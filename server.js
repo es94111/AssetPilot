@@ -435,6 +435,16 @@ app.get('/api/config', (req, res) => {
   res.json({ googleClientId: GOOGLE_CLIENT_ID || null });
 });
 
+// 版本更新資訊（公開，不需認證）
+app.get('/api/changelog', (req, res) => {
+  try {
+    const data = fs.readFileSync(path.join(__dirname, 'changelog.json'), 'utf8');
+    res.json(JSON.parse(data));
+  } catch (e) {
+    res.json({ currentVersion: '0.0', releases: [] });
+  }
+});
+
 // Google SSO 登入
 app.post('/api/auth/google', async (req, res) => {
   const { credential } = req.body;

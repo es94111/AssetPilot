@@ -21,6 +21,9 @@
 ├── app.js             # 前端 SPA 邏輯（IIFE 模組 App）
 ├── index.html         # 單頁 HTML（所有頁面 + Modal）
 ├── style.css          # 全域樣式
+├── changelog.json     # 版本更新紀錄（前端讀取顯示）
+├── logo.svg           # 網站 Logo（登入頁）
+├── favicon.svg        # Favicon + 側邊欄 Logo
 ├── database.db        # SQLite 資料庫檔案（自動產生）
 ├── .env               # 環境變數（JWT 金鑰、Google Client ID 等，勿提交版控）
 ├── .env.example       # 環境變數範本（可提交版控）
@@ -120,6 +123,7 @@ node server.js         # 啟動伺服器，預設 http://localhost:3000
 | `/settings/categories` | 設定 > 分類管理 |
 | `/settings/recurring` | 設定 > 固定收支 |
 | `/settings/export` | 設定 > 資料匯出匯入 |
+| `/settings/account` | 設定 > 帳號設定 |
 
 伺服器端有 catch-all 路由回傳 `index.html` 以支援直接輸入 URL。
 
@@ -175,6 +179,37 @@ node server.js         # 啟動伺服器，預設 http://localhost:3000
 4. 設定授權的 JavaScript 來源（如 `http://localhost:3000`）
 5. 將 Client ID 設為環境變數 `GOOGLE_CLIENT_ID` 啟動伺服器
 6. 未設定時 Google 按鈕自動隱藏，不影響帳號密碼登入功能
+
+## 版本更新流程（重要）
+
+**每次完成功能開發或修正後，必須更新版本資訊：**
+
+1. **更新 `changelog.json`**：
+   - 修改 `currentVersion` 為新版本號
+   - 在 `releases` 陣列**最前面**新增一筆版本紀錄
+   - 格式範例：
+     ```json
+     {
+       "version": "3.7",
+       "date": "2026-03-21",
+       "title": "簡短版本標題",
+       "type": "feature",
+       "changes": [
+         { "tag": "new", "text": "新增的功能說明" },
+         { "tag": "improved", "text": "改進的功能說明" },
+         { "tag": "fixed", "text": "修正的問題說明" },
+         { "tag": "removed", "text": "移除的功能說明" }
+       ]
+     }
+     ```
+   - `tag` 可用值：`new`（新增）、`improved`（改進）、`fixed`（修正）、`removed`（移除）
+
+2. **同步更新 `SRS.md`** 的版本歷程表（8.2 節）
+
+3. **版本號規則**：
+   - 大版本（如 4.0）：新增重大模組
+   - 小版本（如 3.7）：新增功能或重要改進
+   - 修正版（如 3.7.1）：Bug 修正
 
 ## 測試帳號
 

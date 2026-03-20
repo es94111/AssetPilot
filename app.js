@@ -178,6 +178,8 @@ const App = (() => {
     await API.post('/api/recurring/process', {}).catch(() => {});
     cachedCategories = await API.get('/api/categories');
     cachedAccounts = await API.get('/api/accounts');
+    // 載入版本號
+    loadVersionLabel();
     // 根據目前 URL 導航
     const { page, sub } = parseRoute(location.pathname);
     await navigate(page, sub);
@@ -294,8 +296,9 @@ const App = (() => {
     el('loginForm').addEventListener('submit', handleLogin);
     el('registerForm').addEventListener('submit', handleRegister);
 
-    // 登出
+    // 登出 & 版本資訊
     el('logoutBtn').addEventListener('click', logout);
+    el('changelogBtn').addEventListener('click', openChangelog);
 
     // Google SSO 初始化
     initGoogleSSO();
@@ -3047,6 +3050,59 @@ const App = (() => {
     setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 2500);
   }
 
+  // ─── 版本更新資訊 ───
+  // 載入版本號到側邊欄
+  async function loadVersionLabel() {
+    try {
+      const data = await (await fetch('/api/changelog')).json();
+      if (data.currentVersion) {
+        el('appVersionLabel').textContent = data.currentVersion;
+      }
+    } catch (e) { /* ignore */ }
+  }
+
+  async function openChangelog() {
+    openModal('modalChangelog');
+    const content = el('changelogContent');
+    content.innerHTML = '<div class="empty-hint">載入中...</div>';
+    try {
+      const data = await (await fetch('/api/changelog')).json();
+      if (!data.releases || data.releases.length === 0) {
+        content.innerHTML = '<div class="empty-hint">暫無版本資訊</div>';
+        return;
+      }
+      const tagLabels = {
+        'new': { text: '新增', cls: 'cl-tag-new' },
+        'improved': { text: '改進', cls: 'cl-tag-improved' },
+        'fixed': { text: '修正', cls: 'cl-tag-fixed' },
+        'removed': { text: '移除', cls: 'cl-tag-removed' }
+      };
+      content.innerHTML = `
+        <div class="cl-current">目前版本 <strong>v${escHtml(data.currentVersion)}</strong></div>
+        ${data.releases.map((r, i) => `
+          <div class="cl-release ${i === 0 ? 'cl-latest' : ''}">
+            <div class="cl-release-header">
+              <div class="cl-version-badge">v${escHtml(r.version)}</div>
+              <div class="cl-release-info">
+                <span class="cl-release-title">${escHtml(r.title)}</span>
+                <span class="cl-release-date">${escHtml(r.date)}</span>
+              </div>
+              ${i === 0 ? '<span class="cl-latest-badge">最新</span>' : ''}
+            </div>
+            <ul class="cl-changes">
+              ${r.changes.map(c => {
+                const tag = tagLabels[c.tag] || { text: c.tag, cls: 'cl-tag-new' };
+                return `<li><span class="cl-tag ${tag.cls}">${tag.text}</span>${escHtml(c.text)}</li>`;
+              }).join('')}
+            </ul>
+          </div>
+        `).join('')}
+      `;
+    } catch (e) {
+      content.innerHTML = '<div class="empty-hint">載入版本資訊失敗</div>';
+    }
+  }
+
   // ─── 公開 API ───
   return {
     init,
@@ -3081,6 +3137,7 @@ const App = (() => {
     toggleStkDivSelect,
     stkTxGoPage: (p) => renderStockTransactions(p),
     stkDivGoPage: (p) => renderStockDividends(p),
+    openChangelog,
   };
 })();
 

@@ -1,0 +1,16 @@
+services:
+  asset-manager:
+    build: .
+    container_name: asset-manager
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - PORT=3000
+      - DB_PATH=/app/data/database.db
+      - JWT_SECRET=please-change-this-secret
+      - JWT_EXPIRES=7d
+      - GOOGLE_CLIENT_ID=
+      - DB_ENCRYPTION_KEY=

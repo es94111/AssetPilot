@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>資產管理</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="apple-touch-icon" href="/logo.svg">
+  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0"></script>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+<body>
+  <!-- ===== 登入/註冊頁面 ===== -->
+  <div class="auth-container" id="authContainer">
+    <div class="auth-card">
+      <div class="auth-logo">
+        <img src="/logo.svg" alt="資產管理" class="auth-logo-img">
+        <span>資產管理</span>
+      </div>
+      <p class="auth-subtitle">輕鬆管理您的每一筆收支</p>
+
+      <!-- 登入表單 -->
+      <form class="auth-form active" id="loginForm">
+        <h2>登入</h2>
+        <!-- Google SSO -->
+        <div id="googleSignInWrap" class="google-signin-wrap" style="display:none">
+          <div id="googleSignInBtn"></div>
+          <div class="auth-divider"><span>或使用帳號密碼</span></div>
+        </div>
+        <div class="form-row">
+          <label>電子信箱</label>
+          <input type="email" id="loginEmail" required placeholder="請輸入 Email">
+        </div>
+        <div class="form-row">
+          <label>密碼</label>
+          <input type="password" id="loginPassword" required placeholder="請輸入密碼">
+        </div>
+        <div class="auth-error" id="loginError"></div>
+        <button type="submit" class="btn btn-primary btn-block">登入</button>
+        <div class="auth-links">
+          <a href="#" id="showRegister">還沒有帳號？立即註冊</a>
+        </div>
+      </form>
+
+      <!-- 註冊表單 -->
+      <form class="auth-form" id="registerForm">
+        <h2>註冊</h2>
+        <!-- Google SSO -->
+        <div id="googleSignUpWrap" class="google-signin-wrap" style="display:none">
+          <div id="googleSignUpBtn"></div>
+          <div class="auth-divider"><span>或使用帳號密碼註冊</span></div>
+        </div>
+        <div class="form-row">
+          <label>電子信箱 <span class="required">*</span></label>
+          <input type="email" id="regEmail" required placeholder="請輸入 Email">
+        </div>
+        <div class="form-row">
+          <label>顯示名稱 <span class="required">*</span></label>
+          <input type="text" id="regName" required maxlength="50" placeholder="您的暱稱">
+        </div>
+        <div class="form-row">
+          <label>密碼 <span class="required">*</span></label>
+          <input type="password" id="regPassword" required minlength="8" placeholder="至少8位，需含英文與數字">
+        </div>
+        <div class="form-row">
+          <label>確認密碼 <span class="required">*</span></label>
+          <input type="password" id="regPasswordConfirm" required placeholder="再次輸入密碼">
+        </div>
+        <div class="auth-error" id="registerError"></div>
+        <button type="submit" class="btn btn-primary btn-block">註冊</button>
+        <div class="auth-links">
+          <a href="#" id="showLogin">已有帳號？返回登入</a>
+        </div>
+      </form>
+
+    </div>
+  </div>
+
+  <!-- 側邊欄 -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <img src="/favicon.svg" alt="" class="sidebar-logo-img">
+      <span>資產管理</span>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="#" class="nav-item active" data-page="dashboard">
+        <i class="fas fa-chart-pie"></i><span>儀表板</span>
+      </a>
+      <a href="#" class="nav-item" data-page="transactions">
+        <i class="fas fa-receipt"></i><span>交易記錄</span>
+      </a>
+      <a href="#" class="nav-item" data-page="reports">
+        <i class="fas fa-chart-line"></i><span>統計報表</span>
+      </a>
+      <a href="#" class="nav-item" data-page="budget">
+        <i class="fas fa-wallet"></i><span>預算管理</span>
+      </a>
+      <a href="#" class="nav-item" data-page="accounts">
+        <i class="fas fa-building-columns"></i><span>帳戶管理</span>
+      </a>
+      <a href="#" class="nav-item" data-page="stocks">
+        <i class="fas fa-chart-line"></i><span>股票紀錄</span>
+      </a>
+      <a href="#" class="nav-item" data-page="settings">
+        <i class="fas fa-gear"></i><span>設定</span>
+      </a>
+    </nav>
+    <div class="sidebar-footer" id="sidebarFooter">
+      <div class="user-info">
+        <i class="fas fa-user-circle"></i>
+        <span id="userDisplayName"></span>
+      </div>
+      <button class="btn-icon logout-btn" id="logoutBtn" title="登出">
+        <i class="fas fa-right-from-bracket"></i>
+      </button>
+    </div>
+  </aside>
+
+  <!-- 行動版頂部列 -->
+  <header class="mobile-header">
+    <button class="menu-btn" id="menuBtn"><i class="fas fa-bars"></i></button>
+    <h1 id="mobileTitle">儀表板</h1>
+    <div style="width:40px"></div>
+  </header>
+
+  <!-- 主內容 -->
+  <main class="main-content">
+    <!-- ===== 儀表板 ===== -->
+    <section class="page active" id="page-dashboard">
+      <h2 class="page-title">儀表板</h2>
+      <div class="summary-cards">
+        <div class="card summary-card income">
+          <div class="card-icon"><i class="fas fa-arrow-down"></i></div>
+          <div class="card-info">
+            <span class="card-label">本月收入</span>
+            <span class="card-value" id="dashIncome">NT$ 0</span>
+          </div>
+        </div>
+        <div class="card summary-card expense">
+          <div class="card-icon"><i class="fas fa-arrow-up"></i></div>
+          <div class="card-info">
+            <span class="card-label">本月支出</span>
+            <span class="card-value" id="dashExpense">NT$ 0</span>
+          </div>
+        </div>
+        <div class="card summary-card net">
+          <div class="card-icon"><i class="fas fa-scale-balanced"></i></div>
+          <div class="card-info">
+            <span class="card-label">淨收支</span>
+            <span class="card-value" id="dashNet">NT$ 0</span>
+          </div>
+        </div>
+        <div class="card summary-card today">
+          <div class="card-icon"><i class="fas fa-calendar-day"></i></div>
+          <div class="card-info">
+            <span class="card-label">今日支出</span>
+            <span class="card-value" id="dashToday">NT$ 0</span>
+          </div>
+        </div>
+      </div>
+      <div class="dashboard-grid">
+        <div class="card">
+          <h3>預算進度</h3>
+          <div id="dashBudgetProgress"><p class="empty-hint">尚未設定預算</p></div>
+        </div>
+        <div class="card">
+          <h3>支出分類</h3>
+          <div class="chart-container-sm"><canvas id="dashPieChart"></canvas></div>
+        </div>
+        <div class="card full-width">
+          <h3>近期交易</h3>
+          <div id="dashRecentList"><p class="empty-hint">尚無交易記錄</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 交易記錄 ===== -->
+    <section class="page" id="page-transactions">
+      <h2 class="page-title">交易記錄</h2>
+      <div class="filter-bar card">
+        <div class="filter-group">
+          <label>日期範圍</label>
+          <input type="date" id="filterDateFrom">
+          <span>~</span>
+          <input type="date" id="filterDateTo">
+        </div>
+        <div class="filter-group">
+          <label>類型</label>
+          <select id="filterType">
+            <option value="all">全部</option>
+            <option value="expense">支出</option>
+            <option value="income">收入</option>
+            <option value="transfer">轉帳</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>分類</label>
+          <select id="filterCategory"><option value="all">全部</option></select>
+        </div>
+        <div class="filter-group">
+          <label>帳戶</label>
+          <select id="filterAccount"><option value="all">全部</option></select>
+        </div>
+        <div class="filter-group">
+          <label>搜尋</label>
+          <input type="text" id="filterKeyword" placeholder="搜尋備註...">
+        </div>
+        <div class="filter-group">
+          <label>每頁筆數</label>
+          <div class="pagesize-wrap">
+            <select id="filterPageSize">
+              <option value="10">10</option>
+              <option value="20" selected>20</option>
+              <option value="50">50</option>
+              <option value="100">100</option>
+              <option value="custom">自訂</option>
+            </select>
+            <input type="number" id="filterPageSizeCustom" min="1" max="9999" placeholder="筆數" style="display:none">
+          </div>
+        </div>
+        <button class="btn btn-sm" id="filterBtn"><i class="fas fa-search"></i> 篩選</button>
+        <button class="btn btn-sm btn-ghost" id="filterResetBtn"><i class="fas fa-rotate-left"></i> 重置</button>
+      </div>
+      <!-- 批次操作列 -->
+      <div class="batch-bar" id="batchBar" style="display:none">
+        <div class="batch-bar-left">
+          <span id="batchCount">已選 0 筆</span>
+        </div>
+        <div class="batch-bar-right">
+          <button class="btn btn-sm" id="batchChangeCatBtn"><i class="fas fa-tags"></i> 變更分類</button>
+          <button class="btn btn-sm" id="batchChangeAccBtn"><i class="fas fa-wallet"></i> 變更帳戶</button>
+          <button class="btn btn-sm" id="batchChangeDateBtn"><i class="fas fa-calendar"></i> 變更日期</button>
+          <button class="btn btn-sm btn-danger" id="batchDeleteBtn"><i class="fas fa-trash"></i> 批次刪除</button>
+          <button class="btn btn-sm btn-ghost" id="batchCancelBtn"><i class="fas fa-xmark"></i> 取消</button>
+        </div>
+      </div>
+      <div class="card">
+        <table class="data-table" id="transactionTable">
+          <thead>
+            <tr>
+              <th class="th-check"><input type="checkbox" id="selectAllTx" title="全選"></th>
+              <th>日期</th><th>類型</th><th>分類</th><th>金額</th><th>帳戶</th><th>備註</th><th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="transactionBody"></tbody>
+        </table>
+        <div class="pagination" id="transactionPagination"></div>
+      </div>
+    </section>
+
+    <!-- ===== 統計報表 ===== -->
+    <section class="page" id="page-reports">
+      <h2 class="page-title">統計報表</h2>
+      <div class="report-controls card">
+        <div class="tab-group">
+          <button class="tab active" data-report="category">分類統計</button>
+          <button class="tab" data-report="trend">趨勢分析</button>
+          <button class="tab" data-report="daily">每日消費</button>
+        </div>
+        <div class="filter-group">
+          <label>期間</label>
+          <select id="reportRange">
+            <option value="thisMonth">本月</option>
+            <option value="lastMonth">上月</option>
+            <option value="last3">近3個月</option>
+            <option value="last6">近6個月</option>
+            <option value="thisYear">今年</option>
+            <option value="custom">自訂時間</option>
+          </select>
+        </div>
+        <div class="filter-group" id="reportCustomRange" style="display:none">
+          <label>起始</label>
+          <input type="date" id="reportFrom">
+          <span>~</span>
+          <input type="date" id="reportTo">
+        </div>
+        <div class="filter-group">
+          <label>類型</label>
+          <select id="reportType">
+            <option value="expense">支出</option>
+            <option value="income">收入</option>
+          </select>
+        </div>
+      </div>
+      <div class="card">
+        <div class="chart-container" id="reportChartWrap">
+          <canvas id="reportChart"></canvas>
+        </div>
+        <div id="reportSummary" class="report-summary"></div>
+      </div>
+    </section>
+
+    <!-- ===== 預算管理 ===== -->
+    <section class="page" id="page-budget">
+      <h2 class="page-title">預算管理</h2>
+      <div class="budget-header card">
+        <div class="budget-total">
+          <h3>本月總預算</h3>
+          <div class="budget-numbers">
+            <span id="budgetUsed">NT$ 0</span>
+            <span class="budget-sep">/</span>
+            <span id="budgetTotal">NT$ 0</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" id="budgetTotalBar"></div></div>
+        </div>
+        <button class="btn" id="setBudgetBtn"><i class="fas fa-plus"></i> 設定預算</button>
+      </div>
+      <div class="budget-list" id="budgetList"></div>
+    </section>
+
+    <!-- ===== 帳戶管理 ===== -->
+    <section class="page" id="page-accounts">
+      <h2 class="page-title">帳戶管理</h2>
+      <div class="summary-cards">
+        <div class="card summary-card net">
+          <div class="card-icon"><i class="fas fa-landmark"></i></div>
+          <div class="card-info">
+            <span class="card-label">總資產</span>
+            <span class="card-value" id="totalAssets">NT$ 0</span>
+          </div>
+        </div>
+      </div>
+      <div class="account-actions">
+        <button class="btn" id="addAccountBtn"><i class="fas fa-plus"></i> 新增帳戶</button>
+        <button class="btn btn-outline" id="transferBtn"><i class="fas fa-right-left"></i> 帳戶轉帳</button>
+      </div>
+      <div class="account-grid" id="accountGrid"></div>
+    </section>
+
+    <!-- ===== 股票紀錄 ===== -->
+    <section class="page" id="page-stocks">
+      <h2 class="page-title">股票紀錄</h2>
+      <div class="stock-tabs">
+        <button class="tab active" data-stock-tab="portfolio">持股總覽</button>
+        <button class="tab" data-stock-tab="transactions">交易紀錄</button>
+        <button class="tab" data-stock-tab="dividends">股利紀錄</button>
+        <button class="tab" data-stock-tab="realized">實現損益</button>
+      </div>
+
+      <!-- 持股總覽 -->
+      <div class="stock-panel active" id="stockPanel-portfolio">
+        <div class="summary-cards">
+          <div class="card summary-card" style="border-left: 4px solid var(--primary)">
+            <div class="card-icon" style="background:#eef2ff;color:var(--primary)"><i class="fas fa-coins"></i></div>
+            <div class="card-info">
+              <span class="card-label">股票總市值</span>
+              <span class="card-value" id="stockTotalValue">NT$ 0</span>
+            </div>
+          </div>
+          <div class="card summary-card" style="border-left: 4px solid var(--text-secondary)">
+            <div class="card-icon" style="background:#f1f5f9;color:var(--text-secondary)"><i class="fas fa-money-bill-trend-up"></i></div>
+            <div class="card-info">
+              <span class="card-label">總投入成本</span>
+              <span class="card-value" id="stockTotalCost">NT$ 0</span>
+            </div>
+          </div>
+          <div class="card summary-card" style="border-left: 4px solid var(--net)">
+            <div class="card-icon" style="background:var(--net-bg);color:var(--net)"><i class="fas fa-scale-balanced"></i></div>
+            <div class="card-info">
+              <span class="card-label">預估損益</span>
+              <span class="card-value" id="stockTotalPL">NT$ 0</span>
+            </div>
+          </div>
+          <div class="card summary-card" style="border-left: 4px solid #f59e0b">
+            <div class="card-icon" style="background:#fef3c7;color:#f59e0b"><i class="fas fa-hand-holding-dollar"></i></div>
+            <div class="card-info">
+              <span class="card-label">累計股利</span>
+              <span class="card-value" id="stockTotalDiv">NT$ 0</span>
+            </div>
+          </div>
+        </div>
+        <div class="stock-actions">
+          <button class="btn" onclick="App.openStockModal()"><i class="fas fa-plus"></i> 新增股票</button>
+          <button class="btn btn-outline" onclick="App.openPriceUpdateModal()"><i class="fas fa-sync"></i> 更新股價</button>
+        </div>
+        <div class="stock-portfolio-grid" id="stockPortfolioGrid"></div>
+      </div>
+
+      <!-- 交易紀錄 -->
+      <div class="stock-panel" id="stockPanel-transactions">
+        <div class="stock-actions">
+          <button class="btn" onclick="App.openStockTxModal()"><i class="fas fa-plus"></i> 新增交易</button>
+          <div class="filter-group stock-search-group" style="margin-left:auto">
+            <label>查詢股票</label>
+            <div class="stock-search-wrap">
+              <input type="text" id="stockTxFilterInput" placeholder="輸入代號或名稱篩選" autocomplete="off">
+              <button class="btn-icon stock-search-clear" id="stockTxFilterClear" title="清除" style="display:none"><i class="fas fa-xmark"></i></button>
+            </div>
+            <input type="hidden" id="stockTxFilter" value="">
+          </div>
+          <div class="filter-group">
+            <label>每頁筆數</label>
+            <div class="pagesize-wrap">
+              <select id="stkTxPageSize">
+                <option value="10">10</option>
+                <option value="20" selected>20</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+                <option value="custom">自訂</option>
+              </select>
+              <input type="number" id="stkTxPageSizeCustom" min="1" max="9999" placeholder="筆數" style="display:none">
+            </div>
+          </div>
+        </div>
+        <!-- 批次操作列 -->
+        <div class="batch-bar" id="stkTxBatchBar" style="display:none">
+          <div class="batch-bar-left">
+            <span id="stkTxBatchCount">已選 0 筆</span>
+          </div>
+          <div class="batch-bar-right">
+            <button class="btn btn-sm btn-danger" id="stkTxBatchDeleteBtn"><i class="fas fa-trash"></i> 批次刪除</button>
+            <button class="btn btn-sm btn-ghost" id="stkTxBatchCancelBtn"><i class="fas fa-xmark"></i> 取消</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr>
+              <th class="th-check"><input type="checkbox" id="selectAllStkTx" title="全選"></th>
+              <th>日期</th><th>類型</th><th>股票</th><th>股數</th><th>成交價</th><th>手續費</th><th>交易稅</th><th>小計</th><th>操作</th>
+            </tr></thead>
+            <tbody id="stockTxBody"></tbody>
+          </table>
+          <div class="pagination" id="stkTxPagination"></div>
+        </div>
+      </div>
+
+      <!-- 股利紀錄 -->
+      <div class="stock-panel" id="stockPanel-dividends">
+        <div class="stock-actions">
+          <button class="btn" onclick="App.openStockDivModal()"><i class="fas fa-plus"></i> 新增股利</button>
+          <button class="btn btn-outline" id="syncDividendsBtn" onclick="App.syncDividends()"><i class="fas fa-rotate"></i> 同步除權息</button>
+          <div class="filter-group stock-search-group" style="margin-left:auto">
+            <label>查詢股票</label>
+            <div class="stock-search-wrap">
+              <input type="text" id="stockDivFilterInput" placeholder="輸入代號或名稱篩選" autocomplete="off">
+              <button class="btn-icon stock-search-clear" id="stockDivFilterClear" title="清除" style="display:none"><i class="fas fa-xmark"></i></button>
+            </div>
+            <input type="hidden" id="stockDivFilter" value="">
+          </div>
+          <div class="filter-group">
+            <label>每頁筆數</label>
+            <div class="pagesize-wrap">
+              <select id="stkDivPageSize">
+                <option value="10">10</option>
+                <option value="20" selected>20</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+                <option value="custom">自訂</option>
+              </select>
+              <input type="number" id="stkDivPageSizeCustom" min="1" max="9999" placeholder="筆數" style="display:none">
+            </div>
+          </div>
+        </div>
+        <!-- 批次操作列 -->
+        <div class="batch-bar" id="stkDivBatchBar" style="display:none">
+          <div class="batch-bar-left">
+            <span id="stkDivBatchCount">已選 0 筆</span>
+          </div>
+          <div class="batch-bar-right">
+            <button class="btn btn-sm btn-danger" id="stkDivBatchDeleteBtn"><i class="fas fa-trash"></i> 批次刪除</button>
+            <button class="btn btn-sm btn-ghost" id="stkDivBatchCancelBtn"><i class="fas fa-xmark"></i> 取消</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr>
+              <th class="th-check"><input type="checkbox" id="selectAllStkDiv" title="全選"></th>
+              <th>發放日期</th><th>股票</th><th>現金股利</th><th>股票股利(股)</th><th>備註</th><th>操作</th>
+            </tr></thead>
+            <tbody id="stockDivBody"></tbody>
+          </table>
+          <div class="pagination" id="stkDivPagination"></div>
+        </div>
+      </div>
+
+      <!-- 實現損益 -->
+      <div class="stock-panel" id="stockPanel-realized">
+        <div class="summary-cards" id="realizedSummaryCards"></div>
+        <div class="stock-actions" style="margin-top:12px">
+          <div class="filter-group stock-search-group" style="margin-left:auto">
+            <label>查詢股票</label>
+            <div class="stock-search-wrap">
+              <input type="text" id="stockRealizedFilterInput" placeholder="輸入代號或名稱篩選" autocomplete="off">
+              <button class="btn-icon stock-search-clear" id="stockRealizedFilterClear" title="清除" style="display:none"><i class="fas fa-xmark"></i></button>
+            </div>
+            <input type="hidden" id="stockRealizedFilter" value="">
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr>
+              <th>賣出日期</th><th>股票</th><th>賣出股數</th><th>賣出均價</th><th>成本均價</th><th>手續費+稅</th><th>實現損益</th><th>報酬率</th>
+            </tr></thead>
+            <tbody id="stockRealizedBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 設定 ===== -->
+    <section class="page" id="page-settings">
+      <h2 class="page-title">設定</h2>
+      <div class="tab-group settings-tabs">
+        <button class="tab active" data-settings="categories">分類管理</button>
+        <button class="tab" data-settings="recurring">固定收支</button>
+        <button class="tab" data-settings="export">資料匯出匯入</button>
+        <button class="tab" data-settings="account">帳號設定</button>
+      </div>
+      <!-- 分類管理 -->
+      <div class="settings-panel active" id="panel-categories">
+        <div class="settings-section">
+          <div class="section-header">
+            <h3>支出分類</h3>
+            <button class="btn btn-sm" onclick="App.openCategoryModal('expense')"><i class="fas fa-plus"></i> 新增</button>
+          </div>
+          <div class="category-list" id="expenseCategoryList"></div>
+        </div>
+        <div class="settings-section">
+          <div class="section-header">
+            <h3>收入分類</h3>
+            <button class="btn btn-sm" onclick="App.openCategoryModal('income')"><i class="fas fa-plus"></i> 新增</button>
+          </div>
+          <div class="category-list" id="incomeCategoryList"></div>
+        </div>
+      </div>
+      <!-- 固定收支 -->
+      <div class="settings-panel" id="panel-recurring">
+        <div class="section-header">
+          <h3>固定收支</h3>
+          <button class="btn btn-sm" id="addRecurringBtn"><i class="fas fa-plus"></i> 新增</button>
+        </div>
+        <div id="recurringList"></div>
+      </div>
+      <!-- 資料匯出入 -->
+      <div class="settings-panel" id="panel-export">
+        <div class="card">
+          <h3>匯出交易記錄</h3>
+          <div class="export-form">
+            <div class="filter-group">
+              <label>日期範圍</label>
+              <input type="date" id="exportFrom">
+              <span>~</span>
+              <input type="date" id="exportTo">
+            </div>
+            <div class="export-btns">
+              <button class="btn" id="exportCsvBtn"><i class="fas fa-file-csv"></i> 匯出 CSV</button>
+            </div>
+          </div>
+        </div>
+        <div class="card" style="margin-top:16px">
+          <h3>分類管理</h3>
+          <div class="export-form">
+            <div class="export-btns" style="gap:8px">
+              <button class="btn" id="exportCatBtn"><i class="fas fa-download"></i> 匯出分類</button>
+              <label class="btn btn-ghost" style="cursor:pointer" id="importCatLabel">
+                <i class="fas fa-upload"></i> 匯入分類
+                <input type="file" id="importCatInput" accept=".csv" hidden>
+              </label>
+            </div>
+            <p class="import-hint" style="margin-top:8px">匯出 / 匯入分類結構（含子分類），CSV 格式：類型、分類名稱、上層分類、顏色</p>
+          </div>
+        </div>
+        <div class="card" style="margin-top:16px">
+          <h3>股票紀錄</h3>
+          <div class="export-form">
+            <div class="export-btns" style="gap:8px">
+              <button class="btn" id="exportStockTxBtn"><i class="fas fa-download"></i> 匯出交易紀錄</button>
+              <button class="btn" id="exportStockDivBtn"><i class="fas fa-download"></i> 匯出股利紀錄</button>
+            </div>
+            <p class="import-hint" style="margin-top:8px">
+              交易紀錄 CSV：日期、股票代號、股票名稱、類型（買進/賣出）、股數、成交價、手續費、交易稅、帳戶、備註<br>
+              股利紀錄 CSV：日期、股票代號、股票名稱、現金股利、股票股利、備註
+            </p>
+          </div>
+          <div style="margin-top:12px">
+            <div class="export-btns" style="gap:8px">
+              <label class="btn btn-ghost" style="cursor:pointer">
+                <i class="fas fa-upload"></i> 匯入交易紀錄
+                <input type="file" id="importStockTxInput" accept=".csv" hidden>
+              </label>
+              <label class="btn btn-ghost" style="cursor:pointer">
+                <i class="fas fa-upload"></i> 匯入股利紀錄
+                <input type="file" id="importStockDivInput" accept=".csv" hidden>
+              </label>
+            </div>
+            <div class="import-result" id="stockImportResult" style="display:none;margin-top:8px"></div>
+          </div>
+        </div>
+        <div class="card" style="margin-top:16px">
+          <h3>匯入交易記錄</h3>
+          <p class="import-hint">支援 CSV 格式，欄位順序：日期、類型、分類、金額、帳戶、備註<br>
+            類型可為：支出、收入、轉出、轉入<br>
+            第一行為標題列，將自動跳過</p>
+          <div class="import-result" id="importResult" style="display:none"></div>
+          <div class="import-area" id="importArea">
+            <i class="fas fa-cloud-arrow-up"></i>
+            <span>點擊或拖曳 CSV 檔案至此</span>
+            <input type="file" id="importFileInput" accept=".csv" hidden>
+          </div>
+          <div class="import-preview" id="importPreview" style="display:none">
+            <div class="import-preview-header">
+              <span id="importFileName"></span>
+              <span id="importRowCount"></span>
+              <button class="btn btn-sm btn-ghost" id="importClearBtn"><i class="fas fa-xmark"></i> 清除</button>
+            </div>
+            <div class="import-table-wrap">
+              <table class="data-table" id="importPreviewTable">
+                <thead><tr><th>日期</th><th>類型</th><th>分類</th><th>金額</th><th>帳戶</th><th>備註</th></tr></thead>
+                <tbody id="importPreviewBody"></tbody>
+              </table>
+            </div>
+            <div class="import-missing" id="importMissing" style="display:none"></div>
+            <div class="import-actions">
+              <button class="btn" id="importConfirmBtn"><i class="fas fa-file-import"></i> 確認匯入</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- 帳號設定 -->
+      <div class="settings-panel" id="panel-account">
+        <div class="card">
+          <h3><i class="fas fa-user-circle" style="margin-right:8px;color:var(--primary)"></i>帳號資訊</h3>
+          <div class="account-info-section">
+            <div class="account-info-row">
+              <span class="account-info-label">電子信箱</span>
+              <span class="account-info-value" id="accountEmail">—</span>
+            </div>
+            <div class="account-info-row">
+              <span class="account-info-label">顯示名稱</span>
+              <span class="account-info-value" id="accountDisplayName">—</span>
+            </div>
+          </div>
+        </div>
+        <div class="card" style="margin-top:16px">
+          <h3><i class="fab fa-google" style="margin-right:8px;color:#4285f4"></i>Google 帳號綁定</h3>
+          <p class="import-hint" style="margin-bottom:12px">綁定 Google 帳號後，可使用 Google 快速登入，無需輸入帳號密碼。</p>
+          <div id="googleLinkStatus">
+            <!-- 已綁定狀態 -->
+            <div id="googleLinkedInfo" style="display:none">
+              <div class="google-linked-badge">
+                <i class="fas fa-check-circle" style="color:var(--success);margin-right:6px"></i>
+                <span>已綁定 Google 帳號</span>
+              </div>
+              <button class="btn btn-outline danger" id="unlinkGoogleBtn" style="margin-top:12px">
+                <i class="fas fa-unlink"></i> 解除綁定
+              </button>
+            </div>
+            <!-- 未綁定狀態 -->
+            <div id="googleUnlinkedInfo" style="display:none">
+              <div class="google-linked-badge unlinked">
+                <i class="fas fa-times-circle" style="color:var(--text-muted);margin-right:6px"></i>
+                <span>尚未綁定 Google 帳號</span>
+              </div>
+              <div id="googleLinkBtnWrap" style="margin-top:12px"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ===== 新增/編輯交易 Modal ===== -->
+  <div class="modal-overlay" id="modalTransaction">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="modalTransactionTitle">新增交易</h3>
+        <button class="modal-close" onclick="App.closeModal('modalTransaction')">&times;</button>
+      </div>
+      <form id="transactionForm">
+        <input type="hidden" id="txId">
+        <div class="form-row">
+          <div class="type-toggle">
+            <label class="type-option">
+              <input type="radio" name="txType" value="expense" checked>
+              <span class="type-label expense-label">支出</span>
+            </label>
+            <label class="type-option">
+              <input type="radio" name="txType" value="income">
+              <span class="type-label income-label">收入</span>
+            </label>
+            <label class="type-option">
+              <input type="radio" name="txType" value="transfer">
+              <span class="type-label transfer-label">轉帳</span>
+            </label>
+          </div>
+        </div>
+        <div class="form-row">
+          <label>金額 <span class="required">*</span></label>
+          <input type="number" id="txAmount" min="1" step="1" required placeholder="請輸入金額">
+        </div>
+        <div class="form-row">
+          <label>日期 <span class="required">*</span></label>
+          <input type="date" id="txDate" required>
+        </div>
+        <div class="form-row" id="txCategoryRow">
+          <label>分類 <span class="required">*</span></label>
+          <select id="txCategory"></select>
+        </div>
+        <div class="form-row" id="txFromAccountRow" style="display:none">
+          <label>轉出帳戶 <span class="required">*</span></label>
+          <select id="txFromAccount"></select>
+        </div>
+        <div class="form-row" id="txAccountRow">
+          <label id="txAccountLabel">帳戶 <span class="required">*</span></label>
+          <select id="txAccount" required></select>
+        </div>
+        <div class="form-row">
+          <label>備註</label>
+          <input type="text" id="txNote" maxlength="200" placeholder="選填，最多200字">
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-ghost" onclick="App.closeModal('modalTransaction')">取消</button>
+          <button type="submit" class="btn btn-primary">儲存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===== 帳戶 Modal ===== -->
+  <div class="modal-overlay" id="modalAccount">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="modalAccountTitle">新增帳戶</h3>
+        <button class="modal-close" onclick="App.closeModal('modalAccount')">&times;</button>
+      </div>
+      <form id="accountForm">
+        <input type="hidden" id="accId">
+        <div class="form-row">
+          <label>帳戶名稱 <span class="required">*</span></label>
+          <input type="text" id="accName" required maxlength="50" placeholder="如：現金、銀行">
+        </div>
+        <div class="form-row">
+          <label>初始餘額</label>
+          <input type="number" id="accBalance" value="0" step="1">
+        </div>
+        <div class="form-row">
+          <label>圖示</label>
+          <select id="accIcon">
+            <option value="fa-wallet">錢包</option>
+            <option value="fa-building-columns">銀行</option>
+            <option value="fa-credit-card">信用卡</option>
+            <option value="fa-piggy-bank">存錢筒</option>
+            <option value="fa-money-bill">紙鈔</option>
+          </select>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-ghost" onclick="App.closeModal('modalAccount')">取消</button>
+          <button type="submit" class="btn btn-primary">儲存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===== 轉帳 Modal ===== -->
+  <div class="modal-overlay" id="modalTransfer">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>帳戶轉帳</h3>
+        <button class="modal-close" onclick="App.closeModal('modalTransfer')">&times;</button>
+      </div>
+      <form id="transferForm">
+        <div class="form-row">
+          <label>轉出帳戶 <span class="required">*</span></label>
+          <select id="tfFrom" required></select>
+        </div>
+        <div class="form-row">
+          <label>轉入帳戶 <span class="required">*</span></label>
+          <select id="tfTo" required></select>
+        </div>
+        <div class="form-row">
+          <label>金額 <span class="required">*</span></label>
+          <input type="number" id="tfAmount" min="1" step="1" required>
+        </div>
+        <div class="form-row">
+          <label>日期</label>
+          <input type="date" id="tfDate">
+        </div>
+        <div class="form-row">
+          <label>備註</label>
+          <input type="text" id="tfNote" maxlength="200">
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-ghost" onclick="App.closeModal('modalTransfer')">取消</button>
+          <button type="submit" class="btn btn-primary">確認轉帳</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===== 分類 Modal ===== -->
+  <div class="modal-overlay" id="modalCategory">
+    <div class="modal modal-sm">
+      <div class="modal-header">
+        <h3 id="modalCategoryTitle">新增分類</h3>
+        <button class="modal-close" onclick="App.closeModal('modalCategory')">&times;</button>
+      </div>
+      <form id="categoryForm">
+        <input type="hidden" id="catId">
+        <input type="hidden" id="catType">
+        <div class="form-row" id="catParentRow">
+          <label>上層分類</label>
+          <select id="catParent">
+            <option value="">（頂層分類）</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label>分類名稱 <span class="required">*</span></label>
+          <input type="text" id="catName" required maxlength="50">
+        </div>
+        <div class="form-row">
+          <label>顏色</label>
+          <input type="color" id="catColor" value="#6366f1">
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-ghost" onclick="App.closeModal('modalCategory')">取消</button>
+          <button type="submit" class="btn btn-primary">儲存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===== 預算 Modal ===== -->
+  <div class="modal-overlay" id="modalBudget">
+    <div class="modal modal-sm">
+      <div class="modal-header">
+        <h3 id="modalBudgetTitle">設定預算</h3>
+        <button class="modal-close" onclick="App.closeModal('modalBudget')">&times;</button>
+      </div>
+      <form id="budgetForm">
+        <input type="hidden" id="budId">
+        <div class="form-row">
+          <label>分類</label>
+          <select id="budCategory">
+            <option value="">總預算（不分類）</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label>預算金額 <span class="required">*</span></label>
+          <input type="number" id="budAmount" min="1" step="1" required>
+        </div>
+        <div class="form-row">
+          <label>適用月份</label>
+          <input type="month" id="budMonth" required>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-ghost" onclick="App.closeModal('modalBudget')">取消</button>
+          <button type="submit" class="btn btn-primary">儲存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===== 固定收支 Modal ===== -->
+  <div class="modal-overlay" id="modalRecurring">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="modalRecurringTitle">新增固定收支</h3>
+        <button class="modal-close" onclick="App.closeModal('modalRecurring')">&times;</button>
+      </div>
+      <form id="recurringForm">
+        <input type="hidden" id="recId">
+        <div class="form-row">
+          <div class="type-toggle">
+            <label class="type-option">
+              <input type="radio" name="recType" value="expense" checked>
+              <span class="type-label expense-label">支出</span>
+            </label>
+            <label class="type-option">
+              <input type="radio" name="recType" value="income">
+              <span class="type-label income-label">收入</span>
+            </label>
+          </div>
+        </div>
+        <div class="form-row">
+          <label>金額 <span class="required">*</span></label>
+          <input type="number" id="recAmount" min="1" step="1" required>
+        </div>
+        <div class="form-row">
+          <label>分類 <span class="required">*</span></label>
+          <select id="recCategory" required></select>
+        </div>
+        <div class="form-row">
+          <label>帳戶 <span class="required">*</span></label>
+          <select id="recAccount" required></select>
+        </div>
+        <div class="form-row">
+          <label>週期 <span class="required">*</span></label>
+          <select id="recFrequency" required>
+            <option value="daily">每日</option>
+            <option value="weekly">每週</option>
+            <option value="monthly" selected>每月</option>
+            <option value="yearly">每年</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label>起始日期 <span class="required">*</span></label>
+          <input type="date" id="recStartDate" required>
+        </div>
+        <div class="form-row">
+          <label>備註</label>
+          <input type="text" id="recNote" maxlength="200">
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-ghost" onclick="App.closeModal('modalRecurring')">取消</button>
+          <button type="submit" class="btn btn-primary">儲存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===== 確認刪除 Modal ===== -->
+  <!-- ===== 批次變更 Modal ===== -->
+  <div class="modal-overlay" id="modalBatchChange">
+    <div class="modal modal-sm">
+      <div class="modal-header">
+        <h3 id="batchChangeTitle">批次變更</h3>
+        <button class="modal-close" onclick="App.closeModal('modalBatchChange')">&times;</button>
+      </div>
+      <form id="batchChangeForm">
+        <input type="hidden" id="batchField">
+        <div class="form-row" id="batchCatRow" style="display:none">
+          <label>分類</label>
+          <select id="batchCategory"></select>
+        </div>
+        <div class="form-row" id="batchAccRow" style="display:none">
+          <label>帳戶</label>
+          <select id="batchAccount"></select>
+        </div>
+        <div class="form-row" id="batchDateRow" style="display:none">
+          <label>日期</label>
+          <input type="date" id="batchDate">
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-ghost" onclick="App.closeModal('modalBatchChange')">取消</button>
+          <button type="submit" class="btn btn-primary">確認變更</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modalConfirm">
+    <div class="modal modal-sm">
+      <div class="modal-header">
+        <h3>確認刪除</h3>
+        <button class="modal-close" onclick="App.closeModal('modalConfirm')">&times;</button>
+      </div>
+      <p id="confirmMsg">確定要刪除此項目嗎？此操作無法復原。</p>
+      <div class="form-actions">
+        <button class="btn btn-ghost" onclick="App.closeModal('modalConfirm')">取消</button>
+        <button class="btn btn-danger" id="confirmDeleteBtn">刪除</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 新增/編輯股票 Modal ===== -->
+  <div class="modal-overlay" id="modalStock">
+    <div class="modal modal-sm">
+      <div class="modal-header">
+        <h3 id="modalStockTitle">新增股票</h3>
+        <button class="modal-close" onclick="App.closeModal('modalStock')">&times;</button>
+      </div>
+      <form id="stockForm">
+        <input type="hidden" id="stkId">
+        <div class="form-row">
+          <label>股票代號 <span class="required">*</span></label>
+          <input type="text" id="stkSymbol" required maxlength="10" placeholder="輸入代號自動查詢（如 2330）">
+          <span class="stk-lookup-status" id="stkLookupStatus"></span>
+        </div>
+        <div class="form-row">
+          <label>股票名稱 <span class="required">*</span></label>
+          <input type="text" id="stkName" required maxlength="50" placeholder="自動帶入或手動輸入">
+        </div>
+        <div class="form-row">
+          <label>類型 <span class="required">*</span></label>
+          <select id="stkType">
+            <option value="stock">一般股票（證交稅 0.3%）</option>
+            <option value="etf">ETF（證交稅 0.1%）</option>
+            <option value="warrant">權證（證交稅 0.1%）</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label>目前股價</label>
+          <input type="number" id="stkPrice" step="0.01" min="0" placeholder="自動帶入收盤價">
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-ghost" onclick="App.closeModal('modalStock')">取消</button>
+          <button type="submit" class="btn btn-primary">儲存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===== 股票交易 Modal ===== -->
+  <div class="modal-overlay" id="modalStockTx">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="modalStockTxTitle">新增股票交易</h3>
+        <button class="modal-close" onclick="App.closeModal('modalStockTx')">&times;</button>
+      </div>
+      <form id="stockTxForm">
+        <input type="hidden" id="stkTxId">
+        <div class="form-row">
+          <div class="type-toggle">
+            <label class="type-option"><input type="radio" name="stkTxType" value="buy" checked><span class="type-label income-label">買進</span></label>
+            <label class="type-option"><input type="radio" name="stkTxType" value="sell"><span class="type-label expense-label">賣出</span></label>
+          </div>
+        </div>
+        <div class="form-row">
+          <label>股票代號 <span class="required">*</span></label>
+          <input type="text" id="stkTxSymbol" required maxlength="10" placeholder="輸入代號自動查詢（如 2330）" autocomplete="off">
+          <span class="stk-lookup-status" id="stkTxLookupStatus"></span>
+          <input type="hidden" id="stkTxStockId">
+        </div>
+        <div class="form-row">
+          <label>股數 <span class="required">*</span></label>
+          <input type="number" id="stkTxShares" required min="1" placeholder="1000">
+        </div>
+        <div class="form-row">
+          <label>成交價 <span class="required">*</span></label>
+          <input type="number" id="stkTxPrice" required step="0.01" min="0" placeholder="每股成交價">
+        </div>
+        <div class="form-row">
+          <label>日期 <span class="required">*</span></label>
+          <input type="date" id="stkTxDate" required>
+        </div>
+        <div class="form-row">
+          <label>手續費</label>
+          <input type="number" id="stkTxFee" step="1" min="0" value="0">
+        </div>
+        <div class="form-row" id="stkTxTaxRow">
+          <label>交易稅</label>
+          <input type="number" id="stkTxTax" step="1" min="0" value="0">
+        </div>
+        <div class="form-row">
+          <label>證券帳戶</label>
+          <select id="stkTxAccount"></select>
+        </div>
+        <div class="form-row">
+          <label>備註</label>
+          <input type="text" id="stkTxNote" maxlength="200" placeholder="選填">
+        </div>
+        <div class="stock-tx-summary card" id="stkTxSummary" style="padding:12px;margin-bottom:12px;background:var(--bg)">
+          <div style="display:flex;justify-content:space-between"><span>預估金額</span><strong id="stkTxTotal">NT$ 0</strong></div>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-ghost" onclick="App.closeModal('modalStockTx')">取消</button>
+          <button type="submit" class="btn btn-primary">儲存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===== 股利 Modal ===== -->
+  <div class="modal-overlay" id="modalStockDiv">
+    <div class="modal modal-sm">
+      <div class="modal-header">
+        <h3 id="modalStockDivTitle">新增股利</h3>
+        <button class="modal-close" onclick="App.closeModal('modalStockDiv')">&times;</button>
+      </div>
+      <form id="stockDivForm">
+        <input type="hidden" id="stkDivId">
+        <div class="form-row">
+          <label>股票代號 <span class="required">*</span></label>
+          <input type="text" id="stkDivSymbol" required maxlength="10" placeholder="輸入代號自動查詢（如 2330）" autocomplete="off">
+          <span class="stk-lookup-status" id="stkDivLookupStatus"></span>
+          <input type="hidden" id="stkDivStockId">
+        </div>
+        <div class="form-row">
+          <label>發放日期 <span class="required">*</span></label>
+          <input type="date" id="stkDivDate" required>
+        </div>
+        <div class="form-row">
+          <label>現金股利（總額）</label>
+          <input type="number" id="stkDivCash" step="1" min="0" value="0" placeholder="NT$">
+        </div>
+        <div class="form-row">
+          <label>股票股利（股數）</label>
+          <input type="number" id="stkDivSharesAmt" step="1" min="0" value="0" placeholder="增加股數">
+        </div>
+        <div class="form-row">
+          <label>證券帳戶</label>
+          <select id="stkDivAccount"></select>
+        </div>
+        <div class="form-row">
+          <label>備註</label>
+          <input type="text" id="stkDivNote" maxlength="200" placeholder="選填">
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-ghost" onclick="App.closeModal('modalStockDiv')">取消</button>
+          <button type="submit" class="btn btn-primary">儲存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===== 更新股價 Modal ===== -->
+  <div class="modal-overlay" id="modalPriceUpdate">
+    <div class="modal">
+      <div class="modal-header">
+        <h3><i class="fas fa-chart-line" style="color:var(--primary);margin-right:8px"></i>更新股價</h3>
+        <button class="modal-close" onclick="App.closeModal('modalPriceUpdate')">&times;</button>
+      </div>
+      <div style="margin-bottom:16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <button type="button" class="btn btn-outline" id="fetchTwsePricesBtn"><i class="fas fa-cloud-arrow-down"></i> 從證交所取得最新股價</button>
+        <span style="font-size:12px;color:var(--text-muted)">自動取得盤中即時 / 收盤價格</span>
+      </div>
+      <div class="price-update-list" id="priceUpdateList"></div>
+      <div class="form-actions" style="margin-top:16px">
+        <button type="button" class="btn btn-ghost" onclick="App.closeModal('modalPriceUpdate')">取消</button>
+        <button type="button" class="btn btn-primary" id="priceUpdateSaveBtn"><i class="fas fa-check"></i> 儲存全部</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FAB 浮動按鈕 -->
+  <button class="fab" id="fabBtn" title="新增交易"><i class="fas fa-plus"></i></button>
+
+  <!-- Toast 通知 -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,3087 @@
+/* ====================================================================
+   資產管理 - 主應用程式
+   使用後端 API + SQLite 資料庫儲存 + JWT 認證
+   ==================================================================== */
+
+const App = (() => {
+  // ─── 常數 ───
+  const FREQ_LABELS = { daily: '每日', weekly: '每週', monthly: '每月', yearly: '每年' };
+
+  // ─── Auth 狀態 ───
+  let authToken = localStorage.getItem('authToken') || null;
+  let currentUser = null;
+
+  // ─── API 呼叫（自動帶 Authorization header）───
+  function authHeaders() {
+    const h = { 'Content-Type': 'application/json' };
+    if (authToken) h['Authorization'] = 'Bearer ' + authToken;
+    return h;
+  }
+
+  const API = {
+    async get(url) {
+      const r = await fetch(url, { headers: authHeaders() });
+      if (r.status === 401) { logout(); throw new Error('請先登入'); }
+      return r.json();
+    },
+    async post(url, body) {
+      const r = await fetch(url, { method: 'POST', headers: authHeaders(), body: JSON.stringify(body) });
+      const data = await r.json();
+      if (r.status === 401) { logout(); throw new Error('請先登入'); }
+      if (!r.ok) throw new Error(data.error || '操作失敗');
+      return data;
+    },
+    async put(url, body) {
+      const r = await fetch(url, { method: 'PUT', headers: authHeaders(), body: JSON.stringify(body) });
+      const data = await r.json();
+      if (r.status === 401) { logout(); throw new Error('請先登入'); }
+      if (!r.ok) throw new Error(data.error || '操作失敗');
+      return data;
+    },
+    async patch(url) {
+      const r = await fetch(url, { method: 'PATCH', headers: authHeaders() });
+      if (r.status === 401) { logout(); throw new Error('請先登入'); }
+      return r.json();
+    },
+    async del(url) {
+      const r = await fetch(url, { method: 'DELETE', headers: authHeaders() });
+      const data = await r.json();
+      if (r.status === 401) { logout(); throw new Error('請先登入'); }
+      if (!r.ok) throw new Error(data.error || '操作失敗');
+      return data;
+    },
+  };
+
+  // ─── 工具函式 ───
+  const fmt = (n) => 'NT$ ' + Number(n).toLocaleString('zh-TW');
+  function localDateStr(d) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }
+  function localMonthStr(d) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    return `${y}-${m}`;
+  }
+  const today = () => localDateStr(new Date());
+  const thisMonth = () => localMonthStr(new Date());
+  const el = (id) => document.getElementById(id);
+
+  // ─── 快取 ───
+  let cachedCategories = [];
+  let cachedAccounts = [];
+
+  // ─── 狀態 ───
+  let currentPage = 'dashboard';
+  let charts = {};
+  let deleteCallback = null;
+
+  // ─── Auth 邏輯 ───
+  function showAuthForm(formId) {
+    document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+    el(formId).classList.add('active');
+    // 清除錯誤訊息
+    document.querySelectorAll('.auth-error').forEach(e => e.textContent = '');
+  }
+
+  function showAuth() {
+    el('authContainer').classList.add('active');
+    document.querySelector('.sidebar').style.display = 'none';
+    document.querySelector('.mobile-header').style.display = 'none';
+    document.querySelector('.main-content').style.display = 'none';
+    el('fabBtn').style.display = 'none';
+    showAuthForm('loginForm');
+  }
+
+  function hideAuth() {
+    el('authContainer').classList.remove('active');
+    document.querySelector('.sidebar').style.display = '';
+    document.querySelector('.mobile-header').style.display = '';
+    document.querySelector('.main-content').style.display = '';
+    el('fabBtn').style.display = '';
+  }
+
+  async function handleLogin(e) {
+    e.preventDefault();
+    const email = el('loginEmail').value.trim();
+    const password = el('loginPassword').value;
+    el('loginError').textContent = '';
+
+    try {
+      const r = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error || '登入失敗');
+
+      authToken = data.token;
+      currentUser = data.user;
+      localStorage.setItem('authToken', authToken);
+      el('loginForm').reset();
+      await enterApp();
+    } catch (err) {
+      el('loginError').textContent = err.message;
+    }
+  }
+
+  async function handleRegister(e) {
+    e.preventDefault();
+    const email = el('regEmail').value.trim();
+    const displayName = el('regName').value.trim();
+    const password = el('regPassword').value;
+    const confirm = el('regPasswordConfirm').value;
+    el('registerError').textContent = '';
+
+    if (password !== confirm) {
+      el('registerError').textContent = '兩次密碼不一致';
+      return;
+    }
+
+    try {
+      const r = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, displayName }),
+      });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error || '註冊失敗');
+
+      authToken = data.token;
+      currentUser = data.user;
+      localStorage.setItem('authToken', authToken);
+      el('registerForm').reset();
+      await enterApp();
+    } catch (err) {
+      el('registerError').textContent = err.message;
+    }
+  }
+
+
+  function logout() {
+    authToken = null;
+    currentUser = null;
+    localStorage.removeItem('authToken');
+    cachedCategories = [];
+    cachedAccounts = [];
+    showAuth();
+  }
+
+  async function enterApp() {
+    // 設定使用者名稱
+    el('userDisplayName').textContent = currentUser?.displayName || currentUser?.email || '';
+    hideAuth();
+    // 載入快取
+    await API.post('/api/recurring/process', {}).catch(() => {});
+    cachedCategories = await API.get('/api/categories');
+    cachedAccounts = await API.get('/api/accounts');
+    // 根據目前 URL 導航
+    const { page, sub } = parseRoute(location.pathname);
+    await navigate(page, sub);
+  }
+
+  // ─── 初始化 ───
+  async function init() {
+    bindNav();
+    bindForms();
+    bindFilters();
+    bindMobile();
+    bindAuth();
+
+    // 嘗試用 localStorage 的 token 恢復登入
+    if (authToken) {
+      try {
+        const r = await fetch('/api/auth/me', { headers: { 'Authorization': 'Bearer ' + authToken } });
+        if (r.ok) {
+          const data = await r.json();
+          currentUser = data.user;
+          await enterApp();
+          return;
+        }
+      } catch {}
+      // token 無效
+      authToken = null;
+      localStorage.removeItem('authToken');
+    }
+    showAuth();
+  }
+
+  // ─── Google SSO ───
+  let googleClientId = null;
+
+  async function initGoogleSSO() {
+    try {
+      const config = await (await fetch('/api/config')).json();
+      if (!config.googleClientId) return;
+      googleClientId = config.googleClientId;
+
+      // 等待 GSI 載入
+      const waitGsi = () => new Promise((resolve) => {
+        if (window.google?.accounts?.id) return resolve();
+        const check = setInterval(() => {
+          if (window.google?.accounts?.id) { clearInterval(check); resolve(); }
+        }, 100);
+        setTimeout(() => { clearInterval(check); resolve(); }, 5000);
+      });
+      await waitGsi();
+      if (!window.google?.accounts?.id) return;
+
+      google.accounts.id.initialize({
+        client_id: googleClientId,
+        callback: handleGoogleCredential,
+        auto_select: false,
+      });
+
+      // 登入頁按鈕
+      google.accounts.id.renderButton(el('googleSignInBtn'), {
+        type: 'standard',
+        theme: 'outline',
+        size: 'large',
+        text: 'signin_with',
+        shape: 'rectangular',
+        width: 300,
+        locale: 'zh_TW',
+      });
+      el('googleSignInWrap').style.display = '';
+
+      // 註冊頁按鈕
+      google.accounts.id.renderButton(el('googleSignUpBtn'), {
+        type: 'standard',
+        theme: 'outline',
+        size: 'large',
+        text: 'signup_with',
+        shape: 'rectangular',
+        width: 300,
+        locale: 'zh_TW',
+      });
+      el('googleSignUpWrap').style.display = '';
+    } catch (e) {
+      console.warn('Google SSO 初始化失敗:', e.message);
+    }
+  }
+
+  async function handleGoogleCredential(response) {
+    if (!response.credential) return;
+    el('loginError').textContent = '';
+    try {
+      const r = await fetch('/api/auth/google', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ credential: response.credential }),
+      });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error || 'Google 登入失敗');
+
+      authToken = data.token;
+      currentUser = data.user;
+      localStorage.setItem('authToken', authToken);
+      await enterApp();
+    } catch (err) {
+      el('loginError').textContent = err.message;
+      toast('Google 登入失敗：' + err.message, 'error');
+    }
+  }
+
+  function bindAuth() {
+    // 表單切換
+    el('showRegister').addEventListener('click', e => { e.preventDefault(); showAuthForm('registerForm'); });
+    el('showLogin').addEventListener('click', e => { e.preventDefault(); showAuthForm('loginForm'); });
+
+    // 表單提交
+    el('loginForm').addEventListener('submit', handleLogin);
+    el('registerForm').addEventListener('submit', handleRegister);
+
+    // 登出
+    el('logoutBtn').addEventListener('click', logout);
+
+    // Google SSO 初始化
+    initGoogleSSO();
+  }
+
+  async function refreshCache() {
+    cachedCategories = await API.get('/api/categories');
+    cachedAccounts = await API.get('/api/accounts');
+  }
+
+  // ─── 導航 ───
+  const validPages = ['dashboard', 'transactions', 'reports', 'budget', 'accounts', 'stocks', 'settings'];
+  const validSettingsTabs = ['categories', 'recurring', 'export', 'account'];
+
+  function parseRoute(pathname) {
+    const parts = (pathname || '/').replace(/^\/+|\/+$/g, '').split('/').filter(Boolean);
+    const page = validPages.includes(parts[0]) ? parts[0] : 'dashboard';
+    const sub = (page === 'settings' && validSettingsTabs.includes(parts[1])) ? parts[1] : null;
+    return { page, sub };
+  }
+
+  function buildPath(page, sub) {
+    if (page === 'settings' && sub) return '/' + page + '/' + sub;
+    if (page === 'dashboard') return '/';
+    return '/' + page;
+  }
+
+  async function navigate(page, sub, pushState = true) {
+    // 若 page 是 settings 且沒指定 sub，預設 categories
+    if (page === 'settings' && !sub) sub = 'categories';
+    currentPage = page;
+
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    el('page-' + page)?.classList.add('active');
+    document.querySelector(`.nav-item[data-page="${page}"]`)?.classList.add('active');
+    const titles = { dashboard: '儀表板', transactions: '交易記錄', reports: '統計報表', budget: '預算管理', accounts: '帳戶管理', stocks: '股票紀錄', settings: '設定' };
+    el('mobileTitle').textContent = titles[page] || '';
+    el('sidebar').classList.remove('open');
+
+    const path = buildPath(page, sub);
+    if (pushState) history.pushState({ page, sub }, '', path);
+
+    await renderPage(page);
+
+    // 切換設定子分頁（需在 renderSettings 完成後執行）
+    if (page === 'settings' && sub) {
+      activateSettingsTab(sub);
+    }
+  }
+
+  function activateSettingsTab(tab) {
+    document.querySelectorAll('.settings-tabs .tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.settings-panel').forEach(p => p.classList.remove('active'));
+    const tabEl = document.querySelector(`.settings-tabs .tab[data-settings="${tab}"]`);
+    if (tabEl) tabEl.classList.add('active');
+    el('panel-' + tab)?.classList.add('active');
+  }
+
+  function bindNav() {
+    document.querySelectorAll('.nav-item').forEach(item => {
+      item.addEventListener('click', e => {
+        e.preventDefault();
+        const page = item.dataset.page;
+        navigate(page, page === 'settings' ? 'categories' : null);
+      });
+    });
+    window.addEventListener('popstate', (e) => {
+      if (!currentUser) return;
+      const state = e.state;
+      if (state) {
+        navigate(state.page, state.sub, false);
+      } else {
+        const { page, sub } = parseRoute(location.pathname);
+        navigate(page, sub, false);
+      }
+    });
+  }
+
+  function bindMobile() {
+    el('menuBtn').addEventListener('click', () => el('sidebar').classList.toggle('open'));
+    document.addEventListener('click', e => {
+      const sb = el('sidebar');
+      if (sb.classList.contains('open') && !sb.contains(e.target) && e.target !== el('menuBtn') && !el('menuBtn').contains(e.target)) {
+        sb.classList.remove('open');
+      }
+    });
+  }
+
+  // ─── 頁面渲染 ───
+  async function renderPage(page) {
+    switch (page) {
+      case 'dashboard': await renderDashboard(); break;
+      case 'transactions': await renderTransactions(); break;
+      case 'reports': await renderReports(); break;
+      case 'budget': await renderBudget(); break;
+      case 'accounts': await renderAccounts(); break;
+      case 'stocks': await renderStocks(); break;
+      case 'settings': await renderSettings(); break;
+    }
+  }
+
+  // ─── 儀表板 ───
+  async function renderDashboard() {
+    const data = await API.get('/api/dashboard');
+
+    el('dashIncome').textContent = fmt(data.income);
+    el('dashExpense').textContent = fmt(data.expense);
+    el('dashNet').textContent = fmt(data.net);
+    el('dashToday').textContent = fmt(data.todayExpense);
+
+    await renderDashBudget(data.expense);
+    renderDashPie(data.catBreakdown);
+    renderDashRecent(data.recent);
+  }
+
+  async function renderDashBudget(totalExpense) {
+    const budgets = await API.get('/api/budgets?yearMonth=' + thisMonth());
+    const container = el('dashBudgetProgress');
+    if (budgets.length === 0) {
+      container.innerHTML = '<p class="empty-hint">尚未設定預算</p>';
+      return;
+    }
+    let html = '';
+    budgets.slice(0, 3).forEach(b => {
+      const label = b.categoryId ? (getCat(b.categoryId)?.name || '未知') : '總預算';
+      const used = b.used;
+      const pct = Math.min((used / b.amount) * 100, 100);
+      const cls = pct >= 100 ? 'danger' : pct >= 80 ? 'warning' : '';
+      html += `<div style="margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:4px">
+          <span>${label}</span><span>${fmt(used)} / ${fmt(b.amount)}</span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill ${cls}" style="width:${pct}%"></div></div>
+      </div>`;
+    });
+    container.innerHTML = html;
+  }
+
+  function renderDashPie(catBreakdown) {
+    if (charts.dashPie) charts.dashPie.destroy();
+    const ctx = el('dashPieChart').getContext('2d');
+    if (!catBreakdown || catBreakdown.length === 0) {
+      ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+      return;
+    }
+    const labels = catBreakdown.map(c => c.name || '未分類');
+    const data = catBreakdown.map(c => c.total);
+    const colors = catBreakdown.map(c => c.color || '#94a3b8');
+
+    charts.dashPie = new Chart(ctx, {
+      type: 'doughnut',
+      data: { labels, datasets: [{ data, backgroundColor: colors, borderWidth: 0 }] },
+      options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, padding: 10 } } } },
+    });
+  }
+
+  function renderDashRecent(recent) {
+    const container = el('dashRecentList');
+    if (!recent || recent.length === 0) {
+      container.innerHTML = '<p class="empty-hint">尚無交易記錄</p>';
+      return;
+    }
+    let html = '<ul class="recent-list">';
+    recent.forEach(t => {
+      const catName = t.cat_name || '未分類';
+      const catColor = t.cat_color || '#94a3b8';
+      const amountCls = t.type === 'income' ? 'amount-income' : 'amount-expense';
+      const prefix = t.type === 'income' ? '+' : '-';
+      html += `<li class="recent-item">
+        <div class="recent-item-left">
+          <div class="recent-category" style="background:${catColor}">${catName[0]}</div>
+          <div class="recent-item-info">
+            <div class="recent-cat">${catName}</div>
+            <div class="recent-date">${t.date}${t.note ? ' · ' + escHtml(t.note) : ''}</div>
+          </div>
+        </div>
+        <span class="${amountCls}">${prefix} ${fmt(t.amount)}</span>
+      </li>`;
+    });
+    html += '</ul>';
+    container.innerHTML = html;
+  }
+
+  // ─── 交易記錄 ───
+  async function renderTransactions() {
+    populateFilterSelects();
+    await applyFilters();
+  }
+
+  function populateFilterSelects() {
+    const cats = cachedCategories.filter(c => !c.isHidden);
+    let catHtml = '<option value="all">全部</option>';
+    const parents = cats.filter(c => !c.parentId);
+    parents.forEach(p => {
+      const children = cats.filter(c => c.parentId === p.id);
+      if (children.length > 0) {
+        catHtml += `<optgroup label="${escHtml(p.name)}">`;
+        children.forEach(c => { catHtml += `<option value="${c.id}">${escHtml(c.name)}</option>`; });
+        catHtml += '</optgroup>';
+      } else {
+        catHtml += `<option value="${p.id}">${escHtml(p.name)}</option>`;
+      }
+    });
+    el('filterCategory').innerHTML = catHtml;
+
+    let accHtml = '<option value="all">全部</option>';
+    cachedAccounts.forEach(a => accHtml += `<option value="${a.id}">${a.name}</option>`);
+    el('filterAccount').innerHTML = accHtml;
+  }
+
+  async function applyFilters(page) {
+    const params = new URLSearchParams();
+    const dateFrom = el('filterDateFrom').value;
+    const dateTo = el('filterDateTo').value;
+    const type = el('filterType').value;
+    const catId = el('filterCategory').value;
+    const accId = el('filterAccount').value;
+    const keyword = el('filterKeyword').value.trim();
+
+    if (dateFrom) params.set('dateFrom', dateFrom);
+    if (dateTo) params.set('dateTo', dateTo);
+    if (type !== 'all') params.set('type', type);
+    if (catId !== 'all') params.set('categoryId', catId);
+    if (accId !== 'all') params.set('accountId', accId);
+    if (keyword) params.set('keyword', keyword);
+    params.set('page', page || 1);
+    const psVal = el('filterPageSize').value;
+    params.set('limit', psVal === 'custom' ? (parseInt(el('filterPageSizeCustom').value) || 20) : psVal);
+
+    const result = await API.get('/api/transactions?' + params.toString());
+    renderTransactionTable(result);
+  }
+
+  // ─── 多選狀態 ───
+  let selectedTxIds = new Set();
+
+  function updateBatchBar() {
+    const count = selectedTxIds.size;
+    el('batchBar').style.display = count > 0 ? '' : 'none';
+    el('batchCount').textContent = `已選 ${count} 筆`;
+    // 更新全選 checkbox 狀態
+    const allCheckbox = el('selectAllTx');
+    const checkboxes = document.querySelectorAll('.tx-checkbox');
+    if (checkboxes.length > 0 && count === checkboxes.length) {
+      allCheckbox.checked = true;
+      allCheckbox.indeterminate = false;
+    } else if (count > 0) {
+      allCheckbox.checked = false;
+      allCheckbox.indeterminate = true;
+    } else {
+      allCheckbox.checked = false;
+      allCheckbox.indeterminate = false;
+    }
+  }
+
+  function clearSelection() {
+    selectedTxIds.clear();
+    document.querySelectorAll('.tx-checkbox').forEach(cb => cb.checked = false);
+    updateBatchBar();
+  }
+
+  function renderTransactionTable(result) {
+    const { data: txs, total, page: pageNum, totalPages } = result;
+    selectedTxIds.clear();
+    updateBatchBar();
+
+    const tbody = el('transactionBody');
+    if (txs.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="8" class="empty-hint">沒有交易記錄</td></tr>';
+    } else {
+      tbody.innerHTML = txs.map(t => {
+        const cat = getCat(t.categoryId || t.category_id);
+        const acc = getAcc(t.accountId || t.account_id);
+        let typeBadge, amountCls;
+        if (t.type === 'income') {
+          typeBadge = '<span class="type-badge income">收入</span>';
+          amountCls = 'amount-income';
+        } else if (t.type === 'transfer_out') {
+          typeBadge = '<span class="type-badge transfer">轉出</span>';
+          amountCls = 'amount-transfer';
+        } else if (t.type === 'transfer_in') {
+          typeBadge = '<span class="type-badge transfer">轉入</span>';
+          amountCls = 'amount-transfer';
+        } else {
+          typeBadge = '<span class="type-badge expense">支出</span>';
+          amountCls = 'amount-expense';
+        }
+        return `<tr data-txid="${t.id}">
+          <td class="td-check"><input type="checkbox" class="tx-checkbox" data-id="${t.id}" onchange="App.toggleTxSelect('${t.id}', this.checked)"></td>
+          <td>${t.date}</td>
+          <td>${typeBadge}</td>
+          <td>${getCatDisplayName(cat)}</td>
+          <td class="${amountCls}">${fmt(t.amount)}</td>
+          <td>${acc ? acc.name : '-'}</td>
+          <td>${escHtml(t.note || '')}</td>
+          <td>
+            <button class="btn-icon" onclick="App.editTransaction('${t.id}')" title="編輯"><i class="fas fa-pen"></i></button>
+            <button class="btn-icon danger" onclick="App.deleteTransaction('${t.id}')" title="刪除"><i class="fas fa-trash"></i></button>
+          </td>
+        </tr>`;
+      }).join('');
+    }
+
+    // pagination
+    const pag = el('transactionPagination');
+    if (totalPages <= 1) { pag.innerHTML = ''; return; }
+    let ph = `<button ${pageNum <= 1 ? 'disabled' : ''} onclick="App.txGoPage(${pageNum - 1})"><i class="fas fa-chevron-left"></i></button>`;
+    for (let i = 1; i <= totalPages; i++) {
+      if (totalPages > 7) {
+        if (i === 1 || i === totalPages || (i >= pageNum - 1 && i <= pageNum + 1)) {
+          ph += `<button class="${i === pageNum ? 'active' : ''}" onclick="App.txGoPage(${i})">${i}</button>`;
+        } else if (i === pageNum - 2 || i === pageNum + 2) {
+          ph += `<button disabled>...</button>`;
+        }
+      } else {
+        ph += `<button class="${i === pageNum ? 'active' : ''}" onclick="App.txGoPage(${i})">${i}</button>`;
+      }
+    }
+    ph += `<button ${pageNum >= totalPages ? 'disabled' : ''} onclick="App.txGoPage(${pageNum + 1})"><i class="fas fa-chevron-right"></i></button>`;
+    pag.innerHTML = ph;
+  }
+
+  function bindFilters() {
+    el('filterBtn').addEventListener('click', () => applyFilters(1));
+    el('filterResetBtn').addEventListener('click', () => {
+      el('filterDateFrom').value = '';
+      el('filterDateTo').value = '';
+      el('filterType').value = 'all';
+      el('filterCategory').value = 'all';
+      el('filterAccount').value = 'all';
+      el('filterKeyword').value = '';
+      el('filterPageSize').value = '20';
+      el('filterPageSizeCustom').style.display = 'none';
+      el('filterPageSizeCustom').value = '';
+      applyFilters(1);
+    });
+    el('filterPageSize').addEventListener('change', () => {
+      const isCustom = el('filterPageSize').value === 'custom';
+      el('filterPageSizeCustom').style.display = isCustom ? '' : 'none';
+      if (!isCustom) applyFilters(1);
+      else el('filterPageSizeCustom').focus();
+    });
+    el('filterPageSizeCustom').addEventListener('change', () => applyFilters(1));
+    el('filterPageSizeCustom').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); applyFilters(1); }
+    });
+
+    // 全選 checkbox
+    el('selectAllTx').addEventListener('change', (e) => {
+      const checked = e.target.checked;
+      document.querySelectorAll('.tx-checkbox').forEach(cb => {
+        cb.checked = checked;
+        const id = cb.dataset.id;
+        if (checked) selectedTxIds.add(id); else selectedTxIds.delete(id);
+      });
+      updateBatchBar();
+    });
+
+    // 批次操作按鈕
+    el('batchDeleteBtn').addEventListener('click', batchDelete);
+    el('batchChangeCatBtn').addEventListener('click', () => openBatchChangeModal('category'));
+    el('batchChangeAccBtn').addEventListener('click', () => openBatchChangeModal('account'));
+    el('batchChangeDateBtn').addEventListener('click', () => openBatchChangeModal('date'));
+    el('batchCancelBtn').addEventListener('click', clearSelection);
+
+    // 批次變更表單
+    el('batchChangeForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const field = el('batchField').value;
+      const ids = [...selectedTxIds];
+      let fields = {};
+      if (field === 'category') fields.categoryId = el('batchCategory').value;
+      else if (field === 'account') fields.accountId = el('batchAccount').value;
+      else if (field === 'date') fields.date = el('batchDate').value;
+      if (Object.values(fields).some(v => !v)) { toast('請選擇要變更的值', 'error'); return; }
+      try {
+        const result = await API.post('/api/transactions/batch-update', { ids, fields });
+        closeModal('modalBatchChange');
+        toast(`已更新 ${result.updated} 筆交易`, 'success');
+        clearSelection();
+        await renderPage(currentPage);
+      } catch (err) { toast(err.message, 'error'); }
+    });
+  }
+
+  function toggleTxSelect(id, checked) {
+    if (checked) selectedTxIds.add(id); else selectedTxIds.delete(id);
+    updateBatchBar();
+  }
+
+  function batchDelete() {
+    const count = selectedTxIds.size;
+    confirmDelete(`確定要刪除所選的 ${count} 筆交易記錄嗎？此操作無法復原。`, async () => {
+      try {
+        const result = await API.post('/api/transactions/batch-delete', { ids: [...selectedTxIds] });
+        toast(`已刪除 ${result.deleted} 筆交易`, 'success');
+        clearSelection();
+        await renderPage(currentPage);
+      } catch (err) { toast(err.message, 'error'); }
+    });
+  }
+
+  function openBatchChangeModal(field) {
+    el('batchField').value = field;
+    el('batchCatRow').style.display = 'none';
+    el('batchAccRow').style.display = 'none';
+    el('batchDateRow').style.display = 'none';
+    if (field === 'category') {
+      el('batchChangeTitle').textContent = `批次變更分類（${selectedTxIds.size} 筆）`;
+      // 合併支出+收入分類供選擇
+      let html = '<optgroup label="支出">' + buildCategoryOptions('expense') + '</optgroup>';
+      html += '<optgroup label="收入">' + buildCategoryOptions('income') + '</optgroup>';
+      el('batchCategory').innerHTML = html;
+      el('batchCatRow').style.display = '';
+    } else if (field === 'account') {
+      el('batchChangeTitle').textContent = `批次變更帳戶（${selectedTxIds.size} 筆）`;
+      el('batchAccount').innerHTML = cachedAccounts.map(a => `<option value="${a.id}">${a.name}</option>`).join('');
+      el('batchAccRow').style.display = '';
+    } else if (field === 'date') {
+      el('batchChangeTitle').textContent = `批次變更日期（${selectedTxIds.size} 筆）`;
+      el('batchDate').value = today();
+      el('batchDateRow').style.display = '';
+    }
+    openModal('modalBatchChange');
+  }
+
+  // ─── 統計報表 ───
+  let reportBound = false;
+  async function renderReports() {
+    if (!reportBound) {
+      document.querySelectorAll('.report-controls .tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          document.querySelectorAll('.report-controls .tab').forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          drawReport();
+        });
+      });
+      el('reportRange').addEventListener('change', () => {
+        const isCustom = el('reportRange').value === 'custom';
+        el('reportCustomRange').style.display = isCustom ? '' : 'none';
+        if (!isCustom) drawReport();
+      });
+      el('reportFrom').addEventListener('change', drawReport);
+      el('reportTo').addEventListener('change', drawReport);
+      el('reportType').addEventListener('change', drawReport);
+      reportBound = true;
+    }
+    await drawReport();
+  }
+
+  function getReportDateRange() {
+    const range = el('reportRange').value;
+    const now = new Date();
+    let from, to;
+    to = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    switch (range) {
+      case 'thisMonth':
+        from = new Date(now.getFullYear(), now.getMonth(), 1); break;
+      case 'lastMonth':
+        from = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        to = new Date(now.getFullYear(), now.getMonth(), 0); break;
+      case 'last3':
+        from = new Date(now.getFullYear(), now.getMonth() - 2, 1); break;
+      case 'last6':
+        from = new Date(now.getFullYear(), now.getMonth() - 5, 1); break;
+      case 'thisYear':
+        from = new Date(now.getFullYear(), 0, 1); break;
+      case 'custom': {
+        const cf = el('reportFrom').value;
+        const ct = el('reportTo').value;
+        if (cf && ct) return { from: cf, to: ct };
+        if (cf) return { from: cf, to: localDateStr(to) };
+        if (ct) { from = new Date(now.getFullYear(), now.getMonth(), 1); return { from: localDateStr(from), to: ct }; }
+        from = new Date(now.getFullYear(), now.getMonth(), 1);
+        break;
+      }
+      default:
+        from = new Date(now.getFullYear(), now.getMonth(), 1);
+    }
+    return { from: localDateStr(from), to: localDateStr(to) };
+  }
+
+  async function drawReport() {
+    const activeTab = document.querySelector('.report-controls .tab.active')?.dataset.report || 'category';
+    const type = el('reportType').value;
+    const { from, to } = getReportDateRange();
+
+    const reportData = await API.get(`/api/reports?type=${type}&from=${from}&to=${to}`);
+
+    if (charts.report) charts.report.destroy();
+    const ctx = el('reportChart').getContext('2d');
+    el('reportSummary').innerHTML = '';
+
+    switch (activeTab) {
+      case 'category': drawCategoryChart(ctx, reportData); break;
+      case 'trend': drawTrendChart(ctx, reportData, type, from, to); break;
+      case 'daily': drawDailyChart(ctx, reportData, type, from, to); break;
+    }
+  }
+
+  function drawCategoryChart(ctx, data) {
+    const catMap = data.catMap;
+    const labels = Object.keys(catMap);
+    const values = labels.map(l => catMap[l].total);
+    const colors = labels.map(l => catMap[l].color);
+    const total = values.reduce((s, v) => s + v, 0);
+
+    if (labels.length === 0) return;
+
+    charts.report = new Chart(ctx, {
+      type: 'doughnut',
+      data: { labels, datasets: [{ data: values, backgroundColor: colors, borderWidth: 0 }] },
+      options: { responsive: true, plugins: { legend: { position: 'bottom' } } },
+    });
+
+    let summaryHtml = '';
+    labels.forEach((l, i) => {
+      const pct = total ? ((values[i] / total) * 100).toFixed(1) : 0;
+      summaryHtml += `<div class="report-summary-item">
+        <div class="label">${l}</div>
+        <div class="value">${fmt(values[i])}</div>
+        <div class="label">${pct}%</div>
+      </div>`;
+    });
+    el('reportSummary').innerHTML = summaryHtml;
+  }
+
+  function drawTrendChart(ctx, data, type, from, to) {
+    const monthlyMap = data.monthlyMap;
+    const start = new Date(from);
+    const end = new Date(to);
+    const labels = [];
+    const values = [];
+    const cur = new Date(start.getFullYear(), start.getMonth(), 1);
+    while (cur <= end) {
+      const key = localMonthStr(cur);
+      labels.push(key);
+      values.push(monthlyMap[key] || 0);
+      cur.setMonth(cur.getMonth() + 1);
+    }
+    const color = type === 'income' ? '#10b981' : '#ef4444';
+    charts.report = new Chart(ctx, {
+      type: 'line',
+      data: { labels, datasets: [{ label: type === 'income' ? '收入' : '支出', data: values, borderColor: color, backgroundColor: color + '20', fill: true, tension: .3 }] },
+      options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } },
+    });
+  }
+
+  function drawDailyChart(ctx, data, type, from, to) {
+    const dailyMap = data.dailyMap;
+    const labels = [];
+    const values = [];
+    const cur = new Date(from);
+    const endDate = new Date(to);
+    while (cur <= endDate) {
+      const key = localDateStr(cur);
+      labels.push(key.slice(5));
+      values.push(dailyMap[key] || 0);
+      cur.setDate(cur.getDate() + 1);
+    }
+    const color = type === 'income' ? '#10b981' : '#ef4444';
+    charts.report = new Chart(ctx, {
+      type: 'bar',
+      data: { labels, datasets: [{ label: type === 'income' ? '收入' : '支出', data: values, backgroundColor: color + 'cc' }] },
+      options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true }, x: { ticks: { maxTicksLimit: 15 } } } },
+    });
+  }
+
+  // ─── 預算管理 ───
+  async function renderBudget() {
+    const month = thisMonth();
+    const budgets = await API.get('/api/budgets?yearMonth=' + month);
+
+    const totalExpenseRow = budgets.find(b => !b.categoryId);
+    const totalExpenseUsed = totalExpenseRow ? totalExpenseRow.used : 0;
+
+    el('budgetUsed').textContent = fmt(totalExpenseUsed);
+    el('budgetTotal').textContent = totalExpenseRow ? fmt(totalExpenseRow.amount) : 'NT$ 0';
+    const pct = totalExpenseRow ? Math.min((totalExpenseUsed / totalExpenseRow.amount) * 100, 100) : 0;
+    const bar = el('budgetTotalBar');
+    bar.style.width = pct + '%';
+    bar.className = 'progress-fill' + (pct >= 100 ? ' danger' : pct >= 80 ? ' warning' : '');
+
+    const catBudgets = budgets.filter(b => b.categoryId);
+    const container = el('budgetList');
+    if (catBudgets.length === 0 && !totalExpenseRow) {
+      container.innerHTML = '<p class="empty-hint">尚未設定預算，請點擊「設定預算」按鈕</p>';
+    } else {
+      container.innerHTML = catBudgets.map(b => {
+        const cat = getCat(b.categoryId);
+        const p = Math.min((b.used / b.amount) * 100, 100);
+        const cls = p >= 100 ? 'danger' : p >= 80 ? 'warning' : '';
+        return `<div class="budget-item">
+          <div class="budget-item-header">
+            <span>${cat ? cat.name : '未知分類'}</span>
+            <div>
+              <button class="btn-icon" onclick="App.editBudget('${b.id}')" title="編輯"><i class="fas fa-pen"></i></button>
+              <button class="btn-icon danger" onclick="App.deleteBudget('${b.id}')" title="刪除"><i class="fas fa-trash"></i></button>
+            </div>
+          </div>
+          <div class="budget-item-amounts">${fmt(b.used)} / ${fmt(b.amount)} (${p.toFixed(0)}%)</div>
+          <div class="progress-bar"><div class="progress-fill ${cls}" style="width:${p}%"></div></div>
+        </div>`;
+      }).join('');
+    }
+
+    el('setBudgetBtn').onclick = () => openBudgetModal();
+  }
+
+  // ─── 帳戶管理 ───
+  async function renderAccounts() {
+    const accounts = await API.get('/api/accounts');
+    cachedAccounts = accounts;
+    let totalAssets = 0;
+    const grid = el('accountGrid');
+    grid.innerHTML = accounts.map(a => {
+      totalAssets += a.balance;
+      return `<div class="account-card">
+        <div class="card-icon"><i class="fas ${a.icon || 'fa-wallet'}"></i></div>
+        <div class="account-card-info">
+          <div class="account-card-name">${escHtml(a.name)}</div>
+          <div class="account-card-balance">${fmt(a.balance)}</div>
+        </div>
+        <div class="account-card-actions">
+          <button class="btn-icon" onclick="App.editAccount('${a.id}')" title="編輯"><i class="fas fa-pen"></i></button>
+          <button class="btn-icon danger" onclick="App.deleteAccount('${a.id}')" title="刪除"><i class="fas fa-trash"></i></button>
+        </div>
+      </div>`;
+    }).join('');
+    el('totalAssets').textContent = fmt(totalAssets);
+
+    el('addAccountBtn').onclick = () => openAccountModal();
+    el('transferBtn').onclick = () => openTransferModal();
+  }
+
+  // ─── 股票紀錄 ───
+  let stocksBound = false;
+  let cachedStocks = [];
+  let stkTxPage = 1, stkTxPageSize = 20;
+  let stkDivPage = 1, stkDivPageSize = 20;
+  let selectedStkTxIds = new Set();
+  let selectedStkDivIds = new Set();
+
+  function updateStkTxBatchBar() {
+    const count = selectedStkTxIds.size;
+    el('stkTxBatchBar').style.display = count > 0 ? '' : 'none';
+    el('stkTxBatchCount').textContent = `已選 ${count} 筆`;
+    const allCb = el('selectAllStkTx');
+    const cbs = document.querySelectorAll('.stk-tx-checkbox');
+    if (cbs.length > 0 && count === cbs.length) { allCb.checked = true; allCb.indeterminate = false; }
+    else if (count > 0) { allCb.checked = false; allCb.indeterminate = true; }
+    else { allCb.checked = false; allCb.indeterminate = false; }
+  }
+
+  function clearStkTxSelection() {
+    selectedStkTxIds.clear();
+    document.querySelectorAll('.stk-tx-checkbox').forEach(cb => cb.checked = false);
+    updateStkTxBatchBar();
+  }
+
+  function toggleStkTxSelect(id, checked) {
+    if (checked) selectedStkTxIds.add(id); else selectedStkTxIds.delete(id);
+    updateStkTxBatchBar();
+  }
+
+  function updateStkDivBatchBar() {
+    const count = selectedStkDivIds.size;
+    el('stkDivBatchBar').style.display = count > 0 ? '' : 'none';
+    el('stkDivBatchCount').textContent = `已選 ${count} 筆`;
+    const allCb = el('selectAllStkDiv');
+    const cbs = document.querySelectorAll('.stk-div-checkbox');
+    if (cbs.length > 0 && count === cbs.length) { allCb.checked = true; allCb.indeterminate = false; }
+    else if (count > 0) { allCb.checked = false; allCb.indeterminate = true; }
+    else { allCb.checked = false; allCb.indeterminate = false; }
+  }
+
+  function clearStkDivSelection() {
+    selectedStkDivIds.clear();
+    document.querySelectorAll('.stk-div-checkbox').forEach(cb => cb.checked = false);
+    updateStkDivBatchBar();
+  }
+
+  function toggleStkDivSelect(id, checked) {
+    if (checked) selectedStkDivIds.add(id); else selectedStkDivIds.delete(id);
+    updateStkDivBatchBar();
+  }
+
+  function stkTxBatchDelete() {
+    const count = selectedStkTxIds.size;
+    confirmDelete(`確定要刪除所選的 ${count} 筆交易紀錄嗎？此操作無法復原。`, async () => {
+      try {
+        const result = await API.post('/api/stock-transactions/batch-delete', { ids: [...selectedStkTxIds] });
+        toast(`已刪除 ${result.deleted} 筆交易紀錄`, 'success');
+        clearStkTxSelection();
+        await refreshStocks();
+        renderStockPortfolio();
+        await renderStockTransactions();
+        await renderStockRealized();
+      } catch (err) { toast(err.message, 'error'); }
+    });
+  }
+
+  function stkDivBatchDelete() {
+    const count = selectedStkDivIds.size;
+    confirmDelete(`確定要刪除所選的 ${count} 筆股利紀錄嗎？此操作無法復原。`, async () => {
+      try {
+        const result = await API.post('/api/stock-dividends/batch-delete', { ids: [...selectedStkDivIds] });
+        toast(`已刪除 ${result.deleted} 筆股利紀錄`, 'success');
+        clearStkDivSelection();
+        await refreshStocks();
+        renderStockPortfolio();
+        await renderStockDividends();
+      } catch (err) { toast(err.message, 'error'); }
+    });
+  }
+
+  function renderStkPagination(paginationElId, pageNum, totalPages, goPageFn) {
+    const pag = el(paginationElId);
+    if (totalPages <= 1) { pag.innerHTML = ''; return; }
+    let ph = `<button ${pageNum <= 1 ? 'disabled' : ''} onclick="${goPageFn}(${pageNum - 1})"><i class="fas fa-chevron-left"></i></button>`;
+    for (let i = 1; i <= totalPages; i++) {
+      if (totalPages > 7) {
+        if (i === 1 || i === totalPages || (i >= pageNum - 1 && i <= pageNum + 1)) {
+          ph += `<button class="${i === pageNum ? 'active' : ''}" onclick="${goPageFn}(${i})">${i}</button>`;
+        } else if (i === pageNum - 2 || i === pageNum + 2) {
+          ph += `<button disabled>...</button>`;
+        }
+      } else {
+        ph += `<button class="${i === pageNum ? 'active' : ''}" onclick="${goPageFn}(${i})">${i}</button>`;
+      }
+    }
+    ph += `<button ${pageNum >= totalPages ? 'disabled' : ''} onclick="${goPageFn}(${pageNum + 1})"><i class="fas fa-chevron-right"></i></button>`;
+    pag.innerHTML = ph;
+  }
+
+  async function renderStocks() {
+    if (!stocksBound) {
+      // Tab 切換
+      document.querySelectorAll('.stock-tabs .tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          document.querySelectorAll('.stock-tabs .tab').forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          document.querySelectorAll('.stock-panel').forEach(p => p.classList.remove('active'));
+          el('stockPanel-' + tab.dataset.stockTab)?.classList.add('active');
+        });
+      });
+      // 篩選器（搜尋輸入框）
+      setupStockSearchFilter('stockTxFilterInput', 'stockTxFilter', 'stockTxFilterClear', () => { stkTxPage = 1; renderStockTransactions(); });
+      setupStockSearchFilter('stockDivFilterInput', 'stockDivFilter', 'stockDivFilterClear', () => { stkDivPage = 1; renderStockDividends(); });
+      setupStockSearchFilter('stockRealizedFilterInput', 'stockRealizedFilter', 'stockRealizedFilterClear', renderStockRealized);
+
+      // 股票交易：每頁筆數
+      el('stkTxPageSize').addEventListener('change', (e) => {
+        if (e.target.value === 'custom') {
+          el('stkTxPageSizeCustom').style.display = '';
+          el('stkTxPageSizeCustom').focus();
+        } else {
+          el('stkTxPageSizeCustom').style.display = 'none';
+          stkTxPageSize = parseInt(e.target.value);
+          stkTxPage = 1;
+          renderStockTransactions();
+        }
+      });
+      el('stkTxPageSizeCustom').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          const v = parseInt(el('stkTxPageSizeCustom').value);
+          if (v > 0) { stkTxPageSize = v; stkTxPage = 1; renderStockTransactions(); }
+        }
+      });
+
+      // 股票交易：全選 + 批次操作
+      el('selectAllStkTx').addEventListener('change', (e) => {
+        const checked = e.target.checked;
+        document.querySelectorAll('.stk-tx-checkbox').forEach(cb => {
+          cb.checked = checked;
+          const id = cb.dataset.id;
+          if (checked) selectedStkTxIds.add(id); else selectedStkTxIds.delete(id);
+        });
+        updateStkTxBatchBar();
+      });
+      el('stkTxBatchDeleteBtn').addEventListener('click', stkTxBatchDelete);
+      el('stkTxBatchCancelBtn').addEventListener('click', clearStkTxSelection);
+
+      // 股利：每頁筆數
+      el('stkDivPageSize').addEventListener('change', (e) => {
+        if (e.target.value === 'custom') {
+          el('stkDivPageSizeCustom').style.display = '';
+          el('stkDivPageSizeCustom').focus();
+        } else {
+          el('stkDivPageSizeCustom').style.display = 'none';
+          stkDivPageSize = parseInt(e.target.value);
+          stkDivPage = 1;
+          renderStockDividends();
+        }
+      });
+      el('stkDivPageSizeCustom').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          const v = parseInt(el('stkDivPageSizeCustom').value);
+          if (v > 0) { stkDivPageSize = v; stkDivPage = 1; renderStockDividends(); }
+        }
+      });
+
+      // 股利：全選 + 批次操作
+      el('selectAllStkDiv').addEventListener('change', (e) => {
+        const checked = e.target.checked;
+        document.querySelectorAll('.stk-div-checkbox').forEach(cb => {
+          cb.checked = checked;
+          const id = cb.dataset.id;
+          if (checked) selectedStkDivIds.add(id); else selectedStkDivIds.delete(id);
+        });
+        updateStkDivBatchBar();
+      });
+      el('stkDivBatchDeleteBtn').addEventListener('click', stkDivBatchDelete);
+      el('stkDivBatchCancelBtn').addEventListener('click', clearStkDivSelection);
+      // 自動計算手續費/稅
+      const calcFields = ['stkTxShares', 'stkTxPrice'];
+      calcFields.forEach(id => el(id).addEventListener('input', calcStockTxSummary));
+      document.querySelectorAll('input[name="stkTxType"]').forEach(r => {
+        r.addEventListener('change', () => {
+          el('stkTxTaxRow').style.display = r.value === 'sell' ? '' : 'none';
+          calcStockTxSummary();
+        });
+      });
+      // 股票代號自動查詢 TWSE（新增股票 Modal）
+      let stkLookupTimer = null;
+      el('stkSymbol').addEventListener('input', () => {
+        clearTimeout(stkLookupTimer);
+        const sym = el('stkSymbol').value.trim();
+        el('stkLookupStatus').textContent = '';
+        if (sym.length >= 2) {
+          el('stkLookupStatus').textContent = '查詢中...';
+          el('stkLookupStatus').className = 'stk-lookup-status';
+          stkLookupTimer = setTimeout(() => lookupTwseStock(sym), 500);
+        }
+      });
+      // 股票代號自動查詢 TWSE（交易 Modal）
+      let stkTxLookupTimer = null;
+      el('stkTxSymbol').addEventListener('input', () => {
+        clearTimeout(stkTxLookupTimer);
+        const sym = el('stkTxSymbol').value.trim();
+        el('stkTxLookupStatus').textContent = '';
+        el('stkTxStockId').value = '';
+        if (sym.length >= 2) {
+          el('stkTxLookupStatus').textContent = '查詢中...';
+          el('stkTxLookupStatus').className = 'stk-lookup-status';
+          stkTxLookupTimer = setTimeout(() => lookupStockSymbol(sym, 'stkTx'), 500);
+        }
+      });
+      // 股票代號自動查詢 TWSE（股利 Modal）
+      let stkDivLookupTimer = null;
+      el('stkDivSymbol').addEventListener('input', () => {
+        clearTimeout(stkDivLookupTimer);
+        const sym = el('stkDivSymbol').value.trim();
+        el('stkDivLookupStatus').textContent = '';
+        el('stkDivStockId').value = '';
+        if (sym.length >= 2) {
+          el('stkDivLookupStatus').textContent = '查詢中...';
+          el('stkDivLookupStatus').className = 'stk-lookup-status';
+          stkDivLookupTimer = setTimeout(() => lookupStockSymbol(sym, 'stkDiv'), 500);
+        }
+      });
+      // 表單提交
+      el('stockForm').addEventListener('submit', handleStockSave);
+      el('stockTxForm').addEventListener('submit', handleStockTxSave);
+      el('stockDivForm').addEventListener('submit', handleStockDivSave);
+      el('priceUpdateSaveBtn').addEventListener('click', handlePriceUpdateSave);
+      el('fetchTwsePricesBtn').addEventListener('click', fetchTwsePrices);
+      stocksBound = true;
+    }
+    await refreshStocks();
+    renderStockPortfolio();
+    populateStockFilters();
+    await renderStockTransactions();
+    await renderStockDividends();
+    await renderStockRealized();
+  }
+
+  async function refreshStocks() {
+    cachedStocks = await API.get('/api/stocks');
+  }
+
+  function renderStockPortfolio() {
+    const stocks = cachedStocks;
+    let totalValue = 0, totalCost = 0, totalPL = 0, totalDiv = 0;
+    stocks.forEach(s => {
+      totalValue += s.marketValue;
+      totalCost += s.totalCost;
+      totalPL += s.estimatedProfit || 0;
+      totalDiv += s.totalDividend;
+    });
+    el('stockTotalValue').textContent = fmt(totalValue);
+    el('stockTotalCost').textContent = fmt(totalCost);
+    el('stockTotalPL').textContent = (totalPL >= 0 ? '+' : '') + fmt(totalPL);
+    el('stockTotalPL').className = 'card-value ' + (totalPL >= 0 ? 'amount-income' : 'amount-expense');
+    el('stockTotalDiv').textContent = fmt(totalDiv);
+
+    const grid = el('stockPortfolioGrid');
+    if (stocks.length === 0) {
+      grid.innerHTML = '<div class="empty-hint" style="padding:40px;text-align:center;color:var(--text-secondary)">尚無股票，點擊「新增股票」開始記錄</div>';
+      return;
+    }
+    grid.innerHTML = stocks.filter(s => s.totalShares > 0 || s.totalCost > 0 || s.marketValue > 0).map(s => {
+      const ep = s.estimatedProfit || 0;
+      const rr = s.returnRate || 0;
+      const plCls = ep >= 0 ? 'stock-card-pl-pos' : 'stock-card-pl-neg';
+      const plSign = ep >= 0 ? '+' : '';
+      const rlPlCls = s.realizedPL >= 0 ? 'stock-card-pl-pos' : 'stock-card-pl-neg';
+      const rlSign = s.realizedPL >= 0 ? '+' : '';
+      const plArrow = ep >= 0 ? '<i class="fas fa-caret-up"></i>' : '<i class="fas fa-caret-down"></i>';
+      const totalReturn = ep + s.realizedPL + s.totalDividend;
+      return `<div class="stock-card">
+        <div class="stock-card-header">
+          <div class="stock-card-header-left">
+            <span class="stock-card-symbol">${escHtml(s.symbol)}</span>
+            <span class="stock-card-name">${escHtml(s.name)}</span>
+          </div>
+          <div class="stock-card-price-wrap">
+            <div class="stock-card-price">$${(s.currentPrice || 0).toLocaleString()}</div>
+            <div class="stock-card-price-change ${plCls}">${plArrow} ${plSign}${rr.toFixed(1)}%</div>
+          </div>
+        </div>
+        <div class="stock-card-body">
+          <div class="stock-card-item"><span class="label">持有股數</span><span class="value">${s.totalShares.toLocaleString()}</span></div>
+          <div class="stock-card-item"><span class="label">成本均價</span><span class="value">$${Number(s.avgCost).toLocaleString()}</span></div>
+          <div class="stock-card-item"><span class="label">成本金額</span><span class="value">${fmt(s.totalCost)}</span></div>
+          <div class="stock-card-item"><span class="label">市值</span><span class="value">${fmt(s.marketValue)}</span></div>
+          <div class="stock-card-divider"></div>
+          <div class="stock-card-item"><span class="label">預估手續費</span><span class="value">${fmt(s.estSellFee || 0)}</span></div>
+          <div class="stock-card-item"><span class="label">預估交易稅</span><span class="value">${fmt(s.estSellTax || 0)}</span></div>
+          <div class="stock-card-item"><span class="label">預估淨收付</span><span class="value">${fmt(s.estimatedNet || 0)}</span></div>
+          <div class="stock-card-item"><span class="label">預估損益</span><span class="value ${plCls}">${plSign}${fmt(ep)} (${plSign}${rr.toFixed(1)}%)</span></div>
+          <div class="stock-card-divider"></div>
+          <div class="stock-card-item"><span class="label">已實現損益</span><span class="value ${rlPlCls}">${rlSign}${fmt(s.realizedPL)}</span></div>
+          <div class="stock-card-item"><span class="label">累計股利</span><span class="value" style="color:var(--today)">${fmt(s.totalDividend)}</span></div>
+          <div class="stock-card-item"><span class="label">總報酬</span><span class="value ${totalReturn >= 0 ? 'stock-card-pl-pos' : 'stock-card-pl-neg'}">${totalReturn >= 0 ? '+' : ''}${fmt(totalReturn)}</span></div>
+        </div>
+        <div class="stock-card-actions">
+          <button class="btn-icon" onclick="App.editStock('${s.id}')" title="編輯"><i class="fas fa-pen"></i></button>
+          <button class="btn-icon danger" onclick="App.deleteStock('${s.id}')" title="刪除"><i class="fas fa-trash"></i></button>
+        </div>
+      </div>`;
+    }).join('') || '<div class="empty-hint" style="padding:40px;text-align:center;color:var(--text-secondary)">所有股票已賣出，無持股</div>';
+  }
+
+  function populateStockFilters() {
+    // 搜尋式篩選不需要填充 select，只需確保 dropdown 候選項可用
+    // cachedStocks 已有最新資料供搜尋使用
+  }
+
+  function setupStockSearchFilter(inputId, hiddenId, clearBtnId, renderFn) {
+    const input = el(inputId);
+    const hidden = el(hiddenId);
+    const clearBtn = el(clearBtnId);
+    // 建立下拉選單
+    const dropdown = document.createElement('div');
+    dropdown.className = 'stock-search-dropdown';
+    input.parentElement.appendChild(dropdown);
+
+    let activeIdx = -1;
+
+    function showDropdown(keyword) {
+      const kw = keyword.toLowerCase();
+      const matches = kw
+        ? cachedStocks.filter(s => s.symbol.toLowerCase().includes(kw) || s.name.toLowerCase().includes(kw))
+        : cachedStocks;
+      if (matches.length === 0 && !kw) {
+        dropdown.classList.remove('show');
+        return;
+      }
+      const allItem = `<div class="stock-search-item" data-id="" data-symbol="">
+        <span class="stock-search-symbol">全部</span><span class="stock-search-name">顯示所有股票</span></div>`;
+      dropdown.innerHTML = allItem + matches.map(s =>
+        `<div class="stock-search-item" data-id="${s.id}" data-symbol="${s.symbol}">
+          <span class="stock-search-symbol">${escHtml(s.symbol)}</span>
+          <span class="stock-search-name">${escHtml(s.name)}</span>
+        </div>`
+      ).join('');
+      activeIdx = -1;
+      dropdown.classList.add('show');
+    }
+
+    function selectItem(id, symbol) {
+      hidden.value = id;
+      input.value = symbol;
+      clearBtn.style.display = symbol ? '' : 'none';
+      dropdown.classList.remove('show');
+      renderFn();
+    }
+
+    input.addEventListener('focus', () => showDropdown(input.value.trim()));
+    input.addEventListener('input', () => {
+      const kw = input.value.trim();
+      showDropdown(kw);
+      // 即時篩選：若輸入為空則顯示全部
+      if (!kw) {
+        hidden.value = '';
+        clearBtn.style.display = 'none';
+        renderFn();
+      }
+    });
+    input.addEventListener('keydown', (e) => {
+      const items = dropdown.querySelectorAll('.stock-search-item');
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        activeIdx = Math.min(activeIdx + 1, items.length - 1);
+        items.forEach((it, i) => it.classList.toggle('active', i === activeIdx));
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        activeIdx = Math.max(activeIdx - 1, 0);
+        items.forEach((it, i) => it.classList.toggle('active', i === activeIdx));
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (activeIdx >= 0 && items[activeIdx]) {
+          selectItem(items[activeIdx].dataset.id, items[activeIdx].dataset.symbol);
+        }
+      } else if (e.key === 'Escape') {
+        dropdown.classList.remove('show');
+      }
+    });
+
+    dropdown.addEventListener('click', (e) => {
+      const item = e.target.closest('.stock-search-item');
+      if (item) selectItem(item.dataset.id, item.dataset.symbol);
+    });
+
+    // 點擊外部關閉
+    document.addEventListener('click', (e) => {
+      if (!input.parentElement.contains(e.target)) dropdown.classList.remove('show');
+    });
+
+    clearBtn.addEventListener('click', () => {
+      input.value = '';
+      hidden.value = '';
+      clearBtn.style.display = 'none';
+      renderFn();
+    });
+  }
+
+  async function renderStockTransactions(page) {
+    if (page) stkTxPage = page;
+    selectedStkTxIds.clear();
+    updateStkTxBatchBar();
+    const stockId = el('stockTxFilter').value;
+    let params = `?page=${stkTxPage}&pageSize=${stkTxPageSize}`;
+    if (stockId) params += `&stockId=${stockId}`;
+    const result = await API.get('/api/stock-transactions' + params);
+    const { data: txs, total, page: pageNum, totalPages } = result;
+    const tbody = el('stockTxBody');
+    if (txs.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="10" class="empty-hint">沒有交易紀錄</td></tr>';
+      el('stkTxPagination').innerHTML = '';
+      return;
+    }
+    tbody.innerHTML = txs.map(t => {
+      const isBuy = t.type === 'buy';
+      const total = isBuy ? (t.shares * t.price + t.fee) : (t.shares * t.price - t.fee - t.tax);
+      return `<tr>
+        <td class="td-check"><input type="checkbox" class="stk-tx-checkbox" data-id="${t.id}" onchange="App.toggleStkTxSelect('${t.id}', this.checked)"></td>
+        <td>${t.date}</td>
+        <td><span class="type-badge ${isBuy ? 'income' : 'expense'}">${isBuy ? '買進' : '賣出'}</span></td>
+        <td>${t.symbol} ${t.stock_name}</td>
+        <td>${t.shares.toLocaleString()}</td>
+        <td>$${Number(t.price).toLocaleString()}</td>
+        <td>${fmt(t.fee)}</td>
+        <td>${t.tax ? fmt(t.tax) : '-'}</td>
+        <td class="${isBuy ? 'amount-expense' : 'amount-income'}">${fmt(Math.round(total))}</td>
+        <td>
+          <button class="btn-icon" onclick="App.editStockTx('${t.id}')" title="編輯"><i class="fas fa-pen"></i></button>
+          <button class="btn-icon danger" onclick="App.deleteStockTx('${t.id}')" title="刪除"><i class="fas fa-trash"></i></button>
+        </td>
+      </tr>`;
+    }).join('');
+    renderStkPagination('stkTxPagination', pageNum, totalPages, 'App.stkTxGoPage');
+  }
+
+  async function renderStockDividends(page) {
+    if (page) stkDivPage = page;
+    selectedStkDivIds.clear();
+    updateStkDivBatchBar();
+    const stockId = el('stockDivFilter').value;
+    let params = `?page=${stkDivPage}&pageSize=${stkDivPageSize}`;
+    if (stockId) params += `&stockId=${stockId}`;
+    const result = await API.get('/api/stock-dividends' + params);
+    const { data: divs, total, page: pageNum, totalPages } = result;
+    const tbody = el('stockDivBody');
+    if (divs.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" class="empty-hint">沒有股利紀錄</td></tr>';
+      el('stkDivPagination').innerHTML = '';
+      return;
+    }
+    tbody.innerHTML = divs.map(d => `<tr>
+      <td class="td-check"><input type="checkbox" class="stk-div-checkbox" data-id="${d.id}" onchange="App.toggleStkDivSelect('${d.id}', this.checked)"></td>
+      <td>${d.date}</td>
+      <td>${d.symbol} ${d.stock_name}</td>
+      <td>${fmt(d.cash_dividend)}</td>
+      <td>${d.stock_dividend_shares || '-'}</td>
+      <td>${escHtml(d.note || '')}</td>
+      <td>
+        <button class="btn-icon" onclick="App.editStockDiv('${d.id}')" title="編輯"><i class="fas fa-pen"></i></button>
+        <button class="btn-icon danger" onclick="App.deleteStockDiv('${d.id}')" title="刪除"><i class="fas fa-trash"></i></button>
+      </td>
+    </tr>`).join('');
+    renderStkPagination('stkDivPagination', pageNum, totalPages, 'App.stkDivGoPage');
+  }
+
+  // ─── 同步除權息 ───
+  async function syncDividends() {
+    const btn = el('syncDividendsBtn');
+    const origText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 同步中...';
+    try {
+      const result = await API.post('/api/stock-dividends/sync', {});
+      if (result.synced > 0) {
+        toast(`已同步 ${result.synced} 筆股利紀錄`, 'success');
+        await refreshStocks();
+        renderStockPortfolio();
+        await renderStockDividends();
+        await renderStockRealized();
+      } else if (result.skipped > 0) {
+        toast('所有除權息紀錄皆已存在，無需同步', 'info');
+      } else {
+        toast(result.message || '查無符合的除權息紀錄', 'info');
+      }
+      if (result.errors?.length) {
+        console.warn('同步警告:', result.errors);
+      }
+    } catch (e) {
+      toast('同步失敗：' + e.message, 'error');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = origText;
+    }
+  }
+
+  // ─── 實現損益 ───
+  async function renderStockRealized() {
+    const stockId = el('stockRealizedFilter').value;
+    const params = stockId ? `?stockId=${stockId}` : '';
+    const records = await API.get('/api/stock-realized' + params);
+    const tbody = el('stockRealizedBody');
+
+    // 彙總卡片
+    const totalPL = records.reduce((s, r) => s + r.realizedPL, 0);
+    const totalCost = records.reduce((s, r) => s + r.totalCost, 0);
+    const totalReturn = totalCost > 0 ? (totalPL / totalCost * 100) : 0;
+    const thisYear = new Date().getFullYear().toString();
+    const yearPL = records.filter(r => r.date.startsWith(thisYear)).reduce((s, r) => s + r.realizedPL, 0);
+    const plClass = totalPL >= 0 ? 'amount-income' : 'amount-expense';
+    const yearPlClass = yearPL >= 0 ? 'amount-income' : 'amount-expense';
+    el('realizedSummaryCards').innerHTML = `
+      <div class="card summary-card ${totalPL >= 0 ? 'income' : 'expense'}">
+        <div class="card-icon"><i class="fas fa-chart-line"></i></div>
+        <div class="card-info">
+          <span class="card-label">總實現損益</span>
+          <span class="card-value ${plClass}">${totalPL >= 0 ? '+' : ''}${fmt(totalPL)}</span>
+        </div>
+      </div>
+      <div class="card summary-card" style="border-left-color:#6366f1">
+        <div class="card-icon" style="background:#ede9fe;color:#6366f1"><i class="fas fa-percent"></i></div>
+        <div class="card-info">
+          <span class="card-label">整體報酬率</span>
+          <span class="card-value ${plClass}">${totalReturn >= 0 ? '+' : ''}${totalReturn.toFixed(2)}%</span>
+        </div>
+      </div>
+      <div class="card summary-card" style="border-left-color:#f59e0b">
+        <div class="card-icon" style="background:#fef3c7;color:#f59e0b"><i class="fas fa-calendar-check"></i></div>
+        <div class="card-info">
+          <span class="card-label">今年實現損益</span>
+          <span class="card-value ${yearPlClass}">${yearPL >= 0 ? '+' : ''}${fmt(yearPL)}</span>
+        </div>
+      </div>
+      <div class="card summary-card" style="border-left-color:#64748b">
+        <div class="card-icon" style="background:#f1f5f9;color:#64748b"><i class="fas fa-receipt"></i></div>
+        <div class="card-info">
+          <span class="card-label">已實現筆數</span>
+          <span class="card-value">${records.length} 筆</span>
+        </div>
+      </div>`;
+
+    if (records.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="8" class="empty-hint">尚無已實現的賣出紀錄</td></tr>';
+      return;
+    }
+    tbody.innerHTML = records.map(r => {
+      const plClass = r.realizedPL >= 0 ? 'amount-income' : 'amount-expense';
+      const rateSign = r.returnRate >= 0 ? '+' : '';
+      const feeAndTax = r.fee + r.tax;
+      return `<tr>
+        <td>${r.date}</td>
+        <td>${escHtml(r.symbol)} ${escHtml(r.name)}</td>
+        <td>${r.shares.toLocaleString()}</td>
+        <td>$${Number(r.sellPrice).toLocaleString()}</td>
+        <td>$${Number(r.costPerShare).toLocaleString()}</td>
+        <td>${fmt(feeAndTax)}</td>
+        <td class="${plClass}">${r.realizedPL >= 0 ? '+' : ''}${fmt(r.realizedPL)}</td>
+        <td class="${plClass}">${rateSign}${r.returnRate.toFixed(2)}%</td>
+      </tr>`;
+    }).join('');
+  }
+
+  // ─── TWSE 查詢 ───
+  // 台灣時間資訊（UTC+8），由前端判斷，避免依賴 server 時區
+  function getTaiwanTime() {
+    const now = new Date();
+    const tw = new Date(now.getTime() + 8 * 60 * 60 * 1000);
+    return {
+      day: tw.getUTCDay(),               // 0=日, 6=六
+      minutes: tw.getUTCHours() * 60 + tw.getUTCMinutes(),
+      dateStr: tw.toISOString().slice(0, 10).replace(/-/g, ''), // YYYYMMDD
+    };
+  }
+
+  // 取得 TWSE API 路徑（依台灣時間決定資料來源）
+  // 盤中 09:00-13:30 → realtime=1（即時成交價）
+  // 盤後 13:30-24:00 平日 → date=YYYYMMDD（今日收盤價，STOCK_DAY API）
+  // 假日 / 其他 → 無參數（STOCK_DAY_ALL 備援）
+  function twseStockUrl(symbol) {
+    const base = '/api/twse/stock/' + encodeURIComponent(symbol);
+    const { day, minutes, dateStr } = getTaiwanTime();
+    const isWeekday = day >= 1 && day <= 5;
+    if (!isWeekday) return base; // 假日 → 備援
+    if (minutes >= 9 * 60 && minutes < 13 * 60 + 30) {
+      return base + '?realtime=1';       // 盤中 → 即時報價
+    }
+    if (minutes >= 13 * 60 + 30) {
+      return base + '?date=' + dateStr;  // 盤後 → 今日收盤（STOCK_DAY）
+    }
+    return base; // 盤前（09:00 前）→ 備援
+  }
+
+  function formatTwsePriceLabel(result) {
+    const label = result.priceType || '收盤價';
+    const dateInfo = result.isRealtime && result.dataTime
+      ? result.dataTime           // 盤中：顯示時間 HH:MM
+      : (result.dataDate || '');  // 盤後/收盤：顯示日期 YYYY/MM/DD
+    return dateInfo ? `${label} $${result.closingPrice}（${dateInfo}）` : `${label} $${result.closingPrice}`;
+  }
+
+  async function lookupTwseStock(symbol) {
+    try {
+      const result = await API.get(twseStockUrl(symbol));
+      if (result.found) {
+        el('stkName').value = result.name;
+        el('stkPrice').value = result.closingPrice;
+        el('stkLookupStatus').textContent = `✓ ${result.name} ${formatTwsePriceLabel(result)}`;
+        el('stkLookupStatus').className = 'stk-lookup-status success';
+      } else {
+        el('stkLookupStatus').textContent = '找不到此股票代號';
+        el('stkLookupStatus').className = 'stk-lookup-status error';
+      }
+    } catch (e) {
+      el('stkLookupStatus').textContent = '查詢失敗';
+      el('stkLookupStatus').className = 'stk-lookup-status error';
+    }
+  }
+
+  // 交易/股利 Modal 用：查詢股票代號，先檢查已有持倉，再查 TWSE
+  async function lookupStockSymbol(symbol, prefix) {
+    const statusEl = el(prefix + 'LookupStatus');
+    const idEl = el(prefix + 'StockId');
+    // 先查已有持倉
+    const existing = cachedStocks.find(s => s.symbol === symbol);
+    if (existing) {
+      idEl.value = existing.id;
+      statusEl.textContent = `✓ ${existing.symbol} ${existing.name}（已有持倉）`;
+      statusEl.className = 'stk-lookup-status success';
+      return;
+    }
+    // 查 TWSE
+    try {
+      const result = await API.get(twseStockUrl(symbol));
+      if (result.found) {
+        idEl.value = '__new__';
+        statusEl.textContent = `✓ ${result.name} ${formatTwsePriceLabel(result)}（將自動新增）`;
+        statusEl.className = 'stk-lookup-status success';
+        statusEl.dataset.twseName = result.name;
+        statusEl.dataset.twsePrice = result.closingPrice;
+      } else {
+        idEl.value = '';
+        statusEl.textContent = '找不到此股票代號';
+        statusEl.className = 'stk-lookup-status error';
+      }
+    } catch (e) {
+      idEl.value = '';
+      statusEl.textContent = '查詢失敗';
+      statusEl.className = 'stk-lookup-status error';
+    }
+  }
+
+  // 自動建立股票（若尚未存在）
+  async function ensureStockBySymbol(symbol, prefix) {
+    const idEl = el(prefix + 'StockId');
+    const statusEl = el(prefix + 'LookupStatus');
+    // 如果已有 ID（既有持倉），直接回傳
+    if (idEl.value && idEl.value !== '__new__') return idEl.value;
+    // 需要自動新增
+    const name = statusEl.dataset.twseName || symbol;
+    const price = Number(statusEl.dataset.twsePrice) || 0;
+    try {
+      const res = await API.post('/api/stocks', { symbol, name });
+      if (price > 0) {
+        await API.put('/api/stocks/' + res.id, { name, currentPrice: price });
+      }
+      await refreshStocks();
+      populateStockFilters();
+      return res.id;
+    } catch (err) {
+      // 可能已存在（race condition），重新查找
+      await refreshStocks();
+      const s = cachedStocks.find(s => s.symbol === symbol);
+      if (s) return s.id;
+      throw err;
+    }
+  }
+
+  async function fetchTwsePrices() {
+    const btn = el('fetchTwsePricesBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 查詢中...';
+    try {
+      let updated = 0;
+      let isRealtime = false;
+      const inputs = document.querySelectorAll('#priceUpdateList .price-input');
+      for (const inp of inputs) {
+        const stockId = inp.dataset.stockId;
+        const stock = cachedStocks.find(s => s.id === stockId);
+        if (!stock) continue;
+        const result = await API.get(twseStockUrl(stock.symbol));
+        const label = document.querySelector(`.price-source-label[data-stock-id="${stockId}"]`);
+        if (result.found && result.closingPrice > 0) {
+          inp.value = result.closingPrice;
+          updated++;
+          if (result.isRealtime) isRealtime = true;
+          // 顯示價格來源與時間
+          if (label) {
+            const sourceText = formatTwsePriceLabel(result);
+            label.innerHTML = `<span class="price-dot"></span>${sourceText}`;
+            label.classList.add('success');
+          }
+        } else if (label) {
+          label.innerHTML = '<span class="price-dot"></span>查無資料';
+          label.classList.add('error');
+        }
+      }
+      const priceLabel = isRealtime ? '即時成交價' : '收盤價';
+      toast(`已從證交所更新 ${updated} 檔股價（${priceLabel}）`, 'success');
+    } catch (e) {
+      toast('取得股價失敗：' + e.message, 'error');
+    }
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-cloud-arrow-down"></i> 從證交所取得最新股價';
+  }
+
+  // ─── 股票 Modal ───
+  function openStockModal(stockId) {
+    const form = el('stockForm');
+    form.reset();
+    if (stockId) {
+      const s = cachedStocks.find(x => x.id === stockId);
+      if (!s) return;
+      el('stkId').value = s.id;
+      el('stkSymbol').value = s.symbol;
+      el('stkName').value = s.name;
+      el('stkType').value = s.stock_type || 'stock';
+      el('stkPrice').value = s.current_price || 0;
+      el('modalStockTitle').textContent = '編輯股票';
+      el('stkSymbol').readOnly = true;
+    } else {
+      el('stkId').value = '';
+      el('stkType').value = 'stock';
+      el('modalStockTitle').textContent = '新增股票';
+      el('stkSymbol').readOnly = false;
+    }
+    openModal('modalStock');
+  }
+
+  async function handleStockSave(e) {
+    e.preventDefault();
+    const id = el('stkId').value;
+    const symbol = el('stkSymbol').value.trim();
+    const name = el('stkName').value.trim();
+    const stockType = el('stkType').value || 'stock';
+    const currentPrice = Number(el('stkPrice').value) || 0;
+    if (!symbol || !name) return;
+    try {
+      if (id) {
+        await API.put('/api/stocks/' + id, { name, currentPrice, stockType });
+      } else {
+        await API.post('/api/stocks', { symbol, name, stockType });
+        if (currentPrice > 0) {
+          await refreshStocks();
+          const newStock = cachedStocks.find(s => s.symbol === symbol);
+          if (newStock) await API.put('/api/stocks/' + newStock.id, { name, currentPrice, stockType });
+        }
+      }
+      closeModal('modalStock');
+      toast(id ? '股票已更新' : '股票已新增', 'success');
+      await refreshStocks();
+      renderStockPortfolio();
+      populateStockFilters();
+    } catch (err) { toast(err.message, 'error'); }
+  }
+
+  function openStockTxModal(txId) {
+    const form = el('stockTxForm');
+    form.reset();
+    el('stkTxDate').value = today();
+    el('stkTxTaxRow').style.display = 'none';
+    el('stkTxSymbol').readOnly = false;
+    el('stkTxStockId').value = '';
+    el('stkTxLookupStatus').textContent = '';
+    el('stkTxLookupStatus').className = 'stk-lookup-status';
+    el('stkTxAccount').innerHTML = '<option value="">不指定</option>' + cachedAccounts.map(a => `<option value="${a.id}">${a.name}</option>`).join('');
+    if (txId) {
+      (async () => {
+        const txs = await API.get('/api/stock-transactions');
+        const t = txs.find(x => x.id === txId);
+        if (!t) return;
+        el('stkTxId').value = t.id;
+        el('modalStockTxTitle').textContent = '編輯股票交易';
+        form.querySelector(`input[name="stkTxType"][value="${t.type}"]`).checked = true;
+        // 找到股票代號填入
+        const stock = cachedStocks.find(s => s.id === t.stock_id);
+        el('stkTxSymbol').value = stock ? stock.symbol : '';
+        el('stkTxStockId').value = t.stock_id;
+        if (stock) {
+          el('stkTxLookupStatus').textContent = `✓ ${stock.symbol} ${stock.name}`;
+          el('stkTxLookupStatus').className = 'stk-lookup-status success';
+        }
+        el('stkTxShares').value = t.shares;
+        el('stkTxPrice').value = t.price;
+        el('stkTxDate').value = t.date;
+        el('stkTxFee').value = t.fee;
+        el('stkTxTax').value = t.tax;
+        el('stkTxTaxRow').style.display = t.type === 'sell' ? '' : 'none';
+        el('stkTxAccount').value = t.account_id || '';
+        el('stkTxNote').value = t.note || '';
+        calcStockTxSummary();
+      })();
+    } else {
+      el('stkTxId').value = '';
+      el('modalStockTxTitle').textContent = '新增股票交易';
+      form.querySelector('input[name="stkTxType"][value="buy"]').checked = true;
+      el('stkTxTotal').textContent = 'NT$ 0';
+    }
+    openModal('modalStockTx');
+  }
+
+  function calcStockTxSummary() {
+    const shares = Number(el('stkTxShares').value) || 0;
+    const price = Number(el('stkTxPrice').value) || 0;
+    const amount = shares * price;
+    const isBuy = document.querySelector('input[name="stkTxType"]:checked')?.value === 'buy';
+    // 手續費：0.1425%，無條件捨去，整股最低 20 元
+    const fee = amount > 0 ? Math.max(20, Math.floor(amount * 0.001425)) : 0;
+    el('stkTxFee').value = fee;
+    // 證交稅：賣出才收；ETF/權證 0.1%，一般股票 0.3%；無條件捨去，最低 1 元
+    let tax = 0;
+    if (!isBuy && amount > 0) {
+      const stockId = el('stkTxStockId').value;
+      const stock = cachedStocks.find(s => s.id === stockId);
+      const taxRate = (stock?.stock_type === 'etf' || stock?.stock_type === 'warrant') ? 0.001 : 0.003;
+      tax = Math.max(1, Math.floor(amount * taxRate));
+      el('stkTxTax').value = tax;
+    }
+    const total = isBuy ? (amount + fee) : (amount - fee - tax);
+    el('stkTxTotal').textContent = fmt(Math.round(total));
+  }
+
+  async function handleStockTxSave(e) {
+    e.preventDefault();
+    const id = el('stkTxId').value;
+    const type = document.querySelector('input[name="stkTxType"]:checked')?.value;
+    const symbol = el('stkTxSymbol').value.trim();
+    const shares = Number(el('stkTxShares').value);
+    const price = Number(el('stkTxPrice').value);
+    const date = el('stkTxDate').value;
+    const fee = Number(el('stkTxFee').value) || 0;
+    const tax = Number(el('stkTxTax').value) || 0;
+    const accountId = el('stkTxAccount').value;
+    const note = el('stkTxNote').value.trim();
+    if (!symbol || !shares || !price || !date) return;
+    // 確認股票存在或自動新增
+    let stockId = el('stkTxStockId').value;
+    if (!stockId) {
+      toast('請輸入有效的股票代號', 'error');
+      return;
+    }
+    try {
+      if (stockId === '__new__') {
+        stockId = await ensureStockBySymbol(symbol, 'stkTx');
+      }
+      if (id) {
+        await API.put('/api/stock-transactions/' + id, { date, type, shares, price, fee, tax, accountId, note });
+      } else {
+        await API.post('/api/stock-transactions', { stockId, date, type, shares, price, fee, tax, accountId, note });
+      }
+      closeModal('modalStockTx');
+      toast(id ? '交易已更新' : '交易已新增', 'success');
+      await refreshStocks();
+      renderStockPortfolio();
+      await renderStockTransactions();
+      await renderStockRealized();
+    } catch (err) { toast(err.message, 'error'); }
+  }
+
+  function openStockDivModal(divId) {
+    const form = el('stockDivForm');
+    form.reset();
+    el('stkDivDate').value = today();
+    el('stkDivSymbol').readOnly = false;
+    el('stkDivStockId').value = '';
+    el('stkDivLookupStatus').textContent = '';
+    el('stkDivLookupStatus').className = 'stk-lookup-status';
+    el('stkDivAccount').innerHTML = '<option value="">不指定</option>' + cachedAccounts.map(a => `<option value="${a.id}">${a.name}</option>`).join('');
+    if (divId) {
+      (async () => {
+        const divs = await API.get('/api/stock-dividends');
+        const d = divs.find(x => x.id === divId);
+        if (!d) return;
+        el('stkDivId').value = d.id;
+        el('modalStockDivTitle').textContent = '編輯股利';
+        const stock = cachedStocks.find(s => s.id === d.stock_id);
+        el('stkDivSymbol').value = stock ? stock.symbol : '';
+        el('stkDivStockId').value = d.stock_id;
+        if (stock) {
+          el('stkDivLookupStatus').textContent = `✓ ${stock.symbol} ${stock.name}`;
+          el('stkDivLookupStatus').className = 'stk-lookup-status success';
+        }
+        el('stkDivDate').value = d.date;
+        el('stkDivCash').value = d.cash_dividend;
+        el('stkDivSharesAmt').value = d.stock_dividend_shares || 0;
+        el('stkDivAccount').value = d.account_id || '';
+        el('stkDivNote').value = d.note || '';
+      })();
+    } else {
+      el('stkDivId').value = '';
+      el('modalStockDivTitle').textContent = '新增股利';
+    }
+    openModal('modalStockDiv');
+  }
+
+  async function handleStockDivSave(e) {
+    e.preventDefault();
+    const id = el('stkDivId').value;
+    const symbol = el('stkDivSymbol').value.trim();
+    const date = el('stkDivDate').value;
+    const cashDividend = Number(el('stkDivCash').value) || 0;
+    const stockDividendShares = Number(el('stkDivSharesAmt').value) || 0;
+    const accountId = el('stkDivAccount').value;
+    const note = el('stkDivNote').value.trim();
+    if (!symbol || !date) return;
+    let stockId = el('stkDivStockId').value;
+    if (!stockId) {
+      toast('請輸入有效的股票代號', 'error');
+      return;
+    }
+    try {
+      if (stockId === '__new__') {
+        stockId = await ensureStockBySymbol(symbol, 'stkDiv');
+      }
+      if (id) {
+        await API.put('/api/stock-dividends/' + id, { date, cashDividend, stockDividendShares, accountId, note });
+      } else {
+        await API.post('/api/stock-dividends', { stockId, date, cashDividend, stockDividendShares, accountId, note });
+      }
+      closeModal('modalStockDiv');
+      toast(id ? '股利已更新' : '股利已新增', 'success');
+      await refreshStocks();
+      renderStockPortfolio();
+      await renderStockDividends();
+    } catch (err) { toast(err.message, 'error'); }
+  }
+
+  function openPriceUpdateModal() {
+    const list = el('priceUpdateList');
+    list.innerHTML = cachedStocks.map(s => `<div class="price-update-row">
+      <div class="stock-info">
+        <div><span class="stock-symbol">${escHtml(s.symbol)}</span><span class="stock-name">${escHtml(s.name)}</span></div>
+        <div class="price-source-label" data-stock-id="${s.id}"></div>
+      </div>
+      <input type="number" step="0.01" min="0" value="${s.currentPrice || 0}" data-stock-id="${s.id}" class="price-input">
+    </div>`).join('') || '<p style="padding:20px;text-align:center;color:var(--text-muted)">尚無股票</p>';
+    openModal('modalPriceUpdate');
+  }
+
+  async function handlePriceUpdateSave() {
+    const inputs = document.querySelectorAll('#priceUpdateList .price-input');
+    const prices = [];
+    inputs.forEach(inp => {
+      prices.push({ id: inp.dataset.stockId, currentPrice: Number(inp.value) || 0 });
+    });
+    try {
+      await API.post('/api/stocks/batch-price', { prices });
+      closeModal('modalPriceUpdate');
+      toast('股價已更新', 'success');
+      await refreshStocks();
+      renderStockPortfolio();
+    } catch (err) { toast(err.message, 'error'); }
+  }
+
+  async function deleteStock(id) {
+    confirmDelete(`確定要刪除此股票嗎？`, async () => {
+      try {
+        await API.del('/api/stocks/' + id);
+        toast('股票已刪除', 'success');
+        await refreshStocks();
+        renderStockPortfolio();
+        populateStockFilters();
+      } catch (err) { toast(err.message, 'error'); }
+    });
+  }
+
+  async function deleteStockTx(id) {
+    confirmDelete('確定要刪除此交易紀錄嗎？', async () => {
+      try {
+        await API.del('/api/stock-transactions/' + id);
+        toast('交易紀錄已刪除', 'success');
+        await refreshStocks();
+        renderStockPortfolio();
+        await renderStockTransactions();
+        await renderStockRealized();
+      } catch (err) { toast(err.message, 'error'); }
+    });
+  }
+
+  async function deleteStockDiv(id) {
+    confirmDelete('確定要刪除此股利紀錄嗎？', async () => {
+      try {
+        await API.del('/api/stock-dividends/' + id);
+        toast('股利紀錄已刪除', 'success');
+        await refreshStocks();
+        renderStockPortfolio();
+        await renderStockDividends();
+      } catch (err) { toast(err.message, 'error'); }
+    });
+  }
+
+  // ─── 設定 ───
+  let settingsBound = false;
+  async function renderSettings() {
+    if (!settingsBound) {
+      // 使用事件委派避免重複綁定問題
+      document.querySelector('.settings-tabs')?.addEventListener('click', (e) => {
+        const tab = e.target.closest('.tab[data-settings]');
+        if (!tab) return;
+        const sub = tab.dataset.settings;
+        activateSettingsTab(sub);
+        history.pushState({ page: 'settings', sub }, '', buildPath('settings', sub));
+      });
+      settingsBound = true;
+    }
+    await renderCategories();
+    await renderRecurring();
+    bindExport();
+    renderAccountSettings();
+  }
+
+  async function renderCategories() {
+    cachedCategories = await API.get('/api/categories');
+    const cats = cachedCategories;
+    const expCats = cats.filter(c => c.type === 'expense' && !c.isHidden);
+    const incCats = cats.filter(c => c.type === 'income' && !c.isHidden);
+
+    el('expenseCategoryList').innerHTML = buildCatHierarchyHtml(expCats);
+    el('incomeCategoryList').innerHTML = buildCatHierarchyHtml(incCats);
+  }
+
+  function buildCatHierarchyHtml(cats) {
+    const parents = cats.filter(c => !c.parentId);
+    return parents.map(p => {
+      const children = cats.filter(c => c.parentId === p.id);
+      let html = catItemHtml(p, false);
+      if (children.length > 0) {
+        html += '<div class="subcategory-list">';
+        html += children.map(c => catItemHtml(c, true)).join('');
+        html += '</div>';
+      }
+      return html;
+    }).join('');
+  }
+
+  function catItemHtml(c, isSub) {
+    const delBtn = c.isDefault
+      ? ''
+      : `<button class="btn-icon danger" onclick="App.deleteCategory('${c.id}')" title="刪除"><i class="fas fa-trash"></i></button>`;
+    const addSubBtn = !isSub
+      ? `<button class="btn-icon" onclick="App.openCategoryModal('${c.type}', null, '${c.id}')" title="新增子分類"><i class="fas fa-plus"></i></button>`
+      : '';
+    const subCls = isSub ? ' category-item-sub' : '';
+    return `<div class="category-item${subCls}">
+      <div class="category-item-left">
+        ${isSub ? '<i class="fas fa-turn-up fa-rotate-90" style="color:var(--text-secondary);font-size:12px;margin-left:4px"></i>' : ''}
+        <div class="category-color" style="background:${c.color}"></div>
+        <span>${escHtml(c.name)}</span>
+      </div>
+      <div class="category-item-actions">
+        ${addSubBtn}
+        <button class="btn-icon" onclick="App.editCategory('${c.id}')" title="編輯"><i class="fas fa-pen"></i></button>
+        ${delBtn}
+      </div>
+    </div>`;
+  }
+
+  async function renderRecurring() {
+    const recs = await API.get('/api/recurring');
+    const container = el('recurringList');
+    if (recs.length === 0) {
+      container.innerHTML = '<p class="empty-hint">尚無固定收支</p>';
+    } else {
+      container.innerHTML = recs.map(r => {
+        const cat = getCat(r.categoryId);
+        const acc = getAcc(r.accountId);
+        const statusCls = r.isActive ? 'active' : 'paused';
+        const statusText = r.isActive ? '啟用' : '暫停';
+        const typeBadge = r.type === 'income'
+          ? '<span class="type-badge income">收入</span>'
+          : '<span class="type-badge expense">支出</span>';
+        return `<div class="recurring-item">
+          <div class="recurring-info">
+            ${typeBadge}
+            <span style="font-weight:600">${fmt(r.amount)}</span>
+            <span>${cat ? cat.name : '-'}</span>
+            <span>${acc ? acc.name : '-'}</span>
+            <span>${FREQ_LABELS[r.frequency] || r.frequency}</span>
+            <span class="recurring-status ${statusCls}">${statusText}</span>
+          </div>
+          <div style="display:flex;gap:4px">
+            <button class="btn-icon" onclick="App.toggleRecurring('${r.id}')" title="${r.isActive ? '暫停' : '啟用'}">
+              <i class="fas ${r.isActive ? 'fa-pause' : 'fa-play'}"></i>
+            </button>
+            <button class="btn-icon" onclick="App.editRecurring('${r.id}')" title="編輯"><i class="fas fa-pen"></i></button>
+            <button class="btn-icon danger" onclick="App.deleteRecurring('${r.id}')" title="刪除"><i class="fas fa-trash"></i></button>
+          </div>
+        </div>`;
+      }).join('');
+    }
+    el('addRecurringBtn').onclick = () => openRecurringModal();
+  }
+
+  // CSV 下載輔助
+  function downloadCsv(csv, filename) {
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename; a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  // 讀取檔案為文字
+  function readFileAsText(file) {
+    return new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = e => resolve(e.target.result);
+      r.onerror = reject;
+      r.readAsText(file, 'utf-8');
+    });
+  }
+
+  // ─── 股票交易紀錄 匯出 ───
+  async function exportStockTx() {
+    const txs = await API.get('/api/stock-transactions');
+    const BOM = '\uFEFF';
+    let csv = BOM + '日期,股票代號,股票名稱,類型,股數,成交價,手續費,交易稅,帳戶,備註\n';
+    txs.forEach(t => {
+      const acc = cachedAccounts.find(a => a.id === t.account_id);
+      const type = t.type === 'buy' ? '買進' : '賣出';
+      csv += `${t.date},"${escCsv(t.symbol || '')}","${escCsv(t.stock_name || '')}",${type},${t.shares},${t.price},${t.fee || 0},${t.tax || 0},"${escCsv(acc?.name || '')}","${escCsv(t.note || '')}"\n`;
+    });
+    downloadCsv(csv, `股票交易紀錄_${today()}.csv`);
+    toast(`已匯出 ${txs.length} 筆股票交易紀錄`, 'success');
+  }
+
+  // ─── 股票股利紀錄 匯出 ───
+  async function exportStockDiv() {
+    const divs = await API.get('/api/stock-dividends');
+    const BOM = '\uFEFF';
+    let csv = BOM + '日期,股票代號,股票名稱,現金股利,股票股利,備註\n';
+    divs.forEach(d => {
+      csv += `${d.date},"${escCsv(d.symbol || '')}","${escCsv(d.stock_name || '')}",${d.cash_dividend || 0},${d.stock_dividend_shares || 0},"${escCsv(d.note || '')}"\n`;
+    });
+    downloadCsv(csv, `股票股利紀錄_${today()}.csv`);
+    toast(`已匯出 ${divs.length} 筆股票股利紀錄`, 'success');
+  }
+
+  // ─── 股票紀錄 匯入（交易 / 股利） ───
+  async function importStockCsv(file, mode) {
+    const resultEl = el('stockImportResult');
+    resultEl.style.display = 'none';
+    try {
+      const text = await readFileAsText(file);
+      const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l);
+      if (lines.length < 2) { toast('CSV 內容不足（至少需要標題列與一筆資料）', 'error'); return; }
+
+      let rows, endpoint;
+      if (mode === 'tx') {
+        // 交易：日期,代號,名稱,類型,股數,成交價,手續費,交易稅,帳戶,備註
+        rows = lines.slice(1).map(line => {
+          const c = parseCsvLine(line);
+          return { date: c[0]?.trim(), symbol: c[1]?.trim(), name: c[2]?.trim(), type: c[3]?.trim(),
+                   shares: c[4]?.trim(), price: c[5]?.trim(), fee: c[6]?.trim(),
+                   tax: c[7]?.trim(), accountName: c[8]?.trim(), note: c[9]?.trim() };
+        }).filter(r => r.date && r.symbol);
+        endpoint = '/api/stock-transactions/import';
+      } else {
+        // 股利：日期,代號,名稱,現金股利,股票股利,備註
+        rows = lines.slice(1).map(line => {
+          const c = parseCsvLine(line);
+          return { date: c[0]?.trim(), symbol: c[1]?.trim(), name: c[2]?.trim(),
+                   cashDividend: c[3]?.trim(), stockDividend: c[4]?.trim(), note: c[5]?.trim() };
+        }).filter(r => r.date && r.symbol);
+        endpoint = '/api/stock-dividends/import';
+      }
+
+      if (rows.length === 0) { toast('沒有可解析的資料', 'error'); return; }
+
+      const result = await API.post(endpoint, { rows });
+      await refreshStocks();
+
+      const label = mode === 'tx' ? '股票交易紀錄' : '股票股利紀錄';
+      resultEl.style.display = '';
+      resultEl.innerHTML = `<div class="import-result" style="padding:10px;border-radius:8px;background:var(--income-bg);color:var(--income)">
+        ✓ 匯入完成：成功 <strong>${result.imported}</strong> 筆${result.skipped ? `，略過 ${result.skipped} 筆` : ''}
+        ${result.errors?.length ? `<div style="color:var(--danger);font-size:12px;margin-top:4px">${result.errors.slice(0, 5).join('<br>')}</div>` : ''}
+      </div>`;
+      if (result.imported > 0) toast(`已匯入 ${result.imported} 筆${label}`, 'success');
+    } catch (e) {
+      toast('匯入失敗：' + e.message, 'error');
+    }
+  }
+
+  let accountSettingsBound = false;
+  async function renderAccountSettings() {
+    try {
+      const res = await API.get('/api/auth/me');
+      const user = res.user;
+      el('accountEmail').textContent = user.email || '—';
+      el('accountDisplayName').textContent = user.displayName || '—';
+
+      const linkedEl = el('googleLinkedInfo');
+      const unlinkedEl = el('googleUnlinkedInfo');
+
+      if (user.googleLinked) {
+        linkedEl.style.display = '';
+        unlinkedEl.style.display = 'none';
+      } else {
+        linkedEl.style.display = 'none';
+        unlinkedEl.style.display = '';
+        // 初始化 Google 綁定按鈕
+        initGoogleLinkButton();
+      }
+
+      if (!accountSettingsBound) {
+        el('unlinkGoogleBtn').addEventListener('click', async () => {
+          if (!confirm('確定要解除 Google 帳號綁定嗎？解除後將無法使用 Google 快速登入。')) return;
+          try {
+            await API.post('/api/account/unlink-google', {});
+            toast('已解除 Google 帳號綁定');
+            renderAccountSettings();
+          } catch (e) {
+            toast(e.message || '解除綁定失敗', true);
+          }
+        });
+        accountSettingsBound = true;
+      }
+    } catch (e) {
+      console.error('載入帳號設定失敗:', e);
+    }
+  }
+
+  function initGoogleLinkButton() {
+    if (!window.google?.accounts?.id || !googleClientId) {
+      el('googleLinkBtnWrap').innerHTML = '<p style="color:var(--text-muted);font-size:13px">Google SSO 未設定或載入中</p>';
+      return;
+    }
+    el('googleLinkBtnWrap').innerHTML = '';
+    google.accounts.id.renderButton(el('googleLinkBtnWrap'), {
+      type: 'standard',
+      theme: 'outline',
+      size: 'large',
+      text: 'signin_with',
+      shape: 'rectangular',
+      width: 280,
+      click_listener: () => {}
+    });
+    // 設定回調為綁定流程
+    google.accounts.id.initialize({
+      client_id: googleClientId,
+      callback: handleGoogleLink,
+      auto_select: false
+    });
+    // 重新渲染按鈕以套用新 callback
+    el('googleLinkBtnWrap').innerHTML = '';
+    google.accounts.id.renderButton(el('googleLinkBtnWrap'), {
+      type: 'standard',
+      theme: 'outline',
+      size: 'large',
+      text: 'signin_with',
+      shape: 'rectangular',
+      width: 280
+    });
+  }
+
+  async function handleGoogleLink(response) {
+    try {
+      const res = await API.post('/api/account/link-google', { credential: response.credential });
+      toast('Google 帳號綁定成功！');
+      // 重新初始化 Google callback 回登入用途
+      if (window.google?.accounts?.id && googleClientId) {
+        google.accounts.id.initialize({
+          client_id: googleClientId,
+          callback: handleGoogleCredential,
+          auto_select: false
+        });
+      }
+      renderAccountSettings();
+    } catch (e) {
+      toast(e.message || '綁定失敗', true);
+      // 恢復登入用途的 callback
+      if (window.google?.accounts?.id && googleClientId) {
+        google.accounts.id.initialize({
+          client_id: googleClientId,
+          callback: handleGoogleCredential,
+          auto_select: false
+        });
+      }
+    }
+  }
+
+  function bindExport() {
+    el('exportCsvBtn').onclick = exportCsv;
+    el('exportCatBtn').onclick = exportCategories;
+    el('importCatInput').addEventListener('change', importCategories);
+    el('exportStockTxBtn').onclick = exportStockTx;
+    el('exportStockDivBtn').onclick = exportStockDiv;
+    el('importStockTxInput').addEventListener('change', e => {
+      if (e.target.files[0]) importStockCsv(e.target.files[0], 'tx');
+      e.target.value = '';
+    });
+    el('importStockDivInput').addEventListener('change', e => {
+      if (e.target.files[0]) importStockCsv(e.target.files[0], 'div');
+      e.target.value = '';
+    });
+    bindImport();
+  }
+
+  async function exportCsv() {
+    const params = new URLSearchParams();
+    const from = el('exportFrom').value;
+    const to = el('exportTo').value;
+    if (from) params.set('dateFrom', from);
+    if (to) params.set('dateTo', to);
+    params.set('limit', '99999');
+
+    const result = await API.get('/api/transactions?' + params.toString());
+    const txs = result.data;
+
+    const BOM = '\uFEFF';
+    let csv = BOM + '日期,類型,分類,金額,帳戶,備註\n';
+    txs.forEach(t => {
+      const cat = getCat(t.categoryId || t.category_id);
+      const acc = getAcc(t.accountId || t.account_id);
+      let type = '支出';
+      if (t.type === 'income') type = '收入';
+      else if (t.type === 'transfer_out') type = '轉出';
+      else if (t.type === 'transfer_in') type = '轉入';
+      let catName = '';
+      if (cat) {
+        if (cat.parentId) {
+          const parentCat = getCat(cat.parentId);
+          catName = parentCat ? parentCat.name + ' > ' + cat.name : cat.name;
+        } else {
+          catName = cat.name;
+        }
+      } else if (t.type === 'transfer_out' || t.type === 'transfer_in') {
+        catName = '轉帳';
+      }
+      csv += `${t.date},${type},"${catName}",${t.amount},"${acc ? acc.name : ''}","${(t.note || '').replace(/"/g, '""')}"\n`;
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `記帳記錄_${today()}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast('已匯出 CSV 檔案', 'success');
+  }
+
+  // ─── 分類匯出 ───
+  function exportCategories() {
+    const cats = cachedCategories;
+    const parents = cats.filter(c => !c.parentId);
+    const BOM = '\uFEFF';
+    let csv = BOM + '類型,分類名稱,上層分類,顏色\n';
+    parents.forEach(p => {
+      const typeName = p.type === 'income' ? '收入' : '支出';
+      csv += `${typeName},"${escCsv(p.name)}","",${p.color}\n`;
+      const children = cats.filter(c => c.parentId === p.id);
+      children.forEach(c => {
+        csv += `${typeName},"${escCsv(c.name)}","${escCsv(p.name)}",${c.color}\n`;
+      });
+    });
+    // 沒有 parent 的獨立分類（parentId 為空但不在 parents 中的不會有）
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `分類管理_${today()}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast('已匯出分類 CSV', 'success');
+  }
+
+  function escCsv(s) { return (s || '').replace(/"/g, '""'); }
+
+  // ─── 分類匯入 ───
+  async function importCategories(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const text = await file.text();
+    const lines = text.replace(/^\uFEFF/, '').split('\n').filter(l => l.trim());
+    if (lines.length < 2) { toast('CSV 檔案無有效資料', 'error'); e.target.value = ''; return; }
+
+    // 解析（跳過標題列）
+    const rows = [];
+    for (let i = 1; i < lines.length; i++) {
+      const cols = parseCsvLine(lines[i]);
+      if (cols.length < 3) continue;
+      const type = cols[0].trim();
+      const name = cols[1].trim();
+      const parentName = cols[2].trim();
+      const color = (cols[3] || '').trim() || '#6366f1';
+      if (!name || (type !== '支出' && type !== '收入')) continue;
+      rows.push({ type: type === '收入' ? 'income' : 'expense', name, parentName, color });
+    }
+
+    if (rows.length === 0) { toast('CSV 無有效分類資料', 'error'); e.target.value = ''; return; }
+
+    // 先建立父分類，再建立子分類
+    let created = 0, skipped = 0;
+    const parentRows = rows.filter(r => !r.parentName);
+    const childRows = rows.filter(r => r.parentName);
+
+    for (const r of parentRows) {
+      const existing = cachedCategories.find(c => c.name === r.name && c.type === r.type && !c.parentId);
+      if (existing) { skipped++; continue; }
+      try {
+        await API.post('/api/categories', { name: r.name, type: r.type, color: r.color, parentId: '' });
+        created++;
+      } catch { skipped++; }
+    }
+
+    // 重新載入快取以取得新建父分類的 ID
+    await refreshCache();
+
+    for (const r of childRows) {
+      const parent = cachedCategories.find(c => c.name === r.parentName && c.type === r.type && !c.parentId);
+      if (!parent) { skipped++; continue; }
+      const existing = cachedCategories.find(c => c.name === r.name && c.type === r.type && c.parentId === parent.id);
+      if (existing) { skipped++; continue; }
+      try {
+        await API.post('/api/categories', { name: r.name, type: r.type, color: r.color, parentId: parent.id });
+        created++;
+      } catch { skipped++; }
+    }
+
+    await refreshCache();
+    await renderPage(currentPage);
+    toast(`匯入完成：新增 ${created} 個分類${skipped ? `，略過 ${skipped} 個（已存在或無效）` : ''}`, 'success');
+    e.target.value = '';
+  }
+
+  // ─── CSV 匯入 ───
+  let importParsedRows = [];
+
+  function bindImport() {
+    const area = el('importArea');
+    const fileInput = el('importFileInput');
+
+    area.onclick = () => fileInput.click();
+
+    area.ondragover = (e) => { e.preventDefault(); area.classList.add('dragover'); };
+    area.ondragleave = () => area.classList.remove('dragover');
+    area.ondrop = (e) => {
+      e.preventDefault();
+      area.classList.remove('dragover');
+      const file = e.dataTransfer.files[0];
+      if (file && file.name.endsWith('.csv')) handleImportFile(file);
+      else toast('請選擇 .csv 檔案', 'error');
+    };
+
+    fileInput.onchange = () => {
+      if (fileInput.files[0]) handleImportFile(fileInput.files[0]);
+    };
+
+    el('importClearBtn').onclick = clearImport;
+    el('importConfirmBtn').onclick = confirmImport;
+  }
+
+  function parseCsvLine(line) {
+    const result = [];
+    let current = '';
+    let inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (inQuotes) {
+        if (ch === '"' && line[i + 1] === '"') { current += '"'; i++; }
+        else if (ch === '"') inQuotes = false;
+        else current += ch;
+      } else {
+        if (ch === '"') inQuotes = true;
+        else if (ch === ',') { result.push(current.trim()); current = ''; }
+        else current += ch;
+      }
+    }
+    result.push(current.trim());
+    return result;
+  }
+
+  function handleImportFile(file) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      let text = e.target.result;
+      // 移除 BOM
+      if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+      const lines = text.split(/\r?\n/).filter(l => l.trim());
+      if (lines.length < 2) { toast('CSV 檔案無有效資料', 'error'); return; }
+
+      // 跳過標題列
+      const dataLines = lines.slice(1);
+      importParsedRows = [];
+
+      dataLines.forEach(line => {
+        const cols = parseCsvLine(line);
+        if (cols.length < 4) return;
+        importParsedRows.push({
+          date: cols[0] || '',
+          type: cols[1] || '',
+          category: cols[2] || '',
+          amount: cols[3] || '',
+          account: cols[4] || '',
+          note: cols[5] || '',
+        });
+      });
+
+      if (importParsedRows.length === 0) { toast('CSV 檔案無有效資料', 'error'); return; }
+
+      // 顯示預覽
+      el('importArea').style.display = 'none';
+      el('importPreview').style.display = 'block';
+      el('importResult').style.display = 'none';
+      el('importFileName').textContent = file.name;
+      el('importRowCount').textContent = `共 ${importParsedRows.length} 筆`;
+
+      const tbody = el('importPreviewBody');
+      tbody.innerHTML = '';
+      const preview = importParsedRows.slice(0, 20);
+      preview.forEach(r => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${esc(r.date)}</td><td>${esc(r.type)}</td><td>${esc(r.category)}</td><td>${esc(r.amount)}</td><td>${esc(r.account)}</td><td>${esc(r.note)}</td>`;
+        tbody.appendChild(tr);
+      });
+      if (importParsedRows.length > 20) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td colspan="6" style="text-align:center;color:var(--text-secondary)">...還有 ${importParsedRows.length - 20} 筆未顯示</td>`;
+        tbody.appendChild(tr);
+      }
+
+      // 檢查並顯示缺少的分類與帳戶
+      showMissingImportItems();
+    };
+    reader.readAsText(file, 'UTF-8');
+  }
+
+  function showMissingImportItems() {
+    const { missingCats, missingAccs } = findMissingImportItems();
+    const container = el('importMissing');
+
+    if (missingCats.length === 0 && missingAccs.length === 0) {
+      container.style.display = 'none';
+      container.innerHTML = '';
+      return;
+    }
+
+    let html = '<div class="import-missing-title"><i class="fas fa-triangle-exclamation"></i> 發現尚未建立的項目</div>';
+    html += '<div class="import-missing-list">';
+    if (missingCats.length > 0) {
+      html += '<div class="import-missing-group"><b>分類：</b>';
+      missingCats.forEach(c => { html += `<span>${esc(c)}</span>`; });
+      html += '</div>';
+    }
+    if (missingAccs.length > 0) {
+      html += '<div class="import-missing-group"><b>帳戶：</b>';
+      missingAccs.forEach(a => { html += `<span>${esc(a)}</span>`; });
+      html += '</div>';
+    }
+    html += '</div>';
+    html += '<div class="import-missing-actions">';
+    html += '<label><input type="checkbox" id="importAutoCreate" checked> 匯入時自動新增這些分類與帳戶</label>';
+    html += '</div>';
+
+    container.innerHTML = html;
+    container.style.display = 'block';
+  }
+
+  function esc(s) {
+    const d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+  }
+
+  function clearImport() {
+    importParsedRows = [];
+    el('importArea').style.display = '';
+    el('importPreview').style.display = 'none';
+    el('importResult').style.display = 'none';
+    el('importMissing').style.display = 'none';
+    el('importFileInput').value = '';
+  }
+
+  function findMissingImportItems() {
+    const catNames = new Set(cachedCategories.map(c => c.name));
+    const accNames = new Set(cachedAccounts.map(a => a.name));
+    const missingCats = new Set();
+    const missingAccs = new Set();
+
+    importParsedRows.forEach(r => {
+      const isTransfer = (r.type === '轉出' || r.type === '轉入');
+      if (!isTransfer && r.category && !catNames.has(r.category)) {
+        missingCats.add(r.category);
+      }
+      if (r.account && !accNames.has(r.account)) {
+        missingAccs.add(r.account);
+      }
+    });
+    return { missingCats: [...missingCats], missingAccs: [...missingAccs] };
+  }
+
+  async function confirmImport() {
+    if (importParsedRows.length === 0) return;
+
+    // 檢查是否有未對應的分類或帳戶
+    const { missingCats, missingAccs } = findMissingImportItems();
+    const autoCreateCheckbox = el('importAutoCreate');
+    const autoCreate = (missingCats.length > 0 || missingAccs.length > 0) && autoCreateCheckbox && autoCreateCheckbox.checked;
+
+    el('importConfirmBtn').disabled = true;
+    el('importConfirmBtn').innerHTML = '<i class="fas fa-spinner fa-spin"></i> 匯入中...';
+    try {
+      const result = await API.post('/api/transactions/import', {
+        rows: importParsedRows,
+        autoCreate
+      });
+      // 組裝匯入結果訊息
+      let html = `<div class="import-result-success"><i class="fas fa-circle-check"></i> 成功匯入 <strong>${result.imported}</strong> 筆`;
+      if (result.skipped > 0) html += `，跳過 <strong>${result.skipped}</strong> 筆`;
+      html += '</div>';
+      if (result.created && (result.created.categories.length > 0 || result.created.accounts.length > 0)) {
+        html += '<div class="import-result-created"><i class="fas fa-circle-plus"></i> 自動新增：';
+        if (result.created.categories.length > 0) html += `分類（${result.created.categories.join('、')}）`;
+        if (result.created.categories.length > 0 && result.created.accounts.length > 0) html += '、';
+        if (result.created.accounts.length > 0) html += `帳戶（${result.created.accounts.join('、')}）`;
+        html += '</div>';
+      }
+      if (result.errors && result.errors.length > 0) {
+        html += '<div class="import-result-errors"><ul>';
+        result.errors.forEach(err => { html += `<li>${esc(err)}</li>`; });
+        html += '</ul></div>';
+      }
+
+      // 清空匯入區域，回到初始狀態
+      clearImport();
+
+      // 顯示匯入結果（在初始拖曳區上方）
+      el('importResult').style.display = 'block';
+      el('importResult').innerHTML = html;
+
+      toast(`已匯入 ${result.imported} 筆交易`, 'success');
+      // 重新載入資料
+      await refreshCache();
+    } catch (err) {
+      toast('匯入失敗: ' + (err.message || '未知錯誤'), 'error');
+    }
+    el('importConfirmBtn').disabled = false;
+    el('importConfirmBtn').innerHTML = '<i class="fas fa-file-import"></i> 確認匯入';
+  }
+
+  // ─── Modal 操作 ───
+  function openModal(id) { el(id).classList.add('active'); }
+  function closeModal(id) { el(id).classList.remove('active'); }
+
+  // 交易
+  async function openTransactionModal(txId) {
+    const form = el('transactionForm');
+    form.reset();
+    el('txDate').value = today();
+    populateTxSelects();
+    if (txId) {
+      const result = await API.get('/api/transactions?limit=99999');
+      const t = result.data.find(x => x.id === txId);
+      if (!t) return;
+      el('txId').value = t.id;
+      el('modalTransactionTitle').textContent = '編輯交易';
+      form.querySelector(`input[name="txType"][value="${t.type}"]`).checked = true;
+      updateTxFormForType(t.type);
+      el('txAmount').value = t.amount;
+      el('txDate').value = t.date;
+      el('txCategory').value = t.categoryId || t.category_id;
+      el('txAccount').value = t.accountId || t.account_id;
+      el('txNote').value = t.note || '';
+    } else {
+      el('txId').value = '';
+      el('modalTransactionTitle').textContent = '新增交易';
+      updateTxFormForType('expense');
+    }
+    openModal('modalTransaction');
+  }
+
+  function populateTxSelects() {
+    const opts = cachedAccounts.map(a => `<option value="${a.id}">${a.name}</option>`).join('');
+    el('txAccount').innerHTML = opts;
+    el('txFromAccount').innerHTML = opts;
+    const type = document.querySelector('input[name="txType"]:checked')?.value || 'expense';
+    updateTxFormForType(type);
+  }
+
+  function buildCategoryOptions(type) {
+    if (type === 'transfer') type = 'expense';
+    const cats = cachedCategories.filter(c => c.type === type && !c.isHidden);
+    const parents = cats.filter(c => !c.parentId);
+    let html = '';
+    parents.forEach(p => {
+      const children = cats.filter(c => c.parentId === p.id);
+      if (children.length > 0) {
+        html += `<optgroup label="${escHtml(p.name)}">`;
+        children.forEach(c => { html += `<option value="${c.id}">${escHtml(c.name)}</option>`; });
+        html += '</optgroup>';
+      } else {
+        html += `<option value="${p.id}">${escHtml(p.name)}</option>`;
+      }
+    });
+    return html;
+  }
+
+  function updateCategorySelect(type) {
+    el('txCategory').innerHTML = buildCategoryOptions(type);
+  }
+
+  function updateTxFormForType(type) {
+    const isTransfer = type === 'transfer';
+    // 分類：轉帳時隱藏
+    el('txCategoryRow').style.display = isTransfer ? 'none' : '';
+    el('txCategory').required = !isTransfer;
+    // 轉出帳戶：轉帳時顯示
+    el('txFromAccountRow').style.display = isTransfer ? '' : 'none';
+    el('txFromAccount').required = isTransfer;
+    // 帳戶標籤切換
+    el('txAccountLabel').innerHTML = isTransfer
+      ? '轉入帳戶 <span class="required">*</span>'
+      : '帳戶 <span class="required">*</span>';
+    if (!isTransfer) {
+      updateCategorySelect(type);
+    }
+  }
+
+  // 帳戶
+  function openAccountModal(accId) {
+    const form = el('accountForm');
+    form.reset();
+    if (accId) {
+      const a = cachedAccounts.find(x => x.id === accId);
+      if (!a) return;
+      el('accId').value = a.id;
+      el('modalAccountTitle').textContent = '編輯帳戶';
+      el('accName').value = a.name;
+      el('accBalance').value = a.initial_balance ?? a.initialBalance ?? 0;
+      el('accIcon').value = a.icon || 'fa-wallet';
+    } else {
+      el('accId').value = '';
+      el('modalAccountTitle').textContent = '新增帳戶';
+    }
+    openModal('modalAccount');
+  }
+
+  // 轉帳
+  function openTransferModal() {
+    const form = el('transferForm');
+    form.reset();
+    el('tfDate').value = today();
+    const opts = cachedAccounts.map(a => `<option value="${a.id}">${a.name}</option>`).join('');
+    el('tfFrom').innerHTML = opts;
+    el('tfTo').innerHTML = opts;
+    openModal('modalTransfer');
+  }
+
+  // 分類
+  function openCategoryModal(type, catId, parentId) {
+    const form = el('categoryForm');
+    form.reset();
+    el('catType').value = type;
+    // 填充父分類下拉
+    const parentCats = cachedCategories.filter(c => c.type === type && !c.parentId && !c.isHidden);
+    let parentOpts = '<option value="">（頂層分類）</option>';
+    parentCats.forEach(c => { parentOpts += `<option value="${c.id}">${escHtml(c.name)}</option>`; });
+    el('catParent').innerHTML = parentOpts;
+
+    if (catId) {
+      const c = cachedCategories.find(x => x.id === catId);
+      if (!c) return;
+      el('catId').value = c.id;
+      el('catType').value = c.type;
+      el('modalCategoryTitle').textContent = '編輯分類';
+      el('catName').value = c.name;
+      el('catColor').value = c.color || '#6366f1';
+      el('catParent').value = c.parentId || '';
+      // 編輯時：若為父分類（有子分類），不可改為子分類
+      const hasChildren = cachedCategories.some(x => x.parentId === c.id);
+      el('catParentRow').style.display = hasChildren ? 'none' : '';
+    } else {
+      el('catId').value = '';
+      el('modalCategoryTitle').textContent = parentId ? '新增子分類' : '新增分類';
+      el('catParent').value = parentId || '';
+      el('catParentRow').style.display = '';
+    }
+    openModal('modalCategory');
+  }
+
+  // 預算
+  async function openBudgetModal(budId) {
+    const form = el('budgetForm');
+    form.reset();
+    el('budMonth').value = thisMonth();
+    el('budCategory').innerHTML = '<option value="">總預算（不分類）</option>' +
+      buildCategoryOptions('expense');
+    if (budId) {
+      const budgets = await API.get('/api/budgets');
+      const b = budgets.find(x => x.id === budId);
+      if (!b) return;
+      el('budId').value = b.id;
+      el('modalBudgetTitle').textContent = '編輯預算';
+      el('budCategory').value = b.categoryId || '';
+      el('budAmount').value = b.amount;
+      el('budMonth').value = b.yearMonth || b.year_month;
+    } else {
+      el('budId').value = '';
+      el('modalBudgetTitle').textContent = '設定預算';
+    }
+    openModal('modalBudget');
+  }
+
+  // 固定收支
+  async function openRecurringModal(recId) {
+    const form = el('recurringForm');
+    form.reset();
+    el('recStartDate').value = today();
+    el('recAccount').innerHTML = cachedAccounts.map(a => `<option value="${a.id}">${a.name}</option>`).join('');
+    updateRecCategorySelect('expense');
+    if (recId) {
+      const recs = await API.get('/api/recurring');
+      const r = recs.find(x => x.id === recId);
+      if (!r) return;
+      el('recId').value = r.id;
+      el('modalRecurringTitle').textContent = '編輯固定收支';
+      form.querySelector(`input[name="recType"][value="${r.type}"]`).checked = true;
+      updateRecCategorySelect(r.type);
+      el('recAmount').value = r.amount;
+      el('recCategory').value = r.categoryId;
+      el('recAccount').value = r.accountId;
+      el('recFrequency').value = r.frequency;
+      el('recStartDate').value = r.startDate || r.start_date;
+      el('recNote').value = r.note || '';
+    } else {
+      el('recId').value = '';
+      el('modalRecurringTitle').textContent = '新增固定收支';
+    }
+    openModal('modalRecurring');
+  }
+
+  function updateRecCategorySelect(type) {
+    el('recCategory').innerHTML = buildCategoryOptions(type);
+  }
+
+  // ─── 表單綁定 ───
+  function bindForms() {
+    // 交易類型切換
+    document.querySelectorAll('input[name="txType"]').forEach(r => {
+      r.addEventListener('change', () => updateTxFormForType(r.value));
+    });
+    document.querySelectorAll('input[name="recType"]').forEach(r => {
+      r.addEventListener('change', () => updateRecCategorySelect(r.value));
+    });
+
+    // FAB
+    el('fabBtn').addEventListener('click', () => openTransactionModal());
+
+    // 交易表單
+    el('transactionForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = el('txId').value;
+      const type = document.querySelector('input[name="txType"]:checked').value;
+      const amount = Number(el('txAmount').value);
+      const date = el('txDate').value;
+      const note = el('txNote').value.trim();
+
+      try {
+        if (type === 'transfer') {
+          const fromId = el('txFromAccount').value;
+          const toId = el('txAccount').value;
+          if (fromId === toId) { toast('轉出與轉入帳戶不可相同', 'error'); return; }
+          await API.post('/api/transactions/transfer', { fromId, toId, amount, date, note });
+          closeModal('modalTransaction');
+          toast('轉帳成功', 'success');
+        } else {
+          const categoryId = el('txCategory').value;
+          const accountId = el('txAccount').value;
+          if (id) {
+            await API.put('/api/transactions/' + id, { type, amount, date, categoryId, accountId, note });
+          } else {
+            await API.post('/api/transactions', { type, amount, date, categoryId, accountId, note });
+          }
+          closeModal('modalTransaction');
+          toast(id ? '交易已更新' : '交易已新增', 'success');
+        }
+        await renderPage(currentPage);
+      } catch (err) {
+        toast(err.message, 'error');
+      }
+    });
+
+    // 帳戶表單
+    el('accountForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = el('accId').value;
+      const name = el('accName').value.trim();
+      const initialBalance = Number(el('accBalance').value) || 0;
+      const icon = el('accIcon').value;
+      if (!name) return;
+
+      try {
+        if (id) {
+          await API.put('/api/accounts/' + id, { name, initialBalance, icon });
+        } else {
+          await API.post('/api/accounts', { name, initialBalance, icon });
+        }
+        closeModal('modalAccount');
+        toast(id ? '帳戶已更新' : '帳戶已新增', 'success');
+        await refreshCache();
+        await renderPage(currentPage);
+      } catch (err) {
+        toast(err.message, 'error');
+      }
+    });
+
+    // 轉帳表單
+    el('transferForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const fromId = el('tfFrom').value;
+      const toId = el('tfTo').value;
+      const amount = Number(el('tfAmount').value);
+      const date = el('tfDate').value || today();
+      const note = el('tfNote').value.trim();
+
+      try {
+        await API.post('/api/transactions/transfer', { fromId, toId, amount, date, note });
+        closeModal('modalTransfer');
+        toast('轉帳成功', 'success');
+        await renderPage(currentPage);
+      } catch (err) {
+        toast(err.message, 'error');
+      }
+    });
+
+    // 分類表單
+    el('categoryForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = el('catId').value;
+      const type = el('catType').value;
+      const name = el('catName').value.trim();
+      const color = el('catColor').value;
+      const parentId = el('catParent').value;
+      if (!name) return;
+
+      try {
+        if (id) {
+          await API.put('/api/categories/' + id, { name, color });
+        } else {
+          await API.post('/api/categories', { name, type, color, parentId });
+        }
+        closeModal('modalCategory');
+        toast(id ? '分類已更新' : '分類已新增', 'success');
+        await refreshCache();
+        await renderPage(currentPage);
+      } catch (err) {
+        toast(err.message, 'error');
+      }
+    });
+
+    // 預算表單
+    el('budgetForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const categoryId = el('budCategory').value || null;
+      const amount = Number(el('budAmount').value);
+      const yearMonth = el('budMonth').value;
+
+      try {
+        await API.post('/api/budgets', { categoryId, amount, yearMonth });
+        closeModal('modalBudget');
+        toast('預算已儲存', 'success');
+        await renderPage(currentPage);
+      } catch (err) {
+        toast(err.message, 'error');
+      }
+    });
+
+    // 固定收支表單
+    el('recurringForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = el('recId').value;
+      const type = document.querySelector('input[name="recType"]:checked').value;
+      const amount = Number(el('recAmount').value);
+      const categoryId = el('recCategory').value;
+      const accountId = el('recAccount').value;
+      const frequency = el('recFrequency').value;
+      const startDate = el('recStartDate').value;
+      const note = el('recNote').value.trim();
+
+      try {
+        if (id) {
+          await API.put('/api/recurring/' + id, { type, amount, categoryId, accountId, frequency, startDate, note });
+        } else {
+          await API.post('/api/recurring', { type, amount, categoryId, accountId, frequency, startDate, note });
+        }
+        closeModal('modalRecurring');
+        toast(id ? '固定收支已更新' : '固定收支已新增', 'success');
+        await renderPage(currentPage);
+      } catch (err) {
+        toast(err.message, 'error');
+      }
+    });
+
+    // ESC 關閉 modal
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') {
+        document.querySelectorAll('.modal-overlay.active').forEach(m => m.classList.remove('active'));
+      }
+    });
+
+    // 點擊 overlay 關閉
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+      overlay.addEventListener('click', e => {
+        if (e.target === overlay) overlay.classList.remove('active');
+      });
+    });
+  }
+
+  // ─── 刪除操作 ───
+  function confirmDelete(msg, callback) {
+    el('confirmMsg').textContent = msg;
+    deleteCallback = callback;
+    el('confirmDeleteBtn').onclick = async () => {
+      if (deleteCallback) await deleteCallback();
+      closeModal('modalConfirm');
+      deleteCallback = null;
+    };
+    openModal('modalConfirm');
+  }
+
+  function deleteTransaction(id) {
+    confirmDelete('確定要刪除此交易記錄嗎？', async () => {
+      await API.del('/api/transactions/' + id);
+      toast('交易已刪除', 'success');
+      await renderPage(currentPage);
+    });
+  }
+
+  function deleteCategory(id) {
+    confirmDelete('確定要刪除此分類嗎？', async () => {
+      try {
+        await API.del('/api/categories/' + id);
+        toast('分類已刪除', 'success');
+        await refreshCache();
+        await renderPage(currentPage);
+      } catch (err) {
+        toast(err.message, 'error');
+      }
+    });
+  }
+
+  function deleteAccount(id) {
+    confirmDelete('確定要刪除此帳戶嗎？', async () => {
+      try {
+        await API.del('/api/accounts/' + id);
+        toast('帳戶已刪除', 'success');
+        await refreshCache();
+        await renderPage(currentPage);
+      } catch (err) {
+        toast(err.message, 'error');
+      }
+    });
+  }
+
+  function deleteBudget(id) {
+    confirmDelete('確定要刪除此預算嗎？', async () => {
+      await API.del('/api/budgets/' + id);
+      toast('預算已刪除', 'success');
+      await renderPage(currentPage);
+    });
+  }
+
+  function deleteRecurring(id) {
+    confirmDelete('確定要刪除此固定收支嗎？', async () => {
+      await API.del('/api/recurring/' + id);
+      toast('固定收支已刪除', 'success');
+      await renderPage(currentPage);
+    });
+  }
+
+  async function toggleRecurring(id) {
+    await API.patch('/api/recurring/' + id + '/toggle');
+    toast('狀態已更新', 'success');
+    await renderPage(currentPage);
+  }
+
+  // ─── 輔助函式 ───
+  function getCat(id) { return cachedCategories.find(c => c.id === id) || null; }
+  function getCatDisplayName(cat) {
+    if (!cat) return '-';
+    if (cat.parentId) {
+      const parent = getCat(cat.parentId);
+      return parent ? parent.name + ' > ' + cat.name : cat.name;
+    }
+    return cat.name;
+  }
+  function getAcc(id) { return cachedAccounts.find(a => a.id === id) || null; }
+  function escHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+  function toast(msg, type = '') {
+    const container = el('toastContainer');
+    const t = document.createElement('div');
+    t.className = 'toast' + (type ? ' ' + type : '');
+    t.textContent = msg;
+    container.appendChild(t);
+    setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 2500);
+  }
+
+  // ─── 公開 API ───
+  return {
+    init,
+    closeModal,
+    openCategoryModal,
+    editTransaction: openTransactionModal,
+    deleteTransaction,
+    editCategory: (id) => { const c = cachedCategories.find(x => x.id === id); if (c) openCategoryModal(c.type, id); },
+    deleteCategory,
+    editAccount: openAccountModal,
+    deleteAccount,
+    editBudget: openBudgetModal,
+    deleteBudget,
+    editRecurring: openRecurringModal,
+    deleteRecurring,
+    toggleRecurring,
+    txGoPage: (p) => applyFilters(p),
+    toggleTxSelect,
+    // 股票
+    openStockModal,
+    editStock: openStockModal,
+    deleteStock,
+    openStockTxModal,
+    editStockTx: openStockTxModal,
+    deleteStockTx,
+    openStockDivModal,
+    editStockDiv: openStockDivModal,
+    deleteStockDiv,
+    openPriceUpdateModal,
+    syncDividends,
+    toggleStkTxSelect,
+    toggleStkDivSelect,
+    stkTxGoPage: (p) => renderStockTransactions(p),
+    stkDivGoPage: (p) => renderStockDividends(p),
+  };
+})();
+
+document.addEventListener('DOMContentLoaded', App.init);

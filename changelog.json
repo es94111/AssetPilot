@@ -1,6 +1,18 @@
 {
-  "currentVersion": "3.9",
+  "currentVersion": "3.9.1",
   "releases": [
+    {
+      "version": "3.9.1",
+      "date": "2026-03-20",
+      "title": "Docker 密鑰持久化與介面修正",
+      "type": "fixed",
+      "changes": [
+        { "tag": "fixed", "text": "修復 Docker 容器更新後密鑰重新產生導致資料庫解密失敗的問題" },
+        { "tag": "fixed", "text": "修復 Font Awesome / Chart.js 的 SRI 完整性驗證 hash 錯誤，導致圖示無法顯示" },
+        { "tag": "fixed", "text": "修復帳戶管理不同帳戶的 Icon 圖案大小不一致的問題" },
+        { "tag": "improved", "text": "Docker 啟動時優先載入 /app/data/.env 持久化密鑰，確保容器重建後資料庫正常解密" }
+      ]
+    },
     {
       "version": "3.9",
       "date": "2026-03-20",

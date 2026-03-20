@@ -1,8 +1,20 @@
+// ─── 載入環境變數 ───
+// 1. 先載入專案根目錄 .env（本機開發用）
 require('dotenv').config();
-const express = require('express');
-const cors = require('cors');
+
 const path = require('path');
 const fs = require('fs');
+
+// 2. 再載入 data/.env（Docker 持久化密鑰用）
+//    Docker 環境中密鑰儲存在 /app/data/.env，必須優先載入
+const DATA_ENV_PATH = process.env.ENV_PATH || path.join(__dirname, '.env');
+if (fs.existsSync(DATA_ENV_PATH)) {
+  require('dotenv').config({ path: DATA_ENV_PATH, override: true });
+  console.log(`已載入密鑰檔案: ${DATA_ENV_PATH}`);
+}
+
+const express = require('express');
+const cors = require('cors');
 const crypto = require('crypto');
 const initSqlJs = require('sql.js');
 const bcrypt = require('bcryptjs');
@@ -16,7 +28,7 @@ const DB_PATH = process.env.DB_PATH || path.join(__dirname, 'database.db');
 const JWT_EXPIRES = process.env.JWT_EXPIRES || '7d';
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
 
-// ─── 自動產生密鑰（首次啟動時） ───
+// ─── 自動產生密鑰（僅首次啟動時） ───
 function generateSecret(length = 64) {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   let result = '';
@@ -26,7 +38,7 @@ function generateSecret(length = 64) {
 }
 
 function ensureEnvSecrets() {
-  const envPath = process.env.ENV_PATH || path.join(__dirname, '.env');
+  const envPath = DATA_ENV_PATH;
   let envContent = '';
   try { envContent = fs.readFileSync(envPath, 'utf-8'); } catch (e) { /* .env 不存在 */ }
 
@@ -48,6 +60,9 @@ function ensureEnvSecrets() {
   }
 
   if (changed) {
+    // 確保目錄存在
+    const dir = path.dirname(envPath);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
     // 更新或建立 .env 檔案
     const lines = envContent ? envContent.split('\n') : [];
     for (const [k, v] of Object.entries(updates)) {
@@ -61,6 +76,8 @@ function ensureEnvSecrets() {
     }
     fs.writeFileSync(envPath, lines.filter(l => l !== '').join('\n') + '\n', 'utf-8');
     console.log(`密鑰已寫入 ${envPath}，請妥善備份此檔案`);
+  } else {
+    console.log('密鑰已從檔案載入（JWT_SECRET + DB_ENCRYPTION_KEY）');
   }
 }
 

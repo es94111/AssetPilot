@@ -1,6 +1,23 @@
 {
-  "currentVersion": "3.7.1",
+  "currentVersion": "3.8",
   "releases": [
+    {
+      "version": "3.8",
+      "date": "2026-03-20",
+      "title": "安全性強化",
+      "type": "feature",
+      "changes": [
+        { "tag": "new", "text": "新增 Helmet 安全性 HTTP 標頭（HSTS、X-Content-Type-Options、Referrer-Policy 等）" },
+        { "tag": "new", "text": "新增登入/註冊 API 速率限制（每 IP 每 15 分鐘最多 20 次）" },
+        { "tag": "new", "text": "新增 CORS 來源白名單設定（ALLOWED_ORIGINS 環境變數）" },
+        { "tag": "new", "text": "外部腳本加入 SRI（Subresource Integrity）完整性驗證" },
+        { "tag": "improved", "text": "修復所有 XSS 漏洞：所有使用者輸入一律經 escHtml() 跳脫後才插入 DOM" },
+        { "tag": "improved", "text": "伺服器端驗證分類顏色格式（僅允許 #hex），防止 CSS 注入攻擊" },
+        { "tag": "improved", "text": "隱藏 X-Powered-By 標頭，避免洩漏伺服器技術資訊" },
+        { "tag": "fixed", "text": "修復刪除帳號輸入錯誤密碼不顯示錯誤訊息的問題，改為頁面內紅色提示" },
+        { "tag": "fixed", "text": "修復 toast 通知類型參數傳入布林值導致樣式異常的問題" }
+      ]
+    },
     {
       "version": "3.7.1",
       "date": "2026-03-20",

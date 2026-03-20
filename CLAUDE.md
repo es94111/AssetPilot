@@ -51,6 +51,8 @@ node server.js         # 啟動伺服器，預設 http://localhost:3000
 | `JWT_SECRET`       | JWT 簽章金鑰（正式環境務必更換）| `bookkeeping-secret-key-change-in-production` |
 | `JWT_EXPIRES`      | JWT 有效期限                  | `7d`                                         |
 | `GOOGLE_CLIENT_ID` | Google OAuth 2.0 Client ID（選配，留空則停用 SSO）| （空）                    |
+| `DB_ENCRYPTION_KEY` | 資料庫加密金鑰（首次啟動自動產生）| （自動產生 64 字元）       |
+| `ALLOWED_ORIGINS`  | CORS 允許來源（逗號分隔，留空則不限制）| （空）                    |
 
 ## 開發慣例
 
@@ -170,6 +172,17 @@ node server.js         # 啟動伺服器，預設 http://localhost:3000
 - 股票/股利 CSV 匯入時若股票不存在則自動建立；若已存在但名稱為代號（不正確），自動以 CSV 名稱更新
 - 新使用者註冊時自動建立預設分類（含子分類）和預設帳戶
 - Google SSO 登入自動建立使用者帳號（首次登入即註冊）
+- 刪除帳號功能：永久刪除使用者及所有關聯資料（交易記錄、帳戶、分類、預算、股票紀錄等）
+
+### 安全性措施
+
+- **XSS 防護**：所有使用者輸入一律經 `escHtml()` 跳脫後才插入 DOM
+- **安全標頭**：使用 `helmet` 中介軟體設定 HSTS、X-Content-Type-Options、Referrer-Policy 等
+- **速率限制**：`express-rate-limit` 限制 `/api/auth/login`、`/api/auth/register`、`/api/auth/google`（每 IP 每 15 分鐘 20 次）
+- **CORS 控制**：可透過 `ALLOWED_ORIGINS` 環境變數限制允許的來源
+- **SRI 驗證**：外部 CDN 腳本（Font Awesome、Chart.js）加入 `integrity` 屬性
+- **CSS 注入防護**：伺服器端驗證分類顏色格式（僅允許 `#hex`），前端雙重驗證
+- **隱藏伺服器資訊**：停用 `X-Powered-By` 標頭
 
 ### Google SSO 設定
 

@@ -284,6 +284,23 @@ input, select, button, textarea { font-family: inherit; font-size: inherit; }
   box-shadow: 0 0 0 4px rgba(239,68,68,.15); background: #fff;
 }
 .danger-zone-input-row .form-input::placeholder { color: #d4a0a0; }
+.delete-account-error {
+  color: var(--danger);
+  font-size: 13px;
+  padding: 10px 14px;
+  margin: 8px 0;
+  background: var(--danger-bg);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  animation: shake .4s ease-in-out;
+}
+@keyframes shake {
+  0%,100% { transform: translateX(0); }
+  25% { transform: translateX(-6px); }
+  75% { transform: translateX(6px); }
+}
 .btn-delete-account {
   width: 100%; padding: 12px; font-size: 14px; font-weight: 600;
   border-radius: 8px; transition: all .2s;

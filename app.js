@@ -424,7 +424,7 @@ const App = (() => {
     }
     let html = '';
     budgets.slice(0, 3).forEach(b => {
-      const label = b.categoryId ? (getCat(b.categoryId)?.name || '未知') : '總預算';
+      const label = b.categoryId ? escHtml(getCat(b.categoryId)?.name || '未知') : '總預算';
       const used = b.used;
       const pct = Math.min((used / b.amount) * 100, 100);
       const cls = pct >= 100 ? 'danger' : pct >= 80 ? 'warning' : '';
@@ -465,14 +465,14 @@ const App = (() => {
     let html = '<ul class="recent-list">';
     recent.forEach(t => {
       const catName = t.cat_name || '未分類';
-      const catColor = t.cat_color || '#94a3b8';
+      const catColor = /^#[0-9a-fA-F]{3,8}$/.test(t.cat_color) ? t.cat_color : '#94a3b8';
       const amountCls = t.type === 'income' ? 'amount-income' : 'amount-expense';
       const prefix = t.type === 'income' ? '+' : '-';
       html += `<li class="recent-item">
         <div class="recent-item-left">
-          <div class="recent-category" style="background:${catColor}">${catName[0]}</div>
+          <div class="recent-category" style="background:${catColor}">${escHtml(catName[0])}</div>
           <div class="recent-item-info">
-            <div class="recent-cat">${catName}</div>
+            <div class="recent-cat">${escHtml(catName)}</div>
             <div class="recent-date">${t.date}${t.note ? ' · ' + escHtml(t.note) : ''}</div>
           </div>
         </div>
@@ -506,7 +506,7 @@ const App = (() => {
     el('filterCategory').innerHTML = catHtml;
 
     let accHtml = '<option value="all">全部</option>';
-    cachedAccounts.forEach(a => accHtml += `<option value="${a.id}">${a.name}</option>`);
+    cachedAccounts.forEach(a => accHtml += `<option value="${a.id}">${escHtml(a.name)}</option>`);
     el('filterAccount').innerHTML = accHtml;
   }
 
@@ -593,7 +593,7 @@ const App = (() => {
           <td>${typeBadge}</td>
           <td>${getCatDisplayName(cat)}</td>
           <td class="${amountCls}">${fmt(t.amount)}</td>
-          <td>${acc ? acc.name : '-'}</td>
+          <td>${acc ? escHtml(acc.name) : '-'}</td>
           <td>${escHtml(t.note || '')}</td>
           <td>
             <button class="btn-icon" onclick="App.editTransaction('${t.id}')" title="編輯"><i class="fas fa-pen"></i></button>
@@ -716,7 +716,7 @@ const App = (() => {
       el('batchCatRow').style.display = '';
     } else if (field === 'account') {
       el('batchChangeTitle').textContent = `批次變更帳戶（${selectedTxIds.size} 筆）`;
-      el('batchAccount').innerHTML = cachedAccounts.map(a => `<option value="${a.id}">${a.name}</option>`).join('');
+      el('batchAccount').innerHTML = cachedAccounts.map(a => `<option value="${a.id}">${escHtml(a.name)}</option>`).join('');
       el('batchAccRow').style.display = '';
     } else if (field === 'date') {
       el('batchChangeTitle').textContent = `批次變更日期（${selectedTxIds.size} 筆）`;
@@ -894,7 +894,7 @@ const App = (() => {
         const cls = p >= 100 ? 'danger' : p >= 80 ? 'warning' : '';
         return `<div class="budget-item">
           <div class="budget-item-header">
-            <span>${cat ? cat.name : '未知分類'}</span>
+            <span>${cat ? escHtml(cat.name) : '未知分類'}</span>
             <div>
               <button class="btn-icon" onclick="App.editBudget('${b.id}')" title="編輯"><i class="fas fa-pen"></i></button>
               <button class="btn-icon danger" onclick="App.deleteBudget('${b.id}')" title="刪除"><i class="fas fa-trash"></i></button>
@@ -1274,7 +1274,7 @@ const App = (() => {
       const allItem = `<div class="stock-search-item" data-id="" data-symbol="">
         <span class="stock-search-symbol">全部</span><span class="stock-search-name">顯示所有股票</span></div>`;
       dropdown.innerHTML = allItem + matches.map(s =>
-        `<div class="stock-search-item" data-id="${s.id}" data-symbol="${s.symbol}">
+        `<div class="stock-search-item" data-id="${s.id}" data-symbol="${escHtml(s.symbol)}">
           <span class="stock-search-symbol">${escHtml(s.symbol)}</span>
           <span class="stock-search-name">${escHtml(s.name)}</span>
         </div>`
@@ -1362,7 +1362,7 @@ const App = (() => {
         <td class="td-check"><input type="checkbox" class="stk-tx-checkbox" data-id="${t.id}" onchange="App.toggleStkTxSelect('${t.id}', this.checked)"></td>
         <td>${t.date}</td>
         <td><span class="type-badge ${isBuy ? 'income' : 'expense'}">${isBuy ? '買進' : '賣出'}</span></td>
-        <td>${t.symbol} ${t.stock_name}</td>
+        <td>${escHtml(t.symbol)} ${escHtml(t.stock_name)}</td>
         <td>${t.shares.toLocaleString()}</td>
         <td>$${Number(t.price).toLocaleString()}</td>
         <td>${fmt(t.fee)}</td>
@@ -1395,7 +1395,7 @@ const App = (() => {
     tbody.innerHTML = divs.map(d => `<tr>
       <td class="td-check"><input type="checkbox" class="stk-div-checkbox" data-id="${d.id}" onchange="App.toggleStkDivSelect('${d.id}', this.checked)"></td>
       <td>${d.date}</td>
-      <td>${d.symbol} ${d.stock_name}</td>
+      <td>${escHtml(d.symbol)} ${escHtml(d.stock_name)}</td>
       <td>${fmt(d.cash_dividend)}</td>
       <td>${d.stock_dividend_shares || '-'}</td>
       <td>${escHtml(d.note || '')}</td>
@@ -1639,7 +1639,7 @@ const App = (() => {
           // 顯示價格來源與時間
           if (label) {
             const sourceText = formatTwsePriceLabel(result);
-            label.innerHTML = `<span class="price-dot"></span>${sourceText}`;
+            label.innerHTML = `<span class="price-dot"></span>${escHtml(sourceText)}`;
             label.classList.add('success');
           }
         } else if (label) {
@@ -1715,7 +1715,7 @@ const App = (() => {
     el('stkTxStockId').value = '';
     el('stkTxLookupStatus').textContent = '';
     el('stkTxLookupStatus').className = 'stk-lookup-status';
-    el('stkTxAccount').innerHTML = '<option value="">不指定</option>' + cachedAccounts.map(a => `<option value="${a.id}">${a.name}</option>`).join('');
+    el('stkTxAccount').innerHTML = '<option value="">不指定</option>' + cachedAccounts.map(a => `<option value="${a.id}">${escHtml(a.name)}</option>`).join('');
     if (txId) {
       (async () => {
         const txs = await API.get('/api/stock-transactions');
@@ -1817,7 +1817,7 @@ const App = (() => {
     el('stkDivStockId').value = '';
     el('stkDivLookupStatus').textContent = '';
     el('stkDivLookupStatus').className = 'stk-lookup-status';
-    el('stkDivAccount').innerHTML = '<option value="">不指定</option>' + cachedAccounts.map(a => `<option value="${a.id}">${a.name}</option>`).join('');
+    el('stkDivAccount').innerHTML = '<option value="">不指定</option>' + cachedAccounts.map(a => `<option value="${a.id}">${escHtml(a.name)}</option>`).join('');
     if (divId) {
       (async () => {
         const divs = await API.get('/api/stock-dividends');
@@ -1996,7 +1996,7 @@ const App = (() => {
     return `<div class="category-item${subCls}">
       <div class="category-item-left">
         ${isSub ? '<i class="fas fa-turn-up fa-rotate-90" style="color:var(--text-secondary);font-size:12px;margin-left:4px"></i>' : ''}
-        <div class="category-color" style="background:${c.color}"></div>
+        <div class="category-color" style="background:${/^#[0-9a-fA-F]{3,8}$/.test(c.color) ? c.color : '#ccc'}"></div>
         <span>${escHtml(c.name)}</span>
       </div>
       <div class="category-item-actions">
@@ -2025,8 +2025,8 @@ const App = (() => {
           <div class="recurring-info">
             ${typeBadge}
             <span style="font-weight:600">${fmt(r.amount)}</span>
-            <span>${cat ? cat.name : '-'}</span>
-            <span>${acc ? acc.name : '-'}</span>
+            <span>${cat ? escHtml(cat.name) : '-'}</span>
+            <span>${acc ? escHtml(acc.name) : '-'}</span>
             <span>${FREQ_LABELS[r.frequency] || r.frequency}</span>
             <span class="recurring-status ${statusCls}">${statusText}</span>
           </div>
@@ -2126,7 +2126,7 @@ const App = (() => {
       resultEl.style.display = '';
       resultEl.innerHTML = `<div class="import-result" style="padding:10px;border-radius:8px;background:var(--income-bg);color:var(--income)">
         ✓ 匯入完成：成功 <strong>${result.imported}</strong> 筆${result.skipped ? `，略過 ${result.skipped} 筆` : ''}
-        ${result.errors?.length ? `<div style="color:var(--danger);font-size:12px;margin-top:4px">${result.errors.slice(0, 5).join('<br>')}</div>` : ''}
+        ${result.errors?.length ? `<div style="color:var(--danger);font-size:12px;margin-top:4px">${result.errors.slice(0, 5).map(e => escHtml(e)).join('<br>')}</div>` : ''}
       </div>`;
       if (result.imported > 0) toast(`已匯入 ${result.imported} 筆${label}`, 'success');
     } catch (e) {
@@ -2168,21 +2168,31 @@ const App = (() => {
             toast('已解除 Google 帳號綁定');
             renderAccountSettings();
           } catch (e) {
-            toast(e.message || '解除綁定失敗', true);
+            toast(e.message || '解除綁定失敗', 'error');
           }
         });
 
         el('deleteAccountBtn').addEventListener('click', async () => {
           const pw = el('deleteAccountPassword')?.value || '';
+          // 清除之前的錯誤訊息
+          const existingErr = document.querySelector('.delete-account-error');
+          if (existingErr) existingErr.remove();
           if (!confirm('⚠️ 確定要永久刪除帳號嗎？\n\n所有資料將被刪除且無法復原！')) return;
           if (!confirm('再次確認：真的要刪除帳號及所有資料嗎？')) return;
           try {
             await API.post('/api/account/delete', { password: pw || undefined });
-            toast('帳號已刪除');
+            toast('帳號已刪除', 'success');
             localStorage.removeItem('authToken');
             setTimeout(() => location.reload(), 800);
           } catch (e) {
-            toast(e.message || '刪除失敗', true);
+            // 在密碼欄位下方顯示錯誤訊息
+            const errDiv = document.createElement('div');
+            errDiv.className = 'delete-account-error';
+            errDiv.innerHTML = `<i class="fas fa-circle-exclamation"></i> ${escHtml(e.message || '刪除失敗')}`;
+            const section = el('deleteAccountSection');
+            const btn = el('deleteAccountBtn');
+            section.insertBefore(errDiv, btn);
+            toast(e.message || '刪除失敗', 'error');
           }
         });
 
@@ -2240,7 +2250,7 @@ const App = (() => {
       }
       renderAccountSettings();
     } catch (e) {
-      toast(e.message || '綁定失敗', true);
+      toast(e.message || '綁定失敗', 'error');
       // 恢復登入用途的 callback
       if (window.google?.accounts?.id && googleClientId) {
         google.accounts.id.initialize({
@@ -2584,9 +2594,9 @@ const App = (() => {
       html += '</div>';
       if (result.created && (result.created.categories.length > 0 || result.created.accounts.length > 0)) {
         html += '<div class="import-result-created"><i class="fas fa-circle-plus"></i> 自動新增：';
-        if (result.created.categories.length > 0) html += `分類（${result.created.categories.join('、')}）`;
+        if (result.created.categories.length > 0) html += `分類（${result.created.categories.map(c => escHtml(c)).join('、')}）`;
         if (result.created.categories.length > 0 && result.created.accounts.length > 0) html += '、';
-        if (result.created.accounts.length > 0) html += `帳戶（${result.created.accounts.join('、')}）`;
+        if (result.created.accounts.length > 0) html += `帳戶（${result.created.accounts.map(a => escHtml(a)).join('、')}）`;
         html += '</div>';
       }
       if (result.errors && result.errors.length > 0) {
@@ -2644,7 +2654,7 @@ const App = (() => {
   }
 
   function populateTxSelects() {
-    const opts = cachedAccounts.map(a => `<option value="${a.id}">${a.name}</option>`).join('');
+    const opts = cachedAccounts.map(a => `<option value="${a.id}">${escHtml(a.name)}</option>`).join('');
     el('txAccount').innerHTML = opts;
     el('txFromAccount').innerHTML = opts;
     const type = document.querySelector('input[name="txType"]:checked')?.value || 'expense';
@@ -2714,7 +2724,7 @@ const App = (() => {
     const form = el('transferForm');
     form.reset();
     el('tfDate').value = today();
-    const opts = cachedAccounts.map(a => `<option value="${a.id}">${a.name}</option>`).join('');
+    const opts = cachedAccounts.map(a => `<option value="${a.id}">${escHtml(a.name)}</option>`).join('');
     el('tfFrom').innerHTML = opts;
     el('tfTo').innerHTML = opts;
     openModal('modalTransfer');
@@ -2780,7 +2790,7 @@ const App = (() => {
     const form = el('recurringForm');
     form.reset();
     el('recStartDate').value = today();
-    el('recAccount').innerHTML = cachedAccounts.map(a => `<option value="${a.id}">${a.name}</option>`).join('');
+    el('recAccount').innerHTML = cachedAccounts.map(a => `<option value="${a.id}">${escHtml(a.name)}</option>`).join('');
     updateRecCategorySelect('expense');
     if (recId) {
       const recs = await API.get('/api/recurring');
@@ -3054,9 +3064,9 @@ const App = (() => {
     if (!cat) return '-';
     if (cat.parentId) {
       const parent = getCat(cat.parentId);
-      return parent ? parent.name + ' > ' + cat.name : cat.name;
+      return parent ? escHtml(parent.name) + ' &gt; ' + escHtml(cat.name) : escHtml(cat.name);
     }
-    return cat.name;
+    return escHtml(cat.name);
   }
   function getAcc(id) { return cachedAccounts.find(a => a.id === id) || null; }
   function escHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }

@@ -7,6 +7,8 @@ const crypto = require('crypto');
 const initSqlJs = require('sql.js');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -103,7 +105,36 @@ function isEncryptedDB(buffer) {
   return buffer.length >= 4 && buffer.subarray(0, 4).equals(ENC_MAGIC);
 }
 
-app.use(cors());
+// ─── 安全性中介軟體 ───
+const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',').map(s => s.trim())
+  : null; // null = 不限制（開發模式）
+
+app.use(cors(ALLOWED_ORIGINS ? {
+  origin(origin, cb) {
+    if (!origin || ALLOWED_ORIGINS.includes(origin)) cb(null, true);
+    else cb(new Error('CORS 不允許的來源'));
+  }
+} : {}));
+
+app.disable('x-powered-by');
+app.use(helmet({
+  contentSecurityPolicy: false,   // 因使用外部 CDN + inline handlers，暫不啟用 CSP
+  crossOriginEmbedderPolicy: false
+}));
+
+// 登入/註冊 API 速率限制（每 IP 每 15 分鐘最多 20 次）
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: '登入嘗試次數過多，請 15 分鐘後再試' }
+});
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/register', authLimiter);
+app.use('/api/auth/google', authLimiter);
+
 app.use(express.json({ limit: '50mb' }));
 app.use(express.static(__dirname));
 
@@ -362,6 +393,8 @@ function saveDB() {
     fs.writeFileSync(DB_PATH, plain);
   }
 }
+
+function isValidColor(c) { return !c || /^#[0-9a-fA-F]{3,8}$/.test(c); }
 
 function uid() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
@@ -640,6 +673,7 @@ app.get('/api/categories', (req, res) => {
 
 app.post('/api/categories', (req, res) => {
   const { name, type, color, parentId } = req.body;
+  if (!isValidColor(color)) return res.status(400).json({ error: '顏色格式不正確' });
   const pId = parentId || '';
   // 同父分類下名稱不可重複
   const dup = queryOne("SELECT id FROM categories WHERE user_id = ? AND name = ? AND type = ? AND parent_id = ?", [req.userId, name, type, pId]);
@@ -660,6 +694,7 @@ app.post('/api/categories', (req, res) => {
 
 app.put('/api/categories/:id', (req, res) => {
   const { name, color } = req.body;
+  if (!isValidColor(color)) return res.status(400).json({ error: '顏色格式不正確' });
   const cat = queryOne("SELECT * FROM categories WHERE id = ? AND user_id = ?", [req.params.id, req.userId]);
   if (!cat) return res.status(404).json({ error: '分類不存在' });
   const pId = cat.parent_id || '';

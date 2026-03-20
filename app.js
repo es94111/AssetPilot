@@ -2155,6 +2155,11 @@ const App = (() => {
         initGoogleLinkButton();
       }
 
+      // Google-only 帳號（無密碼登入）不需要輸入密碼，隱藏密碼欄位
+      const isGoogleOnly = user.googleLinked && !user.hasPassword;
+      const pwWrap = el('deleteAccountPasswordWrap');
+      if (pwWrap) pwWrap.style.display = isGoogleOnly ? 'none' : '';
+
       if (!accountSettingsBound) {
         el('unlinkGoogleBtn').addEventListener('click', async () => {
           if (!confirm('確定要解除 Google 帳號綁定嗎？解除後將無法使用 Google 快速登入。')) return;
@@ -2166,6 +2171,21 @@ const App = (() => {
             toast(e.message || '解除綁定失敗', true);
           }
         });
+
+        el('deleteAccountBtn').addEventListener('click', async () => {
+          const pw = el('deleteAccountPassword')?.value || '';
+          if (!confirm('⚠️ 確定要永久刪除帳號嗎？\n\n所有資料將被刪除且無法復原！')) return;
+          if (!confirm('再次確認：真的要刪除帳號及所有資料嗎？')) return;
+          try {
+            await API.post('/api/account/delete', { password: pw || undefined });
+            toast('帳號已刪除');
+            localStorage.removeItem('authToken');
+            setTimeout(() => location.reload(), 800);
+          } catch (e) {
+            toast(e.message || '刪除失敗', true);
+          }
+        });
+
         accountSettingsBound = true;
       }
     } catch (e) {

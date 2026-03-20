@@ -243,8 +243,10 @@ input, select, button, textarea { font-family: inherit; font-size: inherit; }
 .btn-ghost:hover { background: var(--bg); color: var(--text); }
 .btn-outline { background: transparent; color: var(--primary); border: 1px solid var(--primary); }
 .btn-outline:hover { background: var(--primary); color: #fff; }
-.btn-danger { background: var(--expense); }
+.btn-danger { background: var(--danger); color: #fff; border: none; }
 .btn-danger:hover { background: #dc2626; }
+.danger-zone { border: 1px solid #fecaca; background: linear-gradient(135deg, #fff 0%, #fef2f2 100%); }
+.danger-zone h3 { color: var(--danger); }
 .btn-primary { background: var(--primary); }
 .btn-icon {
   width: 32px; height: 32px; padding: 0;

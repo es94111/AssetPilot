@@ -662,6 +662,19 @@
             </div>
           </div>
         </div>
+        <div class="card danger-zone" style="margin-top:24px">
+          <h3><i class="fas fa-triangle-exclamation" style="margin-right:8px;color:var(--danger)"></i>危險區域</h3>
+          <p class="import-hint" style="margin-bottom:12px">刪除帳號後，所有資料將<strong>永久刪除且無法復原</strong>，包含所有交易記錄、帳戶、分類、預算、股票紀錄等。</p>
+          <div id="deleteAccountSection">
+            <div id="deleteAccountPasswordWrap" style="margin-bottom:12px">
+              <label class="form-label">請輸入密碼確認</label>
+              <input type="password" id="deleteAccountPassword" class="form-input" placeholder="輸入目前密碼">
+            </div>
+            <button class="btn btn-danger" id="deleteAccountBtn">
+              <i class="fas fa-trash"></i> 永久刪除帳號
+            </button>
+          </div>
+        </div>
       </div>
     </section>
   </main>

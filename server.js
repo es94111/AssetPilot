@@ -222,6 +222,16 @@ async function initDB() {
     db.run("ALTER TABLE users ADD COLUMN google_id TEXT DEFAULT ''");
   } catch (e) { /* 欄位已存在則忽略 */ }
 
+  // 資料庫升級：為 users 加入 has_password 欄位
+  try {
+    db.run("ALTER TABLE users ADD COLUMN has_password INTEGER DEFAULT 0");
+    // 將已有帳號但非 Google-only 的使用者設為 has_password=1
+    db.run("UPDATE users SET has_password = 1 WHERE password_hash != '' AND (google_id = '' OR google_id IS NULL)");
+    // 同時有密碼登入+Google的也算有密碼（透過註冊的帳號後來綁了 Google）
+    db.run("UPDATE users SET has_password = 1 WHERE password_hash != '' AND google_id != '' AND has_password = 0");
+    saveDB();
+  } catch (e) { /* 欄位已存在則忽略 */ }
+
   // 資料庫升級：為 categories 加入 parent_id 欄位
   try {
     db.run("ALTER TABLE categories ADD COLUMN parent_id TEXT DEFAULT ''");
@@ -430,7 +440,7 @@ app.post('/api/auth/register', async (req, res) => {
 
   const id = uid();
   const passwordHash = await bcrypt.hash(password, 10);
-  db.run("INSERT INTO users (id, email, password_hash, display_name, created_at) VALUES (?,?,?,?,?)",
+  db.run("INSERT INTO users (id, email, password_hash, display_name, has_password, created_at) VALUES (?,?,?,?,1,?)",
     [id, email.toLowerCase(), passwordHash, displayName, todayStr()]);
 
   createDefaultsForUser(id);
@@ -547,9 +557,9 @@ app.post('/api/auth/google', async (req, res) => {
 });
 
 app.get('/api/auth/me', authMiddleware, (req, res) => {
-  const user = queryOne("SELECT id, email, display_name, google_id FROM users WHERE id = ?", [req.userId]);
+  const user = queryOne("SELECT id, email, display_name, google_id, has_password FROM users WHERE id = ?", [req.userId]);
   if (!user) return res.status(404).json({ error: '使用者不存在' });
-  res.json({ user: { id: user.id, email: user.email, displayName: user.display_name, googleLinked: !!user.google_id } });
+  res.json({ user: { id: user.id, email: user.email, displayName: user.display_name, googleLinked: !!user.google_id, hasPassword: !!user.has_password } });
 });
 
 // ═══════════════════════════════════════
@@ -592,6 +602,32 @@ app.post('/api/account/unlink-google', (req, res) => {
   if (!user || !user.google_id) return res.status(400).json({ error: '尚未綁定 Google 帳號' });
 
   db.run("UPDATE users SET google_id = '' WHERE id = ?", [req.userId]);
+  saveDB();
+  res.json({ success: true });
+});
+
+// 刪除帳號（永久刪除所有資料）
+app.post('/api/account/delete', async (req, res) => {
+  const { password } = req.body;
+  const user = queryOne("SELECT * FROM users WHERE id = ?", [req.userId]);
+  if (!user) return res.status(404).json({ error: '使用者不存在' });
+
+  // 有密碼的帳號需驗證密碼；Google-only 帳號靠前端二次確認
+  if (user.has_password) {
+    if (!password) return res.status(400).json({ error: '請輸入密碼以確認刪除' });
+    const valid = await bcrypt.compare(password, user.password_hash);
+    if (!valid) return res.status(401).json({ error: '密碼錯誤' });
+  }
+
+  // 刪除使用者所有資料
+  const tables = [
+    'stock_dividends', 'stock_transactions', 'stocks',
+    'transactions', 'budgets', 'recurring', 'accounts', 'categories'
+  ];
+  tables.forEach(t => {
+    db.run(`DELETE FROM ${t} WHERE user_id = ?`, [req.userId]);
+  });
+  db.run("DELETE FROM users WHERE id = ?", [req.userId]);
   saveDB();
   res.json({ success: true });
 });

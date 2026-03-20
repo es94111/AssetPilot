@@ -11,9 +11,60 @@ const jwt = require('jsonwebtoken');
 const app = express();
 const PORT = process.env.PORT || 3000;
 const DB_PATH = process.env.DB_PATH || path.join(__dirname, 'database.db');
-const JWT_SECRET = process.env.JWT_SECRET || 'bookkeeping-secret-key-change-in-production';
 const JWT_EXPIRES = process.env.JWT_EXPIRES || '7d';
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
+
+// ─── 自動產生密鑰（首次啟動時） ───
+function generateSecret(length = 64) {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let result = '';
+  const bytes = crypto.randomBytes(length);
+  for (let i = 0; i < length; i++) result += chars[bytes[i] % chars.length];
+  return result;
+}
+
+function ensureEnvSecrets() {
+  const envPath = process.env.ENV_PATH || path.join(__dirname, '.env');
+  let envContent = '';
+  try { envContent = fs.readFileSync(envPath, 'utf-8'); } catch (e) { /* .env 不存在 */ }
+
+  let changed = false;
+  const updates = {};
+
+  if (!process.env.JWT_SECRET || process.env.JWT_SECRET === 'please-change-this-secret') {
+    const secret = generateSecret(64);
+    updates.JWT_SECRET = secret;
+    process.env.JWT_SECRET = secret;
+    changed = true;
+  }
+
+  if (!process.env.DB_ENCRYPTION_KEY) {
+    const key = generateSecret(64);
+    updates.DB_ENCRYPTION_KEY = key;
+    process.env.DB_ENCRYPTION_KEY = key;
+    changed = true;
+  }
+
+  if (changed) {
+    // 更新或建立 .env 檔案
+    const lines = envContent ? envContent.split('\n') : [];
+    for (const [k, v] of Object.entries(updates)) {
+      const idx = lines.findIndex(l => l.startsWith(k + '='));
+      if (idx >= 0) {
+        lines[idx] = `${k}=${v}`;
+      } else {
+        lines.push(`${k}=${v}`);
+      }
+      console.log(`已自動產生 ${k}（64 字元隨機密鑰）`);
+    }
+    fs.writeFileSync(envPath, lines.filter(l => l !== '').join('\n') + '\n', 'utf-8');
+    console.log(`密鑰已寫入 ${envPath}，請妥善備份此檔案`);
+  }
+}
+
+ensureEnvSecrets();
+
+const JWT_SECRET = process.env.JWT_SECRET;
 const DB_ENCRYPTION_KEY = process.env.DB_ENCRYPTION_KEY || '';
 
 // ─── 資料庫加密（ChaCha20-Poly1305 AEAD） ───

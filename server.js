@@ -616,7 +616,7 @@ app.post('/api/account/delete', async (req, res) => {
   if (user.has_password) {
     if (!password) return res.status(400).json({ error: '請輸入密碼以確認刪除' });
     const valid = await bcrypt.compare(password, user.password_hash);
-    if (!valid) return res.status(401).json({ error: '密碼錯誤' });
+    if (!valid) return res.status(400).json({ error: '密碼錯誤，請重新輸入' });
   }
 
   // 刪除使用者所有資料

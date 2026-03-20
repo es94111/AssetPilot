@@ -10,7 +10,6 @@ services:
     environment:
       - PORT=3000
       - DB_PATH=/app/data/database.db
-      - JWT_SECRET=please-change-this-secret
+      - ENV_PATH=/app/data/.env
       - JWT_EXPIRES=7d
       - GOOGLE_CLIENT_ID=
-      - DB_ENCRYPTION_KEY=

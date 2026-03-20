@@ -107,6 +107,11 @@
         <i class="fas fa-gear"></i><span>設定</span>
       </a>
     </nav>
+    <div class="sidebar-version" id="changelogBtn">
+      <i class="fas fa-code-branch"></i>
+      <span>v<span id="appVersionLabel">—</span> 版本資訊</span>
+      <i class="fas fa-chevron-right" style="margin-left:auto;font-size:10px;opacity:.5"></i>
+    </div>
     <div class="sidebar-footer" id="sidebarFooter">
       <div class="user-info">
         <i class="fas fa-user-circle"></i>
@@ -1119,6 +1124,19 @@
 
   <!-- Toast 通知 -->
   <div class="toast-container" id="toastContainer"></div>
+
+  <!-- ===== 版本更新資訊 Modal ===== -->
+  <div class="modal-overlay" id="modalChangelog">
+    <div class="modal modal-lg">
+      <div class="modal-header">
+        <h3><i class="fas fa-code-branch" style="margin-right:8px;color:var(--primary)"></i>版本更新資訊</h3>
+        <button class="modal-close" onclick="App.closeModal('modalChangelog')">&times;</button>
+      </div>
+      <div class="modal-body changelog-body" id="changelogContent">
+        <div class="empty-hint">載入中...</div>
+      </div>
+    </div>
+  </div>
 
   <script src="/app.js"></script>
 </body>

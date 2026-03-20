@@ -1,0 +1,136 @@
+{
+  "currentVersion": "3.6",
+  "releases": [
+    {
+      "version": "3.6",
+      "date": "2026-03-20",
+      "title": "環境變數、資料庫加密與介面優化",
+      "type": "feature",
+      "changes": [
+        { "tag": "new", "text": "環境變數管理：所有機敏設定移至 .env 檔案（JWT 金鑰、Google Client ID 等）" },
+        { "tag": "new", "text": "資料庫全檔加密：支援 ChaCha20-Poly1305 AEAD 演算法，PBKDF2-SHA256 金鑰推導" },
+        { "tag": "new", "text": "未加密資料庫設定金鑰後自動加密轉換" },
+        { "tag": "new", "text": "Docker 容器化支援：Dockerfile + docker-compose.yml" },
+        { "tag": "new", "text": "設定頁新增「帳號設定」分頁：Google 帳號綁定/解除綁定" },
+        { "tag": "new", "text": "全新網站 Logo 與 Favicon（SVG 向量圖）" },
+        { "tag": "new", "text": "版本更新資訊頁面" },
+        { "tag": "improved", "text": "股票持股公式修正：均價改為成本均價（含手續費）、新增預估淨收付/預估損益/預估手續費/交易稅" },
+        { "tag": "improved", "text": "設定頁分頁切換改用事件委派，修正切換失效問題" },
+        { "tag": "fixed", "text": "FIFO 手續費分攤：修正部分消耗批次時手續費重複計算" }
+      ]
+    },
+    {
+      "version": "3.5",
+      "date": "2026-03-20",
+      "title": "Google SSO 登入與批次操作",
+      "type": "feature",
+      "changes": [
+        { "tag": "new", "text": "Google SSO 登入：支援 Google Identity Services 一鍵登入/註冊" },
+        { "tag": "new", "text": "股票交易紀錄批次刪除 + 伺服器端分頁" },
+        { "tag": "new", "text": "股利紀錄批次刪除 + 伺服器端分頁" },
+        { "tag": "new", "text": "更新股價時顯示價格來源與時間" },
+        { "tag": "improved", "text": "美化持股總覽卡片與更新股價 Modal" },
+        { "tag": "removed", "text": "移除忘記密碼功能" },
+        { "tag": "fixed", "text": "修正股票名稱顯示異常（CSV 匯入自動修正）" }
+      ]
+    },
+    {
+      "version": "3.4",
+      "date": "2026-03-20",
+      "title": "TWSE 除權息自動同步",
+      "type": "feature",
+      "changes": [
+        { "tag": "new", "text": "TWSE 除權息自動同步：查詢 TWT49U + TWT49UDetail API" },
+        { "tag": "new", "text": "依持股期間自動計算並新增現金股利/股票股利紀錄" },
+        { "tag": "improved", "text": "不重複新增已存在的股利紀錄" },
+        { "tag": "improved", "text": "30 分鐘快取機制降低 API 呼叫頻率" }
+      ]
+    },
+    {
+      "version": "3.3",
+      "date": "2026-03-20",
+      "title": "實現損益紀錄",
+      "type": "feature",
+      "changes": [
+        { "tag": "new", "text": "實現損益紀錄 Tab：FIFO 逐筆賣出損益明細" },
+        { "tag": "new", "text": "實現損益彙總卡片：總損益/報酬率/今年損益/筆數" },
+        { "tag": "new", "text": "實現損益搜尋篩選指定股票" },
+        { "tag": "fixed", "text": "修正股票 CSV 匯入自動建立股票時正確帶入名稱" },
+        { "tag": "fixed", "text": "修正 initDB 中 ALTER TABLE stocks 執行順序" }
+      ]
+    },
+    {
+      "version": "3.2",
+      "date": "2026-03-19",
+      "title": "股票 CSV 匯出匯入與類型管理",
+      "type": "feature",
+      "changes": [
+        { "tag": "new", "text": "股票交易紀錄 CSV 匯出/匯入" },
+        { "tag": "new", "text": "股利紀錄 CSV 匯出/匯入" },
+        { "tag": "new", "text": "股票類型管理：一般股票 / ETF / 權證" },
+        { "tag": "improved", "text": "手續費計算修正：Math.floor + 整股最低 20 元" },
+        { "tag": "improved", "text": "證交稅計算：ETF/權證 0.1%、一般股票 0.3%、最低 1 元" },
+        { "tag": "improved", "text": "TWSE 股價查詢改為三段策略（即時/盤後/備援）" }
+      ]
+    },
+    {
+      "version": "3.1",
+      "date": "2026-03-19",
+      "title": "股票自動建立與搜尋篩選",
+      "type": "improved",
+      "changes": [
+        { "tag": "improved", "text": "股票交易/股利新增時輸入代號自動建立股票" },
+        { "tag": "new", "text": "交易紀錄與股利紀錄搜尋篩選指定股票" },
+        { "tag": "fixed", "text": "修正買進/賣出按鈕預設選取狀態" },
+        { "tag": "fixed", "text": "修正搜尋下拉選單文字重疊" }
+      ]
+    },
+    {
+      "version": "3.0",
+      "date": "2026-03-19",
+      "title": "股票投資管理模組",
+      "type": "feature",
+      "changes": [
+        { "tag": "new", "text": "股票持倉管理" },
+        { "tag": "new", "text": "股票交易記錄（買入/賣出）" },
+        { "tag": "new", "text": "股票股利記錄" },
+        { "tag": "new", "text": "FIFO 損益計算" },
+        { "tag": "new", "text": "TWSE 臺灣證券交易所 OpenAPI 整合" },
+        { "tag": "new", "text": "投資組合總覽頁面" }
+      ]
+    },
+    {
+      "version": "2.0",
+      "date": "2026-03-19",
+      "title": "完整記帳功能",
+      "type": "feature",
+      "changes": [
+        { "tag": "new", "text": "子分類支援（parent_id 自關聯）" },
+        { "tag": "new", "text": "批次操作（刪除/變更分類/帳戶/日期）" },
+        { "tag": "new", "text": "分類匯出匯入" },
+        { "tag": "new", "text": "SPA 前端路由（history.pushState）" },
+        { "tag": "new", "text": "每頁筆數自訂" },
+        { "tag": "new", "text": "統計報表自訂時間範圍" },
+        { "tag": "improved", "text": "轉帳關聯刪除" },
+        { "tag": "improved", "text": "大量 CSV 匯入支援（body 上限 50MB）" }
+      ]
+    },
+    {
+      "version": "1.0",
+      "date": "2026-03-18",
+      "title": "初版發布",
+      "type": "feature",
+      "changes": [
+        { "tag": "new", "text": "使用者註冊/登入/登出（JWT 認證）" },
+        { "tag": "new", "text": "交易記錄 CRUD" },
+        { "tag": "new", "text": "帳戶管理（餘額自動計算）" },
+        { "tag": "new", "text": "分類管理" },
+        { "tag": "new", "text": "預算管理" },
+        { "tag": "new", "text": "固定收支" },
+        { "tag": "new", "text": "統計報表" },
+        { "tag": "new", "text": "CSV 匯出/匯入" },
+        { "tag": "new", "text": "響應式設計（桌面 + 手機）" }
+      ]
+    }
+  ]
+}

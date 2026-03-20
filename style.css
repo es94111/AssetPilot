@@ -245,8 +245,50 @@ input, select, button, textarea { font-family: inherit; font-size: inherit; }
 .btn-outline:hover { background: var(--primary); color: #fff; }
 .btn-danger { background: var(--danger); color: #fff; border: none; }
 .btn-danger:hover { background: #dc2626; }
-.danger-zone { border: 1px solid #fecaca; background: linear-gradient(135deg, #fff 0%, #fef2f2 100%); }
-.danger-zone h3 { color: var(--danger); }
+.danger-zone { border: 1px solid #fecaca; background: linear-gradient(135deg, #fff 0%, #fef2f2 100%); padding: 0; overflow: hidden; }
+.danger-zone-header {
+  display: flex; align-items: center; gap: 14px;
+  padding: 18px 24px; background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+  border-bottom: 1px solid #fecaca;
+}
+.danger-zone-icon {
+  width: 40px; height: 40px; border-radius: 10px;
+  background: var(--danger); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; flex-shrink: 0;
+}
+.danger-zone-header h3 { color: var(--danger); font-size: 16px; }
+.danger-zone-desc { color: #b91c1c; font-size: 13px; margin-top: 2px; opacity: .7; }
+.danger-zone-body { padding: 20px 24px; }
+.danger-zone-warning {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 12px 16px; border-radius: 8px;
+  background: #fff5f5; border: 1px solid #fecaca;
+  color: #991b1b; font-size: 13px; line-height: 1.6; margin-bottom: 20px;
+}
+.danger-zone-warning i { margin-top: 3px; flex-shrink: 0; color: var(--danger); }
+.danger-zone-input-wrap { margin-bottom: 20px; }
+.danger-zone-input-wrap .form-label {
+  font-size: 13px; font-weight: 600; color: #7f1d1d;
+  letter-spacing: .3px; margin-bottom: 8px; display: block;
+}
+.danger-zone-input-row { position: relative; }
+.danger-zone-input-row .form-input {
+  width: 100%; padding: 14px 16px;
+  border: 2px solid #fca5a5; border-radius: 12px;
+  font-size: 15px; background: #fff;
+  transition: all .25s;
+}
+.danger-zone-input-row .form-input:focus {
+  outline: none; border-color: var(--danger);
+  box-shadow: 0 0 0 4px rgba(239,68,68,.15); background: #fff;
+}
+.danger-zone-input-row .form-input::placeholder { color: #d4a0a0; }
+.btn-delete-account {
+  width: 100%; padding: 12px; font-size: 14px; font-weight: 600;
+  border-radius: 8px; transition: all .2s;
+}
+.btn-delete-account:hover { background: #dc2626; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(239,68,68,.3); }
 .btn-primary { background: var(--primary); }
 .btn-icon {
   width: 32px; height: 32px; padding: 0;

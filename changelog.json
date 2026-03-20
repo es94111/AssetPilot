@@ -1,6 +1,15 @@
 {
-  "currentVersion": "3.7",
+  "currentVersion": "3.7.1",
   "releases": [
+    {
+      "version": "3.7.1",
+      "date": "2026-03-20",
+      "title": "刪除帳號介面美化",
+      "type": "improved",
+      "changes": [
+        { "tag": "improved", "text": "帳號設定「危險區域」介面重新設計：圖示標頭、警告提示區塊、密碼輸入框紅色焦點樣式" }
+      ]
+    },
     {
       "version": "3.7",
       "date": "2026-03-20",

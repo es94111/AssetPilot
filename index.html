@@ -663,16 +663,29 @@
           </div>
         </div>
         <div class="card danger-zone" style="margin-top:24px">
-          <h3><i class="fas fa-triangle-exclamation" style="margin-right:8px;color:var(--danger)"></i>危險區域</h3>
-          <p class="import-hint" style="margin-bottom:12px">刪除帳號後，所有資料將<strong>永久刪除且無法復原</strong>，包含所有交易記錄、帳戶、分類、預算、股票紀錄等。</p>
-          <div id="deleteAccountSection">
-            <div id="deleteAccountPasswordWrap" style="margin-bottom:12px">
-              <label class="form-label">請輸入密碼確認</label>
-              <input type="password" id="deleteAccountPassword" class="form-input" placeholder="輸入目前密碼">
+          <div class="danger-zone-header">
+            <div class="danger-zone-icon"><i class="fas fa-triangle-exclamation"></i></div>
+            <div>
+              <h3 style="margin:0">危險區域</h3>
+              <p class="danger-zone-desc">此操作不可逆，請謹慎操作</p>
             </div>
-            <button class="btn btn-danger" id="deleteAccountBtn">
-              <i class="fas fa-trash"></i> 永久刪除帳號
-            </button>
+          </div>
+          <div class="danger-zone-body">
+            <div class="danger-zone-warning">
+              <i class="fas fa-info-circle"></i>
+              <span>刪除帳號後，所有資料將<strong>永久刪除且無法復原</strong>，包含所有交易記錄、帳戶、分類、預算、股票紀錄等。</span>
+            </div>
+            <div id="deleteAccountSection">
+              <div id="deleteAccountPasswordWrap" class="danger-zone-input-wrap">
+                <label class="form-label"><i class="fas fa-lock" style="margin-right:6px;opacity:.6"></i>請輸入密碼確認身份</label>
+                <div class="danger-zone-input-row">
+                  <input type="password" id="deleteAccountPassword" class="form-input" placeholder="輸入目前的登入密碼">
+                </div>
+              </div>
+              <button class="btn btn-danger btn-delete-account" id="deleteAccountBtn">
+                <i class="fas fa-trash"></i> 永久刪除帳號
+              </button>
+            </div>
           </div>
         </div>
       </div>

@@ -8,10 +8,16 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - ./data:/app/data
+      - assetpilot-data:/app/data
     environment:
       - PORT=3000
       - DB_PATH=/app/data/database.db
       - ENV_PATH=/app/data/.env
       - JWT_EXPIRES=7d
       - GOOGLE_CLIENT_ID=
+      # JWT_SECRET 和 DB_ENCRYPTION_KEY 首次啟動自動產生，儲存在 /app/data/.env
+
+# 具名 Volume — Docker 自動管理，資料不會因容器刪除而遺失
+volumes:
+  assetpilot-data:
+    driver: local

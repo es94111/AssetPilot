@@ -1,6 +1,12 @@
 node_modules
 database.db
+data/
 .env
 .claude
 .git
+.github
 *.md
+*.tar
+*.csv
+*.bat
+build-docker.sh

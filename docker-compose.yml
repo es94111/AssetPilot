@@ -1,7 +1,9 @@
 services:
-  asset-manager:
-    build: .
-    container_name: asset-manager
+  assetpilot:
+    image: es94111/assetpilot:latest
+    # 如果要自行建置，取消下一行註解並註解 image:
+    # build: .
+    container_name: assetpilot
     restart: unless-stopped
     ports:
       - "3000:3000"

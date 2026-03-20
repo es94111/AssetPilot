@@ -62,7 +62,24 @@ node server.js
 
 > 首次啟動時 `JWT_SECRET` 和 `DB_ENCRYPTION_KEY` 會自動隨機產生並寫入 `.env`。
 
-### 方式二：Docker
+### 方式二：Docker Hub 拉取（推薦）
+
+```bash
+# 從 Docker Hub 拉取最新映像檔
+docker pull es94111/assetpilot:latest
+
+# 啟動容器
+docker run -d \
+  --name assetpilot \
+  --restart unless-stopped \
+  -p 3000:3000 \
+  -v ./data:/app/data \
+  es94111/assetpilot:latest
+```
+
+> 映像檔支援 `linux/amd64` 和 `linux/arm64`（Synology NAS、Raspberry Pi 皆可使用）。
+
+### 方式三：自行建置 Docker
 
 ```bash
 # 建置映像檔
@@ -83,7 +100,7 @@ docker run -d \
 docker compose up -d
 ```
 
-### 方式三：匯入 Docker Image
+### 方式四：匯入 Docker Image
 
 如果你已經有 `asset-manager.tar` 映像檔：
 

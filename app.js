@@ -234,6 +234,7 @@ const App = (() => {
       google.accounts.id.initialize({
         client_id: googleClientId,
         callback: handleGoogleCredential,
+        ux_mode: 'popup',
         auto_select: false,
       });
 
@@ -2222,6 +2223,7 @@ const App = (() => {
     google.accounts.id.initialize({
       client_id: googleClientId,
       callback: handleGoogleLink,
+      ux_mode: 'popup',
       auto_select: false
     });
     // 重新渲染按鈕以套用新 callback
@@ -2245,6 +2247,7 @@ const App = (() => {
         google.accounts.id.initialize({
           client_id: googleClientId,
           callback: handleGoogleCredential,
+          ux_mode: 'popup',
           auto_select: false
         });
       }
@@ -2256,6 +2259,7 @@ const App = (() => {
         google.accounts.id.initialize({
           client_id: googleClientId,
           callback: handleGoogleCredential,
+          ux_mode: 'popup',
           auto_select: false
         });
       }

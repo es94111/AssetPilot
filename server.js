@@ -1751,13 +1751,30 @@ app.post('/api/stocks/batch-price', (req, res) => {
 });
 
 app.delete('/api/stocks/:id', (req, res) => {
-  const hasTx = queryOne("SELECT id FROM stock_transactions WHERE stock_id = ? AND user_id = ? LIMIT 1", [req.params.id, req.userId]);
-  if (hasTx) return res.status(400).json({ error: '此股票有交易紀錄，請先刪除交易紀錄' });
-  const hasDiv = queryOne("SELECT id FROM stock_dividends WHERE stock_id = ? AND user_id = ? LIMIT 1", [req.params.id, req.userId]);
-  if (hasDiv) return res.status(400).json({ error: '此股票有股利紀錄，請先刪除股利紀錄' });
+  const s = queryOne("SELECT id FROM stocks WHERE id = ? AND user_id = ?", [req.params.id, req.userId]);
+  if (!s) return res.status(404).json({ error: '股票不存在' });
+  // 連帶刪除所有相關紀錄（交易紀錄、股利紀錄）
+  db.run("DELETE FROM stock_transactions WHERE stock_id = ? AND user_id = ?", [req.params.id, req.userId]);
+  db.run("DELETE FROM stock_dividends WHERE stock_id = ? AND user_id = ?", [req.params.id, req.userId]);
   db.run("DELETE FROM stocks WHERE id = ? AND user_id = ?", [req.params.id, req.userId]);
   saveDB();
   res.json({ ok: true });
+});
+
+// 清理無持股且無紀錄的股票
+app.post('/api/stocks/cleanup', (req, res) => {
+  const stocks = queryAll("SELECT * FROM stocks WHERE user_id = ?", [req.userId]);
+  let deleted = 0;
+  stocks.forEach(s => {
+    const hasTx = queryOne("SELECT id FROM stock_transactions WHERE stock_id = ? AND user_id = ? LIMIT 1", [s.id, req.userId]);
+    const hasDiv = queryOne("SELECT id FROM stock_dividends WHERE stock_id = ? AND user_id = ? LIMIT 1", [s.id, req.userId]);
+    if (!hasTx && !hasDiv) {
+      db.run("DELETE FROM stocks WHERE id = ? AND user_id = ?", [s.id, req.userId]);
+      deleted++;
+    }
+  });
+  if (deleted > 0) saveDB();
+  res.json({ deleted });
 });
 
 // ─── 實現損益紀錄 ───

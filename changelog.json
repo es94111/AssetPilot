@@ -1,6 +1,20 @@
 {
-  "currentVersion": "3.8",
+  "currentVersion": "3.9",
   "releases": [
+    {
+      "version": "3.9",
+      "date": "2026-03-20",
+      "title": "股票管理優化與 Google SSO 修復",
+      "type": "improved",
+      "changes": [
+        { "tag": "improved", "text": "更新股價僅顯示目前有持股的股票，不再列出已清倉的股票" },
+        { "tag": "improved", "text": "刪除股票時連帶刪除所有相關交易紀錄與股利紀錄（級聯刪除）" },
+        { "tag": "new", "text": "新增股票清理功能：自動移除無任何交易/股利紀錄的空股票" },
+        { "tag": "fixed", "text": "修復 Google SSO 登入卡在 accounts.google.com/gsi/transform 的問題（強制 popup 模式）" },
+        { "tag": "improved", "text": "Docker Volume 自動建立（Dockerfile VOLUME 指令），無需手動指定 -v 參數" },
+        { "tag": "improved", "text": "Docker 新增 HEALTHCHECK 健康檢查，每 30 秒自動檢測服務狀態" }
+      ]
+    },
     {
       "version": "3.8",
       "date": "2026-03-20",

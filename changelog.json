@@ -1,16 +1,16 @@
 {
-  "currentVersion": "3.6.1",
+  "currentVersion": "3.7",
   "releases": [
     {
-      "version": "3.6.1",
+      "version": "3.7",
       "date": "2026-03-20",
-      "title": "密鑰自動產生與 Docker 優化",
-      "type": "improved",
+      "title": "帳號管理與版本資訊優化",
+      "type": "feature",
       "changes": [
-        { "tag": "new", "text": "首次啟動自動產生 JWT_SECRET 與 DB_ENCRYPTION_KEY（64 字元隨機密鑰），寫入 .env 檔案" },
-        { "tag": "improved", "text": "Docker Image 不再內建預設密鑰，改由容器首次啟動時自動產生" },
-        { "tag": "improved", "text": "Docker 密鑰與資料庫統一存放至 /app/data/ 掛載目錄，方便備份" },
-        { "tag": "improved", "text": "側邊欄底部新增版本號顯示，點擊可查看完整版本更新資訊" }
+        { "tag": "new", "text": "帳號設定新增「刪除帳號」功能，永久刪除帳號及所有資料（需密碼確認）" },
+        { "tag": "new", "text": "側邊欄底部顯示版本號，點擊即可查看完整版本更新資訊" },
+        { "tag": "improved", "text": "首次啟動自動產生 JWT_SECRET 與 DB_ENCRYPTION_KEY（64 字元隨機密鑰）" },
+        { "tag": "improved", "text": "Docker 密鑰與資料庫統一存放至 /app/data/ 掛載目錄" }
       ]
     },
     {

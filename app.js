@@ -1880,13 +1880,15 @@ const App = (() => {
 
   function openPriceUpdateModal() {
     const list = el('priceUpdateList');
-    list.innerHTML = cachedStocks.map(s => `<div class="price-update-row">
+    // 只顯示目前有持股的股票
+    const holdingStocks = cachedStocks.filter(s => s.totalShares > 0);
+    list.innerHTML = holdingStocks.map(s => `<div class="price-update-row">
       <div class="stock-info">
         <div><span class="stock-symbol">${escHtml(s.symbol)}</span><span class="stock-name">${escHtml(s.name)}</span></div>
         <div class="price-source-label" data-stock-id="${s.id}"></div>
       </div>
       <input type="number" step="0.01" min="0" value="${s.currentPrice || 0}" data-stock-id="${s.id}" class="price-input">
-    </div>`).join('') || '<p style="padding:20px;text-align:center;color:var(--text-muted)">尚無股票</p>';
+    </div>`).join('') || '<p style="padding:20px;text-align:center;color:var(--text-muted)">目前無持股</p>';
     openModal('modalPriceUpdate');
   }
 
@@ -1906,13 +1908,18 @@ const App = (() => {
   }
 
   async function deleteStock(id) {
-    confirmDelete(`確定要刪除此股票嗎？`, async () => {
+    const s = cachedStocks.find(x => x.id === id);
+    const name = s ? `${s.symbol} ${s.name}` : '此股票';
+    confirmDelete(`確定要刪除「${name}」嗎？\n將一併刪除所有相關的交易紀錄與股利紀錄，此操作無法復原。`, async () => {
       try {
         await API.del('/api/stocks/' + id);
-        toast('股票已刪除', 'success');
+        toast('股票及相關紀錄已刪除', 'success');
         await refreshStocks();
         renderStockPortfolio();
         populateStockFilters();
+        renderStockTransactions();
+        renderStockDividends();
+        renderStockRealized();
       } catch (err) { toast(err.message, 'error'); }
     });
   }

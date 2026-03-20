@@ -23,6 +23,9 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 
 const app = express();
+// 信任反向代理（Nginx / Synology / Docker）傳遞的 X-Forwarded-For 標頭
+// 確保 express-rate-limit 能正確識別使用者 IP
+app.set('trust proxy', 1);
 const PORT = process.env.PORT || 3000;
 const DB_PATH = process.env.DB_PATH || path.join(__dirname, 'database.db');
 const JWT_EXPIRES = process.env.JWT_EXPIRES || '7d';
@@ -1390,18 +1393,109 @@ async function fetchTwseStockDay(symbol, dateStr) {
   }
 }
 
-// 盤後收盤資料（STOCK_DAY_ALL）
+// 上櫃 STOCK_DAY（TPEx 個股日成交資訊）
+const tpexDayCache = {};
+async function fetchTpexStockDay(symbol, dateStr) {
+  const cacheKey = `${symbol}_${dateStr}`;
+  const now = Date.now();
+  const cached = tpexDayCache[cacheKey];
+  if (cached && (now - cached.timestamp) < STOCK_DAY_CACHE_TTL) return cached.data;
+
+  try {
+    // TPEx 日期格式為民國 YYY/MM/DD
+    const rocYear = parseInt(dateStr.slice(0, 4)) - 1911;
+    const rocDate = `${rocYear}/${dateStr.slice(4, 6)}/${dateStr.slice(6, 8)}`;
+    const url = `https://www.tpex.org.tw/web/stock/aftertrading/daily_trading_info/st43_result.php?l=zh-tw&d=${encodeURIComponent(rocDate)}&stkno=${symbol}&_=${now}`;
+    const res = await fetch(url, {
+      headers: { 'User-Agent': 'Mozilla/5.0', 'Referer': 'https://www.tpex.org.tw/' },
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!res.ok) return null;
+    const json = await res.json();
+    if (!json.aaData || json.aaData.length === 0) return null;
+
+    // 取最後一筆（最近交易日）
+    const row = json.aaData[json.aaData.length - 1];
+    // 欄位: [日期, 成交股數, 成交金額, 開盤, 最高, 最低, 收盤, 漲跌價差, 成交筆數]
+    const toNum = s => parseFloat((s || '0').replace(/,/g, '')) || 0;
+    const parts = row[0].split('/');
+    const adYear = parseInt(parts[0]) + 1911;
+    const rowDate = `${adYear}/${parts[1]}/${parts[2]}`;
+
+    const result = {
+      found: true,
+      symbol,
+      name: json.stkName || symbol,
+      closingPrice: toNum(row[6]),
+      openingPrice: toNum(row[3]),
+      highestPrice: toNum(row[4]),
+      lowestPrice: toNum(row[5]),
+      isRealtime: false,
+      priceType: '收盤價（櫃買）',
+      dataDate: rowDate,
+      dataTime: '',
+    };
+    tpexDayCache[cacheKey] = { data: result, timestamp: now };
+    return result;
+  } catch (e) {
+    console.error('TPEx STOCK_DAY API 錯誤:', e.message);
+    return null;
+  }
+}
+
+// 盤後收盤資料（STOCK_DAY_ALL + TPEX）
+let tpexCache = { data: null, timestamp: 0 };
+const TPEX_CACHE_TTL = 10 * 60 * 1000; // 10 分鐘
+
+async function fetchTpexStockAll() {
+  const now = Date.now();
+  if (tpexCache.data && (now - tpexCache.timestamp) < TPEX_CACHE_TTL) {
+    return tpexCache.data;
+  }
+  try {
+    const res = await fetch('https://www.tpex.org.tw/openapi/v1/tpex_mainboard_daily_close_quotes', {
+      headers: { 'User-Agent': 'Mozilla/5.0' },
+      signal: AbortSignal.timeout(10000),
+    });
+    if (!res.ok) return tpexCache.data || [];
+    const raw = await res.json();
+    // 轉換為與 TWSE 相同的格式
+    const data = raw.map(r => ({
+      Code: r.SecuritiesCompanyCode,
+      Name: r.CompanyName,
+      ClosingPrice: r.Close,
+      OpeningPrice: r.Open,
+      HighestPrice: r.High,
+      LowestPrice: r.Low,
+      Change: r.Change,
+      TradeVolume: r.TradeVolume,
+      Date: r.Date,
+      _source: 'tpex',
+    }));
+    tpexCache = { data, timestamp: now };
+    return data;
+  } catch (e) {
+    console.error('TPEx ALL API 錯誤:', e.message);
+    return tpexCache.data || [];
+  }
+}
+
 async function fetchTwseStockAll() {
   const now = Date.now();
   if (twseCache.data && (now - twseCache.timestamp) < TWSE_CACHE_TTL) {
     return twseCache.data;
   }
   try {
-    const res = await fetch('https://openapi.twse.com.tw/v1/exchangeReport/STOCK_DAY_ALL');
-    if (!res.ok) throw new Error('TWSE API 回應錯誤');
-    const data = await res.json();
-    twseCache = { data, timestamp: now };
-    return data;
+    // 同時取得上市 + 上櫃資料
+    const [twseRes, tpexData] = await Promise.all([
+      fetch('https://openapi.twse.com.tw/v1/exchangeReport/STOCK_DAY_ALL'),
+      fetchTpexStockAll(),
+    ]);
+    if (!twseRes.ok) throw new Error('TWSE API 回應錯誤');
+    const twseData = await twseRes.json();
+    const merged = [...twseData, ...tpexData];
+    twseCache = { data: merged, timestamp: now };
+    return merged;
   } catch (e) {
     console.error('TWSE API 錯誤:', e.message);
     return twseCache.data || [];
@@ -1426,16 +1520,20 @@ app.get('/api/twse/stock/:symbol', async (req, res) => {
       if (rt && rt.found && rt.closingPrice > 0) return res.json(rt);
     }
 
-    // 2. 指定日期收盤（STOCK_DAY）— 可取得今日最新收盤價
+    // 2. 指定日期收盤 — 先試上市（TWSE），再試上櫃（TPEx）
     if (dateParam.length === 8) {
       const sd = await fetchTwseStockDay(symbol, dateParam);
       if (sd && sd.found && sd.closingPrice > 0) return res.json(sd);
+      // 上市查無資料，嘗試上櫃
+      const tpex = await fetchTpexStockDay(symbol, dateParam);
+      if (tpex && tpex.found && tpex.closingPrice > 0) return res.json(tpex);
     }
 
-    // 3. 備援：STOCK_DAY_ALL
+    // 3. 備援：STOCK_DAY_ALL（已合併上市 + 上櫃）
     const allStocks = await fetchTwseStockAll();
     const stock = allStocks.find(s => s.Code === symbol);
     if (!stock) return res.json({ found: false });
+    const isTpex = stock._source === 'tpex';
     res.json({
       found: true,
       symbol: stock.Code,
@@ -1447,7 +1545,7 @@ app.get('/api/twse/stock/:symbol', async (req, res) => {
       change: parseFloat(stock.Change) || 0,
       volume: parseInt(stock.TradeVolume) || 0,
       isRealtime: false,
-      priceType: '收盤價',
+      priceType: isTpex ? '收盤價（櫃買）' : '收盤價',
       dataDate: formatTwseDate(stock.Date || ''),
       dataTime: '',
     });

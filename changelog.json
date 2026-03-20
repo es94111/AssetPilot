@@ -1,6 +1,17 @@
 {
-  "currentVersion": "3.9.1",
+  "currentVersion": "3.9.2",
   "releases": [
+    {
+      "version": "3.9.2",
+      "date": "2026-03-20",
+      "title": "上櫃股票報價支援",
+      "type": "fixed",
+      "changes": [
+        { "tag": "new", "text": "新增櫃買中心（TPEx）API 整合：上櫃股票也能自動取得即時/收盤股價" },
+        { "tag": "fixed", "text": "修復上櫃股票（如 8069 元太、6147 頎邦）無法透過更新股價取得報價的問題" },
+        { "tag": "improved", "text": "股票搜尋與報價查詢同時涵蓋上市（TWSE）與上櫃（TPEx）資料" }
+      ]
+    },
     {
       "version": "3.9.1",
       "date": "2026-03-20",

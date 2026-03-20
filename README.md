@@ -43,97 +43,230 @@
 | 圖表 | Chart.js |
 | 安全 | Helmet、express-rate-limit、SRI、CORS 白名單 |
 
+---
+
 ## 快速開始
 
-### 方式一：Node.js 直接執行
+### 方式一：Docker Hub 一鍵部署（推薦）
 
 ```bash
-# 安裝依賴
-npm install
-
-# 複製環境變數範本
-cp .env.example .env
-
-# 啟動伺服器
-node server.js
+docker run -d \
+  --name assetpilot \
+  --restart unless-stopped \
+  -p 3000:3000 \
+  es94111/assetpilot:latest
 ```
 
 開啟 http://localhost:3000 即可使用。
 
-> 首次啟動時 `JWT_SECRET` 和 `DB_ENCRYPTION_KEY` 會自動隨機產生並寫入 `.env`。
+> **就這樣！** 不需要任何額外設定。資料庫、金鑰、Volume 全部自動建立。
 
-### 方式二：Docker Hub 拉取（推薦）
+### 方式二：Docker Compose
 
-```bash
-# 從 Docker Hub 拉取最新映像檔
-docker pull es94111/assetpilot:latest
+建立 `docker-compose.yml`：
 
-# 啟動容器
-docker run -d \
-  --name assetpilot \
-  --restart unless-stopped \
-  -p 3000:3000 \
-  -v ./data:/app/data \
-  es94111/assetpilot:latest
+```yaml
+services:
+  assetpilot:
+    image: es94111/assetpilot:latest
+    container_name: assetpilot
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - assetpilot-data:/app/data
+    environment:
+      - GOOGLE_CLIENT_ID=          # 選配：填入 Google OAuth Client ID 啟用 SSO
+      # - ALLOWED_ORIGINS=https://your-domain.com
+
+volumes:
+  assetpilot-data:
 ```
 
-> 映像檔支援 `linux/amd64` 和 `linux/arm64`（Synology NAS、Raspberry Pi 皆可使用）。
-
-### 方式三：自行建置 Docker
-
-```bash
-# 建置映像檔
-docker build -t assetpilot .
-
-# 啟動容器
-docker run -d \
-  --name assetpilot \
-  --restart unless-stopped \
-  -p 3000:3000 \
-  -v ./data:/app/data \
-  assetpilot
-```
-
-或使用 Docker Compose：
+啟動：
 
 ```bash
 docker compose up -d
 ```
 
-### 方式四：匯入 Docker Image
-
-如果你已經有 `asset-manager.tar` 映像檔：
+### 方式三：Node.js 直接執行
 
 ```bash
-# 匯入映像檔
-docker load -i asset-manager.tar
-
-# 啟動容器
-docker run -d \
-  --name assetpilot \
-  --restart unless-stopped \
-  -p 3000:3000 \
-  -v ./data:/app/data \
-  asset-manager:latest
+npm install
+cp .env.example .env
+node server.js
 ```
 
-## 環境變數
+---
+
+## Docker 部署詳細說明
+
+### 映像檔資訊
+
+| 項目 | 值 |
+|------|-----|
+| Docker Hub | [`es94111/assetpilot`](https://hub.docker.com/r/es94111/assetpilot) |
+| 支援架構 | `linux/amd64`、`linux/arm64` |
+| 基底映像檔 | `node:20-alpine` |
+| 映像大小 | ~180MB |
+| 內建健康檢查 | ✅ 每 30 秒自動檢測 |
+
+### 自動化機制
+
+首次啟動容器時，系統會自動完成以下設定：
+
+| 項目 | 說明 |
+|------|------|
+| **Volume** | Dockerfile 內建 `VOLUME /app/data`，即使不指定 `-v`，Docker 也會自動建立匿名 Volume |
+| **JWT 金鑰** | 未設定 `JWT_SECRET` 時，自動產生 64 字元隨機金鑰並寫入 `/app/data/.env` |
+| **資料庫加密金鑰** | 未設定 `DB_ENCRYPTION_KEY` 時，自動產生 64 字元隨機金鑰並寫入 `/app/data/.env` |
+| **資料庫** | 自動建立 `/app/data/database.db`，含加密保護 |
+| **預設資料** | 新使用者註冊時自動建立預設分類和帳戶 |
+
+### 環境變數
 
 | 變數 | 說明 | 預設值 |
 |------|------|--------|
 | `PORT` | 伺服器埠號 | `3000` |
 | `JWT_SECRET` | JWT 簽章金鑰 | 首次啟動自動產生 |
 | `JWT_EXPIRES` | JWT 有效期限 | `7d` |
-| `GOOGLE_CLIENT_ID` | Google OAuth Client ID（留空停用 SSO） | — |
 | `DB_ENCRYPTION_KEY` | 資料庫加密金鑰（ChaCha20-Poly1305） | 首次啟動自動產生 |
-| `ALLOWED_ORIGINS` | CORS 白名單（逗號分隔） | — |
+| `GOOGLE_CLIENT_ID` | Google OAuth Client ID（留空停用 SSO） | — |
+| `ALLOWED_ORIGINS` | CORS 白名單（逗號分隔） | —（不限制） |
+| `DB_PATH` | 資料庫檔案路徑 | `/app/data/database.db` |
+| `ENV_PATH` | 自動產生的 .env 檔案路徑 | `/app/data/.env` |
 
-## Docker 部署到 Synology NAS
+設定環境變數的方式：
 
-1. 將專案資料夾上傳至 NAS
-2. SSH 進入 NAS 並進入專案目錄
-3. 執行 `sudo docker build -t assetpilot .`
-4. 至 DSM **Container Manager** 建立容器，或使用指令：
+```bash
+# 方式 A：docker run -e 參數
+docker run -d \
+  --name assetpilot \
+  --restart unless-stopped \
+  -p 3000:3000 \
+  -e GOOGLE_CLIENT_ID=your-google-client-id \
+  -e ALLOWED_ORIGINS=https://your-domain.com \
+  es94111/assetpilot:latest
+
+# 方式 B：docker compose（修改 docker-compose.yml 的 environment 區段）
+docker compose up -d
+```
+
+### Volume 與資料持久化
+
+容器內的 `/app/data` 目錄存放所有持久化資料：
+
+```
+/app/data/
+├── database.db    # 加密的 SQLite 資料庫
+└── .env           # 自動產生的金鑰（JWT_SECRET、DB_ENCRYPTION_KEY）
+```
+
+**三種掛載方式：**
+
+```bash
+# 1. 自動（不指定 -v）— Docker 自動建立匿名 Volume
+docker run -d -p 3000:3000 es94111/assetpilot:latest
+
+# 2. 具名 Volume（推薦）— 方便管理與識別
+docker run -d -p 3000:3000 -v assetpilot-data:/app/data es94111/assetpilot:latest
+
+# 3. 綁定本機目錄 — 方便直接存取檔案
+docker run -d -p 3000:3000 -v /path/to/data:/app/data es94111/assetpilot:latest
+```
+
+**Volume 管理指令：**
+
+```bash
+# 查看所有 Volume
+docker volume ls
+
+# 查看 Volume 詳細資訊（儲存位置、大小）
+docker volume inspect assetpilot-data
+
+# 備份資料
+docker run --rm -v assetpilot-data:/data -v $(pwd):/backup alpine \
+  tar czf /backup/assetpilot-backup.tar.gz -C /data .
+
+# 還原資料
+docker run --rm -v assetpilot-data:/data -v $(pwd):/backup alpine \
+  tar xzf /backup/assetpilot-backup.tar.gz -C /data
+```
+
+> ⚠️ **重要：** 刪除 Volume 會永久遺失資料庫和加密金鑰，請先備份再操作。
+
+### 容器管理指令
+
+```bash
+# 查看容器狀態（含健康檢查結果）
+docker ps
+
+# 查看即時日誌
+docker logs -f assetpilot
+
+# 停止容器
+docker stop assetpilot
+
+# 重新啟動
+docker restart assetpilot
+
+# 刪除容器（Volume 資料不受影響）
+docker rm -f assetpilot
+
+# 更新到最新版本
+docker pull es94111/assetpilot:latest
+docker rm -f assetpilot
+docker run -d \
+  --name assetpilot \
+  --restart unless-stopped \
+  -p 3000:3000 \
+  -v assetpilot-data:/app/data \
+  es94111/assetpilot:latest
+```
+
+### 自行建置映像檔
+
+```bash
+# 建置
+docker build -t assetpilot .
+
+# 啟動
+docker run -d \
+  --name assetpilot \
+  --restart unless-stopped \
+  -p 3000:3000 \
+  assetpilot
+
+# 匯出映像檔（帶到其他電腦）
+docker save assetpilot -o assetpilot.tar
+
+# 在其他電腦匯入
+docker load -i assetpilot.tar
+```
+
+---
+
+## 部署到 Synology NAS
+
+### 方式 A：Container Manager GUI（最簡單）
+
+1. DSM → **Container Manager** → **Registry** → 搜尋 `es94111/assetpilot` → 下載
+2. **Container** → **Create** → 選擇 `es94111/assetpilot:latest`
+3. 設定 Port：`3000 → 3000`
+4. Volume 會自動建立，無需手動設定
+5. 啟動即可
+
+### 方式 B：SSH 指令
+
+```bash
+sudo docker run -d \
+  --name assetpilot \
+  --restart unless-stopped \
+  -p 3000:3000 \
+  es94111/assetpilot:latest
+```
+
+如需指定資料路徑以便備份：
 
 ```bash
 sudo docker run -d \
@@ -141,34 +274,136 @@ sudo docker run -d \
   --restart unless-stopped \
   -p 3000:3000 \
   -v /volume1/docker/assetpilot/data:/app/data \
-  assetpilot
+  es94111/assetpilot:latest
 ```
 
-5. 至 DSM **控制台 → 登入入口 → 反向代理**，將 `https://your-domain` 導向 `http://localhost:3000`
+### 反向代理設定（使用自訂網域）
+
+1. 至 DSM **控制台** → **登入入口** → **進階** → **反向代理**
+2. 新增規則：
+
+| 欄位 | 值 |
+|------|-----|
+| 來源通訊協定 | HTTPS |
+| 來源主機名稱 | `your-domain.com` |
+| 來源連接埠 | 443 |
+| 目的地通訊協定 | HTTP |
+| 目的地主機名稱 | `localhost` |
+| 目的地連接埠 | `3000` |
+
+3. 自訂標題 → 新增 `X-Forwarded-For`：`$proxy_add_x_forwarded_for`
+
+---
+
+## 部署到雲端主機
+
+### 使用 Docker Compose（VPS / AWS / GCP / Azure）
+
+```bash
+# 1. 建立專案目錄
+mkdir assetpilot && cd assetpilot
+
+# 2. 建立 docker-compose.yml
+cat > docker-compose.yml << 'EOF'
+services:
+  assetpilot:
+    image: es94111/assetpilot:latest
+    container_name: assetpilot
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - assetpilot-data:/app/data
+    environment:
+      - ALLOWED_ORIGINS=https://your-domain.com
+      - GOOGLE_CLIENT_ID=
+
+volumes:
+  assetpilot-data:
+EOF
+
+# 3. 啟動
+docker compose up -d
+```
+
+### 搭配 Nginx 反向代理 + HTTPS
+
+```nginx
+server {
+    listen 443 ssl http2;
+    server_name your-domain.com;
+
+    ssl_certificate     /path/to/cert.pem;
+    ssl_certificate_key /path/to/key.pem;
+
+    location / {
+        proxy_pass http://127.0.0.1:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+### 搭配 Caddy（自動 HTTPS）
+
+```
+your-domain.com {
+    reverse_proxy localhost:3000
+}
+```
+
+---
 
 ## Google SSO 設定（選配）
 
 1. 至 [Google Cloud Console](https://console.cloud.google.com/) 建立 OAuth 2.0 用戶端 ID
-2. 設定「已授權的 JavaScript 來源」（如 `http://localhost:3000`、`https://your-domain`）
+2. 設定「已授權的 JavaScript 來源」：
+   - 本機開發：`http://localhost:3000`
+   - 正式網域：`https://your-domain.com`
 3. 將 Client ID 設為環境變數 `GOOGLE_CLIENT_ID`
-4. 未設定時 Google 登入按鈕自動隱藏
+4. 未設定時 Google 登入按鈕自動隱藏，不影響帳號密碼登入
+
+---
+
+## CI/CD 自動部署
+
+本專案透過 GitHub Actions 自動建置並推送 Docker 映像檔：
+
+- **觸發條件**：推送到 `main` 分支，或建立 `v*` 標籤
+- **建置平台**：`linux/amd64` + `linux/arm64`
+- **推送目標**：Docker Hub（`es94111/assetpilot`）+ GitHub Container Registry（`ghcr.io`）
+- **標籤策略**：`latest`（main 分支）、版本號（Git tag）、Git SHA
+
+需在 GitHub 倉庫設定 Secrets：
+
+| Secret | 說明 |
+|--------|------|
+| `DOCKERHUB_USERNAME` | Docker Hub 帳號（`es94111`） |
+| `DOCKERHUB_TOKEN` | [Docker Hub Access Token](https://hub.docker.com/settings/security) |
+
+---
 
 ## 檔案結構
 
 ```
-├── server.js          # Express 後端（API + 資料庫）
-├── app.js             # 前端 SPA 邏輯
-├── index.html         # 單頁 HTML
-├── style.css          # 全域樣式
-├── logo.svg           # 網站 Logo
-├── favicon.svg        # Favicon
-├── changelog.json     # 版本更新紀錄
-├── Dockerfile         # Docker 建置設定
-├── docker-compose.yml # Docker Compose 設定
-├── .env.example       # 環境變數範本
-└── data/              # 資料目錄（Docker 掛載）
-    ├── database.db    # SQLite 資料庫（自動產生）
-    └── .env           # 環境變數（Docker 自動產生）
+├── server.js              # Express 後端（API + 資料庫）
+├── app.js                 # 前端 SPA 邏輯
+├── index.html             # 單頁 HTML
+├── style.css              # 全域樣式
+├── logo.svg               # 網站 Logo
+├── favicon.svg            # Favicon
+├── changelog.json         # 版本更新紀錄
+├── Dockerfile             # Docker 建置設定
+├── docker-compose.yml     # Docker Compose 設定
+├── .env.example           # 環境變數範本
+├── .github/workflows/
+│   └── docker-publish.yml # CI/CD 自動建置推送
+└── data/                  # 資料目錄（Docker Volume 掛載）
+    ├── database.db        # 加密的 SQLite 資料庫（自動產生）
+    └── .env               # 金鑰檔案（自動產生）
 ```
 
 ## 安全性
@@ -180,6 +415,7 @@ sudo docker run -d \
 - **SRI 驗證** — 外部 CDN 腳本加入完整性驗證
 - **資料庫加密** — ChaCha20-Poly1305 AEAD + PBKDF2-SHA256 金鑰推導
 - **密碼加密** — bcryptjs 雜湊儲存
+- **健康檢查** — Docker HEALTHCHECK 每 30 秒自動檢測服務狀態
 
 ## 授權
 

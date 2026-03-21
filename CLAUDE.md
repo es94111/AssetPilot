@@ -121,7 +121,11 @@ node server.js         # 啟動伺服器，預設 http://localhost:3000
 | `/reports` | 統計報表 |
 | `/budget` | 預算管理 |
 | `/accounts` | 帳戶管理 |
-| `/stocks` | 股票紀錄 |
+| `/stocks` | 股票紀錄 > 持股總覽（預設） |
+| `/stocks/portfolio` | 股票紀錄 > 持股總覽 |
+| `/stocks/transactions` | 股票紀錄 > 交易紀錄 |
+| `/stocks/dividends` | 股票紀錄 > 股利紀錄 |
+| `/stocks/realized` | 股票紀錄 > 實現損益 |
 | `/settings/categories` | 設定 > 分類管理 |
 | `/settings/recurring` | 設定 > 固定收支 |
 | `/settings/export` | 設定 > 資料匯出匯入 |

@@ -1,6 +1,17 @@
 {
-  "currentVersion": "3.10.1",
+  "currentVersion": "3.11",
   "releases": [
+    {
+      "version": "3.11",
+      "date": "2026-03-21",
+      "title": "股票紀錄子頁面路由",
+      "type": "feature",
+      "changes": [
+        { "tag": "new", "text": "股票紀錄各子選單擁有獨立 URL 路徑（/stocks/portfolio、/stocks/transactions、/stocks/dividends、/stocks/realized）" },
+        { "tag": "improved", "text": "支援直接輸入 URL 或分享連結進入指定的股票子頁面" },
+        { "tag": "improved", "text": "瀏覽器上/下一頁可正確切換股票子選單" }
+      ]
+    },
     {
       "version": "3.10.1",
       "date": "2026-03-21",

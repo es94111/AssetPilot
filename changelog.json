@@ -1,6 +1,16 @@
 {
-  "currentVersion": "3.14.4",
+  "currentVersion": "3.14.5",
   "releases": [
+    {
+      "version": "3.14.5",
+      "date": "2026-03-21",
+      "title": "版本資訊手動重新檢查",
+      "type": "feature",
+      "changes": [
+        { "tag": "new", "text": "版本更新彈窗新增「手動重新檢查更新」按鈕，點擊可立即重抓遠端版本資訊" },
+        { "tag": "improved", "text": "重新檢查後會同步更新側邊欄版本提示與更新徽章" }
+      ]
+    },
     {
       "version": "3.14.4",
       "date": "2026-03-21",

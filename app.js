@@ -11,6 +11,7 @@ const App = (() => {
   let authToken = localStorage.getItem('authToken') || null;
   let currentUser = null;
   let googleUseCodeFlow = false;
+  let authConfig = { registrationEnabled: true, publicRegistration: true, allowlistEnabled: false };
   let themeMode = localStorage.getItem('themeMode') || 'system';
   const prefersDarkMedia = typeof window.matchMedia === 'function'
     ? window.matchMedia('(prefers-color-scheme: dark)')
@@ -222,10 +223,32 @@ const App = (() => {
 
   // ─── Auth 邏輯 ───
   function showAuthForm(formId) {
+    if (formId === 'registerForm' && !authConfig.registrationEnabled) {
+      formId = 'loginForm';
+      el('loginError').textContent = '目前未開放公開註冊，請聯絡管理員';
+    }
     document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
     el(formId).classList.add('active');
     // 清除錯誤訊息
     document.querySelectorAll('.auth-error').forEach(e => e.textContent = '');
+  }
+
+  function updateRegisterEntryVisibility() {
+    const enabled = !!authConfig.registrationEnabled;
+    const showRegisterLink = el('showRegister');
+    const showLoginLink = el('showLogin');
+    const registerForm = el('registerForm');
+    const registerWrap = el('googleSignUpWrap');
+    if (showRegisterLink) showRegisterLink.style.display = enabled ? '' : 'none';
+    if (showLoginLink) showLoginLink.textContent = enabled ? '已有帳號？返回登入' : '返回登入';
+    if (registerWrap && !enabled) registerWrap.style.display = 'none';
+    if (registerForm) {
+      const submitBtn = registerForm.querySelector('button[type="submit"]');
+      if (submitBtn) submitBtn.disabled = !enabled;
+    }
+    if (!enabled && registerForm?.classList.contains('active')) {
+      showAuthForm('loginForm');
+    }
   }
 
   function showAuth() {
@@ -272,6 +295,10 @@ const App = (() => {
 
   async function handleRegister(e) {
     e.preventDefault();
+    if (!authConfig.registrationEnabled) {
+      el('registerError').textContent = '目前未開放公開註冊，請聯絡管理員';
+      return;
+    }
     const email = el('regEmail').value.trim();
     const displayName = el('regName').value.trim();
     const password = el('regPassword').value;
@@ -390,6 +417,13 @@ const App = (() => {
   async function initGoogleSSO() {
     try {
       const config = await (await fetch('/api/config')).json();
+      authConfig = {
+        registrationEnabled: !!config.registrationEnabled,
+        publicRegistration: !!config.publicRegistration,
+        allowlistEnabled: !!config.allowlistEnabled,
+      };
+      updateRegisterEntryVisibility();
+
       if (!config.googleClientId) return;
       googleClientId = config.googleClientId;
       googleUseCodeFlow = !!config.googleCodeFlow;
@@ -523,7 +557,14 @@ const App = (() => {
 
   function bindAuth() {
     // 表單切換
-    el('showRegister').addEventListener('click', e => { e.preventDefault(); showAuthForm('registerForm'); });
+    el('showRegister').addEventListener('click', e => {
+      e.preventDefault();
+      if (!authConfig.registrationEnabled) {
+        el('loginError').textContent = '目前未開放公開註冊，請聯絡管理員';
+        return;
+      }
+      showAuthForm('registerForm');
+    });
     el('showLogin').addEventListener('click', e => { e.preventDefault(); showAuthForm('loginForm'); });
 
     // 表單提交
@@ -558,7 +599,7 @@ const App = (() => {
   // ─── 導航 ───
   const validPages = ['dashboard', 'transactions', 'reports', 'budget', 'accounts', 'stocks', 'settings', 'api-credits'];
   const financePages = ['transactions', 'reports', 'budget', 'accounts'];
-  const validSettingsTabs = ['categories', 'recurring', 'export', 'account'];
+  const validSettingsTabs = ['categories', 'recurring', 'export', 'account', 'admin'];
   const validStocksTabs = ['portfolio', 'transactions', 'dividends', 'realized', 'settings'];
 
   function parseRoute(pathname) {
@@ -585,6 +626,7 @@ const App = (() => {
   async function navigate(page, sub, pushState = true) {
     // 若 page 是 settings 且沒指定 sub，預設 categories
     if (page === 'settings' && !sub) sub = 'categories';
+    if (page === 'settings' && sub === 'admin' && !currentUser?.isAdmin) sub = 'categories';
     // 若 page 是 stocks 且沒指定 sub，預設 portfolio
     if (page === 'stocks' && !sub) sub = 'portfolio';
     currentPage = page;
@@ -2509,15 +2551,32 @@ const App = (() => {
         const tab = e.target.closest('.tab[data-settings]');
         if (!tab) return;
         const sub = tab.dataset.settings;
+        if (sub === 'admin' && !currentUser?.isAdmin) {
+          toast('需要管理員權限', 'error');
+          return;
+        }
         activateSettingsTab(sub);
         history.pushState({ page: 'settings', sub }, '', buildPath('settings', sub));
       });
       settingsBound = true;
     }
+
+    const adminTab = document.querySelector('.settings-tabs .tab[data-settings="admin"]');
+    if (adminTab) adminTab.style.display = currentUser?.isAdmin ? '' : 'none';
+
     await renderCategories();
     await renderRecurring();
     bindExport();
-    renderAccountSettings();
+    await renderAccountSettings();
+    if (currentUser?.isAdmin) {
+      await renderAdminSettings();
+    }
+
+    const activeSettingsTab = document.querySelector('.settings-tabs .tab.active')?.dataset.settings;
+    if (activeSettingsTab === 'admin' && !currentUser?.isAdmin) {
+      activateSettingsTab('categories');
+      history.replaceState({ page: 'settings', sub: 'categories' }, '', buildPath('settings', 'categories'));
+    }
   }
 
   async function renderCategories() {
@@ -2695,6 +2754,7 @@ const App = (() => {
 
   let accountSettingsBound = false;
   let exchangeRatesBound = false;
+  let adminSettingsBound = false;
 
   function buildFxCurrencyOptions(selected) {
     const s = normalizeCurrencyCode(selected);
@@ -2766,6 +2826,7 @@ const App = (() => {
     try {
       const res = await API.get('/api/auth/me');
       const user = res.user;
+      currentUser = { ...(currentUser || {}), ...user };
       el('accountEmail').textContent = user.email || '—';
       el('accountDisplayName').textContent = user.displayName || '—';
 
@@ -2922,6 +2983,109 @@ const App = (() => {
     } catch (e) {
       console.error('載入帳號設定失敗:', e);
     }
+  }
+
+  function renderAdminUserTable(users) {
+    const tbody = el('adminUserBody');
+    if (!tbody) return;
+    if (!Array.isArray(users) || users.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" class="empty-hint">尚無使用者</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = users.map(u => {
+      const isSelf = u.id === currentUser?.id;
+      const canDelete = !isSelf;
+      return `<tr>
+        <td>${escHtml(u.email || '')}</td>
+        <td>${escHtml(u.displayName || '')}</td>
+        <td>${u.isAdmin ? '<span class="type-badge income">管理員</span>' : '<span class="type-badge">一般</span>'}</td>
+        <td>${u.googleLinked ? 'Google' : '密碼'}</td>
+        <td>${escHtml(u.createdAt || '-')}</td>
+        <td>
+          <button class="btn-icon danger admin-delete-user-btn" data-user-id="${u.id}" data-user-email="${escHtml(u.email || '')}" ${canDelete ? '' : 'disabled'} title="${canDelete ? '刪除' : '不可刪除自己'}">
+            <i class="fas fa-trash"></i>
+          </button>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+
+  async function renderAdminSettings() {
+    if (!currentUser?.isAdmin) return;
+    try {
+      const [settings, users] = await Promise.all([
+        API.get('/api/admin/settings'),
+        API.get('/api/admin/users'),
+      ]);
+
+      const toggle = el('adminPublicRegistrationToggle');
+      const emails = el('adminAllowedEmails');
+      if (toggle) toggle.checked = !!settings.publicRegistration;
+      if (emails) emails.value = Array.isArray(settings.allowedRegistrationEmails)
+        ? settings.allowedRegistrationEmails.join('\n')
+        : '';
+      renderAdminUserTable(users);
+    } catch (e) {
+      toast(e.message || '載入管理員設定失敗', 'error');
+    }
+
+    if (adminSettingsBound) return;
+
+    el('saveAdminSettingsBtn')?.addEventListener('click', async () => {
+      try {
+        const publicRegistration = !!el('adminPublicRegistrationToggle')?.checked;
+        const allowedRegistrationEmails = el('adminAllowedEmails')?.value || '';
+        await API.put('/api/admin/settings', { publicRegistration, allowedRegistrationEmails });
+        const config = await (await fetch('/api/config', { cache: 'no-store' })).json();
+        authConfig = {
+          registrationEnabled: !!config.registrationEnabled,
+          publicRegistration: !!config.publicRegistration,
+          allowlistEnabled: !!config.allowlistEnabled,
+        };
+        updateRegisterEntryVisibility();
+        toast('管理員設定已儲存', 'success');
+        await renderAdminSettings();
+      } catch (e) {
+        toast(e.message || '儲存管理員設定失敗', 'error');
+      }
+    });
+
+    el('adminCreateUserForm')?.addEventListener('submit', async (ev) => {
+      ev.preventDefault();
+      const errEl = el('adminCreateUserError');
+      if (errEl) errEl.textContent = '';
+      try {
+        const email = el('adminCreateEmail')?.value?.trim() || '';
+        const displayName = el('adminCreateName')?.value?.trim() || '';
+        const password = el('adminCreatePassword')?.value || '';
+        const isAdmin = !!el('adminCreateIsAdmin')?.checked;
+        await API.post('/api/admin/users', { email, displayName, password, isAdmin });
+        el('adminCreateUserForm')?.reset();
+        toast('使用者已建立', 'success');
+        await renderAdminSettings();
+      } catch (e) {
+        if (errEl) errEl.textContent = e.message || '建立使用者失敗';
+      }
+    });
+
+    el('adminUserBody')?.addEventListener('click', async (ev) => {
+      const btn = ev.target.closest('.admin-delete-user-btn');
+      if (!btn || btn.disabled) return;
+      const userId = btn.dataset.userId;
+      const userEmail = btn.dataset.userEmail || '此使用者';
+      if (!userId) return;
+      if (!confirm(`確定要刪除 ${userEmail} 嗎？\n此操作會刪除此帳號的所有資料，且無法復原。`)) return;
+      try {
+        await API.del('/api/admin/users/' + userId);
+        toast('使用者已刪除', 'success');
+        await renderAdminSettings();
+      } catch (e) {
+        toast(e.message || '刪除使用者失敗', 'error');
+      }
+    });
+
+    adminSettingsBound = true;
   }
 
   function initGoogleLinkButton() {

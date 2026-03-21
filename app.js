@@ -419,16 +419,19 @@ const App = (() => {
   // ─── 導航 ───
   const validPages = ['dashboard', 'transactions', 'reports', 'budget', 'accounts', 'stocks', 'settings'];
   const validSettingsTabs = ['categories', 'recurring', 'export', 'account'];
+  const validStocksTabs = ['portfolio', 'transactions', 'dividends', 'realized'];
 
   function parseRoute(pathname) {
     const parts = (pathname || '/').replace(/^\/+|\/+$/g, '').split('/').filter(Boolean);
     const page = validPages.includes(parts[0]) ? parts[0] : 'dashboard';
-    const sub = (page === 'settings' && validSettingsTabs.includes(parts[1])) ? parts[1] : null;
+    let sub = null;
+    if (page === 'settings' && validSettingsTabs.includes(parts[1])) sub = parts[1];
+    else if (page === 'stocks' && validStocksTabs.includes(parts[1])) sub = parts[1];
     return { page, sub };
   }
 
   function buildPath(page, sub) {
-    if (page === 'settings' && sub) return '/' + page + '/' + sub;
+    if ((page === 'settings' || page === 'stocks') && sub) return '/' + page + '/' + sub;
     if (page === 'dashboard') return '/';
     return '/' + page;
   }
@@ -436,6 +439,8 @@ const App = (() => {
   async function navigate(page, sub, pushState = true) {
     // 若 page 是 settings 且沒指定 sub，預設 categories
     if (page === 'settings' && !sub) sub = 'categories';
+    // 若 page 是 stocks 且沒指定 sub，預設 portfolio
+    if (page === 'stocks' && !sub) sub = 'portfolio';
     currentPage = page;
 
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -451,9 +456,12 @@ const App = (() => {
 
     await renderPage(page);
 
-    // 切換設定子分頁（需在 renderSettings 完成後執行）
+    // 切換子分頁（需在 render 完成後執行）
     if (page === 'settings' && sub) {
       activateSettingsTab(sub);
+    }
+    if (page === 'stocks' && sub) {
+      activateStocksTab(sub);
     }
   }
 
@@ -465,12 +473,21 @@ const App = (() => {
     el('panel-' + tab)?.classList.add('active');
   }
 
+  function activateStocksTab(tab) {
+    document.querySelectorAll('.stock-tabs .tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.stock-panel').forEach(p => p.classList.remove('active'));
+    const tabEl = document.querySelector(`.stock-tabs .tab[data-stock-tab="${tab}"]`);
+    if (tabEl) tabEl.classList.add('active');
+    el('stockPanel-' + tab)?.classList.add('active');
+  }
+
   function bindNav() {
     document.querySelectorAll('.nav-item').forEach(item => {
       item.addEventListener('click', e => {
         e.preventDefault();
         const page = item.dataset.page;
-        navigate(page, page === 'settings' ? 'categories' : null);
+        const sub = page === 'settings' ? 'categories' : page === 'stocks' ? 'portfolio' : null;
+        navigate(page, sub);
       });
     });
     window.addEventListener('popstate', (e) => {
@@ -1146,13 +1163,11 @@ const App = (() => {
 
   async function renderStocks() {
     if (!stocksBound) {
-      // Tab 切換
+      // Tab 切換（透過路由）
       document.querySelectorAll('.stock-tabs .tab').forEach(tab => {
         tab.addEventListener('click', () => {
-          document.querySelectorAll('.stock-tabs .tab').forEach(t => t.classList.remove('active'));
-          tab.classList.add('active');
-          document.querySelectorAll('.stock-panel').forEach(p => p.classList.remove('active'));
-          el('stockPanel-' + tab.dataset.stockTab)?.classList.add('active');
+          const sub = tab.dataset.stockTab;
+          navigate('stocks', sub);
         });
       });
       // 篩選器（搜尋輸入框）

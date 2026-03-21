@@ -149,7 +149,8 @@ const authLimiter = rateLimit({
   max: 20,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { error: '登入嘗試次數過多，請 15 分鐘後再試' }
+  message: { error: '登入嘗試次數過多，請 15 分鐘後再試' },
+  validate: { xForwardedForHeader: false } // 避免反向代理環境下的驗證警告
 });
 app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/register', authLimiter);
@@ -1667,70 +1668,131 @@ app.post('/api/stock-dividends/sync', async (req, res) => {
     const stocks = queryAll("SELECT * FROM stocks WHERE user_id = ?", [req.userId]);
     if (stocks.length === 0) return res.json({ synced: 0, skipped: 0, errors: [] });
 
-    // 找出所有交易的最早日期
-    const allTxs = queryAll(
-      "SELECT date FROM stock_transactions WHERE user_id = ? ORDER BY date ASC LIMIT 1",
-      [req.userId]
-    );
-    if (allTxs.length === 0) return res.json({ synced: 0, skipped: 0, errors: [], message: '尚無交易紀錄' });
+    // 為每檔股票找出持股期間（首次買入 ~ 最後賣出清零 or 至今）
+    const symbolSet = new Set(stocks.map(s => s.symbol));
+    const stockHoldingPeriods = {};
+    stocks.forEach(s => {
+      const txs = queryAll(
+        "SELECT * FROM stock_transactions WHERE stock_id = ? AND user_id = ? ORDER BY date, created_at",
+        [s.id, req.userId]
+      );
+      if (txs.length === 0) return;
+      // 找出所有持股區間 [buyDate, sellDate]
+      const periods = [];
+      let shares = 0, periodStart = null;
+      txs.forEach(t => {
+        if (t.type === 'buy') {
+          if (shares === 0) periodStart = t.date;
+          shares += t.shares;
+        } else {
+          shares -= t.shares;
+          if (shares <= 0) {
+            if (periodStart) periods.push({ start: periodStart, end: t.date });
+            shares = 0;
+            periodStart = null;
+          }
+        }
+      });
+      // 目前仍持有中
+      if (shares > 0 && periodStart) {
+        periods.push({ start: periodStart, end: null }); // null = 至今
+      }
+      if (periods.length > 0) {
+        stockHoldingPeriods[s.symbol] = { stock: s, txs, periods };
+      }
+    });
 
-    const earliestDate = allTxs[0].date; // "2020-01-06"
-    const today = todayStr();             // "2026-03-20"
+    if (Object.keys(stockHoldingPeriods).length === 0) {
+      return res.json({ synced: 0, skipped: 0, errors: [], message: '尚無交易紀錄' });
+    }
 
-    // 按年分段查詢 TWSE 除權息資料（避免單次查詢資料量過大）
-    const startYear = parseInt(earliestDate.slice(0, 4));
-    const endYear = parseInt(today.slice(0, 4));
+    // 收集所有需要查詢的年度範圍
+    const today = todayStr();
+    let minYear = parseInt(today.slice(0, 4)), maxYear = minYear;
+    Object.values(stockHoldingPeriods).forEach(({ periods }) => {
+      periods.forEach(p => {
+        const sy = parseInt(p.start.slice(0, 4));
+        if (sy < minYear) minYear = sy;
+        if (p.end) {
+          const ey = parseInt(p.end.slice(0, 4));
+          if (ey > maxYear) maxYear = ey;
+        }
+      });
+    });
+    maxYear = Math.min(maxYear, parseInt(today.slice(0, 4)));
+
+    // 按年分段查詢 TWSE 除權息資料，每次間隔 2 秒避免被限流
+    const delay = ms => new Promise(r => setTimeout(r, ms));
     let allDividends = [];
-    for (let y = startYear; y <= endYear; y++) {
+    for (let y = minYear; y <= maxYear; y++) {
       const sd = `${y}0101`;
-      const ed = (y === endYear) ? today.replace(/-/g, '') : `${y}1231`;
+      const ed = (y === maxYear) ? today.replace(/-/g, '') : `${y}1231`;
+      console.log(`[股利同步] 查詢 TWSE 除權息 ${y} 年 (${sd}~${ed})...`);
       const divs = await fetchTwseDividendList(sd, ed);
+      console.log(`[股利同步] ${y} 年取得 ${divs.length} 筆除權息資料`);
       allDividends = allDividends.concat(divs);
+      // 避免 TWSE 限流，間隔 2 秒
+      if (y < maxYear) await delay(2000);
     }
 
     // 只保留使用者持有的股票代號
-    const symbolSet = new Set(stocks.map(s => s.symbol));
     const relevantDivs = allDividends.filter(d => symbolSet.has(d.symbol));
+
+    // 去除 API 回傳的重複項目（同一 detailKey 或同股票同日期只保留一筆）
+    const seenKeys = new Set();
+    const uniqueDivs = relevantDivs.filter(d => {
+      const key = d.detailKey || `${d.symbol},${d.date}`;
+      if (seenKeys.has(key)) return false;
+      seenKeys.add(key);
+      return true;
+    });
 
     let synced = 0, skipped = 0;
     const errors = [];
 
-    for (const div of relevantDivs) {
-      const stock = stocks.find(s => s.symbol === div.symbol);
-      if (!stock) continue;
+    for (const div of uniqueDivs) {
+      const holding = stockHoldingPeriods[div.symbol];
+      if (!holding) { skipped++; continue; }
 
-      // 檢查是否已有此日期的股利紀錄
+      const stock = holding.stock;
+
+      // 檢查除息日是否落在任一持股區間內
+      const inHoldingPeriod = holding.periods.some(p => {
+        const afterStart = div.date >= p.start;
+        const beforeEnd = p.end === null || div.date <= p.end;
+        return afterStart && beforeEnd;
+      });
+      if (!inHoldingPeriod) { skipped++; continue; }
+
+      // 檢查是否已有此日期（或同月份 TWSE 同步）的股利紀錄
+      // 避免月配息 ETF（如 00929）在同月產生多筆重複記錄
+      const divMonth = div.date.slice(0, 7); // "2026-03"
       const existing = queryOne(
-        "SELECT id FROM stock_dividends WHERE user_id = ? AND stock_id = ? AND date = ?",
-        [req.userId, stock.id, div.date]
+        "SELECT id FROM stock_dividends WHERE user_id = ? AND stock_id = ? AND (date = ? OR (date LIKE ? AND note LIKE '%TWSE自動同步%'))",
+        [req.userId, stock.id, div.date, divMonth + '%']
       );
       if (existing) { skipped++; continue; }
 
-      // 取得此日期的持股數
-      const txs = queryAll(
-        "SELECT * FROM stock_transactions WHERE stock_id = ? AND user_id = ? ORDER BY date, created_at",
-        [stock.id, req.userId]
-      );
-      const sharesHeld = calcSharesOnDate(txs, div.date);
+      // 取得此日期的持股數（根據交易紀錄累計）
+      const sharesHeld = calcSharesOnDate(holding.txs, div.date);
       if (sharesHeld <= 0) { skipped++; continue; }
 
       // 取得現金股利 / 股票股利明細
       let cashPerShare = 0, stockPer1000 = 0;
 
       if (div.type === '息') {
-        // 純現金股利：直接使用權值+息值
         cashPerShare = div.valuePerShare;
       } else {
-        // 權、權息：需要查詢 Detail API 取得分解
         const dateStr8 = div.date.replace(/-/g, '');
+        // Detail 查詢前也加延遲避免限流
+        await delay(500);
         const detail = await fetchTwseDividendDetail(div.symbol, dateStr8);
         if (detail) {
           cashPerShare = detail.cashDividendPerShare;
           stockPer1000 = detail.stockDividendPer1000;
         } else {
-          // Detail 查詢失敗，跳過「權」類型，「權息」使用權值+息值近似
           if (div.type === '權') { skipped++; errors.push(`${div.symbol} ${div.date} 無法取得除權明細`); continue; }
-          cashPerShare = div.valuePerShare; // 近似值
+          cashPerShare = div.valuePerShare;
         }
       }
 
@@ -1747,9 +1809,11 @@ app.post('/api/stock-dividends/sync', async (req, res) => {
          `TWSE自動同步（每股$${cashPerShare}${stockPer1000 > 0 ? `, 每千股配${stockPer1000}股` : ''}）`, Date.now()]
       );
       synced++;
+      console.log(`[股利同步] ${div.symbol} ${div.date} → 現金$${cashDividend}${stockDividendShares > 0 ? `, 配股${stockDividendShares}` : ''}`);
     }
 
     if (synced > 0) saveDB();
+    console.log(`[股利同步] 完成：同步 ${synced} 筆，跳過 ${skipped} 筆，錯誤 ${errors.length} 筆`);
     res.json({ synced, skipped, errors: errors.slice(0, 10) });
   } catch (e) {
     console.error('股利同步失敗:', e.message);

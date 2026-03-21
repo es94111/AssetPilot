@@ -1,6 +1,20 @@
 {
-  "currentVersion": "3.9.2",
+  "currentVersion": "3.9.3",
   "releases": [
+    {
+      "version": "3.9.3",
+      "date": "2026-03-21",
+      "title": "TWSE 股利同步強化與安全性修復",
+      "type": "improved",
+      "changes": [
+        { "tag": "improved", "text": "TWSE 除權息自動同步支援所有歷史持股期間，不再僅限當年度" },
+        { "tag": "improved", "text": "按持股區間（買入～賣出）精確判斷是否應同步該筆股利" },
+        { "tag": "fixed", "text": "修復月配息 ETF（如 00929）同月產生多筆重複股利紀錄的問題" },
+        { "tag": "fixed", "text": "修復 TWSE API 連續快速查詢被限流導致歷史年度資料取不到的問題" },
+        { "tag": "fixed", "text": "修復反向代理環境下 express-rate-limit X-Forwarded-For 驗證警告" },
+        { "tag": "improved", "text": "同步過程增加進度提示與後台日誌，方便追蹤同步狀態" }
+      ]
+    },
     {
       "version": "3.9.2",
       "date": "2026-03-20",

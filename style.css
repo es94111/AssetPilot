@@ -571,6 +571,55 @@ input, select, button, textarea { font-family: inherit; font-size: inherit; }
   gap: 12px;
 }
 
+.theme-mode-group {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.theme-mode-option {
+  position: relative;
+  cursor: pointer;
+}
+
+.theme-mode-option input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.theme-mode-option span {
+  display: inline-block;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  border-right: 1px solid var(--border);
+  transition: all .2s;
+}
+
+.theme-mode-option:last-child span {
+  border-right: none;
+}
+
+.theme-mode-option input:checked + span {
+  background: var(--primary);
+  color: #fff;
+}
+
+.theme-mode-option:hover span {
+  background: var(--bg);
+  color: var(--text);
+}
+
+.theme-mode-option input:checked + span:hover {
+  background: var(--primary);
+  color: #fff;
+}
+
 .theme-switch {
   position: relative;
   display: inline-block;

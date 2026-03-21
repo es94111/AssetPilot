@@ -603,25 +603,50 @@ const CHANGELOG_SOURCE_URL = 'https://github.com/es94111/AssetPilot/blob/main/ch
 const CHANGELOG_GITHUB_URL = CHANGELOG_SOURCE_URL
   .replace('https://github.com/', 'https://raw.githubusercontent.com/')
   .replace('/blob/', '/');
+const CHANGELOG_GITHUB_API_URL = 'https://api.github.com/repos/es94111/AssetPilot/contents/changelog.json?ref=main';
 let remoteChangelogCache = null;
 let remoteChangelogCacheTime = 0;
 const REMOTE_CHANGELOG_TTL = 30 * 60 * 1000; // 30 分鐘快取
 
-async function fetchRemoteChangelog() {
+async function fetchRemoteChangelog(forceRefresh = false) {
   const now = Date.now();
-  if (remoteChangelogCache && (now - remoteChangelogCacheTime) < REMOTE_CHANGELOG_TTL) {
+  if (!forceRefresh && remoteChangelogCache && (now - remoteChangelogCacheTime) < REMOTE_CHANGELOG_TTL) {
     return remoteChangelogCache;
   }
+
+  const saveCache = (data) => {
+    remoteChangelogCache = data;
+    remoteChangelogCacheTime = now;
+    return data;
+  };
+
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 5000);
     const resp = await fetch(CHANGELOG_GITHUB_URL, { signal: controller.signal });
     clearTimeout(timeout);
+    if (resp.ok) {
+      const data = await resp.json();
+      return saveCache(data);
+    }
+  } catch (e) {
+    // 忽略，改走 GitHub API 備援
+  }
+
+  // 備援：某些網路環境可能無法連到 raw.githubusercontent.com
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+    const resp = await fetch(CHANGELOG_GITHUB_API_URL, {
+      signal: controller.signal,
+      headers: { 'User-Agent': 'AssetPilot-Changelog-Fetcher' },
+    });
+    clearTimeout(timeout);
     if (!resp.ok) return null;
     const data = await resp.json();
-    remoteChangelogCache = data;
-    remoteChangelogCacheTime = now;
-    return data;
+    if (!data?.content) return null;
+    const jsonText = Buffer.from(String(data.content).replace(/\n/g, ''), 'base64').toString('utf8');
+    return saveCache(JSON.parse(jsonText));
   } catch (e) {
     return null;
   }
@@ -656,14 +681,20 @@ function mergeChangelogs(local, remote) {
 }
 
 app.get('/api/changelog', async (req, res) => {
+  // 避免瀏覽器或中介層快取舊版本資訊
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
+
   let local;
   try {
     local = JSON.parse(fs.readFileSync(path.join(__dirname, 'changelog.json'), 'utf8'));
   } catch (e) {
     local = { currentVersion: '0.0', releases: [] };
   }
-  // 非同步取得遠端 changelog，失敗不影響本地顯示
-  const remote = await fetchRemoteChangelog();
+  // refresh=1 可強制略過記憶體快取，立即抓取遠端最新內容
+  const forceRefresh = req.query.refresh === '1';
+  const remote = await fetchRemoteChangelog(forceRefresh);
   const merged = mergeChangelogs(local, remote);
   res.json(merged);
 });

@@ -1,6 +1,17 @@
 {
-  "currentVersion": "3.30.2",
+  "currentVersion": "3.31",
   "releases": [
+    {
+      "version": "3.31",
+      "date": "2026-03-21",
+      "title": "API 使用與授權頁",
+      "type": "feature",
+      "changes": [
+        { "tag": "new", "text": "左側選單新增「API 使用與授權」頁面，集中列出已使用之外部 API 與用途" },
+        { "tag": "new", "text": "新增全球即時匯率 API（rter.info）出處與授權區塊，明確標示 CC BY-SA 要求" },
+        { "tag": "improved", "text": "統一整理 TWSE、Google Identity Services、rter.info 等外部服務來源資訊，便於合規檢視" }
+      ]
+    },
     {
       "version": "3.30.2",
       "date": "2026-03-21",

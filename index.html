@@ -105,6 +105,9 @@
       <a href="#" class="nav-item" data-page="settings">
         <i class="fas fa-gear"></i><span>設定</span>
       </a>
+      <a href="#" class="nav-item" data-page="api-credits">
+        <i class="fas fa-circle-info"></i><span>API 使用與授權</span>
+      </a>
     </nav>
     <div class="sidebar-version" id="changelogBtn">
       <i class="fas fa-code-branch"></i>
@@ -182,6 +185,56 @@
         <div class="card full-width">
           <h3>近期交易</h3>
           <div id="dashRecentList"><p class="empty-hint">尚無交易記錄</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== API 使用與授權 ===== -->
+    <section class="page" id="page-api-credits">
+      <h2 class="page-title">API 使用與授權</h2>
+      <div class="card api-credits-card">
+        <h3>外部 API 清單</h3>
+        <p class="import-hint">本系統使用以下第三方 API 服務，請依各服務條款與授權規範使用。</p>
+        <div class="table-wrap" style="overflow:auto">
+          <table class="data-table api-credits-table">
+            <thead>
+              <tr>
+                <th>API 服務</th>
+                <th>用途</th>
+                <th>來源</th>
+                <th>授權 / 注意事項</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>全球即時匯率 API</td>
+                <td>更新各幣別對 TWD 匯率</td>
+                <td><a href="https://tw.rter.info/capi.php" target="_blank" rel="noopener noreferrer">https://tw.rter.info/capi.php</a></td>
+                <td>CC BY-SA，使用時需標示出處與授權</td>
+              </tr>
+              <tr>
+                <td>TWSE OpenAPI</td>
+                <td>股票代號查詢、股價、除權息資料</td>
+                <td><a href="https://openapi.twse.com.tw/" target="_blank" rel="noopener noreferrer">https://openapi.twse.com.tw/</a></td>
+                <td>依 TWSE OpenAPI 公告與使用規範</td>
+              </tr>
+              <tr>
+                <td>Google Identity Services</td>
+                <td>Google 單一登入（SSO）</td>
+                <td><a href="https://developers.google.com/identity" target="_blank" rel="noopener noreferrer">Google Identity Services</a></td>
+                <td>依 Google API Terms 與 OAuth 規範</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card api-credits-card" style="margin-top:16px">
+        <h3>全球即時匯率 API 出處標示</h3>
+        <div class="api-attribution-box">
+          <p>資料來源：<a href="https://tw.rter.info/capi.php" target="_blank" rel="noopener noreferrer">Realtime Exchange Rate API（rter.info）</a></p>
+          <p>授權：CC BY-SA（姓名標示-相同方式分享）</p>
+          <p>注意：使用此服務時，必須清楚標示出處與授權資訊。</p>
         </div>
       </div>
     </section>

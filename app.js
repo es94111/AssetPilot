@@ -2937,6 +2937,7 @@ const App = (() => {
       currentUser = { ...(currentUser || {}), ...user };
       el('accountEmail').textContent = user.email || '—';
       el('accountDisplayName').textContent = user.displayName || '—';
+      await renderAccountLoginLogs();
 
       const linkedEl = el('googleLinkedInfo');
       const unlinkedEl = el('googleUnlinkedInfo');
@@ -3093,6 +3094,78 @@ const App = (() => {
     }
   }
 
+  function formatLoginAt(timestamp) {
+    const t = Number(timestamp) || 0;
+    if (!(t > 0)) return '-';
+    return localDateTimeStr(t) || '-';
+  }
+
+  function formatLoginMethod(method) {
+    const m = String(method || '').trim().toLowerCase();
+    if (m === 'google') return 'Google SSO';
+    return '密碼';
+  }
+
+  async function renderAccountLoginLogs() {
+    const tbody = el('accountLoginLogBody');
+    if (!tbody) return;
+    try {
+      const result = await API.get('/api/account/login-logs');
+      const logs = Array.isArray(result?.logs) ? result.logs : [];
+      if (logs.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="empty-hint">尚無登入紀錄</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = logs.map(log => `
+        <tr>
+          <td>${escHtml(formatLoginAt(log.loginAt))}</td>
+          <td>${escHtml(log.ipAddress || 'unknown')}</td>
+          <td>${log.isAdminLogin ? '<span class="type-badge income">管理員</span>' : '<span class="type-badge">一般</span>'}</td>
+          <td>${escHtml(formatLoginMethod(log.loginMethod))}</td>
+        </tr>
+      `).join('');
+    } catch (e) {
+      tbody.innerHTML = '<tr><td colspan="4" class="empty-hint">載入登入紀錄失敗</td></tr>';
+    }
+  }
+
+  function renderAdminLoginLogTables(loginLogData) {
+    const adminTbody = el('adminLoginLogBody');
+    const allUserTbody = el('adminAllLoginLogBody');
+    if (!adminTbody || !allUserTbody) return;
+
+    const adminLogs = Array.isArray(loginLogData?.adminLogs) ? loginLogData.adminLogs : [];
+    const allUserLogs = Array.isArray(loginLogData?.allUserLogs) ? loginLogData.allUserLogs : [];
+
+    if (adminLogs.length === 0) {
+      adminTbody.innerHTML = '<tr><td colspan="3" class="empty-hint">尚無管理員登入紀錄</td></tr>';
+    } else {
+      adminTbody.innerHTML = adminLogs.map(log => `
+        <tr>
+          <td>${escHtml(formatLoginAt(log.loginAt))}</td>
+          <td>${escHtml(log.ipAddress || 'unknown')}</td>
+          <td>${escHtml(formatLoginMethod(log.loginMethod))}</td>
+        </tr>
+      `).join('');
+    }
+
+    if (allUserLogs.length === 0) {
+      allUserTbody.innerHTML = '<tr><td colspan="6" class="empty-hint">尚無使用者登入紀錄</td></tr>';
+    } else {
+      allUserTbody.innerHTML = allUserLogs.map(log => `
+        <tr>
+          <td>${escHtml(formatLoginAt(log.loginAt))}</td>
+          <td>${escHtml(log.email || '')}</td>
+          <td>${escHtml(log.displayName || '-')}</td>
+          <td>${log.isAdminLogin ? '<span class="type-badge income">管理員</span>' : '<span class="type-badge">一般</span>'}</td>
+          <td>${escHtml(log.ipAddress || 'unknown')}</td>
+          <td>${escHtml(formatLoginMethod(log.loginMethod))}</td>
+        </tr>
+      `).join('');
+    }
+  }
+
   function renderAdminUserTable(users) {
     const tbody = el('adminUserBody');
     if (!tbody) return;
@@ -3122,9 +3195,10 @@ const App = (() => {
   async function renderAdminSettings() {
     if (!currentUser?.isAdmin) return;
     try {
-      const [settings, users] = await Promise.all([
+      const [settings, users, loginLogData] = await Promise.all([
         API.get('/api/admin/settings'),
         API.get('/api/admin/users'),
+        API.get('/api/admin/login-logs'),
       ]);
 
       const toggle = el('adminPublicRegistrationToggle');
@@ -3134,6 +3208,7 @@ const App = (() => {
         ? settings.allowedRegistrationEmails.join('\n')
         : '';
       renderAdminUserTable(users);
+      renderAdminLoginLogTables(loginLogData);
     } catch (e) {
       toast(e.message || '載入管理員設定失敗', 'error');
     }

@@ -297,6 +297,18 @@ async function initDB() {
     created_at TEXT
   )`);
 
+  db.run(`CREATE TABLE IF NOT EXISTS login_audit_logs (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    email TEXT NOT NULL,
+    login_at INTEGER NOT NULL,
+    ip_address TEXT NOT NULL,
+    login_method TEXT DEFAULT 'password',
+    is_admin_login INTEGER DEFAULT 0
+  )`);
+  db.run(`CREATE INDEX IF NOT EXISTS idx_login_audit_user_time ON login_audit_logs(user_id, login_at DESC)`);
+  db.run(`CREATE INDEX IF NOT EXISTS idx_login_audit_time ON login_audit_logs(login_at DESC)`);
+
   db.run(`CREATE TABLE IF NOT EXISTS system_settings (
     id INTEGER PRIMARY KEY CHECK(id = 1),
     public_registration INTEGER DEFAULT 1,
@@ -978,11 +990,35 @@ function isUserAdmin(userId) {
   return !!row?.is_admin;
 }
 
+function getRequestIp(req) {
+  const forwardedFor = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim();
+  const rawIp = forwardedFor || req.ip || req.socket?.remoteAddress || '';
+  return rawIp ? rawIp.replace(/^::ffff:/, '') : 'unknown';
+}
+
+function recordLoginAudit(user, req, method = 'password') {
+  if (!user?.id) return;
+  db.run(
+    `INSERT INTO login_audit_logs (id, user_id, email, login_at, ip_address, login_method, is_admin_login)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    [
+      uid(),
+      user.id,
+      normalizeEmail(user.email),
+      Date.now(),
+      getRequestIp(req),
+      String(method || 'password').trim().toLowerCase(),
+      user.is_admin ? 1 : 0,
+    ]
+  );
+  saveDB();
+}
+
 function deleteUserData(userId) {
   const tables = [
     'stock_dividends', 'stock_transactions', 'stocks',
     'transactions', 'budgets', 'recurring', 'accounts', 'categories',
-    'exchange_rates', 'exchange_rate_settings', 'stock_settings'
+    'exchange_rates', 'exchange_rate_settings', 'stock_settings', 'login_audit_logs'
   ];
   tables.forEach(t => {
     db.run(`DELETE FROM ${t} WHERE user_id = ?`, [userId]);
@@ -1088,6 +1124,7 @@ app.post('/api/auth/login', async (req, res) => {
 
   // 登入成功，清除失敗記錄
   delete loginAttempts[emailLower];
+  recordLoginAudit(user, req, 'password');
 
   const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: JWT_EXPIRES });
   res.json({ token, user: { id: user.id, email: user.email, displayName: user.display_name, avatarUrl: user.avatar_url || '', themeMode: normalizeThemeMode(user.theme_mode), isAdmin: !!user.is_admin } });
@@ -1489,6 +1526,7 @@ app.post('/api/auth/google', async (req, res) => {
       }
     }
 
+    recordLoginAudit(user, req, 'google');
     const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: JWT_EXPIRES });
     res.json({
       token,
@@ -1513,6 +1551,62 @@ app.get('/api/auth/me', authMiddleware, (req, res) => {
 // 以下所有 API 路由需要驗證
 // ═══════════════════════════════════════
 app.use('/api', authMiddleware);
+
+app.get('/api/account/login-logs', (req, res) => {
+  const logs = queryAll(
+    `SELECT login_at, ip_address, login_method, is_admin_login
+     FROM login_audit_logs
+     WHERE user_id = ?
+     ORDER BY login_at DESC
+     LIMIT 100`,
+    [req.userId]
+  );
+
+  res.json({
+    logs: logs.map(l => ({
+      loginAt: Number(l.login_at) || 0,
+      ipAddress: l.ip_address || 'unknown',
+      loginMethod: l.login_method || 'password',
+      isAdminLogin: !!l.is_admin_login,
+    })),
+  });
+});
+
+app.get('/api/admin/login-logs', adminMiddleware, (req, res) => {
+  const adminLogs = queryAll(
+    `SELECT login_at, ip_address, login_method
+     FROM login_audit_logs
+     WHERE user_id = ? AND is_admin_login = 1
+     ORDER BY login_at DESC
+     LIMIT 200`,
+    [req.userId]
+  );
+
+  const allUserLogs = queryAll(
+    `SELECT l.user_id, l.email, l.login_at, l.ip_address, l.login_method, l.is_admin_login, u.display_name
+     FROM login_audit_logs l
+     LEFT JOIN users u ON u.id = l.user_id
+     ORDER BY l.login_at DESC
+     LIMIT 500`
+  );
+
+  res.json({
+    adminLogs: adminLogs.map(l => ({
+      loginAt: Number(l.login_at) || 0,
+      ipAddress: l.ip_address || 'unknown',
+      loginMethod: l.login_method || 'password',
+    })),
+    allUserLogs: allUserLogs.map(l => ({
+      userId: l.user_id,
+      email: l.email || '',
+      displayName: l.display_name || '',
+      loginAt: Number(l.login_at) || 0,
+      ipAddress: l.ip_address || 'unknown',
+      loginMethod: l.login_method || 'password',
+      isAdminLogin: !!l.is_admin_login,
+    })),
+  });
+});
 
 app.get('/api/admin/settings', adminMiddleware, (req, res) => {
   const settings = getSystemSettings();

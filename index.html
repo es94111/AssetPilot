@@ -901,6 +901,22 @@
           </div>
         </div>
         <div class="card" style="margin-top:16px">
+          <h3><i class="fas fa-clock-rotate-left" style="margin-right:8px;color:var(--primary)"></i>登入紀錄（最近 100 筆）</h3>
+          <div class="table-wrap" style="overflow:auto">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>登入時間</th>
+                  <th>IP 位址</th>
+                  <th>身份</th>
+                  <th>登入方式</th>
+                </tr>
+              </thead>
+              <tbody id="accountLoginLogBody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card" style="margin-top:16px">
           <h3><i class="fab fa-google" style="margin-right:8px;color:#4285f4"></i>Google 帳號綁定</h3>
           <p class="import-hint" style="margin-bottom:12px">綁定 Google 帳號後，可使用 Google 快速登入，無需輸入帳號密碼。</p>
           <div id="googleLinkStatus">
@@ -1022,6 +1038,41 @@
                 </tr>
               </thead>
               <tbody id="adminUserBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3><i class="fas fa-user-shield" style="margin-right:8px;color:var(--primary)"></i>管理員登入紀錄（最近 200 筆）</h3>
+          <div class="table-wrap" style="overflow:auto">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>登入時間</th>
+                  <th>IP 位址</th>
+                  <th>登入方式</th>
+                </tr>
+              </thead>
+              <tbody id="adminLoginLogBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3><i class="fas fa-list" style="margin-right:8px;color:var(--primary)"></i>全部使用者登入紀錄（最近 500 筆）</h3>
+          <div class="table-wrap" style="overflow:auto">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>登入時間</th>
+                  <th>Email</th>
+                  <th>顯示名稱</th>
+                  <th>身份</th>
+                  <th>IP 位址</th>
+                  <th>登入方式</th>
+                </tr>
+              </thead>
+              <tbody id="adminAllLoginLogBody"></tbody>
             </table>
           </div>
         </div>

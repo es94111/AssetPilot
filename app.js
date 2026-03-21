@@ -1315,6 +1315,20 @@ const App = (() => {
     cachedStocks = await API.get('/api/stocks');
   }
 
+  let showFormula = false;
+  function toggleFormula() {
+    showFormula = !showFormula;
+    const grid = el('stockPortfolioGrid');
+    const btn = el('btnToggleFormula');
+    if (showFormula) {
+      grid.classList.add('show-formula');
+      btn.classList.add('active');
+    } else {
+      grid.classList.remove('show-formula');
+      btn.classList.remove('active');
+    }
+  }
+
   function renderStockPortfolio() {
     const stocks = cachedStocks;
     let totalValue = 0, totalCost = 0, totalPL = 0, totalDiv = 0;
@@ -1372,8 +1386,7 @@ const App = (() => {
           <div class="stock-card-item"><span class="label">累計股利</span><span class="value" style="color:var(--today)">${fmt(s.totalDividend)}</span></div>
           <div class="stock-card-item"><span class="label">總報酬</span><span class="value ${totalReturn >= 0 ? 'stock-card-pl-pos' : 'stock-card-pl-neg'}">${totalReturn >= 0 ? '+' : ''}${fmt(totalReturn)}</span></div>
         </div>
-        <details class="stock-card-formula">
-          <summary><i class="fas fa-calculator"></i> 計算公式說明</summary>
+        <div class="stock-card-formula">
           <div class="formula-content">
             <div class="formula-section">
               <div class="formula-title">基本資訊</div>
@@ -1405,13 +1418,15 @@ const App = (() => {
               <div class="formula-detail">= ${plSign}${fmt(ep)} + ${rlSign}${fmt(s.realizedPL)} + ${fmt(s.totalDividend)} = <strong class="${totalReturn >= 0 ? 'stock-card-pl-pos' : 'stock-card-pl-neg'}">${totalReturn >= 0 ? '+' : ''}${fmt(totalReturn)}</strong></div>
             </div>
           </div>
-        </details>
+        </div>
         <div class="stock-card-actions">
           <button class="btn-icon" onclick="App.editStock('${s.id}')" title="編輯"><i class="fas fa-pen"></i></button>
           <button class="btn-icon danger" onclick="App.deleteStock('${s.id}')" title="刪除"><i class="fas fa-trash"></i></button>
         </div>
       </div>`;
     }).join('') || '<div class="empty-hint" style="padding:40px;text-align:center;color:var(--text-secondary)">所有股票已賣出，無持股</div>';
+    // 保留公式顯示狀態
+    if (showFormula) grid.classList.add('show-formula');
   }
 
   function populateStockFilters() {
@@ -3416,6 +3431,7 @@ const App = (() => {
     txGoPage: (p) => applyFilters(p),
     toggleTxSelect,
     // 股票
+    toggleFormula,
     openStockModal,
     editStock: openStockModal,
     deleteStock,

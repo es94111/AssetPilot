@@ -2940,6 +2940,17 @@ const App = (() => {
     if (restoreBackupBtn) restoreBackupBtn.onclick = restoreBackupFromSelection;
     const refreshBackupListBtn = el('refreshBackupListBtn');
     if (refreshBackupListBtn) refreshBackupListBtn.onclick = loadBackupList;
+    const saveBackupSettingsBtn = el('saveBackupSettingsBtn');
+    if (saveBackupSettingsBtn) saveBackupSettingsBtn.onclick = saveBackupSettings;
+    const downloadBackupBtn = el('downloadBackupBtn');
+    if (downloadBackupBtn) downloadBackupBtn.onclick = downloadSelectedBackup;
+    const uploadBackupInput = el('uploadBackupInput');
+    if (uploadBackupInput) {
+      uploadBackupInput.addEventListener('change', e => {
+        if (e.target.files && e.target.files[0]) uploadBackupFile(e.target.files[0]);
+        e.target.value = '';
+      });
+    }
     bindImport();
     loadBackupList();
   }
@@ -2972,6 +2983,8 @@ const App = (() => {
       if (hint) {
         hint.textContent = `系統每 ${settings.autoBackupIntervalHours || '-'} 小時自動備份，最多保留 ${settings.keepCount || '-'} 份。`;
       }
+      if (el('backupIntervalHours')) el('backupIntervalHours').value = Number(settings.autoBackupIntervalHours || 6);
+      if (el('backupKeepCount')) el('backupKeepCount').value = Number(settings.keepCount || 30);
 
       if (backups.length === 0) {
         select.innerHTML = '<option value="">目前沒有備份檔</option>';
@@ -2986,6 +2999,119 @@ const App = (() => {
     } catch (err) {
       select.innerHTML = '<option value="">載入失敗</option>';
       toast(err.message || '載入備份清單失敗', 'error');
+    }
+  }
+
+  async function saveBackupSettings() {
+    const interval = Number(el('backupIntervalHours')?.value || 0);
+    const keep = Number(el('backupKeepCount')?.value || 0);
+    if (!Number.isFinite(interval) || interval < 1 || interval > 168) {
+      toast('自動備份間隔需介於 1 到 168 小時', 'error');
+      return;
+    }
+    if (!Number.isFinite(keep) || keep < 3 || keep > 500) {
+      toast('最多保留份數需介於 3 到 500', 'error');
+      return;
+    }
+
+    const btn = el('saveBackupSettingsBtn');
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 儲存中...';
+    }
+    try {
+      await API.put('/api/system/backups/settings', {
+        autoBackupIntervalHours: interval,
+        keepCount: keep,
+      });
+      await loadBackupList();
+      toast('備份設定已更新', 'success');
+    } catch (err) {
+      toast(err.message || '備份設定更新失敗', 'error');
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-save"></i> 儲存備份設定';
+      }
+    }
+  }
+
+  async function downloadSelectedBackup() {
+    const fileName = el('backupSelect')?.value || '';
+    if (!fileName) {
+      toast('請先選擇要下載的備份檔', 'error');
+      return;
+    }
+
+    const btn = el('downloadBackupBtn');
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 下載中...';
+    }
+    try {
+      const resp = await fetch(`/api/system/backups/download/${encodeURIComponent(fileName)}`, {
+        headers: authHeaders(),
+      });
+      if (!resp.ok) {
+        let message = '下載備份失敗';
+        try {
+          const data = await resp.json();
+          if (data?.error) message = data.error;
+        } catch (e) { /* ignore */ }
+        throw new Error(message);
+      }
+
+      const blob = await resp.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast('備份檔已下載', 'success');
+    } catch (err) {
+      toast(err.message || '下載備份失敗', 'error');
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-download"></i> 下載備份';
+      }
+    }
+  }
+
+  async function uploadBackupFile(file) {
+    const resultEl = el('backupResult');
+    if (!file) return;
+
+    try {
+      const base64 = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const text = String(reader.result || '');
+          const part = text.split(',')[1] || '';
+          resolve(part);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
+      const data = await API.post('/api/system/backups/upload', {
+        fileName: file.name,
+        fileContentBase64: base64,
+      });
+
+      if (resultEl) {
+        resultEl.style.display = 'block';
+        resultEl.innerHTML = `<div class="import-result-success"><i class="fas fa-circle-check"></i> 上傳完成：<strong>${escHtml(data?.backup?.fileName || file.name)}</strong></div>`;
+      }
+      await loadBackupList();
+      toast('備份檔上傳完成', 'success');
+    } catch (err) {
+      if (resultEl) {
+        resultEl.style.display = 'block';
+        resultEl.innerHTML = `<div class="import-result-errors">${escHtml(err.message || '上傳備份失敗')}</div>`;
+      }
+      toast(err.message || '上傳備份失敗', 'error');
     }
   }
 

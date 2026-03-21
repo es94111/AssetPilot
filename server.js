@@ -35,8 +35,10 @@ const JWT_EXPIRES = process.env.JWT_EXPIRES || '7d';
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || '';
 const BACKUP_DIR = process.env.BACKUP_DIR || path.join(path.dirname(DB_PATH), 'backups');
-const AUTO_BACKUP_INTERVAL_HOURS = Math.max(1, parseInt(process.env.AUTO_BACKUP_INTERVAL_HOURS || '6', 10) || 6);
-const AUTO_BACKUP_KEEP = Math.max(3, parseInt(process.env.AUTO_BACKUP_KEEP || '30', 10) || 30);
+const DEFAULT_AUTO_BACKUP_INTERVAL_HOURS = Math.max(1, parseInt(process.env.AUTO_BACKUP_INTERVAL_HOURS || '6', 10) || 6);
+const DEFAULT_AUTO_BACKUP_KEEP = Math.max(3, parseInt(process.env.AUTO_BACKUP_KEEP || '30', 10) || 30);
+let autoBackupIntervalHours = DEFAULT_AUTO_BACKUP_INTERVAL_HOURS;
+let autoBackupKeep = DEFAULT_AUTO_BACKUP_KEEP;
 
 // ─── 自動產生密鑰（僅首次啟動時） ───
 function generateSecret(length = 64) {
@@ -389,6 +391,12 @@ async function initDB() {
     updated_at INTEGER
   )`);
 
+  db.run(`CREATE TABLE IF NOT EXISTS system_settings (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL,
+    updated_at INTEGER
+  )`);
+
   // ─── 日期格式遷移：統一為 YYYY-MM-DD ───
   const dateTables = [
     { table: 'transactions', col: 'date' },
@@ -412,6 +420,7 @@ async function initDB() {
   });
 
   saveDB();
+  loadBackupSettingsFromDB();
   console.log('資料庫初始化完成');
 }
 
@@ -546,8 +555,8 @@ function listBackupFiles() {
 
 function cleanupOldBackups() {
   const files = listBackupFiles();
-  if (files.length <= AUTO_BACKUP_KEEP) return;
-  files.slice(AUTO_BACKUP_KEEP).forEach(f => {
+  if (files.length <= autoBackupKeep) return;
+  files.slice(autoBackupKeep).forEach(f => {
     try {
       fs.unlinkSync(path.join(BACKUP_DIR, f.fileName));
     } catch (e) {
@@ -582,8 +591,38 @@ function startAutoBackupScheduler() {
     } catch (e) {
       console.error('[備份] 自動備份失敗:', e.message);
     }
-  }, AUTO_BACKUP_INTERVAL_HOURS * 60 * 60 * 1000);
-  console.log(`[備份] 自動備份已啟用：每 ${AUTO_BACKUP_INTERVAL_HOURS} 小時執行，最多保留 ${AUTO_BACKUP_KEEP} 份`);
+  }, autoBackupIntervalHours * 60 * 60 * 1000);
+  console.log(`[備份] 自動備份已啟用：每 ${autoBackupIntervalHours} 小時執行，最多保留 ${autoBackupKeep} 份`);
+}
+
+function getSettingValue(key, fallbackValue) {
+  const row = queryOne('SELECT value FROM system_settings WHERE key = ?', [key]);
+  if (!row) return fallbackValue;
+  return row.value;
+}
+
+function setSettingValue(key, value) {
+  db.run(
+    'INSERT OR REPLACE INTO system_settings (key, value, updated_at) VALUES (?, ?, ?)',
+    [key, String(value), Date.now()]
+  );
+}
+
+function loadBackupSettingsFromDB() {
+  const intervalVal = Number(getSettingValue('auto_backup_interval_hours', DEFAULT_AUTO_BACKUP_INTERVAL_HOURS));
+  const keepVal = Number(getSettingValue('auto_backup_keep', DEFAULT_AUTO_BACKUP_KEEP));
+  autoBackupIntervalHours = Number.isFinite(intervalVal) ? Math.max(1, Math.min(168, Math.round(intervalVal))) : DEFAULT_AUTO_BACKUP_INTERVAL_HOURS;
+  autoBackupKeep = Number.isFinite(keepVal) ? Math.max(3, Math.min(500, Math.round(keepVal))) : DEFAULT_AUTO_BACKUP_KEEP;
+}
+
+function saveBackupSettings(intervalHours, keepCount) {
+  autoBackupIntervalHours = Math.max(1, Math.min(168, Math.round(Number(intervalHours) || DEFAULT_AUTO_BACKUP_INTERVAL_HOURS)));
+  autoBackupKeep = Math.max(3, Math.min(500, Math.round(Number(keepCount) || DEFAULT_AUTO_BACKUP_KEEP)));
+  setSettingValue('auto_backup_interval_hours', autoBackupIntervalHours);
+  setSettingValue('auto_backup_keep', autoBackupKeep);
+  saveDB();
+  cleanupOldBackups();
+  startAutoBackupScheduler();
 }
 
 function resolveBackupPath(fileName) {
@@ -1312,8 +1351,28 @@ app.get('/api/system/backups', (req, res) => {
   res.json({
     backups,
     settings: {
-      autoBackupIntervalHours: AUTO_BACKUP_INTERVAL_HOURS,
-      keepCount: AUTO_BACKUP_KEEP,
+      autoBackupIntervalHours: autoBackupIntervalHours,
+      keepCount: autoBackupKeep,
+      backupDir: BACKUP_DIR,
+    },
+  });
+});
+
+app.put('/api/system/backups/settings', (req, res) => {
+  const intervalHours = Number(req.body?.autoBackupIntervalHours);
+  const keepCount = Number(req.body?.keepCount);
+  if (!Number.isFinite(intervalHours) || intervalHours < 1 || intervalHours > 168) {
+    return res.status(400).json({ error: '自動備份時間需介於 1 到 168 小時' });
+  }
+  if (!Number.isFinite(keepCount) || keepCount < 3 || keepCount > 500) {
+    return res.status(400).json({ error: '保留份數需介於 3 到 500 份' });
+  }
+  saveBackupSettings(intervalHours, keepCount);
+  res.json({
+    success: true,
+    settings: {
+      autoBackupIntervalHours: autoBackupIntervalHours,
+      keepCount: autoBackupKeep,
       backupDir: BACKUP_DIR,
     },
   });
@@ -1325,6 +1384,50 @@ app.post('/api/system/backups/run', (req, res) => {
     res.json({ success: true, backup: result });
   } catch (e) {
     res.status(500).json({ error: e.message || '建立備份失敗' });
+  }
+});
+
+app.get('/api/system/backups/download/:fileName', (req, res) => {
+  try {
+    const backupPath = resolveBackupPath(req.params.fileName);
+    res.download(backupPath, path.basename(backupPath));
+  } catch (e) {
+    res.status(400).json({ error: e.message || '下載備份失敗' });
+  }
+});
+
+app.post('/api/system/backups/upload', (req, res) => {
+  const fileNameInput = String(req.body?.fileName || '').trim();
+  const base64 = String(req.body?.fileContentBase64 || '').trim();
+  if (!base64) return res.status(400).json({ error: '缺少上傳檔案內容' });
+
+  try {
+    ensureBackupDir();
+    const fileBuffer = Buffer.from(base64, 'base64');
+    if (!fileBuffer || fileBuffer.length < 64) {
+      return res.status(400).json({ error: '上傳檔案內容不正確或檔案過小' });
+    }
+
+    let finalName = path.basename(fileNameInput || '');
+    if (!/^assetpilot-backup-\d{8}-\d{6}\.db$/.test(finalName)) {
+      finalName = `assetpilot-backup-${backupTimestamp()}.db`;
+    }
+    const outPath = path.join(BACKUP_DIR, finalName);
+    fs.writeFileSync(outPath, fileBuffer);
+    cleanupOldBackups();
+
+    const stat = fs.statSync(outPath);
+    res.json({
+      success: true,
+      backup: {
+        fileName: finalName,
+        size: stat.size,
+        createdAt: stat.mtime.toISOString(),
+        trigger: 'upload',
+      }
+    });
+  } catch (e) {
+    res.status(500).json({ error: e.message || '上傳備份失敗' });
   }
 });
 

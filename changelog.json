@@ -1,6 +1,17 @@
 {
-  "currentVersion": "3.24",
+  "currentVersion": "3.25",
   "releases": [
+    {
+      "version": "3.25",
+      "date": "2026-03-21",
+      "title": "版本更新資訊深色模式可讀性修正",
+      "type": "fixed",
+      "changes": [
+        { "tag": "fixed", "text": "修正深色模式下「版本更新資訊」彈窗最新版本卡片文字對比不足問題" },
+        { "tag": "improved", "text": "為最新版本標頭、當前版本區塊與更新提示橫幅新增 dark-mode 專屬配色" },
+        { "tag": "fixed", "text": "修正多處使用未定義文字變數導致色彩繼承不穩定，統一改用主題文字變數" }
+      ]
+    },
     {
       "version": "3.24",
       "date": "2026-03-21",

@@ -1,6 +1,17 @@
 {
-  "currentVersion": "3.34",
+  "currentVersion": "3.34.1",
   "releases": [
+    {
+      "version": "3.34.1",
+      "date": "2026-03-21",
+      "title": "安全性加固（OAuth state、XSS、防護策略）",
+      "type": "fixed",
+      "changes": [
+        { "tag": "fixed", "text": "Google SSO Authorization Code Flow 新增 state 一次性驗證，防止登入流程被重放或跨站偽造" },
+        { "tag": "fixed", "text": "帳戶 icon 新增前後端白名單驗證與既有資料清理，降低屬性注入造成的 XSS 風險" },
+        { "tag": "improved", "text": "CSP 收斂：移除 inline script 允許，改以 script-src-attr 保留既有事件屬性相容性" }
+      ]
+    },
     {
       "version": "3.34",
       "date": "2026-03-21",

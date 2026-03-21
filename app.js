@@ -165,6 +165,11 @@ const App = (() => {
     return /^[A-Z]{3}$/.test(c) ? c : 'TWD';
   }
 
+  function normalizeAccountIcon(icon) {
+    const value = String(icon || '').trim().toLowerCase();
+    return /^fa-[a-z0-9-]{1,40}$/.test(value) ? value : 'fa-wallet';
+  }
+
   function fmtByCurrency(n, currencyCode) {
     const c = normalizeCurrencyCode(currencyCode);
     return `${c} ${Number(n || 0).toLocaleString('zh-TW', { maximumFractionDigits: 2 })}`;
@@ -439,6 +444,26 @@ const App = (() => {
   // ─── Google SSO ───
   let googleClientId = null;
   let googleAuthInProgress = false;
+  const GOOGLE_OAUTH_STATE_KEY = 'googleOAuthState';
+
+  async function requestGoogleOAuthState() {
+    const r = await fetch('/api/auth/google/state', { cache: 'no-store' });
+    const data = await r.json();
+    if (!r.ok || !data?.state) {
+      throw new Error(data?.error || '無法取得 Google 登入狀態');
+    }
+    return String(data.state);
+  }
+
+  function storeGoogleOAuthState(state) {
+    sessionStorage.setItem(GOOGLE_OAUTH_STATE_KEY, state);
+  }
+
+  function consumeGoogleOAuthState() {
+    const state = sessionStorage.getItem(GOOGLE_OAUTH_STATE_KEY) || '';
+    sessionStorage.removeItem(GOOGLE_OAUTH_STATE_KEY);
+    return state;
+  }
 
   function setGoogleAuthInProgress(inProgress) {
     googleAuthInProgress = inProgress;
@@ -501,14 +526,21 @@ const App = (() => {
     try {
       const params = new URLSearchParams(window.location.search || '');
       const code = params.get('code');
+      const state = params.get('state');
       if (!code) return false;
+
+      const expectedState = consumeGoogleOAuthState();
+      if (!state || !expectedState || state !== expectedState) {
+        throw new Error('Google 登入狀態驗證失敗，請重新登入');
+      }
 
       history.replaceState({}, document.title, location.pathname + location.hash);
       setGoogleAuthInProgress(true);
-      await handleGoogleCode(code, location.origin + '/');
+      await handleGoogleCode(code, location.origin + '/', state);
       return true;
     } catch (e) {
       console.warn('處理 Google URL 授權碼失敗:', e);
+      el('loginError').textContent = e.message || 'Google 登入失敗';
       setGoogleAuthInProgress(false);
       return false;
     }
@@ -519,55 +551,70 @@ const App = (() => {
     if (!googleClientId) { toast('Google SSO 未設定', 'error'); return; }
     if (!googleUseCodeFlow) { toast('Google SSO 需設定 Client Secret 才能使用', 'error'); return; }
     if (googleAuthInProgress) return;
-    setGoogleAuthInProgress(true);
     const redirectUri = location.origin + '/';
 
-    // 強制只使用 GIS Code Client，並改用 redirect 模式避免 popup 回呼在部分瀏覽器失效。
-    if (window.google?.accounts?.oauth2) {
+    const startGoogleRedirect = async () => {
+      setGoogleAuthInProgress(true);
+      let oauthState = '';
       try {
-        const codeClient = google.accounts.oauth2.initCodeClient({
-          client_id: googleClientId,
-          scope: 'openid email profile',
-          ux_mode: 'redirect',
-          redirect_uri: redirectUri,
-          select_account: true,
-          callback: () => {},
-          error_callback: (err) => {
-            const errType = err?.type || 'unknown_error';
-            console.warn('GIS Code Client 錯誤:', errType, err);
-            setGoogleAuthInProgress(false);
-            const elapsedMs = 0;
-            const msg = getGooglePopupErrorMessage(errType, elapsedMs);
-            el('loginError').textContent = msg;
-            const level = errType === 'popup_failed_to_open' ? 'error' : 'info';
-            toast('Google 登入狀態（' + errType + '）：' + msg, level);
-          },
-        });
-        el('loginError').textContent = '正在前往 Google 授權頁面...';
-        codeClient.requestCode();
-        return;
+        oauthState = await requestGoogleOAuthState();
+        storeGoogleOAuthState(oauthState);
       } catch (e) {
-        console.warn('GIS Code Client 啟動失敗:', e);
         setGoogleAuthInProgress(false);
-        el('loginError').textContent = 'Google 登入元件初始化失敗，請稍後再試';
-        toast('Google 登入失敗：GIS 初始化失敗', 'error');
+        const msg = e?.message || '無法啟動 Google 登入';
+        el('loginError').textContent = msg;
+        toast(msg, 'error');
         return;
       }
-    }
 
-    setGoogleAuthInProgress(false);
-    el('loginError').textContent = 'Google 登入元件未載入，請檢查網路或重新整理頁面';
-    toast('Google 登入失敗：GIS SDK 未載入', 'error');
+      if (window.google?.accounts?.oauth2) {
+        try {
+          const codeClient = google.accounts.oauth2.initCodeClient({
+            client_id: googleClientId,
+            scope: 'openid email profile',
+            ux_mode: 'redirect',
+            redirect_uri: redirectUri,
+            select_account: true,
+            callback: () => {},
+            error_callback: (err) => {
+              const errType = err?.type || 'unknown_error';
+              console.warn('GIS Code Client 錯誤:', errType, err);
+              setGoogleAuthInProgress(false);
+              const elapsedMs = 0;
+              const msg = getGooglePopupErrorMessage(errType, elapsedMs);
+              el('loginError').textContent = msg;
+              const level = errType === 'popup_failed_to_open' ? 'error' : 'info';
+              toast('Google 登入狀態（' + errType + '）：' + msg, level);
+            },
+          });
+          el('loginError').textContent = '正在前往 Google 授權頁面...';
+          codeClient.requestCode({ state: oauthState });
+          return;
+        } catch (e) {
+          console.warn('GIS Code Client 啟動失敗:', e);
+          setGoogleAuthInProgress(false);
+          el('loginError').textContent = 'Google 登入元件初始化失敗，請稍後再試';
+          toast('Google 登入失敗：GIS 初始化失敗', 'error');
+          return;
+        }
+      }
+
+      setGoogleAuthInProgress(false);
+      el('loginError').textContent = 'Google 登入元件未載入，請檢查網路或重新整理頁面';
+      toast('Google 登入失敗：GIS SDK 未載入', 'error');
+    };
+
+    startGoogleRedirect();
   }
 
   // Code Flow：將授權碼送到後端交換 token
-  async function handleGoogleCode(code, redirectUri) {
+  async function handleGoogleCode(code, redirectUri, state) {
     el('loginError').textContent = '';
     try {
       const r = await fetch('/api/auth/google', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code, redirect_uri: redirectUri }),
+        body: JSON.stringify({ code, redirect_uri: redirectUri, state }),
       });
       const data = await r.json();
       if (!r.ok) throw new Error(data.error || 'Google 登入失敗');
@@ -1406,8 +1453,9 @@ const App = (() => {
     grid.innerHTML = accounts.map(a => {
       totalAssets += a.balance;
       const currency = normalizeCurrencyCode(a.currency);
+      const safeIcon = normalizeAccountIcon(a.icon);
       return `<div class="account-card">
-        <div class="card-icon"><i class="fas ${a.icon || 'fa-wallet'}"></i></div>
+        <div class="card-icon"><i class="fas ${safeIcon}"></i></div>
         <div class="account-card-info">
           <div class="account-card-name">${escHtml(a.name)} <span class="tx-original-amount">(${currency})</span></div>
           <div class="account-card-balance">${fmtByCurrency(a.balance, currency)}</div>
@@ -3877,7 +3925,7 @@ const App = (() => {
       el('modalAccountTitle').textContent = '編輯帳戶';
       el('accName').value = a.name;
       el('accBalance').value = a.initial_balance ?? a.initialBalance ?? 0;
-      el('accIcon').value = a.icon || 'fa-wallet';
+      el('accIcon').value = normalizeAccountIcon(a.icon);
       el('accCurrency').value = normalizeCurrencyCode(a.currency);
     } else {
       el('accId').value = '';
@@ -4061,7 +4109,7 @@ const App = (() => {
       const id = el('accId').value;
       const name = el('accName').value.trim();
       const initialBalance = Number(el('accBalance').value) || 0;
-      const icon = el('accIcon').value;
+      const icon = normalizeAccountIcon(el('accIcon').value);
       const currency = normalizeCurrencyCode(el('accCurrency').value);
       if (!name) return;
 

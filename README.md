@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-3.34-blue" alt="version">
+  <img src="https://img.shields.io/badge/version-3.34.1-blue" alt="version">
   <img src="https://img.shields.io/badge/node-%3E%3D18-green" alt="node">
   <img src="https://img.shields.io/badge/license-MIT-orange" alt="license">
   <img src="https://img.shields.io/badge/docker-ready-2496ED" alt="docker">
@@ -143,6 +143,7 @@ node server.js
 | `JWT_EXPIRES`       | JWT 有效期限                           | `7d`                    |
 | `DB_ENCRYPTION_KEY` | 資料庫加密金鑰（ChaCha20-Poly1305）    | 首次啟動自動產生          |
 | `GOOGLE_CLIENT_ID`  | Google OAuth Client ID（留空停用 SSO） | —                        |
+| `GOOGLE_CLIENT_SECRET` | Google OAuth Client Secret（Code Flow 必填） | —                   |
 | `ALLOWED_ORIGINS`   | CORS 白名單（逗號分隔）                | —（不限制）              |
 | `DB_PATH`           | 資料庫檔案路徑                         | `/app/data/database.db` |
 | `ENV_PATH`          | 自動產生的 .env 檔案路徑               | `/app/data/.env`        |
@@ -396,8 +397,12 @@ your-domain.com {
 2. 設定「已授權的 JavaScript 來源」：
    - 本機開發：`http://localhost:3000`
    - 正式網域：`https://your-domain.com`
-3. 將 Client ID 設為環境變數 `GOOGLE_CLIENT_ID`
-4. 未設定時 Google 登入按鈕自動隱藏，不影響帳號密碼登入
+3. 設定「已授權的重新導向 URI」：
+  - 本機開發：`http://localhost:3000/`
+  - 正式網域：`https://your-domain.com/`
+4. 將 `GOOGLE_CLIENT_ID` 與 `GOOGLE_CLIENT_SECRET` 設為環境變數
+5. 系統使用 OAuth Authorization Code Flow，登入流程含 state 一次性驗證防重放
+6. 未設定時 Google 登入按鈕自動隱藏，不影響帳號密碼登入
 
 ---
 
@@ -424,8 +429,10 @@ your-domain.com {
 ## 安全性
 
 - **XSS 防護** — 所有使用者輸入經 `escHtml()` 跳脫
+- **屬性注入防護** — 帳戶 icon 欄位採前後端白名單驗證（僅允許 `fa-*`）
 - **安全標頭** — Helmet（HSTS、X-Content-Type-Options、Referrer-Policy）
-- **CSP 保護** — 啟用 Content Security Policy，限制腳本與外部資源來源
+- **CSP 保護** — 已收斂為禁止 inline script，限制腳本與外部資源來源
+- **OAuth state 驗證** — Google 授權碼登入使用一次性 state，降低登入 CSRF/重放風險
 - **速率限制** — 登入/註冊 API 限制每 IP 每 15 分鐘 20 次
 - **CORS 控制** — 可透過 `ALLOWED_ORIGINS` 限制來源
 - **最小暴露面** — 僅白名單前端檔案可靜態存取，不再公開整個專案根目錄

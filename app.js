@@ -1413,7 +1413,7 @@ const App = (() => {
     const btn = el('syncDividendsBtn');
     const origText = btn.innerHTML;
     btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 同步中...';
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 同步中（查詢歷史除權息資料，可能需要數十秒）...';
     try {
       const result = await API.post('/api/stock-dividends/sync', {});
       if (result.synced > 0) {

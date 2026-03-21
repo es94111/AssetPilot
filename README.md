@@ -34,14 +34,14 @@
 
 ## 技術架構
 
-| 層級 | 技術 |
-|------|------|
-| 前端 | 原生 HTML / CSS / JavaScript（SPA） |
-| 後端 | Node.js + Express |
-| 資料庫 | SQLite（sql.js，記憶體 + 檔案持久化） |
-| 認證 | JWT + bcryptjs，Google SSO（選配） |
-| 圖表 | Chart.js |
-| 安全 | Helmet、express-rate-limit、SRI、CORS 白名單 |
+| 層級   | 技術                                         |
+| ------ | -------------------------------------------- |
+| 前端   | 原生 HTML / CSS / JavaScript（SPA）          |
+| 後端   | Node.js + Express                            |
+| 資料庫 | SQLite（sql.js，記憶體 + 檔案持久化）        |
+| 認證   | JWT + bcryptjs，Google SSO（選配）           |
+| 圖表   | Chart.js                                     |
+| 安全   | Helmet、express-rate-limit、SRI、CORS 白名單 |
 
 ---
 
@@ -103,38 +103,38 @@ node server.js
 
 ### 映像檔資訊
 
-| 項目 | 值 |
-|------|-----|
-| Docker Hub | [`es94111/assetpilot`](https://hub.docker.com/r/es94111/assetpilot) |
-| 支援架構 | `linux/amd64`、`linux/arm64` |
-| 基底映像檔 | `node:20-alpine` |
-| 映像大小 | ~180MB |
-| 內建健康檢查 | ✅ 每 30 秒自動檢測 |
+| 項目         | 值                                                                 |
+| ------------ | ------------------------------------------------------------------ |
+| Docker Hub   | [`es94111/assetpilot`](https://hub.docker.com/r/es94111/assetpilot) |
+| 支援架構     | `linux/amd64`、`linux/arm64`                                   |
+| 基底映像檔   | `node:20-alpine`                                                 |
+| 映像大小     | ~180MB                                                             |
+| 內建健康檢查 | ✅ 每 30 秒自動檢測                                                |
 
 ### 自動化機制
 
 首次啟動容器時，系統會自動完成以下設定：
 
-| 項目 | 說明 |
-|------|------|
-| **Volume** | Dockerfile 內建 `VOLUME /app/data`，即使不指定 `-v`，Docker 也會自動建立匿名 Volume |
-| **JWT 金鑰** | 未設定 `JWT_SECRET` 時，自動產生 64 字元隨機金鑰並寫入 `/app/data/.env` |
-| **資料庫加密金鑰** | 未設定 `DB_ENCRYPTION_KEY` 時，自動產生 64 字元隨機金鑰並寫入 `/app/data/.env` |
-| **資料庫** | 自動建立 `/app/data/database.db`，含加密保護 |
-| **預設資料** | 新使用者註冊時自動建立預設分類和帳戶 |
+| 項目                     | 說明                                                                                    |
+| ------------------------ | --------------------------------------------------------------------------------------- |
+| **Volume**         | Dockerfile 內建 `VOLUME /app/data`，即使不指定 `-v`，Docker 也會自動建立匿名 Volume |
+| **JWT 金鑰**       | 未設定 `JWT_SECRET` 時，自動產生 64 字元隨機金鑰並寫入 `/app/data/.env`             |
+| **資料庫加密金鑰** | 未設定 `DB_ENCRYPTION_KEY` 時，自動產生 64 字元隨機金鑰並寫入 `/app/data/.env`      |
+| **資料庫**         | 自動建立 `/app/data/database.db`，含加密保護                                          |
+| **預設資料**       | 新使用者註冊時自動建立預設分類和帳戶                                                    |
 
 ### 環境變數
 
-| 變數 | 說明 | 預設值 |
-|------|------|--------|
-| `PORT` | 伺服器埠號 | `3000` |
-| `JWT_SECRET` | JWT 簽章金鑰 | 首次啟動自動產生 |
-| `JWT_EXPIRES` | JWT 有效期限 | `7d` |
-| `DB_ENCRYPTION_KEY` | 資料庫加密金鑰（ChaCha20-Poly1305） | 首次啟動自動產生 |
-| `GOOGLE_CLIENT_ID` | Google OAuth Client ID（留空停用 SSO） | — |
-| `ALLOWED_ORIGINS` | CORS 白名單（逗號分隔） | —（不限制） |
-| `DB_PATH` | 資料庫檔案路徑 | `/app/data/database.db` |
-| `ENV_PATH` | 自動產生的 .env 檔案路徑 | `/app/data/.env` |
+| 變數                  | 說明                                   | 預設值                    |
+| --------------------- | -------------------------------------- | ------------------------- |
+| `PORT`              | 伺服器埠號                             | `3000`                  |
+| `JWT_SECRET`        | JWT 簽章金鑰                           | 首次啟動自動產生          |
+| `JWT_EXPIRES`       | JWT 有效期限                           | `7d`                    |
+| `DB_ENCRYPTION_KEY` | 資料庫加密金鑰（ChaCha20-Poly1305）    | 首次啟動自動產生          |
+| `GOOGLE_CLIENT_ID`  | Google OAuth Client ID（留空停用 SSO） | —                        |
+| `ALLOWED_ORIGINS`   | CORS 白名單（逗號分隔）                | —（不限制）              |
+| `DB_PATH`           | 資料庫檔案路徑                         | `/app/data/database.db` |
+| `ENV_PATH`          | 自動產生的 .env 檔案路徑               | `/app/data/.env`        |
 
 設定環境變數的方式：
 
@@ -282,14 +282,14 @@ sudo docker run -d \
 1. 至 DSM **控制台** → **登入入口** → **進階** → **反向代理**
 2. 新增規則：
 
-| 欄位 | 值 |
-|------|-----|
-| 來源通訊協定 | HTTPS |
-| 來源主機名稱 | `your-domain.com` |
-| 來源連接埠 | 443 |
-| 目的地通訊協定 | HTTP |
-| 目的地主機名稱 | `localhost` |
-| 目的地連接埠 | `3000` |
+| 欄位           | 值                  |
+| -------------- | ------------------- |
+| 來源通訊協定   | HTTPS               |
+| 來源主機名稱   | `your-domain.com` |
+| 來源連接埠     | 443                 |
+| 目的地通訊協定 | HTTP                |
+| 目的地主機名稱 | `localhost`       |
+| 目的地連接埠   | `3000`            |
 
 3. 自訂標題 → 新增 `X-Forwarded-For`：`$proxy_add_x_forwarded_for`
 
@@ -365,24 +365,6 @@ your-domain.com {
    - 正式網域：`https://your-domain.com`
 3. 將 Client ID 設為環境變數 `GOOGLE_CLIENT_ID`
 4. 未設定時 Google 登入按鈕自動隱藏，不影響帳號密碼登入
-
----
-
-## CI/CD 自動部署
-
-本專案透過 GitHub Actions 自動建置並推送 Docker 映像檔：
-
-- **觸發條件**：推送到 `main` 分支，或建立 `v*` 標籤
-- **建置平台**：`linux/amd64` + `linux/arm64`
-- **推送目標**：Docker Hub（`es94111/assetpilot`）+ GitHub Container Registry（`ghcr.io`）
-- **標籤策略**：`latest`（main 分支）、版本號（Git tag）、Git SHA
-
-需在 GitHub 倉庫設定 Secrets：
-
-| Secret | 說明 |
-|--------|------|
-| `DOCKERHUB_USERNAME` | Docker Hub 帳號（`es94111`） |
-| `DOCKERHUB_TOKEN` | [Docker Hub Access Token](https://hub.docker.com/settings/security) |
 
 ---
 

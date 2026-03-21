@@ -751,7 +751,12 @@ const App = (() => {
     window.addEventListener('popstate', (e) => {
       if (!currentUser) {
         const path = (location.pathname || '/').replace(/\/+$/, '') || '/';
-        if (path === '/login') showLoginPage(false);
+        const isAppPath = path === '/dashboard' || path === '/finance'
+          || path.startsWith('/finance/') || path === '/transactions' || path === '/reports'
+          || path === '/budget' || path === '/accounts' || path === '/stocks'
+          || path.startsWith('/stocks/') || path === '/settings' || path.startsWith('/settings/')
+          || path === '/api-credits';
+        if (path === '/login' || isAppPath) showLoginPage(false);
         else showPublicHome(false);
         return;
       }

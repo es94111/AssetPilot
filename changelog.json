@@ -1,6 +1,17 @@
 {
-  "currentVersion": "3.16",
+  "currentVersion": "3.16.1",
   "releases": [
+    {
+      "version": "3.16.1",
+      "date": "2026-03-21",
+      "title": "系統訊息手動更新與更新時間",
+      "type": "improved",
+      "changes": [
+        { "tag": "new", "text": "系統訊息面板新增「手動更新」按鈕，可立即刷新系統訊息狀態" },
+        { "tag": "new", "text": "新增「上次更新」時間顯示，清楚知道最後更新時刻" },
+        { "tag": "improved", "text": "系統訊息每 30 秒自動更新一次時間與狀態" }
+      ]
+    },
     {
       "version": "3.16",
       "date": "2026-03-21",

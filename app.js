@@ -202,6 +202,7 @@ const App = (() => {
   // ─── 初始化 ───
   async function init() {
     bindSystemCapture();
+    refreshSystemMessages(false);
     bindNav();
     bindForms();
     bindFilters();
@@ -499,6 +500,8 @@ const App = (() => {
   // ─── 系統訊息 ───
   let systemMessages = [];
   let systemCaptureBound = false;
+  let systemLastRefreshAt = null;
+  let systemAutoRefreshTimer = null;
 
   function formatSystemTime(ts) {
     try { return new Date(ts).toLocaleString('zh-TW', { hour12: false }); }
@@ -513,6 +516,23 @@ const App = (() => {
     systemMessages.unshift({ ts: Date.now(), level: level || 'info', text: String(text || ''), source });
     if (systemMessages.length > 300) systemMessages.length = 300;
     if (currentPage === 'settings') renderSystemMessages();
+  }
+
+  function updateSystemRefreshTimeView() {
+    const t = el('systemLastRefreshTime');
+    if (!t) return;
+    const label = systemLastRefreshAt ? formatSystemTime(systemLastRefreshAt) : '尚未更新';
+    t.textContent = `上次更新：${label}`;
+  }
+
+  function refreshSystemMessages(manual = false) {
+    systemLastRefreshAt = Date.now();
+    updateSystemRefreshTimeView();
+    if (currentPage === 'settings') renderSystemMessages();
+    if (manual) {
+      addSystemMessage('info', `已手動更新（頁面：${location.pathname}；網路：${navigator.onLine ? '連線中' : '離線'}）`, '系統狀態');
+      toast('系統訊息已更新', 'success');
+    }
   }
 
   function clearSystemMessages() {
@@ -559,6 +579,12 @@ const App = (() => {
       const msg = typeof reason === 'string' ? reason : (reason?.message || JSON.stringify(reason || 'Promise 錯誤'));
       addSystemMessage('error', msg, '未處理 Promise');
     });
+
+    if (!systemAutoRefreshTimer) {
+      systemAutoRefreshTimer = setInterval(() => {
+        refreshSystemMessages(false);
+      }, 30000);
+    }
 
     systemCaptureBound = true;
   }
@@ -2211,6 +2237,14 @@ const App = (() => {
       clearBtn.addEventListener('click', clearSystemMessages);
       clearBtn.dataset.bound = '1';
     }
+
+    const refreshBtn = el('refreshSystemMessagesBtn');
+    if (refreshBtn && !refreshBtn.dataset.bound) {
+      refreshBtn.addEventListener('click', () => refreshSystemMessages(true));
+      refreshBtn.dataset.bound = '1';
+    }
+
+    updateSystemRefreshTimeView();
   }
 
   async function renderCategories() {

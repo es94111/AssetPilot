@@ -1,6 +1,28 @@
 {
-  "currentVersion": "3.21",
+  "currentVersion": "3.23",
   "releases": [
+    {
+      "version": "3.23",
+      "date": "2026-03-21",
+      "title": "外觀模式三態切換",
+      "type": "feature",
+      "changes": [
+        { "tag": "new", "text": "設定 > 帳號設定的外觀模式改為三態切換：淺色 / 深色 / 跟隨系統" },
+        { "tag": "new", "text": "可在 UI 明確切回「跟隨系統」模式，不再只能在淺色與深色間切換" },
+        { "tag": "improved", "text": "主題控制文案與互動調整，切換時即時生效並顯示對應狀態提示" }
+      ]
+    },
+    {
+      "version": "3.22",
+      "date": "2026-03-21",
+      "title": "主題偏好自動偵測",
+      "type": "improved",
+      "changes": [
+        { "tag": "improved", "text": "新增 prefers-color-scheme 與 window.matchMedia() 支援，預設跟隨瀏覽器/作業系統主題偏好" },
+        { "tag": "improved", "text": "當瀏覽器或系統主題偏好變更時，跟隨系統模式可即時自動同步" },
+        { "tag": "fixed", "text": "修正帳號設定危險區域在深色模式下對比不足、文字難以閱讀問題" }
+      ]
+    },
     {
       "version": "3.21",
       "date": "2026-03-21",

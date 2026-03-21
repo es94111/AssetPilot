@@ -1,6 +1,17 @@
 {
-  "currentVersion": "3.16.9",
+  "currentVersion": "3.16.10",
   "releases": [
+    {
+      "version": "3.16.10",
+      "date": "2026-03-21",
+      "title": "Google 授權完成未自動登入修復",
+      "type": "fixed",
+      "changes": [
+        { "tag": "fixed", "text": "修正 Google 授權視窗完成並關閉後，主頁未自動登入的問題" },
+        { "tag": "improved", "text": "新增 Google 授權碼 watchdog 等待機制，避免早期暫態 popup_closed 事件中斷流程" },
+        { "tag": "improved", "text": "新增 URL code 回呼自動處理（?code=...），即使 popup 回呼受瀏覽器限制仍可自動登入" }
+      ]
+    },
     {
       "version": "3.16.9",
       "date": "2026-03-21",

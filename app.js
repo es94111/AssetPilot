@@ -209,6 +209,11 @@ const App = (() => {
     bindMobile();
     bindAuth();
 
+    // 若 URL 帶有 Google OAuth 授權碼，優先自動完成登入。
+    if (!authToken && await handleGoogleCodeFromUrl()) {
+      return;
+    }
+
     // 嘗試用 localStorage 的 token 恢復登入
     if (authToken) {
       try {
@@ -230,6 +235,14 @@ const App = (() => {
   // ─── Google SSO ───
   let googleClientId = null;
   let googleAuthInProgress = false;
+  let googleAuthWatchdogTimer = null;
+
+  function clearGoogleAuthWatchdog() {
+    if (googleAuthWatchdogTimer) {
+      clearTimeout(googleAuthWatchdogTimer);
+      googleAuthWatchdogTimer = null;
+    }
+  }
 
   function setGoogleAuthInProgress(inProgress) {
     googleAuthInProgress = inProgress;
@@ -281,19 +294,45 @@ const App = (() => {
     return 'Google 登入流程中斷，請再試一次';
   }
 
+  async function handleGoogleCodeFromUrl() {
+    try {
+      const params = new URLSearchParams(window.location.search || '');
+      const code = params.get('code');
+      if (!code) return false;
+
+      history.replaceState({}, document.title, location.pathname + location.hash);
+      setGoogleAuthInProgress(true);
+      await handleGoogleCode(code, location.origin + '/');
+      return true;
+    } catch (e) {
+      console.warn('處理 Google URL 授權碼失敗:', e);
+      setGoogleAuthInProgress(false);
+      return false;
+    }
+  }
+
   // Google 登入：統一使用 Authorization Code Flow
   function googleFallbackLogin() {
     if (!googleClientId) { toast('Google SSO 未設定', 'error'); return; }
     if (!googleUseCodeFlow) { toast('Google SSO 需設定 Client Secret 才能使用', 'error'); return; }
     if (googleAuthInProgress) return;
     setGoogleAuthInProgress(true);
+    clearGoogleAuthWatchdog();
     const redirectUri = location.origin + '/';
     let loginStarted = false;
     const requestStartedAt = Date.now();
 
+    googleAuthWatchdogTimer = setTimeout(() => {
+      if (loginStarted) return;
+      setGoogleAuthInProgress(false);
+      el('loginError').textContent = '尚未收到 Google 授權結果，請再試一次';
+      toast('Google 登入逾時：未收到授權碼，請重新點擊 Google 登入', 'error');
+    }, 30000);
+
     const startCodeLogin = (code) => {
       if (!code || loginStarted) return;
       loginStarted = true;
+      clearGoogleAuthWatchdog();
       handleGoogleCode(code, redirectUri);
     };
 
@@ -308,6 +347,7 @@ const App = (() => {
           select_account: true,
           callback: (resp) => {
             if (resp?.error) {
+              clearGoogleAuthWatchdog();
               setGoogleAuthInProgress(false);
               el('loginError').textContent = resp.error_description || resp.error;
               toast('Google 登入失敗：' + (resp.error_description || resp.error), 'error');
@@ -316,6 +356,7 @@ const App = (() => {
             if (resp?.code) {
               startCodeLogin(resp.code);
             } else {
+              clearGoogleAuthWatchdog();
               setGoogleAuthInProgress(false);
               toast('Google 登入失敗：未取得授權碼', 'error');
             }
@@ -324,6 +365,15 @@ const App = (() => {
             const errType = err?.type || 'unknown_error';
             const elapsedMs = Date.now() - requestStartedAt;
             console.warn('GIS Code Client 錯誤:', errType, err);
+
+            if ((errType === 'popup_closed' || errType === 'popup_closed_by_user') && elapsedMs < 1500) {
+              const msg = getGooglePopupErrorMessage(errType, elapsedMs);
+              el('loginError').textContent = msg;
+              toast('Google 登入狀態（' + errType + '）：' + msg, 'info');
+              return;
+            }
+
+            clearGoogleAuthWatchdog();
             setGoogleAuthInProgress(false);
             const msg = getGooglePopupErrorMessage(errType, elapsedMs);
             el('loginError').textContent = msg;
@@ -335,6 +385,7 @@ const App = (() => {
         return;
       } catch (e) {
         console.warn('GIS Code Client 啟動失敗:', e);
+        clearGoogleAuthWatchdog();
         setGoogleAuthInProgress(false);
         el('loginError').textContent = 'Google 登入元件初始化失敗，請稍後再試';
         toast('Google 登入失敗：GIS 初始化失敗', 'error');
@@ -342,6 +393,7 @@ const App = (() => {
       }
     }
 
+    clearGoogleAuthWatchdog();
     setGoogleAuthInProgress(false);
     el('loginError').textContent = 'Google 登入元件未載入，請檢查網路或重新整理頁面';
     toast('Google 登入失敗：GIS SDK 未載入', 'error');
@@ -366,6 +418,7 @@ const App = (() => {
       el('loginError').textContent = err.message;
       toast('Google 登入失敗：' + err.message, 'error');
     } finally {
+      clearGoogleAuthWatchdog();
       setGoogleAuthInProgress(false);
     }
   }

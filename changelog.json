@@ -1,6 +1,17 @@
 {
-  "currentVersion": "3.14.6",
+  "currentVersion": "3.15",
   "releases": [
+    {
+      "version": "3.15",
+      "date": "2026-03-21",
+      "title": "收支管理子選單整合",
+      "type": "feature",
+      "changes": [
+        { "tag": "new", "text": "側邊欄新增「收支管理」主選單，整合交易記錄、統計報表、預算管理、帳戶管理四個子選項" },
+        { "tag": "improved", "text": "新增 /finance/* 路由（如 /finance/transactions），並保留原本舊路由相容" },
+        { "tag": "improved", "text": "行動版與桌面版導航同步高亮主選單與子選項，切換更直覺" }
+      ]
+    },
     {
       "version": "3.14.6",
       "date": "2026-03-21",

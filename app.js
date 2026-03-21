@@ -403,7 +403,7 @@ const App = (() => {
   const validPages = ['dashboard', 'transactions', 'reports', 'budget', 'accounts', 'stocks', 'settings'];
   const financePages = ['transactions', 'reports', 'budget', 'accounts'];
   const validSettingsTabs = ['categories', 'recurring', 'export', 'account'];
-  const validStocksTabs = ['portfolio', 'transactions', 'dividends', 'realized'];
+  const validStocksTabs = ['portfolio', 'transactions', 'dividends', 'realized', 'settings'];
 
   function parseRoute(pathname) {
     const parts = (pathname || '/').replace(/^\/+|\/+$/g, '').split('/').filter(Boolean);
@@ -1072,6 +1072,17 @@ const App = (() => {
   // ─── 股票紀錄 ───
   let stocksBound = false;
   let cachedStocks = [];
+  const DEFAULT_STOCK_CALC_SETTINGS = {
+    feeRate: 0.001425,
+    feeDiscount: 1,
+    feeMinLot: 20,
+    feeMinOdd: 1,
+    sellTaxRateStock: 0.003,
+    sellTaxRateEtf: 0.001,
+    sellTaxRateWarrant: 0.001,
+    sellTaxMin: 1,
+  };
+  let stockCalcSettings = { ...DEFAULT_STOCK_CALC_SETTINGS };
   let stkTxPage = 1, stkTxPageSize = 20;
   let stkTxSortBy = 'date', stkTxSortDir = 'desc';
   let stkDivPage = 1, stkDivPageSize = 20;
@@ -1311,14 +1322,18 @@ const App = (() => {
       el('stockDivForm').addEventListener('submit', handleStockDivSave);
       el('priceUpdateSaveBtn').addEventListener('click', handlePriceUpdateSave);
       el('fetchTwsePricesBtn').addEventListener('click', fetchTwsePrices);
+      const stockSettingsForm = el('stockSettingsForm');
+      if (stockSettingsForm) stockSettingsForm.addEventListener('submit', saveStockCalcSettings);
       stocksBound = true;
     }
+    await loadStockCalcSettings();
     await refreshStocks();
     renderStockPortfolio();
     populateStockFilters();
     await renderStockTransactions();
     await renderStockDividends();
     await renderStockRealized();
+    renderStockSettingsPanel();
   }
 
   async function refreshStocks() {
@@ -1953,20 +1968,107 @@ const App = (() => {
     const price = Number(el('stkTxPrice').value) || 0;
     const amount = shares * price;
     const isBuy = document.querySelector('input[name="stkTxType"]:checked')?.value === 'buy';
-    // 手續費：0.1425%，無條件捨去，整股最低 20 元
-    const fee = amount > 0 ? Math.max(20, Math.floor(amount * 0.001425)) : 0;
+    const fee = calcStockFeeBySettings(amount, shares);
     el('stkTxFee').value = fee;
-    // 證交稅：賣出才收；ETF/權證 0.1%，一般股票 0.3%；無條件捨去，最低 1 元
     let tax = 0;
     if (!isBuy && amount > 0) {
       const stockId = el('stkTxStockId').value;
       const stock = cachedStocks.find(s => s.id === stockId);
-      const taxRate = (stock?.stock_type === 'etf' || stock?.stock_type === 'warrant') ? 0.001 : 0.003;
-      tax = Math.max(1, Math.floor(amount * taxRate));
-      el('stkTxTax').value = tax;
+      tax = calcStockTaxBySettings(amount, stock?.stock_type || 'stock');
     }
+    el('stkTxTax').value = tax;
     const total = isBuy ? (amount + fee) : (amount - fee - tax);
     el('stkTxTotal').textContent = fmt(Math.round(total));
+  }
+
+  function normalizeStockCalcSettings(raw = {}) {
+    const n = {
+      feeRate: Number(raw.feeRate),
+      feeDiscount: Number(raw.feeDiscount),
+      feeMinLot: Number(raw.feeMinLot),
+      feeMinOdd: Number(raw.feeMinOdd),
+      sellTaxRateStock: Number(raw.sellTaxRateStock),
+      sellTaxRateEtf: Number(raw.sellTaxRateEtf),
+      sellTaxRateWarrant: Number(raw.sellTaxRateWarrant),
+      sellTaxMin: Number(raw.sellTaxMin),
+    };
+    return {
+      feeRate: Number.isFinite(n.feeRate) && n.feeRate > 0 ? n.feeRate : DEFAULT_STOCK_CALC_SETTINGS.feeRate,
+      feeDiscount: Number.isFinite(n.feeDiscount) && n.feeDiscount > 0 ? n.feeDiscount : DEFAULT_STOCK_CALC_SETTINGS.feeDiscount,
+      feeMinLot: Number.isFinite(n.feeMinLot) && n.feeMinLot >= 0 ? Math.round(n.feeMinLot) : DEFAULT_STOCK_CALC_SETTINGS.feeMinLot,
+      feeMinOdd: Number.isFinite(n.feeMinOdd) && n.feeMinOdd >= 0 ? Math.round(n.feeMinOdd) : DEFAULT_STOCK_CALC_SETTINGS.feeMinOdd,
+      sellTaxRateStock: Number.isFinite(n.sellTaxRateStock) && n.sellTaxRateStock >= 0 ? n.sellTaxRateStock : DEFAULT_STOCK_CALC_SETTINGS.sellTaxRateStock,
+      sellTaxRateEtf: Number.isFinite(n.sellTaxRateEtf) && n.sellTaxRateEtf >= 0 ? n.sellTaxRateEtf : DEFAULT_STOCK_CALC_SETTINGS.sellTaxRateEtf,
+      sellTaxRateWarrant: Number.isFinite(n.sellTaxRateWarrant) && n.sellTaxRateWarrant >= 0 ? n.sellTaxRateWarrant : DEFAULT_STOCK_CALC_SETTINGS.sellTaxRateWarrant,
+      sellTaxMin: Number.isFinite(n.sellTaxMin) && n.sellTaxMin >= 0 ? Math.round(n.sellTaxMin) : DEFAULT_STOCK_CALC_SETTINGS.sellTaxMin,
+    };
+  }
+
+  async function loadStockCalcSettings() {
+    try {
+      const data = await API.get('/api/stock-settings');
+      stockCalcSettings = normalizeStockCalcSettings(data || {});
+    } catch {
+      stockCalcSettings = { ...DEFAULT_STOCK_CALC_SETTINGS };
+    }
+  }
+
+  function calcStockFeeBySettings(amount, shares) {
+    if (!(amount > 0)) return 0;
+    const feeBase = Math.floor(amount * stockCalcSettings.feeRate * stockCalcSettings.feeDiscount);
+    const minFee = shares < 1000 ? stockCalcSettings.feeMinOdd : stockCalcSettings.feeMinLot;
+    return Math.max(minFee, feeBase);
+  }
+
+  function getSellTaxRateByType(stockType) {
+    if (stockType === 'etf') return stockCalcSettings.sellTaxRateEtf;
+    if (stockType === 'warrant') return stockCalcSettings.sellTaxRateWarrant;
+    return stockCalcSettings.sellTaxRateStock;
+  }
+
+  function calcStockTaxBySettings(amount, stockType) {
+    if (!(amount > 0)) return 0;
+    const tax = Math.floor(amount * getSellTaxRateByType(stockType));
+    return Math.max(stockCalcSettings.sellTaxMin, tax);
+  }
+
+  function renderStockSettingsPanel() {
+    const form = el('stockSettingsForm');
+    if (!form) return;
+    el('stockFeeRate').value = stockCalcSettings.feeRate;
+    el('stockFeeDiscount').value = stockCalcSettings.feeDiscount;
+    el('stockFeeMinLot').value = stockCalcSettings.feeMinLot;
+    el('stockFeeMinOdd').value = stockCalcSettings.feeMinOdd;
+    el('stockTaxRateStock').value = stockCalcSettings.sellTaxRateStock;
+    el('stockTaxRateEtf').value = stockCalcSettings.sellTaxRateEtf;
+    el('stockTaxRateWarrant').value = stockCalcSettings.sellTaxRateWarrant;
+    el('stockTaxMin').value = stockCalcSettings.sellTaxMin;
+  }
+
+  async function saveStockCalcSettings(e) {
+    e.preventDefault();
+    const payload = {
+      feeRate: Number(el('stockFeeRate').value),
+      feeDiscount: Number(el('stockFeeDiscount').value),
+      feeMinLot: Number(el('stockFeeMinLot').value),
+      feeMinOdd: Number(el('stockFeeMinOdd').value),
+      sellTaxRateStock: Number(el('stockTaxRateStock').value),
+      sellTaxRateEtf: Number(el('stockTaxRateEtf').value),
+      sellTaxRateWarrant: Number(el('stockTaxRateWarrant').value),
+      sellTaxMin: Number(el('stockTaxMin').value),
+    };
+    try {
+      const saved = await API.put('/api/stock-settings', payload);
+      stockCalcSettings = normalizeStockCalcSettings(saved || payload);
+      renderStockSettingsPanel();
+      calcStockTxSummary();
+      await refreshStocks();
+      renderStockPortfolio();
+      await renderStockRealized();
+      toast('股票交易設定已儲存', 'success');
+    } catch (err) {
+      toast(err.message, 'error');
+    }
   }
 
   async function handleStockTxSave(e) {

@@ -342,6 +342,19 @@ async function initDB() {
     created_at INTEGER
   )`);
 
+  db.run(`CREATE TABLE IF NOT EXISTS stock_settings (
+    user_id TEXT PRIMARY KEY,
+    fee_rate REAL DEFAULT 0.001425,
+    fee_discount REAL DEFAULT 1,
+    fee_min_lot INTEGER DEFAULT 20,
+    fee_min_odd INTEGER DEFAULT 1,
+    sell_tax_rate_stock REAL DEFAULT 0.003,
+    sell_tax_rate_etf REAL DEFAULT 0.001,
+    sell_tax_rate_warrant REAL DEFAULT 0.001,
+    sell_tax_min INTEGER DEFAULT 1,
+    updated_at INTEGER
+  )`);
+
   // ─── 日期格式遷移：統一為 YYYY-MM-DD ───
   const dateTables = [
     { table: 'transactions', col: 'date' },
@@ -432,6 +445,20 @@ function createDefaultsForUser(userId) {
   });
   db.run("INSERT INTO accounts (id, user_id, name, initial_balance, icon, created_at) VALUES (?,?,?,0,'fa-wallet',?)",
     [uid(), userId, '現金', todayStr()]);
+  db.run(`INSERT OR IGNORE INTO stock_settings (user_id, fee_rate, fee_discount, fee_min_lot, fee_min_odd, sell_tax_rate_stock, sell_tax_rate_etf, sell_tax_rate_warrant, sell_tax_min, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      userId,
+      DEFAULT_STOCK_SETTINGS.feeRate,
+      DEFAULT_STOCK_SETTINGS.feeDiscount,
+      DEFAULT_STOCK_SETTINGS.feeMinLot,
+      DEFAULT_STOCK_SETTINGS.feeMinOdd,
+      DEFAULT_STOCK_SETTINGS.sellTaxRateStock,
+      DEFAULT_STOCK_SETTINGS.sellTaxRateEtf,
+      DEFAULT_STOCK_SETTINGS.sellTaxRateWarrant,
+      DEFAULT_STOCK_SETTINGS.sellTaxMin,
+      Date.now(),
+    ]);
 }
 
 function saveDB() {
@@ -457,6 +484,97 @@ function todayStr() {
   const m = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
   return `${y}-${m}-${day}`;
+}
+
+const DEFAULT_STOCK_SETTINGS = {
+  feeRate: 0.001425,
+  feeDiscount: 1,
+  feeMinLot: 20,
+  feeMinOdd: 1,
+  sellTaxRateStock: 0.003,
+  sellTaxRateEtf: 0.001,
+  sellTaxRateWarrant: 0.001,
+  sellTaxMin: 1,
+};
+
+function toNum(v, fallback) {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+function getStockSettings(userId) {
+  const row = queryOne('SELECT * FROM stock_settings WHERE user_id = ?', [userId]);
+  if (!row) {
+    db.run(`INSERT INTO stock_settings (user_id, fee_rate, fee_discount, fee_min_lot, fee_min_odd, sell_tax_rate_stock, sell_tax_rate_etf, sell_tax_rate_warrant, sell_tax_min, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        userId,
+        DEFAULT_STOCK_SETTINGS.feeRate,
+        DEFAULT_STOCK_SETTINGS.feeDiscount,
+        DEFAULT_STOCK_SETTINGS.feeMinLot,
+        DEFAULT_STOCK_SETTINGS.feeMinOdd,
+        DEFAULT_STOCK_SETTINGS.sellTaxRateStock,
+        DEFAULT_STOCK_SETTINGS.sellTaxRateEtf,
+        DEFAULT_STOCK_SETTINGS.sellTaxRateWarrant,
+        DEFAULT_STOCK_SETTINGS.sellTaxMin,
+        Date.now(),
+      ]);
+    saveDB();
+    return { ...DEFAULT_STOCK_SETTINGS };
+  }
+  return {
+    feeRate: toNum(row.fee_rate, DEFAULT_STOCK_SETTINGS.feeRate),
+    feeDiscount: toNum(row.fee_discount, DEFAULT_STOCK_SETTINGS.feeDiscount),
+    feeMinLot: Math.round(toNum(row.fee_min_lot, DEFAULT_STOCK_SETTINGS.feeMinLot)),
+    feeMinOdd: Math.round(toNum(row.fee_min_odd, DEFAULT_STOCK_SETTINGS.feeMinOdd)),
+    sellTaxRateStock: toNum(row.sell_tax_rate_stock, DEFAULT_STOCK_SETTINGS.sellTaxRateStock),
+    sellTaxRateEtf: toNum(row.sell_tax_rate_etf, DEFAULT_STOCK_SETTINGS.sellTaxRateEtf),
+    sellTaxRateWarrant: toNum(row.sell_tax_rate_warrant, DEFAULT_STOCK_SETTINGS.sellTaxRateWarrant),
+    sellTaxMin: Math.round(toNum(row.sell_tax_min, DEFAULT_STOCK_SETTINGS.sellTaxMin)),
+  };
+}
+
+function getSellTaxRateByType(stockType, settings) {
+  if (stockType === 'etf') return settings.sellTaxRateEtf;
+  if (stockType === 'warrant') return settings.sellTaxRateWarrant;
+  return settings.sellTaxRateStock;
+}
+
+function calcStockFee(amount, shares, settings) {
+  if (!(amount > 0)) return 0;
+  const minFee = Number(shares) < 1000 ? settings.feeMinOdd : settings.feeMinLot;
+  const baseFee = Math.floor(amount * settings.feeRate * settings.feeDiscount);
+  return Math.max(minFee, baseFee);
+}
+
+function calcStockTax(amount, stockType, settings) {
+  if (!(amount > 0)) return 0;
+  const tax = Math.floor(amount * getSellTaxRateByType(stockType, settings));
+  return Math.max(settings.sellTaxMin, tax);
+}
+
+function normalizeStockSettingsInput(input = {}, current = DEFAULT_STOCK_SETTINGS) {
+  const normalized = {
+    feeRate: toNum(input.feeRate, current.feeRate),
+    feeDiscount: toNum(input.feeDiscount, current.feeDiscount),
+    feeMinLot: Math.round(toNum(input.feeMinLot, current.feeMinLot)),
+    feeMinOdd: Math.round(toNum(input.feeMinOdd, current.feeMinOdd)),
+    sellTaxRateStock: toNum(input.sellTaxRateStock, current.sellTaxRateStock),
+    sellTaxRateEtf: toNum(input.sellTaxRateEtf, current.sellTaxRateEtf),
+    sellTaxRateWarrant: toNum(input.sellTaxRateWarrant, current.sellTaxRateWarrant),
+    sellTaxMin: Math.round(toNum(input.sellTaxMin, current.sellTaxMin)),
+  };
+
+  if (!(normalized.feeRate > 0 && normalized.feeRate <= 0.02)) throw new Error('券商手續費率需介於 0 ~ 0.02');
+  if (!(normalized.feeDiscount > 0 && normalized.feeDiscount <= 1)) throw new Error('手續費折扣需介於 0 ~ 1');
+  if (!(normalized.feeMinLot >= 0 && normalized.feeMinLot <= 1000)) throw new Error('整股最低手續費需介於 0 ~ 1000');
+  if (!(normalized.feeMinOdd >= 0 && normalized.feeMinOdd <= 1000)) throw new Error('零股最低手續費需介於 0 ~ 1000');
+  if (!(normalized.sellTaxRateStock >= 0 && normalized.sellTaxRateStock <= 0.02)) throw new Error('一般股票賣出稅率需介於 0 ~ 0.02');
+  if (!(normalized.sellTaxRateEtf >= 0 && normalized.sellTaxRateEtf <= 0.02)) throw new Error('ETF 賣出稅率需介於 0 ~ 0.02');
+  if (!(normalized.sellTaxRateWarrant >= 0 && normalized.sellTaxRateWarrant <= 0.02)) throw new Error('權證賣出稅率需介於 0 ~ 0.02');
+  if (!(normalized.sellTaxMin >= 0 && normalized.sellTaxMin <= 100)) throw new Error('賣出交易稅最低金額需介於 0 ~ 100');
+
+  return normalized;
 }
 
 // 統一日期格式為 YYYY-MM-DD（支援 YYYYMMDD、YYYY/MM/DD、YYYY-MM-DD）
@@ -2200,8 +2318,41 @@ app.post('/api/stock-dividends/sync', async (req, res) => {
 });
 
 // ─── 股票 ───
+app.get('/api/stock-settings', (req, res) => {
+  const settings = getStockSettings(req.userId);
+  res.json(settings);
+});
+
+app.put('/api/stock-settings', (req, res) => {
+  try {
+    const current = getStockSettings(req.userId);
+    const normalized = normalizeStockSettingsInput(req.body || {}, current);
+    db.run(`UPDATE stock_settings
+      SET fee_rate = ?, fee_discount = ?, fee_min_lot = ?, fee_min_odd = ?,
+          sell_tax_rate_stock = ?, sell_tax_rate_etf = ?, sell_tax_rate_warrant = ?, sell_tax_min = ?, updated_at = ?
+      WHERE user_id = ?`,
+      [
+        normalized.feeRate,
+        normalized.feeDiscount,
+        normalized.feeMinLot,
+        normalized.feeMinOdd,
+        normalized.sellTaxRateStock,
+        normalized.sellTaxRateEtf,
+        normalized.sellTaxRateWarrant,
+        normalized.sellTaxMin,
+        Date.now(),
+        req.userId,
+      ]);
+    saveDB();
+    res.json(normalized);
+  } catch (e) {
+    res.status(400).json({ error: e.message || '股票設定更新失敗' });
+  }
+});
+
 // 股票清單
 app.get('/api/stocks', (req, res) => {
+  const stockSettings = getStockSettings(req.userId);
   const stocks = queryAll("SELECT * FROM stocks WHERE user_id = ? ORDER BY symbol", [req.userId]);
   const result = stocks.map(s => {
     const txs = queryAll("SELECT * FROM stock_transactions WHERE stock_id = ? AND user_id = ? ORDER BY date, created_at", [s.id, req.userId]);
@@ -2241,11 +2392,8 @@ app.get('/api/stocks', (req, res) => {
     const avgCost = totalShares > 0 ? totalCost / totalShares : 0;
     // 市值 = 現價 × 股數
     const marketValue = totalShares * (s.current_price || 0);
-    // 預估賣出手續費 = Math.floor(市值 × 0.1425%)，最低 20 元
-    const estSellFee = totalShares > 0 ? Math.max(20, Math.floor(marketValue * 0.001425)) : 0;
-    // 預估賣出交易稅，依股票類型：一般 0.3%、ETF/權證 0.1%，最低 1 元
-    const taxRate = (s.stock_type === 'etf' || s.stock_type === 'warrant') ? 0.001 : 0.003;
-    const estSellTax = totalShares > 0 ? Math.max(1, Math.floor(marketValue * taxRate)) : 0;
+    const estSellFee = calcStockFee(marketValue, totalShares, stockSettings);
+    const estSellTax = calcStockTax(marketValue, s.stock_type, stockSettings);
     // 預估淨收付 = 市值 – 手續費 – 交易稅
     const estimatedNet = marketValue - estSellFee - estSellTax;
     // 預估損益 = 預估淨收付 – 成本金額

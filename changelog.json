@@ -1,6 +1,17 @@
 {
-  "currentVersion": "3.16.12",
+  "currentVersion": "3.17",
   "releases": [
+    {
+      "version": "3.17",
+      "date": "2026-03-21",
+      "title": "股票交易計算設定",
+      "type": "feature",
+      "changes": [
+        { "tag": "new", "text": "股票紀錄新增「交易設定」分頁，可設定零股/整股最低手續費、手續費折扣與各類型賣出稅率" },
+        { "tag": "new", "text": "後端新增 /api/stock-settings 設定 API 與 stock_settings 資料表，支援每位使用者獨立計算參數" },
+        { "tag": "improved", "text": "股票交易小計與持股總覽預估手續費/交易稅改為套用使用者設定，不再固定使用預設常數" }
+      ]
+    },
     {
       "version": "3.16.12",
       "date": "2026-03-21",

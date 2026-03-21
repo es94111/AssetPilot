@@ -1,6 +1,17 @@
 {
-  "currentVersion": "3.29.1",
+  "currentVersion": "3.30",
   "releases": [
+    {
+      "version": "3.30",
+      "date": "2026-03-21",
+      "title": "移除資料自動備份與還原",
+      "type": "removed",
+      "changes": [
+        { "tag": "removed", "text": "移除設定 > 資料匯出匯入中的備份管理介面（立即備份、下載、上傳、刪除、還原與排程設定）" },
+        { "tag": "removed", "text": "移除後端自動備份排程與所有 /api/system/backups 相關 API" },
+        { "tag": "improved", "text": "同步清理前端備份事件綁定與備份流程程式碼，降低維護複雜度" }
+      ]
+    },
     {
       "version": "3.29.1",
       "date": "2026-03-21",

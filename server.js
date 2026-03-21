@@ -34,13 +34,8 @@ const DB_PATH = process.env.DB_PATH || path.join(__dirname, 'database.db');
 const JWT_EXPIRES = process.env.JWT_EXPIRES || '7d';
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || '';
-const BACKUP_DIR = process.env.BACKUP_DIR || path.join(path.dirname(DB_PATH), 'backups');
-const DEFAULT_AUTO_BACKUP_INTERVAL_HOURS = Math.max(1, parseInt(process.env.AUTO_BACKUP_INTERVAL_HOURS || '6', 10) || 6);
-const DEFAULT_AUTO_BACKUP_KEEP = Math.max(3, parseInt(process.env.AUTO_BACKUP_KEEP || '30', 10) || 30);
 const GLOBAL_FX_API_URL = 'https://tw.rter.info/capi.php';
 const FX_AUTO_SYNC_MIN_INTERVAL_MS = 30 * 60 * 1000;
-let autoBackupIntervalHours = DEFAULT_AUTO_BACKUP_INTERVAL_HOURS;
-let autoBackupKeep = DEFAULT_AUTO_BACKUP_KEEP;
 
 // ─── 自動產生密鑰（僅首次啟動時） ───
 function generateSecret(length = 64) {
@@ -400,12 +395,6 @@ async function initDB() {
     updated_at INTEGER
   )`);
 
-  db.run(`CREATE TABLE IF NOT EXISTS system_settings (
-    key TEXT PRIMARY KEY,
-    value TEXT NOT NULL,
-    updated_at INTEGER
-  )`);
-
   // ─── 日期格式遷移：統一為 YYYY-MM-DD ───
   const dateTables = [
     { table: 'transactions', col: 'date' },
@@ -429,7 +418,6 @@ async function initDB() {
   });
 
   saveDB();
-  loadBackupSettingsFromDB();
   console.log('資料庫初始化完成');
 }
 
@@ -529,130 +517,6 @@ function saveDB() {
   } else {
     fs.writeFileSync(DB_PATH, plain);
   }
-}
-
-function ensureBackupDir() {
-  if (!fs.existsSync(BACKUP_DIR)) {
-    fs.mkdirSync(BACKUP_DIR, { recursive: true });
-  }
-}
-
-function backupTimestamp(d = new Date()) {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  const hh = String(d.getHours()).padStart(2, '0');
-  const mm = String(d.getMinutes()).padStart(2, '0');
-  const ss = String(d.getSeconds()).padStart(2, '0');
-  return `${y}${m}${day}-${hh}${mm}${ss}`;
-}
-
-function listBackupFiles() {
-  ensureBackupDir();
-  const files = fs.readdirSync(BACKUP_DIR)
-    .filter(name => /^assetpilot-backup-\d{8}-\d{6}\.db$/.test(name))
-    .map(name => {
-      const fullPath = path.join(BACKUP_DIR, name);
-      const stat = fs.statSync(fullPath);
-      return {
-        fileName: name,
-        size: stat.size,
-        createdAt: stat.mtime.toISOString(),
-      };
-    })
-    .sort((a, b) => String(b.fileName).localeCompare(String(a.fileName)));
-  return files;
-}
-
-function cleanupOldBackups() {
-  const files = listBackupFiles();
-  if (files.length <= autoBackupKeep) return;
-  files.slice(autoBackupKeep).forEach(f => {
-    try {
-      fs.unlinkSync(path.join(BACKUP_DIR, f.fileName));
-    } catch (e) {
-      console.warn('[備份] 清理舊備份失敗:', f.fileName, e.message);
-    }
-  });
-}
-
-function createDatabaseBackup(trigger = 'manual') {
-  ensureBackupDir();
-  saveDB();
-  const fileName = `assetpilot-backup-${backupTimestamp()}.db`;
-  const targetPath = path.join(BACKUP_DIR, fileName);
-  fs.copyFileSync(DB_PATH, targetPath);
-  cleanupOldBackups();
-  const stat = fs.statSync(targetPath);
-  return {
-    fileName,
-    size: stat.size,
-    createdAt: stat.mtime.toISOString(),
-    trigger,
-  };
-}
-
-let autoBackupTimer = null;
-function startAutoBackupScheduler() {
-  if (autoBackupTimer) clearInterval(autoBackupTimer);
-  autoBackupTimer = setInterval(() => {
-    try {
-      const result = createDatabaseBackup('auto');
-      console.log(`[備份] 已建立自動備份: ${result.fileName}`);
-    } catch (e) {
-      console.error('[備份] 自動備份失敗:', e.message);
-    }
-  }, autoBackupIntervalHours * 60 * 60 * 1000);
-  console.log(`[備份] 自動備份已啟用：每 ${autoBackupIntervalHours} 小時執行，最多保留 ${autoBackupKeep} 份`);
-}
-
-function getSettingValue(key, fallbackValue) {
-  const row = queryOne('SELECT value FROM system_settings WHERE key = ?', [key]);
-  if (!row) return fallbackValue;
-  return row.value;
-}
-
-function setSettingValue(key, value) {
-  db.run(
-    'INSERT OR REPLACE INTO system_settings (key, value, updated_at) VALUES (?, ?, ?)',
-    [key, String(value), Date.now()]
-  );
-}
-
-function loadBackupSettingsFromDB() {
-  const intervalVal = Number(getSettingValue('auto_backup_interval_hours', DEFAULT_AUTO_BACKUP_INTERVAL_HOURS));
-  const keepVal = Number(getSettingValue('auto_backup_keep', DEFAULT_AUTO_BACKUP_KEEP));
-  autoBackupIntervalHours = Number.isFinite(intervalVal) ? Math.max(1, Math.min(168, Math.round(intervalVal))) : DEFAULT_AUTO_BACKUP_INTERVAL_HOURS;
-  autoBackupKeep = Number.isFinite(keepVal) ? Math.max(3, Math.min(500, Math.round(keepVal))) : DEFAULT_AUTO_BACKUP_KEEP;
-}
-
-function saveBackupSettings(intervalHours, keepCount) {
-  autoBackupIntervalHours = Math.max(1, Math.min(168, Math.round(Number(intervalHours) || DEFAULT_AUTO_BACKUP_INTERVAL_HOURS)));
-  autoBackupKeep = Math.max(3, Math.min(500, Math.round(Number(keepCount) || DEFAULT_AUTO_BACKUP_KEEP)));
-  setSettingValue('auto_backup_interval_hours', autoBackupIntervalHours);
-  setSettingValue('auto_backup_keep', autoBackupKeep);
-  saveDB();
-  cleanupOldBackups();
-  startAutoBackupScheduler();
-}
-
-function resolveBackupPath(fileName) {
-  const safeName = path.basename(String(fileName || ''));
-  if (!/^assetpilot-backup-\d{8}-\d{6}\.db$/.test(safeName)) {
-    throw new Error('備份檔名格式不正確');
-  }
-  const fullPath = path.join(BACKUP_DIR, safeName);
-  if (!fs.existsSync(fullPath)) {
-    throw new Error('找不到指定備份檔');
-  }
-  return fullPath;
-}
-
-function isValidBackupFileBuffer(buf) {
-  if (!buf || buf.length < 64) return false;
-  if (isEncryptedDB(buf)) return true;
-  const sqliteMagic = Buffer.from('SQLite format 3\u0000', 'binary');
-  return buf.subarray(0, sqliteMagic.length).equals(sqliteMagic);
 }
 
 function isValidColor(c) { return !c || /^#[0-9a-fA-F]{3,8}$/.test(c); }
@@ -1448,121 +1312,6 @@ app.post('/api/system/update-app', async (req, res) => {
     res.status(500).json({ error: e.message || '更新失敗' });
   } finally {
     isUpdatingApp = false;
-  }
-});
-
-app.get('/api/system/backups', (req, res) => {
-  const backups = listBackupFiles();
-  res.json({
-    backups,
-    settings: {
-      autoBackupIntervalHours: autoBackupIntervalHours,
-      keepCount: autoBackupKeep,
-      backupDir: BACKUP_DIR,
-    },
-  });
-});
-
-app.put('/api/system/backups/settings', (req, res) => {
-  const intervalHours = Number(req.body?.autoBackupIntervalHours);
-  const keepCount = Number(req.body?.keepCount);
-  if (!Number.isFinite(intervalHours) || intervalHours < 1 || intervalHours > 168) {
-    return res.status(400).json({ error: '自動備份時間需介於 1 到 168 小時' });
-  }
-  if (!Number.isFinite(keepCount) || keepCount < 3 || keepCount > 500) {
-    return res.status(400).json({ error: '保留份數需介於 3 到 500 份' });
-  }
-  saveBackupSettings(intervalHours, keepCount);
-  res.json({
-    success: true,
-    settings: {
-      autoBackupIntervalHours: autoBackupIntervalHours,
-      keepCount: autoBackupKeep,
-      backupDir: BACKUP_DIR,
-    },
-  });
-});
-
-app.post('/api/system/backups/run', (req, res) => {
-  try {
-    const result = createDatabaseBackup('manual');
-    res.json({ success: true, backup: result });
-  } catch (e) {
-    res.status(500).json({ error: e.message || '建立備份失敗' });
-  }
-});
-
-app.get('/api/system/backups/download/:fileName', (req, res) => {
-  try {
-    const backupPath = resolveBackupPath(req.params.fileName);
-    res.download(backupPath, path.basename(backupPath));
-  } catch (e) {
-    res.status(400).json({ error: e.message || '下載備份失敗' });
-  }
-});
-
-app.delete('/api/system/backups/:fileName', (req, res) => {
-  try {
-    const backupPath = resolveBackupPath(req.params.fileName);
-    fs.unlinkSync(backupPath);
-    res.json({ success: true, deleted: path.basename(backupPath) });
-  } catch (e) {
-    res.status(400).json({ error: e.message || '刪除備份失敗' });
-  }
-});
-
-app.post('/api/system/backups/upload', (req, res) => {
-  const fileNameInput = String(req.body?.fileName || '').trim();
-  const base64 = String(req.body?.fileContentBase64 || '').trim();
-  if (!base64) return res.status(400).json({ error: '缺少上傳檔案內容' });
-
-  try {
-    ensureBackupDir();
-    const fileBuffer = Buffer.from(base64, 'base64');
-    if (!fileBuffer || fileBuffer.length < 64) {
-      return res.status(400).json({ error: '上傳檔案內容不正確或檔案過小' });
-    }
-    if (!isValidBackupFileBuffer(fileBuffer)) {
-      return res.status(400).json({ error: '上傳檔案不是有效的資料庫備份檔（僅支援 SQLite 或系統加密備份）' });
-    }
-
-    let finalName = path.basename(fileNameInput || '');
-    if (!/^assetpilot-backup-\d{8}-\d{6}\.db$/.test(finalName)) {
-      finalName = `assetpilot-backup-${backupTimestamp()}.db`;
-    }
-    const outPath = path.join(BACKUP_DIR, finalName);
-    fs.writeFileSync(outPath, fileBuffer);
-    cleanupOldBackups();
-
-    const stat = fs.statSync(outPath);
-    res.json({
-      success: true,
-      backup: {
-        fileName: finalName,
-        size: stat.size,
-        createdAt: stat.mtime.toISOString(),
-        trigger: 'upload',
-      }
-    });
-  } catch (e) {
-    res.status(500).json({ error: e.message || '上傳備份失敗' });
-  }
-});
-
-app.post('/api/system/backups/restore', async (req, res) => {
-  const { fileName } = req.body || {};
-  if (!fileName) return res.status(400).json({ error: '缺少備份檔名' });
-  try {
-    const backupPath = resolveBackupPath(fileName);
-    const backupBuffer = fs.readFileSync(backupPath);
-    if (!isValidBackupFileBuffer(backupBuffer)) {
-      return res.status(400).json({ error: '備份檔內容無效，無法還原' });
-    }
-    fs.copyFileSync(backupPath, DB_PATH);
-    await initDB();
-    res.json({ success: true, restoredFrom: fileName });
-  } catch (e) {
-    res.status(500).json({ error: e.message || '還原備份失敗' });
   }
 });
 
@@ -3349,13 +3098,6 @@ app.get('{*path}', (req, res) => {
 
 // ─── 啟動 ───
 initDB().then(() => {
-  startAutoBackupScheduler();
-  try {
-    const firstBackup = createDatabaseBackup('startup');
-    console.log(`[備份] 啟動備份完成: ${firstBackup.fileName}`);
-  } catch (e) {
-    console.warn('[備份] 啟動備份失敗:', e.message);
-  }
   app.listen(PORT, () => {
     console.log(`資產管理伺服器已啟動: http://localhost:${PORT}`);
   });

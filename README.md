@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-3.29.1-blue" alt="version">
+  <img src="https://img.shields.io/badge/version-3.30-blue" alt="version">
   <img src="https://img.shields.io/badge/node-%3E%3D18-green" alt="node">
   <img src="https://img.shields.io/badge/license-MIT-orange" alt="license">
   <img src="https://img.shields.io/badge/docker-ready-2496ED" alt="docker">
@@ -29,9 +29,6 @@
 - **TWSE 整合** — 即時/收盤股價查詢、除權息自動同步
 - **CSV 匯出/匯入** — 交易記錄、分類、股票交易、股利紀錄
 - **全球即時匯率** — 串接 rter.info 匯率 API，支援手動更新與自動更新開關
-- **自動備份與還原** — 伺服器定期自動備份，支援手動備份與一鍵還原
-- **備份檔下載/上傳** — 可下載備份到本機，也可上傳備份檔回系統還原
-- **備份檔刪除** — 可在備份清單中刪除不需要的備份檔
 - **主題切換容錯** — 深色/淺色切換先本機生效，後端同步異常時不影響當下使用
 - **Google SSO** — 一鍵 Google 帳號登入（選配）
 - **資料庫加密** — ChaCha20-Poly1305 + PBKDF2-SHA256 全資料庫加密
@@ -140,9 +137,6 @@ node server.js
 | `ALLOWED_ORIGINS`   | CORS 白名單（逗號分隔）                | —（不限制）              |
 | `DB_PATH`           | 資料庫檔案路徑                         | `/app/data/database.db` |
 | `ENV_PATH`          | 自動產生的 .env 檔案路徑               | `/app/data/.env`        |
-| `BACKUP_DIR`        | 備份資料夾路徑                         | `/app/data/backups`     |
-| `AUTO_BACKUP_INTERVAL_HOURS` | 自動備份週期（小時）          | `6`                     |
-| `AUTO_BACKUP_KEEP`  | 保留備份份數上限                        | `30`                    |
 
 設定環境變數的方式：
 
@@ -231,24 +225,6 @@ docker run -d \
   -v assetpilot-data:/app/data \
   es94111/assetpilot:latest
 ```
-
-### 自動備份與還原
-
-- 系統會在伺服器端定期自動備份資料庫（預設每 6 小時，最多保留 30 份）。
-- 自動備份間隔與保留份數可由使用者在網頁設定頁自訂。
-- 備份檔預設存放於 `/app/data/backups`。
-- 可在網頁 `設定 > 資料匯出匯入` 使用：
-  - `立即備份`：立刻建立新備份
-  - `備份清單`：查看備份時間/大小/檔名
-  - `下載備份`：將選定備份檔下載到本機
-  - `上傳備份`：上傳本機備份檔到系統
-  - `刪除備份`：刪除選定備份檔
-  - `還原備份`：選取任一備份檔還原資料
-  - `儲存備份設定`：更新自動備份週期與保留份數（即時套用）
-
-- 上傳備份檔會進行格式驗證（SQLite 或系統加密備份），避免上傳成功卻無法還原。
-
-> 還原會覆蓋目前資料，建議先手動備份一次再執行還原。
 
 ### 全球即時匯率（rter.info）
 

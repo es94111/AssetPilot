@@ -193,6 +193,19 @@ const App = (() => {
     const m = String(d.getMonth() + 1).padStart(2, '0');
     return `${y}-${m}`;
   }
+
+  function localDateTimeStr(input) {
+    const d = input instanceof Date ? input : new Date(input);
+    if (!(d instanceof Date) || Number.isNaN(d.getTime())) return '';
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const hh = String(d.getHours()).padStart(2, '0');
+    const mm = String(d.getMinutes()).padStart(2, '0');
+    const ss = String(d.getSeconds()).padStart(2, '0');
+    return `${y}-${m}-${day} ${hh}:${mm}:${ss}`;
+  }
+
   const today = () => localDateStr(new Date());
   const thisMonth = () => localMonthStr(new Date());
   const el = (id) => document.getElementById(id);
@@ -2709,7 +2722,8 @@ const App = (() => {
       return;
     }
     if (lastSyncedAt > 0) {
-      statusEl.textContent = `已啟用自動更新；上次更新：${new Date(lastSyncedAt).toLocaleString('zh-TW', { hour12: false })}`;
+      const ts = localDateTimeStr(lastSyncedAt);
+      statusEl.textContent = `已啟用自動更新；上次更新：${ts || '時間格式錯誤'}`;
     } else {
       statusEl.textContent = '已啟用自動更新；尚未同步即時匯率。';
     }
@@ -4052,11 +4066,7 @@ const App = (() => {
 
   function formatLastCheckTime(d) {
     if (!d) return '尚未檢查';
-    try {
-      return d.toLocaleString('zh-TW', { hour12: false });
-    } catch {
-      return d.toISOString();
-    }
+    return localDateTimeStr(d) || '時間格式錯誤';
   }
 
   // 載入版本號到側邊欄

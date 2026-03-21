@@ -1,6 +1,19 @@
 {
-  "currentVersion": "3.20",
+  "currentVersion": "3.21",
   "releases": [
+    {
+      "version": "3.21",
+      "date": "2026-03-21",
+      "title": "多幣別支援與匯率換算",
+      "type": "feature",
+      "changes": [
+        { "tag": "new", "text": "帳戶管理新增帳戶幣別設定，支援 TWD/USD/JPY/EUR/HKD/CNY" },
+        { "tag": "new", "text": "交易新增/編輯支援幣別、原始金額與匯率欄位，非 TWD 交易自動換算為 TWD 儲存" },
+        { "tag": "new", "text": "設定 > 帳號設定新增匯率管理表，可新增/刪除幣別匯率並儲存至個人設定" },
+        { "tag": "improved", "text": "轉帳流程依轉出/轉入帳戶幣別自動換算，並保留雙邊原始幣別金額" },
+        { "tag": "improved", "text": "交易列表與帳戶卡片新增原始幣別顯示，避免多幣別金額混淆" }
+      ]
+    },
     {
       "version": "3.20",
       "date": "2026-03-21",

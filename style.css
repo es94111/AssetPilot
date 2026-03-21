@@ -30,6 +30,7 @@
 }
 
 body.dark-mode {
+  color-scheme: dark;
   --bg: #0b1220;
   --surface: #111827;
   --text: #e5e7eb;
@@ -45,6 +46,16 @@ body.dark-mode {
   --shadow: 0 1px 3px rgba(0,0,0,.45), 0 1px 2px rgba(0,0,0,.35);
   --shadow-md: 0 4px 6px -1px rgba(0,0,0,.45), 0 2px 4px -2px rgba(0,0,0,.35);
   --shadow-lg: 0 4px 12px rgba(0,0,0,.5);
+}
+
+/* 跟隨瀏覽器/系統主題時，使用 prefers-color-scheme 決定原生元件色彩。 */
+body.system-theme {
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  body.system-theme {
+    color-scheme: dark;
+  }
 }
 
 body.dark-mode .sidebar {

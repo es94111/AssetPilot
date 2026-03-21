@@ -309,6 +309,20 @@ async function initDB() {
   db.run(`CREATE INDEX IF NOT EXISTS idx_login_audit_user_time ON login_audit_logs(user_id, login_at DESC)`);
   db.run(`CREATE INDEX IF NOT EXISTS idx_login_audit_time ON login_audit_logs(login_at DESC)`);
 
+  db.run(`CREATE TABLE IF NOT EXISTS login_attempt_logs (
+    id TEXT PRIMARY KEY,
+    user_id TEXT DEFAULT '',
+    email TEXT NOT NULL,
+    login_at INTEGER NOT NULL,
+    ip_address TEXT NOT NULL,
+    login_method TEXT DEFAULT 'password',
+    is_admin_login INTEGER DEFAULT 0,
+    is_success INTEGER DEFAULT 0,
+    failure_reason TEXT DEFAULT ''
+  )`);
+  db.run(`CREATE INDEX IF NOT EXISTS idx_login_attempt_time ON login_attempt_logs(login_at DESC)`);
+  db.run(`CREATE INDEX IF NOT EXISTS idx_login_attempt_email_time ON login_attempt_logs(email, login_at DESC)`);
+
   db.run(`CREATE TABLE IF NOT EXISTS system_settings (
     id INTEGER PRIMARY KEY CHECK(id = 1),
     public_registration INTEGER DEFAULT 1,
@@ -1026,11 +1040,36 @@ function recordLoginAudit(user, req, method = 'password') {
   };
 }
 
+function recordLoginAttempt({ user = null, email = '', req, method = 'password', isSuccess = false, failureReason = '' }) {
+  const loginAt = Date.now();
+  const ipAddress = getRequestIp(req);
+  const loginMethod = String(method || 'password').trim().toLowerCase();
+  const normalizedEmail = normalizeEmail(email || user?.email || '');
+  const userId = user?.id ? String(user.id) : '';
+  const isAdminLogin = user?.is_admin ? 1 : 0;
+  db.run(
+    `INSERT INTO login_attempt_logs (id, user_id, email, login_at, ip_address, login_method, is_admin_login, is_success, failure_reason)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      uid(),
+      userId,
+      normalizedEmail,
+      loginAt,
+      ipAddress,
+      loginMethod,
+      isAdminLogin,
+      isSuccess ? 1 : 0,
+      isSuccess ? '' : String(failureReason || 'unknown').trim().toLowerCase(),
+    ]
+  );
+  saveDB();
+}
+
 function deleteUserData(userId) {
   const tables = [
     'stock_dividends', 'stock_transactions', 'stocks',
     'transactions', 'budgets', 'recurring', 'accounts', 'categories',
-    'exchange_rates', 'exchange_rate_settings', 'stock_settings', 'login_audit_logs'
+    'exchange_rates', 'exchange_rate_settings', 'stock_settings', 'login_audit_logs', 'login_attempt_logs'
   ];
   tables.forEach(t => {
     db.run(`DELETE FROM ${t} WHERE user_id = ?`, [userId]);
@@ -1110,6 +1149,7 @@ app.post('/api/auth/register', async (req, res) => {
 app.post('/api/auth/login', async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) {
+    recordLoginAttempt({ email, req, method: 'password', isSuccess: false, failureReason: 'missing_credentials' });
     return res.status(400).json({ error: '請填寫電子郵件與密碼' });
   }
 
@@ -1119,24 +1159,28 @@ app.post('/api/auth/login', async (req, res) => {
   const attempt = loginAttempts[emailLower];
   if (attempt && attempt.count >= 5 && Date.now() - attempt.lastAttempt < 30 * 60 * 1000) {
     const remaining = Math.ceil((30 * 60 * 1000 - (Date.now() - attempt.lastAttempt)) / 60000);
+    recordLoginAttempt({ email: emailLower, req, method: 'password', isSuccess: false, failureReason: 'account_temporarily_locked' });
     return res.status(429).json({ error: `登入失敗次數過多，請 ${remaining} 分鐘後再試` });
   }
 
   const user = queryOne("SELECT * FROM users WHERE email = ?", [emailLower]);
   if (!user) {
     trackFailedLogin(emailLower);
+    recordLoginAttempt({ email: emailLower, req, method: 'password', isSuccess: false, failureReason: 'user_not_found' });
     return res.status(401).json({ error: '電子郵件或密碼錯誤' });
   }
 
   const valid = await bcrypt.compare(password, user.password_hash);
   if (!valid) {
     trackFailedLogin(emailLower);
+    recordLoginAttempt({ user, email: emailLower, req, method: 'password', isSuccess: false, failureReason: 'wrong_password' });
     return res.status(401).json({ error: '電子郵件或密碼錯誤' });
   }
 
   // 登入成功，清除失敗記錄
   delete loginAttempts[emailLower];
   const currentLogin = recordLoginAudit(user, req, 'password');
+  recordLoginAttempt({ user, email: emailLower, req, method: 'password', isSuccess: true });
 
   const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: JWT_EXPIRES });
   res.json({
@@ -1543,6 +1587,7 @@ app.post('/api/auth/google', async (req, res) => {
     }
 
     const currentLogin = recordLoginAudit(user, req, 'google');
+    recordLoginAttempt({ user, email: user.email, req, method: 'google', isSuccess: true });
     const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: JWT_EXPIRES });
     res.json({
       token,
@@ -1600,8 +1645,8 @@ app.get('/api/admin/login-logs', adminMiddleware, (req, res) => {
   );
 
   const allUserLogs = queryAll(
-    `SELECT l.user_id, l.email, l.login_at, l.ip_address, l.login_method, l.is_admin_login, u.display_name
-     FROM login_audit_logs l
+    `SELECT l.user_id, l.email, l.login_at, l.ip_address, l.login_method, l.is_admin_login, l.is_success, l.failure_reason, u.display_name
+     FROM login_attempt_logs l
      LEFT JOIN users u ON u.id = l.user_id
      ORDER BY l.login_at DESC
      LIMIT 500`
@@ -1621,6 +1666,8 @@ app.get('/api/admin/login-logs', adminMiddleware, (req, res) => {
       ipAddress: l.ip_address || 'unknown',
       loginMethod: l.login_method || 'password',
       isAdminLogin: !!l.is_admin_login,
+      isSuccess: !!l.is_success,
+      failureReason: l.failure_reason || '',
     })),
   });
 });

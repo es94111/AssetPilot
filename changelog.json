@@ -1,6 +1,17 @@
 {
-  "currentVersion": "3.16.2",
+  "currentVersion": "3.16.3",
   "releases": [
+    {
+      "version": "3.16.3",
+      "date": "2026-03-21",
+      "title": "版本資訊一鍵更新",
+      "type": "feature",
+      "changes": [
+        { "tag": "new", "text": "版本更新資訊彈窗在偵測到新版本時新增「立即更新」按鈕，可直接從網頁觸發更新" },
+        { "tag": "new", "text": "後端新增 /api/system/update-app：自動執行 git pull 與 npm install，無需登入伺服器手動更新" },
+        { "tag": "improved", "text": "更新完成後可直接重新整理頁面套用新版前端，並提示後端異動需重啟服務" }
+      ]
+    },
     {
       "version": "3.16.2",
       "date": "2026-03-21",

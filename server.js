@@ -4,6 +4,7 @@ require('dotenv').config();
 
 const path = require('path');
 const fs = require('fs');
+const { spawn } = require('child_process');
 
 // 2. 再載入 data/.env（Docker 持久化密鑰用）
 //    Docker 環境中密鑰儲存在 /app/data/.env，必須優先載入
@@ -680,6 +681,92 @@ function mergeChangelogs(local, remote) {
   };
 }
 
+function runCommand(cmd, args, cwd, timeoutMs = 5 * 60 * 1000) {
+  return new Promise((resolve) => {
+    let stdout = '';
+    let stderr = '';
+    let timedOut = false;
+    const child = spawn(cmd, args, {
+      cwd,
+      env: process.env,
+      shell: false,
+    });
+
+    const timer = setTimeout(() => {
+      timedOut = true;
+      try { child.kill(); } catch (e) { /* ignore */ }
+    }, timeoutMs);
+
+    child.stdout.on('data', (chunk) => {
+      stdout += chunk.toString();
+    });
+    child.stderr.on('data', (chunk) => {
+      stderr += chunk.toString();
+    });
+
+    child.on('error', (err) => {
+      clearTimeout(timer);
+      resolve({ ok: false, code: null, stdout, stderr: (stderr + '\n' + err.message).trim(), timedOut: false });
+    });
+
+    child.on('close', (code) => {
+      clearTimeout(timer);
+      resolve({ ok: code === 0 && !timedOut, code, stdout, stderr, timedOut });
+    });
+  });
+}
+
+function trimOutput(text, max = 3000) {
+  const s = String(text || '').trim();
+  if (s.length <= max) return s;
+  return s.slice(0, max) + '\n...(輸出過長已截斷)';
+}
+
+async function executeInAppUpdate() {
+  const cwd = __dirname;
+  const steps = [];
+
+  if (!fs.existsSync(path.join(cwd, '.git'))) {
+    throw new Error('目前環境不是 Git 專案，無法執行自動更新');
+  }
+
+  const gitCheck = await runCommand('git', ['rev-parse', '--is-inside-work-tree'], cwd, 15000);
+  if (!gitCheck.ok) {
+    throw new Error('找不到 Git 或 Git 專案狀態異常，請確認伺服器已安裝 Git');
+  }
+
+  const branchRes = await runCommand('git', ['rev-parse', '--abbrev-ref', 'HEAD'], cwd, 15000);
+  const currentBranch = (branchRes.stdout || '').trim() || 'main';
+
+  const gitPull = await runCommand('git', ['pull', '--ff-only', 'origin', currentBranch], cwd, 2 * 60 * 1000);
+  steps.push({
+    step: `git pull --ff-only origin ${currentBranch}`,
+    ok: gitPull.ok,
+    output: trimOutput((gitPull.stdout || '') + '\n' + (gitPull.stderr || '')),
+  });
+  if (!gitPull.ok) {
+    throw new Error('更新失敗：無法從遠端取得最新程式碼（git pull 失敗）');
+  }
+
+  const npmCmd = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+  const npmInstall = await runCommand(npmCmd, ['install', '--omit=dev'], cwd, 5 * 60 * 1000);
+  steps.push({
+    step: 'npm install --omit=dev',
+    ok: npmInstall.ok,
+    output: trimOutput((npmInstall.stdout || '') + '\n' + (npmInstall.stderr || '')),
+  });
+  if (!npmInstall.ok) {
+    throw new Error('程式碼已更新，但安裝套件失敗，請檢查伺服器 npm 環境');
+  }
+
+  return {
+    branch: currentBranch,
+    steps,
+    restartRequired: true,
+    message: '更新完成。若有後端程式異動，請重新啟動服務以套用。',
+  };
+}
+
 app.get('/api/changelog', async (req, res) => {
   // 避免瀏覽器或中介層快取舊版本資訊
   res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
@@ -811,6 +898,24 @@ app.get('/api/auth/me', authMiddleware, (req, res) => {
 // 以下所有 API 路由需要驗證
 // ═══════════════════════════════════════
 app.use('/api', authMiddleware);
+
+let isUpdatingApp = false;
+
+app.post('/api/system/update-app', async (req, res) => {
+  if (isUpdatingApp) {
+    return res.status(409).json({ error: '系統正在更新中，請稍後再試' });
+  }
+
+  isUpdatingApp = true;
+  try {
+    const result = await executeInAppUpdate();
+    res.json({ success: true, ...result });
+  } catch (e) {
+    res.status(500).json({ error: e.message || '更新失敗' });
+  } finally {
+    isUpdatingApp = false;
+  }
+});
 
 // ─── 帳號設定 ───
 // 綁定 Google 帳號

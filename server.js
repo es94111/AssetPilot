@@ -2089,11 +2089,18 @@ app.post('/api/stock-dividends/import', async (req, res) => {
 
 // 股票交易紀錄
 app.get('/api/stock-transactions', (req, res) => {
-  const { stockId, page, pageSize } = req.query;
+  const { stockId, page, pageSize, dateFrom, dateTo, sortBy, sortDir } = req.query;
   let whereSql = "WHERE st.user_id = ?";
   const params = [req.userId];
   if (stockId) { whereSql += " AND st.stock_id = ?"; params.push(stockId); }
-  const orderSql = " ORDER BY st.date DESC, st.created_at DESC";
+  // 日期篩選：同時支援 YYYY-MM-DD 和 YYYYMMDD 格式
+  if (dateFrom) { whereSql += " AND REPLACE(st.date, '-', '') >= ?"; params.push(dateFrom.replace(/-/g, '')); }
+  if (dateTo) { whereSql += " AND REPLACE(st.date, '-', '') <= ?"; params.push(dateTo.replace(/-/g, '')); }
+  // 排序（白名單驗證避免 SQL injection）
+  const validSortCols = { date: 'st.date', type: 'st.type', symbol: 's.symbol', shares: 'st.shares', price: 'st.price', fee: 'st.fee', tax: 'st.tax', subtotal: '(st.shares * st.price)' };
+  const dir = sortDir === 'asc' ? 'ASC' : 'DESC';
+  const sortCol = validSortCols[sortBy] || 'st.date';
+  const orderSql = ` ORDER BY ${sortCol} ${dir}, st.created_at DESC`;
   // 分頁
   if (page && pageSize) {
     const p = Math.max(1, parseInt(page));
@@ -2154,11 +2161,18 @@ app.post('/api/stock-transactions/batch-delete', (req, res) => {
 
 // 股利紀錄
 app.get('/api/stock-dividends', (req, res) => {
-  const { stockId, page, pageSize } = req.query;
+  const { stockId, page, pageSize, dateFrom, dateTo, sortBy, sortDir } = req.query;
   let whereSql = "WHERE sd.user_id = ?";
   const params = [req.userId];
   if (stockId) { whereSql += " AND sd.stock_id = ?"; params.push(stockId); }
-  const orderSql = " ORDER BY sd.date DESC";
+  // 日期篩選：同時支援 YYYY-MM-DD 和 YYYYMMDD 格式
+  if (dateFrom) { whereSql += " AND REPLACE(sd.date, '-', '') >= ?"; params.push(dateFrom.replace(/-/g, '')); }
+  if (dateTo) { whereSql += " AND REPLACE(sd.date, '-', '') <= ?"; params.push(dateTo.replace(/-/g, '')); }
+  // 排序（白名單驗證）
+  const validSortCols = { date: 'sd.date', symbol: 's.symbol', cash_dividend: 'sd.cash_dividend' };
+  const dir = sortDir === 'asc' ? 'ASC' : 'DESC';
+  const sortCol = validSortCols[sortBy] || 'sd.date';
+  const orderSql = ` ORDER BY ${sortCol} ${dir}`;
   // 分頁
   if (page && pageSize) {
     const p = Math.max(1, parseInt(page));

@@ -731,6 +731,20 @@
       <!-- 帳號設定 -->
       <div class="settings-panel" id="panel-account">
         <div class="card">
+          <h3><i class="fas fa-coins" style="margin-right:8px;color:var(--primary)"></i>匯率設定（換算為 TWD）</h3>
+          <p class="import-hint" style="margin-bottom:12px">用於多幣別交易換算。TWD 固定為 1，不可刪除。</p>
+          <table class="table fx-rate-table" style="margin-bottom:12px">
+            <thead>
+              <tr><th style="width:40%">幣別</th><th style="width:40%">匯率（to TWD）</th><th style="width:20%">操作</th></tr>
+            </thead>
+            <tbody id="fxRateTableBody"></tbody>
+          </table>
+          <div class="import-actions" style="justify-content:flex-start">
+            <button class="btn" id="addFxRateBtn"><i class="fas fa-plus"></i> 新增幣別</button>
+            <button class="btn btn-primary" id="saveFxRateBtn"><i class="fas fa-floppy-disk"></i> 儲存匯率</button>
+          </div>
+        </div>
+        <div class="card">
           <h3><i class="fas fa-moon" style="margin-right:8px;color:var(--primary)"></i>外觀模式</h3>
           <div class="theme-toggle-row">
             <div>
@@ -840,6 +854,22 @@
           <label>金額 <span class="required">*</span></label>
           <input type="number" id="txAmount" min="1" step="1" required placeholder="請輸入金額">
         </div>
+        <div class="form-row" id="txCurrencyRow">
+          <label>幣別 <span class="required">*</span></label>
+          <select id="txCurrency" required>
+            <option value="TWD">TWD 新台幣</option>
+            <option value="USD">USD 美元</option>
+            <option value="JPY">JPY 日圓</option>
+            <option value="EUR">EUR 歐元</option>
+            <option value="HKD">HKD 港幣</option>
+            <option value="CNY">CNY 人民幣</option>
+          </select>
+        </div>
+        <div class="form-row" id="txFxRateRow" style="display:none">
+          <label>匯率（1 單位外幣 = 幾元 TWD）<span class="required">*</span></label>
+          <input type="number" id="txFxRate" min="0.000001" step="0.000001" placeholder="例如 31.5">
+          <div class="import-hint" id="txConvertedHint" style="margin-top:6px"></div>
+        </div>
         <div class="form-row">
           <label>日期 <span class="required">*</span></label>
           <input type="date" id="txDate" required>
@@ -912,6 +942,17 @@
           <input type="number" id="accBalance" value="0" step="1">
         </div>
         <div class="form-row">
+          <label>帳戶幣別 <span class="required">*</span></label>
+          <select id="accCurrency" required>
+            <option value="TWD">TWD 新台幣</option>
+            <option value="USD">USD 美元</option>
+            <option value="JPY">JPY 日圓</option>
+            <option value="EUR">EUR 歐元</option>
+            <option value="HKD">HKD 港幣</option>
+            <option value="CNY">CNY 人民幣</option>
+          </select>
+        </div>
+        <div class="form-row">
           <label>圖示</label>
           <select id="accIcon">
             <option value="fa-wallet">錢包</option>
@@ -946,7 +987,7 @@
           <select id="tfTo" required></select>
         </div>
         <div class="form-row">
-          <label>金額 <span class="required">*</span></label>
+          <label id="tfAmountLabel">金額 <span class="required">*</span></label>
           <input type="number" id="tfAmount" min="1" step="1" required>
         </div>
         <div class="form-row">

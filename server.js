@@ -233,6 +233,7 @@ async function initDB() {
     user_id TEXT NOT NULL,
     name TEXT NOT NULL,
     initial_balance REAL DEFAULT 0,
+    currency TEXT DEFAULT 'TWD',
     icon TEXT DEFAULT 'fa-wallet',
     created_at TEXT
   )`);
@@ -242,6 +243,9 @@ async function initDB() {
     user_id TEXT NOT NULL,
     type TEXT NOT NULL,
     amount REAL NOT NULL,
+    currency TEXT DEFAULT 'TWD',
+    original_amount REAL DEFAULT 0,
+    fx_rate REAL DEFAULT 1,
     date TEXT NOT NULL,
     category_id TEXT,
     account_id TEXT,
@@ -249,6 +253,14 @@ async function initDB() {
     linked_id TEXT DEFAULT '',
     created_at INTEGER,
     updated_at INTEGER
+  )`);
+
+  db.run(`CREATE TABLE IF NOT EXISTS exchange_rates (
+    user_id TEXT NOT NULL,
+    currency TEXT NOT NULL,
+    rate_to_twd REAL NOT NULL,
+    updated_at INTEGER,
+    PRIMARY KEY (user_id, currency)
   )`);
 
   db.run(`CREATE TABLE IF NOT EXISTS budgets (
@@ -296,6 +308,12 @@ async function initDB() {
   try {
     db.run("ALTER TABLE categories ADD COLUMN parent_id TEXT DEFAULT ''");
   } catch (e) { /* 欄位已存在則忽略 */ }
+
+  // 資料庫升級：多幣別欄位
+  try { db.run("ALTER TABLE accounts ADD COLUMN currency TEXT DEFAULT 'TWD'"); } catch (e) { /* ignore */ }
+  try { db.run("ALTER TABLE transactions ADD COLUMN currency TEXT DEFAULT 'TWD'"); } catch (e) { /* ignore */ }
+  try { db.run("ALTER TABLE transactions ADD COLUMN original_amount REAL DEFAULT 0"); } catch (e) { /* ignore */ }
+  try { db.run("ALTER TABLE transactions ADD COLUMN fx_rate REAL DEFAULT 1"); } catch (e) { /* ignore */ }
 
   // 為既有使用者補建預設子分類
   migrateDefaultSubcategories();
@@ -445,6 +463,11 @@ function createDefaultsForUser(userId) {
   });
   db.run("INSERT INTO accounts (id, user_id, name, initial_balance, icon, created_at) VALUES (?,?,?,0,'fa-wallet',?)",
     [uid(), userId, '現金', todayStr()]);
+
+  Object.entries(DEFAULT_EXCHANGE_RATES).forEach(([currency, rate]) => {
+    db.run("INSERT OR IGNORE INTO exchange_rates (user_id, currency, rate_to_twd, updated_at) VALUES (?, ?, ?, ?)",
+      [userId, currency, rate, Date.now()]);
+  });
   db.run(`INSERT OR IGNORE INTO stock_settings (user_id, fee_rate, fee_discount, fee_min_lot, fee_min_odd, sell_tax_rate_stock, sell_tax_rate_etf, sell_tax_rate_warrant, sell_tax_min, updated_at)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
@@ -484,6 +507,65 @@ function todayStr() {
   const m = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
   return `${y}-${m}-${day}`;
+}
+
+const DEFAULT_EXCHANGE_RATES = {
+  TWD: 1,
+  USD: 31.5,
+  JPY: 0.21,
+  EUR: 34.2,
+  CNY: 4.35,
+  HKD: 4.03,
+};
+
+function normalizeCurrency(code) {
+  const c = String(code || 'TWD').trim().toUpperCase();
+  return /^[A-Z]{3}$/.test(c) ? c : 'TWD';
+}
+
+function getUserExchangeRateMap(userId) {
+  const rows = queryAll('SELECT currency, rate_to_twd FROM exchange_rates WHERE user_id = ?', [userId]);
+  const map = { ...DEFAULT_EXCHANGE_RATES };
+  rows.forEach(r => {
+    const c = normalizeCurrency(r.currency);
+    const rate = Number(r.rate_to_twd);
+    if (rate > 0) map[c] = rate;
+  });
+  map.TWD = 1;
+  return map;
+}
+
+function getExchangeRateToTwd(userId, currencyCode) {
+  const c = normalizeCurrency(currencyCode);
+  if (c === 'TWD') return 1;
+  const row = queryOne('SELECT rate_to_twd FROM exchange_rates WHERE user_id = ? AND currency = ?', [userId, c]);
+  if (row && Number(row.rate_to_twd) > 0) return Number(row.rate_to_twd);
+  return Number(DEFAULT_EXCHANGE_RATES[c]) || 1;
+}
+
+function convertToTwd(originalAmount, currencyCode, fxRateInput, userId) {
+  const currency = normalizeCurrency(currencyCode);
+  const original = Number(originalAmount);
+  if (!(original > 0)) throw new Error('金額必須大於 0');
+  const fxRate = currency === 'TWD'
+    ? 1
+    : (Number(fxRateInput) > 0 ? Number(fxRateInput) : getExchangeRateToTwd(userId, currency));
+  const twdAmount = Math.round(original * fxRate * 100) / 100;
+  return {
+    currency,
+    originalAmount: original,
+    fxRate,
+    twdAmount,
+  };
+}
+
+function convertFromTwd(twdAmount, currencyCode, userId) {
+  const currency = normalizeCurrency(currencyCode);
+  const twd = Number(twdAmount) || 0;
+  if (currency === 'TWD') return twd;
+  const rate = getExchangeRateToTwd(userId, currency);
+  if (!(rate > 0)) return twd;
+  return Math.round((twd / rate) * 100) / 100;
 }
 
 const DEFAULT_STOCK_SETTINGS = {
@@ -1249,39 +1331,86 @@ app.delete('/api/categories/:id', (req, res) => {
   res.json({ ok: true });
 });
 
+// ─── 匯率設定 ───
+app.get('/api/exchange-rates', (req, res) => {
+  const map = getUserExchangeRateMap(req.userId);
+  const rows = Object.keys(map).sort().map(currency => ({
+    currency,
+    rateToTwd: map[currency],
+  }));
+  res.json({ rates: rows });
+});
+
+app.put('/api/exchange-rates', (req, res) => {
+  const rates = Array.isArray(req.body?.rates) ? req.body.rates : null;
+  if (!rates || rates.length === 0) return res.status(400).json({ error: '請提供匯率資料' });
+
+  for (const r of rates) {
+    const currency = normalizeCurrency(r.currency);
+    const rate = Number(r.rateToTwd);
+    if (currency === 'TWD') continue;
+    if (!(rate > 0 && rate < 1000000)) {
+      return res.status(400).json({ error: `${currency} 匯率格式不正確` });
+    }
+    db.run(`INSERT INTO exchange_rates (user_id, currency, rate_to_twd, updated_at)
+      VALUES (?, ?, ?, ?)
+      ON CONFLICT(user_id, currency) DO UPDATE SET rate_to_twd = excluded.rate_to_twd, updated_at = excluded.updated_at`,
+      [req.userId, currency, rate, Date.now()]);
+  }
+
+  db.run(`INSERT OR IGNORE INTO exchange_rates (user_id, currency, rate_to_twd, updated_at)
+    VALUES (?, 'TWD', 1, ?)`, [req.userId, Date.now()]);
+  saveDB();
+  const map = getUserExchangeRateMap(req.userId);
+  const rows = Object.keys(map).sort().map(currency => ({ currency, rateToTwd: map[currency] }));
+  res.json({ rates: rows });
+});
+
 // ─── 帳戶 ───
 app.get('/api/accounts', (req, res) => {
   const accounts = queryAll("SELECT * FROM accounts WHERE user_id = ? ORDER BY created_at", [req.userId]);
   const result = accounts.map(a => {
-    const balance = calcBalance(a.id, a.initial_balance, req.userId);
-    return { ...a, initialBalance: a.initial_balance, balance };
+    const accountCurrency = normalizeCurrency(a.currency);
+    const balance = calcBalance(a.id, a.initial_balance, req.userId, accountCurrency);
+    return {
+      ...a,
+      initialBalance: a.initial_balance,
+      currency: accountCurrency,
+      balance,
+    };
   });
   res.json(result);
 });
 
-function calcBalance(accId, initialBalance, userId) {
+function calcBalance(accId, initialBalance, userId, accountCurrency = 'TWD') {
   let balance = Number(initialBalance) || 0;
-  const txs = queryAll("SELECT type, amount FROM transactions WHERE account_id = ? AND user_id = ?", [accId, userId]);
+  const txs = queryAll("SELECT type, amount, currency, original_amount FROM transactions WHERE account_id = ? AND user_id = ?", [accId, userId]);
   txs.forEach(t => {
-    if (t.type === 'income' || t.type === 'transfer_in') balance += Number(t.amount);
-    else if (t.type === 'expense' || t.type === 'transfer_out') balance -= Number(t.amount);
+    const txCurrency = normalizeCurrency(t.currency);
+    const value = txCurrency === accountCurrency
+      ? (Number(t.original_amount) > 0 ? Number(t.original_amount) : Number(t.amount) || 0)
+      : convertFromTwd(t.amount, accountCurrency, userId);
+    if (t.type === 'income' || t.type === 'transfer_in') balance += value;
+    else if (t.type === 'expense' || t.type === 'transfer_out') balance -= value;
   });
-  return balance;
+  return Math.round(balance * 100) / 100;
 }
 
 app.post('/api/accounts', (req, res) => {
   const { name, initialBalance, icon } = req.body;
+  const currency = normalizeCurrency(req.body.currency);
   const id = uid();
-  db.run("INSERT INTO accounts (id, user_id, name, initial_balance, icon, created_at) VALUES (?,?,?,?,?,?)",
-    [id, req.userId, name, initialBalance || 0, icon || 'fa-wallet', todayStr()]);
+  db.run("INSERT INTO accounts (id, user_id, name, initial_balance, icon, currency, created_at) VALUES (?,?,?,?,?,?,?)",
+    [id, req.userId, name, initialBalance || 0, icon || 'fa-wallet', currency, todayStr()]);
   saveDB();
   res.json({ id });
 });
 
 app.put('/api/accounts/:id', (req, res) => {
   const { name, initialBalance, icon } = req.body;
-  db.run("UPDATE accounts SET name = ?, initial_balance = ?, icon = ? WHERE id = ? AND user_id = ?",
-    [name, initialBalance || 0, icon || 'fa-wallet', req.params.id, req.userId]);
+  const currency = normalizeCurrency(req.body.currency);
+  db.run("UPDATE accounts SET name = ?, initial_balance = ?, icon = ?, currency = ? WHERE id = ? AND user_id = ?",
+    [name, initialBalance || 0, icon || 'fa-wallet', currency, req.params.id, req.userId]);
   saveDB();
   res.json({ ok: true });
 });
@@ -1326,7 +1455,16 @@ app.get('/api/transactions', (req, res) => {
 
   const rows = queryAll(sql, params);
   res.json({
-    data: rows.map(r => ({ ...r, categoryId: r.category_id, accountId: r.account_id, createdAt: r.created_at, updatedAt: r.updated_at })),
+    data: rows.map(r => ({
+      ...r,
+      categoryId: r.category_id,
+      accountId: r.account_id,
+      currency: normalizeCurrency(r.currency),
+      originalAmount: Number(r.original_amount) > 0 ? Number(r.original_amount) : Number(r.amount) || 0,
+      fxRate: Number(r.fx_rate) > 0 ? Number(r.fx_rate) : 1,
+      createdAt: r.created_at,
+      updatedAt: r.updated_at,
+    })),
     total, page: pageNum, totalPages: Math.ceil(total / pageSize),
   });
 });
@@ -1334,12 +1472,17 @@ app.get('/api/transactions', (req, res) => {
 app.post('/api/transactions', (req, res) => {
   const { type, amount, date: rawDate, categoryId, accountId, note } = req.body;
   const date = normalizeDate(rawDate);
-  if (amount <= 0) return res.status(400).json({ error: '金額必須大於 0' });
+  let converted;
+  try {
+    converted = convertToTwd(req.body.originalAmount ?? amount, req.body.currency, req.body.fxRate, req.userId);
+  } catch (e) {
+    return res.status(400).json({ error: e.message || '金額格式錯誤' });
+  }
   if (date > todayStr()) return res.status(400).json({ error: '日期不可為未來日期' });
   const id = uid();
   const now = Date.now();
-  db.run("INSERT INTO transactions (id, user_id, type, amount, date, category_id, account_id, note, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?)",
-    [id, req.userId, type, amount, date, categoryId, accountId, note || '', now, now]);
+  db.run("INSERT INTO transactions (id, user_id, type, amount, currency, original_amount, fx_rate, date, category_id, account_id, note, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
+    [id, req.userId, type, converted.twdAmount, converted.currency, converted.originalAmount, converted.fxRate, date, categoryId, accountId, note || '', now, now]);
   saveDB();
   res.json({ id });
 });
@@ -1347,10 +1490,15 @@ app.post('/api/transactions', (req, res) => {
 app.put('/api/transactions/:id', (req, res) => {
   const { type, amount, date: rawDate, categoryId, accountId, note } = req.body;
   const date = normalizeDate(rawDate);
-  if (amount <= 0) return res.status(400).json({ error: '金額必須大於 0' });
+  let converted;
+  try {
+    converted = convertToTwd(req.body.originalAmount ?? amount, req.body.currency, req.body.fxRate, req.userId);
+  } catch (e) {
+    return res.status(400).json({ error: e.message || '金額格式錯誤' });
+  }
   if (date > todayStr()) return res.status(400).json({ error: '日期不可為未來日期' });
-  db.run("UPDATE transactions SET type=?, amount=?, date=?, category_id=?, account_id=?, note=?, updated_at=? WHERE id=? AND user_id=?",
-    [type, amount, date, categoryId, accountId, note || '', Date.now(), req.params.id, req.userId]);
+  db.run("UPDATE transactions SET type=?, amount=?, currency=?, original_amount=?, fx_rate=?, date=?, category_id=?, account_id=?, note=?, updated_at=? WHERE id=? AND user_id=?",
+    [type, converted.twdAmount, converted.currency, converted.originalAmount, converted.fxRate, date, categoryId, accountId, note || '', Date.now(), req.params.id, req.userId]);
   saveDB();
   res.json({ ok: true });
 });
@@ -1467,7 +1615,7 @@ app.post('/api/transactions/import', (req, res) => {
       // 自動新增帳戶
       if (account && !accMap[account]) {
         const accId = uid();
-        db.run("INSERT INTO accounts (id, user_id, name, initial_balance, icon) VALUES (?,?,?,0,'fa-wallet')",
+        db.run("INSERT INTO accounts (id, user_id, name, initial_balance, icon, currency) VALUES (?,?,?,0,'fa-wallet','TWD')",
           [accId, req.userId, account]);
         accMap[account] = { id: accId, name: account };
         createdAccs.push(account);
@@ -1512,8 +1660,8 @@ app.post('/api/transactions/import', (req, res) => {
 
     if (dbType === 'transfer_out') {
       // 先插入轉出，稍後配對轉入時回填 linked_id
-      db.run("INSERT INTO transactions (id,user_id,type,amount,date,category_id,account_id,note,linked_id,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
-        [txId, req.userId, dbType, amt, date, catId, accId, note || '', '', now, now]);
+      db.run("INSERT INTO transactions (id,user_id,type,amount,currency,original_amount,fx_rate,date,category_id,account_id,note,linked_id,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        [txId, req.userId, dbType, amt, 'TWD', amt, 1, date, catId, accId, note || '', '', now, now]);
       pendingTransferOut.push({ id: txId, date, amount: amt, note: note || '' });
       imported++;
     } else if (dbType === 'transfer_in') {
@@ -1521,18 +1669,18 @@ app.post('/api/transactions/import', (req, res) => {
       const matchIdx = pendingTransferOut.findIndex(p => p.date === date && p.amount === amt);
       if (matchIdx !== -1) {
         const matched = pendingTransferOut.splice(matchIdx, 1)[0];
-        db.run("INSERT INTO transactions (id,user_id,type,amount,date,category_id,account_id,note,linked_id,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
-          [txId, req.userId, dbType, amt, date, catId, accId, note || '', matched.id, now, now]);
+        db.run("INSERT INTO transactions (id,user_id,type,amount,currency,original_amount,fx_rate,date,category_id,account_id,note,linked_id,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+          [txId, req.userId, dbType, amt, 'TWD', amt, 1, date, catId, accId, note || '', matched.id, now, now]);
         // 回填轉出的 linked_id
         db.run("UPDATE transactions SET linked_id = ? WHERE id = ?", [txId, matched.id]);
       } else {
-        db.run("INSERT INTO transactions (id,user_id,type,amount,date,category_id,account_id,note,linked_id,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
-          [txId, req.userId, dbType, amt, date, catId, accId, note || '', '', now, now]);
+        db.run("INSERT INTO transactions (id,user_id,type,amount,currency,original_amount,fx_rate,date,category_id,account_id,note,linked_id,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+          [txId, req.userId, dbType, amt, 'TWD', amt, 1, date, catId, accId, note || '', '', now, now]);
       }
       imported++;
     } else {
-      db.run("INSERT INTO transactions (id,user_id,type,amount,date,category_id,account_id,note,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?)",
-        [txId, req.userId, dbType, amt, date, catId, accId, note || '', now, now]);
+      db.run("INSERT INTO transactions (id,user_id,type,amount,currency,original_amount,fx_rate,date,category_id,account_id,note,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        [txId, req.userId, dbType, amt, 'TWD', amt, 1, date, catId, accId, note || '', now, now]);
       imported++;
     }
   });
@@ -1549,15 +1697,34 @@ app.post('/api/transactions/transfer', (req, res) => {
   const { fromId, toId, amount, date: rawDate, note } = req.body;
   if (fromId === toId) return res.status(400).json({ error: '轉出與轉入帳戶不可相同' });
   if (amount <= 0) return res.status(400).json({ error: '金額必須大於 0' });
+
+  const fromAccount = queryOne('SELECT currency FROM accounts WHERE id = ? AND user_id = ?', [fromId, req.userId]);
+  const toAccount = queryOne('SELECT currency FROM accounts WHERE id = ? AND user_id = ?', [toId, req.userId]);
+  if (!fromAccount || !toAccount) return res.status(400).json({ error: '帳戶不存在' });
+
+  const fromCurrency = normalizeCurrency(fromAccount.currency);
+  const toCurrency = normalizeCurrency(toAccount.currency);
+  const transferAmount = Number(amount);
+  let outConverted;
+  try {
+    outConverted = convertToTwd(transferAmount, fromCurrency, null, req.userId);
+  } catch (e) {
+    return res.status(400).json({ error: e.message || '轉帳金額格式錯誤' });
+  }
+  const inOriginal = toCurrency === fromCurrency
+    ? transferAmount
+    : convertFromTwd(outConverted.twdAmount, toCurrency, req.userId);
+  const inConverted = convertToTwd(inOriginal, toCurrency, null, req.userId);
+
   const now = Date.now();
   const txDate = normalizeDate(rawDate) || todayStr();
   const txNote = note || '轉帳';
   const outId = uid();
   const inId = uid();
-  db.run("INSERT INTO transactions (id,user_id,type,amount,date,category_id,account_id,note,linked_id,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
-    [outId, req.userId, 'transfer_out', amount, txDate, '', fromId, txNote, inId, now, now]);
-  db.run("INSERT INTO transactions (id,user_id,type,amount,date,category_id,account_id,note,linked_id,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
-    [inId, req.userId, 'transfer_in', amount, txDate, '', toId, txNote, outId, now, now]);
+  db.run("INSERT INTO transactions (id,user_id,type,amount,currency,original_amount,fx_rate,date,category_id,account_id,note,linked_id,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+    [outId, req.userId, 'transfer_out', outConverted.twdAmount, fromCurrency, outConverted.originalAmount, outConverted.fxRate, txDate, '', fromId, txNote, inId, now, now]);
+  db.run("INSERT INTO transactions (id,user_id,type,amount,currency,original_amount,fx_rate,date,category_id,account_id,note,linked_id,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+    [inId, req.userId, 'transfer_in', inConverted.twdAmount, toCurrency, inConverted.originalAmount, inConverted.fxRate, txDate, '', toId, txNote, outId, now, now]);
   saveDB();
   res.json({ ok: true });
 });

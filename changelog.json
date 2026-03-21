@@ -1,6 +1,17 @@
 {
-  "currentVersion": "3.35.2",
+  "currentVersion": "3.36",
   "releases": [
+    {
+      "version": "3.36",
+      "date": "2026-03-21",
+      "title": "全站登入紀錄納入失敗事件",
+      "type": "feature",
+      "changes": [
+        { "tag": "new", "text": "管理員「全部使用者登入紀錄」新增失敗登入事件，包含帳號不存在、密碼錯誤、缺少憑證與暫時鎖定" },
+        { "tag": "new", "text": "全站登入紀錄新增「結果」與「失敗原因」欄位，方便快速辨識異常登入" },
+        { "tag": "improved", "text": "新增 login_attempt_logs 稽核資料表，統一記錄成功與失敗的登入嘗試（含 Google 成功登入）" }
+      ]
+    },
     {
       "version": "3.35.2",
       "date": "2026-03-21",

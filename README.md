@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-3.35.2-blue" alt="version">
+  <img src="https://img.shields.io/badge/version-3.36-blue" alt="version">
   <img src="https://img.shields.io/badge/node-%3E%3D18-green" alt="node">
   <img src="https://img.shields.io/badge/license-MIT-orange" alt="license">
   <img src="https://img.shields.io/badge/docker-ready-2496ED" alt="docker">
@@ -34,7 +34,7 @@
 - **主題切換容錯** — 深色/淺色切換先本機生效，後端同步異常時不影響當下使用
 - **Google SSO** — 一鍵 Google 帳號登入（選配）
 - **管理員模式** — 第一位使用者自動成為管理員，可控管註冊政策與使用者帳號
-- **登入稽核紀錄** — 記錄登入時間、IP、登入方式，並保證本次登入可即時顯示
+- **登入稽核紀錄** — 記錄登入時間、IP、登入方式，管理員全站紀錄含成功與失敗登入嘗試
 - **資料庫加密** — ChaCha20-Poly1305 + PBKDF2-SHA256 全資料庫加密
 - **響應式設計** — 桌面與手機皆可使用
 
@@ -255,7 +255,7 @@ docker run -d \
   - 建立新帳號（可直接指定為管理員）
   - 刪除指定帳號
   - 檢視管理員登入時間與 IP 紀錄
-  - 檢視全部使用者登入時間與 IP 紀錄
+  - 檢視全部使用者登入時間與 IP 紀錄（含失敗登入：帳號不存在、密碼錯誤、暫時鎖定等）
 - 註冊策略同時套用於一般註冊與 Google 首次註冊：
   - 若設定白名單，只有白名單內 Email 可註冊
   - 若未設定白名單且關閉公開註冊，僅能由管理員建立帳號
@@ -441,6 +441,7 @@ your-domain.com {
 - **OAuth state 驗證** — Google 授權碼登入使用一次性 state，降低登入 CSRF/重放風險
 - **速率限制** — 登入/註冊 API 限制每 IP 每 15 分鐘 20 次
 - **登入稽核** — 密碼登入與 Google SSO 成功後皆記錄登入時間、IP、登入方式與身份
+- **失敗登入稽核** — 管理員全站登入紀錄會保留失敗嘗試（帳號不存在、密碼錯誤、缺少憑證、暫時鎖定）
 - **本次登入保證** — `/api/auth/login` 與 `/api/auth/google` 會回傳 `currentLogin`，前端登入後可立即顯示本次登入紀錄
 - **CORS 控制** — 可透過 `ALLOWED_ORIGINS` 限制來源
 - **最小暴露面** — 僅白名單前端檔案可靜態存取，不再公開整個專案根目錄

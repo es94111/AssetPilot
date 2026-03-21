@@ -3113,6 +3113,16 @@ const App = (() => {
     return '密碼';
   }
 
+  function formatFailureReason(reason) {
+    const r = String(reason || '').trim().toLowerCase();
+    if (!r) return '-';
+    if (r === 'user_not_found') return '帳號不存在';
+    if (r === 'wrong_password') return '密碼錯誤';
+    if (r === 'missing_credentials') return '缺少帳號或密碼';
+    if (r === 'account_temporarily_locked') return '登入暫時鎖定';
+    return r;
+  }
+
   async function renderAccountLoginLogs() {
     const tbody = el('accountLoginLogBody');
     if (!tbody) return;
@@ -3169,6 +3179,8 @@ const App = (() => {
           ipAddress: latestLoginRecord.ipAddress,
           loginMethod: latestLoginRecord.loginMethod,
           isAdminLogin: !!latestLoginRecord.isAdminLogin,
+          isSuccess: true,
+          failureReason: '',
         });
       }
     }
@@ -3186,7 +3198,7 @@ const App = (() => {
     }
 
     if (allUserLogs.length === 0) {
-      allUserTbody.innerHTML = '<tr><td colspan="6" class="empty-hint">尚無使用者登入紀錄</td></tr>';
+      allUserTbody.innerHTML = '<tr><td colspan="8" class="empty-hint">尚無使用者登入紀錄</td></tr>';
     } else {
       allUserTbody.innerHTML = allUserLogs.map(log => `
         <tr>
@@ -3196,6 +3208,8 @@ const App = (() => {
           <td>${log.isAdminLogin ? '<span class="type-badge income">管理員</span>' : '<span class="type-badge">一般</span>'}</td>
           <td>${escHtml(log.ipAddress || 'unknown')}</td>
           <td>${escHtml(formatLoginMethod(log.loginMethod))}</td>
+          <td>${log.isSuccess ? '<span class="type-badge income">成功</span>' : '<span class="type-badge expense">失敗</span>'}</td>
+          <td>${escHtml(log.isSuccess ? '-' : formatFailureReason(log.failureReason))}</td>
         </tr>
       `).join('');
     }

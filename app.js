@@ -2991,6 +2991,8 @@ const App = (() => {
     if (saveBackupSettingsBtn) saveBackupSettingsBtn.onclick = saveBackupSettings;
     const downloadBackupBtn = el('downloadBackupBtn');
     if (downloadBackupBtn) downloadBackupBtn.onclick = downloadSelectedBackup;
+    const deleteBackupBtn = el('deleteBackupBtn');
+    if (deleteBackupBtn) deleteBackupBtn.onclick = deleteSelectedBackup;
     const uploadBackupInput = el('uploadBackupInput');
     if (uploadBackupInput) {
       uploadBackupInput.addEventListener('change', e => {
@@ -3015,7 +3017,7 @@ const App = (() => {
     return `${(n / (1024 * 1024)).toFixed(2)} MB`;
   }
 
-  async function loadBackupList() {
+  async function loadBackupList(preferFileName = '') {
     const select = el('backupSelect');
     const hint = el('backupSettingsHint');
     const resultEl = el('backupResult');
@@ -3040,6 +3042,10 @@ const App = (() => {
           const label = `${idx === 0 ? '最新' : '備份'}｜${fmtBackupDate(b.createdAt)}｜${fmtBackupSize(b.size)}｜${b.fileName}`;
           return `<option value="${escHtml(b.fileName)}">${escHtml(label)}</option>`;
         }).join('');
+        if (preferFileName) {
+          const target = backups.find(b => b.fileName === preferFileName);
+          if (target) select.value = target.fileName;
+        }
       }
 
       if (resultEl) resultEl.style.display = 'none';
@@ -3151,7 +3157,7 @@ const App = (() => {
         resultEl.style.display = 'block';
         resultEl.innerHTML = `<div class="import-result-success"><i class="fas fa-circle-check"></i> 上傳完成：<strong>${escHtml(data?.backup?.fileName || file.name)}</strong></div>`;
       }
-      await loadBackupList();
+      await loadBackupList(data?.backup?.fileName || '');
       toast('備份檔上傳完成', 'success');
     } catch (err) {
       if (resultEl) {
@@ -3186,6 +3192,43 @@ const App = (() => {
     } finally {
       btn.disabled = false;
       btn.innerHTML = '<i class="fas fa-floppy-disk"></i> 立即備份';
+    }
+  }
+
+  async function deleteSelectedBackup() {
+    const select = el('backupSelect');
+    const btn = el('deleteBackupBtn');
+    const resultEl = el('backupResult');
+    const fileName = select?.value || '';
+    if (!fileName) {
+      toast('請先選擇要刪除的備份檔', 'error');
+      return;
+    }
+    if (!confirm(`確定要刪除此備份檔嗎？\n\n檔案：${fileName}`)) return;
+
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 刪除中...';
+    }
+    try {
+      await API.del(`/api/system/backups/${encodeURIComponent(fileName)}`);
+      if (resultEl) {
+        resultEl.style.display = 'block';
+        resultEl.innerHTML = `<div class="import-result-success"><i class="fas fa-circle-check"></i> 已刪除備份：<strong>${escHtml(fileName)}</strong></div>`;
+      }
+      await loadBackupList();
+      toast('備份檔已刪除', 'success');
+    } catch (err) {
+      if (resultEl) {
+        resultEl.style.display = 'block';
+        resultEl.innerHTML = `<div class="import-result-errors">${escHtml(err.message || '刪除備份失敗')}</div>`;
+      }
+      toast(err.message || '刪除備份失敗', 'error');
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-trash"></i> 刪除備份';
+      }
     }
   }
 

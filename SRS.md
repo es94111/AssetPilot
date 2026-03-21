@@ -1,6 +1,6 @@
 # 資產管理 軟體需求規格書 (SRS)
 
-**版本：** 3.29
+**版本：** 3.29.1
 **日期：** 2026-03-21
 **狀態：** 已實作
 
@@ -454,14 +454,17 @@
   - 使用者可手動立即建立備份
   - 使用者可下載指定備份檔至本機
   - 使用者可上傳備份檔到系統，供後續還原使用
+  - 使用者可刪除指定備份檔
   - 使用者可選擇指定備份檔進行還原，還原後資料立即生效
   - 還原操作需二次確認，並限制為合法備份檔名格式，避免路徑注入
+  - 上傳備份檔需通過格式驗證（SQLite 或系統加密備份），避免上傳後無法還原
 - **API 端點：**
   - `GET /api/system/backups`
   - `PUT /api/system/backups/settings`
   - `POST /api/system/backups/run`
   - `GET /api/system/backups/download/:fileName`
   - `POST /api/system/backups/upload`
+  - `DELETE /api/system/backups/:fileName`
   - `POST /api/system/backups/restore`
 
 #### FR-077 全球即時匯率自動更新
@@ -970,6 +973,7 @@
 | POST | /api/system/backups/run     | 立即建立一份資料備份           |
 | GET  | /api/system/backups/download/:fileName | 下載指定備份檔      |
 | POST | /api/system/backups/upload  | 上傳備份檔至系統               |
+| DELETE | /api/system/backups/:fileName | 刪除指定備份檔             |
 | POST | /api/system/backups/restore | 從指定備份檔還原資料庫         |
 
 ### 7.11 匯率設定
@@ -1081,6 +1085,7 @@
 | 3.27.1  | 2026-03-21 | 修正主題模式切換容錯：切換深色/淺色時若主題同步 API 回應異常，改為保留本機已套用模式並顯示溫和提示，不再中斷操作或回滾主題                                                                                                                                        |
 | 3.28    | 2026-03-21 | 備份功能升級：新增備份檔下載與上傳、可由使用者自訂自動備份間隔與保留份數（預設 6 小時/30 份），設定變更後即時套用排程與清理策略                                                                                                                                    |
 | 3.29    | 2026-03-21 | 匯率設定整合全球即時匯率 API：新增手動即時更新與「自動更新匯率」開關，使用者可自行選擇是否啟用，並顯示上次同步時間                                                                                                                                                |
+| 3.29.1  | 2026-03-21 | 備份功能修正：新增刪除備份檔案，並強化上傳備份檔驗證與上傳後自動選取，修復上傳後無法還原的使用流程問題                                                                                                                                                |
 
 ### 8.3 未來擴充方向
 

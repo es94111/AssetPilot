@@ -1,6 +1,17 @@
 {
-  "currentVersion": "3.29",
+  "currentVersion": "3.29.1",
   "releases": [
+    {
+      "version": "3.29.1",
+      "date": "2026-03-21",
+      "title": "備份刪除與還原穩定性修正",
+      "type": "fixed",
+      "changes": [
+        { "tag": "new", "text": "資料自動備份與還原新增「刪除備份檔案」功能，使用者可直接刪除指定備份" },
+        { "tag": "fixed", "text": "修正上傳備份後無法還原問題：新增備份檔內容驗證，僅接受有效 SQLite/加密備份" },
+        { "tag": "improved", "text": "上傳備份成功後自動選取該檔案，便於立即執行還原" }
+      ]
+    },
     {
       "version": "3.29",
       "date": "2026-03-21",

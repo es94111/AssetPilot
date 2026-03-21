@@ -648,6 +648,13 @@ function resolveBackupPath(fileName) {
   return fullPath;
 }
 
+function isValidBackupFileBuffer(buf) {
+  if (!buf || buf.length < 64) return false;
+  if (isEncryptedDB(buf)) return true;
+  const sqliteMagic = Buffer.from('SQLite format 3\u0000', 'binary');
+  return buf.subarray(0, sqliteMagic.length).equals(sqliteMagic);
+}
+
 function isValidColor(c) { return !c || /^#[0-9a-fA-F]{3,8}$/.test(c); }
 
 function uid() {
@@ -1494,6 +1501,16 @@ app.get('/api/system/backups/download/:fileName', (req, res) => {
   }
 });
 
+app.delete('/api/system/backups/:fileName', (req, res) => {
+  try {
+    const backupPath = resolveBackupPath(req.params.fileName);
+    fs.unlinkSync(backupPath);
+    res.json({ success: true, deleted: path.basename(backupPath) });
+  } catch (e) {
+    res.status(400).json({ error: e.message || '刪除備份失敗' });
+  }
+});
+
 app.post('/api/system/backups/upload', (req, res) => {
   const fileNameInput = String(req.body?.fileName || '').trim();
   const base64 = String(req.body?.fileContentBase64 || '').trim();
@@ -1504,6 +1521,9 @@ app.post('/api/system/backups/upload', (req, res) => {
     const fileBuffer = Buffer.from(base64, 'base64');
     if (!fileBuffer || fileBuffer.length < 64) {
       return res.status(400).json({ error: '上傳檔案內容不正確或檔案過小' });
+    }
+    if (!isValidBackupFileBuffer(fileBuffer)) {
+      return res.status(400).json({ error: '上傳檔案不是有效的資料庫備份檔（僅支援 SQLite 或系統加密備份）' });
     }
 
     let finalName = path.basename(fileNameInput || '');
@@ -1534,6 +1554,10 @@ app.post('/api/system/backups/restore', async (req, res) => {
   if (!fileName) return res.status(400).json({ error: '缺少備份檔名' });
   try {
     const backupPath = resolveBackupPath(fileName);
+    const backupBuffer = fs.readFileSync(backupPath);
+    if (!isValidBackupFileBuffer(backupBuffer)) {
+      return res.status(400).json({ error: '備份檔內容無效，無法還原' });
+    }
     fs.copyFileSync(backupPath, DB_PATH);
     await initDB();
     res.json({ success: true, restoredFrom: fileName });

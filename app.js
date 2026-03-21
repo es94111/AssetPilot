@@ -2929,7 +2929,121 @@ const App = (() => {
       if (e.target.files[0]) importStockCsv(e.target.files[0], 'div');
       e.target.value = '';
     });
+    const backupNowBtn = el('backupNowBtn');
+    if (backupNowBtn) backupNowBtn.onclick = runBackupNow;
+    const restoreBackupBtn = el('restoreBackupBtn');
+    if (restoreBackupBtn) restoreBackupBtn.onclick = restoreBackupFromSelection;
+    const refreshBackupListBtn = el('refreshBackupListBtn');
+    if (refreshBackupListBtn) refreshBackupListBtn.onclick = loadBackupList;
     bindImport();
+    loadBackupList();
+  }
+
+  function fmtBackupDate(iso) {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return String(iso || '');
+    return d.toLocaleString('zh-TW', { hour12: false });
+  }
+
+  function fmtBackupSize(bytes) {
+    const n = Number(bytes) || 0;
+    if (n < 1024) return `${n} B`;
+    if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
+    return `${(n / (1024 * 1024)).toFixed(2)} MB`;
+  }
+
+  async function loadBackupList() {
+    const select = el('backupSelect');
+    const hint = el('backupSettingsHint');
+    const resultEl = el('backupResult');
+    if (!select) return;
+
+    select.innerHTML = '<option value="">載入中...</option>';
+    try {
+      const data = await API.get('/api/system/backups');
+      const backups = Array.isArray(data.backups) ? data.backups : [];
+      const settings = data.settings || {};
+
+      if (hint) {
+        hint.textContent = `系統每 ${settings.autoBackupIntervalHours || '-'} 小時自動備份，最多保留 ${settings.keepCount || '-'} 份。`;
+      }
+
+      if (backups.length === 0) {
+        select.innerHTML = '<option value="">目前沒有備份檔</option>';
+      } else {
+        select.innerHTML = backups.map((b, idx) => {
+          const label = `${idx === 0 ? '最新' : '備份'}｜${fmtBackupDate(b.createdAt)}｜${fmtBackupSize(b.size)}｜${b.fileName}`;
+          return `<option value="${escHtml(b.fileName)}">${escHtml(label)}</option>`;
+        }).join('');
+      }
+
+      if (resultEl) resultEl.style.display = 'none';
+    } catch (err) {
+      select.innerHTML = '<option value="">載入失敗</option>';
+      toast(err.message || '載入備份清單失敗', 'error');
+    }
+  }
+
+  async function runBackupNow() {
+    const btn = el('backupNowBtn');
+    const resultEl = el('backupResult');
+    if (!btn) return;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 備份中...';
+    try {
+      const data = await API.post('/api/system/backups/run', {});
+      const b = data.backup || {};
+      if (resultEl) {
+        resultEl.style.display = 'block';
+        resultEl.innerHTML = `<div class="import-result-success"><i class="fas fa-circle-check"></i> 備份完成：<strong>${escHtml(b.fileName || '')}</strong>（${escHtml(fmtBackupSize(b.size))}）</div>`;
+      }
+      await loadBackupList();
+      toast('資料備份完成', 'success');
+    } catch (err) {
+      if (resultEl) {
+        resultEl.style.display = 'block';
+        resultEl.innerHTML = `<div class="import-result-errors">${escHtml(err.message || '備份失敗')}</div>`;
+      }
+      toast(err.message || '備份失敗', 'error');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-floppy-disk"></i> 立即備份';
+    }
+  }
+
+  async function restoreBackupFromSelection() {
+    const select = el('backupSelect');
+    const btn = el('restoreBackupBtn');
+    const resultEl = el('backupResult');
+    const fileName = select?.value || '';
+    if (!fileName) {
+      toast('請先選擇要還原的備份檔', 'error');
+      return;
+    }
+    const ok = confirm(`確定要還原備份嗎？\n\n檔案：${fileName}\n\n此操作會覆蓋目前資料，且無法復原。`);
+    if (!ok) return;
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 還原中...';
+    try {
+      await API.post('/api/system/backups/restore', { fileName });
+      if (resultEl) {
+        resultEl.style.display = 'block';
+        resultEl.innerHTML = `<div class="import-result-success"><i class="fas fa-circle-check"></i> 已完成還原：<strong>${escHtml(fileName)}</strong></div>`;
+      }
+      await refreshCache();
+      await renderPage(currentPage);
+      toast('備份還原完成', 'success');
+    } catch (err) {
+      if (resultEl) {
+        resultEl.style.display = 'block';
+        resultEl.innerHTML = `<div class="import-result-errors">${escHtml(err.message || '還原失敗')}</div>`;
+      }
+      toast(err.message || '還原失敗', 'error');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-rotate-left"></i> 還原備份';
+    }
   }
 
   async function exportCsv() {

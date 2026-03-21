@@ -34,6 +34,9 @@ const DB_PATH = process.env.DB_PATH || path.join(__dirname, 'database.db');
 const JWT_EXPIRES = process.env.JWT_EXPIRES || '7d';
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || '';
+const BACKUP_DIR = process.env.BACKUP_DIR || path.join(path.dirname(DB_PATH), 'backups');
+const AUTO_BACKUP_INTERVAL_HOURS = Math.max(1, parseInt(process.env.AUTO_BACKUP_INTERVAL_HOURS || '6', 10) || 6);
+const AUTO_BACKUP_KEEP = Math.max(3, parseInt(process.env.AUTO_BACKUP_KEEP || '30', 10) || 30);
 
 // ─── 自動產生密鑰（僅首次啟動時） ───
 function generateSecret(length = 64) {
@@ -506,6 +509,93 @@ function saveDB() {
   } else {
     fs.writeFileSync(DB_PATH, plain);
   }
+}
+
+function ensureBackupDir() {
+  if (!fs.existsSync(BACKUP_DIR)) {
+    fs.mkdirSync(BACKUP_DIR, { recursive: true });
+  }
+}
+
+function backupTimestamp(d = new Date()) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  const hh = String(d.getHours()).padStart(2, '0');
+  const mm = String(d.getMinutes()).padStart(2, '0');
+  const ss = String(d.getSeconds()).padStart(2, '0');
+  return `${y}${m}${day}-${hh}${mm}${ss}`;
+}
+
+function listBackupFiles() {
+  ensureBackupDir();
+  const files = fs.readdirSync(BACKUP_DIR)
+    .filter(name => /^assetpilot-backup-\d{8}-\d{6}\.db$/.test(name))
+    .map(name => {
+      const fullPath = path.join(BACKUP_DIR, name);
+      const stat = fs.statSync(fullPath);
+      return {
+        fileName: name,
+        size: stat.size,
+        createdAt: stat.mtime.toISOString(),
+      };
+    })
+    .sort((a, b) => String(b.fileName).localeCompare(String(a.fileName)));
+  return files;
+}
+
+function cleanupOldBackups() {
+  const files = listBackupFiles();
+  if (files.length <= AUTO_BACKUP_KEEP) return;
+  files.slice(AUTO_BACKUP_KEEP).forEach(f => {
+    try {
+      fs.unlinkSync(path.join(BACKUP_DIR, f.fileName));
+    } catch (e) {
+      console.warn('[備份] 清理舊備份失敗:', f.fileName, e.message);
+    }
+  });
+}
+
+function createDatabaseBackup(trigger = 'manual') {
+  ensureBackupDir();
+  saveDB();
+  const fileName = `assetpilot-backup-${backupTimestamp()}.db`;
+  const targetPath = path.join(BACKUP_DIR, fileName);
+  fs.copyFileSync(DB_PATH, targetPath);
+  cleanupOldBackups();
+  const stat = fs.statSync(targetPath);
+  return {
+    fileName,
+    size: stat.size,
+    createdAt: stat.mtime.toISOString(),
+    trigger,
+  };
+}
+
+let autoBackupTimer = null;
+function startAutoBackupScheduler() {
+  if (autoBackupTimer) clearInterval(autoBackupTimer);
+  autoBackupTimer = setInterval(() => {
+    try {
+      const result = createDatabaseBackup('auto');
+      console.log(`[備份] 已建立自動備份: ${result.fileName}`);
+    } catch (e) {
+      console.error('[備份] 自動備份失敗:', e.message);
+    }
+  }, AUTO_BACKUP_INTERVAL_HOURS * 60 * 60 * 1000);
+  console.log(`[備份] 自動備份已啟用：每 ${AUTO_BACKUP_INTERVAL_HOURS} 小時執行，最多保留 ${AUTO_BACKUP_KEEP} 份`);
+}
+
+function resolveBackupPath(fileName) {
+  const safeName = path.basename(String(fileName || ''));
+  if (!/^assetpilot-backup-\d{8}-\d{6}\.db$/.test(safeName)) {
+    throw new Error('備份檔名格式不正確');
+  }
+  const fullPath = path.join(BACKUP_DIR, safeName);
+  if (!fs.existsSync(fullPath)) {
+    throw new Error('找不到指定備份檔');
+  }
+  return fullPath;
 }
 
 function isValidColor(c) { return !c || /^#[0-9a-fA-F]{3,8}$/.test(c); }
@@ -1214,6 +1304,40 @@ app.post('/api/system/update-app', async (req, res) => {
     res.status(500).json({ error: e.message || '更新失敗' });
   } finally {
     isUpdatingApp = false;
+  }
+});
+
+app.get('/api/system/backups', (req, res) => {
+  const backups = listBackupFiles();
+  res.json({
+    backups,
+    settings: {
+      autoBackupIntervalHours: AUTO_BACKUP_INTERVAL_HOURS,
+      keepCount: AUTO_BACKUP_KEEP,
+      backupDir: BACKUP_DIR,
+    },
+  });
+});
+
+app.post('/api/system/backups/run', (req, res) => {
+  try {
+    const result = createDatabaseBackup('manual');
+    res.json({ success: true, backup: result });
+  } catch (e) {
+    res.status(500).json({ error: e.message || '建立備份失敗' });
+  }
+});
+
+app.post('/api/system/backups/restore', async (req, res) => {
+  const { fileName } = req.body || {};
+  if (!fileName) return res.status(400).json({ error: '缺少備份檔名' });
+  try {
+    const backupPath = resolveBackupPath(fileName);
+    fs.copyFileSync(backupPath, DB_PATH);
+    await initDB();
+    res.json({ success: true, restoredFrom: fileName });
+  } catch (e) {
+    res.status(500).json({ error: e.message || '還原備份失敗' });
   }
 });
 
@@ -2961,6 +3085,13 @@ app.get('{*path}', (req, res) => {
 
 // ─── 啟動 ───
 initDB().then(() => {
+  startAutoBackupScheduler();
+  try {
+    const firstBackup = createDatabaseBackup('startup');
+    console.log(`[備份] 啟動備份完成: ${firstBackup.fileName}`);
+  } catch (e) {
+    console.warn('[備份] 啟動備份失敗:', e.message);
+  }
   app.listen(PORT, () => {
     console.log(`資產管理伺服器已啟動: http://localhost:${PORT}`);
   });

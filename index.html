@@ -727,6 +727,20 @@
             </div>
           </div>
         </div>
+        <div class="card" style="margin-top:16px">
+          <h3>資料自動備份與還原</h3>
+          <p class="import-hint" id="backupSettingsHint">系統會自動定期備份資料，可手動建立備份並從清單還原。</p>
+          <div class="export-btns" style="gap:8px; margin-top:8px">
+            <button class="btn" id="backupNowBtn"><i class="fas fa-floppy-disk"></i> 立即備份</button>
+            <button class="btn btn-outline danger" id="restoreBackupBtn"><i class="fas fa-rotate-left"></i> 還原備份</button>
+          </div>
+          <div class="filter-group" style="margin-top:10px;align-items:center;gap:8px;flex-wrap:wrap">
+            <label for="backupSelect">備份清單</label>
+            <select id="backupSelect" class="form-input" style="min-width:280px;max-width:100%"></select>
+            <button class="btn btn-ghost" id="refreshBackupListBtn" type="button"><i class="fas fa-rotate"></i> 重新整理</button>
+          </div>
+          <div class="import-result" id="backupResult" style="display:none;margin-top:10px"></div>
+        </div>
       </div>
       <!-- 帳號設定 -->
       <div class="settings-panel" id="panel-account">

@@ -1,6 +1,17 @@
 {
-  "currentVersion": "3.25",
+  "currentVersion": "3.26",
   "releases": [
+    {
+      "version": "3.26",
+      "date": "2026-03-21",
+      "title": "主題偏好跨瀏覽器同步",
+      "type": "improved",
+      "changes": [
+        { "tag": "new", "text": "主題偏好（淺色/深色/跟隨系統）改為儲存至使用者帳號，支援跨瀏覽器沿用最新設定" },
+        { "tag": "improved", "text": "登入後會優先套用伺服器端主題偏好，避免不同裝置或瀏覽器顯示不一致" },
+        { "tag": "new", "text": "新增主題偏好設定 API，切換外觀模式時即時同步到後端資料庫" }
+      ]
+    },
     {
       "version": "3.25",
       "date": "2026-03-21",

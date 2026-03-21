@@ -21,8 +21,13 @@ const App = (() => {
     return !!prefersDarkMedia?.matches;
   }
 
+  function normalizeThemeMode(mode) {
+    const v = String(mode || '').trim().toLowerCase();
+    return (v === 'light' || v === 'dark' || v === 'system') ? v : 'system';
+  }
+
   function applyThemeMode(mode, persist = true) {
-    const nextMode = (mode === 'dark' || mode === 'light' || mode === 'system') ? mode : 'system';
+    const nextMode = normalizeThemeMode(mode);
     const resolved = nextMode === 'system'
       ? (getSystemPrefersDark() ? 'dark' : 'light')
       : nextMode;
@@ -59,6 +64,19 @@ const App = (() => {
     } else if (typeof prefersDarkMedia.addListener === 'function') {
       prefersDarkMedia.addListener(handleSystemThemeChange);
     }
+  }
+
+  async function syncThemeModeFromServer() {
+    const serverMode = normalizeThemeMode(currentUser?.themeMode);
+    applyThemeMode(serverMode, true);
+    updateThemeModeControls();
+  }
+
+  async function persistThemeModeToServer(mode) {
+    if (!authToken) return;
+    const nextMode = normalizeThemeMode(mode);
+    const result = await API.put('/api/account/theme', { themeMode: nextMode });
+    if (currentUser) currentUser.themeMode = normalizeThemeMode(result?.themeMode || nextMode);
   }
 
   // ─── API 呼叫（自動帶 Authorization header）───
@@ -259,6 +277,7 @@ const App = (() => {
   }
 
   async function enterApp() {
+    await syncThemeModeFromServer();
     // 設定使用者名稱與頭像
     el('userDisplayName').textContent = currentUser?.displayName || currentUser?.email || '';
     updateUserAvatar();
@@ -2700,14 +2719,22 @@ const App = (() => {
 
       if (!accountSettingsBound) {
         document.querySelectorAll('input[name="themeMode"]').forEach(input => {
-          input.addEventListener('change', (e) => {
+          input.addEventListener('change', async (e) => {
             const nextMode = e.target?.value;
             if (!nextMode) return;
+            const previousMode = themeMode;
             applyThemeMode(nextMode);
             updateThemeModeControls();
-            if (nextMode === 'system') toast('已切換為跟隨系統主題', 'success');
-            else if (nextMode === 'dark') toast('已切換為深色模式', 'success');
-            else toast('已切換為淺色模式', 'success');
+            try {
+              await persistThemeModeToServer(nextMode);
+              if (themeMode === 'system') toast('已切換為跟隨系統主題，且已同步到帳號', 'success');
+              else if (themeMode === 'dark') toast('已切換為深色模式，且已同步到帳號', 'success');
+              else toast('已切換為淺色模式，且已同步到帳號', 'success');
+            } catch (err) {
+              applyThemeMode(previousMode);
+              updateThemeModeControls();
+              toast(err.message || '主題設定同步失敗，已還原', 'error');
+            }
           });
         });
 

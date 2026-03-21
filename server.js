@@ -168,6 +168,12 @@ let db;
 // ─── 登入失敗追蹤 ───
 const loginAttempts = {};
 
+function normalizeThemeMode(mode) {
+  const v = String(mode || '').trim().toLowerCase();
+  if (v === 'light' || v === 'dark' || v === 'system') return v;
+  return 'system';
+}
+
 // ─── 初始化資料庫 ───
 async function initDB() {
   const SQL = await initSqlJs();
@@ -301,6 +307,13 @@ async function initDB() {
   // 資料庫升級：為 users 加入 avatar_url 欄位（Google 頭像）
   try {
     db.run("ALTER TABLE users ADD COLUMN avatar_url TEXT DEFAULT ''");
+    saveDB();
+  } catch (e) { /* 欄位已存在則忽略 */ }
+
+  // 資料庫升級：為 users 加入主題偏好欄位（跨瀏覽器同步）
+  try {
+    db.run("ALTER TABLE users ADD COLUMN theme_mode TEXT DEFAULT 'system'");
+    db.run("UPDATE users SET theme_mode = 'system' WHERE theme_mode IS NULL OR theme_mode = ''");
     saveDB();
   } catch (e) { /* 欄位已存在則忽略 */ }
 
@@ -747,7 +760,7 @@ app.post('/api/auth/register', async (req, res) => {
   saveDB();
 
   const token = jwt.sign({ userId: id }, JWT_SECRET, { expiresIn: JWT_EXPIRES });
-  res.json({ token, user: { id, email: email.toLowerCase(), displayName } });
+  res.json({ token, user: { id, email: email.toLowerCase(), displayName, themeMode: 'system' } });
 });
 
 app.post('/api/auth/login', async (req, res) => {
@@ -781,7 +794,7 @@ app.post('/api/auth/login', async (req, res) => {
   delete loginAttempts[emailLower];
 
   const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: JWT_EXPIRES });
-  res.json({ token, user: { id: user.id, email: user.email, displayName: user.display_name, avatarUrl: user.avatar_url || '' } });
+  res.json({ token, user: { id: user.id, email: user.email, displayName: user.display_name, avatarUrl: user.avatar_url || '', themeMode: normalizeThemeMode(user.theme_mode) } });
 });
 
 function trackFailedLogin(email) {
@@ -1166,7 +1179,7 @@ app.post('/api/auth/google', async (req, res) => {
       token,
       user: {
         id: user.id, email: user.email, displayName: user.display_name,
-        googleLinked: true, avatarUrl: user.avatar_url || '',
+        googleLinked: true, avatarUrl: user.avatar_url || '', themeMode: normalizeThemeMode(user.theme_mode),
       },
     });
   } catch (e) {
@@ -1176,9 +1189,9 @@ app.post('/api/auth/google', async (req, res) => {
 });
 
 app.get('/api/auth/me', authMiddleware, (req, res) => {
-  const user = queryOne("SELECT id, email, display_name, google_id, has_password, avatar_url FROM users WHERE id = ?", [req.userId]);
+  const user = queryOne("SELECT id, email, display_name, google_id, has_password, avatar_url, theme_mode FROM users WHERE id = ?", [req.userId]);
   if (!user) return res.status(404).json({ error: '使用者不存在' });
-  res.json({ user: { id: user.id, email: user.email, displayName: user.display_name, googleLinked: !!user.google_id, hasPassword: !!user.has_password, avatarUrl: user.avatar_url || '' } });
+  res.json({ user: { id: user.id, email: user.email, displayName: user.display_name, googleLinked: !!user.google_id, hasPassword: !!user.has_password, avatarUrl: user.avatar_url || '', themeMode: normalizeThemeMode(user.theme_mode) } });
 });
 
 // ═══════════════════════════════════════
@@ -1242,6 +1255,14 @@ app.post('/api/account/unlink-google', (req, res) => {
   db.run("UPDATE users SET google_id = '' WHERE id = ?", [req.userId]);
   saveDB();
   res.json({ success: true });
+});
+
+// 儲存主題偏好（跨瀏覽器同步）
+app.put('/api/account/theme', (req, res) => {
+  const mode = normalizeThemeMode(req.body?.themeMode);
+  db.run("UPDATE users SET theme_mode = ? WHERE id = ?", [mode, req.userId]);
+  saveDB();
+  res.json({ success: true, themeMode: mode });
 });
 
 // 刪除帳號（永久刪除所有資料）

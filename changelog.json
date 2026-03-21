@@ -1,6 +1,18 @@
 {
-  "currentVersion": "3.11",
+  "currentVersion": "3.12",
   "releases": [
+    {
+      "version": "3.12",
+      "date": "2026-03-21",
+      "title": "遠端版本更新檢查",
+      "type": "feature",
+      "changes": [
+        { "tag": "new", "text": "自動從 GitHub 取得最新版本更新資訊，舊版本也能查看新版功能" },
+        { "tag": "new", "text": "側邊欄版本號旁顯示「有更新」紅色徽章提示" },
+        { "tag": "new", "text": "版本更新彈窗顯示升級橫幅，標示「已安裝」與「新版本」標籤" },
+        { "tag": "improved", "text": "比目前安裝版本更新的 release 卡片以藍色背景區分" }
+      ]
+    },
     {
       "version": "3.11",
       "date": "2026-03-21",

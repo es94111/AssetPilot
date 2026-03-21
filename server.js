@@ -597,13 +597,73 @@ app.get('/api/config', (req, res) => {
 });
 
 // 版本更新資訊（公開，不需認證）
-app.get('/api/changelog', (req, res) => {
-  try {
-    const data = fs.readFileSync(path.join(__dirname, 'changelog.json'), 'utf8');
-    res.json(JSON.parse(data));
-  } catch (e) {
-    res.json({ currentVersion: '0.0', releases: [] });
+// 從 GitHub 取得最新 changelog 並與本地合併，讓舊版本也能看到新版更新資訊
+// GitHub 倉庫原始檔案 URL（用於取得最新 changelog）
+// 預設從環境變數讀取，可自訂；留空則停用遠端檢查
+const CHANGELOG_GITHUB_URL = process.env.CHANGELOG_URL || 'https://raw.githubusercontent.com/es94111/----/main/changelog.json';
+let remoteChangelogCache = null;
+let remoteChangelogCacheTime = 0;
+const REMOTE_CHANGELOG_TTL = 30 * 60 * 1000; // 30 分鐘快取
+
+async function fetchRemoteChangelog() {
+  const now = Date.now();
+  if (remoteChangelogCache && (now - remoteChangelogCacheTime) < REMOTE_CHANGELOG_TTL) {
+    return remoteChangelogCache;
   }
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+    const resp = await fetch(CHANGELOG_GITHUB_URL, { signal: controller.signal });
+    clearTimeout(timeout);
+    if (!resp.ok) return null;
+    const data = await resp.json();
+    remoteChangelogCache = data;
+    remoteChangelogCacheTime = now;
+    return data;
+  } catch (e) {
+    return null;
+  }
+}
+
+function parseVersion(v) {
+  return String(v).split('.').map(n => parseInt(n) || 0);
+}
+
+function compareVersions(a, b) {
+  const pa = parseVersion(a), pb = parseVersion(b);
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    const diff = (pa[i] || 0) - (pb[i] || 0);
+    if (diff !== 0) return diff;
+  }
+  return 0;
+}
+
+function mergeChangelogs(local, remote) {
+  if (!remote || !remote.releases) return local;
+  // 以版本號為 key 合併，遠端優先（可能有更新的版本）
+  const versionMap = new Map();
+  (local.releases || []).forEach(r => versionMap.set(r.version, r));
+  (remote.releases || []).forEach(r => versionMap.set(r.version, r));
+  const merged = Array.from(versionMap.values())
+    .sort((a, b) => compareVersions(b.version, a.version));
+  return {
+    currentVersion: local.currentVersion, // 本地安裝的版本
+    latestVersion: remote.currentVersion || local.currentVersion, // 遠端最新版本
+    releases: merged
+  };
+}
+
+app.get('/api/changelog', async (req, res) => {
+  let local;
+  try {
+    local = JSON.parse(fs.readFileSync(path.join(__dirname, 'changelog.json'), 'utf8'));
+  } catch (e) {
+    local = { currentVersion: '0.0', releases: [] };
+  }
+  // 非同步取得遠端 changelog，失敗不影響本地顯示
+  const remote = await fetchRemoteChangelog();
+  const merged = mergeChangelogs(local, remote);
+  res.json(merged);
 });
 
 // Google SSO 登入（支援 code flow 和 id_token flow）

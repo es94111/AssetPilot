@@ -1255,6 +1255,76 @@ input, select, button, textarea { font-family: inherit; font-size: inherit; }
 .cl-tag-fixed { background: #fef3c7; color: #92400e; }
 .cl-tag-removed { background: #fee2e2; color: #991b1b; }
 
+/* 新版本提示橫幅 */
+.cl-update-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: linear-gradient(135deg, #eff6ff, #dbeafe);
+  border: 1px solid #93c5fd;
+  border-radius: 10px;
+  padding: 14px 18px;
+  margin-bottom: 16px;
+}
+.cl-update-banner i {
+  font-size: 24px;
+  color: var(--primary);
+  flex-shrink: 0;
+}
+.cl-update-banner strong {
+  display: block;
+  font-size: 14px;
+  color: var(--primary);
+  margin-bottom: 2px;
+}
+.cl-update-banner span {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+/* 「已安裝」標籤 */
+.cl-current-badge {
+  background: var(--primary);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+/* 「新版本」標籤 */
+.cl-new-badge {
+  background: #3b82f6;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+/* 比目前版本新的 release 卡片 */
+.cl-release.cl-newer {
+  border-color: #93c5fd;
+  background: #f0f7ff;
+}
+
+/* 側邊欄更新徽章 */
+.update-badge {
+  background: #ef4444;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 10px;
+  margin-left: 6px;
+  white-space: nowrap;
+  animation: badge-pulse 2s ease-in-out infinite;
+}
+.update-badge i { font-size: 9px; width: auto; margin-right: 2px; }
+@keyframes badge-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .6; }
+}
+
 @media (max-width: 768px) {
   .modal-lg { max-width: 95vw; }
   .changelog-body { max-height: 60vh; padding: 0 16px 16px; }

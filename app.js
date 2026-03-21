@@ -556,7 +556,7 @@ const App = (() => {
   }
 
   // ─── 導航 ───
-  const validPages = ['dashboard', 'transactions', 'reports', 'budget', 'accounts', 'stocks', 'settings'];
+  const validPages = ['dashboard', 'transactions', 'reports', 'budget', 'accounts', 'stocks', 'settings', 'api-credits'];
   const financePages = ['transactions', 'reports', 'budget', 'accounts'];
   const validSettingsTabs = ['categories', 'recurring', 'export', 'account'];
   const validStocksTabs = ['portfolio', 'transactions', 'dividends', 'realized', 'settings'];
@@ -597,7 +597,7 @@ const App = (() => {
     if (financePages.includes(page)) {
       activateFinanceTab(page);
     }
-    const titles = { dashboard: '儀表板', transactions: '收支管理', reports: '收支管理', budget: '收支管理', accounts: '收支管理', stocks: '股票紀錄', settings: '設定' };
+    const titles = { dashboard: '儀表板', transactions: '收支管理', reports: '收支管理', budget: '收支管理', accounts: '收支管理', stocks: '股票紀錄', settings: '設定', 'api-credits': 'API 使用與授權' };
     el('mobileTitle').textContent = titles[page] || '';
     el('sidebar').classList.remove('open');
 
@@ -688,7 +688,12 @@ const App = (() => {
       case 'accounts': await renderAccounts(); break;
       case 'stocks': await renderStocks(); break;
       case 'settings': await renderSettings(); break;
+      case 'api-credits': await renderApiCredits(); break;
     }
+  }
+
+  async function renderApiCredits() {
+    // 靜態說明頁：API 來源與授權資訊在 index.html 維護。
   }
 
   // ─── 儀表板 ───

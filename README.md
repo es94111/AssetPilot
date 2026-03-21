@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-3.30.2-blue" alt="version">
+  <img src="https://img.shields.io/badge/version-3.31-blue" alt="version">
   <img src="https://img.shields.io/badge/node-%3E%3D18-green" alt="node">
   <img src="https://img.shields.io/badge/license-MIT-orange" alt="license">
   <img src="https://img.shields.io/badge/docker-ready-2496ED" alt="docker">
@@ -30,6 +30,7 @@
 - **CSV 匯出/匯入** — 交易記錄、分類、股票交易、股利紀錄
 - **匯出匯入介面重整** — 設定頁「資料匯出匯入」改為交易/股票分組卡片，提升一致性與可讀性
 - **全球即時匯率** — 串接 rter.info 匯率 API，支援手動更新與自動更新開關
+- **API 使用與授權頁** — 左側選單新增 API 清單與授權說明，集中顯示出處資訊
 - **主題切換容錯** — 深色/淺色切換先本機生效，後端同步異常時不影響當下使用
 - **Google SSO** — 一鍵 Google 帳號登入（選配）
 - **資料庫加密** — ChaCha20-Poly1305 + PBKDF2-SHA256 全資料庫加密
@@ -234,6 +235,7 @@ docker run -d \
   - `立即取得即時匯率`：手動同步最新匯率
   - `自動更新匯率`：由使用者自行決定是否開啟
 - 啟用自動更新後，系統會在進入匯率設定時依節流策略自動同步，並以 `YYYY-MM-DD HH:mm:ss`（精確到秒）顯示上次更新時間。
+- 全球即時匯率 API 使用授權：CC BY-SA，系統於左側選單 `API 使用與授權` 明確標示出處與授權資訊。
 
 ### 自行建置映像檔
 

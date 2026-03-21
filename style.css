@@ -423,6 +423,44 @@ input, select, button, textarea { font-family: inherit; font-size: inherit; }
   padding: 16px 24px; border-top: 1px solid var(--border);
 }
 
+.invoice-scanner-body {
+  padding: 20px 24px 24px;
+}
+
+.invoice-scanner-view {
+  margin-top: 10px;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border: 2px dashed var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  background: #000;
+}
+
+.invoice-scanner-view video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.invoice-scanner-status {
+  margin-top: 10px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.invoice-scanner-status.success { color: var(--success); }
+.invoice-scanner-status.error { color: var(--danger); }
+
+.invoice-scanner-actions {
+  margin-top: 12px;
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
 /* ===== 類型切換 ===== */
 .type-toggle { display: flex; gap: 8px; }
 .type-option input { display: none; }

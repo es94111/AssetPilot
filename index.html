@@ -860,11 +860,37 @@
           <label>備註</label>
           <input type="text" id="txNote" maxlength="200" placeholder="選填，最多200字">
         </div>
+        <div class="form-row">
+          <button type="button" class="btn btn-outline" id="scanInvoiceQrBtn">
+            <i class="fas fa-qrcode"></i> 掃描電子發票 QRCode 自動帶入
+          </button>
+        </div>
         <div class="form-actions">
           <button type="button" class="btn btn-ghost" onclick="App.closeModal('modalTransaction')">取消</button>
           <button type="submit" class="btn btn-primary">儲存</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- ===== 電子發票 QRCode 掃描 Modal ===== -->
+  <div class="modal-overlay" id="modalInvoiceScanner">
+    <div class="modal modal-lg">
+      <div class="modal-header">
+        <h3>掃描電子發票 QRCode</h3>
+        <button class="modal-close" onclick="App.closeModal('modalInvoiceScanner')">&times;</button>
+      </div>
+      <div class="invoice-scanner-body">
+        <p class="import-hint">請將台灣電子發票 QRCode 對準框內，掃描成功後會自動帶入金額與日期。</p>
+        <div class="invoice-scanner-view">
+          <video id="invoiceScannerVideo" autoplay playsinline muted></video>
+        </div>
+        <p id="invoiceScannerStatus" class="invoice-scanner-status">準備中...</p>
+        <div class="invoice-scanner-actions">
+          <button type="button" class="btn btn-ghost" id="invoiceScanPasteBtn"><i class="fas fa-paste"></i> 貼上 QR 文字解析</button>
+          <button type="button" class="btn btn-primary" onclick="App.closeModal('modalInvoiceScanner')">關閉</button>
+        </div>
+      </div>
     </div>
   </div>
 

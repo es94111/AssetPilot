@@ -334,6 +334,28 @@ async function initDB() {
     created_at INTEGER
   )`);
 
+  // ─── 日期格式遷移：統一為 YYYY-MM-DD ───
+  const dateTables = [
+    { table: 'transactions', col: 'date' },
+    { table: 'stock_transactions', col: 'date' },
+    { table: 'stock_dividends', col: 'date' },
+    { table: 'recurring', col: 'start_date' },
+    { table: 'recurring', col: 'last_generated' },
+  ];
+  dateTables.forEach(({ table, col }) => {
+    try {
+      // 修正 YYYYMMDD（8位純數字）→ YYYY-MM-DD
+      const rows = queryAll(`SELECT id, ${col} FROM ${table} WHERE ${col} IS NOT NULL AND ${col} != '' AND ${col} NOT LIKE '____-__-__'`);
+      rows.forEach(r => {
+        const normalized = normalizeDate(r[col]);
+        if (normalized && normalized !== r[col]) {
+          db.run(`UPDATE ${table} SET ${col} = ? WHERE id = ?`, [normalized, r.id]);
+        }
+      });
+      if (rows.length > 0) console.log(`[日期遷移] ${table}.${col}：修正 ${rows.length} 筆`);
+    } catch (e) { /* 表不存在，忽略 */ }
+  });
+
   saveDB();
   console.log('資料庫初始化完成');
 }
@@ -427,6 +449,22 @@ function todayStr() {
   const m = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
   return `${y}-${m}-${day}`;
+}
+
+// 統一日期格式為 YYYY-MM-DD（支援 YYYYMMDD、YYYY/MM/DD、YYYY-MM-DD）
+function normalizeDate(dateStr) {
+  if (!dateStr) return '';
+  const s = String(dateStr).trim();
+  // 已經是 YYYY-MM-DD
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  // YYYYMMDD → YYYY-MM-DD
+  if (/^\d{8}$/.test(s)) return s.slice(0, 4) + '-' + s.slice(4, 6) + '-' + s.slice(6, 8);
+  // YYYY/MM/DD → YYYY-MM-DD
+  if (/^\d{4}\/\d{1,2}\/\d{1,2}$/.test(s)) {
+    const [y, m, d] = s.split('/');
+    return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+  }
+  return s;
 }
 
 function thisMonth() {
@@ -830,7 +868,8 @@ app.get('/api/transactions', (req, res) => {
 });
 
 app.post('/api/transactions', (req, res) => {
-  const { type, amount, date, categoryId, accountId, note } = req.body;
+  const { type, amount, date: rawDate, categoryId, accountId, note } = req.body;
+  const date = normalizeDate(rawDate);
   if (amount <= 0) return res.status(400).json({ error: '金額必須大於 0' });
   if (date > todayStr()) return res.status(400).json({ error: '日期不可為未來日期' });
   const id = uid();
@@ -842,7 +881,8 @@ app.post('/api/transactions', (req, res) => {
 });
 
 app.put('/api/transactions/:id', (req, res) => {
-  const { type, amount, date, categoryId, accountId, note } = req.body;
+  const { type, amount, date: rawDate, categoryId, accountId, note } = req.body;
+  const date = normalizeDate(rawDate);
   if (amount <= 0) return res.status(400).json({ error: '金額必須大於 0' });
   if (date > todayStr()) return res.status(400).json({ error: '日期不可為未來日期' });
   db.run("UPDATE transactions SET type=?, amount=?, date=?, category_id=?, account_id=?, note=?, updated_at=? WHERE id=? AND user_id=?",
@@ -979,7 +1019,8 @@ app.post('/api/transactions/import', (req, res) => {
   const pendingTransferOut = []; // { idx, id, date, amount, note, accId }
 
   rows.forEach((row, idx) => {
-    const { date, type, category, amount, account, note } = row;
+    const { date: rawDate, type, category, amount, account, note } = row;
+    const date = normalizeDate(rawDate);
     const amt = parseFloat(amount);
     if (!date || !amt || amt <= 0) { skipped++; errors.push(`第 ${idx + 2} 行：日期或金額無效`); return; }
 
@@ -1041,11 +1082,11 @@ app.post('/api/transactions/import', (req, res) => {
 });
 
 app.post('/api/transactions/transfer', (req, res) => {
-  const { fromId, toId, amount, date, note } = req.body;
+  const { fromId, toId, amount, date: rawDate, note } = req.body;
   if (fromId === toId) return res.status(400).json({ error: '轉出與轉入帳戶不可相同' });
   if (amount <= 0) return res.status(400).json({ error: '金額必須大於 0' });
   const now = Date.now();
-  const txDate = date || todayStr();
+  const txDate = normalizeDate(rawDate) || todayStr();
   const txNote = note || '轉帳';
   const outId = uid();
   const inId = uid();
@@ -2045,7 +2086,7 @@ app.post('/api/stock-transactions/import', async (req, res) => {
       }
       const txType = (type === '買進' || type === 'buy') ? 'buy' : 'sell';
       db.run("INSERT INTO stock_transactions (id, user_id, stock_id, type, date, shares, price, fee, tax, account_id, note, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-        [uid(), req.userId, stock.id, txType, date, parseFloat(shares), parseFloat(price),
+        [uid(), req.userId, stock.id, txType, normalizeDate(date), parseFloat(shares), parseFloat(price),
          parseFloat(fee || 0), parseFloat(tax || 0), accountId, note || '', Date.now()]);
       imported++;
     } catch (e) { skipped++; errors.push('錯誤：' + e.message); }
@@ -2079,7 +2120,7 @@ app.post('/api/stock-dividends/import', async (req, res) => {
         db.run("UPDATE stocks SET name = ? WHERE id = ?", [stockName, stock.id]);
       }
       db.run("INSERT INTO stock_dividends (id, user_id, stock_id, date, cash_dividend, stock_dividend_shares, note, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-        [uid(), req.userId, stock.id, date, cash, stock_d, note || '', Date.now()]);
+        [uid(), req.userId, stock.id, normalizeDate(date), cash, stock_d, note || '', Date.now()]);
       imported++;
     } catch (e) { skipped++; errors.push('錯誤：' + e.message); }
   }
@@ -2093,9 +2134,8 @@ app.get('/api/stock-transactions', (req, res) => {
   let whereSql = "WHERE st.user_id = ?";
   const params = [req.userId];
   if (stockId) { whereSql += " AND st.stock_id = ?"; params.push(stockId); }
-  // 日期篩選：同時支援 YYYY-MM-DD 和 YYYYMMDD 格式
-  if (dateFrom) { whereSql += " AND REPLACE(st.date, '-', '') >= ?"; params.push(dateFrom.replace(/-/g, '')); }
-  if (dateTo) { whereSql += " AND REPLACE(st.date, '-', '') <= ?"; params.push(dateTo.replace(/-/g, '')); }
+  if (dateFrom) { whereSql += " AND st.date >= ?"; params.push(normalizeDate(dateFrom)); }
+  if (dateTo) { whereSql += " AND st.date <= ?"; params.push(normalizeDate(dateTo)); }
   // 排序（白名單驗證避免 SQL injection）
   const validSortCols = { date: 'st.date', type: 'st.type', symbol: 's.symbol', shares: 'st.shares', price: 'st.price', fee: 'st.fee', tax: 'st.tax', subtotal: '(st.shares * st.price)' };
   const dir = sortDir === 'asc' ? 'ASC' : 'DESC';
@@ -2118,9 +2158,9 @@ app.get('/api/stock-transactions', (req, res) => {
 });
 
 app.post('/api/stock-transactions', (req, res) => {
-  const { stockId, date, type, shares, price, fee, tax, accountId, note } = req.body;
+  const { stockId, date: rawDate, type, shares, price, fee, tax, accountId, note } = req.body;
+  const date = normalizeDate(rawDate);
   if (!stockId || !date || !type || !shares || !price) return res.status(400).json({ error: '必填欄位未填' });
-  // 若股票不存在，可能需要先建立
   const stock = queryOne("SELECT id FROM stocks WHERE id = ? AND user_id = ?", [stockId, req.userId]);
   if (!stock) return res.status(400).json({ error: '股票不存在' });
   const id = uid();
@@ -2131,7 +2171,8 @@ app.post('/api/stock-transactions', (req, res) => {
 });
 
 app.put('/api/stock-transactions/:id', (req, res) => {
-  const { date, type, shares, price, fee, tax, accountId, note } = req.body;
+  const { date: rawDate, type, shares, price, fee, tax, accountId, note } = req.body;
+  const date = normalizeDate(rawDate);
   const t = queryOne("SELECT * FROM stock_transactions WHERE id = ? AND user_id = ?", [req.params.id, req.userId]);
   if (!t) return res.status(404).json({ error: '交易紀錄不存在' });
   db.run("UPDATE stock_transactions SET date=?, type=?, shares=?, price=?, fee=?, tax=?, account_id=?, note=? WHERE id=? AND user_id=?",
@@ -2165,9 +2206,8 @@ app.get('/api/stock-dividends', (req, res) => {
   let whereSql = "WHERE sd.user_id = ?";
   const params = [req.userId];
   if (stockId) { whereSql += " AND sd.stock_id = ?"; params.push(stockId); }
-  // 日期篩選：同時支援 YYYY-MM-DD 和 YYYYMMDD 格式
-  if (dateFrom) { whereSql += " AND REPLACE(sd.date, '-', '') >= ?"; params.push(dateFrom.replace(/-/g, '')); }
-  if (dateTo) { whereSql += " AND REPLACE(sd.date, '-', '') <= ?"; params.push(dateTo.replace(/-/g, '')); }
+  if (dateFrom) { whereSql += " AND sd.date >= ?"; params.push(normalizeDate(dateFrom)); }
+  if (dateTo) { whereSql += " AND sd.date <= ?"; params.push(normalizeDate(dateTo)); }
   // 排序（白名單驗證）
   const validSortCols = { date: 'sd.date', symbol: 's.symbol', cash_dividend: 'sd.cash_dividend' };
   const dir = sortDir === 'asc' ? 'ASC' : 'DESC';
@@ -2190,7 +2230,8 @@ app.get('/api/stock-dividends', (req, res) => {
 });
 
 app.post('/api/stock-dividends', (req, res) => {
-  const { stockId, date, cashDividend, stockDividendShares, accountId, note } = req.body;
+  const { stockId, date: rawDate, cashDividend, stockDividendShares, accountId, note } = req.body;
+  const date = normalizeDate(rawDate);
   if (!stockId || !date) return res.status(400).json({ error: '必填欄位未填' });
   const stock = queryOne("SELECT id FROM stocks WHERE id = ? AND user_id = ?", [stockId, req.userId]);
   if (!stock) return res.status(400).json({ error: '股票不存在' });
@@ -2202,7 +2243,8 @@ app.post('/api/stock-dividends', (req, res) => {
 });
 
 app.put('/api/stock-dividends/:id', (req, res) => {
-  const { date, cashDividend, stockDividendShares, accountId, note } = req.body;
+  const { date: rawDate, cashDividend, stockDividendShares, accountId, note } = req.body;
+  const date = normalizeDate(rawDate);
   const d = queryOne("SELECT * FROM stock_dividends WHERE id = ? AND user_id = ?", [req.params.id, req.userId]);
   if (!d) return res.status(404).json({ error: '股利紀錄不存在' });
   db.run("UPDATE stock_dividends SET date=?, cash_dividend=?, stock_dividend_shares=?, account_id=?, note=? WHERE id=? AND user_id=?",

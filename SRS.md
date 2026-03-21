@@ -990,6 +990,7 @@
 | 3.14  | 2026-03-21 | 計算公式說明彈窗：持股總覽新增統一的「計算公式」按鈕，點擊彈出完整公式說明視窗 |
 | 3.14.1 | 2026-03-21 | 修復 Google SSO Code Flow 備援登入在授權後導向站內登入頁（AssetPilot 登入頁）問題；改用 GIS popup code client 提升登入流程穩定性 |
 | 3.14.2 | 2026-03-21 | 版本更新資訊遠端來源網址鎖定為 GitHub 官方網址；移除環境變數覆蓋入口，避免使用者自訂更新來源 |
+| 3.14.3 | 2026-03-21 | Google SSO 登入統一使用 OAuth Authorization Code Flow（Client ID + Client Secret）；後端僅接受授權碼登入 |
 
 ### 8.3 未來擴充方向
 

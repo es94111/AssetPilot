@@ -1,6 +1,16 @@
 {
-  "currentVersion": "3.14.2",
+  "currentVersion": "3.14.3",
   "releases": [
+    {
+      "version": "3.14.3",
+      "date": "2026-03-21",
+      "title": "Google SSO 統一 OAuth 授權碼流程",
+      "type": "improved",
+      "changes": [
+        { "tag": "improved", "text": "Google SSO 登入統一使用 Authorization Code Flow（Client ID + Client Secret），不再使用 ID Token 登入分支" },
+        { "tag": "fixed", "text": "後端 /api/auth/google 僅接受授權碼並強制要求 GOOGLE_CLIENT_SECRET，避免混用登入模式" }
+      ]
+    },
     {
       "version": "3.14.2",
       "date": "2026-03-21",

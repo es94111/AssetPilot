@@ -1,6 +1,17 @@
 {
-  "currentVersion": "3.16.7",
+  "currentVersion": "3.16.8",
   "releases": [
+    {
+      "version": "3.16.8",
+      "date": "2026-03-21",
+      "title": "Google SSO 錯誤訊息精準化",
+      "type": "fixed",
+      "changes": [
+        { "tag": "fixed", "text": "修正 Google SSO 在特定情況下誤顯示「視窗已關閉或被阻擋」的問題" },
+        { "tag": "improved", "text": "GIS error_callback 改為依錯誤類型顯示對應訊息（popup_failed_to_open / popup_closed / 其他）" },
+        { "tag": "improved", "text": "避免在錯誤狀態文案中做過度推斷，改為流程中斷提示，降低誤導" }
+      ]
+    },
     {
       "version": "3.16.7",
       "date": "2026-03-21",

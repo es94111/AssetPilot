@@ -1,6 +1,17 @@
 {
-  "currentVersion": "3.26",
+  "currentVersion": "3.26.1",
   "releases": [
+    {
+      "version": "3.26.1",
+      "date": "2026-03-21",
+      "title": "主題切換 JSON 解析錯誤修正",
+      "type": "fixed",
+      "changes": [
+        { "tag": "fixed", "text": "修正切換深色模式時偶發「Unexpected token '<'」JSON 解析錯誤" },
+        { "tag": "improved", "text": "前端 API 回應新增 Content-Type 與 HTML 回傳防呆判斷，避免將錯誤頁當作 JSON 解析" },
+        { "tag": "improved", "text": "當伺服器回傳非 JSON 內容時改顯示可理解錯誤訊息，提升除錯與使用體驗" }
+      ]
+    },
     {
       "version": "3.26",
       "date": "2026-03-21",

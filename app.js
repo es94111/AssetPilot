@@ -374,12 +374,18 @@ const App = (() => {
 
   // ─── 導航 ───
   const validPages = ['dashboard', 'transactions', 'reports', 'budget', 'accounts', 'stocks', 'settings'];
+  const financePages = ['transactions', 'reports', 'budget', 'accounts'];
   const validSettingsTabs = ['categories', 'recurring', 'export', 'account'];
   const validStocksTabs = ['portfolio', 'transactions', 'dividends', 'realized'];
 
   function parseRoute(pathname) {
     const parts = (pathname || '/').replace(/^\/+|\/+$/g, '').split('/').filter(Boolean);
-    const page = validPages.includes(parts[0]) ? parts[0] : 'dashboard';
+    let page = 'dashboard';
+    if (parts[0] === 'finance') {
+      page = financePages.includes(parts[1]) ? parts[1] : 'transactions';
+    } else if (validPages.includes(parts[0])) {
+      page = parts[0];
+    }
     let sub = null;
     if (page === 'settings' && validSettingsTabs.includes(parts[1])) sub = parts[1];
     else if (page === 'stocks' && validStocksTabs.includes(parts[1])) sub = parts[1];
@@ -388,6 +394,7 @@ const App = (() => {
 
   function buildPath(page, sub) {
     if ((page === 'settings' || page === 'stocks') && sub) return '/' + page + '/' + sub;
+    if (financePages.includes(page)) return '/finance/' + page;
     if (page === 'dashboard') return '/';
     return '/' + page;
   }
@@ -398,11 +405,16 @@ const App = (() => {
     // 若 page 是 stocks 且沒指定 sub，預設 portfolio
     if (page === 'stocks' && !sub) sub = 'portfolio';
     currentPage = page;
+    const navPage = financePages.includes(page) ? 'finance' : page;
 
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.querySelectorAll('.nav-sub-item').forEach(n => n.classList.remove('active'));
     el('page-' + page)?.classList.add('active');
-    document.querySelector(`.nav-item[data-page="${page}"]`)?.classList.add('active');
+    document.querySelector(`.nav-item[data-page="${navPage}"]`)?.classList.add('active');
+    if (financePages.includes(page)) {
+      document.querySelector(`.nav-sub-item[data-page="${page}"]`)?.classList.add('active');
+    }
     const titles = { dashboard: '儀表板', transactions: '交易記錄', reports: '統計報表', budget: '預算管理', accounts: '帳戶管理', stocks: '股票紀錄', settings: '設定' };
     el('mobileTitle').textContent = titles[page] || '';
     el('sidebar').classList.remove('open');
@@ -442,8 +454,19 @@ const App = (() => {
       item.addEventListener('click', e => {
         e.preventDefault();
         const page = item.dataset.page;
+        if (page === 'finance') {
+          navigate('transactions', null);
+          return;
+        }
         const sub = page === 'settings' ? 'categories' : page === 'stocks' ? 'portfolio' : null;
         navigate(page, sub);
+      });
+    });
+    document.querySelectorAll('.nav-sub-item').forEach(item => {
+      item.addEventListener('click', e => {
+        e.preventDefault();
+        const page = item.dataset.page;
+        navigate(page, null);
       });
     });
     window.addEventListener('popstate', (e) => {

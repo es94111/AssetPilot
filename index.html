@@ -645,85 +645,104 @@
       </div>
       <!-- 資料匯出入 -->
       <div class="settings-panel" id="panel-export">
-        <div class="card">
-          <h3>匯出交易記錄</h3>
-          <div class="export-form">
-            <div class="filter-group">
-              <label>日期範圍</label>
-              <input type="date" id="exportFrom">
-              <span>~</span>
-              <input type="date" id="exportTo">
+        <div class="panel-export-layout">
+          <div class="card export-cluster-card">
+            <div class="export-cluster-header">
+              <h3><i class="fas fa-receipt"></i>交易資料</h3>
+              <p>交易與分類的匯出匯入集中管理</p>
             </div>
-            <div class="export-btns">
-              <button class="btn" id="exportCsvBtn"><i class="fas fa-file-csv"></i> 匯出 CSV</button>
+            <div class="export-action-grid two-col">
+              <div class="export-action-card">
+                <h4>匯出交易記錄</h4>
+                <div class="export-form">
+                  <div class="filter-group">
+                    <label>日期範圍</label>
+                    <input type="date" id="exportFrom">
+                    <span>~</span>
+                    <input type="date" id="exportTo">
+                  </div>
+                  <div class="export-btns">
+                    <button class="btn" id="exportCsvBtn"><i class="fas fa-file-csv"></i> 匯出 CSV</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="export-action-card">
+                <h4>匯入交易記錄</h4>
+                <p class="import-hint">支援 CSV：日期、類型、分類、金額、帳戶、備註。類型可為支出、收入、轉出、轉入。</p>
+                <div class="import-result" id="importResult" style="display:none"></div>
+                <div class="import-area" id="importArea">
+                  <i class="fas fa-cloud-arrow-up"></i>
+                  <span>點擊或拖曳 CSV 檔案至此</span>
+                  <input type="file" id="importFileInput" accept=".csv" hidden>
+                </div>
+                <div class="import-preview" id="importPreview" style="display:none">
+                  <div class="import-preview-header">
+                    <span id="importFileName"></span>
+                    <span id="importRowCount"></span>
+                    <button class="btn btn-sm btn-ghost" id="importClearBtn"><i class="fas fa-xmark"></i> 清除</button>
+                  </div>
+                  <div class="import-table-wrap">
+                    <table class="data-table" id="importPreviewTable">
+                      <thead><tr><th>日期</th><th>類型</th><th>分類</th><th>金額</th><th>帳戶</th><th>備註</th></tr></thead>
+                      <tbody id="importPreviewBody"></tbody>
+                    </table>
+                  </div>
+                  <div class="import-missing" id="importMissing" style="display:none"></div>
+                  <div class="import-actions">
+                    <button class="btn" id="importConfirmBtn"><i class="fas fa-file-import"></i> 確認匯入</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="export-action-card full">
+                <h4>分類管理</h4>
+                <div class="export-form">
+                  <div class="export-btns" style="gap:8px">
+                    <button class="btn" id="exportCatBtn"><i class="fas fa-download"></i> 匯出分類</button>
+                    <label class="btn btn-ghost" style="cursor:pointer" id="importCatLabel">
+                      <i class="fas fa-upload"></i> 匯入分類
+                      <input type="file" id="importCatInput" accept=".csv" hidden>
+                    </label>
+                  </div>
+                  <p class="import-hint" style="margin-top:8px">匯出 / 匯入分類結構（含子分類），CSV 格式：類型、分類名稱、上層分類、顏色。</p>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-        <div class="card" style="margin-top:16px">
-          <h3>分類管理</h3>
-          <div class="export-form">
-            <div class="export-btns" style="gap:8px">
-              <button class="btn" id="exportCatBtn"><i class="fas fa-download"></i> 匯出分類</button>
-              <label class="btn btn-ghost" style="cursor:pointer" id="importCatLabel">
-                <i class="fas fa-upload"></i> 匯入分類
-                <input type="file" id="importCatInput" accept=".csv" hidden>
-              </label>
+
+          <div class="card export-cluster-card">
+            <div class="export-cluster-header">
+              <h3><i class="fas fa-chart-line"></i>股票資料</h3>
+              <p>股票交易與股利資料的匯出匯入</p>
             </div>
-            <p class="import-hint" style="margin-top:8px">匯出 / 匯入分類結構（含子分類），CSV 格式：類型、分類名稱、上層分類、顏色</p>
-          </div>
-        </div>
-        <div class="card" style="margin-top:16px">
-          <h3>股票紀錄</h3>
-          <div class="export-form">
-            <div class="export-btns" style="gap:8px">
-              <button class="btn" id="exportStockTxBtn"><i class="fas fa-download"></i> 匯出交易紀錄</button>
-              <button class="btn" id="exportStockDivBtn"><i class="fas fa-download"></i> 匯出股利紀錄</button>
-            </div>
-            <p class="import-hint" style="margin-top:8px">
-              交易紀錄 CSV：日期、股票代號、股票名稱、類型（買進/賣出）、股數、成交價、手續費、交易稅、帳戶、備註<br>
-              股利紀錄 CSV：日期、股票代號、股票名稱、現金股利、股票股利、備註
-            </p>
-          </div>
-          <div style="margin-top:12px">
-            <div class="export-btns" style="gap:8px">
-              <label class="btn btn-ghost" style="cursor:pointer">
-                <i class="fas fa-upload"></i> 匯入交易紀錄
-                <input type="file" id="importStockTxInput" accept=".csv" hidden>
-              </label>
-              <label class="btn btn-ghost" style="cursor:pointer">
-                <i class="fas fa-upload"></i> 匯入股利紀錄
-                <input type="file" id="importStockDivInput" accept=".csv" hidden>
-              </label>
-            </div>
-            <div class="import-result" id="stockImportResult" style="display:none;margin-top:8px"></div>
-          </div>
-        </div>
-        <div class="card" style="margin-top:16px">
-          <h3>匯入交易記錄</h3>
-          <p class="import-hint">支援 CSV 格式，欄位順序：日期、類型、分類、金額、帳戶、備註<br>
-            類型可為：支出、收入、轉出、轉入<br>
-            第一行為標題列，將自動跳過</p>
-          <div class="import-result" id="importResult" style="display:none"></div>
-          <div class="import-area" id="importArea">
-            <i class="fas fa-cloud-arrow-up"></i>
-            <span>點擊或拖曳 CSV 檔案至此</span>
-            <input type="file" id="importFileInput" accept=".csv" hidden>
-          </div>
-          <div class="import-preview" id="importPreview" style="display:none">
-            <div class="import-preview-header">
-              <span id="importFileName"></span>
-              <span id="importRowCount"></span>
-              <button class="btn btn-sm btn-ghost" id="importClearBtn"><i class="fas fa-xmark"></i> 清除</button>
-            </div>
-            <div class="import-table-wrap">
-              <table class="data-table" id="importPreviewTable">
-                <thead><tr><th>日期</th><th>類型</th><th>分類</th><th>金額</th><th>帳戶</th><th>備註</th></tr></thead>
-                <tbody id="importPreviewBody"></tbody>
-              </table>
-            </div>
-            <div class="import-missing" id="importMissing" style="display:none"></div>
-            <div class="import-actions">
-              <button class="btn" id="importConfirmBtn"><i class="fas fa-file-import"></i> 確認匯入</button>
+            <div class="export-action-grid two-col">
+              <div class="export-action-card">
+                <h4>匯出股票紀錄</h4>
+                <div class="export-btns" style="gap:8px">
+                  <button class="btn" id="exportStockTxBtn"><i class="fas fa-download"></i> 匯出交易紀錄</button>
+                  <button class="btn" id="exportStockDivBtn"><i class="fas fa-download"></i> 匯出股利紀錄</button>
+                </div>
+                <p class="import-hint" style="margin-top:8px">
+                  交易紀錄 CSV：日期、股票代號、股票名稱、類型（買進/賣出）、股數、成交價、手續費、交易稅、帳戶、備註<br>
+                  股利紀錄 CSV：日期、股票代號、股票名稱、現金股利、股票股利、備註
+                </p>
+              </div>
+
+              <div class="export-action-card">
+                <h4>匯入股票紀錄</h4>
+                <div class="export-btns" style="gap:8px">
+                  <label class="btn btn-ghost" style="cursor:pointer">
+                    <i class="fas fa-upload"></i> 匯入交易紀錄
+                    <input type="file" id="importStockTxInput" accept=".csv" hidden>
+                  </label>
+                  <label class="btn btn-ghost" style="cursor:pointer">
+                    <i class="fas fa-upload"></i> 匯入股利紀錄
+                    <input type="file" id="importStockDivInput" accept=".csv" hidden>
+                  </label>
+                </div>
+                <div class="import-result" id="stockImportResult" style="display:none;margin-top:8px"></div>
+              </div>
             </div>
           </div>
         </div>

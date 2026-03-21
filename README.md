@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-3.30-blue" alt="version">
+  <img src="https://img.shields.io/badge/version-3.30.1-blue" alt="version">
   <img src="https://img.shields.io/badge/node-%3E%3D18-green" alt="node">
   <img src="https://img.shields.io/badge/license-MIT-orange" alt="license">
   <img src="https://img.shields.io/badge/docker-ready-2496ED" alt="docker">
@@ -28,6 +28,7 @@
 - **股票紀錄** — 持股總覽、買賣交易、股利紀錄、FIFO 實現損益計算
 - **TWSE 整合** — 即時/收盤股價查詢、除權息自動同步
 - **CSV 匯出/匯入** — 交易記錄、分類、股票交易、股利紀錄
+- **匯出匯入介面重整** — 設定頁「資料匯出匯入」改為交易/股票分組卡片，提升一致性與可讀性
 - **全球即時匯率** — 串接 rter.info 匯率 API，支援手動更新與自動更新開關
 - **主題切換容錯** — 深色/淺色切換先本機生效，後端同步異常時不影響當下使用
 - **Google SSO** — 一鍵 Google 帳號登入（選配）

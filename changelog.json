@@ -1,6 +1,17 @@
 {
-  "currentVersion": "3.30",
+  "currentVersion": "3.30.1",
   "releases": [
+    {
+      "version": "3.30.1",
+      "date": "2026-03-21",
+      "title": "資料匯出匯入版面重整",
+      "type": "improved",
+      "changes": [
+        { "tag": "improved", "text": "設定 > 資料匯出匯入改為「交易資料 / 股票資料」雙分組卡片，介面層次更一致" },
+        { "tag": "improved", "text": "交易資料區整合匯出交易、匯入交易與分類管理，解決原本 3 欄與 1 欄混搭造成的凌亂感" },
+        { "tag": "improved", "text": "新增行動裝置單欄排版規則，提升小螢幕操作可讀性" }
+      ]
+    },
     {
       "version": "3.30",
       "date": "2026-03-21",

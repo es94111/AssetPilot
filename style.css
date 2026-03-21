@@ -713,6 +713,64 @@ input, select, button, textarea { font-family: inherit; font-size: inherit; }
 .recurring-status.paused { background: var(--bg); color: var(--text-secondary); }
 
 /* ===== 匯出入 ===== */
+.panel-export-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.export-cluster-card {
+  border-radius: 14px;
+}
+
+.export-cluster-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.export-cluster-header h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 17px;
+}
+
+.export-cluster-header p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.export-action-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.export-action-grid.two-col {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.export-action-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
+}
+
+.export-action-card h4 {
+  font-size: 15px;
+  margin-bottom: 10px;
+}
+
+.export-action-card.full {
+  grid-column: 1 / -1;
+}
+
 .export-form { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; }
 .export-btns { display: flex; gap: 8px; }
 
@@ -1130,6 +1188,11 @@ body.dark-mode .data-table tbody tr:hover {
   .fab { bottom: 20px; right: 20px; }
   .category-list { grid-template-columns: 1fr; }
   .report-controls { flex-direction: column; align-items: stretch; }
+  .export-cluster-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .export-action-grid.two-col { grid-template-columns: 1fr; }
 
   /* Auth 響應式 */
   .auth-container { padding: 16px; }

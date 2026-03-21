@@ -3040,9 +3040,181 @@ const App = (() => {
     el('importConfirmBtn').innerHTML = '<i class="fas fa-file-import"></i> 確認匯入';
   }
 
+  // ─── 電子發票 QRCode 掃描 ───
+  let invoiceScannerStream = null;
+  let invoiceScanRaf = 0;
+  let invoiceBarcodeDetector = null;
+
+  function setInvoiceScanStatus(msg, type = 'info') {
+    const statusEl = el('invoiceScannerStatus');
+    if (!statusEl) return;
+    statusEl.textContent = msg;
+    statusEl.className = `invoice-scanner-status ${type}`;
+  }
+
+  function stopInvoiceScanner() {
+    if (invoiceScanRaf) {
+      cancelAnimationFrame(invoiceScanRaf);
+      invoiceScanRaf = 0;
+    }
+    if (invoiceScannerStream) {
+      invoiceScannerStream.getTracks().forEach(t => t.stop());
+      invoiceScannerStream = null;
+    }
+    const v = el('invoiceScannerVideo');
+    if (v) v.srcObject = null;
+  }
+
+  function normalizeInvoiceDate(rocDate7) {
+    if (!/^\d{7}$/.test(rocDate7 || '')) return '';
+    const year = 1911 + Number(rocDate7.slice(0, 3));
+    const month = rocDate7.slice(3, 5);
+    const day = rocDate7.slice(5, 7);
+    return `${year}-${month}-${day}`;
+  }
+
+  function parseTaiwanInvoiceQRCode(rawText) {
+    const raw = String(rawText || '').trim();
+    if (!raw) return null;
+    const clean = raw.replace(/\s+/g, '');
+    if (!/^[A-Za-z]{2}\d{8}/.test(clean)) return null;
+
+    const invoiceNo = clean.slice(0, 10).toUpperCase();
+    const rocDate = clean.slice(10, 17);
+    const randomCode = clean.slice(17, 21);
+    const saleAmountHex = clean.slice(21, 29);
+    const totalAmountHex = clean.slice(29, 37);
+
+    const amountCandidates = [
+      Number.parseInt(totalAmountHex, 16),
+      Number.parseInt(saleAmountHex, 16),
+    ];
+    const amount = amountCandidates.find(v => Number.isFinite(v) && v > 0) || null;
+
+    const noteParts = [`電子發票 ${invoiceNo}`];
+    if (/^\d{4}$/.test(randomCode)) noteParts.push(`隨機碼${randomCode}`);
+
+    return {
+      invoiceNo,
+      date: normalizeInvoiceDate(rocDate),
+      amount,
+      note: noteParts.join(' '),
+    };
+  }
+
+  function applyInvoiceToTransactionForm(parsed) {
+    if (!parsed) return;
+
+    const selectedType = document.querySelector('input[name="txType"]:checked')?.value;
+    if (selectedType === 'transfer') {
+      const expenseRadio = document.querySelector('input[name="txType"][value="expense"]');
+      if (expenseRadio) {
+        expenseRadio.checked = true;
+        updateTxFormForType('expense');
+      }
+    }
+
+    if (parsed.amount && parsed.amount > 0) {
+      el('txAmount').value = parsed.amount;
+    }
+    if (parsed.date) {
+      el('txDate').value = parsed.date;
+    }
+
+    if (parsed.note) {
+      const oldNote = (el('txNote').value || '').trim();
+      if (!oldNote) {
+        el('txNote').value = parsed.note;
+      } else if (!oldNote.includes(parsed.invoiceNo)) {
+        el('txNote').value = `${oldNote}｜${parsed.note}`;
+      }
+    }
+  }
+
+  function handleInvoiceScanText(rawText) {
+    const parsed = parseTaiwanInvoiceQRCode(rawText);
+    if (!parsed) return false;
+    applyInvoiceToTransactionForm(parsed);
+    closeModal('modalInvoiceScanner');
+    toast('已自動帶入電子發票金額與日期', 'success');
+    return true;
+  }
+
+  async function startInvoiceScanner() {
+    const videoEl = el('invoiceScannerVideo');
+    if (!videoEl) return;
+
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setInvoiceScanStatus('此瀏覽器不支援相機掃描', 'error');
+      return;
+    }
+
+    if (!('BarcodeDetector' in window)) {
+      setInvoiceScanStatus('此瀏覽器不支援即時 QR 掃描，請改用「貼上 QR 文字解析」', 'error');
+      return;
+    }
+
+    try {
+      invoiceBarcodeDetector = new BarcodeDetector({ formats: ['qr_code'] });
+      setInvoiceScanStatus('正在啟動相機...', 'info');
+      invoiceScannerStream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: 'environment' } },
+        audio: false,
+      });
+      videoEl.srcObject = invoiceScannerStream;
+      await videoEl.play();
+      setInvoiceScanStatus('請將電子發票 QRCode 對準掃描框', 'success');
+
+      const tick = async () => {
+        if (!invoiceScannerStream) return;
+        try {
+          const codes = await invoiceBarcodeDetector.detect(videoEl);
+          for (const c of codes || []) {
+            const raw = c?.rawValue || '';
+            if (raw && handleInvoiceScanText(raw)) return;
+          }
+        } catch {
+          // 忽略單次偵測錯誤，持續掃描。
+        }
+        invoiceScanRaf = requestAnimationFrame(tick);
+      };
+      invoiceScanRaf = requestAnimationFrame(tick);
+    } catch (e) {
+      stopInvoiceScanner();
+      setInvoiceScanStatus('無法啟動相機，請確認已允許相機權限', 'error');
+    }
+  }
+
+  function openInvoiceScannerModal() {
+    openModal('modalInvoiceScanner');
+    startInvoiceScanner();
+  }
+
+  async function parseInvoiceFromClipboard() {
+    let text = '';
+    try {
+      if (navigator.clipboard?.readText) {
+        text = (await navigator.clipboard.readText()) || '';
+      }
+    } catch {
+      // 忽略，改用 prompt。
+    }
+    if (!text) {
+      text = prompt('請貼上電子發票 QRCode 內容') || '';
+    }
+    if (!text) return;
+    if (!handleInvoiceScanText(text)) {
+      setInvoiceScanStatus('無法辨識此 QRCode 內容，請確認為台灣電子發票 QRCode', 'error');
+      toast('無法辨識電子發票 QRCode 內容', 'error');
+    }
+  }
+
   // ─── Modal 操作 ───
   function openModal(id) { el(id).classList.add('active'); }
-  function closeModal(id) { el(id).classList.remove('active'); }
+  function closeModal(id) {
+    if (id === 'modalInvoiceScanner') stopInvoiceScanner();
+    el(id).classList.remove('active');
+  }
 
   // 交易
   async function openTransactionModal(txId) {
@@ -3247,6 +3419,8 @@ const App = (() => {
 
     // FAB
     el('fabBtn').addEventListener('click', () => openTransactionModal());
+    el('scanInvoiceQrBtn')?.addEventListener('click', openInvoiceScannerModal);
+    el('invoiceScanPasteBtn')?.addEventListener('click', parseInvoiceFromClipboard);
 
     // 交易表單
     el('transactionForm').addEventListener('submit', async (e) => {

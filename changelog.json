@@ -1,6 +1,17 @@
 {
-  "currentVersion": "3.19.1",
+  "currentVersion": "3.20",
   "releases": [
+    {
+      "version": "3.20",
+      "date": "2026-03-21",
+      "title": "電子發票 QRCode 自動輸入",
+      "type": "feature",
+      "changes": [
+        { "tag": "new", "text": "交易新增/編輯視窗新增「掃描電子發票 QRCode」按鈕，支援相機掃描自動帶入資料" },
+        { "tag": "new", "text": "新增電子發票掃描視窗，掃描成功後自動帶入日期、金額與發票備註資訊" },
+        { "tag": "improved", "text": "提供貼上 QR 文字解析備援，當瀏覽器不支援即時掃描時仍可快速帶入發票資料" }
+      ]
+    },
     {
       "version": "3.19.1",
       "date": "2026-03-21",

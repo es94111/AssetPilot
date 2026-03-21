@@ -283,46 +283,8 @@ const App = (() => {
       handleGoogleCode(code, redirectUri);
     };
 
-    const openLegacyPopupFallback = () => {
-      const oauthParams = {
-        client_id: googleClientId,
-        redirect_uri: redirectUri,
-        scope: 'openid email profile',
-        prompt: 'select_account',
-        response_type: 'code',
-        access_type: 'offline',
-      };
-      const authUrl = 'https://accounts.google.com/o/oauth2/v2/auth?' + new URLSearchParams(oauthParams).toString();
-      const w = 500, h = 600;
-      const left = (screen.width - w) / 2, top = (screen.height - h) / 2;
-      const popup = window.open(authUrl, 'googleLogin', `width=${w},height=${h},left=${left},top=${top}`);
-      if (!popup) { setGoogleAuthInProgress(false); toast('請允許彈出視窗', 'error'); return; }
-      const pollTimer = setInterval(() => {
-        try {
-          if (popup.closed) {
-            clearInterval(pollTimer);
-            if (!loginStarted) setGoogleAuthInProgress(false);
-            return;
-          }
-          const url = popup.location.href;
-          if (url && url.startsWith(redirectUri)) {
-            clearInterval(pollTimer);
-            const searchParams = new URL(popup.location.href).searchParams;
-            popup.close();
-            const code = searchParams.get('code');
-            if (code) {
-              startCodeLogin(code);
-            } else {
-              setGoogleAuthInProgress(false);
-              toast('Google 登入失敗：' + (searchParams.get('error') || '未取得授權碼'), 'error');
-            }
-          }
-        } catch (e) { /* cross-origin，繼續等待 */ }
-      }, 200);
-    };
-
-    // Code Flow 優先使用 GIS 官方 popup client，避免授權後回到網站登入頁。
-    if (googleUseCodeFlow && window.google?.accounts?.oauth2) {
+    // 強制只使用 GIS Code Client。
+    if (window.google?.accounts?.oauth2) {
       try {
         const codeClient = google.accounts.oauth2.initCodeClient({
           client_id: googleClientId,
@@ -345,18 +307,27 @@ const App = (() => {
             }
           },
           error_callback: (err) => {
-            console.warn('GIS Code Client 錯誤，改用 OAuth URL 備援:', err);
-            openLegacyPopupFallback();
+            const errType = err?.type || 'unknown_error';
+            console.warn('GIS Code Client 錯誤:', errType, err);
+            setGoogleAuthInProgress(false);
+            el('loginError').textContent = 'Google 視窗已關閉或被瀏覽器阻擋，請再試一次';
+            toast('Google 登入中斷（' + errType + '），請再點一次 Google 登入', 'error');
           },
         });
         codeClient.requestCode();
         return;
       } catch (e) {
-        console.warn('GIS Code Client 啟動失敗，改用 OAuth URL 備援:', e);
+        console.warn('GIS Code Client 啟動失敗:', e);
+        setGoogleAuthInProgress(false);
+        el('loginError').textContent = 'Google 登入元件初始化失敗，請稍後再試';
+        toast('Google 登入失敗：GIS 初始化失敗', 'error');
+        return;
       }
     }
 
-    openLegacyPopupFallback();
+    setGoogleAuthInProgress(false);
+    el('loginError').textContent = 'Google 登入元件未載入，請檢查網路或重新整理頁面';
+    toast('Google 登入失敗：GIS SDK 未載入', 'error');
   }
 
   // Code Flow：將授權碼送到後端交換 token

@@ -1,6 +1,17 @@
 {
-  "currentVersion": "3.16.8",
+  "currentVersion": "3.16.9",
   "releases": [
+    {
+      "version": "3.16.9",
+      "date": "2026-03-21",
+      "title": "Google SSO 即時誤判修正",
+      "type": "fixed",
+      "changes": [
+        { "tag": "fixed", "text": "修正點擊 Google 登入後立即誤顯示『登入流程已中斷』訊息的問題" },
+        { "tag": "improved", "text": "GIS popup_closed 類型加入請求經過時間判斷，短時間事件改為引導完成授權，不直接判定失敗" },
+        { "tag": "improved", "text": "Google SSO 錯誤提示分級調整：僅 popup_failed_to_open 視為錯誤，其餘顯示狀態提示" }
+      ]
+    },
     {
       "version": "3.16.8",
       "date": "2026-03-21",

@@ -795,9 +795,18 @@ function mergeChangelogs(local, remote) {
   (remote.releases || []).forEach(r => versionMap.set(r.version, r));
   const merged = Array.from(versionMap.values())
     .sort((a, b) => compareVersions(b.version, a.version));
+
+  let latest = local.currentVersion;
+  if (remote.currentVersion && compareVersions(remote.currentVersion, latest) > 0) {
+    latest = remote.currentVersion;
+  }
+  if (merged.length > 0 && compareVersions(merged[0].version, latest) > 0) {
+    latest = merged[0].version;
+  }
+
   return {
     currentVersion: local.currentVersion, // 本地安裝的版本
-    latestVersion: remote.currentVersion || local.currentVersion, // 遠端最新版本
+    latestVersion: latest, // 遠端最新版本（以版本號比較後取最大）
     releases: merged
   };
 }

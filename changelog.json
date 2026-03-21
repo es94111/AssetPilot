@@ -1,6 +1,16 @@
 {
-  "currentVersion": "3.19",
+  "currentVersion": "3.19.1",
   "releases": [
+    {
+      "version": "3.19.1",
+      "date": "2026-03-21",
+      "title": "版本更新偵測修正",
+      "type": "fixed",
+      "changes": [
+        { "tag": "fixed", "text": "修正 v3.18 對 v3.18.1 無法顯示可更新的問題" },
+        { "tag": "improved", "text": "版本更新偵測改為從版本清單取最高版本，不再僅依賴遠端 currentVersion 欄位" }
+      ]
+    },
     {
       "version": "3.19",
       "date": "2026-03-21",

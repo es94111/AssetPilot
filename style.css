@@ -858,6 +858,18 @@ input, select, button, textarea { font-family: inherit; font-size: inherit; }
 .auth-divider::before, .auth-divider::after {
   content: ''; flex: 1; height: 1px; background: var(--border);
 }
+.btn-google-fallback {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  width: 100%; padding: 12px 16px;
+  background: #fff; color: #3c4043;
+  border: 1px solid #dadce0; border-radius: 8px;
+  font-size: 14px; font-weight: 500;
+  cursor: pointer; transition: all .2s;
+}
+.btn-google-fallback:hover {
+  background: #f8f9fa; border-color: #c6c9cc;
+  box-shadow: 0 1px 3px rgba(0,0,0,.1);
+}
 
 /* ===== Sidebar Footer ===== */
 .sidebar-footer {

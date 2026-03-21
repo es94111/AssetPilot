@@ -236,34 +236,90 @@ const App = (() => {
         callback: handleGoogleCredential,
         ux_mode: 'popup',
         auto_select: false,
+        error_callback: (err) => {
+          console.warn('Google SSO popup 錯誤:', err);
+          // GSI popup 失敗，顯示備援按鈕
+          showGoogleFallbackButtons();
+        },
       });
 
-      // 登入頁按鈕
-      google.accounts.id.renderButton(el('googleSignInBtn'), {
-        type: 'standard',
-        theme: 'outline',
-        size: 'large',
-        text: 'signin_with',
-        shape: 'rectangular',
-        width: 300,
-        locale: 'zh_TW',
-      });
+      // 嘗試渲染 GSI 標準按鈕
+      try {
+        google.accounts.id.renderButton(el('googleSignInBtn'), {
+          type: 'standard', theme: 'outline', size: 'large',
+          text: 'signin_with', shape: 'rectangular', width: 300, locale: 'zh_TW',
+        });
+        google.accounts.id.renderButton(el('googleSignUpBtn'), {
+          type: 'standard', theme: 'outline', size: 'large',
+          text: 'signup_with', shape: 'rectangular', width: 300, locale: 'zh_TW',
+        });
+      } catch (renderErr) {
+        console.warn('GSI renderButton 失敗，使用備援按鈕:', renderErr);
+        showGoogleFallbackButtons();
+      }
       el('googleSignInWrap').style.display = '';
-
-      // 註冊頁按鈕
-      google.accounts.id.renderButton(el('googleSignUpBtn'), {
-        type: 'standard',
-        theme: 'outline',
-        size: 'large',
-        text: 'signup_with',
-        shape: 'rectangular',
-        width: 300,
-        locale: 'zh_TW',
-      });
       el('googleSignUpWrap').style.display = '';
+
+      // 3 秒後檢查 GSI 按鈕是否實際渲染成功（有時 iframe 載入失敗不報錯）
+      setTimeout(() => {
+        const gsiIframe = el('googleSignInBtn')?.querySelector('iframe, div[role="button"]');
+        if (!gsiIframe) {
+          console.warn('GSI 按鈕未渲染，切換到備援按鈕');
+          showGoogleFallbackButtons();
+        }
+      }, 3000);
     } catch (e) {
       console.warn('Google SSO 初始化失敗:', e.message);
     }
+  }
+
+  function showGoogleFallbackButtons() {
+    const fb1 = el('googleSignInFallback');
+    const fb2 = el('googleSignUpFallback');
+    if (fb1) { fb1.style.display = ''; el('googleSignInBtn').style.display = 'none'; }
+    if (fb2) { fb2.style.display = ''; el('googleSignUpBtn').style.display = 'none'; }
+  }
+
+  // 備援 Google 登入：使用 OAuth 2.0 implicit flow (token endpoint)
+  function googleFallbackLogin() {
+    if (!googleClientId) { toast('Google SSO 未設定', 'error'); return; }
+    // 使用 Google OAuth 2.0 授權端點，要求回傳 id_token
+    const redirectUri = location.origin + '/';
+    const nonce = Math.random().toString(36).slice(2) + Date.now().toString(36);
+    const authUrl = 'https://accounts.google.com/o/oauth2/v2/auth?' + new URLSearchParams({
+      client_id: googleClientId,
+      redirect_uri: redirectUri,
+      response_type: 'id_token',
+      scope: 'openid email profile',
+      nonce: nonce,
+      prompt: 'select_account',
+    }).toString();
+    // 開啟 popup
+    const w = 500, h = 600;
+    const left = (screen.width - w) / 2, top = (screen.height - h) / 2;
+    const popup = window.open(authUrl, 'googleLogin', `width=${w},height=${h},left=${left},top=${top}`);
+    if (!popup) { toast('請允許彈出視窗', 'error'); return; }
+    // 監聽 popup 重導回來（URL 中帶 id_token）
+    const pollTimer = setInterval(() => {
+      try {
+        if (popup.closed) { clearInterval(pollTimer); return; }
+        const url = popup.location.href;
+        if (url && url.startsWith(redirectUri)) {
+          clearInterval(pollTimer);
+          const hash = popup.location.hash.slice(1);
+          popup.close();
+          const params = new URLSearchParams(hash);
+          const idToken = params.get('id_token');
+          if (idToken) {
+            handleGoogleCredential({ credential: idToken });
+          } else {
+            toast('Google 登入失敗：未取得 Token', 'error');
+          }
+        }
+      } catch (e) {
+        // cross-origin，繼續等待
+      }
+    }, 200);
   }
 
   async function handleGoogleCredential(response) {
@@ -3179,6 +3235,7 @@ const App = (() => {
     stkTxGoPage: (p) => renderStockTransactions(p),
     stkDivGoPage: (p) => renderStockDividends(p),
     openChangelog,
+    googleFallbackLogin,
   };
 })();
 

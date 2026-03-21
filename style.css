@@ -1267,7 +1267,7 @@ body.dark-mode .data-table tbody tr:hover {
   line-height: 1.7;
 }
 .formula-name {
-  color: var(--text-primary);
+  color: var(--text);
   font-weight: 600;
   white-space: nowrap;
   min-width: 90px;
@@ -1425,7 +1425,7 @@ body.dark-mode .data-table tbody tr:hover {
 }
 .account-info-value {
   font-size: 14px;
-  color: var(--text-primary);
+  color: var(--text);
 }
 .tx-original-amount {
   font-size: 12px;
@@ -1439,7 +1439,7 @@ body.dark-mode .data-table tbody tr:hover {
   border-radius: 8px;
   padding: 8px 10px;
   background: var(--surface);
-  color: var(--text-primary);
+  color: var(--text);
 }
 .fx-rate-table .fx-rate[readonly] {
   background: var(--surface-2);
@@ -1553,7 +1553,7 @@ body.dark-mode .google-linked-badge.unlinked {
 .cl-release-title {
   font-weight: 600;
   font-size: 14px;
-  color: var(--text-primary);
+  color: var(--text);
 }
 .cl-release-date {
   font-size: 12px;
@@ -1577,7 +1577,7 @@ body.dark-mode .google-linked-badge.unlinked {
 .cl-changes li {
   padding: 5px 0;
   font-size: 13px;
-  color: var(--text-primary);
+  color: var(--text);
   display: flex;
   align-items: flex-start;
   gap: 8px;
@@ -1653,6 +1653,33 @@ body.dark-mode .google-linked-badge.unlinked {
 .cl-release.cl-newer {
   border-color: #93c5fd;
   background: #f0f7ff;
+}
+
+/* 深色模式：版本更新資訊可讀性修正 */
+body.dark-mode .cl-current {
+  background: linear-gradient(135deg, #172554, #312e81);
+  color: #e0e7ff;
+}
+body.dark-mode .cl-latest {
+  border-color: #4f46e5;
+}
+body.dark-mode .cl-latest .cl-release-header {
+  background: linear-gradient(135deg, #1e1b4b, #312e81);
+  border-bottom-color: #4338ca;
+}
+body.dark-mode .cl-release.cl-newer {
+  border-color: #3b82f6;
+  background: #0f172a;
+}
+body.dark-mode .cl-update-banner {
+  background: linear-gradient(135deg, #172554, #0f172a);
+  border-color: #3b82f6;
+}
+body.dark-mode .cl-update-banner strong {
+  color: #bfdbfe;
+}
+body.dark-mode .cl-update-banner span {
+  color: #cbd5e1;
 }
 
 /* 側邊欄更新徽章 */

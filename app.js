@@ -268,6 +268,16 @@ const App = (() => {
     if (fb2) { fb2.style.display = ''; el('googleSignUpBtn').style.display = 'none'; }
   }
 
+  function getGooglePopupErrorMessage(errType) {
+    if (errType === 'popup_failed_to_open') {
+      return 'Google 登入視窗無法開啟，請允許彈出視窗後再試一次';
+    }
+    if (errType === 'popup_closed' || errType === 'popup_closed_by_user') {
+      return 'Google 登入流程已中斷，請重新點擊 Google 登入';
+    }
+    return 'Google 登入流程中斷，請再試一次';
+  }
+
   // Google 登入：統一使用 Authorization Code Flow
   function googleFallbackLogin() {
     if (!googleClientId) { toast('Google SSO 未設定', 'error'); return; }
@@ -310,8 +320,9 @@ const App = (() => {
             const errType = err?.type || 'unknown_error';
             console.warn('GIS Code Client 錯誤:', errType, err);
             setGoogleAuthInProgress(false);
-            el('loginError').textContent = 'Google 視窗已關閉或被瀏覽器阻擋，請再試一次';
-            toast('Google 登入中斷（' + errType + '），請再點一次 Google 登入', 'error');
+            const msg = getGooglePopupErrorMessage(errType);
+            el('loginError').textContent = msg;
+            toast('Google 登入中斷（' + errType + '）：' + msg, 'error');
           },
         });
         codeClient.requestCode();

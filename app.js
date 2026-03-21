@@ -546,6 +546,7 @@ const App = (() => {
 
     await renderDashBudget(data.expense);
     renderDashPie(data.catBreakdown);
+    await renderDashAssetAllocationPie();
     renderDashRecent(data.recent);
   }
 
@@ -587,6 +588,57 @@ const App = (() => {
       type: 'doughnut',
       data: { labels, datasets: [{ data, backgroundColor: colors, borderWidth: 0 }] },
       options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, padding: 10 } } } },
+    });
+  }
+
+  async function renderDashAssetAllocationPie() {
+    if (charts.dashAssetPie) charts.dashAssetPie.destroy();
+    const canvas = el('dashAssetPieChart');
+    if (!canvas) return;
+
+    const [accounts, stocks] = await Promise.all([
+      API.get('/api/accounts'),
+      API.get('/api/stocks'),
+    ]);
+
+    const labels = [];
+    const values = [];
+    const colors = [];
+    const palette = ['#0ea5e9', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6', '#14b8a6', '#64748b'];
+
+    (accounts || []).forEach((a, idx) => {
+      const bal = Number(a.balance) || 0;
+      if (bal <= 0) return;
+      labels.push(a.name || '帳戶');
+      values.push(Math.round(bal));
+      colors.push(palette[idx % palette.length]);
+    });
+
+    const stockValue = (stocks || []).reduce((sum, s) => sum + (Number(s.marketValue) || 0), 0);
+    if (stockValue > 0) {
+      labels.push('股票市值');
+      values.push(Math.round(stockValue));
+      colors.push('#6366f1');
+    }
+
+    const ctx = canvas.getContext('2d');
+    if (values.length === 0) {
+      ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+      return;
+    }
+
+    charts.dashAssetPie = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels,
+        datasets: [{ data: values, backgroundColor: colors, borderWidth: 0 }],
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { position: 'bottom', labels: { boxWidth: 12, padding: 10 } },
+        },
+      },
     });
   }
 

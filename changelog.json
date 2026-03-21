@@ -1,6 +1,17 @@
 {
-  "currentVersion": "3.17",
+  "currentVersion": "3.18",
   "releases": [
+    {
+      "version": "3.18",
+      "date": "2026-03-21",
+      "title": "儀表板新增資產配置圓餅圖",
+      "type": "feature",
+      "changes": [
+        { "tag": "new", "text": "儀表板新增「資產配置（含股票市值）」圓餅圖，整合帳戶餘額與股票市值" },
+        { "tag": "improved", "text": "資產配置圖圖例顯示各資產類別占比，快速辨識現金與股票配置" },
+        { "tag": "improved", "text": "圖表資料改以即時帳戶餘額與股票市值動態計算，切頁後回到儀表板可即時反映最新資料" }
+      ]
+    },
     {
       "version": "3.17",
       "date": "2026-03-21",

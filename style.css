@@ -1387,6 +1387,45 @@ input, select, button, textarea { font-family: inherit; font-size: inherit; }
   color: var(--text-secondary);
 }
 
+/* 深色模式：帳號設定危險區域可讀性修正 */
+body.dark-mode .danger-zone {
+  border-color: #7f1d1d;
+  background: linear-gradient(135deg, #1f1111 0%, #231313 100%);
+}
+body.dark-mode .danger-zone-header {
+  background: linear-gradient(135deg, #3b1212 0%, #2b1010 100%);
+  border-bottom-color: #7f1d1d;
+}
+body.dark-mode .danger-zone-desc {
+  color: #fca5a5;
+  opacity: .95;
+}
+body.dark-mode .danger-zone-warning {
+  background: #311414;
+  border-color: #7f1d1d;
+  color: #fecaca;
+}
+body.dark-mode .danger-zone-input-wrap .form-label {
+  color: #fecaca;
+}
+body.dark-mode .danger-zone-input-row .form-input {
+  border-color: #b91c1c;
+  background: #140b0b;
+  color: #ffe4e6;
+}
+body.dark-mode .danger-zone-input-row .form-input:focus {
+  border-color: #f87171;
+  box-shadow: 0 0 0 4px rgba(248,113,113,.22);
+  background: #1a0d0d;
+}
+body.dark-mode .danger-zone-input-row .form-input::placeholder {
+  color: #fca5a5;
+}
+body.dark-mode .google-linked-badge.unlinked {
+  background: #1f2937;
+  color: #d1d5db;
+}
+
 /* ===== 版本更新資訊 ===== */
 .modal-lg { max-width: 640px; }
 .changelog-body {

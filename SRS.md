@@ -31,21 +31,21 @@
 
 ### 1.3 名詞定義
 
-| 名詞       | 定義                                         |
-| ---------- | -------------------------------------------- |
-| 交易記錄   | 一筆收入、支出或轉帳的資料                   |
-| 分類       | 交易記錄的類別（如餐飲、交通），支援子分類   |
-| 子分類     | 隸屬於父分類的細項分類（如餐飲 > 早餐）      |
-| 帳戶       | 資金來源（如現金、銀行帳戶、信用卡）         |
-| 預算       | 使用者設定的月度支出上限                     |
-| 固定收支   | 週期性自動產生的交易記錄                     |
-| 轉帳       | 帳戶間的資金移轉（產生轉出+轉入配對記錄）   |
-| 批次操作   | 一次對多筆交易進行刪除或變更                 |
-| 股票持倉   | 使用者持有的股票資產記錄                     |
-| 股票交易   | 股票買入或賣出的交易記錄                     |
-| 股票股利   | 股票現金股利或股票股利的發放記錄             |
-| FIFO       | 先進先出法，用於計算股票成本基礎與損益       |
-| TWSE       | 臺灣證券交易所（Taiwan Stock Exchange）      |
+| 名詞     | 定義                                       |
+| -------- | ------------------------------------------ |
+| 交易記錄 | 一筆收入、支出或轉帳的資料                 |
+| 分類     | 交易記錄的類別（如餐飲、交通），支援子分類 |
+| 子分類   | 隸屬於父分類的細項分類（如餐飲 > 早餐）    |
+| 帳戶     | 資金來源（如現金、銀行帳戶、信用卡）       |
+| 預算     | 使用者設定的月度支出上限                   |
+| 固定收支 | 週期性自動產生的交易記錄                   |
+| 轉帳     | 帳戶間的資金移轉（產生轉出+轉入配對記錄）  |
+| 批次操作 | 一次對多筆交易進行刪除或變更               |
+| 股票持倉 | 使用者持有的股票資產記錄                   |
+| 股票交易 | 股票買入或賣出的交易記錄                   |
+| 股票股利 | 股票現金股利或股票股利的發放記錄           |
+| FIFO     | 先進先出法，用於計算股票成本基礎與損益     |
+| TWSE     | 臺灣證券交易所（Taiwan Stock Exchange）    |
 
 ### 1.4 參考文件
 
@@ -61,23 +61,23 @@
 
 ### 2.2 技術架構
 
-| 層級   | 技術                                             |
-| ------ | ------------------------------------------------ |
-| 前端   | 原生 HTML / CSS / JavaScript（單頁應用程式 SPA） |
-| 後端   | Node.js + Express                                |
-| 資料庫 | SQLite（透過 sql.js）                            |
-| 驗證   | JWT（JSON Web Token），有效期 7 天               |
-| 密碼   | bcryptjs 加密儲存                                |
-| SSO    | Google Identity Services（選配）                 |
-| 圖表   | Chart.js                                         |
-| 圖示   | Font Awesome 6                                   |
-| 外部 API | TWSE OpenAPI（臺灣證券交易所即時股價）          |
+| 層級     | 技術                                             |
+| -------- | ------------------------------------------------ |
+| 前端     | 原生 HTML / CSS / JavaScript（單頁應用程式 SPA） |
+| 後端     | Node.js + Express                                |
+| 資料庫   | SQLite（透過 sql.js）                            |
+| 驗證     | JWT（JSON Web Token），有效期 7 天               |
+| 密碼     | bcryptjs 加密儲存                                |
+| SSO      | Google Identity Services（選配）                 |
+| 圖表     | Chart.js                                         |
+| 圖示     | Font Awesome 6                                   |
+| 外部 API | TWSE OpenAPI（臺灣證券交易所即時股價）           |
 
 ### 2.3 使用者角色
 
-| 角色       | 說明                               |
-| ---------- | ---------------------------------- |
-| 一般使用者 | 註冊帳號後使用所有功能             |
+| 角色       | 說明                              |
+| ---------- | --------------------------------- |
+| 一般使用者 | 註冊帳號後使用所有功能            |
 | 訪客       | 未登入狀態，僅可瀏覽登入/註冊頁面 |
 
 ### 2.4 操作環境
@@ -568,17 +568,17 @@
 - **描述：** 網頁路徑與選單/子選單有對應關係
 - **路由表：**
 
-| URL 路徑               | 對應頁面           |
-| ---------------------- | ------------------ |
-| `/`                    | 儀表板             |
-| `/transactions`        | 交易記錄           |
-| `/reports`             | 統計報表           |
-| `/budget`              | 預算管理           |
-| `/accounts`            | 帳戶管理           |
-| `/stocks`              | 股票投資管理       |
-| `/settings/categories` | 設定 > 分類管理    |
-| `/settings/recurring`  | 設定 > 固定收支    |
-| `/settings/export`     | 設定 > 資料匯出匯入|
+| URL 路徑                 | 對應頁面            |
+| ------------------------ | ------------------- |
+| `/`                    | 儀表板              |
+| `/transactions`        | 交易記錄            |
+| `/reports`             | 統計報表            |
+| `/budget`              | 預算管理            |
+| `/accounts`            | 帳戶管理            |
+| `/stocks`              | 股票投資管理        |
+| `/settings/categories` | 設定 > 分類管理     |
+| `/settings/recurring`  | 設定 > 固定收支     |
+| `/settings/export`     | 設定 > 資料匯出匯入 |
 
 - **處理規則：**
   - 使用 `history.pushState` 實作前端路由
@@ -592,12 +592,12 @@
 
 ### 4.1 效能需求
 
-| 項目             | 要求                               |
-| ---------------- | ---------------------------------- |
-| 頁面載入時間     | 首頁 ≤ 3 秒（一般網路環境）       |
-| API 回應時間     | 單筆 CRUD 操作 ≤ 500ms            |
-| 大量匯入         | 支援 9000+ 筆一次匯入             |
-| Request Body     | JSON 上限 50MB                    |
+| 項目         | 要求                         |
+| ------------ | ---------------------------- |
+| 頁面載入時間 | 首頁 ≤ 3 秒（一般網路環境） |
+| API 回應時間 | 單筆 CRUD 操作 ≤ 500ms      |
+| 大量匯入     | 支援 9000+ 筆一次匯入        |
+| Request Body | JSON 上限 50MB               |
 
 ### 4.2 安全性需求
 
@@ -655,26 +655,26 @@
 
 #### Transaction（交易記錄）
 
-| 欄位        | 型態    | 說明                                           | 必填 |
-| ----------- | ------- | ---------------------------------------------- | ---- |
-| id          | TEXT PK | 主鍵                                           | 是   |
-| user_id     | TEXT    | 外鍵 → User                                    | 是   |
-| type        | TEXT    | income / expense / transfer_out / transfer_in  | 是   |
-| amount      | REAL    | 金額                                           | 是   |
-| date        | TEXT    | 交易日期（YYYY-MM-DD）                         | 是   |
-| category_id | TEXT    | 外鍵 → Category                                | 否   |
-| account_id  | TEXT    | 外鍵 → Account                                 | 是   |
-| note        | TEXT    | 備註                                           | 否   |
-| linked_id   | TEXT    | 轉帳配對的交易 ID                              | 否   |
-| created_at  | INTEGER | 建立時間（timestamp）                          | 是   |
-| updated_at  | INTEGER | 更新時間（timestamp）                          | 是   |
+| 欄位        | 型態    | 說明                                          | 必填 |
+| ----------- | ------- | --------------------------------------------- | ---- |
+| id          | TEXT PK | 主鍵                                          | 是   |
+| user_id     | TEXT    | 外鍵 → User                                  | 是   |
+| type        | TEXT    | income / expense / transfer_out / transfer_in | 是   |
+| amount      | REAL    | 金額                                          | 是   |
+| date        | TEXT    | 交易日期（YYYY-MM-DD）                        | 是   |
+| category_id | TEXT    | 外鍵 → Category                              | 否   |
+| account_id  | TEXT    | 外鍵 → Account                               | 是   |
+| note        | TEXT    | 備註                                          | 否   |
+| linked_id   | TEXT    | 轉帳配對的交易 ID                             | 否   |
+| created_at  | INTEGER | 建立時間（timestamp）                         | 是   |
+| updated_at  | INTEGER | 更新時間（timestamp）                         | 是   |
 
 #### Category（分類）
 
 | 欄位       | 型態    | 說明                            | 必填 |
 | ---------- | ------- | ------------------------------- | ---- |
 | id         | TEXT PK | 主鍵                            | 是   |
-| user_id    | TEXT    | 外鍵 → User                     | 是   |
+| user_id    | TEXT    | 外鍵 → User                    | 是   |
 | name       | TEXT    | 分類名稱                        | 是   |
 | type       | TEXT    | income / expense（CHECK 約束）  | 是   |
 | color      | TEXT    | 顏色色碼（預設 #6366f1）        | 否   |
@@ -685,35 +685,35 @@
 
 #### Account（帳戶）
 
-| 欄位            | 型態    | 說明                     | 必填 |
-| --------------- | ------- | ------------------------ | ---- |
-| id              | TEXT PK | 主鍵                     | 是   |
-| user_id         | TEXT    | 外鍵 → User              | 是   |
-| name            | TEXT    | 帳戶名稱                 | 是   |
-| initial_balance | REAL    | 初始餘額（預設 0）       | 是   |
-| icon            | TEXT    | 圖示名稱（預設 fa-wallet）| 否   |
-| created_at      | TEXT    | 建立時間                 | 否   |
+| 欄位            | 型態    | 說明                       | 必填 |
+| --------------- | ------- | -------------------------- | ---- |
+| id              | TEXT PK | 主鍵                       | 是   |
+| user_id         | TEXT    | 外鍵 → User               | 是   |
+| name            | TEXT    | 帳戶名稱                   | 是   |
+| initial_balance | REAL    | 初始餘額（預設 0）         | 是   |
+| icon            | TEXT    | 圖示名稱（預設 fa-wallet） | 否   |
+| created_at      | TEXT    | 建立時間                   | 否   |
 
 #### Budget（預算）
 
-| 欄位        | 型態    | 說明                      | 必填 |
-| ----------- | ------- | ------------------------- | ---- |
-| id          | TEXT PK | 主鍵                      | 是   |
+| 欄位        | 型態    | 說明                       | 必填 |
+| ----------- | ------- | -------------------------- | ---- |
+| id          | TEXT PK | 主鍵                       | 是   |
 | user_id     | TEXT    | 外鍵 → User               | 是   |
 | category_id | TEXT    | 外鍵 → Category（可為空） | 否   |
-| amount      | REAL    | 預算金額                  | 是   |
-| year_month  | TEXT    | 適用年月（如 2026-03）    | 是   |
+| amount      | REAL    | 預算金額                   | 是   |
+| year_month  | TEXT    | 適用年月（如 2026-03）     | 是   |
 
 #### RecurringTransaction（固定收支）
 
 | 欄位           | 型態    | 說明                              | 必填 |
 | -------------- | ------- | --------------------------------- | ---- |
 | id             | TEXT PK | 主鍵                              | 是   |
-| user_id        | TEXT    | 外鍵 → User                       | 是   |
+| user_id        | TEXT    | 外鍵 → User                      | 是   |
 | type           | TEXT    | income / expense                  | 是   |
 | amount         | REAL    | 金額                              | 是   |
-| category_id    | TEXT    | 外鍵 → Category                   | 否   |
-| account_id     | TEXT    | 外鍵 → Account                    | 是   |
+| category_id    | TEXT    | 外鍵 → Category                  | 否   |
+| account_id     | TEXT    | 外鍵 → Account                   | 是   |
 | frequency      | TEXT    | daily / weekly / monthly / yearly | 是   |
 | start_date     | TEXT    | 起始日期                          | 是   |
 | note           | TEXT    | 備註                              | 否   |
@@ -725,42 +725,42 @@
 | 欄位          | 型態    | 說明                                      | 必填 |
 | ------------- | ------- | ----------------------------------------- | ---- |
 | id            | TEXT PK | 主鍵                                      | 是   |
-| user_id       | TEXT    | 外鍵 → User                               | 是   |
+| user_id       | TEXT    | 外鍵 → User                              | 是   |
 | symbol        | TEXT    | 股票代號（如 2330）                       | 是   |
 | name          | TEXT    | 股票名稱（如 台積電）                     | 是   |
-| stock_type    | TEXT    | 類型：stock / etf / warrant（預設 stock）  | 否   |
+| stock_type    | TEXT    | 類型：stock / etf / warrant（預設 stock） | 否   |
 | current_price | REAL    | 目前股價                                  | 否   |
 | updated_at    | TEXT    | 更新時間                                  | 否   |
 
 #### StockTransaction（股票交易）
 
-| 欄位      | 型態    | 說明                   | 必填 |
-| --------- | ------- | ---------------------- | ---- |
-| id        | TEXT PK | 主鍵                   | 是   |
-| user_id   | TEXT    | 外鍵 → User            | 是   |
-| stock_id  | TEXT    | 外鍵 → Stock           | 是   |
-| type      | TEXT    | buy / sell             | 是   |
-| date      | TEXT    | 交易日期               | 是   |
-| shares    | REAL    | 股數                   | 是   |
-| price     | REAL    | 每股價格               | 是   |
-| fee       | REAL    | 手續費（預設 0）       | 否   |
-| tax       | REAL    | 交易稅（預設 0）       | 否   |
-| note      | TEXT    | 備註                   | 否   |
-| created_at| TEXT    | 建立時間               | 否   |
+| 欄位       | 型態    | 說明             | 必填 |
+| ---------- | ------- | ---------------- | ---- |
+| id         | TEXT PK | 主鍵             | 是   |
+| user_id    | TEXT    | 外鍵 → User     | 是   |
+| stock_id   | TEXT    | 外鍵 → Stock    | 是   |
+| type       | TEXT    | buy / sell       | 是   |
+| date       | TEXT    | 交易日期         | 是   |
+| shares     | REAL    | 股數             | 是   |
+| price      | REAL    | 每股價格         | 是   |
+| fee        | REAL    | 手續費（預設 0） | 否   |
+| tax        | REAL    | 交易稅（預設 0） | 否   |
+| note       | TEXT    | 備註             | 否   |
+| created_at | TEXT    | 建立時間         | 否   |
 
 #### StockDividend（股票股利）
 
-| 欄位                  | 型態    | 說明                   | 必填 |
-| --------------------- | ------- | ---------------------- | ---- |
-| id                    | TEXT PK | 主鍵                   | 是   |
-| user_id               | TEXT    | 外鍵 → User            | 是   |
-| stock_id              | TEXT    | 外鍵 → Stock           | 是   |
-| date                  | TEXT    | 除權息日期             | 是   |
-| cash_dividend         | REAL    | 現金股利（元）         | 否   |
-| stock_dividend_shares | REAL    | 股票股利（股）         | 否   |
-| account_id            | TEXT    | 外鍵 → Account         | 否   |
-| note                  | TEXT    | 備註                   | 否   |
-| created_at            | INTEGER | 建立時間（timestamp）  | 否   |
+| 欄位                  | 型態    | 說明                  | 必填 |
+| --------------------- | ------- | --------------------- | ---- |
+| id                    | TEXT PK | 主鍵                  | 是   |
+| user_id               | TEXT    | 外鍵 → User          | 是   |
+| stock_id              | TEXT    | 外鍵 → Stock         | 是   |
+| date                  | TEXT    | 除權息日期            | 是   |
+| cash_dividend         | REAL    | 現金股利（元）        | 否   |
+| stock_dividend_shares | REAL    | 股票股利（股）        | 否   |
+| account_id            | TEXT    | 外鍵 → Account       | 否   |
+| note                  | TEXT    | 備註                  | 否   |
+| created_at            | INTEGER | 建立時間（timestamp） | 否   |
 
 ---
 
@@ -808,20 +808,20 @@
 
 ### 6.3 Modal 彈窗一覽
 
-| Modal              | 用途                             |
-| ------------------ | -------------------------------- |
-| modalTransaction   | 新增/編輯交易記錄               |
-| modalTransfer      | 新增轉帳記錄                    |
-| modalCategory      | 新增/編輯分類（含上層分類選擇） |
-| modalAccount       | 新增/編輯帳戶                   |
-| modalBudget        | 新增/編輯預算                   |
-| modalRecurring     | 新增/編輯固定收支               |
-| modalBatchChange   | 批次變更（分類/帳戶/日期）      |
-| modalConfirm       | 刪除確認                        |
-| modalStock         | 新增/編輯股票持倉（含 TWSE 查詢）|
-| modalStockTx       | 新增/編輯股票交易（含費用試算） |
-| modalStockDiv      | 新增/編輯股票股利               |
-| modalPriceUpdate   | 批次更新股價（含 TWSE 批次取得）|
+| Modal            | 用途                              |
+| ---------------- | --------------------------------- |
+| modalTransaction | 新增/編輯交易記錄                 |
+| modalTransfer    | 新增轉帳記錄                      |
+| modalCategory    | 新增/編輯分類（含上層分類選擇）   |
+| modalAccount     | 新增/編輯帳戶                     |
+| modalBudget      | 新增/編輯預算                     |
+| modalRecurring   | 新增/編輯固定收支                 |
+| modalBatchChange | 批次變更（分類/帳戶/日期）        |
+| modalConfirm     | 刪除確認                          |
+| modalStock       | 新增/編輯股票持倉（含 TWSE 查詢） |
+| modalStockTx     | 新增/編輯股票交易（含費用試算）   |
+| modalStockDiv    | 新增/編輯股票股利                 |
+| modalPriceUpdate | 批次更新股價（含 TWSE 批次取得）  |
 
 ---
 
@@ -829,22 +829,22 @@
 
 ### 7.1 認證
 
-| 方法 | 端點                    | 說明                                      |
-| ---- | ----------------------- | ----------------------------------------- |
-| GET  | /api/config             | 取得前端設定（Google Client ID 等）       |
-| POST | /api/auth/register      | 使用者註冊                                |
-| POST | /api/auth/login         | 使用者登入                                |
-| GET  | /api/auth/me            | 取得當前使用者資訊                        |
-| POST | /api/auth/google        | Google SSO 登入（驗證 ID Token 並簽發 JWT）|
+| 方法 | 端點               | 說明                                        |
+| ---- | ------------------ | ------------------------------------------- |
+| GET  | /api/config        | 取得前端設定（Google Client ID 等）         |
+| POST | /api/auth/register | 使用者註冊                                  |
+| POST | /api/auth/login    | 使用者登入                                  |
+| GET  | /api/auth/me       | 取得當前使用者資訊                          |
+| POST | /api/auth/google   | Google SSO 登入（驗證 ID Token 並簽發 JWT） |
 
 ### 7.2 分類
 
-| 方法   | 端點                 | 說明                           |
-| ------ | -------------------- | ------------------------------ |
-| GET    | /api/categories      | 取得所有分類（含 parentId）    |
-| POST   | /api/categories      | 新增分類（支援 parentId）      |
-| PUT    | /api/categories/:id  | 更新分類名稱與顏色             |
-| DELETE | /api/categories/:id  | 刪除分類（連帶刪除子分類）     |
+| 方法   | 端點                | 說明                        |
+| ------ | ------------------- | --------------------------- |
+| GET    | /api/categories     | 取得所有分類（含 parentId） |
+| POST   | /api/categories     | 新增分類（支援 parentId）   |
+| PUT    | /api/categories/:id | 更新分類名稱與顏色          |
+| DELETE | /api/categories/:id | 刪除分類（連帶刪除子分類）  |
 
 ### 7.3 帳戶
 
@@ -857,74 +857,74 @@
 
 ### 7.4 交易記錄
 
-| 方法   | 端點                              | 說明                               |
-| ------ | --------------------------------- | ---------------------------------- |
-| GET    | /api/transactions                 | 取得交易列表（分頁、篩選）         |
-| POST   | /api/transactions                 | 新增交易記錄                       |
-| PUT    | /api/transactions/:id             | 更新交易記錄                       |
-| DELETE | /api/transactions/:id             | 刪除交易記錄（含 linked 關聯刪除） |
-| POST   | /api/transactions/batch-delete    | 批次刪除多筆交易                   |
-| POST   | /api/transactions/batch-update    | 批次更新多筆交易（分類/帳戶/日期） |
-| POST   | /api/transactions/import          | 匯入 CSV 交易記錄                  |
-| POST   | /api/transactions/transfer        | 新增轉帳記錄（產生配對）           |
+| 方法   | 端點                           | 說明                               |
+| ------ | ------------------------------ | ---------------------------------- |
+| GET    | /api/transactions              | 取得交易列表（分頁、篩選）         |
+| POST   | /api/transactions              | 新增交易記錄                       |
+| PUT    | /api/transactions/:id          | 更新交易記錄                       |
+| DELETE | /api/transactions/:id          | 刪除交易記錄（含 linked 關聯刪除） |
+| POST   | /api/transactions/batch-delete | 批次刪除多筆交易                   |
+| POST   | /api/transactions/batch-update | 批次更新多筆交易（分類/帳戶/日期） |
+| POST   | /api/transactions/import       | 匯入 CSV 交易記錄                  |
+| POST   | /api/transactions/transfer     | 新增轉帳記錄（產生配對）           |
 
 ### 7.5 預算
 
-| 方法   | 端點             | 說明       |
-| ------ | ---------------- | ---------- |
-| GET    | /api/budgets     | 取得預算   |
-| POST   | /api/budgets     | 新增預算   |
-| PUT    | /api/budgets/:id | 更新預算   |
-| DELETE | /api/budgets/:id | 刪除預算   |
+| 方法   | 端點             | 說明     |
+| ------ | ---------------- | -------- |
+| GET    | /api/budgets     | 取得預算 |
+| POST   | /api/budgets     | 新增預算 |
+| PUT    | /api/budgets/:id | 更新預算 |
+| DELETE | /api/budgets/:id | 刪除預算 |
 
 ### 7.6 固定收支
 
-| 方法  | 端點                        | 說明             |
-| ----- | --------------------------- | ---------------- |
-| GET   | /api/recurring              | 取得固定收支列表 |
-| POST  | /api/recurring              | 新增固定收支     |
-| PUT   | /api/recurring/:id          | 更新固定收支     |
-| DELETE| /api/recurring/:id          | 刪除固定收支     |
-| PATCH | /api/recurring/:id/toggle   | 切換啟用/停用    |
-| POST  | /api/recurring/process      | 處理到期的固定收支 |
+| 方法   | 端點                      | 說明               |
+| ------ | ------------------------- | ------------------ |
+| GET    | /api/recurring            | 取得固定收支列表   |
+| POST   | /api/recurring            | 新增固定收支       |
+| PUT    | /api/recurring/:id        | 更新固定收支       |
+| DELETE | /api/recurring/:id        | 刪除固定收支       |
+| PATCH  | /api/recurring/:id/toggle | 切換啟用/停用      |
+| POST   | /api/recurring/process    | 處理到期的固定收支 |
 
 ### 7.7 股票
 
-| 方法   | 端點                             | 說明                                              |
-| ------ | -------------------------------- | ------------------------------------------------- |
-| GET    | /api/stocks                      | 取得所有股票持倉（含 FIFO 損益計算）              |
-| POST   | /api/stocks                      | 新增股票（含 stockType：stock / etf / warrant）   |
-| PUT    | /api/stocks/:id                  | 更新股票資訊（含 stockType）                      |
-| DELETE | /api/stocks/:id                  | 刪除股票（連帶刪除交易與股利記錄）                |
-| POST   | /api/stocks/batch-price          | 批次更新股價                                      |
-| GET    | /api/stock-realized              | 取得實現損益紀錄（FIFO 逐筆，支援 stockId 篩選）  |
-| GET    | /api/stock-transactions          | 取得股票交易記錄（支援 stockId 篩選、分頁）       |
-| POST   | /api/stock-transactions          | 新增股票交易                                      |
-| PUT    | /api/stock-transactions/:id      | 更新股票交易                                      |
-| DELETE | /api/stock-transactions/:id      | 刪除股票交易                                      |
-| POST   | /api/stock-transactions/batch-delete | 批次刪除多筆股票交易                          |
-| POST   | /api/stock-transactions/import   | 匯入股票交易記錄 CSV（自動建立不存在的股票）      |
-| GET    | /api/stock-dividends             | 取得股票股利記錄（支援 stockId 篩選、分頁）       |
-| POST   | /api/stock-dividends             | 新增股票股利                                      |
-| PUT    | /api/stock-dividends/:id         | 更新股票股利                                      |
-| DELETE | /api/stock-dividends/:id         | 刪除股票股利                                      |
-| POST   | /api/stock-dividends/batch-delete | 批次刪除多筆股票股利                             |
-| POST   | /api/stock-dividends/import      | 匯入股票股利記錄 CSV（自動建立不存在的股票）      |
-| POST   | /api/stock-dividends/sync        | 從 TWSE 除權息公告自動同步股利紀錄                |
+| 方法   | 端點                                 | 說明                                             |
+| ------ | ------------------------------------ | ------------------------------------------------ |
+| GET    | /api/stocks                          | 取得所有股票持倉（含 FIFO 損益計算）             |
+| POST   | /api/stocks                          | 新增股票（含 stockType：stock / etf / warrant）  |
+| PUT    | /api/stocks/:id                      | 更新股票資訊（含 stockType）                     |
+| DELETE | /api/stocks/:id                      | 刪除股票（連帶刪除交易與股利記錄）               |
+| POST   | /api/stocks/batch-price              | 批次更新股價                                     |
+| GET    | /api/stock-realized                  | 取得實現損益紀錄（FIFO 逐筆，支援 stockId 篩選） |
+| GET    | /api/stock-transactions              | 取得股票交易記錄（支援 stockId 篩選、分頁）      |
+| POST   | /api/stock-transactions              | 新增股票交易                                     |
+| PUT    | /api/stock-transactions/:id          | 更新股票交易                                     |
+| DELETE | /api/stock-transactions/:id          | 刪除股票交易                                     |
+| POST   | /api/stock-transactions/batch-delete | 批次刪除多筆股票交易                             |
+| POST   | /api/stock-transactions/import       | 匯入股票交易記錄 CSV（自動建立不存在的股票）     |
+| GET    | /api/stock-dividends                 | 取得股票股利記錄（支援 stockId 篩選、分頁）      |
+| POST   | /api/stock-dividends                 | 新增股票股利                                     |
+| PUT    | /api/stock-dividends/:id             | 更新股票股利                                     |
+| DELETE | /api/stock-dividends/:id             | 刪除股票股利                                     |
+| POST   | /api/stock-dividends/batch-delete    | 批次刪除多筆股票股利                             |
+| POST   | /api/stock-dividends/import          | 匯入股票股利記錄 CSV（自動建立不存在的股票）     |
+| POST   | /api/stock-dividends/sync            | 從 TWSE 除權息公告自動同步股利紀錄               |
 
 ### 7.8 TWSE 證交所代理
 
-| 方法 | 端點                           | 說明                                                        |
-| ---- | ------------------------------ | ----------------------------------------------------------- |
-| GET  | /api/twse/stock/:symbol        | 查詢股票名稱與股價（`?realtime=1` 即時 / `?date=` 盤後 / 無參數備援） |
-| GET  | /api/twse/search               | 搜尋股票代號或名稱（query 參數，回傳前 10 筆）              |
+| 方法 | 端點                    | 說明                                                                      |
+| ---- | ----------------------- | ------------------------------------------------------------------------- |
+| GET  | /api/twse/stock/:symbol | 查詢股票名稱與股價（`?realtime=1` 即時 / `?date=` 盤後 / 無參數備援） |
+| GET  | /api/twse/search        | 搜尋股票代號或名稱（query 參數，回傳前 10 筆）                            |
 
 ### 7.9 報表
 
-| 方法 | 端點               | 說明                 |
-| ---- | ------------------ | -------------------- |
-| GET  | /api/dashboard     | 儀表板摘要資料       |
-| GET  | /api/reports       | 統計報表資料         |
+| 方法 | 端點           | 說明           |
+| ---- | -------------- | -------------- |
+| GET  | /api/dashboard | 儀表板摘要資料 |
+| GET  | /api/reports   | 統計報表資料   |
 
 ---
 
@@ -932,84 +932,85 @@
 
 ### 8.1 使用案例摘要
 
-| 編號   | 使用案例             | 主要角色 |
-| ------ | -------------------- | -------- |
-| UC-001 | 註冊帳號             | 訪客     |
-| UC-002 | 登入系統             | 使用者   |
-| UC-003 | 新增支出/收入記錄    | 使用者   |
-| UC-004 | 新增轉帳記錄         | 使用者   |
-| UC-005 | 批次刪除交易記錄     | 使用者   |
-| UC-006 | 批次變更交易分類     | 使用者   |
-| UC-007 | 檢視當月收支         | 使用者   |
-| UC-008 | 設定月度/分類預算    | 使用者   |
-| UC-009 | 檢視統計報表         | 使用者   |
-| UC-010 | 管理分類與子分類     | 使用者   |
-| UC-011 | 帳戶間轉帳           | 使用者   |
-| UC-012 | 設定固定收支         | 使用者   |
-| UC-013 | 匯出交易記錄 CSV     | 使用者   |
-| UC-014 | 匯入交易記錄 CSV     | 使用者   |
-| UC-015 | 匯出/匯入分類結構    | 使用者   |
-| UC-016 | 新增股票持倉（TWSE 查詢）| 使用者 |
-| UC-017 | 記錄股票買賣交易     | 使用者   |
-| UC-018 | 記錄股票股利         | 使用者   |
-| UC-019 | 批次更新股價（TWSE） | 使用者   |
-| UC-020 | 檢視投資組合損益     | 使用者   |
-| UC-021 | 匯出股票交易/股利紀錄 CSV | 使用者 |
-| UC-022 | 匯入股票交易/股利紀錄 CSV | 使用者 |
-| UC-023 | 檢視實現損益紀錄     | 使用者   |
-| UC-024 | 自動同步除權息股利   | 使用者   |
-| UC-025 | Google SSO 登入      | 訪客     |
-| UC-026 | 批次刪除股票交易紀錄 | 使用者   |
-| UC-027 | 批次刪除股利紀錄     | 使用者   |
+| 編號   | 使用案例                  | 主要角色 |
+| ------ | ------------------------- | -------- |
+| UC-001 | 註冊帳號                  | 訪客     |
+| UC-002 | 登入系統                  | 使用者   |
+| UC-003 | 新增支出/收入記錄         | 使用者   |
+| UC-004 | 新增轉帳記錄              | 使用者   |
+| UC-005 | 批次刪除交易記錄          | 使用者   |
+| UC-006 | 批次變更交易分類          | 使用者   |
+| UC-007 | 檢視當月收支              | 使用者   |
+| UC-008 | 設定月度/分類預算         | 使用者   |
+| UC-009 | 檢視統計報表              | 使用者   |
+| UC-010 | 管理分類與子分類          | 使用者   |
+| UC-011 | 帳戶間轉帳                | 使用者   |
+| UC-012 | 設定固定收支              | 使用者   |
+| UC-013 | 匯出交易記錄 CSV          | 使用者   |
+| UC-014 | 匯入交易記錄 CSV          | 使用者   |
+| UC-015 | 匯出/匯入分類結構         | 使用者   |
+| UC-016 | 新增股票持倉（TWSE 查詢） | 使用者   |
+| UC-017 | 記錄股票買賣交易          | 使用者   |
+| UC-018 | 記錄股票股利              | 使用者   |
+| UC-019 | 批次更新股價（TWSE）      | 使用者   |
+| UC-020 | 檢視投資組合損益          | 使用者   |
+| UC-021 | 匯出股票交易/股利紀錄 CSV | 使用者   |
+| UC-022 | 匯入股票交易/股利紀錄 CSV | 使用者   |
+| UC-023 | 檢視實現損益紀錄          | 使用者   |
+| UC-024 | 自動同步除權息股利        | 使用者   |
+| UC-025 | Google SSO 登入           | 訪客     |
+| UC-026 | 批次刪除股票交易紀錄      | 使用者   |
+| UC-027 | 批次刪除股利紀錄          | 使用者   |
 
 ### 8.2 版本歷程
 
-| 版本 | 日期       | 變更說明                                                       |
-| ---- | ---------- | -------------------------------------------------------------- |
-| 1.0  | 2026-03-18 | 初版草稿                                                       |
-| 2.0  | 2026-03-19 | 更新為已實作版本，新增：子分類、批次操作、分類匯出匯入、前端路由、每頁筆數自訂、轉帳關聯刪除、大量匯入支援、系統名稱改為「資產管理」、統計報表自訂時間範圍 |
-| 3.0  | 2026-03-19 | 新增股票投資管理模組：股票持倉管理、股票交易記錄（買入/賣出）、股票股利記錄、FIFO 損益計算、TWSE 臺灣證券交易所 OpenAPI 整合（股票代號查詢、批次股價更新）、投資組合總覽 |
-| 3.1  | 2026-03-19 | 股票交易/股利新增改為輸入代號自動建立（無需先手動新增股票）、新增交易紀錄與股利紀錄搜尋篩選指定股票功能、修正買進/賣出按鈕預設選取狀態、修正搜尋下拉選單文字重疊 |
-| 3.2  | 2026-03-19 | 新增股票 CSV 匯出/匯入（交易紀錄 FR-074、股利紀錄 FR-075）；新增股票類型欄位（stock_type：一般股票/ETF/權證）；修正手續費計算（Math.floor + 最低20元）；修正證交稅計算（Math.floor + 最低1元 + ETF/權證 0.1% 稅率）；TWSE 股價查詢改為三段策略（即時/盤後/備援） |
-| 3.3  | 2026-03-20 | 新增實現損益紀錄 Tab（FR-097）：FIFO 逐筆賣出損益明細、彙總卡片（總損益/報酬率/今年損益/筆數）、搜尋篩選；修正股票 CSV 匯入自動建立股票時正確帶入名稱；修正 initDB 中 ALTER TABLE stocks 執行順序（需在 CREATE TABLE 之後） |
-| 3.4  | 2026-03-20 | 新增 TWSE 除權息自動同步功能（FR-096）：查詢 TWT49U + TWT49UDetail API，依持股期間自動計算並新增現金股利/股票股利紀錄，不重複新增，30 分鐘快取 |
-| 3.5  | 2026-03-20 | 新增 Google SSO 登入（FR-003 改版）；新增股票交易/股利批次刪除與分頁（FR-004/FR-005）；更新股價顯示價格來源與時間；美化持股總覽卡片與更新股價 Modal；移除忘記密碼功能；修正股票名稱顯示異常（CSV 匯入自動修正） |
-| 3.6  | 2026-03-20 | 環境變數管理（.env）；資料庫全檔加密（ChaCha20-Poly1305）；Docker 容器化支援；帳號設定頁（Google 綁定/解除）；全新 Logo/Favicon；版本更新資訊頁面；股票持股公式修正 |
-| 3.7  | 2026-03-20 | 帳號設定新增刪除帳號功能（永久刪除所有資料）；側邊欄顯示版本號；首次啟動自動產生密鑰；Docker 優化（密鑰與資料庫統一掛載） |
-| 3.7.1 | 2026-03-20 | 美化帳號設定「危險區域」介面：圖示標頭、警告提示區塊、密碼輸入框紅色焦點樣式 |
-| 3.8   | 2026-03-20 | 新增 README.md；Docker Hub CI/CD（GitHub Actions）；Google SSO 登入卡頓修復 |
-| 3.9   | 2026-03-20 | 更新股價僅更新目前持股；持股總覽圖示修復；帳戶管理圖示大小統一 |
-| 3.9.1 | 2026-03-20 | Docker 密鑰持久化修復；JWT_SECRET 隨機產生後容器更新無法進入問題修正 |
-| 3.9.2 | 2026-03-20 | 新增櫃買中心（TPEx）上櫃股票報價支援；修正 8069 元太、6147 頎邦等上櫃股票無法取得股價 |
-| 3.9.3 | 2026-03-21 | TWSE 除權息自動同步支援歷史持股期間；修復月配息 ETF 重複股利；修復 express-rate-limit 驗證警告 |
-| 3.10  | 2026-03-21 | 股票交易紀錄/股利紀錄支援欄位排序與日期範圍篩選；統一全站日期格式為 YYYY-MM-DD |
-| 3.10.1 | 2026-03-21 | Google SSO 改用 Authorization Code Flow（用戶端密碼）；登入後顯示 Google 使用者頭像 |
-| 3.11  | 2026-03-21 | 股票紀錄子選單路由化：持股總覽、交易紀錄、股利紀錄、實現損益各有獨立 URL 路徑 |
-| 3.12  | 2026-03-21 | 遠端版本更新檢查：從 GitHub 取得最新 changelog，舊版本可查看新版資訊並顯示升級提示 |
-| 3.13  | 2026-03-21 | 全面依賴升級：Express 5、bcryptjs 3、sql.js 1.14、Font Awesome 6.7.1、Chart.js 4.5.1、Node.js 24 |
-| 3.14  | 2026-03-21 | 計算公式說明彈窗：持股總覽新增統一的「計算公式」按鈕，點擊彈出完整公式說明視窗 |
-| 3.14.1 | 2026-03-21 | 修復 Google SSO Code Flow 備援登入在授權後導向站內登入頁（AssetPilot 登入頁）問題；改用 GIS popup code client 提升登入流程穩定性 |
-| 3.14.2 | 2026-03-21 | 版本更新資訊遠端來源網址鎖定為 GitHub 官方網址；移除環境變數覆蓋入口，避免使用者自訂更新來源 |
-| 3.14.3 | 2026-03-21 | Google SSO 登入統一使用 OAuth Authorization Code Flow（Client ID + Client Secret）；後端僅接受授權碼登入 |
-| 3.14.4 | 2026-03-21 | 修復版本更新資訊不同步問題：前端改為 no-store + 強制刷新；後端新增 refresh=1 與 GitHub API 備援來源 |
-| 3.14.5 | 2026-03-21 | 版本更新彈窗新增「手動重新檢查更新」按鈕；點擊後立即重抓遠端版本並同步更新側邊欄徽章 |
-| 3.14.6 | 2026-03-21 | 版本更新彈窗新增「上次檢查時間」顯示，並在每次成功重新檢查後即時更新 |
-| 3.15 | 2026-03-21 | 側邊欄新增「收支管理」主選單，整合交易記錄/統計報表/預算管理/帳戶管理為子選項，並新增 /finance/* 路由 |
-| 3.15.1 | 2026-03-21 | 收支管理子選項改至頁面中間分頁列（比照股票紀錄），左側僅保留「收支管理」主選單 |
-| 3.16 | 2026-03-21 | 設定新增「系統訊息」子選單：顯示網頁資訊與錯誤內容，並支援清除訊息 |
-| 3.16.1 | 2026-03-21 | 系統訊息新增「手動更新」按鈕與「上次更新時間」顯示，並加入每 30 秒自動更新 |
-| 3.16.2 | 2026-03-21 | 修復 Google SSO 選完帳號後未自動登入：前端新增 callback 逾時與錯誤備援；後端新增 redirect_uri 尾斜線重試 |
-| 3.16.3 | 2026-03-21 | 版本更新資訊偵測到新版本時新增「立即更新」按鈕；一鍵執行 git pull + npm install，免登入伺服器手動更新 |
-| 3.16.4 | 2026-03-21 | 修復 Google SSO 點一次卻彈出兩個登入視窗：加入登入流程鎖並移除逾時自動再開 popup |
-| 3.16.5 | 2026-03-21 | 一鍵更新新增 Docker / 無 .git 模式：改為下載 GitHub 最新 zip 套用更新，修復容器內無法更新問題 |
-| 3.16.6 | 2026-03-21 | 修復 Google SSO 雙彈窗競態：GIS error_callback 不再自動開第二視窗，改為單一路徑並提示重試 |
-| 3.16.7 | 2026-03-21 | Google SSO 強制只走 GIS Code Client，移除 OAuth URL 備援流程，杜絕雙視窗登入 |
-| 3.16.8 | 2026-03-21 | 修正 Google SSO 錯誤文案誤判：GIS error_callback 依錯誤類型顯示訊息，避免誤顯示「視窗已關閉或被阻擋」 |
-| 3.16.9 | 2026-03-21 | 修正 Google SSO 點擊後立即誤報中斷：popup_closed 加入時間判斷，短時間事件改為提示完成授權，不直接判定失敗 |
-| 3.16.10 | 2026-03-21 | 修正 Google 授權完成後未自動登入：新增授權碼 watchdog 與 URL code 回呼自動處理，提升跨瀏覽器穩定性 |
-| 3.16.11 | 2026-03-21 | Google SSO 改用 GIS redirect 授權流程，解決 popup callback 在特定瀏覽器不觸發導致未自動登入問題 |
-| 3.16.12 | 2026-03-21 | 移除設定頁「系統訊息」功能：刪除子分頁與面板，並清除訊息收集/更新/清除相關前端邏輯 |
-| 3.17 | 2026-03-21 | 股票紀錄新增「交易設定」：可自訂零股/整股最低手續費、手續費折扣、賣出稅率，並套用於交易計算與持股預估 |
+| 版本    | 日期       | 變更說明                                                                                                                                                                                                                                                         |
+| ------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1.0     | 2026-03-18 | 初版草稿                                                                                                                                                                                                                                                         |
+| 2.0     | 2026-03-19 | 更新為已實作版本，新增：子分類、批次操作、分類匯出匯入、前端路由、每頁筆數自訂、轉帳關聯刪除、大量匯入支援、系統名稱改為「資產管理」、統計報表自訂時間範圍                                                                                                       |
+| 3.0     | 2026-03-19 | 新增股票投資管理模組：股票持倉管理、股票交易記錄（買入/賣出）、股票股利記錄、FIFO 損益計算、TWSE 臺灣證券交易所 OpenAPI 整合（股票代號查詢、批次股價更新）、投資組合總覽                                                                                         |
+| 3.1     | 2026-03-19 | 股票交易/股利新增改為輸入代號自動建立（無需先手動新增股票）、新增交易紀錄與股利紀錄搜尋篩選指定股票功能、修正買進/賣出按鈕預設選取狀態、修正搜尋下拉選單文字重疊                                                                                                 |
+| 3.2     | 2026-03-19 | 新增股票 CSV 匯出/匯入（交易紀錄 FR-074、股利紀錄 FR-075）；新增股票類型欄位（stock_type：一般股票/ETF/權證）；修正手續費計算（Math.floor + 最低20元）；修正證交稅計算（Math.floor + 最低1元 + ETF/權證 0.1% 稅率）；TWSE 股價查詢改為三段策略（即時/盤後/備援） |
+| 3.3     | 2026-03-20 | 新增實現損益紀錄 Tab（FR-097）：FIFO 逐筆賣出損益明細、彙總卡片（總損益/報酬率/今年損益/筆數）、搜尋篩選；修正股票 CSV 匯入自動建立股票時正確帶入名稱；修正 initDB 中 ALTER TABLE stocks 執行順序（需在 CREATE TABLE 之後）                                      |
+| 3.4     | 2026-03-20 | 新增 TWSE 除權息自動同步功能（FR-096）：查詢 TWT49U + TWT49UDetail API，依持股期間自動計算並新增現金股利/股票股利紀錄，不重複新增，30 分鐘快取                                                                                                                   |
+| 3.5     | 2026-03-20 | 新增 Google SSO 登入（FR-003 改版）；新增股票交易/股利批次刪除與分頁（FR-004/FR-005）；更新股價顯示價格來源與時間；美化持股總覽卡片與更新股價 Modal；移除忘記密碼功能；修正股票名稱顯示異常（CSV 匯入自動修正）                                                  |
+| 3.6     | 2026-03-20 | 環境變數管理（.env）；資料庫全檔加密（ChaCha20-Poly1305）；Docker 容器化支援；帳號設定頁（Google 綁定/解除）；全新 Logo/Favicon；版本更新資訊頁面；股票持股公式修正                                                                                              |
+| 3.7     | 2026-03-20 | 帳號設定新增刪除帳號功能（永久刪除所有資料）；側邊欄顯示版本號；首次啟動自動產生密鑰；Docker 優化（密鑰與資料庫統一掛載）                                                                                                                                        |
+| 3.7.1   | 2026-03-20 | 美化帳號設定「危險區域」介面：圖示標頭、警告提示區塊、密碼輸入框紅色焦點樣式                                                                                                                                                                                     |
+| 3.8     | 2026-03-20 | 新增 README.md；Docker Hub CI/CD（GitHub Actions）；Google SSO 登入卡頓修復                                                                                                                                                                                      |
+| 3.9     | 2026-03-20 | 更新股價僅更新目前持股；持股總覽圖示修復；帳戶管理圖示大小統一                                                                                                                                                                                                   |
+| 3.9.1   | 2026-03-20 | Docker 密鑰持久化修復；JWT_SECRET 隨機產生後容器更新無法進入問題修正                                                                                                                                                                                             |
+| 3.9.2   | 2026-03-20 | 新增櫃買中心（TPEx）上櫃股票報價支援；修正 8069 元太、6147 頎邦等上櫃股票無法取得股價                                                                                                                                                                            |
+| 3.9.3   | 2026-03-21 | TWSE 除權息自動同步支援歷史持股期間；修復月配息 ETF 重複股利；修復 express-rate-limit 驗證警告                                                                                                                                                                   |
+| 3.10    | 2026-03-21 | 股票交易紀錄/股利紀錄支援欄位排序與日期範圍篩選；統一全站日期格式為 YYYY-MM-DD                                                                                                                                                                                   |
+| 3.10.1  | 2026-03-21 | Google SSO 改用 Authorization Code Flow（用戶端密碼）；登入後顯示 Google 使用者頭像                                                                                                                                                                              |
+| 3.11    | 2026-03-21 | 股票紀錄子選單路由化：持股總覽、交易紀錄、股利紀錄、實現損益各有獨立 URL 路徑                                                                                                                                                                                    |
+| 3.12    | 2026-03-21 | 遠端版本更新檢查：從 GitHub 取得最新 changelog，舊版本可查看新版資訊並顯示升級提示                                                                                                                                                                               |
+| 3.13    | 2026-03-21 | 全面依賴升級：Express 5、bcryptjs 3、sql.js 1.14、Font Awesome 6.7.1、Chart.js 4.5.1、Node.js 24                                                                                                                                                                 |
+| 3.14    | 2026-03-21 | 計算公式說明彈窗：持股總覽新增統一的「計算公式」按鈕，點擊彈出完整公式說明視窗                                                                                                                                                                                   |
+| 3.14.1  | 2026-03-21 | 修復 Google SSO Code Flow 備援登入在授權後導向站內登入頁（AssetPilot 登入頁）問題；改用 GIS popup code client 提升登入流程穩定性                                                                                                                                 |
+| 3.14.2  | 2026-03-21 | 版本更新資訊遠端來源網址鎖定為 GitHub 官方網址；移除環境變數覆蓋入口，避免使用者自訂更新來源                                                                                                                                                                     |
+| 3.14.3  | 2026-03-21 | Google SSO 登入統一使用 OAuth Authorization Code Flow（Client ID + Client Secret）；後端僅接受授權碼登入                                                                                                                                                         |
+| 3.14.4  | 2026-03-21 | 修復版本更新資訊不同步問題：前端改為 no-store + 強制刷新；後端新增 refresh=1 與 GitHub API 備援來源                                                                                                                                                              |
+| 3.14.5  | 2026-03-21 | 版本更新彈窗新增「手動重新檢查更新」按鈕；點擊後立即重抓遠端版本並同步更新側邊欄徽章                                                                                                                                                                             |
+| 3.14.6  | 2026-03-21 | 版本更新彈窗新增「上次檢查時間」顯示，並在每次成功重新檢查後即時更新                                                                                                                                                                                             |
+| 3.15    | 2026-03-21 | 側邊欄新增「收支管理」主選單，整合交易記錄/統計報表/預算管理/帳戶管理為子選項，並新增 /finance/* 路由                                                                                                                                                            |
+| 3.15.1  | 2026-03-21 | 收支管理子選項改至頁面中間分頁列（比照股票紀錄），左側僅保留「收支管理」主選單                                                                                                                                                                                   |
+| 3.16    | 2026-03-21 | 設定新增「系統訊息」子選單：顯示網頁資訊與錯誤內容，並支援清除訊息                                                                                                                                                                                               |
+| 3.16.1  | 2026-03-21 | 系統訊息新增「手動更新」按鈕與「上次更新時間」顯示，並加入每 30 秒自動更新                                                                                                                                                                                       |
+| 3.16.2  | 2026-03-21 | 修復 Google SSO 選完帳號後未自動登入：前端新增 callback 逾時與錯誤備援；後端新增 redirect_uri 尾斜線重試                                                                                                                                                         |
+| 3.16.3  | 2026-03-21 | 版本更新資訊偵測到新版本時新增「立即更新」按鈕；一鍵執行 git pull + npm install，免登入伺服器手動更新                                                                                                                                                            |
+| 3.16.4  | 2026-03-21 | 修復 Google SSO 點一次卻彈出兩個登入視窗：加入登入流程鎖並移除逾時自動再開 popup                                                                                                                                                                                 |
+| 3.16.5  | 2026-03-21 | 一鍵更新新增 Docker / 無 .git 模式：改為下載 GitHub 最新 zip 套用更新，修復容器內無法更新問題                                                                                                                                                                    |
+| 3.16.6  | 2026-03-21 | 修復 Google SSO 雙彈窗競態：GIS error_callback 不再自動開第二視窗，改為單一路徑並提示重試                                                                                                                                                                        |
+| 3.16.7  | 2026-03-21 | Google SSO 強制只走 GIS Code Client，移除 OAuth URL 備援流程，杜絕雙視窗登入                                                                                                                                                                                     |
+| 3.16.8  | 2026-03-21 | 修正 Google SSO 錯誤文案誤判：GIS error_callback 依錯誤類型顯示訊息，避免誤顯示「視窗已關閉或被阻擋」                                                                                                                                                            |
+| 3.16.9  | 2026-03-21 | 修正 Google SSO 點擊後立即誤報中斷：popup_closed 加入時間判斷，短時間事件改為提示完成授權，不直接判定失敗                                                                                                                                                        |
+| 3.16.10 | 2026-03-21 | 修正 Google 授權完成後未自動登入：新增授權碼 watchdog 與 URL code 回呼自動處理，提升跨瀏覽器穩定性                                                                                                                                                               |
+| 3.16.11 | 2026-03-21 | Google SSO 改用 GIS redirect 授權流程，解決 popup callback 在特定瀏覽器不觸發導致未自動登入問題                                                                                                                                                                  |
+| 3.16.12 | 2026-03-21 | 移除設定頁「系統訊息」功能：刪除子分頁與面板，並清除訊息收集/更新/清除相關前端邏輯                                                                                                                                                                               |
+| 3.17    | 2026-03-21 | 股票紀錄新增「交易設定」：可自訂零股/整股最低手續費、手續費折扣、賣出稅率，並套用於交易計算與持股預估                                                                                                                                                            |
+| 3.18    | 2026-03-21 | 儀表板新增「資產配置圓餅圖（含股票市值）」：整合帳戶餘額與股票市值，顯示資產配置比例                                                                                                                                                                             |
 
 ### 8.3 未來擴充方向
 
@@ -1024,8 +1025,6 @@
 - 股票歷史股價圖表
 - 股利再投資追蹤
 - 現股當沖證交稅減半計算
-- 零股手續費最低 1 元計算
-- 資產配置圓餅圖（含股票市值）
 
 ---
 

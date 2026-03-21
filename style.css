@@ -29,6 +29,32 @@
   --text-muted: #94a3b8;
 }
 
+body.dark-mode {
+  --bg: #0b1220;
+  --surface: #111827;
+  --text: #e5e7eb;
+  --text-secondary: #9ca3af;
+  --text-muted: #6b7280;
+  --border: #1f2937;
+  --income-bg: #052e2b;
+  --expense-bg: #3b1212;
+  --net-bg: #10243e;
+  --today-bg: #3a2a0a;
+  --success-bg: #052e2b;
+  --danger-bg: #3b1212;
+  --shadow: 0 1px 3px rgba(0,0,0,.45), 0 1px 2px rgba(0,0,0,.35);
+  --shadow-md: 0 4px 6px -1px rgba(0,0,0,.45), 0 2px 4px -2px rgba(0,0,0,.35);
+  --shadow-lg: 0 4px 12px rgba(0,0,0,.5);
+}
+
+body.dark-mode .sidebar {
+  background: #020617;
+}
+
+body.dark-mode .nav-item:hover {
+  background: rgba(255,255,255,.12);
+}
+
 /* ===== Reset ===== */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 body {
@@ -488,6 +514,55 @@ input, select, button, textarea { font-family: inherit; font-size: inherit; }
 .account-card-name { font-weight: 600; font-size: 15px; }
 .account-card-balance { font-size: 20px; font-weight: 700; margin-top: 4px; }
 .account-card-actions { display: flex; gap: 4px; }
+
+.theme-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.theme-switch {
+  position: relative;
+  display: inline-block;
+  width: 52px;
+  height: 30px;
+}
+
+.theme-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.theme-slider {
+  position: absolute;
+  inset: 0;
+  cursor: pointer;
+  background: var(--border);
+  border-radius: 999px;
+  transition: .2s;
+}
+
+.theme-slider::before {
+  content: '';
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  left: 4px;
+  top: 4px;
+  background: #fff;
+  border-radius: 50%;
+  transition: .2s;
+}
+
+.theme-switch input:checked + .theme-slider {
+  background: var(--primary);
+}
+
+.theme-switch input:checked + .theme-slider::before {
+  transform: translateX(22px);
+}
 
 /* ===== 設定面板 ===== */
 .settings-panel { display: none; }

@@ -1,6 +1,16 @@
 {
-  "currentVersion": "3.14.5",
+  "currentVersion": "3.14.6",
   "releases": [
+    {
+      "version": "3.14.6",
+      "date": "2026-03-21",
+      "title": "顯示上次檢查時間",
+      "type": "feature",
+      "changes": [
+        { "tag": "new", "text": "版本更新彈窗在手動重新檢查按鈕旁新增「上次檢查時間」顯示" },
+        { "tag": "improved", "text": "每次成功檢查更新後即時更新時間戳，方便確認最新檢查狀態" }
+      ]
+    },
     {
       "version": "3.14.5",
       "date": "2026-03-21",

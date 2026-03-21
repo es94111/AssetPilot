@@ -11,16 +11,48 @@ const App = (() => {
   let authToken = localStorage.getItem('authToken') || null;
   let currentUser = null;
   let googleUseCodeFlow = false;
-  let themeMode = localStorage.getItem('themeMode') || 'light';
+  let themeMode = localStorage.getItem('themeMode') || 'system';
+  const prefersDarkMedia = typeof window.matchMedia === 'function'
+    ? window.matchMedia('(prefers-color-scheme: dark)')
+    : null;
+
+  function getSystemPrefersDark() {
+    // prefers-color-scheme 會優先反映瀏覽器主題偏好，無自訂時回退至作業系統偏好。
+    return !!prefersDarkMedia?.matches;
+  }
 
   function applyThemeMode(mode, persist = true) {
-    const resolved = mode === 'dark' ? 'dark' : 'light';
-    themeMode = resolved;
+    const nextMode = (mode === 'dark' || mode === 'light' || mode === 'system') ? mode : 'system';
+    const resolved = nextMode === 'system'
+      ? (getSystemPrefersDark() ? 'dark' : 'light')
+      : nextMode;
+
+    themeMode = nextMode;
     document.body.classList.toggle('dark-mode', resolved === 'dark');
+    document.body.classList.toggle('system-theme', nextMode === 'system');
     if (typeof Chart !== 'undefined') {
       Chart.defaults.color = resolved === 'dark' ? '#cbd5e1' : '#475569';
     }
-    if (persist) localStorage.setItem('themeMode', resolved);
+    if (persist) {
+      if (nextMode === 'system') localStorage.removeItem('themeMode');
+      else localStorage.setItem('themeMode', nextMode);
+    }
+  }
+
+  function handleSystemThemeChange() {
+    if (themeMode !== 'system') return;
+    applyThemeMode('system', false);
+    const toggle = el('darkModeToggle');
+    if (toggle) toggle.checked = document.body.classList.contains('dark-mode');
+  }
+
+  function bindThemePreference() {
+    if (!prefersDarkMedia) return;
+    if (typeof prefersDarkMedia.addEventListener === 'function') {
+      prefersDarkMedia.addEventListener('change', handleSystemThemeChange);
+    } else if (typeof prefersDarkMedia.addListener === 'function') {
+      prefersDarkMedia.addListener(handleSystemThemeChange);
+    }
   }
 
   // ─── API 呼叫（自動帶 Authorization header）───
@@ -239,6 +271,7 @@ const App = (() => {
   // ─── 初始化 ───
   async function init() {
     applyThemeMode(themeMode, false);
+    bindThemePreference();
     bindNav();
     bindForms();
     bindFilters();
@@ -2656,7 +2689,7 @@ const App = (() => {
       if (pwWrap) pwWrap.style.display = isGoogleOnly ? 'none' : '';
 
       const darkModeToggle = el('darkModeToggle');
-      if (darkModeToggle) darkModeToggle.checked = themeMode === 'dark';
+      if (darkModeToggle) darkModeToggle.checked = document.body.classList.contains('dark-mode');
 
       await renderExchangeRateSettings();
 

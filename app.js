@@ -268,12 +268,15 @@ const App = (() => {
     if (fb2) { fb2.style.display = ''; el('googleSignUpBtn').style.display = 'none'; }
   }
 
-  function getGooglePopupErrorMessage(errType) {
+  function getGooglePopupErrorMessage(errType, elapsedMs) {
     if (errType === 'popup_failed_to_open') {
       return 'Google 登入視窗無法開啟，請允許彈出視窗後再試一次';
     }
     if (errType === 'popup_closed' || errType === 'popup_closed_by_user') {
-      return 'Google 登入流程已中斷，請重新點擊 Google 登入';
+      if (elapsedMs < 1500) {
+        return 'Google 授權視窗已開啟，請在該視窗完成登入';
+      }
+      return 'Google 登入流程未完成，請重新點擊 Google 登入';
     }
     return 'Google 登入流程中斷，請再試一次';
   }
@@ -286,6 +289,7 @@ const App = (() => {
     setGoogleAuthInProgress(true);
     const redirectUri = location.origin + '/';
     let loginStarted = false;
+    const requestStartedAt = Date.now();
 
     const startCodeLogin = (code) => {
       if (!code || loginStarted) return;
@@ -318,11 +322,13 @@ const App = (() => {
           },
           error_callback: (err) => {
             const errType = err?.type || 'unknown_error';
+            const elapsedMs = Date.now() - requestStartedAt;
             console.warn('GIS Code Client 錯誤:', errType, err);
             setGoogleAuthInProgress(false);
-            const msg = getGooglePopupErrorMessage(errType);
+            const msg = getGooglePopupErrorMessage(errType, elapsedMs);
             el('loginError').textContent = msg;
-            toast('Google 登入中斷（' + errType + '）：' + msg, 'error');
+            const level = errType === 'popup_failed_to_open' ? 'error' : 'info';
+            toast('Google 登入狀態（' + errType + '）：' + msg, level);
           },
         });
         codeClient.requestCode();

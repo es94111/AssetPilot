@@ -1,6 +1,18 @@
 {
-  "currentVersion": "3.10",
+  "currentVersion": "3.10.1",
   "releases": [
+    {
+      "version": "3.10.1",
+      "date": "2026-03-21",
+      "title": "Google SSO 授權碼流程與使用者頭像",
+      "type": "improved",
+      "changes": [
+        { "tag": "improved", "text": "Google SSO 改用 Authorization Code Flow（搭配用戶端密碼），提升安全性" },
+        { "tag": "new", "text": "登入後側邊欄顯示 Google 使用者頭像" },
+        { "tag": "improved", "text": "同時支援 Authorization Code Flow 與 ID Token 兩種 Google 登入模式" },
+        { "tag": "improved", "text": "環境變數新增 GOOGLE_CLIENT_SECRET，設定後自動啟用授權碼流程" }
+      ]
+    },
     {
       "version": "3.10",
       "date": "2026-03-21",

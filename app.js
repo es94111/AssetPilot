@@ -10,6 +10,7 @@ const App = (() => {
   // ─── Auth 狀態 ───
   let authToken = localStorage.getItem('authToken') || null;
   let currentUser = null;
+  let googleUseCodeFlow = false;
 
   // ─── API 呼叫（自動帶 Authorization header）───
   function authHeaders() {
@@ -170,9 +171,22 @@ const App = (() => {
     showAuth();
   }
 
+  function updateUserAvatar() {
+    const avatarEl = el('userAvatar');
+    const iconEl = el('userAvatarIcon');
+    if (currentUser?.avatarUrl) {
+      if (avatarEl) { avatarEl.src = currentUser.avatarUrl; avatarEl.style.display = ''; }
+      if (iconEl) iconEl.style.display = 'none';
+    } else {
+      if (avatarEl) avatarEl.style.display = 'none';
+      if (iconEl) iconEl.style.display = '';
+    }
+  }
+
   async function enterApp() {
-    // 設定使用者名稱
+    // 設定使用者名稱與頭像
     el('userDisplayName').textContent = currentUser?.displayName || currentUser?.email || '';
+    updateUserAvatar();
     hideAuth();
     // 載入快取
     await API.post('/api/recurring/process', {}).catch(() => {});
@@ -219,8 +233,18 @@ const App = (() => {
       const config = await (await fetch('/api/config')).json();
       if (!config.googleClientId) return;
       googleClientId = config.googleClientId;
+      googleUseCodeFlow = !!config.googleCodeFlow;
 
-      // 等待 GSI 載入
+      if (googleUseCodeFlow) {
+        // ─── Authorization Code Flow（有 Client Secret）───
+        // 使用自訂按鈕，不依賴 GSI renderButton
+        showGoogleFallbackButtons();
+        el('googleSignInWrap').style.display = '';
+        el('googleSignUpWrap').style.display = '';
+        return;
+      }
+
+      // ─── Legacy ID Token Flow ───
       const waitGsi = () => new Promise((resolve) => {
         if (window.google?.accounts?.id) return resolve();
         const check = setInterval(() => {
@@ -238,12 +262,10 @@ const App = (() => {
         auto_select: false,
         error_callback: (err) => {
           console.warn('Google SSO popup 錯誤:', err);
-          // GSI popup 失敗，顯示備援按鈕
           showGoogleFallbackButtons();
         },
       });
 
-      // 嘗試渲染 GSI 標準按鈕
       try {
         google.accounts.id.renderButton(el('googleSignInBtn'), {
           type: 'standard', theme: 'outline', size: 'large',
@@ -260,13 +282,9 @@ const App = (() => {
       el('googleSignInWrap').style.display = '';
       el('googleSignUpWrap').style.display = '';
 
-      // 3 秒後檢查 GSI 按鈕是否實際渲染成功（有時 iframe 載入失敗不報錯）
       setTimeout(() => {
         const gsiIframe = el('googleSignInBtn')?.querySelector('iframe, div[role="button"]');
-        if (!gsiIframe) {
-          console.warn('GSI 按鈕未渲染，切換到備援按鈕');
-          showGoogleFallbackButtons();
-        }
+        if (!gsiIframe) showGoogleFallbackButtons();
       }, 3000);
     } catch (e) {
       console.warn('Google SSO 初始化失敗:', e.message);
@@ -280,46 +298,78 @@ const App = (() => {
     if (fb2) { fb2.style.display = ''; el('googleSignUpBtn').style.display = 'none'; }
   }
 
-  // 備援 Google 登入：使用 OAuth 2.0 implicit flow (token endpoint)
+  // Google 登入：根據後端 config 使用 code flow 或 implicit flow
   function googleFallbackLogin() {
     if (!googleClientId) { toast('Google SSO 未設定', 'error'); return; }
-    // 使用 Google OAuth 2.0 授權端點，要求回傳 id_token
     const redirectUri = location.origin + '/';
-    const nonce = Math.random().toString(36).slice(2) + Date.now().toString(36);
-    const authUrl = 'https://accounts.google.com/o/oauth2/v2/auth?' + new URLSearchParams({
+    const oauthParams = {
       client_id: googleClientId,
       redirect_uri: redirectUri,
-      response_type: 'id_token',
       scope: 'openid email profile',
-      nonce: nonce,
       prompt: 'select_account',
-    }).toString();
-    // 開啟 popup
+    };
+    if (googleUseCodeFlow) {
+      oauthParams.response_type = 'code';
+      oauthParams.access_type = 'offline';
+    } else {
+      oauthParams.response_type = 'id_token';
+      oauthParams.nonce = Math.random().toString(36).slice(2) + Date.now().toString(36);
+    }
+    const authUrl = 'https://accounts.google.com/o/oauth2/v2/auth?' + new URLSearchParams(oauthParams).toString();
     const w = 500, h = 600;
     const left = (screen.width - w) / 2, top = (screen.height - h) / 2;
     const popup = window.open(authUrl, 'googleLogin', `width=${w},height=${h},left=${left},top=${top}`);
     if (!popup) { toast('請允許彈出視窗', 'error'); return; }
-    // 監聽 popup 重導回來（URL 中帶 id_token）
     const pollTimer = setInterval(() => {
       try {
         if (popup.closed) { clearInterval(pollTimer); return; }
         const url = popup.location.href;
         if (url && url.startsWith(redirectUri)) {
           clearInterval(pollTimer);
-          const hash = popup.location.hash.slice(1);
-          popup.close();
-          const params = new URLSearchParams(hash);
-          const idToken = params.get('id_token');
-          if (idToken) {
-            handleGoogleCredential({ credential: idToken });
+          if (googleUseCodeFlow) {
+            const searchParams = new URL(popup.location.href).searchParams;
+            popup.close();
+            const code = searchParams.get('code');
+            if (code) {
+              handleGoogleCode(code, redirectUri);
+            } else {
+              toast('Google 登入失敗：' + (searchParams.get('error') || '未取得授權碼'), 'error');
+            }
           } else {
-            toast('Google 登入失敗：未取得 Token', 'error');
+            const hash = popup.location.hash.slice(1);
+            popup.close();
+            const hashParams = new URLSearchParams(hash);
+            const idToken = hashParams.get('id_token');
+            if (idToken) {
+              handleGoogleCredential({ credential: idToken });
+            } else {
+              toast('Google 登入失敗：未取得 Token', 'error');
+            }
           }
         }
-      } catch (e) {
-        // cross-origin，繼續等待
-      }
+      } catch (e) { /* cross-origin，繼續等待 */ }
     }, 200);
+  }
+
+  // Code Flow：將授權碼送到後端交換 token
+  async function handleGoogleCode(code, redirectUri) {
+    el('loginError').textContent = '';
+    try {
+      const r = await fetch('/api/auth/google', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, redirect_uri: redirectUri }),
+      });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error || 'Google 登入失敗');
+      authToken = data.token;
+      currentUser = data.user;
+      localStorage.setItem('authToken', authToken);
+      await enterApp();
+    } catch (err) {
+      el('loginError').textContent = err.message;
+      toast('Google 登入失敗：' + err.message, 'error');
+    }
   }
 
   async function handleGoogleCredential(response) {

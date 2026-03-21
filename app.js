@@ -11,6 +11,17 @@ const App = (() => {
   let authToken = localStorage.getItem('authToken') || null;
   let currentUser = null;
   let googleUseCodeFlow = false;
+  let themeMode = localStorage.getItem('themeMode') || 'light';
+
+  function applyThemeMode(mode, persist = true) {
+    const resolved = mode === 'dark' ? 'dark' : 'light';
+    themeMode = resolved;
+    document.body.classList.toggle('dark-mode', resolved === 'dark');
+    if (typeof Chart !== 'undefined') {
+      Chart.defaults.color = resolved === 'dark' ? '#cbd5e1' : '#475569';
+    }
+    if (persist) localStorage.setItem('themeMode', resolved);
+  }
 
   // ─── API 呼叫（自動帶 Authorization header）───
   function authHeaders() {
@@ -201,6 +212,7 @@ const App = (() => {
 
   // ─── 初始化 ───
   async function init() {
+    applyThemeMode(themeMode, false);
     bindNav();
     bindForms();
     bindFilters();
@@ -2554,7 +2566,16 @@ const App = (() => {
       const pwWrap = el('deleteAccountPasswordWrap');
       if (pwWrap) pwWrap.style.display = isGoogleOnly ? 'none' : '';
 
+      const darkModeToggle = el('darkModeToggle');
+      if (darkModeToggle) darkModeToggle.checked = themeMode === 'dark';
+
       if (!accountSettingsBound) {
+        el('darkModeToggle')?.addEventListener('change', (e) => {
+          const isDark = !!e.target.checked;
+          applyThemeMode(isDark ? 'dark' : 'light');
+          toast(isDark ? '已切換為深色模式' : '已切換為淺色模式', 'success');
+        });
+
         el('unlinkGoogleBtn').addEventListener('click', async () => {
           if (!confirm('確定要解除 Google 帳號綁定嗎？解除後將無法使用 Google 快速登入。')) return;
           try {

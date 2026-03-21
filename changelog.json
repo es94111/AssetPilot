@@ -1,6 +1,17 @@
 {
-  "currentVersion": "3.18.1",
+  "currentVersion": "3.19",
   "releases": [
+    {
+      "version": "3.19",
+      "date": "2026-03-21",
+      "title": "新增深色模式",
+      "type": "feature",
+      "changes": [
+        { "tag": "new", "text": "設定 > 帳號設定 新增深色模式（Dark Mode）切換開關" },
+        { "tag": "new", "text": "全站主題色票支援深色模式，卡片、背景、文字與邊框自動套用" },
+        { "tag": "improved", "text": "主題偏好會儲存在瀏覽器，下次開啟時自動套用上次選擇" }
+      ]
+    },
     {
       "version": "3.18.1",
       "date": "2026-03-21",

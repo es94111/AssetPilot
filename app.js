@@ -2697,6 +2697,24 @@ const App = (() => {
     tbody.appendChild(row);
   }
 
+  function updateFxAutoStatus(settings) {
+    const statusEl = el('fxAutoStatus');
+    const toggle = el('fxAutoUpdateToggle');
+    if (!statusEl || !toggle) return;
+    const autoUpdate = !!settings?.autoUpdate;
+    const lastSyncedAt = Number(settings?.lastSyncedAt) || 0;
+    toggle.checked = autoUpdate;
+    if (!autoUpdate) {
+      statusEl.textContent = '目前為手動更新模式。';
+      return;
+    }
+    if (lastSyncedAt > 0) {
+      statusEl.textContent = `已啟用自動更新；上次更新：${new Date(lastSyncedAt).toLocaleString('zh-TW', { hour12: false })}`;
+    } else {
+      statusEl.textContent = '已啟用自動更新；尚未同步即時匯率。';
+    }
+  }
+
   async function renderExchangeRateSettings() {
     try {
       const res = await API.get('/api/exchange-rates');
@@ -2718,6 +2736,8 @@ const App = (() => {
         .filter(([c]) => c !== 'TWD')
         .sort((a, b) => a[0].localeCompare(b[0]))
         .forEach(([currency, rate]) => appendFxRateRow(currency, rate));
+
+      updateFxAutoStatus(res.settings || {});
     } catch (e) {
       console.error('載入匯率設定失敗:', e);
     }
@@ -2812,6 +2832,33 @@ const App = (() => {
 
       if (!exchangeRatesBound) {
         el('addFxRateBtn')?.addEventListener('click', () => appendFxRateRow('USD', getRateToTwd('USD')));
+        el('refreshGlobalFxBtn')?.addEventListener('click', async () => {
+          try {
+            const rows = Array.from(document.querySelectorAll('#fxRateTableBody tr'));
+            const currencies = rows
+              .map(row => normalizeCurrencyCode(row.querySelector('.fx-currency')?.value || 'TWD'))
+              .filter((v, i, arr) => v && arr.indexOf(v) === i);
+            await API.post('/api/exchange-rates/refresh', { currencies });
+            await refreshCache();
+            await renderExchangeRateSettings();
+            toast('已更新全球即時匯率', 'success');
+          } catch (e) {
+            toast(e.message || '更新即時匯率失敗', 'error');
+          }
+        });
+
+        el('fxAutoUpdateToggle')?.addEventListener('change', async (ev) => {
+          const next = !!ev.target?.checked;
+          try {
+            const result = await API.put('/api/exchange-rates/settings', { autoUpdate: next });
+            updateFxAutoStatus(result.settings || { autoUpdate: next });
+            toast(next ? '已啟用匯率自動更新' : '已關閉匯率自動更新', 'success');
+          } catch (e) {
+            if (el('fxAutoUpdateToggle')) el('fxAutoUpdateToggle').checked = !next;
+            toast(e.message || '更新匯率自動設定失敗', 'error');
+          }
+        });
+
         el('fxRateTableBody')?.addEventListener('click', (e) => {
           const btn = e.target.closest('.fx-delete-btn');
           if (!btn) return;

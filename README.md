@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-3.28-blue" alt="version">
+  <img src="https://img.shields.io/badge/version-3.29-blue" alt="version">
   <img src="https://img.shields.io/badge/node-%3E%3D18-green" alt="node">
   <img src="https://img.shields.io/badge/license-MIT-orange" alt="license">
   <img src="https://img.shields.io/badge/docker-ready-2496ED" alt="docker">
@@ -28,6 +28,7 @@
 - **股票紀錄** — 持股總覽、買賣交易、股利紀錄、FIFO 實現損益計算
 - **TWSE 整合** — 即時/收盤股價查詢、除權息自動同步
 - **CSV 匯出/匯入** — 交易記錄、分類、股票交易、股利紀錄
+- **全球即時匯率** — 串接 rter.info 匯率 API，支援手動更新與自動更新開關
 - **自動備份與還原** — 伺服器定期自動備份，支援手動備份與一鍵還原
 - **備份檔下載/上傳** — 可下載備份到本機，也可上傳備份檔回系統還原
 - **主題切換容錯** — 深色/淺色切換先本機生效，後端同步異常時不影響當下使用
@@ -244,6 +245,14 @@ docker run -d \
   - `儲存備份設定`：更新自動備份週期與保留份數（即時套用）
 
 > 還原會覆蓋目前資料，建議先手動備份一次再執行還原。
+
+### 全球即時匯率（rter.info）
+
+- 匯率設定可連接全球即時匯率 API：`https://tw.rter.info/capi.php`
+- 在 `設定 > 帳號設定 > 匯率設定` 可使用：
+  - `立即取得即時匯率`：手動同步最新匯率
+  - `自動更新匯率`：由使用者自行決定是否開啟
+- 啟用自動更新後，系統會在進入匯率設定時依節流策略自動同步並顯示上次更新時間。
 
 ### 自行建置映像檔
 

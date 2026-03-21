@@ -1,6 +1,17 @@
 {
-  "currentVersion": "3.28",
+  "currentVersion": "3.29",
   "releases": [
+    {
+      "version": "3.29",
+      "date": "2026-03-21",
+      "title": "全球即時匯率自動更新",
+      "type": "feature",
+      "changes": [
+        { "tag": "new", "text": "匯率設定整合全球即時匯率 API（rter.info），可一鍵更新最新匯率" },
+        { "tag": "new", "text": "新增「自動更新匯率」開關，使用者可自行選擇是否啟用" },
+        { "tag": "improved", "text": "自動更新啟用時會依節流策略自動同步，並顯示上次同步時間" }
+      ]
+    },
     {
       "version": "3.28",
       "date": "2026-03-21",

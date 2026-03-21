@@ -42,8 +42,14 @@ const App = (() => {
   function handleSystemThemeChange() {
     if (themeMode !== 'system') return;
     applyThemeMode('system', false);
-    const toggle = el('darkModeToggle');
-    if (toggle) toggle.checked = document.body.classList.contains('dark-mode');
+    updateThemeModeControls();
+  }
+
+  function updateThemeModeControls() {
+    const controls = document.querySelectorAll('input[name="themeMode"]');
+    controls.forEach(input => {
+      input.checked = input.value === themeMode;
+    });
   }
 
   function bindThemePreference() {
@@ -2688,16 +2694,21 @@ const App = (() => {
       const pwWrap = el('deleteAccountPasswordWrap');
       if (pwWrap) pwWrap.style.display = isGoogleOnly ? 'none' : '';
 
-      const darkModeToggle = el('darkModeToggle');
-      if (darkModeToggle) darkModeToggle.checked = document.body.classList.contains('dark-mode');
+      updateThemeModeControls();
 
       await renderExchangeRateSettings();
 
       if (!accountSettingsBound) {
-        el('darkModeToggle')?.addEventListener('change', (e) => {
-          const isDark = !!e.target.checked;
-          applyThemeMode(isDark ? 'dark' : 'light');
-          toast(isDark ? '已切換為深色模式' : '已切換為淺色模式', 'success');
+        document.querySelectorAll('input[name="themeMode"]').forEach(input => {
+          input.addEventListener('change', (e) => {
+            const nextMode = e.target?.value;
+            if (!nextMode) return;
+            applyThemeMode(nextMode);
+            updateThemeModeControls();
+            if (nextMode === 'system') toast('已切換為跟隨系統主題', 'success');
+            else if (nextMode === 'dark') toast('已切換為深色模式', 'success');
+            else toast('已切換為淺色模式', 'success');
+          });
         });
 
         el('unlinkGoogleBtn').addEventListener('click', async () => {

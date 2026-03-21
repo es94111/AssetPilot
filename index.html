@@ -748,13 +748,23 @@
           <h3><i class="fas fa-moon" style="margin-right:8px;color:var(--primary)"></i>外觀模式</h3>
           <div class="theme-toggle-row">
             <div>
-              <div style="font-weight:600">深色模式（Dark Mode）</div>
-              <div class="import-hint" style="margin-top:4px">切換後立即生效，並記住你的偏好。</div>
+              <div style="font-weight:600">主題模式</div>
+              <div class="import-hint" style="margin-top:4px">可選擇淺色、深色，或跟隨瀏覽器/系統主題偏好。</div>
             </div>
-            <label class="theme-switch" title="切換深色模式">
-              <input type="checkbox" id="darkModeToggle">
-              <span class="theme-slider"></span>
-            </label>
+            <div class="theme-mode-group" role="radiogroup" aria-label="主題模式">
+              <label class="theme-mode-option" title="淺色模式">
+                <input type="radio" name="themeMode" value="light">
+                <span>淺色</span>
+              </label>
+              <label class="theme-mode-option" title="深色模式">
+                <input type="radio" name="themeMode" value="dark">
+                <span>深色</span>
+              </label>
+              <label class="theme-mode-option" title="跟隨系統">
+                <input type="radio" name="themeMode" value="system">
+                <span>跟隨系統</span>
+              </label>
+            </div>
           </div>
         </div>
         <div class="card">

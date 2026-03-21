@@ -302,6 +302,35 @@ const App = (() => {
   function googleFallbackLogin() {
     if (!googleClientId) { toast('Google SSO 未設定', 'error'); return; }
     const redirectUri = location.origin + '/';
+
+    // Code Flow 優先使用 GIS 官方 popup client，避免授權後回到網站登入頁。
+    if (googleUseCodeFlow && window.google?.accounts?.oauth2) {
+      try {
+        const codeClient = google.accounts.oauth2.initCodeClient({
+          client_id: googleClientId,
+          scope: 'openid email profile',
+          ux_mode: 'popup',
+          redirect_uri: redirectUri,
+          select_account: true,
+          callback: (resp) => {
+            if (resp?.error) {
+              toast('Google 登入失敗：' + (resp.error_description || resp.error), 'error');
+              return;
+            }
+            if (resp?.code) {
+              handleGoogleCode(resp.code, redirectUri);
+            } else {
+              toast('Google 登入失敗：未取得授權碼', 'error');
+            }
+          },
+        });
+        codeClient.requestCode();
+        return;
+      } catch (e) {
+        console.warn('GIS Code Client 啟動失敗，改用 OAuth URL 備援:', e);
+      }
+    }
+
     const oauthParams = {
       client_id: googleClientId,
       redirect_uri: redirectUri,

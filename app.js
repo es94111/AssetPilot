@@ -3247,7 +3247,7 @@ const App = (() => {
   // 載入版本號到側邊欄
   async function loadVersionLabel() {
     try {
-      const data = await (await fetch('/api/changelog')).json();
+      const data = await (await fetch('/api/changelog?refresh=1', { cache: 'no-store' })).json();
       if (data.currentVersion) {
         el('appVersionLabel').textContent = data.currentVersion;
       }
@@ -3267,7 +3267,7 @@ const App = (() => {
     const content = el('changelogContent');
     content.innerHTML = '<div class="empty-hint">載入中...</div>';
     try {
-      const data = await (await fetch('/api/changelog')).json();
+      const data = await (await fetch('/api/changelog?refresh=1', { cache: 'no-store' })).json();
       if (!data.releases || data.releases.length === 0) {
         content.innerHTML = '<div class="empty-hint">暫無版本資訊</div>';
         return;

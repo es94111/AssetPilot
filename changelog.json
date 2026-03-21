@@ -1,6 +1,17 @@
 {
-  "currentVersion": "3.14.3",
+  "currentVersion": "3.14.4",
   "releases": [
+    {
+      "version": "3.14.4",
+      "date": "2026-03-21",
+      "title": "版本更新即時同步修復",
+      "type": "fixed",
+      "changes": [
+        { "tag": "fixed", "text": "修復 GitHub 有新版本時，網頁版本更新資訊未即時顯示最新內容的問題" },
+        { "tag": "improved", "text": "版本更新 API 支援 refresh=1 強制刷新，前端改用 no-store + 強制刷新避免舊快取" },
+        { "tag": "improved", "text": "遠端 changelog 取得新增 GitHub API 備援來源，降低 raw 網址在特定網路環境失敗風險" }
+      ]
+    },
     {
       "version": "3.14.3",
       "date": "2026-03-21",

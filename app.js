@@ -627,6 +627,12 @@ const App = (() => {
       return;
     }
 
+    const totalValue = values.reduce((sum, v) => sum + v, 0);
+    const formatLegendText = (label, value) => {
+      const pct = totalValue > 0 ? ((value / totalValue) * 100).toFixed(1) : '0.0';
+      return `${label} ${fmt(value)} (${pct}%)`;
+    };
+
     charts.dashAssetPie = new Chart(ctx, {
       type: 'doughnut',
       data: {
@@ -636,7 +642,37 @@ const App = (() => {
       options: {
         responsive: true,
         plugins: {
-          legend: { position: 'bottom', labels: { boxWidth: 12, padding: 10 } },
+          legend: {
+            position: 'bottom',
+            labels: {
+              boxWidth: 12,
+              padding: 10,
+              generateLabels(chart) {
+                const ds = chart.data.datasets[0] || { data: [], backgroundColor: [] };
+                return (chart.data.labels || []).map((label, i) => {
+                  const value = Number(ds.data[i]) || 0;
+                  const bg = Array.isArray(ds.backgroundColor) ? ds.backgroundColor[i] : ds.backgroundColor;
+                  return {
+                    text: formatLegendText(String(label || ''), value),
+                    fillStyle: bg,
+                    strokeStyle: bg,
+                    lineWidth: 0,
+                    hidden: !chart.getDataVisibility(i),
+                    index: i,
+                  };
+                });
+              },
+            },
+          },
+          tooltip: {
+            callbacks: {
+              label(context) {
+                const label = context.label || '';
+                const value = Number(context.raw) || 0;
+                return formatLegendText(label, value);
+              },
+            },
+          },
         },
       },
     });

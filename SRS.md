@@ -1,6 +1,6 @@
 # 資產管理 軟體需求規格書 (SRS)
 
-**版本：** 3.34
+**版本：** 3.34.1
 **日期：** 2026-03-21
 **狀態：** 已實作
 
@@ -121,11 +121,12 @@
 #### FR-003 Google SSO 登入（選配）
 
 - **描述：** 使用者可使用 Google 帳號快速登入或註冊
-- **前置條件：** 伺服器已設定 `GOOGLE_CLIENT_ID` 環境變數
+- **前置條件：** 伺服器已設定 `GOOGLE_CLIENT_ID` 與 `GOOGLE_CLIENT_SECRET` 環境變數
 - **處理規則：**
   - 前端透過 `/api/config` 取得 Google Client ID，動態顯示 Google 登入按鈕
-  - 使用者點擊 Google 按鈕，透過 Google Identity Services 取得 ID Token
-  - 後端透過 Google `oauth2.googleapis.com/tokeninfo` 驗證 Token 並檢查 audience
+  - 使用者點擊 Google 按鈕，透過 Google Identity Services 啟動 OAuth Authorization Code Flow
+  - 前端先向後端取得一次性 state，隨授權請求送出並在回呼時比對
+  - 後端僅接受具有效 state 的授權碼，並向 Google token endpoint 交換 token 後取得使用者資訊
   - 若該 Email 已存在帳號，直接登入；若不存在，自動建立帳號（含預設分類與帳戶）
   - Google SSO 建立的帳號密碼欄位設為隨機 hash（不可用密碼登入，僅能用 Google）
 - **輸出：** 登入成功導向主頁面，與一般登入相同
@@ -1120,6 +1121,7 @@
 | 3.32    | 2026-03-21 | 新增管理員模式：第一個使用者自動成為管理員；管理員可設定公開註冊開關與 Email 白名單，並可建立/刪除使用者；一般註冊與 Google 首次註冊統一套用註冊策略，並加入最後管理員保護機制                                                                                  |
 | 3.33    | 2026-03-21 | 調整前端路由：`/` 改為網站介紹首頁、登入頁改為 `/login`、儀表板改為 `/dashboard`；新增公開首頁內容並維持整體視覺風格一致                                                                                                                                                |
 | 3.34    | 2026-03-21 | 安全性修補：`/api/system/update-app` 改為僅管理員可執行；移除專案根目錄整包靜態公開改為白名單；啟用 CSP 限制腳本/連線來源；前端更新按鈕僅管理員可見                                                                                                                  |
+| 3.34.1  | 2026-03-21 | 安全性加固：Google SSO 新增 OAuth state 一次性驗證；帳戶 icon 新增前後端白名單驗證與舊資料清理；CSP 收斂為禁止 inline script（保留 script-src-attr 以相容既有事件屬性）                                                                                           |
 
 ### 8.3 未來擴充方向
 

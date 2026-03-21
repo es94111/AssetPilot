@@ -156,7 +156,9 @@ app.use(helmet({
       imgSrc: ["'self'", 'data:', 'https:'],
       styleSrc: ["'self'", "'unsafe-inline'", 'https://cdnjs.cloudflare.com'],
       fontSrc: ["'self'", 'https://cdnjs.cloudflare.com', 'data:'],
-      scriptSrc: ["'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net', 'https://cdnjs.cloudflare.com', 'https://accounts.google.com'],
+      // 收斂 CSP：移除 inline <script>，僅保留既有 inline 事件屬性（逐步淘汰）
+      scriptSrc: ["'self'", 'https://cdn.jsdelivr.net', 'https://cdnjs.cloudflare.com', 'https://accounts.google.com'],
+      scriptSrcAttr: ["'unsafe-inline'"],
       connectSrc: [
         "'self'",
         'https://openapi.twse.com.tw',
@@ -186,6 +188,7 @@ const authLimiter = rateLimit({
 });
 app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/register', authLimiter);
+app.use('/api/auth/google/state', authLimiter);
 app.use('/api/auth/google', authLimiter);
 
 app.use(express.json({ limit: '50mb' }));
@@ -200,6 +203,45 @@ let db;
 
 // ─── 登入失敗追蹤 ───
 const loginAttempts = {};
+const googleOAuthStates = new Map();
+const GOOGLE_OAUTH_STATE_TTL_MS = 10 * 60 * 1000;
+
+function isValidGoogleOAuthState(state) {
+  return typeof state === 'string'
+    && state.length >= 20
+    && state.length <= 200
+    && /^[A-Za-z0-9._~-]+$/.test(state);
+}
+
+function pruneGoogleOAuthStates() {
+  const now = Date.now();
+  for (const [state, issuedAt] of googleOAuthStates.entries()) {
+    if ((now - issuedAt) > GOOGLE_OAUTH_STATE_TTL_MS) {
+      googleOAuthStates.delete(state);
+    }
+  }
+}
+
+function issueGoogleOAuthState() {
+  pruneGoogleOAuthStates();
+  const state = crypto.randomBytes(24).toString('base64url');
+  googleOAuthStates.set(state, Date.now());
+  return state;
+}
+
+function consumeGoogleOAuthState(state) {
+  if (!isValidGoogleOAuthState(state)) return false;
+  pruneGoogleOAuthStates();
+  const issuedAt = googleOAuthStates.get(state);
+  if (!issuedAt) return false;
+  googleOAuthStates.delete(state); // 一次性 token，防重放
+  return (Date.now() - issuedAt) <= GOOGLE_OAUTH_STATE_TTL_MS;
+}
+
+function normalizeAccountIcon(icon) {
+  const value = String(icon || '').trim().toLowerCase();
+  return /^fa-[a-z0-9-]{1,40}$/.test(value) ? value : 'fa-wallet';
+}
 
 function normalizeThemeMode(mode) {
   const v = String(mode || '').trim().toLowerCase();
@@ -472,6 +514,19 @@ async function initDB() {
       if (rows.length > 0) console.log(`[日期遷移] ${table}.${col}：修正 ${rows.length} 筆`);
     } catch (e) { /* 表不存在，忽略 */ }
   });
+
+  // 安全性資料清理：帳戶 icon 僅允許安全白名單格式
+  try {
+    const rows = queryAll("SELECT id, icon FROM accounts");
+    rows.forEach(r => {
+      const safeIcon = normalizeAccountIcon(r.icon);
+      if (safeIcon !== r.icon) {
+        db.run("UPDATE accounts SET icon = ? WHERE id = ?", [safeIcon, r.id]);
+      }
+    });
+  } catch (e) {
+    // ignore
+  }
 
   saveDB();
   console.log('資料庫初始化完成');
@@ -1059,6 +1114,11 @@ app.get('/api/config', (req, res) => {
   });
 });
 
+app.get('/api/auth/google/state', (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  res.json({ state: issueGoogleOAuthState() });
+});
+
 // 版本更新資訊（公開，不需認證）
 // 從 GitHub 取得最新 changelog 並與本地合併，讓舊版本也能看到新版更新資訊
 // 版本更新資訊來源固定為官方倉庫，避免被環境變數覆蓋。
@@ -1335,8 +1395,9 @@ app.get('/api/changelog', async (req, res) => {
 
 // Google SSO 登入（統一使用 Authorization Code Flow）
 app.post('/api/auth/google', async (req, res) => {
-  const { code, redirect_uri } = req.body;
+  const { code, redirect_uri, state } = req.body;
   if (!code) return res.status(400).json({ error: '缺少 Google 授權碼' });
+  if (!consumeGoogleOAuthState(state)) return res.status(401).json({ error: 'Google 登入狀態驗證失敗，請重新登入' });
   if (!GOOGLE_CLIENT_ID) return res.status(400).json({ error: 'Google SSO 未設定' });
   if (!GOOGLE_CLIENT_SECRET) return res.status(400).json({ error: 'Google SSO 需設定 GOOGLE_CLIENT_SECRET' });
 
@@ -1771,6 +1832,7 @@ app.get('/api/accounts', (req, res) => {
     const balance = calcBalance(a.id, a.initial_balance, req.userId, accountCurrency);
     return {
       ...a,
+      icon: normalizeAccountIcon(a.icon),
       initialBalance: a.initial_balance,
       currency: accountCurrency,
       balance,
@@ -1796,9 +1858,10 @@ function calcBalance(accId, initialBalance, userId, accountCurrency = 'TWD') {
 app.post('/api/accounts', (req, res) => {
   const { name, initialBalance, icon } = req.body;
   const currency = normalizeCurrency(req.body.currency);
+  const safeIcon = normalizeAccountIcon(icon);
   const id = uid();
   db.run("INSERT INTO accounts (id, user_id, name, initial_balance, icon, currency, created_at) VALUES (?,?,?,?,?,?,?)",
-    [id, req.userId, name, initialBalance || 0, icon || 'fa-wallet', currency, todayStr()]);
+    [id, req.userId, name, initialBalance || 0, safeIcon, currency, todayStr()]);
   saveDB();
   res.json({ id });
 });
@@ -1806,8 +1869,9 @@ app.post('/api/accounts', (req, res) => {
 app.put('/api/accounts/:id', (req, res) => {
   const { name, initialBalance, icon } = req.body;
   const currency = normalizeCurrency(req.body.currency);
+  const safeIcon = normalizeAccountIcon(icon);
   db.run("UPDATE accounts SET name = ?, initial_balance = ?, icon = ?, currency = ? WHERE id = ? AND user_id = ?",
-    [name, initialBalance || 0, icon || 'fa-wallet', currency, req.params.id, req.userId]);
+    [name, initialBalance || 0, safeIcon, currency, req.params.id, req.userId]);
   saveDB();
   res.json({ ok: true });
 });

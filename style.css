@@ -1026,6 +1026,96 @@ input, select, button, textarea { font-family: inherit; font-size: inherit; }
 }
 .stock-card-pl-pos { color: var(--success) !important; }
 .stock-card-pl-neg { color: var(--danger) !important; }
+/* ─── 股票卡片：計算公式說明 ─── */
+.stock-card-formula {
+  margin-top: 12px;
+  border-top: 1px solid var(--border);
+  padding-top: 8px;
+}
+.stock-card-formula summary {
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0;
+  user-select: none;
+  transition: color .2s;
+}
+.stock-card-formula summary:hover { color: var(--primary); }
+.stock-card-formula summary i { font-size: 11px; }
+.stock-card-formula summary::-webkit-details-marker,
+.stock-card-formula summary::marker { display: none; content: ''; }
+.stock-card-formula summary::after {
+  content: '\f078'; /* fa-chevron-down */
+  font-family: 'Font Awesome 6 Free';
+  font-weight: 900;
+  font-size: 9px;
+  margin-left: auto;
+  transition: transform .2s;
+}
+.stock-card-formula[open] summary::after {
+  transform: rotate(180deg);
+}
+.formula-content {
+  padding: 10px 0 4px;
+  animation: formulaSlide .2s ease;
+}
+@keyframes formulaSlide {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.formula-section {
+  margin-bottom: 10px;
+}
+.formula-section:last-child { margin-bottom: 0; }
+.formula-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--primary);
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  margin-bottom: 6px;
+  padding-bottom: 3px;
+  border-bottom: 1px dashed var(--border);
+}
+.formula-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 2px 0;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.formula-name {
+  color: var(--text-secondary);
+  white-space: nowrap;
+  min-width: 80px;
+  flex-shrink: 0;
+}
+.formula-eq {
+  color: var(--text-primary);
+  font-family: 'Courier New', monospace;
+  font-size: 11.5px;
+  word-break: break-all;
+}
+.formula-eq small {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-family: inherit;
+}
+.formula-detail {
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+  color: var(--text-muted);
+  padding: 1px 0 3px 88px;
+  word-break: break-all;
+}
+.formula-detail strong {
+  font-weight: 700;
+}
+
 .stock-card-actions {
   display: flex; gap: 4px; margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border);
   justify-content: flex-end;

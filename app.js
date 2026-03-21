@@ -263,10 +263,51 @@ const App = (() => {
     if (!googleClientId) { toast('Google SSO 未設定', 'error'); return; }
     if (!googleUseCodeFlow) { toast('Google SSO 需設定 Client Secret 才能使用', 'error'); return; }
     const redirectUri = location.origin + '/';
+    let loginStarted = false;
+
+    const startCodeLogin = (code) => {
+      if (!code || loginStarted) return;
+      loginStarted = true;
+      handleGoogleCode(code, redirectUri);
+    };
+
+    const openLegacyPopupFallback = () => {
+      const oauthParams = {
+        client_id: googleClientId,
+        redirect_uri: redirectUri,
+        scope: 'openid email profile',
+        prompt: 'select_account',
+        response_type: 'code',
+        access_type: 'offline',
+      };
+      const authUrl = 'https://accounts.google.com/o/oauth2/v2/auth?' + new URLSearchParams(oauthParams).toString();
+      const w = 500, h = 600;
+      const left = (screen.width - w) / 2, top = (screen.height - h) / 2;
+      const popup = window.open(authUrl, 'googleLogin', `width=${w},height=${h},left=${left},top=${top}`);
+      if (!popup) { toast('請允許彈出視窗', 'error'); return; }
+      const pollTimer = setInterval(() => {
+        try {
+          if (popup.closed) { clearInterval(pollTimer); return; }
+          const url = popup.location.href;
+          if (url && url.startsWith(redirectUri)) {
+            clearInterval(pollTimer);
+            const searchParams = new URL(popup.location.href).searchParams;
+            popup.close();
+            const code = searchParams.get('code');
+            if (code) {
+              startCodeLogin(code);
+            } else {
+              toast('Google 登入失敗：' + (searchParams.get('error') || '未取得授權碼'), 'error');
+            }
+          }
+        } catch (e) { /* cross-origin，繼續等待 */ }
+      }, 200);
+    };
 
     // Code Flow 優先使用 GIS 官方 popup client，避免授權後回到網站登入頁。
     if (googleUseCodeFlow && window.google?.accounts?.oauth2) {
       try {
+        let callbackDone = false;
         const codeClient = google.accounts.oauth2.initCodeClient({
           client_id: googleClientId,
           scope: 'openid email profile',
@@ -274,54 +315,40 @@ const App = (() => {
           redirect_uri: redirectUri,
           select_account: true,
           callback: (resp) => {
+            callbackDone = true;
             if (resp?.error) {
+              el('loginError').textContent = resp.error_description || resp.error;
               toast('Google 登入失敗：' + (resp.error_description || resp.error), 'error');
               return;
             }
             if (resp?.code) {
-              handleGoogleCode(resp.code, redirectUri);
+              startCodeLogin(resp.code);
             } else {
               toast('Google 登入失敗：未取得授權碼', 'error');
             }
           },
+          error_callback: (err) => {
+            callbackDone = true;
+            console.warn('GIS Code Client 錯誤，改用 OAuth URL 備援:', err);
+            openLegacyPopupFallback();
+          },
         });
         codeClient.requestCode();
+
+        // 某些瀏覽器/外掛環境可能不觸發 callback，逾時後改走備援 popup。
+        setTimeout(() => {
+          if (!callbackDone && !loginStarted) {
+            console.warn('GIS Code Client 未回應，改用 OAuth URL 備援');
+            openLegacyPopupFallback();
+          }
+        }, 8000);
         return;
       } catch (e) {
         console.warn('GIS Code Client 啟動失敗，改用 OAuth URL 備援:', e);
       }
     }
 
-    const oauthParams = {
-      client_id: googleClientId,
-      redirect_uri: redirectUri,
-      scope: 'openid email profile',
-      prompt: 'select_account',
-      response_type: 'code',
-      access_type: 'offline',
-    };
-    const authUrl = 'https://accounts.google.com/o/oauth2/v2/auth?' + new URLSearchParams(oauthParams).toString();
-    const w = 500, h = 600;
-    const left = (screen.width - w) / 2, top = (screen.height - h) / 2;
-    const popup = window.open(authUrl, 'googleLogin', `width=${w},height=${h},left=${left},top=${top}`);
-    if (!popup) { toast('請允許彈出視窗', 'error'); return; }
-    const pollTimer = setInterval(() => {
-      try {
-        if (popup.closed) { clearInterval(pollTimer); return; }
-        const url = popup.location.href;
-        if (url && url.startsWith(redirectUri)) {
-          clearInterval(pollTimer);
-          const searchParams = new URL(popup.location.href).searchParams;
-          popup.close();
-          const code = searchParams.get('code');
-          if (code) {
-            handleGoogleCode(code, redirectUri);
-          } else {
-            toast('Google 登入失敗：' + (searchParams.get('error') || '未取得授權碼'), 'error');
-          }
-        }
-      } catch (e) { /* cross-origin，繼續等待 */ }
-    }, 200);
+    openLegacyPopupFallback();
   }
 
   // Code Flow：將授權碼送到後端交換 token

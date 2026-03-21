@@ -710,21 +710,41 @@ app.post('/api/auth/google', async (req, res) => {
     let email, name, googleId, picture;
 
     // ─── Authorization Code Flow（使用 Client Secret 交換 token）───
-    const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({
-        code,
-        client_id: GOOGLE_CLIENT_ID,
-        client_secret: GOOGLE_CLIENT_SECRET,
-        redirect_uri: redirect_uri || '',
-        grant_type: 'authorization_code',
-      }),
-    });
-    const tokenData = await tokenRes.json();
-    if (!tokenRes.ok || !tokenData.id_token) {
-      console.error('Google token exchange 失敗:', tokenData);
-      return res.status(401).json({ error: 'Google 授權碼交換失敗：' + (tokenData.error_description || tokenData.error || '未知錯誤') });
+    const redirectCandidates = [];
+    const originalRedirect = String(redirect_uri || '').trim();
+    if (originalRedirect) {
+      redirectCandidates.push(originalRedirect);
+      if (originalRedirect.endsWith('/')) redirectCandidates.push(originalRedirect.replace(/\/+$/, ''));
+      else redirectCandidates.push(originalRedirect + '/');
+    } else {
+      redirectCandidates.push('');
+    }
+
+    let tokenRes = null;
+    let tokenData = null;
+    let lastTokenError = null;
+
+    for (const ru of [...new Set(redirectCandidates)]) {
+      tokenRes = await fetch('https://oauth2.googleapis.com/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          code,
+          client_id: GOOGLE_CLIENT_ID,
+          client_secret: GOOGLE_CLIENT_SECRET,
+          redirect_uri: ru,
+          grant_type: 'authorization_code',
+        }),
+      });
+      tokenData = await tokenRes.json();
+
+      if (tokenRes.ok && tokenData.id_token) break;
+      lastTokenError = tokenData;
+    }
+
+    if (!tokenRes?.ok || !tokenData?.id_token) {
+      console.error('Google token exchange 失敗:', lastTokenError || tokenData);
+      return res.status(401).json({ error: 'Google 授權碼交換失敗：' + ((lastTokenError || tokenData)?.error_description || (lastTokenError || tokenData)?.error || '未知錯誤') });
     }
 
     // 用 access_token 取得使用者資料（包含頭像）

@@ -1,6 +1,17 @@
 {
-  "currentVersion": "3.16.1",
+  "currentVersion": "3.16.2",
   "releases": [
+    {
+      "version": "3.16.2",
+      "date": "2026-03-21",
+      "title": "Google SSO 自動登入穩定性修復",
+      "type": "fixed",
+      "changes": [
+        { "tag": "fixed", "text": "修復 Google SSO 選完帳號後彈窗關閉但主頁未自動登入的問題" },
+        { "tag": "improved", "text": "GIS Code Client 新增 error_callback 與逾時備援，未回呼時自動切換 OAuth URL popup 流程" },
+        { "tag": "improved", "text": "後端授權碼交換新增 redirect_uri 尾斜線相容重試，降低設定差異導致登入失敗" }
+      ]
+    },
     {
       "version": "3.16.1",
       "date": "2026-03-21",

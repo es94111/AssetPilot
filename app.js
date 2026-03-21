@@ -3274,12 +3274,30 @@ const App = (() => {
   }
 
   // ─── 版本更新資訊 ───
+  function compareVersions(a, b) {
+    const pa = String(a).split('.').map(n => parseInt(n) || 0);
+    const pb = String(b).split('.').map(n => parseInt(n) || 0);
+    for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+      const diff = (pa[i] || 0) - (pb[i] || 0);
+      if (diff !== 0) return diff;
+    }
+    return 0;
+  }
+
   // 載入版本號到側邊欄
   async function loadVersionLabel() {
     try {
       const data = await (await fetch('/api/changelog')).json();
       if (data.currentVersion) {
         el('appVersionLabel').textContent = data.currentVersion;
+      }
+      // 檢查是否有新版本
+      if (data.latestVersion && compareVersions(data.latestVersion, data.currentVersion) > 0) {
+        const badge = el('updateBadge');
+        if (badge) {
+          badge.style.display = '';
+          badge.title = `有新版本 v${data.latestVersion} 可更新`;
+        }
       }
     } catch (e) { /* ignore */ }
   }
@@ -3300,17 +3318,34 @@ const App = (() => {
         'fixed': { text: '修正', cls: 'cl-tag-fixed' },
         'removed': { text: '移除', cls: 'cl-tag-removed' }
       };
+      const hasUpdate = data.latestVersion && compareVersions(data.latestVersion, data.currentVersion) > 0;
+      const updateBanner = hasUpdate ? `
+        <div class="cl-update-banner">
+          <i class="fas fa-arrow-circle-up"></i>
+          <div>
+            <strong>有新版本可更新！</strong>
+            <span>目前 v${escHtml(data.currentVersion)} → 最新 v${escHtml(data.latestVersion)}</span>
+          </div>
+        </div>
+      ` : '';
       content.innerHTML = `
-        <div class="cl-current">目前版本 <strong>v${escHtml(data.currentVersion)}</strong></div>
-        ${data.releases.map((r, i) => `
-          <div class="cl-release ${i === 0 ? 'cl-latest' : ''}">
+        ${updateBanner}
+        <div class="cl-current">目前安裝版本 <strong>v${escHtml(data.currentVersion)}</strong></div>
+        ${data.releases.map((r, i) => {
+          const isCurrent = r.version === data.currentVersion;
+          const isNewer = compareVersions(r.version, data.currentVersion) > 0;
+          const isLatest = i === 0;
+          return `
+          <div class="cl-release ${isLatest ? 'cl-latest' : ''} ${isNewer ? 'cl-newer' : ''}">
             <div class="cl-release-header">
               <div class="cl-version-badge">v${escHtml(r.version)}</div>
               <div class="cl-release-info">
                 <span class="cl-release-title">${escHtml(r.title)}</span>
                 <span class="cl-release-date">${escHtml(r.date)}</span>
               </div>
-              ${i === 0 ? '<span class="cl-latest-badge">最新</span>' : ''}
+              ${isLatest ? '<span class="cl-latest-badge">最新</span>' : ''}
+              ${isCurrent ? '<span class="cl-current-badge">已安裝</span>' : ''}
+              ${isNewer && !isLatest ? '<span class="cl-new-badge">新版本</span>' : ''}
             </div>
             <ul class="cl-changes">
               ${r.changes.map(c => {
@@ -3319,7 +3354,7 @@ const App = (() => {
               }).join('')}
             </ul>
           </div>
-        `).join('')}
+        `}).join('')}
       `;
     } catch (e) {
       content.innerHTML = '<div class="empty-hint">載入版本資訊失敗</div>';

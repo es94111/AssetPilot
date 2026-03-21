@@ -1,6 +1,6 @@
 # 資產管理 軟體需求規格書 (SRS)
 
-**版本：** 3.35.1
+**版本：** 3.35.2
 **日期：** 2026-03-21
 **狀態：** 已實作
 
@@ -116,6 +116,7 @@
   - 驗證帳號密碼是否正確
   - 登入成功後發放 JWT Token，有效期 7 天
   - 登入成功時記錄登入稽核（登入時間、IP 位址、登入方式、身份）
+  - 登入 API 回傳 `currentLogin`，確保前端可立即顯示本次登入紀錄
   - Token 儲存於 localStorage，重新開啟瀏覽器自動恢復登入
 - **輸出：** 登入成功導向主頁面（依 URL 路由）；登出後導向登入頁
 
@@ -929,7 +930,7 @@
 | ---- | ------------------ | ------------------------------------------- |
 | GET  | /api/config        | 取得前端設定（Google Client ID 等）         |
 | POST | /api/auth/register | 使用者註冊                                  |
-| POST | /api/auth/login    | 使用者登入                                  |
+| POST | /api/auth/login    | 使用者登入（回傳 `currentLogin`）           |
 | GET  | /api/auth/me       | 取得當前使用者資訊                          |
 | POST | /api/auth/google   | Google SSO 登入（驗證 ID Token 並簽發 JWT） |
 | GET  | /api/account/login-logs | 取得目前使用者登入稽核紀錄（最近 100 筆） |
@@ -1160,6 +1161,7 @@
 | 3.34.1  | 2026-03-21 | 安全性加固：Google SSO 新增 OAuth state 一次性驗證；帳戶 icon 新增前後端白名單驗證與舊資料清理；CSP 收斂為禁止 inline script（保留 script-src-attr 以相容既有事件屬性）                                                                                           |
 | 3.35    | 2026-03-21 | 新增登入稽核：紀錄密碼/Google 登入成功的時間、IP 與登入方式；帳號設定新增個人登入紀錄；管理員頁新增管理員登入紀錄與全站使用者登入紀錄檢視                                                                                                                           |
 | 3.35.1  | 2026-03-21 | 修復 Google SSO 轉跳卡住：callback 先清除 OAuth 參數避免無限重試；GIS state 改由 initCodeClient 設定，提升 state 帶回穩定性與登入成功率                                                                                                                            |
+| 3.35.2  | 2026-03-21 | 強化登入稽核即時性：登入成功回應新增 `currentLogin`，前端登入後立即補入本次登入紀錄，確保列表必含本次登入                                                                                                                                                |
 
 ### 8.3 未來擴充方向
 

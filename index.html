@@ -99,12 +99,6 @@
       <a href="#" class="nav-item" data-page="finance">
         <i class="fas fa-folder-tree"></i><span>收支管理</span>
       </a>
-      <div class="nav-submenu" data-parent="finance">
-        <a href="#" class="nav-sub-item" data-page="transactions"><i class="fas fa-receipt"></i><span>交易記錄</span></a>
-        <a href="#" class="nav-sub-item" data-page="reports"><i class="fas fa-chart-line"></i><span>統計報表</span></a>
-        <a href="#" class="nav-sub-item" data-page="budget"><i class="fas fa-wallet"></i><span>預算管理</span></a>
-        <a href="#" class="nav-sub-item" data-page="accounts"><i class="fas fa-building-columns"></i><span>帳戶管理</span></a>
-      </div>
       <a href="#" class="nav-item" data-page="stocks">
         <i class="fas fa-chart-line"></i><span>股票紀錄</span>
       </a>
@@ -191,6 +185,12 @@
     <!-- ===== 交易記錄 ===== -->
     <section class="page" id="page-transactions">
       <h2 class="page-title">交易記錄</h2>
+      <div class="finance-tabs">
+        <button class="tab active" data-finance-tab="transactions">交易記錄</button>
+        <button class="tab" data-finance-tab="reports">統計報表</button>
+        <button class="tab" data-finance-tab="budget">預算管理</button>
+        <button class="tab" data-finance-tab="accounts">帳戶管理</button>
+      </div>
       <div class="filter-bar card">
         <div class="filter-group">
           <label>日期範圍</label>
@@ -265,6 +265,12 @@
     <!-- ===== 統計報表 ===== -->
     <section class="page" id="page-reports">
       <h2 class="page-title">統計報表</h2>
+      <div class="finance-tabs">
+        <button class="tab" data-finance-tab="transactions">交易記錄</button>
+        <button class="tab active" data-finance-tab="reports">統計報表</button>
+        <button class="tab" data-finance-tab="budget">預算管理</button>
+        <button class="tab" data-finance-tab="accounts">帳戶管理</button>
+      </div>
       <div class="report-controls card">
         <div class="tab-group">
           <button class="tab active" data-report="category">分類統計</button>
@@ -307,6 +313,12 @@
     <!-- ===== 預算管理 ===== -->
     <section class="page" id="page-budget">
       <h2 class="page-title">預算管理</h2>
+      <div class="finance-tabs">
+        <button class="tab" data-finance-tab="transactions">交易記錄</button>
+        <button class="tab" data-finance-tab="reports">統計報表</button>
+        <button class="tab active" data-finance-tab="budget">預算管理</button>
+        <button class="tab" data-finance-tab="accounts">帳戶管理</button>
+      </div>
       <div class="budget-header card">
         <div class="budget-total">
           <h3>本月總預算</h3>
@@ -325,6 +337,12 @@
     <!-- ===== 帳戶管理 ===== -->
     <section class="page" id="page-accounts">
       <h2 class="page-title">帳戶管理</h2>
+      <div class="finance-tabs">
+        <button class="tab" data-finance-tab="transactions">交易記錄</button>
+        <button class="tab" data-finance-tab="reports">統計報表</button>
+        <button class="tab" data-finance-tab="budget">預算管理</button>
+        <button class="tab active" data-finance-tab="accounts">帳戶管理</button>
+      </div>
       <div class="summary-cards">
         <div class="card summary-card net">
           <div class="card-icon"><i class="fas fa-landmark"></i></div>

@@ -1,6 +1,18 @@
 {
-  "currentVersion": "3.32",
+  "currentVersion": "3.33",
   "releases": [
+    {
+      "version": "3.33",
+      "date": "2026-03-21",
+      "title": "公開首頁與登入路徑調整",
+      "type": "feature",
+      "changes": [
+        { "tag": "new", "text": "新增網站公開首頁（/），提供資產管理功能介紹與登入/註冊入口" },
+        { "tag": "improved", "text": "登入頁路徑調整為 /login，未登入使用者可直接透過網址進入登入流程" },
+        { "tag": "improved", "text": "儀表板路徑調整為 /dashboard，與公開首頁路徑明確分離" },
+        { "tag": "improved", "text": "未登入狀態支援 / 與 /login 的前端路由切換與返回行為" }
+      ]
+    },
     {
       "version": "3.32",
       "date": "2026-03-21",

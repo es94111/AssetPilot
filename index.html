@@ -749,7 +749,11 @@
         <div class="card">
           <div class="section-header" style="margin-bottom:8px">
             <h3><i class="fas fa-circle-info" style="margin-right:8px;color:var(--primary)"></i>系統訊息</h3>
-            <button class="btn btn-sm btn-ghost" id="clearSystemMessagesBtn"><i class="fas fa-trash"></i> 清除訊息</button>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end">
+              <span class="import-hint" id="systemLastRefreshTime" style="margin:0">上次更新：尚未更新</span>
+              <button class="btn btn-sm" id="refreshSystemMessagesBtn"><i class="fas fa-rotate-right"></i> 手動更新</button>
+              <button class="btn btn-sm btn-ghost" id="clearSystemMessagesBtn"><i class="fas fa-trash"></i> 清除訊息</button>
+            </div>
           </div>
           <p class="import-hint" id="systemMessageMeta">顯示網頁操作資訊與錯誤內容（最新在上方）</p>
           <div class="system-message-list" id="systemMessageList">

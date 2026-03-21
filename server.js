@@ -598,9 +598,11 @@ app.get('/api/config', (req, res) => {
 
 // 版本更新資訊（公開，不需認證）
 // 從 GitHub 取得最新 changelog 並與本地合併，讓舊版本也能看到新版更新資訊
-// GitHub 倉庫原始檔案 URL（用於取得最新 changelog）
-// 預設從環境變數讀取，可自訂；留空則停用遠端檢查
-const CHANGELOG_GITHUB_URL = process.env.CHANGELOG_URL || 'https://raw.githubusercontent.com/es94111/----/main/changelog.json';
+// 版本更新資訊來源固定為官方倉庫，避免被環境變數覆蓋。
+const CHANGELOG_SOURCE_URL = 'https://github.com/es94111/AssetPilot/blob/main/changelog.json';
+const CHANGELOG_GITHUB_URL = CHANGELOG_SOURCE_URL
+  .replace('https://github.com/', 'https://raw.githubusercontent.com/')
+  .replace('/blob/', '/');
 let remoteChangelogCache = null;
 let remoteChangelogCacheTime = 0;
 const REMOTE_CHANGELOG_TTL = 30 * 60 * 1000; // 30 分鐘快取

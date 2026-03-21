@@ -3234,6 +3234,8 @@ const App = (() => {
   }
 
   // ─── 版本更新資訊 ───
+  let lastChangelogCheckAt = null;
+
   function compareVersions(a, b) {
     const pa = String(a).split('.').map(n => parseInt(n) || 0);
     const pb = String(b).split('.').map(n => parseInt(n) || 0);
@@ -3244,10 +3246,26 @@ const App = (() => {
     return 0;
   }
 
+  async function fetchChangelog(forceRefresh = true) {
+    const url = forceRefresh ? '/api/changelog?refresh=1' : '/api/changelog';
+    const data = await (await fetch(url, { cache: 'no-store' })).json();
+    lastChangelogCheckAt = new Date();
+    return data;
+  }
+
+  function formatLastCheckTime(d) {
+    if (!d) return '尚未檢查';
+    try {
+      return d.toLocaleString('zh-TW', { hour12: false });
+    } catch {
+      return d.toISOString();
+    }
+  }
+
   // 載入版本號到側邊欄
   async function loadVersionLabel() {
     try {
-      const data = await (await fetch('/api/changelog?refresh=1', { cache: 'no-store' })).json();
+      const data = await fetchChangelog(true);
       if (data.currentVersion) {
         el('appVersionLabel').textContent = data.currentVersion;
       }
@@ -3266,59 +3284,86 @@ const App = (() => {
     openModal('modalChangelog');
     const content = el('changelogContent');
     content.innerHTML = '<div class="empty-hint">載入中...</div>';
-    try {
-      const data = await (await fetch('/api/changelog?refresh=1', { cache: 'no-store' })).json();
-      if (!data.releases || data.releases.length === 0) {
-        content.innerHTML = '<div class="empty-hint">暫無版本資訊</div>';
-        return;
+
+    const render = async (showRefreshing = false) => {
+      if (showRefreshing) {
+        content.innerHTML = '<div class="empty-hint">正在重新檢查更新...</div>';
       }
-      const tagLabels = {
-        'new': { text: '新增', cls: 'cl-tag-new' },
-        'improved': { text: '改進', cls: 'cl-tag-improved' },
-        'fixed': { text: '修正', cls: 'cl-tag-fixed' },
-        'removed': { text: '移除', cls: 'cl-tag-removed' }
-      };
-      const hasUpdate = data.latestVersion && compareVersions(data.latestVersion, data.currentVersion) > 0;
-      const updateBanner = hasUpdate ? `
-        <div class="cl-update-banner">
-          <i class="fas fa-arrow-circle-up"></i>
-          <div>
-            <strong>有新版本可更新！</strong>
-            <span>目前 v${escHtml(data.currentVersion)} → 最新 v${escHtml(data.latestVersion)}</span>
-          </div>
-        </div>
-      ` : '';
-      content.innerHTML = `
-        ${updateBanner}
-        <div class="cl-current">目前安裝版本 <strong>v${escHtml(data.currentVersion)}</strong></div>
-        ${data.releases.map((r, i) => {
-          const isCurrent = r.version === data.currentVersion;
-          const isNewer = compareVersions(r.version, data.currentVersion) > 0;
-          const isLatest = i === 0;
-          return `
-          <div class="cl-release ${isLatest ? 'cl-latest' : ''} ${isNewer ? 'cl-newer' : ''}">
-            <div class="cl-release-header">
-              <div class="cl-version-badge">v${escHtml(r.version)}</div>
-              <div class="cl-release-info">
-                <span class="cl-release-title">${escHtml(r.title)}</span>
-                <span class="cl-release-date">${escHtml(r.date)}</span>
-              </div>
-              ${isLatest ? '<span class="cl-latest-badge">最新</span>' : ''}
-              ${isCurrent ? '<span class="cl-current-badge">已安裝</span>' : ''}
-              ${isNewer && !isLatest ? '<span class="cl-new-badge">新版本</span>' : ''}
+      try {
+        const data = await fetchChangelog(true);
+        await loadVersionLabel();
+
+        if (!data.releases || data.releases.length === 0) {
+          content.innerHTML = '<div class="empty-hint">暫無版本資訊</div>';
+          return;
+        }
+        const tagLabels = {
+          'new': { text: '新增', cls: 'cl-tag-new' },
+          'improved': { text: '改進', cls: 'cl-tag-improved' },
+          'fixed': { text: '修正', cls: 'cl-tag-fixed' },
+          'removed': { text: '移除', cls: 'cl-tag-removed' }
+        };
+        const hasUpdate = data.latestVersion && compareVersions(data.latestVersion, data.currentVersion) > 0;
+        const updateBanner = hasUpdate ? `
+          <div class="cl-update-banner">
+            <i class="fas fa-arrow-circle-up"></i>
+            <div>
+              <strong>有新版本可更新！</strong>
+              <span>目前 v${escHtml(data.currentVersion)} → 最新 v${escHtml(data.latestVersion)}</span>
             </div>
-            <ul class="cl-changes">
-              ${r.changes.map(c => {
-                const tag = tagLabels[c.tag] || { text: c.tag, cls: 'cl-tag-new' };
-                return `<li><span class="cl-tag ${tag.cls}">${tag.text}</span>${escHtml(c.text)}</li>`;
-              }).join('')}
-            </ul>
           </div>
-        `}).join('')}
-      `;
-    } catch (e) {
-      content.innerHTML = '<div class="empty-hint">載入版本資訊失敗</div>';
-    }
+        ` : '';
+        content.innerHTML = `
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin:0 0 12px;flex-wrap:wrap;">
+            <div id="changelogLastCheck" style="font-size:12px;color:var(--text-muted);">
+              上次檢查時間：${escHtml(formatLastCheckTime(lastChangelogCheckAt))}
+            </div>
+            <button type="button" class="btn btn-ghost" id="refreshChangelogBtn">
+              <i class="fas fa-rotate-right"></i> 手動重新檢查更新
+            </button>
+          </div>
+          ${updateBanner}
+          <div class="cl-current">目前安裝版本 <strong>v${escHtml(data.currentVersion)}</strong></div>
+          ${data.releases.map((r, i) => {
+            const isCurrent = r.version === data.currentVersion;
+            const isNewer = compareVersions(r.version, data.currentVersion) > 0;
+            const isLatest = i === 0;
+            return `
+            <div class="cl-release ${isLatest ? 'cl-latest' : ''} ${isNewer ? 'cl-newer' : ''}">
+              <div class="cl-release-header">
+                <div class="cl-version-badge">v${escHtml(r.version)}</div>
+                <div class="cl-release-info">
+                  <span class="cl-release-title">${escHtml(r.title)}</span>
+                  <span class="cl-release-date">${escHtml(r.date)}</span>
+                </div>
+                ${isLatest ? '<span class="cl-latest-badge">最新</span>' : ''}
+                ${isCurrent ? '<span class="cl-current-badge">已安裝</span>' : ''}
+                ${isNewer && !isLatest ? '<span class="cl-new-badge">新版本</span>' : ''}
+              </div>
+              <ul class="cl-changes">
+                ${r.changes.map(c => {
+                  const tag = tagLabels[c.tag] || { text: c.tag, cls: 'cl-tag-new' };
+                  return `<li><span class="cl-tag ${tag.cls}">${tag.text}</span>${escHtml(c.text)}</li>`;
+                }).join('')}
+              </ul>
+            </div>
+          `}).join('')}
+        `;
+
+        const refreshBtn = el('refreshChangelogBtn');
+        if (refreshBtn) {
+          refreshBtn.addEventListener('click', async () => {
+            refreshBtn.disabled = true;
+            refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 重新檢查中...';
+            await render(true);
+          }, { once: true });
+        }
+      } catch (e) {
+        content.innerHTML = '<div class="empty-hint">載入版本資訊失敗</div>';
+      }
+    };
+
+    await render(false);
   }
 
   // ─── 公開 API ───

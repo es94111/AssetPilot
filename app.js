@@ -235,14 +235,6 @@ const App = (() => {
   // ─── Google SSO ───
   let googleClientId = null;
   let googleAuthInProgress = false;
-  let googleAuthWatchdogTimer = null;
-
-  function clearGoogleAuthWatchdog() {
-    if (googleAuthWatchdogTimer) {
-      clearTimeout(googleAuthWatchdogTimer);
-      googleAuthWatchdogTimer = null;
-    }
-  }
 
   function setGoogleAuthInProgress(inProgress) {
     googleAuthInProgress = inProgress;
@@ -283,7 +275,7 @@ const App = (() => {
 
   function getGooglePopupErrorMessage(errType, elapsedMs) {
     if (errType === 'popup_failed_to_open') {
-      return 'Google 登入視窗無法開啟，請允許彈出視窗後再試一次';
+      return 'Google 登入視窗無法開啟，將改用重新導向模式';
     }
     if (errType === 'popup_closed' || errType === 'popup_closed_by_user') {
       if (elapsedMs < 1500) {
@@ -311,81 +303,40 @@ const App = (() => {
     }
   }
 
-  // Google 登入：統一使用 Authorization Code Flow
+  // Google 登入：統一使用 Authorization Code Flow（GIS redirect）
   function googleFallbackLogin() {
     if (!googleClientId) { toast('Google SSO 未設定', 'error'); return; }
     if (!googleUseCodeFlow) { toast('Google SSO 需設定 Client Secret 才能使用', 'error'); return; }
     if (googleAuthInProgress) return;
     setGoogleAuthInProgress(true);
-    clearGoogleAuthWatchdog();
     const redirectUri = location.origin + '/';
-    let loginStarted = false;
-    const requestStartedAt = Date.now();
 
-    googleAuthWatchdogTimer = setTimeout(() => {
-      if (loginStarted) return;
-      setGoogleAuthInProgress(false);
-      el('loginError').textContent = '尚未收到 Google 授權結果，請再試一次';
-      toast('Google 登入逾時：未收到授權碼，請重新點擊 Google 登入', 'error');
-    }, 30000);
-
-    const startCodeLogin = (code) => {
-      if (!code || loginStarted) return;
-      loginStarted = true;
-      clearGoogleAuthWatchdog();
-      handleGoogleCode(code, redirectUri);
-    };
-
-    // 強制只使用 GIS Code Client。
+    // 強制只使用 GIS Code Client，並改用 redirect 模式避免 popup 回呼在部分瀏覽器失效。
     if (window.google?.accounts?.oauth2) {
       try {
         const codeClient = google.accounts.oauth2.initCodeClient({
           client_id: googleClientId,
           scope: 'openid email profile',
-          ux_mode: 'popup',
+          ux_mode: 'redirect',
           redirect_uri: redirectUri,
           select_account: true,
-          callback: (resp) => {
-            if (resp?.error) {
-              clearGoogleAuthWatchdog();
-              setGoogleAuthInProgress(false);
-              el('loginError').textContent = resp.error_description || resp.error;
-              toast('Google 登入失敗：' + (resp.error_description || resp.error), 'error');
-              return;
-            }
-            if (resp?.code) {
-              startCodeLogin(resp.code);
-            } else {
-              clearGoogleAuthWatchdog();
-              setGoogleAuthInProgress(false);
-              toast('Google 登入失敗：未取得授權碼', 'error');
-            }
-          },
+          callback: () => {},
           error_callback: (err) => {
             const errType = err?.type || 'unknown_error';
-            const elapsedMs = Date.now() - requestStartedAt;
             console.warn('GIS Code Client 錯誤:', errType, err);
-
-            if ((errType === 'popup_closed' || errType === 'popup_closed_by_user') && elapsedMs < 1500) {
-              const msg = getGooglePopupErrorMessage(errType, elapsedMs);
-              el('loginError').textContent = msg;
-              toast('Google 登入狀態（' + errType + '）：' + msg, 'info');
-              return;
-            }
-
-            clearGoogleAuthWatchdog();
             setGoogleAuthInProgress(false);
+            const elapsedMs = 0;
             const msg = getGooglePopupErrorMessage(errType, elapsedMs);
             el('loginError').textContent = msg;
             const level = errType === 'popup_failed_to_open' ? 'error' : 'info';
             toast('Google 登入狀態（' + errType + '）：' + msg, level);
           },
         });
+        el('loginError').textContent = '正在前往 Google 授權頁面...';
         codeClient.requestCode();
         return;
       } catch (e) {
         console.warn('GIS Code Client 啟動失敗:', e);
-        clearGoogleAuthWatchdog();
         setGoogleAuthInProgress(false);
         el('loginError').textContent = 'Google 登入元件初始化失敗，請稍後再試';
         toast('Google 登入失敗：GIS 初始化失敗', 'error');
@@ -393,7 +344,6 @@ const App = (() => {
       }
     }
 
-    clearGoogleAuthWatchdog();
     setGoogleAuthInProgress(false);
     el('loginError').textContent = 'Google 登入元件未載入，請檢查網路或重新整理頁面';
     toast('Google 登入失敗：GIS SDK 未載入', 'error');
@@ -418,7 +368,6 @@ const App = (() => {
       el('loginError').textContent = err.message;
       toast('Google 登入失敗：' + err.message, 'error');
     } finally {
-      clearGoogleAuthWatchdog();
       setGoogleAuthInProgress(false);
     }
   }

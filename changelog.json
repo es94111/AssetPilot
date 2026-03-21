@@ -1,6 +1,17 @@
 {
-  "currentVersion": "3.16.10",
+  "currentVersion": "3.16.11",
   "releases": [
+    {
+      "version": "3.16.11",
+      "date": "2026-03-21",
+      "title": "Google SSO 改為 GIS Redirect",
+      "type": "fixed",
+      "changes": [
+        { "tag": "fixed", "text": "修復 Google 授權視窗完成後主頁仍未自動登入的問題" },
+        { "tag": "improved", "text": "Google SSO 由 GIS popup 改為 GIS redirect 流程，避免部分瀏覽器 popup callback 不觸發" },
+        { "tag": "improved", "text": "搭配 URL code 自動處理，授權後可穩定自動交換 token 並登入" }
+      ]
+    },
     {
       "version": "3.16.10",
       "date": "2026-03-21",

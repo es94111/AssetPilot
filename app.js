@@ -4343,6 +4343,7 @@ const App = (() => {
           'removed': { text: '移除', cls: 'cl-tag-removed' }
         };
         const hasUpdate = data.latestVersion && compareVersions(data.latestVersion, data.currentVersion) > 0;
+        const canRunUpdate = hasUpdate && !!currentUser?.isAdmin;
         const updateBanner = hasUpdate ? `
           <div class="cl-update-banner">
             <i class="fas fa-arrow-circle-up"></i>
@@ -4350,9 +4351,9 @@ const App = (() => {
               <strong>有新版本可更新！</strong>
               <span>目前 v${escHtml(data.currentVersion)} → 最新 v${escHtml(data.latestVersion)}</span>
             </div>
-            <button type="button" class="btn btn-sm" id="runAppUpdateBtn">
-              <i class="fas fa-download"></i> 立即更新
-            </button>
+            ${canRunUpdate
+              ? `<button type="button" class="btn btn-sm" id="runAppUpdateBtn"><i class="fas fa-download"></i> 立即更新</button>`
+              : '<span class="import-hint">僅管理員可執行更新</span>'}
           </div>
         ` : '';
         content.innerHTML = `

@@ -180,6 +180,23 @@ input, select, button, textarea { font-family: inherit; font-size: inherit; }
   color: var(--text-secondary); font-size: 12px; font-weight: 600;
   text-transform: uppercase;
 }
+.data-table th.sortable {
+  cursor: pointer; user-select: none; white-space: nowrap;
+  transition: color .2s;
+}
+.data-table th.sortable:hover { color: var(--primary); }
+.data-table th.sortable i { font-size: 10px; margin-left: 2px; opacity: .4; }
+.data-table th.sortable.sort-asc i,
+.data-table th.sortable.sort-desc i { opacity: 1; color: var(--primary); }
+.date-range-wrap {
+  display: flex; align-items: center; gap: 6px;
+}
+.date-range-wrap input[type="date"] {
+  padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px;
+  font-size: 13px; background: var(--card); color: var(--text-primary);
+  width: 140px;
+}
+.date-range-wrap span { color: var(--text-secondary); font-size: 13px; }
 .data-table td {
   padding: 12px 8px;
   border-bottom: 1px solid var(--border);

@@ -996,7 +996,9 @@ const App = (() => {
   let stocksBound = false;
   let cachedStocks = [];
   let stkTxPage = 1, stkTxPageSize = 20;
+  let stkTxSortBy = 'date', stkTxSortDir = 'desc';
   let stkDivPage = 1, stkDivPageSize = 20;
+  let stkDivSortBy = 'date', stkDivSortDir = 'desc';
   let selectedStkTxIds = new Set();
   let selectedStkDivIds = new Set();
 
@@ -1108,6 +1110,10 @@ const App = (() => {
       setupStockSearchFilter('stockDivFilterInput', 'stockDivFilter', 'stockDivFilterClear', () => { stkDivPage = 1; renderStockDividends(); });
       setupStockSearchFilter('stockRealizedFilterInput', 'stockRealizedFilter', 'stockRealizedFilterClear', renderStockRealized);
 
+      // 股票交易：日期篩選
+      el('stkTxDateFrom').addEventListener('change', () => { stkTxPage = 1; renderStockTransactions(); });
+      el('stkTxDateTo').addEventListener('change', () => { stkTxPage = 1; renderStockTransactions(); });
+
       // 股票交易：每頁筆數
       el('stkTxPageSize').addEventListener('change', (e) => {
         if (e.target.value === 'custom') {
@@ -1140,6 +1146,10 @@ const App = (() => {
       });
       el('stkTxBatchDeleteBtn').addEventListener('click', stkTxBatchDelete);
       el('stkTxBatchCancelBtn').addEventListener('click', clearStkTxSelection);
+
+      // 股利：日期篩選
+      el('stkDivDateFrom').addEventListener('change', () => { stkDivPage = 1; renderStockDividends(); });
+      el('stkDivDateTo').addEventListener('change', () => { stkDivPage = 1; renderStockDividends(); });
 
       // 股利：每頁筆數
       el('stkDivPageSize').addEventListener('change', (e) => {
@@ -1397,13 +1407,58 @@ const App = (() => {
     });
   }
 
+  // ─── 排序圖示更新 ───
+  function updateSortIcons(panelId, currentSort, currentDir) {
+    const panel = el(panelId);
+    if (!panel) return;
+    panel.querySelectorAll('th.sortable').forEach(th => {
+      const col = th.dataset.sort;
+      th.classList.remove('sort-asc', 'sort-desc');
+      const icon = th.querySelector('i');
+      if (col === currentSort) {
+        th.classList.add(currentDir === 'asc' ? 'sort-asc' : 'sort-desc');
+        if (icon) icon.className = currentDir === 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down';
+      } else {
+        if (icon) icon.className = 'fas fa-sort';
+      }
+    });
+  }
+
+  function stkTxSort(col) {
+    if (stkTxSortBy === col) {
+      stkTxSortDir = stkTxSortDir === 'desc' ? 'asc' : 'desc';
+    } else {
+      stkTxSortBy = col;
+      stkTxSortDir = col === 'date' ? 'desc' : 'asc';
+    }
+    stkTxPage = 1;
+    renderStockTransactions();
+  }
+
+  function stkDivSort(col) {
+    if (stkDivSortBy === col) {
+      stkDivSortDir = stkDivSortDir === 'desc' ? 'asc' : 'desc';
+    } else {
+      stkDivSortBy = col;
+      stkDivSortDir = col === 'date' ? 'desc' : 'asc';
+    }
+    stkDivPage = 1;
+    renderStockDividends();
+  }
+
   async function renderStockTransactions(page) {
     if (page) stkTxPage = page;
     selectedStkTxIds.clear();
     updateStkTxBatchBar();
     const stockId = el('stockTxFilter').value;
-    let params = `?page=${stkTxPage}&pageSize=${stkTxPageSize}`;
+    const dateFrom = el('stkTxDateFrom')?.value || '';
+    const dateTo = el('stkTxDateTo')?.value || '';
+    let params = `?page=${stkTxPage}&pageSize=${stkTxPageSize}&sortBy=${stkTxSortBy}&sortDir=${stkTxSortDir}`;
     if (stockId) params += `&stockId=${stockId}`;
+    if (dateFrom) params += `&dateFrom=${dateFrom}`;
+    if (dateTo) params += `&dateTo=${dateTo}`;
+    // 更新表頭排序圖示
+    updateSortIcons('stockPanel-transactions', stkTxSortBy, stkTxSortDir);
     const result = await API.get('/api/stock-transactions' + params);
     const { data: txs, total, page: pageNum, totalPages } = result;
     const tbody = el('stockTxBody');
@@ -1439,8 +1494,14 @@ const App = (() => {
     selectedStkDivIds.clear();
     updateStkDivBatchBar();
     const stockId = el('stockDivFilter').value;
-    let params = `?page=${stkDivPage}&pageSize=${stkDivPageSize}`;
+    const dateFrom = el('stkDivDateFrom')?.value || '';
+    const dateTo = el('stkDivDateTo')?.value || '';
+    let params = `?page=${stkDivPage}&pageSize=${stkDivPageSize}&sortBy=${stkDivSortBy}&sortDir=${stkDivSortDir}`;
     if (stockId) params += `&stockId=${stockId}`;
+    if (dateFrom) params += `&dateFrom=${dateFrom}`;
+    if (dateTo) params += `&dateTo=${dateTo}`;
+    // 更新表頭排序圖示
+    updateSortIcons('stockPanel-dividends', stkDivSortBy, stkDivSortDir);
     const result = await API.get('/api/stock-dividends' + params);
     const { data: divs, total, page: pageNum, totalPages } = result;
     const tbody = el('stockDivBody');
@@ -3233,6 +3294,8 @@ const App = (() => {
     toggleStkTxSelect,
     toggleStkDivSelect,
     stkTxGoPage: (p) => renderStockTransactions(p),
+    stkTxSort,
+    stkDivSort,
     stkDivGoPage: (p) => renderStockDividends(p),
     openChangelog,
     googleFallbackLogin,

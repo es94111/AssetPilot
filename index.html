@@ -404,6 +404,14 @@
             <input type="hidden" id="stockTxFilter" value="">
           </div>
           <div class="filter-group">
+            <label>期間</label>
+            <div class="date-range-wrap">
+              <input type="date" id="stkTxDateFrom" title="起始日期">
+              <span>~</span>
+              <input type="date" id="stkTxDateTo" title="結束日期">
+            </div>
+          </div>
+          <div class="filter-group">
             <label>每頁筆數</label>
             <div class="pagesize-wrap">
               <select id="stkTxPageSize">
@@ -431,7 +439,15 @@
           <table class="data-table">
             <thead><tr>
               <th class="th-check"><input type="checkbox" id="selectAllStkTx" title="全選"></th>
-              <th>日期</th><th>類型</th><th>股票</th><th>股數</th><th>成交價</th><th>手續費</th><th>交易稅</th><th>小計</th><th>操作</th>
+              <th class="sortable" data-sort="date" onclick="App.stkTxSort('date')">日期 <i class="fas fa-sort"></i></th>
+              <th class="sortable" data-sort="type" onclick="App.stkTxSort('type')">類型 <i class="fas fa-sort"></i></th>
+              <th class="sortable" data-sort="symbol" onclick="App.stkTxSort('symbol')">股票 <i class="fas fa-sort"></i></th>
+              <th class="sortable" data-sort="shares" onclick="App.stkTxSort('shares')">股數 <i class="fas fa-sort"></i></th>
+              <th class="sortable" data-sort="price" onclick="App.stkTxSort('price')">成交價 <i class="fas fa-sort"></i></th>
+              <th class="sortable" data-sort="fee" onclick="App.stkTxSort('fee')">手續費 <i class="fas fa-sort"></i></th>
+              <th class="sortable" data-sort="tax" onclick="App.stkTxSort('tax')">交易稅 <i class="fas fa-sort"></i></th>
+              <th class="sortable" data-sort="subtotal" onclick="App.stkTxSort('subtotal')">小計 <i class="fas fa-sort"></i></th>
+              <th>操作</th>
             </tr></thead>
             <tbody id="stockTxBody"></tbody>
           </table>
@@ -451,6 +467,14 @@
               <button class="btn-icon stock-search-clear" id="stockDivFilterClear" title="清除" style="display:none"><i class="fas fa-xmark"></i></button>
             </div>
             <input type="hidden" id="stockDivFilter" value="">
+          </div>
+          <div class="filter-group">
+            <label>期間</label>
+            <div class="date-range-wrap">
+              <input type="date" id="stkDivDateFrom" title="起始日期">
+              <span>~</span>
+              <input type="date" id="stkDivDateTo" title="結束日期">
+            </div>
           </div>
           <div class="filter-group">
             <label>每頁筆數</label>
@@ -480,7 +504,10 @@
           <table class="data-table">
             <thead><tr>
               <th class="th-check"><input type="checkbox" id="selectAllStkDiv" title="全選"></th>
-              <th>發放日期</th><th>股票</th><th>現金股利</th><th>股票股利(股)</th><th>備註</th><th>操作</th>
+              <th class="sortable" data-sort="date" onclick="App.stkDivSort('date')">發放日期 <i class="fas fa-sort"></i></th>
+              <th class="sortable" data-sort="symbol" onclick="App.stkDivSort('symbol')">股票 <i class="fas fa-sort"></i></th>
+              <th class="sortable" data-sort="cash_dividend" onclick="App.stkDivSort('cash_dividend')">現金股利 <i class="fas fa-sort"></i></th>
+              <th>股票股利(股)</th><th>備註</th><th>操作</th>
             </tr></thead>
             <tbody id="stockDivBody"></tbody>
           </table>

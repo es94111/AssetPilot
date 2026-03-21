@@ -1,6 +1,18 @@
 {
-  "currentVersion": "3.23",
+  "currentVersion": "3.24",
   "releases": [
+    {
+      "version": "3.24",
+      "date": "2026-03-21",
+      "title": "深色模式文字對比修正",
+      "type": "fixed",
+      "changes": [
+        { "tag": "fixed", "text": "修正儀表板在深色模式下部分文字對比不足、難以閱讀的問題" },
+        { "tag": "improved", "text": "強化深色模式次要文字色階，提升摘要卡、近期交易與提示文案可讀性" },
+        { "tag": "fixed", "text": "修正舊版 [data-theme=dark] 樣式失效問題，統一改為 body.dark-mode，避免深色樣式未套用" },
+        { "tag": "improved", "text": "調整表格 hover 與日期輸入顏色變數，避免深色模式下亮度衝突與文字辨識不清" }
+      ]
+    },
     {
       "version": "3.23",
       "date": "2026-03-21",

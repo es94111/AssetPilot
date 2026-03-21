@@ -34,8 +34,8 @@ body.dark-mode {
   --bg: #0b1220;
   --surface: #111827;
   --text: #e5e7eb;
-  --text-secondary: #9ca3af;
-  --text-muted: #6b7280;
+  --text-secondary: #b6c2d1;
+  --text-muted: #94a3b8;
   --border: #1f2937;
   --income-bg: #052e2b;
   --expense-bg: #3b1212;
@@ -183,7 +183,7 @@ input, select, button, textarea { font-family: inherit; font-size: inherit; }
   gap: 16px;
 }
 .dashboard-grid .full-width { grid-column: 1 / -1; }
-.dashboard-grid h3 { margin-bottom: 16px; font-size: 16px; }
+.dashboard-grid h3 { margin-bottom: 16px; font-size: 16px; color: var(--text); }
 .chart-container-sm { max-width: 280px; margin: 0 auto; }
 .chart-container { position: relative; width: 100%; max-width: 700px; margin: 0 auto; }
 .chart-container canvas { width: 100% !important; }
@@ -230,7 +230,7 @@ input, select, button, textarea { font-family: inherit; font-size: inherit; }
 }
 .date-range-wrap input[type="date"] {
   padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px;
-  font-size: 13px; background: var(--card); color: var(--text-primary);
+  font-size: 13px; background: var(--surface); color: var(--text);
   width: 140px;
 }
 .date-range-wrap span { color: var(--text-secondary); font-size: 13px; }
@@ -239,7 +239,7 @@ input, select, button, textarea { font-family: inherit; font-size: inherit; }
   border-bottom: 1px solid var(--border);
   vertical-align: middle;
 }
-.data-table tbody tr:hover { background: #f8fafc; }
+.data-table tbody tr:hover { background: rgba(15, 23, 42, 0.04); }
 .data-table .amount-income { color: var(--income); font-weight: 600; }
 .data-table .amount-expense { color: var(--expense); font-weight: 600; }
 .type-badge {
@@ -774,7 +774,7 @@ input, select, button, textarea { font-family: inherit; font-size: inherit; }
   background: #fff7ed; border: 1px solid #fed7aa;
   border-radius: 8px; font-size: 13px; color: #9a3412;
 }
-[data-theme="dark"] .import-missing {
+body.dark-mode .import-missing {
   background: #431407; border-color: #7c2d12; color: #fdba74;
 }
 .import-missing-title {
@@ -785,7 +785,7 @@ input, select, button, textarea { font-family: inherit; font-size: inherit; }
   display: inline-block; padding: 2px 8px; margin: 2px 4px;
   background: rgba(0,0,0,.06); border-radius: 4px; font-size: 12px;
 }
-[data-theme="dark"] .import-missing-list span { background: rgba(255,255,255,.1); }
+body.dark-mode .import-missing-list span { background: rgba(255,255,255,.1); }
 .import-missing-group { margin-top: 6px; }
 .import-missing-group b { font-size: 13px; }
 .import-missing-actions {
@@ -844,6 +844,18 @@ input, select, button, textarea { font-family: inherit; font-size: inherit; }
 .empty-hint {
   text-align: center; color: var(--text-secondary);
   padding: 32px; font-size: 14px;
+}
+
+body.dark-mode .card-label,
+body.dark-mode .empty-hint,
+body.dark-mode .recent-item-info .recent-date,
+body.dark-mode .report-summary-item .label,
+body.dark-mode .filter-group label {
+  color: #c0ccdc;
+}
+
+body.dark-mode .data-table tbody tr:hover {
+  background: #172033;
 }
 
 /* ===== 近期交易列表 ===== */

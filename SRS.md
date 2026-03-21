@@ -986,6 +986,7 @@
 | 3.10.1 | 2026-03-21 | Google SSO 改用 Authorization Code Flow（用戶端密碼）；登入後顯示 Google 使用者頭像 |
 | 3.11  | 2026-03-21 | 股票紀錄子選單路由化：持股總覽、交易紀錄、股利紀錄、實現損益各有獨立 URL 路徑 |
 | 3.12  | 2026-03-21 | 遠端版本更新檢查：從 GitHub 取得最新 changelog，舊版本可查看新版資訊並顯示升級提示 |
+| 3.13  | 2026-03-21 | 全面依賴升級：Express 5、bcryptjs 3、sql.js 1.14、Font Awesome 6.7.1、Chart.js 4.5.1、Node.js 24 |
 
 ### 8.3 未來擴充方向
 

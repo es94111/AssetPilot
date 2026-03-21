@@ -1,6 +1,21 @@
 {
-  "currentVersion": "3.12",
+  "currentVersion": "3.13",
   "releases": [
+    {
+      "version": "3.13",
+      "date": "2026-03-21",
+      "title": "全面依賴升級",
+      "type": "improved",
+      "changes": [
+        { "tag": "improved", "text": "升級 Express 4 → 5（更好的非同步錯誤處理、安全性增強）" },
+        { "tag": "improved", "text": "升級 bcryptjs 2.4 → 3.0（預設使用 2b 雜湊、TypeScript 支援）" },
+        { "tag": "improved", "text": "升級 sql.js 1.11 → 1.14（SQLite 引擎更新）" },
+        { "tag": "improved", "text": "升級 Font Awesome 6.5.0 → 6.7.1（新增更多圖示）" },
+        { "tag": "improved", "text": "升級 Chart.js 4.4.0 → 4.5.1（圖表效能改善）" },
+        { "tag": "improved", "text": "Docker 基礎映像升級至 Node.js 24 Alpine" },
+        { "tag": "improved", "text": "所有 CDN 資源更新 SRI 完整性雜湊" }
+      ]
+    },
     {
       "version": "3.12",
       "date": "2026-03-21",

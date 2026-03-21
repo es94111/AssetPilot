@@ -2387,7 +2387,7 @@ app.post('/api/stock-dividends/batch-delete', (req, res) => {
 });
 
 // ─── 前端路由 catch-all（所有非 API、非靜態檔案的請求都回傳 index.html）───
-app.get('*', (req, res) => {
+app.get('{*path}', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 

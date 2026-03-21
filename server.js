@@ -30,6 +30,7 @@ const PORT = process.env.PORT || 3000;
 const DB_PATH = process.env.DB_PATH || path.join(__dirname, 'database.db');
 const JWT_EXPIRES = process.env.JWT_EXPIRES || '7d';
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
+const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || '';
 
 // ─── 自動產生密鑰（僅首次啟動時） ───
 function generateSecret(length = 64) {
@@ -277,10 +278,14 @@ async function initDB() {
   // 資料庫升級：為 users 加入 has_password 欄位
   try {
     db.run("ALTER TABLE users ADD COLUMN has_password INTEGER DEFAULT 0");
-    // 將已有帳號但非 Google-only 的使用者設為 has_password=1
     db.run("UPDATE users SET has_password = 1 WHERE password_hash != '' AND (google_id = '' OR google_id IS NULL)");
-    // 同時有密碼登入+Google的也算有密碼（透過註冊的帳號後來綁了 Google）
     db.run("UPDATE users SET has_password = 1 WHERE password_hash != '' AND google_id != '' AND has_password = 0");
+    saveDB();
+  } catch (e) { /* 欄位已存在則忽略 */ }
+
+  // 資料庫升級：為 users 加入 avatar_url 欄位（Google 頭像）
+  try {
+    db.run("ALTER TABLE users ADD COLUMN avatar_url TEXT DEFAULT ''");
     saveDB();
   } catch (e) { /* 欄位已存在則忽略 */ }
 
@@ -573,7 +578,7 @@ app.post('/api/auth/login', async (req, res) => {
   delete loginAttempts[emailLower];
 
   const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: JWT_EXPIRES });
-  res.json({ token, user: { id: user.id, email: user.email, displayName: user.display_name } });
+  res.json({ token, user: { id: user.id, email: user.email, displayName: user.display_name, avatarUrl: user.avatar_url || '' } });
 });
 
 function trackFailedLogin(email) {
@@ -585,7 +590,10 @@ function trackFailedLogin(email) {
 
 // 前端取得公開設定（Google Client ID 等）
 app.get('/api/config', (req, res) => {
-  res.json({ googleClientId: GOOGLE_CLIENT_ID || null });
+  res.json({
+    googleClientId: GOOGLE_CLIENT_ID || null,
+    googleCodeFlow: !!(GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET), // 有 secret 時使用 code flow
+  });
 });
 
 // 版本更新資訊（公開，不需認證）
@@ -598,50 +606,95 @@ app.get('/api/changelog', (req, res) => {
   }
 });
 
-// Google SSO 登入
+// Google SSO 登入（支援 code flow 和 id_token flow）
 app.post('/api/auth/google', async (req, res) => {
-  const { credential } = req.body;
-  if (!credential) return res.status(400).json({ error: '缺少 Google 憑證' });
+  const { credential, code, redirect_uri } = req.body;
+  if (!credential && !code) return res.status(400).json({ error: '缺少 Google 憑證' });
   if (!GOOGLE_CLIENT_ID) return res.status(400).json({ error: 'Google SSO 未設定' });
 
   try {
-    // 透過 Google tokeninfo 端點驗證 ID Token
-    const verifyRes = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(credential)}`);
-    if (!verifyRes.ok) return res.status(401).json({ error: 'Google 憑證驗證失敗' });
-    const payload = await verifyRes.json();
+    let email, name, googleId, picture;
 
-    // 驗證 audience 是否為我們的 Client ID
-    if (payload.aud !== GOOGLE_CLIENT_ID) {
-      return res.status(401).json({ error: 'Google 憑證 audience 不符' });
+    if (code && GOOGLE_CLIENT_SECRET) {
+      // ─── Authorization Code Flow（使用 Client Secret 交換 token）───
+      const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          code,
+          client_id: GOOGLE_CLIENT_ID,
+          client_secret: GOOGLE_CLIENT_SECRET,
+          redirect_uri: redirect_uri || '',
+          grant_type: 'authorization_code',
+        }),
+      });
+      const tokenData = await tokenRes.json();
+      if (!tokenRes.ok || !tokenData.id_token) {
+        console.error('Google token exchange 失敗:', tokenData);
+        return res.status(401).json({ error: 'Google 授權碼交換失敗：' + (tokenData.error_description || tokenData.error || '未知錯誤') });
+      }
+
+      // 用 access_token 取得使用者資料（包含頭像）
+      const userinfoRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+        headers: { Authorization: `Bearer ${tokenData.access_token}` },
+      });
+      const userinfo = await userinfoRes.json();
+
+      email = userinfo.email?.toLowerCase();
+      name = userinfo.name || email?.split('@')[0] || 'Google User';
+      googleId = userinfo.sub;
+      picture = userinfo.picture || '';
+    } else if (credential) {
+      // ─── Legacy ID Token Flow（無 Client Secret）───
+      const verifyRes = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(credential)}`);
+      if (!verifyRes.ok) return res.status(401).json({ error: 'Google 憑證驗證失敗' });
+      const payload = await verifyRes.json();
+      if (payload.aud !== GOOGLE_CLIENT_ID) {
+        return res.status(401).json({ error: 'Google 憑證 audience 不符' });
+      }
+      email = payload.email?.toLowerCase();
+      name = payload.name || payload.email?.split('@')[0] || 'Google User';
+      googleId = payload.sub;
+      picture = payload.picture || '';
     }
-
-    const email = payload.email?.toLowerCase();
-    const name = payload.name || payload.email?.split('@')[0] || 'Google User';
-    const googleId = payload.sub;
 
     if (!email) return res.status(400).json({ error: '無法取得 Google 帳號 Email' });
 
-    // 查找或建立使用者（優先用 google_id 查找，再用 email）
+    // 查找或建立使用者
     let user = queryOne("SELECT * FROM users WHERE google_id = ?", [googleId]);
     if (!user) user = queryOne("SELECT * FROM users WHERE email = ?", [email]);
     if (!user) {
-      // 自動註冊：Google 使用者不需要密碼，設一組隨機 hash
       const id = uid();
       const randomHash = await bcrypt.hash(uid() + Date.now(), 10);
-      db.run("INSERT INTO users (id, email, password_hash, display_name, google_id, created_at) VALUES (?,?,?,?,?,?)",
-        [id, email, randomHash, name, googleId, todayStr()]);
+      db.run("INSERT INTO users (id, email, password_hash, display_name, google_id, avatar_url, created_at) VALUES (?,?,?,?,?,?,?)",
+        [id, email, randomHash, name, googleId, picture, todayStr()]);
       createDefaultsForUser(id);
       saveDB();
       user = queryOne("SELECT * FROM users WHERE id = ?", [id]);
-    } else if (!user.google_id) {
-      // 既有帳號首次用 Google 登入，自動綁定
-      db.run("UPDATE users SET google_id = ? WHERE id = ?", [googleId, user.id]);
-      saveDB();
+    } else {
+      // 更新 Google ID、頭像、名稱
+      const updates = [];
+      const vals = [];
+      if (!user.google_id) { updates.push('google_id = ?'); vals.push(googleId); }
+      if (picture && picture !== user.avatar_url) { updates.push('avatar_url = ?'); vals.push(picture); }
+      if (name && (!user.display_name || user.display_name === user.email?.split('@')[0])) {
+        updates.push('display_name = ?'); vals.push(name);
+      }
+      if (updates.length > 0) {
+        db.run(`UPDATE users SET ${updates.join(', ')} WHERE id = ?`, [...vals, user.id]);
+        saveDB();
+        user = queryOne("SELECT * FROM users WHERE id = ?", [user.id]);
+      }
     }
 
-    // 發行 JWT
     const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: JWT_EXPIRES });
-    res.json({ token, user: { id: user.id, email: user.email, displayName: user.display_name, googleLinked: true } });
+    res.json({
+      token,
+      user: {
+        id: user.id, email: user.email, displayName: user.display_name,
+        googleLinked: true, avatarUrl: user.avatar_url || '',
+      },
+    });
   } catch (e) {
     console.error('Google SSO 錯誤:', e.message);
     res.status(500).json({ error: 'Google 登入失敗：' + e.message });
@@ -649,9 +702,9 @@ app.post('/api/auth/google', async (req, res) => {
 });
 
 app.get('/api/auth/me', authMiddleware, (req, res) => {
-  const user = queryOne("SELECT id, email, display_name, google_id, has_password FROM users WHERE id = ?", [req.userId]);
+  const user = queryOne("SELECT id, email, display_name, google_id, has_password, avatar_url FROM users WHERE id = ?", [req.userId]);
   if (!user) return res.status(404).json({ error: '使用者不存在' });
-  res.json({ user: { id: user.id, email: user.email, displayName: user.display_name, googleLinked: !!user.google_id, hasPassword: !!user.has_password } });
+  res.json({ user: { id: user.id, email: user.email, displayName: user.display_name, googleLinked: !!user.google_id, hasPassword: !!user.has_password, avatarUrl: user.avatar_url || '' } });
 });
 
 // ═══════════════════════════════════════
@@ -674,14 +727,15 @@ app.post('/api/account/link-google', async (req, res) => {
 
     const googleId = payload.sub;
     const googleEmail = payload.email?.toLowerCase();
+    const picture = payload.picture || '';
 
     // 檢查此 Google 帳號是否已被其他使用者綁定
     const existing = queryOne("SELECT id FROM users WHERE google_id = ? AND id != ?", [googleId, req.userId]);
     if (existing) return res.status(400).json({ error: '此 Google 帳號已被其他使用者綁定' });
 
-    db.run("UPDATE users SET google_id = ? WHERE id = ?", [googleId, req.userId]);
+    db.run("UPDATE users SET google_id = ?, avatar_url = ? WHERE id = ?", [googleId, picture, req.userId]);
     saveDB();
-    res.json({ success: true, googleEmail });
+    res.json({ success: true, googleEmail, avatarUrl: picture });
   } catch (e) {
     console.error('綁定 Google 錯誤:', e.message);
     res.status(500).json({ error: '綁定失敗：' + e.message });

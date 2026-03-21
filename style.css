@@ -901,6 +901,10 @@ input, select, button, textarea { font-family: inherit; font-size: inherit; }
 }
 .user-info i { font-size: 20px; flex-shrink: 0; }
 .user-info span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.user-avatar {
+  width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
+  border: 2px solid rgba(255,255,255,.3); object-fit: cover;
+}
 .sidebar-version {
   display: flex;
   align-items: center;

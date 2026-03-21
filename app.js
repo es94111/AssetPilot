@@ -409,13 +409,12 @@ const App = (() => {
 
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-    document.querySelectorAll('.nav-sub-item').forEach(n => n.classList.remove('active'));
     el('page-' + page)?.classList.add('active');
     document.querySelector(`.nav-item[data-page="${navPage}"]`)?.classList.add('active');
     if (financePages.includes(page)) {
-      document.querySelector(`.nav-sub-item[data-page="${page}"]`)?.classList.add('active');
+      activateFinanceTab(page);
     }
-    const titles = { dashboard: '儀表板', transactions: '交易記錄', reports: '統計報表', budget: '預算管理', accounts: '帳戶管理', stocks: '股票紀錄', settings: '設定' };
+    const titles = { dashboard: '儀表板', transactions: '收支管理', reports: '收支管理', budget: '收支管理', accounts: '收支管理', stocks: '股票紀錄', settings: '設定' };
     el('mobileTitle').textContent = titles[page] || '';
     el('sidebar').classList.remove('open');
 
@@ -449,6 +448,11 @@ const App = (() => {
     el('stockPanel-' + tab)?.classList.add('active');
   }
 
+  function activateFinanceTab(tab) {
+    document.querySelectorAll('.finance-tabs .tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll(`.finance-tabs .tab[data-finance-tab="${tab}"]`).forEach(t => t.classList.add('active'));
+  }
+
   function bindNav() {
     document.querySelectorAll('.nav-item').forEach(item => {
       item.addEventListener('click', e => {
@@ -462,11 +466,11 @@ const App = (() => {
         navigate(page, sub);
       });
     });
-    document.querySelectorAll('.nav-sub-item').forEach(item => {
-      item.addEventListener('click', e => {
+    document.querySelectorAll('.finance-tabs .tab').forEach(tab => {
+      tab.addEventListener('click', e => {
         e.preventDefault();
-        const page = item.dataset.page;
-        navigate(page, null);
+        const page = tab.dataset.financeTab;
+        if (financePages.includes(page)) navigate(page, null);
       });
     });
     window.addEventListener('popstate', (e) => {

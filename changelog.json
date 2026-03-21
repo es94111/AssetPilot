@@ -1,6 +1,17 @@
 {
-  "currentVersion": "3.15",
+  "currentVersion": "3.15.1",
   "releases": [
+    {
+      "version": "3.15.1",
+      "date": "2026-03-21",
+      "title": "收支管理改為頁內子分頁",
+      "type": "improved",
+      "changes": [
+        { "tag": "improved", "text": "左側導航僅保留「收支管理」主選單，不再顯示交易/報表/預算/帳戶子項目" },
+        { "tag": "new", "text": "在收支相關頁面中新增子分頁列（交易記錄／統計報表／預算管理／帳戶管理），操作體驗比照股票紀錄" },
+        { "tag": "improved", "text": "行動版標題統一顯示「收支管理」，並保留 /finance/* 路由切換" }
+      ]
+    },
     {
       "version": "3.15",
       "date": "2026-03-21",

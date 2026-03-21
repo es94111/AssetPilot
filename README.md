@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-3.30.1-blue" alt="version">
+  <img src="https://img.shields.io/badge/version-3.30.2-blue" alt="version">
   <img src="https://img.shields.io/badge/node-%3E%3D18-green" alt="node">
   <img src="https://img.shields.io/badge/license-MIT-orange" alt="license">
   <img src="https://img.shields.io/badge/docker-ready-2496ED" alt="docker">
@@ -233,7 +233,7 @@ docker run -d \
 - 在 `設定 > 帳號設定 > 匯率設定` 可使用：
   - `立即取得即時匯率`：手動同步最新匯率
   - `自動更新匯率`：由使用者自行決定是否開啟
-- 啟用自動更新後，系統會在進入匯率設定時依節流策略自動同步並顯示上次更新時間。
+- 啟用自動更新後，系統會在進入匯率設定時依節流策略自動同步，並以 `YYYY-MM-DD HH:mm:ss`（精確到秒）顯示上次更新時間。
 
 ### 自行建置映像檔
 

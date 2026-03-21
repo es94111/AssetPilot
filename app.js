@@ -10,6 +10,7 @@ const App = (() => {
   // ─── Auth 狀態 ───
   let authToken = localStorage.getItem('authToken') || null;
   let currentUser = null;
+  let latestLoginRecord = null;
   let googleUseCodeFlow = false;
   let authConfig = { registrationEnabled: true, publicRegistration: true, allowlistEnabled: false };
   let themeMode = localStorage.getItem('themeMode') || 'system';
@@ -311,6 +312,7 @@ const App = (() => {
 
       authToken = data.token;
       currentUser = data.user;
+      latestLoginRecord = data.currentLogin || null;
       localStorage.setItem('authToken', authToken);
       el('loginForm').reset();
       await enterApp();
@@ -359,6 +361,7 @@ const App = (() => {
   function logout() {
     authToken = null;
     currentUser = null;
+    latestLoginRecord = null;
     localStorage.removeItem('authToken');
     cachedCategories = [];
     cachedAccounts = [];
@@ -623,6 +626,7 @@ const App = (() => {
       if (!r.ok) throw new Error(data.error || 'Google 登入失敗');
       authToken = data.token;
       currentUser = data.user;
+      latestLoginRecord = data.currentLogin || null;
       localStorage.setItem('authToken', authToken);
       await enterApp();
     } catch (err) {
@@ -3114,7 +3118,11 @@ const App = (() => {
     if (!tbody) return;
     try {
       const result = await API.get('/api/account/login-logs');
-      const logs = Array.isArray(result?.logs) ? result.logs : [];
+      const logs = Array.isArray(result?.logs) ? [...result.logs] : [];
+      if (latestLoginRecord?.loginAt) {
+        const hasLatest = logs.some(log => Number(log.loginAt) === Number(latestLoginRecord.loginAt) && String(log.ipAddress || '') === String(latestLoginRecord.ipAddress || ''));
+        if (!hasLatest) logs.unshift({ ...latestLoginRecord });
+      }
       if (logs.length === 0) {
         tbody.innerHTML = '<tr><td colspan="4" class="empty-hint">尚無登入紀錄</td></tr>';
         return;
@@ -3138,8 +3146,32 @@ const App = (() => {
     const allUserTbody = el('adminAllLoginLogBody');
     if (!adminTbody || !allUserTbody) return;
 
-    const adminLogs = Array.isArray(loginLogData?.adminLogs) ? loginLogData.adminLogs : [];
-    const allUserLogs = Array.isArray(loginLogData?.allUserLogs) ? loginLogData.allUserLogs : [];
+    const adminLogs = Array.isArray(loginLogData?.adminLogs) ? [...loginLogData.adminLogs] : [];
+    const allUserLogs = Array.isArray(loginLogData?.allUserLogs) ? [...loginLogData.allUserLogs] : [];
+
+    if (latestLoginRecord?.loginAt && currentUser?.isAdmin) {
+      const hasAdminLatest = adminLogs.some(log => Number(log.loginAt) === Number(latestLoginRecord.loginAt) && String(log.ipAddress || '') === String(latestLoginRecord.ipAddress || ''));
+      if (!hasAdminLatest) {
+        adminLogs.unshift({
+          loginAt: latestLoginRecord.loginAt,
+          ipAddress: latestLoginRecord.ipAddress,
+          loginMethod: latestLoginRecord.loginMethod,
+        });
+      }
+
+      const hasAllLatest = allUserLogs.some(log => Number(log.loginAt) === Number(latestLoginRecord.loginAt) && String(log.ipAddress || '') === String(latestLoginRecord.ipAddress || '') && String(log.userId || '') === String(currentUser?.id || ''));
+      if (!hasAllLatest) {
+        allUserLogs.unshift({
+          userId: currentUser.id,
+          email: currentUser.email,
+          displayName: currentUser.displayName,
+          loginAt: latestLoginRecord.loginAt,
+          ipAddress: latestLoginRecord.ipAddress,
+          loginMethod: latestLoginRecord.loginMethod,
+          isAdminLogin: !!latestLoginRecord.isAdminLogin,
+        });
+      }
+    }
 
     if (adminLogs.length === 0) {
       adminTbody.innerHTML = '<tr><td colspan="3" class="empty-hint">尚無管理員登入紀錄</td></tr>';

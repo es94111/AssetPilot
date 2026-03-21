@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-3.35.1-blue" alt="version">
+  <img src="https://img.shields.io/badge/version-3.35.2-blue" alt="version">
   <img src="https://img.shields.io/badge/node-%3E%3D18-green" alt="node">
   <img src="https://img.shields.io/badge/license-MIT-orange" alt="license">
   <img src="https://img.shields.io/badge/docker-ready-2496ED" alt="docker">
@@ -34,7 +34,7 @@
 - **主題切換容錯** — 深色/淺色切換先本機生效，後端同步異常時不影響當下使用
 - **Google SSO** — 一鍵 Google 帳號登入（選配）
 - **管理員模式** — 第一位使用者自動成為管理員，可控管註冊政策與使用者帳號
-- **登入稽核紀錄** — 記錄登入時間、IP、登入方式，支援使用者自查與管理員全站檢視
+- **登入稽核紀錄** — 記錄登入時間、IP、登入方式，並保證本次登入可即時顯示
 - **資料庫加密** — ChaCha20-Poly1305 + PBKDF2-SHA256 全資料庫加密
 - **響應式設計** — 桌面與手機皆可使用
 
@@ -408,7 +408,7 @@ your-domain.com {
 5. 系統使用 OAuth Authorization Code Flow，登入流程含 state 一次性驗證防重放
 6. 未設定時 Google 登入按鈕自動隱藏，不影響帳號密碼登入
 
-> 若登入後停在 `/?code=...` 無法進入系統，請確認 Google Console 的重新導向 URI 與網站網域完全一致（含 `https` 與尾端 `/`），並更新到 v3.35.1（已修正 callback URL 卡住與 state 帶回相容性）。
+> 若登入後停在 `/?code=...` 無法進入系統，請確認 Google Console 的重新導向 URI 與網站網域完全一致（含 `https` 與尾端 `/`），並更新到 v3.35.2（已修正 callback URL 卡住與 state 帶回相容性）。
 
 ---
 
@@ -441,6 +441,7 @@ your-domain.com {
 - **OAuth state 驗證** — Google 授權碼登入使用一次性 state，降低登入 CSRF/重放風險
 - **速率限制** — 登入/註冊 API 限制每 IP 每 15 分鐘 20 次
 - **登入稽核** — 密碼登入與 Google SSO 成功後皆記錄登入時間、IP、登入方式與身份
+- **本次登入保證** — `/api/auth/login` 與 `/api/auth/google` 會回傳 `currentLogin`，前端登入後可立即顯示本次登入紀錄
 - **CORS 控制** — 可透過 `ALLOWED_ORIGINS` 限制來源
 - **最小暴露面** — 僅白名單前端檔案可靜態存取，不再公開整個專案根目錄
 - **管理員權限管控** — 系統更新 API 僅允許管理員執行

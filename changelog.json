@@ -1,6 +1,17 @@
 {
-  "currentVersion": "3.35.1",
+  "currentVersion": "3.35.2",
   "releases": [
+    {
+      "version": "3.35.2",
+      "date": "2026-03-21",
+      "title": "登入紀錄即時保證",
+      "type": "fixed",
+      "changes": [
+        { "tag": "fixed", "text": "登入成功回應新增 currentLogin，確保可取得本次登入時間與 IP" },
+        { "tag": "fixed", "text": "前端登入後會立即補入 currentLogin，避免列表暫時缺少本次登入紀錄" },
+        { "tag": "improved", "text": "管理員登入紀錄與全站登入紀錄同步套用本次登入即時顯示邏輯" }
+      ]
+    },
     {
       "version": "3.35.1",
       "date": "2026-03-21",

@@ -998,20 +998,32 @@ function getRequestIp(req) {
 
 function recordLoginAudit(user, req, method = 'password') {
   if (!user?.id) return;
+  const loginId = uid();
+  const loginAt = Date.now();
+  const ipAddress = getRequestIp(req);
+  const loginMethod = String(method || 'password').trim().toLowerCase();
+  const isAdminLogin = user.is_admin ? 1 : 0;
   db.run(
     `INSERT INTO login_audit_logs (id, user_id, email, login_at, ip_address, login_method, is_admin_login)
      VALUES (?, ?, ?, ?, ?, ?, ?)`,
     [
-      uid(),
+      loginId,
       user.id,
       normalizeEmail(user.email),
-      Date.now(),
-      getRequestIp(req),
-      String(method || 'password').trim().toLowerCase(),
-      user.is_admin ? 1 : 0,
+      loginAt,
+      ipAddress,
+      loginMethod,
+      isAdminLogin,
     ]
   );
   saveDB();
+  return {
+    id: loginId,
+    loginAt,
+    ipAddress,
+    loginMethod,
+    isAdminLogin: !!isAdminLogin,
+  };
 }
 
 function deleteUserData(userId) {
@@ -1124,10 +1136,14 @@ app.post('/api/auth/login', async (req, res) => {
 
   // 登入成功，清除失敗記錄
   delete loginAttempts[emailLower];
-  recordLoginAudit(user, req, 'password');
+  const currentLogin = recordLoginAudit(user, req, 'password');
 
   const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: JWT_EXPIRES });
-  res.json({ token, user: { id: user.id, email: user.email, displayName: user.display_name, avatarUrl: user.avatar_url || '', themeMode: normalizeThemeMode(user.theme_mode), isAdmin: !!user.is_admin } });
+  res.json({
+    token,
+    user: { id: user.id, email: user.email, displayName: user.display_name, avatarUrl: user.avatar_url || '', themeMode: normalizeThemeMode(user.theme_mode), isAdmin: !!user.is_admin },
+    currentLogin,
+  });
 });
 
 function trackFailedLogin(email) {
@@ -1526,7 +1542,7 @@ app.post('/api/auth/google', async (req, res) => {
       }
     }
 
-    recordLoginAudit(user, req, 'google');
+    const currentLogin = recordLoginAudit(user, req, 'google');
     const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: JWT_EXPIRES });
     res.json({
       token,
@@ -1534,6 +1550,7 @@ app.post('/api/auth/google', async (req, res) => {
         id: user.id, email: user.email, displayName: user.display_name,
         googleLinked: true, avatarUrl: user.avatar_url || '', themeMode: normalizeThemeMode(user.theme_mode), isAdmin: !!user.is_admin,
       },
+      currentLogin,
     });
   } catch (e) {
     console.error('Google SSO 錯誤:', e.message);

@@ -492,6 +492,46 @@ input, select, button, textarea { font-family: inherit; font-size: inherit; }
 /* ===== 設定面板 ===== */
 .settings-panel { display: none; }
 .settings-panel.active { display: block; }
+.system-message-list {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 420px;
+  overflow: auto;
+}
+.system-message-item {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: var(--surface);
+}
+.system-message-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.system-message-level {
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+.system-message-level.info { background: #dbeafe; color: #1d4ed8; }
+.system-message-level.success { background: #d1fae5; color: #047857; }
+.system-message-level.error { background: #fee2e2; color: #991b1b; }
+.system-message-time {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+.system-message-text {
+  font-size: 13px;
+  color: var(--text-primary);
+  line-height: 1.5;
+  word-break: break-word;
+}
 .settings-section { margin-bottom: 24px; }
 .section-header {
   display: flex; justify-content: space-between; align-items: center;

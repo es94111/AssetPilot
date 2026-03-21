@@ -87,21 +87,48 @@ const App = (() => {
   }
 
   const API = {
+    async parseResponse(r) {
+      const text = await r.text();
+      const contentType = (r.headers.get('content-type') || '').toLowerCase();
+      const isJson = contentType.includes('application/json');
+
+      if (!text) return {};
+      if (isJson) {
+        try {
+          return JSON.parse(text);
+        } catch (e) {
+          throw new Error('伺服器回傳 JSON 格式錯誤，請稍後再試');
+        }
+      }
+
+      // 常見於 API 路由不存在或後端尚未重啟時，會回傳 index.html
+      if (text.trim().startsWith('<!DOCTYPE') || text.trim().startsWith('<html')) {
+        throw new Error('伺服器回傳非 JSON 內容，請確認後端已更新並重新啟動');
+      }
+
+      try {
+        return JSON.parse(text);
+      } catch (e) {
+        throw new Error('伺服器回應格式無法解析，請稍後再試');
+      }
+    },
     async get(url) {
       const r = await fetch(url, { headers: authHeaders() });
       if (r.status === 401) { logout(); throw new Error('請先登入'); }
-      return r.json();
+      const data = await this.parseResponse(r);
+      if (!r.ok) throw new Error(data.error || `操作失敗 (${r.status})`);
+      return data;
     },
     async post(url, body) {
       const r = await fetch(url, { method: 'POST', headers: authHeaders(), body: JSON.stringify(body) });
-      const data = await r.json();
+      const data = await this.parseResponse(r);
       if (r.status === 401) { logout(); throw new Error('請先登入'); }
       if (!r.ok) throw new Error(data.error || '操作失敗');
       return data;
     },
     async put(url, body) {
       const r = await fetch(url, { method: 'PUT', headers: authHeaders(), body: JSON.stringify(body) });
-      const data = await r.json();
+      const data = await this.parseResponse(r);
       if (r.status === 401) { logout(); throw new Error('請先登入'); }
       if (!r.ok) throw new Error(data.error || '操作失敗');
       return data;
@@ -109,11 +136,13 @@ const App = (() => {
     async patch(url) {
       const r = await fetch(url, { method: 'PATCH', headers: authHeaders() });
       if (r.status === 401) { logout(); throw new Error('請先登入'); }
-      return r.json();
+      const data = await this.parseResponse(r);
+      if (!r.ok) throw new Error(data.error || `操作失敗 (${r.status})`);
+      return data;
     },
     async del(url) {
       const r = await fetch(url, { method: 'DELETE', headers: authHeaders() });
-      const data = await r.json();
+      const data = await this.parseResponse(r);
       if (r.status === 401) { logout(); throw new Error('請先登入'); }
       if (!r.ok) throw new Error(data.error || '操作失敗');
       return data;

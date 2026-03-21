@@ -224,6 +224,15 @@ async function initDB() {
     created_at TEXT
   )`);
 
+  db.run(`CREATE TABLE IF NOT EXISTS system_settings (
+    id INTEGER PRIMARY KEY CHECK(id = 1),
+    public_registration INTEGER DEFAULT 1,
+    allowed_registration_emails TEXT DEFAULT '',
+    updated_at INTEGER DEFAULT 0,
+    updated_by TEXT DEFAULT ''
+  )`);
+  db.run("INSERT OR IGNORE INTO system_settings (id, public_registration, allowed_registration_emails, updated_at, updated_by) VALUES (1, 1, '', ?, '')", [Date.now()]);
+
   db.run(`CREATE TABLE IF NOT EXISTS categories (
     id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL,
@@ -325,6 +334,22 @@ async function initDB() {
     db.run("UPDATE users SET theme_mode = 'system' WHERE theme_mode IS NULL OR theme_mode = ''");
     saveDB();
   } catch (e) { /* 欄位已存在則忽略 */ }
+
+  // 資料庫升級：為 users 加入管理員欄位
+  try {
+    db.run("ALTER TABLE users ADD COLUMN is_admin INTEGER DEFAULT 0");
+    saveDB();
+  } catch (e) { /* 欄位已存在則忽略 */ }
+
+  // 若舊資料沒有管理員，將第一位使用者設為管理員
+  const hasAdmin = queryOne("SELECT id FROM users WHERE is_admin = 1 LIMIT 1");
+  if (!hasAdmin) {
+    const firstUser = queryOne("SELECT id FROM users ORDER BY created_at ASC, rowid ASC LIMIT 1");
+    if (firstUser?.id) {
+      db.run("UPDATE users SET is_admin = 1 WHERE id = ?", [firstUser.id]);
+      saveDB();
+    }
+  }
 
   // 資料庫升級：為 categories 加入 parent_id 欄位
   try {
@@ -807,6 +832,78 @@ function queryOne(sql, params = []) {
   return rows.length > 0 ? rows[0] : null;
 }
 
+function normalizeEmail(email) {
+  return String(email || '').trim().toLowerCase();
+}
+
+function parseAllowedRegistrationEmails(value) {
+  const source = Array.isArray(value) ? value.join('\n') : String(value || '');
+  return Array.from(new Set(
+    source
+      .split(/[\n,;\s]+/)
+      .map(v => normalizeEmail(v))
+      .filter(v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v))
+  ));
+}
+
+function getSystemSettings() {
+  const row = queryOne("SELECT public_registration, allowed_registration_emails FROM system_settings WHERE id = 1") || {
+    public_registration: 1,
+    allowed_registration_emails: '',
+  };
+  const allowedRegistrationEmails = parseAllowedRegistrationEmails(row.allowed_registration_emails);
+  return {
+    publicRegistration: !!row.public_registration,
+    allowedRegistrationEmails,
+  };
+}
+
+function getUserCount() {
+  const row = queryOne("SELECT COUNT(1) AS count FROM users");
+  return Number(row?.count || 0);
+}
+
+function canSelfRegister(email) {
+  const emailLower = normalizeEmail(email);
+  if (!emailLower) {
+    return { ok: false, error: '電子郵件格式不正確' };
+  }
+  if (getUserCount() === 0) {
+    return { ok: true };
+  }
+
+  const settings = getSystemSettings();
+  const allowSet = new Set(settings.allowedRegistrationEmails);
+
+  if (allowSet.size > 0) {
+    if (allowSet.has(emailLower)) return { ok: true };
+    return { ok: false, error: '此 Email 未被管理員允許註冊' };
+  }
+
+  if (!settings.publicRegistration) {
+    return { ok: false, error: '目前已關閉公開註冊，請聯絡管理員建立帳號' };
+  }
+
+  return { ok: true };
+}
+
+function isUserAdmin(userId) {
+  const row = queryOne("SELECT is_admin FROM users WHERE id = ?", [userId]);
+  return !!row?.is_admin;
+}
+
+function deleteUserData(userId) {
+  const tables = [
+    'stock_dividends', 'stock_transactions', 'stocks',
+    'transactions', 'budgets', 'recurring', 'accounts', 'categories',
+    'exchange_rates', 'exchange_rate_settings', 'stock_settings'
+  ];
+  tables.forEach(t => {
+    db.run(`DELETE FROM ${t} WHERE user_id = ?`, [userId]);
+  });
+  db.run("DELETE FROM users WHERE id = ?", [userId]);
+}
+
 // ═══════════════════════════════════════
 // Auth Middleware
 // ═══════════════════════════════════════
@@ -824,6 +921,13 @@ function authMiddleware(req, res, next) {
   } catch {
     return res.status(401).json({ error: '登入已過期，請重新登入' });
   }
+}
+
+function adminMiddleware(req, res, next) {
+  if (!isUserAdmin(req.userId)) {
+    return res.status(403).json({ error: '需要管理員權限' });
+  }
+  next();
 }
 
 // ═══════════════════════════════════════
@@ -844,21 +948,29 @@ app.post('/api/auth/register', async (req, res) => {
   if (!/[a-zA-Z]/.test(password) || !/\d/.test(password)) {
     return res.status(400).json({ error: '密碼需包含英文字母與數字' });
   }
-  const existing = queryOne("SELECT id FROM users WHERE email = ?", [email.toLowerCase()]);
+  const emailLower = normalizeEmail(email);
+  const registerCheck = canSelfRegister(emailLower);
+  if (!registerCheck.ok) {
+    return res.status(403).json({ error: registerCheck.error });
+  }
+
+  const existing = queryOne("SELECT id FROM users WHERE email = ?", [emailLower]);
   if (existing) {
     return res.status(400).json({ error: '此電子郵件已被註冊' });
   }
 
   const id = uid();
+  const firstUser = getUserCount() === 0;
+  const isAdmin = firstUser ? 1 : 0;
   const passwordHash = await bcrypt.hash(password, 10);
-  db.run("INSERT INTO users (id, email, password_hash, display_name, has_password, created_at) VALUES (?,?,?,?,1,?)",
-    [id, email.toLowerCase(), passwordHash, displayName, todayStr()]);
+  db.run("INSERT INTO users (id, email, password_hash, display_name, has_password, is_admin, created_at) VALUES (?,?,?,?,1,?,?)",
+    [id, emailLower, passwordHash, displayName, isAdmin, todayStr()]);
 
   createDefaultsForUser(id);
   saveDB();
 
   const token = jwt.sign({ userId: id }, JWT_SECRET, { expiresIn: JWT_EXPIRES });
-  res.json({ token, user: { id, email: email.toLowerCase(), displayName, themeMode: 'system' } });
+  res.json({ token, user: { id, email: emailLower, displayName, themeMode: 'system', isAdmin: !!isAdmin } });
 });
 
 app.post('/api/auth/login', async (req, res) => {
@@ -892,7 +1004,7 @@ app.post('/api/auth/login', async (req, res) => {
   delete loginAttempts[emailLower];
 
   const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: JWT_EXPIRES });
-  res.json({ token, user: { id: user.id, email: user.email, displayName: user.display_name, avatarUrl: user.avatar_url || '', themeMode: normalizeThemeMode(user.theme_mode) } });
+  res.json({ token, user: { id: user.id, email: user.email, displayName: user.display_name, avatarUrl: user.avatar_url || '', themeMode: normalizeThemeMode(user.theme_mode), isAdmin: !!user.is_admin } });
 });
 
 function trackFailedLogin(email) {
@@ -904,9 +1016,15 @@ function trackFailedLogin(email) {
 
 // 前端取得公開設定（Google Client ID 等）
 app.get('/api/config', (req, res) => {
+  const settings = getSystemSettings();
+  const userCount = getUserCount();
+  const registrationEnabled = userCount === 0 || settings.publicRegistration || settings.allowedRegistrationEmails.length > 0;
   res.json({
     googleClientId: GOOGLE_CLIENT_ID || null,
     googleCodeFlow: !!(GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET), // 有 secret 時使用 code flow
+    registrationEnabled,
+    publicRegistration: settings.publicRegistration,
+    allowlistEnabled: settings.allowedRegistrationEmails.length > 0,
   });
 });
 
@@ -1249,10 +1367,17 @@ app.post('/api/auth/google', async (req, res) => {
     let user = queryOne("SELECT * FROM users WHERE google_id = ?", [googleId]);
     if (!user) user = queryOne("SELECT * FROM users WHERE email = ?", [email]);
     if (!user) {
+      const registerCheck = canSelfRegister(email);
+      if (!registerCheck.ok) {
+        return res.status(403).json({ error: registerCheck.error });
+      }
+
       const id = uid();
+      const firstUser = getUserCount() === 0;
+      const isAdmin = firstUser ? 1 : 0;
       const randomHash = await bcrypt.hash(uid() + Date.now(), 10);
-      db.run("INSERT INTO users (id, email, password_hash, display_name, google_id, avatar_url, created_at) VALUES (?,?,?,?,?,?,?)",
-        [id, email, randomHash, name, googleId, picture, todayStr()]);
+      db.run("INSERT INTO users (id, email, password_hash, display_name, google_id, avatar_url, is_admin, created_at) VALUES (?,?,?,?,?,?,?,?)",
+        [id, email, randomHash, name, googleId, picture, isAdmin, todayStr()]);
       createDefaultsForUser(id);
       saveDB();
       user = queryOne("SELECT * FROM users WHERE id = ?", [id]);
@@ -1277,7 +1402,7 @@ app.post('/api/auth/google', async (req, res) => {
       token,
       user: {
         id: user.id, email: user.email, displayName: user.display_name,
-        googleLinked: true, avatarUrl: user.avatar_url || '', themeMode: normalizeThemeMode(user.theme_mode),
+        googleLinked: true, avatarUrl: user.avatar_url || '', themeMode: normalizeThemeMode(user.theme_mode), isAdmin: !!user.is_admin,
       },
     });
   } catch (e) {
@@ -1287,15 +1412,99 @@ app.post('/api/auth/google', async (req, res) => {
 });
 
 app.get('/api/auth/me', authMiddleware, (req, res) => {
-  const user = queryOne("SELECT id, email, display_name, google_id, has_password, avatar_url, theme_mode FROM users WHERE id = ?", [req.userId]);
+  const user = queryOne("SELECT id, email, display_name, google_id, has_password, avatar_url, theme_mode, is_admin FROM users WHERE id = ?", [req.userId]);
   if (!user) return res.status(404).json({ error: '使用者不存在' });
-  res.json({ user: { id: user.id, email: user.email, displayName: user.display_name, googleLinked: !!user.google_id, hasPassword: !!user.has_password, avatarUrl: user.avatar_url || '', themeMode: normalizeThemeMode(user.theme_mode) } });
+  res.json({ user: { id: user.id, email: user.email, displayName: user.display_name, googleLinked: !!user.google_id, hasPassword: !!user.has_password, avatarUrl: user.avatar_url || '', themeMode: normalizeThemeMode(user.theme_mode), isAdmin: !!user.is_admin } });
 });
 
 // ═══════════════════════════════════════
 // 以下所有 API 路由需要驗證
 // ═══════════════════════════════════════
 app.use('/api', authMiddleware);
+
+app.get('/api/admin/settings', adminMiddleware, (req, res) => {
+  const settings = getSystemSettings();
+  res.json(settings);
+});
+
+app.put('/api/admin/settings', adminMiddleware, (req, res) => {
+  const publicRegistration = !!req.body?.publicRegistration;
+  const allowedRegistrationEmails = parseAllowedRegistrationEmails(req.body?.allowedRegistrationEmails);
+  db.run(
+    "UPDATE system_settings SET public_registration = ?, allowed_registration_emails = ?, updated_at = ?, updated_by = ? WHERE id = 1",
+    [publicRegistration ? 1 : 0, allowedRegistrationEmails.join('\n'), Date.now(), req.userId]
+  );
+  saveDB();
+  res.json({ success: true, publicRegistration, allowedRegistrationEmails });
+});
+
+app.get('/api/admin/users', adminMiddleware, (req, res) => {
+  const users = queryAll("SELECT id, email, display_name, created_at, google_id, has_password, is_admin FROM users ORDER BY created_at DESC, email ASC");
+  res.json(users.map(u => ({
+    id: u.id,
+    email: u.email,
+    displayName: u.display_name,
+    createdAt: u.created_at,
+    googleLinked: !!u.google_id,
+    hasPassword: !!u.has_password,
+    isAdmin: !!u.is_admin,
+  })));
+});
+
+app.post('/api/admin/users', adminMiddleware, async (req, res) => {
+  const email = normalizeEmail(req.body?.email);
+  const password = String(req.body?.password || '');
+  const displayName = String(req.body?.displayName || '').trim();
+  const isAdmin = !!req.body?.isAdmin;
+
+  if (!email || !password || !displayName) {
+    return res.status(400).json({ error: '請填寫所有欄位' });
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return res.status(400).json({ error: '電子郵件格式不正確' });
+  }
+  if (password.length < 8) {
+    return res.status(400).json({ error: '密碼長度至少 8 字元' });
+  }
+  if (!/[a-zA-Z]/.test(password) || !/\d/.test(password)) {
+    return res.status(400).json({ error: '密碼需包含英文字母與數字' });
+  }
+  const existing = queryOne("SELECT id FROM users WHERE email = ?", [email]);
+  if (existing) {
+    return res.status(400).json({ error: '此電子郵件已被註冊' });
+  }
+
+  const id = uid();
+  const passwordHash = await bcrypt.hash(password, 10);
+  db.run(
+    "INSERT INTO users (id, email, password_hash, display_name, has_password, is_admin, created_at) VALUES (?,?,?,?,1,?,?)",
+    [id, email, passwordHash, displayName, isAdmin ? 1 : 0, todayStr()]
+  );
+  createDefaultsForUser(id);
+  saveDB();
+
+  res.json({ success: true, user: { id, email, displayName, isAdmin } });
+});
+
+app.delete('/api/admin/users/:id', adminMiddleware, (req, res) => {
+  const targetId = req.params.id;
+  if (!targetId) return res.status(400).json({ error: '缺少使用者 ID' });
+  if (targetId === req.userId) return res.status(400).json({ error: '不可透過管理員介面刪除目前登入帳號' });
+
+  const user = queryOne("SELECT id, is_admin FROM users WHERE id = ?", [targetId]);
+  if (!user) return res.status(404).json({ error: '使用者不存在' });
+
+  if (user.is_admin) {
+    const adminCount = Number(queryOne("SELECT COUNT(1) AS count FROM users WHERE is_admin = 1")?.count || 0);
+    if (adminCount <= 1) {
+      return res.status(400).json({ error: '系統至少需保留一位管理員' });
+    }
+  }
+
+  deleteUserData(targetId);
+  saveDB();
+  res.json({ success: true });
+});
 
 let isUpdatingApp = false;
 
@@ -1369,6 +1578,13 @@ app.post('/api/account/delete', async (req, res) => {
   const user = queryOne("SELECT * FROM users WHERE id = ?", [req.userId]);
   if (!user) return res.status(404).json({ error: '使用者不存在' });
 
+  if (user.is_admin) {
+    const adminCount = Number(queryOne("SELECT COUNT(1) AS count FROM users WHERE is_admin = 1")?.count || 0);
+    if (adminCount <= 1) {
+      return res.status(400).json({ error: '系統至少需保留一位管理員，請先指定其他管理員' });
+    }
+  }
+
   // 有密碼的帳號需驗證密碼；Google-only 帳號靠前端二次確認
   if (user.has_password) {
     if (!password) return res.status(400).json({ error: '請輸入密碼以確認刪除' });
@@ -1376,15 +1592,7 @@ app.post('/api/account/delete', async (req, res) => {
     if (!valid) return res.status(400).json({ error: '密碼錯誤，請重新輸入' });
   }
 
-  // 刪除使用者所有資料
-  const tables = [
-    'stock_dividends', 'stock_transactions', 'stocks',
-    'transactions', 'budgets', 'recurring', 'accounts', 'categories'
-  ];
-  tables.forEach(t => {
-    db.run(`DELETE FROM ${t} WHERE user_id = ?`, [req.userId]);
-  });
-  db.run("DELETE FROM users WHERE id = ?", [req.userId]);
+  deleteUserData(req.userId);
   saveDB();
   res.json({ success: true });
 });

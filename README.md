@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-3.31-blue" alt="version">
+  <img src="https://img.shields.io/badge/version-3.32-blue" alt="version">
   <img src="https://img.shields.io/badge/node-%3E%3D18-green" alt="node">
   <img src="https://img.shields.io/badge/license-MIT-orange" alt="license">
   <img src="https://img.shields.io/badge/docker-ready-2496ED" alt="docker">
@@ -33,6 +33,7 @@
 - **API 使用與授權頁** — 左側選單新增 API 清單與授權說明，集中顯示出處資訊
 - **主題切換容錯** — 深色/淺色切換先本機生效，後端同步異常時不影響當下使用
 - **Google SSO** — 一鍵 Google 帳號登入（選配）
+- **管理員模式** — 第一位使用者自動成為管理員，可控管註冊政策與使用者帳號
 - **資料庫加密** — ChaCha20-Poly1305 + PBKDF2-SHA256 全資料庫加密
 - **響應式設計** — 桌面與手機皆可使用
 
@@ -236,6 +237,19 @@ docker run -d \
   - `自動更新匯率`：由使用者自行決定是否開啟
 - 啟用自動更新後，系統會在進入匯率設定時依節流策略自動同步，並以 `YYYY-MM-DD HH:mm:ss`（精確到秒）顯示上次更新時間。
 - 全球即時匯率 API 使用授權：CC BY-SA，系統於左側選單 `API 使用與授權` 明確標示出處與授權資訊。
+
+### 管理員模式
+
+- 第一個建立的使用者會自動成為管理員。
+- 管理員可在 `設定 > 管理員` 進行以下操作：
+  - 開關公開註冊
+  - 設定可註冊 Email 白名單（每行一個）
+  - 建立新帳號（可直接指定為管理員）
+  - 刪除指定帳號
+- 註冊策略同時套用於一般註冊與 Google 首次註冊：
+  - 若設定白名單，只有白名單內 Email 可註冊
+  - 若未設定白名單且關閉公開註冊，僅能由管理員建立帳號
+- 系統保護規則：最後一位管理員不可被刪除。
 
 ### 自行建置映像檔
 

@@ -1,6 +1,19 @@
 {
-  "currentVersion": "3.31",
+  "currentVersion": "3.32",
   "releases": [
+    {
+      "version": "3.32",
+      "date": "2026-03-21",
+      "title": "管理員模式與註冊控管",
+      "type": "feature",
+      "changes": [
+        { "tag": "new", "text": "新增管理員模式：第一個建立的使用者自動成為管理員" },
+        { "tag": "new", "text": "新增管理員設定：可切換是否開放公開註冊，並可設定 Email 註冊白名單" },
+        { "tag": "new", "text": "新增管理員使用者管理：可建立帳號、刪除帳號並檢視使用者清單" },
+        { "tag": "improved", "text": "一般註冊與 Google 首次註冊皆套用相同註冊策略，未授權 Email 會被阻擋" },
+        { "tag": "fixed", "text": "新增最後一位管理員保護機制，避免系統失去管理員" }
+      ]
+    },
     {
       "version": "3.31",
       "date": "2026-03-21",

@@ -670,6 +670,7 @@
         <button class="tab" data-settings="recurring">固定收支</button>
         <button class="tab" data-settings="export">資料匯出匯入</button>
         <button class="tab" data-settings="account">帳號設定</button>
+        <button class="tab" data-settings="admin" style="display:none">管理員</button>
       </div>
       <!-- 分類管理 -->
       <div class="settings-panel active" id="panel-categories">
@@ -911,6 +912,81 @@
                 <i class="fas fa-trash"></i> 永久刪除帳號
               </button>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 管理員設定 -->
+      <div class="settings-panel" id="panel-admin">
+        <div class="card">
+          <h3><i class="fas fa-user-shield" style="margin-right:8px;color:var(--primary)"></i>註冊策略</h3>
+          <div class="theme-toggle-row" style="margin-top:12px">
+            <div>
+              <div style="font-weight:600">公開註冊</div>
+              <div class="import-hint" style="margin-top:4px">關閉後，僅 Email 白名單可註冊（或由管理員建立帳號）。</div>
+            </div>
+            <label style="display:flex;align-items:center;gap:8px">
+              <input type="checkbox" id="adminPublicRegistrationToggle">
+              <span>開放公開註冊</span>
+            </label>
+          </div>
+          <div class="form-row" style="margin-top:16px">
+            <label>Email 白名單（每行一個）</label>
+            <textarea id="adminAllowedEmails" class="form-input" rows="6" placeholder="example1@mail.com&#10;example2@mail.com"></textarea>
+          </div>
+          <div class="import-actions" style="justify-content:flex-start">
+            <button class="btn btn-primary" id="saveAdminSettingsBtn"><i class="fas fa-save"></i> 儲存註冊策略</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3><i class="fas fa-user-plus" style="margin-right:8px;color:var(--primary)"></i>建立使用者</h3>
+          <form id="adminCreateUserForm" class="admin-create-user-form">
+            <div class="admin-grid-2">
+              <div class="form-row">
+                <label>電子信箱</label>
+                <input type="email" id="adminCreateEmail" class="form-input" required placeholder="user@example.com">
+              </div>
+              <div class="form-row">
+                <label>顯示名稱</label>
+                <input type="text" id="adminCreateName" class="form-input" maxlength="50" required placeholder="新使用者名稱">
+              </div>
+            </div>
+            <div class="admin-grid-2">
+              <div class="form-row">
+                <label>初始密碼</label>
+                <input type="password" id="adminCreatePassword" class="form-input" minlength="8" required placeholder="至少 8 碼且含英數">
+              </div>
+              <div class="form-row admin-checkbox-row">
+                <label>
+                  <input type="checkbox" id="adminCreateIsAdmin">
+                  建立為管理員
+                </label>
+              </div>
+            </div>
+            <div class="auth-error" id="adminCreateUserError"></div>
+            <div class="import-actions" style="justify-content:flex-start">
+              <button type="submit" class="btn btn-primary"><i class="fas fa-user-plus"></i> 建立帳號</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="card">
+          <h3><i class="fas fa-users" style="margin-right:8px;color:var(--primary)"></i>使用者管理</h3>
+          <div class="table-wrap" style="overflow:auto">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Email</th>
+                  <th>顯示名稱</th>
+                  <th>角色</th>
+                  <th>登入方式</th>
+                  <th>建立日期</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="adminUserBody"></tbody>
+            </table>
           </div>
         </div>
       </div>

@@ -727,37 +727,6 @@
             </div>
           </div>
         </div>
-        <div class="card" style="margin-top:16px">
-          <h3>資料自動備份與還原</h3>
-          <p class="import-hint" id="backupSettingsHint">系統會自動定期備份資料，可手動建立備份並從清單還原。</p>
-          <div class="form-grid two-col" style="margin-top:10px">
-            <div class="form-group">
-              <label class="form-label" for="backupIntervalHours">自動備份間隔（小時）</label>
-              <input class="form-input" type="number" id="backupIntervalHours" min="1" max="168" step="1">
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="backupKeepCount">最多保留份數</label>
-              <input class="form-input" type="number" id="backupKeepCount" min="3" max="500" step="1">
-            </div>
-          </div>
-          <div class="export-btns" style="gap:8px; margin-top:8px">
-            <button class="btn" id="backupNowBtn"><i class="fas fa-floppy-disk"></i> 立即備份</button>
-            <button class="btn btn-ghost" id="downloadBackupBtn"><i class="fas fa-download"></i> 下載備份</button>
-            <label class="btn btn-ghost" style="cursor:pointer">
-              <i class="fas fa-upload"></i> 上傳備份
-              <input type="file" id="uploadBackupInput" accept=".db" hidden>
-            </label>
-            <button class="btn btn-outline danger" id="deleteBackupBtn"><i class="fas fa-trash"></i> 刪除備份</button>
-            <button class="btn" id="saveBackupSettingsBtn"><i class="fas fa-save"></i> 儲存備份設定</button>
-            <button class="btn btn-outline danger" id="restoreBackupBtn"><i class="fas fa-rotate-left"></i> 還原備份</button>
-          </div>
-          <div class="filter-group" style="margin-top:10px;align-items:center;gap:8px;flex-wrap:wrap">
-            <label for="backupSelect">備份清單</label>
-            <select id="backupSelect" class="form-input" style="min-width:280px;max-width:100%"></select>
-            <button class="btn btn-ghost" id="refreshBackupListBtn" type="button"><i class="fas fa-rotate"></i> 重新整理</button>
-          </div>
-          <div class="import-result" id="backupResult" style="display:none;margin-top:10px"></div>
-        </div>
       </div>
       <!-- 帳號設定 -->
       <div class="settings-panel" id="panel-account">

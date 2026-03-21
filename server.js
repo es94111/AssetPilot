@@ -4,7 +4,9 @@ require('dotenv').config();
 
 const path = require('path');
 const fs = require('fs');
+const os = require('os');
 const { spawn } = require('child_process');
+const AdmZip = require('adm-zip');
 
 // 2. 再載入 data/.env（Docker 持久化密鑰用）
 //    Docker 環境中密鑰儲存在 /app/data/.env，必須優先載入
@@ -605,6 +607,7 @@ const CHANGELOG_GITHUB_URL = CHANGELOG_SOURCE_URL
   .replace('https://github.com/', 'https://raw.githubusercontent.com/')
   .replace('/blob/', '/');
 const CHANGELOG_GITHUB_API_URL = 'https://api.github.com/repos/es94111/AssetPilot/contents/changelog.json?ref=main';
+const APP_UPDATE_ZIP_URL = 'https://codeload.github.com/es94111/AssetPilot/zip/refs/heads/main';
 let remoteChangelogCache = null;
 let remoteChangelogCacheTime = 0;
 const REMOTE_CHANGELOG_TTL = 30 * 60 * 1000; // 30 分鐘快取
@@ -722,30 +725,104 @@ function trimOutput(text, max = 3000) {
   return s.slice(0, max) + '\n...(輸出過長已截斷)';
 }
 
+async function downloadFile(url, outPath) {
+  const resp = await fetch(url, {
+    headers: { 'User-Agent': 'AssetPilot-Updater' }
+  });
+  if (!resp.ok) {
+    throw new Error(`下載更新檔失敗（HTTP ${resp.status}）`);
+  }
+  const buf = Buffer.from(await resp.arrayBuffer());
+  fs.writeFileSync(outPath, buf);
+}
+
+function shouldSkipUpdatePath(relPath) {
+  const p = relPath.replace(/\\/g, '/');
+  if (!p) return false;
+  if (p === '.git' || p.startsWith('.git/')) return true;
+  if (p === 'node_modules' || p.startsWith('node_modules/')) return true;
+  if (p === 'data' || p.startsWith('data/')) return true;
+  if (p === '.env') return true;
+  if (p === 'database.db') return true;
+  return false;
+}
+
+async function copyDirectoryWithOverwrite(srcDir, dstDir, rootSrcDir = srcDir) {
+  const entries = await fs.promises.readdir(srcDir, { withFileTypes: true });
+  for (const entry of entries) {
+    const srcPath = path.join(srcDir, entry.name);
+    const relPath = path.relative(rootSrcDir, srcPath);
+    if (shouldSkipUpdatePath(relPath)) continue;
+
+    const dstPath = path.join(dstDir, relPath);
+    if (entry.isDirectory()) {
+      await fs.promises.mkdir(dstPath, { recursive: true });
+      await copyDirectoryWithOverwrite(srcPath, dstDir, rootSrcDir);
+    } else if (entry.isFile()) {
+      await fs.promises.mkdir(path.dirname(dstPath), { recursive: true });
+      await fs.promises.copyFile(srcPath, dstPath);
+    }
+  }
+}
+
+async function applyZipUpdate(cwd) {
+  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'assetpilot-update-'));
+  const zipPath = path.join(tempRoot, 'update.zip');
+  const extractPath = path.join(tempRoot, 'extract');
+
+  try {
+    await downloadFile(APP_UPDATE_ZIP_URL, zipPath);
+    const zip = new AdmZip(zipPath);
+    zip.extractAllTo(extractPath, true);
+
+    const dirs = fs.readdirSync(extractPath, { withFileTypes: true }).filter(d => d.isDirectory());
+    if (dirs.length === 0) {
+      throw new Error('更新檔格式錯誤，找不到專案目錄');
+    }
+
+    const sourceRoot = path.join(extractPath, dirs[0].name);
+    await copyDirectoryWithOverwrite(sourceRoot, cwd);
+  } finally {
+    try {
+      fs.rmSync(tempRoot, { recursive: true, force: true });
+    } catch (e) {
+      // 忽略清理失敗
+    }
+  }
+}
+
 async function executeInAppUpdate() {
   const cwd = __dirname;
   const steps = [];
 
-  if (!fs.existsSync(path.join(cwd, '.git'))) {
-    throw new Error('目前環境不是 Git 專案，無法執行自動更新');
-  }
+  const hasGitRepo = fs.existsSync(path.join(cwd, '.git'));
+  let currentBranch = 'main';
 
-  const gitCheck = await runCommand('git', ['rev-parse', '--is-inside-work-tree'], cwd, 15000);
-  if (!gitCheck.ok) {
-    throw new Error('找不到 Git 或 Git 專案狀態異常，請確認伺服器已安裝 Git');
-  }
+  if (hasGitRepo) {
+    const gitCheck = await runCommand('git', ['rev-parse', '--is-inside-work-tree'], cwd, 15000);
+    if (!gitCheck.ok) {
+      throw new Error('找不到 Git 或 Git 專案狀態異常，請確認伺服器已安裝 Git');
+    }
 
-  const branchRes = await runCommand('git', ['rev-parse', '--abbrev-ref', 'HEAD'], cwd, 15000);
-  const currentBranch = (branchRes.stdout || '').trim() || 'main';
+    const branchRes = await runCommand('git', ['rev-parse', '--abbrev-ref', 'HEAD'], cwd, 15000);
+    currentBranch = (branchRes.stdout || '').trim() || 'main';
 
-  const gitPull = await runCommand('git', ['pull', '--ff-only', 'origin', currentBranch], cwd, 2 * 60 * 1000);
-  steps.push({
-    step: `git pull --ff-only origin ${currentBranch}`,
-    ok: gitPull.ok,
-    output: trimOutput((gitPull.stdout || '') + '\n' + (gitPull.stderr || '')),
-  });
-  if (!gitPull.ok) {
-    throw new Error('更新失敗：無法從遠端取得最新程式碼（git pull 失敗）');
+    const gitPull = await runCommand('git', ['pull', '--ff-only', 'origin', currentBranch], cwd, 2 * 60 * 1000);
+    steps.push({
+      step: `git pull --ff-only origin ${currentBranch}`,
+      ok: gitPull.ok,
+      output: trimOutput((gitPull.stdout || '') + '\n' + (gitPull.stderr || '')),
+    });
+    if (!gitPull.ok) {
+      throw new Error('更新失敗：無法從遠端取得最新程式碼（git pull 失敗）');
+    }
+  } else {
+    await applyZipUpdate(cwd);
+    steps.push({
+      step: 'download and apply latest GitHub zip',
+      ok: true,
+      output: '已套用 GitHub 最新程式碼（Docker / 無 .git 模式）',
+    });
   }
 
   const npmCmd = process.platform === 'win32' ? 'npm.cmd' : 'npm';
@@ -760,6 +837,7 @@ async function executeInAppUpdate() {
   }
 
   return {
+    mode: hasGitRepo ? 'git' : 'zip',
     branch: currentBranch,
     steps,
     restartRequired: true,

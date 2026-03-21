@@ -1,6 +1,17 @@
 {
-  "currentVersion": "3.16.4",
+  "currentVersion": "3.16.5",
   "releases": [
+    {
+      "version": "3.16.5",
+      "date": "2026-03-21",
+      "title": "Docker 一鍵更新支援",
+      "type": "feature",
+      "changes": [
+        { "tag": "new", "text": "一鍵更新新增 Docker / 無 .git 模式：自動下載 GitHub 最新程式碼壓縮檔並覆蓋更新" },
+        { "tag": "improved", "text": "保留 data、database.db、.env、node_modules 等本地資料，避免更新時覆蓋使用者環境與資料庫" },
+        { "tag": "fixed", "text": "修正容器內顯示『目前環境不是 Git 專案，無法執行自動更新』導致無法更新的問題" }
+      ]
+    },
     {
       "version": "3.16.4",
       "date": "2026-03-21",

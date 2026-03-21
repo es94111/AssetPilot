@@ -1,6 +1,18 @@
 {
-  "currentVersion": "3.34.1",
+  "currentVersion": "3.35",
   "releases": [
+    {
+      "version": "3.35",
+      "date": "2026-03-21",
+      "title": "登入時間與 IP 稽核紀錄",
+      "type": "feature",
+      "changes": [
+        { "tag": "new", "text": "新增使用者登入紀錄：帳號設定可查看最近登入時間、IP 與登入方式" },
+        { "tag": "new", "text": "新增管理員登入紀錄：管理員頁可查看自身管理員登入時間與 IP" },
+        { "tag": "new", "text": "新增全部使用者登入稽核：管理員可檢視全站使用者登入時間與 IP 紀錄" },
+        { "tag": "improved", "text": "登入成功（密碼與 Google SSO）統一寫入稽核資料表，便於追蹤登入安全事件" }
+      ]
+    },
     {
       "version": "3.34.1",
       "date": "2026-03-21",

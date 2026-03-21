@@ -1344,6 +1344,8 @@ const App = (() => {
       const rlSign = s.realizedPL >= 0 ? '+' : '';
       const plArrow = ep >= 0 ? '<i class="fas fa-caret-up"></i>' : '<i class="fas fa-caret-down"></i>';
       const totalReturn = ep + s.realizedPL + s.totalDividend;
+      const taxRateLabel = (s.stockType === 'etf' || s.stockType === 'warrant') ? '0.1%' : '0.3%';
+      const taxTypeLabel = (s.stockType === 'etf') ? 'ETF' : (s.stockType === 'warrant') ? '權證' : '一般股票';
       return `<div class="stock-card">
         <div class="stock-card-header">
           <div class="stock-card-header-left">
@@ -1370,6 +1372,40 @@ const App = (() => {
           <div class="stock-card-item"><span class="label">累計股利</span><span class="value" style="color:var(--today)">${fmt(s.totalDividend)}</span></div>
           <div class="stock-card-item"><span class="label">總報酬</span><span class="value ${totalReturn >= 0 ? 'stock-card-pl-pos' : 'stock-card-pl-neg'}">${totalReturn >= 0 ? '+' : ''}${fmt(totalReturn)}</span></div>
         </div>
+        <details class="stock-card-formula">
+          <summary><i class="fas fa-calculator"></i> 計算公式說明</summary>
+          <div class="formula-content">
+            <div class="formula-section">
+              <div class="formula-title">基本資訊</div>
+              <div class="formula-row"><span class="formula-name">成本均價</span><span class="formula-eq">= 成本金額 ÷ 持有股數</span></div>
+              <div class="formula-row"><span class="formula-name">成本金額</span><span class="formula-eq">= Σ（買進價金 + 手續費）<small>（FIFO 剩餘庫存）</small></span></div>
+              <div class="formula-row"><span class="formula-name">市值</span><span class="formula-eq">= 現價 × 持有股數 = ${(s.currentPrice||0).toLocaleString()} × ${s.totalShares.toLocaleString()} = ${fmt(s.marketValue)}</span></div>
+            </div>
+            <div class="formula-section">
+              <div class="formula-title">預估賣出成本</div>
+              <div class="formula-row"><span class="formula-name">預估手續費</span><span class="formula-eq">= ⌊市值 × 0.1425%⌋，最低 20 元（整股）</span></div>
+              <div class="formula-detail">= ⌊${fmt(s.marketValue)} × 0.001425⌋ = ${fmt(s.estSellFee||0)}</div>
+              <div class="formula-row"><span class="formula-name">預估交易稅</span><span class="formula-eq">= ⌊市值 × ${taxRateLabel}⌋，最低 1 元 <small>（${taxTypeLabel}）</small></span></div>
+              <div class="formula-detail">= ⌊${fmt(s.marketValue)} × ${taxRateLabel}⌋ = ${fmt(s.estSellTax||0)}</div>
+            </div>
+            <div class="formula-section">
+              <div class="formula-title">損益計算</div>
+              <div class="formula-row"><span class="formula-name">預估淨收付</span><span class="formula-eq">= 市值 − 手續費 − 交易稅</span></div>
+              <div class="formula-detail">= ${fmt(s.marketValue)} − ${fmt(s.estSellFee||0)} − ${fmt(s.estSellTax||0)} = ${fmt(s.estimatedNet||0)}</div>
+              <div class="formula-row"><span class="formula-name">預估損益</span><span class="formula-eq">= 預估淨收付 − 成本金額</span></div>
+              <div class="formula-detail">= ${fmt(s.estimatedNet||0)} − ${fmt(s.totalCost)} = <strong class="${plCls}">${plSign}${fmt(ep)}</strong></div>
+              <div class="formula-row"><span class="formula-name">報酬率</span><span class="formula-eq">= 預估損益 ÷ 成本金額 × 100%</span></div>
+              <div class="formula-detail">= ${plSign}${fmt(ep)} ÷ ${fmt(s.totalCost)} = <strong class="${plCls}">${plSign}${rr.toFixed(2)}%</strong></div>
+            </div>
+            <div class="formula-section">
+              <div class="formula-title">總報酬</div>
+              <div class="formula-row"><span class="formula-name">已實現損益</span><span class="formula-eq">= FIFO 逐筆賣出收入 − 對應買入成本</span></div>
+              <div class="formula-row"><span class="formula-name">累計股利</span><span class="formula-eq">= Σ 現金股利</span></div>
+              <div class="formula-row"><span class="formula-name">總報酬</span><span class="formula-eq">= 預估損益 + 已實現損益 + 累計股利</span></div>
+              <div class="formula-detail">= ${plSign}${fmt(ep)} + ${rlSign}${fmt(s.realizedPL)} + ${fmt(s.totalDividend)} = <strong class="${totalReturn >= 0 ? 'stock-card-pl-pos' : 'stock-card-pl-neg'}">${totalReturn >= 0 ? '+' : ''}${fmt(totalReturn)}</strong></div>
+            </div>
+          </div>
+        </details>
         <div class="stock-card-actions">
           <button class="btn-icon" onclick="App.editStock('${s.id}')" title="編輯"><i class="fas fa-pen"></i></button>
           <button class="btn-icon danger" onclick="App.deleteStock('${s.id}')" title="刪除"><i class="fas fa-trash"></i></button>

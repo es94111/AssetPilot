@@ -1,6 +1,18 @@
 {
-  "currentVersion": "3.13",
+  "currentVersion": "3.14",
   "releases": [
+    {
+      "version": "3.14",
+      "date": "2026-03-21",
+      "title": "持股卡片公式說明",
+      "type": "feature",
+      "changes": [
+        { "tag": "new", "text": "持股總覽每張股票卡片新增「計算公式說明」可展開面板" },
+        { "tag": "new", "text": "顯示預估手續費、交易稅、淨收付、損益、報酬率、總報酬的完整計算公式" },
+        { "tag": "new", "text": "公式說明包含實際數值的計算過程，一目了然" },
+        { "tag": "improved", "text": "依股票類型（一般/ETF/權證）顯示對應的交易稅率" }
+      ]
+    },
     {
       "version": "3.13",
       "date": "2026-03-21",

@@ -145,7 +145,33 @@ app.use(cors(ALLOWED_ORIGINS ? {
 
 app.disable('x-powered-by');
 app.use(helmet({
-  contentSecurityPolicy: false,   // 因使用外部 CDN + inline handlers，暫不啟用 CSP
+  contentSecurityPolicy: {
+    useDefaults: true,
+    directives: {
+      defaultSrc: ["'self'"],
+      baseUri: ["'self'"],
+      objectSrc: ["'none'"],
+      frameAncestors: ["'self'"],
+      formAction: ["'self'"],
+      imgSrc: ["'self'", 'data:', 'https:'],
+      styleSrc: ["'self'", "'unsafe-inline'", 'https://cdnjs.cloudflare.com'],
+      fontSrc: ["'self'", 'https://cdnjs.cloudflare.com', 'data:'],
+      scriptSrc: ["'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net', 'https://cdnjs.cloudflare.com', 'https://accounts.google.com'],
+      connectSrc: [
+        "'self'",
+        'https://openapi.twse.com.tw',
+        'https://mis.twse.com.tw',
+        'https://tw.rter.info',
+        'https://oauth2.googleapis.com',
+        'https://www.googleapis.com',
+        'https://api.github.com',
+        'https://raw.githubusercontent.com',
+        'https://codeload.github.com',
+      ],
+      frameSrc: ["'self'", 'https://accounts.google.com'],
+      workerSrc: ["'self'", 'blob:'],
+    },
+  },
   crossOriginEmbedderPolicy: false
 }));
 
@@ -163,7 +189,12 @@ app.use('/api/auth/register', authLimiter);
 app.use('/api/auth/google', authLimiter);
 
 app.use(express.json({ limit: '50mb' }));
-app.use(express.static(__dirname));
+
+// 僅開放必要前端靜態檔，避免專案根目錄檔案外洩
+const PUBLIC_FILES = ['/app.js', '/style.css', '/logo.svg', '/favicon.svg'];
+app.get(PUBLIC_FILES, (req, res) => {
+  res.sendFile(path.join(__dirname, req.path.slice(1)));
+});
 
 let db;
 
@@ -1508,7 +1539,7 @@ app.delete('/api/admin/users/:id', adminMiddleware, (req, res) => {
 
 let isUpdatingApp = false;
 
-app.post('/api/system/update-app', async (req, res) => {
+app.post('/api/system/update-app', adminMiddleware, async (req, res) => {
   if (isUpdatingApp) {
     return res.status(409).json({ error: '系統正在更新中，請稍後再試' });
   }

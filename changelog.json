@@ -1,6 +1,18 @@
 {
-  "currentVersion": "3.33",
+  "currentVersion": "3.34",
   "releases": [
+    {
+      "version": "3.34",
+      "date": "2026-03-21",
+      "title": "安全性修補（權限、靜態檔、CSP）",
+      "type": "fixed",
+      "changes": [
+        { "tag": "fixed", "text": "修正 /api/system/update-app 權限：改為僅管理員可執行" },
+        { "tag": "fixed", "text": "移除專案根目錄整包靜態公開，改為僅白名單前端檔案可直接存取" },
+        { "tag": "improved", "text": "啟用 Content Security Policy（CSP），限制腳本、連線與資源來源" },
+        { "tag": "improved", "text": "版本更新彈窗僅管理員顯示「立即更新」按鈕，降低誤用風險" }
+      ]
+    },
     {
       "version": "3.33",
       "date": "2026-03-21",

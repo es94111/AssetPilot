@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-3.33-blue" alt="version">
+  <img src="https://img.shields.io/badge/version-3.34-blue" alt="version">
   <img src="https://img.shields.io/badge/node-%3E%3D18-green" alt="node">
   <img src="https://img.shields.io/badge/license-MIT-orange" alt="license">
   <img src="https://img.shields.io/badge/docker-ready-2496ED" alt="docker">
@@ -425,8 +425,11 @@ your-domain.com {
 
 - **XSS 防護** — 所有使用者輸入經 `escHtml()` 跳脫
 - **安全標頭** — Helmet（HSTS、X-Content-Type-Options、Referrer-Policy）
+- **CSP 保護** — 啟用 Content Security Policy，限制腳本與外部資源來源
 - **速率限制** — 登入/註冊 API 限制每 IP 每 15 分鐘 20 次
 - **CORS 控制** — 可透過 `ALLOWED_ORIGINS` 限制來源
+- **最小暴露面** — 僅白名單前端檔案可靜態存取，不再公開整個專案根目錄
+- **管理員權限管控** — 系統更新 API 僅允許管理員執行
 - **SRI 驗證** — 外部 CDN 腳本加入完整性驗證
 - **資料庫加密** — ChaCha20-Poly1305 AEAD + PBKDF2-SHA256 金鑰推導
 - **密碼加密** — bcryptjs 雜湊儲存

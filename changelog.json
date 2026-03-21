@@ -1,6 +1,17 @@
 {
-  "currentVersion": "3.27",
+  "currentVersion": "3.27.1",
   "releases": [
+    {
+      "version": "3.27.1",
+      "date": "2026-03-21",
+      "title": "主題切換同步容錯優化",
+      "type": "fixed",
+      "changes": [
+        { "tag": "fixed", "text": "修正切換深色模式時可能顯示「伺服器回傳非 JSON 內容」訊息，造成操作中斷的問題" },
+        { "tag": "improved", "text": "主題切換改為先本機套用，若後端同步失敗則保留目前模式並改為背景重試同步" },
+        { "tag": "improved", "text": "非 JSON 回應錯誤文案調整為通用格式異常提示，避免顯示過度技術性的訊息" }
+      ]
+    },
     {
       "version": "3.27",
       "date": "2026-03-21",

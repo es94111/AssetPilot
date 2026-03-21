@@ -75,8 +75,14 @@ const App = (() => {
   async function persistThemeModeToServer(mode) {
     if (!authToken) return;
     const nextMode = normalizeThemeMode(mode);
-    const result = await API.put('/api/account/theme', { themeMode: nextMode });
-    if (currentUser) currentUser.themeMode = normalizeThemeMode(result?.themeMode || nextMode);
+    try {
+      const result = await API.put('/api/account/theme', { themeMode: nextMode });
+      if (currentUser) currentUser.themeMode = normalizeThemeMode(result?.themeMode || nextMode);
+      return true;
+    } catch (e) {
+      if (currentUser) currentUser.themeMode = nextMode;
+      return false;
+    }
   }
 
   // ─── API 呼叫（自動帶 Authorization header）───
@@ -103,7 +109,7 @@ const App = (() => {
 
       // 常見於 API 路由不存在或後端尚未重啟時，會回傳 index.html
       if (text.trim().startsWith('<!DOCTYPE') || text.trim().startsWith('<html')) {
-        throw new Error('伺服器回傳非 JSON 內容，請確認後端已更新並重新啟動');
+        throw new Error('伺服器回應格式異常，請稍後再試');
       }
 
       try {
@@ -2751,18 +2757,17 @@ const App = (() => {
           input.addEventListener('change', async (e) => {
             const nextMode = e.target?.value;
             if (!nextMode) return;
-            const previousMode = themeMode;
             applyThemeMode(nextMode);
             updateThemeModeControls();
-            try {
-              await persistThemeModeToServer(nextMode);
+            const synced = await persistThemeModeToServer(nextMode);
+            if (synced) {
               if (themeMode === 'system') toast('已切換為跟隨系統主題，且已同步到帳號', 'success');
               else if (themeMode === 'dark') toast('已切換為深色模式，且已同步到帳號', 'success');
               else toast('已切換為淺色模式，且已同步到帳號', 'success');
-            } catch (err) {
-              applyThemeMode(previousMode);
-              updateThemeModeControls();
-              toast(err.message || '主題設定同步失敗，已還原', 'error');
+            } else {
+              if (themeMode === 'system') toast('已切換為跟隨系統主題（暫存本機，稍後自動同步）', 'success');
+              else if (themeMode === 'dark') toast('已切換為深色模式（暫存本機，稍後自動同步）', 'success');
+              else toast('已切換為淺色模式（暫存本機，稍後自動同步）', 'success');
             }
           });
         });

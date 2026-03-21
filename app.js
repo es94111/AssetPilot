@@ -229,6 +229,16 @@ const App = (() => {
 
   // ─── Google SSO ───
   let googleClientId = null;
+  let googleAuthInProgress = false;
+
+  function setGoogleAuthInProgress(inProgress) {
+    googleAuthInProgress = inProgress;
+    const btnIds = ['googleSignInFallback', 'googleSignUpFallback'];
+    btnIds.forEach(id => {
+      const b = el(id);
+      if (b) b.disabled = inProgress;
+    });
+  }
 
   async function initGoogleSSO() {
     try {
@@ -262,6 +272,8 @@ const App = (() => {
   function googleFallbackLogin() {
     if (!googleClientId) { toast('Google SSO 未設定', 'error'); return; }
     if (!googleUseCodeFlow) { toast('Google SSO 需設定 Client Secret 才能使用', 'error'); return; }
+    if (googleAuthInProgress) return;
+    setGoogleAuthInProgress(true);
     const redirectUri = location.origin + '/';
     let loginStarted = false;
 
@@ -284,10 +296,14 @@ const App = (() => {
       const w = 500, h = 600;
       const left = (screen.width - w) / 2, top = (screen.height - h) / 2;
       const popup = window.open(authUrl, 'googleLogin', `width=${w},height=${h},left=${left},top=${top}`);
-      if (!popup) { toast('請允許彈出視窗', 'error'); return; }
+      if (!popup) { setGoogleAuthInProgress(false); toast('請允許彈出視窗', 'error'); return; }
       const pollTimer = setInterval(() => {
         try {
-          if (popup.closed) { clearInterval(pollTimer); return; }
+          if (popup.closed) {
+            clearInterval(pollTimer);
+            if (!loginStarted) setGoogleAuthInProgress(false);
+            return;
+          }
           const url = popup.location.href;
           if (url && url.startsWith(redirectUri)) {
             clearInterval(pollTimer);
@@ -297,6 +313,7 @@ const App = (() => {
             if (code) {
               startCodeLogin(code);
             } else {
+              setGoogleAuthInProgress(false);
               toast('Google 登入失敗：' + (searchParams.get('error') || '未取得授權碼'), 'error');
             }
           }
@@ -307,7 +324,6 @@ const App = (() => {
     // Code Flow 優先使用 GIS 官方 popup client，避免授權後回到網站登入頁。
     if (googleUseCodeFlow && window.google?.accounts?.oauth2) {
       try {
-        let callbackDone = false;
         const codeClient = google.accounts.oauth2.initCodeClient({
           client_id: googleClientId,
           scope: 'openid email profile',
@@ -315,8 +331,8 @@ const App = (() => {
           redirect_uri: redirectUri,
           select_account: true,
           callback: (resp) => {
-            callbackDone = true;
             if (resp?.error) {
+              setGoogleAuthInProgress(false);
               el('loginError').textContent = resp.error_description || resp.error;
               toast('Google 登入失敗：' + (resp.error_description || resp.error), 'error');
               return;
@@ -324,24 +340,16 @@ const App = (() => {
             if (resp?.code) {
               startCodeLogin(resp.code);
             } else {
+              setGoogleAuthInProgress(false);
               toast('Google 登入失敗：未取得授權碼', 'error');
             }
           },
           error_callback: (err) => {
-            callbackDone = true;
             console.warn('GIS Code Client 錯誤，改用 OAuth URL 備援:', err);
             openLegacyPopupFallback();
           },
         });
         codeClient.requestCode();
-
-        // 某些瀏覽器/外掛環境可能不觸發 callback，逾時後改走備援 popup。
-        setTimeout(() => {
-          if (!callbackDone && !loginStarted) {
-            console.warn('GIS Code Client 未回應，改用 OAuth URL 備援');
-            openLegacyPopupFallback();
-          }
-        }, 8000);
         return;
       } catch (e) {
         console.warn('GIS Code Client 啟動失敗，改用 OAuth URL 備援:', e);
@@ -369,6 +377,8 @@ const App = (() => {
     } catch (err) {
       el('loginError').textContent = err.message;
       toast('Google 登入失敗：' + err.message, 'error');
+    } finally {
+      setGoogleAuthInProgress(false);
     }
   }
 

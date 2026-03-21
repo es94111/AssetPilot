@@ -1,6 +1,17 @@
 {
-  "currentVersion": "3.16.3",
+  "currentVersion": "3.16.4",
   "releases": [
+    {
+      "version": "3.16.4",
+      "date": "2026-03-21",
+      "title": "Google SSO 重複彈窗修復",
+      "type": "fixed",
+      "changes": [
+        { "tag": "fixed", "text": "修復登入頁點一次 Google SSO 卻出現兩個 Google 帳號登入彈窗的問題" },
+        { "tag": "improved", "text": "Google SSO 新增登入流程鎖（in-progress），避免重複觸發與多重請求" },
+        { "tag": "improved", "text": "移除 GIS callback 逾時自動再開 popup 的行為，改為單一流程與錯誤備援" }
+      ]
+    },
     {
       "version": "3.16.3",
       "date": "2026-03-21",

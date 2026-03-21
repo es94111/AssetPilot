@@ -201,8 +201,6 @@ const App = (() => {
 
   // ─── 初始化 ───
   async function init() {
-    bindSystemCapture();
-    refreshSystemMessages(false);
     bindNav();
     bindForms();
     bindFilters();
@@ -404,7 +402,7 @@ const App = (() => {
   // ─── 導航 ───
   const validPages = ['dashboard', 'transactions', 'reports', 'budget', 'accounts', 'stocks', 'settings'];
   const financePages = ['transactions', 'reports', 'budget', 'accounts'];
-  const validSettingsTabs = ['categories', 'recurring', 'export', 'account', 'system'];
+  const validSettingsTabs = ['categories', 'recurring', 'export', 'account'];
   const validStocksTabs = ['portfolio', 'transactions', 'dividends', 'realized'];
 
   function parseRoute(pathname) {
@@ -522,98 +520,6 @@ const App = (() => {
         sb.classList.remove('open');
       }
     });
-  }
-
-  // ─── 系統訊息 ───
-  let systemMessages = [];
-  let systemCaptureBound = false;
-  let systemLastRefreshAt = null;
-  let systemAutoRefreshTimer = null;
-
-  function formatSystemTime(ts) {
-    try { return new Date(ts).toLocaleString('zh-TW', { hour12: false }); }
-    catch { return String(ts); }
-  }
-
-  function escText(s) {
-    return escHtml(String(s || ''));
-  }
-
-  function addSystemMessage(level, text, source = '系統') {
-    systemMessages.unshift({ ts: Date.now(), level: level || 'info', text: String(text || ''), source });
-    if (systemMessages.length > 300) systemMessages.length = 300;
-    if (currentPage === 'settings') renderSystemMessages();
-  }
-
-  function updateSystemRefreshTimeView() {
-    const t = el('systemLastRefreshTime');
-    if (!t) return;
-    const label = systemLastRefreshAt ? formatSystemTime(systemLastRefreshAt) : '尚未更新';
-    t.textContent = `上次更新：${label}`;
-  }
-
-  function refreshSystemMessages(manual = false) {
-    systemLastRefreshAt = Date.now();
-    updateSystemRefreshTimeView();
-    if (currentPage === 'settings') renderSystemMessages();
-    if (manual) {
-      addSystemMessage('info', `已手動更新（頁面：${location.pathname}；網路：${navigator.onLine ? '連線中' : '離線'}）`, '系統狀態');
-      toast('系統訊息已更新', 'success');
-    }
-  }
-
-  function clearSystemMessages() {
-    systemMessages = [];
-    renderSystemMessages();
-    toast('系統訊息已清除', 'success');
-  }
-
-  function renderSystemMessages() {
-    const listEl = el('systemMessageList');
-    const metaEl = el('systemMessageMeta');
-    if (!listEl || !metaEl) return;
-
-    metaEl.textContent = `顯示網頁操作資訊與錯誤內容（最新在上方） 共 ${systemMessages.length} 筆`;
-
-    if (systemMessages.length === 0) {
-      listEl.innerHTML = '<p class="empty-hint">目前沒有訊息</p>';
-      return;
-    }
-
-    listEl.innerHTML = systemMessages.map(m => {
-      const levelLabel = m.level === 'error' ? '錯誤' : m.level === 'success' ? '成功' : '資訊';
-      return `<div class="system-message-item">
-        <div class="system-message-head">
-          <span class="system-message-level ${m.level}">${levelLabel} · ${escText(m.source)}</span>
-          <span class="system-message-time">${escText(formatSystemTime(m.ts))}</span>
-        </div>
-        <div class="system-message-text">${escText(m.text)}</div>
-      </div>`;
-    }).join('');
-  }
-
-  function bindSystemCapture() {
-    if (systemCaptureBound) return;
-
-    window.addEventListener('error', (event) => {
-      const msg = event?.message || '未預期錯誤';
-      const src = event?.filename ? `前端錯誤 @ ${event.filename}${event.lineno ? ':' + event.lineno : ''}` : '前端錯誤';
-      addSystemMessage('error', msg, src);
-    });
-
-    window.addEventListener('unhandledrejection', (event) => {
-      const reason = event?.reason;
-      const msg = typeof reason === 'string' ? reason : (reason?.message || JSON.stringify(reason || 'Promise 錯誤'));
-      addSystemMessage('error', msg, '未處理 Promise');
-    });
-
-    if (!systemAutoRefreshTimer) {
-      systemAutoRefreshTimer = setInterval(() => {
-        refreshSystemMessages(false);
-      }, 30000);
-    }
-
-    systemCaptureBound = true;
   }
 
   // ─── 頁面渲染 ───
@@ -2257,21 +2163,6 @@ const App = (() => {
     await renderRecurring();
     bindExport();
     renderAccountSettings();
-    renderSystemMessages();
-
-    const clearBtn = el('clearSystemMessagesBtn');
-    if (clearBtn && !clearBtn.dataset.bound) {
-      clearBtn.addEventListener('click', clearSystemMessages);
-      clearBtn.dataset.bound = '1';
-    }
-
-    const refreshBtn = el('refreshSystemMessagesBtn');
-    if (refreshBtn && !refreshBtn.dataset.bound) {
-      refreshBtn.addEventListener('click', () => refreshSystemMessages(true));
-      refreshBtn.dataset.bound = '1';
-    }
-
-    updateSystemRefreshTimeView();
   }
 
   async function renderCategories() {
@@ -3394,9 +3285,6 @@ const App = (() => {
     t.textContent = msg;
     container.appendChild(t);
     setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 2500);
-
-    const level = type === 'error' ? 'error' : type === 'success' ? 'success' : 'info';
-    addSystemMessage(level, msg, '操作訊息');
   }
 
   // ─── 版本更新資訊 ───

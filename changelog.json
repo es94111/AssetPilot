@@ -1,6 +1,17 @@
 {
-  "currentVersion": "3.16.11",
+  "currentVersion": "3.16.12",
   "releases": [
+    {
+      "version": "3.16.12",
+      "date": "2026-03-21",
+      "title": "移除設定系統訊息功能",
+      "type": "removed",
+      "changes": [
+        { "tag": "removed", "text": "設定頁移除「系統訊息」子分頁與對應面板 UI" },
+        { "tag": "removed", "text": "移除前端系統訊息收集、手動更新、清除訊息、自動更新等功能" },
+        { "tag": "improved", "text": "同步清理無用樣式與事件綁定，避免殘留程式碼影響維護性" }
+      ]
+    },
     {
       "version": "3.16.11",
       "date": "2026-03-21",

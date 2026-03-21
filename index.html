@@ -389,7 +389,7 @@
         <div class="stock-actions">
           <button class="btn" onclick="App.openStockModal()"><i class="fas fa-plus"></i> 新增股票</button>
           <button class="btn btn-outline" onclick="App.openPriceUpdateModal()"><i class="fas fa-sync"></i> 更新股價</button>
-          <button class="btn btn-outline btn-formula-toggle" id="btnToggleFormula" onclick="App.toggleFormula()"><i class="fas fa-calculator"></i> 計算公式</button>
+          <button class="btn btn-outline" onclick="App.openFormulaModal()"><i class="fas fa-calculator"></i> 計算公式</button>
         </div>
         <div class="stock-portfolio-grid" id="stockPortfolioGrid"></div>
       </div>
@@ -1179,6 +1179,51 @@
       <div class="form-actions" style="margin-top:16px">
         <button type="button" class="btn btn-ghost" onclick="App.closeModal('modalPriceUpdate')">取消</button>
         <button type="button" class="btn btn-primary" id="priceUpdateSaveBtn"><i class="fas fa-check"></i> 儲存全部</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 計算公式說明 Modal ===== -->
+  <div class="modal-overlay" id="modalFormula">
+    <div class="modal modal-lg">
+      <div class="modal-header">
+        <h3><i class="fas fa-calculator" style="color:var(--primary);margin-right:8px"></i>持股計算公式說明</h3>
+        <button class="modal-close" onclick="App.closeModal('modalFormula')">&times;</button>
+      </div>
+      <div class="formula-modal-body">
+        <div class="formula-section">
+          <div class="formula-title"><i class="fas fa-info-circle"></i> 基本資訊</div>
+          <div class="formula-row"><span class="formula-name">持有股數</span><span class="formula-eq">= Σ 買進股數 − Σ 賣出股數 <small>（FIFO 計算後的剩餘庫存）</small></span></div>
+          <div class="formula-row"><span class="formula-name">成本金額</span><span class="formula-eq">= Σ（買進價金 + 買進手續費）<small>（FIFO 剩餘庫存對應的買入成本）</small></span></div>
+          <div class="formula-row"><span class="formula-name">成本均價</span><span class="formula-eq">= 成本金額 ÷ 持有股數</span></div>
+          <div class="formula-row"><span class="formula-name">市值</span><span class="formula-eq">= 現價 × 持有股數</span></div>
+        </div>
+        <div class="formula-section">
+          <div class="formula-title"><i class="fas fa-receipt"></i> 預估賣出成本</div>
+          <div class="formula-row"><span class="formula-name">預估手續費</span><span class="formula-eq">= ⌊市值 × 0.1425%⌋</span></div>
+          <div class="formula-hint">整股最低 20 元，零股最低 1 元；無條件捨去至整數</div>
+          <div class="formula-row"><span class="formula-name">預估交易稅</span><span class="formula-eq">= ⌊市值 × 稅率⌋</span></div>
+          <div class="formula-hint">一般股票 0.3%；ETF / 權證 0.1%；最低 1 元；無條件捨去至整數</div>
+        </div>
+        <div class="formula-section">
+          <div class="formula-title"><i class="fas fa-chart-line"></i> 預估損益</div>
+          <div class="formula-row"><span class="formula-name">預估淨收付</span><span class="formula-eq">= 市值 − 預估手續費 − 預估交易稅</span></div>
+          <div class="formula-hint">假設以現價全數賣出後，實際入帳的金額</div>
+          <div class="formula-row"><span class="formula-name">預估損益</span><span class="formula-eq">= 預估淨收付 − 成本金額</span></div>
+          <div class="formula-row"><span class="formula-name">報酬率</span><span class="formula-eq">= 預估損益 ÷ 成本金額 × 100%</span></div>
+        </div>
+        <div class="formula-section">
+          <div class="formula-title"><i class="fas fa-trophy"></i> 總報酬</div>
+          <div class="formula-row"><span class="formula-name">已實現損益</span><span class="formula-eq">= Σ（賣出淨收入 − FIFO 對應買入成本）</span></div>
+          <div class="formula-hint">依 FIFO（先進先出）逐筆配對計算，賣出淨收入 = 賣出價金 − 手續費 − 交易稅</div>
+          <div class="formula-row"><span class="formula-name">累計股利</span><span class="formula-eq">= Σ 現金股利</span></div>
+          <div class="formula-row"><span class="formula-name">總報酬</span><span class="formula-eq">= 預估損益 + 已實現損益 + 累計股利</span></div>
+          <div class="formula-hint">綜合考量未實現 + 已實現 + 股利收入的總獲利</div>
+        </div>
+        <div class="formula-note">
+          <i class="fas fa-lightbulb"></i>
+          <span>所有預估值以「現價全數賣出」為假設計算，實際交易金額以券商為準。手續費折讓（如 6 折）不包含在預估中。</span>
+        </div>
       </div>
     </div>
   </div>

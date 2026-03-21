@@ -529,12 +529,14 @@ const App = (() => {
       const state = params.get('state');
       if (!code) return false;
 
+      // 不論成功失敗都先清除 OAuth 參數，避免卡在同一個 callback URL 無限重試。
+      history.replaceState({}, document.title, location.pathname + location.hash);
+
       const expectedState = consumeGoogleOAuthState();
       if (!state || !expectedState || state !== expectedState) {
-        throw new Error('Google 登入狀態驗證失敗，請重新登入');
+        throw new Error('Google 登入狀態驗證失敗（state 不一致），請重新點擊 Google 登入');
       }
 
-      history.replaceState({}, document.title, location.pathname + location.hash);
       setGoogleAuthInProgress(true);
       await handleGoogleCode(code, location.origin + '/', state);
       return true;
@@ -574,6 +576,7 @@ const App = (() => {
             scope: 'openid email profile',
             ux_mode: 'redirect',
             redirect_uri: redirectUri,
+            state: oauthState,
             select_account: true,
             callback: () => {},
             error_callback: (err) => {
@@ -588,7 +591,7 @@ const App = (() => {
             },
           });
           el('loginError').textContent = '正在前往 Google 授權頁面...';
-          codeClient.requestCode({ state: oauthState });
+          codeClient.requestCode();
           return;
         } catch (e) {
           console.warn('GIS Code Client 啟動失敗:', e);

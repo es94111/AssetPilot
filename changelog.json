@@ -1,6 +1,16 @@
 {
-  "currentVersion": "3.14.1",
+  "currentVersion": "3.14.2",
   "releases": [
+    {
+      "version": "3.14.2",
+      "date": "2026-03-21",
+      "title": "版本更新來源網址鎖定",
+      "type": "fixed",
+      "changes": [
+        { "tag": "fixed", "text": "版本更新資訊遠端來源改為固定使用 GitHub 官方網址，不再允許環境變數覆蓋" },
+        { "tag": "improved", "text": "伺服器改為固定網址轉換 raw 內容抓取，避免 blob 連結造成解析問題" }
+      ]
+    },
     {
       "version": "3.14.1",
       "date": "2026-03-21",

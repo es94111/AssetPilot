@@ -668,57 +668,44 @@ app.get('/api/changelog', async (req, res) => {
   res.json(merged);
 });
 
-// Google SSO 登入（支援 code flow 和 id_token flow）
+// Google SSO 登入（統一使用 Authorization Code Flow）
 app.post('/api/auth/google', async (req, res) => {
-  const { credential, code, redirect_uri } = req.body;
-  if (!credential && !code) return res.status(400).json({ error: '缺少 Google 憑證' });
+  const { code, redirect_uri } = req.body;
+  if (!code) return res.status(400).json({ error: '缺少 Google 授權碼' });
   if (!GOOGLE_CLIENT_ID) return res.status(400).json({ error: 'Google SSO 未設定' });
+  if (!GOOGLE_CLIENT_SECRET) return res.status(400).json({ error: 'Google SSO 需設定 GOOGLE_CLIENT_SECRET' });
 
   try {
     let email, name, googleId, picture;
 
-    if (code && GOOGLE_CLIENT_SECRET) {
-      // ─── Authorization Code Flow（使用 Client Secret 交換 token）───
-      const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({
-          code,
-          client_id: GOOGLE_CLIENT_ID,
-          client_secret: GOOGLE_CLIENT_SECRET,
-          redirect_uri: redirect_uri || '',
-          grant_type: 'authorization_code',
-        }),
-      });
-      const tokenData = await tokenRes.json();
-      if (!tokenRes.ok || !tokenData.id_token) {
-        console.error('Google token exchange 失敗:', tokenData);
-        return res.status(401).json({ error: 'Google 授權碼交換失敗：' + (tokenData.error_description || tokenData.error || '未知錯誤') });
-      }
-
-      // 用 access_token 取得使用者資料（包含頭像）
-      const userinfoRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-        headers: { Authorization: `Bearer ${tokenData.access_token}` },
-      });
-      const userinfo = await userinfoRes.json();
-
-      email = userinfo.email?.toLowerCase();
-      name = userinfo.name || email?.split('@')[0] || 'Google User';
-      googleId = userinfo.sub;
-      picture = userinfo.picture || '';
-    } else if (credential) {
-      // ─── Legacy ID Token Flow（無 Client Secret）───
-      const verifyRes = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(credential)}`);
-      if (!verifyRes.ok) return res.status(401).json({ error: 'Google 憑證驗證失敗' });
-      const payload = await verifyRes.json();
-      if (payload.aud !== GOOGLE_CLIENT_ID) {
-        return res.status(401).json({ error: 'Google 憑證 audience 不符' });
-      }
-      email = payload.email?.toLowerCase();
-      name = payload.name || payload.email?.split('@')[0] || 'Google User';
-      googleId = payload.sub;
-      picture = payload.picture || '';
+    // ─── Authorization Code Flow（使用 Client Secret 交換 token）───
+    const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        code,
+        client_id: GOOGLE_CLIENT_ID,
+        client_secret: GOOGLE_CLIENT_SECRET,
+        redirect_uri: redirect_uri || '',
+        grant_type: 'authorization_code',
+      }),
+    });
+    const tokenData = await tokenRes.json();
+    if (!tokenRes.ok || !tokenData.id_token) {
+      console.error('Google token exchange 失敗:', tokenData);
+      return res.status(401).json({ error: 'Google 授權碼交換失敗：' + (tokenData.error_description || tokenData.error || '未知錯誤') });
     }
+
+    // 用 access_token 取得使用者資料（包含頭像）
+    const userinfoRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+      headers: { Authorization: `Bearer ${tokenData.access_token}` },
+    });
+    const userinfo = await userinfoRes.json();
+
+    email = userinfo.email?.toLowerCase();
+    name = userinfo.name || email?.split('@')[0] || 'Google User';
+    googleId = userinfo.sub;
+    picture = userinfo.picture || '';
 
     if (!email) return res.status(400).json({ error: '無法取得 Google 帳號 Email' });
 

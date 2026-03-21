@@ -1,6 +1,17 @@
 {
-  "currentVersion": "3.35",
+  "currentVersion": "3.35.1",
   "releases": [
+    {
+      "version": "3.35.1",
+      "date": "2026-03-21",
+      "title": "Google 登入轉跳卡住修復",
+      "type": "fixed",
+      "changes": [
+        { "tag": "fixed", "text": "修正 Google 授權回呼卡在 callback URL：先清除 OAuth 查詢參數，避免重新整理後無限重試" },
+        { "tag": "fixed", "text": "修正 GIS Code Client state 傳遞方式：改於 initCodeClient 設定 state，提升回呼帶回 state 穩定性" },
+        { "tag": "improved", "text": "Google state 驗證失敗改為明確錯誤提示，指引使用者重新點擊登入" }
+      ]
+    },
     {
       "version": "3.35",
       "date": "2026-03-21",

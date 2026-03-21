@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-3.35-blue" alt="version">
+  <img src="https://img.shields.io/badge/version-3.35.1-blue" alt="version">
   <img src="https://img.shields.io/badge/node-%3E%3D18-green" alt="node">
   <img src="https://img.shields.io/badge/license-MIT-orange" alt="license">
   <img src="https://img.shields.io/badge/docker-ready-2496ED" alt="docker">
@@ -402,11 +402,13 @@ your-domain.com {
    - 本機開發：`http://localhost:3000`
    - 正式網域：`https://your-domain.com`
 3. 設定「已授權的重新導向 URI」：
-  - 本機開發：`http://localhost:3000/`
-  - 正式網域：`https://your-domain.com/`
+   - 本機開發：`http://localhost:3000/`
+   - 正式網域：`https://your-domain.com/`
 4. 將 `GOOGLE_CLIENT_ID` 與 `GOOGLE_CLIENT_SECRET` 設為環境變數
 5. 系統使用 OAuth Authorization Code Flow，登入流程含 state 一次性驗證防重放
 6. 未設定時 Google 登入按鈕自動隱藏，不影響帳號密碼登入
+
+> 若登入後停在 `/?code=...` 無法進入系統，請確認 Google Console 的重新導向 URI 與網站網域完全一致（含 `https` 與尾端 `/`），並更新到 v3.35.1（已修正 callback URL 卡住與 state 帶回相容性）。
 
 ---
 

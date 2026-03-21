@@ -37,6 +37,8 @@ const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || '';
 const BACKUP_DIR = process.env.BACKUP_DIR || path.join(path.dirname(DB_PATH), 'backups');
 const DEFAULT_AUTO_BACKUP_INTERVAL_HOURS = Math.max(1, parseInt(process.env.AUTO_BACKUP_INTERVAL_HOURS || '6', 10) || 6);
 const DEFAULT_AUTO_BACKUP_KEEP = Math.max(3, parseInt(process.env.AUTO_BACKUP_KEEP || '30', 10) || 30);
+const GLOBAL_FX_API_URL = 'https://tw.rter.info/capi.php';
+const FX_AUTO_SYNC_MIN_INTERVAL_MS = 30 * 60 * 1000;
 let autoBackupIntervalHours = DEFAULT_AUTO_BACKUP_INTERVAL_HOURS;
 let autoBackupKeep = DEFAULT_AUTO_BACKUP_KEEP;
 
@@ -274,6 +276,13 @@ async function initDB() {
     PRIMARY KEY (user_id, currency)
   )`);
 
+  db.run(`CREATE TABLE IF NOT EXISTS exchange_rate_settings (
+    user_id TEXT PRIMARY KEY,
+    auto_update INTEGER DEFAULT 0,
+    last_synced_at INTEGER DEFAULT 0,
+    updated_at INTEGER
+  )`);
+
   db.run(`CREATE TABLE IF NOT EXISTS budgets (
     id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL,
@@ -493,6 +502,8 @@ function createDefaultsForUser(userId) {
     db.run("INSERT OR IGNORE INTO exchange_rates (user_id, currency, rate_to_twd, updated_at) VALUES (?, ?, ?, ?)",
       [userId, currency, rate, Date.now()]);
   });
+  db.run("INSERT OR IGNORE INTO exchange_rate_settings (user_id, auto_update, last_synced_at, updated_at) VALUES (?, 0, 0, ?)",
+    [userId, Date.now()]);
   db.run(`INSERT OR IGNORE INTO stock_settings (user_id, fee_rate, fee_discount, fee_min_lot, fee_min_odd, sell_tax_rate_stock, sell_tax_rate_etf, sell_tax_rate_warrant, sell_tax_min, updated_at)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
@@ -683,6 +694,93 @@ function getExchangeRateToTwd(userId, currencyCode) {
   const row = queryOne('SELECT rate_to_twd FROM exchange_rates WHERE user_id = ? AND currency = ?', [userId, c]);
   if (row && Number(row.rate_to_twd) > 0) return Number(row.rate_to_twd);
   return Number(DEFAULT_EXCHANGE_RATES[c]) || 1;
+}
+
+function getExchangeRateSettings(userId) {
+  let row = queryOne('SELECT * FROM exchange_rate_settings WHERE user_id = ?', [userId]);
+  if (!row) {
+    db.run('INSERT INTO exchange_rate_settings (user_id, auto_update, last_synced_at, updated_at) VALUES (?, 0, 0, ?)', [userId, Date.now()]);
+    saveDB();
+    row = queryOne('SELECT * FROM exchange_rate_settings WHERE user_id = ?', [userId]);
+  }
+  return {
+    autoUpdate: !!row?.auto_update,
+    lastSyncedAt: Number(row?.last_synced_at) || 0,
+  };
+}
+
+function setExchangeRateAutoUpdate(userId, autoUpdate) {
+  db.run(
+    `INSERT INTO exchange_rate_settings (user_id, auto_update, last_synced_at, updated_at)
+     VALUES (?, ?, COALESCE((SELECT last_synced_at FROM exchange_rate_settings WHERE user_id = ?), 0), ?)
+     ON CONFLICT(user_id) DO UPDATE SET
+       auto_update = excluded.auto_update,
+       updated_at = excluded.updated_at`,
+    [userId, autoUpdate ? 1 : 0, userId, Date.now()]
+  );
+  saveDB();
+  return getExchangeRateSettings(userId);
+}
+
+async function fetchGlobalRealtimeRates() {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000);
+  try {
+    const resp = await fetch(GLOBAL_FX_API_URL, { signal: controller.signal });
+    if (!resp.ok) throw new Error(`匯率服務回應失敗（HTTP ${resp.status}）`);
+    return await resp.json();
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+function resolveRateToTwd(globalData, currencyCode) {
+  const c = normalizeCurrency(currencyCode);
+  if (c === 'TWD') return 1;
+  const direct = Number(globalData?.[`${c}TWD`]?.Exrate);
+  if (direct > 0) return direct;
+  const inverse = Number(globalData?.[`TWD${c}`]?.Exrate);
+  if (inverse > 0) return 1 / inverse;
+  return 0;
+}
+
+async function syncExchangeRatesFromGlobalAPI(userId, requestedCurrencies = []) {
+  const globalData = await fetchGlobalRealtimeRates();
+  const existingMap = getUserExchangeRateMap(userId);
+  const targets = new Set(['TWD']);
+  Object.keys(DEFAULT_EXCHANGE_RATES).forEach(c => targets.add(c));
+  Object.keys(existingMap).forEach(c => targets.add(c));
+  requestedCurrencies.forEach(c => targets.add(normalizeCurrency(c)));
+
+  const now = Date.now();
+  const updated = [];
+  for (const currency of targets) {
+    const c = normalizeCurrency(currency);
+    if (c === 'TWD') {
+      db.run(`INSERT INTO exchange_rates (user_id, currency, rate_to_twd, updated_at)
+        VALUES (?, 'TWD', 1, ?)
+        ON CONFLICT(user_id, currency) DO UPDATE SET rate_to_twd = excluded.rate_to_twd, updated_at = excluded.updated_at`,
+        [userId, now]);
+      continue;
+    }
+    const rate = resolveRateToTwd(globalData, c);
+    if (!(rate > 0)) continue;
+    db.run(`INSERT INTO exchange_rates (user_id, currency, rate_to_twd, updated_at)
+      VALUES (?, ?, ?, ?)
+      ON CONFLICT(user_id, currency) DO UPDATE SET rate_to_twd = excluded.rate_to_twd, updated_at = excluded.updated_at`,
+      [userId, c, rate, now]);
+    updated.push({ currency: c, rateToTwd: rate });
+  }
+
+  db.run(
+    `INSERT INTO exchange_rate_settings (user_id, auto_update, last_synced_at, updated_at)
+     VALUES (?, COALESCE((SELECT auto_update FROM exchange_rate_settings WHERE user_id = ?), 0), ?, ?)
+     ON CONFLICT(user_id) DO UPDATE SET last_synced_at = excluded.last_synced_at, updated_at = excluded.updated_at`,
+    [userId, userId, now, now]
+  );
+
+  saveDB();
+  return { updatedAt: now, updatedRates: updated };
 }
 
 function convertToTwd(originalAmount, currencyCode, fxRateInput, userId) {
@@ -1580,13 +1678,29 @@ app.delete('/api/categories/:id', (req, res) => {
 });
 
 // ─── 匯率設定 ───
-app.get('/api/exchange-rates', (req, res) => {
-  const map = getUserExchangeRateMap(req.userId);
-  const rows = Object.keys(map).sort().map(currency => ({
-    currency,
-    rateToTwd: map[currency],
-  }));
-  res.json({ rates: rows });
+app.get('/api/exchange-rates', async (req, res) => {
+  const respond = () => {
+    const map = getUserExchangeRateMap(req.userId);
+    const rows = Object.keys(map).sort().map(currency => ({
+      currency,
+      rateToTwd: map[currency],
+    }));
+    const settings = getExchangeRateSettings(req.userId);
+    res.json({ rates: rows, settings });
+  };
+
+  const settings = getExchangeRateSettings(req.userId);
+  const shouldAutoSync = settings.autoUpdate
+    && (!settings.lastSyncedAt || (Date.now() - settings.lastSyncedAt) >= FX_AUTO_SYNC_MIN_INTERVAL_MS);
+
+  if (!shouldAutoSync) return respond();
+
+  try {
+    await syncExchangeRatesFromGlobalAPI(req.userId);
+  } catch (e) {
+    console.warn('[匯率] 自動更新失敗:', e.message);
+  }
+  respond();
 });
 
 app.put('/api/exchange-rates', (req, res) => {
@@ -1611,7 +1725,30 @@ app.put('/api/exchange-rates', (req, res) => {
   saveDB();
   const map = getUserExchangeRateMap(req.userId);
   const rows = Object.keys(map).sort().map(currency => ({ currency, rateToTwd: map[currency] }));
-  res.json({ rates: rows });
+  const settings = getExchangeRateSettings(req.userId);
+  res.json({ rates: rows, settings });
+});
+
+app.put('/api/exchange-rates/settings', (req, res) => {
+  const autoUpdate = !!req.body?.autoUpdate;
+  const settings = setExchangeRateAutoUpdate(req.userId, autoUpdate);
+  res.json({ success: true, settings });
+});
+
+app.post('/api/exchange-rates/refresh', async (req, res) => {
+  try {
+    const requestedCurrencies = Array.isArray(req.body?.currencies) ? req.body.currencies : [];
+    const result = await syncExchangeRatesFromGlobalAPI(req.userId, requestedCurrencies);
+    const map = getUserExchangeRateMap(req.userId);
+    const rows = Object.keys(map).sort().map(currency => ({
+      currency,
+      rateToTwd: map[currency],
+    }));
+    const settings = getExchangeRateSettings(req.userId);
+    res.json({ rates: rows, settings, updatedAt: result.updatedAt });
+  } catch (e) {
+    res.status(500).json({ error: e.message || '更新即時匯率失敗' });
+  }
 });
 
 // ─── 帳戶 ───

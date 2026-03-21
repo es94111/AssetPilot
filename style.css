@@ -1402,11 +1402,16 @@ input, select, button, textarea { font-family: inherit; font-size: inherit; }
   display: flex;
   align-items: center;
   gap: 12px;
+  flex-wrap: wrap;
   background: linear-gradient(135deg, #eff6ff, #dbeafe);
   border: 1px solid #93c5fd;
   border-radius: 10px;
   padding: 14px 18px;
   margin-bottom: 16px;
+}
+.cl-update-banner > div {
+  flex: 1;
+  min-width: 220px;
 }
 .cl-update-banner i {
   font-size: 24px;

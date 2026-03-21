@@ -3435,13 +3435,16 @@ const App = (() => {
       if (data.currentVersion) {
         el('appVersionLabel').textContent = data.currentVersion;
       }
+      const badge = el('updateBadge');
       // 檢查是否有新版本
       if (data.latestVersion && compareVersions(data.latestVersion, data.currentVersion) > 0) {
-        const badge = el('updateBadge');
         if (badge) {
           badge.style.display = '';
           badge.title = `有新版本 v${data.latestVersion} 可更新`;
         }
+      } else if (badge) {
+        badge.style.display = 'none';
+        badge.title = '';
       }
     } catch (e) { /* ignore */ }
   }
@@ -3477,6 +3480,9 @@ const App = (() => {
               <strong>有新版本可更新！</strong>
               <span>目前 v${escHtml(data.currentVersion)} → 最新 v${escHtml(data.latestVersion)}</span>
             </div>
+            <button type="button" class="btn btn-sm" id="runAppUpdateBtn">
+              <i class="fas fa-download"></i> 立即更新
+            </button>
           </div>
         ` : '';
         content.innerHTML = `
@@ -3522,6 +3528,29 @@ const App = (() => {
             refreshBtn.disabled = true;
             refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 重新檢查中...';
             await render(true);
+          }, { once: true });
+        }
+
+        const updateBtn = el('runAppUpdateBtn');
+        if (updateBtn) {
+          updateBtn.addEventListener('click', async () => {
+            if (!confirm('將自動下載並套用最新版本，是否繼續？')) return;
+            updateBtn.disabled = true;
+            if (refreshBtn) refreshBtn.disabled = true;
+            updateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 更新中...';
+            try {
+              const result = await API.post('/api/system/update-app', {});
+              toast(result.message || '更新完成', 'success');
+              await render(true);
+              if (confirm('更新已完成，是否立即重新整理頁面套用最新前端？')) {
+                location.reload();
+              }
+            } catch (e) {
+              toast('更新失敗：' + e.message, 'error');
+              updateBtn.disabled = false;
+              if (refreshBtn) refreshBtn.disabled = false;
+              updateBtn.innerHTML = '<i class="fas fa-download"></i> 立即更新';
+            }
           }, { once: true });
         }
       } catch (e) {

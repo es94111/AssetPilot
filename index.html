@@ -12,6 +12,42 @@
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
+  <!-- ===== 公開首頁 ===== -->
+  <section class="public-home" id="publicHome" style="display:none">
+    <div class="public-home-bg"></div>
+    <div class="public-home-container">
+      <div class="public-home-brand">
+        <img src="/logo.svg" alt="資產管理" class="public-home-logo">
+        <span>資產管理</span>
+      </div>
+
+      <div class="public-home-hero card">
+        <p class="public-home-kicker">AssetPilot</p>
+        <h1>用一個頁面，掌握你的現金流與投資全貌</h1>
+        <p class="public-home-desc">整合記帳、預算、股票紀錄、股利與報表分析，幫你把每一筆資產變化看得清楚、管得穩定。</p>
+        <div class="public-home-actions">
+          <button class="btn btn-primary" id="goLoginBtn"><i class="fas fa-right-to-bracket"></i> 前往登入</button>
+          <button class="btn btn-ghost" id="goRegisterBtn"><i class="fas fa-user-plus"></i> 建立帳號</button>
+        </div>
+      </div>
+
+      <div class="public-home-grid">
+        <article class="card public-feature-card">
+          <h3><i class="fas fa-receipt"></i> 交易與預算</h3>
+          <p>收入、支出、轉帳完整紀錄，搭配月度與分類預算追蹤，超支風險即時可見。</p>
+        </article>
+        <article class="card public-feature-card">
+          <h3><i class="fas fa-chart-line"></i> 股票與股利</h3>
+          <p>整合股票交易、股利、持股市值與 FIFO 實現損益，投資績效不再分散在多個工具。</p>
+        </article>
+        <article class="card public-feature-card">
+          <h3><i class="fas fa-shield-halved"></i> 安全與控管</h3>
+          <p>支援管理員模式、註冊白名單、Google SSO 與資料庫加密，兼顧團隊管理與資料安全。</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
   <!-- ===== 登入/註冊頁面 ===== -->
   <div class="auth-container" id="authContainer">
     <div class="auth-card">

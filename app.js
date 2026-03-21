@@ -223,14 +223,14 @@ const App = (() => {
 
   // ─── Auth 邏輯 ───
   function showAuthForm(formId) {
+    // 清除錯誤訊息
+    document.querySelectorAll('.auth-error').forEach(e => e.textContent = '');
     if (formId === 'registerForm' && !authConfig.registrationEnabled) {
       formId = 'loginForm';
       el('loginError').textContent = '目前未開放公開註冊，請聯絡管理員';
     }
     document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
     el(formId).classList.add('active');
-    // 清除錯誤訊息
-    document.querySelectorAll('.auth-error').forEach(e => e.textContent = '');
   }
 
   function updateRegisterEntryVisibility() {
@@ -252,6 +252,7 @@ const App = (() => {
   }
 
   function showAuth() {
+    el('publicHome').style.display = 'none';
     el('authContainer').classList.add('active');
     document.querySelector('.sidebar').style.display = 'none';
     document.querySelector('.mobile-header').style.display = 'none';
@@ -260,7 +261,27 @@ const App = (() => {
     showAuthForm('loginForm');
   }
 
+  function showLoginPage(pushState = false) {
+    showAuth();
+    if (pushState && location.pathname !== '/login') {
+      history.pushState({ publicPage: 'login' }, '', '/login');
+    }
+  }
+
+  function showPublicHome(pushState = false) {
+    el('publicHome').style.display = '';
+    el('authContainer').classList.remove('active');
+    document.querySelector('.sidebar').style.display = 'none';
+    document.querySelector('.mobile-header').style.display = 'none';
+    document.querySelector('.main-content').style.display = 'none';
+    el('fabBtn').style.display = 'none';
+    if (pushState && location.pathname !== '/') {
+      history.pushState({ publicPage: 'home' }, '', '/');
+    }
+  }
+
   function hideAuth() {
+    el('publicHome').style.display = 'none';
     el('authContainer').classList.remove('active');
     document.querySelector('.sidebar').style.display = '';
     document.querySelector('.mobile-header').style.display = '';
@@ -336,7 +357,7 @@ const App = (() => {
     localStorage.removeItem('authToken');
     cachedCategories = [];
     cachedAccounts = [];
-    showAuth();
+    showLoginPage(true);
   }
 
   function updateUserAvatar() {
@@ -365,6 +386,10 @@ const App = (() => {
     loadVersionLabel();
     // 根據目前 URL 導航
     const { page, sub } = parseRoute(location.pathname);
+    if (page === 'home') {
+      await navigate('dashboard', null);
+      return;
+    }
     await navigate(page, sub);
   }
 
@@ -398,7 +423,17 @@ const App = (() => {
       authToken = null;
       localStorage.removeItem('authToken');
     }
-    showAuth();
+    const path = (location.pathname || '/').replace(/\/+$/, '') || '/';
+    const isAppPath = path === '/login' || path === '/dashboard' || path === '/finance'
+      || path.startsWith('/finance/') || path === '/transactions' || path === '/reports'
+      || path === '/budget' || path === '/accounts' || path === '/stocks'
+      || path.startsWith('/stocks/') || path === '/settings' || path.startsWith('/settings/')
+      || path === '/api-credits';
+    if (path === '/login' || isAppPath) {
+      showLoginPage(false);
+    } else {
+      showPublicHome(false);
+    }
   }
 
   // ─── Google SSO ───
@@ -566,6 +601,19 @@ const App = (() => {
       showAuthForm('registerForm');
     });
     el('showLogin').addEventListener('click', e => { e.preventDefault(); showAuthForm('loginForm'); });
+    el('goLoginBtn')?.addEventListener('click', e => {
+      e.preventDefault();
+      showLoginPage(true);
+    });
+    el('goRegisterBtn')?.addEventListener('click', e => {
+      e.preventDefault();
+      showLoginPage(true);
+      if (authConfig.registrationEnabled) {
+        showAuthForm('registerForm');
+      } else {
+        el('loginError').textContent = '目前未開放公開註冊，請聯絡管理員';
+      }
+    });
 
     // 表單提交
     el('loginForm').addEventListener('submit', handleLogin);
@@ -604,8 +652,10 @@ const App = (() => {
 
   function parseRoute(pathname) {
     const parts = (pathname || '/').replace(/^\/+|\/+$/g, '').split('/').filter(Boolean);
-    let page = 'dashboard';
-    if (parts[0] === 'finance') {
+    let page = 'home';
+    if (parts[0] === 'dashboard') {
+      page = 'dashboard';
+    } else if (parts[0] === 'finance') {
       page = financePages.includes(parts[1]) ? parts[1] : 'transactions';
     } else if (validPages.includes(parts[0])) {
       page = parts[0];
@@ -619,7 +669,7 @@ const App = (() => {
   function buildPath(page, sub) {
     if ((page === 'settings' || page === 'stocks') && sub) return '/' + page + '/' + sub;
     if (financePages.includes(page)) return '/finance/' + page;
-    if (page === 'dashboard') return '/';
+    if (page === 'dashboard') return '/dashboard';
     return '/' + page;
   }
 
@@ -699,9 +749,14 @@ const App = (() => {
       });
     });
     window.addEventListener('popstate', (e) => {
-      if (!currentUser) return;
+      if (!currentUser) {
+        const path = (location.pathname || '/').replace(/\/+$/, '') || '/';
+        if (path === '/login') showLoginPage(false);
+        else showPublicHome(false);
+        return;
+      }
       const state = e.state;
-      if (state) {
+      if (state?.page) {
         navigate(state.page, state.sub, false);
       } else {
         const { page, sub } = parseRoute(location.pathname);

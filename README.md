@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-3.32-blue" alt="version">
+  <img src="https://img.shields.io/badge/version-3.33-blue" alt="version">
   <img src="https://img.shields.io/badge/node-%3E%3D18-green" alt="node">
   <img src="https://img.shields.io/badge/license-MIT-orange" alt="license">
   <img src="https://img.shields.io/badge/docker-ready-2496ED" alt="docker">
@@ -36,6 +36,12 @@
 - **管理員模式** — 第一位使用者自動成為管理員，可控管註冊政策與使用者帳號
 - **資料庫加密** — ChaCha20-Poly1305 + PBKDF2-SHA256 全資料庫加密
 - **響應式設計** — 桌面與手機皆可使用
+
+## 公開頁面與路由
+
+- `/`：網站公開首頁（資產管理介紹頁）
+- `/login`：登入/註冊頁
+- `/dashboard`：登入後儀表板
 
 ## 技術架構
 

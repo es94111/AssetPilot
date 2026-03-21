@@ -1,6 +1,16 @@
 {
-  "currentVersion": "3.18",
+  "currentVersion": "3.18.1",
   "releases": [
+    {
+      "version": "3.18.1",
+      "date": "2026-03-21",
+      "title": "資產配置圖顯示金額與百分比",
+      "type": "improved",
+      "changes": [
+        { "tag": "improved", "text": "儀表板資產配置圓餅圖圖例改為顯示『金額 + 百分比』" },
+        { "tag": "improved", "text": "資產配置圖 tooltip 同步顯示金額與百分比，滑鼠移入即可查看完整數值" }
+      ]
+    },
     {
       "version": "3.18",
       "date": "2026-03-21",

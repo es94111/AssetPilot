@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-3.36-blue" alt="version">
+  <img src="https://img.shields.io/badge/version-3.37-blue" alt="version">
   <img src="https://img.shields.io/badge/node-%3E%3D18-green" alt="node">
   <img src="https://img.shields.io/badge/license-MIT-orange" alt="license">
   <img src="https://img.shields.io/badge/docker-ready-2496ED" alt="docker">
@@ -26,6 +26,7 @@
 - **固定收支** — 週期性自動產生交易
 - **統計報表** — 分類統計、趨勢分析、每日消費，自訂時間範圍
 - **股票紀錄** — 持股總覽、買賣交易、股利紀錄、FIFO 實現損益計算
+- **情境式快速新增按鈕** — 收支管理顯示「新增交易」、股票紀錄顯示「新增股票交易紀錄」，其他頁面自動隱藏
 - **TWSE 整合** — 即時/收盤股價查詢、除權息自動同步
 - **CSV 匯出/匯入** — 交易記錄、分類、股票交易、股利紀錄
 - **匯出匯入介面重整** — 設定頁「資料匯出匯入」改為交易/股票分組卡片，提升一致性與可讀性

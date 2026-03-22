@@ -292,7 +292,7 @@ const App = (() => {
     document.querySelector('.sidebar').style.display = '';
     document.querySelector('.mobile-header').style.display = '';
     document.querySelector('.main-content').style.display = '';
-    el('fabBtn').style.display = '';
+    updateFabForPage(currentPage);
   }
 
   async function handleLogin(e) {
@@ -704,6 +704,32 @@ const App = (() => {
   const validSettingsTabs = ['categories', 'recurring', 'export', 'account', 'admin'];
   const validStocksTabs = ['portfolio', 'transactions', 'dividends', 'realized', 'settings'];
 
+  function updateFabForPage(page) {
+    const fab = el('fabBtn');
+    if (!fab) return;
+
+    if (financePages.includes(page)) {
+      fab.style.display = '';
+      fab.dataset.action = 'transaction';
+      fab.title = '新增交易';
+      fab.setAttribute('aria-label', '新增交易');
+      return;
+    }
+
+    if (page === 'stocks') {
+      fab.style.display = '';
+      fab.dataset.action = 'stock-transaction';
+      fab.title = '新增股票交易紀錄';
+      fab.setAttribute('aria-label', '新增股票交易紀錄');
+      return;
+    }
+
+    fab.style.display = 'none';
+    fab.dataset.action = '';
+    fab.title = '';
+    fab.removeAttribute('aria-label');
+  }
+
   function parseRoute(pathname) {
     const parts = (pathname || '/').replace(/^\/+|\/+$/g, '').split('/').filter(Boolean);
     let page = 'home';
@@ -734,6 +760,7 @@ const App = (() => {
     // 若 page 是 stocks 且沒指定 sub，預設 portfolio
     if (page === 'stocks' && !sub) sub = 'portfolio';
     currentPage = page;
+    updateFabForPage(page);
     const navPage = financePages.includes(page) ? 'finance' : page;
 
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -4186,7 +4213,16 @@ const App = (() => {
     el('txAccount')?.addEventListener('change', applyAccountCurrencyToTx);
 
     // FAB
-    el('fabBtn').addEventListener('click', () => openTransactionModal());
+    el('fabBtn').addEventListener('click', () => {
+      const action = el('fabBtn').dataset.action;
+      if (action === 'stock-transaction') {
+        openStockTxModal();
+        return;
+      }
+      if (action === 'transaction') {
+        openTransactionModal();
+      }
+    });
     el('scanInvoiceQrBtn')?.addEventListener('click', openInvoiceScannerModal);
     el('invoiceScanPasteBtn')?.addEventListener('click', parseInvoiceFromClipboard);
 

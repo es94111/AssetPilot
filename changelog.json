@@ -1,6 +1,17 @@
 {
-  "currentVersion": "3.37",
+  "currentVersion": "3.38",
   "releases": [
+    {
+      "version": "3.38",
+      "date": "2026-03-22",
+      "title": "登入稽核紀錄支援刪除與批次刪除",
+      "type": "feature",
+      "changes": [
+        { "tag": "new", "text": "管理員登入紀錄新增單筆刪除與批次刪除功能，支援勾選多筆一次清除" },
+        { "tag": "new", "text": "全部使用者登入紀錄新增單筆刪除與批次刪除功能，含全選與已選筆數顯示" },
+        { "tag": "improved", "text": "管理員登入稽核 API 回傳紀錄 ID，並新增管理員/全站登入稽核刪除端點" }
+      ]
+    },
     {
       "version": "3.37",
       "date": "2026-03-22",

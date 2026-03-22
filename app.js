@@ -2897,6 +2897,8 @@ const App = (() => {
   let accountSettingsBound = false;
   let exchangeRatesBound = false;
   let adminSettingsBound = false;
+  let selectedAdminLoginLogIds = new Set();
+  let selectedAdminAllLoginLogIds = new Set();
 
   function buildFxCurrencyOptions(selected) {
     const s = normalizeCurrencyCode(selected);
@@ -3178,10 +3180,151 @@ const App = (() => {
     }
   }
 
+  function updateAdminLoginLogSelectionUI() {
+    const checkboxes = document.querySelectorAll('.admin-login-log-checkbox');
+    const selectedCount = selectedAdminLoginLogIds.size;
+    const countEl = el('adminLoginLogSelectedCount');
+    const deleteBtn = el('adminLoginLogDeleteSelectedBtn');
+    const selectAll = el('selectAllAdminLoginLogs');
+
+    if (countEl) countEl.textContent = `已選 ${selectedCount} 筆`;
+    if (deleteBtn) deleteBtn.disabled = selectedCount === 0;
+    if (selectAll) {
+      if (checkboxes.length > 0 && selectedCount === checkboxes.length) {
+        selectAll.checked = true;
+        selectAll.indeterminate = false;
+      } else if (selectedCount > 0) {
+        selectAll.checked = false;
+        selectAll.indeterminate = true;
+      } else {
+        selectAll.checked = false;
+        selectAll.indeterminate = false;
+      }
+    }
+  }
+
+  function updateAdminAllLoginLogSelectionUI() {
+    const checkboxes = document.querySelectorAll('.admin-all-login-log-checkbox');
+    const selectedCount = selectedAdminAllLoginLogIds.size;
+    const countEl = el('adminAllLoginLogSelectedCount');
+    const deleteBtn = el('adminAllLoginLogDeleteSelectedBtn');
+    const selectAll = el('selectAllAdminAllLoginLogs');
+
+    if (countEl) countEl.textContent = `已選 ${selectedCount} 筆`;
+    if (deleteBtn) deleteBtn.disabled = selectedCount === 0;
+    if (selectAll) {
+      if (checkboxes.length > 0 && selectedCount === checkboxes.length) {
+        selectAll.checked = true;
+        selectAll.indeterminate = false;
+      } else if (selectedCount > 0) {
+        selectAll.checked = false;
+        selectAll.indeterminate = true;
+      } else {
+        selectAll.checked = false;
+        selectAll.indeterminate = false;
+      }
+    }
+  }
+
+  function toggleAdminLoginLogSelect(id, checked) {
+    if (!id) return;
+    if (checked) selectedAdminLoginLogIds.add(id);
+    else selectedAdminLoginLogIds.delete(id);
+    updateAdminLoginLogSelectionUI();
+  }
+
+  function toggleAllAdminLoginLogs(checked) {
+    document.querySelectorAll('.admin-login-log-checkbox').forEach(cb => {
+      cb.checked = !!checked;
+      const id = cb.dataset.id;
+      if (!id) return;
+      if (checked) selectedAdminLoginLogIds.add(id);
+      else selectedAdminLoginLogIds.delete(id);
+    });
+    updateAdminLoginLogSelectionUI();
+  }
+
+  function toggleAdminAllLoginLogSelect(id, checked) {
+    if (!id) return;
+    if (checked) selectedAdminAllLoginLogIds.add(id);
+    else selectedAdminAllLoginLogIds.delete(id);
+    updateAdminAllLoginLogSelectionUI();
+  }
+
+  function toggleAllAdminAllLoginLogs(checked) {
+    document.querySelectorAll('.admin-all-login-log-checkbox').forEach(cb => {
+      cb.checked = !!checked;
+      const id = cb.dataset.id;
+      if (!id) return;
+      if (checked) selectedAdminAllLoginLogIds.add(id);
+      else selectedAdminAllLoginLogIds.delete(id);
+    });
+    updateAdminAllLoginLogSelectionUI();
+  }
+
+  async function deleteAdminLoginLog(id) {
+    if (!id) return;
+    if (!confirm('確定要刪除此筆管理員登入紀錄嗎？')) return;
+    try {
+      await API.del('/api/admin/login-logs/admin/' + encodeURIComponent(id));
+      toast('管理員登入紀錄已刪除', 'success');
+      await renderAdminSettings();
+    } catch (e) {
+      toast(e.message || '刪除管理員登入紀錄失敗', 'error');
+    }
+  }
+
+  async function deleteSelectedAdminLoginLogs() {
+    const ids = Array.from(selectedAdminLoginLogIds);
+    if (ids.length === 0) {
+      toast('請先勾選要刪除的紀錄', 'error');
+      return;
+    }
+    if (!confirm(`確定要刪除 ${ids.length} 筆管理員登入紀錄嗎？`)) return;
+    try {
+      const result = await API.post('/api/admin/login-logs/admin/batch-delete', { ids });
+      toast(`已刪除 ${result.deleted || 0} 筆管理員登入紀錄`, 'success');
+      await renderAdminSettings();
+    } catch (e) {
+      toast(e.message || '批次刪除管理員登入紀錄失敗', 'error');
+    }
+  }
+
+  async function deleteAdminAllLoginLog(id) {
+    if (!id) return;
+    if (!confirm('確定要刪除此筆使用者登入紀錄嗎？')) return;
+    try {
+      await API.del('/api/admin/login-logs/all/' + encodeURIComponent(id));
+      toast('使用者登入紀錄已刪除', 'success');
+      await renderAdminSettings();
+    } catch (e) {
+      toast(e.message || '刪除使用者登入紀錄失敗', 'error');
+    }
+  }
+
+  async function deleteSelectedAdminAllLoginLogs() {
+    const ids = Array.from(selectedAdminAllLoginLogIds);
+    if (ids.length === 0) {
+      toast('請先勾選要刪除的紀錄', 'error');
+      return;
+    }
+    if (!confirm(`確定要刪除 ${ids.length} 筆使用者登入紀錄嗎？`)) return;
+    try {
+      const result = await API.post('/api/admin/login-logs/all/batch-delete', { ids });
+      toast(`已刪除 ${result.deleted || 0} 筆使用者登入紀錄`, 'success');
+      await renderAdminSettings();
+    } catch (e) {
+      toast(e.message || '批次刪除使用者登入紀錄失敗', 'error');
+    }
+  }
+
   function renderAdminLoginLogTables(loginLogData) {
     const adminTbody = el('adminLoginLogBody');
     const allUserTbody = el('adminAllLoginLogBody');
     if (!adminTbody || !allUserTbody) return;
+
+    selectedAdminLoginLogIds = new Set();
+    selectedAdminAllLoginLogIds = new Set();
 
     const adminLogs = Array.isArray(loginLogData?.adminLogs) ? [...loginLogData.adminLogs] : [];
     const allUserLogs = Array.isArray(loginLogData?.allUserLogs) ? [...loginLogData.allUserLogs] : [];
@@ -3213,22 +3356,30 @@ const App = (() => {
     }
 
     if (adminLogs.length === 0) {
-      adminTbody.innerHTML = '<tr><td colspan="3" class="empty-hint">尚無管理員登入紀錄</td></tr>';
+      adminTbody.innerHTML = '<tr><td colspan="5" class="empty-hint">尚無管理員登入紀錄</td></tr>';
     } else {
-      adminTbody.innerHTML = adminLogs.map(log => `
+      adminTbody.innerHTML = adminLogs.map(log => {
+        const hasId = !!log.id;
+        return `
         <tr>
+          <td class="td-check">${hasId ? `<input type="checkbox" class="admin-login-log-checkbox" data-id="${escHtml(log.id)}" onchange="App.toggleAdminLoginLogSelect('${escHtml(log.id)}', this.checked)">` : ''}</td>
           <td>${escHtml(formatLoginAt(log.loginAt))}</td>
           <td>${escHtml(log.ipAddress || 'unknown')}</td>
           <td>${escHtml(formatLoginMethod(log.loginMethod))}</td>
+          <td>${hasId ? `<button class="btn-icon danger" onclick="App.deleteAdminLoginLog('${escHtml(log.id)}')" title="刪除"><i class="fas fa-trash"></i></button>` : '<span class="import-hint">-</span>'}</td>
         </tr>
-      `).join('');
+      `;
+      }).join('');
     }
 
     if (allUserLogs.length === 0) {
-      allUserTbody.innerHTML = '<tr><td colspan="8" class="empty-hint">尚無使用者登入紀錄</td></tr>';
+      allUserTbody.innerHTML = '<tr><td colspan="10" class="empty-hint">尚無使用者登入紀錄</td></tr>';
     } else {
-      allUserTbody.innerHTML = allUserLogs.map(log => `
+      allUserTbody.innerHTML = allUserLogs.map(log => {
+        const hasId = !!log.id;
+        return `
         <tr>
+          <td class="td-check">${hasId ? `<input type="checkbox" class="admin-all-login-log-checkbox" data-id="${escHtml(log.id)}" onchange="App.toggleAdminAllLoginLogSelect('${escHtml(log.id)}', this.checked)">` : ''}</td>
           <td>${escHtml(formatLoginAt(log.loginAt))}</td>
           <td>${escHtml(log.email || '')}</td>
           <td>${escHtml(log.displayName || '-')}</td>
@@ -3237,9 +3388,14 @@ const App = (() => {
           <td>${escHtml(formatLoginMethod(log.loginMethod))}</td>
           <td>${log.isSuccess ? '<span class="type-badge income">成功</span>' : '<span class="type-badge expense">失敗</span>'}</td>
           <td>${escHtml(log.isSuccess ? '-' : formatFailureReason(log.failureReason))}</td>
+          <td>${hasId ? `<button class="btn-icon danger" onclick="App.deleteAdminAllLoginLog('${escHtml(log.id)}')" title="刪除"><i class="fas fa-trash"></i></button>` : '<span class="import-hint">-</span>'}</td>
         </tr>
-      `).join('');
+      `;
+      }).join('');
     }
+
+    updateAdminLoginLogSelectionUI();
+    updateAdminAllLoginLogSelectionUI();
   }
 
   function renderAdminUserTable(users) {
@@ -3343,6 +3499,17 @@ const App = (() => {
         toast(e.message || '刪除使用者失敗', 'error');
       }
     });
+
+    el('selectAllAdminLoginLogs')?.addEventListener('change', (ev) => {
+      toggleAllAdminLoginLogs(!!ev.target.checked);
+    });
+
+    el('selectAllAdminAllLoginLogs')?.addEventListener('change', (ev) => {
+      toggleAllAdminAllLoginLogs(!!ev.target.checked);
+    });
+
+    el('adminLoginLogDeleteSelectedBtn')?.addEventListener('click', deleteSelectedAdminLoginLogs);
+    el('adminAllLoginLogDeleteSelectedBtn')?.addEventListener('click', deleteSelectedAdminAllLoginLogs);
 
     adminSettingsBound = true;
   }
@@ -4677,6 +4844,10 @@ const App = (() => {
     stkTxSort,
     stkDivSort,
     stkDivGoPage: (p) => renderStockDividends(p),
+    toggleAdminLoginLogSelect,
+    toggleAdminAllLoginLogSelect,
+    deleteAdminLoginLog,
+    deleteAdminAllLoginLog,
     openChangelog,
     googleFallbackLogin,
   };

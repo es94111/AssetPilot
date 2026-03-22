@@ -1636,7 +1636,7 @@ app.get('/api/account/login-logs', (req, res) => {
 
 app.get('/api/admin/login-logs', adminMiddleware, (req, res) => {
   const adminLogs = queryAll(
-    `SELECT login_at, ip_address, login_method
+    `SELECT id, login_at, ip_address, login_method
      FROM login_audit_logs
      WHERE user_id = ? AND is_admin_login = 1
      ORDER BY login_at DESC
@@ -1645,7 +1645,7 @@ app.get('/api/admin/login-logs', adminMiddleware, (req, res) => {
   );
 
   const allUserLogs = queryAll(
-    `SELECT l.user_id, l.email, l.login_at, l.ip_address, l.login_method, l.is_admin_login, l.is_success, l.failure_reason, u.display_name
+    `SELECT l.id, l.user_id, l.email, l.login_at, l.ip_address, l.login_method, l.is_admin_login, l.is_success, l.failure_reason, u.display_name
      FROM login_attempt_logs l
      LEFT JOIN users u ON u.id = l.user_id
      ORDER BY l.login_at DESC
@@ -1654,11 +1654,13 @@ app.get('/api/admin/login-logs', adminMiddleware, (req, res) => {
 
   res.json({
     adminLogs: adminLogs.map(l => ({
+      id: l.id,
       loginAt: Number(l.login_at) || 0,
       ipAddress: l.ip_address || 'unknown',
       loginMethod: l.login_method || 'password',
     })),
     allUserLogs: allUserLogs.map(l => ({
+      id: l.id,
       userId: l.user_id,
       email: l.email || '',
       displayName: l.display_name || '',
@@ -1670,6 +1672,62 @@ app.get('/api/admin/login-logs', adminMiddleware, (req, res) => {
       failureReason: l.failure_reason || '',
     })),
   });
+});
+
+app.delete('/api/admin/login-logs/admin/:id', adminMiddleware, (req, res) => {
+  const id = String(req.params.id || '').trim();
+  if (!id) return res.status(400).json({ error: '缺少紀錄 ID' });
+
+  db.run("DELETE FROM login_audit_logs WHERE id = ? AND user_id = ? AND is_admin_login = 1", [id, req.userId]);
+  const deleted = db.getRowsModified();
+  if (!deleted) return res.status(404).json({ error: '管理員登入紀錄不存在' });
+
+  saveDB();
+  res.json({ deleted });
+});
+
+app.post('/api/admin/login-logs/admin/batch-delete', adminMiddleware, (req, res) => {
+  const ids = Array.isArray(req.body?.ids) ? req.body.ids : [];
+  if (ids.length === 0) return res.status(400).json({ error: '請選擇要刪除的紀錄' });
+
+  let deleted = 0;
+  ids.forEach(rawId => {
+    const id = String(rawId || '').trim();
+    if (!id) return;
+    db.run("DELETE FROM login_audit_logs WHERE id = ? AND user_id = ? AND is_admin_login = 1", [id, req.userId]);
+    deleted += db.getRowsModified();
+  });
+
+  saveDB();
+  res.json({ deleted });
+});
+
+app.delete('/api/admin/login-logs/all/:id', adminMiddleware, (req, res) => {
+  const id = String(req.params.id || '').trim();
+  if (!id) return res.status(400).json({ error: '缺少紀錄 ID' });
+
+  db.run("DELETE FROM login_attempt_logs WHERE id = ?", [id]);
+  const deleted = db.getRowsModified();
+  if (!deleted) return res.status(404).json({ error: '使用者登入紀錄不存在' });
+
+  saveDB();
+  res.json({ deleted });
+});
+
+app.post('/api/admin/login-logs/all/batch-delete', adminMiddleware, (req, res) => {
+  const ids = Array.isArray(req.body?.ids) ? req.body.ids : [];
+  if (ids.length === 0) return res.status(400).json({ error: '請選擇要刪除的紀錄' });
+
+  let deleted = 0;
+  ids.forEach(rawId => {
+    const id = String(rawId || '').trim();
+    if (!id) return;
+    db.run("DELETE FROM login_attempt_logs WHERE id = ?", [id]);
+    deleted += db.getRowsModified();
+  });
+
+  saveDB();
+  res.json({ deleted });
 });
 
 app.get('/api/admin/settings', adminMiddleware, (req, res) => {

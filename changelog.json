@@ -1,6 +1,16 @@
 {
-  "currentVersion": "3.36",
+  "currentVersion": "3.37",
   "releases": [
+    {
+      "version": "3.37",
+      "date": "2026-03-22",
+      "title": "快速新增按鈕依頁面情境顯示",
+      "type": "improved",
+      "changes": [
+        { "tag": "improved", "text": "右下角快速按鈕改為情境式顯示：收支管理頁顯示「新增交易」，股票紀錄頁顯示「新增股票交易紀錄」" },
+        { "tag": "improved", "text": "其他頁面不再顯示快速新增按鈕，降低誤觸與跨頁操作混淆" }
+      ]
+    },
     {
       "version": "3.36",
       "date": "2026-03-21",

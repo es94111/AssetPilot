@@ -1,6 +1,16 @@
 {
-  "currentVersion": "3.38",
+  "currentVersion": "3.39",
   "releases": [
+    {
+      "version": "3.39",
+      "date": "2026-03-22",
+      "title": "匯率設定移至收支管理",
+      "type": "improved",
+      "changes": [
+        { "tag": "improved", "text": "匯率設定介面由「設定 > 帳號設定」移至「收支管理 > 帳戶管理」，提高收支操作流程一致性" },
+        { "tag": "improved", "text": "保留原有即時匯率更新、自動更新開關與匯率儲存功能，僅調整入口位置" }
+      ]
+    },
     {
       "version": "3.38",
       "date": "2026-03-22",

@@ -1504,6 +1504,9 @@ const App = (() => {
 
     el('addAccountBtn').onclick = () => openAccountModal();
     el('transferBtn').onclick = () => openTransferModal();
+
+    await renderExchangeRateSettings();
+    bindExchangeRateSettingsIfNeeded();
   }
 
   // ─── 股票紀錄 ───
@@ -2966,6 +2969,82 @@ const App = (() => {
     }
   }
 
+  function bindExchangeRateSettingsIfNeeded() {
+    if (exchangeRatesBound) return;
+    if (!el('fxRateTableBody') || !el('addFxRateBtn') || !el('saveFxRateBtn')) return;
+
+    el('addFxRateBtn')?.addEventListener('click', () => appendFxRateRow('USD', getRateToTwd('USD')));
+    el('refreshGlobalFxBtn')?.addEventListener('click', async () => {
+      try {
+        const rows = Array.from(document.querySelectorAll('#fxRateTableBody tr'));
+        const currencies = rows
+          .map(row => normalizeCurrencyCode(row.querySelector('.fx-currency')?.value || 'TWD'))
+          .filter((v, i, arr) => v && arr.indexOf(v) === i);
+        await API.post('/api/exchange-rates/refresh', { currencies });
+        await refreshCache();
+        await renderExchangeRateSettings();
+        toast('已更新全球即時匯率', 'success');
+      } catch (e) {
+        toast(e.message || '更新即時匯率失敗', 'error');
+      }
+    });
+
+    el('fxAutoUpdateToggle')?.addEventListener('change', async (ev) => {
+      const next = !!ev.target?.checked;
+      try {
+        const result = await API.put('/api/exchange-rates/settings', { autoUpdate: next });
+        updateFxAutoStatus(result.settings || { autoUpdate: next });
+        toast(next ? '已啟用匯率自動更新' : '已關閉匯率自動更新', 'success');
+      } catch (e) {
+        if (el('fxAutoUpdateToggle')) el('fxAutoUpdateToggle').checked = !next;
+        toast(e.message || '更新匯率自動設定失敗', 'error');
+      }
+    });
+
+    el('fxRateTableBody')?.addEventListener('click', (e) => {
+      const btn = e.target.closest('.fx-delete-btn');
+      if (!btn) return;
+      const row = btn.closest('tr');
+      if (row) row.remove();
+    });
+
+    el('saveFxRateBtn')?.addEventListener('click', async () => {
+      const rows = Array.from(document.querySelectorAll('#fxRateTableBody tr'));
+      const seen = new Set();
+      const rates = [];
+
+      for (const row of rows) {
+        const c = normalizeCurrencyCode(row.querySelector('.fx-currency')?.value || 'TWD');
+        const rate = Number(row.querySelector('.fx-rate')?.value);
+        if (seen.has(c)) {
+          toast(`幣別重複：${c}`, 'error');
+          return;
+        }
+        seen.add(c);
+        if (c === 'TWD') {
+          rates.push({ currency: 'TWD', rateToTwd: 1 });
+          continue;
+        }
+        if (!(rate > 0)) {
+          toast(`${c} 匯率必須大於 0`, 'error');
+          return;
+        }
+        rates.push({ currency: c, rateToTwd: rate });
+      }
+
+      try {
+        await API.put('/api/exchange-rates', { rates });
+        await refreshCache();
+        await renderExchangeRateSettings();
+        toast('匯率已儲存', 'success');
+      } catch (e) {
+        toast(e.message || '儲存匯率失敗', 'error');
+      }
+    });
+
+    exchangeRatesBound = true;
+  }
+
   async function renderAccountSettings() {
     try {
       const res = await API.get('/api/auth/me');
@@ -2996,6 +3075,7 @@ const App = (() => {
       updateThemeModeControls();
 
       await renderExchangeRateSettings();
+      bindExchangeRateSettingsIfNeeded();
 
       if (!accountSettingsBound) {
         document.querySelectorAll('input[name="themeMode"]').forEach(input => {
@@ -3055,76 +3135,7 @@ const App = (() => {
         accountSettingsBound = true;
       }
 
-      if (!exchangeRatesBound) {
-        el('addFxRateBtn')?.addEventListener('click', () => appendFxRateRow('USD', getRateToTwd('USD')));
-        el('refreshGlobalFxBtn')?.addEventListener('click', async () => {
-          try {
-            const rows = Array.from(document.querySelectorAll('#fxRateTableBody tr'));
-            const currencies = rows
-              .map(row => normalizeCurrencyCode(row.querySelector('.fx-currency')?.value || 'TWD'))
-              .filter((v, i, arr) => v && arr.indexOf(v) === i);
-            await API.post('/api/exchange-rates/refresh', { currencies });
-            await refreshCache();
-            await renderExchangeRateSettings();
-            toast('已更新全球即時匯率', 'success');
-          } catch (e) {
-            toast(e.message || '更新即時匯率失敗', 'error');
-          }
-        });
-
-        el('fxAutoUpdateToggle')?.addEventListener('change', async (ev) => {
-          const next = !!ev.target?.checked;
-          try {
-            const result = await API.put('/api/exchange-rates/settings', { autoUpdate: next });
-            updateFxAutoStatus(result.settings || { autoUpdate: next });
-            toast(next ? '已啟用匯率自動更新' : '已關閉匯率自動更新', 'success');
-          } catch (e) {
-            if (el('fxAutoUpdateToggle')) el('fxAutoUpdateToggle').checked = !next;
-            toast(e.message || '更新匯率自動設定失敗', 'error');
-          }
-        });
-
-        el('fxRateTableBody')?.addEventListener('click', (e) => {
-          const btn = e.target.closest('.fx-delete-btn');
-          if (!btn) return;
-          const row = btn.closest('tr');
-          if (row) row.remove();
-        });
-        el('saveFxRateBtn')?.addEventListener('click', async () => {
-          const rows = Array.from(document.querySelectorAll('#fxRateTableBody tr'));
-          const seen = new Set();
-          const rates = [];
-
-          for (const row of rows) {
-            const c = normalizeCurrencyCode(row.querySelector('.fx-currency')?.value || 'TWD');
-            const rate = Number(row.querySelector('.fx-rate')?.value);
-            if (seen.has(c)) {
-              toast(`幣別重複：${c}`, 'error');
-              return;
-            }
-            seen.add(c);
-            if (c === 'TWD') {
-              rates.push({ currency: 'TWD', rateToTwd: 1 });
-              continue;
-            }
-            if (!(rate > 0)) {
-              toast(`${c} 匯率必須大於 0`, 'error');
-              return;
-            }
-            rates.push({ currency: c, rateToTwd: rate });
-          }
-
-          try {
-            await API.put('/api/exchange-rates', { rates });
-            await refreshCache();
-            await renderExchangeRateSettings();
-            toast('匯率已儲存', 'success');
-          } catch (e) {
-            toast(e.message || '儲存匯率失敗', 'error');
-          }
-        });
-        exchangeRatesBound = true;
-      }
+      bindExchangeRateSettingsIfNeeded();
     } catch (e) {
       console.error('載入帳號設定失敗:', e);
     }

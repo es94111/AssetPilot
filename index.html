@@ -450,6 +450,32 @@
         <button class="btn btn-outline" id="transferBtn"><i class="fas fa-right-left"></i> 帳戶轉帳</button>
       </div>
       <div class="account-grid" id="accountGrid"></div>
+
+      <div class="card" style="margin-top:16px">
+        <h3><i class="fas fa-coins" style="margin-right:8px;color:var(--primary)"></i>匯率設定（換算為 TWD）</h3>
+        <p class="import-hint" style="margin-bottom:12px">用於多幣別交易換算。TWD 固定為 1，不可刪除。</p>
+        <div class="theme-toggle-row" style="margin-bottom:10px">
+          <div>
+            <div style="font-weight:600">全球即時匯率（rter.info）</div>
+            <div class="import-hint" id="fxAutoStatus" style="margin-top:4px">可選擇是否自動更新匯率。</div>
+          </div>
+          <label style="display:flex;align-items:center;gap:8px">
+            <input type="checkbox" id="fxAutoUpdateToggle">
+            <span>自動更新匯率</span>
+          </label>
+        </div>
+        <table class="table fx-rate-table" style="margin-bottom:12px">
+          <thead>
+            <tr><th style="width:40%">幣別</th><th style="width:40%">匯率（to TWD）</th><th style="width:20%">操作</th></tr>
+          </thead>
+          <tbody id="fxRateTableBody"></tbody>
+        </table>
+        <div class="import-actions" style="justify-content:flex-start">
+          <button class="btn" id="addFxRateBtn"><i class="fas fa-plus"></i> 新增幣別</button>
+          <button class="btn btn-ghost" id="refreshGlobalFxBtn"><i class="fas fa-globe"></i> 立即取得即時匯率</button>
+          <button class="btn btn-primary" id="saveFxRateBtn"><i class="fas fa-floppy-disk"></i> 儲存匯率</button>
+        </div>
+      </div>
     </section>
 
     <!-- ===== 股票紀錄 ===== -->
@@ -839,31 +865,6 @@
       </div>
       <!-- 帳號設定 -->
       <div class="settings-panel" id="panel-account">
-        <div class="card">
-          <h3><i class="fas fa-coins" style="margin-right:8px;color:var(--primary)"></i>匯率設定（換算為 TWD）</h3>
-          <p class="import-hint" style="margin-bottom:12px">用於多幣別交易換算。TWD 固定為 1，不可刪除。</p>
-          <div class="theme-toggle-row" style="margin-bottom:10px">
-            <div>
-              <div style="font-weight:600">全球即時匯率（rter.info）</div>
-              <div class="import-hint" id="fxAutoStatus" style="margin-top:4px">可選擇是否自動更新匯率。</div>
-            </div>
-            <label style="display:flex;align-items:center;gap:8px">
-              <input type="checkbox" id="fxAutoUpdateToggle">
-              <span>自動更新匯率</span>
-            </label>
-          </div>
-          <table class="table fx-rate-table" style="margin-bottom:12px">
-            <thead>
-              <tr><th style="width:40%">幣別</th><th style="width:40%">匯率（to TWD）</th><th style="width:20%">操作</th></tr>
-            </thead>
-            <tbody id="fxRateTableBody"></tbody>
-          </table>
-          <div class="import-actions" style="justify-content:flex-start">
-            <button class="btn" id="addFxRateBtn"><i class="fas fa-plus"></i> 新增幣別</button>
-            <button class="btn btn-ghost" id="refreshGlobalFxBtn"><i class="fas fa-globe"></i> 立即取得即時匯率</button>
-            <button class="btn btn-primary" id="saveFxRateBtn"><i class="fas fa-floppy-disk"></i> 儲存匯率</button>
-          </div>
-        </div>
         <div class="card">
           <h3><i class="fas fa-moon" style="margin-right:8px;color:var(--primary)"></i>外觀模式</h3>
           <div class="theme-toggle-row">

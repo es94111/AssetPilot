@@ -476,6 +476,17 @@ your-domain.com {
 
 - <a href="https://ipinfo.io/lite" target="_blank" rel="noopener noreferrer">IP address data is powered by IPinfo</a>
 
+## API 來源與提供者
+
+- 全球即時匯率 API：rter.info（Realtime Exchange Rate API）
+  - https://tw.rter.info/howto_currencyapi.php
+- 股票資料 API：臺灣證券交易所（TWSE OpenAPI）
+  - https://openapi.twse.com.tw/
+- Google 單一登入 API：Google（Google Identity Services）
+  - https://developers.google.com/identity
+- IP 國家查詢 API：IPinfo（IPinfo Lite）
+  - https://ipinfo.io/lite
+
 ## 授權
 
 MIT License

@@ -1,6 +1,16 @@
 {
-  "currentVersion": "3.46.1",
+  "currentVersion": "3.46.2",
   "releases": [
+    {
+      "version": "3.46.2",
+      "date": "2026-03-23",
+      "title": "雙圓餅圖配色辨識優化",
+      "type": "improved",
+      "changes": [
+        { "tag": "improved", "text": "美化統計報表雙圓餅圖配色，提升不同分類之間的視覺區隔" },
+        { "tag": "improved", "text": "同一父分類下的子分類自動套用變化色，讓外圈分類更容易辨識" }
+      ]
+    },
     {
       "version": "3.46.1",
       "date": "2026-03-23",

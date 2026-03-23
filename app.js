@@ -1322,9 +1322,16 @@ const App = (() => {
       el('reportFrom').addEventListener('change', drawReport);
       el('reportTo').addEventListener('change', drawReport);
       el('reportType').addEventListener('change', drawReport);
+      el('reportDualPie').addEventListener('change', drawReport);
       reportBound = true;
     }
     await drawReport();
+  }
+
+  function updateReportDualPieVisibility(activeTab) {
+    const wrap = el('reportDualPieWrap');
+    if (!wrap) return;
+    wrap.style.display = activeTab === 'category' ? '' : 'none';
   }
 
   function getReportDateRange() {
@@ -1363,6 +1370,7 @@ const App = (() => {
     const activeTab = document.querySelector('.report-controls .tab.active')?.dataset.report || 'category';
     const type = el('reportType').value;
     const { from, to } = getReportDateRange();
+    updateReportDualPieVisibility(activeTab);
 
     const reportData = await API.get(`/api/reports?type=${type}&from=${from}&to=${to}`);
 
@@ -1371,13 +1379,18 @@ const App = (() => {
     el('reportSummary').innerHTML = '';
 
     switch (activeTab) {
-      case 'category': drawCategoryChart(ctx, reportData); break;
+      case 'category': drawCategoryChart(ctx, reportData, !!el('reportDualPie')?.checked); break;
       case 'trend': drawTrendChart(ctx, reportData, type, from, to); break;
       case 'daily': drawDailyChart(ctx, reportData, type, from, to); break;
     }
   }
 
-  function drawCategoryChart(ctx, data) {
+  function drawCategoryChart(ctx, data, useDualPie = false) {
+    if (useDualPie) {
+      drawDualCategoryChart(ctx, data);
+      return;
+    }
+
     const catMap = data.catMap;
     const labels = Object.keys(catMap);
     const values = labels.map(l => catMap[l].total);
@@ -1402,6 +1415,105 @@ const App = (() => {
       </div>`;
     });
     el('reportSummary').innerHTML = summaryHtml;
+  }
+
+  function drawDualCategoryChart(ctx, data) {
+    const breakdown = Array.isArray(data.categoryBreakdown) ? data.categoryBreakdown : [];
+    if (breakdown.length === 0) return;
+
+    const parentMap = new Map();
+    const childRows = [];
+
+    breakdown.forEach(item => {
+      const amount = Number(item.total) || 0;
+      if (amount <= 0) return;
+
+      const childName = String(item.name || '未分類');
+      const parentName = String(item.parentName || childName);
+      const parentColor = item.parentColor || item.color || '#94a3b8';
+      const childColor = item.color || parentColor || '#94a3b8';
+      const parentKey = String(item.parentId || parentName || '未分類');
+      const label = parentName === childName ? childName : `${parentName} > ${childName}`;
+
+      if (!parentMap.has(parentKey)) {
+        parentMap.set(parentKey, {
+          parentName,
+          parentColor,
+          total: 0,
+        });
+      }
+      const parent = parentMap.get(parentKey);
+      parent.total += amount;
+
+      childRows.push({
+        label,
+        childName,
+        parentName,
+        color: childColor,
+        total: amount,
+      });
+    });
+
+    const parentRows = [...parentMap.values()].sort((a, b) => b.total - a.total);
+    if (parentRows.length === 0 || childRows.length === 0) return;
+
+    charts.report = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: childRows.map(r => r.label),
+        datasets: [
+          {
+            label: '父分類',
+            data: parentRows.map(r => r.total),
+            backgroundColor: parentRows.map(r => r.parentColor),
+            borderWidth: 0,
+            radius: '62%',
+            cutout: '36%',
+            segmentLabels: parentRows.map(r => r.parentName),
+          },
+          {
+            label: '子分類',
+            data: childRows.map(r => r.total),
+            backgroundColor: childRows.map(r => r.color),
+            borderWidth: 0,
+            radius: '95%',
+            cutout: '67%',
+            segmentLabels: childRows.map(r => r.label),
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label(context) {
+                const ds = context.dataset || {};
+                const names = ds.segmentLabels || [];
+                const label = names[context.dataIndex] || '';
+                const value = Number(context.raw) || 0;
+                return `${ds.label}：${label} ${fmt(value)}`;
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const total = childRows.reduce((sum, row) => sum + row.total, 0);
+    const summaryParts = [
+      '<div class="report-summary-item"><div class="label">圖層</div><div class="value">雙圓餅圖</div><div class="label">內圈父分類 / 外圈子分類</div></div>',
+      ...parentRows.map(row => {
+        const pct = total ? ((row.total / total) * 100).toFixed(1) : '0.0';
+        return `<div class="report-summary-item"><div class="label">父分類：${escHtml(row.parentName)}</div><div class="value">${fmt(row.total)}</div><div class="label">${pct}%</div></div>`;
+      }),
+      ...childRows.map(row => {
+        const pct = total ? ((row.total / total) * 100).toFixed(1) : '0.0';
+        return `<div class="report-summary-item"><div class="label">${escHtml(row.label)}</div><div class="value">${fmt(row.total)}</div><div class="label">${pct}%</div></div>`;
+      }),
+    ];
+    el('reportSummary').innerHTML = summaryParts.join('');
   }
 
   function drawTrendChart(ctx, data, type, from, to) {

@@ -1,6 +1,17 @@
 {
-  "currentVersion": "3.45",
+  "currentVersion": "3.46",
   "releases": [
+    {
+      "version": "3.46",
+      "date": "2026-03-23",
+      "title": "統計報表新增雙圓餅圖",
+      "type": "feature",
+      "changes": [
+        { "tag": "new", "text": "收支管理的統計報表新增雙圓餅圖模式：內圈顯示父分類，外圈顯示子分類" },
+        { "tag": "new", "text": "分類統計新增「雙圓餅圖」開關，使用者可自由切換單層與雙層圓餅圖" },
+        { "tag": "improved", "text": "報表摘要同步顯示父分類與子分類的金額與占比，分類層級更清楚" }
+      ]
+    },
     {
       "version": "3.45",
       "date": "2026-03-23",

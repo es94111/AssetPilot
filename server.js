@@ -2751,18 +2751,57 @@ app.get('/api/reports', (req, res) => {
 
   let txs;
   if (from && to) {
-    txs = queryAll("SELECT t.*, c.name as cat_name, c.color as cat_color FROM transactions t LEFT JOIN categories c ON t.category_id = c.id WHERE t.user_id = ? AND t.type = ? AND t.date >= ? AND t.date <= ? ORDER BY t.date", [req.userId, txType, from, to]);
+    txs = queryAll(`
+      SELECT t.*, c.name as cat_name, c.color as cat_color, c.parent_id as cat_parent_id,
+             p.name as cat_parent_name, p.color as cat_parent_color
+      FROM transactions t
+      LEFT JOIN categories c ON t.category_id = c.id
+      LEFT JOIN categories p ON c.parent_id = p.id
+      WHERE t.user_id = ? AND t.type = ? AND t.date >= ? AND t.date <= ?
+      ORDER BY t.date
+    `, [req.userId, txType, from, to]);
   } else {
-    txs = queryAll("SELECT t.*, c.name as cat_name, c.color as cat_color FROM transactions t LEFT JOIN categories c ON t.category_id = c.id WHERE t.user_id = ? AND t.type = ? ORDER BY t.date", [req.userId, txType]);
+    txs = queryAll(`
+      SELECT t.*, c.name as cat_name, c.color as cat_color, c.parent_id as cat_parent_id,
+             p.name as cat_parent_name, p.color as cat_parent_color
+      FROM transactions t
+      LEFT JOIN categories c ON t.category_id = c.id
+      LEFT JOIN categories p ON c.parent_id = p.id
+      WHERE t.user_id = ? AND t.type = ?
+      ORDER BY t.date
+    `, [req.userId, txType]);
   }
 
   const catMap = {};
+  const categoryMap = {};
   txs.forEach(t => {
+    const amount = Number(t.amount) || 0;
     const name = t.cat_name || '未分類';
     const color = t.cat_color || '#94a3b8';
     if (!catMap[name]) catMap[name] = { total: 0, color };
-    catMap[name].total += Number(t.amount);
+    catMap[name].total += amount;
+
+    const categoryId = t.category_id || '';
+    const parentId = t.cat_parent_id || '';
+    const parentName = parentId ? (t.cat_parent_name || '未分類') : name;
+    const parentColor = parentId ? (t.cat_parent_color || color) : color;
+    const key = categoryId || `name:${name}`;
+
+    if (!categoryMap[key]) {
+      categoryMap[key] = {
+        categoryId,
+        name,
+        color,
+        parentId,
+        parentName,
+        parentColor,
+        total: 0,
+      };
+    }
+    categoryMap[key].total += amount;
   });
+
+  const categoryBreakdown = Object.values(categoryMap).sort((a, b) => b.total - a.total);
 
   const dailyMap = {};
   const monthlyMap = {};
@@ -2772,7 +2811,13 @@ app.get('/api/reports', (req, res) => {
     monthlyMap[m] = (monthlyMap[m] || 0) + Number(t.amount);
   });
 
-  res.json({ catMap, dailyMap, monthlyMap, total: txs.reduce((s, t) => s + Number(t.amount), 0) });
+  res.json({
+    catMap,
+    categoryBreakdown,
+    dailyMap,
+    monthlyMap,
+    total: txs.reduce((s, t) => s + Number(t.amount), 0),
+  });
 });
 
 // ─── TWSE 股票查詢（代理 + 快取）───

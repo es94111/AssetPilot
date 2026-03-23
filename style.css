@@ -875,6 +875,20 @@ body.dark-mode .import-missing-list span { background: rgba(255,255,255,.1); }
 .report-summary-item .label { font-size: 13px; color: var(--text-secondary); }
 .report-summary-item .value { font-size: 18px; font-weight: 700; margin-top: 4px; }
 .report-controls { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; }
+.report-toggle { min-width: 280px; }
+.checkbox-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+.checkbox-inline input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--primary);
+}
 
 /* ===== API 使用與授權 ===== */
 .api-credits-card h3 {
@@ -1348,6 +1362,7 @@ body.dark-mode .data-table tbody tr:hover {
   .filter-bar { flex-direction: column; }
   .filter-group { width: 100%; }
   .filter-group input, .filter-group select { width: 100%; }
+  .checkbox-inline { width: 100%; }
   .data-table { font-size: 13px; }
   .data-table th:nth-child(6), .data-table td:nth-child(6),
   .data-table th:nth-child(7), .data-table td:nth-child(7) { display: none; }

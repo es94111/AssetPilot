@@ -1776,12 +1776,9 @@ app.get('/api/admin/login-logs', adminMiddleware, async (req, res) => {
   });
 });
 
-app.delete('/api/admin/login-logs/admin/:id', adminMiddleware, (req, res) => {
-  const target = parseLoginLogTarget(req.params.id);
-  if (!target) return res.status(400).json({ error: '缺少紀錄 ID' });
-
+function deleteAdminLoginAuditByTarget(target, userId) {
   if (target.byRowId) {
-    db.run("DELETE FROM login_audit_logs WHERE rowid = ? AND user_id = ? AND is_admin_login = 1", [target.value, req.userId]);
+    db.run("DELETE FROM login_audit_logs WHERE rowid = ? AND user_id = ? AND is_admin_login = 1", [target.value, userId]);
   } else if (target.byTimestamp) {
     db.run(
       `DELETE FROM login_audit_logs
@@ -1792,12 +1789,32 @@ app.delete('/api/admin/login-logs/admin/:id', adminMiddleware, (req, res) => {
          ORDER BY rowid DESC
          LIMIT 1
        )`,
-      [target.value, req.userId]
+      [target.value, userId]
     );
   } else {
-    db.run("DELETE FROM login_audit_logs WHERE id = ? AND user_id = ? AND is_admin_login = 1", [target.value, req.userId]);
+    db.run("DELETE FROM login_audit_logs WHERE id = ? AND user_id = ? AND is_admin_login = 1", [target.value, userId]);
   }
-  const deleted = db.getRowsModified();
+  return db.getRowsModified();
+}
+
+// 相容舊前端：曾有版本呼叫 /api/admin/login-logs/:id
+app.delete('/api/admin/login-logs/:id', adminMiddleware, (req, res, next) => {
+  if (String(req.params.id || '').trim().toLowerCase() === 'admin') return next();
+  const target = parseLoginLogTarget(req.params.id);
+  if (!target) return res.status(400).json({ error: '缺少紀錄 ID' });
+
+  const deleted = deleteAdminLoginAuditByTarget(target, req.userId);
+  if (!deleted) return res.status(404).json({ error: '管理員登入紀錄不存在' });
+
+  saveDB();
+  res.json({ deleted });
+});
+
+app.delete('/api/admin/login-logs/admin/:id', adminMiddleware, (req, res) => {
+  const target = parseLoginLogTarget(req.params.id);
+  if (!target) return res.status(400).json({ error: '缺少紀錄 ID' });
+
+  const deleted = deleteAdminLoginAuditByTarget(target, req.userId);
   if (!deleted) return res.status(404).json({ error: '管理員登入紀錄不存在' });
 
   saveDB();

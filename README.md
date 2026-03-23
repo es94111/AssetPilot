@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-3.42-blue" alt="version">
+  <img src="https://img.shields.io/badge/version-3.42.1-blue" alt="version">
   <img src="https://img.shields.io/badge/node-%3E%3D18-green" alt="node">
   <img src="https://img.shields.io/badge/license-MIT-orange" alt="license">
   <img src="https://img.shields.io/badge/docker-ready-2496ED" alt="docker">
@@ -60,6 +60,7 @@
 - **v3.40.8** — 修正管理員登入紀錄刪除時的回應格式異常提示
 - **v3.41** — 管理員登入紀錄新增手動同步與上次同步時間顯示
 - **v3.42** — 登入紀錄新增 IP 國家查詢（ipinfo.io）
+- **v3.42.1** — 修正管理員登入紀錄刪除偶發 404 錯誤提示
 
 ## 技術架構
 

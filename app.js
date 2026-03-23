@@ -3315,6 +3315,16 @@ const App = (() => {
       toast('管理員登入紀錄已刪除', 'success');
       await renderAdminSettings();
     } catch (e) {
+      const msg = String(e?.message || '');
+      if (msg.includes('(404)') || msg.includes('404') || msg.includes('不存在')) {
+        try {
+          await syncAdminLoginLogs({ silent: true });
+        } catch (_) {
+          // ignore sync error and still show stable fallback message below
+        }
+        toast('該筆管理員登入紀錄可能已不存在，已同步最新列表', 'success');
+        return;
+      }
       toast(normalizeDeleteApiError(e, '刪除管理員登入紀錄失敗，請重新整理後再試'), 'error');
     }
   }

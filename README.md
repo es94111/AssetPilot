@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-3.40.5-blue" alt="version">
+  <img src="https://img.shields.io/badge/version-3.40.6-blue" alt="version">
   <img src="https://img.shields.io/badge/node-%3E%3D18-green" alt="node">
   <img src="https://img.shields.io/badge/license-MIT-orange" alt="license">
   <img src="https://img.shields.io/badge/docker-ready-2496ED" alt="docker">
@@ -42,6 +42,7 @@
 - **登入紀錄批次刪除修正** — 強化管理員登入紀錄與全站登入紀錄批次刪除穩定性，批次失敗時自動逐筆備援
 - **登入紀錄舊資料相容修正** — 舊版登入紀錄缺少主鍵時，仍可正常勾選並執行單筆/批次刪除
 - **管理員登入紀錄勾選保證** — 無論新舊紀錄皆附備援識別值，確保每列都能勾選並單筆/批次刪除
+- **最新登入列勾選補強** — 即時補入的最新登入紀錄若缺 id，會用時間戳作為備援識別，避免無法勾選
 - **資料庫加密** — ChaCha20-Poly1305 + PBKDF2-SHA256 全資料庫加密
 - **響應式設計** — 桌面與手機皆可使用
 

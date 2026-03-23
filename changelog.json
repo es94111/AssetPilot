@@ -1,6 +1,16 @@
 {
-  "currentVersion": "3.40.5",
+  "currentVersion": "3.40.6",
   "releases": [
+    {
+      "version": "3.40.6",
+      "date": "2026-03-23",
+      "title": "管理員登入紀錄勾選覆蓋補強",
+      "type": "fixed",
+      "changes": [
+        { "tag": "fixed", "text": "修正管理員登入紀錄畫面仍出現無勾選框的列，包含最新補入的登入紀錄" },
+        { "tag": "improved", "text": "登入紀錄補入列若缺 id，會以時間戳備援識別，確保可勾選並批次刪除" }
+      ]
+    },
     {
       "version": "3.40.5",
       "date": "2026-03-23",

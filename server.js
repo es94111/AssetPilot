@@ -3695,6 +3695,19 @@ app.post('/api/stock-dividends/batch-delete', (req, res) => {
   res.json({ deleted });
 });
 
+// API 路由未命中時統一回傳 JSON，避免前端拿到 HTML 導致解析錯誤。
+app.use('/api', (req, res) => {
+  res.status(404).json({ error: 'API 路由不存在' });
+});
+
+// API 例外統一回傳 JSON，避免 Express 預設 HTML 錯誤頁造成前端顯示「回應格式異常」。
+app.use((err, req, res, next) => {
+  if (!req.path.startsWith('/api')) return next(err);
+  console.error('API 錯誤:', err?.stack || err);
+  if (res.headersSent) return next(err);
+  res.status(500).json({ error: '伺服器發生錯誤，請稍後再試' });
+});
+
 // ─── 前端路由 catch-all（所有非 API、非靜態檔案的請求都回傳 index.html）───
 app.get('{*path}', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));

@@ -111,6 +111,9 @@ const App = (() => {
 
       // 常見於 API 路由不存在或後端尚未重啟時，會回傳 index.html
       if (text.trim().startsWith('<!DOCTYPE') || text.trim().startsWith('<html')) {
+        if (!r.ok) {
+          throw new Error(`伺服器暫時異常（${r.status}），請稍後再試`);
+        }
         throw new Error('伺服器回應格式異常，請稍後再試');
       }
 
@@ -3163,6 +3166,15 @@ const App = (() => {
     return r;
   }
 
+  function normalizeDeleteApiError(error, fallbackMessage) {
+    const msg = String(error?.message || '').trim();
+    if (!msg) return fallbackMessage;
+    if (msg.includes('伺服器回應格式異常') || msg.includes('伺服器回傳 JSON 格式錯誤') || msg.includes('伺服器回應格式無法解析')) {
+      return fallbackMessage;
+    }
+    return msg;
+  }
+
   async function renderAccountLoginLogs() {
     const tbody = el('accountLoginLogBody');
     if (!tbody) return;
@@ -3281,7 +3293,7 @@ const App = (() => {
       toast('管理員登入紀錄已刪除', 'success');
       await renderAdminSettings();
     } catch (e) {
-      toast(e.message || '刪除管理員登入紀錄失敗', 'error');
+      toast(normalizeDeleteApiError(e, '刪除管理員登入紀錄失敗，請重新整理後再試'), 'error');
     }
   }
 
@@ -3303,7 +3315,7 @@ const App = (() => {
       toast(`已刪除 ${deleted} 筆管理員登入紀錄`, 'success');
       await renderAdminSettings();
     } catch (e) {
-      toast(e.message || '批次刪除管理員登入紀錄失敗', 'error');
+      toast(normalizeDeleteApiError(e, '批次刪除管理員登入紀錄失敗，請重新整理後再試'), 'error');
     }
   }
 
@@ -3315,7 +3327,7 @@ const App = (() => {
       toast('使用者登入紀錄已刪除', 'success');
       await renderAdminSettings();
     } catch (e) {
-      toast(e.message || '刪除使用者登入紀錄失敗', 'error');
+      toast(normalizeDeleteApiError(e, '刪除使用者登入紀錄失敗，請重新整理後再試'), 'error');
     }
   }
 
@@ -3337,7 +3349,7 @@ const App = (() => {
       toast(`已刪除 ${deleted} 筆使用者登入紀錄`, 'success');
       await renderAdminSettings();
     } catch (e) {
-      toast(e.message || '批次刪除使用者登入紀錄失敗', 'error');
+      toast(normalizeDeleteApiError(e, '批次刪除使用者登入紀錄失敗，請重新整理後再試'), 'error');
     }
   }
 

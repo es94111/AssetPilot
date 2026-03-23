@@ -1,6 +1,16 @@
 {
-  "currentVersion": "3.41",
+  "currentVersion": "3.42",
   "releases": [
+    {
+      "version": "3.42",
+      "date": "2026-03-23",
+      "title": "登入 IP 國家查詢",
+      "type": "feature",
+      "changes": [
+        { "tag": "new", "text": "整合 ipinfo.io API，登入紀錄新增 IP 國家查詢並顯示國家代碼" },
+        { "tag": "improved", "text": "登入紀錄國家查詢加入快取與內網 IP（LOCAL）判斷，降低外部 API 呼叫次數" }
+      ]
+    },
     {
       "version": "3.41",
       "date": "2026-03-23",

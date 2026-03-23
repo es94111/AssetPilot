@@ -3166,6 +3166,13 @@ const App = (() => {
     return r;
   }
 
+  function formatCountryCode(country) {
+    const code = String(country || '').trim().toUpperCase();
+    if (!code || code === '-') return '-';
+    if (code === 'LOCAL') return '內網/本機';
+    return code;
+  }
+
   function normalizeDeleteApiError(error, fallbackMessage) {
     const msg = String(error?.message || '').trim();
     if (!msg) return fallbackMessage;
@@ -3200,7 +3207,7 @@ const App = (() => {
         if (!hasLatest) logs.unshift({ ...latestLoginRecord });
       }
       if (logs.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" class="empty-hint">尚無登入紀錄</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" class="empty-hint">尚無登入紀錄</td></tr>';
         return;
       }
 
@@ -3208,12 +3215,13 @@ const App = (() => {
         <tr>
           <td>${escHtml(formatLoginAt(log.loginAt))}</td>
           <td>${escHtml(log.ipAddress || 'unknown')}</td>
+          <td>${escHtml(formatCountryCode(log.country))}</td>
           <td>${log.isAdminLogin ? '<span class="type-badge income">管理員</span>' : '<span class="type-badge">一般</span>'}</td>
           <td>${escHtml(formatLoginMethod(log.loginMethod))}</td>
         </tr>
       `).join('');
     } catch (e) {
-      tbody.innerHTML = '<tr><td colspan="4" class="empty-hint">載入登入紀錄失敗</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="5" class="empty-hint">載入登入紀錄失敗</td></tr>';
     }
   }
 
@@ -3385,6 +3393,7 @@ const App = (() => {
           id: latestLoginRecord.id || (latestLoginRecord.loginAt ? `ts:${latestLoginRecord.loginAt}` : ''),
           loginAt: latestLoginRecord.loginAt,
           ipAddress: latestLoginRecord.ipAddress,
+          country: latestLoginRecord.country || '-',
           loginMethod: latestLoginRecord.loginMethod,
         });
       }
@@ -3398,6 +3407,7 @@ const App = (() => {
           displayName: currentUser.displayName,
           loginAt: latestLoginRecord.loginAt,
           ipAddress: latestLoginRecord.ipAddress,
+          country: latestLoginRecord.country || '-',
           loginMethod: latestLoginRecord.loginMethod,
           isAdminLogin: !!latestLoginRecord.isAdminLogin,
           isSuccess: true,
@@ -3407,7 +3417,7 @@ const App = (() => {
     }
 
     if (adminLogs.length === 0) {
-      adminTbody.innerHTML = '<tr><td colspan="5" class="empty-hint">尚無管理員登入紀錄</td></tr>';
+      adminTbody.innerHTML = '<tr><td colspan="6" class="empty-hint">尚無管理員登入紀錄</td></tr>';
     } else {
       adminTbody.innerHTML = adminLogs.map(log => {
         const rowId = String(log.id || (log.loginAt ? `ts:${Number(log.loginAt)}` : '')).trim();
@@ -3417,6 +3427,7 @@ const App = (() => {
           <td class="td-check">${hasId ? `<input type="checkbox" class="admin-login-log-checkbox" data-id="${escHtml(rowId)}">` : ''}</td>
           <td>${escHtml(formatLoginAt(log.loginAt))}</td>
           <td>${escHtml(log.ipAddress || 'unknown')}</td>
+          <td>${escHtml(formatCountryCode(log.country))}</td>
           <td>${escHtml(formatLoginMethod(log.loginMethod))}</td>
           <td>${hasId ? `<button class="btn-icon danger admin-login-log-delete-btn" data-id="${escHtml(rowId)}" title="刪除"><i class="fas fa-trash"></i></button>` : '<span class="import-hint">-</span>'}</td>
         </tr>
@@ -3425,7 +3436,7 @@ const App = (() => {
     }
 
     if (allUserLogs.length === 0) {
-      allUserTbody.innerHTML = '<tr><td colspan="10" class="empty-hint">尚無使用者登入紀錄</td></tr>';
+      allUserTbody.innerHTML = '<tr><td colspan="11" class="empty-hint">尚無使用者登入紀錄</td></tr>';
     } else {
       allUserTbody.innerHTML = allUserLogs.map(log => {
         const rowId = String(log.id || (log.loginAt ? `ts:${Number(log.loginAt)}` : '')).trim();
@@ -3438,6 +3449,7 @@ const App = (() => {
           <td>${escHtml(log.displayName || '-')}</td>
           <td>${log.isAdminLogin ? '<span class="type-badge income">管理員</span>' : '<span class="type-badge">一般</span>'}</td>
           <td>${escHtml(log.ipAddress || 'unknown')}</td>
+          <td>${escHtml(formatCountryCode(log.country))}</td>
           <td>${escHtml(formatLoginMethod(log.loginMethod))}</td>
           <td>${log.isSuccess ? '<span class="type-badge income">成功</span>' : '<span class="type-badge expense">失敗</span>'}</td>
           <td>${escHtml(log.isSuccess ? '-' : formatFailureReason(log.failureReason))}</td>

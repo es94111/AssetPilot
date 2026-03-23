@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-3.41-blue" alt="version">
+  <img src="https://img.shields.io/badge/version-3.42-blue" alt="version">
   <img src="https://img.shields.io/badge/node-%3E%3D18-green" alt="node">
   <img src="https://img.shields.io/badge/license-MIT-orange" alt="license">
   <img src="https://img.shields.io/badge/docker-ready-2496ED" alt="docker">
@@ -37,7 +37,7 @@
 - **主題切換容錯** — 深色/淺色切換先本機生效，後端同步異常時不影響當下使用
 - **Google SSO** — 一鍵 Google 帳號登入（選配）
 - **管理員模式** — 第一位使用者自動成為管理員，可控管註冊政策與使用者帳號
-- **登入稽核紀錄** — 記錄登入時間、IP、登入方式，管理員全站紀錄含成功與失敗登入嘗試
+- **登入稽核紀錄** — 記錄登入時間、IP、IP 國家、登入方式，管理員全站紀錄含成功與失敗登入嘗試
 - **登入紀錄刪除管理** — 管理員登入紀錄與全站登入紀錄皆支援單筆刪除與勾選批次刪除
 - **登入紀錄批次刪除修正** — 強化管理員登入紀錄與全站登入紀錄批次刪除穩定性，批次失敗時自動逐筆備援
 - **登入紀錄舊資料相容修正** — 舊版登入紀錄缺少主鍵時，仍可正常勾選並執行單筆/批次刪除
@@ -46,6 +46,7 @@
 - **管理員單筆刪除再補強** — 管理員登入紀錄缺少主鍵時，操作欄仍可用時間戳備援識別執行單筆刪除
 - **登入紀錄刪除回應容錯** — 後端 API 錯誤統一回傳 JSON，避免刪除時出現「伺服器回應格式異常」
 - **管理員登入紀錄手動同步** — 管理員頁新增手動同步按鈕與上次同步時間，免重整頁面即可更新登入紀錄
+- **IP 國家查詢（ipinfo.io）** — 登入紀錄依 IP 顯示國家代碼，內網或本機位址顯示為 LOCAL
 - **資料庫加密** — ChaCha20-Poly1305 + PBKDF2-SHA256 全資料庫加密
 - **響應式設計** — 桌面與手機皆可使用
 
@@ -58,6 +59,7 @@
 - **v3.40.7** — 管理員登入紀錄新增單筆刪除備援路徑，舊資料也可刪除
 - **v3.40.8** — 修正管理員登入紀錄刪除時的回應格式異常提示
 - **v3.41** — 管理員登入紀錄新增手動同步與上次同步時間顯示
+- **v3.42** — 登入紀錄新增 IP 國家查詢（ipinfo.io）
 
 ## 技術架構
 
@@ -160,6 +162,7 @@ node server.js
 | `DB_ENCRYPTION_KEY` | 資料庫加密金鑰（ChaCha20-Poly1305）    | 首次啟動自動產生          |
 | `GOOGLE_CLIENT_ID`  | Google OAuth Client ID（留空停用 SSO） | —                        |
 | `GOOGLE_CLIENT_SECRET` | Google OAuth Client Secret（Code Flow 必填） | —                   |
+| `IPINFO_TOKEN`      | ipinfo.io API Token（選配，提升 IP 國家查詢配額） | —                 |
 | `ALLOWED_ORIGINS`   | CORS 白名單（逗號分隔）                | —（不限制）              |
 | `DB_PATH`           | 資料庫檔案路徑                         | `/app/data/database.db` |
 | `ENV_PATH`          | 自動產生的 .env 檔案路徑               | `/app/data/.env`        |

@@ -1,6 +1,16 @@
 {
-  "currentVersion": "3.40.4",
+  "currentVersion": "3.40.5",
   "releases": [
+    {
+      "version": "3.40.5",
+      "date": "2026-03-23",
+      "title": "管理員登入紀錄勾選保證",
+      "type": "fixed",
+      "changes": [
+        { "tag": "fixed", "text": "修正管理員登入紀錄在少量或舊紀錄時沒有勾選框、無法刪除的問題" },
+        { "tag": "improved", "text": "登入紀錄 API 強制提供備援識別（rowid 或時間戳），確保每列都能勾選與批次刪除" }
+      ]
+    },
     {
       "version": "3.40.4",
       "date": "2026-03-23",

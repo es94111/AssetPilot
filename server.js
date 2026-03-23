@@ -2726,11 +2726,19 @@ app.get('/api/dashboard', (req, res) => {
   const todayExpense = queryOne("SELECT COALESCE(SUM(amount),0) as total FROM transactions WHERE user_id = ? AND type='expense' AND date = ?", [req.userId, todayS])?.total || 0;
 
   const catBreakdown = queryAll(`
-    SELECT c.name, c.color, COALESCE(SUM(t.amount),0) as total
+    SELECT t.category_id as categoryId,
+           c.name,
+           c.color,
+           c.parent_id as parentId,
+           p.name as parentName,
+           p.color as parentColor,
+           COALESCE(SUM(t.amount),0) as total
     FROM transactions t
     LEFT JOIN categories c ON t.category_id = c.id
+    LEFT JOIN categories p ON c.parent_id = p.id
     WHERE t.user_id = ? AND t.type = 'expense' AND t.date LIKE ?
-    GROUP BY t.category_id ORDER BY total DESC
+    GROUP BY t.category_id, c.name, c.color, c.parent_id, p.name, p.color
+    ORDER BY total DESC
   `, [req.userId, month + '%']);
 
   const recent = queryAll(`

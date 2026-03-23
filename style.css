@@ -184,6 +184,21 @@ input, select, button, textarea { font-family: inherit; font-size: inherit; }
 }
 .dashboard-grid .full-width { grid-column: 1 / -1; }
 .dashboard-grid h3 { margin-bottom: 16px; font-size: 16px; color: var(--text); }
+.dashboard-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.dashboard-card-header h3 {
+  margin-bottom: 0;
+}
+.dashboard-dual-toggle {
+  font-size: 13px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
 .chart-container-sm { max-width: 280px; margin: 0 auto; }
 .chart-container { position: relative; width: 100%; max-width: 700px; margin: 0 auto; }
 .chart-container canvas { width: 100% !important; }
@@ -1390,6 +1405,13 @@ body.dark-mode .data-table tbody tr:hover {
 }
 
 @media (max-width: 480px) {
+  .dashboard-card-header {
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+  .dashboard-dual-toggle {
+    width: 100%;
+  }
   .summary-cards { grid-template-columns: 1fr; }
   .card-value { font-size: 18px; }
 }

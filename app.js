@@ -229,6 +229,13 @@ const App = (() => {
   let currentPage = 'dashboard';
   let charts = {};
   let deleteCallback = null;
+  const DASH_DUAL_EXPENSE_KEY = 'dashDualPieExpense';
+  const DASH_DUAL_ASSET_KEY = 'dashDualPieAsset';
+  let dashDualPie = {
+    expense: localStorage.getItem(DASH_DUAL_EXPENSE_KEY) === '1',
+    asset: localStorage.getItem(DASH_DUAL_ASSET_KEY) === '1',
+  };
+  let dashboardDualBound = false;
 
   // ─── Auth 邏輯 ───
   function showAuthForm(formId) {
@@ -886,6 +893,12 @@ const App = (() => {
 
   // ─── 儀表板 ───
   async function renderDashboard() {
+    bindDashboardDualPieControls();
+    const expenseToggle = el('dashExpenseDualPie');
+    const assetToggle = el('dashAssetDualPie');
+    if (expenseToggle) expenseToggle.checked = !!dashDualPie.expense;
+    if (assetToggle) assetToggle.checked = !!dashDualPie.asset;
+
     const data = await API.get('/api/dashboard');
 
     el('dashIncome').textContent = fmt(data.income);
@@ -894,9 +907,32 @@ const App = (() => {
     el('dashToday').textContent = fmt(data.todayExpense);
 
     await renderDashBudget(data.expense);
-    renderDashPie(data.catBreakdown);
-    await renderDashAssetAllocationPie();
+    renderDashPie(data.catBreakdown, !!dashDualPie.expense);
+    await renderDashAssetAllocationPie(!!dashDualPie.asset);
     renderDashRecent(data.recent);
+  }
+
+  function bindDashboardDualPieControls() {
+    if (dashboardDualBound) return;
+    const expenseToggle = el('dashExpenseDualPie');
+    const assetToggle = el('dashAssetDualPie');
+    if (!expenseToggle || !assetToggle) return;
+
+    expenseToggle.addEventListener('change', () => {
+      dashDualPie.expense = !!expenseToggle.checked;
+      if (dashDualPie.expense) localStorage.setItem(DASH_DUAL_EXPENSE_KEY, '1');
+      else localStorage.removeItem(DASH_DUAL_EXPENSE_KEY);
+      renderDashboard();
+    });
+
+    assetToggle.addEventListener('change', () => {
+      dashDualPie.asset = !!assetToggle.checked;
+      if (dashDualPie.asset) localStorage.setItem(DASH_DUAL_ASSET_KEY, '1');
+      else localStorage.removeItem(DASH_DUAL_ASSET_KEY);
+      renderDashboard();
+    });
+
+    dashboardDualBound = true;
   }
 
   async function renderDashBudget(totalExpense) {
@@ -922,13 +958,19 @@ const App = (() => {
     container.innerHTML = html;
   }
 
-  function renderDashPie(catBreakdown) {
+  function renderDashPie(catBreakdown, useDualPie = false) {
     if (charts.dashPie) charts.dashPie.destroy();
     const ctx = el('dashPieChart').getContext('2d');
     if (!catBreakdown || catBreakdown.length === 0) {
       ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
       return;
     }
+
+    if (useDualPie) {
+      drawDashboardExpenseDualPie(ctx, catBreakdown);
+      return;
+    }
+
     const labels = catBreakdown.map(c => c.name || '未分類');
     const data = catBreakdown.map(c => c.total);
     const colors = catBreakdown.map(c => c.color || '#94a3b8');
@@ -940,7 +982,7 @@ const App = (() => {
     });
   }
 
-  async function renderDashAssetAllocationPie() {
+  async function renderDashAssetAllocationPie(useDualPie = false) {
     if (charts.dashAssetPie) charts.dashAssetPie.destroy();
     const canvas = el('dashAssetPieChart');
     if (!canvas) return;
@@ -953,7 +995,14 @@ const App = (() => {
     const labels = [];
     const values = [];
     const colors = [];
-    const palette = ['#0ea5e9', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6', '#14b8a6', '#64748b'];
+    const palette = ['#2563eb', '#16a34a', '#f59e0b', '#ea580c', '#7c3aed', '#0d9488', '#dc2626', '#0891b2', '#9333ea', '#475569'];
+
+    const ctx = canvas.getContext('2d');
+
+    if (useDualPie) {
+      drawDashboardAssetDualPie(ctx, accounts, stocks);
+      return;
+    }
 
     (accounts || []).forEach((a, idx) => {
       const bal = Number(a.balance) || 0;
@@ -967,10 +1016,9 @@ const App = (() => {
     if (stockValue > 0) {
       labels.push('股票市值');
       values.push(Math.round(stockValue));
-      colors.push('#6366f1');
+      colors.push('#7c3aed');
     }
 
-    const ctx = canvas.getContext('2d');
     if (values.length === 0) {
       ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
       return;
@@ -1484,6 +1532,279 @@ const App = (() => {
     const l = Math.max(0.28, Math.min(0.74, hsl.l + lightShift));
     const next = hslToRgb(h, s, l);
     return rgbToHex(next.r, next.g, next.b);
+  }
+
+  function buildParentAccentColor(baseColor, index, totalCount) {
+    const rgb = hexToRgb(baseColor);
+    const hsl = rgbToHsl(rgb.r, rgb.g, rgb.b);
+    const step = totalCount > 0 ? 360 / totalCount : 120;
+    const h = (hsl.h * 0.45 + (index * step) * 0.55 + (index % 2 === 0 ? 14 : -14) + 360) % 360;
+    const s = Math.max(0.58, Math.min(0.92, hsl.s + 0.2));
+    const lightSeed = 0.44 + (index % 3) * 0.07;
+    const l = Math.max(0.34, Math.min(0.7, hsl.l * 0.45 + lightSeed * 0.55));
+    const next = hslToRgb(h, s, l);
+    return rgbToHex(next.r, next.g, next.b);
+  }
+
+  function drawDashboardExpenseDualPie(ctx, catBreakdown) {
+    const breakdown = Array.isArray(catBreakdown) ? catBreakdown : [];
+    const parentMap = new Map();
+    const childRows = [];
+
+    breakdown.forEach(item => {
+      const amount = Number(item.total) || 0;
+      if (amount <= 0) return;
+
+      const childName = String(item.name || '未分類');
+      const parentName = String(item.parentName || childName);
+      const parentKey = String(item.parentId || parentName || '未分類');
+      const baseColor = normalizeHexColor(item.parentColor || item.color || '#94a3b8');
+
+      if (!parentMap.has(parentKey)) {
+        parentMap.set(parentKey, {
+          key: parentKey,
+          parentName,
+          baseColor,
+          total: 0,
+          childCount: 0,
+        });
+      }
+
+      const parent = parentMap.get(parentKey);
+      parent.total += amount;
+      parent.childCount += 1;
+
+      childRows.push({
+        parentKey,
+        parentName,
+        childName,
+        label: parentName === childName ? childName : `${parentName} > ${childName}`,
+        total: amount,
+      });
+    });
+
+    const parentRows = [...parentMap.values()].sort((a, b) => b.total - a.total);
+    if (parentRows.length === 0 || childRows.length === 0) {
+      ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+      return;
+    }
+
+    const parentColorMap = new Map();
+    parentRows.forEach((row, idx) => {
+      parentColorMap.set(row.key, buildParentAccentColor(row.baseColor, idx, parentRows.length));
+    });
+
+    const siblingCursor = new Map();
+    childRows.forEach(row => {
+      const idx = siblingCursor.get(row.parentKey) || 0;
+      const siblingCount = parentMap.get(row.parentKey)?.childCount || 1;
+      const parentColor = parentColorMap.get(row.parentKey) || '#94a3b8';
+      row.color = buildChildVariantColor(parentColor, idx, siblingCount);
+      siblingCursor.set(row.parentKey, idx + 1);
+    });
+
+    charts.dashPie = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: childRows.map(r => r.label),
+        datasets: [
+          {
+            label: '父分類',
+            data: parentRows.map(r => r.total),
+            backgroundColor: parentRows.map(r => parentColorMap.get(r.key)),
+            borderColor: '#ffffff',
+            borderWidth: 2,
+            radius: '62%',
+            cutout: '34%',
+            segmentLabels: parentRows.map(r => r.parentName),
+          },
+          {
+            label: '子分類',
+            data: childRows.map(r => r.total),
+            backgroundColor: childRows.map(r => r.color),
+            borderColor: '#ffffff',
+            borderWidth: 2,
+            radius: '95%',
+            cutout: '66%',
+            segmentLabels: childRows.map(r => r.label),
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              boxWidth: 12,
+              padding: 10,
+              generateLabels(chart) {
+                const ds = chart.data.datasets[1] || { data: [], backgroundColor: [] };
+                return (chart.data.labels || []).map((label, i) => {
+                  const bg = Array.isArray(ds.backgroundColor) ? ds.backgroundColor[i] : ds.backgroundColor;
+                  return {
+                    text: String(label || ''),
+                    fillStyle: bg,
+                    strokeStyle: bg,
+                    lineWidth: 0,
+                    hidden: false,
+                    index: i,
+                  };
+                });
+              },
+            },
+          },
+          tooltip: {
+            callbacks: {
+              title(items) {
+                if (!items || items.length === 0) return '';
+                const item = items[0];
+                const ds = item.dataset || {};
+                const labels = ds.segmentLabels || [];
+                return labels[item.dataIndex] || item.label || '';
+              },
+              label(context) {
+                const ds = context.dataset || {};
+                const labels = ds.segmentLabels || [];
+                const label = labels[context.dataIndex] || context.label || '';
+                const value = Number(context.raw) || 0;
+                return `${ds.label}：${label} ${fmt(value)}`;
+              },
+            },
+          },
+        },
+      },
+    });
+  }
+
+  function drawDashboardAssetDualPie(ctx, accounts, stocks) {
+    const accountRows = (accounts || [])
+      .map(a => ({
+        label: String(a.name || '帳戶'),
+        total: Math.round(Number(a.balance) || 0),
+      }))
+      .filter(row => row.total > 0)
+      .sort((a, b) => b.total - a.total);
+
+    const stockRows = (stocks || [])
+      .map(s => {
+        const code = String(s.code || '').trim();
+        const name = String(s.name || '').trim();
+        const label = code && name && code !== name ? `${code} ${name}` : (name || code || '股票');
+        return {
+          label,
+          total: Math.round(Number(s.marketValue) || 0),
+        };
+      })
+      .filter(row => row.total > 0)
+      .sort((a, b) => b.total - a.total);
+
+    const accountTotal = accountRows.reduce((sum, row) => sum + row.total, 0);
+    const stockTotal = stockRows.reduce((sum, row) => sum + row.total, 0);
+    if (accountTotal <= 0 && stockTotal <= 0) {
+      ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+      return;
+    }
+
+    const parentRows = [];
+    if (accountTotal > 0) parentRows.push({ key: 'account', label: '帳戶資產', total: accountTotal, color: '#2563eb' });
+    if (stockTotal > 0) parentRows.push({ key: 'stock', label: '股票資產', total: stockTotal, color: '#ea580c' });
+
+    const childRows = [
+      ...accountRows.map((row, idx) => ({
+        parentKey: 'account',
+        label: `帳戶資產 > ${row.label}`,
+        total: row.total,
+        color: buildChildVariantColor('#2563eb', idx, Math.max(accountRows.length, 1)),
+      })),
+      ...stockRows.map((row, idx) => ({
+        parentKey: 'stock',
+        label: `股票資產 > ${row.label}`,
+        total: row.total,
+        color: buildChildVariantColor('#ea580c', idx, Math.max(stockRows.length, 1)),
+      })),
+    ];
+
+    const totalValue = childRows.reduce((sum, row) => sum + row.total, 0);
+    const formatLabel = (label, value) => {
+      const pct = totalValue > 0 ? ((value / totalValue) * 100).toFixed(1) : '0.0';
+      return `${label} ${fmt(value)} (${pct}%)`;
+    };
+
+    charts.dashAssetPie = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: childRows.map(r => r.label),
+        datasets: [
+          {
+            label: '父分類',
+            data: parentRows.map(r => r.total),
+            backgroundColor: parentRows.map(r => r.color),
+            borderColor: '#ffffff',
+            borderWidth: 2,
+            radius: '62%',
+            cutout: '34%',
+            segmentLabels: parentRows.map(r => r.label),
+          },
+          {
+            label: '子分類',
+            data: childRows.map(r => r.total),
+            backgroundColor: childRows.map(r => r.color),
+            borderColor: '#ffffff',
+            borderWidth: 2,
+            radius: '95%',
+            cutout: '66%',
+            segmentLabels: childRows.map(r => r.label),
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              boxWidth: 12,
+              padding: 10,
+              generateLabels(chart) {
+                const ds = chart.data.datasets[1] || { data: [], backgroundColor: [] };
+                const labels = chart.data.labels || [];
+                return labels.map((label, i) => {
+                  const value = Number(ds.data?.[i]) || 0;
+                  const bg = Array.isArray(ds.backgroundColor) ? ds.backgroundColor[i] : ds.backgroundColor;
+                  return {
+                    text: formatLabel(String(label || ''), value),
+                    fillStyle: bg,
+                    strokeStyle: bg,
+                    lineWidth: 0,
+                    hidden: false,
+                    index: i,
+                  };
+                });
+              },
+            },
+          },
+          tooltip: {
+            callbacks: {
+              title(items) {
+                if (!items || items.length === 0) return '';
+                const item = items[0];
+                const ds = item.dataset || {};
+                const labels = ds.segmentLabels || [];
+                return labels[item.dataIndex] || item.label || '';
+              },
+              label(context) {
+                const ds = context.dataset || {};
+                const labels = ds.segmentLabels || [];
+                const label = labels[context.dataIndex] || context.label || '';
+                const value = Number(context.raw) || 0;
+                return `${ds.label}：${formatLabel(label, value)}`;
+              },
+            },
+          },
+        },
+      },
+    });
   }
 
   function drawDualCategoryChart(ctx, data) {

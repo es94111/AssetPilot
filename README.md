@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-3.46.2-blue" alt="version">
+  <img src="https://img.shields.io/badge/version-3.47-blue" alt="version">
   <img src="https://img.shields.io/badge/node-%3E%3D18-green" alt="node">
   <img src="https://img.shields.io/badge/license-MIT-orange" alt="license">
   <img src="https://img.shields.io/badge/docker-ready-2496ED" alt="docker">
@@ -27,6 +27,7 @@
 - **固定收支** — 週期性自動產生交易
 - **收支管理整合** — 分類管理與固定收支已整合至收支管理模組內，與交易/預算/帳戶同層操作
 - **統計報表** — 分類統計（支援父子分類雙圓餅圖切換）、趨勢分析、每日消費，自訂時間範圍
+- **儀表板雙圓餅圖** — 支出分類與資產配置（含股票市值）皆可切換雙圓餅圖（內圈父分類、外圈子分類）
 - **股票紀錄** — 持股總覽、買賣交易、股利紀錄、FIFO 實現損益計算
 - **股票交易設定介面美化** — 交易設定改為分區卡片與重點提示，與全站卡片風格一致
 - **情境式快速新增按鈕** — 收支管理顯示「新增交易」、股票紀錄顯示「新增股票交易紀錄」，其他頁面自動隱藏
@@ -55,6 +56,7 @@
 
 ## 近期更新
 
+- **v3.47** — 儀表板「支出分類」與「資產配置（含股票市值）」新增雙圓餅圖開關，並優化配色辨識度
 - **v3.46.2** — 美化雙圓餅圖配色，提升父子分類視覺區隔與辨識度
 - **v3.46.1** — 修正雙圓餅圖內圈父分類提示標題，避免顯示為「父分類 > 子分類」
 - **v3.46** — 統計報表新增雙圓餅圖（內圈父分類、外圈子分類）與開關切換

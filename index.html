@@ -232,11 +232,23 @@
           <div id="dashBudgetProgress"><p class="empty-hint">尚未設定預算</p></div>
         </div>
         <div class="card">
-          <h3>支出分類</h3>
+          <div class="dashboard-card-header">
+            <h3>支出分類</h3>
+            <label class="checkbox-inline dashboard-dual-toggle" for="dashExpenseDualPie">
+              <input type="checkbox" id="dashExpenseDualPie">
+              <span>雙圓餅圖</span>
+            </label>
+          </div>
           <div class="chart-container-sm"><canvas id="dashPieChart"></canvas></div>
         </div>
         <div class="card">
-          <h3>資產配置（含股票市值）</h3>
+          <div class="dashboard-card-header">
+            <h3>資產配置（含股票市值）</h3>
+            <label class="checkbox-inline dashboard-dual-toggle" for="dashAssetDualPie">
+              <input type="checkbox" id="dashAssetDualPie">
+              <span>雙圓餅圖</span>
+            </label>
+          </div>
           <div class="chart-container-sm"><canvas id="dashAssetPieChart"></canvas></div>
         </div>
         <div class="card full-width">

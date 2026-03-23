@@ -1509,6 +1509,116 @@ body.dark-mode .data-table tbody tr:hover {
   justify-content: flex-end;
 }
 
+.stock-settings-card {
+  position: relative;
+  overflow: hidden;
+}
+.stock-settings-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--primary), var(--net));
+}
+.stock-settings-header h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 20px;
+  margin-bottom: 6px;
+}
+.stock-settings-header h3 i {
+  color: var(--primary);
+}
+.stock-settings-intro {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.stock-settings-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: linear-gradient(135deg, var(--surface) 0%, rgba(99,102,241,.06) 100%);
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.45;
+}
+.stock-settings-pill i {
+  color: var(--primary);
+  flex-shrink: 0;
+}
+.stock-settings-form {
+  margin-top: 16px;
+}
+.stock-settings-grid {
+  display: grid;
+  gap: 14px;
+}
+.stock-setting-group {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
+  background: linear-gradient(180deg, var(--surface) 0%, rgba(148,163,184,.06) 100%);
+}
+.stock-setting-group h4 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  margin-bottom: 12px;
+  color: var(--text);
+}
+.stock-setting-group h4 i {
+  color: var(--primary);
+}
+.stock-setting-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.stock-setting-fields .form-group {
+  margin-bottom: 0;
+}
+.stock-setting-fields .form-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.stock-setting-fields .form-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+  transition: border-color .2s, box-shadow .2s;
+}
+.stock-setting-fields .form-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(99,102,241,.14);
+}
+.stock-settings-actions {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: flex-end;
+}
+.stock-settings-actions .btn {
+  min-width: 132px;
+}
+
 /* ─── 更新股價 Modal ─── */
 .price-update-list {
   max-height: 450px; overflow-y: auto;
@@ -1597,6 +1707,16 @@ body.dark-mode .data-table tbody tr:hover {
   .formula-row { flex-direction: column; gap: 2px; }
   .formula-name { min-width: auto; }
   .formula-hint { padding-left: 0; }
+  .stock-settings-intro,
+  .stock-setting-fields {
+    grid-template-columns: 1fr;
+  }
+  .stock-settings-actions {
+    justify-content: stretch;
+  }
+  .stock-settings-actions .btn {
+    width: 100%;
+  }
 }
 
 /* ===== 帳號設定 ===== */

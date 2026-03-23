@@ -1,6 +1,17 @@
 {
-  "currentVersion": "3.40.1",
+  "currentVersion": "3.40.2",
   "releases": [
+    {
+      "version": "3.40.2",
+      "date": "2026-03-23",
+      "title": "股票交易設定介面美化",
+      "type": "improved",
+      "changes": [
+        { "tag": "improved", "text": "股票紀錄的交易設定改為分區卡片版型，將手續費與交易稅參數分組顯示，閱讀更清楚" },
+        { "tag": "improved", "text": "新增交易設定重點提示區塊與圖示，提升參數調整時的理解速度" },
+        { "tag": "improved", "text": "補齊手機版一欄式排版與儲存按鈕寬度調整，維持與全站一致的操作體驗" }
+      ]
+    },
     {
       "version": "3.40.1",
       "date": "2026-03-23",

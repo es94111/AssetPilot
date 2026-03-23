@@ -1,6 +1,16 @@
 {
-  "currentVersion": "3.40.7",
+  "currentVersion": "3.40.8",
   "releases": [
+    {
+      "version": "3.40.8",
+      "date": "2026-03-23",
+      "title": "登入紀錄刪除錯誤訊息修正",
+      "type": "fixed",
+      "changes": [
+        { "tag": "fixed", "text": "修正移除管理員登入紀錄時可能出現「伺服器回應格式異常，請稍後再試」的錯誤訊息" },
+        { "tag": "improved", "text": "新增 API 404/500 統一 JSON 回應與前端刪除錯誤容錯提示，避免 HTML 回應造成解析失敗" }
+      ]
+    },
     {
       "version": "3.40.7",
       "date": "2026-03-23",

@@ -1065,6 +1065,20 @@ function recordLoginAttempt({ user = null, email = '', req, method = 'password',
   saveDB();
 }
 
+function parseLoginLogTarget(rawId) {
+  const id = String(rawId || '').trim();
+  if (!id) return null;
+
+  const rowidMatch = id.match(/^rid:(\d+)$/);
+  if (rowidMatch) {
+    const rowid = Number(rowidMatch[1]);
+    if (!Number.isFinite(rowid) || rowid <= 0) return null;
+    return { byRowId: true, value: rowid };
+  }
+
+  return { byRowId: false, value: id };
+}
+
 function deleteUserData(userId) {
   const tables = [
     'stock_dividends', 'stock_transactions', 'stocks',
@@ -1636,7 +1650,7 @@ app.get('/api/account/login-logs', (req, res) => {
 
 app.get('/api/admin/login-logs', adminMiddleware, (req, res) => {
   const adminLogs = queryAll(
-    `SELECT id, login_at, ip_address, login_method
+    `SELECT id, rowid AS _rid, login_at, ip_address, login_method
      FROM login_audit_logs
      WHERE user_id = ? AND is_admin_login = 1
      ORDER BY login_at DESC
@@ -1645,7 +1659,7 @@ app.get('/api/admin/login-logs', adminMiddleware, (req, res) => {
   );
 
   const allUserLogs = queryAll(
-    `SELECT l.id, l.user_id, l.email, l.login_at, l.ip_address, l.login_method, l.is_admin_login, l.is_success, l.failure_reason, u.display_name
+    `SELECT l.id, l.rowid AS _rid, l.user_id, l.email, l.login_at, l.ip_address, l.login_method, l.is_admin_login, l.is_success, l.failure_reason, u.display_name
      FROM login_attempt_logs l
      LEFT JOIN users u ON u.id = l.user_id
      ORDER BY l.login_at DESC
@@ -1654,13 +1668,13 @@ app.get('/api/admin/login-logs', adminMiddleware, (req, res) => {
 
   res.json({
     adminLogs: adminLogs.map(l => ({
-      id: l.id,
+      id: l.id || (Number(l._rid) > 0 ? `rid:${Number(l._rid)}` : ''),
       loginAt: Number(l.login_at) || 0,
       ipAddress: l.ip_address || 'unknown',
       loginMethod: l.login_method || 'password',
     })),
     allUserLogs: allUserLogs.map(l => ({
-      id: l.id,
+      id: l.id || (Number(l._rid) > 0 ? `rid:${Number(l._rid)}` : ''),
       userId: l.user_id,
       email: l.email || '',
       displayName: l.display_name || '',
@@ -1675,10 +1689,14 @@ app.get('/api/admin/login-logs', adminMiddleware, (req, res) => {
 });
 
 app.delete('/api/admin/login-logs/admin/:id', adminMiddleware, (req, res) => {
-  const id = String(req.params.id || '').trim();
-  if (!id) return res.status(400).json({ error: '缺少紀錄 ID' });
+  const target = parseLoginLogTarget(req.params.id);
+  if (!target) return res.status(400).json({ error: '缺少紀錄 ID' });
 
-  db.run("DELETE FROM login_audit_logs WHERE id = ? AND user_id = ? AND is_admin_login = 1", [id, req.userId]);
+  if (target.byRowId) {
+    db.run("DELETE FROM login_audit_logs WHERE rowid = ? AND user_id = ? AND is_admin_login = 1", [target.value, req.userId]);
+  } else {
+    db.run("DELETE FROM login_audit_logs WHERE id = ? AND user_id = ? AND is_admin_login = 1", [target.value, req.userId]);
+  }
   const deleted = db.getRowsModified();
   if (!deleted) return res.status(404).json({ error: '管理員登入紀錄不存在' });
 
@@ -1692,9 +1710,13 @@ app.post('/api/admin/login-logs/admin/batch-delete', adminMiddleware, (req, res)
 
   let deleted = 0;
   ids.forEach(rawId => {
-    const id = String(rawId || '').trim();
-    if (!id) return;
-    db.run("DELETE FROM login_audit_logs WHERE id = ? AND user_id = ? AND is_admin_login = 1", [id, req.userId]);
+    const target = parseLoginLogTarget(rawId);
+    if (!target) return;
+    if (target.byRowId) {
+      db.run("DELETE FROM login_audit_logs WHERE rowid = ? AND user_id = ? AND is_admin_login = 1", [target.value, req.userId]);
+    } else {
+      db.run("DELETE FROM login_audit_logs WHERE id = ? AND user_id = ? AND is_admin_login = 1", [target.value, req.userId]);
+    }
     deleted += db.getRowsModified();
   });
 
@@ -1703,10 +1725,14 @@ app.post('/api/admin/login-logs/admin/batch-delete', adminMiddleware, (req, res)
 });
 
 app.delete('/api/admin/login-logs/all/:id', adminMiddleware, (req, res) => {
-  const id = String(req.params.id || '').trim();
-  if (!id) return res.status(400).json({ error: '缺少紀錄 ID' });
+  const target = parseLoginLogTarget(req.params.id);
+  if (!target) return res.status(400).json({ error: '缺少紀錄 ID' });
 
-  db.run("DELETE FROM login_attempt_logs WHERE id = ?", [id]);
+  if (target.byRowId) {
+    db.run("DELETE FROM login_attempt_logs WHERE rowid = ?", [target.value]);
+  } else {
+    db.run("DELETE FROM login_attempt_logs WHERE id = ?", [target.value]);
+  }
   const deleted = db.getRowsModified();
   if (!deleted) return res.status(404).json({ error: '使用者登入紀錄不存在' });
 
@@ -1720,9 +1746,13 @@ app.post('/api/admin/login-logs/all/batch-delete', adminMiddleware, (req, res) =
 
   let deleted = 0;
   ids.forEach(rawId => {
-    const id = String(rawId || '').trim();
-    if (!id) return;
-    db.run("DELETE FROM login_attempt_logs WHERE id = ?", [id]);
+    const target = parseLoginLogTarget(rawId);
+    if (!target) return;
+    if (target.byRowId) {
+      db.run("DELETE FROM login_attempt_logs WHERE rowid = ?", [target.value]);
+    } else {
+      db.run("DELETE FROM login_attempt_logs WHERE id = ?", [target.value]);
+    }
     deleted += db.getRowsModified();
   });
 

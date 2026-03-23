@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-3.40.2-blue" alt="version">
+  <img src="https://img.shields.io/badge/version-3.40.3-blue" alt="version">
   <img src="https://img.shields.io/badge/node-%3E%3D18-green" alt="node">
   <img src="https://img.shields.io/badge/license-MIT-orange" alt="license">
   <img src="https://img.shields.io/badge/docker-ready-2496ED" alt="docker">
@@ -40,6 +40,7 @@
 - **登入稽核紀錄** — 記錄登入時間、IP、登入方式，管理員全站紀錄含成功與失敗登入嘗試
 - **登入紀錄刪除管理** — 管理員登入紀錄與全站登入紀錄皆支援單筆刪除與勾選批次刪除
 - **登入紀錄批次刪除修正** — 強化管理員登入紀錄與全站登入紀錄批次刪除穩定性，批次失敗時自動逐筆備援
+- **登入紀錄舊資料相容修正** — 舊版登入紀錄缺少主鍵時，仍可正常勾選並執行單筆/批次刪除
 - **資料庫加密** — ChaCha20-Poly1305 + PBKDF2-SHA256 全資料庫加密
 - **響應式設計** — 桌面與手機皆可使用
 

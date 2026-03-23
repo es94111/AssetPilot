@@ -1417,12 +1417,82 @@ const App = (() => {
     el('reportSummary').innerHTML = summaryHtml;
   }
 
+  function normalizeHexColor(value, fallback = '#94a3b8') {
+    const raw = String(value || '').trim();
+    if (!/^#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?$/.test(raw)) return fallback;
+    if (raw.length === 4) {
+      return '#' + raw.slice(1).split('').map(ch => ch + ch).join('').toLowerCase();
+    }
+    return raw.toLowerCase();
+  }
+
+  function hexToRgb(hex) {
+    const c = normalizeHexColor(hex);
+    const n = parseInt(c.slice(1), 16);
+    return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
+  }
+
+  function rgbToHex(r, g, b) {
+    const clamp = v => Math.max(0, Math.min(255, Math.round(v)));
+    return '#' + [clamp(r), clamp(g), clamp(b)].map(v => v.toString(16).padStart(2, '0')).join('');
+  }
+
+  function rgbToHsl(r, g, b) {
+    const rn = r / 255, gn = g / 255, bn = b / 255;
+    const max = Math.max(rn, gn, bn), min = Math.min(rn, gn, bn);
+    const d = max - min;
+    let h = 0;
+    const l = (max + min) / 2;
+    const s = d === 0 ? 0 : d / (1 - Math.abs(2 * l - 1));
+    if (d !== 0) {
+      if (max === rn) h = 60 * (((gn - bn) / d) % 6);
+      else if (max === gn) h = 60 * ((bn - rn) / d + 2);
+      else h = 60 * ((rn - gn) / d + 4);
+    }
+    if (h < 0) h += 360;
+    return { h, s, l };
+  }
+
+  function hslToRgb(h, s, l) {
+    const c = (1 - Math.abs(2 * l - 1)) * s;
+    const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+    const m = l - c / 2;
+    let r1 = 0, g1 = 0, b1 = 0;
+    if (h < 60) { r1 = c; g1 = x; b1 = 0; }
+    else if (h < 120) { r1 = x; g1 = c; b1 = 0; }
+    else if (h < 180) { r1 = 0; g1 = c; b1 = x; }
+    else if (h < 240) { r1 = 0; g1 = x; b1 = c; }
+    else if (h < 300) { r1 = x; g1 = 0; b1 = c; }
+    else { r1 = c; g1 = 0; b1 = x; }
+    return {
+      r: (r1 + m) * 255,
+      g: (g1 + m) * 255,
+      b: (b1 + m) * 255,
+    };
+  }
+
+  function buildChildVariantColor(baseColor, childIndex, siblingCount) {
+    const rgb = hexToRgb(baseColor);
+    const hsl = rgbToHsl(rgb.r, rgb.g, rgb.b);
+    const span = siblingCount > 1 ? 1 / (siblingCount - 1) : 0.5;
+    const position = siblingCount > 1 ? childIndex * span : 0.5;
+    const hueShift = (position - 0.5) * 56 + ((childIndex % 2 === 0) ? 10 : -10);
+    const satShift = ((childIndex % 3) - 1) * 0.08 + 0.04;
+    const lightShift = (position - 0.5) * 0.3 + ((childIndex % 2 === 0) ? 0.07 : -0.05);
+    const h = (hsl.h + hueShift + 360) % 360;
+    const s = Math.max(0.42, Math.min(0.92, hsl.s + satShift));
+    const l = Math.max(0.28, Math.min(0.74, hsl.l + lightShift));
+    const next = hslToRgb(h, s, l);
+    return rgbToHex(next.r, next.g, next.b);
+  }
+
   function drawDualCategoryChart(ctx, data) {
     const breakdown = Array.isArray(data.categoryBreakdown) ? data.categoryBreakdown : [];
     if (breakdown.length === 0) return;
 
     const parentMap = new Map();
     const childRows = [];
+    const parentChildren = new Map();
 
     breakdown.forEach(item => {
       const amount = Number(item.total) || 0;
@@ -1430,8 +1500,8 @@ const App = (() => {
 
       const childName = String(item.name || '未分類');
       const parentName = String(item.parentName || childName);
-      const parentColor = item.parentColor || item.color || '#94a3b8';
-      const childColor = item.color || parentColor || '#94a3b8';
+      const parentColor = normalizeHexColor(item.parentColor || item.color || '#94a3b8');
+      const childColor = normalizeHexColor(item.color || parentColor || '#94a3b8');
       const parentKey = String(item.parentId || parentName || '未分類');
       const label = parentName === childName ? childName : `${parentName} > ${childName}`;
 
@@ -1445,11 +1515,18 @@ const App = (() => {
       const parent = parentMap.get(parentKey);
       parent.total += amount;
 
+      if (!parentChildren.has(parentKey)) parentChildren.set(parentKey, []);
+      const siblings = parentChildren.get(parentKey);
+      const childIndex = siblings.length;
+      siblings.push(label);
+
       childRows.push({
         label,
         childName,
         parentName,
-        color: childColor,
+        baseColor: childColor,
+        parentKey,
+        childIndex,
         total: amount,
       });
     });
@@ -1466,7 +1543,8 @@ const App = (() => {
             label: '父分類',
             data: parentRows.map(r => r.total),
             backgroundColor: parentRows.map(r => r.parentColor),
-            borderWidth: 0,
+            borderColor: '#ffffff',
+            borderWidth: 2,
             radius: '62%',
             cutout: '36%',
             segmentLabels: parentRows.map(r => r.parentName),
@@ -1474,8 +1552,12 @@ const App = (() => {
           {
             label: '子分類',
             data: childRows.map(r => r.total),
-            backgroundColor: childRows.map(r => r.color),
-            borderWidth: 0,
+            backgroundColor: childRows.map(r => {
+              const siblingCount = (parentChildren.get(r.parentKey) || []).length;
+              return buildChildVariantColor(r.baseColor, r.childIndex, siblingCount);
+            }),
+            borderColor: '#ffffff',
+            borderWidth: 2,
             radius: '95%',
             cutout: '67%',
             segmentLabels: childRows.map(r => r.label),

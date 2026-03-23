@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-3.46.1-blue" alt="version">
+  <img src="https://img.shields.io/badge/version-3.46.2-blue" alt="version">
   <img src="https://img.shields.io/badge/node-%3E%3D18-green" alt="node">
   <img src="https://img.shields.io/badge/license-MIT-orange" alt="license">
   <img src="https://img.shields.io/badge/docker-ready-2496ED" alt="docker">
@@ -55,6 +55,7 @@
 
 ## 近期更新
 
+- **v3.46.2** — 美化雙圓餅圖配色，提升父子分類視覺區隔與辨識度
 - **v3.46.1** — 修正雙圓餅圖內圈父分類提示標題，避免顯示為「父分類 > 子分類」
 - **v3.46** — 統計報表新增雙圓餅圖（內圈父分類、外圈子分類）與開關切換
 - **v3.45** — 帳號資訊新增「修改顯示名稱」功能

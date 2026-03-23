@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-3.42.3-blue" alt="version">
+  <img src="https://img.shields.io/badge/version-3.43-blue" alt="version">
   <img src="https://img.shields.io/badge/node-%3E%3D18-green" alt="node">
   <img src="https://img.shields.io/badge/license-MIT-orange" alt="license">
   <img src="https://img.shields.io/badge/docker-ready-2496ED" alt="docker">
@@ -46,12 +46,14 @@
 - **管理員單筆刪除再補強** — 管理員登入紀錄缺少主鍵時，操作欄仍可用時間戳備援識別執行單筆刪除
 - **登入紀錄刪除回應容錯** — 後端 API 錯誤統一回傳 JSON，避免刪除時出現「伺服器回應格式異常」
 - **管理員登入紀錄手動同步** — 管理員頁新增手動同步按鈕與上次同步時間，免重整頁面即可更新登入紀錄
+- **全部使用者登入紀錄手動同步** — 全部使用者登入紀錄新增手動同步按鈕與上次同步時間
 - **IP 國家查詢（ipinfo.io）** — 登入紀錄依 IP 顯示國家代碼，內網或本機位址顯示為 LOCAL
 - **資料庫加密** — ChaCha20-Poly1305 + PBKDF2-SHA256 全資料庫加密
 - **響應式設計** — 桌面與手機皆可使用
 
 ## 近期更新
 
+- **v3.43** — 全部使用者登入紀錄新增手動同步與上次同步時間顯示
 - **v3.42.3** — 補齊 IPinfo 授權標註與出處連結
 - **v3.42.2** — 管理員登入紀錄刪除新增備援重試，降低 502 造成的操作中斷
 - **v3.42.1** — 修正管理員登入紀錄刪除偶發 404 錯誤提示

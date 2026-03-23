@@ -1,6 +1,16 @@
 {
-  "currentVersion": "3.42.3",
+  "currentVersion": "3.43",
   "releases": [
+    {
+      "version": "3.43",
+      "date": "2026-03-23",
+      "title": "全部使用者登入紀錄手動同步",
+      "type": "feature",
+      "changes": [
+        { "tag": "new", "text": "全部使用者登入紀錄新增「手動同步」按鈕，可即時同步最新登入稽核資料" },
+        { "tag": "improved", "text": "管理員登入紀錄與全部使用者登入紀錄同步後會同時更新上次同步時間" }
+      ]
+    },
     {
       "version": "3.42.3",
       "date": "2026-03-23",

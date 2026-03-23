@@ -3188,12 +3188,20 @@ const App = (() => {
     syncEl.textContent = `上次同步：${formatLoginAt(timestamp)}`;
   }
 
+  function updateAdminAllLoginLogSyncTime(timestamp = Date.now()) {
+    const syncEl = el('adminAllLoginLogSyncAt');
+    if (!syncEl) return;
+    syncEl.textContent = `上次同步：${formatLoginAt(timestamp)}`;
+  }
+
   async function syncAdminLoginLogs(options = {}) {
     const { silent = false } = options;
     const data = await API.get('/api/admin/login-logs');
     renderAdminLoginLogTables(data);
-    updateAdminLoginLogSyncTime(Date.now());
-    if (!silent) toast('管理員登入紀錄已同步', 'success');
+    const now = Date.now();
+    updateAdminLoginLogSyncTime(now);
+    updateAdminAllLoginLogSyncTime(now);
+    if (!silent) toast('登入紀錄已同步', 'success');
   }
 
   async function renderAccountLoginLogs() {
@@ -3642,6 +3650,13 @@ const App = (() => {
         await syncAdminLoginLogs({ silent: false });
       } catch (e) {
         toast(e.message || '同步管理員登入紀錄失敗', 'error');
+      }
+    });
+    el('adminAllLoginLogSyncBtn')?.addEventListener('click', async () => {
+      try {
+        await syncAdminLoginLogs({ silent: false });
+      } catch (e) {
+        toast(e.message || '同步全部使用者登入紀錄失敗', 'error');
       }
     });
 

@@ -1,6 +1,6 @@
 {
   "name": "bookkeeping-app",
-  "version": "3.42.3",
+  "version": "3.43",
   "private": true,
   "scripts": {
     "start": "node server.js"

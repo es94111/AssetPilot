@@ -3384,14 +3384,15 @@ const App = (() => {
       adminTbody.innerHTML = '<tr><td colspan="5" class="empty-hint">尚無管理員登入紀錄</td></tr>';
     } else {
       adminTbody.innerHTML = adminLogs.map(log => {
-        const hasId = !!log.id;
+        const rowId = String(log.id || (log.loginAt ? `ts:${Number(log.loginAt)}` : '')).trim();
+        const hasId = !!rowId;
         return `
         <tr>
-          <td class="td-check">${hasId ? `<input type="checkbox" class="admin-login-log-checkbox" data-id="${escHtml(log.id)}">` : ''}</td>
+          <td class="td-check">${hasId ? `<input type="checkbox" class="admin-login-log-checkbox" data-id="${escHtml(rowId)}">` : ''}</td>
           <td>${escHtml(formatLoginAt(log.loginAt))}</td>
           <td>${escHtml(log.ipAddress || 'unknown')}</td>
           <td>${escHtml(formatLoginMethod(log.loginMethod))}</td>
-          <td>${hasId ? `<button class="btn-icon danger admin-login-log-delete-btn" data-id="${escHtml(log.id)}" title="刪除"><i class="fas fa-trash"></i></button>` : '<span class="import-hint">-</span>'}</td>
+          <td>${hasId ? `<button class="btn-icon danger admin-login-log-delete-btn" data-id="${escHtml(rowId)}" title="刪除"><i class="fas fa-trash"></i></button>` : '<span class="import-hint">-</span>'}</td>
         </tr>
       `;
       }).join('');
@@ -3401,10 +3402,11 @@ const App = (() => {
       allUserTbody.innerHTML = '<tr><td colspan="10" class="empty-hint">尚無使用者登入紀錄</td></tr>';
     } else {
       allUserTbody.innerHTML = allUserLogs.map(log => {
-        const hasId = !!log.id;
+        const rowId = String(log.id || (log.loginAt ? `ts:${Number(log.loginAt)}` : '')).trim();
+        const hasId = !!rowId;
         return `
         <tr>
-          <td class="td-check">${hasId ? `<input type="checkbox" class="admin-all-login-log-checkbox" data-id="${escHtml(log.id)}">` : ''}</td>
+          <td class="td-check">${hasId ? `<input type="checkbox" class="admin-all-login-log-checkbox" data-id="${escHtml(rowId)}">` : ''}</td>
           <td>${escHtml(formatLoginAt(log.loginAt))}</td>
           <td>${escHtml(log.email || '')}</td>
           <td>${escHtml(log.displayName || '-')}</td>
@@ -3413,7 +3415,7 @@ const App = (() => {
           <td>${escHtml(formatLoginMethod(log.loginMethod))}</td>
           <td>${log.isSuccess ? '<span class="type-badge income">成功</span>' : '<span class="type-badge expense">失敗</span>'}</td>
           <td>${escHtml(log.isSuccess ? '-' : formatFailureReason(log.failureReason))}</td>
-          <td>${hasId ? `<button class="btn-icon danger admin-all-login-log-delete-btn" data-id="${escHtml(log.id)}" title="刪除"><i class="fas fa-trash"></i></button>` : '<span class="import-hint">-</span>'}</td>
+          <td>${hasId ? `<button class="btn-icon danger admin-all-login-log-delete-btn" data-id="${escHtml(rowId)}" title="刪除"><i class="fas fa-trash"></i></button>` : '<span class="import-hint">-</span>'}</td>
         </tr>
       `;
       }).join('');

@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-3.39-blue" alt="version">
+  <img src="https://img.shields.io/badge/version-3.40-blue" alt="version">
   <img src="https://img.shields.io/badge/node-%3E%3D18-green" alt="node">
   <img src="https://img.shields.io/badge/license-MIT-orange" alt="license">
   <img src="https://img.shields.io/badge/docker-ready-2496ED" alt="docker">
@@ -24,6 +24,7 @@
 - **分類管理** — 支援父子分類（`parent_id` 自關聯）
 - **預算管理** — 月度/分類預算，視覺化進度條
 - **固定收支** — 週期性自動產生交易
+- **收支管理整合** — 分類管理與固定收支已整合至收支管理模組內，與交易/預算/帳戶同層操作
 - **統計報表** — 分類統計、趨勢分析、每日消費，自訂時間範圍
 - **股票紀錄** — 持股總覽、買賣交易、股利紀錄、FIFO 實現損益計算
 - **情境式快速新增按鈕** — 收支管理顯示「新增交易」、股票紀錄顯示「新增股票交易紀錄」，其他頁面自動隱藏

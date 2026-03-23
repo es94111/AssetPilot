@@ -971,39 +971,23 @@ const App = (() => {
       return;
     }
 
-    const labels = catBreakdown.map(c => c.name || '未分類');
-    const data = catBreakdown.map(c => c.total);
-    const parentMap = new Map();
-    const parentOrder = [];
+    const sorted = buildSortedCategoryRows(catBreakdown);
+    if (sorted.childRows.length === 0) {
+      ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+      return;
+    }
+
+    const labels = sorted.childRows.map(r => r.childName);
+    const data = sorted.childRows.map(r => r.total);
     const parentColorMap = new Map();
 
-    catBreakdown.forEach(item => {
-      const childName = String(item.name || '未分類');
-      const parentName = String(item.parentName || childName);
-      const parentKey = String(item.parentId || parentName || '未分類');
-      const seedColor = normalizeHexColor(item.parentColor || item.color || '#94a3b8');
-      if (!parentMap.has(parentKey)) {
-        parentMap.set(parentKey, { parentName, seedColor, count: 0 });
-        parentOrder.push(parentKey);
-      }
-      parentMap.get(parentKey).count += 1;
+    sorted.parentRows.forEach((parent, idx) => {
+      parentColorMap.set(parent.parentKey, buildParentAccentColor(parent.parentColor, idx, sorted.parentRows.length));
     });
 
-    parentOrder.forEach((parentKey, idx) => {
-      const meta = parentMap.get(parentKey);
-      parentColorMap.set(parentKey, buildParentAccentColor(meta.seedColor, idx, parentOrder.length));
-    });
-
-    const siblingCursor = new Map();
-    const colors = catBreakdown.map(item => {
-      const childName = String(item.name || '未分類');
-      const parentName = String(item.parentName || childName);
-      const parentKey = String(item.parentId || parentName || '未分類');
-      const siblingCount = parentMap.get(parentKey)?.count || 1;
-      const childIndex = siblingCursor.get(parentKey) || 0;
-      siblingCursor.set(parentKey, childIndex + 1);
-      const parentColor = parentColorMap.get(parentKey) || '#94a3b8';
-      return buildChildVariantColor(parentColor, childIndex, siblingCount);
+    const colors = sorted.childRows.map(row => {
+      const parentColor = parentColorMap.get(row.parentKey) || '#94a3b8';
+      return buildChildVariantColor(parentColor, row.childIndex, row.siblingCount);
     });
 
     charts.dashPie = new Chart(ctx, {
@@ -1036,21 +1020,30 @@ const App = (() => {
       return;
     }
 
-    const validAccounts = (accounts || []).filter(a => (Number(a.balance) || 0) > 0);
-    validAccounts.forEach((a, idx) => {
-      const bal = Number(a.balance) || 0;
-      if (bal <= 0) return;
-      labels.push(a.name || '帳戶');
-      values.push(Math.round(bal));
-      colors.push(buildChildVariantColor(accountBase, idx, Math.max(validAccounts.length, 1)));
-    });
-
+    const accountRows = (accounts || [])
+      .map(a => ({ label: String(a.name || '帳戶'), name: String(a.name || '帳戶'), total: Math.round(Number(a.balance) || 0) }))
+      .filter(row => row.total > 0)
+      .sort(sortByTotalThenNameDesc);
     const stockValue = (stocks || []).reduce((sum, s) => sum + (Number(s.marketValue) || 0), 0);
-    if (stockValue > 0) {
-      labels.push('股票市值');
-      values.push(Math.round(stockValue));
-      colors.push(buildChildVariantColor(stockBase, 0, 1));
-    }
+
+    const parentRows = [];
+    if (accountRows.length > 0) parentRows.push({ key: 'account', name: '帳戶資產', total: accountRows.reduce((s, x) => s + x.total, 0), color: accountBase });
+    if (stockValue > 0) parentRows.push({ key: 'stock', name: '股票資產', total: Math.round(stockValue), color: stockBase });
+    parentRows.sort(sortByTotalThenNameDesc);
+
+    parentRows.forEach(parent => {
+      if (parent.key === 'account') {
+        accountRows.forEach((row, idx) => {
+          labels.push(row.label);
+          values.push(row.total);
+          colors.push(buildChildVariantColor(accountBase, idx, Math.max(accountRows.length, 1)));
+        });
+      } else {
+        labels.push('股票市值');
+        values.push(parent.total);
+        colors.push(buildChildVariantColor(stockBase, 0, 1));
+      }
+    });
 
     if (values.length === 0) {
       ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
@@ -1466,44 +1459,107 @@ const App = (() => {
     }
   }
 
+  function sortByTotalThenNameDesc(a, b) {
+    const totalDiff = (Number(b.total) || 0) - (Number(a.total) || 0);
+    if (totalDiff !== 0) return totalDiff;
+    return String(a.name || a.label || '').localeCompare(String(b.name || b.label || ''), 'zh-Hant');
+  }
+
+  function buildSortedCategoryRows(rowsInput) {
+    const rows = Array.isArray(rowsInput) ? rowsInput : [];
+    const parentMap = new Map();
+    const childByParent = new Map();
+
+    rows.forEach(item => {
+      const total = Number(item.total) || 0;
+      if (total <= 0) return;
+
+      const childName = String(item.name || item.childName || '未分類');
+      const parentName = String(item.parentName || childName);
+      const parentKey = String(item.parentId || parentName || '未分類');
+      const parentColor = normalizeHexColor(item.parentColor || item.color || '#94a3b8');
+      const color = normalizeHexColor(item.color || parentColor || '#94a3b8');
+
+      if (!parentMap.has(parentKey)) {
+        parentMap.set(parentKey, {
+          parentKey,
+          parentId: String(item.parentId || ''),
+          parentName,
+          parentColor,
+          total: 0,
+        });
+      }
+      parentMap.get(parentKey).total += total;
+
+      if (!childByParent.has(parentKey)) childByParent.set(parentKey, []);
+      childByParent.get(parentKey).push({
+        parentKey,
+        parentName,
+        childName,
+        name: childName,
+        total,
+        color,
+        label: parentName === childName ? childName : `${parentName} > ${childName}`,
+      });
+    });
+
+    const parentRows = [...parentMap.values()].sort(sortByTotalThenNameDesc);
+    const childRows = [];
+    parentRows.forEach(parent => {
+      const siblings = (childByParent.get(parent.parentKey) || []).sort(sortByTotalThenNameDesc);
+      siblings.forEach((child, childIndex) => {
+        childRows.push({
+          ...child,
+          childIndex,
+          siblingCount: siblings.length,
+        });
+      });
+    });
+
+    return { parentRows, childRows };
+  }
+
+  function buildSortedCategoryRowsFromMap(catMap) {
+    const map = catMap || {};
+    const keys = Object.keys(map);
+    const rows = keys.map(key => {
+      const raw = String(key || '未分類');
+      const [parent, childMaybe] = raw.includes(' > ')
+        ? raw.split(' > ').map(x => x.trim())
+        : [raw, raw];
+      const node = map[key] || {};
+      return {
+        name: childMaybe || raw,
+        parentName: parent || raw,
+        parentId: parent || raw,
+        color: node.color || '#94a3b8',
+        parentColor: node.color || '#94a3b8',
+        total: Number(node.total) || 0,
+      };
+    });
+    return buildSortedCategoryRows(rows);
+  }
+
   function drawCategoryChart(ctx, data, useDualPie = false) {
     if (useDualPie) {
       drawDualCategoryChart(ctx, data);
       return;
     }
 
-    const catMap = data.catMap;
-    const labels = Object.keys(catMap);
-    const values = labels.map(l => catMap[l].total);
-    const parentMap = new Map();
-    const parentOrder = [];
+    const sorted = (Array.isArray(data?.categoryBreakdown) && data.categoryBreakdown.length > 0)
+      ? buildSortedCategoryRows(data.categoryBreakdown)
+      : buildSortedCategoryRowsFromMap(data?.catMap);
+    const labels = sorted.childRows.map(r => r.label);
+    const values = sorted.childRows.map(r => r.total);
     const parentColorMap = new Map();
 
-    labels.forEach(label => {
-      const raw = String(label || '未分類');
-      const parentName = raw.includes(' > ') ? raw.split(' > ')[0].trim() : raw;
-      const seedColor = normalizeHexColor(catMap[label]?.color || '#94a3b8');
-      if (!parentMap.has(parentName)) {
-        parentMap.set(parentName, { seedColor, count: 0 });
-        parentOrder.push(parentName);
-      }
-      parentMap.get(parentName).count += 1;
+    sorted.parentRows.forEach((parent, idx) => {
+      parentColorMap.set(parent.parentKey, buildParentAccentColor(parent.parentColor, idx, sorted.parentRows.length));
     });
 
-    parentOrder.forEach((parentName, idx) => {
-      const meta = parentMap.get(parentName);
-      parentColorMap.set(parentName, buildParentAccentColor(meta.seedColor, idx, parentOrder.length));
-    });
-
-    const siblingCursor = new Map();
-    const colors = labels.map(label => {
-      const raw = String(label || '未分類');
-      const parentName = raw.includes(' > ') ? raw.split(' > ')[0].trim() : raw;
-      const childIndex = siblingCursor.get(parentName) || 0;
-      siblingCursor.set(parentName, childIndex + 1);
-      const siblingCount = parentMap.get(parentName)?.count || 1;
-      const parentColor = parentColorMap.get(parentName) || '#94a3b8';
-      return buildChildVariantColor(parentColor, childIndex, siblingCount);
+    const colors = sorted.childRows.map(row => {
+      const parentColor = parentColorMap.get(row.parentKey) || '#94a3b8';
+      return buildChildVariantColor(parentColor, row.childIndex, row.siblingCount);
     });
     const total = values.reduce((s, v) => s + v, 0);
 
@@ -1623,43 +1679,9 @@ const App = (() => {
   }
 
   function drawDashboardExpenseDualPie(ctx, catBreakdown) {
-    const breakdown = Array.isArray(catBreakdown) ? catBreakdown : [];
-    const parentMap = new Map();
-    const childRows = [];
-
-    breakdown.forEach(item => {
-      const amount = Number(item.total) || 0;
-      if (amount <= 0) return;
-
-      const childName = String(item.name || '未分類');
-      const parentName = String(item.parentName || childName);
-      const parentKey = String(item.parentId || parentName || '未分類');
-      const baseColor = normalizeHexColor(item.parentColor || item.color || '#94a3b8');
-
-      if (!parentMap.has(parentKey)) {
-        parentMap.set(parentKey, {
-          key: parentKey,
-          parentName,
-          baseColor,
-          total: 0,
-          childCount: 0,
-        });
-      }
-
-      const parent = parentMap.get(parentKey);
-      parent.total += amount;
-      parent.childCount += 1;
-
-      childRows.push({
-        parentKey,
-        parentName,
-        childName,
-        label: parentName === childName ? childName : `${parentName} > ${childName}`,
-        total: amount,
-      });
-    });
-
-    const parentRows = [...parentMap.values()].sort((a, b) => b.total - a.total);
+    const sorted = buildSortedCategoryRows(catBreakdown);
+    const parentRows = sorted.parentRows;
+    const childRows = sorted.childRows;
     if (parentRows.length === 0 || childRows.length === 0) {
       ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
       return;
@@ -1667,16 +1689,12 @@ const App = (() => {
 
     const parentColorMap = new Map();
     parentRows.forEach((row, idx) => {
-      parentColorMap.set(row.key, buildParentAccentColor(row.baseColor, idx, parentRows.length));
+      parentColorMap.set(row.parentKey, buildParentAccentColor(row.parentColor, idx, parentRows.length));
     });
 
-    const siblingCursor = new Map();
     childRows.forEach(row => {
-      const idx = siblingCursor.get(row.parentKey) || 0;
-      const siblingCount = parentMap.get(row.parentKey)?.childCount || 1;
       const parentColor = parentColorMap.get(row.parentKey) || '#94a3b8';
-      row.color = buildChildVariantColor(parentColor, idx, siblingCount);
-      siblingCursor.set(row.parentKey, idx + 1);
+      row.color = buildChildVariantColor(parentColor, row.childIndex, row.siblingCount);
     });
 
     charts.dashPie = new Chart(ctx, {
@@ -1783,23 +1801,32 @@ const App = (() => {
     }
 
     const parentRows = [];
-    if (accountTotal > 0) parentRows.push({ key: 'account', label: '帳戶資產', total: accountTotal, color: '#2563eb' });
-    if (stockTotal > 0) parentRows.push({ key: 'stock', label: '股票資產', total: stockTotal, color: '#ea580c' });
+    if (accountTotal > 0) parentRows.push({ key: 'account', label: '帳戶資產', name: '帳戶資產', total: accountTotal, color: '#2563eb' });
+    if (stockTotal > 0) parentRows.push({ key: 'stock', label: '股票資產', name: '股票資產', total: stockTotal, color: '#ea580c' });
+    parentRows.sort(sortByTotalThenNameDesc);
 
-    const childRows = [
-      ...accountRows.map((row, idx) => ({
-        parentKey: 'account',
-        label: `帳戶資產 > ${row.label}`,
-        total: row.total,
-        color: buildChildVariantColor('#2563eb', idx, Math.max(accountRows.length, 1)),
-      })),
-      ...stockRows.map((row, idx) => ({
-        parentKey: 'stock',
-        label: `股票資產 > ${row.label}`,
-        total: row.total,
-        color: buildChildVariantColor('#ea580c', idx, Math.max(stockRows.length, 1)),
-      })),
-    ];
+    const childRows = [];
+    parentRows.forEach(parent => {
+      if (parent.key === 'account') {
+        accountRows.forEach((row, idx) => {
+          childRows.push({
+            parentKey: 'account',
+            label: `帳戶資產 > ${row.label}`,
+            total: row.total,
+            color: buildChildVariantColor('#2563eb', idx, Math.max(accountRows.length, 1)),
+          });
+        });
+      } else {
+        stockRows.forEach((row, idx) => {
+          childRows.push({
+            parentKey: 'stock',
+            label: `股票資產 > ${row.label}`,
+            total: row.total,
+            color: buildChildVariantColor('#ea580c', idx, Math.max(stockRows.length, 1)),
+          });
+        });
+      }
+    });
 
     const totalValue = childRows.reduce((sum, row) => sum + row.total, 0);
     const formatLabel = (label, value) => {
@@ -1887,62 +1914,19 @@ const App = (() => {
     const breakdown = Array.isArray(data.categoryBreakdown) ? data.categoryBreakdown : [];
     if (breakdown.length === 0) return;
 
-    const parentMap = new Map();
-    const childRows = [];
-    const parentChildren = new Map();
-
-    breakdown.forEach(item => {
-      const amount = Number(item.total) || 0;
-      if (amount <= 0) return;
-
-      const childName = String(item.name || '未分類');
-      const parentName = String(item.parentName || childName);
-      const parentColor = normalizeHexColor(item.parentColor || item.color || '#94a3b8');
-      const childColor = normalizeHexColor(item.color || parentColor || '#94a3b8');
-      const parentKey = String(item.parentId || parentName || '未分類');
-      const label = parentName === childName ? childName : `${parentName} > ${childName}`;
-
-      if (!parentMap.has(parentKey)) {
-        parentMap.set(parentKey, {
-          parentName,
-          parentColor,
-          total: 0,
-        });
-      }
-      const parent = parentMap.get(parentKey);
-      parent.total += amount;
-
-      if (!parentChildren.has(parentKey)) parentChildren.set(parentKey, []);
-      const siblings = parentChildren.get(parentKey);
-      const childIndex = siblings.length;
-      siblings.push(label);
-
-      childRows.push({
-        label,
-        childName,
-        parentName,
-        baseColor: childColor,
-        parentKey,
-        childIndex,
-        total: amount,
-      });
-    });
-
-    const parentRows = [...parentMap.values()].sort((a, b) => b.total - a.total);
+    const sorted = buildSortedCategoryRows(breakdown);
+    const parentRows = sorted.parentRows;
+    const childRows = sorted.childRows;
     if (parentRows.length === 0 || childRows.length === 0) return;
 
     const parentColorMap = new Map();
     parentRows.forEach((row, idx) => {
-      parentColorMap.set(row.parentName, buildParentAccentColor(row.parentColor || '#94a3b8', idx, parentRows.length));
+      parentColorMap.set(row.parentKey, buildParentAccentColor(row.parentColor || '#94a3b8', idx, parentRows.length));
     });
 
-    const siblingCursor = new Map();
     childRows.forEach(row => {
-      const idx = siblingCursor.get(row.parentKey) || 0;
-      const siblingCount = (parentChildren.get(row.parentKey) || []).length;
-      const parentColor = parentColorMap.get(row.parentName) || '#94a3b8';
-      row.renderColor = buildChildVariantColor(parentColor, idx, Math.max(siblingCount, 1));
-      siblingCursor.set(row.parentKey, idx + 1);
+      const parentColor = parentColorMap.get(row.parentKey) || '#94a3b8';
+      row.renderColor = buildChildVariantColor(parentColor, row.childIndex, Math.max(row.siblingCount, 1));
     });
 
     charts.report = new Chart(ctx, {
@@ -1953,7 +1937,7 @@ const App = (() => {
           {
             label: '父分類',
             data: parentRows.map(r => r.total),
-            backgroundColor: parentRows.map(r => parentColorMap.get(r.parentName) || '#94a3b8'),
+            backgroundColor: parentRows.map(r => parentColorMap.get(r.parentKey) || '#94a3b8'),
             borderColor: '#ffffff',
             borderWidth: 2,
             radius: '62%',

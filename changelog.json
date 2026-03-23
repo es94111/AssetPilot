@@ -1,6 +1,16 @@
 {
-  "currentVersion": "3.47.1",
+  "currentVersion": "3.47.2",
   "releases": [
+    {
+      "version": "3.47.2",
+      "date": "2026-03-24",
+      "title": "圓餅圖圖例順序統一",
+      "type": "improved",
+      "changes": [
+        { "tag": "improved", "text": "儀表板與統計報表的圓餅圖/雙圓餅圖圖例順序統一為固定規則" },
+        { "tag": "improved", "text": "雙圓餅圖採父分類總額高到低，再依同父分類下子分類總額高到低排序" }
+      ]
+    },
     {
       "version": "3.47.1",
       "date": "2026-03-24",

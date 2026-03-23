@@ -973,7 +973,38 @@ const App = (() => {
 
     const labels = catBreakdown.map(c => c.name || '未分類');
     const data = catBreakdown.map(c => c.total);
-    const colors = catBreakdown.map(c => c.color || '#94a3b8');
+    const parentMap = new Map();
+    const parentOrder = [];
+    const parentColorMap = new Map();
+
+    catBreakdown.forEach(item => {
+      const childName = String(item.name || '未分類');
+      const parentName = String(item.parentName || childName);
+      const parentKey = String(item.parentId || parentName || '未分類');
+      const seedColor = normalizeHexColor(item.parentColor || item.color || '#94a3b8');
+      if (!parentMap.has(parentKey)) {
+        parentMap.set(parentKey, { parentName, seedColor, count: 0 });
+        parentOrder.push(parentKey);
+      }
+      parentMap.get(parentKey).count += 1;
+    });
+
+    parentOrder.forEach((parentKey, idx) => {
+      const meta = parentMap.get(parentKey);
+      parentColorMap.set(parentKey, buildParentAccentColor(meta.seedColor, idx, parentOrder.length));
+    });
+
+    const siblingCursor = new Map();
+    const colors = catBreakdown.map(item => {
+      const childName = String(item.name || '未分類');
+      const parentName = String(item.parentName || childName);
+      const parentKey = String(item.parentId || parentName || '未分類');
+      const siblingCount = parentMap.get(parentKey)?.count || 1;
+      const childIndex = siblingCursor.get(parentKey) || 0;
+      siblingCursor.set(parentKey, childIndex + 1);
+      const parentColor = parentColorMap.get(parentKey) || '#94a3b8';
+      return buildChildVariantColor(parentColor, childIndex, siblingCount);
+    });
 
     charts.dashPie = new Chart(ctx, {
       type: 'doughnut',
@@ -995,7 +1026,8 @@ const App = (() => {
     const labels = [];
     const values = [];
     const colors = [];
-    const palette = ['#2563eb', '#16a34a', '#f59e0b', '#ea580c', '#7c3aed', '#0d9488', '#dc2626', '#0891b2', '#9333ea', '#475569'];
+    const accountBase = '#2563eb';
+    const stockBase = '#ea580c';
 
     const ctx = canvas.getContext('2d');
 
@@ -1004,19 +1036,20 @@ const App = (() => {
       return;
     }
 
-    (accounts || []).forEach((a, idx) => {
+    const validAccounts = (accounts || []).filter(a => (Number(a.balance) || 0) > 0);
+    validAccounts.forEach((a, idx) => {
       const bal = Number(a.balance) || 0;
       if (bal <= 0) return;
       labels.push(a.name || '帳戶');
       values.push(Math.round(bal));
-      colors.push(palette[idx % palette.length]);
+      colors.push(buildChildVariantColor(accountBase, idx, Math.max(validAccounts.length, 1)));
     });
 
     const stockValue = (stocks || []).reduce((sum, s) => sum + (Number(s.marketValue) || 0), 0);
     if (stockValue > 0) {
       labels.push('股票市值');
       values.push(Math.round(stockValue));
-      colors.push('#7c3aed');
+      colors.push(buildChildVariantColor(stockBase, 0, 1));
     }
 
     if (values.length === 0) {
@@ -1442,7 +1475,36 @@ const App = (() => {
     const catMap = data.catMap;
     const labels = Object.keys(catMap);
     const values = labels.map(l => catMap[l].total);
-    const colors = labels.map(l => catMap[l].color);
+    const parentMap = new Map();
+    const parentOrder = [];
+    const parentColorMap = new Map();
+
+    labels.forEach(label => {
+      const raw = String(label || '未分類');
+      const parentName = raw.includes(' > ') ? raw.split(' > ')[0].trim() : raw;
+      const seedColor = normalizeHexColor(catMap[label]?.color || '#94a3b8');
+      if (!parentMap.has(parentName)) {
+        parentMap.set(parentName, { seedColor, count: 0 });
+        parentOrder.push(parentName);
+      }
+      parentMap.get(parentName).count += 1;
+    });
+
+    parentOrder.forEach((parentName, idx) => {
+      const meta = parentMap.get(parentName);
+      parentColorMap.set(parentName, buildParentAccentColor(meta.seedColor, idx, parentOrder.length));
+    });
+
+    const siblingCursor = new Map();
+    const colors = labels.map(label => {
+      const raw = String(label || '未分類');
+      const parentName = raw.includes(' > ') ? raw.split(' > ')[0].trim() : raw;
+      const childIndex = siblingCursor.get(parentName) || 0;
+      siblingCursor.set(parentName, childIndex + 1);
+      const siblingCount = parentMap.get(parentName)?.count || 1;
+      const parentColor = parentColorMap.get(parentName) || '#94a3b8';
+      return buildChildVariantColor(parentColor, childIndex, siblingCount);
+    });
     const total = values.reduce((s, v) => s + v, 0);
 
     if (labels.length === 0) return;
@@ -1483,6 +1545,17 @@ const App = (() => {
   function rgbToHex(r, g, b) {
     const clamp = v => Math.max(0, Math.min(255, Math.round(v)));
     return '#' + [clamp(r), clamp(g), clamp(b)].map(v => v.toString(16).padStart(2, '0')).join('');
+  }
+
+  function blendHexColor(base, accent, ratio = 0.5) {
+    const r = Math.max(0, Math.min(1, Number(ratio) || 0));
+    const rgbBase = hexToRgb(base);
+    const rgbAccent = hexToRgb(accent);
+    return rgbToHex(
+      rgbBase.r * (1 - r) + rgbAccent.r * r,
+      rgbBase.g * (1 - r) + rgbAccent.g * r,
+      rgbBase.b * (1 - r) + rgbAccent.b * r
+    );
   }
 
   function rgbToHsl(r, g, b) {
@@ -1535,7 +1608,10 @@ const App = (() => {
   }
 
   function buildParentAccentColor(baseColor, index, totalCount) {
-    const rgb = hexToRgb(baseColor);
+    const themePalette = ['#6366f1', '#10b981', '#ef4444', '#3b82f6', '#f59e0b', '#14b8a6', '#8b5cf6', '#f97316', '#0ea5e9', '#84cc16'];
+    const themeBase = themePalette[index % themePalette.length];
+    const unifiedBase = blendHexColor(normalizeHexColor(baseColor), themeBase, 0.58);
+    const rgb = hexToRgb(unifiedBase);
     const hsl = rgbToHsl(rgb.r, rgb.g, rgb.b);
     const step = totalCount > 0 ? 360 / totalCount : 120;
     const h = (hsl.h * 0.45 + (index * step) * 0.55 + (index % 2 === 0 ? 14 : -14) + 360) % 360;
@@ -1855,6 +1931,20 @@ const App = (() => {
     const parentRows = [...parentMap.values()].sort((a, b) => b.total - a.total);
     if (parentRows.length === 0 || childRows.length === 0) return;
 
+    const parentColorMap = new Map();
+    parentRows.forEach((row, idx) => {
+      parentColorMap.set(row.parentName, buildParentAccentColor(row.parentColor || '#94a3b8', idx, parentRows.length));
+    });
+
+    const siblingCursor = new Map();
+    childRows.forEach(row => {
+      const idx = siblingCursor.get(row.parentKey) || 0;
+      const siblingCount = (parentChildren.get(row.parentKey) || []).length;
+      const parentColor = parentColorMap.get(row.parentName) || '#94a3b8';
+      row.renderColor = buildChildVariantColor(parentColor, idx, Math.max(siblingCount, 1));
+      siblingCursor.set(row.parentKey, idx + 1);
+    });
+
     charts.report = new Chart(ctx, {
       type: 'doughnut',
       data: {
@@ -1863,7 +1953,7 @@ const App = (() => {
           {
             label: '父分類',
             data: parentRows.map(r => r.total),
-            backgroundColor: parentRows.map(r => r.parentColor),
+            backgroundColor: parentRows.map(r => parentColorMap.get(r.parentName) || '#94a3b8'),
             borderColor: '#ffffff',
             borderWidth: 2,
             radius: '62%',
@@ -1873,10 +1963,7 @@ const App = (() => {
           {
             label: '子分類',
             data: childRows.map(r => r.total),
-            backgroundColor: childRows.map(r => {
-              const siblingCount = (parentChildren.get(r.parentKey) || []).length;
-              return buildChildVariantColor(r.baseColor, r.childIndex, siblingCount);
-            }),
+            backgroundColor: childRows.map(r => r.renderColor || '#94a3b8'),
             borderColor: '#ffffff',
             borderWidth: 2,
             radius: '95%',

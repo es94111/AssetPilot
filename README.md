@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-3.47-blue" alt="version">
+  <img src="https://img.shields.io/badge/version-3.47.1-blue" alt="version">
   <img src="https://img.shields.io/badge/node-%3E%3D18-green" alt="node">
   <img src="https://img.shields.io/badge/license-MIT-orange" alt="license">
   <img src="https://img.shields.io/badge/docker-ready-2496ED" alt="docker">
@@ -56,6 +56,7 @@
 
 ## 近期更新
 
+- **v3.47.1** — 統一儀表板與統計報表的圓餅圖/雙圓餅圖配色，讓圖表風格與網站主題一致
 - **v3.47** — 儀表板「支出分類」與「資產配置（含股票市值）」新增雙圓餅圖開關，並優化配色辨識度
 - **v3.46.2** — 美化雙圓餅圖配色，提升父子分類視覺區隔與辨識度
 - **v3.46.1** — 修正雙圓餅圖內圈父分類提示標題，避免顯示為「父分類 > 子分類」

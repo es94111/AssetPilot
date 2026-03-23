@@ -3356,7 +3356,7 @@ const App = (() => {
       const hasAdminLatest = adminLogs.some(log => Number(log.loginAt) === Number(latestLoginRecord.loginAt) && String(log.ipAddress || '') === String(latestLoginRecord.ipAddress || ''));
       if (!hasAdminLatest) {
         adminLogs.unshift({
-          id: latestLoginRecord.id || '',
+          id: latestLoginRecord.id || (latestLoginRecord.loginAt ? `ts:${latestLoginRecord.loginAt}` : ''),
           loginAt: latestLoginRecord.loginAt,
           ipAddress: latestLoginRecord.ipAddress,
           loginMethod: latestLoginRecord.loginMethod,
@@ -3366,6 +3366,7 @@ const App = (() => {
       const hasAllLatest = allUserLogs.some(log => Number(log.loginAt) === Number(latestLoginRecord.loginAt) && String(log.ipAddress || '') === String(latestLoginRecord.ipAddress || '') && String(log.userId || '') === String(currentUser?.id || ''));
       if (!hasAllLatest) {
         allUserLogs.unshift({
+          id: latestLoginRecord.id || (latestLoginRecord.loginAt ? `ts:${latestLoginRecord.loginAt}` : ''),
           userId: currentUser.id,
           email: currentUser.email,
           displayName: currentUser.displayName,

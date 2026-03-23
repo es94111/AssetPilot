@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-3.42.1-blue" alt="version">
+  <img src="https://img.shields.io/badge/version-3.42.2-blue" alt="version">
   <img src="https://img.shields.io/badge/node-%3E%3D18-green" alt="node">
   <img src="https://img.shields.io/badge/license-MIT-orange" alt="license">
   <img src="https://img.shields.io/badge/docker-ready-2496ED" alt="docker">
@@ -52,6 +52,7 @@
 
 ## 近期更新
 
+- **v3.42.2** — 管理員登入紀錄刪除新增備援重試，降低 502 造成的操作中斷
 - **v3.40** — 分類管理與固定收支整合到收支管理流程
 - **v3.40.1** — 強化登入紀錄批次刪除穩定性
 - **v3.40.2** — 股票交易設定改為卡片式介面，手機版排版同步優化

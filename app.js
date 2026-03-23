@@ -3307,11 +3307,36 @@ const App = (() => {
     updateAdminAllLoginLogSelectionUI();
   }
 
+  function shouldRetryLegacyAdminLoginDelete(error) {
+    const msg = String(error?.message || '').trim();
+    if (!msg) return false;
+    return (
+      msg.includes('404')
+      || msg.includes('502')
+      || msg.includes('503')
+      || msg.includes('504')
+      || msg.includes('伺服器暫時異常')
+      || msg.includes('伺服器回應格式異常')
+      || msg.includes('伺服器回應格式無法解析')
+      || msg.includes('伺服器回傳 JSON 格式錯誤')
+    );
+  }
+
+  async function deleteAdminLoginLogWithCompatFallback(id) {
+    const encodedId = encodeURIComponent(id);
+    try {
+      return await API.del('/api/admin/login-logs/admin/' + encodedId);
+    } catch (primaryError) {
+      if (!shouldRetryLegacyAdminLoginDelete(primaryError)) throw primaryError;
+      return API.del('/api/admin/login-logs/' + encodedId);
+    }
+  }
+
   async function deleteAdminLoginLog(id) {
     if (!id) return;
     if (!confirm('確定要刪除此筆管理員登入紀錄嗎？')) return;
     try {
-      await API.del('/api/admin/login-logs/admin/' + encodeURIComponent(id));
+      await deleteAdminLoginLogWithCompatFallback(id);
       toast('管理員登入紀錄已刪除', 'success');
       await renderAdminSettings();
     } catch (e) {
@@ -3341,7 +3366,7 @@ const App = (() => {
       let deleted = Number(result.deleted) || 0;
       if (deleted === 0 && ids.length > 0) {
         // 備援：若批次端點未成功刪除，改逐筆刪除避免前端無法操作。
-        const settled = await Promise.allSettled(ids.map(id => API.del('/api/admin/login-logs/admin/' + encodeURIComponent(id))));
+        const settled = await Promise.allSettled(ids.map(id => deleteAdminLoginLogWithCompatFallback(id)));
         deleted = settled.filter(x => x.status === 'fulfilled').length;
       }
       toast(`已刪除 ${deleted} 筆管理員登入紀錄`, 'success');

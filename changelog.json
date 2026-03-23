@@ -1,6 +1,16 @@
 {
-  "currentVersion": "3.42.1",
+  "currentVersion": "3.42.2",
   "releases": [
+    {
+      "version": "3.42.2",
+      "date": "2026-03-23",
+      "title": "管理員登入紀錄刪除 502 備援重試",
+      "type": "fixed",
+      "changes": [
+        { "tag": "fixed", "text": "修正移除管理員登入紀錄時偶發顯示「伺服器暫時異常（502）」導致操作中斷" },
+        { "tag": "improved", "text": "刪除管理員登入紀錄新增相容備援重試，主路由失敗時自動改走舊路徑" }
+      ]
+    },
     {
       "version": "3.42.1",
       "date": "2026-03-23",

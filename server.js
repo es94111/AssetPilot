@@ -1668,13 +1668,13 @@ app.get('/api/admin/login-logs', adminMiddleware, (req, res) => {
 
   res.json({
     adminLogs: adminLogs.map(l => ({
-      id: l.id || (Number(l._rid) > 0 ? `rid:${Number(l._rid)}` : ''),
+      id: l.id || (Number(l._rid) > 0 ? `rid:${Number(l._rid)}` : `ts:${Number(l.login_at) || 0}`),
       loginAt: Number(l.login_at) || 0,
       ipAddress: l.ip_address || 'unknown',
       loginMethod: l.login_method || 'password',
     })),
     allUserLogs: allUserLogs.map(l => ({
-      id: l.id || (Number(l._rid) > 0 ? `rid:${Number(l._rid)}` : ''),
+      id: l.id || (Number(l._rid) > 0 ? `rid:${Number(l._rid)}` : `ts:${Number(l.login_at) || 0}`),
       userId: l.user_id,
       email: l.email || '',
       displayName: l.display_name || '',

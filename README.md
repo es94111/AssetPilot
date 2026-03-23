@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-3.42.2-blue" alt="version">
+  <img src="https://img.shields.io/badge/version-3.42.3-blue" alt="version">
   <img src="https://img.shields.io/badge/node-%3E%3D18-green" alt="node">
   <img src="https://img.shields.io/badge/license-MIT-orange" alt="license">
   <img src="https://img.shields.io/badge/docker-ready-2496ED" alt="docker">
@@ -62,6 +62,7 @@
 - **v3.41** — 管理員登入紀錄新增手動同步與上次同步時間顯示
 - **v3.42** — 登入紀錄新增 IP 國家查詢（ipinfo.io）
 - **v3.42.1** — 修正管理員登入紀錄刪除偶發 404 錯誤提示
+- **v3.42.3** — 補齊 IPinfo 授權標註與出處連結
 
 ## 技術架構
 
@@ -470,6 +471,10 @@ your-domain.com {
 - **資料庫加密** — ChaCha20-Poly1305 AEAD + PBKDF2-SHA256 金鑰推導
 - **密碼加密** — bcryptjs 雜湊儲存
 - **健康檢查** — Docker HEALTHCHECK 每 30 秒自動檢測服務狀態
+
+## IPinfo Attribution
+
+- <a href="https://ipinfo.io/lite" target="_blank" rel="noopener noreferrer">IP address data is powered by IPinfo</a>
 
 ## 授權
 

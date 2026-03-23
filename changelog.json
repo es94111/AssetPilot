@@ -1,6 +1,16 @@
 {
-  "currentVersion": "3.42.2",
+  "currentVersion": "3.42.3",
   "releases": [
+    {
+      "version": "3.42.3",
+      "date": "2026-03-23",
+      "title": "IPinfo 出處標註補齊",
+      "type": "improved",
+      "changes": [
+        { "tag": "improved", "text": "API 使用與授權頁新增 IPinfo Lite 條目與資料來源標註" },
+        { "tag": "improved", "text": "依 IPinfo 要求補齊「IP address data is powered by IPinfo」聲明與 https://ipinfo.io/lite 連結" }
+      ]
+    },
     {
       "version": "3.42.2",
       "date": "2026-03-23",

@@ -2063,6 +2063,17 @@ app.put('/api/account/theme', (req, res) => {
   res.json({ success: true, themeMode: mode });
 });
 
+// 更新顯示名稱
+app.put('/api/account/display-name', (req, res) => {
+  const displayName = String(req.body?.displayName || '').trim();
+  if (!displayName) return res.status(400).json({ error: '顯示名稱不可空白' });
+  if (displayName.length > 50) return res.status(400).json({ error: '顯示名稱最多 50 字' });
+
+  db.run("UPDATE users SET display_name = ? WHERE id = ?", [displayName, req.userId]);
+  saveDB();
+  res.json({ success: true, displayName });
+});
+
 // 刪除帳號（永久刪除所有資料）
 app.post('/api/account/delete', async (req, res) => {
   const { password } = req.body;

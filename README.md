@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-3.44-blue" alt="version">
+  <img src="https://img.shields.io/badge/version-3.45-blue" alt="version">
   <img src="https://img.shields.io/badge/node-%3E%3D18-green" alt="node">
   <img src="https://img.shields.io/badge/license-MIT-orange" alt="license">
   <img src="https://img.shields.io/badge/docker-ready-2496ED" alt="docker">
@@ -36,6 +36,7 @@
 - **全球即時匯率** — 串接 rter.info 匯率 API，支援手動更新與自動更新開關
 - **API 使用與授權頁** — 左側選單新增 API 清單與授權說明，集中顯示出處資訊
 - **主題切換容錯** — 深色/淺色切換先本機生效，後端同步異常時不影響當下使用
+- **帳號資訊可改顯示名稱** — 帳號設定可直接修改顯示名稱並立即同步側邊欄
 - **Google SSO** — 一鍵 Google 帳號登入（選配）
 - **管理員模式** — 第一位使用者自動成為管理員，可控管註冊政策與使用者帳號
 - **登入稽核紀錄** — 記錄登入時間、IP、IP 國家、登入方式，管理員全站紀錄含成功與失敗登入嘗試
@@ -54,6 +55,7 @@
 
 ## 近期更新
 
+- **v3.45** — 帳號資訊新增「修改顯示名稱」功能
 - **v3.44** — 交易記錄支援未來交易（可新增未來日期、列表標記與篩選）
 - **v3.43** — 全部使用者登入紀錄新增手動同步與上次同步時間顯示
 - **v3.42.3** — 補齊 IPinfo 授權標註與出處連結

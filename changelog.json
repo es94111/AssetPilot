@@ -1,6 +1,16 @@
 {
-  "currentVersion": "3.44",
+  "currentVersion": "3.45",
   "releases": [
+    {
+      "version": "3.45",
+      "date": "2026-03-23",
+      "title": "帳號資訊新增修改顯示名稱",
+      "type": "feature",
+      "changes": [
+        { "tag": "new", "text": "帳號設定新增「修改顯示名稱」欄位，可直接更新顯示名稱" },
+        { "tag": "improved", "text": "顯示名稱更新後會即時同步到帳號資訊與側邊欄顯示" }
+      ]
+    },
     {
       "version": "3.44",
       "date": "2026-03-23",

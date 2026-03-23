@@ -3058,6 +3058,10 @@ const App = (() => {
       currentUser = { ...(currentUser || {}), ...user };
       el('accountEmail').textContent = user.email || '—';
       el('accountDisplayName').textContent = user.displayName || '—';
+      if (el('accountDisplayNameInput')) {
+        el('accountDisplayNameInput').value = user.displayName || '';
+      }
+      updateUserAvatar();
       await renderAccountLoginLogs();
 
       const linkedEl = el('googleLinkedInfo');
@@ -3111,6 +3115,24 @@ const App = (() => {
             renderAccountSettings();
           } catch (e) {
             toast(e.message || '解除綁定失敗', 'error');
+          }
+        });
+
+        el('accountDisplayNameForm')?.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const displayName = (el('accountDisplayNameInput')?.value || '').trim();
+          if (!displayName) {
+            toast('顯示名稱不可空白', 'error');
+            return;
+          }
+          try {
+            const result = await API.put('/api/account/display-name', { displayName });
+            currentUser = { ...(currentUser || {}), displayName: result.displayName || displayName };
+            el('accountDisplayName').textContent = currentUser.displayName;
+            updateUserAvatar();
+            toast('顯示名稱已更新', 'success');
+          } catch (err) {
+            toast(err.message || '更新顯示名稱失敗', 'error');
           }
         });
 

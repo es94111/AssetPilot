@@ -3356,6 +3356,7 @@ const App = (() => {
       const hasAdminLatest = adminLogs.some(log => Number(log.loginAt) === Number(latestLoginRecord.loginAt) && String(log.ipAddress || '') === String(latestLoginRecord.ipAddress || ''));
       if (!hasAdminLatest) {
         adminLogs.unshift({
+          id: latestLoginRecord.id || '',
           loginAt: latestLoginRecord.loginAt,
           ipAddress: latestLoginRecord.ipAddress,
           loginMethod: latestLoginRecord.loginMethod,

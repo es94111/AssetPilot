@@ -283,6 +283,8 @@
         <button class="tab" data-finance-tab="reports">統計報表</button>
         <button class="tab" data-finance-tab="budget">預算管理</button>
         <button class="tab" data-finance-tab="accounts">帳戶管理</button>
+        <button class="tab" data-finance-tab="categories">分類管理</button>
+        <button class="tab" data-finance-tab="recurring">固定收支</button>
       </div>
       <div class="filter-bar card">
         <div class="filter-group">
@@ -363,6 +365,8 @@
         <button class="tab active" data-finance-tab="reports">統計報表</button>
         <button class="tab" data-finance-tab="budget">預算管理</button>
         <button class="tab" data-finance-tab="accounts">帳戶管理</button>
+        <button class="tab" data-finance-tab="categories">分類管理</button>
+        <button class="tab" data-finance-tab="recurring">固定收支</button>
       </div>
       <div class="report-controls card">
         <div class="tab-group">
@@ -411,6 +415,8 @@
         <button class="tab" data-finance-tab="reports">統計報表</button>
         <button class="tab active" data-finance-tab="budget">預算管理</button>
         <button class="tab" data-finance-tab="accounts">帳戶管理</button>
+        <button class="tab" data-finance-tab="categories">分類管理</button>
+        <button class="tab" data-finance-tab="recurring">固定收支</button>
       </div>
       <div class="budget-header card">
         <div class="budget-total">
@@ -435,6 +441,8 @@
         <button class="tab" data-finance-tab="reports">統計報表</button>
         <button class="tab" data-finance-tab="budget">預算管理</button>
         <button class="tab active" data-finance-tab="accounts">帳戶管理</button>
+        <button class="tab" data-finance-tab="categories">分類管理</button>
+        <button class="tab" data-finance-tab="recurring">固定收支</button>
       </div>
       <div class="summary-cards">
         <div class="card summary-card net">
@@ -476,6 +484,51 @@
           <button class="btn btn-primary" id="saveFxRateBtn"><i class="fas fa-floppy-disk"></i> 儲存匯率</button>
         </div>
       </div>
+    </section>
+
+    <!-- ===== 分類管理（收支管理） ===== -->
+    <section class="page" id="page-categories">
+      <h2 class="page-title">分類管理</h2>
+      <div class="finance-tabs">
+        <button class="tab" data-finance-tab="transactions">交易記錄</button>
+        <button class="tab" data-finance-tab="reports">統計報表</button>
+        <button class="tab" data-finance-tab="budget">預算管理</button>
+        <button class="tab" data-finance-tab="accounts">帳戶管理</button>
+        <button class="tab active" data-finance-tab="categories">分類管理</button>
+        <button class="tab" data-finance-tab="recurring">固定收支</button>
+      </div>
+      <div class="settings-section">
+        <div class="section-header">
+          <h3>支出分類</h3>
+          <button class="btn btn-sm" onclick="App.openCategoryModal('expense')"><i class="fas fa-plus"></i> 新增</button>
+        </div>
+        <div class="category-list" id="expenseCategoryList"></div>
+      </div>
+      <div class="settings-section">
+        <div class="section-header">
+          <h3>收入分類</h3>
+          <button class="btn btn-sm" onclick="App.openCategoryModal('income')"><i class="fas fa-plus"></i> 新增</button>
+        </div>
+        <div class="category-list" id="incomeCategoryList"></div>
+      </div>
+    </section>
+
+    <!-- ===== 固定收支（收支管理） ===== -->
+    <section class="page" id="page-recurring">
+      <h2 class="page-title">固定收支</h2>
+      <div class="finance-tabs">
+        <button class="tab" data-finance-tab="transactions">交易記錄</button>
+        <button class="tab" data-finance-tab="reports">統計報表</button>
+        <button class="tab" data-finance-tab="budget">預算管理</button>
+        <button class="tab" data-finance-tab="accounts">帳戶管理</button>
+        <button class="tab" data-finance-tab="categories">分類管理</button>
+        <button class="tab active" data-finance-tab="recurring">固定收支</button>
+      </div>
+      <div class="section-header">
+        <h3>固定收支</h3>
+        <button class="btn btn-sm" id="addRecurringBtn"><i class="fas fa-plus"></i> 新增</button>
+      </div>
+      <div id="recurringList"></div>
     </section>
 
     <!-- ===== 股票紀錄 ===== -->
@@ -728,39 +781,12 @@
     <section class="page" id="page-settings">
       <h2 class="page-title">設定</h2>
       <div class="tab-group settings-tabs">
-        <button class="tab active" data-settings="categories">分類管理</button>
-        <button class="tab" data-settings="recurring">固定收支</button>
-        <button class="tab" data-settings="export">資料匯出匯入</button>
+        <button class="tab active" data-settings="export">資料匯出匯入</button>
         <button class="tab" data-settings="account">帳號設定</button>
         <button class="tab" data-settings="admin" style="display:none">管理員</button>
       </div>
-      <!-- 分類管理 -->
-      <div class="settings-panel active" id="panel-categories">
-        <div class="settings-section">
-          <div class="section-header">
-            <h3>支出分類</h3>
-            <button class="btn btn-sm" onclick="App.openCategoryModal('expense')"><i class="fas fa-plus"></i> 新增</button>
-          </div>
-          <div class="category-list" id="expenseCategoryList"></div>
-        </div>
-        <div class="settings-section">
-          <div class="section-header">
-            <h3>收入分類</h3>
-            <button class="btn btn-sm" onclick="App.openCategoryModal('income')"><i class="fas fa-plus"></i> 新增</button>
-          </div>
-          <div class="category-list" id="incomeCategoryList"></div>
-        </div>
-      </div>
-      <!-- 固定收支 -->
-      <div class="settings-panel" id="panel-recurring">
-        <div class="section-header">
-          <h3>固定收支</h3>
-          <button class="btn btn-sm" id="addRecurringBtn"><i class="fas fa-plus"></i> 新增</button>
-        </div>
-        <div id="recurringList"></div>
-      </div>
       <!-- 資料匯出入 -->
-      <div class="settings-panel" id="panel-export">
+      <div class="settings-panel active" id="panel-export">
         <div class="panel-export-layout">
           <div class="card export-cluster-card">
             <div class="export-cluster-header">

@@ -700,8 +700,8 @@ const App = (() => {
 
   // ─── 導航 ───
   const validPages = ['dashboard', 'transactions', 'reports', 'budget', 'accounts', 'stocks', 'settings', 'api-credits'];
-  const financePages = ['transactions', 'reports', 'budget', 'accounts'];
-  const validSettingsTabs = ['categories', 'recurring', 'export', 'account', 'admin'];
+  const financePages = ['transactions', 'reports', 'budget', 'accounts', 'categories', 'recurring'];
+  const validSettingsTabs = ['export', 'account', 'admin'];
   const validStocksTabs = ['portfolio', 'transactions', 'dividends', 'realized', 'settings'];
 
   function updateFabForPage(page) {
@@ -754,9 +754,9 @@ const App = (() => {
   }
 
   async function navigate(page, sub, pushState = true) {
-    // 若 page 是 settings 且沒指定 sub，預設 categories
-    if (page === 'settings' && !sub) sub = 'categories';
-    if (page === 'settings' && sub === 'admin' && !currentUser?.isAdmin) sub = 'categories';
+    // 若 page 是 settings 且沒指定 sub，預設 export
+    if (page === 'settings' && !sub) sub = 'export';
+    if (page === 'settings' && sub === 'admin' && !currentUser?.isAdmin) sub = 'export';
     // 若 page 是 stocks 且沒指定 sub，預設 portfolio
     if (page === 'stocks' && !sub) sub = 'portfolio';
     currentPage = page;
@@ -770,7 +770,7 @@ const App = (() => {
     if (financePages.includes(page)) {
       activateFinanceTab(page);
     }
-    const titles = { dashboard: '儀表板', transactions: '收支管理', reports: '收支管理', budget: '收支管理', accounts: '收支管理', stocks: '股票紀錄', settings: '設定', 'api-credits': 'API 使用與授權' };
+    const titles = { dashboard: '儀表板', transactions: '收支管理', reports: '收支管理', budget: '收支管理', accounts: '收支管理', categories: '收支管理', recurring: '收支管理', stocks: '股票紀錄', settings: '設定', 'api-credits': 'API 使用與授權' };
     el('mobileTitle').textContent = titles[page] || '';
     el('sidebar').classList.remove('open');
 
@@ -818,7 +818,7 @@ const App = (() => {
           navigate('transactions', null);
           return;
         }
-        const sub = page === 'settings' ? 'categories' : page === 'stocks' ? 'portfolio' : null;
+        const sub = page === 'settings' ? 'export' : page === 'stocks' ? 'portfolio' : null;
         navigate(page, sub);
       });
     });
@@ -869,6 +869,8 @@ const App = (() => {
       case 'reports': await renderReports(); break;
       case 'budget': await renderBudget(); break;
       case 'accounts': await renderAccounts(); break;
+      case 'categories': await renderCategories(); break;
+      case 'recurring': await renderRecurring(); break;
       case 'stocks': await renderStocks(); break;
       case 'settings': await renderSettings(); break;
       case 'api-credits': await renderApiCredits(); break;
@@ -2709,8 +2711,6 @@ const App = (() => {
     const adminTab = document.querySelector('.settings-tabs .tab[data-settings="admin"]');
     if (adminTab) adminTab.style.display = currentUser?.isAdmin ? '' : 'none';
 
-    await renderCategories();
-    await renderRecurring();
     bindExport();
     await renderAccountSettings();
     if (currentUser?.isAdmin) {
@@ -2719,8 +2719,8 @@ const App = (() => {
 
     const activeSettingsTab = document.querySelector('.settings-tabs .tab.active')?.dataset.settings;
     if (activeSettingsTab === 'admin' && !currentUser?.isAdmin) {
-      activateSettingsTab('categories');
-      history.replaceState({ page: 'settings', sub: 'categories' }, '', buildPath('settings', 'categories'));
+      activateSettingsTab('export');
+      history.replaceState({ page: 'settings', sub: 'export' }, '', buildPath('settings', 'export'));
     }
   }
 

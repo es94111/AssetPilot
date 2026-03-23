@@ -1,6 +1,17 @@
 {
-  "currentVersion": "3.39",
+  "currentVersion": "3.40",
   "releases": [
+    {
+      "version": "3.40",
+      "date": "2026-03-23",
+      "title": "分類管理與固定收支移至收支管理",
+      "type": "improved",
+      "changes": [
+        { "tag": "improved", "text": "分類管理與固定收支由設定頁移至收支管理模組，集中於收支相關流程操作" },
+        { "tag": "new", "text": "新增收支管理子路由：/finance/categories、/finance/recurring" },
+        { "tag": "improved", "text": "設定頁精簡為資料匯出匯入、帳號設定與管理員功能" }
+      ]
+    },
     {
       "version": "3.39",
       "date": "2026-03-22",

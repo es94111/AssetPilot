@@ -2290,12 +2290,16 @@ app.get('/api/transactions', (req, res) => {
   const { dateFrom, dateTo, type, categoryId, accountId, keyword, page, limit } = req.query;
   let sql = "SELECT * FROM transactions WHERE user_id = ?";
   const params = [req.userId];
+  const today = todayStr();
 
   if (dateFrom) { sql += " AND date >= ?"; params.push(dateFrom); }
   if (dateTo) { sql += " AND date <= ?"; params.push(dateTo); }
   if (type && type !== 'all') {
     if (type === 'transfer') {
       sql += " AND (type = 'transfer_out' OR type = 'transfer_in')";
+    } else if (type === 'future') {
+      sql += " AND date > ?";
+      params.push(today);
     } else {
       sql += " AND type = ?"; params.push(type);
     }
@@ -2338,7 +2342,6 @@ app.post('/api/transactions', (req, res) => {
   } catch (e) {
     return res.status(400).json({ error: e.message || '金額格式錯誤' });
   }
-  if (date > todayStr()) return res.status(400).json({ error: '日期不可為未來日期' });
   const id = uid();
   const now = Date.now();
   db.run("INSERT INTO transactions (id, user_id, type, amount, currency, original_amount, fx_rate, date, category_id, account_id, note, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
@@ -2356,7 +2359,6 @@ app.put('/api/transactions/:id', (req, res) => {
   } catch (e) {
     return res.status(400).json({ error: e.message || '金額格式錯誤' });
   }
-  if (date > todayStr()) return res.status(400).json({ error: '日期不可為未來日期' });
   db.run("UPDATE transactions SET type=?, amount=?, currency=?, original_amount=?, fx_rate=?, date=?, category_id=?, account_id=?, note=?, updated_at=? WHERE id=? AND user_id=?",
     [type, converted.twdAmount, converted.currency, converted.originalAmount, converted.fxRate, date, categoryId, accountId, note || '', Date.now(), req.params.id, req.userId]);
   saveDB();

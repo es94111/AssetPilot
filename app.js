@@ -1136,6 +1136,7 @@ const App = (() => {
     const { data: txs, total, page: pageNum, totalPages } = result;
     selectedTxIds.clear();
     updateBatchBar();
+    const todayStrValue = today();
 
     const tbody = el('transactionBody');
     if (txs.length === 0) {
@@ -1144,6 +1145,8 @@ const App = (() => {
       tbody.innerHTML = txs.map(t => {
         const cat = getCat(t.categoryId || t.category_id);
         const acc = getAcc(t.accountId || t.account_id);
+        const isFutureTx = (t.date || '') > todayStrValue;
+        const futureBadge = isFutureTx ? '<span class="tx-schedule-badge">未來</span>' : '';
         let typeBadge, amountCls;
         if (t.type === 'income') {
           typeBadge = '<span class="type-badge income">收入</span>';
@@ -1161,7 +1164,7 @@ const App = (() => {
         return `<tr data-txid="${t.id}">
           <td class="td-check"><input type="checkbox" class="tx-checkbox" data-id="${t.id}" onchange="App.toggleTxSelect('${t.id}', this.checked)"></td>
           <td>${t.date}</td>
-          <td>${typeBadge}</td>
+          <td>${typeBadge}${futureBadge}</td>
           <td>${getCatDisplayName(cat)}</td>
           <td class="${amountCls}">
             ${fmt(t.amount)}

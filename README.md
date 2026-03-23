@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-3.43-blue" alt="version">
+  <img src="https://img.shields.io/badge/version-3.44-blue" alt="version">
   <img src="https://img.shields.io/badge/node-%3E%3D18-green" alt="node">
   <img src="https://img.shields.io/badge/license-MIT-orange" alt="license">
   <img src="https://img.shields.io/badge/docker-ready-2496ED" alt="docker">
@@ -20,6 +20,7 @@
 ## 功能特色
 
 - **交易記錄** — 收入/支出/轉帳 CRUD，批次操作（刪除、變更分類/帳戶/日期）
+- **未來交易** — 可先建立未來日期交易，並在列表以「未來」標籤快速辨識與篩選
 - **帳戶管理** — 多帳戶餘額自動計算
 - **分類管理** — 支援父子分類
 - **預算管理** — 月度/分類預算，視覺化進度條
@@ -53,6 +54,7 @@
 
 ## 近期更新
 
+- **v3.44** — 交易記錄支援未來交易（可新增未來日期、列表標記與篩選）
 - **v3.43** — 全部使用者登入紀錄新增手動同步與上次同步時間顯示
 - **v3.42.3** — 補齊 IPinfo 授權標註與出處連結
 - **v3.42.2** — 管理員登入紀錄刪除新增備援重試，降低 502 造成的操作中斷

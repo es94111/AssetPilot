@@ -1,6 +1,16 @@
 {
-  "currentVersion": "3.40.3",
+  "currentVersion": "3.40.4",
   "releases": [
+    {
+      "version": "3.40.4",
+      "date": "2026-03-23",
+      "title": "管理員登入紀錄勾選修正",
+      "type": "fixed",
+      "changes": [
+        { "tag": "fixed", "text": "修正管理員登入紀錄在僅顯示最新補入紀錄時，該列無法勾選與刪除的問題" },
+        { "tag": "improved", "text": "管理員設定頁補入最新登入紀錄時同步帶入紀錄 ID，確保可選取、可單筆刪除與可批次刪除" }
+      ]
+    },
     {
       "version": "3.40.3",
       "date": "2026-03-23",

@@ -34,8 +34,11 @@ const DB_PATH = process.env.DB_PATH || path.join(__dirname, 'database.db');
 const JWT_EXPIRES = process.env.JWT_EXPIRES || '7d';
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || '';
+const IPINFO_TOKEN = process.env.IPINFO_TOKEN || '';
 const GLOBAL_FX_API_URL = 'https://tw.rter.info/capi.php';
 const FX_AUTO_SYNC_MIN_INTERVAL_MS = 30 * 60 * 1000;
+const IP_COUNTRY_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+const ipCountryCache = new Map();
 
 // ─── 自動產生密鑰（僅首次啟動時） ───
 function generateSecret(length = 64) {
@@ -1010,6 +1013,74 @@ function getRequestIp(req) {
   return rawIp ? rawIp.replace(/^::ffff:/, '') : 'unknown';
 }
 
+function isPrivateOrLocalIp(ip) {
+  const v = String(ip || '').trim().toLowerCase();
+  if (!v || v === 'unknown') return true;
+  if (v === '::1' || v === 'localhost') return true;
+  if (v.startsWith('127.')) return true;
+  if (v.startsWith('10.')) return true;
+  if (v.startsWith('192.168.')) return true;
+  if (v.startsWith('169.254.')) return true;
+  if (/^172\.(1[6-9]|2\d|3[0-1])\./.test(v)) return true;
+  if (v.startsWith('fc') || v.startsWith('fd')) return true; // IPv6 ULA
+  if (v.startsWith('fe80:')) return true; // IPv6 link-local
+  return false;
+}
+
+async function fetchIpCountry(ipAddress) {
+  const ip = String(ipAddress || '').trim();
+  if (!ip || ip === 'unknown') return '-';
+  if (isPrivateOrLocalIp(ip)) return 'LOCAL';
+
+  const cached = ipCountryCache.get(ip);
+  const now = Date.now();
+  if (cached && (now - cached.at) < IP_COUNTRY_CACHE_TTL_MS) return cached.country;
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 2500);
+  try {
+    const tokenQuery = IPINFO_TOKEN ? `?token=${encodeURIComponent(IPINFO_TOKEN)}` : '';
+    const url = `https://ipinfo.io/${encodeURIComponent(ip)}/json${tokenQuery}`;
+    const r = await fetch(url, { signal: controller.signal });
+    if (!r.ok) {
+      ipCountryCache.set(ip, { country: '-', at: now });
+      return '-';
+    }
+    const data = await r.json();
+    const country = String(data?.country || '').trim().toUpperCase() || '-';
+    ipCountryCache.set(ip, { country, at: now });
+    return country;
+  } catch (e) {
+    ipCountryCache.set(ip, { country: '-', at: now });
+    return '-';
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+async function enrichLogsWithCountry(logs, ipField = 'ip_address') {
+  const rows = Array.isArray(logs) ? logs : [];
+  const uniqueIps = [...new Set(rows.map(x => String(x?.[ipField] || '').trim()).filter(Boolean))];
+  const lookup = new Map();
+  const workerCount = Math.min(8, uniqueIps.length);
+  let cursor = 0;
+
+  const workers = Array.from({ length: workerCount }, async () => {
+    while (cursor < uniqueIps.length) {
+      const idx = cursor++;
+      const ip = uniqueIps[idx];
+      const country = await fetchIpCountry(ip);
+      lookup.set(ip, country);
+    }
+  });
+
+  await Promise.all(workers);
+  return rows.map(row => ({
+    ...row,
+    country: lookup.get(String(row?.[ipField] || '').trim()) || '-',
+  }));
+}
+
 function recordLoginAudit(user, req, method = 'password') {
   if (!user?.id) return;
   const loginId = uid();
@@ -1635,7 +1706,7 @@ app.get('/api/auth/me', authMiddleware, (req, res) => {
 // ═══════════════════════════════════════
 app.use('/api', authMiddleware);
 
-app.get('/api/account/login-logs', (req, res) => {
+app.get('/api/account/login-logs', async (req, res) => {
   const logs = queryAll(
     `SELECT login_at, ip_address, login_method, is_admin_login
      FROM login_audit_logs
@@ -1645,17 +1716,20 @@ app.get('/api/account/login-logs', (req, res) => {
     [req.userId]
   );
 
+  const logsWithCountry = await enrichLogsWithCountry(logs, 'ip_address');
+
   res.json({
-    logs: logs.map(l => ({
+    logs: logsWithCountry.map(l => ({
       loginAt: Number(l.login_at) || 0,
       ipAddress: l.ip_address || 'unknown',
+      country: l.country || '-',
       loginMethod: l.login_method || 'password',
       isAdminLogin: !!l.is_admin_login,
     })),
   });
 });
 
-app.get('/api/admin/login-logs', adminMiddleware, (req, res) => {
+app.get('/api/admin/login-logs', adminMiddleware, async (req, res) => {
   const adminLogs = queryAll(
     `SELECT id, rowid AS _rid, login_at, ip_address, login_method
      FROM login_audit_logs
@@ -1673,20 +1747,27 @@ app.get('/api/admin/login-logs', adminMiddleware, (req, res) => {
      LIMIT 500`
   );
 
+  const [adminLogsWithCountry, allUserLogsWithCountry] = await Promise.all([
+    enrichLogsWithCountry(adminLogs, 'ip_address'),
+    enrichLogsWithCountry(allUserLogs, 'ip_address'),
+  ]);
+
   res.json({
-    adminLogs: adminLogs.map(l => ({
+    adminLogs: adminLogsWithCountry.map(l => ({
       id: l.id || (Number(l._rid) > 0 ? `rid:${Number(l._rid)}` : `ts:${Number(l.login_at) || 0}`),
       loginAt: Number(l.login_at) || 0,
       ipAddress: l.ip_address || 'unknown',
+      country: l.country || '-',
       loginMethod: l.login_method || 'password',
     })),
-    allUserLogs: allUserLogs.map(l => ({
+    allUserLogs: allUserLogsWithCountry.map(l => ({
       id: l.id || (Number(l._rid) > 0 ? `rid:${Number(l._rid)}` : `ts:${Number(l.login_at) || 0}`),
       userId: l.user_id,
       email: l.email || '',
       displayName: l.display_name || '',
       loginAt: Number(l.login_at) || 0,
       ipAddress: l.ip_address || 'unknown',
+      country: l.country || '-',
       loginMethod: l.login_method || 'password',
       isAdminLogin: !!l.is_admin_login,
       isSuccess: !!l.is_success,

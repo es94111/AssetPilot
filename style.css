@@ -249,6 +249,16 @@ input, select, button, textarea { font-family: inherit; font-size: inherit; }
 .type-badge.income { background: var(--income-bg); color: var(--income); }
 .type-badge.expense { background: var(--expense-bg); color: var(--expense); }
 .type-badge.transfer { background: var(--net-bg); color: var(--net); }
+.tx-schedule-badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  background: #fef3c7;
+  color: #92400e;
+}
 .data-table .amount-transfer { color: var(--net); font-weight: 600; }
 .th-check, .td-check { width: 36px; text-align: center !important; }
 .td-check input, .th-check input { cursor: pointer; width: 16px; height: 16px; accent-color: var(--primary); }

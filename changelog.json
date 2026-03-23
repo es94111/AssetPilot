@@ -1,6 +1,16 @@
 {
-  "currentVersion": "3.43",
+  "currentVersion": "3.44",
   "releases": [
+    {
+      "version": "3.44",
+      "date": "2026-03-23",
+      "title": "交易記錄新增未來交易",
+      "type": "feature",
+      "changes": [
+        { "tag": "new", "text": "交易記錄可新增與編輯未來日期交易，方便預先規劃已確定的收支" },
+        { "tag": "new", "text": "交易列表新增「未來」標籤，並在類型篩選加入「未來交易」快速檢視" }
+      ]
+    },
     {
       "version": "3.43",
       "date": "2026-03-23",

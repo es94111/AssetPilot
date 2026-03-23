@@ -1076,6 +1076,13 @@ function parseLoginLogTarget(rawId) {
     return { byRowId: true, value: rowid };
   }
 
+  const tsMatch = id.match(/^ts:(\d+)$/);
+  if (tsMatch) {
+    const ts = Number(tsMatch[1]);
+    if (!Number.isFinite(ts) || ts <= 0) return null;
+    return { byTimestamp: true, value: ts };
+  }
+
   return { byRowId: false, value: id };
 }
 
@@ -1694,6 +1701,18 @@ app.delete('/api/admin/login-logs/admin/:id', adminMiddleware, (req, res) => {
 
   if (target.byRowId) {
     db.run("DELETE FROM login_audit_logs WHERE rowid = ? AND user_id = ? AND is_admin_login = 1", [target.value, req.userId]);
+  } else if (target.byTimestamp) {
+    db.run(
+      `DELETE FROM login_audit_logs
+       WHERE rowid IN (
+         SELECT rowid
+         FROM login_audit_logs
+         WHERE login_at = ? AND user_id = ? AND is_admin_login = 1
+         ORDER BY rowid DESC
+         LIMIT 1
+       )`,
+      [target.value, req.userId]
+    );
   } else {
     db.run("DELETE FROM login_audit_logs WHERE id = ? AND user_id = ? AND is_admin_login = 1", [target.value, req.userId]);
   }
@@ -1714,6 +1733,18 @@ app.post('/api/admin/login-logs/admin/batch-delete', adminMiddleware, (req, res)
     if (!target) return;
     if (target.byRowId) {
       db.run("DELETE FROM login_audit_logs WHERE rowid = ? AND user_id = ? AND is_admin_login = 1", [target.value, req.userId]);
+    } else if (target.byTimestamp) {
+      db.run(
+        `DELETE FROM login_audit_logs
+         WHERE rowid IN (
+           SELECT rowid
+           FROM login_audit_logs
+           WHERE login_at = ? AND user_id = ? AND is_admin_login = 1
+           ORDER BY rowid DESC
+           LIMIT 1
+         )`,
+        [target.value, req.userId]
+      );
     } else {
       db.run("DELETE FROM login_audit_logs WHERE id = ? AND user_id = ? AND is_admin_login = 1", [target.value, req.userId]);
     }
@@ -1730,6 +1761,18 @@ app.delete('/api/admin/login-logs/all/:id', adminMiddleware, (req, res) => {
 
   if (target.byRowId) {
     db.run("DELETE FROM login_attempt_logs WHERE rowid = ?", [target.value]);
+  } else if (target.byTimestamp) {
+    db.run(
+      `DELETE FROM login_attempt_logs
+       WHERE rowid IN (
+         SELECT rowid
+         FROM login_attempt_logs
+         WHERE login_at = ?
+         ORDER BY rowid DESC
+         LIMIT 1
+       )`,
+      [target.value]
+    );
   } else {
     db.run("DELETE FROM login_attempt_logs WHERE id = ?", [target.value]);
   }
@@ -1750,6 +1793,18 @@ app.post('/api/admin/login-logs/all/batch-delete', adminMiddleware, (req, res) =
     if (!target) return;
     if (target.byRowId) {
       db.run("DELETE FROM login_attempt_logs WHERE rowid = ?", [target.value]);
+    } else if (target.byTimestamp) {
+      db.run(
+        `DELETE FROM login_attempt_logs
+         WHERE rowid IN (
+           SELECT rowid
+           FROM login_attempt_logs
+           WHERE login_at = ?
+           ORDER BY rowid DESC
+           LIMIT 1
+         )`,
+        [target.value]
+      );
     } else {
       db.run("DELETE FROM login_attempt_logs WHERE id = ?", [target.value]);
     }

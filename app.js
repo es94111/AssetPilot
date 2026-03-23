@@ -3294,7 +3294,13 @@ const App = (() => {
     if (!confirm(`確定要刪除 ${ids.length} 筆管理員登入紀錄嗎？`)) return;
     try {
       const result = await API.post('/api/admin/login-logs/admin/batch-delete', { ids });
-      toast(`已刪除 ${result.deleted || 0} 筆管理員登入紀錄`, 'success');
+      let deleted = Number(result.deleted) || 0;
+      if (deleted === 0 && ids.length > 0) {
+        // 備援：若批次端點未成功刪除，改逐筆刪除避免前端無法操作。
+        const settled = await Promise.allSettled(ids.map(id => API.del('/api/admin/login-logs/admin/' + encodeURIComponent(id))));
+        deleted = settled.filter(x => x.status === 'fulfilled').length;
+      }
+      toast(`已刪除 ${deleted} 筆管理員登入紀錄`, 'success');
       await renderAdminSettings();
     } catch (e) {
       toast(e.message || '批次刪除管理員登入紀錄失敗', 'error');
@@ -3322,7 +3328,13 @@ const App = (() => {
     if (!confirm(`確定要刪除 ${ids.length} 筆使用者登入紀錄嗎？`)) return;
     try {
       const result = await API.post('/api/admin/login-logs/all/batch-delete', { ids });
-      toast(`已刪除 ${result.deleted || 0} 筆使用者登入紀錄`, 'success');
+      let deleted = Number(result.deleted) || 0;
+      if (deleted === 0 && ids.length > 0) {
+        // 備援：若批次端點未成功刪除，改逐筆刪除避免前端無法操作。
+        const settled = await Promise.allSettled(ids.map(id => API.del('/api/admin/login-logs/all/' + encodeURIComponent(id))));
+        deleted = settled.filter(x => x.status === 'fulfilled').length;
+      }
+      toast(`已刪除 ${deleted} 筆使用者登入紀錄`, 'success');
       await renderAdminSettings();
     } catch (e) {
       toast(e.message || '批次刪除使用者登入紀錄失敗', 'error');
@@ -3373,11 +3385,11 @@ const App = (() => {
         const hasId = !!log.id;
         return `
         <tr>
-          <td class="td-check">${hasId ? `<input type="checkbox" class="admin-login-log-checkbox" data-id="${escHtml(log.id)}" onchange="App.toggleAdminLoginLogSelect('${escHtml(log.id)}', this.checked)">` : ''}</td>
+          <td class="td-check">${hasId ? `<input type="checkbox" class="admin-login-log-checkbox" data-id="${escHtml(log.id)}">` : ''}</td>
           <td>${escHtml(formatLoginAt(log.loginAt))}</td>
           <td>${escHtml(log.ipAddress || 'unknown')}</td>
           <td>${escHtml(formatLoginMethod(log.loginMethod))}</td>
-          <td>${hasId ? `<button class="btn-icon danger" onclick="App.deleteAdminLoginLog('${escHtml(log.id)}')" title="刪除"><i class="fas fa-trash"></i></button>` : '<span class="import-hint">-</span>'}</td>
+          <td>${hasId ? `<button class="btn-icon danger admin-login-log-delete-btn" data-id="${escHtml(log.id)}" title="刪除"><i class="fas fa-trash"></i></button>` : '<span class="import-hint">-</span>'}</td>
         </tr>
       `;
       }).join('');
@@ -3390,7 +3402,7 @@ const App = (() => {
         const hasId = !!log.id;
         return `
         <tr>
-          <td class="td-check">${hasId ? `<input type="checkbox" class="admin-all-login-log-checkbox" data-id="${escHtml(log.id)}" onchange="App.toggleAdminAllLoginLogSelect('${escHtml(log.id)}', this.checked)">` : ''}</td>
+          <td class="td-check">${hasId ? `<input type="checkbox" class="admin-all-login-log-checkbox" data-id="${escHtml(log.id)}">` : ''}</td>
           <td>${escHtml(formatLoginAt(log.loginAt))}</td>
           <td>${escHtml(log.email || '')}</td>
           <td>${escHtml(log.displayName || '-')}</td>
@@ -3399,7 +3411,7 @@ const App = (() => {
           <td>${escHtml(formatLoginMethod(log.loginMethod))}</td>
           <td>${log.isSuccess ? '<span class="type-badge income">成功</span>' : '<span class="type-badge expense">失敗</span>'}</td>
           <td>${escHtml(log.isSuccess ? '-' : formatFailureReason(log.failureReason))}</td>
-          <td>${hasId ? `<button class="btn-icon danger" onclick="App.deleteAdminAllLoginLog('${escHtml(log.id)}')" title="刪除"><i class="fas fa-trash"></i></button>` : '<span class="import-hint">-</span>'}</td>
+          <td>${hasId ? `<button class="btn-icon danger admin-all-login-log-delete-btn" data-id="${escHtml(log.id)}" title="刪除"><i class="fas fa-trash"></i></button>` : '<span class="import-hint">-</span>'}</td>
         </tr>
       `;
       }).join('');
@@ -3509,6 +3521,34 @@ const App = (() => {
       } catch (e) {
         toast(e.message || '刪除使用者失敗', 'error');
       }
+    });
+
+    el('adminLoginLogBody')?.addEventListener('change', (ev) => {
+      const cb = ev.target.closest('.admin-login-log-checkbox');
+      if (!cb) return;
+      toggleAdminLoginLogSelect(cb.dataset.id || '', !!cb.checked);
+    });
+
+    el('adminAllLoginLogBody')?.addEventListener('change', (ev) => {
+      const cb = ev.target.closest('.admin-all-login-log-checkbox');
+      if (!cb) return;
+      toggleAdminAllLoginLogSelect(cb.dataset.id || '', !!cb.checked);
+    });
+
+    el('adminLoginLogBody')?.addEventListener('click', async (ev) => {
+      const btn = ev.target.closest('.admin-login-log-delete-btn');
+      if (!btn) return;
+      const id = btn.dataset.id || '';
+      if (!id) return;
+      await deleteAdminLoginLog(id);
+    });
+
+    el('adminAllLoginLogBody')?.addEventListener('click', async (ev) => {
+      const btn = ev.target.closest('.admin-all-login-log-delete-btn');
+      if (!btn) return;
+      const id = btn.dataset.id || '';
+      if (!id) return;
+      await deleteAdminAllLoginLog(id);
     });
 
     el('selectAllAdminLoginLogs')?.addEventListener('change', (ev) => {

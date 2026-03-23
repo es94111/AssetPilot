@@ -3175,6 +3175,20 @@ const App = (() => {
     return msg;
   }
 
+  function updateAdminLoginLogSyncTime(timestamp = Date.now()) {
+    const syncEl = el('adminLoginLogSyncAt');
+    if (!syncEl) return;
+    syncEl.textContent = `上次同步：${formatLoginAt(timestamp)}`;
+  }
+
+  async function syncAdminLoginLogs(options = {}) {
+    const { silent = false } = options;
+    const data = await API.get('/api/admin/login-logs');
+    renderAdminLoginLogTables(data);
+    updateAdminLoginLogSyncTime(Date.now());
+    if (!silent) toast('管理員登入紀錄已同步', 'success');
+  }
+
   async function renderAccountLoginLogs() {
     const tbody = el('accountLoginLogBody');
     if (!tbody) return;
@@ -3466,10 +3480,9 @@ const App = (() => {
   async function renderAdminSettings() {
     if (!currentUser?.isAdmin) return;
     try {
-      const [settings, users, loginLogData] = await Promise.all([
+      const [settings, users] = await Promise.all([
         API.get('/api/admin/settings'),
         API.get('/api/admin/users'),
-        API.get('/api/admin/login-logs'),
       ]);
 
       const toggle = el('adminPublicRegistrationToggle');
@@ -3479,7 +3492,7 @@ const App = (() => {
         ? settings.allowedRegistrationEmails.join('\n')
         : '';
       renderAdminUserTable(users);
-      renderAdminLoginLogTables(loginLogData);
+      await syncAdminLoginLogs({ silent: true });
     } catch (e) {
       toast(e.message || '載入管理員設定失敗', 'error');
     }
@@ -3577,6 +3590,13 @@ const App = (() => {
 
     el('adminLoginLogDeleteSelectedBtn')?.addEventListener('click', deleteSelectedAdminLoginLogs);
     el('adminAllLoginLogDeleteSelectedBtn')?.addEventListener('click', deleteSelectedAdminAllLoginLogs);
+    el('adminLoginLogSyncBtn')?.addEventListener('click', async () => {
+      try {
+        await syncAdminLoginLogs({ silent: false });
+      } catch (e) {
+        toast(e.message || '同步管理員登入紀錄失敗', 'error');
+      }
+    });
 
     adminSettingsBound = true;
   }

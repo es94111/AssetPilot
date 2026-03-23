@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-3.40.8-blue" alt="version">
+  <img src="https://img.shields.io/badge/version-3.41-blue" alt="version">
   <img src="https://img.shields.io/badge/node-%3E%3D18-green" alt="node">
   <img src="https://img.shields.io/badge/license-MIT-orange" alt="license">
   <img src="https://img.shields.io/badge/docker-ready-2496ED" alt="docker">
@@ -45,6 +45,7 @@
 - **最新登入列勾選補強** — 即時補入的最新登入紀錄若缺 id，會用時間戳作為備援識別，避免無法勾選
 - **管理員單筆刪除再補強** — 管理員登入紀錄缺少主鍵時，操作欄仍可用時間戳備援識別執行單筆刪除
 - **登入紀錄刪除回應容錯** — 後端 API 錯誤統一回傳 JSON，避免刪除時出現「伺服器回應格式異常」
+- **管理員登入紀錄手動同步** — 管理員頁新增手動同步按鈕與上次同步時間，免重整頁面即可更新登入紀錄
 - **資料庫加密** — ChaCha20-Poly1305 + PBKDF2-SHA256 全資料庫加密
 - **響應式設計** — 桌面與手機皆可使用
 
@@ -56,6 +57,7 @@
 - **v3.40.3** — 修正舊資料登入紀錄勾選與批次刪除相容性
 - **v3.40.7** — 管理員登入紀錄新增單筆刪除備援路徑，舊資料也可刪除
 - **v3.40.8** — 修正管理員登入紀錄刪除時的回應格式異常提示
+- **v3.41** — 管理員登入紀錄新增手動同步與上次同步時間顯示
 
 ## 技術架構
 

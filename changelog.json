@@ -1,6 +1,17 @@
 {
-  "currentVersion": "3.40.2",
+  "currentVersion": "3.40.3",
   "releases": [
+    {
+      "version": "3.40.3",
+      "date": "2026-03-23",
+      "title": "登入紀錄批次刪除與勾選修正",
+      "type": "fixed",
+      "changes": [
+        { "tag": "fixed", "text": "修正管理員登入紀錄與全部使用者登入紀錄在部分舊資料無法勾選與批次刪除的問題" },
+        { "tag": "improved", "text": "管理員登入紀錄 API 新增舊資料 rowid 備援識別值，確保每筆紀錄都可被選取與刪除" },
+        { "tag": "improved", "text": "登入紀錄刪除端點支援 id 與 rowid 識別，提升舊版資料相容性" }
+      ]
+    },
     {
       "version": "3.40.2",
       "date": "2026-03-23",

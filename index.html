@@ -731,45 +731,62 @@
 
       <!-- 股票交易設定 -->
       <div class="stock-panel" id="stockPanel-settings">
-        <div class="card">
-          <h3>股票交易計算設定</h3>
-          <p class="import-hint">設定手續費與交易稅計算參數後，新增交易與持股總覽預估值會自動套用。</p>
-          <form id="stockSettingsForm" style="margin-top:12px">
-            <div class="form-grid two-col">
-              <div class="form-group">
-                <label class="form-label">券商手續費率（小數）</label>
-                <input class="form-input" type="number" id="stockFeeRate" min="0.000001" max="0.02" step="0.000001" required>
-              </div>
-              <div class="form-group">
-                <label class="form-label">手續費折扣（0~1）</label>
-                <input class="form-input" type="number" id="stockFeeDiscount" min="0.0001" max="1" step="0.0001" required>
-              </div>
-              <div class="form-group">
-                <label class="form-label">整股最低手續費</label>
-                <input class="form-input" type="number" id="stockFeeMinLot" min="0" max="1000" step="1" required>
-              </div>
-              <div class="form-group">
-                <label class="form-label">零股最低手續費</label>
-                <input class="form-input" type="number" id="stockFeeMinOdd" min="0" max="1000" step="1" required>
-              </div>
-              <div class="form-group">
-                <label class="form-label">一般股票賣出稅率（小數）</label>
-                <input class="form-input" type="number" id="stockTaxRateStock" min="0" max="0.02" step="0.000001" required>
-              </div>
-              <div class="form-group">
-                <label class="form-label">ETF 賣出稅率（小數）</label>
-                <input class="form-input" type="number" id="stockTaxRateEtf" min="0" max="0.02" step="0.000001" required>
-              </div>
-              <div class="form-group">
-                <label class="form-label">權證賣出稅率（小數）</label>
-                <input class="form-input" type="number" id="stockTaxRateWarrant" min="0" max="0.02" step="0.000001" required>
-              </div>
-              <div class="form-group">
-                <label class="form-label">賣出交易稅最低金額</label>
-                <input class="form-input" type="number" id="stockTaxMin" min="0" max="100" step="1" required>
-              </div>
+        <div class="card stock-settings-card">
+          <div class="stock-settings-header">
+            <h3><i class="fas fa-sliders"></i>股票交易計算設定</h3>
+            <p class="import-hint">調整手續費與交易稅參數後，新增交易與持股總覽預估值會即時套用。</p>
+          </div>
+          <div class="stock-settings-intro">
+            <div class="stock-settings-pill"><i class="fas fa-percent"></i>手續費採無條件捨去，並套用整股/零股最低金額</div>
+            <div class="stock-settings-pill"><i class="fas fa-receipt"></i>賣出交易稅依商品類型計算，最低金額限制自動生效</div>
+          </div>
+          <form id="stockSettingsForm" class="stock-settings-form">
+            <div class="stock-settings-grid">
+              <section class="stock-setting-group">
+                <h4><i class="fas fa-coins"></i>手續費參數</h4>
+                <div class="form-grid two-col stock-setting-fields">
+                  <div class="form-group">
+                    <label class="form-label">券商手續費率（小數）</label>
+                    <input class="form-input" type="number" id="stockFeeRate" min="0.000001" max="0.02" step="0.000001" required>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">手續費折扣（0~1）</label>
+                    <input class="form-input" type="number" id="stockFeeDiscount" min="0.0001" max="1" step="0.0001" required>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">整股最低手續費</label>
+                    <input class="form-input" type="number" id="stockFeeMinLot" min="0" max="1000" step="1" required>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">零股最低手續費</label>
+                    <input class="form-input" type="number" id="stockFeeMinOdd" min="0" max="1000" step="1" required>
+                  </div>
+                </div>
+              </section>
+
+              <section class="stock-setting-group">
+                <h4><i class="fas fa-file-invoice-dollar"></i>交易稅參數</h4>
+                <div class="form-grid two-col stock-setting-fields">
+                  <div class="form-group">
+                    <label class="form-label">一般股票賣出稅率（小數）</label>
+                    <input class="form-input" type="number" id="stockTaxRateStock" min="0" max="0.02" step="0.000001" required>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">ETF 賣出稅率（小數）</label>
+                    <input class="form-input" type="number" id="stockTaxRateEtf" min="0" max="0.02" step="0.000001" required>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">權證賣出稅率（小數）</label>
+                    <input class="form-input" type="number" id="stockTaxRateWarrant" min="0" max="0.02" step="0.000001" required>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">賣出交易稅最低金額</label>
+                    <input class="form-input" type="number" id="stockTaxMin" min="0" max="100" step="1" required>
+                  </div>
+                </div>
+              </section>
             </div>
-            <div class="modal-actions" style="margin-top:12px;justify-content:flex-end">
+            <div class="stock-settings-actions">
               <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> 儲存設定</button>
             </div>
           </form>

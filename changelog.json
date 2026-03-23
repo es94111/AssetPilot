@@ -1,6 +1,16 @@
 {
-  "currentVersion": "3.46",
+  "currentVersion": "3.46.1",
   "releases": [
+    {
+      "version": "3.46.1",
+      "date": "2026-03-23",
+      "title": "雙圓餅圖父分類標題修正",
+      "type": "fixed",
+      "changes": [
+        { "tag": "fixed", "text": "修正雙圓餅圖內圈父分類提示標題誤顯示為「父分類 > 子分類」的問題" },
+        { "tag": "improved", "text": "分類統計雙圓餅圖的提示文字改為依圈層顯示，父分類與子分類標籤更一致" }
+      ]
+    },
     {
       "version": "3.46",
       "date": "2026-03-23",

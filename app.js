@@ -1488,6 +1488,13 @@ const App = (() => {
           legend: { display: false },
           tooltip: {
             callbacks: {
+              title(items) {
+                if (!items || items.length === 0) return '';
+                const item = items[0];
+                const ds = item.dataset || {};
+                const names = ds.segmentLabels || [];
+                return names[item.dataIndex] || item.label || '';
+              },
               label(context) {
                 const ds = context.dataset || {};
                 const names = ds.segmentLabels || [];

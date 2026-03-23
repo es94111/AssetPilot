@@ -1150,8 +1150,10 @@
         <div class="card">
           <h3><i class="fas fa-list" style="margin-right:8px;color:var(--primary)"></i>全部使用者登入紀錄（最近 500 筆）</h3>
           <div class="import-actions" style="justify-content:flex-start;margin-bottom:10px;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-ghost" id="adminAllLoginLogSyncBtn"><i class="fas fa-rotate"></i> 手動同步</button>
             <button class="btn btn-outline" id="adminAllLoginLogDeleteSelectedBtn" disabled><i class="fas fa-trash"></i> 批次刪除</button>
             <span class="import-hint" id="adminAllLoginLogSelectedCount">已選 0 筆</span>
+            <span class="import-hint" id="adminAllLoginLogSyncAt">上次同步：-</span>
           </div>
           <div class="table-wrap" style="overflow:auto">
             <table class="data-table">

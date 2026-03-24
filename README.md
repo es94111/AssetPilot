@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-3.58-blue" alt="version">
+  <img src="https://img.shields.io/badge/version-3.59-blue" alt="version">
   <img src="https://img.shields.io/badge/node-%3E%3D18-green" alt="node">
   <img src="https://img.shields.io/badge/license-MIT-orange" alt="license">
   <img src="https://img.shields.io/badge/docker-ready-2496ED" alt="docker">
@@ -56,6 +56,7 @@
 - **響應式設計** — 桌面與手機皆可使用
 
 ## 近期更新
+- **v3.59** — 股利紀錄表格日期欄位統一為「除息日期」
 - **v3.58** — 澄清股利日期欄位為除息日期（來自 TWSE API），非發放日期
 - **v3.57** — 實現匯率 8 小時冷卻期限制、基礎貨幣固定為 TWD
 - **v3.56** — 匯率 API 供應商更換為 exchangerate-api.com

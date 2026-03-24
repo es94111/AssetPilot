@@ -1,6 +1,17 @@
 {
-  "currentVersion": "3.54",
+  "currentVersion": "3.55",
   "releases": [
+    {
+      "version": "3.55",
+      "date": "2026-03-24",
+      "title": "匯率查詢路線強化",
+      "type": "improved",
+      "changes": [
+        { "tag": "improved", "text": "強化匯率查詢邏輯，增加 TWDUSD 作為 USD 對 TWD 匹率的後備查詢" },
+        { "tag": "improved", "text": "實現 TWD → USD → 目標貨幣的完整轉換藞鉅" },
+        { "tag": "improved", "text": "擴寬匯率 API 支援範坛，當一至多貨幣鄙轉換路徑可服" }
+      ]
+    },
     {
       "version": "3.54",
       "date": "2026-03-24",

@@ -1,6 +1,17 @@
 {
-  "currentVersion": "3.57",
+  "currentVersion": "3.58",
   "releases": [
+    {
+      "version": "3.58",
+      "date": "2026-03-24",
+      "title": "股利日期欄位澄清",
+      "type": "improved",
+      "changes": [
+        { "tag": "improved", "text": "股利紀錄的日期欄位為『除息日期』（ex-dividend date），來自 TWSE API TWT49U 端點" },
+        { "tag": "improved", "text": "除息日期是投資者必須在此日期前持有股票才能獲得股利的法定基準日，而非股利發放日" },
+        { "tag": "fixed", "text": "修正 UI 標籤，統一為『除息日期』標示，確保使用者理解日期含義" }
+      ]
+    },
     {
       "version": "3.57",
       "date": "2026-03-24",

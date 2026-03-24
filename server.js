@@ -687,9 +687,14 @@ function normalizeCurrency(code) {
   return /^[A-Z]{3}$/.test(c) ? c : 'TWD';
 }
 
+function parseCurrencyCode(code) {
+  const c = String(code || '').trim().toUpperCase();
+  return /^[A-Z]{3}$/.test(c) ? c : '';
+}
+
 function getUserExchangeRateMap(userId) {
   const rows = queryAll('SELECT currency, rate_to_twd FROM exchange_rates WHERE user_id = ?', [userId]);
-  const map = { ...DEFAULT_EXCHANGE_RATES };
+  const map = { TWD: 1 };
   rows.forEach(r => {
     const c = normalizeCurrency(r.currency);
     const rate = Number(r.rate_to_twd);
@@ -759,9 +764,11 @@ async function syncExchangeRatesFromGlobalAPI(userId, requestedCurrencies = []) 
   const globalData = await fetchGlobalRealtimeRates();
   const existingMap = getUserExchangeRateMap(userId);
   const targets = new Set(['TWD']);
-  Object.keys(DEFAULT_EXCHANGE_RATES).forEach(c => targets.add(c));
   Object.keys(existingMap).forEach(c => targets.add(c));
-  requestedCurrencies.forEach(c => targets.add(normalizeCurrency(c)));
+  requestedCurrencies.forEach(c => {
+    const parsed = parseCurrencyCode(c);
+    if (parsed) targets.add(parsed);
+  });
 
   const now = Date.now();
   const updated = [];
@@ -2190,21 +2197,34 @@ app.put('/api/exchange-rates', (req, res) => {
   const rates = Array.isArray(req.body?.rates) ? req.body.rates : null;
   if (!rates || rates.length === 0) return res.status(400).json({ error: '請提供匯率資料' });
 
+  const upserts = [{ currency: 'TWD', rateToTwd: 1 }];
+  const seen = new Set(['TWD']);
+
   for (const r of rates) {
-    const currency = normalizeCurrency(r.currency);
+    const currency = parseCurrencyCode(r.currency);
+    if (!currency) return res.status(400).json({ error: '幣別格式不正確（需為 3 碼英文字母）' });
     const rate = Number(r.rateToTwd);
-    if (currency === 'TWD') continue;
-    if (!(rate > 0 && rate < 1000000)) {
+    if (seen.has(currency)) return res.status(400).json({ error: `幣別重複：${currency}` });
+    seen.add(currency);
+    if (currency !== 'TWD' && !(rate > 0 && rate < 1000000)) {
       return res.status(400).json({ error: `${currency} 匯率格式不正確` });
     }
+
+    upserts.push({ currency, rateToTwd: currency === 'TWD' ? 1 : rate });
+  }
+
+  const now = Date.now();
+  upserts.forEach(item => {
     db.run(`INSERT INTO exchange_rates (user_id, currency, rate_to_twd, updated_at)
       VALUES (?, ?, ?, ?)
       ON CONFLICT(user_id, currency) DO UPDATE SET rate_to_twd = excluded.rate_to_twd, updated_at = excluded.updated_at`,
-      [req.userId, currency, rate, Date.now()]);
-  }
+      [req.userId, item.currency, item.rateToTwd, now]);
+  });
 
-  db.run(`INSERT OR IGNORE INTO exchange_rates (user_id, currency, rate_to_twd, updated_at)
-    VALUES (?, 'TWD', 1, ?)`, [req.userId, Date.now()]);
+  const keepCurrencies = upserts.map(item => item.currency);
+  const placeholders = keepCurrencies.map(() => '?').join(', ');
+  db.run(`DELETE FROM exchange_rates WHERE user_id = ? AND currency NOT IN (${placeholders})`, [req.userId, ...keepCurrencies]);
+
   saveDB();
   const map = getUserExchangeRateMap(req.userId);
   const rows = Object.keys(map).sort().map(currency => ({ currency, rateToTwd: map[currency] }));

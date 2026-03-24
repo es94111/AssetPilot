@@ -763,23 +763,26 @@ function resolveRateToTwd(globalData, currencyCode) {
   if (inverse > 0) return 1 / inverse;
   
   // 策略 3：使用 USD 作為中介貨幣
-  // 如果無法直接對 TWD，先查詢 XXXUSD、再查詢 USDTWD，計算 USDTWD / XXXUSD
+  // 如果無法直接對 TWD，先查詢 XXXUSD、再查詢 USDTWD
+  // 計算公式：1 XXX = rate(XXXUSD) USD = rate(XXXUSD) * rate(USDTWD) TWD
   if (c !== 'USD') {
-    const xxxToUsd = Number(globalData?.['USDUSD']?.Exrate); // USD to USD = 1，但實際查詢是 XXXUSD
-    const xxxToUsdName = `${c}USD`;
     const usdToTwd = Number(globalData?.['USDTWD']?.Exrate);
     
-    // 嘗試 XXXUSD（如 EURUSD）
+    // 嘗試 XXXUSD（如 JPYUSD = 0.000034）
+    const xxxToUsdName = `${c}USD`;
     let rateXxxToUsd = Number(globalData?.[xxxToUsdName]?.Exrate);
     if (rateXxxToUsd > 0 && usdToTwd > 0) {
-      return usdToTwd / rateXxxToUsd;
+      // 1 XXX = rateXxxToUsd USD * usdToTwd TWD
+      return rateXxxToUsd * usdToTwd;
     }
     
-    // 嘗試倒數 USDXXX（如 USDEURO）
+    // 嘗試倒數 USDXXX（如 USDEURO = 0.92，表 1 USD = 0.92 EUR）
+    // 反推：1 EUR = 1 / 0.92 USD = 1.087 USD
     const usdToXxxName = `USD${c}`;
     let rateUsdToXxx = Number(globalData?.[usdToXxxName]?.Exrate);
     if (rateUsdToXxx > 0 && usdToTwd > 0) {
-      return usdToTwd * rateUsdToXxx;
+      // 1 XXX = (1 / rateUsdToXxx) USD * usdToTwd TWD
+      return (usdToTwd / rateUsdToXxx);
     }
   }
   

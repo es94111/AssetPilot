@@ -1,6 +1,18 @@
 {
-  "currentVersion": "3.56",
+  "currentVersion": "3.57",
   "releases": [
+    {
+      "version": "3.57",
+      "date": "2026-03-24",
+      "title": "匯率 8 小時冷卻期限制",
+      "type": "improved",
+      "changes": [
+        { "tag": "improved", "text": "基礎貨幣 TWD（不可變更），批次更新匯率前自動檢查冷卻期" },
+        { "tag": "improved", "text": "於一次成功更新後，連續 8 小時内的手動或自動更新都由冷卻期付" },
+        { "tag": "improved", "text": "前端顯示冷卻期狀愛及距離下次更新的剩餘分鐘" },
+        { "tag": "improved", "text": "手動更新嗊試時，前端連更据 HTTP 429 問題並顯示具體輸需註明" }
+      ]
+    },
     {
       "version": "3.56",
       "date": "2026-03-24",

@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-3.56-blue" alt="version">
+  <img src="https://img.shields.io/badge/version-3.57-blue" alt="version">
   <img src="https://img.shields.io/badge/node-%3E%3D18-green" alt="node">
   <img src="https://img.shields.io/badge/license-MIT-orange" alt="license">
   <img src="https://img.shields.io/badge/docker-ready-2496ED" alt="docker">
@@ -34,7 +34,7 @@
 - **TWSE 整合** — 即時/收盤股價查詢、除權息自動同步
 - **CSV 匯出/匯入** — 交易記錄、分類、股票交易、股利紀錄
 - **匯出匯入介面重整** — 設定頁「資料匯出匯入」改為交易/股票分組卡片，提升一致性與可讀性
-- **全球即時匯率** — 串接 rter.info 匯率 API，支援手動更新與自動更新開關
+- **全球即時匯率** — 串接 exchangerate-api.com 匯率 API（支援基礎貨幣 TWD），每 8 小時可更新一次，支援手動更新與自動更新開關
 - **匯率幣別可自訂** — 匯率設定可新增任意 3 碼幣別代碼，交易與帳戶可直接使用自訂幣別
 - **API 使用與授權頁** — 左側選單新增 API 清單與授權說明，集中顯示出處資訊
 - **主題切換容錯** — 深色/淺色切換先本機生效，後端同步異常時不影響當下使用
@@ -269,14 +269,16 @@ docker run -d \
   es94111/assetpilot:latest
 ```
 
-### 全球即時匯率（rter.info）
+### 全球即時匯率（exchangerate-api.com）
 
-- 匯率設定可連接全球即時匯率 API：`https://tw.rter.info/capi.php`
+- 匯率設定可連接全球即時匯率 API：`https://www.exchangerate-api.com/`
 - 在 `收支管理 > 帳戶管理 > 匯率設定` 可使用：
   - `立即取得即時匯率`：手動同步最新匯率
   - `自動更新匯率`：由使用者自行決定是否開啟
-- 啟用自動更新後，系統會在進入匯率設定時依節流策略自動同步，並以 `YYYY-MM-DD HH:mm:ss`（精確到秒）顯示上次更新時間。
-- 全球即時匯率 API 使用授權：CC BY-SA，系統於左側選單 `API 使用與授權` 明確標示出處與授權資訊。
+- **冷卻期限制**：基礎貨幣 TWD，每 8 小時可更新一次（無論手動或自動更新）
+- 啟用自動更新後，系統會在進入匯率設定時依節流策略自動同步；更新時會檢查冷卻期，若在冷卻期內則跳過
+- 顯示上次更新時間及距離下次更新的剩餘分鐘數
+- 支援免費版 API（無需 key）或付費版 API（設定 `EXCHANGE_RATE_API_KEY` 環境變數）
 
 ### 管理員模式
 
@@ -489,8 +491,8 @@ your-domain.com {
 
 ## API 來源與提供者
 
-- 全球即時匯率 API：rter.info（Realtime Exchange Rate API）
-  - https://tw.rter.info/howto_currencyapi.php
+- 全球即時匯率 API：exchangerate-api.com（支援基礎貨幣 TWD，免費版或付費版）
+  - https://www.exchangerate-api.com/
 - 股票資料 API：臺灣證券交易所（TWSE OpenAPI）
   - https://openapi.twse.com.tw/
 - Google 單一登入 API：Google（Google Identity Services）

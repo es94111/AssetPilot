@@ -523,11 +523,27 @@ async function initDB() {
     updated_at INTEGER
   )`);
 
+  db.run(`CREATE TABLE IF NOT EXISTS stock_recurring (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    stock_id TEXT NOT NULL,
+    amount REAL NOT NULL,
+    frequency TEXT NOT NULL,
+    start_date TEXT NOT NULL,
+    account_id TEXT,
+    note TEXT DEFAULT '',
+    is_active INTEGER DEFAULT 1,
+    last_generated TEXT,
+    created_at INTEGER
+  )`);
+
   // ─── 日期格式遷移：統一為 YYYY-MM-DD ───
   const dateTables = [
     { table: 'transactions', col: 'date' },
     { table: 'stock_transactions', col: 'date' },
     { table: 'stock_dividends', col: 'date' },
+    { table: 'stock_recurring', col: 'start_date' },
+    { table: 'stock_recurring', col: 'last_generated' },
     { table: 'recurring', col: 'start_date' },
     { table: 'recurring', col: 'last_generated' },
   ];
@@ -1223,7 +1239,7 @@ function parseLoginLogTarget(rawId) {
 
 function deleteUserData(userId) {
   const tables = [
-    'stock_dividends', 'stock_transactions', 'stocks',
+    'stock_dividends', 'stock_transactions', 'stock_recurring', 'stocks',
     'transactions', 'budgets', 'recurring', 'accounts', 'categories',
     'exchange_rates', 'exchange_rate_settings', 'stock_settings', 'login_audit_logs', 'login_attempt_logs'
   ];
@@ -3547,6 +3563,134 @@ app.put('/api/stock-settings', (req, res) => {
   } catch (e) {
     res.status(400).json({ error: e.message || '股票設定更新失敗' });
   }
+});
+
+// 股票定期定額
+app.get('/api/stock-recurring', (req, res) => {
+  const rows = queryAll(
+    `SELECT sr.*, s.symbol, s.name as stock_name
+     FROM stock_recurring sr
+     LEFT JOIN stocks s ON sr.stock_id = s.id
+     WHERE sr.user_id = ?
+     ORDER BY sr.start_date DESC, sr.created_at DESC`,
+    [req.userId]
+  );
+  res.json(rows.map(r => ({
+    ...r,
+    stockId: r.stock_id,
+    accountId: r.account_id,
+    startDate: r.start_date,
+    isActive: !!r.is_active,
+    lastGenerated: r.last_generated,
+    stockName: r.stock_name,
+  })));
+});
+
+app.post('/api/stock-recurring', (req, res) => {
+  const { stockId, amount, frequency, startDate: rawStartDate, accountId, note } = req.body || {};
+  const startDate = normalizeDate(rawStartDate);
+  const nAmount = Number(amount);
+  const validFreq = ['daily', 'weekly', 'monthly', 'yearly'];
+  if (!stockId || !(nAmount > 0) || !startDate || !validFreq.includes(frequency)) {
+    return res.status(400).json({ error: '欄位格式不正確' });
+  }
+  const stock = queryOne("SELECT id FROM stocks WHERE id = ? AND user_id = ?", [stockId, req.userId]);
+  if (!stock) return res.status(400).json({ error: '股票不存在' });
+
+  const id = uid();
+  db.run(
+    "INSERT INTO stock_recurring (id, user_id, stock_id, amount, frequency, start_date, account_id, note, is_active, last_generated, created_at) VALUES (?,?,?,?,?,?,?,?,1,NULL,?)",
+    [id, req.userId, stockId, nAmount, frequency, startDate, accountId || '', note || '', Date.now()]
+  );
+  saveDB();
+  res.json({ id });
+});
+
+app.put('/api/stock-recurring/:id', (req, res) => {
+  const current = queryOne("SELECT id FROM stock_recurring WHERE id = ? AND user_id = ?", [req.params.id, req.userId]);
+  if (!current) return res.status(404).json({ error: '定期定額不存在' });
+
+  const { stockId, amount, frequency, startDate: rawStartDate, accountId, note } = req.body || {};
+  const startDate = normalizeDate(rawStartDate);
+  const nAmount = Number(amount);
+  const validFreq = ['daily', 'weekly', 'monthly', 'yearly'];
+  if (!stockId || !(nAmount > 0) || !startDate || !validFreq.includes(frequency)) {
+    return res.status(400).json({ error: '欄位格式不正確' });
+  }
+  const stock = queryOne("SELECT id FROM stocks WHERE id = ? AND user_id = ?", [stockId, req.userId]);
+  if (!stock) return res.status(400).json({ error: '股票不存在' });
+
+  db.run(
+    "UPDATE stock_recurring SET stock_id = ?, amount = ?, frequency = ?, start_date = ?, account_id = ?, note = ? WHERE id = ? AND user_id = ?",
+    [stockId, nAmount, frequency, startDate, accountId || '', note || '', req.params.id, req.userId]
+  );
+  saveDB();
+  res.json({ ok: true });
+});
+
+app.delete('/api/stock-recurring/:id', (req, res) => {
+  db.run("DELETE FROM stock_recurring WHERE id = ? AND user_id = ?", [req.params.id, req.userId]);
+  saveDB();
+  res.json({ ok: true });
+});
+
+app.patch('/api/stock-recurring/:id/toggle', (req, res) => {
+  const r = queryOne("SELECT is_active FROM stock_recurring WHERE id = ? AND user_id = ?", [req.params.id, req.userId]);
+  if (!r) return res.status(404).json({ error: '定期定額不存在' });
+  db.run("UPDATE stock_recurring SET is_active = ? WHERE id = ? AND user_id = ?", [r.is_active ? 0 : 1, req.params.id, req.userId]);
+  saveDB();
+  res.json({ isActive: !r.is_active });
+});
+
+app.post('/api/stock-recurring/process', (req, res) => {
+  const recs = queryAll("SELECT * FROM stock_recurring WHERE user_id = ? AND is_active = 1", [req.userId]);
+  const settings = getStockSettings(req.userId);
+  const todayS = todayStr();
+  let generated = 0;
+  let skipped = 0;
+  let touched = false;
+
+  recs.forEach(r => {
+    let lastGen = r.last_generated || r.start_date;
+    if (!lastGen || lastGen > todayS) return;
+    let nextDate = getNextDate(lastGen, r.frequency);
+    while (nextDate <= todayS) {
+      const stock = queryOne("SELECT id, current_price FROM stocks WHERE id = ? AND user_id = ?", [r.stock_id, req.userId]);
+      const price = Number(stock?.current_price || 0);
+
+      if (!(price > 0)) {
+        db.run("UPDATE stock_recurring SET last_generated = ? WHERE id = ?", [nextDate, r.id]);
+        touched = true;
+        skipped++;
+        nextDate = getNextDate(nextDate, r.frequency);
+        continue;
+      }
+
+      const shares = Math.floor(Number(r.amount) / price);
+      if (!(shares >= 1)) {
+        db.run("UPDATE stock_recurring SET last_generated = ? WHERE id = ?", [nextDate, r.id]);
+        touched = true;
+        skipped++;
+        nextDate = getNextDate(nextDate, r.frequency);
+        continue;
+      }
+
+      const amount = shares * price;
+      const fee = calcStockFee(amount, shares, settings);
+      const finalNote = [r.note || '', '定期定額自動'].filter(Boolean).join(' | ');
+      db.run(
+        "INSERT INTO stock_transactions (id,user_id,stock_id,date,type,shares,price,fee,tax,account_id,note,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+        [uid(), req.userId, r.stock_id, nextDate, 'buy', shares, price, fee, 0, r.account_id || '', finalNote, Date.now()]
+      );
+      db.run("UPDATE stock_recurring SET last_generated = ? WHERE id = ?", [nextDate, r.id]);
+      touched = true;
+      generated++;
+      nextDate = getNextDate(nextDate, r.frequency);
+    }
+  });
+
+  if (touched) saveDB();
+  res.json({ generated, skipped });
 });
 
 // 股票清單

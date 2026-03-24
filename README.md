@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-3.59-blue" alt="version">
+  <img src="https://img.shields.io/badge/version-3.60-blue" alt="version">
   <img src="https://img.shields.io/badge/node-%3E%3D18-green" alt="node">
   <img src="https://img.shields.io/badge/license-MIT-orange" alt="license">
   <img src="https://img.shields.io/badge/docker-ready-2496ED" alt="docker">
@@ -29,6 +29,7 @@
 - **統計報表** — 分類統計（支援父子分類雙圓餅圖切換）、趨勢分析、每日消費，自訂時間範圍
 - **儀表板雙圓餅圖** — 支出分類與資產配置（含股票市值）皆可切換雙圓餅圖（內圈父分類、外圈子分類）
 - **股票紀錄** — 持股總覽、買賣交易、股利紀錄、FIFO 實現損益計算
+- **股票定期定額** — 可設定每期預算與週期，自動產生買進交易
 - **股票交易設定介面美化** — 交易設定改為分區卡片與重點提示，與全站卡片風格一致
 - **情境式快速新增按鈕** — 收支管理顯示「新增交易」、股票紀錄顯示「新增股票交易紀錄」，其他頁面自動隱藏
 - **TWSE 整合** — 即時/收盤股價查詢、除權息自動同步
@@ -56,6 +57,7 @@
 - **響應式設計** — 桌面與手機皆可使用
 
 ## 近期更新
+- **v3.60** — 股票紀錄新增定期定額（可設定週期與每期預算，自動產生買進交易）
 - **v3.59** — 股利紀錄表格日期欄位統一為「除息日期」
 - **v3.58** — 澄清股利日期欄位為除息日期（來自 TWSE API），非發放日期
 - **v3.57** — 實現匯率 8 小時冷卻期限制、基礎貨幣固定為 TWD

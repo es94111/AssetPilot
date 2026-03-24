@@ -845,6 +845,30 @@
               <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> 儲存設定</button>
             </div>
           </form>
+
+          <div class="card" style="margin-top:16px">
+            <div class="stock-actions" style="margin-bottom:10px">
+              <h4 style="margin:0"><i class="fas fa-calendar-check"></i> 股票定期定額</h4>
+              <button class="btn btn-sm" id="addStockRecurringBtn"><i class="fas fa-plus"></i> 新增定期定額</button>
+            </div>
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>股票</th>
+                    <th>每期預算</th>
+                    <th>週期</th>
+                    <th>起始日</th>
+                    <th>上次執行</th>
+                    <th>狀態</th>
+                    <th>備註</th>
+                    <th>操作</th>
+                  </tr>
+                </thead>
+                <tbody id="stockRecurringBody"></tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -1507,6 +1531,52 @@
         </div>
         <div class="form-actions">
           <button type="button" class="btn btn-ghost" onclick="App.closeModal('modalRecurring')">取消</button>
+          <button type="submit" class="btn btn-primary">儲存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===== 股票定期定額 Modal ===== -->
+  <div class="modal-overlay" id="modalStockRecurring">
+    <div class="modal modal-sm">
+      <div class="modal-header">
+        <h3 id="modalStockRecurringTitle">新增股票定期定額</h3>
+        <button class="modal-close" onclick="App.closeModal('modalStockRecurring')">&times;</button>
+      </div>
+      <form id="stockRecurringForm">
+        <input type="hidden" id="stockRecId">
+        <div class="form-row">
+          <label>股票 <span class="required">*</span></label>
+          <select id="stockRecStockId" required></select>
+        </div>
+        <div class="form-row">
+          <label>每期預算（NT$） <span class="required">*</span></label>
+          <input type="number" id="stockRecAmount" min="1" step="1" required>
+        </div>
+        <div class="form-row">
+          <label>週期 <span class="required">*</span></label>
+          <select id="stockRecFrequency" required>
+            <option value="daily">每日</option>
+            <option value="weekly">每週</option>
+            <option value="monthly" selected>每月</option>
+            <option value="yearly">每年</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label>起始日期 <span class="required">*</span></label>
+          <input type="date" id="stockRecStartDate" required>
+        </div>
+        <div class="form-row">
+          <label>證券帳戶</label>
+          <select id="stockRecAccount"></select>
+        </div>
+        <div class="form-row">
+          <label>備註</label>
+          <input type="text" id="stockRecNote" maxlength="200" placeholder="選填">
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-ghost" onclick="App.closeModal('modalStockRecurring')">取消</button>
           <button type="submit" class="btn btn-primary">儲存</button>
         </div>
       </form>

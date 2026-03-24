@@ -1,6 +1,19 @@
 {
-  "currentVersion": "3.47.3",
+  "currentVersion": "3.48",
   "releases": [
+    {
+      "version": "3.48",
+      "date": "2026-03-24",
+      "title": "全站配色系統一致化",
+      "type": "improved",
+      "changes": [
+        { "tag": "improved", "text": "登入頁面漸層色改為使用主色系 CSS 變數，與全站 Indigo 主色統一" },
+        { "tag": "improved", "text": "圖表調色盤更新為 Tailwind 500 色系，與 UI 語義色（收入綠/支出紅/今日橙）視覺一致" },
+        { "tag": "improved", "text": "新增 --primary-light-bg、--today-text、--danger-dark、--warning-bg/border、--twse-bg/border/text 等 CSS 變數" },
+        { "tag": "improved", "text": "消除硬編碼色值：recurring 標籤、formula 提示框、匯入警告框、按鈕 hover 等全數改用 CSS 變數" },
+        { "tag": "improved", "text": "深色模式新增 warning/twse 對應色，確保暗色主題配色語義一致" }
+      ]
+    },
     {
       "version": "3.47.3",
       "date": "2026-03-24",

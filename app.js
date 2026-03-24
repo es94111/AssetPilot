@@ -1660,7 +1660,7 @@ const App = (() => {
   }
 
   function buildParentAccentColor(baseColor, index, totalCount) {
-    const themePalette = ['#1d4ed8', '#0f766e', '#b45309', '#be123c', '#4338ca', '#0369a1', '#5b21b6', '#047857', '#9a3412', '#1e40af'];
+    const themePalette = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#8b5cf6', '#06b6d4', '#f97316', '#ec4899', '#14b8a6'];
     const themeBase = themePalette[index % themePalette.length];
     const unifiedBase = blendHexColor(normalizeHexColor(baseColor), themeBase, 0.68);
     const rgb = hexToRgb(unifiedBase);

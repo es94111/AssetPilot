@@ -3560,19 +3560,20 @@ const App = (() => {
   let selectedAdminLoginLogIds = new Set();
   let selectedAdminAllLoginLogIds = new Set();
 
-  function appendFxRateRow(currency = 'USD', rateToTwd = '') {
+  function appendFxRateRow(currency = 'USD', rateToTwd = '', isFixedRow = false) {
     const tbody = el('fxRateTableBody');
     if (!tbody) return;
     const raw = String(currency || '').trim().toUpperCase().replace(/[^A-Z]/g, '').slice(0, 3);
     const c = /^[A-Z]{3}$/.test(raw) ? raw : '';
-    const isTwd = c === 'TWD';
-    const disabled = isTwd ? 'readonly' : '';
+    const isTwdFixed = isFixedRow && c === 'TWD';
+    const disabled = isTwdFixed ? 'readonly' : '';
     const row = document.createElement('tr');
     row.innerHTML = `
       <td><input class="fx-currency" type="text" maxlength="3" value="${c}" list="fxCurrencySuggestionList" placeholder="例如 USD" ${disabled}></td>
-      <td><input class="fx-rate" type="number" min="0.000001" step="0.000001" value="${rateToTwd || ''}" ${isTwd ? 'readonly' : ''}></td>
-      <td>${isTwd ? '<span class="import-hint">固定</span>' : '<button type="button" class="btn-icon danger fx-delete-btn" title="刪除"><i class="fas fa-trash"></i></button>'}</td>
+      <td><input class="fx-rate" type="number" min="0.000001" step="0.000001" value="${rateToTwd || ''}" ${isTwdFixed ? 'readonly' : ''}></td>
+      <td>${isTwdFixed ? '<span class="import-hint">固定</span>' : '<button type="button" class="btn-icon danger fx-delete-btn" title="刪除"><i class="fas fa-trash"></i></button>'}</td>
     `;
+    if (isFixedRow) row.dataset.fixedCurrency = '1';
     tbody.appendChild(row);
     refreshFxCurrencySuggestionList([c]);
   }
@@ -3615,11 +3616,11 @@ const App = (() => {
       refreshFxCurrencySuggestionList(Object.keys(map));
 
       tbody.innerHTML = '';
-      appendFxRateRow('TWD', 1);
+      appendFxRateRow('TWD', 1, true);
       Object.entries(map)
         .filter(([c]) => c !== 'TWD')
         .sort((a, b) => a[0].localeCompare(b[0]))
-        .forEach(([currency, rate]) => appendFxRateRow(currency, rate));
+        .forEach(([currency, rate]) => appendFxRateRow(currency, rate, false));
 
       updateFxAutoStatus(res.settings || {});
     } catch (e) {
@@ -3694,11 +3695,16 @@ const App = (() => {
       const rates = [];
 
       for (const row of rows) {
+        const isFixedRow = row.dataset.fixedCurrency === '1';
         const raw = row.querySelector('.fx-currency')?.value || '';
         const c = parseCurrencyCodeInput(raw);
         if (!c) {
           toast('請輸入 3 碼英文字母幣別代碼（例如 USD）', 'error');
           return;
+        }
+        if (c === 'TWD' && seen.has('TWD') && !isFixedRow) {
+          // 非固定列誤填 TWD 時不阻擋整體儲存，直接略過該列。
+          continue;
         }
         const rate = Number(row.querySelector('.fx-rate')?.value);
         if (seen.has(c)) {

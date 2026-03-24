@@ -1,6 +1,17 @@
 {
-  "currentVersion": "3.48",
+  "currentVersion": "3.49",
   "releases": [
+    {
+      "version": "3.49",
+      "date": "2026-03-24",
+      "title": "匯率設定支援自訂幣別",
+      "type": "feature",
+      "changes": [
+        { "tag": "new", "text": "匯率設定可由使用者輸入任意 3 碼幣別代碼（例如 SGD、AUD）並儲存" },
+        { "tag": "improved", "text": "交易與帳戶幣別選單改為依使用者匯率清單動態顯示，新增幣別可立即選用" },
+        { "tag": "fixed", "text": "匯率儲存流程改為同步清單，移除的幣別不會在重新整理後自動出現" }
+      ]
+    },
     {
       "version": "3.48",
       "date": "2026-03-24",

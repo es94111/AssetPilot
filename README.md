@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-3.48-blue" alt="version">
+  <img src="https://img.shields.io/badge/version-3.49-blue" alt="version">
   <img src="https://img.shields.io/badge/node-%3E%3D18-green" alt="node">
   <img src="https://img.shields.io/badge/license-MIT-orange" alt="license">
   <img src="https://img.shields.io/badge/docker-ready-2496ED" alt="docker">
@@ -35,6 +35,7 @@
 - **CSV 匯出/匯入** — 交易記錄、分類、股票交易、股利紀錄
 - **匯出匯入介面重整** — 設定頁「資料匯出匯入」改為交易/股票分組卡片，提升一致性與可讀性
 - **全球即時匯率** — 串接 rter.info 匯率 API，支援手動更新與自動更新開關
+- **匯率幣別可自訂** — 匯率設定可新增任意 3 碼幣別代碼，交易與帳戶可直接使用自訂幣別
 - **API 使用與授權頁** — 左側選單新增 API 清單與授權說明，集中顯示出處資訊
 - **主題切換容錯** — 深色/淺色切換先本機生效，後端同步異常時不影響當下使用
 - **帳號資訊可改顯示名稱** — 帳號設定可直接修改顯示名稱並立即同步側邊欄
@@ -56,6 +57,7 @@
 
 ## 近期更新
 
+- **v3.49** — 匯率設定支援自訂幣別，交易與帳戶幣別選單會依使用者匯率清單動態更新
 - **v3.48** — 全站配色系統一致化，登入頁、圖表與提示元件改用一致主色語系，深色模式同步補齊對應語義色
 - **v3.47.3** — 重新設計圓餅圖與雙圓餅圖配色，採用更沉穩一致的主題色系
 - **v3.47.2** — 統一圓餅圖與雙圓餅圖圖例順序，固定為父分類總額高到低、子分類總額高到低

@@ -162,11 +162,70 @@ const App = (() => {
 
   // ─── 工具函式 ───
   const fmt = (n) => 'NT$ ' + Number(n).toLocaleString('zh-TW');
-  const SUPPORTED_CURRENCIES = ['TWD', 'USD', 'JPY', 'EUR', 'HKD', 'CNY'];
+  const DEFAULT_CURRENCY_CODES = ['TWD', 'USD', 'JPY', 'EUR', 'HKD', 'CNY'];
+  const CURRENCY_LABELS = {
+    TWD: '新台幣',
+    USD: '美元',
+    JPY: '日圓',
+    EUR: '歐元',
+    HKD: '港幣',
+    CNY: '人民幣',
+  };
 
   function normalizeCurrencyCode(code) {
     const c = String(code || 'TWD').trim().toUpperCase();
     return /^[A-Z]{3}$/.test(c) ? c : 'TWD';
+  }
+
+  function parseCurrencyCodeInput(code) {
+    const c = String(code || '').trim().toUpperCase();
+    return /^[A-Z]{3}$/.test(c) ? c : '';
+  }
+
+  function getAvailableCurrencies(extra = []) {
+    const set = new Set(DEFAULT_CURRENCY_CODES);
+    Object.keys(cachedExchangeRates || {}).forEach(c => {
+      const code = parseCurrencyCodeInput(c);
+      if (code) set.add(code);
+    });
+    (cachedAccounts || []).forEach(a => {
+      const code = parseCurrencyCodeInput(a.currency);
+      if (code) set.add(code);
+    });
+    (extra || []).forEach(c => {
+      const code = parseCurrencyCodeInput(c);
+      if (code) set.add(code);
+    });
+    const list = Array.from(set).sort((a, b) => a.localeCompare(b));
+    if (!list.includes('TWD')) list.unshift('TWD');
+    return ['TWD', ...list.filter(c => c !== 'TWD')];
+  }
+
+  function currencyOptionLabel(code) {
+    return CURRENCY_LABELS[code] ? `${code} ${CURRENCY_LABELS[code]}` : code;
+  }
+
+  function buildCurrencyOptionsHtml(selected, extra = []) {
+    const s = normalizeCurrencyCode(selected);
+    return getAvailableCurrencies([s, ...(extra || [])])
+      .map(c => `<option value="${c}" ${c === s ? 'selected' : ''}>${currencyOptionLabel(c)}</option>`)
+      .join('');
+  }
+
+  function renderCurrencySelectOptions(selectId, selected = 'TWD', extra = []) {
+    const select = el(selectId);
+    if (!select) return;
+    const s = normalizeCurrencyCode(selected);
+    select.innerHTML = buildCurrencyOptionsHtml(s, extra);
+    select.value = s;
+  }
+
+  function refreshFxCurrencySuggestionList(extra = []) {
+    const listEl = el('fxCurrencySuggestionList');
+    if (!listEl) return;
+    listEl.innerHTML = getAvailableCurrencies(extra)
+      .map(c => `<option value="${c}"></option>`)
+      .join('');
   }
 
   function normalizeAccountIcon(icon) {
@@ -706,6 +765,9 @@ const App = (() => {
       if (rate > 0) map[c] = rate;
     });
     cachedExchangeRates = map;
+    renderCurrencySelectOptions('txCurrency', el('txCurrency')?.value || 'TWD');
+    renderCurrencySelectOptions('accCurrency', el('accCurrency')?.value || 'TWD');
+    refreshFxCurrencySuggestionList();
   }
 
   // ─── 導航 ───
@@ -3498,23 +3560,21 @@ const App = (() => {
   let selectedAdminLoginLogIds = new Set();
   let selectedAdminAllLoginLogIds = new Set();
 
-  function buildFxCurrencyOptions(selected) {
-    const s = normalizeCurrencyCode(selected);
-    return SUPPORTED_CURRENCIES.map(c => `<option value="${c}" ${c === s ? 'selected' : ''}>${c}</option>`).join('');
-  }
-
   function appendFxRateRow(currency = 'USD', rateToTwd = '') {
     const tbody = el('fxRateTableBody');
     if (!tbody) return;
-    const c = normalizeCurrencyCode(currency);
-    const disabled = c === 'TWD' ? 'disabled' : '';
+    const parsed = parseCurrencyCodeInput(currency);
+    const c = parsed || normalizeCurrencyCode(currency);
+    const isTwd = c === 'TWD';
+    const disabled = isTwd ? 'readonly' : '';
     const row = document.createElement('tr');
     row.innerHTML = `
-      <td><select class="fx-currency" ${disabled}>${buildFxCurrencyOptions(c)}</select></td>
-      <td><input class="fx-rate" type="number" min="0.000001" step="0.000001" value="${rateToTwd || ''}" ${c === 'TWD' ? 'readonly' : ''}></td>
-      <td>${c === 'TWD' ? '<span class="import-hint">固定</span>' : '<button type="button" class="btn-icon danger fx-delete-btn" title="刪除"><i class="fas fa-trash"></i></button>'}</td>
+      <td><input class="fx-currency" type="text" maxlength="3" value="${c}" list="fxCurrencySuggestionList" placeholder="例如 USD" ${disabled}></td>
+      <td><input class="fx-rate" type="number" min="0.000001" step="0.000001" value="${rateToTwd || ''}" ${isTwd ? 'readonly' : ''}></td>
+      <td>${isTwd ? '<span class="import-hint">固定</span>' : '<button type="button" class="btn-icon danger fx-delete-btn" title="刪除"><i class="fas fa-trash"></i></button>'}</td>
     `;
     tbody.appendChild(row);
+    refreshFxCurrencySuggestionList([c]);
   }
 
   function updateFxAutoStatus(settings) {
@@ -3550,6 +3610,9 @@ const App = (() => {
         if (rate > 0) map[c] = rate;
       });
       cachedExchangeRates = map;
+      renderCurrencySelectOptions('txCurrency', el('txCurrency')?.value || 'TWD');
+      renderCurrencySelectOptions('accCurrency', el('accCurrency')?.value || 'TWD');
+      refreshFxCurrencySuggestionList(Object.keys(map));
 
       tbody.innerHTML = '';
       appendFxRateRow('TWD', 1);
@@ -3568,13 +3631,23 @@ const App = (() => {
     if (exchangeRatesBound) return;
     if (!el('fxRateTableBody') || !el('addFxRateBtn') || !el('saveFxRateBtn')) return;
 
-    el('addFxRateBtn')?.addEventListener('click', () => appendFxRateRow('USD', getRateToTwd('USD')));
+    el('addFxRateBtn')?.addEventListener('click', () => appendFxRateRow('', ''));
     el('refreshGlobalFxBtn')?.addEventListener('click', async () => {
       try {
         const rows = Array.from(document.querySelectorAll('#fxRateTableBody tr'));
-        const currencies = rows
-          .map(row => normalizeCurrencyCode(row.querySelector('.fx-currency')?.value || 'TWD'))
-          .filter((v, i, arr) => v && arr.indexOf(v) === i);
+        const currencies = [];
+        const seen = new Set();
+        for (const row of rows) {
+          const raw = row.querySelector('.fx-currency')?.value || '';
+          const code = parseCurrencyCodeInput(raw);
+          if (!code) {
+            toast('請輸入 3 碼英文字母幣別代碼（例如 USD）', 'error');
+            return;
+          }
+          if (seen.has(code)) continue;
+          seen.add(code);
+          currencies.push(code);
+        }
         await API.post('/api/exchange-rates/refresh', { currencies });
         await refreshCache();
         await renderExchangeRateSettings();
@@ -3603,13 +3676,30 @@ const App = (() => {
       if (row) row.remove();
     });
 
+    el('fxRateTableBody')?.addEventListener('input', (e) => {
+      const input = e.target;
+      if (!(input instanceof HTMLInputElement) || !input.classList.contains('fx-currency')) return;
+      input.value = input.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 3);
+    });
+
+    el('fxRateTableBody')?.addEventListener('blur', (e) => {
+      const input = e.target;
+      if (!(input instanceof HTMLInputElement) || !input.classList.contains('fx-currency')) return;
+      input.value = (parseCurrencyCodeInput(input.value) || input.value).toUpperCase();
+    }, true);
+
     el('saveFxRateBtn')?.addEventListener('click', async () => {
       const rows = Array.from(document.querySelectorAll('#fxRateTableBody tr'));
       const seen = new Set();
       const rates = [];
 
       for (const row of rows) {
-        const c = normalizeCurrencyCode(row.querySelector('.fx-currency')?.value || 'TWD');
+        const raw = row.querySelector('.fx-currency')?.value || '';
+        const c = parseCurrencyCodeInput(raw);
+        if (!c) {
+          toast('請輸入 3 碼英文字母幣別代碼（例如 USD）', 'error');
+          return;
+        }
         const rate = Number(row.querySelector('.fx-rate')?.value);
         if (seen.has(c)) {
           toast(`幣別重複：${c}`, 'error');
@@ -4880,6 +4970,7 @@ const App = (() => {
     const form = el('transactionForm');
     form.reset();
     el('txDate').value = today();
+    renderCurrencySelectOptions('txCurrency', 'TWD');
     el('txCurrency').value = 'TWD';
     el('txFxRate').value = '';
     el('txConvertedHint').textContent = '';
@@ -4894,6 +4985,7 @@ const App = (() => {
       form.querySelector(`input[name="txType"][value="${formType}"]`).checked = true;
       updateTxFormForType(formType);
       el('txAmount').value = Number(t.originalAmount) > 0 ? t.originalAmount : t.amount;
+      renderCurrencySelectOptions('txCurrency', t.currency, [t.currency]);
       el('txCurrency').value = normalizeCurrencyCode(t.currency);
       el('txFxRate').value = Number(t.fxRate) > 0 ? t.fxRate : '';
       el('txDate').value = t.date;
@@ -5007,10 +5099,12 @@ const App = (() => {
       el('accName').value = a.name;
       el('accBalance').value = a.initial_balance ?? a.initialBalance ?? 0;
       el('accIcon').value = normalizeAccountIcon(a.icon);
+      renderCurrencySelectOptions('accCurrency', a.currency, [a.currency]);
       el('accCurrency').value = normalizeCurrencyCode(a.currency);
     } else {
       el('accId').value = '';
       el('modalAccountTitle').textContent = '新增帳戶';
+      renderCurrencySelectOptions('accCurrency', 'TWD');
       el('accCurrency').value = 'TWD';
     }
     openModal('modalAccount');

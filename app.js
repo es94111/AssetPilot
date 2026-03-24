@@ -3698,24 +3698,27 @@ const App = (() => {
         const isFixedRow = row.dataset.fixedCurrency === '1';
         const raw = row.querySelector('.fx-currency')?.value || '';
         const c = parseCurrencyCodeInput(raw);
+        
+        // 固定列 TWD 直接跳過（後端會自動初始化）
+        if (isFixedRow && c === 'TWD') continue;
+        
         if (!c) {
           toast('請輸入 3 碼英文字母幣別代碼（例如 USD）', 'error');
           return;
         }
-        if (c === 'TWD' && seen.has('TWD') && !isFixedRow) {
-          // 非固定列誤填 TWD 時不阻擋整體儲存，直接略過該列。
+        
+        // 非固定列誤填 TWD 時不阻擋整體儲存，直接略過該列
+        if (c === 'TWD' && !isFixedRow) {
           continue;
         }
+        
         const rate = Number(row.querySelector('.fx-rate')?.value);
         if (seen.has(c)) {
           toast(`幣別重複：${c}`, 'error');
           return;
         }
         seen.add(c);
-        if (c === 'TWD') {
-          rates.push({ currency: 'TWD', rateToTwd: 1 });
-          continue;
-        }
+        
         if (!(rate > 0)) {
           toast(`${c} 匯率必須大於 0`, 'error');
           return;

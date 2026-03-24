@@ -762,27 +762,39 @@ function resolveRateToTwd(globalData, currencyCode) {
   const inverse = Number(globalData?.[`TWD${c}`]?.Exrate);
   if (inverse > 0) return 1 / inverse;
   
-  // 策略 3：使用 USD 作為中介貨幣
-  // 如果無法直接對 TWD，先查詢 XXXUSD、再查詢 USDTWD
-  // 計算公式：1 XXX = rate(XXXUSD) USD = rate(XXXUSD) * rate(USDTWD) TWD
+  // 策略 3：使用 USD 作為中介貨幣（TWD → USD → XXX）
   if (c !== 'USD') {
-    const usdToTwd = Number(globalData?.['USDTWD']?.Exrate);
+    // 先取得 USD 相對 TWD 的匯率
+    let rateUsdToTwd = Number(globalData?.['USDTWD']?.Exrate);
+    let rateTwdToUsd = null;
     
-    // 嘗試 XXXUSD（如 JPYUSD = 0.000034）
-    const xxxToUsdName = `${c}USD`;
-    let rateXxxToUsd = Number(globalData?.[xxxToUsdName]?.Exrate);
-    if (rateXxxToUsd > 0 && usdToTwd > 0) {
-      // 1 XXX = rateXxxToUsd USD * usdToTwd TWD
-      return rateXxxToUsd * usdToTwd;
+    // 如果沒有 USDTWD，嘗試倒數 TWDUSD
+    if (!(rateUsdToTwd > 0)) {
+      const rateTwdToUsdDirect = Number(globalData?.['TWDUSD']?.Exrate);
+      if (rateTwdToUsdDirect > 0) {
+        rateUsdToTwd = 1 / rateTwdToUsdDirect;
+        rateTwdToUsd = rateTwdToUsdDirect;
+      }
+    } else {
+      rateTwdToUsd = 1 / rateUsdToTwd;
     }
     
-    // 嘗試倒數 USDXXX（如 USDEURO = 0.92，表 1 USD = 0.92 EUR）
-    // 反推：1 EUR = 1 / 0.92 USD = 1.087 USD
-    const usdToXxxName = `USD${c}`;
-    let rateUsdToXxx = Number(globalData?.[usdToXxxName]?.Exrate);
-    if (rateUsdToXxx > 0 && usdToTwd > 0) {
-      // 1 XXX = (1 / rateUsdToXxx) USD * usdToTwd TWD
-      return (usdToTwd / rateUsdToXxx);
+    if (rateUsdToTwd > 0) {
+      // 嘗試 XXXUSD（如 JPYUSD = 0.000034，表 1 JPY = 0.000034 USD）
+      // 計算：1 JPY = 0.000034 USD = 0.000034 * rateUsdToTwd TWD
+      const xxxToUsdName = `${c}USD`;
+      const rateXxxToUsd = Number(globalData?.[xxxToUsdName]?.Exrate);
+      if (rateXxxToUsd > 0) {
+        return rateXxxToUsd * rateUsdToTwd;
+      }
+      
+      // 嘗試倒數 USDXXX（如 USDEURO = 0.92，表 1 USD = 0.92 EUR）
+      // 反推：1 EUR = 1 / 0.92 USD = 1.087 USD = 1.087 * rateUsdToTwd TWD
+      const usdToXxxName = `USD${c}`;
+      const rateUsdToXxx = Number(globalData?.[usdToXxxName]?.Exrate);
+      if (rateUsdToXxx > 0) {
+        return (rateUsdToTwd / rateUsdToXxx);
+      }
     }
   }
   

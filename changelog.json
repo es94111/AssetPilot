@@ -1,6 +1,17 @@
 {
-  "currentVersion": "3.55",
+  "currentVersion": "3.56",
   "releases": [
+    {
+      "version": "3.56",
+      "date": "2026-03-24",
+      "title": "匯率 API 供應商更換",
+      "type": "improved",
+      "changes": [
+        { "tag": "improved", "text": "更換匯率提供商為 exchangerate-api.com，提供全球通用匯率資料" },
+        { "tag": "improved", "text": "支援免費版 API（無需 API key），也支援付費版 API（設定 EXCHANGE_RATE_API_KEY 環境變數）" },
+        { "tag": "improved", "text": "改整 resolveRateToTwd 適應 exchangerate-api.com 的 JSON 結構" }
+      ]
+    },
     {
       "version": "3.55",
       "date": "2026-03-24",

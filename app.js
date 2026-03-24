@@ -3649,10 +3649,11 @@ const App = (() => {
           seen.add(code);
           currencies.push(code);
         }
-        await API.post('/api/exchange-rates/refresh', { currencies });
+        const result = await API.post('/api/exchange-rates/refresh', { currencies });
         await refreshCache();
         await renderExchangeRateSettings();
-        toast('已更新全球即時匯率', 'success');
+        const message = result.message || '已更新全球即時匯率';
+        toast(message, 'success');
       } catch (e) {
         toast(e.message || '更新即時匯率失敗', 'error');
       }

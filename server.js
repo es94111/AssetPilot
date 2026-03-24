@@ -35,7 +35,8 @@ const JWT_EXPIRES = process.env.JWT_EXPIRES || '7d';
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || '';
 const IPINFO_TOKEN = process.env.IPINFO_TOKEN || '';
-const GLOBAL_FX_API_URL = 'https://tw.rter.info/capi.php';
+const GLOBAL_FX_API_BASE = 'https://v6.exchangerate-api.com/v6';
+const GLOBAL_FX_API_KEY = process.env.EXCHANGE_RATE_API_KEY || 'free'; // 免費版 key
 const FX_AUTO_SYNC_MIN_INTERVAL_MS = 30 * 60 * 1000;
 const IP_COUNTRY_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const ipCountryCache = new Map();
@@ -166,7 +167,7 @@ app.use(helmet({
         "'self'",
         'https://openapi.twse.com.tw',
         'https://mis.twse.com.tw',
-        'https://tw.rter.info',
+        'https://v6.exchangerate-api.com',
         'https://oauth2.googleapis.com',
         'https://www.googleapis.com',
         'https://api.github.com',
@@ -742,9 +743,24 @@ async function fetchGlobalRealtimeRates() {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 8000);
   try {
-    const resp = await fetch(GLOBAL_FX_API_URL, { signal: controller.signal });
+    // 嘗試以 TWD 作為基礎幣別
+    let url = `${GLOBAL_FX_API_BASE}/${GLOBAL_FX_API_KEY}/latest/TWD`;
+    let resp = await fetch(url, { signal: controller.signal });
+    
+    // 如果 TWD 不被支援，改用 USD
+    if (!resp.ok || resp.status === 404) {
+      url = `${GLOBAL_FX_API_BASE}/${GLOBAL_FX_API_KEY}/latest/USD`;
+      resp = await fetch(url, { signal: controller.signal });
+    }
+    
     if (!resp.ok) throw new Error(`匯率服務回應失敗（HTTP ${resp.status}）`);
-    return await resp.json();
+    const data = await resp.json();
+    
+    if (data.result !== 'success') {
+      throw new Error(`API 錯誤：${data.error_type || '未知錯誤'}`);
+    }
+    
+    return data; // { base_code, conversion_rates, ... }
   } finally {
     clearTimeout(timeout);
   }
@@ -754,47 +770,29 @@ function resolveRateToTwd(globalData, currencyCode) {
   const c = normalizeCurrency(currencyCode);
   if (c === 'TWD') return 1;
   
-  // 策略 1：直接查詢 XXXTWX（如 USDTWD）
-  const direct = Number(globalData?.[`${c}TWD`]?.Exrate);
-  if (direct > 0) return direct;
+  const baseCode = globalData?.base_code || 'USD';
+  const rates = globalData?.conversion_rates || {};
   
-  // 策略 2：查詢倒數 TWDXXX（如 TWDUSD，回傳 1/rate）
-  const inverse = Number(globalData?.[`TWD${c}`]?.Exrate);
-  if (inverse > 0) return 1 / inverse;
+  // 策略 1：直接查詢（若 base_code 是 TWD，直接返回轉換率）
+  if (baseCode === 'TWD') {
+    const direct = Number(rates[c]);
+    if (direct > 0) return direct;
+  }
   
-  // 策略 3：使用 USD 作為中介貨幣（TWD → USD → XXX）
-  if (c !== 'USD') {
-    // 先取得 USD 相對 TWD 的匯率
-    let rateUsdToTwd = Number(globalData?.['USDTWD']?.Exrate);
-    let rateTwdToUsd = null;
+  // 策略 2：如果 base_code 是 USD，需要透過 TWD 反算
+  if (baseCode === 'USD') {
+    const usdToTwd = Number(rates['TWD']);
+    const baseToTarget = Number(rates[c]);
     
-    // 如果沒有 USDTWD，嘗試倒數 TWDUSD
-    if (!(rateUsdToTwd > 0)) {
-      const rateTwdToUsdDirect = Number(globalData?.['TWDUSD']?.Exrate);
-      if (rateTwdToUsdDirect > 0) {
-        rateUsdToTwd = 1 / rateTwdToUsdDirect;
-        rateTwdToUsd = rateTwdToUsdDirect;
-      }
-    } else {
-      rateTwdToUsd = 1 / rateUsdToTwd;
-    }
-    
-    if (rateUsdToTwd > 0) {
-      // 嘗試 XXXUSD（如 JPYUSD = 0.000034，表 1 JPY = 0.000034 USD）
-      // 計算：1 JPY = 0.000034 USD = 0.000034 * rateUsdToTwd TWD
-      const xxxToUsdName = `${c}USD`;
-      const rateXxxToUsd = Number(globalData?.[xxxToUsdName]?.Exrate);
-      if (rateXxxToUsd > 0) {
-        return rateXxxToUsd * rateUsdToTwd;
-      }
-      
-      // 嘗試倒數 USDXXX（如 USDEURO = 0.92，表 1 USD = 0.92 EUR）
-      // 反推：1 EUR = 1 / 0.92 USD = 1.087 USD = 1.087 * rateUsdToTwd TWD
-      const usdToXxxName = `USD${c}`;
-      const rateUsdToXxx = Number(globalData?.[usdToXxxName]?.Exrate);
-      if (rateUsdToXxx > 0) {
-        return (rateUsdToTwd / rateUsdToXxx);
-      }
+    if (usdToTwd > 0 && baseToTarget > 0) {
+      // 1 USD = usdToTwd TWD
+      // 1 baseToTarget = baseToTarget USD = baseToTarget * usdToTwd TWD
+      // 所以 1 c = 1 baseToTarget / (1 USD) * (usdToTwd TWD)
+      // 即 1 c = baseToTarget * usdToTwd TWD
+      // 等等，這個不對。讓我重新思考：
+      // rates[c] 表示 1 USD = rates[c] c
+      // 所以 1 c = 1 / rates[c] USD = 1 / rates[c] * usdToTwd TWD
+      return usdToTwd / baseToTarget;
     }
   }
   

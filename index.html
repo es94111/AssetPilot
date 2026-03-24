@@ -50,7 +50,7 @@
         </article>
         <article class="card public-feature-card">
           <h3><i class="fas fa-robot"></i> 匯率自動更新與自動化</h3>
-          <p>串接 rter.info 全球即時匯率 API 提供即時轉換；支援自訂固定收支週期以自動產生紀錄，大幅減少繁瑣操作。</p>
+          <p>串接 exchangerate-api.com 一合水幣匯率 API 提供即時轉換（基礎貨幣 TWD，每 8 小時更新一次）；支援自訂固定收支週期以自動產生紀錄。</p>
         </article>
         <article class="card public-feature-card">
           <h3><i class="fas fa-shield-halved"></i> 企業級安全與稽核</h3>
@@ -278,8 +278,8 @@
               <tr>
                 <td>全球即時匯率 API</td>
                 <td>更新各幣別對 TWD 匯率</td>
-                <td><a href="https://tw.rter.info/howto_currencyapi.php" target="_blank" rel="noopener noreferrer">https://tw.rter.info/howto_currencyapi.php</a></td>
-                <td>CC BY-SA，使用時需標示出處與授權</td>
+                <td><a href="https://www.exchangerate-api.com/" target="_blank" rel="noopener noreferrer">https://www.exchangerate-api.com/</a></td>
+                <td>無特殊授權要求（無需 key！）</td>
               </tr>
               <tr>
                 <td>TWSE OpenAPI</td>
@@ -305,11 +305,11 @@
       </div>
 
       <div class="card api-credits-card" style="margin-top:16px">
-        <h3>全球即時匯率 API 出處標示</h3>
+        <h3>全球匯率 API 框架</h3>
         <div class="api-attribution-box">
-          <p>資料來源：<a href="https://tw.rter.info/howto_currencyapi.php" target="_blank" rel="noopener noreferrer">Realtime Exchange Rate API（rter.info）</a></p>
-          <p>授權：CC BY-SA（姓名標示-相同方式分享）</p>
-          <p>注意：使用此服務時，必須清楚標示出處與授權資訊。</p>
+          <p>數據來源：<a href="https://www.exchangerate-api.com/" target="_blank" rel="noopener noreferrer">exchangerate-api.com</a></p>
+          <p>特記：支援免費版 API，也支援付費版（【提供更高配當圖】</p>
+          <p>基礎貨幣：TWD（穩定，不可變更）</p>
         </div>
       </div>
 
@@ -518,8 +518,8 @@
         <p class="import-hint" style="margin-bottom:12px">用於多幣別交易換算。TWD 固定為 1，不可刪除。</p>
         <div class="theme-toggle-row" style="margin-bottom:10px">
           <div>
-            <div style="font-weight:600">全球即時匯率（rter.info）</div>
-            <div class="import-hint" id="fxAutoStatus" style="margin-top:4px">可選擇是否自動更新匯率。</div>
+            <div style="font-weight:600">全球匯率（exchangerate-api.com）</div>
+            <div class="import-hint" id="fxAutoStatus" style="margin-top:4px">基礎貨幣 TWD；每 8 小時可更新一次。</div>
           </div>
           <label style="display:flex;align-items:center;gap:8px">
             <input type="checkbox" id="fxAutoUpdateToggle">

@@ -71,7 +71,7 @@
 | SSO      | Google Identity Services（選配）                 |
 | 圖表     | Chart.js                                         |
 | 圖示     | Font Awesome 6                                   |
-| 外部 API | TWSE OpenAPI、rter.info 匯率 API、Google Identity Services、ipinfo.io |
+| 外部 API | TWSE OpenAPI、exchangerate-api.com 匯率 API、Google Identity Services、ipinfo.io |
 
 ### 2.3 使用者角色
 
@@ -517,16 +517,19 @@
 
 #### FR-077 全球即時匯率自動更新
 
-- **描述：** 匯率設定可串接全球即時匯率 API，並由使用者決定是否啟用自動更新
+- **描述：** 匯率設定可串接全球即時匯率 API（exchangerate-api.com），基礎貨幣固定為 TWD，每 8 小時可更新一次
 - **處理規則：**
-  - 使用外部匯率來源 `https://tw.rter.info/capi.php` 取得即時匯率
-  - 依授權要求（CC BY-SA）標示資料來源與授權資訊
+  - 使用外部匯率來源 `https://www.exchangerate-api.com/` 取得即時匯率
+  - 基礎貨幣固定為 TWD（無法變更），所有匯率以 TWD 為基準
+  - 一次成功更新後，連續 8 小時內無法再次手動或自動更新
   - 使用者可自訂 3 碼幣別代碼並儲存於個人匯率清單
   - 使用者可在「收支管理 > 帳戶管理 > 匯率設定」開啟/關閉自動更新
-  - 啟用自動更新時，系統依節流策略自動同步匯率並記錄上次更新時間
-  - 上次更新時間顯示格式統一為 `YYYY-MM-DD HH:mm:ss`（精確到秒，與全站時間格式一致）
-  - 可手動點擊「立即取得即時匯率」強制更新
+  - 啟用自動更新時，系統依節流策略自動同步匯率；若在冷卻期內則跳過
+  - 前端顯示冷卻期狀態及距離下次更新的剩餘分鐘數
+  - 上次更新時間顯示格式統一為 `YYYY-MM-DD HH:mm:ss`（精確到秒）
+  - 超過冷卻期後，可手動點擊「立即取得即時匯率」更新
   - 匯率清單更新後可立即套用到交易與帳戶幣別選單
+  - 支援免費版 API（無需 key）或付費版 API（設定 `EXCHANGE_RATE_API_KEY` 環境變數）
 - **API 端點：**
   - `GET /api/exchange-rates`
   - `PUT /api/exchange-rates/settings`
@@ -538,7 +541,7 @@
 - **處理規則：**
   - 左側選單新增「API 使用與授權」項目
   - 頁面需列出外部 API 名稱、用途、來源連結與授權注意事項
-  - 全球即時匯率 API 需明確標示來源 `https://tw.rter.info/capi.php` 與 CC BY-SA 授權要求
+  - 全球即時匯率 API 需明確標示來源 `https://www.exchangerate-api.com/`；支援免費版與付費版
   - IPinfo 需標示出處：`IP address data is powered by IPinfo`，並提供 `https://ipinfo.io/lite` 連結
 
 ---

@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-3.52-blue" alt="version">
+  <img src="https://img.shields.io/badge/version-3.53-blue" alt="version">
   <img src="https://img.shields.io/badge/node-%3E%3D18-green" alt="node">
   <img src="https://img.shields.io/badge/license-MIT-orange" alt="license">
   <img src="https://img.shields.io/badge/docker-ready-2496ED" alt="docker">
@@ -57,7 +57,8 @@
 
 ## 近期更新
 
-- **v3.52** — 改進全球匯率 API 查詢邏輯，支援 USD 作中介轉換，強化對 TRY 等网上少㔦5e63別支援
+- **v3.53** — 整合所有數字輸入欄位精度，統一支援小數點後第四位，並支援零股詳細輸入
+- **v3.52** — 改進全球匯率 API 查詢邏輯，支援 USD 作中介轉換，強化對 TRY 等網上少見幣別支援
 - **v3.51** — 改進全球匯率 API 支援，不被支援的幣別改為跳過而非拋出錯誤
 - **v3.50** — 修正自訂幣別儲存時誤判「幣別重複：TWD」的根本原因，固定列 TWD 改為不加入傳送資料
 - **v3.49.2** — 調整匯率表為僅固定列 TWD 不可編輯

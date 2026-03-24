@@ -1237,7 +1237,7 @@
         </div>
         <div class="form-row">
           <label>金額 <span class="required">*</span></label>
-          <input type="number" id="txAmount" min="1" step="1" required placeholder="請輸入金額">
+          <input type="number" id="txAmount" min="0.0001" step="0.0001" required placeholder="請輸入金額">
         </div>
         <div class="form-row" id="txCurrencyRow">
           <label>幣別 <span class="required">*</span></label>
@@ -1325,7 +1325,7 @@
         </div>
         <div class="form-row">
           <label>初始餘額</label>
-          <input type="number" id="accBalance" value="0" step="1">
+          <input type="number" id="accBalance" value="0" step="0.0001" min="0">
         </div>
         <div class="form-row">
           <label>帳戶幣別 <span class="required">*</span></label>
@@ -1374,7 +1374,7 @@
         </div>
         <div class="form-row">
           <label id="tfAmountLabel">金額 <span class="required">*</span></label>
-          <input type="number" id="tfAmount" min="1" step="1" required>
+          <input type="number" id="tfAmount" min="0.0001" step="0.0001" required>
         </div>
         <div class="form-row">
           <label>日期</label>
@@ -1441,7 +1441,7 @@
         </div>
         <div class="form-row">
           <label>預算金額 <span class="required">*</span></label>
-          <input type="number" id="budAmount" min="1" step="1" required>
+          <input type="number" id="budAmount" min="0.0001" step="0.0001" required>
         </div>
         <div class="form-row">
           <label>適用月份</label>
@@ -1478,7 +1478,7 @@
         </div>
         <div class="form-row">
           <label>金額 <span class="required">*</span></label>
-          <input type="number" id="recAmount" min="1" step="1" required>
+          <input type="number" id="recAmount" min="0.0001" step="0.0001" required>
         </div>
         <div class="form-row">
           <label>分類 <span class="required">*</span></label>
@@ -1585,7 +1585,7 @@
         </div>
         <div class="form-row">
           <label>目前股價</label>
-          <input type="number" id="stkPrice" step="0.01" min="0" placeholder="自動帶入收盤價">
+          <input type="number" id="stkPrice" step="0.0001" min="0" placeholder="自動帶入收盤價">
         </div>
         <div class="form-actions">
           <button type="button" class="btn btn-ghost" onclick="App.closeModal('modalStock')">取消</button>
@@ -1618,11 +1618,11 @@
         </div>
         <div class="form-row">
           <label>股數 <span class="required">*</span></label>
-          <input type="number" id="stkTxShares" required min="1" placeholder="1000">
+          <input type="number" id="stkTxShares" required min="0.0001" step="0.0001" placeholder="1000">
         </div>
         <div class="form-row">
           <label>成交價 <span class="required">*</span></label>
-          <input type="number" id="stkTxPrice" required step="0.01" min="0" placeholder="每股成交價">
+          <input type="number" id="stkTxPrice" required step="0.0001" min="0" placeholder="每股成交價">
         </div>
         <div class="form-row">
           <label>日期 <span class="required">*</span></label>
@@ -1630,7 +1630,7 @@
         </div>
         <div class="form-row">
           <label>手續費</label>
-          <input type="number" id="stkTxFee" step="1" min="0" value="0">
+          <input type="number" id="stkTxFee" step="0.0001" min="0" value="0">
         </div>
         <div class="form-row" id="stkTxTaxRow">
           <label>交易稅</label>

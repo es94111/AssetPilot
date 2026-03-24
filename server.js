@@ -753,10 +753,36 @@ async function fetchGlobalRealtimeRates() {
 function resolveRateToTwd(globalData, currencyCode) {
   const c = normalizeCurrency(currencyCode);
   if (c === 'TWD') return 1;
+  
+  // 策略 1：直接查詢 XXXTWX（如 USDTWD）
   const direct = Number(globalData?.[`${c}TWD`]?.Exrate);
   if (direct > 0) return direct;
+  
+  // 策略 2：查詢倒數 TWDXXX（如 TWDUSD，回傳 1/rate）
   const inverse = Number(globalData?.[`TWD${c}`]?.Exrate);
   if (inverse > 0) return 1 / inverse;
+  
+  // 策略 3：使用 USD 作為中介貨幣
+  // 如果無法直接對 TWD，先查詢 XXXUSD、再查詢 USDTWD，計算 USDTWD / XXXUSD
+  if (c !== 'USD') {
+    const xxxToUsd = Number(globalData?.['USDUSD']?.Exrate); // USD to USD = 1，但實際查詢是 XXXUSD
+    const xxxToUsdName = `${c}USD`;
+    const usdToTwd = Number(globalData?.['USDTWD']?.Exrate);
+    
+    // 嘗試 XXXUSD（如 EURUSD）
+    let rateXxxToUsd = Number(globalData?.[xxxToUsdName]?.Exrate);
+    if (rateXxxToUsd > 0 && usdToTwd > 0) {
+      return usdToTwd / rateXxxToUsd;
+    }
+    
+    // 嘗試倒數 USDXXX（如 USDEURO）
+    const usdToXxxName = `USD${c}`;
+    let rateUsdToXxx = Number(globalData?.[usdToXxxName]?.Exrate);
+    if (rateUsdToXxx > 0 && usdToTwd > 0) {
+      return usdToTwd * rateUsdToXxx;
+    }
+  }
+  
   return 0;
 }
 

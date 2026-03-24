@@ -1,14 +1,24 @@
 {
-  "currentVersion": "3.49.2",
+  "currentVersion": "3.50",
   "releases": [
+    {
+      "version": "3.50",
+      "date": "2026-03-24",
+      "title": "自訂幣別儲存邏輯修正",
+      "type": "fixed",
+      "changes": [
+        { "tag": "fixed", "text": "修正新增幣別時儲存誤判「幣別重複：TWD」的根本原因，固定列 TWD 改為不加入傳送資料" },
+        { "tag": "improved", "text": "簡化幣別驗證邏輯，前端不重複添加固定 TWD，由後端統一初始化" }
+      ]
+    },
     {
       "version": "3.49.2",
       "date": "2026-03-24",
-      "title": "TRY 新增與儲存修正",
+      "title": "幣別新增按鈕修正",
       "type": "fixed",
       "changes": [
-        { "tag": "fixed", "text": "修正新增幣別輸入 TRY 等代碼時，儲存誤判「幣別重複：TWD」的問題" },
-        { "tag": "improved", "text": "匯率表改為僅固定列 TWD 不可編輯；一般列即使輸入 TWD 也不會阻斷整體儲存" }
+        { "tag": "fixed", "text": "修正「新增幣別」按鈕會出現不可編輯 TWD 的問題" },
+        { "tag": "improved", "text": "新增列改為建立可編輯空白列，使用者可直接輸入 3 碼幣別代碼" }
       ]
     },
     {

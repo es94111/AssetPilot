@@ -3284,7 +3284,7 @@ const App = (() => {
         <div><span class="stock-symbol">${escHtml(s.symbol)}</span><span class="stock-name">${escHtml(s.name)}</span></div>
         <div class="price-source-label" data-stock-id="${s.id}"></div>
       </div>
-      <input type="number" step="0.01" min="0" value="${s.currentPrice || 0}" data-stock-id="${s.id}" class="price-input">
+      <input type="number" step="0.0001" min="0" value="${s.currentPrice || 0}" data-stock-id="${s.id}" class="price-input">
     </div>`).join('') || '<p style="padding:20px;text-align:center;color:var(--text-muted)">目前無持股</p>';
     openModal('modalPriceUpdate');
   }

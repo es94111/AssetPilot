@@ -3563,8 +3563,8 @@ const App = (() => {
   function appendFxRateRow(currency = 'USD', rateToTwd = '') {
     const tbody = el('fxRateTableBody');
     if (!tbody) return;
-    const parsed = parseCurrencyCodeInput(currency);
-    const c = parsed || normalizeCurrencyCode(currency);
+    const raw = String(currency || '').trim().toUpperCase().replace(/[^A-Z]/g, '').slice(0, 3);
+    const c = /^[A-Z]{3}$/.test(raw) ? raw : '';
     const isTwd = c === 'TWD';
     const disabled = isTwd ? 'readonly' : '';
     const row = document.createElement('tr');

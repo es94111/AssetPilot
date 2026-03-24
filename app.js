@@ -1010,8 +1010,8 @@ const App = (() => {
     const labels = [];
     const values = [];
     const colors = [];
-    const accountBase = '#2563eb';
-    const stockBase = '#ea580c';
+    const accountBase = '#0f766e';
+    const stockBase = '#b45309';
 
     const ctx = canvas.getContext('2d');
 
@@ -1649,31 +1649,27 @@ const App = (() => {
   }
 
   function buildChildVariantColor(baseColor, childIndex, siblingCount) {
-    const rgb = hexToRgb(baseColor);
-    const hsl = rgbToHsl(rgb.r, rgb.g, rgb.b);
-    const span = siblingCount > 1 ? 1 / (siblingCount - 1) : 0.5;
-    const position = siblingCount > 1 ? childIndex * span : 0.5;
-    const hueShift = (position - 0.5) * 56 + ((childIndex % 2 === 0) ? 10 : -10);
-    const satShift = ((childIndex % 3) - 1) * 0.08 + 0.04;
-    const lightShift = (position - 0.5) * 0.3 + ((childIndex % 2 === 0) ? 0.07 : -0.05);
-    const h = (hsl.h + hueShift + 360) % 360;
-    const s = Math.max(0.42, Math.min(0.92, hsl.s + satShift));
-    const l = Math.max(0.28, Math.min(0.74, hsl.l + lightShift));
-    const next = hslToRgb(h, s, l);
-    return rgbToHex(next.r, next.g, next.b);
+    const base = normalizeHexColor(baseColor);
+    const tones = [-0.26, -0.16, -0.08, 0, 0.1, 0.2, 0.28];
+    const idx = siblingCount > 1 ? Math.round((childIndex / (siblingCount - 1)) * (tones.length - 1)) : 3;
+    const tone = tones[Math.max(0, Math.min(tones.length - 1, idx))];
+    if (tone >= 0) {
+      return blendHexColor(base, '#f8fafc', Math.min(0.45, tone));
+    }
+    return blendHexColor(base, '#0f172a', Math.min(0.45, Math.abs(tone)));
   }
 
   function buildParentAccentColor(baseColor, index, totalCount) {
-    const themePalette = ['#6366f1', '#10b981', '#ef4444', '#3b82f6', '#f59e0b', '#14b8a6', '#8b5cf6', '#f97316', '#0ea5e9', '#84cc16'];
+    const themePalette = ['#1d4ed8', '#0f766e', '#b45309', '#be123c', '#4338ca', '#0369a1', '#5b21b6', '#047857', '#9a3412', '#1e40af'];
     const themeBase = themePalette[index % themePalette.length];
-    const unifiedBase = blendHexColor(normalizeHexColor(baseColor), themeBase, 0.58);
+    const unifiedBase = blendHexColor(normalizeHexColor(baseColor), themeBase, 0.68);
     const rgb = hexToRgb(unifiedBase);
     const hsl = rgbToHsl(rgb.r, rgb.g, rgb.b);
-    const step = totalCount > 0 ? 360 / totalCount : 120;
-    const h = (hsl.h * 0.45 + (index * step) * 0.55 + (index % 2 === 0 ? 14 : -14) + 360) % 360;
-    const s = Math.max(0.58, Math.min(0.92, hsl.s + 0.2));
-    const lightSeed = 0.44 + (index % 3) * 0.07;
-    const l = Math.max(0.34, Math.min(0.7, hsl.l * 0.45 + lightSeed * 0.55));
+    const step = totalCount > 0 ? 360 / totalCount : 90;
+    const h = (hsl.h * 0.62 + (index * step) * 0.38 + (index % 2 === 0 ? 8 : -8) + 360) % 360;
+    const s = Math.max(0.62, Math.min(0.9, hsl.s + 0.14));
+    const lightSeed = 0.4 + (index % 4) * 0.05;
+    const l = Math.max(0.32, Math.min(0.64, hsl.l * 0.56 + lightSeed * 0.44));
     const next = hslToRgb(h, s, l);
     return rgbToHex(next.r, next.g, next.b);
   }
@@ -1705,7 +1701,7 @@ const App = (() => {
           {
             label: '父分類',
             data: parentRows.map(r => r.total),
-            backgroundColor: parentRows.map(r => parentColorMap.get(r.key)),
+            backgroundColor: parentRows.map(r => parentColorMap.get(r.parentKey) || '#94a3b8'),
             borderColor: '#ffffff',
             borderWidth: 2,
             radius: '62%',
@@ -1801,8 +1797,8 @@ const App = (() => {
     }
 
     const parentRows = [];
-    if (accountTotal > 0) parentRows.push({ key: 'account', label: '帳戶資產', name: '帳戶資產', total: accountTotal, color: '#2563eb' });
-    if (stockTotal > 0) parentRows.push({ key: 'stock', label: '股票資產', name: '股票資產', total: stockTotal, color: '#ea580c' });
+    if (accountTotal > 0) parentRows.push({ key: 'account', label: '帳戶資產', name: '帳戶資產', total: accountTotal, color: '#0f766e' });
+    if (stockTotal > 0) parentRows.push({ key: 'stock', label: '股票資產', name: '股票資產', total: stockTotal, color: '#b45309' });
     parentRows.sort(sortByTotalThenNameDesc);
 
     const childRows = [];
@@ -1813,7 +1809,7 @@ const App = (() => {
             parentKey: 'account',
             label: `帳戶資產 > ${row.label}`,
             total: row.total,
-            color: buildChildVariantColor('#2563eb', idx, Math.max(accountRows.length, 1)),
+            color: buildChildVariantColor('#0f766e', idx, Math.max(accountRows.length, 1)),
           });
         });
       } else {
@@ -1822,7 +1818,7 @@ const App = (() => {
             parentKey: 'stock',
             label: `股票資產 > ${row.label}`,
             total: row.total,
-            color: buildChildVariantColor('#ea580c', idx, Math.max(stockRows.length, 1)),
+            color: buildChildVariantColor('#b45309', idx, Math.max(stockRows.length, 1)),
           });
         });
       }

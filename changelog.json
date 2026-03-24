@@ -1,6 +1,16 @@
 {
-  "currentVersion": "3.49",
+  "currentVersion": "3.49.1",
   "releases": [
+    {
+      "version": "3.49.1",
+      "date": "2026-03-24",
+      "title": "新增幣別按鈕修正",
+      "type": "fixed",
+      "changes": [
+        { "tag": "fixed", "text": "修正點擊「新增幣別」後預設顯示 TWD 且不可編輯/刪除，導致無法新增自訂幣別的問題" },
+        { "tag": "improved", "text": "新增幣別改為建立可編輯空白列，使用者可直接輸入 3 碼幣別代碼並儲存" }
+      ]
+    },
     {
       "version": "3.49",
       "date": "2026-03-24",

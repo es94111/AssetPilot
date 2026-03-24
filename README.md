@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-3.49.1-blue" alt="version">
+  <img src="https://img.shields.io/badge/version-3.49.2-blue" alt="version">
   <img src="https://img.shields.io/badge/node-%3E%3D18-green" alt="node">
   <img src="https://img.shields.io/badge/license-MIT-orange" alt="license">
   <img src="https://img.shields.io/badge/docker-ready-2496ED" alt="docker">
@@ -57,6 +57,7 @@
 
 ## 近期更新
 
+- **v3.49.2** — 修正新增 TRY 等幣別時誤判「幣別重複：TWD」，並調整僅固定 TWD 列不可編輯
 - **v3.49.1** — 修正「新增幣別」按鈕會出現不可編輯 TWD 的問題，新增列改為可直接輸入自訂幣別
 - **v3.49** — 匯率設定支援自訂幣別，交易與帳戶幣別選單會依使用者匯率清單動態更新
 - **v3.48** — 全站配色系統一致化，登入頁、圖表與提示元件改用一致主色語系，深色模式同步補齊對應語義色

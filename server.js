@@ -772,6 +772,7 @@ async function syncExchangeRatesFromGlobalAPI(userId, requestedCurrencies = []) 
 
   const now = Date.now();
   const updated = [];
+  const unsupported = [];
   for (const currency of targets) {
     const c = normalizeCurrency(currency);
     if (c === 'TWD') {
@@ -782,7 +783,10 @@ async function syncExchangeRatesFromGlobalAPI(userId, requestedCurrencies = []) 
       continue;
     }
     const rate = resolveRateToTwd(globalData, c);
-    if (!(rate > 0)) continue;
+    if (!(rate > 0)) {
+      unsupported.push(c);
+      continue;
+    }
     db.run(`INSERT INTO exchange_rates (user_id, currency, rate_to_twd, updated_at)
       VALUES (?, ?, ?, ?)
       ON CONFLICT(user_id, currency) DO UPDATE SET rate_to_twd = excluded.rate_to_twd, updated_at = excluded.updated_at`,
@@ -798,7 +802,7 @@ async function syncExchangeRatesFromGlobalAPI(userId, requestedCurrencies = []) 
   );
 
   saveDB();
-  return { updatedAt: now, updatedRates: updated };
+  return { updatedAt: now, updatedRates: updated, unsupportedCurrencies: unsupported };
 }
 
 function convertToTwd(originalAmount, currencyCode, fxRateInput, userId) {
@@ -2248,7 +2252,11 @@ app.post('/api/exchange-rates/refresh', async (req, res) => {
       rateToTwd: map[currency],
     }));
     const settings = getExchangeRateSettings(req.userId);
-    res.json({ rates: rows, settings, updatedAt: result.updatedAt });
+    let message = `已更新 ${result.updatedRates.length} 筆匯率`;
+    if (result.unsupportedCurrencies.length > 0) {
+      message += `；${result.unsupportedCurrencies.join('、')} 因不被全球 API 支援而無法自動更新，可手動輸入匯率`;
+    }
+    res.json({ rates: rows, settings, updatedAt: result.updatedAt, message });
   } catch (e) {
     res.status(500).json({ error: e.message || '更新即時匯率失敗' });
   }

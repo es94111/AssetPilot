@@ -1,6 +1,17 @@
 {
-  "currentVersion": "3.53",
+  "currentVersion": "3.54",
   "releases": [
+    {
+      "version": "3.54",
+      "date": "2026-03-24",
+      "title": "匯率 USD 中介計算修正",
+      "type": "fixed",
+      "changes": [
+        { "tag": "fixed", "text": "修正 USD 中介轉換酔輯鬜，JPY 、CNY 、HKD 等署粗踊測暫計算方向鍄即" },
+        { "tag": "improved", "text": "XXXUSD u0062|方式計算: 1 XXX = rate(XXXUSD) * rate(USDTWD) TWD" },
+        { "tag": "improved", "text": "USDXXX 方式計算: 1 XXX = rate(USDTWD) / rate(USDXXX) TWD" }
+      ]
+    },
     {
       "version": "3.53",
       "date": "2026-03-24",

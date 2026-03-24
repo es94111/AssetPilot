@@ -25,8 +25,16 @@
   --success: #10b981;
   --success-bg: #d1fae5;
   --danger: #ef4444;
+  --danger-dark: #dc2626;
   --danger-bg: #fee2e2;
   --text-muted: #94a3b8;
+  --primary-light-bg: #eef2ff;
+  --today-text: #92400e;
+  --warning-bg: #fffbeb;
+  --warning-border: #fde68a;
+  --twse-bg: #fff7ed;
+  --twse-border: #fed7aa;
+  --twse-text: #9a3412;
 }
 
 body.dark-mode {
@@ -46,6 +54,12 @@ body.dark-mode {
   --shadow: 0 1px 3px rgba(0,0,0,.45), 0 1px 2px rgba(0,0,0,.35);
   --shadow-md: 0 4px 6px -1px rgba(0,0,0,.45), 0 2px 4px -2px rgba(0,0,0,.35);
   --shadow-lg: 0 4px 12px rgba(0,0,0,.5);
+  --today-text: #fbbf24;
+  --warning-bg: #2d2000;
+  --warning-border: #78550a;
+  --twse-bg: #431407;
+  --twse-border: #7c2d12;
+  --twse-text: #fdba74;
 }
 
 /* 跟隨瀏覽器/系統主題時，使用 prefers-color-scheme 決定原生元件色彩。 */
@@ -271,13 +285,13 @@ input, select, button, textarea { font-family: inherit; font-size: inherit; }
   border-radius: 20px;
   font-size: 11px;
   font-weight: 700;
-  background: #fef3c7;
-  color: #92400e;
+  background: var(--today-bg);
+  color: var(--today-text);
 }
 .data-table .amount-transfer { color: var(--net); font-weight: 600; }
 .th-check, .td-check { width: 36px; text-align: center !important; }
 .td-check input, .th-check input { cursor: pointer; width: 16px; height: 16px; accent-color: var(--primary); }
-.data-table tbody tr.selected { background: var(--primary-light-bg, #eef2ff); }
+.data-table tbody tr.selected { background: var(--primary-light-bg); }
 
 /* ===== 批次操作列 ===== */
 .batch-bar {
@@ -291,7 +305,7 @@ input, select, button, textarea { font-family: inherit; font-size: inherit; }
 .batch-bar .btn { color: #fff; border-color: rgba(255,255,255,.4); background: transparent; font-size: 13px; }
 .batch-bar .btn:hover { background: rgba(255,255,255,.15); }
 .batch-bar .btn-danger { background: var(--expense); border-color: var(--expense); }
-.batch-bar .btn-danger:hover { background: #dc2626; }
+.batch-bar .btn-danger:hover { background: var(--danger-dark); }
 .batch-bar .btn-ghost { border: none; }
 
 /* ===== 分頁 ===== */
@@ -326,7 +340,7 @@ input, select, button, textarea { font-family: inherit; font-size: inherit; }
 .btn-outline { background: transparent; color: var(--primary); border: 1px solid var(--primary); }
 .btn-outline:hover { background: var(--primary); color: #fff; }
 .btn-danger { background: var(--danger); color: #fff; border: none; }
-.btn-danger:hover { background: #dc2626; }
+.btn-danger:hover { background: var(--danger-dark); }
 .danger-zone { border: 1px solid #fecaca; background: linear-gradient(135deg, #fff 0%, #fef2f2 100%); padding: 0; overflow: hidden; }
 .danger-zone-header {
   display: flex; align-items: center; gap: 14px;
@@ -387,7 +401,7 @@ input, select, button, textarea { font-family: inherit; font-size: inherit; }
   width: 100%; padding: 12px; font-size: 14px; font-weight: 600;
   border-radius: 8px; transition: all .2s;
 }
-.btn-delete-account:hover { background: #dc2626; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(239,68,68,.3); }
+.btn-delete-account:hover { background: var(--danger-dark); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(239,68,68,.3); }
 .btn-primary { background: var(--primary); }
 .btn-icon {
   width: 32px; height: 32px; padding: 0;
@@ -854,11 +868,8 @@ input, select, button, textarea { font-family: inherit; font-size: inherit; }
 }
 .import-missing {
   margin-top: 12px; padding: 14px 16px;
-  background: #fff7ed; border: 1px solid #fed7aa;
-  border-radius: 8px; font-size: 13px; color: #9a3412;
-}
-body.dark-mode .import-missing {
-  background: #431407; border-color: #7c2d12; color: #fdba74;
+  background: var(--twse-bg); border: 1px solid var(--twse-border);
+  border-radius: 8px; font-size: 13px; color: var(--twse-text);
 }
 .import-missing-title {
   font-weight: 600; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; font-size: 14px;
@@ -1132,7 +1143,7 @@ body.dark-mode .data-table tbody tr:hover {
 .auth-container {
   display: none;
   position: fixed; inset: 0;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
   z-index: 500;
   align-items: center; justify-content: center;
   padding: 20px;
@@ -1186,14 +1197,14 @@ body.dark-mode .data-table tbody tr:hover {
   font-size: 36px;
   width: 60px; height: 60px;
   display: flex; align-items: center; justify-content: center;
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
   border-radius: 16px;
-  box-shadow: 0 4px 15px rgba(102,126,234,.4);
+  box-shadow: 0 4px 15px rgba(99,102,241,.4);
 }
 .auth-logo-img {
   width: 60px; height: 60px;
   border-radius: 16px;
-  box-shadow: 0 4px 15px rgba(102,126,234,.4);
+  box-shadow: 0 4px 15px rgba(99,102,241,.4);
 }
 .auth-subtitle {
   text-align: center;
@@ -1233,8 +1244,8 @@ body.dark-mode .data-table tbody tr:hover {
 }
 .auth-form .form-row input:focus {
   outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 4px rgba(102,126,234,.15);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px rgba(99,102,241,.15);
   background: var(--surface);
 }
 .auth-form .form-row input::placeholder {
@@ -1245,20 +1256,20 @@ body.dark-mode .data-table tbody tr:hover {
   width: 100%; justify-content: center;
   padding: 14px; font-size: 16px; font-weight: 700;
   border-radius: 12px;
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
   border: none; color: #fff;
-  box-shadow: 0 4px 15px rgba(102,126,234,.35);
+  box-shadow: 0 4px 15px rgba(99,102,241,.35);
   transition: all .25s;
   letter-spacing: .5px;
 }
 .btn-block:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(102,126,234,.45);
-  background: linear-gradient(135deg, #5a6fe0, #6a42a0);
+  box-shadow: 0 8px 25px rgba(99,102,241,.45);
+  background: linear-gradient(135deg, var(--primary-dark), #3730a3);
 }
 .btn-block:active {
   transform: translateY(0);
-  box-shadow: 0 2px 10px rgba(102,126,234,.3);
+  box-shadow: 0 2px 10px rgba(99,102,241,.3);
 }
 
 .auth-links {
@@ -1266,10 +1277,10 @@ body.dark-mode .data-table tbody tr:hover {
   display: flex; flex-direction: column; gap: 10px;
 }
 .auth-links a {
-  color: #667eea; font-size: 14px; font-weight: 500;
+  color: var(--primary); font-size: 14px; font-weight: 500;
   transition: color .2s;
 }
-.auth-links a:hover { color: #764ba2; text-decoration: none; }
+.auth-links a:hover { color: var(--primary-dark); text-decoration: none; }
 
 /* Google SSO */
 .google-signin-wrap {
@@ -1564,12 +1575,12 @@ body.dark-mode .data-table tbody tr:hover {
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  background: #fffbeb;
-  border: 1px solid #fde68a;
+  background: var(--warning-bg);
+  border: 1px solid var(--warning-border);
   border-radius: 8px;
   padding: 12px 14px;
   font-size: 12px;
-  color: #92400e;
+  color: var(--today-text);
   line-height: 1.6;
 }
 .formula-note i {

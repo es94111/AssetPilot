@@ -1,6 +1,17 @@
 {
-  "currentVersion": "3.59",
+  "currentVersion": "3.60",
   "releases": [
+    {
+      "version": "3.60",
+      "date": "2026-03-24",
+      "title": "股票定期定額",
+      "type": "feature",
+      "changes": [
+        { "tag": "new", "text": "股票紀錄新增定期定額，可設定股票、每期預算、週期與起始日" },
+        { "tag": "new", "text": "支援定期定額設定的新增、編輯、刪除與啟用/停用" },
+        { "tag": "improved", "text": "登入時自動執行定期定額排程，依設定產生買進交易紀錄" }
+      ]
+    },
     {
       "version": "3.59",
       "date": "2026-03-24",

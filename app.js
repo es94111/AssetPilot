@@ -462,6 +462,7 @@ const App = (() => {
     hideAuth();
     // 載入快取
     await API.post('/api/recurring/process', {}).catch(() => {});
+    await API.post('/api/stock-recurring/process', {}).catch(() => {});
     cachedCategories = await API.get('/api/categories');
     cachedAccounts = await API.get('/api/accounts');
     // 載入版本號
@@ -2428,6 +2429,8 @@ const App = (() => {
       el('fetchTwsePricesBtn').addEventListener('click', fetchTwsePrices);
       const stockSettingsForm = el('stockSettingsForm');
       if (stockSettingsForm) stockSettingsForm.addEventListener('submit', saveStockCalcSettings);
+      el('addStockRecurringBtn')?.addEventListener('click', () => openStockRecurringModal());
+      el('stockRecurringForm')?.addEventListener('submit', handleStockRecurringSave);
       stocksBound = true;
     }
     await loadStockCalcSettings();
@@ -2438,6 +2441,7 @@ const App = (() => {
     await renderStockDividends();
     await renderStockRealized();
     renderStockSettingsPanel();
+    await renderStockRecurringList();
   }
 
   async function refreshStocks() {
@@ -3173,6 +3177,100 @@ const App = (() => {
     } catch (err) {
       toast(err.message, 'error');
     }
+  }
+
+  async function renderStockRecurringList() {
+    const tbody = el('stockRecurringBody');
+    if (!tbody) return;
+    const recs = await API.get('/api/stock-recurring');
+    if (!recs.length) {
+      tbody.innerHTML = '<tr><td colspan="8" class="empty-hint">尚未設定股票定期定額</td></tr>';
+      return;
+    }
+    tbody.innerHTML = recs.map(r => {
+      const statusText = r.isActive ? '啟用中' : '已停用';
+      const statusCls = r.isActive ? 'active' : 'paused';
+      const stockText = `${escHtml(r.symbol || '')} ${escHtml(r.stockName || '')}`.trim();
+      return `<tr>
+        <td>${stockText || '-'}</td>
+        <td>${fmt(r.amount || 0)}</td>
+        <td>${FREQ_LABELS[r.frequency] || r.frequency}</td>
+        <td>${r.startDate || r.start_date || '-'}</td>
+        <td>${r.lastGenerated || r.last_generated || '-'}</td>
+        <td><span class="recurring-status ${statusCls}">${statusText}</span></td>
+        <td>${escHtml(r.note || '') || '-'}</td>
+        <td>
+          <button class="btn-icon" onclick="App.toggleStockRecurring('${r.id}')" title="${r.isActive ? '停用' : '啟用'}"><i class="fas ${r.isActive ? 'fa-pause' : 'fa-play'}"></i></button>
+          <button class="btn-icon" onclick="App.editStockRecurring('${r.id}')" title="編輯"><i class="fas fa-pen"></i></button>
+          <button class="btn-icon danger" onclick="App.deleteStockRecurring('${r.id}')" title="刪除"><i class="fas fa-trash"></i></button>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+
+  async function openStockRecurringModal(recId) {
+    const form = el('stockRecurringForm');
+    if (!form) return;
+    form.reset();
+    el('stockRecStartDate').value = today();
+    el('stockRecStockId').innerHTML = cachedStocks
+      .map(s => `<option value="${s.id}">${escHtml(s.symbol)} ${escHtml(s.name)}</option>`)
+      .join('');
+    el('stockRecAccount').innerHTML = '<option value="">不指定</option>' + cachedAccounts
+      .map(a => `<option value="${a.id}">${escHtml(a.name)}</option>`)
+      .join('');
+    if (recId) {
+      const recs = await API.get('/api/stock-recurring');
+      const r = recs.find(x => x.id === recId);
+      if (!r) return;
+      el('stockRecId').value = r.id;
+      el('modalStockRecurringTitle').textContent = '編輯股票定期定額';
+      el('stockRecStockId').value = r.stockId || r.stock_id;
+      el('stockRecAmount').value = r.amount || 0;
+      el('stockRecFrequency').value = r.frequency;
+      el('stockRecStartDate').value = r.startDate || r.start_date;
+      el('stockRecAccount').value = r.accountId || r.account_id || '';
+      el('stockRecNote').value = r.note || '';
+    } else {
+      el('stockRecId').value = '';
+      el('modalStockRecurringTitle').textContent = '新增股票定期定額';
+    }
+    openModal('modalStockRecurring');
+  }
+
+  async function handleStockRecurringSave(e) {
+    e.preventDefault();
+    const id = el('stockRecId').value;
+    const payload = {
+      stockId: el('stockRecStockId').value,
+      amount: Number(el('stockRecAmount').value),
+      frequency: el('stockRecFrequency').value,
+      startDate: el('stockRecStartDate').value,
+      accountId: el('stockRecAccount').value,
+      note: el('stockRecNote').value.trim(),
+    };
+    try {
+      if (id) await API.put('/api/stock-recurring/' + id, payload);
+      else await API.post('/api/stock-recurring', payload);
+      closeModal('modalStockRecurring');
+      toast(id ? '股票定期定額已更新' : '股票定期定額已新增', 'success');
+      await renderStockRecurringList();
+    } catch (err) {
+      toast(err.message, 'error');
+    }
+  }
+
+  function deleteStockRecurring(id) {
+    confirmDelete('確定要刪除此股票定期定額嗎？', async () => {
+      await API.del('/api/stock-recurring/' + id);
+      toast('股票定期定額已刪除', 'success');
+      await renderStockRecurringList();
+    });
+  }
+
+  async function toggleStockRecurring(id) {
+    await API.patch('/api/stock-recurring/' + id + '/toggle');
+    await renderStockRecurringList();
   }
 
   async function handleStockTxSave(e) {
@@ -5723,6 +5821,9 @@ const App = (() => {
     openStockDivModal,
     editStockDiv: openStockDivModal,
     deleteStockDiv,
+    editStockRecurring: openStockRecurringModal,
+    deleteStockRecurring,
+    toggleStockRecurring,
     openPriceUpdateModal,
     syncDividends,
     toggleStkTxSelect,

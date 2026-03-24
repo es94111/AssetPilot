@@ -134,7 +134,12 @@ const App = (() => {
       const r = await fetch(url, { method: 'POST', headers: authHeaders(), body: JSON.stringify(body) });
       const data = await this.parseResponse(r);
       if (r.status === 401) { logout(); throw new Error('請先登入'); }
-      if (!r.ok) throw new Error(data.error || '操作失敗');
+      if (!r.ok) {
+        const err = new Error(data.error || '操作失敗');
+        err.status = r.status;
+        err.data = data;
+        throw err;
+      }
       return data;
     },
     async put(url, body) {
@@ -3578,18 +3583,28 @@ const App = (() => {
     refreshFxCurrencySuggestionList([c]);
   }
 
-  function updateFxAutoStatus(settings) {
+  function updateFxAutoStatus(settings, nextUpdateAtMs = 0) {
     const statusEl = el('fxAutoStatus');
     const toggle = el('fxAutoUpdateToggle');
     if (!statusEl || !toggle) return;
     const autoUpdate = !!settings?.autoUpdate;
     const lastSyncedAt = Number(settings?.lastSyncedAt) || 0;
     toggle.checked = autoUpdate;
+    
+    // 檢查冷卻期
+    const COOLDOWN_MS = 8 * 60 * 60 * 1000;
+    const timeSinceLastSync = lastSyncedAt > 0 ? Date.now() - lastSyncedAt : COOLDOWN_MS;
+    const isInCooldown = lastSyncedAt > 0 && timeSinceLastSync < COOLDOWN_MS;
+    
     if (!autoUpdate) {
-      statusEl.textContent = '目前為手動更新模式。';
+      statusEl.textContent = '目前為手動更新模式；基礎貨幣為 TWD。';
       return;
     }
-    if (lastSyncedAt > 0) {
+    
+    if (isInCooldown) {
+      const minutesRemaining = Math.ceil((COOLDOWN_MS - timeSinceLastSync) / 60000);
+      statusEl.innerHTML = `已啟用自動更新；<span style="color:#ff6b6b;">冷卻期中，距離下次更新還有 ${minutesRemaining} 分鐘</span>`;
+    } else if (lastSyncedAt > 0) {
       const ts = localDateTimeStr(lastSyncedAt);
       statusEl.textContent = `已啟用自動更新；上次更新：${ts || '時間格式錯誤'}`;
     } else {
@@ -3622,7 +3637,7 @@ const App = (() => {
         .sort((a, b) => a[0].localeCompare(b[0]))
         .forEach(([currency, rate]) => appendFxRateRow(currency, rate, false));
 
-      updateFxAutoStatus(res.settings || {});
+      updateFxAutoStatus(res.settings || {}, res.nextUpdateAtMs || 0);
     } catch (e) {
       console.error('載入匯率設定失敗:', e);
     }
@@ -3655,7 +3670,12 @@ const App = (() => {
         const message = result.message || '已更新全球即時匯率';
         toast(message, 'success');
       } catch (e) {
-        toast(e.message || '更新即時匯率失敗', 'error');
+        // 處理冷卻期錯誤（429 Too Many Requests）
+        if (e.status === 429) {
+          toast('匯率正在冷卻期中，請稍後再試（基礎貨幣 TWD，每 8 小時可更新一次）', 'warning');
+        } else {
+          toast(e.message || '更新即時匯率失敗', 'error');
+        }
       }
     });
 

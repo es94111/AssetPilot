@@ -1,6 +1,16 @@
 {
-  "currentVersion": "3.61",
+  "currentVersion": "3.62",
   "releases": [
+    {
+      "version": "3.62",
+      "date": "2026-03-25",
+      "title": "匯率更新訊息相容修正",
+      "type": "fixed",
+      "changes": [
+        { "tag": "fixed", "text": "匯率更新按鈕加入舊版冷卻期錯誤訊息相容處理，不再顯示『冷卻期中』文案" },
+        { "tag": "improved", "text": "當偵測到舊版後端回應時，前端改提示重啟後端套用新版匯率邏輯" }
+      ]
+    },
     {
       "version": "3.61",
       "date": "2026-03-25",

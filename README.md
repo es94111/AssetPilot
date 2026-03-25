@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-3.61-blue" alt="version">
+  <img src="https://img.shields.io/badge/version-3.62-blue" alt="version">
   <img src="https://img.shields.io/badge/node-%3E%3D18-green" alt="node">
   <img src="https://img.shields.io/badge/license-MIT-orange" alt="license">
   <img src="https://img.shields.io/badge/docker-ready-2496ED" alt="docker">
@@ -57,6 +57,7 @@
 - **響應式設計** — 桌面與手機皆可使用
 
 ## 近期更新
+- **v3.62** — 匯率更新按鈕加入舊版冷卻期訊息相容處理，避免再顯示「冷卻期中」文案
 - **v3.61** — 全球匯率更新移除冷卻期限制，並在頁面顯示上次取得時間
 - **v3.60** — 股票紀錄新增定期定額（可設定週期與每期預算，自動產生買進交易）
 - **v3.59** — 股利紀錄表格日期欄位統一為「除息日期」

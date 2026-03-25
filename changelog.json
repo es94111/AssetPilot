@@ -1,6 +1,32 @@
 {
-  "currentVersion": "3.63",
+  "currentVersion": "4.0",
   "releases": [
+    {
+      "version": "4.0",
+      "date": "2026-03-25",
+      "title": "全站 UI 現代化重設計",
+      "type": "feature",
+      "changes": [
+        { "tag": "new", "text": "全站導入 Inter 字體，提升閱讀體驗與國際化視覺品質" },
+        { "tag": "new", "text": "新增 CSS 自訂屬性 transition-fast / transition-normal / transition-spring，統一全站動畫節奏" },
+        { "tag": "new", "text": "新增自訂捲軸樣式與 ::selection 選取色，深色模式同步支援" },
+        { "tag": "new", "text": "新增 :focus-visible 全域焦點環，提升鍵盤無障礙導覽體驗" },
+        { "tag": "new", "text": "新增 prefers-reduced-motion 媒體查詢，尊重使用者減少動態偏好" },
+        { "tag": "improved", "text": "色彩系統全面更新：主色調整為 #4f6ef7，危險色改為 rose 色系 #f43f5e，語義更清晰" },
+        { "tag": "improved", "text": "陰影系統重構為多層柔和陰影，卡片與彈窗視覺層次更自然" },
+        { "tag": "improved", "text": "側邊欄改為漸層深色背景，導覽項加入圓角與 active 發光效果" },
+        { "tag": "improved", "text": "行動版頂部列加入毛玻璃效果（backdrop-filter），深色模式同步" },
+        { "tag": "improved", "text": "分頁標籤（finance-tabs / stock-tabs）改為 iOS 風格膠囊分段控件" },
+        { "tag": "improved", "text": "按鈕加入 hover 微上移與投影回饋、active 下壓效果" },
+        { "tag": "improved", "text": "Modal 彈窗新增 spring 彈性入場動畫與背景模糊遮罩" },
+        { "tag": "improved", "text": "公開首頁特色卡片加入毛玻璃背景與 hover 浮動效果" },
+        { "tag": "improved", "text": "卡片全面加入邊框與 hover 提升動畫，摘要卡片圖示 hover 放大" },
+        { "tag": "improved", "text": "Toast 通知改為圓角 12px 並加入 spring 入場動畫" },
+        { "tag": "improved", "text": "FAB 按鈕從圓形改為 16px 圓角方形，hover 浮動效果更明顯" },
+        { "tag": "improved", "text": "全站字體渲染啟用 antialiased，深色模式色彩更精緻" },
+        { "tag": "improved", "text": "表格列 hover 色調統一為主色半透明，page 切換加入淡入動畫" }
+      ]
+    },
     {
       "version": "3.63",
       "date": "2026-03-25",

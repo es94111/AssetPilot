@@ -1,6 +1,17 @@
 {
-  "currentVersion": "3.60",
+  "currentVersion": "3.61",
   "releases": [
+    {
+      "version": "3.61",
+      "date": "2026-03-25",
+      "title": "全球匯率更新體驗優化",
+      "type": "improved",
+      "changes": [
+        { "tag": "improved", "text": "全球匯率（exchangerate-api.com）手動更新移除冷卻期限制，可隨時重新取得" },
+        { "tag": "improved", "text": "匯率設定頁顯示上次取得時間，方便確認資料新鮮度" },
+        { "tag": "fixed", "text": "移除前端冷卻期提示與後端 429 冷卻錯誤回應，更新流程更直覺" }
+      ]
+    },
     {
       "version": "3.60",
       "date": "2026-03-24",

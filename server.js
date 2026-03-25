@@ -815,21 +815,7 @@ function resolveRateToTwd(globalData, currencyCode) {
   return 0;
 }
 
-async function syncExchangeRatesFromGlobalAPI(userId, requestedCurrencies = [], skipCooldown = false) {
-  // 8 小時冷卻期檢查
-  const COOLDOWN_MS = 8 * 60 * 60 * 1000; // 28800000 毫秒
-  const settings = getExchangeRateSettings(userId);
-  const lastSynced = settings.lastSyncedAt || 0;
-  const timeSinceLastSync = Date.now() - lastSynced;
-  
-  if (!skipCooldown && lastSynced > 0 && timeSinceLastSync < COOLDOWN_MS) {
-    const minutesRemaining = Math.ceil((COOLDOWN_MS - timeSinceLastSync) / 60000);
-    const error = new Error(`匯率更新冷卻期中；距離下次更新還有 ${minutesRemaining} 分鐘（基礎貨幣限制 8 小時更新一次）`);
-    error.code = 'COOLDOWN';
-    error.nextUpdateAtMs = lastSynced + COOLDOWN_MS;
-    throw error;
-  }
-  
+async function syncExchangeRatesFromGlobalAPI(userId, requestedCurrencies = []) {
   const globalData = await fetchGlobalRealtimeRates();
   const existingMap = getUserExchangeRateMap(userId);
   const targets = new Set(['TWD']);
@@ -2249,20 +2235,7 @@ app.get('/api/exchange-rates', async (req, res) => {
       rateToTwd: map[currency],
     }));
     const settings = getExchangeRateSettings(req.userId);
-    
-    // 計算距離下次更新的時間
-    const COOLDOWN_MS = 8 * 60 * 60 * 1000;
-    const lastSynced = settings.lastSyncedAt || 0;
-    const timeSinceLastSync = Date.now() - lastSynced;
-    let nextUpdateAtMs = 0;
-    let minutesUntilNextUpdate = 0;
-    
-    if (lastSynced > 0 && timeSinceLastSync < COOLDOWN_MS) {
-      nextUpdateAtMs = lastSynced + COOLDOWN_MS;
-      minutesUntilNextUpdate = Math.ceil((COOLDOWN_MS - timeSinceLastSync) / 60000);
-    }
-    
-    res.json({ rates: rows, settings, nextUpdateAtMs, minutesUntilNextUpdate });
+    res.json({ rates: rows, settings });
   };
 
   const settings = getExchangeRateSettings(req.userId);
@@ -2272,7 +2245,7 @@ app.get('/api/exchange-rates', async (req, res) => {
   if (!shouldAutoSync) return respond();
 
   try {
-    await syncExchangeRatesFromGlobalAPI(req.userId, [], false);
+    await syncExchangeRatesFromGlobalAPI(req.userId, []);
   } catch (e) {
     console.warn('[匯率] 自動更新失敗:', e.message);
   }
@@ -2340,9 +2313,6 @@ app.post('/api/exchange-rates/refresh', async (req, res) => {
     }
     res.json({ rates: rows, settings, updatedAt: result.updatedAt, message });
   } catch (e) {
-    if (e.code === 'COOLDOWN') {
-      return res.status(429).json({ error: e.message, nextUpdateAtMs: e.nextUpdateAtMs });
-    }
     res.status(500).json({ error: e.message || '更新即時匯率失敗' });
   }
 });

@@ -1,0 +1,22 @@
+{
+  "projectName": "VitaTrack",
+  "currentVersion": "1.0",
+  "releases": [
+    {
+      "version": "1.0",
+      "date": "2026-03-25",
+      "title": "初版需求規格建立",
+      "type": "feature",
+      "changes": [
+        { "tag": "new", "text": "建立軟體需求規格書（SRS.md），定義完整功能模組" },
+        { "tag": "new", "text": "定義身體組成紀錄模組（MOD-BODY）" },
+        { "tag": "new", "text": "定義飲食紀錄模組（MOD-DIET）" },
+        { "tag": "new", "text": "定義運動紀錄模組（MOD-EXERCISE）" },
+        { "tag": "new", "text": "定義健康指標追蹤模組（MOD-HEALTH）" },
+        { "tag": "new", "text": "定義目標設定與報表分析模組" },
+        { "tag": "new", "text": "建立資料模型與 ER 關係定義" },
+        { "tag": "new", "text": "建立 README.md 專案說明文件" }
+      ]
+    }
+  ]
+}

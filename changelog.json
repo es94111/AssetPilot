@@ -1,6 +1,16 @@
 {
-  "currentVersion": "3.62",
+  "currentVersion": "3.63",
   "releases": [
+    {
+      "version": "3.63",
+      "date": "2026-03-25",
+      "title": "新增信用卡繳費指引",
+      "type": "improved",
+      "changes": [
+        { "tag": "improved", "text": "文件新增『常見使用教學』，說明如何透過轉帳功能還清信用卡並沖銷負餘額" },
+        { "tag": "improved", "text": "SRS 新增轉帳功能的信用卡繳款應用情境說明" }
+      ]
+    },
     {
       "version": "3.62",
       "date": "2026-03-25",

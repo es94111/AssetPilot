@@ -1496,6 +1496,13 @@ body.dark-mode .stock-tabs .tab.active {
   .summary-cards { grid-template-columns: 1fr 1fr; }
   .summary-card:hover { transform: none; }
   .dashboard-grid { grid-template-columns: 1fr; }
+  .finance-tabs, .stock-tabs {
+    overflow-x: auto; flex-wrap: nowrap; width: 100%;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .finance-tabs::-webkit-scrollbar, .stock-tabs::-webkit-scrollbar { display: none; }
+  .finance-tabs .tab, .stock-tabs .tab { white-space: nowrap; flex-shrink: 0; }
   .filter-bar { flex-direction: column; }
   .filter-group { width: 100%; }
   .filter-group input, .filter-group select { width: 100%; }

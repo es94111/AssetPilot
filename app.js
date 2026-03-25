@@ -3760,7 +3760,12 @@ const App = (() => {
         const message = result.message || '已更新全球即時匯率';
         toast(message, 'success');
       } catch (e) {
-        toast(e.message || '更新即時匯率失敗', 'error');
+        const msg = String(e?.message || '');
+        if (msg.includes('匯率更新冷卻期中') || msg.includes('距離下次更新還有')) {
+          toast('偵測到舊版冷卻期訊息，請重啟後端後再試。', 'warning');
+          return;
+        }
+        toast(msg || '更新即時匯率失敗', 'error');
       }
     });
 

@@ -1,0 +1,26 @@
+# 環境變數（含敏感資訊，禁止提交）
+.env
+.env.local
+.env.*.local
+
+# 依賴套件
+node_modules/
+
+# 建置輸出
+dist/
+build/
+.next/
+
+# 系統與編輯器
+.DS_Store
+Thumbs.db
+*.swp
+.vscode/
+.idea/
+
+# Docker
+docker-compose.override.yml
+
+# 日誌
+*.log
+logs/

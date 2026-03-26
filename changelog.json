@@ -1,6 +1,15 @@
 {
-  "currentVersion": "4.0",
+  "currentVersion": "4.0.1",
   "releases": [
+    {
+      "version": "4.0.1",
+      "date": "2026-03-26",
+      "title": "擴充幣別中文名稱對照表",
+      "type": "fix",
+      "changes": [
+        { "tag": "fixed", "text": "新增交易時自訂幣別（如 TRY）未顯示中文名稱，現已擴充至 30 種常見幣別對照" }
+      ]
+    },
     {
       "version": "4.0",
       "date": "2026-03-25",

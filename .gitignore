@@ -6,10 +6,23 @@
 # 依賴套件
 node_modules/
 
+# Backend
+backend/node_modules/
+backend/dist/
+backend/.env
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+
 # 建置輸出
 dist/
 build/
 .next/
+
+# Prisma
+backend/prisma/*.db
+backend/prisma/migrations/
 
 # 系統與編輯器
 .DS_Store
@@ -17,6 +30,7 @@ Thumbs.db
 *.swp
 .vscode/
 .idea/
+*.code-workspace
 
 # Docker
 docker-compose.override.yml

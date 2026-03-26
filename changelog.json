@@ -1,7 +1,41 @@
 {
   "projectName": "VitaTrack",
-  "currentVersion": "1.0",
+  "currentVersion": "2.0",
   "releases": [
+    {
+      "version": "2.0",
+      "date": "2026-03-26",
+      "title": "Phase 1 MVP 完整實作",
+      "type": "feature",
+      "changes": [
+        { "tag": "new", "text": "後端 API：Express + TypeScript + Prisma ORM + PostgreSQL，RESTful 架構" },
+        { "tag": "new", "text": "使用者管理：JWT 認證、註冊登入、個人檔案與偏好設定" },
+        { "tag": "new", "text": "身體組成紀錄：體重、體脂率、肌肉量、身體圍度 CRUD + 趨勢分析 API" },
+        { "tag": "new", "text": "飲食紀錄：餐次管理、食物搜尋、營養素自動計算、每日摘要" },
+        { "tag": "new", "text": "飲水紀錄：快速新增、每日統計" },
+        { "tag": "new", "text": "儀表板 API：BMR/TDEE 自動計算（Mifflin-St Jeor 公式）、綜合數據摘要" },
+        { "tag": "new", "text": "食物資料庫：內建 55 種台灣常見食物營養數據（主食、肉類、海鮮、蔬菜、水果等）" },
+        { "tag": "new", "text": "前端：React 18 + TypeScript + Vite + Tailwind CSS，響應式設計" },
+        { "tag": "new", "text": "前端頁面：儀表板、身體紀錄、飲食紀錄、設定頁" },
+        { "tag": "new", "text": "圖表元件：體重趨勢折線圖、巨量營養素環形圖、飲水進度環" },
+        { "tag": "new", "text": "多階段 Dockerfile：前後端統一建置，支援生產環境部署" },
+        { "tag": "new", "text": "設計系統：Lora/Raleway 字型、Primary #2563EB 色彩主題" }
+      ]
+    },
+    {
+      "version": "1.1",
+      "date": "2026-03-25",
+      "title": "CI/CD 工作流程建立",
+      "type": "feature",
+      "changes": [
+        { "tag": "new", "text": "新增 GitHub Actions CI/CD 工作流程（.github/workflows/deploy.yml）" },
+        { "tag": "new", "text": "自動建置 Docker Image 並推送至 GitHub Container Registry（GHCR）" },
+        { "tag": "new", "text": "透過 SSH 自動部署至生產伺服器，支援零停機滾動更新" },
+        { "tag": "new", "text": "新增 docker-compose.yml，包含 App + PostgreSQL 服務定義" },
+        { "tag": "new", "text": "新增 .env.example 環境變數範本" },
+        { "tag": "new", "text": "新增 .gitignore 保護敏感檔案" }
+      ]
+    },
     {
       "version": "1.0",
       "date": "2026-03-25",

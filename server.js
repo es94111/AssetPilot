@@ -4130,7 +4130,14 @@ app.use((err, req, res, next) => {
 });
 
 // ─── 前端路由 catch-all（所有非 API、非靜態檔案的請求都回傳 index.html）───
-app.get('{*path}', (req, res) => {
+app.get('{*path}', rateLimit({
+  windowMs: 60 * 1000,
+  max: 120,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: '請求過於頻繁，請稍後再試' },
+  validate: { xForwardedForHeader: false }
+}), (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 

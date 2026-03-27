@@ -7,8 +7,7 @@ import { apiRateLimiter } from '../middleware/rateLimit.js';
 
 const router = Router();
 
-router.use(apiRateLimiter, authMiddleware);
-router.put('/profile', validate(updateProfileSchema), ctrl.updateProfile);
-router.put('/preferences', validate(updatePreferencesSchema), ctrl.updatePreferences);
+router.put('/profile', apiRateLimiter, authMiddleware, validate(updateProfileSchema), ctrl.updateProfile);
+router.put('/preferences', apiRateLimiter, authMiddleware, validate(updatePreferencesSchema), ctrl.updatePreferences);
 
 export default router;

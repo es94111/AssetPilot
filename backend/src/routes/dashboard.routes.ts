@@ -5,7 +5,6 @@ import { apiRateLimiter } from '../middleware/rateLimit.js';
 
 const router = Router();
 
-router.use(apiRateLimiter, authMiddleware);
-router.get('/today', ctrl.getToday);
+router.get('/today', apiRateLimiter, authMiddleware, ctrl.getToday);
 
 export default router;

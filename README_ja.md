@@ -519,7 +519,7 @@ Caddy は HTTPS 証明書の取得と更新を自動的に行います。
 |------|-----|
 | Docker Hub | [`es94111/assetpilot`](https://hub.docker.com/r/es94111/assetpilot) |
 | 対応アーキテクチャ | `linux/amd64`、`linux/arm64` |
-| ベースイメージ | `node:20-alpine` |
+| ベースイメージ | `node:24-alpine` |
 | イメージサイズ | 約 180 MB |
 | ヘルスチェック | 30 秒ごとに自動確認 |
 

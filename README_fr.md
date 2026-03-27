@@ -519,7 +519,7 @@ Cliquez sur **« Mettre à jour les cours »** sur la page du portefeuille. Le s
 |---------|--------|
 | Docker Hub | [`es94111/assetpilot`](https://hub.docker.com/r/es94111/assetpilot) |
 | Architectures prises en charge | `linux/amd64`, `linux/arm64` |
-| Image de base | `node:20-alpine` |
+| Image de base | `node:24-alpine` |
 | Taille de l'image | ~180 MB |
 | Vérification de l'état | Vérification automatique toutes les 30 secondes |
 

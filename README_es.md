@@ -519,7 +519,7 @@ Haz clic en **"Actualizar Precios"** en la página de Cartera. El sistema utiliz
 |----------|-------|
 | Docker Hub | [`es94111/assetpilot`](https://hub.docker.com/r/es94111/assetpilot) |
 | Arquitecturas Soportadas | `linux/amd64`, `linux/arm64` |
-| Imagen Base | `node:20-alpine` |
+| Imagen Base | `node:24-alpine` |
 | Tamaño de la Imagen | ~180 MB |
 | Verificación de Salud | Comprobación automática cada 30 segundos |
 

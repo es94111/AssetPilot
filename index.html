@@ -514,6 +514,7 @@
         <button class="btn" id="addAccountBtn"><i class="fas fa-plus"></i> 新增帳戶</button>
         <button class="btn btn-outline" id="transferBtn"><i class="fas fa-right-left"></i> 帳戶轉帳</button>
       </div>
+      <div id="accountTypeFilter" class="account-type-filter"></div>
       <div class="account-grid" id="accountGrid"></div>
 
       <div class="card" style="margin-top:16px">
@@ -1363,6 +1364,15 @@
             <option value="EUR">EUR 歐元</option>
             <option value="HKD">HKD 港幣</option>
             <option value="CNY">CNY 人民幣</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label>帳戶類別 <span class="required">*</span></label>
+          <select id="accType" onchange="App.onAccTypeChange(this.value)">
+            <option value="現金">💵 現金</option>
+            <option value="銀行">🏦 銀行</option>
+            <option value="信用卡">💳 信用卡</option>
+            <option value="虛擬錢包">📱 虛擬錢包</option>
           </select>
         </div>
         <div class="form-row">

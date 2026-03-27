@@ -519,7 +519,7 @@ Click **"Update Prices"** on the Portfolio page. The system uses a 3-stage strat
 |------|-------|
 | Docker Hub | [`es94111/assetpilot`](https://hub.docker.com/r/es94111/assetpilot) |
 | Supported Architectures | `linux/amd64`, `linux/arm64` |
-| Base Image | `node:20-alpine` |
+| Base Image | `node:24-alpine` |
 | Image Size | ~180 MB |
 | Health Check | Auto-checks every 30 seconds |
 

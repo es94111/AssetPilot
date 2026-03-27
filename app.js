@@ -338,6 +338,7 @@ const App = (() => {
   // ─── 快取 ───
   let cachedCategories = [];
   let cachedAccounts = [];
+  let accountTypeFilter = 'all';
   let cachedExchangeRates = { TWD: 1 };
 
   // ─── 狀態 ───
@@ -2233,28 +2234,83 @@ const App = (() => {
   }
 
   // ─── 帳戶管理 ───
+  const ACCOUNT_TYPE_META = [
+    { key: 'all',    label: '全部',     icon: 'fa-layer-group',      color: 'var(--primary)' },
+    { key: '銀行',   label: '銀行',     icon: 'fa-building-columns', color: '#3b82f6' },
+    { key: '信用卡', label: '信用卡',   icon: 'fa-credit-card',      color: '#8b5cf6' },
+    { key: '現金',   label: '現金',     icon: 'fa-money-bill',       color: '#10b981' },
+    { key: '虛擬錢包', label: '虛擬錢包', icon: 'fa-wallet',          color: '#f59e0b' },
+  ];
+
+  function getAccountTypeMeta(key) {
+    return ACCOUNT_TYPE_META.find(t => t.key === key) || ACCOUNT_TYPE_META[3];
+  }
+
+  function renderAccountCard(a) {
+    const currency = normalizeCurrencyCode(a.currency);
+    const safeIcon = normalizeAccountIcon(a.icon);
+    const typeMeta = getAccountTypeMeta(a.account_type || '現金');
+    return `<div class="account-card">
+      <div class="card-icon" style="background:${typeMeta.color}18;color:${typeMeta.color}">
+        <i class="fas ${safeIcon}"></i>
+      </div>
+      <div class="account-card-info">
+        <div class="account-card-name">${escHtml(a.name)} <span class="tx-original-amount">(${currency})</span></div>
+        <div class="account-card-balance">${fmtByCurrency(a.balance, currency)}</div>
+      </div>
+      <div class="account-card-actions">
+        <button class="btn-icon" onclick="App.editAccount('${a.id}')" title="編輯"><i class="fas fa-pen"></i></button>
+        <button class="btn-icon danger" onclick="App.deleteAccount('${a.id}')" title="刪除"><i class="fas fa-trash"></i></button>
+      </div>
+    </div>`;
+  }
+
   async function renderAccounts() {
     const accounts = await API.get('/api/accounts');
     cachedAccounts = accounts;
-    let totalAssets = 0;
-    const grid = el('accountGrid');
-    grid.innerHTML = accounts.map(a => {
-      totalAssets += a.balance;
-      const currency = normalizeCurrencyCode(a.currency);
-      const safeIcon = normalizeAccountIcon(a.icon);
-      return `<div class="account-card">
-        <div class="card-icon"><i class="fas ${safeIcon}"></i></div>
-        <div class="account-card-info">
-          <div class="account-card-name">${escHtml(a.name)} <span class="tx-original-amount">(${currency})</span></div>
-          <div class="account-card-balance">${fmtByCurrency(a.balance, currency)}</div>
-        </div>
-        <div class="account-card-actions">
-          <button class="btn-icon" onclick="App.editAccount('${a.id}')" title="編輯"><i class="fas fa-pen"></i></button>
-          <button class="btn-icon danger" onclick="App.deleteAccount('${a.id}')" title="刪除"><i class="fas fa-trash"></i></button>
-        </div>
-      </div>`;
-    }).join('');
+
+    const totalAssets = accounts.reduce((sum, a) => sum + a.balance, 0);
     el('totalAssets').textContent = fmt(totalAssets);
+
+    // ── 篩選 Tab ──
+    const filterEl = el('accountTypeFilter');
+    filterEl.innerHTML = ACCOUNT_TYPE_META.map(t => {
+      const count = t.key === 'all' ? accounts.length : accounts.filter(a => (a.account_type || '現金') === t.key).length;
+      return `<button class="acc-type-btn${accountTypeFilter === t.key ? ' active' : ''}"
+        onclick="App.setAccountTypeFilter('${t.key}')">
+        <i class="fas ${t.icon}"></i> ${t.label}
+        <span class="acc-type-count">${count}</span>
+      </button>`;
+    }).join('');
+
+    // ── 渲染卡片 ──
+    const grid = el('accountGrid');
+    const filtered = accountTypeFilter === 'all'
+      ? accounts
+      : accounts.filter(a => (a.account_type || '現金') === accountTypeFilter);
+
+    if (filtered.length === 0) {
+      grid.innerHTML = `<div class="account-empty-state"><i class="fas fa-folder-open"></i><p>此類別尚無帳戶</p></div>`;
+    } else if (accountTypeFilter === 'all') {
+      const typeOrder = ['銀行', '信用卡', '現金', '虛擬錢包'];
+      const grouped = {};
+      filtered.forEach(a => {
+        const t = a.account_type || '現金';
+        if (!grouped[t]) grouped[t] = [];
+        grouped[t].push(a);
+      });
+      grid.innerHTML = typeOrder.filter(t => grouped[t]).map(type => {
+        const meta = getAccountTypeMeta(type);
+        return `<div class="account-type-group-header" style="--group-color:${meta.color}">
+          <i class="fas ${meta.icon}"></i>
+          <span>${type}</span>
+          <span class="acc-group-count">${grouped[type].length} 個</span>
+        </div>
+        ${grouped[type].map(a => renderAccountCard(a)).join('')}`;
+      }).join('');
+    } else {
+      grid.innerHTML = filtered.map(a => renderAccountCard(a)).join('');
+    }
 
     el('addAccountBtn').onclick = () => openAccountModal();
     el('transferBtn').onclick = () => openTransferModal();
@@ -5297,6 +5353,11 @@ const App = (() => {
   }
 
   // 帳戶
+  function onAccTypeChange(type) {
+    const iconMap = { '銀行': 'fa-building-columns', '信用卡': 'fa-credit-card', '現金': 'fa-money-bill', '虛擬錢包': 'fa-wallet' };
+    if (iconMap[type]) el('accIcon').value = iconMap[type];
+  }
+
   function openAccountModal(accId) {
     const form = el('accountForm');
     form.reset();
@@ -5307,12 +5368,15 @@ const App = (() => {
       el('modalAccountTitle').textContent = '編輯帳戶';
       el('accName').value = a.name;
       el('accBalance').value = a.initial_balance ?? a.initialBalance ?? 0;
+      el('accType').value = a.account_type || '現金';
       el('accIcon').value = normalizeAccountIcon(a.icon);
       renderCurrencySelectOptions('accCurrency', a.currency, [a.currency]);
       el('accCurrency').value = normalizeCurrencyCode(a.currency);
     } else {
       el('accId').value = '';
       el('modalAccountTitle').textContent = '新增帳戶';
+      el('accType').value = accountTypeFilter !== 'all' ? accountTypeFilter : '現金';
+      onAccTypeChange(el('accType').value);
       renderCurrencySelectOptions('accCurrency', 'TWD');
       el('accCurrency').value = 'TWD';
     }
@@ -5504,13 +5568,14 @@ const App = (() => {
       const initialBalance = Number(el('accBalance').value) || 0;
       const icon = normalizeAccountIcon(el('accIcon').value);
       const currency = normalizeCurrencyCode(el('accCurrency').value);
+      const accountType = el('accType').value;
       if (!name) return;
 
       try {
         if (id) {
-          await API.put('/api/accounts/' + id, { name, initialBalance, icon, currency });
+          await API.put('/api/accounts/' + id, { name, initialBalance, icon, currency, accountType });
         } else {
-          await API.post('/api/accounts', { name, initialBalance, icon, currency });
+          await API.post('/api/accounts', { name, initialBalance, icon, currency, accountType });
         }
         closeModal('modalAccount');
         toast(id ? '帳戶已更新' : '帳戶已新增', 'success');
@@ -5884,6 +5949,8 @@ const App = (() => {
     deleteCategory,
     editAccount: openAccountModal,
     deleteAccount,
+    setAccountTypeFilter: (type) => { accountTypeFilter = type; renderAccounts(); },
+    onAccTypeChange,
     editBudget: openBudgetModal,
     deleteBudget,
     editRecurring: openRecurringModal,

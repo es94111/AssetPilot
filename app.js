@@ -4510,9 +4510,13 @@ const App = (() => {
 
       const toggle = el('adminPublicRegistrationToggle');
       const emails = el('adminAllowedEmails');
+      const ipAllowlist = el('adminIpAllowlist');
       if (toggle) toggle.checked = !!settings.publicRegistration;
       if (emails) emails.value = Array.isArray(settings.allowedRegistrationEmails)
         ? settings.allowedRegistrationEmails.join('\n')
+        : '';
+      if (ipAllowlist) ipAllowlist.value = Array.isArray(settings.adminIpAllowlist)
+        ? settings.adminIpAllowlist.join('\n')
         : '';
       renderAdminUserTable(users);
       await syncAdminLoginLogs({ silent: true });
@@ -4526,7 +4530,8 @@ const App = (() => {
       try {
         const publicRegistration = !!el('adminPublicRegistrationToggle')?.checked;
         const allowedRegistrationEmails = el('adminAllowedEmails')?.value || '';
-        await API.put('/api/admin/settings', { publicRegistration, allowedRegistrationEmails });
+        const adminIpAllowlist = el('adminIpAllowlist')?.value || '';
+        await API.put('/api/admin/settings', { publicRegistration, allowedRegistrationEmails, adminIpAllowlist });
         const config = await (await fetch('/api/config', { cache: 'no-store' })).json();
         authConfig = {
           registrationEnabled: !!config.registrationEnabled,

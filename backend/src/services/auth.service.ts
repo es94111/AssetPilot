@@ -35,15 +35,42 @@ export async function login(input: LoginInput) {
 
   const valid = await comparePassword(input.password, user.passwordHash);
   if (!valid) {
-    const nextAttempts = user.failedLoginAttempts + 1;
-    const shouldLock = nextAttempts >= MAX_FAILED_LOGIN_ATTEMPTS;
+    const shouldLock = await prisma.$transaction(async (tx) => {
+      const incrementResult = await tx.user.updateMany({
+        where: {
+          id: user.id,
+          OR: [{ lockUntil: null }, { lockUntil: { lte: now } }],
+        },
+        data: {
+          failedLoginAttempts: { increment: 1 },
+        },
+      });
 
-    await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        failedLoginAttempts: shouldLock ? 0 : nextAttempts,
-        lockUntil: shouldLock ? new Date(now.getTime() + LOGIN_LOCK_MINUTES * 60 * 1000) : null,
-      },
+      if (incrementResult.count === 0) {
+        return true;
+      }
+
+      const updatedUser = await tx.user.findUnique({
+        where: { id: user.id },
+        select: { failedLoginAttempts: true },
+      });
+
+      if (!updatedUser) {
+        throw Object.assign(new Error('使用者不存在'), { statusCode: 404 });
+      }
+
+      if (updatedUser.failedLoginAttempts >= MAX_FAILED_LOGIN_ATTEMPTS) {
+        await tx.user.update({
+          where: { id: user.id },
+          data: {
+            failedLoginAttempts: 0,
+            lockUntil: new Date(now.getTime() + LOGIN_LOCK_MINUTES * 60 * 1000),
+          },
+        });
+        return true;
+      }
+
+      return false;
     });
 
     if (shouldLock) {

@@ -1,6 +1,16 @@
 {
-  "currentVersion": "4.0.5",
+  "currentVersion": "4.0.6",
   "releases": [
+    {
+      "version": "4.0.6",
+      "date": "2026-03-27",
+      "title": "帳戶排除計入總資產選項",
+      "type": "feature",
+      "changes": [
+        { "tag": "new", "text": "帳戶設定新增「排除計入總資產」開關，勾選後該帳戶餘額不列入總資產計算" },
+        { "tag": "improved", "text": "帳戶卡片顯示「不計入總資產」標籤，總資產卡片同步顯示已排除帳戶數量提示" }
+      ]
+    },
     {
       "version": "4.0.5",
       "date": "2026-03-27",

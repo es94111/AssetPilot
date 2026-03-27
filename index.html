@@ -507,6 +507,7 @@
           <div class="card-info">
             <span class="card-label">總資產</span>
             <span class="card-value" id="totalAssets">NT$ 0</span>
+            <span class="card-sublabel" id="totalAssetsNote"></span>
           </div>
         </div>
       </div>
@@ -1384,6 +1385,14 @@
             <option value="fa-piggy-bank">存錢筒</option>
             <option value="fa-money-bill">紙鈔</option>
           </select>
+        </div>
+        <div class="form-row">
+          <label class="toggle-label">
+            <input type="checkbox" id="accExclude" class="toggle-checkbox">
+            <span class="toggle-switch"></span>
+            <span class="toggle-text">排除計入總資產</span>
+          </label>
+          <p class="form-hint">勾選後此帳戶餘額不列入儀表板與帳戶頁的總資產計算</p>
         </div>
         <div class="form-actions">
           <button type="button" class="btn btn-ghost" onclick="App.closeModal('modalAccount')">取消</button>

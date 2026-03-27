@@ -9,6 +9,7 @@ import { errorHandler } from './middleware/errorHandler.js';
 import { apiRateLimiter } from './middleware/rateLimit.js';
 
 const app = express();
+app.set('trust proxy', 1);
 
 // Middleware
 app.use(helmet({
@@ -33,7 +34,7 @@ app.use('/api/v1', apiRateLimiter, routes);
 if (env.NODE_ENV === 'production') {
   const frontendPath = path.join(__dirname, '..', 'frontend', 'dist');
   app.use(express.static(frontendPath));
-  app.get('*', (_req, res) => {
+  app.get('*', apiRateLimiter, (_req, res) => {
     res.sendFile(path.join(frontendPath, 'index.html'));
   });
 }

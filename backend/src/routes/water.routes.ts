@@ -7,9 +7,8 @@ import { apiRateLimiter } from '../middleware/rateLimit.js';
 
 const router = Router();
 
-router.use(apiRateLimiter, authMiddleware);
-router.get('/', ctrl.getByDate);
-router.post('/', validate(createWaterLogSchema), ctrl.create);
-router.delete('/:id', ctrl.remove);
+router.get('/', apiRateLimiter, authMiddleware, ctrl.getByDate);
+router.post('/', apiRateLimiter, authMiddleware, validate(createWaterLogSchema), ctrl.create);
+router.delete('/:id', apiRateLimiter, authMiddleware, ctrl.remove);
 
 export default router;

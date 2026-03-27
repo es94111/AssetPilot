@@ -1,33 +1,38 @@
-name: OSV-Scanner
+name: OSV Scanner
 
+# 觸發條件
 on:
   pull_request:
     branches: ["main"]
   merge_group:
     branches: ["main"]
-  schedule:
-    - cron: '35 0 * * 2'
   push:
     branches: ["main"]
+  schedule:
+    - cron: "0 1 * * 0"  # 每週日 UTC 1:00 執行全掃描
 
 permissions:
+  # 上傳 SARIF 到 Security -> Code scanning
+  actions: read
   security-events: write
   contents: read
 
 jobs:
   scan-scheduled:
+    # 全掃描（定時 & push）
     if: ${{ github.event_name == 'push' || github.event_name == 'schedule' }}
-    uses: "google/osv-scanner-action/.github/workflows/osv-scanner-reusable.yml@v2.3.1"
+    uses: "google/osv-scanner-action/.github/workflows/osv-scanner-reusable.yml@v2.3.0"
     with:
+      # 傳給 scanner 的參數（遞迴掃描當前 repo）
       scan-args: |-
-        -r
-        --skip-git
+        --recursive
         ./
+
   scan-pr:
+    # 差異掃描（PR / merge_group）
     if: ${{ github.event_name == 'pull_request' || github.event_name == 'merge_group' }}
-    uses: "google/osv-scanner-action/.github/workflows/osv-scanner-reusable-pr.yml@v2.3.1"
+    uses: "google/osv-scanner-action/.github/workflows/osv-scanner-reusable-pr.yml@v2.3.0"
     with:
       scan-args: |-
-        -r
-        --skip-git
+        --recursive
         ./

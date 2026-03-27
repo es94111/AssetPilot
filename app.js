@@ -2250,12 +2250,16 @@ const App = (() => {
     const currency = normalizeCurrencyCode(a.currency);
     const safeIcon = normalizeAccountIcon(a.icon);
     const typeMeta = getAccountTypeMeta(a.account_type || '現金');
-    return `<div class="account-card">
+    const excluded = a.exclude_from_total === 1 || a.exclude_from_total === true;
+    return `<div class="account-card${excluded ? ' acc-excluded' : ''}">
       <div class="card-icon" style="background:${typeMeta.color}18;color:${typeMeta.color}">
         <i class="fas ${safeIcon}"></i>
       </div>
       <div class="account-card-info">
-        <div class="account-card-name">${escHtml(a.name)} <span class="tx-original-amount">(${currency})</span></div>
+        <div class="account-card-name">
+          ${escHtml(a.name)} <span class="tx-original-amount">(${currency})</span>
+          ${excluded ? '<span class="acc-excluded-badge"><i class="fas fa-eye-slash"></i> 不計入總資產</span>' : ''}
+        </div>
         <div class="account-card-balance">${fmtByCurrency(a.balance, currency)}</div>
       </div>
       <div class="account-card-actions">
@@ -2269,8 +2273,16 @@ const App = (() => {
     const accounts = await API.get('/api/accounts');
     cachedAccounts = accounts;
 
-    const totalAssets = accounts.reduce((sum, a) => sum + a.balance, 0);
+    const includedAccounts = accounts.filter(a => !a.exclude_from_total);
+    const excludedAccounts = accounts.filter(a => a.exclude_from_total);
+    const totalAssets = includedAccounts.reduce((sum, a) => sum + a.balance, 0);
     el('totalAssets').textContent = fmt(totalAssets);
+    const noteEl = el('totalAssetsNote');
+    if (noteEl) {
+      noteEl.textContent = excludedAccounts.length > 0
+        ? `已排除 ${excludedAccounts.length} 個帳戶不計入`
+        : '';
+    }
 
     // ── 篩選 Tab ──
     const filterEl = el('accountTypeFilter');
@@ -5370,6 +5382,7 @@ const App = (() => {
       el('accBalance').value = a.initial_balance ?? a.initialBalance ?? 0;
       el('accType').value = a.account_type || '現金';
       el('accIcon').value = normalizeAccountIcon(a.icon);
+      el('accExclude').checked = !!(a.exclude_from_total);
       renderCurrencySelectOptions('accCurrency', a.currency, [a.currency]);
       el('accCurrency').value = normalizeCurrencyCode(a.currency);
     } else {
@@ -5569,13 +5582,14 @@ const App = (() => {
       const icon = normalizeAccountIcon(el('accIcon').value);
       const currency = normalizeCurrencyCode(el('accCurrency').value);
       const accountType = el('accType').value;
+      const excludeFromTotal = el('accExclude').checked;
       if (!name) return;
 
       try {
         if (id) {
-          await API.put('/api/accounts/' + id, { name, initialBalance, icon, currency, accountType });
+          await API.put('/api/accounts/' + id, { name, initialBalance, icon, currency, accountType, excludeFromTotal });
         } else {
-          await API.post('/api/accounts', { name, initialBalance, icon, currency, accountType });
+          await API.post('/api/accounts', { name, initialBalance, icon, currency, accountType, excludeFromTotal });
         }
         closeModal('modalAccount');
         toast(id ? '帳戶已更新' : '帳戶已新增', 'success');

@@ -1641,25 +1641,22 @@ const App = (() => {
     const sorted = (Array.isArray(data?.categoryBreakdown) && data.categoryBreakdown.length > 0)
       ? buildSortedCategoryRows(data.categoryBreakdown)
       : buildSortedCategoryRowsFromMap(data?.catMap);
-    const labels = sorted.childRows.map(r => r.label);
-    const values = sorted.childRows.map(r => r.total);
+    const parentRows = sorted.parentRows;
+    if (parentRows.length === 0) return;
+
     const parentColorMap = new Map();
-
-    sorted.parentRows.forEach((parent, idx) => {
-      parentColorMap.set(parent.parentKey, buildParentAccentColor(parent.parentColor, idx, sorted.parentRows.length));
+    parentRows.forEach((parent, idx) => {
+      parentColorMap.set(parent.parentKey, buildParentAccentColor(parent.parentColor, idx, parentRows.length));
     });
 
-    const colors = sorted.childRows.map(row => {
-      const parentColor = parentColorMap.get(row.parentKey) || '#94a3b8';
-      return buildChildVariantColor(parentColor, row.childIndex, row.siblingCount);
-    });
+    const labels = parentRows.map(r => r.parentName);
+    const values = parentRows.map(r => r.total);
+    const colors = parentRows.map(r => parentColorMap.get(r.parentKey) || '#94a3b8');
     const total = values.reduce((s, v) => s + v, 0);
-
-    if (labels.length === 0) return;
 
     charts.report = new Chart(ctx, {
       type: 'doughnut',
-      data: { labels, datasets: [{ data: values, backgroundColor: colors, borderWidth: 0 }] },
+      data: { labels, datasets: [{ data: values, backgroundColor: colors, borderWidth: 2, borderColor: '#ffffff' }] },
       options: { responsive: true, plugins: { legend: { position: 'bottom' } } },
     });
 
@@ -1667,7 +1664,7 @@ const App = (() => {
     labels.forEach((l, i) => {
       const pct = total ? ((values[i] / total) * 100).toFixed(1) : 0;
       summaryHtml += `<div class="report-summary-item">
-        <div class="label">${l}</div>
+        <div class="label">${escHtml(l)}</div>
         <div class="value">${fmt(values[i])}</div>
         <div class="label">${pct}%</div>
       </div>`;

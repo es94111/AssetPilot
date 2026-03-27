@@ -1,6 +1,16 @@
 {
-  "currentVersion": "4.0.1",
+  "currentVersion": "4.0.2",
   "releases": [
+    {
+      "version": "4.0.2",
+      "date": "2026-03-27",
+      "title": "統計報表圓餅圖改為父分類統計",
+      "type": "improved",
+      "changes": [
+        { "tag": "improved", "text": "統計報表分類統計預設改為只顯示父分類圓餅圖，簡化數據呈現" },
+        { "tag": "improved", "text": "開啟雙圓餅圖時顯示內圈父分類、外圈子分類，層次更清晰" }
+      ]
+    },
     {
       "version": "4.0.1",
       "date": "2026-03-26",

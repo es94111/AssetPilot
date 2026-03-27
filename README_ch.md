@@ -519,7 +519,7 @@ Caddy 會自動申請並續期 HTTPS 憑證。
 |------|----|
 | Docker Hub | [`es94111/assetpilot`](https://hub.docker.com/r/es94111/assetpilot) |
 | 支援架構 | `linux/amd64`、`linux/arm64` |
-| 基底映像 | `node:20-alpine` |
+| 基底映像 | `node:24-alpine` |
 | 映像大小 | ~180 MB |
 | 健康檢查 | 每 30 秒自動檢測 |
 

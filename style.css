@@ -638,13 +638,58 @@ body.dark-mode .mobile-header {
 
 /* ===== 帳戶 ===== */
 .account-actions {
-  display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;
+  display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;
 }
+/* ── 帳戶類別篩選 ── */
+.account-type-filter {
+  display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;
+}
+.acc-type-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 14px; border-radius: 20px;
+  border: 1.5px solid var(--border);
+  background: var(--surface); color: var(--text-secondary);
+  font-size: 13px; font-weight: 500; cursor: pointer;
+  transition: all var(--transition-normal);
+}
+.acc-type-btn:hover { border-color: var(--primary); color: var(--primary); }
+.acc-type-btn.active {
+  background: var(--primary); border-color: var(--primary);
+  color: #fff; box-shadow: 0 2px 8px color-mix(in srgb, var(--primary) 30%, transparent);
+}
+.acc-type-count {
+  background: rgba(0,0,0,0.12); color: inherit;
+  border-radius: 10px; padding: 1px 7px; font-size: 11px; font-weight: 600;
+}
+.acc-type-btn.active .acc-type-count { background: rgba(255,255,255,0.25); }
+/* ── 帳戶網格 ── */
 .account-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 14px;
 }
+/* ── 類別群組標題 ── */
+.account-type-group-header {
+  grid-column: 1 / -1;
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 4px 4px;
+  color: var(--group-color, var(--primary));
+  font-size: 13px; font-weight: 600;
+  border-bottom: 1.5px solid color-mix(in srgb, var(--group-color, var(--primary)) 20%, transparent);
+  margin-top: 4px;
+}
+.account-type-group-header:first-child { margin-top: 0; }
+.acc-group-count {
+  margin-left: auto; font-size: 12px; font-weight: 500;
+  color: var(--text-muted);
+}
+/* ── 空狀態 ── */
+.account-empty-state {
+  grid-column: 1 / -1;
+  text-align: center; padding: 40px 20px;
+  color: var(--text-muted);
+}
+.account-empty-state i { font-size: 32px; margin-bottom: 10px; display: block; }
 .account-card {
   background: var(--surface); border-radius: var(--radius);
   padding: 20px; box-shadow: var(--shadow);

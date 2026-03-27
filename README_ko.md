@@ -519,7 +519,7 @@ Caddy는 HTTPS 인증서를 자동으로 발급하고 갱신합니다.
 |------|-------|
 | Docker Hub | [`es94111/assetpilot`](https://hub.docker.com/r/es94111/assetpilot) |
 | 지원 아키텍처 | `linux/amd64`, `linux/arm64` |
-| 베이스 이미지 | `node:20-alpine` |
+| 베이스 이미지 | `node:24-alpine` |
 | 이미지 크기 | ~180 MB |
 | 헬스 체크 | 30초마다 자동 확인 |
 

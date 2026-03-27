@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-4.0-blue" alt="version">
+  <img src="https://img.shields.io/badge/version-4.0.4-blue" alt="version">
   <img src="https://img.shields.io/badge/node-%3E%3D18-green" alt="node">
   <img src="https://img.shields.io/badge/license-MIT-orange" alt="license">
   <img src="https://img.shields.io/badge/docker-ready-2496ED" alt="docker">
@@ -17,85 +17,189 @@
 
 ---
 
-## 功能特色
+## 目錄
 
-- **交易記錄** — 收入/支出/轉帳 CRUD，批次操作（刪除、變更分類/帳戶/日期）
-- **未來交易** — 可先建立未來日期交易，並在列表以「未來」標籤快速辨識與篩選
-- **帳戶管理** — 多帳戶餘額自動計算
-- **分類管理** — 支援父子分類
-- **預算管理** — 月度/分類預算，視覺化進度條
-- **固定收支** — 週期性自動產生交易
-- **收支管理整合** — 分類管理與固定收支已整合至收支管理模組內，與交易/預算/帳戶同層操作
-- **統計報表** — 分類統計（支援父子分類雙圓餅圖切換）、趨勢分析、每日消費，自訂時間範圍
-- **儀表板雙圓餅圖** — 支出分類與資產配置（含股票市值）皆可切換雙圓餅圖（內圈父分類、外圈子分類）
-- **股票紀錄** — 持股總覽、買賣交易、股利紀錄、FIFO 實現損益計算
-- **股票定期定額** — 可設定每期預算與週期，自動產生買進交易
-- **股票交易設定介面美化** — 交易設定改為分區卡片與重點提示，與全站卡片風格一致
-- **情境式快速新增按鈕** — 收支管理顯示「新增交易」、股票紀錄顯示「新增股票交易紀錄」，其他頁面自動隱藏
-- **TWSE 整合** — 即時/收盤股價查詢、除權息自動同步
-- **CSV 匯出/匯入** — 交易記錄、分類、股票交易、股利紀錄
-- **匯出匯入介面重整** — 設定頁「資料匯出匯入」改為交易/股票分組卡片，提升一致性與可讀性
-- **全球即時匯率** — 串接 exchangerate-api.com 匯率 API（支援基礎貨幣 TWD），可隨時更新並顯示上次取得時間
-- **匯率幣別可自訂** — 匯率設定可新增任意 3 碼幣別代碼，交易與帳戶可直接使用自訂幣別
-- **API 使用與授權頁** — 左側選單新增 API 清單與授權說明，集中顯示出處資訊
-- **主題切換容錯** — 深色/淺色切換先本機生效，後端同步異常時不影響當下使用
-- **帳號資訊可改顯示名稱** — 帳號設定可直接修改顯示名稱並立即同步側邊欄
-- **Google SSO** — 一鍵 Google 帳號登入（選配）
-- **管理員模式** — 第一位使用者自動成為管理員，可控管註冊政策與使用者帳號
-- **登入稽核紀錄** — 記錄登入時間、IP、IP 國家、登入方式，管理員全站紀錄含成功與失敗登入嘗試
-- **登入紀錄刪除管理** — 管理員登入紀錄與全站登入紀錄皆支援單筆刪除與勾選批次刪除
-- **登入紀錄批次刪除修正** — 強化管理員登入紀錄與全站登入紀錄批次刪除穩定性，批次失敗時自動逐筆備援
-- **登入紀錄舊資料相容修正** — 舊版登入紀錄缺少主鍵時，仍可正常勾選並執行單筆/批次刪除
-- **管理員登入紀錄勾選保證** — 無論新舊紀錄皆附備援識別值，確保每列都能勾選並單筆/批次刪除
-- **最新登入列勾選補強** — 即時補入的最新登入紀錄若缺 id，會用時間戳作為備援識別，避免無法勾選
-- **管理員單筆刪除再補強** — 管理員登入紀錄缺少主鍵時，操作欄仍可用時間戳備援識別執行單筆刪除
-- **登入紀錄刪除回應容錯** — 後端 API 錯誤統一回傳 JSON，避免刪除時出現「伺服器回應格式異常」
-- **管理員登入紀錄手動同步** — 管理員頁新增手動同步按鈕與上次同步時間，免重整頁面即可更新登入紀錄
-- **全部使用者登入紀錄手動同步** — 全部使用者登入紀錄新增手動同步按鈕與上次同步時間
-- **IP 國家查詢（ipinfo.io）** — 登入紀錄依 IP 顯示國家代碼，內網或本機位址顯示為 LOCAL
-- **資料庫加密** — ChaCha20-Poly1305 + PBKDF2-SHA256 全資料庫加密
-- **響應式設計** — 桌面與手機皆可使用
+- [專案介紹](#專案介紹)
+- [專案特色](#專案特色)
+- [專案功能](#專案功能)
+  - [儀表板](#儀表板)
+  - [收支管理](#收支管理)
+  - [股票紀錄](#股票紀錄)
+  - [統計報表](#統計報表)
+  - [預算管理](#預算管理)
+  - [帳戶管理](#帳戶管理)
+  - [設定與管理員](#設定與管理員)
+- [技術架構](#技術架構)
+- [專案安裝方式](#專案安裝方式)
+  - [方式一：Docker Hub 一鍵部署（推薦）](#方式一docker-hub-一鍵部署推薦)
+  - [方式二：Docker Compose](#方式二docker-compose)
+  - [方式三：Node.js 直接執行](#方式三nodejs-直接執行)
+- [環境變數設定](#環境變數設定)
+- [部署指南](#部署指南)
+  - [Synology NAS](#synology-nas)
+  - [雲端主機 VPS](#雲端主機-vps)
+  - [Nginx 反向代理](#nginx-反向代理)
+  - [Caddy 反向代理](#caddy-反向代理)
+- [Google SSO 設定](#google-sso-設定)
+- [專案使用方法](#專案使用方法)
+  - [首次使用](#首次使用)
+  - [新增交易](#新增交易)
+  - [信用卡繳費教學](#信用卡繳費教學)
+  - [股票管理](#股票管理)
+  - [匯率管理](#匯率管理)
+  - [CSV 匯出匯入](#csv-匯出匯入)
+  - [管理員操作](#管理員操作)
+- [Docker 進階管理](#docker-進階管理)
+- [安全性](#安全性)
+- [檔案結構](#檔案結構)
+- [API 來源](#api-來源)
+- [授權](#授權)
 
-## 近期更新
-- **v4.0** — 全站 UI 現代化重設計：Inter 字體、柔和陰影系統、毛玻璃效果、spring 動畫、iOS 風格分段控件、focus-visible 無障礙焦點環
-- **v3.63** — 新增信用卡繳款指引於文件
-- **v3.62** — 匯率更新按鈕加入舊版冷卻期訊息相容處理
-- **v3.61** — 全球匯率更新移除冷卻期限制，並在頁面顯示上次取得時間
-- **v3.60** — 股票紀錄新增定期定額（可設定週期與每期預算，自動產生買進交易）
-- **v3.59** — 股利紀錄表格日期欄位統一為「除息日期」
+---
 
+## 專案介紹
 
-## 常見使用教學
+**AssetPilot** 是一款以隱私優先設計的個人資產管理網頁應用程式。
 
-### 如何處理信用卡繳費（沖銷負餘額）？
-當您使用信用卡消費時，建議直接記錄一筆「**支出**」並將扣款帳戶選為「**信用卡**」。這會讓該信用卡的餘額變成負數，這完全是正常的（反映您的真實負債）。
-當到了信用卡繳費日，請依照下列步驟操作：
-1. 進入**交易記錄**（或使用任何快速新增交易入口）。
-2. 在交易類型選擇「**轉帳**」。
-3. 轉出帳戶：選擇用來繳費的「**銀行帳戶**」。
-4. 轉入帳戶：選擇您的「**信用卡帳戶**」。
-5. 輸入實際繳款金額後儲存。
+所有資料皆儲存於本地（或自托管伺服器），不依賴任何第三方雲端資料庫。透過 Docker 一行指令即可部署，適合在家用 NAS（如 Synology）、VPS 或本機電腦自行托管。
 
-這樣不僅能扣除銀行餘額，還會依據還款金額沖銷信用卡的負數餘額（歸零或減少負數），且不會重複計算為兩次支出。
+**適合誰使用？**
+
+- 希望掌握個人資金流向，追蹤每月收支與預算的人
+- 有台股投資習慣，需要管理持股、損益與股利的投資人
+- 重視資料隱私，不想把個人財務資料交給第三方平台的人
+
+---
+
+## 專案特色
+
+| 特色 | 說明 |
+|------|------|
+| 🏠 **自托管，資料自控** | 資料庫加密儲存於本地，不上傳任何財務資訊至外部伺服器 |
+| 🐳 **Docker 一鍵部署** | 無需設定，單行指令啟動；JWT 金鑰與加密金鑰自動產生 |
+| 📊 **台股深度整合** | 串接 TWSE OpenAPI，即時股價、除權息自動同步、FIFO 損益計算 |
+| 💱 **多幣別支援** | 支援 150+ 種幣別，串接 exchangerate-api.com 即時匯率 |
+| 📱 **響應式設計** | 桌機與手機皆可流暢使用 |
+| 🔒 **企業級安全** | ChaCha20-Poly1305 資料庫加密、Helmet 安全標頭、速率限制、CSP 保護 |
+| 👥 **多帳號管理** | 支援多使用者，管理員可管控註冊政策與稽核登入紀錄 |
+| 🔑 **Google SSO** | 選配 Google 一鍵登入，OAuth Authorization Code Flow |
+
+---
+
+## 專案功能
+
+### 儀表板
+
+- 總資產概覽卡片（各帳戶餘額加總）
+- 本月收入／支出統計
+- 支出分類圓餅圖（支援雙圓餅圖：內圈父分類、外圈子分類）
+- 資產配置圓餅圖（帳戶資產 + 股票市值，支援雙圓餅圖切換）
+- 最近交易記錄列表
+
+### 收支管理
+
+**交易記錄**
+- 收入／支出／轉帳 CRUD，支援備註、分類、帳戶、幣別
+- 未來日期交易，自動標記「未來」標籤供辨識與篩選
+- 多筆勾選批次操作：批次刪除、批次變更分類／帳戶／日期
+- 帳戶間轉帳，雙向自動配對（`linked_id`）
+
+**預算管理**
+- 月度總預算 + 各分類預算
+- 視覺化進度條，即時顯示剩餘預算
+
+**帳戶管理**
+- 多帳戶設定（現金、銀行、信用卡等）
+- 餘額依交易記錄自動計算
+- 多幣別帳戶，整合即時匯率換算
+
+**匯率設定**
+- 串接 exchangerate-api.com，支援 150+ 幣別
+- 手動觸發或自動同步，顯示上次取得時間
+
+**分類管理**
+- 父子兩層分類結構（如：食物 → 早餐 / 午餐 / 晚餐）
+- 自訂分類顏色
+
+**固定收支**
+- 設定週期性收支（月租、薪水等），自動產生交易記錄
+
+### 股票紀錄
+
+**持股總覽**
+- 即時計算持股市值、未實現損益、損益率
+- 自動從 TWSE 取得即時／收盤股價（三段策略）
+- 批次更新股價，顯示每檔價格來源與時間
+
+**交易紀錄**
+- 買進／賣出記錄，支援整股與零股
+- 手續費自動計算（`0.1425%`，整股最低 20 元）
+- 證交稅自動計算（賣出：一般股 `0.3%`、ETF/權證 `0.1%`）
+- 輸入股票代號自動查詢並建立股票（免先手動新增）
+- 搜尋篩選、分頁、多選批次刪除
+
+**股利紀錄**
+- 現金股利／股票股利記錄
+- 除權息自動同步（TWSE `TWT49U` + `TWT49UDetail`），不重複新增
+
+**實現損益**
+- FIFO 逐筆計算成本均價、實現損益、報酬率
+- 彙總卡片：總實現損益、整體報酬率、今年損益
+
+**定期定額**
+- 設定週期與每期預算，自動產生買進交易
+
+### 統計報表
+
+- **分類統計**：父分類圓餅圖，可切換雙圓餅圖（內圈父分類、外圈子分類）；圖例與 tooltip 顯示金額與佔比百分比
+- **趨勢分析**：月度收入／支出折線圖
+- **每日消費**：每日支出長條圖
+- 自訂時間範圍篩選
+
+### 帳戶管理
+
+- 多帳戶新增、編輯、刪除
+- 顯示各帳戶即時餘額
+
+### 設定與管理員
+
+**帳號設定**
+- 修改顯示名稱、密碼
+- 查看個人登入紀錄（最近 100 筆），含登入時間、IP、國家、登入方式
+
+**資料匯出匯入**
+- 交易記錄 CSV 匯出／匯入（含分類結構）
+- 股票交易 CSV 匯出／匯入
+- 股利紀錄 CSV 匯出／匯入
+
+**管理員功能**
+- 開關公開註冊；設定 Email 白名單
+- 新增／刪除使用者帳號
+- 查看所有使用者登入紀錄（含失敗嘗試）
+- 手動同步登入紀錄（免重整頁面）
 
 ---
 
 ## 技術架構
 
-| 層級   | 技術                                         |
-| ------ | -------------------------------------------- |
-| 前端   | 原生 HTML / CSS / JavaScript（SPA）          |
-| 後端   | Node.js + Express                            |
-| 資料庫 | SQLite（sql.js，記憶體 + 檔案持久化）        |
-| 認證   | JWT + bcryptjs，Google SSO（選配）           |
-| 圖表   | Chart.js                                     |
-| 安全   | Helmet、express-rate-limit、SRI、CORS 白名單 |
+| 層級 | 技術 |
+|------|------|
+| 前端 | 原生 HTML / CSS / JavaScript（SPA，`history.pushState`） |
+| 後端 | Node.js + Express |
+| 資料庫 | SQLite（sql.js，記憶體 + 檔案持久化） |
+| 加密 | ChaCha20-Poly1305 AEAD + PBKDF2-SHA256 |
+| 認證 | JWT（Bearer Token）+ bcryptjs，Google OAuth Code Flow（選配） |
+| 圖表 | Chart.js |
+| 圖示 | Font Awesome 6 |
+| 安全 | Helmet、express-rate-limit、SRI、CORS 白名單、CSP |
 
 ---
 
-## 快速開始
+## 專案安裝方式
 
 ### 方式一：Docker Hub 一鍵部署（推薦）
+
+不需任何前置設定，一行指令即可啟動：
 
 ```bash
 docker run -d \
@@ -105,9 +209,11 @@ docker run -d \
   es94111/assetpilot:latest
 ```
 
-開啟 http://localhost:3000 即可使用。
+開啟 [http://localhost:3000](http://localhost:3000) 即可使用。
 
-> **就這樣！** 不需要任何額外設定。資料庫、金鑰、Volume 全部自動建立。
+> **就這樣！** 資料庫、JWT 金鑰、加密金鑰、Volume 全部自動建立。
+
+---
 
 ### 方式二：Docker Compose
 
@@ -137,213 +243,59 @@ volumes:
 docker compose up -d
 ```
 
+---
+
 ### 方式三：Node.js 直接執行
 
+**系統需求：** Node.js >= 18
+
 ```bash
+# 1. 安裝依賴套件
 npm install
+
+# 2. 設定環境變數
 cp .env.example .env
+# 依需求編輯 .env 內容
+
+# 3. 啟動伺服器
 node server.js
 ```
 
----
-
-## Docker 部署詳細說明
-
-### 映像檔資訊
-
-| 項目         | 值                                                                 |
-| ------------ | ------------------------------------------------------------------ |
-| Docker Hub   | [`es94111/assetpilot`](https://hub.docker.com/r/es94111/assetpilot) |
-| 支援架構     | `linux/amd64`、`linux/arm64`                                   |
-| 基底映像檔   | `node:20-alpine`                                                 |
-| 映像大小     | ~180MB                                                             |
-| 內建健康檢查 | ✅ 每 30 秒自動檢測                                                |
-
-### 自動化機制
-
-首次啟動容器時，系統會自動完成以下設定：
-
-| 項目                     | 說明                                                                                    |
-| ------------------------ | --------------------------------------------------------------------------------------- |
-| **Volume**         | Dockerfile 內建 `VOLUME /app/data`，即使不指定 `-v`，Docker 也會自動建立匿名 Volume |
-| **JWT 金鑰**       | 未設定 `JWT_SECRET` 時，自動產生 64 字元隨機金鑰並寫入 `/app/data/.env`             |
-| **資料庫加密金鑰** | 未設定 `DB_ENCRYPTION_KEY` 時，自動產生 64 字元隨機金鑰並寫入 `/app/data/.env`      |
-| **資料庫**         | 自動建立 `/app/data/database.db`，含加密保護                                          |
-| **預設資料**       | 新使用者註冊時自動建立預設分類和帳戶                                                    |
-
-### 環境變數
-
-| 變數                  | 說明                                   | 預設值                    |
-| --------------------- | -------------------------------------- | ------------------------- |
-| `PORT`              | 伺服器埠號                             | `3000`                  |
-| `JWT_SECRET`        | JWT 簽章金鑰                           | 首次啟動自動產生          |
-| `JWT_EXPIRES`       | JWT 有效期限                           | `7d`                    |
-| `DB_ENCRYPTION_KEY` | 資料庫加密金鑰（ChaCha20-Poly1305）    | 首次啟動自動產生          |
-| `GOOGLE_CLIENT_ID`  | Google OAuth Client ID（留空停用 SSO） | —                        |
-| `GOOGLE_CLIENT_SECRET` | Google OAuth Client Secret（Code Flow 必填） | —                   |
-| `IPINFO_TOKEN`      | ipinfo.io API Token（選配，提升 IP 國家查詢配額） | —                 |
-| `ALLOWED_ORIGINS`   | CORS 白名單（逗號分隔）                | —（不限制）              |
-| `DB_PATH`           | 資料庫檔案路徑                         | `/app/data/database.db` |
-| `ENV_PATH`          | 自動產生的 .env 檔案路徑               | `/app/data/.env`        |
-
-設定環境變數的方式：
-
-```bash
-# 方式 A：docker run -e 參數
-docker run -d \
-  --name assetpilot \
-  --restart unless-stopped \
-  -p 3000:3000 \
-  -e GOOGLE_CLIENT_ID=your-google-client-id \
-  -e ALLOWED_ORIGINS=https://your-domain.com \
-  es94111/assetpilot:latest
-
-# 方式 B：docker compose（修改 docker-compose.yml 的 environment 區段）
-docker compose up -d
-```
-
-### Volume 與資料持久化
-
-容器內的 `/app/data` 目錄存放所有持久化資料：
-
-```
-/app/data/
-├── database.db    # 加密的 SQLite 資料庫
-└── .env           # 自動產生的金鑰（JWT_SECRET、DB_ENCRYPTION_KEY）
-```
-
-**三種掛載方式：**
-
-```bash
-# 1. 自動（不指定 -v）— Docker 自動建立匿名 Volume
-docker run -d -p 3000:3000 es94111/assetpilot:latest
-
-# 2. 具名 Volume（推薦）— 方便管理與識別
-docker run -d -p 3000:3000 -v assetpilot-data:/app/data es94111/assetpilot:latest
-
-# 3. 綁定本機目錄 — 方便直接存取檔案
-docker run -d -p 3000:3000 -v /path/to/data:/app/data es94111/assetpilot:latest
-```
-
-**Volume 管理指令：**
-
-```bash
-# 查看所有 Volume
-docker volume ls
-
-# 查看 Volume 詳細資訊（儲存位置、大小）
-docker volume inspect assetpilot-data
-
-# 備份資料
-docker run --rm -v assetpilot-data:/data -v $(pwd):/backup alpine \
-  tar czf /backup/assetpilot-backup.tar.gz -C /data .
-
-# 還原資料
-docker run --rm -v assetpilot-data:/data -v $(pwd):/backup alpine \
-  tar xzf /backup/assetpilot-backup.tar.gz -C /data
-```
-
-> ⚠️ **重要：** 刪除 Volume 會永久遺失資料庫和加密金鑰，請先備份再操作。
-
-### 容器管理指令
-
-```bash
-# 查看容器狀態（含健康檢查結果）
-docker ps
-
-# 查看即時日誌
-docker logs -f assetpilot
-
-# 停止容器
-docker stop assetpilot
-
-# 重新啟動
-docker restart assetpilot
-
-# 刪除容器（Volume 資料不受影響）
-docker rm -f assetpilot
-
-# 更新到最新版本
-docker pull es94111/assetpilot:latest
-docker rm -f assetpilot
-docker run -d \
-  --name assetpilot \
-  --restart unless-stopped \
-  -p 3000:3000 \
-  -v assetpilot-data:/app/data \
-  es94111/assetpilot:latest
-```
-
-### 全球即時匯率（exchangerate-api.com）
-
-- 匯率設定可連接全球即時匯率 API：`https://www.exchangerate-api.com/`
-- 在 `收支管理 > 帳戶管理 > 匯率設定` 可使用：
-  - `立即取得即時匯率`：手動同步最新匯率
-  - `自動更新匯率`：由使用者自行決定是否開啟
-- 不限制手動更新冷卻期，可隨時點擊「立即取得即時匯率」同步
-- 啟用自動更新後，系統會在進入匯率設定時依節流策略自動同步
-- 顯示上次取得時間
-- 支援免費版 API（無需 key）或付費版 API（設定 `EXCHANGE_RATE_API_KEY` 環境變數）
-
-### 管理員模式
-
-- 第一個建立的使用者會自動成為管理員。
-- 管理員可在 `設定 > 管理員` 進行以下操作：
-  - 開關公開註冊
-  - 設定可註冊 Email 白名單（每行一個）
-  - 建立新帳號（可直接指定為管理員）
-  - 刪除指定帳號
-  - 檢視管理員登入時間與 IP 紀錄
-  - 檢視全部使用者登入時間與 IP 紀錄（含失敗登入：帳號不存在、密碼錯誤、暫時鎖定等）
-- 註冊策略同時套用於一般註冊與 Google 首次註冊：
-  - 若設定白名單，只有白名單內 Email 可註冊
-  - 若未設定白名單且關閉公開註冊，僅能由管理員建立帳號
-- 系統保護規則：最後一位管理員不可被刪除。
-- 一般使用者可在 `設定 > 帳號設定` 查看自己的登入時間與 IP 紀錄（最近 100 筆）。
-
-### 自行建置映像檔
-
-```bash
-# 建置
-docker build -t assetpilot .
-
-# 啟動
-docker run -d \
-  --name assetpilot \
-  --restart unless-stopped \
-  -p 3000:3000 \
-  assetpilot
-
-# 匯出映像檔（帶到其他電腦）
-docker save assetpilot -o assetpilot.tar
-
-# 在其他電腦匯入
-docker load -i assetpilot.tar
-```
+開啟 [http://localhost:3000](http://localhost:3000) 即可使用。
 
 ---
 
-## 部署到 Synology NAS
+## 環境變數設定
 
-### 方式 A：Container Manager GUI（最簡單）
+| 變數 | 說明 | 預設值 |
+|------|------|--------|
+| `PORT` | 伺服器埠號 | `3000` |
+| `JWT_SECRET` | JWT 簽章金鑰（正式環境務必更換） | Docker 自動產生 |
+| `JWT_EXPIRES` | JWT 有效期限 | `7d` |
+| `DB_ENCRYPTION_KEY` | 資料庫加密金鑰 | Docker 自動產生 |
+| `DB_PATH` | 資料庫檔案路徑 | `/app/data/database.db` |
+| `ENV_PATH` | 自動產生 .env 路徑 | `/app/data/.env` |
+| `GOOGLE_CLIENT_ID` | Google OAuth Client ID（選配） | — |
+| `GOOGLE_CLIENT_SECRET` | Google OAuth Client Secret（選配） | — |
+| `ALLOWED_ORIGINS` | CORS 白名單，逗號分隔（留空不限制） | — |
+| `EXCHANGE_RATE_API_KEY` | exchangerate-api.com API Key（選配） | — |
+| `IPINFO_TOKEN` | ipinfo.io Token，提升 IP 查詢配額（選配） | — |
+| `CHANGELOG_URL` | 遠端 changelog.json URL | GitHub 倉庫預設 URL |
+
+---
+
+## 部署指南
+
+### Synology NAS
+
+**方式 A：Container Manager GUI（最簡單）**
 
 1. DSM → **Container Manager** → **Registry** → 搜尋 `es94111/assetpilot` → 下載
 2. **Container** → **Create** → 選擇 `es94111/assetpilot:latest`
-3. 設定 Port：`3000 → 3000`
-4. Volume 會自動建立，無需手動設定
-5. 啟動即可
+3. 設定 Port：`3000 → 3000`，Volume 自動建立
+4. 啟動即可
 
-### 方式 B：SSH 指令
-
-```bash
-sudo docker run -d \
-  --name assetpilot \
-  --restart unless-stopped \
-  -p 3000:3000 \
-  es94111/assetpilot:latest
-```
-
-如需指定資料路徑以便備份：
+**方式 B：SSH 指令**
 
 ```bash
 sudo docker run -d \
@@ -354,33 +306,28 @@ sudo docker run -d \
   es94111/assetpilot:latest
 ```
 
-### 反向代理設定（使用自訂網域）
+**反向代理設定（自訂網域 + HTTPS）**
 
-1. 至 DSM **控制台** → **登入入口** → **進階** → **反向代理**
-2. 新增規則：
+DSM → **控制台** → **登入入口** → **進階** → **反向代理**，新增規則：
 
-| 欄位           | 值                  |
-| -------------- | ------------------- |
-| 來源通訊協定   | HTTPS               |
-| 來源主機名稱   | `your-domain.com` |
-| 來源連接埠     | 443                 |
-| 目的地通訊協定 | HTTP                |
-| 目的地主機名稱 | `localhost`       |
-| 目的地連接埠   | `3000`            |
+| 欄位 | 值 |
+|------|----|
+| 來源通訊協定 | HTTPS |
+| 來源主機名稱 | `your-domain.com` |
+| 來源連接埠 | 443 |
+| 目的地通訊協定 | HTTP |
+| 目的地主機名稱 | `localhost` |
+| 目的地連接埠 | `3000` |
 
-3. 自訂標題 → 新增 `X-Forwarded-For`：`$proxy_add_x_forwarded_for`
+自訂標題加入：`X-Forwarded-For` → `$proxy_add_x_forwarded_for`
 
 ---
 
-## 部署到雲端主機
-
-### 使用 Docker Compose（VPS / AWS / GCP / Azure）
+### 雲端主機 VPS
 
 ```bash
-# 1. 建立專案目錄
 mkdir assetpilot && cd assetpilot
 
-# 2. 建立 docker-compose.yml
 cat > docker-compose.yml << 'EOF'
 services:
   assetpilot:
@@ -393,17 +340,17 @@ services:
       - assetpilot-data:/app/data
     environment:
       - ALLOWED_ORIGINS=https://your-domain.com
-      - GOOGLE_CLIENT_ID=
 
 volumes:
   assetpilot-data:
 EOF
 
-# 3. 啟動
 docker compose up -d
 ```
 
-### 搭配 Nginx 反向代理 + HTTPS
+---
+
+### Nginx 反向代理
 
 ```nginx
 server {
@@ -416,15 +363,17 @@ server {
     location / {
         proxy_pass http://127.0.0.1:3000;
         proxy_http_version 1.1;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header Host              $host;
+        proxy_set_header X-Real-IP         $remote_addr;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
     }
 }
 ```
 
-### 搭配 Caddy（自動 HTTPS）
+---
+
+### Caddy 反向代理
 
 ```
 your-domain.com {
@@ -432,22 +381,233 @@ your-domain.com {
 }
 ```
 
+Caddy 會自動申請並續期 HTTPS 憑證。
+
 ---
 
-## Google SSO 設定（選配）
+## Google SSO 設定
 
-1. 至 [Google Cloud Console](https://console.cloud.google.com/) 建立 OAuth 2.0 用戶端 ID
+1. 至 [Google Cloud Console](https://console.cloud.google.com/) 建立 OAuth 2.0 用戶端 ID（類型：網頁應用程式）
 2. 設定「已授權的 JavaScript 來源」：
-   - 本機開發：`http://localhost:3000`
-   - 正式網域：`https://your-domain.com`
+   - 本機：`http://localhost:3000`
+   - 正式：`https://your-domain.com`
 3. 設定「已授權的重新導向 URI」：
-   - 本機開發：`http://localhost:3000/`
-   - 正式網域：`https://your-domain.com/`
-4. 將 `GOOGLE_CLIENT_ID` 與 `GOOGLE_CLIENT_SECRET` 設為環境變數
-5. 系統使用 OAuth Authorization Code Flow，登入流程含 state 一次性驗證防重放
-6. 未設定時 Google 登入按鈕自動隱藏，不影響帳號密碼登入
+   - 本機：`http://localhost:3000/`
+   - 正式：`https://your-domain.com/`
+4. 將 `GOOGLE_CLIENT_ID` 與 `GOOGLE_CLIENT_SECRET` 設為環境變數啟動
+5. 未設定時 Google 登入按鈕自動隱藏，不影響帳號密碼登入
 
-> 若登入後停在 `/?code=...` 無法進入系統，請確認 Google Console 的重新導向 URI 與網站網域完全一致（含 `https` 與尾端 `/`），並更新到 v3.35.2（已修正 callback URL 卡住與 state 帶回相容性）。
+> ⚠️ 若登入後停在 `/?code=...`，請確認重新導向 URI 與網域完全一致（含 `https://` 與尾端 `/`）。
+
+---
+
+## 專案使用方法
+
+### 首次使用
+
+1. 開啟瀏覽器前往 `http://localhost:3000`
+2. 點擊「**立即註冊**」建立帳號
+3. **第一位註冊的使用者自動成為管理員**
+4. 系統自動建立預設分類（食衣住行等）與預設帳戶（現金、銀行帳戶）
+5. 登入後即可開始使用
+
+---
+
+### 新增交易
+
+1. 點擊側邊欄「**收支管理**」
+2. 點擊右上角「**+ 新增交易**」
+3. 填入日期、類型（收入/支出/轉帳）、金額、分類、帳戶
+4. 可選填備註、幣別
+5. 點擊「**儲存**」
+
+**批次操作：** 勾選多筆交易後，操作列出現批次刪除、批次變更分類／帳戶／日期按鈕。
+
+---
+
+### 信用卡繳費教學
+
+使用信用卡消費時，建議記錄「**支出**」並選「信用卡」帳戶，讓餘額顯示為負數（反映真實負債）。
+
+**繳費時：**
+
+1. 「**收支管理**」→「**新增交易**」
+2. 類型選「**轉帳**」
+3. 轉出帳戶：**銀行帳戶**
+4. 轉入帳戶：**信用卡帳戶**
+5. 輸入繳款金額後儲存
+
+這樣既能扣除銀行餘額，又能沖銷信用卡負數餘額，且不重複計算為支出。
+
+---
+
+### 股票管理
+
+**新增持股**
+
+1. 「**股票紀錄**」→「**交易紀錄**」→「**+ 新增股票交易**」
+2. 輸入股票代號（如 `2330`），系統自動從 TWSE 查詢並帶入名稱與現價
+3. 填入買進日期、股數、成交價
+4. 手續費與交易稅自動計算，可手動修改
+5. 儲存後即計入持股
+
+**更新股價**
+
+持股總覽點擊「**更新股價**」，系統使用三段策略自動取得最新價格：
+- 盤中 → TWSE 即時成交價
+- 盤後 → STOCK_DAY 當日收盤價
+- 其他時段 → STOCK_DAY_ALL 最近收盤備援
+
+**同步除權息**
+
+「**股利紀錄**」→「**同步除權息**」，依持股期間自動新增現金股利與股票股利（不重複）。
+
+---
+
+### 匯率管理
+
+1. 「**收支管理**」→「**帳戶管理**」→「**匯率設定**」
+2. 點擊「**立即取得即時匯率**」手動同步
+3. 或開啟「**自動更新匯率**」，進入頁面時自動同步
+4. 可新增任意 3 碼幣別代碼作為自訂幣別
+
+---
+
+### CSV 匯出匯入
+
+**路徑：** 「**設定**」→「**資料匯出匯入**」
+
+| 類型 | 匯出欄位 |
+|------|---------|
+| 交易記錄 | 日期、類型、金額、幣別、分類、帳戶、備註 |
+| 股票交易 | 日期、代號、名稱、類型（買/賣）、股數、成交價、手續費、交易稅、帳戶、備註 |
+| 股利紀錄 | 日期、代號、名稱、現金股利、股票股利、備註 |
+
+**匯入注意：** 若股票代號不存在，匯入時自動建立；若名稱不正確，自動以 CSV 內的名稱更新。
+
+---
+
+### 管理員操作
+
+**路徑：** 「**設定**」→「**管理員**」
+
+| 功能 | 說明 |
+|------|------|
+| 開關公開註冊 | 控制是否允許任何人自行註冊 |
+| Email 白名單 | 僅允許白名單內的 Email 註冊（每行一個） |
+| 新增帳號 | 直接建立新使用者，可設定管理員身份 |
+| 刪除帳號 | 永久刪除使用者及所有關聯資料 |
+| 登入稽核 | 查看所有使用者登入時間、IP、國家、成功/失敗狀態 |
+
+---
+
+## Docker 進階管理
+
+### 映像檔資訊
+
+| 項目 | 值 |
+|------|----|
+| Docker Hub | [`es94111/assetpilot`](https://hub.docker.com/r/es94111/assetpilot) |
+| 支援架構 | `linux/amd64`、`linux/arm64` |
+| 基底映像 | `node:20-alpine` |
+| 映像大小 | ~180 MB |
+| 健康檢查 | 每 30 秒自動檢測 |
+
+### Volume 與資料持久化
+
+容器內 `/app/data` 存放所有持久化資料：
+
+```
+/app/data/
+├── database.db    # 加密的 SQLite 資料庫
+└── .env           # 自動產生的金鑰（JWT_SECRET、DB_ENCRYPTION_KEY）
+```
+
+**三種掛載方式：**
+
+```bash
+# 1. 自動匿名 Volume（最簡單）
+docker run -d -p 3000:3000 es94111/assetpilot:latest
+
+# 2. 具名 Volume（推薦，方便管理）
+docker run -d -p 3000:3000 -v assetpilot-data:/app/data es94111/assetpilot:latest
+
+# 3. 綁定本機目錄（方便直接存取）
+docker run -d -p 3000:3000 -v /path/to/data:/app/data es94111/assetpilot:latest
+```
+
+### 備份與還原
+
+```bash
+# 備份
+docker run --rm \
+  -v assetpilot-data:/data \
+  -v $(pwd):/backup alpine \
+  tar czf /backup/assetpilot-backup.tar.gz -C /data .
+
+# 還原
+docker run --rm \
+  -v assetpilot-data:/data \
+  -v $(pwd):/backup alpine \
+  tar xzf /backup/assetpilot-backup.tar.gz -C /data
+```
+
+> ⚠️ **重要：** 刪除 Volume 會永久遺失資料庫和加密金鑰，請先備份再操作。
+
+### 常用管理指令
+
+```bash
+# 查看容器狀態（含健康檢查）
+docker ps
+
+# 查看即時日誌
+docker logs -f assetpilot
+
+# 停止 / 重啟
+docker stop assetpilot
+docker restart assetpilot
+
+# 更新至最新版本
+docker pull es94111/assetpilot:latest
+docker rm -f assetpilot
+docker run -d \
+  --name assetpilot \
+  --restart unless-stopped \
+  -p 3000:3000 \
+  -v assetpilot-data:/app/data \
+  es94111/assetpilot:latest
+```
+
+### 自行建置映像檔
+
+```bash
+docker build -t assetpilot .
+
+docker run -d \
+  --name assetpilot \
+  --restart unless-stopped \
+  -p 3000:3000 \
+  assetpilot
+```
+
+---
+
+## 安全性
+
+| 機制 | 說明 |
+|------|------|
+| **資料庫加密** | ChaCha20-Poly1305 AEAD + PBKDF2-SHA256 金鑰推導 |
+| **密碼加密** | bcryptjs 雜湊儲存，不明文保存 |
+| **XSS 防護** | 所有使用者輸入經 `escHtml()` 跳脫後才插入 DOM |
+| **安全標頭** | Helmet（HSTS、X-Content-Type-Options、Referrer-Policy） |
+| **CSP 保護** | 限制 inline script，限制腳本與外部資源來源 |
+| **速率限制** | 登入／註冊 API 每 IP 每 15 分鐘最多 20 次 |
+| **CORS 控制** | `ALLOWED_ORIGINS` 可限制允許的來源網域 |
+| **OAuth State 驗證** | Google 登入使用一次性 state 防 CSRF／重放攻擊 |
+| **SRI 驗證** | 外部 CDN 腳本（Font Awesome、Chart.js）加入完整性驗證 |
+| **屬性注入防護** | 帳戶 icon 採白名單驗證（僅允許 `fa-*`） |
+| **登入稽核** | 記錄登入時間、IP、國家、方式；管理員可查失敗嘗試 |
+| **健康檢查** | Docker HEALTHCHECK 每 30 秒自動偵測服務狀態 |
 
 ---
 
@@ -455,15 +615,17 @@ your-domain.com {
 
 ```
 ├── server.js              # Express 後端（API + 資料庫）
-├── app.js                 # 前端 SPA 邏輯
-├── index.html             # 單頁 HTML
+├── app.js                 # 前端 SPA 邏輯（IIFE 模組）
+├── index.html             # 單頁 HTML（所有頁面 + Modal）
 ├── style.css              # 全域樣式
-├── logo.svg               # 網站 Logo
-├── favicon.svg            # Favicon
+├── logo.svg               # 網站 Logo（登入頁）
+├── favicon.svg            # Favicon + 側邊欄 Logo
 ├── changelog.json         # 版本更新紀錄
 ├── Dockerfile             # Docker 建置設定
 ├── docker-compose.yml     # Docker Compose 設定
 ├── .env.example           # 環境變數範本
+├── .gitignore             # Git 忽略清單
+├── SRS.md                 # 軟體需求規格書
 ├── .github/workflows/
 │   └── docker-publish.yml # CI/CD 自動建置推送
 └── data/                  # 資料目錄（Docker Volume 掛載）
@@ -471,40 +633,21 @@ your-domain.com {
     └── .env               # 金鑰檔案（自動產生）
 ```
 
-## 安全性
+---
 
-- **XSS 防護** — 所有使用者輸入經 `escHtml()` 跳脫
-- **屬性注入防護** — 帳戶 icon 欄位採前後端白名單驗證（僅允許 `fa-*`）
-- **安全標頭** — Helmet（HSTS、X-Content-Type-Options、Referrer-Policy）
-- **CSP 保護** — 已收斂為禁止 inline script，限制腳本與外部資源來源
-- **OAuth state 驗證** — Google 授權碼登入使用一次性 state，降低登入 CSRF/重放風險
-- **速率限制** — 登入/註冊 API 限制每 IP 每 15 分鐘 20 次
-- **登入稽核** — 密碼登入與 Google SSO 成功後皆記錄登入時間、IP、登入方式與身份
-- **失敗登入稽核** — 管理員全站登入紀錄會保留失敗嘗試（帳號不存在、密碼錯誤、缺少憑證、暫時鎖定）
-- **本次登入保證** — 登入後可立即顯示本次登入紀錄
-- **CORS 控制** — 可透過 `ALLOWED_ORIGINS` 限制來源
-- **最小暴露面** — 僅白名單前端檔案可靜態存取，不再公開整個專案根目錄
-- **管理員權限管控** — 系統更新功能僅允許管理員執行
-- **SRI 驗證** — 外部 CDN 腳本加入完整性驗證
-- **資料庫加密** — ChaCha20-Poly1305 AEAD + PBKDF2-SHA256 金鑰推導
-- **密碼加密** — bcryptjs 雜湊儲存
-- **健康檢查** — Docker HEALTHCHECK 每 30 秒自動檢測服務狀態
+## API 來源
 
-## IPinfo Attribution
+| 服務 | 用途 | 連結 |
+|------|------|------|
+| **TWSE OpenAPI** | 台股即時股價、除權息資料 | [openapi.twse.com.tw](https://openapi.twse.com.tw/) |
+| **exchangerate-api.com** | 全球即時匯率（基礎貨幣 TWD） | [exchangerate-api.com](https://www.exchangerate-api.com/) |
+| **Google Identity Services** | Google SSO 登入 | [developers.google.com/identity](https://developers.google.com/identity) |
+| **IPinfo Lite** | IP 國家查詢 | [ipinfo.io/lite](https://ipinfo.io/lite) |
 
-- <a href="https://ipinfo.io/lite" target="_blank" rel="noopener noreferrer">IP address data is powered by IPinfo</a>
+IP address data is powered by <a href="https://ipinfo.io/lite" target="_blank" rel="noopener noreferrer">IPinfo</a>.
 
-## API 來源與提供者
-
-- 全球即時匯率 API：exchangerate-api.com（支援基礎貨幣 TWD，免費版或付費版）
-  - https://www.exchangerate-api.com/
-- 股票資料 API：臺灣證券交易所（TWSE OpenAPI）
-  - https://openapi.twse.com.tw/
-- Google 單一登入 API：Google（Google Identity Services）
-  - https://developers.google.com/identity
-- IP 國家查詢 API：IPinfo（IPinfo Lite）
-  - https://ipinfo.io/lite
+---
 
 ## 授權
 
-MIT License
+[MIT License](LICENSE)

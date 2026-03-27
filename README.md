@@ -1,3 +1,13 @@
+<p align="center">
+  🌐 &nbsp;
+  <strong>English</strong> &nbsp;|&nbsp;
+  <a href="README_ch.md">中文</a> &nbsp;|&nbsp;
+  <a href="README_es.md">Español</a> &nbsp;|&nbsp;
+  <a href="README_fr.md">Français</a> &nbsp;|&nbsp;
+  <a href="README_ja.md">日本語</a> &nbsp;|&nbsp;
+  <a href="README_ko.md">한국어</a>
+</p>
+
 # AssetPilot — Personal Asset Management
 
 <p align="center">

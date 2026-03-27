@@ -3,10 +3,11 @@ import * as ctrl from '../controllers/diet.controller.js';
 import { validate } from '../middleware/validate.js';
 import { authMiddleware } from '../middleware/auth.js';
 import { createFoodSchema, createMealLogSchema, updateMealLogSchema, foodSearchSchema } from '../schemas/diet.schema.js';
+import { apiRateLimiter } from '../middleware/rateLimit.js';
 
 const router = Router();
 
-router.use(authMiddleware);
+router.use(apiRateLimiter, authMiddleware);
 
 // Foods
 router.get('/foods', validate(foodSearchSchema, 'query'), ctrl.searchFoods);

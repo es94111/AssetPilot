@@ -462,6 +462,7 @@ async function initDB() {
   // 資料庫升級：多幣別欄位
   try { db.run("ALTER TABLE accounts ADD COLUMN currency TEXT DEFAULT 'TWD'"); } catch (e) { /* ignore */ }
   try { db.run("ALTER TABLE accounts ADD COLUMN account_type TEXT DEFAULT '現金'"); } catch (e) { /* ignore */ }
+  try { db.run("ALTER TABLE accounts ADD COLUMN exclude_from_total INTEGER DEFAULT 0"); } catch (e) { /* ignore */ }
   try { db.run("ALTER TABLE transactions ADD COLUMN currency TEXT DEFAULT 'TWD'"); } catch (e) { /* ignore */ }
   try { db.run("ALTER TABLE transactions ADD COLUMN original_amount REAL DEFAULT 0"); } catch (e) { /* ignore */ }
   try { db.run("ALTER TABLE transactions ADD COLUMN fx_rate REAL DEFAULT 1"); } catch (e) { /* ignore */ }
@@ -2350,26 +2351,28 @@ function calcBalance(accId, initialBalance, userId, accountCurrency = 'TWD') {
 }
 
 app.post('/api/accounts', (req, res) => {
-  const { name, initialBalance, icon, accountType } = req.body;
+  const { name, initialBalance, icon, accountType, excludeFromTotal } = req.body;
   const currency = normalizeCurrency(req.body.currency);
   const safeIcon = normalizeAccountIcon(icon);
   const VALID_TYPES = ['銀行', '信用卡', '現金', '虛擬錢包'];
   const safeType = VALID_TYPES.includes(accountType) ? accountType : '現金';
+  const safeExclude = excludeFromTotal ? 1 : 0;
   const id = uid();
-  db.run("INSERT INTO accounts (id, user_id, name, initial_balance, icon, currency, account_type, created_at) VALUES (?,?,?,?,?,?,?,?)",
-    [id, req.userId, name, initialBalance || 0, safeIcon, currency, safeType, todayStr()]);
+  db.run("INSERT INTO accounts (id, user_id, name, initial_balance, icon, currency, account_type, exclude_from_total, created_at) VALUES (?,?,?,?,?,?,?,?,?)",
+    [id, req.userId, name, initialBalance || 0, safeIcon, currency, safeType, safeExclude, todayStr()]);
   saveDB();
   res.json({ id });
 });
 
 app.put('/api/accounts/:id', (req, res) => {
-  const { name, initialBalance, icon, accountType } = req.body;
+  const { name, initialBalance, icon, accountType, excludeFromTotal } = req.body;
   const currency = normalizeCurrency(req.body.currency);
   const safeIcon = normalizeAccountIcon(icon);
   const VALID_TYPES = ['銀行', '信用卡', '現金', '虛擬錢包'];
   const safeType = VALID_TYPES.includes(accountType) ? accountType : '現金';
-  db.run("UPDATE accounts SET name = ?, initial_balance = ?, icon = ?, currency = ?, account_type = ? WHERE id = ? AND user_id = ?",
-    [name, initialBalance || 0, safeIcon, currency, safeType, req.params.id, req.userId]);
+  const safeExclude = excludeFromTotal ? 1 : 0;
+  db.run("UPDATE accounts SET name = ?, initial_balance = ?, icon = ?, currency = ?, account_type = ?, exclude_from_total = ? WHERE id = ? AND user_id = ?",
+    [name, initialBalance || 0, safeIcon, currency, safeType, safeExclude, req.params.id, req.userId]);
   saveDB();
   res.json({ ok: true });
 });

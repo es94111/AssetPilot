@@ -1,6 +1,15 @@
 {
-  "currentVersion": "4.0.2",
+  "currentVersion": "4.0.3",
   "releases": [
+    {
+      "version": "4.0.3",
+      "date": "2026-03-27",
+      "title": "擴充幣別中文名稱至 150 種",
+      "type": "improved",
+      "changes": [
+        { "tag": "improved", "text": "幣別中文名稱對照表從 30 種大幅擴充至 150 種，涵蓋亞太、歐洲、美洲、中東、非洲及特殊幣別" }
+      ]
+    },
     {
       "version": "4.0.2",
       "date": "2026-03-27",

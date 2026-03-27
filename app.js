@@ -1684,7 +1684,43 @@ const App = (() => {
     charts.report = new Chart(ctx, {
       type: 'doughnut',
       data: { labels, datasets: [{ data: values, backgroundColor: colors, borderWidth: 2, borderColor: '#ffffff' }] },
-      options: { responsive: true, plugins: { legend: { position: 'bottom' } } },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              boxWidth: 12,
+              padding: 10,
+              generateLabels(chart) {
+                const ds = chart.data.datasets[0] || { data: [], backgroundColor: [] };
+                return (chart.data.labels || []).map((label, i) => {
+                  const value = Number(ds.data[i]) || 0;
+                  const pct = total > 0 ? ((value / total) * 100).toFixed(1) : '0.0';
+                  const bg = Array.isArray(ds.backgroundColor) ? ds.backgroundColor[i] : ds.backgroundColor;
+                  return {
+                    text: `${label}  ${fmt(value)}（${pct}%）`,
+                    fillStyle: bg,
+                    strokeStyle: bg,
+                    lineWidth: 0,
+                    hidden: false,
+                    index: i,
+                  };
+                });
+              },
+            },
+          },
+          tooltip: {
+            callbacks: {
+              label(context) {
+                const value = Number(context.raw) || 0;
+                const pct = total > 0 ? ((value / total) * 100).toFixed(1) : '0.0';
+                return `${context.label}：${fmt(value)}（${pct}%）`;
+              },
+            },
+          },
+        },
+      },
     });
 
     let summaryHtml = '';
@@ -2041,6 +2077,9 @@ const App = (() => {
       row.renderColor = buildChildVariantColor(parentColor, row.childIndex, Math.max(row.siblingCount, 1));
     });
 
+    const grandTotal = childRows.reduce((sum, row) => sum + row.total, 0);
+    const parentTotal = parentRows.reduce((sum, row) => sum + row.total, 0);
+
     charts.report = new Chart(ctx, {
       type: 'doughnut',
       data: {
@@ -2086,7 +2125,9 @@ const App = (() => {
                 const names = ds.segmentLabels || [];
                 const label = names[context.dataIndex] || '';
                 const value = Number(context.raw) || 0;
-                return `${ds.label}：${label} ${fmt(value)}`;
+                const ref = ds.label === '父分類' ? parentTotal : grandTotal;
+                const pct = ref > 0 ? ((value / ref) * 100).toFixed(1) : '0.0';
+                return `${ds.label}：${label}  ${fmt(value)}（${pct}%）`;
               },
             },
           },

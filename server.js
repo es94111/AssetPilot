@@ -45,8 +45,9 @@ const ipCountryCache = new Map();
 function generateSecret(length = 64) {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   let result = '';
-  const bytes = crypto.randomBytes(length);
-  for (let i = 0; i < length; i++) result += chars[bytes[i] % chars.length];
+  for (let i = 0; i < length; i++) {
+    result += chars[crypto.randomInt(0, chars.length)];
+  }
   return result;
 }
 
@@ -194,19 +195,35 @@ app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/register', authLimiter);
 app.use('/api/auth/google/state', authLimiter);
 app.use('/api/auth/google', authLimiter);
+app.use('/api', rateLimit({
+  windowMs: 60 * 1000,
+  max: 120,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: '請求過於頻繁，請稍後再試' },
+  validate: { xForwardedForHeader: false }
+}));
 
 app.use(express.json({ limit: '50mb' }));
 
 // 僅開放必要前端靜態檔，避免專案根目錄檔案外洩
 const PUBLIC_FILES = ['/app.js', '/style.css', '/logo.svg', '/favicon.svg'];
+const PUBLIC_FILE_MAP = Object.freeze({
+  '/app.js': path.join(__dirname, 'app.js'),
+  '/style.css': path.join(__dirname, 'style.css'),
+  '/logo.svg': path.join(__dirname, 'logo.svg'),
+  '/favicon.svg': path.join(__dirname, 'favicon.svg'),
+});
 app.get(PUBLIC_FILES, (req, res) => {
-  res.sendFile(path.join(__dirname, req.path.slice(1)));
+  const safePath = PUBLIC_FILE_MAP[req.path];
+  if (!safePath) return res.status(404).end();
+  res.sendFile(safePath);
 });
 
 let db;
 
 // ─── 登入失敗追蹤 ───
-const loginAttempts = {};
+const loginAttempts = new Map();
 const googleOAuthStates = new Map();
 const GOOGLE_OAUTH_STATE_TTL_MS = 10 * 60 * 1000;
 
@@ -681,7 +698,7 @@ function saveDB() {
 function isValidColor(c) { return !c || /^#[0-9a-fA-F]{3,8}$/.test(c); }
 
 function uid() {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  return crypto.randomUUID().replace(/-/g, '');
 }
 
 function todayStr() {
@@ -1019,13 +1036,27 @@ function normalizeEmail(email) {
   return String(email || '').trim().toLowerCase();
 }
 
+function isValidEmail(email) {
+  const s = normalizeEmail(email);
+  if (!s || s.length > 254) return false;
+  if (s.includes('..')) return false;
+  const at = s.indexOf('@');
+  if (at <= 0 || at !== s.lastIndexOf('@') || at >= s.length - 1) return false;
+  const local = s.slice(0, at);
+  const domain = s.slice(at + 1);
+  if (!local || !domain || !domain.includes('.') || domain.startsWith('.') || domain.endsWith('.')) return false;
+  if (!/^[a-z0-9.!#$%&'*+/=?^_`{|}~-]+$/i.test(local)) return false;
+  if (!/^[a-z0-9.-]+$/i.test(domain)) return false;
+  return domain.split('.').every(part => /^[a-z0-9-]+$/i.test(part) && !part.startsWith('-') && !part.endsWith('-') && part.length > 0);
+}
+
 function parseAllowedRegistrationEmails(value) {
   const source = Array.isArray(value) ? value.join('\n') : String(value || '');
   return Array.from(new Set(
     source
       .split(/[\n,;\s]+/)
       .map(v => normalizeEmail(v))
-      .filter(v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v))
+      .filter(v => isValidEmail(v))
   ));
 }
 
@@ -1272,7 +1303,7 @@ app.post('/api/auth/register', async (req, res) => {
   if (!email || !password || !displayName) {
     return res.status(400).json({ error: '請填寫所有欄位' });
   }
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+  if (!isValidEmail(email)) {
     return res.status(400).json({ error: '電子郵件格式不正確' });
   }
   if (password.length < 8) {
@@ -1316,7 +1347,7 @@ app.post('/api/auth/login', async (req, res) => {
   const emailLower = email.toLowerCase();
 
   // 檢查是否鎖定
-  const attempt = loginAttempts[emailLower];
+  const attempt = loginAttempts.get(emailLower);
   if (attempt && attempt.count >= 5 && Date.now() - attempt.lastAttempt < 30 * 60 * 1000) {
     const remaining = Math.ceil((30 * 60 * 1000 - (Date.now() - attempt.lastAttempt)) / 60000);
     recordLoginAttempt({ email: emailLower, req, method: 'password', isSuccess: false, failureReason: 'account_temporarily_locked' });
@@ -1338,7 +1369,7 @@ app.post('/api/auth/login', async (req, res) => {
   }
 
   // 登入成功，清除失敗記錄
-  delete loginAttempts[emailLower];
+  loginAttempts.delete(emailLower);
   const currentLogin = recordLoginAudit(user, req, 'password');
   recordLoginAttempt({ user, email: emailLower, req, method: 'password', isSuccess: true });
 
@@ -1351,9 +1382,10 @@ app.post('/api/auth/login', async (req, res) => {
 });
 
 function trackFailedLogin(email) {
-  if (!loginAttempts[email]) loginAttempts[email] = { count: 0, lastAttempt: 0 };
-  loginAttempts[email].count++;
-  loginAttempts[email].lastAttempt = Date.now();
+  const current = loginAttempts.get(email) || { count: 0, lastAttempt: 0 };
+  current.count++;
+  current.lastAttempt = Date.now();
+  loginAttempts.set(email, current);
 }
 
 
@@ -1650,6 +1682,12 @@ app.get('/api/changelog', async (req, res) => {
   res.json(merged);
 });
 
+function trimTrailingSlashes(value) {
+  let output = String(value || '');
+  while (output.endsWith('/')) output = output.slice(0, -1);
+  return output;
+}
+
 // Google SSO 登入（統一使用 Authorization Code Flow）
 app.post('/api/auth/google', async (req, res) => {
   const { code, redirect_uri, state } = req.body;
@@ -1666,7 +1704,7 @@ app.post('/api/auth/google', async (req, res) => {
     const originalRedirect = String(redirect_uri || '').trim();
     if (originalRedirect) {
       redirectCandidates.push(originalRedirect);
-      if (originalRedirect.endsWith('/')) redirectCandidates.push(originalRedirect.replace(/\/+$/, ''));
+      if (originalRedirect.endsWith('/')) redirectCandidates.push(trimTrailingSlashes(originalRedirect));
       else redirectCandidates.push(originalRedirect + '/');
     } else {
       redirectCandidates.push('');
@@ -2019,7 +2057,7 @@ app.post('/api/admin/users', adminMiddleware, async (req, res) => {
   if (!email || !password || !displayName) {
     return res.status(400).json({ error: '請填寫所有欄位' });
   }
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+  if (!isValidEmail(email)) {
     return res.status(400).json({ error: '電子郵件格式不正確' });
   }
   if (password.length < 8) {

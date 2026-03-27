@@ -574,7 +574,6 @@ const App = (() => {
   // ─── Google SSO ───
   let googleClientId = null;
   let googleAuthInProgress = false;
-  const GOOGLE_OAUTH_STATE_KEY = 'googleOAuthState';
 
   async function requestGoogleOAuthState() {
     const r = await fetch('/api/auth/google/state', { cache: 'no-store' });
@@ -583,16 +582,6 @@ const App = (() => {
       throw new Error(data?.error || '無法取得 Google 登入狀態');
     }
     return String(data.state);
-  }
-
-  function storeGoogleOAuthState(state) {
-    sessionStorage.setItem(GOOGLE_OAUTH_STATE_KEY, state);
-  }
-
-  function consumeGoogleOAuthState() {
-    const state = sessionStorage.getItem(GOOGLE_OAUTH_STATE_KEY) || '';
-    sessionStorage.removeItem(GOOGLE_OAUTH_STATE_KEY);
-    return state;
   }
 
   function setGoogleAuthInProgress(inProgress) {
@@ -662,8 +651,7 @@ const App = (() => {
       // 不論成功失敗都先清除 OAuth 參數，避免卡在同一個 callback URL 無限重試。
       history.replaceState({}, document.title, location.pathname + location.hash);
 
-      const expectedState = consumeGoogleOAuthState();
-      if (!state || !expectedState || state !== expectedState) {
+      if (!state) {
         throw new Error('Google 登入狀態驗證失敗（state 不一致），請重新點擊 Google 登入');
       }
 
@@ -690,7 +678,6 @@ const App = (() => {
       let oauthState = '';
       try {
         oauthState = await requestGoogleOAuthState();
-        storeGoogleOAuthState(oauthState);
       } catch (e) {
         setGoogleAuthInProgress(false);
         const msg = e?.message || '無法啟動 Google 登入';

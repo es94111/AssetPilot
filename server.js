@@ -355,6 +355,14 @@ async function initDB() {
     updated_at INTEGER DEFAULT 0,
     updated_by TEXT DEFAULT ''
   )`);
+
+  // 資料庫升級：為 system_settings 加入管理員 IP 白名單欄位
+  // 必須在 INSERT 使用欄位前執行，避免舊版資料庫啟動失敗
+  try {
+    db.run("ALTER TABLE system_settings ADD COLUMN admin_ip_allowlist TEXT DEFAULT ''");
+    saveDB();
+  } catch (e) { /* 欄位已存在則忽略 */ }
+
   db.run("INSERT OR IGNORE INTO system_settings (id, public_registration, allowed_registration_emails, admin_ip_allowlist, updated_at, updated_by) VALUES (1, 1, '', '', ?, '')", [Date.now()]);
 
   db.run(`CREATE TABLE IF NOT EXISTS categories (
@@ -478,12 +486,6 @@ async function initDB() {
   // 資料庫升級：為 categories 加入 parent_id 欄位
   try {
     db.run("ALTER TABLE categories ADD COLUMN parent_id TEXT DEFAULT ''");
-  } catch (e) { /* 欄位已存在則忽略 */ }
-
-  // 資料庫升級：為 system_settings 加入管理員 IP 白名單欄位
-  try {
-    db.run("ALTER TABLE system_settings ADD COLUMN admin_ip_allowlist TEXT DEFAULT ''");
-    saveDB();
   } catch (e) { /* 欄位已存在則忽略 */ }
 
   // 資料庫升級：多幣別欄位
@@ -1140,8 +1142,13 @@ function getRequestIp(req) {
   return rawIp ? normalizeIp(rawIp) : 'unknown';
 }
 
+function getTrustedRequestIp(req) {
+  const rawIp = req.ip || req.socket?.remoteAddress || '';
+  return rawIp ? normalizeIp(rawIp) : 'unknown';
+}
+
 function isRequestIpWhitelisted(req) {
-  const ip = getRequestIp(req);
+  const ip = getTrustedRequestIp(req);
   if (!ip || ip === 'unknown') return false;
   const settings = getSystemSettings();
   const allowSet = new Set((settings.adminIpAllowlist || []).map(normalizeIp));

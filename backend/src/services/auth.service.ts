@@ -3,6 +3,10 @@ import { hashPassword, comparePassword } from '../lib/password.js';
 import { signToken } from '../lib/jwt.js';
 import { RegisterInput, LoginInput } from '../schemas/auth.schema.js';
 
+const MAX_FAILED_LOGIN_ATTEMPTS = 5;
+const LOGIN_LOCK_MINUTES = 30;
+const LOGIN_LOCK_MESSAGE = `登入失敗次數過多，請 ${LOGIN_LOCK_MINUTES} 分鐘後再試`;
+
 export async function register(input: RegisterInput) {
   const existing = await prisma.user.findUnique({ where: { email: input.email } });
   if (existing) {
@@ -19,14 +23,44 @@ export async function register(input: RegisterInput) {
 }
 
 export async function login(input: LoginInput) {
+  const now = new Date();
   const user = await prisma.user.findUnique({ where: { email: input.email } });
   if (!user) {
     throw Object.assign(new Error('帳號或密碼錯誤'), { statusCode: 401 });
   }
 
+  if (user.lockUntil && user.lockUntil > now) {
+    throw Object.assign(new Error(LOGIN_LOCK_MESSAGE), { statusCode: 429 });
+  }
+
   const valid = await comparePassword(input.password, user.passwordHash);
   if (!valid) {
+    const nextAttempts = user.failedLoginAttempts + 1;
+    const shouldLock = nextAttempts >= MAX_FAILED_LOGIN_ATTEMPTS;
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        failedLoginAttempts: shouldLock ? 0 : nextAttempts,
+        lockUntil: shouldLock ? new Date(now.getTime() + LOGIN_LOCK_MINUTES * 60 * 1000) : null,
+      },
+    });
+
+    if (shouldLock) {
+      throw Object.assign(new Error(LOGIN_LOCK_MESSAGE), { statusCode: 429 });
+    }
+
     throw Object.assign(new Error('帳號或密碼錯誤'), { statusCode: 401 });
+  }
+
+  if (user.failedLoginAttempts !== 0 || user.lockUntil) {
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        failedLoginAttempts: 0,
+        lockUntil: null,
+      },
+    });
   }
 
   const token = signToken({ userId: user.id, email: user.email });

@@ -1316,7 +1316,7 @@ app.post('/api/auth/login', async (req, res) => {
   const emailLower = email.toLowerCase();
 
   // 檢查是否鎖定
-  const attempt = loginAttempts[emailLower];
+  const attempt = isSafeKey(emailLower) ? loginAttempts[emailLower] : undefined;
   if (attempt && attempt.count >= 5 && Date.now() - attempt.lastAttempt < 30 * 60 * 1000) {
     const remaining = Math.ceil((30 * 60 * 1000 - (Date.now() - attempt.lastAttempt)) / 60000);
     recordLoginAttempt({ email: emailLower, req, method: 'password', isSuccess: false, failureReason: 'account_temporarily_locked' });
@@ -1338,7 +1338,9 @@ app.post('/api/auth/login', async (req, res) => {
   }
 
   // 登入成功，清除失敗記錄
-  delete loginAttempts[emailLower];
+  if (isSafeKey(emailLower)) {
+    delete loginAttempts[emailLower];
+  }
   const currentLogin = recordLoginAudit(user, req, 'password');
   recordLoginAttempt({ user, email: emailLower, req, method: 'password', isSuccess: true });
 
@@ -1350,7 +1352,15 @@ app.post('/api/auth/login', async (req, res) => {
   });
 });
 
+function isSafeKey(key) {
+  return key !== '__proto__' && key !== 'constructor' && key !== 'prototype';
+}
+
 function trackFailedLogin(email) {
+  if (!isSafeKey(email)) {
+    // Skip tracking for unsafe keys to avoid prototype pollution
+    return;
+  }
   if (!loginAttempts[email]) loginAttempts[email] = { count: 0, lastAttempt: 0 };
   loginAttempts[email].count++;
   loginAttempts[email].lastAttempt = Date.now();

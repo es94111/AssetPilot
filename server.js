@@ -40,6 +40,7 @@ const GLOBAL_FX_API_KEY = process.env.EXCHANGE_RATE_API_KEY || 'free'; // 免費
 const FX_AUTO_SYNC_MIN_INTERVAL_MS = 30 * 60 * 1000;
 const IP_COUNTRY_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const ipCountryCache = new Map();
+const ENV_ADMIN_IP_ALLOWLIST = parseIpAllowlist(process.env.ADMIN_IP_ALLOWLIST || '');
 
 // ─── 自動產生密鑰（僅首次啟動時） ───
 function generateSecret(length = 64) {
@@ -189,6 +190,7 @@ const authLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: '登入嘗試次數過多，請 15 分鐘後再試' },
+  skip: (req) => isRequestIpWhitelisted(req),
   validate: { xForwardedForHeader: false } // 避免反向代理環境下的驗證警告
 });
 app.use('/api/auth/login', authLimiter);
@@ -201,6 +203,7 @@ app.use('/api', rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: '請求過於頻繁，請稍後再試' },
+  skip: (req) => isRequestIpWhitelisted(req),
   validate: { xForwardedForHeader: false }
 }));
 
@@ -348,10 +351,19 @@ async function initDB() {
     id INTEGER PRIMARY KEY CHECK(id = 1),
     public_registration INTEGER DEFAULT 1,
     allowed_registration_emails TEXT DEFAULT '',
+    admin_ip_allowlist TEXT DEFAULT '',
     updated_at INTEGER DEFAULT 0,
     updated_by TEXT DEFAULT ''
   )`);
-  db.run("INSERT OR IGNORE INTO system_settings (id, public_registration, allowed_registration_emails, updated_at, updated_by) VALUES (1, 1, '', ?, '')", [Date.now()]);
+
+  // 資料庫升級：為 system_settings 加入管理員 IP 白名單欄位
+  // 必須在 INSERT 使用欄位前執行，避免舊版資料庫啟動失敗
+  try {
+    db.run("ALTER TABLE system_settings ADD COLUMN admin_ip_allowlist TEXT DEFAULT ''");
+    saveDB();
+  } catch (e) { /* 欄位已存在則忽略 */ }
+
+  db.run("INSERT OR IGNORE INTO system_settings (id, public_registration, allowed_registration_emails, admin_ip_allowlist, updated_at, updated_by) VALUES (1, 1, '', '', ?, '')", [Date.now()]);
 
   db.run(`CREATE TABLE IF NOT EXISTS categories (
     id TEXT PRIMARY KEY,
@@ -1060,15 +1072,33 @@ function parseAllowedRegistrationEmails(value) {
   ));
 }
 
+function normalizeIp(ip) {
+  return String(ip || '').trim().toLowerCase().replace(/^::ffff:/, '');
+}
+
+function parseIpAllowlist(value) {
+  const source = Array.isArray(value) ? value.join('\n') : String(value || '');
+  return Array.from(new Set(
+    source
+      .split(/[\n,;\s]+/)
+      .map(v => normalizeIp(v))
+      .filter(Boolean)
+  ));
+}
+
 function getSystemSettings() {
-  const row = queryOne("SELECT public_registration, allowed_registration_emails FROM system_settings WHERE id = 1") || {
+  const row = queryOne("SELECT public_registration, allowed_registration_emails, admin_ip_allowlist FROM system_settings WHERE id = 1") || {
     public_registration: 1,
     allowed_registration_emails: '',
+    admin_ip_allowlist: '',
   };
   const allowedRegistrationEmails = parseAllowedRegistrationEmails(row.allowed_registration_emails);
+  const dbAdminIpAllowlist = parseIpAllowlist(row.admin_ip_allowlist);
+  const mergedAdminIpAllowlist = Array.from(new Set([...ENV_ADMIN_IP_ALLOWLIST, ...dbAdminIpAllowlist]));
   return {
     publicRegistration: !!row.public_registration,
     allowedRegistrationEmails,
+    adminIpAllowlist: mergedAdminIpAllowlist,
   };
 }
 
@@ -1109,7 +1139,20 @@ function isUserAdmin(userId) {
 function getRequestIp(req) {
   const forwardedFor = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim();
   const rawIp = forwardedFor || req.ip || req.socket?.remoteAddress || '';
-  return rawIp ? rawIp.replace(/^::ffff:/, '') : 'unknown';
+  return rawIp ? normalizeIp(rawIp) : 'unknown';
+}
+
+function getTrustedRequestIp(req) {
+  const rawIp = req.ip || req.socket?.remoteAddress || '';
+  return rawIp ? normalizeIp(rawIp) : 'unknown';
+}
+
+function isRequestIpWhitelisted(req) {
+  const ip = getTrustedRequestIp(req);
+  if (!ip || ip === 'unknown') return false;
+  const settings = getSystemSettings();
+  const allowSet = new Set((settings.adminIpAllowlist || []).map(normalizeIp));
+  return allowSet.has(ip);
 }
 
 function isPrivateOrLocalIp(ip) {
@@ -2027,12 +2070,13 @@ app.get('/api/admin/settings', adminMiddleware, (req, res) => {
 app.put('/api/admin/settings', adminMiddleware, (req, res) => {
   const publicRegistration = !!req.body?.publicRegistration;
   const allowedRegistrationEmails = parseAllowedRegistrationEmails(req.body?.allowedRegistrationEmails);
+  const adminIpAllowlist = parseIpAllowlist(req.body?.adminIpAllowlist);
   db.run(
-    "UPDATE system_settings SET public_registration = ?, allowed_registration_emails = ?, updated_at = ?, updated_by = ? WHERE id = 1",
-    [publicRegistration ? 1 : 0, allowedRegistrationEmails.join('\n'), Date.now(), req.userId]
+    "UPDATE system_settings SET public_registration = ?, allowed_registration_emails = ?, admin_ip_allowlist = ?, updated_at = ?, updated_by = ? WHERE id = 1",
+    [publicRegistration ? 1 : 0, allowedRegistrationEmails.join('\n'), adminIpAllowlist.join('\n'), Date.now(), req.userId]
   );
   saveDB();
-  res.json({ success: true, publicRegistration, allowedRegistrationEmails });
+  res.json({ success: true, publicRegistration, allowedRegistrationEmails, adminIpAllowlist });
 });
 
 app.get('/api/admin/users', adminMiddleware, (req, res) => {

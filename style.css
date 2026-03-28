@@ -258,6 +258,77 @@ body.dark-mode .mobile-header {
   white-space: nowrap;
 }
 .chart-container-sm { max-width: 280px; margin: 0 auto; }
+
+/* ===== 儀表板 Top5 列表 ===== */
+.dash-top5-section { margin-top: 16px; }
+.dash-top5-section:empty { display: none; }
+.dash-top5-group { margin-bottom: 12px; }
+.dash-top5-group:last-child { margin-bottom: 0; }
+.dash-top5-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.dash-top5-title i { font-size: 12px; }
+.dash-top5-list { list-style: none; padding: 0; margin: 0; }
+.dash-top5-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+  font-size: 13px;
+  color: var(--text);
+  border-bottom: 1px solid var(--border);
+}
+.dash-top5-list li:last-child { border-bottom: none; }
+.dash-top5-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-right: 8px;
+}
+.dash-top5-rank {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+  margin-right: 6px;
+  flex-shrink: 0;
+}
+.dash-top5-value {
+  font-weight: 500;
+  white-space: nowrap;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+.dash-top5-pct {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  margin-left: 4px;
+}
+.dash-top5-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+@media (max-width: 480px) {
+  .dash-top5-columns {
+    grid-template-columns: 1fr;
+  }
+}
+
 .chart-container { position: relative; width: 100%; max-width: 700px; margin: 0 auto; }
 .chart-container canvas { width: 100% !important; }
 

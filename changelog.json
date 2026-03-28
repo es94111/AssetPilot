@@ -1,6 +1,16 @@
 {
-  "currentVersion": "4.0.7",
+  "currentVersion": "4.0.8",
   "releases": [
+    {
+      "version": "4.0.8",
+      "date": "2026-03-28",
+      "title": "儀表板支出分類與資產配置 Top5 列表",
+      "type": "feature",
+      "changes": [
+        { "tag": "improved", "text": "儀表板支出分類圓餅圖改為僅顯示父分類，下方新增支出分類前 5 名排行（含金額與百分比）" },
+        { "tag": "improved", "text": "儀表板資產配置圓餅圖下方新增「持股前 5 名」與「帳戶前 5 名」兩欄排行列表（含金額與佔比）" }
+      ]
+    },
     {
       "version": "4.0.7",
       "date": "2026-03-28",

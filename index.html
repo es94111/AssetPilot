@@ -1124,8 +1124,13 @@
             <label>Email 白名單（每行一個）</label>
             <textarea id="adminAllowedEmails" class="form-input" rows="6" placeholder="example1@mail.com&#10;example2@mail.com"></textarea>
           </div>
+          <div class="form-row" style="margin-top:16px">
+            <label>管理員 IP 白名單（每行一個）</label>
+            <textarea id="adminIpAllowlist" class="form-input" rows="4" placeholder="203.0.113.5&#10;2001:db8::1"></textarea>
+            <div class="import-hint" style="margin-top:6px">白名單 IP 將略過 API 速率限制，避免管理員被誤判封鎖。</div>
+          </div>
           <div class="import-actions" style="justify-content:flex-start">
-            <button class="btn btn-primary" id="saveAdminSettingsBtn"><i class="fas fa-save"></i> 儲存註冊策略</button>
+            <button class="btn btn-primary" id="saveAdminSettingsBtn"><i class="fas fa-save"></i> 儲存管理員設定</button>
           </div>
         </div>
 

@@ -40,13 +40,15 @@ const GLOBAL_FX_API_KEY = process.env.EXCHANGE_RATE_API_KEY || 'free'; // 免費
 const FX_AUTO_SYNC_MIN_INTERVAL_MS = 30 * 60 * 1000;
 const IP_COUNTRY_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const ipCountryCache = new Map();
+const ENV_ADMIN_IP_ALLOWLIST = parseIpAllowlist(process.env.ADMIN_IP_ALLOWLIST || '');
 
 // ─── 自動產生密鑰（僅首次啟動時） ───
 function generateSecret(length = 64) {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   let result = '';
-  const bytes = crypto.randomBytes(length);
-  for (let i = 0; i < length; i++) result += chars[bytes[i] % chars.length];
+  for (let i = 0; i < length; i++) {
+    result += chars[crypto.randomInt(0, chars.length)];
+  }
   return result;
 }
 
@@ -188,25 +190,43 @@ const authLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: '登入嘗試次數過多，請 15 分鐘後再試' },
+  skip: (req) => isRequestIpWhitelisted(req),
   validate: { xForwardedForHeader: false } // 避免反向代理環境下的驗證警告
 });
 app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/register', authLimiter);
 app.use('/api/auth/google/state', authLimiter);
 app.use('/api/auth/google', authLimiter);
+app.use('/api', rateLimit({
+  windowMs: 60 * 1000,
+  max: 120,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: '請求過於頻繁，請稍後再試' },
+  skip: (req) => isRequestIpWhitelisted(req),
+  validate: { xForwardedForHeader: false }
+}));
 
 app.use(express.json({ limit: '50mb' }));
 
 // 僅開放必要前端靜態檔，避免專案根目錄檔案外洩
 const PUBLIC_FILES = ['/app.js', '/style.css', '/logo.svg', '/favicon.svg'];
+const PUBLIC_FILE_MAP = Object.freeze({
+  '/app.js': path.join(__dirname, 'app.js'),
+  '/style.css': path.join(__dirname, 'style.css'),
+  '/logo.svg': path.join(__dirname, 'logo.svg'),
+  '/favicon.svg': path.join(__dirname, 'favicon.svg'),
+});
 app.get(PUBLIC_FILES, (req, res) => {
-  res.sendFile(path.join(__dirname, req.path.slice(1)));
+  const safePath = PUBLIC_FILE_MAP[req.path];
+  if (!safePath) return res.status(404).end();
+  res.sendFile(safePath);
 });
 
 let db;
 
 // ─── 登入失敗追蹤 ───
-const loginAttempts = {};
+const loginAttempts = new Map();
 const googleOAuthStates = new Map();
 const GOOGLE_OAUTH_STATE_TTL_MS = 10 * 60 * 1000;
 
@@ -331,10 +351,19 @@ async function initDB() {
     id INTEGER PRIMARY KEY CHECK(id = 1),
     public_registration INTEGER DEFAULT 1,
     allowed_registration_emails TEXT DEFAULT '',
+    admin_ip_allowlist TEXT DEFAULT '',
     updated_at INTEGER DEFAULT 0,
     updated_by TEXT DEFAULT ''
   )`);
-  db.run("INSERT OR IGNORE INTO system_settings (id, public_registration, allowed_registration_emails, updated_at, updated_by) VALUES (1, 1, '', ?, '')", [Date.now()]);
+
+  // 資料庫升級：為 system_settings 加入管理員 IP 白名單欄位
+  // 必須在 INSERT 使用欄位前執行，避免舊版資料庫啟動失敗
+  try {
+    db.run("ALTER TABLE system_settings ADD COLUMN admin_ip_allowlist TEXT DEFAULT ''");
+    saveDB();
+  } catch (e) { /* 欄位已存在則忽略 */ }
+
+  db.run("INSERT OR IGNORE INTO system_settings (id, public_registration, allowed_registration_emails, admin_ip_allowlist, updated_at, updated_by) VALUES (1, 1, '', '', ?, '')", [Date.now()]);
 
   db.run(`CREATE TABLE IF NOT EXISTS categories (
     id TEXT PRIMARY KEY,
@@ -681,7 +710,7 @@ function saveDB() {
 function isValidColor(c) { return !c || /^#[0-9a-fA-F]{3,8}$/.test(c); }
 
 function uid() {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  return crypto.randomUUID().replace(/-/g, '');
 }
 
 function todayStr() {
@@ -1019,25 +1048,57 @@ function normalizeEmail(email) {
   return String(email || '').trim().toLowerCase();
 }
 
+function isValidEmail(email) {
+  const s = normalizeEmail(email);
+  if (!s || s.length > 254) return false;
+  if (s.includes('..')) return false;
+  const at = s.indexOf('@');
+  if (at <= 0 || at !== s.lastIndexOf('@') || at >= s.length - 1) return false;
+  const local = s.slice(0, at);
+  const domain = s.slice(at + 1);
+  if (!local || !domain || !domain.includes('.') || domain.startsWith('.') || domain.endsWith('.')) return false;
+  if (!/^[a-z0-9.!#$%&'*+/=?^_`{|}~-]+$/i.test(local)) return false;
+  if (!/^[a-z0-9.-]+$/i.test(domain)) return false;
+  return domain.split('.').every(part => /^[a-z0-9-]+$/i.test(part) && !part.startsWith('-') && !part.endsWith('-') && part.length > 0);
+}
+
 function parseAllowedRegistrationEmails(value) {
   const source = Array.isArray(value) ? value.join('\n') : String(value || '');
   return Array.from(new Set(
     source
       .split(/[\n,;\s]+/)
       .map(v => normalizeEmail(v))
-      .filter(v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v))
+      .filter(v => isValidEmail(v))
+  ));
+}
+
+function normalizeIp(ip) {
+  return String(ip || '').trim().toLowerCase().replace(/^::ffff:/, '');
+}
+
+function parseIpAllowlist(value) {
+  const source = Array.isArray(value) ? value.join('\n') : String(value || '');
+  return Array.from(new Set(
+    source
+      .split(/[\n,;\s]+/)
+      .map(v => normalizeIp(v))
+      .filter(Boolean)
   ));
 }
 
 function getSystemSettings() {
-  const row = queryOne("SELECT public_registration, allowed_registration_emails FROM system_settings WHERE id = 1") || {
+  const row = queryOne("SELECT public_registration, allowed_registration_emails, admin_ip_allowlist FROM system_settings WHERE id = 1") || {
     public_registration: 1,
     allowed_registration_emails: '',
+    admin_ip_allowlist: '',
   };
   const allowedRegistrationEmails = parseAllowedRegistrationEmails(row.allowed_registration_emails);
+  const dbAdminIpAllowlist = parseIpAllowlist(row.admin_ip_allowlist);
+  const mergedAdminIpAllowlist = Array.from(new Set([...ENV_ADMIN_IP_ALLOWLIST, ...dbAdminIpAllowlist]));
   return {
     publicRegistration: !!row.public_registration,
     allowedRegistrationEmails,
+    adminIpAllowlist: mergedAdminIpAllowlist,
   };
 }
 
@@ -1078,7 +1139,20 @@ function isUserAdmin(userId) {
 function getRequestIp(req) {
   const forwardedFor = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim();
   const rawIp = forwardedFor || req.ip || req.socket?.remoteAddress || '';
-  return rawIp ? rawIp.replace(/^::ffff:/, '') : 'unknown';
+  return rawIp ? normalizeIp(rawIp) : 'unknown';
+}
+
+function getTrustedRequestIp(req) {
+  const rawIp = req.ip || req.socket?.remoteAddress || '';
+  return rawIp ? normalizeIp(rawIp) : 'unknown';
+}
+
+function isRequestIpWhitelisted(req) {
+  const ip = getTrustedRequestIp(req);
+  if (!ip || ip === 'unknown') return false;
+  const settings = getSystemSettings();
+  const allowSet = new Set((settings.adminIpAllowlist || []).map(normalizeIp));
+  return allowSet.has(ip);
 }
 
 function isPrivateOrLocalIp(ip) {
@@ -1272,7 +1346,7 @@ app.post('/api/auth/register', async (req, res) => {
   if (!email || !password || !displayName) {
     return res.status(400).json({ error: '請填寫所有欄位' });
   }
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+  if (!isValidEmail(email)) {
     return res.status(400).json({ error: '電子郵件格式不正確' });
   }
   if (password.length < 8) {
@@ -1316,7 +1390,7 @@ app.post('/api/auth/login', async (req, res) => {
   const emailLower = email.toLowerCase();
 
   // 檢查是否鎖定
-  const attempt = loginAttempts[emailLower];
+  const attempt = loginAttempts.get(emailLower);
   if (attempt && attempt.count >= 5 && Date.now() - attempt.lastAttempt < 30 * 60 * 1000) {
     const remaining = Math.ceil((30 * 60 * 1000 - (Date.now() - attempt.lastAttempt)) / 60000);
     recordLoginAttempt({ email: emailLower, req, method: 'password', isSuccess: false, failureReason: 'account_temporarily_locked' });
@@ -1338,7 +1412,7 @@ app.post('/api/auth/login', async (req, res) => {
   }
 
   // 登入成功，清除失敗記錄
-  delete loginAttempts[emailLower];
+  loginAttempts.delete(emailLower);
   const currentLogin = recordLoginAudit(user, req, 'password');
   recordLoginAttempt({ user, email: emailLower, req, method: 'password', isSuccess: true });
 
@@ -1351,9 +1425,10 @@ app.post('/api/auth/login', async (req, res) => {
 });
 
 function trackFailedLogin(email) {
-  if (!loginAttempts[email]) loginAttempts[email] = { count: 0, lastAttempt: 0 };
-  loginAttempts[email].count++;
-  loginAttempts[email].lastAttempt = Date.now();
+  const current = loginAttempts.get(email) || { count: 0, lastAttempt: 0 };
+  current.count++;
+  current.lastAttempt = Date.now();
+  loginAttempts.set(email, current);
 }
 
 
@@ -1650,6 +1725,12 @@ app.get('/api/changelog', async (req, res) => {
   res.json(merged);
 });
 
+function trimTrailingSlashes(value) {
+  let output = String(value || '');
+  while (output.endsWith('/')) output = output.slice(0, -1);
+  return output;
+}
+
 // Google SSO 登入（統一使用 Authorization Code Flow）
 app.post('/api/auth/google', async (req, res) => {
   const { code, redirect_uri, state } = req.body;
@@ -1666,7 +1747,7 @@ app.post('/api/auth/google', async (req, res) => {
     const originalRedirect = String(redirect_uri || '').trim();
     if (originalRedirect) {
       redirectCandidates.push(originalRedirect);
-      if (originalRedirect.endsWith('/')) redirectCandidates.push(originalRedirect.replace(/\/+$/, ''));
+      if (originalRedirect.endsWith('/')) redirectCandidates.push(trimTrailingSlashes(originalRedirect));
       else redirectCandidates.push(originalRedirect + '/');
     } else {
       redirectCandidates.push('');
@@ -1989,12 +2070,13 @@ app.get('/api/admin/settings', adminMiddleware, (req, res) => {
 app.put('/api/admin/settings', adminMiddleware, (req, res) => {
   const publicRegistration = !!req.body?.publicRegistration;
   const allowedRegistrationEmails = parseAllowedRegistrationEmails(req.body?.allowedRegistrationEmails);
+  const adminIpAllowlist = parseIpAllowlist(req.body?.adminIpAllowlist);
   db.run(
-    "UPDATE system_settings SET public_registration = ?, allowed_registration_emails = ?, updated_at = ?, updated_by = ? WHERE id = 1",
-    [publicRegistration ? 1 : 0, allowedRegistrationEmails.join('\n'), Date.now(), req.userId]
+    "UPDATE system_settings SET public_registration = ?, allowed_registration_emails = ?, admin_ip_allowlist = ?, updated_at = ?, updated_by = ? WHERE id = 1",
+    [publicRegistration ? 1 : 0, allowedRegistrationEmails.join('\n'), adminIpAllowlist.join('\n'), Date.now(), req.userId]
   );
   saveDB();
-  res.json({ success: true, publicRegistration, allowedRegistrationEmails });
+  res.json({ success: true, publicRegistration, allowedRegistrationEmails, adminIpAllowlist });
 });
 
 app.get('/api/admin/users', adminMiddleware, (req, res) => {
@@ -2019,7 +2101,7 @@ app.post('/api/admin/users', adminMiddleware, async (req, res) => {
   if (!email || !password || !displayName) {
     return res.status(400).json({ error: '請填寫所有欄位' });
   }
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+  if (!isValidEmail(email)) {
     return res.status(400).json({ error: '電子郵件格式不正確' });
   }
   if (password.length < 8) {
@@ -4092,7 +4174,14 @@ app.use((err, req, res, next) => {
 });
 
 // ─── 前端路由 catch-all（所有非 API、非靜態檔案的請求都回傳 index.html）───
-app.get('{*path}', (req, res) => {
+app.get('{*path}', rateLimit({
+  windowMs: 60 * 1000,
+  max: 120,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: '請求過於頻繁，請稍後再試' },
+  validate: { xForwardedForHeader: false }
+}), (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 

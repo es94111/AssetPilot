@@ -1068,6 +1068,8 @@ const App = (() => {
   function renderDashPie(catBreakdown, useDualPie = false) {
     if (charts.dashPie) charts.dashPie.destroy();
     const ctx = el('dashPieChart').getContext('2d');
+    const top5Container = el('dashExpenseTop5');
+    if (top5Container) top5Container.innerHTML = '';
     if (!catBreakdown || catBreakdown.length === 0) {
       ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
       return;
@@ -1075,39 +1077,67 @@ const App = (() => {
 
     if (useDualPie) {
       drawDashboardExpenseDualPie(ctx, catBreakdown);
+      renderDashExpenseTop5(catBreakdown);
       return;
     }
 
     const sorted = buildSortedCategoryRows(catBreakdown);
-    if (sorted.childRows.length === 0) {
+    if (sorted.parentRows.length === 0) {
       ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
       return;
     }
 
-    const labels = sorted.childRows.map(r => r.childName);
-    const data = sorted.childRows.map(r => r.total);
+    // 只用父分類
     const parentColorMap = new Map();
-
     sorted.parentRows.forEach((parent, idx) => {
       parentColorMap.set(parent.parentKey, buildParentAccentColor(parent.parentColor, idx, sorted.parentRows.length));
     });
 
-    const colors = sorted.childRows.map(row => {
-      const parentColor = parentColorMap.get(row.parentKey) || '#94a3b8';
-      return buildChildVariantColor(parentColor, row.childIndex, row.siblingCount);
-    });
+    const labels = sorted.parentRows.map(r => r.parentName);
+    const data = sorted.parentRows.map(r => r.total);
+    const colors = sorted.parentRows.map(r => parentColorMap.get(r.parentKey) || '#94a3b8');
 
     charts.dashPie = new Chart(ctx, {
       type: 'doughnut',
       data: { labels, datasets: [{ data, backgroundColor: colors, borderWidth: 0 }] },
       options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, padding: 10 } } } },
     });
+
+    renderDashExpenseTop5(catBreakdown);
+  }
+
+  function renderDashExpenseTop5(catBreakdown) {
+    const container = el('dashExpenseTop5');
+    if (!container) return;
+
+    const sorted = buildSortedCategoryRows(catBreakdown);
+    const parentRows = sorted.parentRows;
+    if (parentRows.length === 0) { container.innerHTML = ''; return; }
+
+    const grandTotal = parentRows.reduce((s, r) => s + r.total, 0);
+    const top5 = parentRows.slice(0, 5);
+
+    let html = '<div class="dash-top5-group">';
+    html += '<div class="dash-top5-title"><i class="fas fa-tags"></i>支出分類前 5 名</div>';
+    html += '<ul class="dash-top5-list">';
+    top5.forEach((row, idx) => {
+      const pct = grandTotal > 0 ? ((row.total / grandTotal) * 100).toFixed(1) : '0.0';
+      html += `<li>
+        <span class="dash-top5-rank">${idx + 1}</span>
+        <span class="dash-top5-name">${escHtml(row.parentName)}</span>
+        <span class="dash-top5-value">${fmt(row.total)}<span class="dash-top5-pct">${pct}%</span></span>
+      </li>`;
+    });
+    html += '</ul></div>';
+    container.innerHTML = html;
   }
 
   async function renderDashAssetAllocationPie(useDualPie = false) {
     if (charts.dashAssetPie) charts.dashAssetPie.destroy();
     const canvas = el('dashAssetPieChart');
     if (!canvas) return;
+    const assetTop5El = el('dashAssetTop5');
+    if (assetTop5El) assetTop5El.innerHTML = '';
 
     const [accounts, stocks] = await Promise.all([
       API.get('/api/accounts'),
@@ -1124,6 +1154,7 @@ const App = (() => {
 
     if (useDualPie) {
       drawDashboardAssetDualPie(ctx, accounts, stocks);
+      renderDashAssetTop5(accounts, stocks);
       return;
     }
 
@@ -1207,6 +1238,75 @@ const App = (() => {
         },
       },
     });
+
+    renderDashAssetTop5(accounts, stocks);
+  }
+
+  function renderDashAssetTop5(accounts, stocks) {
+    const container = el('dashAssetTop5');
+    if (!container) return;
+
+    const accountRows = (accounts || [])
+      .filter(a => !a.exclude_from_total)
+      .map(a => ({ name: String(a.name || '帳戶'), total: Math.round(Number(a.balance) || 0) }))
+      .filter(r => r.total > 0)
+      .sort((a, b) => b.total - a.total);
+
+    const stockRows = (stocks || [])
+      .map(s => {
+        const code = String(s.code || '').trim();
+        const name = String(s.name || '').trim();
+        const label = code && name && code !== name ? `${code} ${name}` : (name || code || '股票');
+        return { name: label, total: Math.round(Number(s.marketValue) || 0) };
+      })
+      .filter(r => r.total > 0)
+      .sort((a, b) => b.total - a.total);
+
+    if (stockRows.length === 0 && accountRows.length === 0) {
+      container.innerHTML = '';
+      return;
+    }
+
+    let html = '<div class="dash-top5-columns">';
+
+    // 持股前 5 名
+    if (stockRows.length > 0) {
+      const top5Stocks = stockRows.slice(0, 5);
+      const stockTotal = stockRows.reduce((s, r) => s + r.total, 0);
+      html += '<div class="dash-top5-group">';
+      html += '<div class="dash-top5-title"><i class="fas fa-chart-line"></i>持股前 5 名</div>';
+      html += '<ul class="dash-top5-list">';
+      top5Stocks.forEach((row, idx) => {
+        const pct = stockTotal > 0 ? ((row.total / stockTotal) * 100).toFixed(1) : '0.0';
+        html += `<li>
+          <span class="dash-top5-rank">${idx + 1}</span>
+          <span class="dash-top5-name">${escHtml(row.name)}</span>
+          <span class="dash-top5-value">${fmt(row.total)}<span class="dash-top5-pct">${pct}%</span></span>
+        </li>`;
+      });
+      html += '</ul></div>';
+    }
+
+    // 帳戶前 5 名
+    if (accountRows.length > 0) {
+      const top5Accounts = accountRows.slice(0, 5);
+      const accountTotal = accountRows.reduce((s, r) => s + r.total, 0);
+      html += '<div class="dash-top5-group">';
+      html += '<div class="dash-top5-title"><i class="fas fa-landmark"></i>帳戶前 5 名</div>';
+      html += '<ul class="dash-top5-list">';
+      top5Accounts.forEach((row, idx) => {
+        const pct = accountTotal > 0 ? ((row.total / accountTotal) * 100).toFixed(1) : '0.0';
+        html += `<li>
+          <span class="dash-top5-rank">${idx + 1}</span>
+          <span class="dash-top5-name">${escHtml(row.name)}</span>
+          <span class="dash-top5-value">${fmt(row.total)}<span class="dash-top5-pct">${pct}%</span></span>
+        </li>`;
+      });
+      html += '</ul></div>';
+    }
+
+    html += '</div>';
+    container.innerHTML = html;
   }
 
   function renderDashRecent(recent) {

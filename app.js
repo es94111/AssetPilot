@@ -1141,6 +1141,7 @@ const App = (() => {
     }
 
     const accountRows = (accounts || [])
+      .filter(a => !a.exclude_from_total)
       .map(a => ({ label: String(a.name || '帳戶'), name: String(a.name || '帳戶'), total: Math.round(Number(a.balance) || 0) }))
       .filter(row => row.total > 0)
       .sort(sortByTotalThenNameDesc);
@@ -1922,6 +1923,7 @@ const App = (() => {
 
   function drawDashboardAssetDualPie(ctx, accounts, stocks) {
     const accountRows = (accounts || [])
+      .filter(a => !a.exclude_from_total)
       .map(a => ({
         label: String(a.name || '帳戶'),
         total: Math.round(Number(a.balance) || 0),

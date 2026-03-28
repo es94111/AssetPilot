@@ -1,6 +1,17 @@
 {
-  "currentVersion": "4.0.6",
+  "currentVersion": "4.0.7",
   "releases": [
+    {
+      "version": "4.0.7",
+      "date": "2026-03-28",
+      "title": "修正排除帳戶 Bug 與 Modal UI 美化",
+      "type": "fixed",
+      "changes": [
+        { "tag": "fixed", "text": "修正「排除計入總資產」未在儀表板資產配置圓餅圖（單圓餅/雙圓餅）生效的問題" },
+        { "tag": "fixed", "text": "修正編輯帳戶 Modal 中 Toggle 開關與文字重疊的 CSS 特異性問題" },
+        { "tag": "improved", "text": "編輯帳戶 Modal 排除計入總資產區塊 UI 美化，Toggle 與說明文字間距更合理" }
+      ]
+    },
     {
       "version": "4.0.6",
       "date": "2026-03-27",

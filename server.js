@@ -820,10 +820,10 @@ function resolveRateToTwd(globalData, currencyCode) {
   const baseCode = globalData?.base_code || 'USD';
   const rates = globalData?.conversion_rates || {};
   
-  // 策略 1：直接查詢（若 base_code 是 TWD，直接返回轉換率）
+  // 策略 1：直接查詢（若 base_code 是 TWD，rates[c] 表示「1 TWD = rates[c] c」，需取倒數得「1 c = X TWD」）
   if (baseCode === 'TWD') {
     const direct = Number(rates[c]);
-    if (direct > 0) return direct;
+    if (direct > 0) return 1 / direct;
   }
   
   // 策略 2：如果 base_code 是 USD，需要透過 TWD 反算

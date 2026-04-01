@@ -27,7 +27,8 @@
       "WebFetch(domain:www.twse.com.tw)",
       "WebFetch(domain:mis.twse.com.tw)",
       "WebFetch(domain:oauth2.googleapis.com)",
-      "WebFetch(domain:accounts.google.com)"
+      "WebFetch(domain:accounts.google.com)",
+      "Bash(wc -l \"c:/Users/hongyu/SynologyDrive/網頁/記帳網頁\"/README*.md)"
     ]
   }
 }

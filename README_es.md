@@ -21,7 +21,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/version-4.0.4-blue" alt="version">
   <img src="https://img.shields.io/badge/node-%3E%3D18-green" alt="node">
-  <img src="https://img.shields.io/badge/license-MIT-orange" alt="license">
+  <img src="https://img.shields.io/badge/license-AGPL--3.0-blue" alt="license">
   <img src="https://img.shields.io/badge/docker-ready-2496ED" alt="docker">
 </p>
 
@@ -660,4 +660,4 @@ Los datos de direcciones IP son proporcionados por <a href="https://ipinfo.io/li
 
 ## Licencia
 
-[MIT License](LICENSE)
+[GNU AGPL v3](LICENSE)

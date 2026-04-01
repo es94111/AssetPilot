@@ -241,7 +241,7 @@ services:
       - assetpilot-data:/app/data
     environment:
       - GOOGLE_CLIENT_ID=          # Opcional: introduce tu Google OAuth Client ID para habilitar SSO
-      # - ALLOWED_ORIGINS=https://tu-dominio.com
+      # - ALLOWED_ORIGINS=https://your-domain.com
 
 volumes:
   assetpilot-data:
@@ -323,7 +323,7 @@ DSM → **Panel de Control** → **Portal de Inicio de Sesión** → **Avanzado*
 | Campo | Valor |
 |-------|-------|
 | Protocolo de Origen | HTTPS |
-| Nombre de Host de Origen | `tu-dominio.com` |
+| Nombre de Host de Origen | `your-domain.com` |
 | Puerto de Origen | 443 |
 | Protocolo de Destino | HTTP |
 | Nombre de Host de Destino | `localhost` |
@@ -349,7 +349,7 @@ services:
     volumes:
       - assetpilot-data:/app/data
     environment:
-      - ALLOWED_ORIGINS=https://tu-dominio.com
+      - ALLOWED_ORIGINS=https://your-domain.com
 
 volumes:
   assetpilot-data:
@@ -365,7 +365,7 @@ docker compose up -d
 ```nginx
 server {
     listen 443 ssl http2;
-    server_name tu-dominio.com;
+    server_name your-domain.com;
 
     ssl_certificate     /ruta/al/cert.pem;
     ssl_certificate_key /ruta/al/key.pem;
@@ -386,7 +386,7 @@ server {
 ### Proxy Inverso con Caddy
 
 ```
-tu-dominio.com {
+your-domain.com {
     reverse_proxy localhost:3000
 }
 ```
@@ -400,10 +400,10 @@ Caddy aprovisiona y renueva automáticamente los certificados HTTPS.
 1. Ve a [Google Cloud Console](https://console.cloud.google.com/) y crea un ID de cliente OAuth 2.0 (tipo: Aplicación web)
 2. Configura los **Orígenes de JavaScript autorizados**:
    - Local: `http://localhost:3000`
-   - Producción: `https://tu-dominio.com`
+   - Producción: `https://your-domain.com`
 3. Configura los **URI de redireccionamiento autorizados**:
    - Local: `http://localhost:3000/`
-   - Producción: `https://tu-dominio.com/`
+   - Producción: `https://your-domain.com/`
 4. Establece `GOOGLE_CLIENT_ID` y `GOOGLE_CLIENT_SECRET` como variables de entorno y reinicia
 5. Si no está configurado, el botón de inicio de sesión con Google se oculta automáticamente y no afecta al inicio de sesión con contraseña
 

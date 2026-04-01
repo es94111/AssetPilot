@@ -654,7 +654,7 @@ docker run -d \
 | **Google Identity Services** | Google SSO 登入 | [developers.google.com/identity](https://developers.google.com/identity) |
 | **IPinfo Lite** | IP 國家查詢 | [ipinfo.io/lite](https://ipinfo.io/lite) |
 
-IP address data is powered by <a href="https://ipinfo.io/lite" target="_blank" rel="noopener noreferrer">IPinfo</a>.
+IP 位址資料由 <a href="https://ipinfo.io/lite" target="_blank" rel="noopener noreferrer">IPinfo</a> 提供。
 
 ---
 

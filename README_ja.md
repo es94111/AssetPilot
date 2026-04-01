@@ -661,5 +661,3 @@ IP アドレスデータは IPinfo が提供しています。
 ## ライセンス
 
 [GNU AGPL v3](LICENSE)
-
----

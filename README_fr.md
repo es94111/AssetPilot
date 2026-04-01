@@ -654,12 +654,10 @@ docker run -d \
 | **Google Identity Services** | Connexion Google SSO | [developers.google.com/identity](https://developers.google.com/identity) |
 | **IPinfo Lite** | Recherche de pays par adresse IP | [ipinfo.io/lite](https://ipinfo.io/lite) |
 
-Les données d'adresses IP sont fournies par IPinfo.
+Les données d'adresses IP sont fournies par <a href="https://ipinfo.io/lite" target="_blank" rel="noopener noreferrer">IPinfo</a>.
 
 ---
 
 ## Licence
 
 [GNU AGPL v3](LICENSE)
-
----

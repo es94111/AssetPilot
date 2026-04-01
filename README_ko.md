@@ -21,7 +21,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/version-4.0.4-blue" alt="version">
   <img src="https://img.shields.io/badge/node-%3E%3D18-green" alt="node">
-  <img src="https://img.shields.io/badge/license-MIT-orange" alt="license">
+  <img src="https://img.shields.io/badge/license-AGPL--3.0-blue" alt="license">
   <img src="https://img.shields.io/badge/docker-ready-2496ED" alt="docker">
 </p>
 
@@ -660,6 +660,6 @@ IP 주소 데이터는 IPinfo가 제공합니다.
 
 ## 라이선스
 
-[MIT License](LICENSE)
+[GNU AGPL v3](LICENSE)
 
 ---

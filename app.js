@@ -5462,6 +5462,15 @@ const App = (() => {
   function onAccTypeChange(type) {
     const iconMap = { '銀行': 'fa-building-columns', '信用卡': 'fa-credit-card', '現金': 'fa-money-bill', '虛擬錢包': 'fa-wallet' };
     if (iconMap[type]) el('accIcon').value = iconMap[type];
+    const bankRow = el('accLinkedBankRow');
+    if (type === '信用卡') {
+      bankRow.style.display = '';
+      const banks = cachedAccounts.filter(a => a.account_type === '銀行');
+      el('accLinkedBank').innerHTML = '<option value="">不分組</option>' +
+        banks.map(b => `<option value="${b.id}">${escHtml(b.name)}</option>`).join('');
+    } else {
+      bankRow.style.display = 'none';
+    }
   }
 
   function openAccountModal(accId) {
@@ -5475,6 +5484,10 @@ const App = (() => {
       el('accName').value = a.name;
       el('accBalance').value = a.initial_balance ?? a.initialBalance ?? 0;
       el('accType').value = a.account_type || '現金';
+      onAccTypeChange(a.account_type || '現金');
+      if ((a.account_type || '') === '信用卡') {
+        el('accLinkedBank').value = a.linkedBankId || '';
+      }
       el('accIcon').value = normalizeAccountIcon(a.icon);
       el('accExclude').checked = !!(a.exclude_from_total);
       renderCurrencySelectOptions('accCurrency', a.currency, [a.currency]);
@@ -5677,13 +5690,14 @@ const App = (() => {
       const currency = normalizeCurrencyCode(el('accCurrency').value);
       const accountType = el('accType').value;
       const excludeFromTotal = el('accExclude').checked;
+      const linkedBankId = accountType === '信用卡' ? (el('accLinkedBank').value || null) : null;
       if (!name) return;
 
       try {
         if (id) {
-          await API.put('/api/accounts/' + id, { name, initialBalance, icon, currency, accountType, excludeFromTotal });
+          await API.put('/api/accounts/' + id, { name, initialBalance, icon, currency, accountType, excludeFromTotal, linkedBankId });
         } else {
-          await API.post('/api/accounts', { name, initialBalance, icon, currency, accountType, excludeFromTotal });
+          await API.post('/api/accounts', { name, initialBalance, icon, currency, accountType, excludeFromTotal, linkedBankId });
         }
         closeModal('modalAccount');
         toast(id ? '帳戶已更新' : '帳戶已新增', 'success');

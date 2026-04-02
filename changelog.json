@@ -1,6 +1,19 @@
 {
-  "currentVersion": "4.1",
+  "currentVersion": "4.2",
   "releases": [
+    {
+      "version": "4.2",
+      "date": "2026-04-02",
+      "title": "首頁視覺翻新",
+      "type": "improved",
+      "changes": [
+        { "tag": "improved", "text": "公開首頁採用 Plus Jakarta Sans 字型，提升視覺質感" },
+        { "tag": "improved", "text": "英雄區塊新增關鍵數據列（功能模組、加密規格、TWSE 整合、多幣別）" },
+        { "tag": "improved", "text": "功能特色卡片新增彩色圖示容器，六種主題色彩區隔各功能" },
+        { "tag": "improved", "text": "登入按鈕改為橙色主要行動色（CTA），視覺層次更清晰" },
+        { "tag": "fixed", "text": "修正首頁右下角藍色 FAB 按鈕在頁面初始載入時短暫顯示的問題" }
+      ]
+    },
     {
       "version": "4.1",
       "date": "2026-04-02",

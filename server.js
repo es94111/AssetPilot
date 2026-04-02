@@ -2496,6 +2496,8 @@ app.post('/api/accounts/credit-card-repayment', (req, res) => {
   const fromCurrency = normalizeCurrency(fromAccount.currency);
   const now = Date.now();
 
+  // Pre-validate all entries and build converted amounts before any DB writes
+  const validRepayments = [];
   for (const { cardId, amount } of repayments) {
     if (!cardId || Number(amount) <= 0) continue;
     const cardAccount = queryOne("SELECT currency, account_type FROM accounts WHERE id = ? AND user_id = ?", [cardId, req.userId]);
@@ -2513,7 +2515,14 @@ app.post('/api/accounts/credit-card-repayment', (req, res) => {
       ? transferAmount
       : convertFromTwd(outConverted.twdAmount, toCurrency, req.userId);
     const inConverted = convertToTwd(inOriginal, toCurrency, null, req.userId);
+    validRepayments.push({ cardId, toCurrency, outConverted, inConverted });
+  }
 
+  if (validRepayments.length === 0) {
+    return res.status(400).json({ error: '沒有有效的還款項目' });
+  }
+
+  for (const { cardId, toCurrency, outConverted, inConverted } of validRepayments) {
     const outId = uid();
     const inId = uid();
     db.run("INSERT INTO transactions (id,user_id,type,amount,currency,original_amount,fx_rate,date,category_id,account_id,note,linked_id,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",

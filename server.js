@@ -492,6 +492,7 @@ async function initDB() {
   try { db.run("ALTER TABLE accounts ADD COLUMN currency TEXT DEFAULT 'TWD'"); } catch (e) { /* ignore */ }
   try { db.run("ALTER TABLE accounts ADD COLUMN account_type TEXT DEFAULT '現金'"); } catch (e) { /* ignore */ }
   try { db.run("ALTER TABLE accounts ADD COLUMN exclude_from_total INTEGER DEFAULT 0"); } catch (e) { /* ignore */ }
+  try { db.run("ALTER TABLE accounts ADD COLUMN linked_bank_id TEXT DEFAULT NULL"); } catch (e) { /* ignore */ }
   try { db.run("ALTER TABLE transactions ADD COLUMN currency TEXT DEFAULT 'TWD'"); } catch (e) { /* ignore */ }
   try { db.run("ALTER TABLE transactions ADD COLUMN original_amount REAL DEFAULT 0"); } catch (e) { /* ignore */ }
   try { db.run("ALTER TABLE transactions ADD COLUMN fx_rate REAL DEFAULT 1"); } catch (e) { /* ignore */ }

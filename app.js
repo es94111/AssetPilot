@@ -5567,6 +5567,51 @@ const App = (() => {
     el('tfAmountLabel').innerHTML = `金額（${c}） <span class="required">*</span>`;
   }
 
+  function openCreditRepaymentModal(bankId) {
+    const bankAcc = cachedAccounts.find(a => a.id === bankId);
+    if (!bankAcc) return;
+    const cards = cachedAccounts.filter(a => a.linkedBankId === bankId && a.account_type === '信用卡');
+    el('creditRepaymentTitle').textContent = `信用卡還款（${bankAcc.name}）`;
+    el('crDate').value = today();
+    const opts = cachedAccounts.map(a =>
+      `<option value="${a.id}"${a.id === bankId ? ' selected' : ''}>${escHtml(a.name)}</option>`
+    ).join('');
+    el('crFromAccount').innerHTML = opts;
+    el('crCardList').innerHTML = `<table class="cr-card-table">
+      <thead><tr><th>信用卡</th><th>目前欠款</th><th>還款金額</th></tr></thead>
+      <tbody>${cards.map(c => {
+        const currency = normalizeCurrencyCode(c.currency);
+        const debt = Math.max(0, -(c.balance));
+        return `<tr>
+          <td>${escHtml(c.name)}</td>
+          <td>${fmtByCurrency(c.balance, currency)}</td>
+          <td><input type="number" class="cr-amount-input" data-card-id="${c.id}" data-debt="${debt}"
+            value="${debt}" min="0" step="0.01" oninput="App.crUpdateTotal()"></td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table>`;
+    crUpdateTotal();
+    openModal('modalCreditRepayment');
+  }
+
+  function crUpdateTotal() {
+    const inputs = document.querySelectorAll('.cr-amount-input');
+    const total = Array.from(inputs).reduce((sum, inp) => sum + (Number(inp.value) || 0), 0);
+    el('crTotal').textContent = fmt(total);
+  }
+
+  function crSetAll() {
+    document.querySelectorAll('.cr-amount-input').forEach(inp => {
+      inp.value = inp.dataset.debt || 0;
+    });
+    crUpdateTotal();
+  }
+
+  function crClearAll() {
+    document.querySelectorAll('.cr-amount-input').forEach(inp => { inp.value = ''; });
+    crUpdateTotal();
+  }
+
   // 分類
   function openCategoryModal(type, catId, parentId) {
     const form = el('categoryForm');
@@ -5772,6 +5817,25 @@ const App = (() => {
       }
     });
     el('tfFrom')?.addEventListener('change', updateTransferAmountLabel);
+    el('creditRepaymentForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const fromAccountId = el('crFromAccount').value;
+      const date = el('crDate').value || today();
+      const inputs = document.querySelectorAll('.cr-amount-input');
+      const repayments = Array.from(inputs)
+        .map(inp => ({ cardId: inp.dataset.cardId, amount: Number(inp.value) || 0 }))
+        .filter(r => r.amount > 0);
+      if (repayments.length === 0) return toast('請輸入至少一筆還款金額', 'error');
+      try {
+        await API.post('/api/accounts/credit-card-repayment', { fromAccountId, date, repayments });
+        closeModal('modalCreditRepayment');
+        toast('還款成功', 'success');
+        await refreshCache();
+        await renderPage(currentPage);
+      } catch (err) {
+        toast(err.message, 'error');
+      }
+    });
 
     // 分類表單
     el('categoryForm').addEventListener('submit', async (e) => {
@@ -6117,6 +6181,10 @@ const App = (() => {
     editAccount: openAccountModal,
     deleteAccount,
     setAccountTypeFilter: (type) => { accountTypeFilter = type; renderAccounts(); },
+    openCreditRepaymentModal,
+    crUpdateTotal,
+    crSetAll,
+    crClearAll,
     onAccTypeChange,
     editBudget: openBudgetModal,
     deleteBudget,

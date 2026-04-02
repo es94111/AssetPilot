@@ -5571,11 +5571,14 @@ const App = (() => {
     const bankAcc = cachedAccounts.find(a => a.id === bankId);
     if (!bankAcc) return;
     const cards = cachedAccounts.filter(a => a.linkedBankId === bankId && a.account_type === '信用卡');
+    if (cards.length === 0) return toast('此銀行目前沒有已連結的信用卡', 'error');
     el('creditRepaymentTitle').textContent = `信用卡還款（${bankAcc.name}）`;
     el('crDate').value = today();
-    const opts = cachedAccounts.map(a =>
-      `<option value="${a.id}"${a.id === bankId ? ' selected' : ''}>${escHtml(a.name)}</option>`
-    ).join('');
+    const opts = cachedAccounts
+      .filter(a => a.account_type !== '信用卡')
+      .map(a =>
+        `<option value="${a.id}"${a.id === bankId ? ' selected' : ''}>${escHtml(a.name)}</option>`
+      ).join('');
     el('crFromAccount').innerHTML = opts;
     el('crCardList').innerHTML = `<table class="cr-card-table">
       <thead><tr><th>信用卡</th><th>目前欠款</th><th>還款金額</th></tr></thead>

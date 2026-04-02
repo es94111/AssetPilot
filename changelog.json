@@ -1,6 +1,17 @@
 {
-  "currentVersion": "4.0.10",
+  "currentVersion": "4.1",
   "releases": [
+    {
+      "version": "4.1",
+      "date": "2026-04-02",
+      "title": "信用卡銀行分組與一鍵還款",
+      "type": "feature",
+      "changes": [
+        { "tag": "new", "text": "信用卡帳戶可連結所屬銀行帳戶，帳戶管理頁依銀行分組顯示" },
+        { "tag": "new", "text": "信用卡銀行群組新增「還款」按鈕，支援逐張設定還款金額、全部歸零、清除全部" },
+        { "tag": "improved", "text": "刪除銀行帳戶時自動解除旗下信用卡的銀行連結" }
+      ]
+    },
     {
       "version": "4.0.10",
       "date": "2026-03-31",

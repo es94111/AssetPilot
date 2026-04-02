@@ -8,7 +8,7 @@
   <link rel="apple-touch-icon" href="/logo.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/style.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css" integrity="sha512-5Hs3dF2AEPkpNAR7UiOHba+lRSJNeM2ECkwxUIxC1Q/FLycGTbNapWXB4tP889k5T5Ju8fs4b1P5z/iB4nMfSQ==" crossorigin="anonymous" referrerpolicy="no-referrer">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1" integrity="sha512-WoViKhKD4qI2WruSZqv9+kvM4WfFhUMQCLN4QlDTt5aU56fLQy2gYoxWIqlEnXqJy/+Ac5q/hk1oWfqnMDhwMA==" crossorigin="anonymous"></script>
@@ -29,34 +29,58 @@
         <h1>掌控現金流與投資全貌的終極工具</h1>
         <p class="public-home-desc">整合記帳、預算、股票紀錄、股利紀錄與報表分析。支援多帳戶匯率、TWSE 股價自動同步、以及全機密資料的落地加密，讓您安心管理每一分資產。</p>
         <div class="public-home-actions">
-          <button class="btn btn-primary" id="goLoginBtn"><i class="fas fa-right-to-bracket"></i> 登入系統</button>
+          <button class="btn btn-cta" id="goLoginBtn"><i class="fas fa-right-to-bracket"></i> 登入系統</button>
           <button class="btn btn-ghost" id="goRegisterBtn"><i class="fas fa-user-plus"></i> 建立帳號</button>
+        </div>
+        <div class="public-home-stats">
+          <div class="stat-item">
+            <span class="stat-num">6+</span>
+            <span class="stat-label">功能模組</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-num">ChaCha20</span>
+            <span class="stat-label">落地加密</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-num">TWSE</span>
+            <span class="stat-label">即時股價</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-num">多幣別</span>
+            <span class="stat-label">匯率自動轉換</span>
+          </div>
         </div>
       </div>
 
       <div class="public-home-grid">
         <article class="card public-feature-card">
-          <h3><i class="fas fa-receipt"></i> 收支與預算管理</h3>
+          <div class="feature-icon-wrap feature-icon--blue"><i class="fas fa-receipt"></i></div>
+          <h3>收支與預算管理</h3>
           <p>支援多帳戶餘額自動計算與跨帳戶轉帳。內建月度與分類預算追蹤機制，透過視覺化進度條，超支風險防患於未然。</p>
         </article>
         <article class="card public-feature-card">
-          <h3><i class="fas fa-chart-line"></i> 股票與實現損益</h3>
+          <div class="feature-icon-wrap feature-icon--green"><i class="fas fa-chart-line"></i></div>
+          <h3>股票與實現損益</h3>
           <p>持股總覽與買賣紀錄完整整合，內建 FIFO 自動計算「逐筆賣出」的成本均價及實現損益，隨時掌握投資績效。</p>
         </article>
         <article class="card public-feature-card">
-          <h3><i class="fas fa-cloud-arrow-down"></i> TWSE 自動即時同步</h3>
+          <div class="feature-icon-wrap feature-icon--teal"><i class="fas fa-cloud-arrow-down"></i></div>
+          <h3>TWSE 自動即時同步</h3>
           <p>完美整合 TWSE 台灣證券交易所，支援即時股價、收盤價查詢，並能依照持股期間自動判定並同步配息與配股紀錄。</p>
         </article>
         <article class="card public-feature-card">
-          <h3><i class="fas fa-chart-pie"></i> 圖表報表與每日趨勢</h3>
+          <div class="feature-icon-wrap feature-icon--purple"><i class="fas fa-chart-pie"></i></div>
+          <h3>圖表報表與每日趨勢</h3>
           <p>提供多維度的報表圖表。包含資產配置比例、分類支出圓餅圖、與每日消費趨勢圖，財務狀況一目了然。</p>
         </article>
         <article class="card public-feature-card">
-          <h3><i class="fas fa-robot"></i> 匯率自動更新與自動化</h3>
+          <div class="feature-icon-wrap feature-icon--amber"><i class="fas fa-robot"></i></div>
+          <h3>匯率自動更新與自動化</h3>
           <p>串接 exchangerate-api.com 全球匯率 API 提供即時轉換（基礎貨幣 TWD）；支援自訂固定收支週期以自動產生紀錄。</p>
         </article>
         <article class="card public-feature-card">
-          <h3><i class="fas fa-shield-halved"></i> 企業級安全與稽核</h3>
+          <div class="feature-icon-wrap feature-icon--red"><i class="fas fa-shield-halved"></i></div>
+          <h3>企業級安全與稽核</h3>
           <p>ChaCha20-Poly1305 資料庫加密，確保無人可竊取資料；內建管理員模式、 Google SSO 及進階的「登入稽核紀錄」。</p>
         </article>
       </div>

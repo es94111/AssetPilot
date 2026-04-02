@@ -2335,6 +2335,46 @@ const App = (() => {
     return ACCOUNT_TYPE_META.find(t => t.key === key) || ACCOUNT_TYPE_META[3];
   }
 
+  function renderCreditCardsByBank(cards) {
+    const bankGroups = {};
+    const ungrouped = [];
+    cards.forEach(c => {
+      if (c.linkedBankId) {
+        if (!bankGroups[c.linkedBankId]) bankGroups[c.linkedBankId] = [];
+        bankGroups[c.linkedBankId].push(c);
+      } else {
+        ungrouped.push(c);
+      }
+    });
+
+    let html = '';
+    Object.entries(bankGroups).forEach(([bankId, groupCards]) => {
+      const bankAcc = cachedAccounts.find(a => a.id === bankId);
+      const bankName = bankAcc ? escHtml(bankAcc.name) : '未知銀行';
+      const totalDebt = groupCards.reduce((sum, c) => sum + c.balance, 0);
+      const debtStr = fmtByCurrency(totalDebt, 'TWD');
+      html += `<div class="acc-bank-group-header">
+        <i class="fas fa-building-columns"></i>
+        <span>${bankName}</span>
+        <span class="acc-bank-debt">${debtStr}</span>
+        <button class="btn btn-sm btn-outline acc-repay-btn" onclick="App.openCreditRepaymentModal('${bankId}')">
+          <i class="fas fa-hand-holding-dollar"></i> 還款
+        </button>
+      </div>
+      ${groupCards.map(c => renderAccountCard(c)).join('')}`;
+    });
+
+    if (ungrouped.length > 0) {
+      html += `<div class="account-type-group-header" style="--group-color:#8b5cf6;margin-top:${Object.keys(bankGroups).length > 0 ? '8px' : '0'}">
+        <i class="fas fa-credit-card"></i>
+        <span>未分組</span>
+        <span class="acc-group-count">${ungrouped.length} 個</span>
+      </div>
+      ${ungrouped.map(c => renderAccountCard(c)).join('')}`;
+    }
+    return html;
+  }
+
   function renderAccountCard(a) {
     const currency = normalizeCurrencyCode(a.currency);
     const safeIcon = normalizeAccountIcon(a.icon);
@@ -2402,15 +2442,20 @@ const App = (() => {
       });
       grid.innerHTML = typeOrder.filter(t => grouped[t]).map(type => {
         const meta = getAccountTypeMeta(type);
-        return `<div class="account-type-group-header" style="--group-color:${meta.color}">
+        const header = `<div class="account-type-group-header" style="--group-color:${meta.color}">
           <i class="fas ${meta.icon}"></i>
           <span>${type}</span>
           <span class="acc-group-count">${grouped[type].length} 個</span>
-        </div>
-        ${grouped[type].map(a => renderAccountCard(a)).join('')}`;
+        </div>`;
+        const body = type === '信用卡'
+          ? renderCreditCardsByBank(grouped[type])
+          : grouped[type].map(a => renderAccountCard(a)).join('');
+        return header + body;
       }).join('');
     } else {
-      grid.innerHTML = filtered.map(a => renderAccountCard(a)).join('');
+      grid.innerHTML = accountTypeFilter === '信用卡'
+        ? renderCreditCardsByBank(filtered)
+        : filtered.map(a => renderAccountCard(a)).join('');
     }
 
     el('addAccountBtn').onclick = () => openAccountModal();

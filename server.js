@@ -2484,6 +2484,48 @@ app.delete('/api/accounts/:id', (req, res) => {
   res.json({ ok: true });
 });
 
+app.post('/api/accounts/credit-card-repayment', (req, res) => {
+  const { fromAccountId, date: rawDate, repayments } = req.body;
+  if (!fromAccountId || !Array.isArray(repayments) || repayments.length === 0) {
+    return res.status(400).json({ error: '缺少必要參數' });
+  }
+  const fromAccount = queryOne("SELECT currency FROM accounts WHERE id = ? AND user_id = ?", [fromAccountId, req.userId]);
+  if (!fromAccount) return res.status(400).json({ error: '付款帳戶不存在' });
+
+  const txDate = normalizeDate(rawDate) || todayStr();
+  const fromCurrency = normalizeCurrency(fromAccount.currency);
+  const now = Date.now();
+
+  for (const { cardId, amount } of repayments) {
+    if (!cardId || Number(amount) <= 0) continue;
+    const cardAccount = queryOne("SELECT currency, account_type FROM accounts WHERE id = ? AND user_id = ?", [cardId, req.userId]);
+    if (!cardAccount || cardAccount.account_type !== '信用卡') continue;
+
+    const toCurrency = normalizeCurrency(cardAccount.currency);
+    const transferAmount = Number(amount);
+    let outConverted;
+    try {
+      outConverted = convertToTwd(transferAmount, fromCurrency, null, req.userId);
+    } catch (e) {
+      return res.status(400).json({ error: e.message || '金額格式錯誤' });
+    }
+    const inOriginal = toCurrency === fromCurrency
+      ? transferAmount
+      : convertFromTwd(outConverted.twdAmount, toCurrency, req.userId);
+    const inConverted = convertToTwd(inOriginal, toCurrency, null, req.userId);
+
+    const outId = uid();
+    const inId = uid();
+    db.run("INSERT INTO transactions (id,user_id,type,amount,currency,original_amount,fx_rate,date,category_id,account_id,note,linked_id,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+      [outId, req.userId, 'transfer_out', outConverted.twdAmount, fromCurrency, outConverted.originalAmount, outConverted.fxRate, txDate, '', fromAccountId, '信用卡還款', inId, now, now]);
+    db.run("INSERT INTO transactions (id,user_id,type,amount,currency,original_amount,fx_rate,date,category_id,account_id,note,linked_id,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+      [inId, req.userId, 'transfer_in', inConverted.twdAmount, toCurrency, inConverted.originalAmount, inConverted.fxRate, txDate, '', cardId, '信用卡還款', outId, now, now]);
+  }
+
+  saveDB();
+  res.json({ ok: true });
+});
+
 // ─── 交易記錄 ───
 app.get('/api/transactions', (req, res) => {
   const { dateFrom, dateTo, type, categoryId, accountId, keyword, page, limit } = req.query;

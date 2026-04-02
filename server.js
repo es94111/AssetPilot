@@ -2414,6 +2414,7 @@ app.get('/api/accounts', (req, res) => {
       initialBalance: a.initial_balance,
       currency: accountCurrency,
       balance,
+      linkedBankId: a.linked_bank_id || null,
     };
   });
   res.json(result);
@@ -2434,28 +2435,40 @@ function calcBalance(accId, initialBalance, userId, accountCurrency = 'TWD') {
 }
 
 app.post('/api/accounts', (req, res) => {
-  const { name, initialBalance, icon, accountType, excludeFromTotal } = req.body;
+  const { name, initialBalance, icon, accountType, excludeFromTotal, linkedBankId } = req.body;
   const currency = normalizeCurrency(req.body.currency);
   const safeIcon = normalizeAccountIcon(icon);
   const VALID_TYPES = ['銀行', '信用卡', '現金', '虛擬錢包'];
   const safeType = VALID_TYPES.includes(accountType) ? accountType : '現金';
   const safeExclude = excludeFromTotal ? 1 : 0;
+  let safeLinkedBankId = null;
+  if (safeType === '信用卡' && linkedBankId) {
+    const bankAcc = queryOne("SELECT id FROM accounts WHERE id = ? AND user_id = ? AND account_type = '銀行'", [linkedBankId, req.userId]);
+    if (!bankAcc) return res.status(400).json({ error: '指定的銀行帳戶不存在' });
+    safeLinkedBankId = linkedBankId;
+  }
   const id = uid();
-  db.run("INSERT INTO accounts (id, user_id, name, initial_balance, icon, currency, account_type, exclude_from_total, created_at) VALUES (?,?,?,?,?,?,?,?,?)",
-    [id, req.userId, name, initialBalance || 0, safeIcon, currency, safeType, safeExclude, todayStr()]);
+  db.run("INSERT INTO accounts (id, user_id, name, initial_balance, icon, currency, account_type, exclude_from_total, linked_bank_id, created_at) VALUES (?,?,?,?,?,?,?,?,?,?)",
+    [id, req.userId, name, initialBalance || 0, safeIcon, currency, safeType, safeExclude, safeLinkedBankId, todayStr()]);
   saveDB();
   res.json({ id });
 });
 
 app.put('/api/accounts/:id', (req, res) => {
-  const { name, initialBalance, icon, accountType, excludeFromTotal } = req.body;
+  const { name, initialBalance, icon, accountType, excludeFromTotal, linkedBankId } = req.body;
   const currency = normalizeCurrency(req.body.currency);
   const safeIcon = normalizeAccountIcon(icon);
   const VALID_TYPES = ['銀行', '信用卡', '現金', '虛擬錢包'];
   const safeType = VALID_TYPES.includes(accountType) ? accountType : '現金';
   const safeExclude = excludeFromTotal ? 1 : 0;
-  db.run("UPDATE accounts SET name = ?, initial_balance = ?, icon = ?, currency = ?, account_type = ?, exclude_from_total = ? WHERE id = ? AND user_id = ?",
-    [name, initialBalance || 0, safeIcon, currency, safeType, safeExclude, req.params.id, req.userId]);
+  let safeLinkedBankId = null;
+  if (safeType === '信用卡' && linkedBankId) {
+    const bankAcc = queryOne("SELECT id FROM accounts WHERE id = ? AND user_id = ? AND account_type = '銀行'", [linkedBankId, req.userId]);
+    if (!bankAcc) return res.status(400).json({ error: '指定的銀行帳戶不存在' });
+    safeLinkedBankId = linkedBankId;
+  }
+  db.run("UPDATE accounts SET name = ?, initial_balance = ?, icon = ?, currency = ?, account_type = ?, exclude_from_total = ?, linked_bank_id = ? WHERE id = ? AND user_id = ?",
+    [name, initialBalance || 0, safeIcon, currency, safeType, safeExclude, safeLinkedBankId, req.params.id, req.userId]);
   saveDB();
   res.json({ ok: true });
 });
@@ -2465,6 +2478,7 @@ app.delete('/api/accounts/:id', (req, res) => {
   if (count <= 1) return res.status(400).json({ error: '至少需保留一個帳戶' });
   const hasTx = queryOne("SELECT id FROM transactions WHERE account_id = ? AND user_id = ? LIMIT 1", [req.params.id, req.userId]);
   if (hasTx) return res.status(400).json({ error: '此帳戶下有交易記錄，請先移轉至其他帳戶' });
+  db.run("UPDATE accounts SET linked_bank_id = NULL WHERE linked_bank_id = ? AND user_id = ?", [req.params.id, req.userId]);
   db.run("DELETE FROM accounts WHERE id = ? AND user_id = ?", [req.params.id, req.userId]);
   saveDB();
   res.json({ ok: true });

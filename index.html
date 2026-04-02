@@ -1383,6 +1383,13 @@
             <option value="虛擬錢包">📱 虛擬錢包</option>
           </select>
         </div>
+        <div class="form-row" id="accLinkedBankRow" style="display:none">
+          <label>所屬銀行</label>
+          <select id="accLinkedBank">
+            <option value="">不分組</option>
+          </select>
+          <p class="form-hint">連結銀行帳戶後，可在帳戶頁依銀行分組並一鍵還款</p>
+        </div>
         <div class="form-row">
           <label>圖示</label>
           <select id="accIcon">
@@ -1440,6 +1447,41 @@
         <div class="form-actions">
           <button type="button" class="btn btn-ghost" onclick="App.closeModal('modalTransfer')">取消</button>
           <button type="submit" class="btn btn-primary">確認轉帳</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===== 信用卡還款 Modal ===== -->
+  <div class="modal-overlay" id="modalCreditRepayment">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="creditRepaymentTitle">信用卡還款</h3>
+        <button class="modal-close" onclick="App.closeModal('modalCreditRepayment')">&times;</button>
+      </div>
+      <form id="creditRepaymentForm">
+        <div class="form-row">
+          <label>付款帳戶 <span class="required">*</span></label>
+          <select id="crFromAccount" required></select>
+        </div>
+        <div class="form-row">
+          <label>還款日期 <span class="required">*</span></label>
+          <input type="date" id="crDate" required>
+        </div>
+        <div class="form-row">
+          <div id="crCardList"></div>
+        </div>
+        <div class="form-row cr-total-row">
+          <span>還款總計</span>
+          <strong id="crTotal">$0</strong>
+        </div>
+        <div class="form-row cr-quick-btns">
+          <button type="button" class="btn btn-ghost btn-sm" onclick="App.crSetAll()">全部歸零</button>
+          <button type="button" class="btn btn-ghost btn-sm" onclick="App.crClearAll()">清除全部</button>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-ghost" onclick="App.closeModal('modalCreditRepayment')">取消</button>
+          <button type="submit" class="btn btn-primary">確認還款</button>
         </div>
       </form>
     </div>

@@ -754,6 +754,31 @@ body.dark-mode .mobile-header {
   margin-left: auto; font-size: 12px; font-weight: 500;
   color: var(--text-muted);
 }
+/* ── 信用卡銀行子群組 ── */
+.acc-bank-group-header {
+  grid-column: 1 / -1;
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 12px;
+  background: color-mix(in srgb, #8b5cf6 8%, var(--surface));
+  border: 1px solid color-mix(in srgb, #8b5cf6 20%, transparent);
+  border-radius: var(--radius-sm);
+  color: #8b5cf6;
+  font-size: 13px; font-weight: 600;
+  margin-top: 8px;
+}
+.acc-bank-group-header:first-child { margin-top: 0; }
+.acc-bank-debt { font-size: 12px; font-weight: 500; color: var(--text-muted); }
+.acc-repay-btn { margin-left: auto; }
+/* ── 還款 Modal 表格 ── */
+.cr-card-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.cr-card-table th { text-align: left; padding: 6px 8px; color: var(--text-muted); font-weight: 500; border-bottom: 1px solid var(--border); }
+.cr-card-table td { padding: 8px 8px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.cr-card-table td:last-child { width: 130px; }
+.cr-amount-input { width: 100%; padding: 5px 8px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 14px; text-align: right; background: var(--surface); color: var(--text); }
+.cr-amount-input:focus { outline: none; border-color: var(--primary); }
+.cr-total-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 4px; font-size: 15px; border-top: 2px solid var(--border); margin-top: 4px; }
+.cr-total-row strong { font-size: 18px; color: var(--primary); }
+.cr-quick-btns { display: flex; gap: 8px; padding-top: 0; }
 /* ── 空狀態 ── */
 .account-empty-state {
   grid-column: 1 / -1;

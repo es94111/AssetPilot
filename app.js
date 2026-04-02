@@ -2352,11 +2352,11 @@ const App = (() => {
       const bankAcc = cachedAccounts.find(a => a.id === bankId);
       const bankName = bankAcc ? escHtml(bankAcc.name) : '未知銀行';
       const totalDebt = groupCards.reduce((sum, c) => sum + c.balance, 0);
-      const debtStr = fmtByCurrency(totalDebt, 'TWD');
+      const debtStr = fmtByCurrency(totalDebt, 'TWD'); // balances are normalized to TWD by the server
       html += `<div class="acc-bank-group-header">
         <i class="fas fa-building-columns"></i>
-        <span>${bankName}</span>
-        <span class="acc-bank-debt">${debtStr}</span>
+        <span>${bankName} · 共 ${groupCards.length} 張</span>
+        <span class="acc-bank-debt">欠款合計 ${debtStr}</span>
         <button class="btn btn-sm btn-outline acc-repay-btn" onclick="App.openCreditRepaymentModal('${bankId}')">
           <i class="fas fa-hand-holding-dollar"></i> 還款
         </button>
@@ -5584,7 +5584,7 @@ const App = (() => {
       <thead><tr><th>信用卡</th><th>目前欠款</th><th>還款金額</th></tr></thead>
       <tbody>${cards.map(c => {
         const currency = normalizeCurrencyCode(c.currency);
-        const debt = Math.max(0, -(c.balance));
+        const debt = Math.round(Math.max(0, -(c.balance)) * 100) / 100;
         return `<tr>
           <td>${escHtml(c.name)}</td>
           <td>${fmtByCurrency(c.balance, currency)}</td>

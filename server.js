@@ -2489,8 +2489,9 @@ app.post('/api/accounts/credit-card-repayment', (req, res) => {
   if (!fromAccountId || !Array.isArray(repayments) || repayments.length === 0) {
     return res.status(400).json({ error: '缺少必要參數' });
   }
-  const fromAccount = queryOne("SELECT currency FROM accounts WHERE id = ? AND user_id = ?", [fromAccountId, req.userId]);
+  const fromAccount = queryOne("SELECT currency, account_type FROM accounts WHERE id = ? AND user_id = ?", [fromAccountId, req.userId]);
   if (!fromAccount) return res.status(400).json({ error: '付款帳戶不存在' });
+  if (fromAccount.account_type === '信用卡') return res.status(400).json({ error: '付款帳戶不可為信用卡' });
 
   const txDate = normalizeDate(rawDate) || todayStr();
   const fromCurrency = normalizeCurrency(fromAccount.currency);

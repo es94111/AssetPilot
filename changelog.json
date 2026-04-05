@@ -1,6 +1,16 @@
 {
-  "currentVersion": "4.3",
+  "currentVersion": "4.4",
   "releases": [
+    {
+      "version": "4.4",
+      "date": "2026-04-05",
+      "title": "全球匯率 API 跨使用者快取",
+      "type": "improved",
+      "changes": [
+        { "tag": "improved", "text": "全球匯率 API 結果改為 server-level 快取（TTL 5 分鐘），多位使用者在同一時間視窗內觸發匯率更新時，只發出一次外部 API 請求，其餘等待同一 Promise 回傳結果" },
+        { "tag": "improved", "text": "TWSE 股票即時/收盤報價快取（realtimeCache、twseCache 等）原本即為 server-level，確認多使用者共用同一份快取，不重複請求相同代號" }
+      ]
+    },
     {
       "version": "4.3",
       "date": "2026-04-05",

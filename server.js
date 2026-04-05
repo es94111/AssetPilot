@@ -788,31 +788,50 @@ function setExchangeRateAutoUpdate(userId, autoUpdate) {
   return getExchangeRateSettings(userId);
 }
 
+// ─── 全球匯率 server-level 快取（跨所有使用者共用，避免重複打外部 API）───
+const GLOBAL_FX_CACHE_TTL = 5 * 60 * 1000; // 5 分鐘
+let globalFxCache = { data: null, timestamp: 0 };
+let globalFxInflight = null; // 正在進行中的 fetch Promise，所有人共用同一個
+
 async function fetchGlobalRealtimeRates() {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 8000);
-  try {
-    // 嘗試以 TWD 作為基礎幣別
-    let url = `${GLOBAL_FX_API_BASE}/${GLOBAL_FX_API_KEY}/latest/TWD`;
-    let resp = await fetch(url, { signal: controller.signal });
-    
-    // 如果 TWD 不被支援，改用 USD
-    if (!resp.ok || resp.status === 404) {
-      url = `${GLOBAL_FX_API_BASE}/${GLOBAL_FX_API_KEY}/latest/USD`;
-      resp = await fetch(url, { signal: controller.signal });
-    }
-    
-    if (!resp.ok) throw new Error(`匯率服務回應失敗（HTTP ${resp.status}）`);
-    const data = await resp.json();
-    
-    if (data.result !== 'success') {
-      throw new Error(`API 錯誤：${data.error_type || '未知錯誤'}`);
-    }
-    
-    return data; // { base_code, conversion_rates, ... }
-  } finally {
-    clearTimeout(timeout);
+  const now = Date.now();
+  // 快取未過期，直接回傳
+  if (globalFxCache.data && (now - globalFxCache.timestamp) < GLOBAL_FX_CACHE_TTL) {
+    return globalFxCache.data;
   }
+  // 已有進行中的請求，等待相同的 Promise（避免同時多個 user 各自打一次 API）
+  if (globalFxInflight) return globalFxInflight;
+
+  globalFxInflight = (async () => {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+    try {
+      // 嘗試以 TWD 作為基礎幣別
+      let url = `${GLOBAL_FX_API_BASE}/${GLOBAL_FX_API_KEY}/latest/TWD`;
+      let resp = await fetch(url, { signal: controller.signal });
+
+      // 如果 TWD 不被支援，改用 USD
+      if (!resp.ok || resp.status === 404) {
+        url = `${GLOBAL_FX_API_BASE}/${GLOBAL_FX_API_KEY}/latest/USD`;
+        resp = await fetch(url, { signal: controller.signal });
+      }
+
+      if (!resp.ok) throw new Error(`匯率服務回應失敗（HTTP ${resp.status}）`);
+      const data = await resp.json();
+
+      if (data.result !== 'success') {
+        throw new Error(`API 錯誤：${data.error_type || '未知錯誤'}`);
+      }
+
+      globalFxCache = { data, timestamp: Date.now() };
+      return data; // { base_code, conversion_rates, ... }
+    } finally {
+      clearTimeout(timeout);
+      globalFxInflight = null;
+    }
+  })();
+
+  return globalFxInflight;
 }
 
 function resolveRateToTwd(globalData, currencyCode) {

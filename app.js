@@ -1429,6 +1429,7 @@ const App = (() => {
         const acc = getAcc(t.accountId || t.account_id);
         const isFutureTx = (t.date || '') > todayStrValue;
         const futureBadge = isFutureTx ? '<span class="tx-schedule-badge">未來</span>' : '';
+        const excludeBadge = t.excludeFromStats ? '<span class="tx-exclude-badge">不統計</span>' : '';
         let typeBadge, amountCls;
         if (t.type === 'income') {
           typeBadge = '<span class="type-badge income">收入</span>';
@@ -1446,7 +1447,7 @@ const App = (() => {
         return `<tr data-txid="${t.id}">
           <td class="td-check"><input type="checkbox" class="tx-checkbox" data-id="${t.id}" onchange="App.toggleTxSelect('${t.id}', this.checked)"></td>
           <td>${t.date}</td>
-          <td>${typeBadge}${futureBadge}</td>
+          <td>${typeBadge}${futureBadge}${excludeBadge}</td>
           <td>${getCatDisplayName(cat)}</td>
           <td class="${amountCls}">
             ${fmt(t.amount)}
@@ -5390,6 +5391,7 @@ const App = (() => {
     el('txCurrency').value = 'TWD';
     el('txFxRate').value = '';
     el('txConvertedHint').textContent = '';
+    el('txExcludeFromStats').checked = false;
     populateTxSelects();
     if (txId) {
       const result = await API.get('/api/transactions?limit=99999');
@@ -5408,6 +5410,7 @@ const App = (() => {
       el('txCategory').value = t.categoryId || t.category_id;
       el('txAccount').value = t.accountId || t.account_id;
       el('txNote').value = t.note || '';
+      el('txExcludeFromStats').checked = !!t.excludeFromStats;
       refreshTxFxUi();
     } else {
       el('txId').value = '';
@@ -5759,10 +5762,11 @@ const App = (() => {
           const currency = normalizeCurrencyCode(el('txCurrency').value);
           const originalAmount = amount;
           const fxRate = currency === 'TWD' ? 1 : Number(el('txFxRate').value || getRateToTwd(currency));
+          const excludeFromStats = el('txExcludeFromStats').checked;
           if (id) {
-            await API.put('/api/transactions/' + id, { type, amount, originalAmount, currency, fxRate, date, categoryId, accountId, note });
+            await API.put('/api/transactions/' + id, { type, amount, originalAmount, currency, fxRate, date, categoryId, accountId, note, excludeFromStats });
           } else {
-            await API.post('/api/transactions', { type, amount, originalAmount, currency, fxRate, date, categoryId, accountId, note });
+            await API.post('/api/transactions', { type, amount, originalAmount, currency, fxRate, date, categoryId, accountId, note, excludeFromStats });
           }
           closeModal('modalTransaction');
           toast(id ? '交易已更新' : '交易已新增', 'success');

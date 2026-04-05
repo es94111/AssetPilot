@@ -496,6 +496,7 @@ async function initDB() {
   try { db.run("ALTER TABLE transactions ADD COLUMN currency TEXT DEFAULT 'TWD'"); } catch (e) { /* ignore */ }
   try { db.run("ALTER TABLE transactions ADD COLUMN original_amount REAL DEFAULT 0"); } catch (e) { /* ignore */ }
   try { db.run("ALTER TABLE transactions ADD COLUMN fx_rate REAL DEFAULT 1"); } catch (e) { /* ignore */ }
+  try { db.run("ALTER TABLE transactions ADD COLUMN exclude_from_stats INTEGER DEFAULT 0"); } catch (e) { /* ignore */ }
 
   // 為既有使用者補建預設子分類
   migrateDefaultSubcategories();
@@ -2577,6 +2578,7 @@ app.get('/api/transactions', (req, res) => {
       currency: normalizeCurrency(r.currency),
       originalAmount: Number(r.original_amount) > 0 ? Number(r.original_amount) : Number(r.amount) || 0,
       fxRate: Number(r.fx_rate) > 0 ? Number(r.fx_rate) : 1,
+      excludeFromStats: r.exclude_from_stats === 1,
       createdAt: r.created_at,
       updatedAt: r.updated_at,
     })),
@@ -2585,7 +2587,7 @@ app.get('/api/transactions', (req, res) => {
 });
 
 app.post('/api/transactions', (req, res) => {
-  const { type, amount, date: rawDate, categoryId, accountId, note } = req.body;
+  const { type, amount, date: rawDate, categoryId, accountId, note, excludeFromStats } = req.body;
   const date = normalizeDate(rawDate);
   let converted;
   try {
@@ -2595,14 +2597,14 @@ app.post('/api/transactions', (req, res) => {
   }
   const id = uid();
   const now = Date.now();
-  db.run("INSERT INTO transactions (id, user_id, type, amount, currency, original_amount, fx_rate, date, category_id, account_id, note, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
-    [id, req.userId, type, converted.twdAmount, converted.currency, converted.originalAmount, converted.fxRate, date, categoryId, accountId, note || '', now, now]);
+  db.run("INSERT INTO transactions (id, user_id, type, amount, currency, original_amount, fx_rate, date, category_id, account_id, note, exclude_from_stats, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+    [id, req.userId, type, converted.twdAmount, converted.currency, converted.originalAmount, converted.fxRate, date, categoryId, accountId, note || '', excludeFromStats ? 1 : 0, now, now]);
   saveDB();
   res.json({ id });
 });
 
 app.put('/api/transactions/:id', (req, res) => {
-  const { type, amount, date: rawDate, categoryId, accountId, note } = req.body;
+  const { type, amount, date: rawDate, categoryId, accountId, note, excludeFromStats } = req.body;
   const date = normalizeDate(rawDate);
   let converted;
   try {
@@ -2610,8 +2612,8 @@ app.put('/api/transactions/:id', (req, res) => {
   } catch (e) {
     return res.status(400).json({ error: e.message || '金額格式錯誤' });
   }
-  db.run("UPDATE transactions SET type=?, amount=?, currency=?, original_amount=?, fx_rate=?, date=?, category_id=?, account_id=?, note=?, updated_at=? WHERE id=? AND user_id=?",
-    [type, converted.twdAmount, converted.currency, converted.originalAmount, converted.fxRate, date, categoryId, accountId, note || '', Date.now(), req.params.id, req.userId]);
+  db.run("UPDATE transactions SET type=?, amount=?, currency=?, original_amount=?, fx_rate=?, date=?, category_id=?, account_id=?, note=?, exclude_from_stats=?, updated_at=? WHERE id=? AND user_id=?",
+    [type, converted.twdAmount, converted.currency, converted.originalAmount, converted.fxRate, date, categoryId, accountId, note || '', excludeFromStats ? 1 : 0, Date.now(), req.params.id, req.userId]);
   saveDB();
   res.json({ ok: true });
 });
@@ -2851,7 +2853,7 @@ app.get('/api/budgets', (req, res) => {
   const rows = queryAll(sql, params);
   const result = rows.map(b => {
     const month = b.year_month;
-    let usedSql = "SELECT COALESCE(SUM(amount),0) as used FROM transactions WHERE user_id = ? AND type='expense' AND date LIKE ?";
+    let usedSql = "SELECT COALESCE(SUM(amount),0) as used FROM transactions WHERE user_id = ? AND type='expense' AND date LIKE ? AND exclude_from_stats = 0";
     const usedParams = [req.userId, month + '%'];
     if (b.category_id) { usedSql += " AND category_id = ?"; usedParams.push(b.category_id); }
     const used = queryOne(usedSql, usedParams)?.used || 0;
@@ -2961,9 +2963,9 @@ app.get('/api/dashboard', (req, res) => {
   const month = thisMonth();
   const todayS = todayStr();
 
-  const income = queryOne("SELECT COALESCE(SUM(amount),0) as total FROM transactions WHERE user_id = ? AND type='income' AND date LIKE ?", [req.userId, month + '%'])?.total || 0;
-  const expense = queryOne("SELECT COALESCE(SUM(amount),0) as total FROM transactions WHERE user_id = ? AND type='expense' AND date LIKE ?", [req.userId, month + '%'])?.total || 0;
-  const todayExpense = queryOne("SELECT COALESCE(SUM(amount),0) as total FROM transactions WHERE user_id = ? AND type='expense' AND date = ?", [req.userId, todayS])?.total || 0;
+  const income = queryOne("SELECT COALESCE(SUM(amount),0) as total FROM transactions WHERE user_id = ? AND type='income' AND date LIKE ? AND exclude_from_stats = 0", [req.userId, month + '%'])?.total || 0;
+  const expense = queryOne("SELECT COALESCE(SUM(amount),0) as total FROM transactions WHERE user_id = ? AND type='expense' AND date LIKE ? AND exclude_from_stats = 0", [req.userId, month + '%'])?.total || 0;
+  const todayExpense = queryOne("SELECT COALESCE(SUM(amount),0) as total FROM transactions WHERE user_id = ? AND type='expense' AND date = ? AND exclude_from_stats = 0", [req.userId, todayS])?.total || 0;
 
   const catBreakdown = queryAll(`
     SELECT t.category_id as categoryId,
@@ -2976,7 +2978,7 @@ app.get('/api/dashboard', (req, res) => {
     FROM transactions t
     LEFT JOIN categories c ON t.category_id = c.id
     LEFT JOIN categories p ON c.parent_id = p.id
-    WHERE t.user_id = ? AND t.type = 'expense' AND t.date LIKE ?
+    WHERE t.user_id = ? AND t.type = 'expense' AND t.date LIKE ? AND t.exclude_from_stats = 0
     GROUP BY t.category_id, c.name, c.color, c.parent_id, p.name, p.color
     ORDER BY total DESC
   `, [req.userId, month + '%']);
@@ -3005,7 +3007,7 @@ app.get('/api/reports', (req, res) => {
       FROM transactions t
       LEFT JOIN categories c ON t.category_id = c.id
       LEFT JOIN categories p ON c.parent_id = p.id
-      WHERE t.user_id = ? AND t.type = ? AND t.date >= ? AND t.date <= ?
+      WHERE t.user_id = ? AND t.type = ? AND t.date >= ? AND t.date <= ? AND t.exclude_from_stats = 0
       ORDER BY t.date
     `, [req.userId, txType, from, to]);
   } else {
@@ -3015,7 +3017,7 @@ app.get('/api/reports', (req, res) => {
       FROM transactions t
       LEFT JOIN categories c ON t.category_id = c.id
       LEFT JOIN categories p ON c.parent_id = p.id
-      WHERE t.user_id = ? AND t.type = ?
+      WHERE t.user_id = ? AND t.type = ? AND t.exclude_from_stats = 0
       ORDER BY t.date
     `, [req.userId, txType]);
   }

@@ -497,6 +497,8 @@ async function initDB() {
   try { db.run("ALTER TABLE transactions ADD COLUMN original_amount REAL DEFAULT 0"); } catch (e) { /* ignore */ }
   try { db.run("ALTER TABLE transactions ADD COLUMN fx_rate REAL DEFAULT 1"); } catch (e) { /* ignore */ }
   try { db.run("ALTER TABLE transactions ADD COLUMN exclude_from_stats INTEGER DEFAULT 0"); } catch (e) { /* ignore */ }
+  try { db.run("ALTER TABLE login_audit_logs ADD COLUMN country TEXT DEFAULT ''"); } catch (e) { /* ignore */ }
+  try { db.run("ALTER TABLE login_attempt_logs ADD COLUMN country TEXT DEFAULT ''"); } catch (e) { /* ignore */ }
 
   // 為既有使用者補建預設子分類
   migrateDefaultSubcategories();
@@ -1221,26 +1223,48 @@ async function fetchIpCountry(ipAddress) {
   }
 }
 
-async function enrichLogsWithCountry(logs, ipField = 'ip_address') {
-  const rows = Array.isArray(logs) ? logs : [];
-  const uniqueIps = [...new Set(rows.map(x => String(x?.[ipField] || '').trim()).filter(Boolean))];
+// enrichAndPersistCountry：
+// - rows 已含 country 欄位（從 DB SELECT 而來）
+// - 只對 country 為空的列查詢 ipinfo.io，並回寫至指定資料表
+// - tableName: 'login_audit_logs' | 'login_attempt_logs'
+async function enrichAndPersistCountry(rows, tableName) {
+  const list = Array.isArray(rows) ? rows : [];
+  // 找出還沒有 country 的列（舊紀錄或寫入失敗的）
+  const needLookup = list.filter(r => !r.country || r.country === '-');
+  if (needLookup.length === 0) return list;
+
+  const uniqueIps = [...new Set(needLookup.map(r => String(r.ip_address || '').trim()).filter(Boolean))];
   const lookup = new Map();
   const workerCount = Math.min(8, uniqueIps.length);
   let cursor = 0;
 
   const workers = Array.from({ length: workerCount }, async () => {
     while (cursor < uniqueIps.length) {
-      const idx = cursor++;
-      const ip = uniqueIps[idx];
+      const ip = uniqueIps[cursor++];
       const country = await fetchIpCountry(ip);
       lookup.set(ip, country);
     }
   });
-
   await Promise.all(workers);
-  return rows.map(row => ({
-    ...row,
-    country: lookup.get(String(row?.[ipField] || '').trim()) || '-',
+
+  // 將查到的結果回寫 DB（以 ip_address 批次更新，同一 IP 只更新一次）
+  let dirty = false;
+  for (const [ip, country] of lookup) {
+    if (country && country !== '-') {
+      db.run(
+        `UPDATE ${tableName} SET country = ? WHERE ip_address = ? AND (country IS NULL OR country = '' OR country = '-')`,
+        [country, ip]
+      );
+      dirty = true;
+    }
+  }
+  if (dirty) saveDB();
+
+  return list.map(r => ({
+    ...r,
+    country: (r.country && r.country !== '-')
+      ? r.country
+      : (lookup.get(String(r.ip_address || '').trim()) || '-'),
   }));
 }
 
@@ -1265,6 +1289,13 @@ function recordLoginAudit(user, req, method = 'password') {
     ]
   );
   saveDB();
+  // 非同步查詢 IP 國家並回寫，不阻塞登入回應
+  fetchIpCountry(ipAddress).then(country => {
+    if (country) {
+      db.run('UPDATE login_audit_logs SET country = ? WHERE id = ?', [country, loginId]);
+      saveDB();
+    }
+  }).catch(() => {});
   return {
     id: loginId,
     loginAt,
@@ -1281,11 +1312,12 @@ function recordLoginAttempt({ user = null, email = '', req, method = 'password',
   const normalizedEmail = normalizeEmail(email || user?.email || '');
   const userId = user?.id ? String(user.id) : '';
   const isAdminLogin = user?.is_admin ? 1 : 0;
+  const attemptId = uid();
   db.run(
     `INSERT INTO login_attempt_logs (id, user_id, email, login_at, ip_address, login_method, is_admin_login, is_success, failure_reason)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
-      uid(),
+      attemptId,
       userId,
       normalizedEmail,
       loginAt,
@@ -1297,6 +1329,13 @@ function recordLoginAttempt({ user = null, email = '', req, method = 'password',
     ]
   );
   saveDB();
+  // 非同步查詢 IP 國家並回寫，不阻塞登入回應
+  fetchIpCountry(ipAddress).then(country => {
+    if (country) {
+      db.run('UPDATE login_attempt_logs SET country = ? WHERE id = ?', [country, attemptId]);
+      saveDB();
+    }
+  }).catch(() => {});
 }
 
 function parseLoginLogTarget(rawId) {
@@ -1878,7 +1917,7 @@ app.use('/api', authMiddleware);
 
 app.get('/api/account/login-logs', async (req, res) => {
   const logs = queryAll(
-    `SELECT login_at, ip_address, login_method, is_admin_login
+    `SELECT login_at, ip_address, country, login_method, is_admin_login
      FROM login_audit_logs
      WHERE user_id = ?
      ORDER BY login_at DESC
@@ -1886,7 +1925,7 @@ app.get('/api/account/login-logs', async (req, res) => {
     [req.userId]
   );
 
-  const logsWithCountry = await enrichLogsWithCountry(logs, 'ip_address');
+  const logsWithCountry = await enrichAndPersistCountry(logs, 'login_audit_logs');
 
   res.json({
     logs: logsWithCountry.map(l => ({
@@ -1901,7 +1940,7 @@ app.get('/api/account/login-logs', async (req, res) => {
 
 app.get('/api/admin/login-logs', adminMiddleware, async (req, res) => {
   const adminLogs = queryAll(
-    `SELECT id, rowid AS _rid, login_at, ip_address, login_method
+    `SELECT id, rowid AS _rid, login_at, ip_address, country, login_method
      FROM login_audit_logs
      WHERE user_id = ? AND is_admin_login = 1
      ORDER BY login_at DESC
@@ -1910,7 +1949,7 @@ app.get('/api/admin/login-logs', adminMiddleware, async (req, res) => {
   );
 
   const allUserLogs = queryAll(
-    `SELECT l.id, l.rowid AS _rid, l.user_id, l.email, l.login_at, l.ip_address, l.login_method, l.is_admin_login, l.is_success, l.failure_reason, u.display_name
+    `SELECT l.id, l.rowid AS _rid, l.user_id, l.email, l.login_at, l.ip_address, l.country, l.login_method, l.is_admin_login, l.is_success, l.failure_reason, u.display_name
      FROM login_attempt_logs l
      LEFT JOIN users u ON u.id = l.user_id
      ORDER BY l.login_at DESC
@@ -1918,8 +1957,8 @@ app.get('/api/admin/login-logs', adminMiddleware, async (req, res) => {
   );
 
   const [adminLogsWithCountry, allUserLogsWithCountry] = await Promise.all([
-    enrichLogsWithCountry(adminLogs, 'ip_address'),
-    enrichLogsWithCountry(allUserLogs, 'ip_address'),
+    enrichAndPersistCountry(adminLogs, 'login_audit_logs'),
+    enrichAndPersistCountry(allUserLogs, 'login_attempt_logs'),
   ]);
 
   res.json({

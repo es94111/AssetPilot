@@ -1,6 +1,16 @@
 {
-  "currentVersion": "4.2",
+  "currentVersion": "4.3",
   "releases": [
+    {
+      "version": "4.3",
+      "date": "2026-04-05",
+      "title": "交易記錄不統計功能",
+      "type": "new",
+      "changes": [
+        { "tag": "new", "text": "新增「不計入統計」選項：可針對單筆交易記錄標記為不統計，該筆不影響儀表板總覽、統計報表及預算用量計算" },
+        { "tag": "improved", "text": "已標記「不統計」的交易在交易列表顯示灰色標籤以利辨識" }
+      ]
+    },
     {
       "version": "4.2",
       "date": "2026-04-02",

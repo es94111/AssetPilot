@@ -1,6 +1,17 @@
 {
-  "currentVersion": "4.4",
+  "currentVersion": "4.5",
   "releases": [
+    {
+      "version": "4.5",
+      "date": "2026-04-05",
+      "title": "登入紀錄國家持久化",
+      "type": "improved",
+      "changes": [
+        { "tag": "improved", "text": "登入紀錄的 IP 國家現在儲存於資料庫（login_audit_logs / login_attempt_logs 新增 country 欄位），重啟伺服器後不需重新查詢" },
+        { "tag": "improved", "text": "使用者登入時非同步查詢並回寫國家，不影響登入回應速度" },
+        { "tag": "improved", "text": "查詢登入紀錄時，只對尚無國家資料的舊紀錄補查，並自動回寫至資料庫，之後查詢直接讀取 DB 值" }
+      ]
+    },
     {
       "version": "4.4",
       "date": "2026-04-05",

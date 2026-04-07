@@ -1152,6 +1152,7 @@
 
 | 版本 | 日期 | 變更說明 |
 | --- | --- | --- |
+| 4.6 | 2026-04-07 | 認證 Token 改存 httpOnly Cookie（防 XSS 竊取）+ SameSite=Strict（防 CSRF）+ 新增 logout API |
 | 4.5 | 2026-04-05 | 登入紀錄 country 欄位持久化至 DB，重啟後不重查；登入時 fire-and-forget 回寫 |
 | 4.4 | 2026-04-05 | 全球匯率 API 改為 server-level 快取（TTL 5分鐘）+ in-flight deduplication，跨使用者共用 |
 | 4.3 | 2026-04-05 | 新增交易「不計入統計」功能，可標記單筆不影響報表、儀表板、預算計算 |

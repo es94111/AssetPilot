@@ -33,6 +33,17 @@ app.set('trust proxy', 1);
 const PORT = process.env.PORT || 3000;
 const DB_PATH = process.env.DB_PATH || path.join(__dirname, 'database.db');
 const JWT_EXPIRES = process.env.JWT_EXPIRES || '7d';
+
+// 將 JWT_EXPIRES 字串（如 7d、24h、30m）轉換為毫秒，供 Cookie maxAge 使用
+function parseExpiresMs(str) {
+  const match = String(str).match(/^(\d+)(s|m|h|d|w)$/i);
+  if (!match) return 7 * 24 * 60 * 60 * 1000; // 預設 7 天
+  const n = parseInt(match[1], 10);
+  const unit = match[2].toLowerCase();
+  const multipliers = { s: 1000, m: 60 * 1000, h: 3600 * 1000, d: 86400 * 1000, w: 7 * 86400 * 1000 };
+  return n * multipliers[unit];
+}
+const JWT_EXPIRES_MS = parseExpiresMs(JWT_EXPIRES);
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || '';
 const IPINFO_TOKEN = process.env.IPINFO_TOKEN || '';
@@ -1382,7 +1393,7 @@ function setAuthCookie(res, token) {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'strict',
-    maxAge: 7 * 24 * 60 * 60 * 1000,
+    maxAge: JWT_EXPIRES_MS,
   });
 }
 

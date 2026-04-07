@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node -e \"require\\('cookie-parser'\\); console.log\\('installed'\\)\")"
+    ]
+  }
+}

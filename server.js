@@ -22,6 +22,7 @@ const crypto = require('crypto');
 const initSqlJs = require('sql.js');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const cookieParser = require('cookie-parser');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 
@@ -208,6 +209,7 @@ app.use('/api', rateLimit({
 }));
 
 app.use(express.json({ limit: '50mb' }));
+app.use(cookieParser());
 
 // 僅開放必要前端靜態檔，避免專案根目錄檔案外洩
 const PUBLIC_FILES = ['/app.js', '/style.css', '/logo.svg', '/favicon.svg'];
@@ -1375,17 +1377,25 @@ function deleteUserData(userId) {
 // Auth Middleware
 // ═══════════════════════════════════════
 
+function setAuthCookie(res, token) {
+  res.cookie('authToken', token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  });
+}
+
 function authMiddleware(req, res, next) {
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ error: '請先登入' });
-  }
+  const token = req.cookies?.authToken
+    || (req.headers.authorization?.startsWith('Bearer ') ? req.headers.authorization.split(' ')[1] : null);
+  if (!token) return res.status(401).json({ error: '請先登入' });
   try {
-    const token = authHeader.split(' ')[1];
     const decoded = jwt.verify(token, JWT_SECRET);
     req.userId = decoded.userId;
     next();
   } catch {
+    res.clearCookie('authToken');
     return res.status(401).json({ error: '登入已過期，請重新登入' });
   }
 }
@@ -1437,7 +1447,8 @@ app.post('/api/auth/register', async (req, res) => {
   saveDB();
 
   const token = jwt.sign({ userId: id }, JWT_SECRET, { expiresIn: JWT_EXPIRES });
-  res.json({ token, user: { id, email: emailLower, displayName, themeMode: 'system', isAdmin: !!isAdmin } });
+  setAuthCookie(res, token);
+  res.json({ user: { id, email: emailLower, displayName, themeMode: 'system', isAdmin: !!isAdmin } });
 });
 
 app.post('/api/auth/login', async (req, res) => {
@@ -1477,8 +1488,8 @@ app.post('/api/auth/login', async (req, res) => {
   recordLoginAttempt({ user, email: emailLower, req, method: 'password', isSuccess: true });
 
   const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: JWT_EXPIRES });
+  setAuthCookie(res, token);
   res.json({
-    token,
     user: { id: user.id, email: user.email, displayName: user.display_name, avatarUrl: user.avatar_url || '', themeMode: normalizeThemeMode(user.theme_mode), isAdmin: !!user.is_admin },
     currentLogin,
   });
@@ -1890,8 +1901,8 @@ app.post('/api/auth/google', async (req, res) => {
     const currentLogin = recordLoginAudit(user, req, 'google');
     recordLoginAttempt({ user, email: user.email, req, method: 'google', isSuccess: true });
     const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: JWT_EXPIRES });
+    setAuthCookie(res, token);
     res.json({
-      token,
       user: {
         id: user.id, email: user.email, displayName: user.display_name,
         googleLinked: true, avatarUrl: user.avatar_url || '', themeMode: normalizeThemeMode(user.theme_mode), isAdmin: !!user.is_admin,
@@ -1902,6 +1913,11 @@ app.post('/api/auth/google', async (req, res) => {
     console.error('Google SSO 錯誤:', e.message);
     res.status(500).json({ error: 'Google 登入失敗：' + e.message });
   }
+});
+
+app.post('/api/auth/logout', (req, res) => {
+  res.clearCookie('authToken');
+  res.json({ ok: true });
 });
 
 app.get('/api/auth/me', authMiddleware, (req, res) => {

@@ -1,6 +1,18 @@
 {
-  "currentVersion": "4.5",
+  "currentVersion": "4.6",
   "releases": [
+    {
+      "version": "4.6",
+      "date": "2026-04-07",
+      "title": "強化認證安全：改用 httpOnly Cookie",
+      "type": "improved",
+      "changes": [
+        { "tag": "improved", "text": "認證 Token 改存於 httpOnly Cookie，JavaScript 無法讀取，防止 XSS 攻擊竊取 Token" },
+        { "tag": "improved", "text": "Cookie 設定 SameSite=Strict 防止 CSRF 攻擊" },
+        { "tag": "new", "text": "新增 POST /api/auth/logout API，登出時由伺服器清除 Cookie" },
+        { "tag": "improved", "text": "移除前端 localStorage 的 authToken 儲存，Token 完全由伺服器管理" }
+      ]
+    },
     {
       "version": "4.5",
       "date": "2026-04-05",

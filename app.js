@@ -8,7 +8,7 @@ const App = (() => {
   const FREQ_LABELS = { daily: '每日', weekly: '每週', monthly: '每月', yearly: '每年' };
 
   // ─── Auth 狀態 ───
-  let authToken = localStorage.getItem('authToken') || null;
+  let authToken = null; // Token 改由 httpOnly Cookie 管理，前端不儲存
   let currentUser = null;
   let latestLoginRecord = null;
   let googleUseCodeFlow = false;
@@ -75,7 +75,7 @@ const App = (() => {
   }
 
   async function persistThemeModeToServer(mode) {
-    if (!authToken) return;
+    if (!currentUser) return;
     const nextMode = normalizeThemeMode(mode);
     try {
       const result = await API.put('/api/account/theme', { themeMode: nextMode });
@@ -87,12 +87,9 @@ const App = (() => {
     }
   }
 
-  // ─── API 呼叫（自動帶 Authorization header）───
-  function authHeaders() {
-    const h = { 'Content-Type': 'application/json' };
-    if (authToken) h['Authorization'] = 'Bearer ' + authToken;
-    return h;
-  }
+  // ─── API 呼叫（Cookie 自動附送，無需手動帶 token）───
+  const JSON_HEADERS = { 'Content-Type': 'application/json' };
+  const FETCH_OPTS = { credentials: 'include' };
 
   const API = {
     async parseResponse(r) {
@@ -124,14 +121,14 @@ const App = (() => {
       }
     },
     async get(url) {
-      const r = await fetch(url, { headers: authHeaders() });
+      const r = await fetch(url, { ...FETCH_OPTS, headers: JSON_HEADERS });
       if (r.status === 401) { logout(); throw new Error('請先登入'); }
       const data = await this.parseResponse(r);
       if (!r.ok) throw new Error(data.error || `操作失敗 (${r.status})`);
       return data;
     },
     async post(url, body) {
-      const r = await fetch(url, { method: 'POST', headers: authHeaders(), body: JSON.stringify(body) });
+      const r = await fetch(url, { ...FETCH_OPTS, method: 'POST', headers: JSON_HEADERS, body: JSON.stringify(body) });
       const data = await this.parseResponse(r);
       if (r.status === 401) { logout(); throw new Error('請先登入'); }
       if (!r.ok) {
@@ -143,21 +140,21 @@ const App = (() => {
       return data;
     },
     async put(url, body) {
-      const r = await fetch(url, { method: 'PUT', headers: authHeaders(), body: JSON.stringify(body) });
+      const r = await fetch(url, { ...FETCH_OPTS, method: 'PUT', headers: JSON_HEADERS, body: JSON.stringify(body) });
       const data = await this.parseResponse(r);
       if (r.status === 401) { logout(); throw new Error('請先登入'); }
       if (!r.ok) throw new Error(data.error || '操作失敗');
       return data;
     },
     async patch(url) {
-      const r = await fetch(url, { method: 'PATCH', headers: authHeaders() });
+      const r = await fetch(url, { ...FETCH_OPTS, method: 'PATCH', headers: JSON_HEADERS });
       if (r.status === 401) { logout(); throw new Error('請先登入'); }
       const data = await this.parseResponse(r);
       if (!r.ok) throw new Error(data.error || `操作失敗 (${r.status})`);
       return data;
     },
     async del(url) {
-      const r = await fetch(url, { method: 'DELETE', headers: authHeaders() });
+      const r = await fetch(url, { ...FETCH_OPTS, method: 'DELETE', headers: JSON_HEADERS });
       const data = await this.parseResponse(r);
       if (r.status === 401) { logout(); throw new Error('請先登入'); }
       if (!r.ok) throw new Error(data.error || '操作失敗');
@@ -430,16 +427,15 @@ const App = (() => {
     try {
       const r = await fetch('/api/auth/login', {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       });
       const data = await r.json();
       if (!r.ok) throw new Error(data.error || '登入失敗');
 
-      authToken = data.token;
       currentUser = data.user;
       latestLoginRecord = data.currentLogin || null;
-      localStorage.setItem('authToken', authToken);
       el('loginForm').reset();
       await enterApp();
     } catch (err) {
@@ -467,15 +463,14 @@ const App = (() => {
     try {
       const r = await fetch('/api/auth/register', {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password, displayName }),
       });
       const data = await r.json();
       if (!r.ok) throw new Error(data.error || '註冊失敗');
 
-      authToken = data.token;
       currentUser = data.user;
-      localStorage.setItem('authToken', authToken);
       el('registerForm').reset();
       await enterApp();
     } catch (err) {
@@ -485,12 +480,11 @@ const App = (() => {
 
 
   function logout() {
-    authToken = null;
     currentUser = null;
     latestLoginRecord = null;
-    localStorage.removeItem('authToken');
     cachedCategories = [];
     cachedAccounts = [];
+    fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }).catch(() => {});
     showLoginPage(true);
   }
 
@@ -539,25 +533,20 @@ const App = (() => {
     bindAuth();
 
     // 若 URL 帶有 Google OAuth 授權碼，優先自動完成登入。
-    if (!authToken && await handleGoogleCodeFromUrl()) {
+    if (!currentUser && await handleGoogleCodeFromUrl()) {
       return;
     }
 
-    // 嘗試用 localStorage 的 token 恢復登入
-    if (authToken) {
-      try {
-        const r = await fetch('/api/auth/me', { headers: { 'Authorization': 'Bearer ' + authToken } });
-        if (r.ok) {
-          const data = await r.json();
-          currentUser = data.user;
-          await enterApp();
-          return;
-        }
-      } catch {}
-      // token 無效
-      authToken = null;
-      localStorage.removeItem('authToken');
-    }
+    // 嘗試用 Cookie 恢復登入
+    try {
+      const r = await fetch('/api/auth/me', { credentials: 'include' });
+      if (r.ok) {
+        const data = await r.json();
+        currentUser = data.user;
+        await enterApp();
+        return;
+      }
+    } catch {}
     const path = (location.pathname || '/').replace(/\/+$/, '') || '/';
     const isAppPath = path === '/login' || path === '/dashboard' || path === '/finance'
       || path.startsWith('/finance/') || path === '/transactions' || path === '/reports'
@@ -733,15 +722,14 @@ const App = (() => {
     try {
       const r = await fetch('/api/auth/google', {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code, redirect_uri: redirectUri, state }),
       });
       const data = await r.json();
       if (!r.ok) throw new Error(data.error || 'Google 登入失敗');
-      authToken = data.token;
       currentUser = data.user;
       latestLoginRecord = data.currentLogin || null;
-      localStorage.setItem('authToken', authToken);
       await enterApp();
     } catch (err) {
       el('loginError').textContent = err.message;
@@ -4237,7 +4225,7 @@ const App = (() => {
           try {
             await API.post('/api/account/delete', { password: pw || undefined });
             toast('帳號已刪除', 'success');
-            localStorage.removeItem('authToken');
+            await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }).catch(() => {});
             setTimeout(() => location.reload(), 800);
           } catch (e) {
             // 在密碼欄位下方顯示錯誤訊息

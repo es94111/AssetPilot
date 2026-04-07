@@ -1,6 +1,16 @@
 {
-  "currentVersion": "4.6",
+  "currentVersion": "4.6.1",
   "releases": [
+    {
+      "version": "4.6.1",
+      "date": "2026-04-07",
+      "title": "登入有效期統一由環境變數控制",
+      "type": "improved",
+      "changes": [
+        { "tag": "improved", "text": "Cookie maxAge 改由 JWT_EXPIRES 環境變數統一決定，與 JWT 有效期保持一致，不再寫死 7 天" },
+        { "tag": "improved", "text": "支援 s / m / h / d / w 單位（如 7d、24h、30m），修改 .env 一處即同步生效" }
+      ]
+    },
     {
       "version": "4.6",
       "date": "2026-04-07",

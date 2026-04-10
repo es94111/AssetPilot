@@ -384,6 +384,7 @@ body.dark-mode .mobile-header {
   border-bottom: 1px solid var(--border);
   vertical-align: middle;
 }
+.table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 .data-table tbody tr { transition: background var(--transition-fast); }
 .data-table tbody tr:hover { background: rgba(79,110,247,.04); }
 .data-table .amount-income { color: var(--income); font-weight: 600; }
@@ -2255,6 +2256,46 @@ body.dark-mode .stock-tabs .tab.active {
   .stock-settings-actions .btn {
     width: 100%;
   }
+
+  /* 股票 actions 篩選欄在手機版重置 margin */
+  .stock-panel .stock-actions .stock-search-group { margin-left: 0 !important; }
+
+  /* 日期選擇器在手機版自動填滿寬度 */
+  .date-range-wrap input[type="date"] { flex: 1; min-width: 100px; width: auto; }
+
+  /* 交易紀錄：顯示成交價(col6)，隱藏類型(col3)、交易稅(col8) */
+  #stockPanel-transactions .data-table th:nth-child(6),
+  #stockPanel-transactions .data-table td:nth-child(6) { display: table-cell; }
+  #stockPanel-transactions .data-table th:nth-child(3),
+  #stockPanel-transactions .data-table td:nth-child(3),
+  #stockPanel-transactions .data-table th:nth-child(8),
+  #stockPanel-transactions .data-table td:nth-child(8) { display: none; }
+
+  /* 股利紀錄：還原操作欄(col7)被全域規則隱藏的問題 */
+  #stockPanel-dividends .data-table th:nth-child(7),
+  #stockPanel-dividends .data-table td:nth-child(7) { display: table-cell; }
+
+  /* 實現損益：還原實現損益欄(col7)，隱藏賣出股數(col3) */
+  #stockPanel-realized .data-table th:nth-child(7),
+  #stockPanel-realized .data-table td:nth-child(7) { display: table-cell; }
+  #stockPanel-realized .data-table th:nth-child(3),
+  #stockPanel-realized .data-table td:nth-child(3) { display: none; }
+
+  /* 定期定額：還原操作欄(col8)，隱藏上次執行(col5) */
+  #stockPanel-settings .data-table th:nth-child(8),
+  #stockPanel-settings .data-table td:nth-child(8) { display: table-cell; }
+  #stockPanel-settings .data-table th:nth-child(5),
+  #stockPanel-settings .data-table td:nth-child(5) { display: none; }
+}
+
+@media (max-width: 480px) {
+  /* 持股卡片在超小螢幕改為單欄 */
+  .stock-card-body { grid-template-columns: 1fr; }
+  .stock-tabs .tab { padding: 7px 14px; font-size: 12px; }
+
+  /* 交易紀錄：超小螢幕進一步隱藏股數(col5) */
+  #stockPanel-transactions .data-table th:nth-child(5),
+  #stockPanel-transactions .data-table td:nth-child(5) { display: none; }
 }
 
 /* ===== 帳號設定 ===== */

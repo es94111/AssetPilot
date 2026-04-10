@@ -1616,6 +1616,15 @@
           <input type="number" id="recAmount" min="0.0001" step="0.0001" required>
         </div>
         <div class="form-row">
+          <label>幣別 <span class="required">*</span></label>
+          <select id="recCurrency" required></select>
+        </div>
+        <div class="form-row" id="recFxRateRow" style="display:none">
+          <label>匯率（1 單位外幣 = 幾元 TWD）<span class="required">*</span></label>
+          <input type="number" id="recFxRate" min="0.000001" step="0.000001" placeholder="例如 31.5">
+          <div class="import-hint" id="recConvertedHint" style="margin-top:6px"></div>
+        </div>
+        <div class="form-row">
           <label>分類 <span class="required">*</span></label>
           <select id="recCategory" required></select>
         </div>

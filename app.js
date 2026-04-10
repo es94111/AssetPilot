@@ -800,6 +800,7 @@ const App = (() => {
     cachedExchangeRates = map;
     renderCurrencySelectOptions('txCurrency', el('txCurrency')?.value || 'TWD');
     renderCurrencySelectOptions('accCurrency', el('accCurrency')?.value || 'TWD');
+    renderCurrencySelectOptions('recCurrency', el('recCurrency')?.value || 'TWD');
     refreshFxCurrencySuggestionList();
   }
 
@@ -5668,6 +5669,10 @@ const App = (() => {
     el('recStartDate').value = today();
     el('recAccount').innerHTML = cachedAccounts.map(a => `<option value="${a.id}">${escHtml(a.name)}</option>`).join('');
     updateRecCategorySelect('expense');
+    renderCurrencySelectOptions('recCurrency', 'TWD');
+    el('recFxRateRow').style.display = 'none';
+    el('recFxRate').required = false;
+    el('recConvertedHint').textContent = '';
     if (recId) {
       const recs = await API.get('/api/recurring');
       const r = recs.find(x => x.id === recId);
@@ -5676,17 +5681,42 @@ const App = (() => {
       el('modalRecurringTitle').textContent = '編輯固定收支';
       form.querySelector(`input[name="recType"][value="${r.type}"]`).checked = true;
       updateRecCategorySelect(r.type);
-      el('recAmount').value = r.amount;
+      const recCurrency = normalizeCurrencyCode(r.currency || 'TWD');
+      const origAmount = recCurrency === 'TWD' ? r.amount : (Number(r.fx_rate) > 0 ? Math.round(r.amount / r.fx_rate * 10000) / 10000 : r.amount);
+      renderCurrencySelectOptions('recCurrency', recCurrency, [recCurrency]);
+      el('recCurrency').value = recCurrency;
+      el('recAmount').value = origAmount;
+      if (recCurrency !== 'TWD') {
+        el('recFxRate').value = r.fxRate || r.fx_rate || '';
+        el('recFxRateRow').style.display = '';
+        el('recFxRate').required = true;
+      }
       el('recCategory').value = r.categoryId;
       el('recAccount').value = r.accountId;
       el('recFrequency').value = r.frequency;
       el('recStartDate').value = r.startDate || r.start_date;
       el('recNote').value = r.note || '';
+      refreshRecFxUi();
     } else {
       el('recId').value = '';
       el('modalRecurringTitle').textContent = '新增固定收支';
     }
     openModal('modalRecurring');
+  }
+
+  function refreshRecFxUi() {
+    const c = normalizeCurrencyCode(el('recCurrency')?.value || 'TWD');
+    const showFx = c !== 'TWD';
+    el('recFxRateRow').style.display = showFx ? '' : 'none';
+    el('recFxRate').required = showFx;
+    const original = Number(el('recAmount')?.value) || 0;
+    if (showFx && original > 0) {
+      const rate = Number(el('recFxRate').value) > 0 ? Number(el('recFxRate').value) : getRateToTwd(c);
+      const twd = Math.round(original * rate * 100) / 100;
+      el('recConvertedHint').textContent = `≈ TWD ${fmtNum(twd)}`;
+    } else {
+      el('recConvertedHint').textContent = '';
+    }
   }
 
   function updateRecCategorySelect(type) {
@@ -5711,6 +5741,16 @@ const App = (() => {
     });
     el('txFxRate')?.addEventListener('input', refreshTxFxUi);
     el('txAmount')?.addEventListener('input', refreshTxFxUi);
+
+    el('recCurrency')?.addEventListener('change', () => {
+      const c = normalizeCurrencyCode(el('recCurrency').value);
+      if (c !== 'TWD' && !(Number(el('recFxRate').value) > 0)) {
+        el('recFxRate').value = getRateToTwd(c);
+      }
+      refreshRecFxUi();
+    });
+    el('recFxRate')?.addEventListener('input', refreshRecFxUi);
+    el('recAmount')?.addEventListener('input', refreshRecFxUi);
     el('txAccount')?.addEventListener('change', applyAccountCurrencyToTx);
 
     // FAB
@@ -5880,6 +5920,8 @@ const App = (() => {
       const id = el('recId').value;
       const type = document.querySelector('input[name="recType"]:checked').value;
       const amount = Number(el('recAmount').value);
+      const currency = normalizeCurrencyCode(el('recCurrency').value || 'TWD');
+      const fxRate = currency === 'TWD' ? 1 : (Number(el('recFxRate').value) || getRateToTwd(currency));
       const categoryId = el('recCategory').value;
       const accountId = el('recAccount').value;
       const frequency = el('recFrequency').value;
@@ -5888,9 +5930,9 @@ const App = (() => {
 
       try {
         if (id) {
-          await API.put('/api/recurring/' + id, { type, amount, categoryId, accountId, frequency, startDate, note });
+          await API.put('/api/recurring/' + id, { type, amount, currency, fxRate, categoryId, accountId, frequency, startDate, note });
         } else {
-          await API.post('/api/recurring', { type, amount, categoryId, accountId, frequency, startDate, note });
+          await API.post('/api/recurring', { type, amount, currency, fxRate, categoryId, accountId, frequency, startDate, note });
         }
         closeModal('modalRecurring');
         toast(id ? '固定收支已更新' : '固定收支已新增', 'success');

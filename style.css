@@ -1560,6 +1560,25 @@ body.dark-mode .stock-tabs .tab.active {
   font-size: 13px;
 }
 
+/* 公開首頁版本資訊按鈕 */
+.public-changelog-btn {
+  font-size: 13px;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  padding: 7px 16px;
+  background: #fff;
+  gap: 6px;
+}
+.public-changelog-btn:hover {
+  color: var(--primary);
+  border-color: #bfdbfe;
+  background: #fff;
+  transform: none;
+  box-shadow: 0 2px 8px rgba(37,99,235,.1);
+}
+.public-changelog-btn i { color: var(--primary); }
+
 .auth-container {
   display: none;
   position: fixed; inset: 0;
@@ -1630,6 +1649,31 @@ body.dark-mode .stock-tabs .tab.active {
   color: var(--text-secondary);
   font-size: 15px;
   margin-bottom: 36px;
+}
+
+/* 登入頁版本資訊按鈕（固定在 auth-container 底部） */
+.auth-changelog-btn {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 12px;
+  color: rgba(255,255,255,.55);
+  padding: 8px 16px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: color var(--transition-fast), background var(--transition-fast);
+  z-index: 10;
+}
+.auth-changelog-btn:hover {
+  color: rgba(255,255,255,.9);
+  background: rgba(255,255,255,.1);
 }
 
 .auth-form { display: none; }

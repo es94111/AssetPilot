@@ -95,9 +95,11 @@
         <div class="public-stack-badges">
           <span class="badge"><i class="fab fa-node-js"></i> Node.js</span>
           <span class="badge"><i class="fas fa-database"></i> SQLite</span>
-          <span class="badge"><i class="fab fa-docker"></i> Docker Ready</span>
           <span class="badge"><i class="fas fa-lock"></i> ChaCha20 加密</span>
         </div>
+        <button type="button" class="btn btn-ghost public-changelog-btn" onclick="App.openChangelog()">
+          <i class="fas fa-code-branch"></i> 版本更新資訊
+        </button>
       </div>
     </div>
   </section>
@@ -174,6 +176,9 @@
       </form>
 
     </div>
+    <button type="button" class="auth-changelog-btn" onclick="App.openChangelog()">
+      <i class="fas fa-code-branch"></i> 版本更新資訊
+    </button>
   </div>
 
   <!-- 側邊欄 -->

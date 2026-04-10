@@ -1,6 +1,21 @@
 {
-  "currentVersion": "4.6.2",
+  "currentVersion": "4.6.3",
   "releases": [
+    {
+      "version": "4.6.3",
+      "date": "2026-04-10",
+      "title": "全頁 RWD 響應式完善",
+      "type": "improved",
+      "changes": [
+        { "tag": "improved", "text": "頁面標題（page-title）在手機版縮至 20px，超小螢幕縮至 18px，避免佔用過多垂直空間" },
+        { "tag": "improved", "text": "卡片（card）padding 在手機版縮至 16px，超小螢幕縮至 12px，提供更多內容空間" },
+        { "tag": "improved", "text": "所有 Modal 在手機版限制最大寬度 calc(100vw - 32px)，超小螢幕近乎全寬" },
+        { "tag": "improved", "text": "Modal 內部 padding（header、form、form-actions）在手機版統一縮小" },
+        { "tag": "improved", "text": "分頁按鈕（pagination）在手機版自動換行，不再溢出" },
+        { "tag": "improved", "text": "批次操作列（batch-bar）與類型切換（type-toggle）手機版支援換行" },
+        { "tag": "improved", "text": "摘要卡片 icon 在超小螢幕縮小，維持版面比例" }
+      ]
+    },
     {
       "version": "4.6.2",
       "date": "2026-04-10",

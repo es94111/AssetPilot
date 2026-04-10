@@ -1850,6 +1850,25 @@ body.dark-mode .stock-tabs .tab.active {
   .public-home-stats { gap: 20px; }
   .stat-num { font-size: 18px; }
   .public-section-header { margin-bottom: 16px; }
+
+  /* ── 全頁共用 ── */
+  .page-title { font-size: 20px; margin-bottom: 16px; }
+  .card { padding: 16px; }
+
+  /* ── Modal 手機版 ── */
+  .modal { max-width: calc(100vw - 32px); }
+  .modal form, .modal > p { padding: 16px; }
+  .modal-header { padding: 14px 16px; }
+  .form-actions { padding: 12px 16px; }
+
+  /* ── 分頁按鈕換行 ── */
+  .pagination { flex-wrap: wrap; }
+
+  /* ── Batch 操作列換行 ── */
+  .batch-bar { flex-wrap: wrap; }
+
+  /* ── 類型切換換行 ── */
+  .type-toggle { flex-wrap: wrap; }
 }
 
 @media (max-width: 480px) {
@@ -1862,6 +1881,19 @@ body.dark-mode .stock-tabs .tab.active {
   }
   .summary-cards { grid-template-columns: 1fr; }
   .card-value { font-size: 18px; }
+
+  /* 超小螢幕：頁面標題再縮 */
+  .page-title { font-size: 18px; }
+
+  /* 超小螢幕：Modal 幾乎全寬 */
+  .modal, .modal-sm { max-width: calc(100vw - 16px); }
+  .modal-overlay { padding: 8px; }
+
+  /* 卡片再縮 */
+  .card { padding: 12px; }
+
+  /* 摘要卡片 icon 縮小 */
+  .card-icon { width: 40px; height: 40px; min-width: 40px; font-size: 17px; }
 }
 
 /* ===== 股票紀錄 ===== */

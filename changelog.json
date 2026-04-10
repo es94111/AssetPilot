@@ -1,6 +1,27 @@
 {
-  "currentVersion": "4.6.6",
+  "currentVersion": "4.6.8",
   "releases": [
+    {
+      "version": "4.6.8",
+      "date": "2026-04-10",
+      "title": "新增服務條款公開頁面",
+      "type": "new",
+      "changes": [
+        { "tag": "new", "text": "新增 /terms 服務條款頁面，無需登入即可公開存取" },
+        { "tag": "new", "text": "首頁 footer 加入「服務條款」連結，並與隱私權政策並排顯示" },
+        { "tag": "improved", "text": "隱私權政策頁面 footer 加入服務條款互連連結" }
+      ]
+    },
+    {
+      "version": "4.6.7",
+      "date": "2026-04-10",
+      "title": "新增隱私權政策公開頁面",
+      "type": "new",
+      "changes": [
+        { "tag": "new", "text": "新增 /privacy 隱私權政策頁面，無需登入即可公開存取" },
+        { "tag": "new", "text": "首頁 footer 加入「隱私權政策」連結" }
+      ]
+    },
     {
       "version": "4.6.6",
       "date": "2026-04-10",

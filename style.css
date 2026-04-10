@@ -1579,6 +1579,31 @@ body.dark-mode .stock-tabs .tab.active {
 }
 .public-changelog-btn i { color: var(--primary); }
 
+/* 公開首頁法律連結群組 */
+.public-legal-links {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* 公開首頁隱私權政策 / 服務條款連結 */
+.public-privacy-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #94a3b8;
+  text-decoration: none;
+  padding: 6px 12px;
+  border-radius: 999px;
+  transition: color 150ms, background 150ms;
+}
+.public-privacy-link:hover {
+  color: var(--primary);
+  background: rgba(79,110,247,.06);
+}
+.public-privacy-link i { font-size: 12px; }
+
 .auth-container {
   display: none;
   position: fixed; inset: 0;

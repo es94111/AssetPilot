@@ -4361,6 +4361,6 @@ app.get('{*path}', rateLimit({
 // ─── 啟動 ───
 initDB().then(() => {
   app.listen(PORT, () => {
-    console.log(`資產管理伺服器已啟動: http://localhost:${PORT}`);
+    console.log(`AssetPilot 伺服器已啟動: http://localhost:${PORT}`);
   });
 });

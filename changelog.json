@@ -1,6 +1,16 @@
 {
-  "currentVersion": "4.6.5",
+  "currentVersion": "4.6.6",
   "releases": [
+    {
+      "version": "4.6.6",
+      "date": "2026-04-10",
+      "title": "修正幣別下拉選單不完整問題",
+      "type": "fixed",
+      "changes": [
+        { "tag": "fixed", "text": "未進入帳戶管理頁面時，幣別下拉選單僅顯示 6 種預設幣別的問題" },
+        { "tag": "improved", "text": "幣別選單現在直接從完整的 CURRENCY_LABELS 對照表（150+ 種）產生，不再依賴帳戶或匯率設定才能顯示完整選項" }
+      ]
+    },
     {
       "version": "4.6.5",
       "date": "2026-04-10",

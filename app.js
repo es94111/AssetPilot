@@ -164,7 +164,6 @@ const App = (() => {
 
   // ─── 工具函式 ───
   const fmt = (n) => 'NT$ ' + Number(n).toLocaleString('zh-TW');
-  const DEFAULT_CURRENCY_CODES = ['TWD', 'USD', 'JPY', 'EUR', 'HKD', 'CNY'];
   const CURRENCY_LABELS = {
     // 亞太地區
     TWD: '新台幣', JPY: '日圓', CNY: '人民幣', HKD: '港幣', KRW: '韓元',
@@ -224,6 +223,9 @@ const App = (() => {
     XAU: '黃金（盎司）', XAG: '白銀（盎司）', XDR: '特別提款權',
     BTC: '比特幣',
   };
+  // 預設幣別清單 = CURRENCY_LABELS 全部（常用優先）
+  const DEFAULT_CURRENCY_CODES = ['TWD', 'USD', 'JPY', 'EUR', 'HKD', 'CNY',
+    ...Object.keys(CURRENCY_LABELS).filter(c => !['TWD','USD','JPY','EUR','HKD','CNY'].includes(c))];
 
   function normalizeCurrencyCode(code) {
     const c = String(code || 'TWD').trim().toUpperCase();

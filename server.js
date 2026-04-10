@@ -4338,6 +4338,14 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: '伺服器發生錯誤，請稍後再試' });
 });
 
+// ─── 公開頁面路由 ───
+app.get('/privacy', (req, res) => {
+  res.sendFile(path.join(__dirname, 'privacy.html'));
+});
+app.get('/terms', (req, res) => {
+  res.sendFile(path.join(__dirname, 'terms.html'));
+});
+
 // ─── 前端路由 catch-all（所有非 API、非靜態檔案的請求都回傳 index.html）───
 app.get('{*path}', rateLimit({
   windowMs: 60 * 1000,

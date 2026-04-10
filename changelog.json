@@ -1,6 +1,15 @@
 {
-  "currentVersion": "4.6.8",
+  "currentVersion": "4.6.9",
   "releases": [
+    {
+      "version": "4.6.9",
+      "date": "2026-04-10",
+      "title": "修正 Docker 映像檔缺少公開頁面檔案",
+      "type": "fixed",
+      "changes": [
+        { "tag": "fixed", "text": "Dockerfile COPY 指令補上 privacy.html 與 terms.html，修正 Docker 環境下隱私權政策與服務條款頁面回傳 ENOENT 錯誤的問題" }
+      ]
+    },
     {
       "version": "4.6.8",
       "date": "2026-04-10",

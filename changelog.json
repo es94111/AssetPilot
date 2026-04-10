@@ -1,6 +1,18 @@
 {
-  "currentVersion": "4.6.4",
+  "currentVersion": "4.6.5",
   "releases": [
+    {
+      "version": "4.6.5",
+      "date": "2026-04-10",
+      "title": "固定收支支援外幣幣別選擇",
+      "type": "new",
+      "changes": [
+        { "tag": "new", "text": "新增固定收支幣別選擇欄位，可選擇 TWD 以外的外幣" },
+        { "tag": "new", "text": "選擇外幣後顯示匯率輸入欄與換算後 TWD 金額提示，邏輯與交易記錄一致" },
+        { "tag": "improved", "text": "自動執行固定收支時，產生的交易紀錄帶入正確的幣別、原始金額與匯率" },
+        { "tag": "improved", "text": "資料庫新增 currency 與 fx_rate 欄位至 recurring 資料表（自動升級，不影響既有紀錄）" }
+      ]
+    },
     {
       "version": "4.6.4",
       "date": "2026-04-10",

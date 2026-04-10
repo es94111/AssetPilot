@@ -510,6 +510,8 @@ async function initDB() {
   try { db.run("ALTER TABLE transactions ADD COLUMN original_amount REAL DEFAULT 0"); } catch (e) { /* ignore */ }
   try { db.run("ALTER TABLE transactions ADD COLUMN fx_rate REAL DEFAULT 1"); } catch (e) { /* ignore */ }
   try { db.run("ALTER TABLE transactions ADD COLUMN exclude_from_stats INTEGER DEFAULT 0"); } catch (e) { /* ignore */ }
+  try { db.run("ALTER TABLE recurring ADD COLUMN currency TEXT DEFAULT 'TWD'"); } catch (e) { /* ignore */ }
+  try { db.run("ALTER TABLE recurring ADD COLUMN fx_rate REAL DEFAULT 1"); } catch (e) { /* ignore */ }
   try { db.run("ALTER TABLE login_audit_logs ADD COLUMN country TEXT DEFAULT ''"); } catch (e) { /* ignore */ }
   try { db.run("ALTER TABLE login_attempt_logs ADD COLUMN country TEXT DEFAULT ''"); } catch (e) { /* ignore */ }
 
@@ -2973,24 +2975,30 @@ app.get('/api/recurring', (req, res) => {
   const rows = queryAll("SELECT * FROM recurring WHERE user_id = ? ORDER BY start_date DESC", [req.userId]);
   res.json(rows.map(r => ({
     ...r, categoryId: r.category_id, accountId: r.account_id,
-    startDate: r.start_date, isActive: !!r.is_active, lastGenerated: r.last_generated
+    startDate: r.start_date, isActive: !!r.is_active, lastGenerated: r.last_generated,
+    currency: r.currency || 'TWD', fxRate: Number(r.fx_rate) || 1,
   })));
 });
 
 app.post('/api/recurring', (req, res) => {
-  const { type, amount, categoryId, accountId, frequency, startDate, note } = req.body;
-  if (amount <= 0) return res.status(400).json({ error: '金額必須大於 0' });
+  const { type, categoryId, accountId, frequency, startDate, note } = req.body;
+  let { amount, currency, fxRate } = req.body;
+  currency = normalizeCurrency(currency || 'TWD');
+  const converted = convertToTwd(amount, currency, fxRate, req.userId);
   const id = uid();
-  db.run("INSERT INTO recurring (id,user_id,type,amount,category_id,account_id,frequency,start_date,note,is_active,last_generated) VALUES (?,?,?,?,?,?,?,?,?,1,NULL)",
-    [id, req.userId, type, amount, categoryId, accountId, frequency, startDate, note || '']);
+  db.run("INSERT INTO recurring (id,user_id,type,amount,category_id,account_id,frequency,start_date,note,currency,fx_rate,is_active,last_generated) VALUES (?,?,?,?,?,?,?,?,?,?,?,1,NULL)",
+    [id, req.userId, type, converted.twdAmount, categoryId, accountId, frequency, startDate, note || '', converted.currency, converted.fxRate]);
   saveDB();
   res.json({ id });
 });
 
 app.put('/api/recurring/:id', (req, res) => {
-  const { type, amount, categoryId, accountId, frequency, startDate, note } = req.body;
-  db.run("UPDATE recurring SET type=?,amount=?,category_id=?,account_id=?,frequency=?,start_date=?,note=? WHERE id=? AND user_id=?",
-    [type, amount, categoryId, accountId, frequency, startDate, note || '', req.params.id, req.userId]);
+  const { type, categoryId, accountId, frequency, startDate, note } = req.body;
+  let { amount, currency, fxRate } = req.body;
+  currency = normalizeCurrency(currency || 'TWD');
+  const converted = convertToTwd(amount, currency, fxRate, req.userId);
+  db.run("UPDATE recurring SET type=?,amount=?,category_id=?,account_id=?,frequency=?,start_date=?,note=?,currency=?,fx_rate=? WHERE id=? AND user_id=?",
+    [type, converted.twdAmount, categoryId, accountId, frequency, startDate, note || '', converted.currency, converted.fxRate, req.params.id, req.userId]);
   saveDB();
   res.json({ ok: true });
 });
@@ -3020,8 +3028,11 @@ app.post('/api/recurring/process', (req, res) => {
     let nextDate = getNextDate(lastGen, r.frequency);
     while (nextDate <= todayS) {
       const now = Date.now();
-      db.run("INSERT INTO transactions (id,user_id,type,amount,date,category_id,account_id,note,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?)",
-        [uid(), req.userId, r.type, r.amount, nextDate, r.category_id, r.account_id, (r.note || '') + ' (自動)', now, now]);
+      const rCurrency = normalizeCurrency(r.currency || 'TWD');
+      const rFxRate = Number(r.fx_rate) > 0 ? Number(r.fx_rate) : 1;
+      const rOriginalAmount = rCurrency === 'TWD' ? r.amount : Math.round(r.amount / rFxRate * 10000) / 10000;
+      db.run("INSERT INTO transactions (id,user_id,type,amount,original_amount,currency,fx_rate,date,category_id,account_id,note,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        [uid(), req.userId, r.type, r.amount, rOriginalAmount, rCurrency, rFxRate, nextDate, r.category_id, r.account_id, (r.note || '') + ' (自動)', now, now]);
       db.run("UPDATE recurring SET last_generated = ? WHERE id = ?", [nextDate, r.id]);
       count++;
       nextDate = getNextDate(nextDate, r.frequency);

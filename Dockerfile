@@ -7,7 +7,7 @@ COPY package.json package-lock.json* ./
 RUN npm ci --omit=dev || npm install --omit=dev
 
 # 複製應用程式檔案
-COPY server.js app.js index.html style.css logo.svg favicon.svg changelog.json ./
+COPY server.js app.js index.html style.css logo.svg favicon.svg changelog.json privacy.html terms.html ./
 
 # 資料庫與設定存放目錄
 RUN mkdir -p /app/data

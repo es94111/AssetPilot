@@ -1,7 +1,10 @@
 {
   "permissions": {
     "allow": [
-      "Bash(node -e \"require\\('cookie-parser'\\); console.log\\('installed'\\)\")"
+      "Bash(node -e \"require\\('cookie-parser'\\); console.log\\('installed'\\)\")",
+      "Bash(python3 \"C:\\\\Users\\\\hongyu\\\\.claude\\\\plugins\\\\cache\\\\ui-ux-pro-max-skill\\\\ui-ux-pro-max\\\\2.5.0\\\\.claude\\\\skills\\\\ui-ux-pro-max\\\\scripts\\\\search.py\" \"stock portfolio finance responsive mobile adaptive\" --design-system -p \"資產管理\" -f markdown)",
+      "Bash(python \"C:\\\\Users\\\\hongyu\\\\.claude\\\\plugins\\\\cache\\\\ui-ux-pro-max-skill\\\\ui-ux-pro-max\\\\2.5.0\\\\.claude\\\\skills\\\\ui-ux-pro-max\\\\scripts\\\\search.py\" \"stock portfolio finance responsive mobile adaptive\" --design-system -p \"資產管理\" -f markdown)",
+      "Read(//c/Users/hongyu/.claude/plugins/cache/ui-ux-pro-max-skill/**)"
     ]
   }
 }

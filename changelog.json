@@ -1,6 +1,20 @@
 {
-  "currentVersion": "4.6.1",
+  "currentVersion": "4.6.2",
   "releases": [
+    {
+      "version": "4.6.2",
+      "date": "2026-04-10",
+      "title": "股票紀錄頁面響應式優化",
+      "type": "improved",
+      "changes": [
+        { "tag": "improved", "text": "各股票子頁表格加入橫向捲動支援，在小螢幕不再因欄位過多而破版" },
+        { "tag": "improved", "text": "手機版交易紀錄表格自動隱藏次要欄位（類型、交易稅），保留成交價、小計等關鍵資訊" },
+        { "tag": "improved", "text": "手機版實現損益表格還原「實現損益」欄，隱藏「賣出股數」欄" },
+        { "tag": "improved", "text": "手機版股利/定期定額操作欄不再被全域規則誤隱藏" },
+        { "tag": "improved", "text": "手機版篩選欄日期選擇器自適應寬度，查詢股票篩選不再錯位" },
+        { "tag": "improved", "text": "超小螢幕（≤480px）持股卡片改為單欄顯示，標籤字縮小以節省空間" }
+      ]
+    },
     {
       "version": "4.6.1",
       "date": "2026-04-07",

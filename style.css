@@ -3026,9 +3026,6 @@ body.dark-mode .stk-pagination button:focus-visible {
   white-space: nowrap;
 }
 .mtls-notice-actions .btn-ghost {
-  padding: 6px 10px;
-  min-width: 34px;
-  min-height: 34px;
   background: transparent;
   color: var(--text-muted);
   border: 1px solid var(--border);
@@ -3036,6 +3033,11 @@ body.dark-mode .stk-pagination button:focus-visible {
 .mtls-notice-actions .btn-ghost:hover {
   background: var(--bg);
   color: var(--text);
+}
+.mtls-notice-actions .mtls-notice-close-btn {
+  padding: 6px 10px;
+  min-width: 34px;
+  min-height: 34px;
 }
 
 body.dark-mode .mtls-notice {
@@ -3057,13 +3059,14 @@ body.dark-mode .mtls-notice-icon {
   }
   .mtls-notice-actions {
     flex-direction: row;
+    flex-wrap: wrap;
     justify-content: flex-end;
   }
   .mtls-notice-actions .btn {
     flex: 1;
     justify-content: center;
   }
-  .mtls-notice-actions .btn-ghost {
+  .mtls-notice-actions .mtls-notice-close-btn {
     flex: 0 0 auto;
   }
 }

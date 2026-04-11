@@ -6441,17 +6441,30 @@ const App = (() => {
     notice.className = 'mtls-notice';
     notice.setAttribute('role', 'alert');
     notice.setAttribute('aria-live', 'assertive');
-    const detail = err?.detail || err?.message || '此端點必須透過 Cloudflare 存取（mTLS）';
+    // 伺服器 403 回應現在包含結構化欄位：
+    //   reason  — 一句話失敗原因（例如「您的瀏覽器未提供用戶端憑證」）
+    //   detail  — 具體處理指引（指導使用者如何安裝憑證）
+    //   debug   — cf-cert-* 標頭原始值，方便管理員除錯
+    const data = err?.data || {};
+    const reason = data.reason || err?.message || 'mTLS 客戶端憑證驗證失敗';
+    const detail = data.detail || err?.detail || '此端點必須透過 Cloudflare 存取（mTLS）';
+    const debug = data.debug || null;
     // 注意：此處不再以 currentUser?.isAdmin 條件隱藏「前往憑證管理」按鈕。
     // 原因：mTLS 失敗時常在登入資料回填前觸發，currentUser 可能為 null 或 isAdmin 尚未同步，
     // 導致管理員看到非管理員的提示而失去救援路徑。
     // 憑證管理頁面本身已有 admin 權限檢查，非管理員點擊也不會造成資料外洩。
+    const debugHtml = debug ? `
+      <details class="mtls-notice-debug">
+        <summary>技術細節（Cloudflare 回報的 cf-cert-* 標頭）</summary>
+        <pre>${escHtml(JSON.stringify(debug, null, 2))}</pre>
+      </details>` : '';
     notice.innerHTML = `
       <div class="mtls-notice-icon" aria-hidden="true"><i class="fas fa-shield-halved"></i></div>
       <div class="mtls-notice-body">
-        <div class="mtls-notice-title">mTLS 驗證失敗，部分功能暫時無法使用</div>
+        <div class="mtls-notice-title">mTLS 驗證失敗：${escHtml(reason)}</div>
         <div class="mtls-notice-desc">${escHtml(detail)}</div>
-        <div class="mtls-notice-hint">若您是管理員，請前往憑證管理確認設定或暫時關閉 mTLS；否則請聯絡管理員協助處理。</div>
+        <div class="mtls-notice-hint">若您是管理員，可前往憑證管理暫時關閉 mTLS 進行排除；或直接登出後在憑證安裝完成後重新登入。</div>
+        ${debugHtml}
       </div>
       <div class="mtls-notice-actions">
         <button type="button" class="btn btn-primary" id="mtlsNoticeGoAdmin"><i class="fas fa-shield-halved"></i> 前往憑證管理</button>

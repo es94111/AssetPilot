@@ -313,22 +313,54 @@ function mtlsMiddleware(req, res, next) {
     return next();
   }
 
-  // Cloudflare 代理模式：同時相容三種可能的標頭格式
+  // Cloudflare 代理模式：同時相容多種標頭格式
   //   a) cf-cert-verified: "true"/"false"        （Cloudflare Managed Transform 標準格式）
   //   b) cf-client-cert-verified: "SUCCESS"      （舊版或自訂 Transform Rule）
-  //   c) cf-cert-presented: "true"               （憑證已提供訊號，輔助判斷）
+  //   c) cf-cert-presented: "true"/"false"       （瀏覽器是否有提供憑證）
+  //   d) cf-cert-revoked: "true"/"false"         （憑證是否已吊銷）
   const certVerified   = req.headers['cf-cert-verified'];
   const clientVerified = req.headers['cf-client-cert-verified'];
   const certPresented  = req.headers['cf-cert-presented'];
-  const hasAnySignal = certVerified !== undefined || clientVerified !== undefined || certPresented !== undefined;
+  const certRevoked    = req.headers['cf-cert-revoked'];
+  const hasAnySignal =
+    certVerified !== undefined ||
+    clientVerified !== undefined ||
+    certPresented !== undefined ||
+    certRevoked !== undefined;
 
   if (hasAnySignal) {
     const raw = String(certVerified ?? clientVerified ?? '').toLowerCase();
     const isVerified = raw === 'true' || raw === 'success';
     if (isVerified) return next();
+
+    // 根據 Cloudflare 回報的各項 cert 狀態推斷失敗原因，給出對應的使用者指引
+    const presented = String(certPresented ?? '').toLowerCase() === 'true';
+    const revoked   = String(certRevoked   ?? '').toLowerCase() === 'true';
+
+    let reason;
+    let guidance;
+    if (revoked) {
+      reason = '用戶端憑證已被吊銷';
+      guidance = '請向管理員重新申請一份有效的用戶端憑證，並安裝至您的瀏覽器 / 裝置後再試。';
+    } else if (!presented) {
+      // 這是目前最常見的情境：使用者沒有在瀏覽器安裝用戶端憑證
+      reason = '您的瀏覽器未提供用戶端憑證';
+      guidance = 'mTLS 要求瀏覽器 / 裝置先安裝 Cloudflare 簽發的用戶端憑證（.p12 / PKCS#12），並在 TLS 交握時提交。請向管理員取得該憑證，於系統憑證管理工具（macOS Keychain / Windows 憑證管理員 / iOS Profile / Android 使用者憑證）安裝後，重新整理瀏覽器並在提示選擇該憑證。行動 App / IoT 裝置請參考 https://developers.cloudflare.com/ssl/client-certificates/configure-your-mobile-app-or-iot-device/';
+    } else {
+      reason = `用戶端憑證未通過 Cloudflare 驗證（驗證狀態："${raw || '未知'}"）`;
+      guidance = '瀏覽器雖有提供憑證但未被 Cloudflare 接受，可能是憑證過期、來源 CA 未被信任或主機尚未啟用對應的 mTLS Hostname。請確認 Cloudflare Dashboard → SSL/TLS → Client Certificates 內的設定，或由管理員暫時關閉 mTLS。';
+    }
+
     return res.status(403).json({
       error: 'mTLS 客戶端憑證驗證失敗',
-      detail: `Cloudflare 回報憑證驗證狀態為 "${raw || '未知'}"（cf-cert-verified / cf-client-cert-verified）。請確認客戶端已提供有效的用戶端憑證。`
+      reason,
+      detail: guidance,
+      debug: {
+        'cf-cert-verified': certVerified ?? null,
+        'cf-client-cert-verified': clientVerified ?? null,
+        'cf-cert-presented': certPresented ?? null,
+        'cf-cert-revoked': certRevoked ?? null,
+      }
     });
   }
 

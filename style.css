@@ -3012,6 +3012,36 @@ body.dark-mode .stk-pagination button:focus-visible {
   color: var(--text-muted);
   line-height: 1.5;
 }
+.mtls-notice-debug {
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.mtls-notice-debug summary {
+  cursor: pointer;
+  user-select: none;
+  padding: 4px 0;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.mtls-notice-debug summary:hover {
+  color: var(--text);
+}
+.mtls-notice-debug pre {
+  margin: 6px 0 0 0;
+  padding: 8px 10px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--text-secondary);
+  white-space: pre-wrap;
+  word-break: break-all;
+  max-height: 140px;
+  overflow: auto;
+}
 .mtls-notice-actions {
   display: flex;
   align-items: center;

@@ -1,6 +1,17 @@
 {
-  "currentVersion": "4.8.6",
+  "currentVersion": "4.8.7",
   "releases": [
+    {
+      "version": "4.8.7",
+      "date": "2026-04-11",
+      "title": "mTLS 救援路徑擴大至整個管理員面板",
+      "type": "fixed",
+      "changes": [
+        { "tag": "fixed", "text": "修正 mTLS 設定錯誤時「前往憑證管理」按鈕雖可進入管理員頁但 /api/admin/settings 仍被 403 擋下，導致管理員面板無法完整載入的問題" },
+        { "tag": "improved", "text": "mTLS 救援路徑從 /api/admin/certs 擴大至整個 /api/admin/ 命名空間（以及 /api/account/login-logs 設定頁所需），讓管理員在 mTLS 失效時仍能完整開啟管理員面板、檢視現有設定、切換 mTLS 開關" },
+        { "tag": "improved", "text": "所有 /api/admin/ 端點本身已受 authMiddleware + adminMiddleware 保護，跳過 mTLS 不會造成未授權存取，只是讓已通過認證的管理員在 mTLS 故障時仍有救援通道" }
+      ]
+    },
     {
       "version": "4.8.6",
       "date": "2026-04-11",

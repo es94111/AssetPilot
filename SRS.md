@@ -1152,6 +1152,7 @@
 
 | 版本 | 日期 | 變更說明 |
 | --- | --- | --- |
+| 4.8.7 | 2026-04-11 | mTLS 救援路徑從 /api/admin/certs 擴大至整個 /api/admin/ 命名空間與 /api/account/login-logs，讓管理員面板在 mTLS 失效時仍能完整載入；已受 authMiddleware + adminMiddleware 保護 |
 | 4.8.6 | 2026-04-11 | 修正 mTLS 警示卡的「前往憑證管理」按鈕會因 currentUser.isAdmin 未同步而隱藏導致管理員失去救援路徑；一律顯示跳轉按鈕並新增「登出」備援，提示文字統一去除分支判斷 |
 | 4.8.5 | 2026-04-11 | mTLS 錯誤集中處理：新增 isMtlsError() 偵測器與浮動警示卡，每 session 只顯示一次，取代原本每個 API 呼叫都彈 toast 的洗版行為；管理員可一鍵跳轉憑證管理 |
 | 4.8.4 | 2026-04-11 | 管理員登入紀錄頁碼切換改為 iOS 浮動藥丸分段控制器，與上方每頁筆數視覺節奏一致；active 對比 6.02:1、tabular-nums、focus-visible 雙層焦點環、aria-label / aria-current / prefers-reduced-motion 支援 |

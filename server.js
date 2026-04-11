@@ -337,10 +337,18 @@ function mtlsMiddleware(req, res, next) {
 
 // 將 mTLS 套用至所有 /api/ 路由（auth 路由除外，使用者需能在無憑證下完成登入）
 // 若業務上需要連登入也要驗證憑證，可移除下方的 skip 條件
-// 救援路徑：admin/certs 端點也跳過 mTLS，使管理員在設定錯誤時仍能從 UI 關閉 mTLS
-// 這類端點仍受 authMiddleware + requireAdmin 保護，不會被一般使用者存取
+// 救援路徑：整個 /api/admin/ 命名空間跳過 mTLS，使管理員在設定錯誤時仍能從 UI
+// 完整開啟管理員面板並關閉 mTLS；這些端點本身已受 authMiddleware + adminMiddleware
+// 保護，非管理員即使繞過 mTLS 也無法存取，不會造成資料外洩。
+// /api/account/login-logs 為登入帳號自身的紀錄頁，設定頁需能顯示，故一併跳過。
 app.use('/api/', (req, res, next) => {
-  const skipPaths = ['/api/auth/', '/api/config', '/api/changelog', '/api/admin/certs'];
+  const skipPaths = [
+    '/api/auth/',
+    '/api/config',
+    '/api/changelog',
+    '/api/admin/',
+    '/api/account/login-logs',
+  ];
   if (skipPaths.some(p => req.path.startsWith(p.replace('/api', '')))) return next();
   mtlsMiddleware(req, res, next);
 });

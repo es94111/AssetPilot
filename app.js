@@ -4898,11 +4898,23 @@ const App = (() => {
       if (mtlsEnabled) mtlsEnabled.checked = !!data.mtlsEnabled;
       if (mtlsCfOnly)  mtlsCfOnly.checked  = !!data.mtlsCfOnly;
 
+      const certInfo = el('adminMtlsCertInfo');
+      if (certInfo) {
+        const keyNote = data.mtlsKeyExists ? '（私鑰已存在）' : '（私鑰未設定）';
+        certInfo.innerHTML = 'Client Certificate：' + formatCertInfo(data.mtlsCert) + ' ' + escHtml(keyNote);
+      }
+
       const caInfo = el('adminMtlsCaInfo');
-      if (caInfo) caInfo.innerHTML = 'Cloudflare Managed CA：' + formatCertInfo(data.mtlsCa);
+      if (caInfo) caInfo.innerHTML = 'Managed CA：' + formatCertInfo(data.mtlsCa);
+
+      const originCaInfo = el('adminOriginCaInfo');
+      if (originCaInfo) originCaInfo.innerHTML = 'Origin CA：' + formatCertInfo(data.originCa);
 
       const originInfo = el('adminOriginCertInfo');
-      if (originInfo) originInfo.innerHTML = 'Origin Certificate：' + formatCertInfo(data.originCert);
+      if (originInfo) {
+        const keyNote = data.originKeyExists ? '（私鑰已存在）' : '（私鑰未設定）';
+        originInfo.innerHTML = 'Origin Certificate：' + formatCertInfo(data.originCert) + ' ' + escHtml(keyNote);
+      }
     } catch (e) {
       // silent — cert section might not affect normal usage
     }
@@ -4920,16 +4932,44 @@ const App = (() => {
       }
     });
 
+    // Client Certificate (PEM + KEY)
+    el('adminSaveMtlsCertBtn')?.addEventListener('click', async () => {
+      const cert = el('adminMtlsCertPem')?.value?.trim() || '';
+      const key  = el('adminMtlsCertKeyPem')?.value?.trim() || '';
+      if (!cert && !key) { toast('請貼入憑證 PEM 或私鑰 PEM（可擇一或同時上傳）', 'error'); return; }
+      try {
+        await API.post('/api/admin/certs/mtls', { ...(cert && { cert }), ...(key && { key }) });
+        toast('Client Certificate 已部署', 'success');
+        if (cert) el('adminMtlsCertPem').value = '';
+        if (key)  el('adminMtlsCertKeyPem').value = '';
+        await renderAdminCerts();
+      } catch (e) {
+        toast(e.message || '部署 Client Certificate 失敗', 'error');
+      }
+    });
+
+    el('adminDeleteMtlsCertBtn')?.addEventListener('click', async () => {
+      if (!confirm('確定要刪除 Client Certificate 及私鑰？')) return;
+      try {
+        await API.del('/api/admin/certs/mtls');
+        toast('Client Certificate 已刪除', 'success');
+        await renderAdminCerts();
+      } catch (e) {
+        toast(e.message || '刪除 Client Certificate 失敗', 'error');
+      }
+    });
+
+    // Managed CA
     el('adminSaveMtlsCaBtn')?.addEventListener('click', async () => {
       const pem = el('adminMtlsCaPem')?.value?.trim() || '';
       if (!pem) { toast('請貼入 CA 憑證 PEM', 'error'); return; }
       try {
         await API.post('/api/admin/certs/mtls/ca', { cert: pem });
-        toast('CA 憑證已部署', 'success');
+        toast('Managed CA 已部署', 'success');
         el('adminMtlsCaPem').value = '';
         await renderAdminCerts();
       } catch (e) {
-        toast(e.message || '部署 CA 憑證失敗', 'error');
+        toast(e.message || '部署 Managed CA 失敗', 'error');
       }
     });
 
@@ -4937,26 +4977,48 @@ const App = (() => {
       if (!confirm('確定要刪除 Cloudflare Managed CA 憑證？')) return;
       try {
         await API.del('/api/admin/certs/mtls/ca');
-        toast('CA 憑證已刪除', 'success');
+        toast('Managed CA 已刪除', 'success');
         await renderAdminCerts();
       } catch (e) {
-        toast(e.message || '刪除 CA 憑證失敗', 'error');
+        toast(e.message || '刪除 Managed CA 失敗', 'error');
       }
     });
 
+    // Origin CA
+    el('adminSaveOriginCaBtn')?.addEventListener('click', async () => {
+      const pem = el('adminOriginCaPem')?.value?.trim() || '';
+      if (!pem) { toast('請貼入 Origin CA PEM', 'error'); return; }
+      try {
+        await API.post('/api/admin/certs/origin/ca', { cert: pem });
+        toast('Origin CA 已部署，請重啟伺服器', 'success');
+        el('adminOriginCaPem').value = '';
+        await renderAdminCerts();
+      } catch (e) {
+        toast(e.message || '部署 Origin CA 失敗', 'error');
+      }
+    });
+
+    el('adminDeleteOriginCaBtn')?.addEventListener('click', async () => {
+      if (!confirm('確定要刪除 Origin CA 憑證？刪除後需重啟伺服器才完全生效。')) return;
+      try {
+        await API.del('/api/admin/certs/origin/ca');
+        toast('Origin CA 已刪除，請重啟伺服器', 'success');
+        await renderAdminCerts();
+      } catch (e) {
+        toast(e.message || '刪除 Origin CA 失敗', 'error');
+      }
+    });
+
+    // Origin Certificate + Key
     el('adminSaveOriginCertBtn')?.addEventListener('click', async () => {
       const cert = el('adminOriginCertPem')?.value?.trim() || '';
       const key  = el('adminOriginKeyPem')?.value?.trim()  || '';
-      if (!cert || !key) { toast('請貼入 Origin Certificate 和私鑰', 'error'); return; }
+      if (!cert && !key) { toast('請貼入 Origin Certificate 或私鑰（可擇一或同時上傳）', 'error'); return; }
       try {
-        const res = await API.post('/api/admin/certs/origin', { cert, key });
-        if (res.requiresRestart) {
-          toast('Origin Certificate 已儲存，請重啟伺服器以套用 HTTPS', 'success');
-        } else {
-          toast('Origin Certificate 已儲存', 'success');
-        }
-        el('adminOriginCertPem').value = '';
-        el('adminOriginKeyPem').value  = '';
+        await API.post('/api/admin/certs/origin', { ...(cert && { cert }), ...(key && { key }) });
+        toast('Origin Certificate 已儲存，請重啟伺服器以套用 HTTPS', 'success');
+        if (cert) el('adminOriginCertPem').value = '';
+        if (key)  el('adminOriginKeyPem').value  = '';
         await renderAdminCerts();
       } catch (e) {
         toast(e.message || '部署 Origin Certificate 失敗', 'error');
@@ -4964,10 +5026,10 @@ const App = (() => {
     });
 
     el('adminDeleteOriginCertBtn')?.addEventListener('click', async () => {
-      if (!confirm('確定要刪除 Origin Certificate？刪除後需重啟伺服器才完全生效。')) return;
+      if (!confirm('確定要刪除 Origin Certificate、私鑰與 Origin CA？刪除後需重啟伺服器才完全生效。')) return;
       try {
         await API.del('/api/admin/certs/origin');
-        toast('Origin Certificate 已刪除，請重啟伺服器', 'success');
+        toast('Origin Certificate 全部已刪除，請重啟伺服器', 'success');
         await renderAdminCerts();
       } catch (e) {
         toast(e.message || '刪除 Origin Certificate 失敗', 'error');

@@ -10,7 +10,7 @@ RUN npm ci --omit=dev || npm install --omit=dev
 COPY server.js app.js index.html style.css logo.svg favicon.svg changelog.json privacy.html terms.html ./
 
 # 資料庫、設定與 SSL 憑證存放目錄
-RUN mkdir -p /app/data/SSL/mTLS /app/data/SSL/Origin\ Certificates
+RUN mkdir -p /app/data/SSL/Origin\ Certificates
 
 EXPOSE 3000
 

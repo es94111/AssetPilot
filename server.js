@@ -171,8 +171,10 @@ function validatePemKey(pem) {
 }
 
 // SSL 目錄路徑常數
-const SSL_MTLS_DIR = path.join(__dirname, 'SSL', 'mTLS');
-const SSL_ORIGIN_DIR = path.join(__dirname, 'SSL', 'Origin Certificates');
+// SSL_BASE_DIR 預設為專案目錄下的 SSL/，可透過環境變數指定其他路徑（如 Docker Volume）
+const SSL_BASE_DIR   = process.env.SSL_PATH || path.join(__dirname, 'SSL');
+const SSL_MTLS_DIR   = path.join(SSL_BASE_DIR, 'mTLS');
+const SSL_ORIGIN_DIR = path.join(SSL_BASE_DIR, 'Origin Certificates');
 const SSL_MTLS_CERT   = path.join(SSL_MTLS_DIR, 'server.pem');
 const SSL_MTLS_KEY    = path.join(SSL_MTLS_DIR, 'server.key');
 const SSL_MTLS_CA     = path.join(SSL_MTLS_DIR, 'cloudflare-ca.pem');

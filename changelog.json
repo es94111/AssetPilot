@@ -1,6 +1,17 @@
 {
-  "currentVersion": "4.7.7",
+  "currentVersion": "4.7.8",
   "releases": [
+    {
+      "version": "4.7.8",
+      "date": "2026-04-11",
+      "title": "Docker 部署 SSL 憑證持久化修正",
+      "type": "fixed",
+      "changes": [
+        { "tag": "fixed", "text": "修正 Docker 部署後 SSL/TLS 憑證不持久化問題：憑證目錄改為儲存於 /app/data/SSL/（Volume 內）" },
+        { "tag": "new", "text": "新增 SSL_PATH 環境變數，可自訂 SSL 憑證根目錄路徑（本機開發預設為 <專案>/SSL/，Docker 預設為 /app/data/SSL/）" },
+        { "tag": "improved", "text": "Dockerfile 預建 SSL 子目錄結構，確保首次啟動時路徑已存在" }
+      ]
+    },
     {
       "version": "4.7.7",
       "date": "2026-04-11",

@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-4.6.9-blue" alt="version">
+  <img src="https://img.shields.io/badge/version-4.7.2-blue" alt="version">
   <img src="https://img.shields.io/badge/node-%3E%3D18-green" alt="node">
   <img src="https://img.shields.io/badge/license-AGPL--3.0-blue" alt="license">
   <img src="https://img.shields.io/badge/docker-ready-2496ED" alt="docker">
@@ -432,7 +432,7 @@ Caddy 會自動申請並續期 HTTPS 憑證。
 1. 點擊側邊欄「**收支管理**」
 2. 點擊右上角「**+ 新增交易**」
 3. 填入日期、類型（收入/支出/轉帳）、金額、分類、帳戶
-4. 可選填備註、幣別
+4. 可選填備註、幣別（選擇外幣時，若尚無匯率，系統自動查詢並填入）
 5. 點擊「**儲存**」
 
 **批次操作：** 勾選多筆交易後，操作列出現批次刪除、批次變更分類／帳戶／日期按鈕。
@@ -616,7 +616,8 @@ docker run -d \
 | **XSS 防護**         | 所有使用者輸入經 `escHtml()` 跳脫後才插入 DOM         |
 | **安全標頭**         | Helmet（HSTS、X-Content-Type-Options、Referrer-Policy） |
 | **CSP 保護**         | 限制 inline script，限制腳本與外部資源來源              |
-| **速率限制**         | 登入／註冊 API 每 IP 每 15 分鐘最多 20 次               |
+| **速率限制**         | 登入／註冊 API 每 IP 每 15 分鐘最多 20 次；公開頁面每分鐘最多 120 次 |
+| **Cloudflare API Shield** | 提供 OpenAPI 3.0.3 Schema（`openapi.yaml`），可上傳至 Cloudflare 啟用請求驗證（Block / Log 模式） |
 | **CORS 控制**        | `ALLOWED_ORIGINS` 可限制允許的來源網域                |
 | **OAuth State 驗證** | Google 登入使用一次性 state 防 CSRF／重放攻擊           |
 | **SRI 驗證**         | 外部 CDN 腳本（Font Awesome、Chart.js）加入完整性驗證   |
@@ -636,6 +637,9 @@ docker run -d \
 ├── logo.svg               # 網站 Logo（登入頁）
 ├── favicon.svg            # Favicon + 側邊欄 Logo
 ├── changelog.json         # 版本更新紀錄
+├── openapi.yaml           # Cloudflare API Shield Schema（OpenAPI 3.0.3）
+├── privacy.html           # 隱私權政策頁面（公開，無需登入）
+├── terms.html             # 服務條款頁面（公開，無需登入）
 ├── Dockerfile             # Docker 建置設定
 ├── docker-compose.yml     # Docker Compose 設定
 ├── .env.example           # 環境變數範本

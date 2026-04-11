@@ -6,3 +6,4 @@ data/
 doc/
 .gstack/
 openapi.yaml
+asset_openapi.yaml

@@ -59,12 +59,12 @@ const ENV_ADMIN_IP_ALLOWLIST = parseIpAllowlist(process.env.ADMIN_IP_ALLOWLIST |
 // MTLS_CF_ONLY=true  → 僅信任 Cloudflare header（不要求 TLS 客戶端憑證）；適合純 Cloudflare 代理部署
 // SSL_CERT / SSL_KEY  → origin HTTPS 憑證（若需直連 mTLS）
 // MTLS_CA_CERT        → Cloudflare Managed CA 憑證（用於驗證客戶端憑證是否由 Cloudflare 簽發）
-const MTLS_ENABLED = process.env.MTLS_ENABLED === 'true';
-const MTLS_CF_ONLY = process.env.MTLS_CF_ONLY !== 'false'; // 預設 true：優先使用 Cloudflare header
-// Origin Certificate：讓 Express 以 HTTPS 對 Cloudflare 提供服務（Full Strict 模式）
-const SSL_CERT_PATH = process.env.SSL_CERT || path.join(__dirname, 'SSL', 'Origin Certificates', 'server.pem');
-const SSL_KEY_PATH  = process.env.SSL_KEY  || path.join(__dirname, 'SSL', 'Origin Certificates', 'server.key');
-// Cloudflare Managed CA：驗證客戶端 mTLS 憑證鏈（至 Cloudflare Dashboard 下載）
+let MTLS_ENABLED = process.env.MTLS_ENABLED === 'true';
+let MTLS_CF_ONLY = process.env.MTLS_CF_ONLY !== 'false'; // 預設 true：優先使用 Cloudflare header
+// Origin Certificate 與 mTLS CA 路徑（可透過環境變數覆寫；預設使用 SSL/ 資料夾）
+// 注意：SSL_MTLS_DIR / SSL_ORIGIN_DIR 常數在 ensureEnvSecrets() 之後才定義，這裡使用環境變數
+const SSL_CERT_PATH     = process.env.SSL_CERT     || path.join(__dirname, 'SSL', 'Origin Certificates', 'server.pem');
+const SSL_KEY_PATH      = process.env.SSL_KEY      || path.join(__dirname, 'SSL', 'Origin Certificates', 'server.key');
 const MTLS_CA_CERT_PATH = process.env.MTLS_CA_CERT || path.join(__dirname, 'SSL', 'mTLS', 'cloudflare-ca.pem');
 
 // ─── 自動產生密鑰（僅首次啟動時） ───
@@ -122,6 +122,62 @@ function ensureEnvSecrets() {
 }
 
 ensureEnvSecrets();
+
+// ─── .env 單鍵更新 ───
+function setEnvVar(key, value) {
+  try {
+    let content = '';
+    try { content = fs.readFileSync(DATA_ENV_PATH, 'utf-8'); } catch (_) {}
+    const lines = content ? content.split('\n') : [];
+    const idx = lines.findIndex(l => l.startsWith(key + '='));
+    if (idx >= 0) lines[idx] = `${key}=${value}`;
+    else lines.push(`${key}=${value}`);
+    const dir = path.dirname(DATA_ENV_PATH);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(DATA_ENV_PATH, lines.filter(l => l !== '').join('\n') + '\n', 'utf-8');
+  } catch (e) {
+    console.error('setEnvVar 失敗:', e.message);
+  }
+}
+
+// ─── 憑證工具 ───
+function getCertInfo(certPath) {
+  try {
+    if (!fs.existsSync(certPath)) return null;
+    const pem = fs.readFileSync(certPath, 'utf-8');
+    const cert = new crypto.X509Certificate(pem);
+    return {
+      subject: cert.subject,
+      issuer: cert.issuer,
+      validFrom: cert.validFrom,
+      validTo: cert.validTo,
+      fingerprint256: cert.fingerprint256,
+    };
+  } catch (e) {
+    return { error: '憑證格式錯誤：' + e.message };
+  }
+}
+
+function validatePemCert(pem) {
+  return typeof pem === 'string'
+    && pem.includes('-----BEGIN CERTIFICATE-----')
+    && pem.includes('-----END CERTIFICATE-----');
+}
+
+function validatePemKey(pem) {
+  return typeof pem === 'string'
+    && pem.includes('-----BEGIN')
+    && (pem.includes('PRIVATE KEY-----'));
+}
+
+// SSL 目錄路徑常數
+const SSL_MTLS_DIR = path.join(__dirname, 'SSL', 'mTLS');
+const SSL_ORIGIN_DIR = path.join(__dirname, 'SSL', 'Origin Certificates');
+const SSL_MTLS_CERT = path.join(SSL_MTLS_DIR, 'sercer.pem');
+const SSL_MTLS_KEY  = path.join(SSL_MTLS_DIR, 'server.key');
+const SSL_MTLS_CA   = path.join(SSL_MTLS_DIR, 'cloudflare-ca.pem');
+const SSL_ORIGIN_CERT = path.join(SSL_ORIGIN_DIR, 'server.pem');
+const SSL_ORIGIN_KEY  = path.join(SSL_ORIGIN_DIR, 'server.key');
 
 const JWT_SECRET = process.env.JWT_SECRET;
 const DB_ENCRYPTION_KEY = process.env.DB_ENCRYPTION_KEY || '';
@@ -2241,6 +2297,99 @@ app.put('/api/admin/settings', adminMiddleware, (req, res) => {
   );
   saveDB();
   res.json({ success: true, publicRegistration, allowedRegistrationEmails, adminIpAllowlist });
+});
+
+// ─── 憑證管理 API ───────────────────────────────────────────────────────────
+
+// GET /api/admin/certs — 取得憑證狀態與 mTLS 設定
+app.get('/api/admin/certs', adminMiddleware, (req, res) => {
+  res.json({
+    mtlsEnabled: MTLS_ENABLED,
+    mtlsCfOnly: MTLS_CF_ONLY,
+    mtlsCert:     getCertInfo(SSL_MTLS_CERT),
+    mtlsKeyExists: fs.existsSync(SSL_MTLS_KEY),
+    mtlsCa:       getCertInfo(SSL_MTLS_CA),
+    originCert:   getCertInfo(SSL_ORIGIN_CERT),
+    originKeyExists: fs.existsSync(SSL_ORIGIN_KEY),
+  });
+});
+
+// PUT /api/admin/certs/settings — 更新 mTLS 啟用設定（即時生效 + 寫入 .env）
+app.put('/api/admin/certs/settings', adminMiddleware, (req, res) => {
+  const { mtlsEnabled, mtlsCfOnly } = req.body || {};
+  MTLS_ENABLED = !!mtlsEnabled;
+  MTLS_CF_ONLY = mtlsCfOnly !== false;
+  setEnvVar('MTLS_ENABLED', MTLS_ENABLED ? 'true' : 'false');
+  setEnvVar('MTLS_CF_ONLY', MTLS_CF_ONLY ? 'true' : 'false');
+  res.json({ ok: true, mtlsEnabled: MTLS_ENABLED, mtlsCfOnly: MTLS_CF_ONLY });
+});
+
+// POST /api/admin/certs/mtls — 上傳 mTLS 客戶端憑證（cert 和 / 或 key）
+app.post('/api/admin/certs/mtls', adminMiddleware, (req, res) => {
+  const { cert, key } = req.body || {};
+  if (cert !== undefined) {
+    if (!validatePemCert(cert)) return res.status(400).json({ error: '憑證格式錯誤，需為 PEM 格式（-----BEGIN CERTIFICATE-----）' });
+    try { new crypto.X509Certificate(cert); } catch (e) {
+      return res.status(400).json({ error: '憑證解析失敗：' + e.message });
+    }
+    if (!fs.existsSync(SSL_MTLS_DIR)) fs.mkdirSync(SSL_MTLS_DIR, { recursive: true });
+    fs.writeFileSync(SSL_MTLS_CERT, cert.trim() + '\n', 'utf-8');
+  }
+  if (key !== undefined) {
+    if (!validatePemKey(key)) return res.status(400).json({ error: '私鑰格式錯誤，需為 PEM 格式（-----BEGIN ... PRIVATE KEY-----）' });
+    if (!fs.existsSync(SSL_MTLS_DIR)) fs.mkdirSync(SSL_MTLS_DIR, { recursive: true });
+    fs.writeFileSync(SSL_MTLS_KEY, key.trim() + '\n', 'utf-8');
+  }
+  res.json({ ok: true, cert: getCertInfo(SSL_MTLS_CERT), keyExists: fs.existsSync(SSL_MTLS_KEY) });
+});
+
+// POST /api/admin/certs/mtls/ca — 上傳 Cloudflare Managed CA 憑證
+app.post('/api/admin/certs/mtls/ca', adminMiddleware, (req, res) => {
+  const { cert } = req.body || {};
+  if (!validatePemCert(cert)) return res.status(400).json({ error: 'CA 憑證格式錯誤' });
+  try { new crypto.X509Certificate(cert); } catch (e) {
+    return res.status(400).json({ error: 'CA 憑證解析失敗：' + e.message });
+  }
+  if (!fs.existsSync(SSL_MTLS_DIR)) fs.mkdirSync(SSL_MTLS_DIR, { recursive: true });
+  fs.writeFileSync(SSL_MTLS_CA, cert.trim() + '\n', 'utf-8');
+  res.json({ ok: true, cert: getCertInfo(SSL_MTLS_CA) });
+});
+
+// POST /api/admin/certs/origin — 上傳 Origin Certificate（需重啟才生效）
+app.post('/api/admin/certs/origin', adminMiddleware, (req, res) => {
+  const { cert, key } = req.body || {};
+  if (cert !== undefined) {
+    if (!validatePemCert(cert)) return res.status(400).json({ error: '憑證格式錯誤' });
+    try { new crypto.X509Certificate(cert); } catch (e) {
+      return res.status(400).json({ error: '憑證解析失敗：' + e.message });
+    }
+    if (!fs.existsSync(SSL_ORIGIN_DIR)) fs.mkdirSync(SSL_ORIGIN_DIR, { recursive: true });
+    fs.writeFileSync(SSL_ORIGIN_CERT, cert.trim() + '\n', 'utf-8');
+  }
+  if (key !== undefined) {
+    if (!validatePemKey(key)) return res.status(400).json({ error: '私鑰格式錯誤' });
+    if (!fs.existsSync(SSL_ORIGIN_DIR)) fs.mkdirSync(SSL_ORIGIN_DIR, { recursive: true });
+    fs.writeFileSync(SSL_ORIGIN_KEY, key.trim() + '\n', 'utf-8');
+  }
+  res.json({ ok: true, cert: getCertInfo(SSL_ORIGIN_CERT), keyExists: fs.existsSync(SSL_ORIGIN_KEY), requiresRestart: true });
+});
+
+// DELETE /api/admin/certs/mtls — 刪除 mTLS 客戶端憑證與金鑰
+app.delete('/api/admin/certs/mtls', adminMiddleware, (req, res) => {
+  [SSL_MTLS_CERT, SSL_MTLS_KEY].forEach(f => { try { if (fs.existsSync(f)) fs.unlinkSync(f); } catch (_) {} });
+  res.json({ ok: true });
+});
+
+// DELETE /api/admin/certs/mtls/ca — 刪除 Cloudflare CA 憑證
+app.delete('/api/admin/certs/mtls/ca', adminMiddleware, (req, res) => {
+  try { if (fs.existsSync(SSL_MTLS_CA)) fs.unlinkSync(SSL_MTLS_CA); } catch (_) {}
+  res.json({ ok: true });
+});
+
+// DELETE /api/admin/certs/origin — 刪除 Origin Certificate（需重啟才生效）
+app.delete('/api/admin/certs/origin', adminMiddleware, (req, res) => {
+  [SSL_ORIGIN_CERT, SSL_ORIGIN_KEY].forEach(f => { try { if (fs.existsSync(f)) fs.unlinkSync(f); } catch (_) {} });
+  res.json({ ok: true, requiresRestart: true });
 });
 
 app.get('/api/admin/users', adminMiddleware, (req, res) => {

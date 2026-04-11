@@ -1152,6 +1152,7 @@
 
 | 版本 | 日期 | 變更說明 |
 | --- | --- | --- |
+| 4.7.5 | 2026-04-11 | 管理員面板新增 SSL / TLS 憑證管理介面：可在網頁部署 Cloudflare Managed CA、Origin Certificate，並即時切換 mTLS 設定 |
 | 4.7.4 | 2026-04-11 | 新增 mTLS 支援：MTLS_ENABLED 環境變數啟用，支援 Cloudflare header 驗證（CF_ONLY 模式）與直連 HTTPS + TLS 客戶端憑證驗證雙模式 |
 | 4.7.3 | 2026-04-11 | 管理員登入紀錄（200 筆）與全部使用者登入紀錄（500 筆）新增每頁筆數選擇與分頁導覽；工具列顯示總筆數 |
 | 4.7.2 | 2026-04-11 | 修補 /privacy、/terms 缺少速率限制（CodeQL）；修補 backend/ path-to-regexp ReDoS 漏洞；新增 openapi.yaml（Cloudflare API Shield Schema，88 端點） |

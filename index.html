@@ -1316,6 +1316,76 @@
           </div>
           <div class="stk-pagination" id="adminAllLoginLogPagination"></div>
         </div>
+
+        <div class="card">
+          <h3><i class="fas fa-lock" style="margin-right:8px;color:var(--primary)"></i>SSL / TLS 憑證管理</h3>
+
+          <!-- mTLS 設定 -->
+          <div style="margin-top:16px">
+            <div style="font-weight:600;font-size:15px;margin-bottom:10px;color:var(--text)"><i class="fas fa-shield-halved" style="margin-right:6px;color:var(--primary)"></i>mTLS 設定</div>
+            <div class="theme-toggle-row">
+              <div>
+                <div style="font-weight:600">啟用 mTLS</div>
+                <div class="import-hint" style="margin-top:4px">啟用後，所有 /api/ 路由（除登入/設定）須通過 mTLS 驗證。</div>
+              </div>
+              <label style="display:flex;align-items:center;gap:8px">
+                <input type="checkbox" id="adminMtlsEnabledToggle">
+                <span>啟用</span>
+              </label>
+            </div>
+            <div class="theme-toggle-row" style="margin-top:10px">
+              <div>
+                <div style="font-weight:600">僅 Cloudflare Header 驗證（CF Only 模式）</div>
+                <div class="import-hint" style="margin-top:4px">開啟：Cloudflare 在邊緣驗證憑證並傳入 Header（不需 CA 憑證）。關閉：直連 HTTPS + TLS 握手驗證（需設定 CA 憑證）。</div>
+              </div>
+              <label style="display:flex;align-items:center;gap:8px">
+                <input type="checkbox" id="adminMtlsCfOnlyToggle">
+                <span>CF Only</span>
+              </label>
+            </div>
+            <div class="import-actions" style="justify-content:flex-start;margin-top:12px">
+              <button class="btn btn-primary" id="adminSaveMtlsSettingsBtn"><i class="fas fa-save"></i> 儲存 mTLS 設定</button>
+            </div>
+          </div>
+
+          <hr style="border:none;border-top:1px solid var(--border);margin:20px 0">
+
+          <!-- mTLS 客戶端憑證 (Cloudflare Managed CA) -->
+          <div>
+            <div style="font-weight:600;font-size:15px;margin-bottom:10px;color:var(--text)"><i class="fas fa-certificate" style="margin-right:6px;color:var(--primary)"></i>Cloudflare Managed CA 憑證</div>
+            <div class="import-hint" style="margin-bottom:10px">僅在 CF Only 模式關閉（直連 HTTPS）時需要，用於驗證 mTLS 客戶端憑證鏈。</div>
+            <div id="adminMtlsCaInfo" class="import-hint" style="margin-bottom:10px;font-family:monospace;font-size:12px"></div>
+            <div class="form-row">
+              <label>CA 憑證 PEM（貼入內容）</label>
+              <textarea id="adminMtlsCaPem" class="form-input" rows="6" placeholder="-----BEGIN CERTIFICATE-----&#10;...&#10;-----END CERTIFICATE-----"></textarea>
+            </div>
+            <div class="import-actions" style="justify-content:flex-start;margin-top:10px;gap:8px">
+              <button class="btn btn-primary" id="adminSaveMtlsCaBtn"><i class="fas fa-upload"></i> 部署 CA 憑證</button>
+              <button class="btn btn-danger" id="adminDeleteMtlsCaBtn"><i class="fas fa-trash"></i> 刪除</button>
+            </div>
+          </div>
+
+          <hr style="border:none;border-top:1px solid var(--border);margin:20px 0">
+
+          <!-- Origin Certificate -->
+          <div>
+            <div style="font-weight:600;font-size:15px;margin-bottom:10px;color:var(--text)"><i class="fas fa-server" style="margin-right:6px;color:var(--primary)"></i>Origin Certificate（HTTPS 伺服器憑證）</div>
+            <div class="import-hint" style="margin-bottom:10px">Cloudflare Origin Certificate，用於 CF Only 模式關閉時的直連 HTTPS 模式。<span style="color:var(--danger);font-weight:600">變更後需重啟伺服器才生效。</span></div>
+            <div id="adminOriginCertInfo" class="import-hint" style="margin-bottom:10px;font-family:monospace;font-size:12px"></div>
+            <div class="form-row">
+              <label>Origin 憑證 PEM（貼入內容）</label>
+              <textarea id="adminOriginCertPem" class="form-input" rows="6" placeholder="-----BEGIN CERTIFICATE-----&#10;...&#10;-----END CERTIFICATE-----"></textarea>
+            </div>
+            <div class="form-row" style="margin-top:10px">
+              <label>Origin 私鑰 PEM（貼入內容）</label>
+              <textarea id="adminOriginKeyPem" class="form-input" rows="6" placeholder="-----BEGIN PRIVATE KEY-----&#10;...&#10;-----END PRIVATE KEY-----"></textarea>
+            </div>
+            <div class="import-actions" style="justify-content:flex-start;margin-top:10px;gap:8px">
+              <button class="btn btn-primary" id="adminSaveOriginCertBtn"><i class="fas fa-upload"></i> 部署 Origin Certificate</button>
+              <button class="btn btn-danger" id="adminDeleteOriginCertBtn"><i class="fas fa-trash"></i> 刪除</button>
+            </div>
+          </div>
+        </div>
       </div>
 
     </section>

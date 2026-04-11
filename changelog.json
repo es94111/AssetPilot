@@ -1,6 +1,19 @@
 {
-  "currentVersion": "4.8.1",
+  "currentVersion": "4.8.2",
   "releases": [
+    {
+      "version": "4.8.2",
+      "date": "2026-04-11",
+      "title": "管理員登入紀錄每頁筆數 Segmented Control 全面美化",
+      "type": "improved",
+      "changes": [
+        { "tag": "improved", "text": "管理員登入紀錄 / 全部使用者登入紀錄的每頁筆數控制改為 iOS 風格浮動藥丸（pill-in-pill）：軌道為圓角膠囊容器搭配 inset shadow，目前選項以白色浮動藥丸呈現並帶有柔和陰影，取代原本的硬分隔線＋主色塊" },
+        { "tag": "improved", "text": "每頁筆數標籤新增主色小圓點，增加視覺錨點；選項文字採 tabular-nums 對齊、動畫使用 180ms cubic-bezier(.4,0,.2,1) 平滑切換；按下時 0.96 微縮反饋，鍵盤 focus-visible 顯示清晰焦點環" },
+        { "tag": "improved", "text": "自訂筆數輸入框改以主色亮邊＋spring 彈跳動畫滑入，與 segmented control 視覺節奏一致；移除 number input 上下箭頭保持膠囊乾淨" },
+        { "tag": "improved", "text": "Active 狀態文字色由 --primary 改為 --primary-dark，白底對比從 4.28:1 提升至 6.02:1（WCAG AA 通過）；深色模式 active 使用 --primary-light + 藍紫微光陰影，對比 6.19:1" },
+        { "tag": "improved", "text": "小螢幕（≤640px）自動換行、選項最小寬度收縮，避免工具列壓縮" }
+      ]
+    },
     {
       "version": "4.8.1",
       "date": "2026-04-11",

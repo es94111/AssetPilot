@@ -6442,19 +6442,21 @@ const App = (() => {
     notice.setAttribute('role', 'alert');
     notice.setAttribute('aria-live', 'assertive');
     const detail = err?.detail || err?.message || '此端點必須透過 Cloudflare 存取（mTLS）';
-    const isAdmin = !!currentUser?.isAdmin;
+    // 注意：此處不再以 currentUser?.isAdmin 條件隱藏「前往憑證管理」按鈕。
+    // 原因：mTLS 失敗時常在登入資料回填前觸發，currentUser 可能為 null 或 isAdmin 尚未同步，
+    // 導致管理員看到非管理員的提示而失去救援路徑。
+    // 憑證管理頁面本身已有 admin 權限檢查，非管理員點擊也不會造成資料外洩。
     notice.innerHTML = `
       <div class="mtls-notice-icon" aria-hidden="true"><i class="fas fa-shield-halved"></i></div>
       <div class="mtls-notice-body">
         <div class="mtls-notice-title">mTLS 驗證失敗，部分功能暫時無法使用</div>
         <div class="mtls-notice-desc">${escHtml(detail)}</div>
-        <div class="mtls-notice-hint">${isAdmin
-          ? '您可以前往憑證管理確認設定或暫時關閉 mTLS。'
-          : '請聯絡管理員確認 Cloudflare 客戶端憑證設定。'}</div>
+        <div class="mtls-notice-hint">若您是管理員，請前往憑證管理確認設定或暫時關閉 mTLS；否則請聯絡管理員協助處理。</div>
       </div>
       <div class="mtls-notice-actions">
-        ${isAdmin ? '<button type="button" class="btn btn-primary" id="mtlsNoticeGoAdmin"><i class="fas fa-shield-halved"></i> 前往憑證管理</button>' : ''}
-        <button type="button" class="btn btn-ghost" id="mtlsNoticeClose" aria-label="關閉通知"><i class="fas fa-xmark"></i></button>
+        <button type="button" class="btn btn-primary" id="mtlsNoticeGoAdmin"><i class="fas fa-shield-halved"></i> 前往憑證管理</button>
+        <button type="button" class="btn btn-ghost" id="mtlsNoticeLogout"><i class="fas fa-right-from-bracket"></i> 登出</button>
+        <button type="button" class="btn btn-ghost mtls-notice-close-btn" id="mtlsNoticeClose" aria-label="關閉通知"><i class="fas fa-xmark"></i></button>
       </div>
     `;
     document.body.appendChild(notice);
@@ -6468,6 +6470,12 @@ const App = (() => {
       notice.classList.add('mtls-notice-leaving');
       setTimeout(() => notice.remove(), 180);
       navigate('settings', 'admin').catch(() => {});
+    });
+    const logoutBtn = notice.querySelector('#mtlsNoticeLogout');
+    if (logoutBtn) logoutBtn.addEventListener('click', () => {
+      notice.classList.add('mtls-notice-leaving');
+      setTimeout(() => notice.remove(), 180);
+      try { logout(); } catch (e) { location.reload(); }
     });
   }
 

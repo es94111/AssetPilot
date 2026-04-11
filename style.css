@@ -2649,6 +2649,80 @@ body.dark-mode .stock-tabs .tab.active {
   color: var(--text-secondary);
 }
 
+/* ===== 每頁筆數 Segmented Control ===== */
+.pagesize-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  text-transform: uppercase;
+}
+.pagesize-seg {
+  display: inline-flex;
+  align-items: stretch;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.pagesize-opt {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px 11px;
+  min-height: 30px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: transparent;
+  border: none;
+  border-right: 1px solid var(--border);
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
+  white-space: nowrap;
+  line-height: 1;
+}
+.pagesize-opt:last-child {
+  border-right: none;
+}
+.pagesize-opt:hover {
+  background: var(--surface);
+  color: var(--text);
+}
+.pagesize-opt.pagesize-opt-active {
+  background: var(--primary);
+  color: #fff;
+  font-weight: 600;
+}
+.pagesize-opt.pagesize-opt-active:hover {
+  background: var(--primary-dark);
+}
+.pagesize-custom-input {
+  width: 68px;
+  padding: 5px 8px;
+  font-size: 13px;
+  font-weight: 500;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  text-align: center;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+.pagesize-custom-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(79,110,247,.1);
+}
+/* 深色模式 */
+body.dark-mode .pagesize-seg {
+  background: rgba(255,255,255,.04);
+}
+body.dark-mode .pagesize-opt:hover {
+  background: rgba(255,255,255,.07);
+}
+
 /* 設定頁 - checkbox 切換標籤 */
 .settings-toggle-check {
   display: inline-flex;

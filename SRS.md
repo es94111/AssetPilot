@@ -1152,6 +1152,7 @@
 
 | 版本 | 日期 | 變更說明 |
 | --- | --- | --- |
+| 4.8.0 | 2026-04-11 | 管理員登入紀錄每頁筆數改為 Segmented Control，風格統一 |
 | 4.7.9 | 2026-04-11 | 修正 mTLS rejectUnauthorized:false 安全漏洞；無 CA 憑證時強制退回 HTTP 模式 |
 | 4.7.8 | 2026-04-11 | 修正 Docker SSL 憑證不持久化問題；新增 SSL_PATH 環境變數；憑證目錄改為 /app/data/SSL/ |
 | 4.7.7 | 2026-04-11 | 設定頁面 UI 美化：統一卡片標題圖示盒子樣式、SSL/TLS 子分區改用 CSS class、新增 table-toolbar 與 form-input 通用樣式 |

@@ -4619,34 +4619,34 @@ initDB().then(() => {
   const sslKeyExists  = fs.existsSync(SSL_KEY_PATH);
 
   if (MTLS_ENABLED && !MTLS_CF_ONLY && sslCertExists && sslKeyExists) {
-    // HTTPS + mTLS 直連模式：需要客戶端出示憑證
-    const httpsOptions = {
-      cert: fs.readFileSync(SSL_CERT_PATH),
-      key:  fs.readFileSync(SSL_KEY_PATH),
-      requestCert: true,        // 要求客戶端送出憑證
-      rejectUnauthorized: false, // 交由 mtlsMiddleware 決定是否拒絕（可回傳 JSON 錯誤）
-    };
-    // 若存在 Cloudflare CA 憑證，加入以驗證客戶端憑證鏈
-    if (fs.existsSync(MTLS_CA_CERT_PATH)) {
-      httpsOptions.ca = fs.readFileSync(MTLS_CA_CERT_PATH);
-      httpsOptions.rejectUnauthorized = true; // CA 確認後啟用嚴格驗證
+    // HTTPS + mTLS 直連模式：必須有 CA 憑證才能正確驗證客戶端憑證鏈
+    if (!fs.existsSync(MTLS_CA_CERT_PATH)) {
+      console.error('❌  mTLS 直連模式需要 Cloudflare Managed CA 憑證，但目前未部署。');
+      console.error('   → 請至管理員面板「SSL / TLS 憑證管理」上傳 Cloudflare Managed CA 憑證後重啟。');
+      console.error('   → 本次改以 HTTP 模式啟動，mTLS 驗證未生效。');
+      // 無 CA 憑證時退回 HTTP 模式，避免以 rejectUnauthorized:false 運行（無安全保障）
+    } else {
+      const httpsOptions = {
+        cert: fs.readFileSync(SSL_CERT_PATH),
+        key:  fs.readFileSync(SSL_KEY_PATH),
+        ca:   fs.readFileSync(MTLS_CA_CERT_PATH), // Cloudflare Managed CA：驗證客戶端憑證鏈
+        requestCert: true,         // TLS 握手層要求客戶端出示憑證
+        rejectUnauthorized: true,  // CA 驗證失敗則直接拒絕連線（由 TLS 層處理，mtlsMiddleware 處理軟性錯誤）
+      };
+      const https = require('https');
+      https.createServer(httpsOptions, app).listen(PORT, () => {
+        console.log(`AssetPilot 伺服器已啟動（HTTPS + mTLS）: https://localhost:${PORT}`);
+      });
+      return;
     }
-    const https = require('https');
-    https.createServer(httpsOptions, app).listen(PORT, () => {
-      console.log(`AssetPilot 伺服器已啟動（HTTPS + mTLS）: https://localhost:${PORT}`);
-      if (!fs.existsSync(MTLS_CA_CERT_PATH)) {
-        console.warn('  ⚠️  MTLS_CA_CERT 未設定，客戶端憑證將不驗證 CA 鏈');
-        console.warn('  → 請從 Cloudflare Dashboard 下載 Managed CA 憑證並設定 MTLS_CA_CERT 路徑');
-      }
-    });
-  } else {
-    // HTTP 模式（Cloudflare 代理或開發環境）
-    app.listen(PORT, () => {
-      if (MTLS_ENABLED) {
-        console.log(`AssetPilot 伺服器已啟動（HTTP + Cloudflare mTLS header 驗證）: http://localhost:${PORT}`);
-      } else {
-        console.log(`AssetPilot 伺服器已啟動: http://localhost:${PORT}`);
-      }
-    });
   }
+
+  // HTTP 模式（Cloudflare 代理、開發環境，或 mTLS CA 缺失的退回狀態）
+  app.listen(PORT, () => {
+    if (MTLS_ENABLED) {
+      console.log(`AssetPilot 伺服器已啟動（HTTP + Cloudflare mTLS header 驗證）: http://localhost:${PORT}`);
+    } else {
+      console.log(`AssetPilot 伺服器已啟動: http://localhost:${PORT}`);
+    }
+  });
 });

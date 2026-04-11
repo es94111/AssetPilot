@@ -1,6 +1,16 @@
 {
-  "currentVersion": "4.7.8",
+  "currentVersion": "4.7.9",
   "releases": [
+    {
+      "version": "4.7.9",
+      "date": "2026-04-11",
+      "title": "mTLS 安全性強化",
+      "type": "fixed",
+      "changes": [
+        { "tag": "fixed", "text": "修正 CodeQL 安全警告 js/disabling-certificate-validation：移除 rejectUnauthorized:false" },
+        { "tag": "improved", "text": "mTLS 直連模式現在強制要求 CA 憑證存在；若無 CA，自動退回 HTTP 模式並顯示明確錯誤訊息，防止以無驗證狀態運行" }
+      ]
+    },
     {
       "version": "4.7.8",
       "date": "2026-04-11",

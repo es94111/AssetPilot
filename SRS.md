@@ -1152,6 +1152,7 @@
 
 | 版本 | 日期 | 變更說明 |
 | --- | --- | --- |
+| 4.7.2 | 2026-04-11 | 修補 /privacy、/terms 缺少速率限制（CodeQL）；修補 backend/ path-to-regexp ReDoS 漏洞；新增 openapi.yaml（Cloudflare API Shield Schema，88 端點） |
 | 4.7.1 | 2026-04-11 | 修正切換外幣未觸發自動查詢匯率；新增側邊欄隱私權政策 / 服務條款連結；匯率快取架構升級（跨使用者 30 分鐘共用快取 + is_manual 欄位區分手動 / 自動匯率） |
 | 4.7.0 | 2026-04-11 | 交易選擇無匯率外幣時自動向外部 API 查詢即時匯率並填入欄位，交易儲存後匯率自動保存供後續使用 |
 | 4.6.9 | 2026-04-10 | 修正 Dockerfile 未複製 privacy.html / terms.html 導致 Docker 環境 ENOENT 錯誤 |

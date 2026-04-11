@@ -318,7 +318,10 @@ function mtlsMiddleware(req, res, next) {
 
   // 直連模式：若設定 MTLS_CF_ONLY，不允許繞過 Cloudflare 直連
   if (MTLS_CF_ONLY) {
-    return res.status(403).json({ error: '此端點必須透過 Cloudflare 存取（mTLS）' });
+    return res.status(403).json({
+      error: '此端點必須透過 Cloudflare 存取（mTLS）',
+      detail: 'Cloudflare 未回傳 Cf-Client-Cert-Verified 標頭，請確認 Cloudflare 已啟用 mTLS 並綁定用戶端憑證，或由管理員前往「設定 → 管理員 → 憑證管理」關閉 mTLS。'
+    });
   }
 
   // 直連 TLS 模式：驗證 socket 層的客戶端憑證
@@ -334,8 +337,10 @@ function mtlsMiddleware(req, res, next) {
 
 // 將 mTLS 套用至所有 /api/ 路由（auth 路由除外，使用者需能在無憑證下完成登入）
 // 若業務上需要連登入也要驗證憑證，可移除下方的 skip 條件
+// 救援路徑：admin/certs 端點也跳過 mTLS，使管理員在設定錯誤時仍能從 UI 關閉 mTLS
+// 這類端點仍受 authMiddleware + requireAdmin 保護，不會被一般使用者存取
 app.use('/api/', (req, res, next) => {
-  const skipPaths = ['/api/auth/', '/api/config', '/api/changelog'];
+  const skipPaths = ['/api/auth/', '/api/config', '/api/changelog', '/api/admin/certs'];
   if (skipPaths.some(p => req.path.startsWith(p.replace('/api', '')))) return next();
   mtlsMiddleware(req, res, next);
 });

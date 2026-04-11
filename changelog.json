@@ -1,6 +1,18 @@
 {
-  "currentVersion": "4.8.2",
+  "currentVersion": "4.8.3",
   "releases": [
+    {
+      "version": "4.8.3",
+      "date": "2026-04-11",
+      "title": "mTLS 設定錯誤時提供救援路徑與更友善錯誤提示",
+      "type": "fixed",
+      "changes": [
+        { "tag": "fixed", "text": "修正 mTLS 啟用但 Cloudflare 未正確回注 Cf-Client-Cert-Verified 標頭時，使用者登入後會被鎖死在空白頁：enterApp() 載入 /api/categories、/api/accounts 單點失敗不再阻擋後續導航，並以 toast 個別提示" },
+        { "tag": "fixed", "text": "修正切換頁面時單頁 API 403 會導致整個導航中斷：navigate() 以 try/catch 包覆 renderPage()，單頁渲染失敗不再影響其他頁面切換" },
+        { "tag": "new", "text": "新增 mTLS 救援路徑：/api/admin/certs 系列端點（憑證管理 / mTLS 設定）跳過 mTLS 驗證，管理員在 mTLS 設定錯誤時仍可透過「設定 → 管理員 → 憑證管理」關閉 mTLS；端點仍受 authMiddleware + requireAdmin 保護" },
+        { "tag": "improved", "text": "mTLS 中介軟體 403 回應新增 detail 欄位，指引使用者確認 Cloudflare 憑證綁定或改由管理員關閉 mTLS" }
+      ]
+    },
     {
       "version": "4.8.2",
       "date": "2026-04-11",

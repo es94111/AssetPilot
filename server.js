@@ -2354,6 +2354,26 @@ app.post('/api/admin/users', adminMiddleware, async (req, res) => {
   res.json({ success: true, user: { id, email, displayName, isAdmin } });
 });
 
+// PUT /api/admin/users/:id/password — 管理員重設使用者密碼
+app.put('/api/admin/users/:id/password', adminMiddleware, async (req, res) => {
+  const targetId = req.params.id;
+  const newPassword = String(req.body?.newPassword || '');
+  if (!targetId) return res.status(400).json({ error: '缺少使用者 ID' });
+  if (!newPassword) return res.status(400).json({ error: '請輸入新密碼' });
+  if (newPassword.length < 8) return res.status(400).json({ error: '新密碼長度至少 8 字元' });
+  if (!/[a-zA-Z]/.test(newPassword) || !/\d/.test(newPassword)) {
+    return res.status(400).json({ error: '新密碼需包含英文字母與數字' });
+  }
+
+  const user = queryOne("SELECT id FROM users WHERE id = ?", [targetId]);
+  if (!user) return res.status(404).json({ error: '使用者不存在' });
+
+  const passwordHash = await bcrypt.hash(newPassword, 10);
+  db.run("UPDATE users SET password_hash = ?, has_password = 1 WHERE id = ?", [passwordHash, targetId]);
+  saveDB();
+  res.json({ success: true });
+});
+
 app.delete('/api/admin/users/:id', adminMiddleware, (req, res) => {
   const targetId = req.params.id;
   if (!targetId) return res.status(400).json({ error: '缺少使用者 ID' });
@@ -2449,6 +2469,34 @@ app.put('/api/account/display-name', (req, res) => {
   db.run("UPDATE users SET display_name = ? WHERE id = ?", [displayName, req.userId]);
   saveDB();
   res.json({ success: true, displayName });
+});
+
+// 修改密碼（已有密碼者需驗證舊密碼；Google-only 帳號可新增本機密碼）
+app.put('/api/account/password', async (req, res) => {
+  const currentPassword = String(req.body?.currentPassword || '');
+  const newPassword = String(req.body?.newPassword || '');
+
+  if (!newPassword) return res.status(400).json({ error: '請輸入新密碼' });
+  if (newPassword.length < 8) return res.status(400).json({ error: '新密碼長度至少 8 字元' });
+  if (!/[a-zA-Z]/.test(newPassword) || !/\d/.test(newPassword)) {
+    return res.status(400).json({ error: '新密碼需包含英文字母與數字' });
+  }
+
+  const user = queryOne("SELECT id, password_hash, has_password FROM users WHERE id = ?", [req.userId]);
+  if (!user) return res.status(404).json({ error: '使用者不存在' });
+
+  if (user.has_password) {
+    if (!currentPassword) return res.status(400).json({ error: '請輸入目前密碼' });
+    const valid = await bcrypt.compare(currentPassword, user.password_hash);
+    if (!valid) return res.status(401).json({ error: '目前密碼錯誤' });
+    const sameAsOld = await bcrypt.compare(newPassword, user.password_hash);
+    if (sameAsOld) return res.status(400).json({ error: '新密碼不可與目前密碼相同' });
+  }
+
+  const passwordHash = await bcrypt.hash(newPassword, 10);
+  db.run("UPDATE users SET password_hash = ?, has_password = 1 WHERE id = ?", [passwordHash, req.userId]);
+  saveDB();
+  res.json({ success: true });
 });
 
 // 刪除帳號（永久刪除所有資料）

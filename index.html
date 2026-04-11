@@ -1087,6 +1087,28 @@
           </form>
         </div>
         <div class="card" style="margin-top:16px">
+          <h3><i class="fas fa-key"></i><span id="accountPasswordCardTitle">修改密碼</span></h3>
+          <p class="import-hint" id="accountPasswordHint" style="margin-bottom:12px">為保護帳號安全，新密碼至少 8 字元，且需包含英文字母與數字。</p>
+          <form id="accountPasswordForm">
+            <div class="form-row" id="accountCurrentPasswordWrap">
+              <label>目前密碼</label>
+              <input type="password" id="accountCurrentPassword" class="form-input" autocomplete="current-password" placeholder="輸入目前的登入密碼">
+            </div>
+            <div class="form-row">
+              <label>新密碼</label>
+              <input type="password" id="accountNewPassword" class="form-input" autocomplete="new-password" placeholder="至少 8 字元，含英文字母與數字" required>
+            </div>
+            <div class="form-row">
+              <label>再次輸入新密碼</label>
+              <input type="password" id="accountNewPasswordConfirm" class="form-input" autocomplete="new-password" placeholder="再次輸入以確認" required>
+            </div>
+            <div id="accountPasswordError" class="form-error" style="display:none;color:var(--danger);font-size:13px;margin-top:4px"></div>
+            <div class="cert-btn-row" style="margin-top:8px">
+              <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-floppy-disk"></i> <span id="accountPasswordSubmitText">更新密碼</span></button>
+            </div>
+          </form>
+        </div>
+        <div class="card" style="margin-top:16px">
           <h3><i class="fas fa-clock-rotate-left"></i>登入紀錄（最近 100 筆）</h3>
           <div class="table-wrap" style="overflow:auto">
             <table class="data-table">
@@ -1359,6 +1381,37 @@
   </main>
 
   <!-- ===== 新增/編輯交易 Modal ===== -->
+  <!-- 管理員 - 重設使用者密碼 -->
+  <div class="modal-overlay" id="modalAdminResetPassword">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>重設使用者密碼</h3>
+        <button class="modal-close" onclick="App.closeModal('modalAdminResetPassword')">&times;</button>
+      </div>
+      <form id="adminResetPasswordForm">
+        <input type="hidden" id="adminResetPasswordUserId">
+        <div class="form-row">
+          <label>目標使用者</label>
+          <div id="adminResetPasswordTarget" style="font-weight:600;color:var(--text)"></div>
+        </div>
+        <div class="form-row">
+          <label>新密碼</label>
+          <input type="password" id="adminResetPasswordNew" class="form-input" autocomplete="new-password" placeholder="至少 8 字元，含英文字母與數字" required>
+        </div>
+        <div class="form-row">
+          <label>再次輸入新密碼</label>
+          <input type="password" id="adminResetPasswordConfirm" class="form-input" autocomplete="new-password" placeholder="再次輸入以確認" required>
+        </div>
+        <div id="adminResetPasswordError" class="form-error" style="display:none;color:var(--danger);font-size:13px;margin-top:4px"></div>
+        <p class="import-hint" style="margin-top:8px">⚠️ 重設後，該使用者將立即可使用新密碼登入；建議透過安全管道告知。</p>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="App.closeModal('modalAdminResetPassword')">取消</button>
+          <button type="submit" class="btn btn-primary"><i class="fas fa-key"></i> 重設密碼</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <div class="modal-overlay" id="modalTransaction">
     <div class="modal">
       <div class="modal-header">

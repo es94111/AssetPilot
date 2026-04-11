@@ -1242,18 +1242,17 @@
             <span class="import-hint" id="adminLoginLogSelectedCount">已選 0 筆</span>
             <span class="import-hint" id="adminLoginLogTotal"></span>
             <span class="import-hint" id="adminLoginLogSyncAt">上次同步：-</span>
-            <label class="table-toolbar-end">每頁筆數
-              <div class="pagesize-wrap">
-                <select id="adminLoginLogPageSize">
-                  <option value="10">10</option>
-                  <option value="20" selected>20</option>
-                  <option value="50">50</option>
-                  <option value="100">100</option>
-                  <option value="custom">自訂</option>
-                </select>
-                <input type="number" id="adminLoginLogPageSizeCustom" min="1" max="9999" placeholder="筆數" style="display:none">
+            <div class="table-toolbar-end">
+              <span class="pagesize-label">每頁筆數</span>
+              <div class="pagesize-seg" id="adminLoginLogPageSizeGroup" role="group" aria-label="每頁筆數">
+                <button class="pagesize-opt" data-v="10" type="button">10</button>
+                <button class="pagesize-opt pagesize-opt-active" data-v="20" type="button">20</button>
+                <button class="pagesize-opt" data-v="50" type="button">50</button>
+                <button class="pagesize-opt" data-v="100" type="button">100</button>
+                <button class="pagesize-opt" data-v="custom" type="button">自訂</button>
               </div>
-            </label>
+              <input type="number" class="pagesize-custom-input" id="adminLoginLogPageSizeCustom" min="1" max="9999" placeholder="筆數" style="display:none">
+            </div>
           </div>
           <div class="table-wrap" style="overflow:auto">
             <table class="data-table">
@@ -1281,18 +1280,17 @@
             <span class="import-hint" id="adminAllLoginLogSelectedCount">已選 0 筆</span>
             <span class="import-hint" id="adminAllLoginLogTotal"></span>
             <span class="import-hint" id="adminAllLoginLogSyncAt">上次同步：-</span>
-            <label class="table-toolbar-end">每頁筆數
-              <div class="pagesize-wrap">
-                <select id="adminAllLoginLogPageSize">
-                  <option value="10">10</option>
-                  <option value="20" selected>20</option>
-                  <option value="50">50</option>
-                  <option value="100">100</option>
-                  <option value="custom">自訂</option>
-                </select>
-                <input type="number" id="adminAllLoginLogPageSizeCustom" min="1" max="9999" placeholder="筆数" style="display:none">
+            <div class="table-toolbar-end">
+              <span class="pagesize-label">每頁筆數</span>
+              <div class="pagesize-seg" id="adminAllLoginLogPageSizeGroup" role="group" aria-label="每頁筆數">
+                <button class="pagesize-opt" data-v="10" type="button">10</button>
+                <button class="pagesize-opt pagesize-opt-active" data-v="20" type="button">20</button>
+                <button class="pagesize-opt" data-v="50" type="button">50</button>
+                <button class="pagesize-opt" data-v="100" type="button">100</button>
+                <button class="pagesize-opt" data-v="custom" type="button">自訂</button>
               </div>
-            </label>
+              <input type="number" class="pagesize-custom-input" id="adminAllLoginLogPageSizeCustom" min="1" max="9999" placeholder="筆數" style="display:none">
+            </div>
           </div>
           <div class="table-wrap" style="overflow:auto">
             <table class="data-table">

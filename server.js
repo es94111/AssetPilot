@@ -296,7 +296,11 @@ app.use(cookieParser());
 
 // ─── mTLS 驗證中介軟體 ───
 // 支援兩種模式：
-//   1. Cloudflare 代理模式：檢查 Cf-Client-Cert-Verified: SUCCESS header
+//   1. Cloudflare 代理模式：檢查 Cloudflare Managed Transform「Add TLS client auth headers」
+//      回注的 cf-cert-verified 標頭（值為 "true"/"false"，對應 ruleset engine 的
+//      cf.tls_client_auth.cert_verified 欄位）。
+//      同時相容舊版或自訂 Transform Rule 可能使用的 cf-client-cert-verified: SUCCESS 格式。
+//      參考：https://developers.cloudflare.com/rules/transform/managed-transforms/reference/
 //   2. 直連模式：驗證 TLS 層的客戶端憑證（需 HTTPS + CA 憑證）
 // Loopback（127.0.0.1 / ::1）一律放行，確保本機管理與設定錯誤時能救援
 function mtlsMiddleware(req, res, next) {
@@ -309,18 +313,30 @@ function mtlsMiddleware(req, res, next) {
     return next();
   }
 
-  // Cloudflare 代理模式：Cloudflare 邊緣驗證客戶端憑證後回注 header
-  const cfVerified = req.headers['cf-client-cert-verified'];
-  if (cfVerified !== undefined) {
-    if (cfVerified === 'SUCCESS') return next();
-    return res.status(403).json({ error: 'mTLS 客戶端憑證驗證失敗', detail: cfVerified });
+  // Cloudflare 代理模式：同時相容三種可能的標頭格式
+  //   a) cf-cert-verified: "true"/"false"        （Cloudflare Managed Transform 標準格式）
+  //   b) cf-client-cert-verified: "SUCCESS"      （舊版或自訂 Transform Rule）
+  //   c) cf-cert-presented: "true"               （憑證已提供訊號，輔助判斷）
+  const certVerified   = req.headers['cf-cert-verified'];
+  const clientVerified = req.headers['cf-client-cert-verified'];
+  const certPresented  = req.headers['cf-cert-presented'];
+  const hasAnySignal = certVerified !== undefined || clientVerified !== undefined || certPresented !== undefined;
+
+  if (hasAnySignal) {
+    const raw = String(certVerified ?? clientVerified ?? '').toLowerCase();
+    const isVerified = raw === 'true' || raw === 'success';
+    if (isVerified) return next();
+    return res.status(403).json({
+      error: 'mTLS 客戶端憑證驗證失敗',
+      detail: `Cloudflare 回報憑證驗證狀態為 "${raw || '未知'}"（cf-cert-verified / cf-client-cert-verified）。請確認客戶端已提供有效的用戶端憑證。`
+    });
   }
 
   // 直連模式：若設定 MTLS_CF_ONLY，不允許繞過 Cloudflare 直連
   if (MTLS_CF_ONLY) {
     return res.status(403).json({
       error: '此端點必須透過 Cloudflare 存取（mTLS）',
-      detail: 'Cloudflare 未回傳 Cf-Client-Cert-Verified 標頭，請確認 Cloudflare 已啟用 mTLS 並綁定用戶端憑證，或由管理員前往「設定 → 管理員 → 憑證管理」關閉 mTLS。'
+      detail: 'Cloudflare 未回傳 cf-cert-verified 標頭。請在 Cloudflare Dashboard → Rules → Transform Rules → Managed Transforms 啟用「Add TLS client auth headers」，並確認 API Shield mTLS 規則已綁定用戶端憑證；或由管理員前往「設定 → 管理員 → 憑證管理」暫時關閉 mTLS。'
     });
   }
 

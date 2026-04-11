@@ -1,6 +1,18 @@
 {
-  "currentVersion": "4.7.3",
+  "currentVersion": "4.7.4",
   "releases": [
+    {
+      "version": "4.7.4",
+      "date": "2026-04-11",
+      "title": "mTLS 支援（Cloudflare Client Certificates）",
+      "type": "new",
+      "changes": [
+        { "tag": "new", "text": "新增 mTLS 驗證中介軟體：MTLS_ENABLED=true 時，/api/ 路由（除 /api/auth/ 外）必須通過客戶端憑證驗證" },
+        { "tag": "new", "text": "支援 Cloudflare 代理模式（MTLS_CF_ONLY=true，預設）：驗證 Cloudflare 邊緣回注的 Cf-Client-Cert-Verified: SUCCESS header" },
+        { "tag": "new", "text": "支援直連 HTTPS mTLS 模式（MTLS_CF_ONLY=false）：Node.js https.createServer + requestCert，搭配 Cloudflare Managed CA 憑證驗證客戶端憑證鏈" },
+        { "tag": "new", "text": "新增環境變數：MTLS_ENABLED、MTLS_CF_ONLY、SSL_CERT、SSL_KEY、MTLS_CA_CERT，並更新 .env.example 說明" }
+      ]
+    },
     {
       "version": "4.7.3",
       "date": "2026-04-11",

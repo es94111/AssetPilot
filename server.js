@@ -54,6 +54,19 @@ const IP_COUNTRY_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const ipCountryCache = new Map();
 const ENV_ADMIN_IP_ALLOWLIST = parseIpAllowlist(process.env.ADMIN_IP_ALLOWLIST || '');
 
+// ─── mTLS 設定 ───
+// MTLS_ENABLED=true  → 啟用 mTLS 驗證
+// MTLS_CF_ONLY=true  → 僅信任 Cloudflare header（不要求 TLS 客戶端憑證）；適合純 Cloudflare 代理部署
+// SSL_CERT / SSL_KEY  → origin HTTPS 憑證（若需直連 mTLS）
+// MTLS_CA_CERT        → Cloudflare Managed CA 憑證（用於驗證客戶端憑證是否由 Cloudflare 簽發）
+const MTLS_ENABLED = process.env.MTLS_ENABLED === 'true';
+const MTLS_CF_ONLY = process.env.MTLS_CF_ONLY !== 'false'; // 預設 true：優先使用 Cloudflare header
+// Origin Certificate：讓 Express 以 HTTPS 對 Cloudflare 提供服務（Full Strict 模式）
+const SSL_CERT_PATH = process.env.SSL_CERT || path.join(__dirname, 'SSL', 'Origin Certificates', 'server.pem');
+const SSL_KEY_PATH  = process.env.SSL_KEY  || path.join(__dirname, 'SSL', 'Origin Certificates', 'server.key');
+// Cloudflare Managed CA：驗證客戶端 mTLS 憑證鏈（至 Cloudflare Dashboard 下載）
+const MTLS_CA_CERT_PATH = process.env.MTLS_CA_CERT || path.join(__dirname, 'SSL', 'mTLS', 'cloudflare-ca.pem');
+
 // ─── 自動產生密鑰（僅首次啟動時） ───
 function generateSecret(length = 64) {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -221,6 +234,44 @@ app.use('/api', rateLimit({
 
 app.use(express.json({ limit: '50mb' }));
 app.use(cookieParser());
+
+// ─── mTLS 驗證中介軟體 ───
+// 支援兩種模式：
+//   1. Cloudflare 代理模式：檢查 Cf-Client-Cert-Verified: SUCCESS header
+//   2. 直連模式：驗證 TLS 層的客戶端憑證（需 HTTPS + CA 憑證）
+function mtlsMiddleware(req, res, next) {
+  if (!MTLS_ENABLED) return next();
+
+  // Cloudflare 代理模式：Cloudflare 邊緣驗證客戶端憑證後回注 header
+  const cfVerified = req.headers['cf-client-cert-verified'];
+  if (cfVerified !== undefined) {
+    if (cfVerified === 'SUCCESS') return next();
+    return res.status(403).json({ error: 'mTLS 客戶端憑證驗證失敗', detail: cfVerified });
+  }
+
+  // 直連模式：若設定 MTLS_CF_ONLY，不允許繞過 Cloudflare 直連
+  if (MTLS_CF_ONLY) {
+    return res.status(403).json({ error: '此端點必須透過 Cloudflare 存取（mTLS）' });
+  }
+
+  // 直連 TLS 模式：驗證 socket 層的客戶端憑證
+  const cert = req.socket?.getPeerCertificate?.();
+  if (!cert || !cert.subject || Object.keys(cert.subject || {}).length === 0) {
+    return res.status(403).json({ error: '需要提供有效的客戶端 TLS 憑證' });
+  }
+  if (req.socket.authorized === false) {
+    return res.status(403).json({ error: 'mTLS 客戶端憑證未通過 CA 驗證' });
+  }
+  next();
+}
+
+// 將 mTLS 套用至所有 /api/ 路由（auth 路由除外，使用者需能在無憑證下完成登入）
+// 若業務上需要連登入也要驗證憑證，可移除下方的 skip 條件
+app.use('/api/', (req, res, next) => {
+  const skipPaths = ['/api/auth/', '/api/config', '/api/changelog'];
+  if (skipPaths.some(p => req.path.startsWith(p.replace('/api', '')))) return next();
+  mtlsMiddleware(req, res, next);
+});
 
 // 僅開放必要前端靜態檔，避免專案根目錄檔案外洩
 const PUBLIC_FILES = ['/app.js', '/style.css', '/logo.svg', '/favicon.svg'];
@@ -4393,7 +4444,38 @@ app.get('{*path}', rateLimit({
 
 // ─── 啟動 ───
 initDB().then(() => {
-  app.listen(PORT, () => {
-    console.log(`AssetPilot 伺服器已啟動: http://localhost:${PORT}`);
-  });
+  const sslCertExists = fs.existsSync(SSL_CERT_PATH);
+  const sslKeyExists  = fs.existsSync(SSL_KEY_PATH);
+
+  if (MTLS_ENABLED && !MTLS_CF_ONLY && sslCertExists && sslKeyExists) {
+    // HTTPS + mTLS 直連模式：需要客戶端出示憑證
+    const httpsOptions = {
+      cert: fs.readFileSync(SSL_CERT_PATH),
+      key:  fs.readFileSync(SSL_KEY_PATH),
+      requestCert: true,        // 要求客戶端送出憑證
+      rejectUnauthorized: false, // 交由 mtlsMiddleware 決定是否拒絕（可回傳 JSON 錯誤）
+    };
+    // 若存在 Cloudflare CA 憑證，加入以驗證客戶端憑證鏈
+    if (fs.existsSync(MTLS_CA_CERT_PATH)) {
+      httpsOptions.ca = fs.readFileSync(MTLS_CA_CERT_PATH);
+      httpsOptions.rejectUnauthorized = true; // CA 確認後啟用嚴格驗證
+    }
+    const https = require('https');
+    https.createServer(httpsOptions, app).listen(PORT, () => {
+      console.log(`AssetPilot 伺服器已啟動（HTTPS + mTLS）: https://localhost:${PORT}`);
+      if (!fs.existsSync(MTLS_CA_CERT_PATH)) {
+        console.warn('  ⚠️  MTLS_CA_CERT 未設定，客戶端憑證將不驗證 CA 鏈');
+        console.warn('  → 請從 Cloudflare Dashboard 下載 Managed CA 憑證並設定 MTLS_CA_CERT 路徑');
+      }
+    });
+  } else {
+    // HTTP 模式（Cloudflare 代理或開發環境）
+    app.listen(PORT, () => {
+      if (MTLS_ENABLED) {
+        console.log(`AssetPilot 伺服器已啟動（HTTP + Cloudflare mTLS header 驗證）: http://localhost:${PORT}`);
+      } else {
+        console.log(`AssetPilot 伺服器已啟動: http://localhost:${PORT}`);
+      }
+    });
+  }
 });

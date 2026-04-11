@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-4.7.2-blue" alt="version">
+  <img src="https://img.shields.io/badge/version-4.7.3-blue" alt="version">
   <img src="https://img.shields.io/badge/node-%3E%3D18-green" alt="node">
   <img src="https://img.shields.io/badge/license-AGPL--3.0-blue" alt="license">
   <img src="https://img.shields.io/badge/docker-ready-2496ED" alt="docker">
@@ -609,21 +609,21 @@ docker run -d \
 
 ## 安全性
 
-| 機制                       | 說明                                                    |
-| -------------------------- | ------------------------------------------------------- |
-| **資料庫加密**       | ChaCha20-Poly1305 AEAD + PBKDF2-SHA256 金鑰推導         |
-| **密碼加密**         | bcryptjs 雜湊儲存，不明文保存                           |
-| **XSS 防護**         | 所有使用者輸入經 `escHtml()` 跳脫後才插入 DOM         |
-| **安全標頭**         | Helmet（HSTS、X-Content-Type-Options、Referrer-Policy） |
-| **CSP 保護**         | 限制 inline script，限制腳本與外部資源來源              |
-| **速率限制**         | 登入／註冊 API 每 IP 每 15 分鐘最多 20 次；公開頁面每分鐘最多 120 次 |
+| 機制                            | 說明                                                                                                |
+| ------------------------------- | --------------------------------------------------------------------------------------------------- |
+| **資料庫加密**            | ChaCha20-Poly1305 AEAD + PBKDF2-SHA256 金鑰推導                                                     |
+| **密碼加密**              | bcryptjs 雜湊儲存，不明文保存                                                                       |
+| **XSS 防護**              | 所有使用者輸入經 `escHtml()` 跳脫後才插入 DOM                                                     |
+| **安全標頭**              | Helmet（HSTS、X-Content-Type-Options、Referrer-Policy）                                             |
+| **CSP 保護**              | 限制 inline script，限制腳本與外部資源來源                                                          |
+| **速率限制**              | 登入／註冊 API 每 IP 每 15 分鐘最多 20 次；公開頁面每分鐘最多 120 次                                |
 | **Cloudflare API Shield** | 提供 OpenAPI 3.0.3 Schema（`openapi.yaml`），可上傳至 Cloudflare 啟用請求驗證（Block / Log 模式） |
-| **CORS 控制**        | `ALLOWED_ORIGINS` 可限制允許的來源網域                |
-| **OAuth State 驗證** | Google 登入使用一次性 state 防 CSRF／重放攻擊           |
-| **SRI 驗證**         | 外部 CDN 腳本（Font Awesome、Chart.js）加入完整性驗證   |
-| **屬性注入防護**     | 帳戶 icon 採白名單驗證（僅允許 `fa-*`）               |
-| **登入稽核**         | 記錄登入時間、IP、國家、方式；管理員可查失敗嘗試        |
-| **健康檢查**         | Docker HEALTHCHECK 每 30 秒自動偵測服務狀態             |
+| **CORS 控制**             | `ALLOWED_ORIGINS` 可限制允許的來源網域                                                            |
+| **OAuth State 驗證**      | Google 登入使用一次性 state 防 CSRF／重放攻擊                                                       |
+| **SRI 驗證**              | 外部 CDN 腳本（Font Awesome、Chart.js）加入完整性驗證                                               |
+| **屬性注入防護**          | 帳戶 icon 採白名單驗證（僅允許 `fa-*`）                                                           |
+| **登入稽核**              | 記錄登入時間、IP、國家、方式；管理員可查失敗嘗試                                                    |
+| **健康檢查**              | Docker HEALTHCHECK 每 30 秒自動偵測服務狀態                                                         |
 
 ---
 
@@ -662,8 +662,6 @@ docker run -d \
 | **exchangerate-api.com**     | 全球即時匯率（基礎貨幣 TWD） | [exchangerate-api.com](https://www.exchangerate-api.com/)                |
 | **Google Identity Services** | Google SSO 登入              | [developers.google.com/identity](https://developers.google.com/identity) |
 | **IPinfo Lite**              | IP 國家查詢                  | [ipinfo.io/lite](https://ipinfo.io/lite)                                 |
-
-IP 位址資料由 `<a href="https://ipinfo.io/lite" target="_blank" rel="noopener noreferrer">`IPinfo`</a>` 提供。
 
 ---
 

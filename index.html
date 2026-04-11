@@ -575,7 +575,7 @@
             <div style="font-weight:600">全球匯率（exchangerate-api.com）</div>
             <div class="import-hint" id="fxAutoStatus" style="margin-top:4px">基礎貨幣 TWD；顯示上次取得時間。</div>
           </div>
-          <label style="display:flex;align-items:center;gap:8px">
+          <label class="settings-toggle-check">
             <input type="checkbox" id="fxAutoUpdateToggle">
             <span>自動更新匯率</span>
           </label>
@@ -1042,7 +1042,7 @@
       <!-- 帳號設定 -->
       <div class="settings-panel" id="panel-account">
         <div class="card">
-          <h3><i class="fas fa-moon" style="margin-right:8px;color:var(--primary)"></i>外觀模式</h3>
+          <h3><i class="fas fa-moon"></i>外觀模式</h3>
           <div class="theme-toggle-row">
             <div>
               <div style="font-weight:600">主題模式</div>
@@ -1065,7 +1065,7 @@
           </div>
         </div>
         <div class="card">
-          <h3><i class="fas fa-user-circle" style="margin-right:8px;color:var(--primary)"></i>帳號資訊</h3>
+          <h3><i class="fas fa-user-circle"></i>帳號資訊</h3>
           <div class="account-info-section">
             <div class="account-info-row">
               <span class="account-info-label">電子信箱</span>
@@ -1081,13 +1081,13 @@
               <label>修改顯示名稱</label>
               <input type="text" id="accountDisplayNameInput" maxlength="50" placeholder="請輸入新的顯示名稱" required>
             </div>
-            <div class="form-actions" style="justify-content:flex-start">
+            <div class="cert-btn-row" style="margin-top:4px">
               <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-floppy-disk"></i> 儲存顯示名稱</button>
             </div>
           </form>
         </div>
         <div class="card" style="margin-top:16px">
-          <h3><i class="fas fa-clock-rotate-left" style="margin-right:8px;color:var(--primary)"></i>登入紀錄（最近 100 筆）</h3>
+          <h3><i class="fas fa-clock-rotate-left"></i>登入紀錄（最近 100 筆）</h3>
           <div class="table-wrap" style="overflow:auto">
             <table class="data-table">
               <thead>
@@ -1104,7 +1104,7 @@
           </div>
         </div>
         <div class="card" style="margin-top:16px">
-          <h3><i class="fab fa-google" style="margin-right:8px;color:#4285f4"></i>Google 帳號綁定</h3>
+          <h3><i class="fab fa-google"></i>Google 帳號綁定</h3>
           <p class="import-hint" style="margin-bottom:12px">綁定 Google 帳號後，可使用 Google 快速登入，無需輸入帳號密碼。</p>
           <div id="googleLinkStatus">
             <!-- 已綁定狀態 -->
@@ -1158,13 +1158,13 @@
       <!-- 管理員設定 -->
       <div class="settings-panel" id="panel-admin">
         <div class="card">
-          <h3><i class="fas fa-user-shield" style="margin-right:8px;color:var(--primary)"></i>註冊策略</h3>
+          <h3><i class="fas fa-user-shield"></i>註冊策略</h3>
           <div class="theme-toggle-row" style="margin-top:12px">
             <div>
               <div style="font-weight:600">公開註冊</div>
-              <div class="import-hint" style="margin-top:4px">關閉後，僅 Email 白名單可註冊（或由管理員建立帳號）。</div>
+              <p class="admin-section-desc" style="margin:4px 0 0">關閉後，僅 Email 白名單可註冊（或由管理員建立帳號）。</p>
             </div>
-            <label style="display:flex;align-items:center;gap:8px">
+            <label class="settings-toggle-check">
               <input type="checkbox" id="adminPublicRegistrationToggle">
               <span>開放公開註冊</span>
             </label>
@@ -1176,15 +1176,15 @@
           <div class="form-row" style="margin-top:16px">
             <label>管理員 IP 白名單（每行一個）</label>
             <textarea id="adminIpAllowlist" class="form-input" rows="4" placeholder="203.0.113.5&#10;2001:db8::1"></textarea>
-            <div class="import-hint" style="margin-top:6px">白名單 IP 將略過 API 速率限制，避免管理員被誤判封鎖。</div>
+            <p class="admin-section-desc" style="margin-top:6px;margin-bottom:0">白名單 IP 將略過 API 速率限制，避免管理員被誤判封鎖。</p>
           </div>
-          <div class="import-actions" style="justify-content:flex-start">
-            <button class="btn btn-primary" id="saveAdminSettingsBtn"><i class="fas fa-save"></i> 儲存管理員設定</button>
+          <div class="cert-btn-row" style="margin-top:16px">
+            <button class="btn btn-primary btn-sm" id="saveAdminSettingsBtn"><i class="fas fa-save"></i> 儲存管理員設定</button>
           </div>
         </div>
 
         <div class="card">
-          <h3><i class="fas fa-user-plus" style="margin-right:8px;color:var(--primary)"></i>建立使用者</h3>
+          <h3><i class="fas fa-user-plus"></i>建立使用者</h3>
           <form id="adminCreateUserForm" class="admin-create-user-form">
             <div class="admin-grid-2">
               <div class="form-row">
@@ -1209,14 +1209,14 @@
               </div>
             </div>
             <div class="auth-error" id="adminCreateUserError"></div>
-            <div class="import-actions" style="justify-content:flex-start">
-              <button type="submit" class="btn btn-primary"><i class="fas fa-user-plus"></i> 建立帳號</button>
+            <div class="cert-btn-row" style="margin-top:4px">
+              <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-user-plus"></i> 建立帳號</button>
             </div>
           </form>
         </div>
 
         <div class="card">
-          <h3><i class="fas fa-users" style="margin-right:8px;color:var(--primary)"></i>使用者管理</h3>
+          <h3><i class="fas fa-users"></i>使用者管理</h3>
           <div class="table-wrap" style="overflow:auto">
             <table class="data-table">
               <thead>
@@ -1235,14 +1235,14 @@
         </div>
 
         <div class="card">
-          <h3><i class="fas fa-user-shield" style="margin-right:8px;color:var(--primary)"></i>管理員登入紀錄（最近 200 筆）</h3>
-          <div class="import-actions" style="justify-content:flex-start;margin-bottom:10px;gap:8px;flex-wrap:wrap">
-            <button class="btn btn-ghost" id="adminLoginLogSyncBtn"><i class="fas fa-rotate"></i> 手動同步</button>
-            <button class="btn btn-outline" id="adminLoginLogDeleteSelectedBtn" disabled><i class="fas fa-trash"></i> 批次刪除</button>
+          <h3><i class="fas fa-user-shield"></i>管理員登入紀錄（最近 200 筆）</h3>
+          <div class="table-toolbar">
+            <button class="btn btn-ghost btn-sm" id="adminLoginLogSyncBtn"><i class="fas fa-rotate"></i> 手動同步</button>
+            <button class="btn btn-outline btn-sm" id="adminLoginLogDeleteSelectedBtn" disabled><i class="fas fa-trash"></i> 批次刪除</button>
             <span class="import-hint" id="adminLoginLogSelectedCount">已選 0 筆</span>
             <span class="import-hint" id="adminLoginLogTotal"></span>
             <span class="import-hint" id="adminLoginLogSyncAt">上次同步：-</span>
-            <label style="margin-left:auto;display:flex;align-items:center;gap:6px;font-size:13px">每頁筆數
+            <label class="table-toolbar-end">每頁筆數
               <div class="pagesize-wrap">
                 <select id="adminLoginLogPageSize">
                   <option value="10">10</option>
@@ -1274,14 +1274,14 @@
         </div>
 
         <div class="card">
-          <h3><i class="fas fa-list" style="margin-right:8px;color:var(--primary)"></i>全部使用者登入紀錄（最近 500 筆）</h3>
-          <div class="import-actions" style="justify-content:flex-start;margin-bottom:10px;gap:8px;flex-wrap:wrap">
-            <button class="btn btn-ghost" id="adminAllLoginLogSyncBtn"><i class="fas fa-rotate"></i> 手動同步</button>
-            <button class="btn btn-outline" id="adminAllLoginLogDeleteSelectedBtn" disabled><i class="fas fa-trash"></i> 批次刪除</button>
+          <h3><i class="fas fa-list"></i>全部使用者登入紀錄（最近 500 筆）</h3>
+          <div class="table-toolbar">
+            <button class="btn btn-ghost btn-sm" id="adminAllLoginLogSyncBtn"><i class="fas fa-rotate"></i> 手動同步</button>
+            <button class="btn btn-outline btn-sm" id="adminAllLoginLogDeleteSelectedBtn" disabled><i class="fas fa-trash"></i> 批次刪除</button>
             <span class="import-hint" id="adminAllLoginLogSelectedCount">已選 0 筆</span>
             <span class="import-hint" id="adminAllLoginLogTotal"></span>
             <span class="import-hint" id="adminAllLoginLogSyncAt">上次同步：-</span>
-            <label style="margin-left:auto;display:flex;align-items:center;gap:6px;font-size:13px">每頁筆數
+            <label class="table-toolbar-end">每頁筆數
               <div class="pagesize-wrap">
                 <select id="adminAllLoginLogPageSize">
                   <option value="10">10</option>
@@ -1290,7 +1290,7 @@
                   <option value="100">100</option>
                   <option value="custom">自訂</option>
                 </select>
-                <input type="number" id="adminAllLoginLogPageSizeCustom" min="1" max="9999" placeholder="筆數" style="display:none">
+                <input type="number" id="adminAllLoginLogPageSizeCustom" min="1" max="9999" placeholder="筆数" style="display:none">
               </div>
             </label>
           </div>
@@ -1318,108 +1318,108 @@
         </div>
 
         <div class="card">
-          <h3><i class="fas fa-lock" style="margin-right:8px;color:var(--primary)"></i>SSL / TLS 憑證管理</h3>
+          <h3><i class="fas fa-lock"></i>SSL / TLS 憑證管理</h3>
 
           <!-- mTLS 設定 -->
-          <div style="margin-top:16px">
-            <div style="font-weight:600;font-size:15px;margin-bottom:10px;color:var(--text)"><i class="fas fa-shield-halved" style="margin-right:6px;color:var(--primary)"></i>mTLS 設定</div>
+          <div class="admin-section">
+            <div class="admin-section-header"><i class="fas fa-shield-halved"></i>mTLS 設定</div>
             <div class="theme-toggle-row">
               <div>
                 <div style="font-weight:600">啟用 mTLS</div>
-                <div class="import-hint" style="margin-top:4px">啟用後，所有 /api/ 路由（除登入/設定）須通過 mTLS 驗證。</div>
+                <p class="admin-section-desc" style="margin:4px 0 0">啟用後，所有 /api/ 路由（除登入/設定）須通過 mTLS 驗證。</p>
               </div>
-              <label style="display:flex;align-items:center;gap:8px">
+              <label class="settings-toggle-check">
                 <input type="checkbox" id="adminMtlsEnabledToggle">
                 <span>啟用</span>
               </label>
             </div>
-            <div class="theme-toggle-row" style="margin-top:10px">
+            <div class="theme-toggle-row" style="margin-top:12px">
               <div>
                 <div style="font-weight:600">僅 Cloudflare Header 驗證（CF Only 模式）</div>
-                <div class="import-hint" style="margin-top:4px">開啟：Cloudflare 在邊緣驗證憑證並傳入 Header（不需 CA 憑證）。關閉：直連 HTTPS + TLS 握手驗證（需設定 CA 憑證）。</div>
+                <p class="admin-section-desc" style="margin:4px 0 0">開啟：Cloudflare 在邊緣驗證憑證並傳入 Header（不需 CA 憑證）。關閉：直連 HTTPS + TLS 握手驗證（需設定 CA 憑證）。</p>
               </div>
-              <label style="display:flex;align-items:center;gap:8px">
+              <label class="settings-toggle-check">
                 <input type="checkbox" id="adminMtlsCfOnlyToggle">
                 <span>CF Only</span>
               </label>
             </div>
-            <div class="import-actions" style="justify-content:flex-start;margin-top:12px">
-              <button class="btn btn-primary" id="adminSaveMtlsSettingsBtn"><i class="fas fa-save"></i> 儲存 mTLS 設定</button>
+            <div class="cert-btn-row" style="margin-top:14px">
+              <button class="btn btn-primary btn-sm" id="adminSaveMtlsSettingsBtn"><i class="fas fa-save"></i> 儲存 mTLS 設定</button>
             </div>
           </div>
 
-          <hr style="border:none;border-top:1px solid var(--border);margin:20px 0">
+          <hr class="admin-divider">
 
           <!-- Cloudflare-issued Client Certificates (mTLS 用戶端憑證) -->
-          <div>
-            <div style="font-weight:600;font-size:15px;margin-bottom:10px;color:var(--text)"><i class="fas fa-id-card" style="margin-right:6px;color:var(--primary)"></i>Cloudflare-issued Client Certificates</div>
-            <div class="import-hint" style="margin-bottom:10px">Cloudflare 簽發的用戶端憑證，用於 mTLS 身份驗證。從 Cloudflare Dashboard → SSL/TLS → Client Certificates 下載。</div>
-            <div id="adminMtlsCertInfo" class="import-hint" style="margin-bottom:10px;font-family:monospace;font-size:12px"></div>
+          <div class="admin-section">
+            <div class="admin-section-header"><i class="fas fa-id-card"></i>Cloudflare-issued Client Certificates</div>
+            <p class="admin-section-desc">Cloudflare 簽發的用戶端憑證，用於 mTLS 身份驗證。從 Cloudflare Dashboard → SSL/TLS → Client Certificates 下載。</p>
+            <div id="adminMtlsCertInfo" class="cert-info-box"></div>
             <div class="form-row">
               <label>憑證 PEM（貼入內容）</label>
-              <textarea id="adminMtlsCertPem" class="form-input" rows="6" placeholder="-----BEGIN CERTIFICATE-----&#10;...&#10;-----END CERTIFICATE-----"></textarea>
+              <textarea id="adminMtlsCertPem" class="form-input" rows="5" placeholder="-----BEGIN CERTIFICATE-----&#10;...&#10;-----END CERTIFICATE-----"></textarea>
             </div>
-            <div class="form-row" style="margin-top:10px">
+            <div class="form-row">
               <label>私鑰 PEM（貼入內容）</label>
-              <textarea id="adminMtlsCertKeyPem" class="form-input" rows="6" placeholder="-----BEGIN PRIVATE KEY-----&#10;...&#10;-----END PRIVATE KEY-----"></textarea>
+              <textarea id="adminMtlsCertKeyPem" class="form-input" rows="5" placeholder="-----BEGIN PRIVATE KEY-----&#10;...&#10;-----END PRIVATE KEY-----"></textarea>
             </div>
-            <div class="import-actions" style="justify-content:flex-start;margin-top:10px;gap:8px">
-              <button class="btn btn-primary" id="adminSaveMtlsCertBtn"><i class="fas fa-upload"></i> 部署 Client Certificate</button>
-              <button class="btn btn-danger" id="adminDeleteMtlsCertBtn"><i class="fas fa-trash"></i> 刪除</button>
+            <div class="cert-btn-row">
+              <button class="btn btn-primary btn-sm" id="adminSaveMtlsCertBtn"><i class="fas fa-upload"></i> 部署 Client Certificate</button>
+              <button class="btn btn-danger btn-sm" id="adminDeleteMtlsCertBtn"><i class="fas fa-trash"></i> 刪除</button>
             </div>
           </div>
 
-          <hr style="border:none;border-top:1px solid var(--border);margin:20px 0">
+          <hr class="admin-divider">
 
           <!-- Cloudflare Managed CA -->
-          <div>
-            <div style="font-weight:600;font-size:15px;margin-bottom:10px;color:var(--text)"><i class="fas fa-certificate" style="margin-right:6px;color:var(--primary)"></i>Cloudflare Managed CA 憑證</div>
-            <div class="import-hint" style="margin-bottom:10px">僅在 CF Only 模式關閉（直連 HTTPS）時需要，用於驗證 mTLS 客戶端憑證鏈。從 Cloudflare Dashboard → SSL/TLS → Client Certificates 頁面下載。</div>
-            <div id="adminMtlsCaInfo" class="import-hint" style="margin-bottom:10px;font-family:monospace;font-size:12px"></div>
+          <div class="admin-section">
+            <div class="admin-section-header"><i class="fas fa-certificate"></i>Cloudflare Managed CA 憑證</div>
+            <p class="admin-section-desc">僅在 CF Only 模式關閉（直連 HTTPS）時需要，用於驗證 mTLS 客戶端憑證鏈。從 Cloudflare Dashboard → SSL/TLS → Client Certificates 頁面下載。</p>
+            <div id="adminMtlsCaInfo" class="cert-info-box"></div>
             <div class="form-row">
               <label>CA 憑證 PEM（貼入內容）</label>
-              <textarea id="adminMtlsCaPem" class="form-input" rows="6" placeholder="-----BEGIN CERTIFICATE-----&#10;...&#10;-----END CERTIFICATE-----"></textarea>
+              <textarea id="adminMtlsCaPem" class="form-input" rows="5" placeholder="-----BEGIN CERTIFICATE-----&#10;...&#10;-----END CERTIFICATE-----"></textarea>
             </div>
-            <div class="import-actions" style="justify-content:flex-start;margin-top:10px;gap:8px">
-              <button class="btn btn-primary" id="adminSaveMtlsCaBtn"><i class="fas fa-upload"></i> 部署 Managed CA</button>
-              <button class="btn btn-danger" id="adminDeleteMtlsCaBtn"><i class="fas fa-trash"></i> 刪除</button>
+            <div class="cert-btn-row">
+              <button class="btn btn-primary btn-sm" id="adminSaveMtlsCaBtn"><i class="fas fa-upload"></i> 部署 Managed CA</button>
+              <button class="btn btn-danger btn-sm" id="adminDeleteMtlsCaBtn"><i class="fas fa-trash"></i> 刪除</button>
             </div>
           </div>
 
-          <hr style="border:none;border-top:1px solid var(--border);margin:20px 0">
+          <hr class="admin-divider">
 
           <!-- Origin Certificate -->
-          <div>
-            <div style="font-weight:600;font-size:15px;margin-bottom:10px;color:var(--text)"><i class="fas fa-server" style="margin-right:6px;color:var(--primary)"></i>Origin Certificates（HTTPS 伺服器憑證）</div>
-            <div class="import-hint" style="margin-bottom:10px">Cloudflare Origin Certificate，用於直連 HTTPS 模式。<span style="color:var(--danger);font-weight:600">變更後需重啟伺服器才生效。</span></div>
+          <div class="admin-section">
+            <div class="admin-section-header"><i class="fas fa-server"></i>Origin Certificates（HTTPS 伺服器憑證）</div>
+            <p class="admin-section-desc">Cloudflare Origin Certificate，用於直連 HTTPS 模式。<span class="restart-badge"><i class="fas fa-triangle-exclamation"></i>變更後需重啟伺服器才生效</span></p>
 
             <!-- Origin CA -->
-            <div style="font-weight:600;margin:12px 0 6px;color:var(--text-muted);font-size:13px">① Cloudflare Origin CA</div>
-            <div id="adminOriginCaInfo" class="import-hint" style="margin-bottom:8px;font-family:monospace;font-size:12px"></div>
+            <div class="cert-sub-step"><span class="cert-step-num">①</span>Cloudflare Origin CA</div>
+            <div id="adminOriginCaInfo" class="cert-info-box"></div>
             <div class="form-row">
               <label>Origin CA PEM（貼入內容）</label>
               <textarea id="adminOriginCaPem" class="form-input" rows="5" placeholder="-----BEGIN CERTIFICATE-----&#10;...&#10;-----END CERTIFICATE-----"></textarea>
             </div>
-            <div class="import-actions" style="justify-content:flex-start;margin-top:8px;gap:8px">
-              <button class="btn btn-primary" id="adminSaveOriginCaBtn"><i class="fas fa-upload"></i> 部署 Origin CA</button>
-              <button class="btn btn-danger" id="adminDeleteOriginCaBtn"><i class="fas fa-trash"></i> 刪除</button>
+            <div class="cert-btn-row">
+              <button class="btn btn-primary btn-sm" id="adminSaveOriginCaBtn"><i class="fas fa-upload"></i> 部署 Origin CA</button>
+              <button class="btn btn-danger btn-sm" id="adminDeleteOriginCaBtn"><i class="fas fa-trash"></i> 刪除</button>
             </div>
 
             <!-- Origin Cert + Key -->
-            <div style="font-weight:600;margin:18px 0 6px;color:var(--text-muted);font-size:13px">② Origin 憑證（Certificate）</div>
-            <div id="adminOriginCertInfo" class="import-hint" style="margin-bottom:8px;font-family:monospace;font-size:12px"></div>
+            <div class="cert-sub-step"><span class="cert-step-num">②</span>Origin 憑證（Certificate）</div>
+            <div id="adminOriginCertInfo" class="cert-info-box"></div>
             <div class="form-row">
               <label>Origin 憑證 PEM（貼入內容）</label>
-              <textarea id="adminOriginCertPem" class="form-input" rows="6" placeholder="-----BEGIN CERTIFICATE-----&#10;...&#10;-----END CERTIFICATE-----"></textarea>
+              <textarea id="adminOriginCertPem" class="form-input" rows="5" placeholder="-----BEGIN CERTIFICATE-----&#10;...&#10;-----END CERTIFICATE-----"></textarea>
             </div>
-            <div style="font-weight:600;margin:18px 0 6px;color:var(--text-muted);font-size:13px">③ Origin 私鑰（Private Key）</div>
+            <div class="cert-sub-step"><span class="cert-step-num">③</span>Origin 私鑰（Private Key）</div>
             <div class="form-row">
               <label>Origin 私鑰 PEM（貼入內容）</label>
-              <textarea id="adminOriginKeyPem" class="form-input" rows="6" placeholder="-----BEGIN PRIVATE KEY-----&#10;...&#10;-----END PRIVATE KEY-----"></textarea>
+              <textarea id="adminOriginKeyPem" class="form-input" rows="5" placeholder="-----BEGIN PRIVATE KEY-----&#10;...&#10;-----END PRIVATE KEY-----"></textarea>
             </div>
-            <div class="import-actions" style="justify-content:flex-start;margin-top:10px;gap:8px">
-              <button class="btn btn-primary" id="adminSaveOriginCertBtn"><i class="fas fa-upload"></i> 部署 Origin Certificate + Key</button>
-              <button class="btn btn-danger" id="adminDeleteOriginCertBtn"><i class="fas fa-trash"></i> 刪除全部</button>
+            <div class="cert-btn-row">
+              <button class="btn btn-primary btn-sm" id="adminSaveOriginCertBtn"><i class="fas fa-upload"></i> 部署 Origin Certificate + Key</button>
+              <button class="btn btn-danger btn-sm" id="adminDeleteOriginCertBtn"><i class="fas fa-trash"></i> 刪除全部</button>
             </div>
           </div>
         </div>

@@ -1,6 +1,19 @@
 {
-  "currentVersion": "4.7.6",
+  "currentVersion": "4.7.7",
   "releases": [
+    {
+      "version": "4.7.7",
+      "date": "2026-04-11",
+      "title": "設定頁面 UI 統一美化",
+      "type": "improved",
+      "changes": [
+        { "tag": "improved", "text": "設定頁面所有卡片標題統一改為圖示盒子樣式，與其他頁面風格一致" },
+        { "tag": "improved", "text": "SSL/TLS 憑證管理各子分區改用 CSS class（admin-section / cert-info-box / cert-sub-step），移除大量 inline style" },
+        { "tag": "improved", "text": "新增 .table-toolbar 工具列 class，統一管理員登入紀錄操作列排版" },
+        { "tag": "improved", "text": "新增 .form-input 與 .form-row textarea 通用樣式，確保憑證 textarea 套用一致邊框與焦點效果" },
+        { "tag": "improved", "text": "按鈕統一改為 btn-sm 尺寸，與頁面其他操作按鈕視覺比例一致" }
+      ]
+    },
     {
       "version": "4.7.6",
       "date": "2026-04-11",

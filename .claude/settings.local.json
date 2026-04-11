@@ -46,7 +46,8 @@
       "Bash(node -c server.js)",
       "Bash(python -c ':*)",
       "Bash(node -c app.js)",
-      "Bash([ -f .env ])"
+      "Bash([ -f .env ])",
+      "Bash([ -f database.db.bak ])"
     ]
   }
 }

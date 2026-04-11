@@ -1,6 +1,18 @@
 {
-  "currentVersion": "4.9.0",
+  "currentVersion": "4.9.1",
   "releases": [
+    {
+      "version": "4.9.1",
+      "date": "2026-04-11",
+      "title": "新增使用者修改密碼功能（自助 + 管理員重設）",
+      "type": "feature",
+      "changes": [
+        { "tag": "new", "text": "帳號設定新增「修改密碼」卡片：使用者可在設定 → 帳號設定中變更登入密碼，需驗證目前密碼，新密碼需 8 字元且含英數，並要求二次輸入確認；後端同時防止新舊密碼相同" },
+        { "tag": "new", "text": "Google SSO-only 帳號可在同一張卡片設定本機密碼（無需目前密碼驗證），設定後即可同時使用密碼或 Google 登入；卡片標題與提示文字會自動依 hasPassword 切換為「設定本機密碼」" },
+        { "tag": "new", "text": "管理員 → 使用者列表新增「重設密碼」按鈕（鑰匙圖示），點擊開啟 modalAdminResetPassword Modal，可為任一使用者直接設定新密碼，無需提供舊密碼，適用於協助忘記密碼的使用者" },
+        { "tag": "new", "text": "後端新增 PUT /api/account/password（自助修改）與 PUT /api/admin/users/:id/password（管理員重設）；兩者皆套用 8 字元 + 英數字元密碼強度驗證；管理員端點受 adminMiddleware 保護" }
+      ]
+    },
     {
       "version": "4.9.0",
       "date": "2026-04-11",

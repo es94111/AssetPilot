@@ -5421,7 +5421,43 @@ const App = (() => {
     applyAccountCurrencyToTx();
   }
 
-  function applyAccountCurrencyToTx() {
+  async function applyAndFetchCurrencyRate(c) {
+    if (c === 'TWD') {
+      el('txFxRate').value = '';
+      refreshTxFxUi();
+      return;
+    }
+    const cached = Number(cachedExchangeRates[c]);
+    if (cached > 0) {
+      el('txFxRate').value = cached;
+      refreshTxFxUi();
+      return;
+    }
+    // 幣別無匯率 → 自動向外部 API 查詢並即時更新
+    el('txFxRate').disabled = true;
+    el('txFxRate').placeholder = '查詢匯率中…';
+    el('txFxRate').value = '';
+    refreshTxFxUi();
+    try {
+      const result = await API.post('/api/exchange-rates/refresh', { currencies: [c] });
+      const found = (result.rates || []).find(r => normalizeCurrencyCode(r.currency) === c);
+      if (found && Number(found.rateToTwd) > 0) {
+        cachedExchangeRates[c] = Number(found.rateToTwd);
+        el('txFxRate').value = Number(found.rateToTwd);
+        toast(`已自動取得 ${c} 匯率：${found.rateToTwd}`, 'success');
+      } else {
+        toast(`無法自動取得 ${c} 匯率，請手動輸入`, 'warning');
+      }
+    } catch (e) {
+      toast(`取得 ${c} 匯率失敗，請手動輸入`, 'error');
+    } finally {
+      el('txFxRate').disabled = false;
+      el('txFxRate').placeholder = '';
+      refreshTxFxUi();
+    }
+  }
+
+  async function applyAccountCurrencyToTx() {
     const type = document.querySelector('input[name="txType"]:checked')?.value || 'expense';
     if (type === 'transfer') return;
     const accountId = el('txAccount').value;
@@ -5429,12 +5465,7 @@ const App = (() => {
     if (!account) return;
     const c = normalizeCurrencyCode(account.currency);
     el('txCurrency').value = c;
-    if (c !== 'TWD') {
-      el('txFxRate').value = getRateToTwd(c);
-    } else {
-      el('txFxRate').value = '';
-    }
-    refreshTxFxUi();
+    await applyAndFetchCurrencyRate(c);
   }
 
   function refreshTxFxUi() {
@@ -5734,12 +5765,13 @@ const App = (() => {
     document.querySelectorAll('input[name="recType"]').forEach(r => {
       r.addEventListener('change', () => updateRecCategorySelect(r.value));
     });
-    el('txCurrency')?.addEventListener('change', () => {
+    el('txCurrency')?.addEventListener('change', async () => {
       const c = normalizeCurrencyCode(el('txCurrency').value);
       if (c !== 'TWD' && !(Number(el('txFxRate').value) > 0)) {
-        el('txFxRate').value = getRateToTwd(c);
+        await applyAndFetchCurrencyRate(c);
+      } else {
+        refreshTxFxUi();
       }
-      refreshTxFxUi();
     });
     el('txFxRate')?.addEventListener('input', refreshTxFxUi);
     el('txAmount')?.addEventListener('input', refreshTxFxUi);
@@ -5753,7 +5785,7 @@ const App = (() => {
     });
     el('recFxRate')?.addEventListener('input', refreshRecFxUi);
     el('recAmount')?.addEventListener('input', refreshRecFxUi);
-    el('txAccount')?.addEventListener('change', applyAccountCurrencyToTx);
+    el('txAccount')?.addEventListener('change', () => applyAccountCurrencyToTx());
 
     // FAB
     el('fabBtn').addEventListener('click', () => {
@@ -5801,6 +5833,7 @@ const App = (() => {
           closeModal('modalTransaction');
           toast(id ? '交易已更新' : '交易已新增', 'success');
         }
+        await refreshCache();
         await renderPage(currentPage);
       } catch (err) {
         toast(err.message, 'error');

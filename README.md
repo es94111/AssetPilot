@@ -292,9 +292,14 @@ node server.js
 | `GOOGLE_CLIENT_ID`      | Google OAuth Client ID（選配）            | —                        |
 | `GOOGLE_CLIENT_SECRET`  | Google OAuth Client Secret（選配）        | —                        |
 | `ALLOWED_ORIGINS`       | CORS 白名單，逗號分隔（留空不限制）       | —                        |
-| `EXCHANGE_RATE_API_KEY` | exchangerate-api.com API Key（選配）      | —                        |
+| `ADMIN_IP_ALLOWLIST`    | 管理員 IP 白名單，逗號分隔，略過速率限制  | —                        |
+| `EXCHANGE_RATE_API_KEY` | exchangerate-api.com API Key（選配）      | `free`                  |
 | `IPINFO_TOKEN`          | ipinfo.io Token，提升 IP 查詢配額（選配） | —                        |
-| `CHANGELOG_URL`         | 遠端 changelog.json URL                   | GitHub 倉庫預設 URL       |
+| `MTLS_ENABLED`          | 啟用 mTLS 驗證（`true` / `false`）       | `false`                 |
+| `MTLS_CF_ONLY`          | 僅信任 Cloudflare header 驗證（預設）     | `true`                  |
+| `SSL_CERT`              | Origin Certificate 路徑（直連 HTTPS 用）  | —                        |
+| `SSL_KEY`               | Origin 私鑰路徑（直連 HTTPS 用）          | —                        |
+| `MTLS_CA_CERT`          | Cloudflare Managed CA 憑證路徑            | —                        |
 
 ---
 

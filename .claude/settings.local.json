@@ -35,7 +35,11 @@
       "Bash(mv database.db database.db.preview-backup)",
       "Bash(echo \"backup created: $\\(ls database.db.preview-backup 2>/dev/null\\)\")",
       "Bash(rm -f database.db)",
-      "Bash(mv database.db.preview-backup database.db)"
+      "Bash(mv database.db.preview-backup database.db)",
+      "Bash(curl -s -c /tmp/cookies.txt -X POST http://localhost:3000/api/auth/register -H \"Content-Type: application/json\" -d '{\"email\":\"admin@test.com\",\"password\":\"test1234\",\"displayName\":\"Admin\"}')",
+      "Bash(curl -s -X POST http://localhost:3000/api/auth/login -H \"Content-Type: application/json\" -d '{\"email\":\"admin@test.com\",\"password\":\"test1234\"}')",
+      "Bash(curl -s -c /tmp/cookies2.txt -X POST http://localhost:3000/api/auth/register -H \"Content-Type: application/json\" -d '{\"email\":\"admin2@test.com\",\"password\":\"test1234\",\"displayName\":\"Admin2\"}')",
+      "Bash(curl -s -b /tmp/cookies.txt http://localhost:3000/api/auth/me)"
     ]
   }
 }

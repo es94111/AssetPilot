@@ -514,6 +514,7 @@ async function initDB() {
   try { db.run("ALTER TABLE recurring ADD COLUMN fx_rate REAL DEFAULT 1"); } catch (e) { /* ignore */ }
   try { db.run("ALTER TABLE login_audit_logs ADD COLUMN country TEXT DEFAULT ''"); } catch (e) { /* ignore */ }
   try { db.run("ALTER TABLE login_attempt_logs ADD COLUMN country TEXT DEFAULT ''"); } catch (e) { /* ignore */ }
+  try { db.run("ALTER TABLE exchange_rates ADD COLUMN is_manual INTEGER DEFAULT 0"); } catch (e) { /* ignore */ }
 
   // 為既有使用者補建預設子分類
   migrateDefaultSubcategories();
@@ -806,9 +807,14 @@ function setExchangeRateAutoUpdate(userId, autoUpdate) {
 }
 
 // ─── 全球匯率 server-level 快取（跨所有使用者共用，避免重複打外部 API）───
-const GLOBAL_FX_CACHE_TTL = 5 * 60 * 1000; // 5 分鐘
+const GLOBAL_FX_CACHE_TTL = 5 * 60 * 1000; // 5 分鐘：外部 API 原始回應快取
 let globalFxCache = { data: null, timestamp: 0 };
 let globalFxInflight = null; // 正在進行中的 fetch Promise，所有人共用同一個
+
+// ─── 已解析匯率跨使用者共用快取（auto-fetch 專用，手動輸入不放這裡）───
+const SHARED_AUTO_RATE_TTL = 30 * 60 * 1000; // 30 分鐘
+// Map<currencyCode, { rate: number, fetchedAt: number }>
+const sharedAutoRateCache = new Map();
 
 async function fetchGlobalRealtimeRates() {
   const now = Date.now();
@@ -885,7 +891,6 @@ function resolveRateToTwd(globalData, currencyCode) {
 }
 
 async function syncExchangeRatesFromGlobalAPI(userId, requestedCurrencies = []) {
-  const globalData = await fetchGlobalRealtimeRates();
   const existingMap = getUserExchangeRateMap(userId);
   const targets = new Set(['TWD']);
   Object.keys(existingMap).forEach(c => targets.add(c));
@@ -895,25 +900,44 @@ async function syncExchangeRatesFromGlobalAPI(userId, requestedCurrencies = []) 
   });
 
   const now = Date.now();
+
+  // 只有在共用快取中找不到（或已過期）的幣別，才需要打外部 API
+  const needsApi = [...targets].filter(c => {
+    if (c === 'TWD') return false;
+    const hit = sharedAutoRateCache.get(c);
+    return !hit || (now - hit.fetchedAt) >= SHARED_AUTO_RATE_TTL;
+  });
+  const globalData = needsApi.length > 0 ? await fetchGlobalRealtimeRates() : null;
+
   const updated = [];
   const unsupported = [];
   for (const currency of targets) {
     const c = normalizeCurrency(currency);
     if (c === 'TWD') {
-      db.run(`INSERT INTO exchange_rates (user_id, currency, rate_to_twd, updated_at)
-        VALUES (?, 'TWD', 1, ?)
-        ON CONFLICT(user_id, currency) DO UPDATE SET rate_to_twd = excluded.rate_to_twd, updated_at = excluded.updated_at`,
+      db.run(`INSERT INTO exchange_rates (user_id, currency, rate_to_twd, updated_at, is_manual)
+        VALUES (?, 'TWD', 1, ?, 0)
+        ON CONFLICT(user_id, currency) DO UPDATE SET rate_to_twd = 1, updated_at = excluded.updated_at, is_manual = 0`,
         [userId, now]);
       continue;
     }
-    const rate = resolveRateToTwd(globalData, c);
+
+    // 優先使用共用快取
+    const hit = sharedAutoRateCache.get(c);
+    let rate;
+    if (hit && (now - hit.fetchedAt) < SHARED_AUTO_RATE_TTL) {
+      rate = hit.rate;
+    } else {
+      rate = resolveRateToTwd(globalData, c);
+      if (rate > 0) sharedAutoRateCache.set(c, { rate, fetchedAt: now });
+    }
+
     if (!(rate > 0)) {
       unsupported.push(c);
       continue;
     }
-    db.run(`INSERT INTO exchange_rates (user_id, currency, rate_to_twd, updated_at)
-      VALUES (?, ?, ?, ?)
-      ON CONFLICT(user_id, currency) DO UPDATE SET rate_to_twd = excluded.rate_to_twd, updated_at = excluded.updated_at`,
+    db.run(`INSERT INTO exchange_rates (user_id, currency, rate_to_twd, updated_at, is_manual)
+      VALUES (?, ?, ?, ?, 0)
+      ON CONFLICT(user_id, currency) DO UPDATE SET rate_to_twd = excluded.rate_to_twd, updated_at = excluded.updated_at, is_manual = 0`,
       [userId, c, rate, now]);
     updated.push({ currency: c, rateToTwd: rate });
   }
@@ -2446,10 +2470,11 @@ app.put('/api/exchange-rates', (req, res) => {
   }
 
   const now = Date.now();
+  // 手動輸入：寫入使用者自己的 DB（is_manual = 1），不更新跨使用者共用快取
   upserts.forEach(item => {
-    db.run(`INSERT INTO exchange_rates (user_id, currency, rate_to_twd, updated_at)
-      VALUES (?, ?, ?, ?)
-      ON CONFLICT(user_id, currency) DO UPDATE SET rate_to_twd = excluded.rate_to_twd, updated_at = excluded.updated_at`,
+    db.run(`INSERT INTO exchange_rates (user_id, currency, rate_to_twd, updated_at, is_manual)
+      VALUES (?, ?, ?, ?, 1)
+      ON CONFLICT(user_id, currency) DO UPDATE SET rate_to_twd = excluded.rate_to_twd, updated_at = excluded.updated_at, is_manual = 1`,
       [req.userId, item.currency, item.rateToTwd, now]);
   });
 

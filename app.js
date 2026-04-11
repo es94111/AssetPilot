@@ -5767,11 +5767,7 @@ const App = (() => {
     });
     el('txCurrency')?.addEventListener('change', async () => {
       const c = normalizeCurrencyCode(el('txCurrency').value);
-      if (c !== 'TWD' && !(Number(el('txFxRate').value) > 0)) {
-        await applyAndFetchCurrencyRate(c);
-      } else {
-        refreshTxFxUi();
-      }
+      await applyAndFetchCurrencyRate(c);
     });
     el('txFxRate')?.addEventListener('input', refreshTxFxUi);
     el('txAmount')?.addEventListener('input', refreshTxFxUi);

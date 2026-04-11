@@ -1,6 +1,18 @@
 {
-  "currentVersion": "4.7.0",
+  "currentVersion": "4.7.1",
   "releases": [
+    {
+      "version": "4.7.1",
+      "date": "2026-04-11",
+      "title": "匯率快取架構升級與側邊欄法律連結",
+      "type": "improved",
+      "changes": [
+        { "tag": "fixed", "text": "修正交易 Modal 切換第二個（及之後）外幣時，自動查詢匯率未觸發的問題" },
+        { "tag": "new", "text": "側邊欄底部新增「隱私權政策」與「服務條款」快速連結" },
+        { "tag": "improved", "text": "新增跨使用者匯率共用快取（sharedAutoRateCache，TTL 30 分鐘）：用戶 A 查詢過的幣別，用戶 B 在快取期間內可直接使用，無需再打外部 API" },
+        { "tag": "improved", "text": "exchange_rates 資料表新增 is_manual 欄位，區分自動查詢（0）與手動輸入（1）；手動輸入的匯率不寫入共用快取，不影響其他使用者" }
+      ]
+    },
     {
       "version": "4.7.0",
       "date": "2026-04-11",

@@ -1,6 +1,18 @@
 {
-  "currentVersion": "4.7.5",
+  "currentVersion": "4.7.6",
   "releases": [
+    {
+      "version": "4.7.6",
+      "date": "2026-04-11",
+      "title": "SSL/TLS 憑證管理完整支援",
+      "type": "fixed",
+      "changes": [
+        { "tag": "new", "text": "管理員面板新增 Cloudflare-issued Client Certificates 上傳（PEM + 私鑰），對應 mTLS 用戶端憑證" },
+        { "tag": "new", "text": "Origin Certificates 新增第三欄位：Cloudflare Origin CA（POST/DELETE /api/admin/certs/origin/ca）" },
+        { "tag": "fixed", "text": "修正 server.js 中 SSL_MTLS_CERT 路徑 typo（sercer.pem → server.pem）" },
+        { "tag": "improved", "text": "憑證資訊面板同步顯示 Client Certificate、Managed CA、Origin CA、Origin Certificate 四組狀態" }
+      ]
+    },
     {
       "version": "4.7.5",
       "date": "2026-04-11",

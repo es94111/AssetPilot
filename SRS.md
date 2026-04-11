@@ -1152,6 +1152,7 @@
 
 | 版本 | 日期 | 變更說明 |
 | --- | --- | --- |
+| 4.8.1 | 2026-04-11 | 修正啟用 mTLS 後 Google 登入誤報「登入失敗」：分離登入與 enterApp 載入錯誤、mTLS 中介軟體新增 loopback 放行 |
 | 4.8.0 | 2026-04-11 | 管理員登入紀錄每頁筆數改為 Segmented Control，風格統一 |
 | 4.7.9 | 2026-04-11 | 修正 mTLS rejectUnauthorized:false 安全漏洞；無 CA 憑證時強制退回 HTTP 模式 |
 | 4.7.8 | 2026-04-11 | 修正 Docker SSL 憑證不持久化問題；新增 SSL_PATH 環境變數；憑證目錄改為 /app/data/SSL/ |

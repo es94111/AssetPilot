@@ -298,8 +298,16 @@ app.use(cookieParser());
 // 支援兩種模式：
 //   1. Cloudflare 代理模式：檢查 Cf-Client-Cert-Verified: SUCCESS header
 //   2. 直連模式：驗證 TLS 層的客戶端憑證（需 HTTPS + CA 憑證）
+// Loopback（127.0.0.1 / ::1）一律放行，確保本機管理與設定錯誤時能救援
 function mtlsMiddleware(req, res, next) {
   if (!MTLS_ENABLED) return next();
+
+  // Loopback 放行：以 TCP 連線層的來源位址判斷（不受 X-Forwarded-For 影響），
+  // 保留本機救援路徑，避免使用者 mTLS 設定錯誤時被完全鎖死。
+  const socketIp = normalizeIp(req.socket?.remoteAddress || '');
+  if (socketIp === '127.0.0.1' || socketIp === '::1') {
+    return next();
+  }
 
   // Cloudflare 代理模式：Cloudflare 邊緣驗證客戶端憑證後回注 header
   const cfVerified = req.headers['cf-client-cert-verified'];

@@ -1,6 +1,17 @@
 {
-  "currentVersion": "4.8.0",
+  "currentVersion": "4.8.1",
   "releases": [
+    {
+      "version": "4.8.1",
+      "date": "2026-04-11",
+      "title": "修正 mTLS 啟用後 Google 登入誤報失敗",
+      "type": "fixed",
+      "changes": [
+        { "tag": "fixed", "text": "修正啟用 mTLS 後使用 Google 登入會顯示「Google 登入失敗：此端點必須透過 Cloudflare 存取（mTLS）」：Google 授權其實成功，錯誤是登入後 enterApp() 載入 /api/categories 等受 mTLS 保護的端點時被 403，前端誤把後續載入錯誤歸類為登入失敗" },
+        { "tag": "improved", "text": "handleGoogleCode / handleLogin 分離登入與資料載入兩階段錯誤訊息，登入後載入失敗會顯示為「登入後載入資料失敗」而非「登入失敗」" },
+        { "tag": "improved", "text": "mTLS 中介軟體新增 loopback（127.0.0.1 / ::1）放行路徑，以 TCP 連線層位址判斷不受 X-Forwarded-For 影響；本機管理與 mTLS 設定錯誤時可直接連本機救援" }
+      ]
+    },
     {
       "version": "4.8.0",
       "date": "2026-04-11",

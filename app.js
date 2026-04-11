@@ -439,9 +439,16 @@ const App = (() => {
       currentUser = data.user;
       latestLoginRecord = data.currentLogin || null;
       el('loginForm').reset();
+    } catch (err) {
+      el('loginError').textContent = err.message;
+      return;
+    }
+    // 登入已成功；enterApp() 的錯誤屬於登入後的資料載入失敗，不應被誤報為登入失敗。
+    try {
       await enterApp();
     } catch (err) {
       el('loginError').textContent = err.message;
+      toast('登入後載入資料失敗：' + err.message, 'error');
     }
   }
 
@@ -732,10 +739,19 @@ const App = (() => {
       if (!r.ok) throw new Error(data.error || 'Google 登入失敗');
       currentUser = data.user;
       latestLoginRecord = data.currentLogin || null;
-      await enterApp();
     } catch (err) {
       el('loginError').textContent = err.message;
       toast('Google 登入失敗：' + err.message, 'error');
+      setGoogleAuthInProgress(false);
+      return;
+    }
+    // Google 授權已成功；enterApp() 的錯誤屬於登入後的資料載入失敗，
+    // 不應被誤報為「Google 登入失敗」。
+    try {
+      await enterApp();
+    } catch (err) {
+      el('loginError').textContent = err.message;
+      toast('登入後載入資料失敗：' + err.message, 'error');
     } finally {
       setGoogleAuthInProgress(false);
     }

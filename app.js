@@ -3945,6 +3945,10 @@ const App = (() => {
   let adminSettingsBound = false;
   let selectedAdminLoginLogIds = new Set();
   let selectedAdminAllLoginLogIds = new Set();
+  let adminLoginLogPage = 1, adminLoginLogPageSize = 20;
+  let adminAllLoginLogPage = 1, adminAllLoginLogPageSize = 20;
+  let _cachedAdminLoginLogs = [];
+  let _cachedAdminAllLoginLogs = [];
 
   function appendFxRateRow(currency = 'USD', rateToTwd = '', isFixedRow = false) {
     const tbody = el('fxRateTableBody');
@@ -4525,13 +4529,113 @@ const App = (() => {
     }
   }
 
-  function renderAdminLoginLogTables(loginLogData) {
-    const adminTbody = el('adminLoginLogBody');
-    const allUserTbody = el('adminAllLoginLogBody');
-    if (!adminTbody || !allUserTbody) return;
+  function renderAdminLogPagination(elId, page, totalPages, goFn) {
+    const pag = el(elId);
+    if (!pag) return;
+    if (totalPages <= 1) { pag.innerHTML = ''; return; }
+    let ph = `<button ${page <= 1 ? 'disabled' : ''} onclick="${goFn}(${page - 1})"><i class="fas fa-chevron-left"></i></button>`;
+    for (let i = 1; i <= totalPages; i++) {
+      if (totalPages > 7) {
+        if (i === 1 || i === totalPages || (i >= page - 1 && i <= page + 1)) {
+          ph += `<button class="${i === page ? 'active' : ''}" onclick="${goFn}(${i})">${i}</button>`;
+        } else if (i === page - 2 || i === page + 2) {
+          ph += `<button disabled>...</button>`;
+        }
+      } else {
+        ph += `<button class="${i === page ? 'active' : ''}" onclick="${goFn}(${i})">${i}</button>`;
+      }
+    }
+    ph += `<button ${page >= totalPages ? 'disabled' : ''} onclick="${goFn}(${page + 1})"><i class="fas fa-chevron-right"></i></button>`;
+    pag.innerHTML = ph;
+  }
 
+  function adminLoginLogGoPage(p) {
+    adminLoginLogPage = p;
+    _renderAdminLoginLogPage();
+  }
+
+  function adminAllLoginLogGoPage(p) {
+    adminAllLoginLogPage = p;
+    _renderAdminAllLoginLogPage();
+  }
+
+  function _renderAdminLoginLogPage() {
+    const logs = _cachedAdminLoginLogs;
+    const adminTbody = el('adminLoginLogBody');
+    if (!adminTbody) return;
     selectedAdminLoginLogIds = new Set();
+
+    const totalPages = Math.max(1, Math.ceil(logs.length / adminLoginLogPageSize));
+    adminLoginLogPage = Math.min(Math.max(1, adminLoginLogPage), totalPages);
+    const start = (adminLoginLogPage - 1) * adminLoginLogPageSize;
+    const pageRows = logs.slice(start, start + adminLoginLogPageSize);
+
+    const totalEl = el('adminLoginLogTotal');
+    if (totalEl) totalEl.textContent = `共 ${logs.length} 筆`;
+
+    if (logs.length === 0) {
+      adminTbody.innerHTML = '<tr><td colspan="6" class="empty-hint">尚無管理員登入紀錄</td></tr>';
+    } else {
+      adminTbody.innerHTML = pageRows.map(log => {
+        const rowId = String(log.id || (log.loginAt ? `ts:${Number(log.loginAt)}` : '')).trim();
+        const hasId = !!rowId;
+        return `
+        <tr>
+          <td class="td-check">${hasId ? `<input type="checkbox" class="admin-login-log-checkbox" data-id="${escHtml(rowId)}">` : ''}</td>
+          <td>${escHtml(formatLoginAt(log.loginAt))}</td>
+          <td>${escHtml(log.ipAddress || 'unknown')}</td>
+          <td>${escHtml(formatCountryCode(log.country))}</td>
+          <td>${escHtml(formatLoginMethod(log.loginMethod))}</td>
+          <td>${hasId ? `<button class="btn-icon danger admin-login-log-delete-btn" data-id="${escHtml(rowId)}" title="刪除"><i class="fas fa-trash"></i></button>` : '<span class="import-hint">-</span>'}</td>
+        </tr>`;
+      }).join('');
+    }
+    updateAdminLoginLogSelectionUI();
+    renderAdminLogPagination('adminLoginLogPagination', adminLoginLogPage, totalPages, 'App.adminLoginLogGoPage');
+  }
+
+  function _renderAdminAllLoginLogPage() {
+    const logs = _cachedAdminAllLoginLogs;
+    const allUserTbody = el('adminAllLoginLogBody');
+    if (!allUserTbody) return;
     selectedAdminAllLoginLogIds = new Set();
+
+    const totalPages = Math.max(1, Math.ceil(logs.length / adminAllLoginLogPageSize));
+    adminAllLoginLogPage = Math.min(Math.max(1, adminAllLoginLogPage), totalPages);
+    const start = (adminAllLoginLogPage - 1) * adminAllLoginLogPageSize;
+    const pageRows = logs.slice(start, start + adminAllLoginLogPageSize);
+
+    const totalEl = el('adminAllLoginLogTotal');
+    if (totalEl) totalEl.textContent = `共 ${logs.length} 筆`;
+
+    if (logs.length === 0) {
+      allUserTbody.innerHTML = '<tr><td colspan="11" class="empty-hint">尚無使用者登入紀錄</td></tr>';
+    } else {
+      allUserTbody.innerHTML = pageRows.map(log => {
+        const rowId = String(log.id || (log.loginAt ? `ts:${Number(log.loginAt)}` : '')).trim();
+        const hasId = !!rowId;
+        return `
+        <tr>
+          <td class="td-check">${hasId ? `<input type="checkbox" class="admin-all-login-log-checkbox" data-id="${escHtml(rowId)}">` : ''}</td>
+          <td>${escHtml(formatLoginAt(log.loginAt))}</td>
+          <td>${escHtml(log.email || '')}</td>
+          <td>${escHtml(log.displayName || '-')}</td>
+          <td>${log.isAdminLogin ? '<span class="type-badge income">管理員</span>' : '<span class="type-badge">一般</span>'}</td>
+          <td>${escHtml(log.ipAddress || 'unknown')}</td>
+          <td>${escHtml(formatCountryCode(log.country))}</td>
+          <td>${escHtml(formatLoginMethod(log.loginMethod))}</td>
+          <td>${log.isSuccess ? '<span class="type-badge income">成功</span>' : '<span class="type-badge expense">失敗</span>'}</td>
+          <td>${escHtml(log.isSuccess ? '-' : formatFailureReason(log.failureReason))}</td>
+          <td>${hasId ? `<button class="btn-icon danger admin-all-login-log-delete-btn" data-id="${escHtml(rowId)}" title="刪除"><i class="fas fa-trash"></i></button>` : '<span class="import-hint">-</span>'}</td>
+        </tr>`;
+      }).join('');
+    }
+    updateAdminAllLoginLogSelectionUI();
+    renderAdminLogPagination('adminAllLoginLogPagination', adminAllLoginLogPage, totalPages, 'App.adminAllLoginLogGoPage');
+  }
+
+  function renderAdminLoginLogTables(loginLogData) {
+    if (!el('adminLoginLogBody') || !el('adminAllLoginLogBody')) return;
 
     const adminLogs = Array.isArray(loginLogData?.adminLogs) ? [...loginLogData.adminLogs] : [];
     const allUserLogs = Array.isArray(loginLogData?.allUserLogs) ? [...loginLogData.allUserLogs] : [];
@@ -4566,51 +4670,12 @@ const App = (() => {
       }
     }
 
-    if (adminLogs.length === 0) {
-      adminTbody.innerHTML = '<tr><td colspan="6" class="empty-hint">尚無管理員登入紀錄</td></tr>';
-    } else {
-      adminTbody.innerHTML = adminLogs.map(log => {
-        const rowId = String(log.id || (log.loginAt ? `ts:${Number(log.loginAt)}` : '')).trim();
-        const hasId = !!rowId;
-        return `
-        <tr>
-          <td class="td-check">${hasId ? `<input type="checkbox" class="admin-login-log-checkbox" data-id="${escHtml(rowId)}">` : ''}</td>
-          <td>${escHtml(formatLoginAt(log.loginAt))}</td>
-          <td>${escHtml(log.ipAddress || 'unknown')}</td>
-          <td>${escHtml(formatCountryCode(log.country))}</td>
-          <td>${escHtml(formatLoginMethod(log.loginMethod))}</td>
-          <td>${hasId ? `<button class="btn-icon danger admin-login-log-delete-btn" data-id="${escHtml(rowId)}" title="刪除"><i class="fas fa-trash"></i></button>` : '<span class="import-hint">-</span>'}</td>
-        </tr>
-      `;
-      }).join('');
-    }
-
-    if (allUserLogs.length === 0) {
-      allUserTbody.innerHTML = '<tr><td colspan="11" class="empty-hint">尚無使用者登入紀錄</td></tr>';
-    } else {
-      allUserTbody.innerHTML = allUserLogs.map(log => {
-        const rowId = String(log.id || (log.loginAt ? `ts:${Number(log.loginAt)}` : '')).trim();
-        const hasId = !!rowId;
-        return `
-        <tr>
-          <td class="td-check">${hasId ? `<input type="checkbox" class="admin-all-login-log-checkbox" data-id="${escHtml(rowId)}">` : ''}</td>
-          <td>${escHtml(formatLoginAt(log.loginAt))}</td>
-          <td>${escHtml(log.email || '')}</td>
-          <td>${escHtml(log.displayName || '-')}</td>
-          <td>${log.isAdminLogin ? '<span class="type-badge income">管理員</span>' : '<span class="type-badge">一般</span>'}</td>
-          <td>${escHtml(log.ipAddress || 'unknown')}</td>
-          <td>${escHtml(formatCountryCode(log.country))}</td>
-          <td>${escHtml(formatLoginMethod(log.loginMethod))}</td>
-          <td>${log.isSuccess ? '<span class="type-badge income">成功</span>' : '<span class="type-badge expense">失敗</span>'}</td>
-          <td>${escHtml(log.isSuccess ? '-' : formatFailureReason(log.failureReason))}</td>
-          <td>${hasId ? `<button class="btn-icon danger admin-all-login-log-delete-btn" data-id="${escHtml(rowId)}" title="刪除"><i class="fas fa-trash"></i></button>` : '<span class="import-hint">-</span>'}</td>
-        </tr>
-      `;
-      }).join('');
-    }
-
-    updateAdminLoginLogSelectionUI();
-    updateAdminAllLoginLogSelectionUI();
+    _cachedAdminLoginLogs = adminLogs;
+    _cachedAdminAllLoginLogs = allUserLogs;
+    adminLoginLogPage = 1;
+    adminAllLoginLogPage = 1;
+    _renderAdminLoginLogPage();
+    _renderAdminAllLoginLogPage();
   }
 
   function renderAdminUserTable(users) {
@@ -4757,6 +4822,44 @@ const App = (() => {
 
     el('adminLoginLogDeleteSelectedBtn')?.addEventListener('click', deleteSelectedAdminLoginLogs);
     el('adminAllLoginLogDeleteSelectedBtn')?.addEventListener('click', deleteSelectedAdminAllLoginLogs);
+
+    el('adminLoginLogPageSize')?.addEventListener('change', (e) => {
+      if (e.target.value === 'custom') {
+        el('adminLoginLogPageSizeCustom').style.display = '';
+        el('adminLoginLogPageSizeCustom').focus();
+      } else {
+        el('adminLoginLogPageSizeCustom').style.display = 'none';
+        adminLoginLogPageSize = parseInt(e.target.value);
+        adminLoginLogPage = 1;
+        _renderAdminLoginLogPage();
+      }
+    });
+    el('adminLoginLogPageSizeCustom')?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const v = parseInt(el('adminLoginLogPageSizeCustom').value);
+        if (v > 0) { adminLoginLogPageSize = v; adminLoginLogPage = 1; _renderAdminLoginLogPage(); }
+      }
+    });
+
+    el('adminAllLoginLogPageSize')?.addEventListener('change', (e) => {
+      if (e.target.value === 'custom') {
+        el('adminAllLoginLogPageSizeCustom').style.display = '';
+        el('adminAllLoginLogPageSizeCustom').focus();
+      } else {
+        el('adminAllLoginLogPageSizeCustom').style.display = 'none';
+        adminAllLoginLogPageSize = parseInt(e.target.value);
+        adminAllLoginLogPage = 1;
+        _renderAdminAllLoginLogPage();
+      }
+    });
+    el('adminAllLoginLogPageSizeCustom')?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const v = parseInt(el('adminAllLoginLogPageSizeCustom').value);
+        if (v > 0) { adminAllLoginLogPageSize = v; adminAllLoginLogPage = 1; _renderAdminAllLoginLogPage(); }
+      }
+    });
     el('adminLoginLogSyncBtn')?.addEventListener('click', async () => {
       try {
         await syncAdminLoginLogs({ silent: false });
@@ -6284,9 +6387,13 @@ const App = (() => {
     stkDivSort,
     stkDivGoPage: (p) => renderStockDividends(p),
     toggleAdminLoginLogSelect,
+    toggleAllAdminLoginLogs,
     toggleAdminAllLoginLogSelect,
+    toggleAllAdminAllLoginLogs,
     deleteAdminLoginLog,
     deleteAdminAllLoginLog,
+    adminLoginLogGoPage,
+    adminAllLoginLogGoPage,
     openChangelog,
     googleFallbackLogin,
   };

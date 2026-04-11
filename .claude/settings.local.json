@@ -40,7 +40,8 @@
       "Bash(curl -s -X POST http://localhost:3000/api/auth/login -H \"Content-Type: application/json\" -d '{\"email\":\"admin@test.com\",\"password\":\"test1234\"}')",
       "Bash(curl -s -c /tmp/cookies2.txt -X POST http://localhost:3000/api/auth/register -H \"Content-Type: application/json\" -d '{\"email\":\"admin2@test.com\",\"password\":\"test1234\",\"displayName\":\"Admin2\"}')",
       "Bash(curl -s -b /tmp/cookies.txt http://localhost:3000/api/auth/me)",
-      "Bash(rm database.db)"
+      "Bash(rm database.db)",
+      "WebFetch(domain:developers.cloudflare.com)"
     ]
   }
 }

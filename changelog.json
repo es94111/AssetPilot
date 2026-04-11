@@ -1,6 +1,18 @@
 {
-  "currentVersion": "4.8.7",
+  "currentVersion": "4.8.8",
   "releases": [
+    {
+      "version": "4.8.8",
+      "date": "2026-04-11",
+      "title": "修正 mTLS 標頭名稱錯誤（根因）— 相容 Cloudflare Managed Transform",
+      "type": "fixed",
+      "changes": [
+        { "tag": "fixed", "text": "修正 mTLS 中介軟體讀取錯誤的標頭名稱：原本檢查 cf-client-cert-verified: SUCCESS，但 Cloudflare Managed Transform「Add TLS client auth headers」實際回注的是 cf-cert-verified: true/false（對應 ruleset engine 的 cf.tls_client_auth.cert_verified boolean 欄位）。此錯誤使得即使使用者正確設定 Cloudflare mTLS，origin 仍會誤判所有請求為「未通過驗證」而回 403" },
+        { "tag": "improved", "text": "mTLS 中介軟體同時相容三種標頭格式：cf-cert-verified（新版標準）、cf-client-cert-verified: SUCCESS（舊版 / 自訂 Transform Rule）、cf-cert-presented（輔助訊號）；任何一種明確通過訊號即放行，失敗時 403 detail 會回傳實際收到的狀態值方便除錯" },
+        { "tag": "improved", "text": "403 錯誤提示文字加入 Cloudflare 設定指引：需在 Dashboard → Rules → Transform Rules → Managed Transforms 啟用「Add TLS client auth headers」，否則 origin 根本收不到 cert 相關標頭" },
+        { "tag": "improved", "text": "mTLS 中介軟體程式碼加入 Cloudflare 官方文件連結註解，方便日後維護" }
+      ]
+    },
     {
       "version": "4.8.7",
       "date": "2026-04-11",

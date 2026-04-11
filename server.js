@@ -4364,10 +4364,18 @@ app.use((err, req, res, next) => {
 });
 
 // ─── 公開頁面路由 ───
-app.get('/privacy', (req, res) => {
+const publicPageLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 120,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: '請求過於頻繁，請稍後再試' },
+  validate: { xForwardedForHeader: false }
+});
+app.get('/privacy', publicPageLimiter, (req, res) => {
   res.sendFile(path.join(__dirname, 'privacy.html'));
 });
-app.get('/terms', (req, res) => {
+app.get('/terms', publicPageLimiter, (req, res) => {
   res.sendFile(path.join(__dirname, 'terms.html'));
 });
 

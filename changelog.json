@@ -1,6 +1,18 @@
 {
-  "currentVersion": "4.7.4",
+  "currentVersion": "4.7.5",
   "releases": [
+    {
+      "version": "4.7.5",
+      "date": "2026-04-11",
+      "title": "管理員憑證管理介面",
+      "type": "new",
+      "changes": [
+        { "tag": "new", "text": "管理員面板新增「SSL / TLS 憑證管理」卡片，可直接在網頁部署與刪除 Cloudflare Managed CA 憑證及 Origin Certificate" },
+        { "tag": "new", "text": "新增 mTLS 設定切換（啟用 / CF Only 模式）並即時寫入 .env，免重啟即生效" },
+        { "tag": "new", "text": "新增 8 支憑證管理 API：GET /api/admin/certs、PUT /api/admin/certs/settings、POST & DELETE /api/admin/certs/mtls/ca、POST & DELETE /api/admin/certs/origin" },
+        { "tag": "improved", "text": "憑證資訊面板顯示主旨與有效期限，讓管理員確認憑證狀態" }
+      ]
+    },
     {
       "version": "4.7.4",
       "date": "2026-04-11",

@@ -3943,6 +3943,7 @@ const App = (() => {
   let accountSettingsBound = false;
   let exchangeRatesBound = false;
   let adminSettingsBound = false;
+  let adminCertsBound = false;
   let selectedAdminLoginLogIds = new Set();
   let selectedAdminAllLoginLogIds = new Set();
   let adminLoginLogPage = 1, adminLoginLogPageSize = 20;
@@ -4727,6 +4728,7 @@ const App = (() => {
     } catch (e) {
       toast(e.message || '載入管理員設定失敗', 'error');
     }
+    await renderAdminCerts();
 
     if (adminSettingsBound) return;
 
@@ -4876,6 +4878,103 @@ const App = (() => {
     });
 
     adminSettingsBound = true;
+  }
+
+  function formatCertInfo(info) {
+    if (!info) return '（未部署）';
+    if (info.error) return `<span style="color:var(--danger)">${escHtml(info.error)}</span>`;
+    const subj = info.subject?.split('\n').find(l => l.startsWith('CN='))?.replace('CN=', '') || info.subject || '';
+    const from = info.validFrom ? new Date(info.validFrom).toLocaleDateString('zh-TW') : '-';
+    const to   = info.validTo   ? new Date(info.validTo).toLocaleDateString('zh-TW')   : '-';
+    return `主旨：${escHtml(subj)}　有效期：${escHtml(from)} ~ ${escHtml(to)}`;
+  }
+
+  async function renderAdminCerts() {
+    try {
+      const data = await API.get('/api/admin/certs');
+
+      const mtlsEnabled = el('adminMtlsEnabledToggle');
+      const mtlsCfOnly  = el('adminMtlsCfOnlyToggle');
+      if (mtlsEnabled) mtlsEnabled.checked = !!data.mtlsEnabled;
+      if (mtlsCfOnly)  mtlsCfOnly.checked  = !!data.mtlsCfOnly;
+
+      const caInfo = el('adminMtlsCaInfo');
+      if (caInfo) caInfo.innerHTML = 'Cloudflare Managed CA：' + formatCertInfo(data.mtlsCa);
+
+      const originInfo = el('adminOriginCertInfo');
+      if (originInfo) originInfo.innerHTML = 'Origin Certificate：' + formatCertInfo(data.originCert);
+    } catch (e) {
+      // silent — cert section might not affect normal usage
+    }
+
+    if (adminCertsBound) return;
+
+    el('adminSaveMtlsSettingsBtn')?.addEventListener('click', async () => {
+      try {
+        const mtlsEnabled = !!el('adminMtlsEnabledToggle')?.checked;
+        const mtlsCfOnly  = !!el('adminMtlsCfOnlyToggle')?.checked;
+        await API.put('/api/admin/certs/settings', { mtlsEnabled, mtlsCfOnly });
+        toast('mTLS 設定已儲存', 'success');
+      } catch (e) {
+        toast(e.message || '儲存 mTLS 設定失敗', 'error');
+      }
+    });
+
+    el('adminSaveMtlsCaBtn')?.addEventListener('click', async () => {
+      const pem = el('adminMtlsCaPem')?.value?.trim() || '';
+      if (!pem) { toast('請貼入 CA 憑證 PEM', 'error'); return; }
+      try {
+        await API.post('/api/admin/certs/mtls/ca', { cert: pem });
+        toast('CA 憑證已部署', 'success');
+        el('adminMtlsCaPem').value = '';
+        await renderAdminCerts();
+      } catch (e) {
+        toast(e.message || '部署 CA 憑證失敗', 'error');
+      }
+    });
+
+    el('adminDeleteMtlsCaBtn')?.addEventListener('click', async () => {
+      if (!confirm('確定要刪除 Cloudflare Managed CA 憑證？')) return;
+      try {
+        await API.del('/api/admin/certs/mtls/ca');
+        toast('CA 憑證已刪除', 'success');
+        await renderAdminCerts();
+      } catch (e) {
+        toast(e.message || '刪除 CA 憑證失敗', 'error');
+      }
+    });
+
+    el('adminSaveOriginCertBtn')?.addEventListener('click', async () => {
+      const cert = el('adminOriginCertPem')?.value?.trim() || '';
+      const key  = el('adminOriginKeyPem')?.value?.trim()  || '';
+      if (!cert || !key) { toast('請貼入 Origin Certificate 和私鑰', 'error'); return; }
+      try {
+        const res = await API.post('/api/admin/certs/origin', { cert, key });
+        if (res.requiresRestart) {
+          toast('Origin Certificate 已儲存，請重啟伺服器以套用 HTTPS', 'success');
+        } else {
+          toast('Origin Certificate 已儲存', 'success');
+        }
+        el('adminOriginCertPem').value = '';
+        el('adminOriginKeyPem').value  = '';
+        await renderAdminCerts();
+      } catch (e) {
+        toast(e.message || '部署 Origin Certificate 失敗', 'error');
+      }
+    });
+
+    el('adminDeleteOriginCertBtn')?.addEventListener('click', async () => {
+      if (!confirm('確定要刪除 Origin Certificate？刪除後需重啟伺服器才完全生效。')) return;
+      try {
+        await API.del('/api/admin/certs/origin');
+        toast('Origin Certificate 已刪除，請重啟伺服器', 'success');
+        await renderAdminCerts();
+      } catch (e) {
+        toast(e.message || '刪除 Origin Certificate 失敗', 'error');
+      }
+    });
+
+    adminCertsBound = true;
   }
 
   function initGoogleLinkButton() {

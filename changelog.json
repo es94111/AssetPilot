@@ -1,6 +1,19 @@
 {
-  "currentVersion": "4.8.8",
+  "currentVersion": "4.8.9",
   "releases": [
+    {
+      "version": "4.8.9",
+      "date": "2026-04-11",
+      "title": "mTLS 錯誤訊息差異化 — 指引使用者安裝瀏覽器用戶端憑證",
+      "type": "improved",
+      "changes": [
+        { "tag": "improved", "text": "mTLS 403 回應根據 cf-cert-verified / cf-cert-presented / cf-cert-revoked 組合自動判別失敗原因：「瀏覽器未提供憑證」「憑證已吊銷」「憑證未被 Cloudflare 接受」三種情境給出不同指引，避免使用者一律以為是伺服器端錯誤" },
+        { "tag": "new", "text": "最常見的「瀏覽器未安裝用戶端憑證」情境會明確告知使用者需要先在系統（macOS Keychain / Windows 憑證管理員 / iOS Profile / Android 使用者憑證）安裝 Cloudflare 簽發的 .p12 / PKCS#12 憑證，並附上 Cloudflare 官方文件連結供行動 App / IoT 裝置參考" },
+        { "tag": "new", "text": "mTLS 403 回應新增 reason / debug 結構化欄位：reason 是一句話失敗原因、debug 回傳 cf-cert-* 原始標頭值，前端警示卡以可摺疊的 <details> 顯示技術細節方便管理員排錯" },
+        { "tag": "improved", "text": "前端 mTLS 警示卡標題改為「mTLS 驗證失敗：{reason}」讓使用者一眼看到失敗原因，並讀取 err.data.reason / err.data.detail / err.data.debug 而非只看 err.message" },
+        { "tag": "improved", "text": "新增 .mtls-notice-debug CSS：可摺疊 summary + 等寬字體 pre 區塊，與主警示卡同風格；支援深色模式與最大高度捲動" }
+      ]
+    },
     {
       "version": "4.8.8",
       "date": "2026-04-11",

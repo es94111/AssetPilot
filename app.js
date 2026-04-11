@@ -4207,6 +4207,23 @@ const App = (() => {
       const pwWrap = el('deleteAccountPasswordWrap');
       if (pwWrap) pwWrap.style.display = isGoogleOnly ? 'none' : '';
 
+      // 修改密碼卡片：依據是否已有密碼切換「修改密碼」/「設定密碼」標題與目前密碼欄位
+      const passwordCardTitle = el('accountPasswordCardTitle');
+      const passwordHint = el('accountPasswordHint');
+      const passwordSubmitText = el('accountPasswordSubmitText');
+      const currentPasswordWrap = el('accountCurrentPasswordWrap');
+      if (user.hasPassword) {
+        if (passwordCardTitle) passwordCardTitle.textContent = '修改密碼';
+        if (passwordHint) passwordHint.textContent = '為保護帳號安全，新密碼至少 8 字元，且需包含英文字母與數字。';
+        if (passwordSubmitText) passwordSubmitText.textContent = '更新密碼';
+        if (currentPasswordWrap) currentPasswordWrap.style.display = '';
+      } else {
+        if (passwordCardTitle) passwordCardTitle.textContent = '設定本機密碼';
+        if (passwordHint) passwordHint.textContent = '目前帳號僅支援 Google 登入。設定本機密碼後，即可使用電子信箱與密碼登入。';
+        if (passwordSubmitText) passwordSubmitText.textContent = '設定密碼';
+        if (currentPasswordWrap) currentPasswordWrap.style.display = 'none';
+      }
+
       updateThemeModeControls();
 
       await renderExchangeRateSettings();
@@ -4240,6 +4257,40 @@ const App = (() => {
             renderAccountSettings();
           } catch (e) {
             toast(e.message || '解除綁定失敗', 'error');
+          }
+        });
+
+        el('accountPasswordForm')?.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const errEl = el('accountPasswordError');
+          const showError = (msg) => {
+            if (errEl) {
+              errEl.textContent = msg;
+              errEl.style.display = '';
+            }
+          };
+          if (errEl) { errEl.textContent = ''; errEl.style.display = 'none'; }
+          const isGoogleOnly = currentUser?.googleLinked && !currentUser?.hasPassword;
+          const currentPassword = el('accountCurrentPassword')?.value || '';
+          const newPassword = el('accountNewPassword')?.value || '';
+          const confirmPassword = el('accountNewPasswordConfirm')?.value || '';
+          if (!isGoogleOnly && !currentPassword) { showError('請輸入目前密碼'); return; }
+          if (!newPassword) { showError('請輸入新密碼'); return; }
+          if (newPassword.length < 8) { showError('新密碼長度至少 8 字元'); return; }
+          if (!/[a-zA-Z]/.test(newPassword) || !/\d/.test(newPassword)) {
+            showError('新密碼需包含英文字母與數字'); return;
+          }
+          if (newPassword !== confirmPassword) { showError('兩次輸入的新密碼不一致'); return; }
+          try {
+            await API.put('/api/account/password', {
+              currentPassword: isGoogleOnly ? undefined : currentPassword,
+              newPassword,
+            });
+            el('accountPasswordForm')?.reset();
+            toast(isGoogleOnly ? '密碼已設定，現在可使用密碼登入' : '密碼已更新', 'success');
+            renderAccountSettings();
+          } catch (err) {
+            showError(err.message || '更新密碼失敗');
           }
         });
 
@@ -4734,6 +4785,21 @@ const App = (() => {
     _renderAdminAllLoginLogPage();
   }
 
+  function openAdminResetPasswordModal(userId, userEmail, userName) {
+    if (el('adminResetPasswordUserId')) el('adminResetPasswordUserId').value = userId || '';
+    const target = el('adminResetPasswordTarget');
+    if (target) {
+      const label = userName ? `${userName}（${userEmail}）` : (userEmail || '—');
+      target.textContent = label;
+    }
+    if (el('adminResetPasswordNew')) el('adminResetPasswordNew').value = '';
+    if (el('adminResetPasswordConfirm')) el('adminResetPasswordConfirm').value = '';
+    const errEl = el('adminResetPasswordError');
+    if (errEl) { errEl.textContent = ''; errEl.style.display = 'none'; }
+    openModal('modalAdminResetPassword');
+    setTimeout(() => el('adminResetPasswordNew')?.focus(), 50);
+  }
+
   function renderAdminUserTable(users) {
     const tbody = el('adminUserBody');
     if (!tbody) return;
@@ -4752,6 +4818,9 @@ const App = (() => {
         <td>${u.googleLinked ? 'Google' : '密碼'}</td>
         <td>${escHtml(u.createdAt || '-')}</td>
         <td>
+          <button class="btn-icon admin-reset-password-btn" data-user-id="${u.id}" data-user-email="${escHtml(u.email || '')}" data-user-name="${escHtml(u.displayName || '')}" title="重設密碼">
+            <i class="fas fa-key"></i>
+          </button>
           <button class="btn-icon danger admin-delete-user-btn" data-user-id="${u.id}" data-user-email="${escHtml(u.email || '')}" ${canDelete ? '' : 'disabled'} title="${canDelete ? '刪除' : '不可刪除自己'}">
             <i class="fas fa-trash"></i>
           </button>
@@ -4826,6 +4895,15 @@ const App = (() => {
     });
 
     el('adminUserBody')?.addEventListener('click', async (ev) => {
+      const resetBtn = ev.target.closest('.admin-reset-password-btn');
+      if (resetBtn) {
+        const userId = resetBtn.dataset.userId || '';
+        const userEmail = resetBtn.dataset.userEmail || '';
+        const userName = resetBtn.dataset.userName || '';
+        if (!userId) return;
+        openAdminResetPasswordModal(userId, userEmail, userName);
+        return;
+      }
       const btn = ev.target.closest('.admin-delete-user-btn');
       if (!btn || btn.disabled) return;
       const userId = btn.dataset.userId;
@@ -4838,6 +4916,33 @@ const App = (() => {
         await renderAdminSettings();
       } catch (e) {
         toast(e.message || '刪除使用者失敗', 'error');
+      }
+    });
+
+    el('adminResetPasswordForm')?.addEventListener('submit', async (ev) => {
+      ev.preventDefault();
+      const errEl = el('adminResetPasswordError');
+      const showError = (msg) => {
+        if (errEl) { errEl.textContent = msg; errEl.style.display = ''; }
+      };
+      if (errEl) { errEl.textContent = ''; errEl.style.display = 'none'; }
+      const userId = el('adminResetPasswordUserId')?.value || '';
+      const newPassword = el('adminResetPasswordNew')?.value || '';
+      const confirmPassword = el('adminResetPasswordConfirm')?.value || '';
+      if (!userId) { showError('缺少使用者 ID'); return; }
+      if (!newPassword) { showError('請輸入新密碼'); return; }
+      if (newPassword.length < 8) { showError('新密碼長度至少 8 字元'); return; }
+      if (!/[a-zA-Z]/.test(newPassword) || !/\d/.test(newPassword)) {
+        showError('新密碼需包含英文字母與數字'); return;
+      }
+      if (newPassword !== confirmPassword) { showError('兩次輸入的新密碼不一致'); return; }
+      try {
+        await API.put('/api/admin/users/' + userId + '/password', { newPassword });
+        closeModal('modalAdminResetPassword');
+        toast('密碼已重設', 'success');
+        await renderAdminSettings();
+      } catch (e) {
+        showError(e.message || '重設密碼失敗');
       }
     });
 

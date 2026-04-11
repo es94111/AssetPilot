@@ -20,6 +20,9 @@
     "morgan": "^1.10.0",
     "zod": "^3.24.2"
   },
+  "overrides": {
+    "path-to-regexp": ">=0.1.13"
+  },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
     "@types/cors": "^2.8.17",

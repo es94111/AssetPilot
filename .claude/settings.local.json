@@ -31,7 +31,11 @@
       "Bash(wc -l \"c:/Users/hongyu/SynologyDrive/網頁/記帳網頁\"/README*.md)",
       "Bash(node -e \"const express=require\\('express'\\);const app=express\\(\\);app.use\\('/api/', \\(req,res,next\\)=>{console.log\\('req.path:', req.path, 'req.url:', req.url, 'req.baseUrl:', req.baseUrl\\);res.end\\('ok'\\);}\\);const s=app.listen\\(3999, \\(\\)=>{require\\('http'\\).get\\('http://127.0.0.1:3999/api/auth/google', r=>{r.on\\('data',\\(\\)=>{}\\);r.on\\('end',\\(\\)=>s.close\\(\\)\\);}\\);}\\);\")",
       "Bash(node -e ':*)",
-      "Bash(node -e \"JSON.parse\\(require\\('fs'\\).readFileSync\\('changelog.json','utf8'\\)\\); console.log\\('ok'\\)\")"
+      "Bash(node -e \"JSON.parse\\(require\\('fs'\\).readFileSync\\('changelog.json','utf8'\\)\\); console.log\\('ok'\\)\")",
+      "Bash(mv database.db database.db.preview-backup)",
+      "Bash(echo \"backup created: $\\(ls database.db.preview-backup 2>/dev/null\\)\")",
+      "Bash(rm -f database.db)",
+      "Bash(mv database.db.preview-backup database.db)"
     ]
   }
 }

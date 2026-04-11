@@ -2642,85 +2642,169 @@ body.dark-mode .stock-tabs .tab.active {
 }
 .table-toolbar-end {
   margin-left: auto;
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 10px;
+  flex-wrap: wrap;
   font-size: 13px;
   color: var(--text-secondary);
 }
 
-/* ===== 每頁筆數 Segmented Control ===== */
+/* ===== 每頁筆數 Segmented Control（iOS 風格浮動藥丸） =====
+   軌道為淡灰色膠囊容器，內部放置選項；目前選項以浮起的白色膠囊呈現，
+   搭配柔和陰影與主色文字，取代過去的硬分隔線＋主色塊。 */
 .pagesize-label {
-  font-size: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
   font-weight: 600;
   color: var(--text-secondary);
-  letter-spacing: 0.03em;
+  letter-spacing: 0;
+  text-transform: none;
   white-space: nowrap;
-  text-transform: uppercase;
+}
+.pagesize-label::before {
+  content: '';
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--primary);
+  opacity: 0.65;
+  flex-shrink: 0;
 }
 .pagesize-seg {
   display: inline-flex;
-  align-items: stretch;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
   background: var(--bg);
   border: 1px solid var(--border);
-  border-radius: 8px;
-  overflow: hidden;
+  border-radius: 10px;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.03);
 }
 .pagesize-opt {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 5px 11px;
-  min-height: 30px;
-  font-size: 13px;
+  min-width: 36px;
+  min-height: 26px;
+  padding: 4px 11px;
+  font-size: 12.5px;
   font-weight: 500;
   color: var(--text-secondary);
   background: transparent;
   border: none;
-  border-right: 1px solid var(--border);
+  border-radius: 7px;
   cursor: pointer;
-  transition: background var(--transition-fast), color var(--transition-fast);
   white-space: nowrap;
   line-height: 1;
-}
-.pagesize-opt:last-child {
-  border-right: none;
+  font-variant-numeric: tabular-nums;
+  transition:
+    background-color 180ms cubic-bezier(.4, 0, .2, 1),
+    color 180ms cubic-bezier(.4, 0, .2, 1),
+    box-shadow 180ms cubic-bezier(.4, 0, .2, 1),
+    transform 120ms cubic-bezier(.4, 0, .2, 1);
 }
 .pagesize-opt:hover {
-  background: var(--surface);
   color: var(--text);
 }
+.pagesize-opt:active {
+  transform: scale(0.96);
+}
+.pagesize-opt:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px rgba(79, 110, 247, 0.5);
+}
 .pagesize-opt.pagesize-opt-active {
-  background: var(--primary);
-  color: #fff;
+  background: var(--surface);
+  color: var(--primary-dark);
   font-weight: 600;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.08),
+    0 2px 8px rgba(79, 110, 247, 0.12);
 }
 .pagesize-opt.pagesize-opt-active:hover {
-  background: var(--primary-dark);
+  color: var(--primary-dark);
 }
 .pagesize-custom-input {
-  width: 68px;
-  padding: 5px 8px;
-  font-size: 13px;
-  font-weight: 500;
-  border: 1px solid var(--border);
+  width: 72px;
+  padding: 6px 10px;
+  margin-left: 4px;
+  font-size: 12.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  border: 1px solid var(--primary-light);
   border-radius: 8px;
   background: var(--surface);
   color: var(--text);
   text-align: center;
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  transition:
+    border-color 150ms cubic-bezier(.4, 0, .2, 1),
+    box-shadow 150ms cubic-bezier(.4, 0, .2, 1);
+  animation: pagesize-custom-in 240ms cubic-bezier(.34, 1.56, .64, 1);
 }
 .pagesize-custom-input:focus {
   outline: none;
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(79,110,247,.1);
+  box-shadow: 0 0 0 3px rgba(79, 110, 247, 0.15);
 }
+.pagesize-custom-input::placeholder {
+  color: var(--text-muted);
+  font-weight: 500;
+}
+/* 移除數字輸入的上下箭頭（保持膠囊乾淨）*/
+.pagesize-custom-input::-webkit-outer-spin-button,
+.pagesize-custom-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.pagesize-custom-input { -moz-appearance: textfield; }
+
+@keyframes pagesize-custom-in {
+  from { opacity: 0; transform: translateX(-6px) scale(0.94); }
+  to   { opacity: 1; transform: translateX(0) scale(1); }
+}
+
 /* 深色模式 */
 body.dark-mode .pagesize-seg {
-  background: rgba(255,255,255,.04);
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--border);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.35);
 }
 body.dark-mode .pagesize-opt:hover {
-  background: rgba(255,255,255,.07);
+  color: var(--text);
+}
+body.dark-mode .pagesize-opt.pagesize-opt-active {
+  background: var(--surface);
+  color: var(--primary-light);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.35),
+    0 2px 10px rgba(123, 147, 250, 0.22);
+}
+body.dark-mode .pagesize-opt:focus-visible {
+  box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px rgba(123, 147, 250, 0.55);
+}
+body.dark-mode .pagesize-custom-input {
+  background: var(--bg);
+  border-color: rgba(123, 147, 250, 0.6);
+}
+body.dark-mode .pagesize-custom-input:focus {
+  border-color: var(--primary-light);
+  box-shadow: 0 0 0 3px rgba(123, 147, 250, 0.25);
+}
+
+/* 工具列尾段：小螢幕換行，確保 pagesize 控制不被擠壓 */
+@media (max-width: 640px) {
+  .table-toolbar-end {
+    width: 100%;
+    margin-left: 0;
+    justify-content: flex-start;
+  }
+  .pagesize-opt {
+    min-width: 34px;
+    padding: 4px 9px;
+  }
 }
 
 /* 設定頁 - checkbox 切換標籤 */

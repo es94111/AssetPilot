@@ -515,11 +515,22 @@ const App = (() => {
     el('userDisplayName').textContent = currentUser?.displayName || currentUser?.email || '';
     updateUserAvatar();
     hideAuth();
-    // 載入快取
+    // 載入快取（個別以 .catch 防護，避免單一端點失敗就阻擋後續導航，
+    // 例如 mTLS 設定錯誤時仍需讓管理員能進入設定頁關閉 mTLS）
     await API.post('/api/recurring/process', {}).catch(() => {});
     await API.post('/api/stock-recurring/process', {}).catch(() => {});
-    cachedCategories = await API.get('/api/categories');
-    cachedAccounts = await API.get('/api/accounts');
+    let cacheLoadError = null;
+    cachedCategories = await API.get('/api/categories').catch(err => {
+      cacheLoadError = cacheLoadError || err;
+      return [];
+    });
+    cachedAccounts = await API.get('/api/accounts').catch(err => {
+      cacheLoadError = cacheLoadError || err;
+      return [];
+    });
+    if (cacheLoadError) {
+      toast('部分資料載入失敗：' + cacheLoadError.message, 'error');
+    }
     // 載入版本號
     loadVersionLabel();
     // 根據目前 URL 導航
@@ -901,7 +912,14 @@ const App = (() => {
     const path = buildPath(page, sub);
     if (pushState) history.pushState({ page, sub }, '', path);
 
-    await renderPage(page);
+    // 以 try/catch 包覆頁面渲染，單頁資料載入失敗（例如 mTLS 403）不應阻斷整個導航，
+    // 使用者仍可切換到其他頁面（例如設定 → 管理員）進行救援操作。
+    try {
+      await renderPage(page);
+    } catch (err) {
+      console.error('renderPage failed:', err);
+      toast('頁面載入失敗：' + (err?.message || '未知錯誤'), 'error');
+    }
 
     // 切換子分頁（需在 render 完成後執行）
     if (page === 'settings' && sub) {

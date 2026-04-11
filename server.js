@@ -54,18 +54,10 @@ const IP_COUNTRY_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const ipCountryCache = new Map();
 const ENV_ADMIN_IP_ALLOWLIST = parseIpAllowlist(process.env.ADMIN_IP_ALLOWLIST || '');
 
-// ─── mTLS 設定 ───
-// MTLS_ENABLED=true  → 啟用 mTLS 驗證
-// MTLS_CF_ONLY=true  → 僅信任 Cloudflare header（不要求 TLS 客戶端憑證）；適合純 Cloudflare 代理部署
-// SSL_CERT / SSL_KEY  → origin HTTPS 憑證（若需直連 mTLS）
-// MTLS_CA_CERT        → Cloudflare Managed CA 憑證（用於驗證客戶端憑證是否由 Cloudflare 簽發）
-let MTLS_ENABLED = process.env.MTLS_ENABLED === 'true';
-let MTLS_CF_ONLY = process.env.MTLS_CF_ONLY !== 'false'; // 預設 true：優先使用 Cloudflare header
-// Origin Certificate 與 mTLS CA 路徑（可透過環境變數覆寫；預設使用 SSL/ 資料夾）
-// 注意：SSL_MTLS_DIR / SSL_ORIGIN_DIR 常數在 ensureEnvSecrets() 之後才定義，這裡使用環境變數
+// ─── Origin HTTPS 設定 ───
+// SSL_CERT / SSL_KEY → Cloudflare Origin Certificate（當伺服器直接提供 HTTPS 時使用）
 const SSL_CERT_PATH     = process.env.SSL_CERT     || path.join(__dirname, 'SSL', 'Origin Certificates', 'server.pem');
 const SSL_KEY_PATH      = process.env.SSL_KEY      || path.join(__dirname, 'SSL', 'Origin Certificates', 'server.key');
-const MTLS_CA_CERT_PATH = process.env.MTLS_CA_CERT || path.join(__dirname, 'SSL', 'mTLS', 'cloudflare-ca.pem');
 
 // ─── 自動產生密鑰（僅首次啟動時） ───
 function generateSecret(length = 64) {
@@ -170,14 +162,10 @@ function validatePemKey(pem) {
     && (pem.includes('PRIVATE KEY-----'));
 }
 
-// SSL 目錄路徑常數
+// SSL 目錄路徑常數（Origin Certificate）
 // SSL_BASE_DIR 預設為專案目錄下的 SSL/，可透過環境變數指定其他路徑（如 Docker Volume）
 const SSL_BASE_DIR   = process.env.SSL_PATH || path.join(__dirname, 'SSL');
-const SSL_MTLS_DIR   = path.join(SSL_BASE_DIR, 'mTLS');
 const SSL_ORIGIN_DIR = path.join(SSL_BASE_DIR, 'Origin Certificates');
-const SSL_MTLS_CERT   = path.join(SSL_MTLS_DIR, 'server.pem');
-const SSL_MTLS_KEY    = path.join(SSL_MTLS_DIR, 'server.key');
-const SSL_MTLS_CA     = path.join(SSL_MTLS_DIR, 'cloudflare-ca.pem');
 const SSL_ORIGIN_CERT = path.join(SSL_ORIGIN_DIR, 'server.pem');
 const SSL_ORIGIN_KEY  = path.join(SSL_ORIGIN_DIR, 'server.key');
 const SSL_ORIGIN_CA   = path.join(SSL_ORIGIN_DIR, 'cloudflare-origin-ca.pem');
@@ -293,113 +281,6 @@ app.use('/api', rateLimit({
 
 app.use(express.json({ limit: '50mb' }));
 app.use(cookieParser());
-
-// ─── mTLS 驗證中介軟體 ───
-// 支援兩種模式：
-//   1. Cloudflare 代理模式：檢查 Cloudflare Managed Transform「Add TLS client auth headers」
-//      回注的 cf-cert-verified 標頭（值為 "true"/"false"，對應 ruleset engine 的
-//      cf.tls_client_auth.cert_verified 欄位）。
-//      同時相容舊版或自訂 Transform Rule 可能使用的 cf-client-cert-verified: SUCCESS 格式。
-//      參考：https://developers.cloudflare.com/rules/transform/managed-transforms/reference/
-//   2. 直連模式：驗證 TLS 層的客戶端憑證（需 HTTPS + CA 憑證）
-// Loopback（127.0.0.1 / ::1）一律放行，確保本機管理與設定錯誤時能救援
-function mtlsMiddleware(req, res, next) {
-  if (!MTLS_ENABLED) return next();
-
-  // Loopback 放行：以 TCP 連線層的來源位址判斷（不受 X-Forwarded-For 影響），
-  // 保留本機救援路徑，避免使用者 mTLS 設定錯誤時被完全鎖死。
-  const socketIp = normalizeIp(req.socket?.remoteAddress || '');
-  if (socketIp === '127.0.0.1' || socketIp === '::1') {
-    return next();
-  }
-
-  // Cloudflare 代理模式：同時相容多種標頭格式
-  //   a) cf-cert-verified: "true"/"false"        （Cloudflare Managed Transform 標準格式）
-  //   b) cf-client-cert-verified: "SUCCESS"      （舊版或自訂 Transform Rule）
-  //   c) cf-cert-presented: "true"/"false"       （瀏覽器是否有提供憑證）
-  //   d) cf-cert-revoked: "true"/"false"         （憑證是否已吊銷）
-  const certVerified   = req.headers['cf-cert-verified'];
-  const clientVerified = req.headers['cf-client-cert-verified'];
-  const certPresented  = req.headers['cf-cert-presented'];
-  const certRevoked    = req.headers['cf-cert-revoked'];
-  const hasAnySignal =
-    certVerified !== undefined ||
-    clientVerified !== undefined ||
-    certPresented !== undefined ||
-    certRevoked !== undefined;
-
-  if (hasAnySignal) {
-    const raw = String(certVerified ?? clientVerified ?? '').toLowerCase();
-    const isVerified = raw === 'true' || raw === 'success';
-    if (isVerified) return next();
-
-    // 根據 Cloudflare 回報的各項 cert 狀態推斷失敗原因，給出對應的使用者指引
-    const presented = String(certPresented ?? '').toLowerCase() === 'true';
-    const revoked   = String(certRevoked   ?? '').toLowerCase() === 'true';
-
-    let reason;
-    let guidance;
-    if (revoked) {
-      reason = '用戶端憑證已被吊銷';
-      guidance = '請向管理員重新申請一份有效的用戶端憑證，並安裝至您的瀏覽器 / 裝置後再試。';
-    } else if (!presented) {
-      // 這是目前最常見的情境：使用者沒有在瀏覽器安裝用戶端憑證
-      reason = '您的瀏覽器未提供用戶端憑證';
-      guidance = 'mTLS 要求瀏覽器 / 裝置先安裝 Cloudflare 簽發的用戶端憑證（.p12 / PKCS#12），並在 TLS 交握時提交。請向管理員取得該憑證，於系統憑證管理工具（macOS Keychain / Windows 憑證管理員 / iOS Profile / Android 使用者憑證）安裝後，重新整理瀏覽器並在提示選擇該憑證。行動 App / IoT 裝置請參考 https://developers.cloudflare.com/ssl/client-certificates/configure-your-mobile-app-or-iot-device/';
-    } else {
-      reason = `用戶端憑證未通過 Cloudflare 驗證（驗證狀態："${raw || '未知'}"）`;
-      guidance = '瀏覽器雖有提供憑證但未被 Cloudflare 接受，可能是憑證過期、來源 CA 未被信任或主機尚未啟用對應的 mTLS Hostname。請確認 Cloudflare Dashboard → SSL/TLS → Client Certificates 內的設定，或由管理員暫時關閉 mTLS。';
-    }
-
-    return res.status(403).json({
-      error: 'mTLS 客戶端憑證驗證失敗',
-      reason,
-      detail: guidance,
-      debug: {
-        'cf-cert-verified': certVerified ?? null,
-        'cf-client-cert-verified': clientVerified ?? null,
-        'cf-cert-presented': certPresented ?? null,
-        'cf-cert-revoked': certRevoked ?? null,
-      }
-    });
-  }
-
-  // 直連模式：若設定 MTLS_CF_ONLY，不允許繞過 Cloudflare 直連
-  if (MTLS_CF_ONLY) {
-    return res.status(403).json({
-      error: '此端點必須透過 Cloudflare 存取（mTLS）',
-      detail: 'Cloudflare 未回傳 cf-cert-verified 標頭。請在 Cloudflare Dashboard → Rules → Transform Rules → Managed Transforms 啟用「Add TLS client auth headers」，並確認 API Shield mTLS 規則已綁定用戶端憑證；或由管理員前往「設定 → 管理員 → 憑證管理」暫時關閉 mTLS。'
-    });
-  }
-
-  // 直連 TLS 模式：驗證 socket 層的客戶端憑證
-  const cert = req.socket?.getPeerCertificate?.();
-  if (!cert || !cert.subject || Object.keys(cert.subject || {}).length === 0) {
-    return res.status(403).json({ error: '需要提供有效的客戶端 TLS 憑證' });
-  }
-  if (req.socket.authorized === false) {
-    return res.status(403).json({ error: 'mTLS 客戶端憑證未通過 CA 驗證' });
-  }
-  next();
-}
-
-// 將 mTLS 套用至所有 /api/ 路由（auth 路由除外，使用者需能在無憑證下完成登入）
-// 若業務上需要連登入也要驗證憑證，可移除下方的 skip 條件
-// 救援路徑：整個 /api/admin/ 命名空間跳過 mTLS，使管理員在設定錯誤時仍能從 UI
-// 完整開啟管理員面板並關閉 mTLS；這些端點本身已受 authMiddleware + adminMiddleware
-// 保護，非管理員即使繞過 mTLS 也無法存取，不會造成資料外洩。
-// /api/account/login-logs 為登入帳號自身的紀錄頁，設定頁需能顯示，故一併跳過。
-app.use('/api/', (req, res, next) => {
-  const skipPaths = [
-    '/api/auth/',
-    '/api/config',
-    '/api/changelog',
-    '/api/admin/',
-    '/api/account/login-logs',
-  ];
-  if (skipPaths.some(p => req.path.startsWith(p.replace('/api', '')))) return next();
-  mtlsMiddleware(req, res, next);
-});
 
 // 僅開放必要前端靜態檔，避免專案根目錄檔案外洩
 const PUBLIC_FILES = ['/app.js', '/style.css', '/logo.svg', '/favicon.svg'];
@@ -2373,59 +2254,13 @@ app.put('/api/admin/settings', adminMiddleware, (req, res) => {
 
 // ─── 憑證管理 API ───────────────────────────────────────────────────────────
 
-// GET /api/admin/certs — 取得憑證狀態與 mTLS 設定
+// GET /api/admin/certs — 取得 Origin Certificate 狀態
 app.get('/api/admin/certs', adminMiddleware, (req, res) => {
   res.json({
-    mtlsEnabled: MTLS_ENABLED,
-    mtlsCfOnly: MTLS_CF_ONLY,
-    mtlsCert:        getCertInfo(SSL_MTLS_CERT),
-    mtlsKeyExists:   fs.existsSync(SSL_MTLS_KEY),
-    mtlsCa:          getCertInfo(SSL_MTLS_CA),
     originCert:      getCertInfo(SSL_ORIGIN_CERT),
     originKeyExists: fs.existsSync(SSL_ORIGIN_KEY),
     originCa:        getCertInfo(SSL_ORIGIN_CA),
   });
-});
-
-// PUT /api/admin/certs/settings — 更新 mTLS 啟用設定（即時生效 + 寫入 .env）
-app.put('/api/admin/certs/settings', adminMiddleware, (req, res) => {
-  const { mtlsEnabled, mtlsCfOnly } = req.body || {};
-  MTLS_ENABLED = !!mtlsEnabled;
-  MTLS_CF_ONLY = mtlsCfOnly !== false;
-  setEnvVar('MTLS_ENABLED', MTLS_ENABLED ? 'true' : 'false');
-  setEnvVar('MTLS_CF_ONLY', MTLS_CF_ONLY ? 'true' : 'false');
-  res.json({ ok: true, mtlsEnabled: MTLS_ENABLED, mtlsCfOnly: MTLS_CF_ONLY });
-});
-
-// POST /api/admin/certs/mtls — 上傳 mTLS 客戶端憑證（cert 和 / 或 key）
-app.post('/api/admin/certs/mtls', adminMiddleware, (req, res) => {
-  const { cert, key } = req.body || {};
-  if (cert !== undefined) {
-    if (!validatePemCert(cert)) return res.status(400).json({ error: '憑證格式錯誤，需為 PEM 格式（-----BEGIN CERTIFICATE-----）' });
-    try { new crypto.X509Certificate(cert); } catch (e) {
-      return res.status(400).json({ error: '憑證解析失敗：' + e.message });
-    }
-    if (!fs.existsSync(SSL_MTLS_DIR)) fs.mkdirSync(SSL_MTLS_DIR, { recursive: true });
-    fs.writeFileSync(SSL_MTLS_CERT, cert.trim() + '\n', 'utf-8');
-  }
-  if (key !== undefined) {
-    if (!validatePemKey(key)) return res.status(400).json({ error: '私鑰格式錯誤，需為 PEM 格式（-----BEGIN ... PRIVATE KEY-----）' });
-    if (!fs.existsSync(SSL_MTLS_DIR)) fs.mkdirSync(SSL_MTLS_DIR, { recursive: true });
-    fs.writeFileSync(SSL_MTLS_KEY, key.trim() + '\n', 'utf-8');
-  }
-  res.json({ ok: true, cert: getCertInfo(SSL_MTLS_CERT), keyExists: fs.existsSync(SSL_MTLS_KEY) });
-});
-
-// POST /api/admin/certs/mtls/ca — 上傳 Cloudflare Managed CA 憑證
-app.post('/api/admin/certs/mtls/ca', adminMiddleware, (req, res) => {
-  const { cert } = req.body || {};
-  if (!validatePemCert(cert)) return res.status(400).json({ error: 'CA 憑證格式錯誤' });
-  try { new crypto.X509Certificate(cert); } catch (e) {
-    return res.status(400).json({ error: 'CA 憑證解析失敗：' + e.message });
-  }
-  if (!fs.existsSync(SSL_MTLS_DIR)) fs.mkdirSync(SSL_MTLS_DIR, { recursive: true });
-  fs.writeFileSync(SSL_MTLS_CA, cert.trim() + '\n', 'utf-8');
-  res.json({ ok: true, cert: getCertInfo(SSL_MTLS_CA) });
 });
 
 // POST /api/admin/certs/origin — 上傳 Origin Certificate（需重啟才生效）
@@ -2445,18 +2280,6 @@ app.post('/api/admin/certs/origin', adminMiddleware, (req, res) => {
     fs.writeFileSync(SSL_ORIGIN_KEY, key.trim() + '\n', 'utf-8');
   }
   res.json({ ok: true, cert: getCertInfo(SSL_ORIGIN_CERT), keyExists: fs.existsSync(SSL_ORIGIN_KEY), requiresRestart: true });
-});
-
-// DELETE /api/admin/certs/mtls — 刪除 mTLS 客戶端憑證與金鑰
-app.delete('/api/admin/certs/mtls', adminMiddleware, (req, res) => {
-  [SSL_MTLS_CERT, SSL_MTLS_KEY].forEach(f => { try { if (fs.existsSync(f)) fs.unlinkSync(f); } catch (_) {} });
-  res.json({ ok: true });
-});
-
-// DELETE /api/admin/certs/mtls/ca — 刪除 Cloudflare CA 憑證
-app.delete('/api/admin/certs/mtls/ca', adminMiddleware, (req, res) => {
-  try { if (fs.existsSync(SSL_MTLS_CA)) fs.unlinkSync(SSL_MTLS_CA); } catch (_) {}
-  res.json({ ok: true });
 });
 
 // POST /api/admin/certs/origin/ca — 上傳 Cloudflare Origin CA 憑證（需重啟才生效）
@@ -4684,38 +4507,7 @@ app.get('{*path}', rateLimit({
 
 // ─── 啟動 ───
 initDB().then(() => {
-  const sslCertExists = fs.existsSync(SSL_CERT_PATH);
-  const sslKeyExists  = fs.existsSync(SSL_KEY_PATH);
-
-  if (MTLS_ENABLED && !MTLS_CF_ONLY && sslCertExists && sslKeyExists) {
-    // HTTPS + mTLS 直連模式：必須有 CA 憑證才能正確驗證客戶端憑證鏈
-    if (!fs.existsSync(MTLS_CA_CERT_PATH)) {
-      console.error('❌  mTLS 直連模式需要 Cloudflare Managed CA 憑證，但目前未部署。');
-      console.error('   → 請至管理員面板「SSL / TLS 憑證管理」上傳 Cloudflare Managed CA 憑證後重啟。');
-      console.error('   → 本次改以 HTTP 模式啟動，mTLS 驗證未生效。');
-      // 無 CA 憑證時退回 HTTP 模式，避免以 rejectUnauthorized:false 運行（無安全保障）
-    } else {
-      const httpsOptions = {
-        cert: fs.readFileSync(SSL_CERT_PATH),
-        key:  fs.readFileSync(SSL_KEY_PATH),
-        ca:   fs.readFileSync(MTLS_CA_CERT_PATH), // Cloudflare Managed CA：驗證客戶端憑證鏈
-        requestCert: true,         // TLS 握手層要求客戶端出示憑證
-        rejectUnauthorized: true,  // CA 驗證失敗則直接拒絕連線（由 TLS 層處理，mtlsMiddleware 處理軟性錯誤）
-      };
-      const https = require('https');
-      https.createServer(httpsOptions, app).listen(PORT, () => {
-        console.log(`AssetPilot 伺服器已啟動（HTTPS + mTLS）: https://localhost:${PORT}`);
-      });
-      return;
-    }
-  }
-
-  // HTTP 模式（Cloudflare 代理、開發環境，或 mTLS CA 缺失的退回狀態）
   app.listen(PORT, () => {
-    if (MTLS_ENABLED) {
-      console.log(`AssetPilot 伺服器已啟動（HTTP + Cloudflare mTLS header 驗證）: http://localhost:${PORT}`);
-    } else {
-      console.log(`AssetPilot 伺服器已啟動: http://localhost:${PORT}`);
-    }
+    console.log(`AssetPilot 伺服器已啟動: http://localhost:${PORT}`);
   });
 });

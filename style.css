@@ -1869,6 +1869,19 @@ body.dark-mode .stock-tabs .tab.active {
 }
 .logout-btn { color: rgba(255,255,255,.6); flex-shrink: 0; }
 .logout-btn:hover { color: #fff; background: rgba(255,255,255,.1); }
+.sidebar-legal-links {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 6px 12px 10px;
+  font-size: 11px;
+}
+.sidebar-legal-link {
+  color: rgba(255,255,255,.3); text-decoration: none;
+  display: flex; align-items: center; gap: 4px;
+  transition: color var(--transition-fast);
+}
+.sidebar-legal-link:hover { color: rgba(255,255,255,.7); }
+.sidebar-legal-link i { font-size: 10px; }
+.sidebar-legal-sep { color: rgba(255,255,255,.2); }
 
 /* ===== 響應式 ===== */
 @media (max-width: 768px) {

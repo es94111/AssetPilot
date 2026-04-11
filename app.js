@@ -521,8 +521,7 @@ const App = (() => {
     el('userDisplayName').textContent = currentUser?.displayName || currentUser?.email || '';
     updateUserAvatar();
     hideAuth();
-    // 載入快取（個別以 .catch 防護，避免單一端點失敗就阻擋後續導航，
-    // 例如 mTLS 設定錯誤時仍需讓管理員能進入設定頁關閉 mTLS）
+    // 載入快取（個別以 .catch 防護，避免單一端點失敗就阻擋後續導航）
     await API.post('/api/recurring/process', {}).catch(() => {});
     await API.post('/api/stock-recurring/process', {}).catch(() => {});
     let cacheLoadError = null;
@@ -535,11 +534,7 @@ const App = (() => {
       return [];
     });
     if (cacheLoadError) {
-      if (isMtlsError(cacheLoadError)) {
-        handleMtlsError(cacheLoadError);
-      } else {
-        toast('部分資料載入失敗：' + cacheLoadError.message, 'error');
-      }
+      toast('部分資料載入失敗：' + cacheLoadError.message, 'error');
     }
     // 載入版本號
     loadVersionLabel();
@@ -922,17 +917,12 @@ const App = (() => {
     const path = buildPath(page, sub);
     if (pushState) history.pushState({ page, sub }, '', path);
 
-    // 以 try/catch 包覆頁面渲染，單頁資料載入失敗（例如 mTLS 403）不應阻斷整個導航，
-    // 使用者仍可切換到其他頁面（例如設定 → 管理員）進行救援操作。
+    // 以 try/catch 包覆頁面渲染，單頁資料載入失敗不應阻斷整個導航
     try {
       await renderPage(page);
     } catch (err) {
       console.error('renderPage failed:', err);
-      if (isMtlsError(err)) {
-        handleMtlsError(err);
-      } else {
-        toast('頁面載入失敗：' + (err?.message || '未知錯誤'), 'error');
-      }
+      toast('頁面載入失敗：' + (err?.message || '未知錯誤'), 'error');
     }
 
     // 切換子分頁（需在 render 完成後執行）
@@ -4968,20 +4958,6 @@ const App = (() => {
     try {
       const data = await API.get('/api/admin/certs');
 
-      const mtlsEnabled = el('adminMtlsEnabledToggle');
-      const mtlsCfOnly  = el('adminMtlsCfOnlyToggle');
-      if (mtlsEnabled) mtlsEnabled.checked = !!data.mtlsEnabled;
-      if (mtlsCfOnly)  mtlsCfOnly.checked  = !!data.mtlsCfOnly;
-
-      const certInfo = el('adminMtlsCertInfo');
-      if (certInfo) {
-        const keyNote = data.mtlsKeyExists ? '（私鑰已存在）' : '（私鑰未設定）';
-        certInfo.innerHTML = 'Client Certificate：' + formatCertInfo(data.mtlsCert) + ' ' + escHtml(keyNote);
-      }
-
-      const caInfo = el('adminMtlsCaInfo');
-      if (caInfo) caInfo.innerHTML = 'Managed CA：' + formatCertInfo(data.mtlsCa);
-
       const originCaInfo = el('adminOriginCaInfo');
       if (originCaInfo) originCaInfo.innerHTML = 'Origin CA：' + formatCertInfo(data.originCa);
 
@@ -4995,69 +4971,6 @@ const App = (() => {
     }
 
     if (adminCertsBound) return;
-
-    el('adminSaveMtlsSettingsBtn')?.addEventListener('click', async () => {
-      try {
-        const mtlsEnabled = !!el('adminMtlsEnabledToggle')?.checked;
-        const mtlsCfOnly  = !!el('adminMtlsCfOnlyToggle')?.checked;
-        await API.put('/api/admin/certs/settings', { mtlsEnabled, mtlsCfOnly });
-        toast('mTLS 設定已儲存', 'success');
-      } catch (e) {
-        toast(e.message || '儲存 mTLS 設定失敗', 'error');
-      }
-    });
-
-    // Client Certificate (PEM + KEY)
-    el('adminSaveMtlsCertBtn')?.addEventListener('click', async () => {
-      const cert = el('adminMtlsCertPem')?.value?.trim() || '';
-      const key  = el('adminMtlsCertKeyPem')?.value?.trim() || '';
-      if (!cert && !key) { toast('請貼入憑證 PEM 或私鑰 PEM（可擇一或同時上傳）', 'error'); return; }
-      try {
-        await API.post('/api/admin/certs/mtls', { ...(cert && { cert }), ...(key && { key }) });
-        toast('Client Certificate 已部署', 'success');
-        if (cert) el('adminMtlsCertPem').value = '';
-        if (key)  el('adminMtlsCertKeyPem').value = '';
-        await renderAdminCerts();
-      } catch (e) {
-        toast(e.message || '部署 Client Certificate 失敗', 'error');
-      }
-    });
-
-    el('adminDeleteMtlsCertBtn')?.addEventListener('click', async () => {
-      if (!confirm('確定要刪除 Client Certificate 及私鑰？')) return;
-      try {
-        await API.del('/api/admin/certs/mtls');
-        toast('Client Certificate 已刪除', 'success');
-        await renderAdminCerts();
-      } catch (e) {
-        toast(e.message || '刪除 Client Certificate 失敗', 'error');
-      }
-    });
-
-    // Managed CA
-    el('adminSaveMtlsCaBtn')?.addEventListener('click', async () => {
-      const pem = el('adminMtlsCaPem')?.value?.trim() || '';
-      if (!pem) { toast('請貼入 CA 憑證 PEM', 'error'); return; }
-      try {
-        await API.post('/api/admin/certs/mtls/ca', { cert: pem });
-        toast('Managed CA 已部署', 'success');
-        el('adminMtlsCaPem').value = '';
-        await renderAdminCerts();
-      } catch (e) {
-        toast(e.message || '部署 Managed CA 失敗', 'error');
-      }
-    });
-
-    el('adminDeleteMtlsCaBtn')?.addEventListener('click', async () => {
-      if (!confirm('確定要刪除 Cloudflare Managed CA 憑證？')) return;
-      try {
-        await API.del('/api/admin/certs/mtls/ca');
-        toast('Managed CA 已刪除', 'success');
-        await renderAdminCerts();
-      } catch (e) {
-        toast(e.message || '刪除 Managed CA 失敗', 'error');
-      }
-    });
 
     // Origin CA
     el('adminSaveOriginCaBtn')?.addEventListener('click', async () => {
@@ -6415,81 +6328,6 @@ const App = (() => {
     t.textContent = msg;
     container.appendChild(t);
     setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 2500);
-  }
-
-  // ─── mTLS 錯誤集中處理 ───
-  // 當 mTLS 設定錯誤（例如 Cloudflare 未回傳 Cf-Client-Cert-Verified）時，
-  // 整個 UI 的 API 呼叫都會 403。避免每個端點都彈一次 toast 造成干擾，
-  // 改為「第一次出現時顯示一張可操作的持久通知，之後的 mTLS 錯誤靜默吞掉」。
-  let mtlsNoticeShown = false;
-  function isMtlsError(err) {
-    if (!err) return false;
-    const msg = (err.message || err.error || '') + ' ' + (err.detail || '');
-    return /mTLS|Cloudflare.*存取|Cf-Client-Cert/i.test(msg);
-  }
-  function handleMtlsError(err) {
-    if (mtlsNoticeShown) return;
-    mtlsNoticeShown = true;
-    showMtlsNotice(err);
-  }
-  function showMtlsNotice(err) {
-    // 避免重複建立
-    let notice = document.getElementById('mtlsNotice');
-    if (notice) return;
-    notice = document.createElement('div');
-    notice.id = 'mtlsNotice';
-    notice.className = 'mtls-notice';
-    notice.setAttribute('role', 'alert');
-    notice.setAttribute('aria-live', 'assertive');
-    // 伺服器 403 回應現在包含結構化欄位：
-    //   reason  — 一句話失敗原因（例如「您的瀏覽器未提供用戶端憑證」）
-    //   detail  — 具體處理指引（指導使用者如何安裝憑證）
-    //   debug   — cf-cert-* 標頭原始值，方便管理員除錯
-    const data = err?.data || {};
-    const reason = data.reason || err?.message || 'mTLS 客戶端憑證驗證失敗';
-    const detail = data.detail || err?.detail || '此端點必須透過 Cloudflare 存取（mTLS）';
-    const debug = data.debug || null;
-    // 注意：此處不再以 currentUser?.isAdmin 條件隱藏「前往憑證管理」按鈕。
-    // 原因：mTLS 失敗時常在登入資料回填前觸發，currentUser 可能為 null 或 isAdmin 尚未同步，
-    // 導致管理員看到非管理員的提示而失去救援路徑。
-    // 憑證管理頁面本身已有 admin 權限檢查，非管理員點擊也不會造成資料外洩。
-    const debugHtml = debug ? `
-      <details class="mtls-notice-debug">
-        <summary>技術細節（Cloudflare 回報的 cf-cert-* 標頭）</summary>
-        <pre>${escHtml(JSON.stringify(debug, null, 2))}</pre>
-      </details>` : '';
-    notice.innerHTML = `
-      <div class="mtls-notice-icon" aria-hidden="true"><i class="fas fa-shield-halved"></i></div>
-      <div class="mtls-notice-body">
-        <div class="mtls-notice-title">mTLS 驗證失敗：${escHtml(reason)}</div>
-        <div class="mtls-notice-desc">${escHtml(detail)}</div>
-        <div class="mtls-notice-hint">若您是管理員，可前往憑證管理暫時關閉 mTLS 進行排除；或直接登出後在憑證安裝完成後重新登入。</div>
-        ${debugHtml}
-      </div>
-      <div class="mtls-notice-actions">
-        <button type="button" class="btn btn-primary" id="mtlsNoticeGoAdmin"><i class="fas fa-shield-halved"></i> 前往憑證管理</button>
-        <button type="button" class="btn btn-ghost" id="mtlsNoticeLogout"><i class="fas fa-right-from-bracket"></i> 登出</button>
-        <button type="button" class="btn btn-ghost mtls-notice-close-btn" id="mtlsNoticeClose" aria-label="關閉通知"><i class="fas fa-xmark"></i></button>
-      </div>
-    `;
-    document.body.appendChild(notice);
-    const closeBtn = notice.querySelector('#mtlsNoticeClose');
-    if (closeBtn) closeBtn.addEventListener('click', () => {
-      notice.classList.add('mtls-notice-leaving');
-      setTimeout(() => notice.remove(), 180);
-    });
-    const goAdminBtn = notice.querySelector('#mtlsNoticeGoAdmin');
-    if (goAdminBtn) goAdminBtn.addEventListener('click', () => {
-      notice.classList.add('mtls-notice-leaving');
-      setTimeout(() => notice.remove(), 180);
-      navigate('settings', 'admin').catch(() => {});
-    });
-    const logoutBtn = notice.querySelector('#mtlsNoticeLogout');
-    if (logoutBtn) logoutBtn.addEventListener('click', () => {
-      notice.classList.add('mtls-notice-leaving');
-      setTimeout(() => notice.remove(), 180);
-      try { logout(); } catch (e) { location.reload(); }
-    });
   }
 
   // ─── 版本更新資訊 ───

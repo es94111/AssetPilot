@@ -1,6 +1,20 @@
 {
-  "currentVersion": "4.8.9",
+  "currentVersion": "4.9.0",
   "releases": [
+    {
+      "version": "4.9.0",
+      "date": "2026-04-11",
+      "title": "移除 Cloudflare-issued Client Certificates（mTLS）功能",
+      "type": "removed",
+      "changes": [
+        { "tag": "removed", "text": "完整移除 mTLS / Cloudflare-issued Client Certificates 功能：使用者反饋此機制需在每一台裝置手動匯入 .p12 憑證、無法自動部署，且行動裝置與第三方瀏覽器支援度不一致，造成多裝置使用體驗破碎；改建議搭配 Tailscale（裝置層級身份驗證 + WireGuard 加密）或 Cloudflare Access（JWT + Google SSO 整合）達成零信任網路" },
+        { "tag": "removed", "text": "移除後端：mtlsMiddleware、/api/admin/certs/mtls* 與 /api/admin/certs/settings 端點、MTLS_ENABLED / MTLS_CF_ONLY / MTLS_CA_CERT 環境變數、SSL_MTLS_* 路徑常數、HTTPS + mTLS 直連啟動模式；GET /api/admin/certs 僅回傳 Origin Certificate 狀態" },
+        { "tag": "removed", "text": "移除前端：app.js 的 isMtlsError / handleMtlsError / showMtlsNotice 與 mTLS 警示卡邏輯、enterApp / navigate 中的 mTLS 分支、renderAdminCerts 中的 mTLS 上傳/刪除/啟用切換 UI 綁定" },
+        { "tag": "removed", "text": "移除 UI：index.html 的「mTLS 設定」「Cloudflare-issued Client Certificates」「Cloudflare Managed CA」三個 admin 區塊；style.css 的 .mtls-notice* 全套樣式（含 keyframes / 深色模式 / 響應式 / prefers-reduced-motion）" },
+        { "tag": "removed", "text": "移除設定：Dockerfile 不再建立 SSL/mTLS 目錄、.env / .env.example 移除 MTLS_* 與 MTLS_CA_CERT 範例、README 環境變數表移除 mTLS 區段" },
+        { "tag": "improved", "text": "管理員面板「SSL / TLS 憑證管理」卡片簡化為僅 Origin Certificate 區段，介面更聚焦；伺服器啟動模式統一為 HTTP（建議搭配 Cloudflare 反向代理或 Tailscale 私網直連）" }
+      ]
+    },
     {
       "version": "4.8.9",
       "date": "2026-04-11",

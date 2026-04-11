@@ -30,11 +30,17 @@
   - [帳戶管理](#帳戶管理)
   - [設定與管理員](#設定與管理員)
 - [技術架構](#技術架構)
-- [專案安裝方式](#專案安裝方式)
-  - [方式一：Docker Hub 一鍵部署（推薦）](#方式一docker-hub-一鍵部署推薦)
-  - [方式二：Docker Compose](#方式二docker-compose)
-  - [方式三：Node.js 直接執行](#方式三nodejs-直接執行)
-- [環境變數設定](#環境變數設定)
+- [Docker 部署（推薦）](#docker-部署推薦)
+  - [快速啟動](#快速啟動)
+  - [Docker Compose](#docker-compose)
+  - [Docker 環境變數](#docker-環境變數)
+  - [映像檔資訊](#映像檔資訊)
+  - [Volume 與資料持久化](#volume-與資料持久化)
+  - [備份與還原](#備份與還原)
+  - [常用管理指令](#常用管理指令)
+  - [自行建置映像檔](#自行建置映像檔)
+- [Node.js 直接執行](#nodejs-直接執行)
+- [環境變數完整清單](#環境變數完整清單)
 - [部署指南](#部署指南)
   - [Synology NAS](#synology-nas)
   - [雲端主機 VPS](#雲端主機-vps)
@@ -49,7 +55,6 @@
   - [匯率管理](#匯率管理)
   - [CSV 匯出匯入](#csv-匯出匯入)
   - [管理員操作](#管理員操作)
-- [Docker 進階管理](#docker-進階管理)
 - [安全性](#安全性)
 - [檔案結構](#檔案結構)
 - [API 來源](#api-來源)
@@ -209,9 +214,9 @@
 
 ---
 
-## 專案安裝方式
+## Docker 部署（推薦）
 
-### 方式一：Docker Hub 一鍵部署（推薦）
+### 快速啟動
 
 不需任何前置設定，一行指令即可啟動：
 
@@ -220,16 +225,17 @@ docker run -d \
   --name assetpilot \
   --restart unless-stopped \
   -p 3000:3000 \
+  -v assetpilot-data:/app/data \
   es94111/assetpilot:latest
 ```
 
 開啟 [http://localhost:3000](http://localhost:3000) 即可使用。
 
-> **就這樣！** 資料庫、JWT 金鑰、加密金鑰、Volume 全部自動建立。
+> **就這樣！** `JWT_SECRET` 與 `DB_ENCRYPTION_KEY` 首次啟動自動隨機產生並持久化至 Volume；之後重啟容器自動讀取，**無需手動設定**。
 
 ---
 
-### 方式二：Docker Compose
+### Docker Compose
 
 建立 `docker-compose.yml`：
 
@@ -244,11 +250,13 @@ services:
     volumes:
       - assetpilot-data:/app/data
     environment:
-      - GOOGLE_CLIENT_ID=          # 選配：填入 Google OAuth Client ID 啟用 SSO
+      # JWT_SECRET 和 DB_ENCRYPTION_KEY 首次啟動自動產生，儲存在 /app/data/.env
+      - GOOGLE_CLIENT_ID=        # 選配：填入 Google OAuth Client ID 啟用 SSO
       # - ALLOWED_ORIGINS=https://your-domain.com
 
 volumes:
   assetpilot-data:
+    driver: local
 ```
 
 啟動：
@@ -259,7 +267,170 @@ docker compose up -d
 
 ---
 
-### 方式三：Node.js 直接執行
+### Docker 環境變數
+
+Docker 映像檔已內建合理預設值，多數參數無需設定即可正常運作。
+
+**⚙️ 內建預設值（通常不需修改）**
+
+| 變數 | 說明 | 預設值 |
+| ---- | ---- | ------ |
+| `PORT` | 容器監聽埠號 | `3000` |
+| `DB_PATH` | 資料庫路徑（容器內） | `/app/data/database.db` |
+| `ENV_PATH` | 自動產生金鑰的存放路徑 | `/app/data/.env` |
+| `JWT_EXPIRES` | JWT 有效期限 | `7d` |
+
+**🔑 自動產生（首次啟動，勿手動覆寫）**
+
+| 變數 | 說明 |
+| ---- | ---- |
+| `JWT_SECRET` | JWT 簽章金鑰，隨機 64 字元 hex，自動寫入 `/app/data/.env` |
+| `DB_ENCRYPTION_KEY` | 資料庫 ChaCha20 加密金鑰，隨機 64 字元 hex，自動寫入 `/app/data/.env` |
+
+> ⚠️ **警告：** Volume 與金鑰為一組，請勿單獨刪除 `/app/data/.env`，否則資料庫將無法讀取。
+
+**🌐 功能選配**
+
+| 變數 | 說明 | 預設值 |
+| ---- | ---- | ------ |
+| `GOOGLE_CLIENT_ID` | Google OAuth 2.0 Client ID（留空則停用 SSO 登入） | — |
+| `GOOGLE_CLIENT_SECRET` | Google OAuth Client Secret | — |
+| `ALLOWED_ORIGINS` | CORS 白名單，逗號分隔（留空不限制，正式環境建議設定） | — |
+| `ADMIN_IP_ALLOWLIST` | 管理員 IP 白名單，逗號分隔，略過速率限制 | — |
+| `EXCHANGE_RATE_API_KEY` | exchangerate-api.com API Key（預設使用免費版） | `free` |
+| `IPINFO_TOKEN` | ipinfo.io Token，提升 IP 地理位置查詢配額（選配） | — |
+
+**🔒 mTLS / SSL（進階，選配）**
+
+| 變數 | 說明 | 預設值 |
+| ---- | ---- | ------ |
+| `MTLS_ENABLED` | 啟用 mTLS 驗證（`true` / `false`） | `false` |
+| `MTLS_CF_ONLY` | 僅信任 Cloudflare header 驗證，不需 CA 憑證 | `true` |
+| `SSL_CERT` | Origin Certificate 路徑（直連 HTTPS 模式用） | — |
+| `SSL_KEY` | Origin Certificate 私鑰路徑 | — |
+| `MTLS_CA_CERT` | Cloudflare Managed CA 憑證路徑（直連 mTLS 用） | — |
+
+> 💡 mTLS 憑證也可透過管理員面板直接上傳，無需重啟容器即可套用（Origin Certificate 除外）。
+
+**傳入環境變數的方式：**
+
+```bash
+# docker run 加 -e 旗標
+docker run -d \
+  --name assetpilot \
+  --restart unless-stopped \
+  -p 3000:3000 \
+  -v assetpilot-data:/app/data \
+  -e GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com \
+  -e ALLOWED_ORIGINS=https://your-domain.com \
+  es94111/assetpilot:latest
+
+# docker-compose 方式：在 environment: 區塊加入
+environment:
+  - GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
+  - ALLOWED_ORIGINS=https://your-domain.com
+```
+
+---
+
+### 映像檔資訊
+
+| 項目 | 值 |
+| ---- | -- |
+| Docker Hub | [`es94111/assetpilot`](https://hub.docker.com/r/es94111/assetpilot) |
+| 支援架構 | `linux/amd64`、`linux/arm64` |
+| 基底映像 | `node:24-alpine` |
+| 映像大小 | ~180 MB |
+| 健康檢查 | 每 30 秒自動偵測 `/api/config` |
+
+---
+
+### Volume 與資料持久化
+
+容器內 `/app/data` 存放所有持久化資料：
+
+```
+/app/data/
+├── database.db    # 加密的 SQLite 資料庫
+└── .env           # 自動產生的金鑰（JWT_SECRET、DB_ENCRYPTION_KEY）
+```
+
+**三種掛載方式：**
+
+```bash
+# 1. 具名 Volume（推薦，方便管理）
+docker run -d -p 3000:3000 -v assetpilot-data:/app/data es94111/assetpilot:latest
+
+# 2. 綁定本機目錄（方便直接存取檔案）
+docker run -d -p 3000:3000 -v /path/to/data:/app/data es94111/assetpilot:latest
+
+# 3. 自動匿名 Volume（最簡單，但難以識別管理）
+docker run -d -p 3000:3000 es94111/assetpilot:latest
+```
+
+---
+
+### 備份與還原
+
+```bash
+# 備份（含資料庫與金鑰）
+docker run --rm \
+  -v assetpilot-data:/data \
+  -v $(pwd):/backup alpine \
+  tar czf /backup/assetpilot-backup.tar.gz -C /data .
+
+# 還原
+docker run --rm \
+  -v assetpilot-data:/data \
+  -v $(pwd):/backup alpine \
+  tar xzf /backup/assetpilot-backup.tar.gz -C /data
+```
+
+> ⚠️ **重要：** 備份時必須連同 `.env`（金鑰）與 `database.db`（資料）一起備份，兩者缺一無法還原。
+
+---
+
+### 常用管理指令
+
+```bash
+# 查看容器狀態（含健康檢查）
+docker ps
+
+# 查看即時日誌
+docker logs -f assetpilot
+
+# 停止 / 重啟
+docker stop assetpilot
+docker restart assetpilot
+
+# 更新至最新版本
+docker pull es94111/assetpilot:latest
+docker rm -f assetpilot
+docker run -d \
+  --name assetpilot \
+  --restart unless-stopped \
+  -p 3000:3000 \
+  -v assetpilot-data:/app/data \
+  es94111/assetpilot:latest
+```
+
+---
+
+### 自行建置映像檔
+
+```bash
+docker build -t assetpilot .
+
+docker run -d \
+  --name assetpilot \
+  --restart unless-stopped \
+  -p 3000:3000 \
+  assetpilot
+```
+
+---
+
+## Node.js 直接執行
 
 **系統需求：** Node.js >= 18
 
@@ -277,29 +448,33 @@ node server.js
 
 開啟 [http://localhost:3000](http://localhost:3000) 即可使用。
 
+環境變數完整說明請見 [環境變數完整清單](#環境變數完整清單)。
+
 ---
 
-## 環境變數設定
+## 環境變數完整清單
 
-| 變數                      | 說明                                      | 預設值                    |
-| ------------------------- | ----------------------------------------- | ------------------------- |
-| `PORT`                  | 伺服器埠號                                | `3000`                  |
-| `JWT_SECRET`            | JWT 簽章金鑰（正式環境務必更換）          | Docker 自動產生           |
-| `JWT_EXPIRES`           | JWT 有效期限                              | `7d`                    |
-| `DB_ENCRYPTION_KEY`     | 資料庫加密金鑰                            | Docker 自動產生           |
-| `DB_PATH`               | 資料庫檔案路徑                            | `/app/data/database.db` |
-| `ENV_PATH`              | 自動產生 .env 路徑                        | `/app/data/.env`        |
-| `GOOGLE_CLIENT_ID`      | Google OAuth Client ID（選配）            | —                        |
-| `GOOGLE_CLIENT_SECRET`  | Google OAuth Client Secret（選配）        | —                        |
-| `ALLOWED_ORIGINS`       | CORS 白名單，逗號分隔（留空不限制）       | —                        |
-| `ADMIN_IP_ALLOWLIST`    | 管理員 IP 白名單，逗號分隔，略過速率限制  | —                        |
-| `EXCHANGE_RATE_API_KEY` | exchangerate-api.com API Key（選配）      | `free`                  |
-| `IPINFO_TOKEN`          | ipinfo.io Token，提升 IP 查詢配額（選配） | —                        |
-| `MTLS_ENABLED`          | 啟用 mTLS 驗證（`true` / `false`）       | `false`                 |
-| `MTLS_CF_ONLY`          | 僅信任 Cloudflare header 驗證（預設）     | `true`                  |
-| `SSL_CERT`              | Origin Certificate 路徑（直連 HTTPS 用）  | —                        |
-| `SSL_KEY`               | Origin 私鑰路徑（直連 HTTPS 用）          | —                        |
-| `MTLS_CA_CERT`          | Cloudflare Managed CA 憑證路徑            | —                        |
+Docker 部署時建議優先閱讀 [Docker 環境變數](#docker-環境變數)；Node.js 直接執行時請複製 `.env.example` 並依下表填寫。
+
+| 變數 | 說明 | 預設值 |
+| ---- | ---- | ------ |
+| `PORT` | 伺服器埠號 | `3000` |
+| `JWT_SECRET` | JWT 簽章金鑰（Docker 自動產生） | — |
+| `JWT_EXPIRES` | JWT 有效期限 | `7d` |
+| `DB_ENCRYPTION_KEY` | 資料庫加密金鑰（Docker 自動產生） | — |
+| `DB_PATH` | 資料庫檔案路徑 | `./database.db` |
+| `ENV_PATH` | 自動產生金鑰的存放路徑（Docker 用） | `/app/data/.env` |
+| `GOOGLE_CLIENT_ID` | Google OAuth 2.0 Client ID（選配） | — |
+| `GOOGLE_CLIENT_SECRET` | Google OAuth Client Secret（選配） | — |
+| `ALLOWED_ORIGINS` | CORS 白名單，逗號分隔（留空不限制） | — |
+| `ADMIN_IP_ALLOWLIST` | 管理員 IP 白名單，逗號分隔，略過速率限制 | — |
+| `EXCHANGE_RATE_API_KEY` | exchangerate-api.com API Key（選配） | `free` |
+| `IPINFO_TOKEN` | ipinfo.io Token，提升 IP 查詢配額（選配） | — |
+| `MTLS_ENABLED` | 啟用 mTLS 驗證（`true` / `false`） | `false` |
+| `MTLS_CF_ONLY` | 僅信任 Cloudflare header 驗證（預設） | `true` |
+| `SSL_CERT` | Origin Certificate 路徑（直連 HTTPS 用） | — |
+| `SSL_KEY` | Origin 私鑰路徑（直連 HTTPS 用） | — |
+| `MTLS_CA_CERT` | Cloudflare Managed CA 憑證路徑 | — |
 
 ---
 
@@ -518,97 +693,6 @@ Caddy 會自動申請並續期 HTTPS 憑證。
 | 新增帳號     | 直接建立新使用者，可設定管理員身份              |
 | 刪除帳號     | 永久刪除使用者及所有關聯資料                    |
 | 登入稽核     | 查看所有使用者登入時間、IP、國家、成功/失敗狀態 |
-
----
-
-## Docker 進階管理
-
-### 映像檔資訊
-
-| 項目       | 值                                                                 |
-| ---------- | ------------------------------------------------------------------ |
-| Docker Hub | [`es94111/assetpilot`](https://hub.docker.com/r/es94111/assetpilot) |
-| 支援架構   | `linux/amd64`、`linux/arm64`                                   |
-| 基底映像   | `node:24-alpine`                                                 |
-| 映像大小   | ~180 MB                                                            |
-| 健康檢查   | 每 30 秒自動檢測                                                   |
-
-### Volume 與資料持久化
-
-容器內 `/app/data` 存放所有持久化資料：
-
-```
-/app/data/
-├── database.db    # 加密的 SQLite 資料庫
-└── .env           # 自動產生的金鑰（JWT_SECRET、DB_ENCRYPTION_KEY）
-```
-
-**三種掛載方式：**
-
-```bash
-# 1. 自動匿名 Volume（最簡單）
-docker run -d -p 3000:3000 es94111/assetpilot:latest
-
-# 2. 具名 Volume（推薦，方便管理）
-docker run -d -p 3000:3000 -v assetpilot-data:/app/data es94111/assetpilot:latest
-
-# 3. 綁定本機目錄（方便直接存取）
-docker run -d -p 3000:3000 -v /path/to/data:/app/data es94111/assetpilot:latest
-```
-
-### 備份與還原
-
-```bash
-# 備份
-docker run --rm \
-  -v assetpilot-data:/data \
-  -v $(pwd):/backup alpine \
-  tar czf /backup/assetpilot-backup.tar.gz -C /data .
-
-# 還原
-docker run --rm \
-  -v assetpilot-data:/data \
-  -v $(pwd):/backup alpine \
-  tar xzf /backup/assetpilot-backup.tar.gz -C /data
-```
-
-> ⚠️ **重要：** 刪除 Volume 會永久遺失資料庫和加密金鑰，請先備份再操作。
-
-### 常用管理指令
-
-```bash
-# 查看容器狀態（含健康檢查）
-docker ps
-
-# 查看即時日誌
-docker logs -f assetpilot
-
-# 停止 / 重啟
-docker stop assetpilot
-docker restart assetpilot
-
-# 更新至最新版本
-docker pull es94111/assetpilot:latest
-docker rm -f assetpilot
-docker run -d \
-  --name assetpilot \
-  --restart unless-stopped \
-  -p 3000:3000 \
-  -v assetpilot-data:/app/data \
-  es94111/assetpilot:latest
-```
-
-### 自行建置映像檔
-
-```bash
-docker build -t assetpilot .
-
-docker run -d \
-  --name assetpilot \
-  --restart unless-stopped \
-  -p 3000:3000 \
-  assetpilot
-```
 
 ---
 

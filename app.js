@@ -4825,16 +4825,21 @@ const App = (() => {
     el('adminLoginLogDeleteSelectedBtn')?.addEventListener('click', deleteSelectedAdminLoginLogs);
     el('adminAllLoginLogDeleteSelectedBtn')?.addEventListener('click', deleteSelectedAdminAllLoginLogs);
 
-    el('adminLoginLogPageSize')?.addEventListener('change', (e) => {
-      if (e.target.value === 'custom') {
-        el('adminLoginLogPageSizeCustom').style.display = '';
-        el('adminLoginLogPageSizeCustom').focus();
-      } else {
-        el('adminLoginLogPageSizeCustom').style.display = 'none';
-        adminLoginLogPageSize = parseInt(e.target.value);
-        adminLoginLogPage = 1;
-        _renderAdminLoginLogPage();
-      }
+    el('adminLoginLogPageSizeGroup')?.querySelectorAll('.pagesize-opt').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const v = btn.dataset.v;
+        el('adminLoginLogPageSizeGroup').querySelectorAll('.pagesize-opt').forEach(b => b.classList.remove('pagesize-opt-active'));
+        btn.classList.add('pagesize-opt-active');
+        if (v === 'custom') {
+          el('adminLoginLogPageSizeCustom').style.display = '';
+          el('adminLoginLogPageSizeCustom').focus();
+        } else {
+          el('adminLoginLogPageSizeCustom').style.display = 'none';
+          adminLoginLogPageSize = parseInt(v);
+          adminLoginLogPage = 1;
+          _renderAdminLoginLogPage();
+        }
+      });
     });
     el('adminLoginLogPageSizeCustom')?.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
@@ -4844,16 +4849,21 @@ const App = (() => {
       }
     });
 
-    el('adminAllLoginLogPageSize')?.addEventListener('change', (e) => {
-      if (e.target.value === 'custom') {
-        el('adminAllLoginLogPageSizeCustom').style.display = '';
-        el('adminAllLoginLogPageSizeCustom').focus();
-      } else {
-        el('adminAllLoginLogPageSizeCustom').style.display = 'none';
-        adminAllLoginLogPageSize = parseInt(e.target.value);
-        adminAllLoginLogPage = 1;
-        _renderAdminAllLoginLogPage();
-      }
+    el('adminAllLoginLogPageSizeGroup')?.querySelectorAll('.pagesize-opt').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const v = btn.dataset.v;
+        el('adminAllLoginLogPageSizeGroup').querySelectorAll('.pagesize-opt').forEach(b => b.classList.remove('pagesize-opt-active'));
+        btn.classList.add('pagesize-opt-active');
+        if (v === 'custom') {
+          el('adminAllLoginLogPageSizeCustom').style.display = '';
+          el('adminAllLoginLogPageSizeCustom').focus();
+        } else {
+          el('adminAllLoginLogPageSizeCustom').style.display = 'none';
+          adminAllLoginLogPageSize = parseInt(v);
+          adminAllLoginLogPage = 1;
+          _renderAdminAllLoginLogPage();
+        }
+      });
     });
     el('adminAllLoginLogPageSizeCustom')?.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {

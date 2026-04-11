@@ -1152,6 +1152,7 @@
 
 | 版本 | 日期 | 變更說明 |
 | --- | --- | --- |
+| 4.7.7 | 2026-04-11 | 設定頁面 UI 美化：統一卡片標題圖示盒子樣式、SSL/TLS 子分區改用 CSS class、新增 table-toolbar 與 form-input 通用樣式 |
 | 4.7.6 | 2026-04-11 | 新增 Cloudflare Client Certificates（PEM+Key）上傳、Origin CA 欄位；修正 SSL_MTLS_CERT typo |
 | 4.7.5 | 2026-04-11 | 管理員面板新增 SSL / TLS 憑證管理介面：可在網頁部署 Cloudflare Managed CA、Origin Certificate，並即時切換 mTLS 設定 |
 | 4.7.4 | 2026-04-11 | 新增 mTLS 支援：MTLS_ENABLED 環境變數啟用，支援 Cloudflare header 驗證（CF_ONLY 模式）與直連 HTTPS + TLS 客戶端憑證驗證雙模式 |

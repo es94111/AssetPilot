@@ -620,10 +620,33 @@ body.dark-mode .mobile-header {
   color: var(--text);
   transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
-.form-row input:focus, .form-row select:focus {
+.form-row input:focus, .form-row select:focus, .form-row textarea:focus {
   outline: none; border-color: var(--primary);
   box-shadow: 0 0 0 3px rgba(79,110,247,.1);
 }
+.form-row textarea {
+  width: 100%; padding: 10px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: 10px; font-size: 14px;
+  background: var(--surface);
+  color: var(--text);
+  resize: vertical; min-height: 80px;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+/* 通用 form-input class（用於 textarea、input 等表單元素） */
+.form-input {
+  width: 100%; padding: 10px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: 10px; font-size: 14px;
+  background: var(--surface);
+  color: var(--text);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+.form-input:focus {
+  outline: none; border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(79,110,247,.1);
+}
+textarea.form-input { resize: vertical; min-height: 80px; }
 .form-row input[type="color"] {
   width: 48px; height: 36px; padding: 2px; border: 1px solid var(--border);
   border-radius: 6px; cursor: pointer;
@@ -2471,17 +2494,18 @@ body.dark-mode .stock-tabs .tab.active {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
 }
-.admin-create-user-form .form-input,
 #adminAllowedEmails,
 #adminIpAllowlist {
   width: 100%;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 10px 12px;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 14px;
   background: var(--surface);
   color: var(--text);
+  font-size: 14px;
+  resize: vertical;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
-.admin-create-user-form .form-input:focus,
 #adminAllowedEmails:focus,
 #adminIpAllowlist:focus {
   outline: none;
@@ -2498,6 +2522,169 @@ body.dark-mode .stock-tabs .tab.active {
   align-items: center;
   color: var(--text-secondary);
   font-size: 14px;
+}
+
+/* ===== 設定頁面 - 統一卡片標題樣式 ===== */
+#page-settings .card h3 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 16px;
+}
+#page-settings .card h3 > i:first-child {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: var(--primary-light-bg);
+  color: var(--primary);
+  font-size: 15px;
+  flex-shrink: 0;
+}
+#page-settings .card h3 > .fab.fa-google {
+  background: #e8f0fe;
+  color: #4285f4;
+}
+
+/* 管理員面板 - 子分區 */
+.admin-section {
+  padding-top: 20px;
+}
+.admin-section:first-of-type {
+  padding-top: 4px;
+}
+.admin-section-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+.admin-section-header i {
+  color: var(--primary);
+  width: 16px;
+  text-align: center;
+}
+.admin-section-desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin: 0 0 12px;
+}
+.admin-divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 20px 0 0;
+}
+
+/* 憑證狀態資訊框 */
+.cert-info-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 12px;
+  font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', monospace;
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  min-height: 36px;
+}
+.cert-info-box:empty { display: none; }
+
+/* Origin Certificate 步驟標籤 */
+.cert-sub-step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 18px 0 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+.cert-step-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--primary-light-bg);
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.cert-btn-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+/* 表格上方工具列（搜尋、批次刪除、分頁選擇等） */
+.table-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.table-toolbar-end {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+/* 設定頁 - checkbox 切換標籤 */
+.settings-toggle-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.settings-toggle-check input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--primary);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* 重啟警示標籤 */
+.restart-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+
+/* 深色模式：憑證資訊框 */
+body.dark-mode .cert-info-box {
+  background: rgba(255,255,255,.03);
+  border-color: var(--border);
 }
 
 /* 深色模式：帳號設定危險區域可讀性修正 */
@@ -2538,12 +2725,17 @@ body.dark-mode .google-linked-badge.unlinked {
   background: #1f2937;
   color: #d1d5db;
 }
-body.dark-mode .admin-create-user-form .form-input,
 body.dark-mode #adminAllowedEmails,
 body.dark-mode #adminIpAllowlist {
   background: #0f172a;
   border-color: #334155;
   color: #e2e8f0;
+}
+body.dark-mode .form-input,
+body.dark-mode .form-row textarea {
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--text);
 }
 
 @media (max-width: 768px) {

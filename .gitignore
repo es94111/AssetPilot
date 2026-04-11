@@ -4,3 +4,5 @@ database.db
 *.tar
 data/
 doc/
+.gstack/
+openapi.yaml

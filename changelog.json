@@ -1,6 +1,17 @@
 {
-  "currentVersion": "4.7.1",
+  "currentVersion": "4.7.2",
   "releases": [
+    {
+      "version": "4.7.2",
+      "date": "2026-04-11",
+      "title": "安全性修補與 Cloudflare API Shield Schema",
+      "type": "fixed",
+      "changes": [
+        { "tag": "fixed", "text": "修正 /privacy 與 /terms 路由缺少速率限制（Rate Limiting）的 CodeQL 警告，補上與其他路由一致的 120 req/min 限制" },
+        { "tag": "fixed", "text": "修補 backend/ 子專案的 path-to-regexp ReDoS 漏洞（CVE GHSA-9wv6-86v2-598j）：透過 npm overrides 強制升級至 >=0.1.13" },
+        { "tag": "new", "text": "新增 openapi.yaml：符合 Cloudflare API Shield Schema Validation 規格的 OpenAPI 3.0.3 Schema，涵蓋所有 88 個 API 端點" }
+      ]
+    },
     {
       "version": "4.7.1",
       "date": "2026-04-11",

@@ -6,7 +6,16 @@
       "Bash(python \"C:\\\\Users\\\\hongyu\\\\.claude\\\\plugins\\\\cache\\\\ui-ux-pro-max-skill\\\\ui-ux-pro-max\\\\2.5.0\\\\.claude\\\\skills\\\\ui-ux-pro-max\\\\scripts\\\\search.py\" \"stock portfolio finance responsive mobile adaptive\" --design-system -p \"資產管理\" -f markdown)",
       "Read(//c/Users/hongyu/.claude/plugins/cache/ui-ux-pro-max-skill/**)",
       "Skill(browse)",
-      "Skill(browse:*)"
+      "Skill(browse:*)",
+      "Bash(node -e \"const p=require\\('./node_modules/path-to-regexp/package.json'\\);console.log\\(p.version\\)\" echo \"---\" grep -r '\"path-to-regexp\"' package.json package-lock.json)",
+      "Bash(xargs grep:*)",
+      "Bash(find \"c:/Users/hongyu/SynologyDrive/網頁/記帳網頁/backend/node_modules\" -name \"package.json\" -path \"*/path-to-regexp/package.json\" -exec grep '\"version\"' {} +)",
+      "Bash(node -e \"console.log\\(require\\('c:/Users/hongyu/SynologyDrive/網頁/記帳網頁/backend/node_modules/path-to-regexp/package.json'\\).version\\)\")",
+      "Bash(awk '/^  get:/{found=1} found && /operationId:/{print $2; found=0}' \"c:/Users/hongyu/SynologyDrive/網頁/記帳網頁/openapi.yaml\")",
+      "Bash(awk '/^  delete:/{found=1} found && /operationId:/{print $2; found=0}' \"c:/Users/hongyu/SynologyDrive/網頁/記帳網頁/openapi.yaml\")",
+      "Bash(awk '/^  patch:/{found=1} found && /operationId:/{print $2; found=0}' \"c:/Users/hongyu/SynologyDrive/網頁/記帳網頁/openapi.yaml\")",
+      "Bash(python3 -c ':*)",
+      "Bash(node -e ':*)"
     ]
   }
 }

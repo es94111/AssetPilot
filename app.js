@@ -124,7 +124,13 @@ const App = (() => {
       const r = await fetch(url, { ...FETCH_OPTS, headers: JSON_HEADERS });
       if (r.status === 401) { logout(); throw new Error('請先登入'); }
       const data = await this.parseResponse(r);
-      if (!r.ok) throw new Error(data.error || `操作失敗 (${r.status})`);
+      if (!r.ok) {
+        const err = new Error(data.error || `操作失敗 (${r.status})`);
+        err.status = r.status;
+        err.data = data;
+        err.detail = data?.detail;
+        throw err;
+      }
       return data;
     },
     async post(url, body) {
@@ -529,7 +535,11 @@ const App = (() => {
       return [];
     });
     if (cacheLoadError) {
-      toast('部分資料載入失敗：' + cacheLoadError.message, 'error');
+      if (isMtlsError(cacheLoadError)) {
+        handleMtlsError(cacheLoadError);
+      } else {
+        toast('部分資料載入失敗：' + cacheLoadError.message, 'error');
+      }
     }
     // 載入版本號
     loadVersionLabel();
@@ -918,7 +928,11 @@ const App = (() => {
       await renderPage(page);
     } catch (err) {
       console.error('renderPage failed:', err);
-      toast('頁面載入失敗：' + (err?.message || '未知錯誤'), 'error');
+      if (isMtlsError(err)) {
+        handleMtlsError(err);
+      } else {
+        toast('頁面載入失敗：' + (err?.message || '未知錯誤'), 'error');
+      }
     }
 
     // 切換子分頁（需在 render 完成後執行）
@@ -6401,6 +6415,60 @@ const App = (() => {
     t.textContent = msg;
     container.appendChild(t);
     setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 2500);
+  }
+
+  // ─── mTLS 錯誤集中處理 ───
+  // 當 mTLS 設定錯誤（例如 Cloudflare 未回傳 Cf-Client-Cert-Verified）時，
+  // 整個 UI 的 API 呼叫都會 403。避免每個端點都彈一次 toast 造成干擾，
+  // 改為「第一次出現時顯示一張可操作的持久通知，之後的 mTLS 錯誤靜默吞掉」。
+  let mtlsNoticeShown = false;
+  function isMtlsError(err) {
+    if (!err) return false;
+    const msg = (err.message || err.error || '') + ' ' + (err.detail || '');
+    return /mTLS|Cloudflare.*存取|Cf-Client-Cert/i.test(msg);
+  }
+  function handleMtlsError(err) {
+    if (mtlsNoticeShown) return;
+    mtlsNoticeShown = true;
+    showMtlsNotice(err);
+  }
+  function showMtlsNotice(err) {
+    // 避免重複建立
+    let notice = document.getElementById('mtlsNotice');
+    if (notice) return;
+    notice = document.createElement('div');
+    notice.id = 'mtlsNotice';
+    notice.className = 'mtls-notice';
+    notice.setAttribute('role', 'alert');
+    notice.setAttribute('aria-live', 'assertive');
+    const detail = err?.detail || err?.message || '此端點必須透過 Cloudflare 存取（mTLS）';
+    const isAdmin = !!currentUser?.isAdmin;
+    notice.innerHTML = `
+      <div class="mtls-notice-icon" aria-hidden="true"><i class="fas fa-shield-halved"></i></div>
+      <div class="mtls-notice-body">
+        <div class="mtls-notice-title">mTLS 驗證失敗，部分功能暫時無法使用</div>
+        <div class="mtls-notice-desc">${escHtml(detail)}</div>
+        <div class="mtls-notice-hint">${isAdmin
+          ? '您可以前往憑證管理確認設定或暫時關閉 mTLS。'
+          : '請聯絡管理員確認 Cloudflare 客戶端憑證設定。'}</div>
+      </div>
+      <div class="mtls-notice-actions">
+        ${isAdmin ? '<button type="button" class="btn btn-primary" id="mtlsNoticeGoAdmin"><i class="fas fa-shield-halved"></i> 前往憑證管理</button>' : ''}
+        <button type="button" class="btn btn-ghost" id="mtlsNoticeClose" aria-label="關閉通知"><i class="fas fa-xmark"></i></button>
+      </div>
+    `;
+    document.body.appendChild(notice);
+    const closeBtn = notice.querySelector('#mtlsNoticeClose');
+    if (closeBtn) closeBtn.addEventListener('click', () => {
+      notice.classList.add('mtls-notice-leaving');
+      setTimeout(() => notice.remove(), 180);
+    });
+    const goAdminBtn = notice.querySelector('#mtlsNoticeGoAdmin');
+    if (goAdminBtn) goAdminBtn.addEventListener('click', () => {
+      notice.classList.add('mtls-notice-leaving');
+      setTimeout(() => notice.remove(), 180);
+      navigate('settings', 'admin').catch(() => {});
+    });
   }
 
   // ─── 版本更新資訊 ───

@@ -1,6 +1,18 @@
 {
-  "currentVersion": "4.8.4",
+  "currentVersion": "4.8.5",
   "releases": [
+    {
+      "version": "4.8.5",
+      "date": "2026-04-11",
+      "title": "mTLS 錯誤改為單一持久通知，取代 toast 洗版",
+      "type": "improved",
+      "changes": [
+        { "tag": "improved", "text": "mTLS 驗證失敗時不再每個 API 呼叫都彈一個 toast：新增 isMtlsError() 集中偵測，整個 session 只顯示一次浮動警示卡，後續的 mTLS 錯誤靜默吞掉避免干擾" },
+        { "tag": "new", "text": "新增 mTLS 浮動警示卡：紅色側邊強調 + shield 圖示 + 錯誤細節 + 提示文字；管理員顯示「前往憑證管理」一鍵跳轉按鈕，一般使用者顯示聯絡管理員提示；可手動關閉" },
+        { "tag": "improved", "text": "API.get 錯誤物件附加 status / data / detail 欄位，讓錯誤處理可讀取伺服器回傳的結構化資訊（包含 mTLS middleware 的 detail 指引文字）" },
+        { "tag": "improved", "text": "警示卡支援深色模式、小螢幕直排、prefers-reduced-motion；進場動畫採用 spring cubic-bezier(.34,1.56,.64,1)，離場 180ms ease-in" }
+      ]
+    },
     {
       "version": "4.8.4",
       "date": "2026-04-11",

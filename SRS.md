@@ -1152,6 +1152,7 @@
 
 | 版本 | 日期 | 變更說明 |
 | --- | --- | --- |
+| 4.8.9 | 2026-04-11 | mTLS 錯誤訊息差異化：根據 cf-cert-verified / cf-cert-presented / cf-cert-revoked 推斷失敗原因並給出對應指引（未提供憑證 / 已吊銷 / 未被接受）；回應新增 reason + debug 結構化欄位；前端警示卡標題顯示具體失敗原因並附可摺疊的 cf-cert-* 技術細節區塊 |
 | 4.8.8 | 2026-04-11 | 修正 mTLS 中介軟體讀取錯誤標頭名稱（根因）：原本檢查 cf-client-cert-verified: SUCCESS，實際 Cloudflare Managed Transform 回注的是 cf-cert-verified: true/false，導致即使正確設定也全部 403；同時相容三種標頭格式，並於 403 回應加入 Cloudflare Managed Transform 啟用步驟指引 |
 | 4.8.7 | 2026-04-11 | mTLS 救援路徑從 /api/admin/certs 擴大至整個 /api/admin/ 命名空間與 /api/account/login-logs，讓管理員面板在 mTLS 失效時仍能完整載入；已受 authMiddleware + adminMiddleware 保護 |
 | 4.8.6 | 2026-04-11 | 修正 mTLS 警示卡的「前往憑證管理」按鈕會因 currentUser.isAdmin 未同步而隱藏導致管理員失去救援路徑；一律顯示跳轉按鈕並新增「登出」備援，提示文字統一去除分支判斷 |

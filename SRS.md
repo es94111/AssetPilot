@@ -1152,6 +1152,7 @@
 
 | 版本 | 日期 | 變更說明 |
 | --- | --- | --- |
+| 4.8.4 | 2026-04-11 | 管理員登入紀錄頁碼切換改為 iOS 浮動藥丸分段控制器，與上方每頁筆數視覺節奏一致；active 對比 6.02:1、tabular-nums、focus-visible 雙層焦點環、aria-label / aria-current / prefers-reduced-motion 支援 |
 | 4.8.3 | 2026-04-11 | 修正 mTLS 設定錯誤時使用者被鎖死：enterApp() 快取載入單點失敗不中斷導航、navigate() 以 try/catch 包覆頁面渲染；新增 /api/admin/certs 救援路徑跳過 mTLS；403 回應新增 detail 指引 |
 | 4.8.2 | 2026-04-11 | 管理員登入紀錄每頁筆數改為 iOS 風格浮動藥丸 Segmented Control；focus-visible 焦點環、tabular-nums、spring 自訂輸入動畫；active 文字色提升至 --primary-dark 對比 6.02:1 |
 | 4.8.1 | 2026-04-11 | 修正啟用 mTLS 後 Google 登入誤報「登入失敗」：分離登入與 enterApp 載入錯誤、mTLS 中介軟體新增 loopback 放行 |

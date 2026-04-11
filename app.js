@@ -4568,19 +4568,36 @@ const App = (() => {
     const pag = el(elId);
     if (!pag) return;
     if (totalPages <= 1) { pag.innerHTML = ''; return; }
-    let ph = `<button ${page <= 1 ? 'disabled' : ''} onclick="${goFn}(${page - 1})"><i class="fas fa-chevron-left"></i></button>`;
+    const btn = (attrs, inner) => `<button ${attrs}>${inner}</button>`;
+    const prevDisabled = page <= 1 ? 'disabled' : '';
+    const nextDisabled = page >= totalPages ? 'disabled' : '';
+    let ph = btn(
+      `class="stk-pag-nav" aria-label="上一頁" ${prevDisabled} onclick="${goFn}(${page - 1})"`,
+      '<i class="fas fa-chevron-left" aria-hidden="true"></i>'
+    );
     for (let i = 1; i <= totalPages; i++) {
       if (totalPages > 7) {
         if (i === 1 || i === totalPages || (i >= page - 1 && i <= page + 1)) {
-          ph += `<button class="${i === page ? 'active' : ''}" onclick="${goFn}(${i})">${i}</button>`;
+          const isActive = i === page;
+          ph += btn(
+            `class="stk-pag-num${isActive ? ' active' : ''}"${isActive ? ' aria-current="page"' : ''} aria-label="第 ${i} 頁" onclick="${goFn}(${i})"`,
+            i
+          );
         } else if (i === page - 2 || i === page + 2) {
-          ph += `<button disabled>...</button>`;
+          ph += btn('class="stk-pag-ellipsis" disabled aria-hidden="true" tabindex="-1"', '…');
         }
       } else {
-        ph += `<button class="${i === page ? 'active' : ''}" onclick="${goFn}(${i})">${i}</button>`;
+        const isActive = i === page;
+        ph += btn(
+          `class="stk-pag-num${isActive ? ' active' : ''}"${isActive ? ' aria-current="page"' : ''} aria-label="第 ${i} 頁" onclick="${goFn}(${i})"`,
+          i
+        );
       }
     }
-    ph += `<button ${page >= totalPages ? 'disabled' : ''} onclick="${goFn}(${page + 1})"><i class="fas fa-chevron-right"></i></button>`;
+    ph += btn(
+      `class="stk-pag-nav" aria-label="下一頁" ${nextDisabled} onclick="${goFn}(${page + 1})"`,
+      '<i class="fas fa-chevron-right" aria-hidden="true"></i>'
+    );
     pag.innerHTML = ph;
   }
 

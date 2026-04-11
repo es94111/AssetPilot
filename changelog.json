@@ -1,6 +1,19 @@
 {
-  "currentVersion": "4.8.3",
+  "currentVersion": "4.8.4",
   "releases": [
+    {
+      "version": "4.8.4",
+      "date": "2026-04-11",
+      "title": "管理員登入紀錄分頁導覽改為 iOS 浮動藥丸樣式",
+      "type": "improved",
+      "changes": [
+        { "tag": "improved", "text": "管理員登入紀錄 / 全部使用者登入紀錄的頁碼切換從原本未套用樣式的原生按鈕，改為與上方「每頁筆數」一致的 iOS 風格浮動藥丸分段控制器：膠囊軌道 + inset shadow + 浮起主色藥丸" },
+        { "tag": "improved", "text": "Active 頁碼使用 --primary-dark（白底對比 6.02:1，WCAG AA 通過）、font-weight 700、柔和主色光暈陰影；深色模式改用 --primary-light + 藍紫微光（對比 6.19:1）" },
+        { "tag": "improved", "text": "按鈕採 tabular-nums 對齊避免切換時寬度跳動；180ms cubic-bezier(.4,0,.2,1) 平滑過渡、press 0.92 微縮反饋、focus-visible 雙層焦點環；支援 prefers-reduced-motion 關閉動畫" },
+        { "tag": "improved", "text": "上一頁 / 下一頁按鈕加上 aria-label，目前頁加上 aria-current=\"page\"，省略號改用獨立 class 並設 aria-hidden / tabindex=-1，改善螢幕閱讀器與鍵盤導覽體驗" },
+        { "tag": "improved", "text": "小螢幕（≤640px）自動縮小按鈕尺寸與間距，避免工具列壓縮" }
+      ]
+    },
     {
       "version": "4.8.3",
       "date": "2026-04-11",

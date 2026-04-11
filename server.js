@@ -173,11 +173,12 @@ function validatePemKey(pem) {
 // SSL 目錄路徑常數
 const SSL_MTLS_DIR = path.join(__dirname, 'SSL', 'mTLS');
 const SSL_ORIGIN_DIR = path.join(__dirname, 'SSL', 'Origin Certificates');
-const SSL_MTLS_CERT = path.join(SSL_MTLS_DIR, 'sercer.pem');
-const SSL_MTLS_KEY  = path.join(SSL_MTLS_DIR, 'server.key');
-const SSL_MTLS_CA   = path.join(SSL_MTLS_DIR, 'cloudflare-ca.pem');
+const SSL_MTLS_CERT   = path.join(SSL_MTLS_DIR, 'server.pem');
+const SSL_MTLS_KEY    = path.join(SSL_MTLS_DIR, 'server.key');
+const SSL_MTLS_CA     = path.join(SSL_MTLS_DIR, 'cloudflare-ca.pem');
 const SSL_ORIGIN_CERT = path.join(SSL_ORIGIN_DIR, 'server.pem');
 const SSL_ORIGIN_KEY  = path.join(SSL_ORIGIN_DIR, 'server.key');
+const SSL_ORIGIN_CA   = path.join(SSL_ORIGIN_DIR, 'cloudflare-origin-ca.pem');
 
 const JWT_SECRET = process.env.JWT_SECRET;
 const DB_ENCRYPTION_KEY = process.env.DB_ENCRYPTION_KEY || '';
@@ -2306,11 +2307,12 @@ app.get('/api/admin/certs', adminMiddleware, (req, res) => {
   res.json({
     mtlsEnabled: MTLS_ENABLED,
     mtlsCfOnly: MTLS_CF_ONLY,
-    mtlsCert:     getCertInfo(SSL_MTLS_CERT),
-    mtlsKeyExists: fs.existsSync(SSL_MTLS_KEY),
-    mtlsCa:       getCertInfo(SSL_MTLS_CA),
-    originCert:   getCertInfo(SSL_ORIGIN_CERT),
+    mtlsCert:        getCertInfo(SSL_MTLS_CERT),
+    mtlsKeyExists:   fs.existsSync(SSL_MTLS_KEY),
+    mtlsCa:          getCertInfo(SSL_MTLS_CA),
+    originCert:      getCertInfo(SSL_ORIGIN_CERT),
     originKeyExists: fs.existsSync(SSL_ORIGIN_KEY),
+    originCa:        getCertInfo(SSL_ORIGIN_CA),
   });
 });
 
@@ -2386,9 +2388,27 @@ app.delete('/api/admin/certs/mtls/ca', adminMiddleware, (req, res) => {
   res.json({ ok: true });
 });
 
+// POST /api/admin/certs/origin/ca — 上傳 Cloudflare Origin CA 憑證（需重啟才生效）
+app.post('/api/admin/certs/origin/ca', adminMiddleware, (req, res) => {
+  const { cert } = req.body || {};
+  if (!validatePemCert(cert)) return res.status(400).json({ error: 'Origin CA 憑證格式錯誤，需為 PEM 格式' });
+  try { new crypto.X509Certificate(cert); } catch (e) {
+    return res.status(400).json({ error: 'Origin CA 憑證解析失敗：' + e.message });
+  }
+  if (!fs.existsSync(SSL_ORIGIN_DIR)) fs.mkdirSync(SSL_ORIGIN_DIR, { recursive: true });
+  fs.writeFileSync(SSL_ORIGIN_CA, cert.trim() + '\n', 'utf-8');
+  res.json({ ok: true, cert: getCertInfo(SSL_ORIGIN_CA), requiresRestart: true });
+});
+
+// DELETE /api/admin/certs/origin/ca — 刪除 Cloudflare Origin CA 憑證（需重啟才生效）
+app.delete('/api/admin/certs/origin/ca', adminMiddleware, (req, res) => {
+  try { if (fs.existsSync(SSL_ORIGIN_CA)) fs.unlinkSync(SSL_ORIGIN_CA); } catch (_) {}
+  res.json({ ok: true, requiresRestart: true });
+});
+
 // DELETE /api/admin/certs/origin — 刪除 Origin Certificate（需重啟才生效）
 app.delete('/api/admin/certs/origin', adminMiddleware, (req, res) => {
-  [SSL_ORIGIN_CERT, SSL_ORIGIN_KEY].forEach(f => { try { if (fs.existsSync(f)) fs.unlinkSync(f); } catch (_) {} });
+  [SSL_ORIGIN_CERT, SSL_ORIGIN_KEY, SSL_ORIGIN_CA].forEach(f => { try { if (fs.existsSync(f)) fs.unlinkSync(f); } catch (_) {} });
   res.json({ ok: true, requiresRestart: true });
 });
 

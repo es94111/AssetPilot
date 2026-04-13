@@ -637,6 +637,7 @@ const App = (() => {
 
       showGoogleFallbackButtons();
       el('googleSignInWrap').style.display = '';
+      el('altLoginWrap').style.display = '';
       el('googleSignUpWrap').style.display = '';
     } catch (e) {
       console.warn('Google SSO 初始化失敗:', e.message);
@@ -4265,6 +4266,7 @@ const App = (() => {
         el('accountDisplayNameInput').value = user.displayName || '';
       }
       updateUserAvatar();
+      accountLoginLogs = []; // 重新取得
       await renderAccountLoginLogs();
 
       const linkedEl = el('googleLinkedInfo');
@@ -4484,22 +4486,37 @@ const App = (() => {
     if (!silent) toast('登入紀錄已同步', 'success');
   }
 
-  async function renderAccountLoginLogs() {
+  let accountLoginLogs = [];
+  let accountLogPage = 1;
+  let accountLogPageSize = 20;
+  let accountLogPaginationBound = false;
+
+  async function renderAccountLoginLogs(page) {
     const tbody = el('accountLoginLogBody');
     if (!tbody) return;
+    if (typeof page === 'number') accountLogPage = page;
     try {
-      const result = await API.get('/api/account/login-logs');
-      const logs = Array.isArray(result?.logs) ? [...result.logs] : [];
-      if (latestLoginRecord?.loginAt) {
-        const hasLatest = logs.some(log => Number(log.loginAt) === Number(latestLoginRecord.loginAt) && String(log.ipAddress || '') === String(latestLoginRecord.ipAddress || ''));
-        if (!hasLatest) logs.unshift({ ...latestLoginRecord });
+      if (accountLoginLogs.length === 0) {
+        const result = await API.get('/api/account/login-logs');
+        accountLoginLogs = Array.isArray(result?.logs) ? [...result.logs] : [];
+        if (latestLoginRecord?.loginAt) {
+          const hasLatest = accountLoginLogs.some(log => Number(log.loginAt) === Number(latestLoginRecord.loginAt) && String(log.ipAddress || '') === String(latestLoginRecord.ipAddress || ''));
+          if (!hasLatest) accountLoginLogs.unshift({ ...latestLoginRecord });
+        }
       }
-      if (logs.length === 0) {
+      if (accountLoginLogs.length === 0) {
         tbody.innerHTML = '<tr><td colspan="5" class="empty-hint">尚無登入紀錄</td></tr>';
+        el('accountLoginLogPagination').innerHTML = '';
         return;
       }
 
-      tbody.innerHTML = logs.map(log => `
+      const totalPages = Math.ceil(accountLoginLogs.length / accountLogPageSize);
+      if (accountLogPage > totalPages) accountLogPage = totalPages;
+      if (accountLogPage < 1) accountLogPage = 1;
+      const start = (accountLogPage - 1) * accountLogPageSize;
+      const pageData = accountLoginLogs.slice(start, start + accountLogPageSize);
+
+      tbody.innerHTML = pageData.map(log => `
         <tr>
           <td>${escHtml(formatLoginAt(log.loginAt))}</td>
           <td>${escHtml(log.ipAddress || 'unknown')}</td>
@@ -4508,9 +4525,37 @@ const App = (() => {
           <td>${escHtml(formatLoginMethod(log.loginMethod))}</td>
         </tr>
       `).join('');
+
+      renderStkPagination('accountLoginLogPagination', accountLogPage, totalPages, 'App.accountLogGoPage');
+
+      if (!accountLogPaginationBound) {
+        accountLogPaginationBound = true;
+        el('accountLogPageSize')?.addEventListener('change', (e) => {
+          if (e.target.value === 'custom') {
+            el('accountLogPageSizeCustom').style.display = '';
+            el('accountLogPageSizeCustom').focus();
+          } else {
+            el('accountLogPageSizeCustom').style.display = 'none';
+            accountLogPageSize = parseInt(e.target.value);
+            accountLogPage = 1;
+            renderAccountLoginLogs();
+          }
+        });
+        el('accountLogPageSizeCustom')?.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            const v = parseInt(el('accountLogPageSizeCustom').value);
+            if (v > 0) { accountLogPageSize = v; accountLogPage = 1; renderAccountLoginLogs(); }
+          }
+        });
+      }
     } catch (e) {
       tbody.innerHTML = '<tr><td colspan="5" class="empty-hint">載入登入紀錄失敗</td></tr>';
     }
+  }
+
+  function accountLogGoPage(p) {
+    accountLogPage = p;
+    renderAccountLoginLogs();
   }
 
   function updateAdminLoginLogSelectionUI() {
@@ -6681,6 +6726,8 @@ const App = (() => {
     if (!passkeyAvailable) return;
     const wrap = el('passkeyLoginWrap');
     if (wrap) wrap.style.display = '';
+    const altWrap = el('altLoginWrap');
+    if (altWrap) altWrap.style.display = '';
   }
 
   async function passkeyLogin() {
@@ -6838,6 +6885,7 @@ const App = (() => {
     toggleAllAdminAllLoginLogs,
     deleteAdminLoginLog,
     deleteAdminAllLoginLog,
+    accountLogGoPage,
     adminLoginLogGoPage,
     adminAllLoginLogGoPage,
     openChangelog,

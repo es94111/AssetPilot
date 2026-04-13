@@ -47,7 +47,8 @@
       "Bash(python -c ':*)",
       "Bash(node -c app.js)",
       "Bash([ -f .env ])",
-      "Bash([ -f database.db.bak ])"
+      "Bash([ -f database.db.bak ])",
+      "Bash(grep -E \"\\\\.\\(js|html\\)$\")"
     ]
   }
 }

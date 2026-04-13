@@ -1152,6 +1152,7 @@
 
 | 版本 | 日期 | 變更說明 |
 | --- | --- | --- |
+| 4.10.3 | 2026-04-13 | 修正正式環境登入紀錄國家欄位空白：優先使用 Cloudflare CF-IPCountry header，fallback 至 ipinfo.io |
 | 4.10.2 | 2026-04-13 | 修正 Passkey 驗證 counter 路徑錯誤；登入頁 Google/Passkey 按鈕移至帳密下方；登入紀錄新增分頁與每頁筆數選擇；移除登入頁版本更新按鈕 |
 | 4.10.1 | 2026-04-13 | 修正 Passkey 前端模組從 CDN 載入失敗，改為伺服器本地提供；更新 OpenAPI 規格至 v4.10.0 |
 | 4.10.0 | 2026-04-13 | 新增 Passkey (WebAuthn) 無密碼登入：登入頁支援指紋/Face ID/PIN 碼快速登入；帳號設定可管理多組 Passkey（註冊、命名、刪除）；後端新增 passkey_credentials 資料表與 6 支 API 端點 |

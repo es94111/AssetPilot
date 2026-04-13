@@ -1381,6 +1381,13 @@ async function enrichAndPersistCountry(rows, tableName) {
   }));
 }
 
+function getCountryFromRequest(req) {
+  // 優先使用 Cloudflare 提供的 CF-IPCountry header
+  const cfCountry = String(req.headers['cf-ipcountry'] || '').trim().toUpperCase();
+  if (cfCountry && cfCountry !== 'XX' && cfCountry !== 'T1') return cfCountry;
+  return '';
+}
+
 function recordLoginAudit(user, req, method = 'password') {
   if (!user?.id) return;
   const loginId = uid();
@@ -1388,9 +1395,10 @@ function recordLoginAudit(user, req, method = 'password') {
   const ipAddress = getRequestIp(req);
   const loginMethod = String(method || 'password').trim().toLowerCase();
   const isAdminLogin = user.is_admin ? 1 : 0;
+  const cfCountry = getCountryFromRequest(req);
   db.run(
-    `INSERT INTO login_audit_logs (id, user_id, email, login_at, ip_address, login_method, is_admin_login)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO login_audit_logs (id, user_id, email, login_at, ip_address, login_method, is_admin_login, country)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       loginId,
       user.id,
@@ -1399,16 +1407,19 @@ function recordLoginAudit(user, req, method = 'password') {
       ipAddress,
       loginMethod,
       isAdminLogin,
+      cfCountry,
     ]
   );
   saveDB();
-  // 非同步查詢 IP 國家並回寫，不阻塞登入回應
-  fetchIpCountry(ipAddress).then(country => {
-    if (country) {
-      db.run('UPDATE login_audit_logs SET country = ? WHERE id = ?', [country, loginId]);
-      saveDB();
-    }
-  }).catch(() => {});
+  // 若 Cloudflare 未提供國家，非同步查詢 ipinfo.io 並回寫
+  if (!cfCountry) {
+    fetchIpCountry(ipAddress).then(country => {
+      if (country) {
+        db.run('UPDATE login_audit_logs SET country = ? WHERE id = ?', [country, loginId]);
+        saveDB();
+      }
+    }).catch(() => {});
+  }
   return {
     id: loginId,
     loginAt,
@@ -1426,9 +1437,10 @@ function recordLoginAttempt({ user = null, email = '', req, method = 'password',
   const userId = user?.id ? String(user.id) : '';
   const isAdminLogin = user?.is_admin ? 1 : 0;
   const attemptId = uid();
+  const cfCountry = getCountryFromRequest(req);
   db.run(
-    `INSERT INTO login_attempt_logs (id, user_id, email, login_at, ip_address, login_method, is_admin_login, is_success, failure_reason)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO login_attempt_logs (id, user_id, email, login_at, ip_address, login_method, is_admin_login, is_success, failure_reason, country)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       attemptId,
       userId,
@@ -1439,16 +1451,19 @@ function recordLoginAttempt({ user = null, email = '', req, method = 'password',
       isAdminLogin,
       isSuccess ? 1 : 0,
       isSuccess ? '' : String(failureReason || 'unknown').trim().toLowerCase(),
+      cfCountry,
     ]
   );
   saveDB();
-  // 非同步查詢 IP 國家並回寫，不阻塞登入回應
-  fetchIpCountry(ipAddress).then(country => {
-    if (country) {
-      db.run('UPDATE login_attempt_logs SET country = ? WHERE id = ?', [country, attemptId]);
-      saveDB();
-    }
-  }).catch(() => {});
+  // 若 Cloudflare 未提供國家，非同步查詢 ipinfo.io 並回寫
+  if (!cfCountry) {
+    fetchIpCountry(ipAddress).then(country => {
+      if (country) {
+        db.run('UPDATE login_attempt_logs SET country = ? WHERE id = ?', [country, attemptId]);
+        saveDB();
+      }
+    }).catch(() => {});
+  }
 }
 
 function parseLoginLogTarget(rawId) {

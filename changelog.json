@@ -1,6 +1,15 @@
 {
-  "currentVersion": "4.10.2",
+  "currentVersion": "4.10.3",
   "releases": [
+    {
+      "version": "4.10.3",
+      "date": "2026-04-13",
+      "title": "修正正式環境登入紀錄國家欄位空白",
+      "type": "fix",
+      "changes": [
+        { "tag": "fixed", "text": "修正正式環境（Cloudflare 反向代理）登入紀錄國家欄位空白的問題：寫入時優先使用 Cloudflare CF-IPCountry header，僅在無 header 時才 fallback 至 ipinfo.io 查詢" }
+      ]
+    },
     {
       "version": "4.10.2",
       "date": "2026-04-13",

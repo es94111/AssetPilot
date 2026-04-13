@@ -1043,6 +1043,43 @@
               </div>
             </div>
           </div>
+
+          <div class="card export-cluster-card" id="dbBackupCard" style="display:none">
+            <div class="export-cluster-header">
+              <h3><i class="fas fa-database"></i>資料庫備份</h3>
+              <p>匯出或匯入完整資料庫檔案（僅管理員），匯出為未加密的 SQLite 檔案</p>
+            </div>
+            <div class="export-action-grid two-col">
+              <div class="export-action-card">
+                <h4>匯出資料庫</h4>
+                <p class="import-hint">匯出未加密的完整資料庫備份檔（.db），包含所有使用者資料。</p>
+                <div class="export-btns" style="margin-top:8px">
+                  <button class="btn" id="exportDbBtn"><i class="fas fa-download"></i> 匯出資料庫</button>
+                </div>
+              </div>
+              <div class="export-action-card">
+                <h4>匯入資料庫</h4>
+                <p class="import-hint">上傳未加密的 SQLite 資料庫檔案以取代目前資料。匯入前會自動備份現有資料庫。</p>
+                <div class="import-area" id="dbImportArea" style="margin-top:8px">
+                  <i class="fas fa-cloud-arrow-up"></i>
+                  <span>點擊或拖曳 .db 檔案至此</span>
+                  <input type="file" id="dbImportFileInput" accept=".db,.sqlite,.sqlite3" hidden>
+                </div>
+                <div class="db-import-confirm" id="dbImportConfirm" style="display:none">
+                  <div class="db-import-info">
+                    <i class="fas fa-file-circle-check"></i>
+                    <span id="dbImportFileName"></span>
+                    <span id="dbImportFileSize"></span>
+                  </div>
+                  <div class="import-actions" style="gap:8px">
+                    <button class="btn btn-danger" id="dbImportConfirmBtn"><i class="fas fa-file-import"></i> 確認匯入（取代現有資料）</button>
+                    <button class="btn btn-ghost" id="dbImportCancelBtn"><i class="fas fa-xmark"></i> 取消</button>
+                  </div>
+                </div>
+                <div class="import-result" id="dbImportResult" style="display:none;margin-top:8px"></div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
       <!-- 帳號設定 -->

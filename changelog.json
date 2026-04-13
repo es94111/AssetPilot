@@ -1,6 +1,16 @@
 {
-  "currentVersion": "4.10.0",
+  "currentVersion": "4.10.1",
   "releases": [
+    {
+      "version": "4.10.1",
+      "date": "2026-04-13",
+      "title": "修正 Passkey 前端模組載入失敗",
+      "type": "fix",
+      "changes": [
+        { "tag": "fixed", "text": "修正 Passkey 前端動態 import 從 CDN 載入失敗的問題，改為由伺服器本地提供 webauthn.min.js（/vendor/webauthn.min.js）" },
+        { "tag": "improved", "text": "更新 OpenAPI 規格（asset_openapi.yaml）至 v4.10.0：新增 Passkey 相關 7 支 API 端點、同步密碼強度描述" }
+      ]
+    },
     {
       "version": "4.10.0",
       "date": "2026-04-13",

@@ -6,6 +6,7 @@
     "start": "node server.js"
   },
   "dependencies": {
+    "@passwordless-id/webauthn": "^2.3.5",
     "adm-zip": "^0.5.16",
     "bcryptjs": "^3.0.3",
     "cookie-parser": "^1.4.7",

@@ -299,6 +299,7 @@ app.get(PUBLIC_FILES, (req, res) => {
 });
 
 let db;
+let SQL; // sql.js module reference
 
 // ─── 登入失敗追蹤 ───
 const loginAttempts = new Map();
@@ -350,7 +351,7 @@ function normalizeThemeMode(mode) {
 
 // ─── 初始化資料庫 ───
 async function initDB() {
-  const SQL = await initSqlJs();
+  if (!SQL) SQL = await initSqlJs();
 
   if (fs.existsSync(DB_PATH)) {
     const fileBuffer = fs.readFileSync(DB_PATH);
@@ -4713,6 +4714,73 @@ app.post('/api/stock-dividends/batch-delete', (req, res) => {
   });
   saveDB();
   res.json({ deleted });
+});
+
+// ─── 資料庫匯出匯入（僅管理員） ───
+app.get('/api/database/export', (req, res) => {
+  if (!isUserAdmin(req.userId)) return res.status(403).json({ error: '僅管理員可執行此操作' });
+  try {
+    const data = db.export();
+    const plain = Buffer.from(data);
+    const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+    res.setHeader('Content-Type', 'application/x-sqlite3');
+    res.setHeader('Content-Disposition', `attachment; filename="asset_backup_${ts}.db"`);
+    res.send(plain);
+  } catch (e) {
+    console.error('資料庫匯出失敗:', e);
+    res.status(500).json({ error: '資料庫匯出失敗' });
+  }
+});
+
+app.post('/api/database/import', express.raw({ type: 'application/octet-stream', limit: '100mb' }), (req, res) => {
+  if (!isUserAdmin(req.userId)) return res.status(403).json({ error: '僅管理員可執行此操作' });
+  try {
+    let dbBuffer = req.body;
+    if (!Buffer.isBuffer(dbBuffer) || dbBuffer.length < 16) {
+      return res.status(400).json({ error: '無效的資料庫檔案' });
+    }
+    // 若上傳的是加密檔案，拒絕匯入
+    if (isEncryptedDB(dbBuffer)) {
+      return res.status(400).json({ error: '請上傳未加密的資料庫檔案（.db）' });
+    }
+    // 驗證是否為有效的 SQLite 檔案（magic header: "SQLite format 3\000"）
+    const sqliteMagic = dbBuffer.subarray(0, 16).toString('ascii');
+    if (!sqliteMagic.startsWith('SQLite format 3')) {
+      return res.status(400).json({ error: '檔案不是有效的 SQLite 資料庫' });
+    }
+    // 嘗試載入以驗證完整性
+    const testDb = new SQL.Database(new Uint8Array(dbBuffer));
+    // 驗證基本資料表結構
+    const tables = testDb.exec("SELECT name FROM sqlite_master WHERE type='table'");
+    const tableNames = tables.length > 0 ? tables[0].values.map(r => r[0]) : [];
+    const requiredTables = ['users', 'transactions', 'accounts', 'categories'];
+    const missing = requiredTables.filter(t => !tableNames.includes(t));
+    if (missing.length > 0) {
+      testDb.close();
+      return res.status(400).json({ error: `資料庫缺少必要資料表：${missing.join(', ')}` });
+    }
+    testDb.close();
+    // 備份目前資料庫
+    const backupTs = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+    const backupPath = DB_PATH + `.backup_${backupTs}`;
+    try {
+      const currentData = db.export();
+      const currentPlain = Buffer.from(currentData);
+      fs.writeFileSync(backupPath, currentPlain);
+    } catch (e) {
+      console.error('備份目前資料庫失敗:', e);
+    }
+    // 替換資料庫
+    db.close();
+    db = new SQL.Database(new Uint8Array(dbBuffer));
+    saveDB();
+    // 重新初始化（確保升級邏輯執行）
+    initDB();
+    res.json({ ok: true, message: '資料庫匯入成功，已自動備份原始資料庫' });
+  } catch (e) {
+    console.error('資料庫匯入失敗:', e);
+    res.status(500).json({ error: '資料庫匯入失敗：' + (e.message || '未知錯誤') });
+  }
 });
 
 // API 路由未命中時統一回傳 JSON，避免前端拿到 HTML 導致解析錯誤。

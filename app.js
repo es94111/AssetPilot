@@ -4435,6 +4435,7 @@ const App = (() => {
   function formatLoginMethod(method) {
     const m = String(method || '').trim().toLowerCase();
     if (m === 'google') return 'Google SSO';
+    if (m === 'passkey') return 'Passkey';
     return '密碼';
   }
 
@@ -4445,6 +4446,8 @@ const App = (() => {
     if (r === 'wrong_password') return '密碼錯誤';
     if (r === 'missing_credentials') return '缺少帳號或密碼';
     if (r === 'account_temporarily_locked') return '登入暫時鎖定';
+    if (r === 'credential_not_found') return 'Passkey 憑證不存在';
+    if (r === 'verification_failed') return 'Passkey 驗證失敗';
     return r;
   }
 
@@ -5333,6 +5336,7 @@ const App = (() => {
       e.target.value = '';
     });
     bindImport();
+    initDbBackupUI();
   }
 
   async function exportCsv() {
@@ -5676,6 +5680,117 @@ const App = (() => {
     }
     el('importConfirmBtn').disabled = false;
     el('importConfirmBtn').innerHTML = '<i class="fas fa-file-import"></i> 確認匯入';
+  }
+
+  // ─── 資料庫匯出匯入 ───
+  let dbImportFile = null;
+
+  function initDbBackupUI() {
+    const card = el('dbBackupCard');
+    if (!card) return;
+    card.style.display = currentUser?.isAdmin ? '' : 'none';
+    if (!currentUser?.isAdmin) return;
+
+    el('exportDbBtn').onclick = exportDatabase;
+
+    const area = el('dbImportArea');
+    const input = el('dbImportFileInput');
+    area.addEventListener('click', () => input.click());
+    area.addEventListener('dragover', e => { e.preventDefault(); area.classList.add('dragover'); });
+    area.addEventListener('dragleave', () => area.classList.remove('dragover'));
+    area.addEventListener('drop', e => {
+      e.preventDefault();
+      area.classList.remove('dragover');
+      if (e.dataTransfer.files[0]) selectDbFile(e.dataTransfer.files[0]);
+    });
+    input.addEventListener('change', e => {
+      if (e.target.files[0]) selectDbFile(e.target.files[0]);
+      e.target.value = '';
+    });
+    el('dbImportConfirmBtn').onclick = importDatabase;
+    el('dbImportCancelBtn').onclick = cancelDbImport;
+  }
+
+  async function exportDatabase() {
+    const btn = el('exportDbBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 匯出中…';
+    try {
+      const res = await fetch('/api/database/export', { credentials: 'include' });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || '匯出失敗');
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const cd = res.headers.get('Content-Disposition') || '';
+      const match = cd.match(/filename="?([^"]+)"?/);
+      a.download = match ? match[1] : `asset_backup_${new Date().toISOString().slice(0,10)}.db`;
+      a.href = url;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast('資料庫匯出成功', 'success');
+    } catch (e) {
+      toast(e.message || '資料庫匯出失敗', 'error');
+    }
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-download"></i> 匯出資料庫';
+  }
+
+  function selectDbFile(file) {
+    dbImportFile = file;
+    el('dbImportArea').style.display = 'none';
+    el('dbImportConfirm').style.display = '';
+    el('dbImportFileName').textContent = file.name;
+    el('dbImportFileSize').textContent = `（${(file.size / 1024 / 1024).toFixed(2)} MB）`;
+    el('dbImportResult').style.display = 'none';
+  }
+
+  function cancelDbImport() {
+    dbImportFile = null;
+    el('dbImportArea').style.display = '';
+    el('dbImportConfirm').style.display = 'none';
+    el('dbImportResult').style.display = 'none';
+  }
+
+  async function importDatabase() {
+    if (!dbImportFile) return;
+    if (!confirm('確定要匯入此資料庫嗎？\n\n⚠️ 此操作會取代所有現有資料，匯入前會自動備份現有資料庫。\n匯入後需要重新登入。')) return;
+
+    const btn = el('dbImportConfirmBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 匯入中…';
+    const resultEl = el('dbImportResult');
+
+    try {
+      const buffer = await dbImportFile.arrayBuffer();
+      const res = await fetch('/api/database/import', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/octet-stream' },
+        body: buffer
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || '匯入失敗');
+
+      resultEl.style.display = '';
+      resultEl.className = 'import-result success';
+      resultEl.innerHTML = '<i class="fas fa-circle-check"></i> ' + escHtml(data.message) + '<br>即將自動登出，請重新登入…';
+      toast('資料庫匯入成功，即將登出', 'success');
+
+      // 2 秒後自動登出
+      setTimeout(() => {
+        logout();
+      }, 2000);
+    } catch (e) {
+      resultEl.style.display = '';
+      resultEl.className = 'import-result error';
+      resultEl.innerHTML = '<i class="fas fa-circle-xmark"></i> ' + escHtml(e.message);
+      toast(e.message || '資料庫匯入失敗', 'error');
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-file-import"></i> 確認匯入（取代現有資料）';
+    }
   }
 
   // ─── 電子發票 QRCode 掃描 ───

@@ -1,6 +1,28 @@
 {
-  "currentVersion": "4.11.0",
+  "currentVersion": "4.12.1",
   "releases": [
+    {
+      "version": "4.12.1",
+      "date": "2026-04-13",
+      "title": "修正 Passkey 登入紀錄顯示為密碼",
+      "type": "fix",
+      "changes": [
+        { "tag": "fixed", "text": "修正使用 Passkey 登入後，登入紀錄的登入方式顯示為「密碼」而非「Passkey」" },
+        { "tag": "improved", "text": "補充 Passkey 相關登入失敗原因的中文翻譯（憑證不存在、驗證失敗）" }
+      ]
+    },
+    {
+      "version": "4.12.0",
+      "date": "2026-04-13",
+      "title": "資料庫匯出匯入備份",
+      "type": "feature",
+      "changes": [
+        { "tag": "new", "text": "新增資料庫匯出功能：管理員可匯出未加密的完整 SQLite 資料庫備份檔（.db）" },
+        { "tag": "new", "text": "新增資料庫匯入功能：支援拖曳或選擇 .db 檔案匯入，自動驗證 SQLite 格式與必要資料表結構" },
+        { "tag": "new", "text": "匯入前自動備份現有資料庫，匯入後自動登出並重新登入以套用新資料" },
+        { "tag": "improved", "text": "僅管理員可見資料庫備份區塊，非管理員使用者不會看到此功能" }
+      ]
+    },
     {
       "version": "4.11.0",
       "date": "2026-04-13",

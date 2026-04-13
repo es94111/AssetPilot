@@ -1,6 +1,19 @@
 {
-  "currentVersion": "4.9.1",
+  "currentVersion": "4.9.2",
   "releases": [
+    {
+      "version": "4.9.2",
+      "date": "2026-04-13",
+      "title": "批次變更分類 UI 美化與多項修正",
+      "type": "fix",
+      "changes": [
+        { "tag": "fixed", "text": "修正批次變更分類時因嵌套 optgroup 導致部分分類無法顯示的問題" },
+        { "tag": "improved", "text": "批次變更分類改為自訂下拉選單：顯示分類色點、支出/收入分區標題、父子分類群組結構，視窗寬度加大並允許下拉溢出" },
+        { "tag": "fixed", "text": "預設分類與子分類現在允許使用者刪除（移除前後端 is_default 保護限制）" },
+        { "tag": "fixed", "text": "修正新增交易選擇其他幣別時，匯率數值過長導致表單驗證失敗的問題（step 改為 any）" },
+        { "tag": "improved", "text": "更新 OpenAPI 規格（asset_openapi.yaml）至 v4.9.1：新增密碼修改端點、移除 mTLS 端點" }
+      ]
+    },
     {
       "version": "4.9.1",
       "date": "2026-04-11",

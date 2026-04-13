@@ -1152,6 +1152,7 @@
 
 | 版本 | 日期 | 變更說明 |
 | --- | --- | --- |
+| 4.9.2 | 2026-04-13 | 修正批次變更分類嵌套 optgroup 導致分類顯示不全；改為自訂下拉選單含色點與分區結構；允許刪除預設分類；修正匯率輸入 step 驗證過嚴；更新 OpenAPI 規格 |
 | 4.9.1 | 2026-04-11 | 新增使用者修改密碼功能：帳號設定卡片支援自助修改密碼（驗證目前密碼、防止新舊相同）；Google-only 帳號可設定本機密碼；管理員 → 使用者列表新增「重設密碼」按鈕與 Modal，可直接為任一使用者設定新密碼；新增 PUT /api/account/password 與 PUT /api/admin/users/:id/password 端點，密碼強度需 8 字元含英數 |
 | 4.9.0 | 2026-04-11 | 移除 Cloudflare-issued Client Certificates（mTLS）功能：完整刪除後端 mtlsMiddleware / /api/admin/certs/mtls* 端點 / MTLS_* 環境變數 / SSL_MTLS_* 路徑 / HTTPS+mTLS 直連啟動模式、前端 isMtlsError / 警示卡 / renderAdminCerts mTLS UI 綁定、index.html 三個 mTLS admin 區塊、style.css .mtls-notice* 樣式、Dockerfile SSL/mTLS 目錄、.env / README mTLS 設定範例；管理員面板簡化為僅 Origin Certificate；建議搭配 Tailscale 或 Cloudflare Access 取代裝置層級身份驗證 |
 | 4.8.9 | 2026-04-11 | mTLS 錯誤訊息差異化：根據 cf-cert-verified / cf-cert-presented / cf-cert-revoked 推斷失敗原因並給出對應指引（未提供憑證 / 已吊銷 / 未被接受）；回應新增 reason + debug 結構化欄位；前端警示卡標題顯示具體失敗原因並附可摺疊的 cf-cert-* 技術細節區塊 |

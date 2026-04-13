@@ -50,7 +50,8 @@
       "Bash([ -f database.db.bak ])",
       "Bash(grep -E \"\\\\.\\(js|html\\)$\")",
       "Bash(grep -E \"\\\\.\\(html|js|json\\)$\")",
-      "Bash(dir \"C:\\\\Users\\\\hongyu\\\\SynologyDrive\\\\網頁\\\\記帳網頁\\\\database.db*\")"
+      "Bash(dir \"C:\\\\Users\\\\hongyu\\\\SynologyDrive\\\\網頁\\\\記帳網頁\\\\database.db*\")",
+      "Bash(mv asset_openapi.yaml.tmp asset_openapi.yaml)"
     ]
   }
 }

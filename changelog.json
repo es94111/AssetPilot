@@ -1,6 +1,18 @@
 {
-  "currentVersion": "4.9.3",
+  "currentVersion": "4.10.0",
   "releases": [
+    {
+      "version": "4.10.0",
+      "date": "2026-04-13",
+      "title": "新增 Passkey 無密碼登入",
+      "type": "feature",
+      "changes": [
+        { "tag": "new", "text": "支援 Passkey (WebAuthn) 無密碼登入：使用指紋、Face ID 或裝置 PIN 碼即可快速登入，無需輸入帳號密碼" },
+        { "tag": "new", "text": "登入頁新增「使用 Passkey 登入」按鈕，瀏覽器支援 WebAuthn 時自動顯示" },
+        { "tag": "new", "text": "帳號設定新增「Passkey 無密碼登入」管理卡片：可註冊多組 Passkey（不同裝置）、自訂命名、刪除" },
+        { "tag": "new", "text": "後端新增 passkey_credentials 資料表與 6 支 API 端點（challenge、登入驗證、註冊、列表、刪除、重新命名），使用 @passwordless-id/webauthn 套件進行伺服器端驗證" }
+      ]
+    },
     {
       "version": "4.9.3",
       "date": "2026-04-13",

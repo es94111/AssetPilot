@@ -3367,3 +3367,30 @@ body.dark-mode ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,.2
 input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-visible {
   outline-offset: 0;
 }
+
+/* ── Passkey 登入按鈕 ── */
+.passkey-login-wrap { margin-top: 4px; }
+.passkey-login-btn {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  font-weight: 600; font-size: 15px; padding: 10px 16px;
+  border: 1.5px solid var(--primary); color: var(--primary); border-radius: 10px;
+  background: transparent; transition: background var(--transition-fast), color var(--transition-fast);
+}
+.passkey-login-btn:hover { background: var(--primary); color: #fff; }
+.passkey-login-btn i { font-size: 18px; }
+
+/* ── Passkey 管理列表 ── */
+.passkey-empty {
+  display: flex; align-items: center;
+  color: var(--text-muted); font-size: 14px; padding: 8px 0;
+}
+.passkey-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 12px; border-radius: 10px;
+  background: var(--bg); border: 1px solid var(--border);
+  margin-bottom: 8px; transition: background var(--transition-fast);
+}
+.passkey-item:hover { background: var(--surface); }
+.passkey-info { display: flex; align-items: center; gap: 4px; flex: 1; min-width: 0; }
+.passkey-name { font-weight: 600; font-size: 14px; color: var(--text); }
+.passkey-date { font-size: 12px; color: var(--text-muted); margin-left: 8px; }

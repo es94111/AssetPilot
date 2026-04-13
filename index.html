@@ -142,6 +142,13 @@
         </div>
         <div class="auth-error" id="loginError"></div>
         <button type="submit" class="btn btn-primary btn-block">登入</button>
+        <!-- Passkey 登入 -->
+        <div id="passkeyLoginWrap" class="passkey-login-wrap" style="display:none">
+          <div class="auth-divider"><span>或</span></div>
+          <button type="button" class="btn btn-outline btn-block passkey-login-btn" onclick="App.passkeyLogin()">
+            <i class="fas fa-fingerprint"></i> 使用 Passkey 登入
+          </button>
+        </div>
         <div class="auth-links">
           <a href="#" id="showRegister">還沒有帳號？立即註冊</a>
         </div>
@@ -1147,6 +1154,16 @@
               </div>
               <div id="googleLinkBtnWrap" style="margin-top:12px"></div>
             </div>
+          </div>
+        </div>
+        <div class="card" style="margin-top:16px">
+          <h3><i class="fas fa-fingerprint"></i> Passkey 無密碼登入</h3>
+          <p class="import-hint" style="margin-bottom:12px">使用指紋、Face ID 或裝置 PIN 碼快速登入，無需輸入密碼。可在多個裝置上註冊 Passkey。</p>
+          <div id="passkeyList"></div>
+          <div style="margin-top:12px">
+            <button type="button" class="btn btn-primary btn-sm" onclick="App.registerPasskey()">
+              <i class="fas fa-plus"></i> 新增 Passkey
+            </button>
           </div>
         </div>
         <div class="card danger-zone" style="margin-top:24px">

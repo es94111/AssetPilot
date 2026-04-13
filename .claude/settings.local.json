@@ -48,7 +48,8 @@
       "Bash(node -c app.js)",
       "Bash([ -f .env ])",
       "Bash([ -f database.db.bak ])",
-      "Bash(grep -E \"\\\\.\\(js|html\\)$\")"
+      "Bash(grep -E \"\\\\.\\(js|html\\)$\")",
+      "Bash(grep -E \"\\\\.\\(html|js|json\\)$\")"
     ]
   }
 }

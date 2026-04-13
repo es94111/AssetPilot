@@ -25,6 +25,7 @@ const jwt = require('jsonwebtoken');
 const cookieParser = require('cookie-parser');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const { server: webauthnServer } = require('@passwordless-id/webauthn');
 
 const app = express();
 // 信任反向代理（Nginx / Synology / Docker）傳遞的 X-Forwarded-For 標頭
@@ -646,6 +647,18 @@ async function initDB() {
     is_active INTEGER DEFAULT 1,
     last_generated TEXT,
     created_at INTEGER
+  )`);
+
+  // ─── Passkey (WebAuthn) 憑證資料表 ───
+  db.run(`CREATE TABLE IF NOT EXISTS passkey_credentials (
+    credential_id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    public_key TEXT NOT NULL,
+    algorithm TEXT NOT NULL,
+    transports TEXT DEFAULT '[]',
+    counter INTEGER DEFAULT 0,
+    device_name TEXT DEFAULT '',
+    created_at TEXT
   )`);
 
   // ─── 日期格式遷移：統一為 YYYY-MM-DD ───
@@ -1462,7 +1475,8 @@ function deleteUserData(userId) {
   const tables = [
     'stock_dividends', 'stock_transactions', 'stock_recurring', 'stocks',
     'transactions', 'budgets', 'recurring', 'accounts', 'categories',
-    'exchange_rates', 'exchange_rate_settings', 'stock_settings', 'login_audit_logs', 'login_attempt_logs'
+    'exchange_rates', 'exchange_rate_settings', 'stock_settings', 'login_audit_logs', 'login_attempt_logs',
+    'passkey_credentials'
   ];
   tables.forEach(t => {
     db.run(`DELETE FROM ${t} WHERE user_id = ?`, [userId]);
@@ -2012,6 +2026,95 @@ app.post('/api/auth/google', async (req, res) => {
   }
 });
 
+// ─── Passkey (WebAuthn) ───
+const passkeyChallenge = new Map(); // key → { challenge, userId?, expiresAt }
+
+function issuePasskeyChallenge(userId) {
+  const challenge = webauthnServer.randomChallenge();
+  const key = crypto.randomUUID();
+  passkeyChallenge.set(key, { challenge, userId: userId || null, expiresAt: Date.now() + 5 * 60 * 1000 });
+  // 清理過期
+  for (const [k, v] of passkeyChallenge) {
+    if (v.expiresAt < Date.now()) passkeyChallenge.delete(k);
+  }
+  return { key, challenge };
+}
+
+function consumePasskeyChallenge(key) {
+  const entry = passkeyChallenge.get(key);
+  if (!entry) return null;
+  passkeyChallenge.delete(key);
+  if (entry.expiresAt < Date.now()) return null;
+  return entry;
+}
+
+// 取得 challenge（公開，登入用）
+app.get('/api/auth/passkey/challenge', (req, res) => {
+  const { key, challenge } = issuePasskeyChallenge(null);
+  res.json({ key, challenge });
+});
+
+// Passkey 登入
+app.post('/api/auth/passkey/login', async (req, res) => {
+  const { authentication, challengeKey } = req.body;
+  if (!authentication || !challengeKey) return res.status(400).json({ error: '缺少認證資料' });
+
+  const entry = consumePasskeyChallenge(challengeKey);
+  if (!entry) return res.status(400).json({ error: 'Challenge 已過期或無效，請重試' });
+
+  // 用 credential id 查找憑證
+  const cred = queryOne("SELECT * FROM passkey_credentials WHERE credential_id = ?", [authentication.id]);
+  if (!cred) {
+    recordLoginAttempt({ email: '', req, method: 'passkey', isSuccess: false, failureReason: 'credential_not_found' });
+    return res.status(401).json({ error: '找不到對應的 Passkey 憑證' });
+  }
+
+  const user = queryOne("SELECT * FROM users WHERE id = ?", [cred.user_id]);
+  if (!user) return res.status(401).json({ error: '使用者不存在' });
+
+  try {
+    const credentialKey = {
+      id: cred.credential_id,
+      publicKey: cred.public_key,
+      algorithm: cred.algorithm,
+      transports: JSON.parse(cred.transports || '[]'),
+    };
+
+    const origin = req.headers.origin || `${req.protocol}://${req.headers.host}`;
+    const expected = {
+      challenge: entry.challenge,
+      origin,
+      userVerified: true,
+      counter: cred.counter,
+    };
+
+    const result = await webauthnServer.verifyAuthentication(authentication, credentialKey, expected);
+
+    // 更新 counter
+    db.run("UPDATE passkey_credentials SET counter = ? WHERE credential_id = ?", [result.authenticator.counter, cred.credential_id]);
+    saveDB();
+
+    loginAttempts.delete(user.email);
+    const currentLogin = recordLoginAudit(user, req, 'passkey');
+    recordLoginAttempt({ user, email: user.email, req, method: 'passkey', isSuccess: true });
+
+    const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: JWT_EXPIRES });
+    setAuthCookie(res, token);
+    res.json({
+      user: {
+        id: user.id, email: user.email, displayName: user.display_name,
+        googleLinked: !!user.google_id, hasPassword: !!user.has_password,
+        avatarUrl: user.avatar_url || '', themeMode: normalizeThemeMode(user.theme_mode), isAdmin: !!user.is_admin,
+      },
+      currentLogin,
+    });
+  } catch (e) {
+    console.error('Passkey 驗證失敗:', e.message);
+    recordLoginAttempt({ user, email: user.email, req, method: 'passkey', isSuccess: false, failureReason: 'verification_failed' });
+    return res.status(401).json({ error: 'Passkey 驗證失敗：' + e.message });
+  }
+});
+
 app.post('/api/auth/logout', (req, res) => {
   res.clearCookie('authToken');
   res.json({ ok: true });
@@ -2453,6 +2556,79 @@ app.post('/api/account/unlink-google', (req, res) => {
   if (!user || !user.google_id) return res.status(400).json({ error: '尚未綁定 Google 帳號' });
 
   db.run("UPDATE users SET google_id = '' WHERE id = ?", [req.userId]);
+  saveDB();
+  res.json({ success: true });
+});
+
+// ─── Passkey 管理（需登入）───
+
+// 取得 challenge（已登入，註冊用）
+app.get('/api/account/passkey/challenge', (req, res) => {
+  const { key, challenge } = issuePasskeyChallenge(req.userId);
+  res.json({ key, challenge });
+});
+
+// 列出已註冊的 Passkeys
+app.get('/api/account/passkeys', (req, res) => {
+  const rows = queryAll("SELECT credential_id, device_name, created_at FROM passkey_credentials WHERE user_id = ? ORDER BY created_at DESC", [req.userId]);
+  res.json({ passkeys: rows.map(r => ({ id: r.credential_id, deviceName: r.device_name, createdAt: r.created_at })) });
+});
+
+// 註冊新 Passkey
+app.post('/api/account/passkey/register', async (req, res) => {
+  const { registration, challengeKey, deviceName } = req.body;
+  if (!registration || !challengeKey) return res.status(400).json({ error: '缺少註冊資料' });
+
+  const entry = consumePasskeyChallenge(challengeKey);
+  if (!entry) return res.status(400).json({ error: 'Challenge 已過期或無效，請重試' });
+  if (entry.userId !== req.userId) return res.status(400).json({ error: 'Challenge 不匹配' });
+
+  try {
+    const origin = req.headers.origin || `${req.protocol}://${req.headers.host}`;
+    const expected = {
+      challenge: entry.challenge,
+      origin,
+      userVerified: true,
+    };
+
+    const result = await webauthnServer.verifyRegistration(registration, expected);
+
+    const existing = queryOne("SELECT credential_id FROM passkey_credentials WHERE credential_id = ?", [result.credential.id]);
+    if (existing) return res.status(400).json({ error: '此 Passkey 已註冊過' });
+
+    db.run(
+      "INSERT INTO passkey_credentials (credential_id, user_id, public_key, algorithm, transports, counter, device_name, created_at) VALUES (?,?,?,?,?,?,?,?)",
+      [result.credential.id, req.userId, result.credential.publicKey, result.credential.algorithm, JSON.stringify(result.credential.transports || []), 0, String(deviceName || '').trim() || 'Passkey', todayStr()]
+    );
+    saveDB();
+    res.json({ success: true, id: result.credential.id });
+  } catch (e) {
+    console.error('Passkey 註冊驗證失敗:', e.message);
+    return res.status(400).json({ error: 'Passkey 註冊驗證失敗：' + e.message });
+  }
+});
+
+// 刪除 Passkey
+app.delete('/api/account/passkey/:id', (req, res) => {
+  const credId = req.params.id;
+  const cred = queryOne("SELECT credential_id FROM passkey_credentials WHERE credential_id = ? AND user_id = ?", [credId, req.userId]);
+  if (!cred) return res.status(404).json({ error: '找不到此 Passkey' });
+
+  db.run("DELETE FROM passkey_credentials WHERE credential_id = ? AND user_id = ?", [credId, req.userId]);
+  saveDB();
+  res.json({ success: true });
+});
+
+// 重新命名 Passkey
+app.put('/api/account/passkey/:id', (req, res) => {
+  const credId = req.params.id;
+  const deviceName = String(req.body?.deviceName || '').trim();
+  if (!deviceName) return res.status(400).json({ error: '請輸入名稱' });
+
+  const cred = queryOne("SELECT credential_id FROM passkey_credentials WHERE credential_id = ? AND user_id = ?", [credId, req.userId]);
+  if (!cred) return res.status(404).json({ error: '找不到此 Passkey' });
+
+  db.run("UPDATE passkey_credentials SET device_name = ? WHERE credential_id = ? AND user_id = ?", [deviceName, credId, req.userId]);
   saveDB();
   res.json({ success: true });
 });

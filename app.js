@@ -823,6 +823,8 @@ const App = (() => {
 
     // Google SSO 初始化
     initGoogleSSO();
+    // Passkey 按鈕初始化
+    initPasskeyUI();
   }
 
   async function refreshCache() {
@@ -4304,6 +4306,7 @@ const App = (() => {
 
       await renderExchangeRateSettings();
       bindExchangeRateSettingsIfNeeded();
+      await renderPasskeyList();
 
       if (!accountSettingsBound) {
         document.querySelectorAll('input[name="themeMode"]').forEach(input => {
@@ -6671,6 +6674,119 @@ const App = (() => {
   }
 
   // ─── 公開 API ───
+  // ─── Passkey (WebAuthn) ───
+  const passkeyAvailable = typeof window.PublicKeyCredential !== 'undefined';
+
+  function initPasskeyUI() {
+    if (!passkeyAvailable) return;
+    const wrap = el('passkeyLoginWrap');
+    if (wrap) wrap.style.display = '';
+  }
+
+  async function passkeyLogin() {
+    if (!passkeyAvailable) { toast('此瀏覽器不支援 Passkey', 'error'); return; }
+    const errEl = el('loginError');
+    if (errEl) errEl.textContent = '';
+    try {
+      // 1. 取得 challenge
+      const { key, challenge } = await (await fetch('/api/auth/passkey/challenge')).json();
+
+      // 2. 呼叫瀏覽器 WebAuthn API
+      const { client } = await import('https://cdn.jsdelivr.net/npm/@passwordless-id/webauthn@2/dist/webauthn.min.js');
+      const authentication = await client.authenticate({
+        challenge,
+        userVerification: 'preferred',
+      });
+
+      // 3. 送到後端驗證
+      const r = await fetch('/api/auth/passkey/login', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ authentication, challengeKey: key }),
+      });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error || 'Passkey 登入失敗');
+
+      currentUser = data.user;
+      latestLoginRecord = data.currentLogin || null;
+      await enterApp();
+    } catch (err) {
+      if (err.name === 'NotAllowedError') return; // 使用者取消
+      if (errEl) errEl.textContent = err.message || 'Passkey 登入失敗';
+    }
+  }
+
+  async function registerPasskey() {
+    if (!passkeyAvailable) { toast('此瀏覽器不支援 Passkey', 'error'); return; }
+    try {
+      // 1. 取得 challenge
+      const { key, challenge } = await API.get('/api/account/passkey/challenge');
+
+      // 2. 呼叫瀏覽器 WebAuthn API
+      const { client } = await import('https://cdn.jsdelivr.net/npm/@passwordless-id/webauthn@2/dist/webauthn.min.js');
+      const registration = await client.register({
+        user: currentUser?.displayName || currentUser?.email || 'User',
+        challenge,
+        discoverable: 'required',
+        userVerification: 'required',
+      });
+
+      // 3. 命名
+      const deviceName = prompt('為此 Passkey 命名（例如：MacBook、iPhone）：', 'Passkey') || 'Passkey';
+
+      // 4. 送到後端驗證並儲存
+      await API.post('/api/account/passkey/register', {
+        registration,
+        challengeKey: key,
+        deviceName: deviceName.trim(),
+      });
+
+      toast('Passkey 已註冊成功', 'success');
+      await renderPasskeyList();
+    } catch (err) {
+      if (err.name === 'NotAllowedError') return; // 使用者取消
+      toast(err.message || 'Passkey 註冊失敗', 'error');
+    }
+  }
+
+  async function renderPasskeyList() {
+    const container = el('passkeyList');
+    if (!container) return;
+    try {
+      const { passkeys } = await API.get('/api/account/passkeys');
+      if (!passkeys || passkeys.length === 0) {
+        container.innerHTML = `<div class="passkey-empty"><i class="fas fa-key" style="color:var(--text-muted);margin-right:6px"></i>尚未註冊任何 Passkey</div>`;
+        return;
+      }
+      container.innerHTML = passkeys.map(pk => `
+        <div class="passkey-item">
+          <div class="passkey-info">
+            <i class="fas fa-fingerprint" style="color:var(--primary);margin-right:8px"></i>
+            <span class="passkey-name">${escHtml(pk.deviceName || 'Passkey')}</span>
+            <span class="passkey-date">${pk.createdAt || ''}</span>
+          </div>
+          <button class="btn-icon danger" onclick="App.deletePasskey('${escHtml(pk.id)}')" title="刪除">
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>
+      `).join('');
+    } catch {
+      container.innerHTML = '<span style="color:var(--text-muted);font-size:13px">載入 Passkey 列表失敗</span>';
+    }
+  }
+
+  async function deletePasskey(credId) {
+    if (!confirm('確定要刪除此 Passkey？刪除後將無法使用此裝置進行無密碼登入。')) return;
+    try {
+      await API.delete('/api/account/passkey/' + encodeURIComponent(credId));
+      toast('Passkey 已刪除', 'success');
+      await renderPasskeyList();
+    } catch (err) {
+      toast(err.message || '刪除失敗', 'error');
+    }
+  }
+
   return {
     init,
     closeModal,
@@ -6726,6 +6842,9 @@ const App = (() => {
     adminAllLoginLogGoPage,
     openChangelog,
     googleFallbackLogin,
+    passkeyLogin,
+    registerPasskey,
+    deletePasskey,
   };
 })();
 

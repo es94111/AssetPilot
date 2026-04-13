@@ -5863,6 +5863,9 @@ const App = (() => {
     el('txCurrency').value = 'TWD';
     el('txFxRate').value = '';
     el('txConvertedHint').textContent = '';
+    el('txFxFee').value = '';
+    el('txFxFeeRate').value = '1.5';
+    txFxFeeManual = false;
     el('txExcludeFromStats').checked = false;
     populateTxSelects();
     if (txId) {
@@ -5883,12 +5886,17 @@ const App = (() => {
       el('txAccount').value = t.accountId || t.account_id;
       el('txNote').value = t.note || '';
       el('txExcludeFromStats').checked = !!t.excludeFromStats;
+      if (Number(t.fxFee) > 0) {
+        el('txFxFee').value = t.fxFee;
+        txFxFeeManual = true; // 保留編輯時的手續費金額
+      }
       refreshTxFxUi();
     } else {
       el('txId').value = '';
       el('modalTransactionTitle').textContent = '新增交易';
       updateTxFormForType('expense');
       applyAccountCurrencyToTx();
+      refreshTxFxUi();
     }
     openModal('modalTransaction');
   }
@@ -5949,6 +5957,15 @@ const App = (() => {
     await applyAndFetchCurrencyRate(c);
   }
 
+  let txFxFeeManual = false; // 使用者是否手動修改了手續費金額
+
+  function isTxAccountCreditCard() {
+    const accountId = el('txAccount')?.value;
+    if (!accountId) return false;
+    const account = cachedAccounts.find(a => a.id === accountId);
+    return (account?.account_type || '') === '信用卡';
+  }
+
   function refreshTxFxUi() {
     const type = document.querySelector('input[name="txType"]:checked')?.value || 'expense';
     const isTransfer = type === 'transfer';
@@ -5963,6 +5980,23 @@ const App = (() => {
     el('txConvertedHint').textContent = showFx && original > 0
       ? `約為 ${fmt(twd)}（匯率 ${rate}）`
       : '';
+
+    // 海外刷卡手續費：外幣 + 信用卡 + 支出
+    const showFee = showFx && type === 'expense' && isTxAccountCreditCard();
+    el('txFxFeeRow').style.display = showFee ? '' : 'none';
+    if (showFee && !txFxFeeManual) {
+      const feeRate = Number(el('txFxFeeRate').value) || 0;
+      const fee = Math.round(twd * feeRate / 100);
+      el('txFxFee').value = fee > 0 ? fee : '';
+    }
+    // 手續費摘要
+    const fee = Number(el('txFxFee').value) || 0;
+    const summaryEl = el('txFxFeeSummary');
+    if (showFee && twd > 0 && fee > 0) {
+      summaryEl.textContent = `${fmt(twd)} + 手續費 ${fmt(fee)} = 合計 ${fmt(twd + fee)}`;
+    } else {
+      summaryEl.textContent = '';
+    }
   }
 
   function buildCategoryOptions(type) {
@@ -6262,7 +6296,9 @@ const App = (() => {
     });
     el('recFxRate')?.addEventListener('input', refreshRecFxUi);
     el('recAmount')?.addEventListener('input', refreshRecFxUi);
-    el('txAccount')?.addEventListener('change', () => applyAccountCurrencyToTx());
+    el('txAccount')?.addEventListener('change', () => { applyAccountCurrencyToTx(); refreshTxFxUi(); });
+    el('txFxFeeRate')?.addEventListener('input', () => { txFxFeeManual = false; refreshTxFxUi(); });
+    el('txFxFee')?.addEventListener('input', () => { txFxFeeManual = true; refreshTxFxUi(); });
 
     // FAB
     el('fabBtn').addEventListener('click', () => {
@@ -6301,11 +6337,13 @@ const App = (() => {
           const currency = normalizeCurrencyCode(el('txCurrency').value);
           const originalAmount = amount;
           const fxRate = currency === 'TWD' ? 1 : Number(el('txFxRate').value || getRateToTwd(currency));
+          const showFee = currency !== 'TWD' && type === 'expense' && isTxAccountCreditCard();
+          const fxFee = showFee ? (Number(el('txFxFee').value) || 0) : 0;
           const excludeFromStats = el('txExcludeFromStats').checked;
           if (id) {
-            await API.put('/api/transactions/' + id, { type, amount, originalAmount, currency, fxRate, date, categoryId, accountId, note, excludeFromStats });
+            await API.put('/api/transactions/' + id, { type, amount, originalAmount, currency, fxRate, fxFee, date, categoryId, accountId, note, excludeFromStats });
           } else {
-            await API.post('/api/transactions', { type, amount, originalAmount, currency, fxRate, date, categoryId, accountId, note, excludeFromStats });
+            await API.post('/api/transactions', { type, amount, originalAmount, currency, fxRate, fxFee, date, categoryId, accountId, note, excludeFromStats });
           }
           closeModal('modalTransaction');
           toast(id ? '交易已更新' : '交易已新增', 'success');

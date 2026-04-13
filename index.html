@@ -1453,7 +1453,7 @@
         </div>
         <div class="form-row" id="txFxRateRow" style="display:none">
           <label>匯率（1 單位外幣 = 幾元 TWD）<span class="required">*</span></label>
-          <input type="number" id="txFxRate" min="0.000001" step="0.000001" placeholder="例如 31.5">
+          <input type="number" id="txFxRate" min="0.000001" step="any" placeholder="例如 31.5">
           <div class="import-hint" id="txConvertedHint" style="margin-top:6px"></div>
         </div>
         <div class="form-row">
@@ -1752,7 +1752,7 @@
         </div>
         <div class="form-row" id="recFxRateRow" style="display:none">
           <label>匯率（1 單位外幣 = 幾元 TWD）<span class="required">*</span></label>
-          <input type="number" id="recFxRate" min="0.000001" step="0.000001" placeholder="例如 31.5">
+          <input type="number" id="recFxRate" min="0.000001" step="any" placeholder="例如 31.5">
           <div class="import-hint" id="recConvertedHint" style="margin-top:6px"></div>
         </div>
         <div class="form-row">
@@ -1837,7 +1837,7 @@
   <!-- ===== 確認刪除 Modal ===== -->
   <!-- ===== 批次變更 Modal ===== -->
   <div class="modal-overlay" id="modalBatchChange">
-    <div class="modal modal-sm">
+    <div class="modal" style="max-width:460px">
       <div class="modal-header">
         <h3 id="batchChangeTitle">批次變更</h3>
         <button class="modal-close" onclick="App.closeModal('modalBatchChange')">&times;</button>
@@ -1846,7 +1846,15 @@
         <input type="hidden" id="batchField">
         <div class="form-row" id="batchCatRow" style="display:none">
           <label>分類</label>
-          <select id="batchCategory"></select>
+          <input type="hidden" id="batchCategory">
+          <div class="batch-cat-picker" id="batchCatPicker">
+            <button type="button" class="batch-cat-trigger" id="batchCatTrigger">
+              <span class="batch-cat-dot" id="batchCatDot"></span>
+              <span class="batch-cat-label" id="batchCatLabel">選擇分類</span>
+              <i class="fas fa-chevron-down batch-cat-arrow"></i>
+            </button>
+            <div class="batch-cat-dropdown" id="batchCatDropdown"></div>
+          </div>
         </div>
         <div class="form-row" id="batchAccRow" style="display:none">
           <label>帳戶</label>

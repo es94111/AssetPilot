@@ -2580,7 +2580,7 @@ app.delete('/api/categories/:id', (req, res) => {
     // 刪除所有子分類
     db.run("DELETE FROM categories WHERE parent_id = ? AND user_id = ?", [req.params.id, req.userId]);
   }
-  db.run("DELETE FROM categories WHERE id = ? AND user_id = ? AND is_default = 0", [req.params.id, req.userId]);
+  db.run("DELETE FROM categories WHERE id = ? AND user_id = ?", [req.params.id, req.userId]);
   saveDB();
   res.json({ ok: true });
 });

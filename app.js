@@ -1598,10 +1598,7 @@ const App = (() => {
     el('batchDateRow').style.display = 'none';
     if (field === 'category') {
       el('batchChangeTitle').textContent = `批次變更分類（${selectedTxIds.size} 筆）`;
-      // 合併支出+收入分類供選擇
-      let html = '<optgroup label="支出">' + buildCategoryOptions('expense') + '</optgroup>';
-      html += '<optgroup label="收入">' + buildCategoryOptions('income') + '</optgroup>';
-      el('batchCategory').innerHTML = html;
+      buildBatchCatPicker();
       el('batchCatRow').style.display = '';
     } else if (field === 'account') {
       el('batchChangeTitle').textContent = `批次變更帳戶（${selectedTxIds.size} 筆）`;
@@ -1613,6 +1610,79 @@ const App = (() => {
       el('batchDateRow').style.display = '';
     }
     openModal('modalBatchChange');
+  }
+
+  function buildBatchCatPicker() {
+    const dropdown = el('batchCatDropdown');
+    const trigger = el('batchCatTrigger');
+    const hiddenInput = el('batchCategory');
+    const dotEl = el('batchCatDot');
+    const labelEl = el('batchCatLabel');
+
+    // 建構下拉內容
+    let html = '';
+    ['expense', 'income'].forEach(type => {
+      html += `<div class="batch-cat-section">${type === 'expense' ? '支出' : '收入'}</div>`;
+      const cats = cachedCategories.filter(c => c.type === type && !c.isHidden);
+      const parents = cats.filter(c => !c.parentId);
+      parents.forEach(p => {
+        const children = cats.filter(c => c.parentId === p.id);
+        if (children.length > 0) {
+          html += `<div class="batch-cat-group-label"><span class="batch-cat-color" style="background:${/^#[0-9a-fA-F]{3,8}$/.test(p.color) ? p.color : '#ccc'}"></span>${escHtml(p.name)}</div>`;
+          children.forEach(c => {
+            html += `<div class="batch-cat-item" data-id="${c.id}" data-color="${escHtml(c.color)}" data-name="${escHtml(c.name)}"><span class="batch-cat-color" style="background:${/^#[0-9a-fA-F]{3,8}$/.test(c.color) ? c.color : '#ccc'}"></span>${escHtml(c.name)}</div>`;
+          });
+        } else {
+          html += `<div class="batch-cat-item top-level" data-id="${p.id}" data-color="${escHtml(p.color)}" data-name="${escHtml(p.name)}"><span class="batch-cat-color" style="background:${/^#[0-9a-fA-F]{3,8}$/.test(p.color) ? p.color : '#ccc'}"></span>${escHtml(p.name)}</div>`;
+        }
+      });
+    });
+    dropdown.innerHTML = html;
+
+    // 預設選第一個可選項
+    const firstItem = dropdown.querySelector('.batch-cat-item');
+    if (firstItem) selectBatchCat(firstItem);
+
+    // 開關下拉
+    trigger.onclick = (e) => {
+      e.stopPropagation();
+      const isOpen = dropdown.classList.contains('open');
+      dropdown.classList.toggle('open', !isOpen);
+      trigger.classList.toggle('active', !isOpen);
+    };
+
+    // 選擇項目
+    dropdown.onclick = (e) => {
+      const item = e.target.closest('.batch-cat-item');
+      if (!item) return;
+      selectBatchCat(item);
+      dropdown.classList.remove('open');
+      trigger.classList.remove('active');
+    };
+
+    // 點外面關閉
+    const closeDropdown = (e) => {
+      if (!e.target.closest('.batch-cat-picker')) {
+        dropdown.classList.remove('open');
+        trigger.classList.remove('active');
+      }
+    };
+    document.removeEventListener('click', closeDropdown);
+    document.addEventListener('click', closeDropdown);
+
+    function selectBatchCat(item) {
+      dropdown.querySelectorAll('.batch-cat-item').forEach(i => i.classList.remove('selected'));
+      item.classList.add('selected');
+      hiddenInput.value = item.dataset.id;
+      labelEl.textContent = item.dataset.name;
+      const color = item.dataset.color;
+      if (/^#[0-9a-fA-F]{3,8}$/.test(color)) {
+        dotEl.style.background = color;
+        dotEl.classList.add('visible');
+      } else {
+        dotEl.classList.remove('visible');
+      }
+    }
   }
 
   // ─── 統計報表 ───
@@ -3830,9 +3900,7 @@ const App = (() => {
   }
 
   function catItemHtml(c, isSub) {
-    const delBtn = c.isDefault
-      ? ''
-      : `<button class="btn-icon danger" onclick="App.deleteCategory('${c.id}')" title="刪除"><i class="fas fa-trash"></i></button>`;
+    const delBtn = `<button class="btn-icon danger" onclick="App.deleteCategory('${c.id}')" title="刪除"><i class="fas fa-trash"></i></button>`;
     const addSubBtn = !isSub
       ? `<button class="btn-icon" onclick="App.openCategoryModal('${c.type}', null, '${c.id}')" title="新增子分類"><i class="fas fa-plus"></i></button>`
       : '';

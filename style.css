@@ -3368,6 +3368,23 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
   outline-offset: 0;
 }
 
+/* ── 海外刷卡手續費 ── */
+.fx-fee-group {
+  display: flex; gap: 8px; align-items: center;
+}
+.fx-fee-group #txFxFee { flex: 1; }
+.fx-fee-rate-wrap {
+  display: flex; align-items: center; gap: 2px;
+  min-width: 90px; flex-shrink: 0;
+}
+.fx-fee-rate-wrap input {
+  width: 60px; text-align: center;
+  padding: 8px 4px; font-size: 14px;
+}
+.fx-fee-rate-unit {
+  font-size: 14px; color: var(--text-muted); font-weight: 600;
+}
+
 /* ── Passkey 登入按鈕 ── */
 .passkey-login-wrap { margin-top: 4px; }
 .passkey-login-btn {

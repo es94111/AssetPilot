@@ -1488,6 +1488,17 @@
           <input type="number" id="txFxRate" min="0.000001" step="any" placeholder="例如 31.5">
           <div class="import-hint" id="txConvertedHint" style="margin-top:6px"></div>
         </div>
+        <div class="form-row" id="txFxFeeRow" style="display:none">
+          <label>海外刷卡手續費（TWD）</label>
+          <div class="fx-fee-group">
+            <input type="number" id="txFxFee" min="0" step="0.01" placeholder="0">
+            <div class="fx-fee-rate-wrap">
+              <input type="number" id="txFxFeeRate" min="0" max="100" step="0.1" value="1.5">
+              <span class="fx-fee-rate-unit">%</span>
+            </div>
+          </div>
+          <div class="import-hint" id="txFxFeeSummary" style="margin-top:6px"></div>
+        </div>
         <div class="form-row">
           <label>日期 <span class="required">*</span></label>
           <input type="date" id="txDate" required>

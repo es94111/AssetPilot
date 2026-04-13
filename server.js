@@ -572,6 +572,7 @@ async function initDB() {
   try { db.run("ALTER TABLE transactions ADD COLUMN original_amount REAL DEFAULT 0"); } catch (e) { /* ignore */ }
   try { db.run("ALTER TABLE transactions ADD COLUMN fx_rate REAL DEFAULT 1"); } catch (e) { /* ignore */ }
   try { db.run("ALTER TABLE transactions ADD COLUMN exclude_from_stats INTEGER DEFAULT 0"); } catch (e) { /* ignore */ }
+  try { db.run("ALTER TABLE transactions ADD COLUMN fx_fee REAL DEFAULT 0"); } catch (e) { /* ignore */ }
   try { db.run("ALTER TABLE recurring ADD COLUMN currency TEXT DEFAULT 'TWD'"); } catch (e) { /* ignore */ }
   try { db.run("ALTER TABLE recurring ADD COLUMN fx_rate REAL DEFAULT 1"); } catch (e) { /* ignore */ }
   try { db.run("ALTER TABLE login_audit_logs ADD COLUMN country TEXT DEFAULT ''"); } catch (e) { /* ignore */ }
@@ -3049,6 +3050,7 @@ app.get('/api/transactions', (req, res) => {
       currency: normalizeCurrency(r.currency),
       originalAmount: Number(r.original_amount) > 0 ? Number(r.original_amount) : Number(r.amount) || 0,
       fxRate: Number(r.fx_rate) > 0 ? Number(r.fx_rate) : 1,
+      fxFee: Number(r.fx_fee) || 0,
       excludeFromStats: r.exclude_from_stats === 1,
       createdAt: r.created_at,
       updatedAt: r.updated_at,
@@ -3066,10 +3068,12 @@ app.post('/api/transactions', (req, res) => {
   } catch (e) {
     return res.status(400).json({ error: e.message || '金額格式錯誤' });
   }
+  const fxFee = Math.max(0, Number(req.body.fxFee) || 0);
+  const totalTwd = converted.twdAmount + fxFee;
   const id = uid();
   const now = Date.now();
-  db.run("INSERT INTO transactions (id, user_id, type, amount, currency, original_amount, fx_rate, date, category_id, account_id, note, exclude_from_stats, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-    [id, req.userId, type, converted.twdAmount, converted.currency, converted.originalAmount, converted.fxRate, date, categoryId, accountId, note || '', excludeFromStats ? 1 : 0, now, now]);
+  db.run("INSERT INTO transactions (id, user_id, type, amount, currency, original_amount, fx_rate, fx_fee, date, category_id, account_id, note, exclude_from_stats, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+    [id, req.userId, type, totalTwd, converted.currency, converted.originalAmount, converted.fxRate, fxFee, date, categoryId, accountId, note || '', excludeFromStats ? 1 : 0, now, now]);
   saveDB();
   res.json({ id });
 });
@@ -3083,8 +3087,10 @@ app.put('/api/transactions/:id', (req, res) => {
   } catch (e) {
     return res.status(400).json({ error: e.message || '金額格式錯誤' });
   }
-  db.run("UPDATE transactions SET type=?, amount=?, currency=?, original_amount=?, fx_rate=?, date=?, category_id=?, account_id=?, note=?, exclude_from_stats=?, updated_at=? WHERE id=? AND user_id=?",
-    [type, converted.twdAmount, converted.currency, converted.originalAmount, converted.fxRate, date, categoryId, accountId, note || '', excludeFromStats ? 1 : 0, Date.now(), req.params.id, req.userId]);
+  const fxFee = Math.max(0, Number(req.body.fxFee) || 0);
+  const totalTwd = converted.twdAmount + fxFee;
+  db.run("UPDATE transactions SET type=?, amount=?, currency=?, original_amount=?, fx_rate=?, fx_fee=?, date=?, category_id=?, account_id=?, note=?, exclude_from_stats=?, updated_at=? WHERE id=? AND user_id=?",
+    [type, totalTwd, converted.currency, converted.originalAmount, converted.fxRate, fxFee, date, categoryId, accountId, note || '', excludeFromStats ? 1 : 0, Date.now(), req.params.id, req.userId]);
   saveDB();
   res.json({ ok: true });
 });

@@ -1,6 +1,18 @@
 {
-  "currentVersion": "4.10.1",
+  "currentVersion": "4.10.2",
   "releases": [
+    {
+      "version": "4.10.2",
+      "date": "2026-04-13",
+      "title": "Passkey 修正、登入頁佈局調整與登入紀錄分頁",
+      "type": "fix",
+      "changes": [
+        { "tag": "fixed", "text": "修正 Passkey 登入驗證時 counter 屬性路徑錯誤導致驗證失敗的問題" },
+        { "tag": "improved", "text": "登入頁佈局調整：帳號密碼欄位在上，Google SSO 與 Passkey 按鈕統一移至登入按鈕下方的替代登入區塊" },
+        { "tag": "new", "text": "帳號設定「登入紀錄」新增每頁筆數選擇（10 / 20 / 50 / 100 / 自訂）與分頁導覽列" },
+        { "tag": "removed", "text": "移除登入頁底部的「版本更新資訊」按鈕" }
+      ]
+    },
     {
       "version": "4.10.1",
       "date": "2026-04-13",

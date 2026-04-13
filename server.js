@@ -2092,7 +2092,7 @@ app.post('/api/auth/passkey/login', async (req, res) => {
     const result = await webauthnServer.verifyAuthentication(authentication, credentialKey, expected);
 
     // 更新 counter
-    db.run("UPDATE passkey_credentials SET counter = ? WHERE credential_id = ?", [result.authenticator.counter, cred.credential_id]);
+    db.run("UPDATE passkey_credentials SET counter = ? WHERE credential_id = ?", [result.counter || 0, cred.credential_id]);
     saveDB();
 
     loginAttempts.delete(user.email);

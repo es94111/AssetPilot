@@ -1519,8 +1519,8 @@ app.post('/api/auth/register', async (req, res) => {
   if (password.length < 8) {
     return res.status(400).json({ error: '密碼長度至少 8 字元' });
   }
-  if (!/[a-zA-Z]/.test(password) || !/\d/.test(password)) {
-    return res.status(400).json({ error: '密碼需包含英文字母與數字' });
+  if (!/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/\d/.test(password) || !/[^a-zA-Z0-9]/.test(password)) {
+    return res.status(400).json({ error: '密碼需包含大寫字母、小寫字母、數字與特殊符號' });
   }
   const emailLower = normalizeEmail(email);
   const registerCheck = canSelfRegister(emailLower);
@@ -2361,12 +2361,17 @@ app.put('/api/admin/users/:id/password', adminMiddleware, async (req, res) => {
   if (!targetId) return res.status(400).json({ error: '缺少使用者 ID' });
   if (!newPassword) return res.status(400).json({ error: '請輸入新密碼' });
   if (newPassword.length < 8) return res.status(400).json({ error: '新密碼長度至少 8 字元' });
-  if (!/[a-zA-Z]/.test(newPassword) || !/\d/.test(newPassword)) {
-    return res.status(400).json({ error: '新密碼需包含英文字母與數字' });
+  if (!/[A-Z]/.test(newPassword) || !/[a-z]/.test(newPassword) || !/\d/.test(newPassword) || !/[^a-zA-Z0-9]/.test(newPassword)) {
+    return res.status(400).json({ error: '新密碼需包含大寫字母、小寫字母、數字與特殊符號' });
   }
 
-  const user = queryOne("SELECT id FROM users WHERE id = ?", [targetId]);
+  const user = queryOne("SELECT id, password_hash FROM users WHERE id = ?", [targetId]);
   if (!user) return res.status(404).json({ error: '使用者不存在' });
+
+  if (user.password_hash) {
+    const sameAsOld = await bcrypt.compare(newPassword, user.password_hash);
+    if (sameAsOld) return res.status(400).json({ error: '新密碼不可與目前密碼相同' });
+  }
 
   const passwordHash = await bcrypt.hash(newPassword, 10);
   db.run("UPDATE users SET password_hash = ?, has_password = 1 WHERE id = ?", [passwordHash, targetId]);
@@ -2478,8 +2483,8 @@ app.put('/api/account/password', async (req, res) => {
 
   if (!newPassword) return res.status(400).json({ error: '請輸入新密碼' });
   if (newPassword.length < 8) return res.status(400).json({ error: '新密碼長度至少 8 字元' });
-  if (!/[a-zA-Z]/.test(newPassword) || !/\d/.test(newPassword)) {
-    return res.status(400).json({ error: '新密碼需包含英文字母與數字' });
+  if (!/[A-Z]/.test(newPassword) || !/[a-z]/.test(newPassword) || !/\d/.test(newPassword) || !/[^a-zA-Z0-9]/.test(newPassword)) {
+    return res.status(400).json({ error: '新密碼需包含大寫字母、小寫字母、數字與特殊符號' });
   }
 
   const user = queryOne("SELECT id, password_hash, has_password FROM users WHERE id = ?", [req.userId]);

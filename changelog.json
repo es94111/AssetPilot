@@ -1,6 +1,17 @@
 {
-  "currentVersion": "4.9.2",
+  "currentVersion": "4.9.3",
   "releases": [
+    {
+      "version": "4.9.3",
+      "date": "2026-04-13",
+      "title": "強化密碼安全性規則",
+      "type": "feature",
+      "changes": [
+        { "tag": "improved", "text": "密碼強度規則升級：註冊、修改密碼、管理員重設密碼皆需包含大寫字母、小寫字母、數字與特殊符號（原僅要求英文字母與數字）" },
+        { "tag": "improved", "text": "管理員重設密碼新增新舊密碼相同檢查（bcrypt.compare 比對現有雜湊），防止重設為相同密碼" },
+        { "tag": "improved", "text": "註冊表單新增前端密碼強度即時驗證（原僅靠後端驗證），提升使用者體驗" }
+      ]
+    },
     {
       "version": "4.9.2",
       "date": "2026-04-13",

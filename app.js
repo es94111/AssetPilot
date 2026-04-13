@@ -470,6 +470,14 @@ const App = (() => {
     const confirm = el('regPasswordConfirm').value;
     el('registerError').textContent = '';
 
+    if (password.length < 8) {
+      el('registerError').textContent = '密碼長度至少 8 字元';
+      return;
+    }
+    if (!/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/\d/.test(password) || !/[^a-zA-Z0-9]/.test(password)) {
+      el('registerError').textContent = '密碼需包含大寫字母、小寫字母、數字與特殊符號';
+      return;
+    }
     if (password !== confirm) {
       el('registerError').textContent = '兩次密碼不一致';
       return;
@@ -4282,7 +4290,7 @@ const App = (() => {
       const currentPasswordWrap = el('accountCurrentPasswordWrap');
       if (user.hasPassword) {
         if (passwordCardTitle) passwordCardTitle.textContent = '修改密碼';
-        if (passwordHint) passwordHint.textContent = '為保護帳號安全，新密碼至少 8 字元，且需包含英文字母與數字。';
+        if (passwordHint) passwordHint.textContent = '為保護帳號安全，新密碼至少 8 字元，且需包含大寫字母、小寫字母、數字與特殊符號。';
         if (passwordSubmitText) passwordSubmitText.textContent = '更新密碼';
         if (currentPasswordWrap) currentPasswordWrap.style.display = '';
       } else {
@@ -4345,8 +4353,8 @@ const App = (() => {
           if (!isGoogleOnly && !currentPassword) { showError('請輸入目前密碼'); return; }
           if (!newPassword) { showError('請輸入新密碼'); return; }
           if (newPassword.length < 8) { showError('新密碼長度至少 8 字元'); return; }
-          if (!/[a-zA-Z]/.test(newPassword) || !/\d/.test(newPassword)) {
-            showError('新密碼需包含英文字母與數字'); return;
+          if (!/[A-Z]/.test(newPassword) || !/[a-z]/.test(newPassword) || !/\d/.test(newPassword) || !/[^a-zA-Z0-9]/.test(newPassword)) {
+            showError('新密碼需包含大寫字母、小寫字母、數字與特殊符號'); return;
           }
           if (newPassword !== confirmPassword) { showError('兩次輸入的新密碼不一致'); return; }
           try {
@@ -5000,8 +5008,8 @@ const App = (() => {
       if (!userId) { showError('缺少使用者 ID'); return; }
       if (!newPassword) { showError('請輸入新密碼'); return; }
       if (newPassword.length < 8) { showError('新密碼長度至少 8 字元'); return; }
-      if (!/[a-zA-Z]/.test(newPassword) || !/\d/.test(newPassword)) {
-        showError('新密碼需包含英文字母與數字'); return;
+      if (!/[A-Z]/.test(newPassword) || !/[a-z]/.test(newPassword) || !/\d/.test(newPassword) || !/[^a-zA-Z0-9]/.test(newPassword)) {
+        showError('新密碼需包含大寫字母、小寫字母、數字與特殊符號'); return;
       }
       if (newPassword !== confirmPassword) { showError('兩次輸入的新密碼不一致'); return; }
       try {

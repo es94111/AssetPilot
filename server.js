@@ -284,12 +284,13 @@ app.use(express.json({ limit: '50mb' }));
 app.use(cookieParser());
 
 // 僅開放必要前端靜態檔，避免專案根目錄檔案外洩
-const PUBLIC_FILES = ['/app.js', '/style.css', '/logo.svg', '/favicon.svg'];
+const PUBLIC_FILES = ['/app.js', '/style.css', '/logo.svg', '/favicon.svg', '/vendor/webauthn.min.js'];
 const PUBLIC_FILE_MAP = Object.freeze({
   '/app.js': path.join(__dirname, 'app.js'),
   '/style.css': path.join(__dirname, 'style.css'),
   '/logo.svg': path.join(__dirname, 'logo.svg'),
   '/favicon.svg': path.join(__dirname, 'favicon.svg'),
+  '/vendor/webauthn.min.js': path.join(__dirname, 'node_modules', '@passwordless-id', 'webauthn', 'dist', 'browser', 'webauthn.min.js'),
 });
 app.get(PUBLIC_FILES, (req, res) => {
   const safePath = PUBLIC_FILE_MAP[req.path];

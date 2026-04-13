@@ -6692,7 +6692,7 @@ const App = (() => {
       const { key, challenge } = await (await fetch('/api/auth/passkey/challenge')).json();
 
       // 2. 呼叫瀏覽器 WebAuthn API
-      const { client } = await import('https://cdn.jsdelivr.net/npm/@passwordless-id/webauthn@2/dist/webauthn.min.js');
+      const { client } = await import('/vendor/webauthn.min.js');
       const authentication = await client.authenticate({
         challenge,
         userVerification: 'preferred',
@@ -6724,7 +6724,7 @@ const App = (() => {
       const { key, challenge } = await API.get('/api/account/passkey/challenge');
 
       // 2. 呼叫瀏覽器 WebAuthn API
-      const { client } = await import('https://cdn.jsdelivr.net/npm/@passwordless-id/webauthn@2/dist/webauthn.min.js');
+      const { client } = await import('/vendor/webauthn.min.js');
       const registration = await client.register({
         user: currentUser?.displayName || currentUser?.email || 'User',
         challenge,

@@ -1541,7 +1541,9 @@ function adminMiddleware(req, res, next) {
 // ═══════════════════════════════════════
 
 app.post('/api/auth/register', async (req, res) => {
-  const { email, password, displayName } = req.body;
+  const email = String(req.body.email || '');
+  const password = String(req.body.password || '');
+  const displayName = String(req.body.displayName || '');
   if (!email || !password || !displayName) {
     return res.status(400).json({ error: '請填寫所有欄位' });
   }
@@ -1581,7 +1583,8 @@ app.post('/api/auth/register', async (req, res) => {
 });
 
 app.post('/api/auth/login', async (req, res) => {
-  const { email, password } = req.body;
+  const email = String(req.body.email || '');
+  const password = String(req.body.password || '');
   if (!email || !password) {
     recordLoginAttempt({ email, req, method: 'password', isSuccess: false, failureReason: 'missing_credentials' });
     return res.status(400).json({ error: '請填寫電子郵件與密碼' });
@@ -2386,7 +2389,8 @@ app.get('/api/admin/certs', adminMiddleware, (req, res) => {
 
 // POST /api/admin/certs/origin — 上傳 Origin Certificate（需重啟才生效）
 app.post('/api/admin/certs/origin', adminMiddleware, (req, res) => {
-  const { cert, key } = req.body || {};
+  const cert = typeof req.body?.cert === 'string' ? req.body.cert : undefined;
+  const key = typeof req.body?.key === 'string' ? req.body.key : undefined;
   if (cert !== undefined) {
     if (!validatePemCert(cert)) return res.status(400).json({ error: '憑證格式錯誤' });
     try { new crypto.X509Certificate(cert); } catch (e) {
@@ -2405,7 +2409,7 @@ app.post('/api/admin/certs/origin', adminMiddleware, (req, res) => {
 
 // POST /api/admin/certs/origin/ca — 上傳 Cloudflare Origin CA 憑證（需重啟才生效）
 app.post('/api/admin/certs/origin/ca', adminMiddleware, (req, res) => {
-  const { cert } = req.body || {};
+  const cert = typeof req.body?.cert === 'string' ? req.body.cert : '';
   if (!validatePemCert(cert)) return res.status(400).json({ error: 'Origin CA 憑證格式錯誤，需為 PEM 格式' });
   try { new crypto.X509Certificate(cert); } catch (e) {
     return res.status(400).json({ error: 'Origin CA 憑證解析失敗：' + e.message });
@@ -3836,10 +3840,10 @@ async function fetchTwseStockAll() {
 //   ?date=YYYYMMDD        → 指定日期收盤價（STOCK_DAY，盤後最即時）
 //   （無參數）            → STOCK_DAY_ALL（盤後備援）
 app.get('/api/twse/stock/:symbol', async (req, res) => {
-  const symbol = req.params.symbol.trim();
+  const symbol = String(req.params.symbol || '').trim();
   if (!symbol) return res.status(400).json({ error: '請輸入股票代號' });
   const useRealtime = req.query.realtime === '1';
-  const dateParam = (req.query.date || '').replace(/\D/g, ''); // YYYYMMDD
+  const dateParam = String(req.query.date || '').replace(/\D/g, ''); // YYYYMMDD
 
   try {
     // 1. 盤中即時報價
@@ -3884,7 +3888,7 @@ app.get('/api/twse/stock/:symbol', async (req, res) => {
 
 // 搜尋股票（模糊比對代號或名稱，最多回傳 10 筆）— 固定用收盤資料
 app.get('/api/twse/search', async (req, res) => {
-  const q = (req.query.q || '').trim();
+  const q = String(req.query.q || '').trim();
   if (!q) return res.json([]);
   try {
     const allStocks = await fetchTwseStockAll();

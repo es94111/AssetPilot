@@ -744,6 +744,22 @@ body.dark-mode .batch-cat-section { color: var(--primary-light); }
   box-shadow: 0 0 0 3px rgba(79,110,247,.1);
 }
 textarea.form-input { resize: vertical; min-height: 80px; }
+/* 密碼顯示/隱藏切換按鈕 */
+.pw-input-wrap { position: relative; display: block; }
+.pw-input-wrap .form-input,
+.pw-input-wrap input[type="password"],
+.pw-input-wrap input[type="text"] { padding-right: 40px; }
+.pw-toggle-btn {
+  position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+  background: none; border: none; cursor: pointer;
+  color: var(--text-secondary); padding: 4px; line-height: 1; font-size: 15px;
+  transition: color var(--transition-fast);
+}
+.pw-toggle-btn:hover { color: var(--primary); }
+.auth-form .pw-input-wrap input { padding-right: 40px; }
+.danger-zone-input-row .form-input { padding-right: 40px; }
+.danger-zone-input-row .pw-toggle-btn { color: #d4a0a0; }
+.danger-zone-input-row .pw-toggle-btn:hover { color: var(--danger); }
 .form-row input[type="color"] {
   width: 48px; height: 36px; padding: 2px; border: 1px solid var(--border);
   border-radius: 6px; cursor: pointer;

@@ -4739,8 +4739,11 @@ app.get('/api/database/export', (req, res) => {
 app.post('/api/database/import', express.raw({ type: 'application/octet-stream', limit: '100mb' }), (req, res) => {
   if (!isUserAdmin(req.userId)) return res.status(403).json({ error: '僅管理員可執行此操作' });
   try {
+    if (!Buffer.isBuffer(req.body)) {
+      return res.status(400).json({ error: '無效的資料庫檔案' });
+    }
     let dbBuffer = req.body;
-    if (!Buffer.isBuffer(dbBuffer) || dbBuffer.length < 16) {
+    if (dbBuffer.length < 16) {
       return res.status(400).json({ error: '無效的資料庫檔案' });
     }
     // 若上傳的是加密檔案，拒絕匯入

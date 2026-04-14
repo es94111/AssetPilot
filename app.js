@@ -790,6 +790,20 @@ const App = (() => {
   }
 
   function bindAuth() {
+    // 密碼顯示/隱藏切換（全域事件委派，涵蓋所有 .pw-toggle-btn）
+    document.addEventListener('click', (e) => {
+      const btn = e.target.closest('.pw-toggle-btn');
+      if (!btn) return;
+      const wrap = btn.closest('.pw-input-wrap') || btn.closest('.danger-zone-input-row');
+      if (!wrap) return;
+      const input = wrap.querySelector('input');
+      if (!input) return;
+      const show = input.type === 'password';
+      input.type = show ? 'text' : 'password';
+      const icon = btn.querySelector('i');
+      if (icon) icon.className = show ? 'fas fa-eye-slash' : 'fas fa-eye';
+    });
+
     // 表單切換
     el('showRegister').addEventListener('click', e => {
       e.preventDefault();

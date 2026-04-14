@@ -1,6 +1,16 @@
 {
-  "currentVersion": "4.12.1",
+  "currentVersion": "4.12.2",
   "releases": [
+    {
+      "version": "4.12.2",
+      "date": "2026-04-14",
+      "title": "密碼欄位顯示/隱藏切換",
+      "type": "improved",
+      "changes": [
+        { "tag": "new", "text": "所有密碼輸入欄位新增眼睛圖示切換按鈕，可顯示或隱藏密碼內容" },
+        { "tag": "improved", "text": "涵蓋範圍：登入、註冊、修改密碼、設定密碼、刪除帳號確認、管理員建立使用者、管理員重設密碼" }
+      ]
+    },
     {
       "version": "4.12.1",
       "date": "2026-04-13",

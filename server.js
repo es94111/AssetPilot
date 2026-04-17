@@ -555,6 +555,7 @@ async function initDB() {
   try { db.run("ALTER TABLE system_settings ADD COLUMN report_schedule_day_of_month INTEGER DEFAULT 1"); } catch (e) { /* ignore */ }
   try { db.run("ALTER TABLE system_settings ADD COLUMN report_schedule_last_run INTEGER DEFAULT 0"); } catch (e) { /* ignore */ }
   try { db.run("ALTER TABLE system_settings ADD COLUMN report_schedule_last_summary TEXT DEFAULT ''"); } catch (e) { /* ignore */ }
+  try { db.run("ALTER TABLE system_settings ADD COLUMN report_schedule_user_ids TEXT DEFAULT ''"); } catch (e) { /* ignore */ }
 
   db.run("INSERT OR IGNORE INTO system_settings (id, public_registration, allowed_registration_emails, admin_ip_allowlist, updated_at, updated_by) VALUES (1, 1, '', '', ?, '')", [Date.now()]);
 
@@ -2799,9 +2800,10 @@ function buildUserStatsReport(userId) {
     currency: normalizeCurrency(r.currency), categoryName: r.cat_name, categoryColor: r.cat_color,
   }));
 
-  const stocks = queryAll("SELECT id, symbol, name FROM stocks WHERE user_id = ?", [userId]);
+  const stocks = queryAll("SELECT id, symbol, name, current_price FROM stocks WHERE user_id = ?", [userId]);
   let stockHoldings = 0;
   let stockCostTwd = 0;
+  let stockMarketValueTwd = 0;
   for (const s of stocks) {
     const txs = queryAll(
       "SELECT type, shares, price, fee FROM stock_transactions WHERE stock_id = ? AND user_id = ?",
@@ -2825,10 +2827,14 @@ function buildUserStatsReport(userId) {
       }
     }
     if (shares > 0) {
+      const cp = Number(s.current_price) || 0;
       stockHoldings += 1;
       stockCostTwd += Math.max(0, cost);
+      stockMarketValueTwd += shares * cp;
     }
   }
+  const stockUnrealizedPL = stockMarketValueTwd - stockCostTwd;
+  const stockReturnPct = stockCostTwd > 0 ? (stockUnrealizedPL / stockCostTwd) * 100 : null;
 
   const net = income - expense;
   const savingsRate = income > 0 ? Math.max(0, Math.min(1, net / income)) : 0;
@@ -2850,6 +2856,9 @@ function buildUserStatsReport(userId) {
     recentTransactions,
     stockHoldings,
     stockCostTwd: Math.round(stockCostTwd),
+    stockMarketValueTwd: Math.round(stockMarketValueTwd),
+    stockUnrealizedPL: Math.round(stockUnrealizedPL),
+    stockReturnPct,
   };
 }
 
@@ -2948,13 +2957,27 @@ function renderStatsEmailHtml(displayName, email, stats) {
       }).join('')
     : '<tr><td style="padding:8px 12px;color:#94a3b8" colspan="3">尚無交易紀錄</td></tr>';
 
-  // Stocks block
-  const stockBlock = stats.stockHoldings > 0
-    ? `<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#f8fafc;border-radius:10px;border:1px solid #e5e7eb"><tr><td style="padding:14px">
-        <div style="font-size:13px;color:#64748b;margin-bottom:4px">目前持股</div>
-        <div style="font-size:16px;color:#0f172a"><strong>${stats.stockHoldings}</strong> 檔，總成本約 <strong>${escapeEmailHtml(formatAmount(stats.stockCostTwd))}</strong></div>
-      </td></tr></table>`
-    : `<div style="padding:14px;background:#f8fafc;border-radius:10px;border:1px solid #e5e7eb;color:#94a3b8;font-size:13px">目前無持股</div>`;
+  // Stocks block — 含市值 / 未實現損益 / 報酬率
+  let stockBlock;
+  if (stats.stockHoldings > 0) {
+    const plColor = stats.stockUnrealizedPL >= 0 ? '#16a34a' : '#dc2626';
+    const plSign = stats.stockUnrealizedPL >= 0 ? '+' : '';
+    const returnPctStr = stats.stockReturnPct === null
+      ? '—'
+      : `${stats.stockReturnPct >= 0 ? '+' : ''}${(Math.round(stats.stockReturnPct * 100) / 100).toFixed(2)}%`;
+    const returnColor = stats.stockReturnPct === null ? '#888' : (stats.stockReturnPct >= 0 ? '#16a34a' : '#dc2626');
+    stockBlock = `<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#f8fafc;border-radius:10px;border:1px solid #e5e7eb"><tr><td style="padding:14px">
+        <div style="font-size:13px;color:#64748b;margin-bottom:8px">目前持有 <strong style="color:#0f172a">${stats.stockHoldings}</strong> 檔</div>
+        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="font-size:14px"><tbody>
+          <tr><td style="padding:4px 0;color:#475569">總成本</td><td style="padding:4px 0;text-align:right">${escapeEmailHtml(formatAmount(stats.stockCostTwd))}</td></tr>
+          <tr><td style="padding:4px 0;color:#475569">總市值</td><td style="padding:4px 0;text-align:right;font-weight:600">${escapeEmailHtml(formatAmount(stats.stockMarketValueTwd))}</td></tr>
+          <tr><td style="padding:4px 0;color:#475569">未實現損益</td><td style="padding:4px 0;text-align:right;color:${plColor};font-weight:600">${plSign}${escapeEmailHtml(formatAmount(stats.stockUnrealizedPL))}</td></tr>
+          <tr><td style="padding:4px 0;color:#475569">報酬率</td><td style="padding:4px 0;text-align:right;color:${returnColor};font-weight:600">${returnPctStr}</td></tr>
+        </tbody></table>
+      </td></tr></table>`;
+  } else {
+    stockBlock = `<div style="padding:14px;background:#f8fafc;border-radius:10px;border:1px solid #e5e7eb;color:#94a3b8;font-size:13px">目前無持股</div>`;
+  }
 
   // CTA
   const ctaBlock = APP_URL
@@ -3006,51 +3029,8 @@ function renderStatsEmailHtml(displayName, email, stats) {
 </body></html>`;
 }
 
-app.post('/api/admin/send-stats-report', adminMiddleware, async (req, res) => {
-  const smtp = getSmtpSettingsRaw();
-  const hasSmtp = !!(smtp.host && smtp.port);
-  const hasResend = !!(RESEND_API_KEY && RESEND_FROM_EMAIL);
-  if (!hasSmtp && !hasResend) {
-    return res.status(503).json({ error: '尚未設定寄信服務：請至「管理員 → SMTP 設定」配置 SMTP，或設定 RESEND_API_KEY / RESEND_FROM_EMAIL 環境變數' });
-  }
-
-  const userIds = Array.isArray(req.body?.userIds) ? req.body.userIds.map(String).filter(Boolean) : [];
-  if (userIds.length === 0) return res.status(400).json({ error: '請選擇至少一位使用者' });
-  if (userIds.length > 100) return res.status(400).json({ error: '單次最多寄送 100 位' });
-
-  const results = [];
-  for (const uidStr of userIds) {
-    const user = queryOne("SELECT id, email, display_name FROM users WHERE id = ?", [uidStr]);
-    if (!user) {
-      results.push({ userId: uidStr, status: 'skipped', reason: '使用者不存在' });
-      continue;
-    }
-    if (!user.email || !isValidEmail(user.email)) {
-      results.push({ userId: uidStr, email: user.email || '', status: 'skipped', reason: 'Email 無效' });
-      continue;
-    }
-    try {
-      const stats = buildUserStatsReport(user.id);
-      const html = renderStatsEmailHtml(user.display_name, user.email, stats);
-      const subject = `${stats.month} 個人資產統計報表`;
-      const sendResult = await sendStatsEmail({ to: user.email, subject, html });
-      if (!sendResult) {
-        results.push({ userId: uidStr, email: user.email, status: 'failed', reason: '寄信服務未設定' });
-      } else {
-        results.push({ userId: uidStr, email: user.email, status: 'sent', provider: sendResult.provider });
-      }
-    } catch (e) {
-      results.push({ userId: uidStr, email: user.email, status: 'failed', reason: e.message || '寄送失敗' });
-    }
-    // SMTP 不需要強制延遲；Resend 預設 2 req/sec 仍需間隔
-    if (!hasSmtp) await new Promise(r => setTimeout(r, 600));
-  }
-
-  const sent = results.filter(r => r.status === 'sent').length;
-  const failed = results.filter(r => r.status === 'failed').length;
-  const skipped = results.filter(r => r.status === 'skipped').length;
-  res.json({ sent, failed, skipped, provider: hasSmtp ? 'smtp' : 'resend', results });
-});
+// 註：POST /api/admin/send-stats-report 已於 v4.17.0 移除，請改用
+// PUT /api/admin/report-schedule（更新 userIds）+ POST /api/admin/report-schedule/run-now
 
 // ─── SMTP 設定（管理員）───
 app.get('/api/admin/smtp-settings', adminMiddleware, (req, res) => {
@@ -3116,9 +3096,18 @@ app.post('/api/admin/test-email', adminMiddleware, async (req, res) => {
 // ─── 排程自動寄送統計報表 ───
 const SCHEDULE_FREQ_VALUES = ['off', 'daily', 'weekly', 'monthly'];
 
+function parseUserIdList(raw) {
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) return parsed.map(String).filter(Boolean);
+  } catch (e) { /* fall through */ }
+  return [];
+}
+
 function getReportSchedule() {
   const row = queryOne(
-    "SELECT report_schedule_freq, report_schedule_hour, report_schedule_weekday, report_schedule_day_of_month, report_schedule_last_run, report_schedule_last_summary FROM system_settings WHERE id = 1"
+    "SELECT report_schedule_freq, report_schedule_hour, report_schedule_weekday, report_schedule_day_of_month, report_schedule_last_run, report_schedule_last_summary, report_schedule_user_ids FROM system_settings WHERE id = 1"
   );
   // ⚠️ 不要用 `|| fallback`，否則 hour=0（午夜）/ weekday=0（週日）會被當 falsy 還原為 default
   const safe = (v, min, max, fallback) => {
@@ -3133,7 +3122,44 @@ function getReportSchedule() {
     dayOfMonth: safe(row?.report_schedule_day_of_month, 1, 28, 1),
     lastRun: Number(row?.report_schedule_last_run) || 0,
     lastSummary: row?.report_schedule_last_summary || '',
+    userIds: parseUserIdList(row?.report_schedule_user_ids),
   };
+}
+
+// 寄信前自動更新使用者所有持股的最新價格（盤中即時價優先，盤後 STOCK_DAY 收盤；失敗則跳過該檔）
+async function updateUserStockPrices(userId) {
+  const stocks = queryAll("SELECT id, symbol FROM stocks WHERE user_id = ?", [userId]);
+  let updated = 0, skipped = 0;
+  const today = new Date();
+  const todayYmd = `${today.getFullYear()}${String(today.getMonth() + 1).padStart(2, '0')}${String(today.getDate()).padStart(2, '0')}`;
+  for (const s of stocks) {
+    const symbol = String(s.symbol || '').trim();
+    if (!symbol || !/^[A-Z0-9]{2,10}$/i.test(symbol)) { skipped += 1; continue; }
+    try {
+      // 1. 盤中即時
+      let info = await fetchTwseRealtime(symbol);
+      // 2. 盤後 STOCK_DAY（上市優先，再上櫃）
+      if (!info || !info.found || !(info.closingPrice > 0)) {
+        info = await fetchTwseStockDay(symbol, todayYmd);
+      }
+      if (!info || !info.found || !(info.closingPrice > 0)) {
+        info = await fetchTpexStockDay(symbol, todayYmd);
+      }
+      if (info && info.found && info.closingPrice > 0) {
+        db.run(
+          "UPDATE stocks SET current_price = ?, updated_at = ? WHERE id = ? AND user_id = ?",
+          [info.closingPrice, todayStr(), s.id, userId]
+        );
+        updated += 1;
+      } else {
+        skipped += 1;
+      }
+    } catch (e) {
+      skipped += 1;
+    }
+  }
+  if (updated > 0) saveDB();
+  return { updated, skipped };
 }
 
 // 判斷現在是否該觸發寄送：到了當期排程時間，且本期尚未執行
@@ -3157,12 +3183,29 @@ function shouldRunSchedule(schedule, now = new Date()) {
 }
 
 let isRunningSchedule = false;
-async function runScheduledReportNow(triggeredBy = 'scheduler') {
+async function runScheduledReportNow(triggeredBy = 'scheduler', overrideUserIds = null) {
   if (isRunningSchedule) return { skipped: true, reason: '已有寄送任務進行中' };
   isRunningSchedule = true;
   const startedAt = Date.now();
   try {
-    const users = queryAll("SELECT id, email FROM users WHERE email IS NOT NULL AND email != ''");
+    const schedule = getReportSchedule();
+    const targetIds = Array.isArray(overrideUserIds) && overrideUserIds.length
+      ? overrideUserIds.map(String).filter(Boolean)
+      : schedule.userIds;
+
+    if (targetIds.length === 0) {
+      const summary = `${formatTwTime(startedAt)} ${triggeredBy} 觸發但未指定寄送對象，已略過`;
+      db.run("UPDATE system_settings SET report_schedule_last_summary = ? WHERE id = 1", [summary]);
+      saveDB();
+      return { sent: 0, failed: 0, skipped: 0, reason: '未指定寄送對象' };
+    }
+
+    const users = [];
+    for (const id of targetIds) {
+      const u = queryOne("SELECT id, email, display_name FROM users WHERE id = ?", [id]);
+      if (u) users.push(u);
+    }
+
     const smtp = getSmtpSettingsRaw();
     const hasSmtp = !!(smtp.host && smtp.port);
     const hasResend = !!(RESEND_API_KEY && RESEND_FROM_EMAIL);
@@ -3174,12 +3217,21 @@ async function runScheduledReportNow(triggeredBy = 'scheduler') {
     }
 
     let sent = 0, failed = 0, skipped = 0;
+    let priceUpdates = 0;
     const failures = [];
     for (const u of users) {
-      if (!isValidEmail(u.email)) { skipped += 1; continue; }
+      if (!isValidEmail(u.email)) {
+        skipped += 1;
+        failures.push(`${u.email || u.id}: Email 無效或未設定`);
+        continue;
+      }
       try {
+        // 寄送前先更新該使用者所有持股最新報價，確保信件內市值正確
+        const priceResult = await updateUserStockPrices(u.id).catch(() => ({ updated: 0, skipped: 0 }));
+        priceUpdates += priceResult.updated;
+
         const stats = buildUserStatsReport(u.id);
-        const html = renderStatsEmailHtml('', u.email, stats);
+        const html = renderStatsEmailHtml(u.display_name, u.email, stats);
         const subject = `${stats.month} 個人資產統計報表`;
         const r = await sendStatsEmail({ to: u.email, subject, html });
         if (r) sent += 1;
@@ -3192,7 +3244,7 @@ async function runScheduledReportNow(triggeredBy = 'scheduler') {
     }
 
     const finishedAt = Date.now();
-    const summaryParts = [`${formatTwTime(startedAt)} ${triggeredBy}：寄送 ${sent} / 失敗 ${failed} / 略過 ${skipped}`];
+    const summaryParts = [`${formatTwTime(startedAt)} ${triggeredBy}：寄送 ${sent} / 失敗 ${failed} / 略過 ${skipped}（更新股價 ${priceUpdates} 檔）`];
     if (failures.length) summaryParts.push('失敗明細：' + failures.slice(0, 3).join('；') + (failures.length > 3 ? `…（共 ${failures.length} 筆）` : ''));
     const summary = summaryParts.join(' | ');
     db.run(
@@ -3200,7 +3252,7 @@ async function runScheduledReportNow(triggeredBy = 'scheduler') {
       [finishedAt, summary]
     );
     saveDB();
-    return { sent, failed, skipped };
+    return { sent, failed, skipped, priceUpdates };
   } finally {
     isRunningSchedule = false;
   }
@@ -3236,6 +3288,7 @@ app.get('/api/admin/report-schedule', adminMiddleware, (req, res) => {
     hour: s.hour,
     weekday: s.weekday,
     dayOfMonth: s.dayOfMonth,
+    userIds: s.userIds,
     lastRun: s.lastRun,
     lastRunText: s.lastRun ? formatTwTime(s.lastRun) : '',
     lastSummary: s.lastSummary,
@@ -3254,18 +3307,26 @@ app.put('/api/admin/report-schedule', adminMiddleware, (req, res) => {
   const hour = clampInt(req.body?.hour, 0, 23, 9);
   const weekday = clampInt(req.body?.weekday, 0, 6, 1);
   const dayOfMonth = clampInt(req.body?.dayOfMonth, 1, 28, 1);
+
+  const rawIds = Array.isArray(req.body?.userIds) ? req.body.userIds : [];
+  const cleanIds = [...new Set(rawIds.map(String).map(s => s.trim()).filter(Boolean))];
+  if (cleanIds.length > 100) return res.status(400).json({ error: '單次最多指定 100 位使用者' });
+  // 過濾不存在的 user id（避免存進髒資料）
+  const validIds = cleanIds.filter(id => !!queryOne("SELECT id FROM users WHERE id = ?", [id]));
+
   db.run(
-    "UPDATE system_settings SET report_schedule_freq = ?, report_schedule_hour = ?, report_schedule_weekday = ?, report_schedule_day_of_month = ?, updated_at = ?, updated_by = ? WHERE id = 1",
-    [freq, hour, weekday, dayOfMonth, Date.now(), req.userId]
+    "UPDATE system_settings SET report_schedule_freq = ?, report_schedule_hour = ?, report_schedule_weekday = ?, report_schedule_day_of_month = ?, report_schedule_user_ids = ?, updated_at = ?, updated_by = ? WHERE id = 1",
+    [freq, hour, weekday, dayOfMonth, JSON.stringify(validIds), Date.now(), req.userId]
   );
   saveDB();
-  res.json({ success: true, freq, hour, weekday, dayOfMonth });
+  res.json({ success: true, freq, hour, weekday, dayOfMonth, userIds: validIds });
 });
 
-// 立即執行一次排程（不等到下個觸發時間）
+// 立即執行一次排程（不等到下個觸發時間）；可選 body { userIds } 覆寫寄送對象
 app.post('/api/admin/report-schedule/run-now', adminMiddleware, async (req, res) => {
   try {
-    const result = await runScheduledReportNow('手動');
+    const overrideIds = Array.isArray(req.body?.userIds) ? req.body.userIds : null;
+    const result = await runScheduledReportNow('手動', overrideIds);
     res.json({ success: true, ...result });
   } catch (e) {
     res.status(500).json({ error: e.message || '手動執行失敗' });

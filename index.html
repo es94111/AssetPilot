@@ -1400,37 +1400,8 @@
         </div>
 
         <div class="card">
-          <h3><i class="fas fa-paper-plane"></i>寄送資產統計報表</h3>
-          <p class="admin-section-desc" style="margin:4px 0 12px">勾選要寄信的使用者，系統將寄出該使用者本月的資產與收支摘要（優先 SMTP，否則 Resend）。</p>
-          <div id="adminSendReportConfigWarn" class="admin-section-desc" style="display:none;color:var(--danger-color);margin-bottom:12px"></div>
-          <div class="table-toolbar">
-            <label style="display:inline-flex;align-items:center;gap:6px">
-              <input type="checkbox" id="adminSendReportSelectAll"> 全選
-            </label>
-            <button class="btn btn-primary btn-sm" id="adminSendReportBtn" disabled>
-              <i class="fas fa-paper-plane"></i> 寄送給已選使用者（<span id="adminSendReportSelectedCount">0</span>）
-            </button>
-            <span class="import-hint" id="adminSendReportStatus"></span>
-          </div>
-          <div id="adminSendReportDetails" style="display:none"></div>
-          <div class="table-wrap" style="overflow:auto;max-height:320px">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th class="th-check"></th>
-                  <th>Email</th>
-                  <th>顯示名稱</th>
-                  <th>角色</th>
-                </tr>
-              </thead>
-              <tbody id="adminSendReportBody"></tbody>
-            </table>
-          </div>
-        </div>
-
-        <div class="card">
-          <h3><i class="fas fa-clock"></i>排程自動寄送</h3>
-          <p class="admin-section-desc" style="margin:4px 0 12px">設定後系統會在指定頻率自動寄送統計報表給<strong>所有有效 Email 的使用者</strong>（背景每 5 分鐘檢查一次）。</p>
+          <h3><i class="fas fa-paper-plane"></i>排程自動寄送資產統計報表</h3>
+          <p class="admin-section-desc" style="margin:4px 0 12px">設定頻率與寄送對象後，背景排程器每 5 分鐘檢查一次；寄送前會自動更新所有持股最新報價，確保信件內市值與報酬率正確。</p>
           <form id="adminScheduleForm" action="javascript:void(0);" method="post">
             <div class="admin-grid-2">
               <div class="form-row">
@@ -1465,12 +1436,36 @@
                 <input type="number" id="adminScheduleDayOfMonth" class="form-input" min="1" max="28" value="1">
               </div>
             </div>
+
+            <div class="form-row" style="margin-top:6px">
+              <label style="display:flex;justify-content:space-between;align-items:center">
+                <span>寄送對象（勾選使用者，<span id="adminScheduleSelectedCount">0</span> 位已選）</span>
+                <label style="display:inline-flex;align-items:center;gap:6px;font-weight:normal;font-size:13px">
+                  <input type="checkbox" id="adminScheduleSelectAll"> 全選
+                </label>
+              </label>
+              <div class="table-wrap" style="overflow:auto;max-height:280px;border:1px solid var(--border-color,#e5e7eb);border-radius:8px">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th class="th-check"></th>
+                      <th>Email</th>
+                      <th>顯示名稱</th>
+                      <th>角色</th>
+                    </tr>
+                  </thead>
+                  <tbody id="adminScheduleUserBody"></tbody>
+                </table>
+              </div>
+            </div>
+
             <div class="cert-btn-row" style="margin-top:8px">
               <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-save"></i> 儲存排程</button>
-              <button type="button" class="btn btn-outline btn-sm" id="adminScheduleRunNowBtn"><i class="fas fa-bolt"></i> 立即執行一次</button>
+              <button type="button" class="btn btn-outline btn-sm" id="adminScheduleRunNowBtn"><i class="fas fa-bolt"></i> 立即寄送一次</button>
               <span class="import-hint" id="adminScheduleStatus"></span>
             </div>
             <div id="adminScheduleHistory" class="admin-section-desc" style="margin-top:10px;font-size:13px"></div>
+            <div id="adminScheduleDetails" style="display:none"></div>
           </form>
         </div>
 

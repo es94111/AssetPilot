@@ -1,6 +1,25 @@
 {
-  "currentVersion": "4.12.2",
+  "currentVersion": "4.13.0",
   "releases": [
+    {
+      "version": "4.13.0",
+      "date": "2026-04-17",
+      "title": "資安強化：多項中高風險漏洞修補",
+      "type": "feature",
+      "changes": [
+        { "tag": "fixed", "text": "修補儲存型 XSS：normalizeDate() 嚴格拒絕非法日期；前端交易列表、股票交易、股利、實現損益、近期交易等畫面補上 escHtml 跳脫" },
+        { "tag": "fixed", "text": "修補 IDOR 漏洞：新增/編輯交易、批次更新、固定收支、股票交易、股利端點驗證 accountId/categoryId/stockId 屬於當前使用者" },
+        { "tag": "fixed", "text": "改密碼/管理員重設密碼後，舊 JWT 立即失效：users 新增 token_version 欄位，authMiddleware 比對版本" },
+        { "tag": "fixed", "text": "Passkey 註冊/登入的 origin 改用 ALLOWED_ORIGINS 白名單驗證，不再無條件信任 Origin header" },
+        { "tag": "fixed", "text": "CSV 匯出加上 Formula Injection 防護（欄位以 = + - @ 開頭時加前綴單引號）" },
+        { "tag": "fixed", "text": "股票交易驗證 shares/price 必須為正數、手續費/稅費不可為負、type 必須為 buy/sell" },
+        { "tag": "fixed", "text": "股利驗證 cashDividend/stockDividendShares 不可為負" },
+        { "tag": "fixed", "text": "TWSE 股票代號 API 驗證代號格式（2~10 碼英數），搜尋 API 限制字串長度以避免快取污染" },
+        { "tag": "improved", "text": "統一強密碼規則：註冊、管理員建立使用者、管理員重設密碼、一般改密碼皆套用 validateStrongPassword（8字元+大小寫+數字+特殊符號）" },
+        { "tag": "improved", "text": ".env 自動產生密鑰時設定檔案權限為 0o600（僅擁有者可讀寫）" },
+        { "tag": "improved", "text": ".gitignore / .dockerignore 加入 database.db*、*.bak、*.backup_* 避免資料庫備份檔意外打包或 commit" }
+      ]
+    },
     {
       "version": "4.12.2",
       "date": "2026-04-14",

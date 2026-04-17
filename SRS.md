@@ -1152,6 +1152,7 @@
 
 | 版本 | 日期 | 變更說明 |
 | --- | --- | --- |
+| 4.13.0 | 2026-04-17 | 資安強化：修補儲存型 XSS（normalizeDate 嚴格驗證 + 前端 escHtml）、IDOR（驗證 accountId/categoryId/stockId 擁有者）、JWT 無法撤銷（新增 token_version）、Passkey origin 白名單、CSV Formula Injection 防護、股票正數驗證、TWSE symbol 格式驗證、統一強密碼規則、.env 權限 0o600、.gitignore/.dockerignore 排除 DB 備份 |
 | 4.12.2 | 2026-04-14 | 所有密碼欄位新增顯示/隱藏切換按鈕（登入、註冊、修改密碼、刪除帳號確認、管理員建立使用者、管理員重設密碼） |
 | 4.12.1 | 2026-04-13 | 修正 Passkey 登入紀錄顯示為「密碼」而非「Passkey」；補充 Passkey 失敗原因中文翻譯 |
 | 4.12.0 | 2026-04-13 | 新增資料庫匯出匯入備份功能（僅管理員）：匯出未加密 SQLite 檔案、匯入時自動驗證格式與資料表結構、自動備份現有資料庫 |

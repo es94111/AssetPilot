@@ -1380,7 +1380,7 @@ const App = (() => {
           <div class="recent-category" style="background:${catColor}">${escHtml(catName[0])}</div>
           <div class="recent-item-info">
             <div class="recent-cat">${escHtml(catName)}</div>
-            <div class="recent-date">${t.date}${t.note ? ' · ' + escHtml(t.note) : ''}</div>
+            <div class="recent-date">${escHtml(t.date)}${t.note ? ' · ' + escHtml(t.note) : ''}</div>
           </div>
         </div>
         <span class="${amountCls}">${prefix} ${fmt(t.amount)}</span>
@@ -1500,7 +1500,7 @@ const App = (() => {
         }
         return `<tr data-txid="${t.id}">
           <td class="td-check"><input type="checkbox" class="tx-checkbox" data-id="${t.id}" onchange="App.toggleTxSelect('${t.id}', this.checked)"></td>
-          <td>${t.date}</td>
+          <td>${escHtml(t.date)}</td>
           <td>${typeBadge}${futureBadge}${excludeBadge}</td>
           <td>${getCatDisplayName(cat)}</td>
           <td class="${amountCls}">
@@ -3090,7 +3090,7 @@ const App = (() => {
       const total = isBuy ? (t.shares * t.price + t.fee) : (t.shares * t.price - t.fee - t.tax);
       return `<tr>
         <td class="td-check"><input type="checkbox" class="stk-tx-checkbox" data-id="${t.id}" onchange="App.toggleStkTxSelect('${t.id}', this.checked)"></td>
-        <td>${t.date}</td>
+        <td>${escHtml(t.date)}</td>
         <td><span class="type-badge ${isBuy ? 'income' : 'expense'}">${isBuy ? '買進' : '賣出'}</span></td>
         <td>${escHtml(t.symbol)} ${escHtml(t.stock_name)}</td>
         <td>${t.shares.toLocaleString()}</td>
@@ -3130,7 +3130,7 @@ const App = (() => {
     }
     tbody.innerHTML = divs.map(d => `<tr>
       <td class="td-check"><input type="checkbox" class="stk-div-checkbox" data-id="${d.id}" onchange="App.toggleStkDivSelect('${d.id}', this.checked)"></td>
-      <td>${d.date}</td>
+      <td>${escHtml(d.date)}</td>
       <td>${escHtml(d.symbol)} ${escHtml(d.stock_name)}</td>
       <td>${fmt(d.cash_dividend)}</td>
       <td>${d.stock_dividend_shares || '-'}</td>
@@ -3227,7 +3227,7 @@ const App = (() => {
       const rateSign = r.returnRate >= 0 ? '+' : '';
       const feeAndTax = r.fee + r.tax;
       return `<tr>
-        <td>${r.date}</td>
+        <td>${escHtml(r.date)}</td>
         <td>${escHtml(r.symbol)} ${escHtml(r.name)}</td>
         <td>${r.shares.toLocaleString()}</td>
         <td>$${Number(r.sellPrice).toLocaleString()}</td>
@@ -5384,7 +5384,7 @@ const App = (() => {
       } else if (t.type === 'transfer_out' || t.type === 'transfer_in') {
         catName = '轉帳';
       }
-      csv += `${t.date},${type},"${catName}",${t.amount},"${acc ? acc.name : ''}","${(t.note || '').replace(/"/g, '""')}"\n`;
+      csv += `${t.date},${type},"${escCsv(catName)}",${t.amount},"${escCsv(acc ? acc.name : '')}","${escCsv(t.note || '')}"\n`;
     });
 
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -5422,7 +5422,11 @@ const App = (() => {
     toast('已匯出分類 CSV', 'success');
   }
 
-  function escCsv(s) { return (s || '').replace(/"/g, '""'); }
+  function escCsv(s) {
+    const str = String(s ?? '').replace(/"/g, '""');
+    // 防 CSV Formula Injection：若以 =, +, -, @, Tab, CR 開頭加前綴單引號
+    return /^[=+\-@\t\r]/.test(str) ? `'${str}` : str;
+  }
 
   // ─── 分類匯入 ───
   async function importCategories(e) {

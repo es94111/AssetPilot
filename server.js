@@ -107,7 +107,8 @@ function ensureEnvSecrets() {
       }
       console.log(`已自動產生 ${k}（64 字元隨機密鑰）`);
     }
-    fs.writeFileSync(envPath, lines.filter(l => l !== '').join('\n') + '\n', 'utf-8');
+    fs.writeFileSync(envPath, lines.filter(l => l !== '').join('\n') + '\n', { encoding: 'utf-8', mode: 0o600 });
+    try { fs.chmodSync(envPath, 0o600); } catch { /* Windows/非 POSIX 系統忽略 */ }
     console.log(`密鑰已寫入 ${envPath}，請妥善備份此檔案`);
   } else {
     console.log('密鑰已從檔案載入（JWT_SECRET + DB_ENCRYPTION_KEY）');
@@ -214,6 +215,17 @@ function isEncryptedDB(buffer) {
 const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(',').map(s => s.trim())
   : null; // null = 不限制（開發模式）
+
+// 取得受信任的 Passkey / WebAuthn origin：只接受白名單內的 Origin header
+// 開發模式（未設定 ALLOWED_ORIGINS）回退到 req.protocol + host
+function getTrustedOrigin(req) {
+  const reqOrigin = req.headers.origin;
+  if (ALLOWED_ORIGINS && ALLOWED_ORIGINS.length > 0) {
+    if (reqOrigin && ALLOWED_ORIGINS.includes(reqOrigin)) return reqOrigin;
+    return ALLOWED_ORIGINS[0];
+  }
+  return reqOrigin || `${req.protocol}://${req.headers.host}`;
+}
 
 app.use(cors(ALLOWED_ORIGINS ? {
   origin(origin, cb) {
@@ -546,6 +558,12 @@ async function initDB() {
   // 資料庫升級：為 users 加入管理員欄位
   try {
     db.run("ALTER TABLE users ADD COLUMN is_admin INTEGER DEFAULT 0");
+    saveDB();
+  } catch (e) { /* 欄位已存在則忽略 */ }
+
+  // 資料庫升級：token_version（用於改密碼/刪帳號後撤銷既有 JWT）
+  try {
+    db.run("ALTER TABLE users ADD COLUMN token_version INTEGER DEFAULT 0");
     saveDB();
   } catch (e) { /* 欄位已存在則忽略 */ }
 
@@ -1146,19 +1164,29 @@ function normalizeStockSettingsInput(input = {}, current = DEFAULT_STOCK_SETTING
 }
 
 // 統一日期格式為 YYYY-MM-DD（支援 YYYYMMDD、YYYY/MM/DD、YYYY-MM-DD）
+// 無法解析的輸入一律回傳空字串，避免 XSS payload 被寫入資料庫
 function normalizeDate(dateStr) {
   if (!dateStr) return '';
   const s = String(dateStr).trim();
+  let candidate = '';
   // 已經是 YYYY-MM-DD
-  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
-  // YYYYMMDD → YYYY-MM-DD
-  if (/^\d{8}$/.test(s)) return s.slice(0, 4) + '-' + s.slice(4, 6) + '-' + s.slice(6, 8);
-  // YYYY/MM/DD → YYYY-MM-DD
-  if (/^\d{4}\/\d{1,2}\/\d{1,2}$/.test(s)) {
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+    candidate = s;
+  } else if (/^\d{8}$/.test(s)) {
+    // YYYYMMDD → YYYY-MM-DD
+    candidate = s.slice(0, 4) + '-' + s.slice(4, 6) + '-' + s.slice(6, 8);
+  } else if (/^\d{4}\/\d{1,2}\/\d{1,2}$/.test(s)) {
+    // YYYY/MM/DD → YYYY-MM-DD
     const [y, m, d] = s.split('/');
-    return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+    candidate = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+  } else {
+    return '';
   }
-  return s;
+  // 再次驗證實際有效日期（擋掉 9999-99-99 等）
+  const [y, m, d] = candidate.split('-').map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  if (dt.getUTCFullYear() !== y || dt.getUTCMonth() + 1 !== m || dt.getUTCDate() !== d) return '';
+  return candidate;
 }
 
 function thisMonth() {
@@ -1180,6 +1208,15 @@ function queryAll(sql, params = []) {
 function queryOne(sql, params = []) {
   const rows = queryAll(sql, params);
   return rows.length > 0 ? rows[0] : null;
+}
+
+// 驗證資源屬於當前使用者（防 IDOR）
+function assertOwned(table, id, userId) {
+  if (id === undefined || id === null || id === '') return true;
+  const allowedTables = ['accounts', 'categories', 'stocks'];
+  if (!allowedTables.includes(table)) return false;
+  const row = queryOne(`SELECT id FROM ${table} WHERE id = ? AND user_id = ?`, [id, userId]);
+  return !!row;
 }
 
 function normalizeEmail(email) {
@@ -1521,6 +1558,18 @@ function authMiddleware(req, res, next) {
   if (!token) return res.status(401).json({ error: '請先登入' });
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
+    // 比對 token_version（改密碼/刪帳號後所有舊 token 立即失效）
+    const user = queryOne("SELECT token_version FROM users WHERE id = ?", [decoded.userId]);
+    if (!user) {
+      res.clearCookie('authToken');
+      return res.status(401).json({ error: '使用者不存在' });
+    }
+    const dbVersion = Number(user.token_version) || 0;
+    const tokenVersion = Number(decoded.tokenVersion) || 0;
+    if (tokenVersion !== dbVersion) {
+      res.clearCookie('authToken');
+      return res.status(401).json({ error: '登入已失效，請重新登入' });
+    }
     req.userId = decoded.userId;
     next();
   } catch {
@@ -1534,6 +1583,16 @@ function adminMiddleware(req, res, next) {
     return res.status(403).json({ error: '需要管理員權限' });
   }
   next();
+}
+
+// 統一的強密碼驗證（給註冊、管理員建立、改密碼共用）
+function validateStrongPassword(password) {
+  if (!password || typeof password !== 'string') return '密碼為必填';
+  if (password.length < 8) return '密碼長度至少 8 字元';
+  if (!/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/\d/.test(password) || !/[^a-zA-Z0-9]/.test(password)) {
+    return '密碼需包含大寫字母、小寫字母、數字與特殊符號';
+  }
+  return null;
 }
 
 // ═══════════════════════════════════════
@@ -1550,11 +1609,9 @@ app.post('/api/auth/register', async (req, res) => {
   if (!isValidEmail(email)) {
     return res.status(400).json({ error: '電子郵件格式不正確' });
   }
-  if (password.length < 8) {
-    return res.status(400).json({ error: '密碼長度至少 8 字元' });
-  }
-  if (!/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/\d/.test(password) || !/[^a-zA-Z0-9]/.test(password)) {
-    return res.status(400).json({ error: '密碼需包含大寫字母、小寫字母、數字與特殊符號' });
+  const pwdError = validateStrongPassword(password);
+  if (pwdError) {
+    return res.status(400).json({ error: pwdError });
   }
   const emailLower = normalizeEmail(email);
   const registerCheck = canSelfRegister(emailLower);
@@ -1577,7 +1634,7 @@ app.post('/api/auth/register', async (req, res) => {
   createDefaultsForUser(id);
   saveDB();
 
-  const token = jwt.sign({ userId: id }, JWT_SECRET, { expiresIn: JWT_EXPIRES });
+  const token = jwt.sign({ userId: id, tokenVersion: 0 }, JWT_SECRET, { expiresIn: JWT_EXPIRES });
   setAuthCookie(res, token);
   res.json({ user: { id, email: emailLower, displayName, themeMode: 'system', isAdmin: !!isAdmin } });
 });
@@ -1619,7 +1676,7 @@ app.post('/api/auth/login', async (req, res) => {
   const currentLogin = recordLoginAudit(user, req, 'password');
   recordLoginAttempt({ user, email: emailLower, req, method: 'password', isSuccess: true });
 
-  const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: JWT_EXPIRES });
+  const token = jwt.sign({ userId: user.id, tokenVersion: Number(user.token_version) || 0 }, JWT_SECRET, { expiresIn: JWT_EXPIRES });
   setAuthCookie(res, token);
   res.json({
     user: { id: user.id, email: user.email, displayName: user.display_name, avatarUrl: user.avatar_url || '', themeMode: normalizeThemeMode(user.theme_mode), isAdmin: !!user.is_admin },
@@ -2032,7 +2089,7 @@ app.post('/api/auth/google', async (req, res) => {
 
     const currentLogin = recordLoginAudit(user, req, 'google');
     recordLoginAttempt({ user, email: user.email, req, method: 'google', isSuccess: true });
-    const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: JWT_EXPIRES });
+    const token = jwt.sign({ userId: user.id, tokenVersion: Number(user.token_version) || 0 }, JWT_SECRET, { expiresIn: JWT_EXPIRES });
     setAuthCookie(res, token);
     res.json({
       user: {
@@ -2101,7 +2158,7 @@ app.post('/api/auth/passkey/login', async (req, res) => {
       transports: JSON.parse(cred.transports || '[]'),
     };
 
-    const origin = req.headers.origin || `${req.protocol}://${req.headers.host}`;
+    const origin = getTrustedOrigin(req);
     const expected = {
       challenge: entry.challenge,
       origin,
@@ -2119,7 +2176,7 @@ app.post('/api/auth/passkey/login', async (req, res) => {
     const currentLogin = recordLoginAudit(user, req, 'passkey');
     recordLoginAttempt({ user, email: user.email, req, method: 'passkey', isSuccess: true });
 
-    const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: JWT_EXPIRES });
+    const token = jwt.sign({ userId: user.id, tokenVersion: Number(user.token_version) || 0 }, JWT_SECRET, { expiresIn: JWT_EXPIRES });
     setAuthCookie(res, token);
     res.json({
       user: {
@@ -2456,11 +2513,9 @@ app.post('/api/admin/users', adminMiddleware, async (req, res) => {
   if (!isValidEmail(email)) {
     return res.status(400).json({ error: '電子郵件格式不正確' });
   }
-  if (password.length < 8) {
-    return res.status(400).json({ error: '密碼長度至少 8 字元' });
-  }
-  if (!/[a-zA-Z]/.test(password) || !/\d/.test(password)) {
-    return res.status(400).json({ error: '密碼需包含英文字母與數字' });
+  const pwdError = validateStrongPassword(password);
+  if (pwdError) {
+    return res.status(400).json({ error: pwdError });
   }
   const existing = queryOne("SELECT id FROM users WHERE email = ?", [email]);
   if (existing) {
@@ -2484,11 +2539,8 @@ app.put('/api/admin/users/:id/password', adminMiddleware, async (req, res) => {
   const targetId = req.params.id;
   const newPassword = String(req.body?.newPassword || '');
   if (!targetId) return res.status(400).json({ error: '缺少使用者 ID' });
-  if (!newPassword) return res.status(400).json({ error: '請輸入新密碼' });
-  if (newPassword.length < 8) return res.status(400).json({ error: '新密碼長度至少 8 字元' });
-  if (!/[A-Z]/.test(newPassword) || !/[a-z]/.test(newPassword) || !/\d/.test(newPassword) || !/[^a-zA-Z0-9]/.test(newPassword)) {
-    return res.status(400).json({ error: '新密碼需包含大寫字母、小寫字母、數字與特殊符號' });
-  }
+  const pwdError = validateStrongPassword(newPassword);
+  if (pwdError) return res.status(400).json({ error: pwdError });
 
   const user = queryOne("SELECT id, password_hash FROM users WHERE id = ?", [targetId]);
   if (!user) return res.status(404).json({ error: '使用者不存在' });
@@ -2499,7 +2551,8 @@ app.put('/api/admin/users/:id/password', adminMiddleware, async (req, res) => {
   }
 
   const passwordHash = await bcrypt.hash(newPassword, 10);
-  db.run("UPDATE users SET password_hash = ?, has_password = 1 WHERE id = ?", [passwordHash, targetId]);
+  // 管理員重設密碼也需撤銷目標使用者的所有 JWT
+  db.run("UPDATE users SET password_hash = ?, has_password = 1, token_version = COALESCE(token_version, 0) + 1 WHERE id = ?", [passwordHash, targetId]);
   saveDB();
   res.json({ success: true });
 });
@@ -2606,7 +2659,7 @@ app.post('/api/account/passkey/register', async (req, res) => {
   if (entry.userId !== req.userId) return res.status(400).json({ error: 'Challenge 不匹配' });
 
   try {
-    const origin = req.headers.origin || `${req.protocol}://${req.headers.host}`;
+    const origin = getTrustedOrigin(req);
     const expected = {
       challenge: entry.challenge,
       origin,
@@ -2679,11 +2732,8 @@ app.put('/api/account/password', async (req, res) => {
   const currentPassword = String(req.body?.currentPassword || '');
   const newPassword = String(req.body?.newPassword || '');
 
-  if (!newPassword) return res.status(400).json({ error: '請輸入新密碼' });
-  if (newPassword.length < 8) return res.status(400).json({ error: '新密碼長度至少 8 字元' });
-  if (!/[A-Z]/.test(newPassword) || !/[a-z]/.test(newPassword) || !/\d/.test(newPassword) || !/[^a-zA-Z0-9]/.test(newPassword)) {
-    return res.status(400).json({ error: '新密碼需包含大寫字母、小寫字母、數字與特殊符號' });
-  }
+  const pwdError = validateStrongPassword(newPassword);
+  if (pwdError) return res.status(400).json({ error: pwdError });
 
   const user = queryOne("SELECT id, password_hash, has_password FROM users WHERE id = ?", [req.userId]);
   if (!user) return res.status(404).json({ error: '使用者不存在' });
@@ -2697,8 +2747,13 @@ app.put('/api/account/password', async (req, res) => {
   }
 
   const passwordHash = await bcrypt.hash(newPassword, 10);
-  db.run("UPDATE users SET password_hash = ?, has_password = 1 WHERE id = ?", [passwordHash, req.userId]);
+  // 改密碼後將 token_version +1，使所有舊 JWT 立即失效
+  db.run("UPDATE users SET password_hash = ?, has_password = 1, token_version = COALESCE(token_version, 0) + 1 WHERE id = ?", [passwordHash, req.userId]);
   saveDB();
+  // 重新簽發當前 session token
+  const updatedUser = queryOne("SELECT token_version FROM users WHERE id = ?", [req.userId]);
+  const newToken = jwt.sign({ userId: req.userId, tokenVersion: Number(updatedUser.token_version) || 0 }, JWT_SECRET, { expiresIn: JWT_EXPIRES });
+  setAuthCookie(res, newToken);
   res.json({ success: true });
 });
 
@@ -3067,6 +3122,10 @@ app.get('/api/transactions', (req, res) => {
 app.post('/api/transactions', (req, res) => {
   const { type, amount, date: rawDate, categoryId, accountId, note, excludeFromStats } = req.body;
   const date = normalizeDate(rawDate);
+  if (!date) return res.status(400).json({ error: '日期格式無效' });
+  if (!['income', 'expense', 'transfer_in', 'transfer_out'].includes(type)) return res.status(400).json({ error: '交易類型無效' });
+  if (categoryId && !assertOwned('categories', categoryId, req.userId)) return res.status(400).json({ error: '分類不存在或無權限' });
+  if (accountId && !assertOwned('accounts', accountId, req.userId)) return res.status(400).json({ error: '帳戶不存在或無權限' });
   let converted;
   try {
     converted = convertToTwd(req.body.originalAmount ?? amount, req.body.currency, req.body.fxRate, req.userId);
@@ -3086,6 +3145,10 @@ app.post('/api/transactions', (req, res) => {
 app.put('/api/transactions/:id', (req, res) => {
   const { type, amount, date: rawDate, categoryId, accountId, note, excludeFromStats } = req.body;
   const date = normalizeDate(rawDate);
+  if (!date) return res.status(400).json({ error: '日期格式無效' });
+  if (!['income', 'expense', 'transfer_in', 'transfer_out'].includes(type)) return res.status(400).json({ error: '交易類型無效' });
+  if (categoryId && !assertOwned('categories', categoryId, req.userId)) return res.status(400).json({ error: '分類不存在或無權限' });
+  if (accountId && !assertOwned('accounts', accountId, req.userId)) return res.status(400).json({ error: '帳戶不存在或無權限' });
   let converted;
   try {
     converted = convertToTwd(req.body.originalAmount ?? amount, req.body.currency, req.body.fxRate, req.userId);
@@ -3133,6 +3196,15 @@ app.post('/api/transactions/batch-update', (req, res) => {
   const { ids, fields } = req.body;
   if (!Array.isArray(ids) || ids.length === 0) return res.status(400).json({ error: '未選擇任何交易' });
   if (!fields || Object.keys(fields).length === 0) return res.status(400).json({ error: '未指定更新欄位' });
+
+  // 防 IDOR：批次更新時驗證所有 id/fields 屬於當前使用者
+  if (fields.categoryId && !assertOwned('categories', fields.categoryId, req.userId)) return res.status(400).json({ error: '分類不存在或無權限' });
+  if (fields.accountId && !assertOwned('accounts', fields.accountId, req.userId)) return res.status(400).json({ error: '帳戶不存在或無權限' });
+  if (fields.date !== undefined) {
+    const normalizedDate = normalizeDate(fields.date);
+    if (!normalizedDate) return res.status(400).json({ error: '日期格式無效' });
+    fields.date = normalizedDate;
+  }
 
   const allowedFields = { categoryId: 'category_id', accountId: 'account_id', date: 'date' };
   const setClauses = [];
@@ -3378,11 +3450,15 @@ app.get('/api/recurring', (req, res) => {
 app.post('/api/recurring', (req, res) => {
   const { type, categoryId, accountId, frequency, startDate, note } = req.body;
   let { amount, currency, fxRate } = req.body;
+  if (categoryId && !assertOwned('categories', categoryId, req.userId)) return res.status(400).json({ error: '分類不存在或無權限' });
+  if (accountId && !assertOwned('accounts', accountId, req.userId)) return res.status(400).json({ error: '帳戶不存在或無權限' });
+  const normalizedStart = normalizeDate(startDate);
+  if (!normalizedStart) return res.status(400).json({ error: '起始日期格式無效' });
   currency = normalizeCurrency(currency || 'TWD');
   const converted = convertToTwd(amount, currency, fxRate, req.userId);
   const id = uid();
   db.run("INSERT INTO recurring (id,user_id,type,amount,category_id,account_id,frequency,start_date,note,currency,fx_rate,is_active,last_generated) VALUES (?,?,?,?,?,?,?,?,?,?,?,1,NULL)",
-    [id, req.userId, type, converted.twdAmount, categoryId, accountId, frequency, startDate, note || '', converted.currency, converted.fxRate]);
+    [id, req.userId, type, converted.twdAmount, categoryId, accountId, frequency, normalizedStart, note || '', converted.currency, converted.fxRate]);
   saveDB();
   res.json({ id });
 });
@@ -3390,10 +3466,14 @@ app.post('/api/recurring', (req, res) => {
 app.put('/api/recurring/:id', (req, res) => {
   const { type, categoryId, accountId, frequency, startDate, note } = req.body;
   let { amount, currency, fxRate } = req.body;
+  if (categoryId && !assertOwned('categories', categoryId, req.userId)) return res.status(400).json({ error: '分類不存在或無權限' });
+  if (accountId && !assertOwned('accounts', accountId, req.userId)) return res.status(400).json({ error: '帳戶不存在或無權限' });
+  const normalizedStart = normalizeDate(startDate);
+  if (!normalizedStart) return res.status(400).json({ error: '起始日期格式無效' });
   currency = normalizeCurrency(currency || 'TWD');
   const converted = convertToTwd(amount, currency, fxRate, req.userId);
   db.run("UPDATE recurring SET type=?,amount=?,category_id=?,account_id=?,frequency=?,start_date=?,note=?,currency=?,fx_rate=? WHERE id=? AND user_id=?",
-    [type, converted.twdAmount, categoryId, accountId, frequency, startDate, note || '', converted.currency, converted.fxRate, req.params.id, req.userId]);
+    [type, converted.twdAmount, categoryId, accountId, frequency, normalizedStart, note || '', converted.currency, converted.fxRate, req.params.id, req.userId]);
   saveDB();
   res.json({ ok: true });
 });
@@ -3842,6 +3922,7 @@ async function fetchTwseStockAll() {
 app.get('/api/twse/stock/:symbol', async (req, res) => {
   const symbol = String(req.params.symbol || '').trim();
   if (!symbol) return res.status(400).json({ error: '請輸入股票代號' });
+  if (!/^[A-Z0-9]{2,10}$/i.test(symbol)) return res.status(400).json({ error: '股票代號格式不正確' });
   const useRealtime = req.query.realtime === '1';
   const dateParam = String(req.query.date || '').replace(/\D/g, ''); // YYYYMMDD
 
@@ -3890,6 +3971,8 @@ app.get('/api/twse/stock/:symbol', async (req, res) => {
 app.get('/api/twse/search', async (req, res) => {
   const q = String(req.query.q || '').trim();
   if (!q) return res.json([]);
+  // 限制查詢字串長度避免濫用與快取污染
+  if (q.length > 20) return res.status(400).json({ error: '查詢字串過長' });
   try {
     const allStocks = await fetchTwseStockAll();
     const results = allStocks
@@ -4609,8 +4692,13 @@ app.post('/api/stock-transactions', (req, res) => {
   const { stockId, date: rawDate, type, shares, price, fee, tax, accountId, note } = req.body;
   const date = normalizeDate(rawDate);
   if (!stockId || !date || !type || !shares || !price) return res.status(400).json({ error: '必填欄位未填' });
+  if (!['buy', 'sell'].includes(type)) return res.status(400).json({ error: '交易類型無效' });
+  if (!(Number(shares) > 0)) return res.status(400).json({ error: '股數必須為正數' });
+  if (!(Number(price) > 0)) return res.status(400).json({ error: '價格必須為正數' });
+  if (Number(fee) < 0 || Number(tax) < 0) return res.status(400).json({ error: '手續費/稅費不可為負' });
   const stock = queryOne("SELECT id FROM stocks WHERE id = ? AND user_id = ?", [stockId, req.userId]);
   if (!stock) return res.status(400).json({ error: '股票不存在' });
+  if (accountId && !assertOwned('accounts', accountId, req.userId)) return res.status(400).json({ error: '帳戶不存在或無權限' });
   const id = uid();
   db.run("INSERT INTO stock_transactions (id,user_id,stock_id,date,type,shares,price,fee,tax,account_id,note,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
     [id, req.userId, stockId, date, type, shares, price, fee || 0, tax || 0, accountId || '', note || '', Date.now()]);
@@ -4621,6 +4709,12 @@ app.post('/api/stock-transactions', (req, res) => {
 app.put('/api/stock-transactions/:id', (req, res) => {
   const { date: rawDate, type, shares, price, fee, tax, accountId, note } = req.body;
   const date = normalizeDate(rawDate);
+  if (!date) return res.status(400).json({ error: '日期格式無效' });
+  if (!['buy', 'sell'].includes(type)) return res.status(400).json({ error: '交易類型無效' });
+  if (!(Number(shares) > 0)) return res.status(400).json({ error: '股數必須為正數' });
+  if (!(Number(price) > 0)) return res.status(400).json({ error: '價格必須為正數' });
+  if (Number(fee) < 0 || Number(tax) < 0) return res.status(400).json({ error: '手續費/稅費不可為負' });
+  if (accountId && !assertOwned('accounts', accountId, req.userId)) return res.status(400).json({ error: '帳戶不存在或無權限' });
   const t = queryOne("SELECT * FROM stock_transactions WHERE id = ? AND user_id = ?", [req.params.id, req.userId]);
   if (!t) return res.status(404).json({ error: '交易紀錄不存在' });
   db.run("UPDATE stock_transactions SET date=?, type=?, shares=?, price=?, fee=?, tax=?, account_id=?, note=? WHERE id=? AND user_id=?",
@@ -4681,8 +4775,10 @@ app.post('/api/stock-dividends', (req, res) => {
   const { stockId, date: rawDate, cashDividend, stockDividendShares, accountId, note } = req.body;
   const date = normalizeDate(rawDate);
   if (!stockId || !date) return res.status(400).json({ error: '必填欄位未填' });
+  if (Number(cashDividend) < 0 || Number(stockDividendShares) < 0) return res.status(400).json({ error: '股利不可為負' });
   const stock = queryOne("SELECT id FROM stocks WHERE id = ? AND user_id = ?", [stockId, req.userId]);
   if (!stock) return res.status(400).json({ error: '股票不存在' });
+  if (accountId && !assertOwned('accounts', accountId, req.userId)) return res.status(400).json({ error: '帳戶不存在或無權限' });
   const id = uid();
   db.run("INSERT INTO stock_dividends (id,user_id,stock_id,date,cash_dividend,stock_dividend_shares,account_id,note,created_at) VALUES (?,?,?,?,?,?,?,?,?)",
     [id, req.userId, stockId, date, cashDividend || 0, stockDividendShares || 0, accountId || '', note || '', Date.now()]);
@@ -4693,6 +4789,9 @@ app.post('/api/stock-dividends', (req, res) => {
 app.put('/api/stock-dividends/:id', (req, res) => {
   const { date: rawDate, cashDividend, stockDividendShares, accountId, note } = req.body;
   const date = normalizeDate(rawDate);
+  if (!date) return res.status(400).json({ error: '日期格式無效' });
+  if (Number(cashDividend) < 0 || Number(stockDividendShares) < 0) return res.status(400).json({ error: '股利不可為負' });
+  if (accountId && !assertOwned('accounts', accountId, req.userId)) return res.status(400).json({ error: '帳戶不存在或無權限' });
   const d = queryOne("SELECT * FROM stock_dividends WHERE id = ? AND user_id = ?", [req.params.id, req.userId]);
   if (!d) return res.status(404).json({ error: '股利紀錄不存在' });
   db.run("UPDATE stock_dividends SET date=?, cash_dividend=?, stock_dividend_shares=?, account_id=?, note=? WHERE id=? AND user_id=?",

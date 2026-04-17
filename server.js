@@ -26,6 +26,7 @@ const cookieParser = require('cookie-parser');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const { server: webauthnServer } = require('@passwordless-id/webauthn');
+const { Resend } = require('resend');
 
 const app = express();
 // 信任反向代理（Nginx / Synology / Docker）傳遞的 X-Forwarded-For 標頭
@@ -48,6 +49,14 @@ const JWT_EXPIRES_MS = parseExpiresMs(JWT_EXPIRES);
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || '';
 const IPINFO_TOKEN = process.env.IPINFO_TOKEN || '';
+const RESEND_API_KEY = process.env.RESEND_API_KEY || '';
+const RESEND_FROM_EMAIL = process.env.RESEND_FROM_EMAIL || '';
+let resendClient = null;
+function getResendClient() {
+  if (!RESEND_API_KEY) return null;
+  if (!resendClient) resendClient = new Resend(RESEND_API_KEY);
+  return resendClient;
+}
 const GLOBAL_FX_API_BASE = 'https://v6.exchangerate-api.com/v6';
 const GLOBAL_FX_API_KEY = process.env.EXCHANGE_RATE_API_KEY || 'free'; // 免費版 key
 const FX_AUTO_SYNC_MIN_INTERVAL_MS = 30 * 60 * 1000;
@@ -2635,6 +2644,209 @@ app.delete('/api/admin/users/:id', adminMiddleware, (req, res) => {
   deleteUserData(targetId);
   saveDB();
   res.json({ success: true });
+});
+
+// ─── 寄送資產統計報表（管理員）───
+function escapeEmailHtml(value) {
+  return String(value == null ? '' : value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function formatAmount(value, currency = 'TWD') {
+  const n = Number(value) || 0;
+  const sign = n < 0 ? '-' : '';
+  const abs = Math.abs(n);
+  const formatted = abs.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+  return `${sign}${currency} ${formatted}`;
+}
+
+function buildUserStatsReport(userId) {
+  const month = thisMonth();
+  const monthLike = month + '%';
+
+  const accounts = queryAll(
+    "SELECT id, name, initial_balance, currency, exclude_from_total FROM accounts WHERE user_id = ?",
+    [userId]
+  );
+  const balanceByCurrency = {};
+  let includedAccountCount = 0;
+  for (const a of accounts) {
+    const cur = normalizeCurrency(a.currency);
+    const bal = calcBalance(a.id, a.initial_balance, userId, cur);
+    if (!a.exclude_from_total) {
+      balanceByCurrency[cur] = (balanceByCurrency[cur] || 0) + bal;
+      includedAccountCount += 1;
+    }
+  }
+
+  const income = Number(queryOne(
+    "SELECT COALESCE(SUM(amount),0) as total FROM transactions WHERE user_id = ? AND type='income' AND date LIKE ? AND exclude_from_stats = 0",
+    [userId, monthLike]
+  )?.total || 0);
+  const expense = Number(queryOne(
+    "SELECT COALESCE(SUM(amount),0) as total FROM transactions WHERE user_id = ? AND type='expense' AND date LIKE ? AND exclude_from_stats = 0",
+    [userId, monthLike]
+  )?.total || 0);
+
+  const topCategories = queryAll(`
+    SELECT COALESCE(c.name, '未分類') as name, COALESCE(SUM(t.amount), 0) as total
+    FROM transactions t
+    LEFT JOIN categories c ON t.category_id = c.id
+    WHERE t.user_id = ? AND t.type = 'expense' AND t.date LIKE ? AND t.exclude_from_stats = 0
+    GROUP BY c.name
+    ORDER BY total DESC
+    LIMIT 5
+  `, [userId, monthLike]).map(r => ({ name: r.name, total: Number(r.total) || 0 }));
+
+  const stocks = queryAll("SELECT id, symbol, name FROM stocks WHERE user_id = ?", [userId]);
+  let stockHoldings = 0;
+  let stockCostTwd = 0;
+  for (const s of stocks) {
+    const txs = queryAll(
+      "SELECT type, shares, price, fee FROM stock_transactions WHERE stock_id = ? AND user_id = ?",
+      [s.id, userId]
+    );
+    let shares = 0;
+    let cost = 0;
+    for (const t of txs) {
+      const sh = Number(t.shares) || 0;
+      const pr = Number(t.price) || 0;
+      const fee = Number(t.fee) || 0;
+      if (t.type === 'buy') {
+        shares += sh;
+        cost += sh * pr + fee;
+      } else if (t.type === 'sell') {
+        if (shares > 0) {
+          const avg = cost / shares;
+          cost -= avg * Math.min(sh, shares);
+        }
+        shares -= sh;
+      }
+    }
+    if (shares > 0) {
+      stockHoldings += 1;
+      stockCostTwd += Math.max(0, cost);
+    }
+  }
+
+  return {
+    month,
+    accountCount: includedAccountCount,
+    balanceByCurrency,
+    income,
+    expense,
+    net: income - expense,
+    topCategories,
+    stockHoldings,
+    stockCostTwd: Math.round(stockCostTwd),
+  };
+}
+
+function renderStatsEmailHtml(displayName, email, stats) {
+  const safeName = escapeEmailHtml(displayName || email || '使用者');
+  const balanceRows = Object.keys(stats.balanceByCurrency).length
+    ? Object.entries(stats.balanceByCurrency)
+        .map(([cur, total]) => `<tr><td style="padding:6px 12px;border-bottom:1px solid #eee">${escapeEmailHtml(cur)}</td><td style="padding:6px 12px;border-bottom:1px solid #eee;text-align:right">${escapeEmailHtml(formatAmount(total, cur))}</td></tr>`)
+        .join('')
+    : '<tr><td colspan="2" style="padding:6px 12px;color:#888">尚無帳戶</td></tr>';
+
+  const catRows = stats.topCategories.length
+    ? stats.topCategories
+        .map(c => `<tr><td style="padding:6px 12px;border-bottom:1px solid #eee">${escapeEmailHtml(c.name)}</td><td style="padding:6px 12px;border-bottom:1px solid #eee;text-align:right">${escapeEmailHtml(formatAmount(c.total))}</td></tr>`)
+        .join('')
+    : '<tr><td colspan="2" style="padding:6px 12px;color:#888">本月尚無支出紀錄</td></tr>';
+
+  const stockBlock = stats.stockHoldings > 0
+    ? `<p style="margin:8px 0 0;color:#444">目前持有 <strong>${stats.stockHoldings}</strong> 檔，總成本約 ${escapeEmailHtml(formatAmount(stats.stockCostTwd))}</p>`
+    : '<p style="margin:8px 0 0;color:#888">目前無持股</p>';
+
+  return `<!doctype html>
+<html lang="zh-Hant"><head><meta charset="utf-8"><title>個人資產統計報表</title></head>
+<body style="margin:0;padding:24px;background:#f5f6f8;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Noto Sans TC',sans-serif;color:#222">
+  <div style="max-width:560px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.06)">
+    <div style="padding:20px 24px;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff">
+      <h1 style="margin:0;font-size:20px">個人資產統計報表</h1>
+      <p style="margin:6px 0 0;font-size:13px;opacity:0.85">${escapeEmailHtml(stats.month)} 月度摘要</p>
+    </div>
+    <div style="padding:20px 24px">
+      <p style="margin:0 0 12px">${safeName} 您好，以下是您目前的資產與本月收支摘要：</p>
+
+      <h3 style="margin:18px 0 8px;font-size:15px;color:#4f46e5">資產餘額（共 ${stats.accountCount} 個帳戶）</h3>
+      <table style="width:100%;border-collapse:collapse;font-size:14px"><tbody>${balanceRows}</tbody></table>
+
+      <h3 style="margin:20px 0 8px;font-size:15px;color:#4f46e5">本月收支</h3>
+      <table style="width:100%;border-collapse:collapse;font-size:14px"><tbody>
+        <tr><td style="padding:6px 12px;border-bottom:1px solid #eee">收入</td><td style="padding:6px 12px;border-bottom:1px solid #eee;text-align:right;color:#16a34a">${escapeEmailHtml(formatAmount(stats.income))}</td></tr>
+        <tr><td style="padding:6px 12px;border-bottom:1px solid #eee">支出</td><td style="padding:6px 12px;border-bottom:1px solid #eee;text-align:right;color:#dc2626">${escapeEmailHtml(formatAmount(stats.expense))}</td></tr>
+        <tr><td style="padding:6px 12px;border-bottom:1px solid #eee"><strong>淨額</strong></td><td style="padding:6px 12px;border-bottom:1px solid #eee;text-align:right"><strong>${escapeEmailHtml(formatAmount(stats.net))}</strong></td></tr>
+      </tbody></table>
+
+      <h3 style="margin:20px 0 8px;font-size:15px;color:#4f46e5">本月前 5 大支出分類</h3>
+      <table style="width:100%;border-collapse:collapse;font-size:14px"><tbody>${catRows}</tbody></table>
+
+      <h3 style="margin:20px 0 8px;font-size:15px;color:#4f46e5">股票投資</h3>
+      ${stockBlock}
+
+      <p style="margin:24px 0 0;font-size:12px;color:#888">此信件由系統自動寄送，請勿回覆。</p>
+    </div>
+  </div>
+</body></html>`;
+}
+
+app.post('/api/admin/send-stats-report', adminMiddleware, async (req, res) => {
+  const client = getResendClient();
+  if (!client) {
+    return res.status(503).json({ error: 'Resend 未設定，請先在環境變數設定 RESEND_API_KEY 與 RESEND_FROM_EMAIL' });
+  }
+  if (!RESEND_FROM_EMAIL) {
+    return res.status(503).json({ error: '未設定 RESEND_FROM_EMAIL 寄件人' });
+  }
+
+  const userIds = Array.isArray(req.body?.userIds) ? req.body.userIds.map(String).filter(Boolean) : [];
+  if (userIds.length === 0) return res.status(400).json({ error: '請選擇至少一位使用者' });
+  if (userIds.length > 100) return res.status(400).json({ error: '單次最多寄送 100 位' });
+
+  const results = [];
+  for (const uidStr of userIds) {
+    const user = queryOne("SELECT id, email, display_name FROM users WHERE id = ?", [uidStr]);
+    if (!user) {
+      results.push({ userId: uidStr, status: 'skipped', reason: '使用者不存在' });
+      continue;
+    }
+    if (!user.email || !isValidEmail(user.email)) {
+      results.push({ userId: uidStr, email: user.email || '', status: 'skipped', reason: 'Email 無效' });
+      continue;
+    }
+    try {
+      const stats = buildUserStatsReport(user.id);
+      const html = renderStatsEmailHtml(user.display_name, user.email, stats);
+      const subject = `${stats.month} 個人資產統計報表`;
+      const sendResult = await client.emails.send({
+        from: RESEND_FROM_EMAIL,
+        to: user.email,
+        subject,
+        html,
+      });
+      if (sendResult?.error) {
+        results.push({ userId: uidStr, email: user.email, status: 'failed', reason: sendResult.error.message || '寄送失敗' });
+      } else {
+        results.push({ userId: uidStr, email: user.email, status: 'sent' });
+      }
+    } catch (e) {
+      results.push({ userId: uidStr, email: user.email, status: 'failed', reason: e.message || '寄送失敗' });
+    }
+    // 避免觸發 Resend 預設 2 req/sec 限制
+    await new Promise(r => setTimeout(r, 600));
+  }
+
+  const sent = results.filter(r => r.status === 'sent').length;
+  const failed = results.filter(r => r.status === 'failed').length;
+  const skipped = results.filter(r => r.status === 'skipped').length;
+  res.json({ sent, failed, skipped, results });
 });
 
 let isUpdatingApp = false;

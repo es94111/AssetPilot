@@ -1,6 +1,18 @@
 {
-  "currentVersion": "4.16.1",
+  "currentVersion": "4.16.2",
   "releases": [
+    {
+      "version": "4.16.2",
+      "date": "2026-04-17",
+      "title": "修正排程設定儲存後 reload 會失效的 bug",
+      "type": "fix",
+      "changes": [
+        { "tag": "fixed", "text": "排程自動寄送 / SMTP 設定表單加上 action=\"javascript:void(0);\" + method=\"post\"，避免在 listener 尚未綁定的 race window 期間，submit 觸發 form 預設 GET 導航導致表單值丟失" },
+        { "tag": "fixed", "text": "修正後端 hour=0（午夜）/ weekday=0（週日）會被 `||` 當 falsy 重設為預設值的 bug；改用 Number.isFinite() 檢查 + clampInt() 邊界處理" },
+        { "tag": "fixed", "text": "前端 schedule submit 改用 dataset.bound flag 確保 listener 只綁一次（防止 renderAdminSettings race 造成重複綁定）；儲存成功後立即 GET 一次並 re-render 表單，確認 DB 真的持久化" },
+        { "tag": "improved", "text": "frontend payload 使用 `??` 運算子處理數字 default，正確支援 0 值" }
+      ]
+    },
     {
       "version": "4.16.1",
       "date": "2026-04-17",

@@ -5152,30 +5152,33 @@ const App = (() => {
       }
     });
 
-    el('adminSmtpForm')?.addEventListener('submit', async (ev) => {
-      ev.preventDefault();
-      const statusEl = el('adminSmtpStatus');
-      if (statusEl) { statusEl.textContent = '儲存中…'; statusEl.style.color = ''; }
-      try {
-        const payload = {
-          host: el('adminSmtpHost')?.value?.trim() || '',
-          port: Number(el('adminSmtpPort')?.value) || 587,
-          secure: !!el('adminSmtpSecure')?.checked,
-          user: el('adminSmtpUser')?.value?.trim() || '',
-          password: el('adminSmtpPassword')?.value || '',
-          from: el('adminSmtpFrom')?.value?.trim() || '',
-        };
-        await API.put('/api/admin/smtp-settings', payload);
-        if (statusEl) { statusEl.textContent = '已儲存 SMTP 設定'; statusEl.style.color = 'var(--success-color, #16a34a)'; }
-        toast('SMTP 設定已儲存', 'success');
-        // 清空密碼欄並更新 placeholder
-        const pwEl = el('adminSmtpPassword');
-        if (pwEl) { pwEl.value = ''; pwEl.placeholder = payload.password ? '已設定密碼，留空則保留' : pwEl.placeholder; }
-      } catch (e) {
-        if (statusEl) { statusEl.textContent = e.message || '儲存失敗'; statusEl.style.color = 'var(--danger-color)'; }
-        toast(e.message || 'SMTP 設定儲存失敗', 'error');
-      }
-    });
+    const smtpForm = el('adminSmtpForm');
+    if (smtpForm && !smtpForm.dataset.bound) {
+      smtpForm.dataset.bound = '1';
+      smtpForm.addEventListener('submit', async (ev) => {
+        ev.preventDefault();
+        const statusEl = el('adminSmtpStatus');
+        if (statusEl) { statusEl.textContent = '儲存中…'; statusEl.style.color = ''; }
+        try {
+          const payload = {
+            host: el('adminSmtpHost')?.value?.trim() || '',
+            port: Number(el('adminSmtpPort')?.value) || 587,
+            secure: !!el('adminSmtpSecure')?.checked,
+            user: el('adminSmtpUser')?.value?.trim() || '',
+            password: el('adminSmtpPassword')?.value || '',
+            from: el('adminSmtpFrom')?.value?.trim() || '',
+          };
+          await API.put('/api/admin/smtp-settings', payload);
+          if (statusEl) { statusEl.textContent = '已儲存 SMTP 設定'; statusEl.style.color = 'var(--success-color, #16a34a)'; }
+          toast('SMTP 設定已儲存', 'success');
+          const pwEl = el('adminSmtpPassword');
+          if (pwEl) { pwEl.value = ''; pwEl.placeholder = payload.password ? '已設定密碼，留空則保留' : pwEl.placeholder; }
+        } catch (e) {
+          if (statusEl) { statusEl.textContent = e.message || '儲存失敗'; statusEl.style.color = 'var(--danger-color)'; }
+          toast(e.message || 'SMTP 設定儲存失敗', 'error');
+        }
+      });
+    }
 
     el('adminSmtpTestBtn')?.addEventListener('click', async () => {
       const btn = el('adminSmtpTestBtn');
@@ -5198,25 +5201,35 @@ const App = (() => {
 
     el('adminScheduleFreq')?.addEventListener('change', updateAdminScheduleVisibility);
 
-    el('adminScheduleForm')?.addEventListener('submit', async (ev) => {
-      ev.preventDefault();
-      const statusEl = el('adminScheduleStatus');
-      if (statusEl) { statusEl.textContent = '儲存中…'; statusEl.style.color = ''; }
-      try {
-        const payload = {
-          freq: el('adminScheduleFreq')?.value || 'off',
-          hour: Number(el('adminScheduleHour')?.value) || 9,
-          weekday: Number(el('adminScheduleWeekday')?.value) || 1,
-          dayOfMonth: Number(el('adminScheduleDayOfMonth')?.value) || 1,
-        };
-        await API.put('/api/admin/report-schedule', payload);
-        if (statusEl) { statusEl.textContent = '排程已儲存'; statusEl.style.color = 'var(--success-color, #16a34a)'; }
-        toast('排程已儲存', 'success');
-      } catch (e) {
-        if (statusEl) { statusEl.textContent = e.message || '儲存失敗'; statusEl.style.color = 'var(--danger-color)'; }
-        toast(e.message || '排程儲存失敗', 'error');
-      }
-    });
+    const scheduleForm = el('adminScheduleForm');
+    if (scheduleForm && !scheduleForm.dataset.bound) {
+      scheduleForm.dataset.bound = '1';
+      scheduleForm.addEventListener('submit', async (ev) => {
+        ev.preventDefault();
+        const statusEl = el('adminScheduleStatus');
+        if (statusEl) { statusEl.textContent = '儲存中…'; statusEl.style.color = ''; }
+        try {
+          const hourRaw = el('adminScheduleHour')?.value;
+          const weekdayRaw = el('adminScheduleWeekday')?.value;
+          const domRaw = el('adminScheduleDayOfMonth')?.value;
+          const payload = {
+            freq: el('adminScheduleFreq')?.value || 'off',
+            hour: hourRaw === '' ? 9 : (Number(hourRaw) ?? 9),
+            weekday: weekdayRaw === '' ? 1 : (Number(weekdayRaw) ?? 1),
+            dayOfMonth: domRaw === '' ? 1 : (Number(domRaw) ?? 1),
+          };
+          await API.put('/api/admin/report-schedule', payload);
+          // 立即重抓 GET 確認 DB 真的持久化（防止任何介於 PUT/GET 的不一致）
+          const fresh = await API.get('/api/admin/report-schedule').catch(() => null);
+          if (fresh) renderAdminScheduleForm(fresh);
+          if (statusEl) { statusEl.textContent = '排程已儲存'; statusEl.style.color = 'var(--success-color, #16a34a)'; }
+          toast('排程已儲存', 'success');
+        } catch (e) {
+          if (statusEl) { statusEl.textContent = e.message || '儲存失敗'; statusEl.style.color = 'var(--danger-color)'; }
+          toast(e.message || '排程儲存失敗', 'error');
+        }
+      });
+    }
 
     el('adminScheduleRunNowBtn')?.addEventListener('click', async () => {
       if (!confirm('立即觸發一次寄送（將寄給所有有效 Email 的使用者）？')) return;

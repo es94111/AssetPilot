@@ -1355,7 +1355,7 @@
         <div class="card">
           <h3><i class="fas fa-envelope"></i>SMTP 寄信設定</h3>
           <p class="admin-section-desc" style="margin:4px 0 12px">設定 SMTP 後優先使用 SMTP 寄送統計報表；未設定則 fallback 至 Resend（需設定 RESEND_API_KEY 環境變數）。</p>
-          <form id="adminSmtpForm">
+          <form id="adminSmtpForm" action="javascript:void(0);" method="post">
             <div class="admin-grid-2">
               <div class="form-row">
                 <label>Host</label>
@@ -1431,7 +1431,7 @@
         <div class="card">
           <h3><i class="fas fa-clock"></i>排程自動寄送</h3>
           <p class="admin-section-desc" style="margin:4px 0 12px">設定後系統會在指定頻率自動寄送統計報表給<strong>所有有效 Email 的使用者</strong>（背景每 5 分鐘檢查一次）。</p>
-          <form id="adminScheduleForm">
+          <form id="adminScheduleForm" action="javascript:void(0);" method="post">
             <div class="admin-grid-2">
               <div class="form-row">
                 <label>頻率</label>

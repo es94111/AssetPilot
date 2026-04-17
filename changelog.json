@@ -1,6 +1,20 @@
 {
-  "currentVersion": "4.13.0",
+  "currentVersion": "4.13.1",
   "releases": [
+    {
+      "version": "4.13.1",
+      "date": "2026-04-17",
+      "title": "資安強化（續）：刪帳號二次驗證、DoS 防護、非阻塞寫檔",
+      "type": "feature",
+      "changes": [
+        { "tag": "fixed", "text": "Google-only 帳號刪除帳號改為要求 fresh Google id_token 驗證（比對 audience + sub + exp），不再僅靠前端二次確認" },
+        { "tag": "improved", "text": "刪除帳號 UI：Google-only 使用者會看到專屬 Google 重新驗證按鈕；完成驗證前「永久刪除帳號」按鈕維持 disabled" },
+        { "tag": "fixed", "text": "Passkey-only 帳號暫時無法自助刪除，需聯絡管理員（避免無二次驗證）" },
+        { "tag": "improved", "text": "express.json 全局 body 上限從 50MB 降到 5MB；CSV 匯入端點（交易/股票/股利）單獨放寬至 25MB" },
+        { "tag": "improved", "text": "CSV 匯入每次最多 20000 筆，超過直接回 413；body 過大統一回 JSON 413 錯誤" },
+        { "tag": "improved", "text": "saveDB() 改為非阻塞：in-flight 鎖 + pending 合併；以 tmp + rename 原子寫；提供 SIGTERM/SIGINT flush" }
+      ]
+    },
     {
       "version": "4.13.0",
       "date": "2026-04-17",

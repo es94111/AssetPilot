@@ -1353,6 +1353,34 @@
         </div>
 
         <div class="card">
+          <h3><i class="fas fa-paper-plane"></i>寄送資產統計報表</h3>
+          <p class="admin-section-desc" style="margin:4px 0 12px">勾選要寄信的使用者，系統將透過 Resend 寄出該使用者本月的資產與收支摘要。</p>
+          <div id="adminSendReportConfigWarn" class="admin-section-desc" style="display:none;color:var(--danger-color);margin-bottom:12px"></div>
+          <div class="table-toolbar">
+            <label style="display:inline-flex;align-items:center;gap:6px">
+              <input type="checkbox" id="adminSendReportSelectAll"> 全選
+            </label>
+            <button class="btn btn-primary btn-sm" id="adminSendReportBtn" disabled>
+              <i class="fas fa-paper-plane"></i> 寄送給已選使用者（<span id="adminSendReportSelectedCount">0</span>）
+            </button>
+            <span class="import-hint" id="adminSendReportStatus"></span>
+          </div>
+          <div class="table-wrap" style="overflow:auto;max-height:320px">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th class="th-check"></th>
+                  <th>Email</th>
+                  <th>顯示名稱</th>
+                  <th>角色</th>
+                </tr>
+              </thead>
+              <tbody id="adminSendReportBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card">
           <h3><i class="fas fa-user-shield"></i>管理員登入紀錄（最近 200 筆）</h3>
           <div class="table-toolbar">
             <button class="btn btn-ghost btn-sm" id="adminLoginLogSyncBtn"><i class="fas fa-rotate"></i> 手動同步</button>

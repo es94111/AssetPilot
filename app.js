@@ -4990,6 +4990,36 @@ const App = (() => {
     }).join('');
   }
 
+  function renderAdminSendReportTable(users) {
+    const tbody = el('adminSendReportBody');
+    if (!tbody) return;
+    if (!Array.isArray(users) || users.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="4" class="empty-hint">尚無使用者</td></tr>';
+      updateAdminSendReportSelected();
+      return;
+    }
+    tbody.innerHTML = users.map(u => `<tr>
+      <td><input type="checkbox" class="admin-send-report-checkbox" data-user-id="${escHtml(u.id)}" data-user-email="${escHtml(u.email || '')}"></td>
+      <td>${escHtml(u.email || '')}</td>
+      <td>${escHtml(u.displayName || '')}</td>
+      <td>${u.isAdmin ? '<span class="type-badge income">管理員</span>' : '<span class="type-badge">一般</span>'}</td>
+    </tr>`).join('');
+    const selectAll = el('adminSendReportSelectAll');
+    if (selectAll) selectAll.checked = false;
+    updateAdminSendReportSelected();
+  }
+
+  function updateAdminSendReportSelected() {
+    const checks = document.querySelectorAll('.admin-send-report-checkbox');
+    const selected = Array.from(checks).filter(c => c.checked).length;
+    const countEl = el('adminSendReportSelectedCount');
+    const btn = el('adminSendReportBtn');
+    if (countEl) countEl.textContent = String(selected);
+    if (btn) btn.disabled = selected === 0;
+    const selectAll = el('adminSendReportSelectAll');
+    if (selectAll) selectAll.checked = checks.length > 0 && selected === checks.length;
+  }
+
   async function renderAdminSettings() {
     if (!currentUser?.isAdmin) return;
     try {
@@ -5009,6 +5039,7 @@ const App = (() => {
         ? settings.adminIpAllowlist.join('\n')
         : '';
       renderAdminUserTable(users);
+      renderAdminSendReportTable(users);
       await syncAdminLoginLogs({ silent: true });
     } catch (e) {
       toast(e.message || '載入管理員設定失敗', 'error');
@@ -5077,6 +5108,49 @@ const App = (() => {
         await renderAdminSettings();
       } catch (e) {
         toast(e.message || '刪除使用者失敗', 'error');
+      }
+    });
+
+    el('adminSendReportSelectAll')?.addEventListener('change', (ev) => {
+      const checked = !!ev.target.checked;
+      document.querySelectorAll('.admin-send-report-checkbox').forEach(cb => { cb.checked = checked; });
+      updateAdminSendReportSelected();
+    });
+
+    el('adminSendReportBody')?.addEventListener('change', (ev) => {
+      if (ev.target.classList.contains('admin-send-report-checkbox')) {
+        updateAdminSendReportSelected();
+      }
+    });
+
+    el('adminSendReportBtn')?.addEventListener('click', async () => {
+      const checks = Array.from(document.querySelectorAll('.admin-send-report-checkbox')).filter(c => c.checked);
+      const userIds = checks.map(c => c.dataset.userId).filter(Boolean);
+      if (userIds.length === 0) return;
+      const emails = checks.map(c => c.dataset.userEmail).filter(Boolean);
+      if (!confirm(`確定要寄送資產統計報表給 ${userIds.length} 位使用者嗎？\n\n${emails.slice(0, 5).join('\n')}${emails.length > 5 ? `\n…（共 ${emails.length} 位）` : ''}`)) return;
+      const btn = el('adminSendReportBtn');
+      const statusEl = el('adminSendReportStatus');
+      if (btn) btn.disabled = true;
+      if (statusEl) statusEl.textContent = '寄送中…';
+      try {
+        const result = await API.post('/api/admin/send-stats-report', { userIds });
+        const msg = `已寄送 ${result.sent} 封，失敗 ${result.failed} 封，略過 ${result.skipped} 封`;
+        if (statusEl) statusEl.textContent = msg;
+        toast(msg, result.failed > 0 ? 'error' : 'success');
+        if (Array.isArray(result.results)) {
+          const failures = result.results.filter(r => r.status !== 'sent');
+          if (failures.length > 0) {
+            console.warn('[send-stats-report] 失敗/略過明細:', failures);
+          }
+        }
+      } catch (e) {
+        const msg = e.message || '寄送失敗';
+        if (statusEl) statusEl.textContent = msg;
+        toast(msg, 'error');
+      } finally {
+        if (btn) btn.disabled = false;
+        updateAdminSendReportSelected();
       }
     });
 

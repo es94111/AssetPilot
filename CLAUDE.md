@@ -54,6 +54,8 @@ node server.js         # 啟動伺服器，預設 http://localhost:3000
 | `DB_ENCRYPTION_KEY` | 資料庫加密金鑰（首次啟動自動產生）| （自動產生 64 字元）       |
 | `ALLOWED_ORIGINS`  | CORS 允許來源（逗號分隔，留空則不限制）| （空）                    |
 | `CHANGELOG_URL`    | 遠端 changelog.json URL（選配，用於版本更新檢查）| GitHub 倉庫預設 URL      |
+| `RESEND_API_KEY`   | Resend 寄信 API Key（管理員寄送資產統計報表用，留空則停用） | （空）                  |
+| `RESEND_FROM_EMAIL`| Resend 寄件人（須為已驗證網域信箱），格式 `Name <addr@domain>` | （空）                |
 
 ## 開發慣例
 

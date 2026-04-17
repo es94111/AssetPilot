@@ -5014,33 +5014,39 @@ const App = (() => {
     if (domRow) domRow.style.display = freq === 'monthly' ? '' : 'none';
   }
 
-  function renderAdminSendReportTable(users) {
-    const tbody = el('adminSendReportBody');
+  let adminScheduleAllUsers = [];
+  function renderAdminScheduleUserTable(users, savedUserIds) {
+    adminScheduleAllUsers = Array.isArray(users) ? users : [];
+    const savedSet = new Set(Array.isArray(savedUserIds) ? savedUserIds.map(String) : []);
+    const tbody = el('adminScheduleUserBody');
     if (!tbody) return;
-    if (!Array.isArray(users) || users.length === 0) {
+    if (adminScheduleAllUsers.length === 0) {
       tbody.innerHTML = '<tr><td colspan="4" class="empty-hint">尚無使用者</td></tr>';
-      updateAdminSendReportSelected();
+      updateAdminScheduleSelected();
       return;
     }
-    tbody.innerHTML = users.map(u => `<tr>
-      <td><input type="checkbox" class="admin-send-report-checkbox" data-user-id="${escHtml(u.id)}" data-user-email="${escHtml(u.email || '')}"></td>
+    tbody.innerHTML = adminScheduleAllUsers.map(u => `<tr>
+      <td><input type="checkbox" class="admin-schedule-user-checkbox" data-user-id="${escHtml(u.id)}" data-user-email="${escHtml(u.email || '')}" ${savedSet.has(String(u.id)) ? 'checked' : ''}></td>
       <td>${escHtml(u.email || '')}</td>
       <td>${escHtml(u.displayName || '')}</td>
       <td>${u.isAdmin ? '<span class="type-badge income">管理員</span>' : '<span class="type-badge">一般</span>'}</td>
     </tr>`).join('');
-    const selectAll = el('adminSendReportSelectAll');
-    if (selectAll) selectAll.checked = false;
-    updateAdminSendReportSelected();
+    updateAdminScheduleSelected();
   }
 
-  function updateAdminSendReportSelected() {
-    const checks = document.querySelectorAll('.admin-send-report-checkbox');
+  function getAdminScheduleSelectedUserIds() {
+    return Array.from(document.querySelectorAll('.admin-schedule-user-checkbox'))
+      .filter(c => c.checked)
+      .map(c => c.dataset.userId)
+      .filter(Boolean);
+  }
+
+  function updateAdminScheduleSelected() {
+    const checks = document.querySelectorAll('.admin-schedule-user-checkbox');
     const selected = Array.from(checks).filter(c => c.checked).length;
-    const countEl = el('adminSendReportSelectedCount');
-    const btn = el('adminSendReportBtn');
+    const countEl = el('adminScheduleSelectedCount');
     if (countEl) countEl.textContent = String(selected);
-    if (btn) btn.disabled = selected === 0;
-    const selectAll = el('adminSendReportSelectAll');
+    const selectAll = el('adminScheduleSelectAll');
     if (selectAll) selectAll.checked = checks.length > 0 && selected === checks.length;
   }
 
@@ -5079,8 +5085,8 @@ const App = (() => {
         }
       }
       renderAdminUserTable(users);
-      renderAdminSendReportTable(users);
       renderAdminScheduleForm(schedule);
+      renderAdminScheduleUserTable(users, schedule?.userIds);
       await syncAdminLoginLogs({ silent: true });
     } catch (e) {
       toast(e.message || '載入管理員設定失敗', 'error');
@@ -5217,11 +5223,14 @@ const App = (() => {
             hour: hourRaw === '' ? 9 : (Number(hourRaw) ?? 9),
             weekday: weekdayRaw === '' ? 1 : (Number(weekdayRaw) ?? 1),
             dayOfMonth: domRaw === '' ? 1 : (Number(domRaw) ?? 1),
+            userIds: getAdminScheduleSelectedUserIds(),
           };
           await API.put('/api/admin/report-schedule', payload);
-          // 立即重抓 GET 確認 DB 真的持久化（防止任何介於 PUT/GET 的不一致）
           const fresh = await API.get('/api/admin/report-schedule').catch(() => null);
-          if (fresh) renderAdminScheduleForm(fresh);
+          if (fresh) {
+            renderAdminScheduleForm(fresh);
+            renderAdminScheduleUserTable(adminScheduleAllUsers, fresh.userIds);
+          }
           if (statusEl) { statusEl.textContent = '排程已儲存'; statusEl.style.color = 'var(--success-color, #16a34a)'; }
           toast('排程已儲存', 'success');
         } catch (e) {
@@ -5231,82 +5240,46 @@ const App = (() => {
       });
     }
 
+    el('adminScheduleSelectAll')?.addEventListener('change', (ev) => {
+      const checked = !!ev.target.checked;
+      document.querySelectorAll('.admin-schedule-user-checkbox').forEach(cb => { cb.checked = checked; });
+      updateAdminScheduleSelected();
+    });
+
+    el('adminScheduleUserBody')?.addEventListener('change', (ev) => {
+      if (ev.target.classList.contains('admin-schedule-user-checkbox')) {
+        updateAdminScheduleSelected();
+      }
+    });
+
     el('adminScheduleRunNowBtn')?.addEventListener('click', async () => {
-      if (!confirm('立即觸發一次寄送（將寄給所有有效 Email 的使用者）？')) return;
+      const userIds = getAdminScheduleSelectedUserIds();
+      if (userIds.length === 0) {
+        toast('請先勾選至少一位使用者', 'error');
+        return;
+      }
+      if (!confirm(`立即寄送資產統計報表給已勾選的 ${userIds.length} 位使用者？\n（寄送前會自動更新該使用者所有持股最新報價）`)) return;
       const btn = el('adminScheduleRunNowBtn');
       const statusEl = el('adminScheduleStatus');
+      const detailsEl = el('adminScheduleDetails');
       if (btn) btn.disabled = true;
-      if (statusEl) { statusEl.textContent = '執行中…'; statusEl.style.color = ''; }
+      if (detailsEl) { detailsEl.innerHTML = ''; detailsEl.style.display = 'none'; }
+      if (statusEl) { statusEl.textContent = '寄送中…（含股價更新）'; statusEl.style.color = ''; }
       try {
-        const result = await API.post('/api/admin/report-schedule/run-now', {});
+        const result = await API.post('/api/admin/report-schedule/run-now', { userIds });
         const msg = result.skipped && result.reason
           ? result.reason
-          : `已寄送 ${result.sent} / 失敗 ${result.failed} / 略過 ${result.skipped}`;
-        if (statusEl) { statusEl.textContent = msg; statusEl.style.color = result.failed > 0 ? 'var(--danger-color)' : 'var(--success-color, #16a34a)'; }
-        toast(msg, result.failed > 0 ? 'error' : 'success');
-        // 重抓最新狀態
+          : `已寄送 ${result.sent} / 失敗 ${result.failed} / 略過 ${result.skipped}（更新股價 ${result.priceUpdates ?? 0} 檔）`;
+        if (statusEl) { statusEl.textContent = msg; statusEl.style.color = (result.failed || 0) > 0 ? 'var(--danger-color)' : 'var(--success-color, #16a34a)'; }
+        toast(msg, (result.failed || 0) > 0 ? 'error' : 'success');
         const schedule = await API.get('/api/admin/report-schedule').catch(() => null);
-        renderAdminScheduleForm(schedule);
+        if (schedule) renderAdminScheduleForm(schedule);
       } catch (e) {
         const msg = e.message || '執行失敗';
         if (statusEl) { statusEl.textContent = msg; statusEl.style.color = 'var(--danger-color)'; }
         toast(msg, 'error');
       } finally {
         if (btn) btn.disabled = false;
-      }
-    });
-
-    el('adminSendReportSelectAll')?.addEventListener('change', (ev) => {
-      const checked = !!ev.target.checked;
-      document.querySelectorAll('.admin-send-report-checkbox').forEach(cb => { cb.checked = checked; });
-      updateAdminSendReportSelected();
-    });
-
-    el('adminSendReportBody')?.addEventListener('change', (ev) => {
-      if (ev.target.classList.contains('admin-send-report-checkbox')) {
-        updateAdminSendReportSelected();
-      }
-    });
-
-    el('adminSendReportBtn')?.addEventListener('click', async () => {
-      const checks = Array.from(document.querySelectorAll('.admin-send-report-checkbox')).filter(c => c.checked);
-      const userIds = checks.map(c => c.dataset.userId).filter(Boolean);
-      if (userIds.length === 0) return;
-      const emails = checks.map(c => c.dataset.userEmail).filter(Boolean);
-      if (!confirm(`確定要寄送資產統計報表給 ${userIds.length} 位使用者嗎？\n\n${emails.slice(0, 5).join('\n')}${emails.length > 5 ? `\n…（共 ${emails.length} 位）` : ''}`)) return;
-      const btn = el('adminSendReportBtn');
-      const statusEl = el('adminSendReportStatus');
-      if (btn) btn.disabled = true;
-      if (statusEl) statusEl.textContent = '寄送中…';
-      const detailsEl = el('adminSendReportDetails');
-      if (detailsEl) { detailsEl.innerHTML = ''; detailsEl.style.display = 'none'; }
-      try {
-        const result = await API.post('/api/admin/send-stats-report', { userIds });
-        const msg = `已寄送 ${result.sent} 封，失敗 ${result.failed} 封，略過 ${result.skipped} 封`;
-        if (statusEl) statusEl.textContent = msg;
-        toast(msg, result.failed > 0 ? 'error' : 'success');
-        if (Array.isArray(result.results)) {
-          const failures = result.results.filter(r => r.status !== 'sent');
-          if (failures.length > 0) {
-            console.warn('[send-stats-report] 失敗/略過明細:', failures);
-            if (detailsEl) {
-              const rows = failures.map(f => {
-                const label = f.status === 'failed' ? '失敗' : '略過';
-                const color = f.status === 'failed' ? 'var(--danger-color)' : '#888';
-                return `<li style="margin:4px 0"><span style="color:${color};font-weight:600">${label}</span> · ${escHtml(f.email || f.userId || '')} — ${escHtml(f.reason || '無原因')}</li>`;
-              }).join('');
-              detailsEl.innerHTML = `<div style="margin-top:8px;padding:10px 12px;background:var(--bg-subtle,#f8fafc);border-radius:8px;border:1px solid var(--border-color,#e5e7eb)"><div style="font-weight:600;margin-bottom:4px">失敗 / 略過明細</div><ul style="margin:0;padding-left:18px;font-size:13px">${rows}</ul></div>`;
-              detailsEl.style.display = '';
-            }
-          }
-        }
-      } catch (e) {
-        const msg = e.message || '寄送失敗';
-        if (statusEl) statusEl.textContent = msg;
-        toast(msg, 'error');
-      } finally {
-        if (btn) btn.disabled = false;
-        updateAdminSendReportSelected();
       }
     });
 

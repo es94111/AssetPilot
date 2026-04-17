@@ -2943,7 +2943,7 @@ function renderStatsEmailHtml(displayName, email, stats) {
             <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${safeColor};margin-right:6px;vertical-align:middle"></span>
             <span style="color:#0f172a">${escapeEmailHtml(t.categoryName)}</span><span style="color:#94a3b8">${note}</span>
           </td>
-          <td style="padding:8px 12px;border-bottom:1px solid #f1f5f9;text-align:right;color:${color};font-weight:600;white-space:nowrap">${sign}${escapeEmailHtml(formatAmount(t.amount, t.currency).replace(/^[A-Z]{3}\s/, t.currency + ' '))}</td>
+          <td style="padding:8px 12px;border-bottom:1px solid #f1f5f9;text-align:right;color:${color};font-weight:600;white-space:nowrap">${sign}${escapeEmailHtml(formatAmount(t.amount))}</td>
         </tr>`;
       }).join('')
     : '<tr><td style="padding:8px 12px;color:#94a3b8" colspan="3">尚無交易紀錄</td></tr>';

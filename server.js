@@ -2740,6 +2740,34 @@ function prevMonthOf(monthStr) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
 }
 
+function ymd(d) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+// 依排程頻率決定信件「交易區塊」的時間範圍
+//   daily   → 前一天（個別交易明細）
+//   weekly  → 上一個完整週 (Mon-Sun)（每日彙總）
+//   monthly → 上個月 (1日 ~ 月底)（每日彙總）
+//   off/未知 → 預設 daily 行為（手動觸發場景）
+function getReportPeriod(freq, now = new Date()) {
+  if (freq === 'weekly') {
+    const day = now.getDay(); // 0=Sun
+    const daysSinceMon = (day + 6) % 7; // 0 if Mon
+    const lastSun = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysSinceMon - 1);
+    const lastMon = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysSinceMon - 7);
+    return { kind: 'weekly', start: ymd(lastMon), end: ymd(lastSun), label: `上週（${ymd(lastMon)} ~ ${ymd(lastSun)}）每日收支` };
+  }
+  if (freq === 'monthly') {
+    const firstOfThisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const lastOfPrev = new Date(firstOfThisMonth.getTime() - 86400000);
+    const firstOfPrev = new Date(lastOfPrev.getFullYear(), lastOfPrev.getMonth(), 1);
+    return { kind: 'monthly', start: ymd(firstOfPrev), end: ymd(lastOfPrev), label: `上月（${firstOfPrev.getFullYear()}-${String(firstOfPrev.getMonth() + 1).padStart(2, '0')}）每日收支` };
+  }
+  // daily 或其他
+  const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+  return { kind: 'daily', start: ymd(yesterday), end: ymd(yesterday), label: `昨日（${ymd(yesterday)}）交易明細` };
+}
+
 function pctChange(current, prev) {
   const c = Number(current) || 0;
   const p = Number(prev) || 0;
@@ -2747,7 +2775,7 @@ function pctChange(current, prev) {
   return ((c - p) / Math.abs(p)) * 100;
 }
 
-function buildUserStatsReport(userId) {
+function buildUserStatsReport(userId, freq = 'daily') {
   const month = thisMonth();
   const monthLike = month + '%';
   const prevMonth = prevMonthOf(month);
@@ -2788,17 +2816,53 @@ function buildUserStatsReport(userId) {
   `, [userId, monthLike]).map(r => ({ name: r.name, color: r.color, total: Number(r.total) || 0 }));
   const topCategoriesMax = topCategories.reduce((m, c) => Math.max(m, c.total), 0);
 
-  const recentTransactions = queryAll(`
-    SELECT t.date, t.type, t.amount, t.note, t.currency, COALESCE(c.name, '未分類') as cat_name, COALESCE(c.color, '#94a3b8') as cat_color
-    FROM transactions t
-    LEFT JOIN categories c ON t.category_id = c.id
-    WHERE t.user_id = ? AND t.type IN ('income','expense') AND t.exclude_from_stats = 0
-    ORDER BY t.date DESC, t.created_at DESC
-    LIMIT 5
-  `, [userId]).map(r => ({
-    date: r.date, type: r.type, amount: Number(r.amount) || 0, note: r.note || '',
-    currency: normalizeCurrency(r.currency), categoryName: r.cat_name, categoryColor: r.cat_color,
-  }));
+  // 依頻率組「交易區塊」：daily=明細、weekly/monthly=每日彙總
+  const period = getReportPeriod(freq);
+  let transactionsSection;
+  if (period.kind === 'daily') {
+    const txs = queryAll(`
+      SELECT t.date, t.type, t.amount, t.note, COALESCE(c.name, '未分類') as cat_name, COALESCE(c.color, '#94a3b8') as cat_color
+      FROM transactions t
+      LEFT JOIN categories c ON t.category_id = c.id
+      WHERE t.user_id = ? AND t.type IN ('income','expense') AND t.exclude_from_stats = 0
+            AND t.date = ?
+      ORDER BY t.created_at DESC
+    `, [userId, period.start]).map(r => ({
+      date: r.date, type: r.type, amount: Number(r.amount) || 0, note: r.note || '',
+      categoryName: r.cat_name, categoryColor: r.cat_color,
+    }));
+    transactionsSection = { kind: 'daily', date: period.start, label: period.label, transactions: txs };
+  } else {
+    // weekly / monthly：每日彙總
+    const rows = queryAll(`
+      SELECT t.date, t.type, COALESCE(SUM(t.amount), 0) as total
+      FROM transactions t
+      WHERE t.user_id = ? AND t.type IN ('income','expense') AND t.exclude_from_stats = 0
+            AND t.date >= ? AND t.date <= ?
+      GROUP BY t.date, t.type
+      ORDER BY t.date
+    `, [userId, period.start, period.end]);
+    // 補齊區間內所有日期（即使該日無交易）
+    const map = {}; // date -> { income, expense }
+    for (const r of rows) {
+      if (!map[r.date]) map[r.date] = { income: 0, expense: 0 };
+      map[r.date][r.type] = Number(r.total) || 0;
+    }
+    const dailyBreakdown = [];
+    const startDt = new Date(period.start + 'T00:00:00');
+    const endDt = new Date(period.end + 'T00:00:00');
+    for (let d = new Date(startDt); d <= endDt; d.setDate(d.getDate() + 1)) {
+      const k = ymd(d);
+      const v = map[k] || { income: 0, expense: 0 };
+      dailyBreakdown.push({ date: k, weekday: d.getDay(), income: v.income, expense: v.expense, net: v.income - v.expense });
+    }
+    const totalIncome = dailyBreakdown.reduce((s, r) => s + r.income, 0);
+    const totalExpense = dailyBreakdown.reduce((s, r) => s + r.expense, 0);
+    transactionsSection = {
+      kind: period.kind, start: period.start, end: period.end, label: period.label,
+      dailyBreakdown, totalIncome, totalExpense, totalNet: totalIncome - totalExpense,
+    };
+  }
 
   const stocks = queryAll("SELECT id, symbol, name, current_price FROM stocks WHERE user_id = ?", [userId]);
   let stockHoldings = 0;
@@ -2853,7 +2917,7 @@ function buildUserStatsReport(userId) {
     savingsRate,
     topCategories,
     topCategoriesMax,
-    recentTransactions,
+    transactionsSection,
     stockHoldings,
     stockCostTwd: Math.round(stockCostTwd),
     stockMarketValueTwd: Math.round(stockMarketValueTwd),
@@ -2881,150 +2945,266 @@ function renderStatsEmailHtml(displayName, email, stats) {
   const safeName = escapeEmailHtml(displayName || (email ? email.split('@')[0] : '') || '使用者');
   const month = escapeEmailHtml(stats.month);
 
-  // KPI cards (3 欄一列，table 排版兼容 Outlook)
+  // ─── 顏色 / 排版 共用樣式 ───
+  const COLOR_PRIMARY = '#4f46e5';
+  const COLOR_PRIMARY_LIGHT = '#e0e7ff';
+  const COLOR_INK = '#0f172a';
+  const COLOR_MUTED = '#64748b';
+  const COLOR_BORDER = '#e2e8f0';
+  const COLOR_BG_SOFT = '#f8fafc';
+  const COLOR_GREEN = '#16a34a';
+  const COLOR_RED = '#dc2626';
+  const COLOR_AMBER = '#f59e0b';
+
+  // KPI 卡 — 三欄等寬，含 hover-like 邊框
   const kpiCard = (label, value, color, pillHtml) => `
-    <td valign="top" style="padding:0 4px">
-      <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#f8fafc;border-radius:10px;border:1px solid #e5e7eb">
-        <tr><td style="padding:14px 12px;text-align:center">
-          <div style="font-size:12px;color:#64748b;margin-bottom:4px">${escapeEmailHtml(label)}</div>
-          <div style="font-size:18px;font-weight:700;color:${color};line-height:1.2">${escapeEmailHtml(value)}</div>
-          <div style="margin-top:6px">${pillHtml}</div>
+    <td valign="top" width="33%" style="padding:0 5px">
+      <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#ffffff;border-radius:12px;border:1px solid ${COLOR_BORDER};box-shadow:0 1px 2px rgba(15,23,42,0.04)">
+        <tr><td style="padding:16px 12px;text-align:center">
+          <div style="font-size:11px;color:${COLOR_MUTED};letter-spacing:0.08em;text-transform:uppercase;margin-bottom:6px;font-weight:600">${escapeEmailHtml(label)}</div>
+          <div style="font-size:20px;font-weight:700;color:${color};line-height:1.2;letter-spacing:-0.01em">${escapeEmailHtml(value)}</div>
+          <div style="margin-top:8px">${pillHtml}</div>
         </td></tr>
       </table>
     </td>`;
 
   const kpiRow = `
-    <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:16px 0 4px"><tr>
-      ${kpiCard('收入', formatAmount(stats.income), '#16a34a', renderChangePill(stats.incomeChangePct, 'good-up'))}
-      ${kpiCard('支出', formatAmount(stats.expense), '#dc2626', renderChangePill(stats.expenseChangePct, 'good-down'))}
-      ${kpiCard('淨額', formatAmount(stats.net), stats.net >= 0 ? '#0f172a' : '#dc2626', renderChangePill(stats.netChangePct, 'good-up'))}
+    <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:8px 0 4px;border-collapse:separate"><tr>
+      ${kpiCard('本月收入', formatAmount(stats.income), COLOR_GREEN, renderChangePill(stats.incomeChangePct, 'good-up'))}
+      ${kpiCard('本月支出', formatAmount(stats.expense), COLOR_RED, renderChangePill(stats.expenseChangePct, 'good-down'))}
+      ${kpiCard('本月淨額', formatAmount(stats.net), stats.net >= 0 ? COLOR_INK : COLOR_RED, renderChangePill(stats.netChangePct, 'good-up'))}
     </tr></table>`;
 
-  // Savings rate bar
+  // 儲蓄率
   const sr = Math.round(stats.savingsRate * 100);
-  const srColor = sr >= 30 ? '#16a34a' : sr >= 10 ? '#f59e0b' : '#dc2626';
+  const srColor = sr >= 30 ? COLOR_GREEN : sr >= 10 ? COLOR_AMBER : COLOR_RED;
+  const srLabel = sr >= 30 ? '健康' : sr >= 10 ? '尚可' : '偏低';
   const srBlock = stats.income > 0 ? `
-    <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:14px 0 4px"><tr><td>
-      <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px">
-        <span style="color:#475569">本月儲蓄率</span>
-        <span style="color:${srColor};font-weight:600">${sr}%</span>
-      </div>
-      <div style="height:8px;background:#e5e7eb;border-radius:4px;overflow:hidden">
-        <div style="height:8px;width:${sr}%;background:${srColor}"></div>
+    <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:18px 0 4px;background:${COLOR_BG_SOFT};border-radius:10px;border:1px solid ${COLOR_BORDER}"><tr><td style="padding:14px 16px">
+      <table role="presentation" cellpadding="0" cellspacing="0" width="100%"><tr>
+        <td style="font-size:13px;color:${COLOR_MUTED};font-weight:600">本月儲蓄率</td>
+        <td style="font-size:13px;text-align:right"><span style="color:${srColor};font-weight:700;font-size:15px">${sr}%</span> <span style="color:${COLOR_MUTED};font-size:11px">· ${srLabel}</span></td>
+      </tr></table>
+      <div style="height:8px;background:#e2e8f0;border-radius:999px;overflow:hidden;margin-top:8px">
+        <div style="height:8px;width:${sr}%;background:linear-gradient(90deg,${srColor},${srColor})"></div>
       </div>
     </td></tr></table>` : '';
 
-  // Balance by currency
+  // 帳戶餘額
   const balanceRows = Object.keys(stats.balanceByCurrency).length
     ? Object.entries(stats.balanceByCurrency)
-        .map(([cur, total]) => `<tr><td style="padding:8px 12px;border-bottom:1px solid #f1f5f9;color:#475569">${escapeEmailHtml(cur)}</td><td style="padding:8px 12px;border-bottom:1px solid #f1f5f9;text-align:right;font-weight:600">${escapeEmailHtml(formatAmount(total, cur))}</td></tr>`)
-        .join('')
-    : '<tr><td colspan="2" style="padding:8px 12px;color:#94a3b8">尚無帳戶</td></tr>';
+        .map(([cur, total]) => `<tr>
+          <td style="padding:10px 14px;border-bottom:1px solid ${COLOR_BORDER};color:${COLOR_MUTED};font-size:13px;font-weight:600">${escapeEmailHtml(cur)}</td>
+          <td style="padding:10px 14px;border-bottom:1px solid ${COLOR_BORDER};text-align:right;color:${COLOR_INK};font-weight:700;font-size:15px">${escapeEmailHtml(formatAmount(total, cur))}</td>
+        </tr>`).join('')
+    : `<tr><td colspan="2" style="padding:14px;color:#94a3b8;text-align:center;font-size:13px">尚無帳戶</td></tr>`;
 
-  // Top categories with proportional bars
+  // 前 5 大支出（彩色比例條）
   const catRows = stats.topCategories.length
-    ? stats.topCategories.map(c => {
+    ? stats.topCategories.map((c, idx) => {
         const pct = stats.topCategoriesMax > 0 ? Math.round((c.total / stats.topCategoriesMax) * 100) : 0;
         const safeColor = /^#[0-9A-Fa-f]{3,8}$/.test(c.color) ? c.color : '#94a3b8';
-        return `<tr><td style="padding:8px 12px;border-bottom:1px solid #f1f5f9">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
-            <span style="color:#0f172a">${escapeEmailHtml(c.name)}</span>
-            <span style="color:#475569;font-weight:600">${escapeEmailHtml(formatAmount(c.total))}</span>
-          </div>
-          <div style="height:6px;background:#f1f5f9;border-radius:3px;overflow:hidden">
-            <div style="height:6px;width:${pct}%;background:${safeColor}"></div>
+        return `<tr><td style="padding:11px 14px;border-bottom:1px solid ${COLOR_BORDER}">
+          <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom:6px"><tr>
+            <td style="font-size:13px;color:${COLOR_INK}">
+              <span style="display:inline-block;width:18px;color:${COLOR_MUTED};font-size:11px">${idx + 1}.</span>
+              ${escapeEmailHtml(c.name)}
+            </td>
+            <td style="font-size:13px;color:${COLOR_INK};font-weight:700;text-align:right">${escapeEmailHtml(formatAmount(c.total))}</td>
+          </tr></table>
+          <div style="height:6px;background:#f1f5f9;border-radius:999px;overflow:hidden">
+            <div style="height:6px;width:${pct}%;background:${safeColor};border-radius:999px"></div>
           </div>
         </td></tr>`;
       }).join('')
-    : '<tr><td style="padding:8px 12px;color:#94a3b8">本月尚無支出紀錄</td></tr>';
+    : `<tr><td style="padding:14px;color:#94a3b8;text-align:center;font-size:13px">本月尚無支出紀錄</td></tr>`;
 
-  // Recent transactions
-  const txRows = stats.recentTransactions.length
-    ? stats.recentTransactions.map(t => {
-        const isIncome = t.type === 'income';
-        const sign = isIncome ? '+' : '−';
-        const color = isIncome ? '#16a34a' : '#dc2626';
-        const safeColor = /^#[0-9A-Fa-f]{3,8}$/.test(t.categoryColor) ? t.categoryColor : '#94a3b8';
-        const note = t.note ? ` · ${escapeEmailHtml(t.note)}` : '';
+  // 交易區塊（依排程 freq 切換）
+  const txSection = stats.transactionsSection || { kind: 'daily', transactions: [], label: '近期交易' };
+  const txSectionTitle = txSection.label || '交易紀錄';
+  const WEEKDAY_LABELS = ['日', '一', '二', '三', '四', '五', '六'];
+
+  let txContent;
+  if (txSection.kind === 'daily') {
+    const items = txSection.transactions || [];
+    txContent = items.length
+      ? `<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;font-size:14px"><tbody>${
+          items.map(t => {
+            const isIncome = t.type === 'income';
+            const sign = isIncome ? '+' : '−';
+            const color = isIncome ? COLOR_GREEN : COLOR_RED;
+            const safeColor = /^#[0-9A-Fa-f]{3,8}$/.test(t.categoryColor) ? t.categoryColor : '#94a3b8';
+            const note = t.note ? `<div style="color:#94a3b8;font-size:12px;margin-top:2px">${escapeEmailHtml(t.note)}</div>` : '';
+            return `<tr>
+              <td style="padding:11px 14px;border-bottom:1px solid ${COLOR_BORDER}">
+                <table role="presentation" cellpadding="0" cellspacing="0" width="100%"><tr>
+                  <td>
+                    <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${safeColor};margin-right:8px;vertical-align:middle"></span>
+                    <span style="color:${COLOR_INK};font-weight:600">${escapeEmailHtml(t.categoryName)}</span>
+                    ${note}
+                  </td>
+                  <td style="text-align:right;color:${color};font-weight:700;white-space:nowrap;vertical-align:top">${sign}${escapeEmailHtml(formatAmount(t.amount))}</td>
+                </tr></table>
+              </td>
+            </tr>`;
+          }).join('')
+        }</tbody></table>`
+      : `<div style="padding:18px;text-align:center;color:#94a3b8;font-size:13px;background:${COLOR_BG_SOFT};border-radius:10px">這天沒有任何收入或支出紀錄</div>`;
+  } else {
+    // weekly / monthly：每日彙總表
+    const rows = txSection.dailyBreakdown || [];
+    const totalIncome = txSection.totalIncome || 0;
+    const totalExpense = txSection.totalExpense || 0;
+    const totalNet = txSection.totalNet || 0;
+    const summaryColor = totalNet >= 0 ? COLOR_GREEN : COLOR_RED;
+    const summaryHeader = `
+      <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom:12px;background:${COLOR_BG_SOFT};border-radius:10px;border:1px solid ${COLOR_BORDER}"><tr>
+        <td style="padding:12px 14px;text-align:center;border-right:1px solid ${COLOR_BORDER}">
+          <div style="font-size:11px;color:${COLOR_MUTED};letter-spacing:0.06em;text-transform:uppercase;font-weight:600">區間收入</div>
+          <div style="font-size:15px;color:${COLOR_GREEN};font-weight:700;margin-top:2px">${escapeEmailHtml(formatAmount(totalIncome))}</div>
+        </td>
+        <td style="padding:12px 14px;text-align:center;border-right:1px solid ${COLOR_BORDER}">
+          <div style="font-size:11px;color:${COLOR_MUTED};letter-spacing:0.06em;text-transform:uppercase;font-weight:600">區間支出</div>
+          <div style="font-size:15px;color:${COLOR_RED};font-weight:700;margin-top:2px">${escapeEmailHtml(formatAmount(totalExpense))}</div>
+        </td>
+        <td style="padding:12px 14px;text-align:center">
+          <div style="font-size:11px;color:${COLOR_MUTED};letter-spacing:0.06em;text-transform:uppercase;font-weight:600">區間淨額</div>
+          <div style="font-size:15px;color:${summaryColor};font-weight:700;margin-top:2px">${totalNet >= 0 ? '+' : ''}${escapeEmailHtml(formatAmount(totalNet))}</div>
+        </td>
+      </tr></table>`;
+
+    if (rows.length === 0) {
+      txContent = summaryHeader + `<div style="padding:18px;text-align:center;color:#94a3b8;font-size:13px;background:${COLOR_BG_SOFT};border-radius:10px">區間內沒有任何收入或支出紀錄</div>`;
+    } else {
+      const dailyRows = rows.map(r => {
+        const isWeekend = r.weekday === 0 || r.weekday === 6;
+        const dateColor = isWeekend ? COLOR_PRIMARY : COLOR_INK;
+        const md = r.date.slice(5).replace('-', '/');
         return `<tr>
-          <td style="padding:8px 12px;border-bottom:1px solid #f1f5f9;width:78px;color:#64748b;font-size:12px;white-space:nowrap">${escapeEmailHtml(t.date)}</td>
-          <td style="padding:8px 12px;border-bottom:1px solid #f1f5f9">
-            <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${safeColor};margin-right:6px;vertical-align:middle"></span>
-            <span style="color:#0f172a">${escapeEmailHtml(t.categoryName)}</span><span style="color:#94a3b8">${note}</span>
+          <td style="padding:9px 12px;border-bottom:1px solid ${COLOR_BORDER};font-size:13px;color:${dateColor};white-space:nowrap;font-weight:600">
+            ${escapeEmailHtml(md)} <span style="color:${COLOR_MUTED};font-size:11px;font-weight:400">(${WEEKDAY_LABELS[r.weekday]})</span>
           </td>
-          <td style="padding:8px 12px;border-bottom:1px solid #f1f5f9;text-align:right;color:${color};font-weight:600;white-space:nowrap">${sign}${escapeEmailHtml(formatAmount(t.amount))}</td>
+          <td style="padding:9px 12px;border-bottom:1px solid ${COLOR_BORDER};font-size:13px;text-align:right;color:${r.income > 0 ? COLOR_GREEN : '#cbd5e1'};white-space:nowrap">
+            ${r.income > 0 ? '+' + escapeEmailHtml(formatAmount(r.income)) : '—'}
+          </td>
+          <td style="padding:9px 12px;border-bottom:1px solid ${COLOR_BORDER};font-size:13px;text-align:right;color:${r.expense > 0 ? COLOR_RED : '#cbd5e1'};white-space:nowrap">
+            ${r.expense > 0 ? '−' + escapeEmailHtml(formatAmount(r.expense)) : '—'}
+          </td>
+          <td style="padding:9px 12px;border-bottom:1px solid ${COLOR_BORDER};font-size:13px;text-align:right;font-weight:600;white-space:nowrap;color:${r.net > 0 ? COLOR_GREEN : r.net < 0 ? COLOR_RED : '#cbd5e1'}">
+            ${r.net === 0 ? '—' : (r.net > 0 ? '+' : '') + escapeEmailHtml(formatAmount(r.net))}
+          </td>
         </tr>`;
-      }).join('')
-    : '<tr><td style="padding:8px 12px;color:#94a3b8" colspan="3">尚無交易紀錄</td></tr>';
+      }).join('');
+      txContent = summaryHeader + `
+        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;font-size:13px;border:1px solid ${COLOR_BORDER};border-radius:10px;overflow:hidden">
+          <thead>
+            <tr style="background:${COLOR_BG_SOFT}">
+              <th style="padding:9px 12px;text-align:left;color:${COLOR_MUTED};font-size:11px;letter-spacing:0.06em;text-transform:uppercase;font-weight:600;border-bottom:1px solid ${COLOR_BORDER}">日期</th>
+              <th style="padding:9px 12px;text-align:right;color:${COLOR_MUTED};font-size:11px;letter-spacing:0.06em;text-transform:uppercase;font-weight:600;border-bottom:1px solid ${COLOR_BORDER}">收入</th>
+              <th style="padding:9px 12px;text-align:right;color:${COLOR_MUTED};font-size:11px;letter-spacing:0.06em;text-transform:uppercase;font-weight:600;border-bottom:1px solid ${COLOR_BORDER}">支出</th>
+              <th style="padding:9px 12px;text-align:right;color:${COLOR_MUTED};font-size:11px;letter-spacing:0.06em;text-transform:uppercase;font-weight:600;border-bottom:1px solid ${COLOR_BORDER}">淨額</th>
+            </tr>
+          </thead>
+          <tbody>${dailyRows}</tbody>
+        </table>`;
+    }
+  }
 
-  // Stocks block — 含市值 / 未實現損益 / 報酬率
+  // 股票區塊
   let stockBlock;
   if (stats.stockHoldings > 0) {
-    const plColor = stats.stockUnrealizedPL >= 0 ? '#16a34a' : '#dc2626';
+    const plColor = stats.stockUnrealizedPL >= 0 ? COLOR_GREEN : COLOR_RED;
     const plSign = stats.stockUnrealizedPL >= 0 ? '+' : '';
     const returnPctStr = stats.stockReturnPct === null
       ? '—'
       : `${stats.stockReturnPct >= 0 ? '+' : ''}${(Math.round(stats.stockReturnPct * 100) / 100).toFixed(2)}%`;
-    const returnColor = stats.stockReturnPct === null ? '#888' : (stats.stockReturnPct >= 0 ? '#16a34a' : '#dc2626');
-    stockBlock = `<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#f8fafc;border-radius:10px;border:1px solid #e5e7eb"><tr><td style="padding:14px">
-        <div style="font-size:13px;color:#64748b;margin-bottom:8px">目前持有 <strong style="color:#0f172a">${stats.stockHoldings}</strong> 檔</div>
-        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="font-size:14px"><tbody>
-          <tr><td style="padding:4px 0;color:#475569">總成本</td><td style="padding:4px 0;text-align:right">${escapeEmailHtml(formatAmount(stats.stockCostTwd))}</td></tr>
-          <tr><td style="padding:4px 0;color:#475569">總市值</td><td style="padding:4px 0;text-align:right;font-weight:600">${escapeEmailHtml(formatAmount(stats.stockMarketValueTwd))}</td></tr>
-          <tr><td style="padding:4px 0;color:#475569">未實現損益</td><td style="padding:4px 0;text-align:right;color:${plColor};font-weight:600">${plSign}${escapeEmailHtml(formatAmount(stats.stockUnrealizedPL))}</td></tr>
-          <tr><td style="padding:4px 0;color:#475569">報酬率</td><td style="padding:4px 0;text-align:right;color:${returnColor};font-weight:600">${returnPctStr}</td></tr>
+    const returnColor = stats.stockReturnPct === null ? COLOR_MUTED : (stats.stockReturnPct >= 0 ? COLOR_GREEN : COLOR_RED);
+    stockBlock = `<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:${COLOR_BG_SOFT};border-radius:12px;border:1px solid ${COLOR_BORDER}"><tr><td style="padding:16px 18px">
+        <div style="font-size:12px;color:${COLOR_MUTED};letter-spacing:0.06em;text-transform:uppercase;font-weight:600;margin-bottom:10px">目前持有 <span style="color:${COLOR_INK};font-weight:700">${stats.stockHoldings}</span> 檔</div>
+        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="font-size:14px;border-collapse:collapse"><tbody>
+          <tr>
+            <td style="padding:8px 0;color:${COLOR_MUTED};border-bottom:1px solid ${COLOR_BORDER}">總成本</td>
+            <td style="padding:8px 0;text-align:right;color:${COLOR_INK};border-bottom:1px solid ${COLOR_BORDER}">${escapeEmailHtml(formatAmount(stats.stockCostTwd))}</td>
+          </tr>
+          <tr>
+            <td style="padding:8px 0;color:${COLOR_MUTED};border-bottom:1px solid ${COLOR_BORDER}">總市值</td>
+            <td style="padding:8px 0;text-align:right;color:${COLOR_INK};font-weight:700;border-bottom:1px solid ${COLOR_BORDER}">${escapeEmailHtml(formatAmount(stats.stockMarketValueTwd))}</td>
+          </tr>
+          <tr>
+            <td style="padding:8px 0;color:${COLOR_MUTED};border-bottom:1px solid ${COLOR_BORDER}">未實現損益</td>
+            <td style="padding:8px 0;text-align:right;color:${plColor};font-weight:700;border-bottom:1px solid ${COLOR_BORDER}">${plSign}${escapeEmailHtml(formatAmount(stats.stockUnrealizedPL))}</td>
+          </tr>
+          <tr>
+            <td style="padding:8px 0;color:${COLOR_MUTED}">報酬率</td>
+            <td style="padding:8px 0;text-align:right;color:${returnColor};font-weight:700;font-size:15px">${returnPctStr}</td>
+          </tr>
         </tbody></table>
       </td></tr></table>`;
   } else {
-    stockBlock = `<div style="padding:14px;background:#f8fafc;border-radius:10px;border:1px solid #e5e7eb;color:#94a3b8;font-size:13px">目前無持股</div>`;
+    stockBlock = `<div style="padding:18px;background:${COLOR_BG_SOFT};border-radius:12px;border:1px solid ${COLOR_BORDER};color:#94a3b8;font-size:13px;text-align:center">目前無持股</div>`;
   }
 
   // CTA
   const ctaBlock = APP_URL
-    ? `<table role="presentation" cellpadding="0" cellspacing="0" align="center" style="margin:24px auto 8px"><tr><td style="border-radius:8px;background:#4f46e5">
-        <a href="${escapeEmailHtml(APP_URL)}" style="display:inline-block;padding:12px 22px;color:#ffffff;text-decoration:none;font-weight:600;font-size:14px;border-radius:8px">前往儀表板查看完整報表 →</a>
+    ? `<table role="presentation" cellpadding="0" cellspacing="0" align="center" style="margin:28px auto 4px"><tr><td style="border-radius:10px;background:${COLOR_PRIMARY};box-shadow:0 4px 14px rgba(79,70,229,0.25)">
+        <a href="${escapeEmailHtml(APP_URL)}" style="display:inline-block;padding:14px 26px;color:#ffffff;text-decoration:none;font-weight:600;font-size:14px;letter-spacing:0.02em;border-radius:10px">前往儀表板查看完整報表  →</a>
       </td></tr></table>`
     : '';
 
-  const sectionTitle = (text) => `<div style="margin:22px 0 8px;font-size:13px;font-weight:600;color:#4f46e5;letter-spacing:0.04em;text-transform:uppercase">${escapeEmailHtml(text)}</div>`;
+  // 區塊標題（含色塊指示）
+  const sectionTitle = (text) => `<div style="margin:26px 0 10px;display:flex;align-items:center;gap:8px">
+    <span style="display:inline-block;width:3px;height:14px;background:${COLOR_PRIMARY};border-radius:2px;vertical-align:middle"></span>
+    <span style="font-size:13px;font-weight:700;color:${COLOR_INK};letter-spacing:0.02em;vertical-align:middle">${escapeEmailHtml(text)}</span>
+  </div>`;
+
+  // table 包覆樣式
+  const tableShell = (inner) => `<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;border:1px solid ${COLOR_BORDER};border-radius:10px;overflow:hidden;background:#ffffff"><tbody>${inner}</tbody></table>`;
 
   return `<!doctype html>
 <html lang="zh-Hant"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<meta name="supported-color-schemes" content="light">
 <title>個人資產統計報表</title>
 </head>
-<body style="margin:0;padding:24px 12px;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Noto Sans TC',sans-serif;color:#0f172a;-webkit-font-smoothing:antialiased">
+<body style="margin:0;padding:24px 12px;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue','Noto Sans TC','Microsoft JhengHei',sans-serif;color:${COLOR_INK};-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale">
   <table role="presentation" cellpadding="0" cellspacing="0" align="center" width="100%" style="max-width:600px;margin:0 auto"><tr><td>
-    <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#ffffff;border-radius:14px;overflow:hidden;box-shadow:0 4px 16px rgba(15,23,42,0.06)">
-      <tr><td style="padding:28px 28px 18px;background:linear-gradient(135deg,#4f46e5 0%,#7c3aed 100%);color:#ffffff">
-        <div style="font-size:12px;letter-spacing:0.08em;text-transform:uppercase;opacity:0.85;margin-bottom:6px">AssetPilot · ${month} 月度摘要</div>
-        <div style="font-size:22px;font-weight:700;line-height:1.3">${safeName}，這是您本月的資產快照</div>
-        <div style="font-size:13px;opacity:0.9;margin-top:6px">資產 ${stats.accountCount} 個帳戶 · 持股 ${stats.stockHoldings} 檔</div>
+    <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 8px 32px rgba(15,23,42,0.08)">
+      <tr><td style="padding:32px 28px 22px;background:linear-gradient(135deg,#4f46e5 0%,#7c3aed 50%,#a855f7 100%);color:#ffffff;position:relative">
+        <div style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;opacity:0.9;margin-bottom:8px;font-weight:600">AssetPilot · ${month} 月度摘要</div>
+        <div style="font-size:24px;font-weight:800;line-height:1.25;letter-spacing:-0.02em">${safeName}，您好 👋</div>
+        <div style="font-size:14px;line-height:1.5;margin-top:8px;opacity:0.95">這是您本月的資產與收支快照<br>資產 <strong>${stats.accountCount}</strong> 個帳戶 · 持股 <strong>${stats.stockHoldings}</strong> 檔</div>
       </td></tr>
-      <tr><td style="padding:8px 24px 28px">
+      <tr><td style="padding:24px 24px 28px;background:#ffffff">
+
+        ${sectionTitle('本月收支總覽')}
         ${kpiRow}
         ${srBlock}
+
         ${sectionTitle('資產餘額')}
-        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;font-size:14px"><tbody>${balanceRows}</tbody></table>
+        ${tableShell(balanceRows)}
 
         ${sectionTitle('本月前 5 大支出')}
-        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;font-size:14px"><tbody>${catRows}</tbody></table>
+        ${tableShell(catRows)}
 
-        ${sectionTitle('近 5 筆交易')}
-        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;font-size:14px"><tbody>${txRows}</tbody></table>
+        ${sectionTitle(txSectionTitle)}
+        ${txContent}
 
         ${sectionTitle('股票投資')}
         ${stockBlock}
 
         ${ctaBlock}
 
-        <div style="margin-top:28px;padding-top:18px;border-top:1px solid #e5e7eb;font-size:11px;color:#94a3b8;text-align:center;line-height:1.6">
-          此信件由 AssetPilot 系統自動寄送，請勿回覆。<br>
+        <div style="margin-top:32px;padding-top:20px;border-top:1px solid ${COLOR_BORDER};font-size:11px;color:#94a3b8;text-align:center;line-height:1.7">
+          此信件由 <strong style="color:${COLOR_MUTED}">AssetPilot</strong> 系統自動寄送，請勿回覆。<br>
           資料以您於系統內登錄之記錄為準，僅作為參考。
         </div>
       </td></tr>
     </table>
+    <div style="text-align:center;margin-top:14px;font-size:11px;color:#94a3b8">
+      ©  AssetPilot · 個人資產管理
+    </div>
   </td></tr></table>
 </body></html>`;
 }
@@ -3230,7 +3410,7 @@ async function runScheduledReportNow(triggeredBy = 'scheduler', overrideUserIds 
         const priceResult = await updateUserStockPrices(u.id).catch(() => ({ updated: 0, skipped: 0 }));
         priceUpdates += priceResult.updated;
 
-        const stats = buildUserStatsReport(u.id);
+        const stats = buildUserStatsReport(u.id, schedule.freq);
         const html = renderStatsEmailHtml(u.display_name, u.email, stats);
         const subject = `${stats.month} 個人資產統計報表`;
         const r = await sendStatsEmail({ to: u.email, subject, html });

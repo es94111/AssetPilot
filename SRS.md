@@ -1152,6 +1152,7 @@
 
 | 版本 | 日期 | 變更說明 |
 | --- | --- | --- |
+| 4.18.0 | 2026-04-17 | 信件「交易紀錄」區塊改為依排程頻率切換：daily → 昨日交易明細、weekly → 上週 7 天每日收支彙總（Mon-Sun）、monthly → 上月每天收支彙總；週/月彙總多顯示「區間收入/支出/淨額」三欄總覽卡，週末日期紫色標示；信件視覺美化（三色漸層 hero、卡片陰影、節標題色塊、CTA 陰影、品牌標記） |
 | 4.17.0 | 2026-04-17 | 合併「寄送資產統計報表」與「排程自動寄送」成單一卡片：管理員勾選使用者 + 頻率 → 排程指定對象自動寄送（或「立即寄送一次」）；寄送前自動更新該使用者所有持股最新報價（盤中即時 → STOCK_DAY → TPEx 三段策略），信件「股票投資」區塊改顯示 4 列（成本/市值/未實現損益/報酬率含彩色 ±）；system_settings 加入 report_schedule_user_ids 欄位；移除 POST /api/admin/send-stats-report（功能合併） |
 | 4.16.2 | 2026-04-17 | 修正排程設定儲存後 reload 會失效的 bug：①admin 表單加上 action="javascript:void(0);" + method="post" 防止 listener race window 期間 submit 觸發預設 GET 導航導致資料丟失；②修正後端 hour=0（午夜）/ weekday=0（週日）被 `\|\|` 當 falsy 重設為 default 的 bug，改用 Number.isFinite + clampInt；③前端 form 改用 dataset.bound flag 確保 listener 只綁一次，儲存成功後立即 GET 一次並 re-render 表單確認 DB 真的持久化 |
 | 4.16.1 | 2026-04-17 | 文件補齊 + 信件「近 5 筆交易」幣別顯示修正：先前誤把 transactions.currency 當前綴，導致 USD 標記的交易顯示成 USD（實際 amount 已是 TWD 等值）；改為一律 TWD 顯示與 dashboard 一致。README.md「Docker 環境變數」與「環境變數完整清單」補上 RESEND_API_KEY / RESEND_FROM_EMAIL / APP_URL 並註明 SMTP 改走管理員 UI；.env.example 補上 APP_URL；SRS.md 版本歷程補齊 4.14.0 ~ 4.16.1 |

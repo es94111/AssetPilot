@@ -292,7 +292,34 @@ app.use('/api', rateLimit({
   validate: { xForwardedForHeader: false }
 }));
 
-app.use(express.json({ limit: '50mb' }));
+// 一般 API 使用較小的 JSON body 上限避免 DoS；CSV 匯入端點單獨放寬
+const STANDARD_JSON_LIMIT = '5mb';
+const CSV_IMPORT_JSON_LIMIT = '25mb';
+const CSV_IMPORT_PATHS = new Set([
+  '/api/transactions/import',
+  '/api/stock-transactions/import',
+  '/api/stock-dividends/import',
+]);
+const standardJsonParser = express.json({ limit: STANDARD_JSON_LIMIT });
+const csvImportJsonParser = express.json({ limit: CSV_IMPORT_JSON_LIMIT });
+app.use((req, res, next) => {
+  if (CSV_IMPORT_PATHS.has(req.path)) return csvImportJsonParser(req, res, next);
+  return standardJsonParser(req, res, next);
+});
+// 用於 handler 檢查 rows 上限
+const CSV_IMPORT_MAX_ROWS = 20000;
+
+// 統一處理 JSON body 過大的錯誤，回 JSON 而非預設 HTML
+app.use((err, req, res, next) => {
+  if (err && err.type === 'entity.too.large') {
+    return res.status(413).json({ error: '請求內容過大，請減少資料量或分批上傳' });
+  }
+  if (err && err.type === 'entity.parse.failed') {
+    return res.status(400).json({ error: 'JSON 格式錯誤' });
+  }
+  next(err);
+});
+
 app.use(cookieParser());
 
 // 僅開放必要前端靜態檔，避免專案根目錄檔案外洩
@@ -810,16 +837,49 @@ function createDefaultsForUser(userId) {
     ]);
 }
 
+// 非阻塞式寫檔：避免 saveDB 在每個 API 請求中同步阻塞 event loop
+// 使用 in-flight 旗標 + pending 合併，並以 tmp + rename 保證原子性
+let saveInFlight = false;
+let savePending = false;
 function saveDB() {
+  if (saveInFlight) {
+    savePending = true;
+    return;
+  }
+  saveInFlight = true;
+  (async () => {
+    try {
+      while (true) {
+        savePending = false;
+        // db.export() 是同步的，於此拍快照；若之後有更多變更，會在下一輪迴圈再寫一次
+        const data = db.export();
+        const plain = Buffer.from(data);
+        const buf = DB_ENCRYPTION_KEY ? encryptBuffer(plain, DB_ENCRYPTION_KEY) : plain;
+        const tmp = DB_PATH + '.tmp';
+        await fs.promises.writeFile(tmp, buf);
+        await fs.promises.rename(tmp, DB_PATH);
+        if (!savePending) break;
+      }
+    } catch (e) {
+      console.error('saveDB failed:', e && e.message ? e.message : e);
+    } finally {
+      saveInFlight = false;
+    }
+  })();
+}
+
+// 同步備援：僅用於程式關閉前 flush；request 路徑一律用 saveDB()
+function saveDBSync() {
   const data = db.export();
   const plain = Buffer.from(data);
-  if (DB_ENCRYPTION_KEY) {
-    const encrypted = encryptBuffer(plain, DB_ENCRYPTION_KEY);
-    fs.writeFileSync(DB_PATH, encrypted);
-  } else {
-    fs.writeFileSync(DB_PATH, plain);
-  }
+  const buf = DB_ENCRYPTION_KEY ? encryptBuffer(plain, DB_ENCRYPTION_KEY) : plain;
+  fs.writeFileSync(DB_PATH, buf);
 }
+
+// 程序離開前 flush，避免資料遺失
+const flushOnExit = () => { try { saveDBSync(); } catch {} };
+process.once('SIGINT', () => { flushOnExit(); process.exit(0); });
+process.once('SIGTERM', () => { flushOnExit(); process.exit(0); });
 
 function isValidColor(c) { return !c || /^#[0-9a-fA-F]{3,8}$/.test(c); }
 
@@ -2759,7 +2819,7 @@ app.put('/api/account/password', async (req, res) => {
 
 // 刪除帳號（永久刪除所有資料）
 app.post('/api/account/delete', async (req, res) => {
-  const { password } = req.body;
+  const { password, googleCredential } = req.body;
   const user = queryOne("SELECT * FROM users WHERE id = ?", [req.userId]);
   if (!user) return res.status(404).json({ error: '使用者不存在' });
 
@@ -2770,11 +2830,31 @@ app.post('/api/account/delete', async (req, res) => {
     }
   }
 
-  // 有密碼的帳號需驗證密碼；Google-only 帳號靠前端二次確認
+  // 有密碼 → 驗密碼
   if (user.has_password) {
     if (!password) return res.status(400).json({ error: '請輸入密碼以確認刪除' });
     const valid = await bcrypt.compare(password, user.password_hash);
     if (!valid) return res.status(400).json({ error: '密碼錯誤，請重新輸入' });
+  } else if (user.google_id) {
+    // Google-only → 要求提供一次 fresh Google id_token，並驗證 sub 與 audience
+    if (!googleCredential) return res.status(400).json({ error: '請完成 Google 驗證以確認刪除帳號' });
+    if (!GOOGLE_CLIENT_ID) return res.status(500).json({ error: 'Google SSO 未設定，無法刪除帳號' });
+    try {
+      const verifyRes = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(googleCredential)}`);
+      if (!verifyRes.ok) return res.status(401).json({ error: 'Google 憑證驗證失敗' });
+      const payload = await verifyRes.json();
+      if (payload.aud !== GOOGLE_CLIENT_ID) return res.status(401).json({ error: 'Google 憑證 audience 不符' });
+      if (payload.sub !== user.google_id) return res.status(401).json({ error: 'Google 帳號與目前登入帳號不符' });
+      // 檢查 token 是否在有效期內（tokeninfo 回傳 exp 為 Unix seconds）
+      if (payload.exp && Number(payload.exp) * 1000 < Date.now()) {
+        return res.status(401).json({ error: 'Google 憑證已過期，請重新驗證' });
+      }
+    } catch (e) {
+      return res.status(500).json({ error: 'Google 驗證失敗' });
+    }
+  } else {
+    // 既無密碼也無 Google 綁定（例如 Passkey-only）— 目前暫不支援自助刪除
+    return res.status(400).json({ error: '此帳號無可用的二次驗證方式，請聯絡管理員刪除' });
   }
 
   deleteUserData(req.userId);
@@ -3234,6 +3314,7 @@ app.post('/api/transactions/batch-update', (req, res) => {
 app.post('/api/transactions/import', (req, res) => {
   const { rows, autoCreate } = req.body;
   if (!Array.isArray(rows) || rows.length === 0) return res.status(400).json({ error: '無有效資料' });
+  if (rows.length > CSV_IMPORT_MAX_ROWS) return res.status(413).json({ error: `單次最多匯入 ${CSV_IMPORT_MAX_ROWS} 筆，請分批上傳` });
 
   // 取得使用者的分類與帳戶，用名稱比對
   const categories = queryAll("SELECT * FROM categories WHERE user_id = ?", [req.userId]);
@@ -4592,6 +4673,7 @@ app.get('/api/stock-realized', (req, res) => {
 app.post('/api/stock-transactions/import', async (req, res) => {
   const { rows } = req.body;
   if (!Array.isArray(rows) || rows.length === 0) return res.status(400).json({ error: '沒有資料' });
+  if (rows.length > CSV_IMPORT_MAX_ROWS) return res.status(413).json({ error: `單次最多匯入 ${CSV_IMPORT_MAX_ROWS} 筆，請分批上傳` });
   let imported = 0, skipped = 0;
   const errors = [];
   for (const row of rows) {
@@ -4630,6 +4712,7 @@ app.post('/api/stock-transactions/import', async (req, res) => {
 app.post('/api/stock-dividends/import', async (req, res) => {
   const { rows } = req.body;
   if (!Array.isArray(rows) || rows.length === 0) return res.status(400).json({ error: '沒有資料' });
+  if (rows.length > CSV_IMPORT_MAX_ROWS) return res.status(413).json({ error: `單次最多匯入 ${CSV_IMPORT_MAX_ROWS} 筆，請分批上傳` });
   let imported = 0, skipped = 0;
   const errors = [];
   for (const row of rows) {

@@ -1,6 +1,19 @@
 {
-  "currentVersion": "4.16.2",
+  "currentVersion": "4.17.0",
   "releases": [
+    {
+      "version": "4.17.0",
+      "date": "2026-04-17",
+      "title": "合併排程與寄送 + 寄送前自動更新股價",
+      "type": "feature",
+      "changes": [
+        { "tag": "improved", "text": "「寄送資產統計報表」與「排程自動寄送」合併成單一卡片：管理員勾選使用者 + 設定頻率 → 排程自動寄送指定對象（或按「立即寄送一次」即時觸發）" },
+        { "tag": "new", "text": "寄送前自動更新該使用者所有持股最新報價（盤中即時 → STOCK_DAY 收盤 → TPEx 備援），確保信件內市值與報酬率正確" },
+        { "tag": "new", "text": "信件「股票投資」區塊改顯示 4 列：總成本 / 總市值 / 未實現損益（彩色 ±） / 報酬率（彩色 ±%）" },
+        { "tag": "new", "text": "system_settings 新增 report_schedule_user_ids 欄位（JSON 陣列），保存指定寄送對象；GET/PUT /api/admin/report-schedule 包含 userIds；POST /run-now 可接受 { userIds } body 覆寫" },
+        { "tag": "removed", "text": "移除 POST /api/admin/send-stats-report 端點（功能合併進排程）" }
+      ]
+    },
     {
       "version": "4.16.2",
       "date": "2026-04-17",

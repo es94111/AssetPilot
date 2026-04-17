@@ -1,6 +1,19 @@
 {
-  "currentVersion": "4.14.0",
+  "currentVersion": "4.15.0",
   "releases": [
+    {
+      "version": "4.15.0",
+      "date": "2026-04-17",
+      "title": "SMTP 寄信支援 + 失敗原因 UI 顯示",
+      "type": "feature",
+      "changes": [
+        { "tag": "new", "text": "管理員設定 → 新增「SMTP 寄信設定」卡片：可在 UI 設定 Host / Port / User / Password / From / TLS，無需重啟" },
+        { "tag": "new", "text": "整合 nodemailer：SMTP 設了就優先使用，未設定 fallback 至 Resend，皆未設定回 503 並提示如何設定" },
+        { "tag": "new", "text": "新增「寄測試信給自己」按鈕，可立即驗證 SMTP / Resend 設定是否正確" },
+        { "tag": "improved", "text": "寄送統計報表失敗 / 略過原因改為 UI 直接顯示明細，不需再開 DevTools console" },
+        { "tag": "improved", "text": "SMTP 寄送之間不再強制 600ms 延遲（僅 Resend 路徑保留）" }
+      ]
+    },
     {
       "version": "4.14.0",
       "date": "2026-04-17",

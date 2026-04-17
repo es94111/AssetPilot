@@ -27,6 +27,7 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const { server: webauthnServer } = require('@passwordless-id/webauthn');
 const { Resend } = require('resend');
+const nodemailer = require('nodemailer');
 
 const app = express();
 // 信任反向代理（Nginx / Synology / Docker）傳遞的 X-Forwarded-For 標頭
@@ -56,6 +57,58 @@ function getResendClient() {
   if (!RESEND_API_KEY) return null;
   if (!resendClient) resendClient = new Resend(RESEND_API_KEY);
   return resendClient;
+}
+
+function getSmtpSettingsRaw() {
+  const row = queryOne("SELECT smtp_host, smtp_port, smtp_secure, smtp_user, smtp_password, smtp_from FROM system_settings WHERE id = 1");
+  if (!row) return { host: '', port: 587, secure: 0, user: '', password: '', from: '' };
+  return {
+    host: row.smtp_host || '',
+    port: Number(row.smtp_port) || 587,
+    secure: row.smtp_secure ? 1 : 0,
+    user: row.smtp_user || '',
+    password: row.smtp_password || '',
+    from: row.smtp_from || '',
+  };
+}
+
+let smtpTransporter = null;
+let smtpTransporterKey = '';
+function getSmtpTransporter() {
+  const s = getSmtpSettingsRaw();
+  if (!s.host || !s.port) return null;
+  const key = `${s.host}|${s.port}|${s.secure}|${s.user}|${s.password}`;
+  if (smtpTransporter && smtpTransporterKey === key) return smtpTransporter;
+  smtpTransporter = nodemailer.createTransport({
+    host: s.host,
+    port: s.port,
+    secure: !!s.secure,
+    auth: s.user ? { user: s.user, pass: s.password } : undefined,
+  });
+  smtpTransporterKey = key;
+  return smtpTransporter;
+}
+
+// 統一寄信入口：SMTP 優先，否則 Resend，皆未設定回 null
+async function sendStatsEmail({ to, subject, html }) {
+  const smtp = getSmtpSettingsRaw();
+  if (smtp.host && smtp.port) {
+    const transporter = getSmtpTransporter();
+    const from = smtp.from || smtp.user || 'noreply@localhost';
+    const info = await transporter.sendMail({ from, to, subject, html });
+    return { provider: 'smtp', id: info.messageId };
+  }
+  const client = getResendClient();
+  if (client && RESEND_FROM_EMAIL) {
+    const result = await client.emails.send({ from: RESEND_FROM_EMAIL, to, subject, html });
+    if (result?.error) {
+      const err = new Error(result.error.message || 'Resend 寄送失敗');
+      err.provider = 'resend';
+      throw err;
+    }
+    return { provider: 'resend', id: result?.data?.id || '' };
+  }
+  return null;
 }
 const GLOBAL_FX_API_BASE = 'https://v6.exchangerate-api.com/v6';
 const GLOBAL_FX_API_KEY = process.env.EXCHANGE_RATE_API_KEY || 'free'; // 免費版 key
@@ -486,6 +539,13 @@ async function initDB() {
     db.run("ALTER TABLE system_settings ADD COLUMN admin_ip_allowlist TEXT DEFAULT ''");
     saveDB();
   } catch (e) { /* 欄位已存在則忽略 */ }
+  // SMTP 寄信設定（與 Resend 並存，SMTP 設了就優先 SMTP）
+  try { db.run("ALTER TABLE system_settings ADD COLUMN smtp_host TEXT DEFAULT ''"); } catch (e) { /* ignore */ }
+  try { db.run("ALTER TABLE system_settings ADD COLUMN smtp_port INTEGER DEFAULT 587"); } catch (e) { /* ignore */ }
+  try { db.run("ALTER TABLE system_settings ADD COLUMN smtp_secure INTEGER DEFAULT 0"); } catch (e) { /* ignore */ }
+  try { db.run("ALTER TABLE system_settings ADD COLUMN smtp_user TEXT DEFAULT ''"); } catch (e) { /* ignore */ }
+  try { db.run("ALTER TABLE system_settings ADD COLUMN smtp_password TEXT DEFAULT ''"); } catch (e) { /* ignore */ }
+  try { db.run("ALTER TABLE system_settings ADD COLUMN smtp_from TEXT DEFAULT ''"); } catch (e) { /* ignore */ }
 
   db.run("INSERT OR IGNORE INTO system_settings (id, public_registration, allowed_registration_emails, admin_ip_allowlist, updated_at, updated_by) VALUES (1, 1, '', '', ?, '')", [Date.now()]);
 
@@ -2798,12 +2858,11 @@ function renderStatsEmailHtml(displayName, email, stats) {
 }
 
 app.post('/api/admin/send-stats-report', adminMiddleware, async (req, res) => {
-  const client = getResendClient();
-  if (!client) {
-    return res.status(503).json({ error: 'Resend 未設定，請先在環境變數設定 RESEND_API_KEY 與 RESEND_FROM_EMAIL' });
-  }
-  if (!RESEND_FROM_EMAIL) {
-    return res.status(503).json({ error: '未設定 RESEND_FROM_EMAIL 寄件人' });
+  const smtp = getSmtpSettingsRaw();
+  const hasSmtp = !!(smtp.host && smtp.port);
+  const hasResend = !!(RESEND_API_KEY && RESEND_FROM_EMAIL);
+  if (!hasSmtp && !hasResend) {
+    return res.status(503).json({ error: '尚未設定寄信服務：請至「管理員 → SMTP 設定」配置 SMTP，或設定 RESEND_API_KEY / RESEND_FROM_EMAIL 環境變數' });
   }
 
   const userIds = Array.isArray(req.body?.userIds) ? req.body.userIds.map(String).filter(Boolean) : [];
@@ -2825,28 +2884,84 @@ app.post('/api/admin/send-stats-report', adminMiddleware, async (req, res) => {
       const stats = buildUserStatsReport(user.id);
       const html = renderStatsEmailHtml(user.display_name, user.email, stats);
       const subject = `${stats.month} 個人資產統計報表`;
-      const sendResult = await client.emails.send({
-        from: RESEND_FROM_EMAIL,
-        to: user.email,
-        subject,
-        html,
-      });
-      if (sendResult?.error) {
-        results.push({ userId: uidStr, email: user.email, status: 'failed', reason: sendResult.error.message || '寄送失敗' });
+      const sendResult = await sendStatsEmail({ to: user.email, subject, html });
+      if (!sendResult) {
+        results.push({ userId: uidStr, email: user.email, status: 'failed', reason: '寄信服務未設定' });
       } else {
-        results.push({ userId: uidStr, email: user.email, status: 'sent' });
+        results.push({ userId: uidStr, email: user.email, status: 'sent', provider: sendResult.provider });
       }
     } catch (e) {
       results.push({ userId: uidStr, email: user.email, status: 'failed', reason: e.message || '寄送失敗' });
     }
-    // 避免觸發 Resend 預設 2 req/sec 限制
-    await new Promise(r => setTimeout(r, 600));
+    // SMTP 不需要強制延遲；Resend 預設 2 req/sec 仍需間隔
+    if (!hasSmtp) await new Promise(r => setTimeout(r, 600));
   }
 
   const sent = results.filter(r => r.status === 'sent').length;
   const failed = results.filter(r => r.status === 'failed').length;
   const skipped = results.filter(r => r.status === 'skipped').length;
-  res.json({ sent, failed, skipped, results });
+  res.json({ sent, failed, skipped, provider: hasSmtp ? 'smtp' : 'resend', results });
+});
+
+// ─── SMTP 設定（管理員）───
+app.get('/api/admin/smtp-settings', adminMiddleware, (req, res) => {
+  const s = getSmtpSettingsRaw();
+  res.json({
+    host: s.host,
+    port: s.port,
+    secure: !!s.secure,
+    user: s.user,
+    from: s.from,
+    hasPassword: !!s.password,
+  });
+});
+
+app.put('/api/admin/smtp-settings', adminMiddleware, (req, res) => {
+  const host = String(req.body?.host || '').trim();
+  const portRaw = req.body?.port;
+  const port = Number.parseInt(portRaw, 10);
+  const secure = !!req.body?.secure;
+  const user = String(req.body?.user || '').trim();
+  const password = req.body?.password;
+  const from = String(req.body?.from || '').trim();
+
+  if (host && (!Number.isFinite(port) || port < 1 || port > 65535)) {
+    return res.status(400).json({ error: 'Port 必須為 1-65535 的整數' });
+  }
+  if (host.length > 255 || user.length > 320 || from.length > 320) {
+    return res.status(400).json({ error: '欄位長度過長' });
+  }
+
+  const current = getSmtpSettingsRaw();
+  // 若 password 為 undefined 或空字串，視為「保留現有密碼」
+  const nextPassword = (typeof password === 'string' && password !== '') ? password : current.password;
+
+  db.run(
+    "UPDATE system_settings SET smtp_host = ?, smtp_port = ?, smtp_secure = ?, smtp_user = ?, smtp_password = ?, smtp_from = ?, updated_at = ?, updated_by = ? WHERE id = 1",
+    [host, host ? (port || 587) : 587, secure ? 1 : 0, user, nextPassword, from, Date.now(), req.userId]
+  );
+  saveDB();
+  // 強制重建 transporter
+  smtpTransporter = null;
+  smtpTransporterKey = '';
+  res.json({ success: true });
+});
+
+// 寄送測試信給目前登入管理員，驗證 SMTP / Resend 設定
+app.post('/api/admin/test-email', adminMiddleware, async (req, res) => {
+  const me = queryOne("SELECT email, display_name FROM users WHERE id = ?", [req.userId]);
+  if (!me?.email) return res.status(400).json({ error: '目前管理員未設定 Email，無法寄送測試信' });
+  try {
+    const result = await sendStatsEmail({
+      to: me.email,
+      subject: 'AssetPilot 寄信設定測試',
+      html: `<p>這是一封測試信，用來驗證 ${getSmtpSettingsRaw().host ? 'SMTP' : 'Resend'} 寄信設定正確。</p><p>若您能收到此信，代表「寄送資產統計報表」功能已可正常使用。</p>`,
+    });
+    if (!result) return res.status(503).json({ error: '寄信服務未設定' });
+    res.json({ success: true, provider: result.provider, to: me.email });
+  } catch (e) {
+    res.status(500).json({ error: e.message || '測試信寄送失敗' });
+  }
 });
 
 let isUpdatingApp = false;

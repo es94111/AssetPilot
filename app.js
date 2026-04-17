@@ -5023,9 +5023,10 @@ const App = (() => {
   async function renderAdminSettings() {
     if (!currentUser?.isAdmin) return;
     try {
-      const [settings, users] = await Promise.all([
+      const [settings, users, smtp] = await Promise.all([
         API.get('/api/admin/settings'),
         API.get('/api/admin/users'),
+        API.get('/api/admin/smtp-settings').catch(() => null),
       ]);
 
       const toggle = el('adminPublicRegistrationToggle');
@@ -5038,6 +5039,20 @@ const App = (() => {
       if (ipAllowlist) ipAllowlist.value = Array.isArray(settings.adminIpAllowlist)
         ? settings.adminIpAllowlist.join('\n')
         : '';
+      if (smtp) {
+        const setVal = (id, v) => { const e = el(id); if (e) e.value = v ?? ''; };
+        setVal('adminSmtpHost', smtp.host);
+        setVal('adminSmtpPort', smtp.port);
+        setVal('adminSmtpUser', smtp.user);
+        setVal('adminSmtpFrom', smtp.from);
+        const secureEl = el('adminSmtpSecure');
+        if (secureEl) secureEl.checked = !!smtp.secure;
+        const pwEl = el('adminSmtpPassword');
+        if (pwEl) {
+          pwEl.value = '';
+          pwEl.placeholder = smtp.hasPassword ? '已設定密碼，留空則保留' : '請輸入密碼';
+        }
+      }
       renderAdminUserTable(users);
       renderAdminSendReportTable(users);
       await syncAdminLoginLogs({ silent: true });
@@ -5108,6 +5123,50 @@ const App = (() => {
         await renderAdminSettings();
       } catch (e) {
         toast(e.message || '刪除使用者失敗', 'error');
+      }
+    });
+
+    el('adminSmtpForm')?.addEventListener('submit', async (ev) => {
+      ev.preventDefault();
+      const statusEl = el('adminSmtpStatus');
+      if (statusEl) { statusEl.textContent = '儲存中…'; statusEl.style.color = ''; }
+      try {
+        const payload = {
+          host: el('adminSmtpHost')?.value?.trim() || '',
+          port: Number(el('adminSmtpPort')?.value) || 587,
+          secure: !!el('adminSmtpSecure')?.checked,
+          user: el('adminSmtpUser')?.value?.trim() || '',
+          password: el('adminSmtpPassword')?.value || '',
+          from: el('adminSmtpFrom')?.value?.trim() || '',
+        };
+        await API.put('/api/admin/smtp-settings', payload);
+        if (statusEl) { statusEl.textContent = '已儲存 SMTP 設定'; statusEl.style.color = 'var(--success-color, #16a34a)'; }
+        toast('SMTP 設定已儲存', 'success');
+        // 清空密碼欄並更新 placeholder
+        const pwEl = el('adminSmtpPassword');
+        if (pwEl) { pwEl.value = ''; pwEl.placeholder = payload.password ? '已設定密碼，留空則保留' : pwEl.placeholder; }
+      } catch (e) {
+        if (statusEl) { statusEl.textContent = e.message || '儲存失敗'; statusEl.style.color = 'var(--danger-color)'; }
+        toast(e.message || 'SMTP 設定儲存失敗', 'error');
+      }
+    });
+
+    el('adminSmtpTestBtn')?.addEventListener('click', async () => {
+      const btn = el('adminSmtpTestBtn');
+      const statusEl = el('adminSmtpStatus');
+      if (btn) btn.disabled = true;
+      if (statusEl) { statusEl.textContent = '寄測試信中…'; statusEl.style.color = ''; }
+      try {
+        const result = await API.post('/api/admin/test-email', {});
+        const msg = `已寄測試信至 ${result.to}（${result.provider === 'smtp' ? 'SMTP' : 'Resend'}）`;
+        if (statusEl) { statusEl.textContent = msg; statusEl.style.color = 'var(--success-color, #16a34a)'; }
+        toast(msg, 'success');
+      } catch (e) {
+        const msg = e.message || '測試信寄送失敗';
+        if (statusEl) { statusEl.textContent = msg; statusEl.style.color = 'var(--danger-color)'; }
+        toast(msg, 'error');
+      } finally {
+        if (btn) btn.disabled = false;
       }
     });
 

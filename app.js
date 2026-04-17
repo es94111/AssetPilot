@@ -4990,6 +4990,30 @@ const App = (() => {
     }).join('');
   }
 
+  function renderAdminScheduleForm(schedule) {
+    if (!schedule) return;
+    const setVal = (id, v) => { const e = el(id); if (e) e.value = String(v); };
+    setVal('adminScheduleFreq', schedule.freq || 'off');
+    setVal('adminScheduleHour', schedule.hour ?? 9);
+    setVal('adminScheduleWeekday', schedule.weekday ?? 1);
+    setVal('adminScheduleDayOfMonth', schedule.dayOfMonth ?? 1);
+    updateAdminScheduleVisibility();
+    const histEl = el('adminScheduleHistory');
+    if (histEl) {
+      const lastTxt = schedule.lastRunText || '從未執行';
+      const summary = schedule.lastSummary ? `<div style="margin-top:4px">${escHtml(schedule.lastSummary)}</div>` : '';
+      histEl.innerHTML = `<div><strong>上次執行：</strong>${escHtml(lastTxt)}</div>${summary}`;
+    }
+  }
+
+  function updateAdminScheduleVisibility() {
+    const freq = el('adminScheduleFreq')?.value || 'off';
+    const wkRow = el('adminScheduleWeekdayRow');
+    const domRow = el('adminScheduleDayOfMonthRow');
+    if (wkRow) wkRow.style.display = freq === 'weekly' ? '' : 'none';
+    if (domRow) domRow.style.display = freq === 'monthly' ? '' : 'none';
+  }
+
   function renderAdminSendReportTable(users) {
     const tbody = el('adminSendReportBody');
     if (!tbody) return;
@@ -5023,10 +5047,11 @@ const App = (() => {
   async function renderAdminSettings() {
     if (!currentUser?.isAdmin) return;
     try {
-      const [settings, users, smtp] = await Promise.all([
+      const [settings, users, smtp, schedule] = await Promise.all([
         API.get('/api/admin/settings'),
         API.get('/api/admin/users'),
         API.get('/api/admin/smtp-settings').catch(() => null),
+        API.get('/api/admin/report-schedule').catch(() => null),
       ]);
 
       const toggle = el('adminPublicRegistrationToggle');
@@ -5055,6 +5080,7 @@ const App = (() => {
       }
       renderAdminUserTable(users);
       renderAdminSendReportTable(users);
+      renderAdminScheduleForm(schedule);
       await syncAdminLoginLogs({ silent: true });
     } catch (e) {
       toast(e.message || '載入管理員設定失敗', 'error');
@@ -5163,6 +5189,53 @@ const App = (() => {
         toast(msg, 'success');
       } catch (e) {
         const msg = e.message || '測試信寄送失敗';
+        if (statusEl) { statusEl.textContent = msg; statusEl.style.color = 'var(--danger-color)'; }
+        toast(msg, 'error');
+      } finally {
+        if (btn) btn.disabled = false;
+      }
+    });
+
+    el('adminScheduleFreq')?.addEventListener('change', updateAdminScheduleVisibility);
+
+    el('adminScheduleForm')?.addEventListener('submit', async (ev) => {
+      ev.preventDefault();
+      const statusEl = el('adminScheduleStatus');
+      if (statusEl) { statusEl.textContent = '儲存中…'; statusEl.style.color = ''; }
+      try {
+        const payload = {
+          freq: el('adminScheduleFreq')?.value || 'off',
+          hour: Number(el('adminScheduleHour')?.value) || 9,
+          weekday: Number(el('adminScheduleWeekday')?.value) || 1,
+          dayOfMonth: Number(el('adminScheduleDayOfMonth')?.value) || 1,
+        };
+        await API.put('/api/admin/report-schedule', payload);
+        if (statusEl) { statusEl.textContent = '排程已儲存'; statusEl.style.color = 'var(--success-color, #16a34a)'; }
+        toast('排程已儲存', 'success');
+      } catch (e) {
+        if (statusEl) { statusEl.textContent = e.message || '儲存失敗'; statusEl.style.color = 'var(--danger-color)'; }
+        toast(e.message || '排程儲存失敗', 'error');
+      }
+    });
+
+    el('adminScheduleRunNowBtn')?.addEventListener('click', async () => {
+      if (!confirm('立即觸發一次寄送（將寄給所有有效 Email 的使用者）？')) return;
+      const btn = el('adminScheduleRunNowBtn');
+      const statusEl = el('adminScheduleStatus');
+      if (btn) btn.disabled = true;
+      if (statusEl) { statusEl.textContent = '執行中…'; statusEl.style.color = ''; }
+      try {
+        const result = await API.post('/api/admin/report-schedule/run-now', {});
+        const msg = result.skipped && result.reason
+          ? result.reason
+          : `已寄送 ${result.sent} / 失敗 ${result.failed} / 略過 ${result.skipped}`;
+        if (statusEl) { statusEl.textContent = msg; statusEl.style.color = result.failed > 0 ? 'var(--danger-color)' : 'var(--success-color, #16a34a)'; }
+        toast(msg, result.failed > 0 ? 'error' : 'success');
+        // 重抓最新狀態
+        const schedule = await API.get('/api/admin/report-schedule').catch(() => null);
+        renderAdminScheduleForm(schedule);
+      } catch (e) {
+        const msg = e.message || '執行失敗';
         if (statusEl) { statusEl.textContent = msg; statusEl.style.color = 'var(--danger-color)'; }
         toast(msg, 'error');
       } finally {

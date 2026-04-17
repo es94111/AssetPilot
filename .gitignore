@@ -1,5 +1,8 @@
 node_modules/
 database.db
+database.db*
+*.bak
+*.backup_*
 .env
 *.tar
 data/

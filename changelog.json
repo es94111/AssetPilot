@@ -1,6 +1,18 @@
 {
-  "currentVersion": "4.17.0",
+  "currentVersion": "4.18.0",
   "releases": [
+    {
+      "version": "4.18.0",
+      "date": "2026-04-17",
+      "title": "信件交易區塊依排程頻率切換 + 視覺美化",
+      "type": "feature",
+      "changes": [
+        { "tag": "improved", "text": "信件交易區塊改為依排程頻率切換顯示：每日 → 昨日交易明細；每週 → 上週 7 天每日收支彙總；每月 → 上月每天收支彙總；手動觸發預設用 daily 行為" },
+        { "tag": "new", "text": "週/月彙總表額外顯示「區間收入 / 區間支出 / 區間淨額」三欄總覽卡，週末日期以紫色標示" },
+        { "tag": "improved", "text": "信件視覺美化：頭圖三色漸層、卡片陰影加重、節標題加色塊指示、KPI 卡邊框與留白優化、儲蓄率加「健康/尚可/偏低」狀態文字、CTA 按鈕加陰影、底部加品牌標記" },
+        { "tag": "improved", "text": "新增 getReportPeriod() helper：daily 取昨日、weekly 取上週 (Mon-Sun)、monthly 取上個完整日曆月" }
+      ]
+    },
     {
       "version": "4.17.0",
       "date": "2026-04-17",

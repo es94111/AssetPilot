@@ -596,6 +596,7 @@ const App = (() => {
   // ─── Google SSO ───
   let googleClientId = null;
   let googleAuthInProgress = false;
+  let pendingDeleteGoogleCredential = null;
 
   async function requestGoogleOAuthState() {
     const r = await fetch('/api/auth/google/state', { cache: 'no-store' });
@@ -4299,7 +4300,17 @@ const App = (() => {
       // Google-only 帳號（無密碼登入）不需要輸入密碼，隱藏密碼欄位
       const isGoogleOnly = user.googleLinked && !user.hasPassword;
       const pwWrap = el('deleteAccountPasswordWrap');
+      const googleVerifyWrap = el('deleteAccountGoogleWrap');
       if (pwWrap) pwWrap.style.display = isGoogleOnly ? 'none' : '';
+      if (googleVerifyWrap) googleVerifyWrap.style.display = isGoogleOnly ? '' : 'none';
+      // Google-only 使用者：按鈕先 disable 直到完成 Google 驗證
+      pendingDeleteGoogleCredential = null;
+      const deleteBtn = el('deleteAccountBtn');
+      if (deleteBtn) {
+        deleteBtn.disabled = isGoogleOnly;
+        deleteBtn.style.opacity = isGoogleOnly ? '0.5' : '';
+      }
+      if (isGoogleOnly) initDeleteAccountGoogleButton();
 
       // 修改密碼卡片：依據是否已有密碼切換「修改密碼」/「設定密碼」標題與目前密碼欄位
       const passwordCardTitle = el('accountPasswordCardTitle');
@@ -4409,13 +4420,22 @@ const App = (() => {
 
         el('deleteAccountBtn').addEventListener('click', async () => {
           const pw = el('deleteAccountPassword')?.value || '';
+          const isGoogleOnlyNow = currentUser?.googleLinked && !currentUser?.hasPassword;
           // 清除之前的錯誤訊息
           const existingErr = document.querySelector('.delete-account-error');
           if (existingErr) existingErr.remove();
+          if (isGoogleOnlyNow && !pendingDeleteGoogleCredential) {
+            toast('請先完成 Google 驗證', 'error');
+            return;
+          }
           if (!confirm('⚠️ 確定要永久刪除帳號嗎？\n\n所有資料將被刪除且無法復原！')) return;
           if (!confirm('再次確認：真的要刪除帳號及所有資料嗎？')) return;
           try {
-            await API.post('/api/account/delete', { password: pw || undefined });
+            await API.post('/api/account/delete', {
+              password: pw || undefined,
+              googleCredential: pendingDeleteGoogleCredential || undefined,
+            });
+            pendingDeleteGoogleCredential = null;
             toast('帳號已刪除', 'success');
             await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }).catch(() => {});
             setTimeout(() => location.reload(), 800);
@@ -5305,6 +5325,56 @@ const App = (() => {
       shape: 'rectangular',
       width: 280
     });
+  }
+
+  function initDeleteAccountGoogleButton() {
+    const wrap = el('deleteAccountGoogleBtnWrap');
+    if (!wrap) return;
+    if (!window.google?.accounts?.id || !googleClientId) {
+      wrap.innerHTML = '<p style="color:var(--danger-color);font-size:13px">Google SSO 未設定，無法完成驗證。請聯絡管理員。</p>';
+      return;
+    }
+    wrap.innerHTML = '';
+    google.accounts.id.initialize({
+      client_id: googleClientId,
+      callback: handleDeleteAccountGoogleVerify,
+      ux_mode: 'popup',
+      auto_select: false,
+    });
+    google.accounts.id.renderButton(wrap, {
+      type: 'standard',
+      theme: 'outline',
+      size: 'large',
+      text: 'continue_with',
+      shape: 'rectangular',
+      width: 280,
+    });
+  }
+
+  function handleDeleteAccountGoogleVerify(response) {
+    if (!response?.credential) {
+      toast('Google 驗證失敗，請重試', 'error');
+      return;
+    }
+    pendingDeleteGoogleCredential = response.credential;
+    const btn = el('deleteAccountBtn');
+    if (btn) {
+      btn.disabled = false;
+      btn.style.opacity = '';
+    }
+    const wrap = el('deleteAccountGoogleBtnWrap');
+    if (wrap) {
+      wrap.innerHTML = '<p style="color:var(--success-color);font-size:13px"><i class="fas fa-check-circle"></i> 已完成 Google 驗證，可點選下方「永久刪除帳號」</p>';
+    }
+    // 還原登入用途的 callback
+    if (window.google?.accounts?.id && googleClientId) {
+      google.accounts.id.initialize({
+        client_id: googleClientId,
+        callback: handleGoogleCredential,
+        ux_mode: 'popup',
+        auto_select: false,
+      });
+    }
   }
 
   async function handleGoogleLink(response) {

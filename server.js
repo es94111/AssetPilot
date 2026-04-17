@@ -52,6 +52,8 @@ const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || '';
 const IPINFO_TOKEN = process.env.IPINFO_TOKEN || '';
 const RESEND_API_KEY = process.env.RESEND_API_KEY || '';
 const RESEND_FROM_EMAIL = process.env.RESEND_FROM_EMAIL || '';
+// 對外網址（用於信件 CTA 按鈕），未設定則隱藏「前往儀表板」按鈕
+const APP_URL = (process.env.APP_URL || '').replace(/\/$/, '');
 let resendClient = null;
 function getResendClient() {
   if (!RESEND_API_KEY) return null;
@@ -546,6 +548,13 @@ async function initDB() {
   try { db.run("ALTER TABLE system_settings ADD COLUMN smtp_user TEXT DEFAULT ''"); } catch (e) { /* ignore */ }
   try { db.run("ALTER TABLE system_settings ADD COLUMN smtp_password TEXT DEFAULT ''"); } catch (e) { /* ignore */ }
   try { db.run("ALTER TABLE system_settings ADD COLUMN smtp_from TEXT DEFAULT ''"); } catch (e) { /* ignore */ }
+  // 自動寄送統計報表排程
+  try { db.run("ALTER TABLE system_settings ADD COLUMN report_schedule_freq TEXT DEFAULT 'off'"); } catch (e) { /* ignore */ }
+  try { db.run("ALTER TABLE system_settings ADD COLUMN report_schedule_hour INTEGER DEFAULT 9"); } catch (e) { /* ignore */ }
+  try { db.run("ALTER TABLE system_settings ADD COLUMN report_schedule_weekday INTEGER DEFAULT 1"); } catch (e) { /* ignore */ }
+  try { db.run("ALTER TABLE system_settings ADD COLUMN report_schedule_day_of_month INTEGER DEFAULT 1"); } catch (e) { /* ignore */ }
+  try { db.run("ALTER TABLE system_settings ADD COLUMN report_schedule_last_run INTEGER DEFAULT 0"); } catch (e) { /* ignore */ }
+  try { db.run("ALTER TABLE system_settings ADD COLUMN report_schedule_last_summary TEXT DEFAULT ''"); } catch (e) { /* ignore */ }
 
   db.run("INSERT OR IGNORE INTO system_settings (id, public_registration, allowed_registration_emails, admin_ip_allowlist, updated_at, updated_by) VALUES (1, 1, '', '', ?, '')", [Date.now()]);
 
@@ -2724,9 +2733,24 @@ function formatAmount(value, currency = 'TWD') {
   return `${sign}${currency} ${formatted}`;
 }
 
+function prevMonthOf(monthStr) {
+  const [y, m] = monthStr.split('-').map(Number);
+  const d = new Date(y, m - 2, 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function pctChange(current, prev) {
+  const c = Number(current) || 0;
+  const p = Number(prev) || 0;
+  if (p === 0) return c === 0 ? 0 : null; // 無基準
+  return ((c - p) / Math.abs(p)) * 100;
+}
+
 function buildUserStatsReport(userId) {
   const month = thisMonth();
   const monthLike = month + '%';
+  const prevMonth = prevMonthOf(month);
+  const prevMonthLike = prevMonth + '%';
 
   const accounts = queryAll(
     "SELECT id, name, initial_balance, currency, exclude_from_total FROM accounts WHERE user_id = ?",
@@ -2743,24 +2767,37 @@ function buildUserStatsReport(userId) {
     }
   }
 
-  const income = Number(queryOne(
-    "SELECT COALESCE(SUM(amount),0) as total FROM transactions WHERE user_id = ? AND type='income' AND date LIKE ? AND exclude_from_stats = 0",
-    [userId, monthLike]
+  const sumOf = (type, like) => Number(queryOne(
+    `SELECT COALESCE(SUM(amount),0) as total FROM transactions WHERE user_id = ? AND type = ? AND date LIKE ? AND exclude_from_stats = 0`,
+    [userId, type, like]
   )?.total || 0);
-  const expense = Number(queryOne(
-    "SELECT COALESCE(SUM(amount),0) as total FROM transactions WHERE user_id = ? AND type='expense' AND date LIKE ? AND exclude_from_stats = 0",
-    [userId, monthLike]
-  )?.total || 0);
+  const income = sumOf('income', monthLike);
+  const expense = sumOf('expense', monthLike);
+  const prevIncome = sumOf('income', prevMonthLike);
+  const prevExpense = sumOf('expense', prevMonthLike);
 
   const topCategories = queryAll(`
-    SELECT COALESCE(c.name, '未分類') as name, COALESCE(SUM(t.amount), 0) as total
+    SELECT COALESCE(c.name, '未分類') as name, COALESCE(c.color, '#94a3b8') as color, COALESCE(SUM(t.amount), 0) as total
     FROM transactions t
     LEFT JOIN categories c ON t.category_id = c.id
     WHERE t.user_id = ? AND t.type = 'expense' AND t.date LIKE ? AND t.exclude_from_stats = 0
-    GROUP BY c.name
+    GROUP BY c.name, c.color
     ORDER BY total DESC
     LIMIT 5
-  `, [userId, monthLike]).map(r => ({ name: r.name, total: Number(r.total) || 0 }));
+  `, [userId, monthLike]).map(r => ({ name: r.name, color: r.color, total: Number(r.total) || 0 }));
+  const topCategoriesMax = topCategories.reduce((m, c) => Math.max(m, c.total), 0);
+
+  const recentTransactions = queryAll(`
+    SELECT t.date, t.type, t.amount, t.note, t.currency, COALESCE(c.name, '未分類') as cat_name, COALESCE(c.color, '#94a3b8') as cat_color
+    FROM transactions t
+    LEFT JOIN categories c ON t.category_id = c.id
+    WHERE t.user_id = ? AND t.type IN ('income','expense') AND t.exclude_from_stats = 0
+    ORDER BY t.date DESC, t.created_at DESC
+    LIMIT 5
+  `, [userId]).map(r => ({
+    date: r.date, type: r.type, amount: Number(r.amount) || 0, note: r.note || '',
+    currency: normalizeCurrency(r.currency), categoryName: r.cat_name, categoryColor: r.cat_color,
+  }));
 
   const stocks = queryAll("SELECT id, symbol, name FROM stocks WHERE user_id = ?", [userId]);
   let stockHoldings = 0;
@@ -2793,67 +2830,179 @@ function buildUserStatsReport(userId) {
     }
   }
 
+  const net = income - expense;
+  const savingsRate = income > 0 ? Math.max(0, Math.min(1, net / income)) : 0;
+
   return {
     month,
+    prevMonth,
     accountCount: includedAccountCount,
     balanceByCurrency,
     income,
     expense,
-    net: income - expense,
+    net,
+    incomeChangePct: pctChange(income, prevIncome),
+    expenseChangePct: pctChange(expense, prevExpense),
+    netChangePct: pctChange(net, prevIncome - prevExpense),
+    savingsRate,
     topCategories,
+    topCategoriesMax,
+    recentTransactions,
     stockHoldings,
     stockCostTwd: Math.round(stockCostTwd),
   };
 }
 
+function renderChangePill(pct, kind) {
+  // kind: 'good-up' (income up = good) | 'good-down' (expense down = good) | 'neutral'
+  if (pct === null || pct === undefined) {
+    return '<span style="font-size:11px;color:#888">vs. 上月 —</span>';
+  }
+  const rounded = Math.round(pct * 10) / 10;
+  const arrow = rounded > 0 ? '▲' : rounded < 0 ? '▼' : '→';
+  const isPositive = rounded > 0;
+  let color = '#888';
+  if (kind === 'good-up') color = isPositive ? '#16a34a' : (rounded < 0 ? '#dc2626' : '#888');
+  else if (kind === 'good-down') color = isPositive ? '#dc2626' : (rounded < 0 ? '#16a34a' : '#888');
+  const sign = rounded > 0 ? '+' : '';
+  return `<span style="font-size:11px;color:${color}">vs. 上月 ${arrow} ${sign}${rounded}%</span>`;
+}
+
 function renderStatsEmailHtml(displayName, email, stats) {
-  const safeName = escapeEmailHtml(displayName || email || '使用者');
+  const safeName = escapeEmailHtml(displayName || (email ? email.split('@')[0] : '') || '使用者');
+  const month = escapeEmailHtml(stats.month);
+
+  // KPI cards (3 欄一列，table 排版兼容 Outlook)
+  const kpiCard = (label, value, color, pillHtml) => `
+    <td valign="top" style="padding:0 4px">
+      <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#f8fafc;border-radius:10px;border:1px solid #e5e7eb">
+        <tr><td style="padding:14px 12px;text-align:center">
+          <div style="font-size:12px;color:#64748b;margin-bottom:4px">${escapeEmailHtml(label)}</div>
+          <div style="font-size:18px;font-weight:700;color:${color};line-height:1.2">${escapeEmailHtml(value)}</div>
+          <div style="margin-top:6px">${pillHtml}</div>
+        </td></tr>
+      </table>
+    </td>`;
+
+  const kpiRow = `
+    <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:16px 0 4px"><tr>
+      ${kpiCard('收入', formatAmount(stats.income), '#16a34a', renderChangePill(stats.incomeChangePct, 'good-up'))}
+      ${kpiCard('支出', formatAmount(stats.expense), '#dc2626', renderChangePill(stats.expenseChangePct, 'good-down'))}
+      ${kpiCard('淨額', formatAmount(stats.net), stats.net >= 0 ? '#0f172a' : '#dc2626', renderChangePill(stats.netChangePct, 'good-up'))}
+    </tr></table>`;
+
+  // Savings rate bar
+  const sr = Math.round(stats.savingsRate * 100);
+  const srColor = sr >= 30 ? '#16a34a' : sr >= 10 ? '#f59e0b' : '#dc2626';
+  const srBlock = stats.income > 0 ? `
+    <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:14px 0 4px"><tr><td>
+      <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px">
+        <span style="color:#475569">本月儲蓄率</span>
+        <span style="color:${srColor};font-weight:600">${sr}%</span>
+      </div>
+      <div style="height:8px;background:#e5e7eb;border-radius:4px;overflow:hidden">
+        <div style="height:8px;width:${sr}%;background:${srColor}"></div>
+      </div>
+    </td></tr></table>` : '';
+
+  // Balance by currency
   const balanceRows = Object.keys(stats.balanceByCurrency).length
     ? Object.entries(stats.balanceByCurrency)
-        .map(([cur, total]) => `<tr><td style="padding:6px 12px;border-bottom:1px solid #eee">${escapeEmailHtml(cur)}</td><td style="padding:6px 12px;border-bottom:1px solid #eee;text-align:right">${escapeEmailHtml(formatAmount(total, cur))}</td></tr>`)
+        .map(([cur, total]) => `<tr><td style="padding:8px 12px;border-bottom:1px solid #f1f5f9;color:#475569">${escapeEmailHtml(cur)}</td><td style="padding:8px 12px;border-bottom:1px solid #f1f5f9;text-align:right;font-weight:600">${escapeEmailHtml(formatAmount(total, cur))}</td></tr>`)
         .join('')
-    : '<tr><td colspan="2" style="padding:6px 12px;color:#888">尚無帳戶</td></tr>';
+    : '<tr><td colspan="2" style="padding:8px 12px;color:#94a3b8">尚無帳戶</td></tr>';
 
+  // Top categories with proportional bars
   const catRows = stats.topCategories.length
-    ? stats.topCategories
-        .map(c => `<tr><td style="padding:6px 12px;border-bottom:1px solid #eee">${escapeEmailHtml(c.name)}</td><td style="padding:6px 12px;border-bottom:1px solid #eee;text-align:right">${escapeEmailHtml(formatAmount(c.total))}</td></tr>`)
-        .join('')
-    : '<tr><td colspan="2" style="padding:6px 12px;color:#888">本月尚無支出紀錄</td></tr>';
+    ? stats.topCategories.map(c => {
+        const pct = stats.topCategoriesMax > 0 ? Math.round((c.total / stats.topCategoriesMax) * 100) : 0;
+        const safeColor = /^#[0-9A-Fa-f]{3,8}$/.test(c.color) ? c.color : '#94a3b8';
+        return `<tr><td style="padding:8px 12px;border-bottom:1px solid #f1f5f9">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+            <span style="color:#0f172a">${escapeEmailHtml(c.name)}</span>
+            <span style="color:#475569;font-weight:600">${escapeEmailHtml(formatAmount(c.total))}</span>
+          </div>
+          <div style="height:6px;background:#f1f5f9;border-radius:3px;overflow:hidden">
+            <div style="height:6px;width:${pct}%;background:${safeColor}"></div>
+          </div>
+        </td></tr>`;
+      }).join('')
+    : '<tr><td style="padding:8px 12px;color:#94a3b8">本月尚無支出紀錄</td></tr>';
 
+  // Recent transactions
+  const txRows = stats.recentTransactions.length
+    ? stats.recentTransactions.map(t => {
+        const isIncome = t.type === 'income';
+        const sign = isIncome ? '+' : '−';
+        const color = isIncome ? '#16a34a' : '#dc2626';
+        const safeColor = /^#[0-9A-Fa-f]{3,8}$/.test(t.categoryColor) ? t.categoryColor : '#94a3b8';
+        const note = t.note ? ` · ${escapeEmailHtml(t.note)}` : '';
+        return `<tr>
+          <td style="padding:8px 12px;border-bottom:1px solid #f1f5f9;width:78px;color:#64748b;font-size:12px;white-space:nowrap">${escapeEmailHtml(t.date)}</td>
+          <td style="padding:8px 12px;border-bottom:1px solid #f1f5f9">
+            <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${safeColor};margin-right:6px;vertical-align:middle"></span>
+            <span style="color:#0f172a">${escapeEmailHtml(t.categoryName)}</span><span style="color:#94a3b8">${note}</span>
+          </td>
+          <td style="padding:8px 12px;border-bottom:1px solid #f1f5f9;text-align:right;color:${color};font-weight:600;white-space:nowrap">${sign}${escapeEmailHtml(formatAmount(t.amount, t.currency).replace(/^[A-Z]{3}\s/, t.currency + ' '))}</td>
+        </tr>`;
+      }).join('')
+    : '<tr><td style="padding:8px 12px;color:#94a3b8" colspan="3">尚無交易紀錄</td></tr>';
+
+  // Stocks block
   const stockBlock = stats.stockHoldings > 0
-    ? `<p style="margin:8px 0 0;color:#444">目前持有 <strong>${stats.stockHoldings}</strong> 檔，總成本約 ${escapeEmailHtml(formatAmount(stats.stockCostTwd))}</p>`
-    : '<p style="margin:8px 0 0;color:#888">目前無持股</p>';
+    ? `<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#f8fafc;border-radius:10px;border:1px solid #e5e7eb"><tr><td style="padding:14px">
+        <div style="font-size:13px;color:#64748b;margin-bottom:4px">目前持股</div>
+        <div style="font-size:16px;color:#0f172a"><strong>${stats.stockHoldings}</strong> 檔，總成本約 <strong>${escapeEmailHtml(formatAmount(stats.stockCostTwd))}</strong></div>
+      </td></tr></table>`
+    : `<div style="padding:14px;background:#f8fafc;border-radius:10px;border:1px solid #e5e7eb;color:#94a3b8;font-size:13px">目前無持股</div>`;
+
+  // CTA
+  const ctaBlock = APP_URL
+    ? `<table role="presentation" cellpadding="0" cellspacing="0" align="center" style="margin:24px auto 8px"><tr><td style="border-radius:8px;background:#4f46e5">
+        <a href="${escapeEmailHtml(APP_URL)}" style="display:inline-block;padding:12px 22px;color:#ffffff;text-decoration:none;font-weight:600;font-size:14px;border-radius:8px">前往儀表板查看完整報表 →</a>
+      </td></tr></table>`
+    : '';
+
+  const sectionTitle = (text) => `<div style="margin:22px 0 8px;font-size:13px;font-weight:600;color:#4f46e5;letter-spacing:0.04em;text-transform:uppercase">${escapeEmailHtml(text)}</div>`;
 
   return `<!doctype html>
-<html lang="zh-Hant"><head><meta charset="utf-8"><title>個人資產統計報表</title></head>
-<body style="margin:0;padding:24px;background:#f5f6f8;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Noto Sans TC',sans-serif;color:#222">
-  <div style="max-width:560px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.06)">
-    <div style="padding:20px 24px;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff">
-      <h1 style="margin:0;font-size:20px">個人資產統計報表</h1>
-      <p style="margin:6px 0 0;font-size:13px;opacity:0.85">${escapeEmailHtml(stats.month)} 月度摘要</p>
-    </div>
-    <div style="padding:20px 24px">
-      <p style="margin:0 0 12px">${safeName} 您好，以下是您目前的資產與本月收支摘要：</p>
+<html lang="zh-Hant"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>個人資產統計報表</title>
+</head>
+<body style="margin:0;padding:24px 12px;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Noto Sans TC',sans-serif;color:#0f172a;-webkit-font-smoothing:antialiased">
+  <table role="presentation" cellpadding="0" cellspacing="0" align="center" width="100%" style="max-width:600px;margin:0 auto"><tr><td>
+    <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#ffffff;border-radius:14px;overflow:hidden;box-shadow:0 4px 16px rgba(15,23,42,0.06)">
+      <tr><td style="padding:28px 28px 18px;background:linear-gradient(135deg,#4f46e5 0%,#7c3aed 100%);color:#ffffff">
+        <div style="font-size:12px;letter-spacing:0.08em;text-transform:uppercase;opacity:0.85;margin-bottom:6px">AssetPilot · ${month} 月度摘要</div>
+        <div style="font-size:22px;font-weight:700;line-height:1.3">${safeName}，這是您本月的資產快照</div>
+        <div style="font-size:13px;opacity:0.9;margin-top:6px">資產 ${stats.accountCount} 個帳戶 · 持股 ${stats.stockHoldings} 檔</div>
+      </td></tr>
+      <tr><td style="padding:8px 24px 28px">
+        ${kpiRow}
+        ${srBlock}
+        ${sectionTitle('資產餘額')}
+        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;font-size:14px"><tbody>${balanceRows}</tbody></table>
 
-      <h3 style="margin:18px 0 8px;font-size:15px;color:#4f46e5">資產餘額（共 ${stats.accountCount} 個帳戶）</h3>
-      <table style="width:100%;border-collapse:collapse;font-size:14px"><tbody>${balanceRows}</tbody></table>
+        ${sectionTitle('本月前 5 大支出')}
+        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;font-size:14px"><tbody>${catRows}</tbody></table>
 
-      <h3 style="margin:20px 0 8px;font-size:15px;color:#4f46e5">本月收支</h3>
-      <table style="width:100%;border-collapse:collapse;font-size:14px"><tbody>
-        <tr><td style="padding:6px 12px;border-bottom:1px solid #eee">收入</td><td style="padding:6px 12px;border-bottom:1px solid #eee;text-align:right;color:#16a34a">${escapeEmailHtml(formatAmount(stats.income))}</td></tr>
-        <tr><td style="padding:6px 12px;border-bottom:1px solid #eee">支出</td><td style="padding:6px 12px;border-bottom:1px solid #eee;text-align:right;color:#dc2626">${escapeEmailHtml(formatAmount(stats.expense))}</td></tr>
-        <tr><td style="padding:6px 12px;border-bottom:1px solid #eee"><strong>淨額</strong></td><td style="padding:6px 12px;border-bottom:1px solid #eee;text-align:right"><strong>${escapeEmailHtml(formatAmount(stats.net))}</strong></td></tr>
-      </tbody></table>
+        ${sectionTitle('近 5 筆交易')}
+        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;font-size:14px"><tbody>${txRows}</tbody></table>
 
-      <h3 style="margin:20px 0 8px;font-size:15px;color:#4f46e5">本月前 5 大支出分類</h3>
-      <table style="width:100%;border-collapse:collapse;font-size:14px"><tbody>${catRows}</tbody></table>
+        ${sectionTitle('股票投資')}
+        ${stockBlock}
 
-      <h3 style="margin:20px 0 8px;font-size:15px;color:#4f46e5">股票投資</h3>
-      ${stockBlock}
+        ${ctaBlock}
 
-      <p style="margin:24px 0 0;font-size:12px;color:#888">此信件由系統自動寄送，請勿回覆。</p>
-    </div>
-  </div>
+        <div style="margin-top:28px;padding-top:18px;border-top:1px solid #e5e7eb;font-size:11px;color:#94a3b8;text-align:center;line-height:1.6">
+          此信件由 AssetPilot 系統自動寄送，請勿回覆。<br>
+          資料以您於系統內登錄之記錄為準，僅作為參考。
+        </div>
+      </td></tr>
+    </table>
+  </td></tr></table>
 </body></html>`;
 }
 
@@ -2961,6 +3110,152 @@ app.post('/api/admin/test-email', adminMiddleware, async (req, res) => {
     res.json({ success: true, provider: result.provider, to: me.email });
   } catch (e) {
     res.status(500).json({ error: e.message || '測試信寄送失敗' });
+  }
+});
+
+// ─── 排程自動寄送統計報表 ───
+const SCHEDULE_FREQ_VALUES = ['off', 'daily', 'weekly', 'monthly'];
+
+function getReportSchedule() {
+  const row = queryOne(
+    "SELECT report_schedule_freq, report_schedule_hour, report_schedule_weekday, report_schedule_day_of_month, report_schedule_last_run, report_schedule_last_summary FROM system_settings WHERE id = 1"
+  );
+  return {
+    freq: SCHEDULE_FREQ_VALUES.includes(row?.report_schedule_freq) ? row.report_schedule_freq : 'off',
+    hour: Math.min(23, Math.max(0, Number(row?.report_schedule_hour) || 9)),
+    weekday: Math.min(6, Math.max(0, Number(row?.report_schedule_weekday) || 1)),
+    dayOfMonth: Math.min(28, Math.max(1, Number(row?.report_schedule_day_of_month) || 1)),
+    lastRun: Number(row?.report_schedule_last_run) || 0,
+    lastSummary: row?.report_schedule_last_summary || '',
+  };
+}
+
+// 判斷現在是否該觸發寄送：到了當期排程時間，且本期尚未執行
+function shouldRunSchedule(schedule, now = new Date()) {
+  if (schedule.freq === 'off') return false;
+  if (now.getHours() < schedule.hour) return false;
+
+  let periodStart;
+  if (schedule.freq === 'daily') {
+    periodStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0).getTime();
+  } else if (schedule.freq === 'weekly') {
+    if (now.getDay() !== schedule.weekday) return false;
+    periodStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0).getTime();
+  } else if (schedule.freq === 'monthly') {
+    if (now.getDate() !== schedule.dayOfMonth) return false;
+    periodStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0).getTime();
+  } else {
+    return false;
+  }
+  return schedule.lastRun < periodStart;
+}
+
+let isRunningSchedule = false;
+async function runScheduledReportNow(triggeredBy = 'scheduler') {
+  if (isRunningSchedule) return { skipped: true, reason: '已有寄送任務進行中' };
+  isRunningSchedule = true;
+  const startedAt = Date.now();
+  try {
+    const users = queryAll("SELECT id, email FROM users WHERE email IS NOT NULL AND email != ''");
+    const smtp = getSmtpSettingsRaw();
+    const hasSmtp = !!(smtp.host && smtp.port);
+    const hasResend = !!(RESEND_API_KEY && RESEND_FROM_EMAIL);
+    if (!hasSmtp && !hasResend) {
+      const summary = `${formatTwTime(startedAt)} ${triggeredBy} 觸發但寄信服務未設定，已略過`;
+      db.run("UPDATE system_settings SET report_schedule_last_summary = ? WHERE id = 1", [summary]);
+      saveDB();
+      return { sent: 0, failed: 0, skipped: users.length, reason: '寄信服務未設定' };
+    }
+
+    let sent = 0, failed = 0, skipped = 0;
+    const failures = [];
+    for (const u of users) {
+      if (!isValidEmail(u.email)) { skipped += 1; continue; }
+      try {
+        const stats = buildUserStatsReport(u.id);
+        const html = renderStatsEmailHtml('', u.email, stats);
+        const subject = `${stats.month} 個人資產統計報表`;
+        const r = await sendStatsEmail({ to: u.email, subject, html });
+        if (r) sent += 1;
+        else { failed += 1; failures.push(`${u.email}: 寄信服務未設定`); }
+      } catch (e) {
+        failed += 1;
+        failures.push(`${u.email}: ${e.message || '未知錯誤'}`);
+      }
+      if (!hasSmtp) await new Promise(r => setTimeout(r, 600));
+    }
+
+    const finishedAt = Date.now();
+    const summaryParts = [`${formatTwTime(startedAt)} ${triggeredBy}：寄送 ${sent} / 失敗 ${failed} / 略過 ${skipped}`];
+    if (failures.length) summaryParts.push('失敗明細：' + failures.slice(0, 3).join('；') + (failures.length > 3 ? `…（共 ${failures.length} 筆）` : ''));
+    const summary = summaryParts.join(' | ');
+    db.run(
+      "UPDATE system_settings SET report_schedule_last_run = ?, report_schedule_last_summary = ? WHERE id = 1",
+      [finishedAt, summary]
+    );
+    saveDB();
+    return { sent, failed, skipped };
+  } finally {
+    isRunningSchedule = false;
+  }
+}
+
+function formatTwTime(ts) {
+  if (!ts) return '從未';
+  const d = new Date(ts);
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function checkAndRunSchedule() {
+  try {
+    const schedule = getReportSchedule();
+    if (!shouldRunSchedule(schedule)) return;
+    runScheduledReportNow('排程').catch(err => console.error('[scheduled-report]', err));
+  } catch (e) {
+    console.error('[scheduled-report] check error', e);
+  }
+}
+
+// 啟動時延遲 30 秒、之後每 5 分鐘檢查一次
+setTimeout(() => {
+  checkAndRunSchedule();
+  setInterval(checkAndRunSchedule, 5 * 60 * 1000);
+}, 30 * 1000);
+
+app.get('/api/admin/report-schedule', adminMiddleware, (req, res) => {
+  const s = getReportSchedule();
+  res.json({
+    freq: s.freq,
+    hour: s.hour,
+    weekday: s.weekday,
+    dayOfMonth: s.dayOfMonth,
+    lastRun: s.lastRun,
+    lastRunText: s.lastRun ? formatTwTime(s.lastRun) : '',
+    lastSummary: s.lastSummary,
+  });
+});
+
+app.put('/api/admin/report-schedule', adminMiddleware, (req, res) => {
+  const freq = SCHEDULE_FREQ_VALUES.includes(req.body?.freq) ? req.body.freq : 'off';
+  const hour = Math.min(23, Math.max(0, Number.parseInt(req.body?.hour, 10) || 9));
+  const weekday = Math.min(6, Math.max(0, Number.parseInt(req.body?.weekday, 10) || 1));
+  const dayOfMonth = Math.min(28, Math.max(1, Number.parseInt(req.body?.dayOfMonth, 10) || 1));
+  db.run(
+    "UPDATE system_settings SET report_schedule_freq = ?, report_schedule_hour = ?, report_schedule_weekday = ?, report_schedule_day_of_month = ?, updated_at = ?, updated_by = ? WHERE id = 1",
+    [freq, hour, weekday, dayOfMonth, Date.now(), req.userId]
+  );
+  saveDB();
+  res.json({ success: true, freq, hour, weekday, dayOfMonth });
+});
+
+// 立即執行一次排程（不等到下個觸發時間）
+app.post('/api/admin/report-schedule/run-now', adminMiddleware, async (req, res) => {
+  try {
+    const result = await runScheduledReportNow('手動');
+    res.json({ success: true, ...result });
+  } catch (e) {
+    res.status(500).json({ error: e.message || '手動執行失敗' });
   }
 });
 

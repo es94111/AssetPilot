@@ -5133,6 +5133,8 @@ const App = (() => {
       const statusEl = el('adminSendReportStatus');
       if (btn) btn.disabled = true;
       if (statusEl) statusEl.textContent = '寄送中…';
+      const detailsEl = el('adminSendReportDetails');
+      if (detailsEl) { detailsEl.innerHTML = ''; detailsEl.style.display = 'none'; }
       try {
         const result = await API.post('/api/admin/send-stats-report', { userIds });
         const msg = `已寄送 ${result.sent} 封，失敗 ${result.failed} 封，略過 ${result.skipped} 封`;
@@ -5142,6 +5144,15 @@ const App = (() => {
           const failures = result.results.filter(r => r.status !== 'sent');
           if (failures.length > 0) {
             console.warn('[send-stats-report] 失敗/略過明細:', failures);
+            if (detailsEl) {
+              const rows = failures.map(f => {
+                const label = f.status === 'failed' ? '失敗' : '略過';
+                const color = f.status === 'failed' ? 'var(--danger-color)' : '#888';
+                return `<li style="margin:4px 0"><span style="color:${color};font-weight:600">${label}</span> · ${escHtml(f.email || f.userId || '')} — ${escHtml(f.reason || '無原因')}</li>`;
+              }).join('');
+              detailsEl.innerHTML = `<div style="margin-top:8px;padding:10px 12px;background:var(--bg-subtle,#f8fafc);border-radius:8px;border:1px solid var(--border-color,#e5e7eb)"><div style="font-weight:600;margin-bottom:4px">失敗 / 略過明細</div><ul style="margin:0;padding-left:18px;font-size:13px">${rows}</ul></div>`;
+              detailsEl.style.display = '';
+            }
           }
         }
       } catch (e) {

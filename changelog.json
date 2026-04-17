@@ -1,6 +1,18 @@
 {
-  "currentVersion": "4.13.1",
+  "currentVersion": "4.14.0",
   "releases": [
+    {
+      "version": "4.14.0",
+      "date": "2026-04-17",
+      "title": "管理員寄送個人資產統計報表（Resend）",
+      "type": "feature",
+      "changes": [
+        { "tag": "new", "text": "管理員設定 → 新增「寄送資產統計報表」卡片：勾選使用者後一鍵寄出本月資產與收支摘要" },
+        { "tag": "new", "text": "整合 Resend 寄信服務，新增 RESEND_API_KEY / RESEND_FROM_EMAIL 環境變數（留空則該功能停用）" },
+        { "tag": "new", "text": "後端新增 POST /api/admin/send-stats-report：自動計算各幣別餘額、本月收支、前 5 大支出分類與股票持倉成本，輸出 HTML 信件" },
+        { "tag": "improved", "text": "寄送之間加入 600ms 延遲以避免觸發 Resend 預設 2 req/sec 速率限制；單次最多 100 位使用者" }
+      ]
+    },
     {
       "version": "4.13.1",
       "date": "2026-04-17",

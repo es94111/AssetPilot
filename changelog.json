@@ -1,6 +1,18 @@
 {
-  "currentVersion": "4.16.0",
+  "currentVersion": "4.16.1",
   "releases": [
+    {
+      "version": "4.16.1",
+      "date": "2026-04-17",
+      "title": "文件補齊 + 信件「近 5 筆交易」幣別顯示修正",
+      "type": "fix",
+      "changes": [
+        { "tag": "fixed", "text": "信件「近 5 筆交易」金額一律以 TWD 顯示（與 dashboard 一致）：先前誤把 transactions.currency 原幣別當前綴，導致 USD 標記的交易顯示成「USD 327.27」而實際 amount 已是 TWD 等值" },
+        { "tag": "fixed", "text": "README.md「Docker 環境變數」與「環境變數完整清單」補上 RESEND_API_KEY / RESEND_FROM_EMAIL / APP_URL，並說明 SMTP 設定改走管理員 UI" },
+        { "tag": "fixed", "text": ".env.example 補上 APP_URL（信件 CTA 按鈕用）" },
+        { "tag": "fixed", "text": "SRS.md 版本歷程表補齊 v4.14.0 / v4.15.0 / v4.16.0 / v4.16.1 四筆紀錄" }
+      ]
+    },
     {
       "version": "4.16.0",
       "date": "2026-04-17",

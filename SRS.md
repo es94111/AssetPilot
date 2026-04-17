@@ -1152,6 +1152,10 @@
 
 | 版本 | 日期 | 變更說明 |
 | --- | --- | --- |
+| 4.16.1 | 2026-04-17 | 文件補齊 + 信件「近 5 筆交易」幣別顯示修正：先前誤把 transactions.currency 當前綴，導致 USD 標記的交易顯示成 USD（實際 amount 已是 TWD 等值）；改為一律 TWD 顯示與 dashboard 一致。README.md「Docker 環境變數」與「環境變數完整清單」補上 RESEND_API_KEY / RESEND_FROM_EMAIL / APP_URL 並註明 SMTP 改走管理員 UI；.env.example 補上 APP_URL；SRS.md 版本歷程補齊 4.14.0 ~ 4.16.1 |
+| 4.16.0 | 2026-04-17 | 排程自動寄送統計報表 + 信件大改版：system_settings 加入 report_schedule_freq/hour/weekday/day_of_month/last_run/last_summary 6 欄；背景 setInterval 5 分鐘檢查；GET/PUT /api/admin/report-schedule + POST /run-now；信件版面重新設計（漸層 hero、3 欄 KPI 含上月對比 ▲▼ pill、儲蓄率進度條、分類顏色長條、近 5 筆交易、CTA 按鈕需設 APP_URL）；table-based 排版兼容 Outlook |
+| 4.15.0 | 2026-04-17 | SMTP 寄信支援 + 失敗原因 UI 顯示：system_settings 加入 smtp_host/port/secure/user/password/from 欄位；GET/PUT /api/admin/smtp-settings（密碼遮蔽 hasPassword:bool，空字串視為保留）；POST /api/admin/test-email；統一 sendStatsEmail() 入口（SMTP > Resend > 503）；前端新增 SMTP 設定卡片 + 寄測試信按鈕；寄送失敗/略過原因改 UI 直接顯示 |
+| 4.14.0 | 2026-04-17 | 管理員寄送個人資產統計報表（Resend）：新增 RESEND_API_KEY/RESEND_FROM_EMAIL 環境變數；POST /api/admin/send-stats-report（自動計算各幣別餘額、本月收支、前 5 大支出分類、股票持倉成本，輸出 HTML 信件）；前端新增「寄送資產統計報表」卡片（多選使用者一鍵寄送）；單次最多 100 位、間隔 600ms 避開 Resend 速率限制 |
 | 4.13.1 | 2026-04-17 | 資安強化（續）：Google-only 刪帳號改要求 fresh id_token 驗證（audience + sub + exp）；express.json 全局 limit 50MB→5MB，CSV 匯入端點 25MB + 20000 rows 上限；body 過大統一回 JSON 413；saveDB() 改非阻塞（in-flight + pending 合併 + tmp/rename 原子寫） |
 | 4.13.0 | 2026-04-17 | 資安強化：修補儲存型 XSS（normalizeDate 嚴格驗證 + 前端 escHtml）、IDOR（驗證 accountId/categoryId/stockId 擁有者）、JWT 無法撤銷（新增 token_version）、Passkey origin 白名單、CSV Formula Injection 防護、股票正數驗證、TWSE symbol 格式驗證、統一強密碼規則、.env 權限 0o600、.gitignore/.dockerignore 排除 DB 備份 |
 | 4.12.2 | 2026-04-14 | 所有密碼欄位新增顯示/隱藏切換按鈕（登入、註冊、修改密碼、刪除帳號確認、管理員建立使用者、管理員重設密碼） |

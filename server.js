@@ -3120,11 +3120,17 @@ function getReportSchedule() {
   const row = queryOne(
     "SELECT report_schedule_freq, report_schedule_hour, report_schedule_weekday, report_schedule_day_of_month, report_schedule_last_run, report_schedule_last_summary FROM system_settings WHERE id = 1"
   );
+  // ⚠️ 不要用 `|| fallback`，否則 hour=0（午夜）/ weekday=0（週日）會被當 falsy 還原為 default
+  const safe = (v, min, max, fallback) => {
+    const n = Number(v);
+    if (!Number.isFinite(n)) return fallback;
+    return Math.min(max, Math.max(min, n));
+  };
   return {
     freq: SCHEDULE_FREQ_VALUES.includes(row?.report_schedule_freq) ? row.report_schedule_freq : 'off',
-    hour: Math.min(23, Math.max(0, Number(row?.report_schedule_hour) || 9)),
-    weekday: Math.min(6, Math.max(0, Number(row?.report_schedule_weekday) || 1)),
-    dayOfMonth: Math.min(28, Math.max(1, Number(row?.report_schedule_day_of_month) || 1)),
+    hour: safe(row?.report_schedule_hour, 0, 23, 9),
+    weekday: safe(row?.report_schedule_weekday, 0, 6, 1),
+    dayOfMonth: safe(row?.report_schedule_day_of_month, 1, 28, 1),
     lastRun: Number(row?.report_schedule_last_run) || 0,
     lastSummary: row?.report_schedule_last_summary || '',
   };
@@ -3236,11 +3242,18 @@ app.get('/api/admin/report-schedule', adminMiddleware, (req, res) => {
   });
 });
 
+function clampInt(value, min, max, fallback) {
+  const n = Number.parseInt(value, 10);
+  if (!Number.isFinite(n)) return fallback;
+  return Math.min(max, Math.max(min, n));
+}
+
 app.put('/api/admin/report-schedule', adminMiddleware, (req, res) => {
   const freq = SCHEDULE_FREQ_VALUES.includes(req.body?.freq) ? req.body.freq : 'off';
-  const hour = Math.min(23, Math.max(0, Number.parseInt(req.body?.hour, 10) || 9));
-  const weekday = Math.min(6, Math.max(0, Number.parseInt(req.body?.weekday, 10) || 1));
-  const dayOfMonth = Math.min(28, Math.max(1, Number.parseInt(req.body?.dayOfMonth, 10) || 1));
+  // ⚠️ 不要用 `|| fallback`，否則 hour=0（午夜）/ weekday=0（週日）會被當 falsy 吃掉
+  const hour = clampInt(req.body?.hour, 0, 23, 9);
+  const weekday = clampInt(req.body?.weekday, 0, 6, 1);
+  const dayOfMonth = clampInt(req.body?.dayOfMonth, 1, 28, 1);
   db.run(
     "UPDATE system_settings SET report_schedule_freq = ?, report_schedule_hour = ?, report_schedule_weekday = ?, report_schedule_day_of_month = ?, updated_at = ?, updated_by = ? WHERE id = 1",
     [freq, hour, weekday, dayOfMonth, Date.now(), req.userId]

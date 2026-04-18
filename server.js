@@ -967,11 +967,7 @@ function uid() {
 }
 
 function todayStr() {
-  const d = new Date();
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
+  return ymd(new Date());
 }
 
 const DEFAULT_EXCHANGE_RATES = {
@@ -2758,8 +2754,7 @@ function getReportPeriod(freq, now = new Date()) {
     return { kind: 'weekly', start: ymd(lastMon), end: ymd(lastSun), label: `上週（${ymd(lastMon)} ~ ${ymd(lastSun)}）每日收支` };
   }
   if (freq === 'monthly') {
-    const firstOfThisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const lastOfPrev = new Date(firstOfThisMonth.getTime() - 86400000);
+    const lastOfPrev = new Date(now.getFullYear(), now.getMonth(), 0);
     const firstOfPrev = new Date(lastOfPrev.getFullYear(), lastOfPrev.getMonth(), 1);
     return { kind: 'monthly', start: ymd(firstOfPrev), end: ymd(lastOfPrev), label: `上月（${firstOfPrev.getFullYear()}-${String(firstOfPrev.getMonth() + 1).padStart(2, '0')}）每日收支` };
   }
@@ -3152,10 +3147,16 @@ function renderStatsEmailHtml(displayName, email, stats) {
     : '';
 
   // 區塊標題（含色塊指示）
-  const sectionTitle = (text) => `<div style="margin:26px 0 10px;display:flex;align-items:center;gap:8px">
-    <span style="display:inline-block;width:3px;height:14px;background:${COLOR_PRIMARY};border-radius:2px;vertical-align:middle"></span>
-    <span style="font-size:13px;font-weight:700;color:${COLOR_INK};letter-spacing:0.02em;vertical-align:middle">${escapeEmailHtml(text)}</span>
-  </div>`;
+  const sectionTitle = (text) => `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:26px 0 10px;border-collapse:collapse">
+    <tr>
+      <td style="width:3px;vertical-align:middle">
+        <span style="display:block;width:3px;height:14px;background:${COLOR_PRIMARY};border-radius:2px"></span>
+      </td>
+      <td style="padding-left:8px;vertical-align:middle;font-size:13px;font-weight:700;color:${COLOR_INK};letter-spacing:0.02em">
+        ${escapeEmailHtml(text)}
+      </td>
+    </tr>
+  </table>`;
 
   // table 包覆樣式
   const tableShell = (inner) => `<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;border:1px solid ${COLOR_BORDER};border-radius:10px;overflow:hidden;background:#ffffff"><tbody>${inner}</tbody></table>`;

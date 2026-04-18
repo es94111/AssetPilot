@@ -1152,6 +1152,7 @@
 
 | 版本 | 日期 | 變更說明 |
 | --- | --- | --- |
+| 4.18.4 | 2026-04-18 | Copilot Review v4.18.2 修正：①完成分支 report_schedule_last_run 改寫 startedAt 取代 finishedAt，避免長執行跨過下個 periodStart 時 shouldRunSchedule() 將下一期誤判為已執行而跳過（完成時間改放 summary）；②PUT /api/admin/report-schedule 硬編 100 上限改用 REPORT_SCHEDULE_MAX_TARGETS 常數，錯誤訊息亦由常數衍生 |
 | 4.18.3 | 2026-04-18 | Copilot Review v4.18.1 修正：信件 sectionTitle 改用外層 `<table>` + `<td padding>` 包裹內層標題 table 取代 table margin；Outlook（Word 引擎）會忽略 table 上的 margin，原本 26px/10px 上下間距在 Outlook Desktop 會消失 |
 | 4.18.2 | 2026-04-18 | Copilot Review v4.17.0 修正：①runScheduledReportNow() 統一回傳結構，skipped 一律為數字、新增 status 欄位（already_running/no_targets/no_email_service/completed）；②未指定對象/寄信服務未設定的略過分支補上 report_schedule_last_run 更新，避免同一 period 內背景每 5 分鐘重複觸發；③targetIds 統一去重（Set）+ 上限 100 筆；④管理員寄送對象標題列移除巢狀 `<label>`（改 `<div>`）；⑤前端執行結果改依 status 判斷顯示 |
 | 4.18.1 | 2026-04-18 | Copilot Review 修正：①getReportPeriod('monthly') 改用 `new Date(y, m, 0)` 推算上月最後一天，避免硬編 86400000ms 在 DST/時區轉換偏移；②todayStr() 改呼叫 ymd(new Date())，移除重複格式化邏輯；③信件 sectionTitle 區塊標題改用 table 佈局取代 flex/gap，提升 Outlook Desktop 等郵件用戶端相容性 |

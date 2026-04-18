@@ -3442,12 +3442,14 @@ async function runScheduledReportNow(triggeredBy = 'scheduler', overrideUserIds 
     }
 
     const finishedAt = Date.now();
-    const summaryParts = [`${formatTwTime(startedAt)} ${triggeredBy}：寄送 ${sent} / 失敗 ${failed} / 略過 ${skipped}（更新股價 ${priceUpdates} 檔）`];
+    const summaryParts = [`${formatTwTime(startedAt)} ${triggeredBy}：寄送 ${sent} / 失敗 ${failed} / 略過 ${skipped}（更新股價 ${priceUpdates} 檔，完成於 ${formatTwTime(finishedAt)}）`];
     if (failures.length) summaryParts.push('失敗明細：' + failures.slice(0, 3).join('；') + (failures.length > 3 ? `…（共 ${failures.length} 筆）` : ''));
     const summary = summaryParts.join(' | ');
+    // last_run 寫入 startedAt（本期觸發時間），避免長時間執行跨過下個 periodStart 時，
+    // shouldRunSchedule() 將下一期誤判為「已執行」而跳過
     db.run(
       "UPDATE system_settings SET report_schedule_last_run = ?, report_schedule_last_summary = ? WHERE id = 1",
-      [finishedAt, summary]
+      [startedAt, summary]
     );
     saveDB();
     return { sent, failed, skipped, priceUpdates, status: 'completed' };
@@ -3508,7 +3510,9 @@ app.put('/api/admin/report-schedule', adminMiddleware, (req, res) => {
 
   const rawIds = Array.isArray(req.body?.userIds) ? req.body.userIds : [];
   const cleanIds = [...new Set(rawIds.map(String).map(s => s.trim()).filter(Boolean))];
-  if (cleanIds.length > 100) return res.status(400).json({ error: '單次最多指定 100 位使用者' });
+  if (cleanIds.length > REPORT_SCHEDULE_MAX_TARGETS) {
+    return res.status(400).json({ error: `單次最多指定 ${REPORT_SCHEDULE_MAX_TARGETS} 位使用者` });
+  }
   // 過濾不存在的 user id（避免存進髒資料）
   const validIds = cleanIds.filter(id => !!queryOne("SELECT id FROM users WHERE id = ?", [id]));
 

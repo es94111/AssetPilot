@@ -1152,6 +1152,7 @@
 
 | 版本 | 日期 | 變更說明 |
 | --- | --- | --- |
+| 4.18.2 | 2026-04-18 | Copilot Review v4.17.0 修正：①runScheduledReportNow() 統一回傳結構，skipped 一律為數字、新增 status 欄位（already_running/no_targets/no_email_service/completed）；②未指定對象/寄信服務未設定的略過分支補上 report_schedule_last_run 更新，避免同一 period 內背景每 5 分鐘重複觸發；③targetIds 統一去重（Set）+ 上限 100 筆；④管理員寄送對象標題列移除巢狀 `<label>`（改 `<div>`）；⑤前端執行結果改依 status 判斷顯示 |
 | 4.18.1 | 2026-04-18 | Copilot Review 修正：①getReportPeriod('monthly') 改用 `new Date(y, m, 0)` 推算上月最後一天，避免硬編 86400000ms 在 DST/時區轉換偏移；②todayStr() 改呼叫 ymd(new Date())，移除重複格式化邏輯；③信件 sectionTitle 區塊標題改用 table 佈局取代 flex/gap，提升 Outlook Desktop 等郵件用戶端相容性 |
 | 4.18.0 | 2026-04-17 | 信件「交易紀錄」區塊改為依排程頻率切換：daily → 昨日交易明細、weekly → 上週 7 天每日收支彙總（Mon-Sun）、monthly → 上月每天收支彙總；週/月彙總多顯示「區間收入/支出/淨額」三欄總覽卡，週末日期紫色標示；信件視覺美化（三色漸層 hero、卡片陰影、節標題色塊、CTA 陰影、品牌標記） |
 | 4.17.0 | 2026-04-17 | 合併「寄送資產統計報表」與「排程自動寄送」成單一卡片：管理員勾選使用者 + 頻率 → 排程指定對象自動寄送（或「立即寄送一次」）；寄送前自動更新該使用者所有持股最新報價（盤中即時 → STOCK_DAY → TPEx 三段策略），信件「股票投資」區塊改顯示 4 列（成本/市值/未實現損益/報酬率含彩色 ±）；system_settings 加入 report_schedule_user_ids 欄位；移除 POST /api/admin/send-stats-report（功能合併） |

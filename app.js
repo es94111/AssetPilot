@@ -5267,7 +5267,7 @@ const App = (() => {
       if (statusEl) { statusEl.textContent = '寄送中…（含股價更新）'; statusEl.style.color = ''; }
       try {
         const result = await API.post('/api/admin/report-schedule/run-now', { userIds });
-        const msg = result.skipped && result.reason
+        const msg = result.status && result.status !== 'completed' && result.reason
           ? result.reason
           : `已寄送 ${result.sent} / 失敗 ${result.failed} / 略過 ${result.skipped}（更新股價 ${result.priceUpdates ?? 0} 檔）`;
         if (statusEl) { statusEl.textContent = msg; statusEl.style.color = (result.failed || 0) > 0 ? 'var(--danger-color)' : 'var(--success-color, #16a34a)'; }

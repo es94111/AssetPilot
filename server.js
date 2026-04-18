@@ -3147,13 +3147,19 @@ function renderStatsEmailHtml(displayName, email, stats) {
     : '';
 
   // 區塊標題（含色塊指示）
-  const sectionTitle = (text) => `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:26px 0 10px;border-collapse:collapse">
+  const sectionTitle = (text) => `<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse">
     <tr>
-      <td style="width:3px;vertical-align:middle">
-        <span style="display:block;width:3px;height:14px;background:${COLOR_PRIMARY};border-radius:2px"></span>
-      </td>
-      <td style="padding-left:8px;vertical-align:middle;font-size:13px;font-weight:700;color:${COLOR_INK};letter-spacing:0.02em">
-        ${escapeEmailHtml(text)}
+      <td style="padding:26px 0 10px">
+        <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse">
+          <tr>
+            <td style="width:3px;vertical-align:middle">
+              <span style="display:block;width:3px;height:14px;background:${COLOR_PRIMARY};border-radius:2px"></span>
+            </td>
+            <td style="padding-left:8px;vertical-align:middle;font-size:13px;font-weight:700;color:${COLOR_INK};letter-spacing:0.02em">
+              ${escapeEmailHtml(text)}
+            </td>
+          </tr>
+        </table>
       </td>
     </tr>
   </table>`;

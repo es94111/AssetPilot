@@ -1,6 +1,19 @@
 {
-  "currentVersion": "4.18.1",
+  "currentVersion": "4.18.2",
   "releases": [
+    {
+      "version": "4.18.2",
+      "date": "2026-04-18",
+      "title": "排程寄送穩定性修正（Copilot Review v4.17.0）",
+      "type": "fix",
+      "changes": [
+        { "tag": "fixed", "text": "runScheduledReportNow() 統一回傳結構：skipped 一律為數字、新增 status 欄位（already_running / no_targets / no_email_service / completed），避免消費端對 boolean/number 混用判斷錯誤" },
+        { "tag": "fixed", "text": "排程觸發但「未指定寄送對象」或「寄信服務未設定」時，補上 report_schedule_last_run 更新；先前漏寫導致同一 period 內背景每 5 分鐘重複觸發、反覆寫 DB" },
+        { "tag": "improved", "text": "目標 userId 名單統一正規化：去重（Set）+ 上限 100 筆，避免重複 id 對同一使用者多次寄信或惡意傳入大量 id 造成 DB 與寄信負載" },
+        { "tag": "fixed", "text": "管理員「寄送對象」標題列移除巢狀 <label>（外層改 <div>），符合 HTML 規範並避免螢幕閱讀器/點擊聚焦行為異常" },
+        { "tag": "improved", "text": "前端執行結果顯示改依 status 判斷，已執行完成（completed）時一律顯示寄送統計" }
+      ]
+    },
     {
       "version": "4.18.1",
       "date": "2026-04-18",

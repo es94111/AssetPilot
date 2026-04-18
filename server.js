@@ -3363,22 +3363,30 @@ function shouldRunSchedule(schedule, now = new Date()) {
   return schedule.lastRun < periodStart;
 }
 
+const REPORT_SCHEDULE_MAX_TARGETS = 100;
+
 let isRunningSchedule = false;
 async function runScheduledReportNow(triggeredBy = 'scheduler', overrideUserIds = null) {
-  if (isRunningSchedule) return { skipped: true, reason: '已有寄送任務進行中' };
+  if (isRunningSchedule) {
+    return { sent: 0, failed: 0, skipped: 0, status: 'already_running', reason: '已有寄送任務進行中' };
+  }
   isRunningSchedule = true;
   const startedAt = Date.now();
   try {
     const schedule = getReportSchedule();
-    const targetIds = Array.isArray(overrideUserIds) && overrideUserIds.length
-      ? overrideUserIds.map(String).filter(Boolean)
+    const rawIds = Array.isArray(overrideUserIds) && overrideUserIds.length
+      ? overrideUserIds
       : schedule.userIds;
+    const targetIds = Array.from(new Set((rawIds || []).map(String).filter(Boolean))).slice(0, REPORT_SCHEDULE_MAX_TARGETS);
 
     if (targetIds.length === 0) {
       const summary = `${formatTwTime(startedAt)} ${triggeredBy} 觸發但未指定寄送對象，已略過`;
-      db.run("UPDATE system_settings SET report_schedule_last_summary = ? WHERE id = 1", [summary]);
+      db.run(
+        "UPDATE system_settings SET report_schedule_last_run = ?, report_schedule_last_summary = ? WHERE id = 1",
+        [startedAt, summary]
+      );
       saveDB();
-      return { sent: 0, failed: 0, skipped: 0, reason: '未指定寄送對象' };
+      return { sent: 0, failed: 0, skipped: 0, status: 'no_targets', reason: '未指定寄送對象' };
     }
 
     const users = [];
@@ -3392,9 +3400,12 @@ async function runScheduledReportNow(triggeredBy = 'scheduler', overrideUserIds 
     const hasResend = !!(RESEND_API_KEY && RESEND_FROM_EMAIL);
     if (!hasSmtp && !hasResend) {
       const summary = `${formatTwTime(startedAt)} ${triggeredBy} 觸發但寄信服務未設定，已略過`;
-      db.run("UPDATE system_settings SET report_schedule_last_summary = ? WHERE id = 1", [summary]);
+      db.run(
+        "UPDATE system_settings SET report_schedule_last_run = ?, report_schedule_last_summary = ? WHERE id = 1",
+        [startedAt, summary]
+      );
       saveDB();
-      return { sent: 0, failed: 0, skipped: users.length, reason: '寄信服務未設定' };
+      return { sent: 0, failed: 0, skipped: users.length, status: 'no_email_service', reason: '寄信服務未設定' };
     }
 
     let sent = 0, failed = 0, skipped = 0;
@@ -3433,7 +3444,7 @@ async function runScheduledReportNow(triggeredBy = 'scheduler', overrideUserIds 
       [finishedAt, summary]
     );
     saveDB();
-    return { sent, failed, skipped, priceUpdates };
+    return { sent, failed, skipped, priceUpdates, status: 'completed' };
   } finally {
     isRunningSchedule = false;
   }

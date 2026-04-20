@@ -1407,6 +1407,53 @@ function queryNtp(host = 'pool.ntp.org', port = 123, timeoutMs = 3000) {
 }
 
 const DEFAULT_NTP_SERVERS = ['tw.pool.ntp.org', 'pool.ntp.org', 'time.google.com', 'time.cloudflare.com'];
+
+// NTP host 驗證：限制格式 + 阻擋 private/loopback/link-local 位址，避免管理員帳號被盜時變成 SSRF/port-scan 跳板
+function isPrivateOrReservedIp(ip) {
+  const s = String(ip || '').trim();
+  if (!s) return true;
+  // IPv4
+  const v4 = s.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+  if (v4) {
+    const [a, b] = v4.slice(1).map(Number);
+    if (v4.slice(1).some(n => Number(n) > 255)) return true;
+    if (a === 10) return true;                       // 10.0.0.0/8
+    if (a === 127) return true;                      // loopback
+    if (a === 0) return true;                        // 0.0.0.0/8
+    if (a === 169 && b === 254) return true;         // link-local
+    if (a === 172 && b >= 16 && b <= 31) return true;// 172.16.0.0/12
+    if (a === 192 && b === 168) return true;         // 192.168.0.0/16
+    if (a >= 224) return true;                       // multicast / reserved
+    return false;
+  }
+  // IPv6（粗略：loopback、link-local、unique-local、IPv4-mapped 均擋）
+  const lower = s.toLowerCase();
+  if (lower === '::' || lower === '::1') return true;
+  if (lower.startsWith('fe80:')) return true;         // link-local
+  if (lower.startsWith('fc') || lower.startsWith('fd')) return true; // ULA
+  if (lower.startsWith('ff')) return true;            // multicast
+  if (lower.startsWith('::ffff:')) return true;       // IPv4-mapped
+  return false;
+}
+function validateNtpHost(host) {
+  const s = String(host || '').trim();
+  if (!s || s.length > 253) return { ok: false, error: 'NTP 主機長度需為 1-253' };
+  // FQDN or IPv4 or IPv6
+  const fqdn = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/i;
+  const ipv4 = /^\d{1,3}(\.\d{1,3}){3}$/;
+  const ipv6 = /^[0-9a-f:]+$/i;
+  if (!fqdn.test(s) && !ipv4.test(s) && !(ipv6.test(s) && s.includes(':'))) {
+    return { ok: false, error: 'NTP 主機格式錯誤（需為 FQDN 或 IP）' };
+  }
+  if ((ipv4.test(s) || (ipv6.test(s) && s.includes(':'))) && isPrivateOrReservedIp(s)) {
+    return { ok: false, error: '不允許 private / loopback / link-local 位址' };
+  }
+  const lower = s.toLowerCase();
+  if (lower === 'localhost' || lower.endsWith('.localhost') || lower.endsWith('.local') || lower.endsWith('.internal')) {
+    return { ok: false, error: '不允許 localhost / .local / .internal 網域' };
+  }
+  return { ok: true, host: s };
+}
 async function queryNtpWithFallback(candidates) {
   const hosts = Array.isArray(candidates) && candidates.length ? candidates : DEFAULT_NTP_SERVERS;
   const errors = [];
@@ -2716,9 +2763,14 @@ app.put('/api/admin/server-time', adminMiddleware, (req, res) => {
 //   - host：指定 NTP 伺服器（省略則依序嘗試 tw/pool/google/cloudflare）
 //   - apply：是否寫入偏移（預設 true）；false 時僅回傳量測結果供預覽
 app.post('/api/admin/server-time/ntp-sync', adminMiddleware, async (req, res) => {
-  const host = typeof req.body?.host === 'string' ? req.body.host.trim() : '';
+  const rawHost = typeof req.body?.host === 'string' ? req.body.host.trim() : '';
   const apply = req.body?.apply === false ? false : true;
-  const candidates = host ? [host] : DEFAULT_NTP_SERVERS;
+  let candidates = DEFAULT_NTP_SERVERS;
+  if (rawHost) {
+    const v = validateNtpHost(rawHost);
+    if (!v.ok) return res.status(400).json({ error: v.error });
+    candidates = [v.host];
+  }
   try {
     const { ntpMs, roundTripMs, host: usedHost } = await queryNtpWithFallback(candidates);
     // 扣掉單趟網路延遲（假設對稱），提升精準度
@@ -3567,7 +3619,9 @@ async function runScheduledReportNow(triggeredBy = 'scheduler', overrideUserIds 
     return { sent: 0, failed: 0, skipped: 0, status: 'already_running', reason: '已有寄送任務進行中' };
   }
   isRunningSchedule = true;
-  const startedAt = Date.now();
+  // startedAt / finishedAt 一律採用 serverNow()，與 shouldRunSchedule() 的 periodStart 同一時間基準，
+  // 避免 SERVER_TIME_OFFSET ≠ 0 時 lastRun < periodStart 永遠成立導致每 5 分鐘重複觸發
+  const startedAt = serverNow();
   try {
     const schedule = getReportSchedule();
     const rawIds = Array.isArray(overrideUserIds) && overrideUserIds.length
@@ -3631,7 +3685,7 @@ async function runScheduledReportNow(triggeredBy = 'scheduler', overrideUserIds 
       if (!hasSmtp) await new Promise(r => setTimeout(r, 600));
     }
 
-    const finishedAt = Date.now();
+    const finishedAt = serverNow();
     const summaryParts = [`${formatTwTime(startedAt)} ${triggeredBy}：寄送 ${sent} / 失敗 ${failed} / 略過 ${skipped}（更新股價 ${priceUpdates} 檔，完成於 ${formatTwTime(finishedAt)}）`];
     if (failures.length) summaryParts.push('失敗明細：' + failures.slice(0, 3).join('；') + (failures.length > 3 ? `…（共 ${failures.length} 筆）` : ''));
     const summary = summaryParts.join(' | ');

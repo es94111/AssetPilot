@@ -5066,6 +5066,21 @@ const App = (() => {
     return `${sign}${parts.join(' ')}（${ms} ms）`;
   }
 
+  function formatUptimeSeconds(s) {
+    const n = Number(s);
+    if (!Number.isFinite(n) || n < 0) return '';
+    const d = Math.floor(n / 86400);
+    const h = Math.floor((n % 86400) / 3600);
+    const m = Math.floor((n % 3600) / 60);
+    const sec = Math.floor(n % 60);
+    const parts = [];
+    if (d) parts.push(`${d} 天`);
+    if (h) parts.push(`${h} 小時`);
+    if (m) parts.push(`${m} 分`);
+    parts.push(`${sec} 秒`);
+    return parts.join(' ');
+  }
+
   function formatLocalDateTime(ts) {
     if (!Number.isFinite(ts)) return '';
     const d = new Date(ts);
@@ -5090,8 +5105,10 @@ const App = (() => {
         tzEl.value = `${info.timezone || ''} (${utc})`;
       }
       if (offEl) offEl.value = formatOffsetMs(info.offsetMs);
+      const upEl = el('adminServerTimeUptime');
+      if (upEl) upEl.value = formatUptimeSeconds(info.uptimeSeconds);
       const statusEl = el('adminServerTimeStatus');
-      if (statusEl && !statusEl.textContent) statusEl.textContent = '';
+      if (statusEl) { statusEl.textContent = ''; statusEl.style.color = ''; }
     } catch (e) {
       const statusEl = el('adminServerTimeStatus');
       if (statusEl) { statusEl.textContent = e.message || '載入伺服器時間失敗'; statusEl.style.color = 'var(--danger)'; }

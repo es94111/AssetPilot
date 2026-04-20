@@ -1152,6 +1152,7 @@
 
 | 版本 | 日期 | 變更說明 |
 | --- | --- | --- |
+| 4.19.2 | 2026-04-20 | Copilot Review v4.19.1 修正：①runScheduledReportNow() 內 startedAt/finishedAt 改用 serverNow()，與 shouldRunSchedule() 同一時間基準，避免 offset ≠ 0 時每 5 分鐘重複觸發；②NTP host 參數新增嚴格驗證（擋 private/loopback/link-local/ULA/multicast/IPv4-mapped、localhost/.local/.internal、格式 + 長度 253），降低 SSRF 風險；③伺服器時間區塊新增 uptime 欄位；④loadAdminServerTime() 成功時無條件清空狀態訊息 |
 | 4.19.1 | 2026-04-20 | 伺服器時間新增 NTP 自動校正：以原生 dgram/UDP 實作 SNTP v3 client（RFC 4330），3 秒逾時 fallback；預設依序嘗試 tw.pool.ntp.org / pool.ntp.org / time.google.com / time.cloudflare.com；支援「查詢（不套用）」預覽；校正時扣除單趟網路延遲提升精準度；新增 POST /api/admin/server-time/ntp-sync API |
 | 4.19.0 | 2026-04-20 | 管理員頁面新增「伺服器時間」區塊：顯示伺服器實際時間、時區、目前採用時間（含偏移）、啟動後偏移量；可填目標時間或毫秒偏移量設定 SERVER_TIME_OFFSET，套用於 checkAndRunSchedule() 排程檢查（系統時鐘本身不動）；偏移持久化於 system_settings.server_time_offset、上限 ±10 年；新增 GET/PUT /api/admin/server-time API |
 | 4.18.4 | 2026-04-18 | Copilot Review v4.18.2 修正：①完成分支 report_schedule_last_run 改寫 startedAt 取代 finishedAt，避免長執行跨過下個 periodStart 時 shouldRunSchedule() 將下一期誤判為已執行而跳過（完成時間改放 summary）；②PUT /api/admin/report-schedule 硬編 100 上限改用 REPORT_SCHEDULE_MAX_TARGETS 常數，錯誤訊息亦由常數衍生 |

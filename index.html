@@ -1273,6 +1273,58 @@
       <!-- 管理員設定 -->
       <div class="settings-panel" id="panel-admin">
         <div class="card">
+          <h3><i class="fas fa-clock"></i>伺服器時間</h3>
+          <p class="admin-section-desc" style="margin:4px 0 12px">顯示伺服器目前採用的時間，可設定偏移量以測試排程寄送、除權息同步等依時間觸發的功能。偏移值會套用於排程檢查；系統時鐘本身不會被改動。</p>
+          <div class="admin-grid-2">
+            <div class="form-row">
+              <label>伺服器實際時間</label>
+              <input type="text" id="adminServerTimeReal" class="form-input" readonly>
+            </div>
+            <div class="form-row">
+              <label>目前採用時間（含偏移）</label>
+              <input type="text" id="adminServerTimeEffective" class="form-input" readonly>
+            </div>
+          </div>
+          <div class="admin-grid-2">
+            <div class="form-row">
+              <label>時區</label>
+              <input type="text" id="adminServerTimeZone" class="form-input" readonly>
+            </div>
+            <div class="form-row">
+              <label>目前偏移</label>
+              <input type="text" id="adminServerTimeOffset" class="form-input" readonly>
+            </div>
+          </div>
+          <div class="form-row" style="margin-top:8px">
+            <label>設定目標時間（留空代表使用偏移欄位）</label>
+            <input type="datetime-local" id="adminServerTimeTarget" class="form-input" step="1">
+          </div>
+          <div class="form-row">
+            <label>或直接設定偏移量（毫秒，正值 = 快於實際時間）</label>
+            <input type="number" id="adminServerTimeOffsetInput" class="form-input" placeholder="例如 3600000 = +1 小時">
+          </div>
+          <div class="cert-btn-row" style="margin-top:8px">
+            <button type="button" class="btn btn-ghost btn-sm" id="adminServerTimeRefreshBtn"><i class="fas fa-rotate"></i> 重新整理</button>
+            <button type="button" class="btn btn-primary btn-sm" id="adminServerTimeApplyBtn"><i class="fas fa-save"></i> 套用設定</button>
+            <button type="button" class="btn btn-outline btn-sm" id="adminServerTimeResetBtn"><i class="fas fa-undo"></i> 重設為實際時間</button>
+            <span class="import-hint" id="adminServerTimeStatus"></span>
+          </div>
+          <div style="border-top:1px dashed var(--border);margin-top:16px;padding-top:12px">
+            <div style="font-weight:600;margin-bottom:4px"><i class="fas fa-satellite-dish"></i> NTP 校正</div>
+            <p class="admin-section-desc" style="margin:0 0 10px">查詢 NTP 時間伺服器並將差值自動套用為偏移，適用於系統時鐘漂移的情況；已扣掉單趟網路延遲（假設對稱）。</p>
+            <div class="form-row">
+              <label>NTP 伺服器（留空則依序嘗試 tw.pool.ntp.org / pool.ntp.org / time.google.com / time.cloudflare.com）</label>
+              <input type="text" id="adminNtpHost" class="form-input" placeholder="tw.pool.ntp.org" maxlength="255">
+            </div>
+            <div class="cert-btn-row" style="margin-top:4px">
+              <button type="button" class="btn btn-outline btn-sm" id="adminNtpCheckBtn"><i class="fas fa-magnifying-glass"></i> 查詢（不套用）</button>
+              <button type="button" class="btn btn-primary btn-sm" id="adminNtpSyncBtn"><i class="fas fa-satellite-dish"></i> 以 NTP 校正</button>
+              <span class="import-hint" id="adminNtpStatus"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
           <h3><i class="fas fa-user-shield"></i>註冊策略</h3>
           <div class="theme-toggle-row" style="margin-top:12px">
             <div>

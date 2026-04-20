@@ -1152,6 +1152,8 @@
 
 | 版本 | 日期 | 變更說明 |
 | --- | --- | --- |
+| 4.19.1 | 2026-04-20 | 伺服器時間新增 NTP 自動校正：以原生 dgram/UDP 實作 SNTP v3 client（RFC 4330），3 秒逾時 fallback；預設依序嘗試 tw.pool.ntp.org / pool.ntp.org / time.google.com / time.cloudflare.com；支援「查詢（不套用）」預覽；校正時扣除單趟網路延遲提升精準度；新增 POST /api/admin/server-time/ntp-sync API |
+| 4.19.0 | 2026-04-20 | 管理員頁面新增「伺服器時間」區塊：顯示伺服器實際時間、時區、目前採用時間（含偏移）、啟動後偏移量；可填目標時間或毫秒偏移量設定 SERVER_TIME_OFFSET，套用於 checkAndRunSchedule() 排程檢查（系統時鐘本身不動）；偏移持久化於 system_settings.server_time_offset、上限 ±10 年；新增 GET/PUT /api/admin/server-time API |
 | 4.18.4 | 2026-04-18 | Copilot Review v4.18.2 修正：①完成分支 report_schedule_last_run 改寫 startedAt 取代 finishedAt，避免長執行跨過下個 periodStart 時 shouldRunSchedule() 將下一期誤判為已執行而跳過（完成時間改放 summary）；②PUT /api/admin/report-schedule 硬編 100 上限改用 REPORT_SCHEDULE_MAX_TARGETS 常數，錯誤訊息亦由常數衍生 |
 | 4.18.3 | 2026-04-18 | Copilot Review v4.18.1 修正：信件 sectionTitle 改用外層 `<table>` + `<td padding>` 包裹內層標題 table 取代 table margin；Outlook（Word 引擎）會忽略 table 上的 margin，原本 26px/10px 上下間距在 Outlook Desktop 會消失 |
 | 4.18.2 | 2026-04-18 | Copilot Review v4.17.0 修正：①runScheduledReportNow() 統一回傳結構，skipped 一律為數字、新增 status 欄位（already_running/no_targets/no_email_service/completed）；②未指定對象/寄信服務未設定的略過分支補上 report_schedule_last_run 更新，避免同一 period 內背景每 5 分鐘重複觸發；③targetIds 統一去重（Set）+ 上限 100 筆；④管理員寄送對象標題列移除巢狀 `<label>`（改 `<div>`）；⑤前端執行結果改依 status 判斷顯示 |

@@ -1,6 +1,18 @@
 {
-  "currentVersion": "4.19.3",
+  "currentVersion": "4.19.4",
   "releases": [
+    {
+      "version": "4.19.4",
+      "date": "2026-04-20",
+      "title": "NTP 簡化為 IPv4 + FQDN（Copilot Review v4.19.3）",
+      "type": "fix",
+      "changes": [
+        { "tag": "improved", "text": "NTP 同步功能限制為僅支援 IPv4 位址與 FQDN 網域；IPv6 位址與 AAAA 紀錄一律拒絕，降低維護複雜度並消除 IPv6 私有網段判斷的邊角案例" },
+        { "tag": "fixed", "text": "queryNtp() 改寫為 async function，移除 async Promise executor anti-pattern（new Promise(async (resolve, reject) => ...)）造成的例外吞沒風險" },
+        { "tag": "fixed", "text": "resolveHostToPublicIpv4() 改用 dns.lookup({family:4, all:true})，確保純 IPv4 主機上絕不拿到 AAAA 紀錄；dgram socket 固定為 udp4" },
+        { "tag": "removed", "text": "移除 parseIPv6Groups() 與 isPrivateOrReservedIp() 中的 IPv6 分支；zone id 處理、6to4、IPv4-mapped/compatible 展開等邏輯一併簡化" }
+      ]
+    },
     {
       "version": "4.19.3",
       "date": "2026-04-20",

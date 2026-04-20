@@ -5183,7 +5183,8 @@ const App = (() => {
         if (host) payload.host = host;
         const r = await API.post('/api/admin/server-time/ntp-sync', payload);
         const offsetTxt = formatOffsetMs(r.proposedOffsetMs);
-        const msg = `${r.host}：延遲 ${r.roundTripMs} ms，計算偏移 ${offsetTxt}${apply ? '（已套用）' : '（未套用）'}`;
+        const ipTxt = r.resolvedIp ? ` → ${r.resolvedIp}` : '';
+        const msg = `${r.host}${ipTxt}：延遲 ${r.roundTripMs} ms，計算偏移 ${offsetTxt}${apply ? '（已套用）' : '（未套用）'}`;
         if (statusEl) { statusEl.textContent = msg; statusEl.style.color = ''; }
         toast(apply ? 'NTP 校正完成' : 'NTP 查詢完成', 'success');
         if (apply) await loadAdminServerTime();

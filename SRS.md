@@ -1152,6 +1152,7 @@
 
 | 版本 | 日期 | 變更說明 |
 | --- | --- | --- |
+| 4.19.4 | 2026-04-20 | Copilot Review v4.19.3 修正 + NTP 功能簡化：①NTP 同步限制僅支援 IPv4 與 FQDN 網域，IPv6 位址與 AAAA 紀錄一律拒絕；②queryNtp() 改寫為 async function，移除 async Promise executor anti-pattern；③resolveHostToPublicIpv4() 改用 dns.lookup({family:4, all:true})，dgram socket 固定 udp4；④移除 parseIPv6Groups() 與 IPv6 私有網段判斷分支（zone id / 6to4 / IPv4-mapped/compatible 展開邏輯一併簡化） |
 | 4.19.3 | 2026-04-20 | Copilot Review v4.19.2 修正：①isPrivateOrReservedIp() 改用 net.isIP() + 自訂 IPv6 展開器：link-local 改判 fe80::/10、ULA fc00::/7、multicast ff00::/8、IPv4-mapped 完整展開形式、IPv4-compatible ::a.b.c.d、6to4 2002::/16 內嵌私有 IPv4 皆擋；②queryNtp() 送出前 dns.lookup({all:true}) 解析 FQDN 逐一檢查，防 DNS rebinding；送 UDP 用解析後字面 IP 避免 TOCTOU；③依解析結果切換 udp4/udp6（原固定 udp4 導致 IPv6 必敗）；④IPv4 補判 CGNAT 100.64.0.0/10；NTP API 回應加上 resolvedIp 方便稽核 |
 | 4.19.2 | 2026-04-20 | Copilot Review v4.19.1 修正：①runScheduledReportNow() 內 startedAt/finishedAt 改用 serverNow()，與 shouldRunSchedule() 同一時間基準，避免 offset ≠ 0 時每 5 分鐘重複觸發；②NTP host 參數新增嚴格驗證（擋 private/loopback/link-local/ULA/multicast/IPv4-mapped、localhost/.local/.internal、格式 + 長度 253），降低 SSRF 風險；③伺服器時間區塊新增 uptime 欄位；④loadAdminServerTime() 成功時無條件清空狀態訊息 |
 | 4.19.1 | 2026-04-20 | 伺服器時間新增 NTP 自動校正：以原生 dgram/UDP 實作 SNTP v3 client（RFC 4330），3 秒逾時 fallback；預設依序嘗試 tw.pool.ntp.org / pool.ntp.org / time.google.com / time.cloudflare.com；支援「查詢（不套用）」預覽；校正時扣除單趟網路延遲提升精準度；新增 POST /api/admin/server-time/ntp-sync API |

@@ -1,6 +1,18 @@
 {
-  "currentVersion": "4.19.1",
+  "currentVersion": "4.19.2",
   "releases": [
+    {
+      "version": "4.19.2",
+      "date": "2026-04-20",
+      "title": "伺服器時間 / NTP Copilot Review 修正",
+      "type": "fix",
+      "changes": [
+        { "tag": "fixed", "text": "runScheduledReportNow() 內 startedAt/finishedAt 改用 serverNow()，與 shouldRunSchedule() 的 periodStart 同一時間基準；先前 SERVER_TIME_OFFSET ≠ 0 時 lastRun 會永遠小於 periodStart 導致每 5 分鐘重複觸發" },
+        { "tag": "improved", "text": "POST /api/admin/server-time/ntp-sync 的 host 參數新增嚴格驗證：阻擋 private / loopback / link-local / ULA / multicast / IPv4-mapped IPv6 以及 localhost / .local / .internal 網域，並限制 FQDN/IP 格式與長度 253，降低管理員帳號被盜時的 SSRF / 內網探測風險" },
+        { "tag": "improved", "text": "管理員頁面「伺服器時間」區塊新增 uptime 欄位（天/小時/分/秒），顯示後端 process.uptime() 回傳的啟動時長" },
+        { "tag": "fixed", "text": "loadAdminServerTime() 成功載入時無條件清空狀態訊息與顏色，先前若前一次動作顯示過錯誤文字會一直殘留" }
+      ]
+    },
     {
       "version": "4.19.1",
       "date": "2026-04-20",

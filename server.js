@@ -6,6 +6,8 @@ const path = require('path');
 const fs = require('fs');
 const os = require('os');
 const dgram = require('dgram');
+const net = require('net');
+const dns = require('dns').promises;
 const { spawn } = require('child_process');
 const AdmZip = require('adm-zip');
 
@@ -1362,15 +1364,142 @@ function serverNow() {
   return Date.now() + SERVER_TIME_OFFSET;
 }
 
-// 簡易 SNTP client：對指定 NTP 伺服器發一個 UDP v4 請求，回傳 { ntpMs, roundTripMs }
+// 簡易 SNTP client：對指定 NTP 伺服器發一個 UDP 請求，回傳 { ntpMs, roundTripMs }
 // RFC 4330：NTP 時間為 1900-01-01 起算秒數（+小數部分）；需轉為 Unix ms
 const NTP_UNIX_EPOCH_DIFF = 2208988800; // NTP 時間起點 → Unix 時間起點的秒數差
+
+// IPv6 位址展開為 8 組 16-bit 整數；non-IPv6 回傳 null
+function parseIPv6Groups(ip) {
+  if (!net.isIPv6(ip)) return null;
+  let s = ip.toLowerCase();
+  // 去掉 zone id（%eth0）
+  const pct = s.indexOf('%');
+  if (pct >= 0) s = s.slice(0, pct);
+  // IPv4-mapped/compat：結尾若為 IPv4，轉成兩組 16-bit hex
+  const lastColon = s.lastIndexOf(':');
+  const tail = s.slice(lastColon + 1);
+  if (tail.includes('.')) {
+    const v4 = tail.split('.').map(Number);
+    if (v4.length !== 4 || v4.some(n => !Number.isFinite(n) || n < 0 || n > 255)) return null;
+    const hi = (v4[0] << 8) | v4[1];
+    const lo = (v4[2] << 8) | v4[3];
+    s = s.slice(0, lastColon + 1) + hi.toString(16) + ':' + lo.toString(16);
+  }
+  // 展開 ::
+  const parts = s.split('::');
+  if (parts.length > 2) return null;
+  let head = parts[0] ? parts[0].split(':') : [];
+  let tailArr = parts.length === 2 ? (parts[1] ? parts[1].split(':') : []) : null;
+  let groups;
+  if (tailArr === null) {
+    if (head.length !== 8) return null;
+    groups = head;
+  } else {
+    const fill = 8 - head.length - tailArr.length;
+    if (fill < 0) return null;
+    groups = head.concat(Array(fill).fill('0'), tailArr);
+  }
+  const out = groups.map(g => parseInt(g || '0', 16));
+  if (out.length !== 8 || out.some(n => !Number.isFinite(n) || n < 0 || n > 0xffff)) return null;
+  return out;
+}
+
+// 判斷單個 IP（已解析後的字面位址）是否為私有/保留位址
+function isPrivateOrReservedIp(ip) {
+  const s = String(ip || '').trim();
+  if (!s) return true;
+  if (net.isIPv4(s)) {
+    const [a, b] = s.split('.').map(Number);
+    if (a === 10) return true;                        // 10.0.0.0/8
+    if (a === 127) return true;                       // loopback
+    if (a === 0) return true;                         // 0.0.0.0/8
+    if (a === 169 && b === 254) return true;          // link-local 169.254.0.0/16
+    if (a === 172 && b >= 16 && b <= 31) return true; // 172.16.0.0/12
+    if (a === 192 && b === 168) return true;          // 192.168.0.0/16
+    if (a === 100 && b >= 64 && b <= 127) return true;// CGNAT 100.64.0.0/10
+    if (a >= 224) return true;                        // multicast / reserved
+    return false;
+  }
+  const g = parseIPv6Groups(s);
+  if (!g) return true; // 無法解析視為不安全
+  const allZero = g.every(x => x === 0);
+  if (allZero) return true;                                              // ::
+  if (g[0] === 0 && g[1] === 0 && g[2] === 0 && g[3] === 0 && g[4] === 0 && g[5] === 0 && g[6] === 0 && g[7] === 1) return true; // ::1 loopback
+  if ((g[0] & 0xffc0) === 0xfe80) return true;                           // link-local fe80::/10
+  if ((g[0] & 0xfe00) === 0xfc00) return true;                           // ULA fc00::/7 (fc00–fdff)
+  if ((g[0] & 0xff00) === 0xff00) return true;                           // multicast ff00::/8
+  // IPv4-mapped ::ffff:a.b.c.d 與 IPv4-compatible ::a.b.c.d（展開後檢測）
+  if (g[0] === 0 && g[1] === 0 && g[2] === 0 && g[3] === 0 && g[4] === 0) {
+    if (g[5] === 0xffff || g[5] === 0) {
+      const a = (g[6] >> 8) & 0xff;
+      const b = g[6] & 0xff;
+      const c = (g[7] >> 8) & 0xff;
+      const d = g[7] & 0xff;
+      return isPrivateOrReservedIp(`${a}.${b}.${c}.${d}`);
+    }
+  }
+  // 6to4 / Teredo 等 transitional 範圍亦視為可疑
+  if (g[0] === 0x2002) {
+    // 2002::/16：後 32 bit 為嵌入的 IPv4；若內嵌 IPv4 為 private 也擋
+    const a = (g[1] >> 8) & 0xff;
+    const b = g[1] & 0xff;
+    const c = (g[2] >> 8) & 0xff;
+    const d = g[2] & 0xff;
+    return isPrivateOrReservedIp(`${a}.${b}.${c}.${d}`);
+  }
+  return false;
+}
+
+// 驗證 NTP host 字面格式 + 阻擋字面私有位址；FQDN 的 DNS 解析檢查在 queryNtp 內執行
+function validateNtpHost(host) {
+  const s = String(host || '').trim();
+  if (!s || s.length > 253) return { ok: false, error: 'NTP 主機長度需為 1-253' };
+  if (net.isIP(s)) {
+    if (isPrivateOrReservedIp(s)) return { ok: false, error: '不允許 private / loopback / link-local / multicast 位址' };
+    return { ok: true, host: s };
+  }
+  const fqdn = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/i;
+  if (!fqdn.test(s)) return { ok: false, error: 'NTP 主機格式錯誤（需為 FQDN 或 IP）' };
+  const lower = s.toLowerCase();
+  if (lower === 'localhost' || lower.endsWith('.localhost') || lower.endsWith('.local') || lower.endsWith('.internal')) {
+    return { ok: false, error: '不允許 localhost / .local / .internal 網域' };
+  }
+  return { ok: true, host: s };
+}
+
+// 把 FQDN 解析為實際 IP，逐一套用 isPrivateOrReservedIp() 防止 DNS rebinding / 內部 DNS
+async function resolveHostToPublicIp(host) {
+  if (net.isIP(host)) {
+    if (isPrivateOrReservedIp(host)) throw new Error(`${host} 為私有/保留位址`);
+    return { ip: host, family: net.isIPv6(host) ? 6 : 4 };
+  }
+  let records;
+  try {
+    records = await dns.lookup(host, { all: true });
+  } catch (e) {
+    throw new Error(`DNS 解析失敗：${host}（${e.code || e.message}）`);
+  }
+  if (!records || !records.length) throw new Error(`DNS 無解析結果：${host}`);
+  for (const r of records) {
+    if (isPrivateOrReservedIp(r.address)) {
+      throw new Error(`${host} 解析到私有/保留位址 ${r.address}，拒絕連線（疑似 DNS rebinding）`);
+    }
+  }
+  const r = records[0];
+  return { ip: r.address, family: r.family === 6 ? 6 : 4 };
+}
+
 function queryNtp(host = 'pool.ntp.org', port = 123, timeoutMs = 3000) {
-  return new Promise((resolve, reject) => {
-    const socket = dgram.createSocket('udp4');
+  return new Promise(async (resolve, reject) => {
+    let resolved;
+    try {
+      resolved = await resolveHostToPublicIp(host);
+    } catch (e) { reject(e); return; }
+
+    const socket = dgram.createSocket(resolved.family === 6 ? 'udp6' : 'udp4');
     const packet = Buffer.alloc(48);
     packet[0] = 0x1b; // LI=0, VN=3, Mode=3 (client)
-    const t1 = Date.now(); // 發送時刻（本機）
+    const t1 = Date.now();
 
     const timer = setTimeout(() => {
       try { socket.close(); } catch (e) { /* ignore */ }
@@ -1387,16 +1516,16 @@ function queryNtp(host = 'pool.ntp.org', port = 123, timeoutMs = 3000) {
       clearTimeout(timer);
       try { socket.close(); } catch (e) { /* ignore */ }
       if (!msg || msg.length < 48) { reject(new Error('NTP 回應長度不足')); return; }
-      const t4 = Date.now(); // 收到時刻（本機）
-      // transmit timestamp 在 offset 40..47（秒 + 小數秒各 4 bytes）
+      const t4 = Date.now();
       const secs = msg.readUInt32BE(40);
       const frac = msg.readUInt32BE(44);
       if (secs === 0) { reject(new Error('NTP 伺服器回傳無效時間戳（Kiss-o\'-Death 或未同步）')); return; }
       const ntpMs = (secs - NTP_UNIX_EPOCH_DIFF) * 1000 + Math.round((frac / 0x100000000) * 1000);
-      resolve({ ntpMs, roundTripMs: t4 - t1, host });
+      resolve({ ntpMs, roundTripMs: t4 - t1, host, resolvedIp: resolved.ip });
     });
 
-    socket.send(packet, 0, packet.length, port, host, (err) => {
+    // 傳入已解析的 IP 而非原始 host，避免 dgram 再次 DNS 解析出現 TOCTOU
+    socket.send(packet, 0, packet.length, port, resolved.ip, (err) => {
       if (err) {
         clearTimeout(timer);
         try { socket.close(); } catch (e) { /* ignore */ }
@@ -1408,52 +1537,6 @@ function queryNtp(host = 'pool.ntp.org', port = 123, timeoutMs = 3000) {
 
 const DEFAULT_NTP_SERVERS = ['tw.pool.ntp.org', 'pool.ntp.org', 'time.google.com', 'time.cloudflare.com'];
 
-// NTP host 驗證：限制格式 + 阻擋 private/loopback/link-local 位址，避免管理員帳號被盜時變成 SSRF/port-scan 跳板
-function isPrivateOrReservedIp(ip) {
-  const s = String(ip || '').trim();
-  if (!s) return true;
-  // IPv4
-  const v4 = s.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
-  if (v4) {
-    const [a, b] = v4.slice(1).map(Number);
-    if (v4.slice(1).some(n => Number(n) > 255)) return true;
-    if (a === 10) return true;                       // 10.0.0.0/8
-    if (a === 127) return true;                      // loopback
-    if (a === 0) return true;                        // 0.0.0.0/8
-    if (a === 169 && b === 254) return true;         // link-local
-    if (a === 172 && b >= 16 && b <= 31) return true;// 172.16.0.0/12
-    if (a === 192 && b === 168) return true;         // 192.168.0.0/16
-    if (a >= 224) return true;                       // multicast / reserved
-    return false;
-  }
-  // IPv6（粗略：loopback、link-local、unique-local、IPv4-mapped 均擋）
-  const lower = s.toLowerCase();
-  if (lower === '::' || lower === '::1') return true;
-  if (lower.startsWith('fe80:')) return true;         // link-local
-  if (lower.startsWith('fc') || lower.startsWith('fd')) return true; // ULA
-  if (lower.startsWith('ff')) return true;            // multicast
-  if (lower.startsWith('::ffff:')) return true;       // IPv4-mapped
-  return false;
-}
-function validateNtpHost(host) {
-  const s = String(host || '').trim();
-  if (!s || s.length > 253) return { ok: false, error: 'NTP 主機長度需為 1-253' };
-  // FQDN or IPv4 or IPv6
-  const fqdn = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/i;
-  const ipv4 = /^\d{1,3}(\.\d{1,3}){3}$/;
-  const ipv6 = /^[0-9a-f:]+$/i;
-  if (!fqdn.test(s) && !ipv4.test(s) && !(ipv6.test(s) && s.includes(':'))) {
-    return { ok: false, error: 'NTP 主機格式錯誤（需為 FQDN 或 IP）' };
-  }
-  if ((ipv4.test(s) || (ipv6.test(s) && s.includes(':'))) && isPrivateOrReservedIp(s)) {
-    return { ok: false, error: '不允許 private / loopback / link-local 位址' };
-  }
-  const lower = s.toLowerCase();
-  if (lower === 'localhost' || lower.endsWith('.localhost') || lower.endsWith('.local') || lower.endsWith('.internal')) {
-    return { ok: false, error: '不允許 localhost / .local / .internal 網域' };
-  }
-  return { ok: true, host: s };
-}
 async function queryNtpWithFallback(candidates) {
   const hosts = Array.isArray(candidates) && candidates.length ? candidates : DEFAULT_NTP_SERVERS;
   const errors = [];
@@ -2772,7 +2855,7 @@ app.post('/api/admin/server-time/ntp-sync', adminMiddleware, async (req, res) =>
     candidates = [v.host];
   }
   try {
-    const { ntpMs, roundTripMs, host: usedHost } = await queryNtpWithFallback(candidates);
+    const { ntpMs, roundTripMs, host: usedHost, resolvedIp } = await queryNtpWithFallback(candidates);
     // 扣掉單趟網路延遲（假設對稱），提升精準度
     const correctedNtpMs = ntpMs + Math.round(roundTripMs / 2);
     const realNow = Date.now();
@@ -2797,6 +2880,7 @@ app.post('/api/admin/server-time/ntp-sync', adminMiddleware, async (req, res) =>
       success: true,
       applied: apply,
       host: usedHost,
+      resolvedIp,
       roundTripMs,
       ntpMs: correctedNtpMs,
       ntpIso: new Date(correctedNtpMs).toISOString(),

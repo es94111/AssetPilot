@@ -1152,6 +1152,7 @@
 
 | 版本 | 日期 | 變更說明 |
 | --- | --- | --- |
+| 4.19.3 | 2026-04-20 | Copilot Review v4.19.2 修正：①isPrivateOrReservedIp() 改用 net.isIP() + 自訂 IPv6 展開器：link-local 改判 fe80::/10、ULA fc00::/7、multicast ff00::/8、IPv4-mapped 完整展開形式、IPv4-compatible ::a.b.c.d、6to4 2002::/16 內嵌私有 IPv4 皆擋；②queryNtp() 送出前 dns.lookup({all:true}) 解析 FQDN 逐一檢查，防 DNS rebinding；送 UDP 用解析後字面 IP 避免 TOCTOU；③依解析結果切換 udp4/udp6（原固定 udp4 導致 IPv6 必敗）；④IPv4 補判 CGNAT 100.64.0.0/10；NTP API 回應加上 resolvedIp 方便稽核 |
 | 4.19.2 | 2026-04-20 | Copilot Review v4.19.1 修正：①runScheduledReportNow() 內 startedAt/finishedAt 改用 serverNow()，與 shouldRunSchedule() 同一時間基準，避免 offset ≠ 0 時每 5 分鐘重複觸發；②NTP host 參數新增嚴格驗證（擋 private/loopback/link-local/ULA/multicast/IPv4-mapped、localhost/.local/.internal、格式 + 長度 253），降低 SSRF 風險；③伺服器時間區塊新增 uptime 欄位；④loadAdminServerTime() 成功時無條件清空狀態訊息 |
 | 4.19.1 | 2026-04-20 | 伺服器時間新增 NTP 自動校正：以原生 dgram/UDP 實作 SNTP v3 client（RFC 4330），3 秒逾時 fallback；預設依序嘗試 tw.pool.ntp.org / pool.ntp.org / time.google.com / time.cloudflare.com；支援「查詢（不套用）」預覽；校正時扣除單趟網路延遲提升精準度；新增 POST /api/admin/server-time/ntp-sync API |
 | 4.19.0 | 2026-04-20 | 管理員頁面新增「伺服器時間」區塊：顯示伺服器實際時間、時區、目前採用時間（含偏移）、啟動後偏移量；可填目標時間或毫秒偏移量設定 SERVER_TIME_OFFSET，套用於 checkAndRunSchedule() 排程檢查（系統時鐘本身不動）；偏移持久化於 system_settings.server_time_offset、上限 ±10 年；新增 GET/PUT /api/admin/server-time API |

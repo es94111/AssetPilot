@@ -1,6 +1,18 @@
 {
-  "currentVersion": "4.19.2",
+  "currentVersion": "4.19.3",
   "releases": [
+    {
+      "version": "4.19.3",
+      "date": "2026-04-20",
+      "title": "NTP SSRF 防護強化 + IPv6 支援（Copilot Review v4.19.2）",
+      "type": "fix",
+      "changes": [
+        { "tag": "fixed", "text": "isPrivateOrReservedIp() 改用 net.isIP() 搭配自訂 IPv6 展開器：link-local 改判 fe80::/10（原僅擋 fe80:）、ULA 擋 fc00::/7、multicast ff00::/8、IPv4-mapped 擋完整展開形式（例 0:0:0:0:0:ffff:7f00:1）、IPv4-compatible ::a.b.c.d、6to4 2002::/16 內嵌私有 IPv4 亦擋" },
+        { "tag": "fixed", "text": "queryNtp() 發送前先以 dns.lookup({all:true}) 解析 FQDN 的所有 A/AAAA，任一結果為私有/保留位址即拒絕（防 DNS rebinding / 內部 DNS 繞過）；送 UDP 時使用解析後的字面 IP，避免 dgram 二次解析造成 TOCTOU" },
+        { "tag": "fixed", "text": "queryNtp() 依解析結果切換 udp4 / udp6，原先固定 udp4 導致 IPv6 主機必然失敗" },
+        { "tag": "improved", "text": "IPv4 檢查補上 CGNAT 100.64.0.0/10；NTP 同步 API 回應新增 resolvedIp 欄位並於前端顯示，方便稽核實際連線的 IP" }
+      ]
+    },
     {
       "version": "4.19.2",
       "date": "2026-04-20",

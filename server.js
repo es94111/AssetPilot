@@ -5,6 +5,7 @@ require('dotenv').config();
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
+const dgram = require('dgram');
 const { spawn } = require('child_process');
 const AdmZip = require('adm-zip');
 
@@ -556,6 +557,8 @@ async function initDB() {
   try { db.run("ALTER TABLE system_settings ADD COLUMN report_schedule_last_run INTEGER DEFAULT 0"); } catch (e) { /* ignore */ }
   try { db.run("ALTER TABLE system_settings ADD COLUMN report_schedule_last_summary TEXT DEFAULT ''"); } catch (e) { /* ignore */ }
   try { db.run("ALTER TABLE system_settings ADD COLUMN report_schedule_user_ids TEXT DEFAULT ''"); } catch (e) { /* ignore */ }
+  // 伺服器時間偏移（毫秒，正值=快於實際時間）。用於測試排程寄送、除權息同步等依賴時間的功能
+  try { db.run("ALTER TABLE system_settings ADD COLUMN server_time_offset INTEGER DEFAULT 0"); } catch (e) { /* ignore */ }
 
   db.run("INSERT OR IGNORE INTO system_settings (id, public_registration, allowed_registration_emails, admin_ip_allowlist, updated_at, updated_by) VALUES (1, 1, '', '', ?, '')", [Date.now()]);
 
@@ -1343,6 +1346,79 @@ function queryAll(sql, params = []) {
 function queryOne(sql, params = []) {
   const rows = queryAll(sql, params);
   return rows.length > 0 ? rows[0] : null;
+}
+
+// 伺服器時間偏移（毫秒），從 system_settings 載入後快取於記憶體
+let SERVER_TIME_OFFSET = 0;
+function loadServerTimeOffset() {
+  try {
+    const row = queryOne("SELECT server_time_offset FROM system_settings WHERE id = 1");
+    SERVER_TIME_OFFSET = Number.isFinite(Number(row?.server_time_offset)) ? Number(row.server_time_offset) : 0;
+  } catch (e) {
+    SERVER_TIME_OFFSET = 0;
+  }
+}
+function serverNow() {
+  return Date.now() + SERVER_TIME_OFFSET;
+}
+
+// 簡易 SNTP client：對指定 NTP 伺服器發一個 UDP v4 請求，回傳 { ntpMs, roundTripMs }
+// RFC 4330：NTP 時間為 1900-01-01 起算秒數（+小數部分）；需轉為 Unix ms
+const NTP_UNIX_EPOCH_DIFF = 2208988800; // NTP 時間起點 → Unix 時間起點的秒數差
+function queryNtp(host = 'pool.ntp.org', port = 123, timeoutMs = 3000) {
+  return new Promise((resolve, reject) => {
+    const socket = dgram.createSocket('udp4');
+    const packet = Buffer.alloc(48);
+    packet[0] = 0x1b; // LI=0, VN=3, Mode=3 (client)
+    const t1 = Date.now(); // 發送時刻（本機）
+
+    const timer = setTimeout(() => {
+      try { socket.close(); } catch (e) { /* ignore */ }
+      reject(new Error(`NTP 查詢逾時：${host}`));
+    }, timeoutMs);
+
+    socket.once('error', (err) => {
+      clearTimeout(timer);
+      try { socket.close(); } catch (e) { /* ignore */ }
+      reject(err);
+    });
+
+    socket.once('message', (msg) => {
+      clearTimeout(timer);
+      try { socket.close(); } catch (e) { /* ignore */ }
+      if (!msg || msg.length < 48) { reject(new Error('NTP 回應長度不足')); return; }
+      const t4 = Date.now(); // 收到時刻（本機）
+      // transmit timestamp 在 offset 40..47（秒 + 小數秒各 4 bytes）
+      const secs = msg.readUInt32BE(40);
+      const frac = msg.readUInt32BE(44);
+      if (secs === 0) { reject(new Error('NTP 伺服器回傳無效時間戳（Kiss-o\'-Death 或未同步）')); return; }
+      const ntpMs = (secs - NTP_UNIX_EPOCH_DIFF) * 1000 + Math.round((frac / 0x100000000) * 1000);
+      resolve({ ntpMs, roundTripMs: t4 - t1, host });
+    });
+
+    socket.send(packet, 0, packet.length, port, host, (err) => {
+      if (err) {
+        clearTimeout(timer);
+        try { socket.close(); } catch (e) { /* ignore */ }
+        reject(err);
+      }
+    });
+  });
+}
+
+const DEFAULT_NTP_SERVERS = ['tw.pool.ntp.org', 'pool.ntp.org', 'time.google.com', 'time.cloudflare.com'];
+async function queryNtpWithFallback(candidates) {
+  const hosts = Array.isArray(candidates) && candidates.length ? candidates : DEFAULT_NTP_SERVERS;
+  const errors = [];
+  for (const host of hosts) {
+    try {
+      const r = await queryNtp(host);
+      return r;
+    } catch (e) {
+      errors.push(`${host}: ${e.message || e}`);
+    }
+  }
+  throw new Error('所有 NTP 伺服器皆失敗：' + errors.join('；'));
 }
 
 // 驗證資源屬於當前使用者（防 IDOR）
@@ -2568,6 +2644,120 @@ app.put('/api/admin/settings', adminMiddleware, (req, res) => {
   res.json({ success: true, publicRegistration, allowedRegistrationEmails, adminIpAllowlist });
 });
 
+// ─── 伺服器時間 ───────────────────────────────────────────────────────────
+// GET /api/admin/server-time — 取得當前伺服器時間與偏移
+app.get('/api/admin/server-time', adminMiddleware, (req, res) => {
+  const realNow = Date.now();
+  const effectiveNow = realNow + SERVER_TIME_OFFSET;
+  res.json({
+    realNow,
+    realNowIso: new Date(realNow).toISOString(),
+    effectiveNow,
+    effectiveNowIso: new Date(effectiveNow).toISOString(),
+    offsetMs: SERVER_TIME_OFFSET,
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || '',
+    timezoneOffsetMinutes: new Date().getTimezoneOffset(),
+    uptimeSeconds: Math.floor(process.uptime()),
+  });
+});
+
+// PUT /api/admin/server-time — 設定伺服器時間（以偏移量表示）
+// body：{ mode: 'reset' } 直接清 0；{ mode: 'offset', offsetMs } 直接設定偏移；
+// { mode: 'target', targetIso } 或 { mode: 'target', targetMs } 依目標時間回推偏移
+app.put('/api/admin/server-time', adminMiddleware, (req, res) => {
+  const mode = String(req.body?.mode || '').trim();
+  let offsetMs = SERVER_TIME_OFFSET;
+
+  if (mode === 'reset') {
+    offsetMs = 0;
+  } else if (mode === 'offset') {
+    const n = Number(req.body?.offsetMs);
+    if (!Number.isFinite(n)) return res.status(400).json({ error: 'offsetMs 必須為數字（毫秒）' });
+    offsetMs = Math.trunc(n);
+  } else if (mode === 'target') {
+    let target;
+    if (req.body?.targetMs !== undefined) {
+      target = Number(req.body.targetMs);
+    } else if (req.body?.targetIso) {
+      target = new Date(String(req.body.targetIso)).getTime();
+    }
+    if (!Number.isFinite(target)) return res.status(400).json({ error: '目標時間格式錯誤' });
+    offsetMs = target - Date.now();
+  } else {
+    return res.status(400).json({ error: 'mode 必須為 reset / offset / target 其中之一' });
+  }
+
+  // 限制偏移量最多 ±10 年，避免誤植導致後續運算溢位
+  const MAX_OFFSET = 10 * 365 * 24 * 60 * 60 * 1000;
+  if (Math.abs(offsetMs) > MAX_OFFSET) {
+    return res.status(400).json({ error: '偏移量超過 ±10 年上限' });
+  }
+
+  db.run(
+    "UPDATE system_settings SET server_time_offset = ?, updated_at = ?, updated_by = ? WHERE id = 1",
+    [offsetMs, Date.now(), req.userId]
+  );
+  saveDB();
+  SERVER_TIME_OFFSET = offsetMs;
+
+  const realNow = Date.now();
+  const effectiveNow = realNow + SERVER_TIME_OFFSET;
+  res.json({
+    success: true,
+    realNow,
+    effectiveNow,
+    effectiveNowIso: new Date(effectiveNow).toISOString(),
+    offsetMs: SERVER_TIME_OFFSET,
+  });
+});
+
+// POST /api/admin/server-time/ntp-sync — 以 NTP 時間校正伺服器採用時間
+// body：{ host?: string, apply?: boolean }
+//   - host：指定 NTP 伺服器（省略則依序嘗試 tw/pool/google/cloudflare）
+//   - apply：是否寫入偏移（預設 true）；false 時僅回傳量測結果供預覽
+app.post('/api/admin/server-time/ntp-sync', adminMiddleware, async (req, res) => {
+  const host = typeof req.body?.host === 'string' ? req.body.host.trim() : '';
+  const apply = req.body?.apply === false ? false : true;
+  const candidates = host ? [host] : DEFAULT_NTP_SERVERS;
+  try {
+    const { ntpMs, roundTripMs, host: usedHost } = await queryNtpWithFallback(candidates);
+    // 扣掉單趟網路延遲（假設對稱），提升精準度
+    const correctedNtpMs = ntpMs + Math.round(roundTripMs / 2);
+    const realNow = Date.now();
+    const newOffset = correctedNtpMs - realNow;
+
+    const MAX_OFFSET = 10 * 365 * 24 * 60 * 60 * 1000;
+    if (Math.abs(newOffset) > MAX_OFFSET) {
+      return res.status(400).json({ error: 'NTP 計算出的偏移量超過 ±10 年上限，疑似伺服器回應異常' });
+    }
+
+    const previousOffsetMs = SERVER_TIME_OFFSET;
+    if (apply) {
+      db.run(
+        "UPDATE system_settings SET server_time_offset = ?, updated_at = ?, updated_by = ? WHERE id = 1",
+        [newOffset, Date.now(), req.userId]
+      );
+      saveDB();
+      SERVER_TIME_OFFSET = newOffset;
+    }
+
+    res.json({
+      success: true,
+      applied: apply,
+      host: usedHost,
+      roundTripMs,
+      ntpMs: correctedNtpMs,
+      ntpIso: new Date(correctedNtpMs).toISOString(),
+      realNow,
+      proposedOffsetMs: newOffset,
+      offsetMs: SERVER_TIME_OFFSET,
+      previousOffsetMs,
+    });
+  } catch (e) {
+    res.status(502).json({ error: e.message || 'NTP 同步失敗' });
+  }
+});
+
 // ─── 憑證管理 API ───────────────────────────────────────────────────────────
 
 // GET /api/admin/certs — 取得 Origin Certificate 狀態
@@ -3468,7 +3658,7 @@ function formatTwTime(ts) {
 function checkAndRunSchedule() {
   try {
     const schedule = getReportSchedule();
-    if (!shouldRunSchedule(schedule)) return;
+    if (!shouldRunSchedule(schedule, new Date(serverNow()))) return;
     runScheduledReportNow('排程').catch(err => console.error('[scheduled-report]', err));
   } catch (e) {
     console.error('[scheduled-report] check error', e);
@@ -5913,6 +6103,7 @@ app.get('{*path}', rateLimit({
 
 // ─── 啟動 ───
 initDB().then(() => {
+  loadServerTimeOffset();
   app.listen(PORT, () => {
     console.log(`AssetPilot 伺服器已啟動: http://localhost:${PORT}`);
   });

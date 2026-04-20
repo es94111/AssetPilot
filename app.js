@@ -5050,6 +5050,54 @@ const App = (() => {
     if (selectAll) selectAll.checked = checks.length > 0 && selected === checks.length;
   }
 
+  function formatOffsetMs(ms) {
+    if (!Number.isFinite(ms) || ms === 0) return '0（無偏移）';
+    const sign = ms > 0 ? '+' : '-';
+    const abs = Math.abs(ms);
+    const d = Math.floor(abs / 86400000);
+    const h = Math.floor((abs % 86400000) / 3600000);
+    const m = Math.floor((abs % 3600000) / 60000);
+    const s = Math.floor((abs % 60000) / 1000);
+    const parts = [];
+    if (d) parts.push(`${d} 天`);
+    if (h) parts.push(`${h} 小時`);
+    if (m) parts.push(`${m} 分`);
+    if (s || !parts.length) parts.push(`${s} 秒`);
+    return `${sign}${parts.join(' ')}（${ms} ms）`;
+  }
+
+  function formatLocalDateTime(ts) {
+    if (!Number.isFinite(ts)) return '';
+    const d = new Date(ts);
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+  }
+
+  async function loadAdminServerTime() {
+    try {
+      const info = await API.get('/api/admin/server-time');
+      const realEl = el('adminServerTimeReal');
+      const effEl = el('adminServerTimeEffective');
+      const tzEl = el('adminServerTimeZone');
+      const offEl = el('adminServerTimeOffset');
+      if (realEl) realEl.value = formatLocalDateTime(info.realNow);
+      if (effEl) effEl.value = formatLocalDateTime(info.effectiveNow);
+      if (tzEl) {
+        const mins = info.timezoneOffsetMinutes ?? 0;
+        const sign = mins <= 0 ? '+' : '-';
+        const abs = Math.abs(mins);
+        const utc = `UTC${sign}${String(Math.floor(abs / 60)).padStart(2, '0')}:${String(abs % 60).padStart(2, '0')}`;
+        tzEl.value = `${info.timezone || ''} (${utc})`;
+      }
+      if (offEl) offEl.value = formatOffsetMs(info.offsetMs);
+      const statusEl = el('adminServerTimeStatus');
+      if (statusEl && !statusEl.textContent) statusEl.textContent = '';
+    } catch (e) {
+      const statusEl = el('adminServerTimeStatus');
+      if (statusEl) { statusEl.textContent = e.message || '載入伺服器時間失敗'; statusEl.style.color = 'var(--danger)'; }
+    }
+  }
+
   async function renderAdminSettings() {
     if (!currentUser?.isAdmin) return;
     try {
@@ -5092,8 +5140,69 @@ const App = (() => {
       toast(e.message || '載入管理員設定失敗', 'error');
     }
     await renderAdminCerts();
+    await loadAdminServerTime();
 
     if (adminSettingsBound) return;
+
+    el('adminServerTimeRefreshBtn')?.addEventListener('click', () => loadAdminServerTime());
+    el('adminServerTimeResetBtn')?.addEventListener('click', async () => {
+      const statusEl = el('adminServerTimeStatus');
+      if (statusEl) { statusEl.textContent = '重設中…'; statusEl.style.color = ''; }
+      try {
+        await API.put('/api/admin/server-time', { mode: 'reset' });
+        if (statusEl) { statusEl.textContent = '已重設為實際時間'; statusEl.style.color = ''; }
+        toast('伺服器時間偏移已重設', 'success');
+        await loadAdminServerTime();
+      } catch (e) {
+        if (statusEl) { statusEl.textContent = e.message || '重設失敗'; statusEl.style.color = 'var(--danger)'; }
+      }
+    });
+    const runNtpSync = async (apply) => {
+      const statusEl = el('adminNtpStatus');
+      if (statusEl) { statusEl.textContent = apply ? '校正中…' : '查詢中…'; statusEl.style.color = ''; }
+      try {
+        const host = el('adminNtpHost')?.value?.trim() || '';
+        const payload = { apply };
+        if (host) payload.host = host;
+        const r = await API.post('/api/admin/server-time/ntp-sync', payload);
+        const offsetTxt = formatOffsetMs(r.proposedOffsetMs);
+        const msg = `${r.host}：延遲 ${r.roundTripMs} ms，計算偏移 ${offsetTxt}${apply ? '（已套用）' : '（未套用）'}`;
+        if (statusEl) { statusEl.textContent = msg; statusEl.style.color = ''; }
+        toast(apply ? 'NTP 校正完成' : 'NTP 查詢完成', 'success');
+        if (apply) await loadAdminServerTime();
+      } catch (e) {
+        if (statusEl) { statusEl.textContent = e.message || 'NTP 同步失敗'; statusEl.style.color = 'var(--danger)'; }
+      }
+    };
+    el('adminNtpCheckBtn')?.addEventListener('click', () => runNtpSync(false));
+    el('adminNtpSyncBtn')?.addEventListener('click', () => runNtpSync(true));
+
+    el('adminServerTimeApplyBtn')?.addEventListener('click', async () => {
+      const statusEl = el('adminServerTimeStatus');
+      if (statusEl) { statusEl.textContent = '套用中…'; statusEl.style.color = ''; }
+      try {
+        const targetStr = el('adminServerTimeTarget')?.value || '';
+        const offsetStr = el('adminServerTimeOffsetInput')?.value || '';
+        let payload;
+        if (targetStr) {
+          const ts = new Date(targetStr).getTime();
+          if (!Number.isFinite(ts)) throw new Error('目標時間格式錯誤');
+          payload = { mode: 'target', targetMs: ts };
+        } else if (offsetStr !== '') {
+          const n = Number(offsetStr);
+          if (!Number.isFinite(n)) throw new Error('偏移量必須為數字');
+          payload = { mode: 'offset', offsetMs: Math.trunc(n) };
+        } else {
+          throw new Error('請輸入目標時間或偏移量');
+        }
+        await API.put('/api/admin/server-time', payload);
+        if (statusEl) { statusEl.textContent = '已套用'; statusEl.style.color = ''; }
+        toast('伺服器時間已更新', 'success');
+        await loadAdminServerTime();
+      } catch (e) {
+        if (statusEl) { statusEl.textContent = e.message || '套用失敗'; statusEl.style.color = 'var(--danger)'; }
+      }
+    });
 
     el('saveAdminSettingsBtn')?.addEventListener('click', async () => {
       try {

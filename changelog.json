@@ -1,6 +1,29 @@
 {
-  "currentVersion": "4.18.4",
+  "currentVersion": "4.19.1",
   "releases": [
+    {
+      "version": "4.19.1",
+      "date": "2026-04-20",
+      "title": "伺服器時間新增 NTP 自動校正",
+      "type": "feature",
+      "changes": [
+        { "tag": "new", "text": "管理員頁面「伺服器時間」區塊新增 NTP 校正：可指定 NTP 伺服器或使用預設清單（tw.pool.ntp.org / pool.ntp.org / time.google.com / time.cloudflare.com）依序嘗試，自動計算差值並套用為偏移" },
+        { "tag": "new", "text": "支援「查詢（不套用）」按鈕，可先預覽 NTP 時間與延遲再決定是否寫入；校正時自動扣掉單趟網路延遲（假設對稱）提升精準度" },
+        { "tag": "new", "text": "新增 POST /api/admin/server-time/ntp-sync API，以原生 dgram/UDP 實作 SNTP v3 client（RFC 4330），3 秒逾時自動 fallback 下一個伺服器" }
+      ]
+    },
+    {
+      "version": "4.19.0",
+      "date": "2026-04-20",
+      "title": "管理員頁面新增伺服器時間查看與設定",
+      "type": "feature",
+      "changes": [
+        { "tag": "new", "text": "管理員頁面新增「伺服器時間」區塊：即時顯示伺服器實際時間、時區、目前採用時間（含偏移）及啟動後偏移量" },
+        { "tag": "new", "text": "可於管理員頁面設定伺服器時間偏移（直接填目標時間或毫秒偏移量），用於測試排程寄送、除權息同步等依時間觸發的功能；重設按鈕可一鍵清為實際時間" },
+        { "tag": "new", "text": "新增 GET /api/admin/server-time、PUT /api/admin/server-time API；偏移持久化於 system_settings.server_time_offset 並於排程檢查 checkAndRunSchedule() 套用，系統時鐘本身不會被改動" },
+        { "tag": "improved", "text": "偏移量上限限制為 ±10 年，避免誤植導致後續時間運算溢位" }
+      ]
+    },
     {
       "version": "4.18.4",
       "date": "2026-04-18",

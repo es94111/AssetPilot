@@ -3985,7 +3985,7 @@ const App = (() => {
         const fxRate = Number(r.fxRate || r.fx_rate || 1);
         const amountDisplay = currency === 'TWD' || fxRate <= 0
           ? fmt(r.amount)
-          : `${escHtml(currency)} ${fmtNum(Math.round(r.amount / fxRate * 100) / 100)} <span style="color:var(--text-secondary);font-weight:400">(≈ ${fmt(r.amount)})</span>`;
+          : `${escHtml(currency)} ${Number(Math.round(r.amount / fxRate * 100) / 100).toLocaleString('zh-TW')} <span style="color:var(--text-secondary);font-weight:400">(≈ ${fmt(r.amount)})</span>`;
         const catLabel = cat ? escHtml(cat.name) : '<span style="color:var(--danger)">（分類已刪除）</span>';
         const accLabel = acc ? escHtml(acc.name) : '<span style="color:var(--danger)">（帳戶已刪除）</span>';
         return `<div class="recurring-item">

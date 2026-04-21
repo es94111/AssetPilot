@@ -3606,20 +3606,40 @@ async function updateUserStockPrices(userId) {
   return { updated, skipped };
 }
 
-// 判斷現在是否該觸發寄送：到了當期排程時間，且本期尚未執行
-function shouldRunSchedule(schedule, now = new Date()) {
-  if (schedule.freq === 'off') return false;
-  if (now.getHours() < schedule.hour) return false;
+// 取得指定時間戳在台灣時區（UTC+8，無 DST）的各欄位 — 排程與顯示一律以台灣時區為準，
+// 避免伺服器跑在 UTC 等其他時區時「0 時寄送」被當成 UTC 0 點（台灣 08:00）觸發
+function twParts(ts) {
+  const d = new Date(ts + 8 * 3600 * 1000);
+  return {
+    year: d.getUTCFullYear(),
+    month: d.getUTCMonth(),
+    date: d.getUTCDate(),
+    day: d.getUTCDay(),
+    hours: d.getUTCHours(),
+    minutes: d.getUTCMinutes(),
+  };
+}
 
-  let periodStart;
+// 台灣時區當日 00:00 對應的 Unix ms（UTC 時間軸）
+function twStartOfDayMs(ts) {
+  const p = twParts(ts);
+  return Date.UTC(p.year, p.month, p.date) - 8 * 3600 * 1000;
+}
+
+// 判斷現在是否該觸發寄送：到了當期排程時間，且本期尚未執行（一律以台灣時區比對）
+function shouldRunSchedule(schedule, nowTs = serverNow()) {
+  if (schedule.freq === 'off') return false;
+  const tw = twParts(nowTs);
+  if (tw.hours < schedule.hour) return false;
+
+  const periodStart = twStartOfDayMs(nowTs);
+
   if (schedule.freq === 'daily') {
-    periodStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0).getTime();
+    // nothing extra
   } else if (schedule.freq === 'weekly') {
-    if (now.getDay() !== schedule.weekday) return false;
-    periodStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0).getTime();
+    if (tw.day !== schedule.weekday) return false;
   } else if (schedule.freq === 'monthly') {
-    if (now.getDate() !== schedule.dayOfMonth) return false;
-    periodStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0).getTime();
+    if (tw.date !== schedule.dayOfMonth) return false;
   } else {
     return false;
   }
@@ -3719,15 +3739,15 @@ async function runScheduledReportNow(triggeredBy = 'scheduler', overrideUserIds 
 
 function formatTwTime(ts) {
   if (!ts) return '從未';
-  const d = new Date(ts);
+  const p = twParts(ts);
   const pad = (n) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  return `${p.year}-${pad(p.month + 1)}-${pad(p.date)} ${pad(p.hours)}:${pad(p.minutes)}`;
 }
 
 function checkAndRunSchedule() {
   try {
     const schedule = getReportSchedule();
-    if (!shouldRunSchedule(schedule, new Date(serverNow()))) return;
+    if (!shouldRunSchedule(schedule, serverNow())) return;
     runScheduledReportNow('排程').catch(err => console.error('[scheduled-report]', err));
   } catch (e) {
     console.error('[scheduled-report] check error', e);
@@ -4736,10 +4756,13 @@ app.post('/api/recurring/process', (req, res) => {
   let count = 0;
 
   recs.forEach(r => {
-    let lastGen = r.last_generated || r.start_date;
-    if (lastGen > todayS) return;
-    let nextDate = getNextDate(lastGen, r.frequency);
-    while (nextDate <= todayS) {
+    let nextDate;
+    if (r.last_generated) {
+      nextDate = getNextDate(r.last_generated, r.frequency);
+    } else {
+      nextDate = r.start_date;
+    }
+    while (nextDate && nextDate <= todayS) {
       const now = Date.now();
       const rCurrency = normalizeCurrency(r.currency || 'TWD');
       const rFxRate = Number(r.fx_rate) > 0 ? Number(r.fx_rate) : 1;
@@ -4765,6 +4788,80 @@ function getNextDate(dateStr, freq) {
     case 'yearly': d.setFullYear(d.getFullYear() + 1); break;
   }
   return d.toISOString().slice(0, 10);
+}
+
+// ─── TWSE 休市日（有價證券集中交易市場開（休）市日期）───
+// 來源：https://openapi.twse.com.tw/v1/holidaySchedule/holidaySchedule
+const TWSE_HOLIDAY_CACHE_TTL = 24 * 60 * 60 * 1000;
+const TWSE_HOLIDAY_FAILURE_BACKOFF = 5 * 60 * 1000;
+const twseHolidayCache = { set: null, timestamp: 0, lastFailedAt: 0 };
+let twseHolidayInflight = null; // 進行中的 fetch Promise，共用避免同時多次外呼
+
+async function fetchTwseHolidaySet() {
+  const now = Date.now();
+  if (twseHolidayCache.set && (now - twseHolidayCache.timestamp) < TWSE_HOLIDAY_CACHE_TTL) {
+    return twseHolidayCache.set;
+  }
+  // 近期失敗：在 backoff 視窗內不再外呼，避免 API 故障時每次呼叫都卡 ~8s timeout
+  if ((now - twseHolidayCache.lastFailedAt) < TWSE_HOLIDAY_FAILURE_BACKOFF) {
+    return twseHolidayCache.set || new Set();
+  }
+  if (twseHolidayInflight) return twseHolidayInflight;
+
+  twseHolidayInflight = (async () => {
+    try {
+      const res = await fetch('https://openapi.twse.com.tw/v1/holidaySchedule/holidaySchedule', {
+        headers: { 'Accept': 'application/json', 'User-Agent': 'Mozilla/5.0' },
+        signal: AbortSignal.timeout(8000),
+      });
+      if (!res.ok) {
+        twseHolidayCache.lastFailedAt = Date.now();
+        return twseHolidayCache.set || new Set();
+      }
+      const list = await res.json();
+      const set = new Set();
+      list.forEach(item => {
+        const name = item.Name || '';
+        // API 同時包含休市日與特別交易日；「開始交易」/「最後交易」是開市日，要排除
+        if (/開始交易|最後交易/.test(name)) return;
+        const rocDate = String(item.Date || '');
+        if (!/^\d{7}$/.test(rocDate)) return;
+        const y = parseInt(rocDate.slice(0, 3), 10) + 1911;
+        const m = rocDate.slice(3, 5);
+        const d = rocDate.slice(5, 7);
+        set.add(`${y}-${m}-${d}`);
+      });
+      twseHolidayCache.set = set;
+      twseHolidayCache.timestamp = Date.now();
+      twseHolidayCache.lastFailedAt = 0;
+      return set;
+    } catch (e) {
+      twseHolidayCache.lastFailedAt = Date.now();
+      console.error('TWSE holidaySchedule 錯誤:', e.message);
+      return twseHolidayCache.set || new Set();
+    } finally {
+      twseHolidayInflight = null;
+    }
+  })();
+
+  return twseHolidayInflight;
+}
+
+function isTwseWeekend(dateStr) {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const dow = new Date(Date.UTC(y, m - 1, d)).getUTCDay();
+  return dow === 0 || dow === 6;
+}
+
+function nextTwseTradingDay(dateStr, holidaySet) {
+  let cur = dateStr;
+  let safety = 60;
+  while (safety-- > 0 && (isTwseWeekend(cur) || (holidaySet && holidaySet.has(cur)))) {
+    const [y, m, d] = cur.split('-').map(Number);
+    const nx = new Date(Date.UTC(y, m - 1, d + 1));
+    cur = nx.toISOString().slice(0, 10);
+  }
+  return cur;
 }
 
 // ─── 儀表板 ───
@@ -5583,55 +5680,69 @@ app.patch('/api/stock-recurring/:id/toggle', (req, res) => {
   res.json({ isActive: !r.is_active });
 });
 
-app.post('/api/stock-recurring/process', (req, res) => {
+app.post('/api/stock-recurring/process', async (req, res) => {
   const recs = queryAll("SELECT * FROM stock_recurring WHERE user_id = ? AND is_active = 1", [req.userId]);
+  if (recs.length === 0) return res.json({ generated: 0, skipped: 0, postponed: 0 });
   const settings = getStockSettings(req.userId);
   const todayS = todayStr();
+  const holidaySet = await fetchTwseHolidaySet();
   let generated = 0;
   let skipped = 0;
+  let postponed = 0;
   let touched = false;
 
-  recs.forEach(r => {
-    let lastGen = r.last_generated || r.start_date;
-    if (!lastGen || lastGen > todayS) return;
-    let nextDate = getNextDate(lastGen, r.frequency);
-    while (nextDate <= todayS) {
+  for (const r of recs) {
+    let scheduledDate;
+    if (r.last_generated) {
+      scheduledDate = getNextDate(r.last_generated, r.frequency);
+    } else {
+      scheduledDate = r.start_date;
+    }
+    while (scheduledDate && scheduledDate <= todayS) {
+      // 遇到假日或週末延後到下一個交易日
+      const actualDate = nextTwseTradingDay(scheduledDate, holidaySet);
+      if (actualDate > todayS) break; // 下一個交易日還沒到，下次再處理
+      if (actualDate !== scheduledDate) postponed++;
+
       const stock = queryOne("SELECT id, current_price FROM stocks WHERE id = ? AND user_id = ?", [r.stock_id, req.userId]);
       const price = Number(stock?.current_price || 0);
 
       if (!(price > 0)) {
-        db.run("UPDATE stock_recurring SET last_generated = ? WHERE id = ?", [nextDate, r.id]);
+        db.run("UPDATE stock_recurring SET last_generated = ? WHERE id = ?", [scheduledDate, r.id]);
         touched = true;
         skipped++;
-        nextDate = getNextDate(nextDate, r.frequency);
+        scheduledDate = getNextDate(scheduledDate, r.frequency);
         continue;
       }
 
       const shares = Math.floor(Number(r.amount) / price);
       if (!(shares >= 1)) {
-        db.run("UPDATE stock_recurring SET last_generated = ? WHERE id = ?", [nextDate, r.id]);
+        db.run("UPDATE stock_recurring SET last_generated = ? WHERE id = ?", [scheduledDate, r.id]);
         touched = true;
         skipped++;
-        nextDate = getNextDate(nextDate, r.frequency);
+        scheduledDate = getNextDate(scheduledDate, r.frequency);
         continue;
       }
 
       const amount = shares * price;
       const fee = calcStockFee(amount, shares, settings);
-      const finalNote = [r.note || '', '定期定額自動'].filter(Boolean).join(' | ');
+      const noteParts = [r.note || '', '定期定額自動'];
+      if (actualDate !== scheduledDate) noteParts.push(`原排程 ${scheduledDate} 順延`);
+      const finalNote = noteParts.filter(Boolean).join(' | ');
       db.run(
         "INSERT INTO stock_transactions (id,user_id,stock_id,date,type,shares,price,fee,tax,account_id,note,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
-        [uid(), req.userId, r.stock_id, nextDate, 'buy', shares, price, fee, 0, r.account_id || '', finalNote, Date.now()]
+        [uid(), req.userId, r.stock_id, actualDate, 'buy', shares, price, fee, 0, r.account_id || '', finalNote, Date.now()]
       );
-      db.run("UPDATE stock_recurring SET last_generated = ? WHERE id = ?", [nextDate, r.id]);
+      // last_generated 以排程日記錄，下一期從排程日推算，維持原本週期節奏
+      db.run("UPDATE stock_recurring SET last_generated = ? WHERE id = ?", [scheduledDate, r.id]);
       touched = true;
       generated++;
-      nextDate = getNextDate(nextDate, r.frequency);
+      scheduledDate = getNextDate(scheduledDate, r.frequency);
     }
-  });
+  }
 
   if (touched) saveDB();
-  res.json({ generated, skipped });
+  res.json({ generated, skipped, postponed });
 });
 
 // 股票清單
@@ -5837,6 +5948,8 @@ app.post('/api/stock-transactions/import', async (req, res) => {
     try {
       const { date, symbol, name: stockName, type, shares, price, fee, tax, accountName, note } = row;
       if (!date || !symbol || !type || !shares || !price) { skipped++; errors.push(`略過不完整資料（${symbol || '?'}）`); continue; }
+      const shareNum = parseFloat(shares);
+      if (!(shareNum > 0) || !Number.isInteger(shareNum)) { skipped++; errors.push(`股數必須為正整數（${symbol}）`); continue; }
       // 找或建立股票
       let stock = queryOne("SELECT * FROM stocks WHERE user_id = ? AND symbol = ?", [req.userId, symbol]);
       if (!stock) {
@@ -5856,7 +5969,7 @@ app.post('/api/stock-transactions/import', async (req, res) => {
       }
       const txType = (type === '買進' || type === 'buy') ? 'buy' : 'sell';
       db.run("INSERT INTO stock_transactions (id, user_id, stock_id, type, date, shares, price, fee, tax, account_id, note, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-        [uid(), req.userId, stock.id, txType, normalizeDate(date), parseFloat(shares), parseFloat(price),
+        [uid(), req.userId, stock.id, txType, normalizeDate(date), shareNum, parseFloat(price),
          parseFloat(fee || 0), parseFloat(tax || 0), accountId, note || '', Date.now()]);
       imported++;
     } catch (e) { skipped++; errors.push('錯誤：' + e.message); }
@@ -5934,6 +6047,7 @@ app.post('/api/stock-transactions', (req, res) => {
   if (!stockId || !date || !type || !shares || !price) return res.status(400).json({ error: '必填欄位未填' });
   if (!['buy', 'sell'].includes(type)) return res.status(400).json({ error: '交易類型無效' });
   if (!(Number(shares) > 0)) return res.status(400).json({ error: '股數必須為正數' });
+  if (!Number.isInteger(Number(shares))) return res.status(400).json({ error: '股數必須為整數' });
   if (!(Number(price) > 0)) return res.status(400).json({ error: '價格必須為正數' });
   if (Number(fee) < 0 || Number(tax) < 0) return res.status(400).json({ error: '手續費/稅費不可為負' });
   const stock = queryOne("SELECT id FROM stocks WHERE id = ? AND user_id = ?", [stockId, req.userId]);
@@ -5952,6 +6066,7 @@ app.put('/api/stock-transactions/:id', (req, res) => {
   if (!date) return res.status(400).json({ error: '日期格式無效' });
   if (!['buy', 'sell'].includes(type)) return res.status(400).json({ error: '交易類型無效' });
   if (!(Number(shares) > 0)) return res.status(400).json({ error: '股數必須為正數' });
+  if (!Number.isInteger(Number(shares))) return res.status(400).json({ error: '股數必須為整數' });
   if (!(Number(price) > 0)) return res.status(400).json({ error: '價格必須為正數' });
   if (Number(fee) < 0 || Number(tax) < 0) return res.status(400).json({ error: '手續費/稅費不可為負' });
   if (accountId && !assertOwned('accounts', accountId, req.userId)) return res.status(400).json({ error: '帳戶不存在或無權限' });

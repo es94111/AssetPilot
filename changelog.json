@@ -1,6 +1,37 @@
 {
-  "currentVersion": "4.19.4",
+  "currentVersion": "4.20.1",
   "releases": [
+    {
+      "version": "4.20.1",
+      "date": "2026-04-21",
+      "title": "排程寄送報表：固定以台灣時區判斷觸發時間",
+      "type": "fix",
+      "changes": [
+        { "tag": "fixed", "text": "排程寄送資產統計報表若伺服器執行時區不是 Asia/Taipei（例：Zeabur / Docker 預設 UTC），shouldRunSchedule() 的 now.getHours() 會回傳 UTC 時數，導致設定 0 時寄送實際會在 UTC 0 點觸發（台灣時間 08:00）。新增 twParts() 與 twStartOfDayMs() 以固定 UTC+8 計算，shouldRunSchedule()、periodStart、formatTwTime() 皆改用台灣時區，排程設定的時/週/日皆以台灣時間為準" }
+      ]
+    },
+    {
+      "version": "4.20.0",
+      "date": "2026-04-21",
+      "title": "股票定期定額：TWSE 休市日自動順延 + 股數整數限制",
+      "type": "feature",
+      "changes": [
+        { "tag": "new", "text": "股票定期定額遇到 TWSE 休市日或週末，自動順延到下一個交易日：排程日仍以原日期推算週期（維持原本月頻率節奏），但交易紀錄日期改為實際下一個交易日，備註自動附上「原排程 YYYY-MM-DD 順延」" },
+        { "tag": "new", "text": "新增 TWSE 休市日快取（有價證券集中交易市場開（休）市日期 OpenAPI /v1/holidaySchedule/holidaySchedule），24 小時快取；自動排除「開始交易 / 最後交易」等特別交易日，僅將真正休市日加入黑名單" },
+        { "tag": "improved", "text": "/api/stock-recurring/process 回傳值新增 postponed 欄位，記錄本次處理因假日順延的筆數" },
+        { "tag": "fixed", "text": "股票交易紀錄股數限制為正整數：前端 input 由 min/step 0.0001 改為 min/step 1；後端 POST /PUT /api/stock-transactions 與 CSV 匯入皆新增 Number.isInteger 檢查，非整數股數回傳 400 錯誤「股數必須為整數」" }
+      ]
+    },
+    {
+      "version": "4.19.5",
+      "date": "2026-04-21",
+      "title": "固定收支編輯 / 起始日當天自動產生修正",
+      "type": "fix",
+      "changes": [
+        { "tag": "fixed", "text": "固定收支（與股票定期定額）起始日期為今日時，/api/recurring/process 與 /api/stock-recurring/process 不會產生當日交易的問題：過去一律以 getNextDate(start_date) 當首次日期，導致第一筆交易被跳過一個週期；現在 last_generated 為空時改以 start_date 本身作為首次生成日期" },
+        { "tag": "fixed", "text": "編輯固定收支（或交易）時，若分類是帶有子分類的父層，下拉無對應 option 導致 recCategory 值被清空、表單因 required 無法送出；buildCategoryOptions() 現在於父分類 optgroup 最前方加入「父分類名稱（全部）」可選項，沿用既有父層 ID" }
+      ]
+    },
     {
       "version": "4.19.4",
       "date": "2026-04-20",

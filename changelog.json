@@ -1,6 +1,15 @@
 {
-  "currentVersion": "4.20.2",
+  "currentVersion": "4.20.3",
   "releases": [
+    {
+      "version": "4.20.3",
+      "date": "2026-04-21",
+      "title": "固定收支頁載入失敗修正",
+      "type": "fix",
+      "changes": [
+        { "tag": "fixed", "text": "固定收支頁載入失敗：fmtNum is not defined — v4.20.2 引入外幣顯示時誤用了不存在的 fmtNum()（專案僅有 fmt()），整頁渲染 throw；改用 Number(...).toLocaleString('zh-TW') 直接格式化數字" }
+      ]
+    },
     {
       "version": "4.20.2",
       "date": "2026-04-21",

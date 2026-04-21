@@ -46,7 +46,7 @@ body.dark-mode {
   --surface: #151922;
   --text: #e8eaef;
   --text-secondary: #9ca3b4;
-  --text-muted: #6b7280;
+  --text-muted: #8b94a3;
   --border: #252a36;
   --income-bg: #082f2a;
   --expense-bg: #351020;
@@ -2009,7 +2009,7 @@ body.dark-mode .stock-tabs .tab.active {
   gap: 10px;
   padding: 10px 20px;
   margin: 0 12px;
-  color: rgba(255,255,255,.4);
+  color: rgba(255,255,255,.6);
   font-size: 12px;
   cursor: pointer;
   transition: all var(--transition-fast);
@@ -2033,13 +2033,13 @@ body.dark-mode .stock-tabs .tab.active {
   font-size: 11px;
 }
 .sidebar-legal-link {
-  color: rgba(255,255,255,.3); text-decoration: none;
+  color: rgba(255,255,255,.6); text-decoration: none;
   display: flex; align-items: center; gap: 4px;
   transition: color var(--transition-fast);
 }
-.sidebar-legal-link:hover { color: rgba(255,255,255,.7); }
+.sidebar-legal-link:hover { color: rgba(255,255,255,.9); }
 .sidebar-legal-link i { font-size: 10px; }
-.sidebar-legal-sep { color: rgba(255,255,255,.2); }
+.sidebar-legal-sep { color: rgba(255,255,255,.45); }
 
 /* ===== 響應式 ===== */
 @media (max-width: 768px) {

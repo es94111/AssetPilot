@@ -3947,7 +3947,9 @@ const App = (() => {
 
   function nextDateFront(dateStr, freq) {
     if (!dateStr) return '';
-    const d = new Date(dateStr);
+    const m = String(dateStr).match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (!m) return '';
+    const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
     if (isNaN(d.getTime())) return '';
     switch (freq) {
       case 'daily': d.setDate(d.getDate() + 1); break;
@@ -3956,7 +3958,7 @@ const App = (() => {
       case 'yearly': d.setFullYear(d.getFullYear() + 1); break;
       default: return '';
     }
-    return d.toISOString().slice(0, 10);
+    return localDateStr(d);
   }
 
   async function renderRecurring() {
@@ -3979,11 +3981,11 @@ const App = (() => {
         const nextBase = lastGen || startDate;
         const nextGen = lastGen ? nextDateFront(nextBase, r.frequency) : startDate;
         const nextOverdue = r.isActive && nextGen && nextGen <= todayStr;
-        const currency = (r.currency || 'TWD').toUpperCase();
+        const currency = normalizeCurrencyCode(r.currency || 'TWD');
         const fxRate = Number(r.fxRate || r.fx_rate || 1);
         const amountDisplay = currency === 'TWD' || fxRate <= 0
           ? fmt(r.amount)
-          : `${currency} ${fmtNum(Math.round(r.amount / fxRate * 100) / 100)} <span style="color:var(--text-secondary);font-weight:400">(≈ ${fmt(r.amount)})</span>`;
+          : `${escHtml(currency)} ${fmtNum(Math.round(r.amount / fxRate * 100) / 100)} <span style="color:var(--text-secondary);font-weight:400">(≈ ${fmt(r.amount)})</span>`;
         const catLabel = cat ? escHtml(cat.name) : '<span style="color:var(--danger)">（分類已刪除）</span>';
         const accLabel = acc ? escHtml(acc.name) : '<span style="color:var(--danger)">（帳戶已刪除）</span>';
         return `<div class="recurring-item">

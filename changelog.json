@@ -1,6 +1,15 @@
 {
-  "currentVersion": "4.20.3",
+  "currentVersion": "4.20.4",
   "releases": [
+    {
+      "version": "4.20.4",
+      "date": "2026-04-21",
+      "title": "外幣固定收支編輯失敗修正",
+      "type": "fix",
+      "changes": [
+        { "tag": "fixed", "text": "外幣固定收支點擊編輯時 refreshRecFxUi() 內仍殘留 fmtNum(twd) 呼叫（v4.20.3 僅修了列表 render 的那處），導致外幣記錄開啟編輯 Modal 即 throw「fmtNum is not defined」；改用 Number(twd).toLocaleString('zh-TW') 一致格式化" }
+      ]
+    },
     {
       "version": "4.20.3",
       "date": "2026-04-21",

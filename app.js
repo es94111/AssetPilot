@@ -6848,7 +6848,7 @@ const App = (() => {
     if (showFx && original > 0) {
       const rate = Number(el('recFxRate').value) > 0 ? Number(el('recFxRate').value) : getRateToTwd(c);
       const twd = Math.round(original * rate * 100) / 100;
-      el('recConvertedHint').textContent = `≈ TWD ${fmtNum(twd)}`;
+      el('recConvertedHint').textContent = `≈ TWD ${Number(twd).toLocaleString('zh-TW')}`;
     } else {
       el('recConvertedHint').textContent = '';
     }

@@ -1152,6 +1152,7 @@
 
 | 版本 | 日期 | 變更說明 |
 | --- | --- | --- |
+| 4.20.5 | 2026-04-21 | 深色模式對比度修正：①`--text-muted` 由 `#6b7280`（surface 上 3.77:1，未達 WCAG AA）提亮為 `#8b94a3`（5.75:1），影響股票卡片標籤、空白狀態文字、表格次要欄位等共 21 處；②側邊欄 `.sidebar-version` 文字 alpha .4 → .6（3.80→7.27:1）；③`.sidebar-legal-link` alpha .3 → .6（2.61→7.27:1）；④`.sidebar-legal-sep` 分隔點 alpha .2 → .45（1.80→4.52:1） |
 | 4.20.4 | 2026-04-21 | 外幣固定收支編輯失敗修正：refreshRecFxUi() 內仍殘留 fmtNum(twd) 呼叫（v4.20.3 僅修了列表 render），外幣記錄開啟編輯 Modal 即 throw「fmtNum is not defined」；改用 Number(twd).toLocaleString('zh-TW') |
 | 4.20.3 | 2026-04-21 | 固定收支頁載入失敗修正：v4.20.2 外幣顯示誤用不存在的 fmtNum()，整頁 throw「fmtNum is not defined」；改用 Number(...).toLocaleString('zh-TW') 直接格式化 |
 | 4.20.2 | 2026-04-21 | 固定收支列表 UX：①新增詳細明細區塊（起始日、上次產生日、下次產生日，啟用且下次產生日 ≤ 今日時以警示色標記「待執行」），備註一併顯示；②外幣固定收支顯示原幣金額與 TWD 換算；③編輯時若原分類/帳戶已刪除，下拉插入「（原分類已刪除）/（原帳戶已刪除）」佔位選項避免 select.value 靜默清空；④編輯時 type 非 expense/income 時不再 crash，回退為 expense |

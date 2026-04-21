@@ -1155,6 +1155,12 @@ textarea.form-input { resize: vertical; min-height: 80px; }
   flex-wrap: wrap; gap: 8px;
 }
 .recurring-info { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+.recurring-detail {
+  display: flex; gap: 16px; align-items: center; flex-wrap: wrap;
+  margin-top: 8px;
+  font-size: 13px; color: var(--text-secondary);
+}
+.recurring-detail i { margin-right: 4px; opacity: 0.7; }
 .recurring-status {
   display: inline-block; padding: 2px 10px; border-radius: 20px;
   font-size: 12px; font-weight: 600;

@@ -3945,12 +3945,27 @@ const App = (() => {
     </div>`;
   }
 
+  function nextDateFront(dateStr, freq) {
+    if (!dateStr) return '';
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return '';
+    switch (freq) {
+      case 'daily': d.setDate(d.getDate() + 1); break;
+      case 'weekly': d.setDate(d.getDate() + 7); break;
+      case 'monthly': d.setMonth(d.getMonth() + 1); break;
+      case 'yearly': d.setFullYear(d.getFullYear() + 1); break;
+      default: return '';
+    }
+    return d.toISOString().slice(0, 10);
+  }
+
   async function renderRecurring() {
     const recs = await API.get('/api/recurring');
     const container = el('recurringList');
     if (recs.length === 0) {
       container.innerHTML = '<p class="empty-hint">尚無固定收支</p>';
     } else {
+      const todayStr = today();
       container.innerHTML = recs.map(r => {
         const cat = getCat(r.categoryId);
         const acc = getAcc(r.accountId);
@@ -3959,14 +3974,34 @@ const App = (() => {
         const typeBadge = r.type === 'income'
           ? '<span class="type-badge income">收入</span>'
           : '<span class="type-badge expense">支出</span>';
+        const startDate = r.startDate || r.start_date || '';
+        const lastGen = r.lastGenerated || r.last_generated || '';
+        const nextBase = lastGen || startDate;
+        const nextGen = lastGen ? nextDateFront(nextBase, r.frequency) : startDate;
+        const nextOverdue = r.isActive && nextGen && nextGen <= todayStr;
+        const currency = (r.currency || 'TWD').toUpperCase();
+        const fxRate = Number(r.fxRate || r.fx_rate || 1);
+        const amountDisplay = currency === 'TWD' || fxRate <= 0
+          ? fmt(r.amount)
+          : `${currency} ${fmtNum(Math.round(r.amount / fxRate * 100) / 100)} <span style="color:var(--text-secondary);font-weight:400">(≈ ${fmt(r.amount)})</span>`;
+        const catLabel = cat ? escHtml(cat.name) : '<span style="color:var(--danger)">（分類已刪除）</span>';
+        const accLabel = acc ? escHtml(acc.name) : '<span style="color:var(--danger)">（帳戶已刪除）</span>';
         return `<div class="recurring-item">
-          <div class="recurring-info">
-            ${typeBadge}
-            <span style="font-weight:600">${fmt(r.amount)}</span>
-            <span>${cat ? escHtml(cat.name) : '-'}</span>
-            <span>${acc ? escHtml(acc.name) : '-'}</span>
-            <span>${FREQ_LABELS[r.frequency] || r.frequency}</span>
-            <span class="recurring-status ${statusCls}">${statusText}</span>
+          <div style="flex:1;min-width:0">
+            <div class="recurring-info">
+              ${typeBadge}
+              <span style="font-weight:600">${amountDisplay}</span>
+              <span>${catLabel}</span>
+              <span>${accLabel}</span>
+              <span>${FREQ_LABELS[r.frequency] || r.frequency}</span>
+              <span class="recurring-status ${statusCls}">${statusText}</span>
+            </div>
+            <div class="recurring-detail">
+              <span><i class="fas fa-play-circle"></i> 起始：${escHtml(startDate || '-')}</span>
+              <span><i class="fas fa-clock-rotate-left"></i> 上次產生：${escHtml(lastGen || '尚未產生')}</span>
+              <span${nextOverdue ? ' style="color:var(--warning,#f59e0b);font-weight:600"' : ''}><i class="fas fa-calendar-day"></i> 下次產生：${escHtml(nextGen || '-')}${nextOverdue ? '（待執行）' : ''}</span>
+              ${r.note ? `<span><i class="fas fa-sticky-note"></i> ${escHtml(r.note)}</span>` : ''}
+            </div>
           </div>
           <div style="display:flex;gap:4px">
             <button class="btn-icon" onclick="App.toggleRecurring('${r.id}')" title="${r.isActive ? '暫停' : '啟用'}">
@@ -6758,11 +6793,13 @@ const App = (() => {
     if (recId) {
       const recs = await API.get('/api/recurring');
       const r = recs.find(x => x.id === recId);
-      if (!r) return;
+      if (!r) { toast('固定收支不存在', 'error'); return; }
       el('recId').value = r.id;
       el('modalRecurringTitle').textContent = '編輯固定收支';
-      form.querySelector(`input[name="recType"][value="${r.type}"]`).checked = true;
-      updateRecCategorySelect(r.type);
+      const recType = (r.type === 'income' || r.type === 'expense') ? r.type : 'expense';
+      const typeRadio = form.querySelector(`input[name="recType"][value="${recType}"]`);
+      if (typeRadio) typeRadio.checked = true;
+      updateRecCategorySelect(recType);
       const recCurrency = normalizeCurrencyCode(r.currency || 'TWD');
       const origAmount = recCurrency === 'TWD' ? r.amount : (Number(r.fx_rate) > 0 ? Math.round(r.amount / r.fx_rate * 10000) / 10000 : r.amount);
       renderCurrencySelectOptions('recCurrency', recCurrency, [recCurrency]);
@@ -6773,8 +6810,22 @@ const App = (() => {
         el('recFxRateRow').style.display = '';
         el('recFxRate').required = true;
       }
-      el('recCategory').value = r.categoryId;
-      el('recAccount').value = r.accountId;
+      const catSel = el('recCategory');
+      if (r.categoryId && !Array.from(catSel.options).some(o => o.value === r.categoryId)) {
+        const opt = document.createElement('option');
+        opt.value = r.categoryId;
+        opt.textContent = '（原分類已刪除）';
+        catSel.insertBefore(opt, catSel.firstChild);
+      }
+      catSel.value = r.categoryId || '';
+      const accSel = el('recAccount');
+      if (r.accountId && !Array.from(accSel.options).some(o => o.value === r.accountId)) {
+        const opt = document.createElement('option');
+        opt.value = r.accountId;
+        opt.textContent = '（原帳戶已刪除）';
+        accSel.insertBefore(opt, accSel.firstChild);
+      }
+      accSel.value = r.accountId || '';
       el('recFrequency').value = r.frequency;
       el('recStartDate').value = r.startDate || r.start_date;
       el('recNote').value = r.note || '';

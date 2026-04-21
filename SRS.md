@@ -1152,6 +1152,7 @@
 
 | 版本 | 日期 | 變更說明 |
 | --- | --- | --- |
+| 4.20.2 | 2026-04-21 | 固定收支列表 UX：①新增詳細明細區塊（起始日、上次產生日、下次產生日，啟用且下次產生日 ≤ 今日時以警示色標記「待執行」），備註一併顯示；②外幣固定收支顯示原幣金額與 TWD 換算；③編輯時若原分類/帳戶已刪除，下拉插入「（原分類已刪除）/（原帳戶已刪除）」佔位選項避免 select.value 靜默清空；④編輯時 type 非 expense/income 時不再 crash，回退為 expense |
 | 4.20.1 | 2026-04-21 | 排程寄送資產統計報表修正：先前 shouldRunSchedule() 與 formatTwTime() 直接用 Date#getHours() / #getDate() / #getDay()，伺服器跑在非 Asia/Taipei 時區（例：Zeabur / Docker 預設 UTC）時會以 UTC 判斷觸發時間，導致設定 0 時寄送實際在 UTC 0 點（台灣 08:00）才觸發。新增 twParts()（固定 UTC+8 無 DST）與 twStartOfDayMs()，排程觸發時/週/日比對與 lastRun periodStart 一律以台灣時間為準 |
 | 4.20.0 | 2026-04-21 | 股票定期定額強化：①遇 TWSE 休市日或週末自動順延到下一個交易日（排程日仍以原日期推算維持週期節奏，交易紀錄日期為實際交易日，備註附「原排程 YYYY-MM-DD 順延」）；②新增 TWSE 休市日快取（/v1/holidaySchedule/holidaySchedule OpenAPI，24h TTL），過濾「開始交易/最後交易」特別交易日；③/api/stock-recurring/process 回傳新增 postponed 欄位；④股票交易股數限整數：前端 input min/step 0.0001 → 1，後端 POST/PUT/CSV import 皆加 Number.isInteger 檢查 |
 | 4.19.5 | 2026-04-21 | 固定收支修正：①/api/recurring/process 與 /api/stock-recurring/process 原先以 getNextDate(start_date) 當首次生成日期，導致起始日為今天時跳過當日；現 last_generated 為空時改以 start_date 本身作為首次日期；②編輯固定收支（或交易）時，若分類為帶有子分類的父層，下拉無對應 option 導致 recCategory 被清空、表單無法送出；buildCategoryOptions() 於父分類 optgroup 最前方加入「父分類名稱（全部）」可選項 |

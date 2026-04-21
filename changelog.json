@@ -1,6 +1,15 @@
 {
-  "currentVersion": "4.20.0",
+  "currentVersion": "4.20.1",
   "releases": [
+    {
+      "version": "4.20.1",
+      "date": "2026-04-21",
+      "title": "排程寄送報表：固定以台灣時區判斷觸發時間",
+      "type": "fix",
+      "changes": [
+        { "tag": "fixed", "text": "排程寄送資產統計報表若伺服器執行時區不是 Asia/Taipei（例：Zeabur / Docker 預設 UTC），shouldRunSchedule() 的 now.getHours() 會回傳 UTC 時數，導致設定 0 時寄送實際會在 UTC 0 點觸發（台灣時間 08:00）。新增 twParts() 與 twStartOfDayMs() 以固定 UTC+8 計算，shouldRunSchedule()、periodStart、formatTwTime() 皆改用台灣時區，排程設定的時/週/日皆以台灣時間為準" }
+      ]
+    },
     {
       "version": "4.20.0",
       "date": "2026-04-21",

@@ -3606,20 +3606,40 @@ async function updateUserStockPrices(userId) {
   return { updated, skipped };
 }
 
-// 判斷現在是否該觸發寄送：到了當期排程時間，且本期尚未執行
-function shouldRunSchedule(schedule, now = new Date()) {
-  if (schedule.freq === 'off') return false;
-  if (now.getHours() < schedule.hour) return false;
+// 取得指定時間戳在台灣時區（UTC+8，無 DST）的各欄位 — 排程與顯示一律以台灣時區為準，
+// 避免伺服器跑在 UTC 等其他時區時「0 時寄送」被當成 UTC 0 點（台灣 08:00）觸發
+function twParts(ts) {
+  const d = new Date(ts + 8 * 3600 * 1000);
+  return {
+    year: d.getUTCFullYear(),
+    month: d.getUTCMonth(),
+    date: d.getUTCDate(),
+    day: d.getUTCDay(),
+    hours: d.getUTCHours(),
+    minutes: d.getUTCMinutes(),
+  };
+}
 
-  let periodStart;
+// 台灣時區當日 00:00 對應的 Unix ms（UTC 時間軸）
+function twStartOfDayMs(ts) {
+  const p = twParts(ts);
+  return Date.UTC(p.year, p.month, p.date) - 8 * 3600 * 1000;
+}
+
+// 判斷現在是否該觸發寄送：到了當期排程時間，且本期尚未執行（一律以台灣時區比對）
+function shouldRunSchedule(schedule, nowTs = serverNow()) {
+  if (schedule.freq === 'off') return false;
+  const tw = twParts(nowTs);
+  if (tw.hours < schedule.hour) return false;
+
+  const periodStart = twStartOfDayMs(nowTs);
+
   if (schedule.freq === 'daily') {
-    periodStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0).getTime();
+    // nothing extra
   } else if (schedule.freq === 'weekly') {
-    if (now.getDay() !== schedule.weekday) return false;
-    periodStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0).getTime();
+    if (tw.day !== schedule.weekday) return false;
   } else if (schedule.freq === 'monthly') {
-    if (now.getDate() !== schedule.dayOfMonth) return false;
-    periodStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0).getTime();
+    if (tw.date !== schedule.dayOfMonth) return false;
   } else {
     return false;
   }
@@ -3719,15 +3739,15 @@ async function runScheduledReportNow(triggeredBy = 'scheduler', overrideUserIds 
 
 function formatTwTime(ts) {
   if (!ts) return '從未';
-  const d = new Date(ts);
+  const p = twParts(ts);
   const pad = (n) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  return `${p.year}-${pad(p.month + 1)}-${pad(p.date)} ${pad(p.hours)}:${pad(p.minutes)}`;
 }
 
 function checkAndRunSchedule() {
   try {
     const schedule = getReportSchedule();
-    if (!shouldRunSchedule(schedule, new Date(serverNow()))) return;
+    if (!shouldRunSchedule(schedule, serverNow())) return;
     runScheduledReportNow('排程').catch(err => console.error('[scheduled-report]', err));
   } catch (e) {
     console.error('[scheduled-report] check error', e);
@@ -4773,39 +4793,58 @@ function getNextDate(dateStr, freq) {
 // ─── TWSE 休市日（有價證券集中交易市場開（休）市日期）───
 // 來源：https://openapi.twse.com.tw/v1/holidaySchedule/holidaySchedule
 const TWSE_HOLIDAY_CACHE_TTL = 24 * 60 * 60 * 1000;
-const twseHolidayCache = { set: null, timestamp: 0 };
+const TWSE_HOLIDAY_FAILURE_BACKOFF = 5 * 60 * 1000;
+const twseHolidayCache = { set: null, timestamp: 0, lastFailedAt: 0 };
+let twseHolidayInflight = null; // 進行中的 fetch Promise，共用避免同時多次外呼
 
 async function fetchTwseHolidaySet() {
   const now = Date.now();
   if (twseHolidayCache.set && (now - twseHolidayCache.timestamp) < TWSE_HOLIDAY_CACHE_TTL) {
     return twseHolidayCache.set;
   }
-  try {
-    const res = await fetch('https://openapi.twse.com.tw/v1/holidaySchedule/holidaySchedule', {
-      headers: { 'Accept': 'application/json', 'User-Agent': 'Mozilla/5.0' },
-      signal: AbortSignal.timeout(8000),
-    });
-    if (!res.ok) return twseHolidayCache.set || new Set();
-    const list = await res.json();
-    const set = new Set();
-    list.forEach(item => {
-      const name = item.Name || '';
-      // API 同時包含休市日與特別交易日；「開始交易」/「最後交易」是開市日，要排除
-      if (/開始交易|最後交易/.test(name)) return;
-      const rocDate = String(item.Date || '');
-      if (!/^\d{7}$/.test(rocDate)) return;
-      const y = parseInt(rocDate.slice(0, 3), 10) + 1911;
-      const m = rocDate.slice(3, 5);
-      const d = rocDate.slice(5, 7);
-      set.add(`${y}-${m}-${d}`);
-    });
-    twseHolidayCache.set = set;
-    twseHolidayCache.timestamp = now;
-    return set;
-  } catch (e) {
-    console.error('TWSE holidaySchedule 錯誤:', e.message);
+  // 近期失敗：在 backoff 視窗內不再外呼，避免 API 故障時每次呼叫都卡 ~8s timeout
+  if ((now - twseHolidayCache.lastFailedAt) < TWSE_HOLIDAY_FAILURE_BACKOFF) {
     return twseHolidayCache.set || new Set();
   }
+  if (twseHolidayInflight) return twseHolidayInflight;
+
+  twseHolidayInflight = (async () => {
+    try {
+      const res = await fetch('https://openapi.twse.com.tw/v1/holidaySchedule/holidaySchedule', {
+        headers: { 'Accept': 'application/json', 'User-Agent': 'Mozilla/5.0' },
+        signal: AbortSignal.timeout(8000),
+      });
+      if (!res.ok) {
+        twseHolidayCache.lastFailedAt = Date.now();
+        return twseHolidayCache.set || new Set();
+      }
+      const list = await res.json();
+      const set = new Set();
+      list.forEach(item => {
+        const name = item.Name || '';
+        // API 同時包含休市日與特別交易日；「開始交易」/「最後交易」是開市日，要排除
+        if (/開始交易|最後交易/.test(name)) return;
+        const rocDate = String(item.Date || '');
+        if (!/^\d{7}$/.test(rocDate)) return;
+        const y = parseInt(rocDate.slice(0, 3), 10) + 1911;
+        const m = rocDate.slice(3, 5);
+        const d = rocDate.slice(5, 7);
+        set.add(`${y}-${m}-${d}`);
+      });
+      twseHolidayCache.set = set;
+      twseHolidayCache.timestamp = Date.now();
+      twseHolidayCache.lastFailedAt = 0;
+      return set;
+    } catch (e) {
+      twseHolidayCache.lastFailedAt = Date.now();
+      console.error('TWSE holidaySchedule 錯誤:', e.message);
+      return twseHolidayCache.set || new Set();
+    } finally {
+      twseHolidayInflight = null;
+    }
+  })();
+
+  return twseHolidayInflight;
 }
 
 function isTwseWeekend(dateStr) {
@@ -5643,6 +5682,7 @@ app.patch('/api/stock-recurring/:id/toggle', (req, res) => {
 
 app.post('/api/stock-recurring/process', async (req, res) => {
   const recs = queryAll("SELECT * FROM stock_recurring WHERE user_id = ? AND is_active = 1", [req.userId]);
+  if (recs.length === 0) return res.json({ generated: 0, skipped: 0, postponed: 0 });
   const settings = getStockSettings(req.userId);
   const todayS = todayStr();
   const holidaySet = await fetchTwseHolidaySet();

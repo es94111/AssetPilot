@@ -1,6 +1,18 @@
 {
-  "currentVersion": "4.20.1",
+  "currentVersion": "4.20.2",
   "releases": [
+    {
+      "version": "4.20.2",
+      "date": "2026-04-21",
+      "title": "固定收支列表顯示詳細明細 + 編輯穩健性強化",
+      "type": "improved",
+      "changes": [
+        { "tag": "improved", "text": "固定收支列表每筆卡片新增詳細明細區塊：顯示起始日期、上次產生日期、下次產生日期（依頻率推算），若下次產生日已到達且狀態為啟用會以警示色標記「（待執行）」；若有備註一併顯示" },
+        { "tag": "improved", "text": "外幣固定收支顯示原幣別金額與 TWD 換算結果（如 USD 50 ≈ NT$ 1,575）" },
+        { "tag": "fixed", "text": "編輯固定收支時若原分類或帳戶已被刪除，下拉會額外插入「（原分類已刪除）/（原帳戶已刪除）」佔位選項，避免 select.value 靜默清空導致表單 required 無法送出" },
+        { "tag": "fixed", "text": "編輯固定收支時若資料中 type 非 expense/income（異常資料）不再導致 querySelector(...).checked 拋出例外，預設回退為 expense" }
+      ]
+    },
     {
       "version": "4.20.1",
       "date": "2026-04-21",

@@ -1,6 +1,17 @@
 {
-  "currentVersion": "4.20.5",
+  "currentVersion": "4.21.0",
   "releases": [
+    {
+      "version": "4.21.0",
+      "date": "2026-04-24",
+      "title": "SRS 改寫為敘述式 SSD + Spec-Kit 憲章",
+      "type": "improved",
+      "changes": [
+        { "tag": "improved", "text": "SRS.md 全面改寫為敘述式 SSD（System Specification Document）：按模組（使用者與權限、交易與帳戶、分類、預算與固定收支、統計報表、股票投資、匯出匯入、前端路由）分段，每個模組開頭敘述核心目標與運作流程，結尾以「不做什麼」明確列出邊界；舊 IEEE-830 逐條 FR 結構轉為技術附錄保留（非功能需求、資料模型、API 端點）" },
+        { "tag": "new", "text": "導入 Spec-Kit 工作流與 `.specify/memory/constitution.md` v1.0.0（Principle I：所有規格、計畫、使用者文件必須為繁體中文，NON-NEGOTIABLE；源碼識別字、外部 API 名稱、commit prefix、憲章本身為例外）" },
+        { "tag": "new", "text": "新增 Docker dev 分支支援：推送至 `dev` 分支會產出 `dev` 與 `dev.版本號` 雙 tag（與 main 的 `latest` + `版本號` 不重疊）；main 分支推送自動建立 `v版本號` git tag" }
+      ]
+    },
     {
       "version": "4.20.5",
       "date": "2026-04-21",

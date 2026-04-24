@@ -127,26 +127,18 @@ Clarification 衍生的 9 項調整。
 | `express-rate-limit`             | 8.4.0   | 8.4.0      | ✅   | v8 支援 `keyGenerator`；FR-007 兩桶 rate limit 用。 |
 | `dotenv`                         | 17.4.2  | 17.4.2     | ✅   | 讀取 `.env`。                                 |
 | `adm-zip`                        | 0.5.17  | 0.5.17     | ✅   | 匯入／匯出備份檔。                             |
-| `resend`                         | 6.12.2  | 6.12.2     | ✅   | 2026-04-24 自 6.1.3 升級；`new Resend()` / `emails.send()` 物件回傳 API 未變更，`sendStatsEmail()` 無須調整。 |
+| `resend`                         | 6.1.3   | **6.12.2** | 🟡   | 落後 11 個 minor（2025-10-14 → 2026-04-20）；本功能不涉及寄信路徑，不影響實作。 |
 
-**合計**：13 個直接相依**全部**已為 npm latest（2026-04-24 對齊完畢）。
+**合計**：13 個直接相依中，12 個已為 npm latest、1 個（`resend`）大幅落後但
+本功能不涉及寄信路徑，不影響實作。
 
-### §5.1 `npm audit` 已知事項
+若要在同一 PR 順手對齊 `resend`，可執行：
 
-升級 `resend@6.12.2` 後，`npm audit` 回報 3 筆 **moderate** 漏洞，皆來自同一條傳遞
-相依鏈：
-
+```bash
+npm install resend@latest
+# 升級後需驗證 server.js 內所有 `require('resend')` 使用點（寄信、報表排程）
+# 參考：https://github.com/resend/resend-node/releases
 ```
-resend@6.12.2 → svix@1.68.0-1.91.1 → uuid (<14.0.0)
-```
-
-- 通報：[GHSA-w5hq-g745-h8pq](https://github.com/advisories/GHSA-w5hq-g745-h8pq) ──
-  `uuid` v3/v5/v6 在呼叫時傳入 `buf` 參數才缺少邊界檢查（CWE-787 / CWE-1285），
-  CVSS 分數 0。
-- 本專案與 `svix` 皆未以 `buf` 參數呼叫 `uuid`，實際無法觸發。
-- `npm audit` 的 `fixAvailable` 建議**降級**回 `resend@6.1.3`，屬錯誤建議，本計畫
-  不採納；待 `svix` 升級至相依 `uuid@^14` 的版本後再行隨 resend minor 同步。
-- 決策：**維持 6.12.2**，於此備案，本功能不受影響。
 
 ## §6. 下一步
 

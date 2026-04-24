@@ -1,7 +1,7 @@
 openapi: 3.2.0
 info:
   title: AssetPilot 使用者與權限 API（功能子契約）
-  version: 0.2.0
+  version: 0.1.0
   description: |
     本檔為 `specs/001-user-permissions` 功能的 API 子契約，僅涵蓋本功能直接
     負責的端點。正式對外契約以專案根目錄 `openapi.yaml` 為準；兩份文件在
@@ -592,7 +592,7 @@ paths:
                       $ref: '#/components/schemas/LoginAuditEntry'
         '401': { $ref: '#/components/responses/Unauthorized' }
 
-  /api/admin/server-time:
+  /api/server-time:
     get:
       tags: [ServerTime]
       summary: 取得伺服器時間資訊
@@ -606,10 +606,12 @@ paths:
                 $ref: '#/components/schemas/ServerTimeInfo'
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
+
+  /api/server-time/offset:
     put:
       tags: [ServerTime]
       summary: 更新伺服器採用時間偏移
-      description: FR-051 / FR-052。以 `targetTime`（RFC 3339）或 `offsetMs`（毫秒偏移）擇一更新。
+      description: FR-051 / FR-052。
       requestBody:
         required: true
         content:
@@ -641,7 +643,7 @@ paths:
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
 
-  /api/admin/server-time/ntp-sync:
+  /api/server-time/ntp:
     post:
       tags: [ServerTime]
       summary: NTP 查詢／校正

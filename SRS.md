@@ -1,6 +1,6 @@
 # 資產管理 系統規格說明書 (SSD)
 
-**版本：** 4.21.0
+**版本：** 4.21.1
 **日期：** 2026-04-24
 **狀態：** 已實作
 
@@ -904,6 +904,7 @@ API 路徑統一以 `/api/` 為前綴。所有需認證的路由自動套用 aut
 
 | 版本 | 日期 | 變更說明 |
 | --- | --- | --- |
+| 4.21.1 | 2026-04-24 | 升級 `resend` 6.1.3 → 6.12.2 對齊 npm latest（13 個直接相依全對齊）；`emails.send()` 物件回傳 API 未變更，`sendStatsEmail()` 無須調整，`node --check server.js` 通過；`specs/001-user-permissions/research.md` §5 同步標記 ✅，並新增 §5.1 記錄 `resend → svix → uuid<14` 鏈上 GHSA-w5hq-g745-h8pq 3 筆 moderate 漏洞（本專案未以 `buf` 參數呼叫 `uuid`，CVSS 0，不受影響；`fixAvailable` 建議降級為誤判，決策維持 6.12.2） |
 | 4.21.0 | 2026-04-24 | SRS 全面改寫為敘述式 SSD（System Specification Document）：按模組（使用者與權限、交易與帳戶、分類、預算與固定收支、統計報表、股票投資、匯出匯入、前端路由）分段，每個模組含核心目標敘述與「不做什麼」邊界；舊 IEEE-830 逐條 FR 結構轉為技術附錄保留；新增 Spec-Kit 憲章 `.specify/memory/constitution.md` v1.0.0（Principle I：所有規格與使用者文件必須為繁體中文，NON-NEGOTIABLE） |
 | 4.20.5 | 2026-04-21 | 深色模式對比度修正：①`--text-muted` 由 `#6b7280`（surface 上 3.77:1，未達 WCAG AA）提亮為 `#8b94a3`（5.75:1），影響股票卡片標籤、空白狀態文字、表格次要欄位等共 21 處；②側邊欄 `.sidebar-version` 文字 alpha .4 → .6（3.80→7.27:1）；③`.sidebar-legal-link` alpha .3 → .6（2.61→7.27:1）；④`.sidebar-legal-sep` 分隔點 alpha .2 → .45（1.80→4.52:1） |
 | 4.20.4 | 2026-04-21 | 外幣固定收支編輯失敗修正：refreshRecFxUi() 內仍殘留 fmtNum(twd) 呼叫（v4.20.3 僅修了列表 render），外幣記錄開啟編輯 Modal 即 throw「fmtNum is not defined」；改用 Number(twd).toLocaleString('zh-TW') |

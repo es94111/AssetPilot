@@ -701,6 +701,51 @@ async function initDB() {
     }
   }
 
+  // FR-001 / Q8：Email 正規化 migration（M1）
+  // 將既有 users.email 全數 trim + lowercase；衝突時保留 created_at 最小者，
+  // 其餘帳號之 FK 資料合併至存活者；無衝突者直接 UPDATE
+  try {
+    const allUsers = db.exec("SELECT id, email, created_at FROM users ORDER BY created_at ASC, rowid ASC");
+    const rows = allUsers[0]?.values || [];
+    const grouped = new Map();
+    for (const [id, email, createdAt] of rows) {
+      const norm = normalizeEmail(email);
+      if (!norm) continue;
+      if (!grouped.has(norm)) grouped.set(norm, []);
+      grouped.get(norm).push({ id, email, createdAt });
+    }
+    let mergeCount = 0;
+    let updateCount = 0;
+    const FK_TABLES = ['transactions', 'accounts', 'categories', 'budgets', 'recurring', 'stocks', 'stock_transactions', 'stock_dividends', 'stock_settings', 'stock_recurring', 'exchange_rate_settings', 'passkey_credentials', 'login_audit_logs', 'login_attempt_logs'];
+    for (const [norm, list] of grouped.entries()) {
+      if (list.length > 1) {
+        const survivor = list[0];
+        for (let i = 1; i < list.length; i++) {
+          const victim = list[i];
+          for (const table of FK_TABLES) {
+            try { db.run(`UPDATE ${table} SET user_id = ? WHERE user_id = ?`, [survivor.id, victim.id]); } catch (e) { /* table may not exist */ }
+          }
+          db.run('DELETE FROM users WHERE id = ?', [victim.id]);
+          mergeCount++;
+        }
+        if (survivor.email !== norm) {
+          db.run('UPDATE users SET email = ? WHERE id = ?', [norm, survivor.id]);
+          updateCount++;
+        }
+      } else {
+        const only = list[0];
+        if (only.email !== norm) {
+          db.run('UPDATE users SET email = ? WHERE id = ?', [norm, only.id]);
+          updateCount++;
+        }
+      }
+    }
+    if (updateCount > 0 || mergeCount > 0) {
+      saveDB();
+      console.log(`[Email Migration] normalized ${updateCount} users, merged ${mergeCount} duplicate accounts`);
+    }
+  } catch (e) { console.error('[Email Migration] error', e); }
+
   // 資料庫升級：為 categories 加入 parent_id 欄位
   try {
     db.run("ALTER TABLE categories ADD COLUMN parent_id TEXT DEFAULT ''");
@@ -1853,14 +1898,23 @@ function deleteUserData(userId) {
 // Auth Middleware
 // ═══════════════════════════════════════
 
+const AUTH_COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: 'strict',
+  path: '/',
+};
+
 function setAuthCookie(res, token) {
-  res.cookie('authToken', token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
-    maxAge: JWT_EXPIRES_MS,
-  });
+  res.cookie('authToken', token, { ...AUTH_COOKIE_OPTIONS, maxAge: COOKIE_MAX_AGE });
 }
+
+function clearAuthCookie(res) {
+  res.clearCookie('authToken', AUTH_COOKIE_OPTIONS);
+}
+
+// FR-065 / SC-006：登入路徑時序對齊用的 dummy bcrypt hash
+const DUMMY_HASH = bcrypt.hashSync('__dummy__', 10);
 
 function authMiddleware(req, res, next) {
   const token = req.cookies?.authToken
@@ -1969,6 +2023,8 @@ app.post('/api/auth/login', async (req, res) => {
 
   const user = queryOne("SELECT * FROM users WHERE email = ?", [emailLower]);
   if (!user) {
+    // FR-065 / SC-006：即使帳號不存在仍執行一次 bcrypt 比對，消除時序側信道
+    await bcrypt.compare(password, DUMMY_HASH);
     trackFailedLogin(emailLower);
     recordLoginAttempt({ email: emailLower, req, method: 'password', isSuccess: false, failureReason: 'user_not_found' });
     return res.status(401).json({ error: '電子郵件或密碼錯誤' });
@@ -2504,7 +2560,18 @@ app.post('/api/auth/passkey/login', async (req, res) => {
 });
 
 app.post('/api/auth/logout', (req, res) => {
-  res.clearCookie('authToken');
+  // FR-005：登出遞增 token_version，使該使用者所有裝置舊 JWT 立即失效
+  try {
+    const token = req.cookies?.authToken;
+    if (token) {
+      const decoded = jwt.verify(token, JWT_SECRET, { ignoreExpiration: true });
+      if (decoded?.userId) {
+        db.run("UPDATE users SET token_version = COALESCE(token_version, 0) + 1 WHERE id = ?", [decoded.userId]);
+        saveDB();
+      }
+    }
+  } catch (e) { /* token 已失效也無妨，仍清除 Cookie */ }
+  clearAuthCookie(res);
   res.json({ ok: true });
 });
 

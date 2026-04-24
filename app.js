@@ -5156,7 +5156,7 @@ const App = (() => {
     if (!currentUser?.isAdmin) return;
     try {
       const [settings, users, smtp, schedule] = await Promise.all([
-        API.get('/api/admin/settings'),
+        API.get('/api/admin/system-settings'),
         API.get('/api/admin/users'),
         API.get('/api/admin/smtp-settings').catch(() => null),
         API.get('/api/admin/report-schedule').catch(() => null),
@@ -5264,7 +5264,7 @@ const App = (() => {
         const publicRegistration = !!el('adminPublicRegistrationToggle')?.checked;
         const allowedRegistrationEmails = el('adminAllowedEmails')?.value || '';
         const adminIpAllowlist = el('adminIpAllowlist')?.value || '';
-        await API.put('/api/admin/settings', { publicRegistration, allowedRegistrationEmails, adminIpAllowlist });
+        await API.put('/api/admin/system-settings', { publicRegistration, allowedRegistrationEmails, adminIpAllowlist });
         const config = await (await fetch('/api/config', { cache: 'no-store' })).json();
         authConfig = {
           registrationEnabled: !!config.registrationEnabled,

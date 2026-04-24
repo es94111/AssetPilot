@@ -1881,17 +1881,38 @@ function parseLoginLogTarget(rawId) {
   return { byRowId: false, value: id };
 }
 
+// T036：Email SHA-256 雜湊（用於 FR-035 匿名化失敗稽核紀錄）
+function createHashedEmail(email) {
+  return crypto.createHash('sha256').update(normalizeEmail(email)).digest('hex');
+}
+
+// FR-035 / Q9：混合刪除策略
+// - 業務資料表與 passkey_credentials：全部 DELETE WHERE user_id
+// - login_audit_logs：硬刪（僅保留成功登入，業務意義上與使用者綁定）
+// - login_attempt_logs(is_success=0)：匿名化保留（user_id='', email=SHA-256）
+// - login_attempt_logs(is_success=1)：硬刪
+// - users：最後刪除
 function deleteUserData(userId) {
-  const tables = [
+  const user = queryOne('SELECT email FROM users WHERE id = ?', [userId]);
+  const hashedEmail = user ? createHashedEmail(user.email || '') : '';
+  const businessTables = [
     'stock_dividends', 'stock_transactions', 'stock_recurring', 'stocks',
     'transactions', 'budgets', 'recurring', 'accounts', 'categories',
-    'exchange_rates', 'exchange_rate_settings', 'stock_settings', 'login_audit_logs', 'login_attempt_logs',
-    'passkey_credentials'
+    'exchange_rates', 'exchange_rate_settings', 'stock_settings',
+    'passkey_credentials',
   ];
-  tables.forEach(t => {
-    db.run(`DELETE FROM ${t} WHERE user_id = ?`, [userId]);
+  try { db.run('BEGIN'); } catch (e) { /* may already be in transaction */ }
+  businessTables.forEach((t) => {
+    try { db.run(`DELETE FROM ${t} WHERE user_id = ?`, [userId]); } catch (e) { /* table may not exist */ }
   });
-  db.run("DELETE FROM users WHERE id = ?", [userId]);
+  db.run('DELETE FROM login_audit_logs WHERE user_id = ?', [userId]);
+  db.run(
+    "UPDATE login_attempt_logs SET user_id = '', email = ? WHERE user_id = ? AND is_success = 0",
+    [hashedEmail, userId]
+  );
+  db.run('DELETE FROM login_attempt_logs WHERE user_id = ? AND is_success = 1', [userId]);
+  db.run('DELETE FROM users WHERE id = ?', [userId]);
+  try { db.run('COMMIT'); } catch (e) { /* ignore */ }
 }
 
 // ═══════════════════════════════════════
@@ -2793,12 +2814,13 @@ app.post('/api/admin/login-logs/all/batch-delete', adminMiddleware, (req, res) =
   res.json({ deleted });
 });
 
-app.get('/api/admin/settings', adminMiddleware, (req, res) => {
+// CT-1：/api/admin/settings → /api/admin/system-settings（server.js 對齊契約）
+app.get('/api/admin/system-settings', adminMiddleware, (req, res) => {
   const settings = getSystemSettings();
   res.json(settings);
 });
 
-app.put('/api/admin/settings', adminMiddleware, (req, res) => {
+app.put('/api/admin/system-settings', adminMiddleware, (req, res) => {
   const publicRegistration = !!req.body?.publicRegistration;
   const allowedRegistrationEmails = parseAllowedRegistrationEmails(req.body?.allowedRegistrationEmails);
   const adminIpAllowlist = parseIpAllowlist(req.body?.adminIpAllowlist);
@@ -3044,7 +3066,7 @@ app.put('/api/admin/users/:id/password', adminMiddleware, async (req, res) => {
 
   if (user.password_hash) {
     const sameAsOld = await bcrypt.compare(newPassword, user.password_hash);
-    if (sameAsOld) return res.status(400).json({ error: '新密碼不可與目前密碼相同' });
+    if (sameAsOld) return res.status(400).json({ error: 'same_as_current_password' });
   }
 
   const passwordHash = await bcrypt.hash(newPassword, 10);
@@ -3057,18 +3079,19 @@ app.put('/api/admin/users/:id/password', adminMiddleware, async (req, res) => {
 app.delete('/api/admin/users/:id', adminMiddleware, (req, res) => {
   const targetId = req.params.id;
   if (!targetId) return res.status(400).json({ error: '缺少使用者 ID' });
-  if (targetId === req.userId) return res.status(400).json({ error: '不可透過管理員介面刪除目前登入帳號' });
 
   const user = queryOne("SELECT id, is_admin FROM users WHERE id = ?", [targetId]);
   if (!user) return res.status(404).json({ error: '使用者不存在' });
 
+  // FR-036：無法使系統無管理員（涵蓋自刪最後管理員）
   if (user.is_admin) {
     const adminCount = Number(queryOne("SELECT COUNT(1) AS count FROM users WHERE is_admin = 1")?.count || 0);
     if (adminCount <= 1) {
-      return res.status(400).json({ error: '系統至少需保留一位管理員' });
+      return res.status(400).json({ error: 'last_admin_protected' });
     }
   }
 
+  // FR-035：混合刪除策略
   deleteUserData(targetId);
   saveDB();
   res.json({ success: true });

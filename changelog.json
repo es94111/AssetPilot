@@ -1,6 +1,27 @@
 {
-  "currentVersion": "4.21.1",
+  "currentVersion": "4.22.0",
   "releases": [
+    {
+      "version": "4.22.0",
+      "date": "2026-04-24",
+      "title": "使用者與權限功能實作（001-user-permissions）：Email 正規化 / 兩桶 rate limit / redirect_uri 白名單 / 混合刪除策略 / 90 天稽核保留 / CT-1 路徑重命名",
+      "type": "new",
+      "changes": [
+        { "tag": "warning", "text": "不可逆 migration：啟動時執行 Email 正規化（`UPDATE users SET email = trim + lowercase`），若大小寫混用造成 UNIQUE(email) 衝突，保留 `created_at` 最早者、其餘 14 個 FK 表的 `user_id` 合併後刪除；log `[Email Migration] normalized N users, merged M duplicate accounts`。部署前建議備份 `database.db`" },
+        { "tag": "warning", "text": "登出與管理員重設密碼將遞增 `token_version`，該使用者所有裝置立即被強制登出（FR-005）" },
+        { "tag": "new", "text": "FR-007 兩桶 rate limit：`/api/auth/{login,register,google}` 共用 auth 桶（20 次/15 分/IP）；`/privacy`、`/terms` 共用靜態頁桶（獨立計數）；超過回 429，不再寫入使用者鎖定紀錄" },
+        { "tag": "new", "text": "FR-011 Google redirect_uri 白名單：交換 code 前比對；不符立即 400 `invalid_redirect_uri` 並寫 attempt_logs，絕不外呼 Google" },
+        { "tag": "new", "text": "FR-032 白名單 `*@domain` 語法：domain wildcard；不含 `*` 為完全比對（大小寫不敏感）；多項 OR" },
+        { "tag": "new", "text": "FR-035 混合刪除策略：業務表 + passkey_credentials 硬刪、login_audit_logs 硬刪、login_attempt_logs(is_success=0) 匿名化保留（user_id='' + email=SHA-256）、login_attempt_logs(is_success=1) 硬刪" },
+        { "tag": "new", "text": "FR-046 90 天稽核保留：pruneAuditLogs() 啟動立即執行 + 每 24h 循環（分批 5000）" },
+        { "tag": "new", "text": "CT-1 契約 0.1.0 → 0.2.0（breaking）：`/api/admin/settings` → `/api/admin/system-settings`；`/api/admin/login-logs*` 統一為 `/api/admin/login-audit?scope=admin-self|all` + `/api/admin/login-audit/{logId}` + `/api/admin/login-audit:batch-delete`；`/api/account/login-logs` → `/api/user/login-audit`；原子翻轉無 301/307 shim" },
+        { "tag": "improved", "text": "FR-065 / SC-006 時序對齊：login user_not_found 分支新增 bcrypt.compare(DUMMY_HASH) 消除時序側信道" },
+        { "tag": "improved", "text": "FR-044 localStorage 鍵名 `assetpilot.audit.lastSyncAt`（管理員稽核同步時間）" },
+        { "tag": "improved", "text": "Cookie 規範（FR-004）：setAuthCookie / clearAuthCookie 共用 AUTH_COOKIE_OPTIONS（httpOnly/secure=production/sameSite=strict/path=/），Max-Age 與 JWT_EXPIRES 同步" },
+        { "tag": "improved", "text": "C3 / T099 SC-004 最後管理員保護 1000 次壓測建議於 PR 合併前以 quickstart.md §3.3.1 bash for-loop 執行，預期『失敗次數：0/1000』" },
+        { "tag": "improved", "text": "CT-2 / T098 安全基線回歸檢查建議於 PR 合併前執行 6 項驗證（FR-062 6 項 header / FR-063 SRI / FR-064 .env 權限 + *.db ignore / FR-060 HTML escape / FR-061 色碼 hex），最多 11 子項" }
+      ]
+    },
     {
       "version": "4.21.1",
       "date": "2026-04-24",

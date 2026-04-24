@@ -19,11 +19,12 @@ JWT_EXPIRES=7d                       # FR-004 預設
 # Google OAuth（FR-010 / FR-011）
 GOOGLE_CLIENT_ID=<Google Cloud Console 取得>
 GOOGLE_CLIENT_SECRET=<同上>
-GOOGLE_OAUTH_REDIRECT_URIS=https://app.example.com/api/auth/google,http://localhost:3000/api/auth/google
+GOOGLE_OAUTH_REDIRECT_URIS=https://app.your-domain.tld/api/auth/google,http://localhost:3000/api/auth/google
 # └ FR-011：逗號分隔；必須與 Google Cloud Console > OAuth 2.0 Client > Authorized redirect URIs 完全一致
+# └ `app.your-domain.tld` 為範例佔位；部署時請替換為實際對外網域（與 APP_HOST 一致）
 
 # 其他（與本功能無關，依需要保留）
-APP_HOST=app.example.com
+APP_HOST=app.your-domain.tld         # 實際部署時請替換為真實網域
 PORT=3000
 ```
 

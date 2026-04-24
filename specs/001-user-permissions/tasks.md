@@ -152,7 +152,7 @@ phase 追加 `[P] [US?]` test task 於實作任務之前。
 - [ ] T043 [US5] 於 `GET /api/user/login-audit` 回傳 `user_id = req.userId` 最新 100 筆（`ORDER BY login_at DESC LIMIT 100`；index 已存在，見 [data-model.md](./data-model.md) §7）（FR-042）
 - [ ] T044 [US5] 於 `GET /api/admin/login-audit`：以 query 參數 `scope = 'admin-self' | 'all'` 分流 — `admin-self` 回傳 `WHERE is_admin_login = 1 AND user_id = req.userId` 最新 200 筆；`all` 回傳全站最新 500 筆（FR-043）
 - [ ] T045 [US5] 於 `DELETE /api/admin/login-audit/{logId}` 與 `POST /api/admin/login-audit:batch-delete`：主鍵刪除；若 logId 格式不符（FR-045 備援）則以 `login_at` + `ip_address` + `user_id` 組合匹配單筆，避免舊資料缺主鍵時無法刪除
-- [ ] T046 [US5] 於 `app.js` 管理員稽核頁顯示「上次同步時間」（localStorage 快取）與「同步」按鈕，點擊即重新 fetch；失敗紀錄若 `email` 為 64 hex 顯示為 `[已匿名化 #abc123]`（取 hash 前 6 碼，對應 [data-model.md](./data-model.md) §2.4）
+- [ ] T046 [US5] 於 `app.js` 管理員稽核頁顯示「上次同步時間」與「同步」按鈕：讀寫 localStorage 鍵名 **`assetpilot.audit.lastSyncAt`**（權威來源：spec.md FR-044；值為 epoch ms 字串）；載入頁面時若 `localStorage.getItem('assetpilot.audit.lastSyncAt')` 為 `null` 則顯示「尚未同步」而非錯誤；點「同步」按鈕後成功 fetch 時以 `Date.now()` 覆寫。失敗紀錄若 `email` 為 64 hex 顯示為 `[已匿名化 #abc123]`（取 hash 前 6 碼，對應 [data-model.md](./data-model.md) §2.4）
 - [ ] T047 [US5] 於 `app.js` 使用者帳號設定「登入紀錄」區塊按 FR-042 呈現：欄位顯示時間（adopted）、IP、國家、方式（password/google/passkey）；依 `login_at DESC` 排列
 
 **Checkpoint**：依 [quickstart.md](./quickstart.md) §6：
@@ -243,7 +243,7 @@ phase 追加 `[P] [US?]` test task 於實作任務之前。
 - [ ] T091 於 [quickstart.md](./quickstart.md) §8 兩桶 rate limit 驗證：連打 `/api/auth/login` 21 次 → 第 21 次 429；同時 `/privacy` 不受影響；再連打 `/privacy` 21 次第 21 次才 429（FR-007）
 - [ ] T092 [P] 根 `openapi.yaml` 以 `python -c "import yaml; d=yaml.safe_load(open('openapi.yaml','r',encoding='utf-8')); assert d['openapi']=='3.2.0'; print(len(d['paths']),'paths')"` 與 `npx @redocly/cli lint openapi.yaml` 驗證通過（憲章 Principle II）
 - [ ] T093 [P] `specs/001-user-permissions/contracts/auth.openapi.yaml` 同上驗證（`openapi: 3.2.0` 字串、lint 通過）
-- [ ] T094 更新 `changelog.json`：`currentVersion` bump 至 **4.22.0**（minor；當前 `4.21.1`）；新增 release entry 涵蓋（a）Email 正規化 migration 的**不可逆**提醒、（b）`token_version` 於密碼變更遞增的「所有裝置登出」影響、（c）兩桶 rate limit、（d）redirect_uri 白名單、（e）白名單 `*@domain` 語法、（f）混合刪除策略、（g）90 天稽核保留、（h）契約 `info.version: 0.1.0 → 0.2.0` 的三組路徑重命名（CT-1）、（i）安全基線回歸驗證（FR-060 ~ FR-064；CT-2／T098）；依 [.claude/commands/update-docs.md](../../.claude/commands/update-docs.md) 的流程處理
+- [ ] T094 更新 `changelog.json`：`currentVersion` bump 至 **4.22.0**（minor；當前 `4.21.1`）；新增 release entry 涵蓋（a）Email 正規化 migration 的**不可逆**提醒、（b）`token_version` 於密碼變更遞增的「所有裝置登出」影響、（c）兩桶 rate limit、（d）redirect_uri 白名單、（e）白名單 `*@domain` 語法、（f）混合刪除策略、（g）90 天稽核保留、（h）契約 `info.version: 0.1.0 → 0.2.0` 的三組路徑重命名（CT-1）、（i）安全基線回歸驗證（FR-060 ~ FR-064；CT-2／T098）、（j）SC-004 最後管理員保護 1000 次壓測通過（C3／T099）；依 [.claude/commands/update-docs.md](../../.claude/commands/update-docs.md) 的流程處理
 - [ ] T095 同步更新 `SRS.md` 版本歷程（§4.2 或 §8.2）與頁首版本；`README.md` 若有版本徽章一併更新（對應 T094 的版本號）
 - [ ] T096 於 `docs/` 或 `README.md` 運維段補「部署新版本時必做」清單：`GOOGLE_OAUTH_REDIRECT_URIS` 必須填寫（否則 Google 登入將全部失敗，降級為 log 預設值）、資料庫自動跑 Email 正規化 migration、提醒「管理員重設密碼會強制該使用者所有裝置重新登入」
 - [ ] T097 最後以 [quickstart.md](./quickstart.md) §9 Rollback 說明為據，確認備份與還原流程可行（Docker compose 掛載 `./data`、`database.db.bak` 與 `package.json` tag 對應）

@@ -1,91 +1,66 @@
-# Specification Analysis Report — 001-user-permissions（第三輪，post-remediation）
+# Specification Analysis Report — 001-user-permissions（第四輪）
 
 **Date**：2026-04-24
 **Feature**：001-user-permissions
 **Scope**：`spec.md`、`plan.md`、`tasks.md`、`contracts/auth.openapi.yaml`、`quickstart.md`、`data-model.md`、`research.md`
-**Baseline**：第二輪報告（同檔前版）列出的 2 HIGH（F1／C1）、4 MEDIUM（F3／C2／I1／C3）、11 LOW，共 17 條；本輪於同 PR 已全數處置，並重新掃描是否衍生新漂移。
+**Baseline**：第三輪報告（同檔前版）已處置 2 HIGH + 4 MEDIUM + 11 LOW + 4 drift；本輪重新掃描，發現第三輪修正 F3（user_id NULL → '' + SHA-256）時**未完整傳播**至三個下游文件。
 
 ---
 
-## 0. 上輪處置結果總表（驗證）
+## 0. 第三輪處置狀態（回顧）
 
-| 上輪 ID | 等級 | 處置路徑 | 現況檔案：行 | 狀態 |
-|---|---|---|---|---|
-| F1（HIGH） | Inconsistency | [plan.md](./plan.md) CT-1（3 案決策表）；[tasks.md](./tasks.md) T030／T042／T070 單向翻轉 | plan.md:161-206；tasks.md:114,145,221 | ✅ closed |
-| C1（HIGH→MEDIUM） | Constitution | [plan.md](./plan.md) CT-2；[tasks.md](./tasks.md) T098（6 項）、[changelog.json](../../changelog.json) 紀錄 | plan.md:207-242；tasks.md:250-257 | ✅ closed |
-| F3（MEDIUM） | Inconsistency | `user_id = NULL` → `user_id = ''` + SHA-256 | spec.md:190（FR-035）、data-model.md:104,120 | ✅ aligned |
-| C2（MEDIUM） | Constitution | 新增 T029（DUMMY_HASH 時序對齊） | tasks.md:95 | ✅ closed |
-| I1（MEDIUM） | Inconsistency | FR-064 補 Windows NTFS ACL fallback | spec.md:225-229；plan.md:224-228,235-237 | ✅ closed |
-| C3（MEDIUM） | Coverage | 新增 quickstart.md §3.3.1（1000-fuzz）+ T099 | quickstart.md:144-162；tasks.md:258 | ✅ closed |
-| A1（LOW） | Ambiguity | SC-007「60 秒」補「無記憶體快取」語意 | spec.md:251 | ✅ closed |
-| A2（LOW） | Ambiguity | FR-062 列出 6 項 header | spec.md:215-223 | ✅ closed |
-| A3（LOW） | Ambiguity | FR-046 補 `max(interval) < 48h` | spec.md:202 | ✅ closed |
-| D1（LOW） | Duplication | T033 移除 token_version 重複 | tasks.md:117 | ✅ closed |
-| I2（LOW） | Inconsistency | 以 `spawn_task` chip 轉獨立 PR | 另起 session | ⏭️ deferred |
-| I3（LOW） | Inconsistency | T094 補 9 項 release notes（含 CT-1／CT-2） | tasks.md:246 | ✅ closed |
-| F4（LOW） | Inconsistency | FR-044 指定鍵名 `assetpilot.audit.lastSyncAt` | spec.md:200 | ✅ closed |
-| C4（LOW） | Coverage | T065 補 WebAuthn 不支援 fallback UX | tasks.md:203 | ✅ closed |
-| F5（LOW） | Inconsistency | T001 加入 `grep -oE 'process\.env\.[A-Z_]+'` 同步檢查 | tasks.md:42 | ✅ closed |
-| I5（LOW） | Inconsistency | ~~localhost server URL~~（屬刻意保留，redocly 仍 1 warning） | contracts/auth.openapi.yaml:22 | ✅ accepted |
-| A4（LOW） | Ambiguity | （上輪判定不構成新風險，納入 A1 語意釐清同批處置） | — | ✅ folded |
-
-**契約層 redocly 狀態**：1 warning（`localhost:{port}` 本機 server；已於 plan.md 明確標記為刻意保留）。
+17 條基線項全數閉合（15 closed + 1 accepted [localhost] + 1 deferred [I2 spawn_task]）；
+4 項 post-remediation drift（D1–D4）於同輪批次閉合。**累積至第四輪所有前置項均已 closed**。
 
 ---
 
-## 1. 本輪新發現（post-remediation drift）
+## 1. 本輪新發現（F3 修正未完整傳播）
 
-本輪重新掃描是否因處置動作引入新的不一致；共發現 **4 條 LOW** 漂移，無 HIGH／MEDIUM／CRITICAL。
+第二輪 F3 將「`user_id = NULL`」改為「`user_id = ''` + SHA-256」，但**僅更新了 spec.md FR-035（L190）與 data-model.md §2.4**；spec.md 內部的 Clarification 摘要、plan.md 的 Summary、research.md 的 Q9 決策表與開放議題討論仍保留舊語義。這造成同一份功能包內多處自我矛盾，屬 Inconsistency 類 MEDIUM（同一 spec 內部矛盾）+ LOW（下游文件陳述矛盾）。
 
 | ID | 類別 | 等級 | 位置 | 摘要 | 建議 |
 |---|---|---|---|---|---|
-| **D1** | Drift | LOW | [plan.md](./plan.md):221 | CT-2 驗收項 #1 仍寫「四個 header 均存在（FR-062；A2 列於 LOW 未阻擋）」，但 FR-062 已擴充至 6 項，T098 同步更新至 6 項；plan.md 這段文字未同步。 | 將「四個 header」改為「六個 header」，並移除「A2 列於 LOW 未阻擋」括號（A2 已於本輪 closed）。 |
-| **D2** | Drift | LOW | [tasks.md](./tasks.md):155（T046） | spec.md FR-044 已指定 localStorage 鍵名為 `assetpilot.audit.lastSyncAt`，但 T046 僅寫「localStorage 快取」，未引用鍵名。實作時讀寫不同 key 將造成 regression。 | T046 增補：「localStorage 鍵名 `assetpilot.audit.lastSyncAt`（與 FR-044 權威同步）」。 |
-| **D3** | Drift | LOW | [tasks.md](./tasks.md):246（T094） | T094 release notes 已列 (a)–(i) 9 項含 CT-1／CT-2，但本輪新增的 T099（SC-004 1000-fuzz 壓測）未納入 release notes 清單。 | 於 (i) 後追加 (j)「SC-004 最後管理員保護 1000 次壓測通過（C3／T099）」。 |
-| **D4** | Drift | LOW | [quickstart.md](./quickstart.md):22,26 | §1.1 `.env` 範例仍用 `APP_HOST=app.example.com`、`GOOGLE_OAUTH_REDIRECT_URIS=https://app.example.com/...`，但 contracts/auth.openapi.yaml 已改為 `app.your-domain.tld`（配合 redocly `no-server-example.com` rule）。若維護者 copy-paste quickstart，部署環境的白名單又會是 `app.example.com` → 與契約範例不一致。 | 將 §1.1 兩處 `app.example.com` 改為 `app.your-domain.tld`，或註解為「請替換為實際網域」。 |
-
-**備註**：以上 4 條皆屬「文字同步」級 drift，不阻擋合併；建議單一後續 commit 一次修齊。
+| **F6** | Inconsistency | **MEDIUM** | [spec.md](./spec.md):23（Q9 Clarification） | Q9 摘要寫「僅將 `user_id` 置 NULL、Email 以雜湊表示」，但 FR-035（L190）已改為「user_id 清為空字串、Email 改 SHA-256 雜湊」。同一文件內 Clarification 與 FR 條文互相矛盾——讀者可能先看 Clarification 相信 NULL 而實作錯誤。 | 改為「僅將 `user_id` 清為空字串（`''`）、Email 以 SHA-256 雜湊表示」並保留 FR-035 的權威引用。 |
+| **F7** | Inconsistency | LOW | [plan.md](./plan.md):23（Summary 第 6 點） | 計畫摘要仍寫 `user_id = NULL`，與現行 spec.md FR-035 / data-model.md §2.4 衝突。 | 改為 `user_id = ''（空字串）、email = SHA-256(email)`。 |
+| **F8** | Inconsistency | LOW | [research.md](./research.md):78（Q9 決策表） | 決策表 SQL 仍寫 `SET user_id = NULL`，與 data-model.md §2.4 的 `DEFAULT ''` 與 tasks.md T035 的 `SET user_id = ''` 衝突。 | SQL 改為 `UPDATE login_attempt_logs SET user_id = '', email = ? WHERE user_id = ? AND is_success = 0`。 |
+| **F9** | Inconsistency | LOW | [research.md](./research.md):103-106（§4 開放議題第 2 點） | 開放議題仍把「NULL vs 空字串」列為「措辭不同」的待解議題；但本項已於 spec FR-035 + data-model §2.4 明確定案為空字串 + SHA-256，不再屬開放議題。 | 將該段改寫為「已解決：見 FR-035 與 data-model §2.4；程式層一律以空字串表示匿名」，或整段刪除。 |
 
 ---
 
-## 2. 需求覆蓋率（保持 100%）
+## 2. 其他掃描結果（無新增問題）
 
-**Total FR**：42；**有 ≥ 1 個 task 對應**：42；**Coverage**：100%。
-**Total SC**：9；**buildable SC（SC-003–SC-009）覆蓋**：9/9（SC-004 本輪新增 T099、SC-007 新增 A1 語意釐清後仍由既有 T031 DB 重讀路徑覆蓋）。
+### 2.1 契約層
+- `openapi: 3.2.0` 字面值保留 ✅
+- `info.version: 0.2.0` 對應 CT-1 三組路徑 rename ✅
+- `npx @redocly/cli@2.29.2 lint` = 1 warning（`localhost:{port}`，刻意保留）✅
+- 所有 auth 端點帶 `security`；公開端點以 `security: []` 明示 ✅
 
-| 新／變更項 | 來源 | 對應 Task | 狀態 |
-|---|---|---|---|
-| FR-035（user_id='' + SHA-256） | 本輪 F3 | T035、T036 | ✅ |
-| FR-044（鍵名 `assetpilot.audit.lastSyncAt`） | 本輪 F4 | T046（建議補鍵名，見 D2） | ⚠️ drift |
-| FR-046（max(interval) < 48h） | 本輪 A3 | T014（現行 24h 週期已滿足 `< 48h`） | ✅ |
-| FR-062（6 項 header） | 本輪 A2 | T098（已同步） | ✅ |
-| FR-064（Windows NTFS ACL fallback） | 本輪 I1 | T098 第 3 項（已同步） | ✅ |
-| SC-004（1000 次壓測） | 本輪 C3 | T099、quickstart §3.3.1 | ✅ |
-| 時序對齊（bcrypt DUMMY_HASH） | 本輪 C2 | T029 | ✅ |
+### 2.2 D1–D4 第三輪 drift 閉合驗證
+- **D1** [plan.md:219-224](./plan.md)：已列出 FR-062 的 6 項 header（CSP／HSTS／XCTO／Referrer-Policy／X-Frame-Options／Permissions-Policy）✅
+- **D2** [tasks.md:155](./tasks.md)：T046 已明列 `assetpilot.audit.lastSyncAt`、null→「尚未同步」、成功 fetch 以 `Date.now()` 覆寫 ✅
+- **D3** [tasks.md:246](./tasks.md)：T094 release notes (j) SC-004 1000 次壓測通過 ✅
+- **D4** [quickstart.md:22,27](./quickstart.md)：兩處 `app.example.com` → `app.your-domain.tld` ✅
+
+### 2.3 既有閉合項的跨文件一致性抽檢
+- FR-062 6 項 header：spec.md（L215-223）／plan.md（L219-224）／tasks.md T098（L251）三處一致 ✅
+- FR-064 POSIX + Windows NTFS：spec.md（L225-229）／plan.md（L227-240）／tasks.md T098（L253）一致 ✅
+- FR-044 `assetpilot.audit.lastSyncAt`：spec.md（L200）／tasks.md T046（L155）一致 ✅
+- FR-046 `max(interval) < 48h`：spec.md（L202）／tasks.md T014 的 24h 週期滿足 `<48h` ✅
+- T099 SC-004 1000 次壓測：tasks.md（L258）／quickstart.md §3.3.1（L144-162）／T094 (j)（L246）三處一致 ✅
+
+### 2.4 零個 Unmapped Tasks
+65 個 task（T001–T003、T010–T016、T020–T029、T030–T037、T040–T047、T050–T056、T060–T065、T070–T075、T090–T099）全數對應至 ≥ 1 項 FR／SC／CT。
 
 ---
 
 ## 3. Constitution Alignment（憲章 v1.1.0）
 
-- **Principle I（zh-TW）**：✅ PASS
-  spec.md／plan.md／tasks.md／research.md／data-model.md／quickstart.md／contracts/**
-  皆為 zh-TW；保留識別字（`token_version`、`JWT_EXPIRES`、`DUMMY_HASH` 等）為英文。
-- **Principle II（OpenAPI 3.2.0）**：✅ PASS
-  - `contracts/auth.openapi.yaml` 首行 `openapi: 3.2.0`（字面值字串）。
-  - `info.version: 0.2.0`（因 CT-1 三組路徑 rename 屬 breaking，已由 0.1.0 bump 至 0.2.0）。
-  - 所有 auth 端點帶 `security`；公開端點以 `security: []` 明示 opt-out。
-  - `npx @redocly/cli@2.29.2 lint` 回 `Your API description is valid. 🎉`（僅 1 個 localhost 警告，屬刻意保留）。
-  - handler ↔ paths 映射：以 CT-1 原子翻轉後 server.js 與契約一致。
+- **Principle I（zh-TW）**：✅ PASS — 所有 spec-kit 文件皆為繁體中文；識別字例外合規。
+- **Principle II（OpenAPI 3.2.0）**：✅ PASS — 規則 #1–#5 全數符合；handler↔paths CT-1 原子翻轉後一致；`info.version` 依破壞性變更規則 bump。
 
 ---
 
-## 4. Unmapped Tasks（零個）
-
-所有 65 個 task（T001–T003、T010–T016、T020–T029、T030–T037、T040–T047、T050–T056、T060–T065、T070–T075、T090–T099）皆可追溯至至少一項 FR／SC 或 CT。
-
----
-
-## 5. Metrics
+## 4. Metrics
 
 | 指標 | 值 |
 |---|---|
@@ -93,30 +68,30 @@
 | Total Success Criteria（SC） | 9 |
 | Total Tasks | 65 |
 | Requirement Coverage | 100%（42/42） |
-| Ambiguity Count | 0（上輪 3 項 A1/A2/A3 皆已釐清） |
-| Duplication Count | 0（D1 去重後無新重複） |
+| Ambiguity Count | 0 |
+| Duplication Count | 0 |
 | **CRITICAL** | **0** |
 | **HIGH** | **0** |
-| **MEDIUM** | **0** |
-| **LOW**（新發現 drift） | **4** |
+| **MEDIUM（新增 F6）** | **1** |
+| **LOW（新增 F7／F8／F9）** | **3** |
 
 ---
 
-## 6. Next Actions
+## 5. Next Actions
 
-- **無阻擋項**。可進入 `/speckit.implement`。
-- **建議（非阻擋）**：於實作開始前以**單一 commit** 清齊本輪 4 項 LOW drift（plan.md 四/六 header 文字、T046 localStorage 鍵名、T094 release notes 第 (j) 項、quickstart.md `.env` 範例網域）；commit message 建議：
+- **MEDIUM F6 建議合併修復**：雖非阻擋，但因屬「同一份 spec 自我矛盾」，於 `/speckit.implement` 之前先解決可避免實作者誤讀 Clarification 摘要。
+- **LOW F7／F8／F9**：建議與 F6 一起以**單一 commit** 清齊，commit message 建議：
   ```
-  docs(spec): 同步 FR-044／FR-062／T099 至 plan/tasks/quickstart（post-remediation drift）
+  docs(spec): 傳播 FR-035 user_id='' 語義至 Q9 摘要／plan 摘要／research 決策與開放議題
   ```
-- **I2 後續**：`backend/`／`frontend/`／`SRS copy.md`／`asset_openapi.yaml` 殘留清理已以 `spawn_task` 轉獨立 session／PR；本功能不阻擋。
+- **其他路徑**：如果你想先進 `/speckit.implement`，F6 屬「文件層」矛盾、不影響實作（T035 已以空字串明確落地）；但強烈建議先清理以維持 spec-kit 文件鏈的權威性。
 
 ---
 
-## 7. Remediation Offer
+## 6. Remediation Offer
 
-本報告保持**唯讀**；如需直接修補本輪 4 項 LOW drift，可回覆「直接修補 D1~D4」。
+本報告保持**唯讀**。如需直接修補本輪 4 項發現（F6 MEDIUM + F7／F8／F9 LOW），可回覆「直接修補 F6~F9」。
 
 ---
 
-**Summary**：本 spec 已於第二輪同 PR 內處置 2 HIGH + 4 MEDIUM + 11 LOW（含 CT-1／CT-2 兩項 Complexity Tracking 決策）。第三輪僅發現 4 項文字級 drift（LOW），無任何阻擋合併的項目。契約層 redocly lint 通過（1 個 localhost 警告刻意保留）。憲章 Principle I／II 均 PASS。可進入實作階段。
+**Summary**：第四輪掃描確認 D1–D4 已全部閉合；但發現**第二輪 F3 修正未完整傳播**至 spec.md Clarification Q9 摘要、plan.md Summary、research.md Q9 決策表與開放議題——4 處仍保留 `user_id = NULL` 的舊語義，與權威條文（spec FR-035、data-model §2.4）衝突。此次找到 1 MEDIUM（spec 內部自我矛盾）+ 3 LOW，建議同一 commit 清齊後再進入實作。

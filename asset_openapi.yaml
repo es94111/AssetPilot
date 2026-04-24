@@ -1,0 +1,1998 @@
+openapi: "3.0.3"
+
+info:
+  title: AssetPilot API
+  version: "4.12.0"
+  description: |
+    個人資產管理平台 AssetPilot 的完整 API Schema。
+    供 Cloudflare API Shield Schema Validation 使用。
+    認證方式：JWT 儲存於 httpOnly Cookie（token），除 /api/auth/* 與 /api/config 外均需認證。
+
+servers:
+  - url: https://asset.shao.one
+    description: Production
+
+# ─────────────────────────────────────────
+# 標籤定義（對應 Cloudflare API Shield Endpoint Labels）
+# ─────────────────────────────────────────
+tags:
+  - name: Config
+    description: 系統設定與版本資訊（cf-web-page）
+  - name: Auth
+    description: 使用者登入驗證（cf-log-in）
+  - name: Registration
+    description: 使用者註冊（cf-sign-up）
+  - name: Account
+    description: 帳號設定與個人資料（cf-account-update）
+  - name: Categories
+    description: 分類管理（cf-content）
+  - name: ExchangeRates
+    description: 匯率設定與查詢（cf-content）
+  - name: Accounts
+    description: 帳戶管理（cf-content）
+  - name: Transactions
+    description: 交易記錄（cf-content）
+  - name: Budgets
+    description: 預算管理（cf-content）
+  - name: Recurring
+    description: 固定收支（cf-content）
+  - name: Dashboard
+    description: 儀表板與報表（cf-content）
+  - name: TWSE
+    description: 台灣證交所查詢（cf-content）
+  - name: Stocks
+    description: 股票管理（cf-content）
+  - name: StockTransactions
+    description: 股票交易紀錄（cf-content）
+  - name: StockDividends
+    description: 股利紀錄（cf-content）
+  - name: StockRealized
+    description: 實現損益（cf-content）
+  - name: StockSettings
+    description: 股票參數設定（cf-content）
+  - name: StockRecurring
+    description: 股票定期定額（cf-content）
+
+# ─────────────────────────────────────────
+# 安全性定義
+# ─────────────────────────────────────────
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: token
+
+  schemas:
+    # ── 通用 ──
+    IdObject:
+      type: object
+      properties:
+        id:
+          type: string
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+
+    # ── 分類 ──
+    Category:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+          enum: [income, expense]
+        color:
+          type: string
+        parentId:
+          type: string
+        isHidden:
+          type: boolean
+        sortOrder:
+          type: integer
+
+    CategoryInput:
+      type: object
+      required: [name, type, color]
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+          enum: [income, expense]
+        color:
+          type: string
+        parentId:
+          type: string
+        sortOrder:
+          type: integer
+
+    # ── 帳戶 ──
+    Account:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        icon:
+          type: string
+        currency:
+          type: string
+        accountType:
+          type: string
+        excludeFromTotal:
+          type: boolean
+        balance:
+          type: number
+        initialBalance:
+          type: number
+        linkedBankId:
+          type: string
+
+    AccountInput:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        initialBalance:
+          type: number
+        icon:
+          type: string
+        currency:
+          type: string
+        accountType:
+          type: string
+        excludeFromTotal:
+          type: boolean
+        linkedBankId:
+          type: string
+
+    # ── 交易 ──
+    Transaction:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          enum: [income, expense, transfer_in, transfer_out]
+        amount:
+          type: number
+        originalAmount:
+          type: number
+        currency:
+          type: string
+        fxRate:
+          type: number
+        date:
+          type: string
+          format: date
+        categoryId:
+          type: string
+        accountId:
+          type: string
+        note:
+          type: string
+        excludeFromStats:
+          type: boolean
+
+    TransactionInput:
+      type: object
+      required: [type, amount, date, categoryId, accountId]
+      properties:
+        type:
+          type: string
+          enum: [income, expense]
+        amount:
+          type: number
+        originalAmount:
+          type: number
+        currency:
+          type: string
+        fxRate:
+          type: number
+        date:
+          type: string
+        categoryId:
+          type: string
+        accountId:
+          type: string
+        note:
+          type: string
+        excludeFromStats:
+          type: boolean
+        fxFee:
+          type: number
+          description: 海外刷卡手續費（TWD）
+
+    # ── 預算 ──
+    BudgetInput:
+      type: object
+      required: [amount, yearMonth]
+      properties:
+        categoryId:
+          type: string
+        amount:
+          type: number
+        yearMonth:
+          type: string
+
+    # ── 固定收支 ──
+    RecurringInput:
+      type: object
+      required: [type, amount, categoryId, accountId, frequency, startDate]
+      properties:
+        type:
+          type: string
+          enum: [income, expense]
+        amount:
+          type: number
+        currency:
+          type: string
+        fxRate:
+          type: number
+        categoryId:
+          type: string
+        accountId:
+          type: string
+        frequency:
+          type: string
+          enum: [daily, weekly, monthly, yearly]
+        startDate:
+          type: string
+        note:
+          type: string
+
+    # ── 匯率 ──
+    ExchangeRateItem:
+      type: object
+      required: [currency, rateToTwd]
+      properties:
+        currency:
+          type: string
+          minLength: 3
+          maxLength: 3
+        rateToTwd:
+          type: number
+
+    # ── 股票 ──
+    StockInput:
+      type: object
+      required: [symbol, name]
+      properties:
+        symbol:
+          type: string
+        name:
+          type: string
+        stockType:
+          type: string
+          enum: [stock, etf, warrant]
+
+    StockTransactionInput:
+      type: object
+      required: [stockId, date, type, shares, price]
+      properties:
+        stockId:
+          type: string
+        date:
+          type: string
+        type:
+          type: string
+          enum: [buy, sell]
+        shares:
+          type: number
+        price:
+          type: number
+        fee:
+          type: number
+        tax:
+          type: number
+        accountId:
+          type: string
+        note:
+          type: string
+
+    StockDividendInput:
+      type: object
+      required: [stockId, date]
+      properties:
+        stockId:
+          type: string
+        date:
+          type: string
+        cashDividend:
+          type: number
+        stockDividendShares:
+          type: number
+        accountId:
+          type: string
+        note:
+          type: string
+
+    # ── 管理員 ──
+    AdminUserInput:
+      type: object
+      required: [email, password, displayName]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+        displayName:
+          type: string
+        isAdmin:
+          type: boolean
+
+    BatchIdsInput:
+      type: object
+      required: [ids]
+      properties:
+        ids:
+          type: array
+          items:
+            type: string
+
+# ─────────────────────────────────────────
+# 預設安全性（全域）
+# ─────────────────────────────────────────
+security:
+  - cookieAuth: []
+
+# ─────────────────────────────────────────
+# 路由定義
+# ─────────────────────────────────────────
+paths:
+
+  # ── 公開頁面 ──────────────────────────
+  /api/config:
+    get:
+      operationId: getConfig
+      tags: [Config]
+      summary: 取得前端設定（Google Client ID 等）
+      security: []
+      responses:
+        "200":
+          description: 設定物件
+
+  /api/changelog:
+    get:
+      operationId: getChangelog
+      tags: [Config]
+      summary: 取得版本更新紀錄
+      security: []
+      responses:
+        "200":
+          description: Changelog JSON
+
+  # ── 認證 ──────────────────────────────
+  /api/auth/register:
+    post:
+      operationId: authRegister
+      tags: [Registration]
+      summary: 註冊新使用者
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password, displayName]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                displayName:
+                  type: string
+      responses:
+        "200":
+          description: 註冊成功
+        "400":
+          description: 參數錯誤
+
+  /api/auth/login:
+    post:
+      operationId: authLogin
+      tags: [Auth]
+      summary: 以電子郵件密碼登入
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+      responses:
+        "200":
+          description: 登入成功，設定 httpOnly Cookie
+        "401":
+          description: 帳密錯誤
+        "429":
+          description: 登入失敗次數過多
+
+  /api/auth/logout:
+    post:
+      operationId: authLogout
+      tags: [Auth]
+      summary: 登出（清除 Cookie）
+      security: []
+      responses:
+        "200":
+          description: 登出成功
+
+  /api/auth/me:
+    get:
+      operationId: authMe
+      tags: [Auth]
+      summary: 取得目前登入的使用者資訊
+      responses:
+        "200":
+          description: 使用者資訊
+        "401":
+          description: 未認證
+
+  /api/auth/google/state:
+    get:
+      operationId: authGoogleState
+      tags: [Auth]
+      summary: 取得 Google OAuth state nonce
+      security: []
+      responses:
+        "200":
+          description: State token
+
+  /api/auth/google:
+    post:
+      operationId: authGoogle
+      tags: [Auth]
+      summary: Google SSO 登入 / 註冊
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [credential]
+              properties:
+                credential:
+                  type: string
+                state:
+                  type: string
+      responses:
+        "200":
+          description: SSO 登入成功
+        "401":
+          description: Token 驗證失敗
+
+  # ── Passkey (WebAuthn) 認證 ─────────────
+  /api/auth/passkey/challenge:
+    get:
+      operationId: getPasskeyChallenge
+      tags: [Auth]
+      summary: 取得 Passkey 登入用 challenge
+      security: []
+      responses:
+        "200":
+          description: 回傳 challenge 與 key
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  key:
+                    type: string
+                  challenge:
+                    type: string
+
+  /api/auth/passkey/login:
+    post:
+      operationId: passkeyLogin
+      tags: [Auth]
+      summary: 使用 Passkey 進行無密碼登入
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [authentication, challengeKey]
+              properties:
+                authentication:
+                  type: object
+                  description: WebAuthn authentication response
+                challengeKey:
+                  type: string
+      responses:
+        "200":
+          description: 登入成功
+        "400":
+          description: Challenge 過期或缺少資料
+        "401":
+          description: Passkey 驗證失敗
+
+  # ── 帳號設定 ──────────────────────────
+  /api/account/login-logs:
+    get:
+      operationId: getLoginLogs
+      tags: [Account]
+      summary: 取得目前使用者的登入紀錄
+      responses:
+        "200":
+          description: 登入紀錄清單
+
+  /api/account/theme:
+    put:
+      operationId: updateTheme
+      tags: [Account]
+      summary: 更新使用者佈景主題
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                theme:
+                  type: string
+                  enum: [light, dark, auto]
+      responses:
+        "200":
+          description: 更新成功
+
+  /api/account/display-name:
+    put:
+      operationId: updateDisplayName
+      tags: [Account]
+      summary: 更新顯示名稱
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                displayName:
+                  type: string
+      responses:
+        "200":
+          description: 更新成功
+
+  /api/account/link-google:
+    post:
+      operationId: linkGoogle
+      tags: [Account]
+      summary: 綁定 Google 帳號
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [credential]
+              properties:
+                credential:
+                  type: string
+      responses:
+        "200":
+          description: 綁定成功
+
+  /api/account/unlink-google:
+    post:
+      operationId: unlinkGoogle
+      tags: [Account]
+      summary: 解除綁定 Google 帳號
+      responses:
+        "200":
+          description: 解除成功
+
+  /api/account/delete:
+    post:
+      operationId: deleteAccount
+      tags: [Account]
+      summary: 永久刪除帳號及所有資料
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [password]
+              properties:
+                password:
+                  type: string
+      responses:
+        "200":
+          description: 帳號已刪除
+
+  /api/account/password:
+    put:
+      operationId: updateAccountPassword
+      tags: [Account]
+      summary: 修改本機登入密碼（已有密碼者需驗證舊密碼；Google-only 帳號可新增本機密碼）
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [newPassword]
+              properties:
+                currentPassword:
+                  type: string
+                  description: 已設定密碼者必填
+                newPassword:
+                  type: string
+                  minLength: 8
+                  description: 至少 8 字元，需包含大寫字母、小寫字母、數字與特殊符號
+      responses:
+        "200":
+          description: 密碼已更新
+        "400":
+          description: 參數錯誤（密碼太短、未含必要字元、與舊密碼相同等）
+        "401":
+          description: 目前密碼錯誤
+        "404":
+          description: 使用者不存在
+
+  /api/account/passkey/challenge:
+    get:
+      operationId: getPasskeyRegisterChallenge
+      tags: [Account]
+      summary: 取得 Passkey 註冊用 challenge（需登入）
+      responses:
+        "200":
+          description: 回傳 challenge 與 key
+
+  /api/account/passkeys:
+    get:
+      operationId: listPasskeys
+      tags: [Account]
+      summary: 列出已註冊的 Passkey 清單
+      responses:
+        "200":
+          description: Passkey 列表
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  passkeys:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        deviceName:
+                          type: string
+                        createdAt:
+                          type: string
+
+  /api/account/passkey/register:
+    post:
+      operationId: registerPasskey
+      tags: [Account]
+      summary: 註冊新的 Passkey 憑證
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [registration, challengeKey]
+              properties:
+                registration:
+                  type: object
+                  description: WebAuthn registration response
+                challengeKey:
+                  type: string
+                deviceName:
+                  type: string
+      responses:
+        "200":
+          description: 註冊成功
+        "400":
+          description: Challenge 過期或驗證失敗
+
+  /api/account/passkey/{id}:
+    delete:
+      operationId: deletePasskey
+      tags: [Account]
+      summary: 刪除已註冊的 Passkey
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 刪除成功
+        "404":
+          description: 找不到此 Passkey
+    put:
+      operationId: renamePasskey
+      tags: [Account]
+      summary: 重新命名 Passkey
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [deviceName]
+              properties:
+                deviceName:
+                  type: string
+      responses:
+        "200":
+          description: 更新成功
+        "404":
+          description: 找不到此 Passkey
+
+  # ── 分類 ──────────────────────────────
+  /api/categories:
+    get:
+      operationId: getCategories
+      tags: [Categories]
+      summary: 取得分類清單
+      responses:
+        "200":
+          description: 分類陣列
+    post:
+      operationId: createCategory
+      tags: [Categories]
+      summary: 新增分類
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryInput'
+      responses:
+        "200":
+          description: 新增成功
+
+  /api/categories/{id}:
+    put:
+      operationId: updateCategory
+      tags: [Categories]
+      summary: 更新分類
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                color:
+                  type: string
+                isHidden:
+                  type: boolean
+                sortOrder:
+                  type: integer
+      responses:
+        "200":
+          description: 更新成功
+        "404":
+          description: 分類不存在
+    delete:
+      operationId: deleteCategory
+      tags: [Categories]
+      summary: 刪除分類
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 刪除成功
+
+  # ── 匯率 ──────────────────────────────
+  /api/exchange-rates:
+    get:
+      operationId: getExchangeRates
+      tags: [ExchangeRates]
+      summary: 取得使用者匯率設定
+      responses:
+        "200":
+          description: 匯率清單與設定
+    put:
+      operationId: setExchangeRates
+      tags: [ExchangeRates]
+      summary: 手動儲存匯率（僅寫入本使用者）
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [rates]
+              properties:
+                rates:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/ExchangeRateItem'
+      responses:
+        "200":
+          description: 儲存成功
+
+  /api/exchange-rates/settings:
+    put:
+      operationId: updateExchangeRateSettings
+      tags: [ExchangeRates]
+      summary: 更新匯率自動更新設定
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [autoUpdate]
+              properties:
+                autoUpdate:
+                  type: boolean
+      responses:
+        "200":
+          description: 設定已更新
+
+  /api/exchange-rates/refresh:
+    post:
+      operationId: refreshExchangeRates
+      tags: [ExchangeRates]
+      summary: 從外部 API 自動取得最新匯率
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                currencies:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        "200":
+          description: 更新成功
+
+  # ── 帳戶管理 ──────────────────────────
+  /api/accounts:
+    get:
+      operationId: getAccounts
+      tags: [Accounts]
+      summary: 取得帳戶清單（含餘額）
+      responses:
+        "200":
+          description: 帳戶陣列
+    post:
+      operationId: createAccount
+      tags: [Accounts]
+      summary: 新增帳戶
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountInput'
+      responses:
+        "200":
+          description: 新增成功
+
+  /api/accounts/{id}:
+    put:
+      operationId: updateAccount
+      tags: [Accounts]
+      summary: 更新帳戶
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                initialBalance:
+                  type: number
+                icon:
+                  type: string
+                currency:
+                  type: string
+                accountType:
+                  type: string
+                excludeFromTotal:
+                  type: boolean
+                linkedBankId:
+                  type: string
+      responses:
+        "200":
+          description: 更新成功
+    delete:
+      operationId: deleteAccountEntry
+      tags: [Accounts]
+      summary: 刪除帳戶
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 刪除成功
+
+  /api/accounts/credit-card-repayment:
+    post:
+      operationId: creditCardRepayment
+      tags: [Accounts]
+      summary: 信用卡還款（產生轉帳紀錄）
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [creditCardId, amount, date]
+              properties:
+                creditCardId:
+                  type: string
+                amount:
+                  type: number
+                date:
+                  type: string
+                note:
+                  type: string
+      responses:
+        "200":
+          description: 還款成功
+
+  # ── 交易記錄 ──────────────────────────
+  /api/transactions:
+    get:
+      operationId: getTransactions
+      tags: [Transactions]
+      summary: 取得交易記錄（支援篩選分頁）
+      parameters:
+        - name: dateFrom
+          in: query
+          schema:
+            type: string
+        - name: dateTo
+          in: query
+          schema:
+            type: string
+        - name: type
+          in: query
+          schema:
+            type: string
+        - name: categoryId
+          in: query
+          schema:
+            type: string
+        - name: accountId
+          in: query
+          schema:
+            type: string
+        - name: keyword
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: 交易清單（含分頁資訊）
+    post:
+      operationId: createTransaction
+      tags: [Transactions]
+      summary: 新增交易
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransactionInput'
+      responses:
+        "200":
+          description: 新增成功
+
+  /api/transactions/{id}:
+    put:
+      operationId: updateTransaction
+      tags: [Transactions]
+      summary: 更新交易
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum: [income, expense]
+                amount:
+                  type: number
+                originalAmount:
+                  type: number
+                currency:
+                  type: string
+                fxRate:
+                  type: number
+                date:
+                  type: string
+                categoryId:
+                  type: string
+                accountId:
+                  type: string
+                note:
+                  type: string
+                excludeFromStats:
+                  type: boolean
+      responses:
+        "200":
+          description: 更新成功
+    delete:
+      operationId: deleteTransaction
+      tags: [Transactions]
+      summary: 刪除單筆交易
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 刪除成功
+
+  /api/transactions/transfer:
+    post:
+      operationId: createTransfer
+      tags: [Transactions]
+      summary: 帳戶間轉帳
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [fromId, toId, amount, date]
+              properties:
+                fromId:
+                  type: string
+                toId:
+                  type: string
+                amount:
+                  type: number
+                date:
+                  type: string
+                note:
+                  type: string
+      responses:
+        "200":
+          description: 轉帳成功
+
+  /api/transactions/batch-delete:
+    post:
+      operationId: batchDeleteTransactions
+      tags: [Transactions]
+      summary: 批次刪除交易
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchIdsInput'
+      responses:
+        "200":
+          description: 刪除成功
+
+  /api/transactions/batch-update:
+    post:
+      operationId: batchUpdateTransactions
+      tags: [Transactions]
+      summary: 批次更新交易（分類 / 帳戶 / 日期）
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ids, fields]
+              properties:
+                ids:
+                  type: array
+                  items:
+                    type: string
+                fields:
+                  type: object
+                  properties:
+                    categoryId:
+                      type: string
+                    accountId:
+                      type: string
+                    date:
+                      type: string
+      responses:
+        "200":
+          description: 更新成功
+
+  /api/transactions/import:
+    post:
+      operationId: importTransactions
+      tags: [Transactions]
+      summary: CSV 匯入交易記錄
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [rows]
+              properties:
+                rows:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      date:
+                        type: string
+                      type:
+                        type: string
+                      amount:
+                        type: string
+                      category:
+                        type: string
+                      account:
+                        type: string
+                      note:
+                        type: string
+      responses:
+        "200":
+          description: 匯入成功
+
+  # ── 預算 ──────────────────────────────
+  /api/budgets:
+    get:
+      operationId: getBudgets
+      tags: [Budgets]
+      summary: 取得預算清單（含月份使用量）
+      parameters:
+        - name: yearMonth
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 預算清單
+    post:
+      operationId: createBudget
+      tags: [Budgets]
+      summary: 新增 / 更新預算
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BudgetInput'
+      responses:
+        "200":
+          description: 儲存成功
+
+  /api/budgets/{id}:
+    delete:
+      operationId: deleteBudget
+      tags: [Budgets]
+      summary: 刪除預算
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 刪除成功
+
+  # ── 固定收支 ──────────────────────────
+  /api/recurring:
+    get:
+      operationId: getRecurring
+      tags: [Recurring]
+      summary: 取得固定收支清單
+      responses:
+        "200":
+          description: 固定收支陣列
+    post:
+      operationId: createRecurring
+      tags: [Recurring]
+      summary: 新增固定收支
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecurringInput'
+      responses:
+        "200":
+          description: 新增成功
+
+  /api/recurring/{id}:
+    put:
+      operationId: updateRecurring
+      tags: [Recurring]
+      summary: 更新固定收支
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum: [income, expense]
+                amount:
+                  type: number
+                currency:
+                  type: string
+                fxRate:
+                  type: number
+                categoryId:
+                  type: string
+                accountId:
+                  type: string
+                frequency:
+                  type: string
+                  enum: [daily, weekly, monthly, yearly]
+                startDate:
+                  type: string
+                note:
+                  type: string
+      responses:
+        "200":
+          description: 更新成功
+    delete:
+      operationId: deleteRecurring
+      tags: [Recurring]
+      summary: 刪除固定收支
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 刪除成功
+
+  /api/recurring/{id}/toggle:
+    patch:
+      operationId: toggleRecurring
+      tags: [Recurring]
+      summary: 啟用 / 停用固定收支
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 狀態已切換
+
+  /api/recurring/process:
+    post:
+      operationId: processRecurring
+      tags: [Recurring]
+      summary: 手動執行固定收支（產生到期交易）
+      responses:
+        "200":
+          description: 執行結果
+
+  # ── 儀表板 / 報表 ─────────────────────
+  /api/dashboard:
+    get:
+      operationId: getDashboard
+      tags: [Dashboard]
+      summary: 取得儀表板資料
+      responses:
+        "200":
+          description: 儀表板統計資料
+
+  /api/reports:
+    get:
+      operationId: getReports
+      tags: [Dashboard]
+      summary: 取得統計報表
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [income, expense]
+        - name: from
+          in: query
+          schema:
+            type: string
+        - name: to
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 報表資料
+
+  # ── TWSE 台股 API ─────────────────────
+  /api/twse/stock/{symbol}:
+    get:
+      operationId: getTwseStock
+      tags: [TWSE]
+      summary: 查詢台股股票即時 / 收盤價與基本資料
+      parameters:
+        - name: symbol
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 股票資料
+        "404":
+          description: 股票不存在
+
+  /api/twse/search:
+    get:
+      operationId: searchTwseStock
+      tags: [TWSE]
+      summary: 搜尋台股股票代號或名稱
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 搜尋結果清單
+
+  # ── 股票清單 ──────────────────────────
+  /api/stocks:
+    get:
+      operationId: getStocks
+      tags: [Stocks]
+      summary: 取得持股清單（含損益）
+      responses:
+        "200":
+          description: 股票陣列
+    post:
+      operationId: createStock
+      tags: [Stocks]
+      summary: 新增股票
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StockInput'
+      responses:
+        "200":
+          description: 新增成功
+
+  /api/stocks/{id}:
+    put:
+      operationId: updateStock
+      tags: [Stocks]
+      summary: 更新股票基本資料
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                symbol:
+                  type: string
+                name:
+                  type: string
+                stockType:
+                  type: string
+                  enum: [stock, etf, warrant]
+      responses:
+        "200":
+          description: 更新成功
+    delete:
+      operationId: deleteStock
+      tags: [Stocks]
+      summary: 刪除股票
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 刪除成功
+
+  /api/stocks/batch-price:
+    post:
+      operationId: batchUpdateStockPrice
+      tags: [Stocks]
+      summary: 批次更新股票現價
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [symbols]
+              properties:
+                symbols:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        "200":
+          description: 更新結果
+
+  /api/stocks/cleanup:
+    post:
+      operationId: cleanupStocks
+      tags: [Stocks]
+      summary: 清除無持倉且無交易紀錄的股票
+      responses:
+        "200":
+          description: 清除結果
+
+  # ── 股票交易紀錄 ──────────────────────
+  /api/stock-transactions:
+    get:
+      operationId: getStockTransactions
+      tags: [StockTransactions]
+      summary: 取得股票交易紀錄（支援篩選分頁）
+      parameters:
+        - name: stockId
+          in: query
+          schema:
+            type: string
+        - name: dateFrom
+          in: query
+          schema:
+            type: string
+        - name: dateTo
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+        - name: sortBy
+          in: query
+          schema:
+            type: string
+        - name: sortDir
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc]
+      responses:
+        "200":
+          description: 交易紀錄清單
+    post:
+      operationId: createStockTransaction
+      tags: [StockTransactions]
+      summary: 新增股票買賣交易
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StockTransactionInput'
+      responses:
+        "200":
+          description: 新增成功
+
+  /api/stock-transactions/{id}:
+    put:
+      operationId: updateStockTransaction
+      tags: [StockTransactions]
+      summary: 更新股票交易
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                stockId:
+                  type: string
+                date:
+                  type: string
+                type:
+                  type: string
+                  enum: [buy, sell]
+                shares:
+                  type: number
+                price:
+                  type: number
+                fee:
+                  type: number
+                tax:
+                  type: number
+                accountId:
+                  type: string
+                note:
+                  type: string
+      responses:
+        "200":
+          description: 更新成功
+    delete:
+      operationId: deleteStockTransaction
+      tags: [StockTransactions]
+      summary: 刪除股票交易
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 刪除成功
+
+  /api/stock-transactions/batch-delete:
+    post:
+      operationId: batchDeleteStockTransactions
+      tags: [StockTransactions]
+      summary: 批次刪除股票交易
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchIdsInput'
+      responses:
+        "200":
+          description: 刪除成功
+
+  /api/stock-transactions/import:
+    post:
+      operationId: importStockTransactions
+      tags: [StockTransactions]
+      summary: CSV 匯入股票交易紀錄
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [rows]
+              properties:
+                rows:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      date:
+                        type: string
+                      symbol:
+                        type: string
+                      name:
+                        type: string
+                      type:
+                        type: string
+                      shares:
+                        type: string
+                      price:
+                        type: string
+                      fee:
+                        type: string
+                      tax:
+                        type: string
+                      account:
+                        type: string
+                      note:
+                        type: string
+      responses:
+        "200":
+          description: 匯入成功
+
+  # ── 股利紀錄 ──────────────────────────
+  /api/stock-dividends:
+    get:
+      operationId: getStockDividends
+      tags: [StockDividends]
+      summary: 取得股利紀錄
+      parameters:
+        - name: stockId
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: 股利清單
+    post:
+      operationId: createStockDividend
+      tags: [StockDividends]
+      summary: 新增股利紀錄
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StockDividendInput'
+      responses:
+        "200":
+          description: 新增成功
+
+  /api/stock-dividends/{id}:
+    put:
+      operationId: updateStockDividend
+      tags: [StockDividends]
+      summary: 更新股利紀錄
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                stockId:
+                  type: string
+                date:
+                  type: string
+                cashDividend:
+                  type: number
+                stockDividendShares:
+                  type: number
+                accountId:
+                  type: string
+                note:
+                  type: string
+      responses:
+        "200":
+          description: 更新成功
+    delete:
+      operationId: deleteStockDividend
+      tags: [StockDividends]
+      summary: 刪除股利紀錄
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 刪除成功
+
+  /api/stock-dividends/batch-delete:
+    post:
+      operationId: batchDeleteStockDividends
+      tags: [StockDividends]
+      summary: 批次刪除股利紀錄
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchIdsInput'
+      responses:
+        "200":
+          description: 刪除成功
+
+  /api/stock-dividends/import:
+    post:
+      operationId: importStockDividends
+      tags: [StockDividends]
+      summary: CSV 匯入股利紀錄
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [rows]
+              properties:
+                rows:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      date:
+                        type: string
+                      symbol:
+                        type: string
+                      name:
+                        type: string
+                      cashDividend:
+                        type: string
+                      stockDividendShares:
+                        type: string
+                      note:
+                        type: string
+      responses:
+        "200":
+          description: 匯入成功
+
+  /api/stock-dividends/sync:
+    post:
+      operationId: syncStockDividends
+      tags: [StockDividends]
+      summary: 從 TWSE 自動同步除權息股利紀錄
+      responses:
+        "200":
+          description: 同步結果
+
+  # ── 實現損益 ──────────────────────────
+  /api/stock-realized:
+    get:
+      operationId: getStockRealized
+      tags: [StockRealized]
+      summary: 取得已實現損益（FIFO 計算）
+      parameters:
+        - name: stockId
+          in: query
+          schema:
+            type: string
+        - name: dateFrom
+          in: query
+          schema:
+            type: string
+        - name: dateTo
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 損益清單與彙總
+
+  # ── 股票設定 ──────────────────────────
+  /api/stock-settings:
+    get:
+      operationId: getStockSettings
+      tags: [StockSettings]
+      summary: 取得股票手續費 / 稅率設定
+      responses:
+        "200":
+          description: 設定物件
+    put:
+      operationId: updateStockSettings
+      tags: [StockSettings]
+      summary: 更新股票手續費 / 稅率設定
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                feeRate:
+                  type: number
+                feeDiscount:
+                  type: number
+                feeMinLot:
+                  type: integer
+                feeMinOdd:
+                  type: integer
+                sellTaxRateStock:
+                  type: number
+                sellTaxRateEtf:
+                  type: number
+                sellTaxRateWarrant:
+                  type: number
+                sellTaxMin:
+                  type: integer
+      responses:
+        "200":
+          description: 設定已更新
+
+  # ── 股票固定扣款 ──────────────────────
+  /api/stock-recurring:
+    get:
+      operationId: getStockRecurring
+      tags: [StockRecurring]
+      summary: 取得定期定額清單
+      responses:
+        "200":
+          description: 定期定額清單
+    post:
+      operationId: createStockRecurring
+      tags: [StockRecurring]
+      summary: 新增定期定額
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [stockId, amount, frequency, startDate]
+              properties:
+                stockId:
+                  type: string
+                amount:
+                  type: number
+                frequency:
+                  type: string
+                  enum: [weekly, monthly]
+                startDate:
+                  type: string
+                accountId:
+                  type: string
+                note:
+                  type: string
+      responses:
+        "200":
+          description: 新增成功
+
+  /api/stock-recurring/{id}:
+    put:
+      operationId: updateStockRecurring
+      tags: [StockRecurring]
+      summary: 更新定期定額
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                amount:
+                  type: number
+                frequency:
+                  type: string
+                startDate:
+                  type: string
+                accountId:
+                  type: string
+                note:
+                  type: string
+      responses:
+        "200":
+          description: 更新成功
+    delete:
+      operationId: deleteStockRecurring
+      tags: [StockRecurring]
+      summary: 刪除定期定額
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 刪除成功
+
+  /api/stock-recurring/{id}/toggle:
+    patch:
+      operationId: toggleStockRecurring
+      tags: [StockRecurring]
+      summary: 啟用 / 停用定期定額
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 狀態已切換
+
+  /api/stock-recurring/process:
+    post:
+      operationId: processStockRecurring
+      tags: [StockRecurring]
+      summary: 手動執行定期定額
+      responses:
+        "200":
+          description: 執行結果
+
+  # ── 管理員 / 系統 / 資料庫備份（不經過 Cloudflare，不納入 API Shield） ──
+  # /api/admin/*        — 管理員設定、使用者管理、登入紀錄、憑證管理
+  # /api/system/*       — 系統更新
+  # /api/database/*     — 資料庫匯出匯入備份
+  #
+  # 以上端點僅供內部管理使用，詳見 server.js。
+
+# (EOF) 管理員端點不納入此 Schema

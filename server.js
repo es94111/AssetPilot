@@ -52,7 +52,19 @@ function parseExpiresMs(str) {
 const JWT_EXPIRES_MS = parseExpiresMs(JWT_EXPIRES);
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || '';
+const APP_HOST = process.env.APP_HOST || 'localhost';
+const GOOGLE_OAUTH_REDIRECT_URIS = (process.env.GOOGLE_OAUTH_REDIRECT_URIS || '')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean);
 const IPINFO_TOKEN = process.env.IPINFO_TOKEN || '';
+
+const AUDIT_RETENTION_DAYS = 90;
+const PRUNE_BATCH = 5000;
+const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
+const RATE_LIMIT_MAX = 20;
+const COOKIE_MAX_AGE = JWT_EXPIRES_MS;
+const SERVER_TIME_OFFSET_MAX = 10 * 365 * 86400 * 1000;
 const RESEND_API_KEY = process.env.RESEND_API_KEY || '';
 const RESEND_FROM_EMAIL = process.env.RESEND_FROM_EMAIL || '';
 // 對外網址（用於信件 CTA 按鈕），未設定則隱藏「前往儀表板」按鈕
@@ -335,29 +347,30 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false
 }));
 
-// 登入/註冊 API 速率限制（每 IP 每 15 分鐘最多 20 次）
+// 認證類 API 速率限制（FR-007 auth 桶：每 IP 每 15 分鐘最多 20 次）
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 20,
-  standardHeaders: true,
+  windowMs: RATE_LIMIT_WINDOW_MS,
+  max: RATE_LIMIT_MAX,
+  standardHeaders: 'draft-8',
   legacyHeaders: false,
   message: { error: '登入嘗試次數過多，請 15 分鐘後再試' },
   skip: (req) => isRequestIpWhitelisted(req),
-  validate: { xForwardedForHeader: false } // 避免反向代理環境下的驗證警告
+  validate: { xForwardedForHeader: false }
 });
 app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/register', authLimiter);
-app.use('/api/auth/google/state', authLimiter);
 app.use('/api/auth/google', authLimiter);
-app.use('/api', rateLimit({
-  windowMs: 60 * 1000,
-  max: 120,
-  standardHeaders: true,
+
+// 靜態頁桶（FR-007 靜態頁桶：/privacy、/terms；與 auth 桶獨立計數）
+const staticPageLimiter = rateLimit({
+  windowMs: RATE_LIMIT_WINDOW_MS,
+  max: RATE_LIMIT_MAX,
+  standardHeaders: 'draft-8',
   legacyHeaders: false,
   message: { error: '請求過於頻繁，請稍後再試' },
   skip: (req) => isRequestIpWhitelisted(req),
   validate: { xForwardedForHeader: false }
-}));
+});
 
 // 一般 API 使用較小的 JSON body 上限避免 DoS；CSV 匯入端點單獨放寬
 const STANDARD_JSON_LIMIT = '5mb';
@@ -687,6 +700,51 @@ async function initDB() {
       saveDB();
     }
   }
+
+  // FR-001 / Q8：Email 正規化 migration（M1）
+  // 將既有 users.email 全數 trim + lowercase；衝突時保留 created_at 最小者，
+  // 其餘帳號之 FK 資料合併至存活者；無衝突者直接 UPDATE
+  try {
+    const allUsers = db.exec("SELECT id, email, created_at FROM users ORDER BY created_at ASC, rowid ASC");
+    const rows = allUsers[0]?.values || [];
+    const grouped = new Map();
+    for (const [id, email, createdAt] of rows) {
+      const norm = normalizeEmail(email);
+      if (!norm) continue;
+      if (!grouped.has(norm)) grouped.set(norm, []);
+      grouped.get(norm).push({ id, email, createdAt });
+    }
+    let mergeCount = 0;
+    let updateCount = 0;
+    const FK_TABLES = ['transactions', 'accounts', 'categories', 'budgets', 'recurring', 'stocks', 'stock_transactions', 'stock_dividends', 'stock_settings', 'stock_recurring', 'exchange_rate_settings', 'passkey_credentials', 'login_audit_logs', 'login_attempt_logs'];
+    for (const [norm, list] of grouped.entries()) {
+      if (list.length > 1) {
+        const survivor = list[0];
+        for (let i = 1; i < list.length; i++) {
+          const victim = list[i];
+          for (const table of FK_TABLES) {
+            try { db.run(`UPDATE ${table} SET user_id = ? WHERE user_id = ?`, [survivor.id, victim.id]); } catch (e) { /* table may not exist */ }
+          }
+          db.run('DELETE FROM users WHERE id = ?', [victim.id]);
+          mergeCount++;
+        }
+        if (survivor.email !== norm) {
+          db.run('UPDATE users SET email = ? WHERE id = ?', [norm, survivor.id]);
+          updateCount++;
+        }
+      } else {
+        const only = list[0];
+        if (only.email !== norm) {
+          db.run('UPDATE users SET email = ? WHERE id = ?', [norm, only.id]);
+          updateCount++;
+        }
+      }
+    }
+    if (updateCount > 0 || mergeCount > 0) {
+      saveDB();
+      console.log(`[Email Migration] normalized ${updateCount} users, merged ${mergeCount} duplicate accounts`);
+    }
+  } catch (e) { console.error('[Email Migration] error', e); }
 
   // 資料庫升級：為 categories 加入 parent_id 欄位
   try {
@@ -1509,14 +1567,39 @@ function isValidEmail(email) {
   return domain.split('.').every(part => /^[a-z0-9-]+$/i.test(part) && !part.startsWith('-') && !part.endsWith('-') && part.length > 0);
 }
 
+function isValidAllowlistPattern(s) {
+  if (!s) return false;
+  if (s.startsWith('*@')) {
+    const domain = s.slice(2);
+    return !!domain && /^[a-z0-9.-]+$/i.test(domain) && domain.includes('.') && !domain.startsWith('.') && !domain.endsWith('.');
+  }
+  return isValidEmail(s);
+}
+
 function parseAllowedRegistrationEmails(value) {
   const source = Array.isArray(value) ? value.join('\n') : String(value || '');
   return Array.from(new Set(
     source
       .split(/[\n,;\s]+/)
-      .map(v => normalizeEmail(v))
-      .filter(v => isValidEmail(v))
+      .map(v => String(v || '').trim().toLowerCase())
+      .filter(v => isValidAllowlistPattern(v))
   ));
+}
+
+function matchAllowlist(email, rawList) {
+  const normalized = normalizeEmail(email);
+  if (!normalized) return false;
+  const list = Array.isArray(rawList) ? rawList : parseAllowedRegistrationEmails(rawList);
+  for (const item of list) {
+    if (!item) continue;
+    if (item.startsWith('*@')) {
+      if (normalized.endsWith(item.slice(1))) return true;
+      continue;
+    }
+    if (item.includes('*')) continue;
+    if (item === normalized) return true;
+  }
+  return false;
 }
 
 function normalizeIp(ip) {
@@ -1564,10 +1647,10 @@ function canSelfRegister(email) {
   }
 
   const settings = getSystemSettings();
-  const allowSet = new Set(settings.allowedRegistrationEmails);
+  const allowList = settings.allowedRegistrationEmails;
 
-  if (allowSet.size > 0) {
-    if (allowSet.has(emailLower)) return { ok: true };
+  if (allowList.length > 0) {
+    if (matchAllowlist(emailLower, allowList)) return { ok: true };
     return { ok: false, error: '此 Email 未被管理員允許註冊' };
   }
 
@@ -1798,31 +1881,61 @@ function parseLoginLogTarget(rawId) {
   return { byRowId: false, value: id };
 }
 
+// T036：Email SHA-256 雜湊（用於 FR-035 匿名化失敗稽核紀錄）
+function createHashedEmail(email) {
+  return crypto.createHash('sha256').update(normalizeEmail(email)).digest('hex');
+}
+
+// FR-035 / Q9：混合刪除策略
+// - 業務資料表與 passkey_credentials：全部 DELETE WHERE user_id
+// - login_audit_logs：硬刪（僅保留成功登入，業務意義上與使用者綁定）
+// - login_attempt_logs(is_success=0)：匿名化保留（user_id='', email=SHA-256）
+// - login_attempt_logs(is_success=1)：硬刪
+// - users：最後刪除
 function deleteUserData(userId) {
-  const tables = [
+  const user = queryOne('SELECT email FROM users WHERE id = ?', [userId]);
+  const hashedEmail = user ? createHashedEmail(user.email || '') : '';
+  const businessTables = [
     'stock_dividends', 'stock_transactions', 'stock_recurring', 'stocks',
     'transactions', 'budgets', 'recurring', 'accounts', 'categories',
-    'exchange_rates', 'exchange_rate_settings', 'stock_settings', 'login_audit_logs', 'login_attempt_logs',
-    'passkey_credentials'
+    'exchange_rates', 'exchange_rate_settings', 'stock_settings',
+    'passkey_credentials',
   ];
-  tables.forEach(t => {
-    db.run(`DELETE FROM ${t} WHERE user_id = ?`, [userId]);
+  try { db.run('BEGIN'); } catch (e) { /* may already be in transaction */ }
+  businessTables.forEach((t) => {
+    try { db.run(`DELETE FROM ${t} WHERE user_id = ?`, [userId]); } catch (e) { /* table may not exist */ }
   });
-  db.run("DELETE FROM users WHERE id = ?", [userId]);
+  db.run('DELETE FROM login_audit_logs WHERE user_id = ?', [userId]);
+  db.run(
+    "UPDATE login_attempt_logs SET user_id = '', email = ? WHERE user_id = ? AND is_success = 0",
+    [hashedEmail, userId]
+  );
+  db.run('DELETE FROM login_attempt_logs WHERE user_id = ? AND is_success = 1', [userId]);
+  db.run('DELETE FROM users WHERE id = ?', [userId]);
+  try { db.run('COMMIT'); } catch (e) { /* ignore */ }
 }
 
 // ═══════════════════════════════════════
 // Auth Middleware
 // ═══════════════════════════════════════
 
+const AUTH_COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: 'strict',
+  path: '/',
+};
+
 function setAuthCookie(res, token) {
-  res.cookie('authToken', token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
-    maxAge: JWT_EXPIRES_MS,
-  });
+  res.cookie('authToken', token, { ...AUTH_COOKIE_OPTIONS, maxAge: COOKIE_MAX_AGE });
 }
+
+function clearAuthCookie(res) {
+  res.clearCookie('authToken', AUTH_COOKIE_OPTIONS);
+}
+
+// FR-065 / SC-006：登入路徑時序對齊用的 dummy bcrypt hash
+const DUMMY_HASH = bcrypt.hashSync('__dummy__', 10);
 
 function authMiddleware(req, res, next) {
   const token = req.cookies?.authToken
@@ -1931,6 +2044,8 @@ app.post('/api/auth/login', async (req, res) => {
 
   const user = queryOne("SELECT * FROM users WHERE email = ?", [emailLower]);
   if (!user) {
+    // FR-065 / SC-006：即使帳號不存在仍執行一次 bcrypt 比對，消除時序側信道
+    await bcrypt.compare(password, DUMMY_HASH);
     trackFailedLogin(emailLower);
     recordLoginAttempt({ email: emailLower, req, method: 'password', isSuccess: false, failureReason: 'user_not_found' });
     return res.status(401).json({ error: '電子郵件或密碼錯誤' });
@@ -2264,10 +2379,39 @@ function trimTrailingSlashes(value) {
 }
 
 // Google SSO 登入（統一使用 Authorization Code Flow）
+// T050：Google OAuth redirect_uri 白名單（FR-011 / Q10）
+// 啟動時從環境變數解析；空時 fallback 至 APP_HOST + localhost 預設值
+function buildGoogleRedirectAllowlist() {
+  if (GOOGLE_OAUTH_REDIRECT_URIS.length > 0) return new Set(GOOGLE_OAUTH_REDIRECT_URIS);
+  const fallback = [
+    `https://${APP_HOST}/api/auth/google`,
+    `http://localhost:${PORT}/api/auth/google`,
+  ];
+  console.log(`[OAuth] redirect_uri whitelist 未設定，採用預設：${fallback.join(', ')}`);
+  return new Set(fallback);
+}
+const googleRedirectUriAllowlist = buildGoogleRedirectAllowlist();
+
+function isAllowedGoogleRedirectUri(uri) {
+  if (!uri) return false;
+  if (googleRedirectUriAllowlist.has(uri)) return true;
+  // 容許末端斜線差異
+  const stripped = String(uri).replace(/\/$/, '');
+  const withSlash = stripped + '/';
+  return googleRedirectUriAllowlist.has(stripped) || googleRedirectUriAllowlist.has(withSlash);
+}
+
 app.post('/api/auth/google', async (req, res) => {
   const { code, redirect_uri, state } = req.body;
-  if (!code) return res.status(400).json({ error: '缺少 Google 授權碼' });
-  if (!consumeGoogleOAuthState(state)) return res.status(401).json({ error: 'Google 登入狀態驗證失敗，請重新登入' });
+  if (!code) return res.status(400).json({ error: 'invalid_code' });
+
+  // FR-011 / T051：交換授權碼前先比對白名單，不符立即拒絕（絕不外呼 Google）
+  if (!isAllowedGoogleRedirectUri(String(redirect_uri || '').trim())) {
+    recordLoginAttempt({ email: '', req, method: 'google', isSuccess: false, failureReason: 'invalid_redirect_uri' });
+    return res.status(400).json({ error: 'invalid_redirect_uri' });
+  }
+
+  if (!consumeGoogleOAuthState(state)) return res.status(400).json({ error: 'state_mismatch' });
   if (!GOOGLE_CLIENT_ID) return res.status(400).json({ error: 'Google SSO 未設定' });
   if (!GOOGLE_CLIENT_SECRET) return res.status(400).json({ error: 'Google SSO 需設定 GOOGLE_CLIENT_SECRET' });
 
@@ -2318,7 +2462,8 @@ app.post('/api/auth/google', async (req, res) => {
     });
     const userinfo = await userinfoRes.json();
 
-    email = userinfo.email?.toLowerCase();
+    // FR-001 / T053：Google email 一律走 normalizeEmail
+    email = normalizeEmail(userinfo.email);
     name = userinfo.name || email?.split('@')[0] || 'Google User';
     googleId = userinfo.sub;
     picture = userinfo.picture || '';
@@ -2466,7 +2611,18 @@ app.post('/api/auth/passkey/login', async (req, res) => {
 });
 
 app.post('/api/auth/logout', (req, res) => {
-  res.clearCookie('authToken');
+  // FR-005：登出遞增 token_version，使該使用者所有裝置舊 JWT 立即失效
+  try {
+    const token = req.cookies?.authToken;
+    if (token) {
+      const decoded = jwt.verify(token, JWT_SECRET, { ignoreExpiration: true });
+      if (decoded?.userId) {
+        db.run("UPDATE users SET token_version = COALESCE(token_version, 0) + 1 WHERE id = ?", [decoded.userId]);
+        saveDB();
+      }
+    }
+  } catch (e) { /* token 已失效也無妨，仍清除 Cookie */ }
+  clearAuthCookie(res);
   res.json({ ok: true });
 });
 
@@ -2481,7 +2637,8 @@ app.get('/api/auth/me', authMiddleware, (req, res) => {
 // ═══════════════════════════════════════
 app.use('/api', authMiddleware);
 
-app.get('/api/account/login-logs', async (req, res) => {
+// CT-1：/api/account/login-logs → /api/user/login-audit（FR-042：使用者最近 100 筆）
+app.get('/api/user/login-audit', async (req, res) => {
   const logs = queryAll(
     `SELECT login_at, ip_address, country, login_method, is_admin_login
      FROM login_audit_logs
@@ -2490,9 +2647,7 @@ app.get('/api/account/login-logs', async (req, res) => {
      LIMIT 100`,
     [req.userId]
   );
-
   const logsWithCountry = await enrichAndPersistCountry(logs, 'login_audit_logs');
-
   res.json({
     logs: logsWithCountry.map(l => ({
       loginAt: Number(l.login_at) || 0,
@@ -2504,16 +2659,31 @@ app.get('/api/account/login-logs', async (req, res) => {
   });
 });
 
-app.get('/api/admin/login-logs', adminMiddleware, async (req, res) => {
-  const adminLogs = queryAll(
-    `SELECT id, rowid AS _rid, login_at, ip_address, country, login_method
-     FROM login_audit_logs
-     WHERE user_id = ? AND is_admin_login = 1
-     ORDER BY login_at DESC
-     LIMIT 200`,
-    [req.userId]
-  );
-
+// CT-1：/api/admin/login-logs* → /api/admin/login-audit（FR-043：scope=admin-self 或 all）
+app.get('/api/admin/login-audit', adminMiddleware, async (req, res) => {
+  const scope = String(req.query.scope || '').toLowerCase();
+  if (scope === 'admin-self' || scope === 'admin_self') {
+    const adminLogs = queryAll(
+      `SELECT id, rowid AS _rid, login_at, ip_address, country, login_method
+       FROM login_audit_logs
+       WHERE user_id = ? AND is_admin_login = 1
+       ORDER BY login_at DESC
+       LIMIT 200`,
+      [req.userId]
+    );
+    const enriched = await enrichAndPersistCountry(adminLogs, 'login_audit_logs');
+    return res.json({
+      scope: 'admin-self',
+      logs: enriched.map(l => ({
+        id: l.id || (Number(l._rid) > 0 ? `rid:${Number(l._rid)}` : `ts:${Number(l.login_at) || 0}`),
+        loginAt: Number(l.login_at) || 0,
+        ipAddress: l.ip_address || 'unknown',
+        country: l.country || '-',
+        loginMethod: l.login_method || 'password',
+      })),
+    });
+  }
+  // default: scope = 'all' — 全站 500 筆（含失敗嘗試）
   const allUserLogs = queryAll(
     `SELECT l.id, l.rowid AS _rid, l.user_id, l.email, l.login_at, l.ip_address, l.country, l.login_method, l.is_admin_login, l.is_success, l.failure_reason, u.display_name
      FROM login_attempt_logs l
@@ -2521,21 +2691,10 @@ app.get('/api/admin/login-logs', adminMiddleware, async (req, res) => {
      ORDER BY l.login_at DESC
      LIMIT 500`
   );
-
-  const [adminLogsWithCountry, allUserLogsWithCountry] = await Promise.all([
-    enrichAndPersistCountry(adminLogs, 'login_audit_logs'),
-    enrichAndPersistCountry(allUserLogs, 'login_attempt_logs'),
-  ]);
-
+  const enriched = await enrichAndPersistCountry(allUserLogs, 'login_attempt_logs');
   res.json({
-    adminLogs: adminLogsWithCountry.map(l => ({
-      id: l.id || (Number(l._rid) > 0 ? `rid:${Number(l._rid)}` : `ts:${Number(l.login_at) || 0}`),
-      loginAt: Number(l.login_at) || 0,
-      ipAddress: l.ip_address || 'unknown',
-      country: l.country || '-',
-      loginMethod: l.login_method || 'password',
-    })),
-    allUserLogs: allUserLogsWithCountry.map(l => ({
+    scope: 'all',
+    logs: enriched.map(l => ({
       id: l.id || (Number(l._rid) > 0 ? `rid:${Number(l._rid)}` : `ts:${Number(l.login_at) || 0}`),
       userId: l.user_id,
       email: l.email || '',
@@ -2551,149 +2710,71 @@ app.get('/api/admin/login-logs', adminMiddleware, async (req, res) => {
   });
 });
 
-function deleteAdminLoginAuditByTarget(target, userId) {
+// 刪除單筆：FR-045 備援識別（id / rowid / timestamp）嘗試兩個表
+function deleteLoginAuditSingle(target, userId) {
+  let deleted = 0;
+  // 先試 admin-self 範圍的 login_audit_logs
   if (target.byRowId) {
-    db.run("DELETE FROM login_audit_logs WHERE rowid = ? AND user_id = ? AND is_admin_login = 1", [target.value, userId]);
+    db.run("DELETE FROM login_audit_logs WHERE rowid = ?", [target.value]);
   } else if (target.byTimestamp) {
     db.run(
-      `DELETE FROM login_audit_logs
-       WHERE rowid IN (
-         SELECT rowid
-         FROM login_audit_logs
-         WHERE login_at = ? AND user_id = ? AND is_admin_login = 1
-         ORDER BY rowid DESC
-         LIMIT 1
+      `DELETE FROM login_audit_logs WHERE rowid IN (
+         SELECT rowid FROM login_audit_logs WHERE login_at = ? ORDER BY rowid DESC LIMIT 1
        )`,
-      [target.value, userId]
+      [target.value]
     );
   } else {
-    db.run("DELETE FROM login_audit_logs WHERE id = ? AND user_id = ? AND is_admin_login = 1", [target.value, userId]);
+    db.run("DELETE FROM login_audit_logs WHERE id = ?", [target.value]);
   }
-  return db.getRowsModified();
-}
-
-// 相容舊前端：曾有版本呼叫 /api/admin/login-logs/:id
-app.delete('/api/admin/login-logs/:id', adminMiddleware, (req, res, next) => {
-  if (String(req.params.id || '').trim().toLowerCase() === 'admin') return next();
-  const target = parseLoginLogTarget(req.params.id);
-  if (!target) return res.status(400).json({ error: '缺少紀錄 ID' });
-
-  const deleted = deleteAdminLoginAuditByTarget(target, req.userId);
-  if (!deleted) return res.status(404).json({ error: '管理員登入紀錄不存在' });
-
-  saveDB();
-  res.json({ deleted });
-});
-
-app.delete('/api/admin/login-logs/admin/:id', adminMiddleware, (req, res) => {
-  const target = parseLoginLogTarget(req.params.id);
-  if (!target) return res.status(400).json({ error: '缺少紀錄 ID' });
-
-  const deleted = deleteAdminLoginAuditByTarget(target, req.userId);
-  if (!deleted) return res.status(404).json({ error: '管理員登入紀錄不存在' });
-
-  saveDB();
-  res.json({ deleted });
-});
-
-app.post('/api/admin/login-logs/admin/batch-delete', adminMiddleware, (req, res) => {
-  const ids = Array.isArray(req.body?.ids) ? req.body.ids : [];
-  if (ids.length === 0) return res.status(400).json({ error: '請選擇要刪除的紀錄' });
-
-  let deleted = 0;
-  ids.forEach(rawId => {
-    const target = parseLoginLogTarget(rawId);
-    if (!target) return;
-    if (target.byRowId) {
-      db.run("DELETE FROM login_audit_logs WHERE rowid = ? AND user_id = ? AND is_admin_login = 1", [target.value, req.userId]);
-    } else if (target.byTimestamp) {
-      db.run(
-        `DELETE FROM login_audit_logs
-         WHERE rowid IN (
-           SELECT rowid
-           FROM login_audit_logs
-           WHERE login_at = ? AND user_id = ? AND is_admin_login = 1
-           ORDER BY rowid DESC
-           LIMIT 1
-         )`,
-        [target.value, req.userId]
-      );
-    } else {
-      db.run("DELETE FROM login_audit_logs WHERE id = ? AND user_id = ? AND is_admin_login = 1", [target.value, req.userId]);
-    }
-    deleted += db.getRowsModified();
-  });
-
-  saveDB();
-  res.json({ deleted });
-});
-
-app.delete('/api/admin/login-logs/all/:id', adminMiddleware, (req, res) => {
-  const target = parseLoginLogTarget(req.params.id);
-  if (!target) return res.status(400).json({ error: '缺少紀錄 ID' });
-
+  deleted += db.getRowsModified();
+  if (deleted > 0) return deleted;
+  // 再試 login_attempt_logs（all 範圍）
   if (target.byRowId) {
     db.run("DELETE FROM login_attempt_logs WHERE rowid = ?", [target.value]);
   } else if (target.byTimestamp) {
     db.run(
-      `DELETE FROM login_attempt_logs
-       WHERE rowid IN (
-         SELECT rowid
-         FROM login_attempt_logs
-         WHERE login_at = ?
-         ORDER BY rowid DESC
-         LIMIT 1
+      `DELETE FROM login_attempt_logs WHERE rowid IN (
+         SELECT rowid FROM login_attempt_logs WHERE login_at = ? ORDER BY rowid DESC LIMIT 1
        )`,
       [target.value]
     );
   } else {
     db.run("DELETE FROM login_attempt_logs WHERE id = ?", [target.value]);
   }
-  const deleted = db.getRowsModified();
-  if (!deleted) return res.status(404).json({ error: '使用者登入紀錄不存在' });
+  deleted += db.getRowsModified();
+  return deleted;
+}
 
+app.delete('/api/admin/login-audit/:logId', adminMiddleware, (req, res) => {
+  const target = parseLoginLogTarget(req.params.logId);
+  if (!target) return res.status(400).json({ error: '缺少紀錄 ID' });
+  const deleted = deleteLoginAuditSingle(target, req.userId);
+  if (!deleted) return res.status(404).json({ error: '登入紀錄不存在' });
   saveDB();
   res.json({ deleted });
 });
 
-app.post('/api/admin/login-logs/all/batch-delete', adminMiddleware, (req, res) => {
+// 批次刪除：`:batch-delete` 為 RPC 動作式路徑（Express 5 path-to-regexp 支援 `\\:` 逸出冒號）
+app.post('/api/admin/login-audit\\:batch-delete', adminMiddleware, (req, res) => {
   const ids = Array.isArray(req.body?.ids) ? req.body.ids : [];
   if (ids.length === 0) return res.status(400).json({ error: '請選擇要刪除的紀錄' });
-
   let deleted = 0;
-  ids.forEach(rawId => {
+  ids.forEach((rawId) => {
     const target = parseLoginLogTarget(rawId);
     if (!target) return;
-    if (target.byRowId) {
-      db.run("DELETE FROM login_attempt_logs WHERE rowid = ?", [target.value]);
-    } else if (target.byTimestamp) {
-      db.run(
-        `DELETE FROM login_attempt_logs
-         WHERE rowid IN (
-           SELECT rowid
-           FROM login_attempt_logs
-           WHERE login_at = ?
-           ORDER BY rowid DESC
-           LIMIT 1
-         )`,
-        [target.value]
-      );
-    } else {
-      db.run("DELETE FROM login_attempt_logs WHERE id = ?", [target.value]);
-    }
-    deleted += db.getRowsModified();
+    deleted += deleteLoginAuditSingle(target, req.userId);
   });
-
   saveDB();
   res.json({ deleted });
 });
 
-app.get('/api/admin/settings', adminMiddleware, (req, res) => {
+// CT-1：/api/admin/settings → /api/admin/system-settings（server.js 對齊契約）
+app.get('/api/admin/system-settings', adminMiddleware, (req, res) => {
   const settings = getSystemSettings();
   res.json(settings);
 });
 
-app.put('/api/admin/settings', adminMiddleware, (req, res) => {
+app.put('/api/admin/system-settings', adminMiddleware, (req, res) => {
   const publicRegistration = !!req.body?.publicRegistration;
   const allowedRegistrationEmails = parseAllowedRegistrationEmails(req.body?.allowedRegistrationEmails);
   const adminIpAllowlist = parseIpAllowlist(req.body?.adminIpAllowlist);
@@ -2939,7 +3020,7 @@ app.put('/api/admin/users/:id/password', adminMiddleware, async (req, res) => {
 
   if (user.password_hash) {
     const sameAsOld = await bcrypt.compare(newPassword, user.password_hash);
-    if (sameAsOld) return res.status(400).json({ error: '新密碼不可與目前密碼相同' });
+    if (sameAsOld) return res.status(400).json({ error: 'same_as_current_password' });
   }
 
   const passwordHash = await bcrypt.hash(newPassword, 10);
@@ -2952,18 +3033,19 @@ app.put('/api/admin/users/:id/password', adminMiddleware, async (req, res) => {
 app.delete('/api/admin/users/:id', adminMiddleware, (req, res) => {
   const targetId = req.params.id;
   if (!targetId) return res.status(400).json({ error: '缺少使用者 ID' });
-  if (targetId === req.userId) return res.status(400).json({ error: '不可透過管理員介面刪除目前登入帳號' });
 
   const user = queryOne("SELECT id, is_admin FROM users WHERE id = ?", [targetId]);
   if (!user) return res.status(404).json({ error: '使用者不存在' });
 
+  // FR-036：無法使系統無管理員（涵蓋自刪最後管理員）
   if (user.is_admin) {
     const adminCount = Number(queryOne("SELECT COUNT(1) AS count FROM users WHERE is_admin = 1")?.count || 0);
     if (adminCount <= 1) {
-      return res.status(400).json({ error: '系統至少需保留一位管理員' });
+      return res.status(400).json({ error: 'last_admin_protected' });
     }
   }
 
+  // FR-035：混合刪除策略
   deleteUserData(targetId);
   saveDB();
   res.json({ success: true });
@@ -3759,6 +3841,48 @@ setTimeout(() => {
   checkAndRunSchedule();
   setInterval(checkAndRunSchedule, 5 * 60 * 1000);
 }, 30 * 1000);
+
+// FR-046：90 天稽核清除排程（啟動立即執行 + 每 24h 循環）
+function pruneAuditLogs() {
+  const threshold = serverNow() - AUDIT_RETENTION_DAYS * 86400 * 1000;
+  let totalAudit = 0;
+  let totalAttempt = 0;
+  while (true) {
+    const auditIds = db.exec(
+      `SELECT id FROM login_audit_logs WHERE login_at < ${threshold} LIMIT ${PRUNE_BATCH}`
+    );
+    const auditRows = auditIds[0]?.values || [];
+    if (auditRows.length > 0) {
+      const placeholders = auditRows.map(() => '?').join(',');
+      db.run(`DELETE FROM login_audit_logs WHERE id IN (${placeholders})`, auditRows.map(r => r[0]));
+      totalAudit += auditRows.length;
+    }
+    const attemptIds = db.exec(
+      `SELECT id FROM login_attempt_logs WHERE login_at < ${threshold} LIMIT ${PRUNE_BATCH}`
+    );
+    const attemptRows = attemptIds[0]?.values || [];
+    if (attemptRows.length > 0) {
+      const placeholders = attemptRows.map(() => '?').join(',');
+      db.run(`DELETE FROM login_attempt_logs WHERE id IN (${placeholders})`, attemptRows.map(r => r[0]));
+      totalAttempt += attemptRows.length;
+    }
+    if (auditRows.length === 0 && attemptRows.length === 0) break;
+  }
+  const total = totalAudit + totalAttempt;
+  if (total > 0) {
+    saveDB();
+    console.log(`[Audit Prune] removed ${total} rows (audit=${totalAudit}, attempt=${totalAttempt})`);
+  }
+  return total;
+}
+
+function registerAuditPruneJob() {
+  try { pruneAuditLogs(); } catch (e) { console.error('[Audit Prune] initial run error', e); }
+  setInterval(() => {
+    try { pruneAuditLogs(); } catch (e) { console.error('[Audit Prune] scheduled run error', e); }
+  }, 24 * 3600 * 1000);
+  console.log('[Audit Prune] registered; next run in 24h');
+}
 
 app.get('/api/admin/report-schedule', adminMiddleware, (req, res) => {
   const s = getReportSchedule();
@@ -6257,19 +6381,11 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: '伺服器發生錯誤，請稍後再試' });
 });
 
-// ─── 公開頁面路由 ───
-const publicPageLimiter = rateLimit({
-  windowMs: 60 * 1000,
-  max: 120,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { error: '請求過於頻繁，請稍後再試' },
-  validate: { xForwardedForHeader: false }
-});
-app.get('/privacy', publicPageLimiter, (req, res) => {
+// ─── 公開頁面路由（FR-007 靜態頁桶）───
+app.get('/privacy', staticPageLimiter, (req, res) => {
   res.sendFile(path.join(__dirname, 'privacy.html'));
 });
-app.get('/terms', publicPageLimiter, (req, res) => {
+app.get('/terms', staticPageLimiter, (req, res) => {
   res.sendFile(path.join(__dirname, 'terms.html'));
 });
 
@@ -6288,7 +6404,9 @@ app.get('{*path}', rateLimit({
 // ─── 啟動 ───
 initDB().then(() => {
   loadServerTimeOffset();
+  registerAuditPruneJob();
   app.listen(PORT, () => {
     console.log(`AssetPilot 伺服器已啟動: http://localhost:${PORT}`);
+    console.log(`[OAuth] redirect_uri whitelist: ${GOOGLE_OAUTH_REDIRECT_URIS.length} entries`);
   });
 });

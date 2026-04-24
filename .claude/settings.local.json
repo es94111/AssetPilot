@@ -61,7 +61,9 @@
       "Bash(gh run *)",
       "Bash(git merge *)",
       "Bash(specify init *)",
-      "Bash(node -e \"const c = require\\('C:/Users/hongyu/SynologyDrive/網頁/記帳網頁/changelog.json'\\); console.log\\('currentVersion:', c.currentVersion\\); console.log\\('first release:', c.releases[0].version, c.releases[0].title\\);\")"
+      "Bash(node -e \"const c = require\\('C:/Users/hongyu/SynologyDrive/網頁/記帳網頁/changelog.json'\\); console.log\\('currentVersion:', c.currentVersion\\); console.log\\('first release:', c.releases[0].version, c.releases[0].title\\);\")",
+      "PowerShell(& \"./.specify/scripts/powershell/create-new-feature.ps1\" -Json -ShortName 'user-permissions' '�ϥΪ̻P�v���G���U�B�n�J�BGoogle SSO�BPasskey�B�޲z�������B�n�J�]�֡B���A���ɶ��ե��B�w����u')",
+      "Bash(npm audit *)"
     ]
   }
 }

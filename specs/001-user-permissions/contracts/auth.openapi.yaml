@@ -1,0 +1,1015 @@
+openapi: 3.2.0
+info:
+  title: AssetPilot 使用者與權限 API（功能子契約）
+  version: 0.2.0
+  description: |
+    本檔為 `specs/001-user-permissions` 功能的 API 子契約，僅涵蓋本功能直接
+    負責的端點。正式對外契約以專案根目錄 `openapi.yaml` 為準；兩份文件在
+    實作 PR 內必須同時更新以符合憲章 Principle II。
+
+    所有字串欄位的 Email 一律為正規化後（`trim + lowercase`）的表示。
+  contact:
+    name: AssetPilot
+servers:
+  - url: https://{host}
+    description: 正式環境
+    variables:
+      host:
+        default: app.example.com
+  - url: http://localhost:{port}
+    description: 本機開發
+    variables:
+      port:
+        default: "3000"
+
+tags:
+  - name: Auth
+    description: 註冊、登入、登出、SSO、Passkey
+  - name: AdminUsers
+    description: 管理員的使用者／註冊政策管理
+  - name: Audit
+    description: 登入稽核紀錄
+  - name: ServerTime
+    description: 伺服器時間與 NTP 校正
+
+security:
+  - cookieAuth: []
+
+paths:
+  /api/auth/register:
+    post:
+      tags: [Auth]
+      summary: 以電子郵件密碼註冊
+      description: |
+        FR-001 / FR-002 / FR-003 / FR-007。Email 伺服器端強制
+        `trim + lowercase`；密碼須符合強密碼規則。套用 auth 桶速率限制。
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '200': { $ref: '#/components/responses/AuthSuccess' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '403': { $ref: '#/components/responses/RegistrationDisabled' }
+        '409': { $ref: '#/components/responses/EmailInUse' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+
+  /api/auth/login:
+    post:
+      tags: [Auth]
+      summary: 以電子郵件密碼登入
+      description: FR-001 / FR-004 / FR-006 / FR-007 / FR-065。
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200': { $ref: '#/components/responses/AuthSuccess' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/LoginFailed' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+
+  /api/auth/logout:
+    post:
+      tags: [Auth]
+      summary: 登出
+      description: FR-005。遞增 `token_version` 並清除 `authToken` Cookie。
+      responses:
+        '200':
+          description: 已登出
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ok'
+
+  /api/auth/me:
+    get:
+      tags: [Auth]
+      summary: 取得目前登入使用者資訊
+      responses:
+        '200':
+          description: 使用者資訊
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [user]
+                properties:
+                  user:
+                    $ref: '#/components/schemas/User'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /api/auth/change-password:
+    post:
+      tags: [Auth]
+      summary: 使用者變更密碼
+      description: |
+        FR-005 / FR-037。成功後伺服器遞增 `token_version`，所有既有 JWT 立即
+        失效；客戶端須重新登入。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [oldPassword, newPassword]
+              properties:
+                oldPassword:
+                  type: string
+                newPassword:
+                  type: string
+      responses:
+        '200':
+          description: 密碼變更成功；前端應清空 session 並導回登入頁
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ok'
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /api/auth/google/state:
+    get:
+      tags: [Auth]
+      summary: 取得一次性 OAuth state
+      description: FR-011。由後端產生 state 並存於短效 session／memory。
+      security: []
+      responses:
+        '200':
+          description: state 產生
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [state]
+                properties:
+                  state:
+                    type: string
+
+  /api/auth/google:
+    post:
+      tags: [Auth]
+      summary: 以 Google 授權碼交換登入
+      description: |
+        FR-011 / FR-012。
+        - `state` 必須與先前由 `/api/auth/google/state` 發行者相符。
+        - `redirect_uri` 必須在後端維護的白名單內，否則回 400
+          `invalid_redirect_uri` 並寫入失敗稽核。
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GoogleExchangeRequest'
+      responses:
+        '200': { $ref: '#/components/responses/AuthSuccess' }
+        '400':
+          description: |
+            驗證失敗。常見原因：
+            - `invalid_state`：state 不相符或過期
+            - `invalid_redirect_uri`：`redirect_uri` 不在白名單內
+            - `invalid_code`：向 Google 換 token 失敗
+            - `registration_disabled`：首次登入但註冊政策禁止
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429': { $ref: '#/components/responses/RateLimited' }
+
+  /api/auth/passkey/challenge:
+    get:
+      tags: [Auth]
+      summary: 取得 Passkey 登入挑戰
+      description: FR-021。usernameless discoverable credential 模式。
+      security: []
+      responses:
+        '200':
+          description: 挑戰產生
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PasskeyChallenge'
+
+  /api/auth/passkey/login:
+    post:
+      tags: [Auth]
+      summary: 以 Passkey 完成無密碼登入
+      description: FR-021 / FR-022。以 `userHandle` 為帳號查找依據。
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasskeyAssertion'
+      responses:
+        '200': { $ref: '#/components/responses/AuthSuccess' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401':
+          description: Passkey 驗證失敗（origin 不符、counter 退化、或 userHandle 不存在）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/auth/passkey/register/options:
+    get:
+      tags: [Auth]
+      summary: 取得 Passkey 註冊選項
+      responses:
+        '200':
+          description: WebAuthn Registration Options
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /api/auth/passkey/register:
+    post:
+      tags: [Auth]
+      summary: 完成 Passkey 註冊
+      description: FR-020。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [credential, deviceName]
+              properties:
+                credential:
+                  type: object
+                  additionalProperties: true
+                deviceName:
+                  type: string
+                  maxLength: 64
+      responses:
+        '200':
+          description: 註冊成功
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [credential]
+                properties:
+                  credential:
+                    $ref: '#/components/schemas/PasskeyListItem'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /api/auth/passkey/list:
+    get:
+      tags: [Auth]
+      summary: 取得使用者 Passkey 清單
+      responses:
+        '200':
+          description: 清單
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [passkeys]
+                properties:
+                  passkeys:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PasskeyListItem'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /api/auth/passkey/{credentialId}:
+    delete:
+      tags: [Auth]
+      summary: 刪除單一 Passkey
+      parameters:
+        - name: credentialId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 已刪除
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ok'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404':
+          description: credentialId 不存在或不屬於該使用者
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/admin/users:
+    get:
+      tags: [AdminUsers]
+      summary: 列出所有使用者
+      description: FR-034。
+      responses:
+        '200':
+          description: 使用者清單
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [users]
+                properties:
+                  users:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AdminUserListItem'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    post:
+      tags: [AdminUsers]
+      summary: 管理員新增使用者
+      description: FR-034。管理員新增不套用公開註冊／白名單限制。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminCreateUserRequest'
+      responses:
+        '200':
+          description: 已建立
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [user]
+                properties:
+                  user:
+                    $ref: '#/components/schemas/AdminUserListItem'
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/EmailInUse' }
+
+  /api/admin/users/{userId}:
+    delete:
+      tags: [AdminUsers]
+      summary: 刪除使用者
+      description: |
+        FR-035 / FR-036。混合策略——該使用者業務資料與成功登入紀錄硬刪，
+        失敗登入嘗試匿名化保留（`user_id` 改空字串、Email 改 SHA-256 雜湊）。
+        系統必須永遠保有至少一位管理員，否則拒絕。
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 已刪除
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ok'
+        '400':
+          description: 會造成系統無管理員、或嘗試自刪最後管理員
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404':
+          description: 使用者不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/admin/users/{userId}/password:
+    post:
+      tags: [AdminUsers]
+      summary: 管理員重設使用者密碼
+      description: FR-005 / FR-037。重設同時遞增該使用者 `token_version`。
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [newPassword]
+              properties:
+                newPassword:
+                  type: string
+      responses:
+        '200':
+          description: 已重設；該使用者所有既有 JWT 立即失效
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ok'
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /api/admin/system-settings:
+    get:
+      tags: [AdminUsers]
+      summary: 取得全站設定（含註冊政策）
+      responses:
+        '200':
+          description: 設定
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SystemSettings'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    put:
+      tags: [AdminUsers]
+      summary: 更新全站設定
+      description: FR-031 / FR-032。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SystemSettingsUpdate'
+      responses:
+        '200':
+          description: 已更新
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SystemSettings'
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /api/admin/login-audit:
+    get:
+      tags: [Audit]
+      summary: 管理員檢視全站登入紀錄
+      description: FR-043。預設 500 筆、含失敗；支援以 `scope` 切換。
+      parameters:
+        - name: scope
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [all, admin_self]
+            default: all
+          description: |
+            - `all`：全站最近 500 筆（含失敗）。
+            - `admin_self`：自己作為管理員身分登入的最近 200 筆。
+      responses:
+        '200':
+          description: 紀錄清單
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [logs, lastSyncedAt]
+                properties:
+                  logs:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/LoginAuditEntry'
+                  lastSyncedAt:
+                    type: integer
+                    format: int64
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /api/admin/login-audit/{logId}:
+    delete:
+      tags: [Audit]
+      summary: 刪除單筆登入紀錄
+      description: FR-044 / FR-045。無主鍵時以 `?loginAt=<epoch_ms>&email=<str>` 定位。
+      parameters:
+        - name: logId
+          in: path
+          required: true
+          schema:
+            type: string
+            description: 紀錄主鍵；若舊資料無主鍵，傳 `_ts_<epoch_ms>` 表示以時間戳備援識別。
+        - name: loginAt
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int64
+        - name: email
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 已刪除
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ok'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404':
+          description: 紀錄不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/admin/login-audit:batch-delete:
+    post:
+      tags: [Audit]
+      summary: 批次刪除登入紀錄
+      description: FR-044。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [items]
+              properties:
+                items:
+                  type: array
+                  minItems: 1
+                  maxItems: 500
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      loginAt:
+                        type: integer
+                        format: int64
+                      email:
+                        type: string
+      responses:
+        '200':
+          description: 已刪除 N 筆
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [deleted]
+                properties:
+                  deleted:
+                    type: integer
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /api/user/login-audit:
+    get:
+      tags: [Audit]
+      summary: 使用者檢視自己最近 100 筆登入紀錄
+      description: FR-042。
+      responses:
+        '200':
+          description: 紀錄清單
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [logs]
+                properties:
+                  logs:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/LoginAuditEntry'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /api/admin/server-time:
+    get:
+      tags: [ServerTime]
+      summary: 取得伺服器時間資訊
+      description: FR-050。
+      responses:
+        '200':
+          description: 時間資訊
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerTimeInfo'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    put:
+      tags: [ServerTime]
+      summary: 更新伺服器採用時間偏移
+      description: FR-051 / FR-052。以 `targetTime`（RFC 3339）或 `offsetMs`（毫秒偏移）擇一更新。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - type: object
+                  required: [targetTime]
+                  properties:
+                    targetTime:
+                      type: string
+                      format: date-time
+                - type: object
+                  required: [offsetMs]
+                  properties:
+                    offsetMs:
+                      type: integer
+                      format: int64
+                      minimum: -315360000000
+                      maximum: 315360000000
+      responses:
+        '200':
+          description: 已更新
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerTimeInfo'
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /api/admin/server-time/ntp-sync:
+    post:
+      tags: [ServerTime]
+      summary: NTP 查詢／校正
+      description: FR-053 / FR-054 / FR-055。僅接受 IPv4 公網或 FQDN。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                host:
+                  type: string
+                  description: 可選；未帶則依預設 fallback 鏈。
+                apply:
+                  type: boolean
+                  default: false
+                  description: "`false` 僅預覽不套用偏移。"
+      responses:
+        '200':
+          description: 回報 NTP 差異
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [deltaMs, host, applied]
+                properties:
+                  deltaMs:
+                    type: integer
+                    format: int64
+                  host:
+                    type: string
+                  applied:
+                    type: boolean
+        '400':
+          description: 不合法 host（私有網段／IPv6／IPv4-mapped 等）或逾時
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: authToken
+      description: JWT（HS256）；Cookie 旗標 `HttpOnly; Secure; SameSite=Strict`。
+
+  schemas:
+    Ok:
+      type: object
+      required: [ok]
+      properties:
+        ok:
+          type: boolean
+          enum: [true]
+
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+
+    User:
+      type: object
+      required: [id, email, displayName, isAdmin]
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+          format: email
+        displayName:
+          type: string
+        avatarUrl:
+          type: string
+        googleLinked:
+          type: boolean
+        hasPassword:
+          type: boolean
+        themeMode:
+          type: string
+          enum: [system, light, dark]
+        isAdmin:
+          type: boolean
+
+    RegisterRequest:
+      type: object
+      required: [email, password, displayName]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+        displayName:
+          type: string
+          minLength: 1
+          maxLength: 64
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+
+    GoogleExchangeRequest:
+      type: object
+      required: [code, redirect_uri, state]
+      properties:
+        code:
+          type: string
+        redirect_uri:
+          type: string
+          format: uri
+          description: 必須命中後端白名單（`GOOGLE_OAUTH_REDIRECT_URIS`），否則拒絕。
+        state:
+          type: string
+
+    PasskeyChallenge:
+      type: object
+      required: [challenge, rpId, allowCredentials]
+      properties:
+        challenge:
+          type: string
+        rpId:
+          type: string
+        allowCredentials:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+
+    PasskeyAssertion:
+      type: object
+      required: [credential]
+      properties:
+        credential:
+          type: object
+          additionalProperties: true
+
+    PasskeyListItem:
+      type: object
+      required: [credentialId, deviceName, createdAt]
+      properties:
+        credentialId:
+          type: string
+        deviceName:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        lastUsedAt:
+          type: string
+          format: date-time
+
+    AdminUserListItem:
+      type: object
+      required: [id, email, displayName, isAdmin, createdAt]
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+        displayName:
+          type: string
+        isAdmin:
+          type: boolean
+        googleLinked:
+          type: boolean
+        hasPassword:
+          type: boolean
+        createdAt:
+          type: string
+        lastLoginAt:
+          type: integer
+          format: int64
+
+    AdminCreateUserRequest:
+      type: object
+      required: [email, password, displayName]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+        displayName:
+          type: string
+        grantAdmin:
+          type: boolean
+          default: false
+
+    SystemSettings:
+      type: object
+      required: [publicRegistration, allowedRegistrationEmails]
+      properties:
+        publicRegistration:
+          type: boolean
+        allowedRegistrationEmails:
+          type: array
+          items:
+            type: string
+          description: |
+            每一項可為完整 Email（大小寫不敏感完全比對）或 `*@<domain>` 通配；
+            兩種形態可並存，多項之間為 OR。
+        adminIpAllowlist:
+          type: array
+          items:
+            type: string
+        updatedAt:
+          type: integer
+          format: int64
+        updatedBy:
+          type: string
+
+    SystemSettingsUpdate:
+      type: object
+      properties:
+        publicRegistration:
+          type: boolean
+        allowedRegistrationEmails:
+          type: array
+          items:
+            type: string
+        adminIpAllowlist:
+          type: array
+          items:
+            type: string
+
+    LoginAuditEntry:
+      type: object
+      required: [loginAt, ipAddress, loginMethod, isSuccess]
+      properties:
+        id:
+          type: string
+          description: 可能為空（舊資料）；前端應以 `_ts_<loginAt>` 備援識別。
+        userId:
+          type: string
+          description: 匿名化後為空字串。
+        email:
+          type: string
+          description: 匿名化後為 SHA-256 hex（長度 64、僅含 0-9a-f）。
+        displayName:
+          type: string
+        loginAt:
+          type: integer
+          format: int64
+        ipAddress:
+          type: string
+        country:
+          type: string
+        userAgent:
+          type: string
+        loginMethod:
+          type: string
+          enum: [password, google, passkey]
+        isAdminLogin:
+          type: boolean
+        isSuccess:
+          type: boolean
+        failureReason:
+          type: string
+        anonymized:
+          type: boolean
+          description: |
+            前端便利旗標；後端可由 email 欄位是否為 SHA-256 hex 自動判別，
+            但提前帶出避免重複計算。
+
+    ServerTimeInfo:
+      type: object
+      required: [realTimeMs, adoptedTimeMs, offsetMs, timezone, uptimeMs]
+      properties:
+        realTimeMs:
+          type: integer
+          format: int64
+        adoptedTimeMs:
+          type: integer
+          format: int64
+        offsetMs:
+          type: integer
+          format: int64
+        timezone:
+          type: string
+        uptimeMs:
+          type: integer
+          format: int64
+
+  responses:
+    AuthSuccess:
+      description: 登入／註冊成功；伺服器下發 `authToken` Cookie
+      headers:
+        Set-Cookie:
+          schema:
+            type: string
+          description: authToken=<jwt>; HttpOnly; Secure; SameSite=Strict; Max-Age=604800
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [user, currentLogin]
+            properties:
+              user:
+                $ref: '#/components/schemas/User'
+              currentLogin:
+                $ref: '#/components/schemas/LoginAuditEntry'
+
+    ValidationError:
+      description: 輸入驗證失敗
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    LoginFailed:
+      description: 登入失敗；訊息通用化（不揭露帳號是否存在，FR-065）
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Unauthorized:
+      description: 未登入或 Token 已失效
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Forbidden:
+      description: 非管理員存取管理員端點
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    RegistrationDisabled:
+      description: 註冊已關閉、或 Email 不在白名單內
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    EmailInUse:
+      description: Email 已被使用（以正規化後字串比對）
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    RateLimited:
+      description: 已達速率限制（FR-007）
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

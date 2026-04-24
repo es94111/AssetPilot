@@ -10,12 +10,15 @@ info:
     所有字串欄位的 Email 一律為正規化後（`trim + lowercase`）的表示。
   contact:
     name: AssetPilot
+  license:
+    name: Proprietary
+    identifier: LicenseRef-AssetPilot-Proprietary
 servers:
   - url: https://{host}
-    description: 正式環境
+    description: 正式環境；`host` 由部署者以實際網域覆寫（見 `APP_HOST`）
     variables:
       host:
-        default: app.example.com
+        default: app.your-domain.tld
   - url: http://localhost:{port}
     description: 本機開發
     variables:
@@ -39,6 +42,7 @@ paths:
   /api/auth/register:
     post:
       tags: [Auth]
+      operationId: registerUser
       summary: 以電子郵件密碼註冊
       description: |
         FR-001 / FR-002 / FR-003 / FR-007。Email 伺服器端強制
@@ -60,6 +64,7 @@ paths:
   /api/auth/login:
     post:
       tags: [Auth]
+      operationId: loginUser
       summary: 以電子郵件密碼登入
       description: FR-001 / FR-004 / FR-006 / FR-007 / FR-065。
       security: []
@@ -78,6 +83,7 @@ paths:
   /api/auth/logout:
     post:
       tags: [Auth]
+      operationId: logoutUser
       summary: 登出
       description: FR-005。遞增 `token_version` 並清除 `authToken` Cookie。
       responses:
@@ -87,10 +93,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Ok'
+        '401': { $ref: '#/components/responses/Unauthorized' }
 
   /api/auth/me:
     get:
       tags: [Auth]
+      operationId: getCurrentUser
       summary: 取得目前登入使用者資訊
       responses:
         '200':
@@ -108,6 +116,7 @@ paths:
   /api/auth/change-password:
     post:
       tags: [Auth]
+      operationId: changeOwnPassword
       summary: 使用者變更密碼
       description: |
         FR-005 / FR-037。成功後伺服器遞增 `token_version`，所有既有 JWT 立即
@@ -137,6 +146,7 @@ paths:
   /api/auth/google/state:
     get:
       tags: [Auth]
+      operationId: getGoogleOAuthState
       summary: 取得一次性 OAuth state
       description: FR-011。由後端產生 state 並存於短效 session／memory。
       security: []
@@ -151,10 +161,12 @@ paths:
                 properties:
                   state:
                     type: string
+        '429': { $ref: '#/components/responses/RateLimited' }
 
   /api/auth/google:
     post:
       tags: [Auth]
+      operationId: exchangeGoogleCode
       summary: 以 Google 授權碼交換登入
       description: |
         FR-011 / FR-012。
@@ -186,6 +198,7 @@ paths:
   /api/auth/passkey/challenge:
     get:
       tags: [Auth]
+      operationId: getPasskeyChallenge
       summary: 取得 Passkey 登入挑戰
       description: FR-021。usernameless discoverable credential 模式。
       security: []
@@ -196,10 +209,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PasskeyChallenge'
+        '429': { $ref: '#/components/responses/RateLimited' }
 
   /api/auth/passkey/login:
     post:
       tags: [Auth]
+      operationId: passkeyLogin
       summary: 以 Passkey 完成無密碼登入
       description: FR-021 / FR-022。以 `userHandle` 為帳號查找依據。
       security: []
@@ -222,6 +237,7 @@ paths:
   /api/auth/passkey/register/options:
     get:
       tags: [Auth]
+      operationId: getPasskeyRegisterOptions
       summary: 取得 Passkey 註冊選項
       responses:
         '200':
@@ -236,6 +252,7 @@ paths:
   /api/auth/passkey/register:
     post:
       tags: [Auth]
+      operationId: registerPasskey
       summary: 完成 Passkey 註冊
       description: FR-020。
       requestBody:
@@ -268,6 +285,7 @@ paths:
   /api/auth/passkey/list:
     get:
       tags: [Auth]
+      operationId: listPasskeys
       summary: 取得使用者 Passkey 清單
       responses:
         '200':
@@ -287,6 +305,7 @@ paths:
   /api/auth/passkey/{credentialId}:
     delete:
       tags: [Auth]
+      operationId: deletePasskey
       summary: 刪除單一 Passkey
       parameters:
         - name: credentialId
@@ -312,6 +331,7 @@ paths:
   /api/admin/users:
     get:
       tags: [AdminUsers]
+      operationId: listUsers
       summary: 列出所有使用者
       description: FR-034。
       responses:
@@ -331,6 +351,7 @@ paths:
         '403': { $ref: '#/components/responses/Forbidden' }
     post:
       tags: [AdminUsers]
+      operationId: adminCreateUser
       summary: 管理員新增使用者
       description: FR-034。管理員新增不套用公開註冊／白名單限制。
       requestBody:
@@ -358,6 +379,7 @@ paths:
   /api/admin/users/{userId}:
     delete:
       tags: [AdminUsers]
+      operationId: adminDeleteUser
       summary: 刪除使用者
       description: |
         FR-035 / FR-036。混合策略——該使用者業務資料與成功登入紀錄硬刪，
@@ -394,6 +416,7 @@ paths:
   /api/admin/users/{userId}/password:
     post:
       tags: [AdminUsers]
+      operationId: adminResetUserPassword
       summary: 管理員重設使用者密碼
       description: FR-005 / FR-037。重設同時遞增該使用者 `token_version`。
       parameters:
@@ -426,6 +449,7 @@ paths:
   /api/admin/system-settings:
     get:
       tags: [AdminUsers]
+      operationId: getSystemSettings
       summary: 取得全站設定（含註冊政策）
       responses:
         '200':
@@ -438,6 +462,7 @@ paths:
         '403': { $ref: '#/components/responses/Forbidden' }
     put:
       tags: [AdminUsers]
+      operationId: updateSystemSettings
       summary: 更新全站設定
       description: FR-031 / FR-032。
       requestBody:
@@ -460,6 +485,7 @@ paths:
   /api/admin/login-audit:
     get:
       tags: [Audit]
+      operationId: listAdminLoginAudit
       summary: 管理員檢視全站登入紀錄
       description: FR-043。預設 500 筆、含失敗；支援以 `scope` 切換。
       parameters:
@@ -495,6 +521,7 @@ paths:
   /api/admin/login-audit/{logId}:
     delete:
       tags: [Audit]
+      operationId: deleteLoginAuditEntry
       summary: 刪除單筆登入紀錄
       description: FR-044 / FR-045。無主鍵時以 `?loginAt=<epoch_ms>&email=<str>` 定位。
       parameters:
@@ -534,6 +561,7 @@ paths:
   /api/admin/login-audit:batch-delete:
     post:
       tags: [Audit]
+      operationId: batchDeleteLoginAudit
       summary: 批次刪除登入紀錄
       description: FR-044。
       requestBody:
@@ -575,6 +603,7 @@ paths:
   /api/user/login-audit:
     get:
       tags: [Audit]
+      operationId: listOwnLoginAudit
       summary: 使用者檢視自己最近 100 筆登入紀錄
       description: FR-042。
       responses:
@@ -595,6 +624,7 @@ paths:
   /api/admin/server-time:
     get:
       tags: [ServerTime]
+      operationId: getServerTime
       summary: 取得伺服器時間資訊
       description: FR-050。
       responses:
@@ -608,6 +638,7 @@ paths:
         '403': { $ref: '#/components/responses/Forbidden' }
     put:
       tags: [ServerTime]
+      operationId: updateServerTime
       summary: 更新伺服器採用時間偏移
       description: FR-051 / FR-052。以 `targetTime`（RFC 3339）或 `offsetMs`（毫秒偏移）擇一更新。
       requestBody:
@@ -644,6 +675,7 @@ paths:
   /api/admin/server-time/ntp-sync:
     post:
       tags: [ServerTime]
+      operationId: syncServerTimeFromNtp
       summary: NTP 查詢／校正
       description: FR-053 / FR-054 / FR-055。僅接受 IPv4 公網或 FQDN。
       requestBody:

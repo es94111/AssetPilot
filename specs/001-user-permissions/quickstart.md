@@ -141,6 +141,26 @@ curl -b cookies.txt -X DELETE http://localhost:3000/api/admin/users/<selfId>
 
 **預期**：HTTP 400 `{ error: "last_admin_protected" }`。
 
+#### 3.3.1 SC-004 壓測：1000 次嘗試刪除最後管理員應全數 400（對應 [analyze-01.md](./analyze-01.md) C3）
+
+```bash
+# 以唯一管理員 cookies.txt 連續嘗試 1000 次
+fail=0
+for i in $(seq 1 1000); do
+  code=$(curl -s -o /dev/null -w '%{http_code}' -b cookies.txt \
+    -X DELETE http://localhost:3000/api/admin/users/<selfId>)
+  if [ "$code" != "400" ]; then
+    fail=$((fail + 1))
+    echo "[iter $i] unexpected code: $code"
+  fi
+done
+echo "失敗次數：$fail／1000"
+```
+
+**預期**：`失敗次數：0／1000`。  
+**理由**：FR-036「無法使系統無管理員」為永久性不可違反的 invariant，SC-004 要求
+1000 次嘗試皆被阻擋（不得有任何競態條件導致漏洞）。若 `fail > 0` 視為 P0 阻擋合併。
+
 ## §4. P3a — Google SSO 與 `redirect_uri` 白名單（FR-011）
 
 ### 4.1 合法 redirect_uri

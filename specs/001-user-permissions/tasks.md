@@ -39,7 +39,7 @@ phase 追加 `[P] [US?]` test task 於實作任務之前。
 
 **Purpose**：為本功能新增的環境變數、常量、文件骨架做準備。不影響任何現有 API。
 
-- [ ] T001 於 `.env.example` 新增本功能需要的變數範本：`JWT_EXPIRES=7d`（FR-004）、`GOOGLE_OAUTH_REDIRECT_URIS=`（逗號分隔，FR-011）、保留現有 `JWT_SECRET`、`GOOGLE_CLIENT_ID`、`GOOGLE_CLIENT_SECRET`、`APP_HOST`、`PORT`；每行附一行 zh-TW 註解說明
+- [ ] T001 於 `.env.example` 新增本功能需要的變數範本：`JWT_EXPIRES=7d`（FR-004）、`GOOGLE_OAUTH_REDIRECT_URIS=`（逗號分隔，FR-011）、保留現有 `JWT_SECRET`、`GOOGLE_CLIENT_ID`、`GOOGLE_CLIENT_SECRET`、`APP_HOST`、`PORT`；每行附一行 zh-TW 註解說明。完成後以 `grep -oE 'process\.env\.[A-Z_]+' server.js | sort -u` 對照 `.env.example` 現有鍵；若 `server.js` 讀取但 `.env.example` 未列（包含 `RESEND_API_KEY`、`RESEND_FROM_EMAIL`、`APP_URL` 等既有變數），同步補上註解範例
 - [ ] T002 [P] 於 `server.js` 檔頭「環境變數解析」區段補齊讀取邏輯：`const JWT_EXPIRES = process.env.JWT_EXPIRES || '7d'`、`const GOOGLE_OAUTH_REDIRECT_URIS = (process.env.GOOGLE_OAUTH_REDIRECT_URIS || '').split(',').map(s => s.trim()).filter(Boolean)`；啟動 log 輸出 `[OAuth] redirect_uri whitelist: N entries`
 - [ ] T003 [P] 於 `server.js` 頂部常量區塊補上 `AUDIT_RETENTION_DAYS = 90`、`PRUNE_BATCH = 5000`、`RATE_LIMIT_WINDOW_MS = 15*60*1000`、`RATE_LIMIT_MAX = 20`、`COOKIE_MAX_AGE = 7*24*3600*1000`（FR-004／FR-007／FR-046；對照 [data-model.md](./data-model.md) §6）
 
@@ -92,6 +92,7 @@ phase 追加 `[P] [US?]` test task 於實作任務之前。
 - [ ] T026 [US1] 於 `POST /api/auth/logout`（`server.js:2468`）確認 `UPDATE users SET token_version = token_version + 1 WHERE id = ?` 已存在；清除 Cookie 時參數必須與 `Set-Cookie` 原設定的 `secure`、`sameSite`、`httpOnly`、`path` 一致，否則瀏覽器不會覆蓋
 - [ ] T027 [US1] 於 `index.html` 登入／註冊表單確認：(a) 密碼強度 hint 與後端一致、(b) 錯誤訊息一律通用化（FR-065）、(c) 若 `GOOGLE_CLIENT_ID` 未設定則 Google 按鈕區塊整段不渲染（為 US3 預留，但 US1 MVP 需確保無 Google 環境也能順利註冊登入）
 - [ ] T028 [US1] 於 `app.js` 登入後儀表板首屏確認：取得 `currentLogin` 後的顯示（時間、IP、方式）符合 spec US1 Scenario 3
+- [ ] T029 [US1] 於 `server.js` `POST /api/auth/login` 實作「時序對齊 dummy bcrypt」（FR-065 / SC-006 / analyze-01 C2）：當查無對應 Email 時，**仍**呼叫 `bcrypt.compareSync(req.body.password, DUMMY_HASH)` 一次（`DUMMY_HASH` 為模組頂層一次性產生的 `bcrypt.hashSync('__dummy__', 10)` 常量），以消除「不存在帳號」與「存在但密碼錯誤」兩條路徑的時序差異；整體回應時間差需 < 20ms（以 100 次取樣的 P95 比對）；完成後於 [quickstart.md](./quickstart.md) §8 附一段 bash 腳本驗證時序對齊
 
 **Checkpoint（MVP 驗收）**：依 [quickstart.md](./quickstart.md) §2 執行：
 - §2.1 註冊 `Alice@EX.com`，DB `users.email` 為 `alice@ex.com`，回應帶 `isAdmin: true`
@@ -113,7 +114,7 @@ phase 追加 `[P] [US?]` test task 於實作任務之前。
 - [ ] T030 [US2] 於 `server.js` 將 `/api/admin/settings`（`server.js:2691`、`server.js:2696`）**重命名為 `/api/admin/system-settings`** 以對齊 [contracts/auth.openapi.yaml](./contracts/auth.openapi.yaml)（方向：server.js → 契約，依 [plan.md](./plan.md) Complexity Tracking CT-1 已定案）；**同一 PR 原子翻轉，不保留 301/307 轉導**；於 `app.js` 同步把所有呼叫點改為新路徑（`app.js:5159`、`app.js:5267`）；於 `changelog.json` 新增 entry 聲明「舊 `/api/admin/settings` 已移除」
 - [ ] T031 [US2] 於 `PUT /api/admin/system-settings` 寫入路徑接收 `publicRegistration`（0/1）與 `allowedRegistrationEmails`（陣列或字串），寫入前以 `allowedRegistrationEmails.filter(item => item === '*' ? false : true)` 拒絕「單獨 `*`」，其餘交給 T012 的 `matchAllowlist` 判斷；`updated_at = serverTimeNow()`、`updated_by = req.userId` 記錄
 - [ ] T032 [US2] 於 `POST /api/admin/users`（`server.js:2896`）確認 `normalizeEmail` 已在 `server.js:2897` 呼叫；新增：即使 `public_registration = 0` 或白名單未通過，管理員建立使用者仍放行（FR-033 / spec.md Edge Case「管理員透過後台直接建立帳號：不套用白名單與公開註冊限制」）；成功後呼叫 `createDefaultsForUser(id)`
-- [ ] T033 [US2] 於 `PUT /api/admin/users/:id/password`（`server.js:2930`）確認新密碼與舊密碼不同（FR-037）：先 `bcrypt.compareSync(newPassword, oldHash)`，相同則 400 `{ error: 'same_as_current_password' }`；並確認 `token_version + 1` 已落地（T015 涵蓋）
+- [ ] T033 [US2] 於 `PUT /api/admin/users/:id/password`（`server.js:2930`）確認新密碼與舊密碼不同（FR-037）：先 `bcrypt.compareSync(newPassword, oldHash)`，相同則 400 `{ error: 'same_as_current_password' }`。註：`token_version + 1` 遞增由 T015 權威驗證，本任務不重複檢查（D1 去重）
 - [ ] T034 [US2] 於 `DELETE /api/admin/users/:id`（`server.js:2952`）實作 FR-036 保護：若目標 `is_admin = 1` 且 `SELECT COUNT(*) FROM users WHERE is_admin = 1` ≤ 1，回 400 `{ error: 'last_admin_protected' }`；此檢查亦套用於管理員自刪（`req.userId === params.id`）
 - [ ] T035 [US2] 於同路由實作 FR-035 混合刪除策略（Q9）：begin transaction → 依 [data-model.md](./data-model.md) §5.2 所列資料表逐一 `DELETE WHERE user_id = ?`（passkey_credentials、transactions、accounts、categories、budgets、recurring、stocks、stock_transactions、stock_dividends、stock_settings、stock_recurring、exchange_rate_settings）→ `DELETE FROM login_audit_logs WHERE user_id = ?`（成功紀錄硬刪）→ `UPDATE login_attempt_logs SET user_id = '', email = ? WHERE user_id = ? AND is_success = 0`（`?` 為 `sha256(lower(targetEmail)).hex`）→ `DELETE FROM login_attempt_logs WHERE user_id = ? AND is_success = 1`（已登入成功的嘗試紀錄同步硬刪）→ `DELETE FROM users WHERE id = ?` → commit → `saveDB()`
 - [ ] T036 [US2] 於 `server.js` 新增／確認 `createHashedEmail(email)` 工具函式：`crypto.createHash('sha256').update(normalizeEmail(email)).digest('hex')`；匯入 `crypto` 模組（Node 內建）
@@ -199,7 +200,7 @@ phase 追加 `[P] [US?]` test task 於實作任務之前。
 - [ ] T062 [US4] 於 `POST /api/auth/passkey/login`（與 register）確認 origin 白名單比對（FR-022）：origin 允許清單由 `APP_HOST` 推導 + 本機 `http://localhost:<PORT>`；不符即 400 `{ error: 'invalid_origin' }` 並寫 `login_attempt_logs(failure_reason='invalid_origin')`
 - [ ] T063 [US4] 於 `DELETE /api/auth/passkey/:credentialId`：確認只能刪自己的 credential（`WHERE user_id = req.userId`），避免跨使用者刪除
 - [ ] T064 [US4] 於 `index.html` 確認 WebAuthn 前端資源由伺服器本地提供（FR-023）：不引用 CDN；若既有實作已是本地檔則保持
-- [ ] T065 [US4] 於 `app.js` 登入頁 Passkey 按鈕點擊即呼叫 `navigator.credentials.get({ publicKey: { challenge, allowCredentials: [] } })`；**不可**要求使用者先輸入 Email（Q4）；成功後 POST `/api/auth/passkey/login` 並依回應設 Cookie + 導向儀表板
+- [ ] T065 [US4] 於 `app.js` 登入頁 Passkey 按鈕點擊即呼叫 `navigator.credentials.get({ publicKey: { challenge, allowCredentials: [] } })`；**不可**要求使用者先輸入 Email（Q4）；成功後 POST `/api/auth/passkey/login` 並依回應設 Cookie + 導向儀表板。**無 WebAuthn 支援環境的 fallback UX**（對應 spec.md Edge Case）：頁面載入時以 `if (!window.PublicKeyCredential) { ... }` 檢查，不支援時按鈕變灰（`disabled` + `opacity: 0.5`）並附 `title="本瀏覽器不支援 WebAuthn，請使用 Chrome／Safari／Edge 最新版或改以帳密登入"` hover 提示；不得讓頁面渲染失敗或出現 JS 例外
 
 **Checkpoint**：依 [quickstart.md](./quickstart.md) §5：
 - §5.1 帳號設定新增 `MacBook Touch ID` 後清單出現名稱與時間
@@ -242,18 +243,19 @@ phase 追加 `[P] [US?]` test task 於實作任務之前。
 - [ ] T091 於 [quickstart.md](./quickstart.md) §8 兩桶 rate limit 驗證：連打 `/api/auth/login` 21 次 → 第 21 次 429；同時 `/privacy` 不受影響；再連打 `/privacy` 21 次第 21 次才 429（FR-007）
 - [ ] T092 [P] 根 `openapi.yaml` 以 `python -c "import yaml; d=yaml.safe_load(open('openapi.yaml','r',encoding='utf-8')); assert d['openapi']=='3.2.0'; print(len(d['paths']),'paths')"` 與 `npx @redocly/cli lint openapi.yaml` 驗證通過（憲章 Principle II）
 - [ ] T093 [P] `specs/001-user-permissions/contracts/auth.openapi.yaml` 同上驗證（`openapi: 3.2.0` 字串、lint 通過）
-- [ ] T094 更新 `changelog.json`：`currentVersion` bump、新增 release entry 涵蓋（a）Email 正規化 migration 的**不可逆**提醒、（b）`token_version` 於密碼變更遞增的「所有裝置登出」影響、（c）兩桶 rate limit、（d）redirect_uri 白名單、（e）白名單 `*@domain` 語法、（f）混合刪除策略、（g）90 天稽核保留；依 [.claude/commands/update-docs.md](../../.claude/commands/update-docs.md) 的流程處理
+- [ ] T094 更新 `changelog.json`：`currentVersion` bump 至 **4.22.0**（minor；當前 `4.21.1`）；新增 release entry 涵蓋（a）Email 正規化 migration 的**不可逆**提醒、（b）`token_version` 於密碼變更遞增的「所有裝置登出」影響、（c）兩桶 rate limit、（d）redirect_uri 白名單、（e）白名單 `*@domain` 語法、（f）混合刪除策略、（g）90 天稽核保留、（h）契約 `info.version: 0.1.0 → 0.2.0` 的三組路徑重命名（CT-1）、（i）安全基線回歸驗證（FR-060 ~ FR-064；CT-2／T098）；依 [.claude/commands/update-docs.md](../../.claude/commands/update-docs.md) 的流程處理
 - [ ] T095 同步更新 `SRS.md` 版本歷程（§4.2 或 §8.2）與頁首版本；`README.md` 若有版本徽章一併更新（對應 T094 的版本號）
 - [ ] T096 於 `docs/` 或 `README.md` 運維段補「部署新版本時必做」清單：`GOOGLE_OAUTH_REDIRECT_URIS` 必須填寫（否則 Google 登入將全部失敗，降級為 log 預設值）、資料庫自動跑 Email 正規化 migration、提醒「管理員重設密碼會強制該使用者所有裝置重新登入」
 - [ ] T097 最後以 [quickstart.md](./quickstart.md) §9 Rollback 說明為據，確認備份與還原流程可行（Docker compose 掛載 `./data`、`database.db.bak` 與 `package.json` tag 對應）
 - [ ] T098 [P] 安全基線回歸檢查（對應 [analyze-01.md](./analyze-01.md) C1；MEDIUM — 同 PR 帶上、驗收失敗不阻擋合併但需於 `changelog.json` 記錄）。依 [plan.md](./plan.md) Complexity Tracking CT-2 執行 6 項驗證並寫入 [quickstart.md](./quickstart.md) §10 checklist（或追加 §11）：
-  - **FR-062 安全標頭**：啟動 server 後 `curl -sI http://localhost:3000/` 檢查回應含 `Content-Security-Policy`、`X-Content-Type-Options: nosniff`、`Referrer-Policy`、`Strict-Transport-Security` 四項 header
+  - **FR-062 安全標頭（6 項）**：啟動 server 後 `curl -sI http://localhost:3000/` 檢查回應含以下 6 項 header（對應更新後的 [spec.md](./spec.md) FR-062）：`Content-Security-Policy`、`Strict-Transport-Security`、`X-Content-Type-Options: nosniff`、`Referrer-Policy: strict-origin-when-cross-origin`、`X-Frame-Options: DENY`、`Permissions-Policy`（至少禁用 `geolocation=()`、`microphone=()`、`camera=()`）。以 `curl -sI http://localhost:3000/ | grep -iE '^(content-security-policy|strict-transport-security|x-content-type-options|referrer-policy|x-frame-options|permissions-policy):' | wc -l` 取得命中數，預期 = 6
   - **FR-063 SRI integrity**：`grep -c 'integrity=' index.html` 回傳 ≥ 1；若專案已無 CDN 依賴則本項標示 N/A
   - **FR-064 .env 權限**：POSIX 環境 `stat -c '%a' .env` 應為 `600`；Windows 環境以 PowerShell `(Get-Acl .env).Access` 檢查僅 `Administrators` 與 `%USERNAME%` 具寫入
   - **FR-064 ignore 清單**：`grep -F '*.db' .gitignore` 與 `grep -F '*.db' .dockerignore` 各回傳 ≥ 1 行，且兩檔均含 `.env`
   - **FR-060 HTML escape 基線**：`grep -c 'innerHTML\s*=\s*' app.js` 與 main branch 相比不得暴增（作為 regression guard，非硬性上限）
   - **FR-061 色碼 hex 驗證**：`grep -n '#[0-9A-Fa-f]\{6\}' app.js` 對應輸入點仍走 regex 驗證（非字串拼接）
-  - 所有驗證結果（pass／fail／N/A）寫入 `changelog.json` 本版 `changes[]` 一則「安全基線回歸驗證（FR-060 ~ FR-064）：N/M 通過」；任一項 fail 於 PR 描述明列並登記為下一版修復項
+  - 所有驗證結果（pass／fail／N/A）寫入 `changelog.json` 本版 `changes[]` 一則「安全基線回歸驗證（FR-060 ~ FR-064）：N/M 通過」（M = FR-062 6 項 + FR-063 + FR-064 權限 + FR-064 ignore + FR-060 + FR-061 = 最多 11 子項）；任一項 fail 於 PR 描述明列並登記為下一版修復項
+- [ ] T099 [P] SC-004 壓測（對應 [analyze-01.md](./analyze-01.md) C3；MEDIUM — 同 PR 帶上、驗收失敗阻擋合併）：依 [quickstart.md](./quickstart.md) §3.3.1 的 bash for-loop 連續嘗試刪除最後管理員 1000 次，預期全部回 HTTP 400 `last_admin_protected`；`fail = 0` 方為通過。若 `fail > 0` 視為 P0 級競態漏洞，須先修復 `server.js` 管理員計數查詢之 transaction isolation 再重跑
 
 ---
 

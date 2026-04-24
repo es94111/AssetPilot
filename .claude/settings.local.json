@@ -60,7 +60,8 @@
       "Bash(git branch *)",
       "Bash(gh run *)",
       "Bash(git merge *)",
-      "Bash(specify init *)"
+      "Bash(specify init *)",
+      "Bash(node -e \"const c = require\\('C:/Users/hongyu/SynologyDrive/網頁/記帳網頁/changelog.json'\\); console.log\\('currentVersion:', c.currentVersion\\); console.log\\('first release:', c.releases[0].version, c.releases[0].title\\);\")"
     ]
   }
 }

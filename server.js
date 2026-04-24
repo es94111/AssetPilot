@@ -52,7 +52,19 @@ function parseExpiresMs(str) {
 const JWT_EXPIRES_MS = parseExpiresMs(JWT_EXPIRES);
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || '';
+const APP_HOST = process.env.APP_HOST || 'localhost';
+const GOOGLE_OAUTH_REDIRECT_URIS = (process.env.GOOGLE_OAUTH_REDIRECT_URIS || '')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean);
 const IPINFO_TOKEN = process.env.IPINFO_TOKEN || '';
+
+const AUDIT_RETENTION_DAYS = 90;
+const PRUNE_BATCH = 5000;
+const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
+const RATE_LIMIT_MAX = 20;
+const COOKIE_MAX_AGE = JWT_EXPIRES_MS;
+const SERVER_TIME_OFFSET_MAX = 10 * 365 * 86400 * 1000;
 const RESEND_API_KEY = process.env.RESEND_API_KEY || '';
 const RESEND_FROM_EMAIL = process.env.RESEND_FROM_EMAIL || '';
 // 對外網址（用於信件 CTA 按鈕），未設定則隱藏「前往儀表板」按鈕
@@ -335,29 +347,30 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false
 }));
 
-// 登入/註冊 API 速率限制（每 IP 每 15 分鐘最多 20 次）
+// 認證類 API 速率限制（FR-007 auth 桶：每 IP 每 15 分鐘最多 20 次）
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 20,
-  standardHeaders: true,
+  windowMs: RATE_LIMIT_WINDOW_MS,
+  max: RATE_LIMIT_MAX,
+  standardHeaders: 'draft-8',
   legacyHeaders: false,
   message: { error: '登入嘗試次數過多，請 15 分鐘後再試' },
   skip: (req) => isRequestIpWhitelisted(req),
-  validate: { xForwardedForHeader: false } // 避免反向代理環境下的驗證警告
+  validate: { xForwardedForHeader: false }
 });
 app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/register', authLimiter);
-app.use('/api/auth/google/state', authLimiter);
 app.use('/api/auth/google', authLimiter);
-app.use('/api', rateLimit({
-  windowMs: 60 * 1000,
-  max: 120,
-  standardHeaders: true,
+
+// 靜態頁桶（FR-007 靜態頁桶：/privacy、/terms；與 auth 桶獨立計數）
+const staticPageLimiter = rateLimit({
+  windowMs: RATE_LIMIT_WINDOW_MS,
+  max: RATE_LIMIT_MAX,
+  standardHeaders: 'draft-8',
   legacyHeaders: false,
   message: { error: '請求過於頻繁，請稍後再試' },
   skip: (req) => isRequestIpWhitelisted(req),
   validate: { xForwardedForHeader: false }
-}));
+});
 
 // 一般 API 使用較小的 JSON body 上限避免 DoS；CSV 匯入端點單獨放寬
 const STANDARD_JSON_LIMIT = '5mb';
@@ -1509,14 +1522,39 @@ function isValidEmail(email) {
   return domain.split('.').every(part => /^[a-z0-9-]+$/i.test(part) && !part.startsWith('-') && !part.endsWith('-') && part.length > 0);
 }
 
+function isValidAllowlistPattern(s) {
+  if (!s) return false;
+  if (s.startsWith('*@')) {
+    const domain = s.slice(2);
+    return !!domain && /^[a-z0-9.-]+$/i.test(domain) && domain.includes('.') && !domain.startsWith('.') && !domain.endsWith('.');
+  }
+  return isValidEmail(s);
+}
+
 function parseAllowedRegistrationEmails(value) {
   const source = Array.isArray(value) ? value.join('\n') : String(value || '');
   return Array.from(new Set(
     source
       .split(/[\n,;\s]+/)
-      .map(v => normalizeEmail(v))
-      .filter(v => isValidEmail(v))
+      .map(v => String(v || '').trim().toLowerCase())
+      .filter(v => isValidAllowlistPattern(v))
   ));
+}
+
+function matchAllowlist(email, rawList) {
+  const normalized = normalizeEmail(email);
+  if (!normalized) return false;
+  const list = Array.isArray(rawList) ? rawList : parseAllowedRegistrationEmails(rawList);
+  for (const item of list) {
+    if (!item) continue;
+    if (item.startsWith('*@')) {
+      if (normalized.endsWith(item.slice(1))) return true;
+      continue;
+    }
+    if (item.includes('*')) continue;
+    if (item === normalized) return true;
+  }
+  return false;
 }
 
 function normalizeIp(ip) {
@@ -1564,10 +1602,10 @@ function canSelfRegister(email) {
   }
 
   const settings = getSystemSettings();
-  const allowSet = new Set(settings.allowedRegistrationEmails);
+  const allowList = settings.allowedRegistrationEmails;
 
-  if (allowSet.size > 0) {
-    if (allowSet.has(emailLower)) return { ok: true };
+  if (allowList.length > 0) {
+    if (matchAllowlist(emailLower, allowList)) return { ok: true };
     return { ok: false, error: '此 Email 未被管理員允許註冊' };
   }
 
@@ -3759,6 +3797,48 @@ setTimeout(() => {
   checkAndRunSchedule();
   setInterval(checkAndRunSchedule, 5 * 60 * 1000);
 }, 30 * 1000);
+
+// FR-046：90 天稽核清除排程（啟動立即執行 + 每 24h 循環）
+function pruneAuditLogs() {
+  const threshold = serverNow() - AUDIT_RETENTION_DAYS * 86400 * 1000;
+  let totalAudit = 0;
+  let totalAttempt = 0;
+  while (true) {
+    const auditIds = db.exec(
+      `SELECT id FROM login_audit_logs WHERE login_at < ${threshold} LIMIT ${PRUNE_BATCH}`
+    );
+    const auditRows = auditIds[0]?.values || [];
+    if (auditRows.length > 0) {
+      const placeholders = auditRows.map(() => '?').join(',');
+      db.run(`DELETE FROM login_audit_logs WHERE id IN (${placeholders})`, auditRows.map(r => r[0]));
+      totalAudit += auditRows.length;
+    }
+    const attemptIds = db.exec(
+      `SELECT id FROM login_attempt_logs WHERE login_at < ${threshold} LIMIT ${PRUNE_BATCH}`
+    );
+    const attemptRows = attemptIds[0]?.values || [];
+    if (attemptRows.length > 0) {
+      const placeholders = attemptRows.map(() => '?').join(',');
+      db.run(`DELETE FROM login_attempt_logs WHERE id IN (${placeholders})`, attemptRows.map(r => r[0]));
+      totalAttempt += attemptRows.length;
+    }
+    if (auditRows.length === 0 && attemptRows.length === 0) break;
+  }
+  const total = totalAudit + totalAttempt;
+  if (total > 0) {
+    saveDB();
+    console.log(`[Audit Prune] removed ${total} rows (audit=${totalAudit}, attempt=${totalAttempt})`);
+  }
+  return total;
+}
+
+function registerAuditPruneJob() {
+  try { pruneAuditLogs(); } catch (e) { console.error('[Audit Prune] initial run error', e); }
+  setInterval(() => {
+    try { pruneAuditLogs(); } catch (e) { console.error('[Audit Prune] scheduled run error', e); }
+  }, 24 * 3600 * 1000);
+  console.log('[Audit Prune] registered; next run in 24h');
+}
 
 app.get('/api/admin/report-schedule', adminMiddleware, (req, res) => {
   const s = getReportSchedule();
@@ -6257,19 +6337,11 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: '伺服器發生錯誤，請稍後再試' });
 });
 
-// ─── 公開頁面路由 ───
-const publicPageLimiter = rateLimit({
-  windowMs: 60 * 1000,
-  max: 120,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { error: '請求過於頻繁，請稍後再試' },
-  validate: { xForwardedForHeader: false }
-});
-app.get('/privacy', publicPageLimiter, (req, res) => {
+// ─── 公開頁面路由（FR-007 靜態頁桶）───
+app.get('/privacy', staticPageLimiter, (req, res) => {
   res.sendFile(path.join(__dirname, 'privacy.html'));
 });
-app.get('/terms', publicPageLimiter, (req, res) => {
+app.get('/terms', staticPageLimiter, (req, res) => {
   res.sendFile(path.join(__dirname, 'terms.html'));
 });
 
@@ -6288,7 +6360,9 @@ app.get('{*path}', rateLimit({
 // ─── 啟動 ───
 initDB().then(() => {
   loadServerTimeOffset();
+  registerAuditPruneJob();
   app.listen(PORT, () => {
     console.log(`AssetPilot 伺服器已啟動: http://localhost:${PORT}`);
+    console.log(`[OAuth] redirect_uri whitelist: ${GOOGLE_OAUTH_REDIRECT_URIS.length} entries`);
   });
 });

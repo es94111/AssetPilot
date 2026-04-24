@@ -4552,9 +4552,19 @@ const App = (() => {
 
   async function syncAdminLoginLogs(options = {}) {
     const { silent = false } = options;
-    const data = await API.get('/api/admin/login-logs');
+    // CT-1：改呼叫 /api/admin/login-audit 兩個 scope 並合併為舊 shape
+    const [adminSelf, all] = await Promise.all([
+      API.get('/api/admin/login-audit?scope=admin-self'),
+      API.get('/api/admin/login-audit?scope=all'),
+    ]);
+    const data = {
+      adminLogs: Array.isArray(adminSelf?.logs) ? adminSelf.logs : [],
+      allUserLogs: Array.isArray(all?.logs) ? all.logs : [],
+    };
     renderAdminLoginLogTables(data);
+    // FR-044：localStorage 鍵名 assetpilot.audit.lastSyncAt
     const now = Date.now();
+    try { localStorage.setItem('assetpilot.audit.lastSyncAt', String(now)); } catch (_) {}
     updateAdminLoginLogSyncTime(now);
     updateAdminAllLoginLogSyncTime(now);
     if (!silent) toast('登入紀錄已同步', 'success');
@@ -4571,7 +4581,7 @@ const App = (() => {
     if (typeof page === 'number') accountLogPage = page;
     try {
       if (accountLoginLogs.length === 0) {
-        const result = await API.get('/api/account/login-logs');
+        const result = await API.get('/api/user/login-audit');
         accountLoginLogs = Array.isArray(result?.logs) ? [...result.logs] : [];
         if (latestLoginRecord?.loginAt) {
           const hasLatest = accountLoginLogs.some(log => Number(log.loginAt) === Number(latestLoginRecord.loginAt) && String(log.ipAddress || '') === String(latestLoginRecord.ipAddress || ''));
@@ -4730,13 +4740,8 @@ const App = (() => {
   }
 
   async function deleteAdminLoginLogWithCompatFallback(id) {
-    const encodedId = encodeURIComponent(id);
-    try {
-      return await API.del('/api/admin/login-logs/admin/' + encodedId);
-    } catch (primaryError) {
-      if (!shouldRetryLegacyAdminLoginDelete(primaryError)) throw primaryError;
-      return API.del('/api/admin/login-logs/' + encodedId);
-    }
+    // CT-1：單一端點 /api/admin/login-audit/{logId}
+    return API.del('/api/admin/login-audit/' + encodeURIComponent(id));
   }
 
   async function deleteAdminLoginLog(id) {
@@ -4769,7 +4774,7 @@ const App = (() => {
     }
     if (!confirm(`確定要刪除 ${ids.length} 筆管理員登入紀錄嗎？`)) return;
     try {
-      const result = await API.post('/api/admin/login-logs/admin/batch-delete', { ids });
+      const result = await API.post('/api/admin/login-audit:batch-delete', { ids });
       let deleted = Number(result.deleted) || 0;
       if (deleted === 0 && ids.length > 0) {
         // 備援：若批次端點未成功刪除，改逐筆刪除避免前端無法操作。
@@ -4787,7 +4792,7 @@ const App = (() => {
     if (!id) return;
     if (!confirm('確定要刪除此筆使用者登入紀錄嗎？')) return;
     try {
-      await API.del('/api/admin/login-logs/all/' + encodeURIComponent(id));
+      await API.del('/api/admin/login-audit/' + encodeURIComponent(id));
       toast('使用者登入紀錄已刪除', 'success');
       await renderAdminSettings();
     } catch (e) {
@@ -4803,11 +4808,11 @@ const App = (() => {
     }
     if (!confirm(`確定要刪除 ${ids.length} 筆使用者登入紀錄嗎？`)) return;
     try {
-      const result = await API.post('/api/admin/login-logs/all/batch-delete', { ids });
+      const result = await API.post('/api/admin/login-audit:batch-delete', { ids });
       let deleted = Number(result.deleted) || 0;
       if (deleted === 0 && ids.length > 0) {
         // 備援：若批次端點未成功刪除，改逐筆刪除避免前端無法操作。
-        const settled = await Promise.allSettled(ids.map(id => API.del('/api/admin/login-logs/all/' + encodeURIComponent(id))));
+        const settled = await Promise.allSettled(ids.map(id => API.del('/api/admin/login-audit/' + encodeURIComponent(id))));
         deleted = settled.filter(x => x.status === 'fulfilled').length;
       }
       toast(`已刪除 ${deleted} 筆使用者登入紀錄`, 'success');

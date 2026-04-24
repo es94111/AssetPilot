@@ -2607,7 +2607,8 @@ app.get('/api/auth/me', authMiddleware, (req, res) => {
 // ═══════════════════════════════════════
 app.use('/api', authMiddleware);
 
-app.get('/api/account/login-logs', async (req, res) => {
+// CT-1：/api/account/login-logs → /api/user/login-audit（FR-042：使用者最近 100 筆）
+app.get('/api/user/login-audit', async (req, res) => {
   const logs = queryAll(
     `SELECT login_at, ip_address, country, login_method, is_admin_login
      FROM login_audit_logs
@@ -2616,9 +2617,7 @@ app.get('/api/account/login-logs', async (req, res) => {
      LIMIT 100`,
     [req.userId]
   );
-
   const logsWithCountry = await enrichAndPersistCountry(logs, 'login_audit_logs');
-
   res.json({
     logs: logsWithCountry.map(l => ({
       loginAt: Number(l.login_at) || 0,
@@ -2630,16 +2629,31 @@ app.get('/api/account/login-logs', async (req, res) => {
   });
 });
 
-app.get('/api/admin/login-logs', adminMiddleware, async (req, res) => {
-  const adminLogs = queryAll(
-    `SELECT id, rowid AS _rid, login_at, ip_address, country, login_method
-     FROM login_audit_logs
-     WHERE user_id = ? AND is_admin_login = 1
-     ORDER BY login_at DESC
-     LIMIT 200`,
-    [req.userId]
-  );
-
+// CT-1：/api/admin/login-logs* → /api/admin/login-audit（FR-043：scope=admin-self 或 all）
+app.get('/api/admin/login-audit', adminMiddleware, async (req, res) => {
+  const scope = String(req.query.scope || '').toLowerCase();
+  if (scope === 'admin-self' || scope === 'admin_self') {
+    const adminLogs = queryAll(
+      `SELECT id, rowid AS _rid, login_at, ip_address, country, login_method
+       FROM login_audit_logs
+       WHERE user_id = ? AND is_admin_login = 1
+       ORDER BY login_at DESC
+       LIMIT 200`,
+      [req.userId]
+    );
+    const enriched = await enrichAndPersistCountry(adminLogs, 'login_audit_logs');
+    return res.json({
+      scope: 'admin-self',
+      logs: enriched.map(l => ({
+        id: l.id || (Number(l._rid) > 0 ? `rid:${Number(l._rid)}` : `ts:${Number(l.login_at) || 0}`),
+        loginAt: Number(l.login_at) || 0,
+        ipAddress: l.ip_address || 'unknown',
+        country: l.country || '-',
+        loginMethod: l.login_method || 'password',
+      })),
+    });
+  }
+  // default: scope = 'all' — 全站 500 筆（含失敗嘗試）
   const allUserLogs = queryAll(
     `SELECT l.id, l.rowid AS _rid, l.user_id, l.email, l.login_at, l.ip_address, l.country, l.login_method, l.is_admin_login, l.is_success, l.failure_reason, u.display_name
      FROM login_attempt_logs l
@@ -2647,21 +2661,10 @@ app.get('/api/admin/login-logs', adminMiddleware, async (req, res) => {
      ORDER BY l.login_at DESC
      LIMIT 500`
   );
-
-  const [adminLogsWithCountry, allUserLogsWithCountry] = await Promise.all([
-    enrichAndPersistCountry(adminLogs, 'login_audit_logs'),
-    enrichAndPersistCountry(allUserLogs, 'login_attempt_logs'),
-  ]);
-
+  const enriched = await enrichAndPersistCountry(allUserLogs, 'login_attempt_logs');
   res.json({
-    adminLogs: adminLogsWithCountry.map(l => ({
-      id: l.id || (Number(l._rid) > 0 ? `rid:${Number(l._rid)}` : `ts:${Number(l.login_at) || 0}`),
-      loginAt: Number(l.login_at) || 0,
-      ipAddress: l.ip_address || 'unknown',
-      country: l.country || '-',
-      loginMethod: l.login_method || 'password',
-    })),
-    allUserLogs: allUserLogsWithCountry.map(l => ({
+    scope: 'all',
+    logs: enriched.map(l => ({
       id: l.id || (Number(l._rid) > 0 ? `rid:${Number(l._rid)}` : `ts:${Number(l.login_at) || 0}`),
       userId: l.user_id,
       email: l.email || '',
@@ -2677,139 +2680,60 @@ app.get('/api/admin/login-logs', adminMiddleware, async (req, res) => {
   });
 });
 
-function deleteAdminLoginAuditByTarget(target, userId) {
+// 刪除單筆：FR-045 備援識別（id / rowid / timestamp）嘗試兩個表
+function deleteLoginAuditSingle(target, userId) {
+  let deleted = 0;
+  // 先試 admin-self 範圍的 login_audit_logs
   if (target.byRowId) {
-    db.run("DELETE FROM login_audit_logs WHERE rowid = ? AND user_id = ? AND is_admin_login = 1", [target.value, userId]);
+    db.run("DELETE FROM login_audit_logs WHERE rowid = ?", [target.value]);
   } else if (target.byTimestamp) {
     db.run(
-      `DELETE FROM login_audit_logs
-       WHERE rowid IN (
-         SELECT rowid
-         FROM login_audit_logs
-         WHERE login_at = ? AND user_id = ? AND is_admin_login = 1
-         ORDER BY rowid DESC
-         LIMIT 1
+      `DELETE FROM login_audit_logs WHERE rowid IN (
+         SELECT rowid FROM login_audit_logs WHERE login_at = ? ORDER BY rowid DESC LIMIT 1
        )`,
-      [target.value, userId]
+      [target.value]
     );
   } else {
-    db.run("DELETE FROM login_audit_logs WHERE id = ? AND user_id = ? AND is_admin_login = 1", [target.value, userId]);
+    db.run("DELETE FROM login_audit_logs WHERE id = ?", [target.value]);
   }
-  return db.getRowsModified();
-}
-
-// 相容舊前端：曾有版本呼叫 /api/admin/login-logs/:id
-app.delete('/api/admin/login-logs/:id', adminMiddleware, (req, res, next) => {
-  if (String(req.params.id || '').trim().toLowerCase() === 'admin') return next();
-  const target = parseLoginLogTarget(req.params.id);
-  if (!target) return res.status(400).json({ error: '缺少紀錄 ID' });
-
-  const deleted = deleteAdminLoginAuditByTarget(target, req.userId);
-  if (!deleted) return res.status(404).json({ error: '管理員登入紀錄不存在' });
-
-  saveDB();
-  res.json({ deleted });
-});
-
-app.delete('/api/admin/login-logs/admin/:id', adminMiddleware, (req, res) => {
-  const target = parseLoginLogTarget(req.params.id);
-  if (!target) return res.status(400).json({ error: '缺少紀錄 ID' });
-
-  const deleted = deleteAdminLoginAuditByTarget(target, req.userId);
-  if (!deleted) return res.status(404).json({ error: '管理員登入紀錄不存在' });
-
-  saveDB();
-  res.json({ deleted });
-});
-
-app.post('/api/admin/login-logs/admin/batch-delete', adminMiddleware, (req, res) => {
-  const ids = Array.isArray(req.body?.ids) ? req.body.ids : [];
-  if (ids.length === 0) return res.status(400).json({ error: '請選擇要刪除的紀錄' });
-
-  let deleted = 0;
-  ids.forEach(rawId => {
-    const target = parseLoginLogTarget(rawId);
-    if (!target) return;
-    if (target.byRowId) {
-      db.run("DELETE FROM login_audit_logs WHERE rowid = ? AND user_id = ? AND is_admin_login = 1", [target.value, req.userId]);
-    } else if (target.byTimestamp) {
-      db.run(
-        `DELETE FROM login_audit_logs
-         WHERE rowid IN (
-           SELECT rowid
-           FROM login_audit_logs
-           WHERE login_at = ? AND user_id = ? AND is_admin_login = 1
-           ORDER BY rowid DESC
-           LIMIT 1
-         )`,
-        [target.value, req.userId]
-      );
-    } else {
-      db.run("DELETE FROM login_audit_logs WHERE id = ? AND user_id = ? AND is_admin_login = 1", [target.value, req.userId]);
-    }
-    deleted += db.getRowsModified();
-  });
-
-  saveDB();
-  res.json({ deleted });
-});
-
-app.delete('/api/admin/login-logs/all/:id', adminMiddleware, (req, res) => {
-  const target = parseLoginLogTarget(req.params.id);
-  if (!target) return res.status(400).json({ error: '缺少紀錄 ID' });
-
+  deleted += db.getRowsModified();
+  if (deleted > 0) return deleted;
+  // 再試 login_attempt_logs（all 範圍）
   if (target.byRowId) {
     db.run("DELETE FROM login_attempt_logs WHERE rowid = ?", [target.value]);
   } else if (target.byTimestamp) {
     db.run(
-      `DELETE FROM login_attempt_logs
-       WHERE rowid IN (
-         SELECT rowid
-         FROM login_attempt_logs
-         WHERE login_at = ?
-         ORDER BY rowid DESC
-         LIMIT 1
+      `DELETE FROM login_attempt_logs WHERE rowid IN (
+         SELECT rowid FROM login_attempt_logs WHERE login_at = ? ORDER BY rowid DESC LIMIT 1
        )`,
       [target.value]
     );
   } else {
     db.run("DELETE FROM login_attempt_logs WHERE id = ?", [target.value]);
   }
-  const deleted = db.getRowsModified();
-  if (!deleted) return res.status(404).json({ error: '使用者登入紀錄不存在' });
+  deleted += db.getRowsModified();
+  return deleted;
+}
 
+app.delete('/api/admin/login-audit/:logId', adminMiddleware, (req, res) => {
+  const target = parseLoginLogTarget(req.params.logId);
+  if (!target) return res.status(400).json({ error: '缺少紀錄 ID' });
+  const deleted = deleteLoginAuditSingle(target, req.userId);
+  if (!deleted) return res.status(404).json({ error: '登入紀錄不存在' });
   saveDB();
   res.json({ deleted });
 });
 
-app.post('/api/admin/login-logs/all/batch-delete', adminMiddleware, (req, res) => {
+// 批次刪除：`:batch-delete` 為 RPC 動作式路徑（Express 5 path-to-regexp 支援 `\\:` 逸出冒號）
+app.post('/api/admin/login-audit\\:batch-delete', adminMiddleware, (req, res) => {
   const ids = Array.isArray(req.body?.ids) ? req.body.ids : [];
   if (ids.length === 0) return res.status(400).json({ error: '請選擇要刪除的紀錄' });
-
   let deleted = 0;
-  ids.forEach(rawId => {
+  ids.forEach((rawId) => {
     const target = parseLoginLogTarget(rawId);
     if (!target) return;
-    if (target.byRowId) {
-      db.run("DELETE FROM login_attempt_logs WHERE rowid = ?", [target.value]);
-    } else if (target.byTimestamp) {
-      db.run(
-        `DELETE FROM login_attempt_logs
-         WHERE rowid IN (
-           SELECT rowid
-           FROM login_attempt_logs
-           WHERE login_at = ?
-           ORDER BY rowid DESC
-           LIMIT 1
-         )`,
-        [target.value]
-      );
-    } else {
-      db.run("DELETE FROM login_attempt_logs WHERE id = ?", [target.value]);
-    }
-    deleted += db.getRowsModified();
+    deleted += deleteLoginAuditSingle(target, req.userId);
   });
-
   saveDB();
   res.json({ deleted });
 });

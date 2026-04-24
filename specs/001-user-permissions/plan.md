@@ -20,7 +20,7 @@ Passkey 以 `@passwordless-id/webauthn` 驗證。
 3. **兩桶 rate limit（FR-007）**：分離 `auth` 桶與 `靜態頁` 桶，各自 20 次／15 分鐘／IP。
 4. **OAuth `redirect_uri` 白名單（FR-011）**：後端以 `GOOGLE_OAUTH_REDIRECT_URIS` 環境變數維護白名單，與 Google Cloud Console 同步。
 5. **白名單萬用字元（FR-032）**：單項含 `*` 視為 `*@<domain>` 網域通配，否則為大小寫不敏感完全比對。
-6. **使用者刪除混合策略（FR-035）**：刪成功登入紀錄、匿名化保留失敗登入紀錄（`user_id = NULL`、`email = SHA-256(email)`）。
+6. **使用者刪除混合策略（FR-035）**：刪成功登入紀錄、匿名化保留失敗登入紀錄（`user_id = ''` 空字串、`email = SHA-256(email)`；`user_id` 採空字串而非 NULL 以對齊既有 NOT NULL 約束，權威見 [data-model.md](./data-model.md) §2.4）。
 7. **90 天稽核保留（FR-046）**：背景排程每日清除超過 90 天的 `login_audit_logs` 與 `login_attempt_logs`。
 
 其餘 FR 在 `server.js` 已存在對應實作（驗證於 research.md §1），本計畫仍須在

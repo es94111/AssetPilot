@@ -20,7 +20,7 @@
 - **Q6 — JWT 有效期預設與 Cookie 持久化**：採 (A) 預設 **7 天**（`JWT_EXPIRES=7d`），Cookie 為 persistent（`Max-Age` 同 JWT 有效期，瀏覽器關閉後仍有效）；不提供「記住我」選項，全員一致 7 天。
 - **Q7 — 速率限制桶**：採 (C) 分成兩桶——`/api/auth/login`、`/api/auth/register`、`/api/auth/google` 共用 **auth 桶**；`/privacy`、`/terms` 共用 **靜態頁桶**。兩桶各自獨立計數 20 次／15 分鐘／IP。
 - **Q8 — Email 大小寫與唯一性**：採 (A) 註冊、登入、白名單比對前一律將 Email **trim + lowercase**，以正規化後的字串作為 DB 儲存值與比對依據；`Alice@EX.com` 與 `alice@ex.com` 視為同一帳號。
-- **Q9 — 使用者刪除 vs 稽核紀錄保留**：採 (C) 混合策略——刪使用者時，其**成功登入**紀錄（方便使用者／管理員個人稽核的部分）硬刪；但**失敗登入嘗試**紀錄（方便攻擊偵測）保留，僅將 `user_id` 置 NULL、Email 以雜湊表示，保留 IP、時間、失敗原因。
+- **Q9 — 使用者刪除 vs 稽核紀錄保留**：採 (C) 混合策略——刪使用者時，其**成功登入**紀錄（方便使用者／管理員個人稽核的部分）硬刪；但**失敗登入嘗試**紀錄（方便攻擊偵測）保留，僅將 `user_id` 清為空字串（`''`；對齊 NOT NULL 約束，權威見 [data-model.md](./data-model.md) §2.4）、Email 以 SHA-256 雜湊（64 hex）表示，保留 IP、時間、失敗原因。詳細規範見 FR-035。
 - **Q10 — Google OAuth redirect_uri 白名單**：採 (A) 後端維護 `redirect_uri` 白名單（預設為 `https://<APP_HOST>/api/auth/google` 與 `http://localhost:<PORT>/api/auth/google`，可由環境變數擴充），向 Google 換 token 時一併傳入並於後端比對；任何不在白名單內的 `redirect_uri` 皆拒絕。
 
 ## 使用情境與測試 *(mandatory)*

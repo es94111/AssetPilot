@@ -7,6 +7,19 @@
 
 ---
 
+## 本輪處置狀態（post-remediation，2026-04-24）
+
+| ID | 等級 | 處置 | 狀態 |
+|---|---|---|---|
+| F6 | MEDIUM | spec.md:23 Q9 摘要已改為「`user_id` 清為空字串（`''`）、Email 以 SHA-256 雜湊（64 hex）表示」並引用 FR-035 為權威 | ✅ closed |
+| F7 | LOW | plan.md:23 Summary 第 6 點已改為「`user_id = ''` 空字串、`email = SHA-256(email)`」並引用 data-model §2.4 | ✅ closed |
+| F8 | LOW | research.md:78 Q9 決策表 SQL 改為 `SET user_id = '', email = ?` | ✅ closed |
+| F9 | LOW | research.md:103-106 開放議題標記為「已解決」並引用 FR-035 + data-model §2.4 | ✅ closed |
+
+`grep -rn 'user_id = NULL\|user_id.*置 NULL\|SET user_id = NULL' specs/001-user-permissions/` 於修復後僅返回 analyze-01.md 自身（findings 敘述，屬歷史紀錄，非權威衝突）。
+
+---
+
 ## 0. 第三輪處置狀態（回顧）
 
 17 條基線項全數閉合（15 closed + 1 accepted [localhost] + 1 deferred [I2 spawn_task]）；
@@ -72,8 +85,8 @@
 | Duplication Count | 0 |
 | **CRITICAL** | **0** |
 | **HIGH** | **0** |
-| **MEDIUM（新增 F6）** | **1** |
-| **LOW（新增 F7／F8／F9）** | **3** |
+| **MEDIUM** | **0**（F6 已修） |
+| **LOW** | **0**（F7／F8／F9 已修） |
 
 ---
 
@@ -94,4 +107,4 @@
 
 ---
 
-**Summary**：第四輪掃描確認 D1–D4 已全部閉合；但發現**第二輪 F3 修正未完整傳播**至 spec.md Clarification Q9 摘要、plan.md Summary、research.md Q9 決策表與開放議題——4 處仍保留 `user_id = NULL` 的舊語義，與權威條文（spec FR-035、data-model §2.4）衝突。此次找到 1 MEDIUM（spec 內部自我矛盾）+ 3 LOW，建議同一 commit 清齊後再進入實作。
+**Summary**：第四輪掃描確認 D1–D4 已全部閉合；發現**第二輪 F3 修正未完整傳播**至 spec.md Clarification Q9 摘要、plan.md Summary、research.md Q9 決策表與開放議題——4 處仍保留 `user_id = NULL` 的舊語義。F6 MEDIUM + F7／F8／F9 LOW 已於同 PR 內一次修齊（見本檔頂部「本輪處置狀態」表）。目前無 CRITICAL / HIGH / MEDIUM / LOW 未閉合項；契約層 redocly lint 通過；憲章 Principle I／II 均 PASS。可進入 `/speckit.implement`。

@@ -75,7 +75,7 @@ Clarification 衍生的 9 項調整。
 | Q6 | JWT 7 天、persistent Cookie                 | 登入 Cookie 設定                                    | `res.cookie('authToken', token, { httpOnly, secure, sameSite: 'strict', maxAge: 7*24*3600*1000 })`；`JWT_EXPIRES='7d'` 於 `.env.example` 同步。 |
 | Q7 | auth 桶 + 靜態頁桶各 20/15min/IP            | `express-rate-limit` 初始化                         | `const authLimiter = rateLimit({...})`；`const staticLimiter = rateLimit({...})`；分別套用。 |
 | Q8 | Email trim + lowercase 正規化                | 註冊／登入／白名單／管理員新增                      | 新增 `normalizeEmail(raw)` 工具，於上述所有進入點呼叫；DB 儲存值一律正規化。              |
-| Q9 | 混合刪除：成功硬刪、失敗匿名                 | `DELETE /api/admin/users/:id`                       | 兩步驟：`DELETE FROM login_audit_logs WHERE user_id = ?`；`UPDATE login_attempt_logs SET user_id = NULL, email = ? WHERE user_id = ?`（`?` 為 `sha256(lower(email))`）。 |
+| Q9 | 混合刪除：成功硬刪、失敗匿名                 | `DELETE /api/admin/users/:id`                       | 兩步驟：`DELETE FROM login_audit_logs WHERE user_id = ?`；`UPDATE login_attempt_logs SET user_id = '', email = ? WHERE user_id = ?`（`?` 為 `sha256(lower(email))`；`user_id` 採空字串對齊 [data-model.md](./data-model.md) §2.4 NOT NULL 約束）。 |
 | Q10 | `redirect_uri` 白名單                       | `POST /api/auth/google`                             | 啟動時解析 `GOOGLE_OAUTH_REDIRECT_URIS`（逗號分隔）為 `Set<string>`；交換 code 前比對 `req.body.redirect_uri`；不符回 400 並寫入失敗稽核。 |
 
 ## §3. 風險與降級
@@ -100,10 +100,11 @@ Clarification 衍生的 9 項調整。
 - Clarification 未觸及 Passkey 的 Relying Party ID（RP ID）切換策略；
   目前代碼採動態 `req.hostname`，多 origin 部署（如 `app.example.com` 與
   `localhost`）的 Passkey 無法跨用。本計畫**不處理**，留待後續功能規格。
-- `login_attempt_logs.user_id` 的型別為 `TEXT DEFAULT ''`（非 NULLable）；
-  匿名化改寫時以空字串 `''` 取代 NULL，SQL 語意等價但與 spec「`user_id`
-  置 NULL」措辭不同。**決定**：資料庫欄位維持 `DEFAULT ''`，程式層以
-  空字串代表匿名；契約 / 文件以「匿名化」描述，不揭露欄位內部表徵。
+- ~~`login_attempt_logs.user_id` 的型別為 `TEXT DEFAULT ''`（非 NULLable）；
+  匿名化改寫時以空字串 `''` 取代 NULL……~~ **已解決（2026-04-24，第 2 輪 analyze F3）**：
+  spec.md FR-035、Q9 Clarification 摘要、plan.md Summary、本表 Q9 均已統一為
+  「`user_id = ''` 空字串」；與 [data-model.md](./data-model.md) §2.4 `TEXT NOT NULL DEFAULT ''`
+  一致。契約／文件以「匿名化」描述語意，欄位內部值揭露為空字串以供實作者對照。
 - OpenAPI 契約中 `redirect_uri` 不在白名單時回傳的 error code 尚未決定；
   本計畫採 `400 Bad Request` + `{ error: 'invalid_redirect_uri' }`，於 Phase 1
   的 contract 中寫定。

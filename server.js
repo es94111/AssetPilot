@@ -2379,10 +2379,39 @@ function trimTrailingSlashes(value) {
 }
 
 // Google SSO 登入（統一使用 Authorization Code Flow）
+// T050：Google OAuth redirect_uri 白名單（FR-011 / Q10）
+// 啟動時從環境變數解析；空時 fallback 至 APP_HOST + localhost 預設值
+function buildGoogleRedirectAllowlist() {
+  if (GOOGLE_OAUTH_REDIRECT_URIS.length > 0) return new Set(GOOGLE_OAUTH_REDIRECT_URIS);
+  const fallback = [
+    `https://${APP_HOST}/api/auth/google`,
+    `http://localhost:${PORT}/api/auth/google`,
+  ];
+  console.log(`[OAuth] redirect_uri whitelist 未設定，採用預設：${fallback.join(', ')}`);
+  return new Set(fallback);
+}
+const googleRedirectUriAllowlist = buildGoogleRedirectAllowlist();
+
+function isAllowedGoogleRedirectUri(uri) {
+  if (!uri) return false;
+  if (googleRedirectUriAllowlist.has(uri)) return true;
+  // 容許末端斜線差異
+  const stripped = String(uri).replace(/\/$/, '');
+  const withSlash = stripped + '/';
+  return googleRedirectUriAllowlist.has(stripped) || googleRedirectUriAllowlist.has(withSlash);
+}
+
 app.post('/api/auth/google', async (req, res) => {
   const { code, redirect_uri, state } = req.body;
-  if (!code) return res.status(400).json({ error: '缺少 Google 授權碼' });
-  if (!consumeGoogleOAuthState(state)) return res.status(401).json({ error: 'Google 登入狀態驗證失敗，請重新登入' });
+  if (!code) return res.status(400).json({ error: 'invalid_code' });
+
+  // FR-011 / T051：交換授權碼前先比對白名單，不符立即拒絕（絕不外呼 Google）
+  if (!isAllowedGoogleRedirectUri(String(redirect_uri || '').trim())) {
+    recordLoginAttempt({ email: '', req, method: 'google', isSuccess: false, failureReason: 'invalid_redirect_uri' });
+    return res.status(400).json({ error: 'invalid_redirect_uri' });
+  }
+
+  if (!consumeGoogleOAuthState(state)) return res.status(400).json({ error: 'state_mismatch' });
   if (!GOOGLE_CLIENT_ID) return res.status(400).json({ error: 'Google SSO 未設定' });
   if (!GOOGLE_CLIENT_SECRET) return res.status(400).json({ error: 'Google SSO 需設定 GOOGLE_CLIENT_SECRET' });
 
@@ -2433,7 +2462,8 @@ app.post('/api/auth/google', async (req, res) => {
     });
     const userinfo = await userinfoRes.json();
 
-    email = userinfo.email?.toLowerCase();
+    // FR-001 / T053：Google email 一律走 normalizeEmail
+    email = normalizeEmail(userinfo.email);
     name = userinfo.name || email?.split('@')[0] || 'Google User';
     googleId = userinfo.sub;
     picture = userinfo.picture || '';

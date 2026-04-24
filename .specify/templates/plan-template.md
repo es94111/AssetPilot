@@ -31,15 +31,24 @@
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-Gates derived from `.specify/memory/constitution.md` v1.0.0:
+Gates derived from `.specify/memory/constitution.md` v1.1.0:
 
 - **[I] 繁體中文文件規範 Gate**：本計畫及其衍生產出（`spec.md`、
   `research.md`、`data-model.md`、`quickstart.md`、`contracts/**`、
   `tasks.md`）皆以繁體中文（zh-TW）撰寫；原始碼識別字、外部 API/函
   式庫名稱、環境變數鍵、commit message 前綴不在此限。
+- **[II] OpenAPI 3.2.0 契約 Gate**：
+  - 本計畫若新增、移除或調整任何 HTTP 端點，`contracts/**` 內至少一
+    份契約檔需宣告 `openapi: 3.2.0`（字串需完全相等，不可為 `3.1.x`、
+    `3.0.x` 或 pre-release 版本）。
+  - 專案根目錄 `openapi.yaml`（或 `openapi.json`）需同步更新以涵蓋
+    新端點；純內部模組、CLI、靜態資源路由不受此限。
+  - 重複 schema 需改以 `components.schemas` + `$ref` 表達；需要驗證
+    身分的端點需宣告 `security`。
 - **Development Workflow Gate**：已建立對應功能分支；預計同步更新
   `changelog.json` 與 `SRS.md`；若含破壞性變更，PR 描述將以繁體中文
-  列出遷移步驟。
+  列出遷移步驟；API 變更需與實作同一 PR 更新契約（禁止「先上實作、
+  後補契約」的 PR 順序）。
 
 違反上述任一 Gate 時，必須於「Complexity Tracking」表格列出違反項目
 與合理化說明，或改以修訂憲章（新增 PR）處理。

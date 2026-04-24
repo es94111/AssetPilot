@@ -1,6 +1,8 @@
 node_modules
 database.db
 database.db*
+*.db
+*.db.bak
 *.bak
 *.backup_*
 data/

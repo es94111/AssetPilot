@@ -235,3 +235,8 @@ node server.js         # 啟動伺服器，預設 http://localhost:3000
 
 - Email: `test@test.com`
 - Password: `test1234`
+
+<!-- SPECKIT START -->
+For additional context about technologies to be used, project structure,
+shell commands, and other important information, read the current plan
+<!-- SPECKIT END -->

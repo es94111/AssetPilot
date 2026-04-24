@@ -51,7 +51,16 @@
       "Bash(grep -E \"\\\\.\\(js|html\\)$\")",
       "Bash(grep -E \"\\\\.\\(html|js|json\\)$\")",
       "Bash(dir \"C:\\\\Users\\\\hongyu\\\\SynologyDrive\\\\網頁\\\\記帳網頁\\\\database.db*\")",
-      "Bash(mv asset_openapi.yaml.tmp asset_openapi.yaml)"
+      "Bash(mv asset_openapi.yaml.tmp asset_openapi.yaml)",
+      "Bash(git checkout *)",
+      "Bash(git push *)",
+      "Bash(gh pr create --title 'ci: Docker tag 自動帶入 changelog.json 版本號' --body ' *)",
+      "Bash(gh pr *)",
+      "Bash(git pull *)",
+      "Bash(git branch *)",
+      "Bash(gh run *)",
+      "Bash(git merge *)",
+      "Bash(specify init *)"
     ]
   }
 }

@@ -1663,6 +1663,16 @@ const App = (() => {
           typeBadge = '<span class="type-badge expense">支出</span>';
           amountCls = 'amount-expense';
         }
+        // 004-budgets-recurring T074：來自配方 chip（FR-025、FR-027）
+        let sourceChip = '';
+        if (t.sourceRecurringId) {
+          if (t.sourceRecurringName) {
+            sourceChip = `<a class="tx-source-chip" href="#/recurring" title="跳轉至配方"><i class="fas fa-thumbtack"></i> 來自配方：${escHtml(t.sourceRecurringName)}</a>`;
+          } else {
+            sourceChip = '<span class="tx-source-chip tx-source-chip--orphan">（來源配方已刪除）</span>';
+          }
+        }
+        const noteCell = `${escHtml(t.note || '')}${sourceChip ? '<div style="margin-top:2px">' + sourceChip + '</div>' : ''}`;
         return `<tr data-txid="${t.id}">
           <td class="td-check"><input type="checkbox" class="tx-checkbox" data-id="${t.id}" onchange="App.toggleTxSelect('${t.id}', this.checked)"></td>
           <td>${escHtml(t.date)}</td>
@@ -1673,7 +1683,7 @@ const App = (() => {
             ${normalizeCurrencyCode(t.currency) !== 'TWD' ? `<div class="tx-original-amount">${fmtByCurrency(t.originalAmount, t.currency)}</div>` : ''}
           </td>
           <td>${acc ? escHtml(acc.name) : '-'}</td>
-          <td>${escHtml(t.note || '')}</td>
+          <td>${noteCell}</td>
           <td>
             <button class="btn-icon" onclick="App.editTransaction('${t.id}')" title="編輯"><i class="fas fa-pen"></i></button>
             <button class="btn-icon danger" onclick="App.deleteTransaction('${t.id}')" title="刪除"><i class="fas fa-trash"></i></button>
@@ -2593,29 +2603,83 @@ const App = (() => {
   }
 
   // ─── 預算管理 ───
+  // 004-budgets-recurring T034/T035：四段配色 + 月份切換器（FR-006、FR-007）
+  let budgetViewMonth = null; // 當前檢視月份 'YYYY-MM'
+
+  function budgetBarClass(pct) {
+    if (pct >= 1.0) return 'budget-bar--red';
+    if (pct >= 0.8) return 'budget-bar--yellow';
+    if (pct >= 0.5) return 'budget-bar--neutral';
+    return 'budget-bar--green';
+  }
+
+  function shiftMonth(yearMonth, delta) {
+    const m = String(yearMonth).match(/^(\d{4})-(\d{2})$/);
+    if (!m) return yearMonth;
+    let y = parseInt(m[1], 10);
+    let mo = parseInt(m[2], 10) + delta;
+    while (mo > 12) { mo -= 12; y += 1; }
+    while (mo < 1) { mo += 12; y -= 1; }
+    return `${y}-${String(mo).padStart(2, '0')}`;
+  }
+
   async function renderBudget() {
-    const month = thisMonth();
+    if (!budgetViewMonth) budgetViewMonth = thisMonth();
+    const month = budgetViewMonth;
     const budgets = await API.get('/api/budgets?yearMonth=' + month);
 
     const totalExpenseRow = budgets.find(b => !b.categoryId);
     const totalExpenseUsed = totalExpenseRow ? totalExpenseRow.used : 0;
+    const totalAmount = totalExpenseRow ? totalExpenseRow.amount : 0;
 
+    // 整月總進度條
     el('budgetUsed').textContent = fmt(totalExpenseUsed);
-    el('budgetTotal').textContent = totalExpenseRow ? fmt(totalExpenseRow.amount) : 'NT$ 0';
-    const pct = totalExpenseRow ? Math.min((totalExpenseUsed / totalExpenseRow.amount) * 100, 100) : 0;
+    el('budgetTotal').textContent = totalExpenseRow ? fmt(totalAmount) : 'NT$ 0';
+    const totalPct = totalAmount > 0 ? totalExpenseUsed / totalAmount : 0;
     const bar = el('budgetTotalBar');
-    bar.style.width = pct + '%';
-    bar.className = 'progress-fill' + (pct >= 100 ? ' danger' : pct >= 80 ? ' warning' : '');
+    bar.style.width = Math.min(totalPct * 100, 100) + '%';
+    bar.className = 'progress-fill budget-bar ' + (totalExpenseRow ? budgetBarClass(totalPct) : 'budget-bar--green');
 
+    // 月份切換器（注入 budgetMonthNav，若 index.html 未含則 fallback 到 budgetList 上方）
+    const navHtml = `
+      <button class="btn-icon" id="budgetMonthPrev" title="上個月"><i class="fas fa-chevron-left"></i></button>
+      <span id="budgetMonthLabel" style="font-weight:600;min-width:88px;text-align:center">${escHtml(month)}</span>
+      <button class="btn-icon" id="budgetMonthNext" title="下個月"><i class="fas fa-chevron-right"></i></button>`;
+    let navEl = el('budgetMonthNav');
+    if (!navEl) {
+      // 若 index.html 尚無 nav 容器，動態插入到 budgetList 之前
+      navEl = document.createElement('div');
+      navEl.id = 'budgetMonthNav';
+      navEl.className = 'budget-month-nav';
+      const list = el('budgetList');
+      if (list && list.parentNode) list.parentNode.insertBefore(navEl, list);
+    }
+    navEl.innerHTML = navHtml;
+    el('budgetMonthPrev').onclick = async () => {
+      budgetViewMonth = shiftMonth(budgetViewMonth, -1);
+      await renderBudget();
+    };
+    el('budgetMonthNext').onclick = async () => {
+      budgetViewMonth = shiftMonth(budgetViewMonth, +1);
+      await renderBudget();
+    };
+
+    // 分類預算列表
     const catBudgets = budgets.filter(b => b.categoryId);
     const container = el('budgetList');
     if (catBudgets.length === 0 && !totalExpenseRow) {
-      container.innerHTML = '<p class="empty-hint">尚未設定預算，請點擊「設定預算」按鈕</p>';
+      container.innerHTML = '<p class="empty-hint">本月尚未設定預算，請點擊「設定預算」按鈕</p>';
+    } else if (catBudgets.length === 0) {
+      container.innerHTML = '<p class="empty-hint">尚無分類預算，您可新增分類預算追蹤特定支出</p>';
     } else {
       container.innerHTML = catBudgets.map(b => {
         const cat = getCat(b.categoryId);
-        const p = Math.min((b.used / b.amount) * 100, 100);
-        const cls = p >= 100 ? 'danger' : p >= 80 ? 'warning' : '';
+        const ratio = b.amount > 0 ? b.used / b.amount : 0;
+        const fillPct = Math.min(ratio * 100, 100);
+        const displayPct = (ratio * 100).toFixed(0);
+        const barCls = budgetBarClass(ratio);
+        const remaining = b.amount - b.used;
+        const remainingCls = remaining < 0 ? 'budget-bar__pct--red' : '';
         return `<div class="budget-item">
           <div class="budget-item-header">
             <span>${cat ? escHtml(cat.name) : '未知分類'}</span>
@@ -2624,8 +2688,12 @@ const App = (() => {
               <button class="btn-icon danger" onclick="App.deleteBudget('${b.id}')" title="刪除"><i class="fas fa-trash"></i></button>
             </div>
           </div>
-          <div class="budget-item-amounts">${fmt(b.used)} / ${fmt(b.amount)} (${p.toFixed(0)}%)</div>
-          <div class="progress-bar"><div class="progress-fill ${cls}" style="width:${p}%"></div></div>
+          <div class="budget-item-amounts">
+            ${fmt(b.used)} / ${fmt(b.amount)}
+            <span class="${ratio >= 1.0 ? 'budget-bar__pct--red' : ''}">(${displayPct}%)</span>
+            ・剩餘 <span class="${remainingCls}">${fmt(remaining)}</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill budget-bar ${barCls}" style="width:${fillPct}%"></div></div>
         </div>`;
       }).join('');
     }
@@ -4227,6 +4295,7 @@ const App = (() => {
     return localDateStr(d);
   }
 
+  // 004-budgets-recurring T044/T050/T051/T063：renderRecurring 補三日期、色階分流、需處理／待執行視覺
   async function renderRecurring() {
     const recs = await API.get('/api/recurring');
     const container = el('recurringList');
@@ -4244,9 +4313,18 @@ const App = (() => {
           : '<span class="type-badge expense">支出</span>';
         const startDate = r.startDate || r.start_date || '';
         const lastGen = r.lastGenerated || r.last_generated || '';
-        const nextBase = lastGen || startDate;
-        const nextGen = lastGen ? nextDateFront(nextBase, r.frequency) : startDate;
-        const nextOverdue = r.isActive && nextGen && nextGen <= todayStr;
+        // T041：使用 server 計算的 nextDate / needsAttention（FR-019、FR-024a）
+        const nextGen = r.nextDate || (lastGen ? nextDateFront(lastGen, r.frequency) : startDate);
+        const needsAttention = !!r.needsAttention;
+        const isOverdue = r.isActive && nextGen && nextGen <= todayStr && !needsAttention;
+
+        // T050：色階分流 — 紅/橘 needs_attention > 黃 pending > 灰 inactive > 正常
+        let cardCls = 'recurring-item';
+        if (!r.isActive) cardCls += ' recurring-card--inactive';
+        else if (needsAttention) cardCls += ' recurring-card--attention';
+        else if (isOverdue) cardCls += ' recurring-card--pending';
+        else cardCls += ' recurring-card--normal';
+
         const currency = normalizeCurrencyCode(r.currency || 'TWD');
         const fxRate = Number(r.fxRate || r.fx_rate || 1);
         const amountDisplay = currency === 'TWD' || fxRate <= 0
@@ -4254,7 +4332,14 @@ const App = (() => {
           : `${escHtml(currency)} ${Number(Math.round(r.amount / fxRate * 100) / 100).toLocaleString('zh-TW')} <span style="color:var(--text-secondary);font-weight:400">(≈ ${fmt(r.amount)})</span>`;
         const catLabel = cat ? escHtml(cat.name) : '<span style="color:var(--danger)">（分類已刪除）</span>';
         const accLabel = acc ? escHtml(acc.name) : '<span style="color:var(--danger)">（帳戶已刪除）</span>';
-        return `<div class="recurring-item">
+
+        // T063：需處理橫幅
+        const attnBanner = needsAttention
+          ? '<div class="recurring-attention-text">⚠ 需處理：原分類／帳戶已刪除，請重新指定</div>'
+          : '';
+
+        return `<div class="${cardCls}">
+          ${attnBanner}
           <div style="flex:1;min-width:0">
             <div class="recurring-info">
               ${typeBadge}
@@ -4264,11 +4349,11 @@ const App = (() => {
               <span>${FREQ_LABELS[r.frequency] || r.frequency}</span>
               <span class="recurring-status ${statusCls}">${statusText}</span>
             </div>
-            <div class="recurring-detail">
+            <div class="recurring-detail recurring-dates">
               <span><i class="fas fa-play-circle"></i> 起始：${escHtml(startDate || '-')}</span>
               <span><i class="fas fa-clock-rotate-left"></i> 上次產生：${escHtml(lastGen || '尚未產生')}</span>
-              <span${nextOverdue ? ' style="color:var(--warning,#f59e0b);font-weight:600"' : ''}><i class="fas fa-calendar-day"></i> 下次產生：${escHtml(nextGen || '-')}${nextOverdue ? '（待執行）' : ''}</span>
-              ${r.note ? `<span><i class="fas fa-sticky-note"></i> ${escHtml(r.note)}</span>` : ''}
+              <span${isOverdue ? ' class="recurring-pending-tag"' : ''}><i class="fas fa-calendar-day"></i> 下次產生：${escHtml(nextGen || '-')}${isOverdue ? '（待執行）' : ''}</span>
+              ${r.note ? `<span class="recurring-note"><i class="fas fa-sticky-note"></i> ${escHtml(r.note)}</span>` : ''}
             </div>
           </div>
           <div style="display:flex;gap:4px">
@@ -6716,6 +6801,21 @@ const App = (() => {
       if (!t) return;
       el('txId').value = t.id;
       el('modalTransactionTitle').textContent = '編輯交易';
+      // 004-budgets-recurring T075：來源配方 chip（FR-025、FR-026、FR-027）
+      const titleEl = el('modalTransactionTitle');
+      const oldChip = titleEl.parentNode.querySelector('.tx-source-chip-host');
+      if (oldChip) oldChip.remove();
+      if (t.sourceRecurringId) {
+        const host = document.createElement('div');
+        host.className = 'tx-source-chip-host';
+        host.style.marginTop = '4px';
+        if (t.sourceRecurringName) {
+          host.innerHTML = `<a class="tx-source-chip" href="#/recurring" title="跳轉至配方"><i class="fas fa-thumbtack"></i> 來自配方：${escHtml(t.sourceRecurringName)}</a>`;
+        } else {
+          host.innerHTML = '<span class="tx-source-chip tx-source-chip--orphan">（來源配方已刪除）</span>';
+        }
+        titleEl.parentNode.insertBefore(host, titleEl.nextSibling);
+      }
       const formType = (t.type === 'transfer_in' || t.type === 'transfer_out') ? 'transfer' : t.type;
       form.querySelector(`input[name="txType"][value="${formType}"]`).checked = true;
       updateTxFormForType(formType);
@@ -6856,6 +6956,24 @@ const App = (() => {
       } else {
         html += `<option value="${p.id}">${escHtml(p.name)}</option>`;
       }
+    });
+    return html;
+  }
+
+  // 004-budgets-recurring T037：預算 leaf-only 分類下拉（FR-004）
+  function buildBudgetCategoryOptions(type) {
+    if (type === 'transfer') type = 'expense';
+    const cats = cachedCategories.filter(c => c.type === type);
+    const parents = cats.filter(c => !c.parentId);
+    let html = '';
+    parents.forEach(p => {
+      const children = cats.filter(c => c.parentId === p.id);
+      if (children.length > 0) {
+        html += `<optgroup label="${escHtml(p.name)}">`;
+        children.forEach(c => { html += `<option value="${c.id}">${escHtml(c.name)}</option>`; });
+        html += '</optgroup>';
+      }
+      // 父分類無子分類 → 不可作為預算目標（leaf-only）；跳過此父分類
     });
     return html;
   }
@@ -7079,7 +7197,7 @@ const App = (() => {
     form.reset();
     el('budMonth').value = thisMonth();
     el('budCategory').innerHTML = '<option value="">總預算（不分類）</option>' +
-      buildCategoryOptions('expense');
+      buildBudgetCategoryOptions('expense'); // T037：leaf-only（FR-004）
     if (budId) {
       const budgets = await API.get('/api/budgets');
       const b = budgets.find(x => x.id === budId);
@@ -7127,22 +7245,31 @@ const App = (() => {
         el('recFxRateRow').style.display = '';
         el('recFxRate').required = true;
       }
+      // 004-budgets-recurring T062：佔位識別字 __deleted_category__ / __deleted_account__（FR-020）
       const catSel = el('recCategory');
       if (r.categoryId && !Array.from(catSel.options).some(o => o.value === r.categoryId)) {
         const opt = document.createElement('option');
-        opt.value = r.categoryId;
+        opt.value = '__deleted_category__';
         opt.textContent = '（原分類已刪除）';
+        opt.style.color = '#94a3b8';
+        opt.style.fontStyle = 'italic';
         catSel.insertBefore(opt, catSel.firstChild);
+        catSel.value = '__deleted_category__';
+      } else {
+        catSel.value = r.categoryId || '';
       }
-      catSel.value = r.categoryId || '';
       const accSel = el('recAccount');
       if (r.accountId && !Array.from(accSel.options).some(o => o.value === r.accountId)) {
         const opt = document.createElement('option');
-        opt.value = r.accountId;
+        opt.value = '__deleted_account__';
         opt.textContent = '（原帳戶已刪除）';
+        opt.style.color = '#94a3b8';
+        opt.style.fontStyle = 'italic';
         accSel.insertBefore(opt, accSel.firstChild);
+        accSel.value = '__deleted_account__';
+      } else {
+        accSel.value = r.accountId || '';
       }
-      accSel.value = r.accountId || '';
       el('recFrequency').value = r.frequency;
       el('recStartDate').value = r.startDate || r.start_date;
       el('recNote').value = r.note || '';
@@ -7435,12 +7562,24 @@ const App = (() => {
     // 預算表單
     el('budgetForm').addEventListener('submit', async (e) => {
       e.preventDefault();
+      const id = el('budId').value;
       const categoryId = el('budCategory').value || null;
       const amount = Number(el('budAmount').value);
       const yearMonth = el('budMonth').value;
 
+      // 004-budgets-recurring T031/T036：前端正整數守則（FR-003）
+      if (!Number.isFinite(amount) || !Number.isInteger(amount) || amount < 1) {
+        toast('預算金額必須為正整數', 'error');
+        return;
+      }
+
       try {
-        await API.post('/api/budgets', { categoryId, amount, yearMonth });
+        if (id) {
+          // T036：編輯既有預算 → PATCH 僅金額
+          await API.patch('/api/budgets/' + id, { amount });
+        } else {
+          await API.post('/api/budgets', { categoryId, amount, yearMonth });
+        }
         closeModal('modalBudget');
         toast('預算已儲存', 'success');
         await renderPage(currentPage);
@@ -7462,6 +7601,25 @@ const App = (() => {
       const frequency = el('recFrequency').value;
       const startDate = el('recStartDate').value;
       const note = el('recNote').value.trim();
+
+      // 004-budgets-recurring T062：拒絕佔位識別字（FR-020）
+      if (categoryId === '__deleted_category__') {
+        toast('請先選擇有效分類', 'error');
+        return;
+      }
+      if (accountId === '__deleted_account__') {
+        toast('請先選擇有效帳戶', 'error');
+        return;
+      }
+      // T045：金額正整數前端守則（避免 round-trip）
+      if (!Number.isFinite(amount) || amount < 1) {
+        toast('金額必須為正整數', 'error');
+        return;
+      }
+      if (currency === 'TWD' && !Number.isInteger(amount)) {
+        toast('TWD 金額必須為整數', 'error');
+        return;
+      }
 
       try {
         if (id) {

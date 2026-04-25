@@ -803,6 +803,11 @@ async function initDB() {
   // 對應 plan.md CT-1 + data-model.md §3。執行於既有 ALTER 之後、其他資料表 CREATE 之前。
   migrate002TransactionsAccounts();
 
+  // ─── 004 feature: schema migration（T010~T016） ───
+  // 對應 specs/004-budgets-recurring/data-model.md §3。
+  // 執行於 migrate002 之後（因依賴 transactions 已 rebuild 為 INTEGER）。
+  migrateTo004_budgetsRecurring();
+
   // 003-categories T011：為既有使用者補建完整預設樹（含支出「其他」與全部收入分類；冪等）
   backfillDefaultsForAllUsers();
 
@@ -1176,6 +1181,145 @@ function migrateTo003_dropIsHidden() {
     console.error('[003-migration] dropIsHidden FAILED:', err);
     throw err;
   }
+}
+
+// 004-budgets-recurring T010~T016：schema migration
+//   T010: transactions ALTER ADD source_recurring_id / scheduled_date
+//   T011: 兩條 index（partial unique + 普通）
+//   T012: budgets REAL → INTEGER 重建（含 created_at / updated_at）
+//   T013: budgets 三條唯一性 index
+//   T014: recurring REAL → INTEGER/TEXT 重建（含 needs_attention / updated_at）
+//   T015: recurring 兩條 index
+//   T016: self-test
+function migrateTo004_budgetsRecurring() {
+  // T010：transactions ALTER（冪等）
+  try { db.run("ALTER TABLE transactions ADD COLUMN source_recurring_id TEXT DEFAULT NULL"); } catch (e) { /* ignore */ }
+  try { db.run("ALTER TABLE transactions ADD COLUMN scheduled_date TEXT DEFAULT NULL"); } catch (e) { /* ignore */ }
+
+  // T011：transactions 索引
+  db.run(`CREATE UNIQUE INDEX IF NOT EXISTS idx_tx_source_scheduled
+    ON transactions(source_recurring_id, scheduled_date)
+    WHERE source_recurring_id IS NOT NULL`);
+  db.run("CREATE INDEX IF NOT EXISTS idx_tx_source ON transactions(source_recurring_id)");
+
+  // T012：budgets REAL → INTEGER 重建（偵測 typeof(amount) = 'real' 才觸發；冪等）
+  let budgetAmountInfo;
+  try { budgetAmountInfo = queryOne("SELECT typeof(amount) AS t FROM budgets LIMIT 1"); } catch (e) { budgetAmountInfo = null; }
+  const needsBudgetRebuild = budgetAmountInfo && String(budgetAmountInfo.t).toLowerCase() === 'real';
+  if (needsBudgetRebuild) {
+    console.log('[migration 004] 重建 budgets 表（REAL → INTEGER）');
+    try {
+      const fs = require('fs');
+      fs.copyFileSync('database.db', `database.db.bak.${Date.now()}.before-004`);
+    } catch (e) { console.warn('[migration 004] 備份失敗（非致命）:', e?.message || e); }
+
+    try {
+      db.run('BEGIN');
+      db.run(`CREATE TABLE budgets_new (
+        id          TEXT    PRIMARY KEY,
+        user_id     TEXT    NOT NULL,
+        category_id TEXT,
+        amount      INTEGER NOT NULL,
+        year_month  TEXT    NOT NULL,
+        created_at  INTEGER NOT NULL DEFAULT 0,
+        updated_at  INTEGER NOT NULL DEFAULT 0
+      )`);
+      db.run(`INSERT INTO budgets_new (id, user_id, category_id, amount, year_month, created_at, updated_at)
+              SELECT id, user_id, category_id,
+                     CAST(ROUND(COALESCE(amount, 0)) AS INTEGER),
+                     year_month,
+                     ?, ?
+              FROM budgets`, [Date.now(), Date.now()]);
+      db.run("DROP TABLE budgets");
+      db.run("ALTER TABLE budgets_new RENAME TO budgets");
+      db.run('COMMIT');
+    } catch (err) {
+      try { db.run('ROLLBACK'); } catch {}
+      console.error('[migration 004] budgets rebuild FAILED:', err);
+      throw err;
+    }
+  }
+
+  // T013：budgets 唯一性索引（rebuild 後重建；既有 budgets 也補建）
+  db.run(`CREATE UNIQUE INDEX IF NOT EXISTS idx_budgets_unique_cat
+    ON budgets(user_id, year_month, category_id) WHERE category_id IS NOT NULL`);
+  db.run(`CREATE UNIQUE INDEX IF NOT EXISTS idx_budgets_unique_total
+    ON budgets(user_id, year_month) WHERE category_id IS NULL`);
+  db.run(`CREATE INDEX IF NOT EXISTS idx_budgets_user_month ON budgets(user_id, year_month)`);
+
+  // T014：recurring REAL → INTEGER/TEXT 重建 + 補欄位（含 needs_attention / updated_at）
+  let recAmountInfo, recFxInfo, recNeedsAttn;
+  try { recAmountInfo = queryOne("SELECT typeof(amount) AS t FROM recurring LIMIT 1"); } catch (e) { recAmountInfo = null; }
+  try { recFxInfo = queryOne("SELECT typeof(fx_rate) AS t FROM recurring LIMIT 1"); } catch (e) { recFxInfo = null; }
+  try {
+    const cols = queryAll("PRAGMA table_info(recurring)");
+    recNeedsAttn = cols && cols.some(c => c.name === 'needs_attention');
+  } catch (e) { recNeedsAttn = false; }
+  const needsRecRebuild =
+    (recAmountInfo && String(recAmountInfo.t).toLowerCase() === 'real') ||
+    (recFxInfo && String(recFxInfo.t).toLowerCase() === 'real') ||
+    !recNeedsAttn;
+  if (needsRecRebuild) {
+    console.log('[migration 004] 重建 recurring 表（REAL → INTEGER/TEXT + 補欄位）');
+    try {
+      const fs = require('fs');
+      fs.copyFileSync('database.db', `database.db.bak.${Date.now()}.before-004-rec`);
+    } catch (e) { console.warn('[migration 004] 備份失敗（非致命）:', e?.message || e); }
+
+    try {
+      db.run('BEGIN');
+      db.run(`CREATE TABLE recurring_new (
+        id               TEXT    PRIMARY KEY,
+        user_id          TEXT    NOT NULL,
+        type             TEXT    NOT NULL,
+        amount           INTEGER NOT NULL,
+        category_id      TEXT,
+        account_id       TEXT,
+        frequency        TEXT    NOT NULL,
+        start_date       TEXT    NOT NULL,
+        note             TEXT    NOT NULL DEFAULT '',
+        is_active        INTEGER NOT NULL DEFAULT 1,
+        last_generated   TEXT,
+        currency         TEXT    NOT NULL DEFAULT 'TWD',
+        fx_rate          TEXT    NOT NULL DEFAULT '1',
+        needs_attention  INTEGER NOT NULL DEFAULT 0,
+        updated_at       INTEGER NOT NULL DEFAULT 0
+      )`);
+      db.run(`INSERT INTO recurring_new
+              (id, user_id, type, amount, category_id, account_id, frequency, start_date, note,
+               is_active, last_generated, currency, fx_rate, needs_attention, updated_at)
+              SELECT id, user_id, type,
+                     CAST(ROUND(COALESCE(amount, 0)) AS INTEGER),
+                     category_id, account_id, frequency, start_date, COALESCE(note, ''),
+                     COALESCE(is_active, 1), last_generated,
+                     COALESCE(currency, 'TWD'),
+                     CAST(COALESCE(fx_rate, 1) AS TEXT),
+                     0,
+                     ?
+              FROM recurring`, [Date.now()]);
+      db.run("DROP TABLE recurring");
+      db.run("ALTER TABLE recurring_new RENAME TO recurring");
+      db.run('COMMIT');
+    } catch (err) {
+      try { db.run('ROLLBACK'); } catch {}
+      console.error('[migration 004] recurring rebuild FAILED:', err);
+      throw err;
+    }
+  }
+
+  // T015：recurring 索引
+  db.run(`CREATE INDEX IF NOT EXISTS idx_recurring_user_active ON recurring(user_id, is_active)`);
+  db.run(`CREATE INDEX IF NOT EXISTS idx_recurring_user_attn ON recurring(user_id, needs_attention)`);
+
+  // T016：self-test（不通過僅 console.warn，不 throw）
+  const badBudgetAmt = queryOne("SELECT COUNT(*) AS c FROM budgets WHERE typeof(amount) != 'integer' OR amount <= 0")?.c || 0;
+  if (badBudgetAmt > 0) console.warn(`[migration 004] self-test fail: ${badBudgetAmt} 筆 budgets.amount 非正整數`);
+  const badRecAmt = queryOne("SELECT COUNT(*) AS c FROM recurring WHERE typeof(amount) != 'integer' OR amount <= 0")?.c || 0;
+  if (badRecAmt > 0) console.warn(`[migration 004] self-test fail: ${badRecAmt} 筆 recurring.amount 非正整數`);
+  const badFxRate = queryOne("SELECT COUNT(*) AS c FROM recurring WHERE typeof(fx_rate) != 'text'")?.c || 0;
+  if (badFxRate > 0) console.warn(`[migration 004] self-test fail: ${badFxRate} 筆 recurring.fx_rate 非 text`);
+
+  console.log('[migration 004] 完成');
 }
 
 // 003-categories T011：取代既有 migrateDefaultSubcategories — 為所有既有使用者冪等補建預設樹缺漏項
@@ -2520,6 +2664,8 @@ app.post('/api/auth/login', async (req, res) => {
 
   // 003-categories T012：登入時冪等補建預設樹（FR-010、FR-010b：失敗不阻擋登入）
   try { backfillDefaultsForUser(user.id); } catch (e) { console.error('[003-backfill]', e); }
+  // 004-budgets-recurring T023：登入時 server-side 觸發產生流程（FR-012；錯誤吞噬不阻擋登入）
+  try { processRecurringForUser(user.id); } catch (e) { console.error('[004-recurring]', e); }
 
   const token = jwt.sign({ userId: user.id, tokenVersion: Number(user.token_version) || 0 }, JWT_SECRET, { expiresIn: JWT_EXPIRES });
   setAuthCookie(res, token);
@@ -2984,6 +3130,8 @@ app.post('/api/auth/google', async (req, res) => {
     recordLoginAttempt({ user, email: user.email, req, method: 'google', isSuccess: true });
     // 003-categories T012：登入時冪等補建預設樹
     try { backfillDefaultsForUser(user.id); } catch (e) { console.error('[003-backfill]', e); }
+  // 004-budgets-recurring T023：登入時 server-side 觸發產生流程（FR-012；錯誤吞噬不阻擋登入）
+  try { processRecurringForUser(user.id); } catch (e) { console.error('[004-recurring]', e); }
     const token = jwt.sign({ userId: user.id, tokenVersion: Number(user.token_version) || 0 }, JWT_SECRET, { expiresIn: JWT_EXPIRES });
     setAuthCookie(res, token);
     res.json({
@@ -3073,6 +3221,8 @@ app.post('/api/auth/passkey/login', async (req, res) => {
 
     // 003-categories T012：登入時冪等補建預設樹
     try { backfillDefaultsForUser(user.id); } catch (e) { console.error('[003-backfill]', e); }
+  // 004-budgets-recurring T023：登入時 server-side 觸發產生流程（FR-012；錯誤吞噬不阻擋登入）
+  try { processRecurringForUser(user.id); } catch (e) { console.error('[004-recurring]', e); }
 
     const token = jwt.sign({ userId: user.id, tokenVersion: Number(user.token_version) || 0 }, JWT_SECRET, { expiresIn: JWT_EXPIRES });
     setAuthCookie(res, token);
@@ -5444,12 +5594,12 @@ app.get('/api/transactions', (req, res) => {
   // 是否需要 JOIN
   const needJoinAcc = sortField === 'account';
   const needJoinCat = sortField === 'category';
-  const baseTable = needJoinAcc
-    ? "transactions t LEFT JOIN accounts acc ON acc.id = t.account_id"
-    : (needJoinCat
-      ? "transactions t LEFT JOIN categories cat ON cat.id = t.category_id"
-      : "transactions t");
-  const txCol = (col) => needJoinAcc || needJoinCat ? `t.${col}` : col;
+  // 004-budgets-recurring T072：恒常 LEFT JOIN recurring 取 source_recurring_name
+  let baseTable = "transactions t";
+  if (needJoinAcc) baseTable += " LEFT JOIN accounts acc ON acc.id = t.account_id";
+  if (needJoinCat) baseTable += " LEFT JOIN categories cat ON cat.id = t.category_id";
+  baseTable += " LEFT JOIN recurring r ON r.id = t.source_recurring_id AND r.user_id = t.user_id";
+  const txCol = (col) => `t.${col}`;
 
   let where = `${txCol('user_id')} = ?`;
   const params = [req.userId];
@@ -5486,8 +5636,9 @@ app.get('/api/transactions', (req, res) => {
   const pageNum = parseInt(page) || 1;
   const offset = (pageNum - 1) * pageSize;
 
-  // 主查詢必須選回 transactions 全欄位（避免 join 後欄位衝突）
-  const selectCols = needJoinAcc || needJoinCat ? 't.*' : '*';
+  // 主查詢：t.* + 來源配方名（LEFT JOIN 已在 baseTable 處理；FR-025 / FR-027）
+  // U1 修補：COALESCE(NULLIF(r.note, ''), '（未命名配方）') 處理空 note 情境
+  const selectCols = "t.*, COALESCE(NULLIF(r.note, ''), '（未命名配方）') AS source_recurring_name";
   const sql = `SELECT ${selectCols} FROM ${baseTable} WHERE ${where} ${orderClause} LIMIT ${pageSize} OFFSET ${offset}`;
   const items = queryAll(sql, params).map(r => ({
     ...r,
@@ -5501,6 +5652,9 @@ app.get('/api/transactions', (req, res) => {
     twdAmount: Number(r.twd_amount) || Number(r.amount) || 0,
     excludeFromStats: r.exclude_from_stats === 1,
     linkedId: r.linked_id || '',
+    sourceRecurringId: r.source_recurring_id || null,
+    sourceRecurringName: r.source_recurring_id ? (r.source_recurring_name || null) : null,
+    scheduledDate: r.scheduled_date || null,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
   }));
@@ -5561,9 +5715,18 @@ app.post('/api/transactions', (req, res) => {
 });
 
 // FR-014a（T036）：GET /api/transactions/:txId 單筆（樂觀鎖讀取支援）
+// 004-budgets-recurring T073：補 LEFT JOIN recurring 取 source_recurring_name
 app.get('/api/transactions/:txId', (req, res) => {
   const t = ownsResource('transactions', 'id', req.params.txId, req.userId);
   if (!t) return res.status(404).json({ error: 'NotFound' });
+  let sourceRecurringName = null;
+  if (t.source_recurring_id) {
+    const r = queryOne(
+      "SELECT COALESCE(NULLIF(note, ''), '（未命名配方）') AS source_recurring_name FROM recurring WHERE id = ? AND user_id = ?",
+      [t.source_recurring_id, req.userId]
+    );
+    sourceRecurringName = r ? r.source_recurring_name : null;
+  }
   res.json({
     id: t.id,
     accountId: t.account_id,
@@ -5580,6 +5743,9 @@ app.get('/api/transactions/:txId', (req, res) => {
     note: t.note || '',
     excludeFromStats: t.exclude_from_stats === 1,
     linkedId: t.linked_id || '',
+    sourceRecurringId: t.source_recurring_id || null,
+    sourceRecurringName,
+    scheduledDate: t.scheduled_date || null,
     createdAt: t.created_at,
     updatedAt: Number(t.updated_at) || 0,
   });
@@ -5992,6 +6158,7 @@ app.post('/api/transactions/transfer', transferHandler);
 app.post('/api/transfers', transferHandler);
 
 // ─── 預算 ───
+// 004-budgets-recurring T030：used 改用 twd_amount（INTEGER）；FR-009 不做跨月聚合
 app.get('/api/budgets', (req, res) => {
   const { yearMonth } = req.query;
   let sql = "SELECT * FROM budgets WHERE user_id = ?";
@@ -6000,30 +6167,76 @@ app.get('/api/budgets', (req, res) => {
   const rows = queryAll(sql, params);
   const result = rows.map(b => {
     const month = b.year_month;
-    let usedSql = "SELECT COALESCE(SUM(amount),0) as used FROM transactions WHERE user_id = ? AND type='expense' AND date LIKE ? AND exclude_from_stats = 0";
+    // FR-010：以 twd_amount（本幣 INTEGER）彙整；外幣交易已含正確 twd_amount
+    let usedSql = "SELECT COALESCE(SUM(twd_amount),0) AS used FROM transactions WHERE user_id = ? AND type='expense' AND date LIKE ? AND exclude_from_stats = 0";
     const usedParams = [req.userId, month + '%'];
     if (b.category_id) { usedSql += " AND category_id = ?"; usedParams.push(b.category_id); }
     const used = queryOne(usedSql, usedParams)?.used || 0;
-    return { ...b, categoryId: b.category_id, yearMonth: b.year_month, used };
+    return {
+      id: b.id,
+      categoryId: b.category_id,
+      yearMonth: b.year_month,
+      amount: b.amount,
+      used,
+      createdAt: b.created_at,
+      updatedAt: b.updated_at,
+    };
   });
   res.json(result);
 });
 
+// 004-budgets-recurring T031：補正整數驗證、leaf-only、yearMonth 格式、唯一性 409
 app.post('/api/budgets', (req, res) => {
   const { categoryId, amount, yearMonth } = req.body;
-  if (amount <= 0) return res.status(400).json({ error: '預算金額必須大於 0' });
+
+  // FR-003：金額必為正整數
+  if (!Number.isInteger(amount) || amount < 1) {
+    return res.status(400).json({ error: '預算金額必須為正整數', code: 'ValidationError', field: 'amount' });
+  }
+  // yearMonth 格式（FR-009a：不限月份範圍但格式須對）
+  if (!yearMonth || !/^\d{4}-(0[1-9]|1[0-2])$/.test(String(yearMonth))) {
+    return res.status(400).json({ error: '月份格式無效（需為 YYYY-MM）', code: 'ValidationError', field: 'yearMonth' });
+  }
+
   const catId = categoryId || null;
+  // FR-004：分類預算僅可綁子分類（leaf-only）
+  if (catId) {
+    const cat = queryOne("SELECT id, parent_id FROM categories WHERE id = ? AND user_id = ?", [catId, req.userId]);
+    if (!cat) return res.status(400).json({ error: '分類不存在或無權限', code: 'ValidationError', field: 'categoryId' });
+    if (!cat.parent_id || cat.parent_id === '') {
+      return res.status(400).json({ error: '預算僅可綁定子分類；請選擇父分類下的子分類', code: 'ValidationError', field: 'categoryId' });
+    }
+  }
+
+  // FR-002：同月同分類唯一性
   const existing = queryOne("SELECT id FROM budgets WHERE user_id = ? AND year_month = ? AND category_id IS ?", [req.userId, yearMonth, catId]);
   if (existing) {
-    db.run("UPDATE budgets SET amount = ? WHERE id = ?", [amount, existing.id]);
-  } else {
-    db.run("INSERT INTO budgets (id, user_id, category_id, amount, year_month) VALUES (?,?,?,?,?)",
-      [uid(), req.userId, catId, amount, yearMonth]);
+    return res.status(409).json({ error: '該月份此分類已存在預算，請改為編輯既有預算', code: 'Conflict' });
   }
+
+  const now = Date.now();
+  const id = uid();
+  db.run("INSERT INTO budgets (id, user_id, category_id, amount, year_month, created_at, updated_at) VALUES (?,?,?,?,?,?,?)",
+    [id, req.userId, catId, amount, yearMonth, now, now]);
+  saveDB();
+  res.json({ ok: true, id });
+});
+
+// 004-budgets-recurring T032：PATCH 僅編輯金額（FR-008）
+app.patch('/api/budgets/:id', (req, res) => {
+  const { amount } = req.body;
+  if (!Number.isInteger(amount) || amount < 1) {
+    return res.status(400).json({ error: '預算金額必須為正整數', code: 'ValidationError', field: 'amount' });
+  }
+  const existing = queryOne("SELECT id FROM budgets WHERE id = ? AND user_id = ?", [req.params.id, req.userId]);
+  if (!existing) return res.status(404).json({ error: '預算不存在或無權限', code: 'NotFound' });
+  db.run("UPDATE budgets SET amount = ?, updated_at = ? WHERE id = ? AND user_id = ?",
+    [amount, Date.now(), req.params.id, req.userId]);
   saveDB();
   res.json({ ok: true });
 });
 
+// 004-budgets-recurring T033：保留既有 IDOR 守則
 app.delete('/api/budgets/:id', (req, res) => {
   db.run("DELETE FROM budgets WHERE id = ? AND user_id = ?", [req.params.id, req.userId]);
   saveDB();
@@ -6031,42 +6244,147 @@ app.delete('/api/budgets/:id', (req, res) => {
 });
 
 // ─── 固定收支 ───
+const VALID_RECURRING_FREQ = new Set(['daily', 'weekly', 'monthly', 'yearly']);
+const VALID_RECURRING_TYPE = new Set(['income', 'expense']);
+
+// 004-budgets-recurring T041：GET 補 needsAttention / nextDate（FR-018 / FR-019 / FR-024a）
 app.get('/api/recurring', (req, res) => {
   const rows = queryAll("SELECT * FROM recurring WHERE user_id = ? ORDER BY start_date DESC", [req.userId]);
-  res.json(rows.map(r => ({
-    ...r, categoryId: r.category_id, accountId: r.account_id,
-    startDate: r.start_date, isActive: !!r.is_active, lastGenerated: r.last_generated,
-    currency: r.currency || 'TWD', fxRate: Number(r.fx_rate) || 1,
-  })));
+  res.json(rows.map(r => {
+    const nextDate = r.last_generated
+      ? getNextRecurringDate(r.last_generated, r.frequency)
+      : r.start_date;
+    return {
+      id: r.id,
+      type: r.type,
+      amount: r.amount,
+      categoryId: r.category_id,
+      accountId: r.account_id,
+      frequency: r.frequency,
+      startDate: r.start_date,
+      note: r.note || '',
+      isActive: !!r.is_active,
+      lastGenerated: r.last_generated,
+      currency: r.currency || 'TWD',
+      fxRate: String(r.fx_rate != null ? r.fx_rate : '1'),
+      needsAttention: !!r.needs_attention,
+      nextDate,
+      updatedAt: r.updated_at,
+    };
+  }));
 });
 
+// 004-budgets-recurring T040：POST 補正整數驗證、frequency 列舉、amount 轉本幣 INTEGER
 app.post('/api/recurring', (req, res) => {
   const { type, categoryId, accountId, frequency, startDate, note } = req.body;
   let { amount, currency, fxRate } = req.body;
-  if (categoryId && !assertOwned('categories', categoryId, req.userId)) return res.status(400).json({ error: '分類不存在或無權限' });
-  if (accountId && !assertOwned('accounts', accountId, req.userId)) return res.status(400).json({ error: '帳戶不存在或無權限' });
+
+  if (!VALID_RECURRING_TYPE.has(type)) {
+    return res.status(400).json({ error: '類型無效（需為 income 或 expense）', code: 'ValidationError', field: 'type' });
+  }
+  if (!VALID_RECURRING_FREQ.has(frequency)) {
+    return res.status(400).json({ error: '週期無效（需為 daily / weekly / monthly / yearly）', code: 'ValidationError', field: 'frequency' });
+  }
+  if (categoryId && !assertOwned('categories', categoryId, req.userId)) {
+    return res.status(400).json({ error: '分類不存在或無權限', code: 'ValidationError', field: 'categoryId' });
+  }
+  if (accountId && !assertOwned('accounts', accountId, req.userId)) {
+    return res.status(400).json({ error: '帳戶不存在或無權限', code: 'ValidationError', field: 'accountId' });
+  }
   const normalizedStart = normalizeDate(startDate);
-  if (!normalizedStart) return res.status(400).json({ error: '起始日期格式無效' });
+  if (!normalizedStart || !taipeiTime.isValidIsoDate(normalizedStart)) {
+    return res.status(400).json({ error: '起始日期格式無效', code: 'ValidationError', field: 'startDate' });
+  }
   currency = normalizeCurrency(currency || 'TWD');
-  const converted = convertToTwd(amount, currency, fxRate, req.userId);
+  let converted;
+  try {
+    converted = convertToTwd(amount, currency, fxRate, req.userId);
+  } catch (e) {
+    return res.status(400).json({ error: String(e?.message || '金額無效'), code: 'ValidationError', field: 'amount' });
+  }
+  // FR-003 / FR-011：amount 寫入本幣 INTEGER；外幣 round 到整數元
+  const amountTwdInt = Math.round(Number(converted.twdAmount) || 0);
+  if (!(amountTwdInt >= 1)) {
+    return res.status(400).json({ error: '金額必須為正整數（本幣）', code: 'ValidationError', field: 'amount' });
+  }
+
+  const now = Date.now();
   const id = uid();
-  db.run("INSERT INTO recurring (id,user_id,type,amount,category_id,account_id,frequency,start_date,note,currency,fx_rate,is_active,last_generated) VALUES (?,?,?,?,?,?,?,?,?,?,?,1,NULL)",
-    [id, req.userId, type, converted.twdAmount, categoryId, accountId, frequency, normalizedStart, note || '', converted.currency, converted.fxRate]);
+  db.run(
+    `INSERT INTO recurring
+     (id, user_id, type, amount, category_id, account_id, frequency, start_date, note,
+      is_active, last_generated, currency, fx_rate, needs_attention, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, NULL, ?, ?, 0, ?)`,
+    [id, req.userId, type, amountTwdInt, categoryId || null, accountId || null,
+     frequency, normalizedStart, note || '',
+     converted.currency, String(converted.fxRate), now]
+  );
   saveDB();
   res.json({ id });
 });
 
+// 004-budgets-recurring T070 / T061：PUT 加分支邏輯（FR-021a/b/c、FR-024b、FR-020 placeholder reject）
+//   嚴格不對 transactions 表觸發任何 UPDATE（FR-021c 程式碼層護欄）。
 app.put('/api/recurring/:id', (req, res) => {
   const { type, categoryId, accountId, frequency, startDate, note } = req.body;
   let { amount, currency, fxRate } = req.body;
-  if (categoryId && !assertOwned('categories', categoryId, req.userId)) return res.status(400).json({ error: '分類不存在或無權限' });
-  if (accountId && !assertOwned('accounts', accountId, req.userId)) return res.status(400).json({ error: '帳戶不存在或無權限' });
+
+  // FR-020：拒絕佔位識別字
+  if (categoryId === '__deleted_category__') {
+    return res.status(400).json({ error: '請先選擇有效分類', code: 'ValidationError', field: 'categoryId' });
+  }
+  if (accountId === '__deleted_account__') {
+    return res.status(400).json({ error: '請先選擇有效帳戶', code: 'ValidationError', field: 'accountId' });
+  }
+
+  // 取舊配方
+  const old = queryOne("SELECT * FROM recurring WHERE id = ? AND user_id = ?", [req.params.id, req.userId]);
+  if (!old) return res.status(404).json({ error: '配方不存在或無權限', code: 'NotFound' });
+
+  // 類型不可變（spec FR-021、Constitution-style governance）
+  if (type !== undefined && type !== null && type !== old.type) {
+    return res.status(400).json({ error: '類型欄位（收入／支出）建立後不可變更，需變更須刪除後重建', code: 'ValidationError', field: 'type' });
+  }
+  if (!VALID_RECURRING_FREQ.has(frequency)) {
+    return res.status(400).json({ error: '週期無效（需為 daily / weekly / monthly / yearly）', code: 'ValidationError', field: 'frequency' });
+  }
+  if (categoryId && !assertOwned('categories', categoryId, req.userId)) {
+    return res.status(400).json({ error: '分類不存在或無權限', code: 'ValidationError', field: 'categoryId' });
+  }
+  if (accountId && !assertOwned('accounts', accountId, req.userId)) {
+    return res.status(400).json({ error: '帳戶不存在或無權限', code: 'ValidationError', field: 'accountId' });
+  }
   const normalizedStart = normalizeDate(startDate);
-  if (!normalizedStart) return res.status(400).json({ error: '起始日期格式無效' });
+  if (!normalizedStart || !taipeiTime.isValidIsoDate(normalizedStart)) {
+    return res.status(400).json({ error: '起始日期格式無效', code: 'ValidationError', field: 'startDate' });
+  }
   currency = normalizeCurrency(currency || 'TWD');
-  const converted = convertToTwd(amount, currency, fxRate, req.userId);
-  db.run("UPDATE recurring SET type=?,amount=?,category_id=?,account_id=?,frequency=?,start_date=?,note=?,currency=?,fx_rate=? WHERE id=? AND user_id=?",
-    [type, converted.twdAmount, categoryId, accountId, frequency, normalizedStart, note || '', converted.currency, converted.fxRate, req.params.id, req.userId]);
+  let converted;
+  try {
+    converted = convertToTwd(amount, currency, fxRate, req.userId);
+  } catch (e) {
+    return res.status(400).json({ error: String(e?.message || '金額無效'), code: 'ValidationError', field: 'amount' });
+  }
+  const amountTwdInt = Math.round(Number(converted.twdAmount) || 0);
+  if (!(amountTwdInt >= 1)) {
+    return res.status(400).json({ error: '金額必須為正整數（本幣）', code: 'ValidationError', field: 'amount' });
+  }
+
+  // FR-021a：起始日變動則重置 last_generated；FR-021b：起始日未動則保留
+  const newLastGenerated = (normalizedStart !== old.start_date) ? null : old.last_generated;
+
+  // FR-021c 護欄：以下 SQL 嚴格只 UPDATE recurring，不觸動 transactions
+  db.run(
+    `UPDATE recurring
+     SET amount = ?, category_id = ?, account_id = ?, frequency = ?, start_date = ?,
+         note = ?, currency = ?, fx_rate = ?,
+         last_generated = ?, needs_attention = 0, updated_at = ?
+     WHERE id = ? AND user_id = ?`,
+    [amountTwdInt, categoryId || null, accountId || null, frequency, normalizedStart,
+     note || '', converted.currency, String(converted.fxRate),
+     newLastGenerated, Date.now(),
+     req.params.id, req.userId]
+  );
   saveDB();
   res.json({ ok: true });
 });
@@ -6085,44 +6403,177 @@ app.patch('/api/recurring/:id/toggle', (req, res) => {
   res.json({ isActive: !r.is_active });
 });
 
+// 004-budgets-recurring T042：重寫為共用函式 fallback 入口
 app.post('/api/recurring/process', (req, res) => {
-  const recs = queryAll("SELECT * FROM recurring WHERE user_id = ? AND is_active = 1", [req.userId]);
-  const todayS = todayStr();
-  let count = 0;
-
-  recs.forEach(r => {
-    let nextDate;
-    if (r.last_generated) {
-      nextDate = getNextDate(r.last_generated, r.frequency);
-    } else {
-      nextDate = r.start_date;
-    }
-    while (nextDate && nextDate <= todayS) {
-      const now = Date.now();
-      const rCurrency = normalizeCurrency(r.currency || 'TWD');
-      const rFxRate = Number(r.fx_rate) > 0 ? Number(r.fx_rate) : 1;
-      const rOriginalAmount = rCurrency === 'TWD' ? r.amount : Math.round(r.amount / rFxRate * 10000) / 10000;
-      db.run("INSERT INTO transactions (id,user_id,type,amount,original_amount,currency,fx_rate,date,category_id,account_id,note,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
-        [uid(), req.userId, r.type, r.amount, rOriginalAmount, rCurrency, rFxRate, nextDate, r.category_id, r.account_id, (r.note || '') + ' (自動)', now, now]);
-      db.run("UPDATE recurring SET last_generated = ? WHERE id = ?", [nextDate, r.id]);
-      count++;
-      nextDate = getNextDate(nextDate, r.frequency);
-    }
-  });
-
-  if (count > 0) saveDB();
-  res.json({ generated: count });
+  try {
+    const generated = processRecurringForUser(req.userId, { maxSync: Infinity });
+    res.json({ generated });
+  } catch (e) {
+    console.error('[004-recurring] /process error:', e);
+    res.status(500).json({ error: '產生流程失敗' });
+  }
 });
 
-function getNextDate(dateStr, freq) {
-  const d = new Date(dateStr);
-  switch (freq) {
-    case 'daily': d.setDate(d.getDate() + 1); break;
-    case 'weekly': d.setDate(d.getDate() + 7); break;
-    case 'monthly': d.setMonth(d.getMonth() + 1); break;
-    case 'yearly': d.setFullYear(d.getFullYear() + 1); break;
+// 004-budgets-recurring T020：取代既有 getNextDate；FR-022 月底 / 平年回退邏輯
+//   daily / weekly：簡單加日（UTC 計算避免 process 時區漂移）
+//   monthly：先決定下月、再 min(原日, 該月最後一日)；不依賴 setMonth(+1) 的 overflow
+//   yearly：對 2/29 做平年 → 2/28 回退
+function getNextRecurringDate(prevIsoDate, freq) {
+  const m = String(prevIsoDate).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return null;
+  const y = parseInt(m[1], 10);
+  const mo = parseInt(m[2], 10);
+  const d = parseInt(m[3], 10);
+  if (freq === 'daily') {
+    const dt = new Date(Date.UTC(y, mo - 1, d));
+    dt.setUTCDate(dt.getUTCDate() + 1);
+    return dt.toISOString().slice(0, 10);
   }
-  return d.toISOString().slice(0, 10);
+  if (freq === 'weekly') {
+    const dt = new Date(Date.UTC(y, mo - 1, d));
+    dt.setUTCDate(dt.getUTCDate() + 7);
+    return dt.toISOString().slice(0, 10);
+  }
+  if (freq === 'monthly') {
+    let nm = mo + 1, ny = y;
+    if (nm > 12) { nm = 1; ny = y + 1; }
+    // Date.UTC(ny, nm, 0) 的 day=0 即「上一個月（即新月）的最後一天」
+    const lastDay = new Date(Date.UTC(ny, nm, 0)).getUTCDate();
+    const day = Math.min(d, lastDay);
+    return `${ny}-${String(nm).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+  }
+  if (freq === 'yearly') {
+    const ny = y + 1;
+    if (mo === 2 && d === 29) {
+      const isLeap = (ny % 4 === 0 && ny % 100 !== 0) || (ny % 400 === 0);
+      const day = isLeap ? 29 : 28;
+      return `${ny}-02-${String(day).padStart(2, '0')}`;
+    }
+    return `${ny}-${String(mo).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+  }
+  return null;
+}
+
+// 004-budgets-recurring T021：單一配方產生迴圈
+//   (a) lazy 偵測 category_id / account_id 是否仍存在 → 不存在則 needs_attention=1 並 return 0
+//   (b) 計算下一個 scheduledDate（FR-014 首產日 / FR-022 月底回退）
+//   (c) INSERT 包 try/catch 捕捉 UNIQUE constraint failed（FR-028 並發冪等）
+//   (d) UPDATE last_generated 條件式推進（FR-029）
+//   (e) 迴圈直到 scheduledDate > todayInTaipei()
+function processOneRecurring(r, userId) {
+  // (a) 偵測分類 / 帳戶是否仍存在
+  if (r.category_id) {
+    const cat = queryOne("SELECT id FROM categories WHERE id = ? AND user_id = ?", [r.category_id, userId]);
+    if (!cat) {
+      db.run("UPDATE recurring SET needs_attention = 1, updated_at = ? WHERE id = ?", [Date.now(), r.id]);
+      return 0;
+    }
+  }
+  if (r.account_id) {
+    const acct = queryOne("SELECT id FROM accounts WHERE id = ? AND user_id = ?", [r.account_id, userId]);
+    if (!acct) {
+      db.run("UPDATE recurring SET needs_attention = 1, updated_at = ? WHERE id = ?", [Date.now(), r.id]);
+      return 0;
+    }
+  }
+
+  const todayS = taipeiTime.todayInTaipei();
+  let lastGenerated = r.last_generated;
+  let scheduledDate = lastGenerated ? getNextRecurringDate(lastGenerated, r.frequency) : r.start_date;
+  let count = 0;
+
+  while (scheduledDate && scheduledDate <= todayS) {
+    const now = Date.now();
+    const rCurrency = normalizeCurrency(r.currency || 'TWD');
+    const rFxRate = String(r.fx_rate || '1');
+    const rFxRateNum = Number(rFxRate) > 0 ? Number(rFxRate) : 1;
+    // 外幣：amount 已是本幣（INTEGER）；original_amount 由 amount / fx_rate 反推
+    const rOriginalAmount = rCurrency === 'TWD'
+      ? r.amount
+      : Math.round((r.amount / rFxRateNum) * 10000) / 10000;
+    // FR-021c：衍生交易 twd_amount 等於 amount（配方已存本幣）
+    const twdAmount = r.amount;
+
+    try {
+      db.run(
+        `INSERT INTO transactions
+         (id, user_id, type, amount, original_amount, currency, fx_rate, fx_fee, twd_amount,
+          date, category_id, account_id, note, exclude_from_stats, linked_id,
+          source_recurring_id, scheduled_date,
+          created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          uid(), userId, r.type,
+          r.amount, rOriginalAmount, rCurrency, rFxRate, 0, twdAmount,
+          scheduledDate, r.category_id || null, r.account_id || null,
+          (r.note || '') + ' (自動)', 0, '',
+          r.id, scheduledDate,
+          now, now,
+        ]
+      );
+      // FR-029：條件式推進 last_generated
+      db.run(
+        "UPDATE recurring SET last_generated = ?, updated_at = ? WHERE id = ? AND (last_generated IS NULL OR last_generated < ?)",
+        [scheduledDate, now, r.id, scheduledDate]
+      );
+      count++;
+    } catch (e) {
+      // FR-028：UNIQUE constraint failed 表示另一個並發 session 已產該日期；略過繼續
+      if (/UNIQUE constraint failed/i.test(String(e?.message || e))) {
+        // 仍要條件式推進 last_generated 避免死迴圈
+        db.run(
+          "UPDATE recurring SET last_generated = ?, updated_at = ? WHERE id = ? AND (last_generated IS NULL OR last_generated < ?)",
+          [scheduledDate, now, r.id, scheduledDate]
+        );
+      } else {
+        console.error('[004-recurring] INSERT failed for', r.id, scheduledDate, e);
+        throw e;
+      }
+    }
+
+    lastGenerated = scheduledDate;
+    scheduledDate = getNextRecurringDate(lastGenerated, r.frequency);
+  }
+
+  return count;
+}
+
+// 004-budgets-recurring T022：使用者層產生流程入口
+//   - 30 筆軟上限（SC-003 P95 ≤ 500ms）
+//   - 超過上限以 setImmediate 推背景續跑（SC-004 不阻塞登入）
+//   - try/catch 包覆每筆配方避免單筆錯誤中止整體流程
+function processRecurringForUser(userId, opts = {}) {
+  const maxSync = opts.maxSync != null ? opts.maxSync : 30;
+  const start = Date.now();
+  let generated = 0;
+  let bgScheduled = false;
+
+  const recs = queryAll(
+    "SELECT * FROM recurring WHERE user_id = ? AND is_active = 1 AND needs_attention = 0",
+    [userId]
+  );
+
+  for (const r of recs) {
+    if (generated >= maxSync) {
+      if (!bgScheduled) {
+        bgScheduled = true;
+        setImmediate(() => {
+          try { processRecurringForUser(userId, { maxSync: Infinity }); }
+          catch (e) { console.error('[004-recurring] bg resume failed for', userId, e); }
+        });
+      }
+      break;
+    }
+    try {
+      generated += processOneRecurring(r, userId);
+    } catch (e) {
+      console.error('[004-recurring] processOneRecurring failed for', r.id, e);
+    }
+  }
+
+  if (generated > 0) saveDB();
+  console.log(`[004-recurring] generated=${generated} elapsed=${Date.now() - start}ms userId=${userId}${bgScheduled ? ' (bg-resumed)' : ''}`);
+  return generated;
 }
 
 // ─── TWSE 休市日（有價證券集中交易市場開（休）市日期）───
@@ -7619,7 +8070,7 @@ initDB().then(() => {
   app.listen(PORT, () => {
     console.log(`AssetPilot 伺服器已啟動: http://localhost:${PORT}`);
     // T149：啟動 log 帶版本標籤，方便容器日誌追蹤上線版本
-    console.log('[startup] AssetPilot v4.24.0 / feature 003-categories ready');
+    console.log('[startup] AssetPilot v4.25.0 / feature 004-budgets-recurring ready');
     console.log(`[OAuth] redirect_uri whitelist: ${GOOGLE_OAUTH_REDIRECT_URIS.length} entries`);
   });
 });

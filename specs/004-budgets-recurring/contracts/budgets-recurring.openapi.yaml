@@ -1,0 +1,458 @@
+openapi: 3.2.0
+info:
+  title: 預算與固定收支 API（004-budgets-recurring）
+  description: |
+    本契約描述 004 功能（預算與固定收支）涉及的 HTTP 端點與 schema。
+    對應 spec.md 之 FR-001 ~ FR-029（含 FR-009a / 021a / 021b / 021c / 024a / 024b）
+    與 SC-001 ~ SC-008。
+
+    本文件 MUST 與根目錄 `openapi.yaml` 同步維護（憲章 Principle II 規則 #2）；
+    `info.version` 對應根目錄 `openapi.yaml` 的 4.25.0。
+  version: 4.25.0
+
+servers:
+  - url: https://example.com
+    description: production
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: token
+
+  schemas:
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+          description: 對使用者顯示的錯誤訊息（zh-TW）
+        code:
+          type: string
+          description: 內部錯誤代碼（如 ValidationError、Conflict）
+        field:
+          type: string
+          description: 引發錯誤的欄位名稱（若可定位）
+
+    Budget:
+      type: object
+      required: [id, yearMonth, amount, used]
+      properties:
+        id:
+          type: string
+          description: 預算 ID
+        categoryId:
+          type: [string, "null"]
+          description: 綁定子分類 ID；NULL 代表「整月總支出預算」
+        yearMonth:
+          type: string
+          pattern: '^[0-9]{4}-(0[1-9]|1[0-2])$'
+          description: YYYY-MM；不限制範圍（FR-009a，可建立任意過去／未來月份）
+        amount:
+          type: integer
+          minimum: 1
+          description: 本幣（TWD）正整數；FR-003
+        used:
+          type: integer
+          minimum: 0
+          description: 該月份對應分類的支出本幣總和（外幣交易以該筆 twd_amount 計入）；FR-010
+        createdAt:
+          type: integer
+          format: int64
+          description: 建立時間（epoch ms）
+        updatedAt:
+          type: integer
+          format: int64
+          description: 最後更新時間（epoch ms）
+
+    BudgetUpsert:
+      type: object
+      required: [yearMonth, amount]
+      properties:
+        categoryId:
+          type: [string, "null"]
+          description: 綁定子分類 ID；省略或 null 代表「整月總支出預算」
+        yearMonth:
+          type: string
+          pattern: '^[0-9]{4}-(0[1-9]|1[0-2])$'
+        amount:
+          type: integer
+          minimum: 1
+
+    BudgetPatch:
+      type: object
+      required: [amount]
+      description: 僅金額可編輯；yearMonth／categoryId 不可變更（FR-008）
+      properties:
+        amount:
+          type: integer
+          minimum: 1
+
+    RecurringTransaction:
+      type: object
+      required: [id, type, amount, frequency, startDate, isActive]
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          enum: [income, expense]
+          description: 建立後不可變（FR-021 註解）
+        amount:
+          type: integer
+          minimum: 1
+          description: 本幣（TWD）正整數；外幣以 fxRate 折算後存（FR-016）
+        categoryId:
+          type: [string, "null"]
+        accountId:
+          type: [string, "null"]
+        frequency:
+          type: string
+          enum: [daily, weekly, monthly, yearly]
+        startDate:
+          type: string
+          format: date
+          description: 'YYYY-MM-DD'
+        note:
+          type: string
+        isActive:
+          type: boolean
+          description: 停用中的配方不被產生流程處理（FR-017）
+        lastGenerated:
+          type: [string, "null"]
+          format: date
+          description: 上次產生日期；NULL 代表尚未產生過（FR-014 首產日邏輯）
+        currency:
+          type: string
+          example: TWD
+        fxRate:
+          type: string
+          description: decimal 字串（沿用 002 慣例）；如 "32.5"
+        needsAttention:
+          type: boolean
+          description: |
+            FR-024：當綁定分類／帳戶被刪除時自動置 true，產生流程暫停；
+            FR-024b：使用者編輯改選有效項並儲存後自動清除為 false。
+        nextDate:
+          type: [string, "null"]
+          format: date
+          description: |
+            伺服器計算之下次產生日期（依 FR-013 / FR-022）；
+            若 < 今日且 isActive=true 且 needsAttention=false，
+            前端顯示「（待執行）」黃色預警（FR-019）。
+        updatedAt:
+          type: integer
+          format: int64
+
+    RecurringUpsert:
+      type: object
+      required: [type, amount, frequency, startDate]
+      properties:
+        type:
+          type: string
+          enum: [income, expense]
+        amount:
+          type: integer
+          minimum: 1
+        categoryId:
+          type: [string, "null"]
+        accountId:
+          type: [string, "null"]
+        frequency:
+          type: string
+          enum: [daily, weekly, monthly, yearly]
+        startDate:
+          type: string
+          format: date
+        note:
+          type: string
+        currency:
+          type: string
+          default: TWD
+        fxRate:
+          type: string
+          default: '1'
+
+    Transaction:
+      type: object
+      description: |
+        本檔僅列出與本功能相關的衍生欄位；完整 Transaction schema 請見根目錄 openapi.yaml。
+      properties:
+        id:
+          type: string
+        sourceRecurringId:
+          type: [string, "null"]
+          description: |
+            FR-025：衍生交易持久記錄產生它的固定收支配方 ID；
+            FR-027：來源配方被刪後此值仍保留為原值（無 ON DELETE CASCADE）。
+        sourceRecurringName:
+          type: [string, "null"]
+          description: |
+            LEFT JOIN recurring.note 取得；NULL 表示「來源配方已刪除」（FR-027 退化為純文字）。
+        scheduledDate:
+          type: [string, "null"]
+          format: date
+          description: |
+            FR-028 / Key Entities：該筆衍生交易應產生的目標日期；
+            (sourceRecurringId, scheduledDate) 為唯一鍵保護並發冪等。
+
+security:
+  - cookieAuth: []
+
+paths:
+  /api/budgets:
+    get:
+      operationId: listBudgets
+      summary: 取得預算與已用金額
+      description: |
+        FR-005 / FR-007 / FR-010：依 yearMonth 載入該月份預算；used 永遠依當前資料庫即時重算。
+        歷史／未來月份不受時間限制（FR-009a）。
+      parameters:
+        - in: query
+          name: yearMonth
+          required: false
+          schema:
+            type: string
+            pattern: '^[0-9]{4}-(0[1-9]|1[0-2])$'
+          description: 'YYYY-MM；省略則回所有月份（依 plan 階段決議，本功能 UI 永遠帶此參數）'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Budget'
+        '401':
+          description: 未認證
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+    post:
+      operationId: upsertBudget
+      summary: 新增或覆寫預算
+      description: |
+        FR-001 ~ FR-004：兩種粒度（整月總／分類）；同月同分類唯一性（FR-002）；
+        分類預算僅 leaf-only（FR-004）；金額正整數（FR-003）。
+        當 (user_id, yearMonth, categoryId) 已存在時，行為由 plan 階段決議為「拒絕並提示改 PATCH」。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/BudgetUpsert' }
+      responses:
+        '200':
+          description: 建立或覆寫成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  id: { type: string }
+        '400':
+          description: 驗證失敗（金額 ≤ 0、yearMonth 格式錯、categoryId 為父分類等）
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '409':
+          description: 該月份此分類已存在預算（FR-002）；提示改用 PATCH 編輯既有預算
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /api/budgets/{id}:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema: { type: string }
+
+    patch:
+      operationId: patchBudget
+      summary: 編輯預算金額（FR-008）
+      description: |
+        新增端點（本功能新增）。僅金額可改；yearMonth／categoryId 不接受變更。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/BudgetPatch' }
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+        '400':
+          description: amount ≤ 0
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '404':
+          description: 預算不存在或不屬於目前使用者
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+    delete:
+      operationId: deleteBudget
+      summary: 刪除預算
+      responses:
+        '200':
+          description: 刪除成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+
+  /api/recurring:
+    get:
+      operationId: listRecurring
+      summary: 取得固定收支配方清單
+      description: |
+        FR-018 / FR-019 / FR-024a：回應每筆配方含 needsAttention（自動偵測）與
+        nextDate（伺服器計算）。前端依 (isActive, needsAttention, nextDate < today)
+        三因素決定卡片色階（紅／橘 = 需處理；黃 = 待執行；正常／灰 = 啟用／停用）。
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/RecurringTransaction' }
+
+    post:
+      operationId: createRecurring
+      summary: 新增固定收支配方
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RecurringUpsert' }
+      responses:
+        '200':
+          description: 建立成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id: { type: string }
+        '400':
+          description: 驗證失敗（amount ≤ 0、frequency 非列舉值、startDate 格式錯）
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /api/recurring/{id}:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema: { type: string }
+
+    put:
+      operationId: updateRecurring
+      summary: 編輯固定收支配方
+      description: |
+        FR-021：可編輯所有業務欄位；type 不接受變更（建立後不可變）。
+        FR-021a：起始日變動則重置 last_generated = NULL，下次依新起始日首產。
+        FR-021b：起始日未動但週期變動則保留 last_generated。
+        FR-021c：業務欄位變更不溯及既往；伺服器 SQL 嚴格只動 recurring 表本身。
+        FR-024b：若新欄位皆有效則自動清除 needs_attention 旗標。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RecurringUpsert' }
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+        '400':
+          description: 驗證失敗（含 type 變更請求、佔位識別字未改選等；FR-020）
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+    delete:
+      operationId: deleteRecurring
+      summary: 刪除固定收支配方
+      description: |
+        FR-021：刪除配方不連帶刪除已產出的歷史衍生交易；
+        FR-027：歷史衍生交易的 source_recurring_id 仍持久保留為原值，
+        UI 偵測到該 ID 已無對應配方時退化為純文字「（來源配方已刪除）」。
+      responses:
+        '200':
+          description: 刪除成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+
+  /api/recurring/{id}/toggle:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema: { type: string }
+
+    patch:
+      operationId: toggleRecurring
+      summary: 切換啟用／停用狀態（FR-017）
+      responses:
+        '200':
+          description: 切換成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  isActive: { type: boolean }
+
+  /api/recurring/process:
+    post:
+      operationId: processRecurring
+      summary: 觸發產生流程（手動 fallback；登入時亦自動觸發）
+      description: |
+        FR-012：登入時 server-side 已自動呼叫 processRecurringForUser；本端點保留
+        作為「使用者手動補產出」入口（如使用者剛改完配方需立即看到結果）。
+
+        產生規則：
+        - FR-013：自 last_generated 起依週期遞進至「今日（含）」為止。
+        - FR-014：last_generated 為空時以 start_date 當日為首產日。
+        - FR-015：每筆成功產出後同步推進 last_generated；中途失敗仍保證冪等。
+        - FR-022：每月 / 每年週期遇月底不足天數則回退到該月 / 年的最後一天。
+        - FR-023：所有日期判定以使用者所在時區（Asia/Taipei）為準。
+        - FR-028：(source_recurring_id, scheduled_date) 唯一鍵保護並發冪等；
+          INSERT 失敗時略過該日期繼續。
+        - FR-029：last_generated 條件式推進（only-if-newer）。
+      responses:
+        '200':
+          description: 產生流程完成
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  generated:
+                    type: integer
+                    description: 此次新產出的衍生交易筆數

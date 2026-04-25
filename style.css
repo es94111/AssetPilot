@@ -3510,3 +3510,93 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 .passkey-info { display: flex; align-items: center; gap: 4px; flex: 1; min-width: 0; }
 .passkey-name { font-weight: 600; font-size: 14px; color: var(--text); }
 .passkey-date { font-size: 12px; color: var(--text-muted); margin-left: 8px; }
+
+/* ========================================================================
+   004-budgets-recurring：預算進度條四段配色 / 月份切換器 / 固定收支色階 / 來源 chip
+   對應 FR-006 / FR-007 / FR-019 / FR-024a / FR-025 / FR-027
+   ======================================================================== */
+
+/* T038：預算進度條四段配色（FR-006）*/
+.budget-bar {
+  transition: background-color .25s ease, color .25s ease;
+}
+.budget-bar--green   { background: #22c55e !important; }
+.budget-bar--neutral { background: #94a3b8 !important; }
+.budget-bar--yellow  { background: #eab308 !important; }
+.budget-bar--red     { background: #ef4444 !important; color: #fff !important; }
+.budget-bar__pct--red { color: #ef4444 !important; font-weight: 700; }
+
+/* T039：預算月份切換器 */
+.budget-month-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin: 12px 0;
+}
+.budget-month-nav .btn-icon {
+  background: var(--surface, #f3f4f6);
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: 6px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+/* T052：固定收支卡片色階分流 */
+.recurring-card--normal { background: var(--card-bg, var(--surface, #fff)); }
+.recurring-card--pending {
+  background: #fef9c3;
+  border-left: 4px solid #eab308;
+}
+.recurring-card--inactive {
+  opacity: 0.6;
+  filter: grayscale(40%);
+}
+.recurring-pending-tag {
+  color: #b45309 !important;
+  font-weight: 600;
+}
+.recurring-note {
+  color: var(--text-secondary, #6b7280);
+  font-size: 0.9em;
+}
+
+/* T064：需處理紅／橘色階（與黃色 pending 視覺分層；FR-024a） */
+.recurring-card--attention {
+  background: #fee2e2;
+  border-left: 4px solid #ef4444;
+}
+.recurring-attention-text {
+  color: #991b1b;
+  font-weight: 600;
+  margin-bottom: 6px;
+  padding: 6px 8px;
+  background: rgba(239, 68, 68, 0.08);
+  border-radius: 4px;
+}
+
+/* T076：來源配方 chip */
+.tx-source-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.85em;
+  background: #e0e7ff;
+  color: #3730a3;
+  cursor: pointer;
+  text-decoration: none;
+}
+.tx-source-chip:hover {
+  background: #c7d2fe;
+}
+.tx-source-chip--orphan {
+  background: #f3f4f6;
+  color: #6b7280;
+  cursor: default;
+  font-style: italic;
+}
+.tx-source-chip--orphan:hover {
+  background: #f3f4f6;
+}

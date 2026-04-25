@@ -89,7 +89,17 @@
       "Bash(grep -B1 \"Error was generated\\\\|severity: error\\\\|^\\\\\\\\[error\")",
       "Bash(grep -E \"openapi\\\\\\\\.yaml:[0-9]+:[0-9]+\")",
       "Bash(npx --yes @redocly/cli lint specs/003-categories/contracts/categories.openapi.yaml)",
-      "Bash(grep *)"
+      "Bash(grep *)",
+      "Bash(git worktree *)",
+      "PowerShell(.specify/scripts/powershell/check-prerequisites.ps1 -Json -PathsOnly)",
+      "PowerShell(.specify/scripts/powershell/setup-plan.ps1 -Json)",
+      "PowerShell(.specify/scripts/powershell/check-prerequisites.ps1 -Json -RequireTasks -IncludeTasks)",
+      "Bash(echo \"exit=$?\")",
+      "Bash(npx --yes @redocly/cli lint specs/004-budgets-recurring/contracts/budgets-recurring.openapi.yaml)",
+      "Bash(npx --yes @redocly/cli lint specs/004-budgets-recurring/contracts/budgets-recurring.openapi.yaml --max-problems 50)",
+      "Bash(awk '/app\\\\.put.*\\\\/api\\\\/recurring/,/^\\\\}\\\\\\);/' server.js)",
+      "Bash(awk '/app\\\\.delete.*\\\\/api\\\\/transactions/,/^\\\\}\\\\\\);/' server.js)",
+      "Bash(awk '/app\\\\.get.*\\\\/api\\\\/budgets/,/^\\\\}\\\\\\);/' server.js)"
     ]
   }
 }

@@ -76,14 +76,14 @@ Strong success criteria enable independent iteration. Weak ones (“make it work
 <!-- SPECKIT START -->
 ## 目前進行中的功能規劃
 
-- 功能：分類系統（Category System）
-- 分支：`003-categories`
-- 規格：[specs/003-categories/spec.md](specs/003-categories/spec.md)
-- 計畫：[specs/003-categories/plan.md](specs/003-categories/plan.md)
+- 功能：預算與固定收支（Budgets & Recurring Transactions）
+- 分支：`004-budgets-recurring`
+- 規格：[specs/004-budgets-recurring/spec.md](specs/004-budgets-recurring/spec.md)
+- 計畫：[specs/004-budgets-recurring/plan.md](specs/004-budgets-recurring/plan.md)
 - 衍生產物：
-  - [research.md](specs/003-categories/research.md)
-  - [data-model.md](specs/003-categories/data-model.md)
-  - [quickstart.md](specs/003-categories/quickstart.md)
-  - [contracts/categories.openapi.yaml](specs/003-categories/contracts/categories.openapi.yaml)
+  - [research.md](specs/004-budgets-recurring/research.md)
+  - [data-model.md](specs/004-budgets-recurring/data-model.md)
+  - [quickstart.md](specs/004-budgets-recurring/quickstart.md)
+  - [contracts/budgets-recurring.openapi.yaml](specs/004-budgets-recurring/contracts/budgets-recurring.openapi.yaml)
 <!-- SPECKIT END -->
 

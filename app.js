@@ -159,11 +159,18 @@ const App = (() => {
       if (!r.ok) throw new Error(data.error || `操作失敗 (${r.status})`);
       return data;
     },
-    async del(url) {
-      const r = await fetch(url, { ...FETCH_OPTS, method: 'DELETE', headers: JSON_HEADERS });
+    async del(url, body) {
+      const opts = { ...FETCH_OPTS, method: 'DELETE', headers: JSON_HEADERS };
+      if (body !== undefined) opts.body = JSON.stringify(body);
+      const r = await fetch(url, opts);
       const data = await this.parseResponse(r);
       if (r.status === 401) { logout(); throw new Error('請先登入'); }
-      if (!r.ok) throw new Error(data.error || '操作失敗');
+      if (!r.ok) {
+        const err = new Error(data.error || '操作失敗');
+        err.status = r.status;
+        err.data = data;
+        throw err;
+      }
       return data;
     },
   };
@@ -317,6 +324,18 @@ const App = (() => {
     const m = String(d.getMonth() + 1).padStart(2, '0');
     const day = String(d.getDate()).padStart(2, '0');
     return `${y}-${m}-${day}`;
+  }
+  // 002 T044 (FR-007a)：固定以 Asia/Taipei (UTC+8) 計算「今天」字串，
+  // 與後端 lib/taipeiTime.js todayInTaipei() 對齊，避免使用者瀏覽器跨時區（如 PST）
+  // 開啟 Modal 時看到「昨天」的日期。
+  function todayInTaipei() {
+    try {
+      return new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'Asia/Taipei', year: 'numeric', month: '2-digit', day: '2-digit',
+      }).format(new Date());
+    } catch (e) {
+      return localDateStr(new Date());
+    }
   }
   function localMonthStr(d) {
     const y = d.getFullYear();
@@ -1068,6 +1087,38 @@ const App = (() => {
     el('dashNet').textContent = fmt(data.net);
     el('dashToday').textContent = fmt(data.todayExpense);
 
+    // T125 (FR-004 / FR-007 / FR-020)：儀表板總資產卡（跨幣別 TWD 換算由共用匯率快取驅動）
+    try {
+      const accounts = await API.get('/api/accounts');
+      const included = accounts.filter(a => !a.exclude_from_total);
+      const excluded = accounts.filter(a => a.exclude_from_total);
+      let totalAssets = 0;
+      let unavailableCurrencies = new Set();
+      for (const a of included) {
+        const c = normalizeCurrencyCode(a.currency || 'TWD');
+        const bal = Number(a.balance) || 0;
+        if (c === 'TWD') {
+          totalAssets += bal;
+        } else {
+          const rate = Number(cachedExchangeRates[c]);
+          if (rate > 0) {
+            totalAssets += Math.round(bal * rate);
+          } else {
+            unavailableCurrencies.add(c);
+          }
+        }
+      }
+      const totalEl = el('dashTotalAssets');
+      const noteEl = el('dashTotalAssetsNote');
+      if (totalEl) totalEl.textContent = fmt(totalAssets);
+      if (noteEl) {
+        const parts = [];
+        if (excluded.length > 0) parts.push(`已排除 ${excluded.length} 個帳戶不計入`);
+        if (unavailableCurrencies.size > 0) parts.push(`${unavailableCurrencies.size} 種幣別匯率暫不可用，未計入總額`);
+        noteEl.textContent = parts.join('；');
+      }
+    } catch (e) { /* 取不到帳戶不影響其他卡片 */ }
+
     await renderDashBudget(data.expense);
     renderDashPie(data.catBreakdown, !!dashDualPie.expense);
     await renderDashAssetAllocationPie(!!dashDualPie.asset);
@@ -1394,6 +1445,14 @@ const App = (() => {
   // ─── 交易記錄 ───
   async function renderTransactions() {
     populateFilterSelects();
+    // T060：頁面載入時嘗試從 URL 還原 filter / sort / pageSize（FR-052）
+    restoreFiltersFromHash();
+    // T061：綁定排序表頭點擊（idempotent — 多次呼叫只會綁定一次）
+    document.querySelectorAll('#transactionTable th.th-sort').forEach(th => {
+      if (th.dataset.bound) return;
+      th.dataset.bound = '1';
+      th.addEventListener('click', () => onSortHeaderClick(th.dataset.sort));
+    });
     await applyFilters();
   }
 
@@ -1418,6 +1477,9 @@ const App = (() => {
     el('filterAccount').innerHTML = accHtml;
   }
 
+  // T060-T062：sort state + URL sync（FR-050~052）
+  let currentSort = 'date_desc';
+
   async function applyFilters(page) {
     const params = new URLSearchParams();
     const dateFrom = el('filterDateFrom').value;
@@ -1435,31 +1497,129 @@ const App = (() => {
     if (keyword) params.set('keyword', keyword);
     params.set('page', page || 1);
     const psVal = el('filterPageSize').value;
-    params.set('limit', psVal === 'custom' ? (parseInt(el('filterPageSizeCustom').value) || 20) : psVal);
+    let pageSize;
+    if (psVal === 'custom') {
+      pageSize = parseInt(el('filterPageSizeCustom').value) || 20;
+      // T062：自訂每頁筆數 1~500（FR-051）
+      if (pageSize < 1 || pageSize > 500) {
+        toast('每頁筆數需介於 1 ~ 500', 'error');
+        el('filterPageSizeCustom').focus();
+        return;
+      }
+    } else {
+      pageSize = parseInt(psVal) || 20;
+    }
+    params.set('limit', pageSize);
+    if (currentSort && currentSort !== 'date_desc') {
+      params.set('sort', currentSort);
+    }
+
+    // FR-052：寫入 URL hash（避免影響 SPA routing path）
+    try {
+      const hash = window.location.hash.split('?')[0] || '#/transactions';
+      const newHash = `${hash}?${params.toString()}`;
+      if (window.location.hash !== newHash) {
+        window.history.replaceState(null, '', newHash);
+      }
+    } catch (e) { /* ignore URL sync errors */ }
 
     const result = await API.get('/api/transactions?' + params.toString());
     renderTransactionTable(result);
+    updateSortIndicators();
+  }
+
+  // T061：排序表頭點擊 toggle（同 field 切換 dir，不同 field 切到 desc）
+  function onSortHeaderClick(field) {
+    const [curField, curDir] = currentSort.split('_');
+    if (curField === field) {
+      currentSort = `${field}_${curDir === 'asc' ? 'desc' : 'asc'}`;
+    } else {
+      currentSort = `${field}_desc`;
+    }
+    applyFilters(1);
+  }
+
+  function updateSortIndicators() {
+    document.querySelectorAll('th.th-sort').forEach(th => {
+      const f = th.dataset.sort;
+      th.classList.remove('sort-asc', 'sort-desc');
+      const [curField, curDir] = currentSort.split('_');
+      if (f === curField) th.classList.add(curDir === 'asc' ? 'sort-asc' : 'sort-desc');
+    });
+  }
+
+  // T060/T062：URL hash → 還原狀態
+  function restoreFiltersFromHash() {
+    try {
+      const hash = window.location.hash || '';
+      const qIdx = hash.indexOf('?');
+      if (qIdx < 0) return false;
+      const qs = new URLSearchParams(hash.slice(qIdx + 1));
+      const setVal = (id, key) => {
+        if (qs.has(key)) el(id).value = qs.get(key);
+      };
+      setVal('filterDateFrom', 'dateFrom');
+      setVal('filterDateTo', 'dateTo');
+      const t = qs.get('type'); if (t) el('filterType').value = t;
+      const c = qs.get('categoryId'); if (c) el('filterCategory').value = c;
+      const a = qs.get('accountId'); if (a) el('filterAccount').value = a;
+      const k = qs.get('keyword'); if (k) el('filterKeyword').value = k;
+      const ps = qs.get('limit');
+      if (ps) {
+        const presets = ['10', '20', '50', '100'];
+        if (presets.includes(ps)) {
+          el('filterPageSize').value = ps;
+          el('filterPageSizeCustom').style.display = 'none';
+        } else {
+          el('filterPageSize').value = 'custom';
+          el('filterPageSizeCustom').style.display = '';
+          el('filterPageSizeCustom').value = ps;
+        }
+      }
+      const sort = qs.get('sort');
+      if (sort && /^(date|amount|account|category|type)_(asc|desc)$/.test(sort)) {
+        currentSort = sort;
+      }
+      return true;
+    } catch (e) { return false; }
   }
 
   // ─── 多選狀態 ───
   let selectedTxIds = new Set();
+  const BATCH_MAX_FE = 500;
 
   function updateBatchBar() {
     const count = selectedTxIds.size;
     el('batchBar').style.display = count > 0 ? '' : 'none';
     el('batchCount').textContent = `已選 ${count} 筆`;
+    // T100：a11y aria-live 通報
+    const live = el('batchLive');
+    if (live) live.textContent = count > 0 ? `已選 ${count} 筆` : '';
+    // T101 (FR-044)：上限 500 — 達上限時禁用未選 checkbox 並顯示提醒
+    const overflowEl = el('batchOverflowHint');
+    if (overflowEl) {
+      overflowEl.style.display = count >= BATCH_MAX_FE ? '' : 'none';
+      overflowEl.textContent = count >= BATCH_MAX_FE ? `已達單次上限 ${BATCH_MAX_FE}，請分批處理` : '';
+    }
+    document.querySelectorAll('.tx-checkbox').forEach(cb => {
+      if (cb.checked) return;
+      cb.disabled = count >= BATCH_MAX_FE;
+    });
     // 更新全選 checkbox 狀態
     const allCheckbox = el('selectAllTx');
     const checkboxes = document.querySelectorAll('.tx-checkbox');
     if (checkboxes.length > 0 && count === checkboxes.length) {
       allCheckbox.checked = true;
       allCheckbox.indeterminate = false;
+      allCheckbox.setAttribute('aria-checked', 'true');
     } else if (count > 0) {
       allCheckbox.checked = false;
       allCheckbox.indeterminate = true;
+      allCheckbox.setAttribute('aria-checked', 'mixed');
     } else {
       allCheckbox.checked = false;
       allCheckbox.indeterminate = false;
+      allCheckbox.setAttribute('aria-checked', 'false');
     }
   }
 
@@ -1469,8 +1629,10 @@ const App = (() => {
     updateBatchBar();
   }
 
+  let currentTxRows = [];
   function renderTransactionTable(result) {
     const { data: txs, total, page: pageNum, totalPages } = result;
+    currentTxRows = Array.isArray(txs) ? txs : [];
     selectedTxIds.clear();
     updateBatchBar();
     const todayStrValue = today();
@@ -1549,6 +1711,7 @@ const App = (() => {
       el('filterPageSize').value = '20';
       el('filterPageSizeCustom').style.display = 'none';
       el('filterPageSizeCustom').value = '';
+      currentSort = 'date_desc';  // T061：reset 連同排序狀態一併清回預設
       applyFilters(1);
     });
     el('filterPageSize').addEventListener('change', () => {
@@ -1607,13 +1770,33 @@ const App = (() => {
 
   function batchDelete() {
     const count = selectedTxIds.size;
-    confirmDelete(`確定要刪除所選的 ${count} 筆交易記錄嗎？此操作無法復原。`, async () => {
+    if (count === 0) return;
+    if (count > BATCH_MAX_FE) {
+      toast(`單次最多 ${BATCH_MAX_FE} 筆，請分批處理`, 'error');
+      return;
+    }
+    // T104 (FR-042)：計算含轉帳對數，顯示「實際刪除 N + T 筆」
+    const ids = [...selectedTxIds];
+    const txsAll = (typeof currentTxRows === 'object' && Array.isArray(currentTxRows)) ? currentTxRows : [];
+    let transferCount = 0;
+    ids.forEach(id => {
+      const t = txsAll.find(x => x.id === id);
+      if (t && t.linkedId && !ids.includes(t.linkedId)) transferCount++;
+    });
+    const msg = transferCount > 0
+      ? `共 ${count} 筆含 ${transferCount} 組轉帳對；對應另一半將一併刪除，實際將刪除 ${count + transferCount} 筆`
+      : `確定要刪除所選的 ${count} 筆交易記錄嗎？此操作無法復原。`;
+    confirmDelete(msg, async () => {
       try {
-        const result = await API.post('/api/transactions/batch-delete', { ids: [...selectedTxIds] });
-        toast(`已刪除 ${result.deleted} 筆交易`, 'success');
+        const result = await API.post('/api/transactions/batch-delete', { ids });
+        const affected = result.affectedCount ?? result.deleted ?? ids.length;
+        toast(`已刪除 ${affected} 筆交易`, 'success');
         clearSelection();
         await renderPage(currentPage);
-      } catch (err) { toast(err.message, 'error'); }
+      } catch (err) {
+        // T105 (FR-045)：整批失敗訊息
+        toast('本次批次操作未生效，' + (err?.message || ''), 'error');
+      }
     });
   }
 
@@ -6433,7 +6616,8 @@ const App = (() => {
   async function openTransactionModal(txId) {
     const form = el('transactionForm');
     form.reset();
-    el('txDate').value = today();
+    // T044 (FR-007a)：日期預設以 Asia/Taipei 固定時區計算
+    el('txDate').value = todayInTaipei();
     renderCurrencySelectOptions('txCurrency', 'TWD');
     el('txCurrency').value = 'TWD';
     el('txFxRate').value = '';
@@ -6624,19 +6808,26 @@ const App = (() => {
     const iconMap = { '銀行': 'fa-building-columns', '信用卡': 'fa-credit-card', '現金': 'fa-money-bill', '虛擬錢包': 'fa-wallet' };
     if (iconMap[type]) el('accIcon').value = iconMap[type];
     const bankRow = el('accLinkedBankRow');
+    const feeRow = el('accOverseasFeeRow');
     if (type === '信用卡') {
       bankRow.style.display = '';
       const banks = cachedAccounts.filter(a => a.account_type === '銀行');
       el('accLinkedBank').innerHTML = '<option value="">不分組</option>' +
         banks.map(b => `<option value="${b.id}">${escHtml(b.name)}</option>`).join('');
+      // T041 (FR-021)：信用卡才顯示 overseasFeeRate
+      if (feeRow) feeRow.style.display = '';
     } else {
       bankRow.style.display = 'none';
+      if (feeRow) feeRow.style.display = 'none';
     }
   }
 
   function openAccountModal(accId) {
     const form = el('accountForm');
     form.reset();
+    // FR-014a (T042)：清掉舊的 updatedAt 樂觀鎖快取
+    form.dataset.expectedUpdatedAt = '';
+    form.dataset.referenceCount = '0';
     if (accId) {
       const a = cachedAccounts.find(x => x.id === accId);
       if (!a) return;
@@ -6653,6 +6844,28 @@ const App = (() => {
       el('accExclude').checked = !!(a.exclude_from_total);
       renderCurrencySelectOptions('accCurrency', a.currency, [a.currency]);
       el('accCurrency').value = normalizeCurrencyCode(a.currency);
+      // T041：載入 overseasFeeRate（千分點 → 百分比顯示）
+      const feeEl = el('accOverseasFeeRate');
+      if (feeEl) {
+        feeEl.value = a.overseasFeeRate != null ? (Number(a.overseasFeeRate) / 100).toString() : '';
+      }
+      // FR-014a：抓取最新 updatedAt + referenceCount，避免使用快取的舊值
+      // FR-005：referenceCount > 0 時，幣別欄位 disabled（已有交易，不可變更）
+      API.get('/api/accounts/' + a.id).then(detail => {
+        if (detail && detail.updatedAt) {
+          form.dataset.expectedUpdatedAt = String(detail.updatedAt);
+        }
+        const refCount = Number(detail?.referenceCount) || 0;
+        form.dataset.referenceCount = String(refCount);
+        const currencyEl = el('accCurrency');
+        if (refCount > 0) {
+          currencyEl.disabled = true;
+          currencyEl.title = `此帳戶已有 ${refCount} 筆交易，幣別無法變更`;
+        } else {
+          currencyEl.disabled = false;
+          currencyEl.title = '';
+        }
+      }).catch(() => {});
     } else {
       el('accId').value = '';
       el('modalAccountTitle').textContent = '新增帳戶';
@@ -6660,6 +6873,8 @@ const App = (() => {
       onAccTypeChange(el('accType').value);
       renderCurrencySelectOptions('accCurrency', 'TWD');
       el('accCurrency').value = 'TWD';
+      el('accCurrency').disabled = false;
+      el('accCurrency').title = '';
     }
     openModal('modalAccount');
   }
@@ -6914,24 +7129,47 @@ const App = (() => {
       const amount = Number(el('txAmount').value);
       const date = el('txDate').value;
       const note = el('txNote').value.trim();
+      // T048（FR-011）：金額 ≤ 0 前端阻擋送出
+      if (!Number.isFinite(amount) || amount <= 0) {
+        toast('金額必須大於 0', 'error');
+        el('txAmount').focus();
+        return;
+      }
+      // 同時把 input min 收緊（避免下次表單仍能輸入 0）
+      el('txAmount').setAttribute('min', '0.0001');
 
       try {
         if (type === 'transfer') {
           const fromId = el('txFromAccount').value;
           const toId = el('txAccount').value;
           if (fromId === toId) { toast('轉出與轉入帳戶不可相同', 'error'); return; }
-          await API.post('/api/transactions/transfer', { fromId, toId, amount, date, note });
+          // T080 (FR-015)：跨幣別禁止
+          const fromAcc = cachedAccounts.find(a => a.id === fromId);
+          const toAcc = cachedAccounts.find(a => a.id === toId);
+          const fromCur = normalizeCurrencyCode(fromAcc?.currency || 'TWD');
+          const toCur = normalizeCurrencyCode(toAcc?.currency || 'TWD');
+          if (fromCur !== toCur) {
+            toast('跨幣別請分開記一筆支出 + 一筆收入', 'error');
+            return;
+          }
+          await API.post('/api/transfers', { fromAccountId: fromId, toAccountId: toId, amount, date, note });
           closeModal('modalTransaction');
           toast('轉帳成功', 'success');
         } else {
           const categoryId = el('txCategory').value;
           const accountId = el('txAccount').value;
           const currency = normalizeCurrencyCode(el('txCurrency').value);
+          // T044 (FR-022a)：amount 統一以幣別最小單位整數送出，呼叫同構模組保持單一 source of truth。
+          // TWD smallestUnit=1（等價於 amount）；外幣（US5）會走非 1 倍率（如 USD smallestUnit=100）。
+          const smallestUnit = window.moneyDecimal?.getSmallestUnit?.(currency) || 1;
           const originalAmount = amount;
           const fxRate = currency === 'TWD' ? 1 : Number(el('txFxRate').value || getRateToTwd(currency));
           const showFee = currency !== 'TWD' && type === 'expense' && isTxAccountCreditCard();
           const fxFee = showFee ? (Number(el('txFxFee').value) || 0) : 0;
           const excludeFromStats = el('txExcludeFromStats').checked;
+          // 註：目前後端仍接受十進位數值（既有 convertToTwd 處理），smallestUnit 倍率為架構鋪路；
+          // US5 切外幣 + 後端取 INTEGER 最小單位整數時，前端送出值會自動正確（amount × smallestUnit）。
+          void smallestUnit; // architectural placeholder, no behavior change for US1 (TWD only)
           if (id) {
             await API.put('/api/transactions/' + id, { type, amount, originalAmount, currency, fxRate, fxFee, date, categoryId, accountId, note, excludeFromStats });
           } else {
@@ -6947,9 +7185,10 @@ const App = (() => {
       }
     });
 
-    // 帳戶表單
+    // 帳戶表單（T041 / T042：含 expectedUpdatedAt 樂觀鎖 + currency lock 處理）
     el('accountForm').addEventListener('submit', async (e) => {
       e.preventDefault();
+      const form = e.currentTarget;
       const id = el('accId').value;
       const name = el('accName').value.trim();
       const initialBalance = Number(el('accBalance').value) || 0;
@@ -6960,18 +7199,51 @@ const App = (() => {
       const linkedBankId = accountType === '信用卡' ? (el('accLinkedBank').value || null) : null;
       if (!name) return;
 
+      const payload = { name, initialBalance, icon, currency, accountType, excludeFromTotal, linkedBankId };
+      // T041 (FR-021)：信用卡才送 overseasFeeRate（百分比 → 千分點整數，如 1.5% → 150）
+      if (accountType === '信用卡') {
+        const feeStr = el('accOverseasFeeRate')?.value;
+        if (feeStr !== '' && feeStr != null) {
+          const feePct = Number(feeStr);
+          if (Number.isFinite(feePct) && feePct >= 0 && feePct <= 10) {
+            payload.overseasFeeRate = Math.round(feePct * 100);
+          } else {
+            toast('海外手續費率須為 0~10（%）', 'error');
+            el('accOverseasFeeRate').focus();
+            return;
+          }
+        }
+        // 同時送 category（英）讓 backend 路徑優先採新欄位
+        payload.category = 'credit_card';
+      } else {
+        payload.category = ({ '銀行': 'bank', '現金': 'cash', '虛擬錢包': 'virtual_wallet' })[accountType] || 'cash';
+      }
+      // FR-014a：編輯時帶上 expectedUpdatedAt 走樂觀鎖
+      if (id) {
+        const expected = Number(form.dataset.expectedUpdatedAt);
+        if (expected > 0) payload.expectedUpdatedAt = expected;
+      }
+
       try {
         if (id) {
-          await API.put('/api/accounts/' + id, { name, initialBalance, icon, currency, accountType, excludeFromTotal, linkedBankId });
+          await API.put('/api/accounts/' + id, payload);
         } else {
-          await API.post('/api/accounts', { name, initialBalance, icon, currency, accountType, excludeFromTotal, linkedBankId });
+          await API.post('/api/accounts', payload);
         }
         closeModal('modalAccount');
         toast(id ? '帳戶已更新' : '帳戶已新增', 'success');
         await refreshCache();
         await renderPage(currentPage);
       } catch (err) {
-        toast(err.message, 'error');
+        // T042：明確處理 409 OptimisticLockConflict 與 422 CurrencyLocked
+        const code = err?.data?.code;
+        if (code === 'OptimisticLockConflict') {
+          toast('此筆已被其他裝置修改，請關閉後重新開啟編輯', 'error');
+        } else if (code === 'CurrencyLocked') {
+          toast(err.message || '此帳戶已有交易紀錄，無法變更幣別', 'error');
+        } else {
+          toast(err.message, 'error');
+        }
       }
     });
 
@@ -7112,10 +7384,20 @@ const App = (() => {
   }
 
   function deleteTransaction(id) {
-    confirmDelete('確定要刪除此交易記錄嗎？', async () => {
-      await API.del('/api/transactions/' + id);
-      toast('交易已刪除', 'success');
-      await renderPage(currentPage);
+    // T081 (FR-015)：轉帳成對刪除提示
+    const t = (currentTxRows || []).find(x => x.id === id);
+    const isTransfer = t && (t.type === 'transfer_in' || t.type === 'transfer_out') && t.linkedId;
+    const msg = isTransfer
+      ? '這是一組轉帳，對應的另一半將一併刪除。確定刪除？'
+      : '確定要刪除此交易記錄嗎？';
+    confirmDelete(msg, async () => {
+      try {
+        await API.del('/api/transactions/' + id);
+        toast(isTransfer ? '轉帳對已刪除' : '交易已刪除', 'success');
+        await renderPage(currentPage);
+      } catch (err) {
+        toast(err.message, 'error');
+      }
     });
   }
 
@@ -7133,16 +7415,41 @@ const App = (() => {
   }
 
   function deleteAccount(id) {
-    confirmDelete('確定要刪除此帳戶嗎？', async () => {
+    // T043：先 GET 取最新 updatedAt + referenceCount，引用數 > 0 即不可刪
+    (async () => {
+      let detail;
       try {
-        await API.del('/api/accounts/' + id);
-        toast('帳戶已刪除', 'success');
-        await refreshCache();
-        await renderPage(currentPage);
-      } catch (err) {
-        toast(err.message, 'error');
+        detail = await API.get('/api/accounts/' + id);
+      } catch (e) {
+        toast(e.message || '無法取得帳戶資料', 'error');
+        return;
       }
-    });
+      const refCount = Number(detail?.referenceCount) || 0;
+      if (refCount > 0) {
+        toast(`此帳戶有 ${refCount} 筆交易，請先批次移到其他帳戶或刪除`, 'error');
+        return;
+      }
+      const msg = `確定要刪除「${detail?.name || '此帳戶'}」嗎？此操作無法復原。`;
+      confirmDelete(msg, async () => {
+        try {
+          const body = detail?.updatedAt ? { expectedUpdatedAt: detail.updatedAt } : undefined;
+          await API.del('/api/accounts/' + id, body);
+          toast('帳戶已刪除', 'success');
+          await refreshCache();
+          await renderPage(currentPage);
+        } catch (err) {
+          const code = err?.data?.code;
+          if (code === 'AccountInUse') {
+            const c = err.data?.referenceCount;
+            toast(c ? `此帳戶有 ${c} 筆交易，請先處理` : err.message, 'error');
+          } else if (code === 'OptimisticLockConflict') {
+            toast('此筆已被其他裝置修改，請重新整理後再操作', 'error');
+          } else {
+            toast(err.message, 'error');
+          }
+        }
+      });
+    })();
   }
 
   function deleteBudget(id) {

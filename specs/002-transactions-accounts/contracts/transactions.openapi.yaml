@@ -1,0 +1,983 @@
+openapi: 3.2.0
+info:
+  title: AssetPilot 交易與帳戶 API（功能子契約）
+  version: 0.1.0
+  description: |
+    本檔為 `specs/002-transactions-accounts` 功能的 API 子契約，僅涵蓋本功能
+    新增／更動的端點。正式對外契約以專案根目錄 `openapi.yaml` 為準；兩份
+    文件在實作 PR 內必須同時更新以符合憲章 Principle II（OpenAPI 3.2.0）。
+
+    所有金額欄位以「幣別最小單位整數」表達（TWD：元；USD/EUR：分；JPY：円）。
+    `fx_rate` 欄位為 decimal 字串（至少 8 位小數），由後端以 `decimal.js` 計算。
+    所有「今天／未來」判定以 `Asia/Taipei`（UTC+8）為基準（FR-007a）。
+
+    所有 `PATCH` / `DELETE` 端點皆採樂觀鎖（FR-014a）：request 須帶
+    `expected_updated_at`（epoch ms），不符回 `409 Conflict`。
+
+    所有授權失敗或目標資源不屬於 session user 之情境，一律回 `404 Not Found`
+    （FR-060；不洩漏存在性）。
+  contact:
+    name: AssetPilot
+  license:
+    name: Proprietary
+    identifier: LicenseRef-AssetPilot-Proprietary
+
+servers:
+  - url: https://{host}
+    description: 正式環境
+    variables:
+      host:
+        default: app.your-domain.tld
+  - url: http://localhost:{port}
+    description: 本機開發
+    variables:
+      port:
+        default: "3000"
+
+tags:
+  - name: Accounts
+    description: 帳戶 CRUD（FR-001 ~ FR-007）
+  - name: Transactions
+    description: 交易 CRUD 與列表（FR-010 ~ FR-018, FR-050 ~ FR-052）
+  - name: Batch
+    description: 交易批次操作（FR-040 ~ FR-045）
+  - name: Transfers
+    description: 轉帳（FR-015）
+  - name: ExchangeRates
+    description: 匯率查詢（FR-020, FR-023, FR-024）
+  - name: UserSettings
+    description: 使用者偏好（FR-020a）
+
+security:
+  - cookieAuth: []
+
+paths:
+  /api/accounts:
+    get:
+      tags: [Accounts]
+      operationId: listAccounts
+      summary: 列出當前使用者的所有帳戶
+      description: FR-003。回應依 `category` 分組順序排列。
+      responses:
+        '200':
+          description: 帳戶清單
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [accounts]
+                properties:
+                  accounts:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Account'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags: [Accounts]
+      operationId: createAccount
+      summary: 新增帳戶
+      description: FR-001。同 user 允許同名。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountCreateRequest'
+      responses:
+        '201':
+          description: 已建立
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Account'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/accounts/{accountId}:
+    parameters:
+      - $ref: '#/components/parameters/AccountIdPath'
+    get:
+      tags: [Accounts]
+      operationId: getAccount
+      summary: 取得單一帳戶詳情（含當下餘額）
+      description: |
+        FR-007。回應 `currentBalance` 為依公式即時計算結果（僅納入
+        `date <= today(Asia/Taipei)` 之交易）。
+      responses:
+        '200':
+          description: 帳戶詳情
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Account'
+                  - type: object
+                    required: [currentBalance]
+                    properties:
+                      currentBalance:
+                        type: integer
+                        format: int64
+                        description: 幣別最小單位整數
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags: [Accounts]
+      operationId: updateAccount
+      summary: 編輯帳戶（樂觀鎖）
+      description: |
+        FR-005, FR-014a。`currency` 僅於該帳戶尚無任何交易時可更動；否則
+        回 422 `CurrencyLocked`。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountUpdateRequest'
+      responses:
+        '200':
+          description: 已更新
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Account'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/OptimisticLockConflict'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+    delete:
+      tags: [Accounts]
+      operationId: deleteAccount
+      summary: 刪除帳戶（硬刪除；引用檢查；樂觀鎖）
+      description: FR-006, FR-014, FR-014a。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OptimisticLockBody'
+      responses:
+        '204':
+          description: 已刪除
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/OptimisticLockConflict'
+        '422':
+          description: 仍被交易引用
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountInUseError'
+
+  /api/transactions:
+    get:
+      tags: [Transactions]
+      operationId: listTransactions
+      summary: 取得交易列表（含篩選、排序、分頁）
+      description: |
+        FR-050 / FR-051 / FR-052。多條件 AND；排序由 `sort=<field>_<asc|desc>`
+        指定（10 種組合）；分頁參數可反映於 URL。
+      parameters:
+        - name: dateFrom
+          in: query
+          schema: { type: string, format: date }
+          description: ISO 8601 `YYYY-MM-DD`（含本日）
+        - name: dateTo
+          in: query
+          schema: { type: string, format: date }
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [income, expense, transfer, future, all]
+          description: |
+            `transfer` 同時涵蓋 `transfer_in` 與 `transfer_out`；
+            `future` 為 `date > today(Asia/Taipei)` 之交易。
+        - name: categoryId
+          in: query
+          schema: { type: string }
+        - name: accountId
+          in: query
+          schema: { type: string }
+        - name: keyword
+          in: query
+          schema: { type: string }
+          description: 對 `note` 模糊匹配（`%keyword%`、case-insensitive、trim）。
+        - name: sort
+          in: query
+          schema:
+            type: string
+            pattern: '^(date|amount|account|category|type)_(asc|desc)$'
+          description: 預設 `date_desc`。
+        - name: page
+          in: query
+          schema: { type: integer, minimum: 1 }
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 500
+          description: 1~500；超過 500 回 `400 PageSizeOutOfRange`。
+      responses:
+        '200':
+          description: 交易列表
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items, total, page, pageSize]
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Transaction'
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  pageSize:
+                    type: integer
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags: [Transactions]
+      operationId: createTransaction
+      summary: 新增單筆交易（不接受批次建立）
+      description: |
+        FR-011 / FR-022a。請求為單筆；批次建立由 CSV 匯入 feature 自行設計
+        endpoint。`twd_amount` 由後端依公式計算後寫入，request 內任何
+        `twd_amount` 將被忽略。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransactionCreateRequest'
+      responses:
+        '201':
+          description: 已建立
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transaction'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/transactions/{txId}:
+    parameters:
+      - $ref: '#/components/parameters/TransactionIdPath'
+    get:
+      tags: [Transactions]
+      operationId: getTransaction
+      summary: 取得單筆交易詳情
+      responses:
+        '200':
+          description: 交易詳情
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transaction'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags: [Transactions]
+      operationId: updateTransaction
+      summary: 編輯交易（樂觀鎖）
+      description: FR-014a。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransactionUpdateRequest'
+      responses:
+        '200':
+          description: 已更新
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transaction'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/OptimisticLockConflict'
+    delete:
+      tags: [Transactions]
+      operationId: deleteTransaction
+      summary: 刪除交易（硬刪除；轉帳對連動）
+      description: FR-014, FR-015。若為轉帳的任一半，另一半同 transaction 內被刪除。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OptimisticLockBody'
+      responses:
+        '204':
+          description: 已刪除
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/OptimisticLockConflict'
+
+  /api/transactions:batch-update:
+    post:
+      tags: [Batch]
+      operationId: batchUpdateTransactions
+      summary: 批次更新（變更分類／帳戶／日期）
+      description: |
+        FR-041, FR-043, FR-044, FR-045。Atomic 全有全無；任一筆失敗整批 rollback。
+        單次最多 500 筆；超過回 `400 BatchTooLarge`。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchUpdateRequest'
+      responses:
+        '200':
+          description: 已更新
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchResult'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/OptimisticLockConflict'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+
+  /api/transactions:batch-delete:
+    post:
+      tags: [Batch]
+      operationId: batchDeleteTransactions
+      summary: 批次刪除（含轉帳對自動連動）
+      description: |
+        FR-042, FR-044, FR-045。批次內若包含轉帳的任一半，對應另一半於同
+        transaction 內一併刪除；回應 `affectedIds` 包含所有實際被刪除的 ID。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchDeleteRequest'
+      responses:
+        '200':
+          description: 已刪除
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchResult'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/OptimisticLockConflict'
+
+  /api/transfers:
+    post:
+      tags: [Transfers]
+      operationId: createTransfer
+      summary: 新增轉帳（產生 transfer_out + transfer_in 一對交易）
+      description: |
+        FR-015。後端以單一 DB transaction 寫入兩列、共用 `linked_id`。
+        來源／目標帳戶 currency 不一致時回 `422 CrossCurrencyTransfer`。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransferCreateRequest'
+      responses:
+        '201':
+          description: 已建立
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [transferOut, transferIn]
+                properties:
+                  transferOut:
+                    $ref: '#/components/schemas/Transaction'
+                  transferIn:
+                    $ref: '#/components/schemas/Transaction'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+
+  /api/exchange-rates/{currency}:
+    parameters:
+      - name: currency
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: '^[A-Z]{3}$'
+        description: ISO 4217 三字母代碼。
+    get:
+      tags: [ExchangeRates]
+      operationId: getExchangeRate
+      summary: 取得指定幣別對 TWD 的即時匯率（30 分鐘伺服器快取）
+      description: |
+        FR-020 / FR-023 / FR-024。匯率為跨使用者共用快取；in-flight dedup +
+        30 分鐘 server cache；外部 API 失敗時依序：(1) 快取 → (2) 提示手動。
+      responses:
+        '200':
+          description: 匯率資料
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExchangeRate'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '503':
+          description: 匯率暫不可用（API 失敗 + 無快取）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/user/settings/pinned-currencies:
+    get:
+      tags: [UserSettings]
+      operationId: getPinnedCurrencies
+      summary: 取得使用者 pin 的常用幣別清單
+      description: FR-020a。
+      responses:
+        '200':
+          description: 清單
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PinnedCurrencies'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    put:
+      tags: [UserSettings]
+      operationId: setPinnedCurrencies
+      summary: 覆寫使用者常用幣別清單（樂觀鎖）
+      description: FR-020a, FR-014a。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [pinnedCurrencies, expected_updated_at]
+              properties:
+                pinnedCurrencies:
+                  type: array
+                  items:
+                    type: string
+                    pattern: '^[A-Z]{3}$'
+                  minItems: 1
+                  maxItems: 50
+                expected_updated_at:
+                  type: integer
+                  format: int64
+      responses:
+        '200':
+          description: 已更新
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PinnedCurrencies'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          $ref: '#/components/responses/OptimisticLockConflict'
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: token
+      description: 由 001-user-permissions 簽發的 JWT；HttpOnly + Secure + SameSite=Strict。
+
+  parameters:
+    AccountIdPath:
+      name: accountId
+      in: path
+      required: true
+      schema:
+        type: string
+      description: 帳戶 UUID。
+    TransactionIdPath:
+      name: txId
+      in: path
+      required: true
+      schema:
+        type: string
+      description: 交易 UUID。
+
+  responses:
+    Unauthorized:
+      description: 未登入或 token 無效
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    NotFound:
+      description: 資源不存在或不屬於目前使用者（IDOR 防線：不洩漏存在性）
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    ValidationError:
+      description: 請求欄位不合法
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    OptimisticLockConflict:
+      description: 樂觀鎖衝突；附伺服器當前 `updated_at`
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/Error'
+              - type: object
+                properties:
+                  serverUpdatedAt:
+                    type: integer
+                    format: int64
+    UnprocessableEntity:
+      description: 違反業務約束（CurrencyLocked / CrossCurrencyTransfer / 等）
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+
+  schemas:
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+          description: 機器可讀代碼，如 `ValidationError`、`OptimisticLockConflict`、`NotFound`、`CrossCurrencyTransfer`、`CurrencyLocked`、`AccountInUse`、`BatchTooLarge`、`PageSizeOutOfRange`。
+        message:
+          type: string
+          description: 使用者可讀訊息（zh-TW）。
+        field:
+          type: string
+          description: 出錯欄位名（僅 ValidationError 時有意義）。
+
+    Account:
+      type: object
+      required:
+        - id
+        - name
+        - category
+        - currency
+        - initialBalance
+        - icon
+        - excludeFromTotal
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+          minLength: 1
+          maxLength: 64
+        category:
+          type: string
+          enum: [bank, credit_card, cash, virtual_wallet]
+        currency:
+          type: string
+          pattern: '^[A-Z]{3}$'
+        initialBalance:
+          type: integer
+          format: int64
+          description: 幣別最小單位整數。
+        icon:
+          type: string
+        excludeFromTotal:
+          type: boolean
+        linkedBankId:
+          type: string
+          nullable: true
+          description: 僅 `category = credit_card` 時可填。
+        overseasFeeRate:
+          type: integer
+          minimum: 0
+          maximum: 1000
+          nullable: true
+          description: 千分點整數（150 = 1.5%）；僅 credit_card；NULL = 採全域預設 1.5%。
+        createdAt:
+          type: integer
+          format: int64
+          description: epoch ms。
+        updatedAt:
+          type: integer
+          format: int64
+          description: epoch ms；用於樂觀鎖比對。
+
+    AccountCreateRequest:
+      type: object
+      required: [name, category, currency, initialBalance]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 64
+        category:
+          type: string
+          enum: [bank, credit_card, cash, virtual_wallet]
+        currency:
+          type: string
+          pattern: '^[A-Z]{3}$'
+        initialBalance:
+          type: integer
+          format: int64
+        icon:
+          type: string
+        excludeFromTotal:
+          type: boolean
+          default: false
+        linkedBankId:
+          type: string
+          nullable: true
+        overseasFeeRate:
+          type: integer
+          minimum: 0
+          maximum: 1000
+
+    AccountUpdateRequest:
+      type: object
+      required: [expected_updated_at]
+      properties:
+        expected_updated_at:
+          type: integer
+          format: int64
+        name:
+          type: string
+          minLength: 1
+          maxLength: 64
+        category:
+          type: string
+          enum: [bank, credit_card, cash, virtual_wallet]
+        currency:
+          type: string
+          pattern: '^[A-Z]{3}$'
+          description: 僅當該帳戶尚無任何交易時可變更，否則回 422 `CurrencyLocked`。
+        initialBalance:
+          type: integer
+          format: int64
+        icon:
+          type: string
+        excludeFromTotal:
+          type: boolean
+        linkedBankId:
+          type: string
+          nullable: true
+        overseasFeeRate:
+          type: integer
+          minimum: 0
+          maximum: 1000
+
+    AccountInUseError:
+      allOf:
+        - $ref: '#/components/schemas/Error'
+        - type: object
+          required: [referenceCount]
+          properties:
+            error:
+              type: string
+              enum: [AccountInUse]
+            referenceCount:
+              type: integer
+              description: 該帳戶仍被引用的交易筆數。
+
+    Transaction:
+      type: object
+      required:
+        - id
+        - accountId
+        - type
+        - amount
+        - currency
+        - fxRate
+        - fxFee
+        - twdAmount
+        - date
+        - excludeFromStats
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+        accountId:
+          type: string
+        toAccountId:
+          type: string
+          nullable: true
+          description: 僅 `type = transfer_in` 填值。
+        type:
+          type: string
+          enum: [income, expense, transfer_out, transfer_in]
+        amount:
+          type: integer
+          format: int64
+          description: 原幣最小單位整數；> 0。
+        currency:
+          type: string
+          pattern: '^[A-Z]{3}$'
+        fxRate:
+          type: string
+          description: decimal 字串（≥ 8 位小數）；TWD 時為 `'1'`。
+        fxFee:
+          type: integer
+          format: int64
+          description: TWD 元；非 TWD 信用卡交易使用。
+        twdAmount:
+          type: integer
+          format: int64
+          description: 後端計算結果；TWD 元；不接受前端覆寫。
+        date:
+          type: string
+          format: date
+          description: ISO 8601 `YYYY-MM-DD`（Asia/Taipei）。
+        categoryId:
+          type: string
+          nullable: true
+        note:
+          type: string
+          maxLength: 200
+        excludeFromStats:
+          type: boolean
+        linkedId:
+          type: string
+          description: 轉帳對的另一半 ID；非轉帳為空字串。
+        createdAt:
+          type: integer
+          format: int64
+        updatedAt:
+          type: integer
+          format: int64
+
+    TransactionCreateRequest:
+      type: object
+      required: [accountId, type, amount, currency, date]
+      properties:
+        accountId:
+          type: string
+        type:
+          type: string
+          enum: [income, expense]
+          description: 轉帳請改用 `POST /api/transfers`。
+        amount:
+          type: integer
+          format: int64
+          minimum: 1
+        currency:
+          type: string
+          pattern: '^[A-Z]{3}$'
+        fxRate:
+          type: string
+          description: 非 TWD 必填；TWD 可省略（後端強制 `'1'`）。
+        fxFee:
+          type: integer
+          minimum: 0
+          description: 僅信用卡 + 非 TWD 適用；其他情境必為 0 或省略。
+        date:
+          type: string
+          format: date
+        categoryId:
+          type: string
+        note:
+          type: string
+          maxLength: 200
+        excludeFromStats:
+          type: boolean
+          default: false
+
+    TransactionUpdateRequest:
+      type: object
+      required: [expected_updated_at]
+      properties:
+        expected_updated_at:
+          type: integer
+          format: int64
+        amount:
+          type: integer
+          format: int64
+          minimum: 1
+        currency:
+          type: string
+          pattern: '^[A-Z]{3}$'
+        fxRate:
+          type: string
+        fxFee:
+          type: integer
+          minimum: 0
+        date:
+          type: string
+          format: date
+        categoryId:
+          type: string
+        accountId:
+          type: string
+        note:
+          type: string
+          maxLength: 200
+        excludeFromStats:
+          type: boolean
+
+    OptimisticLockBody:
+      type: object
+      required: [expected_updated_at]
+      properties:
+        expected_updated_at:
+          type: integer
+          format: int64
+
+    BatchUpdateRequest:
+      type: object
+      required: [ids, patch]
+      properties:
+        ids:
+          type: array
+          items: { type: string }
+          minItems: 1
+          maxItems: 500
+        patch:
+          type: object
+          description: 允許之欄位：`categoryId` / `accountId` / `date`（FR-043）。
+          properties:
+            categoryId:
+              type: string
+            accountId:
+              type: string
+            date:
+              type: string
+              format: date
+        expected_updated_at:
+          type: object
+          description: |
+            可選；若提供，須是 `{ id: epochMs }` 對應表，後端逐筆比對。
+            未提供等同接受任何當前 `updated_at`（lenient mode；前端應通常提供）。
+          additionalProperties:
+            type: integer
+            format: int64
+
+    BatchDeleteRequest:
+      type: object
+      required: [ids]
+      properties:
+        ids:
+          type: array
+          items: { type: string }
+          minItems: 1
+          maxItems: 500
+        expected_updated_at:
+          type: object
+          additionalProperties:
+            type: integer
+            format: int64
+
+    BatchResult:
+      type: object
+      required: [affectedIds, affectedCount]
+      properties:
+        affectedIds:
+          type: array
+          items: { type: string }
+        affectedCount:
+          type: integer
+          description: 實際異動筆數（批次刪除時包含連動的轉帳對另一半）。
+
+    TransferCreateRequest:
+      type: object
+      required: [fromAccountId, toAccountId, amount, date]
+      properties:
+        fromAccountId:
+          type: string
+        toAccountId:
+          type: string
+        amount:
+          type: integer
+          format: int64
+          minimum: 1
+        date:
+          type: string
+          format: date
+        note:
+          type: string
+          maxLength: 200
+
+    ExchangeRate:
+      type: object
+      required: [currency, rateToTwd, fetchedAt, source]
+      properties:
+        currency:
+          type: string
+          pattern: '^[A-Z]{3}$'
+        rateToTwd:
+          type: string
+          description: decimal 字串（≥ 8 位小數）。
+        fetchedAt:
+          type: integer
+          format: int64
+          description: epoch ms（UTC）。
+        source:
+          type: string
+          description: 例 `exchangerate-api`。
+        cached:
+          type: boolean
+          description: 是否來自快取（true = 未呼叫外部 API）。
+
+    PinnedCurrencies:
+      type: object
+      required: [pinnedCurrencies, updatedAt]
+      properties:
+        pinnedCurrencies:
+          type: array
+          items:
+            type: string
+            pattern: '^[A-Z]{3}$'
+        updatedAt:
+          type: integer
+          format: int64

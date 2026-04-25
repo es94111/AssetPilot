@@ -63,7 +63,15 @@
       "Bash(specify init *)",
       "Bash(node -e \"const c = require\\('C:/Users/hongyu/SynologyDrive/網頁/記帳網頁/changelog.json'\\); console.log\\('currentVersion:', c.currentVersion\\); console.log\\('first release:', c.releases[0].version, c.releases[0].title\\);\")",
       "PowerShell(& \"./.specify/scripts/powershell/create-new-feature.ps1\" -Json -ShortName 'user-permissions' '�ϥΪ̻P�v���G���U�B�n�J�BGoogle SSO�BPasskey�B�޲z�������B�n�J�]�֡B���A���ɶ��ե��B�w����u')",
-      "Bash(npm audit *)"
+      "Bash(npm audit *)",
+      "Bash(pwsh -File .specify/scripts/powershell/check-prerequisites.ps1 -Json -PathsOnly)",
+      "Bash(pwsh -File .specify/scripts/powershell/setup-plan.ps1 -Json)",
+      "PowerShell(.specify/scripts/powershell/check-prerequisites.ps1 -Json)",
+      "Bash(pwsh *)",
+      "Bash(node -e ' *)",
+      "Bash(node --check server.js)",
+      "Bash(node --check app.js)",
+      "Bash(node *)"
     ]
   }
 }

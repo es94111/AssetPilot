@@ -12,6 +12,10 @@
   <link rel="stylesheet" href="/style.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css" integrity="sha512-5Hs3dF2AEPkpNAR7UiOHba+lRSJNeM2ECkwxUIxC1Q/FLycGTbNapWXB4tP889k5T5Ju8fs4b1P5z/iB4nMfSQ==" crossorigin="anonymous" referrerpolicy="no-referrer">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1" integrity="sha512-WoViKhKD4qI2WruSZqv9+kvM4WfFhUMQCLN4QlDTt5aU56fLQy2gYoxWIqlEnXqJy/+Ac5q/hk1oWfqnMDhwMA==" crossorigin="anonymous"></script>
+  <!-- 002 feature: decimal.js（金額／匯率精度，與後端 lib/moneyDecimal.js 同構共用；版本鎖 10.4.3） -->
+  <script src="https://cdn.jsdelivr.net/npm/decimal.js@10.4.3/decimal.min.js" integrity="sha384-R1s5T+qp0eipToh29x4hut3GGQRmpTE3PdCMTbskHdMV7xkaTNtTx/V0/aDfUjyH" crossorigin="anonymous" defer></script>
+  <!-- 002 feature: lib/moneyDecimal.js（同構模組，需於 decimal.js 之後載入） -->
+  <script src="/lib/moneyDecimal.js" defer></script>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
@@ -290,6 +294,15 @@
             <span class="card-value" id="dashToday">NT$ 0</span>
           </div>
         </div>
+        <!-- 002 T047 (FR-004 / FR-007)：儀表板總資產卡 -->
+        <div class="card summary-card net">
+          <div class="card-icon"><i class="fas fa-landmark"></i></div>
+          <div class="card-info">
+            <span class="card-label">總資產</span>
+            <span class="card-value" id="dashTotalAssets">NT$ 0</span>
+            <span class="card-sublabel" id="dashTotalAssetsNote"></span>
+          </div>
+        </div>
       </div>
       <div class="dashboard-grid">
         <div class="card">
@@ -439,16 +452,17 @@
               <option value="100">100</option>
               <option value="custom">自訂</option>
             </select>
-            <input type="number" id="filterPageSizeCustom" min="1" max="9999" placeholder="筆數" style="display:none">
+            <input type="number" id="filterPageSizeCustom" min="1" max="500" placeholder="筆數 1~500" style="display:none">
           </div>
         </div>
         <button class="btn btn-sm" id="filterBtn"><i class="fas fa-search"></i> 篩選</button>
         <button class="btn btn-sm btn-ghost" id="filterResetBtn"><i class="fas fa-rotate-left"></i> 重置</button>
       </div>
       <!-- 批次操作列 -->
-      <div class="batch-bar" id="batchBar" style="display:none">
+      <div class="batch-bar" id="batchBar" style="display:none" role="region" aria-label="批次操作">
         <div class="batch-bar-left">
           <span id="batchCount">已選 0 筆</span>
+          <span id="batchOverflowHint" style="display:none;color:#fef08a;margin-left:12px;font-size:13px"></span>
         </div>
         <div class="batch-bar-right">
           <button class="btn btn-sm" id="batchChangeCatBtn"><i class="fas fa-tags"></i> 變更分類</button>
@@ -458,12 +472,19 @@
           <button class="btn btn-sm btn-ghost" id="batchCancelBtn"><i class="fas fa-xmark"></i> 取消</button>
         </div>
       </div>
+      <!-- T100 / T144：a11y aria-live 通報區（批次選取狀態） -->
+      <div id="batchLive" role="status" aria-live="polite" class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)"></div>
       <div class="card">
         <table class="data-table" id="transactionTable">
           <thead>
             <tr>
               <th class="th-check"><input type="checkbox" id="selectAllTx" title="全選"></th>
-              <th>日期</th><th>類型</th><th>分類</th><th>金額</th><th>帳戶</th><th>備註</th><th>操作</th>
+              <th class="th-sort" data-sort="date">日期 <span class="sort-icon" data-for="date"></span></th>
+              <th class="th-sort" data-sort="type">類型 <span class="sort-icon" data-for="type"></span></th>
+              <th class="th-sort" data-sort="category">分類 <span class="sort-icon" data-for="category"></span></th>
+              <th class="th-sort" data-sort="amount">金額 <span class="sort-icon" data-for="amount"></span></th>
+              <th class="th-sort" data-sort="account">帳戶 <span class="sort-icon" data-for="account"></span></th>
+              <th>備註</th><th>操作</th>
             </tr>
           </thead>
           <tbody id="transactionBody"></tbody>
@@ -1846,6 +1867,12 @@
             <option value="">不分組</option>
           </select>
           <p class="form-hint">連結銀行帳戶後，可在帳戶頁依銀行分組並一鍵還款</p>
+        </div>
+        <!-- 002 T041：信用卡海外刷卡手續費率（FR-021） -->
+        <div class="form-row" id="accOverseasFeeRow" style="display:none">
+          <label>海外刷卡手續費率（%）</label>
+          <input type="number" id="accOverseasFeeRate" min="0" max="10" step="0.01" placeholder="預設 1.5">
+          <p class="form-hint">建立外幣交易時自動套用；可於當筆交易手動覆寫</p>
         </div>
         <div class="form-row">
           <label>圖示</label>

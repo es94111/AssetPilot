@@ -1,6 +1,6 @@
 # 資產管理 系統規格說明書 (SSD)
 
-**版本：** 4.21.1
+**版本：** 4.23.0
 **日期：** 2026-04-24
 **狀態：** 已實作
 
@@ -904,6 +904,7 @@ API 路徑統一以 `/api/` 為前綴。所有需認證的路由自動套用 aut
 
 | 版本 | 日期 | 變更說明 |
 | --- | --- | --- |
+| 4.23.0 | 2026-04-25 | 002-transactions-accounts 落地：①CT-1 schema migration（`accounts` 補 `category` / `overseas_fee_rate` / `updated_at`、`transactions` 補 `to_account_id` / `twd_amount`、`amount` / `initial_balance` REAL→INTEGER 幣別最小單位、`fx_rate` REAL→TEXT decimal、`exchange_rates` 拆 per-user + global 跨使用者 30 分鐘共用快取、新增 `user_settings.pinned_currencies` JSON）；②新增 dependency `decimal.js ^10.4.3`（後端 + 前端 CDN 同版本）並抽出同構模組 `lib/moneyDecimal.js` / `lib/taipeiTime.js` / `lib/exchangeRateCache.js`；③9 群端點 — `/api/accounts` GET/POST、`/api/accounts/{id}` GET/PATCH/DELETE、`/api/transactions` GET/POST、`/api/transactions/{id}` GET/PATCH/DELETE、`/api/transactions:batch-update` / `:batch-delete`、`/api/transfers` POST、`/api/exchange-rates/{currency}` GET、`/api/user/settings/pinned-currencies` GET/PUT；④FR-014a 樂觀鎖（PATCH/DELETE 接受 `expected_updated_at` 不符 409）、FR-060 IDOR 防線（`ownsResource(table,idColumn,idValue,userId)` 統一介面 + `requireOwnedAccount` / `requireOwnedTransaction`，非自己資源一律 404 不洩漏）、FR-015 同幣別轉帳 transfer 對 + 跨幣別 422、FR-016 / FR-017 統計過濾 `type IN ('income','expense') AND exclude_from_stats = 0`、FR-021 信用卡海外手續費（千分點）、FR-042 / FR-044 / FR-045 批次操作上限 500 筆 + BEGIN/COMMIT/ROLLBACK + 樂觀鎖、FR-007a 全程 Asia/Taipei 時區、FR-030 / FR-031 / FR-032 BarcodeDetector + 貼上文字 fallback；⑤a11y：批次操作列 `aria-live="polite"` + checkbox `aria-checked="mixed"`；⑥啟動 log `[startup] AssetPilot v4.23.0 / feature 002-transactions-accounts ready` |
 | 4.21.1 | 2026-04-24 | 升級 `resend` 6.1.3 → 6.12.2 對齊 npm latest（13 個直接相依全對齊）；`emails.send()` 物件回傳 API 未變更，`sendStatsEmail()` 無須調整，`node --check server.js` 通過；`specs/001-user-permissions/research.md` §5 同步標記 ✅，並新增 §5.1 記錄 `resend → svix → uuid<14` 鏈上 GHSA-w5hq-g745-h8pq 3 筆 moderate 漏洞（本專案未以 `buf` 參數呼叫 `uuid`，CVSS 0，不受影響；`fixAvailable` 建議降級為誤判，決策維持 6.12.2） |
 | 4.21.0 | 2026-04-24 | SRS 全面改寫為敘述式 SSD（System Specification Document）：按模組（使用者與權限、交易與帳戶、分類、預算與固定收支、統計報表、股票投資、匯出匯入、前端路由）分段，每個模組含核心目標敘述與「不做什麼」邊界；舊 IEEE-830 逐條 FR 結構轉為技術附錄保留；新增 Spec-Kit 憲章 `.specify/memory/constitution.md` v1.0.0（Principle I：所有規格與使用者文件必須為繁體中文，NON-NEGOTIABLE） |
 | 4.20.5 | 2026-04-21 | 深色模式對比度修正：①`--text-muted` 由 `#6b7280`（surface 上 3.77:1，未達 WCAG AA）提亮為 `#8b94a3`（5.75:1），影響股票卡片標籤、空白狀態文字、表格次要欄位等共 21 處；②側邊欄 `.sidebar-version` 文字 alpha .4 → .6（3.80→7.27:1）；③`.sidebar-legal-link` alpha .3 → .6（2.61→7.27:1）；④`.sidebar-legal-sep` 分隔點 alpha .2 → .45（1.80→4.52:1） |

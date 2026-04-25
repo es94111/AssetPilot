@@ -76,7 +76,8 @@
       "PowerShell(& \"$\\(Get-Location\\)\\\\.specify\\\\scripts\\\\powershell\\\\check-prerequisites.ps1\" -Json -PathsOnly)",
       "Bash(git fetch *)",
       "PowerShell(& \"$\\(Get-Location\\)\\\\.specify\\\\scripts\\\\powershell\\\\setup-plan.ps1\" -Json)",
-      "PowerShell(& \"$\\(Get-Location\\)\\\\.specify\\\\scripts\\\\powershell\\\\check-prerequisites.ps1\" -Json)"
+      "PowerShell(& \"$\\(Get-Location\\)\\\\.specify\\\\scripts\\\\powershell\\\\check-prerequisites.ps1\" -Json)",
+      "PowerShell(& \"$\\(Get-Location\\)\\\\.specify\\\\scripts\\\\powershell\\\\check-prerequisites.ps1\" -Json -RequireTasks -IncludeTasks)"
     ]
   }
 }

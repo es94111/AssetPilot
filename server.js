@@ -4964,55 +4964,98 @@ app.post('/api/accounts/credit-card-repayment', (req, res) => {
 });
 
 // ─── 交易記錄 ───
+// FR-050~052（T050-T052）：含 sort（5 欄位 × 2 方向 = 10 組）/ pageSize 上限 500 / 關鍵字 trim+LIKE
 app.get('/api/transactions', (req, res) => {
-  const { dateFrom, dateTo, type, categoryId, accountId, keyword, page, limit } = req.query;
-  let sql = "SELECT * FROM transactions WHERE user_id = ?";
-  const params = [req.userId];
-  const today = todayStr();
+  const { dateFrom, dateTo, type, categoryId, accountId, page } = req.query;
+  // FR-050：keyword 採 trim + case-insensitive；後端 LIKE 含 %keyword%
+  const keyword = String(req.query.keyword || '').trim();
+  // FR-051：pageSize 上限 500（自訂值）；超過回 400 PageSizeOutOfRange
+  const limit = Number.parseInt(req.query.limit, 10);
+  const pageSize = Number.isFinite(limit) && limit > 0 ? limit : 20;
+  if (pageSize > 500) {
+    return res.status(400).json({ error: '每頁最多 500 筆', code: 'PageSizeOutOfRange' });
+  }
+  // FR-050：sort 解析（field × dir）；預設 date_desc
+  const SORT_REGEX = /^(date|amount|account|category|type)_(asc|desc)$/;
+  const sortStr = String(req.query.sort || 'date_desc').toLowerCase();
+  const sortMatch = SORT_REGEX.exec(sortStr);
+  if (req.query.sort && !sortMatch) {
+    return res.status(400).json({ error: 'sort 參數格式無效', code: 'ValidationError', field: 'sort' });
+  }
+  const sortField = sortMatch ? sortMatch[1] : 'date';
+  const sortDir = sortMatch && sortMatch[2] === 'asc' ? 'ASC' : 'DESC';
 
-  if (dateFrom) { sql += " AND date >= ?"; params.push(dateFrom); }
-  if (dateTo) { sql += " AND date <= ?"; params.push(dateTo); }
+  // 是否需要 JOIN
+  const needJoinAcc = sortField === 'account';
+  const needJoinCat = sortField === 'category';
+  const baseTable = needJoinAcc
+    ? "transactions t LEFT JOIN accounts acc ON acc.id = t.account_id"
+    : (needJoinCat
+      ? "transactions t LEFT JOIN categories cat ON cat.id = t.category_id"
+      : "transactions t");
+  const txCol = (col) => needJoinAcc || needJoinCat ? `t.${col}` : col;
+
+  let where = `${txCol('user_id')} = ?`;
+  const params = [req.userId];
+  const today = taipeiTime.todayInTaipei();
+
+  if (dateFrom) { where += ` AND ${txCol('date')} >= ?`; params.push(dateFrom); }
+  if (dateTo) { where += ` AND ${txCol('date')} <= ?`; params.push(dateTo); }
   if (type && type !== 'all') {
     if (type === 'transfer') {
-      sql += " AND (type = 'transfer_out' OR type = 'transfer_in')";
+      where += ` AND (${txCol('type')} = 'transfer_out' OR ${txCol('type')} = 'transfer_in')`;
     } else if (type === 'future') {
-      sql += " AND date > ?";
+      where += ` AND ${txCol('date')} > ?`;
       params.push(today);
     } else {
-      sql += " AND type = ?"; params.push(type);
+      where += ` AND ${txCol('type')} = ?`; params.push(type);
     }
   }
-  if (categoryId && categoryId !== 'all') { sql += " AND category_id = ?"; params.push(categoryId); }
-  if (accountId && accountId !== 'all') { sql += " AND account_id = ?"; params.push(accountId); }
-  if (keyword) { sql += " AND note LIKE ?"; params.push(`%${keyword}%`); }
+  if (categoryId && categoryId !== 'all') { where += ` AND ${txCol('category_id')} = ?`; params.push(categoryId); }
+  if (accountId && accountId !== 'all') { where += ` AND ${txCol('account_id')} = ?`; params.push(accountId); }
+  if (keyword) { where += ` AND LOWER(${txCol('note')}) LIKE LOWER(?)`; params.push(`%${keyword}%`); }
 
-  const countSql = sql.replace("SELECT *", "SELECT COUNT(*) as cnt");
+  // count（與分頁主查詢用同一 WHERE）
+  const countSql = `SELECT COUNT(*) as cnt FROM ${baseTable} WHERE ${where}`;
   const total = queryOne(countSql, params)?.cnt || 0;
 
-  sql += " ORDER BY date DESC, created_at DESC";
+  // 主查詢 ORDER BY
+  let orderClause;
+  if (sortField === 'date') orderClause = `ORDER BY ${txCol('date')} ${sortDir}, ${txCol('created_at')} DESC`;
+  else if (sortField === 'amount') orderClause = `ORDER BY ${txCol('amount')} ${sortDir}, ${txCol('date')} DESC`;
+  else if (sortField === 'type') orderClause = `ORDER BY ${txCol('type')} ${sortDir}, ${txCol('date')} DESC`;
+  else if (sortField === 'account') orderClause = `ORDER BY acc.name ${sortDir}, t.date DESC`;
+  else if (sortField === 'category') orderClause = `ORDER BY cat.name ${sortDir}, t.date DESC`;
 
   const pageNum = parseInt(page) || 1;
-  const pageSize = parseInt(limit) || 20;
-  sql += ` LIMIT ${pageSize} OFFSET ${(pageNum - 1) * pageSize}`;
+  const offset = (pageNum - 1) * pageSize;
 
-  const rows = queryAll(sql, params);
+  // 主查詢必須選回 transactions 全欄位（避免 join 後欄位衝突）
+  const selectCols = needJoinAcc || needJoinCat ? 't.*' : '*';
+  const sql = `SELECT ${selectCols} FROM ${baseTable} WHERE ${where} ${orderClause} LIMIT ${pageSize} OFFSET ${offset}`;
+  const items = queryAll(sql, params).map(r => ({
+    ...r,
+    categoryId: r.category_id,
+    accountId: r.account_id,
+    toAccountId: r.to_account_id || null,
+    currency: normalizeCurrency(r.currency),
+    originalAmount: Number(r.original_amount) > 0 ? Number(r.original_amount) : Number(r.amount) || 0,
+    fxRate: Number(r.fx_rate) > 0 ? Number(r.fx_rate) : 1,
+    fxFee: Number(r.fx_fee) || 0,
+    twdAmount: Number(r.twd_amount) || Number(r.amount) || 0,
+    excludeFromStats: r.exclude_from_stats === 1,
+    linkedId: r.linked_id || '',
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
+  }));
   res.json({
-    data: rows.map(r => ({
-      ...r,
-      categoryId: r.category_id,
-      accountId: r.account_id,
-      toAccountId: r.to_account_id || null,
-      currency: normalizeCurrency(r.currency),
-      originalAmount: Number(r.original_amount) > 0 ? Number(r.original_amount) : Number(r.amount) || 0,
-      fxRate: Number(r.fx_rate) > 0 ? Number(r.fx_rate) : 1,
-      fxFee: Number(r.fx_fee) || 0,
-      twdAmount: Number(r.twd_amount) || Number(r.amount) || 0,
-      excludeFromStats: r.exclude_from_stats === 1,
-      linkedId: r.linked_id || '',
-      createdAt: r.created_at,
-      updatedAt: r.updated_at,
-    })),
-    total, page: pageNum, totalPages: Math.ceil(total / pageSize),
+    data: items,           // backward compat
+    items,                  // T052 新欄位
+    total,
+    page: pageNum,
+    pageSize,               // T052 echo back
+    totalPages: Math.ceil(total / pageSize),
+    sort: `${sortField}_${sortDir.toLowerCase()}`,  // 排序狀態 echo（FR-052 URL 還原）
   });
 });
 

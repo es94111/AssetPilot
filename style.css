@@ -362,14 +362,22 @@ body.dark-mode .mobile-header {
   color: var(--text-secondary); font-size: 11px; font-weight: 600;
   text-transform: uppercase; letter-spacing: 0.05em;
 }
-.data-table th.sortable {
+.data-table th.sortable,
+.data-table th.th-sort {
   cursor: pointer; user-select: none; white-space: nowrap;
   transition: color .2s;
 }
-.data-table th.sortable:hover { color: var(--primary); }
-.data-table th.sortable i { font-size: 10px; margin-left: 2px; opacity: .4; }
+.data-table th.sortable:hover,
+.data-table th.th-sort:hover { color: var(--primary); }
+.data-table th.sortable i,
+.data-table th.th-sort .sort-icon { font-size: 10px; margin-left: 4px; opacity: .35; }
 .data-table th.sortable.sort-asc i,
-.data-table th.sortable.sort-desc i { opacity: 1; color: var(--primary); }
+.data-table th.sortable.sort-desc i,
+.data-table th.th-sort.sort-asc .sort-icon,
+.data-table th.th-sort.sort-desc .sort-icon { opacity: 1; color: var(--primary); }
+.data-table th.th-sort.sort-asc .sort-icon::before { content: "▲"; }
+.data-table th.th-sort.sort-desc .sort-icon::before { content: "▼"; }
+.data-table th.th-sort:not(.sort-asc):not(.sort-desc) .sort-icon::before { content: "↕"; }
 .date-range-wrap {
   display: flex; align-items: center; gap: 6px;
 }

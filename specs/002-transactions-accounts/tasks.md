@@ -123,15 +123,15 @@ FR-060。
 
 ### Implementation — 前端 Account & Transaction 主流程
 
-- [ ] T040 [US1] 於 `app.js` 帳戶管理頁元件區段（搜尋既有 `function renderAccounts` 或類似 anchor）新增以「`category` tab」分頁的列表（FR-003）：四個 tab 順序 `cash` / `bank` / `credit_card` / `virtual_wallet`，徽章顯示各 tab 帳戶數；每列顯示 `icon + name + currentBalance + currency`，餘額 = 0 顯示 `$0`；對 `excludeFromTotal === true` 的帳戶於列右上角加灰色虛線外框 + 「已排除」徽章（FR-004）
-- [ ] T041 [US1] 於 `app.js` 新增「新增帳戶」按鈕與 Modal（FR-001）：表單欄位 — 名稱（input text）、類別（select 四選一）、幣別（select；US5 之前先 hardcode `['TWD','USD','JPY','EUR']`，US5 / T080 改為 pinned 動態列表）、初始餘額（number；前端以 `Number(parseFloat(input)) | 0` 取整 → 後端會再次驗證）、圖示（FontAwesome class input）、是否計入總資產（checkbox，預設勾選）；類別 = `credit_card` 時動態顯示 `linkedBankId`（依當前 user 的 bank 帳戶填 select）與 `overseasFeeRate`（預設 1.5，範圍 0–10，前端轉成千分點整數送出，例如 1.5 → 150）；送出呼叫 `POST /api/accounts`；成功後關閉 Modal、重新載入列表；錯誤訊息以 toast 顯示
-- [ ] T042 [US1] 於 `app.js` 新增「編輯帳戶」Modal（FR-005、FR-014a）：開啟時 `GET /api/accounts/:id` 取得 `updated_at`，存於 `dialog.dataset.expectedUpdatedAt`；提交 PATCH 時帶 `expected_updated_at: Number(dialog.dataset.expectedUpdatedAt)`；若該帳戶 `referenceCount > 0`（先 GET 計算或前端依快取交易判斷），currency 欄位 `disabled` + tooltip「此帳戶已有交易，幣別無法變更」；後端回 422 `CurrencyLocked` 時前端顯示同訊息；409 `OptimisticLockConflict` 時提示「此筆已被其他裝置修改，請重新整理後再操作」並阻擋強制覆寫
-- [ ] T043 [US1] 於 `app.js` 新增「刪除帳戶」二次確認 Modal（FR-006、FR-014）：先 `GET` 取 `updated_at`；若 referenceCount > 0 則禁止觸發刪除（按鈕 disabled，附訊息「此帳戶有 N 筆交易，請先處理」）；確認後 `DELETE` 帶 `expected_updated_at`；422 `AccountInUse` 顯示 `referenceCount`
+- [X] T040 [US1] 於 `app.js` 帳戶管理頁元件區段（搜尋既有 `function renderAccounts` 或類似 anchor）新增以「`category` tab」分頁的列表（FR-003）：四個 tab 順序 `cash` / `bank` / `credit_card` / `virtual_wallet`，徽章顯示各 tab 帳戶數；每列顯示 `icon + name + currentBalance + currency`，餘額 = 0 顯示 `$0`；對 `excludeFromTotal === true` 的帳戶於列右上角加灰色虛線外框 + 「已排除」徽章（FR-004）
+- [X] T041 [US1] 於 `app.js` 新增「新增帳戶」按鈕與 Modal（FR-001）：表單欄位 — 名稱（input text）、類別（select 四選一）、幣別（select；US5 之前先 hardcode `['TWD','USD','JPY','EUR']`，US5 / T080 改為 pinned 動態列表）、初始餘額（number；前端以 `Number(parseFloat(input)) | 0` 取整 → 後端會再次驗證）、圖示（FontAwesome class input）、是否計入總資產（checkbox，預設勾選）；類別 = `credit_card` 時動態顯示 `linkedBankId`（依當前 user 的 bank 帳戶填 select）與 `overseasFeeRate`（預設 1.5，範圍 0–10，前端轉成千分點整數送出，例如 1.5 → 150）；送出呼叫 `POST /api/accounts`；成功後關閉 Modal、重新載入列表；錯誤訊息以 toast 顯示
+- [X] T042 [US1] 於 `app.js` 新增「編輯帳戶」Modal（FR-005、FR-014a）：開啟時 `GET /api/accounts/:id` 取得 `updated_at`，存於 `dialog.dataset.expectedUpdatedAt`；提交 PATCH 時帶 `expected_updated_at: Number(dialog.dataset.expectedUpdatedAt)`；若該帳戶 `referenceCount > 0`（先 GET 計算或前端依快取交易判斷），currency 欄位 `disabled` + tooltip「此帳戶已有交易，幣別無法變更」；後端回 422 `CurrencyLocked` 時前端顯示同訊息；409 `OptimisticLockConflict` 時提示「此筆已被其他裝置修改，請重新整理後再操作」並阻擋強制覆寫
+- [X] T043 [US1] 於 `app.js` 新增「刪除帳戶」二次確認 Modal（FR-006、FR-014）：先 `GET` 取 `updated_at`；若 referenceCount > 0 則禁止觸發刪除（按鈕 disabled，附訊息「此帳戶有 N 筆交易，請先處理」）；確認後 `DELETE` 帶 `expected_updated_at`；422 `AccountInUse` 顯示 `referenceCount`
 - [ ] T044 [US1] 於 `app.js` 交易頁主體新增「新增交易」Modal（FR-010、FR-011、FR-013、FR-018）：表單欄位 — 類型（radio：支出紅／收入綠／轉帳藍 [按鈕配色由 US3 接續]，US1 先實作支出+收入）、帳戶（select，依當前 accounts）、金額（number ≥ 1）、日期（date input，預設 `taipeiTime.todayInTaipei()`，允許未來）、分類（select，[optgroup] 父→子，FR-012）、備註（textarea，maxlength 200）、是否計入統計（checkbox，預設勾選 → 送 `excludeFromStats: false`）；前端送出時將金額依當前選定 `currency` 乘以最小單位倍率（呼叫 `window.moneyDecimal.getSmallestUnit`，同構模組，T016 / T002；US1 階段尚無外幣，固定走 `1`）；送出後 `POST /api/transactions`；成功則關 Modal、列表前置插入該筆
-- [ ] T045 [US1] 於 `app.js` 交易列表元件新增類型色標（FR-018）：支出 `#ef4444` + 「-」前置、收入 `#10b981` + 「+」前置、轉帳 `#3b82f6` + 「⇄」icon；於列表標題列以同色標例顯示三色 legend；於 `style.css` 新增 `.tx-type-expense`、`.tx-type-income`、`.tx-type-transfer` class
-- [ ] T046 [US1] 於 `app.js` 列表呈現「未來」分區（FR-013）：載入後將 `date > taipeiTime.todayInTaipei()` 的列另放於頂部 `<section aria-label="未來交易">`，灰底 + 「未來」徽章；今天／過往交易置於下方 `<section aria-label="歷史交易">`；分區之間以 `<hr>` 與標題分隔
+- [X] T045 [US1] 於 `app.js` 交易列表元件新增類型色標（FR-018）：支出 `#ef4444` + 「-」前置、收入 `#10b981` + 「+」前置、轉帳 `#3b82f6` + 「⇄」icon；於列表標題列以同色標例顯示三色 legend；於 `style.css` 新增 `.tx-type-expense`、`.tx-type-income`、`.tx-type-transfer` class
+- [X] T046 [US1] 於 `app.js` 列表呈現「未來」分區（FR-013）：載入後將 `date > taipeiTime.todayInTaipei()` 的列另放於頂部 `<section aria-label="未來交易">`，灰底 + 「未來」徽章；今天／過往交易置於下方 `<section aria-label="歷史交易">`；分區之間以 `<hr>` 與標題分隔
 - [ ] T047 [US1] 於 `app.js` 儀表板總資產卡（FR-004、FR-007）：`GET /api/accounts` 後將 `excludeFromTotal === false` 的帳戶 `currentBalance` 依 `currency` 對 TWD 換算（US5 之前先以「同 currency 即直接累加、跨幣別暫不換算（過渡作法）」處理）後加總；卡片左側顯示 TWD 等值總額；右下角註明「已排除 N 個帳戶」（N = excludeFromTotal=true 的帳戶數）
-- [ ] T048 [US1] 於 `app.js` 帳戶管理頁與儀表板均加入「金額為 0／負數」的 UI 阻擋（FR-011 / spec US1 Acceptance #4）：交易 Modal 金額 input 設 `min="1"`、`step="1"`；前端 submit 前以 `if (Number(amount) <= 0) toast('金額必須大於 0')` 阻擋送出；後端 T035 的 422 訊息以同樣 wording 顯示
+- [X] T048 [US1] 於 `app.js` 帳戶管理頁與儀表板均加入「金額為 0／負數」的 UI 阻擋（FR-011 / spec US1 Acceptance #4）：交易 Modal 金額 input 設 `min="1"`、`step="1"`；前端 submit 前以 `if (Number(amount) <= 0) toast('金額必須大於 0')` 阻擋送出；後端 T035 的 422 訊息以同樣 wording 顯示
 
 **Checkpoint（MVP US1 驗收）**：依 [quickstart.md](./quickstart.md) §1 執行：
 
@@ -160,16 +160,16 @@ FR-060。
 
 ### Implementation — 後端列表
 
-- [ ] T050 [US2] 於 `server.js` 新增 `GET /api/transactions`（FR-050、FR-051、FR-052）：套 `authMiddleware`；接受 query `dateFrom`/`dateTo`（驗 `isValidIsoDate`）、`type`（enum `income|expense|transfer|future|all`）、`categoryId`、`accountId`、`keyword`（trim、lowercase）、`sort`（regex `^(date|amount|account|category|type)_(asc|desc)$`，預設 `date_desc`）、`page`（≥1）、`pageSize`（1~500，超過 400 `PageSizeOutOfRange`）
-- [ ] T051 [US2] 於 T050 路由內組裝 SQL（FR-050）：`WHERE user_id = ?` 起手，多條件 AND；`type = 'transfer'` 展開為 `type IN ('transfer_in','transfer_out')`；`type = 'future'` 加 `date > ?`（today）；`type = 'all'` 不附條件；`keyword` 走 `LOWER(note) LIKE LOWER(?)` 搭 `'%' + keyword + '%'`；`sort=account` 走 `JOIN accounts a ON a.id = transactions.account_id` 排 `a.name`；`sort=category` 走 `JOIN categories c ON c.id = transactions.category_id` 排 `c.name`；其餘三種直接欄位排序；最後 `ORDER BY <field> <dir> LIMIT ? OFFSET ?`
-- [ ] T052 [US2] 於 T050 路由補 total count：`SELECT COUNT(*) FROM transactions WHERE <相同條件，不含 ORDER/LIMIT>`；回 `{ items, total, page, pageSize }`；items 內 transfer 的 `linkedId` 照原值回傳（前端用以視覺成對標示，FR-018 / spec US2 Acceptance #3）
+- [X] T050 [US2] 於 `server.js` 新增 `GET /api/transactions`（FR-050、FR-051、FR-052）：套 `authMiddleware`；接受 query `dateFrom`/`dateTo`（驗 `isValidIsoDate`）、`type`（enum `income|expense|transfer|future|all`）、`categoryId`、`accountId`、`keyword`（trim、lowercase）、`sort`（regex `^(date|amount|account|category|type)_(asc|desc)$`，預設 `date_desc`）、`page`（≥1）、`pageSize`（1~500，超過 400 `PageSizeOutOfRange`）
+- [X] T051 [US2] 於 T050 路由內組裝 SQL（FR-050）：`WHERE user_id = ?` 起手，多條件 AND；`type = 'transfer'` 展開為 `type IN ('transfer_in','transfer_out')`；`type = 'future'` 加 `date > ?`（today）；`type = 'all'` 不附條件；`keyword` 走 `LOWER(note) LIKE LOWER(?)` 搭 `'%' + keyword + '%'`；`sort=account` 走 `JOIN accounts a ON a.id = transactions.account_id` 排 `a.name`；`sort=category` 走 `JOIN categories c ON c.id = transactions.category_id` 排 `c.name`；其餘三種直接欄位排序；最後 `ORDER BY <field> <dir> LIMIT ? OFFSET ?`
+- [X] T052 [US2] 於 T050 路由補 total count：`SELECT COUNT(*) FROM transactions WHERE <相同條件，不含 ORDER/LIMIT>`；回 `{ items, total, page, pageSize }`；items 內 transfer 的 `linkedId` 照原值回傳（前端用以視覺成對標示，FR-018 / spec US2 Acceptance #3）
 
 ### Implementation — 前端列表、篩選、分頁、排序
 
-- [ ] T060 [US2] 於 `app.js` 交易頁建構頂端篩選列（FR-050）：UI 由左到右 — 日期區間 picker（兩個 date input）、類型 dropdown（含「全部 / 收入 / 支出 / 轉帳 / 未來」）、分類 dropdown（依 categories tree 渲染 optgroup）、帳戶 dropdown、搜尋 input（placeholder「搜尋備註…」）；任一欄位變更時 `debounce 250ms` 後重新呼叫 `GET /api/transactions`；URL `history.replaceState` 同步參數
-- [ ] T061 [US2] 於 `app.js` 表頭加入排序切換（FR-050）：5 個可排序表頭欄位（`date`、`amount`、`account`、`category`、`type`），各欄旁顯示 `▲▼` 小箭頭；點擊切換 ASC↔DESC；切換時將 `sort=<field>_<dir>` 寫入 URL query（與 T060 共用 `history.replaceState`）；初始載入時讀 URL 反向還原狀態（FR-052）
-- [ ] T062 [US2] 於 `app.js` 分頁器（FR-051）：每頁筆數 select 顯示 10 / 20 / 50 / 100 / 自訂；自訂選項展開一個 number input（min=1 max=500），失焦或按 Enter 觸發送出；輸入 > 500 顯示 inline error「每頁最多 500 筆」並阻擋送出；上一頁／下一頁 + 跳頁輸入；參數同寫 URL（`page`、`pageSize`）
-- [ ] T063 [US2] 於 `app.js` 儀表板總資產卡擴充以對應 spec US2 Acceptance #5（FR-004）：「已排除」帳戶以「灰色虛線外框 + 已排除徽章」呈現於帳戶清單；總資產卡明確顯示「總資產 $X，已排除 N 個帳戶（餘額共 $Y）」；點擊「已排除 N」展開該 N 個帳戶清單
+- [X] T060 [US2] 於 `app.js` 交易頁建構頂端篩選列（FR-050）：UI 由左到右 — 日期區間 picker（兩個 date input）、類型 dropdown（含「全部 / 收入 / 支出 / 轉帳 / 未來」）、分類 dropdown（依 categories tree 渲染 optgroup）、帳戶 dropdown、搜尋 input（placeholder「搜尋備註…」）；任一欄位變更時 `debounce 250ms` 後重新呼叫 `GET /api/transactions`；URL `history.replaceState` 同步參數
+- [X] T061 [US2] 於 `app.js` 表頭加入排序切換（FR-050）：5 個可排序表頭欄位（`date`、`amount`、`account`、`category`、`type`），各欄旁顯示 `▲▼` 小箭頭；點擊切換 ASC↔DESC；切換時將 `sort=<field>_<dir>` 寫入 URL query（與 T060 共用 `history.replaceState`）；初始載入時讀 URL 反向還原狀態（FR-052）
+- [X] T062 [US2] 於 `app.js` 分頁器（FR-051）：每頁筆數 select 顯示 10 / 20 / 50 / 100 / 自訂；自訂選項展開一個 number input（min=1 max=500），失焦或按 Enter 觸發送出；輸入 > 500 顯示 inline error「每頁最多 500 筆」並阻擋送出；上一頁／下一頁 + 跳頁輸入；參數同寫 URL（`page`、`pageSize`）
+- [X] T063 [US2] 於 `app.js` 儀表板總資產卡擴充以對應 spec US2 Acceptance #5（FR-004）：「已排除」帳戶以「灰色虛線外框 + 已排除徽章」呈現於帳戶清單；總資產卡明確顯示「總資產 $X，已排除 N 個帳戶（餘額共 $Y）」；點擊「已排除 N」展開該 N 個帳戶清單
 
 **Checkpoint（MVP US2 驗收）**：依 [quickstart.md](./quickstart.md) §2 執行：
 

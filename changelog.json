@@ -1,6 +1,27 @@
 {
-  "currentVersion": "4.24.0",
+  "currentVersion": "4.25.0",
   "releases": [
+    {
+      "version": "4.25.0",
+      "date": "2026-04-25",
+      "title": "預算與固定收支重整（004-budgets-recurring）：四段配色 / 月份切換器 / 配方來源追溯 / 並發冪等保護",
+      "type": "new",
+      "changes": [
+        { "tag": "warning", "text": "schema migration：`budgets.amount` / `recurring.amount` 由 REAL 改為 INTEGER（與 002 慣例對齊）、`recurring.fx_rate` 由 REAL 改為 TEXT decimal 字串、新增 `recurring.needs_attention` / `updated_at` 欄位、`transactions` 表新增 `source_recurring_id` / `scheduled_date` 欄位與 partial unique index（並發冪等保護）；啟動時自動備份 database.db.bak.<ts>.before-004" },
+        { "tag": "new", "text": "新增端點：`PATCH /api/budgets/{id}`（僅編輯金額；FR-008）" },
+        { "tag": "new", "text": "預算進度條四段配色：< 50% 綠、50–79% 中性、80–99% 黃（接近上限預警）、≥ 100% 紅（超支，條身與百分比文字皆紅）；超支不阻擋使用者繼續記帳" },
+        { "tag": "new", "text": "預算月份切換器：可切到任意歷史／未來月份檢視該月份的預算進度；歷史月份「已用金額」即時依當前資料庫重算（FR-007、FR-009a）" },
+        { "tag": "new", "text": "固定收支自動產生流程於登入時 server-side 觸發（FR-012；30 筆軟上限 + setImmediate 背景續跑保 SC-003 / SC-004）；條件式 `last_generated` 推進 + `(source_recurring_id, scheduled_date)` 唯一鍵保並發冪等" },
+        { "tag": "new", "text": "固定收支卡片色階分流：紅／橘「需處理」（原分類／帳戶已刪除）> 黃「（待執行）」逾期 > 灰停用 > 正常；備註直接顯示於卡片上" },
+        { "tag": "new", "text": "編輯固定收支時對已刪除的分類／帳戶以 `__deleted_category__` / `__deleted_account__` 佔位下拉防呆；後端拒絕該佔位值並要求改選有效項（FR-020、SC-008）" },
+        { "tag": "new", "text": "衍生交易在交易列表與編輯頁顯示「來自配方」chip 並支援點擊跳轉；來源配方被刪後 chip 退化為灰字「（來源配方已刪除）」" },
+        { "tag": "fix", "text": "每月 31 號遇 2 月正確回退至月底（既有 `Date.setMonth(+1)` 會 overflow 至下月初造成漏產）；每年 2/29 遇平年回退至 2/28" },
+        { "tag": "improved", "text": "編輯既有配方分支邏輯：起始日變動則重置 `last_generated`、週期變動則保留、業務欄位變動皆不溯及既往（FR-021a / FR-021b / FR-021c）；歷史衍生交易作為帳目記錄不可變" },
+        { "tag": "improved", "text": "預算 used 計算改用 `SUM(twd_amount)`（INTEGER，本幣彙整）；外幣交易以該筆已記錄之本幣金額計入，不另撈即時匯率（FR-010）" },
+        { "tag": "improved", "text": "固定收支類型欄位（收入／支出）建立後永久不可變更（與 003 對 `categories.type` 對稱治理）" },
+        { "tag": "improved", "text": "OUT-003：本期不做伺服器端 cron／worker 排程；FR-012 僅以登入觸發路徑兌現" }
+      ]
+    },
     {
       "version": "4.24.0",
       "date": "2026-04-25",

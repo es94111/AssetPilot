@@ -89,7 +89,9 @@
       "Bash(grep -B1 \"Error was generated\\\\|severity: error\\\\|^\\\\\\\\[error\")",
       "Bash(grep -E \"openapi\\\\\\\\.yaml:[0-9]+:[0-9]+\")",
       "Bash(npx --yes @redocly/cli lint specs/003-categories/contracts/categories.openapi.yaml)",
-      "Bash(grep *)"
+      "Bash(grep *)",
+      "Bash(git worktree *)",
+      "PowerShell(.specify/scripts/powershell/check-prerequisites.ps1 -Json -PathsOnly)"
     ]
   }
 }

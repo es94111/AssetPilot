@@ -12,6 +12,10 @@
   <link rel="stylesheet" href="/style.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css" integrity="sha512-5Hs3dF2AEPkpNAR7UiOHba+lRSJNeM2ECkwxUIxC1Q/FLycGTbNapWXB4tP889k5T5Ju8fs4b1P5z/iB4nMfSQ==" crossorigin="anonymous" referrerpolicy="no-referrer">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1" integrity="sha512-WoViKhKD4qI2WruSZqv9+kvM4WfFhUMQCLN4QlDTt5aU56fLQy2gYoxWIqlEnXqJy/+Ac5q/hk1oWfqnMDhwMA==" crossorigin="anonymous"></script>
+  <!-- 002 feature: decimal.js（金額／匯率精度，與後端 lib/moneyDecimal.js 同構共用；版本鎖 10.4.3） -->
+  <script src="https://cdn.jsdelivr.net/npm/decimal.js@10.4.3/decimal.min.js" integrity="sha384-R1s5T+qp0eipToh29x4hut3GGQRmpTE3PdCMTbskHdMV7xkaTNtTx/V0/aDfUjyH" crossorigin="anonymous" defer></script>
+  <!-- 002 feature: lib/moneyDecimal.js（同構模組，需於 decimal.js 之後載入） -->
+  <script src="/lib/moneyDecimal.js" defer></script>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>

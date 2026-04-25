@@ -46,7 +46,7 @@
   與 `dataset.parentId` 比對，僅同層接受 drop（即 FR-024b：parent 列只接受
   parent 列、同 parent 的 sub 只接受同 parent 的 sub）。
 - `drop`：依放下位置計算新 `sort_order` 序列（前端先樂觀更新 DOM）→
-  `POST /api/categories:reorder` body 為 `{ scope, items: [{ id, sortOrder }] }`，
+  `POST /api/categories/reorder` body 為 `{ scope, items: [{ id, sortOrder }] }`，
   scope 為 `"parents:expense"`／`"parents:income"`／`"children:<parentId>"`；
   後端在單一 `BEGIN…COMMIT` 內 UPDATE 所有 ID 的 `sort_order`。
 
@@ -305,8 +305,8 @@ if (categoryId) {
   - `Category` schema：移除 `isHidden` 屬性。
   - 新增 schemas：`CategoryReorderRequest`、`CategoryMoveRequest`、
     `CategoryReorderItem`。
-  - 新增端點：`PATCH /api/categories/{id}`、`POST /api/categories:reorder`、
-    `POST /api/categories:restore-defaults`。
+  - 新增端點：`PATCH /api/categories/{id}`、`POST /api/categories/reorder`、
+    `POST /api/categories/restore-defaults`。
   - `info.version` bump 至 `4.24.0`，與 `changelog.json.currentVersion`
     對齊。
 

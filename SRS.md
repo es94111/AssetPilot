@@ -46,7 +46,7 @@
 | 層級     | 技術                                                                                              |
 | -------- | ------------------------------------------------------------------------------------------------- |
 | 前端     | 原生 HTML / CSS / JavaScript（SPA）、Chart.js、Font Awesome 6                                     |
-| 後端     | Node.js 18+、Express                                                                              |
+| 後端     | Node.js 24+、Express                                                                              |
 | 資料庫   | SQLite（透過 sql.js，記憶體執行 + 檔案持久化）                                                    |
 | 驗證     | JWT（httpOnly Cookie，`JWT_EXPIRES` 控制有效期）、bcryptjs、Passkey（WebAuthn）、Google SSO（選配）|
 | 外部 API | TWSE OpenAPI、exchangerate-api.com、ipinfo.io、Google Identity Services、Resend、SMTP             |
@@ -81,7 +81,7 @@
 ### 1.6 作業環境
 
 - **前端：** 現代瀏覽器（Chrome、Firefox、Safari、Edge 最新版本）
-- **後端：** Node.js 18+
+- **後端：** Node.js 24+
 - **部署：** 本地伺服器或雲端容器；預設 port 3000；支援 Docker（AMD64 + ARM64）
 
 ### 1.7 系統邊界

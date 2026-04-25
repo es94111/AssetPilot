@@ -29,8 +29,8 @@ sql.js 記憶體執行 + `database.db` 檔案持久化、JWT httpOnly Cookie、O
    - 同步補建缺漏的「預設父分類」本身（既有實作只補子分類）。
 3. **API 強化與新增**：將既有端點補完樂觀鎖外的所有 003 規格約束，且新增三支端點：
    - `PATCH /api/categories/{id}` 用以**移動子分類至另一父分類**（FR-014a/b/d）。
-   - `POST /api/categories:reorder` 用以**批次重排同層分類**（FR-024a/b）。
-   - `POST /api/categories:restore-defaults` 用以「還原預設分類」（FR-011d/e/f）。
+   - `POST /api/categories/reorder` 用以**批次重排同層分類**（FR-024a/b）。
+   - `POST /api/categories/restore-defaults` 用以「還原預設分類」（FR-011d/e/f）。
 4. **顏色驗證收緊**：`isValidColor` 既有 regex `/^#[0-9a-fA-F]{3,8}$/` 過於寬鬆；
    依 FR-020 改為 `/^#[0-9A-Fa-f]{6}$/`（**僅** 6 碼 hex，不含 alpha、不含 3 碼縮寫），
    後端拒絕任何不符；前端 `<input type="color">` 原生即輸出 `#RRGGBB`，無需額外處理。
@@ -44,7 +44,7 @@ sql.js 記憶體執行 + `database.db` 檔案持久化、JWT httpOnly Cookie、O
    區塊；新增「還原預設分類」按鈕（明確文案：「補回過去刪除的預設分類」）。
 8. **HTML5 原生拖曳排序**（FR-024a/b）：使用瀏覽器內建 `draggable` 屬性 +
    `dragstart`/`dragover`/`drop` 事件，不引入任何拖曳函式庫；拖曳完成後
-   呼叫 `POST /api/categories:reorder` 一次性更新該層級的 `sort_order` 整批。
+   呼叫 `POST /api/categories/reorder` 一次性更新該層級的 `sort_order` 整批。
 
 本計畫無新外部 API；無 IPinfo／TWSE／Google Identity Services／Resend 互動。
 
@@ -55,8 +55,8 @@ sql.js 記憶體執行 + `database.db` 檔案持久化、JWT httpOnly Cookie、O
 | `/api/categories/{id}` | PUT | FR-014, FR-014c, FR-015, FR-016, FR-020 | 既有；拒絕 type 變更、拒絕 promote/demote |
 | `/api/categories/{id}` | PATCH | FR-014a, FR-014b, FR-014d | **新增**：用於子分類跨父歸屬變更 |
 | `/api/categories/{id}` | DELETE | FR-017, FR-018, FR-019, FR-011b, FR-011b1 | 既有；新增寫入 `deleted_defaults` |
-| `/api/categories:reorder` | POST | FR-024, FR-024a, FR-024b | **新增**：批次同層重排 |
-| `/api/categories:restore-defaults` | POST | FR-011d, FR-011e, FR-011f | **新增**：清空 registry + 補建 |
+| `/api/categories/reorder` | POST | FR-024, FR-024a, FR-024b | **新增**：批次同層重排 |
+| `/api/categories/restore-defaults` | POST | FR-011d, FR-011e, FR-011f | **新增**：清空 registry + 補建 |
 
 實作順序：US1（FR-007~FR-011f）→ US2（FR-012~FR-016, FR-022~FR-026）→ US3
 （FR-017~FR-019）；對應 P1→P1→P2，詳見 tasks.md（Phase 2，本計畫不產出）。
@@ -148,8 +148,8 @@ Gates（憲章 v1.1.0）：
     （`sql.js`、`Express`）、HTTP 狀態碼為英文／符號，符合憲章例外條款。
 - **[II] OpenAPI 3.2.0 契約 Gate**：✅ PASS
   - 本功能對既有 `/api/categories`、`/api/categories/{id}` 端點補強欄位
-    與行為，並新增 `PATCH /api/categories/{id}`、`POST /api/categories:reorder`、
-    `POST /api/categories:restore-defaults` 三支端點，皆於
+    與行為，並新增 `PATCH /api/categories/{id}`、`POST /api/categories/reorder`、
+    `POST /api/categories/restore-defaults` 三支端點，皆於
     [contracts/categories.openapi.yaml](./contracts/categories.openapi.yaml)
     宣告，`openapi: 3.2.0` 字串。
   - 同 PR 將同步更新根目錄 `openapi.yaml` 加入相同端點與 schema

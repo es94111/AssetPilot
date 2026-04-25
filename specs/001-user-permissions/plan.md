@@ -6,7 +6,7 @@
 ## Summary
 
 本計畫將 `spec.md`（42 FR／6 使用者故事／10 Clarification）落地到既有實作。
-技術路線沿用專案既有單體結構：Node.js 18+ 搭配 Express 5、單一 `server.js`
+技術路線沿用專案既有單體結構：Node.js 24+ 搭配 Express 5、單一 `server.js`
 聚合所有 API 與中介層、根目錄 SPA（`index.html` / `app.js` / `style.css`）、
 sql.js 於記憶體執行並以 `database.db` 檔案持久化。JWT 以 `HttpOnly` + `Secure`
 + `SameSite=Strict` Cookie 傳遞、`JWT_EXPIRES` 預設 7 天；密碼採 bcryptjs、
@@ -28,7 +28,7 @@ Passkey 以 `@passwordless-id/webauthn` 驗證。
 
 ## Technical Context
 
-**Language/Version**：Node.js 18+（部署於 Zeabur 與 Docker；`package.json` 已鎖定
+**Language/Version**：Node.js 24+（部署於 Zeabur 與 Docker；`package.json` 已鎖定
 `express ^5.2.1`、`sql.js ^1.14.1`）。前端為瀏覽器原生 ES modules，無打包步驟。
 
 **Primary Dependencies**：

@@ -86,7 +86,7 @@ components:
     CategoryReorderRequest:
       type: object
       description: |-
-        批次重排同層分類（POST /api/categories:reorder）；FR-024a/b。
+        批次重排同層分類（POST /api/categories/reorder）；FR-024a/b。
         scope 限定操作範疇，items 內所有 id 必為同一 scope。
       properties:
         scope:
@@ -271,7 +271,7 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-  /api/categories:reorder:
+  /api/categories/reorder:
     post:
       tags: [分類]
       summary: 批次重排同層分類
@@ -292,7 +292,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /api/categories:restore-defaults:
+  /api/categories/restore-defaults:
     post:
       tags: [分類]
       summary: 還原預設分類（補回過去刪除的預設分類）

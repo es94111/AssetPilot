@@ -176,7 +176,7 @@ curl -b cookies.txt http://localhost:3000/api/categories \
 # 範例輸出（順序：早餐→午餐→晚餐→飲料→點心）
 
 # 2. 模擬拖曳「點心」到第一位
-curl -b cookies.txt -X POST http://localhost:3000/api/categories:reorder \
+curl -b cookies.txt -X POST http://localhost:3000/api/categories/reorder \
   -H 'Content-Type: application/json' \
   -d "{
     \"scope\": \"children:$DINING_ID\",
@@ -245,7 +245,7 @@ curl -b cookies.txt http://localhost:3000/api/categories \
 # 預期：0（未補回）
 
 # (d) 還原預設 → 補回（FR-011d/e）
-curl -b cookies.txt -X POST http://localhost:3000/api/categories:restore-defaults
+curl -b cookies.txt -X POST http://localhost:3000/api/categories/restore-defaults
 # 預期：HTTP 200，{"ok":true,"restored":1}
 
 curl -b cookies.txt http://localhost:3000/api/categories \

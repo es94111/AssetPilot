@@ -273,7 +273,7 @@ function backfillDefaultsForUser(userId) {
      → 200 { ok: true }
 ```
 
-### 4.4 批次重排同層分類（POST /api/categories:reorder）
+### 4.4 批次重排同層分類（POST /api/categories/reorder）
 
 ```text
 請求 body: { scope: "parents:expense" | "parents:income" | "children:<parentId>",
@@ -309,7 +309,7 @@ function backfillDefaultsForUser(userId) {
      → 200 { ok: true }
 ```
 
-### 4.6 還原預設分類（POST /api/categories:restore-defaults）
+### 4.6 還原預設分類（POST /api/categories/restore-defaults）
 
 ```text
 請求 → BEGIN

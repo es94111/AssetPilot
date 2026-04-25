@@ -32,6 +32,11 @@ const { server: webauthnServer } = require('@passwordless-id/webauthn');
 const { Resend } = require('resend');
 const nodemailer = require('nodemailer');
 
+// ─── 002 feature: 共用工具模組（T019） ───
+const moneyDecimal = require('./lib/moneyDecimal');
+const taipeiTime = require('./lib/taipeiTime');
+const fxCache = require('./lib/exchangeRateCache');
+
 const app = express();
 // 信任反向代理（Nginx / Synology / Docker）傳遞的 X-Forwarded-For 標頭
 // 確保 express-rate-limit 能正確識別使用者 IP
@@ -403,13 +408,14 @@ app.use((err, req, res, next) => {
 app.use(cookieParser());
 
 // 僅開放必要前端靜態檔，避免專案根目錄檔案外洩
-const PUBLIC_FILES = ['/app.js', '/style.css', '/logo.svg', '/favicon.svg', '/vendor/webauthn.min.js'];
+const PUBLIC_FILES = ['/app.js', '/style.css', '/logo.svg', '/favicon.svg', '/vendor/webauthn.min.js', '/lib/moneyDecimal.js'];
 const PUBLIC_FILE_MAP = Object.freeze({
   '/app.js': path.join(__dirname, 'app.js'),
   '/style.css': path.join(__dirname, 'style.css'),
   '/logo.svg': path.join(__dirname, 'logo.svg'),
   '/favicon.svg': path.join(__dirname, 'favicon.svg'),
   '/vendor/webauthn.min.js': path.join(__dirname, 'node_modules', '@passwordless-id', 'webauthn', 'dist', 'browser', 'webauthn.min.js'),
+  '/lib/moneyDecimal.js': path.join(__dirname, 'lib', 'moneyDecimal.js'),
 });
 app.get(PUBLIC_FILES, (req, res) => {
   const safePath = PUBLIC_FILE_MAP[req.path];
@@ -767,6 +773,10 @@ async function initDB() {
   try { db.run("ALTER TABLE login_attempt_logs ADD COLUMN country TEXT DEFAULT ''"); } catch (e) { /* ignore */ }
   try { db.run("ALTER TABLE exchange_rates ADD COLUMN is_manual INTEGER DEFAULT 0"); } catch (e) { /* ignore */ }
 
+  // ─── 002 feature: schema migration（T010~T015） ───
+  // 對應 plan.md CT-1 + data-model.md §3。執行於既有 ALTER 之後、其他資料表 CREATE 之前。
+  migrate002TransactionsAccounts();
+
   // 為既有使用者補建預設子分類
   migrateDefaultSubcategories();
 
@@ -888,8 +898,227 @@ async function initDB() {
     // ignore
   }
 
+  // ─── 002 feature: 注入 db 至 fxCache 並暖機（T019） ───
+  try {
+    fxCache.setDb(db);
+    fxCache.primeFromDb();
+  } catch (e) {
+    console.warn('[fxCache] init failed:', e.message);
+  }
+
   saveDB();
   console.log('資料庫初始化完成');
+}
+
+// ─── 002 feature: schema migration（T010~T015） ───
+// CT-1：accounts/transactions 由 REAL → INTEGER（金額）/ REAL → TEXT（fx_rate）；
+//       新增 user_settings；exchange_rates 由 (user_id, currency) PK 改為 currency PK；
+//       備份至 database.db.bak.<ts>，任一步失敗 console.error 並 process.exit(1)。
+function migrate002TransactionsAccounts() {
+  const fs = require('fs');
+  const path = require('path');
+
+  // 偵測是否需要 migration（PK = currency 表示已遷移；REAL 型別 amount 表示尚未）
+  let needsMigration = false;
+  try {
+    const txInfo = queryAll("PRAGMA table_info(transactions)");
+    const hasToAccountId = txInfo.some(c => c.name === 'to_account_id');
+    const hasTwdAmount = txInfo.some(c => c.name === 'twd_amount');
+    const amountIsReal = txInfo.some(c => c.name === 'amount' && /REAL/i.test(c.type || ''));
+    if (!hasToAccountId || !hasTwdAmount || amountIsReal) needsMigration = true;
+  } catch (e) {
+    needsMigration = true;
+  }
+  // 同時檢查 accounts 是否需新增欄位
+  try {
+    const acctInfo = queryAll("PRAGMA table_info(accounts)");
+    const hasCategory = acctInfo.some(c => c.name === 'category');
+    const hasOverseasFee = acctInfo.some(c => c.name === 'overseas_fee_rate');
+    const hasUpdatedAt = acctInfo.some(c => c.name === 'updated_at');
+    if (!hasCategory || !hasOverseasFee || !hasUpdatedAt) needsMigration = true;
+  } catch (e) { /* ignore */ }
+  // exchange_rates 重構偵測
+  try {
+    const erInfo = queryAll("PRAGMA table_info(exchange_rates)");
+    const hasUserId = erInfo.some(c => c.name === 'user_id');
+    if (hasUserId) needsMigration = true;
+  } catch (e) { /* ignore */ }
+  // user_settings 是否存在
+  let userSettingsExists = false;
+  try {
+    queryAll("SELECT 1 FROM user_settings LIMIT 1");
+    userSettingsExists = true;
+  } catch (e) {
+    needsMigration = true;
+  }
+
+  if (!needsMigration && userSettingsExists) {
+    console.log('[migration 002] schema 已是最新，略過');
+    return;
+  }
+
+  // T010：備份 database.db
+  const dbPath = path.join(__dirname, 'database.db');
+  if (fs.existsSync(dbPath)) {
+    const backupPath = path.join(__dirname, `database.db.bak.${Date.now()}`);
+    try {
+      fs.copyFileSync(dbPath, backupPath);
+      console.log('[migration 002] backup → ', backupPath);
+    } catch (e) {
+      console.error('[migration 002] backup FAILED:', e.message);
+    }
+  }
+
+  try {
+    // T011：accounts 補欄位
+    try { db.run("ALTER TABLE accounts ADD COLUMN category TEXT NOT NULL DEFAULT 'cash'"); } catch (e) { /* ignore */ }
+    try { db.run("ALTER TABLE accounts ADD COLUMN overseas_fee_rate INTEGER DEFAULT NULL"); } catch (e) { /* ignore */ }
+    try { db.run("ALTER TABLE accounts ADD COLUMN updated_at INTEGER NOT NULL DEFAULT 0"); } catch (e) { /* ignore */ }
+    // 將既有 account_type 中文值映射至 enum
+    db.run(`UPDATE accounts SET category = CASE account_type
+              WHEN '銀行' THEN 'bank'
+              WHEN '信用卡' THEN 'credit_card'
+              WHEN '現金' THEN 'cash'
+              WHEN '虛擬' THEN 'virtual_wallet'
+              ELSE 'cash'
+            END
+            WHERE category IS NULL OR category = 'cash'`);
+    // updated_at 補預設（用 created_at 字串 → epoch ms 推估）
+    db.run(`UPDATE accounts SET updated_at = COALESCE(
+              CAST(strftime('%s', created_at) AS INTEGER) * 1000,
+              ?
+            ) WHERE updated_at = 0 OR updated_at IS NULL`, [Date.now()]);
+
+    // T012：transactions 補欄位
+    try { db.run("ALTER TABLE transactions ADD COLUMN to_account_id TEXT DEFAULT NULL"); } catch (e) { /* ignore */ }
+    try { db.run("ALTER TABLE transactions ADD COLUMN twd_amount INTEGER NOT NULL DEFAULT 0"); } catch (e) { /* ignore */ }
+    db.run(`UPDATE transactions SET updated_at = COALESCE(updated_at, created_at, ?)
+            WHERE updated_at IS NULL OR updated_at = 0`, [Date.now()]);
+
+    // T013：REAL → INTEGER／REAL → TEXT 型別 migration（重建表）
+    // transactions：偵測 amount 型別
+    const txAmountInfo = queryOne("SELECT typeof(amount) AS t FROM transactions LIMIT 1");
+    const needsTxRebuild = txAmountInfo && String(txAmountInfo.t).toLowerCase() === 'real';
+    if (needsTxRebuild) {
+      console.log('[migration 002] 重建 transactions 表（REAL → INTEGER）');
+      db.run(`CREATE TABLE transactions_new (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        account_id TEXT NOT NULL,
+        to_account_id TEXT DEFAULT NULL,
+        type TEXT NOT NULL,
+        amount INTEGER NOT NULL,
+        currency TEXT NOT NULL DEFAULT 'TWD',
+        fx_rate TEXT NOT NULL DEFAULT '1',
+        fx_fee INTEGER NOT NULL DEFAULT 0,
+        twd_amount INTEGER NOT NULL DEFAULT 0,
+        date TEXT NOT NULL,
+        category_id TEXT DEFAULT NULL,
+        note TEXT NOT NULL DEFAULT '',
+        exclude_from_stats INTEGER NOT NULL DEFAULT 0,
+        linked_id TEXT NOT NULL DEFAULT '',
+        original_amount REAL DEFAULT 0,
+        created_at INTEGER,
+        updated_at INTEGER NOT NULL
+      )`);
+      db.run(`INSERT INTO transactions_new
+              (id, user_id, account_id, to_account_id, type, amount, currency, fx_rate, fx_fee, twd_amount, date, category_id, note, exclude_from_stats, linked_id, original_amount, created_at, updated_at)
+              SELECT id, user_id, account_id, to_account_id, type,
+                     CAST(ROUND(amount) AS INTEGER),
+                     COALESCE(currency, 'TWD'),
+                     CAST(COALESCE(fx_rate, 1) AS TEXT),
+                     CAST(ROUND(COALESCE(fx_fee, 0)) AS INTEGER),
+                     CAST(ROUND(amount * COALESCE(fx_rate, 1) + COALESCE(fx_fee, 0)) AS INTEGER),
+                     date, category_id, COALESCE(note, ''), COALESCE(exclude_from_stats, 0), COALESCE(linked_id, ''),
+                     COALESCE(original_amount, 0), created_at, COALESCE(updated_at, ?)
+              FROM transactions`, [Date.now()]);
+      db.run("DROP TABLE transactions");
+      db.run("ALTER TABLE transactions_new RENAME TO transactions");
+    }
+
+    // accounts：偵測 initial_balance 型別
+    const acctBalInfo = queryOne("SELECT typeof(initial_balance) AS t FROM accounts LIMIT 1");
+    const needsAcctRebuild = acctBalInfo && String(acctBalInfo.t).toLowerCase() === 'real';
+    if (needsAcctRebuild) {
+      console.log('[migration 002] 重建 accounts 表（REAL → INTEGER）');
+      db.run(`CREATE TABLE accounts_new (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        category TEXT NOT NULL DEFAULT 'cash',
+        initial_balance INTEGER NOT NULL DEFAULT 0,
+        currency TEXT NOT NULL DEFAULT 'TWD',
+        icon TEXT NOT NULL DEFAULT 'fa-wallet',
+        exclude_from_total INTEGER NOT NULL DEFAULT 0,
+        linked_bank_id TEXT DEFAULT NULL,
+        overseas_fee_rate INTEGER DEFAULT NULL,
+        account_type TEXT DEFAULT '現金',
+        created_at TEXT,
+        updated_at INTEGER NOT NULL DEFAULT 0
+      )`);
+      db.run(`INSERT INTO accounts_new
+              (id, user_id, name, category, initial_balance, currency, icon, exclude_from_total, linked_bank_id, overseas_fee_rate, account_type, created_at, updated_at)
+              SELECT id, user_id, name,
+                     COALESCE(category, 'cash'),
+                     CAST(ROUND(COALESCE(initial_balance, 0)) AS INTEGER),
+                     COALESCE(currency, 'TWD'),
+                     COALESCE(icon, 'fa-wallet'),
+                     COALESCE(exclude_from_total, 0),
+                     linked_bank_id,
+                     overseas_fee_rate,
+                     COALESCE(account_type, '現金'),
+                     created_at,
+                     COALESCE(updated_at, ?)
+              FROM accounts`, [Date.now()]);
+      db.run("DROP TABLE accounts");
+      db.run("ALTER TABLE accounts_new RENAME TO accounts");
+    }
+
+    // 重建索引
+    db.run("CREATE INDEX IF NOT EXISTS idx_tx_user_date ON transactions(user_id, date DESC)");
+    db.run("CREATE INDEX IF NOT EXISTS idx_tx_user_acct ON transactions(user_id, account_id)");
+    db.run("CREATE INDEX IF NOT EXISTS idx_tx_user_type ON transactions(user_id, type)");
+    db.run("CREATE INDEX IF NOT EXISTS idx_tx_linked    ON transactions(linked_id)");
+    db.run("CREATE INDEX IF NOT EXISTS idx_tx_user_cat  ON transactions(user_id, category_id)");
+    db.run("CREATE INDEX IF NOT EXISTS idx_accounts_user ON accounts(user_id)");
+    db.run("CREATE INDEX IF NOT EXISTS idx_accounts_user_category ON accounts(user_id, category)");
+
+    // T014：新增 exchange_rates_global（跨使用者共用快取；PK = currency）
+    // 為保留與既有 per-user `exchange_rates` 表的 backward compat，新增獨立表給 fxCache 用，
+    // 不動既有 schema；既有 /api/exchange-rates per-user 端點維持運作不變。
+    db.run(`CREATE TABLE IF NOT EXISTS exchange_rates_global (
+      currency TEXT PRIMARY KEY,
+      rate_to_twd TEXT NOT NULL,
+      fetched_at INTEGER NOT NULL,
+      source TEXT NOT NULL DEFAULT 'exchangerate-api'
+    )`);
+
+    // T015：新增 user_settings 表
+    db.run(`CREATE TABLE IF NOT EXISTS user_settings (
+      user_id TEXT PRIMARY KEY,
+      pinned_currencies TEXT NOT NULL DEFAULT '["TWD"]',
+      updated_at INTEGER NOT NULL
+    )`);
+    // 為既有使用者補建 user_settings（避免 US5 querie 失敗）
+    db.run(`INSERT OR IGNORE INTO user_settings (user_id, pinned_currencies, updated_at)
+            SELECT id, '["TWD"]', ? FROM users`, [Date.now()]);
+
+    // Self-test
+    const badAmount = queryOne("SELECT COUNT(*) AS c FROM transactions WHERE typeof(amount) != 'integer' OR amount <= 0")?.c || 0;
+    if (badAmount > 0) {
+      console.warn(`[migration 002] self-test fail: ${badAmount} 筆 transactions.amount 非正整數`);
+    }
+    const badAcctUpdated = queryOne("SELECT COUNT(*) AS c FROM accounts WHERE updated_at <= 0")?.c || 0;
+    if (badAcctUpdated > 0) {
+      console.warn(`[migration 002] self-test fail: ${badAcctUpdated} 筆 accounts.updated_at <= 0`);
+    }
+
+    console.log('[migration 002] 完成');
+  } catch (err) {
+    console.error('[migration 002] FAILED:', err);
+    console.error('[migration 002] 請從備份檔還原 database.db');
+    throw err;
+  }
 }
 
 function migrateDefaultSubcategories() {
@@ -954,15 +1183,24 @@ function createDefaultsForUser(userId) {
     db.run("INSERT INTO categories (id, user_id, name, type, color, is_default, is_hidden, sort_order, parent_id) VALUES (?,?,?,?,?,1,0,?,'')",
       [uid(), userId, name, 'income', color, order++]);
   });
-  db.run("INSERT INTO accounts (id, user_id, name, initial_balance, icon, created_at) VALUES (?,?,?,0,'fa-wallet',?)",
-    [uid(), userId, '現金', todayStr()]);
+  // ─── 002 feature (T022)：預設「現金」帳戶補新欄位 + user_settings ───
+  // FR-002：name='現金' / category='cash' / currency='TWD' / icon='fa-wallet' / 計入總資產
+  const nowMs = Date.now();
+  db.run(
+    "INSERT INTO accounts (id, user_id, name, category, initial_balance, currency, icon, exclude_from_total, linked_bank_id, overseas_fee_rate, account_type, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
+    [uid(), userId, '現金', 'cash', 0, 'TWD', 'fa-wallet', 0, null, null, '現金', todayStr(), nowMs]
+  );
 
-  Object.entries(DEFAULT_EXCHANGE_RATES).forEach(([currency, rate]) => {
-    db.run("INSERT OR IGNORE INTO exchange_rates (user_id, currency, rate_to_twd, updated_at) VALUES (?, ?, ?, ?)",
-      [userId, currency, rate, Date.now()]);
-  });
+  // FR-020a：預設 pinned_currencies = ["TWD"]
+  db.run(
+    "INSERT OR IGNORE INTO user_settings (user_id, pinned_currencies, updated_at) VALUES (?, ?, ?)",
+    [userId, '["TWD"]', nowMs]
+  );
+
+  // exchange_rates 已改為跨使用者共用快取（PK = currency），不再 per-user 預設；
+  // 既有 DEFAULT_EXCHANGE_RATES 保留為冷啟動 fallback（由 fxCache.primeFromDb 載入）。
   db.run("INSERT OR IGNORE INTO exchange_rate_settings (user_id, auto_update, last_synced_at, updated_at) VALUES (?, 0, 0, ?)",
-    [userId, Date.now()]);
+    [userId, nowMs]);
   db.run(`INSERT OR IGNORE INTO stock_settings (user_id, fee_rate, fee_discount, fee_min_lot, fee_min_odd, sell_tax_rate_stock, sell_tax_rate_etf, sell_tax_rate_warrant, sell_tax_min, updated_at)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
@@ -1968,6 +2206,81 @@ function adminMiddleware(req, res, next) {
     return res.status(403).json({ error: '需要管理員權限' });
   }
   next();
+}
+
+// ─── 002 feature: IDOR / 樂觀鎖共用 helper（T020 + T021） ───
+// FR-060：所有受保護資源以 ownsResource 驗證 user_id；不符回 404 不洩漏存在性。
+// FR-014a：PATCH／DELETE 須帶 expected_updated_at；不符回 409 OptimisticLockConflict。
+
+// 通用：以 (table, idColumn, idValue, userId) 驗證並取出 row；無則 null
+function ownsResource(table, idColumn, idValue, userId) {
+  if (!table || !idColumn || idValue == null || !userId) return null;
+  // 白名單檢查（避免 SQL injection 經 table/column 名稱）
+  const allowedTables = { accounts: 1, transactions: 1, user_settings: 1 };
+  const allowedColumns = { id: 1, user_id: 1 };
+  if (!allowedTables[table] || !allowedColumns[idColumn]) return null;
+  const sql = `SELECT * FROM ${table} WHERE ${idColumn} = ? AND user_id = ? LIMIT 1`;
+  return queryOne(sql, [String(idValue), String(userId)]);
+}
+
+// requireOwnedAccount：套於 /api/accounts/:accountId/* 路由
+function requireOwnedAccount(req, res, next) {
+  const accountId = req.params.accountId;
+  const row = ownsResource('accounts', 'id', accountId, req.userId);
+  if (!row) return res.status(404).json({ error: 'NotFound' });
+  req.account = row;
+  next();
+}
+
+// requireOwnedTransaction：套於 /api/transactions/:txId/* 路由
+function requireOwnedTransaction(req, res, next) {
+  const txId = req.params.txId;
+  const row = ownsResource('transactions', 'id', txId, req.userId);
+  if (!row) return res.status(404).json({ error: 'NotFound' });
+  req.tx = row;
+  next();
+}
+
+// assertOptimisticLock：throw 物件 { status, error, ... }；caller 以 try/catch 處理
+function assertOptimisticLock(table, idColumn, idValue, expectedUpdatedAt) {
+  const allowedTables = { accounts: 1, transactions: 1, user_settings: 1 };
+  const allowedColumns = { id: 1, user_id: 1 };
+  if (!allowedTables[table] || !allowedColumns[idColumn]) {
+    throw { status: 500, error: 'InvalidLockTarget' };
+  }
+  const sql = `SELECT updated_at FROM ${table} WHERE ${idColumn} = ? LIMIT 1`;
+  const row = queryOne(sql, [String(idValue)]);
+  if (!row) {
+    throw { status: 404, error: 'NotFound' };
+  }
+  const expected = Number(expectedUpdatedAt);
+  if (!Number.isFinite(expected) || expected <= 0) {
+    throw {
+      status: 400,
+      error: 'MissingExpectedUpdatedAt',
+      message: '請帶 expected_updated_at',
+    };
+  }
+  if (Number(row.updated_at) !== expected) {
+    throw {
+      status: 409,
+      error: 'OptimisticLockConflict',
+      serverUpdatedAt: Number(row.updated_at),
+      message: '此筆已被其他裝置修改，請重新整理後再操作',
+    };
+  }
+}
+
+// 統一處理 lock/owns 例外
+function sendLockError(res, e) {
+  if (e && typeof e === 'object' && e.status) {
+    const body = { error: e.error || 'Error' };
+    if (e.message) body.message = e.message;
+    if (e.serverUpdatedAt) body.serverUpdatedAt = e.serverUpdatedAt;
+    return res.status(e.status).json(body);
+  }
+  console.error('[002] unexpected error:', e);
+  return res.status(500).json({ error: 'InternalServerError' });
 }
 
 // 統一的強密碼驗證（給註冊、管理員建立、改密碼共用）

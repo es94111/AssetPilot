@@ -2227,7 +2227,7 @@ function ownsResource(table, idColumn, idValue, userId) {
 function requireOwnedAccount(req, res, next) {
   const accountId = req.params.accountId;
   const row = ownsResource('accounts', 'id', accountId, req.userId);
-  if (!row) return res.status(404).json({ error: 'NotFound' });
+  if (!row) return res.status(404).json({ error: '資源不存在或無權限', code: 'NotFound' });
   req.account = row;
   next();
 }
@@ -2236,7 +2236,7 @@ function requireOwnedAccount(req, res, next) {
 function requireOwnedTransaction(req, res, next) {
   const txId = req.params.txId;
   const row = ownsResource('transactions', 'id', txId, req.userId);
-  if (!row) return res.status(404).json({ error: 'NotFound' });
+  if (!row) return res.status(404).json({ error: '資源不存在或無權限', code: 'NotFound' });
   req.tx = row;
   next();
 }
@@ -2271,16 +2271,18 @@ function assertOptimisticLock(table, idColumn, idValue, expectedUpdatedAt) {
   }
 }
 
-// 統一處理 lock/owns 例外
+// 統一處理 lock/owns 例外（error 欄位放中文訊息給既有前端 toast 使用，code 放程式碼）
 function sendLockError(res, e) {
   if (e && typeof e === 'object' && e.status) {
-    const body = { error: e.error || 'Error' };
-    if (e.message) body.message = e.message;
+    const body = {
+      error: e.message || e.error || 'Error',
+      code: e.error || 'Error',
+    };
     if (e.serverUpdatedAt) body.serverUpdatedAt = e.serverUpdatedAt;
     return res.status(e.status).json(body);
   }
   console.error('[002] unexpected error:', e);
-  return res.status(500).json({ error: 'InternalServerError' });
+  return res.status(500).json({ error: '伺服器內部錯誤', code: 'InternalServerError' });
 }
 
 // 統一的強密碼驗證（給註冊、管理員建立、改密碼共用）
@@ -4630,6 +4632,7 @@ app.post('/api/exchange-rates/refresh', async (req, res) => {
 });
 
 // ─── 帳戶 ───
+// FR-001~007（T031）：GET 回傳 category/overseasFeeRate/updatedAt 等 002 新欄位
 app.get('/api/accounts', (req, res) => {
   const accounts = queryAll("SELECT * FROM accounts WHERE user_id = ? ORDER BY created_at", [req.userId]);
   const result = accounts.map(a => {
@@ -4642,10 +4645,35 @@ app.get('/api/accounts', (req, res) => {
       currency: accountCurrency,
       balance,
       linkedBankId: a.linked_bank_id || null,
+      category: a.category || categoryFromAccountType(a.account_type),
+      overseasFeeRate: a.overseas_fee_rate ?? null,
+      excludeFromTotal: a.exclude_from_total === 1,
+      updatedAt: Number(a.updated_at) || 0,
     };
   });
   res.json(result);
 });
+
+// 中英 enum 互轉（向後相容既有 account_type 中文值）
+function categoryFromAccountType(accountType) {
+  switch (accountType) {
+    case '銀行': return 'bank';
+    case '信用卡': return 'credit_card';
+    case '虛擬錢包':
+    case '虛擬': return 'virtual_wallet';
+    case '現金':
+    default: return 'cash';
+  }
+}
+function accountTypeFromCategory(category) {
+  switch (category) {
+    case 'bank': return '銀行';
+    case 'credit_card': return '信用卡';
+    case 'virtual_wallet': return '虛擬錢包';
+    case 'cash':
+    default: return '現金';
+  }
+}
 
 function calcBalance(accId, initialBalance, userId, accountCurrency = 'TWD') {
   let balance = Number(initialBalance) || 0;
@@ -4661,54 +4689,226 @@ function calcBalance(accId, initialBalance, userId, accountCurrency = 'TWD') {
   return Math.round(balance * 100) / 100;
 }
 
+// FR-001（T030）：POST 接受 category（英）與 overseasFeeRate；保留 accountType（中）backward compat
 app.post('/api/accounts', (req, res) => {
-  const { name, initialBalance, icon, accountType, excludeFromTotal, linkedBankId } = req.body;
+  const { name, initialBalance, icon, excludeFromTotal, linkedBankId } = req.body;
   const currency = normalizeCurrency(req.body.currency);
   const safeIcon = normalizeAccountIcon(icon);
-  const VALID_TYPES = ['銀行', '信用卡', '現金', '虛擬錢包'];
-  const safeType = VALID_TYPES.includes(accountType) ? accountType : '現金';
+  // 名稱基本驗證（FR-001）
+  const safeName = String(name || '').trim();
+  if (safeName.length < 1 || safeName.length > 64) {
+    return res.status(400).json({ error: '名稱必須為 1~64 字元', code: 'ValidationError', field: 'name' });
+  }
+  // 解析 category：優先吃英文 enum，fallback 從中文 accountType 推導
+  const VALID_CATEGORIES = ['bank', 'credit_card', 'cash', 'virtual_wallet'];
+  let category = req.body.category;
+  if (!VALID_CATEGORIES.includes(category)) {
+    category = categoryFromAccountType(req.body.accountType);
+  }
+  const safeAccountType = accountTypeFromCategory(category);
   const safeExclude = excludeFromTotal ? 1 : 0;
+  // overseasFeeRate（千分點整數，FR-021）：僅 credit_card 接受
+  let safeOverseasFeeRate = null;
+  if (category === 'credit_card' && req.body.overseasFeeRate != null) {
+    const v = Number(req.body.overseasFeeRate);
+    if (!Number.isFinite(v) || v < 0 || v > 1000) {
+      return res.status(400).json({ error: '海外手續費率須為 0~1000（千分點）', code: 'ValidationError', field: 'overseasFeeRate' });
+    }
+    safeOverseasFeeRate = Math.round(v);
+  }
   let safeLinkedBankId = null;
-  if (safeType === '信用卡' && linkedBankId) {
-    const bankAcc = queryOne("SELECT id FROM accounts WHERE id = ? AND user_id = ? AND account_type = '銀行'", [linkedBankId, req.userId]);
+  if (category === 'credit_card' && linkedBankId) {
+    const bankAcc = queryOne("SELECT id FROM accounts WHERE id = ? AND user_id = ? AND (category = 'bank' OR account_type = '銀行')", [linkedBankId, req.userId]);
     if (!bankAcc) return res.status(400).json({ error: '指定的銀行帳戶不存在' });
     safeLinkedBankId = linkedBankId;
   }
   const id = uid();
-  db.run("INSERT INTO accounts (id, user_id, name, initial_balance, icon, currency, account_type, exclude_from_total, linked_bank_id, created_at) VALUES (?,?,?,?,?,?,?,?,?,?)",
-    [id, req.userId, name, initialBalance || 0, safeIcon, currency, safeType, safeExclude, safeLinkedBankId, todayStr()]);
+  const nowMs = Date.now();
+  // initial_balance 為幣別最小單位整數（FR-022a）；若前端尚未轉換，後端強制取整避免 REAL 殘留
+  const safeInitialBalance = Math.round(Number(initialBalance) || 0);
+  db.run(
+    "INSERT INTO accounts (id, user_id, name, category, initial_balance, currency, icon, exclude_from_total, linked_bank_id, overseas_fee_rate, account_type, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
+    [id, req.userId, safeName, category, safeInitialBalance, currency, safeIcon, safeExclude, safeLinkedBankId, safeOverseasFeeRate, safeAccountType, todayStr(), nowMs]
+  );
   saveDB();
-  res.json({ id });
+  res.status(201).json({
+    id,
+    name: safeName,
+    category,
+    accountType: safeAccountType,
+    initialBalance: safeInitialBalance,
+    currency,
+    icon: safeIcon,
+    excludeFromTotal: safeExclude === 1,
+    linkedBankId: safeLinkedBankId,
+    overseasFeeRate: safeOverseasFeeRate,
+    updatedAt: nowMs,
+  });
 });
 
-app.put('/api/accounts/:id', (req, res) => {
-  const { name, initialBalance, icon, accountType, excludeFromTotal, linkedBankId } = req.body;
-  const currency = normalizeCurrency(req.body.currency);
+// FR-005 / FR-014a（T033）：PUT/PATCH 接受 expectedUpdatedAt 樂觀鎖 + 幣別鎖（已有交易時禁變更 currency）
+const updateAccountHandler = (req, res) => {
+  // IDOR 檢查
+  const existing = ownsResource('accounts', 'id', req.params.id, req.userId);
+  if (!existing) return res.status(404).json({ error: '資源不存在或無權限', code: 'NotFound' });
+
+  // 樂觀鎖：若 body 有提供 expectedUpdatedAt 才驗證（向後相容既有不帶 expected 的呼叫）
+  if (req.body.expectedUpdatedAt != null || req.body.expected_updated_at != null) {
+    try {
+      const expected = req.body.expectedUpdatedAt ?? req.body.expected_updated_at;
+      assertOptimisticLock('accounts', 'id', req.params.id, expected);
+    } catch (e) {
+      return sendLockError(res, e);
+    }
+  }
+
+  const { name, initialBalance, icon, excludeFromTotal, linkedBankId } = req.body;
+  const newCurrency = normalizeCurrency(req.body.currency);
   const safeIcon = normalizeAccountIcon(icon);
-  const VALID_TYPES = ['銀行', '信用卡', '現金', '虛擬錢包'];
-  const safeType = VALID_TYPES.includes(accountType) ? accountType : '現金';
+  const safeName = String(name || existing.name).trim();
+  if (safeName.length < 1 || safeName.length > 64) {
+    return res.status(400).json({ error: '名稱必須為 1~64 字元', code: 'ValidationError', field: 'name' });
+  }
+  const VALID_CATEGORIES = ['bank', 'credit_card', 'cash', 'virtual_wallet'];
+  let category = req.body.category;
+  if (!VALID_CATEGORIES.includes(category)) {
+    category = categoryFromAccountType(req.body.accountType);
+  }
+  const safeAccountType = accountTypeFromCategory(category);
   const safeExclude = excludeFromTotal ? 1 : 0;
+
+  // FR-005：currency 變更時，若該帳戶已有任一交易引用，禁止變更
+  if (newCurrency && newCurrency !== normalizeCurrency(existing.currency)) {
+    const refCount = queryOne(
+      "SELECT COUNT(*) AS c FROM transactions WHERE (account_id = ? OR to_account_id = ?) AND user_id = ?",
+      [req.params.id, req.params.id, req.userId]
+    )?.c || 0;
+    if (refCount > 0) {
+      return res.status(422).json({
+        error: '此帳戶已有交易紀錄，無法變更幣別；如需不同幣別請新增帳戶',
+        code: 'CurrencyLocked',
+        referenceCount: refCount,
+      });
+    }
+  }
+
+  // overseasFeeRate（FR-021）
+  let safeOverseasFeeRate = existing.overseas_fee_rate;
+  if (req.body.overseasFeeRate != null) {
+    if (category === 'credit_card') {
+      const v = Number(req.body.overseasFeeRate);
+      if (!Number.isFinite(v) || v < 0 || v > 1000) {
+        return res.status(400).json({ error: '海外手續費率須為 0~1000（千分點）', code: 'ValidationError', field: 'overseasFeeRate' });
+      }
+      safeOverseasFeeRate = Math.round(v);
+    } else {
+      safeOverseasFeeRate = null;
+    }
+  }
+
   let safeLinkedBankId = null;
-  if (safeType === '信用卡' && linkedBankId) {
-    const bankAcc = queryOne("SELECT id FROM accounts WHERE id = ? AND user_id = ? AND account_type = '銀行'", [linkedBankId, req.userId]);
+  if (category === 'credit_card' && linkedBankId) {
+    const bankAcc = queryOne(
+      "SELECT id FROM accounts WHERE id = ? AND user_id = ? AND (category = 'bank' OR account_type = '銀行')",
+      [linkedBankId, req.userId]
+    );
     if (!bankAcc) return res.status(400).json({ error: '指定的銀行帳戶不存在' });
     safeLinkedBankId = linkedBankId;
   }
-  db.run("UPDATE accounts SET name = ?, initial_balance = ?, icon = ?, currency = ?, account_type = ?, exclude_from_total = ?, linked_bank_id = ? WHERE id = ? AND user_id = ?",
-    [name, initialBalance || 0, safeIcon, currency, safeType, safeExclude, safeLinkedBankId, req.params.id, req.userId]);
+
+  const safeInitialBalance = Math.round(Number(initialBalance) || 0);
+  const nowMs = Date.now();
+  db.run(
+    "UPDATE accounts SET name = ?, category = ?, initial_balance = ?, icon = ?, currency = ?, account_type = ?, exclude_from_total = ?, linked_bank_id = ?, overseas_fee_rate = ?, updated_at = ? WHERE id = ? AND user_id = ?",
+    [safeName, category, safeInitialBalance, safeIcon, newCurrency, safeAccountType, safeExclude, safeLinkedBankId, safeOverseasFeeRate, nowMs, req.params.id, req.userId]
+  );
   saveDB();
-  res.json({ ok: true });
+  res.json({ ok: true, updatedAt: nowMs });
+};
+app.put('/api/accounts/:id', updateAccountHandler);
+// PATCH 別名（契約使用 PATCH，保留 PUT backward compat）
+app.patch('/api/accounts/:id', updateAccountHandler);
+// 第二別名：契約路徑 /api/accounts/:accountId（與 :id 同效）
+app.patch('/api/accounts/:accountId', (req, res) => {
+  req.params.id = req.params.accountId;
+  return updateAccountHandler(req, res);
 });
 
+// FR-006 / FR-014a（T034）：DELETE 加 expectedUpdatedAt + 引用筆數明確回報
 app.delete('/api/accounts/:id', (req, res) => {
+  // IDOR
+  const existing = ownsResource('accounts', 'id', req.params.id, req.userId);
+  if (!existing) return res.status(404).json({ error: '資源不存在或無權限', code: 'NotFound' });
+
+  // 樂觀鎖（向後相容：若 body / query 有提供才驗證）
+  const expectedUpdatedAt = req.body?.expectedUpdatedAt ?? req.body?.expected_updated_at ?? req.query?.expected_updated_at;
+  if (expectedUpdatedAt != null) {
+    try {
+      assertOptimisticLock('accounts', 'id', req.params.id, expectedUpdatedAt);
+    } catch (e) {
+      return sendLockError(res, e);
+    }
+  }
+
   const count = queryOne("SELECT COUNT(*) as cnt FROM accounts WHERE user_id = ?", [req.userId])?.cnt || 0;
   if (count <= 1) return res.status(400).json({ error: '至少需保留一個帳戶' });
-  const hasTx = queryOne("SELECT id FROM transactions WHERE account_id = ? AND user_id = ? LIMIT 1", [req.params.id, req.userId]);
-  if (hasTx) return res.status(400).json({ error: '此帳戶下有交易記錄，請先移轉至其他帳戶' });
+
+  // FR-006：引用檢查（含 to_account_id）
+  const refCount = queryOne(
+    "SELECT COUNT(*) AS c FROM transactions WHERE (account_id = ? OR to_account_id = ?) AND user_id = ?",
+    [req.params.id, req.params.id, req.userId]
+  )?.c || 0;
+  if (refCount > 0) {
+    return res.status(422).json({
+      error: `請先處理該帳戶上的 ${refCount} 筆交易（可批次移到其他帳戶或刪除）`,
+      code: 'AccountInUse',
+      referenceCount: refCount,
+    });
+  }
+
   db.run("UPDATE accounts SET linked_bank_id = NULL WHERE linked_bank_id = ? AND user_id = ?", [req.params.id, req.userId]);
   db.run("DELETE FROM accounts WHERE id = ? AND user_id = ?", [req.params.id, req.userId]);
   saveDB();
   res.json({ ok: true });
+});
+
+// FR-007（T032）：GET /api/accounts/:accountId 單筆（含 currentBalance 計算）
+app.get('/api/accounts/:accountId', (req, res) => {
+  const a = ownsResource('accounts', 'id', req.params.accountId, req.userId);
+  if (!a) return res.status(404).json({ error: 'NotFound' });
+  const accountCurrency = normalizeCurrency(a.currency);
+  // FR-007：餘額僅含 date <= todayInTaipei() 的交易（未來交易不計）
+  const today = taipeiTime.todayInTaipei();
+  const txs = queryAll(
+    "SELECT type, amount, currency, original_amount FROM transactions WHERE account_id = ? AND user_id = ? AND date <= ?",
+    [a.id, req.userId, today]
+  );
+  let balance = Number(a.initial_balance) || 0;
+  txs.forEach(t => {
+    const v = Number(t.original_amount) > 0 ? Number(t.original_amount) : Number(t.amount) || 0;
+    if (t.type === 'income' || t.type === 'transfer_in') balance += v;
+    else if (t.type === 'expense' || t.type === 'transfer_out') balance -= v;
+  });
+  // 引用筆數（給前端決定是否鎖 currency 欄位）
+  const referenceCount = queryOne(
+    "SELECT COUNT(*) AS c FROM transactions WHERE (account_id = ? OR to_account_id = ?) AND user_id = ?",
+    [a.id, a.id, req.userId]
+  )?.c || 0;
+  res.json({
+    id: a.id,
+    name: a.name,
+    category: a.category || categoryFromAccountType(a.account_type),
+    accountType: a.account_type,
+    initialBalance: a.initial_balance,
+    currency: accountCurrency,
+    icon: normalizeAccountIcon(a.icon),
+    excludeFromTotal: a.exclude_from_total === 1,
+    linkedBankId: a.linked_bank_id || null,
+    overseasFeeRate: a.overseas_fee_rate ?? null,
+    currentBalance: Math.round(balance),
+    referenceCount,
+    updatedAt: Number(a.updated_at) || 0,
+  });
 });
 
 app.post('/api/accounts/credit-card-repayment', (req, res) => {
@@ -4801,11 +5001,14 @@ app.get('/api/transactions', (req, res) => {
       ...r,
       categoryId: r.category_id,
       accountId: r.account_id,
+      toAccountId: r.to_account_id || null,
       currency: normalizeCurrency(r.currency),
       originalAmount: Number(r.original_amount) > 0 ? Number(r.original_amount) : Number(r.amount) || 0,
       fxRate: Number(r.fx_rate) > 0 ? Number(r.fx_rate) : 1,
       fxFee: Number(r.fx_fee) || 0,
+      twdAmount: Number(r.twd_amount) || Number(r.amount) || 0,
       excludeFromStats: r.exclude_from_stats === 1,
+      linkedId: r.linked_id || '',
       createdAt: r.created_at,
       updatedAt: r.updated_at,
     })),
@@ -4813,13 +5016,20 @@ app.get('/api/transactions', (req, res) => {
   });
 });
 
+// FR-010~018, FR-022a（T035）：POST 同步寫入 twd_amount（與 amount 對齊既有 TWD-eq 語意）
 app.post('/api/transactions', (req, res) => {
   const { type, amount, date: rawDate, categoryId, accountId, note, excludeFromStats } = req.body;
   const date = normalizeDate(rawDate);
   if (!date) return res.status(400).json({ error: '日期格式無效' });
+  if (!taipeiTime.isValidIsoDate(date)) return res.status(400).json({ error: '日期格式無效', code: 'ValidationError', field: 'date' });
   if (!['income', 'expense', 'transfer_in', 'transfer_out'].includes(type)) return res.status(400).json({ error: '交易類型無效' });
   if (categoryId && !assertOwned('categories', categoryId, req.userId)) return res.status(400).json({ error: '分類不存在或無權限' });
   if (accountId && !assertOwned('accounts', accountId, req.userId)) return res.status(400).json({ error: '帳戶不存在或無權限' });
+  // FR-011：amount > 0 後端強制
+  const numAmt = Number(req.body.originalAmount ?? amount);
+  if (!Number.isFinite(numAmt) || numAmt <= 0) {
+    return res.status(400).json({ error: '金額必須大於 0', code: 'ValidationError', field: 'amount' });
+  }
   let converted;
   try {
     converted = convertToTwd(req.body.originalAmount ?? amount, req.body.currency, req.body.fxRate, req.userId);
@@ -4828,21 +5038,84 @@ app.post('/api/transactions', (req, res) => {
   }
   const fxFee = Math.max(0, Number(req.body.fxFee) || 0);
   const totalTwd = converted.twdAmount + fxFee;
+  // FR-022a：以 moneyDecimal 重算 twd_amount（與 totalTwd 一致；用 decimal 避免漂移）
+  const twdAmountInt = moneyDecimal.computeTwdAmount(
+    Math.round(converted.originalAmount * 100) / 100,
+    String(converted.fxRate || 1),
+    fxFee
+  );
   const id = uid();
   const now = Date.now();
-  db.run("INSERT INTO transactions (id, user_id, type, amount, currency, original_amount, fx_rate, fx_fee, date, category_id, account_id, note, exclude_from_stats, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-    [id, req.userId, type, totalTwd, converted.currency, converted.originalAmount, converted.fxRate, fxFee, date, categoryId, accountId, note || '', excludeFromStats ? 1 : 0, now, now]);
+  db.run(
+    "INSERT INTO transactions (id, user_id, type, amount, currency, original_amount, fx_rate, fx_fee, twd_amount, date, category_id, account_id, note, exclude_from_stats, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+    [id, req.userId, type, totalTwd, converted.currency, converted.originalAmount, converted.fxRate, fxFee, twdAmountInt, date, categoryId, accountId, note || '', excludeFromStats ? 1 : 0, now, now]
+  );
   saveDB();
-  res.json({ id });
+  res.status(201).json({ id, twdAmount: twdAmountInt, updatedAt: now });
 });
 
-app.put('/api/transactions/:id', (req, res) => {
+// FR-014a（T036）：GET /api/transactions/:txId 單筆（樂觀鎖讀取支援）
+app.get('/api/transactions/:txId', (req, res) => {
+  const t = ownsResource('transactions', 'id', req.params.txId, req.userId);
+  if (!t) return res.status(404).json({ error: 'NotFound' });
+  res.json({
+    id: t.id,
+    accountId: t.account_id,
+    toAccountId: t.to_account_id || null,
+    type: t.type,
+    amount: t.amount,
+    currency: normalizeCurrency(t.currency),
+    originalAmount: t.original_amount,
+    fxRate: t.fx_rate,
+    fxFee: t.fx_fee,
+    twdAmount: t.twd_amount,
+    date: t.date,
+    categoryId: t.category_id,
+    note: t.note || '',
+    excludeFromStats: t.exclude_from_stats === 1,
+    linkedId: t.linked_id || '',
+    createdAt: t.created_at,
+    updatedAt: Number(t.updated_at) || 0,
+  });
+});
+
+// FR-014 / FR-014a（T037）：PUT/PATCH 加 expectedUpdatedAt 樂觀鎖
+const updateTransactionHandler = (req, res) => {
+  // IDOR
+  const existing = ownsResource('transactions', 'id', req.params.id, req.userId);
+  if (!existing) return res.status(404).json({ error: '資源不存在或無權限', code: 'NotFound' });
+
+  // 樂觀鎖（向後相容：有 expectedUpdatedAt 才驗證）
+  if (req.body.expectedUpdatedAt != null || req.body.expected_updated_at != null) {
+    try {
+      const expected = req.body.expectedUpdatedAt ?? req.body.expected_updated_at;
+      assertOptimisticLock('transactions', 'id', req.params.id, expected);
+    } catch (e) {
+      return sendLockError(res, e);
+    }
+  }
+
+  // 禁止 transfer_* PATCH 任意欄位（spec：轉帳僅整對刪除）
+  if ((existing.type === 'transfer_in' || existing.type === 'transfer_out') &&
+      (req.body.type != null && req.body.type !== existing.type)) {
+    return res.status(422).json({
+      error: '轉帳交易僅能整對刪除，無法逐筆變更類型（請改用刪除後重建）',
+      code: 'TransferImmutable',
+    });
+  }
+
   const { type, amount, date: rawDate, categoryId, accountId, note, excludeFromStats } = req.body;
   const date = normalizeDate(rawDate);
   if (!date) return res.status(400).json({ error: '日期格式無效' });
   if (!['income', 'expense', 'transfer_in', 'transfer_out'].includes(type)) return res.status(400).json({ error: '交易類型無效' });
   if (categoryId && !assertOwned('categories', categoryId, req.userId)) return res.status(400).json({ error: '分類不存在或無權限' });
   if (accountId && !assertOwned('accounts', accountId, req.userId)) return res.status(400).json({ error: '帳戶不存在或無權限' });
+
+  const numAmt = Number(req.body.originalAmount ?? amount);
+  if (!Number.isFinite(numAmt) || numAmt <= 0) {
+    return res.status(400).json({ error: '金額必須大於 0', code: 'ValidationError', field: 'amount' });
+  }
+
   let converted;
   try {
     converted = convertToTwd(req.body.originalAmount ?? amount, req.body.currency, req.body.fxRate, req.userId);
@@ -4851,17 +5124,43 @@ app.put('/api/transactions/:id', (req, res) => {
   }
   const fxFee = Math.max(0, Number(req.body.fxFee) || 0);
   const totalTwd = converted.twdAmount + fxFee;
-  db.run("UPDATE transactions SET type=?, amount=?, currency=?, original_amount=?, fx_rate=?, fx_fee=?, date=?, category_id=?, account_id=?, note=?, exclude_from_stats=?, updated_at=? WHERE id=? AND user_id=?",
-    [type, totalTwd, converted.currency, converted.originalAmount, converted.fxRate, fxFee, date, categoryId, accountId, note || '', excludeFromStats ? 1 : 0, Date.now(), req.params.id, req.userId]);
+  const twdAmountInt = moneyDecimal.computeTwdAmount(
+    Math.round(converted.originalAmount * 100) / 100,
+    String(converted.fxRate || 1),
+    fxFee
+  );
+  const nowMs = Date.now();
+  db.run(
+    "UPDATE transactions SET type=?, amount=?, currency=?, original_amount=?, fx_rate=?, fx_fee=?, twd_amount=?, date=?, category_id=?, account_id=?, note=?, exclude_from_stats=?, updated_at=? WHERE id=? AND user_id=?",
+    [type, totalTwd, converted.currency, converted.originalAmount, converted.fxRate, fxFee, twdAmountInt, date, categoryId, accountId, note || '', excludeFromStats ? 1 : 0, nowMs, req.params.id, req.userId]
+  );
   saveDB();
-  res.json({ ok: true });
+  res.json({ ok: true, updatedAt: nowMs });
+};
+app.put('/api/transactions/:id', updateTransactionHandler);
+app.patch('/api/transactions/:id', updateTransactionHandler);
+app.patch('/api/transactions/:txId', (req, res) => {
+  req.params.id = req.params.txId;
+  return updateTransactionHandler(req, res);
 });
 
+// FR-014 / FR-014a（T038）：DELETE 加 expectedUpdatedAt + 轉帳連動刪除（已支援）
 app.delete('/api/transactions/:id', (req, res) => {
-  // 若為轉帳交易，同時刪除對應的 linked 交易
-  const tx = queryOne("SELECT linked_id FROM transactions WHERE id = ? AND user_id = ?", [req.params.id, req.userId]);
+  // IDOR
+  const tx = ownsResource('transactions', 'id', req.params.id, req.userId);
+  if (!tx) return res.status(404).json({ error: 'NotFound' });
+
+  const expectedUpdatedAt = req.body?.expectedUpdatedAt ?? req.body?.expected_updated_at ?? req.query?.expected_updated_at;
+  if (expectedUpdatedAt != null) {
+    try {
+      assertOptimisticLock('transactions', 'id', req.params.id, expectedUpdatedAt);
+    } catch (e) {
+      return sendLockError(res, e);
+    }
+  }
+
   db.run("DELETE FROM transactions WHERE id = ? AND user_id = ?", [req.params.id, req.userId]);
-  if (tx && tx.linked_id) {
+  if (tx.linked_id) {
     db.run("DELETE FROM transactions WHERE id = ? AND user_id = ?", [tx.linked_id, req.userId]);
   }
   saveDB();

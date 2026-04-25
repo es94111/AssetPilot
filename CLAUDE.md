@@ -2,58 +2,73 @@
 
 Please refer to the [Project Charter](.specify/memory/constitution.md) (.specify/memory/constitution.md), which serves as the guiding principle for all development work.
 
-1. Think Before You Code
+### 1. Think Before Coding
 
-Don’t make assumptions. Don’t hide your confusion. Present trade-offs.
+**Do not assume. Do not hide confusion. Surface trade-offs.**
 
-LLMs often silently choose an interpretation and execute it. This principle enforces explicit reasoning:
+LLMs often silently pick one interpretation and proceed. This principle enforces explicit reasoning:
 
-State assumptions explicitly — If you’re unsure, ask instead of guessing
+* **State assumptions clearly** — If uncertain, ask instead of guessing
+* **Present multiple interpretations** — When ambiguity exists, don’t silently choose
+* **Raise objections when appropriate** — If there’s a simpler approach, say it
+* **Pause when confused** — Point out unclear areas and request clarification
 
-Present multiple interpretations — When ambiguity exists, don’t silently choose
+---
 
-Speak up when appropriate — If there’s a simpler way, say so
+### 2. Simplicity First
 
-Pause when confused — Point out what’s unclear and ask for clarification
+**Solve the problem with the least amount of code. Avoid over-engineering.**
 
-2. Simplicity First
+Counteract the tendency to overbuild:
 
-Solve problems with the least amount of code. Don’t over-speculate.
+* Do not add features beyond what’s requested
+* Do not create abstractions for one-off code
+* Do not add unrequested “flexibility” or “configurability”
+* Do not handle scenarios that won’t realistically occur
+* If 200 lines can be written in 50, rewrite it
 
-Counter the tendency toward over-engineering:
+**Litmus test:** Would a senior engineer consider this overly complex? If yes, simplify.
 
-Don’t add features beyond what’s required
+---
 
-Don’t create abstractions for one-off code
+### 3. Precise Changes
 
-Don’t add unsolicited “flexibility” or “configurability”
-
-Don’t handle errors for scenarios that can’t happen
-
-If 200 lines of code can be written in 50, rewrite it
-
-Testing criterion: Would a senior engineer find this overly complex? If so, simplify it.
-
-3. Make Precise Changes
-
-Touch only what you must. Clean up only the mess you created.
+**Only touch what must be touched. Only clean up what you break.**
 
 When editing existing code:
 
-Do not “improve” adjacent code, comments, or formatting
-
-Do not refactor something that isn’t broken
-
-Match the existing style, even if you prefer a different approach
-
-If you notice unrelated dead code, mention it—do not delete it
+* Do not “improve” adjacent code, comments, or formatting
+* Do not refactor what isn’t broken
+* Match the existing style, even if you prefer a different one
+* If you notice unrelated dead code, mention it — don’t remove it
 
 When your changes create orphaned code:
 
-Remove imports/variables/functions that have become obsolete due to your changes
+* Remove imports/variables/functions made obsolete by your changes
+* Do not remove pre-existing dead code unless explicitly asked
 
-Do not delete pre-existing dead code unless requested
+**Litmus test:** Every modified line should be directly traceable to the user’s request.
 
-Verification criterion: Every line of modification should be directly traceable to a user request.
+---
 
-*Translated with [DeepL.com](https://www.deepl.com/?utm_campaign=product&utm_source=web_translator&utm_medium=web&utm_content=copy_free_translation) (free version)*
+### 4. Goal-Driven Execution
+
+**Define success criteria. Iterate until achieved.**
+
+Turn vague instructions into verifiable goals:
+
+| Instead of...      | Transform into...                                           |
+| ------------------ | ----------------------------------------------------------- |
+| “Add validation” | “Write tests for invalid inputs, then make them pass”     |
+| “Fix the bug”    | “Write a test that reproduces the bug, then make it pass” |
+| “Refactor X”     | “Ensure tests pass before and after refactoring”          |
+
+For multi-step tasks, outline a short plan:
+
+```
+1. [Step] → Verify: [Check]
+2. [Step] → Verify: [Check]
+3. [Step] → Verify: [Check]
+```
+
+Strong success criteria enable independent iteration. Weak ones (“make it work”) require constant clarification.

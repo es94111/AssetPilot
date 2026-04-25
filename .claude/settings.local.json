@@ -93,7 +93,13 @@
       "Bash(git worktree *)",
       "PowerShell(.specify/scripts/powershell/check-prerequisites.ps1 -Json -PathsOnly)",
       "PowerShell(.specify/scripts/powershell/setup-plan.ps1 -Json)",
-      "PowerShell(.specify/scripts/powershell/check-prerequisites.ps1 -Json -RequireTasks -IncludeTasks)"
+      "PowerShell(.specify/scripts/powershell/check-prerequisites.ps1 -Json -RequireTasks -IncludeTasks)",
+      "Bash(echo \"exit=$?\")",
+      "Bash(npx --yes @redocly/cli lint specs/004-budgets-recurring/contracts/budgets-recurring.openapi.yaml)",
+      "Bash(npx --yes @redocly/cli lint specs/004-budgets-recurring/contracts/budgets-recurring.openapi.yaml --max-problems 50)",
+      "Bash(awk '/app\\\\.put.*\\\\/api\\\\/recurring/,/^\\\\}\\\\\\);/' server.js)",
+      "Bash(awk '/app\\\\.delete.*\\\\/api\\\\/transactions/,/^\\\\}\\\\\\);/' server.js)",
+      "Bash(awk '/app\\\\.get.*\\\\/api\\\\/budgets/,/^\\\\}\\\\\\);/' server.js)"
     ]
   }
 }

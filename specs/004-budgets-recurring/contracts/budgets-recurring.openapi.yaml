@@ -44,8 +44,7 @@ components:
           type: string
           description: 預算 ID
         categoryId:
-          type: string
-          nullable: true
+          type: [string, "null"]
           description: 綁定子分類 ID；NULL 代表「整月總支出預算」
         yearMonth:
           type: string
@@ -73,8 +72,7 @@ components:
       required: [yearMonth, amount]
       properties:
         categoryId:
-          type: string
-          nullable: true
+          type: [string, "null"]
           description: 綁定子分類 ID；省略或 null 代表「整月總支出預算」
         yearMonth:
           type: string
@@ -107,11 +105,9 @@ components:
           minimum: 1
           description: 本幣（TWD）正整數；外幣以 fxRate 折算後存（FR-016）
         categoryId:
-          type: string
-          nullable: true
+          type: [string, "null"]
         accountId:
-          type: string
-          nullable: true
+          type: [string, "null"]
         frequency:
           type: string
           enum: [daily, weekly, monthly, yearly]
@@ -125,9 +121,8 @@ components:
           type: boolean
           description: 停用中的配方不被產生流程處理（FR-017）
         lastGenerated:
-          type: string
+          type: [string, "null"]
           format: date
-          nullable: true
           description: 上次產生日期；NULL 代表尚未產生過（FR-014 首產日邏輯）
         currency:
           type: string
@@ -141,9 +136,8 @@ components:
             FR-024：當綁定分類／帳戶被刪除時自動置 true，產生流程暫停；
             FR-024b：使用者編輯改選有效項並儲存後自動清除為 false。
         nextDate:
-          type: string
+          type: [string, "null"]
           format: date
-          nullable: true
           description: |
             伺服器計算之下次產生日期（依 FR-013 / FR-022）；
             若 < 今日且 isActive=true 且 needsAttention=false，
@@ -163,11 +157,9 @@ components:
           type: integer
           minimum: 1
         categoryId:
-          type: string
-          nullable: true
+          type: [string, "null"]
         accountId:
-          type: string
-          nullable: true
+          type: [string, "null"]
         frequency:
           type: string
           enum: [daily, weekly, monthly, yearly]
@@ -191,20 +183,17 @@ components:
         id:
           type: string
         sourceRecurringId:
-          type: string
-          nullable: true
+          type: [string, "null"]
           description: |
             FR-025：衍生交易持久記錄產生它的固定收支配方 ID；
             FR-027：來源配方被刪後此值仍保留為原值（無 ON DELETE CASCADE）。
         sourceRecurringName:
-          type: string
-          nullable: true
+          type: [string, "null"]
           description: |
             LEFT JOIN recurring.note 取得；NULL 表示「來源配方已刪除」（FR-027 退化為純文字）。
         scheduledDate:
-          type: string
+          type: [string, "null"]
           format: date
-          nullable: true
           description: |
             FR-028 / Key Entities：該筆衍生交易應產生的目標日期；
             (sourceRecurringId, scheduledDate) 為唯一鍵保護並發冪等。

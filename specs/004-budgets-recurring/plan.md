@@ -5,7 +5,7 @@
 
 ## Summary
 
-本計畫將 004 規格（5 user story／**33 base FR + 9 sub-FR（`a/b/c` 後綴：FR-009a / 021a / 021b / 021c / 024a / 024b）= 36 FR + OUT-001/002**／10 Clarification（3 輪）／8 SC）落地至既有單體應用。**完全不引入新技術棧**：沿用 001 / 002 / 003 已建立的 Node.js 24+、Express 5、單一 `server.js`、根目錄 SPA（`index.html` / `app.js` / `style.css`）、sql.js 記憶體執行 + `database.db` 檔案持久化、JWT httpOnly Cookie、OpenAPI 3.2.0 契約、`decimal.js` / `lib/moneyDecimal.js` / `lib/taipeiTime.js`、`lib/exchangeRateCache.js` 等既有依賴；本功能**不引入任何新 npm 套件、不引入新前端 CDN 資源、不引入新外部 API**。
+本計畫將 004 規格（5 user story／**29 base FR + 6 sub-FR（`a/b/c` 後綴：FR-009a / 021a / 021b / 021c / 024a / 024b）= 35 FR + OUT-001/002/003**／10 Clarification（3 輪）／8 SC）落地至既有單體應用。**完全不引入新技術棧**：沿用 001 / 002 / 003 已建立的 Node.js 24+、Express 5、單一 `server.js`、根目錄 SPA（`index.html` / `app.js` / `style.css`）、sql.js 記憶體執行 + `database.db` 檔案持久化、JWT httpOnly Cookie、OpenAPI 3.2.0 契約、`decimal.js` / `lib/moneyDecimal.js` / `lib/taipeiTime.js`、`lib/exchangeRateCache.js` 等既有依賴；本功能**不引入任何新 npm 套件、不引入新前端 CDN 資源、不引入新外部 API**。
 
 既有實作（baseline）已涵蓋本功能約 50% 表面：
 
@@ -203,8 +203,10 @@ specs/004-budgets-recurring/
 │                                      #  - renderRecurring()：三日期卡片 + 待執行/需處理
 │                                      #    色階分層 + 編輯對話框佔位下拉
 │                                      #  - 交易列表行末「📌 來自配方」chip
-│                                      #  - 移除原本 client-trigger /api/recurring/process
-│                                      #    呼叫（line 554；改由 server-side 登入時觸發）
+│                                      #  - 保留既有 client-trigger /api/recurring/process
+│                                      #    呼叫（line 554）作為備援；FR-028 唯一鍵保證
+│                                      #    server-side 與 client 重複觸發冪等，與 stock-
+│                                      #    recurring 同步走 client trigger 維持對稱
 ├── index.html                         # 既有；補預算月份 nav 與 recurring 卡片新欄位
 ├── style.css                          # 既有；新增進度條四段配色 class、recurring
 │                                      #  卡片紅／橘／黃色階、來源 chip 樣式

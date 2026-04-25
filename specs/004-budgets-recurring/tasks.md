@@ -7,6 +7,8 @@ description: "預算與固定收支（004-budgets-recurring）任務分解"
 **Input**: 設計文件位於 `/specs/004-budgets-recurring/`
 **Prerequisites**: [plan.md](./plan.md)、[spec.md](./spec.md)、[research.md](./research.md)、[data-model.md](./data-model.md)、[contracts/budgets-recurring.openapi.yaml](./contracts/budgets-recurring.openapi.yaml)、[quickstart.md](./quickstart.md)
 
+**Scope**: 5 user story／**29 base FR + 6 sub-FR（`a/b/c` 後綴：FR-009a / 021a / 021b / 021c / 024a / 024b）= 35 FR + OUT-001/002/003**／10 Clarification（3 輪）／8 SC（其中 SC-007 屬 post-launch retention，不在 build-time 驗證範疇）。
+
 **Tests**: 既有專案無自動化測試框架（與 001 / 002 / 003 一致）；本功能不引入新測試 dependency。所有驗證走 [quickstart.md](./quickstart.md) 的可重現手動流程。**故任務清單不含 Tests 區塊。**
 
 **Organization**: 任務以 user story 為主軸分組；Setup（Phase 1）與 Foundational（Phase 2）為跨 story 共用基礎設施。
@@ -66,7 +68,7 @@ description: "預算與固定收支（004-budgets-recurring）任務分解"
 
 ### 後端
 
-- [ ] T030 [US1] 在 [server.js](../../server.js) 取代既有 `app.get('/api/budgets', …)`（行 5995）：將 `used` 計算改用 `SUM(twd_amount)`（INTEGER）而非 `SUM(amount)`（REAL），並補 `exclude_from_stats = 0` 條件；回應整形補 `createdAt` / `updatedAt` 欄位。對應 FR-005、FR-007、FR-010。
+- [ ] T030 [US1] 在 [server.js](../../server.js) 取代既有 `app.get('/api/budgets', …)`（行 5995）：將 `used` 計算改用 `SUM(twd_amount)`（INTEGER）而非 `SUM(amount)`（REAL），並補 `exclude_from_stats = 0` 條件；回應整形補 `createdAt` / `updatedAt` 欄位。每次查詢僅回傳 `WHERE year_month = ?` 該月，**不**做跨月聚合或 `LAG()` 結轉計算（FR-009 不結轉的程式碼層保證）。對應 FR-005、FR-007、FR-009、FR-010。
 - [ ] T031 [US1] 在 [server.js](../../server.js) 取代既有 `app.post('/api/budgets', …)`（行 6012）：(a) 補 `amount` 必為正整數（`Number.isInteger(amount) && amount >= 1`）拒絕回 `400`；(b) 補 `categoryId` 若非 NULL 須為 leaf-only（`assertOwned('categories', ...)` + `parent_id != ''`）；(c) `yearMonth` 格式驗證 `^\d{4}-(0[1-9]|1[0-2])$`；(d) 既有 upsert 行為改為「同 (user_id, year_month, category_id) 已存在則回 `409 Conflict` 訊息『該月份此分類已存在預算，請改為編輯既有預算』」；(e) 新建時補 `created_at` / `updated_at` 欄位寫入。對應 FR-001 ~ FR-004、FR-009a。
 - [ ] T032 [US1] 在 [server.js](../../server.js) 新增 `app.patch('/api/budgets/:id', …)`：僅接受 `amount` 欄位變更；正整數驗證同 T031；`UPDATE budgets SET amount = ?, updated_at = ? WHERE id = ? AND user_id = ?`；不存在或不屬於該使用者回 `404`。對應 FR-008、契約 `paths./api/budgets/{id}.patch`。
 - [ ] T033 [P] [US1] 在 [server.js](../../server.js) 既有 `app.delete('/api/budgets/:id', …)`（行 6027）已正確；本任務僅補回應 `{ ok: true }` 是否一致並驗證 IDOR 守則（`AND user_id = ?` 已存在）。
@@ -74,7 +76,7 @@ description: "預算與固定收支（004-budgets-recurring）任務分解"
 ### 前端
 
 - [ ] T034 [US1] 在 [app.js](../../app.js) `renderBudget()`（約行 2598）改寫進度條 class 邏輯：新增 `budgetBarClass(pct)` 函式，依 `< 0.5 / 0.5–0.79 / 0.8–0.99 / >= 1.0` 回 `budget-bar--green / --neutral / --yellow / --red`；對每筆預算 row 渲染時套用對應 class；超支時百分比文字額外套 `budget-bar__pct--red` class。對應 FR-006、Edge Case「進度條配色閾值臨界」。
-- [ ] T035 [US1] 在 [app.js](../../app.js) `renderBudget()` 新增月份切換器：HTML 中加入 `<button id="budgetMonthPrev">‹</button> <span id="budgetMonthLabel">YYYY-MM</span> <button id="budgetMonthNext">›</button>`；JavaScript 維護當前檢視月份 `state.budgetMonth`（預設 `taipeiTime.monthInTaipei(new Date())`）；切換時 `await API.get('/api/budgets?yearMonth=' + state.budgetMonth)` 並重繪；無預算時顯示空狀態 + 「新增預算」入口。對應 FR-007、Acceptance Scenario US1.5。
+- [ ] T035 [US1] 在 [app.js](../../app.js) `renderBudget()` 新增月份切換器：HTML 中加入 `<button id="budgetMonthPrev">‹</button> <span id="budgetMonthLabel">YYYY-MM</span> <button id="budgetMonthNext">›</button>`；JavaScript 維護當前檢視月份 `state.budgetMonth`（預設取當月 YYYY-MM）；切換時 `await API.get('/api/budgets?yearMonth=' + state.budgetMonth)` 並重繪；無預算時顯示空狀態 + 「新增預算」入口。**前置**：若 `lib/taipeiTime.js` 無 `monthInTaipei(date)` 函式（僅有 `todayInTaipei`），先在該檔補一個 helper：`function monthInTaipei(date) { return todayInTaipei(date).slice(0, 7); }` 並 export；屬同檔擴充、不引入新 dependency。對應 FR-007、FR-023、Acceptance Scenario US1.6。
 - [ ] T036 [US1] 在 [app.js](../../app.js) 預算編輯對話框新增「編輯既有預算」流程：點擊既有預算的 ✎ 按鈕呼叫 `API.patch('/api/budgets/' + id, { amount: newAmount })`；儲存成功後重抓 `GET /api/budgets?yearMonth=...` 即時刷新進度條。對應 FR-008。
 - [ ] T037 [US1] 在 [app.js](../../app.js) 新增預算對話框中分類下拉的 leaf-only 篩選：迭代 `state.categories` 時跳過 `parent_id === ''` 的父分類本身、僅以群組標題形式呈現（`<optgroup label="餐飲">`）並列出其子分類為可選 `<option>`。對應 FR-004。
 - [ ] T038 [P] [US1] 在 [style.css](../../style.css) 新增四個 class：`.budget-bar { transition: background-color .25s ease, color .25s ease; }`、`.budget-bar--green { background: #22c55e; }`、`.budget-bar--neutral { background: #94a3b8; }`、`.budget-bar--yellow { background: #eab308; }`、`.budget-bar--red { background: #ef4444; color: #fff; }`、`.budget-bar__pct--red { color: #ef4444; font-weight: 700; }`；以及月份切換器 nav 樣式 `.budget-month-nav { display: flex; ... }`。對應 FR-006、[research.md §5](./research.md)。
@@ -99,7 +101,7 @@ description: "預算與固定收支（004-budgets-recurring）任務分解"
 
 ### 前端
 
-- [ ] T044 [US2] 在 [app.js](../../app.js) `renderRecurring()` 補三日期顯示：每張卡片內容渲染 `<div class="recurring-dates">起始 ${startDate} · 上次 ${lastGenerated || '—'} · 下次 ${nextDate || '—'}</div>`。對應 FR-018、Acceptance Scenario US3.1。
+- [ ] T044 [US2] 在 [app.js](../../app.js) `renderRecurring()` 補三日期顯示：每張卡片內容渲染 `<div class="recurring-dates">起始 ${startDate} · 上次 ${lastGenerated || '—'} · 下次 ${nextDate || '—'}</div>`。對應 FR-018、Acceptance Scenario US3.1。**註**：FR-018 邏輯上隸屬 US3，但「列表頁基線資訊」必須與 US2 配方 CRUD 同期落地（沒有日期顯示則 US2 無從驗證自動產生結果）；故此項提前於 US2 phase 實作。US3 phase 只新增警示色階（T050），不改本任務的 markup。
 - [ ] T045 [US2] 在 [app.js](../../app.js) 配方新增／編輯對話框：金額輸入欄位設 `<input type="number" min="1" step="1">` 不接受小數；分類下拉沿用 leaf-only 邏輯（與 T037 一致）；幣別下拉與匯率欄位沿用 002 既有 `recurringForm.fxRate` 處理；submit 前前端再做一次 `Number.isInteger(amount) && amount >= 1` 檢查避免 round-trip。對應 FR-011、FR-016。
 
 **Checkpoint**: US2 完整可獨立驗證 — quickstart.md §3 全部步驟通過；長時間未登入後再登入會補產出全部交易，每筆帶 `source_recurring_id` 與 `scheduled_date`；並發兩 tab 不重複產出。
@@ -151,10 +153,10 @@ description: "預算與固定收支（004-budgets-recurring）任務分解"
 
 ### 後端
 
-- [ ] T070 [US5] 在 [server.js](../../server.js) 取代既有 `app.put('/api/recurring/:id', …)`（行 6059）：(a) 先 `queryOne` 取舊配方資料；(b) `oldStartDate = old.start_date`、`oldFrequency = old.frequency`；(c) 計算 `newLastGenerated = (newStartDate !== oldStartDate) ? null : old.last_generated`（FR-021a / FR-021b 分支邏輯）；(d) 計算 `newNeedsAttention = 0`（一律清除，因新欄位皆已驗有效；FR-024b）；(e) `UPDATE recurring SET amount=?, category_id=?, account_id=?, frequency=?, start_date=?, note=?, currency=?, fx_rate=?, last_generated=?, needs_attention=?, updated_at=? WHERE id=? AND user_id=?`；(f) **嚴格不**對 `transactions` 表觸發任何 UPDATE（FR-021c 程式碼層護欄）。對應 FR-021a、FR-021b、FR-021c、FR-024b。
+- [ ] T070 [US5] 在 [server.js](../../server.js) 取代既有 `app.put('/api/recurring/:id', …)`（行 6059）：(a) 先 `queryOne` 取舊配方資料；(b) `oldStartDate = old.start_date`、`oldFrequency = old.frequency`；(c) 計算 `newLastGenerated = (newStartDate !== oldStartDate) ? null : old.last_generated`（FR-021a / FR-021b 分支邏輯）；(d) 計算 `newNeedsAttention = 0`（一律清除，因新欄位皆已驗有效；FR-024b）；(e) `UPDATE recurring SET amount=?, category_id=?, account_id=?, frequency=?, start_date=?, note=?, currency=?, fx_rate=?, last_generated=?, needs_attention=?, updated_at=? WHERE id=? AND user_id=?`；(f) **嚴格不**對 `transactions` 表觸發任何 UPDATE（FR-021c 程式碼層護欄）；(g) `currency` / `fx_rate` 變更後，下次新產出之衍生交易使用新值，歷史衍生交易不變（FR-016 與 FR-021c 之自然延伸）。對應 FR-021a、FR-021b、FR-021c、FR-024b、FR-016。
 - [ ] T071 [US5] 在 [server.js](../../server.js) `processOneRecurring`（T021 內）的 `INSERT INTO transactions` SQL 補 `source_recurring_id` 與 `scheduled_date` 兩個 placeholder 與對應參數（值即為 `r.id` 與當次 `nextDate`）。對應 FR-025、FR-028。
-- [ ] T072 [US5] 在 [server.js](../../server.js) 取代既有 `app.get('/api/transactions', …)`（既有 transactions list query）：將 SELECT 改為 `SELECT t.*, r.note AS source_recurring_name FROM transactions t LEFT JOIN recurring r ON r.id = t.source_recurring_id AND r.user_id = t.user_id WHERE t.user_id = ? AND ...`；回應整形補 `sourceRecurringId: t.source_recurring_id`、`sourceRecurringName: t.source_recurring_name`、`scheduledDate: t.scheduled_date`。對應 FR-025、FR-027、[research.md §7](./research.md)。
-- [ ] T073 [US5] 同樣補 [server.js](../../server.js) 既有 `app.get('/api/transactions/:id', …)`（單筆查詢）的 LEFT JOIN 與整形（與 T072 一致）。
+- [ ] T072 [US5] 在 [server.js](../../server.js) 取代既有 `app.get('/api/transactions', …)`（既有 transactions list query）：將 SELECT 改為 `SELECT t.*, COALESCE(NULLIF(r.note, ''), '（未命名配方）') AS source_recurring_name FROM transactions t LEFT JOIN recurring r ON r.id = t.source_recurring_id AND r.user_id = t.user_id WHERE t.user_id = ? AND ...`；`COALESCE + NULLIF` 處理 `recurring.note` 為空字串的情境（避免 chip 顯示「📌 來自配方：」尾段空白）；當 `r.id` 不存在時 `source_recurring_name` 為 NULL（前端 T074 退化為「（來源配方已刪除）」）。回應整形補 `sourceRecurringId: t.source_recurring_id`、`sourceRecurringName: t.source_recurring_name`、`scheduledDate: t.scheduled_date`。對應 FR-025、FR-027、[research.md §7](./research.md)。
+- [ ] T073 [US5] 同樣補 [server.js](../../server.js) 既有 `app.get('/api/transactions/:id', …)`（單筆查詢）的 LEFT JOIN 與 `COALESCE(NULLIF(r.note, ''), '（未命名配方）')` 整形（與 T072 一致）。
 
 ### 前端
 
@@ -174,7 +176,7 @@ description: "預算與固定收支（004-budgets-recurring）任務分解"
 - [ ] T091 [P] 在 [changelog.json](../../changelog.json) 頂部新增 `4.25.0` 條目：`type: "new"`；`title: "預算與固定收支重整（004-budgets-recurring）：四段配色 / 月份切換器 / 配方來源追溯 / 並發冪等保護"`；`changes` 陣列 zh-TW 條列：(a) `tag: "warning"` 「schema migration：budgets / recurring 表 REAL → INTEGER 重建；transactions 表新增 source_recurring_id / scheduled_date；啟動時自動備份 database.db.bak.<ts>.before-004」、(b) `tag: "feature"` 多條（PATCH /api/budgets/{id}、四段配色、月份切換器、待執行黃色 / 需處理紅橘色階、來源 chip、登入時自動觸發產生流程）、(c) `tag: "fix"` 「每月 31 號遇 2 月正確回退至月底（既有實作會 overflow 至下月初）」。同步更新 `currentVersion` 為 `"4.25.0"`。
 - [ ] T092 [P] 在 [SRS.md](../../SRS.md) 版本歷史區段新增 `4.25.0` 條目，內容與 T091 對應；同步檢查 `§3.3 端點列舉` 是否需補 `PATCH /api/budgets/{id}`（若有則加入）。
 - [ ] T093 執行 `npx @redocly/cli lint openapi.yaml` 與 `npx @redocly/cli lint specs/004-budgets-recurring/contracts/budgets-recurring.openapi.yaml`，預期 0 error；任一錯誤須在本任務內修正。對應憲章 Principle II 規則 #1（lint 強制）。
-- [ ] T094 在 PR 中以 `grep -nE "UPDATE\s+transactions" server.js` 驗證 `app.put('/api/recurring/:id', …)` handler 範圍內**無**任何 `UPDATE transactions` SQL（FR-021c 不溯及既往的程式碼層護欄）。手動審查並截圖記入 PR 描述。
+- [ ] T094 在 PR 中執行三條 grep 驗證程式碼層護欄並截圖記入 PR 描述：(a) `grep -nE "UPDATE\s+transactions" server.js` — 驗證 `app.put('/api/recurring/:id', …)` handler 範圍內**無**任何 `UPDATE transactions` SQL（FR-021c 不溯及既往）；(b) `grep -nE "DELETE\s+FROM\s+recurring|UPDATE\s+recurring.*last_generated" server.js` — 驗證 `app.delete('/api/transactions/:id', …)` handler 範圍內**無**對 `recurring` 表的反向變更（FR-026 衍生交易刪除不影響配方）；(c) `grep -nE "year_month\s*[<>]|LAG\s*\(|LEAD\s*\(" server.js` — 驗證預算查詢無跨月聚合或結轉計算（FR-009）。
 - [ ] T095 依 [quickstart.md](./quickstart.md) §2 ~ §9 全流程逐項手動驗證；任一步驟失敗即回到對應 user story 任務修補；通過後在 PR 描述附 DevTools Network 截圖（重點：登入後 `[004-recurring] generated=N elapsed=Tms` console 輸出、`POST /api/budgets` 回 INTEGER amount、PATCH 回 `{ ok: true }`）。
 
 ---

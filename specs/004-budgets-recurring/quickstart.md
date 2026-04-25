@@ -196,7 +196,7 @@
 | SC-003：登入時產生流程 P95 ≤ 500ms（≤ 30 筆） | DevTools Network → `POST /api/auth/login` 的 Time（含 server-side 觸發）；`console.log` 觀察 `[004-recurring] generated=N elapsed=Tms` |
 | SC-004：> 30 筆時不阻塞登入頁面 | 建立 50 筆每日配方、起始日 90 天前 → 登入後 elapsed 仍 ≤ 500ms（剩餘交給 setImmediate） |
 | SC-005：連續登入／登出 10 次冪等 | 自動化：寫一個 bash for 迴圈打 `/api/auth/login` 10 次，最後跑 §3.5 SQL 驗證為 0 筆 |
-| SC-006：進度條 ≤ 200ms 反映 | DevTools Network → `POST /api/transactions` 後的 `GET /api/budgets` Time |
+| SC-006：進度條 ≤ 200ms 反映 | DevTools Network → `POST /api/transactions` 後的 `GET /api/budgets` Time；額外於 `app.js` `renderBudget()` 入口與結尾以 `console.time('renderBudget')` / `console.timeEnd('renderBudget')` 標記，DevTools Performance 面板錄影前後頁可看到 render 耗時（不引入新監控 stack） |
 | SC-007：90% 使用者一週後仍查看進度條 | 業務指標，本機驗證階段不適用；上線後依 access log 統計 |
 | SC-008：0 筆因介面靜默清空誤儲存 | §5.2 多次嘗試「不改任何欄位、按儲存」皆被 400 拒絕 |
 

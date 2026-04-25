@@ -91,7 +91,8 @@
       "Bash(npx --yes @redocly/cli lint specs/003-categories/contracts/categories.openapi.yaml)",
       "Bash(grep *)",
       "Bash(git worktree *)",
-      "PowerShell(.specify/scripts/powershell/check-prerequisites.ps1 -Json -PathsOnly)"
+      "PowerShell(.specify/scripts/powershell/check-prerequisites.ps1 -Json -PathsOnly)",
+      "PowerShell(.specify/scripts/powershell/setup-plan.ps1 -Json)"
     ]
   }
 }

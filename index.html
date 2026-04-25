@@ -633,7 +633,12 @@
 
     <!-- ===== 分類管理（收支管理） ===== -->
     <section class="page" id="page-categories">
-      <h2 class="page-title">分類管理</h2>
+      <div class="page-title-row">
+        <h2 class="page-title">分類管理</h2>
+        <button class="btn btn-ghost btn-sm" id="btnRestoreDefaults" title="僅補回過去刪除的預設分類，不會修改現有分類">
+          <i class="fas fa-arrow-rotate-left"></i> 補回過去刪除的預設分類
+        </button>
+      </div>
       <div class="finance-tabs">
         <button class="tab" data-finance-tab="transactions">交易記錄</button>
         <button class="tab" data-finance-tab="reports">統計報表</button>
@@ -642,19 +647,20 @@
         <button class="tab active" data-finance-tab="categories">分類管理</button>
         <button class="tab" data-finance-tab="recurring">固定收支</button>
       </div>
-      <div class="settings-section">
-        <div class="section-header">
-          <h3>支出分類</h3>
-          <button class="btn btn-sm" onclick="App.openCategoryModal('expense')"><i class="fas fa-plus"></i> 新增</button>
+      <div class="cat-section" data-type="expense">
+        <div class="cat-section-header">
+          <h3 class="cat-section-title">支出</h3>
+          <button class="btn btn-sm" onclick="App.openCategoryModal('expense')"><i class="fas fa-plus"></i> 新增父分類</button>
         </div>
-        <div class="category-list" id="expenseCategoryList"></div>
+        <div class="cat-section-body" id="expenseCategoryList"></div>
       </div>
-      <div class="settings-section">
-        <div class="section-header">
-          <h3>收入分類</h3>
-          <button class="btn btn-sm" onclick="App.openCategoryModal('income')"><i class="fas fa-plus"></i> 新增</button>
+      <hr class="cat-section-divider">
+      <div class="cat-section" data-type="income">
+        <div class="cat-section-header">
+          <h3 class="cat-section-title">收入</h3>
+          <button class="btn btn-sm" onclick="App.openCategoryModal('income')"><i class="fas fa-plus"></i> 新增父分類</button>
         </div>
-        <div class="category-list" id="incomeCategoryList"></div>
+        <div class="cat-section-body" id="incomeCategoryList"></div>
       </div>
     </section>
 
@@ -1981,6 +1987,10 @@
       <form id="categoryForm">
         <input type="hidden" id="catId">
         <input type="hidden" id="catType">
+        <input type="hidden" id="catOriginalParent">
+        <div class="form-row" id="catTypeNoticeRow" style="display:none">
+          <p class="form-hint">分類類型一經建立不可變更</p>
+        </div>
         <div class="form-row" id="catParentRow">
           <label>上層分類</label>
           <select id="catParent">

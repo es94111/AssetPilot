@@ -152,8 +152,10 @@ const App = (() => {
       if (!r.ok) throw new Error(data.error || '操作失敗');
       return data;
     },
-    async patch(url) {
-      const r = await fetch(url, { ...FETCH_OPTS, method: 'PATCH', headers: JSON_HEADERS });
+    async patch(url, body) {
+      const opts = { ...FETCH_OPTS, method: 'PATCH', headers: JSON_HEADERS };
+      if (body !== undefined) opts.body = JSON.stringify(body);
+      const r = await fetch(url, opts);
       if (r.status === 401) { logout(); throw new Error('請先登入'); }
       const data = await this.parseResponse(r);
       if (!r.ok) throw new Error(data.error || `操作失敗 (${r.status})`);
@@ -1457,7 +1459,7 @@ const App = (() => {
   }
 
   function populateFilterSelects() {
-    const cats = cachedCategories.filter(c => !c.isHidden);
+    const cats = cachedCategories;
     let catHtml = '<option value="all">全部</option>';
     const parents = cats.filter(c => !c.parentId);
     parents.forEach(p => {
@@ -1832,7 +1834,7 @@ const App = (() => {
     let html = '';
     ['expense', 'income'].forEach(type => {
       html += `<div class="batch-cat-section">${type === 'expense' ? '支出' : '收入'}</div>`;
-      const cats = cachedCategories.filter(c => c.type === type && !c.isHidden);
+      const cats = cachedCategories.filter(c => c.type === type);
       const parents = cats.filter(c => !c.parentId);
       parents.forEach(p => {
         const children = cats.filter(c => c.parentId === p.id);
@@ -4086,46 +4088,127 @@ const App = (() => {
 
   async function renderCategories() {
     cachedCategories = await API.get('/api/categories');
-    const cats = cachedCategories;
-    const expCats = cats.filter(c => c.type === 'expense' && !c.isHidden);
-    const incCats = cats.filter(c => c.type === 'income' && !c.isHidden);
-
-    el('expenseCategoryList').innerHTML = buildCatHierarchyHtml(expCats);
-    el('incomeCategoryList').innerHTML = buildCatHierarchyHtml(incCats);
+    renderCategoryPage();
   }
 
-  function buildCatHierarchyHtml(cats) {
-    const parents = cats.filter(c => !c.parentId);
+  // 003-categories T020：以雙區塊渲染分類管理頁（支出在上、收入在下）
+  function renderCategoryPage() {
+    const cats = cachedCategories || [];
+    const expCats = cats.filter(c => c.type === 'expense');
+    const incCats = cats.filter(c => c.type === 'income');
+    const expHost = el('expenseCategoryList');
+    const incHost = el('incomeCategoryList');
+    if (expHost) expHost.innerHTML = buildCatHierarchyHtml(expCats, 'expense');
+    if (incHost) incHost.innerHTML = buildCatHierarchyHtml(incCats, 'income');
+    bindCategoryDragHandlers(expHost);
+    bindCategoryDragHandlers(incHost);
+  }
+
+  function buildCatHierarchyHtml(cats, type) {
+    const parents = cats
+      .filter(c => !c.parentId)
+      .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
     return parents.map(p => {
-      const children = cats.filter(c => c.parentId === p.id);
-      let html = catItemHtml(p, false);
-      if (children.length > 0) {
-        html += '<div class="subcategory-list">';
-        html += children.map(c => catItemHtml(c, true)).join('');
-        html += '</div>';
-      }
+      const children = cats
+        .filter(c => c.parentId === p.id)
+        .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+      let html = parentRowHtml(p, type);
+      html += `<div class="subcategory-grid" data-parent-id="${p.id}">`;
+      html += children.map(c => subCellHtml(c, p.id)).join('');
+      html += '</div>';
       return html;
     }).join('');
   }
 
-  function catItemHtml(c, isSub) {
-    const delBtn = `<button class="btn-icon danger" onclick="App.deleteCategory('${c.id}')" title="刪除"><i class="fas fa-trash"></i></button>`;
-    const addSubBtn = !isSub
-      ? `<button class="btn-icon" onclick="App.openCategoryModal('${c.type}', null, '${c.id}')" title="新增子分類"><i class="fas fa-plus"></i></button>`
-      : '';
-    const subCls = isSub ? ' category-item-sub' : '';
-    return `<div class="category-item${subCls}">
-      <div class="category-item-left">
-        ${isSub ? '<i class="fas fa-turn-up fa-rotate-90" style="color:var(--text-secondary);font-size:12px;margin-left:4px"></i>' : ''}
-        <div class="category-color" style="background:${/^#[0-9a-fA-F]{3,8}$/.test(c.color) ? c.color : '#ccc'}"></div>
-        <span>${escHtml(c.name)}</span>
+  function parentRowHtml(c, type) {
+    const colorOk = /^#[0-9a-fA-F]{6}$/.test(c.color || '');
+    return `<div class="category-row" draggable="true" data-id="${c.id}" data-scope="parents:${type}">
+      <div class="category-row-left">
+        <span class="category-drag-handle" title="拖曳調整順序"><i class="fas fa-grip-vertical"></i></span>
+        <div class="category-color" style="background:${colorOk ? c.color : '#ccc'}"></div>
+        <span class="category-name">${escHtml(c.name)}</span>
       </div>
-      <div class="category-item-actions">
-        ${addSubBtn}
+      <div class="category-row-actions">
+        <button class="btn-icon" onclick="App.openCategoryModal('${c.type}', null, '${c.id}')" title="新增子分類"><i class="fas fa-plus"></i></button>
         <button class="btn-icon" onclick="App.editCategory('${c.id}')" title="編輯"><i class="fas fa-pen"></i></button>
-        ${delBtn}
+        <button class="btn-icon danger" onclick="App.deleteCategory('${c.id}')" title="刪除"><i class="fas fa-trash"></i></button>
       </div>
     </div>`;
+  }
+
+  function subCellHtml(c, parentId) {
+    const colorOk = /^#[0-9a-fA-F]{6}$/.test(c.color || '');
+    return `<div class="subcategory-cell" draggable="true" data-id="${c.id}" data-scope="children:${parentId}">
+      <span class="subcategory-arrow">▸</span>
+      <div class="category-color" style="background:${colorOk ? c.color : '#ccc'}"></div>
+      <span class="subcategory-name">${escHtml(c.name)}</span>
+      <div class="subcategory-actions">
+        <button class="btn-icon" onclick="App.editCategory('${c.id}')" title="編輯"><i class="fas fa-pen"></i></button>
+        <button class="btn-icon danger" onclick="App.deleteCategory('${c.id}')" title="刪除"><i class="fas fa-trash"></i></button>
+      </div>
+    </div>`;
+  }
+
+  // 003-categories T021：HTML5 原生拖曳排序（同層） — 不引入任何函式庫
+  let dragSourceEl = null;
+  function bindCategoryDragHandlers(host) {
+    if (!host) return;
+    const items = host.querySelectorAll('[draggable="true"]');
+    items.forEach(item => {
+      item.addEventListener('dragstart', (e) => {
+        dragSourceEl = item;
+        item.classList.add('dragging');
+        try { e.dataTransfer.setData('text/plain', item.dataset.id || ''); } catch {}
+        e.dataTransfer.effectAllowed = 'move';
+      });
+      item.addEventListener('dragend', () => {
+        item.classList.remove('dragging');
+        host.querySelectorAll('.drag-over,.drag-forbidden').forEach(n => n.classList.remove('drag-over', 'drag-forbidden'));
+        dragSourceEl = null;
+      });
+      item.addEventListener('dragenter', (e) => {
+        if (!dragSourceEl || dragSourceEl === item) return;
+        if (item.dataset.scope === dragSourceEl.dataset.scope) {
+          item.classList.add('drag-over');
+        } else {
+          item.classList.add('drag-forbidden');
+        }
+      });
+      item.addEventListener('dragleave', () => {
+        item.classList.remove('drag-over', 'drag-forbidden');
+      });
+      item.addEventListener('dragover', (e) => {
+        if (!dragSourceEl) return;
+        if (item.dataset.scope === dragSourceEl.dataset.scope) {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'move';
+        }
+      });
+      item.addEventListener('drop', async (e) => {
+        e.preventDefault();
+        item.classList.remove('drag-over', 'drag-forbidden');
+        if (!dragSourceEl || dragSourceEl === item) return;
+        if (item.dataset.scope !== dragSourceEl.dataset.scope) return;
+        const parent = item.parentNode;
+        if (!parent) return;
+        const rect = item.getBoundingClientRect();
+        const after = (e.clientY - rect.top) > rect.height / 2;
+        parent.insertBefore(dragSourceEl, after ? item.nextSibling : item);
+        // 收集新的順序
+        const scope = dragSourceEl.dataset.scope;
+        const siblings = Array.from(parent.querySelectorAll(`[data-scope="${scope}"]`));
+        const items = siblings.map((node, idx) => ({ id: node.dataset.id, sortOrder: idx + 1 }));
+        try {
+          await API.post('/api/categories/reorder', { scope, items });
+          await refreshCache();
+          renderCategoryPage();
+        } catch (err) {
+          toast(err.message || '重排失敗', 'error');
+          await refreshCache();
+          renderCategoryPage();
+        }
+      });
+    });
   }
 
   function nextDateFront(dateStr, freq) {
@@ -6760,7 +6843,7 @@ const App = (() => {
 
   function buildCategoryOptions(type) {
     if (type === 'transfer') type = 'expense';
-    const cats = cachedCategories.filter(c => c.type === type && !c.isHidden);
+    const cats = cachedCategories.filter(c => c.type === type);
     const parents = cats.filter(c => !c.parentId);
     let html = '';
     parents.forEach(p => {
@@ -6946,13 +7029,18 @@ const App = (() => {
     crUpdateTotal();
   }
 
-  // 分類
+  // 003-categories T022/T023：分類 modal — type 編輯時 read-only；子分類可改父
   function openCategoryModal(type, catId, parentId) {
     const form = el('categoryForm');
     form.reset();
     el('catType').value = type;
-    // 填充父分類下拉
-    const parentCats = cachedCategories.filter(c => c.type === type && !c.parentId && !c.isHidden);
+    el('catOriginalParent').value = '';
+    el('catTypeNoticeRow').style.display = 'none';
+
+    // 填充父分類下拉（同 type 的所有父分類）
+    const parentCats = cachedCategories
+      .filter(c => c.type === type && !c.parentId)
+      .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
     let parentOpts = '<option value="">（頂層分類）</option>';
     parentCats.forEach(c => { parentOpts += `<option value="${c.id}">${escHtml(c.name)}</option>`; });
     el('catParent').innerHTML = parentOpts;
@@ -6964,16 +7052,23 @@ const App = (() => {
       el('catType').value = c.type;
       el('modalCategoryTitle').textContent = '編輯分類';
       el('catName').value = c.name;
-      el('catColor').value = c.color || '#6366f1';
-      el('catParent').value = c.parentId || '';
-      // 編輯時：若為父分類（有子分類），不可改為子分類
-      const hasChildren = cachedCategories.some(x => x.parentId === c.id);
-      el('catParentRow').style.display = hasChildren ? 'none' : '';
+      el('catColor').value = /^#[0-9a-fA-F]{6}$/.test(c.color || '') ? c.color : '#6366f1';
+      el('catOriginalParent').value = c.parentId || '';
+      el('catTypeNoticeRow').style.display = '';
+      if (!c.parentId) {
+        // 父分類：隱藏「上層分類」下拉（FR-015 防 demote）
+        el('catParentRow').style.display = 'none';
+      } else {
+        // 子分類：可選同 type 的其他父分類（FR-014a）
+        el('catParentRow').style.display = '';
+        el('catParent').value = c.parentId || '';
+      }
     } else {
       el('catId').value = '';
-      el('modalCategoryTitle').textContent = parentId ? '新增子分類' : '新增分類';
+      el('modalCategoryTitle').textContent = parentId ? '新增子分類' : '新增父分類';
       el('catParent').value = parentId || '';
-      el('catParentRow').style.display = '';
+      // 新增子分類時隱藏父分類下拉（已透過 + 按鈕指定父分類）；新增頂層父分類時也隱藏
+      el('catParentRow').style.display = parentId ? 'none' : 'none';
     }
     openModal('modalCategory');
   }
@@ -7080,6 +7175,27 @@ const App = (() => {
 
   // ─── 表單綁定 ───
   function bindForms() {
+    // 003-categories T027：補回過去刪除的預設分類
+    el('btnRestoreDefaults')?.addEventListener('click', () => {
+      confirmDelete(
+        '將補回您過去刪除的預設分類；不會修改任何現有分類。確定執行？',
+        async () => {
+          try {
+            const r = await API.post('/api/categories/restore-defaults', {});
+            if (!r.restored) {
+              toast('目前沒有需要補回的預設分類', 'success');
+            } else {
+              toast(`已補回 ${r.restored} 個分類`, 'success');
+            }
+            await refreshCache();
+            renderCategoryPage();
+          } catch (err) {
+            toast(err.message || '補回失敗', 'error');
+          }
+        }
+      );
+    });
+
     // 交易類型切換
     document.querySelectorAll('input[name="txType"]').forEach(r => {
       r.addEventListener('change', () => updateTxFormForType(r.value));
@@ -7286,7 +7402,7 @@ const App = (() => {
       }
     });
 
-    // 分類表單
+    // 分類表單（003-categories T022/T023）
     el('categoryForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const id = el('catId').value;
@@ -7294,11 +7410,16 @@ const App = (() => {
       const name = el('catName').value.trim();
       const color = el('catColor').value;
       const parentId = el('catParent').value;
+      const originalParent = el('catOriginalParent').value;
       if (!name) return;
 
       try {
         if (id) {
           await API.put('/api/categories/' + id, { name, color });
+          // 子分類且父分類有改變 → PATCH 移動到新父分類
+          if (originalParent && parentId && parentId !== originalParent) {
+            await API.patch('/api/categories/' + id, { parentId });
+          }
         } else {
           await API.post('/api/categories', { name, type, color, parentId });
         }
@@ -7402,7 +7523,20 @@ const App = (() => {
   }
 
   function deleteCategory(id) {
-    confirmDelete('確定要刪除此分類嗎？', async () => {
+    // 003-categories T028：父分類列出「將連帶刪除底下所有子分類」+ 子分類數
+    const cat = (cachedCategories || []).find(c => c.id === id);
+    let msg;
+    if (!cat) {
+      msg = '確定要刪除此分類嗎？';
+    } else if (!cat.parentId) {
+      const childCount = (cachedCategories || []).filter(c => c.parentId === id).length;
+      msg = childCount > 0
+        ? `確定要刪除父分類「${cat.name}」？將連帶刪除底下 ${childCount} 個子分類。`
+        : `確定要刪除父分類「${cat.name}」？`;
+    } else {
+      msg = `確定要刪除子分類「${cat.name}」？`;
+    }
+    confirmDelete(msg, async () => {
       try {
         await API.del('/api/categories/' + id);
         toast('分類已刪除', 'success');

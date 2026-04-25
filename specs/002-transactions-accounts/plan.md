@@ -5,8 +5,9 @@
 
 ## Summary
 
-本計畫將 002 規格（6 user story／34 FR／20 Clarification／8 SC）落地至既有
-單體應用。沿用 001 已建立的技術骨架：Node.js 18+、Express 5、單一
+本計畫將 002 規格（6 user story／**34 base FR + 4 sub-FR（`a` 後綴：
+FR-007a / 014a / 020a / 022a）= 38 total**／20 Clarification／8 SC）落地
+至既有單體應用。沿用 001 已建立的技術骨架：Node.js 18+、Express 5、單一
 `server.js`、根目錄 SPA（`index.html` / `app.js` / `style.css`）、sql.js
 記憶體執行 + `database.db` 檔案持久化、JWT httpOnly Cookie、bcryptjs、
 Passkey（`@passwordless-id/webauthn`）。本功能新增的整合僅有匯率資料源
@@ -33,9 +34,12 @@ Services／Resend** 雖已於專案存在但與本功能直接需求無關（IPi
    合併本功能用法（去除 `user_id` 改成跨使用者快取，FR-023）。
 4. **樂觀鎖（FR-014a）**：所有 `PATCH` / `DELETE` 端點要求
    `expected_updated_at`（epoch ms），不符回 `409 Conflict`。
-5. **IDOR 防線（FR-060）**：新增 `ownsResource(table, id, userId)`
-   helper 與 `requireOwnedAccount(req, accountId)` middleware；不符
-   一律回 `404 Not Found`，不洩漏存在性。
+5. **IDOR 防線（FR-060）**：新增**底層通用** helper
+   `ownsResource(table, idColumn, idValue, userId)`（PK 欄位名稱由 caller
+   指定，使 `accounts.id` / `transactions.id` / `user_settings.user_id`
+   皆可共用同一查詢介面），其上包裝 `requireOwnedAccount` /
+   `requireOwnedTransaction` middleware；不符一律回 `404 Not Found`，不
+   洩漏存在性。
 6. **Atomic 批次操作（FR-045）**：`POST /api/transactions:batch-update`
    / `:batch-delete` 一律包在 `db.run('BEGIN'…'COMMIT/ROLLBACK')`；
    單次最多 500 筆、超過回 `400`；任一筆失敗整批回滾。
@@ -177,8 +181,11 @@ Gates（憲章 v1.1.0）：
   - 共用 schemas（`Account`、`Transaction`、`Money`、`OptimisticLock`、
     `BatchResult`）以 `components.schemas` + `$ref` 表達；所有需驗證身分
     端點宣告 `security: [{ cookieAuth: [] }]`。
-  - `info.version` 起始 `0.1.0`；後續 breaking change（如欄位 rename）
-    將 bump minor，依憲章規則 #3。
+  - `info.version` **沿用 001 已建立的 `4.22.0`**（與 `changelog.json
+    .currentVersion` 對齊）；本 PR 因新增端點屬 minor，依憲章規則 #3
+    bump 至 `4.23.0`（同步寫入 `openapi.yaml` 與 `changelog.json`，見
+    tasks.md T140 / T142）。後續 breaking change（如欄位 rename）依
+    憲章 versioning 規則處理。
 - **Development Workflow Gate**：✅ PASS
   - 功能分支 `002-transactions-accounts` 已由 `create-new-feature.ps1`
     建立、首批 commit 已上推（`566734d docs(002): 新增「交易與帳戶」

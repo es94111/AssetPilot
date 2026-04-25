@@ -1,6 +1,28 @@
 {
-  "currentVersion": "4.22.0",
+  "currentVersion": "4.23.0",
   "releases": [
+    {
+      "version": "4.23.0",
+      "date": "2026-04-25",
+      "title": "交易與帳戶（002-transactions-accounts）：帳戶 CRUD / 交易 CRUD / 批次 / 轉帳 / 自動匯率 / 海外手續費 / QR 掃描 / 樂觀鎖 / IDOR",
+      "type": "new",
+      "changes": [
+        { "tag": "warning", "text": "schema migration（CT-1）：`accounts` 補 `category` / `overseas_fee_rate` / `updated_at`；`transactions` 補 `to_account_id` / `twd_amount`；`amount` / `initial_balance` 由 REAL 改為 INTEGER 幣別最小單位；`fx_rate` 改為 TEXT decimal 字串。啟動時自動備份 database.db.bak.<ts>。部署前建議備份" },
+        { "tag": "new", "text": "新增 dependency `decimal.js ^10.4.3`（後端 + 前端 CDN 同版本），FR-022a 金額精度單一 source of truth 同構模組 `lib/moneyDecimal.js`" },
+        { "tag": "new", "text": "新增 9 群端點：`/api/accounts` (GET/POST)、`/api/accounts/{id}` (GET/PATCH/DELETE)、`/api/transactions` (GET/POST)、`/api/transactions/{id}` (GET/PATCH/DELETE)、`/api/transactions:batch-update` / `:batch-delete`、`/api/transfers` (POST)、`/api/exchange-rates/{currency}` (GET 跨使用者共用快取 30 分鐘 TTL)、`/api/user/settings/pinned-currencies` (GET/PUT)" },
+        { "tag": "new", "text": "FR-014a 樂觀鎖：所有 PATCH/DELETE 接受 `expected_updated_at` epoch ms，不符回 409 OptimisticLockConflict" },
+        { "tag": "new", "text": "FR-060 IDOR 防線：`ownsResource(table,idColumn,idValue,userId)` 統一資源所有權驗證；`requireOwnedAccount` / `requireOwnedTransaction` 中介層；非自己資源一律 404 不洩漏存在性" },
+        { "tag": "new", "text": "FR-015 同幣別轉帳：`POST /api/transfers` 產生 transfer_out + transfer_in 對；跨幣別 422 CrossCurrencyTransfer；任一被刪則另一半同步刪除" },
+        { "tag": "new", "text": "FR-021 信用卡海外手續費：以 `accounts.overseas_fee_rate`（千分點）為預設值；信用卡 + 非 TWD 交易自動填入手續費；前端可覆寫" },
+        { "tag": "new", "text": "FR-016 / FR-017 統計過濾：所有月支出／分類／預算／儀表板統計 SQL 過濾 `type IN ('income','expense') AND exclude_from_stats = 0`，轉帳與不計入交易不影響統計但仍影響餘額" },
+        { "tag": "new", "text": "FR-042 / FR-044 / FR-045 批次操作：`POST /api/transactions:batch-{update,delete}` 上限 500 筆、整批 BEGIN/COMMIT/ROLLBACK、樂觀鎖支援；批次刪除自動連動 transfer_in/out 另一半" },
+        { "tag": "new", "text": "FR-020a 常用幣別：每使用者 `user_settings.pinned_currencies` JSON 陣列，必含 TWD" },
+        { "tag": "new", "text": "FR-007a 時區：所有「今天／未來」判定走 `Asia/Taipei` 統一函式 `lib/taipeiTime.js todayInTaipei()`" },
+        { "tag": "new", "text": "FR-030 / FR-031 / FR-032 電子發票 QR 掃描：BarcodeDetector 主路徑 + 貼上 QR 文字解析 fallback；解析失敗保留使用者已填欄位" },
+        { "tag": "improved", "text": "a11y：批次操作列加 aria-live polite 通報已選 N、半選 checkbox 設 aria-checked='mixed'；500 筆上限觸達時顯示『已達單次上限 500，請分批處理』黃字提示" },
+        { "tag": "improved", "text": "啟動 log 加上 `[startup] AssetPilot v4.23.0 / feature 002-transactions-accounts ready`，方便容器日誌追蹤" }
+      ]
+    },
     {
       "version": "4.22.0",
       "date": "2026-04-24",

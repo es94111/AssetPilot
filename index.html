@@ -294,6 +294,15 @@
             <span class="card-value" id="dashToday">NT$ 0</span>
           </div>
         </div>
+        <!-- 002 T047 (FR-004 / FR-007)：儀表板總資產卡 -->
+        <div class="card summary-card net">
+          <div class="card-icon"><i class="fas fa-landmark"></i></div>
+          <div class="card-info">
+            <span class="card-label">總資產</span>
+            <span class="card-value" id="dashTotalAssets">NT$ 0</span>
+            <span class="card-sublabel" id="dashTotalAssetsNote"></span>
+          </div>
+        </div>
       </div>
       <div class="dashboard-grid">
         <div class="card">
@@ -450,9 +459,10 @@
         <button class="btn btn-sm btn-ghost" id="filterResetBtn"><i class="fas fa-rotate-left"></i> 重置</button>
       </div>
       <!-- 批次操作列 -->
-      <div class="batch-bar" id="batchBar" style="display:none">
+      <div class="batch-bar" id="batchBar" style="display:none" role="region" aria-label="批次操作">
         <div class="batch-bar-left">
           <span id="batchCount">已選 0 筆</span>
+          <span id="batchOverflowHint" style="display:none;color:#fef08a;margin-left:12px;font-size:13px"></span>
         </div>
         <div class="batch-bar-right">
           <button class="btn btn-sm" id="batchChangeCatBtn"><i class="fas fa-tags"></i> 變更分類</button>
@@ -462,6 +472,8 @@
           <button class="btn btn-sm btn-ghost" id="batchCancelBtn"><i class="fas fa-xmark"></i> 取消</button>
         </div>
       </div>
+      <!-- T100 / T144：a11y aria-live 通報區（批次選取狀態） -->
+      <div id="batchLive" role="status" aria-live="polite" class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)"></div>
       <div class="card">
         <table class="data-table" id="transactionTable">
           <thead>

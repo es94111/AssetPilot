@@ -4631,6 +4631,92 @@ app.post('/api/exchange-rates/refresh', async (req, res) => {
   }
 });
 
+// T110（FR-020 / FR-023 / FR-024）：GET /api/exchange-rates/:currency — 跨使用者共用快取
+app.get('/api/exchange-rates/:currency', async (req, res) => {
+  const currency = String(req.params.currency || '').toUpperCase();
+  if (!/^[A-Z]{3}$/.test(currency)) {
+    return res.status(400).json({ error: 'ValidationError', field: 'currency', message: '幣別需為 3 碼大寫英文' });
+  }
+  if (currency === 'TWD') {
+    return res.json({ currency: 'TWD', rateToTwd: '1', fetchedAt: Date.now(), source: 'literal', cached: true });
+  }
+  try {
+    const result = await fxCache.getRate(currency);
+    res.json({
+      currency,
+      rateToTwd: result.rate,
+      fetchedAt: result.fetchedAt || Date.now(),
+      source: result.source || 'exchangerate-api',
+      cached: !!result.cached,
+    });
+  } catch (e) {
+    // fallback：嘗試從使用者既有 DB 拉值
+    const map = getUserExchangeRateMap(req.userId);
+    const fallback = map[currency];
+    if (fallback) {
+      return res.json({ currency, rateToTwd: String(fallback), fetchedAt: Date.now(), source: 'user-db', cached: true });
+    }
+    res.status(503).json({ error: 'RateUnavailable', message: '匯率暫不可用，請手動輸入' });
+  }
+});
+
+// T111 / T112（FR-020a）：常用幣別設定
+app.get('/api/user/settings/pinned-currencies', (req, res) => {
+  let row = queryOne('SELECT pinned_currencies, updated_at FROM user_settings WHERE user_id = ?', [req.userId]);
+  if (!row) {
+    const now = Date.now();
+    db.run('INSERT INTO user_settings (user_id, pinned_currencies, updated_at) VALUES (?, ?, ?)', [req.userId, '["TWD"]', now]);
+    saveDB();
+    row = { pinned_currencies: '["TWD"]', updated_at: now };
+  }
+  let pinned;
+  try { pinned = JSON.parse(row.pinned_currencies || '["TWD"]'); }
+  catch { pinned = ['TWD']; }
+  if (!Array.isArray(pinned)) pinned = ['TWD'];
+  res.json({ pinnedCurrencies: pinned, updatedAt: Number(row.updated_at) || 0 });
+});
+
+app.put('/api/user/settings/pinned-currencies', (req, res) => {
+  const list = req.body?.pinnedCurrencies;
+  if (!Array.isArray(list) || list.length < 1 || list.length > 50) {
+    return res.status(400).json({ error: 'ValidationError', field: 'pinnedCurrencies', message: '常用幣別數量需介於 1~50' });
+  }
+  const norm = [];
+  for (const c of list) {
+    const code = String(c || '').toUpperCase();
+    if (!/^[A-Z]{3}$/.test(code)) {
+      return res.status(400).json({ error: 'ValidationError', field: 'pinnedCurrencies', message: `幣別格式不正確：${c}` });
+    }
+    if (!norm.includes(code)) norm.push(code);
+  }
+  if (!norm.includes('TWD')) norm.unshift('TWD');
+
+  // 取現有 row
+  let row = queryOne('SELECT pinned_currencies, updated_at FROM user_settings WHERE user_id = ?', [req.userId]);
+  if (!row) {
+    const now = Date.now();
+    db.run('INSERT INTO user_settings (user_id, pinned_currencies, updated_at) VALUES (?, ?, ?)', [req.userId, JSON.stringify(norm), now]);
+    saveDB();
+    return res.json({ pinnedCurrencies: norm, updatedAt: now });
+  }
+
+  // 樂觀鎖（向後相容：有 expected_updated_at 才驗）
+  const expected = req.body?.expected_updated_at ?? req.body?.expectedUpdatedAt;
+  if (expected != null && Number(expected) !== Number(row.updated_at)) {
+    return res.status(409).json({
+      error: 'OptimisticLockConflict',
+      serverUpdatedAt: Number(row.updated_at),
+      message: '此筆已被其他裝置修改，請重新整理後再操作',
+    });
+  }
+
+  const nowMs = Date.now();
+  db.run('UPDATE user_settings SET pinned_currencies = ?, updated_at = ? WHERE user_id = ?',
+    [JSON.stringify(norm), nowMs, req.userId]);
+  saveDB();
+  res.json({ pinnedCurrencies: norm, updatedAt: nowMs });
+});
+
 // ─── 帳戶 ───
 // FR-001~007（T031）：GET 回傳 category/overseasFeeRate/updatedAt 等 002 新欄位
 app.get('/api/accounts', (req, res) => {
@@ -5210,61 +5296,123 @@ app.delete('/api/transactions/:id', (req, res) => {
   res.json({ ok: true });
 });
 
-// ─── 批次操作 ───
-app.post('/api/transactions/batch-delete', (req, res) => {
-  const { ids } = req.body;
+// ─── 批次操作（T090 / T091；FR-042 / FR-043 / FR-044 / FR-045）───
+const BATCH_MAX = 500;
+
+const batchDeleteHandler = (req, res) => {
+  const { ids, expected_updated_at: expectedMap } = req.body || {};
   if (!Array.isArray(ids) || ids.length === 0) return res.status(400).json({ error: '未選擇任何交易' });
-  let deleted = 0;
-  ids.forEach(id => {
-    const tx = queryOne("SELECT linked_id FROM transactions WHERE id = ? AND user_id = ?", [id, req.userId]);
-    if (!tx) return;
-    db.run("DELETE FROM transactions WHERE id = ? AND user_id = ?", [id, req.userId]);
-    if (tx.linked_id) {
-      db.run("DELETE FROM transactions WHERE id = ? AND user_id = ?", [tx.linked_id, req.userId]);
+  if (ids.length > BATCH_MAX) {
+    return res.status(400).json({ error: `單次最多 ${BATCH_MAX} 筆`, code: 'BatchTooLarge' });
+  }
+  // 取得所有 row 並驗 ownership + 樂觀鎖
+  const rows = ids.map(id => queryOne(
+    "SELECT id, user_id, linked_id, updated_at FROM transactions WHERE id = ? AND user_id = ?",
+    [id, req.userId]
+  ));
+  for (let i = 0; i < rows.length; i++) {
+    if (!rows[i]) return res.status(404).json({ error: 'NotFound', missingId: ids[i] });
+    if (expectedMap && expectedMap[ids[i]] != null) {
+      const expected = Number(expectedMap[ids[i]]);
+      if (Number(rows[i].updated_at) !== expected) {
+        return res.status(409).json({
+          error: 'OptimisticLockConflict',
+          conflictId: ids[i],
+          serverUpdatedAt: Number(rows[i].updated_at),
+          message: '此筆已被其他裝置修改，請重新整理後再操作',
+        });
+      }
     }
-    deleted++;
-  });
+  }
+  // 計算所有要刪的 id（含 transfer linked 半）
+  const all = new Set(ids);
+  rows.forEach(r => { if (r.linked_id) all.add(r.linked_id); });
+  try {
+    db.run('BEGIN');
+    [...all].forEach(id => db.run("DELETE FROM transactions WHERE id = ? AND user_id = ?", [id, req.userId]));
+    db.run('COMMIT');
+  } catch (e) {
+    try { db.run('ROLLBACK'); } catch {}
+    return res.status(500).json({ error: '批次刪除失敗', message: String(e?.message || e) });
+  }
   saveDB();
-  res.json({ deleted });
-});
+  res.json({ affectedIds: [...all], affectedCount: all.size, deleted: all.size });
+};
 
-app.post('/api/transactions/batch-update', (req, res) => {
-  const { ids, fields } = req.body;
+const batchUpdateHandler = (req, res) => {
+  const { ids, fields, patch, expected_updated_at: expectedMap } = req.body || {};
+  const updateFields = patch || fields || {};
   if (!Array.isArray(ids) || ids.length === 0) return res.status(400).json({ error: '未選擇任何交易' });
-  if (!fields || Object.keys(fields).length === 0) return res.status(400).json({ error: '未指定更新欄位' });
+  if (ids.length > BATCH_MAX) {
+    return res.status(400).json({ error: `單次最多 ${BATCH_MAX} 筆`, code: 'BatchTooLarge' });
+  }
+  if (!updateFields || Object.keys(updateFields).length === 0) return res.status(400).json({ error: '未指定更新欄位' });
 
-  // 防 IDOR：批次更新時驗證所有 id/fields 屬於當前使用者
-  if (fields.categoryId && !assertOwned('categories', fields.categoryId, req.userId)) return res.status(400).json({ error: '分類不存在或無權限' });
-  if (fields.accountId && !assertOwned('accounts', fields.accountId, req.userId)) return res.status(400).json({ error: '帳戶不存在或無權限' });
-  if (fields.date !== undefined) {
-    const normalizedDate = normalizeDate(fields.date);
+  if (updateFields.categoryId && !assertOwned('categories', updateFields.categoryId, req.userId)) {
+    return res.status(422).json({ error: 'CategoryForeign', message: '分類不存在或無權限' });
+  }
+  if (updateFields.accountId && !assertOwned('accounts', updateFields.accountId, req.userId)) {
+    return res.status(422).json({ error: 'AccountForeign', message: '帳戶不存在或無權限' });
+  }
+  if (updateFields.date !== undefined) {
+    const normalizedDate = normalizeDate(updateFields.date);
     if (!normalizedDate) return res.status(400).json({ error: '日期格式無效' });
-    fields.date = normalizedDate;
+    updateFields.date = normalizedDate;
+  }
+
+  // 預先驗 ownership + 樂觀鎖
+  const rows = ids.map(id => queryOne(
+    "SELECT id, user_id, updated_at FROM transactions WHERE id = ? AND user_id = ?",
+    [id, req.userId]
+  ));
+  for (let i = 0; i < rows.length; i++) {
+    if (!rows[i]) return res.status(404).json({ error: 'NotFound', missingId: ids[i] });
+    if (expectedMap && expectedMap[ids[i]] != null) {
+      const expected = Number(expectedMap[ids[i]]);
+      if (Number(rows[i].updated_at) !== expected) {
+        return res.status(409).json({
+          error: 'OptimisticLockConflict',
+          conflictId: ids[i],
+          serverUpdatedAt: Number(rows[i].updated_at),
+          message: '此筆已被其他裝置修改，請重新整理後再操作',
+        });
+      }
+    }
   }
 
   const allowedFields = { categoryId: 'category_id', accountId: 'account_id', date: 'date' };
   const setClauses = [];
   const values = [];
   for (const [key, col] of Object.entries(allowedFields)) {
-    if (fields[key] !== undefined) {
+    if (updateFields[key] !== undefined) {
       setClauses.push(`${col} = ?`);
-      values.push(fields[key]);
+      values.push(updateFields[key]);
     }
   }
   if (setClauses.length === 0) return res.status(400).json({ error: '無有效更新欄位' });
   setClauses.push('updated_at = ?');
-  values.push(Date.now());
+  const nowMs = Date.now();
+  values.push(nowMs);
 
-  let updated = 0;
-  ids.forEach(id => {
-    const tx = queryOne("SELECT id FROM transactions WHERE id = ? AND user_id = ?", [id, req.userId]);
-    if (!tx) return;
-    db.run(`UPDATE transactions SET ${setClauses.join(', ')} WHERE id = ? AND user_id = ?`, [...values, id, req.userId]);
-    updated++;
-  });
+  try {
+    db.run('BEGIN');
+    ids.forEach(id => {
+      db.run(`UPDATE transactions SET ${setClauses.join(', ')} WHERE id = ? AND user_id = ?`, [...values, id, req.userId]);
+    });
+    db.run('COMMIT');
+  } catch (e) {
+    try { db.run('ROLLBACK'); } catch {}
+    return res.status(500).json({ error: '批次更新失敗', message: String(e?.message || e) });
+  }
   saveDB();
-  res.json({ updated });
-});
+  res.json({ affectedIds: ids, affectedCount: ids.length, updated: ids.length, updatedAt: nowMs });
+};
+
+app.post('/api/transactions/batch-delete', batchDeleteHandler);
+app.post('/api/transactions/batch-update', batchUpdateHandler);
+// 契約路徑（colon 形式）
+app.post(/^\/api\/transactions:batch-delete$/, batchDeleteHandler);
+app.post(/^\/api\/transactions:batch-update$/, batchUpdateHandler);
 
 // ─── 匯入 CSV ───
 app.post('/api/transactions/import', (req, res) => {
@@ -5399,41 +5547,65 @@ app.post('/api/transactions/import', (req, res) => {
   });
 });
 
-app.post('/api/transactions/transfer', (req, res) => {
-  const { fromId, toId, amount, date: rawDate, note } = req.body;
+// T070（FR-015）：POST /api/transfers — 同幣別轉帳產生 transfer_out + transfer_in 對
+const transferHandler = (req, res) => {
+  const fromId = req.body.fromAccountId ?? req.body.fromId;
+  const toId = req.body.toAccountId ?? req.body.toId;
+  const { amount, date: rawDate, note } = req.body;
+  if (!fromId || !toId) return res.status(400).json({ error: '缺少帳戶資訊' });
   if (fromId === toId) return res.status(400).json({ error: '轉出與轉入帳戶不可相同' });
-  if (amount <= 0) return res.status(400).json({ error: '金額必須大於 0' });
+  if (!Number.isFinite(Number(amount)) || Number(amount) <= 0) return res.status(400).json({ error: '金額必須大於 0' });
 
-  const fromAccount = queryOne('SELECT currency FROM accounts WHERE id = ? AND user_id = ?', [fromId, req.userId]);
-  const toAccount = queryOne('SELECT currency FROM accounts WHERE id = ? AND user_id = ?', [toId, req.userId]);
-  if (!fromAccount || !toAccount) return res.status(400).json({ error: '帳戶不存在' });
+  const fromAccount = queryOne('SELECT id, currency FROM accounts WHERE id = ? AND user_id = ?', [fromId, req.userId]);
+  const toAccount = queryOne('SELECT id, currency FROM accounts WHERE id = ? AND user_id = ?', [toId, req.userId]);
+  if (!fromAccount || !toAccount) return res.status(404).json({ error: 'NotFound' });
 
   const fromCurrency = normalizeCurrency(fromAccount.currency);
   const toCurrency = normalizeCurrency(toAccount.currency);
+  if (fromCurrency !== toCurrency) {
+    return res.status(422).json({
+      error: 'CrossCurrencyTransfer',
+      message: '跨幣別請分開記一筆支出 + 一筆收入',
+    });
+  }
+
   const transferAmount = Number(amount);
-  let outConverted;
+  let converted;
   try {
-    outConverted = convertToTwd(transferAmount, fromCurrency, null, req.userId);
+    converted = convertToTwd(transferAmount, fromCurrency, null, req.userId);
   } catch (e) {
     return res.status(400).json({ error: e.message || '轉帳金額格式錯誤' });
   }
-  const inOriginal = toCurrency === fromCurrency
-    ? transferAmount
-    : convertFromTwd(outConverted.twdAmount, toCurrency, req.userId);
-  const inConverted = convertToTwd(inOriginal, toCurrency, null, req.userId);
 
   const now = Date.now();
   const txDate = normalizeDate(rawDate) || todayStr();
   const txNote = note || '轉帳';
   const outId = uid();
   const inId = uid();
-  db.run("INSERT INTO transactions (id,user_id,type,amount,currency,original_amount,fx_rate,date,category_id,account_id,note,linked_id,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-    [outId, req.userId, 'transfer_out', outConverted.twdAmount, fromCurrency, outConverted.originalAmount, outConverted.fxRate, txDate, '', fromId, txNote, inId, now, now]);
-  db.run("INSERT INTO transactions (id,user_id,type,amount,currency,original_amount,fx_rate,date,category_id,account_id,note,linked_id,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-    [inId, req.userId, 'transfer_in', inConverted.twdAmount, toCurrency, inConverted.originalAmount, inConverted.fxRate, txDate, '', toId, txNote, outId, now, now]);
+  try {
+    db.run('BEGIN');
+    db.run(
+      "INSERT INTO transactions (id,user_id,type,amount,currency,original_amount,fx_rate,fx_fee,twd_amount,date,category_id,account_id,to_account_id,note,linked_id,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+      [outId, req.userId, 'transfer_out', converted.twdAmount, fromCurrency, converted.originalAmount, converted.fxRate, 0, converted.twdAmount, txDate, '', fromId, toId, txNote, inId, now, now]
+    );
+    db.run(
+      "INSERT INTO transactions (id,user_id,type,amount,currency,original_amount,fx_rate,fx_fee,twd_amount,date,category_id,account_id,to_account_id,note,linked_id,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+      [inId, req.userId, 'transfer_in', converted.twdAmount, toCurrency, converted.originalAmount, converted.fxRate, 0, converted.twdAmount, txDate, '', toId, fromId, txNote, outId, now, now]
+    );
+    db.run('COMMIT');
+  } catch (e) {
+    try { db.run('ROLLBACK'); } catch {}
+    return res.status(500).json({ error: '轉帳建立失敗', message: String(e?.message || e) });
+  }
   saveDB();
-  res.json({ ok: true });
-});
+  res.status(201).json({
+    transferOut: { id: outId, accountId: fromId, toAccountId: toId, amount: converted.originalAmount, currency: fromCurrency, date: txDate, linkedId: inId, updatedAt: now },
+    transferIn: { id: inId, accountId: toId, toAccountId: fromId, amount: converted.originalAmount, currency: toCurrency, date: txDate, linkedId: outId, updatedAt: now },
+    ok: true,
+  });
+};
+app.post('/api/transactions/transfer', transferHandler);
+app.post('/api/transfers', transferHandler);
 
 // ─── 預算 ───
 app.get('/api/budgets', (req, res) => {
@@ -5672,7 +5844,7 @@ app.get('/api/dashboard', (req, res) => {
     SELECT t.*, c.name as cat_name, c.color as cat_color
     FROM transactions t
     LEFT JOIN categories c ON t.category_id = c.id
-    WHERE t.user_id = ? AND t.type IN ('income','expense')
+    WHERE t.user_id = ? AND t.type IN ('income','expense') AND t.exclude_from_stats = 0
     ORDER BY t.date DESC, t.created_at DESC LIMIT 5
   `, [req.userId]);
 
@@ -7062,6 +7234,8 @@ initDB().then(() => {
   registerAuditPruneJob();
   app.listen(PORT, () => {
     console.log(`AssetPilot 伺服器已啟動: http://localhost:${PORT}`);
+    // T149：啟動 log 帶版本標籤，方便容器日誌追蹤上線版本
+    console.log('[startup] AssetPilot v4.23.0 / feature 002-transactions-accounts ready');
     console.log(`[OAuth] redirect_uri whitelist: ${GOOGLE_OAUTH_REDIRECT_URIS.length} entries`);
   });
 });

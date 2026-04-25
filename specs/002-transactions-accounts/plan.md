@@ -89,10 +89,13 @@ Services／Resend** 雖已於專案存在但與本功能直接需求無關（IPi
   [research.md §2](./research.md)）。
 - 前端（既有）：原生 HTML/CSS/JavaScript（SPA）、Chart.js 圖表、
   Font Awesome 6 圖示，所有外部資源以 SRI 掛載。
-- 前端（**本功能新增**）：QR 掃描元件——採用瀏覽器原生
+- 前端（**本功能新增**）：(a) QR 掃描元件——採用瀏覽器原生
   [`BarcodeDetector` API](https://developer.mozilla.org/en-US/docs/Web/API/BarcodeDetector)
   為主、不支援時 fallback 至 `jsQR` (CDN + SRI 載入)；理由與替代方案見
-  [research.md §6](./research.md)。
+  [research.md §6](./research.md)。(b) `decimal.js`——以 CDN + SRI 載入
+  （`https://cdn.jsdelivr.net/npm/decimal.js@10.4.3/decimal.min.js`），
+  暴露 `window.Decimal`，供 `lib/moneyDecimal.js` 同構載入時於前端解析；
+  與後端 `npm install decimal.js` 共用同一版本以避免 round 結果漂移。
 - 外部 API：`https://v6.exchangerate-api.com/v6/{KEY}/latest/TWD`
   （匯率，沿用 001 既有環境變數 `EXCHANGE_RATE_API_KEY`）；其餘
   IPinfo／TWSE／Google Identity Services／Resend 於本功能不直接呼叫。
@@ -232,13 +235,14 @@ specs/002-transactions-accounts/
 ├── index.html                       # SPA 入口；補 jsQR fallback CDN（SRI）
 ├── style.css                        # 全站樣式；新增「未來」分區、批次操作列
 │                                    # 紫色強調、半選 checkbox 樣式
-├── lib/                             # 【本功能新增】後端共用模組（純函式）
-│   ├── moneyDecimal.js              # 金額 decimal.js 工具：smallestUnit↔decimal、
-│   │                                # 各幣別最小單位定義表
-│   ├── exchangeRateCache.js         # 跨使用者匯率快取（in-flight dedup +
-│   │                                # 30 分鐘 server cache）
-│   └── taipeiTime.js                # Asia/Taipei 時區工具：todayInTaipei()、
-│                                    # isFutureDate(dateStr)
+├── lib/                             # 【本功能新增】共用純函式工具
+│   ├── moneyDecimal.js              # 金額 decimal.js 工具（**同構模組，前後端共用**）：
+│   │                                # smallestUnit↔decimal、各幣別最小單位定義表、
+│   │                                # computeTwdAmount、formatForDisplay
+│   ├── exchangeRateCache.js         # 跨使用者匯率快取（**server-only**：
+│   │                                # in-flight dedup + 30 分鐘 server cache）
+│   └── taipeiTime.js                # Asia/Taipei 時區工具（**server-only**：
+│                                    # todayInTaipei()、isFutureDate(dateStr)）
 ├── openapi.yaml                     # 全站契約；本功能於 PR 內同步加入新端點
 ├── database.db                      # sql.js 持久化檔（gitignore）
 ├── package.json / package-lock.json # 新增 decimal.js dependency
@@ -255,8 +259,19 @@ specs/002-transactions-accounts/
 1. **單一 server.js 已達 28 萬字元（~280KB）**，FR-022a / FR-007a /
    FR-023 三項需要可測純函式（金額換算、時區、匯率快取去重），抽到
    `lib/*` 既能避免 server.js 進一步膨脹，亦便於未來引入測試。
-2. **`lib/` 為 server-side only**：前端不需要這三項計算（前端只
-   呼叫 API、不重複計算 TWD 等值），避免雙端重複邏輯。
+2. **`lib/` 採混合策略以避免雙端重複邏輯**：
+   - **`lib/moneyDecimal.js` 為同構模組**（前後端共用，single source of
+     truth）：因 FR-021 海外手續費 UI（T123）與 FR-004 / FR-020 儀表板
+     跨幣別 TWD 換算（T125）需前端即時計算 fxFee／TWD 等值，且後端
+     T035 / T113 / T035 須採同套 `decimal.js` 公式；若 `lib/` 僅
+     server-side，前端只能 (a) 多打 API 換算（往返成本）或 (b) 重寫一份
+     簡化邏輯（漂移風險）。同構策略以 UMD 樣式同時暴露 `module.exports`
+     與 `window.moneyDecimal`，server.js 以 `require('./lib/moneyDecimal')`
+     載入、前端以 `<script>` 載入後從 `window.moneyDecimal` 取用；
+     `decimal.js` 依賴於前端以 CDN + SRI 掛載（與 jsQR fallback 同模式）。
+   - **`lib/exchangeRateCache.js` 與 `lib/taipeiTime.js` 仍為 server-only**：
+     前者持有伺服器記憶體 cache 物件、後者僅 server 端寫入
+     `transactions.date` 時需要；兩者前端皆不直接呼叫，無重複邏輯風險。
 3. **不新增 backend／frontend 目錄拆分**：001 已決策不採此拆分，本
    功能延續以保持結構一致。
 

@@ -1,0 +1,312 @@
+openapi: 3.2.0
+info:
+  title: 資產管理 API — 003 分類系統子契約
+  version: 4.24.0
+  description: |-
+    本檔為 specs/003-categories 功能的 OpenAPI 子契約，僅描述本功能修改
+    與新增的端點與 schema。所有端點同步登記於專案根目錄 `openapi.yaml`
+    （憲章 Principle II 規則 #2：handler 與 paths.* 必須同 PR 對齊）。
+
+    認證：JWT（HS256）存於 httpOnly Cookie（`authToken`，`SameSite=Strict`）。
+    錯誤主體：`{ "error": string }`，HTTP 狀態碼為 400 / 404 / 409 等。
+
+servers:
+  - url: http://localhost:3000
+    description: 本機開發
+  - url: https://assetpilot.example.com
+    description: 正式站（佔位）
+
+tags:
+  - name: 分類
+    description: 兩層分類樹、預設樹補建、拖曳排序、跨父歸屬變更、還原預設
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: authToken
+
+  schemas:
+    Category:
+      type: object
+      description: |-
+        分類節點。`parentId` 為空字串時代表父分類；非空字串時代表子分類，
+        且 `parentId` 必為同 `userId`、同 `type` 的父分類 `id`。
+      properties:
+        id: { type: string }
+        name: { type: string, minLength: 1 }
+        type:
+          type: string
+          enum: [income, expense]
+          description: 建立後永久不可變（FR-014c）
+        color:
+          type: string
+          pattern: '^#[0-9A-Fa-f]{6}$'
+          description: 嚴格 6 碼 hex；不接受縮寫或含 alpha（FR-020、FR-021）
+        isDefault: { type: boolean, description: 純資訊旗標（FR-009a） }
+        sortOrder: { type: integer }
+        parentId:
+          type: string
+          description: 空字串=父分類；非空=子分類所屬父分類 ID
+      required: [id, name, type, color, isDefault, sortOrder, parentId]
+
+    CategoryUpsert:
+      type: object
+      description: 新增分類（POST /api/categories）；type 一旦建立不可再變更
+      properties:
+        name: { type: string, minLength: 1 }
+        type: { type: string, enum: [income, expense] }
+        color: { type: string, pattern: '^#[0-9A-Fa-f]{6}$' }
+        parentId:
+          type: string
+          description: 空字串=新增父分類；非空=新增於該父分類底下的子分類，type 必與父分類一致
+      required: [name, type, color]
+
+    CategoryEdit:
+      type: object
+      description: 編輯分類（PUT /api/categories/{id}）；僅可改 name/color
+      properties:
+        name: { type: string, minLength: 1 }
+        color: { type: string, pattern: '^#[0-9A-Fa-f]{6}$' }
+      required: [name, color]
+
+    CategoryMoveRequest:
+      type: object
+      description: |-
+        將子分類移到另一父分類（PATCH /api/categories/{id}）；FR-014a/b/d。
+        既有 transaction.category_id 不變更，僅父分類歸屬與 sort_order 改變。
+      properties:
+        parentId:
+          type: string
+          minLength: 1
+          description: 新父分類 ID；必須為使用者擁有、type 與此分類相同的父分類
+      required: [parentId]
+
+    CategoryReorderRequest:
+      type: object
+      description: |-
+        批次重排同層分類（POST /api/categories:reorder）；FR-024a/b。
+        scope 限定操作範疇，items 內所有 id 必為同一 scope。
+      properties:
+        scope:
+          type: string
+          description: |-
+            `parents:expense` 或 `parents:income`：重排該 type 的全部父分類；
+            `children:<parentId>`：重排某父分類底下的子分類。
+          pattern: '^(parents:(expense|income)|children:.+)$'
+        items:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/CategoryReorderItem'
+      required: [scope, items]
+
+    CategoryReorderItem:
+      type: object
+      properties:
+        id: { type: string }
+        sortOrder: { type: integer, minimum: 0 }
+      required: [id, sortOrder]
+
+    RestoreDefaultsResponse:
+      type: object
+      properties:
+        ok: { type: boolean }
+        restored:
+          type: integer
+          description: 本次補建的分類數（含父與子）；若使用者從未刪除過任何預設項則為 0
+      required: [ok, restored]
+
+    Error:
+      type: object
+      properties:
+        error: { type: string }
+      required: [error]
+
+  responses:
+    OkSuccess:
+      description: 成功
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              ok: { type: boolean }
+            required: [ok]
+    IdResponse:
+      description: 建立成功並回傳 id
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              id: { type: string }
+            required: [id]
+    BadRequest:
+      description: 請求不合法（含顏色格式錯、類型不一致、leaf-only 違反等）
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    NotFound:
+      description: 分類不存在或非該使用者擁有
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+
+  parameters:
+    PathId:
+      name: id
+      in: path
+      required: true
+      schema: { type: string }
+
+security:
+  - cookieAuth: []
+
+paths:
+  /api/categories:
+    get:
+      tags: [分類]
+      summary: 列出分類
+      description: |-
+        回傳該使用者所有分類（含父與子），預設依 `sortOrder` 由小到大。
+        前端可依 `type` 與 `parentId` 自行重組成兩層樹。已移除 `isHidden`
+        欄位。
+      operationId: listCategories
+      responses:
+        '200':
+          description: 分類清單
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Category'
+
+    post:
+      tags: [分類]
+      summary: 新增分類（父或子）
+      description: |-
+        - 若 `parentId == ''`：新增父分類（FR-012），需傳入 `type`。
+        - 若 `parentId` 非空：新增子分類（FR-013），`type` 由父分類繼承
+          且 client 端應傳入正確 `type`；後端會額外驗證 type 一致。
+        - 顏色嚴格 `#RRGGBB`（FR-020）。
+      operationId: createCategory
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryUpsert'
+      responses:
+        '200':
+          $ref: '#/components/responses/IdResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /api/categories/{id}:
+    parameters:
+      - $ref: '#/components/parameters/PathId'
+    put:
+      tags: [分類]
+      summary: 編輯分類（名稱、顏色）
+      description: |-
+        僅可變更 `name` 與 `color`；`type`、`parentId`、`sortOrder` 一律
+        忽略並拒絕（FR-014c：type 不可變、FR-015：父分類不可被 demote 為
+        子分類；跨父歸屬請使用 PATCH）。
+      operationId: updateCategory
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryEdit'
+      responses:
+        '200':
+          $ref: '#/components/responses/OkSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    patch:
+      tags: [分類]
+      summary: 移動子分類到另一父分類
+      description: |-
+        FR-014a/b/d：僅可對「子分類」呼叫；新父分類必須為同 type、同
+        userId 的父分類；既有交易 `category_id` 不變動；移動後此子分類
+        的 `sortOrder` 自動設為新父底下既有最大值 + 1。
+      operationId: moveCategoryParent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryMoveRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/OkSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags: [分類]
+      summary: 刪除分類（其下不得有交易）
+      description: |-
+        - 若該分類底下尚有任一筆交易 → `400`（FR-017）。
+        - 若為父分類，則任一子分類底下有交易 → `400`（FR-018）；皆無則
+          連帶刪除整棵樹（FR-019）。
+        - 對被刪除的「預設分類」（`isDefault=true`），系統會在交易內
+          將其穩定識別鍵寫入 `deleted_defaults`（FR-011b、FR-011b1）；
+          連帶刪除的預設子分類同樣寫入。
+      operationId: deleteCategory
+      responses:
+        '200':
+          $ref: '#/components/responses/OkSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/categories:reorder:
+    post:
+      tags: [分類]
+      summary: 批次重排同層分類
+      description: |-
+        FR-024a/b：拖曳排序結束後，前端一次性呼叫此端點更新該層級全部
+        受影響項目的 `sortOrder`。`scope` 限定範疇（同 type 的父分類層
+        或某 parent 底下的子分類層），`items` 中所有 id 必屬同一 scope。
+      operationId: reorderCategories
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryReorderRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/OkSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /api/categories:restore-defaults:
+    post:
+      tags: [分類]
+      summary: 還原預設分類（補回過去刪除的預設分類）
+      description: |-
+        FR-011d/e/f：清空使用者的 `deleted_defaults` registry，並執行
+        一次預設樹補建（FR-010 流程）。**非破壞性**：不刪除、覆寫、修改
+        任何已存在的分類；可觀察結果僅為「過去缺漏的預設項被新增回來」。
+        UI 文案應為「補回過去刪除的預設分類」，不可使用「重置」「恢復出
+        廠」等可能誤導的字眼（FR-011f）。
+      operationId: restoreDefaultCategories
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestoreDefaultsResponse'

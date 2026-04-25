@@ -71,7 +71,11 @@
       "Bash(node -e ' *)",
       "Bash(node --check server.js)",
       "Bash(node --check app.js)",
-      "Bash(node *)"
+      "Bash(node *)",
+      "PowerShell(& \"$\\(Get-Location\\)\\\\.specify\\\\extensions\\\\git\\\\scripts\\\\powershell\\\\create-new-feature.ps1\" -Json -ShortName \"categories\" \"Two-level category system with default tree\")",
+      "PowerShell(& \"$\\(Get-Location\\)\\\\.specify\\\\scripts\\\\powershell\\\\check-prerequisites.ps1\" -Json -PathsOnly)",
+      "Bash(git fetch *)",
+      "PowerShell(& \"$\\(Get-Location\\)\\\\.specify\\\\scripts\\\\powershell\\\\setup-plan.ps1\" -Json)"
     ]
   }
 }

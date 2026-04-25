@@ -5,7 +5,7 @@
 規格主路徑與 8 項 SC（Success Criteria）。
 
 > **前置**：001-user-permissions 已完成且使用者可以註冊／登入。
-> 本機 Node.js 18+、`npm install` 已執行（含本功能新增的 `decimal.js`）。
+> 本機 Node.js 24+、`npm install` 已執行（含本功能新增的 `decimal.js`）。
 
 ---
 

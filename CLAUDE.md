@@ -72,3 +72,18 @@ For multi-step tasks, outline a short plan:
 ```
 
 Strong success criteria enable independent iteration. Weak ones (“make it work”) require constant clarification.
+
+<!-- SPECKIT START -->
+## 目前進行中的功能規劃
+
+- 功能：分類系統（Category System）
+- 分支：`003-categories`
+- 規格：[specs/003-categories/spec.md](specs/003-categories/spec.md)
+- 計畫：[specs/003-categories/plan.md](specs/003-categories/plan.md)
+- 衍生產物：
+  - [research.md](specs/003-categories/research.md)
+  - [data-model.md](specs/003-categories/data-model.md)
+  - [quickstart.md](specs/003-categories/quickstart.md)
+  - [contracts/categories.openapi.yaml](specs/003-categories/contracts/categories.openapi.yaml)
+<!-- SPECKIT END -->
+

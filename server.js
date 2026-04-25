@@ -2416,46 +2416,34 @@ app.get('/api/auth/google/state', (req, res) => {
 // 版本更新資訊（公開，不需認證）
 // 從 GitHub 取得最新 changelog 並與本地合併，讓舊版本也能看到新版更新資訊
 // 版本更新資訊來源固定為官方倉庫，避免被環境變數覆蓋。
+// 同時抓 main + dev 兩條分支：dev 上 PR merge 後即使 main 尚未同步，也能讓所有部署看到最新版本資訊。
 const CHANGELOG_SOURCE_URL = 'https://github.com/es94111/AssetPilot/blob/main/changelog.json';
-const CHANGELOG_GITHUB_URL = CHANGELOG_SOURCE_URL
-  .replace('https://github.com/', 'https://raw.githubusercontent.com/')
-  .replace('/blob/', '/');
-const CHANGELOG_GITHUB_API_URL = 'https://api.github.com/repos/es94111/AssetPilot/contents/changelog.json?ref=main';
+const CHANGELOG_REMOTE_BRANCHES = ['main', 'dev'];
 const APP_UPDATE_ZIP_URL = 'https://codeload.github.com/es94111/AssetPilot/zip/refs/heads/main';
 let remoteChangelogCache = null;
 let remoteChangelogCacheTime = 0;
 const REMOTE_CHANGELOG_TTL = 30 * 60 * 1000; // 30 分鐘快取
 
-async function fetchRemoteChangelog(forceRefresh = false) {
-  const now = Date.now();
-  if (!forceRefresh && remoteChangelogCache && (now - remoteChangelogCacheTime) < REMOTE_CHANGELOG_TTL) {
-    return remoteChangelogCache;
-  }
-
-  const saveCache = (data) => {
-    remoteChangelogCache = data;
-    remoteChangelogCacheTime = now;
-    return data;
-  };
+async function fetchChangelogFromBranch(branch) {
+  const rawUrl = `https://raw.githubusercontent.com/es94111/AssetPilot/${branch}/changelog.json`;
+  const apiUrl = `https://api.github.com/repos/es94111/AssetPilot/contents/changelog.json?ref=${branch}`;
 
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 5000);
-    const resp = await fetch(CHANGELOG_GITHUB_URL, { signal: controller.signal });
+    const resp = await fetch(rawUrl, { signal: controller.signal });
     clearTimeout(timeout);
     if (resp.ok) {
-      const data = await resp.json();
-      return saveCache(data);
+      return await resp.json();
     }
   } catch (e) {
     // 忽略，改走 GitHub API 備援
   }
 
-  // 備援：某些網路環境可能無法連到 raw.githubusercontent.com
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 5000);
-    const resp = await fetch(CHANGELOG_GITHUB_API_URL, {
+    const resp = await fetch(apiUrl, {
       signal: controller.signal,
       headers: { 'User-Agent': 'AssetPilot-Changelog-Fetcher' },
     });
@@ -2464,10 +2452,40 @@ async function fetchRemoteChangelog(forceRefresh = false) {
     const data = await resp.json();
     if (!data?.content) return null;
     const jsonText = Buffer.from(String(data.content).replace(/\n/g, ''), 'base64').toString('utf8');
-    return saveCache(JSON.parse(jsonText));
+    return JSON.parse(jsonText);
   } catch (e) {
     return null;
   }
+}
+
+async function fetchRemoteChangelog(forceRefresh = false) {
+  const now = Date.now();
+  if (!forceRefresh && remoteChangelogCache && (now - remoteChangelogCacheTime) < REMOTE_CHANGELOG_TTL) {
+    return remoteChangelogCache;
+  }
+
+  // 平行抓 main + dev，全部失敗才回 null
+  const results = await Promise.all(CHANGELOG_REMOTE_BRANCHES.map(b => fetchChangelogFromBranch(b)));
+  const valid = results.filter(r => r && Array.isArray(r.releases));
+  if (valid.length === 0) return null;
+
+  // 合併 main + dev：以版本號為 key 去重，後來者覆蓋（dev 通常較新，會覆蓋 main 同版本）
+  const versionMap = new Map();
+  let latestCurrentVersion = '0.0';
+  valid.forEach(data => {
+    (data.releases || []).forEach(r => versionMap.set(r.version, r));
+    if (data.currentVersion && compareVersions(data.currentVersion, latestCurrentVersion) > 0) {
+      latestCurrentVersion = data.currentVersion;
+    }
+  });
+  const merged = {
+    currentVersion: latestCurrentVersion,
+    releases: Array.from(versionMap.values()).sort((a, b) => compareVersions(b.version, a.version)),
+  };
+
+  remoteChangelogCache = merged;
+  remoteChangelogCacheTime = now;
+  return merged;
 }
 
 function parseVersion(v) {

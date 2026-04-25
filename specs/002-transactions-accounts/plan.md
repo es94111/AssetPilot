@@ -7,7 +7,7 @@
 
 本計畫將 002 規格（6 user story／**34 base FR + 4 sub-FR（`a` 後綴：
 FR-007a / 014a / 020a / 022a）= 38 total**／20 Clarification／8 SC）落地
-至既有單體應用。沿用 001 已建立的技術骨架：Node.js 18+、Express 5、單一
+至既有單體應用。沿用 001 已建立的技術骨架：Node.js 24+、Express 5、單一
 `server.js`、根目錄 SPA（`index.html` / `app.js` / `style.css`）、sql.js
 記憶體執行 + `database.db` 檔案持久化、JWT httpOnly Cookie、bcryptjs、
 Passkey（`@passwordless-id/webauthn`）。本功能新增的整合僅有匯率資料源
@@ -71,7 +71,7 @@ Services／Resend** 雖已於專案存在但與本功能直接需求無關（IPi
 
 ## Technical Context
 
-**Language/Version**：Node.js 18+（部署於 Zeabur 與 Docker；`package.json`
+**Language/Version**：Node.js 24+（部署於 Zeabur 與 Docker；`package.json`
 鎖定 `express ^5.2.1`、`sql.js ^1.14.1`）。前端為瀏覽器原生 ES modules，
 無打包步驟（與 001 相同）。
 

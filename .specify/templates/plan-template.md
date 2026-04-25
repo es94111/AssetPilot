@@ -31,7 +31,7 @@
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-Gates derived from `.specify/memory/constitution.md` v1.1.0:
+Gates derived from `.specify/memory/constitution.md` v1.2.0:
 
 - **[I] 繁體中文文件規範 Gate**：本計畫及其衍生產出（`spec.md`、
   `research.md`、`data-model.md`、`quickstart.md`、`contracts/**`、
@@ -45,6 +45,16 @@ Gates derived from `.specify/memory/constitution.md` v1.1.0:
     新端點；純內部模組、CLI、靜態資源路由不受此限。
   - 重複 schema 需改以 `components.schemas` + `$ref` 表達；需要驗證
     身分的端點需宣告 `security`。
+- **[III] Slash-Style HTTP Path Gate**：
+  - 本計畫新增／修改的所有 HTTP 路徑（`server.js` 路由、`openapi.yaml`、
+    `contracts/**`、前端 `app.js` fetch 字串、文件中引用的具體路徑）
+    一律以斜線 `/` 為唯一分隔符；**禁止** Google AIP-136 冒號式自訂方
+    法（如 `/api/categories:reorder`）。
+  - 自訂方法須採子資源段表達（如 `/api/categories/reorder`、
+    `/api/categories/restore-defaults`、`/api/transactions/batch-update`）；
+    多字動詞使用 kebab-case。
+  - 例外：Express 路由參數宣告（`/api/users/:id`）合法，因為實際 wire
+    URL 不含冒號。
 - **Development Workflow Gate**：已建立對應功能分支；預計同步更新
   `changelog.json` 與 `SRS.md`；若含破壞性變更，PR 描述將以繁體中文
   列出遷移步驟；API 變更需與實作同一 PR 更新契約（禁止「先上實作、

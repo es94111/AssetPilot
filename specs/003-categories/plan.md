@@ -138,7 +138,7 @@ dependency，改以 [quickstart.md](./quickstart.md) 的可重現手動驗證流
 
 *GATE：Phase 0 研究前必過；Phase 1 設計後重測。*
 
-Gates（憲章 v1.1.0）：
+Gates（憲章 v1.2.0）：
 
 - **[I] 繁體中文文件規範 Gate**：✅ PASS
   - `spec.md`、本 `plan.md`、`research.md`、`data-model.md`、`quickstart.md`、
@@ -161,6 +161,15 @@ Gates（憲章 v1.1.0）：
   - `info.version` 沿用 `4.23.0`（002 已 bump 至此）；本 PR 因新增端點屬
     minor，bump 至 `4.24.0`（同步寫入 `openapi.yaml` 與 `changelog.json`，
     見 tasks.md）。
+- **[III] Slash-Style HTTP Path Gate**：✅ PASS
+  - 本功能新增的所有自訂方法皆採斜線形式：
+    `POST /api/categories/reorder`、`POST /api/categories/restore-defaults`；
+    無任何 `:verb` 冒號式路徑於 `server.js`、`openapi.yaml`、
+    `contracts/categories.openapi.yaml`、`app.js` 或 spec 衍生產物中。
+  - 動詞段一律 kebab-case（`restore-defaults`），與既有 002 慣例
+    （`/api/transactions/batch-update` 等）一致。
+  - 既有 Express 路由參數宣告（如 `app.put('/api/categories/:id', …)`）
+    屬規格允許之冒號用途（路由參數 sigil，非自訂方法動詞）。
 - **Development Workflow Gate**：✅ PASS
   - 功能分支 `003-categories` 已由 `create-new-feature.ps1` 建立。
   - 實作完成後將同步更新 `changelog.json` 新增 release entry、`SRS.md`

@@ -65,7 +65,8 @@
       "PowerShell(& \"./.specify/scripts/powershell/create-new-feature.ps1\" -Json -ShortName 'user-permissions' '�ϥΪ̻P�v���G���U�B�n�J�BGoogle SSO�BPasskey�B�޲z�������B�n�J�]�֡B���A���ɶ��ե��B�w����u')",
       "Bash(npm audit *)",
       "Bash(pwsh -File .specify/scripts/powershell/check-prerequisites.ps1 -Json -PathsOnly)",
-      "Bash(pwsh -File .specify/scripts/powershell/setup-plan.ps1 -Json)"
+      "Bash(pwsh -File .specify/scripts/powershell/setup-plan.ps1 -Json)",
+      "PowerShell(.specify/scripts/powershell/check-prerequisites.ps1 -Json)"
     ]
   }
 }

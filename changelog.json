@@ -1,6 +1,24 @@
 {
-  "currentVersion": "4.23.0",
+  "currentVersion": "4.24.0",
   "releases": [
+    {
+      "version": "4.24.0",
+      "date": "2026-04-25",
+      "title": "分類系統重整（003-categories）：兩層階層 / 預設樹補建 / 拖曳排序 / 跨父歸屬 / 刪除追蹤與還原",
+      "type": "new",
+      "changes": [
+        { "tag": "warning", "text": "schema migration：移除 `categories.is_hidden` 欄位（rebuild 模式，sql.js 不支援 DROP COLUMN）；啟動時自動備份 database.db.bak.<ts>.before-003" },
+        { "tag": "new", "text": "新增 `deleted_defaults` 表（DeletedDefaultRegistry）：使用者主動刪除過的預設分類不會於登入時自動補回；提供「補回過去刪除的預設分類」按鈕（非破壞性還原）" },
+        { "tag": "new", "text": "新增端點：`PATCH /api/categories/{id}`（移動子分類至另一父分類）、`POST /api/categories/reorder`（批次重排同層）、`POST /api/categories/restore-defaults`（清空 registry + 補建）" },
+        { "tag": "new", "text": "預設樹重新設計：8 個支出父分類 + 5 個收入父分類 + 56 個預設子分類，含支出「其他」與全部 5 個收入父分類底下完整子分類，新增「美妝保養」「訂閱服務」「瓦斯費」「牙科」「健檢」等項" },
+        { "tag": "new", "text": "登入時冪等補建（`backfillDefaultsForUser`）：補齊缺漏的預設項，跳過 deleted_defaults 與既有客製化；P95 < 200 ms" },
+        { "tag": "new", "text": "分類管理頁雙區塊：上半段支出、下半段收入；父分類整列、子分類網格（左側 4px 藍色邊框 + 箭頭）；HTML5 原生拖曳排序（同層）" },
+        { "tag": "improved", "text": "顏色驗證收緊為嚴格 `^#[0-9A-Fa-f]{6}$`（FR-020 / FR-021，防 CSS 注入）；不再接受 `#RGB` 縮寫或 `#RRGGBBAA` alpha" },
+        { "tag": "improved", "text": "分類 type 一經建立永久不可變更；PUT 接受 `type` 欄位變更請求 → `400 分類類型不可變更`" },
+        { "tag": "improved", "text": "leaf-only：`POST /api/transactions` / `PATCH /api/transactions/{id}` 後端強制 `category_id` 必為子分類，父分類 ID → 400" },
+        { "tag": "improved", "text": "升級 Dockerfile 至 `node:26-alpine`；package.json `engines.node` 鎖定 `>=24.0.0`" }
+      ]
+    },
     {
       "version": "4.23.0",
       "date": "2026-04-25",

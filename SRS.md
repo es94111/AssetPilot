@@ -1,7 +1,7 @@
 # 資產管理 系統規格說明書 (SSD)
 
-**版本：** 4.23.0
-**日期：** 2026-04-24
+**版本：** 4.24.0
+**日期：** 2026-04-25
 **狀態：** 已實作
 
 ---
@@ -193,40 +193,50 @@
 
 #### 階層
 
-分類支援兩層：父分類與子分類。不提供三層以上的孫分類 — 這是刻意的限制，避免使用者陷入「我要建幾層才夠」的糾結。每個分類有名稱、類型（收入／支出，強制 CHECK 約束）、顏色、是否為預設分類、是否隱藏、排序順序。子分類的類型必須跟父分類一致，同一個父分類下名稱不可重複。子分類僅能隸屬於一個父分類。
+分類支援兩層：父分類與子分類。不提供三層以上的孫分類 — 這是刻意的限制，避免使用者陷入「我要建幾層才夠」的糾結。每個分類有名稱、類型（收入／支出，強制 CHECK 約束）、顏色、是否為預設分類、排序順序。子分類的類型必須跟父分類一致，同一個父分類下名稱不可重複。子分類僅能隸屬於一個父分類。**分類類型一經建立永久不可變更**，避免歷史交易語意混亂。**交易僅能指派至子分類**（leaf-only），父分類僅作為組織節點不直接承載交易（後端強制）。
 
 #### 預設資料
 
-新使用者註冊時會自動建立完整的預設分類樹：
+新使用者註冊時會自動建立完整的預設分類樹（13 個父分類 + 56 個子分類）：
 
-- **支出父分類：** 餐飲、交通、購物、娛樂、居住、醫療、教育、其他
-- **預設子分類範例：**
+- **支出父分類（8）：** 餐飲、交通、購物、娛樂、居住、醫療、教育、其他
+- **預設子分類：**
   - 餐飲 → 早餐、午餐、晚餐、飲料、點心
-  - 交通 → 公車/捷運、計程車/Uber、加油、停車費、高鐵/火車
-  - 購物 → 日用品、服飾、3C產品、家電
-  - 娛樂 → 電影/影音、遊戲、旅遊、運動健身
-  - 居住 → 房租/房貸、水電費、網路費、管理費
-  - 醫療 → 掛號費、藥品、保健食品
-  - 教育 → 學費、書籍、線上課程
-- **收入分類：** 薪資、獎金、投資、兼職、其他
+  - 交通 → 大眾運輸、計程車、加油、停車費、高鐵/火車
+  - 購物 → 日用品、服飾、3C 用品、家電、美妝保養
+  - 娛樂 → 電影/影音、遊戲、旅遊、運動健身、訂閱服務
+  - 居住 → 房租/房貸、水電費、瓦斯費、網路費、管理費
+  - 醫療 → 掛號費、藥品、保健食品、牙科、健檢
+  - 教育 → 學費、書籍、線上課程、補習費
+  - 其他 → 雜支、禮金/紅包、捐款、罰款
+- **收入父分類（5）：** 薪資、獎金、投資、兼職、其他
+  - 薪資 → 月薪、加班費
+  - 獎金 → 年終獎金、績效獎金、節日禮金
+  - 投資 → 股利、利息、資本利得
+  - 兼職 → 接案、家教、打工
+  - 其他 → 退稅、贈與/紅包、雜項
 
-舊使用者在系統升級後若缺少任一預設子分類，會在登入時被自動補建。
+舊使用者在系統升級後若缺少任一預設項，會在登入時被自動補建（P95 < 200 ms）；補建會跳過使用者主動刪除過的預設項（透過 `DeletedDefaultRegistry` 追蹤），不會復活已刪除的預設項。
 
 #### 畫面
 
-父分類顯示完整寬度，帶 `+`（新增子分類）與編輯按鈕；子分類以網格佈局縮排顯示，帶左側藍色邊框和箭頭圖示。整棵分類樹的色彩配色與儀表板、報表的圖例完全一致。
+分類管理頁採雙區塊：上半段「支出」、下半段「收入」。父分類顯示完整寬度，帶 `+`（新增子分類）、編輯與刪除按鈕；子分類以 CSS Grid 網格縮排顯示，帶左側 4px 藍色邊框和箭頭圖示。整棵分類樹支援 **HTML5 原生拖曳排序**（同層）：父列拖曳重排該 type 的所有父分類；子分類在同一父分類底下拖曳重排，跨父歸屬調整則透過編輯 modal 內的「上層分類」下拉。色彩配色與儀表板、報表的圖例完全一致。
+
+頁首提供「補回過去刪除的預設分類」按鈕：點擊後清空 `DeletedDefaultRegistry` 並執行一次補建；這是非破壞性操作，**不修改任何現有分類**。
 
 #### 約束
 
 - 分類下若有交易記錄則不可刪除
-- 刪除父分類時，若任一子分類下有交易，整棵樹都不可刪除；否則連帶刪除所有子分類
-- 顏色僅允許 `#RRGGBB` 格式，後端會驗證；這是為了防止 CSS 注入
+- 刪除父分類時，若任一子分類下有交易，整棵樹都不可刪除；否則連帶刪除所有子分類；連帶刪除的預設子分類會對稱寫入 `DeletedDefaultRegistry`，避免下次登入又被自動補回
+- 顏色僅允許嚴格 `#RRGGBB` 6 碼 hex，後端會驗證；這是為了防止 CSS 注入（不接受 `#RGB` 縮寫或 `#RRGGBBAA` alpha 形式）
+- 分類類型（收入／支出）一經建立永久不可變更
 - 編輯父分類時不可將其改為某分類的子分類（避免形成循環）
 
 #### 不做什麼
 
 - 不做 AI 自動分類或分類建議；留給未來版本
 - 不做跨使用者的共用分類模板庫；使用者想要套用他人範本只能透過 CSV 匯入匯出
+- 不做「是否隱藏」屬性：分類只能新增、編輯、刪除，沒有第四種狀態
 
 ---
 
@@ -904,6 +914,7 @@ API 路徑統一以 `/api/` 為前綴。所有需認證的路由自動套用 aut
 
 | 版本 | 日期 | 變更說明 |
 | --- | --- | --- |
+| 4.24.0 | 2026-04-25 | 003-categories 落地：①schema migration 移除 `categories.is_hidden` 欄位（rebuild 模式）+ 新增 `deleted_defaults(user_id, default_key, deleted_at)` 表 + 索引 `idx_cat_user_parent_sort` / `idx_cat_user_type`；啟動時自動備份 `database.db.bak.<ts>.before-003`；②預設樹重新設計（13 父 + 56 子）含支出「其他」與全部 5 個收入父分類，新增「美妝保養」「訂閱服務」「瓦斯費」「牙科」「健檢」等項；③新增端點 `PATCH /api/categories/{id}`（移動子分類至另一父分類）、`POST /api/categories/reorder`（批次重排同層）、`POST /api/categories/restore-defaults`（清空 registry + 補建）；④登入時冪等補建（password / Google SSO / Passkey 三條登入路徑）P95 < 200 ms，跳過 deleted_defaults 與既有客製化；⑤分類 type 一經建立永久不可變更（PUT 拒絕 type 變更）；⑥leaf-only：交易 `category_id` 必為子分類（後端強制）；⑦顏色驗證收緊為嚴格 `^#[0-9A-Fa-f]{6}$`，不接受 `#RGB` 或 `#RRGGBBAA`；⑧分類管理頁雙區塊（支出在上、收入在下）+ HTML5 原生拖曳排序（同層）+ 子分類縮排網格（左側 4px 藍色邊框 + ▸ 箭頭）+ 「補回過去刪除的預設分類」按鈕；⑨完全移除「是否隱藏」屬性；⑩零新依賴（無新增 npm 套件、無新前端 CDN） |
 | 4.23.0 | 2026-04-25 | 002-transactions-accounts 落地：①CT-1 schema migration（`accounts` 補 `category` / `overseas_fee_rate` / `updated_at`、`transactions` 補 `to_account_id` / `twd_amount`、`amount` / `initial_balance` REAL→INTEGER 幣別最小單位、`fx_rate` REAL→TEXT decimal、`exchange_rates` 拆 per-user + global 跨使用者 30 分鐘共用快取、新增 `user_settings.pinned_currencies` JSON）；②新增 dependency `decimal.js ^10.4.3`（後端 + 前端 CDN 同版本）並抽出同構模組 `lib/moneyDecimal.js` / `lib/taipeiTime.js` / `lib/exchangeRateCache.js`；③9 群端點 — `/api/accounts` GET/POST、`/api/accounts/{id}` GET/PATCH/DELETE、`/api/transactions` GET/POST、`/api/transactions/{id}` GET/PATCH/DELETE、`/api/transactions:batch-update` / `:batch-delete`、`/api/transfers` POST、`/api/exchange-rates/{currency}` GET、`/api/user/settings/pinned-currencies` GET/PUT；④FR-014a 樂觀鎖（PATCH/DELETE 接受 `expected_updated_at` 不符 409）、FR-060 IDOR 防線（`ownsResource(table,idColumn,idValue,userId)` 統一介面 + `requireOwnedAccount` / `requireOwnedTransaction`，非自己資源一律 404 不洩漏）、FR-015 同幣別轉帳 transfer 對 + 跨幣別 422、FR-016 / FR-017 統計過濾 `type IN ('income','expense') AND exclude_from_stats = 0`、FR-021 信用卡海外手續費（千分點）、FR-042 / FR-044 / FR-045 批次操作上限 500 筆 + BEGIN/COMMIT/ROLLBACK + 樂觀鎖、FR-007a 全程 Asia/Taipei 時區、FR-030 / FR-031 / FR-032 BarcodeDetector + 貼上文字 fallback；⑤a11y：批次操作列 `aria-live="polite"` + checkbox `aria-checked="mixed"`；⑥啟動 log `[startup] AssetPilot v4.23.0 / feature 002-transactions-accounts ready` |
 | 4.21.1 | 2026-04-24 | 升級 `resend` 6.1.3 → 6.12.2 對齊 npm latest（13 個直接相依全對齊）；`emails.send()` 物件回傳 API 未變更，`sendStatsEmail()` 無須調整，`node --check server.js` 通過；`specs/001-user-permissions/research.md` §5 同步標記 ✅，並新增 §5.1 記錄 `resend → svix → uuid<14` 鏈上 GHSA-w5hq-g745-h8pq 3 筆 moderate 漏洞（本專案未以 `buf` 參數呼叫 `uuid`，CVSS 0，不受影響；`fixAvailable` 建議降級為誤判，決策維持 6.12.2） |
 | 4.21.0 | 2026-04-24 | SRS 全面改寫為敘述式 SSD（System Specification Document）：按模組（使用者與權限、交易與帳戶、分類、預算與固定收支、統計報表、股票投資、匯出匯入、前端路由）分段，每個模組含核心目標敘述與「不做什麼」邊界；舊 IEEE-830 逐條 FR 結構轉為技術附錄保留；新增 Spec-Kit 憲章 `.specify/memory/constitution.md` v1.0.0（Principle I：所有規格與使用者文件必須為繁體中文，NON-NEGOTIABLE） |

@@ -1154,6 +1154,59 @@ textarea.form-input { resize: vertical; min-height: 80px; }
   gap: 6px; margin-top: 6px; margin-bottom: 8px;
 }
 
+/* ===== 003-categories T024：分類管理頁雙區塊 + 父列／子網格 + 拖曳視覺 ===== */
+.page-title-row {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 16px; gap: 12px; flex-wrap: wrap;
+}
+.cat-section { margin-bottom: 16px; }
+.cat-section-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 10px;
+}
+.cat-section-title { font-size: 18px; font-weight: 700; }
+.cat-section-divider {
+  border: none; border-top: 1px dashed var(--border);
+  margin: 20px 0;
+}
+.cat-section-body { display: flex; flex-direction: column; gap: 10px; }
+.category-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 14px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: grab;
+}
+.category-row:active { cursor: grabbing; }
+.category-row-left { display: flex; align-items: center; gap: 10px; }
+.category-row-actions { display: flex; gap: 2px; }
+.category-name { font-weight: 600; }
+.category-drag-handle {
+  color: var(--text-secondary); font-size: 14px; cursor: grab;
+}
+.subcategory-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 6px;
+  margin: 6px 0 14px 24px;
+}
+.subcategory-cell {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 12px;
+  background: var(--bg); border: 1px solid var(--border);
+  border-left: 4px solid #3b82f6;
+  border-radius: 6px;
+  cursor: grab;
+  font-size: 14px;
+}
+.subcategory-cell:active { cursor: grabbing; }
+.subcategory-arrow { color: var(--text-secondary); font-size: 12px; }
+.subcategory-name { flex: 1; }
+.subcategory-actions { display: flex; gap: 2px; opacity: 0.7; }
+.subcategory-cell:hover .subcategory-actions { opacity: 1; }
+.dragging { opacity: 0.5; }
+.drag-over { outline: 2px dashed var(--primary); outline-offset: -2px; }
+.drag-forbidden { outline: 2px dashed var(--expense, #ef4444); outline-offset: -2px; }
+
 /* ===== 固定收支列表 ===== */
 .recurring-item {
   display: flex; align-items: center; justify-content: space-between;

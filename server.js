@@ -514,6 +514,18 @@ async function initDB() {
     }
   }
 
+  // 003-categories T002：於任何 schema 變更前備份既有 DB（僅當 DB 檔案已存在）
+  if (fs.existsSync(DB_PATH)) {
+    const backup003 = `${DB_PATH}.bak.${Date.now()}.before-003`;
+    try {
+      fs.copyFileSync(DB_PATH, backup003);
+      console.log('[003-backup] before-003 →', backup003);
+    } catch (e) {
+      console.error('[003-backup] FAILED:', e.message);
+      throw e;
+    }
+  }
+
   db.run(`CREATE TABLE IF NOT EXISTS users (
     id TEXT PRIMARY KEY,
     email TEXT UNIQUE NOT NULL,
@@ -590,10 +602,24 @@ async function initDB() {
     type TEXT NOT NULL CHECK(type IN ('income','expense')),
     color TEXT DEFAULT '#6366f1',
     is_default INTEGER DEFAULT 0,
-    is_hidden INTEGER DEFAULT 0,
     sort_order INTEGER DEFAULT 0,
     parent_id TEXT DEFAULT ''
   )`);
+
+  // 003-categories T003：移除 categories.is_hidden 欄位（rebuild 模式，sql.js 不支援 DROP COLUMN）
+  migrateTo003_dropIsHidden();
+
+  // 003-categories T004：DeletedDefaultRegistry — 記錄使用者主動刪除過的預設分類，避免登入時自動補回
+  db.run(`CREATE TABLE IF NOT EXISTS deleted_defaults (
+    user_id TEXT NOT NULL,
+    default_key TEXT NOT NULL,
+    deleted_at INTEGER DEFAULT 0,
+    PRIMARY KEY (user_id, default_key)
+  )`);
+
+  // 003-categories T005：分類管理頁讀取／拖曳排序加速
+  db.run("CREATE INDEX IF NOT EXISTS idx_cat_user_parent_sort ON categories(user_id, parent_id, sort_order)");
+  db.run("CREATE INDEX IF NOT EXISTS idx_cat_user_type ON categories(user_id, type)");
 
   db.run(`CREATE TABLE IF NOT EXISTS accounts (
     id TEXT PRIMARY KEY,
@@ -777,8 +803,8 @@ async function initDB() {
   // 對應 plan.md CT-1 + data-model.md §3。執行於既有 ALTER 之後、其他資料表 CREATE 之前。
   migrate002TransactionsAccounts();
 
-  // 為既有使用者補建預設子分類
-  migrateDefaultSubcategories();
+  // 003-categories T011：為既有使用者補建完整預設樹（含支出「其他」與全部收入分類；冪等）
+  backfillDefaultsForAllUsers();
 
   // ─── 股票相關資料表 ───
   db.run(`CREATE TABLE IF NOT EXISTS stocks (
@@ -1121,68 +1147,181 @@ function migrate002TransactionsAccounts() {
   }
 }
 
-function migrateDefaultSubcategories() {
+// 003-categories T003：偵測並移除 categories.is_hidden 欄位（rebuild 模式）
+function migrateTo003_dropIsHidden() {
+  let cols;
+  try { cols = queryAll("PRAGMA table_info(categories)"); } catch (e) { return; }
+  if (!cols || !cols.some(c => c.name === 'is_hidden')) return; // 冪等：已無 is_hidden 直接 return
+
+  try {
+    db.run('BEGIN');
+    db.run(`CREATE TABLE categories_new (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      name TEXT NOT NULL,
+      type TEXT NOT NULL CHECK(type IN ('income','expense')),
+      color TEXT DEFAULT '#6366f1',
+      is_default INTEGER DEFAULT 0,
+      sort_order INTEGER DEFAULT 0,
+      parent_id TEXT DEFAULT ''
+    )`);
+    db.run(`INSERT INTO categories_new (id, user_id, name, type, color, is_default, sort_order, parent_id)
+            SELECT id, user_id, name, type, color, is_default, sort_order, parent_id FROM categories`);
+    db.run('DROP TABLE categories');
+    db.run('ALTER TABLE categories_new RENAME TO categories');
+    db.run('COMMIT');
+    console.log('[003-migration] dropped categories.is_hidden');
+  } catch (err) {
+    try { db.run('ROLLBACK'); } catch {}
+    console.error('[003-migration] dropIsHidden FAILED:', err);
+    throw err;
+  }
+}
+
+// 003-categories T011：取代既有 migrateDefaultSubcategories — 為所有既有使用者冪等補建預設樹缺漏項
+function backfillDefaultsForAllUsers() {
   const users = queryAll("SELECT DISTINCT user_id FROM categories");
   users.forEach(({ user_id }) => {
-    // 取得此使用者的頂層支出分類
-    const parentCats = queryAll("SELECT * FROM categories WHERE user_id = ? AND type = 'expense' AND (parent_id = '' OR parent_id IS NULL)", [user_id]);
-    let maxOrder = queryOne("SELECT COALESCE(MAX(sort_order),0) as m FROM categories WHERE user_id = ?", [user_id])?.m || 0;
-
-    parentCats.forEach(parent => {
-      const subs = defaultSubcategories[parent.name];
-      if (!subs) return;
-      // 檢查是否已有子分類
-      const existingSubs = queryAll("SELECT name FROM categories WHERE user_id = ? AND parent_id = ?", [user_id, parent.id]);
-      const existingNames = new Set(existingSubs.map(s => s.name));
-
-      subs.forEach(([subName, subColor]) => {
-        if (existingNames.has(subName)) return; // 已存在則跳過
-        maxOrder++;
-        db.run("INSERT INTO categories (id, user_id, name, type, color, is_default, is_hidden, sort_order, parent_id) VALUES (?,?,?,?,?,1,0,?,?)",
-          [uid(), user_id, subName, 'expense', subColor, maxOrder, parent.id]);
-      });
-    });
+    try { backfillDefaultsForUser(user_id); }
+    catch (e) { console.error('[003-backfill] user=', user_id, e); }
   });
 }
 
-// 預設子分類定義
-const defaultSubcategories = {
-  '餐飲': [['早餐', '#ef4444'], ['午餐', '#f87171'], ['晚餐', '#dc2626'], ['飲料', '#fb923c'], ['點心', '#fca5a5']],
-  '交通': [['公車/捷運', '#f97316'], ['計程車', '#fb923c'], ['加油', '#fdba74'], ['停車費', '#ea580c'], ['高鐵/火車', '#c2410c']],
-  '購物': [['日用品', '#eab308'], ['服飾', '#facc15'], ['3C產品', '#ca8a04'], ['家電', '#a16207']],
-  '娛樂': [['電影', '#8b5cf6'], ['遊戲', '#a78bfa'], ['旅遊', '#7c3aed'], ['運動', '#6d28d9']],
-  '居住': [['房租/房貸', '#06b6d4'], ['水電費', '#22d3ee'], ['網路/電話', '#0891b2'], ['管理費', '#0e7490']],
-  '醫療': [['掛號費', '#ec4899'], ['藥品', '#f472b6'], ['保健食品', '#db2777']],
-  '教育': [['學費', '#3b82f6'], ['書籍', '#60a5fa'], ['課程/補習', '#2563eb']],
+// 003-categories T007：預設樹常數（FR-008 修訂版；13 父 + 56 子 = 69 筆）
+// 「其他」鍵在支出與收入皆出現，故子分類以巢狀 { expense, income } 結構避鍵衝突
+const DEFAULT_EXPENSE_PARENTS = [
+  ['餐飲', '#ef4444'], ['交通', '#f97316'], ['購物', '#eab308'],
+  ['娛樂', '#8b5cf6'], ['居住', '#06b6d4'], ['醫療', '#ec4899'],
+  ['教育', '#3b82f6'], ['其他', '#64748b'],
+];
+const DEFAULT_INCOME_PARENTS = [
+  ['薪資', '#10b981'], ['獎金', '#14b8a6'], ['投資', '#6366f1'],
+  ['兼職', '#f59e0b'], ['其他', '#71717a'],
+];
+const DEFAULT_SUBCATEGORIES = {
+  expense: {
+    '餐飲': [['早餐','#fca5a5'], ['午餐','#f87171'], ['晚餐','#dc2626'], ['飲料','#fb923c'], ['點心','#fdba74']],
+    '交通': [['大眾運輸','#fdba74'], ['計程車','#fb923c'], ['加油','#f97316'], ['停車費','#ea580c'], ['高鐵/火車','#c2410c']],
+    '購物': [['日用品','#fde047'], ['服飾','#facc15'], ['3C用品','#eab308'], ['家電','#ca8a04'], ['美妝保養','#a16207']],
+    '娛樂': [['電影/影音','#a78bfa'], ['遊戲','#8b5cf6'], ['旅遊','#7c3aed'], ['運動健身','#6d28d9'], ['訂閱服務','#5b21b6']],
+    '居住': [['房租/房貸','#22d3ee'], ['水電費','#06b6d4'], ['瓦斯費','#0891b2'], ['網路費','#0e7490'], ['管理費','#155e75']],
+    '醫療': [['掛號費','#f9a8d4'], ['藥品','#f472b6'], ['保健食品','#ec4899'], ['牙科','#db2777'], ['健檢','#be185d']],
+    '教育': [['學費','#93c5fd'], ['書籍','#60a5fa'], ['線上課程','#3b82f6'], ['補習費','#2563eb']],
+    '其他': [['雜支','#94a3b8'], ['禮金/紅包','#64748b'], ['捐款','#475569'], ['罰款','#334155']],
+  },
+  income: {
+    '薪資': [['月薪','#34d399'], ['加班費','#10b981']],
+    '獎金': [['年終獎金','#5eead4'], ['績效獎金','#2dd4bf'], ['節日禮金','#14b8a6']],
+    '投資': [['股利','#a5b4fc'], ['利息','#818cf8'], ['資本利得','#6366f1']],
+    '兼職': [['接案','#fbbf24'], ['家教','#f59e0b'], ['打工','#d97706']],
+    '其他': [['退稅','#a1a1aa'], ['贈與/紅包','#71717a'], ['雜項','#52525b']],
+  },
 };
 
-// 為新使用者建立預設分類與帳戶
-function createDefaultsForUser(userId) {
-  const expenseCats = [
-    ['餐飲', '#ef4444'], ['交通', '#f97316'], ['購物', '#eab308'], ['娛樂', '#8b5cf6'],
-    ['居住', '#06b6d4'], ['醫療', '#ec4899'], ['教育', '#3b82f6'], ['其他', '#64748b'],
+// 003-categories T008：穩定識別字串
+//   父分類：`<type>:<name>`；子分類：`<type>:<parentName>:<name>`
+function categoryDefaultKey(type, parentName, name) {
+  if (parentName === null || parentName === undefined || parentName === '') {
+    return `${type}:${name}`;
+  }
+  return `${type}:${parentName}:${name}`;
+}
+
+// 003-categories T010：冪等補建單一使用者預設樹
+//   1. 跳過 deleted_defaults 中已記錄的項
+//   2. 跳過 (user_id, type, name) / (user_id, parent_id, name) 既有項
+//   3. 僅 INSERT 真正缺漏的；單一交易內完成
+function backfillDefaultsForUser(userId) {
+  const deletedRows = queryAll("SELECT default_key FROM deleted_defaults WHERE user_id = ?", [userId]);
+  const deletedSet = new Set(deletedRows.map(r => r.default_key));
+  let maxOrder = queryOne(
+    "SELECT COALESCE(MAX(sort_order),0) AS m FROM categories WHERE user_id = ?",
+    [userId]
+  )?.m || 0;
+  let inserted = 0;
+
+  const types = [
+    ['expense', DEFAULT_EXPENSE_PARENTS],
+    ['income', DEFAULT_INCOME_PARENTS],
   ];
-  const incomeCats = [
-    ['薪資', '#10b981'], ['獎金', '#14b8a6'], ['投資', '#6366f1'], ['兼職', '#f59e0b'], ['其他', '#64748b'],
-  ];
-  let order = 0;
-  expenseCats.forEach(([name, color]) => {
-    const parentId = uid();
-    db.run("INSERT INTO categories (id, user_id, name, type, color, is_default, is_hidden, sort_order, parent_id) VALUES (?,?,?,?,?,1,0,?,'')",
-      [parentId, userId, name, 'expense', color, order++]);
-    // 建立子分類
-    const subs = defaultSubcategories[name];
-    if (subs) {
-      subs.forEach(([subName, subColor]) => {
-        db.run("INSERT INTO categories (id, user_id, name, type, color, is_default, is_hidden, sort_order, parent_id) VALUES (?,?,?,?,?,1,0,?,?)",
-          [uid(), userId, subName, 'expense', subColor, order++, parentId]);
-      });
+
+  db.run('BEGIN');
+  try {
+    for (const [type, parents] of types) {
+      for (const [pName, pColor] of parents) {
+        const pKey = categoryDefaultKey(type, null, pName);
+        if (deletedSet.has(pKey)) continue;
+
+        let parent = queryOne(
+          "SELECT id FROM categories WHERE user_id = ? AND type = ? AND name = ? AND (parent_id = '' OR parent_id IS NULL)",
+          [userId, type, pName]
+        );
+        if (!parent) {
+          const pid = uid();
+          maxOrder++;
+          db.run(
+            "INSERT INTO categories (id, user_id, name, type, color, is_default, sort_order, parent_id) VALUES (?,?,?,?,?,1,?,'')",
+            [pid, userId, pName, type, pColor, maxOrder]
+          );
+          parent = { id: pid };
+          inserted++;
+        }
+
+        const subs = (DEFAULT_SUBCATEGORIES[type] || {})[pName] || [];
+        for (const [sName, sColor] of subs) {
+          const sKey = categoryDefaultKey(type, pName, sName);
+          if (deletedSet.has(sKey)) continue;
+
+          const exists = queryOne(
+            "SELECT id FROM categories WHERE user_id = ? AND parent_id = ? AND name = ?",
+            [userId, parent.id, sName]
+          );
+          if (exists) continue;
+
+          maxOrder++;
+          db.run(
+            "INSERT INTO categories (id, user_id, name, type, color, is_default, sort_order, parent_id) VALUES (?,?,?,?,?,1,?,?)",
+            [uid(), userId, sName, type, sColor, maxOrder, parent.id]
+          );
+          inserted++;
+        }
+      }
     }
-  });
-  incomeCats.forEach(([name, color]) => {
-    db.run("INSERT INTO categories (id, user_id, name, type, color, is_default, is_hidden, sort_order, parent_id) VALUES (?,?,?,?,?,1,0,?,'')",
-      [uid(), userId, name, 'income', color, order++]);
-  });
+    db.run('COMMIT');
+  } catch (err) {
+    try { db.run('ROLLBACK'); } catch {}
+    throw err;
+  }
+  return inserted;
+}
+
+// 003-categories T009：為新使用者建立完整預設樹（13 父 + 56 子）+ 「現金」帳戶 + user_settings
+function createDefaultsForUser(userId) {
+  let order = 0;
+  for (const [name, color] of DEFAULT_EXPENSE_PARENTS) {
+    const parentId = uid();
+    order++;
+    db.run("INSERT INTO categories (id, user_id, name, type, color, is_default, sort_order, parent_id) VALUES (?,?,?,?,?,1,?,'')",
+      [parentId, userId, name, 'expense', color, order]);
+    const subs = (DEFAULT_SUBCATEGORIES.expense || {})[name] || [];
+    for (const [subName, subColor] of subs) {
+      order++;
+      db.run("INSERT INTO categories (id, user_id, name, type, color, is_default, sort_order, parent_id) VALUES (?,?,?,?,?,1,?,?)",
+        [uid(), userId, subName, 'expense', subColor, order, parentId]);
+    }
+  }
+  for (const [name, color] of DEFAULT_INCOME_PARENTS) {
+    const parentId = uid();
+    order++;
+    db.run("INSERT INTO categories (id, user_id, name, type, color, is_default, sort_order, parent_id) VALUES (?,?,?,?,?,1,?,'')",
+      [parentId, userId, name, 'income', color, order]);
+    const subs = (DEFAULT_SUBCATEGORIES.income || {})[name] || [];
+    for (const [subName, subColor] of subs) {
+      order++;
+      db.run("INSERT INTO categories (id, user_id, name, type, color, is_default, sort_order, parent_id) VALUES (?,?,?,?,?,1,?,?)",
+        [uid(), userId, subName, 'income', subColor, order, parentId]);
+    }
+  }
   // ─── 002 feature (T022)：預設「現金」帳戶補新欄位 + user_settings ───
   // FR-002：name='現金' / category='cash' / currency='TWD' / icon='fa-wallet' / 計入總資產
   const nowMs = Date.now();
@@ -1261,7 +1400,8 @@ const flushOnExit = () => { try { saveDBSync(); } catch {} };
 process.once('SIGINT', () => { flushOnExit(); process.exit(0); });
 process.once('SIGTERM', () => { flushOnExit(); process.exit(0); });
 
-function isValidColor(c) { return !c || /^#[0-9a-fA-F]{3,8}$/.test(c); }
+// 003-categories T006：嚴格 #RRGGBB 6 位 hex（FR-020、FR-021；防 CSS 注入）
+function isValidColor(c) { return typeof c === 'string' && /^#[0-9A-Fa-f]{6}$/.test(c); }
 
 function uid() {
   return crypto.randomUUID().replace(/-/g, '');
@@ -2378,6 +2518,9 @@ app.post('/api/auth/login', async (req, res) => {
   const currentLogin = recordLoginAudit(user, req, 'password');
   recordLoginAttempt({ user, email: emailLower, req, method: 'password', isSuccess: true });
 
+  // 003-categories T012：登入時冪等補建預設樹（FR-010、FR-010b：失敗不阻擋登入）
+  try { backfillDefaultsForUser(user.id); } catch (e) { console.error('[003-backfill]', e); }
+
   const token = jwt.sign({ userId: user.id, tokenVersion: Number(user.token_version) || 0 }, JWT_SECRET, { expiresIn: JWT_EXPIRES });
   setAuthCookie(res, token);
   res.json({
@@ -2839,6 +2982,8 @@ app.post('/api/auth/google', async (req, res) => {
 
     const currentLogin = recordLoginAudit(user, req, 'google');
     recordLoginAttempt({ user, email: user.email, req, method: 'google', isSuccess: true });
+    // 003-categories T012：登入時冪等補建預設樹
+    try { backfillDefaultsForUser(user.id); } catch (e) { console.error('[003-backfill]', e); }
     const token = jwt.sign({ userId: user.id, tokenVersion: Number(user.token_version) || 0 }, JWT_SECRET, { expiresIn: JWT_EXPIRES });
     setAuthCookie(res, token);
     res.json({
@@ -2925,6 +3070,9 @@ app.post('/api/auth/passkey/login', async (req, res) => {
     loginAttempts.delete(user.email);
     const currentLogin = recordLoginAudit(user, req, 'passkey');
     recordLoginAttempt({ user, email: user.email, req, method: 'passkey', isSuccess: true });
+
+    // 003-categories T012：登入時冪等補建預設樹
+    try { backfillDefaultsForUser(user.id); } catch (e) { console.error('[003-backfill]', e); }
 
     const token = jwt.sign({ userId: user.id, tokenVersion: Number(user.token_version) || 0 }, JWT_SECRET, { expiresIn: JWT_EXPIRES });
     setAuthCookie(res, token);
@@ -4496,63 +4644,267 @@ app.post('/api/account/delete', async (req, res) => {
   res.json({ success: true });
 });
 
-// ─── 分類 ───
+// ─── 分類（003-categories） ───
+
+// T013：列出分類（移除 isHidden 欄位、explicit SELECT）
 app.get('/api/categories', (req, res) => {
-  const rows = queryAll("SELECT * FROM categories WHERE user_id = ? ORDER BY sort_order", [req.userId]);
-  res.json(rows.map(r => ({ ...r, isDefault: !!r.is_default, isHidden: !!r.is_hidden, sortOrder: r.sort_order, parentId: r.parent_id || '' })));
+  const rows = queryAll(
+    "SELECT id, user_id, name, type, color, is_default, sort_order, parent_id FROM categories WHERE user_id = ? ORDER BY sort_order",
+    [req.userId]
+  );
+  res.json(rows.map(r => ({
+    id: r.id,
+    name: r.name,
+    type: r.type,
+    color: r.color,
+    isDefault: !!r.is_default,
+    sortOrder: r.sort_order,
+    parentId: r.parent_id || '',
+  })));
 });
 
+// T014：新增分類（父：(user_id,type,name) 唯一；子：(user_id,parent_id,name) 唯一；拒絕兩層以上）
 app.post('/api/categories', (req, res) => {
-  const { name, type, color, parentId } = req.body;
+  const { name, type, color, parentId } = req.body || {};
+  if (!name || typeof name !== 'string' || !name.trim()) return res.status(400).json({ error: '分類名稱不可為空' });
+  if (type !== 'income' && type !== 'expense') return res.status(400).json({ error: '分類類型不正確' });
   if (!isValidColor(color)) return res.status(400).json({ error: '顏色格式不正確' });
   const pId = parentId || '';
-  // 同父分類下名稱不可重複
-  const dup = queryOne("SELECT id FROM categories WHERE user_id = ? AND name = ? AND type = ? AND parent_id = ?", [req.userId, name, type, pId]);
-  if (dup) return res.status(400).json({ error: '同分類下名稱不可重複' });
-  // 若指定父分類，驗證父分類存在且為同類型的頂層分類
   if (pId) {
-    const parent = queryOne("SELECT * FROM categories WHERE id = ? AND user_id = ? AND parent_id = ''", [pId, req.userId]);
+    // 子分類路徑
+    const parent = queryOne("SELECT * FROM categories WHERE id = ? AND user_id = ?", [pId, req.userId]);
     if (!parent) return res.status(400).json({ error: '父分類不存在' });
+    if (parent.parent_id !== '' && parent.parent_id !== null) {
+      // FR-001：拒絕兩層以上（不可在子分類底下再新增子分類）
+      return res.status(400).json({ error: '不可在子分類底下再新增子分類' });
+    }
     if (parent.type !== type) return res.status(400).json({ error: '子分類類型必須與父分類相同' });
+    const dup = queryOne("SELECT id FROM categories WHERE user_id = ? AND parent_id = ? AND name = ?", [req.userId, pId, name]);
+    if (dup) return res.status(400).json({ error: '同父分類下名稱不可重複' });
+  } else {
+    // 父分類路徑：FR-005a 唯一鍵 (user_id, type, name)
+    const dup = queryOne(
+      "SELECT id FROM categories WHERE user_id = ? AND type = ? AND name = ? AND (parent_id = '' OR parent_id IS NULL)",
+      [req.userId, type, name]
+    );
+    if (dup) return res.status(400).json({ error: '同類型下父分類名稱不可重複' });
   }
   const id = uid();
   const maxOrder = queryOne("SELECT COALESCE(MAX(sort_order),0) as m FROM categories WHERE user_id = ?", [req.userId])?.m || 0;
-  db.run("INSERT INTO categories (id, user_id, name, type, color, is_default, is_hidden, sort_order, parent_id) VALUES (?,?,?,?,?,0,0,?,?)",
-    [id, req.userId, name, type, color || '#6366f1', maxOrder + 1, pId]);
+  db.run(
+    "INSERT INTO categories (id, user_id, name, type, color, is_default, sort_order, parent_id) VALUES (?,?,?,?,?,0,?,?)",
+    [id, req.userId, name, type, color, maxOrder + 1, pId]
+  );
   saveDB();
   res.json({ id });
 });
 
+// T015：編輯分類（僅 name/color；type 變更請求 → 400；parentId/sortOrder 靜默忽略）
 app.put('/api/categories/:id', (req, res) => {
-  const { name, color } = req.body;
-  if (!isValidColor(color)) return res.status(400).json({ error: '顏色格式不正確' });
+  const { name, color, type } = req.body || {};
   const cat = queryOne("SELECT * FROM categories WHERE id = ? AND user_id = ?", [req.params.id, req.userId]);
   if (!cat) return res.status(404).json({ error: '分類不存在' });
+  if (type !== undefined && type !== null && type !== cat.type) {
+    return res.status(400).json({ error: '分類類型不可變更' });
+  }
+  if (!name || typeof name !== 'string' || !name.trim()) return res.status(400).json({ error: '分類名稱不可為空' });
+  if (!isValidColor(color)) return res.status(400).json({ error: '顏色格式不正確' });
   const pId = cat.parent_id || '';
-  const dup = queryOne("SELECT id FROM categories WHERE user_id = ? AND name = ? AND type = ? AND parent_id = ? AND id != ?", [req.userId, name, cat.type, pId, req.params.id]);
-  if (dup) return res.status(400).json({ error: '同分類下名稱不可重複' });
+  if (pId === '') {
+    // 父分類：FR-005a (user_id, type, name) 唯一
+    const dup = queryOne(
+      "SELECT id FROM categories WHERE user_id = ? AND type = ? AND name = ? AND (parent_id = '' OR parent_id IS NULL) AND id != ?",
+      [req.userId, cat.type, name, req.params.id]
+    );
+    if (dup) return res.status(400).json({ error: '同類型下父分類名稱不可重複' });
+  } else {
+    // 子分類：(user_id, parent_id, name) 唯一
+    const dup = queryOne(
+      "SELECT id FROM categories WHERE user_id = ? AND parent_id = ? AND name = ? AND id != ?",
+      [req.userId, pId, name, req.params.id]
+    );
+    if (dup) return res.status(400).json({ error: '同父分類下名稱不可重複' });
+  }
   db.run("UPDATE categories SET name = ?, color = ? WHERE id = ? AND user_id = ?", [name, color, req.params.id, req.userId]);
   saveDB();
   res.json({ ok: true });
 });
 
+// T016：移動子分類至另一父分類（FR-014a/b/d）
+app.patch('/api/categories/:id', (req, res) => {
+  const { parentId: newParentId } = req.body || {};
+  if (!newParentId || typeof newParentId !== 'string') {
+    return res.status(400).json({ error: '請指定新的父分類 ID' });
+  }
+  const cat = queryOne("SELECT * FROM categories WHERE id = ? AND user_id = ?", [req.params.id, req.userId]);
+  if (!cat) return res.status(404).json({ error: '分類不存在' });
+  if (!cat.parent_id) return res.status(400).json({ error: '父分類不可移動到其他父分類底下' });
+  if (newParentId === req.params.id) return res.status(400).json({ error: '不可將分類移到自身底下' });
+  const newParent = queryOne("SELECT * FROM categories WHERE id = ? AND user_id = ?", [newParentId, req.userId]);
+  if (!newParent) return res.status(400).json({ error: '新的父分類不存在' });
+  if (newParent.parent_id !== '' && newParent.parent_id !== null) {
+    return res.status(400).json({ error: '目標必須為父分類' });
+  }
+  if (newParent.type !== cat.type) return res.status(400).json({ error: '子分類類型必須與新父分類相同' });
+  const dup = queryOne(
+    "SELECT id FROM categories WHERE user_id = ? AND parent_id = ? AND name = ? AND id != ?",
+    [req.userId, newParentId, cat.name, req.params.id]
+  );
+  if (dup) return res.status(400).json({ error: '新父分類底下已有同名子分類' });
+  const newOrder = (queryOne(
+    "SELECT COALESCE(MAX(sort_order),0) AS m FROM categories WHERE user_id = ? AND parent_id = ?",
+    [req.userId, newParentId]
+  )?.m || 0) + 1;
+  db.run(
+    "UPDATE categories SET parent_id = ?, sort_order = ? WHERE id = ? AND user_id = ?",
+    [newParentId, newOrder, req.params.id, req.userId]
+  );
+  saveDB();
+  res.json({ ok: true });
+});
+
+// T017：批次重排同層分類（FR-024a/b）
+app.post('/api/categories/reorder', (req, res) => {
+  const { scope, items } = req.body || {};
+  if (typeof scope !== 'string' || !/^(parents:(expense|income)|children:.+)$/.test(scope)) {
+    return res.status(400).json({ error: 'scope 不合法' });
+  }
+  if (!Array.isArray(items) || items.length === 0) {
+    return res.status(400).json({ error: 'items 不可為空' });
+  }
+  // 取出所有 id 對應的 row 並驗證 scope 一致
+  const ids = items.map(it => String(it && it.id || ''));
+  if (ids.some(id => !id)) return res.status(400).json({ error: 'item.id 不可為空' });
+  const placeholders = ids.map(() => '?').join(',');
+  const rows = queryAll(
+    `SELECT id, type, parent_id FROM categories WHERE user_id = ? AND id IN (${placeholders})`,
+    [req.userId, ...ids]
+  );
+  if (rows.length !== ids.length) return res.status(400).json({ error: '部分分類不存在或無權限' });
+
+  let expectedParentId, expectedType;
+  if (scope.startsWith('parents:')) {
+    expectedParentId = '';
+    expectedType = scope === 'parents:expense' ? 'expense' : 'income';
+  } else {
+    expectedParentId = scope.slice('children:'.length);
+    const parentRow = queryOne("SELECT * FROM categories WHERE id = ? AND user_id = ?", [expectedParentId, req.userId]);
+    if (!parentRow) return res.status(400).json({ error: '父分類不存在' });
+    if (parentRow.parent_id !== '' && parentRow.parent_id !== null) {
+      return res.status(400).json({ error: 'scope 對應的父分類不合法' });
+    }
+    expectedType = parentRow.type;
+  }
+  for (const r of rows) {
+    if ((r.parent_id || '') !== expectedParentId) {
+      return res.status(400).json({ error: '所有分類必須屬於同一 scope（不可跨層）' });
+    }
+    if (r.type !== expectedType) {
+      return res.status(400).json({ error: '所有分類必須屬於同一 type' });
+    }
+  }
+  db.run('BEGIN');
+  try {
+    for (const it of items) {
+      db.run(
+        "UPDATE categories SET sort_order = ? WHERE id = ? AND user_id = ?",
+        [Number(it.sortOrder) || 0, String(it.id), req.userId]
+      );
+    }
+    db.run('COMMIT');
+  } catch (err) {
+    try { db.run('ROLLBACK'); } catch {}
+    console.error('[categories/reorder]', err);
+    return res.status(500).json({ error: '重排失敗' });
+  }
+  saveDB();
+  res.json({ ok: true, updated: items.length });
+});
+
+// T026：還原預設分類（清空 deleted_defaults + 補建；非破壞性）
+app.post('/api/categories/restore-defaults', (req, res) => {
+  let inserted = 0;
+  db.run('BEGIN');
+  try {
+    db.run("DELETE FROM deleted_defaults WHERE user_id = ?", [req.userId]);
+    db.run('COMMIT');
+  } catch (err) {
+    try { db.run('ROLLBACK'); } catch {}
+    console.error('[restore-defaults] DELETE registry failed', err);
+    return res.status(500).json({ error: '還原預設分類失敗' });
+  }
+  try {
+    inserted = backfillDefaultsForUser(req.userId);
+  } catch (err) {
+    console.error('[restore-defaults] backfill failed', err);
+    return res.status(500).json({ error: '補建預設分類失敗' });
+  }
+  saveDB();
+  res.json({ ok: true, restored: inserted });
+});
+
+// T025：刪除分類（連帶刪除子；對被刪除的預設分類寫入 deleted_defaults）
 app.delete('/api/categories/:id', (req, res) => {
   const cat = queryOne("SELECT * FROM categories WHERE id = ? AND user_id = ?", [req.params.id, req.userId]);
   if (!cat) return res.status(404).json({ error: '分類不存在' });
-  // 檢查此分類及其子分類是否有交易
+  // 檢查此分類底下是否有交易
   const hasTx = queryOne("SELECT id FROM transactions WHERE category_id = ? AND user_id = ? LIMIT 1", [req.params.id, req.userId]);
   if (hasTx) return res.status(400).json({ error: '此分類下有交易記錄，請先移轉至其他分類' });
-  // 若為父分類，也檢查子分類是否有交易
-  if (!cat.parent_id) {
-    const childIds = queryAll("SELECT id FROM categories WHERE parent_id = ? AND user_id = ?", [req.params.id, req.userId]).map(c => c.id);
-    for (const cid of childIds) {
-      const childTx = queryOne("SELECT id FROM transactions WHERE category_id = ? AND user_id = ? LIMIT 1", [cid, req.userId]);
+  const isParent = !cat.parent_id;
+  const now = Date.now();
+  let childRows = [];
+  if (isParent) {
+    childRows = queryAll("SELECT id, name, is_default FROM categories WHERE parent_id = ? AND user_id = ?", [req.params.id, req.userId]);
+    for (const c of childRows) {
+      const childTx = queryOne("SELECT id FROM transactions WHERE category_id = ? AND user_id = ? LIMIT 1", [c.id, req.userId]);
       if (childTx) return res.status(400).json({ error: '此分類的子分類下有交易記錄，請先移轉至其他分類' });
     }
-    // 刪除所有子分類
-    db.run("DELETE FROM categories WHERE parent_id = ? AND user_id = ?", [req.params.id, req.userId]);
   }
-  db.run("DELETE FROM categories WHERE id = ? AND user_id = ?", [req.params.id, req.userId]);
+
+  db.run('BEGIN');
+  try {
+    if (isParent) {
+      // 父分類：先寫入子分類的 deleted_defaults（is_default=1 才寫）
+      for (const c of childRows) {
+        if (c.is_default) {
+          const key = categoryDefaultKey(cat.type, cat.name, c.name);
+          db.run(
+            "INSERT OR REPLACE INTO deleted_defaults (user_id, default_key, deleted_at) VALUES (?, ?, ?)",
+            [req.userId, key, now]
+          );
+        }
+      }
+      // 刪除子
+      db.run("DELETE FROM categories WHERE parent_id = ? AND user_id = ?", [req.params.id, req.userId]);
+      // 父若預設亦寫入 registry
+      if (cat.is_default) {
+        const key = categoryDefaultKey(cat.type, null, cat.name);
+        db.run(
+          "INSERT OR REPLACE INTO deleted_defaults (user_id, default_key, deleted_at) VALUES (?, ?, ?)",
+          [req.userId, key, now]
+        );
+      }
+      db.run("DELETE FROM categories WHERE id = ? AND user_id = ?", [req.params.id, req.userId]);
+    } else {
+      // 子分類：若預設則先寫入 registry（key 需要父分類 name）
+      if (cat.is_default) {
+        const parent = queryOne("SELECT name FROM categories WHERE id = ? AND user_id = ?", [cat.parent_id, req.userId]);
+        if (parent) {
+          const key = categoryDefaultKey(cat.type, parent.name, cat.name);
+          db.run(
+            "INSERT OR REPLACE INTO deleted_defaults (user_id, default_key, deleted_at) VALUES (?, ?, ?)",
+            [req.userId, key, now]
+          );
+        }
+      }
+      db.run("DELETE FROM categories WHERE id = ? AND user_id = ?", [req.params.id, req.userId]);
+    }
+    db.run('COMMIT');
+  } catch (err) {
+    try { db.run('ROLLBACK'); } catch {}
+    console.error('[categories/delete]', err);
+    return res.status(500).json({ error: '刪除分類失敗' });
+  }
   saveDB();
   res.json({ ok: true });
 });
@@ -5171,6 +5523,13 @@ app.post('/api/transactions', (req, res) => {
   if (!taipeiTime.isValidIsoDate(date)) return res.status(400).json({ error: '日期格式無效', code: 'ValidationError', field: 'date' });
   if (!['income', 'expense', 'transfer_in', 'transfer_out'].includes(type)) return res.status(400).json({ error: '交易類型無效' });
   if (categoryId && !assertOwned('categories', categoryId, req.userId)) return res.status(400).json({ error: '分類不存在或無權限' });
+  // 003-categories T018：leaf-only — 交易必須指派至子分類，不能直接掛在父分類底下（FR-013a）
+  if (categoryId) {
+    const catRow = queryOne("SELECT parent_id FROM categories WHERE id = ? AND user_id = ?", [categoryId, req.userId]);
+    if (catRow && !catRow.parent_id) {
+      return res.status(400).json({ error: '交易必須指派至子分類，不能直接掛在父分類底下' });
+    }
+  }
   if (accountId && !assertOwned('accounts', accountId, req.userId)) return res.status(400).json({ error: '帳戶不存在或無權限' });
   // FR-011：amount > 0 後端強制
   const numAmt = Number(req.body.originalAmount ?? amount);
@@ -5256,6 +5615,13 @@ const updateTransactionHandler = (req, res) => {
   if (!date) return res.status(400).json({ error: '日期格式無效' });
   if (!['income', 'expense', 'transfer_in', 'transfer_out'].includes(type)) return res.status(400).json({ error: '交易類型無效' });
   if (categoryId && !assertOwned('categories', categoryId, req.userId)) return res.status(400).json({ error: '分類不存在或無權限' });
+  // 003-categories T018：leaf-only — 交易必須指派至子分類（FR-013a）
+  if (categoryId) {
+    const catRow = queryOne("SELECT parent_id FROM categories WHERE id = ? AND user_id = ?", [categoryId, req.userId]);
+    if (catRow && !catRow.parent_id) {
+      return res.status(400).json({ error: '交易必須指派至子分類，不能直接掛在父分類底下' });
+    }
+  }
   if (accountId && !assertOwned('accounts', accountId, req.userId)) return res.status(400).json({ error: '帳戶不存在或無權限' });
 
   const numAmt = Number(req.body.originalAmount ?? amount);
@@ -5478,7 +5844,7 @@ app.post('/api/transactions/import', (req, res) => {
         orderCounter++;
         const color = defaultColors[colorIdx % defaultColors.length];
         colorIdx++;
-        db.run("INSERT INTO categories (id, user_id, name, type, color, is_default, is_hidden, sort_order) VALUES (?,?,?,?,?,0,0,?)",
+        db.run("INSERT INTO categories (id, user_id, name, type, color, is_default, sort_order) VALUES (?,?,?,?,?,0,?)",
           [catId, req.userId, category, dbType, color, orderCounter]);
         catMap[category] = { id: catId, name: category, type: dbType };
         createdCats.push(category);
@@ -7253,7 +7619,7 @@ initDB().then(() => {
   app.listen(PORT, () => {
     console.log(`AssetPilot 伺服器已啟動: http://localhost:${PORT}`);
     // T149：啟動 log 帶版本標籤，方便容器日誌追蹤上線版本
-    console.log('[startup] AssetPilot v4.23.0 / feature 002-transactions-accounts ready');
+    console.log('[startup] AssetPilot v4.24.0 / feature 003-categories ready');
     console.log(`[OAuth] redirect_uri whitelist: ${GOOGLE_OAUTH_REDIRECT_URIS.length} entries`);
   });
 });

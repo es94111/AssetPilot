@@ -77,7 +77,19 @@
       "Bash(git fetch *)",
       "PowerShell(& \"$\\(Get-Location\\)\\\\.specify\\\\scripts\\\\powershell\\\\setup-plan.ps1\" -Json)",
       "PowerShell(& \"$\\(Get-Location\\)\\\\.specify\\\\scripts\\\\powershell\\\\check-prerequisites.ps1\" -Json)",
-      "PowerShell(& \"$\\(Get-Location\\)\\\\.specify\\\\scripts\\\\powershell\\\\check-prerequisites.ps1\" -Json -RequireTasks -IncludeTasks)"
+      "PowerShell(& \"$\\(Get-Location\\)\\\\.specify\\\\scripts\\\\powershell\\\\check-prerequisites.ps1\" -Json -RequireTasks -IncludeTasks)",
+      "Bash(powershell *)",
+      "Bash(grep -n \"categoryForm\\\\|saveCategory\\\\|onsubmit.*category\\\\|catParent\\\\|deleteCategory\\\\|App\\\\\\\\.openCategoryModal\\\\|cachedCategories\" app.js)",
+      "Bash(grep -n \"API\\\\\\\\.patch\\\\|API = {\\\\|const API\\\\b\\\\|API\\\\\\\\.put\\\\|patch:\" app.js)",
+      "Bash(grep -n \"^\\\\\\\\.category-\\\\|^\\\\\\\\.subcategory-\\\\|category-color\\\\\\\\b\" style.css)",
+      "Bash(grep -n \"版本歷史\\\\|## 版本\\\\|^## .*版本\\\\|^### 4\\\\\\\\.\" SRS.md)",
+      "Bash(npx --yes @redocly/cli lint openapi.yaml)",
+      "Bash(npx --yes @redocly/cli lint openapi.yaml --max-problems 200)",
+      "Bash(grep -E \"^\\\\\\\\[1\\\\\\\\] |error \")",
+      "Bash(grep -B1 \"Error was generated\\\\|severity: error\\\\|^\\\\\\\\[error\")",
+      "Bash(grep -E \"openapi\\\\\\\\.yaml:[0-9]+:[0-9]+\")",
+      "Bash(npx --yes @redocly/cli lint specs/003-categories/contracts/categories.openapi.yaml)",
+      "Bash(grep *)"
     ]
   }
 }

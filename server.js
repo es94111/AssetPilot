@@ -3065,9 +3065,15 @@ function trimTrailingSlashes(value) {
 // 啟動時從環境變數解析；空時 fallback 至 APP_HOST + localhost 預設值
 function buildGoogleRedirectAllowlist() {
   if (GOOGLE_OAUTH_REDIRECT_URIS.length > 0) return new Set(GOOGLE_OAUTH_REDIRECT_URIS);
+  // 前端 (app.js) 送的 redirect_uri 為 `location.origin + '/'`（根路徑、含末端斜線）
+  // — 故 fallback 必須與之一致。歷史版本錯誤地寫成 `/api/auth/google` 路徑，導致預設配置永遠
+  // 命中 invalid_redirect_uri；只有手動設 GOOGLE_OAUTH_REDIRECT_URIS 才能避開。本 fallback 修正
+  // 為與 frontend 同步的根路徑形式，並同時容納含 / 不含末端斜線兩種變體。
   const fallback = [
-    `https://${APP_HOST}/api/auth/google`,
-    `http://localhost:${PORT}/api/auth/google`,
+    `https://${APP_HOST}/`,
+    `https://${APP_HOST}`,
+    `http://localhost:${PORT}/`,
+    `http://localhost:${PORT}`,
   ];
   console.log(`[OAuth] redirect_uri whitelist 未設定，採用預設：${fallback.join(', ')}`);
   return new Set(fallback);

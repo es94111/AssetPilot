@@ -265,6 +265,12 @@
     <!-- ===== 儀表板 ===== -->
     <section class="page active" id="page-dashboard">
       <h2 class="page-title">儀表板</h2>
+      <!-- 005 T031: 月份切換器（FR-001 / Round 1 Q1）-->
+      <div class="month-nav" id="dashMonthNav">
+        <button type="button" class="month-nav__btn" id="dashMonthPrev" aria-label="上一月">‹</button>
+        <span class="month-nav__label" id="dashMonthLabel">YYYY-MM</span>
+        <button type="button" class="month-nav__btn" id="dashMonthNext" aria-label="下一月">›</button>
+      </div>
       <div class="summary-cards">
         <div class="card summary-card income">
           <div class="card-icon"><i class="fas fa-arrow-down"></i></div>
@@ -1550,6 +1556,18 @@
             <div id="adminScheduleHistory" class="admin-section-desc" style="margin-top:10px;font-size:13px"></div>
             <div id="adminScheduleDetails" style="display:none"></div>
           </form>
+        </div>
+
+        <!-- 005 T076/T079: 多筆排程並存列表（FR-016 / Round 2 Q2）-->
+        <div class="card">
+          <h3><i class="fas fa-list"></i>多筆排程列表（005）</h3>
+          <p class="admin-section-desc" style="margin:4px 0 12px">每位使用者可有多筆同頻率／不同頻率的排程；每筆獨立啟用、編輯、刪除、立即寄送。</p>
+          <div class="cert-btn-row" style="margin-bottom:12px">
+            <button type="button" class="btn btn-primary btn-sm" id="adminAddScheduleBtn"><i class="fas fa-plus"></i> 新增排程</button>
+            <button type="button" class="btn btn-outline btn-sm" id="adminRefreshSchedulesBtn"><i class="fas fa-sync"></i> 重新整理</button>
+            <span class="import-hint" id="adminSchedulesStatus"></span>
+          </div>
+          <div id="adminReportSchedulesList"></div>
         </div>
 
         <div class="card">

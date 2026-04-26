@@ -6,7 +6,15 @@
 
 **前次掃描概要**: 識別 9 個 finding（1 HIGH / 4 MEDIUM / 4 LOW），核心議題為 round 4 釐清（`/api/accounts.twdAccumulated`）後 spec/tasks 已升級但 plan/research/data-model/contracts/quickstart 五份姊妹文件**尚未同步**。
 
-**本次掃描結論**: 前次 9 個 finding 全部驗證為 **RESOLVED**。所有姊妹文件均已補入 round 4 內容、契約檔已宣告 `twdAccumulated` schema、quickstart 已含對應驗證步驟。新一輪僅剩 6 個 LOW/MEDIUM 文件層級細節，**無任何 CRITICAL 或 HIGH**；可推進至 `/speckit.implement`。
+**本次掃描結論**: 前次 9 個 finding 全部驗證為 **RESOLVED**。所有姊妹文件均已補入 round 4 內容、契約檔已宣告 `twdAccumulated` schema、quickstart 已含對應驗證步驟。新一輪 6 個 LOW/MEDIUM 文件層級 finding（N1 ~ N6）已於本次 remediation 全部修補；**無任何 CRITICAL 或 HIGH**；可推進至 `/speckit.implement`。
+
+**Remediation Applied (本輪 N1 ~ N6)**:
+- **N1**: [plan.md L10](./plan.md) 改寫為自描述形式（不再循環引用 analyze-01.md 的「Remediation Applied」段落）
+- **N2**: [tasks.md L10](./tasks.md) 移除「+ OUT-001/002/003/004」字樣，補充說明 spec.md 的 4 項 Out of Scope
+- **N3**: [tasks.md T066 步驟 (f.1)](./tasks.md) 補 `sendStatsEmail` 回 null 時視為 failed；[tasks.md T072](./tasks.md) 補 handler MUST 回 503 不可偽裝成功
+- **N4**: [tasks.md T095](./tasks.md) 補 SC-001 / SC-002 `performance.now()` 量測指引
+- **N5**: [spec.md SC-007](./spec.md) 末尾補「post-launch user retention metric」標註
+- **N6**: [tasks.md T015](./tasks.md) 移除 task body 內的 meta-explanation 括號註記，移至 Foundational Checkpoint 後的腳註
 
 ---
 
@@ -137,8 +145,7 @@
 
 ---
 
-## Remediation Offer
+## Remediation Status
 
-是否要我為以上 6 條 finding 產出**具體的 remediation diff**（標明每個檔案的精確 before / after 行內容）？我**不會**自動套用，僅產出文字 diff 供你審閱、選擇手動套用或拒絕。
-
-回應「請產出 remediation」即執行；回應「跳過」則本次 `/speckit.analyze` 結束。
+✅ N1 ~ N6 全部已套用 remediation（見上方「Remediation Applied」區塊）。
+本次 `/speckit.analyze` 結束，可進入 `/speckit.implement`。

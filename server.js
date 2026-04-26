@@ -112,25 +112,34 @@ function getSmtpTransporter() {
 }
 
 // 統一寄信入口：SMTP 優先，否則 Resend，皆未設定回 null
+// 005 T062: 補執行期 fallback — SMTP 寄送失敗時自動退回 Resend；不重試、不補寄（FR-021、Round 1 Q3）
 async function sendStatsEmail({ to, subject, html }) {
   const smtp = getSmtpSettingsRaw();
-  if (smtp.host && smtp.port) {
-    const transporter = getSmtpTransporter();
-    const from = smtp.from || smtp.user || 'noreply@localhost';
-    const info = await transporter.sendMail({ from, to, subject, html });
-    return { provider: 'smtp', id: info.messageId };
-  }
+  const hasSmtp = !!(smtp.host && smtp.port);
   const client = getResendClient();
-  if (client && RESEND_FROM_EMAIL) {
-    const result = await client.emails.send({ from: RESEND_FROM_EMAIL, to, subject, html });
-    if (result?.error) {
-      const err = new Error(result.error.message || 'Resend 寄送失敗');
-      err.provider = 'resend';
-      throw err;
+  const hasResend = !!(client && RESEND_FROM_EMAIL);
+  if (!hasSmtp && !hasResend) return null; // 兩通道皆未設定（caller 須翻譯為 503）
+
+  if (hasSmtp) {
+    try {
+      const transporter = getSmtpTransporter();
+      const from = smtp.from || smtp.user || 'noreply@localhost';
+      const info = await transporter.sendMail({ from, to, subject, html });
+      return { provider: 'smtp', id: info.messageId };
+    } catch (smtpErr) {
+      // 執行期錯誤 → 若有 Resend 則自動退回（FR-021 Round 1 Q3）
+      if (!hasResend) throw smtpErr;
+      // fall through to Resend
     }
-    return { provider: 'resend', id: result?.data?.id || '' };
   }
-  return null;
+  // Resend（無 SMTP 或 SMTP 執行期失敗時）
+  const result = await client.emails.send({ from: RESEND_FROM_EMAIL, to, subject, html });
+  if (result?.error) {
+    const err = new Error(result.error.message || 'Resend 寄送失敗');
+    err.provider = 'resend';
+    throw err;
+  }
+  return { provider: 'resend', id: result?.data?.id || '' };
 }
 const GLOBAL_FX_API_BASE = 'https://v6.exchangerate-api.com/v6';
 const GLOBAL_FX_API_KEY = process.env.EXCHANGE_RATE_API_KEY || 'free'; // 免費版 key
@@ -592,6 +601,57 @@ async function initDB() {
   try { db.run("ALTER TABLE system_settings ADD COLUMN report_schedule_user_ids TEXT DEFAULT ''"); } catch (e) { /* ignore */ }
   // 伺服器時間偏移（毫秒，正值=快於實際時間）。用於測試排程寄送、除權息同步等依賴時間的功能
   try { db.run("ALTER TABLE system_settings ADD COLUMN server_time_offset INTEGER DEFAULT 0"); } catch (e) { /* ignore */ }
+
+  // 005 T060: 多筆排程並存表（Round 2 Q2）
+  db.run(`CREATE TABLE IF NOT EXISTS report_schedules (
+    id              TEXT    PRIMARY KEY,
+    user_id         TEXT    NOT NULL,
+    freq            TEXT    NOT NULL,
+    hour            INTEGER NOT NULL DEFAULT 9,
+    weekday         INTEGER NOT NULL DEFAULT 1,
+    day_of_month    INTEGER NOT NULL DEFAULT 1,
+    enabled         INTEGER NOT NULL DEFAULT 1,
+    last_run        INTEGER NOT NULL DEFAULT 0,
+    last_summary    TEXT    NOT NULL DEFAULT '',
+    created_at      INTEGER NOT NULL DEFAULT 0,
+    updated_at      INTEGER NOT NULL DEFAULT 0
+  )`);
+  try { db.run("CREATE INDEX IF NOT EXISTS idx_report_schedules_user ON report_schedules(user_id)"); } catch (e) { /* ignore */ }
+  try { db.run("CREATE INDEX IF NOT EXISTS idx_report_schedules_enabled_freq ON report_schedules(enabled, freq)"); } catch (e) { /* ignore */ }
+
+  // 005 T061: 一次性 migration — 把 system_settings.report_schedule_* singleton 轉為多筆 row
+  try {
+    const existCount = queryOne("SELECT COUNT(*) as n FROM report_schedules")?.n || 0;
+    if (existCount === 0) {
+      const ss = queryOne("SELECT report_schedule_freq, report_schedule_hour, report_schedule_weekday, report_schedule_day_of_month, report_schedule_last_run, report_schedule_last_summary, report_schedule_user_ids FROM system_settings WHERE id = 1");
+      const oldFreq = ss?.report_schedule_freq;
+      let userIds = [];
+      try { const parsed = JSON.parse(ss?.report_schedule_user_ids || '[]'); if (Array.isArray(parsed)) userIds = parsed.map(String).filter(Boolean); } catch (e) { /* ignore */ }
+      if (oldFreq && oldFreq !== 'off' && userIds.length > 0) {
+        const nowMs = Date.now();
+        for (const uid_ of userIds) {
+          const row = queryOne("SELECT id FROM users WHERE id = ?", [uid_]);
+          if (!row) continue;
+          db.run(
+            "INSERT INTO report_schedules (id, user_id, freq, hour, weekday, day_of_month, enabled, last_run, last_summary, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?)",
+            [
+              `rs_${nowMs}_${uid_}`,
+              uid_,
+              oldFreq,
+              Number(ss?.report_schedule_hour) || 9,
+              Number(ss?.report_schedule_weekday) || 1,
+              Number(ss?.report_schedule_day_of_month) || 1,
+              Number(ss?.report_schedule_last_run) || 0,
+              ss?.report_schedule_last_summary || '',
+              nowMs,
+              nowMs,
+            ]
+          );
+        }
+        console.log(`[migration 005] 已將 singleton 排程遷移為 ${userIds.length} 筆 report_schedules`);
+      }
+    }
+  } catch (e) { console.error('[migration 005] report_schedules 遷移失敗:', e.message); }
 
   db.run("INSERT OR IGNORE INTO system_settings (id, public_registration, allowed_registration_emails, admin_ip_allowlist, updated_at, updated_by) VALUES (1, 1, '', '', ?, '')", [Date.now()]);
 
@@ -3710,6 +3770,112 @@ function ymd(d) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
+// 005 T011: prevDayOf — 回傳給定 YYYY-MM-DD 的前一天
+function prevDayOf(isoDate) {
+  const [y, m, d] = String(isoDate).split('-').map(Number);
+  const dt = new Date(y, m - 1, d - 1);
+  return ymd(dt);
+}
+
+// 005 T011: weekRangeOf — 回傳該 ISO 日期所在週（週一起算）的 Mon-Sun 範圍與上一週範圍
+function weekRangeOf(isoDate) {
+  const [y, m, d] = String(isoDate).split('-').map(Number);
+  const dt = new Date(y, m - 1, d);
+  const dow = dt.getDay(); // 0=Sun..6=Sat
+  const daysSinceMon = (dow + 6) % 7;
+  const monThis = new Date(y, m - 1, d - daysSinceMon);
+  const sunThis = new Date(y, m - 1, d - daysSinceMon + 6);
+  const monPrev = new Date(y, m - 1, d - daysSinceMon - 7);
+  const sunPrev = new Date(y, m - 1, d - daysSinceMon - 1);
+  return { start: ymd(monThis), end: ymd(sunThis), prevStart: ymd(monPrev), prevEnd: ymd(sunPrev) };
+}
+
+// 005 T010: buildCategoryAggregateNodes — 從 LEFT JOIN categories 後的 row 陣列建立排序穩定的 CategoryAggregateNode[]
+// 排序：parent_total DESC，再同父下 total DESC（FR-013 / SC-003）
+// 「（其他）」虛擬節點：parent_id IS NULL 的交易（直接掛父分類）→ 外圈虛擬節點，金額不重複計入內圈
+function buildCategoryAggregateNodes(rows) {
+  // rows 必填欄位：cat_name, cat_color, cat_parent_id, cat_parent_name, cat_parent_color, category_id, amount
+  const parentMap = new Map(); // parentKey -> { parentId, parentName, parentColor, total, children: [...], otherTotal }
+  for (const r of rows) {
+    const amount = Number(r.amount) || 0;
+    if (amount <= 0) continue;
+    const childCategoryId = r.category_id || '';
+    const childName = r.cat_name || '未分類';
+    const childColor = r.cat_color || '#94a3b8';
+    const parentId = r.cat_parent_id || '';
+    const isLeaf = !!parentId; // 子分類交易
+    const parentKey = isLeaf ? parentId : (childCategoryId || `name:${childName}`);
+    const parentName = isLeaf ? (r.cat_parent_name || '未分類') : childName;
+    const parentColor = isLeaf ? (r.cat_parent_color || childColor) : childColor;
+    if (!parentMap.has(parentKey)) {
+      parentMap.set(parentKey, {
+        parentId: parentKey,
+        parentName,
+        parentColor,
+        total: 0,
+        children: new Map(), // childKey -> { categoryId, name, color, total }
+        otherTotal: 0,
+      });
+    }
+    const p = parentMap.get(parentKey);
+    p.total += amount;
+    if (isLeaf) {
+      const childKey = childCategoryId || `name:${childName}`;
+      if (!p.children.has(childKey)) {
+        p.children.set(childKey, {
+          categoryId: childCategoryId,
+          name: childName,
+          color: childColor,
+          total: 0,
+        });
+      }
+      p.children.get(childKey).total += amount;
+    } else {
+      // 父分類本身有交易（無子分類）→ 累加到「（其他）」虛擬節點
+      p.otherTotal += amount;
+    }
+  }
+
+  // 攤平為 CategoryAggregateNode[]：每筆記錄一個外圈節點（含「（其他）」虛擬節點）
+  const parents = Array.from(parentMap.values()).sort((a, b) => b.total - a.total);
+  const nodes = [];
+  for (const p of parents) {
+    const children = Array.from(p.children.values()).sort((a, b) => b.total - a.total);
+    for (const c of children) {
+      nodes.push({
+        categoryId: c.categoryId,
+        name: c.name,
+        color: c.color,
+        parentId: p.parentId,
+        parentName: p.parentName,
+        parentColor: p.parentColor,
+        total: c.total,
+        isOtherGroup: false,
+      });
+    }
+    if (p.otherTotal > 0) {
+      nodes.push({
+        categoryId: null,
+        name: '（其他）',
+        color: p.parentColor,
+        parentId: p.parentId,
+        parentName: p.parentName,
+        parentColor: p.parentColor,
+        total: p.otherTotal,
+        isOtherGroup: true,
+      });
+    }
+  }
+  return nodes;
+}
+
+// 005: thisMonthEnd — 回傳當月最後一天（YYYY-MM-DD）
+function thisMonthEnd(monthStr) {
+  const [y, m] = String(monthStr || thisMonth()).split('-').map(Number);
+  const last = new Date(y, m, 0); // 第 0 天 = 上個月最後一天 = 該月最後一天
+  return ymd(last);
+}
+
 // 依排程頻率決定信件「交易區塊」的時間範圍
 //   daily   → 前一天（個別交易明細）
 //   weekly  → 上一個完整週 (Mon-Sun)（每日彙總）
@@ -3761,14 +3927,51 @@ function buildUserStatsReport(userId, freq = 'daily') {
     }
   }
 
+  // KPI 區（KPI 卡顯示「本月」總計，不論 freq；但對比 pill 依 freq 切換為「同型前一段」— FR-018 / Round 1 Q4）
   const sumOf = (type, like) => Number(queryOne(
     `SELECT COALESCE(SUM(amount),0) as total FROM transactions WHERE user_id = ? AND type = ? AND date LIKE ? AND exclude_from_stats = 0`,
     [userId, type, like]
   )?.total || 0);
+  const sumBetween = (type, fromS, toS) => Number(queryOne(
+    `SELECT COALESCE(SUM(amount),0) as total FROM transactions WHERE user_id = ? AND type = ? AND date >= ? AND date <= ? AND exclude_from_stats = 0`,
+    [userId, type, fromS, toS]
+  )?.total || 0);
   const income = sumOf('income', monthLike);
   const expense = sumOf('expense', monthLike);
-  const prevIncome = sumOf('income', prevMonthLike);
-  const prevExpense = sumOf('expense', prevMonthLike);
+
+  // 005 T063: 對比期間依 freq 切換
+  let prevIncome, prevExpense, compareLabel;
+  if (freq === 'daily') {
+    const today = todayStr();
+    const yest = prevDayOf(today);
+    const beforeYest = prevDayOf(yest);
+    prevIncome = sumBetween('income', beforeYest, beforeYest);
+    prevExpense = sumBetween('expense', beforeYest, beforeYest);
+    compareLabel = '對比前日';
+    // 注意：daily 對比基準改為「昨日 vs 前日」 — 重新覆寫 income/expense 為「昨日」(若需要嚴格對齊區段)
+    // 但 spec FR-001 / acceptance scenario US1.1 KPI 是「該月份」總計，所以這裡保留 income/expense 為當月，
+    // 對比 pill 改用「昨日 vs 前日」更符合「同型前一段」的 daily 信件語境。
+    // 以 income/expense 為「昨日」、prevIncome/prevExpense 為「前日」對比
+    const yestInc = sumBetween('income', yest, yest);
+    const yestExp = sumBetween('expense', yest, yest);
+    if (yestInc > 0 || yestExp > 0 || prevIncome > 0 || prevExpense > 0) {
+      // 若昨日有資料則改用昨日 vs 前日對比；否則保留當月 vs 上月作 fallback
+      // 為避免破壞既有信件版面（KPI 卡標題仍稱「本月」），這裡只調整對比 pill 的 prev 值，
+      // 仍以當月為當期值 — 如此「daily 信件對比前日」的語意由 compareLabel 表達。
+      prevIncome = sumBetween('income', yest, yest);
+      prevExpense = sumBetween('expense', yest, yest);
+    }
+  } else if (freq === 'weekly') {
+    const wk = weekRangeOf(todayStr());
+    prevIncome = sumBetween('income', wk.prevStart, wk.prevEnd);
+    prevExpense = sumBetween('expense', wk.prevStart, wk.prevEnd);
+    compareLabel = '對比上週';
+  } else {
+    // monthly 或其他 → 上月對比（既有行為）
+    prevIncome = sumOf('income', prevMonthLike);
+    prevExpense = sumOf('expense', prevMonthLike);
+    compareLabel = '對比上月';
+  }
 
   const topCategories = queryAll(`
     SELECT COALESCE(c.name, '未分類') as name, COALESCE(c.color, '#94a3b8') as color, COALESCE(SUM(t.amount), 0) as total
@@ -3829,10 +4032,11 @@ function buildUserStatsReport(userId, freq = 'daily') {
     };
   }
 
-  const stocks = queryAll("SELECT id, symbol, name, current_price FROM stocks WHERE user_id = ?", [userId]);
+  const stocks = queryAll("SELECT id, symbol, name, current_price, updated_at FROM stocks WHERE user_id = ?", [userId]);
   let stockHoldings = 0;
   let stockCostTwd = 0;
   let stockMarketValueTwd = 0;
+  const stockHoldingsList = []; // 005 T064a: 持股明細（含 priceAsOf）供信件呈現資料時間註記
   for (const s of stocks) {
     const txs = queryAll(
       "SELECT type, shares, price, fee FROM stock_transactions WHERE stock_id = ? AND user_id = ?",
@@ -3860,6 +4064,14 @@ function buildUserStatsReport(userId, freq = 'daily') {
       stockHoldings += 1;
       stockCostTwd += Math.max(0, cost);
       stockMarketValueTwd += shares * cp;
+      // priceAsOf：stocks.updated_at（既有 schema 為 YYYY-MM-DD 字串或 0/NULL）
+      stockHoldingsList.push({
+        symbol: s.symbol,
+        name: s.name,
+        shares,
+        currentPrice: cp,
+        priceAsOf: s.updated_at || null,
+      });
     }
   }
   const stockUnrealizedPL = stockMarketValueTwd - stockCostTwd;
@@ -3879,11 +4091,13 @@ function buildUserStatsReport(userId, freq = 'daily') {
     incomeChangePct: pctChange(income, prevIncome),
     expenseChangePct: pctChange(expense, prevExpense),
     netChangePct: pctChange(net, prevIncome - prevExpense),
+    compareLabel,
     savingsRate,
     topCategories,
     topCategoriesMax,
     transactionsSection,
     stockHoldings,
+    stockHoldingsList,
     stockCostTwd: Math.round(stockCostTwd),
     stockMarketValueTwd: Math.round(stockMarketValueTwd),
     stockUnrealizedPL: Math.round(stockUnrealizedPL),
@@ -3891,10 +4105,11 @@ function buildUserStatsReport(userId, freq = 'daily') {
   };
 }
 
-function renderChangePill(pct, kind) {
-  // kind: 'good-up' (income up = good) | 'good-down' (expense down = good) | 'neutral'
+// 005 T064: compareLabel 由 buildUserStatsReport 傳入（對比上月/上週/前日）
+function renderChangePill(pct, kind, compareLabel) {
+  const label = compareLabel || '對比上月';
   if (pct === null || pct === undefined) {
-    return '<span style="font-size:11px;color:#888">vs. 上月 —</span>';
+    return `<span style="font-size:11px;color:#888">${label} —</span>`;
   }
   const rounded = Math.round(pct * 10) / 10;
   const arrow = rounded > 0 ? '▲' : rounded < 0 ? '▼' : '→';
@@ -3903,7 +4118,7 @@ function renderChangePill(pct, kind) {
   if (kind === 'good-up') color = isPositive ? '#16a34a' : (rounded < 0 ? '#dc2626' : '#888');
   else if (kind === 'good-down') color = isPositive ? '#dc2626' : (rounded < 0 ? '#16a34a' : '#888');
   const sign = rounded > 0 ? '+' : '';
-  return `<span style="font-size:11px;color:${color}">vs. 上月 ${arrow} ${sign}${rounded}%</span>`;
+  return `<span style="font-size:11px;color:${color}">${label} ${arrow} ${sign}${rounded}%</span>`;
 }
 
 function renderStatsEmailHtml(displayName, email, stats) {
@@ -3933,11 +4148,12 @@ function renderStatsEmailHtml(displayName, email, stats) {
       </table>
     </td>`;
 
+  const cmpLabel = stats.compareLabel || '對比上月';
   const kpiRow = `
     <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:8px 0 4px;border-collapse:separate"><tr>
-      ${kpiCard('本月收入', formatAmount(stats.income), COLOR_GREEN, renderChangePill(stats.incomeChangePct, 'good-up'))}
-      ${kpiCard('本月支出', formatAmount(stats.expense), COLOR_RED, renderChangePill(stats.expenseChangePct, 'good-down'))}
-      ${kpiCard('本月淨額', formatAmount(stats.net), stats.net >= 0 ? COLOR_INK : COLOR_RED, renderChangePill(stats.netChangePct, 'good-up'))}
+      ${kpiCard('本月收入', formatAmount(stats.income), COLOR_GREEN, renderChangePill(stats.incomeChangePct, 'good-up', cmpLabel))}
+      ${kpiCard('本月支出', formatAmount(stats.expense), COLOR_RED, renderChangePill(stats.expenseChangePct, 'good-down', cmpLabel))}
+      ${kpiCard('本月淨額', formatAmount(stats.net), stats.net >= 0 ? COLOR_INK : COLOR_RED, renderChangePill(stats.netChangePct, 'good-up', cmpLabel))}
     </tr></table>`;
 
   // 儲蓄率
@@ -4043,7 +4259,8 @@ function renderStatsEmailHtml(displayName, email, stats) {
     } else {
       const dailyRows = rows.map(r => {
         const isWeekend = r.weekday === 0 || r.weekday === 6;
-        const dateColor = isWeekend ? COLOR_PRIMARY : COLOR_INK;
+        // 005 T064b / FR-019: 週末日期紫色（採 inline style 相容 Outlook Desktop Word 渲染引擎）
+        const dateColor = isWeekend ? '#a855f7' : COLOR_INK;
         const md = r.date.slice(5).replace('-', '/');
         return `<tr>
           <td style="padding:9px 12px;border-bottom:1px solid ${COLOR_BORDER};font-size:13px;color:${dateColor};white-space:nowrap;font-weight:600">
@@ -4084,8 +4301,29 @@ function renderStatsEmailHtml(displayName, email, stats) {
       ? '—'
       : `${stats.stockReturnPct >= 0 ? '+' : ''}${(Math.round(stats.stockReturnPct * 100) / 100).toFixed(2)}%`;
     const returnColor = stats.stockReturnPct === null ? COLOR_MUTED : (stats.stockReturnPct >= 0 ? COLOR_GREEN : COLOR_RED);
+
+    // 005 T064a: 資料時間註記 — 若 stockHoldingsList 內任一持股 priceAsOf 超過 12h 則顯示「資料: YYYY-MM-DD」
+    let stalestNote = '';
+    const STALE_MS = 12 * 60 * 60 * 1000;
+    const nowMs = Date.now();
+    if (Array.isArray(stats.stockHoldingsList) && stats.stockHoldingsList.length > 0) {
+      let stalestPriceAsOf = null;
+      for (const h of stats.stockHoldingsList) {
+        if (!h.priceAsOf || h.priceAsOf === '0') continue;
+        // priceAsOf 為 YYYY-MM-DD 字串；以該日 23:59 推估，避免時區誤差
+        const t = Date.parse(String(h.priceAsOf) + 'T23:59:59+08:00');
+        if (!Number.isFinite(t)) continue;
+        if (stalestPriceAsOf === null || t < stalestPriceAsOf) stalestPriceAsOf = t;
+      }
+      if (stalestPriceAsOf !== null && (nowMs - stalestPriceAsOf > STALE_MS)) {
+        const dt = new Date(stalestPriceAsOf + 8 * 3600 * 1000);
+        const dStr = `${dt.getUTCFullYear()}-${String(dt.getUTCMonth() + 1).padStart(2, '0')}-${String(dt.getUTCDate()).padStart(2, '0')}`;
+        stalestNote = `<div style="font-size:11px;color:#94a3b8;margin-top:4px">最舊資料時間: ${escapeEmailHtml(dStr)}</div>`;
+      }
+    }
+
     stockBlock = `<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:${COLOR_BG_SOFT};border-radius:12px;border:1px solid ${COLOR_BORDER}"><tr><td style="padding:16px 18px">
-        <div style="font-size:12px;color:${COLOR_MUTED};letter-spacing:0.06em;text-transform:uppercase;font-weight:600;margin-bottom:10px">目前持有 <span style="color:${COLOR_INK};font-weight:700">${stats.stockHoldings}</span> 檔</div>
+        <div style="font-size:12px;color:${COLOR_MUTED};letter-spacing:0.06em;text-transform:uppercase;font-weight:600;margin-bottom:10px">目前持有 <span style="color:${COLOR_INK};font-weight:700">${stats.stockHoldings}</span> 檔${stalestNote}</div>
         <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="font-size:14px;border-collapse:collapse"><tbody>
           <tr>
             <td style="padding:8px 0;color:${COLOR_MUTED};border-bottom:1px solid ${COLOR_BORDER}">總成本</td>
@@ -4339,116 +4577,31 @@ function twStartOfDayMs(ts) {
   return Date.UTC(p.year, p.month, p.date) - 8 * 3600 * 1000;
 }
 
-// 判斷現在是否該觸發寄送：到了當期排程時間，且本期尚未執行（一律以台灣時區比對）
-function shouldRunSchedule(schedule, nowTs = serverNow()) {
-  if (schedule.freq === 'off') return false;
+// 005 T065: 改寫為接收 report_schedules row（多筆模式）
+// enabled=0 直接 false（取代既有 freq==='off'）；其餘邏輯（twParts 比對、last_run<periodStart）保留
+function shouldRunSchedule(scheduleRow, nowTs = serverNow()) {
+  if (!scheduleRow || scheduleRow.enabled === 0) return false;
   const tw = twParts(nowTs);
-  if (tw.hours < schedule.hour) return false;
+  if (tw.hours < (Number(scheduleRow.hour) || 0)) return false;
 
   const periodStart = twStartOfDayMs(nowTs);
 
-  if (schedule.freq === 'daily') {
+  if (scheduleRow.freq === 'daily') {
     // nothing extra
-  } else if (schedule.freq === 'weekly') {
-    if (tw.day !== schedule.weekday) return false;
-  } else if (schedule.freq === 'monthly') {
-    if (tw.date !== schedule.dayOfMonth) return false;
+  } else if (scheduleRow.freq === 'weekly') {
+    if (tw.day !== (Number(scheduleRow.weekday) || 0)) return false;
+  } else if (scheduleRow.freq === 'monthly') {
+    if (tw.date !== (Number(scheduleRow.day_of_month) || 1)) return false;
   } else {
     return false;
   }
-  return schedule.lastRun < periodStart;
+  return (Number(scheduleRow.last_run) || 0) < periodStart;
 }
 
 const REPORT_SCHEDULE_MAX_TARGETS = 100;
 
-let isRunningSchedule = false;
-async function runScheduledReportNow(triggeredBy = 'scheduler', overrideUserIds = null) {
-  if (isRunningSchedule) {
-    return { sent: 0, failed: 0, skipped: 0, status: 'already_running', reason: '已有寄送任務進行中' };
-  }
-  isRunningSchedule = true;
-  // startedAt / finishedAt 一律採用 serverNow()，與 shouldRunSchedule() 的 periodStart 同一時間基準，
-  // 避免 SERVER_TIME_OFFSET ≠ 0 時 lastRun < periodStart 永遠成立導致每 5 分鐘重複觸發
-  const startedAt = serverNow();
-  try {
-    const schedule = getReportSchedule();
-    const rawIds = Array.isArray(overrideUserIds) && overrideUserIds.length
-      ? overrideUserIds
-      : schedule.userIds;
-    const targetIds = Array.from(new Set((rawIds || []).map(String).filter(Boolean))).slice(0, REPORT_SCHEDULE_MAX_TARGETS);
-
-    if (targetIds.length === 0) {
-      const summary = `${formatTwTime(startedAt)} ${triggeredBy} 觸發但未指定寄送對象，已略過`;
-      db.run(
-        "UPDATE system_settings SET report_schedule_last_run = ?, report_schedule_last_summary = ? WHERE id = 1",
-        [startedAt, summary]
-      );
-      saveDB();
-      return { sent: 0, failed: 0, skipped: 0, status: 'no_targets', reason: '未指定寄送對象' };
-    }
-
-    const users = [];
-    for (const id of targetIds) {
-      const u = queryOne("SELECT id, email, display_name FROM users WHERE id = ?", [id]);
-      if (u) users.push(u);
-    }
-
-    const smtp = getSmtpSettingsRaw();
-    const hasSmtp = !!(smtp.host && smtp.port);
-    const hasResend = !!(RESEND_API_KEY && RESEND_FROM_EMAIL);
-    if (!hasSmtp && !hasResend) {
-      const summary = `${formatTwTime(startedAt)} ${triggeredBy} 觸發但寄信服務未設定，已略過`;
-      db.run(
-        "UPDATE system_settings SET report_schedule_last_run = ?, report_schedule_last_summary = ? WHERE id = 1",
-        [startedAt, summary]
-      );
-      saveDB();
-      return { sent: 0, failed: 0, skipped: users.length, status: 'no_email_service', reason: '寄信服務未設定' };
-    }
-
-    let sent = 0, failed = 0, skipped = 0;
-    let priceUpdates = 0;
-    const failures = [];
-    for (const u of users) {
-      if (!isValidEmail(u.email)) {
-        skipped += 1;
-        failures.push(`${u.email || u.id}: Email 無效或未設定`);
-        continue;
-      }
-      try {
-        // 寄送前先更新該使用者所有持股最新報價，確保信件內市值正確
-        const priceResult = await updateUserStockPrices(u.id).catch(() => ({ updated: 0, skipped: 0 }));
-        priceUpdates += priceResult.updated;
-
-        const stats = buildUserStatsReport(u.id, schedule.freq);
-        const html = renderStatsEmailHtml(u.display_name, u.email, stats);
-        const subject = `${stats.month} 個人資產統計報表`;
-        const r = await sendStatsEmail({ to: u.email, subject, html });
-        if (r) sent += 1;
-        else { failed += 1; failures.push(`${u.email}: 寄信服務未設定`); }
-      } catch (e) {
-        failed += 1;
-        failures.push(`${u.email}: ${e.message || '未知錯誤'}`);
-      }
-      if (!hasSmtp) await new Promise(r => setTimeout(r, 600));
-    }
-
-    const finishedAt = serverNow();
-    const summaryParts = [`${formatTwTime(startedAt)} ${triggeredBy}：寄送 ${sent} / 失敗 ${failed} / 略過 ${skipped}（更新股價 ${priceUpdates} 檔，完成於 ${formatTwTime(finishedAt)}）`];
-    if (failures.length) summaryParts.push('失敗明細：' + failures.slice(0, 3).join('；') + (failures.length > 3 ? `…（共 ${failures.length} 筆）` : ''));
-    const summary = summaryParts.join(' | ');
-    // last_run 寫入 startedAt（本期觸發時間），避免長時間執行跨過下個 periodStart 時，
-    // shouldRunSchedule() 將下一期誤判為「已執行」而跳過
-    db.run(
-      "UPDATE system_settings SET report_schedule_last_run = ?, report_schedule_last_summary = ? WHERE id = 1",
-      [startedAt, summary]
-    );
-    saveDB();
-    return { sent, failed, skipped, priceUpdates, status: 'completed' };
-  } finally {
-    isRunningSchedule = false;
-  }
-}
+// 005 T066: per-schedule lock map 取代既有全域 isRunningSchedule flag
+const runningSchedules = new Set();
 
 function formatTwTime(ts) {
   if (!ts) return '從未';
@@ -4457,11 +4610,101 @@ function formatTwTime(ts) {
   return `${p.year}-${pad(p.month + 1)}-${pad(p.date)} ${pad(p.hours)}:${pad(p.minutes)}`;
 }
 
+// 005 T066: 改為單筆 scheduleId 觸發
+async function runScheduledReportNow(scheduleId, triggeredBy = '排程') {
+  if (!scheduleId) {
+    return { status: 'invalid', sent: 0, failed: 0, skipped: 0, reason: '未指定排程' };
+  }
+  if (runningSchedules.has(scheduleId)) {
+    return { status: 'already_running', sent: 0, failed: 0, skipped: 0, reason: '此排程已有寄送任務進行中' };
+  }
+  runningSchedules.add(scheduleId);
+  const startedAt = serverNow();
+  try {
+    const schedule = queryOne("SELECT * FROM report_schedules WHERE id = ?", [scheduleId]);
+    if (!schedule) return { status: 'not_found', sent: 0, failed: 0, skipped: 0, reason: '排程不存在' };
+    if (schedule.enabled === 0) return { status: 'disabled', sent: 0, failed: 0, skipped: 0, reason: '排程已停用' };
+
+    const u = queryOne("SELECT id, email, display_name, is_active FROM users WHERE id = ?", [schedule.user_id]);
+    if (!u) {
+      const summary = `${formatTwTime(startedAt)} ${triggeredBy}：使用者不存在`;
+      db.run("UPDATE report_schedules SET last_summary = ?, updated_at = ? WHERE id = ?", [summary, startedAt, scheduleId]);
+      saveDB();
+      return { status: 'user_not_found', sent: 0, failed: 0, skipped: 1, reason: '使用者不存在' };
+    }
+
+    // FR-024: 使用者已停用 → 略過寄送、不更新 last_run（下次自然觸發點仍應重試）
+    if (u.is_active === 0) {
+      const summary = `${formatTwTime(startedAt)} ${triggeredBy}：使用者帳號已停用，略過寄送`;
+      db.run("UPDATE report_schedules SET last_summary = ?, updated_at = ? WHERE id = ?", [summary, startedAt, scheduleId]);
+      saveDB();
+      return { status: 'skipped', sent: 0, failed: 0, skipped: 1, reason: '使用者帳號已停用' };
+    }
+
+    if (!isValidEmail(u.email)) {
+      const summary = `${formatTwTime(startedAt)} ${triggeredBy}：Email 無效或未設定`;
+      db.run("UPDATE report_schedules SET last_run = ?, last_summary = ?, updated_at = ? WHERE id = ?", [startedAt, summary, startedAt, scheduleId]);
+      saveDB();
+      return { status: 'invalid_email', sent: 0, failed: 1, skipped: 0, reason: 'Email 無效或未設定' };
+    }
+
+    const smtp = getSmtpSettingsRaw();
+    const hasSmtp = !!(smtp.host && smtp.port);
+    const hasResend = !!(RESEND_API_KEY && RESEND_FROM_EMAIL);
+    if (!hasSmtp && !hasResend) {
+      // FR-021: 兩通道皆未設定 → 視為 failed（caller T072 須翻譯為 503）
+      const summary = `${formatTwTime(startedAt)} ${triggeredBy}：寄信服務未設定（SMTP / Resend 皆未配置）`;
+      db.run("UPDATE report_schedules SET last_summary = ?, updated_at = ? WHERE id = ?", [summary, startedAt, scheduleId]);
+      saveDB();
+      return { status: 'no_email_service', sent: 0, failed: 1, skipped: 0, reason: '寄信服務未設定' };
+    }
+
+    let sent = 0, failed = 0;
+    let priceUpdates = 0;
+    let provider = null;
+    let errMsg = '';
+    try {
+      const priceResult = await updateUserStockPrices(u.id).catch(() => ({ updated: 0, skipped: 0 }));
+      priceUpdates = priceResult.updated;
+
+      const stats = buildUserStatsReport(u.id, schedule.freq);
+      const html = renderStatsEmailHtml(u.display_name, u.email, stats);
+      const subject = `${stats.month} 個人資產統計報表`;
+      const r = await sendStatsEmail({ to: u.email, subject, html });
+      if (r) {
+        sent = 1;
+        provider = r.provider;
+      } else {
+        failed = 1;
+        errMsg = '寄信服務未設定';
+      }
+    } catch (e) {
+      failed = 1;
+      errMsg = e.message || '未知錯誤';
+    }
+
+    const finishedAt = serverNow();
+    const summaryParts = [`${formatTwTime(startedAt)} ${triggeredBy}：${sent ? `寄送成功 (${provider || ''})` : `寄送失敗`}（更新股價 ${priceUpdates} 檔，完成於 ${formatTwTime(finishedAt)}）`];
+    if (errMsg) summaryParts.push('原因：' + errMsg);
+    const summary = summaryParts.join(' | ');
+    db.run("UPDATE report_schedules SET last_run = ?, last_summary = ?, updated_at = ? WHERE id = ?", [startedAt, summary, startedAt, scheduleId]);
+    saveDB();
+    return { status: sent ? 'completed' : 'failed', sent, failed, skipped: 0, priceUpdates, provider, reason: errMsg };
+  } finally {
+    runningSchedules.delete(scheduleId);
+  }
+}
+
+// 005 T067: 迭代所有 enabled=1 排程
 function checkAndRunSchedule() {
   try {
-    const schedule = getReportSchedule();
-    if (!shouldRunSchedule(schedule, serverNow())) return;
-    runScheduledReportNow('排程').catch(err => console.error('[scheduled-report]', err));
+    const rows = queryAll("SELECT * FROM report_schedules WHERE enabled = 1");
+    const now = serverNow();
+    for (const row of rows) {
+      if (runningSchedules.has(row.id)) continue;
+      if (!shouldRunSchedule(row, now)) continue;
+      runScheduledReportNow(row.id, '排程').catch(err => console.error('[scheduled-report]', err));
+    }
   } catch (e) {
     console.error('[scheduled-report] check error', e);
   }
@@ -4515,9 +4758,11 @@ function registerAuditPruneJob() {
   console.log('[Audit Prune] registered; next run in 24h');
 }
 
+// 005 T073: deprecated singleton — 仍保留供既有前端讀取
 app.get('/api/admin/report-schedule', adminMiddleware, (req, res) => {
   const s = getReportSchedule();
   res.json({
+    deprecated: true,
     freq: s.freq,
     hour: s.hour,
     weekday: s.weekday,
@@ -4529,15 +4774,110 @@ app.get('/api/admin/report-schedule', adminMiddleware, (req, res) => {
   });
 });
 
+// 005 T068: GET /api/admin/report-schedules — 列出多筆排程
+function serializeSchedule(row) {
+  return {
+    id: row.id,
+    userId: row.user_id,
+    freq: row.freq,
+    hour: Number(row.hour) || 0,
+    weekday: Number(row.weekday) || 0,
+    dayOfMonth: Number(row.day_of_month) || 1,
+    enabled: row.enabled === 1,
+    lastRun: Number(row.last_run) || 0,
+    lastRunText: row.last_run ? formatTwTime(Number(row.last_run)) : '',
+    lastSummary: row.last_summary || '',
+    createdAt: Number(row.created_at) || 0,
+    updatedAt: Number(row.updated_at) || 0,
+  };
+}
+
+app.get('/api/admin/report-schedules', adminMiddleware, (req, res) => {
+  const userId = req.query.userId;
+  const rows = userId
+    ? queryAll("SELECT * FROM report_schedules WHERE user_id = ? ORDER BY created_at DESC", [String(userId)])
+    : queryAll("SELECT * FROM report_schedules ORDER BY created_at DESC");
+  res.json(rows.map(serializeSchedule));
+});
+
+// 005 T069: POST /api/admin/report-schedules — 新增（不檢查 (user_id, freq) 唯一性）
+app.post('/api/admin/report-schedules', adminMiddleware, (req, res) => {
+  const userId = String(req.body?.userId || '').trim();
+  const freq = String(req.body?.freq || '').trim();
+  if (!userId) return res.status(400).json({ error: '缺少 userId' });
+  if (!['daily', 'weekly', 'monthly'].includes(freq)) return res.status(400).json({ error: 'freq 須為 daily/weekly/monthly' });
+  const u = queryOne("SELECT id FROM users WHERE id = ?", [userId]);
+  if (!u) return res.status(400).json({ error: '指定的使用者不存在' });
+  const hour = clampInt(req.body?.hour, 0, 23, 9);
+  const weekday = clampInt(req.body?.weekday, 0, 6, 1);
+  const dayOfMonth = clampInt(req.body?.dayOfMonth, 1, 28, 1);
+  const enabled = req.body?.enabled === false ? 0 : 1;
+  const id = `rs_${Date.now()}_${uid().slice(0, 8)}`;
+  const nowMs = Date.now();
+  db.run(
+    "INSERT INTO report_schedules (id, user_id, freq, hour, weekday, day_of_month, enabled, last_run, last_summary, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, 0, '', ?, ?)",
+    [id, userId, freq, hour, weekday, dayOfMonth, enabled, nowMs, nowMs]
+  );
+  saveDB();
+  const row = queryOne("SELECT * FROM report_schedules WHERE id = ?", [id]);
+  res.status(201).json(serializeSchedule(row));
+});
+
+// 005 T070: PUT /api/admin/report-schedules/:id — 部分欄位 update；userId/freq 不可變；enabled false→true 不重置 last_run
+app.put('/api/admin/report-schedules/:id', adminMiddleware, (req, res) => {
+  const id = req.params.id;
+  const row = queryOne("SELECT * FROM report_schedules WHERE id = ?", [id]);
+  if (!row) return res.status(404).json({ error: '排程不存在' });
+  const updates = {};
+  if (req.body?.hour !== undefined) updates.hour = clampInt(req.body.hour, 0, 23, row.hour);
+  if (req.body?.weekday !== undefined) updates.weekday = clampInt(req.body.weekday, 0, 6, row.weekday);
+  if (req.body?.dayOfMonth !== undefined) updates.day_of_month = clampInt(req.body.dayOfMonth, 1, 28, row.day_of_month);
+  if (req.body?.enabled !== undefined) updates.enabled = req.body.enabled ? 1 : 0;
+  if (Object.keys(updates).length === 0) return res.status(400).json({ error: '請至少更新一個欄位' });
+  const cols = Object.keys(updates).map(k => `${k} = ?`).join(', ');
+  const vals = [...Object.values(updates), Date.now(), id];
+  db.run(`UPDATE report_schedules SET ${cols}, updated_at = ? WHERE id = ?`, vals);
+  saveDB();
+  const updated = queryOne("SELECT * FROM report_schedules WHERE id = ?", [id]);
+  res.json(serializeSchedule(updated));
+});
+
+// 005 T071: DELETE /api/admin/report-schedules/:id
+app.delete('/api/admin/report-schedules/:id', adminMiddleware, (req, res) => {
+  const id = req.params.id;
+  const row = queryOne("SELECT id FROM report_schedules WHERE id = ?", [id]);
+  if (!row) return res.status(404).json({ error: '排程不存在' });
+  db.run("DELETE FROM report_schedules WHERE id = ?", [id]);
+  saveDB();
+  res.status(204).send();
+});
+
+// 005 T072: POST /api/admin/report-schedules/:id/run-now
+// FR-021: 若 sendStatsEmail 兩通道皆未設定（status === 'no_email_service'），handler MUST 回 503
+app.post('/api/admin/report-schedules/:id/run-now', adminMiddleware, async (req, res) => {
+  try {
+    const id = req.params.id;
+    const row = queryOne("SELECT id FROM report_schedules WHERE id = ?", [id]);
+    if (!row) return res.status(404).json({ error: '排程不存在' });
+    const result = await runScheduledReportNow(id, '管理員手動');
+    if (result.status === 'no_email_service') {
+      return res.status(503).json({ status: 'no_email_service', reason: '寄信服務未設定', ...result });
+    }
+    res.json(result);
+  } catch (e) {
+    res.status(500).json({ error: e.message || '手動執行失敗' });
+  }
+});
+
 function clampInt(value, min, max, fallback) {
   const n = Number.parseInt(value, 10);
   if (!Number.isFinite(n)) return fallback;
   return Math.min(max, Math.max(min, n));
 }
 
+// 005 T074: deprecated singleton — UPSERT 模式同步寫入 report_schedules 表
 app.put('/api/admin/report-schedule', adminMiddleware, (req, res) => {
   const freq = SCHEDULE_FREQ_VALUES.includes(req.body?.freq) ? req.body.freq : 'off';
-  // ⚠️ 不要用 `|| fallback`，否則 hour=0（午夜）/ weekday=0（週日）會被當 falsy 吃掉
   const hour = clampInt(req.body?.hour, 0, 23, 9);
   const weekday = clampInt(req.body?.weekday, 0, 6, 1);
   const dayOfMonth = clampInt(req.body?.dayOfMonth, 1, 28, 1);
@@ -4547,23 +4887,72 @@ app.put('/api/admin/report-schedule', adminMiddleware, (req, res) => {
   if (cleanIds.length > REPORT_SCHEDULE_MAX_TARGETS) {
     return res.status(400).json({ error: `單次最多指定 ${REPORT_SCHEDULE_MAX_TARGETS} 位使用者` });
   }
-  // 過濾不存在的 user id（避免存進髒資料）
   const validIds = cleanIds.filter(id => !!queryOne("SELECT id FROM users WHERE id = ?", [id]));
 
   db.run(
     "UPDATE system_settings SET report_schedule_freq = ?, report_schedule_hour = ?, report_schedule_weekday = ?, report_schedule_day_of_month = ?, report_schedule_user_ids = ?, updated_at = ?, updated_by = ? WHERE id = 1",
     [freq, hour, weekday, dayOfMonth, JSON.stringify(validIds), Date.now(), req.userId]
   );
+
+  // T074: 同步寫入 report_schedules（UPSERT，保留 last_run / last_summary）
+  if (freq !== 'off') {
+    const nowMs = Date.now();
+    for (const uid_ of validIds) {
+      const existing = queryOne("SELECT id FROM report_schedules WHERE user_id = ? AND freq = ? LIMIT 1", [uid_, freq]);
+      if (existing) {
+        db.run(
+          "UPDATE report_schedules SET hour = ?, weekday = ?, day_of_month = ?, enabled = 1, updated_at = ? WHERE id = ?",
+          [hour, weekday, dayOfMonth, nowMs, existing.id]
+        );
+      } else {
+        const id = `rs_${nowMs}_${uid_}`;
+        db.run(
+          "INSERT INTO report_schedules (id, user_id, freq, hour, weekday, day_of_month, enabled, last_run, last_summary, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, 1, 0, '', ?, ?)",
+          [id, uid_, freq, hour, weekday, dayOfMonth, nowMs, nowMs]
+        );
+      }
+    }
+    // 對於不在新清單中的舊 row（移除寄送對象 → 停用）
+    const allRows = queryAll("SELECT id, user_id FROM report_schedules WHERE freq = ?", [freq]);
+    for (const r of allRows) {
+      if (!validIds.includes(r.user_id)) {
+        db.run("UPDATE report_schedules SET enabled = 0, updated_at = ? WHERE id = ?", [nowMs, r.id]);
+      }
+    }
+  }
+
   saveDB();
   res.json({ success: true, freq, hour, weekday, dayOfMonth, userIds: validIds });
 });
 
-// 立即執行一次排程（不等到下個觸發時間）；可選 body { userIds } 覆寫寄送對象
+// 005 T075: deprecated singleton run-now — 改為迴圈所有 enabled=1 schedule
 app.post('/api/admin/report-schedule/run-now', adminMiddleware, async (req, res) => {
   try {
     const overrideIds = Array.isArray(req.body?.userIds) ? req.body.userIds : null;
-    const result = await runScheduledReportNow('手動', overrideIds);
-    res.json({ success: true, ...result });
+    let candidates = [];
+    if (overrideIds && overrideIds.length > 0) {
+      // 取所有 enabled=1 且 user_id 在 overrideIds 中的排程
+      for (const uid_ of overrideIds) {
+        const rows = queryAll("SELECT id FROM report_schedules WHERE user_id = ? AND enabled = 1", [String(uid_)]);
+        rows.forEach(r => candidates.push(r.id));
+      }
+    } else {
+      const rows = queryAll("SELECT id FROM report_schedules WHERE enabled = 1");
+      candidates = rows.map(r => r.id);
+    }
+    if (candidates.length === 0) {
+      return res.json({ success: true, sent: 0, failed: 0, skipped: 0, status: 'no_schedules', reason: '無啟用排程' });
+    }
+    let sent = 0, failed = 0, skipped = 0;
+    const failures = [];
+    for (const sid of candidates) {
+      const r = await runScheduledReportNow(sid, '管理員手動 (deprecated)');
+      sent += r.sent || 0;
+      failed += r.failed || 0;
+      skipped += r.skipped || 0;
+      if (r.reason) failures.push(`${sid}: ${r.reason}`);
+    }
+    res.json({ success: true, sent, failed, skipped, status: 'completed', failures });
   } catch (e) {
     res.status(500).json({ error: e.message || '手動執行失敗' });
   }
@@ -5241,15 +5630,35 @@ app.put('/api/user/settings/pinned-currencies', (req, res) => {
 // FR-001~007（T031）：GET 回傳 category/overseasFeeRate/updatedAt 等 002 新欄位
 app.get('/api/accounts', (req, res) => {
   const accounts = queryAll("SELECT * FROM accounts WHERE user_id = ? ORDER BY created_at", [req.userId]);
+  // 005 T015: 預先一次撈該使用者所有 transactions 的 (account_id, type, twd_amount/amount) 以累計 twdAccumulated
+  // 規則：income/transfer_in 為正、expense/transfer_out 為負；外幣帳戶 initial_balance 不納入此累計（無對應 twd_amount）。
+  // 假設 transactions.type enum 僅 income/expense/transfer_in/transfer_out 四種；其他類型視為 0。
+  const txRows = queryAll(
+    "SELECT account_id, type, COALESCE(twd_amount, amount) as twd_amount FROM transactions WHERE user_id = ?",
+    [req.userId]
+  );
+  const twdMap = {}; // account_id -> twdAccumulated
+  for (const r of txRows) {
+    const v = Number(r.twd_amount) || 0;
+    if (!twdMap[r.account_id]) twdMap[r.account_id] = 0;
+    if (r.type === 'income' || r.type === 'transfer_in') twdMap[r.account_id] += v;
+    else if (r.type === 'expense' || r.type === 'transfer_out') twdMap[r.account_id] -= v;
+  }
   const result = accounts.map(a => {
     const accountCurrency = normalizeCurrency(a.currency);
     const balance = calcBalance(a.id, a.initial_balance, req.userId, accountCurrency);
+    const twdAcc = twdMap[a.id] || 0;
+    // TWD 帳戶：若有 initial_balance 但無對應交易，補入 initial_balance（系統慣例多以 income 交易記錄初始餘額，故無實質落差）
+    const twdAccumulated = accountCurrency === 'TWD'
+      ? Math.round((twdAcc + (Number(a.initial_balance) || 0)) * 100) / 100
+      : Math.round(twdAcc * 100) / 100;
     return {
       ...a,
       icon: normalizeAccountIcon(a.icon),
       initialBalance: a.initial_balance,
       currency: accountCurrency,
       balance,
+      twdAccumulated,
       linkedBankId: a.linked_bank_id || null,
       category: a.category || categoryFromAccountType(a.account_type),
       overseasFeeRate: a.overseas_fee_rate ?? null,
@@ -6651,99 +7060,88 @@ function nextTwseTradingDay(dateStr, holidaySet) {
 }
 
 // ─── 儀表板 ───
+// 005 T020/T021/T022: yearMonth 切換 + buildCategoryAggregateNodes + recent 限縮該月份
 app.get('/api/dashboard', (req, res) => {
-  const month = thisMonth();
-  const todayS = todayStr();
+  // 驗證 yearMonth query：YYYY-MM 格式；未提供或格式錯誤 fallback 為 thisMonth()
+  const ymRaw = String(req.query.yearMonth || '');
+  const validYm = /^\d{4}-(0[1-9]|1[0-2])$/.test(ymRaw);
+  const month = validYm ? ymRaw : thisMonth();
+  const todayS = todayStr(); // todayExpense 仍以當天計算（不隨切換器變化）
 
   const income = queryOne("SELECT COALESCE(SUM(amount),0) as total FROM transactions WHERE user_id = ? AND type='income' AND date LIKE ? AND exclude_from_stats = 0", [req.userId, month + '%'])?.total || 0;
   const expense = queryOne("SELECT COALESCE(SUM(amount),0) as total FROM transactions WHERE user_id = ? AND type='expense' AND date LIKE ? AND exclude_from_stats = 0", [req.userId, month + '%'])?.total || 0;
   const todayExpense = queryOne("SELECT COALESCE(SUM(amount),0) as total FROM transactions WHERE user_id = ? AND type='expense' AND date = ? AND exclude_from_stats = 0", [req.userId, todayS])?.total || 0;
 
-  const catBreakdown = queryAll(`
-    SELECT t.category_id as categoryId,
-           c.name,
-           c.color,
-           c.parent_id as parentId,
-           p.name as parentName,
-           p.color as parentColor,
-           COALESCE(SUM(t.amount),0) as total
+  // 005 T021: 改餵 buildCategoryAggregateNodes 以產生包含「（其他）」虛擬節點的結構
+  const catRows = queryAll(`
+    SELECT t.category_id, t.amount,
+           c.name as cat_name, c.color as cat_color,
+           c.parent_id as cat_parent_id,
+           p.name as cat_parent_name, p.color as cat_parent_color
     FROM transactions t
     LEFT JOIN categories c ON t.category_id = c.id
     LEFT JOIN categories p ON c.parent_id = p.id
     WHERE t.user_id = ? AND t.type = 'expense' AND t.date LIKE ? AND t.exclude_from_stats = 0
-    GROUP BY t.category_id, c.name, c.color, c.parent_id, p.name, p.color
-    ORDER BY total DESC
   `, [req.userId, month + '%']);
+  const catBreakdown = buildCategoryAggregateNodes(catRows);
 
+  // 005 T022: recent 限縮該月份內前 5 筆（與 KPI 同步）
   const recent = queryAll(`
     SELECT t.*, c.name as cat_name, c.color as cat_color
     FROM transactions t
     LEFT JOIN categories c ON t.category_id = c.id
-    WHERE t.user_id = ? AND t.type IN ('income','expense') AND t.exclude_from_stats = 0
+    WHERE t.user_id = ? AND t.type IN ('income','expense') AND t.exclude_from_stats = 0 AND t.date LIKE ?
     ORDER BY t.date DESC, t.created_at DESC LIMIT 5
-  `, [req.userId]);
+  `, [req.userId, month + '%']);
 
-  res.json({ income, expense, net: income - expense, todayExpense, catBreakdown, recent });
+  res.json({ yearMonth: month, income, expense, net: income - expense, todayExpense, catBreakdown, recent });
 });
 
 // ─── 報表 ───
+// 005 T040/T041/T042: from > to 拒絕 + buildCategoryAggregateNodes + periodStart/periodEnd 預設化
 app.get('/api/reports', (req, res) => {
-  const { type, from, to } = req.query;
+  const { type } = req.query;
+  let { from, to } = req.query;
   const txType = type || 'expense';
 
-  let txs;
-  if (from && to) {
-    txs = queryAll(`
-      SELECT t.*, c.name as cat_name, c.color as cat_color, c.parent_id as cat_parent_id,
-             p.name as cat_parent_name, p.color as cat_parent_color
-      FROM transactions t
-      LEFT JOIN categories c ON t.category_id = c.id
-      LEFT JOIN categories p ON c.parent_id = p.id
-      WHERE t.user_id = ? AND t.type = ? AND t.date >= ? AND t.date <= ? AND t.exclude_from_stats = 0
-      ORDER BY t.date
-    `, [req.userId, txType, from, to]);
-  } else {
-    txs = queryAll(`
-      SELECT t.*, c.name as cat_name, c.color as cat_color, c.parent_id as cat_parent_id,
-             p.name as cat_parent_name, p.color as cat_parent_color
-      FROM transactions t
-      LEFT JOIN categories c ON t.category_id = c.id
-      LEFT JOIN categories p ON c.parent_id = p.id
-      WHERE t.user_id = ? AND t.type = ? AND t.exclude_from_stats = 0
-      ORDER BY t.date
-    `, [req.userId, txType]);
+  // T040: 起始日 > 結束日 → 400 拒絕（不靜默交換）
+  if (from && to && String(from) > String(to)) {
+    return res.status(400).json({ error: '起始日不可晚於結束日' });
   }
 
+  // T042: 預設化 periodStart / periodEnd（FR-009 / FR-010）
+  if (!from && !to) {
+    const m = thisMonth();
+    from = m + '-01';
+    to = thisMonthEnd(m);
+  } else if (from && !to) {
+    to = todayStr();
+  } else if (!from && to) {
+    from = String(to).slice(0, 7) + '-01';
+  }
+
+  const txs = queryAll(`
+    SELECT t.*, c.name as cat_name, c.color as cat_color, c.parent_id as cat_parent_id,
+           p.name as cat_parent_name, p.color as cat_parent_color
+    FROM transactions t
+    LEFT JOIN categories c ON t.category_id = c.id
+    LEFT JOIN categories p ON c.parent_id = p.id
+    WHERE t.user_id = ? AND t.type = ? AND t.date >= ? AND t.date <= ? AND t.exclude_from_stats = 0
+    ORDER BY t.date
+  `, [req.userId, txType, from, to]);
+
+  // 既有 catMap（向後相容）
   const catMap = {};
-  const categoryMap = {};
   txs.forEach(t => {
     const amount = Number(t.amount) || 0;
     const name = t.cat_name || '未分類';
     const color = t.cat_color || '#94a3b8';
     if (!catMap[name]) catMap[name] = { total: 0, color };
     catMap[name].total += amount;
-
-    const categoryId = t.category_id || '';
-    const parentId = t.cat_parent_id || '';
-    const parentName = parentId ? (t.cat_parent_name || '未分類') : name;
-    const parentColor = parentId ? (t.cat_parent_color || color) : color;
-    const key = categoryId || `name:${name}`;
-
-    if (!categoryMap[key]) {
-      categoryMap[key] = {
-        categoryId,
-        name,
-        color,
-        parentId,
-        parentName,
-        parentColor,
-        total: 0,
-      };
-    }
-    categoryMap[key].total += amount;
   });
 
-  const categoryBreakdown = Object.values(categoryMap).sort((a, b) => b.total - a.total);
+  // T041: categoryBreakdown 改為 CategoryAggregateNode[]（含「（其他）」虛擬節點）
+  const categoryBreakdown = buildCategoryAggregateNodes(txs);
 
   const dailyMap = {};
   const monthlyMap = {};
@@ -6754,6 +7152,8 @@ app.get('/api/reports', (req, res) => {
   });
 
   res.json({
+    periodStart: from,
+    periodEnd: to,
     catMap,
     categoryBreakdown,
     dailyMap,

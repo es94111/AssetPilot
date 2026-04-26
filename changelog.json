@@ -1,6 +1,29 @@
 {
-  "currentVersion": "4.25.0",
+  "currentVersion": "4.26.0",
   "releases": [
+    {
+      "version": "4.26.0",
+      "date": "2026-04-26",
+      "title": "統計報表（005-stats-reports）：儀表板月份切換 / 雙圓餅 +「（其他）」/ 多筆排程並存 / 執行期 fallback / 對比 pill 同型前一段",
+      "type": "new",
+      "changes": [
+        { "tag": "warning", "text": "schema migration：新增 `report_schedules` 表（10 欄位 + 2 索引），不變動既有表；啟動時自動把既有 `system_settings.report_schedule_*` singleton 排程遷移為多筆 row（冪等，僅當新表為空時執行）" },
+        { "tag": "new", "text": "新增端點：`GET / POST /api/admin/report-schedules`、`PUT / DELETE /api/admin/report-schedules/{id}`、`POST /api/admin/report-schedules/{id}/run-now`（FR-016 / Round 2 Q2）" },
+        { "tag": "new", "text": "`GET /api/dashboard?yearMonth=YYYY-MM` 補 yearMonth query 參數；切換月份時 KPI / 預算 / 圓餅 / 最近 5 筆交易同步重算（FR-001 / Round 1 Q1）" },
+        { "tag": "new", "text": "`GET /api/accounts` response 新增 `twdAccumulated` 計算欄位（為 `SUM(transactions.twd_amount, signed)`）；外幣帳戶 initial_balance 不納入此累計；資產配置圓餅與「持股／帳戶前 5 名」改採此單一資料來源（FR-004 / Round 4）" },
+        { "tag": "new", "text": "支出分類圓餅圖（儀表板 + 統計頁）父分類本身有交易但無子分類細項時，外圈以「（其他）」虛擬子分類群組呈現，與真實子分類同列、同色階；金額不重複計入內圈父分類（FR-013 / Round 3 Q1）" },
+        { "tag": "new", "text": "圓餅圖點擊跳轉：點擊內圈父分類 / 外圈子分類扇區 → 跳轉至預先篩選的交易列表頁；資產配置圓餅點擊「股票市值」→ 股票頁、點擊帳戶 → 該帳戶交易列表（FR-015a / Round 3 Q2）" },
+        { "tag": "new", "text": "統計報表頁工具列狀態 Session 內保留：期間 / 類型 / 自訂時間切換在同一次登入會話中保留；登出後重置為預設「本月 + 支出」（FR-011a / Round 1 Q5）" },
+        { "tag": "new", "text": "排程信件對比 pill 改為「同型前一段」：每日對比前日、每週對比上週、每月對比上月（既有行為）；信件 KPI 區塊新增 compareLabel 小字（FR-018 / Round 1 Q4）" },
+        { "tag": "new", "text": "排程信件「股票投資」區塊：若任一持股 priceAsOf 超過 12 小時未更新，顯示「最舊資料時間」小字註記（FR-023）" },
+        { "tag": "improved", "text": "排程引擎重寫為多筆並存：`(user_id, freq)` 不設唯一鍵；per-schedule lock map 取代既有全域 isRunningSchedule flag，避免單一排程卡住整個系統" },
+        { "tag": "improved", "text": "寄信通道執行期 fallback：SMTP 寄送暫時性失敗（連線錯誤 / 暫時拒收 / timeout）時自動退回 Resend 嘗試同一封信；不重試、不於下次觸發補寄；兩通道皆未設定回 503 不靜默吞錯（FR-021 / Round 1 Q3）" },
+        { "tag": "improved", "text": "排程停用→啟用不補寄：`shouldRunSchedule` 比對 `last_run < periodStart`，停用期間漏掉的觸發點不溯及補寄（FR-024a / Round 2 Q3）" },
+        { "tag": "improved", "text": "`GET /api/reports`：起始日 > 結束日回 400 拒絕（不靜默交換）；categoryBreakdown 改為 CategoryAggregateNode[]；補 periodStart / periodEnd 預設化（FR-010 / FR-013）" },
+        { "tag": "improved", "text": "deprecated singleton 端點 `/api/admin/report-schedule` 系列以 UPSERT 模式同步寫入 `report_schedules` 表（保留 last_run / last_summary）；管理員 UI 同時呈現既有 form 與新版多筆排程列表" },
+        { "tag": "improved", "text": "信件「交易紀錄」每週分支週末日期改用紫色 `#a855f7`（採 inline style 相容 Outlook Desktop Word 渲染引擎，FR-019 / Round 4）" }
+      ]
+    },
     {
       "version": "4.25.0",
       "date": "2026-04-25",

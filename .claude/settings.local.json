@@ -104,7 +104,8 @@
       "Bash(git rev-list *)",
       "PowerShell(& '.specify\\\\extensions\\\\git\\\\scripts\\\\powershell\\\\create-new-feature.ps1' -Json -ShortName \"stats-reports\" \"�έp���� - �����O�B�έp�������P�H��Ƶ{����\")",
       "PowerShell(& '.specify\\\\scripts\\\\powershell\\\\check-prerequisites.ps1' -Json -PathsOnly)",
-      "PowerShell(& '.specify\\\\scripts\\\\powershell\\\\setup-plan.ps1' -Json)"
+      "PowerShell(& '.specify\\\\scripts\\\\powershell\\\\setup-plan.ps1' -Json)",
+      "PowerShell(& '.specify\\\\scripts\\\\powershell\\\\check-prerequisites.ps1' -Json)"
     ]
   }
 }

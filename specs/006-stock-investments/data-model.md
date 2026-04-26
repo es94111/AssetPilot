@@ -45,7 +45,22 @@ ALTER TABLE stock_transactions ADD COLUMN period_start_date TEXT;
 - **用途**：與下方 partial unique index 配合提供 idempotency 保證（多裝置同時登入觸發排程不會重複扣款）。
 - **冪等性**：try/catch 包覆。
 
-### 2.3 partial unique index — 排程 idempotency
+### 2.3 `stock_transactions.tax_auto_calculated`
+
+```sql
+ALTER TABLE stock_transactions ADD COLUMN tax_auto_calculated INTEGER DEFAULT 1;
+```
+
+- **語意**：標示證交稅 `tax` 欄位是「系統依 FR-012 公式自動計算」（值 = 1）或「使用者手動覆寫」（值 = 0）；用於 FR-001 末段「修改持股類型 MUST 觸發該檔所有未實現 / 已實現損益重算」的稅額重算範圍判定（U1 / S1 補強）。
+- **預設值**：`1`（自動計算）；既有所有 row 自動以 1 填入，向後兼容（baseline 既有交易若 tax 為手動輸入，理論上會被誤判為「自動」並於下次 stockType 修改時被覆寫；此 edge case 視為可接受，因為 baseline 階段尚無 stockType 修改入口，沒有實際觸發路徑）。
+- **寫入規則**：
+  - `POST /api/stock-transactions`：req.body 顯式提供 `tax` → `tax_auto_calculated = 0`；省略 `tax` 由系統計算 → `tax_auto_calculated = 1`。
+  - `PUT /api/stock-transactions/{id}`：同上規則重新判定。
+  - 股票股利合成 $0 交易：`tax_auto_calculated = 1`（系統強制 0，後續類型修改無實際影響因 buy 不課稅）。
+- **重算範圍**：FR-001 末段觸發重算時，僅 `tax_auto_calculated = 1` 的歷史 sell 交易 tax 會被覆寫為新稅率值；`tax_auto_calculated = 0` 的手動覆寫值保留不動。
+- **冪等性**：try/catch 包覆 ALTER TABLE。
+
+### 2.4 partial unique index — 排程 idempotency
 
 ```sql
 CREATE UNIQUE INDEX IF NOT EXISTS idx_stock_tx_recurring_idem
@@ -132,8 +147,9 @@ SELECT name FROM sqlite_master WHERE type='index' AND name='idx_stock_tx_recurri
 |---|---|---|---|
 | 1 | `stocks` | `+delisted INTEGER DEFAULT 0` | 低（純新增、有預設） |
 | 2 | `stock_transactions` | `+recurring_plan_id TEXT, +period_start_date TEXT` | 低（純新增、預設 NULL） |
-| 3 | `stock_transactions` | `+UNIQUE INDEX idx_stock_tx_recurring_idem` | 低（partial、僅對排程交易生效） |
+| 3 | `stock_transactions` | `+tax_auto_calculated INTEGER DEFAULT 1` | 低（純新增、有預設；既有 row 視為自動計算，於下次 stockType 修改時可能覆寫） |
+| 4 | `stock_transactions` | `+UNIQUE INDEX idx_stock_tx_recurring_idem` | 低（partial、僅對排程交易生效） |
 
-**總計**：3 個 ALTER + 1 個 CREATE INDEX，**0 個新表**，**0 個刪除欄位**，**0 個變更既有欄位 type/default**。
+**總計**：4 個 ALTER + 1 個 CREATE INDEX，**0 個新表**，**0 個刪除欄位**，**0 個變更既有欄位 type/default**。
 
 backward compatibility 100% — 既有 stock 相關 API（`/api/stocks` GET、`/api/stock-transactions` POST 等）在不傳新欄位時行為完全等價於 baseline。

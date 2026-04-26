@@ -1,6 +1,30 @@
 {
-  "currentVersion": "4.26.0",
+  "currentVersion": "4.27.0",
   "releases": [
+    {
+      "version": "4.27.0",
+      "date": "2026-04-26",
+      "title": "股票投資（006-stock-investments）：投資組合總覽 + 實現損益 Tab + 同步除權息阻擋 Modal + 下市標記 + FIFO decimal.js 全精度 + 登入時排程觸發 + idempotency 唯一鍵",
+      "type": "new",
+      "changes": [
+        { "tag": "warning", "text": "schema migration：為 `stocks` 加入 `delisted INTEGER DEFAULT 0`；為 `stock_transactions` 加入 `recurring_plan_id` / `period_start_date` / `tax_auto_calculated` 三欄；建立 partial unique index `idx_stock_tx_recurring_idem`（同 user / plan / period 三元組僅一筆，多裝置 race 下定期定額不重複扣款）；冪等 ALTER，向後兼容" },
+        { "tag": "new", "text": "新增端點：`GET /api/stock-realized-pl`（已實現損益 + 4 數字彙總卡）、`GET /api/stocks/quote`（FR-007 失敗類型分流：ok / not_found / service_unavailable / invalid）、`POST /api/stocks/batch-fetch`（並發查 TWSE 最新股價 read-only，受 `TWSE_MAX_CONCURRENCY` 限制）、`POST /api/stock-dividends/sync?year=YYYY`（年份分段同步）" },
+        { "tag": "new", "text": "`/api/stocks` GET response shape 改為 `{ stocks, portfolioSummary }`：portfolioSummary 採金額加權公式（totalReturnRate = totalPL / totalCost × 100；totalCost = 0 時為 null）" },
+        { "tag": "new", "text": "FIFO 計算改用 `lib/moneyDecimal.js` 內共用 `calcFifoLots()` helper，內部全程 `decimal.js` 全精度；手續費分攤保留小數，僅最終 response 階段取整（SC-004 ≤ 1 元誤差）" },
+        { "tag": "new", "text": "股票股利配發合成 $0 buy 交易：新增 / 同步股利時若 stockDividendShares > 0，於 `stock_transactions` 同步寫入 `[SYNTH] 股票股利配發` 前綴交易；FIFO 佇列自然納入；刪除股利時連動刪除（依 stock_id + date + price=0 + note 前綴匹配）" },
+        { "tag": "new", "text": "賣出鏈式約束驗證：`POST /api/stock-transactions` 與 `PUT /api/stock-transactions/:id`（type=sell）拒絕「該交易日當下持有不足」與「自該日起任一時點持有 < 0」；錯誤訊息含衝突日期；`PUT` 改為 atomic delete + insert 模擬（包 BEGIN / COMMIT / ROLLBACK）" },
+        { "tag": "new", "text": "登入時 server-side 非同步（setImmediate）觸發 `processStockRecurring(userId)` 補產生定期定額；補產生迴圈每期改用 TWSE STOCK_DAY 歷史收盤價；INSERT 加 `recurring_plan_id` + `period_start_date` 並改用 `INSERT OR IGNORE` 達 idempotency" },
+        { "tag": "new", "text": "前端股票頁：投資組合總覽卡新增「整體報酬率」第 5 卡；個股卡片補「最後查價時間」（> 24h 顯示 ⚠ 橘色）+ 資料來源（即時 / 收盤 / T+1 / 凍結）+「（已下市）」badge + 三段式損益顯色（綠 ▲ / 灰 / 紅 ▼）" },
+        { "tag": "new", "text": "前端同步除權息：點按鈕觸發阻擋式 Modal + 進度條 + 取消按鈕；前端依交易紀錄推算最早年份，逐年呼叫 `/api/stock-dividends/sync?year=YYYY`；完成後 toast 顯示「新增 N / 跳過 M / 失敗 K」彙總；按取消後設 aborted 中止迴圈" },
+        { "tag": "new", "text": "前端批次更新股價 Modal：每列加「標為已下市」checkbox（凍結價格 + 後續查價跳過下市股票）；改用 `/api/stocks/batch-fetch` 並發查價；查詢失敗顯示「查詢失敗」紅色提示且保留原值" },
+        { "tag": "new", "text": "前端共用 helper：`colorizePL(value)`（三段式顯色 ▲ / ▼）、`formatStaleQuoteBadge(updatedAt)`（24h ⚠）、`validateStockSymbol(sym)`（^[0-9A-Za-z]{1,8}$ ASCII 防注入）、`inferStockTypeFrontend(sym)`（00xx → ETF / 6+ 碼或結尾字母 → 權證）" },
+        { "tag": "improved", "text": "持股類型修改重算：`PUT /api/stocks/:id` 變更 stockType 時自動重算該股所有 `tax_auto_calculated = 1` 的歷史 sell 交易稅額；手動覆寫的稅額（`tax_auto_calculated = 0`）保留不動" },
+        { "tag": "improved", "text": "股利批次刪除（`POST /api/stock-dividends/batch-delete`）套用連動刪除規則；股票交易批次刪除（`POST /api/stock-transactions/batch-delete`）拒絕股票股利合成交易（必須透過刪除對應股利紀錄處理）" },
+        { "tag": "improved", "text": "FR-014 自動建立股票路徑：`POST /api/stocks` 與 import 路徑於 stockType 未指定時自動推斷；name 留空時 fallback 為「（未命名）」不阻擋使用者記錄" },
+        { "tag": "improved", "text": "新增環境變數 `TWSE_MAX_CONCURRENCY`（預設 5）控制 TWSE 並發查詢上限；`lib/twseFetch.js` 新增 `fetchWithRetry(url, options, retries=2)`（指數退避 1s/2s）、`fetchAllWithLimit(items, fetcher)` 純 JS 並發控制（無新 npm 依賴）" },
+        { "tag": "improved", "text": "Edge Case「歷史代號改名」：`updateUserStockPrices` 取得 TWSE 最新 name 時若與 DB 不同，自動 UPDATE stocks.name；下市股票（delisted=1）跳過 TWSE 請求" }
+      ]
+    },
     {
       "version": "4.26.0",
       "date": "2026-04-26",

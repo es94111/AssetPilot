@@ -5,7 +5,9 @@
 
 ## Summary
 
-本計畫將 005 規格（3 user story／**26 base FR + 3 sub-FR（`a` 後綴：FR-011a / FR-015a / FR-024a）= 29 FR**／10 Clarification（3 輪）／7 SC）落地至既有單體應用。**完全不引入新技術棧**：沿用 001 / 002 / 003 / 004 已建立的 Node.js 24+、Express 5、單一 `server.js`、根目錄 SPA（`index.html` / `app.js` / `style.css`）、sql.js 記憶體執行 + `database.db` 檔案持久化、JWT httpOnly Cookie、OpenAPI 3.2.0 契約、Chart.js 4.5.1 CDN（已 SRI 鎖版）、`decimal.js`、`nodemailer`、`resend` SDK、`twParts()` / `taipeiTime` 等既有依賴；本功能**不引入任何新 npm 套件、不引入新前端 CDN 資源、不引入新外部 API、不新增獨立服務或 cron worker**（使用者明確要求）。
+本計畫將 005 規格（3 user story／**26 base FR + 3 sub-FR（`a` 後綴：FR-011a / FR-015a / FR-024a）= 29 FR**／**11 Clarification（4 輪）**／7 SC）落地至既有單體應用。**完全不引入新技術棧**：沿用 001 / 002 / 003 / 004 已建立的 Node.js 24+、Express 5、單一 `server.js`、根目錄 SPA（`index.html` / `app.js` / `style.css`）、sql.js 記憶體執行 + `database.db` 檔案持久化、JWT httpOnly Cookie、OpenAPI 3.2.0 契約、Chart.js 4.5.1 CDN（已 SRI 鎖版）、`decimal.js`、`nodemailer`、`resend` SDK、`twParts()` / `taipeiTime` 等既有依賴；本功能**不引入任何新 npm 套件、不引入新前端 CDN 資源、不引入新外部 API、不新增獨立服務或 cron worker**（使用者明確要求）。
+
+**Round 4 釐清補強**（2026-04-26 由 [analyze-01.md](./analyze-01.md) 跨產出物分析觸發）：spec 補入 `/api/accounts.twdAccumulated` 計算欄位設計（為 `SUM(transactions.twd_amount, signed by direction)`，外幣帳戶 `initial_balance` 不納入此累計）；解決儀表板資產配置 TWD 等值的單一資料來源問題。對應計畫變動：在 Phase 2 Foundational 新增 T015（`/api/accounts` 加 `twdAccumulated` 欄位）；在 Phase 5 US3 新增 T064a（FR-023 資料時間註記）與 T064b（FR-019 weekly Mon-Sun 起點 + 週末紫色驗證）；T027 / T066 / T065 / T067 / T070 / T074 / T075 / T076 / T044 / T026 / T048 / T049 / T050 / T090 / T094 共 14 處 task description 補強更精確的實作邊界。Tasks 總數由 65 → 68；FR coverage 由 93% → 100%。詳見 [tasks.md 修補歷史](./tasks.md) 與 [analyze-01.md Remediation Applied](./analyze-01.md)。
 
 既有實作（baseline）已涵蓋本功能約 60% 表面：
 

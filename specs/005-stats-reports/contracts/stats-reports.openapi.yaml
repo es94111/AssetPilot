@@ -22,6 +22,8 @@ tags:
     description: 儀表板 KPI、分類圓餅、最近交易彙整
   - name: 統計報表
     description: 跨期間／類型的分類統計、每日趨勢、每日彙總
+  - name: 帳戶
+    description: 既有帳戶端點之 schema 補強（005 新增 twdAccumulated 欄位）
   - name: 排程信件報表
     description: 管理員建立／管理多筆使用者資產統計信件排程
 
@@ -40,6 +42,27 @@ components:
         error: { type: string, description: 對使用者顯示的錯誤訊息（zh-TW） }
         code: { type: string, description: 內部錯誤代碼 }
         field: { type: string, description: 引發錯誤的欄位 }
+
+    AccountWithTwdAccumulated:
+      type: object
+      description: |
+        本功能 005 對既有 `/api/accounts` (GET) 的 response 進行**additive change**：
+        於每筆帳戶物件新增 `twdAccumulated` 計算欄位。其餘既有欄位（id, name,
+        balance, currency, initialBalance, ...）schema 仍以根目錄 `openapi.yaml`
+        的 `Account` schema 為準；本 schema 僅描述「005 新增的部分」。
+      required: [twdAccumulated]
+      properties:
+        twdAccumulated:
+          type: number
+          description: |
+            該帳戶所有歷史交易記錄之 `twd_amount` 累計（依方向有號）；
+            計算邏輯：`SUM(transactions.twd_amount × sign)`，sign 規則為
+            `income / transfer_in` 為 +1、`expense / transfer_out` 為 -1。
+            外幣帳戶的 `initial_balance` **不**納入此累計（無對應 twd_amount，
+            依 spec round 4 釐清）；TWD 帳戶因每筆 transactions.twd_amount = amount
+            自然反映。儀表板資產配置圓餅圖（FR-004）MUST 以此欄位為唯一 TWD 等值
+            來源；既有 `balance` 欄位（原幣餘額）保留供其他頁面使用，**不**移除。
+            可能為負值（帳戶被刷爆過）；前端圓餅圖以絕對值參與弧度計算但 tooltip 顯示原值含負號。
 
     CategoryAggregateNode:
       type: object
@@ -242,6 +265,26 @@ security:
   - cookieAuth: []
 
 paths:
+  /api/accounts:
+    get:
+      tags: [帳戶]
+      summary: 取得使用者所有帳戶（附 twdAccumulated）
+      description: |
+        既有端點，本功能對 response 加一個 `twdAccumulated` 計算欄位（additive，
+        不破壞既有欄位）；T015 為唯一一個改動此端點的任務。
+        其餘 schema 與行為以根目錄 `openapi.yaml` 的 `Account` 為準；
+        本檔僅宣告 005 新增的部分（補強 D5 同步）。
+      responses:
+        '200':
+          description: 帳戶清單；每筆於既有欄位之外含 `twdAccumulated`
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  allOf:
+                    - $ref: '#/components/schemas/AccountWithTwdAccumulated'
+
   /api/dashboard:
     get:
       tags: [儀表板]

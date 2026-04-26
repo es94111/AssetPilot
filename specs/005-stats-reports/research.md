@@ -308,3 +308,82 @@ async function sendStatsEmail({ to, subject, html }) {
 2. **排程刪除後歷史寄送紀錄是否 cascade** — 本版採「不刪 last_summary（保留為歷史摘要文字）；刪除 row 後 last_summary 隨 row 一併消失」最簡單策略；若未來需要「跨 schedule 刪除仍保留審計」再規劃 audit 表。
 3. **TWSE 查價限速與重試** — 沿用 `updateUserStockPrices()` 既有實作，本功能不調整其重試策略。
 4. **大量使用者排程 scale**（如 > 100 排程）— 預期不會發生；若達該量級，可改 `setInterval` 為基於 `last_run` 的 delta-loop（不在本版範圍）。
+
+---
+
+## 13. Round 4 補強：`/api/accounts.twdAccumulated` 計算欄位（FR-004、Round 4）
+
+### 背景
+
+[analyze-01.md](./analyze-01.md) 第 1 次掃描識別 C3：T027 假設 `/api/accounts.balance` 已是 TWD 累計值，但實際 `calcBalance()`（server.js:5284）回傳「帳戶原幣餘額」（USD account 回 USD 數值）；既有 `app.js:1095-1112` dashboard 「總資產卡」是用 `cachedExchangeRates` 即時匯率重新折算，與 spec round 1 Q2 「累計本幣金額（不查即時匯率）」要求不一致。同時 C4 識別 `initial_balance` 在外幣帳戶情境下無對應 TWD 歷史值的處理未定義。
+
+### 決策
+
+新增 spec Session 2026-04-26 (round 4) clarification，鎖定如下：
+
+- **新增 `twdAccumulated` 欄位於 `/api/accounts` response**（additive change，不破壞既有 `balance`）。
+- 計算邏輯：`SUM(transactions.twd_amount × sign) WHERE account_id = ? AND user_id = ?`；
+  - sign 規則：`income / transfer_in = +1`、`expense / transfer_out = -1`；
+  - 假設 `transactions.type` enum 僅此四種（既有專案實際 enum 為此四種，已驗證）。
+- **外幣帳戶 `initial_balance` 不納入累計**（無對應 twd_amount 歷史值，避免引入「初始時匯率」假設）。
+- TWD 帳戶 `initial_balance` 若使用者以一筆 `income` 交易記錄（系統慣例），自然反映於 twd_amount 累計；若 `initial_balance != 0` 但無對應交易，前端需了解此值不會反映於 twdAccumulated（屬使用者資料輸入習慣，非 bug）。
+- 既有 `balance` 欄位（原幣餘額）保留供帳戶管理頁、交易輸入頁等其他功能使用，**不**移除。
+
+### 理由
+
+- **單一資料來源**：與 FR-025 / 004 預算側同口徑（`SUM(twd_amount)`）；跨頁（KPI、預算、資產配置）使用同一份本幣金額計算邏輯，避免「即時匯率漂移」造成不同頁面數字不一致。
+- **效能可預測**：避免前端對每個帳戶發 N+1 `/api/transactions?accountId=X` 查詢；後端一次性計算後 cache 在 response 中。
+- **向後相容**：純 additive，舊 client 忽略新欄位仍正常運作。
+
+### 替代方案
+
+- **(a) 前端對每帳戶呼叫 `/api/transactions?accountId=X` 計算** — 否決。N+1 查詢對 30 個帳戶造成 30 個 HTTP request；違反 SC-001（儀表板 2 秒呈現）。
+- **(b) 新增 `?balanceUnit=twd` query param 切換 `balance` 欄位語意** — 否決。改變既有欄位語意是 breaking change；其他既有 client 可能依賴 `balance` 為原幣值。
+- **(c) 後端 `/api/dashboard` response 直接包 `assetAllocation: [{kind, name, twdValue}]`** — 否決。把資產配置邏輯耦合進 dashboard 端點；不符前端組裝原則（決策 §3）；難以重用於其他頁面（例如未來資產配置獨立頁）。
+
+選 **additive 新欄位**（本決策）— 三種替代方案中對既有 client 影響最小，效能最好，邏輯最一致。
+
+---
+
+## 14. Round 4 補強：FR-023 / FR-019 信件實作細節
+
+### 14.1 FR-023 股價快取資料時間註記
+
+#### 決策
+
+- `buildUserStatsReport(userId, freq)` 取持股清單時，**MUST** 一併讀取 `stocks.updated_at` 並計入 `stats.stockHoldingsList[].priceAsOf`（epoch ms）。
+- `renderStatsEmailHtml(...)` 於「股票投資」區塊每列渲染時，若 `priceAsOf < (sendingTimestamp - 12 * 3600 * 1000)`（即超過 12 小時未更新），補 `<span style="font-size:11px; color:#94a3b8;">資料: YYYY-MM-DD HH:MM</span>`（台灣時區）。
+- 若 `updated_at` 為 0 / NULL / 字串 `"0"`（從未成功更新），呈現「資料: —」並同時將價格欄位顯示為「—」（避免 NaN-formatted 日期）。
+- 12 小時閾值的選擇：(a) 信件預期每日凌晨寄送 → 寄送前 `updateUserStockPrices()` 通常於同一小時內完成；(b) 12 小時涵蓋當日台灣交易時段（09:00-13:30）至次日凌晨；(c) 短於 12 小時會把寄送前剛更新的快取誤判為 stale；長於 24 小時又對「3 天前的快取」遺漏標示。12 小時為平衡點。
+
+#### 理由
+
+- spec FR-023 明示「不阻擋整封信件寄出」+「以小字註記」— 須有顯式註記讓使用者了解該檔股票的市值可能已過時，避免使用者誤判。
+- 採 `stocks.updated_at` 而非 transactions level 的時間戳，因為 `updateUserStockPrices()` 寫入此欄位即代表「最後一次成功查價時間」，語意精準。
+
+#### 替代方案
+
+- **不註記、僅以快取為準** — 否決。違反 FR-023 後半句。
+- **註記閾值改為 1 小時** — 否決。寄送前 `updateUserStockPrices` 若略慢將造成不必要的 stale 標示。
+- **以 `stocks.created_at` 為基準** — 否決。created_at 不反映「最後成功更新」時間。
+
+### 14.2 FR-019 weekly 信件 Mon-Sun 起點 + 週末紫色
+
+#### 決策
+
+- 驗證既有 `getReportPeriod('weekly')`（server.js:3784 附近）的 `period.start` 為**週一**（baseline 應如此但 T064b 含驗證步驟）。若不是則修正為週一起點。
+- `dailyBreakdown[]` 元素內保留 `weekday` 欄位（既有 `d.getDay()` 0~6）。
+- `renderStatsEmailHtml()` 於 weekly 模式的每日彙總列遇 `weekday === 0 || weekday === 6` 時套紫色 inline style（如 `color: #a855f7;`）。
+
+#### 理由
+
+- spec FR-019 明示「Mon-Sun 每日彙總」+「週末日期紫色標示」；本決策完全對應。
+- 採 inline style 而非 CSS class，是因為 HTML 信件需 inline 化才能在 Outlook Desktop 正確渲染（Word engine 對 `<style>` 區塊支援有限）。
+
+#### 影響範圍 cross-reference
+
+T064b 修改 `getReportPeriod()` 將同時影響：
+- deprecated singleton `app.post('/api/admin/report-schedule/run-now')`（仍呼叫 `buildUserStatsReport`）
+- `/api/admin/test-email`（雖然測試信不依此區段內容，仍走同 helper）
+
+修改後 MUST 驗證 deprecated 路徑信件版面依然正確（quickstart §4.5 / §4.7 涵蓋此驗證）。

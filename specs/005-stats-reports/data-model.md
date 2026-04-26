@@ -75,8 +75,12 @@ row 消失
 - 用於信件「交易紀錄」區塊（每日明細 / 每週彙總 / 每月彙總）。
 - 共用既有索引：`idx_transactions_user_date`（已存在）、`idx_transactions_user_type_date`（已存在）。
 
-### 2.2 `accounts` + `calcBalance()`（讀取）
-- 用於儀表板「資產配置圓餅圖」的「帳戶餘額」分布；前端呼叫 `/api/accounts` 取餘額（已內含 TWD 等值換算邏輯，外幣帳戶以歷史交易累計本幣金額；FR-004、Round 1 Q2、Round 2 Q1）。
+### 2.2 `accounts` + `calcBalance()`（讀取，但 `/api/accounts` response 加 `twdAccumulated` 計算欄位）
+- 表結構**不**變動（無 ALTER）。
+- `/api/accounts` (GET) response **新增** `twdAccumulated` 計算欄位（T015；屬 Foundational phase）；計算邏輯為 `SUM(transactions.twd_amount × sign)`（`income / transfer_in = +1`、`expense / transfer_out = -1`）；外幣帳戶 `initial_balance` **不**納入此累計（依 spec round 4 釐清，因無對應 twd_amount 歷史值）。
+- 既有 `balance` 欄位（由 `calcBalance(accId, initialBalance, userId, accountCurrency)` 計算之原幣餘額）**保留不動**；其他頁面（帳戶管理頁、交易輸入頁）仍使用此欄位。
+- 儀表板「資產配置圓餅圖」（FR-004、T027）MUST 讀取 `twdAccumulated` 而非 `balance × cachedExchangeRates`；統計頁、信件等其他功能不使用 `twdAccumulated`（不必要計算開銷由 GET 端點承擔，但每使用者帳戶數通常 < 30 故可忽略）。
+- 詳見 [contracts/stats-reports.openapi.yaml#components/schemas/AccountWithTwdAccumulated](./contracts/stats-reports.openapi.yaml)。
 
 ### 2.3 `stocks`（讀取）
 - 用於儀表板「資產配置圓餅圖」的「股票市值」分布；前端呼叫 `/api/stocks` 取 `current_price`（既有快取欄位）；本功能**不**主動觸發查價（Round 2 Q1）。

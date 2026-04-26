@@ -3075,6 +3075,16 @@ function buildGoogleRedirectAllowlist() {
     `http://localhost:${PORT}/`,
     `http://localhost:${PORT}`,
   ];
+  // 自動納入 ALLOWED_ORIGINS（CORS 白名單）— 多數部署只設 ALLOWED_ORIGINS、忘了 APP_HOST，
+  // 為避免每個自訂網域都要再多設一次 redirect_uri 白名單，這裡自動派生。
+  if (ALLOWED_ORIGINS && ALLOWED_ORIGINS.length > 0) {
+    for (const origin of ALLOWED_ORIGINS) {
+      const stripped = String(origin || '').replace(/\/$/, '');
+      if (!stripped) continue;
+      fallback.push(stripped);
+      fallback.push(stripped + '/');
+    }
+  }
   console.log(`[OAuth] redirect_uri whitelist 未設定，採用預設：${fallback.join(', ')}`);
   return new Set(fallback);
 }
@@ -3095,6 +3105,7 @@ app.post('/api/auth/google', async (req, res) => {
 
   // FR-011 / T051：交換授權碼前先比對白名單，不符立即拒絕（絕不外呼 Google）
   if (!isAllowedGoogleRedirectUri(String(redirect_uri || '').trim())) {
+    console.warn(`[OAuth] invalid_redirect_uri 被拒：received=${JSON.stringify(redirect_uri)}，allowlist=${JSON.stringify([...googleRedirectUriAllowlist])}`);
     recordLoginAttempt({ email: '', req, method: 'google', isSuccess: false, failureReason: 'invalid_redirect_uri' });
     return res.status(400).json({ error: 'invalid_redirect_uri' });
   }

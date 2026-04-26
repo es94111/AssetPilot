@@ -1075,48 +1075,74 @@ const App = (() => {
   }
 
   // ─── 儀表板 ───
+  // 005 T023: 模組級儀表板月份狀態（FR-001、Round 1 Q1）
+  let dashMonth = (() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+  })();
+  let dashboardMonthBound = false;
+
+  function bindDashboardMonthSwitcher() {
+    if (dashboardMonthBound) return;
+    const prev = el('dashMonthPrev');
+    const next = el('dashMonthNext');
+    if (!prev || !next) return;
+    const stepMonth = (delta) => {
+      const [y, m] = dashMonth.split('-').map(Number);
+      const d = new Date(y, m - 1 + delta, 1);
+      dashMonth = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      renderDashboard();
+    };
+    prev.addEventListener('click', () => stepMonth(-1));
+    next.addEventListener('click', () => stepMonth(1));
+    dashboardMonthBound = true;
+  }
+
   async function renderDashboard() {
     bindDashboardDualPieControls();
+    bindDashboardMonthSwitcher();
     const expenseToggle = el('dashExpenseDualPie');
     const assetToggle = el('dashAssetDualPie');
     if (expenseToggle) expenseToggle.checked = !!dashDualPie.expense;
     if (assetToggle) assetToggle.checked = !!dashDualPie.asset;
 
-    const data = await API.get('/api/dashboard');
+    // 月份標籤更新
+    const labelEl = el('dashMonthLabel');
+    if (labelEl) labelEl.textContent = dashMonth;
+
+    const data = await API.get('/api/dashboard?yearMonth=' + encodeURIComponent(dashMonth));
 
     el('dashIncome').textContent = fmt(data.income);
     el('dashExpense').textContent = fmt(data.expense);
     el('dashNet').textContent = fmt(data.net);
-    el('dashToday').textContent = fmt(data.todayExpense);
+    if (el('dashToday')) el('dashToday').textContent = fmt(data.todayExpense);
 
-    // T125 (FR-004 / FR-007 / FR-020)：儀表板總資產卡（跨幣別 TWD 換算由共用匯率快取驅動）
+    // 總資產卡：採 twdAccumulated 為主來源（005 T015 / FR-004 / FR-025）；保留既有計算為 fallback
     try {
       const accounts = await API.get('/api/accounts');
       const included = accounts.filter(a => !a.exclude_from_total);
       const excluded = accounts.filter(a => a.exclude_from_total);
       let totalAssets = 0;
-      let unavailableCurrencies = new Set();
       for (const a of included) {
-        const c = normalizeCurrencyCode(a.currency || 'TWD');
-        const bal = Number(a.balance) || 0;
-        if (c === 'TWD') {
-          totalAssets += bal;
+        // 優先使用 twdAccumulated；若不存在（舊版 API）則 fallback 到 balance × 匯率
+        if (a.twdAccumulated !== undefined && a.twdAccumulated !== null) {
+          totalAssets += Number(a.twdAccumulated) || 0;
         } else {
-          const rate = Number(cachedExchangeRates[c]);
-          if (rate > 0) {
-            totalAssets += Math.round(bal * rate);
-          } else {
-            unavailableCurrencies.add(c);
+          const c = normalizeCurrencyCode(a.currency || 'TWD');
+          const bal = Number(a.balance) || 0;
+          if (c === 'TWD') totalAssets += bal;
+          else {
+            const rate = Number(cachedExchangeRates[c]);
+            if (rate > 0) totalAssets += Math.round(bal * rate);
           }
         }
       }
       const totalEl = el('dashTotalAssets');
       const noteEl = el('dashTotalAssetsNote');
-      if (totalEl) totalEl.textContent = fmt(totalAssets);
+      if (totalEl) totalEl.textContent = fmt(Math.round(totalAssets));
       if (noteEl) {
         const parts = [];
         if (excluded.length > 0) parts.push(`已排除 ${excluded.length} 個帳戶不計入`);
-        if (unavailableCurrencies.size > 0) parts.push(`${unavailableCurrencies.size} 種幣別匯率暫不可用，未計入總額`);
         noteEl.textContent = parts.join('；');
       }
     } catch (e) { /* 取不到帳戶不影響其他卡片 */ }
@@ -1151,7 +1177,8 @@ const App = (() => {
   }
 
   async function renderDashBudget(totalExpense) {
-    const budgets = await API.get('/api/budgets?yearMonth=' + thisMonth());
+    // 005 T024: 預算進度條跟隨儀表板月份切換器
+    const budgets = await API.get('/api/budgets?yearMonth=' + dashMonth);
     const container = el('dashBudgetProgress');
     if (budgets.length === 0) {
       container.innerHTML = '<p class="empty-hint">尚未設定預算</p>';
@@ -1205,10 +1232,31 @@ const App = (() => {
     const data = sorted.parentRows.map(r => r.total);
     const colors = sorted.parentRows.map(r => parentColorMap.get(r.parentKey) || '#94a3b8');
 
+    // 005 T026: 點擊內圈父分類 → navigateToTransactions
+    const meta = sorted.parentRows.map(r => ({ parentId: r.parentId, parentName: r.parentName }));
     charts.dashPie = new Chart(ctx, {
       type: 'doughnut',
       data: { labels, datasets: [{ data, backgroundColor: colors, borderWidth: 0 }] },
-      options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, padding: 10 } } } },
+      options: {
+        responsive: true,
+        plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, padding: 10 } } },
+        onClick: (evt, items) => {
+          if (!items.length) return;
+          const seg = meta[items[0].index];
+          if (!seg) return;
+          const monthEnd = (() => {
+            const [y, m] = dashMonth.split('-').map(Number);
+            const d = new Date(y, m, 0);
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+          })();
+          navigateToTransactions({
+            categoryId: seg.parentId,
+            type: 'expense',
+            from: dashMonth + '-01',
+            to: monthEnd,
+          });
+        },
+      },
     });
 
     renderDashExpenseTop5(catBreakdown);
@@ -1266,29 +1314,37 @@ const App = (() => {
       return;
     }
 
+    // 005 T027: 採 twdAccumulated（FR-004 / Round 4 / 不主動觸發查價）；負值取絕對值參與弧度但 tooltip 顯示原值
     const accountRows = (accounts || [])
       .filter(a => !a.exclude_from_total)
-      .map(a => ({ label: String(a.name || '帳戶'), name: String(a.name || '帳戶'), total: Math.round(Number(a.balance) || 0) }))
-      .filter(row => row.total > 0)
-      .sort(sortByTotalThenNameDesc);
+      .map(a => {
+        const twd = a.twdAccumulated !== undefined ? (Number(a.twdAccumulated) || 0) : (Number(a.balance) || 0);
+        return { label: String(a.name || '帳戶'), name: String(a.name || '帳戶'), id: a.id, total: Math.round(twd), absTotal: Math.abs(Math.round(twd)) };
+      })
+      .filter(row => row.absTotal > 0)
+      .sort((a, b) => b.absTotal - a.absTotal);
     const stockValue = (stocks || []).reduce((sum, s) => sum + (Number(s.marketValue) || 0), 0);
 
     const parentRows = [];
-    if (accountRows.length > 0) parentRows.push({ key: 'account', name: '帳戶資產', total: accountRows.reduce((s, x) => s + x.total, 0), color: accountBase });
+    if (accountRows.length > 0) parentRows.push({ key: 'account', name: '帳戶資產', total: accountRows.reduce((s, x) => s + x.absTotal, 0), color: accountBase });
     if (stockValue > 0) parentRows.push({ key: 'stock', name: '股票資產', total: Math.round(stockValue), color: stockBase });
     parentRows.sort(sortByTotalThenNameDesc);
 
+    // 005: 紀錄 segment metadata 供 onClick 跳轉
+    const segMeta = [];
     parentRows.forEach(parent => {
       if (parent.key === 'account') {
         accountRows.forEach((row, idx) => {
           labels.push(row.label);
-          values.push(row.total);
+          values.push(row.absTotal);
           colors.push(buildChildVariantColor(accountBase, idx, Math.max(accountRows.length, 1)));
+          segMeta.push({ kind: 'account', accountId: row.id });
         });
       } else {
         labels.push('股票市值');
         values.push(parent.total);
         colors.push(buildChildVariantColor(stockBase, 0, 1));
+        segMeta.push({ kind: 'stock' });
       }
     });
 
@@ -1344,6 +1400,14 @@ const App = (() => {
             },
           },
         },
+        // 005 T029: 點擊資產配置扇區跳轉
+        onClick: (evt, items) => {
+          if (!items.length) return;
+          const seg = segMeta[items[0].index];
+          if (!seg) return;
+          if (seg.kind === 'stock') navigateToStocks();
+          else if (seg.kind === 'account') navigateToTransactions({ accountId: seg.accountId });
+        },
       },
     });
 
@@ -1354,11 +1418,15 @@ const App = (() => {
     const container = el('dashAssetTop5');
     if (!container) return;
 
+    // 005: 採 twdAccumulated（FR-004 / Round 4）
     const accountRows = (accounts || [])
       .filter(a => !a.exclude_from_total)
-      .map(a => ({ name: String(a.name || '帳戶'), total: Math.round(Number(a.balance) || 0) }))
-      .filter(r => r.total > 0)
-      .sort((a, b) => b.total - a.total);
+      .map(a => {
+        const twd = a.twdAccumulated !== undefined ? (Number(a.twdAccumulated) || 0) : (Number(a.balance) || 0);
+        return { name: String(a.name || '帳戶'), total: Math.round(twd), absTotal: Math.abs(Math.round(twd)) };
+      })
+      .filter(r => r.absTotal > 0)
+      .sort((a, b) => b.absTotal - a.absTotal);
 
     const stockRows = (stocks || [])
       .map(s => {
@@ -1395,15 +1463,15 @@ const App = (() => {
       html += '</ul></div>';
     }
 
-    // 帳戶前 5 名
+    // 帳戶前 5 名（採 absTotal 排序與百分比計算；顯示原值含負號）
     if (accountRows.length > 0) {
       const top5Accounts = accountRows.slice(0, 5);
-      const accountTotal = accountRows.reduce((s, r) => s + r.total, 0);
+      const accountTotal = accountRows.reduce((s, r) => s + r.absTotal, 0);
       html += '<div class="dash-top5-group">';
       html += '<div class="dash-top5-title"><i class="fas fa-landmark"></i>帳戶前 5 名</div>';
       html += '<ul class="dash-top5-list">';
       top5Accounts.forEach((row, idx) => {
-        const pct = accountTotal > 0 ? ((row.total / accountTotal) * 100).toFixed(1) : '0.0';
+        const pct = accountTotal > 0 ? ((row.absTotal / accountTotal) * 100).toFixed(1) : '0.0';
         html += `<li>
           <span class="dash-top5-rank">${idx + 1}</span>
           <span class="dash-top5-name">${escHtml(row.name)}</span>
@@ -1906,7 +1974,56 @@ const App = (() => {
     }
   }
 
+  // ─── 005 共用 helper（T012/T013/T014）───
+  function renderEmptyState(canvasEl, label) {
+    if (!canvasEl) return;
+    const ctx = canvasEl.getContext('2d');
+    const w = canvasEl.width || canvasEl.clientWidth || 300;
+    const h = canvasEl.height || canvasEl.clientHeight || 180;
+    ctx.clearRect(0, 0, w, h);
+    ctx.save();
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '14px -apple-system, "Segoe UI", "Microsoft JhengHei", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(label || '此期間無資料', w / 2, h / 2);
+    ctx.restore();
+  }
+
+  function navigateToTransactions(opts) {
+    // FR-015a：圓餅圖點擊跳轉至預先篩選的交易列表，採同 SPA 內 push state 切頁
+    const params = new URLSearchParams();
+    if (opts.from) params.set('dateFrom', opts.from);
+    if (opts.to) params.set('dateTo', opts.to);
+    if (opts.type) params.set('type', opts.type);
+    if (opts.accountId) params.set('accountId', opts.accountId);
+    if (opts.isOtherGroup && opts.parentId) {
+      params.set('categoryId', opts.parentId);
+    } else if (opts.categoryId) {
+      params.set('categoryId', opts.categoryId);
+    }
+    params.set('page', '1');
+    try {
+      const newHash = `#/transactions?${params.toString()}`;
+      window.history.replaceState(null, '', newHash);
+    } catch (e) { /* ignore */ }
+    navigate('transactions', null);
+  }
+
+  function navigateToStocks() {
+    navigate('stocks', 'portfolio');
+  }
+
   // ─── 統計報表 ───
+  // 005 T043: Session 內保留期間/類型狀態（FR-011a / Round 1 Q5）；登出時 IIFE 重載自然回預設
+  let reportsState = {
+    period: 'thisMonth',
+    type: 'expense',
+    customStart: '',
+    customEnd: '',
+    activeTab: 'category',
+    dualPie: false,
+  };
   let reportBound = false;
   async function renderReports() {
     if (!reportBound) {
@@ -1914,20 +2031,32 @@ const App = (() => {
         tab.addEventListener('click', () => {
           document.querySelectorAll('.report-controls .tab').forEach(t => t.classList.remove('active'));
           tab.classList.add('active');
+          reportsState.activeTab = tab.dataset.report || 'category';
           drawReport();
         });
       });
       el('reportRange').addEventListener('change', () => {
-        const isCustom = el('reportRange').value === 'custom';
+        reportsState.period = el('reportRange').value;
+        const isCustom = reportsState.period === 'custom';
         el('reportCustomRange').style.display = isCustom ? '' : 'none';
         if (!isCustom) drawReport();
       });
-      el('reportFrom').addEventListener('change', drawReport);
-      el('reportTo').addEventListener('change', drawReport);
-      el('reportType').addEventListener('change', drawReport);
-      el('reportDualPie').addEventListener('change', drawReport);
+      el('reportFrom').addEventListener('change', () => { reportsState.customStart = el('reportFrom').value; drawReport(); });
+      el('reportTo').addEventListener('change', () => { reportsState.customEnd = el('reportTo').value; drawReport(); });
+      el('reportType').addEventListener('change', () => { reportsState.type = el('reportType').value; drawReport(); });
+      if (el('reportDualPie')) el('reportDualPie').addEventListener('change', () => { reportsState.dualPie = !!el('reportDualPie').checked; drawReport(); });
       reportBound = true;
     }
+    // 套用 Session state 到 UI 控件
+    if (el('reportRange')) el('reportRange').value = reportsState.period;
+    if (el('reportType')) el('reportType').value = reportsState.type;
+    if (el('reportFrom')) el('reportFrom').value = reportsState.customStart;
+    if (el('reportTo')) el('reportTo').value = reportsState.customEnd;
+    if (el('reportDualPie')) el('reportDualPie').checked = !!reportsState.dualPie;
+    if (el('reportCustomRange')) el('reportCustomRange').style.display = reportsState.period === 'custom' ? '' : 'none';
+    document.querySelectorAll('.report-controls .tab').forEach(t => {
+      t.classList.toggle('active', t.dataset.report === reportsState.activeTab);
+    });
     await drawReport();
   }
 
@@ -1975,7 +2104,25 @@ const App = (() => {
     const { from, to } = getReportDateRange();
     updateReportDualPieVisibility(activeTab);
 
-    const reportData = await API.get(`/api/reports?type=${type}&from=${from}&to=${to}`);
+    // 005 T045 / FR-010: 起始日 > 結束日 → 拒絕，不發 request
+    if (from && to && from > to) {
+      const canvas = el('reportChart');
+      if (canvas) {
+        if (charts.report) { charts.report.destroy(); charts.report = null; }
+        renderEmptyState(canvas, '起始日不可晚於結束日');
+      }
+      const summaryEl = el('reportSummary');
+      if (summaryEl) summaryEl.innerHTML = '<div style="color:#dc2626;padding:12px;text-align:center">起始日不可晚於結束日</div>';
+      return;
+    }
+
+    let reportData;
+    try {
+      reportData = await API.get(`/api/reports?type=${type}&from=${from}&to=${to}`);
+    } catch (e) {
+      console.error('drawReport failed:', e);
+      return;
+    }
 
     if (charts.report) charts.report.destroy();
     const ctx = el('reportChart').getContext('2d');
@@ -2091,6 +2238,10 @@ const App = (() => {
     const colors = parentRows.map(r => parentColorMap.get(r.parentKey) || '#94a3b8');
     const total = values.reduce((s, v) => s + v, 0);
 
+    // 005 T048: 點擊圓餅扇區跳轉至預先篩選的交易列表（FR-015a）
+    const meta = parentRows.map(r => ({ parentId: r.parentId, parentName: r.parentName }));
+    const range = getReportDateRange();
+    const rType = el('reportType')?.value || 'expense';
     charts.report = new Chart(ctx, {
       type: 'doughnut',
       data: { labels, datasets: [{ data: values, backgroundColor: colors, borderWidth: 2, borderColor: '#ffffff' }] },
@@ -2129,6 +2280,17 @@ const App = (() => {
               },
             },
           },
+        },
+        onClick: (evt, items) => {
+          if (!items.length) return;
+          const seg = meta[items[0].index];
+          if (!seg) return;
+          navigateToTransactions({
+            categoryId: seg.parentId,
+            type: rType,
+            from: range.from,
+            to: range.to,
+          });
         },
       },
     });
@@ -5481,6 +5643,116 @@ const App = (() => {
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
   }
 
+  // 005 T076/T077: 多筆排程列表（FR-016 / Round 2 Q2）
+  let adminSchedulesBound = false;
+  async function renderAdminReportSchedules() {
+    const container = el('adminReportSchedulesList');
+    if (!container) return;
+    container.innerHTML = '<p class="empty-hint">載入中…</p>';
+    try {
+      const [schedules, users] = await Promise.all([
+        API.get('/api/admin/report-schedules'),
+        API.get('/api/admin/users'),
+      ]);
+      const userMap = {};
+      users.forEach(u => { userMap[u.id] = u; });
+      if (!Array.isArray(schedules) || schedules.length === 0) {
+        container.innerHTML = '<p class="empty-hint">尚無排程，點擊「新增排程」開始</p>';
+        return;
+      }
+      const grouped = {};
+      schedules.forEach(s => {
+        if (!grouped[s.userId]) grouped[s.userId] = [];
+        grouped[s.userId].push(s);
+      });
+      let html = '';
+      Object.keys(grouped).forEach(uid_ => {
+        const u = userMap[uid_] || { displayName: '（使用者已刪除）', email: uid_ };
+        html += `<div class="schedule-user-group" style="margin-bottom:14px;border:1px solid var(--border-color,#e5e7eb);border-radius:8px;overflow:hidden">
+          <div style="padding:8px 12px;background:#f8fafc;font-weight:600">
+            ${escHtml(u.displayName || u.email)} <span style="color:#64748b;font-weight:400;font-size:12px">${escHtml(u.email || '')}</span>
+          </div>
+          <div>`;
+        grouped[uid_].forEach(s => {
+          const freqText = s.freq === 'daily' ? '每日' : s.freq === 'weekly' ? '每週' : '每月';
+          const timeDetail = s.freq === 'weekly' ? `週${'日一二三四五六'[s.weekday] || s.weekday} ${String(s.hour).padStart(2, '0')}:00`
+            : s.freq === 'monthly' ? `每月 ${s.dayOfMonth} 日 ${String(s.hour).padStart(2, '0')}:00`
+            : `每日 ${String(s.hour).padStart(2, '0')}:00`;
+          html += `<div class="schedule-card" style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-top:1px solid var(--border-color,#e5e7eb);gap:8px;flex-wrap:wrap">
+            <div style="flex:1;min-width:200px">
+              <div><strong>${freqText}</strong> · ${escHtml(timeDetail)} · <span style="color:${s.enabled ? '#16a34a' : '#94a3b8'}">${s.enabled ? '啟用' : '停用'}</span></div>
+              ${s.lastSummary ? `<div style="color:#64748b;font-size:12px;margin-top:4px">${escHtml(s.lastSummary)}</div>` : ''}
+            </div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <button type="button" class="btn btn-outline btn-sm" data-action="toggle" data-id="${s.id}">${s.enabled ? '停用' : '啟用'}</button>
+              <button type="button" class="btn btn-outline btn-sm" data-action="run" data-id="${s.id}"><i class="fas fa-bolt"></i> 立即寄送</button>
+              <button type="button" class="btn btn-outline btn-sm" data-action="delete" data-id="${s.id}" style="color:#dc2626"><i class="fas fa-trash"></i></button>
+            </div>
+          </div>`;
+        });
+        html += `</div></div>`;
+      });
+      container.innerHTML = html;
+      // 綁定按鈕事件
+      container.querySelectorAll('button[data-action]').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const id = btn.dataset.id;
+          const action = btn.dataset.action;
+          const statusEl = el('adminSchedulesStatus');
+          try {
+            if (action === 'toggle') {
+              const sch = schedules.find(s => s.id === id);
+              await API.put(`/api/admin/report-schedules/${id}`, { enabled: !sch.enabled });
+              if (statusEl) statusEl.textContent = '已切換啟用狀態';
+              await renderAdminReportSchedules();
+            } else if (action === 'run') {
+              if (statusEl) statusEl.textContent = '寄送中…';
+              const r = await API.post(`/api/admin/report-schedules/${id}/run-now`, {});
+              if (statusEl) statusEl.textContent = `寄送結果：寄送 ${r.sent || 0} / 失敗 ${r.failed || 0} / 略過 ${r.skipped || 0}${r.provider ? ' (' + r.provider + ')' : ''}`;
+              await renderAdminReportSchedules();
+            } else if (action === 'delete') {
+              if (!confirm('確認刪除此排程？')) return;
+              await API.del(`/api/admin/report-schedules/${id}`);
+              if (statusEl) statusEl.textContent = '已刪除';
+              await renderAdminReportSchedules();
+            }
+          } catch (e) {
+            if (statusEl) statusEl.textContent = '操作失敗：' + (e.message || '未知錯誤');
+            toast(e.message || '操作失敗', 'error');
+          }
+        });
+      });
+    } catch (e) {
+      container.innerHTML = `<p class="empty-hint" style="color:#dc2626">載入失敗：${escHtml(e.message || '未知錯誤')}</p>`;
+    }
+  }
+
+  function bindAdminScheduleListButtons() {
+    if (adminSchedulesBound) return;
+    const addBtn = el('adminAddScheduleBtn');
+    const refreshBtn = el('adminRefreshSchedulesBtn');
+    if (addBtn) addBtn.addEventListener('click', async () => {
+      const users = await API.get('/api/admin/users').catch(() => []);
+      if (!users.length) { toast('無可選使用者', 'error'); return; }
+      const uList = users.map((u, i) => `${i + 1}. ${u.email}`).join('\n');
+      const idx = parseInt(prompt(`選擇使用者編號:\n${uList}`, '1'), 10);
+      if (!Number.isFinite(idx) || idx < 1 || idx > users.length) return;
+      const user = users[idx - 1];
+      const freq = prompt('頻率（daily/weekly/monthly）', 'daily');
+      if (!['daily', 'weekly', 'monthly'].includes(freq)) { toast('頻率無效', 'error'); return; }
+      const hour = parseInt(prompt('小時（0-23）', '9'), 10);
+      const weekday = freq === 'weekly' ? parseInt(prompt('週幾（0=日, 1=一, ..., 6=六）', '1'), 10) : 1;
+      const dayOfMonth = freq === 'monthly' ? parseInt(prompt('每月日期（1-28）', '1'), 10) : 1;
+      try {
+        await API.post('/api/admin/report-schedules', { userId: user.id, freq, hour, weekday, dayOfMonth, enabled: true });
+        toast('已新增排程', 'success');
+        await renderAdminReportSchedules();
+      } catch (e) { toast(e.message || '新增失敗', 'error'); }
+    });
+    if (refreshBtn) refreshBtn.addEventListener('click', () => renderAdminReportSchedules());
+    adminSchedulesBound = true;
+  }
+
   async function loadAdminServerTime() {
     try {
       const info = await API.get('/api/admin/server-time');
@@ -5545,6 +5817,9 @@ const App = (() => {
       renderAdminUserTable(users);
       renderAdminScheduleForm(schedule);
       renderAdminScheduleUserTable(users, schedule?.userIds);
+      // 005 T076: 多筆排程列表 + 按鈕綁定
+      bindAdminScheduleListButtons();
+      await renderAdminReportSchedules();
       await syncAdminLoginLogs({ silent: true });
     } catch (e) {
       toast(e.message || '載入管理員設定失敗', 'error');

@@ -55,7 +55,7 @@ description: "股票投資（006-stock-investments）任務分解"
 - [ ] T015 [P] 在 [server.js](../../server.js) 既有股票 helper 區塊（約 [server.js:7700-7800](../../server.js#L7700)）新增 `getSharesAtDate(userId, stockId, date)` 函式：`SELECT COALESCE(SUM(CASE WHEN type='buy' THEN shares ELSE -shares END), 0) AS shares FROM stock_transactions WHERE user_id = ? AND stock_id = ? AND date <= ?`，回傳整數。對應 FR-013、Pass 3 Q2、[research.md §4](./research.md)。
 - [ ] T016 [P] 在 [server.js](../../server.js) `getSharesAtDate` 附近新增 `validateChainConstraint(userId, stockId, txDate, txType, txShares, excludeTxId=null)` 函式：模擬「插入 / 修改」一筆交易後，掃 `≥ txDate` 的所有交易（排除 excludeTxId）並滾動計算每筆之後的累計持有；任一時點 < 0 則回傳 `{ ok: false, conflictDate, expectedShares }`，否則 `{ ok: true }`。對應 FR-013、Pass 3 Q2 + Pass 4 Q2。
 - [ ] T017 在 [server.js](../../server.js) audit 既有 `calcStockFee(amount, shares, settings)` 與 `calcStockTax(amount, stockType, settings)` 兩個 helper 是否符合 `max(⌊amount × rate⌋, minValue)` 規則（**先 floor 再 max**）；若實作為 `Math.max(Math.round(...), min)` 或反向順序則修正為 `Math.max(Math.floor(amount * rate), min)`。修正後新增單元測試文檔註釋（不引入測試框架，純註釋）：`// FR-011 Pass 2 Q5: max(floor(金額 × 0.1425%), 整股 20 / 零股 1)`。對應 FR-011、FR-012、Pass 2 Q5。
-- [ ] T018 在 [server.js](../../server.js) audit 既有 TWSE 查價 helper（如 `fetchTwseStockPrice`、`updateUserStockPrices` 等），確認所有 fetch 呼叫皆改為 `fetchWithRetry()`（T014）；若無歷史股價查詢 helper 則新增 `fetchTwseStockDay(symbol, date)`（呼叫 `https://www.twse.com.tw/exchangeReport/STOCK_DAY?date=YYYYMMDD&stockNo=X`，解析 response 取該日收盤價）。對應 [research.md §5 + §6](./research.md)、Pass 3 Q3、Pass 4 Q3。
+- [ ] T018 在 [server.js](../../server.js) audit 既有 TWSE 查價 helper（如 `fetchTwseStockPrice`、`updateUserStockPrices` 等），確認所有 fetch 呼叫皆改為 `fetchWithRetry()`（T014）；若無歷史股價查詢 helper 則新增 `fetchTwseStockDay(symbol, date)`（呼叫 `https://www.twse.com.tw/exchangeReport/STOCK_DAY?date=YYYYMMDD&stockNo=X`，解析 response 取該日收盤價）。**歷史代號改名同步**（G5、Edge Case「歷史代號改名」）：所有 TWSE 查價 helper 取得最新 name 時，若與 DB `stocks.name` 不同則 `UPDATE stocks SET name = ? WHERE id = ? AND name <> ?`；若 baseline 已有此邏輯則 audit 確認即可。對應 FR-005、FR-006、[research.md §5 + §6](./research.md)、Pass 3 Q3、Pass 4 Q3。
 
 ### 前端共用 helper
 
@@ -85,7 +85,7 @@ description: "股票投資（006-stock-investments）任務分解"
 
 ### 後端 — `/api/stocks` GET 重構（[server.js:7960-8024](../../server.js#L7960)）
 
-- [ ] T030 [US1] 在 [server.js](../../server.js) `/api/stocks` GET handler 改寫 FIFO 計算段（[server.js:7966-7991](../../server.js#L7966)）：將 `lots[i].price` / `lots[i].fee` / `remaining` / `sellRevenue` / `sellCost` / `realizedPL` 全部改為 `Decimal` 物件（沿用既有 `decimal.js` 依賴與 [lib/moneyDecimal.js](../../lib/moneyDecimal.js) pattern）；手續費分攤改為 `feeUsed = lot.fee.times(used).div(lot.shares)` 保留全精度；累計階段全程 Decimal 操作；**僅最後 response 階段** 透過 `.toNumber()` + `Math.round()` 轉為整數。對應 FR-030、SC-004、Pass 4 Q1、[research.md §2](./research.md)。
+- [ ] T030 [US1] 在 [server.js](../../server.js) `/api/stocks` GET handler 改寫 FIFO 計算段（[server.js:7966-7991](../../server.js#L7966)）：**抽出**為共用 helper `calcFifoLots(transactions)` 至 [lib/moneyDecimal.js](../../lib/moneyDecimal.js)（與 plan.md L217 一致），匯出 `{ lots, totalShares, totalCost, realizedPL, sellEntries }` 結構；內部將 `lots[i].price` / `lots[i].fee` / `remaining` / `sellRevenue` / `sellCost` / `realizedPL` 全部改為 `Decimal` 物件；手續費分攤改為 `feeUsed = lot.fee.times(used).div(lot.shares)` 保留全精度；累計階段全程 Decimal 操作；**僅最後 response 階段**（GET handler 內）透過 `.toNumber()` + `Math.round()` 轉為整數。/api/stocks GET 與 T090 `/api/stock-realized-pl` 共用 `calcFifoLots()`。對應 FR-030、SC-004、Pass 4 Q1、[research.md §2](./research.md)、plan.md L217。
 - [ ] T031 [US1] 在 [server.js](../../server.js) `/api/stocks` GET handler T030 後續：response 從 `res.json(result)` 改為 `res.json({ stocks: result, portfolioSummary: {...} })`；`portfolioSummary` 計算如下：
   ```js
   const totalMarketValue = result.reduce((s, x) => s + (x.marketValue || 0), 0);
@@ -121,8 +121,9 @@ description: "股票投資（006-stock-investments）任務分解"
 - [ ] T040 [US2] 在 [server.js](../../server.js) `/api/stock-transactions` POST handler 新增賣出鏈式約束驗證：當 `req.body.type === 'sell'` 時，先呼叫 `getSharesAtDate(userId, stockId, txDate)`（T015），若 < `req.body.shares` 則 `return res.status(400).json({ error: '賣出股數不可超過 ' + txDate + ' 當下持有 (' + currentShares + ' 股)' })`；通過後呼叫 `validateChainConstraint(userId, stockId, txDate, 'sell', txShares)`（T016），若 `!ok` 則 `return res.status(400).json({ error: '此交易會造成 ' + conflictDate + ' 持有量為負 (預期 ' + expectedShares + ' 股)' })`。對應 FR-013、Pass 3 Q2。
 - [ ] T041 [US2] 在 [server.js](../../server.js) `/api/stock-transactions` PUT handler（[server.js:8284-8290](../../server.js#L8284)）改寫為「atomic delete + insert」模擬：包 SQL transaction（`db.run('BEGIN')`）→ 讀舊紀錄 → 呼叫 `validateChainConstraint(userId, stockId, newDate, newType, newShares, excludeTxId=req.params.id)`（T016 接受 excludeTxId）→ 若 reject 則 `db.run('ROLLBACK')` + 回 400；通過則 UPDATE + `db.run('COMMIT')`。對應 FR-037、Pass 4 Q2、[research.md §10](./research.md)。
 - [ ] T042 [US2] 在 [server.js](../../server.js) `/api/stocks` POST handler（[server.js:8026-8038](../../server.js#L8026)）補：若 `req.body.stockType` 未指定（`undefined` 或非 ['stock', 'etf', 'warrant']），呼叫 `inferStockType(symbol)`（[lib/twseFetch.js](../../lib/twseFetch.js) T014）作為預設值；response 補回傳 `{ id, stockType }` 兩欄。對應 FR-001、Pass 3 Q1。
-- [ ] T043 [US2] 在 [server.js](../../server.js) FR-014 自動新增股票路徑（[server.js:8168 + 8210](../../server.js#L8168)）— 即 stock-transactions / stock-dividends POST 時若 stockId 不存在時自動 INSERT stocks — 補：INSERT 時 `inferStockType(symbol)` 作為 stock_type 欄位值（替換目前硬編 'stock'）。對應 FR-014、Pass 3 Q1。
-- [ ] T044 [US2] 在 [server.js](../../server.js) 既有 `/api/stocks/quote` 或同等 TWSE 查價代理端點補：呼叫前以 `^[0-9A-Za-z]{1,8}$` 正則驗證 `req.query.symbol`（後端二次驗證，FR-008 要求前後端皆驗）；不通過回 `400 { error: '股票代號格式不正確' }`。若該端點不存在則新增 `app.get('/api/stocks/quote', ...)` 包裝既有 `fetchTwseStockPrice`（透過 T018 保證走 `fetchWithRetry`）。對應 FR-008、Pass 3 Q4。
+- [ ] T042a [US2] 在 [server.js](../../server.js) `/api/stocks/:id` PUT handler（若 baseline 不存在則新增）：允許使用者修改 `stockType`（'stock' / 'etf' / 'warrant'）；UPDATE 後 FR-001 末段要求「觸發該檔所有未實現 / 已實現損益重算」— 實作策略：(a) 未實現損益由 FR-002 動態計算保證即時反映（下次 GET /api/stocks 重算 FIFO，自然反映新類型影響的成本基礎）；(b) **歷史 sell 交易的證交稅** — 若該檔有未經手動覆寫的歷史 sell 交易（即 tax 為自動計算值），系統 MUST 依新 stockType 對應稅率重算並 UPDATE stock_transactions.tax；如何辨識「手動覆寫 vs 自動計算」：建議以一個 `tax_auto_calculated` boolean 欄位（若 baseline 無則本 PR 補；DEFAULT 1）標示，僅 `tax_auto_calculated = 1` 的歷史 tax 會被重算。對應 FR-001 末段、FR-002、G3。
+- [ ] T043 [US2] 在 [server.js](../../server.js) FR-014 自動新增股票路徑（[server.js:8168 + 8210](../../server.js#L8168)）— 即 stock-transactions / stock-dividends POST 時若 stockId 不存在時自動 INSERT stocks — 補：(a) INSERT 時 `inferStockType(symbol)` 作為 stock_type 欄位值（替換目前硬編 'stock'）；(b) **fallback 行為**（FR-014 + G4）：嘗試呼叫 TWSE 查價取 name 與 current_price，**查詢失敗時** `name = '（未命名）'`、`current_price = 0`，仍完成 INSERT 不阻擋使用者繼續記錄交易；查詢失敗 type 區分由 T044 後端依 5xx vs 200-empty 分流（FR-007 + A1 修正後語意）。對應 FR-001、FR-014、Pass 3 Q1。
+- [ ] T044 [US2] 在 [server.js](../../server.js) 既有 `/api/stocks/quote` 或同等 TWSE 查價代理端點補：(a) 呼叫前以 `^[0-9A-Za-z]{1,8}$` 正則驗證 `req.query.symbol`（後端二次驗證，FR-008 要求前後端皆驗）；不通過回 `400 { error: '股票代號格式不正確' }`；(b) **失敗類型分流**（FR-007 修正後 + A1）：若 TWSE 回應 5xx / network error / timeout → response `{ status: 'service_unavailable', error: '股價服務暫時無法回應' }`（前端顯示黃色 ⚠）；若 TWSE 回應 200 但無此代號資料 → response `{ status: 'not_found', error: '找不到此股票代號' }`（前端顯示紅色 ✗）；查詢成功 → `{ status: 'ok', name, currentPrice, priceSource }`。若該端點不存在則新增 `app.get('/api/stocks/quote', ...)` 包裝既有 `fetchTwseStockPrice`（透過 T018 保證走 `fetchWithRetry`）。對應 FR-007、FR-008、Pass 3 Q4。
 
 ### 前端 — 股票交易 Modal（[app.js](../../app.js) 既有 Modal 區塊）
 
@@ -132,11 +133,17 @@ description: "股票投資（006-stock-investments）任務分解"
 - [ ] T053 [US2] 在 [app.js](../../app.js) 股票交易 Modal 買賣切換按鈕：`onclick` 切換時即時變化按鈕配色（買入綠 / 賣出紅，CSS class toggle `.btn-buy` / `.btn-sell`）+ 同時觸發 T052 費用摘要重算（賣出多顯示證交稅、總額顯示「淨收入」label）。對應 FR-009、Acceptance Scenario US2.6。
 - [ ] T054 [US2] 在 [app.js](../../app.js) 股票交易 Modal 送出 handler：捕捉後端 400 錯誤訊息（鏈式約束、整數檢查、必填等）並顯示於 Modal 底部紅色提示區；不關閉 Modal、保留輸入值供使用者修正。對應 FR-013、Pass 3 Q2。
 
+### 交易紀錄列表（FR-017 + FR-018）
+
+- [ ] T056 [US2] 在 [server.js](../../server.js) 既有 `/api/stock-transactions` GET handler audit + 補：(a) 接受 query params `page`（預設 1）/ `pageSize`（預設 20，限 [1, 100]）/ `search`（依 stock symbol 或 name LIKE 模糊搜尋）；(b) response 包成 `{ data: [...], total, page, totalPages }`（伺服器端分頁，FR-017）。若 baseline 已支援則僅 audit 確認 schema 一致；若未支援則補實作。對應 FR-017。
+- [ ] T057 [US2] 在 [server.js](../../server.js) 新增 `app.post('/api/stock-transactions/batch-delete', ...)` 端點：接受 `{ ids: [...] }`；逐筆 DELETE FROM stock_transactions WHERE id IN (?, ?, ...) AND user_id = ?；response `{ deleted: N }`；若任一筆 ID 為股票股利合成交易（note LIKE '%股票股利配發%'）則拒絕（建議透過股利刪除連動處理）。對應 FR-017、FR-018、[contracts/stock-investments.openapi.yaml `/api/stock-transactions/batch-delete`](./contracts/stock-investments.openapi.yaml)。
+- [ ] T058 [US2] 在 [app.js](../../app.js) 既有交易紀錄頁渲染函式補：(a) 下拉式搜尋欄（依 stock symbol 或 name 過濾）+ debounce 300ms 觸發 GET；(b) checkbox 多選 + 「批次刪除」按鈕（無選取時 disabled）；(c) 每頁筆數選單（10 / 20 / 50 / 100 / 自訂）+ 分頁按鈕；(d) 點「批次刪除」開啟**二次確認 Modal**（標題「確認刪除」、內容「將刪除選取的 N 筆交易，此操作無法復原」、按鈕「取消 / 確認刪除」），確認後呼叫 `/api/stock-transactions/batch-delete` + 重整列表。對應 FR-017、FR-018。
+
 ### 樣式（[style.css](../../style.css)）
 
-- [ ] T055 [P] [US2] 在 [style.css](../../style.css) 新增交易 Modal 樣式：`.btn-buy`（綠色背景）/ `.btn-sell`（紅色背景）+ 切換時 200ms 過渡；`.fee-summary`（費用摘要區塊 grid 排版）；`.fee-summary__error`（紅色錯誤訊息區塊）。
+- [ ] T055 [P] [US2] 在 [style.css](../../style.css) 新增交易 Modal 樣式：`.btn-buy`（綠色背景）/ `.btn-sell`（紅色背景）+ 切換時 200ms 過渡；`.fee-summary`（費用摘要區塊 grid 排版）；`.fee-summary__error`（紅色錯誤訊息區塊）；`.confirm-dialog`（二次確認對話框 backdrop + center card 樣式，與 `.modal-blocking` 共用一個 z-index 規則但較淺色 backdrop）；`.list-toolbar`（搜尋欄 + 分頁控制 + 批次操作 flex 排版）。
 
-**Checkpoint**: 使用者新增交易 → 代號自動查價 + 自動判定 stockType + 即時費用試算 + 買賣切換顏色 + 賣出鏈式約束 reject 全套用；US2 已可獨立交付。
+**Checkpoint**: 使用者新增交易 → 代號自動查價 + 自動判定 stockType + 即時費用試算 + 買賣切換顏色 + 賣出鏈式約束 reject + 列表頁搜尋 / 多選 / 分頁 / 批次刪除二次確認 全套用；US2 已可獨立交付。
 
 ---
 
@@ -155,7 +162,7 @@ description: "股票投資（006-stock-investments）任務分解"
 
 - [ ] T062 [US3] 在 [server.js](../../server.js) 既有同步除權息邏輯（[server.js:7720-7780](../../server.js#L7720)）抽出為共用 helper `syncDividendsForYear(userId, year)`：returns `{ year, added, skipped, failed, details: [...] }`；內部沿用 baseline TWT49U + TWT49UDetail 邏輯；`fetch` 改用 `fetchWithRetry`（T014）。對應 FR-025、FR-026、FR-027、[research.md §7](./research.md)。
 - [ ] T063 [US3] 在 [server.js](../../server.js) 新增 `app.post('/api/stock-dividends/sync', (req, res) => { ... })` 端點：query `?year=YYYY`（驗證 2010 ≤ year ≤ 2099）→ 呼叫 `syncDividendsForYear(req.userId, year)` → response 包 `{ year, added, skipped, failed, details }`。同步寫入 stock_dividends 時亦遵 T060 規則寫合成交易（若有股票股利）。對應 [contracts/stock-investments.openapi.yaml `/api/stock-dividends/sync`](./contracts/stock-investments.openapi.yaml)、Pass 2 Q1。
-- [ ] T064 [US3] 在 [server.js](../../server.js) 既有單一同步端點（如 `POST /api/stock-dividends/sync-all`，若有）保留為手動觸發 alias：內部呼叫多年份的 `syncDividendsForYear` 並合併彙總；亦可保留為向後兼容入口。
+- [ ] T064 [US3] 確認手動觸發入口統一改為「前端逐年呼叫 `/api/stock-dividends/sync?year=YYYY`」（透過 T072 阻擋式 Modal 達成）；若 baseline 存在 `/api/stock-dividends/sync-all` 端點則保留向後兼容（內部 loop 呼叫 `syncDividendsForYear`），但**不**將其加入 OpenAPI 契約（避免新增非必要端點）。本 task 的驗收為：grep server.js 後確認 `/api/stock-dividends/sync` 為唯一新增的同步入口。對應 FR-027、Pass 2 Q1。
 
 ### 前端 — 股利 Modal（[app.js](../../app.js)）
 
@@ -164,14 +171,20 @@ description: "股票投資（006-stock-investments）任務分解"
 
 ### 前端 — 同步除權息阻擋式 Modal
 
-- [ ] T072 [US3] 在 [app.js](../../app.js) 新增 `runSyncDividendsModal()` 函式：(a) 計算年份範圍 — 查使用者最早交易日（從現有 stock_transactions data 或新增 `/api/stocks/earliest-date` 端點），若無則用今年；(b) 渲染阻擋式 Modal HTML：`<div class="modal-blocking"><div class="modal-blocking__content"><h3>同步除權息</h3><div class="progress-bar"><div class="progress-bar__fill" style="width: 0%"></div></div><div id="syncStage">準備中...</div><button id="syncCancel">取消</button></div></div>`；(c) `let aborted = false; document.getElementById('syncCancel').onclick = () => { aborted = true; };`；(d) `for (const year of years) { if (aborted) break; updateStage('正在同步 ' + year + ' 年...'); const result = await fetch('/api/stock-dividends/sync?year=' + year).then(r => r.json()); accumulate(result); updateProgress((++done / years.length) × 100); }`；(e) 完成或 abort 後關閉 Modal + toast 顯示彙總（新增 N / 跳過 M / 失敗 K）。對應 FR-027、Pass 2 Q1、[research.md §7](./research.md)。
+- [ ] T072 [US3] 在 [app.js](../../app.js) 新增 `runSyncDividendsModal()` 函式：(a) 計算年份範圍 — **客戶端推算**：從前端已快取的 stock_transactions 資料 `Math.min(...txs.map(t => new Date(t.date).getFullYear()))` 取得最早年份；若無交易則用今年（**不**新增 `/api/stocks/earliest-date` 端點以避免額外契約面）；(b) 渲染阻擋式 Modal HTML：`<div class="modal-blocking"><div class="modal-blocking__content"><h3>同步除權息</h3><div class="progress-bar"><div class="progress-bar__fill" style="width: 0%"></div></div><div id="syncStage">準備中...</div><button id="syncCancel">取消</button></div></div>`；(c) `let aborted = false; document.getElementById('syncCancel').onclick = () => { aborted = true; };`；(d) `for (const year of years) { if (aborted) break; updateStage('正在同步 ' + year + ' 年...'); const result = await fetch('/api/stock-dividends/sync?year=' + year).then(r => r.json()); accumulate(result); updateProgress((++done / years.length) × 100); }`；(e) 完成或 abort 後關閉 Modal + toast 顯示彙總（新增 N / 跳過 M / 失敗 K）。對應 FR-027、Pass 2 Q1、[research.md §7](./research.md)。
 - [ ] T073 [US3] 在 [app.js](../../app.js) 股利紀錄頁的「同步除權息」按鈕 onclick 改為呼叫 `runSyncDividendsModal()`（T072）；取代既有單次 fetch 行為。
+
+### 股利紀錄列表（FR-017 + FR-018）
+
+- [ ] T075 [US3] 在 [server.js](../../server.js) 既有 `/api/stock-dividends` GET handler audit + 補：(a) 接受 query params `page` / `pageSize` / `search`（依 stock symbol 或 name 模糊搜尋）；(b) response 改為 `{ data, total, page, totalPages }`（伺服器端分頁，FR-017）。若 baseline 已支援則僅 audit 確認 schema 一致。對應 FR-017。
+- [ ] T076 [US3] 在 [server.js](../../server.js) 新增 `app.post('/api/stock-dividends/batch-delete', ...)` 端點：接受 `{ ids: [...] }`；對每筆 ID 套用 T061 的連動處理邏輯（刪除合成 $0 交易 + 退回現金股利帳戶餘額）；response `{ deleted: N }`。對應 FR-017、FR-018、[contracts/stock-investments.openapi.yaml `/api/stock-dividends/batch-delete`](./contracts/stock-investments.openapi.yaml)。
+- [ ] T077 [US3] 在 [app.js](../../app.js) 既有股利紀錄頁渲染函式補：(a) 下拉式搜尋欄 + debounce 300ms；(b) checkbox 多選 + 「批次刪除」按鈕；(c) 每頁筆數選單 + 分頁按鈕；(d) 點「批次刪除」開啟二次確認 Modal（內容「將刪除選取的 N 筆股利紀錄，連動刪除合成股票股利交易與退回現金股利帳戶餘額，此操作無法復原」），確認後呼叫 `/api/stock-dividends/batch-delete` + 重整列表。對應 FR-017、FR-018。
 
 ### 樣式
 
 - [ ] T074 [P] [US3] 在 [style.css](../../style.css) 補同步 Modal 子元素樣式：`.modal-blocking__content`（白底卡片、padding 24px、圓角）、`.modal-blocking__content h3`（標題字號）、`.modal-blocking__content #syncStage`（當前階段文字）、`.modal-blocking__content #syncCancel`（取消按鈕邊框樣式）。
 
-**Checkpoint**: 使用者新增股利 / 同步除權息 / 刪除股利 全套用 spec 行為（純股票股利不寫帳戶 / 阻擋式 Modal + 取消 / 連動刪除）；US3 已可獨立交付。
+**Checkpoint**: 使用者新增股利 / 同步除權息 / 刪除股利 / 列表搜尋 + 多選 + 分頁 + 批次刪除二次確認 全套用 spec 行為；US3 已可獨立交付。
 
 ---
 
@@ -234,7 +247,7 @@ description: "股票投資（006-stock-investments）任務分解"
 ### 前端 — 批次更新 Modal
 
 - [ ] T110 [US6] 在 [app.js](../../app.js) 既有 `renderBatchPriceModal()` 或同等批次更新 Modal 渲染函式：每列加 `<input type="checkbox" class="delisted-toggle">` 預填 `s.delisted ? 'checked' : ''`；onclick 時即時 toggle 該列「標為已下市」狀態；送出時 body 包 `{ updates: [{ stockId, currentPrice, delisted }] }`。對應 FR-035a、Pass 1 Q2。
-- [ ] T111 [US6] 在 [app.js](../../app.js) 批次更新 Modal「從證交所取得最新股價」按鈕：點下後 fetch `/api/stocks/batch-fetch`（若無此端點則新增為 `app.post('/api/stocks/batch-fetch', ...)` 沿用 T101 邏輯）；response 為每檔最新股價 + 來源（即時 / 收盤 / T+1）+ 取得時間；前端逐列回填輸入框並右側顯示來源 + 時間；查詢失敗的個別股票顯示「查詢失敗」並保留原值。對應 FR-034、Pass 4 Q3。
+- [ ] T111 [US6] 在 [server.js](../../server.js) 新增 `app.post('/api/stocks/batch-fetch', ...)` 端點：對使用者所有 `delisted = 0` 的持股呼叫 `fetchAllWithLimit`（T014）並發查 TWSE 最新股價；response `{ results: [{ stockId, symbol, status, currentPrice, priceSource, fetchedAt, error }] }`；本端點為 **read-only** 不寫入 DB（寫入由前端確認後透過 `/api/stocks/batch-price` 完成）。然後在 [app.js](../../app.js) 批次更新 Modal「從證交所取得最新股價」按鈕：點下後 fetch `/api/stocks/batch-fetch`，前端逐列回填輸入框並右側顯示來源 + 時間；status='failed' 的個別股票顯示「查詢失敗」並保留原值。對應 FR-034、Pass 4 Q3、[contracts/stock-investments.openapi.yaml `/api/stocks/batch-fetch`](./contracts/stock-investments.openapi.yaml)。
 - [ ] T112 [US6] 在 [app.js](../../app.js) 批次更新 Modal「確認」按鈕：以使用者輸入值（手動覆寫優先）為準包 `{ updates: [...] }` POST 至 `/api/stocks/batch-price`；成功後 close Modal + 重新整理股票頁所有市值 / 損益 / 報酬率。對應 FR-035、Acceptance Scenario US6.3。
 
 ### 樣式
@@ -361,10 +374,10 @@ Dev C: Phase 5 (US3) — T060 ~ T074
 | Phase 1: Setup | 4 | 環境就緒（T001 ~ T004） |
 | Phase 2: Foundational | 14 | Schema + 共用 helper + CSS（T010 ~ T023） |
 | Phase 3: US1（P1） | 7 | 投資組合總覽 + 個股卡片（T030 ~ T036） |
-| Phase 4: US2（P1） | 11 | 交易 Modal + 鏈式約束（T040 ~ T055） |
-| Phase 5: US3（P1） | 10 | 股利 + 同步除權息（T060 ~ T074） |
+| Phase 4: US2（P1） | 15 | 交易 Modal + 鏈式約束 + 列表頁（T040 ~ T058，含 T042a） |
+| Phase 5: US3（P1） | 13 | 股利 + 同步除權息 + 列表頁（T060 ~ T077） |
 | Phase 6: US4（P2） | 5 | 排程登入觸發 + idempotency（T080 ~ T084） |
 | Phase 7: US5（P2） | 5 | 實現損益 Tab（T090 ~ T094） |
 | Phase 8: US6（P3） | 6 | 批次更新 Modal（T100 ~ T120） |
 | Phase 9: Polish | 6 | 文件 + 契約 + 驗證（T130 ~ T135） |
-| **Total** | **68** | **39 FR / 19 Clarification 全覆蓋** |
+| **Total** | **75** | **39 FR / 19 Clarification 全覆蓋（含 FR-017 列表頁、FR-018 二次確認、FR-001 末段類型修改）** |

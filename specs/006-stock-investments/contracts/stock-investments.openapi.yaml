@@ -211,10 +211,14 @@ paths:
           application/json:
             schema:
               type: object
-              required: [symbol, name]
+              required: [symbol]
               properties:
                 symbol: { type: string, pattern: "^[0-9A-Za-z]{1,8}$", example: "0050" }
-                name: { type: string, example: "元大台灣 50" }
+                name:
+                  type: string
+                  description: |
+                    省略時伺服器以 TWSE 查詢結果自動填入；查詢失敗時以「（未命名）」為 placeholder（FR-014 + Pass 3 Q4）。
+                  example: "元大台灣 50"
                 stockType: { $ref: '#/components/schemas/StockType' }
       responses:
         "200":
@@ -228,6 +232,53 @@ paths:
                   id: { type: string }
                   stockType: { $ref: '#/components/schemas/StockType' }
         "400": { $ref: '#/components/responses/BadRequest' }
+        "401": { $ref: '#/components/responses/Unauthorized' }
+
+  /api/stocks/batch-fetch:
+    post:
+      summary: 批次從 TWSE 查詢所有持股的最新股價（read-only，不寫入 DB）
+      description: |
+        新增（FR-034 + Pass 4 Q3）：批次更新股價 Modal 的「從證交所取得最新股價」按鈕呼叫此端點；
+        並發查詢使用者所有 `delisted = 0` 的持股，受 env var `TWSE_MAX_CONCURRENCY`（預設 5）限制 +
+        失敗指數退避重試 2 次。本端點為 **read-only**，不寫入 `stocks.current_price`；前端取得回傳值
+        後讓使用者於 Modal 內預覽 / 手動覆寫，最終透過 `/api/stocks/batch-price` 寫入。
+      tags: [Stocks]
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [results]
+                properties:
+                  results:
+                    type: array
+                    items:
+                      type: object
+                      required: [stockId, symbol, status]
+                      properties:
+                        stockId: { type: string }
+                        symbol: { type: string }
+                        status: { type: string, enum: [ok, failed] }
+                        currentPrice:
+                          type: number
+                          nullable: true
+                          description: "查詢成功時的最新股價；失敗時為 null"
+                        priceSource:
+                          $ref: '#/components/schemas/PriceSource'
+                          nullable: true
+                        fetchedAt:
+                          type: string
+                          format: date-time
+                          nullable: true
+                          description: "成功取得時間（ISO 8601）"
+                        error:
+                          type: string
+                          nullable: true
+                          description: "失敗原因（status = failed 時填入）"
         "401": { $ref: '#/components/responses/Unauthorized' }
 
   /api/stocks/batch-price:
@@ -325,6 +376,40 @@ paths:
               schema: { $ref: '#/components/schemas/Error' }
         "401": { $ref: '#/components/responses/Unauthorized' }
 
+  /api/stock-transactions/batch-delete:
+    post:
+      summary: 批次刪除多筆股票交易（FR-017 + FR-018）
+      description: |
+        新增：交易紀錄頁 checkbox 多選後送出本端點；前端 MUST 已通過二次確認對話框
+        （FR-018）才呼叫此端點。刪除後 FIFO 佇列依 FR-018 全量重算（衍生數值動態反映）。
+      tags: [StockTransactions]
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ids]
+              properties:
+                ids:
+                  type: array
+                  minItems: 1
+                  items: { type: string }
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [deleted]
+                properties:
+                  deleted: { type: integer, description: "實際刪除筆數" }
+        "400": { $ref: '#/components/responses/BadRequest' }
+        "401": { $ref: '#/components/responses/Unauthorized' }
+
   /api/stock-transactions/{id}:
     put:
       summary: 修改一筆股票交易（atomic delete + insert）
@@ -372,6 +457,70 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Error' }
+
+    delete:
+      summary: 刪除單一筆股票交易
+      description: |
+        刪除後 FIFO 佇列依 FR-018 全量重算；若該交易為股票股利合成 $0 交易則應透過
+        `/api/stock-dividends/{id}` 刪除股利紀錄連動處理（見 FR-018 連動規則），不應直接呼叫此端點。
+      tags: [StockTransactions]
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [ok]
+                properties:
+                  ok: { type: boolean }
+        "401": { $ref: '#/components/responses/Unauthorized' }
+        "404":
+          description: 交易不存在
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /api/stock-dividends/batch-delete:
+    post:
+      summary: 批次刪除多筆股利紀錄（FR-017 + FR-018）
+      description: |
+        新增：股利紀錄頁 checkbox 多選後送出本端點；前端 MUST 已通過二次確認對話框
+        （FR-018）才呼叫此端點。每筆刪除依 FR-018 連動處理（合成 $0 交易 + 退回現金股利帳戶餘額）。
+      tags: [StockDividends]
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ids]
+              properties:
+                ids:
+                  type: array
+                  minItems: 1
+                  items: { type: string }
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [deleted]
+                properties:
+                  deleted: { type: integer, description: "實際刪除筆數" }
+        "400": { $ref: '#/components/responses/BadRequest' }
+        "401": { $ref: '#/components/responses/Unauthorized' }
 
   # ─────────────────────────────────────────────
   # 股利（修改既有端點 — 純股票股利不寫帳戶 + 連動刪除）

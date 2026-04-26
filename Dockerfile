@@ -8,6 +8,8 @@ RUN npm ci --omit=dev || npm install --omit=dev
 
 # 複製應用程式檔案
 COPY server.js app.js index.html style.css logo.svg favicon.svg changelog.json privacy.html terms.html ./
+# 共用工具模組（002 起 server.js 透過 require('./lib/...') 載入：moneyDecimal / taipeiTime / exchangeRateCache）
+COPY lib ./lib
 
 # 資料庫、設定與 SSL 憑證存放目錄
 RUN mkdir -p /app/data/SSL/Origin\ Certificates

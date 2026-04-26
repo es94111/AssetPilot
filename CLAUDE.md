@@ -76,14 +76,14 @@ Strong success criteria enable independent iteration. Weak ones (“make it work
 <!-- SPECKIT START -->
 ## 目前進行中的功能規劃
 
-- 功能：預算與固定收支（Budgets & Recurring Transactions）
-- 分支：`004-budgets-recurring`
-- 規格：[specs/004-budgets-recurring/spec.md](specs/004-budgets-recurring/spec.md)
-- 計畫：[specs/004-budgets-recurring/plan.md](specs/004-budgets-recurring/plan.md)
+- 功能：統計報表（Statistics & Reports）
+- 分支：`005-stats-reports`
+- 規格：[specs/005-stats-reports/spec.md](specs/005-stats-reports/spec.md)
+- 計畫：[specs/005-stats-reports/plan.md](specs/005-stats-reports/plan.md)
 - 衍生產物：
-  - [research.md](specs/004-budgets-recurring/research.md)
-  - [data-model.md](specs/004-budgets-recurring/data-model.md)
-  - [quickstart.md](specs/004-budgets-recurring/quickstart.md)
-  - [contracts/budgets-recurring.openapi.yaml](specs/004-budgets-recurring/contracts/budgets-recurring.openapi.yaml)
+  - [research.md](specs/005-stats-reports/research.md)
+  - [data-model.md](specs/005-stats-reports/data-model.md)
+  - [quickstart.md](specs/005-stats-reports/quickstart.md)
+  - [contracts/stats-reports.openapi.yaml](specs/005-stats-reports/contracts/stats-reports.openapi.yaml)
 <!-- SPECKIT END -->
 

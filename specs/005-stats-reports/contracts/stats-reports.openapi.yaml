@@ -1,0 +1,484 @@
+openapi: 3.2.0
+info:
+  title: 統計報表 API（005-stats-reports）
+  description: |
+    本契約描述 005 功能（統計報表）涉及的 HTTP 端點與 schema。
+    對應 spec.md 之 FR-001 ~ FR-026（含 FR-011a / FR-015a / FR-024a）
+    與 SC-001 ~ SC-007，以及 10 條 Clarifications（共 3 輪）。
+
+    本文件 MUST 與根目錄 `openapi.yaml` 同步維護（憲章 Principle II 規則 #2）；
+    `info.version` 對應根目錄 `openapi.yaml` 的 `4.26.0`。
+
+    所有路徑遵守憲章 Principle III：以斜線（`/`）為唯一分隔符，多字動詞 kebab-case
+    （例：`/api/admin/report-schedules/{id}/run-now`），不使用 Google AIP-136 冒號式自訂方法。
+  version: 4.26.0
+
+servers:
+  - url: https://example.com
+    description: production
+
+tags:
+  - name: 儀表板
+    description: 儀表板 KPI、分類圓餅、最近交易彙整
+  - name: 統計報表
+    description: 跨期間／類型的分類統計、每日趨勢、每日彙總
+  - name: 排程信件報表
+    description: 管理員建立／管理多筆使用者資產統計信件排程
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: token
+
+  schemas:
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error: { type: string, description: 對使用者顯示的錯誤訊息（zh-TW） }
+        code: { type: string, description: 內部錯誤代碼 }
+        field: { type: string, description: 引發錯誤的欄位 }
+
+    CategoryAggregateNode:
+      type: object
+      description: |
+        分類聚合節點（Category Aggregate Node）— 圓餅圖、折線圖、長條圖共用的原子聚合單位。
+        排序鍵為「父總額 desc，同父下子總額 desc」（FR-013）。
+      required: [categoryId, name, color, parentId, parentName, parentColor, total, isOtherGroup]
+      properties:
+        categoryId:
+          type: [string, "null"]
+          description: 分類 ID；對於虛擬「（其他）」節點為 null
+        name:
+          type: string
+          description: 顯示名稱；虛擬節點為「（其他）」
+        color:
+          type: string
+          description: 顯示色（hex 字串如 `#94a3b8`）
+        parentId:
+          type: [string, "null"]
+          description: 父分類 ID；本節點若為內圈父分類則為 null
+        parentName:
+          type: [string, "null"]
+          description: 父分類顯示名稱；內圈父分類本身則同 name
+        parentColor:
+          type: [string, "null"]
+          description: 父分類顯示色
+        total:
+          type: number
+          description: 該節點在指定期間 + 類型下的累計金額（TWD 等值）
+        isOtherGroup:
+          type: boolean
+          description: |
+            是否為「（其他）」虛擬子分類節點（Round 3 Q1）；true 代表此節點承載
+            「該父分類本身有交易但未掛任何子分類」的金額；外圈呈現時與真實
+            子分類同列、同色階規則排序；金額不重複計入內圈父分類弧度
+
+    DashboardResponse:
+      type: object
+      required: [income, expense, net, todayExpense, catBreakdown, recent, yearMonth]
+      properties:
+        yearMonth:
+          type: string
+          pattern: '^[0-9]{4}-(0[1-9]|1[0-2])$'
+          description: 本次計算所對應的月份（FR-001）
+        income:
+          type: number
+          description: 該月份收入總額（TWD 等值）
+        expense:
+          type: number
+          description: 該月份支出總額（TWD 等值）
+        net:
+          type: number
+          description: 收入 - 支出（TWD 等值）
+        todayExpense:
+          type: number
+          description: 今日支出（TWD 等值）；不隨月份切換器變化（永遠是當天）
+        catBreakdown:
+          type: array
+          description: 該月份的分類聚合節點（FR-002 / FR-013 / Round 3 Q1）
+          items:
+            $ref: '#/components/schemas/CategoryAggregateNode'
+        recent:
+          type: array
+          description: 該月份內依交易日期由新到舊的最多 5 筆交易（FR-007）
+          items:
+            type: object
+
+    ReportsResponse:
+      type: object
+      required: [categoryBreakdown, dailyMap, monthlyMap, total, periodStart, periodEnd]
+      properties:
+        periodStart:
+          type: string
+          pattern: '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'
+          description: 期間起始日（YYYY-MM-DD）
+        periodEnd:
+          type: string
+          pattern: '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'
+          description: 期間結束日（YYYY-MM-DD）
+        categoryBreakdown:
+          type: array
+          description: 該期間 + 類型下的分類聚合節點（FR-013、Round 3 Q1）
+          items:
+            $ref: '#/components/schemas/CategoryAggregateNode'
+        dailyMap:
+          type: object
+          description: 每日金額映射（'YYYY-MM-DD' → 該日該類型總額）；用於折線／長條圖
+          additionalProperties:
+            type: number
+        monthlyMap:
+          type: object
+          description: 每月金額映射（'YYYY-MM' → 該月該類型總額）
+          additionalProperties:
+            type: number
+        total:
+          type: number
+          description: 期間 + 類型總額
+
+    ReportSchedule:
+      type: object
+      description: |
+        多筆排程模式（Round 2 Q2）— 同一使用者下 `(user_id, freq)` 不為唯一鍵，
+        可有多筆同頻率排程並存，每筆獨立觸發、獨立寄送、獨立記錄結果。
+      required: [id, userId, freq, hour, weekday, dayOfMonth, enabled]
+      properties:
+        id: { type: string, description: 排程 ID（uid()） }
+        userId: { type: string, description: 對應的使用者 ID }
+        freq:
+          type: string
+          enum: [daily, weekly, monthly]
+        hour: { type: integer, minimum: 0, maximum: 23 }
+        weekday:
+          type: integer
+          minimum: 0
+          maximum: 6
+          description: 0=週日；僅 freq=weekly 時生效
+        dayOfMonth:
+          type: integer
+          minimum: 1
+          maximum: 28
+          description: 僅 freq=monthly 時生效
+        enabled:
+          type: boolean
+          description: 停用→啟用時 last_run 不變、不補寄（FR-024a / Round 2 Q3）
+        lastRun:
+          type: integer
+          format: int64
+          description: epoch ms；上次成功觸發開始時間
+        lastRunText:
+          type: string
+          description: lastRun 的台灣時區人類可讀格式
+        lastSummary:
+          type: string
+          description: 上次觸發摘要（含使用者數量、寄送結果、失敗原因 prefix）
+        createdAt:
+          type: integer
+          format: int64
+        updatedAt:
+          type: integer
+          format: int64
+
+    ReportScheduleCreate:
+      type: object
+      required: [userId, freq]
+      properties:
+        userId: { type: string }
+        freq:
+          type: string
+          enum: [daily, weekly, monthly]
+        hour:
+          type: integer
+          minimum: 0
+          maximum: 23
+          default: 9
+        weekday:
+          type: integer
+          minimum: 0
+          maximum: 6
+          default: 1
+        dayOfMonth:
+          type: integer
+          minimum: 1
+          maximum: 28
+          default: 1
+        enabled:
+          type: boolean
+          default: true
+
+    ReportScheduleUpdate:
+      type: object
+      description: PUT 採全欄位覆蓋；userId 與 freq 不可變（如需更換請刪除後新建）
+      properties:
+        hour: { type: integer, minimum: 0, maximum: 23 }
+        weekday: { type: integer, minimum: 0, maximum: 6 }
+        dayOfMonth: { type: integer, minimum: 1, maximum: 28 }
+        enabled: { type: boolean }
+
+    ReportScheduleRunResult:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [completed, no_email_service, already_running, no_targets, disabled]
+        sent: { type: integer }
+        failed: { type: integer }
+        skipped: { type: integer }
+        priceUpdates:
+          type: integer
+          description: 寄送前自動更新成功的股價檔數（FR-017）
+        provider:
+          type: string
+          enum: [smtp, resend]
+          description: 實際成功寄送的通道（FR-021 / Round 1 Q3）
+        reason:
+          type: string
+          description: 失敗或略過的原因（zh-TW）
+
+security:
+  - cookieAuth: []
+
+paths:
+  /api/dashboard:
+    get:
+      tags: [儀表板]
+      summary: 取得指定月份的儀表板統計（FR-001 ~ FR-007）
+      description: |
+        回傳所選月份的 income / expense / net、catBreakdown（含「（其他）」虛擬節點）、
+        最近 5 筆交易（限該月份內，依交易日期由新到舊）。月份切換器（前端）會傳
+        `yearMonth` 參數，未提供則預設為當前台灣時區月份（FR-001 / Round 1 Q1）。
+      parameters:
+        - in: query
+          name: yearMonth
+          schema:
+            type: string
+            pattern: '^[0-9]{4}-(0[1-9]|1[0-2])$'
+          required: false
+          description: 'YYYY-MM；省略時預設為當前台灣時區月份'
+      responses:
+        '200':
+          description: 儀表板統計資料
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardResponse'
+
+  /api/reports:
+    get:
+      tags: [統計報表]
+      summary: 取得指定期間 + 類型的統計報表資料（FR-008 ~ FR-015）
+      description: |
+        統計報表頁的圓餅 / 折線 / 長條圖共用此端點。期間以 `from` / `to` 指定（YYYY-MM-DD）；
+        類型以 `type` 指定（expense | income）。聚合粒度於前端決定（FR-014），後端僅回
+        `dailyMap` / `monthlyMap` 兩種 bucket。
+      parameters:
+        - in: query
+          name: type
+          schema:
+            type: string
+            enum: [expense, income]
+          required: false
+          description: 預設 expense（FR-011）
+        - in: query
+          name: from
+          schema:
+            type: string
+            pattern: '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'
+          required: false
+        - in: query
+          name: to
+          schema:
+            type: string
+            pattern: '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'
+          required: false
+      responses:
+        '200':
+          description: 報表資料
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportsResponse'
+        '400':
+          description: 'from > to 時拒絕（FR-010：不靜默交換兩值）'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /api/admin/report-schedules:
+    get:
+      tags: [排程信件報表]
+      summary: 列出所有使用者的所有排程（管理員）
+      parameters:
+        - in: query
+          name: userId
+          schema: { type: string }
+          required: false
+          description: 篩選特定使用者；省略則列全部
+      responses:
+        '200':
+          description: 排程列表
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ReportSchedule'
+        '403':
+          description: 非管理員
+    post:
+      tags: [排程信件報表]
+      summary: 新增一筆排程（管理員）
+      description: '同一使用者下可重複建立同 freq 的排程（Round 2 Q2）'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ReportScheduleCreate' }
+      responses:
+        '201':
+          description: 建立成功
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ReportSchedule' }
+        '400':
+          description: 欄位驗證失敗
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /api/admin/report-schedules/{id}:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema: { type: string }
+    put:
+      tags: [排程信件報表]
+      summary: 更新排程設定（管理員）
+      description: |
+        userId 與 freq 不可變（FR-016：建立後綁定）；
+        enabled 由 0 → 1 時 `last_run` 不變，下次自然觸發點開始（FR-024a / Round 2 Q3）。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ReportScheduleUpdate' }
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ReportSchedule' }
+        '404':
+          description: 排程不存在
+    delete:
+      tags: [排程信件報表]
+      summary: 刪除排程（管理員）
+      responses:
+        '204':
+          description: 刪除成功（無回應內容）
+        '404':
+          description: 排程不存在
+
+  /api/admin/report-schedules/{id}/run-now:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema: { type: string }
+    post:
+      tags: [排程信件報表]
+      summary: 立即觸發單筆排程（管理員，不等待自然觸發點）
+      description: |
+        執行流程：更新該使用者股價（FR-017）→ buildUserStatsReport（freq 對應）
+        → renderStatsEmailHtml → sendStatsEmail（SMTP 優先；執行期失敗自動退回
+        Resend；皆失敗 throw；FR-021 / Round 1 Q3）。
+      responses:
+        '200':
+          description: 執行結果
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ReportScheduleRunResult' }
+        '404':
+          description: 排程不存在
+        '503':
+          description: 寄信服務未設定（既有 FR-021 行為）
+
+  /api/admin/report-schedule:
+    description: |
+      DEPRECATED — 為保向後相容暫保留 singleton 設計（讀寫 system_settings 對應欄位）。
+      新功能請改用 /api/admin/report-schedules（複數）。
+      PUT handler 內額外執行「同步寫入 report_schedules 表」，將 userIds 陣列拆成
+      多筆同 freq 排程。
+    get:
+      deprecated: true
+      tags: [排程信件報表]
+      summary: '[DEPRECATED] 取得 singleton 排程設定'
+      responses:
+        '200':
+          description: 兼容舊前端管理頁的 singleton 結構
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  freq: { type: string, enum: [off, daily, weekly, monthly] }
+                  hour: { type: integer }
+                  weekday: { type: integer }
+                  dayOfMonth: { type: integer }
+                  userIds:
+                    type: array
+                    items: { type: string }
+                  lastRun: { type: integer }
+                  lastRunText: { type: string }
+                  lastSummary: { type: string }
+    put:
+      deprecated: true
+      tags: [排程信件報表]
+      summary: '[DEPRECATED] 更新 singleton 排程；同時同步至 report_schedules 表'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                freq: { type: string, enum: [off, daily, weekly, monthly] }
+                hour: { type: integer }
+                weekday: { type: integer }
+                dayOfMonth: { type: integer }
+                userIds:
+                  type: array
+                  items: { type: string }
+      responses:
+        '200':
+          description: 更新成功
+
+  /api/admin/report-schedule/run-now:
+    description: |
+      DEPRECATED — 為保向後相容暫保留 singleton 立即觸發。
+      新功能請改用 /api/admin/report-schedules/{id}/run-now。
+    post:
+      deprecated: true
+      tags: [排程信件報表]
+      summary: '[DEPRECATED] 立即觸發 singleton 排程'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userIds:
+                  type: array
+                  items: { type: string }
+                  description: 覆寫該次寄送對象（不影響排程設定）
+      responses:
+        '200':
+          description: 觸發結果
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ReportScheduleRunResult' }

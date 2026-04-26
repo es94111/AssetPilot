@@ -783,6 +783,14 @@ async function initDB() {
     saveDB();
   } catch (e) { /* 欄位已存在則忽略 */ }
 
+  // 資料庫升級：為 users 加入 is_active 欄位（FR-024：排程寄送統計報表時，
+  // 若使用者帳號已停用 (is_active = 0) 則略過寄送）
+  try {
+    db.run("ALTER TABLE users ADD COLUMN is_active INTEGER DEFAULT 1");
+    db.run("UPDATE users SET is_active = 1 WHERE is_active IS NULL");
+    saveDB();
+  } catch (e) { /* 欄位已存在則忽略 */ }
+
   // 若舊資料沒有管理員，將第一位使用者設為管理員
   const hasAdmin = queryOne("SELECT id FROM users WHERE is_admin = 1 LIMIT 1");
   if (!hasAdmin) {

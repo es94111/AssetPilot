@@ -313,7 +313,11 @@
 
 每檔持股代表一個「股票代號」加一個「類型」（一般股票／ETF／權證）。類型影響賣出時的證交稅稅率（一般 0.3%、ETF/權證 0.1%）。持有股數、平均成本、損益等數值一律由系統從交易紀錄動態計算，不額外儲存 — 確保帳目永遠跟交易一致。
 
-投資組合總覽卡顯示總市值、總成本、總損益、報酬率；個股卡片顯示代號與名稱、持有股數、平均成本、目前股價、市值、損益與報酬率。獲利綠色（▲）虧損紅色（▼）。
+投資組合總覽卡顯示總市值、總成本、總損益、整體報酬率（金額加權公式：`totalPL / totalCost × 100`；`totalCost = 0` 時顯示「—」）；個股卡片顯示代號與名稱、持有股數、平均成本、目前股價、市值、損益與報酬率，並補「最後查價時間」標記（> 24 小時以橘色 ⚠ 警示）、價格來源（即時／收盤／T+1／凍結）、已下市 badge。三段式損益顯色：獲利綠色（▲）／損益 0 灰色／虧損紅色（▼）。
+
+`GET /api/stocks` response 為 `{ stocks: [...], portfolioSummary: { totalMarketValue, totalCost, totalPL, totalReturnRate } }`；FIFO 計算改用 `lib/moneyDecimal.js` 內共用 `calcFifoLots()` helper（decimal.js 全精度，僅最終 response 階段取整以滿足 SC-004 ≤ 1 元誤差）。
+
+`stocks.delisted INTEGER DEFAULT 0` 欄位記錄使用者於批次更新股價 Modal 手動標記的下市旗標；下市股票凍結價格、跳過 TWSE 查價、priceSource 固定為 `'frozen'`。
 
 #### TWSE 整合
 
@@ -335,7 +339,9 @@
 
 #### 定期定額
 
-使用者可設定某檔股票的定期定額：每期預算、週期、起始日、證券帳戶、備註、啟用／停用。系統在每次登入時檢查是否有該產生的排程，依「每期預算 ÷ 當前股價」計算可買股數（無法買 1 股時略過）並產生買進交易。
+使用者可設定某檔股票的定期定額：每期預算、週期、起始日、證券帳戶、備註、啟用／停用。系統在每次登入時 server-side 非同步（`setImmediate` fire-and-forget）觸發 `processStockRecurring(userId)` 補產生流程，補產生迴圈每期使用該期應觸發日的 TWSE STOCK_DAY 歷史收盤價計算可買股數（無法買 1 股時略過）並產生買進交易。
+
+`stock_transactions` 表新增 `recurring_plan_id` / `period_start_date` 兩欄並建立 partial unique index `idx_stock_tx_recurring_idem`（`(user_id, recurring_plan_id, period_start_date)` 三元組僅一筆），配合 `INSERT OR IGNORE` 達成多裝置同時登入觸發 race 下不重複扣款。
 
 若排程日遇週末或 TWSE 休市日則自動順延到下一個交易日；排程日本身仍以原日期推算保持週期節奏，交易紀錄的日期寫入實際交易日，備註附「原排程 YYYY-MM-DD 順延」。休市日快取 24 小時，來源為 TWSE `/v1/holidaySchedule/holidaySchedule` OpenAPI，並過濾掉「開始交易／最後交易」等特別交易日。
 
@@ -346,17 +352,21 @@
 - 現金股利 = 持股數 × 每股現金股利（四捨五入）
 - 股票股利 = 持股數 × 每千股配股數 ÷ 1000
 
-同日期同股票若已存在股利紀錄則不重複新增；自動新增的備註會標示「TWSE自動同步（每股$X.XX）」。除權息 API 快取 30 分鐘。
+同日期同股票若已存在股利紀錄則不重複新增；自動新增的備註會標示「TWSE自動同步（每股$X.XX）」。除權息 API 快取 30 分鐘。`POST /api/stock-dividends/sync?year=YYYY` 支援單年同步；前端「同步除權息」按鈕觸發阻擋式 Modal + 進度條 + 取消按鈕，從最早交易年份逐年呼叫並累計 `新增 N / 跳過 M / 失敗 K` 顯示於完成 toast。
+
+#### 股票股利合成交易
+
+新增或同步含 `stockDividendShares > 0` 的股利時，系統於 `stock_transactions` 同步寫入一筆合成 `$0` buy 交易（`note` 以 `[SYNTH] 股票股利配發` 唯一前綴開頭），讓 FIFO 佇列自然納入這批 $0 cost lot。刪除股利紀錄時連動刪除對應合成交易（依 `stock_id + date + price=0 + note 前綴` 匹配，容差 0.001 股）；股票交易批次刪除拒絕含合成股票股利交易的選取，必須透過刪除股利紀錄處理。
 
 #### 實現損益
 
-獨立 Tab 呈現每筆賣出交易的 FIFO 實現損益。頂部彙總卡顯示總實現損益、整體報酬率、今年實現損益、已實現筆數。表格列出賣出日期、股票、股數、賣出均價、成本均價（FIFO）、手續費+稅、實現損益、報酬率。
+獨立 Tab 呈現每筆賣出交易的 FIFO 實現損益。`GET /api/stock-realized-pl` response shape 為 `{ entries: [...], summary: { totalRealizedPL, overallReturnRate, ytdRealizedPL, count } }`，整體報酬率採金額加權公式（`totalRealizedPL / totalCost × 100`，`totalCost = 0` 時為 `null`）。頂部彙總卡顯示總實現損益、整體報酬率、今年實現損益、已實現筆數。表格列出賣出日期、股票、股數、賣出均價、成本均價（FIFO）、手續費+稅、實現損益、報酬率，皆套用三段式顯色。
 
 FIFO 邏輯：買入批次依時間序進入佇列（手續費分攤至成本）；每筆賣出依序從最早批次扣除，算出該筆賣出的成本基礎；實現損益 = 賣出收入（股數 × 賣出價 - 手續費 - 證交稅）- FIFO 成本基礎；報酬率 = 實現損益 ÷ FIFO 成本基礎 × 100%。未賣出部位的平均成本以 FIFO 剩餘批次計算。
 
 #### 批次更新股價
 
-Modal 列出所有持股與目前股價輸入框，支援「從證交所取得最新股價」一鍵批次拉 TWSE 最新收盤價（顯示每檔的價格來源：即時／收盤／T+1 與取得時間），也允許手動調整個別股價；確認後一次寫回。
+Modal 列出所有持股與目前股價輸入框，每列附「標為已下市」checkbox（凍結價格 + 後續查價跳過），支援「從證交所取得最新股價」一鍵批次拉 TWSE 最新收盤價（透過 `POST /api/stocks/batch-fetch` 並發查價，受 `TWSE_MAX_CONCURRENCY` 環境變數控制，預設 5；失敗時指數退避重試 2 次，間隔 1s/2s）。`POST /api/stocks/batch-price` 接受 `{ updates: [{ stockId, currentPrice, delisted? }] }`；省略 `delisted` 時保留向後兼容（沿用 baseline 行為僅更新價格）。也允許手動調整個別股價；確認後一次寫回。
 
 #### 不做什麼
 

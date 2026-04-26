@@ -36,6 +36,9 @@ const nodemailer = require('nodemailer');
 const moneyDecimal = require('./lib/moneyDecimal');
 const taipeiTime = require('./lib/taipeiTime');
 const fxCache = require('./lib/exchangeRateCache');
+// 006-stock-investments：TWSE 並發查價 helper
+const twseFetch = require('./lib/twseFetch');
+const Decimal = require('decimal.js');
 
 const app = express();
 // 信任反向代理（Nginx / Synology / Docker）傳遞的 X-Forwarded-For 標頭
@@ -894,6 +897,11 @@ async function initDB() {
     db.run("ALTER TABLE stocks ADD COLUMN stock_type TEXT DEFAULT 'stock'");
   } catch (e) { /* 欄位已存在則忽略 */ }
 
+  // 資料庫升級（006-stock-investments）：為 stocks 加入 delisted 旗標（FR-035a / Pass 1 Q2）
+  try {
+    db.run("ALTER TABLE stocks ADD COLUMN delisted INTEGER DEFAULT 0");
+  } catch (e) { /* 欄位已存在則忽略 */ }
+
   db.run(`CREATE TABLE IF NOT EXISTS stock_transactions (
     id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL,
@@ -908,6 +916,21 @@ async function initDB() {
     note TEXT DEFAULT '',
     created_at INTEGER
   )`);
+
+  // 資料庫升級（006-stock-investments）：定期定額 idempotency 與類型修改重算用欄位
+  try {
+    db.run("ALTER TABLE stock_transactions ADD COLUMN recurring_plan_id TEXT");
+  } catch (e) { /* 欄位已存在則忽略 */ }
+  try {
+    db.run("ALTER TABLE stock_transactions ADD COLUMN period_start_date TEXT");
+  } catch (e) { /* 欄位已存在則忽略 */ }
+  try {
+    db.run("ALTER TABLE stock_transactions ADD COLUMN tax_auto_calculated INTEGER DEFAULT 1");
+  } catch (e) { /* 欄位已存在則忽略 */ }
+  // partial unique index：同 (user_id, recurring_plan_id, period_start_date) 三元組僅允許一筆排程交易
+  try {
+    db.run("CREATE UNIQUE INDEX IF NOT EXISTS idx_stock_tx_recurring_idem ON stock_transactions (user_id, recurring_plan_id, period_start_date) WHERE recurring_plan_id IS NOT NULL AND period_start_date IS NOT NULL");
+  } catch (e) { /* 索引已存在或 sqlite 版本不支援 partial index 時忽略 */ }
 
   db.run(`CREATE TABLE IF NOT EXISTS stock_dividends (
     id TEXT PRIMARY KEY,
@@ -1003,6 +1026,26 @@ async function initDB() {
     fxCache.primeFromDb();
   } catch (e) {
     console.warn('[fxCache] init failed:', e.message);
+  }
+
+  // ─── 006 feature: schema 驗證（T013） ───
+  try {
+    const delistedNullCount = queryOne("SELECT COUNT(*) AS c FROM stocks WHERE delisted IS NULL");
+    if (delistedNullCount && delistedNullCount.c > 0) {
+      console.warn(`[migration 006] stocks.delisted IS NULL row count = ${delistedNullCount.c}（預期 0）`);
+    }
+    const idxRow = queryOne("SELECT name FROM sqlite_master WHERE type='index' AND name='idx_stock_tx_recurring_idem'");
+    if (!idxRow) {
+      console.warn('[migration 006] partial unique index idx_stock_tx_recurring_idem 未建立成功');
+    } else {
+      console.log('[migration 006] idx_stock_tx_recurring_idem OK');
+    }
+    const taxNullCount = queryOne("SELECT COUNT(*) AS c FROM stock_transactions WHERE tax_auto_calculated IS NULL");
+    if (taxNullCount && taxNullCount.c > 0) {
+      console.warn(`[migration 006] stock_transactions.tax_auto_calculated IS NULL row count = ${taxNullCount.c}（預期 0）`);
+    }
+  } catch (e) {
+    console.warn('[migration 006] schema 驗證失敗:', e.message);
   }
 
   saveDB();
@@ -1914,6 +1957,7 @@ function getSellTaxRateByType(stockType, settings) {
   return settings.sellTaxRateStock;
 }
 
+// FR-011 Pass 2 Q5：max(floor(金額 × 0.1425% × 折扣), 整股 20 / 零股 1)
 function calcStockFee(amount, shares, settings) {
   if (!(amount > 0)) return 0;
   const minFee = Number(shares) < 1000 ? settings.feeMinOdd : settings.feeMinLot;
@@ -1921,6 +1965,7 @@ function calcStockFee(amount, shares, settings) {
   return Math.max(minFee, baseFee);
 }
 
+// FR-012 Pass 2 Q5：max(floor(金額 × 稅率), sellTaxMin)；稅率依 stockType 取對應值
 function calcStockTax(amount, stockType, settings) {
   if (!(amount > 0)) return 0;
   const tax = Math.floor(amount * getSellTaxRateByType(stockType, settings));
@@ -2734,6 +2779,10 @@ app.post('/api/auth/login', async (req, res) => {
   try { backfillDefaultsForUser(user.id); } catch (e) { console.error('[003-backfill]', e); }
   // 004-budgets-recurring T023：登入時 server-side 觸發產生流程（FR-012；錯誤吞噬不阻擋登入）
   try { processRecurringForUser(user.id); } catch (e) { console.error('[004-recurring]', e); }
+  // 006-stock-investments T083：登入時 server-side 非同步觸發股票定期定額補產生（FR-020）
+  setImmediate(() => {
+    processStockRecurring(user.id).catch(e => console.warn('[006-stock-recurring]', e.message));
+  });
 
   const token = jwt.sign({ userId: user.id, tokenVersion: Number(user.token_version) || 0 }, JWT_SECRET, { expiresIn: JWT_EXPIRES });
   setAuthCookie(res, token);
@@ -4547,8 +4596,9 @@ function getReportSchedule() {
 }
 
 // 寄信前自動更新使用者所有持股的最新價格（盤中即時價優先，盤後 STOCK_DAY 收盤；失敗則跳過該檔）
+// 006 T101：下市股票（delisted=1）跳過 TWSE 請求；歷史代號改名 → 自動同步 stocks.name
 async function updateUserStockPrices(userId) {
-  const stocks = queryAll("SELECT id, symbol FROM stocks WHERE user_id = ?", [userId]);
+  const stocks = queryAll("SELECT id, symbol, name, delisted FROM stocks WHERE user_id = ? AND COALESCE(delisted, 0) = 0", [userId]);
   let updated = 0, skipped = 0;
   const today = new Date();
   const todayYmd = `${today.getFullYear()}${String(today.getMonth() + 1).padStart(2, '0')}${String(today.getDate()).padStart(2, '0')}`;
@@ -4568,8 +4618,12 @@ async function updateUserStockPrices(userId) {
       if (info && info.found && info.closingPrice > 0) {
         db.run(
           "UPDATE stocks SET current_price = ?, updated_at = ? WHERE id = ? AND user_id = ?",
-          [info.closingPrice, todayStr(), s.id, userId]
+          [info.closingPrice, new Date().toISOString(), s.id, userId]
         );
+        // 006 Edge Case「歷史代號改名」：TWSE 回傳 name 與 DB 不同則同步更新
+        if (info.name && info.name !== s.name) {
+          db.run("UPDATE stocks SET name = ? WHERE id = ? AND user_id = ?", [info.name, s.id, userId]);
+        }
         updated += 1;
       } else {
         skipped += 1;
@@ -7263,6 +7317,7 @@ async function fetchTwseRealtime(symbol) {
         closingPrice: price || 0,
         isRealtime,
         priceType: isRealtime ? '即時成交價' : '昨收價',
+        priceSource: isRealtime ? 'realtime' : 't+1',
         dataDate,
         dataTime,
         timestamp: now,
@@ -7340,6 +7395,7 @@ async function fetchTwseStockDay(symbol, dateStr) {
       lowestPrice: toNum(row[5]),
       isRealtime: false,
       priceType: '收盤價',
+      priceSource: 'close',
       dataDate: rowDate,
       dataTime: '',
     };
@@ -7390,6 +7446,7 @@ async function fetchTpexStockDay(symbol, dateStr) {
       lowestPrice: toNum(row[5]),
       isRealtime: false,
       priceType: '收盤價（櫃買）',
+      priceSource: 'close',
       dataDate: rowDate,
       dataTime: '',
     };
@@ -7513,6 +7570,59 @@ app.get('/api/twse/stock/:symbol', async (req, res) => {
   }
 });
 
+// 006 T044：股票查價 wrapper — FR-007 失敗類型分流（status: ok / not_found / service_unavailable）
+// FR-008：前後端皆套 ASCII 1-8 字驗證
+app.get('/api/stocks/quote', async (req, res) => {
+  const symbol = String(req.query.symbol || '').trim();
+  if (!/^[0-9A-Za-z]{1,8}$/.test(symbol)) {
+    return res.status(400).json({ status: 'invalid', error: '股票代號格式不正確' });
+  }
+  try {
+    const today = new Date();
+    const todayYmd = `${today.getFullYear()}${String(today.getMonth() + 1).padStart(2, '0')}${String(today.getDate()).padStart(2, '0')}`;
+    // 1. 即時 → 2. STOCK_DAY → 3. TPEx STOCK_DAY → 4. STOCK_DAY_ALL
+    let info = await fetchTwseRealtime(symbol);
+    if (!info || !info.found || !(info.closingPrice > 0)) {
+      info = await fetchTwseStockDay(symbol, todayYmd);
+    }
+    if (!info || !info.found || !(info.closingPrice > 0)) {
+      info = await fetchTpexStockDay(symbol, todayYmd);
+    }
+    if (!info || !info.found || !(info.closingPrice > 0)) {
+      try {
+        const all = await fetchTwseStockAll();
+        const stock = all.find(s => s.Code === symbol);
+        if (stock) {
+          info = {
+            found: true,
+            symbol: stock.Code,
+            name: stock.Name,
+            closingPrice: parseFloat(stock.ClosingPrice) || 0,
+            isRealtime: false,
+            priceType: stock._source === 'tpex' ? '收盤價（櫃買）' : '收盤價',
+            priceSource: 'close',
+          };
+        }
+      } catch (_) { /* fall through to not_found */ }
+    }
+    if (info && info.found && info.closingPrice > 0) {
+      return res.json({
+        status: 'ok',
+        symbol: info.symbol || symbol,
+        name: info.name || symbol,
+        currentPrice: info.closingPrice,
+        priceSource: info.priceSource || (info.isRealtime ? 'realtime' : 'close'),
+        priceType: info.priceType || '',
+        dataDate: info.dataDate || '',
+        dataTime: info.dataTime || '',
+      });
+    }
+    return res.json({ status: 'not_found', error: '找不到此股票代號' });
+  } catch (e) {
+    return res.status(503).json({ status: 'service_unavailable', error: '股價服務暫時無法回應：' + e.message });
+  }
+});
+
 // 搜尋股票（模糊比對代號或名稱，最多回傳 10 筆）— 固定用收盤資料
 app.get('/api/twse/search', async (req, res) => {
   const q = String(req.query.q || '').trim();
@@ -7622,9 +7732,59 @@ function calcSharesOnDate(txs, targetDate) {
   return shares;
 }
 
-// 自動同步除權息 API
+// 006-stock-investments T015：以資料庫直接查詢取得截至 date 當下持有股數（含股票股利合成 buy 交易）。
+function getSharesAtDate(userId, stockId, date) {
+  const row = queryOne(
+    "SELECT COALESCE(SUM(CASE WHEN type='buy' THEN shares ELSE -shares END), 0) AS shares FROM stock_transactions WHERE user_id = ? AND stock_id = ? AND date <= ?",
+    [userId, stockId, date]
+  );
+  return row && row.shares != null ? Number(row.shares) : 0;
+}
+
+// 006-stock-investments T016：模擬「插入 / 修改」一筆交易後，掃所有 ≥ txDate 的交易並滾動計算累計持股；
+// 任一時點 < 0 則回傳衝突日期；以資料庫實際交易為基準（排除 excludeTxId 模擬刪除舊紀錄）。
+function validateChainConstraint(userId, stockId, txDate, txType, txShares, excludeTxId = null) {
+  // 截至 txDate 的累計持股（不含被排除的紀錄）
+  const baseRow = excludeTxId
+    ? queryOne(
+        "SELECT COALESCE(SUM(CASE WHEN type='buy' THEN shares ELSE -shares END), 0) AS shares FROM stock_transactions WHERE user_id = ? AND stock_id = ? AND date <= ? AND id != ?",
+        [userId, stockId, txDate, excludeTxId]
+      )
+    : queryOne(
+        "SELECT COALESCE(SUM(CASE WHEN type='buy' THEN shares ELSE -shares END), 0) AS shares FROM stock_transactions WHERE user_id = ? AND stock_id = ? AND date <= ?",
+        [userId, stockId, txDate]
+      );
+  const baseShares = baseRow && baseRow.shares != null ? Number(baseRow.shares) : 0;
+  const delta = txType === 'buy' ? Number(txShares) : -Number(txShares);
+  let cumulative = baseShares + delta;
+  if (cumulative < 0) {
+    return { ok: false, conflictDate: txDate, expectedShares: cumulative };
+  }
+  // 後續交易（嚴格大於 txDate；同日同 stock 多筆按 created_at 順序但已透過 baseShares 包含）
+  const futureSql = excludeTxId
+    ? "SELECT date, type, shares FROM stock_transactions WHERE user_id = ? AND stock_id = ? AND date > ? AND id != ? ORDER BY date, created_at"
+    : "SELECT date, type, shares FROM stock_transactions WHERE user_id = ? AND stock_id = ? AND date > ? ORDER BY date, created_at";
+  const futureParams = excludeTxId
+    ? [userId, stockId, txDate, excludeTxId]
+    : [userId, stockId, txDate];
+  const future = queryAll(futureSql, futureParams);
+  for (const t of future) {
+    cumulative += t.type === 'buy' ? Number(t.shares) : -Number(t.shares);
+    if (cumulative < 0) {
+      return { ok: false, conflictDate: t.date, expectedShares: cumulative };
+    }
+  }
+  return { ok: true };
+}
+
+// 自動同步除權息 API（006 T062/T063：支援 ?year=YYYY 單年同步；FR-027 / Pass 2 Q1）
 app.post('/api/stock-dividends/sync', async (req, res) => {
   try {
+    // 006 T063：?year=YYYY 拆段同步 — 限定年份範圍
+    const yearParam = req.query.year ? parseInt(req.query.year, 10) : null;
+    if (yearParam !== null && (!Number.isInteger(yearParam) || yearParam < 2010 || yearParam > 2099)) {
+      return res.status(400).json({ error: 'year 參數必須為 2010-2099' });
+    }
     const stocks = queryAll("SELECT * FROM stocks WHERE user_id = ?", [req.userId]);
     if (stocks.length === 0) return res.json({ synced: 0, skipped: 0, errors: [] });
 
@@ -7668,18 +7828,25 @@ app.post('/api/stock-dividends/sync', async (req, res) => {
 
     // 收集所有需要查詢的年度範圍
     const today = todayStr();
-    let minYear = parseInt(today.slice(0, 4)), maxYear = minYear;
-    Object.values(stockHoldingPeriods).forEach(({ periods }) => {
-      periods.forEach(p => {
-        const sy = parseInt(p.start.slice(0, 4));
-        if (sy < minYear) minYear = sy;
-        if (p.end) {
-          const ey = parseInt(p.end.slice(0, 4));
-          if (ey > maxYear) maxYear = ey;
-        }
+    let minYear, maxYear;
+    if (yearParam !== null) {
+      minYear = yearParam;
+      maxYear = yearParam;
+    } else {
+      minYear = parseInt(today.slice(0, 4));
+      maxYear = minYear;
+      Object.values(stockHoldingPeriods).forEach(({ periods }) => {
+        periods.forEach(p => {
+          const sy = parseInt(p.start.slice(0, 4));
+          if (sy < minYear) minYear = sy;
+          if (p.end) {
+            const ey = parseInt(p.end.slice(0, 4));
+            if (ey > maxYear) maxYear = ey;
+          }
+        });
       });
-    });
-    maxYear = Math.min(maxYear, parseInt(today.slice(0, 4)));
+      maxYear = Math.min(maxYear, parseInt(today.slice(0, 4)));
+    }
 
     // 按年分段查詢 TWSE 除權息資料，每次間隔 2 秒避免被限流
     const delay = ms => new Promise(r => setTimeout(r, ms));
@@ -7763,11 +7930,20 @@ app.post('/api/stock-dividends/sync', async (req, res) => {
       if (cashDividend === 0 && stockDividendShares === 0) { skipped++; continue; }
 
       // 新增股利紀錄
+      const divId = uid();
+      const divNote = `TWSE自動同步（每股$${cashPerShare}${stockPer1000 > 0 ? `, 每千股配${stockPer1000}股` : ''}）`;
       db.run(
         "INSERT INTO stock_dividends (id, user_id, stock_id, date, cash_dividend, stock_dividend_shares, note, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-        [uid(), req.userId, stock.id, div.date, cashDividend, stockDividendShares,
-         `TWSE自動同步（每股$${cashPerShare}${stockPer1000 > 0 ? `, 每千股配${stockPer1000}股` : ''}）`, Date.now()]
+        [divId, req.userId, stock.id, div.date, cashDividend, stockDividendShares, divNote, Date.now()]
       );
+      // 006 T060：股票股利配發合成 $0 buy 交易
+      if (stockDividendShares > 0) {
+        const synthNote = `[SYNTH] 股票股利配發 | ${divNote}`;
+        db.run(
+          "INSERT INTO stock_transactions (id,user_id,stock_id,date,type,shares,price,fee,tax,account_id,note,created_at,tax_auto_calculated) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
+          [uid(), req.userId, stock.id, div.date, 'buy', stockDividendShares, 0, 0, 0, null, synthNote, Date.now(), 1]
+        );
+      }
       synced++;
       console.log(`[股利同步] ${div.symbol} ${div.date} → 現金$${cashDividend}${stockDividendShares > 0 ? `, 配股${stockDividendShares}` : ''}`);
     }
@@ -7891,10 +8067,11 @@ app.patch('/api/stock-recurring/:id/toggle', (req, res) => {
   res.json({ isActive: !r.is_active });
 });
 
-app.post('/api/stock-recurring/process', async (req, res) => {
-  const recs = queryAll("SELECT * FROM stock_recurring WHERE user_id = ? AND is_active = 1", [req.userId]);
-  if (recs.length === 0) return res.json({ generated: 0, skipped: 0, postponed: 0 });
-  const settings = getStockSettings(req.userId);
+// 006 T080~T082：抽出共用 helper（FR-020/FR-021/FR-024a）
+async function processStockRecurring(userId) {
+  const recs = queryAll("SELECT * FROM stock_recurring WHERE user_id = ? AND is_active = 1", [userId]);
+  if (recs.length === 0) return { generated: 0, skipped: 0, postponed: 0 };
+  const settings = getStockSettings(userId);
   const todayS = todayStr();
   const holidaySet = await fetchTwseHolidaySet();
   let generated = 0;
@@ -7910,13 +8087,31 @@ app.post('/api/stock-recurring/process', async (req, res) => {
       scheduledDate = r.start_date;
     }
     while (scheduledDate && scheduledDate <= todayS) {
-      // 遇到假日或週末延後到下一個交易日
+      // FR-022 排程順延：遇到假日或週末延後到下一個交易日
       const actualDate = nextTwseTradingDay(scheduledDate, holidaySet);
       if (actualDate > todayS) break; // 下一個交易日還沒到，下次再處理
       if (actualDate !== scheduledDate) postponed++;
 
-      const stock = queryOne("SELECT id, current_price FROM stocks WHERE id = ? AND user_id = ?", [r.stock_id, req.userId]);
-      const price = Number(stock?.current_price || 0);
+      // 006 T081：每期改用「該期應觸發日的歷史股價」（FR-021）
+      let price = 0;
+      try {
+        const stockRow = queryOne("SELECT id, symbol, current_price FROM stocks WHERE id = ? AND user_id = ?", [r.stock_id, userId]);
+        if (stockRow && stockRow.symbol) {
+          const ymd = String(actualDate).replace(/-/g, '');
+          let info = await fetchTwseStockDay(stockRow.symbol, ymd);
+          if (!info || !info.found || !(info.closingPrice > 0)) {
+            info = await fetchTpexStockDay(stockRow.symbol, ymd);
+          }
+          if (info && info.found && info.closingPrice > 0) {
+            price = info.closingPrice;
+          } else {
+            price = Number(stockRow.current_price || 0);
+          }
+        }
+      } catch (e) {
+        // 歷史股價查詢失敗 → 跳過該期，不阻擋後續
+        console.warn(`[stock-recurring] 歷史股價查詢失敗 (${r.id}, ${actualDate}):`, e.message);
+      }
 
       if (!(price > 0)) {
         db.run("UPDATE stock_recurring SET last_generated = ? WHERE id = ?", [scheduledDate, r.id]);
@@ -7940,64 +8135,67 @@ app.post('/api/stock-recurring/process', async (req, res) => {
       const noteParts = [r.note || '', '定期定額自動'];
       if (actualDate !== scheduledDate) noteParts.push(`原排程 ${scheduledDate} 順延`);
       const finalNote = noteParts.filter(Boolean).join(' | ');
-      db.run(
-        "INSERT INTO stock_transactions (id,user_id,stock_id,date,type,shares,price,fee,tax,account_id,note,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
-        [uid(), req.userId, r.stock_id, actualDate, 'buy', shares, price, fee, 0, r.account_id || '', finalNote, Date.now()]
-      );
+      // 006 T082：INSERT OR IGNORE + recurring_plan_id + period_start_date 達 idempotency
+      try {
+        db.run(
+          "INSERT OR IGNORE INTO stock_transactions (id,user_id,stock_id,date,type,shares,price,fee,tax,account_id,note,created_at,tax_auto_calculated,recurring_plan_id,period_start_date) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+          [uid(), userId, r.stock_id, actualDate, 'buy', shares, price, fee, 0, r.account_id || '', finalNote, Date.now(), 1, r.id, scheduledDate]
+        );
+        const inserted = db.getRowsModified();
+        if (inserted > 0) {
+          generated++;
+        } else {
+          skipped++; // 已存在（多裝置 race）
+        }
+      } catch (e) {
+        console.warn('[stock-recurring] INSERT 失敗:', e.message);
+        skipped++;
+      }
       // last_generated 以排程日記錄，下一期從排程日推算，維持原本週期節奏
       db.run("UPDATE stock_recurring SET last_generated = ? WHERE id = ?", [scheduledDate, r.id]);
       touched = true;
-      generated++;
       scheduledDate = getNextDate(scheduledDate, r.frequency);
     }
   }
 
   if (touched) saveDB();
-  res.json({ generated, skipped, postponed });
+  return { generated, skipped, postponed };
+}
+
+app.post('/api/stock-recurring/process', async (req, res) => {
+  try {
+    const result = await processStockRecurring(req.userId);
+    res.json(result);
+  } catch (e) {
+    res.status(500).json({ error: '排程處理失敗：' + e.message });
+  }
 });
 
-// 股票清單
+// 股票清單（006 T030/T031/T032：FIFO decimal.js 全精度 + portfolioSummary + delisted/lastQuotedAt/priceSource）
 app.get('/api/stocks', (req, res) => {
   const stockSettings = getStockSettings(req.userId);
   const stocks = queryAll("SELECT * FROM stocks WHERE user_id = ? ORDER BY symbol", [req.userId]);
   const result = stocks.map(s => {
     const txs = queryAll("SELECT * FROM stock_transactions WHERE stock_id = ? AND user_id = ? ORDER BY date, created_at", [s.id, req.userId]);
     const divs = queryAll("SELECT * FROM stock_dividends WHERE stock_id = ? AND user_id = ? ORDER BY date DESC", [s.id, req.userId]);
-    // FIFO 計算持股與成本
-    let lots = []; // { shares, price, fee }
-    let totalShares = 0;
-    let realizedPL = 0;
-    txs.forEach(t => {
-      if (t.type === 'buy') {
-        lots.push({ shares: t.shares, price: t.price, fee: t.fee || 0 });
-        totalShares += t.shares;
-      } else {
-        let remaining = t.shares;
-        const sellRevenue = t.shares * t.price - t.fee - t.tax;
-        let sellCost = 0;
-        while (remaining > 0 && lots.length > 0) {
-          const lot = lots[0];
-          const used = Math.min(remaining, lot.shares);
-          const feeUsed = lot.shares === used ? lot.fee : Math.round(lot.fee * used / lot.shares);
-          sellCost += used * lot.price + feeUsed;
-          lot.fee -= feeUsed;
-          lot.shares -= used;
-          remaining -= used;
-          if (lot.shares <= 0) lots.shift();
-        }
-        realizedPL += sellRevenue - sellCost;
-        totalShares -= t.shares;
-      }
-    });
-    // 加上股票股利的股數
-    divs.forEach(d => { totalShares += (d.stock_dividend_shares || 0); });
-    // 現買公式
-    // 成本金額 = 買進價金 + 手續費
-    const totalCost = lots.reduce((sum, l) => sum + l.shares * l.price + l.fee, 0);
+    // 006 T030：使用 lib/moneyDecimal calcFifoLots 共用 helper（decimal.js 全精度）
+    const fifo = moneyDecimal.calcFifoLots(txs);
+    // FIFO 已將股票股利合成 $0 buy 交易納入；此處不再額外加 stock_dividend_shares 避免重複計算。
+    // （baseline 直接加總是因為當時未寫合成交易；006 T060 起寫合成交易後 totalShares 自然包含配股。）
+    // 為向後兼容尚未補寫合成交易的歷史股利紀錄，補加未對應合成交易的配股股數。
+    const dividendSyntheticShares = txs
+      .filter(t => t.type === 'buy' && Number(t.price) === 0 && typeof t.note === 'string' && /\[SYNTH\] 股票股利|股票股利配發/.test(t.note))
+      .reduce((sum, t) => sum + Number(t.shares || 0), 0);
+    const recordedDividendShares = divs.reduce((sum, d) => sum + Number(d.stock_dividend_shares || 0), 0);
+    const missingDividendShares = Math.max(0, recordedDividendShares - dividendSyntheticShares);
+    const totalShares = fifo.totalShares.plus(missingDividendShares).toNumber();
+    const totalCost = fifo.totalCost.toNumber();
+    const realizedPL = fifo.realizedPL.toNumber();
     // 均價（成本均價）= 成本金額 / 股數
     const avgCost = totalShares > 0 ? totalCost / totalShares : 0;
     // 市值 = 現價 × 股數
-    const marketValue = totalShares * (s.current_price || 0);
+    const currentPrice = Number(s.current_price || 0);
+    const marketValue = totalShares * currentPrice;
     const estSellFee = calcStockFee(marketValue, totalShares, stockSettings);
     const estSellTax = calcStockTax(marketValue, s.stock_type, stockSettings);
     // 預估淨收付 = 市值 – 手續費 – 交易稅
@@ -8006,59 +8204,157 @@ app.get('/api/stocks', (req, res) => {
     const estimatedProfit = estimatedNet - totalCost;
     // 報酬率 = 預估損益 / 成本金額 × 100%
     const returnRate = totalCost > 0 ? (estimatedProfit / totalCost * 100) : 0;
-    const totalDividend = divs.reduce((sum, d) => sum + d.cash_dividend, 0);
+    const totalDividend = divs.reduce((sum, d) => sum + Number(d.cash_dividend || 0), 0);
+    const isDelisted = !!s.delisted;
     return {
-      ...s, totalShares, avgCost: Math.round(avgCost * 100) / 100,
-      totalCost: Math.round(totalCost), marketValue: Math.round(marketValue),
-      estSellFee, estSellTax,
+      ...s,
+      totalShares,
+      avgCost: Math.round(avgCost * 100) / 100,
+      totalCost: Math.round(totalCost),
+      marketValue: Math.round(marketValue),
+      estSellFee,
+      estSellTax,
       estimatedNet: Math.round(estimatedNet),
       estimatedProfit: Math.round(estimatedProfit),
       returnRate: Math.round(returnRate * 100) / 100,
       realizedPL: Math.round(realizedPL * 100) / 100,
       totalDividend: Math.round(totalDividend),
-      currentPrice: s.current_price, updatedAt: s.updated_at,
-      stockType: s.stock_type
+      currentPrice,
+      updatedAt: s.updated_at,
+      stockType: s.stock_type,
+      delisted: isDelisted,
+      lastQuotedAt: s.updated_at,
+      priceSource: isDelisted ? 'frozen' : null,
     };
   });
-  res.json(result);
+  // 006 T031：portfolioSummary（金額加權整體報酬率）
+  const totalMarketValue = result.reduce((sum, x) => sum + (x.marketValue || 0), 0);
+  const totalCostSum = result.reduce((sum, x) => sum + (x.totalCost || 0), 0);
+  const totalPL = totalMarketValue - totalCostSum;
+  const totalReturnRate = totalCostSum > 0 ? Math.round(totalPL / totalCostSum * 10000) / 100 : null;
+  const portfolioSummary = {
+    totalMarketValue: Math.round(totalMarketValue),
+    totalCost: Math.round(totalCostSum),
+    totalPL: Math.round(totalPL),
+    totalReturnRate,
+  };
+  res.json({ stocks: result, portfolioSummary });
 });
 
 app.post('/api/stocks', (req, res) => {
   const { symbol, name, stockType } = req.body;
-  if (!symbol || !name) return res.status(400).json({ error: '股票代號和名稱為必填' });
+  if (!symbol) return res.status(400).json({ error: '股票代號為必填' });
+  // 006 T042：FR-014 fallback — name 留空時使用「（未命名）」
+  if (!/^[0-9A-Za-z]{1,8}$/.test(String(symbol).trim())) {
+    return res.status(400).json({ error: '股票代號格式不正確（限 1-8 字 ASCII 數字 / 字母）' });
+  }
   const dup = queryOne("SELECT id FROM stocks WHERE user_id = ? AND symbol = ?", [req.userId, symbol]);
   if (dup) return res.status(400).json({ error: '此股票代號已存在' });
   const id = uid();
   const validTypes = ['stock', 'etf', 'warrant'];
-  const type = validTypes.includes(stockType) ? stockType : 'stock';
+  // 006 T042：未指定 stockType 時自動推斷
+  const type = validTypes.includes(stockType) ? stockType : twseFetch.inferStockType(symbol);
+  const finalName = (name && String(name).trim()) || '（未命名）';
   db.run("INSERT INTO stocks (id, user_id, symbol, name, current_price, stock_type, updated_at) VALUES (?,?,?,?,0,?,?)",
-    [id, req.userId, symbol, name, type, todayStr()]);
+    [id, req.userId, symbol, finalName, type, new Date().toISOString()]);
   saveDB();
-  res.json({ id });
+  res.json({ id, stockType: type });
 });
 
+// 006 T042a：PUT 補強 — 修改 stockType 時觸發歷史 sell 交易稅額重算（FR-001 末段）
 app.put('/api/stocks/:id', (req, res) => {
   const { name, currentPrice, stockType } = req.body;
   const s = queryOne("SELECT * FROM stocks WHERE id = ? AND user_id = ?", [req.params.id, req.userId]);
   if (!s) return res.status(404).json({ error: '股票不存在' });
   const validTypes = ['stock', 'etf', 'warrant'];
   const type = validTypes.includes(stockType) ? stockType : (s.stock_type || 'stock');
+  const typeChanged = type !== s.stock_type;
   db.run("UPDATE stocks SET name = ?, current_price = ?, stock_type = ?, updated_at = ? WHERE id = ? AND user_id = ?",
-    [name || s.name, currentPrice != null ? currentPrice : s.current_price, type, todayStr(), req.params.id, req.userId]);
+    [name || s.name, currentPrice != null ? currentPrice : s.current_price, type, new Date().toISOString(), req.params.id, req.userId]);
+  // 持股類型修改 → 歷史 sell 交易（tax_auto_calculated=1）依新稅率重算
+  let recalculated = 0;
+  if (typeChanged) {
+    const settings = getStockSettings(req.userId);
+    const historicalSells = queryAll(
+      "SELECT id, shares, price FROM stock_transactions WHERE user_id = ? AND stock_id = ? AND type = 'sell' AND COALESCE(tax_auto_calculated, 1) = 1",
+      [req.userId, req.params.id]
+    );
+    historicalSells.forEach(t => {
+      const amount = Number(t.shares) * Number(t.price);
+      const newTax = calcStockTax(amount, type, settings);
+      db.run("UPDATE stock_transactions SET tax = ? WHERE id = ?", [newTax, t.id]);
+      recalculated += 1;
+    });
+  }
   saveDB();
-  res.json({ ok: true });
+  res.json({ ok: true, recalculated });
 });
 
-// 批次更新股價
+// 批次更新股價（006 T100：支援 updates / delisted；向後兼容 prices [{ id, currentPrice }]）
 app.post('/api/stocks/batch-price', (req, res) => {
-  const { prices } = req.body; // [{ id, currentPrice }]
-  if (!Array.isArray(prices)) return res.status(400).json({ error: '無效資料' });
-  prices.forEach(p => {
-    db.run("UPDATE stocks SET current_price = ?, updated_at = ? WHERE id = ? AND user_id = ?",
-      [p.currentPrice, todayStr(), p.id, req.userId]);
+  const updates = Array.isArray(req.body.updates) ? req.body.updates
+    : (Array.isArray(req.body.prices)
+      ? req.body.prices.map(p => ({ stockId: p.stockId || p.id, currentPrice: p.currentPrice }))
+      : null);
+  if (!updates) return res.status(400).json({ error: '無效資料' });
+  let updated = 0;
+  const nowIso = new Date().toISOString();
+  updates.forEach(u => {
+    const stockId = u.stockId || u.id;
+    if (!stockId) return;
+    if (typeof u.delisted === 'boolean') {
+      // 設定下市旗標 + 凍結價格
+      db.run(
+        "UPDATE stocks SET current_price = ?, delisted = ?, updated_at = ? WHERE id = ? AND user_id = ?",
+        [Number(u.currentPrice) || 0, u.delisted ? 1 : 0, nowIso, stockId, req.userId]
+      );
+    } else {
+      // 向後兼容：僅更新價格
+      db.run(
+        "UPDATE stocks SET current_price = ?, updated_at = ? WHERE id = ? AND user_id = ?",
+        [Number(u.currentPrice) || 0, nowIso, stockId, req.userId]
+      );
+    }
+    updated += db.getRowsModified();
   });
   saveDB();
-  res.json({ ok: true });
+  res.json({ ok: true, updated });
+});
+
+// 006 T111：批次查 TWSE 最新股價（read-only，不寫入 DB；前端確認後透過 /batch-price 寫入）
+app.post('/api/stocks/batch-fetch', async (req, res) => {
+  const stocks = queryAll("SELECT id, symbol, name FROM stocks WHERE user_id = ? AND COALESCE(delisted, 0) = 0", [req.userId]);
+  if (stocks.length === 0) return res.json({ results: [] });
+  const today = new Date();
+  const todayYmd = `${today.getFullYear()}${String(today.getMonth() + 1).padStart(2, '0')}${String(today.getDate()).padStart(2, '0')}`;
+  const fetcher = async (s) => {
+    let info = await fetchTwseRealtime(s.symbol);
+    if (!info || !info.found || !(info.closingPrice > 0)) {
+      info = await fetchTwseStockDay(s.symbol, todayYmd);
+    }
+    if (!info || !info.found || !(info.closingPrice > 0)) {
+      info = await fetchTpexStockDay(s.symbol, todayYmd);
+    }
+    if (info && info.found && info.closingPrice > 0) {
+      return {
+        stockId: s.id,
+        symbol: s.symbol,
+        status: 'ok',
+        currentPrice: info.closingPrice,
+        priceSource: info.priceSource || (info.isRealtime ? 'realtime' : 'close'),
+        priceType: info.priceType || '',
+        fetchedAt: new Date().toISOString(),
+      };
+    }
+    return { stockId: s.id, symbol: s.symbol, status: 'failed', error: '查詢失敗' };
+  };
+  try {
+    const settled = await twseFetch.fetchAllWithLimit(stocks, fetcher);
+    const results = settled.map(r => r.ok ? r.value : { stockId: r.item.id, symbol: r.item.symbol, status: 'failed', error: r.error });
+    res.json({ results });
+  } catch (e) {
+    res.status(500).json({ error: '批次查價失敗：' + e.message });
+  }
 });
 
 app.delete('/api/stocks/:id', (req, res) => {
@@ -8086,6 +8382,53 @@ app.post('/api/stocks/cleanup', (req, res) => {
   });
   if (deleted > 0) saveDB();
   res.json({ deleted });
+});
+
+// 006 T090：實現損益（彙總 + 列表）— FR-029 / FR-030 / FR-032 / Pass 4 Q1
+app.get('/api/stock-realized-pl', (req, res) => {
+  const stocks = queryAll("SELECT * FROM stocks WHERE user_id = ?", [req.userId]);
+  const entries = [];
+  stocks.forEach(s => {
+    const txs = queryAll(
+      "SELECT * FROM stock_transactions WHERE stock_id = ? AND user_id = ? ORDER BY date, created_at",
+      [s.id, req.userId]
+    );
+    const fifo = moneyDecimal.calcFifoLots(txs);
+    fifo.sellEntries.forEach(entry => {
+      const t = entry.tx;
+      entries.push({
+        transactionId: t.id,
+        sellDate: t.date,
+        stockId: s.id,
+        symbol: s.symbol,
+        name: s.name,
+        shares: Number(t.shares),
+        sellPrice: Number(t.price),
+        costPrice: Math.round(entry.costPerShare.toNumber() * 100) / 100,
+        feeAndTax: Math.round((Number(t.fee || 0) + Number(t.tax || 0))),
+        sellRevenue: Math.round(entry.sellRevenue.toNumber()),
+        totalCost: Math.round(entry.totalCost.toNumber()),
+        realizedPL: Math.round(entry.realizedPL.toNumber()),
+        returnRate: Math.round(entry.returnRate.toNumber() * 100) / 100,
+      });
+    });
+  });
+  entries.sort((a, b) => b.sellDate.localeCompare(a.sellDate));
+  // 金額加權公式（FR-029 / Pass 2 Q4）
+  const totalRealizedPL = entries.reduce((s, e) => s + e.realizedPL, 0);
+  const totalCostSum = entries.reduce((s, e) => s + e.totalCost, 0);
+  const overallReturnRate = totalCostSum > 0 ? Math.round(totalRealizedPL / totalCostSum * 10000) / 100 : null;
+  const thisYear = String(new Date().getFullYear());
+  const ytdRealizedPL = entries.filter(e => e.sellDate.startsWith(thisYear)).reduce((s, e) => s + e.realizedPL, 0);
+  res.json({
+    entries,
+    summary: {
+      totalRealizedPL,
+      overallReturnRate,
+      ytdRealizedPL,
+      count: entries.length,
+    },
+  });
 });
 
 // ─── 實現損益紀錄 ───
@@ -8161,12 +8504,14 @@ app.post('/api/stock-transactions/import', async (req, res) => {
       if (!date || !symbol || !type || !shares || !price) { skipped++; errors.push(`略過不完整資料（${symbol || '?'}）`); continue; }
       const shareNum = parseFloat(shares);
       if (!(shareNum > 0) || !Number.isInteger(shareNum)) { skipped++; errors.push(`股數必須為正整數（${symbol}）`); continue; }
-      // 找或建立股票
+      // 006 T043：找或建立股票，自動推斷 stockType + 名稱 fallback「（未命名）」
       let stock = queryOne("SELECT * FROM stocks WHERE user_id = ? AND symbol = ?", [req.userId, symbol]);
       if (!stock) {
         const sid = uid();
-        db.run("INSERT INTO stocks (id, user_id, symbol, name, current_price, stock_type, updated_at) VALUES (?, ?, ?, ?, ?, 'stock', ?)",
-          [sid, req.userId, symbol, stockName || symbol, parseFloat(price) || 0, todayStr()]);
+        const inferredType = twseFetch.inferStockType(symbol);
+        const fallbackName = (stockName && String(stockName).trim()) || '（未命名）';
+        db.run("INSERT INTO stocks (id, user_id, symbol, name, current_price, stock_type, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+          [sid, req.userId, symbol, fallbackName, parseFloat(price) || 0, inferredType, new Date().toISOString()]);
         stock = queryOne("SELECT * FROM stocks WHERE id = ?", [sid]);
       } else if (stock.name === symbol && stockName && stockName !== symbol) {
         // 股票名稱不正確（等於代號），用 CSV 提供的名稱更新
@@ -8203,12 +8548,14 @@ app.post('/api/stock-dividends/import', async (req, res) => {
       const cash = parseFloat(cashDividend || 0);
       const stock_d = parseFloat(stockDividend || 0);
       if (!cash && !stock_d) { skipped++; errors.push(`現金股利與股票股利至少填一項（${symbol} ${date}）`); continue; }
-      // 找或建立股票
+      // 006 T043：找或建立股票，自動推斷 stockType + 名稱 fallback「（未命名）」
       let stock = queryOne("SELECT * FROM stocks WHERE user_id = ? AND symbol = ?", [req.userId, symbol]);
       if (!stock) {
         const sid = uid();
-        db.run("INSERT INTO stocks (id, user_id, symbol, name, current_price, stock_type, updated_at) VALUES (?, ?, ?, ?, ?, 'stock', ?)",
-          [sid, req.userId, symbol, stockName || symbol, 0, todayStr()]);
+        const inferredType = twseFetch.inferStockType(symbol);
+        const fallbackName = (stockName && String(stockName).trim()) || '（未命名）';
+        db.run("INSERT INTO stocks (id, user_id, symbol, name, current_price, stock_type, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+          [sid, req.userId, symbol, fallbackName, 0, inferredType, new Date().toISOString()]);
         stock = queryOne("SELECT * FROM stocks WHERE id = ?", [sid]);
       } else if (stock.name === symbol && stockName && stockName !== symbol) {
         // 股票名稱不正確（等於代號），用 CSV 提供的名稱更新
@@ -8264,13 +8611,27 @@ app.post('/api/stock-transactions', (req, res) => {
   const stock = queryOne("SELECT id FROM stocks WHERE id = ? AND user_id = ?", [stockId, req.userId]);
   if (!stock) return res.status(400).json({ error: '股票不存在' });
   if (accountId && !assertOwned('accounts', accountId, req.userId)) return res.status(400).json({ error: '帳戶不存在或無權限' });
+  // 006 T040：賣出鏈式約束驗證（FR-013 / Pass 3 Q2）
+  if (type === 'sell') {
+    const sharesAt = getSharesAtDate(req.userId, stockId, date);
+    if (sharesAt < Number(shares)) {
+      return res.status(400).json({ error: `賣出股數不可超過 ${date} 當下持有 (${sharesAt} 股)` });
+    }
+    const chain = validateChainConstraint(req.userId, stockId, date, 'sell', Number(shares));
+    if (!chain.ok) {
+      return res.status(400).json({ error: `此交易會造成 ${chain.conflictDate} 持有量為負 (預期 ${chain.expectedShares} 股)` });
+    }
+  }
+  // 006：tax_auto_calculated 由 req.body 是否顯式提供 tax 判定（顯式 = 手動覆寫）
+  const taxAutoCalc = (req.body.tax === undefined || req.body.tax === null || req.body.tax === '') ? 1 : 0;
   const id = uid();
-  db.run("INSERT INTO stock_transactions (id,user_id,stock_id,date,type,shares,price,fee,tax,account_id,note,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
-    [id, req.userId, stockId, date, type, shares, price, fee || 0, tax || 0, accountId || '', note || '', Date.now()]);
+  db.run("INSERT INTO stock_transactions (id,user_id,stock_id,date,type,shares,price,fee,tax,account_id,note,created_at,tax_auto_calculated) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
+    [id, req.userId, stockId, date, type, shares, price, fee || 0, tax || 0, accountId || '', note || '', Date.now(), taxAutoCalc]);
   saveDB();
   res.json({ id });
 });
 
+// 006 T041：PUT 改為 atomic delete + insert 模擬（FR-037 / Pass 4 Q2）
 app.put('/api/stock-transactions/:id', (req, res) => {
   const { date: rawDate, type, shares, price, fee, tax, accountId, note } = req.body;
   const date = normalizeDate(rawDate);
@@ -8283,8 +8644,29 @@ app.put('/api/stock-transactions/:id', (req, res) => {
   if (accountId && !assertOwned('accounts', accountId, req.userId)) return res.status(400).json({ error: '帳戶不存在或無權限' });
   const t = queryOne("SELECT * FROM stock_transactions WHERE id = ? AND user_id = ?", [req.params.id, req.userId]);
   if (!t) return res.status(404).json({ error: '交易紀錄不存在' });
-  db.run("UPDATE stock_transactions SET date=?, type=?, shares=?, price=?, fee=?, tax=?, account_id=?, note=? WHERE id=? AND user_id=?",
-    [date, type, shares, price, fee || 0, tax || 0, accountId || '', note || '', req.params.id, req.userId]);
+  // 鏈式約束驗證（排除自身舊紀錄）
+  if (type === 'sell') {
+    const chain = validateChainConstraint(req.userId, t.stock_id, date, 'sell', Number(shares), req.params.id);
+    if (!chain.ok) {
+      return res.status(400).json({ error: `此修改會造成 ${chain.conflictDate} 持有量為負 (預期 ${chain.expectedShares} 股)` });
+    }
+  } else {
+    // type=buy 時若交易日延後可能也產生負持股
+    const chain = validateChainConstraint(req.userId, t.stock_id, date, 'buy', Number(shares), req.params.id);
+    if (!chain.ok) {
+      return res.status(400).json({ error: `此修改會造成 ${chain.conflictDate} 持有量為負 (預期 ${chain.expectedShares} 股)` });
+    }
+  }
+  const taxAutoCalc = (req.body.tax === undefined || req.body.tax === null || req.body.tax === '') ? 1 : 0;
+  db.run("BEGIN");
+  try {
+    db.run("UPDATE stock_transactions SET date=?, type=?, shares=?, price=?, fee=?, tax=?, account_id=?, note=?, tax_auto_calculated=? WHERE id=? AND user_id=?",
+      [date, type, shares, price, fee || 0, tax || 0, accountId || '', note || '', taxAutoCalc, req.params.id, req.userId]);
+    db.run("COMMIT");
+  } catch (e) {
+    try { db.run("ROLLBACK"); } catch (_) { /* noop */ }
+    return res.status(500).json({ error: '更新交易失敗：' + e.message });
+  }
   saveDB();
   res.json({ ok: true });
 });
@@ -8295,13 +8677,20 @@ app.delete('/api/stock-transactions/:id', (req, res) => {
   res.json({ ok: true });
 });
 
-// 股票交易批次刪除
+// 股票交易批次刪除（006 T057：拒絕股票股利合成交易）
 app.post('/api/stock-transactions/batch-delete', (req, res) => {
   const { ids } = req.body;
   if (!ids || !Array.isArray(ids) || ids.length === 0) return res.status(400).json({ error: '請選擇要刪除的紀錄' });
+  // 先檢查是否有合成股票股利交易（必須透過刪除股利紀錄連動處理）
+  for (const id of ids) {
+    const t = queryOne("SELECT note FROM stock_transactions WHERE id = ? AND user_id = ?", [id, req.userId]);
+    if (t && typeof t.note === 'string' && /^\[SYNTH\] 股票股利|股票股利配發/.test(t.note)) {
+      return res.status(400).json({ error: '股票股利合成交易必須透過刪除對應股利紀錄連動處理，請至「股利紀錄」頁刪除' });
+    }
+  }
   let deleted = 0;
   ids.forEach(id => {
-    const r = db.run("DELETE FROM stock_transactions WHERE id = ? AND user_id = ?", [id, req.userId]);
+    db.run("DELETE FROM stock_transactions WHERE id = ? AND user_id = ?", [id, req.userId]);
     deleted += db.getRowsModified();
   });
   saveDB();
@@ -8337,19 +8726,37 @@ app.get('/api/stock-dividends', (req, res) => {
   }
 });
 
+// 006 T060：股利新增 — 純股票股利不寫帳戶；含股票股利時同步寫入合成 $0 交易（FR-015 / FR-016）
 app.post('/api/stock-dividends', (req, res) => {
   const { stockId, date: rawDate, cashDividend, stockDividendShares, accountId, note } = req.body;
   const date = normalizeDate(rawDate);
   if (!stockId || !date) return res.status(400).json({ error: '必填欄位未填' });
-  if (Number(cashDividend) < 0 || Number(stockDividendShares) < 0) return res.status(400).json({ error: '股利不可為負' });
-  const stock = queryOne("SELECT id FROM stocks WHERE id = ? AND user_id = ?", [stockId, req.userId]);
+  const cash = Number(cashDividend) || 0;
+  const stkDivShares = Number(stockDividendShares) || 0;
+  if (cash < 0 || stkDivShares < 0) return res.status(400).json({ error: '股利不可為負' });
+  if (cash === 0 && stkDivShares === 0) return res.status(400).json({ error: '現金股利與股票股利至少填一項' });
+  const stock = queryOne("SELECT id, name FROM stocks WHERE id = ? AND user_id = ?", [stockId, req.userId]);
   if (!stock) return res.status(400).json({ error: '股票不存在' });
+  // FR-015：accountId conditional required — cash > 0 時必填，純股票股利可為 null
+  if (cash > 0 && !accountId) return res.status(400).json({ error: '入款帳戶為必填（含現金股利時）' });
   if (accountId && !assertOwned('accounts', accountId, req.userId)) return res.status(400).json({ error: '帳戶不存在或無權限' });
   const id = uid();
   db.run("INSERT INTO stock_dividends (id,user_id,stock_id,date,cash_dividend,stock_dividend_shares,account_id,note,created_at) VALUES (?,?,?,?,?,?,?,?,?)",
-    [id, req.userId, stockId, date, cashDividend || 0, stockDividendShares || 0, accountId || '', note || '', Date.now()]);
+    [id, req.userId, stockId, date, cash, stkDivShares, accountId || null, note || '', Date.now()]);
+  // 006 T060：股票股利配發合成 $0 buy 交易（FIFO 佇列維持完整）
+  let synthTxId = null;
+  if (stkDivShares > 0) {
+    synthTxId = uid();
+    const synthNote = `[SYNTH] 股票股利配發 | ${note || ''}`.trim();
+    db.run(
+      "INSERT INTO stock_transactions (id,user_id,stock_id,date,type,shares,price,fee,tax,account_id,note,created_at,tax_auto_calculated) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
+      [synthTxId, req.userId, stockId, date, 'buy', stkDivShares, 0, 0, 0, null, synthNote, Date.now(), 1]
+    );
+  }
+  // 注意：baseline 不在新增股利時自動寫入 transactions（帳戶餘額），保留此行為；
+  // accountId 僅作為股利紀錄的關聯標記，使用者若需要寫入帳戶可手動新增交易。
   saveDB();
-  res.json({ id });
+  res.json({ id, synthTxId });
 });
 
 app.put('/api/stock-dividends/:id', (req, res) => {
@@ -8366,23 +8773,57 @@ app.put('/api/stock-dividends/:id', (req, res) => {
   res.json({ ok: true });
 });
 
+// 006 T061：刪除股利連動處理 — 同步刪除合成 $0 交易（FR-018 / Pass 2 Q3）
 app.delete('/api/stock-dividends/:id', (req, res) => {
+  const old = queryOne("SELECT * FROM stock_dividends WHERE id = ? AND user_id = ?", [req.params.id, req.userId]);
+  if (!old) return res.status(404).json({ error: '股利紀錄不存在' });
+  let linkedTransactionDeleted = false;
+  if (Number(old.stock_dividend_shares) > 0) {
+    // 依 stock_id + date + price=0 + note 前綴匹配（容差 0.001 股）
+    const targetShares = Number(old.stock_dividend_shares);
+    const synth = queryAll(
+      "SELECT id, shares FROM stock_transactions WHERE user_id = ? AND stock_id = ? AND date = ? AND type = 'buy' AND price = 0 AND (note LIKE '[SYNTH] 股票股利%' OR note LIKE '%股票股利配發%')",
+      [req.userId, old.stock_id, old.date]
+    );
+    synth.forEach(t => {
+      if (Math.abs(Number(t.shares) - targetShares) < 0.001) {
+        db.run("DELETE FROM stock_transactions WHERE id = ?", [t.id]);
+        linkedTransactionDeleted = true;
+      }
+    });
+  }
   db.run("DELETE FROM stock_dividends WHERE id = ? AND user_id = ?", [req.params.id, req.userId]);
   saveDB();
-  res.json({ ok: true });
+  res.json({ ok: true, linkedTransactionDeleted });
 });
 
-// 股利批次刪除
+// 股利批次刪除（006 T076：套用 T061 連動處理）
 app.post('/api/stock-dividends/batch-delete', (req, res) => {
   const { ids } = req.body;
   if (!ids || !Array.isArray(ids) || ids.length === 0) return res.status(400).json({ error: '請選擇要刪除的紀錄' });
   let deleted = 0;
+  let linkedDeleted = 0;
   ids.forEach(id => {
+    const old = queryOne("SELECT * FROM stock_dividends WHERE id = ? AND user_id = ?", [id, req.userId]);
+    if (!old) return;
+    if (Number(old.stock_dividend_shares) > 0) {
+      const targetShares = Number(old.stock_dividend_shares);
+      const synth = queryAll(
+        "SELECT id, shares FROM stock_transactions WHERE user_id = ? AND stock_id = ? AND date = ? AND type = 'buy' AND price = 0 AND (note LIKE '[SYNTH] 股票股利%' OR note LIKE '%股票股利配發%')",
+        [req.userId, old.stock_id, old.date]
+      );
+      synth.forEach(t => {
+        if (Math.abs(Number(t.shares) - targetShares) < 0.001) {
+          db.run("DELETE FROM stock_transactions WHERE id = ?", [t.id]);
+          linkedDeleted += 1;
+        }
+      });
+    }
     db.run("DELETE FROM stock_dividends WHERE id = ? AND user_id = ?", [id, req.userId]);
     deleted += db.getRowsModified();
   });
   saveDB();
-  res.json({ deleted });
+  res.json({ deleted, linkedDeleted });
 });
 
 // ─── 資料庫匯出匯入（僅管理員） ───
@@ -8495,7 +8936,7 @@ initDB().then(() => {
   app.listen(PORT, () => {
     console.log(`AssetPilot 伺服器已啟動: http://localhost:${PORT}`);
     // T149：啟動 log 帶版本標籤，方便容器日誌追蹤上線版本
-    console.log('[startup] AssetPilot v4.25.0 / feature 004-budgets-recurring ready');
+    console.log('[startup] AssetPilot v4.27.0 / feature 006-stock-investments ready');
     console.log(`[OAuth] redirect_uri whitelist: ${GOOGLE_OAUTH_REDIRECT_URIS.length} entries`);
   });
 });

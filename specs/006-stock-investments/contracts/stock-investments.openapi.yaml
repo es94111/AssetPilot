@@ -1,0 +1,928 @@
+openapi: 3.2.0
+info:
+  title: 股票投資（Stock Investments）功能契約
+  version: 4.27.0
+  description: |
+    006-stock-investments 功能新增與修改的 HTTP 端點契約。
+    所有路徑遵循 Slash-Style HTTP Path Convention（憲章 Principle III），
+    所有端點需 cookieAuth 登入（憲章 Principle II）。
+    本契約完整內容於同 PR 同步合併至專案根目錄 `openapi.yaml`。
+
+servers:
+  - url: /
+    description: 同源（Express + SPA 同 Origin）
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: token
+      description: JWT httpOnly Cookie（既有；本功能不變更）
+
+  schemas:
+    StockType:
+      type: string
+      enum: [stock, etf, warrant]
+      description: |
+        股票類型 — 'stock' 一般股票（賣出證交稅 0.3%）、
+        'etf' ETF（賣出證交稅 0.1%）、'warrant' 權證（賣出證交稅 0.1%）。
+        若 POST 時未指定，伺服器以 `inferStockType(symbol)` 規則自動判定：
+        00xx 4–5 碼 → etf；6 碼以上或結尾含字母 → warrant；其餘 → stock。
+
+    PriceSource:
+      type: string
+      enum: [realtime, close, t+1, frozen]
+      description: |
+        股價來源 — 'realtime' 即時成交價（盤中）、
+        'close' 當日收盤價（盤後）、't+1' 前一交易日收盤價（非交易日 / 盤前）、
+        'frozen' 已下市股票凍結的最後一次成功取得價格。
+
+    StockSummary:
+      type: object
+      required: [id, symbol, name, totalShares, avgCost, currentPrice, marketValue, totalCost, returnRate, stockType, delisted]
+      properties:
+        id: { type: string }
+        symbol: { type: string, example: "2330" }
+        name: { type: string, example: "台積電" }
+        stockType: { $ref: '#/components/schemas/StockType' }
+        totalShares: { type: integer, description: "持有股數（含股票股利配發）" }
+        avgCost:
+          type: number
+          description: "FIFO 剩餘批次的平均成本；持股 = 0 時為 0"
+        currentPrice:
+          type: number
+          description: "目前股價；下市時凍結為標記前的最後一次成功取得價格"
+        marketValue:
+          type: integer
+          description: "市值（總股數 × 目前股價）；尚未取得股價時為 null"
+          nullable: true
+        totalCost:
+          type: integer
+          description: "FIFO 剩餘批次的總成本（含手續費分攤）"
+        estimatedProfit:
+          type: integer
+          description: "預估未實現損益 = 預估淨收付 − 總成本"
+        returnRate:
+          type: number
+          description: "報酬率（百分比，2 位小數）；總成本 = 0 時為 null"
+          nullable: true
+        realizedPL:
+          type: integer
+          description: "累計已實現損益（含本檔的所有歷史賣出）"
+        totalDividend:
+          type: integer
+          description: "累計現金股利（不含股票股利的市值）"
+        delisted:
+          type: boolean
+          description: "是否已標記為下市"
+        lastQuotedAt:
+          type: string
+          format: date-time
+          description: "最後查價時間（ISO 8601）"
+        priceSource: { $ref: '#/components/schemas/PriceSource' }
+
+    PortfolioSummary:
+      type: object
+      required: [totalMarketValue, totalCost, totalPL]
+      properties:
+        totalMarketValue:
+          type: integer
+          description: "總市值（Σ 各檔市值）"
+        totalCost:
+          type: integer
+          description: "總成本（Σ 各檔 FIFO 剩餘成本）"
+        totalPL:
+          type: integer
+          description: "總損益（總市值 − 總成本）"
+        totalReturnRate:
+          type: number
+          description: "整體報酬率（金額加權，百分比）；總成本 = 0 時為 null"
+          nullable: true
+
+    RealizedPLEntry:
+      type: object
+      required: [transactionId, sellDate, stockId, symbol, name, shares, sellPrice, costPrice, feeAndTax, realizedPL, returnRate]
+      properties:
+        transactionId: { type: string }
+        sellDate: { type: string, format: date }
+        stockId: { type: string }
+        symbol: { type: string }
+        name: { type: string }
+        shares: { type: integer }
+        sellPrice:
+          type: number
+          description: "賣出均價（成交金額 / 股數）"
+        costPrice:
+          type: number
+          description: "FIFO 成本均價（含手續費分攤）"
+        feeAndTax:
+          type: integer
+          description: "手續費 + 證交稅"
+        realizedPL:
+          type: integer
+          description: "實現損益 = 賣出收入 − FIFO 成本基礎"
+        returnRate:
+          type: number
+          description: "報酬率（百分比，2 位小數）"
+
+    RealizedPLSummary:
+      type: object
+      required: [totalRealizedPL, count]
+      properties:
+        totalRealizedPL:
+          type: integer
+          description: "總實現損益（Σ 所有 entries）"
+        overallReturnRate:
+          type: number
+          description: "整體報酬率（金額加權）；總成本 = 0 時為 null"
+          nullable: true
+        ytdRealizedPL:
+          type: integer
+          description: "今年（依台灣時區）實現損益合計"
+        count:
+          type: integer
+          description: "已實現筆數"
+
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error: { type: string, description: "錯誤訊息（繁體中文）" }
+
+    QuoteResult:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [ok, not_found, service_unavailable]
+          description: |
+            ok = TWSE 回應 200 且代號有效；
+            not_found = TWSE 回應 200 但無此代號（前端紅色 ✗）；
+            service_unavailable = TWSE 5xx / network / timeout（前端黃色 ⚠，沿用最後成功值）。
+        symbol: { type: string, nullable: true }
+        name: { type: string, nullable: true }
+        currentPrice:
+          type: number
+          nullable: true
+          description: "查詢成功時的最新股價"
+        priceSource:
+          allOf:
+            - $ref: '#/components/schemas/PriceSource'
+          nullable: true
+        fetchedAt:
+          type: string
+          format: date-time
+          nullable: true
+        error:
+          type: string
+          nullable: true
+          description: "失敗類型對應的繁體中文訊息"
+
+    StockTransactionListItem:
+      type: object
+      required: [id, stockId, symbol, name, date, type, shares, price, fee, tax]
+      properties:
+        id: { type: string }
+        stockId: { type: string }
+        symbol: { type: string }
+        name: { type: string }
+        date: { type: string, format: date }
+        type: { type: string, enum: [buy, sell] }
+        shares: { type: integer }
+        price: { type: number }
+        fee: { type: integer }
+        tax: { type: integer }
+        taxAutoCalculated:
+          type: boolean
+          description: |
+            true = 系統依 FR-012 自動計算 tax；false = 使用者手動覆寫（FR-001 末段類型修改重算時保留不動）。
+        accountId: { type: string, nullable: true }
+        note:
+          type: string
+          nullable: true
+          description: |
+            一般使用者備註；若為股票股利合成交易則 MUST 以唯一前綴 `[SYNTH] 股票股利` 開頭（FR-016 + U3 / I2 規範），
+            FR-018 連動刪除以此前綴精確匹配。
+        recurringPlanId:
+          type: string
+          nullable: true
+          description: "若為定期定額自動產生則填入排程 id（FR-024a）"
+        periodStartDate:
+          type: string
+          format: date
+          nullable: true
+          description: "若為定期定額自動產生則填入該期起始日（FR-024a）"
+
+    StockDividendListItem:
+      type: object
+      required: [id, stockId, symbol, name, date, cashDividend, stockDividendShares]
+      properties:
+        id: { type: string }
+        stockId: { type: string }
+        symbol: { type: string }
+        name: { type: string }
+        date:
+          type: string
+          format: date
+          description: "除息日期（ex-dividend date）"
+        cashDividend: { type: integer }
+        stockDividendShares: { type: integer }
+        accountId:
+          type: string
+          nullable: true
+          description: "純股票股利（cashDividend=0）時為 null（Pass 2 Q2）"
+        note: { type: string, nullable: true }
+        source:
+          type: string
+          enum: [manual, twse_sync]
+          description: "資料來源 — 手動建立或 TWSE 自動同步"
+
+  responses:
+    Unauthorized:
+      description: 未登入或 Cookie 已失效
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    BadRequest:
+      description: 輸入欄位驗證失敗或業務規則拒絕
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+
+security:
+  - cookieAuth: []
+
+paths:
+
+  # ─────────────────────────────────────────────
+  # 持倉與總覽（修改既有端點）
+  # ─────────────────────────────────────────────
+  /api/stocks:
+    get:
+      summary: 取得使用者所有持股 + 投資組合總覽
+      description: |
+        本功能修改：response 從原本的純 array 改為 `{ stocks: [...], portfolioSummary: {...} }` 物件，
+        補 `portfolioSummary` 提供總覽卡四個彙整數字（FR-003 + Pass 2 Q4 金額加權公式）。
+        同時各筆 stock 補 `delisted` / `lastQuotedAt` / `priceSource` 欄位。
+        持股股數 = 0 的股票不出現於 stocks 陣列（FR-004）；下市股票仍出現但 `delisted=true`。
+      tags: [Stocks]
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [stocks, portfolioSummary]
+                properties:
+                  stocks:
+                    type: array
+                    items: { $ref: '#/components/schemas/StockSummary' }
+                  portfolioSummary: { $ref: '#/components/schemas/PortfolioSummary' }
+        "401": { $ref: '#/components/responses/Unauthorized' }
+
+    post:
+      summary: 手動新增一檔股票
+      description: |
+        修改：若 body 未指定 `stockType`，伺服器以 `inferStockType(symbol)` 規則
+        自動判定（FR-001 + Pass 3 Q1）。`symbol` 經 `^[0-9A-Za-z]{1,8}$` 正則驗證
+        + TWSE 存在性確認（FR-008 + Pass 3 Q4）。
+      tags: [Stocks]
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [symbol]
+              properties:
+                symbol: { type: string, pattern: "^[0-9A-Za-z]{1,8}$", example: "0050" }
+                name:
+                  type: string
+                  description: |
+                    省略時伺服器以 TWSE 查詢結果自動填入；查詢失敗時以「（未命名）」為 placeholder（FR-014 + Pass 3 Q4）。
+                  example: "元大台灣 50"
+                stockType: { $ref: '#/components/schemas/StockType' }
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [id, stockType]
+                properties:
+                  id: { type: string }
+                  stockType: { $ref: '#/components/schemas/StockType' }
+        "400": { $ref: '#/components/responses/BadRequest' }
+        "401": { $ref: '#/components/responses/Unauthorized' }
+
+  /api/stocks/quote:
+    get:
+      summary: TWSE 即時查價代理（FR-007 + FR-008）
+      description: |
+        新增（為 contract 補登既有/新建端點）：交易與股利 Modal 輸入股票代號時呼叫此端點
+        以取得名稱與最新股價並回填。後端先以 `^[0-9A-Za-z]{1,8}$` 正則驗證 symbol（FR-008
+        防注入），通過後呼叫既有 TWSE 查價 helper（採 FR-005 三段策略 + FR-006 TPEX
+        fallback + Pass 4 Q3 並發/重試）。回傳 `status` 三段分流（FR-007 修正後語意 + A1）：
+        - `ok` → TWSE 回應 200 且代號有效（前端綠色 ✓）
+        - `not_found` → TWSE 回應 200 但無此代號（前端紅色 ✗）
+        - `service_unavailable` → TWSE 5xx / network / timeout（前端黃色 ⚠，沿用最後成功值）
+      tags: [Stocks]
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: symbol
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: "^[0-9A-Za-z]{1,8}$"
+      responses:
+        "200":
+          description: 查詢結果（status 三段分流；status=service_unavailable 仍回 200 以利前端統一處理）
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/QuoteResult' }
+        "400":
+          description: symbol 格式不符 `^[0-9A-Za-z]{1,8}$`
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        "401": { $ref: '#/components/responses/Unauthorized' }
+
+  /api/stocks/batch-fetch:
+    post:
+      summary: 批次從 TWSE 查詢所有持股的最新股價（read-only，不寫入 DB）
+      description: |
+        新增（FR-034 + Pass 4 Q3）：批次更新股價 Modal 的「從證交所取得最新股價」按鈕呼叫此端點；
+        並發查詢使用者所有 `delisted = 0` 的持股，受 env var `TWSE_MAX_CONCURRENCY`（預設 5）限制 +
+        失敗指數退避重試 2 次。本端點為 **read-only**，不寫入 `stocks.current_price`；前端取得回傳值
+        後讓使用者於 Modal 內預覽 / 手動覆寫，最終透過 `/api/stocks/batch-price` 寫入。
+      tags: [Stocks]
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [results]
+                properties:
+                  results:
+                    type: array
+                    items:
+                      type: object
+                      required: [stockId, symbol, status]
+                      properties:
+                        stockId: { type: string }
+                        symbol: { type: string }
+                        status: { type: string, enum: [ok, failed] }
+                        currentPrice:
+                          type: number
+                          nullable: true
+                          description: "查詢成功時的最新股價；失敗時為 null"
+                        priceSource:
+                          $ref: '#/components/schemas/PriceSource'
+                          nullable: true
+                        fetchedAt:
+                          type: string
+                          format: date-time
+                          nullable: true
+                          description: "成功取得時間（ISO 8601）"
+                        error:
+                          type: string
+                          nullable: true
+                          description: "失敗原因（status = failed 時填入）"
+        "401": { $ref: '#/components/responses/Unauthorized' }
+
+  /api/stocks/batch-price:
+    post:
+      summary: 批次更新所有持股的目前股價（FR-033 ~ FR-035a）
+      description: |
+        修改：body 改為 `{ updates: [{ stockId, currentPrice, delisted }, ...] }`。
+        `delisted=true` 時系統凍結 `current_price` 為當下值且後續所有 TWSE
+        查價情境跳過該檔（Pass 1 Q2 + FR-035a）；`delisted=false` 解除標記。
+        並發查詢 TWSE 時受 env var `TWSE_MAX_CONCURRENCY`（預設 5）限制 +
+        失敗指數退避重試 2 次（Pass 4 Q3）。
+      tags: [Stocks]
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [updates]
+              properties:
+                updates:
+                  type: array
+                  items:
+                    type: object
+                    required: [stockId, currentPrice]
+                    properties:
+                      stockId: { type: string }
+                      currentPrice: { type: number, minimum: 0 }
+                      delisted:
+                        type: boolean
+                        description: |
+                          true 標記下市並凍結價格；false 解除標記；
+                          省略則不變動 delisted 旗標（向後兼容 baseline 呼叫者）。
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [updated]
+                properties:
+                  updated: { type: integer, description: "更新筆數" }
+        "400": { $ref: '#/components/responses/BadRequest' }
+        "401": { $ref: '#/components/responses/Unauthorized' }
+
+  # ─────────────────────────────────────────────
+  # 交易（修改既有端點 — 補鏈式約束驗證）
+  # ─────────────────────────────────────────────
+  /api/stock-transactions:
+    get:
+      summary: 取得股票交易列表（伺服器端分頁 + 搜尋，FR-017）
+      description: |
+        新增（為 contract 補登既有/新建端點）：交易紀錄頁列表資料源。支援依股票代號或
+        名稱模糊搜尋（`search`）+ 伺服器端分頁（`page` / `pageSize`）；response 包成
+        `{data, total, page, totalPages}` 結構。`pageSize` 上限為 200（A2 修正後規範：
+        系統內建選單 10 / 20 / 50 / 100；自訂值範圍 [1, 200]，每次 session 重設為 20）。
+      tags: [StockTransactions]
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: page
+          in: query
+          required: false
+          schema: { type: integer, minimum: 1, default: 1 }
+        - name: pageSize
+          in: query
+          required: false
+          schema: { type: integer, minimum: 1, maximum: 200, default: 20 }
+        - name: search
+          in: query
+          required: false
+          schema: { type: string }
+          description: "依股票代號（symbol）或名稱（name）模糊搜尋"
+        - name: stockId
+          in: query
+          required: false
+          schema: { type: string }
+          description: "選填；過濾單一股票"
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, total, page, totalPages]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/StockTransactionListItem' }
+                  total: { type: integer, description: "符合條件的總筆數" }
+                  page: { type: integer }
+                  totalPages: { type: integer }
+        "400": { $ref: '#/components/responses/BadRequest' }
+        "401": { $ref: '#/components/responses/Unauthorized' }
+
+    post:
+      summary: 新增一筆股票交易
+      description: |
+        修改：賣出（type='sell'）交易加入 FR-013 + Pass 3 Q2 鏈式約束驗證。
+        - 該交易日當下持有 < shares → 400 with message "賣出股數不可超過 YYYY-MM-DD 當下持有 (X 股)"
+        - 任一後續時點持有為負 → 400 with message "此交易會造成 YYYY-MM-DD 持有量為負 (預期 X 股)"
+        手續費以 `max(⌊金額 × 0.1425%⌋, 整股 20 / 零股 1)` 預設計算（FR-011 + Pass 2 Q5）；
+        證交稅以 `max(⌊金額 × 稅率⌋, 1)` 預設計算（FR-012）；皆可手動覆寫。
+      tags: [StockTransactions]
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [stockId, date, type, shares, price]
+              properties:
+                stockId: { type: string }
+                date: { type: string, format: date }
+                type: { type: string, enum: [buy, sell] }
+                shares: { type: integer, minimum: 1, description: "整數，拒絕小數（FR-010）" }
+                price: { type: number, minimum: 0 }
+                fee: { type: number, minimum: 0, description: "省略則自動計算" }
+                tax: { type: number, minimum: 0, description: "省略則自動計算（賣出）或為 0（買入）" }
+                accountId: { type: string }
+                note: { type: string, default: "" }
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [id]
+                properties:
+                  id: { type: string }
+        "400":
+          description: 驗證失敗（鏈式約束、整數檢查、必填等）
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        "401": { $ref: '#/components/responses/Unauthorized' }
+
+  /api/stock-transactions/batch-delete:
+    post:
+      summary: 批次刪除多筆股票交易（FR-017 + FR-018）
+      description: |
+        新增：交易紀錄頁 checkbox 多選後送出本端點；前端 MUST 已通過二次確認對話框
+        （FR-018）才呼叫此端點。刪除後 FIFO 佇列依 FR-018 全量重算（衍生數值動態反映）。
+      tags: [StockTransactions]
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ids]
+              properties:
+                ids:
+                  type: array
+                  minItems: 1
+                  items: { type: string }
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [deleted]
+                properties:
+                  deleted: { type: integer, description: "實際刪除筆數" }
+        "400": { $ref: '#/components/responses/BadRequest' }
+        "401": { $ref: '#/components/responses/Unauthorized' }
+
+  /api/stock-transactions/{id}:
+    put:
+      summary: 修改一筆股票交易（atomic delete + insert）
+      description: |
+        修改：本端點視為「刪除舊紀錄 + 插入新紀錄」的單一原子操作（FR-037 + Pass 4 Q2）；
+        套用 FR-018 全量 FIFO 重算 + FR-013 鏈式約束驗證；違反則整個修改 reject 並保留原紀錄。
+      tags: [StockTransactions]
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [date, type, shares, price]
+              properties:
+                date: { type: string, format: date }
+                type: { type: string, enum: [buy, sell] }
+                shares: { type: integer, minimum: 1 }
+                price: { type: number, minimum: 0 }
+                fee: { type: number, minimum: 0 }
+                tax: { type: number, minimum: 0 }
+                accountId: { type: string }
+                note: { type: string }
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [ok]
+                properties:
+                  ok: { type: boolean }
+        "400": { $ref: '#/components/responses/BadRequest' }
+        "401": { $ref: '#/components/responses/Unauthorized' }
+        "404":
+          description: 交易不存在
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+    delete:
+      summary: 刪除單一筆股票交易
+      description: |
+        刪除後 FIFO 佇列依 FR-018 全量重算；若該交易為股票股利合成 $0 交易則應透過
+        `/api/stock-dividends/{id}` 刪除股利紀錄連動處理（見 FR-018 連動規則），不應直接呼叫此端點。
+      tags: [StockTransactions]
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [ok]
+                properties:
+                  ok: { type: boolean }
+        "401": { $ref: '#/components/responses/Unauthorized' }
+        "404":
+          description: 交易不存在
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /api/stock-dividends/batch-delete:
+    post:
+      summary: 批次刪除多筆股利紀錄（FR-017 + FR-018）
+      description: |
+        新增：股利紀錄頁 checkbox 多選後送出本端點；前端 MUST 已通過二次確認對話框
+        （FR-018）才呼叫此端點。每筆刪除依 FR-018 連動處理（合成 $0 交易 + 退回現金股利帳戶餘額）。
+      tags: [StockDividends]
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ids]
+              properties:
+                ids:
+                  type: array
+                  minItems: 1
+                  items: { type: string }
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [deleted]
+                properties:
+                  deleted: { type: integer, description: "實際刪除筆數" }
+        "400": { $ref: '#/components/responses/BadRequest' }
+        "401": { $ref: '#/components/responses/Unauthorized' }
+
+  # ─────────────────────────────────────────────
+  # 股利（修改既有端點 — 純股票股利不寫帳戶 + 連動刪除）
+  # ─────────────────────────────────────────────
+  /api/stock-dividends:
+    get:
+      summary: 取得股利紀錄列表（伺服器端分頁 + 搜尋，FR-017）
+      description: |
+        新增（為 contract 補登既有/新建端點）：股利紀錄頁列表資料源。支援依股票代號或
+        名稱模糊搜尋（`search`）+ 伺服器端分頁（`page` / `pageSize`）；response 包成
+        `{data, total, page, totalPages}` 結構。`pageSize` 上限為 200（A2 修正後規範：
+        系統內建選單 10 / 20 / 50 / 100；自訂值範圍 [1, 200]，每次 session 重設為 20）。
+      tags: [StockDividends]
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: page
+          in: query
+          required: false
+          schema: { type: integer, minimum: 1, default: 1 }
+        - name: pageSize
+          in: query
+          required: false
+          schema: { type: integer, minimum: 1, maximum: 200, default: 20 }
+        - name: search
+          in: query
+          required: false
+          schema: { type: string }
+          description: "依股票代號（symbol）或名稱（name）模糊搜尋"
+        - name: stockId
+          in: query
+          required: false
+          schema: { type: string }
+          description: "選填；過濾單一股票"
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, total, page, totalPages]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/StockDividendListItem' }
+                  total: { type: integer }
+                  page: { type: integer }
+                  totalPages: { type: integer }
+        "400": { $ref: '#/components/responses/BadRequest' }
+        "401": { $ref: '#/components/responses/Unauthorized' }
+
+    post:
+      summary: 新增一筆股利紀錄
+      description: |
+        修改：`accountId` 改為僅當 `cashDividend > 0` 時必填；純股票股利時為選填
+        （Pass 2 Q2）。系統若 `stockDividendShares > 0` 則同時寫入合成 $0 交易紀錄
+        以維持 FIFO 佇列正確性（FR-016 + Pass 1 Q1 + Pass 2 Q3）。
+      tags: [StockDividends]
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [stockId, date]
+              properties:
+                stockId: { type: string }
+                date:
+                  type: string
+                  format: date
+                  description: "除息日期（ex-dividend date，FR-015）"
+                cashDividend: { type: number, minimum: 0, default: 0 }
+                stockDividendShares: { type: integer, minimum: 0, default: 0 }
+                accountId:
+                  type: string
+                  description: |
+                    現金股利金額 > 0 時必填；純股票股利時可省略（不寫入任何帳戶餘額）。
+                note: { type: string, default: "" }
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [id]
+                properties:
+                  id: { type: string }
+        "400": { $ref: '#/components/responses/BadRequest' }
+        "401": { $ref: '#/components/responses/Unauthorized' }
+
+  /api/stock-dividends/{id}:
+    delete:
+      summary: 刪除一筆股利紀錄（連動處理）
+      description: |
+        修改：刪除股利時連動處理（Pass 2 Q3）：
+        - 含股票股利 → 自動同步刪除對應的合成 $0 股票股利交易紀錄。
+        - 含現金股利 → 自動退回原入款帳戶餘額（刪除對應的 transactions 紀錄）。
+        - FIFO 佇列依 FR-018 重建；無需額外確認對話框（視為單一原子操作）。
+      tags: [StockDividends]
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [ok, linkedTransactionDeleted]
+                properties:
+                  ok: { type: boolean }
+                  linkedTransactionDeleted:
+                    type: boolean
+                    description: "是否同步刪除了合成股票股利交易"
+        "401": { $ref: '#/components/responses/Unauthorized' }
+        "404":
+          description: 股利不存在
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /api/stock-dividends/sync:
+    post:
+      summary: 同步單一年份的除權息資料
+      description: |
+        新增：拆段同步端點供前端阻擋式 Modal 逐年呼叫並更新進度（FR-027 + Pass 2 Q1）。
+        前端依使用者最早交易日年份 → 今年逐年送 POST 並更新進度條；
+        若使用者點 Modal 取消按鈕則前端 break 跳出迴圈（後端不需取消邏輯）。
+        同步邏輯沿用既有 TWSE TWT49U + TWT49UDetail；同步結果含每筆明細與彙總計數。
+      tags: [StockDividends]
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: year
+          in: query
+          required: true
+          schema:
+            type: integer
+            minimum: 2010
+            maximum: 2099
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [year, added, skipped, failed]
+                properties:
+                  year: { type: integer }
+                  added: { type: integer, description: "新增筆數" }
+                  skipped: { type: integer, description: "跳過筆數（已存在或無持股）" }
+                  failed: { type: integer, description: "失敗筆數" }
+                  details:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        stockId: { type: string }
+                        symbol: { type: string }
+                        date: { type: string, format: date }
+                        status: { type: string, enum: [added, skipped, failed] }
+                        reason: { type: string, nullable: true }
+        "400": { $ref: '#/components/responses/BadRequest' }
+        "401": { $ref: '#/components/responses/Unauthorized' }
+
+  # ─────────────────────────────────────────────
+  # 已實現損益（新增端點）
+  # ─────────────────────────────────────────────
+  /api/stock-realized-pl:
+    get:
+      summary: 取得已實現損益列表 + 彙總（FR-029 ~ FR-032）
+      description: |
+        新增：FIFO 邏輯計算每筆賣出交易的成本基礎、實現損益、報酬率；
+        提供彙總卡四個數字（總實現損益 / 整體報酬率 / 今年實現損益 / 已實現筆數）。
+        整體報酬率採金額加權公式（Pass 2 Q4）。FIFO 內部以 decimal.js 全精度計算
+        （Pass 4 Q1），顯示時取整。
+      tags: [StockRealizedPL]
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [entries, summary]
+                properties:
+                  entries:
+                    type: array
+                    items: { $ref: '#/components/schemas/RealizedPLEntry' }
+                  summary: { $ref: '#/components/schemas/RealizedPLSummary' }
+        "401": { $ref: '#/components/responses/Unauthorized' }
+
+  # ─────────────────────────────────────────────
+  # 定期定額（修改既有端點 — idempotency）
+  # ─────────────────────────────────────────────
+  /api/stock-recurring/process:
+    post:
+      summary: 觸發定期定額排程處理（手動入口）
+      description: |
+        修改：本端點保留為手動觸發入口（向後兼容）；日常觸發改為登入時自動執行
+        （server-side hook，FR-020）。本端點與登入 hook 共用 `processStockRecurring(userId)`
+        helper，行為一致：
+        - 補產生迴圈：每期使用該期應觸發日的歷史股價（Pass 3 Q3，via TWSE STOCK_DAY 歷史 API）。
+        - INSERT `stock_transactions` 加 `recurring_plan_id` + `period_start_date` 兩欄
+          + INSERT OR IGNORE 對應 partial unique index（Pass 3 Q5 多裝置 idempotency）。
+        - 預算 < 1 股 / 歷史股價查詢失敗 → 該期跳過、不阻擋後續期數。
+        並發查詢時受 `TWSE_MAX_CONCURRENCY`（預設 5）+ 重試 2 次限制（Pass 4 Q3）。
+      tags: [StockRecurring]
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [generated, skipped, postponed]
+                properties:
+                  generated: { type: integer }
+                  skipped: { type: integer }
+                  postponed: { type: integer }
+        "401": { $ref: '#/components/responses/Unauthorized' }

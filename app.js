@@ -327,6 +327,46 @@ const App = (() => {
     const day = String(d.getDate()).padStart(2, '0');
     return `${y}-${m}-${day}`;
   }
+
+  // 006-stock-investments T019：損益顯色三段式（綠 ▲ / 灰 / 紅 ▼）— Pass 4 Q4
+  function colorizePL(value) {
+    if (value === null || value === undefined || Number(value) === 0) {
+      return { className: 'pl-zero', symbol: '' };
+    }
+    if (Number(value) > 0) return { className: 'pl-positive', symbol: '▲' };
+    return { className: 'pl-negative', symbol: '▼' };
+  }
+
+  // 006-stock-investments T020：> 24 小時陳舊資料 ⚠ 警示色
+  function formatStaleQuoteBadge(updatedAt) {
+    if (!updatedAt) return { text: '—', className: 'stale-quote' };
+    const ts = new Date(updatedAt).getTime();
+    if (!isFinite(ts) || ts <= 0) return { text: '—', className: 'stale-quote' };
+    const diffMs = Date.now() - ts;
+    if (diffMs > 86400000) {
+      const days = Math.floor(diffMs / 86400000);
+      return { text: `${days} 天前`, className: 'stale-quote' };
+    }
+    const d = new Date(ts);
+    const hh = String(d.getHours()).padStart(2, '0');
+    const mm = String(d.getMinutes()).padStart(2, '0');
+    return { text: `${hh}:${mm}`, className: '' };
+  }
+
+  // 006-stock-investments T021：股票代號前端正則驗證（FR-008 + Pass 3 Q4）
+  function validateStockSymbol(symbol) {
+    return typeof symbol === 'string' && /^[0-9A-Za-z]{1,8}$/.test(symbol.trim());
+  }
+
+  // 006-stock-investments T022：前端版股票類型推斷（FR-001 + Pass 3 Q1）
+  function inferStockTypeFrontend(symbol) {
+    if (typeof symbol !== 'string') return 'stock';
+    const s = symbol.trim().toUpperCase();
+    if (!s) return 'stock';
+    if (/^00\d{2,3}$/.test(s)) return 'etf';
+    if (s.length >= 6 || /[A-Z]$/.test(s)) return 'warrant';
+    return 'stock';
+  }
   // 002 T044 (FR-007a)：固定以 Asia/Taipei (UTC+8) 計算「今天」字串，
   // 與後端 lib/taipeiTime.js todayInTaipei() 對齊，避免使用者瀏覽器跨時區（如 PST）
   // 開啟 Modal 時看到「昨天」的日期。
@@ -3009,6 +3049,7 @@ const App = (() => {
   // ─── 股票紀錄 ───
   let stocksBound = false;
   let cachedStocks = [];
+  let cachedPortfolioSummary = null;
   const DEFAULT_STOCK_CALC_SETTINGS = {
     feeRate: 0.001425,
     feeDiscount: 1,
@@ -3215,12 +3256,18 @@ const App = (() => {
           calcStockTxSummary();
         });
       });
-      // 股票代號自動查詢 TWSE（新增股票 Modal）
+      // 股票代號自動查詢 TWSE（新增股票 Modal）— 006 T051：套用前端 ASCII 正則預驗
       let stkLookupTimer = null;
       el('stkSymbol').addEventListener('input', () => {
         clearTimeout(stkLookupTimer);
         const sym = el('stkSymbol').value.trim();
         el('stkLookupStatus').textContent = '';
+        if (sym.length === 0) return;
+        if (!validateStockSymbol(sym)) {
+          el('stkLookupStatus').textContent = '代號格式不正確（限 1–8 字 ASCII 數字 / 字母）';
+          el('stkLookupStatus').className = 'stk-lookup-status error';
+          return;
+        }
         if (sym.length >= 2) {
           el('stkLookupStatus').textContent = '查詢中...';
           el('stkLookupStatus').className = 'stk-lookup-status';
@@ -3234,6 +3281,12 @@ const App = (() => {
         const sym = el('stkTxSymbol').value.trim();
         el('stkTxLookupStatus').textContent = '';
         el('stkTxStockId').value = '';
+        if (sym.length === 0) return;
+        if (!validateStockSymbol(sym)) {
+          el('stkTxLookupStatus').textContent = '代號格式不正確（限 1–8 字 ASCII 數字 / 字母）';
+          el('stkTxLookupStatus').className = 'stk-lookup-status error';
+          return;
+        }
         if (sym.length >= 2) {
           el('stkTxLookupStatus').textContent = '查詢中...';
           el('stkTxLookupStatus').className = 'stk-lookup-status';
@@ -3247,6 +3300,12 @@ const App = (() => {
         const sym = el('stkDivSymbol').value.trim();
         el('stkDivLookupStatus').textContent = '';
         el('stkDivStockId').value = '';
+        if (sym.length === 0) return;
+        if (!validateStockSymbol(sym)) {
+          el('stkDivLookupStatus').textContent = '代號格式不正確（限 1–8 字 ASCII 數字 / 字母）';
+          el('stkDivLookupStatus').className = 'stk-lookup-status error';
+          return;
+        }
         if (sym.length >= 2) {
           el('stkDivLookupStatus').textContent = '查詢中...';
           el('stkDivLookupStatus').className = 'stk-lookup-status';
@@ -3277,7 +3336,18 @@ const App = (() => {
   }
 
   async function refreshStocks() {
-    cachedStocks = await API.get('/api/stocks');
+    const resp = await API.get('/api/stocks');
+    // 006 T031：response shape 由 array 改為 { stocks, portfolioSummary }；保留向後兼容
+    if (Array.isArray(resp)) {
+      cachedStocks = resp;
+      cachedPortfolioSummary = null;
+    } else if (resp && Array.isArray(resp.stocks)) {
+      cachedStocks = resp.stocks;
+      cachedPortfolioSummary = resp.portfolioSummary || null;
+    } else {
+      cachedStocks = [];
+      cachedPortfolioSummary = null;
+    }
   }
 
   function openFormulaModal() {
@@ -3286,18 +3356,37 @@ const App = (() => {
 
   function renderStockPortfolio() {
     const stocks = cachedStocks;
-    let totalValue = 0, totalCost = 0, totalPL = 0, totalDiv = 0;
-    stocks.forEach(s => {
-      totalValue += s.marketValue;
-      totalCost += s.totalCost;
-      totalPL += s.estimatedProfit || 0;
-      totalDiv += s.totalDividend;
-    });
-    el('stockTotalValue').textContent = fmt(totalValue);
-    el('stockTotalCost').textContent = fmt(totalCost);
+    // 006 T033：portfolioSummary 改用後端金額加權公式（FR-029 / Pass 2 Q4）
+    const summary = cachedPortfolioSummary || (() => {
+      let totalMV = 0, totalC = 0, totalPL = 0;
+      stocks.forEach(s => { totalMV += s.marketValue || 0; totalC += s.totalCost || 0; totalPL += s.estimatedProfit || 0; });
+      return {
+        totalMarketValue: totalMV,
+        totalCost: totalC,
+        totalPL,
+        totalReturnRate: totalC > 0 ? Math.round(totalPL / totalC * 10000) / 100 : null,
+      };
+    })();
+    let totalDiv = 0;
+    stocks.forEach(s => { totalDiv += s.totalDividend || 0; });
+    const totalPL = summary.totalPL;
+    const plColor = colorizePL(totalPL);
+    el('stockTotalValue').textContent = fmt(summary.totalMarketValue || 0);
+    el('stockTotalCost').textContent = fmt(summary.totalCost || 0);
     el('stockTotalPL').textContent = (totalPL >= 0 ? '+' : '') + fmt(totalPL);
-    el('stockTotalPL').className = 'card-value ' + (totalPL >= 0 ? 'amount-income' : 'amount-expense');
+    el('stockTotalPL').className = 'card-value ' + plColor.className;
     el('stockTotalDiv').textContent = fmt(totalDiv);
+    // 整體報酬率（金額加權；totalCost = 0 顯示「—」）
+    const overallRateEl = el('stockTotalReturnRate');
+    if (overallRateEl) {
+      if (summary.totalReturnRate === null || summary.totalReturnRate === undefined) {
+        overallRateEl.textContent = '—';
+        overallRateEl.className = 'card-value pl-zero';
+      } else {
+        overallRateEl.textContent = (summary.totalReturnRate >= 0 ? '+' : '') + Number(summary.totalReturnRate).toFixed(2) + '%';
+        overallRateEl.className = 'card-value ' + colorizePL(summary.totalReturnRate).className;
+      }
+    }
 
     const grid = el('stockPortfolioGrid');
     if (stocks.length === 0) {
@@ -3307,25 +3396,35 @@ const App = (() => {
     grid.innerHTML = stocks.filter(s => s.totalShares > 0 || s.totalCost > 0 || s.marketValue > 0).map(s => {
       const ep = s.estimatedProfit || 0;
       const rr = s.returnRate || 0;
-      const plCls = ep >= 0 ? 'stock-card-pl-pos' : 'stock-card-pl-neg';
-      const plSign = ep >= 0 ? '+' : '';
-      const rlPlCls = s.realizedPL >= 0 ? 'stock-card-pl-pos' : 'stock-card-pl-neg';
-      const rlSign = s.realizedPL >= 0 ? '+' : '';
-      const plArrow = ep >= 0 ? '<i class="fas fa-caret-up"></i>' : '<i class="fas fa-caret-down"></i>';
-      const totalReturn = ep + s.realizedPL + s.totalDividend;
-      return `<div class="stock-card">
+      const plMeta = colorizePL(ep);
+      const plSign = ep > 0 ? '+' : (ep < 0 ? '' : '');
+      const rlMeta = colorizePL(s.realizedPL || 0);
+      const rlSign = (s.realizedPL || 0) > 0 ? '+' : '';
+      const plArrow = plMeta.symbol ? `<span class="${plMeta.className}">${plMeta.symbol}</span>` : '';
+      const totalReturn = ep + (s.realizedPL || 0) + (s.totalDividend || 0);
+      const trMeta = colorizePL(totalReturn);
+      // 006 T034：24 小時 stale 標示
+      const stale = formatStaleQuoteBadge(s.lastQuotedAt || s.updatedAt);
+      const staleHtml = `<span class="stock-card__quote-time ${stale.className}">${escHtml(stale.text)}</span>`;
+      // 資料來源（即時／收盤／T+1／凍結）
+      const sourceLabel = ({ realtime: '即時', close: '收盤', 't+1': 'T+1', frozen: '凍結' })[s.priceSource] || '';
+      const sourceHtml = sourceLabel ? `<span class="stock-card__price-source">(${sourceLabel})</span>` : '';
+      // 已下市 badge
+      const delistedBadge = s.delisted ? '<span class="delisted-badge">（已下市）</span>' : '';
+      return `<div class="stock-card${s.delisted ? ' stock-card--delisted' : ''}">
         <div class="stock-card-header">
           <div class="stock-card-header-left">
             <span class="stock-card-symbol">${escHtml(s.symbol)}</span>
-            <span class="stock-card-name">${escHtml(s.name)}</span>
+            <span class="stock-card-name">${escHtml(s.name)}</span>${delistedBadge}
           </div>
           <div class="stock-card-price-wrap">
-            <div class="stock-card-price">$${(s.currentPrice || 0).toLocaleString()}</div>
-            <div class="stock-card-price-change ${plCls}">${plArrow} ${plSign}${rr.toFixed(1)}%</div>
+            <div class="stock-card-price">$${(s.currentPrice || 0).toLocaleString()}${sourceHtml}</div>
+            <div class="stock-card-price-change ${plMeta.className}">${plArrow} ${plSign}${rr.toFixed(2)}%</div>
+            ${staleHtml}
           </div>
         </div>
         <div class="stock-card-body">
-          <div class="stock-card-item"><span class="label">持有股數</span><span class="value">${s.totalShares.toLocaleString()}</span></div>
+          <div class="stock-card-item"><span class="label">持有股數</span><span class="value">${Number(s.totalShares).toLocaleString()}</span></div>
           <div class="stock-card-item"><span class="label">成本均價</span><span class="value">$${Number(s.avgCost).toLocaleString()}</span></div>
           <div class="stock-card-item"><span class="label">成本金額</span><span class="value">${fmt(s.totalCost)}</span></div>
           <div class="stock-card-item"><span class="label">市值</span><span class="value">${fmt(s.marketValue)}</span></div>
@@ -3333,11 +3432,11 @@ const App = (() => {
           <div class="stock-card-item"><span class="label">預估手續費</span><span class="value">${fmt(s.estSellFee || 0)}</span></div>
           <div class="stock-card-item"><span class="label">預估交易稅</span><span class="value">${fmt(s.estSellTax || 0)}</span></div>
           <div class="stock-card-item"><span class="label">預估淨收付</span><span class="value">${fmt(s.estimatedNet || 0)}</span></div>
-          <div class="stock-card-item"><span class="label">預估損益</span><span class="value ${plCls}">${plSign}${fmt(ep)} (${plSign}${rr.toFixed(1)}%)</span></div>
+          <div class="stock-card-item"><span class="label">預估損益</span><span class="value ${plMeta.className}">${plSign}${fmt(ep)} (${plSign}${rr.toFixed(2)}%)</span></div>
           <div class="stock-card-divider"></div>
-          <div class="stock-card-item"><span class="label">已實現損益</span><span class="value ${rlPlCls}">${rlSign}${fmt(s.realizedPL)}</span></div>
+          <div class="stock-card-item"><span class="label">已實現損益</span><span class="value ${rlMeta.className}">${rlSign}${fmt(s.realizedPL || 0)}</span></div>
           <div class="stock-card-item"><span class="label">累計股利</span><span class="value" style="color:var(--today)">${fmt(s.totalDividend)}</span></div>
-          <div class="stock-card-item"><span class="label">總報酬</span><span class="value ${totalReturn >= 0 ? 'stock-card-pl-pos' : 'stock-card-pl-neg'}">${totalReturn >= 0 ? '+' : ''}${fmt(totalReturn)}</span></div>
+          <div class="stock-card-item"><span class="label">總報酬</span><span class="value ${trMeta.className}">${totalReturn > 0 ? '+' : ''}${fmt(totalReturn)}</span></div>
         </div>
         <div class="stock-card-actions">
           <button class="btn-icon" onclick="App.editStock('${s.id}')" title="編輯"><i class="fas fa-pen"></i></button>
@@ -3559,71 +3658,136 @@ const App = (() => {
     renderStkPagination('stkDivPagination', pageNum, totalPages, 'App.stkDivGoPage');
   }
 
-  // ─── 同步除權息 ───
+  // 006 T072/T073：同步除權息 — 阻擋式 Modal + 進度條 + 取消按鈕（FR-027 / Pass 2 Q1）
   async function syncDividends() {
-    const btn = el('syncDividendsBtn');
-    const origText = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 同步中（查詢歷史除權息資料，可能需要數十秒）...';
+    // 計算年份範圍（前端從 cachedStocks + 交易紀錄推算）
+    let earliestYear = new Date().getFullYear();
     try {
-      const result = await API.post('/api/stock-dividends/sync', {});
-      if (result.synced > 0) {
-        toast(`已同步 ${result.synced} 筆股利紀錄`, 'success');
-        await refreshStocks();
-        renderStockPortfolio();
-        await renderStockDividends();
-        await renderStockRealized();
-      } else if (result.skipped > 0) {
-        toast('所有除權息紀錄皆已存在，無需同步', 'info');
-      } else {
-        toast(result.message || '查無符合的除權息紀錄', 'info');
+      const txResp = await API.get('/api/stock-transactions');
+      const txs = Array.isArray(txResp) ? txResp : (txResp.data || []);
+      txs.forEach(t => {
+        const y = parseInt(String(t.date || '').slice(0, 4), 10);
+        if (Number.isInteger(y) && y < earliestYear && y >= 2010) earliestYear = y;
+      });
+    } catch (_) { /* 若取不到交易紀錄，從今年開始 */ }
+    const currentYear = new Date().getFullYear();
+    const years = [];
+    for (let y = earliestYear; y <= currentYear; y++) years.push(y);
+
+    // 建立阻擋式 Modal
+    const modal = document.createElement('div');
+    modal.className = 'modal-blocking';
+    modal.innerHTML = `
+      <div class="modal-blocking__content">
+        <h3>同步除權息</h3>
+        <div id="syncStage">準備中（共 ${years.length} 年）...</div>
+        <div class="progress-bar"><div class="progress-bar__fill" id="syncProgressFill"></div></div>
+        <button id="syncCancel" class="btn">取消</button>
+      </div>`;
+    document.body.appendChild(modal);
+    let aborted = false;
+    const cancelBtn = modal.querySelector('#syncCancel');
+    const stageEl = modal.querySelector('#syncStage');
+    const progressFill = modal.querySelector('#syncProgressFill');
+    cancelBtn.addEventListener('click', () => { aborted = true; cancelBtn.disabled = true; cancelBtn.textContent = '正在中止...'; });
+
+    let totalSynced = 0, totalSkipped = 0, totalErrors = 0;
+    for (let i = 0; i < years.length; i++) {
+      if (aborted) break;
+      const year = years[i];
+      stageEl.textContent = `正在同步 ${year} 年（${i + 1}/${years.length}）...`;
+      try {
+        const result = await API.post('/api/stock-dividends/sync?year=' + year, {});
+        totalSynced += Number(result.synced || 0);
+        totalSkipped += Number(result.skipped || 0);
+        totalErrors += Number((result.errors || []).length || 0);
+      } catch (e) {
+        totalErrors += 1;
+        console.warn(`[同步除權息] ${year} 年失敗:`, e.message);
       }
-      if (result.errors?.length) {
-        console.warn('同步警告:', result.errors);
-      }
-    } catch (e) {
-      toast('同步失敗：' + e.message, 'error');
-    } finally {
-      btn.disabled = false;
-      btn.innerHTML = origText;
+      progressFill.style.width = `${Math.round((i + 1) / years.length * 100)}%`;
     }
+    document.body.removeChild(modal);
+    if (aborted) {
+      toast(`已中止同步（已新增 ${totalSynced} 筆 / 跳過 ${totalSkipped} 筆 / 失敗 ${totalErrors} 筆）`, 'info');
+    } else if (totalSynced > 0) {
+      toast(`同步完成：新增 ${totalSynced} 筆 / 跳過 ${totalSkipped} 筆 / 失敗 ${totalErrors} 筆`, 'success');
+    } else {
+      toast(`同步完成：所有除權息紀錄皆已存在或無符合範圍（跳過 ${totalSkipped} 筆）`, 'info');
+    }
+    await refreshStocks();
+    renderStockPortfolio();
+    await renderStockDividends();
+    await renderStockRealized();
   }
 
-  // ─── 實現損益 ───
+  // ─── 實現損益（006 T092：使用 /api/stock-realized-pl 結構化回應 + 三段式顯色） ───
   async function renderStockRealized() {
     const stockId = el('stockRealizedFilter').value;
-    const params = stockId ? `?stockId=${stockId}` : '';
-    const records = await API.get('/api/stock-realized' + params);
+    let records = [];
+    let summary = null;
+    try {
+      const resp = await API.get('/api/stock-realized-pl');
+      const allEntries = (resp && Array.isArray(resp.entries)) ? resp.entries : [];
+      // 客戶端依 stockId 篩選（若有）
+      records = stockId ? allEntries.filter(e => e.stockId === stockId) : allEntries;
+      // 用結構化 entries 對應舊 records shape（date / fee / tax 等欄位轉名）
+      records = records.map(e => ({
+        id: e.transactionId,
+        date: e.sellDate,
+        stockId: e.stockId,
+        symbol: e.symbol,
+        name: e.name,
+        shares: e.shares,
+        sellPrice: e.sellPrice,
+        fee: 0,
+        tax: 0,
+        feeAndTax: e.feeAndTax,
+        sellRevenue: e.sellRevenue,
+        costPerShare: e.costPrice,
+        totalCost: e.totalCost,
+        realizedPL: e.realizedPL,
+        returnRate: e.returnRate,
+      }));
+      summary = stockId ? null : (resp.summary || null);
+    } catch (_) {
+      // fallback：舊端點
+      const params = stockId ? `?stockId=${stockId}` : '';
+      records = await API.get('/api/stock-realized' + params);
+    }
     const tbody = el('stockRealizedBody');
 
-    // 彙總卡片
-    const totalPL = records.reduce((s, r) => s + r.realizedPL, 0);
+    // 彙總卡片（006 T092：summary 來自後端金額加權公式）
+    const totalPL = summary ? summary.totalRealizedPL : records.reduce((s, r) => s + r.realizedPL, 0);
     const totalCost = records.reduce((s, r) => s + r.totalCost, 0);
-    const totalReturn = totalCost > 0 ? (totalPL / totalCost * 100) : 0;
+    const overallRate = summary && summary.overallReturnRate !== null
+      ? summary.overallReturnRate
+      : (totalCost > 0 ? Math.round(totalPL / totalCost * 10000) / 100 : null);
     const thisYear = new Date().getFullYear().toString();
-    const yearPL = records.filter(r => r.date.startsWith(thisYear)).reduce((s, r) => s + r.realizedPL, 0);
-    const plClass = totalPL >= 0 ? 'amount-income' : 'amount-expense';
-    const yearPlClass = yearPL >= 0 ? 'amount-income' : 'amount-expense';
+    const yearPL = summary ? summary.ytdRealizedPL : records.filter(r => r.date.startsWith(thisYear)).reduce((s, r) => s + r.realizedPL, 0);
+    const plMeta = colorizePL(totalPL);
+    const yearMeta = colorizePL(yearPL);
+    const rateMeta = overallRate === null ? colorizePL(0) : colorizePL(overallRate);
     el('realizedSummaryCards').innerHTML = `
       <div class="card summary-card ${totalPL >= 0 ? 'income' : 'expense'}">
         <div class="card-icon"><i class="fas fa-chart-line"></i></div>
         <div class="card-info">
           <span class="card-label">總實現損益</span>
-          <span class="card-value ${plClass}">${totalPL >= 0 ? '+' : ''}${fmt(totalPL)}</span>
+          <span class="card-value ${plMeta.className}">${totalPL > 0 ? '+' : ''}${fmt(totalPL)}</span>
         </div>
       </div>
       <div class="card summary-card" style="border-left-color:#6366f1">
         <div class="card-icon" style="background:#ede9fe;color:#6366f1"><i class="fas fa-percent"></i></div>
         <div class="card-info">
           <span class="card-label">整體報酬率</span>
-          <span class="card-value ${plClass}">${totalReturn >= 0 ? '+' : ''}${totalReturn.toFixed(2)}%</span>
+          <span class="card-value ${rateMeta.className}">${overallRate === null ? '—' : ((overallRate >= 0 ? '+' : '') + overallRate.toFixed(2) + '%')}</span>
         </div>
       </div>
       <div class="card summary-card" style="border-left-color:#f59e0b">
         <div class="card-icon" style="background:#fef3c7;color:#f59e0b"><i class="fas fa-calendar-check"></i></div>
         <div class="card-info">
           <span class="card-label">今年實現損益</span>
-          <span class="card-value ${yearPlClass}">${yearPL >= 0 ? '+' : ''}${fmt(yearPL)}</span>
+          <span class="card-value ${yearMeta.className}">${yearPL > 0 ? '+' : ''}${fmt(yearPL)}</span>
         </div>
       </div>
       <div class="card summary-card" style="border-left-color:#64748b">
@@ -3639,9 +3803,10 @@ const App = (() => {
       return;
     }
     tbody.innerHTML = records.map(r => {
-      const plClass = r.realizedPL >= 0 ? 'amount-income' : 'amount-expense';
-      const rateSign = r.returnRate >= 0 ? '+' : '';
-      const feeAndTax = r.fee + r.tax;
+      const plMeta = colorizePL(r.realizedPL);
+      const rateMeta = colorizePL(r.returnRate);
+      const rateSign = r.returnRate > 0 ? '+' : '';
+      const feeAndTax = (r.feeAndTax !== undefined) ? r.feeAndTax : ((r.fee || 0) + (r.tax || 0));
       return `<tr>
         <td>${escHtml(r.date)}</td>
         <td>${escHtml(r.symbol)} ${escHtml(r.name)}</td>
@@ -3649,8 +3814,8 @@ const App = (() => {
         <td>$${Number(r.sellPrice).toLocaleString()}</td>
         <td>$${Number(r.costPerShare).toLocaleString()}</td>
         <td>${fmt(feeAndTax)}</td>
-        <td class="${plClass}">${r.realizedPL >= 0 ? '+' : ''}${fmt(r.realizedPL)}</td>
-        <td class="${plClass}">${rateSign}${r.returnRate.toFixed(2)}%</td>
+        <td class="${plMeta.className}">${r.realizedPL > 0 ? '+' : ''}${fmt(r.realizedPL)}</td>
+        <td class="${rateMeta.className}">${rateSign}${Number(r.returnRate).toFixed(2)}%</td>
       </tr>`;
     }).join('');
   }
@@ -3775,30 +3940,34 @@ const App = (() => {
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 查詢中...';
     try {
+      // 006 T111：使用 /api/stocks/batch-fetch 並發查價（受 TWSE_MAX_CONCURRENCY 限制 + 重試 2 次）
+      const resp = await API.post('/api/stocks/batch-fetch', {});
+      const results = (resp && Array.isArray(resp.results)) ? resp.results : [];
       let updated = 0;
       let isRealtime = false;
-      const inputs = document.querySelectorAll('#priceUpdateList .price-input');
-      for (const inp of inputs) {
-        const stockId = inp.dataset.stockId;
-        const stock = cachedStocks.find(s => s.id === stockId);
-        if (!stock) continue;
-        const result = await API.get(twseStockUrl(stock.symbol));
+      results.forEach(r => {
+        const stockId = r.stockId;
+        const inp = document.querySelector(`#priceUpdateList .price-input[data-stock-id="${stockId}"]`);
         const label = document.querySelector(`.price-source-label[data-stock-id="${stockId}"]`);
-        if (result.found && result.closingPrice > 0) {
-          inp.value = result.closingPrice;
-          updated++;
-          if (result.isRealtime) isRealtime = true;
-          // 顯示價格來源與時間
+        if (r.status === 'ok' && r.currentPrice > 0) {
+          if (inp) inp.value = r.currentPrice;
+          updated += 1;
+          if (r.priceSource === 'realtime') isRealtime = true;
           if (label) {
-            const sourceText = formatTwsePriceLabel(result);
+            const sourceMap = { realtime: '即時', close: '收盤', 't+1': 'T+1' };
+            const t = r.fetchedAt ? new Date(r.fetchedAt).toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' }) : '';
+            const sourceText = (sourceMap[r.priceSource] || '') + (t ? ` ${t}` : '');
             label.innerHTML = `<span class="price-dot"></span>${escHtml(sourceText)}`;
             label.classList.add('success');
+            label.classList.remove('error');
           }
-        } else if (label) {
-          label.innerHTML = '<span class="price-dot"></span>查無資料';
-          label.classList.add('error');
+        } else {
+          if (label) {
+            label.innerHTML = '<span class="price-dot"></span><span class="batch-price-row__failed">查詢失敗</span>';
+            label.classList.add('error');
+          }
         }
-      }
+      });
       const priceLabel = isRealtime ? '即時成交價' : '收盤價';
       toast(`已從證交所更新 ${updated} 檔股價（${priceLabel}）`, 'success');
     } catch (e) {
@@ -4188,6 +4357,15 @@ const App = (() => {
     const accountId = el('stkDivAccount').value;
     const note = el('stkDivNote').value.trim();
     if (!symbol || !date) return;
+    if (cashDividend === 0 && stockDividendShares === 0) {
+      toast('現金股利與股票股利至少填一項', 'error');
+      return;
+    }
+    // 006 T070：accountId conditional required — cashDividend > 0 時必填（FR-015 / Pass 2 Q2）
+    if (cashDividend > 0 && !accountId) {
+      toast('入款帳戶為必填（含現金股利時）', 'error');
+      return;
+    }
     let stockId = el('stkDivStockId').value;
     if (!stockId) {
       toast('請輸入有效的股票代號', 'error');
@@ -4207,31 +4385,42 @@ const App = (() => {
       await refreshStocks();
       renderStockPortfolio();
       await renderStockDividends();
+      await renderStockRealized();
     } catch (err) { toast(err.message, 'error'); }
   }
 
   function openPriceUpdateModal() {
     const list = el('priceUpdateList');
-    // 只顯示目前有持股的股票
-    const holdingStocks = cachedStocks.filter(s => s.totalShares > 0);
-    list.innerHTML = holdingStocks.map(s => `<div class="price-update-row">
+    // 006 T110：每列加「標為已下市」checkbox（FR-035a / Pass 1 Q2）
+    const holdingStocks = cachedStocks.filter(s => s.totalShares > 0 || s.delisted);
+    list.innerHTML = holdingStocks.map(s => `<div class="price-update-row batch-price-row" data-stock-id="${s.id}">
       <div class="stock-info">
-        <div><span class="stock-symbol">${escHtml(s.symbol)}</span><span class="stock-name">${escHtml(s.name)}</span></div>
-        <div class="price-source-label" data-stock-id="${s.id}"></div>
+        <div><span class="stock-symbol">${escHtml(s.symbol)}</span><span class="stock-name">${escHtml(s.name)}</span>${s.delisted ? '<span class="delisted-badge">已下市</span>' : ''}</div>
+        <div class="price-source-label batch-price-row__source" data-stock-id="${s.id}"></div>
       </div>
       <input type="number" step="0.0001" min="0" value="${s.currentPrice || 0}" data-stock-id="${s.id}" class="price-input">
+      <label class="delisted-toggle-label" style="font-size:13px;display:inline-flex;align-items:center;gap:4px">
+        <input type="checkbox" class="delisted-toggle" data-stock-id="${s.id}" ${s.delisted ? 'checked' : ''}> 已下市
+      </label>
     </div>`).join('') || '<p style="padding:20px;text-align:center;color:var(--text-muted)">目前無持股</p>';
     openModal('modalPriceUpdate');
   }
 
   async function handlePriceUpdateSave() {
-    const inputs = document.querySelectorAll('#priceUpdateList .price-input');
-    const prices = [];
-    inputs.forEach(inp => {
-      prices.push({ id: inp.dataset.stockId, currentPrice: Number(inp.value) || 0 });
+    const rows = document.querySelectorAll('#priceUpdateList .price-update-row');
+    const updates = [];
+    rows.forEach(row => {
+      const stockId = row.dataset.stockId;
+      const priceInp = row.querySelector('.price-input');
+      const delistedInp = row.querySelector('.delisted-toggle');
+      updates.push({
+        stockId,
+        currentPrice: Number(priceInp ? priceInp.value : 0) || 0,
+        delisted: delistedInp ? delistedInp.checked : false,
+      });
     });
     try {
-      await API.post('/api/stocks/batch-price', { prices });
+      await API.post('/api/stocks/batch-price', { updates });
       closeModal('modalPriceUpdate');
       toast('股價已更新', 'success');
       await refreshStocks();

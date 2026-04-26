@@ -3600,3 +3600,48 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 .tx-source-chip--orphan:hover {
   background: #f3f4f6;
 }
+
+/* ===== 005 統計報表：儀表板月份切換器 ===== */
+.month-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 16px;
+  padding: 6px 12px;
+  background: var(--card-bg, #fff);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 999px;
+  font-weight: 600;
+}
+.month-nav__btn {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  font-size: 18px;
+  cursor: pointer;
+  color: var(--primary, #4f46e5);
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.month-nav__btn:hover {
+  background: rgba(79, 70, 229, 0.08);
+}
+.month-nav__label {
+  min-width: 80px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ===== 005 多筆排程列表 ===== */
+.schedule-card {
+  transition: background 0.12s ease;
+}
+.schedule-card:hover {
+  background: #f9fafb;
+}
+.schedule-user-group {
+  background: #fff;
+}

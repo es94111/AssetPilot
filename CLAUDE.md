@@ -2,76 +2,65 @@
 
 Please refer to the [Project Charter](.specify/memory/constitution.md) (.specify/memory/constitution.md), which serves as the guiding principle for all development work.
 
-### 1. Think Before Coding
+## 1. Think Before Coding
 
-**Do not assume. Do not hide confusion. Surface trade-offs.**
+**Don't assume. Don't hide confusion. Surface tradeoffs.**
 
-LLMs often silently pick one interpretation and proceed. This principle enforces explicit reasoning:
+Before implementing:
+- State your assumptions explicitly. If uncertain, ask.
+- If multiple interpretations exist, present them - don't pick silently.
+- If a simpler approach exists, say so. Push back when warranted.
+- If something is unclear, stop. Name what's confusing. Ask.
 
-* **State assumptions clearly** — If uncertain, ask instead of guessing
-* **Present multiple interpretations** — When ambiguity exists, don’t silently choose
-* **Raise objections when appropriate** — If there’s a simpler approach, say it
-* **Pause when confused** — Point out unclear areas and request clarification
+## 2. Simplicity First
 
----
+**Minimum code that solves the problem. Nothing speculative.**
 
-### 2. Simplicity First
+- No features beyond what was asked.
+- No abstractions for single-use code.
+- No "flexibility" or "configurability" that wasn't requested.
+- No error handling for impossible scenarios.
+- If you write 200 lines and it could be 50, rewrite it.
 
-**Solve the problem with the least amount of code. Avoid over-engineering.**
+Ask yourself: "Would a senior engineer say this is overcomplicated?" If yes, simplify.
 
-Counteract the tendency to overbuild:
+## 3. Surgical Changes
 
-* Do not add features beyond what’s requested
-* Do not create abstractions for one-off code
-* Do not add unrequested “flexibility” or “configurability”
-* Do not handle scenarios that won’t realistically occur
-* If 200 lines can be written in 50, rewrite it
-
-**Litmus test:** Would a senior engineer consider this overly complex? If yes, simplify.
-
----
-
-### 3. Precise Changes
-
-**Only touch what must be touched. Only clean up what you break.**
+**Touch only what you must. Clean up only your own mess.**
 
 When editing existing code:
+- Don't "improve" adjacent code, comments, or formatting.
+- Don't refactor things that aren't broken.
+- Match existing style, even if you'd do it differently.
+- If you notice unrelated dead code, mention it - don't delete it.
 
-* Do not “improve” adjacent code, comments, or formatting
-* Do not refactor what isn’t broken
-* Match the existing style, even if you prefer a different one
-* If you notice unrelated dead code, mention it — don’t remove it
+When your changes create orphans:
+- Remove imports/variables/functions that YOUR changes made unused.
+- Don't remove pre-existing dead code unless asked.
 
-When your changes create orphaned code:
+The test: Every changed line should trace directly to the user's request.
 
-* Remove imports/variables/functions made obsolete by your changes
-* Do not remove pre-existing dead code unless explicitly asked
+## 4. Goal-Driven Execution
 
-**Litmus test:** Every modified line should be directly traceable to the user’s request.
+**Define success criteria. Loop until verified.**
+
+Transform tasks into verifiable goals:
+- "Add validation" → "Write tests for invalid inputs, then make them pass"
+- "Fix the bug" → "Write a test that reproduces it, then make it pass"
+- "Refactor X" → "Ensure tests pass before and after"
+
+For multi-step tasks, state a brief plan:
+```
+1. [Step] → verify: [check]
+2. [Step] → verify: [check]
+3. [Step] → verify: [check]
+```
+
+Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
 
 ---
 
-### 4. Goal-Driven Execution
-
-**Define success criteria. Iterate until achieved.**
-
-Turn vague instructions into verifiable goals:
-
-| Instead of...      | Transform into...                                           |
-| ------------------ | ----------------------------------------------------------- |
-| “Add validation” | “Write tests for invalid inputs, then make them pass”     |
-| “Fix the bug”    | “Write a test that reproduces the bug, then make it pass” |
-| “Refactor X”     | “Ensure tests pass before and after refactoring”          |
-
-For multi-step tasks, outline a short plan:
-
-```
-1. [Step] → Verify: [Check]
-2. [Step] → Verify: [Check]
-3. [Step] → Verify: [Check]
-```
-
-Strong success criteria enable independent iteration. Weak ones (“make it work”) require constant clarification.
+**These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.
 
 <!-- SPECKIT START -->
 ## 目前進行中的功能規劃

@@ -109,6 +109,17 @@ const ZEABUR_API_ENDPOINT = 'https://api.zeabur.com/api/v1/zsend/emails';
 const RESEND_API_KEY = process.env.RESEND_API_KEY || '';
 const RESEND_FROM_EMAIL = process.env.RESEND_FROM_EMAIL || '';
 
+// 全通道共用寄件人顯示名稱；若各通道 FROM 已是 `Name <email>` 格式則不覆寫，尊重 per-provider 設定
+const EMAIL_SENDER_NAME = (process.env.EMAIL_SENDER_NAME || '').trim();
+
+function formatFromAddress(raw) {
+  if (!raw) return raw;
+  if (!EMAIL_SENDER_NAME) return raw;
+  if (raw.includes('<')) return raw; // 已含顯示名稱，不覆寫
+  const escaped = EMAIL_SENDER_NAME.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+  return `"${escaped}" <${raw}>`;
+}
+
 // 對外網址（用於信件 CTA 按鈕），未設定則隱藏「前往儀表板」按鈕
 const APP_URL = (process.env.APP_URL || '').replace(/\/$/, '');
 
@@ -143,7 +154,7 @@ function isProviderConfigured(name) {
 async function sendViaProvider(name, { to, subject, html }) {
   if (name === 'smtp') {
     const transporter = getSmtpTransporter();
-    const from = SMTP_FROM || SMTP_USER || 'noreply@localhost';
+    const from = formatFromAddress(SMTP_FROM || SMTP_USER || 'noreply@localhost');
     const info = await transporter.sendMail({ from, to, subject, html });
     return { provider: 'smtp', id: info.messageId };
   }
@@ -155,7 +166,7 @@ async function sendViaProvider(name, { to, subject, html }) {
         'Authorization': `Bearer ${ZEABUR_API_KEY}`,
       },
       body: JSON.stringify({
-        from: ZEABUR_FROM_EMAIL,
+        from: formatFromAddress(ZEABUR_FROM_EMAIL),
         to: Array.isArray(to) ? to : [to],
         subject,
         html,
@@ -170,7 +181,7 @@ async function sendViaProvider(name, { to, subject, html }) {
     return { provider: 'zeabur', id: data?.id || data?.message_id || '' };
   }
   if (name === 'resend') {
-    const result = await getResendClient().emails.send({ from: RESEND_FROM_EMAIL, to, subject, html });
+    const result = await getResendClient().emails.send({ from: formatFromAddress(RESEND_FROM_EMAIL), to, subject, html });
     if (result?.error) {
       const err = new Error(result.error.message || 'Resend 寄送失敗');
       err.provider = 'resend';

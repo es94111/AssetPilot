@@ -1111,7 +1111,10 @@ const App = (() => {
   }
 
   async function renderApiCredits() {
-    // 靜態說明頁：API 來源與授權資訊在 index.html 維護。
+    // 007 feature (T057, FR-036~038)：以 /api/external-apis 動態渲染容器
+    if (typeof window.__renderExternalApisPage === 'function') {
+      try { await window.__renderExternalApisPage(); } catch (_) { /* fall back to static */ }
+    }
   }
 
   // ─── 儀表板 ───
@@ -4742,32 +4745,25 @@ const App = (() => {
     });
   }
 
-  // ─── 股票交易紀錄 匯出 ───
+  // ─── 股票交易紀錄 匯出（007 feature: T037） ───
   async function exportStockTx() {
-    const txs = await API.get('/api/stock-transactions');
-    const BOM = '\uFEFF';
-    let csv = BOM + '日期,股票代號,股票名稱,類型,股數,成交價,手續費,交易稅,帳戶,備註\n';
-    txs.forEach(t => {
-      const acc = cachedAccounts.find(a => a.id === t.account_id);
-      const type = t.type === 'buy' ? '買進' : '賣出';
-      csv += `${t.date},"${escCsv(t.symbol || '')}","${escCsv(t.stock_name || '')}",${type},${t.shares},${t.price},${t.fee || 0},${t.tax || 0},"${escCsv(acc?.name || '')}","${escCsv(t.note || '')}"\n`;
-    });
-    downloadCsv(csv, `股票交易紀錄_${today()}.csv`);
-    toast(`已匯出 ${txs.length} 筆股票交易紀錄`, 'success');
+    try {
+      await downloadServerCsv('/api/stock-transactions/export', `stock-transactions_${today()}.csv`);
+      toast('已匯出股票交易紀錄', 'success');
+    } catch (e) {
+      toast('匯出失敗：' + (e.message || ''), 'error');
+    }
   }
 
-  // ─── 股票股利紀錄 匯出 ───
+  // ─── 股票股利紀錄 匯出（007 feature: T038） ───
   async function exportStockDiv() {
-    const divs = await API.get('/api/stock-dividends');
-    const BOM = '\uFEFF';
-    let csv = BOM + '日期,股票代號,股票名稱,現金股利,股票股利,備註\n';
-    divs.forEach(d => {
-      csv += `${d.date},"${escCsv(d.symbol || '')}","${escCsv(d.stock_name || '')}",${d.cash_dividend || 0},${d.stock_dividend_shares || 0},"${escCsv(d.note || '')}"\n`;
-    });
-    downloadCsv(csv, `股票股利紀錄_${today()}.csv`);
-    toast(`已匯出 ${divs.length} 筆股票股利紀錄`, 'success');
+    try {
+      await downloadServerCsv('/api/stock-dividends/export', `stock-dividends_${today()}.csv`);
+      toast('已匯出股票股利紀錄', 'success');
+    } catch (e) {
+      toast('匯出失敗：' + (e.message || ''), 'error');
+    }
   }
-
   // ─── 股票紀錄 匯入（交易 / 股利） ───
   async function importStockCsv(file, mode) {
     const resultEl = el('stockImportResult');
@@ -4788,18 +4784,39 @@ const App = (() => {
         }).filter(r => r.date && r.symbol);
         endpoint = '/api/stock-transactions/import';
       } else {
-        // 股利：日期,代號,名稱,現金股利,股票股利,備註
+        // 股利：日期,代號,名稱,現金股利,股票股利,帳戶,備註（007 feature: T039）
         rows = lines.slice(1).map(line => {
           const c = parseCsvLine(line);
           return { date: c[0]?.trim(), symbol: c[1]?.trim(), name: c[2]?.trim(),
-                   cashDividend: c[3]?.trim(), stockDividend: c[4]?.trim(), note: c[5]?.trim() };
+                   cashDividend: c[3]?.trim(), stockDividend: c[4]?.trim(),
+                   accountName: c[5]?.trim(), note: c[6]?.trim() };
         }).filter(r => r.date && r.symbol);
         endpoint = '/api/stock-dividends/import';
+        // T039：client-side 預檢「現金股利 > 0 但帳戶空」
+        const missingAccount = rows.filter(r => Number(r.cashDividend || 0) > 0 && !r.accountName);
+        if (missingAccount.length > 0) {
+          toast(`有 ${missingAccount.length} 筆現金股利 > 0 但帳戶留空，請於 CSV 帳戶欄位明示`, 'error');
+          return;
+        }
       }
 
       if (rows.length === 0) { toast('沒有可解析的資料', 'error'); return; }
 
-      const result = await API.post(endpoint, { rows });
+      const stopPoll = startImportProgressPolling();
+      let result;
+      try {
+        result = await API.post(endpoint, { rows });
+      } catch (err) {
+        stopPoll();
+        const errorCode = err.error || err.errorCode || (err.message || '');
+        if (errorCode.includes('IMPORT_IN_PROGRESS')) {
+          toast('您已有匯入進行中，請稍候完成後再試', 'error');
+        } else {
+          toast('匯入失敗：' + (err.message || ''), 'error');
+        }
+        return;
+      }
+      stopPoll();
       await refreshStocks();
 
       const label = mode === 'tx' ? '股票交易紀錄' : '股票股利紀錄';
@@ -4878,6 +4895,12 @@ const App = (() => {
         if (rate > 0) map[c] = rate;
       });
       cachedExchangeRates = map;
+      // 007 feature (T044)：暴露給 ±20% 偏離警告 helper 比對「自動匯率基準」
+      window.__cachedFxRates = rates.map(r => ({
+        currency: r.currency,
+        rateToTwd: r.rateToTwd,
+        is_manual: r.isManual ? 1 : 0,
+      }));
       renderCurrencySelectOptions('txCurrency', el('txCurrency')?.value || 'TWD');
       renderCurrencySelectOptions('accCurrency', el('accCurrency')?.value || 'TWD');
       refreshFxCurrencySuggestionList(Object.keys(map));
@@ -4952,8 +4975,44 @@ const App = (() => {
 
     el('fxRateTableBody')?.addEventListener('input', (e) => {
       const input = e.target;
-      if (!(input instanceof HTMLInputElement) || !input.classList.contains('fx-currency')) return;
-      input.value = input.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 3);
+      if (input instanceof HTMLInputElement && input.classList.contains('fx-currency')) {
+        input.value = input.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 3);
+        // 007 feature (T043, FR-030)：ISO 4217 即時驗證
+        const code = input.value;
+        if (code.length === 3 && typeof window.__isValidIso4217 === 'function') {
+          if (!window.__isValidIso4217(code)) {
+            input.style.borderColor = 'var(--danger)';
+            input.title = '不是有效的 ISO 4217 幣別代碼';
+          } else {
+            input.style.borderColor = '';
+            input.title = '';
+          }
+        }
+      }
+      // 007 feature (T044, FR-033a)：手動匯率 ±20% 偏離警告
+      if (input instanceof HTMLInputElement && input.classList.contains('fx-rate')) {
+        const row = input.closest('tr');
+        if (!row) return;
+        const code = row.querySelector('.fx-currency')?.value || '';
+        const newRate = Number(input.value);
+        let warnEl = row.querySelector('.rate-deviation-warning');
+        if (newRate > 0 && code && typeof window.__checkRateDeviation === 'function' && Array.isArray(window.__cachedFxRates)) {
+          const dev = window.__checkRateDeviation(newRate, code, window.__cachedFxRates);
+          if (dev) {
+            const cell = input.closest('td');
+            if (cell) {
+              if (!warnEl) {
+                warnEl = document.createElement('div');
+                warnEl.className = 'rate-deviation-warning';
+                cell.appendChild(warnEl);
+              }
+              warnEl.textContent = `⚠ 目前即時匯率為 ${dev.suggestedRate.toFixed(4)}，您輸入 ${newRate.toFixed(4)} 偏離 ${(dev.deviation * 100).toFixed(1)}%，請確認`;
+            }
+          } else if (warnEl) {
+            warnEl.remove();
+          }
+        }
+      }
     });
 
     el('fxRateTableBody')?.addEventListener('blur', (e) => {
@@ -5025,6 +5084,10 @@ const App = (() => {
       updateUserAvatar();
       accountLoginLogs = []; // 重新取得
       await renderAccountLoginLogs();
+      // 007 feature (T066)：渲染使用者「我的操作紀錄」
+      try {
+        if (typeof window.__renderUserAuditLogPage === 'function') await window.__renderUserAuditLogPage();
+      } catch (_) { /* noop */ }
 
       const linkedEl = el('googleLinkedInfo');
       const unlinkedEl = el('googleUnlinkedInfo');
@@ -6013,6 +6076,9 @@ const App = (() => {
       bindAdminScheduleListButtons();
       await renderAdminReportSchedules();
       await syncAdminLoginLogs({ silent: true });
+      // 007 feature (T065, T053)：渲染管理員稽核日誌與自動備份清單
+      try { if (typeof window.__renderAdminAuditLogPage === 'function') await window.__renderAdminAuditLogPage(); } catch (_) { /* noop */ }
+      try { if (typeof window.__renderAdminBackupsPage === 'function') await window.__renderAdminBackupsPage(); } catch (_) { /* noop */ }
     } catch (e) {
       toast(e.message || '載入管理員設定失敗', 'error');
     }
@@ -6613,73 +6679,60 @@ const App = (() => {
     initDbBackupUI();
   }
 
+  // 007 feature (T018, T031, T037, T038)：所有 CSV 匯出改由伺服端產生
+  async function downloadServerCsv(endpointPath, fallbackName) {
+    const resp = await fetch(endpointPath, { credentials: 'include' });
+    if (!resp.ok) {
+      let msg = '匯出失敗';
+      try { const j = await resp.json(); msg = j.error || msg; } catch (_) { /* noop */ }
+      throw new Error(msg);
+    }
+    let filename = fallbackName;
+    const cd = resp.headers.get('Content-Disposition') || '';
+    const m = cd.match(/filename="?([^";]+)"?/);
+    if (m) filename = m[1];
+    const blob = await resp.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   async function exportCsv() {
     const params = new URLSearchParams();
     const from = el('exportFrom').value;
     const to = el('exportTo').value;
     if (from) params.set('dateFrom', from);
     if (to) params.set('dateTo', to);
-    params.set('limit', '99999');
-
-    const result = await API.get('/api/transactions?' + params.toString());
-    const txs = result.data;
-
-    const BOM = '\uFEFF';
-    let csv = BOM + '日期,類型,分類,金額,帳戶,備註\n';
-    txs.forEach(t => {
-      const cat = getCat(t.categoryId || t.category_id);
-      const acc = getAcc(t.accountId || t.account_id);
-      let type = '支出';
-      if (t.type === 'income') type = '收入';
-      else if (t.type === 'transfer_out') type = '轉出';
-      else if (t.type === 'transfer_in') type = '轉入';
-      let catName = '';
-      if (cat) {
-        if (cat.parentId) {
-          const parentCat = getCat(cat.parentId);
-          catName = parentCat ? parentCat.name + ' > ' + cat.name : cat.name;
-        } else {
-          catName = cat.name;
-        }
-      } else if (t.type === 'transfer_out' || t.type === 'transfer_in') {
-        catName = '轉帳';
-      }
-      csv += `${t.date},${type},"${escCsv(catName)}",${t.amount},"${escCsv(acc ? acc.name : '')}","${escCsv(t.note || '')}"\n`;
-    });
-
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `記帳記錄_${today()}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-    toast('已匯出 CSV 檔案', 'success');
+    try {
+      const qs = params.toString();
+      await downloadServerCsv('/api/transactions/export' + (qs ? ('?' + qs) : ''), `transactions_${today()}.csv`);
+      toast('已匯出 CSV 檔案', 'success');
+    } catch (e) {
+      toast('匯出失敗：' + (e.message || ''), 'error');
+    }
   }
 
-  // ─── 分類匯出 ───
-  function exportCategories() {
-    const cats = cachedCategories;
-    const parents = cats.filter(c => !c.parentId);
-    const BOM = '\uFEFF';
-    let csv = BOM + '類型,分類名稱,上層分類,顏色\n';
-    parents.forEach(p => {
-      const typeName = p.type === 'income' ? '收入' : '支出';
-      csv += `${typeName},"${escCsv(p.name)}","",${p.color}\n`;
-      const children = cats.filter(c => c.parentId === p.id);
-      children.forEach(c => {
-        csv += `${typeName},"${escCsv(c.name)}","${escCsv(p.name)}",${c.color}\n`;
-      });
-    });
-    // 沒有 parent 的獨立分類（parentId 為空但不在 parents 中的不會有）
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `分類管理_${today()}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-    toast('已匯出分類 CSV', 'success');
+  // 007 feature (T037, T038)：股票/股利匯出共用 helper
+  async function downloadServerStockCsv(endpointPath, fallback) {
+    try {
+      await downloadServerCsv(endpointPath, fallback);
+      toast('已匯出 CSV', 'success');
+    } catch (e) {
+      toast('匯出失敗：' + (e.message || ''), 'error');
+    }
+  }
+
+  // ─── 分類匯出（007 feature: T031）───
+  async function exportCategories() {
+    try {
+      await downloadServerCsv('/api/categories/export', `categories_${today()}.csv`);
+      toast('已匯出分類 CSV', 'success');
+    } catch (e) {
+      toast('匯出失敗：' + (e.message || ''), 'error');
+    }
   }
 
   function escCsv(s) {
@@ -6919,16 +6972,29 @@ const App = (() => {
     const autoCreateCheckbox = el('importAutoCreate');
     const autoCreate = (missingCats.length > 0 || missingAccs.length > 0) && autoCreateCheckbox && autoCreateCheckbox.checked;
 
+    // 007 feature (T028)：先檢查是否有進行中匯入
+    try {
+      const progress = await API.get('/api/imports/progress');
+      if (progress && progress.active) {
+        toast('您已有匯入進行中，請稍候完成後再試', 'error');
+        return;
+      }
+    } catch (_) { /* progress check failure 不阻擋 */ }
+
     el('importConfirmBtn').disabled = true;
     el('importConfirmBtn').innerHTML = '<i class="fas fa-spinner fa-spin"></i> 匯入中...';
+    // 啟動進度輪詢
+    const stopPoll = startImportProgressPolling();
     try {
       const result = await API.post('/api/transactions/import', {
         rows: importParsedRows,
         autoCreate
       });
+      stopPoll();
       // 組裝匯入結果訊息
       let html = `<div class="import-result-success"><i class="fas fa-circle-check"></i> 成功匯入 <strong>${result.imported}</strong> 筆`;
       if (result.skipped > 0) html += `，跳過 <strong>${result.skipped}</strong> 筆`;
+      if (result.errors && result.errors.length > 0) html += `，錯誤 <strong>${result.errors.length}</strong> 筆`;
       html += '</div>';
       if (result.created && (result.created.categories.length > 0 || result.created.accounts.length > 0)) {
         html += '<div class="import-result-created"><i class="fas fa-circle-plus"></i> 自動新增：';
@@ -6937,27 +7003,88 @@ const App = (() => {
         if (result.created.accounts.length > 0) html += `帳戶（${result.created.accounts.map(a => escHtml(a)).join('、')}）`;
         html += '</div>';
       }
+      if (result.warnings && result.warnings.length > 0) {
+        html += '<div class="import-result-warnings"><b>警告：</b><ul>';
+        result.warnings.forEach(w => {
+          const reason = w.reason || w.type || '';
+          html += `<li>第 ${w.row} 行：${esc(reason)}</li>`;
+        });
+        html += '</ul></div>';
+      }
       if (result.errors && result.errors.length > 0) {
-        html += '<div class="import-result-errors"><ul>';
-        result.errors.forEach(err => { html += `<li>${esc(err)}</li>`; });
+        html += '<div class="import-result-errors"><b>錯誤：</b><ul>';
+        result.errors.slice(0, 20).forEach(err => {
+          // 新格式為 { row, reason }；舊格式為字串
+          const txt = typeof err === 'string' ? err : `第 ${err.row} 行：${err.reason}`;
+          html += `<li>${esc(txt)}</li>`;
+        });
+        if (result.errors.length > 20) html += `<li>...等 ${result.errors.length} 筆錯誤</li>`;
         html += '</ul></div>';
       }
 
-      // 清空匯入區域，回到初始狀態
       clearImport();
-
-      // 顯示匯入結果（在初始拖曳區上方）
       el('importResult').style.display = 'block';
       el('importResult').innerHTML = html;
 
       toast(`已匯入 ${result.imported} 筆交易`, 'success');
-      // 重新載入資料
       await refreshCache();
     } catch (err) {
-      toast('匯入失敗: ' + (err.message || '未知錯誤'), 'error');
+      stopPoll();
+      const status = err.status || err.code;
+      const errorCode = err.error || err.errorCode;
+      if (status === 409 || errorCode === 'IMPORT_IN_PROGRESS' || (err.message || '').includes('IMPORT_IN_PROGRESS')) {
+        toast('您已有匯入進行中，請稍候完成後再試', 'error');
+      } else if (err.failedAt) {
+        toast(`匯入失敗（已自動回滾）：失敗位置 ${err.failedAt}`, 'error');
+      } else {
+        toast('匯入失敗: ' + (err.message || '未知錯誤'), 'error');
+      }
     }
     el('importConfirmBtn').disabled = false;
     el('importConfirmBtn').innerHTML = '<i class="fas fa-file-import"></i> 確認匯入';
+  }
+
+  // 007 feature (T016)：匯入進度輪詢 helper
+  function startImportProgressPolling() {
+    let stopped = false;
+    let timer = null;
+    const poll = async () => {
+      if (stopped) return;
+      try {
+        const p = await API.get('/api/imports/progress');
+        if (p && p.active) {
+          renderImportProgressBar(p);
+        } else {
+          hideImportProgressBar();
+        }
+      } catch (_) { /* swallow */ }
+    };
+    timer = setInterval(poll, 1000);
+    poll();
+    return () => { stopped = true; if (timer) clearInterval(timer); hideImportProgressBar(); };
+  }
+
+  function renderImportProgressBar({ processed, total, phase }) {
+    const wrap = el('importProgressBar');
+    if (!wrap) return;
+    wrap.style.display = 'block';
+    const pct = total > 0 ? Math.min(100, Math.round((processed / total) * 100)) : 0;
+    const phaseText = ({
+      parsing: '解析中',
+      validating: '驗證中',
+      writing: '寫入中',
+      pairing: '配對中',
+      finalizing: '完成中',
+    })[phase] || phase || '處理中';
+    wrap.innerHTML = `
+      <div style="font-size:13px;color:var(--text-secondary)">${escHtml(phaseText)}：已處理 ${processed} / ${total} 筆（${pct}%）</div>
+      <div style="background:var(--border);border-radius:4px;height:8px;margin-top:6px;overflow:hidden">
+        <div style="background:var(--primary);height:100%;width:${pct}%;transition:width .3s"></div>
+      </div>`;
+  }
+  function hideImportProgressBar() {
+    const wrap = el('importProgressBar');
+    if (wrap) { wrap.style.display = 'none'; wrap.innerHTML = ''; }
   }
 
   // ─── 資料庫匯出匯入 ───
@@ -6990,6 +7117,22 @@ const App = (() => {
   }
 
   async function exportDatabase() {
+    // 007 feature (T051, FR-024a)：下載前確認 Modal
+    const ok = window.confirm(
+      '⚠️ 警告：此檔案將包含所有使用者的明文敏感資料\n' +
+      '\n' +
+      '包括但不限於：\n' +
+      '• 使用者密碼雜湊（bcrypt）\n' +
+      '• Session token / Passkey 認證資料\n' +
+      '• 所有交易、分類、帳戶與股票紀錄\n' +
+      '• 系統設定與外部 API 金鑰快取\n' +
+      '\n' +
+      '請確保下載後將檔案存放於安全位置（離線、加密儲存裝置），\n' +
+      '並避免上傳至雲端共享空間或公共倉庫。\n' +
+      '\n' +
+      '確定要下載？'
+    );
+    if (!ok) return;
     const btn = el('exportDbBtn');
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 匯出中…';
@@ -7004,7 +7147,7 @@ const App = (() => {
       const a = document.createElement('a');
       const cd = res.headers.get('Content-Disposition') || '';
       const match = cd.match(/filename="?([^"]+)"?/);
-      a.download = match ? match[1] : `asset_backup_${new Date().toISOString().slice(0,10)}.db`;
+      a.download = match ? match[1] : `assetpilot-backup-${new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14)}.db`;
       a.href = url;
       a.click();
       URL.revokeObjectURL(url);
@@ -7050,6 +7193,30 @@ const App = (() => {
         body: buffer
       });
       const data = await res.json();
+      if (res.status === 422 && data.error === 'RESTORE_FAILED_ROLLED_BACK') {
+        resultEl.style.display = '';
+        resultEl.className = 'import-result error';
+        resultEl.innerHTML = '<i class="fas fa-circle-xmark"></i> 還原失敗，已自動回復至還原前狀態，請檢查 server 日誌'
+          + (data.beforeRestorePath ? `<br><small>備份檔：${escHtml(data.beforeRestorePath)}</small>` : '');
+        toast('還原失敗，已自動回滾', 'error');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-file-import"></i> 確認匯入（取代現有資料）';
+        return;
+      }
+      if (res.status === 500 && data.error === 'RESTORE_FAILED_DB_UNKNOWN') {
+        resultEl.style.display = '';
+        resultEl.className = 'import-result error';
+        let backupsHtml = '';
+        if (Array.isArray(data.availableBackups) && data.availableBackups.length > 0) {
+          backupsHtml = '<br>可用備份檔：<ul style="margin:4px 0 0 1.2em">' +
+            data.availableBackups.map(b => `<li>${escHtml(b)}</li>`).join('') + '</ul>';
+        }
+        resultEl.innerHTML = '<i class="fas fa-circle-xmark"></i> 主資料庫狀態未知，請聯繫管理員' + backupsHtml;
+        toast('主資料庫狀態未知，請聯繫管理員', 'error');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-file-import"></i> 確認匯入（取代現有資料）';
+        return;
+      }
       if (!res.ok) throw new Error(data.error || '匯入失敗');
 
       resultEl.style.display = '';
@@ -8534,6 +8701,296 @@ const App = (() => {
       toast(err.message || '刪除失敗', 'error');
     }
   }
+
+  // ════════════════════════════════════════════════════════════
+  // 007 feature: 資料匯出匯入
+  // ════════════════════════════════════════════════════════════
+
+  // T043 (FR-030)：ISO 4217 白名單副本（與後端 lib/iso4217.js 同步）
+  const ISO_4217_CODES = [
+    'AED','AFN','ALL','AMD','ANG','AOA','ARS','AUD','AWG','AZN',
+    'BAM','BBD','BDT','BGN','BHD','BIF','BMD','BND','BOB','BOV',
+    'BRL','BSD','BTN','BWP','BYN','BZD','CAD','CDF','CHE','CHF',
+    'CHW','CLF','CLP','CNY','COP','COU','CRC','CUP','CVE','CZK',
+    'DJF','DKK','DOP','DZD','EGP','ERN','ETB','EUR','FJD','FKP',
+    'GBP','GEL','GHS','GIP','GMD','GNF','GTQ','GYD','HKD','HNL',
+    'HTG','HUF','IDR','ILS','INR','IQD','IRR','ISK','JMD','JOD',
+    'JPY','KES','KGS','KHR','KMF','KPW','KRW','KWD','KYD','KZT',
+    'LAK','LBP','LKR','LRD','LSL','LYD','MAD','MDL','MGA','MKD',
+    'MMK','MNT','MOP','MRU','MUR','MVR','MWK','MXN','MXV','MYR',
+    'MZN','NAD','NGN','NIO','NOK','NPR','NZD','OMR','PAB','PEN',
+    'PGK','PHP','PKR','PLN','PYG','QAR','RON','RSD','RUB','RWF',
+    'SAR','SBD','SCR','SDG','SEK','SGD','SHP','SLE','SOS','SRD',
+    'SSP','STN','SVC','SYP','SZL','THB','TJS','TMT','TND','TOP',
+    'TRY','TTD','TWD','TZS','UAH','UGX','USD','USN','UYI','UYU',
+    'UYW','UZS','VED','VES','VND','VUV','WST','XAF','XCD','XCG',
+    'XDR','XOF','XPF','XSU','XUA','YER','ZAR','ZMW','ZWG',
+  ];
+  const ISO_4217_SET = new Set(ISO_4217_CODES);
+  function isValidIso4217(code) {
+    return typeof code === 'string' && ISO_4217_SET.has(code.toUpperCase());
+  }
+  // 對外暴露給 datalist 等 UI
+  window.__ISO_4217_CODES = ISO_4217_CODES;
+
+  // T044 (FR-033a)：手動匯率 ±20% 偏離警告
+  function checkRateDeviation(newRate, currency, rates) {
+    const ref = (rates || []).find(r => (r.currency || r.Currency) === currency && !(r.is_manual || r.isManual));
+    if (!ref) return null;
+    const refRate = Number(ref.rateToTwd ?? ref.rate_to_twd);
+    const cur = Number(newRate);
+    if (!(refRate > 0) || !(cur > 0)) return null;
+    const dev = Math.abs(cur - refRate) / refRate;
+    if (dev > 0.20) return { deviation: dev, suggestedRate: refRate };
+    return null;
+  }
+
+  // T057 (FR-036~038)：API 使用與授權頁
+  async function renderExternalApisPage() {
+    const container = el('externalApisContainer');
+    if (!container) return;
+    container.innerHTML = '<p>載入中...</p>';
+    try {
+      const res = await fetch('/api/external-apis', { credentials: 'include' });
+      const data = await res.json();
+      const apis = data.apis || [];
+      let html = '<div class="external-apis-list">';
+      apis.forEach(api => {
+        const tags = [];
+        if (api.supportsFree) tags.push('<span class="badge badge-success">免費</span>');
+        if (api.supportsPaid) tags.push('<span class="badge badge-info">付費</span>');
+        html += `<div class="external-api-card">
+          <h3>${escHtml(api.name)}</h3>
+          <p>${escHtml(api.description || '')}</p>
+          <a href="${escHtml(api.url)}" target="_blank" rel="noopener">${escHtml(api.url)}</a>
+          ${tags.length ? `<div class="badges">${tags.join(' ')}</div>` : ''}
+          ${api.attribution ? `<div class="attribution-badge" style="margin-top:8px;color:#c0392b;font-weight:bold">${escHtml(api.attribution)}</div>` : ''}
+        </div>`;
+      });
+      html += '</div>';
+      container.innerHTML = html;
+    } catch (e) {
+      container.innerHTML = `<p style="color:var(--danger)">載入失敗：${escHtml(e.message || '')}</p>`;
+    }
+  }
+
+  // T065 / T066：稽核日誌頁（管理員 + 一般使用者）
+  async function renderAuditLogPage(scope) {
+    // scope: 'admin' or 'user'
+    const containerId = scope === 'admin' ? 'adminAuditLogContainer' : 'userAuditLogContainer';
+    const container = el(containerId);
+    if (!container) return;
+    const isAdmin = scope === 'admin';
+    const endpoint = isAdmin ? '/api/admin/data-audit' : '/api/user/data-audit';
+
+    const stateKey = isAdmin ? '_adminAuditState' : '_userAuditState';
+    if (!window[stateKey]) {
+      window[stateKey] = { page: 1, pageSize: 50, action: '', result: '', userId: '', start: '', end: '' };
+    }
+    const state = window[stateKey];
+
+    container.innerHTML = `
+      <div class="audit-log-filters">
+        ${isAdmin ? `<input id="${scope}AuditUser" type="text" placeholder="使用者 ID" value="${escHtml(state.userId)}">` : ''}
+        <select id="${scope}AuditAction">
+          <option value="">全部動作</option>
+          ${['export_transactions','import_transactions','export_categories','import_categories',
+             'export_stock_transactions','import_stock_transactions','export_stock_dividends','import_stock_dividends',
+             'download_backup','restore_backup','restore_failed']
+              .map(a => `<option value="${a}" ${state.action === a ? 'selected' : ''}>${a}</option>`).join('')}
+        </select>
+        <select id="${scope}AuditResult">
+          <option value="">全部結果</option>
+          <option value="success" ${state.result === 'success' ? 'selected' : ''}>成功</option>
+          <option value="failed" ${state.result === 'failed' ? 'selected' : ''}>失敗</option>
+          <option value="rolled_back" ${state.result === 'rolled_back' ? 'selected' : ''}>已回滾</option>
+        </select>
+        <input id="${scope}AuditStart" type="datetime-local" value="${escHtml(state.start)}">
+        <input id="${scope}AuditEnd" type="datetime-local" value="${escHtml(state.end)}">
+        <button id="${scope}AuditFilterBtn" class="btn btn-primary">過濾</button>
+        ${isAdmin ? `<button id="adminAuditExportBtn" class="btn">匯出 CSV</button>
+          <button id="adminAuditPurgeBtn" class="btn btn-danger">清空全部</button>
+          <span style="margin-left:12px"></span>
+          <label>保留天數：
+            <select id="adminAuditRetention">
+              <option value="30">30 天</option>
+              <option value="90">90 天</option>
+              <option value="180">180 天</option>
+              <option value="365">365 天</option>
+              <option value="forever">永久</option>
+            </select>
+            <button id="adminAuditRetentionSaveBtn" class="btn">儲存</button>
+          </label>` : ''}
+      </div>
+      <table class="audit-log-table">
+        <thead><tr><th>時間</th><th>使用者</th><th>動作</th><th>結果</th><th>IP</th><th>詳情</th></tr></thead>
+        <tbody id="${scope}AuditTbody"><tr><td colspan="6">載入中...</td></tr></tbody>
+      </table>
+      <div id="${scope}AuditPagination" class="audit-log-pagination"></div>`;
+
+    el(`${scope}AuditFilterBtn`).onclick = () => {
+      if (isAdmin) state.userId = el(`${scope}AuditUser`).value.trim();
+      state.action = el(`${scope}AuditAction`).value;
+      state.result = el(`${scope}AuditResult`).value;
+      state.start = el(`${scope}AuditStart`).value;
+      state.end = el(`${scope}AuditEnd`).value;
+      state.page = 1;
+      loadAuditLogs();
+    };
+
+    if (isAdmin) {
+      el('adminAuditExportBtn').onclick = async () => {
+        const params = buildAuditQuery(state);
+        try {
+          await downloadServerCsv('/api/admin/data-audit/export' + (params ? ('?' + params) : ''), 'audit-log.csv');
+          toast('已匯出稽核日誌 CSV', 'success');
+        } catch (e) {
+          toast('匯出失敗：' + (e.message || ''), 'error');
+        }
+      };
+      el('adminAuditPurgeBtn').onclick = async () => {
+        if (!confirm('⚠️ 確定要清空全部稽核日誌？此操作不可復原')) return;
+        if (!confirm('再次確認：將永久刪除所有稽核紀錄')) return;
+        try {
+          const r = await API.post('/api/admin/data-audit/purge', {});
+          toast(`已刪除 ${r.deleted} 筆稽核紀錄`, 'success');
+          loadAuditLogs();
+        } catch (e) {
+          toast('清空失敗：' + (e.message || ''), 'error');
+        }
+      };
+      // 載入目前保留天數
+      try {
+        const r = await API.get('/api/admin/data-audit/retention');
+        el('adminAuditRetention').value = r.retention_days || '90';
+      } catch (_) { /* noop */ }
+      el('adminAuditRetentionSaveBtn').onclick = async () => {
+        const v = el('adminAuditRetention').value;
+        try {
+          await API.put('/api/admin/data-audit/retention', { retention_days: v });
+          toast('保留天數已更新', 'success');
+        } catch (e) {
+          toast('更新失敗：' + (e.message || ''), 'error');
+        }
+      };
+    }
+
+    async function loadAuditLogs() {
+      const tbody = el(`${scope}AuditTbody`);
+      tbody.innerHTML = '<tr><td colspan="6">載入中...</td></tr>';
+      const params = buildAuditQuery(state);
+      try {
+        const r = await API.get(endpoint + (params ? ('?' + params) : ''));
+        if (!r.data || r.data.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="6">無資料</td></tr>';
+        } else {
+          tbody.innerHTML = '';
+          r.data.forEach(row => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td>${escHtml(row.timestamp)}</td>
+              <td>${escHtml(row.user_id || '').slice(0, 12)}</td>
+              <td>${escHtml(row.action)}</td>
+              <td><span class="badge badge-${row.result === 'success' ? 'success' : (row.result === 'failed' ? 'danger' : 'warn')}">${escHtml(row.result)}</span></td>
+              <td>${escHtml(row.ip_address || '')}</td>
+              <td><button class="btn btn-sm" data-toggle-detail="1">詳情</button></td>`;
+            const detailTr = document.createElement('tr');
+            detailTr.style.display = 'none';
+            detailTr.innerHTML = `<td colspan="6"><pre class="audit-log-row-detail">${escHtml(JSON.stringify(row.metadata, null, 2))}</pre></td>`;
+            tr.querySelector('button[data-toggle-detail]').onclick = () => {
+              detailTr.style.display = (detailTr.style.display === 'none') ? '' : 'none';
+            };
+            tbody.appendChild(tr);
+            tbody.appendChild(detailTr);
+          });
+        }
+        // pagination
+        const pag = el(`${scope}AuditPagination`);
+        if (pag) {
+          pag.innerHTML = '';
+          if (r.totalPages > 1) {
+            for (let p = 1; p <= r.totalPages; p++) {
+              const b = document.createElement('button');
+              b.className = 'btn btn-sm' + (p === state.page ? ' btn-primary' : '');
+              b.textContent = p;
+              b.onclick = () => { state.page = p; loadAuditLogs(); };
+              pag.appendChild(b);
+            }
+          }
+        }
+      } catch (e) {
+        tbody.innerHTML = `<tr><td colspan="6" style="color:var(--danger)">載入失敗：${escHtml(e.message || '')}</td></tr>`;
+      }
+    }
+
+    function buildAuditQuery(s) {
+      const p = new URLSearchParams();
+      if (s.action) p.set('action', s.action);
+      if (s.result) p.set('result', s.result);
+      if (s.start) p.set('start', new Date(s.start).toISOString());
+      if (s.end) p.set('end', new Date(s.end).toISOString());
+      if (s.page > 1) p.set('page', s.page);
+      if (s.pageSize !== 50) p.set('pageSize', s.pageSize);
+      if (isAdmin && s.userId) p.set('user_id', s.userId);
+      return p.toString();
+    }
+
+    loadAuditLogs();
+  }
+
+  // T053 (FR-026b)：管理員自動備份清單
+  async function renderAdminBackupsPage() {
+    const container = el('adminBackupsContainer');
+    if (!container) return;
+    container.innerHTML = '<p>載入中...</p>';
+    try {
+      const r = await API.get('/api/admin/backups');
+      const files = r.files || [];
+      if (files.length === 0) {
+        container.innerHTML = '<p>目前沒有備份檔。</p>';
+        return;
+      }
+      let html = `<p>總大小：${(r.totalSizeBytes / 1024 / 1024).toFixed(2)} MB</p>
+        <table class="backups-table">
+          <thead><tr><th>檔名</th><th>類型</th><th>大小</th><th>建立時間</th><th>操作</th></tr></thead>
+          <tbody>`;
+      files.forEach(f => {
+        const kindLabel = f.kind === 'before-restore' ? '還原前自動備份' : (f.kind === 'manual-download' ? '手動下載' : f.kind);
+        html += `<tr>
+          <td>${escHtml(f.filename)}</td>
+          <td>${escHtml(kindLabel)}</td>
+          <td>${(f.sizeBytes / 1024 / 1024).toFixed(2)} MB</td>
+          <td>${escHtml(f.mtime)}</td>
+          <td><button class="btn btn-sm btn-danger" data-del="${escHtml(f.filename)}">刪除</button></td>
+        </tr>`;
+      });
+      html += '</tbody></table>';
+      container.innerHTML = html;
+      container.querySelectorAll('button[data-del]').forEach(btn => {
+        btn.onclick = async () => {
+          const fn = btn.getAttribute('data-del');
+          if (!confirm(`確定刪除備份檔 ${fn}？`)) return;
+          try {
+            await API.delete('/api/admin/backups/' + encodeURIComponent(fn));
+            toast('已刪除', 'success');
+            renderAdminBackupsPage();
+          } catch (e) {
+            toast('刪除失敗：' + (e.message || ''), 'error');
+          }
+        };
+      });
+    } catch (e) {
+      container.innerHTML = `<p style="color:var(--danger)">載入失敗：${escHtml(e.message || '')}</p>`;
+    }
+  }
+
+  // 對外暴露的初始化 hook
+  window.__renderExternalApisPage = renderExternalApisPage;
+  window.__renderAdminAuditLogPage = () => renderAuditLogPage('admin');
+  window.__renderUserAuditLogPage = () => renderAuditLogPage('user');
+  window.__renderAdminBackupsPage = renderAdminBackupsPage;
+  window.__checkRateDeviation = checkRateDeviation;
+  window.__isValidIso4217 = isValidIso4217;
 
   return {
     init,

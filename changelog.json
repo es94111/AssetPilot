@@ -1,6 +1,33 @@
 {
-  "currentVersion": "4.27.0",
+  "currentVersion": "4.28.0",
   "releases": [
+    {
+      "version": "4.28.0",
+      "date": "2026-04-27",
+      "title": "資料匯出匯入（007-data-export-import）：純伺服端 CSV 匯出 + 原子化匯入 + 互斥鎖 + 進度回饋 + 操作稽核日誌 + 整檔備份/還原強化 + ISO 4217 白名單 + API 授權頁",
+      "type": "new",
+      "changes": [
+        { "tag": "warning", "text": "schema migration：新增 `data_operation_audit_log` 表（10 欄 + 3 個索引）；為既有 `system_settings` 新增 `audit_log_retention_days TEXT DEFAULT '90'` 欄位；新增 `backups/` 子目錄並加入 .gitignore / .dockerignore；冪等 ALTER + CREATE TABLE IF NOT EXISTS，向後兼容" },
+        { "tag": "new", "text": "新增匯出端點（純伺服端產 CSV stream，UTF-8 BOM + Formula Injection 防護）：`GET /api/transactions/export`、`GET /api/categories/export`（父分類在前 / 子分類在後）、`GET /api/stock-transactions/export`、`GET /api/stock-dividends/export`（帳戶欄位反查現金股利對應入款交易）" },
+        { "tag": "new", "text": "新增匯入端點：`POST /api/categories/import`（取代既有 client-side 多次 POST 模式，全 DB transaction 原子化、自動先建父後建子、唯一鍵 `(type, name)` 重複略過、hex 顏色嚴格驗證）" },
+        { "tag": "new", "text": "改寫 `POST /api/transactions/import`：互斥鎖（重入回 409 IMPORT_IN_PROGRESS）+ 全 DB transaction 原子化 + 進度回饋每 500 筆 + ISO 8601 嚴格驗證 + 六欄重複偵測 + 重寫轉帳配對為 (date, amount) 分組 + CSV 順序兩兩配對 + 剩餘列入 warnings；CSV 額外欄位 silent drop；response 補 warnings + errors[].row" },
+        { "tag": "new", "text": "改寫股票交易與股利匯入：互斥鎖 + 進度 + ISO 8601 + 全 DB transaction + 六欄/四欄重複偵測；股利新增「現金股利 > 0 時帳戶必填」驗證；FR-023b 純股票股利合成 $0 買進交易帳戶推導三條路徑（最近 buy → 唯一證券帳戶 → 多帳戶無歷史則錯誤）" },
+        { "tag": "new", "text": "新增進度查詢端點：`GET /api/imports/progress`（short polling；entry 含 processed / total / phase / startedAt / completedAt；完成後 5 秒自動清除）" },
+        { "tag": "new", "text": "改寫 `GET /api/database/export`：檔名格式改為 `assetpilot-backup-{YYYYMMDDHHmmss}.db`（FR-024）；前端按下「下載備份」前彈出確認 Modal 含明文敏感資料警示（FR-024a）" },
+        { "tag": "new", "text": "改寫 `POST /api/database/import`：必要表清單擴充加入 `stocks`；通過驗證後寫入 `backups/before-restore-{ts}.db`；替換失敗自動回滾並回 422 RESTORE_FAILED_ROLLED_BACK；雙重失敗回 500 RESTORE_FAILED_DB_UNKNOWN 含可用備份檔清單；寫入新檔後執行 pruneBeforeRestoreBackups() 保留最近 5 份且 ≤ 90 天" },
+        { "tag": "new", "text": "新增管理員備份檔管理端點：`GET /api/admin/backups`（列出備份檔）+ `DELETE /api/admin/backups/:filename`（path.basename + regex 雙重防路徑遍歷）；前端管理員設定頁新增「自動備份清單」卡片" },
+        { "tag": "new", "text": "新增稽核日誌查詢端點：`GET /api/admin/data-audit`（管理員，支援 user_id / action / result / start / end / page / pageSize 過濾）+ `GET /api/user/data-audit`（一般使用者，後端強制覆寫 user_id）+ 匯出 CSV / 清空 / 保留天數讀寫端點（30/90/180/365/forever）" },
+        { "tag": "new", "text": "稽核日誌涵蓋 11 個 action：export_transactions / import_transactions / export_categories / import_categories / export_stock_transactions / import_stock_transactions / export_stock_dividends / import_stock_dividends / download_backup / restore_backup / restore_failed；metadata 採白名單欄位制（rows / imported / skipped / errors / warnings / byteSize / dateFrom / dateTo / failure_stage / failure_reason / unknown_columns / backup_path / before_restore_path / filename / filterParams 共 15 條），嚴禁傳入 CSV 內容、密碼、token" },
+        { "tag": "new", "text": "改寫 `registerAuditPruneJob()`：採「次日午夜 setTimeout cascade」模式（FR-046a 明文要求每日午夜伺服器時區）；啟動 5 秒後先跑一次清理 stale 紀錄、之後每日 0:00 cascade 觸發；不引入 node-cron 等套件" },
+        { "tag": "new", "text": "為 `PUT /api/exchange-rates` 與 `GET /api/exchange-rates/:currency` 加入 ISO 4217 白名單前置驗證（FR-030）；新增 `lib/iso4217.js`（純 JS 陣列字面量 ~180 條主要流通幣別）；前端「匯率設定」頁即時驗證；不在白名單回 400 `不是有效的 ISO 4217 幣別代碼`" },
+        { "tag": "new", "text": "前端手動匯率 ±20% 偏離警告（FR-033a）：onChange 與最近一次 `is_manual = false` 紀錄比對；偏離 > 20% 顯示黃色警告含建議值；後端不阻擋（僅警告不拒絕）" },
+        { "tag": "new", "text": "新增「API 使用與授權」頁動態渲染（FR-036~038）：`lib/external-apis.json` + `GET /api/external-apis` 公開端點（無需登入、附 Cache-Control: public, max-age=3600）；IPinfo 條目固定顯示 `IP address data is powered by IPinfo` 合規授權字樣（紅色 attribution-badge 強制可見）" },
+        { "tag": "new", "text": "前端管理員設定頁新增「資料操作稽核日誌」分頁：過濾表單 + 列表 + metadata JSON 詳情展開 + 匯出 CSV + 清空（二次確認）+ 保留天數下拉" },
+        { "tag": "new", "text": "前端使用者「個人設定」頁新增「我的操作紀錄」分頁：UI 同管理員但不含使用者過濾、清空、保留天數；後端強制 user_id 覆寫防跨使用者查詢" },
+        { "tag": "improved", "text": "前端共用 `downloadServerCsv()` helper：fetch endpoint → 解析 Content-Disposition filename → 觸發下載；取代既有 4 處 client-side CSV 組裝（交易 / 分類 / 股票交易 / 股票股利）；伺服端集中 Formula Injection 防護與稽核日誌寫入" },
+        { "tag": "improved", "text": "`.gitignore` 與 `.dockerignore` 新增 `backups/` 子目錄排除規則（FR-028）" }
+      ]
+    },
     {
       "version": "4.27.0",
       "date": "2026-04-26",

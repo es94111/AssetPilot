@@ -1,0 +1,377 @@
+openapi: 3.2.0
+info:
+  title: 前端路由與頁面（Frontend Routing & Pages）契約
+  version: 0.1.0
+  description: |-
+    本契約涵蓋功能 008「前端路由與頁面」之 API delta；落地於既有 `openapi.yaml`
+    之上，本檔僅描述 delta，不重複既有共用資源（cookieAuth、ErrorResponse 等沿用
+    根目錄 `openapi.yaml` 既有定義）。
+
+    **核心設計**：本功能之主要邏輯為前端 SPA 路由，**新增 0 個對外 HTTP 端點**；
+    僅修改既有 `/api/admin/system-settings` 端點補欄位，並於既有
+    `/api/auth/login`、`/api/auth/me` 之 response `themeMode` 欄位（已存在）
+    的契約中明示前端會將其寫入 localStorage 作樂觀渲染快取。
+
+    **沿用既有技術棧**：Express 5、JWT Cookie 認證、sql.js；本功能不引入
+    新依賴、不新增獨立服務、不新增外部 API、不引入前端框架／router 套件／
+    Modal 函式庫／圖示套件。
+
+servers:
+  - url: http://localhost:3000
+    description: 本機開發
+  - url: https://assetpilot.example.com
+    description: 正式站（佔位，待部署時更新）
+
+tags:
+  - name: 系統設定
+    description: 對外的系統公開設定與版本更新資訊
+
+paths:
+  # ─────────────────────────────────────────
+  # 既有端點：擴欄補 routeAuditMode
+  # ─────────────────────────────────────────
+  /api/admin/system-settings:
+    get:
+      tags: [系統設定]
+      summary: 讀取系統設定（含路由稽核模式）
+      description: |-
+        既有端點，本功能新增 `routeAuditMode` 欄位（FR-033）。
+        值域 `security`／`extended`／`minimal`，預設 `security`。
+      operationId: adminSystemSettingsGet
+      security:
+        - cookieAuth: []
+      x-required-role: admin
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SystemSettings'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+    put:
+      tags: [系統設定]
+      summary: 更新系統設定（含路由稽核模式）
+      description: |-
+        既有端點，本功能於 request body 新增可選欄位 `routeAuditMode`（FR-033）。
+        若提供且值非 `security`／`extended`／`minimal`，回 400。
+        切換立即生效，下一個 catch-all 觸發即套用。
+      operationId: adminSystemSettingsUpdate
+      security:
+        - cookieAuth: []
+      x-required-role: admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SystemSettingsUpdate'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SystemSettings'
+        '400':
+          description: |-
+            參數錯誤；常見：`routeAuditMode` 非合法值。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: "routeAuditMode 必須為 security、extended 或 minimal"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  # ─────────────────────────────────────────
+  # 既有端點：response 已含 themeMode；本契約僅補充說明前端會寫入 localStorage
+  # ─────────────────────────────────────────
+  /api/auth/login:
+    post:
+      tags: [認證]
+      summary: 登入（既有；response 包含 themeMode）
+      description: |-
+        既有端點；本功能不變更 request／response 結構。
+        本契約於此明示：response `user.themeMode` 為前端 FR-021a 三層 fallback 之第一層；
+        前端登入成功後 MUST 將 `themeMode` 寫入 `localStorage.theme_pref`，
+        並用於下次登入或重整時的樂觀渲染。
+      operationId: authLogin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string }
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthUserResponse'
+        '401':
+          description: 帳號或密碼錯誤
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/auth/me:
+    get:
+      tags: [認證]
+      summary: 讀取當前使用者（既有；response 包含 themeMode）
+      description: |-
+        既有端點；本功能不變更 request／response 結構。
+        本契約於此明示：response `user.themeMode` 與登入時一致，前端用於與
+        `localStorage.theme_pref` 比對、不一致時覆寫並切換主題。
+      operationId: authMe
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthUserResponse'
+        '401':
+          description: |-
+            未登入或 session 失效；前端 FR-007a 偵測到此狀態 MUST 立刻將當前 URL
+            寫入 `?next=` 並導向 `/login`，同時 Toast「您的登入已過期，請重新登入」。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: token
+
+  schemas:
+    SystemSettings:
+      type: object
+      description: |-
+        系統設定（管理員可讀寫）。本功能新增欄位 `routeAuditMode`（FR-033）。
+        其餘欄位為既有，請見根目錄 `openapi.yaml`。
+      properties:
+        publicRegistration:
+          type: boolean
+          description: 是否開放公開註冊
+        allowedRegistrationEmails:
+          type: array
+          items: { type: string }
+          description: 允許註冊的 email 列表（CSV 解析後）
+        adminIpAllowlist:
+          type: array
+          items: { type: string }
+          description: 管理員 IP 白名單
+        smtp:
+          type: object
+          description: SMTP 設定（既有）
+          properties:
+            host: { type: string }
+            port: { type: integer }
+            secure: { type: boolean }
+            user: { type: string }
+            from: { type: string }
+        reportScheduleFreq:
+          type: string
+          enum: [off, weekly, monthly]
+          description: 報表排程頻率
+        auditLogRetentionDays:
+          type: string
+          enum: ['30', '90', '180', '365', forever]
+          description: |-
+            稽核日誌保留天數（既有；007 引入）。
+        routeAuditMode:
+          type: string
+          enum: [security, extended, minimal]
+          default: security
+          description: |-
+            **本功能新增（FR-033）**：路由相關稽核事件之寫入範圍。
+            - `security`（預設）：僅高訊號安全事件（admin path blocked、open redirect blocked、
+              static path traversal blocked）。
+            - `extended`：security + 401（session 失效）。
+            - `minimal`：本功能定義的路由相關事件皆不寫入；既有 007 稽核行為不受影響。
+        updatedAt:
+          type: integer
+          description: 最後修改 unix timestamp
+        updatedBy:
+          type: string
+          description: 最後修改者 user_id
+      required:
+        - publicRegistration
+        - routeAuditMode
+
+    SystemSettingsUpdate:
+      type: object
+      description: |-
+        管理員 PUT 系統設定之 request body；所有欄位皆為可選（部分更新）。
+      properties:
+        publicRegistration:
+          type: boolean
+        allowedRegistrationEmails:
+          type: array
+          items: { type: string }
+        adminIpAllowlist:
+          type: array
+          items: { type: string }
+        smtp:
+          type: object
+          properties:
+            host: { type: string }
+            port: { type: integer }
+            secure: { type: boolean }
+            user: { type: string }
+            password: { type: string }
+            from: { type: string }
+        reportScheduleFreq:
+          type: string
+          enum: [off, weekly, monthly]
+        auditLogRetentionDays:
+          type: string
+          enum: ['30', '90', '180', '365', forever]
+        routeAuditMode:
+          type: string
+          enum: [security, extended, minimal]
+          description: |-
+            **本功能新增（FR-033）**：可選；若提供且非合法值回 400。
+
+    AuthUserResponse:
+      type: object
+      description: |-
+        認證相關端點之共用回應結構（登入、SSO、Passkey、auth/me 等）。
+        本功能不變更結構；僅明示 `user.themeMode` 於 FR-021a 三層 fallback 中的角色。
+      properties:
+        user:
+          type: object
+          properties:
+            id:
+              type: string
+            email:
+              type: string
+              format: email
+            displayName:
+              type: string
+            avatarUrl:
+              type: string
+            themeMode:
+              type: string
+              enum: [system, light, dark]
+              description: |-
+                使用者選擇的主題模式（既有；005／006 已實作）。
+                **本功能新增前端契約**：前端 MUST 將此值寫入 `localStorage.theme_pref` 並
+                作為下次啟動時的樂觀渲染來源（FR-021a 三層 fallback 之第一階段；
+                第二階段為 API response 覆寫；第三階段為 `prefers-color-scheme` fallback）。
+            isAdmin:
+              type: boolean
+            googleLinked:
+              type: boolean
+            hasPassword:
+              type: boolean
+          required: [id, email, displayName, themeMode, isAdmin]
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required: [error]
+
+    # ─────────────────────────────────────────
+    # 路由稽核事件 schema（既有 data_operation_audit_log 表之列舉值擴充）
+    # 本 schema 為「描述性」契約，不對應任何 HTTP request／response；
+    # 用於說明 catch-all 寫入既有 audit 表時的 `action` 與 `metadata` 內容。
+    # 既有 007 之 `/api/admin/data-audit` 端點之 response 將自然包含本擴充列舉值。
+    # ─────────────────────────────────────────
+    RouteAuditAction:
+      type: string
+      enum:
+        - route_admin_path_blocked
+        - route_open_redirect_blocked
+        - static_path_traversal_blocked
+      description: |-
+        **本功能新增（FR-032）**：data_operation_audit_log.action 之擴充列舉值。
+        既有 007 列舉值（export_*／import_*／database_*／audit_log_*／backup_*）保留不變。
+
+    RouteAuditMetadataAdminPathBlocked:
+      type: object
+      description: |-
+        action = `route_admin_path_blocked` 時 metadata 之結構。
+      properties:
+        path:
+          type: string
+          description: 請求原始 path（未正規化）
+        normalizedPath:
+          type: string
+          description: 正規化後 path（FR-010a；用於與 ADMIN_ONLY_PATHS 比對）
+      required: [path, normalizedPath]
+
+    RouteAuditMetadataOpenRedirectBlocked:
+      type: object
+      description: |-
+        action = `route_open_redirect_blocked` 時 metadata 之結構。
+      properties:
+        next:
+          type: string
+          description: 原始 ?next= 字串（未解碼）
+        reason:
+          type: string
+          enum:
+            - empty
+            - malformed-uri
+            - not-relative
+            - protocol-relative
+            - unknown-path
+          description: 攔截原因（對應 FR-006a 五條失敗模式）
+      required: [next, reason]
+
+    RouteAuditMetadataPathTraversalBlocked:
+      type: object
+      description: |-
+        action = `static_path_traversal_blocked` 時 metadata 之結構。
+      properties:
+        rawUrl:
+          type: string
+          description: 請求原始 URL（含 query／hash）
+        pattern:
+          type: string
+          enum:
+            - literal
+            - percent-encoded
+            - double-encoded
+          description: |-
+            偵測到之 traversal 模式：
+            - `literal`：請求 URL 含字面 `..`
+            - `percent-encoded`：含 `%2e%2e`（單次 percent-encode）
+            - `double-encoded`：含 `%252e%252e`（雙重 percent-encode）
+      required: [rawUrl, pattern]
+
+  responses:
+    Unauthorized:
+      description: 未登入或 session 失效
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Forbidden:
+      description: 已登入但權限不足（非管理員）
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'

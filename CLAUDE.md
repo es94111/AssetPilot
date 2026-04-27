@@ -65,14 +65,14 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 <!-- SPECKIT START -->
 ## 目前進行中的功能規劃
 
-- 功能：資料匯出匯入（Data Export / Import）
-- 分支：`007-data-export-import`
-- 規格：[specs/007-data-export-import/spec.md](specs/007-data-export-import/spec.md)
-- 計畫：[specs/007-data-export-import/plan.md](specs/007-data-export-import/plan.md)
+- 功能：前端路由與頁面（Frontend Routing & Pages）
+- 分支：`008-frontend-routing`
+- 規格：[specs/008-frontend-routing/spec.md](specs/008-frontend-routing/spec.md)
+- 計畫：[specs/008-frontend-routing/plan.md](specs/008-frontend-routing/plan.md)
 - 衍生產物：
-  - [research.md](specs/007-data-export-import/research.md)
-  - [data-model.md](specs/007-data-export-import/data-model.md)
-  - [quickstart.md](specs/007-data-export-import/quickstart.md)
-  - [contracts/data-export-import.openapi.yaml](specs/007-data-export-import/contracts/data-export-import.openapi.yaml)
+  - [research.md](specs/008-frontend-routing/research.md)
+  - [data-model.md](specs/008-frontend-routing/data-model.md)
+  - [quickstart.md](specs/008-frontend-routing/quickstart.md)
+  - [contracts/frontend-routing.openapi.yaml](specs/008-frontend-routing/contracts/frontend-routing.openapi.yaml)
 <!-- SPECKIT END -->
 

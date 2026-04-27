@@ -14,6 +14,11 @@
 - `importLocks: Set<string>` — 每使用者匯入互斥鎖。
 - `importProgress: Map<string, ImportProgressEntry>` — 進度回饋（short polling）。
 
+**語彙統一說明**：本檔（含 plan / research / data-model / contract）與 spec 對「分類層級」採同義異稱：
+- spec 與 CSV 欄位名為「**上層分類**」（zh-TW 自然用詞）。
+- research / data-model / 程式碼識別字使用「**父分類** / `parent_id`」（沿用既有 003-categories 的 DB 欄位名）。
+- 三者指**同一概念** — 即 `categories.parent_id` 欄位所表達的「分類樹中的上一層」。閱讀時可自由替換。
+
 **新增檔案系統路徑**：
 - `backups/before-restore-{YYYYMMDDHHmmss}.db` — 還原前自動備份。
 - `backups/assetpilot-backup-{YYYYMMDDHHmmss}.db` — 管理員下載格式（不存於伺服器，僅響應檔名）。

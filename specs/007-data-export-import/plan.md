@@ -11,7 +11,7 @@
 
 - **Baseline 已實作（需補強）**：
   - `POST /api/transactions/import`（[server.js:6456](../../server.js#L6456)）— 已有「自動建立缺項」與「轉帳兩兩配對」雛型，但**(a)** 配對演算法不支援多重候選消歧（FR-012），**(b)** 未包單一 DB transaction（FR-014a），**(c)** 未做 ISO 8601 嚴格驗證（FR-014b），**(d)** 未做六欄重複略過（FR-014），**(e)** 未做互斥鎖（FR-014c），**(f)** 未推送進度（FR-014d），**(g)** 未防 Formula Injection（FR-005），**(h)** 未做未知欄位 silent drop（FR-006a），**(i)** 未寫稽核日誌（FR-042~044）。
-  - `POST /api/stock-transactions/import`（[server.js:8495](../../server.js#L8495)）— 已有「找或建立股票」雛型，但**(a)** 未做六欄重複略過（FR-023a），**(b)** 未包 DB transaction（FR-014a），**(c)** 名稱更新邏輯與 spec FR-021「`name` 欄位仍是代號才更新」一致（保留現狀），**(d)** 未做 ISO 8601 嚴格驗證（FR-014b），**(e)** 未做互斥鎖（FR-014c），**(f)** 未推送進度（FR-014d），**(g)** 未寫稽核日誌（FR-042~044）。
+  - `POST /api/stock-transactions/import`（[server.js:8495](../../server.js#L8495)）— 已有「找或建立股票」雛型，但**(a)** 未做六欄重複略過（FR-023a），**(b)** 未包 DB transaction（FR-014a），**(c)** 名稱更新邏輯與 spec FR-021「`name` 欄位仍是代號才更新」一致（保留現狀），**(d)** 未做 ISO 8601 嚴格驗證（FR-014b），**(e)** 未做互斥鎖（FR-014c），**(f)** 未推送進度（FR-014d），**(g)** 未寫稽核日誌（FR-042~044）。**FR-022「觸發 FIFO 全量重算」採惰性詮釋**：既有 `GET /api/stocks` 於每次呼叫時依當下 `stock_transactions` 全量計算 FIFO（lazy recompute），匯入新交易後下次 GET 自動納入；本計畫不主動觸發重算，與 spec FR-022 等價（重算發生點延後至下次 GET，使用者體驗無差異；省下匯入完成時的同步重算成本）。
   - `POST /api/stock-dividends/import`（[server.js:8538](../../server.js#L8538)）— 已實作但**(a)** 完全未處理 `accountName`／`account` 欄位（FR-019、FR-023b），**(b)** 未做四欄重複略過（FR-023a），**(c)** 未做 ISO 8601 嚴格驗證，**(d)** 未做互斥鎖、未寫稽核日誌、未推送進度。
   - `GET /api/database/export` + `POST /api/database/import`（[server.js:8830](../../server.js#L8830)、[server.js:8845](../../server.js#L8845)）— 已驗證 SQLite header 與必要表（users / transactions / accounts / categories），備份目前資料庫至 `DB_PATH + '.backup_<ts>'`；但**(a)** 檔名格式為 `asset_backup_<ts>.db` 與 spec `assetpilot-backup-{YYYYMMDDHHmmss}.db` 不符（FR-024），**(b)** 未做下載前確認彈窗（FR-024a），**(c)** 必要表清單未含 stocks（FR-025），**(d)** 備份檔放在 `DB_PATH + '.backup_<ts>'` 而非 `backups/before-restore-{timestamp}.db` 子目錄（FR-026），**(e)** 還原失敗未自動回滾（FR-026a），**(f)** 無保留 5 份／90 天清理策略（FR-026b），**(g)** 一般使用者 RBAC 已套（管理員 only），未變動，**(h)** `.gitignore` 已含 `*.bak`（涵蓋部分），但需明示 `backups/` 資料夾排除（FR-028），**(i)** 未寫稽核日誌（FR-042~044）。
   - 匯率（`/api/exchange-rates`、`POST /api/exchange-rates/refresh`，[server.js:5531](../../server.js#L5531)~5650）— 已有 fxCache 跨使用者快取（`exchange_rates_global` 表 + `lib/exchangeRateCache.js`）、`is_manual` 欄位、`auto_update` 開關、付費版 API key 切換；但**(a)** 30 分鐘 TTL 需 audit `exchangeRateCache.js` 確認，**(b)** 無 ISO 4217 白名單前置驗證（FR-030），**(c)** 手動編輯無 ±20% 警告（FR-033a），**(d)** 「上次取得時間」精確到秒需 audit UI 顯示，**(e)** 匯率不在稽核表範圍內（spec FR-042 列舉項皆為匯出／匯入／備份／還原）。
@@ -33,7 +33,7 @@
   13. **必要資料表清單擴充**（FR-025）— `requiredTables` 加入 `stocks`（既有為 `users / transactions / accounts / categories`）。
   14. **ISO 4217 白名單**（FR-030）— 新增 `lib/iso4217.js` 匯出 ~180 個代碼陣列；`PUT /api/exchange-rates` 與 `GET /api/exchange-rates/:currency` 前置驗證。
   15. **手動匯率 ±20% 警告**（FR-033a）— 純前端 UI 警告（後端不阻擋）；前端比對 `is_manual = false` 紀錄與 fxCache 快取項取得即時值。
-  16. **API 授權頁**（FR-036~038）— 純前端頁面 + 一份靜態 JSON `lib/external-apis.json`（IPinfo 條目含 `IP address data is powered by IPinfo` 字樣）；不變更後端。
+  16. **API 授權頁**（FR-036~038）— 純前端頁面 + 一份靜態 JSON `lib/external-apis.json`（IPinfo 條目含 `IP address data is powered by IPinfo` 字樣）；不變更後端。**註：spec US7「不需重新部署整個應用」於本計畫詮釋為「不需重 build Docker image / 推 registry」**；單純編輯 `lib/external-apis.json` + `npm start` restart 屬部署內 reload，不視為「重新部署」。線上熱更新（不重啟 process 即生效）非本計畫範圍。
   17. **稽核日誌保留期設定**（FR-046a）— 新增 `system_settings` 鍵 `audit_log_retention_days`（值：30/90/180/365/'forever'，預設 90）；既有 `registerAuditPruneJob()`（[server.js:4832](../../server.js#L4832)）擴充清理範圍至 `data_operation_audit_log`。
   18. **稽核日誌查詢端點**（FR-045、FR-046b）— `GET /api/admin/data-audit`（管理員，含 user_id/action/時間/result 過濾）+ `GET /api/user/data-audit`（一般使用者，固定以登入者 ID 過濾）。
   19. **稽核日誌清空與 CSV 匯出**（FR-046a）— `GET /api/admin/data-audit/export` 產 CSV、`POST /api/admin/data-audit/purge` 清空。
@@ -91,7 +91,7 @@
      - 必要表清單擴充 `users / transactions / accounts / categories / stocks`（加 stocks）。
      - 通過驗證後，於 `backups/` 子目錄寫入 `before-restore-{timestamp}.db`（`fs.mkdirSync('backups', { recursive: true })`、`fs.writeFileSync(...)`）。
      - 替換主資料庫 try/catch：失敗時呼叫 `restoreFromBackup(beforeRestorePath)` 將 `before-restore-{timestamp}.db` 內容寫回 `DB_PATH` + 重新 `new SQL.Database()`；雙重失敗則拋例外、UI 顯示 `"還原失敗，主資料庫狀態未知，請聯繫管理員"`。
-     - 寫入新檔後立即呼叫 `pruneBeforeRestoreBackups()`：列出 `backups/before-restore-*.db`、按 mtime 排序、保留最近 5 份且 mtime 距今 ≤ 90 天的、其餘 `fs.unlinkSync()`；刪除事件 `console.log` 結構化 log + 寫稽核日誌。
+     - 寫入新檔後立即呼叫 `pruneBeforeRestoreBackups()`：列出 `backups/before-restore-*.db`、按 mtime 排序、保留最近 5 份且 mtime 距今 ≤ 90 天的、其餘 `fs.unlinkSync()`；刪除事件僅以 `console.log` 結構化 log 記錄（**不寫稽核日誌** — `pruneBeforeRestoreBackups` 屬「系統內部維運動作」非使用者可觸發操作，不在 spec FR-042/FR-043 列舉的 audit action 範圍內；管理員可透過 server log 觀察刪除事件）。
    - **管理員備份清單端點**：新增 `GET /api/admin/backups`（列出 `backups/` 內 `before-restore-*.db` 與 `assetpilot-backup-*.db` 名單 + 大小 + mtime）+ `DELETE /api/admin/backups/:filename`（管理員手動刪除，路徑遍歷防護以 `path.basename` 強制扁平化）。
    - **`.gitignore` / `.dockerignore`**：加入 `backups/` 一行（既有 `*.bak` 規則僅涵蓋根目錄 `*.bak` 檔，未涵蓋子目錄內的 `.db`，需明示）。
 
@@ -110,7 +110,7 @@
 - CSV 解析 / 組裝 / Formula Injection 防護皆為純 JS（`String.prototype.startsWith`、`replace`、template literal）；不引入 csv-parser / papa-parse 等。
 - 進度回饋採 short polling（前端 setInterval 1s、後端純 Map）；不引入 SSE 或 WebSocket（新依賴）。
 - 互斥鎖採 `Set<userId>`；server 重啟自動清空，不需 Redis / DB lock。
-- 稽核日誌清理沿用既有 `registerAuditPruneJob()` 的 setInterval 24h 模式（[server.js:4832](../../server.js#L4832)），不新增 cron worker。
+- 稽核日誌清理沿用既有 `registerAuditPruneJob()`（[server.js:4832](../../server.js#L4832)）的 setTimeout pattern；本計畫於既有 job 內**改寫排程為「次日午夜 setTimeout cascade」**以符合 FR-046a「每日午夜（伺服器時區）」明文要求；不新增 cron worker / 不引入 node-cron 等套件。
 - 還原備份檔以 `fs.readdirSync` + `fs.unlinkSync` 純 JS 處理；不引入 fs-extra。
 - ISO 4217 為純 JS array literal；不引入 currency.js 等。
 

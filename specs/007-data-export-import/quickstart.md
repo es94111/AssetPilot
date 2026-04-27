@@ -182,12 +182,35 @@ git check-ignore -v backups/before-restore-test.db
 - ✅ DB 中第一筆轉出與第三筆轉入有相同 linked_id
 - ✅ 第二筆轉出 linked_id 為空字串
 
+### 3.7b SC-004 量化驗證 — 100 對轉帳往返配對成功率
+
+1. 產生包含 100 對轉帳的 CSV（200 筆）：每對採不同日期或不同金額以避免群組碰撞（如 `2026-01-01 / 1000`、`2026-01-02 / 2000` ...）；轉出 / 轉入兩端帳戶皆已存在。
+2. 在新空白測試帳號下匯入該 CSV。
+3. 統計 SQL：`SELECT COUNT(DISTINCT linked_id) FROM transactions WHERE user_id = ? AND linked_id != ''`。
+
+**Pass criteria**（對應 SC-004 ≥ 99%）：
+- ✅ 配對組數 ≥ 99（即 100 對中至少 99 對成功 linked_id 互指）
+- ✅ `warnings` 陣列長度 ≤ 1（最多容許 1 對因群組碰撞 / Edge Case 列入未配對警告）
+
 ### 3.8 Idempotency / 進度回饋邊界
 
 1. 進入匯入頁，無進行中匯入時呼叫 `GET /api/imports/progress`。
 
 **Pass criteria**：
 - ✅ 回 `{ active: false }`（HTTP 200）
+
+### 3.9 網路中斷弱保證（FR-014a 取捨）
+
+> **本計畫的弱保證**：使用者離開頁面或網路中斷時，後端 handler 仍會跑完當前匯入；若 commit 已完成則資料保留、UI 視為失敗、使用者重試會被 FR-014 重複偵測自動略過（SC-009 冪等性保證）。**不**實作 `req.on('aborted', ...)` 中斷檢查（避免 sql.js 同步 API 與異步事件混雜風險）。
+
+1. 上傳 1000 筆 CSV → 進度條顯示「writing 階段、500 / 1000」時，於 DevTools Network 面板按「Offline」中斷網路。
+2. 等待 30 秒後恢復網路、重新整理頁面。
+
+**Pass criteria**：
+- ✅ 視 commit 是否完成有兩種情境：
+  - 情境 A（commit 在中斷前完成）：交易列表已含本批 1000 筆；重試上傳同一檔 → 顯示「成功 0 / 略過 1000 / 錯誤 0」（FR-014 冪等性）
+  - 情境 B（commit 未完成 / handler 仍在跑）：rollback；交易列表無本批資料；重試上傳同一檔 → 全部成功
+- ✅ 兩種情境最終結果一致（一份資料），無雙寫入
 
 ---
 
@@ -493,6 +516,18 @@ grep -rn "fetch(\|axios\|got\|node-fetch\|http\.get\|https\.get" server.js lib/ 
 - ✅ 對應的所有外部服務皆已列於 `lib/external-apis.json`
 - ✅ IPinfo `attribution` 字串完全相符 `IP address data is powered by IPinfo`
 
+### 10.5 SC-007：首次使用者匯入 UAT（人工觀察）
+
+> UX 衡量指標、難以程式化驗證；採人工 UAT 觀察。
+
+1. 邀請一位**未接觸過本系統匯入功能**的測試者（家人 / 同事亦可）。
+2. 給予一份 50 ~ 100 筆範例 CSV（含 1 個尚未建立的分類，以觸發「自動建立缺項」對話框）。
+3. 觀察並計時：從進入匯入頁 → 上傳 → 解決缺項對話框 → 看到「成功 N」結果。
+
+**Pass criteria**：
+- ✅ ≤ 5 分鐘完成（spec SC-007）
+- ✅ 觀察者無需開發者協助即可獨立完成（衡量教學門檻是否合理）
+
 ---
 
 ## 11. 回歸測試
@@ -504,8 +539,13 @@ grep -rn "fetch(\|axios\|got\|node-fetch\|http\.get\|https\.get" server.js lib/ 
 3. 既有股票投資頁面（持倉、實現損益、批次更新股價）正常。
 4. 既有匯率設定 / 自動更新 toggle 正常。
 5. 既有登入 / 登出 / Passkey / Google SSO 正常。
+6. **匯率相關 baseline 行為（FR-029 / FR-033 / FR-034 / FR-035）**：
+   - 匯率設定頁基礎貨幣 TWD 不可刪除、不可修改（FR-029）。
+   - 編輯既有自動匯率為手動值並按下「鎖定」→ `is_manual = 1`；下次自動更新觸發時該紀錄不被覆寫（FR-033）。
+   - `EXCHANGE_RATE_API_KEY` 環境變數切換（`free` ↔ 付費 key）後 restart server，呼叫 `POST /api/exchange-rates/refresh` 路徑切換正確（透過 `lib/exchangeRateCache.js` 內部分流；FR-034）。
+   - 模擬 exchangerate-api.com 不可達（如 `EXCHANGE_RATE_API_KEY=invalid` 或暫斷網路）→ UI 顯示明確錯誤訊息且既有匯率不被清空（FR-035）。
 
-**Pass criteria**：✅ 上列 1-5 全部回歸通過、無 console error、UI 無破版。
+**Pass criteria**：✅ 上列 1-6 全部回歸通過、無 console error、UI 無破版。
 
 ---
 

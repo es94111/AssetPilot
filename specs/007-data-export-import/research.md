@@ -125,7 +125,13 @@ try {
 ```
 
 **邊界情境**：
-- 使用者離開頁面 → fetch 中斷 → server side handler `req.on('aborted', ...)` 不主動 rollback（既有 baseline 也未做此處理）；但因為整個寫入在單一 transaction 內，server side handler 完整跑完才 COMMIT，因此「中斷」實質意味著 connection 斷掉時 handler 仍在跑 → 跑完後 res.send 失敗（client 看不到結果）→ 但 data 已 commit。**改善**：handler 開頭加 `let aborted = false; req.on('aborted', () => { aborted = true })`；在每個 phase 結束後檢查若 aborted 則 throw 進入 ROLLBACK 流程。
+- 使用者離開頁面 → fetch 中斷 → server side handler 仍在跑（Node.js 不會因 socket close 中止執行中的 JS）→ handler 跑完才 COMMIT。
+- **本計畫採弱保證取捨**：不實作 `req.on('aborted', ...)` 中斷檢查；接受「commit 已完成則資料保留、UI 視為失敗、使用者重試會被 FR-014 重複偵測自動略過」的弱保證。
+- **取捨理由**：
+  1. sql.js 為單執行緒同步 API，於 phase 中插入 abort check 會混雜「同步寫入 + 異步事件監聽」，增加 race window 與測試面。
+  2. SC-009 冪等性（FR-014 六欄重複略過）已保證「斷線後重試」不會出現重複資料 — 使用者重試一次即恢復一致狀態。
+  3. 中斷期極窄（commit 為記憶體 op，毫秒級）— 使用者實際命中此邊界的機率極低。
+- **使用者影響**：若中斷時 commit 已成功但 res.send 失敗，使用者前端看到「網路錯誤」但實際資料已寫入；下次重新整理交易列表即可看到已匯入內容；spec / quickstart 對應段落需明示此弱保證以管理使用者期待。
 
 ---
 
@@ -345,7 +351,8 @@ function pruneBeforeRestoreBackups() {
 **決策**：新表 `data_operation_audit_log` + `writeOperationAudit()` helper + 沿用既有 `registerAuditPruneJob()` 的 setInterval 24h 模式（[server.js:4832](../../server.js#L4832)）擴充清理範圍。
 
 **Rationale**：
-- spec FR-046a 要求「每日午夜清理」— 既有 `registerAuditPruneJob` 採「啟動後 5 秒先跑一次 + 每 24 小時跑一次」pattern（不嚴格在午夜跑，但效果等價：每日清理一次）；沿用避免新引入 cron 套件（如 node-cron）。
+- spec FR-046a 要求「每日午夜（伺服器時區）清理」 — 本計畫採「次日午夜 setTimeout cascade」純 JS 模式（每次 tick 結束後重新計算下次午夜的 epoch ms 並 setTimeout）；避免新引入 cron 套件（如 node-cron），同時嚴格符合 spec 文字承諾。
+- 既有 `registerAuditPruneJob`（[server.js:4832](../../server.js#L4832)）目前採「啟動後 5 秒 + 每 24 小時 setInterval」pattern；本計畫改寫此 job 為「啟動 5 秒先跑一次 + scheduleNextMidnightTick() cascade」雙軌：(1) 啟動 5 秒讓 server 暖機後立即清理一次 stale 紀錄；(2) 之後每日午夜準時觸發。同時保留既有 `login_audit_logs` 清理路徑共用同一 tick。
 - 寫入失敗 try/catch 不阻擋主操作（FR-044）— 配合 server log 確保事後可補登。
 - 稽核日誌**不含明文敏感資料**（FR-046）— metadata 欄位僅紀錄筆數、檔案大小、失敗原因等元資料；CSV 內容、密碼、token 不入庫。
 
@@ -371,11 +378,11 @@ function writeOperationAudit({ userId, role, action, ipAddress, userAgent, resul
 }
 ```
 
-**清理 job 擴充**：
+**清理 job 擴充（每日午夜 cascade 模式，FR-046a）**：
 ```javascript
 function registerAuditPruneJob() {
   function tick() {
-    // ... 既有 login_audit_logs 清理邏輯
+    // ... 既有 login_audit_logs 清理邏輯（沿用）
     // 新增：data_operation_audit_log 清理
     const setting = queryOne("SELECT value FROM system_settings WHERE key = 'audit_log_retention_days'");
     const retention = setting?.value || '90';
@@ -386,10 +393,22 @@ function registerAuditPruneJob() {
     db.run("DELETE FROM data_operation_audit_log WHERE timestamp < ?", [threshold]);
     saveDB();
   }
-  setTimeout(tick, 5000); // 啟動 5 秒後跑一次
-  setInterval(tick, 24 * 60 * 60 * 1000); // 每 24 小時
+  // FR-046a：「每日午夜（伺服器時區）」執行 — 採 setTimeout cascade 模式
+  function scheduleNextMidnightTick() {
+    const now = new Date();
+    const nextMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0, 0);
+    const ms = nextMidnight.getTime() - now.getTime();
+    setTimeout(() => {
+      try { tick(); } catch (e) { console.error('[audit-prune] tick failed', e); }
+      scheduleNextMidnightTick();
+    }, ms);
+  }
+  setTimeout(tick, 5000);            // 啟動 5 秒後先跑一次（清理啟動前累積的 stale 紀錄）
+  scheduleNextMidnightTick();        // 之後每日午夜準時觸發
 }
 ```
+
+**為何不用 setInterval(24h)**：`setInterval(fn, 86400000)` 自啟動時間起每 24 小時觸發一次（例如下午 3 點啟動則每天下午 3 點觸發），與 spec「每日午夜」不符；setTimeout cascade 每次重新計算到下次 0:00 的精準 ms 數，誤差 ≤ 一個事件迴圈 tick。
 
 **權限與查詢**：
 - `GET /api/admin/data-audit`：`adminMiddleware`；query 支援 `user_id` / `action` / `result` / `start` / `end` / `page` / `pageSize`；預設 `pageSize = 50`、按 `timestamp DESC`。

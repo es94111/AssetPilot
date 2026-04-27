@@ -4951,7 +4951,7 @@ function renderStatsEmailHtml(displayName, email, stats) {
 <body style="margin:0;padding:24px 12px;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue','Noto Sans TC','Microsoft JhengHei',sans-serif;color:${COLOR_INK};-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale" width="100%">
   <table role="presentation" cellpadding="0" cellspacing="0" align="center" width="100%" class="ap-outer" style="max-width:600px;margin:0 auto;width:100%"><tr><td>
     <table role="presentation" cellpadding="0" cellspacing="0" width="100%" class="ap-shell" style="background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 8px 32px rgba(15,23,42,0.08)">
-      <tr><td class="ap-hero" style="padding:32px 28px 22px;background:linear-gradient(135deg,#4f46e5 0%,#7c3aed 50%,#a855f7 100%);color:#ffffff;position:relative">
+      <tr><td class="ap-hero" bgcolor="#4f46e5" style="padding:32px 28px 22px;background-color:#4f46e5;background:#4f46e5 linear-gradient(135deg,#4f46e5 0%,#7c3aed 50%,#a855f7 100%);color:#ffffff">
         <div style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;opacity:0.9;margin-bottom:8px;font-weight:600">AssetPilot · ${month} 月度摘要</div>
         <div class="ap-hero-title" style="font-size:24px;font-weight:800;line-height:1.25;letter-spacing:-0.02em">${safeName}，您好 👋</div>
         <div style="font-size:14px;line-height:1.5;margin-top:8px;opacity:0.95">這是您本月的資產與收支快照<br>資產 <strong>${stats.accountCount}</strong> 個帳戶 · 持股 <strong>${stats.stockHoldings}</strong> 檔</div>

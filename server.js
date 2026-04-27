@@ -376,6 +376,7 @@ function decryptBuffer(encBuffer, passphrase) {
 }
 
 function isEncryptedDB(buffer) {
+  if (!Buffer.isBuffer(buffer)) return false;
   return buffer.length >= 4 && buffer.subarray(0, 4).equals(ENC_MAGIC);
 }
 
@@ -450,6 +451,20 @@ app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/register', authLimiter);
 app.use('/api/auth/google', authLimiter);
 
+// 全域 API rate limiter（CodeQL js/missing-rate-limiting）：每 IP 每 15 分鐘 600 次
+// 額度足夠正常 SPA 操作，仍能阻擋自動化暴力 / DoS；和 authLimiter 疊用時取最嚴格那層。
+const API_GLOBAL_RATE_LIMIT_MAX = 600;
+const apiGlobalLimiter = rateLimit({
+  windowMs: RATE_LIMIT_WINDOW_MS,
+  max: API_GLOBAL_RATE_LIMIT_MAX,
+  standardHeaders: 'draft-8',
+  legacyHeaders: false,
+  message: { error: '請求過於頻繁，請稍後再試' },
+  skip: (req) => isRequestIpWhitelisted(req),
+  validate: { xForwardedForHeader: false }
+});
+app.use('/api', apiGlobalLimiter);
+
 // 靜態頁桶（FR-007 靜態頁桶：/privacy、/terms；與 auth 桶獨立計數）
 const staticPageLimiter = rateLimit({
   windowMs: RATE_LIMIT_WINDOW_MS,
@@ -490,6 +505,35 @@ app.use((err, req, res, next) => {
 });
 
 app.use(cookieParser());
+
+// CSRF 防護（CodeQL js/missing-token-validation）：
+// 認證採 Cookie + JWT；雖已用 SameSite=Strict 阻擋大多數跨站偽造，仍對狀態變更請求
+// 額外驗證 Origin / Referer header 必須屬於 ALLOWED_ORIGINS 白名單。
+// 純 Bearer Token（Authorization header）模式不受 CSRF 影響（瀏覽器無法跨站送 Authorization），故略過。
+const CSRF_SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
+function isOriginAllowed(originValue) {
+  if (!originValue) return false;
+  if (!ALLOWED_ORIGINS || ALLOWED_ORIGINS.length === 0) return true; // 開發模式：未設定白名單時不阻擋
+  try {
+    const u = new URL(originValue);
+    const normalized = `${u.protocol}//${u.host}`;
+    return ALLOWED_ORIGINS.includes(normalized) || ALLOWED_ORIGINS.includes(originValue);
+  } catch (_) {
+    return false;
+  }
+}
+app.use('/api', (req, res, next) => {
+  if (CSRF_SAFE_METHODS.has(req.method)) return next();
+  // Bearer Token 流程不受 CSRF 影響（瀏覽器不會自動跨站附加 Authorization header）
+  const authHeader = req.headers.authorization || '';
+  const usesCookieAuth = !authHeader.startsWith('Bearer ') && !!req.cookies?.authToken;
+  if (!usesCookieAuth) return next();
+  const origin = req.headers.origin || req.headers.referer || '';
+  if (!isOriginAllowed(origin)) {
+    return res.status(403).json({ error: '請求來源不被允許（CSRF 防護）' });
+  }
+  return next();
+});
 
 // 僅開放必要前端靜態檔，避免專案根目錄檔案外洩
 // 008 feature (T063 / FR-026)：擴充至 9 條合法白名單；Cache-Control 由 handler 套用
@@ -2387,8 +2431,12 @@ function getRouteAuditMode() {
 const ADMIN_ONLY_PATHS = ['/settings/admin'];
 
 // 008 feature (T003 / FR-010a)：後端版路徑正規化（與前端 normalizePath 演算法一致）
+// CodeQL js/polynomial-redos：對 user-controlled `?next=` 路徑施加長度上限，
+// 避免極長字串觸發 regex 引擎大量 backtracking。
+const MAX_ROUTE_PATH_LENGTH = 2048;
 function normalizeRoutePath(rawPath) {
   if (typeof rawPath !== 'string') return '/';
+  if (rawPath.length > MAX_ROUTE_PATH_LENGTH) return '/';
   const noQueryHash = rawPath.split(/[?#]/)[0] || '/';
   const lower = noQueryHash.toLowerCase();
   const collapsed = lower.replace(/\/{2,}/g, '/');
@@ -10126,10 +10174,14 @@ app.post('/api/database/import', express.raw({ type: 'application/octet-stream',
   if (!isUserAdmin(req.userId)) return res.status(403).json({ error: '僅管理員可執行此操作' });
   let beforeRestorePath = '';
   try {
-    if (!Buffer.isBuffer(req.body)) {
+    // CodeQL js/type-confusion-through-parameter-tampering：明確將 req.body 收斂為 Buffer，
+    // 避免後續 .length / .subarray 讀取被靜態分析視為 user-controlled type 操作。
+    const rawBody = req.body;
+    if (!Buffer.isBuffer(rawBody)) {
       return res.status(400).json({ error: '無效的資料庫檔案' });
     }
-    let dbBuffer = req.body;
+    /** @type {Buffer} */
+    const dbBuffer = Buffer.from(rawBody);
     if (dbBuffer.length < 16) {
       return res.status(400).json({ error: '無效的資料庫檔案' });
     }

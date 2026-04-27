@@ -1,7 +1,7 @@
 # 資產管理 系統規格說明書 (SSD)
 
-**版本：** 4.26.0
-**日期：** 2026-04-26
+**版本：** 4.28.0
+**日期：** 2026-04-27
 **狀態：** 已實作
 
 ---
@@ -880,6 +880,37 @@ API 路徑統一以 `/api/` 為前綴。所有需認證的路由自動套用 aut
 | POST   | /api/admin/server-time/ntp-sync          | 從 NTP 同步時間                                           |
 | GET    | /api/admin/db/export                     | 匯出資料庫備份（未加密 SQLite）                           |
 | POST   | /api/admin/db/import                     | 匯入資料庫備份（覆寫前自動備份）                          |
+
+### 3.X 007-data-export-import 新增端點（v4.28.0）
+
+| 方法   | 路徑                                       | 說明                                                       |
+| ------ | ------------------------------------------ | ---------------------------------------------------------- |
+| GET    | /api/transactions/export                   | 匯出交易記錄 CSV（伺服端 stream，UTF-8 BOM）                |
+| GET    | /api/categories/export                     | 匯出分類結構 CSV（父分類在前 / 子分類在後）                 |
+| POST   | /api/categories/import                     | 匯入分類結構 CSV（原子化、互斥鎖、唯一鍵 type+name 略過）   |
+| GET    | /api/stock-transactions/export             | 匯出股票交易 CSV                                            |
+| GET    | /api/stock-dividends/export                | 匯出股票股利 CSV（帳戶欄位反查）                            |
+| GET    | /api/imports/progress                      | 查詢目前匯入進度（short polling，1s 一次）                  |
+| GET    | /api/admin/backups                         | 列出 backups/ 目錄內備份檔（管理員）                        |
+| DELETE | /api/admin/backups/:filename               | 手動刪除備份檔（管理員，path.basename + regex 防遍歷）      |
+| GET    | /api/admin/data-audit                      | 列出全部稽核日誌（管理員，支援 user / action / 時間過濾）   |
+| GET    | /api/user/data-audit                       | 列出我的操作紀錄（一般使用者，後端強制覆寫 user_id）        |
+| GET    | /api/admin/data-audit/export               | 匯出稽核日誌為 CSV（管理員）                                |
+| POST   | /api/admin/data-audit/purge                | 清空稽核日誌（管理員）                                      |
+| GET    | /api/admin/data-audit/retention            | 讀取稽核日誌保留天數設定（管理員）                          |
+| PUT    | /api/admin/data-audit/retention            | 更新保留天數（30/90/180/365/forever）                       |
+| GET    | /api/external-apis                         | API 使用與授權清單（公開端點，無需登入）                    |
+
+**新增資料表**：
+- `data_operation_audit_log`（10 欄 + 3 索引）— 資料操作稽核紀錄。
+- `system_settings.audit_log_retention_days`（新增欄位）— 稽核日誌保留期。
+- `backups/`（執行期子目錄）— 還原前自動備份檔，保留最近 5 份且 ≤ 90 天。
+
+**端點行為強化**：
+- `POST /api/transactions/import`、`/api/stock-transactions/import`、`/api/stock-dividends/import`：互斥鎖（重入回 409）+ 全 DB transaction 原子化 + 進度回饋每 500 筆 + ISO 8601 嚴格 + 重複偵測（六欄 / 四欄）+ CSV 額外欄位 silent drop + 寫入稽核日誌。
+- `GET /api/database/export`：檔名格式改為 `assetpilot-backup-{YYYYMMDDHHmmss}.db`。
+- `POST /api/database/import`：必要表加入 stocks；通過驗證後寫入 `backups/before-restore-{ts}.db`；替換失敗自動回滾（422 RESTORE_FAILED_ROLLED_BACK）；雙重失敗回 500 RESTORE_FAILED_DB_UNKNOWN 含可用備份檔清單；保留 5 份 + 90 天清理。
+- `PUT /api/exchange-rates`、`GET /api/exchange-rates/:currency`：新增 ISO 4217 白名單前置驗證。
 
 ---
 

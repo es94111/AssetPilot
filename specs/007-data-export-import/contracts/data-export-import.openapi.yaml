@@ -801,8 +801,7 @@ components:
           type: integer
           description: epoch ms
         completedAt:
-          type: integer
-          nullable: true
+          type: [integer, 'null']
           description: epoch ms；null 表示進行中
 
     DataOperationAuditLog:
@@ -851,8 +850,7 @@ components:
         description: { type: string, example: 'IP 位址地理位置查詢' }
         url: { type: string, format: uri, example: 'https://ipinfo.io/lite' }
         attribution:
-          type: string
-          nullable: true
+          type: [string, 'null']
           description: '若非空，UI 必須顯示此字串作為合規授權聲明。例如 IPinfo 條目固定為 IP address data is powered by IPinfo'
           example: 'IP address data is powered by IPinfo'
         supportsFree: { type: boolean }

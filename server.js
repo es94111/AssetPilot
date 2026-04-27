@@ -39,6 +39,14 @@ const fxCache = require('./lib/exchangeRateCache');
 // 006-stock-investments：TWSE 並發查價 helper
 const twseFetch = require('./lib/twseFetch');
 const Decimal = require('decimal.js');
+// ─── 007 feature: 資料匯出匯入共用模組（T015） ───
+const { ISO_4217_CODES, isValidCurrency } = require('./lib/iso4217');
+const externalApisData = require('./lib/external-apis.json');
+
+// ─── 007 feature: 匯入互斥鎖 + 進度回饋 + backups 路徑（T007） ───
+const importLocks = new Set();
+const importProgress = new Map();
+const BACKUPS_DIR = path.join(__dirname, 'backups');
 
 const app = express();
 // 信任反向代理（Nginx / Synology / Docker）傳遞的 X-Forwarded-For 標頭
@@ -558,6 +566,23 @@ async function initDB() {
   db.run(`CREATE INDEX IF NOT EXISTS idx_login_audit_user_time ON login_audit_logs(user_id, login_at DESC)`);
   db.run(`CREATE INDEX IF NOT EXISTS idx_login_audit_time ON login_audit_logs(login_at DESC)`);
 
+  // ─── 007 feature: 資料操作稽核日誌（FR-042 ~ FR-046b） ───
+  db.run(`CREATE TABLE IF NOT EXISTS data_operation_audit_log (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    role TEXT NOT NULL,
+    action TEXT NOT NULL,
+    ip_address TEXT DEFAULT '',
+    user_agent TEXT DEFAULT '',
+    timestamp TEXT NOT NULL,
+    result TEXT NOT NULL,
+    is_admin_operation INTEGER DEFAULT 0,
+    metadata TEXT DEFAULT '{}'
+  )`);
+  db.run(`CREATE INDEX IF NOT EXISTS idx_data_audit_user_time ON data_operation_audit_log(user_id, timestamp DESC)`);
+  db.run(`CREATE INDEX IF NOT EXISTS idx_data_audit_time ON data_operation_audit_log(timestamp DESC)`);
+  db.run(`CREATE INDEX IF NOT EXISTS idx_data_audit_action ON data_operation_audit_log(action)`);
+
   db.run(`CREATE TABLE IF NOT EXISTS login_attempt_logs (
     id TEXT PRIMARY KEY,
     user_id TEXT DEFAULT '',
@@ -604,6 +629,8 @@ async function initDB() {
   try { db.run("ALTER TABLE system_settings ADD COLUMN report_schedule_user_ids TEXT DEFAULT ''"); } catch (e) { /* ignore */ }
   // 伺服器時間偏移（毫秒，正值=快於實際時間）。用於測試排程寄送、除權息同步等依賴時間的功能
   try { db.run("ALTER TABLE system_settings ADD COLUMN server_time_offset INTEGER DEFAULT 0"); } catch (e) { /* ignore */ }
+  // 007 feature: 稽核日誌保留天數（FR-046a；'30' / '90' / '180' / '365' / 'forever'，預設 '90'）
+  try { db.run("ALTER TABLE system_settings ADD COLUMN audit_log_retention_days TEXT DEFAULT '90'"); } catch (e) { /* ignore */ }
 
   // 005 T060: 多筆排程並存表（Round 2 Q2）
   db.run(`CREATE TABLE IF NOT EXISTS report_schedules (
@@ -2572,6 +2599,141 @@ function clearAuthCookie(res) {
 // FR-065 / SC-006：登入路徑時序對齊用的 dummy bcrypt hash
 const DUMMY_HASH = bcrypt.hashSync('__dummy__', 10);
 
+// ═══════════════════════════════════════════════════════════════
+// ─── 007 feature: 資料匯出匯入共用 helper（T008 ~ T013） ───
+// ═══════════════════════════════════════════════════════════════
+
+// T008: 匯入互斥鎖
+function acquireImportLock(userId) {
+  if (importLocks.has(userId)) return false;
+  importLocks.add(userId);
+  return true;
+}
+function releaseImportLock(userId) {
+  importLocks.delete(userId);
+}
+
+// T009: 稽核日誌寫入 helper（FR-042 ~ FR-046）
+const AUDIT_METADATA_ALLOWED_KEYS = new Set([
+  'rows', 'imported', 'skipped', 'errors', 'warnings', 'byteSize',
+  'dateFrom', 'dateTo', 'failure_stage', 'failure_reason',
+  'unknown_columns', 'backup_path', 'before_restore_path',
+  'filename', 'filterParams',
+]);
+function writeOperationAudit({ userId, role, action, ipAddress, userAgent, result, isAdminOperation, metadata }) {
+  try {
+    const id = uid();
+    const timestamp = new Date().toISOString();
+    let safeMetadata = {};
+    if (metadata && typeof metadata === 'object') {
+      const dropped = [];
+      Object.keys(metadata).forEach(k => {
+        if (AUDIT_METADATA_ALLOWED_KEYS.has(k)) safeMetadata[k] = metadata[k];
+        else dropped.push(k);
+      });
+      if (dropped.length > 0) {
+        try {
+          console.warn(JSON.stringify({ event: 'audit_metadata_dropped_keys', dropped }));
+        } catch (_) { /* noop */ }
+      }
+    }
+    const ua = (userAgent || '').slice(0, 500);
+    db.run(
+      "INSERT INTO data_operation_audit_log (id, user_id, role, action, ip_address, user_agent, timestamp, result, is_admin_operation, metadata) VALUES (?,?,?,?,?,?,?,?,?,?)",
+      [id, userId || '', role || 'user', action, ipAddress || '', ua, timestamp, result || 'success', isAdminOperation ? 1 : 0, JSON.stringify(safeMetadata)]
+    );
+    saveDB();
+  } catch (e) {
+    try {
+      console.error(JSON.stringify({ event: 'audit_write_failed', userId, action, result, error: String(e?.message || e) }));
+    } catch (_) { /* noop */ }
+  }
+}
+
+// T010: CSV 組裝 helper（Formula Injection 防護 + UTF-8 BOM）
+function formulaInjectionEscape(value) {
+  if (typeof value !== 'string') return value;
+  if (/^[=+\-@]/.test(value)) return "'" + value;
+  return value;
+}
+function csvCell(value) {
+  const raw = value === null || value === undefined ? '' : String(value);
+  const escaped = formulaInjectionEscape(raw);
+  if (/[",\n\r]/.test(escaped)) return '"' + escaped.replace(/"/g, '""') + '"';
+  return escaped;
+}
+function buildCsv(headers, rows) {
+  const BOM = '﻿';
+  const headerLine = headers.map(csvCell).join(',');
+  const lines = [headerLine];
+  for (const row of rows) {
+    lines.push(row.map(csvCell).join(','));
+  }
+  return BOM + lines.join('\r\n') + '\r\n';
+}
+
+// T011: 驗證 helper
+function isValidIso8601Date(s) {
+  if (typeof s !== 'string') return false;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return false;
+  const ts = Date.parse(s);
+  return !Number.isNaN(ts);
+}
+function isValidHexColor(s) {
+  if (typeof s !== 'string') return false;
+  return /^#[0-9A-Fa-f]{6}$/.test(s);
+}
+
+// T012: 重複偵測 hash helpers（分隔符採 \x01 控制字元）
+const HASH_SEP = '';
+function makeTxHash(date, type, categoryId, amount, accountId, note) {
+  return [date || '', type || '', categoryId || '', String(amount || ''), accountId || '', note || ''].join(HASH_SEP);
+}
+function makeStockTxHash(date, symbol, type, shares, price, accountId) {
+  return [date || '', symbol || '', type || '', String(shares || ''), String(price || ''), accountId || ''].join(HASH_SEP);
+}
+function makeDividendHash(date, symbol, cashDividend, stockDividend) {
+  return [date || '', symbol || '', String(cashDividend || ''), String(stockDividend || '')].join(HASH_SEP);
+}
+
+// T013: 備份檔 helper
+function ensureBackupsDir() {
+  try { fs.mkdirSync(BACKUPS_DIR, { recursive: true }); } catch (_) { /* noop */ }
+}
+function pruneBeforeRestoreBackups() {
+  try {
+    if (!fs.existsSync(BACKUPS_DIR)) return;
+    const files = fs.readdirSync(BACKUPS_DIR)
+      .filter(f => f.startsWith('before-restore-') && f.endsWith('.db'))
+      .map(f => {
+        const fp = path.join(BACKUPS_DIR, f);
+        try {
+          return { name: f, path: fp, mtime: fs.statSync(fp).mtimeMs };
+        } catch (_) {
+          return null;
+        }
+      })
+      .filter(Boolean)
+      .sort((a, b) => b.mtime - a.mtime);
+    const NOW = Date.now();
+    const NINETY_DAYS = 90 * 24 * 60 * 60 * 1000;
+    files.forEach((f, i) => {
+      if (i >= 5 || (NOW - f.mtime) > NINETY_DAYS) {
+        try {
+          fs.unlinkSync(f.path);
+          console.log(JSON.stringify({ event: 'before_restore_pruned', file: f.name, mtime: new Date(f.mtime).toISOString() }));
+        } catch (e) {
+          console.error(JSON.stringify({ event: 'before_restore_prune_failed', file: f.name, error: String(e?.message || e) }));
+        }
+      }
+    });
+  } catch (e) {
+    console.error(JSON.stringify({ event: 'before_restore_prune_failed', error: String(e?.message || e) }));
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+
 function authMiddleware(req, res, next) {
   const token = req.cookies?.authToken
     || (req.headers.authorization?.startsWith('Bearer ') ? req.headers.authorization.split(' ')[1] : null);
@@ -3397,6 +3559,12 @@ app.get('/api/auth/me', authMiddleware, (req, res) => {
   res.json({ user: { id: user.id, email: user.email, displayName: user.display_name, googleLinked: !!user.google_id, hasPassword: !!user.has_password, avatarUrl: user.avatar_url || '', themeMode: normalizeThemeMode(user.theme_mode), isAdmin: !!user.is_admin } });
 });
 
+// ─── 007 feature (T056, FR-036~038)：API 使用與授權清單（公開端點，無需登入） ───
+app.get('/api/external-apis', (req, res) => {
+  res.setHeader('Cache-Control', 'public, max-age=3600');
+  res.json({ apis: externalApisData });
+});
+
 // ═══════════════════════════════════════
 // 以下所有 API 路由需要驗證
 // ═══════════════════════════════════════
@@ -3422,6 +3590,122 @@ app.get('/api/user/login-audit', async (req, res) => {
       isAdminLogin: !!l.is_admin_login,
     })),
   });
+});
+
+// ─── 007 feature: 資料操作稽核日誌查詢端點（T059 ~ T064） ───
+function parseAuditQuery(req, forceUserId) {
+  const where = [];
+  const params = [];
+  const userId = forceUserId !== undefined ? forceUserId : (req.query.user_id || '');
+  if (userId) { where.push('user_id = ?'); params.push(String(userId)); }
+  if (req.query.action) {
+    const acts = String(req.query.action).split(',').map(s => s.trim()).filter(Boolean);
+    if (acts.length > 0) {
+      where.push(`action IN (${acts.map(() => '?').join(',')})`);
+      acts.forEach(a => params.push(a));
+    }
+  }
+  if (req.query.result && ['success', 'failed', 'rolled_back'].includes(String(req.query.result))) {
+    where.push('result = ?');
+    params.push(String(req.query.result));
+  }
+  if (req.query.start) { where.push('timestamp >= ?'); params.push(String(req.query.start)); }
+  if (req.query.end) { where.push('timestamp <= ?'); params.push(String(req.query.end)); }
+  const whereSql = where.length > 0 ? 'WHERE ' + where.join(' AND ') : '';
+  return { whereSql, params };
+}
+
+function serializeAuditRow(r) {
+  let metadata = {};
+  try { metadata = r.metadata ? JSON.parse(r.metadata) : {}; } catch (_) { metadata = { raw: r.metadata }; }
+  return {
+    id: r.id,
+    user_id: r.user_id,
+    role: r.role,
+    action: r.action,
+    ip_address: r.ip_address || '',
+    user_agent: r.user_agent || '',
+    timestamp: r.timestamp,
+    result: r.result,
+    is_admin_operation: Number(r.is_admin_operation) || 0,
+    metadata,
+  };
+}
+
+// T059：管理員列出全部稽核日誌
+app.get('/api/admin/data-audit', adminMiddleware, (req, res) => {
+  const { whereSql, params } = parseAuditQuery(req);
+  const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+  const pageSize = Math.max(1, Math.min(200, parseInt(req.query.pageSize, 10) || 50));
+  const total = queryOne(`SELECT COUNT(*) AS cnt FROM data_operation_audit_log ${whereSql}`, params)?.cnt || 0;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const dataSql = `SELECT * FROM data_operation_audit_log ${whereSql} ORDER BY timestamp DESC LIMIT ? OFFSET ?`;
+  const data = queryAll(dataSql, [...params, pageSize, (page - 1) * pageSize]).map(serializeAuditRow);
+  res.json({ data, total, page, totalPages });
+});
+
+// T060：使用者「我的操作紀錄」（強制覆寫 user_id）
+app.get('/api/user/data-audit', (req, res) => {
+  const { whereSql, params } = parseAuditQuery(req, req.userId);
+  const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+  const pageSize = Math.max(1, Math.min(200, parseInt(req.query.pageSize, 10) || 50));
+  const total = queryOne(`SELECT COUNT(*) AS cnt FROM data_operation_audit_log ${whereSql}`, params)?.cnt || 0;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const dataSql = `SELECT * FROM data_operation_audit_log ${whereSql} ORDER BY timestamp DESC LIMIT ? OFFSET ?`;
+  const data = queryAll(dataSql, [...params, pageSize, (page - 1) * pageSize]).map(serializeAuditRow);
+  res.json({ data, total, page, totalPages });
+});
+
+// T061：匯出稽核日誌 CSV（管理員）
+app.get('/api/admin/data-audit/export', adminMiddleware, (req, res) => {
+  try {
+    const { whereSql, params } = parseAuditQuery(req);
+    const rows = queryAll(`SELECT * FROM data_operation_audit_log ${whereSql} ORDER BY timestamp DESC`, params);
+    const headers = ['id', 'user_id', 'role', 'action', 'ip_address', 'user_agent', 'timestamp', 'result', 'is_admin_operation', 'metadata'];
+    const dataRows = rows.map(r => [
+      r.id, r.user_id, r.role, r.action, r.ip_address || '', r.user_agent || '',
+      r.timestamp, r.result, r.is_admin_operation, r.metadata || '{}',
+    ]);
+    const csv = buildCsv(headers, dataRows);
+    const filename = `audit-log-${makeBackupTimestamp()}.csv`;
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(csv);
+  } catch (e) {
+    console.error('export audit-log failed', e);
+    res.status(500).json({ error: '匯出稽核日誌失敗', message: String(e?.message || e) });
+  }
+});
+
+// T062：清空稽核日誌（管理員）
+app.post('/api/admin/data-audit/purge', adminMiddleware, (req, res) => {
+  try {
+    const total = queryOne("SELECT COUNT(*) AS cnt FROM data_operation_audit_log")?.cnt || 0;
+    db.run("DELETE FROM data_operation_audit_log");
+    saveDB();
+    res.json({ ok: true, deleted: total });
+  } catch (e) {
+    console.error('purge audit-log failed', e);
+    res.status(500).json({ error: '清空稽核日誌失敗', message: String(e?.message || e) });
+  }
+});
+
+// T063 / T064：保留天數設定
+app.get('/api/admin/data-audit/retention', adminMiddleware, (req, res) => {
+  const row = queryOne("SELECT audit_log_retention_days FROM system_settings WHERE id = 1");
+  res.json({ retention_days: row?.audit_log_retention_days || '90' });
+});
+app.put('/api/admin/data-audit/retention', adminMiddleware, (req, res) => {
+  const value = String(req.body?.retention_days || '');
+  if (!['30', '90', '180', '365', 'forever'].includes(value)) {
+    return res.status(400).json({ error: 'retention_days 必須為 30 / 90 / 180 / 365 / forever 之一' });
+  }
+  db.run(
+    "UPDATE system_settings SET audit_log_retention_days = ?, updated_at = ?, updated_by = ? WHERE id = 1",
+    [value, Date.now(), req.userId]
+  );
+  saveDB();
+  res.json({ ok: true, retention_days: value });
 });
 
 // CT-1：/api/admin/login-logs* → /api/admin/login-audit（FR-043：scope=admin-self 或 all）
@@ -4829,12 +5113,58 @@ function pruneAuditLogs() {
   return total;
 }
 
+// 007 feature (T014)：稽核日誌清理擴充至 data_operation_audit_log
+function pruneDataOperationAuditLog() {
+  try {
+    const row = queryOne("SELECT audit_log_retention_days FROM system_settings WHERE id = 1");
+    const retention = row?.audit_log_retention_days || '90';
+    if (retention === 'forever') return 0;
+    const days = parseInt(retention, 10);
+    if (!days || days <= 0) return 0;
+    const threshold = new Date(Date.now() - days * 86400 * 1000).toISOString();
+    let total = 0;
+    while (true) {
+      const idsRes = db.exec(
+        `SELECT id FROM data_operation_audit_log WHERE timestamp < ? LIMIT ${PRUNE_BATCH}`,
+        [threshold]
+      );
+      const rows = idsRes[0]?.values || [];
+      if (rows.length === 0) break;
+      const placeholders = rows.map(() => '?').join(',');
+      db.run(`DELETE FROM data_operation_audit_log WHERE id IN (${placeholders})`, rows.map(r => r[0]));
+      total += rows.length;
+    }
+    if (total > 0) {
+      saveDB();
+      console.log(`[Audit Prune] data_operation_audit_log removed ${total} rows`);
+    }
+    return total;
+  } catch (e) {
+    console.error('[Audit Prune] data_operation_audit_log error', e);
+    return 0;
+  }
+}
+
 function registerAuditPruneJob() {
-  try { pruneAuditLogs(); } catch (e) { console.error('[Audit Prune] initial run error', e); }
-  setInterval(() => {
-    try { pruneAuditLogs(); } catch (e) { console.error('[Audit Prune] scheduled run error', e); }
-  }, 24 * 3600 * 1000);
-  console.log('[Audit Prune] registered; next run in 24h');
+  function tick() {
+    try { pruneAuditLogs(); } catch (e) { console.error('[Audit Prune] login_audit run error', e); }
+    try { pruneDataOperationAuditLog(); } catch (e) { console.error('[Audit Prune] data_audit run error', e); }
+  }
+  // FR-046a：每日午夜（伺服器時區）執行 — 採 setTimeout cascade 模式
+  function scheduleNextMidnightTick() {
+    const now = new Date();
+    const nextMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0, 0);
+    const ms = nextMidnight.getTime() - now.getTime();
+    setTimeout(() => {
+      try { tick(); } catch (e) { console.error('[Audit Prune] tick failed', e); }
+      scheduleNextMidnightTick();
+    }, ms);
+  }
+  setTimeout(() => {
+    try { tick(); } catch (e) { console.error('[Audit Prune] initial tick failed', e); }
+  }, 5000);
+  scheduleNextMidnightTick();
+  console.log('[Audit Prune] registered; next run at server-local midnight');
 }
 
 // 005 T073: deprecated singleton — 仍保留供既有前端讀取
@@ -5563,6 +5893,10 @@ app.put('/api/exchange-rates', (req, res) => {
   for (const r of rates) {
     const currency = parseCurrencyCode(r.currency);
     if (!currency) return res.status(400).json({ error: '幣別格式不正確（需為 3 碼英文字母）' });
+    // 007 feature (T040, FR-030)：ISO 4217 白名單前置驗證
+    if (!isValidCurrency(currency)) {
+      return res.status(400).json({ error: '不是有效的 ISO 4217 幣別代碼', currency });
+    }
     const rate = Number(r.rateToTwd);
     if (seen.has(currency)) return res.status(400).json({ error: `幣別重複：${currency}` });
     seen.add(currency);
@@ -5624,6 +5958,10 @@ app.get('/api/exchange-rates/:currency', async (req, res) => {
   const currency = String(req.params.currency || '').toUpperCase();
   if (!/^[A-Z]{3}$/.test(currency)) {
     return res.status(400).json({ error: 'ValidationError', field: 'currency', message: '幣別需為 3 碼大寫英文' });
+  }
+  // 007 feature (T041, FR-030)：ISO 4217 白名單前置驗證（二次防線）
+  if (!isValidCurrency(currency)) {
+    return res.status(400).json({ error: '不是有效的 ISO 4217 幣別代碼', currency });
   }
   if (currency === 'TWD') {
     return res.json({ currency: 'TWD', rateToTwd: '1', fetchedAt: Date.now(), source: 'literal', cached: true });
@@ -6452,137 +6790,662 @@ app.post('/api/transactions/batch-update', batchUpdateHandler);
 app.post(/^\/api\/transactions:batch-delete$/, batchDeleteHandler);
 app.post(/^\/api\/transactions:batch-update$/, batchUpdateHandler);
 
-// ─── 匯入 CSV ───
+// ═══════════════════════════════════════════════════════════════
+// ─── 007 feature: 資料匯出端點群（T017、T029、T033、T034） ───
+// ═══════════════════════════════════════════════════════════════
+
+// 共用 helper：將 type 列舉轉中文
+function txTypeToChinese(t) {
+  if (t === 'income') return '收入';
+  if (t === 'expense') return '支出';
+  if (t === 'transfer_out') return '轉出';
+  if (t === 'transfer_in') return '轉入';
+  return t || '';
+}
+// 共用 helper：normalize hex color to 6 digits
+function normalizeHexColor(c) {
+  if (!c || typeof c !== 'string') return '';
+  if (/^#[0-9A-Fa-f]{6}$/.test(c)) return c.toUpperCase();
+  if (/^#[0-9A-Fa-f]{3}$/.test(c)) {
+    return ('#' + c[1] + c[1] + c[2] + c[2] + c[3] + c[3]).toUpperCase();
+  }
+  return c;
+}
+
+// T017 (US1)：匯出交易記錄 CSV（純伺服端）
+app.get('/api/transactions/export', (req, res) => {
+  const dateFrom = req.query.dateFrom || '';
+  const dateTo = req.query.dateTo || '';
+  try {
+    let where = 'WHERE t.user_id = ?';
+    const params = [req.userId];
+    if (dateFrom && isValidIso8601Date(dateFrom)) { where += ' AND t.date >= ?'; params.push(dateFrom); }
+    if (dateTo && isValidIso8601Date(dateTo)) { where += ' AND t.date <= ?'; params.push(dateTo); }
+    const sql = `SELECT t.date, t.type, t.amount, t.note,
+      c.name AS cat_name, c.parent_id AS cat_parent_id,
+      pc.name AS parent_cat_name,
+      a.name AS account_name
+      FROM transactions t
+      LEFT JOIN categories c ON t.category_id = c.id
+      LEFT JOIN categories pc ON c.parent_id = pc.id
+      LEFT JOIN accounts a ON t.account_id = a.id
+      ${where}
+      ORDER BY t.date DESC, t.created_at DESC`;
+    const rows = queryAll(sql, params);
+    const headers = ['日期', '類型', '分類', '金額', '帳戶', '備註'];
+    const dataRows = rows.map(r => {
+      let category = '';
+      if (r.cat_name) {
+        category = r.parent_cat_name ? (r.parent_cat_name + ' > ' + r.cat_name) : r.cat_name;
+      }
+      return [
+        r.date || '',
+        txTypeToChinese(r.type),
+        category,
+        r.amount,
+        r.account_name || '',
+        r.note || '',
+      ];
+    });
+    const csv = buildCsv(headers, dataRows);
+    const filename = `transactions-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}.csv`;
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(csv);
+    writeOperationAudit({
+      userId: req.userId,
+      role: isUserAdmin(req.userId) ? 'admin' : 'user',
+      action: 'export_transactions',
+      ipAddress: req.ip || '',
+      userAgent: req.headers['user-agent'] || '',
+      result: 'success',
+      isAdminOperation: false,
+      metadata: { rows: dataRows.length, byteSize: Buffer.byteLength(csv, 'utf8'), dateFrom, dateTo },
+    });
+  } catch (e) {
+    console.error('export_transactions failed', e);
+    return res.status(500).json({ error: '匯出失敗', message: String(e?.message || e) });
+  }
+});
+
+// T029 (US3)：匯出分類結構 CSV
+app.get('/api/categories/export', (req, res) => {
+  try {
+    const cats = queryAll(
+      "SELECT * FROM categories WHERE user_id = ? ORDER BY (parent_id IS NULL OR parent_id = '') DESC, sort_order ASC, name ASC",
+      [req.userId]
+    );
+    const idMap = {};
+    cats.forEach(c => { idMap[c.id] = c; });
+    // 父分類在前、子分類在後（按 sort_order 排序）
+    const parents = cats.filter(c => !c.parent_id);
+    const children = cats.filter(c => c.parent_id);
+    const headers = ['類型', '分類名稱', '上層分類', '顏色'];
+    const dataRows = [];
+    parents.forEach(p => {
+      dataRows.push([
+        p.type === 'income' ? '收入' : '支出',
+        p.name || '',
+        '',
+        normalizeHexColor(p.color || ''),
+      ]);
+    });
+    children.forEach(c => {
+      const parent = idMap[c.parent_id];
+      dataRows.push([
+        c.type === 'income' ? '收入' : '支出',
+        c.name || '',
+        parent?.name || '',
+        normalizeHexColor(c.color || ''),
+      ]);
+    });
+    const csv = buildCsv(headers, dataRows);
+    const filename = `categories-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}.csv`;
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(csv);
+    writeOperationAudit({
+      userId: req.userId,
+      role: isUserAdmin(req.userId) ? 'admin' : 'user',
+      action: 'export_categories',
+      ipAddress: req.ip || '',
+      userAgent: req.headers['user-agent'] || '',
+      result: 'success',
+      isAdminOperation: false,
+      metadata: { rows: dataRows.length, byteSize: Buffer.byteLength(csv, 'utf8') },
+    });
+  } catch (e) {
+    console.error('export_categories failed', e);
+    return res.status(500).json({ error: '匯出失敗', message: String(e?.message || e) });
+  }
+});
+
+// T033 (US4)：匯出股票交易 CSV
+app.get('/api/stock-transactions/export', (req, res) => {
+  const dateFrom = req.query.dateFrom || '';
+  const dateTo = req.query.dateTo || '';
+  try {
+    let where = 'WHERE st.user_id = ?';
+    const params = [req.userId];
+    if (dateFrom && isValidIso8601Date(dateFrom)) { where += ' AND st.date >= ?'; params.push(dateFrom); }
+    if (dateTo && isValidIso8601Date(dateTo)) { where += ' AND st.date <= ?'; params.push(dateTo); }
+    const sql = `SELECT st.date, st.type, st.shares, st.price, st.fee, st.tax, st.note,
+      s.symbol, s.name AS stock_name,
+      a.name AS account_name
+      FROM stock_transactions st
+      JOIN stocks s ON st.stock_id = s.id
+      LEFT JOIN accounts a ON st.account_id = a.id
+      ${where}
+      ORDER BY st.date DESC, st.created_at DESC`;
+    const rows = queryAll(sql, params);
+    const headers = ['日期', '股票代號', '股票名稱', '類型', '股數', '成交價', '手續費', '交易稅', '帳戶', '備註'];
+    const dataRows = rows.map(r => [
+      r.date || '',
+      r.symbol || '',
+      r.stock_name || '',
+      r.type === 'buy' ? '買進' : '賣出',
+      r.shares,
+      r.price,
+      r.fee || 0,
+      r.tax || 0,
+      r.account_name || '',
+      r.note || '',
+    ]);
+    const csv = buildCsv(headers, dataRows);
+    const filename = `stock-transactions-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}.csv`;
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(csv);
+    writeOperationAudit({
+      userId: req.userId,
+      role: isUserAdmin(req.userId) ? 'admin' : 'user',
+      action: 'export_stock_transactions',
+      ipAddress: req.ip || '',
+      userAgent: req.headers['user-agent'] || '',
+      result: 'success',
+      isAdminOperation: false,
+      metadata: { rows: dataRows.length, byteSize: Buffer.byteLength(csv, 'utf8'), dateFrom, dateTo },
+    });
+  } catch (e) {
+    console.error('export_stock_transactions failed', e);
+    return res.status(500).json({ error: '匯出失敗', message: String(e?.message || e) });
+  }
+});
+
+// T034 (US4)：匯出股票股利 CSV（含帳戶欄位反查）
+app.get('/api/stock-dividends/export', (req, res) => {
+  const dateFrom = req.query.dateFrom || '';
+  const dateTo = req.query.dateTo || '';
+  try {
+    let where = 'WHERE sd.user_id = ?';
+    const params = [req.userId];
+    if (dateFrom && isValidIso8601Date(dateFrom)) { where += ' AND sd.date >= ?'; params.push(dateFrom); }
+    if (dateTo && isValidIso8601Date(dateTo)) { where += ' AND sd.date <= ?'; params.push(dateTo); }
+    const sql = `SELECT sd.id, sd.date, sd.cash_dividend, sd.stock_dividend_shares, sd.note,
+      s.symbol, s.name AS stock_name
+      FROM stock_dividends sd
+      JOIN stocks s ON sd.stock_id = s.id
+      ${where}
+      ORDER BY sd.date DESC, sd.created_at DESC`;
+    const rows = queryAll(sql, params);
+    // 帳戶反查：透過 transactions（同日期、現金股利金額）關聯
+    const headers = ['日期', '股票代號', '股票名稱', '現金股利', '股票股利', '帳戶', '備註'];
+    const dataRows = rows.map(r => {
+      let accountName = '';
+      const cash = Number(r.cash_dividend || 0);
+      if (cash > 0) {
+        // 反查：同 user / 同日期 / 收入類型 / 同金額 / 備註含「股利」或「dividend」
+        const tx = queryOne(
+          `SELECT a.name AS account_name FROM transactions t
+           LEFT JOIN accounts a ON t.account_id = a.id
+           WHERE t.user_id = ? AND t.date = ? AND t.type = 'income' AND ABS(t.amount - ?) < 0.01
+             AND (t.note LIKE ? OR t.note LIKE ? OR t.note LIKE ?)
+           ORDER BY t.created_at DESC LIMIT 1`,
+          [req.userId, r.date, cash, '%股利%', '%dividend%', '%' + (r.symbol || '') + '%']
+        );
+        accountName = tx?.account_name || '';
+      }
+      return [
+        r.date || '',
+        r.symbol || '',
+        r.stock_name || '',
+        r.cash_dividend || 0,
+        r.stock_dividend_shares || 0,
+        accountName,
+        r.note || '',
+      ];
+    });
+    const csv = buildCsv(headers, dataRows);
+    const filename = `stock-dividends-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}.csv`;
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(csv);
+    writeOperationAudit({
+      userId: req.userId,
+      role: isUserAdmin(req.userId) ? 'admin' : 'user',
+      action: 'export_stock_dividends',
+      ipAddress: req.ip || '',
+      userAgent: req.headers['user-agent'] || '',
+      result: 'success',
+      isAdminOperation: false,
+      metadata: { rows: dataRows.length, byteSize: Buffer.byteLength(csv, 'utf8'), dateFrom, dateTo },
+    });
+  } catch (e) {
+    console.error('export_stock_dividends failed', e);
+    return res.status(500).json({ error: '匯出失敗', message: String(e?.message || e) });
+  }
+});
+
+// T026：匯入進度查詢端點（short polling）
+app.get('/api/imports/progress', (req, res) => {
+  const entry = importProgress.get(req.userId);
+  if (!entry) return res.json({ active: false });
+  return res.json({ active: true, ...entry });
+});
+
+// ─── 匯入 CSV（007 feature: 原子化版本 T019 ~ T027） ───
 app.post('/api/transactions/import', (req, res) => {
   const { rows, autoCreate } = req.body;
   if (!Array.isArray(rows) || rows.length === 0) return res.status(400).json({ error: '無有效資料' });
   if (rows.length > CSV_IMPORT_MAX_ROWS) return res.status(413).json({ error: `單次最多匯入 ${CSV_IMPORT_MAX_ROWS} 筆，請分批上傳` });
 
-  // 取得使用者的分類與帳戶，用名稱比對
-  const categories = queryAll("SELECT * FROM categories WHERE user_id = ?", [req.userId]);
-  const accounts = queryAll("SELECT * FROM accounts WHERE user_id = ?", [req.userId]);
-  // 建立分類對照：支援 "父分類 > 子分類" 格式，也支援直接名稱
-  const catMap = {};
-  categories.forEach(c => {
-    if (c.parent_id) {
-      const parent = categories.find(p => p.id === c.parent_id);
-      if (parent) catMap[parent.name + ' > ' + c.name] = c;
-    }
-    // 也用純名稱建立對照（子分類也可以直接用名稱匹配）
-    if (!catMap[c.name]) catMap[c.name] = c;
-  });
-  const accMap = {};
-  accounts.forEach(a => { accMap[a.name] = a; });
-
-  const now = Date.now();
-  const createdCats = [];
-  const createdAccs = [];
-
-  // 若 autoCreate，先掃描並建立缺少的分類與帳戶
-  if (autoCreate) {
-    const maxOrder = queryOne("SELECT COALESCE(MAX(sort_order),0) as m FROM categories WHERE user_id = ?", [req.userId])?.m || 0;
-    let orderCounter = maxOrder;
-    const defaultColors = ['#6366f1','#f59e0b','#10b981','#ef4444','#3b82f6','#8b5cf6','#ec4899','#14b8a6'];
-    let colorIdx = 0;
-
-    rows.forEach(row => {
-      const { type, category, account } = row;
-      let dbType = 'expense';
-      if (type === '收入') dbType = 'income';
-      else if (type === '轉出' || type === '轉入') dbType = null;
-      else if (type === '支出') dbType = 'expense';
-
-      // 自動新增分類
-      if (dbType && category && !catMap[category]) {
-        const catId = uid();
-        orderCounter++;
-        const color = defaultColors[colorIdx % defaultColors.length];
-        colorIdx++;
-        db.run("INSERT INTO categories (id, user_id, name, type, color, is_default, sort_order) VALUES (?,?,?,?,?,0,?)",
-          [catId, req.userId, category, dbType, color, orderCounter]);
-        catMap[category] = { id: catId, name: category, type: dbType };
-        createdCats.push(category);
-      }
-
-      // 自動新增帳戶
-      if (account && !accMap[account]) {
-        const accId = uid();
-        db.run("INSERT INTO accounts (id, user_id, name, initial_balance, icon, currency) VALUES (?,?,?,0,'fa-wallet','TWD')",
-          [accId, req.userId, account]);
-        accMap[account] = { id: accId, name: account };
-        createdAccs.push(account);
-      }
-    });
+  // T019 (a)(b): 互斥鎖
+  if (!acquireImportLock(req.userId)) {
+    return res.status(409).json({ error: 'IMPORT_IN_PROGRESS', message: '您已有匯入進行中，請稍候完成後再試' });
   }
+
+  // T019 (c): 進度回饋
+  importProgress.set(req.userId, {
+    processed: 0, total: rows.length, phase: 'parsing',
+    startedAt: Date.now(), completedAt: null,
+  });
+
+  const updateProgress = (processed, phase) => {
+    const cur = importProgress.get(req.userId);
+    if (cur) importProgress.set(req.userId, { ...cur, processed, phase });
+  };
 
   let imported = 0;
   let skipped = 0;
   const errors = [];
+  const warnings = [];
+  const createdCats = [];
+  const createdAccs = [];
+  const unknownColumnsSet = new Set();
+  const KNOWN_COLUMNS = new Set(['date', 'type', 'category', 'amount', 'account', 'note']);
+  let txStarted = false;
+  let failureStage = null;
 
-  // 第一輪：收集待配對的轉帳（轉出找轉入配對，依日期+金額+備註）
-  const pendingTransferOut = []; // { idx, id, date, amount, note, accId }
-
-  rows.forEach((row, idx) => {
-    const { date: rawDate, type, category, amount, account, note } = row;
-    const date = normalizeDate(rawDate);
-    const amt = parseFloat(amount);
-    if (!date || !amt || amt <= 0) { skipped++; errors.push(`第 ${idx + 2} 行：日期或金額無效`); return; }
-
-    // 類型對應
-    let dbType = 'expense';
-    if (type === '收入') dbType = 'income';
-    else if (type === '轉出') dbType = 'transfer_out';
-    else if (type === '轉入') dbType = 'transfer_in';
-    else if (type === '支出') dbType = 'expense';
-    else { skipped++; errors.push(`第 ${idx + 2} 行：未知類型「${type}」`); return; }
-
-    // 分類比對（轉帳可無分類）
-    let catId = '';
-    if (dbType !== 'transfer_out' && dbType !== 'transfer_in') {
-      const cat = catMap[category];
-      if (cat) catId = cat.id;
+  try {
+    // T027: 額外欄位 silent drop 偵測
+    if (rows.length > 0 && rows[0] && typeof rows[0] === 'object') {
+      Object.keys(rows[0]).forEach(k => {
+        if (!KNOWN_COLUMNS.has(k)) unknownColumnsSet.add(k);
+      });
+    }
+    if (unknownColumnsSet.size > 0) {
+      console.log(JSON.stringify({ event: 'csv_unknown_columns', userId: req.userId, action: 'import_transactions', columns: [...unknownColumnsSet] }));
     }
 
-    // 帳戶比對
-    let accId = '';
-    const acc = accMap[account];
-    if (acc) accId = acc.id;
+    updateProgress(0, 'validating');
 
-    const txId = uid();
-
-    if (dbType === 'transfer_out') {
-      // 先插入轉出，稍後配對轉入時回填 linked_id
-      db.run("INSERT INTO transactions (id,user_id,type,amount,currency,original_amount,fx_rate,date,category_id,account_id,note,linked_id,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-        [txId, req.userId, dbType, amt, 'TWD', amt, 1, date, catId, accId, note || '', '', now, now]);
-      pendingTransferOut.push({ id: txId, date, amount: amt, note: note || '' });
-      imported++;
-    } else if (dbType === 'transfer_in') {
-      // 嘗試配對一筆同日期、同金額的轉出
-      const matchIdx = pendingTransferOut.findIndex(p => p.date === date && p.amount === amt);
-      if (matchIdx !== -1) {
-        const matched = pendingTransferOut.splice(matchIdx, 1)[0];
-        db.run("INSERT INTO transactions (id,user_id,type,amount,currency,original_amount,fx_rate,date,category_id,account_id,note,linked_id,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-          [txId, req.userId, dbType, amt, 'TWD', amt, 1, date, catId, accId, note || '', matched.id, now, now]);
-        // 回填轉出的 linked_id
-        db.run("UPDATE transactions SET linked_id = ? WHERE id = ?", [txId, matched.id]);
-      } else {
-        db.run("INSERT INTO transactions (id,user_id,type,amount,currency,original_amount,fx_rate,date,category_id,account_id,note,linked_id,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-          [txId, req.userId, dbType, amt, 'TWD', amt, 1, date, catId, accId, note || '', '', now, now]);
+    // 取得既有資料
+    const categories = queryAll("SELECT * FROM categories WHERE user_id = ?", [req.userId]);
+    const accounts = queryAll("SELECT * FROM accounts WHERE user_id = ?", [req.userId]);
+    const catMap = {};
+    categories.forEach(c => {
+      if (c.parent_id) {
+        const parent = categories.find(p => p.id === c.parent_id);
+        if (parent) catMap[parent.name + ' > ' + c.name] = c;
       }
-      imported++;
-    } else {
-      db.run("INSERT INTO transactions (id,user_id,type,amount,currency,original_amount,fx_rate,date,category_id,account_id,note,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
-        [txId, req.userId, dbType, amt, 'TWD', amt, 1, date, catId, accId, note || '', now, now]);
-      imported++;
+      if (!catMap[c.name]) catMap[c.name] = c;
+    });
+    const accMap = {};
+    accounts.forEach(a => { accMap[a.name] = a; });
+
+    // 重複偵測：建立既有 hash set
+    const existingTx = queryAll(
+      "SELECT date, type, category_id, amount, account_id, note FROM transactions WHERE user_id = ?",
+      [req.userId]
+    );
+    const existingHashes = new Set();
+    existingTx.forEach(t => {
+      existingHashes.add(makeTxHash(t.date, t.type, t.category_id, t.amount, t.account_id, t.note));
+    });
+    const batchHashes = new Set();
+
+    // 開啟 transaction
+    db.run('BEGIN');
+    txStarted = true;
+    failureStage = 'auto_create';
+
+    // 第一階段：autoCreate 缺項
+    if (autoCreate) {
+      const maxOrder = queryOne("SELECT COALESCE(MAX(sort_order),0) as m FROM categories WHERE user_id = ?", [req.userId])?.m || 0;
+      let orderCounter = maxOrder;
+      const defaultColors = ['#6366f1','#f59e0b','#10b981','#ef4444','#3b82f6','#8b5cf6','#ec4899','#14b8a6'];
+      let colorIdx = 0;
+      rows.forEach(row => {
+        const { type, category, account } = row;
+        let dbType = 'expense';
+        if (type === '收入') dbType = 'income';
+        else if (type === '轉出' || type === '轉入') dbType = null;
+        else if (type === '支出') dbType = 'expense';
+        if (dbType && category && !catMap[category]) {
+          const catId = uid();
+          orderCounter++;
+          const color = defaultColors[colorIdx % defaultColors.length];
+          colorIdx++;
+          db.run("INSERT INTO categories (id, user_id, name, type, color, is_default, sort_order) VALUES (?,?,?,?,?,0,?)",
+            [catId, req.userId, category, dbType, color, orderCounter]);
+          catMap[category] = { id: catId, name: category, type: dbType };
+          createdCats.push(category);
+        }
+        if (account && !accMap[account]) {
+          const accId = uid();
+          db.run("INSERT INTO accounts (id, user_id, name, initial_balance, icon, currency) VALUES (?,?,?,0,'fa-wallet','TWD')",
+            [accId, req.userId, account]);
+          accMap[account] = { id: accId, name: account };
+          createdAccs.push(account);
+        }
+      });
     }
+
+    failureStage = 'writing';
+    updateProgress(0, 'writing');
+
+    const now = Date.now();
+    // 第二階段：解析 + 寫入非轉帳交易；轉帳留到第三階段配對
+    // 為了 FR-012 配對演算法，需保留 row 順序資訊
+    const parsedRows = []; // { idx, row, dbType, date, amt, catId, accId, note, valid, txId }
+    rows.forEach((row, idx) => {
+      const { date: rawDate, type, category, amount, account, note } = row;
+      // T020: ISO 8601 嚴格驗證
+      const date = (typeof rawDate === 'string' && isValidIso8601Date(rawDate)) ? rawDate : normalizeDate(rawDate);
+      const amt = parseFloat(amount);
+      if (!date || !isValidIso8601Date(date)) {
+        errors.push({ row: idx + 2, reason: '日期格式必須為 YYYY-MM-DD' });
+        skipped++;
+        return;
+      }
+      if (!Number.isFinite(amt) || amt <= 0) {
+        errors.push({ row: idx + 2, reason: '金額無效' });
+        skipped++;
+        return;
+      }
+      let dbType = 'expense';
+      if (type === '收入') dbType = 'income';
+      else if (type === '轉出') dbType = 'transfer_out';
+      else if (type === '轉入') dbType = 'transfer_in';
+      else if (type === '支出') dbType = 'expense';
+      else {
+        errors.push({ row: idx + 2, reason: `未知類型「${type}」` });
+        skipped++;
+        return;
+      }
+      let catId = '';
+      if (dbType !== 'transfer_out' && dbType !== 'transfer_in') {
+        const cat = catMap[category];
+        if (cat) catId = cat.id;
+      }
+      let accId = '';
+      const acc = accMap[account];
+      if (acc) accId = acc.id;
+      const noteStr = note || '';
+      // T021: 六欄重複偵測
+      const h = makeTxHash(date, dbType, catId, amt, accId, noteStr);
+      if (existingHashes.has(h) || batchHashes.has(h)) {
+        skipped++;
+        return;
+      }
+      batchHashes.add(h);
+      parsedRows.push({ idx, dbType, date, amt, catId, accId, note: noteStr });
+    });
+
+    // T022: 轉帳配對演算法（按 (date, amount) 分組、組內依 CSV 順序兩兩配對）
+    updateProgress(0, 'pairing');
+    const groupMap = new Map();
+    parsedRows.forEach((p, i) => {
+      if (p.dbType === 'transfer_out' || p.dbType === 'transfer_in') {
+        const key = `${p.date}|${p.amt}`;
+        if (!groupMap.has(key)) groupMap.set(key, { outs: [], ins: [] });
+        const grp = groupMap.get(key);
+        const txId = uid();
+        p.txId = txId;
+        if (p.dbType === 'transfer_out') grp.outs.push({ idx: p.idx, txId });
+        else grp.ins.push({ idx: p.idx, txId });
+      } else {
+        p.txId = uid();
+      }
+    });
+    const linkedIdMap = new Map(); // txId → linked_id
+    groupMap.forEach((grp) => {
+      const pairs = Math.min(grp.outs.length, grp.ins.length);
+      for (let i = 0; i < pairs; i++) {
+        linkedIdMap.set(grp.outs[i].txId, grp.ins[i].txId);
+        linkedIdMap.set(grp.ins[i].txId, grp.outs[i].txId);
+      }
+      for (let i = pairs; i < grp.outs.length; i++) {
+        warnings.push({ row: grp.outs[i].idx + 2, type: 'unpaired_transfer', reason: '未找到對應轉入' });
+      }
+      for (let i = pairs; i < grp.ins.length; i++) {
+        warnings.push({ row: grp.ins[i].idx + 2, type: 'unpaired_transfer', reason: '未找到對應轉出' });
+      }
+    });
+
+    // 寫入
+    updateProgress(0, 'writing');
+    parsedRows.forEach((p, i) => {
+      const linked = linkedIdMap.get(p.txId) || '';
+      db.run(
+        "INSERT INTO transactions (id,user_id,type,amount,currency,original_amount,fx_rate,date,category_id,account_id,note,linked_id,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        [p.txId, req.userId, p.dbType, p.amt, 'TWD', p.amt, 1, p.date, p.catId, p.accId, p.note, linked, now, now]
+      );
+      imported++;
+      if ((i + 1) % 500 === 0) updateProgress(i + 1, 'writing');
+    });
+
+    failureStage = 'finalizing';
+    updateProgress(parsedRows.length, 'finalizing');
+    db.run('COMMIT');
+    saveDB();
+
+    // 完成 progress
+    const completedEntry = importProgress.get(req.userId) || {};
+    importProgress.set(req.userId, { ...completedEntry, processed: parsedRows.length, phase: 'finalizing', completedAt: Date.now() });
+    setTimeout(() => importProgress.delete(req.userId), 5000);
+
+    writeOperationAudit({
+      userId: req.userId,
+      role: isUserAdmin(req.userId) ? 'admin' : 'user',
+      action: 'import_transactions',
+      ipAddress: req.ip || '',
+      userAgent: req.headers['user-agent'] || '',
+      result: 'success',
+      isAdminOperation: false,
+      metadata: {
+        rows: rows.length,
+        imported, skipped,
+        errors: errors.length,
+        warnings: warnings.length,
+        unknown_columns: [...unknownColumnsSet],
+      },
+    });
+
+    res.json({
+      imported,
+      skipped,
+      errors: errors.slice(0, 50),
+      warnings,
+      created: { categories: createdCats, accounts: createdAccs },
+      unknownColumns: [...unknownColumnsSet],
+    });
+  } catch (e) {
+    if (txStarted) {
+      try { db.run('ROLLBACK'); } catch (_) { /* noop */ }
+    }
+    importProgress.set(req.userId, { processed: 0, total: rows.length, phase: 'finalizing', startedAt: Date.now(), completedAt: Date.now() });
+    setTimeout(() => importProgress.delete(req.userId), 5000);
+    writeOperationAudit({
+      userId: req.userId,
+      role: isUserAdmin(req.userId) ? 'admin' : 'user',
+      action: 'import_transactions',
+      ipAddress: req.ip || '',
+      userAgent: req.headers['user-agent'] || '',
+      result: 'failed',
+      isAdminOperation: false,
+      metadata: {
+        rows: rows.length,
+        failure_stage: failureStage || 'unknown',
+        failure_reason: String(e?.message || e).slice(0, 200),
+      },
+    });
+    return res.status(500).json({ error: '匯入失敗', message: String(e?.message || e), failedAt: failureStage || 'unknown' });
+  } finally {
+    releaseImportLock(req.userId);
+  }
+});
+
+// ─── 007 feature (T030, US3)：匯入分類結構 CSV ───
+app.post('/api/categories/import', (req, res) => {
+  const { rows } = req.body;
+  if (!Array.isArray(rows) || rows.length === 0) return res.status(400).json({ error: '無有效資料' });
+  if (rows.length > CSV_IMPORT_MAX_ROWS) return res.status(413).json({ error: `單次最多匯入 ${CSV_IMPORT_MAX_ROWS} 筆，請分批上傳` });
+
+  if (!acquireImportLock(req.userId)) {
+    return res.status(409).json({ error: 'IMPORT_IN_PROGRESS', message: '您已有匯入進行中，請稍候完成後再試' });
+  }
+
+  importProgress.set(req.userId, {
+    processed: 0, total: rows.length, phase: 'parsing',
+    startedAt: Date.now(), completedAt: null,
   });
 
-  saveDB();
-  res.json({
-    imported, skipped,
-    errors: errors.slice(0, 10),
-    created: { categories: createdCats, accounts: createdAccs }
-  });
+  let imported = 0;
+  let skipped = 0;
+  const errors = [];
+  let txStarted = false;
+  let failureStage = null;
+
+  try {
+    failureStage = 'validating';
+    // 既有分類
+    const existing = queryAll("SELECT * FROM categories WHERE user_id = ?", [req.userId]);
+    const existingByKey = new Map(); // (type|name) → row
+    existing.forEach(c => existingByKey.set(`${c.type}|${c.name}`, c));
+    // 第一輪：parents
+    const parentRows = [];
+    const childRows = [];
+    rows.forEach((r, idx) => {
+      const type = r.type === '收入' ? 'income' : (r.type === '支出' ? 'expense' : null);
+      const name = (r.name || r.分類名稱 || '').toString().trim();
+      const parent = (r.parent || r.上層分類 || '').toString().trim();
+      const color = r.color || r.顏色 || '';
+      if (!type) {
+        errors.push({ row: idx + 2, reason: `未知類型「${r.type}」` });
+        skipped++;
+        return;
+      }
+      if (!name) {
+        errors.push({ row: idx + 2, reason: '分類名稱為空' });
+        skipped++;
+        return;
+      }
+      if (color && !isValidHexColor(color)) {
+        errors.push({ row: idx + 2, reason: '顏色格式必須為 #RRGGBB' });
+        skipped++;
+        return;
+      }
+      const item = { idx, type, name, parent, color: color || '#6366f1' };
+      if (parent) childRows.push(item);
+      else parentRows.push(item);
+    });
+
+    db.run('BEGIN');
+    txStarted = true;
+    failureStage = 'writing';
+
+    const maxOrder = queryOne("SELECT COALESCE(MAX(sort_order),0) AS m FROM categories WHERE user_id = ?", [req.userId])?.m || 0;
+    let orderCounter = maxOrder;
+
+    // 寫入父分類
+    parentRows.forEach((p, i) => {
+      const key = `${p.type}|${p.name}`;
+      if (existingByKey.has(key)) { skipped++; return; }
+      const id = uid();
+      orderCounter++;
+      db.run("INSERT INTO categories (id, user_id, name, type, color, is_default, sort_order) VALUES (?,?,?,?,?,0,?)",
+        [id, req.userId, p.name, p.type, p.color, orderCounter]);
+      existingByKey.set(key, { id, name: p.name, type: p.type, color: p.color });
+      imported++;
+      if ((i + 1) % 500 === 0) {
+        const cur = importProgress.get(req.userId);
+        if (cur) importProgress.set(req.userId, { ...cur, processed: i + 1, phase: 'writing' });
+      }
+    });
+
+    // 寫入子分類
+    childRows.forEach((c, i) => {
+      const key = `${c.type}|${c.name}`;
+      if (existingByKey.has(key)) { skipped++; return; }
+      const parentKey = `${c.type}|${c.parent}`;
+      const parent = existingByKey.get(parentKey);
+      if (!parent) {
+        errors.push({ row: c.idx + 2, reason: `找不到上層分類「${c.parent}」` });
+        skipped++;
+        return;
+      }
+      const id = uid();
+      orderCounter++;
+      db.run("INSERT INTO categories (id, user_id, name, type, color, parent_id, is_default, sort_order) VALUES (?,?,?,?,?,?,0,?)",
+        [id, req.userId, c.name, c.type, c.color, parent.id, orderCounter]);
+      existingByKey.set(key, { id, name: c.name, type: c.type, color: c.color });
+      imported++;
+    });
+
+    failureStage = 'finalizing';
+    db.run('COMMIT');
+    saveDB();
+
+    const completedEntry = importProgress.get(req.userId) || {};
+    importProgress.set(req.userId, { ...completedEntry, processed: rows.length, phase: 'finalizing', completedAt: Date.now() });
+    setTimeout(() => importProgress.delete(req.userId), 5000);
+
+    writeOperationAudit({
+      userId: req.userId,
+      role: isUserAdmin(req.userId) ? 'admin' : 'user',
+      action: 'import_categories',
+      ipAddress: req.ip || '',
+      userAgent: req.headers['user-agent'] || '',
+      result: 'success',
+      isAdminOperation: false,
+      metadata: { rows: rows.length, imported, skipped, errors: errors.length, warnings: 0 },
+    });
+
+    res.json({
+      imported,
+      skipped,
+      errors: errors.slice(0, 50),
+      warnings: [],
+    });
+  } catch (e) {
+    if (txStarted) { try { db.run('ROLLBACK'); } catch (_) { /* noop */ } }
+    importProgress.set(req.userId, { processed: 0, total: rows.length, phase: 'finalizing', startedAt: Date.now(), completedAt: Date.now() });
+    setTimeout(() => importProgress.delete(req.userId), 5000);
+    writeOperationAudit({
+      userId: req.userId,
+      role: isUserAdmin(req.userId) ? 'admin' : 'user',
+      action: 'import_categories',
+      ipAddress: req.ip || '',
+      userAgent: req.headers['user-agent'] || '',
+      result: 'failed',
+      isAdminOperation: false,
+      metadata: { rows: rows.length, failure_stage: failureStage || 'unknown', failure_reason: String(e?.message || e).slice(0, 200) },
+    });
+    return res.status(500).json({ error: '匯入失敗', message: String(e?.message || e), failedAt: failureStage || 'unknown' });
+  } finally {
+    releaseImportLock(req.userId);
+  }
 });
 
 // T070（FR-015）：POST /api/transfers — 同幣別轉帳產生 transfer_out + transfer_in 對
@@ -8491,64 +9354,207 @@ app.get('/api/stock-realized', (req, res) => {
   res.json(realized);
 });
 
-// ─── 股票交易紀錄 匯入 ───
-app.post('/api/stock-transactions/import', async (req, res) => {
+// ─── 股票交易紀錄 匯入（007 feature: T035 強化） ───
+app.post('/api/stock-transactions/import', (req, res) => {
   const { rows } = req.body;
   if (!Array.isArray(rows) || rows.length === 0) return res.status(400).json({ error: '沒有資料' });
   if (rows.length > CSV_IMPORT_MAX_ROWS) return res.status(413).json({ error: `單次最多匯入 ${CSV_IMPORT_MAX_ROWS} 筆，請分批上傳` });
-  let imported = 0, skipped = 0;
+
+  if (!acquireImportLock(req.userId)) {
+    return res.status(409).json({ error: 'IMPORT_IN_PROGRESS', message: '您已有匯入進行中，請稍候完成後再試' });
+  }
+  importProgress.set(req.userId, {
+    processed: 0, total: rows.length, phase: 'parsing',
+    startedAt: Date.now(), completedAt: null,
+  });
+
+  let imported = 0;
+  let skipped = 0;
   const errors = [];
-  for (const row of rows) {
-    try {
-      const { date, symbol, name: stockName, type, shares, price, fee, tax, accountName, note } = row;
-      if (!date || !symbol || !type || !shares || !price) { skipped++; errors.push(`略過不完整資料（${symbol || '?'}）`); continue; }
+  const warnings = [];
+  let txStarted = false;
+  let failureStage = null;
+
+  try {
+    failureStage = 'validating';
+    // 既有股票交易 hash set
+    const existing = queryAll(
+      `SELECT st.date, st.type, st.shares, st.price, st.account_id, s.symbol
+       FROM stock_transactions st JOIN stocks s ON st.stock_id = s.id WHERE st.user_id = ?`,
+      [req.userId]
+    );
+    const existingHashes = new Set();
+    existing.forEach(t => {
+      existingHashes.add(makeStockTxHash(t.date, t.symbol, t.type, t.shares, t.price, t.account_id));
+    });
+    const batchHashes = new Set();
+
+    db.run('BEGIN');
+    txStarted = true;
+    failureStage = 'writing';
+
+    rows.forEach((row, idx) => {
+      const { date: rawDate, symbol, name: stockName, type, shares, price, fee, tax, accountName, note } = row;
+      if (!rawDate || !symbol || !type || !shares || !price) {
+        errors.push({ row: idx + 2, reason: `略過不完整資料（${symbol || '?'}）` });
+        skipped++; return;
+      }
+      const date = isValidIso8601Date(rawDate) ? rawDate : normalizeDate(rawDate);
+      if (!date || !isValidIso8601Date(date)) {
+        errors.push({ row: idx + 2, reason: '日期格式必須為 YYYY-MM-DD' });
+        skipped++; return;
+      }
       const shareNum = parseFloat(shares);
-      if (!(shareNum > 0) || !Number.isInteger(shareNum)) { skipped++; errors.push(`股數必須為正整數（${symbol}）`); continue; }
-      // 006 T043：找或建立股票，自動推斷 stockType + 名稱 fallback「（未命名）」
+      if (!(shareNum > 0) || !Number.isInteger(shareNum)) {
+        errors.push({ row: idx + 2, reason: `股數必須為正整數（${symbol}）` });
+        skipped++; return;
+      }
+      const priceNum = parseFloat(price);
+      if (!(priceNum > 0)) {
+        errors.push({ row: idx + 2, reason: '成交價必須為正數' });
+        skipped++; return;
+      }
+      // 找或建立股票
       let stock = queryOne("SELECT * FROM stocks WHERE user_id = ? AND symbol = ?", [req.userId, symbol]);
       if (!stock) {
         const sid = uid();
         const inferredType = twseFetch.inferStockType(symbol);
         const fallbackName = (stockName && String(stockName).trim()) || '（未命名）';
         db.run("INSERT INTO stocks (id, user_id, symbol, name, current_price, stock_type, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
-          [sid, req.userId, symbol, fallbackName, parseFloat(price) || 0, inferredType, new Date().toISOString()]);
+          [sid, req.userId, symbol, fallbackName, priceNum, inferredType, new Date().toISOString()]);
         stock = queryOne("SELECT * FROM stocks WHERE id = ?", [sid]);
       } else if (stock.name === symbol && stockName && stockName !== symbol) {
-        // 股票名稱不正確（等於代號），用 CSV 提供的名稱更新
         db.run("UPDATE stocks SET name = ? WHERE id = ?", [stockName, stock.id]);
       }
       // 找帳戶
-      let accountId = null;
+      let accountId = '';
       if (accountName) {
         const acc = queryOne("SELECT id FROM accounts WHERE user_id = ? AND name = ?", [req.userId, accountName]);
         if (acc) accountId = acc.id;
       }
       const txType = (type === '買進' || type === 'buy') ? 'buy' : 'sell';
+      // 重複偵測
+      const h = makeStockTxHash(date, symbol, txType, shareNum, priceNum, accountId);
+      if (existingHashes.has(h) || batchHashes.has(h)) { skipped++; return; }
+      batchHashes.add(h);
+
       db.run("INSERT INTO stock_transactions (id, user_id, stock_id, type, date, shares, price, fee, tax, account_id, note, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-        [uid(), req.userId, stock.id, txType, normalizeDate(date), shareNum, parseFloat(price),
+        [uid(), req.userId, stock.id, txType, date, shareNum, priceNum,
          parseFloat(fee || 0), parseFloat(tax || 0), accountId, note || '', Date.now()]);
       imported++;
-    } catch (e) { skipped++; errors.push('錯誤：' + e.message); }
+      if ((idx + 1) % 500 === 0) {
+        const cur = importProgress.get(req.userId);
+        if (cur) importProgress.set(req.userId, { ...cur, processed: idx + 1, phase: 'writing' });
+      }
+    });
+
+    failureStage = 'finalizing';
+    db.run('COMMIT');
+    saveDB();
+
+    const completedEntry = importProgress.get(req.userId) || {};
+    importProgress.set(req.userId, { ...completedEntry, processed: rows.length, phase: 'finalizing', completedAt: Date.now() });
+    setTimeout(() => importProgress.delete(req.userId), 5000);
+
+    writeOperationAudit({
+      userId: req.userId,
+      role: isUserAdmin(req.userId) ? 'admin' : 'user',
+      action: 'import_stock_transactions',
+      ipAddress: req.ip || '',
+      userAgent: req.headers['user-agent'] || '',
+      result: 'success',
+      isAdminOperation: false,
+      metadata: { rows: rows.length, imported, skipped, errors: errors.length, warnings: warnings.length },
+    });
+
+    res.json({ imported, skipped, errors: errors.slice(0, 50), warnings });
+  } catch (e) {
+    if (txStarted) { try { db.run('ROLLBACK'); } catch (_) { /* noop */ } }
+    importProgress.set(req.userId, { processed: 0, total: rows.length, phase: 'finalizing', startedAt: Date.now(), completedAt: Date.now() });
+    setTimeout(() => importProgress.delete(req.userId), 5000);
+    writeOperationAudit({
+      userId: req.userId,
+      role: isUserAdmin(req.userId) ? 'admin' : 'user',
+      action: 'import_stock_transactions',
+      ipAddress: req.ip || '',
+      userAgent: req.headers['user-agent'] || '',
+      result: 'failed',
+      isAdminOperation: false,
+      metadata: { rows: rows.length, failure_stage: failureStage || 'unknown', failure_reason: String(e?.message || e).slice(0, 200) },
+    });
+    return res.status(500).json({ error: '匯入失敗', message: String(e?.message || e), failedAt: failureStage || 'unknown' });
+  } finally {
+    releaseImportLock(req.userId);
   }
-  saveDB();
-  res.json({ imported, skipped, errors });
 });
 
-// ─── 股票股利 匯入 ───
-app.post('/api/stock-dividends/import', async (req, res) => {
+// ─── 股票股利 匯入（007 feature: T036 強化） ───
+app.post('/api/stock-dividends/import', (req, res) => {
   const { rows } = req.body;
   if (!Array.isArray(rows) || rows.length === 0) return res.status(400).json({ error: '沒有資料' });
   if (rows.length > CSV_IMPORT_MAX_ROWS) return res.status(413).json({ error: `單次最多匯入 ${CSV_IMPORT_MAX_ROWS} 筆，請分批上傳` });
-  let imported = 0, skipped = 0;
+
+  if (!acquireImportLock(req.userId)) {
+    return res.status(409).json({ error: 'IMPORT_IN_PROGRESS', message: '您已有匯入進行中，請稍候完成後再試' });
+  }
+  importProgress.set(req.userId, {
+    processed: 0, total: rows.length, phase: 'parsing',
+    startedAt: Date.now(), completedAt: null,
+  });
+
+  let imported = 0;
+  let skipped = 0;
   const errors = [];
-  for (const row of rows) {
-    try {
-      const { date, symbol, name: stockName, cashDividend, stockDividend, note } = row;
-      if (!date || !symbol) { skipped++; errors.push(`略過不完整資料（${symbol || '?'}）`); continue; }
+  let txStarted = false;
+  let failureStage = null;
+
+  try {
+    failureStage = 'validating';
+    // 重複 hash set
+    const existing = queryAll(
+      `SELECT sd.date, sd.cash_dividend, sd.stock_dividend_shares, s.symbol
+       FROM stock_dividends sd JOIN stocks s ON sd.stock_id = s.id WHERE sd.user_id = ?`,
+      [req.userId]
+    );
+    const existingHashes = new Set();
+    existing.forEach(d => {
+      existingHashes.add(makeDividendHash(d.date, d.symbol, d.cash_dividend, d.stock_dividend_shares));
+    });
+    const batchHashes = new Set();
+
+    // 使用者證券帳戶清單（用於純股票股利合成交易帳戶推導）
+    const securityAccounts = queryAll(
+      "SELECT id, name FROM accounts WHERE user_id = ? AND (account_type = 'securities' OR icon = 'fa-chart-line' OR LOWER(name) LIKE '%證券%')",
+      [req.userId]
+    );
+
+    db.run('BEGIN');
+    txStarted = true;
+    failureStage = 'writing';
+
+    rows.forEach((row, idx) => {
+      const { date: rawDate, symbol, name: stockName, cashDividend, stockDividend, accountName, note } = row;
+      if (!rawDate || !symbol) {
+        errors.push({ row: idx + 2, reason: `略過不完整資料（${symbol || '?'}）` });
+        skipped++; return;
+      }
+      const date = isValidIso8601Date(rawDate) ? rawDate : normalizeDate(rawDate);
+      if (!date || !isValidIso8601Date(date)) {
+        errors.push({ row: idx + 2, reason: '日期格式必須為 YYYY-MM-DD' });
+        skipped++; return;
+      }
       const cash = parseFloat(cashDividend || 0);
       const stock_d = parseFloat(stockDividend || 0);
-      if (!cash && !stock_d) { skipped++; errors.push(`現金股利與股票股利至少填一項（${symbol} ${date}）`); continue; }
-      // 006 T043：找或建立股票，自動推斷 stockType + 名稱 fallback「（未命名）」
+      if (!cash && !stock_d) {
+        errors.push({ row: idx + 2, reason: `現金股利與股票股利至少填一項（${symbol} ${date}）` });
+        skipped++; return;
+      }
+      // FR-019：現金股利 > 0 時帳戶必填
+      if (cash > 0 && !accountName) {
+        errors.push({ row: idx + 2, reason: '現金股利 > 0 時必填帳戶' });
+        skipped++; return;
+      }
+      // 找或建立股票
       let stock = queryOne("SELECT * FROM stocks WHERE user_id = ? AND symbol = ?", [req.userId, symbol]);
       if (!stock) {
         const sid = uid();
@@ -8558,16 +9564,97 @@ app.post('/api/stock-dividends/import', async (req, res) => {
           [sid, req.userId, symbol, fallbackName, 0, inferredType, new Date().toISOString()]);
         stock = queryOne("SELECT * FROM stocks WHERE id = ?", [sid]);
       } else if (stock.name === symbol && stockName && stockName !== symbol) {
-        // 股票名稱不正確（等於代號），用 CSV 提供的名稱更新
         db.run("UPDATE stocks SET name = ? WHERE id = ?", [stockName, stock.id]);
       }
+
+      // 重複偵測
+      const h = makeDividendHash(date, symbol, cash, stock_d);
+      if (existingHashes.has(h) || batchHashes.has(h)) { skipped++; return; }
+      batchHashes.add(h);
+
+      // 帳戶解析
+      let accountId = '';
+      if (accountName) {
+        const acc = queryOne("SELECT id FROM accounts WHERE user_id = ? AND name = ?", [req.userId, accountName]);
+        if (acc) accountId = acc.id;
+      }
+
+      // FR-023：合成 $0 買進交易（若有股票股利）
+      if (stock_d > 0) {
+        let synthAccountId = accountId;
+        // FR-023b：純股票股利且帳戶留空時的推導
+        if (!synthAccountId) {
+          // 路徑 1：該 symbol 最近一筆 buy 的 account_id
+          const lastBuy = queryOne(
+            "SELECT account_id FROM stock_transactions WHERE user_id = ? AND stock_id = ? AND type = 'buy' AND account_id IS NOT NULL AND account_id != '' ORDER BY date DESC LIMIT 1",
+            [req.userId, stock.id]
+          );
+          if (lastBuy && lastBuy.account_id) {
+            synthAccountId = lastBuy.account_id;
+          } else if (securityAccounts.length === 1) {
+            // 路徑 2：唯一證券帳戶
+            synthAccountId = securityAccounts[0].id;
+          } else if (securityAccounts.length > 1) {
+            // 多個證券帳戶且無歷史：列為錯誤
+            errors.push({ row: idx + 2, reason: '純股票股利合成交易無法判定所屬帳戶，請於 CSV 帳戶欄位明示' });
+            skipped++;
+            return;
+          }
+        }
+        const synthNote = '[SYNTH] 股票股利配發 ' + (note || '');
+        db.run(
+          "INSERT INTO stock_transactions (id, user_id, stock_id, type, date, shares, price, fee, tax, account_id, note, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+          [uid(), req.userId, stock.id, 'buy', date, stock_d, 0, 0, 0, synthAccountId || '', synthNote, Date.now()]
+        );
+      }
+
       db.run("INSERT INTO stock_dividends (id, user_id, stock_id, date, cash_dividend, stock_dividend_shares, note, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-        [uid(), req.userId, stock.id, normalizeDate(date), cash, stock_d, note || '', Date.now()]);
+        [uid(), req.userId, stock.id, date, cash, stock_d, note || '', Date.now()]);
       imported++;
-    } catch (e) { skipped++; errors.push('錯誤：' + e.message); }
+      if ((idx + 1) % 500 === 0) {
+        const cur = importProgress.get(req.userId);
+        if (cur) importProgress.set(req.userId, { ...cur, processed: idx + 1, phase: 'writing' });
+      }
+    });
+
+    failureStage = 'finalizing';
+    db.run('COMMIT');
+    saveDB();
+
+    const completedEntry = importProgress.get(req.userId) || {};
+    importProgress.set(req.userId, { ...completedEntry, processed: rows.length, phase: 'finalizing', completedAt: Date.now() });
+    setTimeout(() => importProgress.delete(req.userId), 5000);
+
+    writeOperationAudit({
+      userId: req.userId,
+      role: isUserAdmin(req.userId) ? 'admin' : 'user',
+      action: 'import_stock_dividends',
+      ipAddress: req.ip || '',
+      userAgent: req.headers['user-agent'] || '',
+      result: 'success',
+      isAdminOperation: false,
+      metadata: { rows: rows.length, imported, skipped, errors: errors.length, warnings: 0 },
+    });
+
+    res.json({ imported, skipped, errors: errors.slice(0, 50), warnings: [] });
+  } catch (e) {
+    if (txStarted) { try { db.run('ROLLBACK'); } catch (_) { /* noop */ } }
+    importProgress.set(req.userId, { processed: 0, total: rows.length, phase: 'finalizing', startedAt: Date.now(), completedAt: Date.now() });
+    setTimeout(() => importProgress.delete(req.userId), 5000);
+    writeOperationAudit({
+      userId: req.userId,
+      role: isUserAdmin(req.userId) ? 'admin' : 'user',
+      action: 'import_stock_dividends',
+      ipAddress: req.ip || '',
+      userAgent: req.headers['user-agent'] || '',
+      result: 'failed',
+      isAdminOperation: false,
+      metadata: { rows: rows.length, failure_stage: failureStage || 'unknown', failure_reason: String(e?.message || e).slice(0, 200) },
+    });
+    return res.status(500).json({ error: '匯入失敗', message: String(e?.message || e), failedAt: failureStage || 'unknown' });
+  } finally {
+    releaseImportLock(req.userId);
   }
-  saveDB();
-  res.json({ imported, skipped, errors });
 });
 
 // 股票交易紀錄
@@ -8826,16 +9913,35 @@ app.post('/api/stock-dividends/batch-delete', (req, res) => {
   res.json({ deleted, linkedDeleted });
 });
 
-// ─── 資料庫匯出匯入（僅管理員） ───
+// ─── 資料庫匯出匯入（僅管理員，007 feature: T047 / T048 強化） ───
+function makeBackupTimestamp() {
+  // YYYYMMDDHHmmss
+  return new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14);
+}
+function isValidBackupFilename(filename) {
+  return /^(before-restore-|assetpilot-backup-)\d{14}\.db$/.test(filename);
+}
+
 app.get('/api/database/export', (req, res) => {
   if (!isUserAdmin(req.userId)) return res.status(403).json({ error: '僅管理員可執行此操作' });
   try {
     const data = db.export();
     const plain = Buffer.from(data);
-    const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+    const ts = makeBackupTimestamp();
+    const filename = `assetpilot-backup-${ts}.db`;
     res.setHeader('Content-Type', 'application/x-sqlite3');
-    res.setHeader('Content-Disposition', `attachment; filename="asset_backup_${ts}.db"`);
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     res.send(plain);
+    writeOperationAudit({
+      userId: req.userId,
+      role: 'admin',
+      action: 'download_backup',
+      ipAddress: req.ip || '',
+      userAgent: req.headers['user-agent'] || '',
+      result: 'success',
+      isAdminOperation: true,
+      metadata: { byteSize: plain.length, filename },
+    });
   } catch (e) {
     console.error('資料庫匯出失敗:', e);
     res.status(500).json({ error: '資料庫匯出失敗' });
@@ -8844,6 +9950,7 @@ app.get('/api/database/export', (req, res) => {
 
 app.post('/api/database/import', express.raw({ type: 'application/octet-stream', limit: '100mb' }), (req, res) => {
   if (!isUserAdmin(req.userId)) return res.status(403).json({ error: '僅管理員可執行此操作' });
+  let beforeRestorePath = '';
   try {
     if (!Buffer.isBuffer(req.body)) {
       return res.status(400).json({ error: '無效的資料庫檔案' });
@@ -8852,47 +9959,187 @@ app.post('/api/database/import', express.raw({ type: 'application/octet-stream',
     if (dbBuffer.length < 16) {
       return res.status(400).json({ error: '無效的資料庫檔案' });
     }
-    // 若上傳的是加密檔案，拒絕匯入
     if (isEncryptedDB(dbBuffer)) {
       return res.status(400).json({ error: '請上傳未加密的資料庫檔案（.db）' });
     }
-    // 驗證是否為有效的 SQLite 檔案（magic header: "SQLite format 3\000"）
     const sqliteMagic = dbBuffer.subarray(0, 16).toString('ascii');
     if (!sqliteMagic.startsWith('SQLite format 3')) {
       return res.status(400).json({ error: '檔案不是有效的 SQLite 資料庫' });
     }
-    // 嘗試載入以驗證完整性
     const testDb = new SQL.Database(new Uint8Array(dbBuffer));
-    // 驗證基本資料表結構
     const tables = testDb.exec("SELECT name FROM sqlite_master WHERE type='table'");
     const tableNames = tables.length > 0 ? tables[0].values.map(r => r[0]) : [];
-    const requiredTables = ['users', 'transactions', 'accounts', 'categories'];
+    // FR-025：必要表清單擴充加入 stocks
+    const requiredTables = ['users', 'transactions', 'accounts', 'categories', 'stocks'];
     const missing = requiredTables.filter(t => !tableNames.includes(t));
     if (missing.length > 0) {
       testDb.close();
       return res.status(400).json({ error: `資料庫缺少必要資料表：${missing.join(', ')}` });
     }
     testDb.close();
-    // 備份目前資料庫
-    const backupTs = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-    const backupPath = DB_PATH + `.backup_${backupTs}`;
+
+    // FR-026：寫入 backups/before-restore-{ts}.db
+    ensureBackupsDir();
+    const backupTs = makeBackupTimestamp();
+    beforeRestorePath = path.join(BACKUPS_DIR, `before-restore-${backupTs}.db`);
     try {
       const currentData = db.export();
-      const currentPlain = Buffer.from(currentData);
-      fs.writeFileSync(backupPath, currentPlain);
+      fs.writeFileSync(beforeRestorePath, Buffer.from(currentData));
     } catch (e) {
-      console.error('備份目前資料庫失敗:', e);
+      console.error('寫入 before-restore 備份失敗:', e);
+      return res.status(500).json({ error: '建立還原前備份失敗，請檢查 backups/ 目錄權限', message: String(e?.message || e) });
     }
-    // 替換資料庫
-    db.close();
-    db = new SQL.Database(new Uint8Array(dbBuffer));
-    saveDB();
-    // 重新初始化（確保升級邏輯執行）
-    initDB();
-    res.json({ ok: true, message: '資料庫匯入成功，已自動備份原始資料庫' });
+
+    // FR-026a：替換主資料庫，失敗自動回滾
+    let restoreOk = false;
+    try {
+      db.close();
+      db = new SQL.Database(new Uint8Array(dbBuffer));
+      saveDB();
+      initDB();
+      restoreOk = true;
+    } catch (replaceErr) {
+      console.error('替換主資料庫失敗，嘗試回滾:', replaceErr);
+      try {
+        const beforeBuf = fs.readFileSync(beforeRestorePath);
+        db = new SQL.Database(new Uint8Array(beforeBuf));
+        saveDB();
+        initDB();
+        writeOperationAudit({
+          userId: req.userId,
+          role: 'admin',
+          action: 'restore_failed',
+          ipAddress: req.ip || '',
+          userAgent: req.headers['user-agent'] || '',
+          result: 'rolled_back',
+          isAdminOperation: true,
+          metadata: {
+            failure_stage: 'replace_main_db',
+            failure_reason: String(replaceErr?.message || replaceErr).slice(0, 200),
+            before_restore_path: path.relative(__dirname, beforeRestorePath),
+          },
+        });
+        return res.status(422).json({
+          error: 'RESTORE_FAILED_ROLLED_BACK',
+          message: '還原失敗，已自動回復至還原前狀態',
+          beforeRestorePath: path.relative(__dirname, beforeRestorePath),
+        });
+      } catch (rollbackErr) {
+        console.error('自動回滾失敗:', rollbackErr);
+        // 雙重失敗：列出可用備份檔
+        const availableBackups = (() => {
+          try {
+            return fs.readdirSync(BACKUPS_DIR)
+              .filter(f => f.endsWith('.db'))
+              .map(f => path.relative(__dirname, path.join(BACKUPS_DIR, f)));
+          } catch (_) { return []; }
+        })();
+        writeOperationAudit({
+          userId: req.userId,
+          role: 'admin',
+          action: 'restore_failed',
+          ipAddress: req.ip || '',
+          userAgent: req.headers['user-agent'] || '',
+          result: 'failed',
+          isAdminOperation: true,
+          metadata: {
+            failure_stage: 'rollback',
+            failure_reason: String(rollbackErr?.message || rollbackErr).slice(0, 200),
+            before_restore_path: path.relative(__dirname, beforeRestorePath),
+          },
+        });
+        return res.status(500).json({
+          error: 'RESTORE_FAILED_DB_UNKNOWN',
+          message: '主資料庫狀態未知，請聯繫管理員',
+          availableBackups,
+        });
+      }
+    }
+
+    // FR-026b：清理超期 / 超量 before-restore 檔
+    pruneBeforeRestoreBackups();
+
+    if (restoreOk) {
+      writeOperationAudit({
+        userId: req.userId,
+        role: 'admin',
+        action: 'restore_backup',
+        ipAddress: req.ip || '',
+        userAgent: req.headers['user-agent'] || '',
+        result: 'success',
+        isAdminOperation: true,
+        metadata: {
+          byteSize: dbBuffer.length,
+          before_restore_path: path.relative(__dirname, beforeRestorePath),
+        },
+      });
+      return res.json({
+        ok: true,
+        message: '資料庫還原成功，請重新登入',
+        beforeRestorePath: path.relative(__dirname, beforeRestorePath),
+      });
+    }
   } catch (e) {
     console.error('資料庫匯入失敗:', e);
-    res.status(500).json({ error: '資料庫匯入失敗：' + (e.message || '未知錯誤') });
+    writeOperationAudit({
+      userId: req.userId,
+      role: 'admin',
+      action: 'restore_failed',
+      ipAddress: req.ip || '',
+      userAgent: req.headers['user-agent'] || '',
+      result: 'failed',
+      isAdminOperation: true,
+      metadata: {
+        failure_stage: 'pre_validation',
+        failure_reason: String(e?.message || e).slice(0, 200),
+      },
+    });
+    return res.status(500).json({ error: '資料庫匯入失敗：' + (e.message || '未知錯誤') });
+  }
+});
+
+// ─── 007 feature (T049): 列出 backups/ 內備份檔（管理員） ───
+app.get('/api/admin/backups', adminMiddleware, (req, res) => {
+  ensureBackupsDir();
+  try {
+    const files = fs.readdirSync(BACKUPS_DIR)
+      .filter(f => f.endsWith('.db'))
+      .map(f => {
+        const fp = path.join(BACKUPS_DIR, f);
+        try {
+          const st = fs.statSync(fp);
+          let kind = 'unknown';
+          if (f.startsWith('before-restore-')) kind = 'before-restore';
+          else if (f.startsWith('assetpilot-backup-')) kind = 'manual-download';
+          return { filename: f, sizeBytes: st.size, mtime: new Date(st.mtimeMs).toISOString(), kind };
+        } catch (_) { return null; }
+      })
+      .filter(Boolean)
+      .sort((a, b) => b.mtime.localeCompare(a.mtime));
+    const totalSizeBytes = files.reduce((sum, f) => sum + f.sizeBytes, 0);
+    res.json({ totalSizeBytes, files });
+  } catch (e) {
+    console.error('list backups failed', e);
+    res.status(500).json({ error: '列出備份檔失敗', message: String(e?.message || e) });
+  }
+});
+
+// ─── 007 feature (T050): 手動刪除備份檔（管理員，路徑遍歷防護） ───
+app.delete('/api/admin/backups/:filename', adminMiddleware, (req, res) => {
+  const flat = path.basename(String(req.params.filename || ''));
+  if (!isValidBackupFilename(flat)) {
+    return res.status(400).json({ error: '檔名格式不合法' });
+  }
+  const fp = path.join(BACKUPS_DIR, flat);
+  if (!fs.existsSync(fp)) {
+    return res.status(404).json({ error: '備份檔不存在' });
+  }
+  try {
+    fs.unlinkSync(fp);
+    res.json({ ok: true });
+  } catch (e) {
+    console.error('delete backup failed', e);
+    res.status(500).json({ error: '刪除失敗', message: String(e?.message || e) });
   }
 });
 
@@ -8932,11 +10179,12 @@ app.get('{*path}', rateLimit({
 // ─── 啟動 ───
 initDB().then(() => {
   loadServerTimeOffset();
+  ensureBackupsDir();
   registerAuditPruneJob();
   app.listen(PORT, () => {
     console.log(`AssetPilot 伺服器已啟動: http://localhost:${PORT}`);
     // T149：啟動 log 帶版本標籤，方便容器日誌追蹤上線版本
-    console.log('[startup] AssetPilot v4.27.0 / feature 006-stock-investments ready');
+    console.log('[startup] AssetPilot v4.28.0 / feature 007-data-export-import ready');
     console.log(`[OAuth] redirect_uri whitelist: ${GOOGLE_OAUTH_REDIRECT_URIS.length} entries`);
   });
 });

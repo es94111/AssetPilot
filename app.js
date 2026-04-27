@@ -1034,7 +1034,7 @@ const App = (() => {
     { path: '/stocks/settings',      page: 'stocks',       sub: 'settings',     isPublic: false, requireAdmin: false, staticTitle: '股票交易設定',      icon: 'sliders',       fab: { label: '新增股票交易紀錄', modalId: 'modalStockTx' } },
     { path: '/api-credits',          page: 'api-credits',  sub: null,           isPublic: false, requireAdmin: false, staticTitle: 'API 使用與授權',    icon: 'key',           fab: null },
     { path: '/settings/account',     page: 'settings',     sub: 'account',      isPublic: false, requireAdmin: false, staticTitle: '帳號設定',          icon: 'user',          fab: null },
-    { path: '/settings/admin',       page: 'settings',     sub: 'admin',        isPublic: false, requireAdmin: true,  staticTitle: '管理員面板',        icon: 'shield',        fab: null },
+    { path: '/settings/admin',       page: 'settings',     sub: 'admin',        isPublic: false, requireAdmin: true,  staticTitle: '管理員',            icon: 'shield',        fab: null },
     { path: '/settings/export',      page: 'settings',     sub: 'export',       isPublic: false, requireAdmin: false, staticTitle: '資料匯出匯入',      icon: 'database',      fab: null },
   ];
 
@@ -2344,12 +2344,11 @@ const App = (() => {
       params.set('sort', currentSort);
     }
 
-    // FR-052：寫入 URL hash（避免影響 SPA routing path）
+    // FR-052：寫入 URL search（與其他頁面一致）
     try {
-      const hash = window.location.hash.split('?')[0] || '#/transactions';
-      const newHash = `${hash}?${params.toString()}`;
-      if (window.location.hash !== newHash) {
-        window.history.replaceState(null, '', newHash);
+      const newUrl = location.pathname + '?' + params.toString() + location.hash;
+      if (location.pathname + location.search + location.hash !== newUrl) {
+        window.history.replaceState(history.state || null, '', newUrl);
       }
     } catch (e) { /* ignore URL sync errors */ }
 
@@ -2378,13 +2377,19 @@ const App = (() => {
     });
   }
 
-  // T060/T062：URL hash → 還原狀態
+  // T060/T062：URL search/hash → 還原狀態（兼容舊版 #/transactions?... 連結）
   function restoreFiltersFromHash() {
     try {
-      const hash = window.location.hash || '';
-      const qIdx = hash.indexOf('?');
-      if (qIdx < 0) return false;
-      const qs = new URLSearchParams(hash.slice(qIdx + 1));
+      let qsRaw = '';
+      if (window.location.search && window.location.search.length > 1) {
+        qsRaw = window.location.search.slice(1);
+      } else {
+        const hash = window.location.hash || '';
+        const qIdx = hash.indexOf('?');
+        if (qIdx < 0) return false;
+        qsRaw = hash.slice(qIdx + 1);
+      }
+      const qs = new URLSearchParams(qsRaw);
       const setVal = (id, key) => {
         if (qs.has(key)) el(id).value = qs.get(key);
       };
@@ -3880,6 +3885,70 @@ const App = (() => {
     pag.innerHTML = ph;
   }
 
+  // ─── 股票子頁 URL search 同步（與交易記錄一致） ───
+  function writeStockUrlSearch(panelSub, fields) {
+    if (currentRoute?.sub !== panelSub) return;
+    try {
+      const sp = new URLSearchParams();
+      Object.entries(fields).forEach(([k, v]) => {
+        if (v === '' || v === null || v === undefined) return;
+        sp.set(k, String(v));
+      });
+      const qs = sp.toString();
+      const newUrl = location.pathname + (qs ? '?' + qs : '') + location.hash;
+      if (location.pathname + location.search + location.hash !== newUrl) {
+        history.replaceState(history.state || null, '', newUrl);
+      }
+    } catch (_) { /* ignore */ }
+  }
+
+  function restoreStockFiltersFromUrl() {
+    const sub = currentRoute?.sub;
+    if (!sub) return;
+    const qs = new URLSearchParams(location.search || '');
+    if ([...qs.keys()].length === 0) return;
+    const applyPageSize = (selectId, customId, parsedVal, setState) => {
+      if (!parsedVal || parsedVal <= 0) return;
+      setState(parsedVal);
+      const presets = ['10', '20', '50', '100'];
+      const sel = el(selectId);
+      const customInput = el(customId);
+      if (presets.includes(String(parsedVal))) {
+        if (sel) sel.value = String(parsedVal);
+        if (customInput) customInput.style.display = 'none';
+      } else {
+        if (sel) sel.value = 'custom';
+        if (customInput) {
+          customInput.style.display = '';
+          customInput.value = String(parsedVal);
+        }
+      }
+    };
+    if (sub === 'transactions') {
+      if (qs.has('stockId') && el('stockTxFilter')) el('stockTxFilter').value = qs.get('stockId');
+      if (qs.has('dateFrom') && el('stkTxDateFrom')) el('stkTxDateFrom').value = qs.get('dateFrom');
+      if (qs.has('dateTo') && el('stkTxDateTo')) el('stkTxDateTo').value = qs.get('dateTo');
+      if (qs.has('page')) stkTxPage = parseInt(qs.get('page')) || 1;
+      if (qs.has('pageSize')) {
+        applyPageSize('stkTxPageSize', 'stkTxPageSizeCustom', parseInt(qs.get('pageSize')), v => { stkTxPageSize = v; });
+      }
+      if (qs.has('sortBy')) stkTxSortBy = qs.get('sortBy');
+      if (qs.has('sortDir')) stkTxSortDir = qs.get('sortDir');
+    } else if (sub === 'dividends') {
+      if (qs.has('stockId') && el('stockDivFilter')) el('stockDivFilter').value = qs.get('stockId');
+      if (qs.has('dateFrom') && el('stkDivDateFrom')) el('stkDivDateFrom').value = qs.get('dateFrom');
+      if (qs.has('dateTo') && el('stkDivDateTo')) el('stkDivDateTo').value = qs.get('dateTo');
+      if (qs.has('page')) stkDivPage = parseInt(qs.get('page')) || 1;
+      if (qs.has('pageSize')) {
+        applyPageSize('stkDivPageSize', 'stkDivPageSizeCustom', parseInt(qs.get('pageSize')), v => { stkDivPageSize = v; });
+      }
+      if (qs.has('sortBy')) stkDivSortBy = qs.get('sortBy');
+      if (qs.has('sortDir')) stkDivSortDir = qs.get('sortDir');
+    } else if (sub === 'realized') {
+      if (qs.has('stockId') && el('stockRealizedFilter')) el('stockRealizedFilter').value = qs.get('stockId');
+    }
+  }
+
   async function renderStocks() {
     if (!stocksBound) {
       // Tab 切換（透過路由）
@@ -4048,6 +4117,7 @@ const App = (() => {
     await refreshStocks();
     renderStockPortfolio();
     populateStockFilters();
+    restoreStockFiltersFromUrl();
     await renderStockTransactions();
     await renderStockDividends();
     await renderStockRealized();
@@ -4310,6 +4380,15 @@ const App = (() => {
     if (stockId) params += `&stockId=${stockId}`;
     if (dateFrom) params += `&dateFrom=${dateFrom}`;
     if (dateTo) params += `&dateTo=${dateTo}`;
+    writeStockUrlSearch('transactions', {
+      stockId,
+      dateFrom,
+      dateTo,
+      page: stkTxPage,
+      pageSize: stkTxPageSize,
+      sortBy: stkTxSortBy !== 'date' ? stkTxSortBy : '',
+      sortDir: stkTxSortDir !== 'desc' ? stkTxSortDir : '',
+    });
     // 更新表頭排序圖示
     updateSortIcons('stockPanel-transactions', stkTxSortBy, stkTxSortDir);
     const result = await API.get('/api/stock-transactions' + params);
@@ -4353,6 +4432,15 @@ const App = (() => {
     if (stockId) params += `&stockId=${stockId}`;
     if (dateFrom) params += `&dateFrom=${dateFrom}`;
     if (dateTo) params += `&dateTo=${dateTo}`;
+    writeStockUrlSearch('dividends', {
+      stockId,
+      dateFrom,
+      dateTo,
+      page: stkDivPage,
+      pageSize: stkDivPageSize,
+      sortBy: stkDivSortBy !== 'date' ? stkDivSortBy : '',
+      sortDir: stkDivSortDir !== 'desc' ? stkDivSortDir : '',
+    });
     // 更新表頭排序圖示
     updateSortIcons('stockPanel-dividends', stkDivSortBy, stkDivSortDir);
     const result = await API.get('/api/stock-dividends' + params);
@@ -4444,6 +4532,7 @@ const App = (() => {
   // ─── 實現損益（006 T092：使用 /api/stock-realized-pl 結構化回應 + 三段式顯色） ───
   async function renderStockRealized() {
     const stockId = el('stockRealizedFilter').value;
+    writeStockUrlSearch('realized', { stockId });
     let records = [];
     let summary = null;
     try {
@@ -5204,7 +5293,18 @@ const App = (() => {
           return;
         }
         activateSettingsTab(sub);
-        history.pushState({ page: 'settings', sub }, '', buildPath('settings', sub));
+        const newPath = buildPath('settings', sub);
+        history.pushState({ page: 'settings', sub, path: newPath }, '', newPath);
+        const route = parsePath(newPath);
+        if (route) {
+          currentRoute = route;
+          document.title = route.staticTitle + ' — 記帳網頁';
+          announceRoute(route.staticTitle);
+          const mobileTitleNode = el('mobileTitle');
+          if (mobileTitleNode) mobileTitleNode.textContent = route.staticTitle;
+          try { updateFabForRoute(route); } catch (_) {}
+        }
+        try { updateSidebarActive(newPath); } catch (_) {}
       });
       settingsBound = true;
     }

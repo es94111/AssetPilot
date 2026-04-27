@@ -3977,10 +3977,24 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
   border-radius: 8px;
   padding: 12px;
   background: var(--bg-secondary);
+  min-width: 0;
+  overflow: hidden;
 }
 .external-api-card h3 {
   margin: 0 0 6px 0;
   font-size: 16px;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+.external-api-card p {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+.external-api-card a {
+  display: inline-block;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-all;
 }
 .external-api-card .badges {
   margin-top: 8px;

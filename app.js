@@ -13,7 +13,13 @@ const App = (() => {
   let latestLoginRecord = null;
   let googleUseCodeFlow = false;
   let authConfig = { registrationEnabled: true, publicRegistration: true, allowlistEnabled: false };
-  let themeMode = localStorage.getItem('themeMode') || 'system';
+  // 008 feature (T052 / FR-021a)：優先讀 theme_pref；fallback 至舊鍵 themeMode
+  let themeMode = (function () {
+    try {
+      const v = localStorage.getItem('theme_pref') || localStorage.getItem('themeMode') || 'system';
+      return ['system', 'light', 'dark'].includes(v) ? v : 'system';
+    } catch (_) { return 'system'; }
+  })();
   const prefersDarkMedia = typeof window.matchMedia === 'function'
     ? window.matchMedia('(prefers-color-scheme: dark)')
     : null;
@@ -37,12 +43,30 @@ const App = (() => {
     themeMode = nextMode;
     document.body.classList.toggle('dark-mode', resolved === 'dark');
     document.body.classList.toggle('system-theme', nextMode === 'system');
+    // 008 feature (T051 / FR-020 / FR-021a)：同時寫 <html data-theme> 屬性供 CSS 變數覆寫使用
+    try { document.documentElement.setAttribute('data-theme', resolved); } catch (_) {}
     if (typeof Chart !== 'undefined') {
       Chart.defaults.color = resolved === 'dark' ? '#cbd5e1' : '#475569';
     }
     if (persist) {
-      if (nextMode === 'system') localStorage.removeItem('themeMode');
-      else localStorage.setItem('themeMode', nextMode);
+      // 008 feature (T053 / FR-021a)：統一以 theme_pref 為 localStorage key（向後保留 themeMode）
+      try { localStorage.setItem('theme_pref', nextMode); } catch (_) {}
+      if (nextMode === 'system') {
+        try { localStorage.removeItem('themeMode'); } catch (_) {}
+      } else {
+        try { localStorage.setItem('themeMode', nextMode); } catch (_) {}
+      }
+    }
+  }
+
+  // 008 feature (T053 / FR-019 / FR-021a)：統一接收伺服器主題（登入完成、auth/me、PUT /api/account/theme）
+  function onUserThemeReceived(serverTheme) {
+    const mode = normalizeThemeMode(serverTheme);
+    let cached = null;
+    try { cached = localStorage.getItem('theme_pref'); } catch (_) {}
+    if (cached !== mode) {
+      try { localStorage.setItem('theme_pref', mode); } catch (_) {}
+      applyThemeMode(mode, false);
     }
   }
 
@@ -79,7 +103,10 @@ const App = (() => {
     const nextMode = normalizeThemeMode(mode);
     try {
       const result = await API.put('/api/account/theme', { themeMode: nextMode });
-      if (currentUser) currentUser.themeMode = normalizeThemeMode(result?.themeMode || nextMode);
+      const synced = normalizeThemeMode(result?.themeMode || nextMode);
+      if (currentUser) currentUser.themeMode = synced;
+      // 008 feature (T055 / FR-018 / FR-020)：成功後同步 onUserThemeReceived，立即生效並寫 theme_pref
+      try { onUserThemeReceived(synced); } catch (_) {}
       return true;
     } catch (e) {
       if (currentUser) currentUser.themeMode = nextMode;
@@ -120,9 +147,9 @@ const App = (() => {
         throw new Error('伺服器回應格式無法解析，請稍後再試');
       }
     },
+    // 008 feature (T031 / FR-007a)：API.* 全量改用 apiFetch；401 → /login?next= + Toast
     async get(url) {
-      const r = await fetch(url, { ...FETCH_OPTS, headers: JSON_HEADERS });
-      if (r.status === 401) { logout(); throw new Error('請先登入'); }
+      const r = await apiFetch(url, { headers: JSON_HEADERS });
       const data = await this.parseResponse(r);
       if (!r.ok) {
         const err = new Error(data.error || `操作失敗 (${r.status})`);
@@ -134,9 +161,8 @@ const App = (() => {
       return data;
     },
     async post(url, body) {
-      const r = await fetch(url, { ...FETCH_OPTS, method: 'POST', headers: JSON_HEADERS, body: JSON.stringify(body) });
+      const r = await apiFetch(url, { method: 'POST', headers: JSON_HEADERS, body: JSON.stringify(body) });
       const data = await this.parseResponse(r);
-      if (r.status === 401) { logout(); throw new Error('請先登入'); }
       if (!r.ok) {
         const err = new Error(data.error || '操作失敗');
         err.status = r.status;
@@ -146,27 +172,24 @@ const App = (() => {
       return data;
     },
     async put(url, body) {
-      const r = await fetch(url, { ...FETCH_OPTS, method: 'PUT', headers: JSON_HEADERS, body: JSON.stringify(body) });
+      const r = await apiFetch(url, { method: 'PUT', headers: JSON_HEADERS, body: JSON.stringify(body) });
       const data = await this.parseResponse(r);
-      if (r.status === 401) { logout(); throw new Error('請先登入'); }
       if (!r.ok) throw new Error(data.error || '操作失敗');
       return data;
     },
     async patch(url, body) {
-      const opts = { ...FETCH_OPTS, method: 'PATCH', headers: JSON_HEADERS };
+      const opts = { method: 'PATCH', headers: JSON_HEADERS };
       if (body !== undefined) opts.body = JSON.stringify(body);
-      const r = await fetch(url, opts);
-      if (r.status === 401) { logout(); throw new Error('請先登入'); }
+      const r = await apiFetch(url, opts);
       const data = await this.parseResponse(r);
       if (!r.ok) throw new Error(data.error || `操作失敗 (${r.status})`);
       return data;
     },
     async del(url, body) {
-      const opts = { ...FETCH_OPTS, method: 'DELETE', headers: JSON_HEADERS };
+      const opts = { method: 'DELETE', headers: JSON_HEADERS };
       if (body !== undefined) opts.body = JSON.stringify(body);
-      const r = await fetch(url, opts);
+      const r = await apiFetch(url, opts);
       const data = await this.parseResponse(r);
-      if (r.status === 401) { logout(); throw new Error('請先登入'); }
       if (!r.ok) {
         const err = new Error(data.error || '操作失敗');
         err.status = r.status;
@@ -494,6 +517,7 @@ const App = (() => {
     el('loginError').textContent = '';
 
     try {
+      // FR-007a 例外：登入端點本身不走 apiFetch（401 為登入失敗，非 session 過期）
       const r = await fetch('/api/auth/login', {
         method: 'POST',
         credentials: 'include',
@@ -568,8 +592,14 @@ const App = (() => {
     latestLoginRecord = null;
     cachedCategories = [];
     cachedAccounts = [];
+    // FR-007a 例外：登入端點本身（含 logout）允許保留原 fetch
     fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }).catch(() => {});
-    showLoginPage(true);
+    // 008 feature (T013 / T054 / FR-007b)：清 next + theme_pref + 其他帳號偏好
+    try {
+      const successToast = '已成功登出';
+      try { toast(successToast, 'success'); } catch (_) {}
+    } catch (_) {}
+    redirectToLogin('logout');
   }
 
   function updateUserAvatar() {
@@ -586,10 +616,14 @@ const App = (() => {
 
   async function enterApp() {
     await syncThemeModeFromServer();
+    // T053 / FR-019：theme_pref 同步來自伺服器
+    try { onUserThemeReceived(currentUser?.themeMode); } catch (_) {}
     // 設定使用者名稱與頭像
     el('userDisplayName').textContent = currentUser?.displayName || currentUser?.email || '';
     updateUserAvatar();
     hideAuth();
+    // T039 C2：登入後重新渲染側邊欄（避免 stale 管理員入口）
+    try { renderSidebar(currentUser); } catch (_) {}
     // 載入快取（個別以 .catch 防護，避免單一端點失敗就阻擋後續導航）
     await API.post('/api/recurring/process', {}).catch(() => {});
     await API.post('/api/stock-recurring/process', {}).catch(() => {});
@@ -607,24 +641,64 @@ const App = (() => {
     }
     // 載入版本號
     loadVersionLabel();
-    // 根據目前 URL 導航
-    const { page, sub } = parseRoute(location.pathname);
-    if (page === 'home') {
-      await navigate('dashboard', null);
+
+    // T028 / FR-005 / FR-006 / FR-014：依 URL 直接導航
+    // 處理 ?next=（FR-029）
+    const params = new URLSearchParams(location.search || '');
+    const rawNext = params.get('next');
+    if (location.pathname === '/login' && rawNext) {
+      const result = validateNextParam(rawNext);
+      const target = result.ok ? result.target : (result.fallback || '/dashboard');
+      try { history.replaceState({ path: normalizePath(target) }, '', target); } catch (_) {}
+      await navigateToPath(target, { pushState: false, replace: true });
       return;
     }
-    await navigate(page, sub);
+
+    // 已登入造訪 /login 或 / → 自動 replaceState 至 /dashboard
+    const norm = normalizePath(location.pathname);
+    if (norm === '/login' || norm === '/') {
+      await navigateToPath('/dashboard', { pushState: false, replace: true });
+      return;
+    }
+
+    await navigateToPath(location.pathname + location.search, { pushState: false, replace: true });
   }
 
   // ─── 初始化 ───
   async function init() {
-    applyThemeMode(themeMode, false);
+    // 008 feature (T028 / FR-010c)：手動捲動還原
+    try { history.scrollRestoration = 'manual'; } catch (_) {}
+
+    // 008 feature (T052 / FR-021a)：theme_pref 樂觀渲染（fetch /api/auth/me 之前）
+    try {
+      let cached = localStorage.getItem('theme_pref');
+      if (!cached) {
+        // 向後兼容：舊鍵 'themeMode'
+        cached = localStorage.getItem('themeMode');
+        if (cached) {
+          try { localStorage.setItem('theme_pref', cached); } catch (_) {}
+        }
+      }
+      const valid = ['system', 'light', 'dark'].includes(cached) ? cached : 'system';
+      applyThemeMode(valid, false);
+    } catch (_) {
+      applyThemeMode(themeMode, false);
+    }
+
     bindThemePreference();
     bindNav();
     bindForms();
     bindFilters();
     bindMobile();
     bindAuth();
+
+    // 008 feature (T028 / FR-010a)：路徑正規化 → replaceState 改寫
+    try {
+      const norm = normalizePath(location.pathname);
+      if (norm !== location.pathname && location.pathname !== '/') {
+        history.replaceState(history.state || {}, '', norm + location.search + location.hash);
+      }
+    } catch (_) {}
 
     // 若 URL 帶有 Google OAuth 授權碼，優先自動完成登入。
     if (!currentUser && await handleGoogleCodeFromUrl()) {
@@ -641,17 +715,28 @@ const App = (() => {
         return;
       }
     } catch {}
-    const path = (location.pathname || '/').replace(/\/+$/, '') || '/';
-    const isAppPath = path === '/login' || path === '/dashboard' || path === '/finance'
-      || path.startsWith('/finance/') || path === '/transactions' || path === '/reports'
-      || path === '/budget' || path === '/accounts' || path === '/stocks'
-      || path.startsWith('/stocks/') || path === '/settings' || path.startsWith('/settings/')
-      || path === '/api-credits';
-    if (path === '/login' || isAppPath) {
-      showLoginPage(false);
-    } else {
-      showPublicHome(false);
+
+    // 008 feature (T028 / FR-005 / FR-006 / FR-008)：未登入時依 URL 決定流程
+    const norm = normalizePath(location.pathname);
+    const route = parsePath(norm);
+
+    if (route && route.isPublic) {
+      // 公開路由：直接渲染
+      await navigateToPath(norm, { pushState: false, replace: true });
+      return;
     }
+
+    if (!route) {
+      // 未知路徑：顯示 404 訊息頁（不需登入）
+      render404();
+      return;
+    }
+
+    // 受保護路由 → 寫 ?next= 並導向 /login
+    const next = norm + location.search + location.hash;
+    const encoded = encodeURIComponent(next);
+    try { history.replaceState({ path: '/login' }, '', '/login?next=' + encoded); } catch (_) {}
+    showLoginPage(false);
   }
 
   // ─── Google SSO ───
@@ -925,7 +1010,377 @@ const App = (() => {
     refreshFxCurrencySuggestionList();
   }
 
-  // ─── 導航 ───
+  // ─── 008 feature: 前端路由表（FR-001、FR-002、FR-015b 第 4 點）─────────────
+  // 20 條：4 公開 + 16 受保護（/stocks 雙別名為兩條獨立項目）
+  const ROUTES = [
+    // 公開路由
+    { path: '/',          page: 'public-home', sub: null, isPublic: true,  requireAdmin: false, staticTitle: '首頁',           icon: null,            fab: null },
+    { path: '/login',     page: 'login',       sub: null, isPublic: true,  requireAdmin: false, staticTitle: '登入',           icon: null,            fab: null },
+    { path: '/privacy',   page: 'privacy',     sub: null, isPublic: true,  requireAdmin: false, staticTitle: '隱私權政策',     icon: null,            fab: null },
+    { path: '/terms',     page: 'terms',       sub: null, isPublic: true,  requireAdmin: false, staticTitle: '服務條款',       icon: null,            fab: null },
+    // 受保護路由（依 FR-012 規定之分組順序：儀表板 → 收支 → 股票 → API → 設定）
+    { path: '/dashboard',            page: 'dashboard',    sub: null,           isPublic: false, requireAdmin: false, staticTitle: '儀表板',            icon: 'gauge',         fab: null },
+    { path: '/finance/transactions', page: 'transactions', sub: null,           isPublic: false, requireAdmin: false, staticTitle: '交易記錄',          icon: 'receipt',       fab: { label: '新增交易', modalId: 'modalTransaction' } },
+    { path: '/finance/reports',      page: 'reports',      sub: null,           isPublic: false, requireAdmin: false, staticTitle: '統計報表',          icon: 'chart',         fab: { label: '新增交易', modalId: 'modalTransaction' } },
+    { path: '/finance/budget',       page: 'budget',       sub: null,           isPublic: false, requireAdmin: false, staticTitle: '預算管理',          icon: 'wallet',        fab: { label: '新增交易', modalId: 'modalTransaction' } },
+    { path: '/finance/accounts',     page: 'accounts',     sub: null,           isPublic: false, requireAdmin: false, staticTitle: '帳戶管理',          icon: 'bank',          fab: { label: '新增交易', modalId: 'modalTransaction' } },
+    { path: '/finance/categories',   page: 'categories',   sub: null,           isPublic: false, requireAdmin: false, staticTitle: '分類管理',          icon: 'tags',          fab: { label: '新增交易', modalId: 'modalTransaction' } },
+    { path: '/finance/recurring',    page: 'recurring',    sub: null,           isPublic: false, requireAdmin: false, staticTitle: '固定收支',          icon: 'repeat',        fab: { label: '新增交易', modalId: 'modalTransaction' } },
+    { path: '/stocks',               page: 'stocks',       sub: 'portfolio',    isPublic: false, requireAdmin: false, staticTitle: '持股總覽',          icon: 'briefcase',     fab: { label: '新增股票交易紀錄', modalId: 'modalStockTx' }, alias: '/stocks/portfolio' },
+    { path: '/stocks/portfolio',     page: 'stocks',       sub: 'portfolio',    isPublic: false, requireAdmin: false, staticTitle: '持股總覽',          icon: 'briefcase',     fab: { label: '新增股票交易紀錄', modalId: 'modalStockTx' } },
+    { path: '/stocks/transactions',  page: 'stocks',       sub: 'transactions', isPublic: false, requireAdmin: false, staticTitle: '股票交易紀錄',      icon: 'arrow-up-down', fab: { label: '新增股票交易紀錄', modalId: 'modalStockTx' } },
+    { path: '/stocks/dividends',     page: 'stocks',       sub: 'dividends',    isPublic: false, requireAdmin: false, staticTitle: '股票股利紀錄',      icon: 'gift',          fab: { label: '新增股票交易紀錄', modalId: 'modalStockTx' } },
+    { path: '/stocks/realized',      page: 'stocks',       sub: 'realized',     isPublic: false, requireAdmin: false, staticTitle: '股票實現損益紀錄',  icon: 'check',         fab: { label: '新增股票交易紀錄', modalId: 'modalStockTx' } },
+    { path: '/api-credits',          page: 'api-credits',  sub: null,           isPublic: false, requireAdmin: false, staticTitle: 'API 使用與授權',    icon: 'key',           fab: null },
+    { path: '/settings/account',     page: 'settings',     sub: 'account',      isPublic: false, requireAdmin: false, staticTitle: '帳號設定',          icon: 'user',          fab: null },
+    { path: '/settings/admin',       page: 'settings',     sub: 'admin',        isPublic: false, requireAdmin: true,  staticTitle: '管理員面板',        icon: 'shield',        fab: null },
+    { path: '/settings/export',      page: 'settings',     sub: 'export',       isPublic: false, requireAdmin: false, staticTitle: '資料匯出匯入',      icon: 'database',      fab: null },
+  ];
+
+  // T007：14 個 Lucide 風格 inline SVG 圖示字典 + 1 個 fallback「首字方塊」
+  const SVG = (d) => `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+  const SIDEBAR_ICONS = {
+    gauge: SVG('<path d="M12 14l4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/>'),
+    receipt: SVG('<path d="M4 2v20l3-2 3 2 3-2 3 2 3-2 1 2V2H4z"/><path d="M16 8H8"/><path d="M16 12H8"/><path d="M13 16H8"/>'),
+    chart: SVG('<path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-5"/>'),
+    wallet: SVG('<path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/>'),
+    bank: SVG('<rect x="3" y="10" width="18" height="11"/><path d="M3 7l9-5 9 5"/><path d="M7 14v4"/><path d="M12 14v4"/><path d="M17 14v4"/>'),
+    tags: SVG('<path d="M9 5H4v5l9 9 5-5z"/><circle cx="6.5" cy="7.5" r="1.5"/><path d="M14 9l7 7-5 5-7-7"/>'),
+    repeat: SVG('<polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/>'),
+    briefcase: SVG('<rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>'),
+    'arrow-up-down': SVG('<path d="M7 17V3"/><polyline points="3 7 7 3 11 7"/><path d="M17 7v14"/><polyline points="13 17 17 21 21 17"/>'),
+    gift: SVG('<polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>'),
+    check: SVG('<polyline points="20 6 9 17 4 12"/>'),
+    key: SVG('<circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3"/>'),
+    user: SVG('<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>'),
+    shield: SVG('<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>'),
+    database: SVG('<ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/>'),
+  };
+  function fallbackBlock(label) {
+    const ch = (label || '?').slice(0, 1);
+    return `<span class="nav-icon-fallback" aria-hidden="true">${ch}</span>`;
+  }
+
+  // T008：純函式 normalizePath（與後端 normalizeRoutePath 同演算法）
+  function normalizePath(rawPath) {
+    if (typeof rawPath !== 'string') return '/';
+    const noQueryHash = rawPath.split(/[?#]/)[0] || '/';
+    const lower = noQueryHash.toLowerCase();
+    const collapsed = lower.replace(/\/{2,}/g, '/');
+    if (collapsed === '/') return '/';
+    return collapsed.replace(/\/+$/, '') || '/';
+  }
+
+  // T009：parsePath → 線性查找 ROUTES 之精確 match
+  function parsePath(pathname) {
+    const norm = normalizePath(pathname);
+    return ROUTES.find(r => r.path === norm) || null;
+  }
+
+  // T010：buildPath（雙簽章）— 既有呼叫 buildPath('settings', 'export') 仍可用
+  function buildPath(pageOrRoute, sub) {
+    if (typeof pageOrRoute === 'object' && pageOrRoute && pageOrRoute.path) {
+      return pageOrRoute.path;
+    }
+    const page = pageOrRoute;
+    // 先嘗試 (page + sub) 對應
+    const exact = ROUTES.find(r => r.page === page && r.sub === (sub ?? null));
+    if (exact && !exact.alias) return exact.path;
+    if (exact) return exact.path;
+    // 老簽章 fallback：finance 系列
+    const FINANCE = ['transactions', 'reports', 'budget', 'accounts', 'categories', 'recurring'];
+    if (FINANCE.includes(page)) return '/finance/' + page;
+    if (page === 'dashboard') return '/dashboard';
+    if (page === 'stocks') return sub ? '/stocks/' + sub : '/stocks';
+    if (page === 'settings') return sub ? '/settings/' + sub : '/settings/export';
+    return '/' + page;
+  }
+
+  // T011：?next= 嚴格白名單（FR-006a 五條規則）
+  function validateNextParam(rawNext) {
+    if (typeof rawNext !== 'string' || rawNext.length === 0) {
+      return { ok: false, reason: 'empty', fallback: '/dashboard' };
+    }
+    let decoded;
+    try {
+      decoded = decodeURIComponent(rawNext);
+    } catch (e) {
+      return { ok: false, reason: 'malformed-uri', fallback: '/dashboard' };
+    }
+    if (!decoded.startsWith('/')) {
+      return { ok: false, reason: 'not-relative', fallback: '/dashboard' };
+    }
+    if (decoded.startsWith('//') || decoded.startsWith('/\\') || decoded.includes('://')) {
+      return { ok: false, reason: 'protocol-relative', fallback: '/dashboard' };
+    }
+    const pathname = decoded.split(/[?#]/)[0];
+    const normalized = normalizePath(pathname);
+    if (!ROUTES.find(r => r.path === normalized)) {
+      return { ok: false, reason: 'unknown-path', fallback: '/dashboard' };
+    }
+    return { ok: true, target: decoded };
+  }
+
+  // T012、T013：apiFetch + redirectToLogin（FR-007a / FR-007b）
+  function redirectToLogin(reason) {
+    if (reason === 'logout') {
+      try { localStorage.removeItem('theme_pref'); } catch (_) {}
+      try { localStorage.removeItem('themeMode'); } catch (_) {}
+      try { applyThemeMode('system', false); } catch (_) {}
+      location.assign('/login');
+      return;
+    }
+    const next = location.pathname + location.search + location.hash;
+    const encoded = encodeURIComponent(next);
+    if (reason === 'session-expired') {
+      try { toast('您的登入已過期，請重新登入', 'error'); } catch (_) {}
+    }
+    location.assign('/login?next=' + encoded);
+  }
+
+  async function apiFetch(url, options = {}) {
+    const opts = { credentials: 'include', ...options };
+    const res = await fetch(url, opts);
+    const isAuthEndpoint = typeof url === 'string'
+      && (url.startsWith('/api/auth/login')
+        || url.startsWith('/api/auth/register')
+        || url.startsWith('/api/auth/google')
+        || url.startsWith('/api/auth/passkey'));
+    if (res.status === 401 && !isAuthEndpoint) {
+      redirectToLogin('session-expired');
+      throw new Error('SESSION_EXPIRED');
+    }
+    return res;
+  }
+
+  // T014：路由切換期間之 module-scoped 狀態
+  let currentRoute = null;
+  let progressTimer = null;
+  let modalStack = [];
+  let modalPreviousFocus = [];
+  let bodyScrollY = 0;
+
+  // T015：route progress + SR live region helpers
+  function showRouteProgress(deferMs = 200) {
+    if (progressTimer) return;
+    progressTimer = setTimeout(() => {
+      const node = el('route-progress');
+      if (node) node.hidden = false;
+      progressTimer = 'shown';
+    }, deferMs);
+  }
+  function hideRouteProgress() {
+    if (progressTimer && progressTimer !== 'shown') clearTimeout(progressTimer);
+    progressTimer = null;
+    const node = el('route-progress');
+    if (node) node.hidden = true;
+  }
+  function announceRoute(pageName) {
+    const node = el('sr-route-status');
+    if (!node) return;
+    node.textContent = '已切換至 ' + (pageName || '頁面');
+  }
+
+  // T016 + T056~T058：ModalBase（共用基底元件）
+  const ModalBase = (() => {
+    let tabKeydownHandler = null;
+    let hashChangeHandler = null;
+    let activeModalEl = null;
+
+    function getFocusables(modalEl) {
+      if (!modalEl) return [];
+      return Array.from(modalEl.querySelectorAll(
+        'button, [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      )).filter(node => !node.hasAttribute('disabled') && node.offsetParent !== null);
+    }
+
+    function attachTrap(modalEl) {
+      tabKeydownHandler = (e) => {
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          ModalBase.closeTopmost();
+          return;
+        }
+        if (e.key !== 'Tab') return;
+        const focusables = getFocusables(modalEl);
+        if (focusables.length === 0) return;
+        const first = focusables[0];
+        const last = focusables[focusables.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          last.focus();
+          e.preventDefault();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          first.focus();
+          e.preventDefault();
+        }
+      };
+      document.addEventListener('keydown', tabKeydownHandler);
+    }
+
+    function attachHashWatch() {
+      hashChangeHandler = () => {
+        // 外部觸發 hash 改變視為使用者主動離開 Modal → 全部關閉
+        if (modalStack.length > 0) {
+          while (modalStack.length > 0) ModalBase.closeTopmost();
+        }
+      };
+      window.addEventListener('hashchange', hashChangeHandler);
+    }
+
+    function detachHandlers() {
+      if (tabKeydownHandler) {
+        document.removeEventListener('keydown', tabKeydownHandler);
+        tabKeydownHandler = null;
+      }
+      if (hashChangeHandler) {
+        window.removeEventListener('hashchange', hashChangeHandler);
+        hashChangeHandler = null;
+      }
+    }
+
+    function lockBodyScroll() {
+      bodyScrollY = window.scrollY;
+      document.body.style.top = `-${bodyScrollY}px`;
+      document.body.classList.add('modal-open');
+    }
+    function unlockBodyScroll() {
+      document.body.classList.remove('modal-open');
+      document.body.style.top = '';
+      window.scrollTo(0, bodyScrollY);
+    }
+
+    function showModalEl(modalEl) {
+      if (!modalEl) return;
+      // 既有 Modal DOM 結構：.modal-overlay 包 .modal；以類別 .active 顯示
+      modalEl.classList.add('active');
+      modalEl.style.display = '';
+    }
+    function hideModalEl(modalEl) {
+      if (!modalEl) return;
+      modalEl.classList.remove('active');
+      modalEl.style.display = '';
+    }
+
+    function open(modalId, options = {}) {
+      const modalEl = document.getElementById(modalId);
+      if (!modalEl) {
+        console.warn('[ModalBase] 找不到 Modal 元素：' + modalId);
+        return;
+      }
+      // 堆疊規則：僅 modalConfirm 可疊在其他 Modal 上；其他組合一律拒絕
+      if (modalStack.length > 0) {
+        if (modalId !== 'modalConfirm') {
+          console.warn('[ModalBase] 違反堆疊規則：非 modalConfirm 不得疊加（嘗試 ' + modalId + '）');
+          return;
+        }
+        if (modalStack.includes('modalConfirm')) {
+          console.warn('[ModalBase] 違反堆疊規則：modalConfirm 不得疊加自身');
+          return;
+        }
+      }
+
+      modalStack.push(modalId);
+      modalPreviousFocus.push(document.activeElement);
+
+      if (modalStack.length === 1) {
+        lockBodyScroll();
+      }
+
+      // history 整合
+      try {
+        const currentState = history.state || {};
+        if (modalStack.length === 1) {
+          history.replaceState(
+            { ...currentState, modalParent: { hash: location.hash, scrollY: bodyScrollY } },
+            '',
+            location.pathname + location.search + location.hash
+          );
+        }
+        history.pushState(
+          { modalLayer: modalId, modalStack: [...modalStack] },
+          '',
+          location.pathname + location.search + '#modal-' + modalId
+        );
+      } catch (_) { /* history API 失敗不影響 modal 顯示 */ }
+
+      activeModalEl = modalEl;
+      showModalEl(modalEl);
+
+      // 焦點移至第一個可互動元素
+      requestAnimationFrame(() => {
+        const focusables = getFocusables(modalEl);
+        if (focusables.length > 0) focusables[0].focus();
+        else modalEl.focus?.();
+      });
+
+      // Tab/ESC trap + hashchange watch
+      detachHandlers();
+      attachTrap(modalEl);
+      attachHashWatch();
+
+      modalEl.__modalBaseOptions = options || {};
+    }
+
+    function closeTopmost() {
+      if (modalStack.length === 0) return;
+      try { history.back(); } catch (_) { /* 由 popstate 接手 */ }
+    }
+
+    function close() {
+      while (modalStack.length > 0) closeTopmost();
+    }
+
+    // popstate 結束關閉的副作用（解 body 鎖、focus 還原、hide DOM）
+    function handlePopstate(event) {
+      if (modalStack.length === 0) return false;
+      const top = modalStack[modalStack.length - 1];
+      const stillModalLayer = event.state?.modalLayer;
+
+      if (stillModalLayer && modalStack.includes(stillModalLayer)) {
+        // 後退到較底層 Modal：彈出較上層的
+        const modalEl = document.getElementById(top);
+        hideModalEl(modalEl);
+        modalStack.pop();
+        const prevFocus = modalPreviousFocus.pop();
+        if (prevFocus && typeof prevFocus.focus === 'function') {
+          requestAnimationFrame(() => { try { prevFocus.focus(); } catch (_) {} });
+        }
+        // 重新 trap 焦點到下層
+        const newTopId = modalStack[modalStack.length - 1];
+        const newTopEl = newTopId ? document.getElementById(newTopId) : null;
+        if (newTopEl) {
+          detachHandlers();
+          attachTrap(newTopEl);
+          attachHashWatch();
+          activeModalEl = newTopEl;
+        }
+        return true;
+      }
+
+      // 全部關閉
+      while (modalStack.length > 0) {
+        const id = modalStack.pop();
+        hideModalEl(document.getElementById(id));
+      }
+      const last = modalPreviousFocus.length > 0 ? modalPreviousFocus[0] : null;
+      modalPreviousFocus.length = 0;
+      detachHandlers();
+      unlockBodyScroll();
+      activeModalEl = null;
+      if (last && typeof last.focus === 'function') {
+        requestAnimationFrame(() => { try { last.focus(); } catch (_) {} });
+      }
+      return true;
+    }
+
+    function getStack() {
+      return [...modalStack];
+    }
+
+    return { open, close, closeTopmost, getStack, handlePopstate };
+  })();
+
+  // ─── 既有匯入路由表的別名（漸進式改寫；保留既有清單以向後兼容） ───
   const validPages = ['dashboard', 'transactions', 'reports', 'budget', 'accounts', 'stocks', 'settings', 'api-credits'];
   const financePages = ['transactions', 'reports', 'budget', 'accounts', 'categories', 'recurring'];
   const validSettingsTabs = ['export', 'account', 'admin'];
@@ -957,6 +1412,78 @@ const App = (() => {
     fab.removeAttribute('aria-label');
   }
 
+  // 008 feature (T048 / FR-016)：依路由表 fab 欄位驅動 FAB
+  function updateFabForRoute(route) {
+    const fab = el('fabBtn');
+    if (!fab) return;
+    if (!route || !route.fab) {
+      fab.style.display = 'none';
+      fab.dataset.action = '';
+      fab.dataset.modalId = '';
+      fab.title = '';
+      fab.removeAttribute('aria-label');
+      return;
+    }
+    fab.style.display = '';
+    fab.title = route.fab.label;
+    fab.setAttribute('aria-label', route.fab.label);
+    fab.dataset.modalId = route.fab.modalId || '';
+    // 既有 click handler 透過 data-action 派發，沿用 updateFabForPage 的 action 字串以維持向後兼容
+    if (financePages.includes(route.page)) fab.dataset.action = 'transaction';
+    else if (route.page === 'stocks') fab.dataset.action = 'stock-transaction';
+    else fab.dataset.action = '';
+  }
+
+  // 008 feature (T040 / FR-015a)：依正規化 path 切換 sidebar active
+  function updateSidebarActive(currentPath) {
+    const norm = normalizePath(currentPath || location.pathname);
+    document.querySelectorAll('.sidebar-mid .nav-item').forEach(item => {
+      const dataPath = item.getAttribute('data-path');
+      const isMatch = dataPath === norm
+        || (norm === '/stocks/portfolio' && dataPath === '/stocks')
+        || (norm === '/stocks' && dataPath === '/stocks/portfolio');
+      item.classList.toggle('active', !!isMatch);
+    });
+    // 向後兼容：既有舊 .nav-item[data-page] 也保留 active
+    const route = parsePath(norm);
+    if (route) {
+      const pageGroup = financePages.includes(route.page) ? 'finance' : route.page;
+      document.querySelectorAll('.sidebar-mid .nav-item[data-page]').forEach(n => n.classList.remove('active'));
+      document.querySelector(`.sidebar-mid .nav-item[data-page="${pageGroup}"]`)?.classList.add('active');
+    }
+  }
+
+  // 008 feature (T039 / FR-012 / FR-015b)：依 ROUTES 表動態渲染側邊欄
+  function renderSidebar(user) {
+    const navRoot = el('sidebarNav');
+    if (!navRoot) return;
+    const isAdmin = !!(user && user.isAdmin);
+    const visibleRoutes = ROUTES.filter(r => {
+      if (r.isPublic) return false;
+      if (r.alias) return false; // 雙別名不重複出現
+      if (r.requireAdmin && !isAdmin) return false;
+      return true;
+    });
+    const html = visibleRoutes.map(r => {
+      const iconHtml = (r.icon && SIDEBAR_ICONS[r.icon])
+        ? `<span class="nav-icon">${SIDEBAR_ICONS[r.icon]}</span>`
+        : `<span class="nav-icon">${fallbackBlock(r.staticTitle)}</span>`;
+      return `<a href="${r.path}" class="nav-item" data-path="${r.path}"><span class="nav-icon">${SIDEBAR_ICONS[r.icon] || fallbackBlock(r.staticTitle)}</span><span class="nav-label">${r.staticTitle}</span></a>`;
+    }).join('');
+    navRoot.innerHTML = html;
+    // 重新綁定 click 事件
+    navRoot.querySelectorAll('.nav-item').forEach(item => {
+      item.addEventListener('click', e => {
+        e.preventDefault();
+        const targetPath = item.getAttribute('data-path');
+        // T041：點擊當前路徑不 pushState
+        if (currentRoute && currentRoute.path === targetPath) return;
+        navigateToPath(targetPath);
+      });
+    });
+    updateSidebarActive(location.pathname);
+  }
+
   function parseRoute(pathname) {
     const parts = (pathname || '/').replace(/^\/+|\/+$/g, '').split('/').filter(Boolean);
     let page = 'home';
@@ -980,45 +1507,199 @@ const App = (() => {
     return '/' + page;
   }
 
-  async function navigate(page, sub, pushState = true) {
-    // 若 page 是 settings 且沒指定 sub，預設 export
-    if (page === 'settings' && !sub) sub = 'export';
-    if (page === 'settings' && sub === 'admin' && !currentUser?.isAdmin) sub = 'export';
-    // 若 page 是 stocks 且沒指定 sub，預設 portfolio
-    if (page === 'stocks' && !sub) sub = 'portfolio';
-    currentPage = page;
-    updateFabForPage(page);
-    const navPage = financePages.includes(page) ? 'finance' : page;
-
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-    el('page-' + page)?.classList.add('active');
-    document.querySelector(`.nav-item[data-page="${navPage}"]`)?.classList.add('active');
-    if (financePages.includes(page)) {
-      activateFinanceTab(page);
+  // 008 feature (T032 / FR-008 / FR-014)：404 訊息頁渲染
+  function render404() {
+    document.querySelectorAll('.main-content .page').forEach(p => {
+      p.classList.remove('active');
+      p.hidden = true;
+    });
+    const node = el('page-404');
+    if (node) {
+      node.classList.add('active');
+      node.hidden = false;
     }
-    const titles = { dashboard: '儀表板', transactions: '收支管理', reports: '收支管理', budget: '收支管理', accounts: '收支管理', categories: '收支管理', recurring: '收支管理', stocks: '股票紀錄', settings: '設定', 'api-credits': 'API 使用與授權' };
-    el('mobileTitle').textContent = titles[page] || '';
-    el('sidebar').classList.remove('open');
+    document.title = '找不到頁面 — 記帳網頁';
+    announceRoute('找不到頁面');
+    currentRoute = null;
+    // 綁定一次返回按鈕
+    const goHome = el('page404GoHome');
+    const goDash = el('page404GoDashboard');
+    if (goHome && !goHome.__boundRouter) {
+      goHome.__boundRouter = true;
+      goHome.addEventListener('click', () => navigateToPath('/'));
+    }
+    if (goDash && !goDash.__boundRouter) {
+      goDash.__boundRouter = true;
+      goDash.addEventListener('click', () => {
+        if (currentUser) navigateToPath('/dashboard');
+        else navigateToPath('/login');
+      });
+    }
+    try { updateFabForRoute(null); } catch (_) {}
+  }
 
-    const path = buildPath(page, sub);
-    if (pushState) history.pushState({ page, sub }, '', path);
+  // 008 feature (T025~T028 / FR-003 / FR-010b / FR-010c / FR-010d / FR-010e)：核心切換
+  async function navigateToPath(targetPath, options = {}) {
+    const { pushState = true, replace = false } = options || {};
+    const normalized = normalizePath(targetPath);
 
-    // 以 try/catch 包覆頁面渲染，單頁資料載入失敗不應阻斷整個導航
+    // 寫入當前 scrollY 至「即將離開」條目
+    if (pushState && !replace) {
+      try {
+        const currentState = history.state || {};
+        history.replaceState(
+          { ...currentState, scrollY: window.scrollY },
+          '',
+          location.pathname + location.search + location.hash
+        );
+      } catch (_) {}
+    }
+
+    // 解析目標路由
+    const route = parsePath(normalized);
+
+    // 公開路由處理（/login、/、/privacy、/terms）
+    if (route && route.isPublic) {
+      if (pushState && !replace && location.pathname !== normalized) {
+        try { history.pushState({ path: normalized }, '', normalized); }
+        catch (_) {}
+      } else if (replace && location.pathname !== normalized) {
+        try { history.replaceState({ path: normalized }, '', normalized); }
+        catch (_) {}
+      }
+      currentRoute = route;
+      document.title = route.staticTitle + ' — 記帳網頁';
+      announceRoute(route.staticTitle);
+      try { updateFabForRoute(route); } catch (_) {}
+      if (route.path === '/login') {
+        showLoginPage(false);
+      } else if (route.path === '/') {
+        showPublicHome(false);
+      } else if (route.path === '/privacy') {
+        showLegalPage('privacy');
+      } else if (route.path === '/terms') {
+        showLegalPage('terms');
+      }
+      return;
+    }
+
+    // 受保護路由：未登入 → /login?next=
+    if (!currentUser) {
+      const next = normalized + (location.search.startsWith('?') ? '' : '') + location.hash;
+      const encoded = encodeURIComponent(next);
+      try { history.replaceState({ path: '/login' }, '', '/login?next=' + encoded); } catch (_) {}
+      showLoginPage(false);
+      return;
+    }
+
+    // 未知路徑或角色不足
+    if (!route) {
+      // pushState 保留原路徑（404 不改寫 URL）
+      if (pushState && !replace && location.pathname !== normalized) {
+        try { history.pushState({ path: normalized }, '', targetPath); } catch (_) {}
+      }
+      render404();
+      return;
+    }
+    if (route.requireAdmin && !currentUser.isAdmin) {
+      if (pushState && !replace && location.pathname !== normalized) {
+        try { history.pushState({ path: normalized }, '', targetPath); } catch (_) {}
+      }
+      render404();
+      return;
+    }
+
+    // pushState
+    if (pushState && !replace && location.pathname !== normalized) {
+      try { history.pushState({ path: normalized, page: route.page, sub: route.sub, scrollY: 0 }, '', normalized); } catch (_) {}
+    } else if (replace) {
+      try { history.replaceState({ path: normalized, page: route.page, sub: route.sub }, '', normalized); } catch (_) {}
+    }
+
+    // 第一階段 title + SR 公告
+    document.title = route.staticTitle + ' — 記帳網頁';
+    announceRoute(route.staticTitle);
+
+    // 進度條
+    showRouteProgress();
+
+    currentRoute = route;
+    currentPage = route.page;
+    try { updateFabForRoute(route); } catch (_) {}
+
+    // 顯示頁面殼
+    document.querySelectorAll('.main-content .page').forEach(p => {
+      p.classList.remove('active');
+      if (p.id === 'page-' + route.page) {
+        p.classList.add('active');
+        p.hidden = false;
+      } else {
+        p.hidden = true;
+      }
+    });
+    // T040：sidebar active 三件式
+    try { updateSidebarActive(normalized); } catch (_) {}
+
+    // mobile title
+    const mobileTitleNode = el('mobileTitle');
+    if (mobileTitleNode) mobileTitleNode.textContent = route.staticTitle;
+
+    // 收合行動側邊欄
+    el('sidebar')?.classList.remove('open', 'sidebar-open');
+    const backdrop = el('sidebarBackdrop');
+    if (backdrop) { backdrop.classList.remove('visible'); backdrop.hidden = true; }
+
+    // finance 子分頁高亮
+    if (financePages.includes(route.page)) {
+      activateFinanceTab(route.page);
+    }
+
+    // render 資料
     try {
-      await renderPage(page);
+      await renderPage(route.page);
     } catch (err) {
       console.error('renderPage failed:', err);
-      toast('頁面載入失敗：' + (err?.message || '未知錯誤'), 'error');
+      try { toast('頁面載入失敗：' + (err?.message || '未知錯誤'), 'error'); } catch (_) {}
     }
 
-    // 切換子分頁（需在 render 完成後執行）
-    if (page === 'settings' && sub) {
-      activateSettingsTab(sub);
+    // 切換子分頁
+    if (route.page === 'settings' && route.sub) {
+      activateSettingsTab(route.sub);
     }
-    if (page === 'stocks' && sub) {
-      activateStocksTab(sub);
+    if (route.page === 'stocks' && route.sub) {
+      activateStocksTab(route.sub);
     }
+
+    hideRouteProgress();
+  }
+
+  function showLegalPage(which) {
+    document.querySelector('.sidebar') && (document.querySelector('.sidebar').style.display = 'none');
+    const mh = document.querySelector('.mobile-header');
+    if (mh) mh.style.display = 'none';
+    const mc = document.querySelector('.main-content');
+    if (mc) mc.style.display = '';
+    el('publicHome') && (el('publicHome').style.display = 'none');
+    el('authContainer')?.classList.remove('active');
+    el('fabBtn') && (el('fabBtn').style.display = 'none');
+    document.querySelectorAll('.main-content .page').forEach(p => {
+      p.classList.remove('active');
+      p.hidden = true;
+    });
+    const target = which === 'privacy' ? el('page-privacy') : el('page-terms');
+    if (target) {
+      target.classList.add('active');
+      target.hidden = false;
+    }
+  }
+
+  // T026：navigate(page, sub) thin wrapper（保留既有簽章）
+  async function navigate(page, sub, pushState = true) {
+    if (page === 'settings' && !sub) sub = 'export';
+    if (page === 'settings' && sub === 'admin' && !currentUser?.isAdmin) sub = 'export';
+    if (page === 'stocks' && !sub) sub = 'portfolio';
+    const path = buildPath(page, sub);
+    return navigateToPath(path, { pushState });
   }
 
   function activateSettingsTab(tab) {
@@ -1043,9 +1724,16 @@ const App = (() => {
   }
 
   function bindNav() {
+    // 008 feature (T041)：點擊由 renderSidebar() 動態綁定 data-path；此處保留向後兼容 data-page 處理
     document.querySelectorAll('.nav-item').forEach(item => {
       item.addEventListener('click', e => {
         e.preventDefault();
+        const dataPath = item.getAttribute('data-path');
+        if (dataPath) {
+          if (currentRoute && currentRoute.path === dataPath) return;
+          navigateToPath(dataPath);
+          return;
+        }
         const page = item.dataset.page;
         if (page === 'finance') {
           navigate('transactions', null);
@@ -1063,33 +1751,57 @@ const App = (() => {
       });
     });
     window.addEventListener('popstate', (e) => {
-      if (!currentUser) {
-        const path = (location.pathname || '/').replace(/\/+$/, '') || '/';
-        const isAppPath = path === '/dashboard' || path === '/finance'
-          || path.startsWith('/finance/') || path === '/transactions' || path === '/reports'
-          || path === '/budget' || path === '/accounts' || path === '/stocks'
-          || path.startsWith('/stocks/') || path === '/settings' || path.startsWith('/settings/')
-          || path === '/api-credits';
-        if (path === '/login' || isAppPath) showLoginPage(false);
-        else showPublicHome(false);
-        return;
+      // 008 feature (T027 / FR-024)：Modal hash 條目優先讓 ModalBase 處理
+      if (e.state && (e.state.modalLayer || e.state.modalParent)) {
+        const handled = ModalBase.handlePopstate(e);
+        if (handled) return;
       }
-      const state = e.state;
-      if (state?.page) {
-        navigate(state.page, state.sub, false);
-      } else {
-        const { page, sub } = parseRoute(location.pathname);
-        navigate(page, sub, false);
+      // 否則由路由系統接手
+      navigateToPath(location.pathname + location.search, { pushState: false });
+
+      // 還原 scrollY
+      const targetScrollY = e.state?.scrollY;
+      if (typeof targetScrollY === 'number' && Number.isFinite(targetScrollY)) {
+        requestAnimationFrame(() => window.scrollTo(0, targetScrollY));
+        setTimeout(() => window.scrollTo(0, targetScrollY), 250);
       }
     });
   }
 
   function bindMobile() {
-    el('menuBtn').addEventListener('click', () => el('sidebar').classList.toggle('open'));
+    const menuBtn = el('menuBtn');
+    const sb = el('sidebar');
+    const backdrop = el('sidebarBackdrop');
+
+    function setSidebarOpen(open) {
+      if (!sb) return;
+      sb.classList.toggle('open', open);
+      sb.classList.toggle('sidebar-open', open);
+      if (backdrop) {
+        backdrop.classList.toggle('visible', open);
+        backdrop.hidden = !open;
+      }
+    }
+
+    if (menuBtn) {
+      menuBtn.addEventListener('click', () => {
+        const isOpen = sb?.classList.contains('open');
+        setSidebarOpen(!isOpen);
+      });
+    }
+    if (backdrop) {
+      backdrop.addEventListener('click', () => setSidebarOpen(false));
+    }
     document.addEventListener('click', e => {
-      const sb = el('sidebar');
-      if (sb.classList.contains('open') && !sb.contains(e.target) && e.target !== el('menuBtn') && !el('menuBtn').contains(e.target)) {
-        sb.classList.remove('open');
+      if (!sb) return;
+      if (sb.classList.contains('open') && !sb.contains(e.target) && e.target !== menuBtn && !menuBtn?.contains(e.target)) {
+        setSidebarOpen(false);
+      }
+    });
+    // T045：ESC 關閉行動側邊欄
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && sb?.classList.contains('open')) {
+        setSidebarOpen(false);
       }
     });
   }
@@ -6055,6 +6767,13 @@ const App = (() => {
       if (ipAllowlist) ipAllowlist.value = Array.isArray(settings.adminIpAllowlist)
         ? settings.adminIpAllowlist.join('\n')
         : '';
+      // 008 feature (T069 / FR-033)：路由稽核模式
+      const auditMode = ['security', 'extended', 'minimal'].includes(settings.routeAuditMode)
+        ? settings.routeAuditMode
+        : 'security';
+      document.querySelectorAll('input[name="routeAuditMode"]').forEach(inp => {
+        inp.checked = inp.value === auditMode;
+      });
       if (smtp) {
         const setVal = (id, v) => { const e = el(id); if (e) e.value = v ?? ''; };
         setVal('adminSmtpHost', smtp.host);
@@ -6153,7 +6872,10 @@ const App = (() => {
         const publicRegistration = !!el('adminPublicRegistrationToggle')?.checked;
         const allowedRegistrationEmails = el('adminAllowedEmails')?.value || '';
         const adminIpAllowlist = el('adminIpAllowlist')?.value || '';
-        await API.put('/api/admin/system-settings', { publicRegistration, allowedRegistrationEmails, adminIpAllowlist });
+        // 008 feature (T069 / FR-033)：包含路由稽核模式
+        const routeAuditModeInput = document.querySelector('input[name="routeAuditMode"]:checked');
+        const routeAuditMode = routeAuditModeInput?.value || 'security';
+        await API.put('/api/admin/system-settings', { publicRegistration, allowedRegistrationEmails, adminIpAllowlist, routeAuditMode });
         const config = await (await fetch('/api/config', { cache: 'no-store' })).json();
         authConfig = {
           registrationEnabled: !!config.registrationEnabled,
@@ -7137,7 +7859,8 @@ const App = (() => {
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 匯出中…';
     try {
-      const res = await fetch('/api/database/export', { credentials: 'include' });
+      // 008 feature (T031 / FR-007a)：apiFetch 統一處理 401 → /login?next=
+      const res = await apiFetch('/api/database/export');
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         throw new Error(err.error || '匯出失敗');
@@ -7186,9 +7909,9 @@ const App = (() => {
 
     try {
       const buffer = await dbImportFile.arrayBuffer();
-      const res = await fetch('/api/database/import', {
+      // 008 feature (T031 / FR-007a)：apiFetch 統一處理 401 → /login?next=
+      const res = await apiFetch('/api/database/import', {
         method: 'POST',
-        credentials: 'include',
         headers: { 'Content-Type': 'application/octet-stream' },
         body: buffer
       });
@@ -7408,10 +8131,23 @@ const App = (() => {
   }
 
   // ─── Modal 操作 ───
-  function openModal(id) { el(id).classList.add('active'); }
+  // 008 feature (T059 / FR-022)：以 ModalBase 接管 lifecycle（捲動鎖、history、焦點 trap、堆疊規則）
+  function openModal(id, options) {
+    ModalBase.open(id, options);
+  }
   function closeModal(id) {
     if (id === 'modalInvoiceScanner') stopInvoiceScanner();
-    el(id).classList.remove('active');
+    // 若該 Modal 在堆疊中，透過 ModalBase 關閉以正確還原；否則直接隱藏（向後兼容）
+    const stack = ModalBase.getStack();
+    if (stack.includes(id)) {
+      // 連續關閉直到目標離開堆疊
+      while (ModalBase.getStack().includes(id)) {
+        ModalBase.closeTopmost();
+      }
+    } else {
+      const node = el(id);
+      if (node) node.classList.remove('active');
+    }
   }
 
   // 交易
@@ -8751,7 +9487,8 @@ const App = (() => {
     if (!container) return;
     container.innerHTML = '<p>載入中...</p>';
     try {
-      const res = await fetch('/api/external-apis', { credentials: 'include' });
+      // FR-007a：/api/external-apis 為已登入後的端點，沿用 apiFetch
+      const res = await apiFetch('/api/external-apis');
       const data = await res.json();
       const apis = data.apis || [];
       let html = '<div class="external-apis-list">';

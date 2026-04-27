@@ -1043,3 +1043,60 @@ API 路徑統一以 `/api/` 為前綴。所有需認證的路由自動套用 aut
 - 測試與品質提升：E2E 測試、視覺回歸測試、無障礙檢測
 
 ---
+
+## v4.29.0 — 008 Frontend Routing & Pages（2026-04-27）
+
+### 路由架構（FR-001 ~ FR-005、FR-008、FR-014）
+
+- 前端採 URL-first SPA 路由，`app.js` 內以模組級常數 `ROUTES` 維護 20 條路徑（4 公開 + 16 受保護，含 `/stocks` 與 `/stocks/portfolio` 雙別名）。
+- 純函式 `parsePath` / `buildPath` / `normalizePath` / `validateNextParam` 為單一資料來源；不引入 router 套件、不引入 path-to-regexp。
+- 路徑正規化：小寫 + 折疊連續斜線 + 去尾端斜線（除根 `/`）；不一致時以 `replaceState` 改寫；超出能力（含 `..` / `%2e%2e`）走 FR-027 path traversal 攔截。
+- 不存在路徑或非管理員命中管理員路徑 → 前端渲染 `#page-404` 訊息頁（URL 保留原樣不被改寫）。
+
+### 後端 admin-only 路徑常數（FR-032a）
+
+- `server.js` 維護模組級常數 `const ADMIN_ONLY_PATHS = ['/settings/admin'];`，與前端 `ROUTES` 表 `requireAdmin: true` 條目對應。
+- 同步要求：新增管理員專屬路徑時 MUST 同時更新前端 ROUTES 表與後端 `ADMIN_ONLY_PATHS`，由 PR code review 把關。
+
+### 路由稽核模式（FR-033）
+
+`system_settings.route_audit_mode` 欄位（TEXT、預設 `'security'`）控制 `data_operation_audit_log.action` 之路由相關事件寫入範圍：
+
+| 模式 | route_admin_path_blocked | route_open_redirect_blocked | static_path_traversal_blocked | session_expired (401) | 既有 007 action |
+| --- | --- | --- | --- | --- | --- |
+| `security`（預設） | ✅ | ✅ | ✅ | ❌ | ✅ |
+| `extended` | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `minimal` | ❌ | ❌ | ❌ | ❌ | ✅ |
+
+切換立即生效，不需重啟（catch-all 與 authMiddleware 即時查詢；單行 SQL）。
+
+### 路由稽核 action 列舉值（FR-032）
+
+`data_operation_audit_log.action` 擴充列舉值：
+
+- `route_admin_path_blocked`：catch-all 偵測非管理員命中 `ADMIN_ONLY_PATHS`；metadata `{ path, normalizedPath }`。
+- `route_open_redirect_blocked`：catch-all 偵測 `/login?next=...` 之 next 不通過白名單；metadata `{ next, reason }`。
+- `static_path_traversal_blocked`：catch-all 偵測 `..` / `%2e%2e` / `%252e%252e`；metadata `{ rawUrl, pattern }`。
+- `session_expired`：`authMiddleware` 對受保護 API 回 401（僅 `extended` 模式寫入）；metadata `{ path, reason ∈ {'token-missing', 'token-invalid', 'token-expired', 'token-version-mismatch'} }`。
+
+### 靜態檔白名單擴充（FR-026 / FR-028）
+
+`PUBLIC_FILES` 擴充至 9 條：`/app.js`、`/style.css`、`/logo.svg`、`/favicon.svg`、`/vendor/webauthn.min.js`、`/lib/moneyDecimal.js`、`/changelog.json`、`/privacy.html`、`/terms.html`。
+
+Cache-Control 規則：
+- `/changelog.json`、`/index.html`：`no-cache`
+- 其他白名單條目：`public, max-age=300`
+
+### Modal 共用基底元件（FR-022 ~ FR-024b）
+
+`ModalBase`（`app.js` 內 IIFE 物件）統一接管 12 個 Modal 之 lifecycle：history 整合（pushState `#modal-<id>` + popstate 判別）、捲動鎖（含 iOS Safari 防穿透）、堆疊規則（僅 `modalConfirm` 可疊在其他 Modal 上）、焦點 trap、ESC 關閉、初始焦點。
+
+### 外觀模式跨裝置同步快取（FR-019 ~ FR-021a）
+
+新增前端 localStorage key `theme_pref`（值域 `system` / `light` / `dark`）；三層 fallback：
+1. localStorage `theme_pref`（樂觀渲染）
+2. API response `themeMode`（覆寫 localStorage）
+3. `prefers-color-scheme`（首次或非合法值）
+
+登出清除：`localStorage.removeItem('theme_pref')`（FR-007b）。
+

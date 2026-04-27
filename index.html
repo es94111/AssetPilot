@@ -19,6 +19,10 @@
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
+  <!-- 008 feature (T017 / FR-010d / FR-010e)：應用程式 root SPA 路由 helpers -->
+  <div id="route-progress" class="route-progress" hidden></div>
+  <div id="sr-route-status" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
+
   <!-- ===== 公開首頁 ===== -->
   <section class="public-home" id="publicHome" style="display:none">
     <div class="public-home-bg"></div>
@@ -208,48 +212,44 @@
   </div>
 
   <!-- 側邊欄 -->
+  <!-- 008 feature (T019 / FR-015c)：三段式佈局（top: logo / mid: 主清單 / bottom: 使用者） -->
   <aside class="sidebar" id="sidebar">
-    <div class="sidebar-header">
-      <img src="/favicon.svg" alt="" class="sidebar-logo-img">
-      <span>AssetPilot</span>
-    </div>
-    <nav class="sidebar-nav">
-      <a href="#" class="nav-item active" data-page="dashboard">
-        <i class="fas fa-chart-pie"></i><span>儀表板</span>
-      </a>
-      <a href="#" class="nav-item" data-page="finance">
-        <i class="fas fa-folder-tree"></i><span>收支管理</span>
-      </a>
-      <a href="#" class="nav-item" data-page="stocks">
-        <i class="fas fa-chart-line"></i><span>股票紀錄</span>
-      </a>
-      <a href="#" class="nav-item" data-page="settings">
-        <i class="fas fa-gear"></i><span>設定</span>
-      </a>
-      <a href="#" class="nav-item" data-page="api-credits">
-        <i class="fas fa-circle-info"></i><span>API 使用與授權</span>
-      </a>
-    </nav>
-    <div class="sidebar-version" id="changelogBtn">
-      <i class="fas fa-code-branch"></i>
-      <span>v<span id="appVersionLabel">—</span> 版本資訊</span>
-      <span class="update-badge" id="updateBadge" style="display:none"><i class="fas fa-arrow-up"></i> 有更新</span>
-      <i class="fas fa-chevron-right" style="margin-left:auto;font-size:10px;opacity:.5"></i>
-    </div>
-    <div class="sidebar-legal-links">
-      <a href="/privacy" class="sidebar-legal-link"><i class="fas fa-shield-halved"></i>隱私權政策</a>
-      <span class="sidebar-legal-sep">·</span>
-      <a href="/terms" class="sidebar-legal-link"><i class="fas fa-file-contract"></i>服務條款</a>
-    </div>
-    <div class="sidebar-footer" id="sidebarFooter">
-      <div class="user-info">
-        <img id="userAvatar" class="user-avatar" src="" alt="" style="display:none">
-        <i class="fas fa-user-circle" id="userAvatarIcon"></i>
-        <span id="userDisplayName"></span>
+    <div class="sidebar-top">
+      <div class="sidebar-header">
+        <img src="/favicon.svg" alt="" class="sidebar-logo-img">
+        <span>AssetPilot</span>
       </div>
-      <button class="btn-icon logout-btn" id="logoutBtn" title="登出">
-        <i class="fas fa-right-from-bracket"></i>
-      </button>
+    </div>
+    <nav class="sidebar-mid">
+      <div class="sidebar-nav" id="sidebarNav">
+        <!-- 由 renderSidebar() 動態生成（T039）；fallback 內容保留以避免空白 -->
+        <a href="#" class="nav-item active" data-page="dashboard">
+          <i class="fas fa-chart-pie"></i><span>儀表板</span>
+        </a>
+      </div>
+    </nav>
+    <div class="sidebar-bottom">
+      <div class="sidebar-version" id="changelogBtn">
+        <i class="fas fa-code-branch"></i>
+        <span>v<span id="appVersionLabel">—</span> 版本資訊</span>
+        <span class="update-badge" id="updateBadge" style="display:none"><i class="fas fa-arrow-up"></i> 有更新</span>
+        <i class="fas fa-chevron-right" style="margin-left:auto;font-size:10px;opacity:.5"></i>
+      </div>
+      <div class="sidebar-legal-links">
+        <a href="/privacy" class="sidebar-legal-link"><i class="fas fa-shield-halved"></i>隱私權政策</a>
+        <span class="sidebar-legal-sep">·</span>
+        <a href="/terms" class="sidebar-legal-link"><i class="fas fa-file-contract"></i>服務條款</a>
+      </div>
+      <div class="sidebar-footer" id="sidebarFooter">
+        <div class="user-info">
+          <img id="userAvatar" class="user-avatar" src="" alt="" style="display:none">
+          <i class="fas fa-user-circle" id="userAvatarIcon"></i>
+          <span id="userDisplayName"></span>
+        </div>
+        <button class="btn-icon logout-btn" id="logoutBtn" title="登出">
+          <i class="fas fa-right-from-bracket"></i>
+        </button>
+      </div>
     </div>
   </aside>
 
@@ -1411,6 +1411,16 @@
             <textarea id="adminIpAllowlist" class="form-input" rows="4" placeholder="203.0.113.5&#10;2001:db8::1"></textarea>
             <p class="admin-section-desc" style="margin-top:6px;margin-bottom:0">白名單 IP 將略過 API 速率限制，避免管理員被誤判封鎖。</p>
           </div>
+          <!-- 008 feature (T069 / FR-033)：路由稽核模式 -->
+          <div class="form-row" style="margin-top:16px">
+            <label>路由稽核模式</label>
+            <div class="radio-group" id="routeAuditModeGroup" style="display:flex;gap:12px;flex-wrap:wrap;margin-top:6px">
+              <label class="radio-inline"><input type="radio" name="routeAuditMode" value="security" checked> security（預設）</label>
+              <label class="radio-inline"><input type="radio" name="routeAuditMode" value="extended"> extended</label>
+              <label class="radio-inline"><input type="radio" name="routeAuditMode" value="minimal"> minimal</label>
+            </div>
+            <p class="admin-section-desc" style="margin-top:6px;margin-bottom:0">security：僅高訊號安全事件；extended：再加 401 session_expired；minimal：路由稽核全部關閉。</p>
+          </div>
           <div class="cert-btn-row" style="margin-top:16px">
             <button class="btn btn-primary btn-sm" id="saveAdminSettingsBtn"><i class="fas fa-save"></i> 儲存管理員設定</button>
           </div>
@@ -1721,7 +1731,38 @@
       </div>
 
     </section>
+
+    <!-- 008 feature (T018 / FR-008 / FR-014)：404 訊息頁 -->
+    <section class="page" id="page-404" hidden>
+      <div class="page-404-wrap">
+        <h2 class="page-title">找不到頁面</h2>
+        <p class="empty-hint">您所瀏覽的網址不存在或已被移除。請確認網址是否正確，或從下方按鈕返回。</p>
+        <div class="page-404-actions">
+          <button type="button" class="btn btn-primary" id="page404GoHome"><i class="fas fa-house"></i> 返回首頁</button>
+          <button type="button" class="btn btn-secondary" id="page404GoDashboard"><i class="fas fa-chart-pie"></i> 返回儀表板</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 008 feature (T020 / FR-001)：隱私權政策頁（SPA 內嵌） -->
+    <section class="page" id="page-privacy" hidden>
+      <div class="legal-page">
+        <h2 class="page-title">隱私權政策</h2>
+        <p>本服務承諾保護您的個人資料安全。完整政策內容請見 <a href="/privacy.html" target="_blank" rel="noopener">/privacy.html</a>。</p>
+      </div>
+    </section>
+
+    <!-- 008 feature (T020 / FR-001)：服務條款頁（SPA 內嵌） -->
+    <section class="page" id="page-terms" hidden>
+      <div class="legal-page">
+        <h2 class="page-title">服務條款</h2>
+        <p>使用本服務即表示同意服務條款。完整條款內容請見 <a href="/terms.html" target="_blank" rel="noopener">/terms.html</a>。</p>
+      </div>
+    </section>
   </main>
+
+  <!-- 008 feature (T046 / FR-011 / FR-015)：行動斷點側邊欄遮罩 -->
+  <div class="sidebar-backdrop" id="sidebarBackdrop" hidden></div>
 
   <!-- ===== 新增/編輯交易 Modal ===== -->
   <!-- 管理員 - 重設使用者密碼 -->

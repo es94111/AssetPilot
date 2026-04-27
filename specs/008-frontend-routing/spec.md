@@ -74,7 +74,7 @@
 
 **Why this priority**：使用者要有方式在受保護頁面之間切換，否則只能靠手動改網址列。這是除了路由本身之外、讓 URL 路由實際被「用」起來的最低必要條件，與 US1 並列 P1。
 
-**Independent Test**：以一般使用者登入桌面瀏覽器（≥ 1024px），驗證側邊欄常駐並列出 11 個受保護頁入口（不含管理員面板）；逐一點擊每一項，主內容區與 URL 同步切換。將瀏覽器寬度縮至 < 768px，確認側邊欄收合、出現漢堡按鈕，點擊展開、點選項目後自動收合並切頁。再以管理員身分重複，確認多出「管理員面板」入口。
+**Independent Test**：以一般使用者登入桌面瀏覽器（≥ 1024px），驗證側邊欄常駐並列出 14 個受保護頁入口（`/stocks` 與 `/stocks/portfolio` 為同一入口；不含管理員面板）；逐一點擊每一項，主內容區與 URL 同步切換。將瀏覽器寬度縮至 < 768px，確認側邊欄收合、出現漢堡按鈕，點擊展開、點選項目後自動收合並切頁。再以管理員身分重複，確認多出「管理員面板」入口。
 
 **Acceptance Scenarios**：
 
@@ -288,7 +288,7 @@
 - **FR-019**：偏好 MUST 持久化於後端使用者偏好資料中（不僅存於 localStorage），使同帳號於不同瀏覽器登入時自動套用相同偏好。
 - **FR-020**：模式切換 MUST 立即套用至當前畫面，無需手動重整；「跟隨系統」模式下作業系統主題改變時應用程式 MUST 跟隨更新。
 - **FR-021**：登入頁與其他公開頁未取得使用者偏好前 MUST 依瀏覽器 `prefers-color-scheme` 決定淺／深色，不固定為其中一種。
-- **FR-021a**：登入完成後的初始主題渲染 MUST 採三層 fallback 順序以消除 FOUC：(1) 後端 `/api/auth/login` 與 `/api/users/me` 回應 MUST 在 response body 直接夾帶 `theme` 欄位（值域 `system`／`light`／`dark`），前端 MUST 於掛載 SPA 主畫面前讀取並套用至 `<html data-theme>`；(2) 前端 MUST 將每次成功取得的 `theme` 值寫入 localStorage（key：`theme_pref`），下次登入或重整時優先採用 localStorage 值進行「樂觀渲染」（在 API 回應到達前先呈現），API 回應到達後若與快取不一致 MUST 切換並覆寫 localStorage；(3) 首次登入、localStorage 缺值或值非合法值時 MUST fallback 至 `prefers-color-scheme`（與 FR-021 公開頁邏輯一致）。登出時 MUST 清除 `theme_pref` localStorage 條目以避免帳號間殘留偏好。
+- **FR-021a**：登入完成後的初始主題渲染 MUST 採三層 fallback 順序以消除 FOUC：(1) 後端 `/api/auth/login` 與 `/api/auth/me` 回應 MUST 在 response body 直接夾帶 `theme` 欄位（值域 `system`／`light`／`dark`），前端 MUST 於掛載 SPA 主畫面前讀取並套用至 `<html data-theme>`；(2) 前端 MUST 將每次成功取得的 `theme` 值寫入 localStorage（key：`theme_pref`），下次登入或重整時優先採用 localStorage 值進行「樂觀渲染」（在 API 回應到達前先呈現），API 回應到達後若與快取不一致 MUST 切換並覆寫 localStorage；(3) 首次登入、localStorage 缺值或值非合法值時 MUST fallback 至 `prefers-color-scheme`（與 FR-021 公開頁邏輯一致）。登出時 MUST 清除 `theme_pref` localStorage 條目以避免帳號間殘留偏好。
 
 #### Modal 規範（US3 + US5）
 
@@ -321,7 +321,7 @@
   4. **主動關閉同步歷史**：Modal 透過 ESC、關閉按鈕、點擊遮罩、表單成功送出等方式主動關閉時 MUST 同步呼叫 `history.back()`（疊加情境僅 back 一次即可關閉最上層），避免歷史殘留多餘條目；
   5. **深層連結**：重整時若 hash 對應到既有 Modal id（且該頁支援該 Modal），可選擇還原該 Modal（非必要；各 Modal 視需求自行決定是否支援深層連結）；
   6. **Modal 開啟期間頁內錨點變更（罕見）**：若使用者於 Modal 開啟期間透過外部觸發改變 `location.hash`（例如貼上含錨點之 URL 至網址列），MUST 視為「使用者主動離開 Modal」並關閉所有 Modal，不嘗試保留 Modal 狀態。
-- **FR-024a**：Modal 堆疊規則 — 預設 MUST NOT 同時開啟多個 Modal（開新 Modal 前 MUST 先關閉既有 Modal）；唯一例外為「`modalConfirm` 疊在其他 Modal 之上」（典型情境：使用者於 `modalTransaction`／`modalAccount` 等編輯型 Modal 內按刪除按鈕，疊出 `modalConfirm` 二次確認）。疊加時：(a) history MUST 再推一筆 `#modal-confirm` 條目並於該條目 `state.modalLayer = 'modalConfirm'`（依 FR-024 機制；此時下層 Modal 條目仍保留其 `modalLayer = <下層 modalId>` 與最初父條目的 `modalParent`）；(b) 背景捲動鎖（FR-023a）MUST 維持鎖定，不重複套用 `position: fixed` 也不於上層關閉時誤解除；(c) z-index 順序 MUST 為「上層 `modalConfirm` > 下層編輯 Modal > FAB > 主內容」；(d) 使用者按瀏覽器「上一頁」或 ESC MUST 僅關閉最上層 `modalConfirm`（popstate 後 `event.state.modalLayer` 為下層 Modal id，依 FR-024 第 3 點維持 Modal 框架）並回到下層 Modal 互動狀態，再按一次才關閉下層 Modal（此時 popstate 後新條目無 `modalLayer` 但含 `modalParent`，依 FR-024 第 3 點還原 hash 與關閉 Modal）。任何超過此單層疊加的組合（例如 confirm 上再疊 confirm、或兩個編輯型 Modal 疊加）MUST 由共用基底元件直接拒絕並 console.warn。
+- **FR-024a**：Modal 堆疊規則 — 預設 MUST NOT 同時開啟多個 Modal（開新 Modal 前 MUST 先關閉既有 Modal）；唯一例外為「`modalConfirm` 疊在其他 Modal 之上」（典型情境：使用者於 `modalTransaction`／`modalAccount` 等編輯型 Modal 內按刪除按鈕，疊出 `modalConfirm` 二次確認）。疊加時：(a) history MUST 再推一筆 `#modal-modalConfirm` 條目（依 FR-024 第 2 點 `#modal-<modalId>` 模板，無特例縮寫）並於該條目 `state.modalLayer = 'modalConfirm'`（依 FR-024 機制；此時下層 Modal 條目仍保留其 `modalLayer = <下層 modalId>` 與最初父條目的 `modalParent`）；(b) 背景捲動鎖（FR-023a）MUST 維持鎖定，不重複套用 `position: fixed` 也不於上層關閉時誤解除；(c) z-index 順序 MUST 為「上層 `modalConfirm` > 下層編輯 Modal > FAB > 主內容」；(d) 使用者按瀏覽器「上一頁」或 ESC MUST 僅關閉最上層 `modalConfirm`（popstate 後 `event.state.modalLayer` 為下層 Modal id，依 FR-024 第 3 點維持 Modal 框架）並回到下層 Modal 互動狀態，再按一次才關閉下層 Modal（此時 popstate 後新條目無 `modalLayer` 但含 `modalParent`，依 FR-024 第 3 點還原 hash 與關閉 Modal）。任何超過此單層疊加的組合（例如 confirm 上再疊 confirm、或兩個編輯型 Modal 疊加）MUST 由共用基底元件直接拒絕並 console.warn。
 - **FR-024b**：Modal 焦點管理 — Modal 共用基底元件 MUST 於每一個 Modal 完整實作焦點生命週期（無障礙 WCAG 2.1.2／2.4.3）：
   1. **記憶觸發者**：Modal 開啟前 MUST 將當前 `document.activeElement` 寫入 Modal 內部狀態作為「還原目標」。
   2. **初始焦點**：Modal 開啟動畫結束後 MUST 將鍵盤焦點移至 Modal 內第一個可互動元素（依 DOM 順序：第一個未禁用的 input／select／textarea／button／`[tabindex]>=0` 等）；若 Modal 無任何可互動元素則對 Modal 容器本身設 `tabindex="-1"` 並聚焦容器；本次焦點變更 MUST 套用 focus-visible 焦點環（FR-025）。
@@ -342,7 +342,7 @@
 #### 靜態檔安全白名單（US6）
 
 - **FR-026**：伺服器 MUST 維護靜態檔白名單，僅允許以下檔案以原始內容回傳：`index.html`、`app.js`、`style.css`、`favicon.svg`、`logo.svg`、`changelog.json`、`privacy.html`、`terms.html`，以及未來明確加入此清單的公開資產。任何不在白名單上的檔案 MUST NOT 以 raw bytes 回傳，請求路徑 MUST 走 catch-all（FR-004）回傳 SPA `index.html`。
-- **FR-027**：白名單檢查 MUST 拒絕路徑遊走（path traversal）：任何含 `..` 或 URL-encoded 等價形式（如 `%2e%2e`、`%252e%252e`）的請求 MUST 回 404 而不解析。
+- **FR-027**：白名單檢查 MUST 拒絕路徑遊走（path traversal）：任何含 `..` 或 URL-encoded 等價形式（如 `%2e%2e`、`%252e%252e`）的請求 MUST NOT 解析任何檔案系統路徑或回傳 raw bytes。後端 MUST 走 catch-all（FR-004）回傳 SPA `index.html`，由前端依 FR-008 渲染「404 — 找不到頁面」訊息頁（HTTP 狀態碼為 200，與 FR-008 統一前端 404 渲染策略）；同時 MUST 依 FR-032 寫入 `static_path_traversal_blocked` 稽核事件（metadata 含原始 URL 與偵測到的編碼樣式：`literal` / `percent-encoded` / `double-encoded`）。
 - **FR-028**：白名單資源 MUST 設定合適的 `Cache-Control` 標頭：`index.html` 設為 `no-cache` 或極短 max-age（避免使用者卡在舊版本）；`app.js`／`style.css` 採內容指紋（檔名含 hash）後可設長期 cache，未指紋版本則設短 max-age。
 
 #### 不做什麼（明確排除）
@@ -383,7 +383,8 @@
 - **SC-005**：使用 axe-core 或同等無障礙掃描工具掃描全部 14 個受保護頁與 4 個公開頁的淺色＋深色模式（共 36 個畫面），WCAG AA 對比度違規數量為 0；focus-visible 焦點環在每個可互動元素上皆可被鍵盤偵測。
 - **SC-006**：靜態檔白名單測試覆蓋（FR-026 + FR-027）：對 9 條合法白名單路徑與 9 條黑名單路徑（含 `.env`、`server.js`、`data.db`、`.git/config`、含 `..` 與 `%2e%2e` 的 path traversal）逐一發 GET 請求，合法路徑 9 / 9 回 200 與檔案內容；黑名單路徑 0 / 9 回傳實際內容（皆為 SPA index 或 404）。
 - **SC-007**：跨瀏覽器與手機執行 US1 + US2 完整 Acceptance Scenarios，每平台通過率 100%；瀏覽器「上一頁／下一頁」於三個以上頁面之間切換的還原成功率 100%。支援矩陣為 evergreen 最近 2 個主版本：Chrome／Edge／Firefox 採最新 stable 與前一版（latest 2 majors）、Safari 16+（含 macOS／iOS）、Android Chrome 最近 2 個版本；本規格用到的 API（History API、`prefers-color-scheme`、`overscroll-behavior`、focus-visible、`tabular-nums`、`position: fixed` scroll lock）於上述支援矩陣均原生支援，不引入 polyfill。
-- **SC-008**：頁面切換效能（雙層量測）— (a) 客戶端路由切換（從點擊側邊欄／FAB／內部連結到 URL 更新 + 主內容區換頁框架可見）P95 ≤ 100ms；(b) 完整內容渲染（含資料 fetch 完成、表格／圖表／清單已可互動）P95 ≤ 1000ms。量測涵蓋至少 14 個受保護頁的切換樣本，每頁不少於 50 次取樣。
+- **SC-008a**：客戶端路由切換效能 — 從點擊側邊欄／FAB／內部連結到 URL 更新 + 主內容區換頁框架（殼）可見的時間 P95 ≤ 100ms。量測涵蓋至少 14 個受保護頁的切換樣本，每頁不少於 50 次取樣。
+- **SC-008b**：完整內容渲染效能 — 自路由切換起算至主內容（含資料 fetch 完成、表格／圖表／清單已可互動）完整渲染的時間 P95 ≤ 1000ms。量測樣本與 SC-008a 共用。
 
 ## 假設
 

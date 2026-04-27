@@ -30,7 +30,7 @@
 **決策**：採 URL-first 模型，但保留既有 `navigate(page, sub)` 簽章作 alias。
 
 **理由**：
-- spec FR-001 + FR-002 明確要求 18 條 URL 路徑與頁面**一一對應**；`page` 概念是實作細節，不應反過來成為對外契約。
+- spec FR-001 + FR-002 明確要求 20 條 URL 路徑（4 公開 + 16 受保護，含 stocks 雙別名）對應 18 個獨特頁面，URL 與頁面 1:1（雙別名為例外，由 `alias` 欄位明示）；`page` 概念是實作細節，不應反過來成為對外契約。
 - 既有 `navigate(page, sub)` 已使用 `history.pushState`，但路徑是 `buildPath(page, sub)` 由內部生成，導致：
   - URL 路徑表達能力受限（如 `/stocks/portfolio` 與 `/stocks` 之雙別名難以表達）；
   - 重整時需要先 `parsePath` 才能取得 `{page, sub}`；
@@ -48,7 +48,7 @@
 5. `navigateToPath(path, { pushState = true, replace = false })`（新內部 API）：核心切換邏輯。
 
 **否決方案**：
-- ❌ 引入 page.js／Navigo：違反「不引入新技術」原則；本功能 18 條靜態路徑無動態 segment（除 stocks 雙別名），無需 path-to-regexp。
+- ❌ 引入 page.js／Navigo：違反「不引入新技術」原則；本功能 20 條靜態路徑無動態 segment（除 stocks 雙別名），無需 path-to-regexp。
 - ❌ 既有 `page+sub` 完全不變：FR-006a 之 `?next=` 白名單需依 path 直接比對，沿用 `page+sub` 模型會引入 path-to-(page,sub) 雙向轉換的不對稱風險。
 
 ---
@@ -688,7 +688,7 @@ spec.md 的 23 條 Clarification 已全部於 spec 階段解決（見 [spec.md](
 
 | 風險 | 機率 | 影響 | 緩解 |
 | --- | --- | --- | --- |
-| 既有 `navigate(page, sub)` 重構不完整，部分頁面切換失靈 | 中 | 中 | 保留既有簽章作 alias，漸進式改寫；以 quickstart.md 18 條路徑逐一驗證 |
+| 既有 `navigate(page, sub)` 重構不完整，部分頁面切換失靈 | 中 | 中 | 保留既有簽章作 alias，漸進式改寫；以 quickstart.md 20 條路徑逐一驗證 |
 | Modal 共用基底元件強制套用，導致既有 Modal 行為變化（如關閉動畫、表單提交流程） | 中 | 中 | ModalBase 暴露 `onClose` callback；既有業務邏輯仍在各 Modal 內；逐一回歸驗證 |
 | 焦點 trap 漏接 iframe／contenteditable | 低 | 低 | 本應用無 iframe；contenteditable 僅在備註欄罕見使用；可接受 |
 | iOS Safari `position: fixed` 捲動鎖在橫螢幕／底部 toolbar 出現／消失時失效 | 中 | 低 | 以 `overscroll-behavior: contain` + `touch-action: none` 雙保險；於 quickstart.md 加 iOS 驗證項 |

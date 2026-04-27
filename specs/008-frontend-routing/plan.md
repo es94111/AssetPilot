@@ -5,7 +5,7 @@
 
 ## Summary
 
-本計畫將 008 規格（**6 個 user story（P1×2 + P2×2 + P3×2）／33 base FR + 13 sub-FR（`a`~`e` 後綴）= 46 FR／23 條 Clarification／8 SC**）落地至既有單體應用。**完全不引入任何新技術規格**（使用者明確要求：「使用目前專案現有的技術規格，不要新增任何技術規格」）：沿用 001~007 已建立的 Node.js 24+、Express 5、單一 `server.js`、根目錄 SPA（`index.html` / `app.js` / `style.css`、純 vanilla JS IIFE、無框架、無 router 套件、無打包工具）、sql.js 記憶體執行 + `database.db` 檔案持久化、JWT httpOnly Cookie、OpenAPI 3.2.0 契約、既有 `data_operation_audit_log` 表（007 既建）、既有 `system_settings` 表、既有 `users.theme_mode` 欄位、既有 `PUBLIC_FILES` 靜態檔白名單、既有 catch-all、既有 Modal 容器（`index.html` 已含 12 個 Modal 結構）；**不引入任何新 npm 套件、不引入新前端 CDN、不引入 router 函式庫（如 page.js / Navigo / vue-router）、不引入 Modal 函式庫、不新增獨立服務或 worker**。
+本計畫將 008 規格（**6 個 user story（P1×2 + P2×2 + P3×2）／33 base FR + 16 sub-FR（`a`~`e` 後綴）= 49 FR／25 條 Clarification／9 SC（SC-008 已拆為 SC-008a／SC-008b）**）落地至既有單體應用。**完全不引入任何新技術規格**（使用者明確要求：「使用目前專案現有的技術規格，不要新增任何技術規格」）：沿用 001~007 已建立的 Node.js 24+、Express 5、單一 `server.js`、根目錄 SPA（`index.html` / `app.js` / `style.css`、純 vanilla JS IIFE、無框架、無 router 套件、無打包工具）、sql.js 記憶體執行 + `database.db` 檔案持久化、JWT httpOnly Cookie、OpenAPI 3.2.0 契約、既有 `data_operation_audit_log` 表（007 既建）、既有 `system_settings` 表、既有 `users.theme_mode` 欄位、既有 `PUBLIC_FILES` 靜態檔白名單、既有 catch-all、既有 Modal 容器（`index.html` 已含 12 個 Modal 結構）；**不引入任何新 npm 套件、不引入新前端 CDN、不引入 router 函式庫（如 page.js / Navigo / vue-router）、不引入 Modal 函式庫、不新增獨立服務或 worker**。
 
 既有實作（baseline）已涵蓋本功能約 **45% 表面**：
 - **Baseline 已實作**：
@@ -45,7 +45,7 @@
 本計畫的工作可拆為 **6 大塊**（每一塊對應規格的若干 FR；落地細節見 [research.md](./research.md)）：
 
 1. **路由表與正規化核心**（FR-001 ~ FR-010c、FR-014、FR-015a／FR-015b 路由表共置）：
-   - 於 `app.js` 內定義 `const ROUTES = [{ path, page, sub, isPublic, requireAdmin, staticTitle, icon, fab }, ...]`（共 18 條：4 公開 + 14 受保護）。
+   - 於 `app.js` 內定義 `const ROUTES = [{ path, page, sub, isPublic, requireAdmin, staticTitle, icon, fab }, ...]`（共 20 條：4 公開 + 16 受保護，含 `/stocks` 與 `/stocks/portfolio` 雙別名為兩條獨立 ROUTES 項目）。
    - 純函式 `parsePath(pathname): RouteRecord | null` / `buildPath(routeRecord): string` / `normalizePath(pathname): string` / `validateNextParam(rawNext): string`。
    - 改寫 `navigate()` 為 thin wrapper，內部呼叫 `parsePath(window.location.pathname)`；對外 API 變為 `navigateTo(path, options)` 但保留既有 `navigate(page, sub)` 簽章作 alias 以利漸進改寫。
    - 啟動順序：`init()` 中先 `normalizePath()` + `replaceState`，再 `parsePath`，再 `renderPage`；`popstate` 同樣走此順序。
@@ -82,7 +82,7 @@
    - `server.js` 新增模組級常數 `const ADMIN_ONLY_PATHS = ['/settings/admin'];`（位置：catch-all 附近，可讀性優先）。
    - 新增模組級 helper `normalizeRoutePath(rawPath): string`（與前端 `normalizePath` 演算法一致：小寫、折疊雙斜、去尾端斜線）。
    - catch-all（[server.js:10168](../../server.js#L10168)）內新增前置檢查：
-     - 若路徑含 `..` 或 `%2e%2e`／`%252e%252e` → 寫稽核 `static_path_traversal_blocked` → 仍走 SPA（FR-027 spec 要求 404 但 SPA index 已涵蓋；前端會落入 404 頁），維持與 spec 兼容。
+     - 若路徑含 `..` 或 `%2e%2e`／`%252e%252e` → 寫稽核 `static_path_traversal_blocked` → 走 catch-all `sendFile(index.html)`（HTTP 200），由前端依 FR-008 渲染 404 訊息頁（FR-027 已修訂為與 FR-008 統一前端 404 渲染策略，不再回 HTTP 404）。
      - 若 `/login` 且 `?next=...` 非合法 → 寫稽核 `route_open_redirect_blocked`。
      - 若正規化後 path 命中 `ADMIN_ONLY_PATHS` 且非管理員（檢查 cookie 解 JWT；無 cookie 視為非管理員）→ 寫稽核 `route_admin_path_blocked`。
    - 稽核寫入透過既有 `writeOperationAudit({ ... })`（007 既有）；稽核模式為 `minimal` 時跳過寫入；為 `extended` 時加寫 401（待 401 偵測點補實作）。
@@ -165,7 +165,7 @@ Gates derived from `.specify/memory/constitution.md` v1.2.0：
 
 - **[III] Slash-Style HTTP Path Gate**：
   - 本計畫**不新增任何 HTTP 路徑**；既有 `/api/admin/system-settings`、`/api/auth/login`、`/api/auth/me` 全部斜線。
-  - 本計畫之**前端路由表**（FR-001 + FR-002，共 18 條 path）皆為斜線形式（`/dashboard`、`/finance/transactions`、`/stocks/portfolio`、`/settings/admin` 等）；**無**冒號自訂方法。
+  - 本計畫之**前端路由表**（FR-001 + FR-002，共 20 條 path）皆為斜線形式（`/dashboard`、`/finance/transactions`、`/stocks/portfolio`、`/settings/admin` 等）；**無**冒號自訂方法。
   - **檢核結果**：✅ 通過。
 
 - **Development Workflow Gate**：

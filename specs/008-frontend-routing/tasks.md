@@ -50,7 +50,7 @@ description: "前端路由與頁面（008-frontend-routing）任務清單"
 
 ### 前端核心資料表與純函式
 
-- [ ] T006 [P] [app.js](../../app.js) 新增模組級常數 `const ROUTES = [...]`，含 18 條（4 公開 + 14 受保護）並依 [data-model.md §1](./data-model.md) 完整欄位（`path`、`page`、`sub`、`isPublic`、`requireAdmin`、`staticTitle`、`icon`、`fab`、`alias`）（FR-001、FR-002、FR-015b 第 4 點）
+- [ ] T006 [P] [app.js](../../app.js) 新增模組級常數 `const ROUTES = [...]`，含 20 條（4 公開 + 16 受保護，含 `/stocks` 與 `/stocks/portfolio` 雙別名為兩條獨立項目）並依 [data-model.md §1](./data-model.md) 完整欄位（`path`、`page`、`sub`、`isPublic`、`requireAdmin`、`staticTitle`、`icon`、`fab`、`alias`）（FR-001、FR-002、FR-015b 第 4 點）
 - [ ] T007 [P] [app.js](../../app.js) 新增模組級常數 `const SIDEBAR_ICONS = { wallet, chart, ... }`：14 個 inline SVG 字典 + 1 個首字方塊 fallback；採 Lucide 字彙、`stroke="currentColor"`（FR-015b 第 1、5 點；research §8）
 - [ ] T008 [app.js](../../app.js) 新增純函式 `function normalizePath(rawPath)`：小寫 + 折雙斜 + 去尾斜（除 `/`）；演算法見 [research.md §2](./research.md)（FR-010a）
 - [ ] T009 [app.js](../../app.js) 新增純函式 `function parsePath(pathname)`：先 `normalizePath`，再對 `ROUTES` 線性查找精確 match；找不到回 `null`（驅動 404）（FR-005、FR-008、依賴 T006、T008）
@@ -67,7 +67,7 @@ description: "前端路由與頁面（008-frontend-routing）任務清單"
 - [ ] T017 [index.html](../../index.html) 在應用程式 root（`<body>` 內、所有 `.page` 容器之上）新增 `<div id="route-progress" class="route-progress" hidden></div>` 與 `<div id="sr-route-status" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>`（FR-010d、FR-010e）
 - [ ] T018 [index.html](../../index.html) 新增 `<div id="page-404" class="page" hidden>...</div>` 容器，含「找不到頁面」標題、訊息、「返回首頁」與「返回儀表板」按鈕（FR-008、FR-014；按鈕 onclick 留空，於 US1 T026 補綁）
 - [ ] T019 [index.html](../../index.html) 將既有 `<aside id="sidebar">` 拆分為 `<div class="sidebar-top">`（logo）/ `<nav class="sidebar-mid">`（主清單）/ `<div class="sidebar-bottom">`（使用者區）三段（FR-015c；保留現有子節點，僅外層分組）
-- [ ] T020 [index.html](../../index.html) 新增 `<div id="page-privacy" class="page" hidden>` 與 `<div id="page-terms" class="page" hidden>` 容器並內嵌既有 `privacy.html` / `terms.html` 主體 HTML（為 US6 T053 移除獨立 handler 鋪路；保留原檔以維持白名單向後兼容）
+- [ ] T020 [index.html](../../index.html) 新增 `<div id="page-privacy" class="page" hidden>` 與 `<div id="page-terms" class="page" hidden>` 容器並內嵌既有 `privacy.html` / `terms.html` 主體 HTML（為 US6 T065 移除獨立 handler 鋪路；保留原檔以維持白名單向後兼容）
 
 ### 前端共用樣式
 
@@ -84,7 +84,7 @@ description: "前端路由與頁面（008-frontend-routing）任務清單"
 
 **Goal**：使用者輸入／書籤／分享 URL 即可直達任一頁面；F5 重整不掉頁；上一頁／下一頁完整還原；未登入訪客被導向登入頁並於登入後跳回；不存在或無權限的路徑落入 404 訊息頁
 
-**Independent Test**：依 [quickstart.md §1](./quickstart.md) 18 條 URL 全部可直達 + 重整 + 書籤；5 條 `?next=` 開放重定向攻擊全部攔下；瀏覽器上一頁／下一頁完整還原；不存在路徑顯示 404 訊息頁
+**Independent Test**：依 [quickstart.md §1](./quickstart.md) 20 條 URL 全部可直達 + 重整 + 書籤（4 公開 + 16 受保護，含 stocks 雙別名）；5 條 `?next=` 開放重定向攻擊全部攔下；瀏覽器上一頁／下一頁完整還原；不存在路徑顯示 404 訊息頁
 
 ### 路由切換核心改寫
 
@@ -112,10 +112,10 @@ description: "前端路由與頁面（008-frontend-routing）任務清單"
 ### 後端 catch-all 攔截
 
 - [ ] T036 [US1] [server.js](../../server.js) 改寫 catch-all（[server.js:10167](../../server.js#L10167)）：呼叫 `normalizeRoutePath(req.path)` → 依 `getRouteAuditMode()` 判斷是否寫稽核（`minimal` 模式跳過）；本任務先建立框架，下面三個任務各自填入偵測邏輯（FR-027、FR-006a、FR-014；依賴 T002、T003、T005）
-- [ ] T037 [US1] [server.js](../../server.js) catch-all 內加入 path traversal 偵測：`req.originalUrl.includes('..')` 或 `/(%2e|%252e){2}/i.test(req.originalUrl)` → 透過既有 `writeOperationAudit({ action: 'static_path_traversal_blocked', metadata: { rawUrl, pattern: 'literal' | 'percent-encoded' | 'double-encoded' }, ... })` 寫稽核；仍 `sendFile(index.html)`（FR-027、FR-032；依賴 T036）
+- [ ] T037 [US1] [server.js](../../server.js) catch-all 內加入 path traversal 偵測：`req.originalUrl.includes('..')` 或 `/(%2e|%252e){2}/i.test(req.originalUrl)` → 透過既有 `writeOperationAudit({ action: 'static_path_traversal_blocked', metadata: { rawUrl, pattern: 'literal' | 'percent-encoded' | 'double-encoded' }, ... })` 寫稽核；走 catch-all `sendFile(index.html)`（HTTP 200，由前端依 FR-008 渲染 404 訊息頁；FR-027 修訂版：與 FR-008 統一前端 404 渲染策略，不再回 HTTP 404）（FR-027、FR-032；依賴 T036）
 - [ ] T038 [US1] [server.js](../../server.js) catch-all 內加入 open redirect 偵測：若 `req.path === '/login'` 且 `req.query.next` 不通過後端版 `validateNextParam`（演算法與前端一致，呼叫 T003 `normalizeRoutePath` + 內建 ROUTES path 列表常數同步）→ 透過 `writeOperationAudit({ action: 'route_open_redirect_blocked', metadata: { next, reason }, ... })` 寫稽核；仍 `sendFile(index.html)`（FR-006a、FR-032；依賴 T036；後端 ROUTES path 列表與前端 T006 手動同步）
 
-**Checkpoint**：US1 完成；應用程式可作為 SPA 運作於所有 18 條 URL；MVP 路由能力達成
+**Checkpoint**：US1 完成；應用程式可作為 SPA 運作於所有 20 條 URL（4 公開 + 16 受保護）；MVP 路由能力達成
 
 ---
 
@@ -127,7 +127,7 @@ description: "前端路由與頁面（008-frontend-routing）任務清單"
 
 ### 側邊欄渲染與 active 狀態
 
-- [ ] T039 [US2] [app.js](../../app.js) 新增 `function renderSidebar(currentUser)`：依 `ROUTES`（過濾 `isPublic === false`）+ `currentUser.isAdmin`（過濾 `requireAdmin === true`）生成 `<a class="nav-item" data-path="${r.path}"><span class="nav-icon">${SIDEBAR_ICONS[r.icon] || fallbackBlock(r.staticTitle)}</span><span class="nav-label">${r.staticTitle}</span></a>`；分組順序依 [spec FR-012](./spec.md)（依賴 T006、T007、T019）
+- [ ] T039 [US2] [app.js](../../app.js) 新增 `function renderSidebar(currentUser)`：依 `ROUTES`（過濾 `isPublic === false`）+ `currentUser.isAdmin`（過濾 `requireAdmin === true`）並 **依 FR-012 規定之分組順序**（儀表板 → 收支管理：交易／報表／預算／帳戶／分類／固定收支 → 股票投資：持股／交易紀錄／股利／實現損益 → API 使用 → 設定：帳號／資料匯出匯入／管理員面板）生成 `<a class="nav-item" data-path="${r.path}"><span class="nav-icon">${SIDEBAR_ICONS[r.icon] || fallbackBlock(r.staticTitle)}</span><span class="nav-label">${r.staticTitle}</span></a>`；ROUTES 表排列順序 MUST 與 FR-012 一致（C1）。**角色變更刷新（C2）**：在 `/api/auth/me` 回應到達後（含登入完成、token 刷新、權限變更）MUST 重新呼叫 `renderSidebar(currentUser)` 重渲染側邊欄，避免「管理員身分被移除但側邊欄仍顯示管理員面板」之 stale 狀態（spec Edge Cases 提到此情境；依賴 T006、T007、T019）
 - [ ] T040 [US2] [app.js](../../app.js) 在 `navigateToPath` 內呼叫 `updateSidebarActive(currentPath)`：依正規化後 path 比對 `[data-path]` 並切換 `.active` class；移除舊版手動 `data-page` 對應邏輯之冗餘部分（FR-015a；依賴 T025、T039）
 - [ ] T041 [US2] [app.js](../../app.js) 點擊 `.nav-item` 之 click handler：若 `data-path === currentRoute.path` 即 `e.preventDefault()` 且不 `pushState`，避免「上一頁」陷在同一頁回退（FR-009；依賴 T039、T040）
 
@@ -190,7 +190,7 @@ description: "前端路由與頁面（008-frontend-routing）任務清單"
 
 - [ ] T056 [US5] [app.js](../../app.js) `ModalBase.open(modalId, options)` 完整邏輯：堆疊規則檢查（非 modalConfirm 且 stack 不空 → console.warn return）→ `modalPreviousFocus.push(document.activeElement)` → `bodyScrollY = window.scrollY` + 套 `body.modal-open` + `body.style.top = -bodyScrollY + 'px'` → `replaceState({...current, modalParent: { hash, scrollY }})` → `pushState({modalLayer: id, modalStack: [...]}, '#modal-' + id)` → 顯示 Modal DOM → 焦點移至第一個可互動元素（FR-022、FR-023a、FR-024、FR-024a、FR-024b 第 1、2 點；依賴 T014、T016、T023）
 - [ ] T057 [US5] [app.js](../../app.js) `ModalBase.close()` / `closeTopmost()`：呼叫 `history.back()`；popstate handler 內依 `event.state?.modalLayer` / `modalParent` 判別「下層仍開」vs「全部關閉」並執行解鎖（`body.modal-open` 移除、`window.scrollTo(0, bodyScrollY)`、`location.hash` 還原）+ 焦點還原至 `modalPreviousFocus.pop()`（FR-024 第 3、4 點、FR-024b 第 4、5 點；依賴 T056）
-- [ ] T058 [US5] [app.js](../../app.js) `ModalBase` 內加入 `function trapFocus(modalEl, e)` Tab/Shift+Tab 環圈邏輯（依 [research.md §4](./research.md) 焦點 trap 實作）；於 `open` 時 `addEventListener('keydown', handleTabFn)`，`close` 時 `removeEventListener`；ESC 鍵亦於同一 handler 處理（FR-024b 第 3 點；依賴 T056）
+- [ ] T058 [US5] [app.js](../../app.js) `ModalBase` 內加入 `function trapFocus(modalEl, e)` Tab/Shift+Tab 環圈邏輯（依 [research.md §4](./research.md) 焦點 trap 實作）；於 `open` 時 `addEventListener('keydown', handleTabFn)`，`close` 時 `removeEventListener`；ESC 鍵亦於同一 handler 處理；同時 `addEventListener('hashchange', handleExternalHashChange)` 偵測 Modal 開啟期間外部觸發改變 `location.hash`（例：使用者貼上含錨點之 URL 至網址列）→ 視為「使用者主動離開 Modal」並呼叫 `ModalBase.close()` 關閉所有 Modal，不嘗試保留 Modal 狀態（FR-024 第 6 點）；hashchange listener 於 `close` 時一併移除（FR-024b 第 3 點、FR-024 第 6 點；依賴 T056）
 
 ### 12 個 Modal 接入
 
@@ -240,11 +240,11 @@ description: "前端路由與頁面（008-frontend-routing）任務清單"
 
 ### 驗證
 
-- [ ] T074 執行 [quickstart.md §1](./quickstart.md) US1 全部驗證：18 條 URL 直達 + 重整 + 書籤；5 條 `?next=` 開放重定向攻擊；404 訊息頁；上一頁／下一頁；正規化；捲動還原
-- [ ] T075 執行 [quickstart.md §2](./quickstart.md) US2 全部驗證：14 + 1 個側邊欄項目；三件式 active；圖示+文字；三段式佈局；漢堡選單行為；admin 路徑命中 404 + audit log
-- [ ] T076 執行 [quickstart.md §3~6](./quickstart.md) US3~US6 全部驗證：FAB 對照表 14 + 4 頁；外觀模式三選一立即生效 + 跨裝置同步 P95 ≤ 500ms；12 個 Modal 行為一致；9 條合法路徑 + 9 條黑名單路徑
+- [ ] T074 執行 [quickstart.md §1](./quickstart.md) US1 全部驗證（**對應 SC-001 深層連結 5/5、SC-002 F5 ≥ 99%**）：20 條 URL 直達 + 重整 + 書籤（4 公開 + 16 受保護）；5 條 `?next=` 開放重定向攻擊；404 訊息頁；上一頁／下一頁；正規化；捲動還原
+- [ ] T075 執行 [quickstart.md §2](./quickstart.md) US2 全部驗證（**SC-003 部分**：FAB 顯示與標籤對照於 T076 涵蓋；本任務聚焦 sidebar 行為）：14 + 1 個側邊欄項目；三件式 active；圖示+文字；三段式佈局；漢堡選單行為；admin 路徑命中 404 + audit log；**以一般使用者 cookie 對 `/api/admin/*` 任一 GET 端點驗證後端回 403**（FR-014 後端強制要求 — 確認既有 `adminMiddleware` 仍掛在所有 admin API；非依 UI 表現而異）
+- [ ] T076 執行 [quickstart.md §3~6](./quickstart.md) US3~US6 全部驗證（**對應 SC-003 FAB 14 頁對齊、SC-004 主題同步 P95 ≤ 500ms、SC-006 白名單 9+9**）：FAB 對照表 14 + 4 頁；外觀模式三選一立即生效 + 跨裝置同步 P95 ≤ 500ms；12 個 Modal 行為一致；9 條合法路徑 + 9 條黑名單路徑
 - [ ] T077 執行 [quickstart.md §7](./quickstart.md) 路由稽核三事件覆蓋 + 三模式（`security` / `extended` / `minimal`）切換驗證
-- [ ] T078 執行 [quickstart.md §8](./quickstart.md) 性能 P95 量測：14 個受保護頁各切換 50 次，路由切換（殼可見）P95 ≤ 100ms（SC-008a）；完整內容渲染（資料 fetch 完成）P95 ≤ 1000ms（SC-008b）
+- [ ] T078 執行 [quickstart.md §8](./quickstart.md) 性能 P95 量測（**對應 SC-008a 路由切換 ≤ 100ms、SC-008b 完整渲染 ≤ 1000ms**）：14 個受保護頁各切換 50 次，路由切換（殼可見）P95 ≤ 100ms；完整內容渲染（資料 fetch 完成）P95 ≤ 1000ms
 - [ ] T079 執行 [quickstart.md §9](./quickstart.md) 跨瀏覽器 + 行動驗證：Chrome / Edge / Firefox latest 2 majors + Safari 16+ macOS / iOS + Android Chrome latest 2，US1 + US2 通過率 100%（SC-007）
 - [ ] T080 執行 axe-core 掃描淺色 + 深色 × 18 個畫面 = 36 個畫面 WCAG AA 違規數應為 0（SC-005）
 

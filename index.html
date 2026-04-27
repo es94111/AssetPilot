@@ -1481,50 +1481,13 @@
         </div>
 
         <div class="card">
-          <h3><i class="fas fa-envelope"></i>SMTP 寄信設定</h3>
-          <p class="admin-section-desc" style="margin:4px 0 12px">設定 SMTP 後優先使用 SMTP 寄送統計報表；未設定則 fallback 至 Resend（需設定 RESEND_API_KEY 環境變數）。</p>
-          <form id="adminSmtpForm" action="javascript:void(0);" method="post">
-            <div class="admin-grid-2">
-              <div class="form-row">
-                <label>Host</label>
-                <input type="text" id="adminSmtpHost" class="form-input" placeholder="smtp.gmail.com" maxlength="255">
-              </div>
-              <div class="form-row">
-                <label>Port</label>
-                <input type="number" id="adminSmtpPort" class="form-input" placeholder="587" min="1" max="65535">
-              </div>
-            </div>
-            <div class="admin-grid-2">
-              <div class="form-row">
-                <label>User（登入帳號）</label>
-                <input type="text" id="adminSmtpUser" class="form-input" placeholder="your-account@gmail.com" maxlength="320" autocomplete="off">
-              </div>
-              <div class="form-row">
-                <label>Password</label>
-                <div class="pw-input-wrap">
-                  <input type="password" id="adminSmtpPassword" class="form-input" placeholder="留空則保留現有密碼" maxlength="512" autocomplete="new-password">
-                  <button type="button" class="pw-toggle-btn" aria-label="顯示或隱藏密碼" tabindex="-1"><i class="fas fa-eye"></i></button>
-                </div>
-              </div>
-            </div>
-            <div class="admin-grid-2">
-              <div class="form-row">
-                <label>From（寄件人，留空則用 User）</label>
-                <input type="text" id="adminSmtpFrom" class="form-input" placeholder="AssetPilot &lt;noreply@example.com&gt;" maxlength="320">
-              </div>
-              <div class="form-row admin-checkbox-row">
-                <label>
-                  <input type="checkbox" id="adminSmtpSecure">
-                  使用 TLS（port 465 必須勾選；587 通常不勾，走 STARTTLS）
-                </label>
-              </div>
-            </div>
-            <div class="cert-btn-row" style="margin-top:8px">
-              <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-save"></i> 儲存 SMTP 設定</button>
-              <button type="button" class="btn btn-outline btn-sm" id="adminSmtpTestBtn"><i class="fas fa-paper-plane"></i> 寄測試信給自己</button>
-              <span class="import-hint" id="adminSmtpStatus"></span>
-            </div>
-          </form>
+          <h3><i class="fas fa-envelope"></i>寄信通道狀態</h3>
+          <p class="admin-section-desc" style="margin:4px 0 12px">寄信通道（SMTP / Zeabur Email / Resend）一律由環境變數設定。請以 <code>EMAIL_PROVIDER_PRIMARY</code> / <code>EMAIL_PROVIDER_FALLBACK</code> 指定主要與備用通道，並補齊對應通道的環境變數（詳見 <code>.env.example</code>）。</p>
+          <div id="adminEmailProvidersStatus" style="font-size:13px;line-height:1.8;color:var(--text-secondary)">載入中…</div>
+          <div class="cert-btn-row" style="margin-top:12px">
+            <button type="button" class="btn btn-outline btn-sm" id="adminSmtpTestBtn"><i class="fas fa-paper-plane"></i> 寄測試信給自己</button>
+            <span class="import-hint" id="adminSmtpStatus"></span>
+          </div>
         </div>
 
         <div class="card">

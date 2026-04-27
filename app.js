@@ -6852,10 +6852,10 @@ const App = (() => {
   async function renderAdminSettings() {
     if (!currentUser?.isAdmin) return;
     try {
-      const [settings, users, smtp, schedule] = await Promise.all([
+      const [settings, users, emailProviders, schedule] = await Promise.all([
         API.get('/api/admin/system-settings'),
         API.get('/api/admin/users'),
-        API.get('/api/admin/smtp-settings').catch(() => null),
+        API.get('/api/admin/email-providers').catch(() => null),
         API.get('/api/admin/report-schedule').catch(() => null),
       ]);
 
@@ -6876,18 +6876,33 @@ const App = (() => {
       document.querySelectorAll('input[name="routeAuditMode"]').forEach(inp => {
         inp.checked = inp.value === auditMode;
       });
-      if (smtp) {
-        const setVal = (id, v) => { const e = el(id); if (e) e.value = v ?? ''; };
-        setVal('adminSmtpHost', smtp.host);
-        setVal('adminSmtpPort', smtp.port);
-        setVal('adminSmtpUser', smtp.user);
-        setVal('adminSmtpFrom', smtp.from);
-        const secureEl = el('adminSmtpSecure');
-        if (secureEl) secureEl.checked = !!smtp.secure;
-        const pwEl = el('adminSmtpPassword');
-        if (pwEl) {
-          pwEl.value = '';
-          pwEl.placeholder = smtp.hasPassword ? '已設定密碼，留空則保留' : '請輸入密碼';
+      const providersEl = el('adminEmailProvidersStatus');
+      if (providersEl) {
+        if (!emailProviders) {
+          providersEl.textContent = '無法載入寄信通道狀態';
+          providersEl.style.color = 'var(--danger-color)';
+        } else {
+          const labelOf = (name) => {
+            if (name === 'smtp') return 'SMTP';
+            if (name === 'zeabur') return 'Zeabur Email';
+            if (name === 'resend') return 'Resend';
+            return '（未設定）';
+          };
+          const cfg = emailProviders.configured || {};
+          const badge = (name) => {
+            const ok = !!cfg[name];
+            const color = ok ? 'var(--success-color, #16a34a)' : 'var(--text-secondary)';
+            const txt = ok ? '已設定' : '未設定';
+            return `<span style="color:${color}">${labelOf(name)}：${txt}</span>`;
+          };
+          const primary = emailProviders.primary || '';
+          const fallback = emailProviders.fallback || '';
+          providersEl.innerHTML = `
+            <div><strong>主要通道：</strong>${primary ? labelOf(primary) : '<span style="color:var(--danger-color)">未設定（寄信功能停用）</span>'}</div>
+            <div><strong>備用通道：</strong>${fallback ? labelOf(fallback) : '（無）'}</div>
+            <div style="margin-top:6px;font-size:12px">${badge('smtp')}　${badge('zeabur')}　${badge('resend')}</div>
+          `;
+          providersEl.style.color = '';
         }
       }
       renderAdminUserTable(users);
@@ -7035,34 +7050,6 @@ const App = (() => {
       }
     });
 
-    const smtpForm = el('adminSmtpForm');
-    if (smtpForm && !smtpForm.dataset.bound) {
-      smtpForm.dataset.bound = '1';
-      smtpForm.addEventListener('submit', async (ev) => {
-        ev.preventDefault();
-        const statusEl = el('adminSmtpStatus');
-        if (statusEl) { statusEl.textContent = '儲存中…'; statusEl.style.color = ''; }
-        try {
-          const payload = {
-            host: el('adminSmtpHost')?.value?.trim() || '',
-            port: Number(el('adminSmtpPort')?.value) || 587,
-            secure: !!el('adminSmtpSecure')?.checked,
-            user: el('adminSmtpUser')?.value?.trim() || '',
-            password: el('adminSmtpPassword')?.value || '',
-            from: el('adminSmtpFrom')?.value?.trim() || '',
-          };
-          await API.put('/api/admin/smtp-settings', payload);
-          if (statusEl) { statusEl.textContent = '已儲存 SMTP 設定'; statusEl.style.color = 'var(--success-color, #16a34a)'; }
-          toast('SMTP 設定已儲存', 'success');
-          const pwEl = el('adminSmtpPassword');
-          if (pwEl) { pwEl.value = ''; pwEl.placeholder = payload.password ? '已設定密碼，留空則保留' : pwEl.placeholder; }
-        } catch (e) {
-          if (statusEl) { statusEl.textContent = e.message || '儲存失敗'; statusEl.style.color = 'var(--danger-color)'; }
-          toast(e.message || 'SMTP 設定儲存失敗', 'error');
-        }
-      });
-    }
-
     el('adminSmtpTestBtn')?.addEventListener('click', async () => {
       const btn = el('adminSmtpTestBtn');
       const statusEl = el('adminSmtpStatus');
@@ -7070,7 +7057,8 @@ const App = (() => {
       if (statusEl) { statusEl.textContent = '寄測試信中…'; statusEl.style.color = ''; }
       try {
         const result = await API.post('/api/admin/test-email', {});
-        const msg = `已寄測試信至 ${result.to}（${result.provider === 'smtp' ? 'SMTP' : 'Resend'}）`;
+        const providerLabel = ({ smtp: 'SMTP', zeabur: 'Zeabur Email', resend: 'Resend' })[result.provider] || result.provider;
+        const msg = `已寄測試信至 ${result.to}（${providerLabel}）`;
         if (statusEl) { statusEl.textContent = msg; statusEl.style.color = 'var(--success-color, #16a34a)'; }
         toast(msg, 'success');
       } catch (e) {

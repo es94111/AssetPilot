@@ -66,3 +66,9 @@ updates:
     labels:
       - dependencies
       - docker
+    # 禁止 base image major 升級（避免 node 24 → 25/26 等不穩定/非 LTS 跳躍）；
+    # 仍接受 minor/patch（如 node:24.x 安全更新）
+    ignore:
+      - dependency-name: "node"
+        update-types:
+          - "version-update:semver-major"

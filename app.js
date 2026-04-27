@@ -7260,8 +7260,13 @@ const App = (() => {
     el('txExcludeFromStats').checked = false;
     populateTxSelects();
     if (txId) {
-      const result = await API.get('/api/transactions?limit=99999');
-      const t = result.data.find(x => x.id === txId);
+      let t;
+      try {
+        t = await API.get('/api/transactions/' + encodeURIComponent(txId));
+      } catch (err) {
+        toast(err.message || '載入交易失敗', 'error');
+        return;
+      }
       if (!t) return;
       el('txId').value = t.id;
       el('modalTransactionTitle').textContent = '編輯交易';

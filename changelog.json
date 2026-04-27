@@ -1,6 +1,27 @@
 {
-  "currentVersion": "4.28.0",
+  "currentVersion": "4.29.0",
   "releases": [
+    {
+      "version": "4.29.0",
+      "date": "2026-04-27",
+      "title": "前端路由與頁面（008-frontend-routing）：URL-first SPA 路由 + 12 個 Modal 共用基底 + 側邊欄三段式佈局 + 外觀模式跨裝置同步快取 + 靜態檔白名單擴充 + 路由稽核模式",
+      "type": "new",
+      "changes": [
+        { "tag": "warning", "text": "schema migration：為既有 `system_settings` 新增 `route_audit_mode TEXT DEFAULT 'security'` 欄位（FR-033，冪等 ALTER）；`data_operation_audit_log.action` 列舉值擴充四條（route_admin_path_blocked / route_open_redirect_blocked / static_path_traversal_blocked / session_expired），不變更欄位定義" },
+        { "tag": "new", "text": "前端 ROUTES 表（4 公開 + 16 受保護，含 /stocks 雙別名）+ parsePath / buildPath / normalizePath / validateNextParam 純函式（FR-001 ~ FR-005、FR-010a、FR-006a）；前端路由由 URL pathname 直接決定 page，既有 navigate(page, sub) 簽章保留作 alias" },
+        { "tag": "new", "text": "404 訊息頁（#page-404）：未知路徑或非管理員命中管理員路徑時顯示 404 訊息頁，URL 保留原樣；前端走 FR-008 / FR-014 一致渲染策略" },
+        { "tag": "new", "text": "頂部 2px indeterminate 路由切換進度條（200ms 延遲門檻、prefers-reduced-motion 降級）+ aria-live polite SR live region（FR-010d / FR-010e）" },
+        { "tag": "new", "text": "Modal 共用基底元件 ModalBase：history 整合、捲動鎖（含 iOS Safari 滾動穿透防護）、堆疊規則（僅 modalConfirm 可疊在其他 Modal 上）、焦點 trap、ESC 關閉、初始焦點（FR-022 ~ FR-024b）" },
+        { "tag": "new", "text": "側邊欄三段式佈局（top: logo / mid: 主清單 / bottom: 使用者區）+ 三件式 active 視覺（左 4px 直條 + 主色文字 + 主色 8% 背景）+ 14 個 Lucide 風格 inline SVG 圖示（FR-015 / FR-015a / FR-015b / FR-015c）" },
+        { "tag": "new", "text": "401 自動導向（FR-007a）：apiFetch wrapper 偵測 401（除登入端點）→ Toast「您的登入已過期，請重新登入」+ /login?next= 導向；登出時清除 theme_pref 與 next 參數（FR-007b）" },
+        { "tag": "new", "text": "外觀模式跨裝置同步快取：localStorage `theme_pref` 三層 fallback（API → localStorage → prefers-color-scheme），登出清除以避免殘留" },
+        { "tag": "new", "text": "後端 catch-all 稽核：path traversal（含 percent / double 編碼）+ open redirect（/login?next=）+ admin-only 路徑攔截（ADMIN_ONLY_PATHS 常數陣列；與前端 ROUTES requireAdmin: true 條目手動同步）" },
+        { "tag": "new", "text": "管理員設定頁新增「路由稽核模式」三選一（security / extended / minimal）；security 為預設，extended 額外寫入 401 session_expired，minimal 全部關閉" },
+        { "tag": "new", "text": "靜態檔白名單擴充至 9 條（追加 /changelog.json、/privacy.html、/terms.html）+ Cache-Control 標頭（changelog.json / index.html → no-cache；其餘 → public, max-age=300）" },
+        { "tag": "new", "text": "移除既有獨立 /privacy 與 /terms handler，改由 catch-all 走 SPA index → 前端 router 渲染 #page-privacy / #page-terms 容器（FR-001 / FR-003）" },
+        { "tag": "improved", "text": "API.* 全量改用 apiFetch；既有散落 fetch('/api/...') 之 401 處理集中至單一 redirectToLogin('session-expired')" }
+      ]
+    },
     {
       "version": "4.28.0",
       "date": "2026-04-27",

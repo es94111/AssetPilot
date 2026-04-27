@@ -4006,3 +4006,194 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 .badge-info { background: #dbeafe; color: #1e40af; }
 .badge-danger { background: #fee2e2; color: #991b1b; }
 .badge-warn { background: #fef3c7; color: #92400e; }
+
+/* ===== 008 feature: 前端路由與頁面（Frontend Routing & Pages） ===== */
+
+/* T021 / FR-010e：螢幕閱讀器專用 .sr-only */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* T022 / FR-010d：頂部 2px indeterminate 路由切換進度條 */
+.route-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: transparent;
+  pointer-events: none;
+  z-index: 9999;
+  overflow: hidden;
+}
+.route-progress::after {
+  content: '';
+  display: block;
+  width: 30%;
+  height: 100%;
+  background: var(--primary, #6366f1);
+  animation: route-progress-slide 1s ease-in-out infinite;
+}
+@keyframes route-progress-slide {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(400%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .route-progress::after {
+    animation: none;
+    width: 100%;
+    background: rgba(99, 102, 241, 0.3);
+  }
+}
+
+/* T023 / FR-023a：Modal 開啟時 body 鎖（含 iOS Safari 滾動穿透防護） */
+body.modal-open {
+  position: fixed;
+  width: 100%;
+  overflow: hidden;
+  overscroll-behavior: contain;
+  touch-action: none;
+}
+
+/* T024 / FR-015c：側邊欄三段式佈局（top/mid/bottom） */
+.sidebar-top {
+  flex-shrink: 0;
+}
+.sidebar-mid {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0;
+  min-height: 0;
+}
+.sidebar-mid .sidebar-nav { padding: 16px 12px; }
+.sidebar-bottom {
+  flex-shrink: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* T042 / FR-015a：側邊欄 active 三件式（左 4px 直條 + 主色文字 + 主色 8% 背景） */
+.sidebar-mid .nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 40px;
+  padding: 0 12px;
+  border-left: 4px solid transparent;
+  border-radius: 8px;
+  margin-bottom: 4px;
+  position: relative;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.6);
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.sidebar-mid .nav-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.95);
+}
+.sidebar-mid .nav-item.active {
+  border-left-color: var(--primary, #6366f1);
+  color: var(--primary-light, #93a4ff);
+  background: rgba(99, 102, 241, 0.12);
+  box-shadow: none;
+}
+.sidebar-mid .nav-item:focus-visible {
+  outline: 2px solid var(--primary, #6366f1);
+  outline-offset: -2px;
+}
+
+/* T043 / FR-015b：圖示 + 文字並列 */
+.sidebar-mid .nav-icon {
+  display: inline-flex;
+  width: 20px;
+  height: 20px;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.sidebar-mid .nav-icon svg {
+  width: 20px;
+  height: 20px;
+  display: block;
+}
+.sidebar-mid .nav-icon-fallback {
+  display: inline-flex;
+  width: 20px;
+  height: 20px;
+  align-items: center;
+  justify-content: center;
+  background: rgba(99, 102, 241, 0.18);
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.85);
+}
+.sidebar-mid .nav-label {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* T044 / FR-011 / FR-015：行動斷點側邊欄遮罩 */
+.sidebar-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 99;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+.sidebar-backdrop.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+@media (max-width: 767px) {
+  .sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.2s ease;
+  }
+  .sidebar.open,
+  .sidebar.sidebar-open {
+    transform: translateX(0);
+  }
+}
+
+/* T050 / FR-017：FAB 與 Modal stack z-index 層次 */
+.fab { z-index: 1001; }
+.modal-overlay { z-index: 1002; }
+.modal-overlay .modal,
+.modal-overlay > .modal { z-index: 1003; }
+#modalConfirm.modal-overlay { z-index: 1004; }
+#modalConfirm.modal-overlay > .modal { z-index: 1005; }
+
+/* T018 / 404 訊息頁樣式 */
+.page-404-wrap {
+  max-width: 640px;
+  margin: 80px auto;
+  padding: 40px 24px;
+  text-align: center;
+}
+.page-404-actions {
+  margin-top: 32px;
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.legal-page {
+  max-width: 760px;
+  margin: 32px auto;
+  padding: 32px 24px;
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.legal-page .page-title { margin-bottom: 16px; }

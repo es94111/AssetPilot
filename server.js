@@ -428,7 +428,12 @@ app.use((err, req, res, next) => {
 app.use(cookieParser());
 
 // 僅開放必要前端靜態檔，避免專案根目錄檔案外洩
-const PUBLIC_FILES = ['/app.js', '/style.css', '/logo.svg', '/favicon.svg', '/vendor/webauthn.min.js', '/lib/moneyDecimal.js'];
+// 008 feature (T063 / FR-026)：擴充至 9 條合法白名單；Cache-Control 由 handler 套用
+const PUBLIC_FILES = [
+  '/app.js', '/style.css', '/logo.svg', '/favicon.svg',
+  '/vendor/webauthn.min.js', '/lib/moneyDecimal.js',
+  '/changelog.json', '/privacy.html', '/terms.html',
+];
 const PUBLIC_FILE_MAP = Object.freeze({
   '/app.js': path.join(__dirname, 'app.js'),
   '/style.css': path.join(__dirname, 'style.css'),
@@ -436,10 +441,19 @@ const PUBLIC_FILE_MAP = Object.freeze({
   '/favicon.svg': path.join(__dirname, 'favicon.svg'),
   '/vendor/webauthn.min.js': path.join(__dirname, 'node_modules', '@passwordless-id', 'webauthn', 'dist', 'browser', 'webauthn.min.js'),
   '/lib/moneyDecimal.js': path.join(__dirname, 'lib', 'moneyDecimal.js'),
+  '/changelog.json': path.join(__dirname, 'changelog.json'),
+  '/privacy.html': path.join(__dirname, 'privacy.html'),
+  '/terms.html': path.join(__dirname, 'terms.html'),
 });
 app.get(PUBLIC_FILES, (req, res) => {
   const safePath = PUBLIC_FILE_MAP[req.path];
   if (!safePath) return res.status(404).end();
+  // 008 feature (T064 / FR-028)：依檔名套用 Cache-Control
+  if (req.path === '/changelog.json') {
+    res.setHeader('Cache-Control', 'no-cache');
+  } else {
+    res.setHeader('Cache-Control', 'public, max-age=300');
+  }
   res.sendFile(safePath);
 });
 
@@ -631,6 +645,8 @@ async function initDB() {
   try { db.run("ALTER TABLE system_settings ADD COLUMN server_time_offset INTEGER DEFAULT 0"); } catch (e) { /* ignore */ }
   // 007 feature: 稽核日誌保留天數（FR-046a；'30' / '90' / '180' / '365' / 'forever'，預設 '90'）
   try { db.run("ALTER TABLE system_settings ADD COLUMN audit_log_retention_days TEXT DEFAULT '90'"); } catch (e) { /* ignore */ }
+  // 008 feature (T004 / FR-033)：路由稽核模式（'security' / 'extended' / 'minimal'，預設 'security'）
+  try { db.run("ALTER TABLE system_settings ADD COLUMN route_audit_mode TEXT DEFAULT 'security'"); } catch (e) { /* ignore */ }
 
   // 005 T060: 多筆排程並存表（Round 2 Q2）
   db.run(`CREATE TABLE IF NOT EXISTS report_schedules (
@@ -2279,19 +2295,83 @@ function parseIpAllowlist(value) {
 }
 
 function getSystemSettings() {
-  const row = queryOne("SELECT public_registration, allowed_registration_emails, admin_ip_allowlist FROM system_settings WHERE id = 1") || {
+  const row = queryOne("SELECT public_registration, allowed_registration_emails, admin_ip_allowlist, route_audit_mode FROM system_settings WHERE id = 1") || {
     public_registration: 1,
     allowed_registration_emails: '',
     admin_ip_allowlist: '',
+    route_audit_mode: 'security',
   };
   const allowedRegistrationEmails = parseAllowedRegistrationEmails(row.allowed_registration_emails);
   const dbAdminIpAllowlist = parseIpAllowlist(row.admin_ip_allowlist);
   const mergedAdminIpAllowlist = Array.from(new Set([...ENV_ADMIN_IP_ALLOWLIST, ...dbAdminIpAllowlist]));
+  const routeAuditMode = ['security', 'extended', 'minimal'].includes(row.route_audit_mode)
+    ? row.route_audit_mode
+    : 'security';
   return {
     publicRegistration: !!row.public_registration,
     allowedRegistrationEmails,
     adminIpAllowlist: mergedAdminIpAllowlist,
+    routeAuditMode,
   };
+}
+
+// 008 feature (T005 / FR-033)：以即時查詢取得路由稽核模式（不快取，預設 'security'）
+function getRouteAuditMode() {
+  try {
+    const row = queryOne("SELECT route_audit_mode FROM system_settings WHERE id = 1");
+    const mode = row?.route_audit_mode;
+    return ['security', 'extended', 'minimal'].includes(mode) ? mode : 'security';
+  } catch (e) {
+    return 'security';
+  }
+}
+
+// 008 feature (T002 / FR-032a)：管理員專屬路徑常數，與前端 ROUTES requireAdmin: true 條目對應；新增條目須同步更新前端
+const ADMIN_ONLY_PATHS = ['/settings/admin'];
+
+// 008 feature (T003 / FR-010a)：後端版路徑正規化（與前端 normalizePath 演算法一致）
+function normalizeRoutePath(rawPath) {
+  if (typeof rawPath !== 'string') return '/';
+  const noQueryHash = rawPath.split(/[?#]/)[0] || '/';
+  const lower = noQueryHash.toLowerCase();
+  const collapsed = lower.replace(/\/{2,}/g, '/');
+  if (collapsed === '/') return '/';
+  return collapsed.replace(/\/+$/, '') || '/';
+}
+
+// 008 feature (T038 / FR-006a)：後端 ROUTES path 列表，與前端 app.js ROUTES 表手動同步
+const BACKEND_KNOWN_PATHS = new Set([
+  '/', '/login', '/privacy', '/terms',
+  '/dashboard',
+  '/finance/transactions', '/finance/reports', '/finance/budget',
+  '/finance/accounts', '/finance/categories', '/finance/recurring',
+  '/stocks', '/stocks/portfolio', '/stocks/transactions',
+  '/stocks/dividends', '/stocks/realized',
+  '/api-credits',
+  '/settings/account', '/settings/admin', '/settings/export',
+]);
+
+// 008 feature (T038 / FR-006a)：後端 ?next= 驗證；五條規則與前端 validateNextParam 對齊
+function validateNextParamBackend(rawNext) {
+  if (typeof rawNext !== 'string' || rawNext.length === 0) {
+    return { ok: false, reason: 'empty' };
+  }
+  let decoded;
+  try {
+    decoded = decodeURIComponent(rawNext);
+  } catch (e) {
+    return { ok: false, reason: 'malformed-uri' };
+  }
+  if (!decoded.startsWith('/')) return { ok: false, reason: 'not-relative' };
+  if (decoded.startsWith('//') || decoded.startsWith('/\\') || decoded.includes('://')) {
+    return { ok: false, reason: 'protocol-relative' };
+  }
+  const pathname = decoded.split(/[?#]/)[0];
+  const normalized = normalizeRoutePath(pathname);
+  if (!BACKEND_KNOWN_PATHS.has(normalized)) {
+    return { ok: false, reason: 'unknown-path' };
+  }
+  return { ok: true, target: decoded };
 }
 
 function getUserCount() {
@@ -2619,6 +2699,8 @@ const AUDIT_METADATA_ALLOWED_KEYS = new Set([
   'dateFrom', 'dateTo', 'failure_stage', 'failure_reason',
   'unknown_columns', 'backup_path', 'before_restore_path',
   'filename', 'filterParams',
+  // 008 feature (FR-032)：路由稽核 metadata 白名單
+  'path', 'normalizedPath', 'next', 'reason', 'rawUrl', 'pattern',
 ]);
 function writeOperationAudit({ userId, role, action, ipAddress, userAgent, result, isAdminOperation, metadata }) {
   try {
@@ -2737,27 +2819,51 @@ function pruneBeforeRestoreBackups() {
 function authMiddleware(req, res, next) {
   const token = req.cookies?.authToken
     || (req.headers.authorization?.startsWith('Bearer ') ? req.headers.authorization.split(' ')[1] : null);
-  if (!token) return res.status(401).json({ error: '請先登入' });
+  if (!token) {
+    maybeAuditSessionExpired(req, '', 'token-missing');
+    return res.status(401).json({ error: '請先登入' });
+  }
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
     // 比對 token_version（改密碼/刪帳號後所有舊 token 立即失效）
     const user = queryOne("SELECT token_version FROM users WHERE id = ?", [decoded.userId]);
     if (!user) {
       res.clearCookie('authToken');
+      maybeAuditSessionExpired(req, decoded.userId || '', 'token-invalid');
       return res.status(401).json({ error: '使用者不存在' });
     }
     const dbVersion = Number(user.token_version) || 0;
     const tokenVersion = Number(decoded.tokenVersion) || 0;
     if (tokenVersion !== dbVersion) {
       res.clearCookie('authToken');
+      maybeAuditSessionExpired(req, decoded.userId || '', 'token-version-mismatch');
       return res.status(401).json({ error: '登入已失效，請重新登入' });
     }
     req.userId = decoded.userId;
     next();
-  } catch {
+  } catch (e) {
     res.clearCookie('authToken');
+    const reason = (e && e.name === 'TokenExpiredError') ? 'token-expired' : 'token-invalid';
+    maybeAuditSessionExpired(req, '', reason);
     return res.status(401).json({ error: '登入已過期，請重新登入' });
   }
+}
+
+// 008 feature (T070 / FR-032 / FR-033)：僅在 extended 模式下寫 session_expired 稽核
+function maybeAuditSessionExpired(req, userId, reason) {
+  try {
+    if (getRouteAuditMode() !== 'extended') return;
+    writeOperationAudit({
+      userId: userId || '',
+      role: userId ? 'user' : 'guest',
+      action: 'session_expired',
+      ipAddress: getRequestIp(req),
+      userAgent: req.headers['user-agent'] || '',
+      result: 'failure',
+      isAdminOperation: false,
+      metadata: { path: req.originalUrl || req.path || '', reason },
+    });
+  } catch (_) { /* 不影響主流程 */ }
 }
 
 function adminMiddleware(req, res, next) {
@@ -3827,12 +3933,34 @@ app.put('/api/admin/system-settings', adminMiddleware, (req, res) => {
   const publicRegistration = !!req.body?.publicRegistration;
   const allowedRegistrationEmails = parseAllowedRegistrationEmails(req.body?.allowedRegistrationEmails);
   const adminIpAllowlist = parseIpAllowlist(req.body?.adminIpAllowlist);
-  db.run(
-    "UPDATE system_settings SET public_registration = ?, allowed_registration_emails = ?, admin_ip_allowlist = ?, updated_at = ?, updated_by = ? WHERE id = 1",
-    [publicRegistration ? 1 : 0, allowedRegistrationEmails.join('\n'), adminIpAllowlist.join('\n'), Date.now(), req.userId]
-  );
+  // 008 feature (T068 / FR-033)：可選 routeAuditMode；非合法值回 400
+  let routeAuditMode = null;
+  if (Object.prototype.hasOwnProperty.call(req.body || {}, 'routeAuditMode')) {
+    const candidate = String(req.body.routeAuditMode || '');
+    if (!['security', 'extended', 'minimal'].includes(candidate)) {
+      return res.status(400).json({ error: 'routeAuditMode 必須為 security、extended 或 minimal' });
+    }
+    routeAuditMode = candidate;
+  }
+  if (routeAuditMode) {
+    db.run(
+      "UPDATE system_settings SET public_registration = ?, allowed_registration_emails = ?, admin_ip_allowlist = ?, route_audit_mode = ?, updated_at = ?, updated_by = ? WHERE id = 1",
+      [publicRegistration ? 1 : 0, allowedRegistrationEmails.join('\n'), adminIpAllowlist.join('\n'), routeAuditMode, Date.now(), req.userId]
+    );
+  } else {
+    db.run(
+      "UPDATE system_settings SET public_registration = ?, allowed_registration_emails = ?, admin_ip_allowlist = ?, updated_at = ?, updated_by = ? WHERE id = 1",
+      [publicRegistration ? 1 : 0, allowedRegistrationEmails.join('\n'), adminIpAllowlist.join('\n'), Date.now(), req.userId]
+    );
+  }
   saveDB();
-  res.json({ success: true, publicRegistration, allowedRegistrationEmails, adminIpAllowlist });
+  res.json({
+    success: true,
+    publicRegistration,
+    allowedRegistrationEmails,
+    adminIpAllowlist,
+    routeAuditMode: routeAuditMode || getRouteAuditMode(),
+  });
 });
 
 // ─── 伺服器時間 ───────────────────────────────────────────────────────────
@@ -10156,13 +10284,73 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: '伺服器發生錯誤，請稍後再試' });
 });
 
-// ─── 公開頁面路由（FR-007 靜態頁桶）───
-app.get('/privacy', staticPageLimiter, (req, res) => {
-  res.sendFile(path.join(__dirname, 'privacy.html'));
-});
-app.get('/terms', staticPageLimiter, (req, res) => {
-  res.sendFile(path.join(__dirname, 'terms.html'));
-});
+// 008 feature (T065)：移除既有獨立 /privacy 與 /terms handler，改由 catch-all 提供 SPA index → 前端 router 渲染 #page-privacy / #page-terms
+
+// ─── 008 feature (T036 / FR-027 / FR-006a / FR-014 / FR-032)：catch-all 稽核偵測 ───
+function detectRouteAuditEvents(req) {
+  const events = [];
+  const rawUrl = req.originalUrl || req.url || '';
+  const normalizedPath = normalizeRoutePath(req.path);
+
+  // T037：path traversal
+  if (rawUrl.includes('..')) {
+    events.push({
+      action: 'static_path_traversal_blocked',
+      metadata: { rawUrl, pattern: 'literal' },
+    });
+  } else if (/(%252e){2}/i.test(rawUrl)) {
+    events.push({
+      action: 'static_path_traversal_blocked',
+      metadata: { rawUrl, pattern: 'double-encoded' },
+    });
+  } else if (/(%2e){2}/i.test(rawUrl)) {
+    events.push({
+      action: 'static_path_traversal_blocked',
+      metadata: { rawUrl, pattern: 'percent-encoded' },
+    });
+  }
+
+  // T038：open redirect on /login
+  if (normalizedPath === '/login' && typeof req.query?.next === 'string' && req.query.next.length > 0) {
+    const result = validateNextParamBackend(req.query.next);
+    if (!result.ok) {
+      events.push({
+        action: 'route_open_redirect_blocked',
+        metadata: { next: String(req.query.next).slice(0, 500), reason: result.reason },
+      });
+    }
+  }
+
+  // T047：admin-only path 偵測
+  if (ADMIN_ONLY_PATHS.includes(normalizedPath)) {
+    let isAdmin = false;
+    let candidateUserId = '';
+    const token = req.cookies?.authToken;
+    if (token) {
+      try {
+        const decoded = jwt.verify(token, JWT_SECRET);
+        candidateUserId = decoded?.userId || '';
+        if (candidateUserId) {
+          const userRow = queryOne("SELECT token_version, is_admin FROM users WHERE id = ?", [candidateUserId]);
+          const dbVersion = Number(userRow?.token_version) || 0;
+          const tokenVersion = Number(decoded?.tokenVersion) || 0;
+          if (userRow && tokenVersion === dbVersion && userRow.is_admin) {
+            isAdmin = true;
+          }
+        }
+      } catch (_) { /* token 解析失敗視為非管理員 */ }
+    }
+    if (!isAdmin) {
+      events.push({
+        action: 'route_admin_path_blocked',
+        userId: candidateUserId,
+        metadata: { path: req.path || '', normalizedPath },
+      });
+    }
+  }
+
+  return events;
+}
 
 // ─── 前端路由 catch-all（所有非 API、非靜態檔案的請求都回傳 index.html）───
 app.get('{*path}', rateLimit({
@@ -10173,6 +10361,31 @@ app.get('{*path}', rateLimit({
   message: { error: '請求過於頻繁，請稍後再試' },
   validate: { xForwardedForHeader: false }
 }), (req, res) => {
+  // 008 feature (T036 / FR-033)：依模式寫稽核
+  try {
+    const auditMode = getRouteAuditMode();
+    if (auditMode !== 'minimal') {
+      const events = detectRouteAuditEvents(req);
+      const ip = getRequestIp(req);
+      const ua = req.headers['user-agent'] || '';
+      events.forEach(ev => {
+        writeOperationAudit({
+          userId: ev.userId || '',
+          role: ev.userId ? 'user' : 'guest',
+          action: ev.action,
+          ipAddress: ip,
+          userAgent: ua,
+          result: 'failure',
+          isAdminOperation: false,
+          metadata: ev.metadata,
+        });
+      });
+    }
+  } catch (e) {
+    try { console.warn(JSON.stringify({ event: 'catchall_audit_error', error: String(e?.message || e) })); } catch (_) { /* noop */ }
+  }
+  // 008 feature (T064 / FR-028)：index.html 不快取（SPA 入口）
+  res.setHeader('Cache-Control', 'no-cache');
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
@@ -10184,7 +10397,7 @@ initDB().then(() => {
   app.listen(PORT, () => {
     console.log(`AssetPilot 伺服器已啟動: http://localhost:${PORT}`);
     // T149：啟動 log 帶版本標籤，方便容器日誌追蹤上線版本
-    console.log('[startup] AssetPilot v4.28.0 / feature 007-data-export-import ready');
+    console.log('[startup] AssetPilot v4.29.0 / feature 008-frontend-routing ready');
     console.log(`[OAuth] redirect_uri whitelist: ${GOOGLE_OAUTH_REDIRECT_URIS.length} entries`);
   });
 });

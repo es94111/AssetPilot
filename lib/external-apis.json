@@ -32,8 +32,24 @@
     "supportsPaid": false
   },
   {
+    "name": "SMTP（Nodemailer）",
+    "description": "Email 寄送通道（管理員資產統計報表，搭配 Gmail / Outlook 等 SMTP server）",
+    "url": "https://nodemailer.com",
+    "attribution": null,
+    "supportsFree": true,
+    "supportsPaid": false
+  },
+  {
+    "name": "Zeabur Email（ZSend）",
+    "description": "Email 寄送通道（管理員資產統計報表，HTTP REST API）",
+    "url": "https://zeabur.com/docs/en-US/email/quick-start",
+    "attribution": null,
+    "supportsFree": true,
+    "supportsPaid": true
+  },
+  {
     "name": "Resend",
-    "description": "Email 寄送（管理員資產統計報表）",
+    "description": "Email 寄送通道（管理員資產統計報表）",
     "url": "https://resend.com",
     "attribution": null,
     "supportsFree": true,

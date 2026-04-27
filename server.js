@@ -81,10 +81,51 @@ const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
 const RATE_LIMIT_MAX = 20;
 const COOKIE_MAX_AGE = JWT_EXPIRES_MS;
 const SERVER_TIME_OFFSET_MAX = 10 * 365 * 86400 * 1000;
+// ─── 寄信通道設定（全部走環境變數）───
+// EMAIL_PROVIDER_PRIMARY / EMAIL_PROVIDER_FALLBACK：smtp | zeabur | resend | (空)
+// 兩者皆空 → 寄信功能停用；fallback 僅在 primary 執行期失敗時觸發（不重試、不補寄）。
+const EMAIL_PROVIDERS = ['smtp', 'zeabur', 'resend'];
+function normalizeProvider(v) {
+  const s = String(v || '').trim().toLowerCase();
+  return EMAIL_PROVIDERS.includes(s) ? s : '';
+}
+const EMAIL_PROVIDER_PRIMARY = normalizeProvider(process.env.EMAIL_PROVIDER_PRIMARY);
+const EMAIL_PROVIDER_FALLBACK = normalizeProvider(process.env.EMAIL_PROVIDER_FALLBACK);
+
+// SMTP 設定（環境變數）
+const SMTP_HOST = process.env.SMTP_HOST || '';
+const SMTP_PORT = Number.parseInt(process.env.SMTP_PORT, 10) || 587;
+const SMTP_SECURE = /^(1|true|yes)$/i.test(String(process.env.SMTP_SECURE || ''));
+const SMTP_USER = process.env.SMTP_USER || '';
+const SMTP_PASSWORD = process.env.SMTP_PASSWORD || '';
+const SMTP_FROM = process.env.SMTP_FROM || '';
+
+// Zeabur Email（ZSend）設定
+const ZEABUR_API_KEY = process.env.ZEABUR_API_KEY || '';
+const ZEABUR_FROM_EMAIL = process.env.ZEABUR_FROM_EMAIL || '';
+const ZEABUR_API_ENDPOINT = 'https://api.zeabur.com/api/v1/zsend/emails';
+
+// Resend 設定
 const RESEND_API_KEY = process.env.RESEND_API_KEY || '';
 const RESEND_FROM_EMAIL = process.env.RESEND_FROM_EMAIL || '';
+
 // 對外網址（用於信件 CTA 按鈕），未設定則隱藏「前往儀表板」按鈕
 const APP_URL = (process.env.APP_URL || '').replace(/\/$/, '');
+
+let smtpTransporter = null;
+function getSmtpTransporter() {
+  if (!SMTP_HOST) return null;
+  if (!smtpTransporter) {
+    smtpTransporter = nodemailer.createTransport({
+      host: SMTP_HOST,
+      port: SMTP_PORT,
+      secure: SMTP_SECURE,
+      auth: SMTP_USER ? { user: SMTP_USER, pass: SMTP_PASSWORD } : undefined,
+    });
+  }
+  return smtpTransporter;
+}
+
 let resendClient = null;
 function getResendClient() {
   if (!RESEND_API_KEY) return null;
@@ -92,65 +133,77 @@ function getResendClient() {
   return resendClient;
 }
 
-function getSmtpSettingsRaw() {
-  const row = queryOne("SELECT smtp_host, smtp_port, smtp_secure, smtp_user, smtp_password, smtp_from FROM system_settings WHERE id = 1");
-  if (!row) return { host: '', port: 587, secure: 0, user: '', password: '', from: '' };
-  return {
-    host: row.smtp_host || '',
-    port: Number(row.smtp_port) || 587,
-    secure: row.smtp_secure ? 1 : 0,
-    user: row.smtp_user || '',
-    password: row.smtp_password || '',
-    from: row.smtp_from || '',
-  };
+function isProviderConfigured(name) {
+  if (name === 'smtp') return !!SMTP_HOST;
+  if (name === 'zeabur') return !!(ZEABUR_API_KEY && ZEABUR_FROM_EMAIL);
+  if (name === 'resend') return !!(RESEND_API_KEY && RESEND_FROM_EMAIL);
+  return false;
 }
 
-let smtpTransporter = null;
-let smtpTransporterKey = '';
-function getSmtpTransporter() {
-  const s = getSmtpSettingsRaw();
-  if (!s.host || !s.port) return null;
-  const key = `${s.host}|${s.port}|${s.secure}|${s.user}|${s.password}`;
-  if (smtpTransporter && smtpTransporterKey === key) return smtpTransporter;
-  smtpTransporter = nodemailer.createTransport({
-    host: s.host,
-    port: s.port,
-    secure: !!s.secure,
-    auth: s.user ? { user: s.user, pass: s.password } : undefined,
-  });
-  smtpTransporterKey = key;
-  return smtpTransporter;
+async function sendViaProvider(name, { to, subject, html }) {
+  if (name === 'smtp') {
+    const transporter = getSmtpTransporter();
+    const from = SMTP_FROM || SMTP_USER || 'noreply@localhost';
+    const info = await transporter.sendMail({ from, to, subject, html });
+    return { provider: 'smtp', id: info.messageId };
+  }
+  if (name === 'zeabur') {
+    const resp = await fetch(ZEABUR_API_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${ZEABUR_API_KEY}`,
+      },
+      body: JSON.stringify({
+        from: ZEABUR_FROM_EMAIL,
+        to: Array.isArray(to) ? to : [to],
+        subject,
+        html,
+      }),
+    });
+    const data = await resp.json().catch(() => ({}));
+    if (!resp.ok) {
+      const err = new Error(data?.message || data?.error || `Zeabur 寄送失敗 (HTTP ${resp.status})`);
+      err.provider = 'zeabur';
+      throw err;
+    }
+    return { provider: 'zeabur', id: data?.id || data?.message_id || '' };
+  }
+  if (name === 'resend') {
+    const result = await getResendClient().emails.send({ from: RESEND_FROM_EMAIL, to, subject, html });
+    if (result?.error) {
+      const err = new Error(result.error.message || 'Resend 寄送失敗');
+      err.provider = 'resend';
+      throw err;
+    }
+    return { provider: 'resend', id: result?.data?.id || '' };
+  }
+  throw new Error(`未知寄信通道：${name}`);
 }
 
-// 統一寄信入口：SMTP 優先，否則 Resend，皆未設定回 null
-// 005 T062: 補執行期 fallback — SMTP 寄送失敗時自動退回 Resend；不重試、不補寄（FR-021、Round 1 Q3）
+// 統一寄信入口：依 EMAIL_PROVIDER_PRIMARY → EMAIL_PROVIDER_FALLBACK 順序嘗試。
+// primary 執行期失敗時若 fallback 已設定則自動退回；皆未設定回 null（caller 須翻譯為 503）。
 async function sendStatsEmail({ to, subject, html }) {
-  const smtp = getSmtpSettingsRaw();
-  const hasSmtp = !!(smtp.host && smtp.port);
-  const client = getResendClient();
-  const hasResend = !!(client && RESEND_FROM_EMAIL);
-  if (!hasSmtp && !hasResend) return null; // 兩通道皆未設定（caller 須翻譯為 503）
+  const primary = isProviderConfigured(EMAIL_PROVIDER_PRIMARY) ? EMAIL_PROVIDER_PRIMARY : '';
+  const fallback = (EMAIL_PROVIDER_FALLBACK && EMAIL_PROVIDER_FALLBACK !== primary && isProviderConfigured(EMAIL_PROVIDER_FALLBACK))
+    ? EMAIL_PROVIDER_FALLBACK : '';
+  if (!primary && !fallback) return null;
 
-  if (hasSmtp) {
+  if (primary) {
     try {
-      const transporter = getSmtpTransporter();
-      const from = smtp.from || smtp.user || 'noreply@localhost';
-      const info = await transporter.sendMail({ from, to, subject, html });
-      return { provider: 'smtp', id: info.messageId };
-    } catch (smtpErr) {
-      // 執行期錯誤 → 若有 Resend 則自動退回（FR-021 Round 1 Q3）
-      if (!hasResend) throw smtpErr;
-      // fall through to Resend
+      return await sendViaProvider(primary, { to, subject, html });
+    } catch (err) {
+      if (!fallback) throw err;
     }
   }
-  // Resend（無 SMTP 或 SMTP 執行期失敗時）
-  const result = await client.emails.send({ from: RESEND_FROM_EMAIL, to, subject, html });
-  if (result?.error) {
-    const err = new Error(result.error.message || 'Resend 寄送失敗');
-    err.provider = 'resend';
-    throw err;
-  }
-  return { provider: 'resend', id: result?.data?.id || '' };
+  return await sendViaProvider(fallback, { to, subject, html });
+}
+
+function getActiveEmailProviders() {
+  const primary = isProviderConfigured(EMAIL_PROVIDER_PRIMARY) ? EMAIL_PROVIDER_PRIMARY : '';
+  const fallback = (EMAIL_PROVIDER_FALLBACK && EMAIL_PROVIDER_FALLBACK !== primary && isProviderConfigured(EMAIL_PROVIDER_FALLBACK))
+    ? EMAIL_PROVIDER_FALLBACK : '';
+  return { primary, fallback, hasAny: !!(primary || fallback) };
 }
 const GLOBAL_FX_API_BASE = 'https://v6.exchangerate-api.com/v6';
 const GLOBAL_FX_API_KEY = process.env.EXCHANGE_RATE_API_KEY || 'free'; // 免費版 key
@@ -626,13 +679,6 @@ async function initDB() {
     db.run("ALTER TABLE system_settings ADD COLUMN admin_ip_allowlist TEXT DEFAULT ''");
     saveDB();
   } catch (e) { /* 欄位已存在則忽略 */ }
-  // SMTP 寄信設定（與 Resend 並存，SMTP 設了就優先 SMTP）
-  try { db.run("ALTER TABLE system_settings ADD COLUMN smtp_host TEXT DEFAULT ''"); } catch (e) { /* ignore */ }
-  try { db.run("ALTER TABLE system_settings ADD COLUMN smtp_port INTEGER DEFAULT 587"); } catch (e) { /* ignore */ }
-  try { db.run("ALTER TABLE system_settings ADD COLUMN smtp_secure INTEGER DEFAULT 0"); } catch (e) { /* ignore */ }
-  try { db.run("ALTER TABLE system_settings ADD COLUMN smtp_user TEXT DEFAULT ''"); } catch (e) { /* ignore */ }
-  try { db.run("ALTER TABLE system_settings ADD COLUMN smtp_password TEXT DEFAULT ''"); } catch (e) { /* ignore */ }
-  try { db.run("ALTER TABLE system_settings ADD COLUMN smtp_from TEXT DEFAULT ''"); } catch (e) { /* ignore */ }
   // 自動寄送統計報表排程
   try { db.run("ALTER TABLE system_settings ADD COLUMN report_schedule_freq TEXT DEFAULT 'off'"); } catch (e) { /* ignore */ }
   try { db.run("ALTER TABLE system_settings ADD COLUMN report_schedule_hour INTEGER DEFAULT 9"); } catch (e) { /* ignore */ }
@@ -4935,51 +4981,21 @@ function renderStatsEmailHtml(displayName, email, stats) {
 // 註：POST /api/admin/send-stats-report 已於 v4.17.0 移除，請改用
 // PUT /api/admin/report-schedule（更新 userIds）+ POST /api/admin/report-schedule/run-now
 
-// ─── SMTP 設定（管理員）───
-app.get('/api/admin/smtp-settings', adminMiddleware, (req, res) => {
-  const s = getSmtpSettingsRaw();
+// ─── 寄信通道狀態（管理員，唯讀，反映環境變數設定）───
+app.get('/api/admin/email-providers', adminMiddleware, (req, res) => {
+  const { primary, fallback } = getActiveEmailProviders();
   res.json({
-    host: s.host,
-    port: s.port,
-    secure: !!s.secure,
-    user: s.user,
-    from: s.from,
-    hasPassword: !!s.password,
+    primary,
+    fallback,
+    configured: {
+      smtp: isProviderConfigured('smtp'),
+      zeabur: isProviderConfigured('zeabur'),
+      resend: isProviderConfigured('resend'),
+    },
   });
 });
 
-app.put('/api/admin/smtp-settings', adminMiddleware, (req, res) => {
-  const host = String(req.body?.host || '').trim();
-  const portRaw = req.body?.port;
-  const port = Number.parseInt(portRaw, 10);
-  const secure = !!req.body?.secure;
-  const user = String(req.body?.user || '').trim();
-  const password = req.body?.password;
-  const from = String(req.body?.from || '').trim();
-
-  if (host && (!Number.isFinite(port) || port < 1 || port > 65535)) {
-    return res.status(400).json({ error: 'Port 必須為 1-65535 的整數' });
-  }
-  if (host.length > 255 || user.length > 320 || from.length > 320) {
-    return res.status(400).json({ error: '欄位長度過長' });
-  }
-
-  const current = getSmtpSettingsRaw();
-  // 若 password 為 undefined 或空字串，視為「保留現有密碼」
-  const nextPassword = (typeof password === 'string' && password !== '') ? password : current.password;
-
-  db.run(
-    "UPDATE system_settings SET smtp_host = ?, smtp_port = ?, smtp_secure = ?, smtp_user = ?, smtp_password = ?, smtp_from = ?, updated_at = ?, updated_by = ? WHERE id = 1",
-    [host, host ? (port || 587) : 587, secure ? 1 : 0, user, nextPassword, from, Date.now(), req.userId]
-  );
-  saveDB();
-  // 強制重建 transporter
-  smtpTransporter = null;
-  smtpTransporterKey = '';
-  res.json({ success: true });
-});
-
-// 寄送測試信給目前登入管理員，驗證 SMTP / Resend 設定
+// 寄送測試信給目前登入管理員，驗證寄信設定
 app.post('/api/admin/test-email', adminMiddleware, async (req, res) => {
   const me = queryOne("SELECT email, display_name FROM users WHERE id = ?", [req.userId]);
   if (!me?.email) return res.status(400).json({ error: '目前管理員未設定 Email，無法寄送測試信' });
@@ -4987,9 +5003,9 @@ app.post('/api/admin/test-email', adminMiddleware, async (req, res) => {
     const result = await sendStatsEmail({
       to: me.email,
       subject: 'AssetPilot 寄信設定測試',
-      html: `<p>這是一封測試信，用來驗證 ${getSmtpSettingsRaw().host ? 'SMTP' : 'Resend'} 寄信設定正確。</p><p>若您能收到此信，代表「寄送資產統計報表」功能已可正常使用。</p>`,
+      html: `<p>這是一封測試信，用來驗證寄信設定正確。</p><p>若您能收到此信，代表「寄送資產統計報表」功能已可正常使用。</p>`,
     });
-    if (!result) return res.status(503).json({ error: '寄信服務未設定' });
+    if (!result) return res.status(503).json({ error: '寄信服務未設定（請設定 EMAIL_PROVIDER_PRIMARY 環境變數）' });
     res.json({ success: true, provider: result.provider, to: me.email });
   } catch (e) {
     res.status(500).json({ error: e.message || '測試信寄送失敗' });

@@ -1335,10 +1335,13 @@ const App = (() => {
     const assetTop5El = el('dashAssetTop5');
     if (assetTop5El) assetTop5El.innerHTML = '';
 
-    const [accounts, stocks] = await Promise.all([
+    const [accounts, stocksResp] = await Promise.all([
       API.get('/api/accounts'),
       API.get('/api/stocks'),
     ]);
+    const stocks = Array.isArray(stocksResp)
+      ? stocksResp
+      : (stocksResp && Array.isArray(stocksResp.stocks) ? stocksResp.stocks : []);
 
     const labels = [];
     const values = [];

@@ -4490,18 +4490,57 @@ const App = (() => {
     const modal = document.createElement('div');
     modal.className = 'modal-blocking';
     modal.innerHTML = `
-      <div class="modal-blocking__content">
-        <h3>同步除權息</h3>
-        <div id="syncStage">準備中（共 ${years.length} 年）...</div>
-        <div class="progress-bar"><div class="progress-bar__fill" id="syncProgressFill"></div></div>
-        <button id="syncCancel" class="btn">取消</button>
+      <div class="modal-blocking__content sync-modal" role="dialog" aria-modal="true" aria-labelledby="syncModalTitle">
+        <div class="sync-modal__header">
+          <div class="sync-modal__icon" aria-hidden="true"><i class="fas fa-rotate fa-spin"></i></div>
+          <div class="sync-modal__heading">
+            <h3 id="syncModalTitle">同步除權息</h3>
+            <p class="sync-modal__subtitle">從 TWSE 取得 ${earliestYear}–${currentYear} 年度資料</p>
+          </div>
+        </div>
+        <div class="sync-modal__progress">
+          <div class="sync-modal__progress-row">
+            <span id="syncStage" class="sync-modal__stage">準備中（共 ${years.length} 年）...</span>
+            <span id="syncPercent" class="sync-modal__percent">0%</span>
+          </div>
+          <div class="progress-bar"><div class="progress-bar__fill" id="syncProgressFill"></div></div>
+        </div>
+        <div class="sync-modal__stats" aria-live="polite">
+          <div class="sync-stat sync-stat--added">
+            <span class="sync-stat__label">新增</span>
+            <span class="sync-stat__value" id="syncStatAdded">0</span>
+          </div>
+          <div class="sync-stat sync-stat--skipped">
+            <span class="sync-stat__label">跳過</span>
+            <span class="sync-stat__value" id="syncStatSkipped">0</span>
+          </div>
+          <div class="sync-stat sync-stat--errors">
+            <span class="sync-stat__label">失敗</span>
+            <span class="sync-stat__value" id="syncStatErrors">0</span>
+          </div>
+        </div>
+        <div class="sync-modal__footer">
+          <button id="syncCancel" class="sync-modal__cancel" type="button">
+            <i class="fas fa-xmark"></i><span>取消同步</span>
+          </button>
+        </div>
       </div>`;
     document.body.appendChild(modal);
     let aborted = false;
     const cancelBtn = modal.querySelector('#syncCancel');
+    const cancelLabel = cancelBtn.querySelector('span');
     const stageEl = modal.querySelector('#syncStage');
     const progressFill = modal.querySelector('#syncProgressFill');
-    cancelBtn.addEventListener('click', () => { aborted = true; cancelBtn.disabled = true; cancelBtn.textContent = '正在中止...'; });
+    const percentEl = modal.querySelector('#syncPercent');
+    const statAddedEl = modal.querySelector('#syncStatAdded');
+    const statSkippedEl = modal.querySelector('#syncStatSkipped');
+    const statErrorsEl = modal.querySelector('#syncStatErrors');
+    cancelBtn.addEventListener('click', () => {
+      aborted = true;
+      cancelBtn.disabled = true;
+      cancelBtn.classList.add('is-aborting');
+      if (cancelLabel) cancelLabel.textContent = '正在中止...';
+    });
 
     let totalSynced = 0, totalSkipped = 0, totalErrors = 0;
     for (let i = 0; i < years.length; i++) {
@@ -4517,7 +4556,12 @@ const App = (() => {
         totalErrors += 1;
         console.warn(`[同步除權息] ${year} 年失敗:`, e.message);
       }
-      progressFill.style.width = `${Math.round((i + 1) / years.length * 100)}%`;
+      statAddedEl.textContent = totalSynced;
+      statSkippedEl.textContent = totalSkipped;
+      statErrorsEl.textContent = totalErrors;
+      const pct = Math.round((i + 1) / years.length * 100);
+      progressFill.style.width = pct + '%';
+      percentEl.textContent = pct + '%';
     }
     document.body.removeChild(modal);
     if (aborted) {

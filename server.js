@@ -2346,7 +2346,7 @@ const BACKEND_KNOWN_PATHS = new Set([
   '/finance/transactions', '/finance/reports', '/finance/budget',
   '/finance/accounts', '/finance/categories', '/finance/recurring',
   '/stocks', '/stocks/portfolio', '/stocks/transactions',
-  '/stocks/dividends', '/stocks/realized',
+  '/stocks/dividends', '/stocks/realized', '/stocks/settings',
   '/api-credits',
   '/settings/account', '/settings/admin', '/settings/export',
 ]);

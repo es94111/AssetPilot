@@ -347,6 +347,8 @@
     <!-- ===== API 使用與授權 ===== -->
     <section class="page" id="page-api-credits">
       <h2 class="page-title">API 使用與授權</h2>
+      <!-- 007 feature (T058)：動態 API 清單容器，由 /api/external-apis 渲染 -->
+      <div id="externalApisContainer" class="card" style="margin-bottom:16px"></div>
       <div class="card api-credits-card">
         <h3>外部 API 清單</h3>
         <p class="import-hint">本系統使用以下第三方 API 服務，請依各服務條款與授權規範使用。</p>
@@ -1036,6 +1038,8 @@
                     </table>
                   </div>
                   <div class="import-missing" id="importMissing" style="display:none"></div>
+                  <!-- 007 feature: 匯入進度條 -->
+                  <div id="importProgressBar" style="display:none;margin:8px 0;padding:8px;background:var(--bg-secondary);border-radius:6px"></div>
                   <div class="import-actions">
                     <button class="btn" id="importConfirmBtn"><i class="fas fa-file-import"></i> 確認匯入</button>
                   </div>
@@ -1209,6 +1213,12 @@
             </div>
           </form>
         </div>
+        <!-- 007 feature (T067)：使用者「我的操作紀錄」 -->
+        <div class="card" id="userAuditLogCard" style="margin-top:16px">
+          <h3><i class="fas fa-history"></i> 我的操作紀錄</h3>
+          <p class="admin-section-desc">記錄您執行的匯出 / 匯入操作。</p>
+          <div id="userAuditLogContainer"></div>
+        </div>
         <div class="card" style="margin-top:16px">
           <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px">
             <h3 style="margin:0"><i class="fas fa-clock-rotate-left"></i> 登入紀錄（最近 100 筆）</h3>
@@ -1312,6 +1322,18 @@
 
       <!-- 管理員設定 -->
       <div class="settings-panel" id="panel-admin">
+        <!-- 007 feature (T067)：管理員稽核日誌 -->
+        <div class="card" id="adminAuditLogCard">
+          <h3><i class="fas fa-list-check"></i>資料操作稽核日誌</h3>
+          <p class="admin-section-desc">記錄所有匯出 / 匯入 / 備份 / 還原操作。</p>
+          <div id="adminAuditLogContainer"></div>
+        </div>
+        <!-- 007 feature (T054)：自動備份清單 -->
+        <div class="card" id="adminBackupsCard">
+          <h3><i class="fas fa-hard-drive"></i>自動備份清單</h3>
+          <p class="admin-section-desc">列出 backups/ 目錄內 before-restore 自動備份檔；保留最近 5 份且 ≤ 90 天。</p>
+          <div id="adminBackupsContainer"></div>
+        </div>
         <div class="card">
           <h3><i class="fas fa-clock"></i>伺服器時間</h3>
           <p class="admin-section-desc" style="margin:4px 0 12px">顯示伺服器目前採用的時間，可設定偏移量以測試排程寄送、除權息同步等依時間觸發的功能。偏移值會套用於排程檢查；系統時鐘本身不會被改動。</p>

@@ -3876,3 +3876,133 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
   color: var(--danger);
   font-size: 12px;
 }
+
+/* ─── 007 feature: 資料匯出匯入 ─── */
+
+/* T045：手動匯率 ±20% 偏離警告 */
+.rate-deviation-warning {
+  background: #fff8e1;
+  color: #b45309;
+  border: 1px solid #fbbf24;
+  border-radius: 6px;
+  padding: 6px 10px;
+  margin-top: 4px;
+  font-size: 12px;
+}
+
+/* T055：下載備份確認 Modal 警示 */
+.modal-confirm-warning {
+  background: #fee2e2;
+  border: 2px solid #ef4444;
+  color: #991b1b;
+  border-radius: 8px;
+  padding: 12px;
+  margin: 12px 0;
+}
+
+/* T068：稽核日誌列表表格 */
+.audit-log-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 12px;
+  font-size: 13px;
+}
+.audit-log-table th, .audit-log-table td {
+  border-bottom: 1px solid var(--border);
+  padding: 6px 8px;
+  text-align: left;
+}
+.audit-log-table th {
+  background: var(--bg-secondary);
+  font-weight: 600;
+}
+.audit-log-row-detail {
+  background: var(--bg-secondary);
+  padding: 8px;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 11px;
+  white-space: pre-wrap;
+  max-height: 240px;
+  overflow: auto;
+  margin: 4px 0;
+}
+
+.audit-log-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.audit-log-filters input,
+.audit-log-filters select {
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 13px;
+}
+.audit-log-pagination {
+  margin-top: 12px;
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.audit-log-pagination button {
+  min-width: 32px;
+  padding: 4px 8px;
+}
+
+.backups-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 12px;
+  font-size: 13px;
+}
+.backups-table th, .backups-table td {
+  border-bottom: 1px solid var(--border);
+  padding: 6px 8px;
+  text-align: left;
+}
+
+/* External APIs page */
+.external-apis-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+  padding: 12px;
+}
+.external-api-card {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  background: var(--bg-secondary);
+}
+.external-api-card h3 {
+  margin: 0 0 6px 0;
+  font-size: 16px;
+}
+.external-api-card .badges {
+  margin-top: 8px;
+  display: flex;
+  gap: 6px;
+}
+.attribution-badge {
+  background: #fee2e2;
+  border-left: 4px solid #ef4444;
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.badge-success { background: #d1fae5; color: #065f46; }
+.badge-info { background: #dbeafe; color: #1e40af; }
+.badge-danger { background: #fee2e2; color: #991b1b; }
+.badge-warn { background: #fef3c7; color: #92400e; }

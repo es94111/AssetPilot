@@ -4459,12 +4459,19 @@ function buildUserStatsReport(userId, freq = 'daily') {
     compareLabel = '對比上月';
   }
 
+  // 子分類向上歸併到父分類（例：早餐 / 午餐 → 餐飲）
   const topCategories = queryAll(`
-    SELECT COALESCE(c.name, '未分類') as name, COALESCE(c.color, '#94a3b8') as color, COALESCE(SUM(t.amount), 0) as total
+    SELECT
+      COALESCE(pc.name, c.name, '未分類') as name,
+      COALESCE(pc.color, c.color, '#94a3b8') as color,
+      COALESCE(SUM(t.amount), 0) as total
     FROM transactions t
     LEFT JOIN categories c ON t.category_id = c.id
+    LEFT JOIN categories pc ON c.parent_id = pc.id
     WHERE t.user_id = ? AND t.type = 'expense' AND t.date LIKE ? AND t.exclude_from_stats = 0
-    GROUP BY c.name, c.color
+    GROUP BY COALESCE(pc.id, c.id),
+             COALESCE(pc.name, c.name, '未分類'),
+             COALESCE(pc.color, c.color, '#94a3b8')
     ORDER BY total DESC
     LIMIT 5
   `, [userId, monthLike]).map(r => ({ name: r.name, color: r.color, total: Number(r.total) || 0 }));
@@ -4867,17 +4874,32 @@ function renderStatsEmailHtml(displayName, email, stats) {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light">
 <meta name="supported-color-schemes" content="light">
+<meta name="format-detection" content="telephone=no,date=no,address=no,email=no">
 <title>個人資產統計報表</title>
+<style>
+  body { width: 100% !important; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+  table { mso-table-lspace: 0pt; mso-table-rspace: 0pt; border-collapse: collapse; }
+  img { -ms-interpolation-mode: bicubic; border: 0; outline: none; text-decoration: none; }
+  @media only screen and (max-width: 600px) {
+    body { padding: 0 !important; background: #ffffff !important; }
+    .ap-outer { width: 100% !important; max-width: 100% !important; }
+    .ap-shell { border-radius: 0 !important; box-shadow: none !important; }
+    .ap-hero { padding: 26px 18px 20px !important; }
+    .ap-hero-title { font-size: 22px !important; }
+    .ap-body { padding: 18px 14px 24px !important; }
+    .ap-footer { margin-top: 12px !important; padding: 0 12px 16px !important; }
+  }
+</style>
 </head>
-<body style="margin:0;padding:24px 12px;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue','Noto Sans TC','Microsoft JhengHei',sans-serif;color:${COLOR_INK};-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale">
-  <table role="presentation" cellpadding="0" cellspacing="0" align="center" width="100%" style="max-width:600px;margin:0 auto"><tr><td>
-    <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 8px 32px rgba(15,23,42,0.08)">
-      <tr><td style="padding:32px 28px 22px;background:linear-gradient(135deg,#4f46e5 0%,#7c3aed 50%,#a855f7 100%);color:#ffffff;position:relative">
+<body style="margin:0;padding:24px 12px;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue','Noto Sans TC','Microsoft JhengHei',sans-serif;color:${COLOR_INK};-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale" width="100%">
+  <table role="presentation" cellpadding="0" cellspacing="0" align="center" width="100%" class="ap-outer" style="max-width:600px;margin:0 auto;width:100%"><tr><td>
+    <table role="presentation" cellpadding="0" cellspacing="0" width="100%" class="ap-shell" style="background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 8px 32px rgba(15,23,42,0.08)">
+      <tr><td class="ap-hero" style="padding:32px 28px 22px;background:linear-gradient(135deg,#4f46e5 0%,#7c3aed 50%,#a855f7 100%);color:#ffffff;position:relative">
         <div style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;opacity:0.9;margin-bottom:8px;font-weight:600">AssetPilot · ${month} 月度摘要</div>
-        <div style="font-size:24px;font-weight:800;line-height:1.25;letter-spacing:-0.02em">${safeName}，您好 👋</div>
+        <div class="ap-hero-title" style="font-size:24px;font-weight:800;line-height:1.25;letter-spacing:-0.02em">${safeName}，您好 👋</div>
         <div style="font-size:14px;line-height:1.5;margin-top:8px;opacity:0.95">這是您本月的資產與收支快照<br>資產 <strong>${stats.accountCount}</strong> 個帳戶 · 持股 <strong>${stats.stockHoldings}</strong> 檔</div>
       </td></tr>
-      <tr><td style="padding:24px 24px 28px;background:#ffffff">
+      <tr><td class="ap-body" style="padding:24px 24px 28px;background:#ffffff">
 
         ${sectionTitle('本月收支總覽')}
         ${kpiRow}
@@ -4903,7 +4925,7 @@ function renderStatsEmailHtml(displayName, email, stats) {
         </div>
       </td></tr>
     </table>
-    <div style="text-align:center;margin-top:14px;font-size:11px;color:#94a3b8">
+    <div class="ap-footer" style="text-align:center;margin-top:14px;font-size:11px;color:#94a3b8">
       ©  AssetPilot · 個人資產管理
     </div>
   </td></tr></table>
@@ -6668,6 +6690,62 @@ app.post('/api/transactions', (req, res) => {
   res.status(201).json({ id, twdAmount: twdAmountInt, updatedAt: now });
 });
 
+// T017 (US1)：匯出交易記錄 CSV（純伺服端）— 必須註冊於 /:txId 動態路由之前
+app.get('/api/transactions/export', (req, res) => {
+  const dateFrom = req.query.dateFrom || '';
+  const dateTo = req.query.dateTo || '';
+  try {
+    let where = 'WHERE t.user_id = ?';
+    const params = [req.userId];
+    if (dateFrom && isValidIso8601Date(dateFrom)) { where += ' AND t.date >= ?'; params.push(dateFrom); }
+    if (dateTo && isValidIso8601Date(dateTo)) { where += ' AND t.date <= ?'; params.push(dateTo); }
+    const sql = `SELECT t.date, t.type, t.amount, t.note,
+      c.name AS cat_name, c.parent_id AS cat_parent_id,
+      pc.name AS parent_cat_name,
+      a.name AS account_name
+      FROM transactions t
+      LEFT JOIN categories c ON t.category_id = c.id
+      LEFT JOIN categories pc ON c.parent_id = pc.id
+      LEFT JOIN accounts a ON t.account_id = a.id
+      ${where}
+      ORDER BY t.date DESC, t.created_at DESC`;
+    const rows = queryAll(sql, params);
+    const headers = ['日期', '類型', '分類', '金額', '帳戶', '備註'];
+    const dataRows = rows.map(r => {
+      let category = '';
+      if (r.cat_name) {
+        category = r.parent_cat_name ? (r.parent_cat_name + ' > ' + r.cat_name) : r.cat_name;
+      }
+      return [
+        r.date || '',
+        txTypeToChinese(r.type),
+        category,
+        r.amount,
+        r.account_name || '',
+        r.note || '',
+      ];
+    });
+    const csv = buildCsv(headers, dataRows);
+    const filename = `transactions-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}.csv`;
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(csv);
+    writeOperationAudit({
+      userId: req.userId,
+      role: isUserAdmin(req.userId) ? 'admin' : 'user',
+      action: 'export_transactions',
+      ipAddress: req.ip || '',
+      userAgent: req.headers['user-agent'] || '',
+      result: 'success',
+      isAdminOperation: false,
+      metadata: { rows: dataRows.length, byteSize: Buffer.byteLength(csv, 'utf8'), dateFrom, dateTo },
+    });
+  } catch (e) {
+    console.error('export_transactions failed', e);
+    return res.status(500).json({ error: '匯出失敗', message: String(e?.message || e) });
+  }
+});
+
 // FR-014a（T036）：GET /api/transactions/:txId 單筆（樂觀鎖讀取支援）
 // 004-budgets-recurring T073：補 LEFT JOIN recurring 取 source_recurring_name
 app.get('/api/transactions/:txId', (req, res) => {
@@ -6939,62 +7017,6 @@ function normalizeHexColor(c) {
   }
   return c;
 }
-
-// T017 (US1)：匯出交易記錄 CSV（純伺服端）
-app.get('/api/transactions/export', (req, res) => {
-  const dateFrom = req.query.dateFrom || '';
-  const dateTo = req.query.dateTo || '';
-  try {
-    let where = 'WHERE t.user_id = ?';
-    const params = [req.userId];
-    if (dateFrom && isValidIso8601Date(dateFrom)) { where += ' AND t.date >= ?'; params.push(dateFrom); }
-    if (dateTo && isValidIso8601Date(dateTo)) { where += ' AND t.date <= ?'; params.push(dateTo); }
-    const sql = `SELECT t.date, t.type, t.amount, t.note,
-      c.name AS cat_name, c.parent_id AS cat_parent_id,
-      pc.name AS parent_cat_name,
-      a.name AS account_name
-      FROM transactions t
-      LEFT JOIN categories c ON t.category_id = c.id
-      LEFT JOIN categories pc ON c.parent_id = pc.id
-      LEFT JOIN accounts a ON t.account_id = a.id
-      ${where}
-      ORDER BY t.date DESC, t.created_at DESC`;
-    const rows = queryAll(sql, params);
-    const headers = ['日期', '類型', '分類', '金額', '帳戶', '備註'];
-    const dataRows = rows.map(r => {
-      let category = '';
-      if (r.cat_name) {
-        category = r.parent_cat_name ? (r.parent_cat_name + ' > ' + r.cat_name) : r.cat_name;
-      }
-      return [
-        r.date || '',
-        txTypeToChinese(r.type),
-        category,
-        r.amount,
-        r.account_name || '',
-        r.note || '',
-      ];
-    });
-    const csv = buildCsv(headers, dataRows);
-    const filename = `transactions-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}.csv`;
-    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-    res.send(csv);
-    writeOperationAudit({
-      userId: req.userId,
-      role: isUserAdmin(req.userId) ? 'admin' : 'user',
-      action: 'export_transactions',
-      ipAddress: req.ip || '',
-      userAgent: req.headers['user-agent'] || '',
-      result: 'success',
-      isAdminOperation: false,
-      metadata: { rows: dataRows.length, byteSize: Buffer.byteLength(csv, 'utf8'), dateFrom, dateTo },
-    });
-  } catch (e) {
-    console.error('export_transactions failed', e);
-    return res.status(500).json({ error: '匯出失敗', message: String(e?.message || e) });
-  }
-});
 
 // T029 (US3)：匯出分類結構 CSV
 app.get('/api/categories/export', (req, res) => {

@@ -1,6 +1,19 @@
 {
-  "currentVersion": "4.29.0",
+  "currentVersion": "4.30.0",
   "releases": [
+    {
+      "version": "4.30.0",
+      "date": "2026-04-27",
+      "title": "寄信通道改用環境變數 + 新增 Zeabur Email 通道",
+      "type": "improved",
+      "changes": [
+        { "tag": "warning", "text": "breaking change：移除管理員「SMTP 寄信設定」UI 與 GET/PUT /api/admin/smtp-settings 端點；移除 system_settings 的 smtp_host/port/secure/user/password/from 六個欄位 schema migration（既有 DB 欄位保留不主動破壞，但程式不再讀寫）。原本透過管理員 UI 設定的 SMTP 必須改寫到環境變數" },
+        { "tag": "new", "text": "新增三條寄信通道環境變數：SMTP（SMTP_HOST/PORT/SECURE/USER/PASSWORD/FROM）、Zeabur Email（ZEABUR_API_KEY/ZEABUR_FROM_EMAIL，文件 https://zeabur.com/docs/en-US/email/quick-start ）、Resend（RESEND_API_KEY/RESEND_FROM_EMAIL，沿用既有）" },
+        { "tag": "new", "text": "新增 EMAIL_PROVIDER_PRIMARY / EMAIL_PROVIDER_FALLBACK 環境變數（值：smtp / zeabur / resend / 留空），管理員可指定 1 主 1 備、僅 1 主或全停用；primary 執行期失敗時若 fallback 已設定才自動退回，不重試不補寄（沿用 FR-021 Round 1 Q3 語意）" },
+        { "tag": "new", "text": "新增 GET /api/admin/email-providers（唯讀）回傳目前 primary / fallback 與三通道是否設定；管理員設定頁原 SMTP 卡片改為「寄信通道狀態」唯讀顯示 + 寄測試信按鈕" },
+        { "tag": "improved", "text": "POST /api/admin/test-email 與排程器錯誤訊息更新：未設定通道時提示「請設定 EMAIL_PROVIDER_PRIMARY 環境變數」" }
+      ]
+    },
     {
       "version": "4.29.0",
       "date": "2026-04-27",

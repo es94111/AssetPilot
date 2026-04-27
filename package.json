@@ -23,5 +23,8 @@
     "nodemailer": "^8.0.6",
     "resend": "^6.12.2",
     "sql.js": "^1.14.1"
+  },
+  "overrides": {
+    "uuid": "^14.0.0"
   }
 }

@@ -864,9 +864,8 @@ API 路徑統一以 `/api/` 為前綴。所有需認證的路由自動套用 aut
 | POST   | /api/admin/login-logs/admin/batch-delete | 批次刪除管理員登入紀錄（`{ ids: [...] }`）                |
 | DELETE | /api/admin/login-logs/all/:id            | 刪除單筆全站使用者登入紀錄                                |
 | POST   | /api/admin/login-logs/all/batch-delete   | 批次刪除全站使用者登入紀錄（`{ ids: [...] }`）            |
-| GET    | /api/admin/smtp-settings                 | 取得 SMTP 設定（密碼遮蔽）                                |
-| PUT    | /api/admin/smtp-settings                 | 更新 SMTP 設定                                            |
-| POST   | /api/admin/test-email                    | 寄送 SMTP 測試信                                          |
+| GET    | /api/admin/email-providers               | 取得寄信通道狀態（primary/fallback + 各通道是否設定）     |
+| POST   | /api/admin/test-email                    | 寄送測試信（驗證寄信通道設定）                            |
 | GET    | /api/admin/report-schedule               | 取得資產統計信件排程設定（**deprecated**，005 起改用 /api/admin/report-schedules 複數）|
 | PUT    | /api/admin/report-schedule               | 更新資產統計信件排程設定（**deprecated**；同步寫入 report_schedules 表）|
 | POST   | /api/admin/report-schedule/run-now       | 立即寄送一次（**deprecated**；改為迴圈所有 enabled=1 schedules）|

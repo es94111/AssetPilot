@@ -5177,12 +5177,9 @@ async function runScheduledReportNow(scheduleId, triggeredBy = '排程') {
       return { status: 'invalid_email', sent: 0, failed: 1, skipped: 0, reason: 'Email 無效或未設定' };
     }
 
-    const smtp = getSmtpSettingsRaw();
-    const hasSmtp = !!(smtp.host && smtp.port);
-    const hasResend = !!(RESEND_API_KEY && RESEND_FROM_EMAIL);
-    if (!hasSmtp && !hasResend) {
-      // FR-021: 兩通道皆未設定 → 視為 failed（caller T072 須翻譯為 503）
-      const summary = `${formatTwTime(startedAt)} ${triggeredBy}：寄信服務未設定（SMTP / Resend 皆未配置）`;
+    if (!getActiveEmailProviders().hasAny) {
+      // FR-021: 寄信服務未設定 → 視為 failed（caller T072 須翻譯為 503）
+      const summary = `${formatTwTime(startedAt)} ${triggeredBy}：寄信服務未設定（請設定 EMAIL_PROVIDER_PRIMARY 環境變數）`;
       db.run("UPDATE report_schedules SET last_summary = ?, updated_at = ? WHERE id = ?", [summary, startedAt, scheduleId]);
       saveDB();
       return { status: 'no_email_service', sent: 0, failed: 1, skipped: 0, reason: '寄信服務未設定' };

@@ -75,7 +75,7 @@
    - `updateFabForPage(page)` 改寫為依路由表 `fab` 欄位查詢（`{ label, modalId } | null`）。
    - 404 頁面：`index.html` 加 `<div id="page-404" class="page">…</div>`；`renderPage('404')` 顯示。
    - 登入跳轉：新增 helper `redirectToLogin(reason: 'unauthenticated' | 'session-expired' | 'logout')`：寫 `?next=`（前兩種）／不寫（後者）+ Toast 對應訊息。
-   - `apiFetch(url, options)`：包覆 `fetch`；偵測 401 → 呼叫 `redirectToLogin('session-expired')`；偵測網路錯誤 → 透過 Toast 通知；其他狀態原樣回傳。**所有現有 fetch('/api/…') 呼叫改用 apiFetch**（漸進式改寫；既有 `fetch` 仍可運作但不享有 401 自動導向，留作後續清理）。
+   - `apiFetch(url, options)`：包覆 `fetch`；偵測 401 → 呼叫 `redirectToLogin('session-expired')`；偵測網路錯誤 → 透過 Toast 通知；其他狀態原樣回傳。**所有現有 fetch('/api/…') 呼叫 MUST 一次性全量替換為 apiFetch**（FR-007a 為 MUST 級規範，不採漸進式延後）；登入端點本身（`/api/auth/login`、`/api/auth/register` 等首次取得 cookie 之請求）允許保留原 `fetch` 並以 inline 註解標註豁免；任務 T031 以 `grep` 驗證零殘留作為完成準則。
    - localStorage `theme_pref`：登入成功後寫入；登出時刪除；啟動時讀並樂觀渲染。
 
 6. **後端強化（admin-only 路徑稽核 + 路徑遊走稽核 + 稽核模式設定 + 靜態白名單擴充 + Cache-Control）**（FR-026 ~ FR-028、FR-032 ~ FR-033）：
@@ -159,7 +159,7 @@ Gates derived from `.specify/memory/constitution.md` v1.2.0：
     - `GET /api/auth/me`：response `user` 物件已含 `themeMode`（既有，不變更）。
   - 已於 [contracts/frontend-routing.openapi.yaml](./contracts/frontend-routing.openapi.yaml) 宣告 `openapi: 3.2.0` 並描述上述兩個 PATCH 與既有兩個端點之回應欄位 delta。
   - 根目錄 `openapi.yaml`（v4.28.0）將於同 PR 同步更新（新版本 `4.29.0`，MINOR 非破壞性 — 僅補欄位）。
-  - 共用 schema：`SystemSettings` schema 既有，本計畫 `properties` 加 `routeAuditMode`；`AuditLogActions` 列舉值擴充三條。
+  - 共用 schema：`SystemSettings` schema 既有，本計畫 `properties` 加 `routeAuditMode`；`AuditLogActions` 列舉值擴充四條（`route_admin_path_blocked`／`route_open_redirect_blocked`／`static_path_traversal_blocked`／`session_expired`；後者僅於 `extended` 模式寫入）。
   - 認證：`/api/admin/system-settings` 既有 `security: [cookieAuth: []]` + admin role 不變；不新增公開端點。
   - **檢核結果**：✅ 通過。
 

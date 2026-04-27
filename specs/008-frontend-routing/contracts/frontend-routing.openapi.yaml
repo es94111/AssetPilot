@@ -305,9 +305,15 @@ components:
         - route_admin_path_blocked
         - route_open_redirect_blocked
         - static_path_traversal_blocked
+        - session_expired
       description: |-
         **本功能新增（FR-032）**：data_operation_audit_log.action 之擴充列舉值。
         既有 007 列舉值（export_*／import_*／database_*／audit_log_*／backup_*）保留不變。
+
+        模式對映（FR-033）：
+        - `security`（預設）：僅前三個 `route_*` / `static_*` 動作會被寫入。
+        - `extended`：前三個 + `session_expired` 全部寫入。
+        - `minimal`：上述四個動作皆不寫入；既有 007 稽核行為不受影響。
 
     RouteAuditMetadataAdminPathBlocked:
       type: object
@@ -361,6 +367,29 @@ components:
             - `percent-encoded`：含 `%2e%2e`（單次 percent-encode）
             - `double-encoded`：含 `%252e%252e`（雙重 percent-encode）
       required: [rawUrl, pattern]
+
+    RouteAuditMetadataSessionExpired:
+      type: object
+      description: |-
+        action = `session_expired` 時 metadata 之結構（僅 `extended` 模式下寫入；FR-033）。
+      properties:
+        path:
+          type: string
+          description: 觸發 401 之 API 路徑（例 `/api/auth/me`、`/api/transactions`）
+        reason:
+          type: string
+          enum:
+            - token-missing
+            - token-invalid
+            - token-expired
+            - token-version-mismatch
+          description: |-
+            session 失效原因：
+            - `token-missing`：請求未夾帶 cookie token。
+            - `token-invalid`：token 無法解析／簽章不符。
+            - `token-expired`：token `exp` 已過。
+            - `token-version-mismatch`：token `tokenVersion` 與資料庫不符（被管理員強制登出）。
+      required: [path, reason]
 
   responses:
     Unauthorized:

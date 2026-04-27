@@ -511,9 +511,9 @@ function getRouteAuditMode() {
 
 ---
 
-## 11. 401 自動導向（FR-007a）— 漸進式改寫
+## 11. 401 自動導向（FR-007a）— 全量改寫
 
-**決策**：新增 `apiFetch(url, options)` wrapper；既有 fetch 呼叫漸進式改寫。
+**決策**：新增 `apiFetch(url, options)` wrapper；既有 `fetch('/api/...')` 呼叫於 T031 一次性全量替換（FR-007a 為 MUST 級規範，不採延後）。
 
 **`apiFetch` 設計**：
 ```js
@@ -544,20 +544,20 @@ function redirectToLogin(reason) {
 }
 ```
 
-**漸進式改寫**：
+**全量改寫**：
 - 既有 `fetch('/api/...')` 散落於 `app.js` 多處（>100 處）。
-- 一次性全部改寫風險高；採漸進式：
-  1. 先實作 `apiFetch`。
-  2. 修改最高頻路徑（dashboard、transactions、stocks）改用 `apiFetch`。
-  3. 其餘路徑於 tasks 階段逐一改寫。
-- 未改寫的 `fetch` 仍可運作，僅缺 401 自動導向；過期後使用者下次 fetch 才觸發；可接受過渡。
+- FR-007a 為 MUST 級需求，T031 一次性全量替換為 `apiFetch`：
+  1. 先實作 `apiFetch`（T012）。
+  2. 全量替換所有 `fetch('/api/...')` 呼叫，含 dashboard／transactions／stocks／reports／budget／accounts／categories／recurring／api-credits／settings 全部頁面。
+  3. 完成後以 `grep -n "fetch('/api" app.js` 驗證**零殘留**作為任務完成準則。
+- 未改寫的 `fetch` 將造成 FR-007a 行為破口，視為實作缺陷。
 
-**例外**：
-- `/api/auth/login` / `/api/auth/register` / `/api/auth/google` 之 401 為「登入失敗」非「session 過期」，不導向。
+**例外（豁免）**：
+- `/api/auth/login` / `/api/auth/register` / `/api/auth/google` 之 401 為「登入失敗」非「session 過期」，不導向；保留原 `fetch` 並以 inline 註解（`// FR-007a 例外：登入端點本身`）標註豁免。
 
 **理由**：
 - 集中 401 處理避免每個 fetch 點各自實作。
-- 漸進式改寫降低風險。
+- 全量替換確保 FR-007a「API 任何端點回 401」MUST 行為無破口。
 - spec FR-007a 對應的所有要件皆涵蓋。
 
 ---
@@ -695,7 +695,7 @@ spec.md 的 23 條 Clarification 已全部於 spec 階段解決（見 [spec.md](
 | 後端 catch-all 解 cookie 取 userId 失敗（cookie 過期但路徑為 admin-only） | 低 | 低 | 解 token 失敗視為非管理員，仍寫稽核（防探測）；既有 `verifyJwt` 失敗回 null 已涵蓋 |
 | `?next=` ROUTES 表比對與後端 ADMIN_ONLY_PATHS 不同步 | 中 | 中 | spec FR-032a 已要求單一 PR 同步更新 + code review 把關；plan.md 第 16 點明列 |
 | 14 個圖示之 inline SVG 增加 `app.js` 大小 ~4 KB | 低 | 低 | 既有 `app.js` 已 ~9000 行；4 KB ≪ 1% 增量；可接受 |
-| 漸進式 `apiFetch` 改寫不徹底，部分頁面 401 後不導向 | 中 | 低 | 不影響功能，僅體驗稍差；後續 PR 補完即可 |
+| 全量 `apiFetch` 改寫遺漏少數 fetch 點，造成 FR-007a 破口 | 高 | 低 | T031 完成後以 `grep -n "fetch('/api" app.js` 驗證零殘留；登入端點以 inline 註解標註豁免；CR 階段亦需檢查 |
 
 ---
 

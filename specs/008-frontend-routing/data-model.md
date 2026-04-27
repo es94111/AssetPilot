@@ -139,6 +139,7 @@ ALTER TABLE system_settings ADD COLUMN route_audit_mode TEXT DEFAULT 'security';
 | `route_admin_path_blocked`        | catch-all 偵測非管理員命中 admin path（FR-014、FR-032、FR-032a） | `{ path: string, normalizedPath: string }`                                                          |
 | `route_open_redirect_blocked`     | catch-all 偵測非法 `?next=`（FR-006a、FR-032）  | `{ next: string, reason: 'malformed-uri' \| 'not-relative' \| 'protocol-relative' \| 'unknown-path' }` |
 | `static_path_traversal_blocked`   | catch-all 偵測 `..` / `%2e%2e`（FR-027、FR-032） | `{ rawUrl: string, pattern: 'literal' \| 'percent-encoded' \| 'double-encoded' }`                     |
+| `session_expired`                 | `authMiddleware` 對受保護 API 回 401（FR-007a、FR-032、FR-033 `extended` 模式專屬） | `{ path: string, reason: 'token-missing' \| 'token-invalid' \| 'token-expired' \| 'token-version-mismatch' }` |
 
 ### 既有 `action` 列舉值（不變更，列出供參考）
 
@@ -150,11 +151,13 @@ ALTER TABLE system_settings ADD COLUMN route_audit_mode TEXT DEFAULT 'security';
 
 ### 擴充模式（FR-033）下的寫入規則
 
-| `route_audit_mode` 值 | 寫入新增 3 條 action | 寫入 401（`session_expired`） | 既有 007 action |
-| ----------------------- | ------------------- | ----------------------------- | --------------- |
-| `security`（預設）      | ✅                  | ❌                            | ✅              |
-| `extended`              | ✅                  | ✅（額外）                    | ✅              |
-| `minimal`               | ❌                  | ❌                            | ✅              |
+FR-032 共定義 4 條新增 action：前 3 條為高訊號安全事件（`route_admin_path_blocked`／`route_open_redirect_blocked`／`static_path_traversal_blocked`），第 4 條為 `session_expired`（僅 `extended` 模式寫入）。
+
+| `route_audit_mode` 值 | 寫入前 3 條 action | 寫入 `session_expired` | 既有 007 action |
+| ----------------------- | ------------------ | ---------------------- | --------------- |
+| `security`（預設）      | ✅                 | ❌                     | ✅              |
+| `extended`              | ✅                 | ✅                     | ✅              |
+| `minimal`               | ❌                 | ❌                     | ✅              |
 
 ---
 

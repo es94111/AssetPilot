@@ -97,7 +97,7 @@ description: "前端路由與頁面（008-frontend-routing）任務清單"
 
 - [ ] T029 [US1] [app.js](../../app.js) 在登入頁 render 路徑加入 `?next=` 解析：以單次 `decodeURIComponent` 解碼 `URLSearchParams.get('next')`，丟入 `validateNextParam`；通過時登入成功後 `location.assign(target)`，未通過時 `location.assign('/dashboard')` 並透過 `apiFetch('/api/admin/data-audit-self-report', ...)` ——但本功能 **不新增端點**，open redirect 稽核改由後端 catch-all 偵測（見 T037），前端僅 fallback（FR-006、FR-006a、FR-007；依賴 T011、T012）
 - [ ] T030 [US1] [app.js](../../app.js) 改寫既有 `showLoginPage`／`showPublicHome`／登入成功 callback（[app.js:462-477](../../app.js#L462)附近）：登入成功後若 URL 含合法 `?next=` MUST 跳回該 path；若已登入訪客造訪 `/login` MUST 自動 `replaceState` 至 `/dashboard`（FR-007；依賴 T011）
-- [ ] T031 [US1] [app.js](../../app.js) 將 dashboard、transactions、stocks 三條最高頻 fetch 路徑（既有 `fetch('/api/...')` 呼叫）改用 `apiFetch`：對應 401 自動導向 `/login?next=<currentUrl>` + Toast「您的登入已過期，請重新登入」；其餘 fetch 點留作後續清理（FR-007a；漸進式改寫策略；依賴 T012、T013）
+- [ ] T031 [US1] [app.js](../../app.js) **全量**替換所有 `fetch('/api/...')` 呼叫為 `apiFetch`（FR-007a MUST：API 任何端點回 401 皆需自動導向 `/login?next=<currentUrl>` + Toast「您的登入已過期，請重新登入」）；範圍涵蓋 dashboard／transactions／stocks／reports／budget／accounts／categories／recurring／api-credits／settings/account／settings/admin／settings/export 全部頁面之既有 fetch 點。完成後 MUST 於 [app.js](../../app.js) 執行 `grep -n "fetch('/api" app.js` 驗證**零殘留**；登入端點本身（`/api/auth/login`、`/api/auth/register` 等首次取得 cookie 之請求）允許保留原 `fetch`（無 401 自動導向需求），但 MUST 於 [app.js](../../app.js) 內以 inline 註解（`// FR-007a 例外：登入端點本身`）標註豁免（依賴 T012、T013）
 
 ### 404 訊息頁
 
@@ -230,13 +230,13 @@ description: "前端路由與頁面（008-frontend-routing）任務清單"
 - [ ] T067 [server.js](../../server.js) `GET /api/admin/system-settings`（[server.js:3821](../../server.js#L3821)附近）response 加 `routeAuditMode` 欄位（讀自 T004 新增之 column）（FR-033、契約 [§paths./api/admin/system-settings.get](./contracts/frontend-routing.openapi.yaml)；依賴 T004、T005）
 - [ ] T068 [server.js](../../server.js) `PUT /api/admin/system-settings` request body 接受可選 `routeAuditMode`：值需 ∈ `{'security', 'extended', 'minimal'}`，否則 400「routeAuditMode 必須為 security、extended 或 minimal」；寫入既有 column；不新增端點（FR-033、契約 [§paths./api/admin/system-settings.put](./contracts/frontend-routing.openapi.yaml)；依賴 T067）
 - [ ] T069 [app.js](../../app.js) + [index.html](../../index.html) 管理員設定頁 UI 新增「路由稽核模式」三選一單選（`security` / `extended` / `minimal`）；呼叫 `PUT /api/admin/system-settings` 提交（FR-033；依賴 T068）
-- [ ] T070 [server.js](../../server.js) catch-all（T036~T038、T047）內所有 `writeOperationAudit` 呼叫以 `getRouteAuditMode()` 判別模式：`minimal` 全跳過；`extended` 額外於 401 偵測點寫 `session_expired`（前端 401 走 `/api/auth/me` 等端點；後端在 authMiddleware 401 回應路徑加寫 hook 即可，不影響業務邏輯）（FR-033；依賴 T005、T036、T037、T038、T047）
+- [ ] T070 [server.js](../../server.js) catch-all（T036~T038、T047）內所有 `writeOperationAudit` 呼叫以 `getRouteAuditMode()` 判別模式：`minimal` 全跳過；`extended` 額外於既有 `authMiddleware` 401 回應路徑加 hook 寫入 `session_expired`（FR-032 第四項列舉；metadata 須含 `path` 與 `reason ∈ {'token-missing', 'token-invalid', 'token-expired', 'token-version-mismatch'}`，與 [contracts/frontend-routing.openapi.yaml](./contracts/frontend-routing.openapi.yaml) `RouteAuditMetadataSessionExpired` 一致）；不影響業務邏輯（FR-032、FR-033；依賴 T005、T036、T037、T038、T047）
 
 ### 契約與文件同步
 
-- [ ] T071 [P] [openapi.yaml](../../openapi.yaml) 將 `info.version` 升至 `4.29.0`；`SystemSettings` schema `properties` 加 `routeAuditMode`（enum: security/extended/minimal, default: security）並補入 `required`；`PUT /api/admin/system-settings` requestBody schema 同步加可選 `routeAuditMode`；`AuditLogActions` 列舉值擴充三條 `route_admin_path_blocked` / `route_open_redirect_blocked` / `static_path_traversal_blocked`（與 [contracts/frontend-routing.openapi.yaml](./contracts/frontend-routing.openapi.yaml) 一致）
+- [ ] T071 [P] [openapi.yaml](../../openapi.yaml) 將 `info.version` 升至 `4.29.0`；`SystemSettings` schema `properties` 加 `routeAuditMode`（enum: security/extended/minimal, default: security）並補入 `required`；`PUT /api/admin/system-settings` requestBody schema 同步加可選 `routeAuditMode`；`AuditLogActions` 列舉值擴充**四條** `route_admin_path_blocked` / `route_open_redirect_blocked` / `static_path_traversal_blocked` / `session_expired`（FR-032 第四項；僅於 `extended` 模式寫入）；新增 metadata schema `RouteAuditMetadataSessionExpired`（與 [contracts/frontend-routing.openapi.yaml](./contracts/frontend-routing.openapi.yaml) `RouteAuditAction` enum 與 `RouteAuditMetadataSessionExpired` 一致）
 - [ ] T072 [P] [changelog.json](../../changelog.json) 新增 v4.29.0 條目：摘要「前端路由與頁面（008）：URL-first SPA 路由、12 個 Modal 共用基底、側邊欄三段式佈局、外觀模式跨裝置同步快取、靜態檔白名單擴充、路由稽核模式」+ 對應 PR 連結 placeholder；版本日期填 2026-04-27
-- [ ] T073 [P] [SRS.md](../../SRS.md) 補登：admin-only 路徑 `ADMIN_ONLY_PATHS = ['/settings/admin']` 常數宣告與手動同步要求（FR-032a）；`route_audit_mode` 欄位三模式行為矩陣（FR-033）；`data_operation_audit_log.action` 三條新增列舉值描述
+- [ ] T073 [P] [SRS.md](../../SRS.md) 補登：admin-only 路徑 `ADMIN_ONLY_PATHS = ['/settings/admin']` 常數宣告與手動同步要求（FR-032a）；`route_audit_mode` 欄位三模式行為矩陣（FR-033，含 `extended` 觸發 `session_expired` 之說明）；`data_operation_audit_log.action` 四條新增列舉值描述（含 `session_expired`）
 
 ### 驗證
 
@@ -335,7 +335,7 @@ US3（依賴 US2 渲染框架）+ US5（ModalBase 行為實作）建議於 US2 +
 - `[Story]` 標籤對應 spec 6 條 user story 之優先序（US1/US2 = P1、US3/US4 = P2、US5/US6 = P3）
 - 每完成一個 Story 階段建議 commit 並執行對應 quickstart 區段
 - 「不引入新依賴」原則：所有任務 MUST 嚴守，發現需新 npm 套件／CDN 即停下與 user 確認
-- 漸進式 `apiFetch` 改寫策略（T031）：US1 僅替換高頻路徑；其餘 fetch 留作後續 PR 清理（不影響功能、僅體驗稍差）
+- `apiFetch` 全量改寫（T031）：FR-007a 為 MUST 級需求，所有 `fetch('/api/...')` 呼叫一次性替換完成；登入端點豁免條件已於 T031 明示。完成後以 grep 驗證零殘留作為任務完成準則
 - 後端 ROUTES path 列表（T038 內隱含）需與前端 T006 手動同步；於 T071 openapi.yaml 同步檢查時雙方對齊
 - T020 + T065 + T066 為「移除獨立 `/privacy` `/terms` handler 改由 SPA 處理」之三步動作，需於同一 PR 內完成避免 broken state
 - ModalBase 改寫（T056~T060）為 12 個 Modal 一次性 lifecycle 接管，建議於同一 PR 完成並逐一回歸；若風險過高可拆分為「先實作 ModalBase + 接 5 個高頻 Modal」與「補完剩餘 7 個 Modal」兩 PR

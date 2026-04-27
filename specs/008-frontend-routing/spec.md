@@ -354,13 +354,14 @@
 #### 路由與權限稽核日誌（跨 US2 + US6）
 
 - **FR-032**：系統 MUST 將下列路由相關安全事件寫入 audit log（沿用既有 `data_operation_audit_log` 表或等價結構，欄位含 user_id、role、action、ip_address、user_agent、timestamp、metadata）：
-  - **`route_admin_path_blocked`**：一般使用者（非管理員）命中 `/settings/admin` 或其他僅限管理員之路徑（前端僅顯示 404 但後端 API 回 403 時觸發；FR-014）。
-  - **`route_open_redirect_blocked`**：`?next=` 參數被合法性檢查攔下為外部連結或非合法內部路徑（FR-006、FR-007、FR-007a）。
-  - **`static_path_traversal_blocked`**：靜態檔白名單偵測到 `..` 或 URL-encoded 等價形式並拒絕（FR-027）。
+  - **`route_admin_path_blocked`**：一般使用者（非管理員）命中 `/settings/admin` 或其他僅限管理員之路徑（前端僅顯示 404 但後端 API 回 403 時觸發；FR-014）。預設於 `security` 與 `extended` 模式寫入。
+  - **`route_open_redirect_blocked`**：`?next=` 參數被合法性檢查攔下為外部連結或非合法內部路徑（FR-006、FR-007、FR-007a）。預設於 `security` 與 `extended` 模式寫入。
+  - **`static_path_traversal_blocked`**：靜態檔白名單偵測到 `..` 或 URL-encoded 等價形式並拒絕（FR-027）。預設於 `security` 與 `extended` 模式寫入。
+  - **`session_expired`**：使用中 session／JWT 失效（後端 `authMiddleware` 對受保護 API 回 401 之路徑點觸發；對應前端 FR-007a 行為）。**僅於 `extended` 模式寫入**；`security`／`minimal` 模式 MUST NOT 寫入此事件。metadata MUST 包含 `path`（觸發 401 之 API 路徑）、`reason`（`token-missing`／`token-invalid`／`token-expired`／`token-version-mismatch` 四選一）。
 - **FR-032a**：後端 MUST 維護「admin-only 路徑」常數陣列（程式碼層級，例如於 `server.js` 或路由模組內定義 `ADMIN_ONLY_PATHS = ['/settings/admin']`），作為 `route_admin_path_blocked` 偵測的單一比對來源。catch-all 收到請求時若使用者非管理員且正規化後（FR-010a）路徑命中此陣列，MUST 寫入該稽核事件後再回傳 SPA `index.html`（讓前端依 FR-014 渲染 404）。本陣列與前端路由表（FR-002）**手動同步**並以 code review 把關一致性；新增任何 admin-only 路徑時 MUST 於同一 PR 內同時更新前端路由表與後端常數陣列，否則視為實作缺陷。
 - **FR-033**：管理員 MUST 可於系統設定頁切換稽核範圍模式：
-  - **`security`（預設）**：僅 FR-032 列出的高訊號安全事件。
-  - **`extended`**：追加記錄 401（使用中 session 失效，FR-007a）。
+  - **`security`（預設）**：僅寫入 FR-032 前三個高訊號安全事件（`route_admin_path_blocked`／`route_open_redirect_blocked`／`static_path_traversal_blocked`）。
+  - **`extended`**：寫入 FR-032 全部四個事件（前三項 + `session_expired`）；`session_expired` 動作名稱需與 FR-032 第四項列舉一致並同步登錄至 OpenAPI `AuditLogActions` schema。
   - **`minimal`**：停止寫入本功能定義的路由相關事件（仍保留 001／007 既有的稽核行為）。
   
   常規 `popstate` / `pushState` 切換與 404 命中 MUST NOT 寫入稽核（雜訊過高），不論模式為何。

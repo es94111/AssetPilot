@@ -1011,7 +1011,7 @@ const App = (() => {
   }
 
   // ─── 008 feature: 前端路由表（FR-001、FR-002、FR-015b 第 4 點）─────────────
-  // 20 條：4 公開 + 16 受保護（/stocks 雙別名為兩條獨立項目）
+  // 21 條：4 公開 + 17 受保護（/stocks 雙別名為兩條獨立項目）
   const ROUTES = [
     // 公開路由
     { path: '/',          page: 'public-home', sub: null, isPublic: true,  requireAdmin: false, staticTitle: '首頁',           icon: null,            fab: null },
@@ -1031,6 +1031,7 @@ const App = (() => {
     { path: '/stocks/transactions',  page: 'stocks',       sub: 'transactions', isPublic: false, requireAdmin: false, staticTitle: '股票交易紀錄',      icon: 'arrow-up-down', fab: { label: '新增股票交易紀錄', modalId: 'modalStockTx' } },
     { path: '/stocks/dividends',     page: 'stocks',       sub: 'dividends',    isPublic: false, requireAdmin: false, staticTitle: '股票股利紀錄',      icon: 'gift',          fab: { label: '新增股票交易紀錄', modalId: 'modalStockTx' } },
     { path: '/stocks/realized',      page: 'stocks',       sub: 'realized',     isPublic: false, requireAdmin: false, staticTitle: '股票實現損益紀錄',  icon: 'check',         fab: { label: '新增股票交易紀錄', modalId: 'modalStockTx' } },
+    { path: '/stocks/settings',      page: 'stocks',       sub: 'settings',     isPublic: false, requireAdmin: false, staticTitle: '股票交易設定',      icon: 'sliders',       fab: { label: '新增股票交易紀錄', modalId: 'modalStockTx' } },
     { path: '/api-credits',          page: 'api-credits',  sub: null,           isPublic: false, requireAdmin: false, staticTitle: 'API 使用與授權',    icon: 'key',           fab: null },
     { path: '/settings/account',     page: 'settings',     sub: 'account',      isPublic: false, requireAdmin: false, staticTitle: '帳號設定',          icon: 'user',          fab: null },
     { path: '/settings/admin',       page: 'settings',     sub: 'admin',        isPublic: false, requireAdmin: true,  staticTitle: '管理員面板',        icon: 'shield',        fab: null },
@@ -1055,6 +1056,7 @@ const App = (() => {
     user: SVG('<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>'),
     shield: SVG('<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>'),
     database: SVG('<ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/>'),
+    sliders: SVG('<line x1="4" x2="4" y1="21" y2="14"/><line x1="4" x2="4" y1="10" y2="3"/><line x1="12" x2="12" y1="21" y2="12"/><line x1="12" x2="12" y1="8" y2="3"/><line x1="20" x2="20" y1="21" y2="16"/><line x1="20" x2="20" y1="12" y2="3"/><line x1="2" x2="6" y1="14" y2="14"/><line x1="10" x2="14" y1="8" y2="8"/><line x1="18" x2="22" y1="16" y2="16"/>'),
   };
   function fallbackBlock(label) {
     const ch = (label || '?').slice(0, 1);

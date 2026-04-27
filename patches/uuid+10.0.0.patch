@@ -1,0 +1,104 @@
+diff --git a/node_modules/uuid/dist/v35.js b/node_modules/uuid/dist/v35.js
+--- a/node_modules/uuid/dist/v35.js
++++ b/node_modules/uuid/dist/v35.js
+@@ -43,6 +43,9 @@
+     bytes[8] = bytes[8] & 0x3f | 0x80;
+     if (buf) {
+       offset = offset || 0;
++      if (offset < 0 || offset + 16 > buf.length) {
++        throw new RangeError(`UUID byte range ${offset}:${offset + 15} is out of buffer bounds`);
++      }
+       for (let i = 0; i < 16; ++i) {
+         buf[offset + i] = bytes[i];
+       }
+diff --git a/node_modules/uuid/dist/v6.js b/node_modules/uuid/dist/v6.js
+--- a/node_modules/uuid/dist/v6.js
++++ b/node_modules/uuid/dist/v6.js
+@@ -29,6 +29,9 @@
+ 
+   // Return as a byte array if requested
+   if (buf) {
++    if (offset < 0 || offset + 16 > buf.length) {
++      throw new RangeError(`UUID byte range ${offset}:${offset + 15} is out of buffer bounds`);
++    }
+     for (let i = 0; i < 16; i++) {
+       buf[offset + i] = bytes[i];
+     }
+diff --git a/node_modules/uuid/dist/esm-node/v35.js b/node_modules/uuid/dist/esm-node/v35.js
+--- a/node_modules/uuid/dist/esm-node/v35.js
++++ b/node_modules/uuid/dist/esm-node/v35.js
+@@ -35,6 +35,9 @@
+     bytes[8] = bytes[8] & 0x3f | 0x80;
+     if (buf) {
+       offset = offset || 0;
++      if (offset < 0 || offset + 16 > buf.length) {
++        throw new RangeError(`UUID byte range ${offset}:${offset + 15} is out of buffer bounds`);
++      }
+       for (let i = 0; i < 16; ++i) {
+         buf[offset + i] = bytes[i];
+       }
+diff --git a/node_modules/uuid/dist/esm-node/v6.js b/node_modules/uuid/dist/esm-node/v6.js
+--- a/node_modules/uuid/dist/esm-node/v6.js
++++ b/node_modules/uuid/dist/esm-node/v6.js
+@@ -23,6 +23,9 @@
+ 
+   // Return as a byte array if requested
+   if (buf) {
++    if (offset < 0 || offset + 16 > buf.length) {
++      throw new RangeError(`UUID byte range ${offset}:${offset + 15} is out of buffer bounds`);
++    }
+     for (let i = 0; i < 16; i++) {
+       buf[offset + i] = bytes[i];
+     }
+diff --git a/node_modules/uuid/dist/esm-browser/v35.js b/node_modules/uuid/dist/esm-browser/v35.js
+--- a/node_modules/uuid/dist/esm-browser/v35.js
++++ b/node_modules/uuid/dist/esm-browser/v35.js
+@@ -35,6 +35,9 @@
+     bytes[8] = bytes[8] & 0x3f | 0x80;
+     if (buf) {
+       offset = offset || 0;
++      if (offset < 0 || offset + 16 > buf.length) {
++        throw new RangeError(`UUID byte range ${offset}:${offset + 15} is out of buffer bounds`);
++      }
+       for (var i = 0; i < 16; ++i) {
+         buf[offset + i] = bytes[i];
+       }
+diff --git a/node_modules/uuid/dist/esm-browser/v6.js b/node_modules/uuid/dist/esm-browser/v6.js
+--- a/node_modules/uuid/dist/esm-browser/v6.js
++++ b/node_modules/uuid/dist/esm-browser/v6.js
+@@ -27,6 +27,9 @@
+ 
+   // Return as a byte array if requested
+   if (buf) {
++    if (offset < 0 || offset + 16 > buf.length) {
++      throw new RangeError(`UUID byte range ${offset}:${offset + 15} is out of buffer bounds`);
++    }
+     for (var i = 0; i < 16; i++) {
+       buf[offset + i] = bytes[i];
+     }
+diff --git a/node_modules/uuid/dist/commonjs-browser/v35.js b/node_modules/uuid/dist/commonjs-browser/v35.js
+--- a/node_modules/uuid/dist/commonjs-browser/v35.js
++++ b/node_modules/uuid/dist/commonjs-browser/v35.js
+@@ -43,6 +43,9 @@
+     bytes[8] = bytes[8] & 0x3f | 0x80;
+     if (buf) {
+       offset = offset || 0;
++      if (offset < 0 || offset + 16 > buf.length) {
++        throw new RangeError(`UUID byte range ${offset}:${offset + 15} is out of buffer bounds`);
++      }
+       for (var i = 0; i < 16; ++i) {
+         buf[offset + i] = bytes[i];
+       }
+diff --git a/node_modules/uuid/dist/commonjs-browser/v6.js b/node_modules/uuid/dist/commonjs-browser/v6.js
+--- a/node_modules/uuid/dist/commonjs-browser/v6.js
++++ b/node_modules/uuid/dist/commonjs-browser/v6.js
+@@ -33,6 +33,9 @@
+ 
+   // Return as a byte array if requested
+   if (buf) {
++    if (offset < 0 || offset + 16 > buf.length) {
++      throw new RangeError(`UUID byte range ${offset}:${offset + 15} is out of buffer bounds`);
++    }
+     for (var i = 0; i < 16; i++) {
+       buf[offset + i] = bytes[i];
+     }

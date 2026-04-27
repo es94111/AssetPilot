@@ -4760,9 +4760,9 @@ function renderStatsEmailHtml(displayName, email, stats) {
   const srLabel = sr >= 30 ? '健康' : sr >= 10 ? '尚可' : '偏低';
   const srBlock = stats.income > 0 ? `
     <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:18px 0 4px;background:${COLOR_BG_SOFT};border-radius:10px;border:1px solid ${COLOR_BORDER}"><tr><td style="padding:14px 16px">
-      <table role="presentation" cellpadding="0" cellspacing="0" width="100%"><tr>
-        <td style="font-size:13px;color:${COLOR_MUTED};font-weight:600">本月儲蓄率</td>
-        <td style="font-size:13px;text-align:right"><span style="color:${srColor};font-weight:700;font-size:15px">${sr}%</span> <span style="color:${COLOR_MUTED};font-size:11px">· ${srLabel}</span></td>
+      <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="table-layout:fixed"><tr>
+        <td width="50%" style="font-size:13px;color:${COLOR_MUTED};font-weight:600">本月儲蓄率</td>
+        <td width="50%" style="font-size:13px;text-align:right"><span style="color:${srColor};font-weight:700;font-size:15px">${sr}%</span> <span style="color:${COLOR_MUTED};font-size:11px">· ${srLabel}</span></td>
       </tr></table>
       <div style="height:8px;background:#e2e8f0;border-radius:999px;overflow:hidden;margin-top:8px">
         <div style="height:8px;width:${sr}%;background:linear-gradient(90deg,${srColor},${srColor})"></div>
@@ -4784,12 +4784,12 @@ function renderStatsEmailHtml(displayName, email, stats) {
         const pct = stats.topCategoriesMax > 0 ? Math.round((c.total / stats.topCategoriesMax) * 100) : 0;
         const safeColor = /^#[0-9A-Fa-f]{3,8}$/.test(c.color) ? c.color : '#94a3b8';
         return `<tr><td style="padding:11px 14px;border-bottom:1px solid ${COLOR_BORDER}">
-          <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom:6px"><tr>
-            <td style="font-size:13px;color:${COLOR_INK}">
+          <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom:6px;table-layout:fixed"><tr>
+            <td width="60%" style="font-size:13px;color:${COLOR_INK}">
               <span style="display:inline-block;width:18px;color:${COLOR_MUTED};font-size:11px">${idx + 1}.</span>
               ${escapeEmailHtml(c.name)}
             </td>
-            <td style="font-size:13px;color:${COLOR_INK};font-weight:700;text-align:right">${escapeEmailHtml(formatAmount(c.total))}</td>
+            <td width="40%" style="font-size:13px;color:${COLOR_INK};font-weight:700;text-align:right">${escapeEmailHtml(formatAmount(c.total))}</td>
           </tr></table>
           <div style="height:6px;background:#f1f5f9;border-radius:999px;overflow:hidden">
             <div style="height:6px;width:${pct}%;background:${safeColor};border-radius:999px"></div>
@@ -4816,13 +4816,13 @@ function renderStatsEmailHtml(displayName, email, stats) {
             const note = t.note ? `<div style="color:#94a3b8;font-size:12px;margin-top:2px">${escapeEmailHtml(t.note)}</div>` : '';
             return `<tr>
               <td style="padding:11px 14px;border-bottom:1px solid ${COLOR_BORDER}">
-                <table role="presentation" cellpadding="0" cellspacing="0" width="100%"><tr>
-                  <td>
+                <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="table-layout:fixed"><tr>
+                  <td width="65%">
                     <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${safeColor};margin-right:8px;vertical-align:middle"></span>
                     <span style="color:${COLOR_INK};font-weight:600">${escapeEmailHtml(t.categoryName)}</span>
                     ${note}
                   </td>
-                  <td style="text-align:right;color:${color};font-weight:700;white-space:nowrap;vertical-align:top">${sign}${escapeEmailHtml(formatAmount(t.amount))}</td>
+                  <td width="35%" style="text-align:right;color:${color};font-weight:700;white-space:nowrap;vertical-align:top">${sign}${escapeEmailHtml(formatAmount(t.amount))}</td>
                 </tr></table>
               </td>
             </tr>`;
@@ -4861,28 +4861,34 @@ function renderStatsEmailHtml(displayName, email, stats) {
         const dateColor = isWeekend ? '#a855f7' : COLOR_INK;
         const md = r.date.slice(5).replace('-', '/');
         return `<tr>
-          <td style="padding:9px 12px;border-bottom:1px solid ${COLOR_BORDER};font-size:13px;color:${dateColor};white-space:nowrap;font-weight:600">
-            ${escapeEmailHtml(md)} <span style="color:${COLOR_MUTED};font-size:11px;font-weight:400">(${WEEKDAY_LABELS[r.weekday]})</span>
+          <td class="ap-bk-cell" style="padding:9px 12px;border-bottom:1px solid ${COLOR_BORDER};font-size:13px;color:${dateColor};font-weight:600">
+            <span style="white-space:nowrap">${escapeEmailHtml(md)}</span> <span style="color:${COLOR_MUTED};font-size:11px;font-weight:400;white-space:nowrap">(${WEEKDAY_LABELS[r.weekday]})</span>
           </td>
-          <td style="padding:9px 12px;border-bottom:1px solid ${COLOR_BORDER};font-size:13px;text-align:right;color:${r.income > 0 ? COLOR_GREEN : '#cbd5e1'};white-space:nowrap">
+          <td class="ap-bk-cell" style="padding:9px 12px;border-bottom:1px solid ${COLOR_BORDER};font-size:13px;text-align:right;color:${r.income > 0 ? COLOR_GREEN : '#cbd5e1'};white-space:nowrap">
             ${r.income > 0 ? '+' + escapeEmailHtml(formatAmount(r.income)) : '—'}
           </td>
-          <td style="padding:9px 12px;border-bottom:1px solid ${COLOR_BORDER};font-size:13px;text-align:right;color:${r.expense > 0 ? COLOR_RED : '#cbd5e1'};white-space:nowrap">
+          <td class="ap-bk-cell" style="padding:9px 12px;border-bottom:1px solid ${COLOR_BORDER};font-size:13px;text-align:right;color:${r.expense > 0 ? COLOR_RED : '#cbd5e1'};white-space:nowrap">
             ${r.expense > 0 ? '−' + escapeEmailHtml(formatAmount(r.expense)) : '—'}
           </td>
-          <td style="padding:9px 12px;border-bottom:1px solid ${COLOR_BORDER};font-size:13px;text-align:right;font-weight:600;white-space:nowrap;color:${r.net > 0 ? COLOR_GREEN : r.net < 0 ? COLOR_RED : '#cbd5e1'}">
+          <td class="ap-bk-cell" style="padding:9px 12px;border-bottom:1px solid ${COLOR_BORDER};font-size:13px;text-align:right;font-weight:600;white-space:nowrap;color:${r.net > 0 ? COLOR_GREEN : r.net < 0 ? COLOR_RED : '#cbd5e1'}">
             ${r.net === 0 ? '—' : (r.net > 0 ? '+' : '') + escapeEmailHtml(formatAmount(r.net))}
           </td>
         </tr>`;
       }).join('');
       txContent = summaryHeader + `
-        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;font-size:13px;border:1px solid ${COLOR_BORDER};border-radius:10px;overflow:hidden">
+        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;font-size:13px;border:1px solid ${COLOR_BORDER};border-radius:10px;overflow:hidden;table-layout:fixed">
+          <colgroup>
+            <col width="28%">
+            <col width="24%">
+            <col width="24%">
+            <col width="24%">
+          </colgroup>
           <thead>
             <tr style="background:${COLOR_BG_SOFT}">
-              <th style="padding:9px 12px;text-align:left;color:${COLOR_MUTED};font-size:11px;letter-spacing:0.06em;text-transform:uppercase;font-weight:600;border-bottom:1px solid ${COLOR_BORDER}">日期</th>
-              <th style="padding:9px 12px;text-align:right;color:${COLOR_MUTED};font-size:11px;letter-spacing:0.06em;text-transform:uppercase;font-weight:600;border-bottom:1px solid ${COLOR_BORDER}">收入</th>
-              <th style="padding:9px 12px;text-align:right;color:${COLOR_MUTED};font-size:11px;letter-spacing:0.06em;text-transform:uppercase;font-weight:600;border-bottom:1px solid ${COLOR_BORDER}">支出</th>
-              <th style="padding:9px 12px;text-align:right;color:${COLOR_MUTED};font-size:11px;letter-spacing:0.06em;text-transform:uppercase;font-weight:600;border-bottom:1px solid ${COLOR_BORDER}">淨額</th>
+              <th class="ap-bk-cell" style="padding:9px 12px;text-align:left;color:${COLOR_MUTED};font-size:11px;letter-spacing:0.06em;text-transform:uppercase;font-weight:600;border-bottom:1px solid ${COLOR_BORDER}">日期</th>
+              <th class="ap-bk-cell" style="padding:9px 12px;text-align:right;color:${COLOR_MUTED};font-size:11px;letter-spacing:0.06em;text-transform:uppercase;font-weight:600;border-bottom:1px solid ${COLOR_BORDER}">收入</th>
+              <th class="ap-bk-cell" style="padding:9px 12px;text-align:right;color:${COLOR_MUTED};font-size:11px;letter-spacing:0.06em;text-transform:uppercase;font-weight:600;border-bottom:1px solid ${COLOR_BORDER}">支出</th>
+              <th class="ap-bk-cell" style="padding:9px 12px;text-align:right;color:${COLOR_MUTED};font-size:11px;letter-spacing:0.06em;text-transform:uppercase;font-weight:600;border-bottom:1px solid ${COLOR_BORDER}">淨額</th>
             </tr>
           </thead>
           <tbody>${dailyRows}</tbody>
@@ -4922,22 +4928,22 @@ function renderStatsEmailHtml(displayName, email, stats) {
 
     stockBlock = `<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:${COLOR_BG_SOFT};border-radius:12px;border:1px solid ${COLOR_BORDER}"><tr><td style="padding:16px 18px">
         <div style="font-size:12px;color:${COLOR_MUTED};letter-spacing:0.06em;text-transform:uppercase;font-weight:600;margin-bottom:10px">目前持有 <span style="color:${COLOR_INK};font-weight:700">${stats.stockHoldings}</span> 檔${stalestNote}</div>
-        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="font-size:14px;border-collapse:collapse"><tbody>
+        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="font-size:14px;border-collapse:collapse;table-layout:fixed"><tbody>
           <tr>
-            <td style="padding:8px 0;color:${COLOR_MUTED};border-bottom:1px solid ${COLOR_BORDER}">總成本</td>
-            <td style="padding:8px 0;text-align:right;color:${COLOR_INK};border-bottom:1px solid ${COLOR_BORDER}">${escapeEmailHtml(formatAmount(stats.stockCostTwd))}</td>
+            <td width="55%" style="padding:8px 0;color:${COLOR_MUTED};border-bottom:1px solid ${COLOR_BORDER}">總成本</td>
+            <td width="45%" style="padding:8px 0;text-align:right;color:${COLOR_INK};border-bottom:1px solid ${COLOR_BORDER}">${escapeEmailHtml(formatAmount(stats.stockCostTwd))}</td>
           </tr>
           <tr>
-            <td style="padding:8px 0;color:${COLOR_MUTED};border-bottom:1px solid ${COLOR_BORDER}">總市值</td>
-            <td style="padding:8px 0;text-align:right;color:${COLOR_INK};font-weight:700;border-bottom:1px solid ${COLOR_BORDER}">${escapeEmailHtml(formatAmount(stats.stockMarketValueTwd))}</td>
+            <td width="55%" style="padding:8px 0;color:${COLOR_MUTED};border-bottom:1px solid ${COLOR_BORDER}">總市值</td>
+            <td width="45%" style="padding:8px 0;text-align:right;color:${COLOR_INK};font-weight:700;border-bottom:1px solid ${COLOR_BORDER}">${escapeEmailHtml(formatAmount(stats.stockMarketValueTwd))}</td>
           </tr>
           <tr>
-            <td style="padding:8px 0;color:${COLOR_MUTED};border-bottom:1px solid ${COLOR_BORDER}">未實現損益</td>
-            <td style="padding:8px 0;text-align:right;color:${plColor};font-weight:700;border-bottom:1px solid ${COLOR_BORDER}">${plSign}${escapeEmailHtml(formatAmount(stats.stockUnrealizedPL))}</td>
+            <td width="55%" style="padding:8px 0;color:${COLOR_MUTED};border-bottom:1px solid ${COLOR_BORDER}">未實現損益</td>
+            <td width="45%" style="padding:8px 0;text-align:right;color:${plColor};font-weight:700;border-bottom:1px solid ${COLOR_BORDER}">${plSign}${escapeEmailHtml(formatAmount(stats.stockUnrealizedPL))}</td>
           </tr>
           <tr>
-            <td style="padding:8px 0;color:${COLOR_MUTED}">報酬率</td>
-            <td style="padding:8px 0;text-align:right;color:${returnColor};font-weight:700;font-size:15px">${returnPctStr}</td>
+            <td width="55%" style="padding:8px 0;color:${COLOR_MUTED}">報酬率</td>
+            <td width="45%" style="padding:8px 0;text-align:right;color:${returnColor};font-weight:700;font-size:15px">${returnPctStr}</td>
           </tr>
         </tbody></table>
       </td></tr></table>`;
@@ -4993,6 +4999,7 @@ function renderStatsEmailHtml(displayName, email, stats) {
     .ap-hero-title { font-size: 22px !important; }
     .ap-body { padding: 18px 14px 24px !important; }
     .ap-footer { margin-top: 12px !important; padding: 0 12px 16px !important; }
+    .ap-bk-cell { padding: 8px 6px !important; font-size: 12px !important; }
   }
 </style>
 </head>

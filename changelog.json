@@ -4,200 +4,173 @@
     {
       "version": "4.29.0",
       "date": "2026-04-27",
-      "title": "前端路由與頁面（008-frontend-routing）：URL-first SPA 路由 + 12 個 Modal 共用基底 + 側邊欄三段式佈局 + 外觀模式跨裝置同步快取 + 靜態檔白名單擴充 + 路由稽核模式",
+      "title": "全新前端路由與頁面架構",
       "type": "new",
       "changes": [
-        { "tag": "warning", "text": "schema migration：為既有 `system_settings` 新增 `route_audit_mode TEXT DEFAULT 'security'` 欄位（FR-033，冪等 ALTER）；`data_operation_audit_log.action` 列舉值擴充四條（route_admin_path_blocked / route_open_redirect_blocked / static_path_traversal_blocked / session_expired），不變更欄位定義" },
-        { "tag": "new", "text": "前端 ROUTES 表（4 公開 + 16 受保護，含 /stocks 雙別名）+ parsePath / buildPath / normalizePath / validateNextParam 純函式（FR-001 ~ FR-005、FR-010a、FR-006a）；前端路由由 URL pathname 直接決定 page，既有 navigate(page, sub) 簽章保留作 alias" },
-        { "tag": "new", "text": "404 訊息頁（#page-404）：未知路徑或非管理員命中管理員路徑時顯示 404 訊息頁，URL 保留原樣；前端走 FR-008 / FR-014 一致渲染策略" },
-        { "tag": "new", "text": "頂部 2px indeterminate 路由切換進度條（200ms 延遲門檻、prefers-reduced-motion 降級）+ aria-live polite SR live region（FR-010d / FR-010e）" },
-        { "tag": "new", "text": "Modal 共用基底元件 ModalBase：history 整合、捲動鎖（含 iOS Safari 滾動穿透防護）、堆疊規則（僅 modalConfirm 可疊在其他 Modal 上）、焦點 trap、ESC 關閉、初始焦點（FR-022 ~ FR-024b）" },
-        { "tag": "new", "text": "側邊欄三段式佈局（top: logo / mid: 主清單 / bottom: 使用者區）+ 三件式 active 視覺（左 4px 直條 + 主色文字 + 主色 8% 背景）+ 14 個 Lucide 風格 inline SVG 圖示（FR-015 / FR-015a / FR-015b / FR-015c）" },
-        { "tag": "new", "text": "401 自動導向（FR-007a）：apiFetch wrapper 偵測 401（除登入端點）→ Toast「您的登入已過期，請重新登入」+ /login?next= 導向；登出時清除 theme_pref 與 next 參數（FR-007b）" },
-        { "tag": "new", "text": "外觀模式跨裝置同步快取：localStorage `theme_pref` 三層 fallback（API → localStorage → prefers-color-scheme），登出清除以避免殘留" },
-        { "tag": "new", "text": "後端 catch-all 稽核：path traversal（含 percent / double 編碼）+ open redirect（/login?next=）+ admin-only 路徑攔截（ADMIN_ONLY_PATHS 常數陣列；與前端 ROUTES requireAdmin: true 條目手動同步）" },
-        { "tag": "new", "text": "管理員設定頁新增「路由稽核模式」三選一（security / extended / minimal）；security 為預設，extended 額外寫入 401 session_expired，minimal 全部關閉" },
-        { "tag": "new", "text": "靜態檔白名單擴充至 9 條（追加 /changelog.json、/privacy.html、/terms.html）+ Cache-Control 標頭（changelog.json / index.html → no-cache；其餘 → public, max-age=300）" },
-        { "tag": "new", "text": "移除既有獨立 /privacy 與 /terms handler，改由 catch-all 走 SPA index → 前端 router 渲染 #page-privacy / #page-terms 容器（FR-001 / FR-003）" },
-        { "tag": "improved", "text": "API.* 全量改用 apiFetch；既有散落 fetch('/api/...') 之 401 處理集中至單一 redirectToLogin('session-expired')" }
+        { "tag": "new", "text": "全新網址路由：每個頁面都有自己的網址，可直接收藏、分享或從瀏覽器歷史紀錄回到指定頁面" },
+        { "tag": "new", "text": "找不到頁面時顯示專屬的 404 提示頁，網址保留原樣方便回頭修正" },
+        { "tag": "new", "text": "切換頁面時頂端顯示細緻的進度條，更清楚知道載入狀態（並支援降低動態效果偏好設定）" },
+        { "tag": "new", "text": "彈出視窗（Modal）統一行為：可以用瀏覽器返回鍵關閉、按 ESC 關閉、自動鎖定背景捲動、焦點不再跑出視窗" },
+        { "tag": "new", "text": "側邊欄改為三段式佈局（Logo / 主選單 / 使用者區），目前所在頁面會以左側色條與主色背景強調，並新增整套統一風格的選單圖示" },
+        { "tag": "new", "text": "登入逾期時自動帶您回登入頁，登入後再回到您原本要去的頁面，不必手動重來" },
+        { "tag": "new", "text": "外觀模式（淺色／深色／跟隨系統）跨裝置同步並暫存於瀏覽器，避免切換裝置時短暫閃爍" },
+        { "tag": "new", "text": "管理員可選擇路由稽核模式：標準（預設）、加強（多紀錄登入逾期事件）、最少（僅必要事件）" },
+        { "tag": "improved", "text": "強化網址安全性：阻擋路徑遍歷、不安全的轉址，以及一般使用者誤闖管理員網址" },
+        { "tag": "improved", "text": "隱私權政策與服務條款頁面整合進新版路由，網址直連即可閱讀" }
       ]
     },
     {
       "version": "4.28.0",
       "date": "2026-04-27",
-      "title": "資料匯出匯入（007-data-export-import）：純伺服端 CSV 匯出 + 原子化匯入 + 互斥鎖 + 進度回饋 + 操作稽核日誌 + 整檔備份/還原強化 + ISO 4217 白名單 + API 授權頁",
+      "title": "資料匯出匯入大改版 + 操作稽核日誌",
       "type": "new",
       "changes": [
-        { "tag": "warning", "text": "schema migration：新增 `data_operation_audit_log` 表（10 欄 + 3 個索引）；為既有 `system_settings` 新增 `audit_log_retention_days TEXT DEFAULT '90'` 欄位；新增 `backups/` 子目錄並加入 .gitignore / .dockerignore；冪等 ALTER + CREATE TABLE IF NOT EXISTS，向後兼容" },
-        { "tag": "new", "text": "新增匯出端點（純伺服端產 CSV stream，UTF-8 BOM + Formula Injection 防護）：`GET /api/transactions/export`、`GET /api/categories/export`（父分類在前 / 子分類在後）、`GET /api/stock-transactions/export`、`GET /api/stock-dividends/export`（帳戶欄位反查現金股利對應入款交易）" },
-        { "tag": "new", "text": "新增匯入端點：`POST /api/categories/import`（取代既有 client-side 多次 POST 模式，全 DB transaction 原子化、自動先建父後建子、唯一鍵 `(type, name)` 重複略過、hex 顏色嚴格驗證）" },
-        { "tag": "new", "text": "改寫 `POST /api/transactions/import`：互斥鎖（重入回 409 IMPORT_IN_PROGRESS）+ 全 DB transaction 原子化 + 進度回饋每 500 筆 + ISO 8601 嚴格驗證 + 六欄重複偵測 + 重寫轉帳配對為 (date, amount) 分組 + CSV 順序兩兩配對 + 剩餘列入 warnings；CSV 額外欄位 silent drop；response 補 warnings + errors[].row" },
-        { "tag": "new", "text": "改寫股票交易與股利匯入：互斥鎖 + 進度 + ISO 8601 + 全 DB transaction + 六欄/四欄重複偵測；股利新增「現金股利 > 0 時帳戶必填」驗證；FR-023b 純股票股利合成 $0 買進交易帳戶推導三條路徑（最近 buy → 唯一證券帳戶 → 多帳戶無歷史則錯誤）" },
-        { "tag": "new", "text": "新增進度查詢端點：`GET /api/imports/progress`（short polling；entry 含 processed / total / phase / startedAt / completedAt；完成後 5 秒自動清除）" },
-        { "tag": "new", "text": "改寫 `GET /api/database/export`：檔名格式改為 `assetpilot-backup-{YYYYMMDDHHmmss}.db`（FR-024）；前端按下「下載備份」前彈出確認 Modal 含明文敏感資料警示（FR-024a）" },
-        { "tag": "new", "text": "改寫 `POST /api/database/import`：必要表清單擴充加入 `stocks`；通過驗證後寫入 `backups/before-restore-{ts}.db`；替換失敗自動回滾並回 422 RESTORE_FAILED_ROLLED_BACK；雙重失敗回 500 RESTORE_FAILED_DB_UNKNOWN 含可用備份檔清單；寫入新檔後執行 pruneBeforeRestoreBackups() 保留最近 5 份且 ≤ 90 天" },
-        { "tag": "new", "text": "新增管理員備份檔管理端點：`GET /api/admin/backups`（列出備份檔）+ `DELETE /api/admin/backups/:filename`（path.basename + regex 雙重防路徑遍歷）；前端管理員設定頁新增「自動備份清單」卡片" },
-        { "tag": "new", "text": "新增稽核日誌查詢端點：`GET /api/admin/data-audit`（管理員，支援 user_id / action / result / start / end / page / pageSize 過濾）+ `GET /api/user/data-audit`（一般使用者，後端強制覆寫 user_id）+ 匯出 CSV / 清空 / 保留天數讀寫端點（30/90/180/365/forever）" },
-        { "tag": "new", "text": "稽核日誌涵蓋 11 個 action：export_transactions / import_transactions / export_categories / import_categories / export_stock_transactions / import_stock_transactions / export_stock_dividends / import_stock_dividends / download_backup / restore_backup / restore_failed；metadata 採白名單欄位制（rows / imported / skipped / errors / warnings / byteSize / dateFrom / dateTo / failure_stage / failure_reason / unknown_columns / backup_path / before_restore_path / filename / filterParams 共 15 條），嚴禁傳入 CSV 內容、密碼、token" },
-        { "tag": "new", "text": "改寫 `registerAuditPruneJob()`：採「次日午夜 setTimeout cascade」模式（FR-046a 明文要求每日午夜伺服器時區）；啟動 5 秒後先跑一次清理 stale 紀錄、之後每日 0:00 cascade 觸發；不引入 node-cron 等套件" },
-        { "tag": "new", "text": "為 `PUT /api/exchange-rates` 與 `GET /api/exchange-rates/:currency` 加入 ISO 4217 白名單前置驗證（FR-030）；新增 `lib/iso4217.js`（純 JS 陣列字面量 ~180 條主要流通幣別）；前端「匯率設定」頁即時驗證；不在白名單回 400 `不是有效的 ISO 4217 幣別代碼`" },
-        { "tag": "new", "text": "前端手動匯率 ±20% 偏離警告（FR-033a）：onChange 與最近一次 `is_manual = false` 紀錄比對；偏離 > 20% 顯示黃色警告含建議值；後端不阻擋（僅警告不拒絕）" },
-        { "tag": "new", "text": "新增「API 使用與授權」頁動態渲染（FR-036~038）：`lib/external-apis.json` + `GET /api/external-apis` 公開端點（無需登入、附 Cache-Control: public, max-age=3600）；IPinfo 條目固定顯示 `IP address data is powered by IPinfo` 合規授權字樣（紅色 attribution-badge 強制可見）" },
-        { "tag": "new", "text": "前端管理員設定頁新增「資料操作稽核日誌」分頁：過濾表單 + 列表 + metadata JSON 詳情展開 + 匯出 CSV + 清空（二次確認）+ 保留天數下拉" },
-        { "tag": "new", "text": "前端使用者「個人設定」頁新增「我的操作紀錄」分頁：UI 同管理員但不含使用者過濾、清空、保留天數；後端強制 user_id 覆寫防跨使用者查詢" },
-        { "tag": "improved", "text": "前端共用 `downloadServerCsv()` helper：fetch endpoint → 解析 Content-Disposition filename → 觸發下載；取代既有 4 處 client-side CSV 組裝（交易 / 分類 / 股票交易 / 股票股利）；伺服端集中 Formula Injection 防護與稽核日誌寫入" },
-        { "tag": "improved", "text": "`.gitignore` 與 `.dockerignore` 新增 `backups/` 子目錄排除規則（FR-028）" }
+        { "tag": "new", "text": "全面改為伺服器端產生 CSV：交易、分類、股票交易、股票股利皆可一鍵下載，含 UTF-8 BOM（Excel 開啟不亂碼）並具備 Excel 公式注入防護" },
+        { "tag": "new", "text": "分類匯入支援父子層級：上傳一份 CSV 即可一次補齊所有父分類與子分類，重複者自動跳過，顏色格式錯誤會明確提示" },
+        { "tag": "new", "text": "交易匯入更穩健：同時間只允許一份匯入進行（避免雙重扣款），全部成功或全部回復、嚴格日期格式檢查、自動偵測重複，並會回報略過與警告明細" },
+        { "tag": "new", "text": "股票交易與股利匯入也加入相同的安全保護；股利新增「現金股利大於 0 必須指定帳戶」的驗證；純股票股利會自動推導對應的證券帳戶" },
+        { "tag": "new", "text": "匯入過程中可即時查詢進度（每 500 筆回報一次），完成後顯示匯入、跳過、錯誤摘要" },
+        { "tag": "new", "text": "整檔備份檔名改為「assetpilot-backup-時間戳.db」格式，下載前彈出提醒（檔內為明文資料，請妥善保管）" },
+        { "tag": "new", "text": "整檔還原更安全：還原前會自動備份目前資料，失敗時自動回復；保留最近 5 份還原前備份且最多 90 天" },
+        { "tag": "new", "text": "管理員設定新增「自動備份清單」：可瀏覽所有自動備份檔並安全刪除（無法跳出備份資料夾）" },
+        { "tag": "new", "text": "新增「資料操作稽核日誌」：所有匯出、匯入、下載備份、還原備份等動作都會留存紀錄；管理員可查看全部、過濾、匯出 CSV 與清空，使用者也能在個人設定查看自己的操作紀錄" },
+        { "tag": "new", "text": "稽核日誌保留期限可調整（30／90／180／365 天或永久保留），系統每天午夜自動清理過期紀錄" },
+        { "tag": "new", "text": "匯率設定強化：僅接受合法的 ISO 4217 三碼幣別代碼（涵蓋約 180 種主要流通幣別），並在手動輸入匯率時若偏離最新自動匯率超過 ±20% 顯示黃色警告（僅提醒，不阻擋）" },
+        { "tag": "new", "text": "新增「API 使用與授權」頁的動態內容，並依 IPinfo 要求顯著標示資料來源" }
       ]
     },
     {
       "version": "4.27.0",
       "date": "2026-04-26",
-      "title": "股票投資（006-stock-investments）：投資組合總覽 + 實現損益 Tab + 同步除權息阻擋 Modal + 下市標記 + FIFO decimal.js 全精度 + 登入時排程觸發 + idempotency 唯一鍵",
+      "title": "股票投資全面強化",
       "type": "new",
       "changes": [
-        { "tag": "warning", "text": "schema migration：為 `stocks` 加入 `delisted INTEGER DEFAULT 0`；為 `stock_transactions` 加入 `recurring_plan_id` / `period_start_date` / `tax_auto_calculated` 三欄；建立 partial unique index `idx_stock_tx_recurring_idem`（同 user / plan / period 三元組僅一筆，多裝置 race 下定期定額不重複扣款）；冪等 ALTER，向後兼容" },
-        { "tag": "new", "text": "新增端點：`GET /api/stock-realized-pl`（已實現損益 + 4 數字彙總卡）、`GET /api/stocks/quote`（FR-007 失敗類型分流：ok / not_found / service_unavailable / invalid）、`POST /api/stocks/batch-fetch`（並發查 TWSE 最新股價 read-only，受 `TWSE_MAX_CONCURRENCY` 限制）、`POST /api/stock-dividends/sync?year=YYYY`（年份分段同步）" },
-        { "tag": "new", "text": "`/api/stocks` GET response shape 改為 `{ stocks, portfolioSummary }`：portfolioSummary 採金額加權公式（totalReturnRate = totalPL / totalCost × 100；totalCost = 0 時為 null）" },
-        { "tag": "new", "text": "FIFO 計算改用 `lib/moneyDecimal.js` 內共用 `calcFifoLots()` helper，內部全程 `decimal.js` 全精度；手續費分攤保留小數，僅最終 response 階段取整（SC-004 ≤ 1 元誤差）" },
-        { "tag": "new", "text": "股票股利配發合成 $0 buy 交易：新增 / 同步股利時若 stockDividendShares > 0，於 `stock_transactions` 同步寫入 `[SYNTH] 股票股利配發` 前綴交易；FIFO 佇列自然納入；刪除股利時連動刪除（依 stock_id + date + price=0 + note 前綴匹配）" },
-        { "tag": "new", "text": "賣出鏈式約束驗證：`POST /api/stock-transactions` 與 `PUT /api/stock-transactions/:id`（type=sell）拒絕「該交易日當下持有不足」與「自該日起任一時點持有 < 0」；錯誤訊息含衝突日期；`PUT` 改為 atomic delete + insert 模擬（包 BEGIN / COMMIT / ROLLBACK）" },
-        { "tag": "new", "text": "登入時 server-side 非同步（setImmediate）觸發 `processStockRecurring(userId)` 補產生定期定額；補產生迴圈每期改用 TWSE STOCK_DAY 歷史收盤價；INSERT 加 `recurring_plan_id` + `period_start_date` 並改用 `INSERT OR IGNORE` 達 idempotency" },
-        { "tag": "new", "text": "前端股票頁：投資組合總覽卡新增「整體報酬率」第 5 卡；個股卡片補「最後查價時間」（> 24h 顯示 ⚠ 橘色）+ 資料來源（即時 / 收盤 / T+1 / 凍結）+「（已下市）」badge + 三段式損益顯色（綠 ▲ / 灰 / 紅 ▼）" },
-        { "tag": "new", "text": "前端同步除權息：點按鈕觸發阻擋式 Modal + 進度條 + 取消按鈕；前端依交易紀錄推算最早年份，逐年呼叫 `/api/stock-dividends/sync?year=YYYY`；完成後 toast 顯示「新增 N / 跳過 M / 失敗 K」彙總；按取消後設 aborted 中止迴圈" },
-        { "tag": "new", "text": "前端批次更新股價 Modal：每列加「標為已下市」checkbox（凍結價格 + 後續查價跳過下市股票）；改用 `/api/stocks/batch-fetch` 並發查價；查詢失敗顯示「查詢失敗」紅色提示且保留原值" },
-        { "tag": "new", "text": "前端共用 helper：`colorizePL(value)`（三段式顯色 ▲ / ▼）、`formatStaleQuoteBadge(updatedAt)`（24h ⚠）、`validateStockSymbol(sym)`（^[0-9A-Za-z]{1,8}$ ASCII 防注入）、`inferStockTypeFrontend(sym)`（00xx → ETF / 6+ 碼或結尾字母 → 權證）" },
-        { "tag": "improved", "text": "持股類型修改重算：`PUT /api/stocks/:id` 變更 stockType 時自動重算該股所有 `tax_auto_calculated = 1` 的歷史 sell 交易稅額；手動覆寫的稅額（`tax_auto_calculated = 0`）保留不動" },
-        { "tag": "improved", "text": "股利批次刪除（`POST /api/stock-dividends/batch-delete`）套用連動刪除規則；股票交易批次刪除（`POST /api/stock-transactions/batch-delete`）拒絕股票股利合成交易（必須透過刪除對應股利紀錄處理）" },
-        { "tag": "improved", "text": "FR-014 自動建立股票路徑：`POST /api/stocks` 與 import 路徑於 stockType 未指定時自動推斷；name 留空時 fallback 為「（未命名）」不阻擋使用者記錄" },
-        { "tag": "improved", "text": "新增環境變數 `TWSE_MAX_CONCURRENCY`（預設 5）控制 TWSE 並發查詢上限；`lib/twseFetch.js` 新增 `fetchWithRetry(url, options, retries=2)`（指數退避 1s/2s）、`fetchAllWithLimit(items, fetcher)` 純 JS 並發控制（無新 npm 依賴）" },
-        { "tag": "improved", "text": "Edge Case「歷史代號改名」：`updateUserStockPrices` 取得 TWSE 最新 name 時若與 DB 不同，自動 UPDATE stocks.name；下市股票（delisted=1）跳過 TWSE 請求" }
+        { "tag": "new", "text": "新增「實現損益」頁籤與 4 張數字彙總卡，清楚呈現累積實現損益、報酬率與筆數" },
+        { "tag": "new", "text": "投資組合總覽新增「整體報酬率」第 5 張卡，採金額加權方式計算，更貼近真實投報" },
+        { "tag": "new", "text": "個股卡片補上「最後查價時間」（超過 24 小時顯示橘色警示）、資料來源（即時／收盤／T+1／凍結），下市股票顯示「（已下市）」標記" },
+        { "tag": "new", "text": "損益顯示三段配色：獲利綠色▲、平盤灰色、虧損紅色▼，一眼就能辨識" },
+        { "tag": "new", "text": "同步除權息改為阻擋式進度視窗：顯示進度、可隨時取消，完成後彙總顯示新增、跳過、失敗筆數" },
+        { "tag": "new", "text": "批次更新股價可勾選「標為已下市」，下市股票會凍結價格、後續查價自動跳過" },
+        { "tag": "new", "text": "賣出交易嚴格驗證：拒絕當天持有不足或往後任一時點變負股的賣出，並提示衝突日期" },
+        { "tag": "new", "text": "股票股利配發會自動產生對應的零成本買進交易，刪除股利時連動刪除，方便管理庫存" },
+        { "tag": "improved", "text": "持股全程使用高精度計算（小數點全程保留），手續費分攤更精準，誤差控制在 1 元以內" },
+        { "tag": "improved", "text": "登入時自動補產生定期定額交易：歷史補單採用對應日期的收盤價，並具備重複扣款保護" },
+        { "tag": "improved", "text": "修改持股類型時會自動重算所有「自動計算」的歷史賣出稅額；手動覆寫的稅額保留不動" },
+        { "tag": "improved", "text": "查詢上市櫃股價更穩定：失敗自動重試、可控並發數，並自動同步股票最新名稱" }
       ]
     },
     {
       "version": "4.26.0",
       "date": "2026-04-26",
-      "title": "統計報表（005-stats-reports）：儀表板月份切換 / 雙圓餅 +「（其他）」/ 多筆排程並存 / 執行期 fallback / 對比 pill 同型前一段",
+      "title": "統計報表與儀表板強化",
       "type": "new",
       "changes": [
-        { "tag": "warning", "text": "schema migration：新增 `report_schedules` 表（10 欄位 + 2 索引），不變動既有表；啟動時自動把既有 `system_settings.report_schedule_*` singleton 排程遷移為多筆 row（冪等，僅當新表為空時執行）" },
-        { "tag": "new", "text": "新增端點：`GET / POST /api/admin/report-schedules`、`PUT / DELETE /api/admin/report-schedules/{id}`、`POST /api/admin/report-schedules/{id}/run-now`（FR-016 / Round 2 Q2）" },
-        { "tag": "new", "text": "`GET /api/dashboard?yearMonth=YYYY-MM` 補 yearMonth query 參數；切換月份時 KPI / 預算 / 圓餅 / 最近 5 筆交易同步重算（FR-001 / Round 1 Q1）" },
-        { "tag": "new", "text": "`GET /api/accounts` response 新增 `twdAccumulated` 計算欄位（為 `SUM(transactions.twd_amount, signed)`）；外幣帳戶 initial_balance 不納入此累計；資產配置圓餅與「持股／帳戶前 5 名」改採此單一資料來源（FR-004 / Round 4）" },
-        { "tag": "new", "text": "支出分類圓餅圖（儀表板 + 統計頁）父分類本身有交易但無子分類細項時，外圈以「（其他）」虛擬子分類群組呈現，與真實子分類同列、同色階；金額不重複計入內圈父分類（FR-013 / Round 3 Q1）" },
-        { "tag": "new", "text": "圓餅圖點擊跳轉：點擊內圈父分類 / 外圈子分類扇區 → 跳轉至預先篩選的交易列表頁；資產配置圓餅點擊「股票市值」→ 股票頁、點擊帳戶 → 該帳戶交易列表（FR-015a / Round 3 Q2）" },
-        { "tag": "new", "text": "統計報表頁工具列狀態 Session 內保留：期間 / 類型 / 自訂時間切換在同一次登入會話中保留；登出後重置為預設「本月 + 支出」（FR-011a / Round 1 Q5）" },
-        { "tag": "new", "text": "排程信件對比 pill 改為「同型前一段」：每日對比前日、每週對比上週、每月對比上月（既有行為）；信件 KPI 區塊新增 compareLabel 小字（FR-018 / Round 1 Q4）" },
-        { "tag": "new", "text": "排程信件「股票投資」區塊：若任一持股 priceAsOf 超過 12 小時未更新，顯示「最舊資料時間」小字註記（FR-023）" },
-        { "tag": "improved", "text": "排程引擎重寫為多筆並存：`(user_id, freq)` 不設唯一鍵；per-schedule lock map 取代既有全域 isRunningSchedule flag，避免單一排程卡住整個系統" },
-        { "tag": "improved", "text": "寄信通道執行期 fallback：SMTP 寄送暫時性失敗（連線錯誤 / 暫時拒收 / timeout）時自動退回 Resend 嘗試同一封信；不重試、不於下次觸發補寄；兩通道皆未設定回 503 不靜默吞錯（FR-021 / Round 1 Q3）" },
-        { "tag": "improved", "text": "排程停用→啟用不補寄：`shouldRunSchedule` 比對 `last_run < periodStart`，停用期間漏掉的觸發點不溯及補寄（FR-024a / Round 2 Q3）" },
-        { "tag": "improved", "text": "`GET /api/reports`：起始日 > 結束日回 400 拒絕（不靜默交換）；categoryBreakdown 改為 CategoryAggregateNode[]；補 periodStart / periodEnd 預設化（FR-010 / FR-013）" },
-        { "tag": "improved", "text": "deprecated singleton 端點 `/api/admin/report-schedule` 系列以 UPSERT 模式同步寫入 `report_schedules` 表（保留 last_run / last_summary）；管理員 UI 同時呈現既有 form 與新版多筆排程列表" },
-        { "tag": "improved", "text": "信件「交易紀錄」每週分支週末日期改用紫色 `#a855f7`（採 inline style 相容 Outlook Desktop Word 渲染引擎，FR-019 / Round 4）" }
+        { "tag": "new", "text": "儀表板支援月份切換：所有 KPI、預算、圓餅、近期交易都會跟著切到所選月份重新計算" },
+        { "tag": "new", "text": "支出分類圓餅：父分類本身有交易但沒分到子分類時，外圈以「（其他）」顯示，與真正的子分類同色階呈現，金額不重複計算" },
+        { "tag": "new", "text": "圓餅圖點擊跳轉：點父分類或子分類自動跳到預先篩選好的交易列表；資產配置點「股票市值」跳到股票頁、點帳戶跳到該帳戶交易列表" },
+        { "tag": "new", "text": "資產配置與「持股／帳戶前 5 名」改用單一資料來源：直接以帳戶台幣累計餘額計算，數字更一致" },
+        { "tag": "new", "text": "排程寄送報表支援多筆並存：管理員可同時建立多個寄送設定，互不干擾、不會卡住整個系統" },
+        { "tag": "new", "text": "排程信件對比指標改為「同型前一段」：每日比前日、每週比上週、每月比上月，並在 KPI 區塊加上明確說明" },
+        { "tag": "new", "text": "信件「股票投資」區塊：若有持股報價超過 12 小時未更新，會註記最舊資料時間，方便判斷數字新鮮度" },
+        { "tag": "improved", "text": "統計報表頁工具列狀態（期間、類型、自訂時間）在同一次登入會話中保留，登出後重置為預設「本月＋支出」" },
+        { "tag": "improved", "text": "排程寄送遇到 SMTP 暫時失敗時自動改走 Resend 重試一次；兩個通道都未設定會回傳錯誤而不靜默失敗" },
+        { "tag": "improved", "text": "排程停用後再啟用不會補寄停用期間漏掉的報表" },
+        { "tag": "improved", "text": "信件「交易紀錄」每週分支的週末日期改用紫色標示，提升 Outlook 桌面版的相容性" }
       ]
     },
     {
       "version": "4.25.0",
       "date": "2026-04-25",
-      "title": "預算與固定收支重整（004-budgets-recurring）：四段配色 / 月份切換器 / 配方來源追溯 / 並發冪等保護",
+      "title": "預算與固定收支大改版",
       "type": "new",
       "changes": [
-        { "tag": "warning", "text": "schema migration：`budgets.amount` / `recurring.amount` 由 REAL 改為 INTEGER（與 002 慣例對齊）、`recurring.fx_rate` 由 REAL 改為 TEXT decimal 字串、新增 `recurring.needs_attention` / `updated_at` 欄位、`transactions` 表新增 `source_recurring_id` / `scheduled_date` 欄位與 partial unique index（並發冪等保護）；啟動時自動備份 database.db.bak.<ts>.before-004" },
-        { "tag": "new", "text": "新增端點：`PATCH /api/budgets/{id}`（僅編輯金額；FR-008）" },
-        { "tag": "new", "text": "預算進度條四段配色：< 50% 綠、50–79% 中性、80–99% 黃（接近上限預警）、≥ 100% 紅（超支，條身與百分比文字皆紅）；超支不阻擋使用者繼續記帳" },
-        { "tag": "new", "text": "預算月份切換器：可切到任意歷史／未來月份檢視該月份的預算進度；歷史月份「已用金額」即時依當前資料庫重算（FR-007、FR-009a）" },
-        { "tag": "new", "text": "固定收支自動產生流程於登入時 server-side 觸發（FR-012；30 筆軟上限 + setImmediate 背景續跑保 SC-003 / SC-004）；條件式 `last_generated` 推進 + `(source_recurring_id, scheduled_date)` 唯一鍵保並發冪等" },
-        { "tag": "new", "text": "固定收支卡片色階分流：紅／橘「需處理」（原分類／帳戶已刪除）> 黃「（待執行）」逾期 > 灰停用 > 正常；備註直接顯示於卡片上" },
-        { "tag": "new", "text": "編輯固定收支時對已刪除的分類／帳戶以 `__deleted_category__` / `__deleted_account__` 佔位下拉防呆；後端拒絕該佔位值並要求改選有效項（FR-020、SC-008）" },
-        { "tag": "new", "text": "衍生交易在交易列表與編輯頁顯示「來自配方」chip 並支援點擊跳轉；來源配方被刪後 chip 退化為灰字「（來源配方已刪除）」" },
-        { "tag": "fix", "text": "每月 31 號遇 2 月正確回退至月底（既有 `Date.setMonth(+1)` 會 overflow 至下月初造成漏產）；每年 2/29 遇平年回退至 2/28" },
-        { "tag": "improved", "text": "編輯既有配方分支邏輯：起始日變動則重置 `last_generated`、週期變動則保留、業務欄位變動皆不溯及既往（FR-021a / FR-021b / FR-021c）；歷史衍生交易作為帳目記錄不可變" },
-        { "tag": "improved", "text": "預算 used 計算改用 `SUM(twd_amount)`（INTEGER，本幣彙整）；外幣交易以該筆已記錄之本幣金額計入，不另撈即時匯率（FR-010）" },
-        { "tag": "improved", "text": "固定收支類型欄位（收入／支出）建立後永久不可變更（與 003 對 `categories.type` 對稱治理）" },
-        { "tag": "improved", "text": "OUT-003：本期不做伺服器端 cron／worker 排程；FR-012 僅以登入觸發路徑兌現" }
+        { "tag": "new", "text": "預算進度條四段配色：未滿 50% 綠色、50–79% 中性、80–99% 黃色（接近上限預警）、超支則紅色；超支不會阻擋繼續記帳" },
+        { "tag": "new", "text": "預算月份切換器：可切到任意歷史或未來月份檢視預算進度，歷史月份的「已用金額」會即時依當前資料庫重算" },
+        { "tag": "new", "text": "新增「僅編輯預算金額」快速操作，避免每次都要重設整筆預算" },
+        { "tag": "new", "text": "固定收支自動產生時機：登入時於背景觸發補產生，並具備重複保護避免雙重扣款" },
+        { "tag": "new", "text": "固定收支卡片色階分流：紅／橘代表「需處理」（原分類或帳戶已刪除）、黃色代表「待執行」（已逾期）、灰色代表停用、其餘正常顯示，備註直接顯示在卡片上" },
+        { "tag": "new", "text": "編輯固定收支時若原分類或帳戶已刪除，下拉會顯示佔位選項並要求改選有效項目，避免存檔失敗" },
+        { "tag": "new", "text": "由配方產生的衍生交易會在交易列表與編輯頁顯示「來自配方」標籤，可直接點擊跳到來源配方；來源配方被刪後標籤退化為灰字提示" },
+        { "tag": "fix", "text": "每月 31 號遇 2 月正確回退到月底，每年 2/29 遇平年回退到 2/28（過去會跳到下月初造成漏產）" },
+        { "tag": "improved", "text": "編輯既有配方：起始日變動時重置上次產生紀錄、週期變動時保留；歷史已產生的交易作為帳目記錄不再追溯修改" },
+        { "tag": "improved", "text": "預算用量計算改用台幣本幣彙整：外幣交易以記錄當下的本幣金額計入，避免每次重新撈匯率造成數字飄動" },
+        { "tag": "improved", "text": "固定收支類型（收入／支出）建立後永久不可變更，避免歷史紀錄錯位" }
       ]
     },
     {
       "version": "4.24.0",
       "date": "2026-04-25",
-      "title": "分類系統重整（003-categories）：兩層階層 / 預設樹補建 / 拖曳排序 / 跨父歸屬 / 刪除追蹤與還原",
+      "title": "分類系統重整",
       "type": "new",
       "changes": [
-        { "tag": "warning", "text": "schema migration：移除 `categories.is_hidden` 欄位（rebuild 模式，sql.js 不支援 DROP COLUMN）；啟動時自動備份 database.db.bak.<ts>.before-003" },
-        { "tag": "new", "text": "新增 `deleted_defaults` 表（DeletedDefaultRegistry）：使用者主動刪除過的預設分類不會於登入時自動補回；提供「補回過去刪除的預設分類」按鈕（非破壞性還原）" },
-        { "tag": "new", "text": "新增端點：`PATCH /api/categories/{id}`（移動子分類至另一父分類）、`POST /api/categories/reorder`（批次重排同層）、`POST /api/categories/restore-defaults`（清空 registry + 補建）" },
-        { "tag": "new", "text": "預設樹重新設計：8 個支出父分類 + 5 個收入父分類 + 56 個預設子分類，含支出「其他」與全部 5 個收入父分類底下完整子分類，新增「美妝保養」「訂閱服務」「瓦斯費」「牙科」「健檢」等項" },
-        { "tag": "new", "text": "登入時冪等補建（`backfillDefaultsForUser`）：補齊缺漏的預設項，跳過 deleted_defaults 與既有客製化；P95 < 200 ms" },
-        { "tag": "new", "text": "分類管理頁雙區塊：上半段支出、下半段收入；父分類整列、子分類網格（左側 4px 藍色邊框 + 箭頭）；HTML5 原生拖曳排序（同層）" },
-        { "tag": "improved", "text": "顏色驗證收緊為嚴格 `^#[0-9A-Fa-f]{6}$`（FR-020 / FR-021，防 CSS 注入）；不再接受 `#RGB` 縮寫或 `#RRGGBBAA` alpha" },
-        { "tag": "improved", "text": "分類 type 一經建立永久不可變更；PUT 接受 `type` 欄位變更請求 → `400 分類類型不可變更`" },
-        { "tag": "improved", "text": "leaf-only：`POST /api/transactions` / `PATCH /api/transactions/{id}` 後端強制 `category_id` 必為子分類，父分類 ID → 400" },
-        { "tag": "improved", "text": "升級 Dockerfile 至 `node:26-alpine`；package.json `engines.node` 鎖定 `>=24.0.0`" }
+        { "tag": "new", "text": "分類採兩層階層：父分類底下可建子分類；交易必須記錄在子分類，統計報表自動向上彙整" },
+        { "tag": "new", "text": "預設分類大幅擴充：8 個支出父分類 + 5 個收入父分類 + 56 個預設子分類，新增「美妝保養」「訂閱服務」「瓦斯費」「牙科」「健檢」等實用項目" },
+        { "tag": "new", "text": "登入時冪等補建預設分類：自動補上缺漏的預設項，但跳過您主動刪除過的，不會莫名復活" },
+        { "tag": "new", "text": "新增「補回過去刪除的預設分類」按鈕：一鍵清空刪除清單並補建，做為非破壞性還原" },
+        { "tag": "new", "text": "支援拖曳排序：同層分類可直接以拖曳調整順序" },
+        { "tag": "new", "text": "支援子分類跨父分類搬移：把子分類掛到別的父分類底下，不必刪除重建" },
+        { "tag": "new", "text": "分類管理頁雙區塊（上半段支出、下半段收入）：父分類整列、子分類網格化顯示，左側藍色邊框與箭頭標示子層級" },
+        { "tag": "improved", "text": "顏色驗證更嚴格（僅接受標準的 6 碼 hex 格式），防止樣式注入" },
+        { "tag": "improved", "text": "分類類型一經建立永久不可變更，避免歷史交易類型錯亂" },
+        { "tag": "improved", "text": "新增交易與編輯交易時，後端強制要求「分類必為子分類」（誤選父分類會被退回）" },
+        { "tag": "improved", "text": "升級執行環境至 Node.js 26（容器映像）" }
       ]
     },
     {
       "version": "4.23.0",
       "date": "2026-04-25",
-      "title": "交易與帳戶（002-transactions-accounts）：帳戶 CRUD / 交易 CRUD / 批次 / 轉帳 / 自動匯率 / 海外手續費 / QR 掃描 / 樂觀鎖 / IDOR",
+      "title": "交易與帳戶大改版",
       "type": "new",
       "changes": [
-        { "tag": "warning", "text": "schema migration（CT-1）：`accounts` 補 `category` / `overseas_fee_rate` / `updated_at`；`transactions` 補 `to_account_id` / `twd_amount`；`amount` / `initial_balance` 由 REAL 改為 INTEGER 幣別最小單位；`fx_rate` 改為 TEXT decimal 字串。啟動時自動備份 database.db.bak.<ts>。部署前建議備份" },
-        { "tag": "new", "text": "新增 dependency `decimal.js ^10.4.3`（後端 + 前端 CDN 同版本），FR-022a 金額精度單一 source of truth 同構模組 `lib/moneyDecimal.js`" },
-        { "tag": "new", "text": "新增 9 群端點：`/api/accounts` (GET/POST)、`/api/accounts/{id}` (GET/PATCH/DELETE)、`/api/transactions` (GET/POST)、`/api/transactions/{id}` (GET/PATCH/DELETE)、`/api/transactions:batch-update` / `:batch-delete`、`/api/transfers` (POST)、`/api/exchange-rates/{currency}` (GET 跨使用者共用快取 30 分鐘 TTL)、`/api/user/settings/pinned-currencies` (GET/PUT)" },
-        { "tag": "new", "text": "FR-014a 樂觀鎖：所有 PATCH/DELETE 接受 `expected_updated_at` epoch ms，不符回 409 OptimisticLockConflict" },
-        { "tag": "new", "text": "FR-060 IDOR 防線：`ownsResource(table,idColumn,idValue,userId)` 統一資源所有權驗證；`requireOwnedAccount` / `requireOwnedTransaction` 中介層；非自己資源一律 404 不洩漏存在性" },
-        { "tag": "new", "text": "FR-015 同幣別轉帳：`POST /api/transfers` 產生 transfer_out + transfer_in 對；跨幣別 422 CrossCurrencyTransfer；任一被刪則另一半同步刪除" },
-        { "tag": "new", "text": "FR-021 信用卡海外手續費：以 `accounts.overseas_fee_rate`（千分點）為預設值；信用卡 + 非 TWD 交易自動填入手續費；前端可覆寫" },
-        { "tag": "new", "text": "FR-016 / FR-017 統計過濾：所有月支出／分類／預算／儀表板統計 SQL 過濾 `type IN ('income','expense') AND exclude_from_stats = 0`，轉帳與不計入交易不影響統計但仍影響餘額" },
-        { "tag": "new", "text": "FR-042 / FR-044 / FR-045 批次操作：`POST /api/transactions:batch-{update,delete}` 上限 500 筆、整批 BEGIN/COMMIT/ROLLBACK、樂觀鎖支援；批次刪除自動連動 transfer_in/out 另一半" },
-        { "tag": "new", "text": "FR-020a 常用幣別：每使用者 `user_settings.pinned_currencies` JSON 陣列，必含 TWD" },
-        { "tag": "new", "text": "FR-007a 時區：所有「今天／未來」判定走 `Asia/Taipei` 統一函式 `lib/taipeiTime.js todayInTaipei()`" },
-        { "tag": "new", "text": "FR-030 / FR-031 / FR-032 電子發票 QR 掃描：BarcodeDetector 主路徑 + 貼上 QR 文字解析 fallback；解析失敗保留使用者已填欄位" },
-        { "tag": "improved", "text": "a11y：批次操作列加 aria-live polite 通報已選 N、半選 checkbox 設 aria-checked='mixed'；500 筆上限觸達時顯示『已達單次上限 500，請分批處理』黃字提示" },
-        { "tag": "improved", "text": "啟動 log 加上 `[startup] AssetPilot v4.23.0 / feature 002-transactions-accounts ready`，方便容器日誌追蹤" }
+        { "tag": "new", "text": "金額精度全面升級：所有金額計算採用高精度小數庫，前後端統一，杜絕浮點誤差" },
+        { "tag": "new", "text": "帳戶補上「類別」「海外手續費率」「最後更新時間」三個欄位，方便分組與費用試算" },
+        { "tag": "new", "text": "編輯／刪除採用樂觀鎖：若有第二個裝置同時改動，會明確提示衝突而非靜默覆蓋" },
+        { "tag": "new", "text": "資源所有權嚴格驗證：嘗試存取別人資料一律顯示「找不到」，不洩漏資料是否存在" },
+        { "tag": "new", "text": "同幣別轉帳會自動產生轉出與轉入兩筆配對交易；跨幣別轉帳暫不支援；任一筆被刪除時另一筆同步刪除" },
+        { "tag": "new", "text": "信用卡海外手續費：信用卡 + 非台幣交易時自動套用帳戶設定的手續費率（千分點），可手動覆寫" },
+        { "tag": "new", "text": "統計過濾更精準：只計入收入／支出且未勾選「不計入統計」的交易；轉帳與不計入的交易仍會影響餘額但不影響統計" },
+        { "tag": "new", "text": "批次更新／刪除單次最多 500 筆，整批成功或全部回復；批次刪除轉帳交易會自動連動刪除另一半" },
+        { "tag": "new", "text": "「常用幣別」改為每位使用者各自儲存（必含 TWD），交易選單只顯示您勾選的幣別" },
+        { "tag": "new", "text": "電子發票 QR 掃描：相機即時掃描為主、貼上 QR 文字解析為備援，解析失敗時保留您已填欄位" },
+        { "tag": "improved", "text": "「今天／未來」判定統一以台北時區計算，不受伺服器時區影響" },
+        { "tag": "improved", "text": "批次操作列加上無障礙提示，達到 500 筆上限時會顯示「請分批處理」黃字提示" }
       ]
     },
     {
       "version": "4.22.0",
       "date": "2026-04-24",
-      "title": "使用者與權限功能實作（001-user-permissions）：Email 正規化 / 兩桶 rate limit / redirect_uri 白名單 / 混合刪除策略 / 90 天稽核保留 / CT-1 路徑重命名",
+      "title": "使用者與權限大改版",
       "type": "new",
       "changes": [
-        { "tag": "warning", "text": "不可逆 migration：啟動時執行 Email 正規化（`UPDATE users SET email = trim + lowercase`），若大小寫混用造成 UNIQUE(email) 衝突，保留 `created_at` 最早者、其餘 14 個 FK 表的 `user_id` 合併後刪除；log `[Email Migration] normalized N users, merged M duplicate accounts`。部署前建議備份 `database.db`" },
-        { "tag": "warning", "text": "登出與管理員重設密碼將遞增 `token_version`，該使用者所有裝置立即被強制登出（FR-005）" },
-        { "tag": "new", "text": "FR-007 兩桶 rate limit：`/api/auth/{login,register,google}` 共用 auth 桶（20 次/15 分/IP）；`/privacy`、`/terms` 共用靜態頁桶（獨立計數）；超過回 429，不再寫入使用者鎖定紀錄" },
-        { "tag": "new", "text": "FR-011 Google redirect_uri 白名單：交換 code 前比對；不符立即 400 `invalid_redirect_uri` 並寫 attempt_logs，絕不外呼 Google" },
-        { "tag": "new", "text": "FR-032 白名單 `*@domain` 語法：domain wildcard；不含 `*` 為完全比對（大小寫不敏感）；多項 OR" },
-        { "tag": "new", "text": "FR-035 混合刪除策略：業務表 + passkey_credentials 硬刪、login_audit_logs 硬刪、login_attempt_logs(is_success=0) 匿名化保留（user_id='' + email=SHA-256）、login_attempt_logs(is_success=1) 硬刪" },
-        { "tag": "new", "text": "FR-046 90 天稽核保留：pruneAuditLogs() 啟動立即執行 + 每 24h 循環（分批 5000）" },
-        { "tag": "new", "text": "CT-1 契約 0.1.0 → 0.2.0（breaking）：`/api/admin/settings` → `/api/admin/system-settings`；`/api/admin/login-logs*` 統一為 `/api/admin/login-audit?scope=admin-self|all` + `/api/admin/login-audit/{logId}` + `/api/admin/login-audit:batch-delete`；`/api/account/login-logs` → `/api/user/login-audit`；原子翻轉無 301/307 shim" },
-        { "tag": "improved", "text": "FR-065 / SC-006 時序對齊：login user_not_found 分支新增 bcrypt.compare(DUMMY_HASH) 消除時序側信道" },
-        { "tag": "improved", "text": "FR-044 localStorage 鍵名 `assetpilot.audit.lastSyncAt`（管理員稽核同步時間）" },
-        { "tag": "improved", "text": "Cookie 規範（FR-004）：setAuthCookie / clearAuthCookie 共用 AUTH_COOKIE_OPTIONS（httpOnly/secure=production/sameSite=strict/path=/），Max-Age 與 JWT_EXPIRES 同步" },
-        { "tag": "improved", "text": "C3 / T099 SC-004 最後管理員保護 1000 次壓測建議於 PR 合併前以 quickstart.md §3.3.1 bash for-loop 執行，預期『失敗次數：0/1000』" },
-        { "tag": "improved", "text": "CT-2 / T098 安全基線回歸檢查建議於 PR 合併前執行 6 項驗證（FR-062 6 項 header / FR-063 SRI / FR-064 .env 權限 + *.db ignore / FR-060 HTML escape / FR-061 色碼 hex），最多 11 子項" }
+        { "tag": "warning", "text": "升級時系統會自動執行 Email 正規化（去除空白並轉為小寫）；若大小寫混用造成重複帳號，將保留最早建立者並合併其餘帳號的資料。建議升級前先備份資料庫" },
+        { "tag": "warning", "text": "登出與管理員重設密碼會立即讓該使用者所有裝置強制登出（包含其他瀏覽器與行動裝置）" },
+        { "tag": "new", "text": "登入／註冊速率限制改為兩個獨立桶：登入註冊類共用一桶（每 IP 15 分鐘內最多 20 次），隱私權與服務條款頁獨立計數，超過顯示 429 即可" },
+        { "tag": "new", "text": "Google 登入導向網址加入白名單比對：不在清單者直接拒絕，並寫入嘗試紀錄，絕不向 Google 發出請求" },
+        { "tag": "new", "text": "Email 註冊白名單支援「網域萬用字元」語法（例如 *@example.com 代表整個網域）" },
+        { "tag": "new", "text": "刪除帳號採用混合策略：業務資料硬刪除、登入失敗紀錄匿名化保留（供未來資安分析）、登入成功紀錄完整刪除" },
+        { "tag": "new", "text": "登入稽核紀錄保留 90 天，系統啟動立刻清理一次，之後每 24 小時自動清理一輪" },
+        { "tag": "improved", "text": "登入時序強化：即使帳號不存在也會執行同等運算延遲，消除側信道判斷帳號是否存在的可能" },
+        { "tag": "improved", "text": "Cookie 規範統一：登入有效期、Cookie 與 JWT Token 三者完全同步" }
       ]
     },
     {
       "version": "4.21.1",
       "date": "2026-04-24",
-      "title": "升級 resend 6.1.3 → 6.12.2 並對齊所有直接相依至 npm latest",
+      "title": "升級寄信與相依套件",
       "type": "improved",
       "changes": [
-        { "tag": "improved", "text": "將 `resend` 由 6.1.3 升級至 6.12.2（落後 11 個 minor 版本），對齊 npm latest；`new Resend()` / `client.emails.send({from,to,subject,html})` 物件回傳 API 未改變，server.js 的 `sendStatsEmail()`、測試寄信與能力偵測三處呼叫點無須調整，`node --check server.js` 通過" },
-        { "tag": "improved", "text": "`specs/001-user-permissions/research.md` §5 同步更新：13 個直接相依全部對齊 npm latest（原 `resend` 標記 🟡 → ✅）；新增 §5.1 記錄 `npm audit` 的 3 筆 moderate 漏洞（`resend → svix → uuid<14.0.0`，GHSA-w5hq-g745-h8pq）皆不影響本專案（未以 `buf` 參數呼叫 `uuid`，CVSS 0）且 `fixAvailable` 建議降級為誤判，決策維持 6.12.2" }
+        { "tag": "improved", "text": "升級 Resend 寄信套件至最新版本，與其他相依套件一同對齊穩定版" }
       ]
     },
     {
       "version": "4.21.0",
       "date": "2026-04-24",
-      "title": "SRS 改寫為敘述式 SSD + Spec-Kit 憲章",
+      "title": "重整系統規格文件與專案治理",
       "type": "improved",
       "changes": [
-        { "tag": "improved", "text": "SRS.md 全面改寫為敘述式 SSD（System Specification Document）：按模組（使用者與權限、交易與帳戶、分類、預算與固定收支、統計報表、股票投資、匯出匯入、前端路由）分段，每個模組開頭敘述核心目標與運作流程，結尾以「不做什麼」明確列出邊界；舊 IEEE-830 逐條 FR 結構轉為技術附錄保留（非功能需求、資料模型、API 端點）" },
-        { "tag": "new", "text": "導入 Spec-Kit 工作流與 `.specify/memory/constitution.md` v1.1.0：Principle I（所有規格、計畫、使用者文件必須為繁體中文，NON-NEGOTIABLE）、Principle II（所有 HTTP API 契約必須使用 OpenAPI 3.2.0，不接受 3.0.x/3.1.x/pre-release；新端點需與實作同 PR 更新契約）；源碼識別字、外部 API 名稱、commit prefix、憲章本身為 Principle I 例外" },
-        { "tag": "new", "text": "建立 `openapi.yaml` 於專案根目錄（Principle II 要求）：`openapi: 3.2.0` 固定字串，涵蓋 113 個 operation／86 個 path／33 個共用 schema／19 個 tag，對應 SRS.md §3.3 端點分類；共用響應（BadRequest、Unauthorized、Forbidden、NotFound、PayloadTooLarge、ServerError、OkSuccess、IdResponse）以 `$ref` 重用；JWT Cookie 以 `components.securitySchemes.cookieAuth` 宣告並全域套用，公開端點（註冊、登入、config、changelog、Google/Passkey 前置）以 `security: []` 覆寫" },
-        { "tag": "new", "text": "新增 Docker dev 分支支援：推送至 `dev` 分支會產出 `dev` 與 `dev.版本號` 雙 tag（與 main 的 `latest` + `版本號` 不重疊）；main 分支推送自動建立 `v版本號` git tag" }
+        { "tag": "improved", "text": "重新編寫系統規格文件，按模組敘述功能與邊界，更易閱讀" },
+        { "tag": "new", "text": "建立完整的 API 規格檔（OpenAPI 3.2.0），涵蓋所有功能端點，方便日後維護與 API 治理" },
+        { "tag": "new", "text": "支援開發版 Docker 映像：dev 分支推送會產出 dev 版本標籤，與正式版互不干擾" }
       ]
     },
     {
@@ -206,367 +179,340 @@
       "title": "深色模式對比度修正",
       "type": "fix",
       "changes": [
-        { "tag": "fixed", "text": "深色模式下 --text-muted 由 #6b7280 提亮為 #8b94a3（surface 上由 3.77:1 提升至 5.75:1），影響股票卡片標籤、空白狀態文字、表格次要欄位等共 21 處 UI 文字" },
-        { "tag": "fixed", "text": "側邊欄底部「v4.20.x 版本資訊」按鈕文字由 rgba(255,255,255,.4)（3.80:1）提亮為 .6（7.27:1），符合 WCAG AA" },
-        { "tag": "fixed", "text": "側邊欄「隱私權政策／服務條款」連結由 .3（2.61:1）提亮為 .6（7.27:1）；中間分隔點「·」由 .2（1.80:1）提亮為 .45（4.52:1）" }
+        { "tag": "fixed", "text": "深色模式下次要文字色提亮，提升股票卡片標籤、空白狀態文字、表格次要欄位等多處可讀性" },
+        { "tag": "fixed", "text": "側邊欄底部版本資訊按鈕與隱私權／服務條款連結色階提亮，符合 WCAG AA 對比度標準" }
       ]
     },
     {
       "version": "4.20.4",
       "date": "2026-04-21",
-      "title": "外幣固定收支編輯失敗修正",
+      "title": "修正外幣固定收支編輯失敗",
       "type": "fix",
       "changes": [
-        { "tag": "fixed", "text": "外幣固定收支點擊編輯時 refreshRecFxUi() 內仍殘留 fmtNum(twd) 呼叫（v4.20.3 僅修了列表 render 的那處），導致外幣記錄開啟編輯 Modal 即 throw「fmtNum is not defined」；改用 Number(twd).toLocaleString('zh-TW') 一致格式化" }
+        { "tag": "fixed", "text": "修正點擊編輯外幣固定收支時跳出錯誤的問題，現在可正常開啟編輯視窗" }
       ]
     },
     {
       "version": "4.20.3",
       "date": "2026-04-21",
-      "title": "固定收支頁載入失敗修正",
+      "title": "修正固定收支頁載入失敗",
       "type": "fix",
       "changes": [
-        { "tag": "fixed", "text": "固定收支頁載入失敗：fmtNum is not defined — v4.20.2 引入外幣顯示時誤用了不存在的 fmtNum()（專案僅有 fmt()），整頁渲染 throw；改用 Number(...).toLocaleString('zh-TW') 直接格式化數字" }
+        { "tag": "fixed", "text": "修正前一版引入外幣顯示時造成固定收支頁無法載入的問題" }
       ]
     },
     {
       "version": "4.20.2",
       "date": "2026-04-21",
-      "title": "固定收支列表顯示詳細明細 + 編輯穩健性強化",
+      "title": "固定收支顯示更詳細的明細",
       "type": "improved",
       "changes": [
-        { "tag": "improved", "text": "固定收支列表每筆卡片新增詳細明細區塊：顯示起始日期、上次產生日期、下次產生日期（依頻率推算），若下次產生日已到達且狀態為啟用會以警示色標記「（待執行）」；若有備註一併顯示" },
-        { "tag": "improved", "text": "外幣固定收支顯示原幣別金額與 TWD 換算結果（如 USD 50 ≈ NT$ 1,575）" },
-        { "tag": "fixed", "text": "編輯固定收支時若原分類或帳戶已被刪除，下拉會額外插入「（原分類已刪除）/（原帳戶已刪除）」佔位選項，避免 select.value 靜默清空導致表單 required 無法送出" },
-        { "tag": "fixed", "text": "編輯固定收支時若資料中 type 非 expense/income（異常資料）不再導致 querySelector(...).checked 拋出例外，預設回退為 expense" }
+        { "tag": "improved", "text": "固定收支列表每筆卡片新增明細：起始日期、上次產生日期、下次產生日期；若已逾期且狀態為啟用會以警示色標記「（待執行）」；備註一併顯示" },
+        { "tag": "improved", "text": "外幣固定收支同時顯示原幣別金額與台幣換算結果（例：USD 50 ≈ NT$ 1,575）" },
+        { "tag": "fixed", "text": "編輯時若原分類或帳戶已被刪除，會顯示佔位選項而不是默默清空表單" },
+        { "tag": "fixed", "text": "編輯時若資料異常（類型欄位非預期值）不再彈出錯誤，自動回退為支出" }
       ]
     },
     {
       "version": "4.20.1",
       "date": "2026-04-21",
-      "title": "排程寄送報表：固定以台灣時區判斷觸發時間",
+      "title": "排程寄送固定以台灣時區判斷",
       "type": "fix",
       "changes": [
-        { "tag": "fixed", "text": "排程寄送資產統計報表若伺服器執行時區不是 Asia/Taipei（例：Zeabur / Docker 預設 UTC），shouldRunSchedule() 的 now.getHours() 會回傳 UTC 時數，導致設定 0 時寄送實際會在 UTC 0 點觸發（台灣時間 08:00）。新增 twParts() 與 twStartOfDayMs() 以固定 UTC+8 計算，shouldRunSchedule()、periodStart、formatTwTime() 皆改用台灣時區，排程設定的時/週/日皆以台灣時間為準" }
+        { "tag": "fixed", "text": "修正部署於非台灣時區的伺服器（例如 UTC）時，排程寄送會在錯誤時間觸發的問題；現在所有排程的時、週、日皆以台灣時間為準" }
       ]
     },
     {
       "version": "4.20.0",
       "date": "2026-04-21",
-      "title": "股票定期定額：TWSE 休市日自動順延 + 股數整數限制",
+      "title": "股票定期定額：休市日順延 + 整數股限制",
       "type": "feature",
       "changes": [
-        { "tag": "new", "text": "股票定期定額遇到 TWSE 休市日或週末，自動順延到下一個交易日：排程日仍以原日期推算週期（維持原本月頻率節奏），但交易紀錄日期改為實際下一個交易日，備註自動附上「原排程 YYYY-MM-DD 順延」" },
-        { "tag": "new", "text": "新增 TWSE 休市日快取（有價證券集中交易市場開（休）市日期 OpenAPI /v1/holidaySchedule/holidaySchedule），24 小時快取；自動排除「開始交易 / 最後交易」等特別交易日，僅將真正休市日加入黑名單" },
-        { "tag": "improved", "text": "/api/stock-recurring/process 回傳值新增 postponed 欄位，記錄本次處理因假日順延的筆數" },
-        { "tag": "fixed", "text": "股票交易紀錄股數限制為正整數：前端 input 由 min/step 0.0001 改為 min/step 1；後端 POST /PUT /api/stock-transactions 與 CSV 匯入皆新增 Number.isInteger 檢查，非整數股數回傳 400 錯誤「股數必須為整數」" }
+        { "tag": "new", "text": "股票定期定額遇到台股休市日或週末會自動順延到下一個交易日，並在備註附上「原排程日期順延」標記" },
+        { "tag": "new", "text": "新增台股休市日自動快取（24 小時更新），自動排除「開始交易／最後交易」等特別交易日" },
+        { "tag": "improved", "text": "定期定額處理結果新增「順延筆數」欄位，方便確認執行情況" },
+        { "tag": "fixed", "text": "股票交易紀錄股數改為僅接受正整數（前後端一致），避免誤輸入小數股數" }
       ]
     },
     {
       "version": "4.19.5",
       "date": "2026-04-21",
-      "title": "固定收支編輯 / 起始日當天自動產生修正",
+      "title": "固定收支編輯與當日自動產生修正",
       "type": "fix",
       "changes": [
-        { "tag": "fixed", "text": "固定收支（與股票定期定額）起始日期為今日時，/api/recurring/process 與 /api/stock-recurring/process 不會產生當日交易的問題：過去一律以 getNextDate(start_date) 當首次日期，導致第一筆交易被跳過一個週期；現在 last_generated 為空時改以 start_date 本身作為首次生成日期" },
-        { "tag": "fixed", "text": "編輯固定收支（或交易）時，若分類是帶有子分類的父層，下拉無對應 option 導致 recCategory 值被清空、表單因 required 無法送出；buildCategoryOptions() 現在於父分類 optgroup 最前方加入「父分類名稱（全部）」可選項，沿用既有父層 ID" }
+        { "tag": "fixed", "text": "修正固定收支與股票定期定額起始日為今日時，第一筆交易會被跳過一個週期的問題" },
+        { "tag": "fixed", "text": "編輯時若分類為帶有子分類的父層，下拉清單新增「父分類名稱（全部）」可選項，避免表單因找不到對應選項而無法送出" }
       ]
     },
     {
       "version": "4.19.4",
       "date": "2026-04-20",
-      "title": "NTP 簡化為 IPv4 + FQDN（Copilot Review v4.19.3）",
+      "title": "NTP 校正功能簡化",
       "type": "fix",
       "changes": [
-        { "tag": "improved", "text": "NTP 同步功能限制為僅支援 IPv4 位址與 FQDN 網域；IPv6 位址與 AAAA 紀錄一律拒絕，降低維護複雜度並消除 IPv6 私有網段判斷的邊角案例" },
-        { "tag": "fixed", "text": "queryNtp() 改寫為 async function，移除 async Promise executor anti-pattern（new Promise(async (resolve, reject) => ...)）造成的例外吞沒風險" },
-        { "tag": "fixed", "text": "resolveHostToPublicIpv4() 改用 dns.lookup({family:4, all:true})，確保純 IPv4 主機上絕不拿到 AAAA 紀錄；dgram socket 固定為 udp4" },
-        { "tag": "removed", "text": "移除 parseIPv6Groups() 與 isPrivateOrReservedIp() 中的 IPv6 分支；zone id 處理、6to4、IPv4-mapped/compatible 展開等邏輯一併簡化" }
+        { "tag": "improved", "text": "NTP 校正功能改為僅支援 IPv4 與網域名稱，移除 IPv6 支援以降低維護複雜度" },
+        { "tag": "fixed", "text": "強化 NTP 查詢內部處理，避免極少數情況下的例外吞沒風險" }
       ]
     },
     {
       "version": "4.19.3",
       "date": "2026-04-20",
-      "title": "NTP SSRF 防護強化 + IPv6 支援（Copilot Review v4.19.2）",
+      "title": "NTP 校正資安強化",
       "type": "fix",
       "changes": [
-        { "tag": "fixed", "text": "isPrivateOrReservedIp() 改用 net.isIP() 搭配自訂 IPv6 展開器：link-local 改判 fe80::/10（原僅擋 fe80:）、ULA 擋 fc00::/7、multicast ff00::/8、IPv4-mapped 擋完整展開形式（例 0:0:0:0:0:ffff:7f00:1）、IPv4-compatible ::a.b.c.d、6to4 2002::/16 內嵌私有 IPv4 亦擋" },
-        { "tag": "fixed", "text": "queryNtp() 發送前先以 dns.lookup({all:true}) 解析 FQDN 的所有 A/AAAA，任一結果為私有/保留位址即拒絕（防 DNS rebinding / 內部 DNS 繞過）；送 UDP 時使用解析後的字面 IP，避免 dgram 二次解析造成 TOCTOU" },
-        { "tag": "fixed", "text": "queryNtp() 依解析結果切換 udp4 / udp6，原先固定 udp4 導致 IPv6 主機必然失敗" },
-        { "tag": "improved", "text": "IPv4 檢查補上 CGNAT 100.64.0.0/10；NTP 同步 API 回應新增 resolvedIp 欄位並於前端顯示，方便稽核實際連線的 IP" }
+        { "tag": "fixed", "text": "強化 NTP 校正功能：阻擋指向私有／保留位址的 NTP 伺服器，防止內網探測；新增 CGNAT 位址判斷" },
+        { "tag": "improved", "text": "校正結果回傳實際連線到的 IP，方便管理員稽核；同步畫面也會顯示這項資訊" }
       ]
     },
     {
       "version": "4.19.2",
       "date": "2026-04-20",
-      "title": "伺服器時間 / NTP Copilot Review 修正",
+      "title": "伺服器時間設定相關修正",
       "type": "fix",
       "changes": [
-        { "tag": "fixed", "text": "runScheduledReportNow() 內 startedAt/finishedAt 改用 serverNow()，與 shouldRunSchedule() 的 periodStart 同一時間基準；先前 SERVER_TIME_OFFSET ≠ 0 時 lastRun 會永遠小於 periodStart 導致每 5 分鐘重複觸發" },
-        { "tag": "improved", "text": "POST /api/admin/server-time/ntp-sync 的 host 參數新增嚴格驗證：阻擋 private / loopback / link-local / ULA / multicast / IPv4-mapped IPv6 以及 localhost / .local / .internal 網域，並限制 FQDN/IP 格式與長度 253，降低管理員帳號被盜時的 SSRF / 內網探測風險" },
-        { "tag": "improved", "text": "管理員頁面「伺服器時間」區塊新增 uptime 欄位（天/小時/分/秒），顯示後端 process.uptime() 回傳的啟動時長" },
-        { "tag": "fixed", "text": "loadAdminServerTime() 成功載入時無條件清空狀態訊息與顏色，先前若前一次動作顯示過錯誤文字會一直殘留" }
+        { "tag": "fixed", "text": "修正設定時間偏移量後，排程可能每 5 分鐘重複觸發的問題" },
+        { "tag": "improved", "text": "強化 NTP 校正的伺服器位址驗證：阻擋私有位址、迴環位址、本機網域，限制長度與格式，降低資安風險" },
+        { "tag": "improved", "text": "管理員「伺服器時間」區塊新增「啟動時間」欄位（顯示天／時／分／秒）" },
+        { "tag": "fixed", "text": "成功載入伺服器時間資訊時會無條件清空舊有的錯誤訊息殘留" }
       ]
     },
     {
       "version": "4.19.1",
       "date": "2026-04-20",
-      "title": "伺服器時間新增 NTP 自動校正",
+      "title": "伺服器時間支援 NTP 自動校正",
       "type": "feature",
       "changes": [
-        { "tag": "new", "text": "管理員頁面「伺服器時間」區塊新增 NTP 校正：可指定 NTP 伺服器或使用預設清單（tw.pool.ntp.org / pool.ntp.org / time.google.com / time.cloudflare.com）依序嘗試，自動計算差值並套用為偏移" },
-        { "tag": "new", "text": "支援「查詢（不套用）」按鈕，可先預覽 NTP 時間與延遲再決定是否寫入；校正時自動扣掉單趟網路延遲（假設對稱）提升精準度" },
-        { "tag": "new", "text": "新增 POST /api/admin/server-time/ntp-sync API，以原生 dgram/UDP 實作 SNTP v3 client（RFC 4330），3 秒逾時自動 fallback 下一個伺服器" }
+        { "tag": "new", "text": "管理員可指定 NTP 伺服器或從預設清單（台灣 ntp pool / Google / Cloudflare）依序嘗試，自動計算差值並套用為時間偏移" },
+        { "tag": "new", "text": "支援「查詢（不套用）」按鈕：可先預覽 NTP 時間與延遲再決定是否寫入；校正會自動扣掉單趟網路延遲，提升精準度" }
       ]
     },
     {
       "version": "4.19.0",
       "date": "2026-04-20",
-      "title": "管理員頁面新增伺服器時間查看與設定",
+      "title": "管理員可查看與設定伺服器時間",
       "type": "feature",
       "changes": [
-        { "tag": "new", "text": "管理員頁面新增「伺服器時間」區塊：即時顯示伺服器實際時間、時區、目前採用時間（含偏移）及啟動後偏移量" },
-        { "tag": "new", "text": "可於管理員頁面設定伺服器時間偏移（直接填目標時間或毫秒偏移量），用於測試排程寄送、除權息同步等依時間觸發的功能；重設按鈕可一鍵清為實際時間" },
-        { "tag": "new", "text": "新增 GET /api/admin/server-time、PUT /api/admin/server-time API；偏移持久化於 system_settings.server_time_offset 並於排程檢查 checkAndRunSchedule() 套用，系統時鐘本身不會被改動" },
-        { "tag": "improved", "text": "偏移量上限限制為 ±10 年，避免誤植導致後續時間運算溢位" }
+        { "tag": "new", "text": "管理員頁面新增「伺服器時間」區塊：即時顯示伺服器時間、時區、目前採用時間（含偏移）與啟動後偏移量" },
+        { "tag": "new", "text": "可直接設定伺服器時間偏移（填入目標時間或毫秒），用於測試排程觸發等依時間驅動的功能；一鍵重設回實際時間" },
+        { "tag": "improved", "text": "偏移量上限為 ±10 年，避免誤植造成後續時間運算錯誤" }
       ]
     },
     {
       "version": "4.18.4",
       "date": "2026-04-18",
-      "title": "排程跨期誤判修正 + 上限常數整合（Copilot Review v4.18.2）",
+      "title": "排程跨期誤判修正",
       "type": "fix",
       "changes": [
-        { "tag": "fixed", "text": "完成分支 report_schedule_last_run 改寫入 startedAt（本期觸發時間）取代 finishedAt；先前若寄送/股價更新耗時跨過下一個 periodStart（如 23:xx 排程），shouldRunSchedule() 會將下一期誤判為已執行而跳過。完成時間改放 summary 文字" },
-        { "tag": "improved", "text": "PUT /api/admin/report-schedule 硬編 100 上限改用 REPORT_SCHEDULE_MAX_TARGETS 常數，錯誤訊息亦由常數衍生，避免日後上限調整時兩處不一致" }
+        { "tag": "fixed", "text": "修正排程寄送或股價更新若耗時跨過下一個觸發週期時，可能誤判已執行而跳過的問題" }
       ]
     },
     {
       "version": "4.18.3",
       "date": "2026-04-18",
-      "title": "信件 sectionTitle Outlook 間距修正（Copilot Review v4.18.1）",
+      "title": "信件區塊間距於 Outlook 修正",
       "type": "fix",
       "changes": [
-        { "tag": "fixed", "text": "信件 sectionTitle 改用外層 `<table>` + `<td padding>` 包裹內層標題 table，取代直接在 table 上設 margin；Outlook（Word 引擎）會忽略 table margin，原本 26px/10px 上下間距在 Outlook Desktop 會消失" }
+        { "tag": "fixed", "text": "修正排程信件區塊標題在 Outlook 桌面版顯示時上下間距消失的問題" }
       ]
     },
     {
       "version": "4.18.2",
       "date": "2026-04-18",
-      "title": "排程寄送穩定性修正（Copilot Review v4.17.0）",
+      "title": "排程寄送穩定性修正",
       "type": "fix",
       "changes": [
-        { "tag": "fixed", "text": "runScheduledReportNow() 統一回傳結構：skipped 一律為數字、新增 status 欄位（already_running / no_targets / no_email_service / completed），避免消費端對 boolean/number 混用判斷錯誤" },
-        { "tag": "fixed", "text": "排程觸發但「未指定寄送對象」或「寄信服務未設定」時，補上 report_schedule_last_run 更新；先前漏寫導致同一 period 內背景每 5 分鐘重複觸發、反覆寫 DB" },
-        { "tag": "improved", "text": "目標 userId 名單統一正規化：去重（Set）+ 上限 100 筆，避免重複 id 對同一使用者多次寄信或惡意傳入大量 id 造成 DB 與寄信負載" },
-        { "tag": "fixed", "text": "管理員「寄送對象」標題列移除巢狀 <label>（外層改 <div>），符合 HTML 規範並避免螢幕閱讀器/點擊聚焦行為異常" },
-        { "tag": "improved", "text": "前端執行結果顯示改依 status 判斷，已執行完成（completed）時一律顯示寄送統計" }
+        { "tag": "fixed", "text": "排程寄送回傳統一格式：明確區分「執行中／無寄送對象／寄信服務未設定／完成」四種狀態，畫面顯示更精準" },
+        { "tag": "fixed", "text": "排程觸發但未指定寄送對象或寄信服務未設定時，補上「上次執行時間」更新，避免短時間內重複觸發" },
+        { "tag": "improved", "text": "寄送對象名單統一去重並設置 100 筆上限，避免重複寄信或大量名單造成負載" }
       ]
     },
     {
       "version": "4.18.1",
       "date": "2026-04-18",
-      "title": "信件排程程式碼修正（Copilot Review）",
+      "title": "信件排程細節修正",
       "type": "fix",
       "changes": [
-        { "tag": "fixed", "text": "getReportPeriod('monthly') 改用 new Date(y, m, 0) 推算上月最後一天，避免硬編 86400000 毫秒在 DST/時區轉換時偏移" },
-        { "tag": "improved", "text": "todayStr() 改為呼叫 ymd(new Date())，移除重複格式化邏輯" },
-        { "tag": "improved", "text": "信件 sectionTitle 區塊標題改用 table 佈局取代 flex/gap，提升 Outlook Desktop 等郵件用戶端相容性" }
+        { "tag": "fixed", "text": "每月排程的時間區間計算改用標準方式，避免日光節約時間或時區轉換造成偏移" },
+        { "tag": "improved", "text": "信件區塊標題改用表格佈局，提升 Outlook 桌面版等郵件用戶端的相容性" }
       ]
     },
     {
       "version": "4.18.0",
       "date": "2026-04-17",
-      "title": "信件交易區塊依排程頻率切換 + 視覺美化",
+      "title": "信件交易區塊依排程頻率切換",
       "type": "feature",
       "changes": [
-        { "tag": "improved", "text": "信件交易區塊改為依排程頻率切換顯示：每日 → 昨日交易明細；每週 → 上週 7 天每日收支彙總；每月 → 上月每天收支彙總；手動觸發預設用 daily 行為" },
-        { "tag": "new", "text": "週/月彙總表額外顯示「區間收入 / 區間支出 / 區間淨額」三欄總覽卡，週末日期以紫色標示" },
-        { "tag": "improved", "text": "信件視覺美化：頭圖三色漸層、卡片陰影加重、節標題加色塊指示、KPI 卡邊框與留白優化、儲蓄率加「健康/尚可/偏低」狀態文字、CTA 按鈕加陰影、底部加品牌標記" },
-        { "tag": "improved", "text": "新增 getReportPeriod() helper：daily 取昨日、weekly 取上週 (Mon-Sun)、monthly 取上個完整日曆月" }
+        { "tag": "improved", "text": "信件交易區塊改為依排程頻率切換顯示：每日 → 昨日交易明細；每週 → 上週 7 天每日彙總；每月 → 上月每天彙總；手動觸發預設用每日格式" },
+        { "tag": "new", "text": "週／月彙總表新增「區間收入／區間支出／區間淨額」三欄總覽卡，週末日期以紫色標示" },
+        { "tag": "improved", "text": "信件視覺美化：頭圖三色漸層、卡片陰影加重、區塊標題加色塊指示、儲蓄率新增「健康／尚可／偏低」狀態文字、CTA 按鈕加陰影、底部加品牌標記" }
       ]
     },
     {
       "version": "4.17.0",
       "date": "2026-04-17",
-      "title": "合併排程與寄送 + 寄送前自動更新股價",
+      "title": "排程與寄送合併 + 寄送前自動更新股價",
       "type": "feature",
       "changes": [
-        { "tag": "improved", "text": "「寄送資產統計報表」與「排程自動寄送」合併成單一卡片：管理員勾選使用者 + 設定頻率 → 排程自動寄送指定對象（或按「立即寄送一次」即時觸發）" },
-        { "tag": "new", "text": "寄送前自動更新該使用者所有持股最新報價（盤中即時 → STOCK_DAY 收盤 → TPEx 備援），確保信件內市值與報酬率正確" },
-        { "tag": "new", "text": "信件「股票投資」區塊改顯示 4 列：總成本 / 總市值 / 未實現損益（彩色 ±） / 報酬率（彩色 ±%）" },
-        { "tag": "new", "text": "system_settings 新增 report_schedule_user_ids 欄位（JSON 陣列），保存指定寄送對象；GET/PUT /api/admin/report-schedule 包含 userIds；POST /run-now 可接受 { userIds } body 覆寫" },
-        { "tag": "removed", "text": "移除 POST /api/admin/send-stats-report 端點（功能合併進排程）" }
+        { "tag": "improved", "text": "「寄送資產統計報表」與「排程自動寄送」合併為單一卡片：勾選使用者 + 設定頻率即可排程寄送，或直接「立即寄送一次」" },
+        { "tag": "new", "text": "寄送前自動更新該使用者持股最新報價，確保信件內市值與報酬率即時且正確" },
+        { "tag": "new", "text": "信件「股票投資」區塊改為四列顯示：總成本／總市值／未實現損益（彩色）／報酬率（彩色）" }
       ]
     },
     {
       "version": "4.16.2",
       "date": "2026-04-17",
-      "title": "修正排程設定儲存後 reload 會失效的 bug",
+      "title": "排程設定儲存後重整失效修正",
       "type": "fix",
       "changes": [
-        { "tag": "fixed", "text": "排程自動寄送 / SMTP 設定表單加上 action=\"javascript:void(0);\" + method=\"post\"，避免在 listener 尚未綁定的 race window 期間，submit 觸發 form 預設 GET 導航導致表單值丟失" },
-        { "tag": "fixed", "text": "修正後端 hour=0（午夜）/ weekday=0（週日）會被 `||` 當 falsy 重設為預設值的 bug；改用 Number.isFinite() 檢查 + clampInt() 邊界處理" },
-        { "tag": "fixed", "text": "前端 schedule submit 改用 dataset.bound flag 確保 listener 只綁一次（防止 renderAdminSettings race 造成重複綁定）；儲存成功後立即 GET 一次並 re-render 表單，確認 DB 真的持久化" },
-        { "tag": "improved", "text": "frontend payload 使用 `??` 運算子處理數字 default，正確支援 0 值" }
+        { "tag": "fixed", "text": "修正排程自動寄送與 SMTP 設定表單在某些情況下儲存後重整會丟失欄位值的問題" },
+        { "tag": "fixed", "text": "修正設定時、星期等欄位填入 0（午夜或星期日）會被當成未填而重設為預設值的問題" },
+        { "tag": "improved", "text": "儲存成功後立即重新讀取一次設定並重新繪製表單，確認資料庫已正確保存" }
       ]
     },
     {
       "version": "4.16.1",
       "date": "2026-04-17",
-      "title": "文件補齊 + 信件「近 5 筆交易」幣別顯示修正",
+      "title": "信件交易明細幣別顯示修正",
       "type": "fix",
       "changes": [
-        { "tag": "fixed", "text": "信件「近 5 筆交易」金額一律以 TWD 顯示（與 dashboard 一致）：先前誤把 transactions.currency 原幣別當前綴，導致 USD 標記的交易顯示成「USD 327.27」而實際 amount 已是 TWD 等值" },
-        { "tag": "fixed", "text": "README.md「Docker 環境變數」與「環境變數完整清單」補上 RESEND_API_KEY / RESEND_FROM_EMAIL / APP_URL，並說明 SMTP 設定改走管理員 UI" },
-        { "tag": "fixed", "text": ".env.example 補上 APP_URL（信件 CTA 按鈕用）" },
-        { "tag": "fixed", "text": "SRS.md 版本歷程表補齊 v4.14.0 / v4.15.0 / v4.16.0 / v4.16.1 四筆紀錄" }
+        { "tag": "fixed", "text": "修正信件「近 5 筆交易」誤把原幣別前綴顯示在已換算為台幣的金額上的問題（現在統一以台幣顯示）" },
+        { "tag": "fixed", "text": "補齊文件中的環境變數說明" }
       ]
     },
     {
       "version": "4.16.0",
       "date": "2026-04-17",
-      "title": "排程自動寄送統計報表 + 信件內容大幅最佳化",
+      "title": "排程自動寄送統計報表",
       "type": "feature",
       "changes": [
-        { "tag": "new", "text": "管理員設定 → 新增「排程自動寄送」卡片：可選每日／每週（指定週幾）／每月（指定 1-28 日）自動寄送統計報表給所有使用者" },
-        { "tag": "new", "text": "新增「立即執行一次」按鈕：手動觸發排程，立即寄給所有有效 Email 的使用者；下方顯示上次執行時間與寄送結果摘要" },
-        { "tag": "new", "text": "背景排程器每 5 分鐘檢查一次排程；missed run（伺服器停機跨期）不補寄；以 last_run timestamp 防止重複寄送" },
-        { "tag": "improved", "text": "信件版面重新設計：3 欄 KPI 卡（收入／支出／淨額，含上月對比 ▲▼ 百分比）、儲蓄率進度條、分類顏色長條圖、近 5 筆交易、結尾 CTA 按鈕" },
-        { "tag": "new", "text": "信件加入「前往儀表板」CTA 按鈕（需設定 APP_URL 環境變數，未設定則自動隱藏）" },
-        { "tag": "improved", "text": "信件改用 table-based 排版兼容 Outlook；max-width 600px + viewport meta 響應式；分類顏色驗證 #hex 格式防 CSS 注入" }
+        { "tag": "new", "text": "管理員設定新增「排程自動寄送」卡片：可選每日／每週（指定週幾）／每月（指定 1–28 日）自動寄送統計報表給所有使用者" },
+        { "tag": "new", "text": "新增「立即執行一次」按鈕：手動觸發排程，立即寄送給所有有效 Email 的使用者，下方顯示上次執行時間與結果摘要" },
+        { "tag": "new", "text": "背景排程器每 5 分鐘檢查一次；若伺服器停機跨期，下次啟動不補寄；以「上次執行時間」防止重複寄送" },
+        { "tag": "improved", "text": "信件版面重新設計：3 欄 KPI 卡（含上月對比）、儲蓄率進度條、分類顏色長條圖、近 5 筆交易、結尾 CTA 按鈕" },
+        { "tag": "improved", "text": "信件改用表格佈局相容 Outlook；最大寬度 600px 響應式；分類顏色驗證以防樣式注入" }
       ]
     },
     {
       "version": "4.15.0",
       "date": "2026-04-17",
-      "title": "SMTP 寄信支援 + 失敗原因 UI 顯示",
+      "title": "SMTP 寄信支援",
       "type": "feature",
       "changes": [
-        { "tag": "new", "text": "管理員設定 → 新增「SMTP 寄信設定」卡片：可在 UI 設定 Host / Port / User / Password / From / TLS，無需重啟" },
-        { "tag": "new", "text": "整合 nodemailer：SMTP 設了就優先使用，未設定 fallback 至 Resend，皆未設定回 503 並提示如何設定" },
-        { "tag": "new", "text": "新增「寄測試信給自己」按鈕，可立即驗證 SMTP / Resend 設定是否正確" },
-        { "tag": "improved", "text": "寄送統計報表失敗 / 略過原因改為 UI 直接顯示明細，不需再開 DevTools console" },
-        { "tag": "improved", "text": "SMTP 寄送之間不再強制 600ms 延遲（僅 Resend 路徑保留）" }
+        { "tag": "new", "text": "管理員設定新增「SMTP 寄信設定」卡片：可在介面填寫主機、連接埠、帳號、密碼、寄件人、TLS 設定，無需重啟" },
+        { "tag": "new", "text": "整合 SMTP 與 Resend：SMTP 有設定時優先使用，未設定則改用 Resend；都未設定時會明確提示如何設定" },
+        { "tag": "new", "text": "新增「寄測試信給自己」按鈕，可立即驗證設定是否正確" },
+        { "tag": "improved", "text": "寄送統計報表失敗或略過原因改為畫面直接顯示明細，不必再開瀏覽器主控台" }
       ]
     },
     {
       "version": "4.14.0",
       "date": "2026-04-17",
-      "title": "管理員寄送個人資產統計報表（Resend）",
+      "title": "管理員寄送個人資產統計報表",
       "type": "feature",
       "changes": [
-        { "tag": "new", "text": "管理員設定 → 新增「寄送資產統計報表」卡片：勾選使用者後一鍵寄出本月資產與收支摘要" },
-        { "tag": "new", "text": "整合 Resend 寄信服務，新增 RESEND_API_KEY / RESEND_FROM_EMAIL 環境變數（留空則該功能停用）" },
-        { "tag": "new", "text": "後端新增 POST /api/admin/send-stats-report：自動計算各幣別餘額、本月收支、前 5 大支出分類與股票持倉成本，輸出 HTML 信件" },
-        { "tag": "improved", "text": "寄送之間加入 600ms 延遲以避免觸發 Resend 預設 2 req/sec 速率限制；單次最多 100 位使用者" }
+        { "tag": "new", "text": "管理員設定新增「寄送資產統計報表」卡片：勾選使用者後一鍵寄出本月資產與收支摘要" },
+        { "tag": "new", "text": "整合 Resend 寄信服務（未設定 API 金鑰則該功能停用）" },
+        { "tag": "new", "text": "信件內容自動計算各幣別餘額、本月收支、前 5 大支出分類與股票持倉成本" }
       ]
     },
     {
       "version": "4.13.1",
       "date": "2026-04-17",
-      "title": "資安強化（續）：刪帳號二次驗證、DoS 防護、非阻塞寫檔",
+      "title": "資安強化（續）",
       "type": "feature",
       "changes": [
-        { "tag": "fixed", "text": "Google-only 帳號刪除帳號改為要求 fresh Google id_token 驗證（比對 audience + sub + exp），不再僅靠前端二次確認" },
-        { "tag": "improved", "text": "刪除帳號 UI：Google-only 使用者會看到專屬 Google 重新驗證按鈕；完成驗證前「永久刪除帳號」按鈕維持 disabled" },
-        { "tag": "fixed", "text": "Passkey-only 帳號暫時無法自助刪除，需聯絡管理員（避免無二次驗證）" },
-        { "tag": "improved", "text": "express.json 全局 body 上限從 50MB 降到 5MB；CSV 匯入端點（交易/股票/股利）單獨放寬至 25MB" },
-        { "tag": "improved", "text": "CSV 匯入每次最多 20000 筆，超過直接回 413；body 過大統一回 JSON 413 錯誤" },
-        { "tag": "improved", "text": "saveDB() 改為非阻塞：in-flight 鎖 + pending 合併；以 tmp + rename 原子寫；提供 SIGTERM/SIGINT flush" }
+        { "tag": "fixed", "text": "Google 帳號刪除帳號改為要求重新做一次 Google 驗證，不再僅靠前端二次確認" },
+        { "tag": "improved", "text": "刪除帳號介面：Google 帳號使用者會看到專屬的重新驗證按鈕，未完成驗證前無法執行永久刪除" },
+        { "tag": "fixed", "text": "Passkey 帳號暫時無法自助刪除（避免無二次驗證），請聯絡管理員處理" },
+        { "tag": "improved", "text": "全站請求大小限制下調，CSV 匯入端點單獨放寬；單次匯入最多 20,000 筆" },
+        { "tag": "improved", "text": "資料庫寫入改為非阻塞、原子化寫入，並在伺服器關機時確保資料完整存檔" }
       ]
     },
     {
       "version": "4.13.0",
       "date": "2026-04-17",
-      "title": "資安強化：多項中高風險漏洞修補",
+      "title": "資安強化：多項漏洞修補",
       "type": "feature",
       "changes": [
-        { "tag": "fixed", "text": "修補儲存型 XSS：normalizeDate() 嚴格拒絕非法日期；前端交易列表、股票交易、股利、實現損益、近期交易等畫面補上 escHtml 跳脫" },
-        { "tag": "fixed", "text": "修補 IDOR 漏洞：新增/編輯交易、批次更新、固定收支、股票交易、股利端點驗證 accountId/categoryId/stockId 屬於當前使用者" },
-        { "tag": "fixed", "text": "改密碼/管理員重設密碼後，舊 JWT 立即失效：users 新增 token_version 欄位，authMiddleware 比對版本" },
-        { "tag": "fixed", "text": "Passkey 註冊/登入的 origin 改用 ALLOWED_ORIGINS 白名單驗證，不再無條件信任 Origin header" },
-        { "tag": "fixed", "text": "CSV 匯出加上 Formula Injection 防護（欄位以 = + - @ 開頭時加前綴單引號）" },
-        { "tag": "fixed", "text": "股票交易驗證 shares/price 必須為正數、手續費/稅費不可為負、type 必須為 buy/sell" },
-        { "tag": "fixed", "text": "股利驗證 cashDividend/stockDividendShares 不可為負" },
-        { "tag": "fixed", "text": "TWSE 股票代號 API 驗證代號格式（2~10 碼英數），搜尋 API 限制字串長度以避免快取污染" },
-        { "tag": "improved", "text": "統一強密碼規則：註冊、管理員建立使用者、管理員重設密碼、一般改密碼皆套用 validateStrongPassword（8字元+大小寫+數字+特殊符號）" },
-        { "tag": "improved", "text": ".env 自動產生密鑰時設定檔案權限為 0o600（僅擁有者可讀寫）" },
-        { "tag": "improved", "text": ".gitignore / .dockerignore 加入 database.db*、*.bak、*.backup_* 避免資料庫備份檔意外打包或 commit" }
+        { "tag": "fixed", "text": "修補儲存型 XSS 風險：嚴格拒絕非法日期格式，列表畫面全面跳脫使用者輸入" },
+        { "tag": "fixed", "text": "修補資源所有權檢查漏洞：交易、批次更新、固定收支、股票交易、股利端點都會驗證帳戶／分類／股票屬於當前使用者" },
+        { "tag": "fixed", "text": "修改密碼或管理員重設密碼後，舊登入憑證立即失效，所有裝置強制重新登入" },
+        { "tag": "fixed", "text": "Passkey 註冊與登入的來源網址改為白名單比對" },
+        { "tag": "fixed", "text": "CSV 匯出加上 Excel 公式注入防護" },
+        { "tag": "fixed", "text": "強化股票交易與股利欄位驗證（股數、價格、手續費、稅費、類型等）" },
+        { "tag": "improved", "text": "統一強密碼規則：8 字元以上且需包含大小寫、數字與特殊符號" },
+        { "tag": "improved", "text": "首次啟動自動產生密鑰，並設定為僅擁有者可讀寫" }
       ]
     },
     {
       "version": "4.12.2",
       "date": "2026-04-14",
-      "title": "密碼欄位顯示/隱藏切換",
+      "title": "密碼欄位顯示／隱藏切換",
       "type": "improved",
       "changes": [
-        { "tag": "new", "text": "所有密碼輸入欄位新增眼睛圖示切換按鈕，可顯示或隱藏密碼內容" },
-        { "tag": "improved", "text": "涵蓋範圍：登入、註冊、修改密碼、設定密碼、刪除帳號確認、管理員建立使用者、管理員重設密碼" }
+        { "tag": "new", "text": "所有密碼輸入欄位新增眼睛圖示，可切換顯示或隱藏密碼" },
+        { "tag": "improved", "text": "涵蓋登入、註冊、修改密碼、設定密碼、刪除帳號確認、管理員建立使用者、管理員重設密碼" }
       ]
     },
     {
       "version": "4.12.1",
       "date": "2026-04-13",
-      "title": "修正 Passkey 登入紀錄顯示為密碼",
+      "title": "Passkey 登入紀錄顯示修正",
       "type": "fix",
       "changes": [
-        { "tag": "fixed", "text": "修正使用 Passkey 登入後，登入紀錄的登入方式顯示為「密碼」而非「Passkey」" },
-        { "tag": "improved", "text": "補充 Passkey 相關登入失敗原因的中文翻譯（憑證不存在、驗證失敗）" }
+        { "tag": "fixed", "text": "修正使用 Passkey 登入後，登入紀錄誤顯示為「密碼」的問題" },
+        { "tag": "improved", "text": "補充 Passkey 失敗原因的中文翻譯（憑證不存在、驗證失敗）" }
       ]
     },
     {
       "version": "4.12.0",
       "date": "2026-04-13",
-      "title": "資料庫匯出匯入備份",
+      "title": "資料庫整檔備份匯入",
       "type": "feature",
       "changes": [
-        { "tag": "new", "text": "新增資料庫匯出功能：管理員可匯出未加密的完整 SQLite 資料庫備份檔（.db）" },
-        { "tag": "new", "text": "新增資料庫匯入功能：支援拖曳或選擇 .db 檔案匯入，自動驗證 SQLite 格式與必要資料表結構" },
-        { "tag": "new", "text": "匯入前自動備份現有資料庫，匯入後自動登出並重新登入以套用新資料" },
-        { "tag": "improved", "text": "僅管理員可見資料庫備份區塊，非管理員使用者不會看到此功能" }
+        { "tag": "new", "text": "管理員可匯出完整的資料庫備份檔" },
+        { "tag": "new", "text": "支援拖曳或選擇備份檔上傳，自動驗證格式與資料表結構" },
+        { "tag": "new", "text": "匯入前自動備份目前資料，匯入後自動登出並重新登入以套用新資料" }
       ]
     },
     {
       "version": "4.11.0",
       "date": "2026-04-13",
-      "title": "海外刷卡手續費計算",
+      "title": "海外刷卡手續費自動計算",
       "type": "feature",
       "changes": [
-        { "tag": "new", "text": "新增交易支出使用外幣 + 信用卡時，自動計算海外刷卡手續費（預設 1.5%），手續費金額與費率皆可手動調整" },
-        { "tag": "new", "text": "手續費摘要顯示：原始台幣金額 + 手續費 = 合計金額，清楚呈現實際扣款" },
-        { "tag": "improved", "text": "編輯已有手續費的交易時，自動載入手續費金額與費率，保留使用者手動調整值" }
+        { "tag": "new", "text": "外幣支出 + 信用卡時自動計算海外刷卡手續費（預設 1.5%），手續費金額與費率皆可手動調整" },
+        { "tag": "new", "text": "顯示手續費摘要：原始台幣金額 + 手續費 = 合計，清楚呈現實際扣款" },
+        { "tag": "improved", "text": "編輯已有手續費的交易時，自動載入手續費金額與費率，保留手動調整值" }
       ]
     },
     {
       "version": "4.10.3",
       "date": "2026-04-13",
-      "title": "修正正式環境登入紀錄國家欄位空白",
+      "title": "正式環境登入紀錄國家修正",
       "type": "fix",
       "changes": [
-        { "tag": "fixed", "text": "修正正式環境（Cloudflare 反向代理）登入紀錄國家欄位空白的問題：寫入時優先使用 Cloudflare CF-IPCountry header，僅在無 header 時才 fallback 至 ipinfo.io 查詢" }
+        { "tag": "fixed", "text": "修正透過 Cloudflare 反向代理時登入紀錄國家欄位空白的問題：優先使用 Cloudflare 提供的國家資訊，無提供時才查詢外部服務" }
       ]
     },
     {
       "version": "4.10.2",
       "date": "2026-04-13",
-      "title": "Passkey 修正、登入頁佈局調整與登入紀錄分頁",
+      "title": "Passkey 修正、登入頁佈局調整與分頁",
       "type": "fix",
       "changes": [
-        { "tag": "fixed", "text": "修正 Passkey 登入驗證時 counter 屬性路徑錯誤導致驗證失敗的問題" },
-        { "tag": "improved", "text": "登入頁佈局調整：帳號密碼欄位在上，Google SSO 與 Passkey 按鈕統一移至登入按鈕下方的替代登入區塊" },
-        { "tag": "new", "text": "帳號設定「登入紀錄」新增每頁筆數選擇（10 / 20 / 50 / 100 / 自訂）與分頁導覽列" },
-        { "tag": "removed", "text": "移除登入頁底部的「版本更新資訊」按鈕" }
+        { "tag": "fixed", "text": "修正 Passkey 驗證失敗的問題" },
+        { "tag": "improved", "text": "登入頁佈局調整：帳號密碼欄位在上，Google 與 Passkey 統一移至「替代登入」區塊" },
+        { "tag": "new", "text": "登入紀錄新增每頁筆數選擇（10／20／50／100／自訂）與分頁導覽列" }
       ]
     },
     {
       "version": "4.10.1",
       "date": "2026-04-13",
-      "title": "修正 Passkey 前端模組載入失敗",
+      "title": "Passkey 前端模組載入失敗修正",
       "type": "fix",
       "changes": [
-        { "tag": "fixed", "text": "修正 Passkey 前端動態 import 從 CDN 載入失敗的問題，改為由伺服器本地提供 webauthn.min.js（/vendor/webauthn.min.js）" },
-        { "tag": "improved", "text": "更新 OpenAPI 規格（asset_openapi.yaml）至 v4.10.0：新增 Passkey 相關 7 支 API 端點、同步密碼強度描述" }
+        { "tag": "fixed", "text": "修正 Passkey 元件從外部來源載入失敗的問題：改由伺服器本地直接提供" }
       ]
     },
     {
@@ -575,85 +521,73 @@
       "title": "新增 Passkey 無密碼登入",
       "type": "feature",
       "changes": [
-        { "tag": "new", "text": "支援 Passkey (WebAuthn) 無密碼登入：使用指紋、Face ID 或裝置 PIN 碼即可快速登入，無需輸入帳號密碼" },
-        { "tag": "new", "text": "登入頁新增「使用 Passkey 登入」按鈕，瀏覽器支援 WebAuthn 時自動顯示" },
-        { "tag": "new", "text": "帳號設定新增「Passkey 無密碼登入」管理卡片：可註冊多組 Passkey（不同裝置）、自訂命名、刪除" },
-        { "tag": "new", "text": "後端新增 passkey_credentials 資料表與 6 支 API 端點（challenge、登入驗證、註冊、列表、刪除、重新命名），使用 @passwordless-id/webauthn 套件進行伺服器端驗證" }
+        { "tag": "new", "text": "支援 Passkey 無密碼登入：使用指紋、Face ID 或裝置 PIN 即可快速登入，無需輸入帳號密碼" },
+        { "tag": "new", "text": "登入頁新增「使用 Passkey 登入」按鈕（瀏覽器支援時自動顯示）" },
+        { "tag": "new", "text": "帳號設定新增 Passkey 管理卡片：可在多裝置註冊多組 Passkey、自訂命名、刪除" }
       ]
     },
     {
       "version": "4.9.3",
       "date": "2026-04-13",
-      "title": "強化密碼安全性規則",
+      "title": "強化密碼安全規則",
       "type": "feature",
       "changes": [
-        { "tag": "improved", "text": "密碼強度規則升級：註冊、修改密碼、管理員重設密碼皆需包含大寫字母、小寫字母、數字與特殊符號（原僅要求英文字母與數字）" },
-        { "tag": "improved", "text": "管理員重設密碼新增新舊密碼相同檢查（bcrypt.compare 比對現有雜湊），防止重設為相同密碼" },
-        { "tag": "improved", "text": "註冊表單新增前端密碼強度即時驗證（原僅靠後端驗證），提升使用者體驗" }
+        { "tag": "improved", "text": "密碼強度規則升級：註冊、修改密碼、管理員重設密碼皆需包含大寫、小寫、數字與特殊符號" },
+        { "tag": "improved", "text": "管理員重設密碼新增新舊密碼相同檢查，防止重設為相同密碼" },
+        { "tag": "improved", "text": "註冊表單新增前端密碼強度即時驗證" }
       ]
     },
     {
       "version": "4.9.2",
       "date": "2026-04-13",
-      "title": "批次變更分類 UI 美化與多項修正",
+      "title": "批次變更分類介面美化與多項修正",
       "type": "fix",
       "changes": [
-        { "tag": "fixed", "text": "修正批次變更分類時因嵌套 optgroup 導致部分分類無法顯示的問題" },
-        { "tag": "improved", "text": "批次變更分類改為自訂下拉選單：顯示分類色點、支出/收入分區標題、父子分類群組結構，視窗寬度加大並允許下拉溢出" },
-        { "tag": "fixed", "text": "預設分類與子分類現在允許使用者刪除（移除前後端 is_default 保護限制）" },
-        { "tag": "fixed", "text": "修正新增交易選擇其他幣別時，匯率數值過長導致表單驗證失敗的問題（step 改為 any）" },
-        { "tag": "improved", "text": "更新 OpenAPI 規格（asset_openapi.yaml）至 v4.9.1：新增密碼修改端點、移除 mTLS 端點" }
+        { "tag": "fixed", "text": "修正批次變更分類時部分分類無法顯示的問題" },
+        { "tag": "improved", "text": "批次變更分類改為自訂下拉：顯示分類色點、收入／支出分區標題、父子分類群組結構，下拉視窗加大且允許溢出" },
+        { "tag": "fixed", "text": "預設分類與子分類現在允許使用者刪除" },
+        { "tag": "fixed", "text": "修正新增交易時匯率數值過長導致表單驗證失敗的問題" }
       ]
     },
     {
       "version": "4.9.1",
       "date": "2026-04-11",
-      "title": "新增使用者修改密碼功能（自助 + 管理員重設）",
+      "title": "新增使用者修改密碼（自助 + 管理員重設）",
       "type": "feature",
       "changes": [
-        { "tag": "new", "text": "帳號設定新增「修改密碼」卡片：使用者可在設定 → 帳號設定中變更登入密碼，需驗證目前密碼，新密碼需 8 字元且含英數，並要求二次輸入確認；後端同時防止新舊密碼相同" },
-        { "tag": "new", "text": "Google SSO-only 帳號可在同一張卡片設定本機密碼（無需目前密碼驗證），設定後即可同時使用密碼或 Google 登入；卡片標題與提示文字會自動依 hasPassword 切換為「設定本機密碼」" },
-        { "tag": "new", "text": "管理員 → 使用者列表新增「重設密碼」按鈕（鑰匙圖示），點擊開啟 modalAdminResetPassword Modal，可為任一使用者直接設定新密碼，無需提供舊密碼，適用於協助忘記密碼的使用者" },
-        { "tag": "new", "text": "後端新增 PUT /api/account/password（自助修改）與 PUT /api/admin/users/:id/password（管理員重設）；兩者皆套用 8 字元 + 英數字元密碼強度驗證；管理員端點受 adminMiddleware 保護" }
+        { "tag": "new", "text": "帳號設定新增「修改密碼」卡片：需驗證目前密碼，新密碼需符合強度規則並二次輸入確認；後端阻擋與舊密碼相同" },
+        { "tag": "new", "text": "Google 帳號可在同一張卡片設定本機密碼（無需驗證舊密碼），設定後可同時使用密碼或 Google 登入" },
+        { "tag": "new", "text": "管理員可在使用者列表點擊「重設密碼」直接為任一使用者設定新密碼，適用於協助忘記密碼的使用者" }
       ]
     },
     {
       "version": "4.9.0",
       "date": "2026-04-11",
-      "title": "移除 Cloudflare-issued Client Certificates（mTLS）功能",
+      "title": "移除 mTLS（Cloudflare-issued Client Certificates）",
       "type": "removed",
       "changes": [
-        { "tag": "removed", "text": "完整移除 mTLS / Cloudflare-issued Client Certificates 功能：使用者反饋此機制需在每一台裝置手動匯入 .p12 憑證、無法自動部署，且行動裝置與第三方瀏覽器支援度不一致，造成多裝置使用體驗破碎；改建議搭配 Tailscale（裝置層級身份驗證 + WireGuard 加密）或 Cloudflare Access（JWT + Google SSO 整合）達成零信任網路" },
-        { "tag": "removed", "text": "移除後端：mtlsMiddleware、/api/admin/certs/mtls* 與 /api/admin/certs/settings 端點、MTLS_ENABLED / MTLS_CF_ONLY / MTLS_CA_CERT 環境變數、SSL_MTLS_* 路徑常數、HTTPS + mTLS 直連啟動模式；GET /api/admin/certs 僅回傳 Origin Certificate 狀態" },
-        { "tag": "removed", "text": "移除前端：app.js 的 isMtlsError / handleMtlsError / showMtlsNotice 與 mTLS 警示卡邏輯、enterApp / navigate 中的 mTLS 分支、renderAdminCerts 中的 mTLS 上傳/刪除/啟用切換 UI 綁定" },
-        { "tag": "removed", "text": "移除 UI：index.html 的「mTLS 設定」「Cloudflare-issued Client Certificates」「Cloudflare Managed CA」三個 admin 區塊；style.css 的 .mtls-notice* 全套樣式（含 keyframes / 深色模式 / 響應式 / prefers-reduced-motion）" },
-        { "tag": "removed", "text": "移除設定：Dockerfile 不再建立 SSL/mTLS 目錄、.env / .env.example 移除 MTLS_* 與 MTLS_CA_CERT 範例、README 環境變數表移除 mTLS 區段" },
-        { "tag": "improved", "text": "管理員面板「SSL / TLS 憑證管理」卡片簡化為僅 Origin Certificate 區段，介面更聚焦；伺服器啟動模式統一為 HTTP（建議搭配 Cloudflare 反向代理或 Tailscale 私網直連）" }
+        { "tag": "removed", "text": "完整移除 mTLS / Cloudflare-issued Client Certificates 功能：使用者反映需手動匯入憑證、行動裝置與第三方瀏覽器支援不一，多裝置體驗破碎；建議改用 Tailscale 或 Cloudflare Access 達成零信任網路" },
+        { "tag": "improved", "text": "管理員「SSL／TLS 憑證管理」卡片簡化為僅 Origin Certificate 區段，介面更聚焦" }
       ]
     },
     {
       "version": "4.8.9",
       "date": "2026-04-11",
-      "title": "mTLS 錯誤訊息差異化 — 指引使用者安裝瀏覽器用戶端憑證",
+      "title": "mTLS 錯誤訊息差異化",
       "type": "improved",
       "changes": [
-        { "tag": "improved", "text": "mTLS 403 回應根據 cf-cert-verified / cf-cert-presented / cf-cert-revoked 組合自動判別失敗原因：「瀏覽器未提供憑證」「憑證已吊銷」「憑證未被 Cloudflare 接受」三種情境給出不同指引，避免使用者一律以為是伺服器端錯誤" },
-        { "tag": "new", "text": "最常見的「瀏覽器未安裝用戶端憑證」情境會明確告知使用者需要先在系統（macOS Keychain / Windows 憑證管理員 / iOS Profile / Android 使用者憑證）安裝 Cloudflare 簽發的 .p12 / PKCS#12 憑證，並附上 Cloudflare 官方文件連結供行動 App / IoT 裝置參考" },
-        { "tag": "new", "text": "mTLS 403 回應新增 reason / debug 結構化欄位：reason 是一句話失敗原因、debug 回傳 cf-cert-* 原始標頭值，前端警示卡以可摺疊的 <details> 顯示技術細節方便管理員排錯" },
-        { "tag": "improved", "text": "前端 mTLS 警示卡標題改為「mTLS 驗證失敗：{reason}」讓使用者一眼看到失敗原因，並讀取 err.data.reason / err.data.detail / err.data.debug 而非只看 err.message" },
-        { "tag": "improved", "text": "新增 .mtls-notice-debug CSS：可摺疊 summary + 等寬字體 pre 區塊，與主警示卡同風格；支援深色模式與最大高度捲動" }
+        { "tag": "improved", "text": "mTLS 失敗時依情境提供不同指引：「瀏覽器未提供憑證」「憑證已吊銷」「憑證未被接受」，避免一律以為是伺服器問題" },
+        { "tag": "new", "text": "最常見的「未安裝用戶端憑證」會明確告知使用者需在系統憑證管理員安裝對應憑證，並附上官方文件連結" }
       ]
     },
     {
       "version": "4.8.8",
       "date": "2026-04-11",
-      "title": "修正 mTLS 標頭名稱錯誤（根因）— 相容 Cloudflare Managed Transform",
+      "title": "修正 mTLS 標頭名稱錯誤",
       "type": "fixed",
       "changes": [
-        { "tag": "fixed", "text": "修正 mTLS 中介軟體讀取錯誤的標頭名稱：原本檢查 cf-client-cert-verified: SUCCESS，但 Cloudflare Managed Transform「Add TLS client auth headers」實際回注的是 cf-cert-verified: true/false（對應 ruleset engine 的 cf.tls_client_auth.cert_verified boolean 欄位）。此錯誤使得即使使用者正確設定 Cloudflare mTLS，origin 仍會誤判所有請求為「未通過驗證」而回 403" },
-        { "tag": "improved", "text": "mTLS 中介軟體同時相容三種標頭格式：cf-cert-verified（新版標準）、cf-client-cert-verified: SUCCESS（舊版 / 自訂 Transform Rule）、cf-cert-presented（輔助訊號）；任何一種明確通過訊號即放行，失敗時 403 detail 會回傳實際收到的狀態值方便除錯" },
-        { "tag": "improved", "text": "403 錯誤提示文字加入 Cloudflare 設定指引：需在 Dashboard → Rules → Transform Rules → Managed Transforms 啟用「Add TLS client auth headers」，否則 origin 根本收不到 cert 相關標頭" },
-        { "tag": "improved", "text": "mTLS 中介軟體程式碼加入 Cloudflare 官方文件連結註解，方便日後維護" }
+        { "tag": "fixed", "text": "修正 mTLS 中介軟體讀取的標頭名稱與 Cloudflare 實際回傳不符，導致即使設定正確也會被誤判為驗證失敗的問題" },
+        { "tag": "improved", "text": "同時相容新舊兩種標頭格式；錯誤提示加入 Cloudflare 設定指引" }
       ]
     },
     {
@@ -662,70 +596,59 @@
       "title": "mTLS 救援路徑擴大至整個管理員面板",
       "type": "fixed",
       "changes": [
-        { "tag": "fixed", "text": "修正 mTLS 設定錯誤時「前往憑證管理」按鈕雖可進入管理員頁但 /api/admin/settings 仍被 403 擋下，導致管理員面板無法完整載入的問題" },
-        { "tag": "improved", "text": "mTLS 救援路徑從 /api/admin/certs 擴大至整個 /api/admin/ 命名空間（以及 /api/account/login-logs 設定頁所需），讓管理員在 mTLS 失效時仍能完整開啟管理員面板、檢視現有設定、切換 mTLS 開關" },
-        { "tag": "improved", "text": "所有 /api/admin/ 端點本身已受 authMiddleware + adminMiddleware 保護，跳過 mTLS 不會造成未授權存取，只是讓已通過認證的管理員在 mTLS 故障時仍有救援通道" }
+        { "tag": "fixed", "text": "修正 mTLS 設定錯誤時管理員面板無法完整載入的問題：救援路徑擴大涵蓋整個管理員區域，讓管理員能在 mTLS 失效時仍可進入面板修改設定" }
       ]
     },
     {
       "version": "4.8.6",
       "date": "2026-04-11",
-      "title": "mTLS 警示卡永遠顯示救援按鈕，新增登出備援",
+      "title": "mTLS 警示卡永遠顯示救援按鈕",
       "type": "fixed",
       "changes": [
-        { "tag": "fixed", "text": "修正 mTLS 警示卡的「前往憑證管理」按鈕會因 currentUser.isAdmin 未同步而隱藏：mTLS 錯誤常在登入資料回填前觸發，導致實際管理員看到非管理員提示而失去救援路徑。現一律顯示跳轉按鈕（憑證管理頁本身已有 admin 權限檢查，不會造成資料外洩）" },
-        { "tag": "new", "text": "mTLS 警示卡新增「登出」備援按鈕：即使非管理員或按鈕跳轉後仍無法進入，使用者隨時可一鍵登出回到登入頁重新處理" },
-        { "tag": "improved", "text": "提示文字改為一致的「若您是管理員，請前往憑證管理確認設定或暫時關閉 mTLS；否則請聯絡管理員協助處理」，去除分支判斷" }
+        { "tag": "fixed", "text": "修正 mTLS 警示卡的「前往憑證管理」按鈕在某些時機會被隱藏的問題；現在永遠顯示" },
+        { "tag": "new", "text": "新增「登出」備援按鈕，讓使用者隨時可以一鍵登出回到登入頁重新處理" }
       ]
     },
     {
       "version": "4.8.5",
       "date": "2026-04-11",
-      "title": "mTLS 錯誤改為單一持久通知，取代 toast 洗版",
+      "title": "mTLS 錯誤改為單一持久通知",
       "type": "improved",
       "changes": [
-        { "tag": "improved", "text": "mTLS 驗證失敗時不再每個 API 呼叫都彈一個 toast：新增 isMtlsError() 集中偵測，整個 session 只顯示一次浮動警示卡，後續的 mTLS 錯誤靜默吞掉避免干擾" },
-        { "tag": "new", "text": "新增 mTLS 浮動警示卡：紅色側邊強調 + shield 圖示 + 錯誤細節 + 提示文字；管理員顯示「前往憑證管理」一鍵跳轉按鈕，一般使用者顯示聯絡管理員提示；可手動關閉" },
-        { "tag": "improved", "text": "API.get 錯誤物件附加 status / data / detail 欄位，讓錯誤處理可讀取伺服器回傳的結構化資訊（包含 mTLS middleware 的 detail 指引文字）" },
-        { "tag": "improved", "text": "警示卡支援深色模式、小螢幕直排、prefers-reduced-motion；進場動畫採用 spring cubic-bezier(.34,1.56,.64,1)，離場 180ms ease-in" }
+        { "tag": "improved", "text": "mTLS 失敗時不再每個請求都跳一個提示：整個工作階段只顯示一次浮動警示卡，後續錯誤靜默吞掉避免干擾" },
+        { "tag": "new", "text": "新增 mTLS 浮動警示卡：紅色側邊強調 + 圖示 + 錯誤細節 + 提示，管理員可一鍵跳轉憑證管理" }
       ]
     },
     {
       "version": "4.8.4",
       "date": "2026-04-11",
-      "title": "管理員登入紀錄分頁導覽改為 iOS 浮動藥丸樣式",
+      "title": "登入紀錄分頁導覽改為浮動藥丸樣式",
       "type": "improved",
       "changes": [
-        { "tag": "improved", "text": "管理員登入紀錄 / 全部使用者登入紀錄的頁碼切換從原本未套用樣式的原生按鈕，改為與上方「每頁筆數」一致的 iOS 風格浮動藥丸分段控制器：膠囊軌道 + inset shadow + 浮起主色藥丸" },
-        { "tag": "improved", "text": "Active 頁碼使用 --primary-dark（白底對比 6.02:1，WCAG AA 通過）、font-weight 700、柔和主色光暈陰影；深色模式改用 --primary-light + 藍紫微光（對比 6.19:1）" },
-        { "tag": "improved", "text": "按鈕採 tabular-nums 對齊避免切換時寬度跳動；180ms cubic-bezier(.4,0,.2,1) 平滑過渡、press 0.92 微縮反饋、focus-visible 雙層焦點環；支援 prefers-reduced-motion 關閉動畫" },
-        { "tag": "improved", "text": "上一頁 / 下一頁按鈕加上 aria-label，目前頁加上 aria-current=\"page\"，省略號改用獨立 class 並設 aria-hidden / tabindex=-1，改善螢幕閱讀器與鍵盤導覽體驗" },
-        { "tag": "improved", "text": "小螢幕（≤640px）自動縮小按鈕尺寸與間距，避免工具列壓縮" }
+        { "tag": "improved", "text": "登入紀錄頁碼切換改為與「每頁筆數」一致的浮動藥丸分段控制器，視覺更一致" },
+        { "tag": "improved", "text": "強化對比度（符合 WCAG AA）並支援深色模式；上一頁／下一頁按鈕補上無障礙標籤" }
       ]
     },
     {
       "version": "4.8.3",
       "date": "2026-04-11",
-      "title": "mTLS 設定錯誤時提供救援路徑與更友善錯誤提示",
+      "title": "mTLS 設定錯誤時提供救援路徑",
       "type": "fixed",
       "changes": [
-        { "tag": "fixed", "text": "修正 mTLS 啟用但 Cloudflare 未正確回注 Cf-Client-Cert-Verified 標頭時，使用者登入後會被鎖死在空白頁：enterApp() 載入 /api/categories、/api/accounts 單點失敗不再阻擋後續導航，並以 toast 個別提示" },
-        { "tag": "fixed", "text": "修正切換頁面時單頁 API 403 會導致整個導航中斷：navigate() 以 try/catch 包覆 renderPage()，單頁渲染失敗不再影響其他頁面切換" },
-        { "tag": "new", "text": "新增 mTLS 救援路徑：/api/admin/certs 系列端點（憑證管理 / mTLS 設定）跳過 mTLS 驗證，管理員在 mTLS 設定錯誤時仍可透過「設定 → 管理員 → 憑證管理」關閉 mTLS；端點仍受 authMiddleware + requireAdmin 保護" },
-        { "tag": "improved", "text": "mTLS 中介軟體 403 回應新增 detail 欄位，指引使用者確認 Cloudflare 憑證綁定或改由管理員關閉 mTLS" }
+        { "tag": "fixed", "text": "修正 mTLS 啟用但 Cloudflare 未正確回傳憑證標頭時，使用者登入後會卡住空白頁的問題" },
+        { "tag": "fixed", "text": "修正切換頁面時單頁載入失敗會中斷整個導航的問題" },
+        { "tag": "new", "text": "新增 mTLS 救援路徑：憑證管理相關端點跳過 mTLS 驗證，管理員仍可進入修改設定（仍受身分驗證保護）" }
       ]
     },
     {
       "version": "4.8.2",
       "date": "2026-04-11",
-      "title": "管理員登入紀錄每頁筆數 Segmented Control 全面美化",
+      "title": "登入紀錄每頁筆數控制全面美化",
       "type": "improved",
       "changes": [
-        { "tag": "improved", "text": "管理員登入紀錄 / 全部使用者登入紀錄的每頁筆數控制改為 iOS 風格浮動藥丸（pill-in-pill）：軌道為圓角膠囊容器搭配 inset shadow，目前選項以白色浮動藥丸呈現並帶有柔和陰影，取代原本的硬分隔線＋主色塊" },
-        { "tag": "improved", "text": "每頁筆數標籤新增主色小圓點，增加視覺錨點；選項文字採 tabular-nums 對齊、動畫使用 180ms cubic-bezier(.4,0,.2,1) 平滑切換；按下時 0.96 微縮反饋，鍵盤 focus-visible 顯示清晰焦點環" },
-        { "tag": "improved", "text": "自訂筆數輸入框改以主色亮邊＋spring 彈跳動畫滑入，與 segmented control 視覺節奏一致；移除 number input 上下箭頭保持膠囊乾淨" },
-        { "tag": "improved", "text": "Active 狀態文字色由 --primary 改為 --primary-dark，白底對比從 4.28:1 提升至 6.02:1（WCAG AA 通過）；深色模式 active 使用 --primary-light + 藍紫微光陰影，對比 6.19:1" },
-        { "tag": "improved", "text": "小螢幕（≤640px）自動換行、選項最小寬度收縮，避免工具列壓縮" }
+        { "tag": "improved", "text": "登入紀錄每頁筆數控制改為浮動藥丸分段控制器，視覺更精緻" },
+        { "tag": "improved", "text": "標籤新增主色小圓點作為視覺錨點；自訂筆數輸入框改以主色亮邊與彈跳動畫滑入" },
+        { "tag": "improved", "text": "強化對比度與小螢幕排版" }
       ]
     },
     {
@@ -734,9 +657,8 @@
       "title": "修正 mTLS 啟用後 Google 登入誤報失敗",
       "type": "fixed",
       "changes": [
-        { "tag": "fixed", "text": "修正啟用 mTLS 後使用 Google 登入會顯示「Google 登入失敗：此端點必須透過 Cloudflare 存取（mTLS）」：Google 授權其實成功，錯誤是登入後 enterApp() 載入 /api/categories 等受 mTLS 保護的端點時被 403，前端誤把後續載入錯誤歸類為登入失敗" },
-        { "tag": "improved", "text": "handleGoogleCode / handleLogin 分離登入與資料載入兩階段錯誤訊息，登入後載入失敗會顯示為「登入後載入資料失敗」而非「登入失敗」" },
-        { "tag": "improved", "text": "mTLS 中介軟體新增 loopback（127.0.0.1 / ::1）放行路徑，以 TCP 連線層位址判斷不受 X-Forwarded-For 影響；本機管理與 mTLS 設定錯誤時可直接連本機救援" }
+        { "tag": "fixed", "text": "修正啟用 mTLS 後使用 Google 登入會誤顯示登入失敗（其實是登入後載入資料時被擋）的問題；現在會分階段顯示對應的錯誤訊息" },
+        { "tag": "improved", "text": "本機連線（127.0.0.1 / ::1）放行 mTLS 檢查，方便管理員在設定錯誤時直接連本機救援" }
       ]
     },
     {
@@ -745,8 +667,8 @@
       "title": "登入紀錄每頁筆數改為分段控制器",
       "type": "improved",
       "changes": [
-        { "tag": "improved", "text": "管理員登入紀錄與全部使用者登入紀錄的每頁筆數由下拉選單改為分段控制器（Segmented Control），風格與主題切換一致" },
-        { "tag": "improved", "text": "自訂筆數選項保留，點選後展開數字輸入框，Enter 確認生效" }
+        { "tag": "improved", "text": "登入紀錄每頁筆數由下拉改為分段控制器，與主題切換風格一致" },
+        { "tag": "improved", "text": "保留自訂筆數選項，點選後展開數字輸入框" }
       ]
     },
     {
@@ -755,19 +677,18 @@
       "title": "mTLS 安全性強化",
       "type": "fixed",
       "changes": [
-        { "tag": "fixed", "text": "修正 CodeQL 安全警告 js/disabling-certificate-validation：移除 rejectUnauthorized:false" },
-        { "tag": "improved", "text": "mTLS 直連模式現在強制要求 CA 憑證存在；若無 CA，自動退回 HTTP 模式並顯示明確錯誤訊息，防止以無驗證狀態運行" }
+        { "tag": "fixed", "text": "移除憑證驗證的不安全選項，避免無驗證狀態運行" },
+        { "tag": "improved", "text": "mTLS 直連模式強制要求 CA 憑證；若無 CA 自動退回 HTTP 並顯示明確錯誤" }
       ]
     },
     {
       "version": "4.7.8",
       "date": "2026-04-11",
-      "title": "Docker 部署 SSL 憑證持久化修正",
+      "title": "Docker 部署 SSL 憑證持久化",
       "type": "fixed",
       "changes": [
-        { "tag": "fixed", "text": "修正 Docker 部署後 SSL/TLS 憑證不持久化問題：憑證目錄改為儲存於 /app/data/SSL/（Volume 內）" },
-        { "tag": "new", "text": "新增 SSL_PATH 環境變數，可自訂 SSL 憑證根目錄路徑（本機開發預設為 <專案>/SSL/，Docker 預設為 /app/data/SSL/）" },
-        { "tag": "improved", "text": "Dockerfile 預建 SSL 子目錄結構，確保首次啟動時路徑已存在" }
+        { "tag": "fixed", "text": "修正 Docker 部署後 SSL 憑證不持久化的問題：憑證目錄改為儲存於資料磁碟" },
+        { "tag": "new", "text": "新增可自訂憑證根目錄路徑的環境變數" }
       ]
     },
     {
@@ -776,23 +697,21 @@
       "title": "設定頁面 UI 統一美化",
       "type": "improved",
       "changes": [
-        { "tag": "improved", "text": "設定頁面所有卡片標題統一改為圖示盒子樣式，與其他頁面風格一致" },
-        { "tag": "improved", "text": "SSL/TLS 憑證管理各子分區改用 CSS class（admin-section / cert-info-box / cert-sub-step），移除大量 inline style" },
-        { "tag": "improved", "text": "新增 .table-toolbar 工具列 class，統一管理員登入紀錄操作列排版" },
-        { "tag": "improved", "text": "新增 .form-input 與 .form-row textarea 通用樣式，確保憑證 textarea 套用一致邊框與焦點效果" },
-        { "tag": "improved", "text": "按鈕統一改為 btn-sm 尺寸，與頁面其他操作按鈕視覺比例一致" }
+        { "tag": "improved", "text": "設定頁面所有卡片標題統一改為圖示盒子樣式" },
+        { "tag": "improved", "text": "SSL／TLS 憑證管理子分區改用統一樣式類別，移除大量內嵌樣式" },
+        { "tag": "improved", "text": "管理員登入紀錄操作列、表單欄位與按鈕尺寸全面統一" }
       ]
     },
     {
       "version": "4.7.6",
       "date": "2026-04-11",
-      "title": "SSL/TLS 憑證管理完整支援",
+      "title": "SSL／TLS 憑證管理完整支援",
       "type": "fixed",
       "changes": [
-        { "tag": "new", "text": "管理員面板新增 Cloudflare-issued Client Certificates 上傳（PEM + 私鑰），對應 mTLS 用戶端憑證" },
-        { "tag": "new", "text": "Origin Certificates 新增第三欄位：Cloudflare Origin CA（POST/DELETE /api/admin/certs/origin/ca）" },
-        { "tag": "fixed", "text": "修正 server.js 中 SSL_MTLS_CERT 路徑 typo（sercer.pem → server.pem）" },
-        { "tag": "improved", "text": "憑證資訊面板同步顯示 Client Certificate、Managed CA、Origin CA、Origin Certificate 四組狀態" }
+        { "tag": "new", "text": "管理員面板新增 Cloudflare 用戶端憑證上傳，對應 mTLS" },
+        { "tag": "new", "text": "Origin Certificate 區段補上 Origin CA 欄位" },
+        { "tag": "fixed", "text": "修正憑證檔名設定錯誤" },
+        { "tag": "improved", "text": "憑證資訊面板同步顯示用戶端憑證、Managed CA、Origin CA、Origin Certificate 四組狀態" }
       ]
     },
     {
@@ -801,118 +720,114 @@
       "title": "管理員憑證管理介面",
       "type": "new",
       "changes": [
-        { "tag": "new", "text": "管理員面板新增「SSL / TLS 憑證管理」卡片，可直接在網頁部署與刪除 Cloudflare Managed CA 憑證及 Origin Certificate" },
-        { "tag": "new", "text": "新增 mTLS 設定切換（啟用 / CF Only 模式）並即時寫入 .env，免重啟即生效" },
-        { "tag": "new", "text": "新增 8 支憑證管理 API：GET /api/admin/certs、PUT /api/admin/certs/settings、POST & DELETE /api/admin/certs/mtls/ca、POST & DELETE /api/admin/certs/origin" },
-        { "tag": "improved", "text": "憑證資訊面板顯示主旨與有效期限，讓管理員確認憑證狀態" }
+        { "tag": "new", "text": "管理員面板新增「SSL／TLS 憑證管理」卡片，可直接在網頁部署與刪除 Cloudflare Managed CA 與 Origin Certificate" },
+        { "tag": "new", "text": "新增 mTLS 設定切換（啟用／僅 Cloudflare 模式），即時生效無需重啟" },
+        { "tag": "improved", "text": "憑證資訊面板顯示主旨與有效期限" }
       ]
     },
     {
       "version": "4.7.4",
       "date": "2026-04-11",
-      "title": "mTLS 支援（Cloudflare Client Certificates）",
+      "title": "新增 mTLS（Cloudflare 用戶端憑證）支援",
       "type": "new",
       "changes": [
-        { "tag": "new", "text": "新增 mTLS 驗證中介軟體：MTLS_ENABLED=true 時，/api/ 路由（除 /api/auth/ 外）必須通過客戶端憑證驗證" },
-        { "tag": "new", "text": "支援 Cloudflare 代理模式（MTLS_CF_ONLY=true，預設）：驗證 Cloudflare 邊緣回注的 Cf-Client-Cert-Verified: SUCCESS header" },
-        { "tag": "new", "text": "支援直連 HTTPS mTLS 模式（MTLS_CF_ONLY=false）：Node.js https.createServer + requestCert，搭配 Cloudflare Managed CA 憑證驗證客戶端憑證鏈" },
-        { "tag": "new", "text": "新增環境變數：MTLS_ENABLED、MTLS_CF_ONLY、SSL_CERT、SSL_KEY、MTLS_CA_CERT，並更新 .env.example 說明" }
+        { "tag": "new", "text": "啟用 mTLS 後，登入後的 API 請求需通過用戶端憑證驗證" },
+        { "tag": "new", "text": "支援 Cloudflare 代理模式（驗證邊緣回注的憑證標頭）" },
+        { "tag": "new", "text": "支援直連模式（伺服器直接驗證用戶端憑證鏈）" }
       ]
     },
     {
       "version": "4.7.3",
       "date": "2026-04-11",
-      "title": "管理員登入紀錄分頁功能",
+      "title": "管理員登入紀錄分頁",
       "type": "feature",
       "changes": [
-        { "tag": "new", "text": "管理員登入紀錄（最近 200 筆）與全部使用者登入紀錄（最近 500 筆）新增每頁筆數選擇（10 / 20 / 50 / 100 / 自訂）與分頁導覽列" },
-        { "tag": "improved", "text": "兩份登入紀錄表格工具列新增「共 N 筆」總筆數顯示" }
+        { "tag": "new", "text": "管理員登入紀錄與全部使用者登入紀錄新增每頁筆數選擇（10／20／50／100／自訂）與分頁導覽列" },
+        { "tag": "improved", "text": "工具列新增「共 N 筆」總筆數顯示" }
       ]
     },
     {
       "version": "4.7.2",
       "date": "2026-04-11",
-      "title": "安全性修補與 Cloudflare API Shield Schema",
+      "title": "資安修補與 API 規格檔",
       "type": "fixed",
       "changes": [
-        { "tag": "fixed", "text": "修正 /privacy 與 /terms 路由缺少速率限制（Rate Limiting）的 CodeQL 警告，補上與其他路由一致的 120 req/min 限制" },
-        { "tag": "fixed", "text": "修補 backend/ 子專案的 path-to-regexp ReDoS 漏洞（CVE GHSA-9wv6-86v2-598j）：透過 npm overrides 強制升級至 >=0.1.13" },
-        { "tag": "new", "text": "新增 openapi.yaml：符合 Cloudflare API Shield Schema Validation 規格的 OpenAPI 3.0.3 Schema，涵蓋所有 88 個 API 端點" }
+        { "tag": "fixed", "text": "為隱私權與服務條款頁補上速率限制（每分鐘 120 次）" },
+        { "tag": "fixed", "text": "升級套件以修補已知漏洞" },
+        { "tag": "new", "text": "新增完整的 API 規格檔，涵蓋所有 88 個端點" }
       ]
     },
     {
       "version": "4.7.1",
       "date": "2026-04-11",
-      "title": "匯率快取架構升級與側邊欄法律連結",
+      "title": "匯率快取架構升級與側邊欄連結",
       "type": "improved",
       "changes": [
-        { "tag": "fixed", "text": "修正交易 Modal 切換第二個（及之後）外幣時，自動查詢匯率未觸發的問題" },
+        { "tag": "fixed", "text": "修正交易視窗切換到第二個（含）外幣時自動匯率查詢未觸發的問題" },
         { "tag": "new", "text": "側邊欄底部新增「隱私權政策」與「服務條款」快速連結" },
-        { "tag": "improved", "text": "新增跨使用者匯率共用快取（sharedAutoRateCache，TTL 30 分鐘）：用戶 A 查詢過的幣別，用戶 B 在快取期間內可直接使用，無需再打外部 API" },
-        { "tag": "improved", "text": "exchange_rates 資料表新增 is_manual 欄位，區分自動查詢（0）與手動輸入（1）；手動輸入的匯率不寫入共用快取，不影響其他使用者" }
+        { "tag": "improved", "text": "匯率自動查詢結果改為跨使用者共用快取（30 分鐘）：A 使用者剛查過的幣別，B 使用者在快取期內可直接使用" },
+        { "tag": "improved", "text": "區分自動查詢與手動輸入的匯率，手動輸入不影響其他使用者的共用快取" }
       ]
     },
     {
       "version": "4.7.0",
       "date": "2026-04-11",
-      "title": "新增交易幣別自動查詢匯率功能",
+      "title": "新增交易幣別自動查詢匯率",
       "type": "new",
       "changes": [
-        { "tag": "new", "text": "新增交易時選擇無匯率幣別，系統自動向外部 API 查詢即時匯率並填入匯率欄位" },
-        { "tag": "new", "text": "自動取得的匯率即時存入匯率設定，交易儲存後該幣別匯率可供後續使用" },
-        { "tag": "improved", "text": "查詢匯率期間匯率輸入欄位顯示「查詢匯率中…」提示，避免使用者誤操作" }
+        { "tag": "new", "text": "新增交易時若選擇尚無匯率的幣別，系統自動向外部 API 查詢即時匯率並填入" },
+        { "tag": "new", "text": "自動取得的匯率即時存入匯率設定，後續可重複使用" },
+        { "tag": "improved", "text": "查詢期間匯率欄位顯示「查詢匯率中…」提示，避免誤操作" }
       ]
     },
     {
       "version": "4.6.9",
       "date": "2026-04-10",
-      "title": "修正 Docker 映像檔缺少公開頁面檔案",
+      "title": "Docker 映像缺少公開頁面修正",
       "type": "fixed",
       "changes": [
-        { "tag": "fixed", "text": "Dockerfile COPY 指令補上 privacy.html 與 terms.html，修正 Docker 環境下隱私權政策與服務條款頁面回傳 ENOENT 錯誤的問題" }
+        { "tag": "fixed", "text": "修正 Docker 映像未包含隱私權政策與服務條款頁面，導致開啟時錯誤的問題" }
       ]
     },
     {
       "version": "4.6.8",
       "date": "2026-04-10",
-      "title": "新增服務條款公開頁面",
+      "title": "新增服務條款公開頁",
       "type": "new",
       "changes": [
-        { "tag": "new", "text": "新增 /terms 服務條款頁面，無需登入即可公開存取" },
-        { "tag": "new", "text": "首頁 footer 加入「服務條款」連結，並與隱私權政策並排顯示" },
-        { "tag": "improved", "text": "隱私權政策頁面 footer 加入服務條款互連連結" }
+        { "tag": "new", "text": "新增服務條款頁面，無需登入即可公開存取" },
+        { "tag": "improved", "text": "首頁與隱私權政策頁底部加入服務條款連結互通" }
       ]
     },
     {
       "version": "4.6.7",
       "date": "2026-04-10",
-      "title": "新增隱私權政策公開頁面",
+      "title": "新增隱私權政策公開頁",
       "type": "new",
       "changes": [
-        { "tag": "new", "text": "新增 /privacy 隱私權政策頁面，無需登入即可公開存取" },
-        { "tag": "new", "text": "首頁 footer 加入「隱私權政策」連結" }
+        { "tag": "new", "text": "新增隱私權政策頁面，無需登入即可公開存取" },
+        { "tag": "new", "text": "首頁底部加入「隱私權政策」連結" }
       ]
     },
     {
       "version": "4.6.6",
       "date": "2026-04-10",
-      "title": "修正幣別下拉選單不完整問題",
+      "title": "幣別下拉選單不完整修正",
       "type": "fixed",
       "changes": [
-        { "tag": "fixed", "text": "未進入帳戶管理頁面時，幣別下拉選單僅顯示 6 種預設幣別的問題" },
-        { "tag": "improved", "text": "幣別選單現在直接從完整的 CURRENCY_LABELS 對照表（150+ 種）產生，不再依賴帳戶或匯率設定才能顯示完整選項" }
+        { "tag": "fixed", "text": "修正未進入帳戶管理頁面時，幣別下拉只顯示 6 種預設幣別的問題" },
+        { "tag": "improved", "text": "幣別選單改為直接從完整對照表（150+ 種）產生" }
       ]
     },
     {
       "version": "4.6.5",
       "date": "2026-04-10",
-      "title": "固定收支支援外幣幣別選擇",
+      "title": "固定收支支援外幣",
       "type": "new",
       "changes": [
-        { "tag": "new", "text": "新增固定收支幣別選擇欄位，可選擇 TWD 以外的外幣" },
-        { "tag": "new", "text": "選擇外幣後顯示匯率輸入欄與換算後 TWD 金額提示，邏輯與交易記錄一致" },
-        { "tag": "improved", "text": "自動執行固定收支時，產生的交易紀錄帶入正確的幣別、原始金額與匯率" },
-        { "tag": "improved", "text": "資料庫新增 currency 與 fx_rate 欄位至 recurring 資料表（自動升級，不影響既有紀錄）" }
+        { "tag": "new", "text": "固定收支新增幣別欄位，可選台幣以外的外幣" },
+        { "tag": "new", "text": "選擇外幣後顯示匯率輸入欄與台幣換算結果，邏輯與交易記錄一致" },
+        { "tag": "improved", "text": "自動執行固定收支時，產生的交易紀錄會帶入正確的幣別、原始金額與匯率" }
       ]
     },
     {
@@ -921,24 +836,20 @@
       "title": "版本更新資訊對未登入使用者開放",
       "type": "improved",
       "changes": [
-        { "tag": "new", "text": "公開首頁底部新增「版本更新資訊」按鈕，未登入使用者可直接查看更新紀錄" },
-        { "tag": "new", "text": "登入/註冊頁底部新增「版本更新資訊」連結，方便在登入前確認版本" },
-        { "tag": "improved", "text": "「立即更新」按鈕維持僅管理員可見，一般使用者與未登入者只能查看，不能執行更新" }
+        { "tag": "new", "text": "公開首頁底部新增「版本更新資訊」按鈕，未登入也能查看更新紀錄" },
+        { "tag": "new", "text": "登入／註冊頁底部新增「版本更新資訊」連結" },
+        { "tag": "improved", "text": "「立即更新」按鈕維持僅管理員可見；一般使用者與未登入者只能查看，不能執行更新" }
       ]
     },
     {
       "version": "4.6.3",
       "date": "2026-04-10",
-      "title": "全頁 RWD 響應式完善",
+      "title": "全頁響應式完善",
       "type": "improved",
       "changes": [
-        { "tag": "improved", "text": "頁面標題（page-title）在手機版縮至 20px，超小螢幕縮至 18px，避免佔用過多垂直空間" },
-        { "tag": "improved", "text": "卡片（card）padding 在手機版縮至 16px，超小螢幕縮至 12px，提供更多內容空間" },
-        { "tag": "improved", "text": "所有 Modal 在手機版限制最大寬度 calc(100vw - 32px)，超小螢幕近乎全寬" },
-        { "tag": "improved", "text": "Modal 內部 padding（header、form、form-actions）在手機版統一縮小" },
-        { "tag": "improved", "text": "分頁按鈕（pagination）在手機版自動換行，不再溢出" },
-        { "tag": "improved", "text": "批次操作列（batch-bar）與類型切換（type-toggle）手機版支援換行" },
-        { "tag": "improved", "text": "摘要卡片 icon 在超小螢幕縮小，維持版面比例" }
+        { "tag": "improved", "text": "頁面標題與卡片留白在手機與超小螢幕自動縮小，提供更多內容空間" },
+        { "tag": "improved", "text": "彈出視窗在手機版限制最大寬度，超小螢幕近乎全寬，內部留白統一縮小" },
+        { "tag": "improved", "text": "分頁按鈕、批次操作列、類型切換在手機版自動換行，不再溢出" }
       ]
     },
     {
@@ -947,22 +858,18 @@
       "title": "股票紀錄頁面響應式優化",
       "type": "improved",
       "changes": [
-        { "tag": "improved", "text": "各股票子頁表格加入橫向捲動支援，在小螢幕不再因欄位過多而破版" },
-        { "tag": "improved", "text": "手機版交易紀錄表格自動隱藏次要欄位（類型、交易稅），保留成交價、小計等關鍵資訊" },
-        { "tag": "improved", "text": "手機版實現損益表格還原「實現損益」欄，隱藏「賣出股數」欄" },
-        { "tag": "improved", "text": "手機版股利/定期定額操作欄不再被全域規則誤隱藏" },
-        { "tag": "improved", "text": "手機版篩選欄日期選擇器自適應寬度，查詢股票篩選不再錯位" },
-        { "tag": "improved", "text": "超小螢幕（≤480px）持股卡片改為單欄顯示，標籤字縮小以節省空間" }
+        { "tag": "improved", "text": "各股票子頁表格加入橫向捲動，在小螢幕不再因欄位過多而破版" },
+        { "tag": "improved", "text": "手機版自動隱藏次要欄位，保留成交價、小計等關鍵資訊" },
+        { "tag": "improved", "text": "超小螢幕（≤480px）持股卡片改為單欄顯示" }
       ]
     },
     {
       "version": "4.6.1",
       "date": "2026-04-07",
-      "title": "登入有效期統一由環境變數控制",
+      "title": "登入有效期統一控制",
       "type": "improved",
       "changes": [
-        { "tag": "improved", "text": "Cookie maxAge 改由 JWT_EXPIRES 環境變數統一決定，與 JWT 有效期保持一致，不再寫死 7 天" },
-        { "tag": "improved", "text": "支援 s / m / h / d / w 單位（如 7d、24h、30m），修改 .env 一處即同步生效" }
+        { "tag": "improved", "text": "Cookie 有效期改與登入 Token 有效期一致，不再寫死 7 天，方便管理員依需求調整" }
       ]
     },
     {
@@ -971,10 +878,9 @@
       "title": "強化認證安全：改用 httpOnly Cookie",
       "type": "improved",
       "changes": [
-        { "tag": "improved", "text": "認證 Token 改存於 httpOnly Cookie，JavaScript 無法讀取，防止 XSS 攻擊竊取 Token" },
-        { "tag": "improved", "text": "Cookie 設定 SameSite=Strict 防止 CSRF 攻擊" },
-        { "tag": "new", "text": "新增 POST /api/auth/logout API，登出時由伺服器清除 Cookie" },
-        { "tag": "improved", "text": "移除前端 localStorage 的 authToken 儲存，Token 完全由伺服器管理" }
+        { "tag": "improved", "text": "認證 Token 改存於 httpOnly Cookie，瀏覽器 JavaScript 無法讀取，防止 XSS 攻擊竊取" },
+        { "tag": "improved", "text": "Cookie 加上 SameSite=Strict 防止 CSRF 攻擊" },
+        { "tag": "new", "text": "新增登出 API，登出時由伺服器清除 Cookie" }
       ]
     },
     {
@@ -983,9 +889,8 @@
       "title": "登入紀錄國家持久化",
       "type": "improved",
       "changes": [
-        { "tag": "improved", "text": "登入紀錄的 IP 國家現在儲存於資料庫（login_audit_logs / login_attempt_logs 新增 country 欄位），重啟伺服器後不需重新查詢" },
-        { "tag": "improved", "text": "使用者登入時非同步查詢並回寫國家，不影響登入回應速度" },
-        { "tag": "improved", "text": "查詢登入紀錄時，只對尚無國家資料的舊紀錄補查，並自動回寫至資料庫，之後查詢直接讀取 DB 值" }
+        { "tag": "improved", "text": "登入紀錄的 IP 國家改為儲存於資料庫，重啟伺服器後不需重新查詢" },
+        { "tag": "improved", "text": "使用者登入時非同步查詢並回寫國家，不影響登入回應速度" }
       ]
     },
     {
@@ -994,18 +899,17 @@
       "title": "全球匯率 API 跨使用者快取",
       "type": "improved",
       "changes": [
-        { "tag": "improved", "text": "全球匯率 API 結果改為 server-level 快取（TTL 5 分鐘），多位使用者在同一時間視窗內觸發匯率更新時，只發出一次外部 API 請求，其餘等待同一 Promise 回傳結果" },
-        { "tag": "improved", "text": "TWSE 股票即時/收盤報價快取（realtimeCache、twseCache 等）原本即為 server-level，確認多使用者共用同一份快取，不重複請求相同代號" }
+        { "tag": "improved", "text": "全球匯率改為伺服器層級快取（5 分鐘）：多位使用者在短時間內都查匯率時，只發出一次外部請求" }
       ]
     },
     {
       "version": "4.3",
       "date": "2026-04-05",
-      "title": "交易記錄不統計功能",
+      "title": "交易記錄不統計選項",
       "type": "new",
       "changes": [
-        { "tag": "new", "text": "新增「不計入統計」選項：可針對單筆交易記錄標記為不統計，該筆不影響儀表板總覽、統計報表及預算用量計算" },
-        { "tag": "improved", "text": "已標記「不統計」的交易在交易列表顯示灰色標籤以利辨識" }
+        { "tag": "new", "text": "新增「不計入統計」選項：可針對單筆交易標記為不統計，該筆不影響儀表板、統計報表與預算用量" },
+        { "tag": "improved", "text": "已標記的交易在交易列表顯示灰色標籤以利辨識" }
       ]
     },
     {
@@ -1015,10 +919,9 @@
       "type": "improved",
       "changes": [
         { "tag": "improved", "text": "公開首頁採用 Plus Jakarta Sans 字型，提升視覺質感" },
-        { "tag": "improved", "text": "英雄區塊新增關鍵數據列（功能模組、加密規格、TWSE 整合、多幣別）" },
-        { "tag": "improved", "text": "功能特色卡片新增彩色圖示容器，六種主題色彩區隔各功能" },
-        { "tag": "improved", "text": "登入按鈕改為橙色主要行動色（CTA），視覺層次更清晰" },
-        { "tag": "fixed", "text": "修正首頁右下角藍色 FAB 按鈕在頁面初始載入時短暫顯示的問題" }
+        { "tag": "improved", "text": "英雄區塊新增關鍵數據列（功能模組、加密規格、台股整合、多幣別）" },
+        { "tag": "improved", "text": "功能特色卡片新增彩色圖示容器，登入按鈕改為主要行動色" },
+        { "tag": "fixed", "text": "修正首頁右下角浮動按鈕在頁面初始載入時短暫顯示的問題" }
       ]
     },
     {
@@ -1028,17 +931,17 @@
       "type": "feature",
       "changes": [
         { "tag": "new", "text": "信用卡帳戶可連結所屬銀行帳戶，帳戶管理頁依銀行分組顯示" },
-        { "tag": "new", "text": "信用卡銀行群組新增「還款」按鈕，支援逐張設定還款金額、全部歸零、清除全部" },
+        { "tag": "new", "text": "信用卡銀行群組新增「還款」按鈕，支援逐張設定金額、全部歸零、清除全部" },
         { "tag": "improved", "text": "刪除銀行帳戶時自動解除旗下信用卡的銀行連結" }
       ]
     },
     {
       "version": "4.0.10",
       "date": "2026-03-31",
-      "title": "修正外幣匯率換算方向錯誤",
+      "title": "外幣匯率換算方向修正",
       "type": "fixed",
       "changes": [
-        { "tag": "fixed", "text": "修正以 TWD 為基準幣別自動更新匯率時，換算方向錯誤（原本 1 USD 誤算為 0.031 倍，應為 32 倍左右），導致外幣金額顯示極小" }
+        { "tag": "fixed", "text": "修正以台幣為基準幣別自動更新匯率時換算方向錯誤的問題（例如 1 USD 誤算為 0.031 倍，應為 32 倍左右）" }
       ]
     },
     {
@@ -1047,38 +950,37 @@
       "title": "管理員 IP 白名單樣式修正",
       "type": "fixed",
       "changes": [
-        { "tag": "fixed", "text": "修正管理員設定頁「IP 白名單」輸入框樣式不一致，現與 Email 白名單及其他表單欄位風格統一（含深色模式）" }
+        { "tag": "fixed", "text": "修正 IP 白名單輸入框樣式不一致的問題，現與其他表單欄位風格統一（含深色模式）" }
       ]
     },
     {
       "version": "4.0.8",
       "date": "2026-03-28",
-      "title": "儀表板支出分類與資產配置 Top5 列表",
+      "title": "儀表板支出分類與資產配置 Top 5",
       "type": "feature",
       "changes": [
-        { "tag": "improved", "text": "儀表板支出分類圓餅圖改為僅顯示父分類，下方新增支出分類前 5 名排行（含金額與百分比）" },
-        { "tag": "improved", "text": "儀表板資產配置圓餅圖下方新增「持股前 5 名」與「帳戶前 5 名」兩欄排行列表（含金額與佔比）" }
+        { "tag": "improved", "text": "儀表板支出分類圓餅圖改為僅顯示父分類，下方新增前 5 名排行（含金額與百分比）" },
+        { "tag": "improved", "text": "儀表板資產配置圓餅圖下方新增「持股前 5 名」與「帳戶前 5 名」排行列表" }
       ]
     },
     {
       "version": "4.0.7",
       "date": "2026-03-28",
-      "title": "修正排除帳戶 Bug 與 Modal UI 美化",
+      "title": "排除帳戶修正與設定卡片美化",
       "type": "fixed",
       "changes": [
-        { "tag": "fixed", "text": "修正「排除計入總資產」未在儀表板資產配置圓餅圖（單圓餅/雙圓餅）生效的問題" },
-        { "tag": "fixed", "text": "修正編輯帳戶 Modal 中 Toggle 開關與文字重疊的 CSS 特異性問題" },
-        { "tag": "improved", "text": "編輯帳戶 Modal 排除計入總資產區塊 UI 美化，Toggle 與說明文字間距更合理" }
+        { "tag": "fixed", "text": "修正「排除計入總資產」未在儀表板資產配置圖生效的問題" },
+        { "tag": "fixed", "text": "修正編輯帳戶時切換開關與文字重疊的樣式問題" }
       ]
     },
     {
       "version": "4.0.6",
       "date": "2026-03-27",
-      "title": "帳戶排除計入總資產選項",
+      "title": "帳戶排除計入總資產",
       "type": "feature",
       "changes": [
         { "tag": "new", "text": "帳戶設定新增「排除計入總資產」開關，勾選後該帳戶餘額不列入總資產計算" },
-        { "tag": "improved", "text": "帳戶卡片顯示「不計入總資產」標籤，總資產卡片同步顯示已排除帳戶數量提示" }
+        { "tag": "improved", "text": "帳戶卡片顯示「不計入總資產」標籤，總資產卡片同步顯示已排除帳戶數量" }
       ]
     },
     {
@@ -1087,11 +989,10 @@
       "title": "帳戶類別標籤與分類顯示",
       "type": "feature",
       "changes": [
-        { "tag": "new", "text": "帳戶新增「帳戶類別」欄位，支援銀行、信用卡、現金、虛擬錢包四種類別" },
-        { "tag": "new", "text": "帳戶管理頁新增類別篩選 Tab，可切換顯示特定類別或全部帳戶" },
-        { "tag": "new", "text": "全部顯示時依類別分組並顯示群組標題，一目瞭然" },
-        { "tag": "improved", "text": "選擇帳戶類別時自動對應建議圖示，新增時預設類別與目前篩選一致" },
-        { "tag": "improved", "text": "帳戶卡片圖示顏色依類別區分（藍色銀行、紫色信用卡、綠色現金、橘色虛擬錢包）" }
+        { "tag": "new", "text": "帳戶新增「類別」欄位，支援銀行、信用卡、現金、虛擬錢包" },
+        { "tag": "new", "text": "帳戶管理頁新增類別篩選頁籤，可切換顯示特定類別或全部" },
+        { "tag": "new", "text": "全部顯示時依類別分組並顯示群組標題" },
+        { "tag": "improved", "text": "選擇類別時自動對應建議圖示；帳戶卡片圖示顏色依類別區分（藍／紫／綠／橘）" }
       ]
     },
     {
@@ -1100,14 +1001,13 @@
       "title": "統計報表圓餅圖顯示金額與百分比",
       "type": "improved",
       "changes": [
-        { "tag": "improved", "text": "統計報表單圓餅圖的圖例與 tooltip 顯示各項目金額與佔比百分比" },
-        { "tag": "improved", "text": "統計報表雙圓餅圖的 tooltip 顯示各層（父分類/子分類）金額與佔比百分比" }
+        { "tag": "improved", "text": "統計報表單圓餅圖與雙圓餅圖的圖例與滑鼠提示同時顯示金額與占比百分比" }
       ]
     },
     {
       "version": "4.0.3",
       "date": "2026-03-27",
-      "title": "擴充幣別中文名稱至 150 種",
+      "title": "幣別中文名稱擴充至 150 種",
       "type": "improved",
       "changes": [
         { "tag": "improved", "text": "幣別中文名稱對照表從 30 種大幅擴充至 150 種，涵蓋亞太、歐洲、美洲、中東、非洲及特殊幣別" }
@@ -1119,17 +1019,17 @@
       "title": "統計報表圓餅圖改為父分類統計",
       "type": "improved",
       "changes": [
-        { "tag": "improved", "text": "統計報表分類統計預設改為只顯示父分類圓餅圖，簡化數據呈現" },
-        { "tag": "improved", "text": "開啟雙圓餅圖時顯示內圈父分類、外圈子分類，層次更清晰" }
+        { "tag": "improved", "text": "統計報表分類統計預設改為僅顯示父分類圓餅圖，簡化呈現" },
+        { "tag": "improved", "text": "開啟雙圓餅圖時，內圈父分類、外圈子分類，層次更清晰" }
       ]
     },
     {
       "version": "4.0.1",
       "date": "2026-03-26",
-      "title": "擴充幣別中文名稱對照表",
+      "title": "幣別中文名稱對照擴充",
       "type": "fix",
       "changes": [
-        { "tag": "fixed", "text": "新增交易時自訂幣別（如 TRY）未顯示中文名稱，現已擴充至 30 種常見幣別對照" }
+        { "tag": "fixed", "text": "新增交易時自訂幣別未顯示中文名稱的問題；對照表已擴充至 30 種常見幣別" }
       ]
     },
     {
@@ -1138,24 +1038,17 @@
       "title": "全站 UI 現代化重設計",
       "type": "feature",
       "changes": [
-        { "tag": "new", "text": "全站導入 Inter 字體，提升閱讀體驗與國際化視覺品質" },
-        { "tag": "new", "text": "新增 CSS 自訂屬性 transition-fast / transition-normal / transition-spring，統一全站動畫節奏" },
-        { "tag": "new", "text": "新增自訂捲軸樣式與 ::selection 選取色，深色模式同步支援" },
-        { "tag": "new", "text": "新增 :focus-visible 全域焦點環，提升鍵盤無障礙導覽體驗" },
-        { "tag": "new", "text": "新增 prefers-reduced-motion 媒體查詢，尊重使用者減少動態偏好" },
-        { "tag": "improved", "text": "色彩系統全面更新：主色調整為 #4f6ef7，危險色改為 rose 色系 #f43f5e，語義更清晰" },
+        { "tag": "new", "text": "全站導入 Inter 字體，提升閱讀體驗" },
+        { "tag": "new", "text": "新增自訂捲軸樣式與選取色，深色模式同步支援" },
+        { "tag": "new", "text": "全站焦點環美化，提升鍵盤操作體驗" },
+        { "tag": "new", "text": "尊重「減少動態效果」偏好設定" },
+        { "tag": "improved", "text": "色彩系統全面更新：主色調整為靛藍，危險色改為玫瑰紅，語義更清晰" },
         { "tag": "improved", "text": "陰影系統重構為多層柔和陰影，卡片與彈窗視覺層次更自然" },
-        { "tag": "improved", "text": "側邊欄改為漸層深色背景，導覽項加入圓角與 active 發光效果" },
-        { "tag": "improved", "text": "行動版頂部列加入毛玻璃效果（backdrop-filter），深色模式同步" },
-        { "tag": "improved", "text": "分頁標籤（finance-tabs / stock-tabs）改為 iOS 風格膠囊分段控件" },
-        { "tag": "improved", "text": "按鈕加入 hover 微上移與投影回饋、active 下壓效果" },
-        { "tag": "improved", "text": "Modal 彈窗新增 spring 彈性入場動畫與背景模糊遮罩" },
-        { "tag": "improved", "text": "公開首頁特色卡片加入毛玻璃背景與 hover 浮動效果" },
-        { "tag": "improved", "text": "卡片全面加入邊框與 hover 提升動畫，摘要卡片圖示 hover 放大" },
-        { "tag": "improved", "text": "Toast 通知改為圓角 12px 並加入 spring 入場動畫" },
-        { "tag": "improved", "text": "FAB 按鈕從圓形改為 16px 圓角方形，hover 浮動效果更明顯" },
-        { "tag": "improved", "text": "全站字體渲染啟用 antialiased，深色模式色彩更精緻" },
-        { "tag": "improved", "text": "表格列 hover 色調統一為主色半透明，page 切換加入淡入動畫" }
+        { "tag": "improved", "text": "側邊欄改為漸層深色背景，導覽項加入圓角與發光效果" },
+        { "tag": "improved", "text": "行動版頂部列加入毛玻璃效果，深色模式同步" },
+        { "tag": "improved", "text": "分頁標籤改為 iOS 風格膠囊分段控制器" },
+        { "tag": "improved", "text": "按鈕、彈窗、首頁特色卡片新增微互動與動畫回饋" },
+        { "tag": "improved", "text": "提示通知圓角化並加入彈跳入場動畫；浮動按鈕改為圓角方形" }
       ]
     },
     {
@@ -1164,8 +1057,7 @@
       "title": "新增信用卡繳費指引",
       "type": "improved",
       "changes": [
-        { "tag": "improved", "text": "文件新增『常見使用教學』，說明如何透過轉帳功能還清信用卡並沖銷負餘額" },
-        { "tag": "improved", "text": "SRS 新增轉帳功能的信用卡繳款應用情境說明" }
+        { "tag": "improved", "text": "文件新增「常見使用教學」，說明如何透過轉帳功能還清信用卡並沖銷負餘額" }
       ]
     },
     {
@@ -1174,8 +1066,8 @@
       "title": "匯率更新訊息相容修正",
       "type": "fixed",
       "changes": [
-        { "tag": "fixed", "text": "匯率更新按鈕加入舊版冷卻期錯誤訊息相容處理，不再顯示『冷卻期中』文案" },
-        { "tag": "improved", "text": "當偵測到舊版後端回應時，前端改提示重啟後端套用新版匯率邏輯" }
+        { "tag": "fixed", "text": "匯率更新按鈕加入舊版冷卻期錯誤訊息相容處理，不再顯示「冷卻期中」文案" },
+        { "tag": "improved", "text": "偵測到舊版後端回應時，提示重啟後端套用新版匯率邏輯" }
       ]
     },
     {
@@ -1184,9 +1076,8 @@
       "title": "全球匯率更新體驗優化",
       "type": "improved",
       "changes": [
-        { "tag": "improved", "text": "全球匯率（exchangerate-api.com）手動更新移除冷卻期限制，可隨時重新取得" },
-        { "tag": "improved", "text": "匯率設定頁顯示上次取得時間，方便確認資料新鮮度" },
-        { "tag": "fixed", "text": "移除前端冷卻期提示與後端 429 冷卻錯誤回應，更新流程更直覺" }
+        { "tag": "improved", "text": "全球匯率手動更新移除冷卻期限制，可隨時重新取得" },
+        { "tag": "improved", "text": "匯率設定頁顯示上次取得時間，方便確認資料新鮮度" }
       ]
     },
     {
@@ -1195,8 +1086,8 @@
       "title": "股票定期定額",
       "type": "feature",
       "changes": [
-        { "tag": "new", "text": "股票紀錄新增定期定額，可設定股票、每期預算、週期與起始日" },
-        { "tag": "new", "text": "支援定期定額設定的新增、編輯、刪除與啟用/停用" },
+        { "tag": "new", "text": "股票紀錄新增定期定額：可設定股票、每期預算、週期與起始日" },
+        { "tag": "new", "text": "支援定期定額的新增、編輯、刪除與啟用／停用" },
         { "tag": "improved", "text": "登入時自動執行定期定額排程，依設定產生買進交易紀錄" }
       ]
     },
@@ -1206,8 +1097,8 @@
       "title": "股利日期欄位命名統一",
       "type": "fixed",
       "changes": [
-        { "tag": "fixed", "text": "股利紀錄表格的日期欄位名稱由『發放日期』調整為『除息日期』" },
-        { "tag": "improved", "text": "股利日期欄位在列表與說明文件的語意統一，降低誤解成本" }
+        { "tag": "fixed", "text": "股利紀錄表格的日期欄位由「發放日期」調整為「除息日期」" },
+        { "tag": "improved", "text": "股利日期欄位語意統一，降低誤解" }
       ]
     },
     {
@@ -1216,9 +1107,8 @@
       "title": "股利日期欄位澄清",
       "type": "improved",
       "changes": [
-        { "tag": "improved", "text": "股利紀錄的日期欄位為『除息日期』（ex-dividend date），來自 TWSE API TWT49U 端點" },
-        { "tag": "improved", "text": "除息日期是投資者必須在此日期前持有股票才能獲得股利的法定基準日，而非股利發放日" },
-        { "tag": "fixed", "text": "修正 UI 標籤，統一為『除息日期』標示，確保使用者理解日期含義" }
+        { "tag": "improved", "text": "股利紀錄的日期為「除息日期」（投資者必須在此日期前持有股票才能獲得股利的法定基準日），而非實際發放日" },
+        { "tag": "fixed", "text": "統一介面標籤為「除息日期」，避免誤解" }
       ]
     },
     {
@@ -1227,43 +1117,37 @@
       "title": "匯率 8 小時冷卻期限制",
       "type": "improved",
       "changes": [
-        { "tag": "improved", "text": "基礎貨幣 TWD（不可變更），批次更新匯率前自動檢查冷卻期" },
-        { "tag": "improved", "text": "於一次成功更新後，連續 8 小時内的手動或自動更新都由冷卻期付" },
-        { "tag": "improved", "text": "前端顯示冷卻期狀愛及距離下次更新的剩餘分鐘" },
-        { "tag": "improved", "text": "手動更新嗊試時，前端連更据 HTTP 429 問題並顯示具體輸需註明" }
+        { "tag": "improved", "text": "基礎幣別固定為台幣（不可變更），批次更新匯率前自動檢查冷卻期" },
+        { "tag": "improved", "text": "成功更新後 8 小時內的手動或自動更新都會被冷卻期擋下" },
+        { "tag": "improved", "text": "前端顯示冷卻狀態與距離下次更新的剩餘分鐘" }
       ]
     },
     {
       "version": "3.56",
       "date": "2026-03-24",
-      "title": "匯率 API 供應商更換",
+      "title": "更換匯率資料供應商",
       "type": "improved",
       "changes": [
-        { "tag": "improved", "text": "更換匯率提供商為 exchangerate-api.com，提供全球通用匯率資料" },
-        { "tag": "improved", "text": "支援免費版 API（無需 API key），也支援付費版 API（設定 EXCHANGE_RATE_API_KEY 環境變數）" },
-        { "tag": "improved", "text": "改整 resolveRateToTwd 適應 exchangerate-api.com 的 JSON 結構" }
+        { "tag": "improved", "text": "更換為新的匯率資料供應商，提供更全面的全球幣別匯率" },
+        { "tag": "improved", "text": "支援免費版與付費版（透過環境變數設定 API 金鑰）" }
       ]
     },
     {
       "version": "3.55",
       "date": "2026-03-24",
-      "title": "匯率查詢路線強化",
+      "title": "匯率查詢路徑強化",
       "type": "improved",
       "changes": [
-        { "tag": "improved", "text": "強化匯率查詢邏輯，增加 TWDUSD 作為 USD 對 TWD 匹率的後備查詢" },
-        { "tag": "improved", "text": "實現 TWD → USD → 目標貨幣的完整轉換藞鉅" },
-        { "tag": "improved", "text": "擴寬匯率 API 支援範坛，當一至多貨幣鄙轉換路徑可服" }
+        { "tag": "improved", "text": "匯率查詢邏輯加強：增加備援查詢路徑，擴大可換算的幣別範圍" }
       ]
     },
     {
       "version": "3.54",
       "date": "2026-03-24",
-      "title": "匯率 USD 中介計算修正",
+      "title": "美元中介換算修正",
       "type": "fixed",
       "changes": [
-        { "tag": "fixed", "text": "修正 USD 中介轉換酔輯鬜，JPY 、CNY 、HKD 等署粗踊測暫計算方向鍄即" },
-        { "tag": "improved", "text": "XXXUSD u0062|方式計算: 1 XXX = rate(XXXUSD) * rate(USDTWD) TWD" },
-        { "tag": "improved", "text": "USDXXX 方式計算: 1 XXX = rate(USDTWD) / rate(USDXXX) TWD" }
+        { "tag": "fixed", "text": "修正使用美元作為中介換算時，日圓、人民幣、港幣等幣別的換算方向錯誤" }
       ]
     },
     {
@@ -1272,60 +1156,57 @@
       "title": "數字輸入精度提升",
       "type": "improved",
       "changes": [
-        { "tag": "improved", "text": "整合所有數字輸入欄位配做，整數、金額、股價等都是置可輸入到小數點也第四位" },
-        { "tag": "improved", "text": "支援零股輸入（股數最小単位 0.0001）" },
-        { "tag": "improved", "text": "一整化金額、股價、手管費等數値本位設定爲 step='0.0001'" }
+        { "tag": "improved", "text": "金額、股價、手續費等數字欄位統一支援小數點後 4 位" },
+        { "tag": "improved", "text": "支援零股輸入（股數最小單位 0.0001）" }
       ]
     },
     {
       "version": "3.52",
       "date": "2026-03-24",
-      "title": "全球匯率 USD 中介支援",
+      "title": "全球匯率美元中介支援",
       "type": "improved",
       "changes": [
-        { "tag": "improved", "text": "改進全球匯率 API 查詢邏輯，當某幣別不有直接 TWD 對价時，改用 USD 作中介轉換" },
-        { "tag": "improved", "text": "支援 XXXUSD 上測下測两种範坛求詢，井可該 USDXXX 對數值變換（如 TRY 可透過 USDTRY + USDTWD 間接下測算出）" }
+        { "tag": "improved", "text": "改進匯率查詢：當某幣別沒有直接對應台幣的匯率時，改以美元作為中介換算（如土耳其里拉可透過 USDTRY + USDTWD 間接算出）" }
       ]
     },
     {
       "version": "3.51",
       "date": "2026-03-24",
-      "title": "全球匯率 API 支援改進",
+      "title": "全球匯率不支援幣別處理",
       "type": "improved",
       "changes": [
-        { "tag": "improved", "text": "改進全球匯率 API 更新邏輯，當某幣別不被 API 支援（如 TRY）時改為跳過而非拋出錯誤" },
-        { "tag": "improved", "text": "更新完成後顯示詳細訊息，告知成功更新筆數與無法支援的幣別清單" },
-        { "tag": "improved", "text": "提示用戶不被支援的幣別可手動輸入匯率" }
+        { "tag": "improved", "text": "更新邏輯改進：某幣別不被 API 支援時改為跳過而非整批拋出錯誤" },
+        { "tag": "improved", "text": "更新完成後顯示成功更新筆數與不支援的幣別清單" },
+        { "tag": "improved", "text": "提示使用者不支援的幣別可手動輸入匯率" }
       ]
     },
     {
       "version": "3.50",
       "date": "2026-03-24",
-      "title": "自訂幣別儲存邏輯修正",
+      "title": "自訂幣別儲存修正",
       "type": "fixed",
       "changes": [
-        { "tag": "fixed", "text": "修正新增幣別時儲存誤判「幣別重複：TWD」的根本原因，固定列 TWD 改為不加入傳送資料" },
-        { "tag": "improved", "text": "簡化幣別驗證邏輯，前端不重複添加固定 TWD，由後端統一初始化" }
+        { "tag": "fixed", "text": "修正新增幣別時誤判「幣別重複：TWD」的問題：固定列的台幣不再加入傳送資料" },
+        { "tag": "improved", "text": "簡化幣別驗證邏輯，固定的台幣由後端統一初始化" }
       ]
     },
     {
       "version": "3.49.2",
       "date": "2026-03-24",
-      "title": "幣別新增按鈕修正",
+      "title": "新增幣別按鈕修正",
       "type": "fixed",
       "changes": [
-        { "tag": "fixed", "text": "修正「新增幣別」按鈕會出現不可編輯 TWD 的問題" },
-        { "tag": "improved", "text": "新增列改為建立可編輯空白列，使用者可直接輸入 3 碼幣別代碼" }
+        { "tag": "fixed", "text": "修正「新增幣別」按鈕會出現不可編輯的台幣的問題" },
+        { "tag": "improved", "text": "改為建立可編輯空白列，使用者可直接輸入 3 碼幣別代碼" }
       ]
     },
     {
       "version": "3.49.1",
       "date": "2026-03-24",
-      "title": "新增幣別按鈕修正",
+      "title": "新增幣別按鈕再修正",
       "type": "fixed",
       "changes": [
-        { "tag": "fixed", "text": "修正點擊「新增幣別」後預設顯示 TWD 且不可編輯/刪除，導致無法新增自訂幣別的問題" },
-        { "tag": "improved", "text": "新增幣別改為建立可編輯空白列，使用者可直接輸入 3 碼幣別代碼並儲存" }
+        { "tag": "fixed", "text": "修正點擊「新增幣別」後預設顯示台幣且不可編輯，導致無法新增自訂幣別的問題" }
       ]
     },
     {
@@ -1334,9 +1215,9 @@
       "title": "匯率設定支援自訂幣別",
       "type": "feature",
       "changes": [
-        { "tag": "new", "text": "匯率設定可由使用者輸入任意 3 碼幣別代碼（例如 SGD、AUD）並儲存" },
-        { "tag": "improved", "text": "交易與帳戶幣別選單改為依使用者匯率清單動態顯示，新增幣別可立即選用" },
-        { "tag": "fixed", "text": "匯率儲存流程改為同步清單，移除的幣別不會在重新整理後自動出現" }
+        { "tag": "new", "text": "匯率設定可由使用者輸入任意 3 碼幣別代碼（例如新加坡幣 SGD、澳幣 AUD）並儲存" },
+        { "tag": "improved", "text": "交易與帳戶幣別選單改為依使用者匯率清單動態顯示" },
+        { "tag": "fixed", "text": "匯率儲存流程改為同步清單，移除的幣別不會在重新整理後自動回來" }
       ]
     },
     {
@@ -1345,11 +1226,9 @@
       "title": "全站配色系統一致化",
       "type": "improved",
       "changes": [
-        { "tag": "improved", "text": "登入頁面漸層色改為使用主色系 CSS 變數，與全站 Indigo 主色統一" },
-        { "tag": "improved", "text": "圖表調色盤更新為 Tailwind 500 色系，與 UI 語義色（收入綠/支出紅/今日橙）視覺一致" },
-        { "tag": "improved", "text": "新增 --primary-light-bg、--today-text、--danger-dark、--warning-bg/border、--twse-bg/border/text 等 CSS 變數" },
-        { "tag": "improved", "text": "消除硬編碼色值：recurring 標籤、formula 提示框、匯入警告框、按鈕 hover 等全數改用 CSS 變數" },
-        { "tag": "improved", "text": "深色模式新增 warning/twse 對應色，確保暗色主題配色語義一致" }
+        { "tag": "improved", "text": "登入頁與全站配色統一為靛藍主色系" },
+        { "tag": "improved", "text": "圖表配色與介面語義色（收入綠／支出紅／今日橘）一致" },
+        { "tag": "improved", "text": "深色模式新增警告色與台股提示色變數，確保暗色主題語義一致" }
       ]
     },
     {
@@ -1358,8 +1237,7 @@
       "title": "圓餅圖配色重設",
       "type": "improved",
       "changes": [
-        { "tag": "improved", "text": "重新設計圓餅圖與雙圓餅圖配色，改為更沉穩且一致的主題色系" },
-        { "tag": "improved", "text": "父分類使用主色、子分類改用同色系深淺階梯色，提升視覺層次與辨識度" }
+        { "tag": "improved", "text": "重新設計圓餅圖與雙圓餅圖配色：父分類使用主色、子分類用同色系深淺階梯，提升視覺層次" }
       ]
     },
     {
@@ -1368,8 +1246,8 @@
       "title": "圓餅圖圖例順序統一",
       "type": "improved",
       "changes": [
-        { "tag": "improved", "text": "儀表板與統計報表的圓餅圖/雙圓餅圖圖例順序統一為固定規則" },
-        { "tag": "improved", "text": "雙圓餅圖採父分類總額高到低，再依同父分類下子分類總額高到低排序" }
+        { "tag": "improved", "text": "儀表板與統計報表的圓餅圖／雙圓餅圖圖例順序統一為固定規則" },
+        { "tag": "improved", "text": "雙圓餅圖採父分類總額高到低，再依子分類總額高到低排序" }
       ]
     },
     {
@@ -1378,8 +1256,7 @@
       "title": "圓餅圖配色風格統一",
       "type": "improved",
       "changes": [
-        { "tag": "improved", "text": "統一儀表板與統計報表的單圓餅圖/雙圓餅圖配色規則，與網站主題風格一致" },
-        { "tag": "improved", "text": "雙圓餅圖改為父分類主色 + 子分類同色系變化，提升層級辨識與整體一致性" }
+        { "tag": "improved", "text": "統一儀表板與統計報表的單／雙圓餅圖配色，與網站主題風格一致" }
       ]
     },
     {
@@ -1389,8 +1266,7 @@
       "type": "feature",
       "changes": [
         { "tag": "new", "text": "儀表板「支出分類」新增雙圓餅圖開關（內圈父分類、外圈子分類）" },
-        { "tag": "new", "text": "儀表板「資產配置（含股票市值）」新增雙圓餅圖開關，外圈可顯示帳戶與個股配置" },
-        { "tag": "improved", "text": "優化儀表板雙圓餅圖配色，提升父子層級與分類間的視覺辨識度" }
+        { "tag": "new", "text": "儀表板「資產配置（含股票市值）」新增雙圓餅圖開關，外圈可顯示帳戶與個股配置" }
       ]
     },
     {
@@ -1399,8 +1275,7 @@
       "title": "雙圓餅圖配色辨識優化",
       "type": "improved",
       "changes": [
-        { "tag": "improved", "text": "美化統計報表雙圓餅圖配色，提升不同分類之間的視覺區隔" },
-        { "tag": "improved", "text": "同一父分類下的子分類自動套用變化色，讓外圈分類更容易辨識" }
+        { "tag": "improved", "text": "美化統計報表雙圓餅圖配色，提升不同分類間的視覺區隔" }
       ]
     },
     {
@@ -1409,8 +1284,7 @@
       "title": "雙圓餅圖父分類標題修正",
       "type": "fixed",
       "changes": [
-        { "tag": "fixed", "text": "修正雙圓餅圖內圈父分類提示標題誤顯示為「父分類 > 子分類」的問題" },
-        { "tag": "improved", "text": "分類統計雙圓餅圖的提示文字改為依圈層顯示，父分類與子分類標籤更一致" }
+        { "tag": "fixed", "text": "修正雙圓餅圖內圈父分類提示誤顯示為「父分類 > 子分類」的問題" }
       ]
     },
     {
@@ -1419,29 +1293,29 @@
       "title": "統計報表新增雙圓餅圖",
       "type": "feature",
       "changes": [
-        { "tag": "new", "text": "收支管理的統計報表新增雙圓餅圖模式：內圈顯示父分類，外圈顯示子分類" },
-        { "tag": "new", "text": "分類統計新增「雙圓餅圖」開關，使用者可自由切換單層與雙層圓餅圖" },
-        { "tag": "improved", "text": "報表摘要同步顯示父分類與子分類的金額與占比，分類層級更清楚" }
+        { "tag": "new", "text": "統計報表新增雙圓餅圖：內圈顯示父分類、外圈顯示子分類" },
+        { "tag": "new", "text": "分類統計新增「雙圓餅圖」開關，可自由切換單層與雙層" },
+        { "tag": "improved", "text": "報表摘要同步顯示父分類與子分類的金額與占比" }
       ]
     },
     {
       "version": "3.45",
       "date": "2026-03-23",
-      "title": "帳號資訊新增修改顯示名稱",
+      "title": "帳號設定新增修改顯示名稱",
       "type": "feature",
       "changes": [
-        { "tag": "new", "text": "帳號設定新增「修改顯示名稱」欄位，可直接更新顯示名稱" },
-        { "tag": "improved", "text": "顯示名稱更新後會即時同步到帳號資訊與側邊欄顯示" }
+        { "tag": "new", "text": "帳號設定新增「修改顯示名稱」欄位" },
+        { "tag": "improved", "text": "更新後即時同步至帳號資訊與側邊欄" }
       ]
     },
     {
       "version": "3.44",
       "date": "2026-03-23",
-      "title": "交易記錄新增未來交易",
+      "title": "交易記錄支援未來日期",
       "type": "feature",
       "changes": [
-        { "tag": "new", "text": "交易記錄可新增與編輯未來日期交易，方便預先規劃已確定的收支" },
-        { "tag": "new", "text": "交易列表新增「未來」標籤，並在類型篩選加入「未來交易」快速檢視" }
+        { "tag": "new", "text": "可新增與編輯未來日期的交易，方便預先規劃已確定的收支" },
+        { "tag": "new", "text": "交易列表新增「未來」標籤，類型篩選新增「未來交易」快速檢視" }
       ]
     },
     {
@@ -1450,8 +1324,8 @@
       "title": "全部使用者登入紀錄手動同步",
       "type": "feature",
       "changes": [
-        { "tag": "new", "text": "全部使用者登入紀錄新增「手動同步」按鈕，可即時同步最新登入稽核資料" },
-        { "tag": "improved", "text": "管理員登入紀錄與全部使用者登入紀錄同步後會同時更新上次同步時間" }
+        { "tag": "new", "text": "全部使用者登入紀錄新增「手動同步」按鈕，可即時取得最新資料" },
+        { "tag": "improved", "text": "管理員與全站登入紀錄同步後會同時更新「上次同步時間」" }
       ]
     },
     {
@@ -1460,28 +1334,25 @@
       "title": "IPinfo 出處標註補齊",
       "type": "improved",
       "changes": [
-        { "tag": "improved", "text": "API 使用與授權頁新增 IPinfo Lite 條目與資料來源標註" },
-        { "tag": "improved", "text": "依 IPinfo 要求補齊「IP address data is powered by IPinfo」聲明與 https://ipinfo.io/lite 連結" }
+        { "tag": "improved", "text": "API 使用與授權頁新增 IPinfo Lite 條目與資料來源標註，符合官方授權要求" }
       ]
     },
     {
       "version": "3.42.2",
       "date": "2026-03-23",
-      "title": "管理員登入紀錄刪除 502 備援重試",
+      "title": "管理員登入紀錄刪除偶發 502 修正",
       "type": "fixed",
       "changes": [
-        { "tag": "fixed", "text": "修正移除管理員登入紀錄時偶發顯示「伺服器暫時異常（502）」導致操作中斷" },
-        { "tag": "improved", "text": "刪除管理員登入紀錄新增相容備援重試，主路由失敗時自動改走舊路徑" }
+        { "tag": "fixed", "text": "修正刪除管理員登入紀錄時偶發顯示「伺服器暫時異常（502）」的問題" }
       ]
     },
     {
       "version": "3.42.1",
       "date": "2026-03-23",
-      "title": "管理員登入紀錄刪除 404 相容修正",
+      "title": "管理員登入紀錄刪除偶發 404 修正",
       "type": "fixed",
       "changes": [
-        { "tag": "fixed", "text": "修正移除管理員登入紀錄時偶發顯示「伺服器暫時異常（404）」的問題" },
-        { "tag": "improved", "text": "新增舊版刪除路由相容支援與前端 404 同步容錯，避免操作中斷" }
+        { "tag": "fixed", "text": "修正刪除管理員登入紀錄時偶發顯示「伺服器暫時異常（404）」的問題" }
       ]
     },
     {
@@ -1490,8 +1361,8 @@
       "title": "登入 IP 國家查詢",
       "type": "feature",
       "changes": [
-        { "tag": "new", "text": "整合 ipinfo.io API，登入紀錄新增 IP 國家查詢並顯示國家代碼" },
-        { "tag": "improved", "text": "登入紀錄國家查詢加入快取與內網 IP（LOCAL）判斷，降低外部 API 呼叫次數" }
+        { "tag": "new", "text": "整合 IPinfo，登入紀錄新增 IP 國家查詢並顯示國家代碼" },
+        { "tag": "improved", "text": "查詢加入快取與內網 IP 判斷，降低外部 API 呼叫次數" }
       ]
     },
     {
@@ -1500,8 +1371,8 @@
       "title": "管理員登入紀錄手動同步",
       "type": "feature",
       "changes": [
-        { "tag": "new", "text": "管理員登入紀錄新增「手動同步」按鈕，可不重整頁面即時更新最新登入稽核資料" },
-        { "tag": "improved", "text": "管理員設定頁新增「上次同步時間」顯示，方便確認登入紀錄資料的新鮮度" }
+        { "tag": "new", "text": "管理員登入紀錄新增「手動同步」按鈕，不必重整頁面就能取得最新資料" },
+        { "tag": "improved", "text": "管理員設定頁新增「上次同步時間」顯示" }
       ]
     },
     {
@@ -1510,8 +1381,7 @@
       "title": "登入紀錄刪除錯誤訊息修正",
       "type": "fixed",
       "changes": [
-        { "tag": "fixed", "text": "修正移除管理員登入紀錄時可能出現「伺服器回應格式異常，請稍後再試」的錯誤訊息" },
-        { "tag": "improved", "text": "新增 API 404/500 統一 JSON 回應與前端刪除錯誤容錯提示，避免 HTML 回應造成解析失敗" }
+        { "tag": "fixed", "text": "修正刪除管理員登入紀錄時可能出現「伺服器回應格式異常」的訊息" }
       ]
     },
     {
@@ -1520,18 +1390,16 @@
       "title": "管理員登入紀錄單筆刪除補強",
       "type": "fixed",
       "changes": [
-        { "tag": "new", "text": "新增管理員登入紀錄單筆刪除備援路徑，當紀錄缺少主鍵時可改用時間戳識別刪除" },
-        { "tag": "fixed", "text": "修正管理員登入紀錄與全站登入紀錄在少數舊資料情境下操作欄顯示 '-'、無法執行單筆刪除的問題" }
+        { "tag": "fixed", "text": "修正部分舊資料情境下操作欄顯示「-」、無法執行單筆刪除的問題" }
       ]
     },
     {
       "version": "3.40.6",
       "date": "2026-03-23",
-      "title": "管理員登入紀錄勾選覆蓋補強",
+      "title": "管理員登入紀錄勾選補強",
       "type": "fixed",
       "changes": [
-        { "tag": "fixed", "text": "修正管理員登入紀錄畫面仍出現無勾選框的列，包含最新補入的登入紀錄" },
-        { "tag": "improved", "text": "登入紀錄補入列若缺 id，會以時間戳備援識別，確保可勾選並批次刪除" }
+        { "tag": "fixed", "text": "修正部分管理員登入紀錄無勾選框，包含最新補入紀錄的問題" }
       ]
     },
     {
@@ -1540,8 +1408,7 @@
       "title": "管理員登入紀錄勾選保證",
       "type": "fixed",
       "changes": [
-        { "tag": "fixed", "text": "修正管理員登入紀錄在少量或舊紀錄時沒有勾選框、無法刪除的問題" },
-        { "tag": "improved", "text": "登入紀錄 API 強制提供備援識別（rowid 或時間戳），確保每列都能勾選與批次刪除" }
+        { "tag": "fixed", "text": "修正管理員登入紀錄在少量或舊紀錄時沒有勾選框、無法刪除的問題" }
       ]
     },
     {
@@ -1550,8 +1417,7 @@
       "title": "管理員登入紀錄勾選修正",
       "type": "fixed",
       "changes": [
-        { "tag": "fixed", "text": "修正管理員登入紀錄在僅顯示最新補入紀錄時，該列無法勾選與刪除的問題" },
-        { "tag": "improved", "text": "管理員設定頁補入最新登入紀錄時同步帶入紀錄 ID，確保可選取、可單筆刪除與可批次刪除" }
+        { "tag": "fixed", "text": "修正最新補入紀錄無法勾選與刪除的問題" }
       ]
     },
     {
@@ -1560,8 +1426,7 @@
       "title": "登入紀錄批次刪除與勾選修正",
       "type": "fixed",
       "changes": [
-        { "tag": "fixed", "text": "修正舊版登入紀錄在部分情況下無法勾選與批次刪除的問題" },
-        { "tag": "improved", "text": "提升登入紀錄刪除流程的舊資料相容性與穩定性" }
+        { "tag": "fixed", "text": "修正部分舊版登入紀錄無法勾選與批次刪除的問題" }
       ]
     },
     {
@@ -1570,9 +1435,9 @@
       "title": "股票交易設定介面美化",
       "type": "improved",
       "changes": [
-        { "tag": "improved", "text": "股票紀錄的交易設定改為分區卡片版型，將手續費與交易稅參數分組顯示，閱讀更清楚" },
-        { "tag": "improved", "text": "新增交易設定重點提示區塊與圖示，提升參數調整時的理解速度" },
-        { "tag": "improved", "text": "補齊手機版一欄式排版與儲存按鈕寬度調整，維持與全站一致的操作體驗" }
+        { "tag": "improved", "text": "股票紀錄的交易設定改為分區卡片版型，將手續費與交易稅分組顯示" },
+        { "tag": "improved", "text": "新增交易設定重點提示區塊與圖示" },
+        { "tag": "improved", "text": "補齊手機版單欄排版" }
       ]
     },
     {
@@ -1581,9 +1446,8 @@
       "title": "登入紀錄批次刪除穩定性修正",
       "type": "fixed",
       "changes": [
-        { "tag": "fixed", "text": "修復管理員登入紀錄與全部使用者登入紀錄在部分情況下無法批次刪除的問題" },
-        { "tag": "improved", "text": "登入紀錄表格改用事件委派處理勾選與刪除動作，避免動態渲染後事件失效" },
-        { "tag": "improved", "text": "批次刪除回傳未成功時自動降級為逐筆刪除，提升刪除成功率與操作可靠性" }
+        { "tag": "fixed", "text": "修正登入紀錄在部分情況下無法批次刪除的問題" },
+        { "tag": "improved", "text": "批次刪除若失敗會自動降級為逐筆刪除，提升成功率" }
       ]
     },
     {
@@ -1592,8 +1456,7 @@
       "title": "分類管理與固定收支移至收支管理",
       "type": "improved",
       "changes": [
-        { "tag": "improved", "text": "分類管理與固定收支由設定頁移至收支管理模組，集中於收支相關流程操作" },
-        { "tag": "new", "text": "新增收支管理子路由：/finance/categories、/finance/recurring" },
+        { "tag": "improved", "text": "分類管理與固定收支由設定頁移至收支管理模組，集中於收支相關流程" },
         { "tag": "improved", "text": "設定頁精簡為資料匯出匯入、帳號設定與管理員功能" }
       ]
     },
@@ -1603,8 +1466,7 @@
       "title": "匯率設定移至收支管理",
       "type": "improved",
       "changes": [
-        { "tag": "improved", "text": "匯率設定介面由「設定 > 帳號設定」移至「收支管理 > 帳戶管理」，提高收支操作流程一致性" },
-        { "tag": "improved", "text": "保留原有即時匯率更新、自動更新開關與匯率儲存功能，僅調整入口位置" }
+        { "tag": "improved", "text": "匯率設定由「設定」移至「收支管理 > 帳戶管理」，操作流程更一致" }
       ]
     },
     {
@@ -1613,9 +1475,8 @@
       "title": "登入稽核紀錄支援刪除與批次刪除",
       "type": "feature",
       "changes": [
-        { "tag": "new", "text": "管理員登入紀錄新增單筆刪除與批次刪除功能，支援勾選多筆一次清除" },
-        { "tag": "new", "text": "全部使用者登入紀錄新增單筆刪除與批次刪除功能，含全選與已選筆數顯示" },
-        { "tag": "improved", "text": "管理員登入稽核 API 回傳紀錄 ID，並新增管理員/全站登入稽核刪除端點" }
+        { "tag": "new", "text": "管理員登入紀錄新增單筆與批次刪除，支援勾選多筆一次清除" },
+        { "tag": "new", "text": "全部使用者登入紀錄新增單筆與批次刪除，含全選與已選筆數顯示" }
       ]
     },
     {
@@ -1624,8 +1485,8 @@
       "title": "快速新增按鈕依頁面情境顯示",
       "type": "improved",
       "changes": [
-        { "tag": "improved", "text": "右下角快速按鈕改為情境式顯示：收支管理頁顯示「新增交易」，股票紀錄頁顯示「新增股票交易紀錄」" },
-        { "tag": "improved", "text": "其他頁面不再顯示快速新增按鈕，降低誤觸與跨頁操作混淆" }
+        { "tag": "improved", "text": "右下角快速按鈕改為情境式：收支管理頁顯示「新增交易」、股票紀錄頁顯示「新增股票交易紀錄」" },
+        { "tag": "improved", "text": "其他頁面不再顯示快速新增按鈕，降低誤觸" }
       ]
     },
     {
@@ -1634,9 +1495,8 @@
       "title": "全站登入紀錄納入失敗事件",
       "type": "feature",
       "changes": [
-        { "tag": "new", "text": "管理員「全部使用者登入紀錄」新增失敗登入事件，包含帳號不存在、密碼錯誤、缺少憑證與暫時鎖定" },
-        { "tag": "new", "text": "全站登入紀錄新增「結果」與「失敗原因」欄位，方便快速辨識異常登入" },
-        { "tag": "improved", "text": "新增 login_attempt_logs 稽核資料表，統一記錄成功與失敗的登入嘗試（含 Google 成功登入）" }
+        { "tag": "new", "text": "管理員「全部使用者登入紀錄」新增失敗事件：帳號不存在、密碼錯誤、缺少憑證、暫時鎖定" },
+        { "tag": "new", "text": "新增「結果」與「失敗原因」欄位，方便辨識異常登入" }
       ]
     },
     {
@@ -1645,9 +1505,7 @@
       "title": "登入紀錄即時保證",
       "type": "fixed",
       "changes": [
-        { "tag": "fixed", "text": "登入成功回應新增 currentLogin，確保可取得本次登入時間與 IP" },
-        { "tag": "fixed", "text": "前端登入後會立即補入 currentLogin，避免列表暫時缺少本次登入紀錄" },
-        { "tag": "improved", "text": "管理員登入紀錄與全站登入紀錄同步套用本次登入即時顯示邏輯" }
+        { "tag": "fixed", "text": "登入後立即補上本次登入紀錄，避免列表暫時缺漏" }
       ]
     },
     {
@@ -1656,9 +1514,8 @@
       "title": "Google 登入轉跳卡住修復",
       "type": "fixed",
       "changes": [
-        { "tag": "fixed", "text": "修正 Google 授權回呼卡在 callback URL：先清除 OAuth 查詢參數，避免重新整理後無限重試" },
-        { "tag": "fixed", "text": "修正 GIS Code Client state 傳遞方式：改於 initCodeClient 設定 state，提升回呼帶回 state 穩定性" },
-        { "tag": "improved", "text": "Google state 驗證失敗改為明確錯誤提示，指引使用者重新點擊登入" }
+        { "tag": "fixed", "text": "修正 Google 授權回呼卡在轉跳網址：先清除網址查詢參數，避免重新整理後無限重試" },
+        { "tag": "improved", "text": "Google 授權狀態驗證失敗改為明確錯誤提示，指引使用者重新點擊登入" }
       ]
     },
     {
@@ -1668,32 +1525,30 @@
       "type": "feature",
       "changes": [
         { "tag": "new", "text": "新增使用者登入紀錄：帳號設定可查看最近登入時間、IP 與登入方式" },
-        { "tag": "new", "text": "新增管理員登入紀錄：管理員頁可查看自身管理員登入時間與 IP" },
-        { "tag": "new", "text": "新增全部使用者登入稽核：管理員可檢視全站使用者登入時間與 IP 紀錄" },
-        { "tag": "improved", "text": "登入成功（密碼與 Google SSO）統一寫入稽核資料表，便於追蹤登入安全事件" }
+        { "tag": "new", "text": "新增管理員登入紀錄：管理員可查看自身管理員登入紀錄" },
+        { "tag": "new", "text": "新增全部使用者登入稽核：管理員可檢視全站登入紀錄" }
       ]
     },
     {
       "version": "3.34.1",
       "date": "2026-03-21",
-      "title": "安全性加固（OAuth state、XSS、防護策略）",
+      "title": "資安加固",
       "type": "fixed",
       "changes": [
-        { "tag": "fixed", "text": "Google SSO Authorization Code Flow 新增 state 一次性驗證，防止登入流程被重放或跨站偽造" },
-        { "tag": "fixed", "text": "帳戶 icon 新增前後端白名單驗證與既有資料清理，降低屬性注入造成的 XSS 風險" },
-        { "tag": "improved", "text": "CSP 收斂：移除 inline script 允許，改以 script-src-attr 保留既有事件屬性相容性" }
+        { "tag": "fixed", "text": "Google 登入流程新增一次性驗證碼，防止重放或跨站偽造" },
+        { "tag": "fixed", "text": "帳戶圖示新增前後端白名單驗證與既有資料清理，降低注入風險" },
+        { "tag": "improved", "text": "收緊內容安全策略" }
       ]
     },
     {
       "version": "3.34",
       "date": "2026-03-21",
-      "title": "安全性修補（權限、靜態檔、CSP）",
+      "title": "資安修補",
       "type": "fixed",
       "changes": [
-        { "tag": "fixed", "text": "修正 /api/system/update-app 權限：改為僅管理員可執行" },
-        { "tag": "fixed", "text": "移除專案根目錄整包靜態公開，改為僅白名單前端檔案可直接存取" },
-        { "tag": "improved", "text": "啟用 Content Security Policy（CSP），限制腳本、連線與資源來源" },
-        { "tag": "improved", "text": "版本更新彈窗僅管理員顯示「立即更新」按鈕，降低誤用風險" }
+        { "tag": "fixed", "text": "更新功能權限改為僅管理員可執行" },
+        { "tag": "fixed", "text": "移除整包靜態檔案公開，改為僅白名單前端檔案可直接存取" },
+        { "tag": "improved", "text": "啟用內容安全策略（CSP），限制腳本、連線與資源來源" }
       ]
     },
     {
@@ -1702,10 +1557,9 @@
       "title": "公開首頁與登入路徑調整",
       "type": "feature",
       "changes": [
-        { "tag": "new", "text": "新增網站公開首頁（/），提供資產管理功能介紹與登入/註冊入口" },
-        { "tag": "improved", "text": "登入頁路徑調整為 /login，未登入使用者可直接透過網址進入登入流程" },
-        { "tag": "improved", "text": "儀表板路徑調整為 /dashboard，與公開首頁路徑明確分離" },
-        { "tag": "improved", "text": "未登入狀態支援 / 與 /login 的前端路由切換與返回行為" }
+        { "tag": "new", "text": "新增網站公開首頁，提供功能介紹與登入／註冊入口" },
+        { "tag": "improved", "text": "登入頁網址調整為 /login，未登入使用者可直接進入" },
+        { "tag": "improved", "text": "儀表板網址調整為 /dashboard，與公開首頁明確分離" }
       ]
     },
     {
@@ -1715,9 +1569,8 @@
       "type": "feature",
       "changes": [
         { "tag": "new", "text": "新增管理員模式：第一個建立的使用者自動成為管理員" },
-        { "tag": "new", "text": "新增管理員設定：可切換是否開放公開註冊，並可設定 Email 註冊白名單" },
-        { "tag": "new", "text": "新增管理員使用者管理：可建立帳號、刪除帳號並檢視使用者清單" },
-        { "tag": "improved", "text": "一般註冊與 Google 首次註冊皆套用相同註冊策略，未授權 Email 會被阻擋" },
+        { "tag": "new", "text": "管理員設定可切換是否開放公開註冊，並可設定 Email 註冊白名單" },
+        { "tag": "new", "text": "管理員可建立帳號、刪除帳號、檢視使用者清單" },
         { "tag": "fixed", "text": "新增最後一位管理員保護機制，避免系統失去管理員" }
       ]
     },
@@ -1727,9 +1580,9 @@
       "title": "API 使用與授權頁",
       "type": "feature",
       "changes": [
-        { "tag": "new", "text": "左側選單新增「API 使用與授權」頁面，集中列出已使用之外部 API 與用途" },
-        { "tag": "new", "text": "新增全球即時匯率 API（rter.info）出處與授權區塊，明確標示 CC BY-SA 要求" },
-        { "tag": "improved", "text": "統一整理 TWSE、Google Identity Services、rter.info 等外部服務來源資訊，便於合規檢視" }
+        { "tag": "new", "text": "左側選單新增「API 使用與授權」頁，集中列出已使用之外部服務與用途" },
+        { "tag": "new", "text": "新增全球即時匯率資料來源與授權說明（CC BY-SA 標示）" },
+        { "tag": "improved", "text": "統一整理外部服務來源資訊，方便合規檢視" }
       ]
     },
     {
@@ -1738,9 +1591,7 @@
       "title": "全球即時匯率時間格式優化",
       "type": "improved",
       "changes": [
-        { "tag": "improved", "text": "全球即時匯率上次更新時間改為顯示到秒，避免僅到分鐘造成資訊不明確" },
-        { "tag": "improved", "text": "匯率更新時間格式統一為 YYYY-MM-DD HH:mm:ss，與全站時間格式一致" },
-        { "tag": "improved", "text": "共用前端時間格式化邏輯，確保狀態文案顯示一致" }
+        { "tag": "improved", "text": "上次更新時間改為顯示到秒，格式統一為 YYYY-MM-DD HH:mm:ss" }
       ]
     },
     {
@@ -1749,9 +1600,8 @@
       "title": "資料匯出匯入版面重整",
       "type": "improved",
       "changes": [
-        { "tag": "improved", "text": "設定 > 資料匯出匯入改為「交易資料 / 股票資料」雙分組卡片，介面層次更一致" },
-        { "tag": "improved", "text": "交易資料區整合匯出交易、匯入交易與分類管理，解決原本 3 欄與 1 欄混搭造成的凌亂感" },
-        { "tag": "improved", "text": "新增行動裝置單欄排版規則，提升小螢幕操作可讀性" }
+        { "tag": "improved", "text": "資料匯出匯入改為「交易資料／股票資料」雙分組卡片，介面層次更一致" },
+        { "tag": "improved", "text": "新增行動裝置單欄排版規則" }
       ]
     },
     {
@@ -1760,9 +1610,7 @@
       "title": "移除資料自動備份與還原",
       "type": "removed",
       "changes": [
-        { "tag": "removed", "text": "移除設定 > 資料匯出匯入中的備份管理介面（立即備份、下載、上傳、刪除、還原與排程設定）" },
-        { "tag": "removed", "text": "移除後端自動備份排程與所有 /api/system/backups 相關 API" },
-        { "tag": "improved", "text": "同步清理前端備份事件綁定與備份流程程式碼，降低維護複雜度" }
+        { "tag": "removed", "text": "移除自動備份排程與管理介面（立即備份、下載、上傳、刪除、還原與排程設定）" }
       ]
     },
     {
@@ -1771,9 +1619,8 @@
       "title": "備份刪除與還原穩定性修正",
       "type": "fixed",
       "changes": [
-        { "tag": "new", "text": "資料自動備份與還原新增「刪除備份檔案」功能，使用者可直接刪除指定備份" },
-        { "tag": "fixed", "text": "修正上傳備份後無法還原問題：新增備份檔內容驗證，僅接受有效 SQLite/加密備份" },
-        { "tag": "improved", "text": "上傳備份成功後自動選取該檔案，便於立即執行還原" }
+        { "tag": "new", "text": "資料自動備份新增「刪除備份檔案」功能" },
+        { "tag": "fixed", "text": "修正上傳備份後無法還原的問題：新增備份檔內容驗證" }
       ]
     },
     {
@@ -1782,9 +1629,9 @@
       "title": "全球即時匯率自動更新",
       "type": "feature",
       "changes": [
-        { "tag": "new", "text": "匯率設定整合全球即時匯率 API（rter.info），可一鍵更新最新匯率" },
-        { "tag": "new", "text": "新增「自動更新匯率」開關，使用者可自行選擇是否啟用" },
-        { "tag": "improved", "text": "自動更新啟用時會依節流策略自動同步，並顯示上次同步時間" }
+        { "tag": "new", "text": "匯率設定整合全球即時匯率，可一鍵更新最新匯率" },
+        { "tag": "new", "text": "新增「自動更新匯率」開關" },
+        { "tag": "improved", "text": "啟用自動更新時依節流策略自動同步，並顯示上次同步時間" }
       ]
     },
     {
@@ -1793,9 +1640,8 @@
       "title": "備份下載上傳與自訂排程",
       "type": "feature",
       "changes": [
-        { "tag": "new", "text": "資料自動備份與還原新增備份檔下載與上傳，使用者可匯出備份到本機並重新上傳" },
-        { "tag": "new", "text": "自動備份時間與最多保留份數改為可在設定頁自訂，預設每 6 小時、最多保留 30 份" },
-        { "tag": "improved", "text": "後端新增備份設定 API，更新設定後會立即重啟排程並套用新的保留策略" }
+        { "tag": "new", "text": "資料自動備份新增備份檔下載與上傳，可匯出到本機並重新上傳" },
+        { "tag": "new", "text": "自動備份時間與最多保留份數可在設定頁自訂（預設每 6 小時、最多 30 份）" }
       ]
     },
     {
@@ -1804,9 +1650,8 @@
       "title": "主題切換同步容錯優化",
       "type": "fixed",
       "changes": [
-        { "tag": "fixed", "text": "修正切換深色模式時可能顯示「伺服器回傳非 JSON 內容」訊息，造成操作中斷的問題" },
-        { "tag": "improved", "text": "主題切換改為先本機套用，若後端同步失敗則保留目前模式並改為背景重試同步" },
-        { "tag": "improved", "text": "非 JSON 回應錯誤文案調整為通用格式異常提示，避免顯示過度技術性的訊息" }
+        { "tag": "fixed", "text": "修正切換深色模式時偶發顯示異常訊息的問題" },
+        { "tag": "improved", "text": "主題切換改為先本機套用，若同步失敗則保留目前模式並背景重試" }
       ]
     },
     {
@@ -1815,20 +1660,19 @@
       "title": "資料自動備份與還原",
       "type": "feature",
       "changes": [
-        { "tag": "new", "text": "新增資料自動備份排程，伺服器可定期自動備份資料庫並保留最近多份歷史版本" },
-        { "tag": "new", "text": "設定 > 資料匯出匯入 新增備份管理介面，可立即備份、檢視備份清單與手動還原" },
-        { "tag": "improved", "text": "新增備份還原 API 與安全檔名驗證，還原後自動重載資料庫以立即生效" }
+        { "tag": "new", "text": "新增資料自動備份排程，可定期備份資料庫並保留多份歷史版本" },
+        { "tag": "new", "text": "資料匯出匯入新增備份管理介面，可立即備份、檢視清單、手動還原" },
+        { "tag": "improved", "text": "還原後自動重載資料庫，立即生效" }
       ]
     },
     {
       "version": "3.26.1",
       "date": "2026-03-21",
-      "title": "主題切換 JSON 解析錯誤修正",
+      "title": "主題切換解析錯誤修正",
       "type": "fixed",
       "changes": [
-        { "tag": "fixed", "text": "修正切換深色模式時偶發「Unexpected token '<'」JSON 解析錯誤" },
-        { "tag": "improved", "text": "前端 API 回應新增 Content-Type 與 HTML 回傳防呆判斷，避免將錯誤頁當作 JSON 解析" },
-        { "tag": "improved", "text": "當伺服器回傳非 JSON 內容時改顯示可理解錯誤訊息，提升除錯與使用體驗" }
+        { "tag": "fixed", "text": "修正切換深色模式時偶發解析錯誤" },
+        { "tag": "improved", "text": "新增伺服器回應格式檢查，避免將錯誤頁誤當作正常資料解析" }
       ]
     },
     {
@@ -1837,9 +1681,8 @@
       "title": "主題偏好跨瀏覽器同步",
       "type": "improved",
       "changes": [
-        { "tag": "new", "text": "主題偏好（淺色/深色/跟隨系統）改為儲存至使用者帳號，支援跨瀏覽器沿用最新設定" },
-        { "tag": "improved", "text": "登入後會優先套用伺服器端主題偏好，避免不同裝置或瀏覽器顯示不一致" },
-        { "tag": "new", "text": "新增主題偏好設定 API，切換外觀模式時即時同步到後端資料庫" }
+        { "tag": "new", "text": "主題偏好（淺色／深色／跟隨系統）改為儲存至帳號，跨瀏覽器同步" },
+        { "tag": "improved", "text": "登入後優先套用伺服器端主題偏好，避免不同裝置顯示不一致" }
       ]
     },
     {
@@ -1848,9 +1691,8 @@
       "title": "版本更新資訊深色模式可讀性修正",
       "type": "fixed",
       "changes": [
-        { "tag": "fixed", "text": "修正深色模式下「版本更新資訊」彈窗最新版本卡片文字對比不足問題" },
-        { "tag": "improved", "text": "為最新版本標頭、當前版本區塊與更新提示橫幅新增 dark-mode 專屬配色" },
-        { "tag": "fixed", "text": "修正多處使用未定義文字變數導致色彩繼承不穩定，統一改用主題文字變數" }
+        { "tag": "fixed", "text": "修正深色模式下「版本更新資訊」彈窗最新版本卡片文字對比不足的問題" },
+        { "tag": "improved", "text": "為最新版本標頭、當前版本區塊、更新提示橫幅新增深色模式專屬配色" }
       ]
     },
     {
@@ -1860,9 +1702,7 @@
       "type": "fixed",
       "changes": [
         { "tag": "fixed", "text": "修正儀表板在深色模式下部分文字對比不足、難以閱讀的問題" },
-        { "tag": "improved", "text": "強化深色模式次要文字色階，提升摘要卡、近期交易與提示文案可讀性" },
-        { "tag": "fixed", "text": "修正舊版 [data-theme=dark] 樣式失效問題，統一改為 body.dark-mode，避免深色樣式未套用" },
-        { "tag": "improved", "text": "調整表格 hover 與日期輸入顏色變數，避免深色模式下亮度衝突與文字辨識不清" }
+        { "tag": "improved", "text": "強化深色模式次要文字色階與表格、日期欄位顏色變數" }
       ]
     },
     {
@@ -1871,9 +1711,8 @@
       "title": "外觀模式三態切換",
       "type": "feature",
       "changes": [
-        { "tag": "new", "text": "設定 > 帳號設定的外觀模式改為三態切換：淺色 / 深色 / 跟隨系統" },
-        { "tag": "new", "text": "可在 UI 明確切回「跟隨系統」模式，不再只能在淺色與深色間切換" },
-        { "tag": "improved", "text": "主題控制文案與互動調整，切換時即時生效並顯示對應狀態提示" }
+        { "tag": "new", "text": "外觀模式改為三態切換：淺色／深色／跟隨系統" },
+        { "tag": "new", "text": "可在介面明確切回「跟隨系統」模式" }
       ]
     },
     {
@@ -1882,9 +1721,9 @@
       "title": "主題偏好自動偵測",
       "type": "improved",
       "changes": [
-        { "tag": "improved", "text": "新增 prefers-color-scheme 與 window.matchMedia() 支援，預設跟隨瀏覽器/作業系統主題偏好" },
-        { "tag": "improved", "text": "當瀏覽器或系統主題偏好變更時，跟隨系統模式可即時自動同步" },
-        { "tag": "fixed", "text": "修正帳號設定危險區域在深色模式下對比不足、文字難以閱讀問題" }
+        { "tag": "improved", "text": "預設跟隨瀏覽器或作業系統主題偏好" },
+        { "tag": "improved", "text": "瀏覽器或系統主題變更時，跟隨系統模式可即時自動同步" },
+        { "tag": "fixed", "text": "修正帳號設定危險區域在深色模式下對比不足的問題" }
       ]
     },
     {
@@ -1893,22 +1732,22 @@
       "title": "多幣別支援與匯率換算",
       "type": "feature",
       "changes": [
-        { "tag": "new", "text": "帳戶管理新增帳戶幣別設定，支援 TWD/USD/JPY/EUR/HKD/CNY" },
-        { "tag": "new", "text": "交易新增/編輯支援幣別、原始金額與匯率欄位，非 TWD 交易自動換算為 TWD 儲存" },
-        { "tag": "new", "text": "設定 > 帳號設定新增匯率管理表，可新增/刪除幣別匯率並儲存至個人設定" },
-        { "tag": "improved", "text": "轉帳流程依轉出/轉入帳戶幣別自動換算，並保留雙邊原始幣別金額" },
-        { "tag": "improved", "text": "交易列表與帳戶卡片新增原始幣別顯示，避免多幣別金額混淆" }
+        { "tag": "new", "text": "帳戶管理新增幣別設定，支援台幣、美金、日圓、歐元、港幣、人民幣" },
+        { "tag": "new", "text": "交易支援幣別、原始金額與匯率欄位，非台幣交易自動換算為台幣儲存" },
+        { "tag": "new", "text": "帳號設定新增匯率管理表，可新增／刪除幣別匯率" },
+        { "tag": "improved", "text": "轉帳依轉出／轉入帳戶幣別自動換算，並保留雙邊原始幣別金額" },
+        { "tag": "improved", "text": "交易列表與帳戶卡片新增原始幣別顯示" }
       ]
     },
     {
       "version": "3.20",
       "date": "2026-03-21",
-      "title": "電子發票 QRCode 自動輸入",
+      "title": "電子發票 QR 碼自動輸入",
       "type": "feature",
       "changes": [
-        { "tag": "new", "text": "交易新增/編輯視窗新增「掃描電子發票 QRCode」按鈕，支援相機掃描自動帶入資料" },
-        { "tag": "new", "text": "新增電子發票掃描視窗，掃描成功後自動帶入日期、金額與發票備註資訊" },
-        { "tag": "improved", "text": "提供貼上 QR 文字解析備援，當瀏覽器不支援即時掃描時仍可快速帶入發票資料" }
+        { "tag": "new", "text": "交易視窗新增「掃描電子發票 QR 碼」按鈕，支援相機掃描自動帶入資料" },
+        { "tag": "new", "text": "新增電子發票掃描視窗，掃描成功後自動帶入日期、金額與發票備註" },
+        { "tag": "improved", "text": "提供貼上 QR 文字解析備援，瀏覽器不支援掃描時仍可使用" }
       ]
     },
     {
@@ -1917,8 +1756,7 @@
       "title": "版本更新偵測修正",
       "type": "fixed",
       "changes": [
-        { "tag": "fixed", "text": "修正 v3.18 對 v3.18.1 無法顯示可更新的問題" },
-        { "tag": "improved", "text": "版本更新偵測改為從版本清單取最高版本，不再僅依賴遠端 currentVersion 欄位" }
+        { "tag": "fixed", "text": "修正部分版本之間無法顯示可更新的問題" }
       ]
     },
     {
@@ -1927,9 +1765,9 @@
       "title": "新增深色模式",
       "type": "feature",
       "changes": [
-        { "tag": "new", "text": "設定 > 帳號設定 新增深色模式（Dark Mode）切換開關" },
-        { "tag": "new", "text": "全站主題色票支援深色模式，卡片、背景、文字與邊框自動套用" },
-        { "tag": "improved", "text": "主題偏好會儲存在瀏覽器，下次開啟時自動套用上次選擇" }
+        { "tag": "new", "text": "帳號設定新增深色模式切換開關" },
+        { "tag": "new", "text": "全站主題色票支援深色模式（卡片、背景、文字、邊框自動套用）" },
+        { "tag": "improved", "text": "主題偏好儲存於瀏覽器，下次開啟時自動套用" }
       ]
     },
     {
@@ -1938,8 +1776,7 @@
       "title": "資產配置圖顯示金額與百分比",
       "type": "improved",
       "changes": [
-        { "tag": "improved", "text": "儀表板資產配置圓餅圖圖例改為顯示『金額 + 百分比』" },
-        { "tag": "improved", "text": "資產配置圖 tooltip 同步顯示金額與百分比，滑鼠移入即可查看完整數值" }
+        { "tag": "improved", "text": "儀表板資產配置圓餅圖圖例改為顯示「金額 + 百分比」" }
       ]
     },
     {
@@ -1949,8 +1786,7 @@
       "type": "feature",
       "changes": [
         { "tag": "new", "text": "儀表板新增「資產配置（含股票市值）」圓餅圖，整合帳戶餘額與股票市值" },
-        { "tag": "improved", "text": "資產配置圖圖例顯示各資產類別占比，快速辨識現金與股票配置" },
-        { "tag": "improved", "text": "圖表資料改以即時帳戶餘額與股票市值動態計算，切頁後回到儀表板可即時反映最新資料" }
+        { "tag": "improved", "text": "圖例顯示各資產類別占比，快速辨識現金與股票配置" }
       ]
     },
     {
@@ -1959,31 +1795,27 @@
       "title": "股票交易計算設定",
       "type": "feature",
       "changes": [
-        { "tag": "new", "text": "股票紀錄新增「交易設定」分頁，可設定零股/整股最低手續費、手續費折扣與各類型賣出稅率" },
-        { "tag": "new", "text": "後端新增 /api/stock-settings 設定 API 與 stock_settings 資料表，支援每位使用者獨立計算參數" },
-        { "tag": "improved", "text": "股票交易小計與持股總覽預估手續費/交易稅改為套用使用者設定，不再固定使用預設常數" }
+        { "tag": "new", "text": "股票紀錄新增「交易設定」分頁：可設定零股／整股最低手續費、手續費折扣與各類型賣出稅率" },
+        { "tag": "improved", "text": "股票交易小計與持股總覽預估手續費／交易稅改為套用使用者設定" }
       ]
     },
     {
       "version": "3.16.12",
       "date": "2026-03-21",
-      "title": "移除設定系統訊息功能",
+      "title": "移除設定系統訊息",
       "type": "removed",
       "changes": [
-        { "tag": "removed", "text": "設定頁移除「系統訊息」子分頁與對應面板 UI" },
-        { "tag": "removed", "text": "移除前端系統訊息收集、手動更新、清除訊息、自動更新等功能" },
-        { "tag": "improved", "text": "同步清理無用樣式與事件綁定，避免殘留程式碼影響維護性" }
+        { "tag": "removed", "text": "設定頁移除「系統訊息」子分頁與相關功能" }
       ]
     },
     {
       "version": "3.16.11",
       "date": "2026-03-21",
-      "title": "Google SSO 改為 GIS Redirect",
+      "title": "Google 登入改為轉址流程",
       "type": "fixed",
       "changes": [
-        { "tag": "fixed", "text": "修復 Google 授權視窗完成後主頁仍未自動登入的問題" },
-        { "tag": "improved", "text": "Google SSO 由 GIS popup 改為 GIS redirect 流程，避免部分瀏覽器 popup callback 不觸發" },
-        { "tag": "improved", "text": "搭配 URL code 自動處理，授權後可穩定自動交換 token 並登入" }
+        { "tag": "fixed", "text": "修復 Google 授權視窗完成後主頁未自動登入的問題" },
+        { "tag": "improved", "text": "Google 登入由彈窗改為轉址流程，避免部分瀏覽器彈窗回呼不觸發" }
       ]
     },
     {
@@ -1992,52 +1824,46 @@
       "title": "Google 授權完成未自動登入修復",
       "type": "fixed",
       "changes": [
-        { "tag": "fixed", "text": "修正 Google 授權視窗完成並關閉後，主頁未自動登入的問題" },
-        { "tag": "improved", "text": "新增 Google 授權碼 watchdog 等待機制，避免早期暫態 popup_closed 事件中斷流程" },
-        { "tag": "improved", "text": "新增 URL code 回呼自動處理（?code=...），即使 popup 回呼受瀏覽器限制仍可自動登入" }
+        { "tag": "fixed", "text": "修正 Google 授權視窗關閉後主頁未自動登入的問題" },
+        { "tag": "improved", "text": "新增備援機制，避免早期暫態事件中斷流程" }
       ]
     },
     {
       "version": "3.16.9",
       "date": "2026-03-21",
-      "title": "Google SSO 即時誤判修正",
+      "title": "Google 登入即時誤判修正",
       "type": "fixed",
       "changes": [
-        { "tag": "fixed", "text": "修正點擊 Google 登入後立即誤顯示『登入流程已中斷』訊息的問題" },
-        { "tag": "improved", "text": "GIS popup_closed 類型加入請求經過時間判斷，短時間事件改為引導完成授權，不直接判定失敗" },
-        { "tag": "improved", "text": "Google SSO 錯誤提示分級調整：僅 popup_failed_to_open 視為錯誤，其餘顯示狀態提示" }
+        { "tag": "fixed", "text": "修正點擊 Google 登入後立即誤顯示「登入流程已中斷」訊息的問題" }
       ]
     },
     {
       "version": "3.16.8",
       "date": "2026-03-21",
-      "title": "Google SSO 錯誤訊息精準化",
+      "title": "Google 登入錯誤訊息精準化",
       "type": "fixed",
       "changes": [
-        { "tag": "fixed", "text": "修正 Google SSO 在特定情況下誤顯示「視窗已關閉或被阻擋」的問題" },
-        { "tag": "improved", "text": "GIS error_callback 改為依錯誤類型顯示對應訊息（popup_failed_to_open / popup_closed / 其他）" },
-        { "tag": "improved", "text": "避免在錯誤狀態文案中做過度推斷，改為流程中斷提示，降低誤導" }
+        { "tag": "fixed", "text": "修正 Google 登入特定情況下誤顯示「視窗已關閉或被阻擋」的問題" },
+        { "tag": "improved", "text": "改為依錯誤類型顯示對應訊息，避免誤導" }
       ]
     },
     {
       "version": "3.16.7",
       "date": "2026-03-21",
-      "title": "Google SSO 強制 GIS",
+      "title": "Google 登入流程統一",
       "type": "fixed",
       "changes": [
-        { "tag": "fixed", "text": "Google SSO 登入強制只走 GIS Code Client，移除 OAuth URL popup 備援路徑" },
-        { "tag": "fixed", "text": "修復單次點擊可能同時出現 storagerelay 與 redirect_uri 兩種 Google 帳號視窗的問題" },
-        { "tag": "improved", "text": "GIS 初始化失敗時改為顯示明確錯誤訊息，避免隱性切換到第二套登入流程" }
+        { "tag": "fixed", "text": "修復單次點擊可能同時出現兩種 Google 帳號視窗的問題" },
+        { "tag": "improved", "text": "Google 登入統一使用單一流程，避免隱性切換到備援路徑" }
       ]
     },
     {
       "version": "3.16.6",
       "date": "2026-03-21",
-      "title": "Google SSO 單一路徑修復",
+      "title": "Google 登入單一路徑修復",
       "type": "fixed",
       "changes": [
-        { "tag": "fixed", "text": "修復 Google SSO 一次點擊出現兩個帳號選擇視窗（GIS + 備援 OAuth）問題" },
-        { "tag": "improved", "text": "GIS error_callback 不再自動再開第二個 popup，改為提示使用者重試，避免雙視窗競態" }
+        { "tag": "fixed", "text": "修復 Google 登入一次點擊出現兩個帳號選擇視窗的問題" }
       ]
     },
     {
@@ -2046,20 +1872,18 @@
       "title": "Docker 一鍵更新支援",
       "type": "feature",
       "changes": [
-        { "tag": "new", "text": "一鍵更新新增 Docker / 無 .git 模式：自動下載 GitHub 最新程式碼壓縮檔並覆蓋更新" },
-        { "tag": "improved", "text": "保留 data、database.db、.env、node_modules 等本地資料，避免更新時覆蓋使用者環境與資料庫" },
-        { "tag": "fixed", "text": "修正容器內顯示『目前環境不是 Git 專案，無法執行自動更新』導致無法更新的問題" }
+        { "tag": "new", "text": "一鍵更新新增 Docker 模式：自動下載最新程式碼並覆蓋更新" },
+        { "tag": "improved", "text": "保留資料、資料庫、設定、套件等本地檔案，避免覆蓋使用者環境" }
       ]
     },
     {
       "version": "3.16.4",
       "date": "2026-03-21",
-      "title": "Google SSO 重複彈窗修復",
+      "title": "Google 登入重複彈窗修復",
       "type": "fixed",
       "changes": [
-        { "tag": "fixed", "text": "修復登入頁點一次 Google SSO 卻出現兩個 Google 帳號登入彈窗的問題" },
-        { "tag": "improved", "text": "Google SSO 新增登入流程鎖（in-progress），避免重複觸發與多重請求" },
-        { "tag": "improved", "text": "移除 GIS callback 逾時自動再開 popup 的行為，改為單一流程與錯誤備援" }
+        { "tag": "fixed", "text": "修復 Google 登入點一次卻出現兩個帳號登入彈窗的問題" },
+        { "tag": "improved", "text": "新增登入流程鎖，避免重複觸發" }
       ]
     },
     {
@@ -2068,31 +1892,29 @@
       "title": "版本資訊一鍵更新",
       "type": "feature",
       "changes": [
-        { "tag": "new", "text": "版本更新資訊彈窗在偵測到新版本時新增「立即更新」按鈕，可直接從網頁觸發更新" },
-        { "tag": "new", "text": "後端新增 /api/system/update-app：自動執行 git pull 與 npm install，無需登入伺服器手動更新" },
-        { "tag": "improved", "text": "更新完成後可直接重新整理頁面套用新版前端，並提示後端異動需重啟服務" }
+        { "tag": "new", "text": "版本更新資訊偵測到新版本時新增「立即更新」按鈕，可直接從網頁觸發更新" },
+        { "tag": "improved", "text": "更新完成後可直接重新整理頁面套用新版前端，並提示後端異動需重啟" }
       ]
     },
     {
       "version": "3.16.2",
       "date": "2026-03-21",
-      "title": "Google SSO 自動登入穩定性修復",
+      "title": "Google 登入自動登入穩定性修復",
       "type": "fixed",
       "changes": [
-        { "tag": "fixed", "text": "修復 Google SSO 選完帳號後彈窗關閉但主頁未自動登入的問題" },
-        { "tag": "improved", "text": "GIS Code Client 新增 error_callback 與逾時備援，未回呼時自動切換 OAuth URL popup 流程" },
-        { "tag": "improved", "text": "後端授權碼交換新增 redirect_uri 尾斜線相容重試，降低設定差異導致登入失敗" }
+        { "tag": "fixed", "text": "修復 Google 選完帳號後彈窗關閉但主頁未自動登入的問題" },
+        { "tag": "improved", "text": "新增逾時備援，未回呼時自動切換至備援流程" }
       ]
     },
     {
       "version": "3.16.1",
       "date": "2026-03-21",
-      "title": "系統訊息手動更新與更新時間",
+      "title": "系統訊息手動更新",
       "type": "improved",
       "changes": [
-        { "tag": "new", "text": "系統訊息面板新增「手動更新」按鈕，可立即刷新系統訊息狀態" },
-        { "tag": "new", "text": "新增「上次更新」時間顯示，清楚知道最後更新時刻" },
-        { "tag": "improved", "text": "系統訊息每 30 秒自動更新一次時間與狀態" }
+        { "tag": "new", "text": "系統訊息面板新增「手動更新」按鈕" },
+        { "tag": "new", "text": "新增「上次更新」時間顯示" },
+        { "tag": "improved", "text": "系統訊息每 30 秒自動更新一次" }
       ]
     },
     {
@@ -2101,9 +1923,9 @@
       "title": "設定新增系統訊息",
       "type": "feature",
       "changes": [
-        { "tag": "new", "text": "設定子選單新增「系統訊息」，集中顯示網頁資訊與錯誤內容" },
-        { "tag": "new", "text": "自動收集操作提示（toast）、前端例外與未處理 Promise 錯誤" },
-        { "tag": "new", "text": "支援一鍵清除系統訊息，並顯示目前累積筆數" }
+        { "tag": "new", "text": "設定新增「系統訊息」子分頁，集中顯示網頁資訊與錯誤" },
+        { "tag": "new", "text": "自動收集操作提示、前端例外與未處理錯誤" },
+        { "tag": "new", "text": "支援一鍵清除系統訊息，並顯示累積筆數" }
       ]
     },
     {
@@ -2112,9 +1934,8 @@
       "title": "收支管理改為頁內子分頁",
       "type": "improved",
       "changes": [
-        { "tag": "improved", "text": "左側導航僅保留「收支管理」主選單，不再顯示交易/報表/預算/帳戶子項目" },
-        { "tag": "new", "text": "在收支相關頁面中新增子分頁列（交易記錄／統計報表／預算管理／帳戶管理），操作體驗比照股票紀錄" },
-        { "tag": "improved", "text": "行動版標題統一顯示「收支管理」，並保留 /finance/* 路由切換" }
+        { "tag": "improved", "text": "左側導覽僅保留「收支管理」主選單，子項目改為頁內分頁" },
+        { "tag": "new", "text": "在收支頁面新增子分頁列（交易記錄／統計報表／預算管理／帳戶管理）" }
       ]
     },
     {
@@ -2123,9 +1944,8 @@
       "title": "收支管理子選單整合",
       "type": "feature",
       "changes": [
-        { "tag": "new", "text": "側邊欄新增「收支管理」主選單，整合交易記錄、統計報表、預算管理、帳戶管理四個子選項" },
-        { "tag": "improved", "text": "新增 /finance/* 路由（如 /finance/transactions），並保留原本舊路由相容" },
-        { "tag": "improved", "text": "行動版與桌面版導航同步高亮主選單與子選項，切換更直覺" }
+        { "tag": "new", "text": "側邊欄新增「收支管理」主選單，整合交易記錄、統計報表、預算管理、帳戶管理" },
+        { "tag": "improved", "text": "新增子網址，並保留原本舊網址相容" }
       ]
     },
     {
@@ -2134,8 +1954,7 @@
       "title": "顯示上次檢查時間",
       "type": "feature",
       "changes": [
-        { "tag": "new", "text": "版本更新彈窗在手動重新檢查按鈕旁新增「上次檢查時間」顯示" },
-        { "tag": "improved", "text": "每次成功檢查更新後即時更新時間戳，方便確認最新檢查狀態" }
+        { "tag": "new", "text": "版本更新彈窗在重新檢查按鈕旁顯示「上次檢查時間」" }
       ]
     },
     {
@@ -2144,8 +1963,7 @@
       "title": "版本資訊手動重新檢查",
       "type": "feature",
       "changes": [
-        { "tag": "new", "text": "版本更新彈窗新增「手動重新檢查更新」按鈕，點擊可立即重抓遠端版本資訊" },
-        { "tag": "improved", "text": "重新檢查後會同步更新側邊欄版本提示與更新徽章" }
+        { "tag": "new", "text": "版本更新彈窗新增「手動重新檢查更新」按鈕，可立即重抓遠端版本資訊" }
       ]
     },
     {
@@ -2154,19 +1972,17 @@
       "title": "版本更新即時同步修復",
       "type": "fixed",
       "changes": [
-        { "tag": "fixed", "text": "修復 GitHub 有新版本時，網頁版本更新資訊未即時顯示最新內容的問題" },
-        { "tag": "improved", "text": "版本更新 API 支援 refresh=1 強制刷新，前端改用 no-store + 強制刷新避免舊快取" },
-        { "tag": "improved", "text": "遠端 changelog 取得新增 GitHub API 備援來源，降低 raw 網址在特定網路環境失敗風險" }
+        { "tag": "fixed", "text": "修復新版本未即時顯示的問題" },
+        { "tag": "improved", "text": "支援強制刷新並新增備援來源，降低特定網路環境失敗風險" }
       ]
     },
     {
       "version": "3.14.3",
       "date": "2026-03-21",
-      "title": "Google SSO 統一 OAuth 授權碼流程",
+      "title": "Google 登入流程統一",
       "type": "improved",
       "changes": [
-        { "tag": "improved", "text": "Google SSO 登入統一使用 Authorization Code Flow（Client ID + Client Secret），不再使用 ID Token 登入分支" },
-        { "tag": "fixed", "text": "後端 /api/auth/google 僅接受授權碼並強制要求 GOOGLE_CLIENT_SECRET，避免混用登入模式" }
+        { "tag": "improved", "text": "Google 登入統一使用授權碼流程，並要求設定客戶端密鑰，避免混用模式" }
       ]
     },
     {
@@ -2175,18 +1991,16 @@
       "title": "版本更新來源網址鎖定",
       "type": "fixed",
       "changes": [
-        { "tag": "fixed", "text": "版本更新資訊遠端來源改為固定使用 GitHub 官方網址，不再允許環境變數覆蓋" },
-        { "tag": "improved", "text": "伺服器改為固定網址轉換 raw 內容抓取，避免 blob 連結造成解析問題" }
+        { "tag": "fixed", "text": "版本更新資訊改為固定使用官方網址，提升穩定性" }
       ]
     },
     {
       "version": "3.14.1",
       "date": "2026-03-21",
-      "title": "Google SSO 導向修復",
+      "title": "Google 登入導向修復",
       "type": "fixed",
       "changes": [
-        { "tag": "fixed", "text": "修復 Google SSO Code Flow 備援登入會在授權後導向站內登入頁（AssetPilot 登入頁）的問題" },
-        { "tag": "improved", "text": "Code Flow 備援登入改用 Google GIS popup code client，減少 OAuth 導向體驗中斷" }
+        { "tag": "fixed", "text": "修復 Google 登入備援流程在授權後導向站內登入頁的問題" }
       ]
     },
     {
@@ -2196,23 +2010,18 @@
       "type": "feature",
       "changes": [
         { "tag": "new", "text": "持股總覽新增「計算公式」按鈕，點擊彈出統一的公式說明視窗" },
-        { "tag": "new", "text": "公式說明涵蓋：基本資訊、預估賣出成本、預估損益、總報酬四大區塊" },
-        { "tag": "improved", "text": "公式說明改為獨立彈窗，不再佔用每張卡片空間，介面更簡潔" }
+        { "tag": "new", "text": "公式說明涵蓋：基本資訊、預估賣出成本、預估損益、總報酬四大區塊" }
       ]
     },
     {
       "version": "3.13",
       "date": "2026-03-21",
-      "title": "全面依賴升級",
+      "title": "全面相依套件升級",
       "type": "improved",
       "changes": [
-        { "tag": "improved", "text": "升級 Express 4 → 5（更好的非同步錯誤處理、安全性增強）" },
-        { "tag": "improved", "text": "升級 bcryptjs 2.4 → 3.0（預設使用 2b 雜湊、TypeScript 支援）" },
-        { "tag": "improved", "text": "升級 sql.js 1.11 → 1.14（SQLite 引擎更新）" },
-        { "tag": "improved", "text": "升級 Font Awesome 6.5.0 → 6.7.1（新增更多圖示）" },
-        { "tag": "improved", "text": "升級 Chart.js 4.4.0 → 4.5.1（圖表效能改善）" },
-        { "tag": "improved", "text": "Docker 基礎映像升級至 Node.js 24 Alpine" },
-        { "tag": "improved", "text": "所有 CDN 資源更新 SRI 完整性雜湊" }
+        { "tag": "improved", "text": "升級 Express、bcryptjs、SQLite 引擎、Font Awesome、Chart.js 至最新穩定版" },
+        { "tag": "improved", "text": "Docker 基礎映像升級至 Node.js 24" },
+        { "tag": "improved", "text": "更新所有外部資源的完整性雜湊驗證" }
       ]
     },
     {
@@ -2221,61 +2030,55 @@
       "title": "遠端版本更新檢查",
       "type": "feature",
       "changes": [
-        { "tag": "new", "text": "自動從 GitHub 取得最新版本更新資訊，舊版本也能查看新版功能" },
+        { "tag": "new", "text": "自動取得最新版本更新資訊，舊版本也能查看新版功能" },
         { "tag": "new", "text": "側邊欄版本號旁顯示「有更新」紅色徽章提示" },
-        { "tag": "new", "text": "版本更新彈窗顯示升級橫幅，標示「已安裝」與「新版本」標籤" },
-        { "tag": "improved", "text": "比目前安裝版本更新的 release 卡片以藍色背景區分" }
+        { "tag": "new", "text": "版本更新彈窗顯示升級橫幅，標示「已安裝」與「新版本」" }
       ]
     },
     {
       "version": "3.11",
       "date": "2026-03-21",
-      "title": "股票紀錄子頁面路由",
+      "title": "股票紀錄子頁面網址",
       "type": "feature",
       "changes": [
-        { "tag": "new", "text": "股票紀錄各子選單擁有獨立 URL 路徑（/stocks/portfolio、/stocks/transactions、/stocks/dividends、/stocks/realized）" },
-        { "tag": "improved", "text": "支援直接輸入 URL 或分享連結進入指定的股票子頁面" },
-        { "tag": "improved", "text": "瀏覽器上/下一頁可正確切換股票子選單" }
+        { "tag": "new", "text": "股票紀錄各子選單擁有獨立網址（持股／交易／股利／實現損益）" },
+        { "tag": "improved", "text": "支援直接輸入網址或分享連結進入指定的股票子頁面" },
+        { "tag": "improved", "text": "瀏覽器上一頁／下一頁可正確切換股票子選單" }
       ]
     },
     {
       "version": "3.10.1",
       "date": "2026-03-21",
-      "title": "Google SSO 授權碼流程與使用者頭像",
+      "title": "Google 登入流程升級與顯示頭像",
       "type": "improved",
       "changes": [
-        { "tag": "improved", "text": "Google SSO 改用 Authorization Code Flow（搭配用戶端密碼），提升安全性" },
-        { "tag": "new", "text": "登入後側邊欄顯示 Google 使用者頭像" },
-        { "tag": "improved", "text": "同時支援 Authorization Code Flow 與 ID Token 兩種 Google 登入模式" },
-        { "tag": "improved", "text": "環境變數新增 GOOGLE_CLIENT_SECRET，設定後自動啟用授權碼流程" }
+        { "tag": "improved", "text": "Google 登入改用授權碼流程（搭配客戶端密鑰），提升安全性" },
+        { "tag": "new", "text": "登入後側邊欄顯示 Google 使用者頭像" }
       ]
     },
     {
       "version": "3.10",
       "date": "2026-03-21",
-      "title": "股票紀錄排序、日期篩選與日期格式統一",
+      "title": "股票紀錄排序與日期篩選",
       "type": "feature",
       "changes": [
         { "tag": "new", "text": "股票交易紀錄支援欄位排序（日期、類型、股票、股數、成交價、手續費、交易稅、小計）" },
         { "tag": "new", "text": "股利紀錄支援欄位排序（發放日期、股票、現金股利）" },
-        { "tag": "new", "text": "股票交易紀錄與股利紀錄新增日期範圍篩選（起始～結束日期）" },
-        { "tag": "improved", "text": "排序狀態以圖示（↑↓）標示當前排序欄位與方向" },
-        { "tag": "fixed", "text": "統一全站日期格式為 YYYY-MM-DD，修正資料庫中混用 YYYYMMDD 的問題" },
-        { "tag": "improved", "text": "新增 normalizeDate() 工具函式，所有日期寫入/匯入/更新皆自動正規化" }
+        { "tag": "new", "text": "股票交易紀錄與股利紀錄新增日期範圍篩選" },
+        { "tag": "improved", "text": "排序狀態以圖示標示當前排序欄位與方向" },
+        { "tag": "fixed", "text": "統一全站日期格式為 YYYY-MM-DD，修正資料庫中混用格式的問題" }
       ]
     },
     {
       "version": "3.9.3",
       "date": "2026-03-21",
-      "title": "TWSE 股利同步強化與安全性修復",
+      "title": "股利同步強化",
       "type": "improved",
       "changes": [
-        { "tag": "improved", "text": "TWSE 除權息自動同步支援所有歷史持股期間，不再僅限當年度" },
-        { "tag": "improved", "text": "按持股區間（買入～賣出）精確判斷是否應同步該筆股利" },
-        { "tag": "fixed", "text": "修復月配息 ETF（如 00929）同月產生多筆重複股利紀錄的問題" },
-        { "tag": "fixed", "text": "修復 TWSE API 連續快速查詢被限流導致歷史年度資料取不到的問題" },
-        { "tag": "fixed", "text": "修復反向代理環境下 express-rate-limit X-Forwarded-For 驗證警告" },
-        { "tag": "improved", "text": "同步過程增加進度提示與後台日誌，方便追蹤同步狀態" }
+        { "tag": "improved", "text": "除權息自動同步支援所有歷史持股期間，不再僅限當年度" },
+        { "tag": "improved", "text": "依持股區間（買入～賣出）精確判斷是否應同步該筆股利" },
+        { "tag": "fixed", "text": "修復月配息 ETF 同月產生多筆重複股利紀錄的問題" },
+        { "tag": "fixed", "text": "修復股價來源連續快速查詢被限流導致歷史資料取不到的問題" }
       ]
     },
     {
@@ -2284,9 +2087,9 @@
       "title": "上櫃股票報價支援",
       "type": "fixed",
       "changes": [
-        { "tag": "new", "text": "新增櫃買中心（TPEx）API 整合：上櫃股票也能自動取得即時/收盤股價" },
-        { "tag": "fixed", "text": "修復上櫃股票（如 8069 元太、6147 頎邦）無法透過更新股價取得報價的問題" },
-        { "tag": "improved", "text": "股票搜尋與報價查詢同時涵蓋上市（TWSE）與上櫃（TPEx）資料" }
+        { "tag": "new", "text": "整合櫃買中心資料：上櫃股票也能自動取得即時／收盤股價" },
+        { "tag": "fixed", "text": "修復上櫃股票無法取得報價的問題" },
+        { "tag": "improved", "text": "股票搜尋與報價查詢同時涵蓋上市與上櫃" }
       ]
     },
     {
@@ -2296,40 +2099,36 @@
       "type": "fixed",
       "changes": [
         { "tag": "fixed", "text": "修復 Docker 容器更新後密鑰重新產生導致資料庫解密失敗的問題" },
-        { "tag": "fixed", "text": "修復 Font Awesome / Chart.js 的 SRI 完整性驗證 hash 錯誤，導致圖示無法顯示" },
-        { "tag": "fixed", "text": "修復帳戶管理不同帳戶的 Icon 圖案大小不一致的問題" },
-        { "tag": "improved", "text": "Docker 啟動時優先載入 /app/data/.env 持久化密鑰，確保容器重建後資料庫正常解密" }
+        { "tag": "fixed", "text": "修復外部資源完整性驗證錯誤導致圖示無法顯示的問題" },
+        { "tag": "fixed", "text": "修復帳戶管理不同帳戶的圖示大小不一致" }
       ]
     },
     {
       "version": "3.9",
       "date": "2026-03-20",
-      "title": "股票管理優化與 Google SSO 修復",
+      "title": "股票管理優化與 Google 登入修復",
       "type": "improved",
       "changes": [
-        { "tag": "improved", "text": "更新股價僅顯示目前有持股的股票，不再列出已清倉的股票" },
-        { "tag": "improved", "text": "刪除股票時連帶刪除所有相關交易紀錄與股利紀錄（級聯刪除）" },
-        { "tag": "new", "text": "新增股票清理功能：自動移除無任何交易/股利紀錄的空股票" },
-        { "tag": "fixed", "text": "修復 Google SSO 登入卡在 accounts.google.com/gsi/transform 的問題（強制 popup 模式）" },
-        { "tag": "improved", "text": "Docker Volume 自動建立（Dockerfile VOLUME 指令），無需手動指定 -v 參數" },
-        { "tag": "improved", "text": "Docker 新增 HEALTHCHECK 健康檢查，每 30 秒自動檢測服務狀態" }
+        { "tag": "improved", "text": "更新股價僅顯示目前有持股的股票，不再列出已清倉股票" },
+        { "tag": "improved", "text": "刪除股票時連帶刪除所有相關交易紀錄與股利紀錄" },
+        { "tag": "new", "text": "新增股票清理功能：自動移除無任何交易／股利紀錄的空股票" },
+        { "tag": "fixed", "text": "修復 Google 登入卡住的問題" },
+        { "tag": "improved", "text": "Docker 自動建立資料磁碟，無需手動指定" }
       ]
     },
     {
       "version": "3.8",
       "date": "2026-03-20",
-      "title": "安全性強化",
+      "title": "資安強化",
       "type": "feature",
       "changes": [
-        { "tag": "new", "text": "新增 Helmet 安全性 HTTP 標頭（HSTS、X-Content-Type-Options、Referrer-Policy 等）" },
-        { "tag": "new", "text": "新增登入/註冊 API 速率限制（每 IP 每 15 分鐘最多 20 次）" },
-        { "tag": "new", "text": "新增 CORS 來源白名單設定（ALLOWED_ORIGINS 環境變數）" },
-        { "tag": "new", "text": "外部腳本加入 SRI（Subresource Integrity）完整性驗證" },
-        { "tag": "improved", "text": "修復所有 XSS 漏洞：所有使用者輸入一律經 escHtml() 跳脫後才插入 DOM" },
-        { "tag": "improved", "text": "伺服器端驗證分類顏色格式（僅允許 #hex），防止 CSS 注入攻擊" },
-        { "tag": "improved", "text": "隱藏 X-Powered-By 標頭，避免洩漏伺服器技術資訊" },
-        { "tag": "fixed", "text": "修復刪除帳號輸入錯誤密碼不顯示錯誤訊息的問題，改為頁面內紅色提示" },
-        { "tag": "fixed", "text": "修復 toast 通知類型參數傳入布林值導致樣式異常的問題" }
+        { "tag": "new", "text": "新增多項安全性 HTTP 標頭（HSTS、Referrer-Policy 等）" },
+        { "tag": "new", "text": "新增登入／註冊速率限制（每 IP 每 15 分鐘最多 20 次）" },
+        { "tag": "new", "text": "新增 CORS 來源白名單設定" },
+        { "tag": "new", "text": "外部腳本加入完整性驗證（SRI）" },
+        { "tag": "improved", "text": "修復所有 XSS 漏洞：所有使用者輸入一律經跳脫後才插入畫面" },
+        { "tag": "improved", "text": "伺服器端驗證分類顏色格式（僅允許 hex），防止樣式注入" },
+        { "tag": "fixed", "text": "修復刪除帳號輸入錯誤密碼不顯示錯誤訊息的問題" }
       ]
     },
     {
@@ -2338,7 +2137,7 @@
       "title": "刪除帳號介面美化",
       "type": "improved",
       "changes": [
-        { "tag": "improved", "text": "帳號設定「危險區域」介面重新設計：圖示標頭、警告提示區塊、密碼輸入框紅色焦點樣式" }
+        { "tag": "improved", "text": "「危險區域」介面重新設計：圖示標頭、警告提示、密碼欄位紅色焦點樣式" }
       ]
     },
     {
@@ -2347,10 +2146,9 @@
       "title": "帳號管理與版本資訊優化",
       "type": "feature",
       "changes": [
-        { "tag": "new", "text": "帳號設定新增「刪除帳號」功能，永久刪除帳號及所有資料（需密碼確認）" },
-        { "tag": "new", "text": "側邊欄底部顯示版本號，點擊即可查看完整版本更新資訊" },
-        { "tag": "improved", "text": "首次啟動自動產生 JWT_SECRET 與 DB_ENCRYPTION_KEY（64 字元隨機密鑰）" },
-        { "tag": "improved", "text": "Docker 密鑰與資料庫統一存放至 /app/data/ 掛載目錄" }
+        { "tag": "new", "text": "帳號設定新增「刪除帳號」功能，可永久刪除帳號及所有資料（需密碼確認）" },
+        { "tag": "new", "text": "側邊欄底部顯示版本號，點擊查看完整版本更新資訊" },
+        { "tag": "improved", "text": "首次啟動自動產生加密密鑰" }
       ]
     },
     {
@@ -2359,41 +2157,38 @@
       "title": "環境變數、資料庫加密與介面優化",
       "type": "feature",
       "changes": [
-        { "tag": "new", "text": "環境變數管理：所有機敏設定移至 .env 檔案（JWT 金鑰、Google Client ID 等）" },
-        { "tag": "new", "text": "資料庫全檔加密：支援 ChaCha20-Poly1305 AEAD 演算法，PBKDF2-SHA256 金鑰推導" },
+        { "tag": "new", "text": "環境變數管理：所有敏感設定移至設定檔" },
+        { "tag": "new", "text": "資料庫整檔加密（採用業界標準演算法）" },
         { "tag": "new", "text": "未加密資料庫設定金鑰後自動加密轉換" },
-        { "tag": "new", "text": "Docker 容器化支援：Dockerfile + docker-compose.yml" },
-        { "tag": "new", "text": "設定頁新增「帳號設定」分頁：Google 帳號綁定/解除綁定" },
-        { "tag": "new", "text": "全新網站 Logo 與 Favicon（SVG 向量圖）" },
-        { "tag": "new", "text": "版本更新資訊頁面" },
-        { "tag": "improved", "text": "股票持股公式修正：均價改為成本均價（含手續費）、新增預估淨收付/預估損益/預估手續費/交易稅" },
-        { "tag": "improved", "text": "設定頁分頁切換改用事件委派，修正切換失效問題" },
+        { "tag": "new", "text": "Docker 容器化支援" },
+        { "tag": "new", "text": "設定頁新增「帳號設定」分頁：Google 帳號綁定／解除綁定" },
+        { "tag": "new", "text": "全新網站 Logo 與 Favicon" },
+        { "tag": "new", "text": "新增版本更新資訊頁面" },
+        { "tag": "improved", "text": "股票持股公式修正：均價改為成本均價（含手續費）、新增預估淨收付／預估損益／預估手續費／交易稅" },
         { "tag": "fixed", "text": "FIFO 手續費分攤：修正部分消耗批次時手續費重複計算" }
       ]
     },
     {
       "version": "3.5",
       "date": "2026-03-20",
-      "title": "Google SSO 登入與批次操作",
+      "title": "Google 登入與批次操作",
       "type": "feature",
       "changes": [
-        { "tag": "new", "text": "Google SSO 登入：支援 Google Identity Services 一鍵登入/註冊" },
+        { "tag": "new", "text": "Google 登入：支援一鍵登入／註冊" },
         { "tag": "new", "text": "股票交易紀錄批次刪除 + 伺服器端分頁" },
         { "tag": "new", "text": "股利紀錄批次刪除 + 伺服器端分頁" },
         { "tag": "new", "text": "更新股價時顯示價格來源與時間" },
-        { "tag": "improved", "text": "美化持股總覽卡片與更新股價 Modal" },
-        { "tag": "removed", "text": "移除忘記密碼功能" },
-        { "tag": "fixed", "text": "修正股票名稱顯示異常（CSV 匯入自動修正）" }
+        { "tag": "improved", "text": "美化持股總覽卡片與更新股價彈窗" },
+        { "tag": "removed", "text": "移除忘記密碼功能" }
       ]
     },
     {
       "version": "3.4",
       "date": "2026-03-20",
-      "title": "TWSE 除權息自動同步",
+      "title": "除權息自動同步",
       "type": "feature",
       "changes": [
-        { "tag": "new", "text": "TWSE 除權息自動同步：查詢 TWT49U + TWT49UDetail API" },
-        { "tag": "new", "text": "依持股期間自動計算並新增現金股利/股票股利紀錄" },
+        { "tag": "new", "text": "除權息自動同步：依持股期間自動計算並新增現金股利／股票股利紀錄" },
         { "tag": "improved", "text": "不重複新增已存在的股利紀錄" },
         { "tag": "improved", "text": "30 分鐘快取機制降低 API 呼叫頻率" }
       ]
@@ -2404,11 +2199,9 @@
       "title": "實現損益紀錄",
       "type": "feature",
       "changes": [
-        { "tag": "new", "text": "實現損益紀錄 Tab：FIFO 逐筆賣出損益明細" },
-        { "tag": "new", "text": "實現損益彙總卡片：總損益/報酬率/今年損益/筆數" },
-        { "tag": "new", "text": "實現損益搜尋篩選指定股票" },
-        { "tag": "fixed", "text": "修正股票 CSV 匯入自動建立股票時正確帶入名稱" },
-        { "tag": "fixed", "text": "修正 initDB 中 ALTER TABLE stocks 執行順序" }
+        { "tag": "new", "text": "新增「實現損益紀錄」分頁：FIFO 逐筆賣出損益明細" },
+        { "tag": "new", "text": "實現損益彙總卡片：總損益／報酬率／今年損益／筆數" },
+        { "tag": "new", "text": "支援搜尋篩選指定股票" }
       ]
     },
     {
@@ -2417,12 +2210,12 @@
       "title": "股票 CSV 匯出匯入與類型管理",
       "type": "feature",
       "changes": [
-        { "tag": "new", "text": "股票交易紀錄 CSV 匯出/匯入" },
-        { "tag": "new", "text": "股利紀錄 CSV 匯出/匯入" },
-        { "tag": "new", "text": "股票類型管理：一般股票 / ETF / 權證" },
-        { "tag": "improved", "text": "手續費計算修正：Math.floor + 整股最低 20 元" },
-        { "tag": "improved", "text": "證交稅計算：ETF/權證 0.1%、一般股票 0.3%、最低 1 元" },
-        { "tag": "improved", "text": "TWSE 股價查詢改為三段策略（即時/盤後/備援）" }
+        { "tag": "new", "text": "股票交易紀錄 CSV 匯出／匯入" },
+        { "tag": "new", "text": "股利紀錄 CSV 匯出／匯入" },
+        { "tag": "new", "text": "股票類型管理：一般股票／ETF／權證" },
+        { "tag": "improved", "text": "手續費計算修正（含整股最低費用）" },
+        { "tag": "improved", "text": "證交稅計算依股票類型調整" },
+        { "tag": "improved", "text": "股價查詢改為三段策略（即時／盤後／備援）" }
       ]
     },
     {
@@ -2431,10 +2224,9 @@
       "title": "股票自動建立與搜尋篩選",
       "type": "improved",
       "changes": [
-        { "tag": "improved", "text": "股票交易/股利新增時輸入代號自動建立股票" },
-        { "tag": "new", "text": "交易紀錄與股利紀錄搜尋篩選指定股票" },
-        { "tag": "fixed", "text": "修正買進/賣出按鈕預設選取狀態" },
-        { "tag": "fixed", "text": "修正搜尋下拉選單文字重疊" }
+        { "tag": "improved", "text": "股票交易／股利新增時輸入代號自動建立股票" },
+        { "tag": "new", "text": "交易紀錄與股利紀錄支援搜尋篩選指定股票" },
+        { "tag": "fixed", "text": "修正買進／賣出按鈕預設選取狀態" }
       ]
     },
     {
@@ -2444,10 +2236,10 @@
       "type": "feature",
       "changes": [
         { "tag": "new", "text": "股票持倉管理" },
-        { "tag": "new", "text": "股票交易記錄（買入/賣出）" },
+        { "tag": "new", "text": "股票交易記錄（買入／賣出）" },
         { "tag": "new", "text": "股票股利記錄" },
         { "tag": "new", "text": "FIFO 損益計算" },
-        { "tag": "new", "text": "TWSE 臺灣證券交易所 OpenAPI 整合" },
+        { "tag": "new", "text": "整合台灣證券交易所公開資料" },
         { "tag": "new", "text": "投資組合總覽頁面" }
       ]
     },
@@ -2457,14 +2249,14 @@
       "title": "完整記帳功能",
       "type": "feature",
       "changes": [
-        { "tag": "new", "text": "子分類支援（parent_id 自關聯）" },
-        { "tag": "new", "text": "批次操作（刪除/變更分類/帳戶/日期）" },
+        { "tag": "new", "text": "子分類支援" },
+        { "tag": "new", "text": "批次操作（刪除／變更分類／帳戶／日期）" },
         { "tag": "new", "text": "分類匯出匯入" },
-        { "tag": "new", "text": "SPA 前端路由（history.pushState）" },
+        { "tag": "new", "text": "前端網址路由" },
         { "tag": "new", "text": "每頁筆數自訂" },
         { "tag": "new", "text": "統計報表自訂時間範圍" },
         { "tag": "improved", "text": "轉帳關聯刪除" },
-        { "tag": "improved", "text": "大量 CSV 匯入支援（body 上限 50MB）" }
+        { "tag": "improved", "text": "大量 CSV 匯入支援" }
       ]
     },
     {
@@ -2473,14 +2265,14 @@
       "title": "初版發布",
       "type": "feature",
       "changes": [
-        { "tag": "new", "text": "使用者註冊/登入/登出（JWT 認證）" },
-        { "tag": "new", "text": "交易記錄 CRUD" },
+        { "tag": "new", "text": "使用者註冊／登入／登出" },
+        { "tag": "new", "text": "交易記錄新增、編輯、刪除" },
         { "tag": "new", "text": "帳戶管理（餘額自動計算）" },
         { "tag": "new", "text": "分類管理" },
         { "tag": "new", "text": "預算管理" },
         { "tag": "new", "text": "固定收支" },
         { "tag": "new", "text": "統計報表" },
-        { "tag": "new", "text": "CSV 匯出/匯入" },
+        { "tag": "new", "text": "CSV 匯出／匯入" },
         { "tag": "new", "text": "響應式設計（桌面 + 手機）" }
       ]
     }

@@ -295,7 +295,7 @@
 - 每週：Mon-Sun 每日彙總，多顯示「區間收入／支出／淨額」三欄總覽卡，週末日期紫色標示
 - 每月：上月每天彙總
 
-「股票投資」區塊顯示 4 列：成本、市值、未實現損益、報酬率（含彩色 ± 符號）。寄信通道（v4.30.0 起）一律由環境變數設定，支援三種：SMTP（Nodemailer）、Zeabur Email（ZSend HTTP API）、Resend；以 `EMAIL_PROVIDER_PRIMARY` 與 `EMAIL_PROVIDER_FALLBACK`（值：`smtp` / `zeabur` / `resend` / 留空）指定主要與備用通道，primary 執行期失敗時若 fallback 已設定才自動退回，不重試不補寄；兩者皆未設定則回 503（沿用 005 FR-021）。排程檢查以台灣時間（UTC+8，無 DST）為基準，使用 `twParts()` 輔助函式確保部署在 UTC 主機上仍能正確觸發。
+「股票投資」區塊顯示 4 列：成本、市值、未實現損益、報酬率（含彩色 ± 符號）。寄信通道（v4.30.0 起）一律由環境變數設定，支援三種：SMTP（Nodemailer）、Zeabur Email（ZSend HTTP API）、Resend；以 `EMAIL_PROVIDER_PRIMARY` 與 `EMAIL_PROVIDER_FALLBACK`（值：`smtp` / `zeabur` / `resend` / 留空）指定主要與備用通道，primary 執行期失敗時若 fallback 已設定才自動退回，不重試不補寄；兩者皆未設定則回 503（沿用 005 FR-021）。寄件人顯示名稱可透過 `EMAIL_SENDER_NAME`（v4.30.1 起）為三通道統一指定，採 RFC 5322 quoted-string 包裝為 `"<name>" <email>`；若各通道 FROM 變數已是 `Name <email>` 格式則不覆寫，保留 per-provider override 能力。排程檢查以台灣時間（UTC+8，無 DST）為基準，使用 `twParts()` 輔助函式確保部署在 UTC 主機上仍能正確觸發。
 
 #### 不做什麼
 

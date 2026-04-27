@@ -1,0 +1,901 @@
+openapi: 3.2.0
+info:
+  title: 資料匯出匯入（Data Export / Import）契約
+  version: 0.1.0
+  description: |-
+    本契約涵蓋功能 007「資料匯出匯入」之新增與修改端點，落地於既有 `openapi.yaml`
+    之上；本檔僅描述 delta，不重複既有共用資源（cookieAuth、ErrorResponse 等沿用
+    根目錄 openapi.yaml 既有定義）。
+
+    **沿用既有技術棧**：Express 5、JSON body 上傳、JWT Cookie 認證；本功能不引入
+    新依賴、不新增獨立服務、不新增外部 API。
+
+servers:
+  - url: http://localhost:3000
+    description: 本機開發
+  - url: https://assetpilot.example.com
+    description: 正式站
+
+tags:
+  - name: 資料匯出
+    description: 交易／分類／股票／股利 CSV 匯出（純伺服端產 CSV stream）
+  - name: 資料匯入
+    description: 交易／分類／股票／股利 CSV 匯入（含進度回饋與互斥鎖）
+  - name: 資料庫備份
+    description: 管理員整檔備份／還原（含自動回滾與保留策略）
+  - name: 稽核日誌
+    description: 資料操作稽核日誌（管理員查詢與一般使用者「我的操作紀錄」）
+  - name: 對外 API
+    description: API 使用與授權資訊頁
+
+security:
+  - cookieAuth: []
+
+paths:
+
+  # ────────────────────────────────────────────────────────────
+  # 資料匯出（純伺服端產 CSV）
+  # ────────────────────────────────────────────────────────────
+
+  /api/transactions/export:
+    get:
+      tags: [資料匯出]
+      summary: 匯出交易記錄 CSV
+      operationId: exportTransactions
+      description: |
+        匯出指定日期範圍內的交易記錄為 UTF-8 BOM 編碼的 CSV 檔案。
+        欄位順序：日期、類型、分類、金額、帳戶、備註。
+        - 「分類」欄位以「父分類 > 子分類」格式呈現；無子分類時僅輸出父分類名稱。
+        - 「類型」欄位輸出中文：支出 / 收入 / 轉出 / 轉入。
+        - Formula Injection 防護：以 `=` / `+` / `-` / `@` 開頭的字串前置單引號。
+        - 日期格式嚴格 ISO 8601 `YYYY-MM-DD`。
+
+        匯出後寫入 `data_operation_audit_log`，action = `export_transactions`。
+      parameters:
+        - name: dateFrom
+          in: query
+          description: 起始日期（含），ISO 8601 `YYYY-MM-DD`；省略時匯出全部
+          required: false
+          schema: { type: string, format: date }
+        - name: dateTo
+          in: query
+          description: 結束日期（含），ISO 8601 `YYYY-MM-DD`；省略時匯出全部
+          required: false
+          schema: { type: string, format: date }
+      responses:
+        '200':
+          description: CSV 檔案
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+                example: 'attachment; filename="transactions-20260427.csv"'
+          content:
+            text/csv:
+              schema: { type: string, format: binary }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '500': { $ref: '#/components/responses/ServerError' }
+
+  /api/categories/export:
+    get:
+      tags: [資料匯出]
+      summary: 匯出分類結構 CSV
+      operationId: exportCategories
+      description: |
+        匯出分類結構 CSV。欄位順序：類型、分類名稱、上層分類、顏色。
+        - 父分類「上層分類」為空字串；子分類填父分類名稱。
+        - 顏色欄位嚴格 hex 6 碼 `#RRGGBB`。
+        - 父分類於子分類**之前**輸出，便於匯入端依序建立。
+
+        匯出後寫入 `data_operation_audit_log`，action = `export_categories`。
+      responses:
+        '200':
+          description: CSV 檔案
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+                example: 'attachment; filename="categories-20260427.csv"'
+          content:
+            text/csv:
+              schema: { type: string, format: binary }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '500': { $ref: '#/components/responses/ServerError' }
+
+  /api/stock-transactions/export:
+    get:
+      tags: [資料匯出]
+      summary: 匯出股票交易 CSV
+      operationId: exportStockTransactions
+      description: |
+        匯出股票交易 CSV。欄位順序：日期、股票代號、股票名稱、類型、股數、成交價、
+        手續費、交易稅、帳戶、備註。類型輸出中文（買進 / 賣出）。
+
+        匯出後寫入 `data_operation_audit_log`，action = `export_stock_transactions`。
+      parameters:
+        - { name: dateFrom, in: query, required: false, schema: { type: string, format: date } }
+        - { name: dateTo,   in: query, required: false, schema: { type: string, format: date } }
+      responses:
+        '200':
+          description: CSV 檔案
+          headers:
+            Content-Disposition:
+              schema: { type: string, example: 'attachment; filename="stock-transactions-20260427.csv"' }
+          content:
+            text/csv:
+              schema: { type: string, format: binary }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '500': { $ref: '#/components/responses/ServerError' }
+
+  /api/stock-dividends/export:
+    get:
+      tags: [資料匯出]
+      summary: 匯出股票股利 CSV
+      operationId: exportStockDividends
+      description: |
+        匯出股票股利 CSV。欄位順序：日期、股票代號、股票名稱、現金股利、股票股利、
+        帳戶、備註。
+        - 現金股利 > 0 時帳戶必填（必為現金入款帳戶名稱）。
+        - 純股票股利（現金股利 = 0）時帳戶可留空。
+
+        匯出後寫入 `data_operation_audit_log`，action = `export_stock_dividends`。
+      parameters:
+        - { name: dateFrom, in: query, required: false, schema: { type: string, format: date } }
+        - { name: dateTo,   in: query, required: false, schema: { type: string, format: date } }
+      responses:
+        '200':
+          description: CSV 檔案
+          headers:
+            Content-Disposition:
+              schema: { type: string, example: 'attachment; filename="stock-dividends-20260427.csv"' }
+          content:
+            text/csv:
+              schema: { type: string, format: binary }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '500': { $ref: '#/components/responses/ServerError' }
+
+  # ────────────────────────────────────────────────────────────
+  # 資料匯入（含進度回饋與互斥鎖）
+  # ────────────────────────────────────────────────────────────
+
+  /api/transactions/import:
+    post:
+      tags: [資料匯入]
+      summary: 匯入交易 CSV（既有端點補強）
+      operationId: importTransactions
+      description: |
+        匯入交易 CSV（前端解析為 JSON `rows` 後上傳）。本端點為既有端點補強：
+        - 全 DB transaction 原子化（FR-014a）
+        - 同使用者單一匯入排他鎖（FR-014c），第二個並行請求回 409。
+        - 進度回饋（FR-014d）：每處理 500 筆更新 `importProgress`；前端輪詢
+          `GET /api/imports/progress` 取得進度。
+        - 日期嚴格 ISO 8601（FR-014b）。
+        - 六欄重複偵測（日期+類型+分類+金額+帳戶+備註）自動略過（FR-014）。
+        - 轉帳配對演算法：按 (date, amount) 分組，組內以 CSV 順序兩兩配對；
+          剩餘列入 `warnings`（FR-012）。
+        - CSV 額外欄位 silent drop（FR-006a）。
+
+        寫入 `data_operation_audit_log`，action = `import_transactions`。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [rows]
+              properties:
+                rows:
+                  type: array
+                  description: 已解析的 CSV 列；每筆物件含 date / type / category / amount / account / note 欄位
+                  items: { type: object }
+                autoCreate:
+                  type: boolean
+                  default: false
+                  description: 是否自動建立 CSV 中尚未存在的分類與帳戶
+      responses:
+        '200':
+          description: 匯入成功（含部分行錯誤的 partial-success）
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ImportSummary' }
+        '400':
+          description: 必要欄位缺失或檔案格式錯誤
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+        '409':
+          description: 同使用者已有匯入進行中（IMPORT_IN_PROGRESS）
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ErrorResponse'
+                  - type: object
+                    properties:
+                      error: { type: string, enum: [IMPORT_IN_PROGRESS] }
+        '413':
+          description: 超過 25 MB 或 20000 筆上限
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+        '500':
+          description: 整批 rollback（FR-014a）；無部分寫入殘留
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ErrorResponse'
+                  - type: object
+                    properties:
+                      failedAt: { type: string, description: 失敗階段或 CSV 行號 }
+
+  /api/categories/import:
+    post:
+      tags: [資料匯入]
+      summary: 匯入分類結構 CSV（新增端點）
+      operationId: importCategories
+      description: |
+        匯入分類結構 CSV。**新增伺服端端點**（baseline 為純前端多次呼叫
+        `POST /api/categories`，不符 FR-014a 原子性）。
+        - 自動先建父後建子（不論 CSV 內順序）。
+        - 唯一鍵 = 「類型 + 分類名稱」；重複者自動略過、不覆寫顏色。
+        - 顏色嚴格 hex 6 碼 `^#[0-9A-Fa-f]{6}$`，不符視為錯誤。
+        - 全 DB transaction 原子化、互斥鎖、進度回饋同 `/api/transactions/import`。
+
+        寫入 `data_operation_audit_log`，action = `import_categories`。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [rows]
+              properties:
+                rows:
+                  type: array
+                  description: 已解析的 CSV 列；每筆物件含 type / name / parent / color 欄位
+                  items: { type: object }
+      responses:
+        '200':
+          description: 匯入成功（含部分行錯誤）
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ImportSummary' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '409': { $ref: '#/components/responses/ImportInProgress' }
+        '413': { $ref: '#/components/responses/PayloadTooLarge' }
+        '500': { $ref: '#/components/responses/ServerError' }
+
+  /api/stock-transactions/import:
+    post:
+      tags: [資料匯入]
+      summary: 匯入股票交易 CSV（既有端點補強）
+      operationId: importStockTransactions
+      description: |
+        既有端點補強：
+        - 六欄重複偵測（日期+代號+類型+股數+成交價+帳戶）自動略過（FR-023a）。
+        - 全 DB transaction 原子化（FR-014a）+ 互斥鎖（FR-014c）+ 進度回饋（FR-014d）。
+        - 日期嚴格 ISO 8601（FR-014b）。
+        - 持倉表 `name` 欄位仍為代號時自動以 CSV 名稱更新（FR-021，沿用既有行為）。
+
+        寫入 `data_operation_audit_log`，action = `import_stock_transactions`。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [rows]
+              properties:
+                rows:
+                  type: array
+                  description: 已解析的 CSV 列
+                  items: { type: object }
+      responses:
+        '200':
+          description: 匯入成功
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ImportSummary' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '409': { $ref: '#/components/responses/ImportInProgress' }
+        '413': { $ref: '#/components/responses/PayloadTooLarge' }
+        '500': { $ref: '#/components/responses/ServerError' }
+
+  /api/stock-dividends/import:
+    post:
+      tags: [資料匯入]
+      summary: 匯入股票股利 CSV（既有端點補強）
+      operationId: importStockDividends
+      description: |
+        既有端點補強：
+        - 四欄重複偵測（日期+代號+現金股利+股票股利）自動略過（FR-023a）。
+        - 「帳戶」欄位處理：現金股利 > 0 時必填，否則可空（FR-019）。
+        - 純股票股利（現金股利 = 0、股票股利 > 0、帳戶留空）合成 $0 買進交易
+          的帳戶推導：(1) 該 symbol 最近一筆買進的 account；(2) 使用者唯一證券
+          帳戶；(3) 否則該行錯誤（FR-023b）。
+        - 全 DB transaction 原子化 + 互斥鎖 + 進度回饋同上。
+
+        寫入 `data_operation_audit_log`，action = `import_stock_dividends`。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [rows]
+              properties:
+                rows:
+                  type: array
+                  description: 已解析的 CSV 列
+                  items: { type: object }
+      responses:
+        '200':
+          description: 匯入成功
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ImportSummary' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '409': { $ref: '#/components/responses/ImportInProgress' }
+        '413': { $ref: '#/components/responses/PayloadTooLarge' }
+        '500': { $ref: '#/components/responses/ServerError' }
+
+  /api/imports/progress:
+    get:
+      tags: [資料匯入]
+      summary: 查詢目前匯入進度（short polling）
+      operationId: getImportProgress
+      description: |
+        前端每 1 秒輪詢此端點取得目前使用者的匯入進度。匯入完成後 entry 留 5 秒
+        讓最後一輪 polling 可讀到 100% 狀態，之後刪除。
+      responses:
+        '200':
+          description: 目前進度狀態
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ImportProgress' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  # ────────────────────────────────────────────────────────────
+  # 資料庫備份／還原
+  # ────────────────────────────────────────────────────────────
+
+  /api/database/export:
+    get:
+      tags: [資料庫備份]
+      summary: 下載整檔資料庫備份（管理員）
+      operationId: downloadDatabaseBackup
+      x-required-role: admin
+      description: |
+        管理員專屬。產生未加密 SQLite 二進位檔案的下載 response。
+        - 檔名格式：`assetpilot-backup-{YYYYMMDDHHmmss}.db`（FR-024）。
+        - **本端點本身不顯示確認彈窗**；確認 Modal 由前端在按下「下載備份」前
+          開啟，使用者點「確認下載」才呼叫此端點（FR-024a）。
+
+        寫入 `data_operation_audit_log`，action = `download_backup`，
+        is_admin_operation = true。
+      responses:
+        '200':
+          description: SQLite 二進位檔
+          headers:
+            Content-Disposition:
+              schema: { type: string, example: 'attachment; filename="assetpilot-backup-20260427132508.db"' }
+          content:
+            application/x-sqlite3:
+              schema: { type: string, format: binary }
+        '403':
+          description: 非管理員
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+        '500': { $ref: '#/components/responses/ServerError' }
+
+  /api/database/import:
+    post:
+      tags: [資料庫備份]
+      summary: 上傳整檔資料庫還原（管理員）
+      operationId: restoreDatabaseBackup
+      x-required-role: admin
+      description: |
+        管理員專屬。上傳 SQLite 檔案還原資料庫。
+        流程：
+        1. 驗證 SQLite header（`SQLite format 3\0`）。
+        2. 驗證必要資料表：users、transactions、accounts、categories、stocks（FR-025）。
+        3. 通過 → 自動寫入 `backups/before-restore-{YYYYMMDDHHmmss}.db`（FR-026）。
+        4. 替換主資料庫；失敗時自動以 `before-restore` 檔回滾（FR-026a），
+           並回 422 `RESTORE_FAILED_ROLLED_BACK`。
+        5. 寫入新檔後執行 `pruneBeforeRestoreBackups()` 清理（保留最近 5 份且
+           ≤ 90 天）（FR-026b）。
+
+        寫入 `data_operation_audit_log`，action = `restore_backup` 或 `restore_failed`。
+      requestBody:
+        required: true
+        content:
+          application/octet-stream:
+            schema: { type: string, format: binary }
+      responses:
+        '200':
+          description: 還原成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean, enum: [true] }
+                  message: { type: string }
+                  beforeRestorePath: { type: string, example: 'backups/before-restore-20260427132508.db' }
+        '400':
+          description: 檔案格式錯誤或缺必要表
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+        '403':
+          description: 非管理員
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+        '422':
+          description: 還原失敗、已自動回滾至還原前狀態
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ErrorResponse'
+                  - type: object
+                    properties:
+                      error: { type: string, enum: [RESTORE_FAILED_ROLLED_BACK] }
+                      beforeRestorePath: { type: string }
+        '500':
+          description: 還原失敗且自動回滾亦失敗（極端情境）；UI 顯示主庫狀態未知
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ErrorResponse'
+                  - type: object
+                    properties:
+                      error: { type: string, enum: [RESTORE_FAILED_DB_UNKNOWN] }
+                      availableBackups: { type: array, items: { type: string } }
+
+  /api/admin/backups:
+    get:
+      tags: [資料庫備份]
+      summary: 列出 backups/ 目錄內備份檔（管理員）
+      operationId: listBackups
+      x-required-role: admin
+      responses:
+        '200':
+          description: 備份檔清單
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  totalSizeBytes: { type: integer }
+                  files:
+                    type: array
+                    items: { $ref: '#/components/schemas/BackupFileInfo' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /api/admin/backups/{filename}:
+    delete:
+      tags: [資料庫備份]
+      summary: 手動刪除備份檔（管理員）
+      operationId: deleteBackup
+      x-required-role: admin
+      description: |
+        刪除 `backups/` 子目錄內的指定備份檔。`filename` 經 `path.basename` 強制
+        扁平化以防路徑遍歷攻擊。
+      parameters:
+        - name: filename
+          in: path
+          required: true
+          schema: { type: string, pattern: '^(before-restore-|assetpilot-backup-)\d{14}\.db$' }
+      responses:
+        '200':
+          description: 刪除成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean, enum: [true] }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  # ────────────────────────────────────────────────────────────
+  # 稽核日誌
+  # ────────────────────────────────────────────────────────────
+
+  /api/admin/data-audit:
+    get:
+      tags: [稽核日誌]
+      summary: 列出全部稽核日誌（管理員）
+      operationId: listAdminDataAudit
+      x-required-role: admin
+      parameters:
+        - { name: user_id, in: query, required: false, schema: { type: string } }
+        - { name: action,  in: query, required: false, description: 'comma-separated action 列表', schema: { type: string } }
+        - { name: result,  in: query, required: false, schema: { type: string, enum: [success, failed, rolled_back] } }
+        - { name: start,   in: query, required: false, description: ISO 8601 datetime, schema: { type: string, format: date-time } }
+        - { name: end,     in: query, required: false, description: ISO 8601 datetime, schema: { type: string, format: date-time } }
+        - { name: page,    in: query, required: false, schema: { type: integer, minimum: 1, default: 1 } }
+        - { name: pageSize,in: query, required: false, schema: { type: integer, minimum: 1, maximum: 200, default: 50 } }
+      responses:
+        '200':
+          description: 稽核日誌清單（依 timestamp DESC）
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/DataOperationAuditLog' }
+                  total: { type: integer }
+                  page: { type: integer }
+                  totalPages: { type: integer }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /api/user/data-audit:
+    get:
+      tags: [稽核日誌]
+      summary: 列出我的操作紀錄（一般使用者）
+      operationId: listUserDataAudit
+      description: |
+        固定以登入者 ID 過濾；後端強制覆寫 `user_id` 參數，禁止跨使用者查詢。
+      parameters:
+        - { name: action,  in: query, required: false, schema: { type: string } }
+        - { name: result,  in: query, required: false, schema: { type: string, enum: [success, failed, rolled_back] } }
+        - { name: start,   in: query, required: false, schema: { type: string, format: date-time } }
+        - { name: end,     in: query, required: false, schema: { type: string, format: date-time } }
+        - { name: page,    in: query, required: false, schema: { type: integer, minimum: 1, default: 1 } }
+        - { name: pageSize,in: query, required: false, schema: { type: integer, minimum: 1, maximum: 200, default: 50 } }
+      responses:
+        '200':
+          description: 我的操作紀錄
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/DataOperationAuditLog' }
+                  total: { type: integer }
+                  page: { type: integer }
+                  totalPages: { type: integer }
+
+  /api/admin/data-audit/export:
+    get:
+      tags: [稽核日誌]
+      summary: 匯出全部稽核日誌為 CSV（管理員）
+      operationId: exportAdminDataAudit
+      x-required-role: admin
+      description: |
+        產 CSV 檔；欄位：id, user_id, role, action, ip_address, user_agent,
+        timestamp, result, is_admin_operation, metadata。
+        檔名 `audit-log-{YYYYMMDDHHmmss}.csv`。
+      responses:
+        '200':
+          description: CSV 檔
+          content:
+            text/csv:
+              schema: { type: string, format: binary }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /api/admin/data-audit/purge:
+    post:
+      tags: [稽核日誌]
+      summary: 清空全部稽核日誌（管理員）
+      operationId: purgeAdminDataAudit
+      x-required-role: admin
+      description: |
+        執行 `DELETE FROM data_operation_audit_log`；二次確認由前端 Modal 處理，
+        後端僅檢 RBAC。
+      responses:
+        '200':
+          description: 清空成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean, enum: [true] }
+                  deleted: { type: integer, description: 刪除筆數 }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /api/admin/data-audit/retention:
+    get:
+      tags: [稽核日誌]
+      summary: 讀取稽核日誌保留天數設定（管理員）
+      operationId: getAuditRetention
+      x-required-role: admin
+      responses:
+        '200':
+          description: 目前保留天數設定
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  retention_days:
+                    type: string
+                    enum: ['30', '90', '180', '365', 'forever']
+                    example: '90'
+        '403': { $ref: '#/components/responses/Forbidden' }
+    put:
+      tags: [稽核日誌]
+      summary: 更新稽核日誌保留天數設定（管理員）
+      operationId: setAuditRetention
+      x-required-role: admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [retention_days]
+              properties:
+                retention_days:
+                  type: string
+                  enum: ['30', '90', '180', '365', 'forever']
+      responses:
+        '200':
+          description: 設定成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean, enum: [true] }
+                  retention_days: { type: string }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  # ────────────────────────────────────────────────────────────
+  # 對外 API 授權頁
+  # ────────────────────────────────────────────────────────────
+
+  /api/external-apis:
+    get:
+      tags: [對外 API]
+      summary: 列出本系統所有對外 API 條目（無需認證）
+      operationId: listExternalApis
+      security: []
+      description: |
+        公開端點（無需登入）；回傳 `lib/external-apis.json` 內容。
+        附 `Cache-Control: public, max-age=3600`。
+      responses:
+        '200':
+          description: API 條目清單
+          headers:
+            Cache-Control:
+              schema: { type: string, example: 'public, max-age=3600' }
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  apis:
+                    type: array
+                    items: { $ref: '#/components/schemas/ExternalApiEntry' }
+
+  # ────────────────────────────────────────────────────────────
+  # 既有端點修改：PUT /api/exchange-rates
+  # ────────────────────────────────────────────────────────────
+  # 本端點既有實作於 server.js:5556；本契約僅描述「ISO 4217 白名單驗證」變更。
+  # 完整 schema 仍以根目錄 openapi.yaml 為準。
+
+  /api/exchange-rates:
+    put:
+      tags: [匯率]
+      summary: 手動編輯匯率（既有端點補強）
+      operationId: putExchangeRate
+      description: |
+        既有端點補強：
+        - 加入 ISO 4217 白名單前置驗證（FR-030）；非白名單值回 400。
+        - 數值驗證仍為硬性：空值、非數字、`≤ 0` 拒絕；±20% 偏離為**前端**警告
+          （後端不阻擋，FR-033a）。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [currency, rate]
+              properties:
+                currency: { type: string, pattern: '^[A-Z]{3}$', example: USD }
+                rate: { type: number, exclusiveMinimum: 0, example: 32.45 }
+      responses:
+        '200':
+          description: 更新成功
+        '400':
+          description: 驗證失敗
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ErrorResponse'
+                  - type: object
+                    properties:
+                      error: { type: string, example: 不是有效的 ISO 4217 幣別代碼 }
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: authToken
+      description: |
+        JWT (HS256) 存放於 httpOnly Cookie `authToken`，`SameSite=Strict`。
+        所有 `/api/**` 端點（除明示 `security: []` 者）皆須附此 Cookie。
+
+  schemas:
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error: { type: string, description: 錯誤代碼或訊息 }
+        message: { type: string, description: 詳細訊息（可選） }
+
+    ImportSummary:
+      type: object
+      required: [imported, skipped, errors]
+      description: |
+        匯入完成回傳摘要（FR-013）。
+      properties:
+        imported:
+          type: integer
+          description: 成功寫入的筆數
+        skipped:
+          type: integer
+          description: 因重複（FR-014 / FR-023a）自動略過的筆數
+        errors:
+          type: array
+          maxItems: 50
+          description: 行級錯誤清單（最多 50 條）
+          items:
+            type: object
+            properties:
+              row: { type: integer, description: CSV 行號（含標題行；資料第一行為 row=2） }
+              reason: { type: string, description: 失敗原因 }
+        warnings:
+          type: array
+          description: 行級警告清單（如未配對轉帳）
+          items:
+            type: object
+            properties:
+              row: { type: integer }
+              type: { type: string, enum: [unpaired_transfer], description: 警告類別 }
+              reason: { type: string }
+        created:
+          type: object
+          description: 自動建立的缺項清單（autoCreate = true 時）
+          properties:
+            categories: { type: array, items: { type: string } }
+            accounts: { type: array, items: { type: string } }
+        unknownColumns:
+          type: array
+          description: CSV 中未識別的額外欄位名稱（FR-006a；前端 UI 不顯示，僅 debug 用）
+          items: { type: string }
+
+    ImportProgress:
+      type: object
+      required: [active]
+      description: 匯入進度（short polling）
+      properties:
+        active:
+          type: boolean
+          description: 是否有進行中的匯入
+        processed:
+          type: integer
+          description: 已處理筆數（active = true 時提供）
+        total:
+          type: integer
+          description: 總筆數
+        phase:
+          type: string
+          enum: [parsing, validating, writing, pairing, finalizing]
+        startedAt:
+          type: integer
+          description: epoch ms
+        completedAt:
+          type: integer
+          nullable: true
+          description: epoch ms；null 表示進行中
+
+    DataOperationAuditLog:
+      type: object
+      required: [id, user_id, role, action, timestamp, result]
+      description: 資料操作稽核紀錄（對應 data_operation_audit_log 表）
+      properties:
+        id: { type: string }
+        user_id: { type: string }
+        role: { type: string, enum: [user, admin] }
+        action:
+          type: string
+          enum:
+            - export_transactions
+            - import_transactions
+            - export_categories
+            - import_categories
+            - export_stock_transactions
+            - import_stock_transactions
+            - export_stock_dividends
+            - import_stock_dividends
+            - download_backup
+            - restore_backup
+            - restore_failed
+        ip_address: { type: string }
+        user_agent: { type: string }
+        timestamp: { type: string, format: date-time, description: 'UTC ISO 8601' }
+        result: { type: string, enum: [success, failed, rolled_back] }
+        is_admin_operation: { type: integer, enum: [0, 1] }
+        metadata: { type: object, description: 'JSON object（後端以 string 儲存、回傳前 parse）' }
+
+    BackupFileInfo:
+      type: object
+      required: [filename, sizeBytes, mtime, kind]
+      properties:
+        filename: { type: string, example: 'before-restore-20260427132508.db' }
+        sizeBytes: { type: integer }
+        mtime: { type: string, format: date-time }
+        kind: { type: string, enum: [before-restore, manual-download], description: '`before-restore` 為自動備份檔；`manual-download` 為管理員主動下載的歷史備份（若有保留）' }
+
+    ExternalApiEntry:
+      type: object
+      required: [name, description, url]
+      properties:
+        name: { type: string, example: 'IPinfo' }
+        description: { type: string, example: 'IP 位址地理位置查詢' }
+        url: { type: string, format: uri, example: 'https://ipinfo.io/lite' }
+        attribution:
+          type: string
+          nullable: true
+          description: '若非空，UI 必須顯示此字串作為合規授權聲明。例如 IPinfo 條目固定為 IP address data is powered by IPinfo'
+          example: 'IP address data is powered by IPinfo'
+        supportsFree: { type: boolean }
+        supportsPaid: { type: boolean }
+
+  responses:
+    Unauthorized:
+      description: 未登入
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+    Forbidden:
+      description: 權限不足（非管理員）
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+    NotFound:
+      description: 資源不存在
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+    BadRequest:
+      description: 請求參數錯誤
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+    PayloadTooLarge:
+      description: 超過 25 MB 或 20000 筆上限
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+    ImportInProgress:
+      description: 同使用者已有匯入進行中（IMPORT_IN_PROGRESS）
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/ErrorResponse'
+              - type: object
+                properties:
+                  error: { type: string, enum: [IMPORT_IN_PROGRESS] }
+    ServerError:
+      description: 伺服器錯誤
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }

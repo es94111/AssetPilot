@@ -1,17 +1,27 @@
 {
-  "currentVersion": "4.30.0",
+  "currentVersion": "4.30.1",
   "releases": [
+    {
+      "version": "4.30.1",
+      "date": "2026-04-27",
+      "title": "新增寄信人名稱統一設定（三通道共用）",
+      "type": "new",
+      "changes": [
+        { "tag": "new", "text": "可設定寄信人的顯示名稱（例如「AssetPilot」或「我的記帳系統」），收件者就會看到品牌名稱而不是冷冰冰的 email 地址；三個寄信通道（SMTP、Zeabur Email、Resend）共用同一個名稱，不必逐一設定。" },
+        { "tag": "improved", "text": "若已在某通道的寄件人欄位內自行寫入名稱，會尊重該通道既有設定不覆寫，方便為單一通道換用不同的品牌名稱。" }
+      ]
+    },
     {
       "version": "4.30.0",
       "date": "2026-04-27",
-      "title": "寄信通道改用環境變數 + 新增 Zeabur Email 通道",
+      "title": "寄信設定全面改用環境變數 + 新增 Zeabur Email 寄信通道",
       "type": "improved",
       "changes": [
-        { "tag": "warning", "text": "breaking change：移除管理員「SMTP 寄信設定」UI 與 GET/PUT /api/admin/smtp-settings 端點；移除 system_settings 的 smtp_host/port/secure/user/password/from 六個欄位 schema migration（既有 DB 欄位保留不主動破壞，但程式不再讀寫）。原本透過管理員 UI 設定的 SMTP 必須改寫到環境變數" },
-        { "tag": "new", "text": "新增三條寄信通道環境變數：SMTP（SMTP_HOST/PORT/SECURE/USER/PASSWORD/FROM）、Zeabur Email（ZEABUR_API_KEY/ZEABUR_FROM_EMAIL，文件 https://zeabur.com/docs/en-US/email/quick-start ）、Resend（RESEND_API_KEY/RESEND_FROM_EMAIL，沿用既有）" },
-        { "tag": "new", "text": "新增 EMAIL_PROVIDER_PRIMARY / EMAIL_PROVIDER_FALLBACK 環境變數（值：smtp / zeabur / resend / 留空），管理員可指定 1 主 1 備、僅 1 主或全停用；primary 執行期失敗時若 fallback 已設定才自動退回，不重試不補寄（沿用 FR-021 Round 1 Q3 語意）" },
-        { "tag": "new", "text": "新增 GET /api/admin/email-providers（唯讀）回傳目前 primary / fallback 與三通道是否設定；管理員設定頁原 SMTP 卡片改為「寄信通道狀態」唯讀顯示 + 寄測試信按鈕" },
-        { "tag": "improved", "text": "POST /api/admin/test-email 與排程器錯誤訊息更新：未設定通道時提示「請設定 EMAIL_PROVIDER_PRIMARY 環境變數」" }
+        { "tag": "warning", "text": "升級時管理員設定頁的「SMTP 寄信設定」卡片會被移除，原本在介面上輸入的 SMTP 主機、帳號、密碼等請改寫到環境變數，否則排程寄信會失敗。建議升級前先把現有設定截圖留底。" },
+        { "tag": "new", "text": "寄信通道支援三種：SMTP（搭配 Gmail、Outlook 等）、Zeabur Email、Resend，皆由環境變數設定，不再透過管理員介面編輯。" },
+        { "tag": "new", "text": "可指定一個「主要通道」與一個「備用通道」。當主要通道寄送失敗時，系統會自動改用備用通道送出（不會重試、不會補寄漏掉的信件），確保通知不會無聲失敗。" },
+        { "tag": "improved", "text": "管理員設定頁新增「寄信通道狀態」卡片，可即時檢視每個通道是否已設定，並按一鍵寄測試信給自己驗證。" },
+        { "tag": "improved", "text": "寄信失敗的錯誤訊息更清楚，會直接提示需要補上哪個設定值；先前只會回「寄信服務未設定」這類模糊訊息。" }
       ]
     },
     {

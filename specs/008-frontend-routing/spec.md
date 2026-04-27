@@ -24,6 +24,11 @@
 - Q: `?next=` 內部 URL 合法性驗證的具體演算法？ → A: 嚴格白名單 — (1) 必須以單一 `/` 開頭；(2) 不得以 `//` 或 `/\` 開頭（防 protocol-relative URL）；(3) 經 FR-010a 正規化後 pathname 部分 MUST 命中 FR-001 + FR-002 路由表中的已知 path（管理員專屬路徑亦放行，跳回後再由 FR-014 把關權限）；(4) 不通過任一條件即 fallback 至 `/dashboard`，並寫入 `route_open_redirect_blocked` 稽核（FR-032）；query 與 hash 部分允許保留並原樣帶回
 - Q: 使用者主動登出後的導向目的地？ → A: 登出後 MUST 導向 `/login`，並清除任何殘留的 `?next=` 參數與 localStorage `theme_pref` 條目；登出後若使用者點擊「登入」可重新走 FR-021a 三層 fallback 取得新 theme（與 FR-021a 對齊；避免帳號間殘留偏好）
 - Q: 瀏覽器最低支援版本（含相容性 polyfill 決策依據）？ → A: Evergreen 最近 2 個主版本 — Chrome / Edge / Firefox 採最新 stable 與前一版（latest 2 majors）；Safari 16+（含 macOS Safari 與 iOS Safari）；Android Chrome 最近 2 個版本。涵蓋約 95% 真實流量；本規格用到的 API（History API、`prefers-color-scheme`、`overscroll-behavior`、focus-visible、`tabular-nums`、`position: fixed` scroll lock）皆原生支援，不需 polyfill
+- Q: SPA 路由切換時 `document.title` 的更新策略？ → A: 兩階段 — (1) 路由切換瞬間（與 URL 同步、在資料 fetch 開始前）以該路由預設靜態標題更新 `document.title`，格式為「{頁面名稱} — 記帳網頁」（例：「交易記錄 — 記帳網頁」），確保 P95 ≤ 100ms 路由切換指標含正確標題、瀏覽器分頁／歷史／書籤即時可讀、螢幕閱讀器收到頁面變更語義；(2) 資料 fetch 完成後若該頁具備具識別度的動態語境（例：交易頁的月份篩選、股票頁的個股代碼），MUST 以動態標題覆寫（例：「2026-04 交易記錄 — 記帳網頁」），無此語境的頁面（如儀表板、設定）僅停留於靜態標題
+- Q: 瀏覽器「上一頁／下一頁」（popstate）時的捲動位置還原？ → A: 前端手動接管 — `history.scrollRestoration` MUST 設為 `'manual'`；每次 `pushState` 切換新頁面前 MUST 以 `history.replaceState` 將當前 `window.scrollY` 寫入舊條目的 `state.scrollY`；`popstate` 觸發時若 `event.state.scrollY` 存在 MUST 還原該值（資料就緒前可先記入並於資料抵達後再次套用，避免內容尚未載入導致還原失敗），不存在則捲至頂端（前進新頁面）。Modal hash 條目（FR-024）與正規化 `replaceState`（FR-010a）MUST NOT 觸發捲動還原邏輯（背景已由 FR-023a 鎖定，且為同一邏輯頁面）；於 Safari／iOS 等原生 scrollRestoration 不一致之瀏覽器以此手動策略統一行為
+- Q: Modal 開啟時的焦點管理（focus trap、初始焦點、關閉後還原）？ → A: 完整實作 — Modal 共用基底元件 MUST 於開啟時 (1) 將開啟前的 `document.activeElement` 記入 Modal 內部狀態作為「還原目標」；(2) 將鍵盤焦點移至 Modal 內第一個可互動元素（無可互動者則 Modal 容器本身設 `tabindex="-1"` 並聚焦），且本次焦點變更 MUST 套用 focus-visible 焦點環（依 FR-025）；(3) 攔截 Tab／Shift+Tab，使焦點僅在 Modal 內可互動元素環圈循環，不得外洩至背景表格／FAB／側邊欄；關閉時 MUST 將焦點還原至開啟前的觸發元素（若該元素已從 DOM 移除則 fallback 至主內容區容器）。FR-024a 疊加情境下：`modalConfirm` 開啟時記住的還原目標為下層 Modal 的觸發按鈕；`modalConfirm` 關閉後焦點還原至下層 Modal 內，下層 Modal 再關閉時還原至最初觸發者。本行為對 12 種 Modal 由共用基底強制，不允許各 Modal 關閉
+- Q: 路由切換期間，主內容區尚在 fetch 資料時的視覺呈現？ → A: 頁面殼立刻顯示 — 路由切換瞬間（與 URL 更新同步、資料 fetch 開始前）MUST 立即渲染目標頁面的「殼」：頁面標題列、區塊容器、表頭、空圖表畫布等靜態框架；殼內可顯示頂部 2px 主色進度條或「載入中…」微提示，但不使用置中 spinner（避免遮蔽框架語境）；資料抵達後 MUST 以 in-place 方式填充列表／圖表／統計數值，不重新掛載殼層；空狀態（無資料）與錯誤狀態（fetch 失敗）MUST 以該頁殼內的訊息位置呈現，不切換到全頁錯誤畫面（與 FR-008／FR-014 全頁 404 區分）；本機制與 SC-008 雙層效能指標對齊（殼可見 = 路由切換 P95 100ms 達標；資料填充 = 內容渲染 P95 1000ms 達標）；採用本機制即不需為每頁額外維護骨架圖（skeleton）資產
+- Q: 側邊欄項目的視覺呈現（圖示策略）？ → A: 圖示 + 文字並列 — 每個側邊欄項目 MUST 採「左側圖示 + 文字標籤」二元素並列；圖示為內聯 SVG（建議來源 Lucide／Heroicons 字彙，避免引入字型檔以對齊 FR-029 不做 PWA 之最小化包大小原則），尺寸 20×20px；版面規格：項目左 padding 12px、圖示與文字間距 12px、項目高度 40px；圖示色於 active 狀態繼承文字主色（與 FR-015a 三件式 active 狀態整體一致），非 active 為灰階文字色；漢堡選單（< 768px）展開時規格相同；新路由若無對應圖示 MUST 以首字方塊（背景灰階、文字深一階）作 fallback 以維持對齊。圖示對應由前端路由表（FR-002）以欄位形式定義，與路徑、頁面元件名共置維護
 
 ## 使用情境與測試 *(mandatory)*
 
@@ -215,6 +220,24 @@
 - **FR-009**：點擊已選中的側邊欄項目（與目前 URL 相同）MUST NOT 重複新增瀏覽器歷史紀錄（避免「上一頁」陷在同一頁回退）。
 - **FR-010**：路由解析 MUST 僅以 pathname 為依據，query string 與 hash MUST 不影響路由配對（兩者由各頁自行解讀）。
 - **FR-010a**：路徑正規化 — 所有路由 MUST 為小寫、不含 trailing slash（根路徑 `/` 除外）、不含連續斜線（`//`、`///` 等）。前端 router 啟動與每次 `popstate`／`pushState` 時 MUST 對 `window.location.pathname` 執行正規化：(a) 全轉小寫；(b) 折疊連續斜線為單一斜線；(c) 去除尾端斜線（除 `/`）。若正規化前後不一致，MUST 以 `history.replaceState` 改寫為正規形式（不推 history、不污染上一頁／下一頁堆疊）後再進行路由配對。後端 catch-all 對受保護路由列表（FR-002）與管理員路徑（FR-014）的比對 MUST 以正規化後字串進行；FR-032 稽核日誌寫入的路徑欄位 MUST 為正規化後形式。任何含 URL-encoded 斜線（`%2F`、`%2f`）或編碼後仍含 `..` 的請求一律比照 FR-027 路徑遊走攔截。
+- **FR-010b**：SPA 路由切換時 `document.title` MUST 採兩階段更新以兼顧效能指標（SC-008a P95 ≤ 100ms）與資料感知標題：
+  1. **第一階段（與 URL 同步）**：路由切換瞬間、在頁面資料 fetch 開始前 MUST 以該路由的預設靜態標題覆寫 `document.title`，格式統一為 `{頁面名稱} — 記帳網頁`（例：`交易記錄 — 記帳網頁`、`管理員面板 — 記帳網頁`、`找不到頁面 — 記帳網頁`）。靜態標題對照表 MUST 與前端路由表（FR-002）共置維護。
+  2. **第二階段（資料就緒後動態覆寫）**：對具備具識別度動態語境的頁面（例如交易記錄的當前篩選月份、個股相關頁的個股代碼／名稱、預算管理的當前預算月份），資料 fetch 完成後 MUST 將標題覆寫為包含該語境之動態形式（例：`2026-04 交易記錄 — 記帳網頁`、`2330 台積電 持股總覽 — 記帳網頁`）。儀表板、設定群組、API 使用、404 等無動態語境的頁面 MUST 停留於第一階段靜態標題、不再二次更新。
+  3. 公開頁（`/`、`/login`、`/privacy`、`/terms`）僅有靜態標題；登入瞬間切換至受保護頁時亦走兩階段流程。
+  4. 螢幕閱讀器：每次 `document.title` 更新 MUST 不額外觸發人工 `aria-live` 公告（避免重複公告）；瀏覽器原生「頁面變更」語義已透過 title 變更 + 主內容區結構變更涵蓋。
+- **FR-010d**：路由切換期間主內容區的視覺呈現 — 為兼顧 SC-008 雙層效能指標（路由切換 P95 ≤ 100ms、完整內容渲染 P95 ≤ 1000ms）並避免「網址已換、畫面為空」之中間狀態（Edge Cases 列出之失敗模式），主內容區 MUST 採「頁面殼 + in-place 填充」策略：
+  1. **殼立刻可見**：路由切換瞬間（與 URL 更新同步、資料 fetch 開始前）MUST 即時渲染目標頁面的「殼」，含頁面標題列、區塊／卡片容器邊框、表頭欄位（thead）、空圖表畫布等靜態框架。殼層 MUST 不依賴任何 fetch 結果即可繪出。
+  2. **載入微提示**：殼可選擇性顯示頂部 2px 主色（`#6366f1`）進度條或表體內微弱「載入中…」字樣作為等待提示；MUST NOT 使用置中遮罩式 spinner（會遮蔽殼提供的框架語境）；MUST NOT 顯示骨架圖灰階方塊（避免每頁額外維護骨架資產）。
+  3. **in-place 填充**：資料 fetch 完成後 MUST 將列表行、圖表資料、統計數值等動態內容直接寫入殼內預留位置，不重新掛載／重繪殼層；伴隨 FR-010b 第二階段 `document.title` 動態覆寫。
+  4. **空狀態／錯誤狀態同位呈現**：fetch 成功但無資料時 MUST 在該殼內訊息區顯示空狀態說明；fetch 失敗時 MUST 在同一位置顯示錯誤訊息與重試按鈕，並以 Toast（FR-025 錯誤紅樣式）通知；MUST NOT 切換到全頁錯誤畫面（與 FR-008／FR-014 全頁 404 區分），亦 MUST NOT 觸發 URL 回滾。
+  5. **適用範圍**：所有受保護頁（FR-002）皆適用；公開頁（`/`、`/login`、`/privacy`、`/terms`）內容多為靜態，不需資料 fetch 階段。
+- **FR-010c**：捲動位置還原 — 前端 router MUST 以手動策略接管 SPA 路由切換的捲動還原，不依賴瀏覽器原生 `history.scrollRestoration = 'auto'`（原生機制於 `pushState` SPA 場景在 Safari／iOS 行為不一致）：
+  1. 應用程式啟動時 MUST 顯式設定 `history.scrollRestoration = 'manual'`；
+  2. 每次以 `pushState` 切換至新路由前 MUST 先以 `history.replaceState` 將當前 `window.scrollY` 寫入「即將離開條目」的 `state.scrollY` 欄位；
+  3. `popstate` 觸發且 `event.state?.scrollY` 為有限數值時 MUST 還原至該值（建議於主內容區下次 paint 前以 `requestAnimationFrame` 套用一次，並於該頁資料 fetch 完成後再校正一次以涵蓋「歷史條目記錄時內容尚未載入」之情境）；
+  4. 前進至全新路由（`event.state?.scrollY` 不存在）時 MUST 捲至頂端 (`scrollTo(0, 0)`)；
+  5. Modal hash 條目（FR-024、FR-024a）的 `pushState` MUST NOT 觸發本還原邏輯（Modal 背景已由 FR-023a 鎖定，且 `popstate` 僅關閉 Modal、邏輯頁未換）；
+  6. 路徑正規化 `replaceState`（FR-010a）MUST NOT 視為頁面切換，亦不觸發本還原邏輯。
 
 #### 主導航與權限分流（US2）
 
@@ -224,6 +247,13 @@
 - **FR-014**：一般使用者（非管理員）直接以網址列輸入 `/settings/admin` 或其他僅限管理員之路徑時，前端 MUST 呈現與 FR-008 相同的「404 — 找不到頁面」訊息頁（含「返回首頁」與「返回儀表板」按鈕）；URL 保留原樣不被改寫；前端 MUST NOT 揭露該路徑「存在但無權限」之資訊（與不存在路由的回應形式完全一致，以最大化資訊保密）。後端對應 API MUST 一律回傳 403 / 無資料，不依此 UI 表現而異。
 - **FR-015**：手機漢堡選單展開後 MUST 以遮罩覆蓋主內容；點選任一項後 MUST 自動收合並切換頁面；點擊遮罩或按 ESC MUST 關閉選單。
 - **FR-015a**：側邊欄目前頁面（active item）視覺狀態 MUST 採三件式呈現：(a) 項目左側 4px 寬的主色（`#6366f1`）垂直直條；(b) 項目文字以主色顯示；(c) 項目背景為主色 8% 透明度（淺色與深色模式皆同）。非 active 項目 MUST 為預設灰階文字搭配透明背景；hover 狀態 MUST 為灰階 4% 背景（與 active 的主色 8% 在色相與彩度皆可區分）。鍵盤 focus-visible MUST 為主色 2px 焦點環（依 FR-025 設計系統），與 active 視覺正交、可同時呈現。active 狀態 MUST 由前端 router 依正規化後 pathname 與路由表（FR-002）配對自動套用，不需各頁手動指定。手機漢堡選單展開時 active 視覺規則完全相同。
+- **FR-015b**：側邊欄項目視覺結構 MUST 採「圖示 + 文字標籤」二元素並列（適用於桌面常駐側邊欄與行動漢堡選單展開狀態）：
+  1. **圖示來源**：MUST 為內聯 SVG（建議採用 Lucide 或 Heroicons 字彙；MUST NOT 引入額外圖示字型檔，以與 FR-029「不做 PWA」之最小包大小原則一致）；圖示尺寸固定 20×20px。
+  2. **版面規格**：項目左側 padding 12px → 圖示 → 圖示與文字間距 12px → 文字標籤；項目高度 40px；右側 padding 12px。
+  3. **顏色行為**：圖示色 MUST 透過 `currentColor` 繼承項目文字色，使 active 狀態下圖示自動與文字一同切換為主色（與 FR-015a 三件式 active 視覺整體一致）；非 active 與 hover 狀態下圖示色 MUST 與該狀態文字色一致。
+  4. **路由表共置**：每筆路由（FR-002）的圖示識別 MUST 以欄位形式（例：`icon: 'wallet'`）與路徑、頁面元件名共置維護，由側邊欄元件以路由表為單一資料來源生成。
+  5. **Fallback**：若新增路由暫缺對應圖示識別 MUST 以「首字方塊」（背景灰階、文字深一階、尺寸 20×20px）作 fallback，以維持版面對齊不破版。
+  6. 行動斷點（< 768px）漢堡選單展開後 MUST 套用完全相同之視覺結構，不另設縮減型樣式。
 
 #### 情境式 FAB（US3）
 
@@ -264,6 +294,13 @@
 - **FR-023a**：Modal 開啟時 MUST 鎖定 `<body>` 捲動（背景內容固定不動）；Modal 內容高度超過視窗時 MUST 由 Modal 自身內部捲動，不得讓背景產生捲動。鎖定行為 MUST 包含 iOS Safari 之滾動穿透防護（例如 `position: fixed` + 還原 scrollTop，或 `overscroll-behavior: contain` + `touch-action` 規範）。所有 12 種 Modal 共用此行為，不允許各自關閉。
 - **FR-024**：Modal 開啟期間使用者按瀏覽器「上一頁」MUST 優先關閉 Modal 而非離開當前頁；若 Modal 已關閉再按「上一頁」才退到前一個 URL。實作上 MUST 於 Modal 開啟時以 `pushState` 推一筆「Modal 開啟中」歷史條目（hash 形式建議為 `#modal-<modalId>`，例：`#modal-transaction`），於 `popstate` 觸發時關閉對應 Modal；Modal 透過 ESC 或關閉按鈕主動關閉時 MUST 同步呼叫 `history.back()` 以避免歷史殘留多餘條目。重整時若 hash 對應到既有 Modal id，可選擇還原該 Modal（非必要；各 Modal 視需求自行決定是否支援深層連結）。
 - **FR-024a**：Modal 堆疊規則 — 預設 MUST NOT 同時開啟多個 Modal（開新 Modal 前 MUST 先關閉既有 Modal）；唯一例外為「`modalConfirm` 疊在其他 Modal 之上」（典型情境：使用者於 `modalTransaction`／`modalAccount` 等編輯型 Modal 內按刪除按鈕，疊出 `modalConfirm` 二次確認）。疊加時：(a) history MUST 再推一筆 `#modal-confirm` 條目（共 2 筆 modal 條目）；(b) 背景捲動鎖（FR-023a）MUST 維持鎖定，不重複套用 `position: fixed` 也不於上層關閉時誤解除；(c) z-index 順序 MUST 為「上層 `modalConfirm` > 下層編輯 Modal > FAB > 主內容」；(d) 使用者按瀏覽器「上一頁」或 ESC MUST 僅關閉最上層 `modalConfirm` 並回到下層 Modal 互動狀態，再按一次才關閉下層 Modal。任何超過此單層疊加的組合（例如 confirm 上再疊 confirm、或兩個編輯型 Modal 疊加）MUST 由共用基底元件直接拒絕並 console.warn。
+- **FR-024b**：Modal 焦點管理 — Modal 共用基底元件 MUST 於每一個 Modal 完整實作焦點生命週期（無障礙 WCAG 2.1.2／2.4.3）：
+  1. **記憶觸發者**：Modal 開啟前 MUST 將當前 `document.activeElement` 寫入 Modal 內部狀態作為「還原目標」。
+  2. **初始焦點**：Modal 開啟動畫結束後 MUST 將鍵盤焦點移至 Modal 內第一個可互動元素（依 DOM 順序：第一個未禁用的 input／select／textarea／button／`[tabindex]>=0` 等）；若 Modal 無任何可互動元素則對 Modal 容器本身設 `tabindex="-1"` 並聚焦容器；本次焦點變更 MUST 套用 focus-visible 焦點環（FR-025）。
+  3. **焦點環圈（trap）**：Modal 開啟期間 MUST 攔截 Tab／Shift+Tab；當焦點位於最後一個可互動元素時 Tab MUST 環圈至第一個；位於第一個時 Shift+Tab MUST 環圈至最後一個；焦點 MUST NOT 外洩至背景的側邊欄／FAB／表格／其他 Modal 之下層元素。
+  4. **焦點還原**：Modal 關閉（透過 ESC、關閉按鈕、瀏覽器上一頁、點擊遮罩、表單成功送出後自動關閉）後 MUST 將焦點還原至開啟前記憶的「還原目標」；若該目標已從 DOM 移除（例如刪除完成後該列已不存在）MUST fallback 至主內容區容器並聚焦其首個可互動元素。
+  5. **疊加（FR-024a）情境**：`modalConfirm` 疊在編輯型 Modal 上時，`modalConfirm` 的還原目標為下層 Modal 內觸發疊加的按鈕（例：刪除按鈕）；`modalConfirm` 關閉後焦點 MUST 還原至下層 Modal 該按鈕，使用者再操作下層 Modal；下層 Modal 關閉時才還原至最初的非 Modal 觸發者。
+  6. **共用基底強制**：所有 12 種 Modal（FR-022）MUST 由共用基底自動套用本行為，個別 Modal MUST NOT 自行關閉、覆寫或停用焦點 trap 與還原邏輯。
 
 #### 設計系統與無障礙（US5）
 

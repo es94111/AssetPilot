@@ -1221,9 +1221,13 @@ const App = (() => {
 
     function attachHashWatch() {
       hashChangeHandler = () => {
-        // 外部觸發 hash 改變視為使用者主動離開 Modal → 全部關閉
+        // 外部觸發 hash 改變視為使用者主動離開 Modal → 全部關閉。
+        // 必須使用一次性 history.go(-N) 而非 while 迴圈呼叫 closeTopmost，
+        // 因為部分瀏覽器（尤其手機）popstate 為非同步、或 hashchange 在
+        // popstate 之前同步觸發，迴圈中 modalStack 不會即時清空，會多走幾步 history.back。
         if (modalStack.length > 0) {
-          while (modalStack.length > 0) ModalBase.closeTopmost();
+          const layers = modalStack.length;
+          try { history.go(-layers); } catch (_) { /* 由 popstate 接手清理 */ }
         }
       };
       window.addEventListener('hashchange', hashChangeHandler);
@@ -8229,11 +8233,16 @@ const App = (() => {
     if (id === 'modalInvoiceScanner') stopInvoiceScanner();
     // 若該 Modal 在堆疊中，透過 ModalBase 關閉以正確還原；否則直接隱藏（向後兼容）
     const stack = ModalBase.getStack();
-    if (stack.includes(id)) {
-      // 連續關閉直到目標離開堆疊
-      while (ModalBase.getStack().includes(id)) {
-        ModalBase.closeTopmost();
-      }
+    const idx = stack.indexOf(id);
+    if (idx >= 0) {
+      // 一次性 history.go(-N) 退回對應層數，N = 從 id 到 stack 頂端的距離。
+      // 不可改用 while 迴圈呼叫 closeTopmost：部分瀏覽器（尤其手機）popstate 為
+      // 非同步或 hashchange 先於 popstate 同步觸發，迴圈內 modalStack 不會即時
+      // 清空，會多走 history.back 把使用者推回開 Modal 之前的上一頁（issue：
+      // 新增交易點儲存後跳回上一頁）。handlePopstate 的「全部關閉」分支會處理
+      // stack 與 DOM 清理。
+      const layers = stack.length - idx;
+      try { history.go(-layers); } catch (_) { /* 由 popstate 接手清理 */ }
     } else {
       const node = el(id);
       if (node) node.classList.remove('active');

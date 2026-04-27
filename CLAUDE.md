@@ -65,14 +65,14 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 <!-- SPECKIT START -->
 ## 目前進行中的功能規劃
 
-- 功能：股票投資（Stock Investments）
-- 分支：`006-stock-investments`
-- 規格：[specs/006-stock-investments/spec.md](specs/006-stock-investments/spec.md)
-- 計畫：[specs/006-stock-investments/plan.md](specs/006-stock-investments/plan.md)
+- 功能：資料匯出匯入（Data Export / Import）
+- 分支：`007-data-export-import`
+- 規格：[specs/007-data-export-import/spec.md](specs/007-data-export-import/spec.md)
+- 計畫：[specs/007-data-export-import/plan.md](specs/007-data-export-import/plan.md)
 - 衍生產物：
-  - [research.md](specs/006-stock-investments/research.md)
-  - [data-model.md](specs/006-stock-investments/data-model.md)
-  - [quickstart.md](specs/006-stock-investments/quickstart.md)
-  - [contracts/stock-investments.openapi.yaml](specs/006-stock-investments/contracts/stock-investments.openapi.yaml)
+  - [research.md](specs/007-data-export-import/research.md)
+  - [data-model.md](specs/007-data-export-import/data-model.md)
+  - [quickstart.md](specs/007-data-export-import/quickstart.md)
+  - [contracts/data-export-import.openapi.yaml](specs/007-data-export-import/contracts/data-export-import.openapi.yaml)
 <!-- SPECKIT END -->
 

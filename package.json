@@ -17,10 +17,10 @@
     "decimal.js": "^10.4.3",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
-    "express-rate-limit": "^8.4.0",
+    "express-rate-limit": "^8.4.1",
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.2",
-    "nodemailer": "^8.0.5",
+    "nodemailer": "^8.0.6",
     "resend": "^6.12.2",
     "sql.js": "^1.14.1"
   }

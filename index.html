@@ -26,8 +26,6 @@
   <!-- ===== 公開首頁 ===== -->
   <section class="public-home" id="publicHome" style="display:none">
     <div class="public-home-bg" aria-hidden="true"></div>
-    <div class="public-home-orb public-home-orb--a" aria-hidden="true"></div>
-    <div class="public-home-orb public-home-orb--b" aria-hidden="true"></div>
 
     <div class="public-home-container">
       <header class="public-home-brand">
@@ -70,25 +68,37 @@
 
       <!-- Stats Strip -->
       <div class="public-home-stats">
-        <div class="stat-item">
-          <span class="stat-num">6<span class="stat-num-unit">+</span></span>
-          <span class="stat-label">功能模組</span>
-          <span class="stat-sub">記帳・股票・預算・報表・稽核・系統</span>
+        <div class="stat-item stat-item--primary">
+          <div class="stat-icon"><i class="fas fa-cubes"></i></div>
+          <div class="stat-text">
+            <span class="stat-num">6<span class="stat-num-unit">+</span></span>
+            <span class="stat-label">功能模組</span>
+            <span class="stat-sub">記帳・股票・預算・報表・稽核</span>
+          </div>
         </div>
-        <div class="stat-item">
-          <span class="stat-num">ChaCha20</span>
-          <span class="stat-label">落地加密</span>
-          <span class="stat-sub">Poly1305 AEAD + PBKDF2</span>
+        <div class="stat-item stat-item--success">
+          <div class="stat-icon"><i class="fas fa-lock"></i></div>
+          <div class="stat-text">
+            <span class="stat-num">ChaCha20</span>
+            <span class="stat-label">落地加密</span>
+            <span class="stat-sub">Poly1305 AEAD + PBKDF2</span>
+          </div>
         </div>
-        <div class="stat-item">
-          <span class="stat-num">TWSE</span>
-          <span class="stat-label">即時股價</span>
-          <span class="stat-sub">盤中／盤後／備援三段策略</span>
+        <div class="stat-item stat-item--info">
+          <div class="stat-icon"><i class="fas fa-tower-broadcast"></i></div>
+          <div class="stat-text">
+            <span class="stat-num">TWSE</span>
+            <span class="stat-label">即時股價</span>
+            <span class="stat-sub">盤中／盤後／備援</span>
+          </div>
         </div>
-        <div class="stat-item">
-          <span class="stat-num">FIFO</span>
-          <span class="stat-label">全精度損益</span>
-          <span class="stat-sub">decimal.js 逐筆計算</span>
+        <div class="stat-item stat-item--amber">
+          <div class="stat-icon"><i class="fas fa-calculator"></i></div>
+          <div class="stat-text">
+            <span class="stat-num">FIFO</span>
+            <span class="stat-label">全精度損益</span>
+            <span class="stat-sub">decimal.js 逐筆計算</span>
+          </div>
         </div>
       </div>
 

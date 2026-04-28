@@ -25,85 +25,201 @@
 
   <!-- ===== 公開首頁 ===== -->
   <section class="public-home" id="publicHome" style="display:none">
-    <div class="public-home-bg"></div>
+    <div class="public-home-bg" aria-hidden="true"></div>
+    <div class="public-home-orb public-home-orb--a" aria-hidden="true"></div>
+    <div class="public-home-orb public-home-orb--b" aria-hidden="true"></div>
+
     <div class="public-home-container">
-      <div class="public-home-brand">
+      <header class="public-home-brand">
         <img src="/logo.svg" alt="AssetPilot" class="public-home-logo">
         <span>AssetPilot</span>
-      </div>
+        <span class="brand-divider" aria-hidden="true"></span>
+        <span class="brand-tagline">個人財務指揮中心</span>
+      </header>
 
+      <!-- Hero -->
       <div class="public-home-hero">
-        <p class="public-home-kicker"><i class="fas fa-chart-mixed"></i> AssetPilot</p>
-        <h1>掌控現金流與投資全貌<br><span class="h1-accent">的終極工具</span></h1>
-        <p class="public-home-desc">整合記帳、預算、股票紀錄、股利紀錄與報表分析。支援多帳戶匯率、TWSE 股價自動同步、以及全機密資料的落地加密，讓您安心管理每一分資產。</p>
+        <p class="public-home-kicker">
+          <i class="fas fa-shield-halved"></i> 自托管 · 開源 · AGPL v3
+        </p>
+        <h1>
+          你的財務指揮中心，<br>
+          <span class="h1-accent">從擁有資料開始</span>
+        </h1>
+        <p class="public-home-desc">
+          整合台股投資、收支記帳、預算追蹤、報表分析與資料稽核——所有資料以 <strong>ChaCha20-Poly1305</strong> 在你的伺服器落地加密，不上雲、不訂閱、不依賴外部金鑰服務。
+        </p>
+
         <div class="public-home-actions">
-          <button class="btn btn-cta" id="goLoginBtn"><i class="fas fa-right-to-bracket"></i> 登入系統</button>
-          <button class="btn btn-ghost" id="goRegisterBtn"><i class="fas fa-user-plus"></i> 建立帳號</button>
+          <button class="btn btn-cta" id="goLoginBtn">
+            <i class="fas fa-right-to-bracket"></i> 立即開始
+          </button>
+          <button class="btn btn-ghost" id="goRegisterBtn">
+            <i class="fas fa-user-plus"></i> 建立帳號
+          </button>
         </div>
-        <div class="public-home-stats">
-          <div class="stat-item">
-            <span class="stat-num">6+</span>
-            <span class="stat-label">功能模組</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-num">ChaCha20</span>
-            <span class="stat-label">落地加密</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-num">TWSE</span>
-            <span class="stat-label">即時股價</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-num">多幣別</span>
-            <span class="stat-label">匯率自動轉換</span>
-          </div>
+
+        <ul class="public-home-trust" aria-label="核心承諾">
+          <li><i class="fas fa-code-branch" aria-hidden="true"></i> 開源 AGPL v3</li>
+          <li><i class="fas fa-lock" aria-hidden="true"></i> 落地加密</li>
+          <li><i class="fas fa-server" aria-hidden="true"></i> 無雲端依賴</li>
+          <li><i class="fab fa-docker" aria-hidden="true"></i> 一行部署</li>
+          <li><i class="fas fa-file-code" aria-hidden="true"></i> OpenAPI 3.2</li>
+        </ul>
+      </div>
+
+      <!-- Stats Strip -->
+      <div class="public-home-stats">
+        <div class="stat-item">
+          <span class="stat-num">6<span class="stat-num-unit">+</span></span>
+          <span class="stat-label">功能模組</span>
+          <span class="stat-sub">記帳・股票・預算・報表・稽核・系統</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-num">ChaCha20</span>
+          <span class="stat-label">落地加密</span>
+          <span class="stat-sub">Poly1305 AEAD + PBKDF2</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-num">TWSE</span>
+          <span class="stat-label">即時股價</span>
+          <span class="stat-sub">盤中／盤後／備援三段策略</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-num">FIFO</span>
+          <span class="stat-label">全精度損益</span>
+          <span class="stat-sub">decimal.js 逐筆計算</span>
         </div>
       </div>
 
+      <!-- Pillar Cards -->
       <div class="public-section-header">
-        <h2>核心功能</h2>
-        <p>六大模組，覆蓋個人財務全生命週期</p>
+        <span class="public-section-eyebrow">Why AssetPilot</span>
+        <h2>專為「掌握自己的錢」而生</h2>
+        <p>四大支柱，覆蓋個人財務全生命週期</p>
       </div>
 
-      <div class="public-home-grid">
-        <article class="card public-feature-card">
-          <div class="feature-icon-wrap feature-icon--blue"><i class="fas fa-receipt"></i></div>
-          <h3>收支與預算管理</h3>
-          <p>支援多帳戶餘額自動計算與跨帳戶轉帳。內建月度與分類預算追蹤機制，透過視覺化進度條，超支風險防患於未然。</p>
+      <div class="public-pillar-grid">
+        <article class="pillar-card pillar-card--blue">
+          <div class="pillar-head">
+            <div class="pillar-icon"><i class="fas fa-wallet"></i></div>
+            <div class="pillar-head-text">
+              <span class="pillar-tag">記帳預算</span>
+              <h3>收支與預算管理</h3>
+            </div>
+          </div>
+          <ul class="pillar-list">
+            <li>多帳戶餘額自動計算 + 跨帳戶轉帳雙向配對</li>
+            <li>月度／分類預算進度條，四段配色防止超支</li>
+            <li>固定收支週期化，登入時 server-side 自動產生</li>
+            <li>批次刪除／改分類／改日期，未來交易標記</li>
+          </ul>
         </article>
-        <article class="card public-feature-card">
-          <div class="feature-icon-wrap feature-icon--green"><i class="fas fa-chart-line"></i></div>
-          <h3>股票與實現損益</h3>
-          <p>持股總覽與買賣紀錄完整整合，內建 FIFO 自動計算「逐筆賣出」的成本均價及實現損益，隨時掌握投資績效。</p>
+
+        <article class="pillar-card pillar-card--green">
+          <div class="pillar-head">
+            <div class="pillar-icon"><i class="fas fa-chart-line"></i></div>
+            <div class="pillar-head-text">
+              <span class="pillar-tag">股票投資</span>
+              <h3>台股深度整合（TWSE）</h3>
+            </div>
+          </div>
+          <ul class="pillar-list">
+            <li>三段策略抓股價：盤中即時／盤後收盤／備援</li>
+            <li>FIFO 全精度實現損益（decimal.js）逐筆計算</li>
+            <li>除權息自動同步、現金股利對應入款帳戶</li>
+            <li>定期定額遇休市自動順延，下市標記凍結價格</li>
+          </ul>
         </article>
-        <article class="card public-feature-card">
-          <div class="feature-icon-wrap feature-icon--teal"><i class="fas fa-cloud-arrow-down"></i></div>
-          <h3>TWSE 自動即時同步</h3>
-          <p>完美整合 TWSE 台灣證券交易所，支援即時股價、收盤價查詢，並能依照持股期間自動判定並同步配息與配股紀錄。</p>
+
+        <article class="pillar-card pillar-card--purple">
+          <div class="pillar-head">
+            <div class="pillar-icon"><i class="fas fa-shield-halved"></i></div>
+            <div class="pillar-head-text">
+              <span class="pillar-tag">安全治理</span>
+              <h3>企業級安全與資料治理</h3>
+            </div>
+          </div>
+          <ul class="pillar-list">
+            <li>ChaCha20-Poly1305 資料庫 AEAD 加密</li>
+            <li>三種登入：帳密 / Google SSO / Passkey（WebAuthn）</li>
+            <li>操作稽核 + 整檔備份還原，保留天數可調</li>
+            <li>Helmet + CSP + 速率限制 + Formula Injection 防護</li>
+          </ul>
         </article>
-        <article class="card public-feature-card">
-          <div class="feature-icon-wrap feature-icon--purple"><i class="fas fa-chart-pie"></i></div>
-          <h3>圖表報表與每日趨勢</h3>
-          <p>提供多維度的報表圖表。包含資產配置比例、分類支出圓餅圖、與每日消費趨勢圖，財務狀況一目了然。</p>
-        </article>
-        <article class="card public-feature-card">
-          <div class="feature-icon-wrap feature-icon--amber"><i class="fas fa-robot"></i></div>
-          <h3>匯率自動更新與自動化</h3>
-          <p>串接 exchangerate-api.com 全球匯率 API 提供即時轉換（基礎貨幣 TWD）；支援自訂固定收支週期以自動產生紀錄。</p>
-        </article>
-        <article class="card public-feature-card">
-          <div class="feature-icon-wrap feature-icon--red"><i class="fas fa-shield-halved"></i></div>
-          <h3>企業級安全與稽核</h3>
-          <p>ChaCha20-Poly1305 資料庫加密，確保無人可竊取資料；內建管理員模式、 Google SSO 及進階的「登入稽核紀錄」。</p>
+
+        <article class="pillar-card pillar-card--amber">
+          <div class="pillar-head">
+            <div class="pillar-icon"><i class="fas fa-rocket"></i></div>
+            <div class="pillar-head-text">
+              <span class="pillar-tag">部署整合</span>
+              <h3>一鍵部署與 API 契約</h3>
+            </div>
+          </div>
+          <ul class="pillar-list">
+            <li>Docker 一行指令啟動，金鑰首啟自動產生</li>
+            <li>OpenAPI 3.2.0 契約，可掛 Cloudflare API Shield</li>
+            <li>多幣別匯率自動轉換（exchangerate-api.com）</li>
+            <li>URL-first SPA：直連、書籤、F5 不掉頁</li>
+          </ul>
         </article>
       </div>
 
-      <div class="public-home-footer">
-        <p class="public-footer-label">技術棧</p>
-        <div class="public-stack-badges">
-          <span class="badge"><i class="fas fa-database"></i> SQLite</span>
-          <span class="badge"><i class="fas fa-lock"></i> ChaCha20 加密</span>
+      <!-- Quick Deploy -->
+      <div class="public-deploy">
+        <div class="public-deploy-text">
+          <span class="public-section-eyebrow">Quick Start</span>
+          <h2>60 秒，把它跑在你自己的伺服器上</h2>
+          <p>單行指令，自動產生 JWT 與資料庫加密金鑰並寫入持久化 volume。映像檔同時支援 amd64 與 arm64，內建健康檢查。</p>
+          <div class="public-deploy-chips">
+            <span class="chip"><i class="fas fa-box-archive"></i> ~180 MB 映像</span>
+            <span class="chip"><i class="fas fa-microchip"></i> amd64 + arm64</span>
+            <span class="chip"><i class="fas fa-heart-pulse"></i> 30s 健康檢查</span>
+            <span class="chip"><i class="fas fa-key"></i> 金鑰自動產生</span>
+          </div>
         </div>
+        <div class="public-deploy-code">
+          <div class="code-window">
+            <div class="code-window-bar">
+              <span class="code-dot code-dot--r"></span>
+              <span class="code-dot code-dot--y"></span>
+              <span class="code-dot code-dot--g"></span>
+              <span class="code-window-title">terminal — docker run</span>
+              <button type="button" class="code-copy-btn" id="deployCopyBtn" aria-label="複製指令" data-copy="docker run -d --name assetpilot -p 3000:3000 -v assetpilot-data:/app/data es94111/assetpilot:latest">
+                <i class="fas fa-copy"></i><span>複製</span>
+              </button>
+            </div>
+            <pre class="code-window-body"><code><span class="code-prompt">$</span> <span class="code-cmd">docker run</span> <span class="code-flag">-d</span> <span class="code-flag">--name</span> assetpilot <span class="code-flag">\</span>
+    <span class="code-flag">-p</span> <span class="code-arg">3000:3000</span> <span class="code-flag">\</span>
+    <span class="code-flag">-v</span> <span class="code-arg">assetpilot-data:/app/data</span> <span class="code-flag">\</span>
+    <span class="code-img">es94111/assetpilot:latest</span></code></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tech Stack -->
+      <div class="public-stack">
+        <div class="public-stack-head">
+          <span class="public-section-eyebrow">Tech Stack</span>
+          <h2>純伺服端、零 build step</h2>
+          <p>不引入前端框架、不引入 router 套件、不引入 build 工具。所有 UI 行為以原生 DOM API + IIFE 模組實作。</p>
+        </div>
+        <div class="public-stack-badges">
+          <span class="badge"><i class="fab fa-node-js"></i> Node.js ≥ 24</span>
+          <span class="badge"><i class="fas fa-bolt"></i> Express 5</span>
+          <span class="badge"><i class="fas fa-database"></i> SQLite (sql.js)</span>
+          <span class="badge"><i class="fas fa-lock"></i> ChaCha20-Poly1305</span>
+          <span class="badge"><i class="fas fa-calculator"></i> decimal.js</span>
+          <span class="badge"><i class="fas fa-key"></i> JWT + WebAuthn</span>
+          <span class="badge"><i class="fas fa-file-code"></i> OpenAPI 3.2.0</span>
+          <span class="badge"><i class="fas fa-shield-halved"></i> Helmet + Rate Limit</span>
+          <span class="badge"><i class="fas fa-chart-pie"></i> Chart.js</span>
+          <span class="badge"><i class="fab fa-docker"></i> Docker (multi-arch)</span>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <footer class="public-home-footer">
         <button type="button" class="btn btn-ghost public-changelog-btn" onclick="App.openChangelog()">
           <i class="fas fa-code-branch"></i> 版本更新資訊
         </button>
@@ -111,11 +227,15 @@
           <a href="/privacy" class="public-privacy-link">
             <i class="fas fa-shield-halved"></i> 隱私權政策
           </a>
+          <span class="public-legal-dot" aria-hidden="true">·</span>
           <a href="/terms" class="public-privacy-link">
             <i class="fas fa-file-contract"></i> 服務條款
           </a>
         </div>
-      </div>
+        <p class="public-footer-meta">
+          <i class="fas fa-scale-balanced"></i> GNU AGPL v3 ・ 自托管 ・ 不收集你的財務資料
+        </p>
+      </footer>
     </div>
   </section>
 

@@ -975,6 +975,26 @@ const App = (() => {
       }
     });
 
+    el('deployCopyBtn')?.addEventListener('click', async (e) => {
+      const btn = e.currentTarget;
+      const cmd = btn.getAttribute('data-copy') || '';
+      const label = btn.querySelector('span');
+      const icon = btn.querySelector('i');
+      try {
+        await navigator.clipboard.writeText(cmd);
+        if (label) label.textContent = '已複製';
+        if (icon) { icon.classList.remove('fa-copy'); icon.classList.add('fa-check'); }
+        btn.classList.add('is-copied');
+      } catch {
+        if (label) label.textContent = '請手動複製';
+      }
+      setTimeout(() => {
+        if (label) label.textContent = '複製';
+        if (icon) { icon.classList.remove('fa-check'); icon.classList.add('fa-copy'); }
+        btn.classList.remove('is-copied');
+      }, 1800);
+    });
+
     // 表單提交
     el('loginForm').addEventListener('submit', handleLogin);
     el('registerForm').addEventListener('submit', handleRegister);

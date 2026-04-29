@@ -390,17 +390,93 @@ const App = (() => {
     if (s.length >= 6 || /[A-Z]$/.test(s)) return 'warrant';
     return 'stock';
   }
-  // 002 T044 (FR-007a)：固定以 Asia/Taipei (UTC+8) 計算「今天」字串，
-  // 與後端 lib/taipeiTime.js todayInTaipei() 對齊，避免使用者瀏覽器跨時區（如 PST）
-  // 開啟 Modal 時看到「昨天」的日期。
-  function todayInTaipei() {
+  // 009 FR-013（憲章 v1.3.0 Principle IV）：依使用者偏好時區計算「今天」字串。
+  // 取代既有 002 T044 / FR-007a 的 Asia/Taipei 寫死實作。
+  function getUserTz() {
+    return (currentUser && currentUser.timezone) || 'Asia/Taipei';
+  }
+  function getBrowserTz() {
+    try {
+      return Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Taipei';
+    } catch (e) {
+      return 'Asia/Taipei';
+    }
+  }
+  function todayInUserTz() {
     try {
       return new Intl.DateTimeFormat('en-CA', {
-        timeZone: 'Asia/Taipei', year: 'numeric', month: '2-digit', day: '2-digit',
+        timeZone: getUserTz(), year: 'numeric', month: '2-digit', day: '2-digit',
       }).format(new Date());
     } catch (e) {
       return localDateStr(new Date());
     }
+  }
+  // 009 FR-012：依使用者偏好時區格式化 ISO 字串為當地顯示
+  function formatLocalDateTime(isoOrMs, options) {
+    if (isoOrMs == null || isoOrMs === '') return '';
+    const d = (typeof isoOrMs === 'number') ? new Date(isoOrMs) : new Date(isoOrMs);
+    if (isNaN(d.getTime())) return '';
+    const opts = Object.assign({
+      timeZone: getUserTz(),
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit',
+      hour12: false,
+    }, options || {});
+    try {
+      return new Intl.DateTimeFormat('zh-TW', opts).format(d).replace(/\//g, '-');
+    } catch (e) {
+      return d.toISOString();
+    }
+  }
+  // 向後相容別名（避免一次性大量 rename；後續 PR 可移除）
+  function todayInTaipei() {
+    return todayInUserTz();
+  }
+  // 009 FR-010 (b)：既有使用者三條件提示（7 天靜默；確認後 PATCH timezone）
+  function maybePromptTimezoneChange() {
+    const userTz = (currentUser && currentUser.timezone) || 'Asia/Taipei';
+    const browserTz = getBrowserTz();
+    if (userTz !== 'Asia/Taipei') return; // 條件 1 失敗：使用者已主動設過
+    if (browserTz === 'Asia/Taipei') return; // 條件 2 失敗：瀏覽器與預設一致
+    let dismissedUntil = 0;
+    try {
+      const v = localStorage.getItem('tzPromptDismissedUntil');
+      if (v) dismissedUntil = parseInt(v, 10) || 0;
+    } catch (_) {}
+    if (dismissedUntil > Date.now()) return; // 條件 3 失敗：仍在 7 天靜默期
+    // 三條件成立 → 彈出輕量 confirm 對話框
+    const ok = window.confirm('偵測到您的瀏覽器位於 ' + browserTz + '，目前帳號時區為 Asia/Taipei。是否要將帳號時區更新為 ' + browserTz + '？\n（按取消可暫不更新；7 天內不再提示）');
+    if (ok) {
+      API.patch('/api/users/me/timezone', { timezone: browserTz, source: 'auto-detect' })
+        .then(updated => {
+          if (updated && updated.timezone) {
+            currentUser = Object.assign({}, currentUser || {}, { timezone: updated.timezone });
+            try { localStorage.removeItem('tzPromptDismissedUntil'); } catch (_) {}
+            toast('時區已更新為 ' + updated.timezone, 'success');
+          }
+        })
+        .catch(err => toast('時區更新失敗：' + err.message, 'error'));
+    } else {
+      try {
+        localStorage.setItem('tzPromptDismissedUntil', String(Date.now() + 7 * 86400000));
+      } catch (_) {}
+    }
+  }
+
+  // 009：取得 IANA 時區清單（前端用於設定頁下拉）；不支援 Intl.supportedValuesOf 時走白名單
+  function listAvailableTimezones() {
+    try {
+      if (typeof Intl.supportedValuesOf === 'function') {
+        const list = Intl.supportedValuesOf('timeZone');
+        // Node 端的 list 不含 UTC；瀏覽器端通常包含。補白名單常用項以保險
+        const extras = ['UTC', 'Etc/UTC', 'Etc/GMT'];
+        const set = new Set(list);
+        extras.forEach(e => { try { new Intl.DateTimeFormat('en', { timeZone: e }); set.add(e); } catch (_) {} });
+        return Array.from(set).sort();
+      }
+    } catch (e) { /* fall through */ }
+    return ['UTC', 'Asia/Taipei', 'Asia/Tokyo', 'Asia/Shanghai', 'Asia/Singapore',
+      'Europe/London', 'Europe/Paris', 'America/New_York', 'America/Los_Angeles', 'Australia/Sydney'];
   }
   function localMonthStr(d) {
     const y = d.getFullYear();
@@ -616,6 +692,20 @@ const App = (() => {
 
   async function enterApp() {
     await syncThemeModeFromServer();
+    // 009 FR-007 / T033：取得完整 user 物件（含 timezone），合併入 currentUser
+    try {
+      const me = await API.get('/api/users/me');
+      if (me && me.timezone) {
+        currentUser = Object.assign({}, currentUser || {}, {
+          timezone: me.timezone,
+          // 把 me 的部分欄位以 camelCase 別名也補進來（前端既有欄位用 camelCase）
+          themeMode: me.theme_mode || (currentUser && currentUser.themeMode) || 'system',
+        });
+      }
+    } catch (e) { /* 取不到 me 不阻擋登入流程 */ }
+    // 009 FR-010 (b) / T034：既有使用者首次登入若仍為預設 Asia/Taipei
+    // 且瀏覽器時區不同 → 一次性提示對話框（7 天靜默）
+    try { maybePromptTimezoneChange(); } catch (e) { console.warn('[009] timezone prompt failed:', e); }
     // T053 / FR-019：theme_pref 同步來自伺服器
     try { onUserThemeReceived(currentUser?.themeMode); } catch (_) {}
     // 設定使用者名稱與頭像
@@ -1734,6 +1824,85 @@ const App = (() => {
     const tabEl = document.querySelector(`.settings-tabs .tab[data-settings="${tab}"]`);
     if (tabEl) tabEl.classList.add('active');
     el('panel-' + tab)?.classList.add('active');
+    // 009 multi-timezone：切到 account 分頁時，初始化時區下拉
+    if (tab === 'account') {
+      try { renderTimezoneSettings(); } catch (e) { console.warn('[009] renderTimezoneSettings failed:', e); }
+    }
+  }
+
+  // 009 FR-011 / T037 / T038：設定頁時區下拉 + 即時預覽 + 儲存
+  let _tzPreviewTimer = null;
+  function renderTimezoneSettings() {
+    const select = el('tzSelect');
+    const search = el('tzSearchInput');
+    const saveBtn = el('tzSaveBtn');
+    const currentLabel = el('tzCurrentLabel');
+    const preview = el('tzPreview');
+    if (!select || !saveBtn) return;
+    const allTz = listAvailableTimezones();
+    const currentTz = (currentUser && currentUser.timezone) || 'Asia/Taipei';
+
+    function rebuildOptions(filter) {
+      const f = (filter || '').trim().toLowerCase();
+      const filtered = f ? allTz.filter(tz => tz.toLowerCase().includes(f)) : allTz;
+      // 確保「目前選擇」永遠在清單最上方
+      const ordered = (filtered.includes(currentTz) ? [] : [currentTz]).concat(filtered);
+      select.innerHTML = ordered.slice(0, 200).map(tz =>
+        `<option value="${tz}"${tz === currentTz ? ' selected' : ''}>${tz}</option>`
+      ).join('');
+    }
+
+    function updatePreview() {
+      const tz = select.value || currentTz;
+      try {
+        const fmt = new Intl.DateTimeFormat('zh-TW', {
+          timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit',
+          hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
+        });
+        preview.textContent = '當地時間：' + fmt.format(new Date()).replace(/\//g, '-') + '（' + tz + '）';
+      } catch (e) {
+        preview.textContent = '無法解析時區：' + tz;
+      }
+    }
+
+    if (currentLabel) currentLabel.textContent = '目前：' + currentTz;
+    rebuildOptions(search.value);
+    updatePreview();
+
+    if (_tzPreviewTimer) clearInterval(_tzPreviewTimer);
+    _tzPreviewTimer = setInterval(updatePreview, 1000);
+
+    if (!search.dataset.tzBound) {
+      search.dataset.tzBound = '1';
+      search.addEventListener('input', () => rebuildOptions(search.value));
+    }
+    if (!select.dataset.tzBound) {
+      select.dataset.tzBound = '1';
+      select.addEventListener('change', updatePreview);
+    }
+    if (!saveBtn.dataset.tzBound) {
+      saveBtn.dataset.tzBound = '1';
+      saveBtn.addEventListener('click', async () => {
+        const tz = select.value;
+        if (!tz) { toast('請先選擇時區', 'error'); return; }
+        saveBtn.disabled = true;
+        try {
+          const updated = await API.patch('/api/users/me/timezone', { timezone: tz, source: 'manual' });
+          if (updated && updated.timezone) {
+            currentUser = Object.assign({}, currentUser || {}, { timezone: updated.timezone });
+            if (currentLabel) currentLabel.textContent = '目前：' + updated.timezone;
+            toast('時區已更新為 ' + updated.timezone, 'success');
+            // 已主動變更：清除自動偵測提示靜默期
+            try { localStorage.removeItem('tzPromptDismissedUntil'); } catch (_) {}
+            // 即時生效：未來新增交易的「今天」會立刻採用新時區
+          }
+        } catch (e) {
+          toast('時區更新失敗：' + e.message, 'error');
+        } finally {
+          saveBtn.disabled = false;
+        }
+      });
+    }
   }
 
   function activateStocksTab(tab) {
@@ -4815,7 +4984,7 @@ const App = (() => {
   async function fetchTwsePrices() {
     const btn = el('fetchTwsePricesBtn');
     btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 查詢中...';
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>查詢中...</span>';
     try {
       // 006 T111：使用 /api/stocks/batch-fetch 並發查價（受 TWSE_MAX_CONCURRENCY 限制 + 重試 2 次）
       const resp = await API.post('/api/stocks/batch-fetch', {});
@@ -4826,32 +4995,44 @@ const App = (() => {
         const stockId = r.stockId;
         const inp = document.querySelector(`#priceUpdateList .price-input[data-stock-id="${stockId}"]`);
         const label = document.querySelector(`.price-source-label[data-stock-id="${stockId}"]`);
+        const row = document.querySelector(`#priceUpdateList .price-update-row[data-stock-id="${stockId}"]`);
         if (r.status === 'ok' && r.currentPrice > 0) {
           if (inp) inp.value = r.currentPrice;
           updated += 1;
           if (r.priceSource === 'realtime') isRealtime = true;
+          if (row) {
+            const base = Number(row.dataset.basePrice || 0);
+            row.classList.toggle('is-changed', Math.abs(r.currentPrice - base) > 1e-6);
+          }
           if (label) {
             const sourceMap = { realtime: '即時', close: '收盤', 't+1': 'T+1' };
             const t = r.fetchedAt ? new Date(r.fetchedAt).toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' }) : '';
             const sourceText = (sourceMap[r.priceSource] || '') + (t ? ` ${t}` : '');
             label.innerHTML = `<span class="price-dot"></span>${escHtml(sourceText)}`;
-            label.classList.add('success');
             label.classList.remove('error');
+            label.classList.toggle('realtime', r.priceSource === 'realtime');
+            label.classList.toggle('success', r.priceSource !== 'realtime');
           }
         } else {
           if (label) {
             label.innerHTML = '<span class="price-dot"></span><span class="batch-price-row__failed">查詢失敗</span>';
+            label.classList.remove('success', 'realtime');
             label.classList.add('error');
           }
         }
       });
+      const hintEl = el('priceUpdateHint');
+      if (hintEl) {
+        hintEl.classList.add('success');
+        hintEl.innerHTML = `<i class="fas fa-circle-check"></i> 已更新 ${updated} 檔（${isRealtime ? '即時成交價' : '收盤價'}），記得按「儲存全部」`;
+      }
       const priceLabel = isRealtime ? '即時成交價' : '收盤價';
       toast(`已從證交所更新 ${updated} 檔股價（${priceLabel}）`, 'success');
     } catch (e) {
       toast('取得股價失敗：' + e.message, 'error');
     }
     btn.disabled = false;
-    btn.innerHTML = '<i class="fas fa-cloud-arrow-down"></i> 從證交所取得最新股價';
+    btn.innerHTML = '<i class="fas fa-bolt"></i><span>取得最新股價</span>';
   }
 
   // ─── 股票 Modal ───
@@ -5270,16 +5451,60 @@ const App = (() => {
     const list = el('priceUpdateList');
     // 006 T110：每列加「標為已下市」checkbox（FR-035a / Pass 1 Q2）
     const holdingStocks = cachedStocks.filter(s => s.totalShares > 0 || s.delisted);
-    list.innerHTML = holdingStocks.map(s => `<div class="price-update-row batch-price-row" data-stock-id="${s.id}">
-      <div class="stock-info">
-        <div><span class="stock-symbol">${escHtml(s.symbol)}</span><span class="stock-name">${escHtml(s.name)}</span>${s.delisted ? '<span class="delisted-badge">已下市</span>' : ''}</div>
-        <div class="price-source-label batch-price-row__source" data-stock-id="${s.id}"></div>
+    const countEl = el('priceUpdateCount');
+    if (countEl) countEl.textContent = holdingStocks.length ? `${holdingStocks.length} 檔` : '';
+    const fetchBtn = el('fetchTwsePricesBtn');
+    if (fetchBtn) fetchBtn.disabled = holdingStocks.length === 0;
+    if (!holdingStocks.length) {
+      list.innerHTML = `<div class="price-update-empty">
+        <div class="price-update-empty__icon"><i class="fas fa-chart-simple"></i></div>
+        <div class="price-update-empty__title">尚無持股紀錄</div>
+        <div class="price-update-empty__desc">先在「股票」頁新增交易，再來這裡更新最新股價</div>
+      </div>`;
+      const hintEl = el('priceUpdateHint');
+      if (hintEl) hintEl.innerHTML = '<i class="fas fa-circle-info"></i> 目前沒有可更新的持股';
+      openModal('modalPriceUpdate');
+      return;
+    }
+    list.innerHTML = holdingStocks.map((s, idx) => `<div class="price-update-row${s.delisted ? ' is-delisted' : ''}" data-stock-id="${s.id}" data-base-price="${s.currentPrice || 0}" style="animation-delay:${Math.min(idx * 24, 360)}ms">
+      <div class="price-update-row__info">
+        <div class="price-update-row__head">
+          <span class="price-update-row__symbol">${escHtml(s.symbol)}</span>
+          <span class="price-update-row__name" title="${escHtml(s.name)}">${escHtml(s.name)}</span>
+          ${s.delisted ? '<span class="delisted-badge">已下市</span>' : ''}
+        </div>
+        <div class="price-update-row__source batch-price-row__source price-source-label" data-stock-id="${s.id}"></div>
       </div>
-      <input type="number" step="0.0001" min="0" value="${s.currentPrice || 0}" data-stock-id="${s.id}" class="price-input">
-      <label class="delisted-toggle-label" style="font-size:13px;display:inline-flex;align-items:center;gap:4px">
-        <input type="checkbox" class="delisted-toggle" data-stock-id="${s.id}" ${s.delisted ? 'checked' : ''}> 已下市
+      <div class="price-update-row__price-wrap">
+        <input type="number" step="0.0001" min="0" value="${s.currentPrice || 0}" data-stock-id="${s.id}" class="price-input" inputmode="decimal" aria-label="${escHtml(s.symbol)} 現價">
+      </div>
+      <label class="price-update-row__delisted" title="標記為已下市後，將從持股市值計算中排除">
+        <span class="price-update-row__switch">
+          <input type="checkbox" class="delisted-toggle" data-stock-id="${s.id}" ${s.delisted ? 'checked' : ''}>
+          <span class="price-update-row__switch-track"></span>
+        </span>
+        <span>已下市</span>
       </label>
-    </div>`).join('') || '<p style="padding:20px;text-align:center;color:var(--text-muted)">目前無持股</p>';
+    </div>`).join('');
+    const hintEl = el('priceUpdateHint');
+    if (hintEl) {
+      hintEl.classList.remove('success');
+      hintEl.innerHTML = '<i class="fas fa-circle-info"></i> 修改價格後請按右側「儲存全部」生效';
+    }
+    // 變更追蹤：輸入或切換已下市時即時反映
+    list.querySelectorAll('.price-update-row').forEach(row => {
+      const priceInp = row.querySelector('.price-input');
+      const delistedInp = row.querySelector('.delisted-toggle');
+      const basePrice = Number(row.dataset.basePrice || 0);
+      const updateChanged = () => {
+        const cur = Number(priceInp.value) || 0;
+        row.classList.toggle('is-changed', Math.abs(cur - basePrice) > 1e-6);
+      };
+      if (priceInp) priceInp.addEventListener('input', updateChanged);
+      if (delistedInp) delistedInp.addEventListener('change', () => {
+        row.classList.toggle('is-delisted', delistedInp.checked);
+      });
+    });
     openModal('modalPriceUpdate');
   }
 
@@ -8317,8 +8542,8 @@ const App = (() => {
   async function openTransactionModal(txId) {
     const form = el('transactionForm');
     form.reset();
-    // T044 (FR-007a)：日期預設以 Asia/Taipei 固定時區計算
-    el('txDate').value = todayInTaipei();
+    // 009 FR-013：日期預設以使用者偏好時區計算（取代 002 T044 Asia/Taipei 寫死）
+    el('txDate').value = todayInUserTz();
     renderCurrencySelectOptions('txCurrency', 'TWD');
     el('txCurrency').value = 'TWD';
     el('txFxRate').value = '';

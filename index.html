@@ -1290,6 +1290,23 @@
             </div>
           </div>
         </div>
+        <!-- 009 multi-timezone：時區設定 -->
+        <div class="card">
+          <h3><i class="fas fa-globe"></i>時區</h3>
+          <div class="timezone-row">
+            <div class="timezone-row__info">
+              <div style="font-weight:600">偏好時區</div>
+              <div class="import-hint" style="margin-top:4px">所有時間／日期皆以此時區呈現；新增交易的「今天」也以此為準。</div>
+              <div class="timezone-current" id="tzCurrentLabel" style="margin-top:8px;font-size:13px;color:var(--text-muted)"></div>
+            </div>
+            <div class="timezone-row__controls">
+              <input type="text" id="tzSearchInput" placeholder="搜尋時區（例：tokyo、new_york）" autocomplete="off" class="form-input" style="width:240px">
+              <select id="tzSelect" class="form-input" size="6" style="width:240px;margin-top:6px;font-family:monospace;font-size:13px"></select>
+              <div class="timezone-preview" id="tzPreview" style="margin-top:6px;font-size:12px;color:var(--text-muted);min-height:18px"></div>
+              <button type="button" class="btn btn-primary" id="tzSaveBtn" style="margin-top:8px"><i class="fas fa-check"></i> 儲存時區</button>
+            </div>
+          </div>
+        </div>
         <div class="card">
           <h3><i class="fas fa-user-circle"></i>帳號資訊</h3>
           <div class="account-info-section">
@@ -2533,19 +2550,30 @@
 
   <!-- ===== 更新股價 Modal ===== -->
   <div class="modal-overlay" id="modalPriceUpdate">
-    <div class="modal">
+    <div class="modal modal-lg price-update-modal">
       <div class="modal-header">
-        <h3><i class="fas fa-chart-line" style="color:var(--primary);margin-right:8px"></i>更新股價</h3>
+        <h3><i class="fas fa-chart-line" style="color:var(--primary);margin-right:8px"></i>更新股價<span class="price-update-count" id="priceUpdateCount"></span></h3>
         <button class="modal-close" onclick="App.closeModal('modalPriceUpdate')">&times;</button>
       </div>
-      <div style="margin-bottom:16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-        <button type="button" class="btn btn-outline" id="fetchTwsePricesBtn"><i class="fas fa-cloud-arrow-down"></i> 從證交所取得最新股價</button>
-        <span style="font-size:12px;color:var(--text-muted)">自動取得盤中即時 / 收盤價格</span>
+      <div class="price-update-body">
+        <div class="price-update-banner">
+          <div class="price-update-banner__icon"><i class="fas fa-cloud-arrow-down"></i></div>
+          <div class="price-update-banner__text">
+            <div class="price-update-banner__title">一鍵同步證交所行情</div>
+            <div class="price-update-banner__desc">自動抓取盤中即時或當日收盤價，省去手動輸入。</div>
+          </div>
+          <button type="button" class="btn btn-primary price-update-banner__btn" id="fetchTwsePricesBtn">
+            <i class="fas fa-bolt"></i><span>取得最新股價</span>
+          </button>
+        </div>
+        <div class="price-update-list" id="priceUpdateList"></div>
       </div>
-      <div class="price-update-list" id="priceUpdateList"></div>
-      <div class="form-actions" style="margin-top:16px">
-        <button type="button" class="btn btn-ghost" onclick="App.closeModal('modalPriceUpdate')">取消</button>
-        <button type="button" class="btn btn-primary" id="priceUpdateSaveBtn"><i class="fas fa-check"></i> 儲存全部</button>
+      <div class="price-update-footer">
+        <span class="price-update-footer__hint" id="priceUpdateHint"><i class="fas fa-circle-info"></i> 修改價格後請按右側「儲存全部」生效</span>
+        <div class="price-update-footer__actions">
+          <button type="button" class="btn btn-ghost" onclick="App.closeModal('modalPriceUpdate')">取消</button>
+          <button type="button" class="btn btn-primary" id="priceUpdateSaveBtn"><i class="fas fa-check"></i> 儲存全部</button>
+        </div>
       </div>
     </div>
   </div>

@@ -35,6 +35,8 @@ const nodemailer = require('nodemailer');
 // ─── 002 feature: 共用工具模組（T019） ───
 const moneyDecimal = require('./lib/moneyDecimal');
 const taipeiTime = require('./lib/taipeiTime');
+// 009 feature: per-user 時區工具（憲章 v1.3.0 Principle IV）
+const userTime = require('./lib/userTime');
 const fxCache = require('./lib/exchangeRateCache');
 // 006-stock-investments：TWSE 並發查價 helper
 const twseFetch = require('./lib/twseFetch');
@@ -937,6 +939,48 @@ async function initDB() {
     db.run("UPDATE users SET is_active = 1 WHERE is_active IS NULL");
     saveDB();
   } catch (e) { /* 欄位已存在則忽略 */ }
+
+  // ─── 009 feature: multi-timezone migration ───
+  // T006：在 ADD COLUMN 前先備份 database.db（僅當 timezone 欄位尚不存在時觸發）
+  try {
+    const cols = db.exec("PRAGMA table_info(users)");
+    const colRows = (cols && cols[0] && cols[0].values) ? cols[0].values : [];
+    const hasTimezone = colRows.some(r => r[1] === 'timezone');
+    if (!hasTimezone) {
+      const dbPath = path.join(__dirname, 'database.db');
+      if (fs.existsSync(dbPath)) {
+        const backupPath = path.join(__dirname, `database.db.bak.${Date.now()}.before-009`);
+        try {
+          fs.copyFileSync(dbPath, backupPath);
+          console.log('[migration 009] backup → ', backupPath);
+        } catch (e) {
+          console.error('[migration 009] backup FAILED:', e.message);
+        }
+      }
+    }
+  } catch (e) { /* PRAGMA 讀取失敗則略過備份 */ }
+
+  // T004：users.timezone（IANA 識別碼，預設 Asia/Taipei）
+  // 既有列由 NOT NULL DEFAULT 自動填值；對於先前以 NULL 存在的列補刀。
+  try {
+    db.run("ALTER TABLE users ADD COLUMN timezone TEXT NOT NULL DEFAULT 'Asia/Taipei'");
+    db.run("UPDATE users SET timezone = 'Asia/Taipei' WHERE timezone IS NULL OR timezone = ''");
+    saveDB();
+  } catch (e) { /* 欄位已存在則忽略 */ }
+
+  // T005：monthly_report_send_log（per-user × year_month 月度郵件寄送去重事實表）
+  // UNIQUE(user_id, year_month) 為核心不變式 — 排程器先 INSERT、UNIQUE 衝突即跳過。
+  db.run(`CREATE TABLE IF NOT EXISTS monthly_report_send_log (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    year_month TEXT NOT NULL,
+    schedule_id TEXT,
+    sent_at_utc TEXT NOT NULL,
+    send_status TEXT NOT NULL DEFAULT 'success',
+    error_message TEXT DEFAULT '',
+    UNIQUE(user_id, year_month)
+  )`);
+  db.run("CREATE INDEX IF NOT EXISTS idx_monthly_report_send_log_user ON monthly_report_send_log(user_id, year_month DESC)");
 
   // 若舊資料沒有管理員，將第一位使用者設為管理員
   const hasAdmin = queryOne("SELECT id FROM users WHERE is_admin = 1 LIMIT 1");
@@ -2931,7 +2975,8 @@ function authMiddleware(req, res, next) {
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
     // 比對 token_version（改密碼/刪帳號後所有舊 token 立即失效）
-    const user = queryOne("SELECT token_version FROM users WHERE id = ?", [decoded.userId]);
+    // 009 T009：同一 SELECT 順帶取 timezone，掛 req.userTimezone（避免額外查詢）
+    const user = queryOne("SELECT token_version, timezone FROM users WHERE id = ?", [decoded.userId]);
     if (!user) {
       res.clearCookie('authToken');
       maybeAuditSessionExpired(req, decoded.userId || '', 'token-invalid');
@@ -2945,6 +2990,7 @@ function authMiddleware(req, res, next) {
       return res.status(401).json({ error: '登入已失效，請重新登入' });
     }
     req.userId = decoded.userId;
+    req.userTimezone = user.timezone || 'Asia/Taipei';
     next();
   } catch (e) {
     res.clearCookie('authToken');
@@ -3781,6 +3827,86 @@ app.get('/api/external-apis', (req, res) => {
 // ═══════════════════════════════════════
 app.use('/api', authMiddleware);
 
+// ─── 009 multi-timezone：使用者個人資料 + 時區管理 ───
+// FR-007 / T029：GET /api/users/me — 完整 user 物件，含 timezone
+app.get('/api/users/me', (req, res) => {
+  const u = queryOne(
+    "SELECT id, email, password_hash, display_name, google_id, has_password, avatar_url, theme_mode, is_admin, is_active, created_at, timezone FROM users WHERE id = ?",
+    [req.userId]
+  );
+  if (!u) return res.status(404).json({ error: 'User not found', code: 'NotFound' });
+  res.json({
+    id: u.id,
+    email: u.email,
+    display_name: u.display_name,
+    timezone: u.timezone || 'Asia/Taipei',
+    has_password: !!u.has_password,
+    google_id: u.google_id || '',
+    avatar_url: u.avatar_url || '',
+    theme_mode: normalizeThemeMode(u.theme_mode),
+    is_admin: !!u.is_admin,
+    is_active: u.is_active == null ? true : !!u.is_active,
+    created_at: userTime.toIsoUtc(u.created_at || new Date(0)),
+    updated_at: null, // 既有 users 表無 updated_at；T030 PATCH 後將改寫此欄位
+  });
+});
+
+// FR-008 / T030：PATCH /api/users/me/timezone
+// 驗證 IANA → UPDATE → 寫 data_operation_audit_log → 回完整 user
+app.patch('/api/users/me/timezone', (req, res) => {
+  const { timezone, source } = req.body || {};
+  if (!userTime.isValidIanaTimezone(timezone)) {
+    return res.status(400).json({ error: '時區格式無效', code: 'ValidationError', field: 'timezone' });
+  }
+  const userRow = queryOne(
+    "SELECT id, email, display_name, google_id, has_password, avatar_url, theme_mode, is_admin, is_active, created_at, timezone FROM users WHERE id = ?",
+    [req.userId]
+  );
+  if (!userRow) return res.status(404).json({ error: 'User not found', code: 'NotFound' });
+  const prev = userRow.timezone || 'Asia/Taipei';
+
+  // No-op：同值直接回，不寫 audit
+  if (prev !== timezone) {
+    db.run("UPDATE users SET timezone = ? WHERE id = ?", [timezone, req.userId]);
+    // 寫稽核紀錄（沿用 server.js:2829 既有 INSERT 風格）
+    const src = (source === 'manual' || source === 'auto-detect') ? source : 'manual';
+    db.run(
+      "INSERT INTO data_operation_audit_log (id, user_id, role, action, ip_address, user_agent, timestamp, result, is_admin_operation, metadata) VALUES (?,?,?,?,?,?,?,?,?,?)",
+      [
+        crypto.randomUUID().replace(/-/g, ''),
+        req.userId,
+        'user',
+        'user.timezone.update',
+        req.ip || '',
+        req.get('user-agent') || '',
+        new Date().toISOString(),
+        'success',
+        0,
+        JSON.stringify({ from: prev, to: timezone, source: src }),
+      ]
+    );
+    saveDB();
+    // 更新本回應的 timezone 欄位（不重新 SELECT）
+    userRow.timezone = timezone;
+    req.userTimezone = timezone; // 同一 request 內後續邏輯立即生效
+  }
+
+  res.json({
+    id: userRow.id,
+    email: userRow.email,
+    display_name: userRow.display_name,
+    timezone: userRow.timezone,
+    has_password: !!userRow.has_password,
+    google_id: userRow.google_id || '',
+    avatar_url: userRow.avatar_url || '',
+    theme_mode: normalizeThemeMode(userRow.theme_mode),
+    is_admin: !!userRow.is_admin,
+    is_active: userRow.is_active == null ? true : !!userRow.is_active,
+    created_at: userTime.toIsoUtc(userRow.created_at || new Date(0)),
+    updated_at: userTime.toIsoUtc(new Date()),
+  });
+});
+
 // CT-1：/api/account/login-logs → /api/user/login-audit（FR-042：使用者最近 100 筆）
 app.get('/api/user/login-audit', async (req, res) => {
   const logs = queryAll(
@@ -4497,8 +4623,9 @@ function pctChange(current, prev) {
   return ((c - p) / Math.abs(p)) * 100;
 }
 
-function buildUserStatsReport(userId, freq = 'daily') {
-  const month = thisMonth();
+function buildUserStatsReport(userId, freq = 'daily', userTimezone = 'Asia/Taipei') {
+  // 009 FR-006：以該使用者偏好時區計算「本月」（取代固定 process timezone）
+  const month = userTime.monthInUserTz(userTimezone);
   const monthLike = month + '%';
   const prevMonth = prevMonthOf(month);
   const prevMonthLike = prevMonth + '%';
@@ -5174,23 +5301,54 @@ function twStartOfDayMs(ts) {
 
 // 005 T065: 改寫為接收 report_schedules row（多筆模式）
 // enabled=0 直接 false（取代既有 freq==='off'）；其餘邏輯（twParts 比對、last_run<periodStart）保留
-function shouldRunSchedule(scheduleRow, nowTs = serverNow()) {
+// 009 FR-006：scheduler 改以 per-user 時區判斷觸發
+// userTimezone 可選；未提供則 fallback 'Asia/Taipei' 維持向後相容
+function shouldRunSchedule(scheduleRow, userTimezone, nowTs = serverNow()) {
   if (!scheduleRow || scheduleRow.enabled === 0) return false;
-  const tw = twParts(nowTs);
-  if (tw.hours < (Number(scheduleRow.hour) || 0)) return false;
+  // 向後相容：舊呼叫 shouldRunSchedule(scheduleRow, nowTs)（第二參數是數字 ms）
+  if (typeof userTimezone === 'number' && nowTs === serverNow()) {
+    nowTs = userTimezone;
+    userTimezone = 'Asia/Taipei';
+  }
+  const tz = userTimezone || 'Asia/Taipei';
+  const local = userTime.partsInTz(tz, nowTs);
+  if (local.hour < (Number(scheduleRow.hour) || 0)) return false;
 
-  const periodStart = twStartOfDayMs(nowTs);
+  // 「period start」= 該使用者當地當日 00:00 對應的 UTC ms。
+  // 算法：取 ms 對應的 local YYYY-MM-DD，再以該 ymd 在當地 00:00 反推 ms。
+  // 使用 Intl.DateTimeFormat 反推法：嘗試以 UTC midnight 為起點，調整偏移直到 local 字串吻合。
+  const ymd = `${local.year}-${String(local.month).padStart(2, '0')}-${String(local.day).padStart(2, '0')}`;
+  const periodStart = localDayStartMs(tz, ymd);
 
   if (scheduleRow.freq === 'daily') {
     // nothing extra
   } else if (scheduleRow.freq === 'weekly') {
-    if (tw.day !== (Number(scheduleRow.weekday) || 0)) return false;
+    if (local.weekday !== (Number(scheduleRow.weekday) || 0)) return false;
   } else if (scheduleRow.freq === 'monthly') {
-    if (tw.date !== (Number(scheduleRow.day_of_month) || 1)) return false;
+    if (local.day !== (Number(scheduleRow.day_of_month) || 1)) return false;
   } else {
     return false;
   }
   return (Number(scheduleRow.last_run) || 0) < periodStart;
+}
+
+// 求「指定 IANA 時區下、某 YYYY-MM-DD 當地 00:00」對應的 UTC ms。
+// 二分／反推：以 ymd 為基準的 UTC midnight 為錨，依該 tz 偏移調整。
+function localDayStartMs(tz, ymd) {
+  const [y, m, d] = ymd.split('-').map(s => parseInt(s, 10));
+  // 起步：UTC ymd 00:00 ms
+  const utcMid = Date.UTC(y, m - 1, d, 0, 0, 0);
+  // 求該瞬時在 tz 下的 hour/minute；若不是 00:00，反推偏移
+  const p = userTime.partsInTz(tz, utcMid);
+  // 偏移分鐘 = 該 tz 比 UTC 多 X 分鐘
+  // 我們希望 local = 00:00；目前 local = (p.hour:p.minute)，故偏移 = (p.hour*60 + p.minute) 分鐘
+  // 但若 tz < UTC（如 PDT），p.hour 會是「前一天的 17 等」→ 視為負偏移，需 +24h
+  let offsetMin = p.hour * 60 + p.minute;
+  // 若 partsInTz 顯示的 day 與目標 ymd 不同（往前），偏移要加上 24*60
+  const localYmd = `${p.year}-${String(p.month).padStart(2, '0')}-${String(p.day).padStart(2, '0')}`;
+  if (localYmd < ymd) offsetMin -= 24 * 60;
+  else if (localYmd > ymd) offsetMin += 24 * 60;
+  return utcMid - offsetMin * 60 * 1000;
 }
 
 const REPORT_SCHEDULE_MAX_TARGETS = 100;
@@ -5220,7 +5378,7 @@ async function runScheduledReportNow(scheduleId, triggeredBy = '排程') {
     if (!schedule) return { status: 'not_found', sent: 0, failed: 0, skipped: 0, reason: '排程不存在' };
     if (schedule.enabled === 0) return { status: 'disabled', sent: 0, failed: 0, skipped: 0, reason: '排程已停用' };
 
-    const u = queryOne("SELECT id, email, display_name, is_active FROM users WHERE id = ?", [schedule.user_id]);
+    const u = queryOne("SELECT id, email, display_name, is_active, timezone FROM users WHERE id = ?", [schedule.user_id]);
     if (!u) {
       const summary = `${formatTwTime(startedAt)} ${triggeredBy}：使用者不存在`;
       db.run("UPDATE report_schedules SET last_summary = ?, updated_at = ? WHERE id = ?", [summary, startedAt, scheduleId]);
@@ -5255,11 +5413,44 @@ async function runScheduledReportNow(scheduleId, triggeredBy = '排程') {
     let priceUpdates = 0;
     let provider = null;
     let errMsg = '';
+    let dedupSkipped = false;
+
+    // 009 FR-006 / FR-018：monthly schedule 走 monthly_report_send_log UNIQUE 去重
+    // 先 INSERT，UNIQUE 衝突即跳過寄送（已寄過該月份）；其他錯誤拋出
+    let dedupRowId = null;
+    if (schedule.freq === 'monthly') {
+      const userTz = u.timezone || 'Asia/Taipei';
+      const ym = userTime.monthInUserTz(userTz, startedAt);
+      try {
+        dedupRowId = crypto.randomUUID().replace(/-/g, '');
+        db.run(
+          "INSERT INTO monthly_report_send_log (id, user_id, year_month, schedule_id, sent_at_utc) VALUES (?,?,?,?,?)",
+          [dedupRowId, u.id, ym, scheduleId, new Date(startedAt).toISOString()]
+        );
+      } catch (e) {
+        const msg = String(e && e.message || '');
+        if (/UNIQUE|constraint/i.test(msg)) {
+          dedupSkipped = true;
+          dedupRowId = null;
+        } else {
+          throw e;
+        }
+      }
+    }
+
+    if (dedupSkipped) {
+      const summary = `${formatTwTime(startedAt)} ${triggeredBy}：本月份已寄送過（dedup skip）`;
+      db.run("UPDATE report_schedules SET last_summary = ?, updated_at = ? WHERE id = ?", [summary, startedAt, scheduleId]);
+      saveDB();
+      return { status: 'skipped', sent: 0, failed: 0, skipped: 1, reason: '本月份已寄送過' };
+    }
+
     try {
       const priceResult = await updateUserStockPrices(u.id).catch(() => ({ updated: 0, skipped: 0 }));
       priceUpdates = priceResult.updated;
 
-      const stats = buildUserStatsReport(u.id, schedule.freq);
+      // 009 FR-006：傳入使用者時區，使月份邊界 per-user
+      const stats = buildUserStatsReport(u.id, schedule.freq, u.timezone || 'Asia/Taipei');
       const html = renderStatsEmailHtml(u.display_name, u.email, stats);
       const subject = `${stats.month} 個人資產統計報表`;
       const r = await sendStatsEmail({ to: u.email, subject, html });
@@ -5275,6 +5466,17 @@ async function runScheduledReportNow(scheduleId, triggeredBy = '排程') {
       errMsg = e.message || '未知錯誤';
     }
 
+    // 009 FR-018：寄送失敗時更新 monthly_report_send_log.send_status='failed'
+    // 該列保留為事實紀錄，scheduler 不自動重試
+    if (dedupRowId && failed) {
+      try {
+        db.run(
+          "UPDATE monthly_report_send_log SET send_status = 'failed', error_message = ? WHERE id = ?",
+          [String(errMsg).slice(0, 500), dedupRowId]
+        );
+      } catch (e) { console.warn('[009] monthly_report_send_log fail update failed:', e.message); }
+    }
+
     const finishedAt = serverNow();
     const summaryParts = [`${formatTwTime(startedAt)} ${triggeredBy}：${sent ? `寄送成功 (${provider || ''})` : `寄送失敗`}（更新股價 ${priceUpdates} 檔，完成於 ${formatTwTime(finishedAt)}）`];
     if (errMsg) summaryParts.push('原因：' + errMsg);
@@ -5287,14 +5489,18 @@ async function runScheduledReportNow(scheduleId, triggeredBy = '排程') {
   }
 }
 
-// 005 T067: 迭代所有 enabled=1 排程
+// 005 T067 / 009 FR-006：迭代所有 enabled=1 排程，per-user 時區判斷觸發
 function checkAndRunSchedule() {
   try {
-    const rows = queryAll("SELECT * FROM report_schedules WHERE enabled = 1");
+    // 009：JOIN users 取 timezone（is_active=1 才寄）
+    const rows = queryAll(
+      "SELECT s.*, u.timezone AS user_timezone FROM report_schedules s JOIN users u ON u.id = s.user_id WHERE s.enabled = 1 AND u.is_active = 1"
+    );
     const now = serverNow();
     for (const row of rows) {
       if (runningSchedules.has(row.id)) continue;
-      if (!shouldRunSchedule(row, now)) continue;
+      const tz = row.user_timezone || 'Asia/Taipei';
+      if (!shouldRunSchedule(row, tz, now)) continue;
       runScheduledReportNow(row.id, '排程').catch(err => console.error('[scheduled-report]', err));
     }
   } catch (e) {
@@ -5303,9 +5509,11 @@ function checkAndRunSchedule() {
 }
 
 // 啟動時延遲 30 秒、之後每 5 分鐘檢查一次
+// 009 T037：環境變數 SCHEDULER_TICK_MS 可調整心跳間隔（測試用）
+const SCHEDULER_TICK_MS = Number(process.env.SCHEDULER_TICK_MS) || 5 * 60 * 1000;
 setTimeout(() => {
   checkAndRunSchedule();
-  setInterval(checkAndRunSchedule, 5 * 60 * 1000);
+  setInterval(checkAndRunSchedule, SCHEDULER_TICK_MS);
 }, 30 * 1000);
 
 // FR-046：90 天稽核清除排程（啟動立即執行 + 每 24h 循環）
@@ -6538,8 +6746,8 @@ app.get('/api/accounts/:accountId', (req, res) => {
   const a = ownsResource('accounts', 'id', req.params.accountId, req.userId);
   if (!a) return res.status(404).json({ error: 'NotFound' });
   const accountCurrency = normalizeCurrency(a.currency);
-  // FR-007：餘額僅含 date <= todayInTaipei() 的交易（未來交易不計）
-  const today = taipeiTime.todayInTaipei();
+  // 009 FR-004：餘額以該使用者偏好時區下的「今天」為界（FR-007a per-user）
+  const today = userTime.todayInUserTz(req.userTimezone);
   const txs = queryAll(
     "SELECT type, amount, currency, original_amount FROM transactions WHERE account_id = ? AND user_id = ? AND date <= ?",
     [a.id, req.userId, today]
@@ -6658,7 +6866,8 @@ app.get('/api/transactions', (req, res) => {
 
   let where = `${txCol('user_id')} = ?`;
   const params = [req.userId];
-  const today = taipeiTime.todayInTaipei();
+  // 009 FR-004：「今天」改以該使用者偏好時區計算
+  const today = userTime.todayInUserTz(req.userTimezone);
 
   if (dateFrom) { where += ` AND ${txCol('date')} >= ?`; params.push(dateFrom); }
   if (dateTo) { where += ` AND ${txCol('date')} <= ?`; params.push(dateTo); }
@@ -6727,9 +6936,12 @@ app.get('/api/transactions', (req, res) => {
 // FR-010~018, FR-022a（T035）：POST 同步寫入 twd_amount（與 amount 對齊既有 TWD-eq 語意）
 app.post('/api/transactions', (req, res) => {
   const { type, amount, date: rawDate, categoryId, accountId, note, excludeFromStats } = req.body;
-  const date = normalizeDate(rawDate);
+  // 009 FR-005：未提供 date 時，預設為使用者當地「今天」（YYYY-MM-DD）
+  const date = (rawDate == null || String(rawDate).trim() === '')
+    ? userTime.todayInUserTz(req.userTimezone)
+    : normalizeDate(rawDate);
   if (!date) return res.status(400).json({ error: '日期格式無效' });
-  if (!taipeiTime.isValidIsoDate(date)) return res.status(400).json({ error: '日期格式無效', code: 'ValidationError', field: 'date' });
+  if (!userTime.isValidIsoDate(date)) return res.status(400).json({ error: '日期格式無效', code: 'ValidationError', field: 'date' });
   if (!['income', 'expense', 'transfer_in', 'transfer_out'].includes(type)) return res.status(400).json({ error: '交易類型無效' });
   if (categoryId && !assertOwned('categories', categoryId, req.userId)) return res.status(400).json({ error: '分類不存在或無權限' });
   // 003-categories T018：leaf-only — 交易必須指派至子分類，不能直接掛在父分類底下（FR-013a）
@@ -8039,8 +8251,9 @@ function getNextRecurringDate(prevIsoDate, freq) {
 //   (b) 計算下一個 scheduledDate（FR-014 首產日 / FR-022 月底回退）
 //   (c) INSERT 包 try/catch 捕捉 UNIQUE constraint failed（FR-028 並發冪等）
 //   (d) UPDATE last_generated 條件式推進（FR-029）
-//   (e) 迴圈直到 scheduledDate > todayInTaipei()
-function processOneRecurring(r, userId) {
+//   (e) 迴圈直到 scheduledDate > todayInUserTz(userTimezone)
+// 009 FR-004：userTimezone 由上層 processRecurringForUser 帶入，避免每筆 SELECT。
+function processOneRecurring(r, userId, userTimezone) {
   // (a) 偵測分類 / 帳戶是否仍存在
   if (r.category_id) {
     const cat = queryOne("SELECT id FROM categories WHERE id = ? AND user_id = ?", [r.category_id, userId]);
@@ -8057,7 +8270,8 @@ function processOneRecurring(r, userId) {
     }
   }
 
-  const todayS = taipeiTime.todayInTaipei();
+  // 009 FR-004：以該使用者偏好時區為「今天」邊界
+  const todayS = userTime.todayInUserTz(userTimezone || 'Asia/Taipei');
   let lastGenerated = r.last_generated;
   let scheduledDate = lastGenerated ? getNextRecurringDate(lastGenerated, r.frequency) : r.start_date;
   let count = 0;
@@ -8128,6 +8342,10 @@ function processRecurringForUser(userId, opts = {}) {
   let generated = 0;
   let bgScheduled = false;
 
+  // 009 FR-004：取使用者時區，傳給 processOneRecurring 以正確計算「今天」
+  const userRow = queryOne("SELECT timezone FROM users WHERE id = ?", [userId]);
+  const userTimezone = (userRow && userRow.timezone) || 'Asia/Taipei';
+
   const recs = queryAll(
     "SELECT * FROM recurring WHERE user_id = ? AND is_active = 1 AND needs_attention = 0",
     [userId]
@@ -8145,7 +8363,7 @@ function processRecurringForUser(userId, opts = {}) {
       break;
     }
     try {
-      generated += processOneRecurring(r, userId);
+      generated += processOneRecurring(r, userId, userTimezone);
     } catch (e) {
       console.error('[004-recurring] processOneRecurring failed for', r.id, e);
     }
@@ -8340,6 +8558,9 @@ const TWSE_REALTIME_CACHE_TTL = 60 * 1000; // 1 分鐘快取（即時報價）
 const realtimeCache = {}; // { [symbol]: { ...data, timestamp } }
 
 // 台灣時間輔助
+// FR-014：TWSE 市場時間鎖 Asia/Taipei，與 users.timezone 無關。
+// 憲章 v1.3.0 Principle IV「市場／法規／外部系統時區」例外條款：
+// 真實世界市場開盤時間是外部世界事實，不隨使用者偏好變動。
 function getTaiwanTime() {
   const now = new Date();
   const twTime = new Date(now.getTime() + 8 * 60 * 60 * 1000);
@@ -8348,7 +8569,8 @@ function getTaiwanTime() {
   return { twTime, day, minutes };
 }
 
-// 判斷目前是否為台股交易時間（週一~週五 09:00-13:30 台灣時間 UTC+8）
+// FR-014：判斷目前是否為台股交易時間（週一~週五 09:00-13:30 台灣時間 UTC+8）。
+// 此判斷永遠以 Asia/Taipei 為準，使用者於洛杉磯時區也看到正確的「台股是否開盤中」。
 function isTwseTrading() {
   const { day, minutes } = getTaiwanTime();
   if (day === 0 || day === 6) return false;

@@ -1057,6 +1057,77 @@ API 路徑統一以 `/api/` 為前綴。所有需認證的路由自動套用 aut
 
 ---
 
+## v4.33.0 — 009 Multi-Timezone Support（2026-04-29）
+
+### 規範升級（FR-007a 修訂）
+
+- **FR-007a 重新定義**：原本「所有『今天／未來』判定固定以 UTC+8 計算」改為「以該操作所針對使用者的 `users.timezone`（IANA 識別碼，預設 `Asia/Taipei`）計算」。
+- **新增治理原則（憲章 v1.3.0 Principle IV — Time & Timezone Discipline，NON-NEGOTIABLE）**：後端 timestamp 一律以 Unix ms 或 ISO 8601 UTC `Z` 字串儲存／傳輸；API 出口統一 `YYYY-MM-DDTHH:mm:ss.sssZ` 毫秒精度；「使用者當地某日／某月／某時刻」一律以 `users.timezone` 計算。例外：市場／法規時間（如 TWSE 09:00–13:30 Asia/Taipei）需源碼註解標明。
+- **既有 Asia/Taipei 使用者不受影響**：所有 API 回應與 UI 行為相對升級前 100% 一致（regression-free）。
+
+### 資料模型變更
+
+- `users` 新增 `timezone TEXT NOT NULL DEFAULT 'Asia/Taipei'`（IANA 識別碼）。既有列由 DEFAULT 自動填值；不需資料遷移。
+- 新增 `monthly_report_send_log` 表：`id`、`user_id`、`year_month`、`schedule_id`、`sent_at_utc`、`send_status`（success / failed）、`error_message`，以 `UNIQUE(user_id, year_month)` 防重寄；scheduler 先 INSERT、UNIQUE 衝突即跳過。
+- `transactions.date` 欄位形式不變（`YYYY-MM-DD`），語意改為「該交易所有人於其偏好時區的當地自然日」；歷史列被視為以 Asia/Taipei 寫入，不重算。
+
+### 後端工具
+
+- 新增 `lib/userTime.js`：`isValidIanaTimezone`、`todayInUserTz`、`monthInUserTz`、`isFutureDateForTz`、`partsInTz`、`toIsoUtc`、`isValidIsoDate`、`__nowMs / __setNowMs`（測試 hook）。
+- `lib/taipeiTime.js` 改為 thin wrapper（內部呼叫 `userTime.*` 並固定傳 `'Asia/Taipei'`），維持向後相容；既有 callsite 不需改。
+- `authMiddleware` 擴展為同 `SELECT` 取 `timezone`，掛 `req.userTimezone`（零額外查詢）。
+
+### 新 API 端點
+
+| Method | Path | 說明 |
+| --- | --- | --- |
+| GET | `/api/users/me` | 取當前使用者完整資料（含 `timezone`、`theme_mode`、`created_at` 為 `.sssZ`） |
+| PATCH | `/api/users/me/timezone` | 更新偏好時區；非 IANA 回 400；no-op（同值）不寫 audit；成功變更寫 `data_operation_audit_log`（`action='user.timezone.update'`、metadata 含 `from`/`to`/`source ∈ {auto-detect, manual}`） |
+
+### 月度報表郵件 per-user 觸發（FR-006 / FR-018）
+
+- `checkAndRunSchedule()` JOIN `users` 取 `timezone` 帶入；`shouldRunSchedule(scheduleRow, userTimezone, nowTs)` 改以 `userTime.partsInTz(tz, nowTs)` 計算 local hour / day / weekday。
+- 環境變數 `SCHEDULER_TICK_MS` 可注入測試心跳間隔（預設 5 分鐘）。
+- 寄送失敗保留 `monthly_report_send_log.send_status='failed'` + `error_message`，scheduler 不自動重試（避免風暴）。
+
+### 前端
+
+- `app.js` 新增工具：`getUserTz()`、`getBrowserTz()`、`todayInUserTz()`、`formatLocalDateTime(iso, opts?)`、`listAvailableTimezones()`，保留 `todayInTaipei()` 為 alias。
+- 登入後 `enterApp()` 呼叫 `GET /api/users/me`，合併 `currentUser.timezone`。
+- 既有使用者 `maybePromptTimezoneChange()` FR-010 (b) 三條件 AND（`timezone === Asia/Taipei` ∧ 瀏覽器 tz ≠ Asia/Taipei ∧ `localStorage.tzPromptDismissedUntil` 不在 7 天靜默期）→ 一次性 confirm 對話框。
+- 個人設定頁新增「時區」card：搜尋下拉（`Intl.supportedValuesOf('timeZone')` ≈ 418 區域 + UTC/Etc/UTC 別名 + 10 項 fallback 白名單）、即時預覽（每秒更新）、儲存（`source='manual'`）。
+
+### TWSE 例外（FR-014）
+
+`getTaiwanTime()` / `isTwseTrading()` 永久鎖 Asia/Taipei；源碼加 `// FR-014: TWSE 市場時間鎖 Asia/Taipei，與 users.timezone 無關` 註解。市場開盤判斷不隨使用者偏好變動。
+
+### 測試
+
+新增 5 支自動化測試（**107 / 107 pass**）：
+
+| 檔案 | 內容 | pass |
+| --- | --- | --- |
+| `tests/lib/userTime.test.js` | 7 個函式單元測試（含 5 組 DST 邊界） | 50 |
+| `tests/migration/migration-009.test.js` | DDL + UNIQUE 約束 | 11 |
+| `tests/integration/us1-natural-day.test.js` | PST 23:30 / 00:30 / 跨日 / regression-free | 15 |
+| `tests/integration/us2-users-me-timezone.test.js` | PATCH IANA 驗證 / no-op / audit / source 白名單 | 18 |
+| `tests/integration/us3-monthly-report.test.js` | PST 觸發 / UNIQUE 防重寄 / DST 秋重 / 失敗保留 | 13 |
+
+`npm run test:tz` 一鍵跑全部。
+
+### Breaking Change 影響面
+
+- 既有 Asia/Taipei 使用者：**零行為變化**（regression-free）。
+- 非 Asia/Taipei 使用者：原本看到的「今天／本月」邊界錯亂問題已修復；月度報表郵件改在當地 1 號 00:00 寄送。
+- 新 API 與既有 `/api/auth/me` 並存；前端 `currentUser` 同時讀兩個（前者取 timezone、後者取 displayName 等 camelCase 欄位）。
+- OpenAPI `info.version` 升至 `4.33.0`；`openapi: 3.2.0` 字串保持不變（憲章 II）。
+
+### 後續迭代範圍（不在本 PR）
+
+- 既有 `*_at` 欄位全面正規化為 `.sssZ`（型別不一致需逐欄分析，risk vs SC-001 trade-off）。
+- 管理員手動清除 `monthly_report_send_log.send_status='failed'` 列以重觸發寄送的 UI / API。
+- 前端散落的 `new Date(x).toLocaleString()` 全面替換為 `formatLocalDateTime(x)`（現提供工具未強制套用，視覺顯示在不同時區帳號下會跟隨瀏覽器系統 tz；資料正確性不受影響）。
+
 ## v4.29.0 — 008 Frontend Routing & Pages（2026-04-27）
 
 ### 路由架構（FR-001 ~ FR-005、FR-008、FR-014）

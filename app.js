@@ -4815,7 +4815,7 @@ const App = (() => {
   async function fetchTwsePrices() {
     const btn = el('fetchTwsePricesBtn');
     btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 查詢中...';
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>查詢中...</span>';
     try {
       // 006 T111：使用 /api/stocks/batch-fetch 並發查價（受 TWSE_MAX_CONCURRENCY 限制 + 重試 2 次）
       const resp = await API.post('/api/stocks/batch-fetch', {});
@@ -4826,32 +4826,44 @@ const App = (() => {
         const stockId = r.stockId;
         const inp = document.querySelector(`#priceUpdateList .price-input[data-stock-id="${stockId}"]`);
         const label = document.querySelector(`.price-source-label[data-stock-id="${stockId}"]`);
+        const row = document.querySelector(`#priceUpdateList .price-update-row[data-stock-id="${stockId}"]`);
         if (r.status === 'ok' && r.currentPrice > 0) {
           if (inp) inp.value = r.currentPrice;
           updated += 1;
           if (r.priceSource === 'realtime') isRealtime = true;
+          if (row) {
+            const base = Number(row.dataset.basePrice || 0);
+            row.classList.toggle('is-changed', Math.abs(r.currentPrice - base) > 1e-6);
+          }
           if (label) {
             const sourceMap = { realtime: '即時', close: '收盤', 't+1': 'T+1' };
             const t = r.fetchedAt ? new Date(r.fetchedAt).toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' }) : '';
             const sourceText = (sourceMap[r.priceSource] || '') + (t ? ` ${t}` : '');
             label.innerHTML = `<span class="price-dot"></span>${escHtml(sourceText)}`;
-            label.classList.add('success');
             label.classList.remove('error');
+            label.classList.toggle('realtime', r.priceSource === 'realtime');
+            label.classList.toggle('success', r.priceSource !== 'realtime');
           }
         } else {
           if (label) {
             label.innerHTML = '<span class="price-dot"></span><span class="batch-price-row__failed">查詢失敗</span>';
+            label.classList.remove('success', 'realtime');
             label.classList.add('error');
           }
         }
       });
+      const hintEl = el('priceUpdateHint');
+      if (hintEl) {
+        hintEl.classList.add('success');
+        hintEl.innerHTML = `<i class="fas fa-circle-check"></i> 已更新 ${updated} 檔（${isRealtime ? '即時成交價' : '收盤價'}），記得按「儲存全部」`;
+      }
       const priceLabel = isRealtime ? '即時成交價' : '收盤價';
       toast(`已從證交所更新 ${updated} 檔股價（${priceLabel}）`, 'success');
     } catch (e) {
       toast('取得股價失敗：' + e.message, 'error');
     }
     btn.disabled = false;
-    btn.innerHTML = '<i class="fas fa-cloud-arrow-down"></i> 從證交所取得最新股價';
+    btn.innerHTML = '<i class="fas fa-bolt"></i><span>取得最新股價</span>';
   }
 
   // ─── 股票 Modal ───
@@ -5270,16 +5282,60 @@ const App = (() => {
     const list = el('priceUpdateList');
     // 006 T110：每列加「標為已下市」checkbox（FR-035a / Pass 1 Q2）
     const holdingStocks = cachedStocks.filter(s => s.totalShares > 0 || s.delisted);
-    list.innerHTML = holdingStocks.map(s => `<div class="price-update-row batch-price-row" data-stock-id="${s.id}">
-      <div class="stock-info">
-        <div><span class="stock-symbol">${escHtml(s.symbol)}</span><span class="stock-name">${escHtml(s.name)}</span>${s.delisted ? '<span class="delisted-badge">已下市</span>' : ''}</div>
-        <div class="price-source-label batch-price-row__source" data-stock-id="${s.id}"></div>
+    const countEl = el('priceUpdateCount');
+    if (countEl) countEl.textContent = holdingStocks.length ? `${holdingStocks.length} 檔` : '';
+    const fetchBtn = el('fetchTwsePricesBtn');
+    if (fetchBtn) fetchBtn.disabled = holdingStocks.length === 0;
+    if (!holdingStocks.length) {
+      list.innerHTML = `<div class="price-update-empty">
+        <div class="price-update-empty__icon"><i class="fas fa-chart-simple"></i></div>
+        <div class="price-update-empty__title">尚無持股紀錄</div>
+        <div class="price-update-empty__desc">先在「股票」頁新增交易，再來這裡更新最新股價</div>
+      </div>`;
+      const hintEl = el('priceUpdateHint');
+      if (hintEl) hintEl.innerHTML = '<i class="fas fa-circle-info"></i> 目前沒有可更新的持股';
+      openModal('modalPriceUpdate');
+      return;
+    }
+    list.innerHTML = holdingStocks.map((s, idx) => `<div class="price-update-row${s.delisted ? ' is-delisted' : ''}" data-stock-id="${s.id}" data-base-price="${s.currentPrice || 0}" style="animation-delay:${Math.min(idx * 24, 360)}ms">
+      <div class="price-update-row__info">
+        <div class="price-update-row__head">
+          <span class="price-update-row__symbol">${escHtml(s.symbol)}</span>
+          <span class="price-update-row__name" title="${escHtml(s.name)}">${escHtml(s.name)}</span>
+          ${s.delisted ? '<span class="delisted-badge">已下市</span>' : ''}
+        </div>
+        <div class="price-update-row__source batch-price-row__source price-source-label" data-stock-id="${s.id}"></div>
       </div>
-      <input type="number" step="0.0001" min="0" value="${s.currentPrice || 0}" data-stock-id="${s.id}" class="price-input">
-      <label class="delisted-toggle-label" style="font-size:13px;display:inline-flex;align-items:center;gap:4px">
-        <input type="checkbox" class="delisted-toggle" data-stock-id="${s.id}" ${s.delisted ? 'checked' : ''}> 已下市
+      <div class="price-update-row__price-wrap">
+        <input type="number" step="0.0001" min="0" value="${s.currentPrice || 0}" data-stock-id="${s.id}" class="price-input" inputmode="decimal" aria-label="${escHtml(s.symbol)} 現價">
+      </div>
+      <label class="price-update-row__delisted" title="標記為已下市後，將從持股市值計算中排除">
+        <span class="price-update-row__switch">
+          <input type="checkbox" class="delisted-toggle" data-stock-id="${s.id}" ${s.delisted ? 'checked' : ''}>
+          <span class="price-update-row__switch-track"></span>
+        </span>
+        <span>已下市</span>
       </label>
-    </div>`).join('') || '<p style="padding:20px;text-align:center;color:var(--text-muted)">目前無持股</p>';
+    </div>`).join('');
+    const hintEl = el('priceUpdateHint');
+    if (hintEl) {
+      hintEl.classList.remove('success');
+      hintEl.innerHTML = '<i class="fas fa-circle-info"></i> 修改價格後請按右側「儲存全部」生效';
+    }
+    // 變更追蹤：輸入或切換已下市時即時反映
+    list.querySelectorAll('.price-update-row').forEach(row => {
+      const priceInp = row.querySelector('.price-input');
+      const delistedInp = row.querySelector('.delisted-toggle');
+      const basePrice = Number(row.dataset.basePrice || 0);
+      const updateChanged = () => {
+        const cur = Number(priceInp.value) || 0;
+        row.classList.toggle('is-changed', Math.abs(cur - basePrice) > 1e-6);
+      };
+      if (priceInp) priceInp.addEventListener('input', updateChanged);
+      if (delistedInp) delistedInp.addEventListener('change', () => {
+        row.classList.toggle('is-delisted', delistedInp.checked);
+      });
+    });
     openModal('modalPriceUpdate');
   }
 

@@ -3457,6 +3457,36 @@ async function applyZipUpdate(cwd) {
   }
 }
 
+// 自動重啟：偵測是否在有 process supervisor 的環境下執行
+// 沒有 supervisor 時若呼叫 process.exit(0)，服務會直接掛掉、需手動回主機重啟
+function detectProcessSupervisor() {
+  // Docker：容器內固定存在此檔案
+  if (fs.existsSync('/.dockerenv')) return { available: true, type: 'docker' };
+  // PM2：fork 子程序時注入
+  if (process.env.pm_id || process.env.PM2_HOME) return { available: true, type: 'pm2' };
+  // systemd：service 啟動時注入
+  if (process.env.INVOCATION_ID) return { available: true, type: 'systemd' };
+  return { available: false, type: 'none' };
+}
+
+// AUTO_RESTART_AFTER_UPDATE：auto（預設，偵測到 supervisor 才重啟）/ force（強制重啟）/ off（停用）
+const AUTO_RESTART_MODE = (process.env.AUTO_RESTART_AFTER_UPDATE || 'auto').toLowerCase();
+
+function planAutoRestart() {
+  if (AUTO_RESTART_MODE === 'off') {
+    return { willRestart: false, reason: '已透過 AUTO_RESTART_AFTER_UPDATE=off 停用自動重啟', supervisor: 'disabled' };
+  }
+  const sup = detectProcessSupervisor();
+  if (AUTO_RESTART_MODE === 'force') {
+    return { willRestart: true, reason: '強制模式（AUTO_RESTART_AFTER_UPDATE=force）', supervisor: sup.type };
+  }
+  // auto 模式
+  if (sup.available) {
+    return { willRestart: true, reason: `偵測到 ${sup.type}，將自動重啟`, supervisor: sup.type };
+  }
+  return { willRestart: false, reason: '未偵測到 process supervisor（Docker/PM2/systemd），請手動重啟服務', supervisor: 'none' };
+}
+
 async function executeInAppUpdate() {
   const cwd = __dirname;
   const steps = [];
@@ -5814,7 +5844,26 @@ app.post('/api/system/update-app', adminMiddleware, async (req, res) => {
   isUpdatingApp = true;
   try {
     const result = await executeInAppUpdate();
-    res.json({ success: true, ...result });
+    const restartPlan = planAutoRestart();
+    const restartDelayMs = 1500; // 給 client 收到回應 + 顯示遮罩的緩衝時間
+    if (restartPlan.willRestart) {
+      // 先註冊 finish hook，再回應，確保 socket flush 後再 exit；supervisor 會自動拉起來
+      res.on('finish', () => {
+        console.log(`[update-app] 自動重啟：${restartPlan.reason}（${restartDelayMs}ms 後）`);
+        setTimeout(() => {
+          flushOnExit();
+          process.exit(0);
+        }, restartDelayMs);
+      });
+    }
+    res.json({
+      success: true,
+      ...result,
+      autoRestartScheduled: restartPlan.willRestart,
+      autoRestartReason: restartPlan.reason,
+      autoRestartSupervisor: restartPlan.supervisor,
+      restartDelayMs: restartPlan.willRestart ? restartDelayMs : 0,
+    });
   } catch (e) {
     res.status(500).json({ error: e.message || '更新失敗' });
   } finally {

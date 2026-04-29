@@ -9661,6 +9661,63 @@ const App = (() => {
     setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 2500);
   }
 
+  // ─── 系統重啟遮罩 + 健康檢查輪詢 ───
+  function showRestartOverlayAndWait({ reason, supervisor, startDelayMs }) {
+    const overlay = el('restartOverlay');
+    const titleEl = el('restartOverlayTitle');
+    const msgEl = el('restartOverlayMsg');
+    const elapsedEl = el('restartOverlayElapsed');
+    const actions = el('restartOverlayActions');
+    const reloadBtn = el('restartOverlayReloadBtn');
+    if (!overlay) { location.reload(); return; }
+
+    if (titleEl) titleEl.textContent = '系統正在重新啟動';
+    if (msgEl) {
+      const supText = supervisor ? `（${supervisor}）` : '';
+      msgEl.textContent = `${reason}${supText}。連線恢復後將自動重新整理頁面…`;
+    }
+    if (actions) actions.style.display = 'none';
+    overlay.classList.add('show');
+
+    const startedAt = Date.now();
+    const POLL_INTERVAL = 2000;     // 每 2 秒探一次
+    const MAX_WAIT_MS = 90 * 1000;  // 最長等 90 秒
+    let timer = null;
+
+    const updateElapsed = () => {
+      if (!elapsedEl) return;
+      const sec = Math.floor((Date.now() - startedAt) / 1000);
+      elapsedEl.textContent = `已等待 ${sec} 秒`;
+    };
+    const elapsedTimer = setInterval(updateElapsed, 1000);
+
+    const stop = () => {
+      if (timer) clearTimeout(timer);
+      clearInterval(elapsedTimer);
+    };
+
+    if (reloadBtn) {
+      reloadBtn.onclick = () => { stop(); location.reload(); };
+    }
+
+    const poll = async () => {
+      // 後端尚未起來會 fetch error 或回非 2xx；起來後 /api/config 會 200
+      try {
+        const r = await fetch('/api/config', { cache: 'no-store' });
+        if (r.ok) { stop(); location.reload(); return; }
+      } catch { /* still down */ }
+      if (Date.now() - startedAt > MAX_WAIT_MS) {
+        stop();
+        if (msgEl) msgEl.textContent = '等待逾時，後端仍未恢復。請手動重新整理頁面或檢查容器狀態。';
+        if (actions) actions.style.display = '';
+        return;
+      }
+      timer = setTimeout(poll, POLL_INTERVAL);
+    };
+    // 先給 backend startDelayMs + 一個額外緩衝才開始輪詢
+    timer = setTimeout(poll, (startDelayMs || 1500) + 500);
+  }
+
   // ─── 版本更新資訊 ───
   let lastChangelogCheckAt = null;
 
@@ -9800,9 +9857,19 @@ const App = (() => {
             try {
               const result = await API.post('/api/system/update-app', {});
               toast(result.message || '更新完成', 'success');
-              await render(true);
-              if (confirm('更新已完成，是否立即重新整理頁面套用最新前端？')) {
-                location.reload();
+              if (result.autoRestartScheduled) {
+                // 後端會在 restartDelayMs 後 process.exit；前端開遮罩、輪詢健康檢查、回來後 reload
+                showRestartOverlayAndWait({
+                  reason: result.autoRestartReason || '系統重啟中',
+                  supervisor: result.autoRestartSupervisor || '',
+                  startDelayMs: result.restartDelayMs || 1500,
+                });
+              } else {
+                await render(true);
+                const reason = result.autoRestartReason ? `（${result.autoRestartReason}）` : '';
+                if (confirm(`更新已完成，但系統未自動重啟${reason}。\n\n要立即重新整理頁面套用最新前端嗎？（後端仍跑舊程式碼，需手動重啟服務）`)) {
+                  location.reload();
+                }
               }
             } catch (e) {
               toast('更新失敗：' + e.message, 'error');

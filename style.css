@@ -1536,6 +1536,52 @@ body.dark-mode .import-missing-list span { background: rgba(255,255,255,.1); }
 .fab:hover { transform: translateY(-3px) scale(1.05); box-shadow: 0 8px 24px rgba(79,110,247,.4); }
 .fab:active { transform: translateY(0) scale(.98); }
 
+/* ===== 系統重啟遮罩 ===== */
+.restart-overlay {
+  position: fixed; inset: 0;
+  background: rgba(15, 23, 42, .55);
+  backdrop-filter: blur(4px);
+  display: none;
+  align-items: center; justify-content: center;
+  z-index: 9999;
+  animation: restartOverlayIn .2s ease-out;
+}
+.restart-overlay.show { display: flex; }
+@keyframes restartOverlayIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.restart-overlay-card {
+  background: var(--surface);
+  color: var(--text);
+  border-radius: 14px;
+  padding: 32px 36px;
+  min-width: 320px; max-width: 480px;
+  box-shadow: var(--shadow-md);
+  text-align: center;
+}
+.restart-overlay-spinner {
+  font-size: 36px; color: var(--primary);
+  margin-bottom: 12px;
+}
+.restart-overlay-title {
+  font-size: 18px; font-weight: 600;
+  margin-bottom: 8px;
+}
+.restart-overlay-msg {
+  font-size: 14px; color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 12px;
+}
+.restart-overlay-elapsed {
+  font-size: 12px; color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  margin-bottom: 12px;
+}
+.restart-overlay-actions {
+  margin-top: 8px;
+}
+
 /* ===== Toast ===== */
 .toast-container {
   position: fixed; top: 20px; right: 20px;

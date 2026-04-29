@@ -938,6 +938,48 @@ async function initDB() {
     saveDB();
   } catch (e) { /* 欄位已存在則忽略 */ }
 
+  // ─── 009 feature: multi-timezone migration ───
+  // T006：在 ADD COLUMN 前先備份 database.db（僅當 timezone 欄位尚不存在時觸發）
+  try {
+    const cols = db.exec("PRAGMA table_info(users)");
+    const colRows = (cols && cols[0] && cols[0].values) ? cols[0].values : [];
+    const hasTimezone = colRows.some(r => r[1] === 'timezone');
+    if (!hasTimezone) {
+      const dbPath = path.join(__dirname, 'database.db');
+      if (fs.existsSync(dbPath)) {
+        const backupPath = path.join(__dirname, `database.db.bak.${Date.now()}.before-009`);
+        try {
+          fs.copyFileSync(dbPath, backupPath);
+          console.log('[migration 009] backup → ', backupPath);
+        } catch (e) {
+          console.error('[migration 009] backup FAILED:', e.message);
+        }
+      }
+    }
+  } catch (e) { /* PRAGMA 讀取失敗則略過備份 */ }
+
+  // T004：users.timezone（IANA 識別碼，預設 Asia/Taipei）
+  // 既有列由 NOT NULL DEFAULT 自動填值；對於先前以 NULL 存在的列補刀。
+  try {
+    db.run("ALTER TABLE users ADD COLUMN timezone TEXT NOT NULL DEFAULT 'Asia/Taipei'");
+    db.run("UPDATE users SET timezone = 'Asia/Taipei' WHERE timezone IS NULL OR timezone = ''");
+    saveDB();
+  } catch (e) { /* 欄位已存在則忽略 */ }
+
+  // T005：monthly_report_send_log（per-user × year_month 月度郵件寄送去重事實表）
+  // UNIQUE(user_id, year_month) 為核心不變式 — 排程器先 INSERT、UNIQUE 衝突即跳過。
+  db.run(`CREATE TABLE IF NOT EXISTS monthly_report_send_log (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    year_month TEXT NOT NULL,
+    schedule_id TEXT,
+    sent_at_utc TEXT NOT NULL,
+    send_status TEXT NOT NULL DEFAULT 'success',
+    error_message TEXT DEFAULT '',
+    UNIQUE(user_id, year_month)
+  )`);
+  db.run("CREATE INDEX IF NOT EXISTS idx_monthly_report_send_log_user ON monthly_report_send_log(user_id, year_month DESC)");
+
   // 若舊資料沒有管理員，將第一位使用者設為管理員
   const hasAdmin = queryOne("SELECT id FROM users WHERE is_admin = 1 LIMIT 1");
   if (!hasAdmin) {
@@ -2931,7 +2973,8 @@ function authMiddleware(req, res, next) {
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
     // 比對 token_version（改密碼/刪帳號後所有舊 token 立即失效）
-    const user = queryOne("SELECT token_version FROM users WHERE id = ?", [decoded.userId]);
+    // 009 T009：同一 SELECT 順帶取 timezone，掛 req.userTimezone（避免額外查詢）
+    const user = queryOne("SELECT token_version, timezone FROM users WHERE id = ?", [decoded.userId]);
     if (!user) {
       res.clearCookie('authToken');
       maybeAuditSessionExpired(req, decoded.userId || '', 'token-invalid');
@@ -2945,6 +2988,7 @@ function authMiddleware(req, res, next) {
       return res.status(401).json({ error: '登入已失效，請重新登入' });
     }
     req.userId = decoded.userId;
+    req.userTimezone = user.timezone || 'Asia/Taipei';
     next();
   } catch (e) {
     res.clearCookie('authToken');

@@ -18,8 +18,8 @@
 
 **Purpose**: 開發環境就緒檢查、測試夾具。
 
-- [ ] T001 環境檢查：在開發容器與本機跑 `node -e "console.log(Intl.supportedValuesOf('timeZone').length)"`，數字必須 ≥ 400；同時驗證 `Asia/Taipei`、`America/Los_Angeles`、`Europe/London`、`Asia/Tokyo`、`Pacific/Auckland`、`America/Asuncion` 6 組時區可被解析（記錄結果於 [specs/009-multi-timezone/quickstart.md](./quickstart.md) §0）
-- [ ] T002 [P] 在 `Dockerfile`（或 `docker-compose.yml`）確認 base image 為 `node:20-alpine` 並具備 full-icu；若 ICU 未達標則調整為 `node:20`（GA full-icu 版本）— 修改 [Dockerfile](../../Dockerfile)、[docker-compose.yml](../../docker-compose.yml)（如需）
+- [X] T001 環境檢查：本機 Node `Intl.supportedValuesOf('timeZone').length` = **418**（≥ 400 ✓）；6 組關鍵時區（Asia/Taipei、America/Los_Angeles、Europe/London、Asia/Tokyo、Pacific/Auckland、America/Asuncion）全部可解析。
+- [X] T002 [P] [Dockerfile](../../Dockerfile) base image 為 `node:24-alpine`（比規格設定的 `node:20-alpine` 更新；node 24 LTS 預設 full-icu），ICU 涵蓋達標，**無需調整**。
 
 ---
 
@@ -29,17 +29,17 @@
 
 ### 憲章 / 治理
 
-- [ ] T003 升級憲章 v1.2.0 → v1.3.0：在 [.specify/memory/constitution.md](../../.specify/memory/constitution.md) 頂部新增 Sync Impact Report；新增 `IV. Time & Timezone Discipline — NON-NEGOTIABLE`（後端一律 UTC ISO 8601 `Z`，使用者「當地」一律 per-user IANA，TWSE 等市場時間例外於源碼註解標明）；修訂 FR-007a 為「per-user `users.timezone`，預設 `Asia/Taipei`」；更新 footer `Version: 1.3.0`、`Last Amended: 2026-04-29`
+- [X] T003 升級憲章 v1.2.0 → v1.3.0：在 [.specify/memory/constitution.md](../../.specify/memory/constitution.md) 頂部新增 Sync Impact Report；新增 `IV. Time & Timezone Discipline — NON-NEGOTIABLE`（後端一律 UTC ISO 8601 `Z`，使用者「當地」一律 per-user IANA，TWSE 等市場時間例外於源碼註解標明）；修訂 FR-007a 為「per-user `users.timezone`，預設 `Asia/Taipei`」；更新 footer `Version: 1.3.0`、`Last Amended: 2026-04-29`
 
 ### DB Schema Migration
 
-- [ ] T004 [P] 在 [server.js](../../server.js) 既有 migration 區塊（約 `:895` 之後）新增 `ALTER TABLE users ADD COLUMN timezone TEXT NOT NULL DEFAULT 'Asia/Taipei'`（包 try/catch）；補 `UPDATE users SET timezone = 'Asia/Taipei' WHERE timezone IS NULL OR timezone = ''` 後寫 `saveDB()`
-- [ ] T005 [P] 在 [server.js](../../server.js) 同一 migration 區塊新增 `CREATE TABLE IF NOT EXISTS monthly_report_send_log (...)`（schema 見 [data-model.md §3](./data-model.md)）+ `CREATE INDEX IF NOT EXISTS idx_monthly_report_send_log_user`
-- [ ] T006 升級備份：在 migration 執行前複製 `database.db` → `database.db.bak.<ts>.before-009`（沿用既有 migration 002 模式於 [server.js](../../server.js)）
+- [X] T004 [P] users.timezone 欄位（NOT NULL DEFAULT 'Asia/Taipei'）+ NULL/empty 補刀，已加於 [server.js](../../server.js) 既有 migration 區塊
+- [X] T005 [P] monthly_report_send_log 表 + UNIQUE(user_id, year_month) + idx，已加於同區塊
+- [X] T006 升級備份：條件式（僅當 timezone 欄位尚未存在時）複製 `database.db.bak.<ts>.before-009`，已驗證產生檔案 `database.db.bak.1777460698999.before-009`
 
 ### 後端工具層
 
-- [ ] T007 新增 [lib/userTime.js](../../lib/userTime.js)，匯出純函式：
+- [X] T007 新增 [lib/userTime.js](../../lib/userTime.js)，匯出純函式：
   - `isValidIanaTimezone(tz)`（基於 `Intl.supportedValuesOf('timeZone')`，明確拒絕 `''`、`null`、`'PST'`、`'UTC+8'`）
   - `todayInUserTz(tz)`：回 `'YYYY-MM-DD'`
   - `monthInUserTz(tz, dateOrNull)`：回 `'YYYY-MM'`
@@ -48,14 +48,12 @@
   - `toIsoUtc(value)`：接受 `number`/`string`/`Date` → 一律 `'YYYY-MM-DDTHH:mm:ss.sssZ'`；無毫秒輸入補 `.000`；非 `Z` 結尾或含偏移視為違規（throw）
   - `isValidIsoDate(s)`：沿用既有 `lib/taipeiTime.js` 邏輯
   - `__nowMs()` / `__setNowMs(ms|null)`：測試 hook，預設讀 `process.env.FAKE_NOW`（ISO 字串）→ ms，否則 `Date.now()`
-- [ ] T008 改寫 [lib/taipeiTime.js](../../lib/taipeiTime.js) 為 thin wrapper：每個既有匯出函式內部呼叫 `lib/userTime.js` 的對應函式並固定傳 `'Asia/Taipei'`；保留既有 `module.exports` shape 維持向後相容
-- [ ] T009 在 [server.js](../../server.js) 加 `attachUserTimezone(req, res, next)` middleware：讀 `req.userId`（由既有 JWT middleware `requireAuth` 提供）→ 一次 `SELECT timezone FROM users WHERE id = ?` → 掛 `req.userTimezone`；fallback `'Asia/Taipei'`。
-  - **註冊順序**：於 `requireAuth` 之**後**立即接 `attachUserTimezone`；公開端點（`/api/login`、`/api/register`、`/api/oauth/google/callback`、`/api/healthz` 等）不經 `requireAuth` → 自然不經 `attachUserTimezone`，無額外 SELECT 成本。
-  - **實作建議**：於既有 `requireAuth` 函式內部尾段直接補 `req.userTimezone = ...` 而非另立 middleware，避免雙重 DB 查詢；此為實作優化，不改變外部行為。
+- [X] T008 改寫 [lib/taipeiTime.js](../../lib/taipeiTime.js) 為 thin wrapper：每個既有匯出函式內部呼叫 `lib/userTime.js` 的對應函式並固定傳 `'Asia/Taipei'`；保留既有 `module.exports` shape 維持向後相容
+- [X] T009 採「實作建議」路徑：於 [server.js](../../server.js) 既有 `authMiddleware` 函式內部，將其原本 `SELECT token_version FROM users` 擴成 `SELECT token_version, timezone FROM users`，並於成功路徑補 `req.userTimezone = user.timezone || 'Asia/Taipei';`。零額外 SELECT；公開端點不經 authMiddleware 自然無 timezone 注入。
 
 ### Foundational 測試
 
-- [ ] T010 [P] 撰寫 [tests/lib/userTime.test.js](../../tests/lib/userTime.test.js)，覆蓋 `lib/userTime.js` 全部 6 個純函式：
+- [X] T010 [P] [tests/lib/userTime.test.js](../../tests/lib/userTime.test.js) 完成；50/50 pass。覆蓋 7 個純函式：
   - `isValidIanaTimezone`：正例 5 組（`Asia/Taipei`、`America/Los_Angeles`、`Europe/London`、`Pacific/Auckland`、`UTC`）／反例 4 組（`'PST'`、`'UTC+8'`、`''`、`null`）
   - `todayInUserTz`：5 組 DST 邊界（PST 春跳、PST 秋重、Pacific/Auckland 南半球、Asia/Taipei 對照、America/Asuncion 深夜切換）下與 `Intl.DateTimeFormat` 結果一致
   - `monthInUserTz`：跨月（PST 4-30 23:30 → `'2026-04'`；同瞬時 PST 5-1 00:30 → `'2026-05'`）、跨年（Asia/Taipei 12-31 23:30 → `'2026-12'`；同瞬時 1-1 00:30 → `'2027-01'`）、不傳 `dateOrNull` 時等同 `now()`
@@ -63,7 +61,7 @@
   - `partsInTz`：對相同 ms 與 `Intl.DateTimeFormat.formatToParts` 拆解結果完全一致；包含 `weekday` 0–6 對應驗證
   - `toIsoUtc`：接受 ms / Date / `'2026-04-29 07:30:00'`（無 T、無 Z）／ `'2026-04-29T07:30:00.000Z'`（已是 `.sssZ`）／ `'2026-04-29T07:30:00Z'`（無毫秒，補 `.000`）5 種輸入皆輸出合法 `.sssZ`；對 `'2026-04-29T07:30:00+08:00'`、`'invalid'`、`null`、`undefined` 擲錯
   - `isValidIsoDate`（沿用既有 `lib/taipeiTime.js` 邏輯，re-export）：合法 `'2026-04-29'` → true；月日越界 `'2026-02-30'`、`'2026-13-01'`、`'2026-04-31'` → false；非 ISO 格式 `'2026/04/29'`、`'04-29-2026'`、`'2026-4-29'` → false；非字串 `null`、`undefined`、`20260429` → false
-- [ ] T011 [P] 撰寫 [tests/migration/migration-009.test.js](../../tests/migration/migration-009.test.js)：跑 migration 後 `PRAGMA table_info(users)` 含 `timezone NOT NULL DEFAULT 'Asia/Taipei'`；`monthly_report_send_log` 表存在且 UNIQUE 約束生效（`INSERT OR ABORT` 第二筆相同 `(user_id, year_month)` 必失敗）
+- [X] T011 [P] [tests/migration/migration-009.test.js](../../tests/migration/migration-009.test.js) 完成；11/11 pass。`npm run test:tz` 一併跑兩支測試。
 
 **Checkpoint**: Foundation ready — user story 可開始平行進行。
 

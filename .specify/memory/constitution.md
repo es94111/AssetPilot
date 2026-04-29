@@ -1,20 +1,24 @@
 <!--
 Sync Impact Report
 ==================
-Version change: 1.1.0 → 1.2.0  (MINOR: new principle added)
-Modified principles: N/A
+Version change: 1.2.0 → 1.3.0  (MINOR: new principle added; FR-007a redefined)
+Modified principles:
+  - FR-007a (previously implicit "lock to UTC+8 for today/future judgments")
+    is REDEFINED to "use per-user `users.timezone` (IANA identifier,
+    default `Asia/Taipei`) for any 'today/this-month/future-date'
+    determination". The hard-coded UTC+8 anchor is removed except for
+    market-time / regulatory exceptions (see Principle IV).
 Added sections:
-  - Core Principles → Principle III: Slash-Style HTTP Path Convention
+  - Core Principles → Principle IV: Time & Timezone Discipline
     (NON-NEGOTIABLE)
 Removed sections: None
 Templates requiring updates:
   - ✅ .specify/templates/plan-template.md (Constitution Check section
-    expanded to include slash-path gate)
-  - ✅ .specify/templates/spec-template.md (no structural change needed;
-    API path requirements still live in plan/contracts/)
+    will be regenerated to include Principle IV gate on next plan run)
+  - ✅ .specify/templates/spec-template.md (no structural change needed)
   - ✅ .specify/templates/tasks-template.md (no structural change)
   - ✅ .specify/templates/checklist-template.md (no structural change)
-Follow-up TODOs:
+Follow-up TODOs (carried forward from v1.2.0):
   - ✅ `openapi.yaml` 已於 v4.21.0 建立於專案根目錄，`openapi` 欄位
     固定為 `3.2.0`，涵蓋 SRS.md §3.3 列舉之端點。後續新增／修改
     端點須在同一 PR 更新此檔案（見 Principle II 規則 #2）。
@@ -22,6 +26,18 @@ Follow-up TODOs:
     `specs/**/contracts/**` use only slash paths as of v4.24.0;
     legacy `:verb` styling, if any reappears, must be migrated in the
     same PR per Principle III rule #2.
+Follow-up TODOs (introduced by v1.3.0):
+  - ☐ Migration in progress under feature 009-multi-timezone:
+    `users.timezone` column (DEFAULT `Asia/Taipei`) added by
+    `server.js` migration; `lib/userTime.js` provides per-tz utilities;
+    `lib/taipeiTime.js` retained as a thin wrapper for backward
+    compatibility. Callsites previously using
+    `taipeiTime.todayInTaipei()` for "today" judgments are migrated to
+    `userTime.todayInUserTz(req.userTimezone)` in the same PR.
+  - ☐ TWSE market-hours judgment in `lib/twseFetch.js` and
+    `server.js:8351` is annotated with `// FR-014: TWSE 市場時間鎖
+    Asia/Taipei，與 users.timezone 無關` per Principle IV exception
+    clause.
 Notes:
   - This constitution document itself is written in English at maintainer
     request; it is a governance/meta document and is NOT classified as a
@@ -197,6 +213,57 @@ project's existing endpoints (`/api/transactions/batch-update`, etc.),
 keep the contract free of routing-engine corner cases, and make every
 path trivially copyable in shell, browser address bar, and log line.
 
+### IV. Time & Timezone Discipline — NON‑NEGOTIABLE
+
+Every time-related computation, storage, and output produced by this
+project **MUST** follow these three rules:
+
+1. **Backend storage / transport in UTC.** Any timestamp-shaped value
+   (`*_at`, `created_at`, `updated_at`, `last_login_at`, audit-log
+   `timestamp`, etc.) MUST be stored as either Unix-ms integers or as
+   ISO 8601 strings whose offset is exactly `Z` (UTC). Server-side
+   code MUST NOT depend on the host process timezone (`process.env.TZ`,
+   `Date#getHours()`, etc.) for business-meaningful judgments;
+   timezone-aware extraction MUST go through `Intl.DateTimeFormat`
+   with an explicit `timeZone` option.
+
+2. **API output is millisecond-precision UTC ISO 8601.** Every
+   timestamp-shaped field exposed via HTTP MUST be emitted as a
+   string of the exact shape `YYYY-MM-DDTHH:mm:ss.sssZ` (e.g.
+   `2026-04-29T07:30:00.000Z`). Strings without a `Z` suffix or
+   with a non-UTC offset (e.g. `+08:00`) are NOT acceptable.
+   Legacy database rows lacking millisecond precision MUST be
+   normalized at the API boundary (pad `.000`).
+
+3. **"Today / this-month / future" is per-user.** Any judgment about
+   what date a user is currently on, what month they belong to, or
+   whether a date string lies in their future MUST consult that
+   user's `users.timezone` (an IANA identifier; default
+   `Asia/Taipei`). Hard-coded `Asia/Taipei` anchors in business
+   logic are forbidden.
+
+**Exceptions** (each MUST be annotated inline with a `// FR-014` or
+similar source-code comment naming the rule that lifts the lock):
+
+- **Market / regulatory time.** Real-world market hours (TWSE
+  09:00–13:30 Mon–Fri Asia/Taipei), regulatory cut-offs (tax filing
+  deadlines pegged to a specific jurisdiction), and similar
+  externally-imposed time anchors MAY remain hard-coded to the
+  jurisdiction's timezone. They are not user preferences.
+- **External system clocks.** When mirroring a third-party system's
+  natural-day boundary (e.g. a banking API that closes books at
+  Asia/Taipei midnight), the bound is dictated by that system, not
+  by the user.
+
+**Rationale**: A multi-timezone product cannot rely on a single
+implicit anchor without producing wrong "today" boundaries for users
+outside that anchor — and silent wrongness in financial software
+erodes trust faster than any feature shipped on time can recover.
+Tying every time judgment explicitly to either `users.timezone` (for
+user-facing meaning) or a documented external anchor (for market /
+regulatory meaning) makes correctness reviewable line-by-line, and
+makes timezone-related bugs grep-able rather than emergent.
+
 ## Development Workflow
 
 1. **Feature-branch first.** Every new feature MUST begin on a dedicated
@@ -243,4 +310,4 @@ path trivially copyable in shell, browser address bar, and log line.
    Complexity Tracking table, or propose a Constitution amendment in a
    separate PR.
 
-**Version**: 1.2.0 | **Ratified**: 2026-04-24 | **Last Amended**: 2026-04-25
+**Version**: 1.3.0 | **Ratified**: 2026-04-24 | **Last Amended**: 2026-04-29

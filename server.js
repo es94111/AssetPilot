@@ -5301,23 +5301,54 @@ function twStartOfDayMs(ts) {
 
 // 005 T065: 改寫為接收 report_schedules row（多筆模式）
 // enabled=0 直接 false（取代既有 freq==='off'）；其餘邏輯（twParts 比對、last_run<periodStart）保留
-function shouldRunSchedule(scheduleRow, nowTs = serverNow()) {
+// 009 FR-006：scheduler 改以 per-user 時區判斷觸發
+// userTimezone 可選；未提供則 fallback 'Asia/Taipei' 維持向後相容
+function shouldRunSchedule(scheduleRow, userTimezone, nowTs = serverNow()) {
   if (!scheduleRow || scheduleRow.enabled === 0) return false;
-  const tw = twParts(nowTs);
-  if (tw.hours < (Number(scheduleRow.hour) || 0)) return false;
+  // 向後相容：舊呼叫 shouldRunSchedule(scheduleRow, nowTs)（第二參數是數字 ms）
+  if (typeof userTimezone === 'number' && nowTs === serverNow()) {
+    nowTs = userTimezone;
+    userTimezone = 'Asia/Taipei';
+  }
+  const tz = userTimezone || 'Asia/Taipei';
+  const local = userTime.partsInTz(tz, nowTs);
+  if (local.hour < (Number(scheduleRow.hour) || 0)) return false;
 
-  const periodStart = twStartOfDayMs(nowTs);
+  // 「period start」= 該使用者當地當日 00:00 對應的 UTC ms。
+  // 算法：取 ms 對應的 local YYYY-MM-DD，再以該 ymd 在當地 00:00 反推 ms。
+  // 使用 Intl.DateTimeFormat 反推法：嘗試以 UTC midnight 為起點，調整偏移直到 local 字串吻合。
+  const ymd = `${local.year}-${String(local.month).padStart(2, '0')}-${String(local.day).padStart(2, '0')}`;
+  const periodStart = localDayStartMs(tz, ymd);
 
   if (scheduleRow.freq === 'daily') {
     // nothing extra
   } else if (scheduleRow.freq === 'weekly') {
-    if (tw.day !== (Number(scheduleRow.weekday) || 0)) return false;
+    if (local.weekday !== (Number(scheduleRow.weekday) || 0)) return false;
   } else if (scheduleRow.freq === 'monthly') {
-    if (tw.date !== (Number(scheduleRow.day_of_month) || 1)) return false;
+    if (local.day !== (Number(scheduleRow.day_of_month) || 1)) return false;
   } else {
     return false;
   }
   return (Number(scheduleRow.last_run) || 0) < periodStart;
+}
+
+// 求「指定 IANA 時區下、某 YYYY-MM-DD 當地 00:00」對應的 UTC ms。
+// 二分／反推：以 ymd 為基準的 UTC midnight 為錨，依該 tz 偏移調整。
+function localDayStartMs(tz, ymd) {
+  const [y, m, d] = ymd.split('-').map(s => parseInt(s, 10));
+  // 起步：UTC ymd 00:00 ms
+  const utcMid = Date.UTC(y, m - 1, d, 0, 0, 0);
+  // 求該瞬時在 tz 下的 hour/minute；若不是 00:00，反推偏移
+  const p = userTime.partsInTz(tz, utcMid);
+  // 偏移分鐘 = 該 tz 比 UTC 多 X 分鐘
+  // 我們希望 local = 00:00；目前 local = (p.hour:p.minute)，故偏移 = (p.hour*60 + p.minute) 分鐘
+  // 但若 tz < UTC（如 PDT），p.hour 會是「前一天的 17 等」→ 視為負偏移，需 +24h
+  let offsetMin = p.hour * 60 + p.minute;
+  // 若 partsInTz 顯示的 day 與目標 ymd 不同（往前），偏移要加上 24*60
+  const localYmd = `${p.year}-${String(p.month).padStart(2, '0')}-${String(p.day).padStart(2, '0')}`;
+  if (localYmd < ymd) offsetMin -= 24 * 60;
+  else if (localYmd > ymd) offsetMin += 24 * 60;
+  return utcMid - offsetMin * 60 * 1000;
 }
 
 const REPORT_SCHEDULE_MAX_TARGETS = 100;
@@ -5382,6 +5413,38 @@ async function runScheduledReportNow(scheduleId, triggeredBy = '排程') {
     let priceUpdates = 0;
     let provider = null;
     let errMsg = '';
+    let dedupSkipped = false;
+
+    // 009 FR-006 / FR-018：monthly schedule 走 monthly_report_send_log UNIQUE 去重
+    // 先 INSERT，UNIQUE 衝突即跳過寄送（已寄過該月份）；其他錯誤拋出
+    let dedupRowId = null;
+    if (schedule.freq === 'monthly') {
+      const userTz = u.timezone || 'Asia/Taipei';
+      const ym = userTime.monthInUserTz(userTz, startedAt);
+      try {
+        dedupRowId = crypto.randomUUID().replace(/-/g, '');
+        db.run(
+          "INSERT INTO monthly_report_send_log (id, user_id, year_month, schedule_id, sent_at_utc) VALUES (?,?,?,?,?)",
+          [dedupRowId, u.id, ym, scheduleId, new Date(startedAt).toISOString()]
+        );
+      } catch (e) {
+        const msg = String(e && e.message || '');
+        if (/UNIQUE|constraint/i.test(msg)) {
+          dedupSkipped = true;
+          dedupRowId = null;
+        } else {
+          throw e;
+        }
+      }
+    }
+
+    if (dedupSkipped) {
+      const summary = `${formatTwTime(startedAt)} ${triggeredBy}：本月份已寄送過（dedup skip）`;
+      db.run("UPDATE report_schedules SET last_summary = ?, updated_at = ? WHERE id = ?", [summary, startedAt, scheduleId]);
+      saveDB();
+      return { status: 'skipped', sent: 0, failed: 0, skipped: 1, reason: '本月份已寄送過' };
+    }
+
     try {
       const priceResult = await updateUserStockPrices(u.id).catch(() => ({ updated: 0, skipped: 0 }));
       priceUpdates = priceResult.updated;
@@ -5403,6 +5466,17 @@ async function runScheduledReportNow(scheduleId, triggeredBy = '排程') {
       errMsg = e.message || '未知錯誤';
     }
 
+    // 009 FR-018：寄送失敗時更新 monthly_report_send_log.send_status='failed'
+    // 該列保留為事實紀錄，scheduler 不自動重試
+    if (dedupRowId && failed) {
+      try {
+        db.run(
+          "UPDATE monthly_report_send_log SET send_status = 'failed', error_message = ? WHERE id = ?",
+          [String(errMsg).slice(0, 500), dedupRowId]
+        );
+      } catch (e) { console.warn('[009] monthly_report_send_log fail update failed:', e.message); }
+    }
+
     const finishedAt = serverNow();
     const summaryParts = [`${formatTwTime(startedAt)} ${triggeredBy}：${sent ? `寄送成功 (${provider || ''})` : `寄送失敗`}（更新股價 ${priceUpdates} 檔，完成於 ${formatTwTime(finishedAt)}）`];
     if (errMsg) summaryParts.push('原因：' + errMsg);
@@ -5415,14 +5489,18 @@ async function runScheduledReportNow(scheduleId, triggeredBy = '排程') {
   }
 }
 
-// 005 T067: 迭代所有 enabled=1 排程
+// 005 T067 / 009 FR-006：迭代所有 enabled=1 排程，per-user 時區判斷觸發
 function checkAndRunSchedule() {
   try {
-    const rows = queryAll("SELECT * FROM report_schedules WHERE enabled = 1");
+    // 009：JOIN users 取 timezone（is_active=1 才寄）
+    const rows = queryAll(
+      "SELECT s.*, u.timezone AS user_timezone FROM report_schedules s JOIN users u ON u.id = s.user_id WHERE s.enabled = 1 AND u.is_active = 1"
+    );
     const now = serverNow();
     for (const row of rows) {
       if (runningSchedules.has(row.id)) continue;
-      if (!shouldRunSchedule(row, now)) continue;
+      const tz = row.user_timezone || 'Asia/Taipei';
+      if (!shouldRunSchedule(row, tz, now)) continue;
       runScheduledReportNow(row.id, '排程').catch(err => console.error('[scheduled-report]', err));
     }
   } catch (e) {
@@ -5431,9 +5509,11 @@ function checkAndRunSchedule() {
 }
 
 // 啟動時延遲 30 秒、之後每 5 分鐘檢查一次
+// 009 T037：環境變數 SCHEDULER_TICK_MS 可調整心跳間隔（測試用）
+const SCHEDULER_TICK_MS = Number(process.env.SCHEDULER_TICK_MS) || 5 * 60 * 1000;
 setTimeout(() => {
   checkAndRunSchedule();
-  setInterval(checkAndRunSchedule, 5 * 60 * 1000);
+  setInterval(checkAndRunSchedule, SCHEDULER_TICK_MS);
 }, 30 * 1000);
 
 // FR-046：90 天稽核清除排程（啟動立即執行 + 每 24h 循環）

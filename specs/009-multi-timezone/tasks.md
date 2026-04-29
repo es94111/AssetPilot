@@ -172,17 +172,19 @@
 
 ### 測試
 
-- [ ] T041 [P] [US3] 撰寫 [tests/integration/monthly-report-pst.test.js](../../tests/integration/monthly-report-pst.test.js)：模擬 PST 月初觸發、台北未觸發
-- [ ] T042 [P] [US3] 撰寫 [tests/integration/monthly-report-dedup.test.js](../../tests/integration/monthly-report-dedup.test.js)：同一 user × year_month 二次 INSERT → SQLITE_CONSTRAINT_UNIQUE，scheduler 跳過不寄
-- [ ] T043 [P] [US3] 撰寫 [tests/integration/monthly-report-dst.test.js](../../tests/integration/monthly-report-dst.test.js)：在 PST 秋季 DST 重複 01:00 場景下，確認月初 00:00 仍只觸發一次（DST 重複不在 00:00）
-- [ ] T044 [P] [US3] 撰寫 [tests/integration/monthly-report-failed.test.js](../../tests/integration/monthly-report-failed.test.js)：mock 寄信失敗 → `send_status='failed'` + `error_message`；下個 tick 不重試（FR-018）
+- [X] T041 + T042 + T043 + T044 [P] [US3] 合併為 [tests/integration/us3-monthly-report.test.js](../../tests/integration/us3-monthly-report.test.js)；13/13 pass。涵蓋：
+  - Scenario 1: PST 月初觸發
+  - Scenario 2: UNIQUE 防重寄（5 分鐘後 tick 不重複 INSERT）
+  - Scenario 3: DST 秋季重複時刻仍只觸發一次
+  - Scenario 4: 失敗保留 + scheduler 不自動重試（FR-018）
 
 ### 後端排程器
 
-- [ ] T045 [US3] 在 [server.js](../../server.js) 約 `:5293` 周邊改寫 scheduler tick：(a) 環境變數 `SCHEDULER_TICK_MS`（預設 `5 * 60 * 1000`）；(b) 取所有 `enabled=1` 的 `report_schedules` JOIN `users (is_active=1)` 一次撈；(c) 對每筆 row 計算 `local = userTime.partsInTz(user.timezone, userTime.__nowMs())`；(d) `matchesTrigger(sch, local)` 判斷
-- [ ] T046 [US3] 在 [server.js](../../server.js) scheduler 的 monthly 分支：先 `INSERT INTO monthly_report_send_log (id, user_id, year_month, schedule_id, sent_at_utc) VALUES (...)`；catch `SQLITE_CONSTRAINT_UNIQUE` → 跳過；其他錯誤 → throw 至上層 try/catch；INSERT 成功才呼叫既有 `sendMonthlyReportEmail(user, ym, schedule)`；寄送失敗 → `UPDATE monthly_report_send_log SET send_status='failed', error_message=?`
-- [ ] T047 [US3] 在 [server.js](../../server.js) scheduler 的 daily/weekly 分支：保留既有 `last_run` 比對邏輯，但 `local.hour` / `local.weekday` 改自 `userTime.partsInTz(user.timezone, ...)`，**不**透過 `data_operation_audit_log` 相關欄位
-- [ ] T048 [US3] 在 [server.js](../../server.js) scheduler 既有測試入口（如 `POST /api/admin/test-schedule`）保留；確認其呼叫路徑不繞過 `monthly_report_send_log` 去重（測試觸發也吃 UNIQUE 約束）
+- [X] T045 [US3] [server.js](../../server.js) `checkAndRunSchedule()` JOIN users 取 timezone；`shouldRunSchedule(scheduleRow, userTimezone, nowTs)` 改以 `userTime.partsInTz(tz, nowTs)`；`SCHEDULER_TICK_MS` 環境變數可注入。新增 `localDayStartMs(tz, ymd)` 反推 helper。向後相容舊呼叫（第二參數為 ms）
+- [X] T045a [US3] `shouldRunSchedule` 接 `userTimezone` 參數；舊邏輯（`twParts/twStartOfDayMs`）保留無破壞，但走新分支時繞過
+- [X] T046 [US3] `runScheduledReportNow` 新增 monthly 分支去重：先 `INSERT INTO monthly_report_send_log (id, user_id, year_month, schedule_id, sent_at_utc)` UNIQUE 衝突即跳過；INSERT 成功才寄信；寄送失敗時 `UPDATE send_status='failed', error_message=?`
+- [X] T047 [US3] daily / weekly 分支沿用既有 `last_run` 比對邏輯，新 `shouldRunSchedule` 已將 hour / weekday 改 per-user-tz 解讀
+- [X] T048 [US3] 既有 admin 測試入口（`POST /api/scheduled-reports/:id/run-now` 等）走相同 `runScheduledReportNow` 路徑，自動吃 UNIQUE 去重
 
 **Checkpoint**: P3 通過 — 月度郵件 per-user 觸發、不重寄、失敗不重試。三個 user stories 獨立可用。
 

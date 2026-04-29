@@ -4917,3 +4917,24 @@ body.modal-open {
   box-shadow: var(--shadow);
 }
 .legal-page .page-title { margin-bottom: 16px; }
+
+/* ─── 009 multi-timezone：時區設定區塊 ─── */
+.timezone-row {
+  display: flex; gap: 24px; align-items: flex-start; flex-wrap: wrap;
+}
+.timezone-row__info { flex: 1 1 240px; min-width: 220px; }
+.timezone-row__controls { display: flex; flex-direction: column; gap: 0; }
+.timezone-current {
+  display: inline-block;
+  padding: 4px 10px; border-radius: 999px;
+  background: var(--primary-light-bg, rgba(79,110,247,.08));
+  color: var(--primary);
+  font-weight: 500;
+}
+body.dark-mode .timezone-current {
+  background: rgba(123,147,250,.14);
+  color: var(--primary-light);
+}
+#tzSelect option { padding: 4px 6px; }
+#tzSelect option:checked { background: var(--primary); color: #fff; }
+.timezone-preview { font-variant-numeric: tabular-nums; }

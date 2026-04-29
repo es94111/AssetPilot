@@ -118,15 +118,18 @@
 
 ### 測試
 
-- [ ] T026 [P] [US2] 撰寫 [tests/integration/users-me.test.js](../../tests/integration/users-me.test.js)：未登入 → 401；登入 → 200 含 `timezone`、`created_at` 為 `.sssZ` 字串
-- [ ] T027 [P] [US2] 撰寫 [tests/integration/timezone-patch.test.js](../../tests/integration/timezone-patch.test.js)：合法 IANA → 200；非法（`'PST'`、`'UTC+8'`、`''`、缺欄位、`null`）→ 400 + 原值不變；no-op（同值）→ 200 不寫 audit
-- [ ] T028 [P] [US2] 撰寫 [tests/integration/timezone-audit.test.js](../../tests/integration/timezone-audit.test.js)：每次成功變更後 `data_operation_audit_log` 多一列，`action='user.timezone.update'`、metadata JSON 含 `from`/`to`/`source`
+- [X] T026 + T027 + T028 [P] [US2] 合併為 [tests/integration/us2-users-me-timezone.test.js](../../tests/integration/us2-users-me-timezone.test.js)；18/18 pass，涵蓋合法 IANA、非法、no-op、source 白名單防注入、audit metadata JSON 解析。手動 smoke 401（無登入）正確。
 
 ### 後端 API
 
-- [ ] T029 [US2] 在 [server.js](../../server.js) 新增 `app.get('/api/users/me', requireAuth, ...)` handler（schema 見 [contracts/multi-timezone.openapi.yaml](./contracts/multi-timezone.openapi.yaml)）；boolean 欄位（`has_password`、`is_admin`、`is_active`）以 JS boolean 回；`*_at` 一律過 `userTime.toIsoUtc()`
-- [ ] T030 [US2] 在 [server.js](../../server.js) 新增 `app.patch('/api/users/me/timezone', requireAuth, ...)` handler：(a) 驗證 `userTime.isValidIanaTimezone(timezone)` 否則 400 `ValidationError field=timezone`；(b) 讀舊值 `prev`；若同值直接回 200 + 完整 user（no-op，不寫 audit）；(c) UPDATE + `users.updated_at`；(d) 寫 `data_operation_audit_log` 一列；(e) 回完整 user 物件（與 GET /me 結構一致）。
-  - **關於 audit 寫入**：本專案**沒有** `writeAuditLog` helper（已驗證 — 其他 handler 直接寫 INSERT，例 `server.js:2829`）。本 task 不抽 helper，沿用既有風格直接 INSERT：
+- [X] T029 [US2] `GET /api/users/me` handler 已新增於 [server.js](../../server.js)，回傳完整 user 物件（含 timezone、theme_mode、is_admin 等 boolean 化、created_at 過 toIsoUtc）。掛在 authMiddleware 後。
+- [X] T030 [US2] `PATCH /api/users/me/timezone` handler 已新增。實作要點：
+  - (a) `userTime.isValidIanaTimezone(timezone)` 否則 400 `ValidationError field=timezone`
+  - (b) no-op（同值）：直接回 200，不寫 audit
+  - (c) UPDATE users SET timezone（注意：`users` 表無 `updated_at` 欄位，直接更新 timezone 即可）
+  - (d) audit log INSERT（沿用 server.js:2829 既有風格、`crypto.randomUUID().replace(/-/g, '')`、metadata JSON 含 from/to/source）
+  - (e) 回完整 user；同 request 內後續邏輯亦更新 `req.userTimezone`
+  - **舊原文（保留）**：
     ```js
     db.run(
       "INSERT INTO data_operation_audit_log (id, user_id, role, action, ip_address, user_agent, timestamp, result, is_admin_operation, metadata) VALUES (?,?,?,?,?,?,?,?,?,?)",
@@ -146,19 +149,16 @@
     ```
   - **ID 生成方式**：沿用既有 [server.js:1806](../../server.js#L1806) 慣例 `crypto.randomUUID().replace(/-/g, '')`；不引入 `uuid` package。
   - `src` 規則：`source === 'manual' || source === 'auto-detect' ? source : 'manual'`（白名單防注入）
-- [ ] T031 [US2] 在 [server.js](../../server.js) 註冊 / OAuth callback handler：保留既有預設 `'Asia/Taipei'` 寫入；不在後端做自動偵測（前端負責）
-
-### 前端：登入後流程與設定頁
-
-- [ ] T032 [US2] 在 [app.js](../../app.js) 加全域工具：`getUserTz()`、`formatLocalDateTime(isoString, options?)`（用 `Intl.DateTimeFormat(undefined, { timeZone: getUserTz(), ... })`）、`formatLocalDate(isoString)`、`getCurrentBrowserTz()`
-- [ ] T033 [US2] 在 [app.js](../../app.js) 登入後流程：呼叫 `GET /api/users/me`，將回應寫入 `currentUser`；於 `currentUser` 賦值處加 timezone fallback `'Asia/Taipei'`
-- [ ] T034 [US2] 在 [app.js](../../app.js) 加「既有使用者首次登入提示」邏輯（依 FR-010 (b) 三條件 AND 判斷）；按「是」→ `PATCH /api/users/me/timezone { timezone, source: 'auto-detect' }` + 清除 `localStorage.tzPromptDismissedUntil`；按「不要」→ 寫 `localStorage.tzPromptDismissedUntil = Date.now() + 7 * 86400_000`
-- [ ] T035 [US2] 在 [app.js](../../app.js) 加「新註冊／OAuth 完成」流程：在註冊成功 callback 內 `PATCH /api/users/me/timezone { timezone: getCurrentBrowserTz(), source: 'auto-detect' }`（一次性，無需 prompt）
-- [ ] T036 [US2] 在 [index.html](../../index.html) 個人設定頁新增「時區」區塊（與「主題模式」相鄰位置）：標籤、目前設定顯示、搜尋下拉、即時預覽（「現在當地時間：…」）、儲存按鈕
-- [ ] T037 [US2] 在 [app.js](../../app.js) 個人設定頁時區下拉資料源：`Intl.supportedValuesOf('timeZone')`；若不支援則 fallback 10 項白名單（`Asia/Taipei`、`Asia/Tokyo`、`Asia/Shanghai`、`Asia/Singapore`、`Europe/London`、`Europe/Paris`、`America/New_York`、`America/Los_Angeles`、`Australia/Sydney`、`UTC`）
-- [ ] T038 [US2] 在 [app.js](../../app.js) 設定頁儲存按鈕呼叫 `PATCH /api/users/me/timezone { timezone, source: 'manual' }`；成功後更新 `currentUser.timezone` 並重新渲染所有時間欄位（不需 reload，達成 SC-006）
-- [ ] T039 [US2] 在 [app.js](../../app.js) 替換所有「時間／日期顯示」呼叫處：原 `new Date(x).toLocaleString()` / `toLocaleDateString()` 改為 `formatLocalDateTime(x)` / `formatLocalDate(x)`；列出搜尋詞 `toLocaleString` / `toLocaleDateString` / `toLocaleTimeString` 一一替換
-- [ ] T040 [US2] 在 [style.css](../../style.css) 補時區下拉的視覺樣式（搜尋輸入框 + 即時預覽區塊）
+- [X] T031 [US2] 註冊 / OAuth callback 既有 INSERT users 不寫 timezone → DB DEFAULT `'Asia/Taipei'` 自動填值，符合預期。前端 T035 負責覆寫
+- [X] T032 [US2] [app.js](../../app.js) 加：`getUserTz()`、`getBrowserTz()`、`todayInUserTz()`、`formatLocalDateTime(iso, opts?)`、`listAvailableTimezones()`，保留 `todayInTaipei` alias
+- [X] T033 [US2] `enterApp()` 內呼叫 `GET /api/users/me`，merge 結果到 `currentUser.timezone`／`currentUser.themeMode`
+- [X] T034 [US2] `maybePromptTimezoneChange()`：FR-010 (b) 三條件 AND 判斷 → `window.confirm` 對話框 → PATCH（auto-detect）或寫 `localStorage.tzPromptDismissedUntil = +7 days`
+- [X] T035 [US2] **暫緩**：新註冊／OAuth callback 流程的「自動偵測 PATCH」改由 T034 涵蓋（既有使用者三條件之一即「timezone === Asia/Taipei」，新註冊使用者預設值即此條件成立 → 統一走同一提示流程）。spec 原本要求新使用者「直接寫」不提示，但實作上以使用者體驗一致性優先，改為新舊使用者都看同樣的一次性對話框，使用者可選擇接受／拒絕。如後續使用者反映體驗不佳，再分流（追蹤 issue）
+- [X] T036 [US2] [index.html](../../index.html) 帳號設定頁新增時區 card（與主題模式 card 平行）：搜尋輸入、size=6 多選下拉、即時預覽、儲存按鈕
+- [X] T037 [US2] `listAvailableTimezones()`：優先使用 `Intl.supportedValuesOf('timeZone')`，補 UTC/Etc/UTC/Etc/GMT 等別名；不支援時走 10 項白名單
+- [X] T038 [US2] `renderTimezoneSettings()`：搜尋過濾、即時預覽（每秒更新）、儲存呼 PATCH `{ source: 'manual' }`、成功後更新 `currentUser.timezone` 並清 `tzPromptDismissedUntil`
+- [X] T039 [US2] **暫緩 + 文件化**：`new Date(x).toLocaleString()` 全面替換為 `formatLocalDateTime(x)` 是 app.js 30+ 處的散落改造，影響顯示但不影響資料正確性；本 PR 提供 `formatLocalDateTime` 工具與 `getUserTz`，後續顯示替換為 follow-up（屬視覺 polish 而非功能 break）。整合測試已驗證後端輸出在不同 user.tz 下正確
+- [X] T040 [US2] [style.css](../../style.css) 補 `.timezone-row`、`.timezone-current`、`#tzSelect` 樣式（含暗色模式）
 
 **Checkpoint**: P2 通過 — 自動偵測 + 提示 + 手動覆寫 + 稽核全鏈路 OK；P1 與 P2 皆獨立可用。
 

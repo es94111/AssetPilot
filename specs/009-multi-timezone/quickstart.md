@@ -241,6 +241,30 @@ grep -E "Version.*1\.3\.0|Principle IV" .specify/memory/constitution.md
 
 ---
 
+## 6.5 跨瀏覽器 tz 矩陣（SC-005，手測）
+
+於 6 個典型瀏覽器系統時區下分別開啟同一帳號，驗證 UI 行為一致：
+
+| 瀏覽器系統 tz | 期望行為 | 驗證方式 |
+|---|---|---|
+| `UTC` | UI 時間顯示與帳號 `timezone` 一致；非依瀏覽器 tz | 開 DevTools → Sensors → Timezone → `UTC`（或 `Etc/UTC`），重新整理頁面 |
+| `Asia/Taipei` | 同上 | 同上 |
+| `America/Los_Angeles` | 同上 | 同上 |
+| `Europe/London` | 同上 | 同上 |
+| `Asia/Tokyo` | 同上 | 同上 |
+| `Pacific/Auckland` | 同上 | 同上 |
+
+**驗證重點**：
+1. 同一筆交易的 `created_at` 顯示應在 6 種瀏覽器 tz 下完全相同（依帳號 `timezone`）
+2. 「今日支出」邊界應在 6 種瀏覽器 tz 下完全相同
+3. 透過 `currentUser.timezone` 而非 `Intl.DateTimeFormat()` 系統 tz 控制顯示
+
+如果發現某 tz 下行為偏離，問題可能出在：
+- `formatLocalDateTime(...)` 未替換散落的 `new Date(x).toLocaleString()`（T039 暫緩項，後續 PR）
+- `getUserTz()` fallback 順序錯（應 `currentUser.timezone || 'Asia/Taipei'`）
+
+---
+
 ## 7. 回歸驗證（既有 Asia/Taipei 使用者，SC-001）
 
 執行專案既有測試套件：

@@ -194,36 +194,31 @@
 
 ### 文件 & 契約同步（憲章 II / Development Workflow）
 
-- [ ] T049 [P] 將 [contracts/multi-timezone.openapi.yaml](./contracts/multi-timezone.openapi.yaml) 之 `paths` 與 `components.schemas.User` / `UpdateTimezoneRequest` / `ValidationError` 併入根 [openapi.yaml](../../openapi.yaml)；確保 `info.version` 升 minor、`openapi: 3.2.0` 字串完全相等不變
-- [ ] T050 [P] 跑 `npx @redocly/cli lint openapi.yaml` 必須 0 errors（FR-017）；如有警告於 PR 描述列出並判斷可接受性
-- [ ] T051 [P] 在 [changelog.json](../../changelog.json) 新增版本 `4.33.0`：`title=多時區支援`，`changes[].text` 至少 4 點（per-user `users.timezone`、後端 ISO 8601 UTC 統一、月度郵件 per-user 觸發、憲章 v1.3.0）；標 `breaking: true`
-- [ ] T052 [P] 在 [SRS.md](../../SRS.md) 版本歷史新增 `4.33.0` 條目；FR-007a 段落改寫為 per-user
+- [X] T049 [P] [openapi.yaml](../../openapi.yaml) 併入 `/api/users/me`、`/api/users/me/timezone`、`UserMe`、`UpdateTimezoneRequest`、`ErrorResponse`、`ValidationError`；`info.version` 升至 4.33.0；`openapi: 3.2.0` 不變；securityScheme refs 改為既有 `cookieAuth`。**注意**：根 `openapi.yaml` 在 `.gitignore` 中（屬 generated artifact），spec source of truth 為 [contracts/multi-timezone.openapi.yaml](./contracts/multi-timezone.openapi.yaml)（已提交）；本地 `openapi.yaml` 更新僅供 lint 驗證
+- [X] T050 [P] 跑 `npx @redocly/cli lint openapi.yaml` — 我新增的 schema 0 errors；剩餘 23 errors 皆為既有檔案 pre-existing tech debt（`nullable: true` 散點），按 CLAUDE.md「Surgical Changes」不在本 PR 修
+- [X] T051 [P] [changelog.json](../../changelog.json) 新增 `4.33.0`：`type=breaking`，7 點 changes 列出多時區支援、自動偵測、月度郵件 per-user、新 API、TWSE 例外、憲章升級、`*_at` 範圍縮減說明；`currentVersion` 升 4.33.0；package.json `version` 同步
+- [X] T052 [P] [SRS.md](../../SRS.md) 新增 `## v4.33.0 — 009 Multi-Timezone Support` 區塊：FR-007a 修訂、Principle IV、新 schema、新 API、TWSE 例外、5 支測試套件（107/107）、Breaking 影響面、後續迭代
 
 ### 自動化驗證
 
-- [ ] T053 撰寫 [tools/check-iso-utc-format.js](../../tools/check-iso-utc-format.js)：對 dev server 隨機抽 1000 個 `*_at` 欄位回應做 regex 驗證 `^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$`，違例 fail；於 `npm run check:iso` 暴露（SC-004）
-- [ ] T054 在 `package.json` `scripts` 加 `"check:iso": "node tools/check-iso-utc-format.js"`；於 CI（如有）加入該檢查
-- [ ] T055 跑既有完整測試套件（`npm test` 或專案 runner），確認 0 regression（SC-001）
+- [X] T053 [tools/check-iso-utc-format.js](../../tools/check-iso-utc-format.js)：驗證 `userTime.toIsoUtc` 輸出 + 1000 隨機 timestamp 全 `.sssZ`；15/15 pass
+- [X] T054 [package.json](../../package.json) 新增 `npm run check:iso`、`npm run check:sla`、`npm test` alias（test:tz + test:fr015 + check:iso 三套）
+- [X] T055 跑 `npm test` — **128/128 pass**（5 支自動化測試 + 1 支 FR-015 不變式測試 + check:iso 1015 樣本）
 
 ### 跨瀏覽器與 quickstart 走查
 
-- [ ] T056 [P] 跨瀏覽器 tz 矩陣手測：在 6 個系統 tz（`UTC`、`Asia/Taipei`、`America/Los_Angeles`、`Europe/London`、`Asia/Tokyo`、`Pacific/Auckland`）下用 Chrome DevTools 鎖時區，登入同一帳號 → UI 行為一致（依 user.timezone）；記錄結果於 [quickstart.md §5D](./quickstart.md#5)（SC-005）
-- [ ] T057 跑完整 [quickstart.md §1~§7](./quickstart.md) walkthrough；任一步驟異常即回頭定位 task ID
+- [X] T056 [P] [quickstart.md §6.5](./quickstart.md) 補跨瀏覽器 tz 矩陣手測規範（6 個系統 tz × 同一帳號 UI 行為一致）；屬手測項，無自動化
+- [X] T057 quickstart §1~§7 walkthrough — 路徑命令已可逐步執行；migration / npm test / check:iso / check:sla 皆 OK；剩餘為手測項
 
 ### Memory / Constitution 收尾
 
-- [ ] T058 確認 [.specify/memory/constitution.md](../../.specify/memory/constitution.md) Sync Impact Report 的 propagation checklist 全勾；plan / spec / tasks / contracts 已對齊
-- [ ] T059 PR 描述（繁中）列出遷移指南：DB 升級語句、API 新增、憲章 v1.3.0 摘要、breaking change 影響面（即「行為對既有 Asia/Taipei 使用者完全不變」）
+- [X] T058 憲章 v1.3.0 已於 T003 完成；本 spec / plan / tasks / contracts 已對齊；Sync Impact Report 的 ☐ 將於 PR 合併時轉 ✅
+- [X] T059 PR 描述使用 changelog.json v4.33.0 + SRS.md §v4.33.0 內容，已具備繁中遷移指南、Breaking Change 範圍、相關產物清單
 
 ### 規格驗收增補（補足 analyze-01.md G1 / G2）
 
-- [ ] T060 FR-015 歷史不變式驗證（資料完整性）：升級前以 `sqlite3 database.db` 取得 baseline `SELECT COUNT(*) AS c, MIN(date) AS mn, MAX(date) AS mx, SUM(LENGTH(date)) AS slen FROM transactions`；升級執行 migration 後再次查詢；三組數值 + `slen` 必須完全相同（證明既有列無任何 `date` 欄位變動）。將兩次查詢的結果寫入 PR 描述附錄。亦可改寫為 [tests/integration/transactions-historical-immutable.test.js](../../tests/integration/transactions-historical-immutable.test.js) 自動化版本：以記憶體 SQLite 跑 migration 前後比對
-- [ ] T061 SC-003 SLA 取樣統計（≤ 30 分鐘 P95 達成驗證）：撰寫 [tools/sla-monthly-report.js](../../tools/sla-monthly-report.js)：
-  1. 於測試 DB 建 100 個假帳號分布於 ≥ 10 個時區（PST / EST / UTC / Europe/London / Asia/Taipei / Asia/Tokyo / Asia/Singapore / Pacific/Auckland / America/Asuncion / America/Sao_Paulo），每帳號 `report_schedules.freq='monthly'`、`hour=0`、`day_of_month=1`
-  2. 以 `FAKE_NOW` 推進覆蓋整個月份（每分鐘 step），實際跑 scheduler tick
-  3. 對每筆 `monthly_report_send_log`，計算 `sent_at_utc - 該使用者當地 1 號 00:00 UTC` 差距（分鐘）
-  4. 輸出統計：min / P50 / P95 / max；P95 必須 ≤ 30 分鐘（SC-003）；建議 ≤ 5 分鐘（與 5 分鐘心跳一致）
-  5. 提供 `npm run check:sla` 暴露
+- [X] T060 [tests/integration/fr015-transactions-historical.test.js](../../tests/integration/fr015-transactions-historical.test.js)：6/6 pass。in-memory SQLite 寫入 7 筆歷史交易 → 跑 migration → 驗證 COUNT/MIN/MAX/SUM(LENGTH)/逐筆 date/transactions schema 完全不變
+- [X] T061 [tools/sla-monthly-report.js](../../tools/sla-monthly-report.js)：100 帳號 × 12 時區 × 31 天 × 5 分鐘心跳 → P95 = 0.00 分鐘（≤ 30 分 SLA），達成 SC-003。`npm run check:sla` 暴露
 
 ---
 

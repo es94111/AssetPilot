@@ -5,6 +5,17 @@
 **Status**: Draft
 **Input**: 將系統時區從寫死 `Asia/Taipei` 升級為「per-user 可設定」。後端時間以 UTC+0 + ISO 8601 為唯一語意，前端依使用者偏好時區呈現。
 
+## Clarifications
+
+### Session 2026-04-29
+
+> 註：本次於 Auto 模式下執行 `/speckit.clarify`，所有題目以「採用推薦答案」自動結算；若有任一處需調整，請於後續 PR review 時直接覆寫對應段落。
+
+- Q: 月度報表郵件寄送失敗（`monthly_report_send_log.send_status='failed'`）的後續處理策略？ → A: 失敗列保留為事實紀錄，scheduler 不自動重試（避免風暴）；管理員可透過下一個迭代新增的內部腳本／API 手動清除 failed 列以觸發重寄。本功能 PR 範圍僅實作「不自動重試」的去重保護，不交付管理員手動觸發 UI/API。
+- Q: 「既有使用者首次登入時提示時區」的觸發判斷依據（避免每次登入都打擾）？ → A: 同時滿足下列三條件才彈窗：(1) `currentUser.timezone === 'Asia/Taipei'`（亦即仍為預設值），(2) `Intl.DateTimeFormat().resolvedOptions().timeZone !== 'Asia/Taipei'`，(3) `localStorage.tzPromptDismissedUntil` 為空或已過期；使用者按「不要」即寫入 `now + 7 days`，按「是」即 PATCH 並清除該 key。一旦使用者主動於設定頁變更過時區（`timezone !== 'Asia/Taipei'`），永久不再彈窗。
+- Q: 變更 `users.timezone` 是否需要寫入 `data_operation_audit_log`？ → A: 是。任一次成功的 `PATCH /api/users/me/timezone` 必須寫一列稽核紀錄，`action = 'user.timezone.update'`，`metadata` 包含 `from`、`to` 兩值與 `source`（`auto-detect` / `manual`）；目的是支援後續「使用者反映時間錯亂」時可回溯時區變更歷程。
+- Q: `*_at` 欄位 ISO 8601 字串的小數秒精度規範？ → A: 新寫入路徑一律輸出毫秒精度（`YYYY-MM-DDTHH:mm:ss.sssZ`，等同 `new Date().toISOString()` 預設輸出）；既有 row 若以無毫秒形式（`YYYY-MM-DDTHH:mm:ssZ`）入庫，由統一的 `toIsoUtc()` 工具於 API 出口補齊毫秒（補 `.000`）。任一非 `Z` 結尾或包含時區偏移（如 `+08:00`）的輸出視為違規。
+
 ## 使用者情境與測試 *(必填)*
 
 ### User Story 1 — 非台灣使用者的「自然日」正確歸屬（Priority: P1）
@@ -63,7 +74,7 @@
 - **使用者中途修改時區**：`transactions.date` 既存值不重算；改時區後，新增交易與「今天／當月」邏輯立即採用新時區。
 - **TWSE 台股交易時間判斷**：屬市場時間而非使用者偏好，永久鎖定 `Asia/Taipei`；本功能不改變此行為。
 - **歷史資料的 `transactions.date`**：本功能上線前的列被視為「以 Asia/Taipei 自然日寫入」；不做資料遷移，現有解讀對既有 Asia/Taipei 使用者不變。
-- **共用裝置／VPN**：自動偵測在「首次登入」階段可能取得非使用者真實所在時區；以「提示確認」而非「強制覆寫」處理。
+- **共用裝置／VPN**：自動偵測階段可能取得非使用者真實所在時區；以「提示確認」而非「強制覆寫」處理（細節見 FR-010 的 3 條件判斷）。一旦使用者按「不要」，7 天靜默期內不再打擾。
 - **無效時區字串**：API 與前端 UI 雙層阻擋；後端視為驗證錯誤回 400。
 - **時區資料庫過時**：依賴 Node.js 內建 ICU；若部署環境 ICU 缺漏特定時區，視為部署環境問題，由運維修復而非應用層處理。
 - **既有使用者大量升級**：所有未指定時區的使用者套用預設 `Asia/Taipei`，不發信也不強制提示；只在他下次登入時觸發 User Story 2 的提示流程。
@@ -77,18 +88,25 @@
 - **FR-002**: 系統 MUST 拒絕任何非 IANA tz database 識別碼的時區值（包含縮寫如 `PST`、固定偏移如 `UTC+8`、空字串、null）。
 
 #### 後端時間語意
-- **FR-003**: 後端任何 timestamp 性質的欄位（`*_at`、`created_at`、`updated_at`、`last_login_at` 等）在 API 回應中 MUST 以 ISO 8601 UTC 字串呈現，且以 `Z` 結尾（例如 `2026-04-29T07:30:00.000Z`）。
+- **FR-003**: 後端任何 timestamp 性質的欄位（`*_at`、`created_at`、`updated_at`、`last_login_at` 等）在 API 回應中 MUST 以 ISO 8601 UTC 字串呈現，且以 `Z` 結尾（例如 `2026-04-29T07:30:00.000Z`）。**精度要求**：新寫入路徑一律包含毫秒（等同 `new Date().toISOString()` 預設輸出）；既有以無毫秒形式入庫的列由統一的 `toIsoUtc()` 工具於 API 出口補齊毫秒（補 `.000`）。任一非 `Z` 結尾或包含時區偏移（如 `+08:00`）的輸出視為違規。
 - **FR-004**: 後端在內部進行任何「今天」「當月」「未來日」的判斷時 MUST 使用該操作所針對的使用者的時區，不得使用 process timezone、`Asia/Taipei` 寫死值或瀏覽器回報值。
 - **FR-005**: `transactions.date` 欄位 MUST 維持 `YYYY-MM-DD` 字串格式，但語意定義為「該交易所有人於其偏好時區的當地自然日」；新增交易時若未明確指定 `date`，後端 MUST 以該使用者時區下的「今天」字串為預設值。
-- **FR-006**: 月度報表郵件的觸發條件 MUST 由「全系統台灣時區月初 00:00」改為「該使用者於其偏好時區的月初 00:00」；同一使用者於同一月份 MUST NOT 收到重複郵件。
+- **FR-006**: 月度報表郵件的觸發條件 MUST 由「全系統台灣時區月初 00:00」改為「該使用者於其偏好時區的月初 00:00」；同一使用者於同一月份 MUST NOT 收到重複郵件。失敗處理見 FR-018。
 
 #### API
 - **FR-007**: 系統 MUST 提供 `GET /api/users/me` 端點回傳當前使用者個人資料，回傳體 MUST 包含 `timezone` 欄位（IANA 字串）。
-- **FR-008**: 系統 MUST 提供 `PATCH /api/users/me/timezone` 端點允許使用者更新自己的時區；端點 MUST 驗證輸入為合法 IANA 識別碼，否則回 400 並維持原值不變。
+- **FR-008**: 系統 MUST 提供 `PATCH /api/users/me/timezone` 端點允許使用者更新自己的時區；端點 MUST 驗證輸入為合法 IANA 識別碼，否則回 400 並維持原值不變。任一次成功變更 MUST 寫入既有 `data_operation_audit_log` 一列，`action = 'user.timezone.update'`，metadata 包含 `from`、`to`、`source ∈ {'auto-detect','manual'}` 三欄。
 - **FR-009**: 所有現有依賴「今天／當月」邏輯的 API 端點（餘額、預算、月份報表、定期交易展開、未來日驗證）MUST 改以呼叫者時區計算，且對 `timezone == 'Asia/Taipei'` 的使用者 MUST 維持與升級前完全一致的回應。
 
 #### 前端體驗
-- **FR-010**: 前端在使用者首次登入時 MUST 偵測瀏覽器回報的 IANA 時區（`Intl.DateTimeFormat().resolvedOptions().timeZone`），並依規則處理：（a）新註冊使用者直接寫入；（b）既有使用者僅顯示一次性提示詢問是否更新，使用者拒絕後此次登入不再提示。
+- **FR-010**: 前端在登入後 MUST 偵測瀏覽器回報的 IANA 時區（`Intl.DateTimeFormat().resolvedOptions().timeZone`），並依規則處理：
+  - **(a) 新註冊使用者**（剛完成 `/api/register` 或首次 OAuth callback 的同一個 session）：直接送出 `PATCH /api/users/me/timezone`，`source = 'auto-detect'`。
+  - **(b) 既有使用者**：當且僅當以下 3 條件**同時**成立才彈出一次性提示對話框：
+    1. `currentUser.timezone === 'Asia/Taipei'`（仍為預設值）
+    2. `Intl.DateTimeFormat().resolvedOptions().timeZone !== 'Asia/Taipei'`
+    3. `localStorage.tzPromptDismissedUntil` 不存在或其值早於 `Date.now()`
+  - 使用者按「是」→ PATCH（`source = 'auto-detect'`）並清除 `tzPromptDismissedUntil`；按「不要」→ 寫入 `localStorage.tzPromptDismissedUntil = Date.now() + 7 * 86400 * 1000`。
+  - 一旦使用者透過個人設定頁主動將時區改為非 `Asia/Taipei`（即任意 `manual` 變更），此提示永久不再彈出（條件 1 自然失敗）。
 - **FR-011**: 前端 MUST 在「個人設定」頁提供時區選擇介面（搜尋／選單），允許使用者在所有合法 IANA 時區中選擇任一值。
 - **FR-012**: 前端任何時間顯示 MUST 依當前登入使用者的偏好時區呈現（不依賴瀏覽器系統時區），並標示該時區（例如 `2026-04-29 15:30 (Asia/Taipei)`）。
 - **FR-013**: 前端送出至後端的「日期類」欄位（如新增交易的 `date`）MUST 為使用者時區下的當地自然日字串；送出至後端的「時間戳類」欄位 MUST 為 UTC ISO 8601。
@@ -98,6 +116,7 @@
 - **FR-015**: 既有 `transactions.date` 列（升級前已寫入者）MUST 不被遷移；其語意一律解讀為「以 `Asia/Taipei` 寫入的當地自然日」。
 - **FR-016**: 系統 MUST 在憲章（`.specify/memory/constitution.md`）中將既有 FR-007a「鎖 UTC+8」原則修訂為「per-user 時區」，並新增「Time & Timezone Discipline」治理原則；本變更 MUST 與本功能於同一 PR 合併。
 - **FR-017**: 本功能 MUST 同步更新 `openapi.yaml`（含 `users` 物件 schema、`/api/users/me`、`/api/users/me/timezone`）並通過 `npx @redocly/cli lint openapi.yaml` 檢核；OpenAPI 文件版本 `openapi: 3.2.0` MUST 保持不變。
+- **FR-018**: 月度報表郵件寄送失敗時，`monthly_report_send_log.send_status` MUST 標記為 `failed` 並保留 `error_message`；scheduler MUST NOT 自動重試。本功能不交付管理員手動清除／重觸發 UI 或 API（屬後續迭代範圍）。
 
 ### Key Entities
 

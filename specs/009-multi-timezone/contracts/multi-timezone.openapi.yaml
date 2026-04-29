@@ -1,0 +1,187 @@
+openapi: 3.2.0
+info:
+  title: AssetPilot — Multi-Timezone API
+  version: 0.1.0
+  description: |
+    本契約描述 009-multi-timezone 功能新增／修改的 API 端點。
+    完整契約於合併時併入專案根 `openapi.yaml`。
+
+    時區語意：
+    - 所有 timestamp（`*_at`）一律 UTC ISO 8601 字串，以 `Z` 結尾。
+    - `timezone` 欄位為 IANA tz database 識別碼字串。
+    - 「日期」欄位（`YYYY-MM-DD`）為使用者當地自然日，由前端依
+      使用者時區產生後送出。
+
+servers:
+  - url: https://example.invalid
+    description: 佔位符；實際 URL 由部署環境決定，本契約僅描述路徑與 schema。
+
+security:
+  - jwtCookie: []
+
+tags:
+  - name: users
+    description: 使用者個人資料與偏好設定
+
+paths:
+  /api/users/me:
+    get:
+      tags: [users]
+      summary: 取得當前登入使用者資料
+      description: |
+        回傳完整的 User 物件，包含 `timezone`、`theme_mode` 等個人化欄位。
+        前端登入後會立即呼叫此端點以初始化 `currentUser` 全域狀態。
+      operationId: getCurrentUser
+      responses:
+        '200':
+          description: 成功取得使用者資料
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/users/me/timezone:
+    patch:
+      tags: [users]
+      summary: 更新當前登入使用者的偏好時區
+      description: |
+        將使用者的 `timezone` 欄位更新為指定 IANA 識別碼。
+        若值非合法 IANA 識別碼（包含縮寫如 `PST`、固定偏移如 `UTC+8`），
+        伺服器回 `400` 並維持原值不變。
+      operationId: patchCurrentUserTimezone
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTimezoneRequest'
+            examples:
+              valid:
+                value: { timezone: America/Los_Angeles }
+              invalidAbbrev:
+                value: { timezone: PST }
+              invalidOffset:
+                value: { timezone: UTC+8 }
+      responses:
+        '200':
+          description: 更新成功，回傳完整 User 物件
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: 時區無效
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+              example:
+                error: 時區格式無效
+                code: ValidationError
+                field: timezone
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+components:
+  securitySchemes:
+    jwtCookie:
+      type: apiKey
+      in: cookie
+      name: token
+      description: JWT 寫於 HttpOnly cookie，由 `/api/login`、`/api/oauth/google/callback` 設定。
+
+  responses:
+    Unauthorized:
+      description: 未登入或 token 無效／已撤銷
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  schemas:
+    User:
+      type: object
+      required:
+        - id
+        - email
+        - display_name
+        - timezone
+        - has_password
+        - is_admin
+        - is_active
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: 使用者 UUID
+        email:
+          type: string
+          format: email
+        display_name:
+          type: string
+          minLength: 1
+          maxLength: 64
+        timezone:
+          type: string
+          description: IANA tz database 識別碼
+          example: Asia/Taipei
+        has_password:
+          type: boolean
+        google_id:
+          type: string
+          description: 已連動 Google 帳號的 sub；未連動時為空字串
+        avatar_url:
+          type: string
+        theme_mode:
+          type: string
+          enum: [system, light, dark]
+        is_admin:
+          type: boolean
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+          description: ISO 8601 UTC（必含 `Z`）
+        updated_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    UpdateTimezoneRequest:
+      type: object
+      required: [timezone]
+      properties:
+        timezone:
+          type: string
+          description: 必須為 IANA tz database 合法識別碼
+          example: America/Los_Angeles
+        source:
+          type: string
+          enum: [auto-detect, manual]
+          default: manual
+          description: |
+            指示本次變更的來源；用於寫入 `data_operation_audit_log.metadata.source`。
+            前端自動偵測流程傳 `auto-detect`；設定頁手動變更傳 `manual`。
+            未提供時後端視為 `manual`。
+
+    ErrorResponse:
+      type: object
+      required: [error, code]
+      properties:
+        error:
+          type: string
+        code:
+          type: string
+
+    ValidationError:
+      allOf:
+        - $ref: '#/components/schemas/ErrorResponse'
+        - type: object
+          properties:
+            field:
+              type: string
+              description: 引發驗證錯誤的欄位名稱

@@ -560,6 +560,87 @@ body.dark-mode .mobile-header {
 /* dark mode */
 body.dark-mode .batch-cat-section { color: var(--primary-light); }
 
+/* ===== 多選下拉（filterCategory 等） ===== */
+.multi-select { position: relative; min-width: 160px; }
+.multi-select-trigger {
+  display: flex; align-items: center; gap: 8px;
+  width: 100%; min-height: 38px; padding: 7px 12px;
+  border: 1.5px solid var(--border);
+  border-radius: 10px; font-size: 14px;
+  background: var(--surface); color: var(--text);
+  cursor: pointer; text-align: left;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+.multi-select-trigger:hover { border-color: var(--primary-light); }
+.multi-select-trigger:focus,
+.multi-select-trigger.active {
+  outline: none; border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(79,110,247,.1);
+}
+.multi-select-label {
+  flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.multi-select-arrow {
+  font-size: 11px; color: var(--text-secondary);
+  transition: transform var(--transition-fast);
+  flex-shrink: 0;
+}
+.multi-select-trigger.active .multi-select-arrow { transform: rotate(180deg); }
+
+.multi-select-dropdown {
+  display: none; position: absolute; top: calc(100% + 4px); left: 0;
+  min-width: 100%; max-width: 320px;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  box-shadow: var(--shadow-md);
+  max-height: 360px; overflow-y: auto; padding: 6px 0;
+  z-index: 50;
+  animation: multiSelectIn .15s ease-out;
+}
+.multi-select-dropdown.open { display: block; }
+@keyframes multiSelectIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: none; }
+}
+.multi-select-actions {
+  display: flex; gap: 6px; padding: 4px 10px 8px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 4px;
+}
+.multi-select-action {
+  flex: 1; padding: 5px 10px; font-size: 12px; font-weight: 500;
+  border: 1px solid var(--border); border-radius: 6px;
+  background: var(--surface); color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+.multi-select-action:hover {
+  border-color: var(--primary); color: var(--primary);
+  background: var(--primary-light-bg);
+}
+.multi-select-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 14px;
+  font-size: 13px; color: var(--text);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+  user-select: none;
+}
+.multi-select-item:hover { background: var(--bg); }
+.multi-select-item input[type="checkbox"] {
+  margin: 0; flex-shrink: 0; cursor: pointer;
+  width: 14px; height: 14px;
+  accent-color: var(--primary);
+}
+.multi-select-item.parent { font-weight: 600; }
+.multi-select-item.child { padding-left: 32px; font-size: 12.5px; color: var(--text-secondary); }
+.multi-select-group + .multi-select-group { margin-top: 4px; padding-top: 4px; border-top: 1px solid var(--border); }
+.multi-select-dropdown::-webkit-scrollbar { width: 4px; }
+.multi-select-dropdown::-webkit-scrollbar-track { background: transparent; }
+.multi-select-dropdown::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+.multi-select-dropdown::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
 /* ===== 分頁 ===== */
 .pagination {
   display: flex; justify-content: center; gap: 4px;

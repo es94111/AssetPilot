@@ -6881,7 +6881,24 @@ app.get('/api/transactions', (req, res) => {
       where += ` AND ${txCol('type')} = ?`; params.push(type);
     }
   }
-  if (categoryId && categoryId !== 'all') { where += ` AND ${txCol('category_id')} = ?`; params.push(categoryId); }
+  if (categoryId && categoryId !== 'all') {
+    // 多選分類：categoryId 接受單一 ID 或逗號分隔（前端 multi-select 與 URL 深連結共用）
+    // 每個 ID 若為父分類則展開為「父 + 所有子分類」；葉子分類保持自身（FR-015a）
+    const requested = String(categoryId).split(',').map(s => s.trim()).filter(Boolean);
+    if (requested.length > 0) {
+      const placeholders = requested.map(() => '?').join(',');
+      const childRows = queryAll(
+        `SELECT id FROM categories WHERE user_id = ? AND parent_id IN (${placeholders})`,
+        [req.userId, ...requested]
+      );
+      const expanded = new Set(requested);
+      childRows.forEach(r => expanded.add(r.id));
+      const ids = [...expanded];
+      const idPh = ids.map(() => '?').join(',');
+      where += ` AND ${txCol('category_id')} IN (${idPh})`;
+      params.push(...ids);
+    }
+  }
   if (accountId && accountId !== 'all') { where += ` AND ${txCol('account_id')} = ?`; params.push(accountId); }
   if (keyword) { where += ` AND LOWER(${txCol('note')}) LIKE LOWER(?)`; params.push(`%${keyword}%`); }
 

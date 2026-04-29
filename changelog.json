@@ -4,16 +4,15 @@
     {
       "version": "4.33.0",
       "date": "2026-04-29",
-      "title": "多時區支援：時間從寫死台灣升級為 per-user 可設定（Breaking Change）",
-      "type": "breaking",
+      "title": "新增多時區支援：海外使用者也能看到正確的「今天」",
+      "type": "new",
       "changes": [
-        { "tag": "feature", "text": "**多時區支援**：每位使用者現在可在「個人設定 → 時區」自選任一 IANA 時區（搜尋下拉支援 400+ 區域）。所有「今天／本月／餘額／預算／月度報表郵件」邊界一律以該使用者的偏好時區計算，不再寫死 Asia/Taipei。既有帳號預設仍為 Asia/Taipei，不需任何手動操作。" },
-        { "tag": "feature", "text": "**自動偵測**：登入後若使用者帳號仍為預設 Asia/Taipei、但瀏覽器位於不同時區，會彈出一次性確認對話框詢問是否更新。按「不要」7 天內不再提示；按「是」立即套用並寫入稽核紀錄。" },
-        { "tag": "feature", "text": "**月度報表郵件 per-user 寄送**：原本固定在台灣 1 號 00:00 寄送，現改為「使用者當地 1 號 00:00」觸發。新增 `monthly_report_send_log` 表以 UNIQUE(user_id, year_month) 確保每月一封不重寄；寄送失敗保留紀錄、不自動重試。" },
-        { "tag": "feature", "text": "**新增 API**：`GET /api/users/me`（含 timezone）、`PATCH /api/users/me/timezone`（每次成功變更寫入 data_operation_audit_log）。" },
-        { "tag": "improved", "text": "**TWSE 台股交易時間判斷**例外保留 Asia/Taipei（市場時間非使用者偏好），源碼加註解標明。" },
-        { "tag": "breaking", "text": "**憲章升至 v1.3.0**：新增 Principle IV「Time & Timezone Discipline」（後端 UTC ISO 8601 Z + per-user IANA），FR-007a 由「鎖 UTC+8」修訂為「per-user `users.timezone` 預設 Asia/Taipei」。Breaking 影響面有限：既有 Asia/Taipei 使用者所有 API 回應與 UI 行為相對升級前 100% 一致（regression-free）。" },
-        { "tag": "improved", "text": "**`*_at` 欄位 ISO 8601 UTC 規範**：本功能新增的端點（`/api/users/me`、`monthly_report_send_log.sent_at_utc`、audit log timestamp）一律輸出 `YYYY-MM-DDTHH:mm:ss.sssZ`。既有欄位（型別不一致）保留原表示法以維持 regression-free，全面正規化為下個迭代範圍。" }
+        { "tag": "warning", "text": "升級後既有使用者預設仍為台北時區，行為完全不變。若你目前實際在海外，建議升級後到「個人設定 → 時區」確認偏好時區，調整後不需重新登入即可立即生效。" },
+        { "tag": "new", "text": "個人設定頁新增「時區」設定，可從 400 多個世界時區中搜尋並選擇任一時區。系統會依此判斷你的「今天／本月」邊界，所有時間／日期顯示也會以你選定的時區呈現。預設為台北時區，不需手動設定也能正常使用。" },
+        { "tag": "new", "text": "登入後若系統偵測到你的瀏覽器時區與帳號設定不同，會彈出一次性確認對話框詢問是否更新（按「不要」7 天內不會再打擾，按「是」立即套用）。第一次出國旅行、搬家或瀏覽器時區改變時很實用。" },
+        { "tag": "improved", "text": "海外時區使用者於當地深夜記錄的交易，現在會被正確歸入「當地當天」而不是被系統錯歸到隔天。先前洛杉磯使用者於當地晚間 11:30 記帳會被歸到台北時區的隔天，導致「今日支出」「本月小計」錯亂；本版完整修正。" },
+        { "tag": "improved", "text": "月度資產統計信件改為依各使用者的當地時區寄送（每月 1 號當地凌晨 0 點）。例如帳號設為紐約時區的使用者會在紐約 1 號 0 點收到信，而不是台北 1 號 0 點。對台北時區使用者來說，寄信時間維持不變。" },
+        { "tag": "improved", "text": "台股交易時間判斷（週一至週五 09:00–13:30）永遠以台灣時區為準，不會因為使用者個人偏好時區改成洛杉磯就誤判為「閉市」。市場開盤時段是真實世界的事實，與個人時區設定無關。" }
       ]
     },
     {

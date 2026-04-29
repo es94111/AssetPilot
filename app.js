@@ -8488,7 +8488,6 @@ const App = (() => {
       const children = cats.filter(c => c.parentId === p.id);
       if (children.length > 0) {
         html += `<optgroup label="${escHtml(p.name)}">`;
-        html += `<option value="${p.id}">${escHtml(p.name)}（全部）</option>`;
         children.forEach(c => { html += `<option value="${c.id}">${escHtml(c.name)}</option>`; });
         html += '</optgroup>';
       } else {

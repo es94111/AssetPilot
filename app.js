@@ -2480,24 +2480,134 @@ const App = (() => {
   }
 
   function populateFilterSelects() {
-    const cats = cachedCategories;
-    let catHtml = '<option value="all">全部</option>';
-    const parents = cats.filter(c => !c.parentId);
-    parents.forEach(p => {
-      const children = cats.filter(c => c.parentId === p.id);
-      if (children.length > 0) {
-        catHtml += `<optgroup label="${escHtml(p.name)}">`;
-        children.forEach(c => { catHtml += `<option value="${c.id}">${escHtml(c.name)}</option>`; });
-        catHtml += '</optgroup>';
-      } else {
-        catHtml += `<option value="${p.id}">${escHtml(p.name)}</option>`;
-      }
-    });
-    el('filterCategory').innerHTML = catHtml;
+    populateFilterCategoryItems();
+    bindFilterCategoryEvents();
 
     let accHtml = '<option value="all">全部</option>';
     cachedAccounts.forEach(a => accHtml += `<option value="${a.id}">${escHtml(a.name)}</option>`);
     el('filterAccount').innerHTML = accHtml;
+  }
+
+  // ─── 分類多選 ───
+  // 空 Set = 「全部」（不送 categoryId 參數）
+  let filterCategoryIds = new Set();
+
+  function populateFilterCategoryItems() {
+    const wrap = el('filterCategoryItems');
+    if (!wrap) return;
+    const cats = cachedCategories;
+    const parents = cats.filter(c => !c.parentId);
+    let html = '';
+    parents.forEach(p => {
+      const children = cats.filter(c => c.parentId === p.id);
+      if (children.length > 0) {
+        html += '<div class="multi-select-group">';
+        html += `<label class="multi-select-item parent"><input type="checkbox" data-id="${p.id}" data-role="parent"><span>${escHtml(p.name)}</span></label>`;
+        children.forEach(c => {
+          html += `<label class="multi-select-item child"><input type="checkbox" data-id="${c.id}" data-role="child" data-parent-id="${p.id}"><span>${escHtml(c.name)}</span></label>`;
+        });
+        html += '</div>';
+      } else {
+        html += `<label class="multi-select-item"><input type="checkbox" data-id="${p.id}" data-role="leaf"><span>${escHtml(p.name)}</span></label>`;
+      }
+    });
+    wrap.innerHTML = html;
+    refreshFilterCategoryUI();
+  }
+
+  function refreshFilterCategoryUI() {
+    const wrap = el('filterCategoryItems');
+    if (wrap) {
+      wrap.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+        cb.checked = filterCategoryIds.has(cb.dataset.id);
+      });
+    }
+    const label = el('filterCategoryLabel');
+    if (label) {
+      if (filterCategoryIds.size === 0) {
+        label.textContent = '全部';
+      } else if (filterCategoryIds.size === 1) {
+        const id = [...filterCategoryIds][0];
+        const cat = cachedCategories.find(c => c.id === id);
+        label.textContent = cat ? cat.name : '已選 1 項';
+      } else {
+        label.textContent = `已選 ${filterCategoryIds.size} 項`;
+      }
+    }
+  }
+
+  function setFilterCategoryIdsFromString(raw) {
+    filterCategoryIds = new Set(
+      String(raw || '')
+        .split(',')
+        .map(s => s.trim())
+        .filter(Boolean)
+        .filter(id => id !== 'all')
+    );
+    refreshFilterCategoryUI();
+  }
+
+  function bindFilterCategoryEvents() {
+    const trigger = el('filterCategoryTrigger');
+    const dropdown = el('filterCategoryDropdown');
+    const wrap = el('filterCategoryWrap');
+    if (!trigger || !dropdown || !wrap || trigger.dataset.bound) return;
+    trigger.dataset.bound = '1';
+
+    trigger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const open = !dropdown.classList.contains('open');
+      dropdown.classList.toggle('open', open);
+      trigger.classList.toggle('active', open);
+      trigger.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+
+    dropdown.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const actionBtn = e.target.closest('.multi-select-action');
+      if (actionBtn) {
+        if (actionBtn.dataset.action === 'all') {
+          filterCategoryIds = new Set(cachedCategories.map(c => c.id));
+        } else if (actionBtn.dataset.action === 'none') {
+          filterCategoryIds.clear();
+        }
+        refreshFilterCategoryUI();
+        return;
+      }
+      const cb = e.target.closest('input[type="checkbox"]');
+      if (!cb) return;
+      const id = cb.dataset.id;
+      const role = cb.dataset.role;
+      if (cb.checked) filterCategoryIds.add(id); else filterCategoryIds.delete(id);
+
+      if (role === 'parent') {
+        // 父分類同步全部子分類
+        cachedCategories.filter(c => c.parentId === id).forEach(child => {
+          if (cb.checked) filterCategoryIds.add(child.id); else filterCategoryIds.delete(child.id);
+        });
+      } else if (role === 'child') {
+        const parentId = cb.dataset.parentId;
+        if (!cb.checked) {
+          // 子分類取消 → 父分類也取消（避免 backend 展開時重新包含此子分類）
+          filterCategoryIds.delete(parentId);
+        } else {
+          // 全部子分類已選 → 自動勾起父分類
+          const siblings = cachedCategories.filter(c => c.parentId === parentId);
+          if (siblings.every(s => filterCategoryIds.has(s.id))) {
+            filterCategoryIds.add(parentId);
+          }
+        }
+      }
+      refreshFilterCategoryUI();
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('#filterCategoryWrap')) {
+        dropdown.classList.remove('open');
+        trigger.classList.remove('active');
+        trigger.setAttribute('aria-expanded', 'false');
+      }
+    });
   }
 
   // T060-T062：sort state + URL sync（FR-050~052）
@@ -2508,14 +2618,14 @@ const App = (() => {
     const dateFrom = el('filterDateFrom').value;
     const dateTo = el('filterDateTo').value;
     const type = el('filterType').value;
-    const catId = el('filterCategory').value;
+    const catIds = [...filterCategoryIds];
     const accId = el('filterAccount').value;
     const keyword = el('filterKeyword').value.trim();
 
     if (dateFrom) params.set('dateFrom', dateFrom);
     if (dateTo) params.set('dateTo', dateTo);
     if (type !== 'all') params.set('type', type);
-    if (catId !== 'all') params.set('categoryId', catId);
+    if (catIds.length > 0) params.set('categoryId', catIds.join(','));
     if (accId !== 'all') params.set('accountId', accId);
     if (keyword) params.set('keyword', keyword);
     params.set('page', page || 1);
@@ -2589,7 +2699,7 @@ const App = (() => {
       setVal('filterDateFrom', 'dateFrom');
       setVal('filterDateTo', 'dateTo');
       const t = qs.get('type'); if (t) el('filterType').value = t;
-      const c = qs.get('categoryId'); if (c) el('filterCategory').value = c;
+      const c = qs.get('categoryId'); if (c) setFilterCategoryIdsFromString(c); else { filterCategoryIds.clear(); refreshFilterCategoryUI(); }
       const a = qs.get('accountId'); if (a) el('filterAccount').value = a;
       const k = qs.get('keyword'); if (k) el('filterKeyword').value = k;
       const ps = qs.get('limit');
@@ -2743,7 +2853,8 @@ const App = (() => {
       el('filterDateFrom').value = '';
       el('filterDateTo').value = '';
       el('filterType').value = 'all';
-      el('filterCategory').value = 'all';
+      filterCategoryIds.clear();
+      refreshFilterCategoryUI();
       el('filterAccount').value = 'all';
       el('filterKeyword').value = '';
       el('filterPageSize').value = '20';

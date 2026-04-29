@@ -570,7 +570,19 @@
         </div>
         <div class="filter-group">
           <label>分類</label>
-          <select id="filterCategory"><option value="all">全部</option></select>
+          <div class="multi-select" id="filterCategoryWrap">
+            <button type="button" class="multi-select-trigger" id="filterCategoryTrigger" aria-haspopup="listbox" aria-expanded="false">
+              <span class="multi-select-label" id="filterCategoryLabel">全部</span>
+              <span class="multi-select-arrow" aria-hidden="true">▾</span>
+            </button>
+            <div class="multi-select-dropdown" id="filterCategoryDropdown" role="listbox" aria-multiselectable="true">
+              <div class="multi-select-actions">
+                <button type="button" class="multi-select-action" data-action="all">全選</button>
+                <button type="button" class="multi-select-action" data-action="none">清除</button>
+              </div>
+              <div class="multi-select-items" id="filterCategoryItems"></div>
+            </div>
+          </div>
         </div>
         <div class="filter-group">
           <label>帳戶</label>

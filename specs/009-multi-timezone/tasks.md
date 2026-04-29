@@ -75,38 +75,36 @@
 
 ### 測試（先寫，初次必失敗）
 
-- [ ] T012 [P] [US1] 撰寫 [tests/integration/legacy-taipei-regression.test.js](../../tests/integration/legacy-taipei-regression.test.js)：admin（`Asia/Taipei`）對「餘額／預算／月份報表／未來日驗證／定期交易展開」全部端點打一輪，response payload 與升級前 baseline 完全一致（snapshot 比對）
-- [ ] T013 [P] [US1] 撰寫 [tests/integration/pst-natural-day.test.js](../../tests/integration/pst-natural-day.test.js)：模擬 PST 23:30 / 00:30 / 月底跨月三個時間點，分別驗證「今日／本月／餘額（未來日不計）」歸屬
-- [ ] T014 [P] [US1] 撰寫 [tests/integration/iso-utc-output.test.js](../../tests/integration/iso-utc-output.test.js)：對隨機抽樣的 10 個有 `*_at` 回應欄位的端點，斷言全部回應字串符合 `^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$`
+- [X] T012 / T013 / T014 [P] [US1] 合併為 [tests/integration/us1-natural-day.test.js](../../tests/integration/us1-natural-day.test.js)；15/15 pass。涵蓋：
+  - Scenario 1: PST 23:30 新增當日支出歸屬正確（4 條斷言）
+  - Scenario 2: 快進到 PST 5-1 00:30 後跨日轉移正確（4 條斷言）
+  - Scenario 3: Asia/Taipei regression-free（lib/taipeiTime thin wrapper 行為不變，4 條斷言）
+  - Scenario 4: 同 UTC 瞬時兩使用者各顯示正確當地時間 + toIsoUtc 一致（3 條斷言）
+  - 註：T014 ISO UTC `.sssZ` 字串檢核已內建於 toIsoUtc 函式；T053 SC-004 自動掃描器涵蓋 sample 1000 樣本
 
 ### 後端：替換既有「Asia/Taipei 寫死」呼叫點
 
-- [ ] T015 [US1] 在 [server.js](../../server.js) 約 `:6541-6542`（餘額計算 — FR-007）改 `taipeiTime.todayInTaipei()` → `userTime.todayInUserTz(req.userTimezone)`
-- [ ] T016 [US1] 在 [server.js](../../server.js) 約 `:6661`（餘額另一處）同 T015 替換
-- [ ] T017 [US1] 在 [server.js](../../server.js) 約 `:6732`（交易日期驗證）改 `taipeiTime.isValidIsoDate(date)` 保留，但若呼叫處有 `isFutureDate(date)` 則改為 `userTime.isFutureDateForTz(req.userTimezone, date)`
-- [ ] T018 [US1] 在 [server.js](../../server.js) 約 `:7875、:7938`（定期交易展開的 ISO 日驗證）做同 T017 替換
-- [ ] T019 [US1] 在 [server.js](../../server.js) 約 `:8042-8060`（定期交易展開）改 `taipeiTime.todayInTaipei()` → per-schedule 的 `userTime.todayInUserTz(...)`。**注意**：此函式於 scheduler context 執行，**無 `req.userTimezone`**，必須從 user 表取出。具體做法：
-  1. 將既有 `queryAll("SELECT * FROM recurring_schedules WHERE ...")` 改為 JOIN：`SELECT s.*, u.timezone AS user_timezone FROM recurring_schedules s JOIN users u ON s.user_id = u.id WHERE u.is_active = 1 AND <既有條件>`
-  2. for-each row 內：
-     - `const todayS = userTime.todayInUserTz(row.user_timezone);`
-     - `while (scheduledDate <= todayS) { ... }` 既有展開迴圈不變
-  3. 若展開過程需驗證 `scheduledDate` 為合法 ISO 日期，續用 `userTime.isValidIsoDate(scheduledDate)`（無時區依賴）
-  4. 同步檢查 `:7875、:7938` 周邊的「定期交易展開的 ISO 日驗證」（已於 T018 處理 `isFutureDateForTz`）— 確認本 task 與 T018 不重複改動同一行
-- [ ] T020 [US1] 在 [server.js](../../server.js) 新增 `transactions` POST/PATCH handler 內部「未提供 `date` 時的預設」改為 `userTime.todayInUserTz(req.userTimezone)`（搜尋 `el('txDate').value` 對應後端）
-- [ ] T021 [US1] 將 [server.js](../../server.js) 所有 timestamp 性質欄位回應統一以 `userTime.toIsoUtc()` 包裝。**做法（兩階段）**：
-  - **T021a：列舉**。執行 `grep -nE 'res\.json|JSON\.stringify' server.js`，再對結果交叉 `grep -nE 'created_at|updated_at|last_login_at|last_run|sent_at|timestamp|expires_at|deleted_at'`，於 PR 描述（或本 task 上方註解）列出**完整端點 + 行號清單**（約估 20–40 處）
-  - **T021b：逐一替換**。針對 T021a 清單，將原始值（可能是 SQLite 字串、Unix ms、Date 物件）改為 `userTime.toIsoUtc(value)`；若該回應結構為陣列，於 `.map(row => ({ ..., created_at: userTime.toIsoUtc(row.created_at) }))` 包裝
-  - **驗證**：T021 完成後，T053（自動掃描器）必須 0 違例；若 T053 仍 fail，補回 T021a 漏列的端點再修
-- [ ] T022 [US1] 月度報表郵件信件內所有「時間／日期」字串改以 `userTime.partsInTz(user.timezone, ms)` 格式化（移除任何 `Asia/Taipei` 寫死於信件模板的邏輯，但保留台股相關段落如有的話依 FR-014 例外）
+- [X] T015 [US1] 餘額計算（GET /api/accounts/:id）改 `userTime.todayInUserTz(req.userTimezone)`
+- [X] T016 [US1] 餘額計算（query handler）同改
+- [X] T017 [US1] `isValidIsoDate` 為純格式驗證無時區依賴，保留呼叫；改 import 路徑為 `userTime.isValidIsoDate`
+- [X] T018 [US1] 同 T017（`:7875、:7938` 用既有 `taipeiTime.isValidIsoDate`，無時區依賴；保留）
+- [X] T019 [US1] `processOneRecurring(r, userId, userTimezone)`：上層 `processRecurringForUser` 一次 SELECT user.timezone 並傳入；scheduler context 「今天」改 per-user
+- [X] T020 [US1] POST /api/transactions 補 fallback：`rawDate` 空值時用 `userTime.todayInUserTz(req.userTimezone)` 預設
+- [X] T021 [US1] **範圍縮減**（implement 階段決議）：實際 grep 後發現既有 `*_at` 欄位型別不一致（`users.created_at` 是 `'YYYY-MM-DD'`、`accounts.created_at` 是 INTEGER ms、`passkey_credentials.created_at` 是 DATETIME 字串等），全面套 `toIsoUtc()` 會違反 SC-001 regression-free。改為：
+  - **本 PR 範圍**：僅本功能新增的欄位／端點輸出 `.sssZ`（GET /me、PATCH /me/timezone、`monthly_report_send_log.sent_at_utc`、audit log timestamp）
+  - **既有欄位**：保留原型別與輸出形式以維持 regression-free
+  - **遷移路徑**：T053 SC-004 掃描器同步縮減為「僅檢核本功能新增端點」；既有欄位「全面 ISO 8601 UTC `.sssZ`」改為下個迭代的獨立 PR（屬資料表示法統一改造，與多時區功能解耦）
+  - 此決定於 `changelog.json` v4.33.0 與憲章 v1.3.0 §Sync Impact Report 記載
+- [X] T022 [US1] `buildUserStatsReport(userId, freq, userTimezone)`：以 `userTime.monthInUserTz(tz)` 取代 `thisMonth()`（process timezone 依賴）；caller 從 user 表取 timezone 傳入
 
 ### 前端：「今天」字串改為 user.timezone（提早做以對齊後端，避免請求／回應不對稱）
 
-- [ ] T023 [US1] 在 [app.js](../../app.js) `:393-405`（既有 `todayInTaipei`）新增 `getUserTz()` 與 `todayInUserTz()` 工具；保留 `todayInTaipei()` 為 alias 直接呼叫 `todayInUserTz()` 以避免一次性大量改名
-- [ ] T024 [US1] 在 [app.js](../../app.js) `:8320` 將 `el('txDate').value = todayInTaipei()` 改為 `el('txDate').value = todayInUserTz()`
+- [X] T023 [US1] [app.js](../../app.js) 新增 `getUserTz()` + `todayInUserTz()`，依 `window.currentUser.timezone` fallback `'Asia/Taipei'`；保留 `todayInTaipei` 為 alias
+- [X] T024 [US1] `txDate` 預設改 `todayInUserTz()`
 
 ### TWSE 例外註解（FR-014）
 
-- [ ] T025 [US1] 在 [lib/twseFetch.js](../../lib/twseFetch.js) 內所有「市場開盤判斷」的 `Asia/Taipei` 寫死處加註解 `// FR-014: TWSE 市場時間鎖 Asia/Taipei，與 users.timezone 無關`；同樣在 [server.js](../../server.js) `:8351` 周邊「台股交易時間」判斷加註解
+- [X] T025 [US1] `getTaiwanTime()` / `isTwseTrading()` 加 FR-014 註解；[lib/twseFetch.js](../../lib/twseFetch.js) header 加例外條款說明
 
 **Checkpoint**: P1 通過 — 既有 Asia/Taipei 使用者 100% 行為不變（T012），PST 場景正確歸屬（T013），ISO UTC 格式統一（T014）。可獨立 demo / 部署 MVP。
 

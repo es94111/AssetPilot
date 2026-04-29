@@ -85,7 +85,7 @@ const ym = monthInUserTz(user.timezone);
 try {
   db.run(
     "INSERT INTO monthly_report_send_log (id, user_id, year_month, schedule_id, sent_at_utc) VALUES (?, ?, ?, ?, ?)",
-    [uuid(), user.id, ym, schedule.id, new Date().toISOString()]
+    [crypto.randomUUID().replace(/-/g, ''), user.id, ym, schedule.id, new Date().toISOString()]
   );
   // INSERT 成功才實際送信；失敗（UNIQUE 衝突）即跳過此使用者
   await sendMonthlyReportEmail(user, ym);

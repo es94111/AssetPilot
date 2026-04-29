@@ -49,7 +49,9 @@
   - `isValidIsoDate(s)`：沿用既有 `lib/taipeiTime.js` 邏輯
   - `__nowMs()` / `__setNowMs(ms|null)`：測試 hook，預設讀 `process.env.FAKE_NOW`（ISO 字串）→ ms，否則 `Date.now()`
 - [ ] T008 改寫 [lib/taipeiTime.js](../../lib/taipeiTime.js) 為 thin wrapper：每個既有匯出函式內部呼叫 `lib/userTime.js` 的對應函式並固定傳 `'Asia/Taipei'`；保留既有 `module.exports` shape 維持向後相容
-- [ ] T009 在 [server.js](../../server.js) 既有 JWT auth middleware 之後加 `attachUserTimezone(req, res, next)` middleware：對需 auth 的 `/api/**` 路由前置一次 `SELECT timezone FROM users WHERE id = ?`，掛 `req.userTimezone`；fallback `'Asia/Taipei'`
+- [ ] T009 在 [server.js](../../server.js) 加 `attachUserTimezone(req, res, next)` middleware：讀 `req.userId`（由既有 JWT middleware `requireAuth` 提供）→ 一次 `SELECT timezone FROM users WHERE id = ?` → 掛 `req.userTimezone`；fallback `'Asia/Taipei'`。
+  - **註冊順序**：於 `requireAuth` 之**後**立即接 `attachUserTimezone`；公開端點（`/api/login`、`/api/register`、`/api/oauth/google/callback`、`/api/healthz` 等）不經 `requireAuth` → 自然不經 `attachUserTimezone`，無額外 SELECT 成本。
+  - **實作建議**：於既有 `requireAuth` 函式內部尾段直接補 `req.userTimezone = ...` 而非另立 middleware，避免雙重 DB 查詢；此為實作優化，不改變外部行為。
 
 ### Foundational 測試
 
@@ -60,6 +62,7 @@
   - `isFutureDateForTz`：3 組（過去日 → false、當天 → false、未來日 → true）；每組於 PST + Asia/Taipei 兩時區交叉驗證「跨日臨界」行為
   - `partsInTz`：對相同 ms 與 `Intl.DateTimeFormat.formatToParts` 拆解結果完全一致；包含 `weekday` 0–6 對應驗證
   - `toIsoUtc`：接受 ms / Date / `'2026-04-29 07:30:00'`（無 T、無 Z）／ `'2026-04-29T07:30:00.000Z'`（已是 `.sssZ`）／ `'2026-04-29T07:30:00Z'`（無毫秒，補 `.000`）5 種輸入皆輸出合法 `.sssZ`；對 `'2026-04-29T07:30:00+08:00'`、`'invalid'`、`null`、`undefined` 擲錯
+  - `isValidIsoDate`（沿用既有 `lib/taipeiTime.js` 邏輯，re-export）：合法 `'2026-04-29'` → true；月日越界 `'2026-02-30'`、`'2026-13-01'`、`'2026-04-31'` → false；非 ISO 格式 `'2026/04/29'`、`'04-29-2026'`、`'2026-4-29'` → false；非字串 `null`、`undefined`、`20260429` → false
 - [ ] T011 [P] 撰寫 [tests/migration/migration-009.test.js](../../tests/migration/migration-009.test.js)：跑 migration 後 `PRAGMA table_info(users)` 含 `timezone NOT NULL DEFAULT 'Asia/Taipei'`；`monthly_report_send_log` 表存在且 UNIQUE 約束生效（`INSERT OR ABORT` 第二筆相同 `(user_id, year_month)` 必失敗）
 
 **Checkpoint**: Foundation ready — user story 可開始平行進行。
@@ -132,7 +135,7 @@
     db.run(
       "INSERT INTO data_operation_audit_log (id, user_id, role, action, ip_address, user_agent, timestamp, result, is_admin_operation, metadata) VALUES (?,?,?,?,?,?,?,?,?,?)",
       [
-        uuid(),
+        crypto.randomUUID().replace(/-/g, ''),
         req.userId,
         'user',
         'user.timezone.update',
@@ -145,6 +148,7 @@
       ]
     );
     ```
+  - **ID 生成方式**：沿用既有 [server.js:1806](../../server.js#L1806) 慣例 `crypto.randomUUID().replace(/-/g, '')`；不引入 `uuid` package。
   - `src` 規則：`source === 'manual' || source === 'auto-detect' ? source : 'manual'`（白名單防注入）
 - [ ] T031 [US2] 在 [server.js](../../server.js) 註冊 / OAuth callback handler：保留既有預設 `'Asia/Taipei'` 寫入；不在後端做自動偵測（前端負責）
 

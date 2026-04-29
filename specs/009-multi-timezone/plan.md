@@ -109,8 +109,8 @@ specs/009-multi-timezone/
 
 > 各階段以「目標 / 變更檔案 / 驗證手段」描述。實際 task 拆分於 `/speckit.tasks` 產出 `tasks.md`。
 
-### Phase 0：憲章修訂與相依性確認 ✓
-**目標**：在開始實作前確保憲章 v1.3.0 草案就緒，避免「實作完成發現違憲必須回頭」。
+### Phase 0：憲章修訂與相依性確認
+**目標**：在開始實作前確保憲章 v1.3.0 草案就緒，避免「實作完成發現違憲必須回頭」。實際執行落於 `tasks.md` T003。
 
 **變更檔案**：
 - `.specify/memory/constitution.md`：
@@ -241,7 +241,7 @@ app.patch('/api/users/me/timezone', requireAuth, (req, res) => {
   db.run(
     "INSERT INTO data_operation_audit_log (id, user_id, role, action, ip_address, user_agent, timestamp, result, is_admin_operation, metadata) VALUES (?,?,?,?,?,?,?,?,?,?)",
     [
-      uuid(),
+      crypto.randomUUID().replace(/-/g, ''),  // 沿用 server.js 既有慣例
       req.userId,
       'user',
       'user.timezone.update',
@@ -290,7 +290,7 @@ function schedulerTick() {
       const sentAt = new Date(nowMs).toISOString();
       try {
         db.run("INSERT INTO monthly_report_send_log (id, user_id, year_month, schedule_id, sent_at_utc) VALUES (?, ?, ?, ?, ?)",
-          [uuid(), u.id, ym, sch.id, sentAt]);
+          [crypto.randomUUID().replace(/-/g, ''), u.id, ym, sch.id, sentAt]);
       } catch (e) {
         if (e.code === 'SQLITE_CONSTRAINT_UNIQUE') continue;
         throw e;

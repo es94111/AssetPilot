@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "start": "node server.js",
-    "test:tz": "node tests/lib/userTime.test.js && node tests/migration/migration-009.test.js && node tests/integration/us1-natural-day.test.js"
+    "test:tz": "node tests/lib/userTime.test.js && node tests/migration/migration-009.test.js && node tests/integration/us1-natural-day.test.js && node tests/integration/us2-users-me-timezone.test.js && node tests/integration/us3-monthly-report.test.js"
   },
   "engines": {
     "node": ">=24.0.0 <25"

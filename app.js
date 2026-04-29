@@ -3060,7 +3060,11 @@ const App = (() => {
   }
 
   function navigateToTransactions(opts) {
-    // FR-015a：圓餅圖點擊跳轉至預先篩選的交易列表，採同 SPA 內 push state 切頁
+    // FR-015a：圓餅圖點擊跳轉至預先篩選的交易列表
+    // 注意：008-frontend-routing 後 navigateToPath 會以 pushState(state, '', normalized)
+    // 覆寫 URL（normalized 不含 search/hash），舊 hash 寫法會被吃掉。
+    // 解法：先把 URL pushState 成「目標 pathname + 搜尋參數」，這樣 navigateToPath 內
+    // `location.pathname !== normalized` 條件為 false 就不會再 pushState 覆寫。
     const params = new URLSearchParams();
     if (opts.from) params.set('dateFrom', opts.from);
     if (opts.to) params.set('dateTo', opts.to);
@@ -3072,9 +3076,11 @@ const App = (() => {
       params.set('categoryId', opts.categoryId);
     }
     params.set('page', '1');
+    const targetPath = '/finance/transactions';
+    const targetUrl = targetPath + '?' + params.toString();
     try {
-      const newHash = `#/transactions?${params.toString()}`;
-      window.history.replaceState(null, '', newHash);
+      // pushState 進歷史；navigateToPath 之後會看到 pathname 已等於 normalized → 不覆寫
+      window.history.pushState({ path: targetPath, page: 'transactions', sub: null, scrollY: 0 }, '', targetUrl);
     } catch (e) { /* ignore */ }
     navigate('transactions', null);
   }

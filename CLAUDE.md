@@ -65,14 +65,14 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 <!-- SPECKIT START -->
 ## 目前進行中的功能規劃
 
-- 功能：前端路由與頁面（Frontend Routing & Pages）
-- 分支：`008-frontend-routing`
-- 規格：[specs/008-frontend-routing/spec.md](specs/008-frontend-routing/spec.md)
-- 計畫：[specs/008-frontend-routing/plan.md](specs/008-frontend-routing/plan.md)
+- 功能：多時區支援（Multi-Timezone Support）
+- 分支：`009-multi-timezone`
+- 規格：[specs/009-multi-timezone/spec.md](specs/009-multi-timezone/spec.md)
+- 計畫：[specs/009-multi-timezone/plan.md](specs/009-multi-timezone/plan.md)
 - 衍生產物：
-  - [research.md](specs/008-frontend-routing/research.md)
-  - [data-model.md](specs/008-frontend-routing/data-model.md)
-  - [quickstart.md](specs/008-frontend-routing/quickstart.md)
-  - [contracts/frontend-routing.openapi.yaml](specs/008-frontend-routing/contracts/frontend-routing.openapi.yaml)
+  - [research.md](specs/009-multi-timezone/research.md)
+  - [data-model.md](specs/009-multi-timezone/data-model.md)
+  - [quickstart.md](specs/009-multi-timezone/quickstart.md)
+  - [contracts/multi-timezone.openapi.yaml](specs/009-multi-timezone/contracts/multi-timezone.openapi.yaml)
 <!-- SPECKIT END -->
 

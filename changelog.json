@@ -1,6 +1,21 @@
 {
-  "currentVersion": "4.32.2",
+  "currentVersion": "4.33.0",
   "releases": [
+    {
+      "version": "4.33.0",
+      "date": "2026-04-29",
+      "title": "多時區支援：時間從寫死台灣升級為 per-user 可設定（Breaking Change）",
+      "type": "breaking",
+      "changes": [
+        { "tag": "feature", "text": "**多時區支援**：每位使用者現在可在「個人設定 → 時區」自選任一 IANA 時區（搜尋下拉支援 400+ 區域）。所有「今天／本月／餘額／預算／月度報表郵件」邊界一律以該使用者的偏好時區計算，不再寫死 Asia/Taipei。既有帳號預設仍為 Asia/Taipei，不需任何手動操作。" },
+        { "tag": "feature", "text": "**自動偵測**：登入後若使用者帳號仍為預設 Asia/Taipei、但瀏覽器位於不同時區，會彈出一次性確認對話框詢問是否更新。按「不要」7 天內不再提示；按「是」立即套用並寫入稽核紀錄。" },
+        { "tag": "feature", "text": "**月度報表郵件 per-user 寄送**：原本固定在台灣 1 號 00:00 寄送，現改為「使用者當地 1 號 00:00」觸發。新增 `monthly_report_send_log` 表以 UNIQUE(user_id, year_month) 確保每月一封不重寄；寄送失敗保留紀錄、不自動重試。" },
+        { "tag": "feature", "text": "**新增 API**：`GET /api/users/me`（含 timezone）、`PATCH /api/users/me/timezone`（每次成功變更寫入 data_operation_audit_log）。" },
+        { "tag": "improved", "text": "**TWSE 台股交易時間判斷**例外保留 Asia/Taipei（市場時間非使用者偏好），源碼加註解標明。" },
+        { "tag": "breaking", "text": "**憲章升至 v1.3.0**：新增 Principle IV「Time & Timezone Discipline」（後端 UTC ISO 8601 Z + per-user IANA），FR-007a 由「鎖 UTC+8」修訂為「per-user `users.timezone` 預設 Asia/Taipei」。Breaking 影響面有限：既有 Asia/Taipei 使用者所有 API 回應與 UI 行為相對升級前 100% 一致（regression-free）。" },
+        { "tag": "improved", "text": "**`*_at` 欄位 ISO 8601 UTC 規範**：本功能新增的端點（`/api/users/me`、`monthly_report_send_log.sent_at_utc`、audit log timestamp）一律輸出 `YYYY-MM-DDTHH:mm:ss.sssZ`。既有欄位（型別不一致）保留原表示法以維持 regression-free，全面正規化為下個迭代範圍。" }
+      ]
+    },
     {
       "version": "4.32.2",
       "date": "2026-04-29",

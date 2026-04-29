@@ -2820,41 +2820,323 @@ body.dark-mode .public-changelog-btn:hover { background: var(--surface); }
 }
 
 /* ─── 更新股價 Modal ─── */
+.price-update-modal { max-width: 640px; }
+.price-update-modal .modal-header { border-bottom: 1px solid var(--border); }
+.price-update-count {
+  display: inline-flex; align-items: center;
+  margin-left: 10px; padding: 2px 10px;
+  font-size: 12px; font-weight: 600;
+  color: var(--primary);
+  background: var(--primary-light-bg);
+  border-radius: 999px;
+  letter-spacing: 0;
+}
+body.dark-mode .price-update-count {
+  background: rgba(123, 147, 250, .14);
+  color: var(--primary-light);
+}
+.price-update-body { padding: 20px 24px 4px; }
+
+/* Banner / 取得股價 CTA */
+.price-update-banner {
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px 16px; margin-bottom: 16px;
+  background: linear-gradient(135deg, rgba(79,110,247,.08) 0%, rgba(79,110,247,.02) 100%);
+  border: 1px solid rgba(79,110,247,.14);
+  border-radius: 14px;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+.price-update-banner:hover {
+  border-color: rgba(79,110,247,.3);
+  box-shadow: 0 4px 12px rgba(79,110,247,.08);
+}
+body.dark-mode .price-update-banner {
+  background: linear-gradient(135deg, rgba(123,147,250,.10) 0%, rgba(123,147,250,.02) 100%);
+  border-color: rgba(123,147,250,.20);
+}
+.price-update-banner__icon {
+  width: 44px; height: 44px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--primary);
+  color: #fff;
+  border-radius: 12px;
+  font-size: 18px;
+  box-shadow: 0 4px 10px rgba(79,110,247,.28);
+  flex-shrink: 0;
+}
+.price-update-banner__text { flex: 1; min-width: 0; }
+.price-update-banner__title {
+  font-size: 14px; font-weight: 700; color: var(--text);
+  letter-spacing: -.01em; margin-bottom: 2px;
+}
+.price-update-banner__desc {
+  font-size: 12px; color: var(--text-secondary); line-height: 1.5;
+}
+.price-update-banner__btn {
+  flex-shrink: 0;
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 9px 16px; font-size: 13px; font-weight: 600;
+  min-height: 40px;
+}
+.price-update-banner__btn:disabled { cursor: wait; opacity: .85; }
+
+/* List 區 */
 .price-update-list {
-  max-height: 450px; overflow-y: auto;
+  max-height: 50vh; overflow-y: auto;
+  margin: 0 -8px; padding: 4px 8px;
+  scrollbar-width: thin;
 }
+.price-update-list::-webkit-scrollbar { width: 8px; }
+.price-update-list::-webkit-scrollbar-thumb {
+  background: var(--border); border-radius: 4px;
+}
+.price-update-list::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+/* 單列卡片 */
 .price-update-row {
-  display: flex; align-items: center; gap: 16px; padding: 14px 12px;
-  border-radius: 10px; margin-bottom: 4px;
-  transition: background .15s;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 140px auto;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  margin-bottom: 8px;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
+  animation: priceRowIn .35s cubic-bezier(.4,0,.2,1) both;
 }
-.price-update-row:hover { background: var(--bg); }
-.price-update-row .stock-info { flex: 1; min-width: 0; }
-.price-update-row .stock-symbol {
-  font-weight: 700; font-size: 15px; color: var(--primary); margin-right: 6px;
+@keyframes priceRowIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
 }
-.price-update-row .stock-name {
+.price-update-row:hover {
+  border-color: rgba(79,110,247,.3);
+  box-shadow: 0 2px 8px rgba(15,23,42,.06);
+}
+body.dark-mode .price-update-row:hover {
+  box-shadow: 0 2px 10px rgba(0,0,0,.35);
+}
+.price-update-row.is-changed {
+  border-color: var(--primary);
+  background: linear-gradient(135deg, rgba(79,110,247,.04) 0%, transparent 80%);
+}
+.price-update-row.is-delisted {
+  background: linear-gradient(135deg, rgba(244,63,94,.04) 0%, transparent 80%);
+  border-color: rgba(244,63,94,.22);
+}
+.price-update-row.is-delisted .price-update-row__price-wrap { opacity: .55; }
+
+/* 左側資訊 */
+.price-update-row__info { min-width: 0; }
+.price-update-row__head {
+  display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
+  margin-bottom: 2px;
+}
+.price-update-row__symbol {
+  font-weight: 700; font-size: 16px; color: var(--text);
+  letter-spacing: -.01em; font-variant-numeric: tabular-nums;
+}
+.price-update-row__name {
   font-size: 13px; color: var(--text-secondary);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  max-width: 220px;
+}
+.price-update-row__source {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11px; font-weight: 500;
+  padding: 2px 8px; border-radius: 999px;
+  background: var(--bg);
+  color: var(--text-muted);
+  margin-top: 4px;
+  min-height: 20px;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+.price-update-row__source:empty { display: none; }
+.price-update-row__source .price-dot {
+  width: 6px; height: 6px; border-radius: 50%; display: inline-block;
+  background: currentColor;
+}
+.price-update-row__source.success {
+  background: rgba(16,185,129,.10);
+  color: var(--success);
+}
+.price-update-row__source.realtime {
+  background: rgba(16,185,129,.14);
+  color: var(--success);
+  animation: pricePulse 1.6s ease-in-out infinite;
+}
+@keyframes pricePulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(16,185,129,.28); }
+  50% { box-shadow: 0 0 0 5px rgba(16,185,129,0); }
+}
+.price-update-row__source.error {
+  background: rgba(244,63,94,.10);
+  color: var(--danger);
+}
+
+/* 中間 價格 input */
+.price-update-row__price-wrap {
+  position: relative;
+  display: flex; align-items: center;
+  transition: opacity var(--transition-fast);
+}
+.price-update-row__price-wrap::before {
+  content: 'NT$';
+  position: absolute; left: 12px;
+  font-size: 11px; font-weight: 600;
+  color: var(--text-muted);
+  pointer-events: none;
 }
 .price-update-row .price-input {
-  width: 110px; text-align: right; font-weight: 600; font-size: 15px;
-  border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px;
-  transition: border-color .2s, box-shadow .2s;
+  width: 100%; min-width: 0;
+  text-align: right; font-weight: 700; font-size: 15px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  background: var(--surface);
+  border: 1.5px solid var(--border); border-radius: 10px;
+  padding: 9px 12px 9px 42px;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  -moz-appearance: textfield;
 }
+.price-update-row .price-input::-webkit-outer-spin-button,
+.price-update-row .price-input::-webkit-inner-spin-button {
+  -webkit-appearance: none; margin: 0;
+}
+.price-update-row .price-input:hover { border-color: var(--text-muted); }
 .price-update-row .price-input:focus {
-  border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79,110,247,.12); outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(79,110,247,.16);
+  outline: none;
 }
-.price-source-label {
-  font-size: 11px; color: var(--text-muted); margin-top: 3px;
-  display: flex; align-items: center; gap: 4px;
+.price-update-row.is-changed .price-input {
+  border-color: var(--primary);
+  background: var(--primary-light-bg);
 }
-.price-source-label.success { color: var(--success); }
-.price-source-label.error { color: var(--danger); }
-.price-source-label .price-dot {
-  width: 6px; height: 6px; border-radius: 50%; display: inline-block;
+body.dark-mode .price-update-row.is-changed .price-input {
+  background: rgba(123,147,250,.10);
 }
-.price-source-label.success .price-dot { background: var(--success); }
-.price-source-label.error .price-dot { background: var(--danger); }
+
+/* 右側 已下市 toggle 開關 */
+.price-update-row__delisted {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 12px; font-weight: 500; color: var(--text-secondary);
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+.price-update-row__switch {
+  position: relative;
+  width: 36px; height: 20px;
+  flex-shrink: 0;
+}
+.price-update-row__switch input {
+  position: absolute; opacity: 0; width: 0; height: 0;
+}
+.price-update-row__switch-track {
+  position: absolute; inset: 0;
+  background: var(--border);
+  border-radius: 999px;
+  transition: background var(--transition-fast);
+}
+.price-update-row__switch-track::after {
+  content: '';
+  position: absolute;
+  top: 2px; left: 2px;
+  width: 16px; height: 16px;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0,0,0,.18);
+  transition: transform var(--transition-fast);
+}
+.price-update-row__switch input:checked + .price-update-row__switch-track {
+  background: var(--danger);
+}
+.price-update-row__switch input:checked + .price-update-row__switch-track::after {
+  transform: translateX(16px);
+}
+.price-update-row__switch input:focus-visible + .price-update-row__switch-track {
+  box-shadow: 0 0 0 3px rgba(79,110,247,.28);
+}
+.price-update-row.is-delisted .price-update-row__delisted { color: var(--danger); font-weight: 600; }
+
+/* 下市標記 inline badge */
+.price-update-row .delisted-badge {
+  margin-left: 0;
+  font-size: 10px;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  padding: 1px 6px;
+}
+
+/* 空狀態 */
+.price-update-empty {
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--text-muted);
+}
+.price-update-empty__icon {
+  width: 56px; height: 56px;
+  margin: 0 auto 12px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--bg);
+  border-radius: 50%;
+  font-size: 22px;
+}
+.price-update-empty__title {
+  font-size: 14px; font-weight: 600; color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+.price-update-empty__desc { font-size: 12px; }
+
+/* Footer */
+.price-update-footer {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; padding: 16px 24px;
+  border-top: 1px solid var(--border);
+  background: var(--bg);
+  border-radius: 0 0 16px 16px;
+  flex-wrap: wrap;
+}
+.price-update-footer__hint {
+  font-size: 12px; color: var(--text-muted);
+  display: inline-flex; align-items: center; gap: 6px;
+  flex: 1; min-width: 0;
+}
+.price-update-footer__hint i { color: var(--primary); }
+.price-update-footer__hint.success { color: var(--success); }
+.price-update-footer__hint.success i { color: var(--success); }
+.price-update-footer__actions {
+  display: flex; align-items: center; gap: 8px;
+}
+.price-update-footer__actions .btn { min-height: 40px; padding: 9px 16px; }
+
+@media (max-width: 600px) {
+  .price-update-body { padding: 16px 16px 4px; }
+  .price-update-banner {
+    flex-wrap: wrap;
+    padding: 12px 14px;
+  }
+  .price-update-banner__btn { width: 100%; justify-content: center; }
+  .price-update-row {
+    grid-template-columns: minmax(0, 1fr) 130px;
+    grid-template-areas:
+      "info  price"
+      "toggle toggle";
+    row-gap: 10px;
+  }
+  .price-update-row__info { grid-area: info; }
+  .price-update-row__price-wrap { grid-area: price; }
+  .price-update-row__delisted {
+    grid-area: toggle; justify-content: flex-end;
+    padding-top: 8px; border-top: 1px dashed var(--border);
+    margin-top: 2px;
+  }
+  .price-update-row__name { max-width: 60vw; }
+  .price-update-footer { padding: 14px 16px; flex-direction: column; align-items: stretch; }
+  .price-update-footer__actions { justify-content: stretch; }
+  .price-update-footer__actions .btn { flex: 1; }
+}
 
 .stk-lookup-status {
   display: block; font-size: 12px; margin-top: 4px;
@@ -4294,22 +4576,11 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
   .realized-pl-summary { grid-template-columns: repeat(2, 1fr); }
 }
 
-/* 批次更新股價列 */
-.batch-price-row {
-  display: grid;
-  grid-template-columns: 80px 1fr 100px 80px auto;
-  gap: 8px;
-  align-items: center;
-  padding: 8px 0;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
-}
-.batch-price-row__source {
-  font-size: 11px;
-  color: var(--text-muted);
-}
+/* 批次更新股價列：modifier 別名（搭配 .price-update-row 使用） */
 .batch-price-row__failed {
   color: var(--danger);
   font-size: 12px;
+  font-weight: 500;
 }
 
 /* ─── 007 feature: 資料匯出匯入 ─── */

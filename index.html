@@ -2641,6 +2641,21 @@
   <!-- Toast 通知 -->
   <div class="toast-container" id="toastContainer"></div>
 
+  <!-- ===== 系統重啟遮罩 ===== -->
+  <div class="restart-overlay" id="restartOverlay" role="alertdialog" aria-modal="true" aria-labelledby="restartOverlayTitle" aria-describedby="restartOverlayMsg">
+    <div class="restart-overlay-card">
+      <div class="restart-overlay-spinner" aria-hidden="true">
+        <i class="fas fa-circle-notch fa-spin"></i>
+      </div>
+      <div class="restart-overlay-title" id="restartOverlayTitle">系統正在重新啟動</div>
+      <div class="restart-overlay-msg" id="restartOverlayMsg">請稍候，連線恢復後將自動重新整理頁面…</div>
+      <div class="restart-overlay-elapsed" id="restartOverlayElapsed">已等待 0 秒</div>
+      <div class="restart-overlay-actions" id="restartOverlayActions" style="display:none">
+        <button type="button" class="btn btn-sm" id="restartOverlayReloadBtn">立即重新整理</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ===== 版本更新資訊 Modal ===== -->
   <div class="modal-overlay" id="modalChangelog">
     <div class="modal modal-lg">

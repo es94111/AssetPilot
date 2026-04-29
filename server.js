@@ -3827,6 +3827,86 @@ app.get('/api/external-apis', (req, res) => {
 // ═══════════════════════════════════════
 app.use('/api', authMiddleware);
 
+// ─── 009 multi-timezone：使用者個人資料 + 時區管理 ───
+// FR-007 / T029：GET /api/users/me — 完整 user 物件，含 timezone
+app.get('/api/users/me', (req, res) => {
+  const u = queryOne(
+    "SELECT id, email, password_hash, display_name, google_id, has_password, avatar_url, theme_mode, is_admin, is_active, created_at, timezone FROM users WHERE id = ?",
+    [req.userId]
+  );
+  if (!u) return res.status(404).json({ error: 'User not found', code: 'NotFound' });
+  res.json({
+    id: u.id,
+    email: u.email,
+    display_name: u.display_name,
+    timezone: u.timezone || 'Asia/Taipei',
+    has_password: !!u.has_password,
+    google_id: u.google_id || '',
+    avatar_url: u.avatar_url || '',
+    theme_mode: normalizeThemeMode(u.theme_mode),
+    is_admin: !!u.is_admin,
+    is_active: u.is_active == null ? true : !!u.is_active,
+    created_at: userTime.toIsoUtc(u.created_at || new Date(0)),
+    updated_at: null, // 既有 users 表無 updated_at；T030 PATCH 後將改寫此欄位
+  });
+});
+
+// FR-008 / T030：PATCH /api/users/me/timezone
+// 驗證 IANA → UPDATE → 寫 data_operation_audit_log → 回完整 user
+app.patch('/api/users/me/timezone', (req, res) => {
+  const { timezone, source } = req.body || {};
+  if (!userTime.isValidIanaTimezone(timezone)) {
+    return res.status(400).json({ error: '時區格式無效', code: 'ValidationError', field: 'timezone' });
+  }
+  const userRow = queryOne(
+    "SELECT id, email, display_name, google_id, has_password, avatar_url, theme_mode, is_admin, is_active, created_at, timezone FROM users WHERE id = ?",
+    [req.userId]
+  );
+  if (!userRow) return res.status(404).json({ error: 'User not found', code: 'NotFound' });
+  const prev = userRow.timezone || 'Asia/Taipei';
+
+  // No-op：同值直接回，不寫 audit
+  if (prev !== timezone) {
+    db.run("UPDATE users SET timezone = ? WHERE id = ?", [timezone, req.userId]);
+    // 寫稽核紀錄（沿用 server.js:2829 既有 INSERT 風格）
+    const src = (source === 'manual' || source === 'auto-detect') ? source : 'manual';
+    db.run(
+      "INSERT INTO data_operation_audit_log (id, user_id, role, action, ip_address, user_agent, timestamp, result, is_admin_operation, metadata) VALUES (?,?,?,?,?,?,?,?,?,?)",
+      [
+        crypto.randomUUID().replace(/-/g, ''),
+        req.userId,
+        'user',
+        'user.timezone.update',
+        req.ip || '',
+        req.get('user-agent') || '',
+        new Date().toISOString(),
+        'success',
+        0,
+        JSON.stringify({ from: prev, to: timezone, source: src }),
+      ]
+    );
+    saveDB();
+    // 更新本回應的 timezone 欄位（不重新 SELECT）
+    userRow.timezone = timezone;
+    req.userTimezone = timezone; // 同一 request 內後續邏輯立即生效
+  }
+
+  res.json({
+    id: userRow.id,
+    email: userRow.email,
+    display_name: userRow.display_name,
+    timezone: userRow.timezone,
+    has_password: !!userRow.has_password,
+    google_id: userRow.google_id || '',
+    avatar_url: userRow.avatar_url || '',
+    theme_mode: normalizeThemeMode(userRow.theme_mode),
+    is_admin: !!userRow.is_admin,
+    is_active: userRow.is_active == null ? true : !!userRow.is_active,
+    created_at: userTime.toIsoUtc(userRow.created_at || new Date(0)),
+    updated_at: userTime.toIsoUtc(new Date()),
+  });
+});
+
 // CT-1：/api/account/login-logs → /api/user/login-audit（FR-042：使用者最近 100 筆）
 app.get('/api/user/login-audit', async (req, res) => {
   const logs = queryAll(

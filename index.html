@@ -1290,6 +1290,23 @@
             </div>
           </div>
         </div>
+        <!-- 009 multi-timezone：時區設定 -->
+        <div class="card">
+          <h3><i class="fas fa-globe"></i>時區</h3>
+          <div class="timezone-row">
+            <div class="timezone-row__info">
+              <div style="font-weight:600">偏好時區</div>
+              <div class="import-hint" style="margin-top:4px">所有時間／日期皆以此時區呈現；新增交易的「今天」也以此為準。</div>
+              <div class="timezone-current" id="tzCurrentLabel" style="margin-top:8px;font-size:13px;color:var(--text-muted)"></div>
+            </div>
+            <div class="timezone-row__controls">
+              <input type="text" id="tzSearchInput" placeholder="搜尋時區（例：tokyo、new_york）" autocomplete="off" class="form-input" style="width:240px">
+              <select id="tzSelect" class="form-input" size="6" style="width:240px;margin-top:6px;font-family:monospace;font-size:13px"></select>
+              <div class="timezone-preview" id="tzPreview" style="margin-top:6px;font-size:12px;color:var(--text-muted);min-height:18px"></div>
+              <button type="button" class="btn btn-primary" id="tzSaveBtn" style="margin-top:8px"><i class="fas fa-check"></i> 儲存時區</button>
+            </div>
+          </div>
+        </div>
         <div class="card">
           <h3><i class="fas fa-user-circle"></i>帳號資訊</h3>
           <div class="account-info-section">

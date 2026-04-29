@@ -393,7 +393,14 @@ const App = (() => {
   // 009 FR-013（憲章 v1.3.0 Principle IV）：依使用者偏好時區計算「今天」字串。
   // 取代既有 002 T044 / FR-007a 的 Asia/Taipei 寫死實作。
   function getUserTz() {
-    return (window.currentUser && window.currentUser.timezone) || 'Asia/Taipei';
+    return (currentUser && currentUser.timezone) || 'Asia/Taipei';
+  }
+  function getBrowserTz() {
+    try {
+      return Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Taipei';
+    } catch (e) {
+      return 'Asia/Taipei';
+    }
   }
   function todayInUserTz() {
     try {
@@ -404,9 +411,72 @@ const App = (() => {
       return localDateStr(new Date());
     }
   }
+  // 009 FR-012：依使用者偏好時區格式化 ISO 字串為當地顯示
+  function formatLocalDateTime(isoOrMs, options) {
+    if (isoOrMs == null || isoOrMs === '') return '';
+    const d = (typeof isoOrMs === 'number') ? new Date(isoOrMs) : new Date(isoOrMs);
+    if (isNaN(d.getTime())) return '';
+    const opts = Object.assign({
+      timeZone: getUserTz(),
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit',
+      hour12: false,
+    }, options || {});
+    try {
+      return new Intl.DateTimeFormat('zh-TW', opts).format(d).replace(/\//g, '-');
+    } catch (e) {
+      return d.toISOString();
+    }
+  }
   // 向後相容別名（避免一次性大量 rename；後續 PR 可移除）
   function todayInTaipei() {
     return todayInUserTz();
+  }
+  // 009 FR-010 (b)：既有使用者三條件提示（7 天靜默；確認後 PATCH timezone）
+  function maybePromptTimezoneChange() {
+    const userTz = (currentUser && currentUser.timezone) || 'Asia/Taipei';
+    const browserTz = getBrowserTz();
+    if (userTz !== 'Asia/Taipei') return; // 條件 1 失敗：使用者已主動設過
+    if (browserTz === 'Asia/Taipei') return; // 條件 2 失敗：瀏覽器與預設一致
+    let dismissedUntil = 0;
+    try {
+      const v = localStorage.getItem('tzPromptDismissedUntil');
+      if (v) dismissedUntil = parseInt(v, 10) || 0;
+    } catch (_) {}
+    if (dismissedUntil > Date.now()) return; // 條件 3 失敗：仍在 7 天靜默期
+    // 三條件成立 → 彈出輕量 confirm 對話框
+    const ok = window.confirm('偵測到您的瀏覽器位於 ' + browserTz + '，目前帳號時區為 Asia/Taipei。是否要將帳號時區更新為 ' + browserTz + '？\n（按取消可暫不更新；7 天內不再提示）');
+    if (ok) {
+      API.patch('/api/users/me/timezone', { timezone: browserTz, source: 'auto-detect' })
+        .then(updated => {
+          if (updated && updated.timezone) {
+            currentUser = Object.assign({}, currentUser || {}, { timezone: updated.timezone });
+            try { localStorage.removeItem('tzPromptDismissedUntil'); } catch (_) {}
+            toast('時區已更新為 ' + updated.timezone, 'success');
+          }
+        })
+        .catch(err => toast('時區更新失敗：' + err.message, 'error'));
+    } else {
+      try {
+        localStorage.setItem('tzPromptDismissedUntil', String(Date.now() + 7 * 86400000));
+      } catch (_) {}
+    }
+  }
+
+  // 009：取得 IANA 時區清單（前端用於設定頁下拉）；不支援 Intl.supportedValuesOf 時走白名單
+  function listAvailableTimezones() {
+    try {
+      if (typeof Intl.supportedValuesOf === 'function') {
+        const list = Intl.supportedValuesOf('timeZone');
+        // Node 端的 list 不含 UTC；瀏覽器端通常包含。補白名單常用項以保險
+        const extras = ['UTC', 'Etc/UTC', 'Etc/GMT'];
+        const set = new Set(list);
+        extras.forEach(e => { try { new Intl.DateTimeFormat('en', { timeZone: e }); set.add(e); } catch (_) {} });
+        return Array.from(set).sort();
+      }
+    } catch (e) { /* fall through */ }
+    return ['UTC', 'Asia/Taipei', 'Asia/Tokyo', 'Asia/Shanghai', 'Asia/Singapore',
+      'Europe/London', 'Europe/Paris', 'America/New_York', 'America/Los_Angeles', 'Australia/Sydney'];
   }
   function localMonthStr(d) {
     const y = d.getFullYear();
@@ -622,6 +692,20 @@ const App = (() => {
 
   async function enterApp() {
     await syncThemeModeFromServer();
+    // 009 FR-007 / T033：取得完整 user 物件（含 timezone），合併入 currentUser
+    try {
+      const me = await API.get('/api/users/me');
+      if (me && me.timezone) {
+        currentUser = Object.assign({}, currentUser || {}, {
+          timezone: me.timezone,
+          // 把 me 的部分欄位以 camelCase 別名也補進來（前端既有欄位用 camelCase）
+          themeMode: me.theme_mode || (currentUser && currentUser.themeMode) || 'system',
+        });
+      }
+    } catch (e) { /* 取不到 me 不阻擋登入流程 */ }
+    // 009 FR-010 (b) / T034：既有使用者首次登入若仍為預設 Asia/Taipei
+    // 且瀏覽器時區不同 → 一次性提示對話框（7 天靜默）
+    try { maybePromptTimezoneChange(); } catch (e) { console.warn('[009] timezone prompt failed:', e); }
     // T053 / FR-019：theme_pref 同步來自伺服器
     try { onUserThemeReceived(currentUser?.themeMode); } catch (_) {}
     // 設定使用者名稱與頭像
@@ -1740,6 +1824,85 @@ const App = (() => {
     const tabEl = document.querySelector(`.settings-tabs .tab[data-settings="${tab}"]`);
     if (tabEl) tabEl.classList.add('active');
     el('panel-' + tab)?.classList.add('active');
+    // 009 multi-timezone：切到 account 分頁時，初始化時區下拉
+    if (tab === 'account') {
+      try { renderTimezoneSettings(); } catch (e) { console.warn('[009] renderTimezoneSettings failed:', e); }
+    }
+  }
+
+  // 009 FR-011 / T037 / T038：設定頁時區下拉 + 即時預覽 + 儲存
+  let _tzPreviewTimer = null;
+  function renderTimezoneSettings() {
+    const select = el('tzSelect');
+    const search = el('tzSearchInput');
+    const saveBtn = el('tzSaveBtn');
+    const currentLabel = el('tzCurrentLabel');
+    const preview = el('tzPreview');
+    if (!select || !saveBtn) return;
+    const allTz = listAvailableTimezones();
+    const currentTz = (currentUser && currentUser.timezone) || 'Asia/Taipei';
+
+    function rebuildOptions(filter) {
+      const f = (filter || '').trim().toLowerCase();
+      const filtered = f ? allTz.filter(tz => tz.toLowerCase().includes(f)) : allTz;
+      // 確保「目前選擇」永遠在清單最上方
+      const ordered = (filtered.includes(currentTz) ? [] : [currentTz]).concat(filtered);
+      select.innerHTML = ordered.slice(0, 200).map(tz =>
+        `<option value="${tz}"${tz === currentTz ? ' selected' : ''}>${tz}</option>`
+      ).join('');
+    }
+
+    function updatePreview() {
+      const tz = select.value || currentTz;
+      try {
+        const fmt = new Intl.DateTimeFormat('zh-TW', {
+          timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit',
+          hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
+        });
+        preview.textContent = '當地時間：' + fmt.format(new Date()).replace(/\//g, '-') + '（' + tz + '）';
+      } catch (e) {
+        preview.textContent = '無法解析時區：' + tz;
+      }
+    }
+
+    if (currentLabel) currentLabel.textContent = '目前：' + currentTz;
+    rebuildOptions(search.value);
+    updatePreview();
+
+    if (_tzPreviewTimer) clearInterval(_tzPreviewTimer);
+    _tzPreviewTimer = setInterval(updatePreview, 1000);
+
+    if (!search.dataset.tzBound) {
+      search.dataset.tzBound = '1';
+      search.addEventListener('input', () => rebuildOptions(search.value));
+    }
+    if (!select.dataset.tzBound) {
+      select.dataset.tzBound = '1';
+      select.addEventListener('change', updatePreview);
+    }
+    if (!saveBtn.dataset.tzBound) {
+      saveBtn.dataset.tzBound = '1';
+      saveBtn.addEventListener('click', async () => {
+        const tz = select.value;
+        if (!tz) { toast('請先選擇時區', 'error'); return; }
+        saveBtn.disabled = true;
+        try {
+          const updated = await API.patch('/api/users/me/timezone', { timezone: tz, source: 'manual' });
+          if (updated && updated.timezone) {
+            currentUser = Object.assign({}, currentUser || {}, { timezone: updated.timezone });
+            if (currentLabel) currentLabel.textContent = '目前：' + updated.timezone;
+            toast('時區已更新為 ' + updated.timezone, 'success');
+            // 已主動變更：清除自動偵測提示靜默期
+            try { localStorage.removeItem('tzPromptDismissedUntil'); } catch (_) {}
+            // 即時生效：未來新增交易的「今天」會立刻採用新時區
+          }
+        } catch (e) {
+          toast('時區更新失敗：' + e.message, 'error');
+        } finally {
+          saveBtn.disabled = false;
+        }
+      });
+    }
   }
 
   function activateStocksTab(tab) {

@@ -390,17 +390,23 @@ const App = (() => {
     if (s.length >= 6 || /[A-Z]$/.test(s)) return 'warrant';
     return 'stock';
   }
-  // 002 T044 (FR-007a)：固定以 Asia/Taipei (UTC+8) 計算「今天」字串，
-  // 與後端 lib/taipeiTime.js todayInTaipei() 對齊，避免使用者瀏覽器跨時區（如 PST）
-  // 開啟 Modal 時看到「昨天」的日期。
-  function todayInTaipei() {
+  // 009 FR-013（憲章 v1.3.0 Principle IV）：依使用者偏好時區計算「今天」字串。
+  // 取代既有 002 T044 / FR-007a 的 Asia/Taipei 寫死實作。
+  function getUserTz() {
+    return (window.currentUser && window.currentUser.timezone) || 'Asia/Taipei';
+  }
+  function todayInUserTz() {
     try {
       return new Intl.DateTimeFormat('en-CA', {
-        timeZone: 'Asia/Taipei', year: 'numeric', month: '2-digit', day: '2-digit',
+        timeZone: getUserTz(), year: 'numeric', month: '2-digit', day: '2-digit',
       }).format(new Date());
     } catch (e) {
       return localDateStr(new Date());
     }
+  }
+  // 向後相容別名（避免一次性大量 rename；後續 PR 可移除）
+  function todayInTaipei() {
+    return todayInUserTz();
   }
   function localMonthStr(d) {
     const y = d.getFullYear();
@@ -8373,8 +8379,8 @@ const App = (() => {
   async function openTransactionModal(txId) {
     const form = el('transactionForm');
     form.reset();
-    // T044 (FR-007a)：日期預設以 Asia/Taipei 固定時區計算
-    el('txDate').value = todayInTaipei();
+    // 009 FR-013：日期預設以使用者偏好時區計算（取代 002 T044 Asia/Taipei 寫死）
+    el('txDate').value = todayInUserTz();
     renderCurrencySelectOptions('txCurrency', 'TWD');
     el('txCurrency').value = 'TWD';
     el('txFxRate').value = '';

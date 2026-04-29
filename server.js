@@ -35,6 +35,8 @@ const nodemailer = require('nodemailer');
 // ─── 002 feature: 共用工具模組（T019） ───
 const moneyDecimal = require('./lib/moneyDecimal');
 const taipeiTime = require('./lib/taipeiTime');
+// 009 feature: per-user 時區工具（憲章 v1.3.0 Principle IV）
+const userTime = require('./lib/userTime');
 const fxCache = require('./lib/exchangeRateCache');
 // 006-stock-investments：TWSE 並發查價 helper
 const twseFetch = require('./lib/twseFetch');
@@ -4541,8 +4543,9 @@ function pctChange(current, prev) {
   return ((c - p) / Math.abs(p)) * 100;
 }
 
-function buildUserStatsReport(userId, freq = 'daily') {
-  const month = thisMonth();
+function buildUserStatsReport(userId, freq = 'daily', userTimezone = 'Asia/Taipei') {
+  // 009 FR-006：以該使用者偏好時區計算「本月」（取代固定 process timezone）
+  const month = userTime.monthInUserTz(userTimezone);
   const monthLike = month + '%';
   const prevMonth = prevMonthOf(month);
   const prevMonthLike = prevMonth + '%';
@@ -5264,7 +5267,7 @@ async function runScheduledReportNow(scheduleId, triggeredBy = '排程') {
     if (!schedule) return { status: 'not_found', sent: 0, failed: 0, skipped: 0, reason: '排程不存在' };
     if (schedule.enabled === 0) return { status: 'disabled', sent: 0, failed: 0, skipped: 0, reason: '排程已停用' };
 
-    const u = queryOne("SELECT id, email, display_name, is_active FROM users WHERE id = ?", [schedule.user_id]);
+    const u = queryOne("SELECT id, email, display_name, is_active, timezone FROM users WHERE id = ?", [schedule.user_id]);
     if (!u) {
       const summary = `${formatTwTime(startedAt)} ${triggeredBy}：使用者不存在`;
       db.run("UPDATE report_schedules SET last_summary = ?, updated_at = ? WHERE id = ?", [summary, startedAt, scheduleId]);
@@ -5303,7 +5306,8 @@ async function runScheduledReportNow(scheduleId, triggeredBy = '排程') {
       const priceResult = await updateUserStockPrices(u.id).catch(() => ({ updated: 0, skipped: 0 }));
       priceUpdates = priceResult.updated;
 
-      const stats = buildUserStatsReport(u.id, schedule.freq);
+      // 009 FR-006：傳入使用者時區，使月份邊界 per-user
+      const stats = buildUserStatsReport(u.id, schedule.freq, u.timezone || 'Asia/Taipei');
       const html = renderStatsEmailHtml(u.display_name, u.email, stats);
       const subject = `${stats.month} 個人資產統計報表`;
       const r = await sendStatsEmail({ to: u.email, subject, html });
@@ -6582,8 +6586,8 @@ app.get('/api/accounts/:accountId', (req, res) => {
   const a = ownsResource('accounts', 'id', req.params.accountId, req.userId);
   if (!a) return res.status(404).json({ error: 'NotFound' });
   const accountCurrency = normalizeCurrency(a.currency);
-  // FR-007：餘額僅含 date <= todayInTaipei() 的交易（未來交易不計）
-  const today = taipeiTime.todayInTaipei();
+  // 009 FR-004：餘額以該使用者偏好時區下的「今天」為界（FR-007a per-user）
+  const today = userTime.todayInUserTz(req.userTimezone);
   const txs = queryAll(
     "SELECT type, amount, currency, original_amount FROM transactions WHERE account_id = ? AND user_id = ? AND date <= ?",
     [a.id, req.userId, today]
@@ -6702,7 +6706,8 @@ app.get('/api/transactions', (req, res) => {
 
   let where = `${txCol('user_id')} = ?`;
   const params = [req.userId];
-  const today = taipeiTime.todayInTaipei();
+  // 009 FR-004：「今天」改以該使用者偏好時區計算
+  const today = userTime.todayInUserTz(req.userTimezone);
 
   if (dateFrom) { where += ` AND ${txCol('date')} >= ?`; params.push(dateFrom); }
   if (dateTo) { where += ` AND ${txCol('date')} <= ?`; params.push(dateTo); }
@@ -6771,9 +6776,12 @@ app.get('/api/transactions', (req, res) => {
 // FR-010~018, FR-022a（T035）：POST 同步寫入 twd_amount（與 amount 對齊既有 TWD-eq 語意）
 app.post('/api/transactions', (req, res) => {
   const { type, amount, date: rawDate, categoryId, accountId, note, excludeFromStats } = req.body;
-  const date = normalizeDate(rawDate);
+  // 009 FR-005：未提供 date 時，預設為使用者當地「今天」（YYYY-MM-DD）
+  const date = (rawDate == null || String(rawDate).trim() === '')
+    ? userTime.todayInUserTz(req.userTimezone)
+    : normalizeDate(rawDate);
   if (!date) return res.status(400).json({ error: '日期格式無效' });
-  if (!taipeiTime.isValidIsoDate(date)) return res.status(400).json({ error: '日期格式無效', code: 'ValidationError', field: 'date' });
+  if (!userTime.isValidIsoDate(date)) return res.status(400).json({ error: '日期格式無效', code: 'ValidationError', field: 'date' });
   if (!['income', 'expense', 'transfer_in', 'transfer_out'].includes(type)) return res.status(400).json({ error: '交易類型無效' });
   if (categoryId && !assertOwned('categories', categoryId, req.userId)) return res.status(400).json({ error: '分類不存在或無權限' });
   // 003-categories T018：leaf-only — 交易必須指派至子分類，不能直接掛在父分類底下（FR-013a）
@@ -8083,8 +8091,9 @@ function getNextRecurringDate(prevIsoDate, freq) {
 //   (b) 計算下一個 scheduledDate（FR-014 首產日 / FR-022 月底回退）
 //   (c) INSERT 包 try/catch 捕捉 UNIQUE constraint failed（FR-028 並發冪等）
 //   (d) UPDATE last_generated 條件式推進（FR-029）
-//   (e) 迴圈直到 scheduledDate > todayInTaipei()
-function processOneRecurring(r, userId) {
+//   (e) 迴圈直到 scheduledDate > todayInUserTz(userTimezone)
+// 009 FR-004：userTimezone 由上層 processRecurringForUser 帶入，避免每筆 SELECT。
+function processOneRecurring(r, userId, userTimezone) {
   // (a) 偵測分類 / 帳戶是否仍存在
   if (r.category_id) {
     const cat = queryOne("SELECT id FROM categories WHERE id = ? AND user_id = ?", [r.category_id, userId]);
@@ -8101,7 +8110,8 @@ function processOneRecurring(r, userId) {
     }
   }
 
-  const todayS = taipeiTime.todayInTaipei();
+  // 009 FR-004：以該使用者偏好時區為「今天」邊界
+  const todayS = userTime.todayInUserTz(userTimezone || 'Asia/Taipei');
   let lastGenerated = r.last_generated;
   let scheduledDate = lastGenerated ? getNextRecurringDate(lastGenerated, r.frequency) : r.start_date;
   let count = 0;
@@ -8172,6 +8182,10 @@ function processRecurringForUser(userId, opts = {}) {
   let generated = 0;
   let bgScheduled = false;
 
+  // 009 FR-004：取使用者時區，傳給 processOneRecurring 以正確計算「今天」
+  const userRow = queryOne("SELECT timezone FROM users WHERE id = ?", [userId]);
+  const userTimezone = (userRow && userRow.timezone) || 'Asia/Taipei';
+
   const recs = queryAll(
     "SELECT * FROM recurring WHERE user_id = ? AND is_active = 1 AND needs_attention = 0",
     [userId]
@@ -8189,7 +8203,7 @@ function processRecurringForUser(userId, opts = {}) {
       break;
     }
     try {
-      generated += processOneRecurring(r, userId);
+      generated += processOneRecurring(r, userId, userTimezone);
     } catch (e) {
       console.error('[004-recurring] processOneRecurring failed for', r.id, e);
     }
@@ -8384,6 +8398,9 @@ const TWSE_REALTIME_CACHE_TTL = 60 * 1000; // 1 分鐘快取（即時報價）
 const realtimeCache = {}; // { [symbol]: { ...data, timestamp } }
 
 // 台灣時間輔助
+// FR-014：TWSE 市場時間鎖 Asia/Taipei，與 users.timezone 無關。
+// 憲章 v1.3.0 Principle IV「市場／法規／外部系統時區」例外條款：
+// 真實世界市場開盤時間是外部世界事實，不隨使用者偏好變動。
 function getTaiwanTime() {
   const now = new Date();
   const twTime = new Date(now.getTime() + 8 * 60 * 60 * 1000);
@@ -8392,7 +8409,8 @@ function getTaiwanTime() {
   return { twTime, day, minutes };
 }
 
-// 判斷目前是否為台股交易時間（週一~週五 09:00-13:30 台灣時間 UTC+8）
+// FR-014：判斷目前是否為台股交易時間（週一~週五 09:00-13:30 台灣時間 UTC+8）。
+// 此判斷永遠以 Asia/Taipei 為準，使用者於洛杉磯時區也看到正確的「台股是否開盤中」。
 function isTwseTrading() {
   const { day, minutes } = getTaiwanTime();
   if (day === 0 || day === 6) return false;

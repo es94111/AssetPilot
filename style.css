@@ -2575,6 +2575,13 @@ body.dark-mode .public-changelog-btn:hover { background: var(--surface); }
     align-items: flex-start;
   }
   .export-action-grid.two-col { grid-template-columns: 1fr; }
+  .account-cluster-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .account-section {
+    padding: 14px;
+  }
 
   /* Auth 響應式 */
   .auth-container { padding: 16px; }
@@ -3369,8 +3376,58 @@ body.dark-mode .price-update-row.is-changed .price-input {
 }
 
 /* ===== 帳號設定 ===== */
-.account-info-section {
+.panel-account-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.account-cluster-card {
+  border-radius: 14px;
+}
+.account-cluster-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+.account-cluster-header h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 17px;
+}
+.account-cluster-header p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+.account-section {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+}
+.account-section + .account-section {
   margin-top: 12px;
+}
+.account-section h4 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  margin-bottom: 12px;
+}
+.account-section h4 i {
+  color: var(--text-secondary);
+  font-size: 14px;
+  width: 18px;
+  text-align: center;
+}
+.account-info-section {
+  margin-top: 0;
 }
 .account-info-row {
   display: flex;

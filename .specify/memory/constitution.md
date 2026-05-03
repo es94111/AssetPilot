@@ -264,35 +264,49 @@ user-facing meaning) or a documented external anchor (for market /
 regulatory meaning) makes correctness reviewable line-by-line, and
 makes timezone-related bugs grep-able rather than emergent.
 
-### V. Brownfield 開發紀律 — NON‑NEGOTIABLE
+### V. Brownfield Development Discipline — NON‑NEGOTIABLE
 
-本專案為**棕地專案（Brownfield）**：現有的程式碼、架構、行為與資料模型
-**MUST** 被視為既定事實加以保留，任何變更 **MUST** 遵守下列規則。
+This project is a **Brownfield project**: the existing codebase, architecture,
+behavior, and data model **MUST** be treated as established facts and preserved.
+Every change **MUST** comply with the following rules.
 
-1. **禁止任意重構。** 未被需求明確要求的重構（包括改名、搬移、抽象化、
-   格式整理）一律禁止。若發現問題想改善，MUST 先向人類提出並獲得明確同意，
-   再在獨立 PR 中執行。
-2. **最小化變更原則。** 每一行改動 MUST 能直接追溯到需求或缺陷報告。
-   改了 50 行卻只需要改 5 行，等同違憲。
-3. **保留既有行為與邏輯。** 現有端點回傳格式、資料庫 schema 欄位語意、
-   前端渲染路徑、錯誤處理流程均視為合約。改動它們屬於 breaking change，
-   MUST 走 §Development Workflow §5 破壞性變更流程。
-4. **禁止更動現有套件版本。** `package.json` 中已存在的套件，其版本 pin 值
-   **MUST NOT** 被更改（升版、降版、移除皆禁止），除非需求明確要求且人類
-   已確認。
-5. **新增套件需人類確認。** 任何尚未出現在 `package.json` 的新依賴，在
-   執行 `npm install <pkg>` 之前 **MUST** 向人類說明理由並取得明確同意。
-   替代方案（用現有套件或標準函式庫解決）MUST 先被評估且明確排除。
+1. **No arbitrary refactoring.** Refactoring not explicitly required by a
+   feature request or bug report — including renames, moves, abstractions,
+   and formatting cleanup — is forbidden. If an improvement is identified,
+   it MUST be proposed to a human and receive explicit approval before being
+   executed in a dedicated PR.
+2. **Minimize changes.** Every changed line MUST be directly traceable to a
+   requirement or bug report. Changing 50 lines when 5 would suffice is a
+   Constitution violation.
+3. **Preserve existing behavior and logic.** Existing endpoint response
+   shapes, database schema field semantics, frontend rendering paths, and
+   error-handling flows are treated as contracts. Altering them constitutes
+   a breaking change and MUST follow the breaking-change process in
+   §Development Workflow §5.
+4. **Do not modify existing package versions.** Version pins for packages
+   already present in `package.json` **MUST NOT** be changed — upgrades,
+   downgrades, and removals are all forbidden — unless explicitly required
+   by a feature request and confirmed by a human.
+5. **New packages require human confirmation.** Any dependency not already
+   present in `package.json` MUST NOT be installed (`npm install <pkg>`)
+   until the rationale has been presented to a human and explicit approval
+   obtained. Alternatives (solving the problem with existing packages or
+   the standard library) MUST be evaluated and explicitly ruled out first.
 
-**例外**（每處 MUST 於程式碼內以 `// Brownfield-exception:` 註解說明原因）：
+**Exceptions** (each MUST be annotated inline with a `// Brownfield-exception:`
+comment explaining the reason):
 
-- 安全漏洞修補（CVE fix）強制升版，等同人類確認。
-- 測試框架或工具鏈變更，若完全不影響 production bundle，可在獨立 PR
-  中提案，但仍需人類確認後才執行。
+- Security vulnerability fixes (CVE patches) that force a version bump are
+  treated as pre-approved by the human.
+- Test-framework or toolchain changes that have zero impact on the production
+  bundle may be proposed in a dedicated PR, but still require human
+  confirmation before execution.
 
-**Rationale**: 棕地專案最大的成本來自「隱性破壞」——改了不該改的東西，
-讓原本可用的功能悄悄失效。嚴格的最小化原則將風險控制在可審查的範圍內，
-讓每個 diff 的影響面都能被一眼識別。
+**Rationale**: The greatest cost in a brownfield project is silent breakage —
+changing something that should not have been touched and quietly breaking
+features that previously worked. Strict minimization keeps risk within a
+reviewable boundary and makes the blast radius of every diff immediately
+apparent.
 
 ## Development Workflow
 

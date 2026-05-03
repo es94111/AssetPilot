@@ -2267,15 +2267,15 @@ const App = (() => {
       return;
     }
 
-    // 005 T027: 採 twdAccumulated（FR-004 / Round 4 / 不主動觸發查價）；負值取絕對值參與弧度但 tooltip 顯示原值
+    // 005 T027: 採 twdAccumulated（FR-004 / Round 4 / 不主動觸發查價）；排除負值（如信用卡負債）不列入資產配置
     const accountRows = (accounts || [])
       .filter(a => !a.exclude_from_total)
       .map(a => {
         const twd = a.twdAccumulated !== undefined ? (Number(a.twdAccumulated) || 0) : (Number(a.balance) || 0);
         return { label: String(a.name || '帳戶'), name: String(a.name || '帳戶'), id: a.id, total: Math.round(twd), absTotal: Math.abs(Math.round(twd)) };
       })
-      .filter(row => row.absTotal > 0)
-      .sort((a, b) => b.absTotal - a.absTotal);
+      .filter(row => row.total > 0)
+      .sort((a, b) => b.total - a.total);
     const stockValue = (stocks || []).reduce((sum, s) => sum + (Number(s.marketValue) || 0), 0);
 
     const parentRows = [];
@@ -2371,15 +2371,15 @@ const App = (() => {
     const container = el('dashAssetTop5');
     if (!container) return;
 
-    // 005: 採 twdAccumulated（FR-004 / Round 4）
+    // 005: 採 twdAccumulated（FR-004 / Round 4），排除負值帳戶（如信用卡負債）
     const accountRows = (accounts || [])
       .filter(a => !a.exclude_from_total)
       .map(a => {
         const twd = a.twdAccumulated !== undefined ? (Number(a.twdAccumulated) || 0) : (Number(a.balance) || 0);
         return { name: String(a.name || '帳戶'), total: Math.round(twd), absTotal: Math.abs(Math.round(twd)) };
       })
-      .filter(r => r.absTotal > 0)
-      .sort((a, b) => b.absTotal - a.absTotal);
+      .filter(r => r.total > 0)
+      .sort((a, b) => b.total - a.total);
 
     const stockRows = (stocks || [])
       .map(s => {
@@ -2416,19 +2416,19 @@ const App = (() => {
       html += '</ul></div>';
     }
 
-    // 帳戶前 5 名（採 absTotal 排序與百分比計算；顯示正值以符合資產配置語意）
+    // 帳戶前 5 名（採正值總額排序與百分比計算）
     if (accountRows.length > 0) {
       const top5Accounts = accountRows.slice(0, 5);
-      const accountTotal = accountRows.reduce((s, r) => s + r.absTotal, 0);
+      const accountTotal = accountRows.reduce((s, r) => s + r.total, 0);
       html += '<div class="dash-top5-group">';
       html += '<div class="dash-top5-title"><i class="fas fa-landmark"></i>帳戶前 5 名</div>';
       html += '<ul class="dash-top5-list">';
       top5Accounts.forEach((row, idx) => {
-        const pct = accountTotal > 0 ? ((row.absTotal / accountTotal) * 100).toFixed(1) : '0.0';
+        const pct = accountTotal > 0 ? ((row.total / accountTotal) * 100).toFixed(1) : '0.0';
         html += `<li>
           <span class="dash-top5-rank">${idx + 1}</span>
           <span class="dash-top5-name">${escHtml(row.name)}</span>
-          <span class="dash-top5-value">${fmt(row.absTotal)}<span class="dash-top5-pct">${pct}%</span></span>
+          <span class="dash-top5-value">${fmt(row.total)}<span class="dash-top5-pct">${pct}%</span></span>
         </li>`;
       });
       html += '</ul></div>';
@@ -3569,10 +3569,13 @@ const App = (() => {
   function drawDashboardAssetDualPie(ctx, accounts, stocks) {
     const accountRows = (accounts || [])
       .filter(a => !a.exclude_from_total)
-      .map(a => ({
-        label: String(a.name || '帳戶'),
-        total: Math.round(Number(a.balance) || 0),
-      }))
+      .map(a => {
+        const twd = a.twdAccumulated !== undefined ? (Number(a.twdAccumulated) || 0) : (Number(a.balance) || 0);
+        return {
+          label: String(a.name || '帳戶'),
+          total: Math.round(twd),
+        };
+      })
       .filter(row => row.total > 0)
       .sort((a, b) => b.total - a.total);
 

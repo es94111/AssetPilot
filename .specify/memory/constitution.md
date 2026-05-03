@@ -1,7 +1,7 @@
 <!--
 Sync Impact Report
 ==================
-Version change: 1.2.0 → 1.3.0  (MINOR: new principle added; FR-007a redefined)
+Version change: 1.3.0 → 1.4.0  (MINOR: Principle V Brownfield Discipline added)
 Modified principles:
   - FR-007a (previously implicit "lock to UTC+8 for today/future judgments")
     is REDEFINED to "use per-user `users.timezone` (IANA identifier,
@@ -264,6 +264,50 @@ user-facing meaning) or a documented external anchor (for market /
 regulatory meaning) makes correctness reviewable line-by-line, and
 makes timezone-related bugs grep-able rather than emergent.
 
+### V. Brownfield Development Discipline — NON‑NEGOTIABLE
+
+This project is a **Brownfield project**: the existing codebase, architecture,
+behavior, and data model **MUST** be treated as established facts and preserved.
+Every change **MUST** comply with the following rules.
+
+1. **No arbitrary refactoring.** Refactoring not explicitly required by a
+   feature request or bug report — including renames, moves, abstractions,
+   and formatting cleanup — is forbidden. If an improvement is identified,
+   it MUST be proposed to a human and receive explicit approval before being
+   executed in a dedicated PR.
+2. **Minimize changes.** Every changed line MUST be directly traceable to a
+   requirement or bug report. Changing 50 lines when 5 would suffice is a
+   Constitution violation.
+3. **Preserve existing behavior and logic.** Existing endpoint response
+   shapes, database schema field semantics, frontend rendering paths, and
+   error-handling flows are treated as contracts. Altering them constitutes
+   a breaking change and MUST follow the breaking-change process in
+   §Development Workflow §5.
+4. **Do not modify existing package versions.** Version pins for packages
+   already present in `package.json` **MUST NOT** be changed — upgrades,
+   downgrades, and removals are all forbidden — unless explicitly required
+   by a feature request and confirmed by a human.
+5. **New packages require human confirmation.** Any dependency not already
+   present in `package.json` MUST NOT be installed (`npm install <pkg>`)
+   until the rationale has been presented to a human and explicit approval
+   obtained. Alternatives (solving the problem with existing packages or
+   the standard library) MUST be evaluated and explicitly ruled out first.
+
+**Exceptions** (each MUST be annotated inline with a `// Brownfield-exception:`
+comment explaining the reason):
+
+- Security vulnerability fixes (CVE patches) that force a version bump are
+  treated as pre-approved by the human.
+- Test-framework or toolchain changes that have zero impact on the production
+  bundle may be proposed in a dedicated PR, but still require human
+  confirmation before execution.
+
+**Rationale**: The greatest cost in a brownfield project is silent breakage —
+changing something that should not have been touched and quietly breaking
+features that previously worked. Strict minimization keeps risk within a
+reviewable boundary and makes the blast radius of every diff immediately
+apparent.
+
 ## Development Workflow
 
 1. **Feature-branch first.** Every new feature MUST begin on a dedicated
@@ -310,4 +354,4 @@ makes timezone-related bugs grep-able rather than emergent.
    Complexity Tracking table, or propose a Constitution amendment in a
    separate PR.
 
-**Version**: 1.3.0 | **Ratified**: 2026-04-24 | **Last Amended**: 2026-04-29
+**Version**: 1.4.0 | **Ratified**: 2026-04-24 | **Last Amended**: 2026-05-03

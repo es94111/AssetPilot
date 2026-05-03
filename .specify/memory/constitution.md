@@ -1,7 +1,7 @@
 <!--
 Sync Impact Report
 ==================
-Version change: 1.2.0 → 1.3.0  (MINOR: new principle added; FR-007a redefined)
+Version change: 1.3.0 → 1.4.0  (MINOR: Principle V Brownfield Discipline added)
 Modified principles:
   - FR-007a (previously implicit "lock to UTC+8 for today/future judgments")
     is REDEFINED to "use per-user `users.timezone` (IANA identifier,
@@ -264,6 +264,36 @@ user-facing meaning) or a documented external anchor (for market /
 regulatory meaning) makes correctness reviewable line-by-line, and
 makes timezone-related bugs grep-able rather than emergent.
 
+### V. Brownfield 開發紀律 — NON‑NEGOTIABLE
+
+本專案為**棕地專案（Brownfield）**：現有的程式碼、架構、行為與資料模型
+**MUST** 被視為既定事實加以保留，任何變更 **MUST** 遵守下列規則。
+
+1. **禁止任意重構。** 未被需求明確要求的重構（包括改名、搬移、抽象化、
+   格式整理）一律禁止。若發現問題想改善，MUST 先向人類提出並獲得明確同意，
+   再在獨立 PR 中執行。
+2. **最小化變更原則。** 每一行改動 MUST 能直接追溯到需求或缺陷報告。
+   改了 50 行卻只需要改 5 行，等同違憲。
+3. **保留既有行為與邏輯。** 現有端點回傳格式、資料庫 schema 欄位語意、
+   前端渲染路徑、錯誤處理流程均視為合約。改動它們屬於 breaking change，
+   MUST 走 §Development Workflow §5 破壞性變更流程。
+4. **禁止更動現有套件版本。** `package.json` 中已存在的套件，其版本 pin 值
+   **MUST NOT** 被更改（升版、降版、移除皆禁止），除非需求明確要求且人類
+   已確認。
+5. **新增套件需人類確認。** 任何尚未出現在 `package.json` 的新依賴，在
+   執行 `npm install <pkg>` 之前 **MUST** 向人類說明理由並取得明確同意。
+   替代方案（用現有套件或標準函式庫解決）MUST 先被評估且明確排除。
+
+**例外**（每處 MUST 於程式碼內以 `// Brownfield-exception:` 註解說明原因）：
+
+- 安全漏洞修補（CVE fix）強制升版，等同人類確認。
+- 測試框架或工具鏈變更，若完全不影響 production bundle，可在獨立 PR
+  中提案，但仍需人類確認後才執行。
+
+**Rationale**: 棕地專案最大的成本來自「隱性破壞」——改了不該改的東西，
+讓原本可用的功能悄悄失效。嚴格的最小化原則將風險控制在可審查的範圍內，
+讓每個 diff 的影響面都能被一眼識別。
+
 ## Development Workflow
 
 1. **Feature-branch first.** Every new feature MUST begin on a dedicated
@@ -310,4 +340,4 @@ makes timezone-related bugs grep-able rather than emergent.
    Complexity Tracking table, or propose a Constitution amendment in a
    separate PR.
 
-**Version**: 1.3.0 | **Ratified**: 2026-04-24 | **Last Amended**: 2026-04-29
+**Version**: 1.4.0 | **Ratified**: 2026-04-24 | **Last Amended**: 2026-05-03

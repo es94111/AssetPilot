@@ -1,6 +1,6 @@
 # 資產管理 系統規格說明書 (SSD)
 
-**版本：** 4.35.2
+**版本：** 4.36.0
 **日期：** 2026-05-03
 **狀態：** 已實作
 
@@ -964,6 +964,7 @@ API 路徑統一以 `/api/` 為前綴。所有需認證的路由自動套用 aut
 
 | 版本 | 日期 | 變更說明 |
 | --- | --- | --- |
+| 4.36.0 | 2026-05-03 | 儀表板新增「收入分類」圓餅圖（010-dashboard-income-pie）：①`server.js` `/api/dashboard` 新增 `incomeCatBreakdown` 欄位（`buildCategoryAggregateNodes` + `type='income'` 查詢）；②`index.html` 在支出分類與資產配置卡片之間插入「收入分類」卡片（含雙圓餅圖開關 `dashIncomeDualPie`、canvas `dashIncomePieChart`、排行容器 `dashIncomeTop5`）；③`app.js` 新增 `DASH_DUAL_INCOME_KEY` 常數、`dashDualPie.income` 狀態、`renderDashIncomePie()`（單環 + useDualPie 雙環 + FR-009 點擊跳轉 type=income）、`renderDashIncomeTop5()`（前 5 名排行）、`drawDashboardIncomeDualPie()`（父+子雙環，鏡射 `drawDashboardExpenseDualPie`）、income toggle change 事件綁定；④`openapi.yaml` 新增 `incomeCatBreakdown` 欄位定義 |
 | 4.35.2 | 2026-05-03 | 修正儀表板「資產配置（含股票市值）」與「帳戶前 5 名」中，信用卡等負值欠款帳戶錯誤顯示為負數且被列入資產總和計算的問題。改為排除負值帳戶，確保排行榜與圓餅圖符合資產語意。 |
 | 4.35.1 | 2026-04-29 | 修正 `navigateToTransactions()`（`app.js:3062`）與 008-frontend-routing 不相容：原寫法用 `history.replaceState(null, '', '#/transactions?...')` 把 URL 參數塞到 hash，但 `navigateToPath()` 在 `location.pathname !== normalized` 時會執行 `history.pushState({...}, '', normalized)` 覆寫整個 URL（normalizePath 已剝除 search/hash），導致 hash 內的 `categoryId` / `dateFrom` / `dateTo` / `type` 全部遺失，`restoreFiltersFromHash()` 接著讀到空字串 → 無 filter 套用 → 4.34.0 backend 父→子展開邏輯永遠收不到 categoryId。本版改為先 `pushState({path,page,sub,scrollY}, '', '/finance/transactions?<params>')` 把 URL 寫成「目標 pathname + search params」，這樣 `navigateToPath` 進來時 `location.pathname === normalized` 條件為 true 不再覆寫，URL 與 search 全部保留 → `restoreFiltersFromHash` 正確讀取 → `applyFilters` 正確套用。同時受惠：dashboard 支出餅（line 2202）、dashboard 資產餅（line 2362）、報表分類餅（line 3363）三個 callsite |
 | 4.35.0 | 2026-04-29 | 自動重啟服務（in-app update）：①`server.js` 新增 `detectProcessSupervisor()` 偵測 `/.dockerenv` / `process.env.pm_id` / `PM2_HOME` / `INVOCATION_ID`，回傳 `{available, type: 'docker' \| 'pm2' \| 'systemd' \| 'none'}`；②新增 `AUTO_RESTART_AFTER_UPDATE` env var（`auto`（預設）/ `force` / `off`）+ `planAutoRestart()` 決策函式，僅在 supervisor 可用時才執行 exit；③`POST /api/system/update-app` 成功後先註冊 `res.on('finish', ...)` hook，回應 JSON 含 `autoRestartScheduled` / `autoRestartReason` / `autoRestartSupervisor` / `restartDelayMs`，response flush 完成後 setTimeout 1500ms → `flushOnExit()` + `process.exit(0)`，由 supervisor (Docker `restart: unless-stopped`) 重新拉起；④`index.html` 新增 `#restartOverlay`（role=alertdialog，含 spinner / title / msg / elapsed / 立即重新整理 fallback button）；`style.css` 加 `.restart-overlay` 全螢幕遮罩 + backdrop-filter blur(4px)、`.restart-overlay-card` / `.restart-overlay-spinner` / `.restart-overlay-elapsed` 樣式；⑤`app.js` 新增 `showRestartOverlayAndWait()` 函式：開遮罩、每秒更新已等待秒數、`startDelayMs+500` 後開始輪詢 `/api/config`（公開端點，不需 auth）、每 2 秒 fetch 一次、200 即 `location.reload()`，90 秒未恢復顯示逾時 + 手動 reload 按鈕；⑥前端 `runAppUpdateBtn` click handler 改為依 `result.autoRestartScheduled` 分流：true → 開遮罩等待；false → 顯示 confirm 含失敗原因（如「未偵測到 supervisor」），由使用者決定是否手動 reload；⑦不變動 admin auth 中介層，仍維持 `adminMiddleware` 限制 |

@@ -8540,19 +8540,6 @@ app.get('/api/dashboard', (req, res) => {
   `, [req.userId, month + '%']);
   const catBreakdown = buildCategoryAggregateNodes(catRows);
 
-  // 010: income category breakdown
-  const incomeCatRows = queryAll(`
-    SELECT t.category_id, t.amount,
-           c.name as cat_name, c.color as cat_color,
-           c.parent_id as cat_parent_id,
-           p.name as cat_parent_name, p.color as cat_parent_color
-    FROM transactions t
-    LEFT JOIN categories c ON t.category_id = c.id
-    LEFT JOIN categories p ON c.parent_id = p.id
-    WHERE t.user_id = ? AND t.type = 'income' AND t.date LIKE ? AND t.exclude_from_stats = 0
-  `, [req.userId, month + '%']);
-  const incomeCatBreakdown = buildCategoryAggregateNodes(incomeCatRows);
-
   // 005 T022: recent 限縮該月份內前 5 筆（與 KPI 同步）
   const recent = queryAll(`
     SELECT t.*, c.name as cat_name, c.color as cat_color
@@ -8562,7 +8549,7 @@ app.get('/api/dashboard', (req, res) => {
     ORDER BY t.date DESC, t.created_at DESC LIMIT 5
   `, [req.userId, month + '%']);
 
-  res.json({ yearMonth: month, income, expense, net: income - expense, todayExpense, catBreakdown, incomeCatBreakdown, recent });
+  res.json({ yearMonth: month, income, expense, net: income - expense, todayExpense, catBreakdown, recent });
 });
 
 // ─── 報表 ───

@@ -512,9 +512,11 @@ const App = (() => {
   let deleteCallback = null;
   const DASH_DUAL_EXPENSE_KEY = 'dashDualPieExpense';
   const DASH_DUAL_ASSET_KEY = 'dashDualPieAsset';
+  const DASH_DUAL_INCOME_KEY = 'dashDualPieIncome';
   let dashDualPie = {
     expense: localStorage.getItem(DASH_DUAL_EXPENSE_KEY) === '1',
     asset: localStorage.getItem(DASH_DUAL_ASSET_KEY) === '1',
+    income: localStorage.getItem(DASH_DUAL_INCOME_KEY) === '1',
   };
   let dashboardDualBound = false;
 
@@ -2053,8 +2055,10 @@ const App = (() => {
     bindDashboardMonthSwitcher();
     const expenseToggle = el('dashExpenseDualPie');
     const assetToggle = el('dashAssetDualPie');
+    const incomeToggle = el('dashIncomeDualPie');
     if (expenseToggle) expenseToggle.checked = !!dashDualPie.expense;
     if (assetToggle) assetToggle.checked = !!dashDualPie.asset;
+    if (incomeToggle) incomeToggle.checked = !!dashDualPie.income;
 
     // 月份標籤更新
     const labelEl = el('dashMonthLabel');
@@ -2099,6 +2103,7 @@ const App = (() => {
 
     await renderDashBudget(data.expense);
     renderDashPie(data.catBreakdown, !!dashDualPie.expense);
+    renderDashIncomePie(data.incomeCatBreakdown, !!dashDualPie.income);
     await renderDashAssetAllocationPie(!!dashDualPie.asset);
     renderDashRecent(data.recent);
   }
@@ -2107,6 +2112,7 @@ const App = (() => {
     if (dashboardDualBound) return;
     const expenseToggle = el('dashExpenseDualPie');
     const assetToggle = el('dashAssetDualPie');
+    const incomeToggle = el('dashIncomeDualPie');
     if (!expenseToggle || !assetToggle) return;
 
     expenseToggle.addEventListener('change', () => {
@@ -2122,6 +2128,15 @@ const App = (() => {
       else localStorage.removeItem(DASH_DUAL_ASSET_KEY);
       renderDashboard();
     });
+
+    if (incomeToggle) {
+      incomeToggle.addEventListener('change', () => {
+        dashDualPie.income = !!incomeToggle.checked;
+        if (dashDualPie.income) localStorage.setItem(DASH_DUAL_INCOME_KEY, '1');
+        else localStorage.removeItem(DASH_DUAL_INCOME_KEY);
+        renderDashboard();
+      });
+    }
 
     dashboardDualBound = true;
   }
@@ -2238,6 +2253,101 @@ const App = (() => {
     container.innerHTML = html;
   }
 
+  function renderDashIncomePie(incomeCatBreakdown, useDualPie = false) {
+    if (charts.dashIncomePie) charts.dashIncomePie.destroy();
+    const canvas = el('dashIncomePieChart');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const top5Container = el('dashIncomeTop5');
+    if (top5Container) top5Container.innerHTML = '';
+    if (!incomeCatBreakdown || incomeCatBreakdown.length === 0) {
+      ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+      if (top5Container) top5Container.innerHTML = '<p class="empty-hint">本月無收入記錄</p>';
+      return;
+    }
+
+    if (useDualPie) {
+      if (typeof drawDashboardIncomeDualPie === 'function') {
+        drawDashboardIncomeDualPie(ctx, incomeCatBreakdown);
+      } else {
+        renderDashIncomePie(incomeCatBreakdown, false);
+        return;
+      }
+      renderDashIncomeTop5(incomeCatBreakdown);
+      return;
+    }
+
+    const sorted = buildSortedCategoryRows(incomeCatBreakdown);
+    if (sorted.parentRows.length === 0) {
+      ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+      if (top5Container) top5Container.innerHTML = '<p class="empty-hint">本月無收入記錄</p>';
+      return;
+    }
+
+    const parentColorMap = new Map();
+    sorted.parentRows.forEach((parent, idx) => {
+      parentColorMap.set(parent.parentKey, buildParentAccentColor(parent.parentColor, idx, sorted.parentRows.length));
+    });
+
+    const labels = sorted.parentRows.map(r => r.parentName);
+    const data = sorted.parentRows.map(r => r.total);
+    const colors = sorted.parentRows.map(r => parentColorMap.get(r.parentKey) || '#94a3b8');
+    const meta = sorted.parentRows.map(r => ({ parentId: r.parentId, parentName: r.parentName }));
+
+    charts.dashIncomePie = new Chart(ctx, {
+      type: 'doughnut',
+      data: { labels, datasets: [{ data, backgroundColor: colors, borderWidth: 0 }] },
+      options: {
+        responsive: true,
+        plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, padding: 10 } } },
+        onClick: (evt, items) => {
+          if (!items.length) return;
+          const seg = meta[items[0].index];
+          if (!seg) return;
+          const monthEnd = (() => {
+            const [y, m] = dashMonth.split('-').map(Number);
+            const d = new Date(y, m, 0);
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+          })();
+          navigateToTransactions({
+            categoryId: seg.parentId,
+            type: 'income',
+            from: dashMonth + '-01',
+            to: monthEnd,
+          });
+        },
+      },
+    });
+
+    renderDashIncomeTop5(incomeCatBreakdown);
+  }
+
+  function renderDashIncomeTop5(incomeCatBreakdown) {
+    const container = el('dashIncomeTop5');
+    if (!container) return;
+
+    const sorted = buildSortedCategoryRows(incomeCatBreakdown);
+    const parentRows = sorted.parentRows;
+    if (parentRows.length === 0) { container.innerHTML = ''; return; }
+
+    const grandTotal = parentRows.reduce((s, r) => s + r.total, 0);
+    const top5 = parentRows.slice(0, 5);
+
+    let html = '<div class="dash-top5-group">';
+    html += '<div class="dash-top5-title"><i class="fas fa-tags"></i>收入分類前 5 名</div>';
+    html += '<ul class="dash-top5-list">';
+    top5.forEach((row, idx) => {
+      const pct = grandTotal > 0 ? ((row.total / grandTotal) * 100).toFixed(1) : '0.0';
+      html += `<li>
+        <span class="dash-top5-rank">${idx + 1}</span>
+        <span class="dash-top5-name">${escHtml(row.parentName)}</span>
+        <span class="dash-top5-value">${fmt(row.total)}<span class="dash-top5-pct">${pct}%</span></span>
+      </li>`;
+    });
+    html += '</ul></div>';
+    container.innerHTML = html;
+  }
+
   async function renderDashAssetAllocationPie(useDualPie = false) {
     if (charts.dashAssetPie) charts.dashAssetPie.destroy();
     const canvas = el('dashAssetPieChart');
@@ -2267,15 +2377,15 @@ const App = (() => {
       return;
     }
 
-    // 005 T027: 採 twdAccumulated（FR-004 / Round 4 / 不主動觸發查價）；負值取絕對值參與弧度但 tooltip 顯示原值
+    // 005 T027: 採 twdAccumulated（FR-004 / Round 4 / 不主動觸發查價）；排除負值（如信用卡負債）不列入資產配置
     const accountRows = (accounts || [])
       .filter(a => !a.exclude_from_total)
       .map(a => {
         const twd = a.twdAccumulated !== undefined ? (Number(a.twdAccumulated) || 0) : (Number(a.balance) || 0);
         return { label: String(a.name || '帳戶'), name: String(a.name || '帳戶'), id: a.id, total: Math.round(twd), absTotal: Math.abs(Math.round(twd)) };
       })
-      .filter(row => row.absTotal > 0)
-      .sort((a, b) => b.absTotal - a.absTotal);
+      .filter(row => row.total > 0)
+      .sort((a, b) => b.total - a.total);
     const stockValue = (stocks || []).reduce((sum, s) => sum + (Number(s.marketValue) || 0), 0);
 
     const parentRows = [];
@@ -2371,15 +2481,15 @@ const App = (() => {
     const container = el('dashAssetTop5');
     if (!container) return;
 
-    // 005: 採 twdAccumulated（FR-004 / Round 4）
+    // 005: 採 twdAccumulated（FR-004 / Round 4），排除負值帳戶（如信用卡負債）
     const accountRows = (accounts || [])
       .filter(a => !a.exclude_from_total)
       .map(a => {
         const twd = a.twdAccumulated !== undefined ? (Number(a.twdAccumulated) || 0) : (Number(a.balance) || 0);
         return { name: String(a.name || '帳戶'), total: Math.round(twd), absTotal: Math.abs(Math.round(twd)) };
       })
-      .filter(r => r.absTotal > 0)
-      .sort((a, b) => b.absTotal - a.absTotal);
+      .filter(r => r.total > 0)
+      .sort((a, b) => b.total - a.total);
 
     const stockRows = (stocks || [])
       .map(s => {
@@ -2416,15 +2526,15 @@ const App = (() => {
       html += '</ul></div>';
     }
 
-    // 帳戶前 5 名（採 absTotal 排序與百分比計算；顯示原值含負號）
+    // 帳戶前 5 名（採正值總額排序與百分比計算）
     if (accountRows.length > 0) {
       const top5Accounts = accountRows.slice(0, 5);
-      const accountTotal = accountRows.reduce((s, r) => s + r.absTotal, 0);
+      const accountTotal = accountRows.reduce((s, r) => s + r.total, 0);
       html += '<div class="dash-top5-group">';
       html += '<div class="dash-top5-title"><i class="fas fa-landmark"></i>帳戶前 5 名</div>';
       html += '<ul class="dash-top5-list">';
       top5Accounts.forEach((row, idx) => {
-        const pct = accountTotal > 0 ? ((row.absTotal / accountTotal) * 100).toFixed(1) : '0.0';
+        const pct = accountTotal > 0 ? ((row.total / accountTotal) * 100).toFixed(1) : '0.0';
         html += `<li>
           <span class="dash-top5-rank">${idx + 1}</span>
           <span class="dash-top5-name">${escHtml(row.name)}</span>
@@ -3566,13 +3676,109 @@ const App = (() => {
     });
   }
 
+  function drawDashboardIncomeDualPie(ctx, incomeCatBreakdown) {
+    const sorted = buildSortedCategoryRows(incomeCatBreakdown);
+    const parentRows = sorted.parentRows;
+    const childRows = sorted.childRows;
+    if (parentRows.length === 0 || childRows.length === 0) {
+      ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+      return;
+    }
+
+    const parentColorMap = new Map();
+    parentRows.forEach((row, idx) => {
+      parentColorMap.set(row.parentKey, buildParentAccentColor(row.parentColor, idx, parentRows.length));
+    });
+
+    childRows.forEach(row => {
+      const parentColor = parentColorMap.get(row.parentKey) || '#94a3b8';
+      row.color = buildChildVariantColor(parentColor, row.childIndex, row.siblingCount);
+    });
+
+    charts.dashIncomePie = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: childRows.map(r => r.label),
+        datasets: [
+          {
+            label: '父分類',
+            data: parentRows.map(r => r.total),
+            backgroundColor: parentRows.map(r => parentColorMap.get(r.parentKey) || '#94a3b8'),
+            borderColor: '#ffffff',
+            borderWidth: 2,
+            radius: '62%',
+            cutout: '34%',
+            segmentLabels: parentRows.map(r => r.parentName),
+          },
+          {
+            label: '子分類',
+            data: childRows.map(r => r.total),
+            backgroundColor: childRows.map(r => r.color),
+            borderColor: '#ffffff',
+            borderWidth: 2,
+            radius: '95%',
+            cutout: '66%',
+            segmentLabels: childRows.map(r => r.label),
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              boxWidth: 12,
+              padding: 10,
+              generateLabels(chart) {
+                const ds = chart.data.datasets[1] || { data: [], backgroundColor: [] };
+                return (chart.data.labels || []).map((label, i) => {
+                  const bg = Array.isArray(ds.backgroundColor) ? ds.backgroundColor[i] : ds.backgroundColor;
+                  return {
+                    text: String(label || ''),
+                    fillStyle: bg,
+                    strokeStyle: bg,
+                    lineWidth: 0,
+                    hidden: false,
+                    index: i,
+                  };
+                });
+              },
+            },
+          },
+          tooltip: {
+            callbacks: {
+              title(items) {
+                if (!items || items.length === 0) return '';
+                const item = items[0];
+                const ds = item.dataset || {};
+                const labels = ds.segmentLabels || [];
+                return labels[item.dataIndex] || item.label || '';
+              },
+              label(context) {
+                const ds = context.dataset || {};
+                const labels = ds.segmentLabels || [];
+                const label = labels[context.dataIndex] || context.label || '';
+                const value = Number(context.raw) || 0;
+                return `${ds.label}：${label} ${fmt(value)}`;
+              },
+            },
+          },
+        },
+      },
+    });
+  }
+
   function drawDashboardAssetDualPie(ctx, accounts, stocks) {
     const accountRows = (accounts || [])
       .filter(a => !a.exclude_from_total)
-      .map(a => ({
-        label: String(a.name || '帳戶'),
-        total: Math.round(Number(a.balance) || 0),
-      }))
+      .map(a => {
+        const twd = a.twdAccumulated !== undefined ? (Number(a.twdAccumulated) || 0) : (Number(a.balance) || 0);
+        return {
+          label: String(a.name || '帳戶'),
+          total: Math.round(twd),
+        };
+      })
       .filter(row => row.total > 0)
       .sort((a, b) => b.total - a.total);
 

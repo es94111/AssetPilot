@@ -17,5 +17,8 @@
       "Bash(python3 -c ':*)",
       "Bash(node -e ':*)"
     ]
+  },
+  "enabledPlugins": {
+    "ui-ux-pro-max@ui-ux-pro-max-skill": true
   }
 }

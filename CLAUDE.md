@@ -65,14 +65,14 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 <!-- SPECKIT START -->
 ## 目前進行中的功能規劃
 
-- 功能：多時區支援（Multi-Timezone Support）
-- 分支：`009-multi-timezone`
-- 規格：[specs/009-multi-timezone/spec.md](specs/009-multi-timezone/spec.md)
-- 計畫：[specs/009-multi-timezone/plan.md](specs/009-multi-timezone/plan.md)
+- 功能：儀表板收入分類圓餅圖（Dashboard Income Category Pie Chart）
+- 分支：`010-dashboard-income-pie`
+- 規格：[specs/010-dashboard-income-pie/spec.md](specs/010-dashboard-income-pie/spec.md)
+- 計畫：[specs/010-dashboard-income-pie/plan.md](specs/010-dashboard-income-pie/plan.md)
 - 衍生產物：
-  - [research.md](specs/009-multi-timezone/research.md)
-  - [data-model.md](specs/009-multi-timezone/data-model.md)
-  - [quickstart.md](specs/009-multi-timezone/quickstart.md)
-  - [contracts/multi-timezone.openapi.yaml](specs/009-multi-timezone/contracts/multi-timezone.openapi.yaml)
+  - [research.md](specs/010-dashboard-income-pie/research.md)
+  - [data-model.md](specs/010-dashboard-income-pie/data-model.md)
+  - [quickstart.md](specs/010-dashboard-income-pie/quickstart.md)
+  - [contracts/dashboard-income-pie.openapi.yaml](specs/010-dashboard-income-pie/contracts/dashboard-income-pie.openapi.yaml)
 <!-- SPECKIT END -->
 

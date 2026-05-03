@@ -2416,7 +2416,7 @@ const App = (() => {
       html += '</ul></div>';
     }
 
-    // 帳戶前 5 名（採 absTotal 排序與百分比計算；顯示原值含負號）
+    // 帳戶前 5 名（採 absTotal 排序與百分比計算；顯示正值以符合資產配置語意）
     if (accountRows.length > 0) {
       const top5Accounts = accountRows.slice(0, 5);
       const accountTotal = accountRows.reduce((s, r) => s + r.absTotal, 0);
@@ -2428,7 +2428,7 @@ const App = (() => {
         html += `<li>
           <span class="dash-top5-rank">${idx + 1}</span>
           <span class="dash-top5-name">${escHtml(row.name)}</span>
-          <span class="dash-top5-value">${fmt(row.total)}<span class="dash-top5-pct">${pct}%</span></span>
+          <span class="dash-top5-value">${fmt(row.absTotal)}<span class="dash-top5-pct">${pct}%</span></span>
         </li>`;
       });
       html += '</ul></div>';

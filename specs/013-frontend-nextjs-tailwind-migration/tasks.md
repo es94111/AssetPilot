@@ -23,6 +23,11 @@
 ## Phase 5: Polish & Cross-cutting
 - [X] T013 Migrate remaining UI components from `components/ui/` to Tailwind v4/TSX
 - [X] T015 Migrate Account Settings page
+- [X] T016 Migrate Accounts module
+- [X] T017 Migrate Categories module
+- [X] T018 Migrate Budget module
+- [X] T019 Migrate Recurring module
+- [X] T020 Migrate Reports module
 - [ ] T014 Run lighthouse and verify performance improvements (LCP < 2.5s, TBT < 200ms)
 
 

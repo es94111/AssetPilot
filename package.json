@@ -3,7 +3,9 @@
   "version": "4.33.0",
   "private": true,
   "scripts": {
-    "start": "node server.js",
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
     "test": "npm run test:tz && npm run test:fr015 && npm run check:iso",
     "test:tz": "node tests/lib/userTime.test.js && node tests/migration/migration-009.test.js && node tests/integration/us1-natural-day.test.js && node tests/integration/us2-users-me-timezone.test.js && node tests/integration/us3-monthly-report.test.js",
     "test:fr015": "node tests/integration/fr015-transactions-historical.test.js",

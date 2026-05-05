@@ -9,11 +9,9 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-5.0.1-blue" alt="version">
+  <img src="https://img.shields.io/badge/version-4.35.1-blue" alt="version">
   <img src="https://img.shields.io/badge/node-%3E%3D24-brightgreen" alt="node">
-  <img src="https://img.shields.io/badge/next.js-15-black" alt="next.js">
-  <img src="https://img.shields.io/badge/react-19-61DAFB" alt="react">
-  <img src="https://img.shields.io/badge/tailwind-v4-38BDF8" alt="tailwind">
+  <img src="https://img.shields.io/badge/express-5.x-000000" alt="express">
   <img src="https://img.shields.io/badge/openapi-3.2.0-6BA539" alt="openapi">
   <img src="https://img.shields.io/badge/license-AGPL--3.0-blue" alt="license">
   <img src="https://img.shields.io/badge/docker-ready-2496ED" alt="docker">
@@ -103,18 +101,18 @@
 
 | 層級 | 技術 |
 | ---- | ---- |
-| 前端框架 | Next.js 15（App Router）+ React 19 + Tailwind CSS v4 |
-| 後端框架 | Next.js API Routes（取代 Express 5）|
-| 執行環境 | Node.js ≥ 24 |
+| 前端 | 原生 HTML / CSS / Vanilla JS（IIFE，無框架、無 build step）；URL-first SPA 路由 |
+| 後端 | Node.js ≥ 24 + Express 5 |
 | 資料庫 | SQLite（sql.js，記憶體 + 檔案持久化） |
 | 加密 | ChaCha20-Poly1305 AEAD + PBKDF2-SHA256 |
 | 認證 | JWT（HS256，httpOnly Cookie）+ bcryptjs；選配 Google OAuth Code Flow + Passkey（WebAuthn） |
 | 金額精度 | decimal.js（FIFO / 匯率 / 手續費分攤前後端同構共用 `lib/moneyDecimal.js`） |
 | 圖表 | Chart.js |
 | 寄信 | SMTP（Nodemailer）/ Zeabur Email（ZSend HTTP API）/ Resend；以環境變數指定主備通道，執行期 fallback |
-| 安全 | Next.js 安全標頭（CSP、X-Frame-Options、Referrer-Policy）、in-memory 速率限制（middleware.js） |
-| 部署 | Next.js Standalone（`node .next/standalone/server.js`）；Docker 映像約 180 MB |
+| 安全 | Helmet、express-rate-limit、CSP、SRI、CORS 白名單 |
 | 契約 | OpenAPI 3.2.0（`openapi.yaml`） |
+
+**完全不引入**：前端框架（React / Vue）、router 套件（page.js / Navigo）、Modal 函式庫（micromodal）、focus-trap、icon 字型（Lucide / Heroicons）、build 工具（Vite / esbuild）。所有 UI 行為以原生 DOM API + IIFE 模組實作。
 
 ---
 
@@ -160,24 +158,8 @@ volumes:
 ```bash
 npm install              # Node.js ≥ 24
 cp .env.example .env     # 依需求編輯
-npm run build            # 建置 Next.js
-npm start                # 啟動（next start）
+node server.js
 ```
-
-**開發模式（Hot Reload）：**
-
-```bash
-npm run dev
-```
-
-**Standalone 模式（生產推薦）：**
-
-```bash
-npm run build
-node .next/standalone/server.js
-```
-
-> 舊版 Express 伺服器（`server.js`）保留為相容備用，可用 `npm run start:legacy` 啟動。
 
 ### Synology NAS
 

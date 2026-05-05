@@ -1,12 +1,9 @@
 {
   "name": "bookkeeping-app",
-  "version": "5.0.0",
+  "version": "4.33.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "start:legacy": "node server.js",
+    "start": "node server.js",
     "test": "npm run test:tz && npm run test:fr015 && npm run check:iso",
     "test:tz": "node tests/lib/userTime.test.js && node tests/migration/migration-009.test.js && node tests/integration/us1-natural-day.test.js && node tests/integration/us2-users-me-timezone.test.js && node tests/integration/us3-monthly-report.test.js",
     "test:fr015": "node tests/integration/fr015-transactions-historical.test.js",
@@ -18,10 +15,8 @@
   },
   "dependencies": {
     "@passwordless-id/webauthn": "^2.3.5",
-    "@tailwindcss/postcss": "^4.1.0",
     "adm-zip": "^0.5.17",
     "bcryptjs": "^3.0.3",
-    "chart.js": "^4.5.1",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "decimal.js": "^10.4.3",
@@ -30,13 +25,9 @@
     "express-rate-limit": "^8.4.1",
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.2",
-    "next": "^15.3.0",
     "nodemailer": "^8.0.6",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0",
     "resend": "^6.12.2",
-    "sql.js": "^1.14.1",
-    "tailwindcss": "^4.1.0"
+    "sql.js": "^1.14.1"
   },
   "overrides": {
     "uuid": "^14.0.0"

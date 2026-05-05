@@ -16,5 +16,3 @@ data/
 *.bat
 build-docker.sh
 backups/
-# Next.js 建置快取（Builder 階段會重新建置）
-.next/cache

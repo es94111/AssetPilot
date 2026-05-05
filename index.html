@@ -1290,198 +1290,173 @@
       </div>
       <!-- 帳號設定 -->
       <div class="settings-panel" id="panel-account">
-        <div class="panel-account-layout">
-
-          <!-- 個人偏好 -->
-          <div class="card account-cluster-card">
-            <div class="account-cluster-header">
-              <h3><i class="fas fa-palette"></i>個人偏好</h3>
-              <p>自訂外觀主題與時區設定</p>
+        <div class="card">
+          <h3><i class="fas fa-moon"></i>外觀模式</h3>
+          <div class="theme-toggle-row">
+            <div>
+              <div style="font-weight:600">主題模式</div>
+              <div class="import-hint" style="margin-top:4px">可選擇淺色、深色，或跟隨瀏覽器/系統主題偏好。</div>
             </div>
-            <div class="account-section">
-              <h4><i class="fas fa-moon"></i>外觀模式</h4>
-              <div class="theme-toggle-row">
-                <div>
-                  <div style="font-weight:600">主題模式</div>
-                  <div class="import-hint" style="margin-top:4px">可選擇淺色、深色，或跟隨瀏覽器/系統主題偏好。</div>
-                </div>
-                <div class="theme-mode-group" role="radiogroup" aria-label="主題模式">
-                  <label class="theme-mode-option" title="淺色模式">
-                    <input type="radio" name="themeMode" value="light">
-                    <span>淺色</span>
-                  </label>
-                  <label class="theme-mode-option" title="深色模式">
-                    <input type="radio" name="themeMode" value="dark">
-                    <span>深色</span>
-                  </label>
-                  <label class="theme-mode-option" title="跟隨系統">
-                    <input type="radio" name="themeMode" value="system">
-                    <span>跟隨系統</span>
-                  </label>
-                </div>
+            <div class="theme-mode-group" role="radiogroup" aria-label="主題模式">
+              <label class="theme-mode-option" title="淺色模式">
+                <input type="radio" name="themeMode" value="light">
+                <span>淺色</span>
+              </label>
+              <label class="theme-mode-option" title="深色模式">
+                <input type="radio" name="themeMode" value="dark">
+                <span>深色</span>
+              </label>
+              <label class="theme-mode-option" title="跟隨系統">
+                <input type="radio" name="themeMode" value="system">
+                <span>跟隨系統</span>
+              </label>
+            </div>
+          </div>
+        </div>
+        <!-- 009 multi-timezone：時區設定 -->
+        <div class="card">
+          <h3><i class="fas fa-globe"></i>時區</h3>
+          <div class="timezone-row">
+            <div class="timezone-row__info">
+              <div style="font-weight:600">偏好時區</div>
+              <div class="import-hint" style="margin-top:4px">所有時間／日期皆以此時區呈現；新增交易的「今天」也以此為準。</div>
+              <div class="timezone-current" id="tzCurrentLabel" style="margin-top:8px;font-size:13px;color:var(--text-muted)"></div>
+            </div>
+            <div class="timezone-row__controls">
+              <input type="text" id="tzSearchInput" placeholder="搜尋時區（例：tokyo、new_york）" autocomplete="off" class="form-input" style="width:240px">
+              <select id="tzSelect" class="form-input" size="6" style="width:240px;margin-top:6px;font-family:monospace;font-size:13px"></select>
+              <div class="timezone-preview" id="tzPreview" style="margin-top:6px;font-size:12px;color:var(--text-muted);min-height:18px"></div>
+              <button type="button" class="btn btn-primary" id="tzSaveBtn" style="margin-top:8px"><i class="fas fa-check"></i> 儲存時區</button>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <h3><i class="fas fa-user-circle"></i>帳號資訊</h3>
+          <div class="account-info-section">
+            <div class="account-info-row">
+              <span class="account-info-label">電子信箱</span>
+              <span class="account-info-value" id="accountEmail">—</span>
+            </div>
+            <div class="account-info-row">
+              <span class="account-info-label">顯示名稱</span>
+              <span class="account-info-value" id="accountDisplayName">—</span>
+            </div>
+          </div>
+          <form id="accountDisplayNameForm" style="margin-top:12px">
+            <div class="form-row">
+              <label>修改顯示名稱</label>
+              <input type="text" id="accountDisplayNameInput" maxlength="50" placeholder="請輸入新的顯示名稱" required>
+            </div>
+            <div class="cert-btn-row" style="margin-top:4px">
+              <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-floppy-disk"></i> 儲存顯示名稱</button>
+            </div>
+          </form>
+        </div>
+        <div class="card" style="margin-top:16px">
+          <h3><i class="fas fa-key"></i><span id="accountPasswordCardTitle">修改密碼</span></h3>
+          <p class="import-hint" id="accountPasswordHint" style="margin-bottom:12px">為保護帳號安全，新密碼至少 8 字元，且需包含英文字母與數字。</p>
+          <form id="accountPasswordForm">
+            <div class="form-row" id="accountCurrentPasswordWrap">
+              <label>目前密碼</label>
+              <div class="pw-input-wrap">
+                <input type="password" id="accountCurrentPassword" class="form-input" autocomplete="current-password" placeholder="輸入目前的登入密碼">
+                <button type="button" class="pw-toggle-btn" aria-label="顯示或隱藏密碼" tabindex="-1"><i class="fas fa-eye"></i></button>
               </div>
             </div>
-            <!-- 009 multi-timezone：時區設定 -->
-            <div class="account-section">
-              <h4><i class="fas fa-globe"></i>時區</h4>
-              <div class="timezone-row">
-                <div class="timezone-row__info">
-                  <div style="font-weight:600">偏好時區</div>
-                  <div class="import-hint" style="margin-top:4px">所有時間／日期皆以此時區呈現；新增交易的「今天」也以此為準。</div>
-                  <div class="timezone-current" id="tzCurrentLabel" style="margin-top:8px;font-size:13px;color:var(--text-muted)"></div>
-                </div>
-                <div class="timezone-row__controls">
-                  <input type="text" id="tzSearchInput" placeholder="搜尋時區（例：tokyo、new_york）" autocomplete="off" class="form-input" style="width:240px">
-                  <select id="tzSelect" class="form-input" size="6" style="width:240px;margin-top:6px;font-family:monospace;font-size:13px"></select>
-                  <div class="timezone-preview" id="tzPreview" style="margin-top:6px;font-size:12px;color:var(--text-muted);min-height:18px"></div>
-                  <button type="button" class="btn btn-primary" id="tzSaveBtn" style="margin-top:8px"><i class="fas fa-check"></i> 儲存時區</button>
-                </div>
+            <div class="form-row">
+              <label>新密碼</label>
+              <div class="pw-input-wrap">
+                <input type="password" id="accountNewPassword" class="form-input" autocomplete="new-password" placeholder="至少 8 字元，含大小寫英文、數字與特殊符號" required>
+                <button type="button" class="pw-toggle-btn" aria-label="顯示或隱藏密碼" tabindex="-1"><i class="fas fa-eye"></i></button>
+              </div>
+            </div>
+            <div class="form-row">
+              <label>再次輸入新密碼</label>
+              <div class="pw-input-wrap">
+                <input type="password" id="accountNewPasswordConfirm" class="form-input" autocomplete="new-password" placeholder="再次輸入以確認" required>
+                <button type="button" class="pw-toggle-btn" aria-label="顯示或隱藏密碼" tabindex="-1"><i class="fas fa-eye"></i></button>
+              </div>
+            </div>
+            <div id="accountPasswordError" class="form-error" style="display:none;color:var(--danger);font-size:13px;margin-top:4px"></div>
+            <div class="cert-btn-row" style="margin-top:8px">
+              <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-floppy-disk"></i> <span id="accountPasswordSubmitText">更新密碼</span></button>
+            </div>
+          </form>
+        </div>
+        <!-- 007 feature (T067)：使用者「我的操作紀錄」 -->
+        <div class="card" id="userAuditLogCard" style="margin-top:16px">
+          <h3><i class="fas fa-history"></i> 我的操作紀錄</h3>
+          <p class="admin-section-desc">記錄您執行的匯出 / 匯入操作。</p>
+          <div id="userAuditLogContainer"></div>
+        </div>
+        <div class="card" style="margin-top:16px">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px">
+            <h3 style="margin:0"><i class="fas fa-clock-rotate-left"></i> 登入紀錄（最近 100 筆）</h3>
+            <div class="filter-group" style="margin:0">
+              <label style="margin:0;font-size:13px">每頁</label>
+              <div class="pagesize-wrap">
+                <select id="accountLogPageSize">
+                  <option value="10">10</option>
+                  <option value="20" selected>20</option>
+                  <option value="50">50</option>
+                  <option value="100">100</option>
+                  <option value="custom">自訂</option>
+                </select>
+                <input type="number" id="accountLogPageSizeCustom" min="1" max="9999" placeholder="筆數" style="display:none">
               </div>
             </div>
           </div>
-
-          <!-- 帳號與安全 -->
-          <div class="card account-cluster-card">
-            <div class="account-cluster-header">
-              <h3><i class="fas fa-shield-halved"></i>帳號與安全</h3>
-              <p>管理帳號資訊、密碼與登入方式</p>
-            </div>
-            <div class="account-section">
-              <h4><i class="fas fa-user-circle"></i>帳號資訊</h4>
-              <div class="account-info-section">
-                <div class="account-info-row">
-                  <span class="account-info-label">電子信箱</span>
-                  <span class="account-info-value" id="accountEmail">—</span>
-                </div>
-                <div class="account-info-row">
-                  <span class="account-info-label">顯示名稱</span>
-                  <span class="account-info-value" id="accountDisplayName">—</span>
-                </div>
+          <div class="table-wrap" style="overflow:auto">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>登入時間</th>
+                  <th>IP 位址</th>
+                  <th>國家</th>
+                  <th>身份</th>
+                  <th>登入方式</th>
+                </tr>
+              </thead>
+              <tbody id="accountLoginLogBody"></tbody>
+            </table>
+          </div>
+          <div class="pagination" id="accountLoginLogPagination" style="margin-top:8px"></div>
+        </div>
+        <div class="card" style="margin-top:16px">
+          <h3><i class="fab fa-google"></i>Google 帳號綁定</h3>
+          <p class="import-hint" style="margin-bottom:12px">綁定 Google 帳號後，可使用 Google 快速登入，無需輸入帳號密碼。</p>
+          <div id="googleLinkStatus">
+            <!-- 已綁定狀態 -->
+            <div id="googleLinkedInfo" style="display:none">
+              <div class="google-linked-badge">
+                <i class="fas fa-check-circle" style="color:var(--success);margin-right:6px"></i>
+                <span>已綁定 Google 帳號</span>
               </div>
-              <form id="accountDisplayNameForm" style="margin-top:12px">
-                <div class="form-row">
-                  <label>修改顯示名稱</label>
-                  <input type="text" id="accountDisplayNameInput" maxlength="50" placeholder="請輸入新的顯示名稱" required>
-                </div>
-                <div class="cert-btn-row" style="margin-top:4px">
-                  <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-floppy-disk"></i> 儲存顯示名稱</button>
-                </div>
-              </form>
+              <button class="btn btn-outline danger" id="unlinkGoogleBtn" style="margin-top:12px">
+                <i class="fas fa-unlink"></i> 解除綁定
+              </button>
             </div>
-            <div class="account-section">
-              <h4><i class="fas fa-key"></i><span id="accountPasswordCardTitle">修改密碼</span></h4>
-              <p class="import-hint" id="accountPasswordHint" style="margin-bottom:12px">為保護帳號安全，新密碼至少 8 字元，且需包含英文字母與數字。</p>
-              <form id="accountPasswordForm">
-                <div class="form-row" id="accountCurrentPasswordWrap">
-                  <label>目前密碼</label>
-                  <div class="pw-input-wrap">
-                    <input type="password" id="accountCurrentPassword" class="form-input" autocomplete="current-password" placeholder="輸入目前的登入密碼">
-                    <button type="button" class="pw-toggle-btn" aria-label="顯示或隱藏密碼" tabindex="-1"><i class="fas fa-eye"></i></button>
-                  </div>
-                </div>
-                <div class="form-row">
-                  <label>新密碼</label>
-                  <div class="pw-input-wrap">
-                    <input type="password" id="accountNewPassword" class="form-input" autocomplete="new-password" placeholder="至少 8 字元，含大小寫英文、數字與特殊符號" required>
-                    <button type="button" class="pw-toggle-btn" aria-label="顯示或隱藏密碼" tabindex="-1"><i class="fas fa-eye"></i></button>
-                  </div>
-                </div>
-                <div class="form-row">
-                  <label>再次輸入新密碼</label>
-                  <div class="pw-input-wrap">
-                    <input type="password" id="accountNewPasswordConfirm" class="form-input" autocomplete="new-password" placeholder="再次輸入以確認" required>
-                    <button type="button" class="pw-toggle-btn" aria-label="顯示或隱藏密碼" tabindex="-1"><i class="fas fa-eye"></i></button>
-                  </div>
-                </div>
-                <div id="accountPasswordError" class="form-error" style="display:none;color:var(--danger);font-size:13px;margin-top:4px"></div>
-                <div class="cert-btn-row" style="margin-top:8px">
-                  <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-floppy-disk"></i> <span id="accountPasswordSubmitText">更新密碼</span></button>
-                </div>
-              </form>
-            </div>
-            <div class="account-section">
-              <h4><i class="fab fa-google"></i>Google 帳號綁定</h4>
-              <p class="import-hint" style="margin-bottom:12px">綁定 Google 帳號後，可使用 Google 快速登入，無需輸入帳號密碼。</p>
-              <div id="googleLinkStatus">
-                <div id="googleLinkedInfo" style="display:none">
-                  <div class="google-linked-badge">
-                    <i class="fas fa-check-circle" style="color:var(--success);margin-right:6px"></i>
-                    <span>已綁定 Google 帳號</span>
-                  </div>
-                  <button class="btn btn-outline danger" id="unlinkGoogleBtn" style="margin-top:12px">
-                    <i class="fas fa-unlink"></i> 解除綁定
-                  </button>
-                </div>
-                <div id="googleUnlinkedInfo" style="display:none">
-                  <div class="google-linked-badge unlinked">
-                    <i class="fas fa-times-circle" style="color:var(--text-muted);margin-right:6px"></i>
-                    <span>尚未綁定 Google 帳號</span>
-                  </div>
-                  <div id="googleLinkBtnWrap" style="margin-top:12px"></div>
-                </div>
+            <!-- 未綁定狀態 -->
+            <div id="googleUnlinkedInfo" style="display:none">
+              <div class="google-linked-badge unlinked">
+                <i class="fas fa-times-circle" style="color:var(--text-muted);margin-right:6px"></i>
+                <span>尚未綁定 Google 帳號</span>
               </div>
-            </div>
-            <div class="account-section">
-              <h4><i class="fas fa-fingerprint"></i>Passkey 無密碼登入</h4>
-              <p class="import-hint" style="margin-bottom:12px">使用指紋、Face ID 或裝置 PIN 碼快速登入，無需輸入密碼。可在多個裝置上註冊 Passkey。</p>
-              <div id="passkeyList"></div>
-              <div style="margin-top:12px">
-                <button type="button" class="btn btn-primary btn-sm" onclick="App.registerPasskey()">
-                  <i class="fas fa-plus"></i> 新增 Passkey
-                </button>
-              </div>
+              <div id="googleLinkBtnWrap" style="margin-top:12px"></div>
             </div>
           </div>
-
-          <!-- 活動紀錄 -->
-          <div class="card account-cluster-card">
-            <div class="account-cluster-header">
-              <h3><i class="fas fa-clock-rotate-left"></i>活動紀錄</h3>
-              <p>檢視操作與登入歷史紀錄</p>
-            </div>
-            <!-- 007 feature (T067)：使用者「我的操作紀錄」 -->
-            <div class="account-section" id="userAuditLogCard">
-              <h4><i class="fas fa-history"></i>我的操作紀錄</h4>
-              <p class="admin-section-desc">記錄您執行的匯出 / 匯入操作。</p>
-              <div id="userAuditLogContainer"></div>
-            </div>
-            <div class="account-section">
-              <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px">
-                <h4 style="margin:0"><i class="fas fa-right-to-bracket" style="color:var(--text-secondary);font-size:14px;width:18px;text-align:center;margin-right:8px"></i>登入紀錄（最近 100 筆）</h4>
-                <div class="filter-group" style="margin:0">
-                  <label style="margin:0;font-size:13px">每頁</label>
-                  <div class="pagesize-wrap">
-                    <select id="accountLogPageSize">
-                      <option value="10">10</option>
-                      <option value="20" selected>20</option>
-                      <option value="50">50</option>
-                      <option value="100">100</option>
-                      <option value="custom">自訂</option>
-                    </select>
-                    <input type="number" id="accountLogPageSizeCustom" min="1" max="9999" placeholder="筆數" style="display:none">
-                  </div>
-                </div>
-              </div>
-              <div class="table-wrap" style="overflow:auto">
-                <table class="data-table">
-                  <thead>
-                    <tr>
-                      <th>登入時間</th>
-                      <th>IP 位址</th>
-                      <th>國家</th>
-                      <th>身份</th>
-                      <th>登入方式</th>
-                    </tr>
-                  </thead>
-                  <tbody id="accountLoginLogBody"></tbody>
-                </table>
-              </div>
-              <div class="pagination" id="accountLoginLogPagination" style="margin-top:8px"></div>
-            </div>
+        </div>
+        <div class="card" style="margin-top:16px">
+          <h3><i class="fas fa-fingerprint"></i> Passkey 無密碼登入</h3>
+          <p class="import-hint" style="margin-bottom:12px">使用指紋、Face ID 或裝置 PIN 碼快速登入，無需輸入密碼。可在多個裝置上註冊 Passkey。</p>
+          <div id="passkeyList"></div>
+          <div style="margin-top:12px">
+            <button type="button" class="btn btn-primary btn-sm" onclick="App.registerPasskey()">
+              <i class="fas fa-plus"></i> 新增 Passkey
+            </button>
           </div>
-
-          <!-- 危險區域 -->
-          <div class="card danger-zone">
+        </div>
+        <div class="card danger-zone" style="margin-top:24px">
           <div class="danger-zone-header">
             <div class="danger-zone-icon"><i class="fas fa-triangle-exclamation"></i></div>
             <div>
@@ -1512,8 +1487,6 @@
               </button>
             </div>
           </div>
-        </div>
-
         </div>
       </div>
 

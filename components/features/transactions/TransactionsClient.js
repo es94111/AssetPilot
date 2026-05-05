@@ -222,7 +222,7 @@ export default function TransactionsClient() {
 
       {/* Add/Edit Modal */}
       {modal && (
-        <div className="modal-backdrop" onClick={() => setModal(false)}>
+        <div className="modal-overlay active" onClick={() => setModal(false)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h3>{editId ? '編輯交易' : '新增交易'}</h3>
@@ -282,7 +282,7 @@ export default function TransactionsClient() {
       )}
 
       {deleteId && (
-        <div className="modal-backdrop" onClick={() => setDeleteId(null)}>
+        <div className="modal-overlay active" onClick={() => setDeleteId(null)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h3>確認刪除</h3>

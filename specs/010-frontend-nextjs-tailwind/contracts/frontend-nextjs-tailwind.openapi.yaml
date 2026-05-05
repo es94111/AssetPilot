@@ -1,0 +1,52 @@
+openapi: 3.2.0
+info:
+  title: AssetPilot API — 框架遷移契約申報（010-frontend-nextjs-tailwind）
+  version: 0.1.0
+  description: |
+    本文件申報本次框架遷移（Express → Next.js API Routes）對 HTTP 契約的影響。
+
+    **結論：所有現有端點的路徑、請求格式、回應格式均不變（零破壞性變更）。**
+
+    既有完整 API 契約請參閱專案根目錄 `asset_openapi.yaml`（OpenAPI 3.2.0）。
+    本次遷移不新增、不移除、不修改任何端點，`asset_openapi.yaml` 無需更新。
+
+    ## 實作遷移說明
+
+    | 現有實作 | 遷移後實作 |
+    |----------|-----------|
+    | `server.js` Express 路由 | `app/api/*/route.js` Next.js Route Handlers |
+    | Express `authMiddleware` | `middleware.js` Next.js Middleware |
+    | `helmet` 安全標頭 | `next.config.js` headers() |
+    | `express-rate-limit` | `middleware.js` in-memory Map 實作 |
+    | `cookie-parser` | Next.js `cookies()` API |
+    | `express.json()` | Next.js 內建 JSON 解析 |
+    | `express.raw()` | `request.arrayBuffer()` |
+
+    ## 路由路徑一致性驗證
+
+    所有現有 `/api/*` 路徑在遷移後維持完全相同（遵循憲章 Principle III Slash-Style）。
+    Next.js App Router 的目錄結構對應如下：
+
+    - `/api/auth/login` → `app/api/auth/login/route.js`
+    - `/api/accounts` → `app/api/accounts/route.js`
+    - `/api/accounts/:id` → `app/api/accounts/[id]/route.js`
+    - `/api/categories/reorder` → `app/api/categories/reorder/route.js`
+    - `/api/transactions/batch-delete` → `app/api/transactions/batch-delete/route.js`
+
+    **注意**：現有 `server.js` 中有一處混用 regex 路由（`/api/transactions:batch-delete` regex），
+    遷移後統一改為 `/api/transactions/batch-delete`（slash-style，符合憲章 Principle III）。
+    此修正不影響前端呼叫（前端 `app.js` 中呼叫路徑已是 slash-style）。
+
+paths: {}
+
+components:
+  schemas: {}
+  securitySchemes:
+    jwtCookie:
+      type: apiKey
+      in: cookie
+      name: token
+      description: |
+        JWT 儲存於 httpOnly Cookie（名稱 `token`）。
+        遷移前後 Cookie 名稱、簽發方式、有效期限完全一致。
+        切換當下舊有 Session 因 Cookie 格式不相容而失效，使用者需重新登入一次。

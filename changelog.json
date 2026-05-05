@@ -2,6 +2,17 @@
   "currentVersion": "4.36.0",
   "releases": [
     {
+      "version": "4.36.1",
+      "date": "2026-05-05",
+      "title": "前端架構遷移至 Next.js + Tailwind CSS v4",
+      "type": "improved",
+      "changes": [
+        { "tag": "improved", "text": "完成前端架構遷移，將原有的 Express + 原生 JS 混合架構升級為 Next.js 15 (App Router) + Tailwind CSS v4，提升開發效率與維護性。" },
+        { "tag": "improved", "text": "Dashboard 與 Transactions 頁面已優先遷移，並透過 Hybrid 路由轉發 API 至 Express 後端，確保服務穩定性。" },
+        { "tag": "improved", "text": "UI 元件庫（Button, Table, Dialog, Badge 等）全面使用 TypeScript 重構並套用 Tailwind v4 工具類別樣式，提升元件重用性與類型安全。" }
+      ]
+    },
+    {
       "version": "4.36.0",
       "date": "2026-05-03",
       "title": "儀表板新增收入分類圓餅圖，掌握收入來源組成",

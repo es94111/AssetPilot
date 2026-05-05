@@ -1,6 +1,19 @@
 {
-  "currentVersion": "4.36.0",
+  "currentVersion": "5.0.0",
   "releases": [
+    {
+      "version": "5.0.0",
+      "date": "2026-05-05",
+      "title": "前端框架遷移至 Next.js 15 + React 19 + Tailwind CSS v4",
+      "type": "new",
+      "changes": [
+        { "tag": "new", "text": "前端框架由 Express + 原生 JS SPA 全面遷移至 Next.js 15（App Router）+ React 19 + Tailwind CSS v4，所有功能頁面改為 React 元件，提供更流暢的使用體驗。" },
+        { "tag": "new", "text": "採用 Server-Side Rendering（SSR）架構，首頁載入速度顯著提升；登入頁、隱私政策頁等靜態內容採用 SSG 預渲染，LCP 大幅改善。" },
+        { "tag": "new", "text": "所有 HTTP API 端點路徑與請求／回應格式完全向後相容，資料庫結構維持不變，既有資料無需任何遷移。" },
+        { "tag": "new", "text": "部署方式改為 Next.js Standalone 模式（node .next/standalone/server.js），Docker 映像更輕量，不需打包完整 node_modules。" },
+        { "tag": "improved", "text": "靜態資源（JS、CSS）採用長期快取（Cache-Control: max-age=31536000, immutable），重複訪問時幾乎不需重新下載資源。" }
+      ]
+    },
     {
       "version": "4.36.0",
       "date": "2026-05-03",

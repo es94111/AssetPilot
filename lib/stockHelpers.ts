@@ -1,10 +1,17 @@
-'use strict';
+import { getDB, queryAll, queryOne, saveDB } from './db';
 
-const { getDB, queryAll, queryOne, saveDB } = require('./db');
+export interface StockSettings {
+  feeRate: number;
+  feeDiscount: number;
+  feeMinLot: number;
+  feeMinOdd: number;
+  sellTaxRateStock: number;
+  sellTaxRateEtf: number;
+  sellTaxRateWarrant: number;
+  sellTaxMin: number;
+}
 
-const HASH_SEP = '\x01';
-
-const DEFAULT_STOCK_SETTINGS = {
+export const DEFAULT_STOCK_SETTINGS: StockSettings = {
   feeRate: 0.001425,
   feeDiscount: 1,
   feeMinLot: 20,
@@ -15,12 +22,12 @@ const DEFAULT_STOCK_SETTINGS = {
   sellTaxMin: 1,
 };
 
-function toNum(v, fallback) {
+function toNum(v: any, fallback: number): number {
   const n = Number(v);
   return Number.isFinite(n) ? n : fallback;
 }
 
-function getStockSettings(userId) {
+export function getStockSettings(userId: string): StockSettings {
   const db = getDB();
   const row = queryOne('SELECT * FROM stock_settings WHERE user_id = ?', [userId]);
   if (!row) {
@@ -55,27 +62,27 @@ function getStockSettings(userId) {
   };
 }
 
-function getSellTaxRateByType(stockType, settings) {
+function getSellTaxRateByType(stockType: string, settings: StockSettings): number {
   if (stockType === 'etf') return settings.sellTaxRateEtf;
   if (stockType === 'warrant') return settings.sellTaxRateWarrant;
   return settings.sellTaxRateStock;
 }
 
-function calcStockFee(amount, shares, settings) {
+export function calcStockFee(amount: number, shares: number, settings: StockSettings): number {
   if (!(amount > 0)) return 0;
   const minFee = Number(shares) < 1000 ? settings.feeMinOdd : settings.feeMinLot;
   const baseFee = Math.floor(amount * settings.feeRate * settings.feeDiscount);
   return Math.max(minFee, baseFee);
 }
 
-function calcStockTax(amount, stockType, settings) {
+export function calcStockTax(amount: number, stockType: string, settings: StockSettings): number {
   if (!(amount > 0)) return 0;
   const tax = Math.floor(amount * getSellTaxRateByType(stockType, settings));
   return Math.max(settings.sellTaxMin, tax);
 }
 
-function normalizeStockSettingsInput(input = {}, current = DEFAULT_STOCK_SETTINGS) {
-  const normalized = {
+export function normalizeStockSettingsInput(input: any = {}, current: StockSettings = DEFAULT_STOCK_SETTINGS): StockSettings {
+  const normalized: StockSettings = {
     feeRate: toNum(input.feeRate, current.feeRate),
     feeDiscount: toNum(input.feeDiscount, current.feeDiscount),
     feeMinLot: Math.round(toNum(input.feeMinLot, current.feeMinLot)),
@@ -98,15 +105,17 @@ function normalizeStockSettingsInput(input = {}, current = DEFAULT_STOCK_SETTING
   return normalized;
 }
 
-function makeStockTxHash(date, symbol, type, shares, price, accountId) {
+export function makeStockTxHash(date: string, symbol: string, type: string, shares: number, price: number, accountId: string): string {
+  const HASH_SEP = '\x01';
   return [date || '', symbol || '', type || '', String(shares || ''), String(price || ''), accountId || ''].join(HASH_SEP);
 }
 
-function makeDividendHash(date, symbol, cashDividend, stockDividend) {
+export function makeDividendHash(date: string, symbol: string, cashDividend: number, stockDividend: number): string {
+  const HASH_SEP = '\x01';
   return [date || '', symbol || '', String(cashDividend || ''), String(stockDividend || '')].join(HASH_SEP);
 }
 
-function getSharesAtDate(userId, stockId, date) {
+export function getSharesAtDate(userId: string, stockId: string, date: string): number {
   const row = queryOne(
     "SELECT COALESCE(SUM(CASE WHEN type='buy' THEN shares ELSE -shares END), 0) AS shares FROM stock_transactions WHERE user_id = ? AND stock_id = ? AND date <= ?",
     [userId, stockId, date]
@@ -114,7 +123,7 @@ function getSharesAtDate(userId, stockId, date) {
   return row && row.shares != null ? Number(row.shares) : 0;
 }
 
-function validateChainConstraint(userId, stockId, txDate, txType, txShares, excludeTxId = null) {
+export function validateChainConstraint(userId: string, stockId: string, txDate: string, txType: string, txShares: number, excludeTxId: string | null = null): { ok: boolean, conflictDate?: string, expectedShares?: number } {
   const baseRow = excludeTxId
     ? queryOne(
         "SELECT COALESCE(SUM(CASE WHEN type='buy' THEN shares ELSE -shares END), 0) AS shares FROM stock_transactions WHERE user_id = ? AND stock_id = ? AND date <= ? AND id != ?",
@@ -140,15 +149,3 @@ function validateChainConstraint(userId, stockId, txDate, txType, txShares, excl
   }
   return { ok: true };
 }
-
-module.exports = {
-  DEFAULT_STOCK_SETTINGS,
-  getStockSettings,
-  calcStockFee,
-  calcStockTax,
-  normalizeStockSettingsInput,
-  makeStockTxHash,
-  makeDividendHash,
-  getSharesAtDate,
-  validateChainConstraint,
-};

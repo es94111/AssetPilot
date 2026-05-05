@@ -964,6 +964,7 @@ API 路徑統一以 `/api/` 為前綴。所有需認證的路由自動套用 aut
 
 | 版本 | 日期 | 變更說明 |
 | --- | --- | --- |
+| 4.37.0 | 2026-05-06 | 前端遷移收尾：①Phase 5 任務 T016–T020 完成，將 Accounts、Categories、Budget、Recurring、Reports 5 個記帳模組由舊 `app/finance/*/page.js` + `components/features/*/Client.js` 全面改寫為 Next.js App Router `page.tsx` + `*Client.tsx`（TypeScript + Tailwind v4 utility classes）；②持股相關 5 頁（`app/stocks/{dividends,portfolio,realized,settings,transactions}/page.tsx` + 對應 `*Client.tsx`）同步遷移；③Login、Account Settings、Admin、AppLayout、Sidebar、TopNav 改 `.tsx`；④清理 `app-legacy/` 整個舊版目錄與孤兒 `.js` client；⑤`package.json` scripts 由 `node server.js` 切為 `next dev` / `next build` / `next start`，部署需先 build 再 start；⑥`stockHelpers.js` → `stockHelpers.ts`；⑦剩餘 T014（lighthouse 驗證 LCP < 2.5s / TBT < 200ms）尚未執行 |
 | 4.36.3 | 2026-05-05 | 側邊選單項目順序調整：`components/layout/Sidebar.tsx` 內 `NAV_ITEMS` 將「資料匯出匯入」（`/settings/export`）由原最末位上移至「持股總覽」之後；「帳號設定」（`/settings/account`）、「管理員」（`/settings/admin`，requireAdmin）緊接其後集中為設定區；「API 使用與授權」（`/api-credits`）移至清單最末。僅調整陣列順序，未變動路徑、icon 或 requireAdmin 條件 |
 | 4.36.2 | 2026-05-05 | 修復交易記錄編輯視窗交互問題，優化事件處理機制 |
 | 4.36.1 | 2026-05-05 | 前端架構遷移至 Next.js + Tailwind CSS v4：完成 Dashboard 與 Transactions 頁面遷移；UI 元件庫（Button、Table、Dialog、Badge 等）以 TypeScript 重構並套用 Tailwind v4 工具類別；Hybrid 路由轉發 API 至 Express 後端 |

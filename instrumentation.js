@@ -6,7 +6,8 @@ export async function register() {
   if (process.env.NEXT_RUNTIME !== 'nodejs') return;
 
   // webpackIgnore: true — 防止 webpack 嘗試 bundle lib/db.js（含 path/fs/crypto 內建模組）
-  const { initDB, flushOnExit } = await import(/* webpackIgnore: true */ './lib/db.js');
+  // 使用 process.cwd() 確保 standalone 模式下路徑正確（.next/server/ 內的相對路徑會解析錯誤）
+  const { initDB, flushOnExit } = await import(/* webpackIgnore: true */ `${process.cwd()}/lib/db.js`);
   await initDB();
 
   // 程序結束時同步寫回 DB
@@ -20,7 +21,7 @@ export async function register() {
   const SCHEDULER_TICK_MS = Number(process.env.SCHEDULER_TICK_MS) || 5 * 60 * 1000;
   setTimeout(async () => {
     try {
-      const { checkAndRunSchedule } = await import(/* webpackIgnore: true */ './lib/scheduler.js');
+      const { checkAndRunSchedule } = await import(/* webpackIgnore: true */ `${process.cwd()}/lib/scheduler.js`);
       checkAndRunSchedule();
       setInterval(checkAndRunSchedule, SCHEDULER_TICK_MS);
     } catch (_) {
@@ -36,7 +37,7 @@ function registerAuditPruneJob() {
 
   async function tick() {
     try {
-      const { getDB } = await import(/* webpackIgnore: true */ './lib/db.js');
+      const { getDB } = await import(/* webpackIgnore: true */ `${process.cwd()}/lib/db.js`);
       const db = getDB();
       pruneTable(db, AUDIT_RETENTION_DAYS, PRUNE_BATCH);
     } catch (e) {

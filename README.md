@@ -101,7 +101,7 @@
 
 | 層級 | 技術 |
 | ---- | ---- |
-| 前端 | 原生 HTML / CSS / Vanilla JS（IIFE，無框架、無 build step）；URL-first SPA 路由 |
+| 前端 | 原生 HTML / CSS / Vanilla JS (已遷移至 Next.js 15 + Tailwind CSS v4) |
 | 後端 | Node.js ≥ 24 + Express 5 |
 | 資料庫 | SQLite（sql.js，記憶體 + 檔案持久化） |
 | 加密 | ChaCha20-Poly1305 AEAD + PBKDF2-SHA256 |
@@ -112,7 +112,7 @@
 | 安全 | Helmet、express-rate-limit、CSP、SRI、CORS 白名單 |
 | 契約 | OpenAPI 3.2.0（`openapi.yaml`） |
 
-**完全不引入**：前端框架（React / Vue）、router 套件（page.js / Navigo）、Modal 函式庫（micromodal）、focus-trap、icon 字型（Lucide / Heroicons）、build 工具（Vite / esbuild）。所有 UI 行為以原生 DOM API + IIFE 模組實作。
+**完全不引入**：前端框架（React / Vue）、router 套件（page.js / Navigo）、Modal 函式庫（micromodal）、focus-trap、icon 字型（Lucide / Heroicons）、build 工具（Vite / esbuild）。(v4.33.0 遷移至 Next.js + Tailwind v4)
 
 ---
 

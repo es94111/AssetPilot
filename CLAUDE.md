@@ -65,14 +65,14 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 <!-- SPECKIT START -->
 ## 目前進行中的功能規劃
 
-- 功能：儀表板收入分類圓餅圖（Dashboard Income Category Pie Chart）
-- 分支：`010-dashboard-income-pie`
-- 規格：[specs/010-dashboard-income-pie/spec.md](specs/010-dashboard-income-pie/spec.md)
-- 計畫：[specs/010-dashboard-income-pie/plan.md](specs/010-dashboard-income-pie/plan.md)
+- 功能：前端遷移至 Next.js + Tailwind CSS v4
+- 分支：`feature/013-nextjs-tailwind-migration`
+- 規格：[specs/013-frontend-nextjs-tailwind-migration/spec.md](specs/013-frontend-nextjs-tailwind-migration/spec.md)
+- 計畫：[specs/013-frontend-nextjs-tailwind-migration/plan.md](specs/013-frontend-nextjs-tailwind-migration/plan.md)
 - 衍生產物：
-  - [research.md](specs/010-dashboard-income-pie/research.md)
-  - [data-model.md](specs/010-dashboard-income-pie/data-model.md)
-  - [quickstart.md](specs/010-dashboard-income-pie/quickstart.md)
-  - [contracts/dashboard-income-pie.openapi.yaml](specs/010-dashboard-income-pie/contracts/dashboard-income-pie.openapi.yaml)
+  - [research.md](specs/013-frontend-nextjs-tailwind-migration/research.md)
+  - [data-model.md](specs/013-frontend-nextjs-tailwind-migration/data-model.md)
+  - [quickstart.md](specs/013-frontend-nextjs-tailwind-migration/quickstart.md)
+  - [tasks.md](specs/013-frontend-nextjs-tailwind-migration/tasks.md)
 <!-- SPECKIT END -->
 

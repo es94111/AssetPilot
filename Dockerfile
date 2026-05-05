@@ -27,6 +27,7 @@ ENV GOOGLE_CLIENT_ID=
 
 # 複製 Next.js standalone 輸出
 COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/node_modules/sql.js/dist/sql-wasm.wasm ./node_modules/sql.js/dist/sql-wasm.wasm
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
 

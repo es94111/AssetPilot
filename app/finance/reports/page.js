@@ -1,0 +1,13 @@
+export const dynamic = 'force-dynamic';
+import AppLayout from '../../../components/layout/AppLayout';
+import ReportsClient from '../../../components/features/reports/ReportsClient';
+import { requireServerAuth } from '../../../lib/serverAuth';
+
+export default async function ReportsPage() {
+  const user = await requireServerAuth();
+  return (
+    <AppLayout user={user}>
+      <ReportsClient user={user} />
+    </AppLayout>
+  );
+}

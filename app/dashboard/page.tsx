@@ -1,34 +1,11 @@
-import { requireAuth } from '@/lib/auth';
+import { getDashboardData } from '@/lib/dashboardHelpers';
 import { DashboardFilters } from './components/DashboardFilters';
-import logger from '@/lib/logger';
-
-async function getDashboardData(session: string, month?: string) {
-  const url = month 
-    ? `http://assetpilot:3000/api/dashboard?month=${month}`
-    : 'http://assetpilot:3000/api/dashboard';
-
-  logger.info({ url }, 'Fetching dashboard data');
-
-  const res = await fetch(url, {
-    headers: {
-      Cookie: `session=${session}`,
-    },
-  });
-
-  if (!res.ok) {
-    logger.error({ status: res.status }, 'Failed to fetch dashboard data');
-    throw new Error('Failed to fetch dashboard data');
-  }
-
-  return res.json();
-}
 
 export default async function DashboardPage(props: {
   searchParams: Promise<{ month?: string }>;
 }) {
   const searchParams = await props.searchParams;
-  const session = await requireAuth();
-  const data = await getDashboardData(session, searchParams.month);
+  const data = await getDashboardData(searchParams.month);
 
   return (
     <div className="container mx-auto p-6 md:p-10">
@@ -46,5 +23,4 @@ export default async function DashboardPage(props: {
       </div>
     </div>
   );
-
 }

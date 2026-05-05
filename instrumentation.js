@@ -55,11 +55,13 @@ function registerAuditPruneJob() {
       db.run(`DELETE FROM login_audit_logs WHERE id IN (${placeholders})`, rows.map(r => r[0]));
       if (rows.length < batchSize) break;
     }
-    // data_operation_audit_log（recorded_at 欄位為 ISO 字串）
+    // data_operation_audit_log（timestamp 欄位為 ISO 字串）
     try {
       const iso = new Date(threshold).toISOString();
-      db.run(`DELETE FROM data_operation_audit_log WHERE recorded_at < ?`, [iso]);
-    } catch (_) {}
+      db.run(`DELETE FROM data_operation_audit_log WHERE timestamp < ?`, [iso]);
+    } catch (e) {
+      console.warn('[Audit Prune] data_operation_audit_log prune failed', e);
+    }
   }
 
   // 啟動 5s 後立即執行一次

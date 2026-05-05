@@ -1,0 +1,12 @@
+import AppLayout from "@/components/layout/AppLayout";
+import PortfolioClient from "@/components/features/stocks/PortfolioClient";
+import { requireServerAuth } from "@/lib/auth";
+
+export default async function PortfolioPage() {
+  const user = await requireServerAuth();
+  return (
+    <AppLayout user={user}>
+      <PortfolioClient />
+    </AppLayout>
+  );
+}

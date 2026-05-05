@@ -45,8 +45,7 @@ components:
     jwtCookie:
       type: apiKey
       in: cookie
-      name: token
+      name: authToken
       description: |
-        JWT 儲存於 httpOnly Cookie（名稱 `token`）。
-        遷移前後 Cookie 名稱、簽發方式、有效期限完全一致。
-        切換當下舊有 Session 因 Cookie 格式不相容而失效，使用者需重新登入一次。
+        JWT 儲存於 httpOnly Cookie（名稱 `authToken`）。
+        遷移前後 Cookie 名稱、簽發方式、有效期限完全一致，Session 無需重新登入。

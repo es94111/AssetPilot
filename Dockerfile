@@ -36,6 +36,8 @@ RUN addgroup --system --gid 1001 nodejs \
 # (使用 distDir='build' 輸出，因此從 /app/build/ 拷貝已在上方處理)
 # public 目錄（favicon、logo 等）
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
+# Next.js 靜態資產（含編譯後 CSS/JS）
+COPY --from=builder --chown=nextjs:nodejs /app/build/static ./build/static
 # lib/ 透過 instrumentation.js 動態 import (webpackIgnore)，未被 Next.js trace，需手動複製
 COPY --from=builder --chown=nextjs:nodejs /app/lib ./lib
 

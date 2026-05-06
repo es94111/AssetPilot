@@ -12,17 +12,17 @@ export async function PUT(request, { params }) {
   const { cashDividend, stockDividendShares, accountId, note } = body;
   const date = normalizeDate(body.date);
 
-  if (!date) return NextResponse.json({ error: '日期格式無效' }, { status: 400 });
+  if (!date) return NextResponse.json({ error: '?交??澆??⊥?' }, { status: 400 });
   if (Number(cashDividend) < 0 || Number(stockDividendShares) < 0) {
-    return NextResponse.json({ error: '股利不可為負' }, { status: 400 });
+    return NextResponse.json({ error: '?∪銝?箄?' }, { status: 400 });
   }
   if (accountId) {
     const acc = queryOne('SELECT id FROM accounts WHERE id = ? AND user_id = ?', [accountId, auth.userId]);
-    if (!acc) return NextResponse.json({ error: '帳戶不存在或無權限' }, { status: 400 });
+    if (!acc) return NextResponse.json({ error: '撣單銝??冽??⊥??? }, { status: 400 });
   }
 
   const d = queryOne('SELECT * FROM stock_dividends WHERE id = ? AND user_id = ?', [id, auth.userId]);
-  if (!d) return NextResponse.json({ error: '股利紀錄不存在' }, { status: 404 });
+  if (!d) return NextResponse.json({ error: '?∪蝝??摮' }, { status: 404 });
 
   const db = getDB();
   db.run(
@@ -40,7 +40,7 @@ export async function DELETE(request, { params }) {
 
   const { id } = await params;
   const old = queryOne('SELECT * FROM stock_dividends WHERE id = ? AND user_id = ?', [id, auth.userId]);
-  if (!old) return NextResponse.json({ error: '股利紀錄不存在' }, { status: 404 });
+  if (!old) return NextResponse.json({ error: '?∪蝝??摮' }, { status: 404 });
 
   const db = getDB();
   let linkedTransactionDeleted = false;
@@ -48,7 +48,7 @@ export async function DELETE(request, { params }) {
   if (Number(old.stock_dividend_shares) > 0) {
     const targetShares = Number(old.stock_dividend_shares);
     const synth = queryAll(
-      "SELECT id, shares FROM stock_transactions WHERE user_id = ? AND stock_id = ? AND date = ? AND type = 'buy' AND price = 0 AND (note LIKE '[SYNTH] 股票股利%' OR note LIKE '%股票股利配發%')",
+      "SELECT id, shares FROM stock_transactions WHERE user_id = ? AND stock_id = ? AND date = ? AND type = 'buy' AND price = 0 AND (note LIKE '[SYNTH] ?∠巨?∪%' OR note LIKE '%?∠巨?∪?%')",
       [auth.userId, old.stock_id, old.date]
     );
     synth.forEach(t => {

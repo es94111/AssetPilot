@@ -13,8 +13,8 @@ export async function GET(request, { params }) {
 
   const { symbol: rawSymbol } = await params;
   const symbol = String(rawSymbol || '').trim();
-  if (!symbol) return NextResponse.json({ error: '請輸入股票代號' }, { status: 400 });
-  if (!/^[A-Z0-9]{2,10}$/i.test(symbol)) return NextResponse.json({ error: '股票代號格式不正確' }, { status: 400 });
+  if (!symbol) return NextResponse.json({ error: '隢撓?亥蟡其誨?? }, { status: 400 });
+  if (!/^[A-Z0-9]{2,10}$/i.test(symbol)) return NextResponse.json({ error: '?∠巨隞???澆?銝迤蝣? }, { status: 400 });
 
   const { searchParams } = new URL(request.url);
   const useRealtime = searchParams.get('realtime') === '1';
@@ -44,11 +44,11 @@ export async function GET(request, { params }) {
       change: parseFloat(stock.Change) || 0,
       volume: parseInt(stock.TradeVolume) || 0,
       isRealtime: false,
-      priceType: isTpex ? '收盤價（櫃買）' : '收盤價',
+      priceType: isTpex ? '?嗥?對?瑹眺嚗? : '?嗥??,
       dataDate: formatTwseDate(stock.Date || ''),
       dataTime: '',
     });
   } catch (e) {
-    return NextResponse.json({ error: '查詢失敗：' + e.message }, { status: 500 });
+    return NextResponse.json({ error: '?亥岷憭望?嚗? + e.message }, { status: 500 });
   }
 }

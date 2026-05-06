@@ -6,7 +6,7 @@ import { isValidCurrency } from '../../../lib/iso4217';
 import { FX_AUTO_SYNC_MIN_INTERVAL_MS, syncExchangeRatesFromGlobalAPI } from '../../../lib/exchangeRateHelpers';
 
 export async function GET(request) {
-  const auth = requireAuth(request);
+  const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
   const settings = getExchangeRateSettings(auth.userId);
@@ -28,7 +28,7 @@ export async function GET(request) {
 }
 
 export async function PUT(request) {
-  const auth = requireAuth(request);
+  const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
   const body = await request.json().catch(() => ({}));

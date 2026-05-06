@@ -3,7 +3,7 @@ import { requireAuth } from '../../../../lib/apiHelpers';
 import { processRecurringForUser } from '../../../../lib/recurringHelpers';
 
 export async function POST(request) {
-  const auth = requireAuth(request);
+  const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
   try {

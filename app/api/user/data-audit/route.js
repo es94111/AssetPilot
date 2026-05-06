@@ -20,7 +20,7 @@ function serializeAuditRow(r) {
 }
 
 export async function GET(request) {
-  const auth = requireAuth(request);
+  const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
   const { searchParams } = new URL(request.url);

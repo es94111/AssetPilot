@@ -9,7 +9,7 @@ import {
 } from '../../../../lib/twseFetchNext';
 
 export async function POST(request) {
-  const auth = requireAuth(request);
+  const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
   const stocks = queryAll(

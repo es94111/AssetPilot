@@ -15,7 +15,7 @@ export async function PUT(request, { params }) {
   const { name, currentPrice, stockType } = body;
 
   const s = queryOne('SELECT * FROM stocks WHERE id = ? AND user_id = ?', [id, auth.userId]);
-  if (!s) return NextResponse.json({ error: '股票不存在' }, { status: 404 });
+  if (!s) return NextResponse.json({ error: '?∠巨銝??? }, { status: 404 });
 
   const validTypes = ['stock', 'etf', 'warrant'];
   const type = validTypes.includes(stockType) ? stockType : (s.stock_type || 'stock');
@@ -52,7 +52,7 @@ export async function DELETE(request, { params }) {
 
   const { id } = await params;
   const s = queryOne('SELECT id FROM stocks WHERE id = ? AND user_id = ?', [id, auth.userId]);
-  if (!s) return NextResponse.json({ error: '股票不存在' }, { status: 404 });
+  if (!s) return NextResponse.json({ error: '?∠巨銝??? }, { status: 404 });
 
   const db = getDB();
   db.run('DELETE FROM stock_transactions WHERE stock_id = ? AND user_id = ?', [id, auth.userId]);

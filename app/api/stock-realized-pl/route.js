@@ -4,7 +4,7 @@ import { queryAll } from '../../../lib/db';
 import moneyDecimal from '../../../lib/moneyDecimal';
 
 export async function GET(request) {
-  const auth = requireAuth(request);
+  const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
   const stocks = queryAll('SELECT * FROM stocks WHERE user_id = ?', [auth.userId]);

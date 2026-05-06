@@ -38,4 +38,5 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select({
   );
 });
 
+export { Select };
 export default Select;

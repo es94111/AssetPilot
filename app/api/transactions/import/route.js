@@ -9,8 +9,7 @@ import { getRequestIpFromHeaders } from '../../../../lib/loginHelpers';
 const CSV_IMPORT_MAX_ROWS = 20000;
 const HASH_SEP = '\x01';
 
-export const importLocks = new Set();
-export const importProgress = new Map();
+import { importLocks, importProgress } from '@/lib/transactionImportState';
 
 function acquireImportLock(userId) {
   if (importLocks.has(userId)) return false;

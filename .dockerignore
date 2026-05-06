@@ -1,4 +1,7 @@
 node_modules
+.next
+out
+.next/types
 database.db
 database.db*
 *.db

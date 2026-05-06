@@ -34,9 +34,9 @@ if (process.platform === 'win32') {
 const nextConfig = {
   output: 'standalone',
   distDir: 'build', // ASCII-only path
-  // 遷移期暫時關閉 build-time TS / ESLint 檢查（runtime 行為不變）；型別錯誤另案修
-  typescript: { ignoreBuildErrors: true },
-  eslint: { ignoreDuringBuilds: true },
+  // 保留 JS/TS 混用（由 tsconfig 的 allowJs 控制），但 build 需執行完整型別與 lint 檢查
+  typescript: { ignoreBuildErrors: false },
+  eslint: { ignoreDuringBuilds: false },
   // Next.js 15 起 instrumentation.js 為穩定 API，無需 experimental.instrumentationHook
 
   async headers() {

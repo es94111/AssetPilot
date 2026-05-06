@@ -17,3 +17,5 @@ SSL/
 .claude/worktrees/
 backups/
 .specify/memory/changelog-style.md
+build/
+.next/

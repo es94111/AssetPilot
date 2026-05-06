@@ -540,13 +540,12 @@ app.use('/api', (req, res, next) => {
 // 僅開放必要前端靜態檔，避免專案根目錄檔案外洩
 // 008 feature (T063 / FR-026)：擴充至 9 條合法白名單；Cache-Control 由 handler 套用
 const PUBLIC_FILES = [
-  '/app.js', '/style.css', '/logo.svg', '/favicon.svg',
+  '/app.js', '/logo.svg', '/favicon.svg',
   '/vendor/webauthn.min.js', '/lib/moneyDecimal.js',
   '/changelog.json', '/privacy.html', '/terms.html',
 ];
 const PUBLIC_FILE_MAP = Object.freeze({
   '/app.js': path.join(__dirname, 'app.js'),
-  '/style.css': path.join(__dirname, 'style.css'),
   '/logo.svg': path.join(__dirname, 'logo.svg'),
   '/favicon.svg': path.join(__dirname, 'favicon.svg'),
   '/vendor/webauthn.min.js': path.join(__dirname, 'node_modules', '@passwordless-id', 'webauthn', 'dist', 'browser', 'webauthn.min.js'),

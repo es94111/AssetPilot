@@ -158,7 +158,14 @@ volumes:
 ```bash
 npm install              # Node.js ≥ 24
 cp .env.example .env     # 依需求編輯
-node server.js
+npm run dev
+```
+
+、生 成 產 品
+
+```bash
+npm run build
+npm run start
 ```
 
 ### Synology NAS

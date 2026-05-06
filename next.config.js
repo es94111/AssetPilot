@@ -33,16 +33,10 @@ if (process.platform === 'win32') {
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'standalone',
+  distDir: 'build', // ASCII-only path
   // 遷移期暫時關閉 build-time TS / ESLint 檢查（runtime 行為不變）；型別錯誤另案修
   typescript: { ignoreBuildErrors: true },
   eslint: { ignoreDuringBuilds: true },
-  // outputFileTracingRoot：修正 Windows 路徑含非 ASCII 字元時的 EINVAL readlink 問題
-  outputFileTracingRoot: path.join(__dirname),
-  // 排除 .next/types 避免 @vercel/nft 在 Windows 非 ASCII 路徑上 readlink EINVAL 崩潰
-  // Next.js 15 起此選項移出 experimental
-  outputFileTracingExcludes: {
-    '*': ['.next/types/**'],
-  },
   // Next.js 15 起 instrumentation.js 為穩定 API，無需 experimental.instrumentationHook
 
   async headers() {

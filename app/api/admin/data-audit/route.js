@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { requireAdmin } from '../../../../lib/apiHelpers.js';
+import { requireAdmin } from '../../../../lib/apiHelpers';
 import { queryOne, queryAll } from '../../../../lib/db.js';
 
 function parseAuditQuery(searchParams) {

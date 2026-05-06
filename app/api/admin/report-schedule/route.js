@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { requireAdmin } from '../../../../lib/apiHelpers.js';
+import { requireAdmin } from '../../../../lib/apiHelpers';
 import { getDB, queryOne, queryAll, saveDB } from '../../../../lib/db.js';
 import { uid } from '../../../../lib/loginHelpers.js';
 

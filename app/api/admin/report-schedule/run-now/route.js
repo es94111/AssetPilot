@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { requireAdmin } from '../../../../../lib/apiHelpers.js';
+import { requireAdmin } from '../../../../../lib/apiHelpers';
 
 export async function POST(request) {
   const auth = requireAdmin(request);

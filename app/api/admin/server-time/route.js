@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { requireAdmin } from '../../../../lib/apiHelpers.js';
+import { requireAdmin } from '../../../../lib/apiHelpers';
 import { getDB, queryOne, saveDB } from '../../../../lib/db.js';
 
 // Module-level variable for server time offset (initialized from DB on first call)

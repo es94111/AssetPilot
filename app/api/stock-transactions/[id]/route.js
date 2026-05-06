@@ -5,7 +5,7 @@ import { normalizeDate } from '../../../../lib/accountHelpers';
 import { validateChainConstraint } from '../../../../lib/stockHelpers';
 
 export async function PUT(request, { params }) {
-  const auth = requireAuth(request);
+  const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
   const { id } = await params;
@@ -13,27 +13,27 @@ export async function PUT(request, { params }) {
   const { type, shares, price, fee, tax, accountId, note } = body;
   const date = normalizeDate(body.date);
 
-  if (!date) return NextResponse.json({ error: '?交??澆??⊥?' }, { status: 400 });
-  if (!['buy', 'sell'].includes(type)) return NextResponse.json({ error: '鈭斗?憿??⊥?' }, { status: 400 });
-  if (!(Number(shares) > 0)) return NextResponse.json({ error: '?⊥敹??箸迤?? }, { status: 400 });
-  if (!Number.isInteger(Number(shares))) return NextResponse.json({ error: '?⊥敹??箸?? }, { status: 400 });
-  if (!(Number(price) > 0)) return NextResponse.json({ error: '?寞敹??箸迤?? }, { status: 400 });
+  if (!date) return NextResponse.json({ error: '日期格式無效' }, { status: 400 });
+  if (!['buy', 'sell'].includes(type)) return NextResponse.json({ error: '交易類型無效' }, { status: 400 });
+  if (!(Number(shares) > 0)) return NextResponse.json({ error: '股數必須為正數' }, { status: 400 });
+  if (!Number.isInteger(Number(shares))) return NextResponse.json({ error: '股數必須為整數' }, { status: 400 });
+  if (!(Number(price) > 0)) return NextResponse.json({ error: '價格必須為正數' }, { status: 400 });
   if (Number(fee) < 0 || Number(tax) < 0) {
-    return NextResponse.json({ error: '??鞎?蝔祥銝?箄?' }, { status: 400 });
+    return NextResponse.json({ error: '手續費/稅費不可為負' }, { status: 400 });
   }
 
   if (accountId) {
     const acc = queryOne('SELECT id FROM accounts WHERE id = ? AND user_id = ?', [accountId, auth.userId]);
-    if (!acc) return NextResponse.json({ error: '撣單銝??冽??⊥??? }, { status: 400 });
+    if (!acc) return NextResponse.json({ error: '帳戶不存在或無權限' }, { status: 400 });
   }
 
   const t = queryOne('SELECT * FROM stock_transactions WHERE id = ? AND user_id = ?', [id, auth.userId]);
-  if (!t) return NextResponse.json({ error: '鈭斗?蝝??摮' }, { status: 404 });
+  if (!t) return NextResponse.json({ error: '交易紀錄不存在' }, { status: 404 });
 
   const chain = validateChainConstraint(auth.userId, t.stock_id, date, type, Number(shares), id);
   if (!chain.ok) {
     return NextResponse.json(
-      { error: `甇支耨?寞??? ${chain.conflictDate} ???鞎?(?? ${chain.expectedShares} ??` },
+      { error: `此修改會造成 ${chain.conflictDate} 持有量為負 (預期 ${chain.expectedShares} 股)` },
       { status: 400 }
     );
   }
@@ -49,7 +49,7 @@ export async function PUT(request, { params }) {
     db.run('COMMIT');
   } catch (e) {
     try { db.run('ROLLBACK'); } catch (_) { /* noop */ }
-    return NextResponse.json({ error: '?湔鈭斗?憭望?嚗? + e.message }, { status: 500 });
+    return NextResponse.json({ error: '更新交易失敗：' + e.message }, { status: 500 });
   }
   saveDB();
 
@@ -57,7 +57,7 @@ export async function PUT(request, { params }) {
 }
 
 export async function DELETE(request, { params }) {
-  const auth = requireAuth(request);
+  const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
   const { id } = await params;

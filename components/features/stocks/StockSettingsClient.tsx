@@ -129,14 +129,14 @@ export default function StockSettingsClient(_props: { user?: any } = {}) {
       <div className="p-6 bg-white border border-slate-200 rounded-xl shadow-sm">
         <h3 className="text-lg font-semibold mb-4">手續費 / 交易稅設定</h3>
         <form onSubmit={handleSave} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Input label="手續費率" type="number" step="0.000001" value={settings.feeRate} onChange={e => setSettings(s => ({ ...s, feeRate: e.target.value }))} />
-          <Input label="折扣 (0~1)" type="number" step="0.01" value={settings.feeDiscount} onChange={e => setSettings(s => ({ ...s, feeDiscount: e.target.value }))} />
-          <Input label="最低手續費（整股）" type="number" value={settings.feeMinLot} onChange={e => setSettings(s => ({ ...s, feeMinLot: e.target.value }))} />
-          <Input label="最低手續費（零股）" type="number" value={settings.feeMinOdd} onChange={e => setSettings(s => ({ ...s, feeMinOdd: e.target.value }))} />
-          <Input label="賣出稅率（股票）" type="number" step="0.0001" value={settings.sellTaxRateStock} onChange={e => setSettings(s => ({ ...s, sellTaxRateStock: e.target.value }))} />
-          <Input label="賣出稅率（ETF）" type="number" step="0.0001" value={settings.sellTaxRateEtf} onChange={e => setSettings(s => ({ ...s, sellTaxRateEtf: e.target.value }))} />
-          <Input label="賣出稅率（權證）" type="number" step="0.0001" value={settings.sellTaxRateWarrant} onChange={e => setSettings(s => ({ ...s, sellTaxRateWarrant: e.target.value }))} />
-          <Input label="最低交易稅" type="number" value={settings.sellTaxMin} onChange={e => setSettings(s => ({ ...s, sellTaxMin: e.target.value }))} />
+          <Input label="手續費率" type="number" step="0.000001" value={settings.feeRate} onChange={e => setSettings(s => ({ ...s, feeRate: Number(e.target.value) }))} />
+          <Input label="折扣 (0~1)" type="number" step="0.01" value={settings.feeDiscount} onChange={e => setSettings(s => ({ ...s, feeDiscount: Number(e.target.value) }))} />
+          <Input label="最低手續費（整股）" type="number" value={settings.feeMinLot} onChange={e => setSettings(s => ({ ...s, feeMinLot: Number(e.target.value) }))} />
+          <Input label="最低手續費（零股）" type="number" value={settings.feeMinOdd} onChange={e => setSettings(s => ({ ...s, feeMinOdd: Number(e.target.value) }))} />
+          <Input label="賣出稅率（股票）" type="number" step="0.0001" value={settings.sellTaxRateStock} onChange={e => setSettings(s => ({ ...s, sellTaxRateStock: Number(e.target.value) }))} />
+          <Input label="賣出稅率（ETF）" type="number" step="0.0001" value={settings.sellTaxRateEtf} onChange={e => setSettings(s => ({ ...s, sellTaxRateEtf: Number(e.target.value) }))} />
+          <Input label="賣出稅率（權證）" type="number" step="0.0001" value={settings.sellTaxRateWarrant} onChange={e => setSettings(s => ({ ...s, sellTaxRateWarrant: Number(e.target.value) }))} />
+          <Input label="最低交易稅" type="number" value={settings.sellTaxMin} onChange={e => setSettings(s => ({ ...s, sellTaxMin: Number(e.target.value) }))} />
           <div className="col-span-full">
             {saveMsg && <p className={`text-sm mb-2 ${saveMsg.includes('失敗') ? 'text-red-500' : 'text-green-600'}`}>{saveMsg}</p>}
             <Button type="submit" disabled={saving}>{saving ? '儲存中...' : '儲存設定'}</Button>

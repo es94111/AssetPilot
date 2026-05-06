@@ -9,24 +9,24 @@ function today() {
   return new Date().toISOString().slice(0, 10);
 }
 
-function fmt(n) { return 'NT$ ' + Math.round(Number(n) || 0).toLocaleString('zh-TW'); }
+function fmt(n: number | string) { return 'NT$ ' + Math.round(Number(n) || 0).toLocaleString('zh-TW'); }
 
 export default function TransactionsClient(_props: { user?: any } = {}) {
-  const [txs, setTxs] = useState([]);
+  const [txs, setTxs] = useState<any[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [pageSize] = useState(20);
   const [loading, setLoading] = useState(true);
-  const [accounts, setAccounts] = useState([]);
-  const [categories, setCategories] = useState([]);
+  const [accounts, setAccounts] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
   const [filters, setFilters] = useState({ type: '', accountId: '', categoryId: '', dateFrom: '', dateTo: '', q: '' });
   const [modal, setModal] = useState(false);
   const [form, setForm] = useState({ ...EMPTY_FORM, date: today() });
-  const [editId, setEditId] = useState(null);
+  const [editId, setEditId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState('');
-  const [deleteId, setDeleteId] = useState(null);
-  const [selected, setSelected] = useState(new Set());
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
 
   const load = useCallback(async (p = page) => {
     setLoading(true);
@@ -67,7 +67,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
     setModal(true);
   }
 
-  function openEdit(tx) {
+  function openEdit(tx: any) {
     setForm({
       date: tx.date || today(),
       type: tx.type || 'expense',
@@ -82,7 +82,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
     setModal(true);
   }
 
-  async function handleSave(e) {
+  async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     if (!form.date) { setFormError('請選擇日期'); return; }
     if (!form.amount || Number(form.amount) <= 0) { setFormError('請輸入有效金額'); return; }
@@ -99,13 +99,13 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
       setModal(false);
       setPage(1);
       await load(1);
-    } catch (e) { setFormError(e.message); }
+    } catch (e: any) { setFormError(e.message); }
     setSaving(false);
   }
 
   async function handleDelete() {
     if (!deleteId) return;
-    try { await apiDelete(`/api/transactions/${deleteId}`); setDeleteId(null); await load(page); } catch (e) { alert(e.message); }
+    try { await apiDelete(`/api/transactions/${deleteId}`); setDeleteId(null); await load(page); } catch (e: any) { alert(e.message); }
   }
 
   async function handleBatchDelete() {
@@ -115,18 +115,18 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
       await apiPost('/api/transactions/batch-delete', { ids: [...selected] });
       setSelected(new Set());
       await load(page);
-    } catch (e) { alert(e.message); }
+    } catch (e: any) { alert(e.message); }
   }
 
   const filteredCats = categories.filter(c => !form.type || c.type === form.type);
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
-  const getCatName = (tx) => {
-    const c = categories.find(c => c.id === (tx.category_id || tx.categoryId));
+  const getCatName = (tx: any) => {
+    const c = categories.find((c: any) => c.id === (tx.category_id || tx.categoryId));
     return c ? c.name : (tx.cat_name || '—');
   };
-  const getAcctName = (tx) => {
-    const a = accounts.find(a => a.id === (tx.account_id || tx.accountId));
+  const getAcctName = (tx: any) => {
+    const a = accounts.find((a: any) => a.id === (tx.account_id || tx.accountId));
     return a ? a.name : (tx.account_name || '—');
   };
 

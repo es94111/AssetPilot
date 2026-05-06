@@ -1,10 +1,54 @@
 import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
 import { requireAuth as getAuth } from './auth';
+import { verifyToken } from './auth';
+import { queryOne } from './db';
 import logger from '@/lib/logger';
 
-export async function requireAuth(request?: any) {
-  return await getAuth();
+type ApiAuthResult = {
+  userId: string;
+  userTimezone: string;
+  email: string;
+  displayName: string;
+  isAdmin: boolean;
+  themeMode: string;
+};
+
+export function requireAuth(request: any): ApiAuthResult | NextResponse;
+export function requireAuth(): Promise<string>;
+export function requireAuth(request?: any) {
+  if (request) {
+    const token = request.cookies?.get('authToken')?.value;
+    if (!token) {
+      return NextResponse.json({ error: '未登入' }, { status: 401 });
+    }
+
+    let userId: string;
+    try {
+      const decoded = verifyToken(token) as { userId?: string };
+      userId = String(decoded?.userId || '');
+    } catch {
+      return NextResponse.json({ error: '登入已失效' }, { status: 401 });
+    }
+
+    const user = queryOne(
+      'SELECT id, email, display_name, is_admin, theme_mode, timezone FROM users WHERE id = ?',
+      [userId]
+    );
+    if (!user) {
+      return NextResponse.json({ error: '使用者不存在' }, { status: 401 });
+    }
+
+    return {
+      userId: user.id,
+      userTimezone: user.timezone || 'Asia/Taipei',
+      email: user.email || '',
+      displayName: user.display_name || '',
+      isAdmin: !!user.is_admin,
+      themeMode: user.theme_mode || 'system',
+    };
+  }
+
+  return getAuth();
 }
 
 export async function fetchFromExpressApi(endpoint: string) {
@@ -52,13 +96,19 @@ export async function clearAuthCookie() {
   cookieStore.delete('authToken');
 }
 
-export async function requireAdmin() {
-  const session = await requireAuth();
-  // 在這裡應該驗證 user 的管理員權限。由於沒有 user 物件，這通常透過檢查 JWT 或查詢資料庫。
-  // 為了簡化並重建原邏輯，我們先假設需要查詢。
-  // 注意：這需要 db.js。
-  // ...
-  return session;
+export function requireAdmin(request: any): ApiAuthResult | NextResponse;
+export function requireAdmin(): Promise<string>;
+export function requireAdmin(request?: any) {
+  if (request) {
+    const auth = requireAuth(request);
+    if (auth instanceof NextResponse) return auth;
+    if (!auth.isAdmin) {
+      return NextResponse.json({ error: '需要管理員權限' }, { status: 403 });
+    }
+    return auth;
+  }
+
+  return getAuth();
 }
 
 export function normalizeThemeMode(mode: string) {

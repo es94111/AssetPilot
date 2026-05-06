@@ -1,7 +1,11 @@
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { requireAuth } from '@/lib/auth';
+import { requireAuth as getAuth } from '@/lib/auth';
 import logger from '@/lib/logger';
+
+export async function requireAuth(request?: any) {
+  return await getAuth();
+}
 
 export async function fetchFromExpressApi(endpoint: string) {
   const session = await requireAuth();

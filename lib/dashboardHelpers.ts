@@ -12,8 +12,24 @@ interface CategoryNode {
   isOtherGroup: boolean;
 }
 
+interface ParentChildNode {
+  categoryId: string;
+  name: string;
+  color: string;
+  total: number;
+}
+
+interface ParentAggregateNode {
+  parentId: string;
+  parentName: string;
+  parentColor: string;
+  total: number;
+  children: Map<string, ParentChildNode>;
+  otherTotal: number;
+}
+
 export function buildCategoryAggregateNodes(rows: any[]): CategoryNode[] {
-  const parentMap = new Map<string, any>();
+  const parentMap = new Map<string, ParentAggregateNode>();
   for (const r of rows) {
     const amount = Number(r.amount) || 0;
     if (amount <= 0) continue;
@@ -29,13 +45,16 @@ export function buildCategoryAggregateNodes(rows: any[]): CategoryNode[] {
       parentMap.set(parentKey, { parentId: parentKey, parentName, parentColor, total: 0, children: new Map(), otherTotal: 0 });
     }
     const p = parentMap.get(parentKey);
+    if (!p) continue;
     p.total += amount;
     if (isLeaf) {
       const childKey = childCategoryId || `name:${childName}`;
       if (!p.children.has(childKey)) {
         p.children.set(childKey, { categoryId: childCategoryId, name: childName, color: childColor, total: 0 });
       }
-      p.children.get(childKey).total += amount;
+      const child = p.children.get(childKey);
+      if (!child) continue;
+      child.total += amount;
     } else {
       p.otherTotal += amount;
     }

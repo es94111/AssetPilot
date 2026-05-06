@@ -14,9 +14,9 @@ type ApiAuthResult = {
   themeMode: string;
 };
 
-export function requireAuth(request: any): ApiAuthResult | NextResponse;
+export function requireAuth(request: any): Promise<ApiAuthResult | NextResponse>;
 export function requireAuth(): Promise<string>;
-export function requireAuth(request?: any) {
+export async function requireAuth(request?: any): Promise<ApiAuthResult | NextResponse | string> {
   if (request) {
     const token = request.cookies?.get('authToken')?.value;
     if (!token) {
@@ -97,11 +97,11 @@ export async function clearAuthCookie() {
   cookieStore.delete('authToken');
 }
 
-export function requireAdmin(request: any): ApiAuthResult | NextResponse;
+export function requireAdmin(request: any): Promise<ApiAuthResult | NextResponse>;
 export function requireAdmin(): Promise<string>;
-export function requireAdmin(request?: any) {
+export async function requireAdmin(request?: any): Promise<ApiAuthResult | NextResponse | string> {
   if (request) {
-    const auth = requireAuth(request);
+    const auth = await requireAuth(request);
     if (auth instanceof NextResponse) return auth;
     if (!auth.isAdmin) {
       return NextResponse.json({ error: '需要管理員權限' }, { status: 403 });

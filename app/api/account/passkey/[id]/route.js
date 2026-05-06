@@ -3,7 +3,7 @@ import { requireAuth } from '../../../../../lib/apiHelpers';
 import { getDB, queryOne, saveDB } from '../../../../../lib/db';
 
 export async function DELETE(request, { params }) {
-  const auth = requireAuth(request);
+  const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
   const { id: credId } = await params;
@@ -16,7 +16,7 @@ export async function DELETE(request, { params }) {
 }
 
 export async function PUT(request, { params }) {
-  const auth = requireAuth(request);
+  const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
   const { id: credId } = await params;

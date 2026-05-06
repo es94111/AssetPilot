@@ -59,14 +59,14 @@ export async function getDashboardData(month?: string) {
   const session = await requireAuth();
   
   const url = month 
-    ? `http://localhost:3000/api/dashboard?month=${month}`
+    ? `http://localhost:3000/api/dashboard?yearMonth=${month}`
     : 'http://localhost:3000/api/dashboard';
 
   logger.info({ url }, 'Fetching dashboard data');
 
   const res = await fetch(url, {
     headers: {
-      Cookie: `session=${session}`,
+      Cookie: `authToken=${session}`,
     },
   });
 

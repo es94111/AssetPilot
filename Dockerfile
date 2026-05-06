@@ -20,7 +20,7 @@ FROM node:24-alpine AS runner
 WORKDIR /app
 
 COPY --from=builder --chown=nextjs:nodejs /app/build/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/build/static ./.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/build/standalone/.next/static ./.next/static
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
 ENV DB_PATH=/app/data/database.db
@@ -34,9 +34,7 @@ RUN addgroup --system --gid 1001 nodejs \
  && adduser --system --uid 1001 nextjs
 
 # Next.js standalone 輸出（內含最小化 node_modules 與 server.js 入口）
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-# 靜態資源（hash 命名，長期快取）
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+# (使用 distDir='build' 輸出，因此從 /app/build/ 拷貝已在上方處理)
 # public 目錄（favicon、logo 等）
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 # lib/ 透過 instrumentation.js 動態 import (webpackIgnore)，未被 Next.js trace，需手動複製

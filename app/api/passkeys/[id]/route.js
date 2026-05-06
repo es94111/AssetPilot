@@ -12,7 +12,7 @@ export async function DELETE(request, { params }) {
     'SELECT credential_id FROM passkey_credentials WHERE credential_id = ? AND user_id = ?',
     [id, auth.userId]
   );
-  if (!cred) return NextResponse.json({ error: '找不到此 Passkey' }, { status: 404 });
+  if (!cred) return NextResponse.json({ error: '?曆??唳迨 Passkey' }, { status: 404 });
 
   getDB().run(
     'DELETE FROM passkey_credentials WHERE credential_id = ? AND user_id = ?',

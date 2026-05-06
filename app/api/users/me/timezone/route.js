@@ -6,7 +6,7 @@ import { isValidIanaTimezone, toIsoUtc } from '../../../../../lib/userTime';
 import { getRequestIpFromHeaders } from '../../../../../lib/loginHelpers';
 
 export async function PATCH(request) {
-  const auth = requireAuth(request);
+  const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
   const body = await request.json().catch(() => ({}));

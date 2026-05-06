@@ -26,7 +26,7 @@ function parsePinned(raw) {
 }
 
 export async function GET(request) {
-  const auth = requireAuth(request);
+  const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
   const row = getOrCreateRow(auth.userId);
@@ -37,7 +37,7 @@ export async function GET(request) {
 }
 
 export async function PUT(request) {
-  const auth = requireAuth(request);
+  const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
   const body = await request.json().catch(() => ({}));

@@ -4,7 +4,7 @@ import { getDB, saveDB } from '../../../lib/db';
 import { getStockSettings, normalizeStockSettingsInput } from '../../../lib/stockHelpers';
 
 export async function GET(request) {
-  const auth = requireAuth(request);
+  const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
   const settings = getStockSettings(auth.userId);
@@ -12,7 +12,7 @@ export async function GET(request) {
 }
 
 export async function PUT(request) {
-  const auth = requireAuth(request);
+  const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
   const body = await request.json().catch(() => ({}));

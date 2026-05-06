@@ -4,7 +4,7 @@ import { queryOne } from '../../../../lib/db';
 import { toIsoUtc } from '../../../../lib/userTime';
 
 export async function GET(request) {
-  const auth = requireAuth(request);
+  const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
   const u = queryOne(

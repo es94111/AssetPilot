@@ -6,7 +6,7 @@ import { uid } from '../../../lib/userDefaults';
 function isValidColor(c) { return typeof c === 'string' && /^#[0-9A-Fa-f]{6}$/.test(c); }
 
 export async function GET(request) {
-  const auth = requireAuth(request);
+  const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
   const rows = queryAll(
@@ -25,7 +25,7 @@ export async function GET(request) {
 }
 
 export async function POST(request) {
-  const auth = requireAuth(request);
+  const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
   const body = await request.json().catch(() => ({}));

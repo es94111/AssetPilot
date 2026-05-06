@@ -11,7 +11,7 @@ import {
 import { inferStockType } from '../../../lib/twseFetchNext';
 
 export async function GET(request) {
-  const auth = requireAuth(request);
+  const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
   const stockSettings = getStockSettings(auth.userId);
@@ -86,7 +86,7 @@ export async function GET(request) {
 }
 
 export async function POST(request) {
-  const auth = requireAuth(request);
+  const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
   const body = await request.json().catch(() => ({}));

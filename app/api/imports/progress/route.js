@@ -3,7 +3,7 @@ import { requireAuth } from '../../../../lib/apiHelpers';
 import { importProgress } from '@/lib/transactionImportState';
 
 export async function GET(request) {
-  const auth = requireAuth(request);
+  const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
   const entry = importProgress.get(auth.userId);

@@ -10,7 +10,7 @@ const VALID_RECURRING_FREQ = new Set(['daily', 'weekly', 'monthly', 'yearly']);
 const VALID_RECURRING_TYPE = new Set(['income', 'expense']);
 
 export async function GET(request) {
-  const auth = requireAuth(request);
+  const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
   const rows = queryAll('SELECT * FROM recurring WHERE user_id = ? ORDER BY start_date DESC', [auth.userId]);
@@ -39,7 +39,7 @@ export async function GET(request) {
 }
 
 export async function POST(request) {
-  const auth = requireAuth(request);
+  const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
   const body = await request.json().catch(() => ({}));

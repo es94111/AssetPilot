@@ -52,7 +52,7 @@ function deleteLoginAuditSingle(db, target) {
 }
 
 export async function DELETE(request, { params }) {
-  const auth = requireAdmin(request);
+  const auth = await requireAdmin(request);
   if (auth instanceof NextResponse) return auth;
 
   const { logId } = await params;

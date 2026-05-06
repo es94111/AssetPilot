@@ -42,7 +42,7 @@ function makeBackupTimestamp() {
 }
 
 export async function GET(request) {
-  const auth = requireAdmin(request);
+  const auth = await requireAdmin(request);
   if (auth instanceof NextResponse) return auth;
 
   try {

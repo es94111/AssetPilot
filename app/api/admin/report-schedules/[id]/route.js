@@ -19,7 +19,7 @@ function clampInt(value, min, max, fallback) {
 }
 
 export async function PUT(request, { params }) {
-  const auth = requireAdmin(request);
+  const auth = await requireAdmin(request);
   if (auth instanceof NextResponse) return auth;
 
   const { id } = await params;
@@ -44,7 +44,7 @@ export async function PUT(request, { params }) {
 }
 
 export async function DELETE(request, { params }) {
-  const auth = requireAdmin(request);
+  const auth = await requireAdmin(request);
   if (auth instanceof NextResponse) return auth;
 
   const { id } = await params;

@@ -14,7 +14,7 @@ function validateStrongPassword(password) {
 }
 
 export async function PUT(request, { params }) {
-  const auth = requireAdmin(request);
+  const auth = await requireAdmin(request);
   if (auth instanceof NextResponse) return auth;
 
   const { id } = await params;

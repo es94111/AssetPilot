@@ -30,7 +30,7 @@ function validatePemKey(pem) {
 }
 
 export async function POST(request) {
-  const auth = requireAdmin(request);
+  const auth = await requireAdmin(request);
   if (auth instanceof NextResponse) return auth;
 
   const body = await request.json().catch(() => ({}));
@@ -54,7 +54,7 @@ export async function POST(request) {
 }
 
 export async function DELETE(request) {
-  const auth = requireAdmin(request);
+  const auth = await requireAdmin(request);
   if (auth instanceof NextResponse) return auth;
 
   [SSL_ORIGIN_CERT, SSL_ORIGIN_KEY, SSL_ORIGIN_CA].forEach(f => { try { if (fs.existsSync(f)) fs.unlinkSync(f); } catch (_) {} });

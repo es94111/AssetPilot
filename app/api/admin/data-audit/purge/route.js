@@ -3,7 +3,7 @@ import { requireAdmin } from '../../../../../lib/apiHelpers';
 import { getDB, queryOne, saveDB } from '../../../../../lib/db.js';
 
 export async function POST(request) {
-  const auth = requireAdmin(request);
+  const auth = await requireAdmin(request);
   if (auth instanceof NextResponse) return auth;
 
   try {

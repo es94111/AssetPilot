@@ -78,7 +78,7 @@ async function sendEmail({ to, subject, html }) {
 }
 
 export async function POST(request) {
-  const auth = requireAdmin(request);
+  const auth = await requireAdmin(request);
   if (auth instanceof NextResponse) return auth;
 
   const me = queryOne('SELECT email, display_name FROM users WHERE id = ?', [auth.userId]);

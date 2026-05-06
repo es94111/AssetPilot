@@ -14,7 +14,7 @@ function getServerTimeOffset() {
 }
 
 export async function GET(request) {
-  const auth = requireAdmin(request);
+  const auth = await requireAdmin(request);
   if (auth instanceof NextResponse) return auth;
 
   const offset = getServerTimeOffset();
@@ -34,7 +34,7 @@ export async function GET(request) {
 }
 
 export async function PUT(request) {
-  const auth = requireAdmin(request);
+  const auth = await requireAdmin(request);
   if (auth instanceof NextResponse) return auth;
 
   let body;

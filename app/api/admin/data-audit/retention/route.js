@@ -3,7 +3,7 @@ import { requireAdmin } from '../../../../../lib/apiHelpers';
 import { getDB, queryOne, saveDB } from '../../../../../lib/db.js';
 
 export async function GET(request) {
-  const auth = requireAdmin(request);
+  const auth = await requireAdmin(request);
   if (auth instanceof NextResponse) return auth;
 
   const row = queryOne('SELECT audit_log_retention_days FROM system_settings WHERE id = 1');
@@ -11,7 +11,7 @@ export async function GET(request) {
 }
 
 export async function PUT(request) {
-  const auth = requireAdmin(request);
+  const auth = await requireAdmin(request);
   if (auth instanceof NextResponse) return auth;
 
   let body;

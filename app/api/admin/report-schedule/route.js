@@ -42,7 +42,7 @@ function clampInt(value, min, max, fallback) {
 }
 
 export async function GET(request) {
-  const auth = requireAdmin(request);
+  const auth = await requireAdmin(request);
   if (auth instanceof NextResponse) return auth;
 
   const s = getReportSchedule();
@@ -60,7 +60,7 @@ export async function GET(request) {
 }
 
 export async function PUT(request) {
-  const auth = requireAdmin(request);
+  const auth = await requireAdmin(request);
   if (auth instanceof NextResponse) return auth;
 
   let body;

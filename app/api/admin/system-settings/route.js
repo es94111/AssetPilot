@@ -4,7 +4,7 @@ import { getDB, queryOne, saveDB } from '../../../../lib/db.js';
 import { getSystemSettings, parseAllowedRegistrationEmails, parseIpAllowlist } from '../../../../lib/loginHelpers.js';
 
 export async function GET(request) {
-  const auth = requireAdmin(request);
+  const auth = await requireAdmin(request);
   if (auth instanceof NextResponse) return auth;
 
   const settings = getSystemSettings();
@@ -12,7 +12,7 @@ export async function GET(request) {
 }
 
 export async function PUT(request) {
-  const auth = requireAdmin(request);
+  const auth = await requireAdmin(request);
   if (auth instanceof NextResponse) return auth;
 
   let body;

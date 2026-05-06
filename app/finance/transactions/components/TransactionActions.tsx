@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type MouseEvent } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 export function TransactionActions({ id }: { id: string }) {
@@ -11,7 +11,7 @@ export function TransactionActions({ id }: { id: string }) {
       {/* 阻止觸發器事件冒泡到 TableRow */}
       <DialogTrigger 
         className="text-blue-500 hover:text-blue-700 cursor-pointer"
-        onClick={(e) => {
+        onClick={(e: MouseEvent) => {
           e.stopPropagation();
         }}
       >
@@ -19,7 +19,7 @@ export function TransactionActions({ id }: { id: string }) {
       </DialogTrigger>
       
       {/* 點擊內容內部時防止冒泡並阻止預設行為 */}
-      <DialogContent onClick={(e) => e.stopPropagation()}>
+      <DialogContent onClick={(e: MouseEvent) => e.stopPropagation()}>
         <DialogHeader>
           <DialogTitle>編輯交易 {id}</DialogTitle>
         </DialogHeader>

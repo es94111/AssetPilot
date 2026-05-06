@@ -4,6 +4,9 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "記帳網頁 - 儀表板",
   description: "個人記帳儀表板",
+  icons: {
+    icon: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({

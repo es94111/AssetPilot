@@ -1,0 +1,172 @@
+exports.id=3971,exports.ids=[3971],exports.modules={12572:(a,b,c)=>{"use strict";c.d(b,{default:()=>d});let d=(0,c(97954).registerClientReference)(function(){throw Error("Attempted to call the default export of \"C:\\\\Users\\\\hongyu\\\\SynologyDrive\\\\web\\\\AssetPilot\\\\components\\\\layout\\\\AppLayout.tsx\" from the server, but it's on the client. It's not possible to invoke a client function from the server, it can only be rendered as a Component or passed to props of a Client Component.")},"C:\\Users\\hongyu\\SynologyDrive\\web\\AssetPilot\\components\\layout\\AppLayout.tsx","default")},12716:()=>{},14235:(a,b,c)=>{"use strict";c.d(b,{default:()=>n});var d=c(21124),e=c(38301),f=c(42378),g=c(24515),h=c(255);let i=[{path:"/dashboard",label:"儀表板",icon:h.HxJ,requireAdmin:!1},{path:"/finance/transactions",label:"交易記錄",icon:h.TA3,requireAdmin:!1},{path:"/finance/reports",label:"統計報表",icon:h._C,requireAdmin:!1},{path:"/finance/budget",label:"預算管理",icon:h.uWV,requireAdmin:!1},{path:"/finance/accounts",label:"帳戶管理",icon:h.t6i,requireAdmin:!1},{path:"/finance/categories",label:"分類管理",icon:h.YDL,requireAdmin:!1},{path:"/finance/recurring",label:"固定收支",icon:h.kM6,requireAdmin:!1},{path:"/stocks",label:"持股總覽",icon:h.ZHz,requireAdmin:!1},{path:"/settings/export",label:"資料匯出匯入",icon:h.WmV,requireAdmin:!1},{path:"/settings/account",label:"帳號設定",icon:h.KJW,requireAdmin:!1},{path:"/settings/admin",label:"管理員",icon:h.ekZ,requireAdmin:!0},{path:"/api-credits",label:"API 使用與授權",icon:h.Uzy,requireAdmin:!1}];function j({user:a}){let b=(0,f.usePathname)(),c=(0,f.useRouter)(),e=i.filter(b=>!b.requireAdmin||a?.isAdmin);async function j(){await fetch("/api/auth/logout",{method:"POST"}),c.push("/login"),c.refresh()}return(0,d.jsxs)("aside",{className:"w-64 bg-white border-r border-slate-200 flex flex-col h-full",children:[(0,d.jsx)("div",{className:"p-4 border-b",children:(0,d.jsxs)("div",{className:"flex items-center gap-2 font-bold text-lg",children:[(0,d.jsx)(g.default,{src:"/favicon.svg",alt:"",width:28,height:28}),(0,d.jsx)("span",{children:"AssetPilot"})]})}),(0,d.jsx)("nav",{className:"flex-1 p-4 space-y-1 overflow-y-auto",children:e.map(a=>{let e=a.icon,f=b===a.path||"/dashboard"!==a.path&&b.startsWith(a.path);return(0,d.jsxs)("button",{onClick:()=>c.push(a.path),className:`flex items-center gap-3 w-full p-2 rounded-lg transition-colors ${f?"bg-blue-50 text-blue-700":"text-slate-600 hover:bg-slate-100"}`,children:[(0,d.jsx)(e,{size:20}),(0,d.jsx)("span",{children:a.label})]},a.path)})}),(0,d.jsxs)("div",{className:"p-4 border-t space-y-4",children:[(0,d.jsxs)("div",{className:"flex items-center gap-2 text-sm text-slate-600",children:[(0,d.jsx)(h.KJW,{size:16}),(0,d.jsx)("span",{children:a?.displayName||a?.email||"使用者"})]}),(0,d.jsx)(k,{variant:"ghost",className:"w-full justify-start text-red-600",onClick:j,children:"登出"})]})]})}function k({variant:a="default",className:b="",...c}){return(0,d.jsx)("button",{className:`px-4 py-2 rounded-md font-medium transition-colors ${{default:"bg-blue-600 text-white hover:bg-blue-700",ghost:"bg-transparent hover:bg-slate-100"}[a]} ${b}`,...c})}function l({title:a,onMenuClick:b}){return(0,d.jsxs)("header",{className:"sticky top-0 bg-white border-b border-slate-200 px-4 py-3 flex items-center gap-4 lg:hidden",children:[(0,d.jsx)("button",{className:"p-2 rounded-md hover:bg-slate-100",onClick:b,"aria-label":"開啟選單",children:(0,d.jsx)(h.W1t,{size:24})}),(0,d.jsx)("h1",{className:"text-lg font-semibold text-slate-900",children:a})]})}let m={"/dashboard":"儀表板","/finance/transactions":"交易記錄","/finance/reports":"統計報表","/finance/budget":"預算管理","/finance/accounts":"帳戶管理","/finance/categories":"分類管理","/finance/recurring":"固定收支","/stocks":"持股總覽","/stocks/portfolio":"持股總覽","/stocks/transactions":"股票交易紀錄","/stocks/dividends":"股票股利紀錄","/stocks/realized":"股票實現損益紀錄","/stocks/settings":"股票交易設定","/api-credits":"API 使用與授權","/settings/account":"帳號設定","/settings/admin":"管理員","/settings/export":"資料匯出匯入"};function n({user:a,children:b}){let[c,g]=(0,e.useState)(!1),h=m[(0,f.usePathname)()]||"AssetPilot";return(0,d.jsxs)("div",{className:"flex h-screen bg-slate-50",children:[(0,d.jsx)(j,{user:a}),c&&(0,d.jsx)("div",{className:"fixed inset-0 bg-black/50 z-40 lg:hidden",onClick:()=>g(!1)}),(0,d.jsxs)("div",{className:"flex-1 flex flex-col overflow-hidden",children:[(0,d.jsx)(l,{title:h,onMenuClick:()=>g(a=>!a)}),(0,d.jsx)("main",{className:"flex-1 overflow-y-auto p-4 md:p-6",children:b})]})]})}},16825:(a,b,c)=>{"use strict";let d=c(33873),e=c(29021),f=c(55511),g=process.env.DB_PATH||d.join(process.cwd(),"database.db"),h=process.env.DB_ENCRYPTION_KEY||"",i=Buffer.from("EADB");function j(a,b){return f.pbkdf2Sync(a,b,1e5,32,"sha256")}function k(a,b){let c=f.randomBytes(16),d=j(b,c),e=f.randomBytes(12),g=f.createCipheriv("chacha20-poly1305",d,e,{authTagLength:16}),h=Buffer.concat([g.update(a),g.final()]),k=g.getAuthTag();return Buffer.concat([i,c,e,k,h])}function l(a,b){if(a.length<48)throw Error("加密檔案格式錯誤：檔案太小");if(!a.subarray(0,4).equals(i))throw Error("非加密資料庫檔案");let c=a.subarray(4,20),d=a.subarray(20,32),e=a.subarray(32,48),g=a.subarray(48),h=j(b,c),k=f.createDecipheriv("chacha20-poly1305",h,d,{authTagLength:16});return k.setAuthTag(e),Buffer.concat([k.update(g),k.final()])}function m(a){return!!Buffer.isBuffer(a)&&a.length>=4&&a.subarray(0,4).equals(i)}let n=globalThis.__sqlDb||null,o=!1,p=!1;function q(){if(o){p=!0;return}o=!0,(async()=>{try{for(;;){p=!1;let a=n.export(),b=Buffer.from(a),c=h?k(b,h):b,d=g+".tmp";if(await e.promises.writeFile(d,c),await e.promises.rename(d,g),!p)break}}catch(a){console.error("saveDB failed:",a?.message??a)}finally{o=!1}})()}function r(){let a=n.export(),b=Buffer.from(a),c=h?k(b,h):b;e.writeFileSync(g,c)}function s(){if(n||(n=globalThis.__sqlDb??null),!n)throw Error("DB 尚未初始化，請確認 instrumentation.js 已執行");return n}async function t(){let a=n;a.run(`CREATE TABLE IF NOT EXISTS users (
+    id TEXT PRIMARY KEY,
+    email TEXT UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    display_name TEXT NOT NULL,
+    created_at TEXT
+  )`),a.run(`CREATE TABLE IF NOT EXISTS login_audit_logs (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    email TEXT NOT NULL,
+    login_at INTEGER NOT NULL,
+    ip_address TEXT NOT NULL,
+    login_method TEXT DEFAULT 'password',
+    is_admin_login INTEGER DEFAULT 0
+  )`),a.run("CREATE INDEX IF NOT EXISTS idx_login_audit_user_time ON login_audit_logs(user_id, login_at DESC)"),a.run("CREATE INDEX IF NOT EXISTS idx_login_audit_time ON login_audit_logs(login_at DESC)"),a.run(`CREATE TABLE IF NOT EXISTS data_operation_audit_log (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    role TEXT NOT NULL,
+    action TEXT NOT NULL,
+    ip_address TEXT DEFAULT '',
+    user_agent TEXT DEFAULT '',
+    timestamp TEXT NOT NULL,
+    result TEXT NOT NULL,
+    is_admin_operation INTEGER DEFAULT 0,
+    metadata TEXT DEFAULT '{}'
+  )`),a.run("CREATE INDEX IF NOT EXISTS idx_data_audit_user_time ON data_operation_audit_log(user_id, timestamp DESC)"),a.run("CREATE INDEX IF NOT EXISTS idx_data_audit_time ON data_operation_audit_log(timestamp DESC)"),a.run("CREATE INDEX IF NOT EXISTS idx_data_audit_action ON data_operation_audit_log(action)"),a.run(`CREATE TABLE IF NOT EXISTS login_attempt_logs (
+    id TEXT PRIMARY KEY,
+    user_id TEXT DEFAULT '',
+    email TEXT NOT NULL,
+    login_at INTEGER NOT NULL,
+    ip_address TEXT NOT NULL,
+    login_method TEXT DEFAULT 'password',
+    is_admin_login INTEGER DEFAULT 0,
+    is_success INTEGER DEFAULT 0,
+    failure_reason TEXT DEFAULT ''
+  )`),a.run("CREATE INDEX IF NOT EXISTS idx_login_attempt_time ON login_attempt_logs(login_at DESC)"),a.run("CREATE INDEX IF NOT EXISTS idx_login_attempt_email_time ON login_attempt_logs(email, login_at DESC)"),a.run(`CREATE TABLE IF NOT EXISTS system_settings (
+    id INTEGER PRIMARY KEY CHECK(id = 1),
+    public_registration INTEGER DEFAULT 1,
+    allowed_registration_emails TEXT DEFAULT '',
+    admin_ip_allowlist TEXT DEFAULT '',
+    updated_at INTEGER DEFAULT 0,
+    updated_by TEXT DEFAULT ''
+  )`);let b=b=>{try{a.run(b)}catch{}};b("ALTER TABLE system_settings ADD COLUMN admin_ip_allowlist TEXT DEFAULT ''"),b("ALTER TABLE system_settings ADD COLUMN report_schedule_freq TEXT DEFAULT 'off'"),b("ALTER TABLE system_settings ADD COLUMN report_schedule_hour INTEGER DEFAULT 9"),b("ALTER TABLE system_settings ADD COLUMN report_schedule_weekday INTEGER DEFAULT 1"),b("ALTER TABLE system_settings ADD COLUMN report_schedule_day_of_month INTEGER DEFAULT 1"),b("ALTER TABLE system_settings ADD COLUMN report_schedule_last_run INTEGER DEFAULT 0"),b("ALTER TABLE system_settings ADD COLUMN report_schedule_last_summary TEXT DEFAULT ''"),b("ALTER TABLE system_settings ADD COLUMN report_schedule_user_ids TEXT DEFAULT ''"),b("ALTER TABLE system_settings ADD COLUMN server_time_offset INTEGER DEFAULT 0"),b("ALTER TABLE system_settings ADD COLUMN audit_log_retention_days TEXT DEFAULT '90'"),b("ALTER TABLE system_settings ADD COLUMN route_audit_mode TEXT DEFAULT 'security'"),a.run("INSERT OR IGNORE INTO system_settings (id, public_registration, allowed_registration_emails, admin_ip_allowlist, updated_at, updated_by) VALUES (1, 1, '', '', ?, '')",[Date.now()]),a.run(`CREATE TABLE IF NOT EXISTS report_schedules (
+    id              TEXT    PRIMARY KEY,
+    user_id         TEXT    NOT NULL,
+    freq            TEXT    NOT NULL,
+    hour            INTEGER NOT NULL DEFAULT 9,
+    weekday         INTEGER NOT NULL DEFAULT 1,
+    day_of_month    INTEGER NOT NULL DEFAULT 1,
+    enabled         INTEGER NOT NULL DEFAULT 1,
+    last_run        INTEGER NOT NULL DEFAULT 0,
+    last_summary    TEXT    NOT NULL DEFAULT '',
+    created_at      INTEGER NOT NULL DEFAULT 0,
+    updated_at      INTEGER NOT NULL DEFAULT 0
+  )`),b("CREATE INDEX IF NOT EXISTS idx_report_schedules_user ON report_schedules(user_id)"),b("CREATE INDEX IF NOT EXISTS idx_report_schedules_enabled_freq ON report_schedules(enabled, freq)"),a.run(`CREATE TABLE IF NOT EXISTS categories (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    name TEXT NOT NULL,
+    type TEXT NOT NULL CHECK(type IN ('income','expense')),
+    color TEXT DEFAULT '#6366f1',
+    is_default INTEGER DEFAULT 0,
+    sort_order INTEGER DEFAULT 0,
+    parent_id TEXT DEFAULT ''
+  )`),a.run(`CREATE TABLE IF NOT EXISTS deleted_defaults (
+    user_id TEXT NOT NULL,
+    default_key TEXT NOT NULL,
+    deleted_at INTEGER DEFAULT 0,
+    PRIMARY KEY (user_id, default_key)
+  )`),b("CREATE INDEX IF NOT EXISTS idx_cat_user_parent_sort ON categories(user_id, parent_id, sort_order)"),b("CREATE INDEX IF NOT EXISTS idx_cat_user_type ON categories(user_id, type)"),a.run(`CREATE TABLE IF NOT EXISTS accounts (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    name TEXT NOT NULL,
+    initial_balance REAL DEFAULT 0,
+    currency TEXT DEFAULT 'TWD',
+    icon TEXT DEFAULT 'fa-wallet',
+    created_at TEXT
+  )`),a.run(`CREATE TABLE IF NOT EXISTS transactions (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    type TEXT NOT NULL,
+    amount REAL NOT NULL,
+    currency TEXT DEFAULT 'TWD',
+    original_amount REAL DEFAULT 0,
+    fx_rate REAL DEFAULT 1,
+    date TEXT NOT NULL,
+    category_id TEXT,
+    account_id TEXT,
+    note TEXT DEFAULT '',
+    linked_id TEXT DEFAULT '',
+    created_at INTEGER,
+    updated_at INTEGER
+  )`),a.run(`CREATE TABLE IF NOT EXISTS exchange_rates (
+    user_id TEXT NOT NULL,
+    currency TEXT NOT NULL,
+    rate_to_twd REAL NOT NULL,
+    updated_at INTEGER,
+    PRIMARY KEY (user_id, currency)
+  )`),a.run(`CREATE TABLE IF NOT EXISTS exchange_rate_settings (
+    user_id TEXT PRIMARY KEY,
+    auto_update INTEGER DEFAULT 0,
+    last_synced_at INTEGER DEFAULT 0,
+    updated_at INTEGER
+  )`),a.run(`CREATE TABLE IF NOT EXISTS budgets (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    category_id TEXT,
+    amount REAL NOT NULL,
+    period TEXT DEFAULT 'monthly',
+    year INTEGER,
+    month INTEGER,
+    created_at INTEGER,
+    updated_at INTEGER
+  )`),a.run(`CREATE TABLE IF NOT EXISTS recurring (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    name TEXT NOT NULL,
+    type TEXT NOT NULL,
+    amount REAL NOT NULL,
+    currency TEXT DEFAULT 'TWD',
+    category_id TEXT,
+    account_id TEXT,
+    freq TEXT NOT NULL,
+    next_date TEXT,
+    is_active INTEGER DEFAULT 1,
+    created_at INTEGER
+  )`),a.run(`CREATE TABLE IF NOT EXISTS stocks (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    symbol TEXT NOT NULL,
+    name TEXT NOT NULL,
+    shares REAL DEFAULT 0,
+    avg_cost REAL DEFAULT 0,
+    currency TEXT DEFAULT 'TWD',
+    account_id TEXT DEFAULT '',
+    created_at INTEGER,
+    updated_at INTEGER
+  )`),a.run(`CREATE TABLE IF NOT EXISTS stock_transactions (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    stock_id TEXT NOT NULL,
+    type TEXT NOT NULL,
+    shares REAL NOT NULL,
+    price REAL NOT NULL,
+    fee REAL DEFAULT 0,
+    tax REAL DEFAULT 0,
+    date TEXT NOT NULL,
+    note TEXT DEFAULT '',
+    created_at INTEGER
+  )`),a.run(`CREATE TABLE IF NOT EXISTS stock_dividends (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    stock_id TEXT NOT NULL,
+    amount REAL NOT NULL,
+    shares REAL DEFAULT 0,
+    date TEXT NOT NULL,
+    note TEXT DEFAULT '',
+    created_at INTEGER
+  )`),a.run(`CREATE TABLE IF NOT EXISTS stock_recurring (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    stock_id TEXT NOT NULL,
+    freq TEXT NOT NULL,
+    shares REAL NOT NULL,
+    price REAL DEFAULT 0,
+    next_date TEXT,
+    is_active INTEGER DEFAULT 1,
+    created_at INTEGER
+  )`),a.run(`CREATE TABLE IF NOT EXISTS user_settings (
+    user_id TEXT PRIMARY KEY,
+    pinned_currencies TEXT DEFAULT '[]',
+    updated_at INTEGER
+  )`),b("ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'user'"),b("ALTER TABLE users ADD COLUMN is_admin INTEGER DEFAULT 0"),b("ALTER TABLE users ADD COLUMN timezone TEXT DEFAULT 'Asia/Taipei'"),b("ALTER TABLE users ADD COLUMN theme_mode TEXT DEFAULT 'system'"),b("ALTER TABLE users ADD COLUMN google_id TEXT DEFAULT ''"),b("ALTER TABLE users ADD COLUMN google_sub TEXT DEFAULT ''"),b("ALTER TABLE users ADD COLUMN has_password INTEGER DEFAULT 1"),b("ALTER TABLE users ADD COLUMN avatar_url TEXT DEFAULT ''"),b("ALTER TABLE users ADD COLUMN token_version INTEGER DEFAULT 0"),b("ALTER TABLE users ADD COLUMN passkey_credentials TEXT DEFAULT '[]'"),b("ALTER TABLE users ADD COLUMN updated_at INTEGER DEFAULT 0"),b("ALTER TABLE accounts ADD COLUMN type TEXT DEFAULT 'checking'"),b("ALTER TABLE accounts ADD COLUMN balance REAL DEFAULT 0"),b("ALTER TABLE accounts ADD COLUMN color TEXT DEFAULT '#6366f1'"),b("ALTER TABLE accounts ADD COLUMN sort_order INTEGER DEFAULT 0"),b("ALTER TABLE accounts ADD COLUMN is_active INTEGER DEFAULT 1"),b("ALTER TABLE accounts ADD COLUMN updated_at INTEGER DEFAULT 0"),b("ALTER TABLE accounts ADD COLUMN note TEXT DEFAULT ''"),b("ALTER TABLE transactions ADD COLUMN transfer_to_account_id TEXT DEFAULT ''"),b("ALTER TABLE transactions ADD COLUMN tags TEXT DEFAULT '[]'"),b("ALTER TABLE stock_transactions ADD COLUMN realized_pl REAL DEFAULT 0");let d=c(33873).join(process.cwd(),"backups");c(29021).existsSync(d)||c(29021).mkdirSync(d,{recursive:!0}),q()}async function u(a){let b=c(33296),e=await b({locateFile:a=>d.join(process.cwd(),"node_modules","sql.js","dist",a)});if(n)try{n.close()}catch(a){}n=new e.Database(a),q(),await t()}a.exports={initDB:async function a(){if(n)return;let a=c(33296),b=await a({locateFile:a=>d.join(process.cwd(),"node_modules","sql.js","dist",a)});if(e.existsSync(g)){let a=e.readFileSync(g),c=m(a);if(c&&!h&&(console.error("錯誤：資料庫已加密但未設定 DB_ENCRYPTION_KEY，無法啟動"),process.exit(1)),c)try{let c=l(a,h);n=new b.Database(c),console.log("已載入加密資料庫（ChaCha20-Poly1305）")}catch(a){console.error("資料庫解密失敗（金鑰可能不正確）:",a.message),process.exit(1)}else h?(n=new b.Database(a),console.log("偵測到未加密資料庫，自動加密中..."),q(),console.log("資料庫已自動加密完成")):n=new b.Database(a)}else n=new b.Database,h&&console.log("將使用加密模式儲存新資料庫");globalThis.__sqlDb=n,await t(),console.log("資料庫初始化完成")},getDB:s,saveDB:q,saveDBSync:r,flushOnExit:()=>{try{r()}catch{}},queryOne:function(a,b=[]){let c=s().prepare(a);if(c.bind(b),c.step()){let a=c.getAsObject();return c.free(),a}return c.free(),null},queryAll:function(a,b=[]){let c=s().prepare(a);c.bind(b);let d=[];for(;c.step();)d.push(c.getAsObject());return c.free(),d},isEncryptedDB:m,encryptBuffer:k,decryptBuffer:l,replaceDB:u}},16953:(a,b,c)=>{"use strict";c.r(b),c.d(b,{default:()=>f,metadata:()=>e});var d=c(75338);c(82704);let e={title:"記帳網頁 - 儀表板",description:"個人記帳儀表板",icons:{icon:"/favicon.svg"}};function f({children:a}){return(0,d.jsx)("html",{lang:"zh-TW",children:(0,d.jsx)("body",{className:"antialiased",children:(0,d.jsx)("main",{children:a})})})}},46055:(a,b,c)=>{"use strict";c.r(b),c.d(b,{default:()=>e});var d=c(97523);let e=async a=>[{type:"image/x-icon",sizes:"16x16",url:(0,d.fillMetadataSegment)(".",await a.params,"favicon.ico")+""}]},46702:(a,b,c)=>{Promise.resolve().then(c.t.bind(c,81170,23)),Promise.resolve().then(c.t.bind(c,23597,23)),Promise.resolve().then(c.t.bind(c,36893,23)),Promise.resolve().then(c.t.bind(c,89748,23)),Promise.resolve().then(c.t.bind(c,6060,23)),Promise.resolve().then(c.t.bind(c,7184,23)),Promise.resolve().then(c.t.bind(c,69576,23)),Promise.resolve().then(c.t.bind(c,73041,23)),Promise.resolve().then(c.t.bind(c,51384,23))},59916:()=>{},66147:(a,b,c)=>{"use strict";c.r(b),c.d(b,{AUTH_COOKIE_OPTIONS:()=>m,getSession:()=>i,requireAuth:()=>j,signToken:()=>k,verifyToken:()=>l});var d=c(86802),e=c(82161),f=c(48318),g=c.n(f);let h=process.env.JWT_SECRET||"default_secret";async function i(){let a=(await (0,d.cookies)()).get("authToken");return a?a.value:null}async function j(){let a=await i();return a||(0,e.redirect)("/login"),a}function k(a,b){return g().sign({userId:a,tokenVersion:b},h,{expiresIn:"7d"})}function l(a){return g().verify(a,h)}let m={httpOnly:!0,secure:!0,sameSite:"strict",path:"/"}},82704:()=>{},86454:(a,b,c)=>{Promise.resolve().then(c.t.bind(c,54160,23)),Promise.resolve().then(c.t.bind(c,31603,23)),Promise.resolve().then(c.t.bind(c,68495,23)),Promise.resolve().then(c.t.bind(c,75170,23)),Promise.resolve().then(c.t.bind(c,77526,23)),Promise.resolve().then(c.t.bind(c,78922,23)),Promise.resolve().then(c.t.bind(c,29234,23)),Promise.resolve().then(c.t.bind(c,12263,23)),Promise.resolve().then(c.bind(c,82146))},92398:(a,b,c)=>{"use strict";let{cookies:d}=c(86802),{redirect:e}=c(82161),{verifyToken:f}=c(66147),{queryOne:g}=c(16825);async function h(){let a,b=await d(),c=b.get("authToken")?.value;c||e("/login");try{a=f(c).userId}catch(a){e("/login")}let h=g("SELECT id, email, display_name, is_admin, theme_mode FROM users WHERE id = ?",[a]);return h||e("/login"),{id:h.id,email:h.email,displayName:h.display_name,isAdmin:!!h.is_admin,themeMode:h.theme_mode||"system"}}async function i(){let a=await h();return a.isAdmin||e("/dashboard"),a}a.exports={requireServerAuth:h,requireServerAdmin:i}}};

@@ -5,7 +5,7 @@ import { normalizeCurrency, convertToTwd, convertFromTwd, normalizeDate } from '
 import { uid, todayStr } from '../../../../lib/userDefaults';
 
 export async function POST(request) {
-  const auth = requireAuth(request);
+  const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
   const body = await request.json().catch(() => ({}));

@@ -1,6 +1,6 @@
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { requireAuth as getAuth } from '@/lib/auth';
+import { requireAuth as getAuth } from './auth';
 import logger from '@/lib/logger';
 
 export async function requireAuth(request?: any) {

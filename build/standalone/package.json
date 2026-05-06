@@ -1,0 +1,60 @@
+{
+  "name": "bookkeeping-app",
+  "version": "4.33.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "test": "npm run test:tz && npm run test:fr015 && npm run check:iso",
+    "test:tz": "node tests/lib/userTime.test.js && node tests/migration/migration-009.test.js && node tests/integration/us1-natural-day.test.js && node tests/integration/us2-users-me-timezone.test.js && node tests/integration/us3-monthly-report.test.js",
+    "test:fr015": "node tests/integration/fr015-transactions-historical.test.js",
+    "check:iso": "node tools/check-iso-utc-format.js",
+    "check:sla": "node tools/sla-monthly-report.js"
+  },
+  "engines": {
+    "node": ">=24.0.0 <25"
+  },
+  "dependencies": {
+    "@base-ui/react": "^1.4.1",
+    "@hookform/resolvers": "^5.2.2",
+    "@passwordless-id/webauthn": "^2.3.5",
+    "@tailwindcss/postcss": "^4.2.4",
+    "adm-zip": "^0.5.17",
+    "bcryptjs": "^3.0.3",
+    "chart.js": "^4.5.1",
+    "class-variance-authority": "^0.7.1",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "decimal.js": "^10.4.3",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.4.1",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "lucide-react": "^1.14.0",
+    "next": "^15.5.15",
+    "nodemailer": "^8.0.6",
+    "pino": "^10.3.1",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
+    "react-hook-form": "^7.75.0",
+    "recharts": "^3.8.1",
+    "resend": "^6.12.2",
+    "sql.js": "^1.14.1",
+    "tailwind-merge": "^3.5.0",
+    "tailwindcss": "^4.2.4",
+    "zod": "^4.4.3"
+  },
+  "overrides": {
+    "uuid": "^14.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.19.17",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "autoprefixer": "^10.5.0",
+    "postcss": "^8.5.14",
+    "typescript": "^5.9.3"
+  }
+}

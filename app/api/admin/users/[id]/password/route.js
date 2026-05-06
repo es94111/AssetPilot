@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
-import { requireAdmin } from '../../../../../../lib/apiHelpers.js';
+import { requireAdmin } from '../../../../../../lib/apiHelpers';
 import { getDB, queryOne, saveDB } from '../../../../../../lib/db.js';
 
 function validateStrongPassword(password) {

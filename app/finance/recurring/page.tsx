@@ -1,12 +1,12 @@
 import AppLayout from "@/components/layout/AppLayout";
-import TransactionsClient from "@/components/features/transactions/TransactionsClient";
+import RecurringClient from "@/components/features/recurring/RecurringClient";
 import { requireServerAuth } from "@/lib/serverAuth";
 
-export default async function TransactionsPage() {
+export default async function RecurringPage() {
   const user = await requireServerAuth();
   return (
     <AppLayout user={user}>
-      <TransactionsClient user={user} />
+      <RecurringClient />
     </AppLayout>
   );
 }

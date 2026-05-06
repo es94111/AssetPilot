@@ -1,12 +1,12 @@
 import AppLayout from "@/components/layout/AppLayout";
-import TransactionsClient from "@/components/features/transactions/TransactionsClient";
+import AccountsClient from "@/components/features/accounts/AccountsClient";
 import { requireServerAuth } from "@/lib/serverAuth";
 
-export default async function TransactionsPage() {
+export default async function AccountsPage() {
   const user = await requireServerAuth();
   return (
     <AppLayout user={user}>
-      <TransactionsClient user={user} />
+      <AccountsClient user={user} />
     </AppLayout>
   );
 }

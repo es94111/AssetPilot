@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { requireAuth } from '../../../../lib/apiHelpers';
-import { importProgress } from '../../transactions/import/route';
+import { importProgress } from '@/lib/transactionImportState';
 
 export async function GET(request) {
   const auth = requireAuth(request);

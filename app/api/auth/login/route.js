@@ -69,7 +69,7 @@ export async function POST(request) {
       processRecurringForUser(user.id);
     } catch (_) {}
     try {
-      const { processStockRecurring } = await import('../../../../lib/stockHelpers.js');
+      const { processStockRecurring } = await import('../../../../lib/stockHelpers');
       await processStockRecurring(user.id);
     } catch (_) {}
   });

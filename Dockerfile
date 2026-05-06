@@ -20,7 +20,6 @@ FROM node:24-alpine AS runner
 WORKDIR /app
 
 COPY --from=builder --chown=nextjs:nodejs /app/build/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/build/standalone/.next/static ./.next/static
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
 ENV DB_PATH=/app/data/database.db

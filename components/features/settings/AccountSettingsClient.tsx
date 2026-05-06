@@ -31,6 +31,11 @@ export default function AccountSettingsClient({ user: initialUser }: { user: any
   const [pkLoading, setPkLoading] = useState(false);
   const [pkError, setPkError] = useState('');
 
+  const [loginAudit, setLoginAudit] = useState<any[]>([]);
+  const [auditLoading, setAuditLoading] = useState(false);
+  const [googleMsg, setGoogleMsg] = useState('');
+  const [deleteMsg, setDeleteMsg] = useState('');
+
   const load = useCallback(async () => {
     setLoading(true);
     try {
@@ -52,7 +57,16 @@ export default function AccountSettingsClient({ user: initialUser }: { user: any
     setPkLoading(false);
   }, []);
 
-  useEffect(() => { load(); loadPasskeys(); }, [load, loadPasskeys]);
+  const loadLoginAudit = useCallback(async () => {
+    setAuditLoading(true);
+    try {
+      const res = await apiGet('/api/user/login-audit');
+      setLoginAudit(res.logs || []);
+    } catch (_) {}
+    setAuditLoading(false);
+  }, []);
+
+  useEffect(() => { load(); loadPasskeys(); loadLoginAudit(); }, [load, loadPasskeys, loadLoginAudit]);
 
   async function handleChangePw(e: React.FormEvent) {
     e.preventDefault();
@@ -148,6 +162,50 @@ export default function AccountSettingsClient({ user: initialUser }: { user: any
     } catch (e: any) { setPkError(e.message || 'Passkey 註冊失敗'); }
   }
 
+  async function handleLinkGoogle() {
+    setGoogleMsg('');
+    const credential = window.prompt('請貼上 Google ID Token 以模擬綁定流程');
+    if (!credential) return;
+    try {
+      await apiPost('/api/account/link-google', { credential });
+      setGoogleMsg('Google 帳號已綁定');
+      await load();
+    } catch (e: any) {
+      setGoogleMsg(e.message || 'Google 綁定失敗');
+    }
+  }
+
+  async function handleUnlinkGoogle() {
+    setGoogleMsg('');
+    try {
+      await apiDelete('/api/account/settings/google');
+      setGoogleMsg('Google 帳號已解除綁定');
+      await load();
+    } catch (e: any) {
+      setGoogleMsg(e.message || 'Google 解除綁定失敗');
+    }
+  }
+
+  async function handleDeleteAccount() {
+    setDeleteMsg('');
+    const password = window.prompt('輸入密碼以刪除帳號');
+    if (password == null) return;
+    try {
+      const res = await fetch('/api/account/settings/delete', {
+        method: 'DELETE',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+      setDeleteMsg('帳號已刪除');
+      window.location.href = '/';
+    } catch (e: any) {
+      setDeleteMsg(e.message || '刪除帳號失敗');
+    }
+  }
+
   if (loading) return <div className="p-8 text-slate-500">載入中...</div>;
 
   const isGoogleOnly = profile?.googleLinked && !profile?.hasPassword;
@@ -215,6 +273,56 @@ export default function AccountSettingsClient({ user: initialUser }: { user: any
           ))}
         </div>
         <Button className="mt-4" onClick={handleRegisterPasskey}>+ 新增 Passkey</Button>
+      </div>
+
+      <div className="p-6 bg-white border border-slate-200 rounded-xl shadow-sm">
+        <h3 className="text-lg font-semibold mb-4">Google 綁定</h3>
+        <p className="text-sm text-slate-500 mb-4">目前狀態：{profile?.googleLinked ? '已綁定 Google 帳號' : '尚未綁定 Google 帳號'}</p>
+        <div className="flex gap-3 flex-wrap">
+          {!profile?.googleLinked && <Button onClick={handleLinkGoogle}>綁定 Google 帳號</Button>}
+          {profile?.googleLinked && <Button variant="outline" onClick={handleUnlinkGoogle}>解除綁定</Button>}
+        </div>
+        {googleMsg && <p className="text-sm text-slate-600 mt-3">{googleMsg}</p>}
+      </div>
+
+      <div className="p-6 bg-white border border-slate-200 rounded-xl shadow-sm">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold">登入稽核紀錄</h3>
+          <Button variant="outline" onClick={loadLoginAudit}>重新整理</Button>
+        </div>
+        {auditLoading ? <p className="text-slate-500">載入中...</p> : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead>
+                <tr className="border-b text-slate-500">
+                  <th className="text-left py-2 pr-4">登入時間</th>
+                  <th className="text-left py-2 pr-4">IP</th>
+                  <th className="text-left py-2 pr-4">國家</th>
+                  <th className="text-left py-2 pr-4">方式</th>
+                  <th className="text-left py-2">管理員登入</th>
+                </tr>
+              </thead>
+              <tbody>
+                {loginAudit.map((log, index) => (
+                  <tr key={`${log.loginAt}-${index}`} className="border-b last:border-0">
+                    <td className="py-3 pr-4">{new Date(Number(log.loginAt) || 0).toLocaleString('zh-TW')}</td>
+                    <td className="py-3 pr-4">{log.ipAddress}</td>
+                    <td className="py-3 pr-4">{log.country}</td>
+                    <td className="py-3 pr-4">{log.loginMethod}</td>
+                    <td className="py-3">{log.isAdminLogin ? '是' : '否'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      <div className="p-6 bg-white border border-red-200 rounded-xl shadow-sm">
+        <h3 className="text-lg font-semibold text-red-600 mb-4">刪除帳號</h3>
+        <p className="text-sm text-slate-600 mb-4">刪除帳號後，您的交易、帳戶、股票、Passkey 與設定資料都會永久移除。</p>
+        <Button variant="destructive" onClick={handleDeleteAccount}>刪除我的帳號</Button>
+        {deleteMsg && <p className="text-sm text-slate-600 mt-3">{deleteMsg}</p>}
       </div>
     </div>
   );

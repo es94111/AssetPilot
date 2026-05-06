@@ -3,6 +3,13 @@ export const dynamic = 'force-dynamic';
 import externalApisData from '../../lib/external-apis.json';
 
 export default async function ApiCreditsPage() {
+  const usageNotes = [
+    '匯率同步只會查公開匯率資料，不會送出個人財務明細。',
+    'TWSE 相關查詢只會帶股票代號與市場資料，不會包含你的帳戶或持股成本。',
+    'IPinfo 僅用於登入稽核顯示國家資訊。',
+    'Google Identity Services 僅在你主動使用 Google 登入或綁定時才會啟用。',
+  ];
+
   return (
     <div className="min-h-screen bg-slate-100 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
       <nav className="sticky top-0 z-50 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/95">
@@ -33,6 +40,22 @@ export default async function ApiCreditsPage() {
           </p>
         </div>
 
+        <div className="mb-6 grid gap-4 md:grid-cols-2">
+          <section className="rounded-2xl border border-slate-200 bg-white px-6 py-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">資料透明度</h2>
+            <ul className="mt-3 list-disc space-y-2 pl-5 text-sm/7 text-slate-600 dark:text-slate-300">
+              {usageNotes.map((note) => <li key={note}>{note}</li>)}
+            </ul>
+          </section>
+          <section className="rounded-2xl border border-slate-200 bg-white px-6 py-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">合規與授權</h2>
+            <div className="mt-3 space-y-2 text-sm/7 text-slate-600 dark:text-slate-300">
+              <p>頁面會列出每個外部來源的官方網站、用途、是否支援免費/付費方案，以及需要保留的授權標示。</p>
+              <p>如果某服務要求顯示 attribution，例如 IPinfo，這裡會明確列出，避免遷移後把授權資訊弄丟。</p>
+            </div>
+          </section>
+        </div>
+
         <div className="grid gap-5 md:grid-cols-2">
           {externalApisData.map((api) => (
             <section key={api.name} className="rounded-2xl border border-slate-200 bg-white px-6 py-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
@@ -52,6 +75,9 @@ export default async function ApiCreditsPage() {
                 </span>
                 <span className="rounded-full bg-slate-100 px-3 py-1 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
                   付費方案: {api.supportsPaid ? '支援' : '不支援'}
+                </span>
+                <span className="rounded-full bg-slate-100 px-3 py-1 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                  用途: {api.description}
                 </span>
               </div>
 

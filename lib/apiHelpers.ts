@@ -1,3 +1,4 @@
+import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { requireAuth as getAuth } from './auth';
 import { verifyToken } from './auth';

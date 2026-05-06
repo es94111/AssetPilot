@@ -11,12 +11,12 @@ function normalizeDate(dateStr) {
 }
 
 export async function PUT(request, { params }) {
-  const auth = requireAuth(request);
+  const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
   const { id } = await params;
   const current = queryOne('SELECT id FROM stock_recurring WHERE id = ? AND user_id = ?', [id, auth.userId]);
-  if (!current) return NextResponse.json({ error: '摰?摰?銝??? }, { status: 404 });
+  if (!current) return NextResponse.json({ error: '定期定額不存在' }, { status: 404 });
 
   const body = await request.json().catch(() => ({}));
   const { stockId, amount, frequency, startDate: rawStartDate, accountId, note } = body;
@@ -24,10 +24,10 @@ export async function PUT(request, { params }) {
   const nAmount = Number(amount);
   const validFreq = ['daily', 'weekly', 'monthly', 'yearly'];
   if (!stockId || !(nAmount > 0) || !startDate || !validFreq.includes(frequency)) {
-    return NextResponse.json({ error: '甈??澆?銝迤蝣? }, { status: 400 });
+    return NextResponse.json({ error: '欄位格式不正確' }, { status: 400 });
   }
   const stock = queryOne('SELECT id FROM stocks WHERE id = ? AND user_id = ?', [stockId, auth.userId]);
-  if (!stock) return NextResponse.json({ error: '?∠巨銝??? }, { status: 400 });
+  if (!stock) return NextResponse.json({ error: '股票不存在' }, { status: 400 });
 
   getDB().run(
     'UPDATE stock_recurring SET stock_id = ?, amount = ?, frequency = ?, start_date = ?, account_id = ?, note = ? WHERE id = ? AND user_id = ?',
@@ -38,7 +38,7 @@ export async function PUT(request, { params }) {
 }
 
 export async function DELETE(request, { params }) {
-  const auth = requireAuth(request);
+  const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
   const { id } = await params;

@@ -6,7 +6,7 @@ import { ownsResource, assertOptimisticLock, lockErrorResponse } from '../../../
 import moneyDecimal from '../../../../lib/moneyDecimal';
 
 export async function GET(request, { params }) {
-  const auth = requireAuth(request);
+  const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
   const { txId } = await params;
@@ -16,7 +16,7 @@ export async function GET(request, { params }) {
   let sourceRecurringName = null;
   if (t.source_recurring_id) {
     const r = queryOne(
-      "SELECT COALESCE(NULLIF(note, ''), '嚗?賢??嚗?) AS source_recurring_name FROM recurring WHERE id = ? AND user_id = ?",
+      "SELECT COALESCE(NULLIF(note, ''), '（未命名配方）') AS source_recurring_name FROM recurring WHERE id = ? AND user_id = ?",
       [t.source_recurring_id, auth.userId]
     );
     sourceRecurringName = r ? r.source_recurring_name : null;
@@ -48,7 +48,7 @@ export async function GET(request, { params }) {
 
 async function updateHandler(request, txId, auth) {
   const existing = ownsResource('transactions', 'id', txId, auth.userId);
-  if (!existing) return NextResponse.json({ error: '鞈?銝??冽??⊥???, code: 'NotFound' }, { status: 404 });
+  if (!existing) return NextResponse.json({ error: '資源不存在或無權限', code: 'NotFound' }, { status: 404 });
 
   const body = await request.json().catch(() => ({}));
 
@@ -64,41 +64,41 @@ async function updateHandler(request, txId, auth) {
   if ((existing.type === 'transfer_in' || existing.type === 'transfer_out') &&
       (body.type != null && body.type !== existing.type)) {
     return NextResponse.json({
-      error: '頧董鈭斗???游??芷嚗瘜?霈憿?嚗??寧?芷敺?撱綽?',
+      error: '轉帳交易僅能整對刪除，無法逐筆變更類型（請改用刪除後重建）',
       code: 'TransferImmutable',
     }, { status: 422 });
   }
 
   const { type, amount, categoryId, accountId, note, excludeFromStats } = body;
   const date = normalizeDate(body.date);
-  if (!date) return NextResponse.json({ error: '?交??澆??⊥?' }, { status: 400 });
+  if (!date) return NextResponse.json({ error: '日期格式無效' }, { status: 400 });
   if (!['income', 'expense', 'transfer_in', 'transfer_out'].includes(type)) {
-    return NextResponse.json({ error: '鈭斗?憿??⊥?' }, { status: 400 });
+    return NextResponse.json({ error: '交易類型無效' }, { status: 400 });
   }
 
   if (categoryId) {
     const catOwned = queryOne('SELECT id FROM categories WHERE id = ? AND user_id = ?', [categoryId, auth.userId]);
-    if (!catOwned) return NextResponse.json({ error: '??銝??冽??⊥??? }, { status: 400 });
+    if (!catOwned) return NextResponse.json({ error: '分類不存在或無權限' }, { status: 400 });
     const catRow = queryOne('SELECT parent_id FROM categories WHERE id = ? AND user_id = ?', [categoryId, auth.userId]);
     if (catRow && !catRow.parent_id) {
-      return NextResponse.json({ error: '鈭斗?敹??晷?喳???嚗??賜?交??函??摨?' }, { status: 400 });
+      return NextResponse.json({ error: '交易必須指派至子分類，不能直接掛在父分類底下' }, { status: 400 });
     }
   }
   if (accountId) {
     const accOwned = queryOne('SELECT id FROM accounts WHERE id = ? AND user_id = ?', [accountId, auth.userId]);
-    if (!accOwned) return NextResponse.json({ error: '撣單銝??冽??⊥??? }, { status: 400 });
+    if (!accOwned) return NextResponse.json({ error: '帳戶不存在或無權限' }, { status: 400 });
   }
 
   const numAmt = Number(body.originalAmount ?? amount);
   if (!Number.isFinite(numAmt) || numAmt <= 0) {
-    return NextResponse.json({ error: '??敹?憭扳 0', code: 'ValidationError', field: 'amount' }, { status: 400 });
+    return NextResponse.json({ error: '金額必須大於 0', code: 'ValidationError', field: 'amount' }, { status: 400 });
   }
 
   let converted;
   try {
     converted = convertToTwd(body.originalAmount ?? amount, body.currency, body.fxRate, auth.userId);
   } catch (e) {
-    return NextResponse.json({ error: e.message || '???澆??航炊' }, { status: 400 });
+    return NextResponse.json({ error: e.message || '金額格式錯誤' }, { status: 400 });
   }
 
   const fxFee = Math.max(0, Number(body.fxFee) || 0);
@@ -120,21 +120,21 @@ async function updateHandler(request, txId, auth) {
 }
 
 export async function PUT(request, { params }) {
-  const auth = requireAuth(request);
+  const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
   const { txId } = await params;
   return updateHandler(request, txId, auth);
 }
 
 export async function PATCH(request, { params }) {
-  const auth = requireAuth(request);
+  const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
   const { txId } = await params;
   return updateHandler(request, txId, auth);
 }
 
 export async function DELETE(request, { params }) {
-  const auth = requireAuth(request);
+  const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
   const { txId } = await params;

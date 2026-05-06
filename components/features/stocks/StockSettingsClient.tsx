@@ -37,6 +37,7 @@ export default function StockSettingsClient(_props: { user?: any } = {}) {
   const [recEditId, setRecEditId] = useState<string | null>(null);
   const [recSaving, setRecSaving] = useState(false);
   const [recFormError, setRecFormError] = useState('');
+  const [stockStatusMsg, setStockStatusMsg] = useState('');
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -119,6 +120,19 @@ export default function StockSettingsClient(_props: { user?: any } = {}) {
     } catch (e: any) { alert(e.message); }
   }
 
+  async function handleToggleDelisted(stock: any) {
+    setStockStatusMsg('');
+    try {
+      await apiPost('/api/stocks/batch-price', {
+        updates: [{ stockId: stock.id, currentPrice: stock.currentPrice || 0, delisted: !stock.delisted }],
+      });
+      setStockStatusMsg(`${stock.symbol} 已${stock.delisted ? '恢復為正常追蹤' : '標記為下市'}`);
+      await load();
+    } catch (e: any) {
+      setStockStatusMsg(e.message || '更新下市狀態失敗');
+    }
+  }
+
   if (loading) return <div className="p-8 text-slate-500">載入中...</div>;
 
   return (
@@ -142,6 +156,41 @@ export default function StockSettingsClient(_props: { user?: any } = {}) {
             <Button type="submit" disabled={saving}>{saving ? '儲存中...' : '儲存設定'}</Button>
           </div>
         </form>
+      </div>
+
+      <div className="p-6 bg-white border border-slate-200 rounded-xl shadow-sm space-y-4">
+        <div className="flex justify-between items-center">
+          <h3 className="text-lg font-semibold">股票狀態管理</h3>
+          {stockStatusMsg && <span className="text-sm text-slate-600">{stockStatusMsg}</span>}
+        </div>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>股票</TableHead>
+              <TableHead>目前價格</TableHead>
+              <TableHead>狀態</TableHead>
+              <TableHead>操作</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {stocks.map((stock) => (
+              <TableRow key={stock.id}>
+                <TableCell>{stock.symbol} {stock.name}</TableCell>
+                <TableCell>{fmt(stock.currentPrice || stock.current_price || 0)}</TableCell>
+                <TableCell>
+                  <span className={`px-2 py-1 rounded text-xs ${stock.delisted ? 'bg-amber-100 text-amber-800' : 'bg-green-100 text-green-800'}`}>
+                    {stock.delisted ? '已下市' : '正常追蹤'}
+                  </span>
+                </TableCell>
+                <TableCell>
+                  <Button variant="outline" size="sm" onClick={() => handleToggleDelisted(stock)}>
+                    {stock.delisted ? '恢復追蹤' : '標記下市'}
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </div>
 
       <div className="p-6 bg-white border border-slate-200 rounded-xl shadow-sm">

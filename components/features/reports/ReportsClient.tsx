@@ -1,14 +1,14 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { apiGet } from '@/lib/clientApi';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
 import Chart from 'chart.js/auto';
 
-function fmt(n: number | string) { return 'NT$ ' + Math.round(Number(n) || 0).toLocaleString('zh-TW'); }
+function fmt(n: number | string) {
+  return 'NT$ ' + Math.round(Number(n) || 0).toLocaleString('zh-TW');
+}
 
 function getDateRange(period: string, customFrom: string, customTo: string) {
   const now = new Date();
@@ -34,10 +34,30 @@ function getDateRange(period: string, customFrom: string, customTo: string) {
       if (customTo) to = new Date(customTo);
       break;
   }
-  return { 
-    from: from.toISOString().split('T')[0], 
-    to: to.toISOString().split('T')[0] 
+  return {
+    from: from.toISOString().split('T')[0],
+    to: to.toISOString().split('T')[0],
   };
+}
+
+function shiftPeriod(from: string, to: string) {
+  const start = new Date(from);
+  const end = new Date(to);
+  const span = end.getTime() - start.getTime();
+  const previousEnd = new Date(start.getTime() - 24 * 60 * 60 * 1000);
+  const previousStart = new Date(previousEnd.getTime() - span);
+  return {
+    from: previousStart.toISOString().split('T')[0],
+    to: previousEnd.toISOString().split('T')[0],
+  };
+}
+
+function compareText(current: number, previous: number) {
+  const delta = current - previous;
+  const sign = delta > 0 ? '+' : '';
+  if (previous === 0) return `${sign}${fmt(delta)}，前期無資料`;
+  const rate = Math.round((delta / previous) * 10000) / 100;
+  return `${sign}${fmt(delta)} (${sign}${rate}%)`;
 }
 
 export default function ReportsClient(_props: { user?: any } = {}) {
@@ -47,21 +67,32 @@ export default function ReportsClient(_props: { user?: any } = {}) {
   const [customFrom, setCustomFrom] = useState('');
   const [customTo, setCustomTo] = useState('');
   const [reportData, setReportData] = useState<any>(null);
+  const [previousReportData, setPreviousReportData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chartInstanceRef = useRef<Chart | null>(null);
 
   const fetchReport = useCallback(async () => {
     const { from, to } = getDateRange(period, customFrom, customTo);
+    const previous = shiftPeriod(from, to);
     setLoading(true);
     try {
-      const data = await apiGet(`/api/reports?type=${type}&from=${from}&to=${to}`);
-      setReportData(data);
+      const [currentData, previousData] = await Promise.all([
+        apiGet(`/api/reports?type=${type}&from=${from}&to=${to}`),
+        apiGet(`/api/reports?type=${type}&from=${previous.from}&to=${previous.to}`).catch(() => null),
+      ]);
+      setReportData(currentData);
+      setPreviousReportData(previousData);
     } catch (_) {}
     setLoading(false);
   }, [period, customFrom, customTo, type]);
 
   useEffect(() => { fetchReport(); }, [fetchReport]);
+
+  const catRows = useMemo(() => Array.isArray(reportData?.categoryBreakdown)
+    ? reportData.categoryBreakdown.filter((row: any) => Number(row.total) > 0).sort((a: any, b: any) => Number(b.total) - Number(a.total))
+    : [], [reportData]);
 
   useEffect(() => {
     if (!reportData || !chartRef.current) return;
@@ -70,26 +101,32 @@ export default function ReportsClient(_props: { user?: any } = {}) {
     const ctx = chartRef.current.getContext('2d');
     if (!ctx) return;
 
-    const COLORS = ['#3b82f6', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16', '#f97316', '#6366f1'];
-    
+    const colors = ['#3b82f6', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16', '#f97316', '#6366f1'];
     let chartConfig: any = { type: 'bar', data: { datasets: [] }, options: { responsive: true } };
 
     if (activeTab === 'category') {
-      const rows = Array.isArray(reportData?.categoryBreakdown) ? reportData.categoryBreakdown : [];
-      const filtered = rows.filter((r: any) => Number(r.total) > 0);
+      const filtered = catRows;
       chartConfig = {
         type: 'pie',
         data: {
-          labels: filtered.map((r: any) => r.name || r.childName || '未分類'),
+          labels: filtered.map((row: any) => row.name || '未分類'),
           datasets: [{
-            data: filtered.map((r: any) => Number(r.total) || 0),
-            backgroundColor: filtered.map((r: any, i: number) => r.color || COLORS[i % COLORS.length]),
+            data: filtered.map((row: any) => Number(row.total) || 0),
+            backgroundColor: filtered.map((row: any, index: number) => row.color || colors[index % colors.length]),
           }],
         },
-        options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+        options: {
+          responsive: true,
+          plugins: { legend: { position: 'bottom' } },
+          onClick: (_event: any, elements: any[]) => {
+            if (!elements.length) return;
+            const row = filtered[elements[0].index];
+            setSelectedCategory(row?.name || null);
+          },
+        },
       };
     } else {
-      const dataSet = activeTab === 'trend' ? (reportData?.monthlyTotals || reportData?.monthly || {}) : (reportData?.dailyTotals || reportData?.daily || {});
+      const dataSet = activeTab === 'trend' ? (reportData?.monthlyMap || {}) : (reportData?.dailyMap || {});
       const sortedKeys = Object.keys(dataSet).sort();
       chartConfig = {
         type: 'bar',
@@ -97,28 +134,27 @@ export default function ReportsClient(_props: { user?: any } = {}) {
           labels: sortedKeys,
           datasets: [{
             label: type === 'expense' ? '支出' : '收入',
-            data: sortedKeys.map(k => Number(dataSet[k]) || 0),
+            data: sortedKeys.map((key) => Number(dataSet[key]) || 0),
             backgroundColor: type === 'expense' ? '#ef4444' : '#10b981',
           }],
         },
-        options: { responsive: true, scales: { y: { beginAtZero: true } } }
+        options: { responsive: true, scales: { y: { beginAtZero: true } } },
       };
     }
 
     chartInstanceRef.current = new Chart(ctx, chartConfig);
     return () => { chartInstanceRef.current?.destroy(); };
-  }, [reportData, activeTab, type]);
+  }, [reportData, activeTab, type, catRows]);
 
-  const catRows = Array.isArray(reportData?.categoryBreakdown)
-    ? reportData.categoryBreakdown.filter((r: any) => Number(r.total) > 0).sort((a: any, b: any) => Number(b.total) - Number(a.total))
-    : [];
-  const grandTotal = reportData?.total || reportData?.grandTotal || catRows.reduce((s: number, r: any) => s + Number(r.total), 0);
+  const grandTotal = reportData?.total || catRows.reduce((sum: number, row: any) => sum + Number(row.total), 0);
+  const previousTotal = previousReportData?.total || 0;
+  const selectedRow = selectedCategory ? catRows.find((row: any) => row.name === selectedCategory) : null;
 
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold">統計報表</h2>
       <div className="flex gap-2 border-b">
-        {(['category', 'trend', 'daily'] as const).map(tab => (
+        {(['category', 'trend', 'daily'] as const).map((tab) => (
           <button key={tab} className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === tab ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`} onClick={() => setActiveTab(tab)}>
             {tab === 'category' ? '分類統計' : tab === 'trend' ? '趨勢分析' : '每日消費'}
           </button>
@@ -126,14 +162,25 @@ export default function ReportsClient(_props: { user?: any } = {}) {
       </div>
 
       <div className="flex flex-wrap gap-4 p-4 bg-white border border-slate-200 rounded-lg shadow-sm">
-        <Select options={[{label: '本月', value: 'thisMonth'}, {label: '上月', value: 'lastMonth'}, {label: '近3個月', value: 'last3'}, {label: '近6個月', value: 'last6'}, {label: '今年', value: 'thisYear'}, {label: '自訂', value: 'custom'}]} value={period} onChange={e => setPeriod(e.target.value)} label="期間" className="w-40" />
+        <Select options={[{ label: '本月', value: 'thisMonth' }, { label: '上月', value: 'lastMonth' }, { label: '近3個月', value: 'last3' }, { label: '近6個月', value: 'last6' }, { label: '今年', value: 'thisYear' }, { label: '自訂', value: 'custom' }]} value={period} onChange={(e) => setPeriod(e.target.value)} label="期間" className="w-40" />
         {period === 'custom' && (
           <>
-            <Input type="date" value={customFrom} onChange={e => setCustomFrom(e.target.value)} label="開始" />
-            <Input type="date" value={customTo} onChange={e => setCustomTo(e.target.value)} label="結束" />
+            <Input type="date" value={customFrom} onChange={(e) => setCustomFrom(e.target.value)} label="開始" />
+            <Input type="date" value={customTo} onChange={(e) => setCustomTo(e.target.value)} label="結束" />
           </>
         )}
-        <Select options={[{label: '支出', value: 'expense'}, {label: '收入', value: 'income'}]} value={type} onChange={e => setType(e.target.value)} label="類型" className="w-32" />
+        <Select options={[{ label: '支出', value: 'expense' }, { label: '收入', value: 'income' }]} value={type} onChange={(e) => setType(e.target.value)} label="類型" className="w-32" />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="p-4 bg-white border border-slate-200 rounded-lg shadow-sm">
+          <p className="text-sm text-slate-500">本期合計</p>
+          <p className="text-2xl font-semibold text-slate-900">{fmt(grandTotal)}</p>
+        </div>
+        <div className="p-4 bg-white border border-slate-200 rounded-lg shadow-sm">
+          <p className="text-sm text-slate-500">相較前期</p>
+          <p className={`text-xl font-semibold ${(grandTotal - previousTotal) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>{compareText(grandTotal, previousTotal)}</p>
+        </div>
       </div>
 
       {loading ? <p className="text-slate-500">載入中...</p> : (
@@ -148,18 +195,24 @@ export default function ReportsClient(_props: { user?: any } = {}) {
             <h3 className="font-semibold text-lg">{type === 'expense' ? '支出' : '收入'}明細</h3>
             <p className="font-bold">合計：{fmt(grandTotal)}</p>
           </div>
-          {catRows.map((r: any, i: number) => {
-            const percentage = grandTotal > 0 ? Math.round(Number(r.total) / grandTotal * 100) : 0;
+          {selectedRow && (
+            <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+              已選取分類：<strong>{selectedRow.parentName && selectedRow.parentName !== selectedRow.name ? `${selectedRow.parentName} › ` : ''}{selectedRow.name}</strong>，金額 {fmt(selectedRow.total)}
+            </div>
+          )}
+          {catRows.map((row: any, index: number) => {
+            const percentage = grandTotal > 0 ? Math.round((Number(row.total) / grandTotal) * 100) : 0;
+            const selected = selectedCategory === row.name;
             return (
-              <div key={i} className="flex items-center gap-3 text-sm">
-                <span className="w-3 h-3 rounded-full" style={{ background: r.color || '#94a3b8' }} />
-                <span className="flex-1">{r.parentName && r.parentName !== r.name ? `${r.parentName} › ` : ''}{r.name || r.childName || '未分類'}</span>
+              <button key={`${row.parentId}-${index}`} type="button" className={`w-full flex items-center gap-3 text-sm rounded-lg px-2 py-2 transition ${selected ? 'bg-blue-50' : 'hover:bg-slate-50'}`} onClick={() => setSelectedCategory(row.name)}>
+                <span className="w-3 h-3 rounded-full" style={{ background: row.color || '#94a3b8' }} />
+                <span className="flex-1 text-left">{row.parentName && row.parentName !== row.name ? `${row.parentName} › ` : ''}{row.name || '未分類'}</span>
                 <div className="w-32 h-2 bg-slate-100 rounded-full overflow-hidden">
-                  <div className="h-full rounded-full" style={{ width: `${percentage}%`, background: r.color || '#94a3b8' }} />
+                  <div className="h-full rounded-full" style={{ width: `${percentage}%`, background: row.color || '#94a3b8' }} />
                 </div>
                 <span className="w-12 text-right">{percentage}%</span>
-                <span className="w-24 text-right font-medium">{fmt(r.total)}</span>
-              </div>
+                <span className="w-24 text-right font-medium">{fmt(row.total)}</span>
+              </button>
             );
           })}
         </div>

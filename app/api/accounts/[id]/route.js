@@ -10,7 +10,7 @@ const VALID_CATEGORIES = ['bank', 'credit_card', 'cash', 'virtual_wallet'];
 
 // GET /api/accounts/[id]
 export async function GET(request, { params }) {
-  const auth = requireAuth(request);
+  const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
   const { id } = await params;
@@ -50,7 +50,7 @@ export async function GET(request, { params }) {
 }
 
 async function updateAccount(request, id) {
-  const auth = requireAuth(request);
+  const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
   const existing = ownsResource('accounts', 'id', id, auth.userId);
@@ -131,7 +131,7 @@ export async function PATCH(request, { params }) {
 }
 
 export async function DELETE(request, { params }) {
-  const auth = requireAuth(request);
+  const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
   const { id } = await params;

@@ -10,7 +10,7 @@ import { uid, todayStr } from '../../../lib/userDefaults';
 const VALID_CATEGORIES = ['bank', 'credit_card', 'cash', 'virtual_wallet'];
 
 export async function GET(request) {
-  const auth = requireAuth(request);
+  const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
   const accounts = queryAll('SELECT * FROM accounts WHERE user_id = ? ORDER BY created_at', [auth.userId]);
@@ -50,7 +50,7 @@ export async function GET(request) {
 }
 
 export async function POST(request) {
-  const auth = requireAuth(request);
+  const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
   const body = await request.json().catch(() => ({}));

@@ -4,12 +4,23 @@ import { useState, useEffect, useCallback } from 'react';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../../lib/clientApi';
 
 const EMPTY_FORM = { date: '', type: 'expense', amount: '', categoryId: '', accountId: '', note: '', excludeFromStats: false };
+const EMPTY_TRANSFER_FORM = { date: '', amount: '', fromAccountId: '', toAccountId: '', note: '' };
 
 function today() {
   return new Date().toISOString().slice(0, 10);
 }
 
-function fmt(n: number | string) { return 'NT$ ' + Math.round(Number(n) || 0).toLocaleString('zh-TW'); }
+function fmt(n: number | string) {
+  return 'NT$ ' + Math.round(Number(n) || 0).toLocaleString('zh-TW');
+}
+
+function labelForType(type: string) {
+  if (type === 'income') return '收入';
+  if (type === 'expense') return '支出';
+  if (type === 'transfer_in') return '轉入';
+  if (type === 'transfer_out') return '轉出';
+  return type;
+}
 
 export default function TransactionsClient(_props: { user?: any } = {}) {
   const [txs, setTxs] = useState<any[]>([]);
@@ -19,9 +30,14 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
   const [loading, setLoading] = useState(true);
   const [accounts, setAccounts] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
-  const [filters, setFilters] = useState({ type: '', accountId: '', categoryId: '', dateFrom: '', dateTo: '', q: '' });
+  const [filters, setFilters] = useState({ type: '', accountId: '', categoryId: '', dateFrom: '', dateTo: '', keyword: '' });
   const [modal, setModal] = useState(false);
+  const [transferModal, setTransferModal] = useState(false);
+  const [batchModal, setBatchModal] = useState<'category' | 'date' | null>(null);
   const [form, setForm] = useState({ ...EMPTY_FORM, date: today() });
+  const [transferForm, setTransferForm] = useState({ ...EMPTY_TRANSFER_FORM, date: today() });
+  const [batchCategoryId, setBatchCategoryId] = useState('');
+  const [batchDate, setBatchDate] = useState(today());
   const [editId, setEditId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState('');
@@ -32,16 +48,17 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
     setLoading(true);
     try {
       const params = new URLSearchParams({
-        page: String(p), pageSize: String(pageSize),
+        page: String(p),
+        limit: String(pageSize),
         ...(filters.type ? { type: filters.type } : {}),
         ...(filters.accountId ? { accountId: filters.accountId } : {}),
         ...(filters.categoryId ? { categoryId: filters.categoryId } : {}),
         ...(filters.dateFrom ? { dateFrom: filters.dateFrom } : {}),
         ...(filters.dateTo ? { dateTo: filters.dateTo } : {}),
-        ...(filters.q ? { q: filters.q } : {}),
+        ...(filters.keyword ? { keyword: filters.keyword } : {}),
       });
       const data = await apiGet(`/api/transactions?${params}`);
-      setTxs(data.transactions || data.data || []);
+      setTxs(data.items || data.data || []);
       setTotal(data.total || 0);
     } catch (_) {}
     setLoading(false);
@@ -57,8 +74,8 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
   }, []);
 
   useEffect(() => { loadMeta(); }, [loadMeta]);
-  useEffect(() => { setPage(1); load(1); }, [filters]);
-  useEffect(() => { load(page); }, [page]);
+  useEffect(() => { setPage(1); load(1); }, [filters, load]);
+  useEffect(() => { load(page); }, [page, load]);
 
   function openAdd() {
     setForm({ ...EMPTY_FORM, date: today(), accountId: accounts[0]?.id || '' });
@@ -67,15 +84,25 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
     setModal(true);
   }
 
+  function openTransfer() {
+    setTransferForm({ ...EMPTY_TRANSFER_FORM, date: today(), fromAccountId: accounts[0]?.id || '', toAccountId: accounts[1]?.id || '' });
+    setFormError('');
+    setTransferModal(true);
+  }
+
   function openEdit(tx: any) {
+    if (tx.type === 'transfer_in' || tx.type === 'transfer_out') {
+      setFormError('轉帳交易請改用刪除後重建');
+      return;
+    }
     setForm({
       date: tx.date || today(),
       type: tx.type || 'expense',
-      amount: tx.amount ?? '',
+      amount: tx.originalAmount ?? tx.amount ?? '',
       categoryId: tx.category_id || tx.categoryId || '',
       accountId: tx.account_id || tx.accountId || '',
       note: tx.note || '',
-      excludeFromStats: !!tx.exclude_from_stats,
+      excludeFromStats: !!(tx.excludeFromStats ?? tx.exclude_from_stats),
     });
     setEditId(tx.id);
     setFormError('');
@@ -89,23 +116,68 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
     setSaving(true);
     setFormError('');
     const body = {
-      date: form.date, type: form.type, amount: Number(form.amount),
-      categoryId: form.categoryId || null, accountId: form.accountId || null,
-      note: form.note, excludeFromStats: form.excludeFromStats,
+      date: form.date,
+      type: form.type,
+      amount: Number(form.amount),
+      categoryId: form.categoryId || null,
+      accountId: form.accountId || null,
+      note: form.note,
+      excludeFromStats: form.excludeFromStats,
     };
     try {
-      if (editId) { await apiPut(`/api/transactions/${editId}`, body); }
-      else { await apiPost('/api/transactions', body); }
+      if (editId) await apiPut(`/api/transactions/${editId}`, body);
+      else await apiPost('/api/transactions', body);
       setModal(false);
       setPage(1);
       await load(1);
-    } catch (e: any) { setFormError(e.message); }
+    } catch (e: any) {
+      setFormError(e.message);
+    }
+    setSaving(false);
+  }
+
+  async function handleTransferSave(e: React.FormEvent) {
+    e.preventDefault();
+    if (!transferForm.fromAccountId || !transferForm.toAccountId) {
+      setFormError('請選擇轉出與轉入帳戶');
+      return;
+    }
+    if (transferForm.fromAccountId === transferForm.toAccountId) {
+      setFormError('轉出與轉入帳戶不可相同');
+      return;
+    }
+    if (!transferForm.amount || Number(transferForm.amount) <= 0) {
+      setFormError('請輸入有效金額');
+      return;
+    }
+    setSaving(true);
+    setFormError('');
+    try {
+      await apiPost('/api/transactions/transfer', {
+        date: transferForm.date,
+        amount: Number(transferForm.amount),
+        fromAccountId: transferForm.fromAccountId,
+        toAccountId: transferForm.toAccountId,
+        note: transferForm.note,
+      });
+      setTransferModal(false);
+      setPage(1);
+      await load(1);
+    } catch (e: any) {
+      setFormError(e.message);
+    }
     setSaving(false);
   }
 
   async function handleDelete() {
     if (!deleteId) return;
-    try { await apiDelete(`/api/transactions/${deleteId}`); setDeleteId(null); await load(page); } catch (e: any) { alert(e.message); }
+    try {
+      await apiDelete(`/api/transactions/${deleteId}`);
+      setDeleteId(null);
+      await load(page);
+    } catch (e: any) {
+      alert(e.message);
+    }
   }
 
   async function handleBatchDelete() {
@@ -115,61 +187,85 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
       await apiPost('/api/transactions/batch-delete', { ids: [...selected] });
       setSelected(new Set());
       await load(page);
-    } catch (e: any) { alert(e.message); }
+    } catch (e: any) {
+      alert(e.message);
+    }
   }
 
-  const filteredCats = categories.filter(c => !form.type || c.type === form.type);
+  async function handleBatchUpdate() {
+    const ids = [...selected];
+    if (ids.length === 0 || !batchModal) return;
+    const patch = batchModal === 'category'
+      ? { categoryId: batchCategoryId || null }
+      : { date: batchDate };
+    try {
+      await apiPost('/api/transactions/batch-update', { ids, patch });
+      setBatchModal(null);
+      setSelected(new Set());
+      await load(page);
+    } catch (e: any) {
+      alert(e.message);
+    }
+  }
+
+  const filteredCats = categories.filter((category: any) => !form.type || category.type === form.type);
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   const getCatName = (tx: any) => {
-    const c = categories.find((c: any) => c.id === (tx.category_id || tx.categoryId));
-    return c ? c.name : (tx.cat_name || '—');
+    const category = categories.find((item: any) => item.id === (tx.category_id || tx.categoryId));
+    return category ? (category.parent_name ? `${category.parent_name} › ${category.name}` : category.name) : (tx.cat_name || '—');
   };
+
   const getAcctName = (tx: any) => {
-    const a = accounts.find((a: any) => a.id === (tx.account_id || tx.accountId));
-    return a ? a.name : (tx.account_name || '—');
+    const account = accounts.find((item: any) => item.id === (tx.account_id || tx.accountId));
+    return account ? account.name : (tx.account_name || '—');
   };
 
   return (
-    <div className="page active">
-      <h2 className="page-title">交易記錄</h2>
+    <div className="page active space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="page-title">交易記錄</h2>
+        {formError && <div className="text-sm text-red-500">{formError}</div>}
+      </div>
 
-      {/* Filters */}
       <div className="filter-bar">
-        <input type="text" className="filter-input" placeholder="搜尋備註..." value={filters.q} onChange={e => setFilters(f => ({ ...f, q: e.target.value }))} />
-        <select value={filters.type} onChange={e => setFilters(f => ({ ...f, type: e.target.value }))}>
+        <input type="text" className="filter-input" placeholder="搜尋備註..." value={filters.keyword} onChange={(e) => setFilters((current) => ({ ...current, keyword: e.target.value }))} />
+        <select value={filters.type} onChange={(e) => setFilters((current) => ({ ...current, type: e.target.value }))}>
           <option value="">所有類型</option>
           <option value="income">收入</option>
           <option value="expense">支出</option>
           <option value="transfer">轉帳</option>
+          <option value="future">未來交易</option>
         </select>
-        <select value={filters.accountId} onChange={e => setFilters(f => ({ ...f, accountId: e.target.value }))}>
+        <select value={filters.accountId} onChange={(e) => setFilters((current) => ({ ...current, accountId: e.target.value }))}>
           <option value="">所有帳戶</option>
-          {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+          {accounts.map((account: any) => <option key={account.id} value={account.id}>{account.name}</option>)}
         </select>
-        <select value={filters.categoryId} onChange={e => setFilters(f => ({ ...f, categoryId: e.target.value }))}>
+        <select value={filters.categoryId} onChange={(e) => setFilters((current) => ({ ...current, categoryId: e.target.value }))}>
           <option value="">所有分類</option>
-          {categories.map(c => <option key={c.id} value={c.id}>{c.parent_name ? `${c.parent_name} › ${c.name}` : c.name}</option>)}
+          {categories.map((category: any) => <option key={category.id} value={category.id}>{category.parent_name ? `${category.parent_name} › ${category.name}` : category.name}</option>)}
         </select>
-        <input type="date" value={filters.dateFrom} onChange={e => setFilters(f => ({ ...f, dateFrom: e.target.value }))} title="開始日期" />
-        <input type="date" value={filters.dateTo} onChange={e => setFilters(f => ({ ...f, dateTo: e.target.value }))} title="結束日期" />
-        <button className="btn btn-ghost btn-sm" onClick={() => setFilters({ type: '', accountId: '', categoryId: '', dateFrom: '', dateTo: '', q: '' })}>
+        <input type="date" value={filters.dateFrom} onChange={(e) => setFilters((current) => ({ ...current, dateFrom: e.target.value }))} title="開始日期" />
+        <input type="date" value={filters.dateTo} onChange={(e) => setFilters((current) => ({ ...current, dateTo: e.target.value }))} title="結束日期" />
+        <button className="btn btn-ghost btn-sm" onClick={() => setFilters({ type: '', accountId: '', categoryId: '', dateFrom: '', dateTo: '', keyword: '' })}>
           <i className="fas fa-xmark" /> 清除
         </button>
       </div>
 
-      <div className="tx-actions">
+      <div className="tx-actions flex flex-wrap gap-2 items-center">
         <button className="btn" onClick={openAdd}><i className="fas fa-plus" /> 新增交易</button>
+        <button className="btn btn-ghost btn-sm" onClick={openTransfer}><i className="fas fa-right-left" /> 帳戶轉帳</button>
         {selected.size > 0 && (
-          <button className="btn btn-danger btn-sm" onClick={handleBatchDelete}>
-            <i className="fas fa-trash" /> 刪除選取 ({selected.size})
-          </button>
+          <>
+            <button className="btn btn-ghost btn-sm" onClick={() => setBatchModal('category')}><i className="fas fa-tags" /> 批次改分類</button>
+            <button className="btn btn-ghost btn-sm" onClick={() => setBatchModal('date')}><i className="fas fa-calendar" /> 批次改日期</button>
+            <button className="btn btn-danger btn-sm" onClick={handleBatchDelete}><i className="fas fa-trash" /> 刪除選取 ({selected.size})</button>
+          </>
         )}
         <span className="tx-count">共 {total} 筆</span>
       </div>
 
       {loading && <p className="empty-hint">載入中...</p>}
-
       {!loading && txs.length === 0 && <p className="empty-hint">尚無符合條件的交易記錄</p>}
 
       {!loading && txs.length > 0 && (
@@ -177,53 +273,71 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
           <table className="data-table">
             <thead>
               <tr>
-                <th><input type="checkbox" onChange={e => {
-                  if (e.target.checked) setSelected(new Set(txs.map(t => t.id)));
-                  else setSelected(new Set());
-                }} checked={selected.size === txs.length && txs.length > 0} /></th>
-                <th>日期</th><th>類型</th><th>分類</th><th>帳戶</th><th>備註</th><th>金額</th><th>操作</th>
+                <th><input type="checkbox" onChange={(e) => setSelected(e.target.checked ? new Set(txs.map((tx) => tx.id)) : new Set())} checked={selected.size === txs.length && txs.length > 0} /></th>
+                <th>日期</th>
+                <th>類型</th>
+                <th>分類</th>
+                <th>帳戶</th>
+                <th>備註</th>
+                <th>金額</th>
+                <th>操作</th>
               </tr>
             </thead>
             <tbody>
-              {txs.map(tx => (
-                <tr key={tx.id} className={selected.has(tx.id) ? 'row-selected' : ''}>
-                  <td><input type="checkbox" checked={selected.has(tx.id)} onChange={e => {
-                    const next = new Set(selected);
-                    if (e.target.checked) next.add(tx.id); else next.delete(tx.id);
-                    setSelected(next);
-                  }} /></td>
-                  <td>{tx.date}</td>
-                  <td><span className={`badge badge-${tx.type}`}>{tx.type === 'income' ? '收入' : tx.type === 'expense' ? '支出' : '轉帳'}</span></td>
-                  <td>{getCatName(tx)}</td>
-                  <td>{getAcctName(tx)}</td>
-                  <td>{tx.note || '—'}</td>
-                  <td className={tx.type === 'income' ? 'amount-income' : tx.type === 'expense' ? 'amount-expense' : ''}>
-                    {tx.type === 'income' ? '+' : tx.type === 'expense' ? '-' : ''}{fmt(tx.amount)}
-                  </td>
-                  <td>
-                    <button className="btn-icon" title="編輯" onClick={() => openEdit(tx)}><i className="fas fa-pencil" /></button>
-                    <button className="btn-icon danger" title="刪除" onClick={() => setDeleteId(tx.id)}><i className="fas fa-trash" /></button>
-                  </td>
-                </tr>
-              ))}
+              {txs.map((tx) => {
+                const isTransfer = tx.type === 'transfer_in' || tx.type === 'transfer_out';
+                const isFuture = tx.date > today();
+                return (
+                  <tr key={tx.id} className={selected.has(tx.id) ? 'row-selected' : ''}>
+                    <td>
+                      <input
+                        type="checkbox"
+                        checked={selected.has(tx.id)}
+                        onChange={(e) => {
+                          const next = new Set(selected);
+                          if (e.target.checked) next.add(tx.id); else next.delete(tx.id);
+                          setSelected(next);
+                        }}
+                      />
+                    </td>
+                    <td>
+                      <div>{tx.date}</div>
+                      {isFuture && <div className="text-xs text-amber-600">未來交易</div>}
+                    </td>
+                    <td><span className={`badge badge-${tx.type}`}>{labelForType(tx.type)}</span></td>
+                    <td>{isTransfer ? '—' : getCatName(tx)}</td>
+                    <td>{getAcctName(tx)}{tx.toAccountId ? ` → ${accounts.find((account: any) => account.id === tx.toAccountId)?.name || '—'}` : ''}</td>
+                    <td>
+                      <div>{tx.note || '—'}</div>
+                      {tx.sourceRecurringName && <div className="text-xs text-slate-500">來源：{tx.sourceRecurringName}</div>}
+                      {tx.excludeFromStats && <div className="text-xs text-slate-500">不計入統計</div>}
+                    </td>
+                    <td className={tx.type === 'income' || tx.type === 'transfer_in' ? 'amount-income' : 'amount-expense'}>
+                      {tx.type === 'income' || tx.type === 'transfer_in' ? '+' : '-'}{fmt(tx.originalAmount ?? tx.amount)}
+                    </td>
+                    <td>
+                      {!isTransfer && <button className="btn-icon" title="編輯" onClick={() => openEdit(tx)}><i className="fas fa-pencil" /></button>}
+                      <button className="btn-icon danger" title="刪除" onClick={() => setDeleteId(tx.id)}><i className="fas fa-trash" /></button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
       )}
 
-      {/* Pagination */}
       {totalPages > 1 && (
         <div className="pagination">
-          <button className="btn btn-ghost btn-sm" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>‹ 上一頁</button>
+          <button className="btn btn-ghost btn-sm" disabled={page <= 1} onClick={() => setPage((current) => current - 1)}>‹ 上一頁</button>
           <span className="page-info">{page} / {totalPages}</span>
-          <button className="btn btn-ghost btn-sm" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>下一頁 ›</button>
+          <button className="btn btn-ghost btn-sm" disabled={page >= totalPages} onClick={() => setPage((current) => current + 1)}>下一頁 ›</button>
         </div>
       )}
 
-      {/* Add/Edit Modal */}
       {modal && (
         <div className="modal-overlay active" onClick={() => setModal(false)}>
-          <div className="modal" onClick={e => e.stopPropagation()}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>{editId ? '編輯交易' : '新增交易'}</h3>
               <button className="btn-icon" onClick={() => setModal(false)}><i className="fas fa-xmark" /></button>
@@ -231,44 +345,40 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
             <form onSubmit={handleSave} className="modal-body">
               <div className="form-row">
                 <label>日期 *</label>
-                <input type="date" required value={form.date} onChange={e => setForm(f => ({ ...f, date: e.target.value }))} />
+                <input type="date" required value={form.date} onChange={(e) => setForm((current) => ({ ...current, date: e.target.value }))} />
               </div>
               <div className="form-row">
                 <label>類型</label>
-                <select value={form.type} onChange={e => setForm(f => ({ ...f, type: e.target.value, categoryId: '' }))}>
+                <select value={form.type} onChange={(e) => setForm((current) => ({ ...current, type: e.target.value, categoryId: '' }))}>
                   <option value="income">收入</option>
                   <option value="expense">支出</option>
-                  <option value="transfer">轉帳</option>
                 </select>
               </div>
               <div className="form-row">
                 <label>金額 *</label>
-                <input type="number" required min="0.01" step="0.01" value={form.amount} onChange={e => setForm(f => ({ ...f, amount: e.target.value }))} placeholder="0" />
+                <input type="number" required min="0.01" step="0.01" value={form.amount} onChange={(e) => setForm((current) => ({ ...current, amount: e.target.value }))} placeholder="0" />
               </div>
-              {form.type !== 'transfer' && (
-                <div className="form-row">
-                  <label>分類</label>
-                  <select value={form.categoryId} onChange={e => setForm(f => ({ ...f, categoryId: e.target.value }))}>
-                    <option value="">未分類</option>
-                    {filteredCats.map(c => <option key={c.id} value={c.id}>{c.parent_name ? `${c.parent_name} › ${c.name}` : c.name}</option>)}
-                  </select>
-                </div>
-              )}
+              <div className="form-row">
+                <label>分類</label>
+                <select value={form.categoryId} onChange={(e) => setForm((current) => ({ ...current, categoryId: e.target.value }))}>
+                  <option value="">未分類</option>
+                  {filteredCats.map((category: any) => <option key={category.id} value={category.id}>{category.parent_name ? `${category.parent_name} › ${category.name}` : category.name}</option>)}
+                </select>
+              </div>
               <div className="form-row">
                 <label>帳戶</label>
-                <select value={form.accountId} onChange={e => setForm(f => ({ ...f, accountId: e.target.value }))}>
+                <select value={form.accountId} onChange={(e) => setForm((current) => ({ ...current, accountId: e.target.value }))}>
                   <option value="">未指定</option>
-                  {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+                  {accounts.map((account: any) => <option key={account.id} value={account.id}>{account.name}</option>)}
                 </select>
               </div>
               <div className="form-row">
                 <label>備註</label>
-                <input type="text" maxLength={200} value={form.note} onChange={e => setForm(f => ({ ...f, note: e.target.value }))} />
+                <input type="text" maxLength={200} value={form.note} onChange={(e) => setForm((current) => ({ ...current, note: e.target.value }))} />
               </div>
               <div className="form-row form-row-checkbox">
                 <label>
-                  <input type="checkbox" checked={form.excludeFromStats} onChange={e => setForm(f => ({ ...f, excludeFromStats: e.target.checked }))} />
-                  {' '}不計入統計
+                  <input type="checkbox" checked={form.excludeFromStats} onChange={(e) => setForm((current) => ({ ...current, excludeFromStats: e.target.checked }))} /> 不計入統計
                 </label>
               </div>
               {formError && <div className="auth-error">{formError}</div>}
@@ -281,9 +391,86 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
         </div>
       )}
 
+      {transferModal && (
+        <div className="modal-overlay active" onClick={() => setTransferModal(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>帳戶轉帳</h3>
+              <button className="btn-icon" onClick={() => setTransferModal(false)}><i className="fas fa-xmark" /></button>
+            </div>
+            <form onSubmit={handleTransferSave} className="modal-body">
+              <div className="form-row">
+                <label>日期 *</label>
+                <input type="date" required value={transferForm.date} onChange={(e) => setTransferForm((current) => ({ ...current, date: e.target.value }))} />
+              </div>
+              <div className="form-row">
+                <label>轉出帳戶 *</label>
+                <select value={transferForm.fromAccountId} onChange={(e) => setTransferForm((current) => ({ ...current, fromAccountId: e.target.value }))}>
+                  <option value="">請選擇</option>
+                  {accounts.map((account: any) => <option key={account.id} value={account.id}>{account.name}</option>)}
+                </select>
+              </div>
+              <div className="form-row">
+                <label>轉入帳戶 *</label>
+                <select value={transferForm.toAccountId} onChange={(e) => setTransferForm((current) => ({ ...current, toAccountId: e.target.value }))}>
+                  <option value="">請選擇</option>
+                  {accounts.map((account: any) => <option key={account.id} value={account.id}>{account.name}</option>)}
+                </select>
+              </div>
+              <div className="form-row">
+                <label>金額 *</label>
+                <input type="number" required min="0.01" step="0.01" value={transferForm.amount} onChange={(e) => setTransferForm((current) => ({ ...current, amount: e.target.value }))} />
+              </div>
+              <div className="form-row">
+                <label>備註</label>
+                <input type="text" maxLength={200} value={transferForm.note} onChange={(e) => setTransferForm((current) => ({ ...current, note: e.target.value }))} />
+              </div>
+              {formError && <div className="auth-error">{formError}</div>}
+              <div className="modal-footer">
+                <button type="button" className="btn btn-ghost" onClick={() => setTransferModal(false)}>取消</button>
+                <button type="submit" className="btn btn-primary" disabled={saving}>{saving ? '建立中...' : '確認轉帳'}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {batchModal && (
+        <div className="modal-overlay active" onClick={() => setBatchModal(null)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>{batchModal === 'category' ? '批次變更分類' : '批次變更日期'}</h3>
+              <button className="btn-icon" onClick={() => setBatchModal(null)}><i className="fas fa-xmark" /></button>
+            </div>
+            <div className="modal-body">
+              {batchModal === 'category' ? (
+                <div className="form-row">
+                  <label>新分類</label>
+                  <select value={batchCategoryId} onChange={(e) => setBatchCategoryId(e.target.value)}>
+                    <option value="">未分類</option>
+                    {categories.filter((category: any) => category.parent_id || category.parent_name).map((category: any) => (
+                      <option key={category.id} value={category.id}>{category.parent_name ? `${category.parent_name} › ${category.name}` : category.name}</option>
+                    ))}
+                  </select>
+                </div>
+              ) : (
+                <div className="form-row">
+                  <label>新日期</label>
+                  <input type="date" value={batchDate} onChange={(e) => setBatchDate(e.target.value)} />
+                </div>
+              )}
+              <div className="modal-footer">
+                <button className="btn btn-ghost" onClick={() => setBatchModal(null)}>取消</button>
+                <button className="btn btn-primary" onClick={handleBatchUpdate}>套用到 {selected.size} 筆</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {deleteId && (
         <div className="modal-overlay active" onClick={() => setDeleteId(null)}>
-          <div className="modal" onClick={e => e.stopPropagation()}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>確認刪除</h3>
               <button className="btn-icon" onClick={() => setDeleteId(null)}><i className="fas fa-xmark" /></button>

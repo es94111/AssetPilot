@@ -29,7 +29,8 @@ export function DashboardFilters() {
     } else {
       params.delete("month");
     }
-    router.push(`/app/dashboard?${params.toString()}`);
+    const query = params.toString();
+    router.push(query ? `/dashboard?${query}` : '/dashboard');
   }
 
   return (

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { requireAuth } from '../../../../../lib/apiHelpers';
-import { issuePasskeyChallenge } from '../../../auth/passkey/challenge/route';
+import { issuePasskeyChallenge } from '@/lib/passkeyChallenge';
 
 export async function GET(request) {
   const auth = requireAuth(request);

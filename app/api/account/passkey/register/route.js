@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { server as webauthnServer } from '@passwordless-id/webauthn';
 import { requireAuth } from '../../../../../lib/apiHelpers';
 import { getDB, queryOne, saveDB } from '../../../../../lib/db';
-import { consumePasskeyChallenge } from '../../../auth/passkey/challenge/route';
+import { consumePasskeyChallenge } from '@/lib/passkeyChallenge';
 
 function todayStr() {
   return new Date().toISOString().slice(0, 10);

@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/Input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
-export default function AdminClient() {
+export default function AdminClient(_props: { user?: any } = {}) {
   const [activeTab, setActiveTab] = useState('system');
   const [settings, setSettings] = useState<any>(null);
   const [users, setUsers] = useState<any[]>([]);

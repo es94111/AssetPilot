@@ -17,7 +17,7 @@ function pct(spent: number, budget: number) {
   return Math.min(100, Math.round((spent / budget) * 100));
 }
 
-export default function BudgetClient() {
+export default function BudgetClient(_props: { user?: any } = {}) {
   const [budgets, setBudgets] = useState<any[]>([]);
   const [month, setMonth] = useState(() => new Date().toISOString().slice(0, 7));
   const [loading, setLoading] = useState(true);

@@ -4,7 +4,7 @@ import { getDB, queryAll, queryOne, saveDB } from '../../../../lib/db';
 import { uid } from '../../../../lib/userDefaults';
 import { writeOperationAudit } from '../../../../lib/auditHelpers';
 import { getRequestIpFromHeaders } from '../../../../lib/loginHelpers';
-import { importLocks, importProgress } from '../../../api/transactions/import/route';
+import { importLocks, importProgress } from '@/lib/transactionImportState';
 
 const CSV_IMPORT_MAX_ROWS = 20000;
 

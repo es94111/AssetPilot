@@ -14,7 +14,7 @@ function fmt(n: number | string) { return 'NT$ ' + Math.round(Number(n) || 0).to
 
 const EMPTY_FORM = { stockId: '', type: 'buy', date: '', shares: '', price: '', fee: '', tax: '', note: '' };
 
-export default function StockTxClient() {
+export default function StockTxClient(_props: { user?: any } = {}) {
   const [txs, setTxs] = useState<any[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);

@@ -14,7 +14,7 @@ const EMPTY_FORM = { type: 'expense', amount: '', currency: 'TWD', fxRate: '1', 
 
 function fmt(n: number | string) { return 'NT$ ' + Math.round(Number(n) || 0).toLocaleString('zh-TW'); }
 
-export default function RecurringClient() {
+export default function RecurringClient(_props: { user?: any } = {}) {
   const [recs, setRecs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState<any[]>([]);

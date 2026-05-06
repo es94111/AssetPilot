@@ -10,7 +10,7 @@ import { Plus, Edit3, Trash2 } from 'lucide-react';
 
 const EMPTY_FORM = { name: '', type: 'expense', color: '#94a3b8', parentId: '', icon: '' };
 
-export default function CategoriesClient() {
+export default function CategoriesClient(_props: { user?: any } = {}) {
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'expense' | 'income'>('expense');

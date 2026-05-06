@@ -6,7 +6,7 @@ export default async function AccountsPage() {
   const user = await requireServerAuth();
   return (
     <AppLayout user={user}>
-      <AccountsClient user={user} />
+      <AccountsClient />
     </AppLayout>
   );
 }

@@ -10,8 +10,8 @@ import { inferStockType } from '../../../../lib/twseFetchNext';
 
 const CSV_IMPORT_MAX_ROWS = 20000;
 
-export const importLocks = new Set();
-export const importProgress = new Map();
+const importLocks = new Set();
+const importProgress = new Map();
 
 function acquireImportLock(userId) {
   if (importLocks.has(userId)) return false;

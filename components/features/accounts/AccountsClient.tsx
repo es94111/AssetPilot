@@ -25,7 +25,7 @@ function fmt(n: number | string, currency = 'TWD') {
   return (currency === 'TWD' ? 'NT$ ' : '') + num.toLocaleString('zh-TW') + (currency !== 'TWD' ? ' ' + currency : '');
 }
 
-export default function AccountsClient() {
+export default function AccountsClient(_props: { user?: any } = {}) {
   const [accounts, setAccounts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');

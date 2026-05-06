@@ -1,6 +1,6 @@
 import AppLayout from "@/components/layout/AppLayout";
 import RecurringClient from "@/components/features/recurring/RecurringClient";
-import { requireServerAuth } from "@/lib/auth";
+import { requireServerAuth } from "@/lib/serverAuth";
 
 export default async function RecurringPage() {
   const user = await requireServerAuth();

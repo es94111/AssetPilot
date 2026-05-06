@@ -25,7 +25,7 @@ const EMPTY_REC_FORM = { stockId: '', amount: '', frequency: 'monthly', startDat
 
 function fmt(n: number | string) { return 'NT$ ' + Math.round(Number(n) || 0).toLocaleString('zh-TW'); }
 
-export default function StockSettingsClient() {
+export default function StockSettingsClient(_props: { user?: any } = {}) {
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);

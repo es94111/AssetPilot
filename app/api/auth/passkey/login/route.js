@@ -5,7 +5,7 @@ import { getDB, queryOne, saveDB } from '../../../../../lib/db';
 import { recordLoginAudit, recordLoginAttempt } from '../../../../../lib/loginHelpers';
 import { backfillDefaultsForUser } from '../../../../../lib/userDefaults';
 import { formatUser, setAuthCookie } from '../../../../../lib/apiHelpers';
-import { consumePasskeyChallenge } from '../challenge/route';
+import { consumePasskeyChallenge } from '@/lib/passkeyChallenge';
 
 const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || '').split(',').map(s => s.trim()).filter(Boolean);
 

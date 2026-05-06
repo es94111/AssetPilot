@@ -114,12 +114,12 @@ export default function AccountSettingsClient({ user: initialUser }: { user: any
       return;
     }
     try {
-      const { key, challenge } = await apiGet('/api/account/passkey/challenge');
+      const { key, challenge } = await apiGet('/api/account/passkey/challenge') as { key: string; challenge: string };
       const credOpts = {
-        challenge: Uint8Array.from(atob(challenge.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0)),
+        challenge: Uint8Array.from(atob(challenge.replace(/-/g, '+').replace(/_/g, '/')), (c: string) => c.charCodeAt(0)),
         rp: { name: '記帳網頁' },
         user: {
-          id: Uint8Array.from(key, c => c.charCodeAt(0)),
+          id: Uint8Array.from(key, (c: string) => c.charCodeAt(0)),
           name: profile?.email || 'user',
           displayName: profile?.displayName || profile?.email || 'user',
         },

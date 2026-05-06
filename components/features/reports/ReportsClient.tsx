@@ -40,7 +40,7 @@ function getDateRange(period: string, customFrom: string, customTo: string) {
   };
 }
 
-export default function ReportsClient() {
+export default function ReportsClient(_props: { user?: any } = {}) {
   const [activeTab, setActiveTab] = useState<'category' | 'trend' | 'daily'>('category');
   const [period, setPeriod] = useState('thisMonth');
   const [type, setType] = useState('expense');

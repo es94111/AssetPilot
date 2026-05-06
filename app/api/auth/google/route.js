@@ -11,7 +11,7 @@ import {
 } from '../../../../lib/loginHelpers';
 import { uid, todayStr, createDefaultsForUser, backfillDefaultsForUser } from '../../../../lib/userDefaults';
 import { formatUser, setAuthCookie } from '../../../../lib/apiHelpers';
-import { consumeGoogleOAuthState } from './state/route';
+import { consumeGoogleOAuthState } from '@/lib/googleOAuthState';
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || '';

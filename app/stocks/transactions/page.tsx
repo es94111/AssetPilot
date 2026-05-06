@@ -1,6 +1,6 @@
 import AppLayout from "@/components/layout/AppLayout";
 import StockTxClient from "@/components/features/stocks/StockTxClient";
-import { requireServerAuth } from "@/lib/auth";
+import { requireServerAuth } from "@/lib/serverAuth";
 
 export default async function TransactionsPage() {
   const user = await requireServerAuth();

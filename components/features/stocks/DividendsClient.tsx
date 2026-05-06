@@ -14,7 +14,7 @@ function fmt(n: number | string) { return 'NT$ ' + Math.round(Number(n) || 0).to
 
 const EMPTY_FORM = { stockId: '', date: '', cashDividend: '', stockDividendShares: '', note: '' };
 
-export default function DividendsClient() {
+export default function DividendsClient(_props: { user?: any } = {}) {
   const [divs, setDivs] = useState<any[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);

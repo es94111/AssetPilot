@@ -27,7 +27,7 @@ function plClass(n: number | string) {
   return num > 0 ? 'text-green-600' : num < 0 ? 'text-red-600' : '';
 }
 
-export default function PortfolioClient() {
+export default function PortfolioClient(_props: { user?: any } = {}) {
   const [stocks, setStocks] = useState<any[]>([]);
   const [summary, setSummary] = useState<any>(null);
   const [loading, setLoading] = useState(true);

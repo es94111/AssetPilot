@@ -17,7 +17,7 @@ function plClass(n: number | string) {
   return num > 0 ? 'text-green-600' : num < 0 ? 'text-red-600' : '';
 }
 
-export default function RealizedClient() {
+export default function RealizedClient(_props: { user?: any } = {}) {
   const [records, setRecords] = useState<any[]>([]);
   const [summary, setSummary] = useState<any>(null);
   const [stocks, setStocks] = useState<any[]>([]);

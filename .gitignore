@@ -14,5 +14,6 @@ doc/
 openapi.yaml
 SSL/
 .claude/scheduled_tasks.lock
+.claude/worktrees/
 backups/
 .specify/memory/changelog-style.md

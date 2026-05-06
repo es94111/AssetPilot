@@ -115,7 +115,7 @@ export default function AccountSettingsClient({ user: initialUser }: { user: any
     }
     try {
       const { key, challenge } = await apiGet('/api/account/passkey/challenge') as { key: string; challenge: string };
-      const credOpts = {
+      const credOpts: PublicKeyCredentialCreationOptions = {
         challenge: Uint8Array.from(atob(challenge.replace(/-/g, '+').replace(/_/g, '/')), (c: string) => c.charCodeAt(0)),
         rp: { name: '記帳網頁' },
         user: {

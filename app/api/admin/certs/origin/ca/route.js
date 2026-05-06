@@ -24,7 +24,7 @@ function validatePemCert(pem) {
 }
 
 export async function POST(request) {
-  const auth = requireAdmin(request);
+  const auth = await requireAdmin(request);
   if (auth instanceof NextResponse) return auth;
 
   const body = await request.json().catch(() => ({}));
@@ -41,7 +41,7 @@ export async function POST(request) {
 }
 
 export async function DELETE(request) {
-  const auth = requireAdmin(request);
+  const auth = await requireAdmin(request);
   if (auth instanceof NextResponse) return auth;
 
   try { if (fs.existsSync(SSL_ORIGIN_CA)) fs.unlinkSync(SSL_ORIGIN_CA); } catch (_) {}

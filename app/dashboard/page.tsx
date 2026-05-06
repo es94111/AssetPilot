@@ -24,6 +24,7 @@ export default async function DashboardPage(props: {
   const recentRows = Array.isArray(data.recent) ? data.recent : [];
   const totalExpense = Number(data.expense) || 0;
   const totalIncome = Number(data.income) || 0;
+  const net = Number(data.net) || 0;
 
   return (
     <AppLayout user={user}>
@@ -37,22 +38,74 @@ export default async function DashboardPage(props: {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-          <div className="p-5 bg-white border border-slate-200 rounded-xl shadow-sm">
+          <div className="p-5 bg-gradient-to-br from-emerald-50 to-white border border-emerald-200 rounded-xl shadow-sm">
             <p className="text-sm text-slate-500">總收入</p>
             <p className="mt-2 text-2xl font-semibold text-emerald-600">{fmtMoney(data.income)}</p>
           </div>
-          <div className="p-5 bg-white border border-slate-200 rounded-xl shadow-sm">
+          <div className="p-5 bg-gradient-to-br from-rose-50 to-white border border-rose-200 rounded-xl shadow-sm">
             <p className="text-sm text-slate-500">總支出</p>
             <p className="mt-2 text-2xl font-semibold text-rose-600">{fmtMoney(data.expense)}</p>
           </div>
-          <div className="p-5 bg-white border border-slate-200 rounded-xl shadow-sm">
+          <div className={`p-5 rounded-xl shadow-sm border ${net >= 0 ? 'bg-gradient-to-br from-blue-50 to-white border-blue-200' : 'bg-gradient-to-br from-red-50 to-white border-red-200'}`}>
             <p className="text-sm text-slate-500">淨額</p>
-            <p className={`mt-2 text-2xl font-semibold ${(Number(data.net) || 0) >= 0 ? 'text-blue-600' : 'text-red-600'}`}>{fmtMoney(data.net)}</p>
+            <p className={`mt-2 text-2xl font-semibold ${net >= 0 ? 'text-blue-600' : 'text-red-600'}`}>{fmtMoney(data.net)}</p>
           </div>
           <div className="p-5 bg-white border border-slate-200 rounded-xl shadow-sm">
             <p className="text-sm text-slate-500">今日支出</p>
             <p className="mt-2 text-2xl font-semibold text-slate-900">{fmtMoney(data.todayExpense)}</p>
           </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-[1.25fr_0.75fr] gap-6">
+          <section className="rounded-2xl border border-slate-200 bg-slate-950 px-6 py-6 text-white shadow-sm">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-sm text-slate-300">本月收支概覽</p>
+                <h2 className="mt-2 text-2xl font-semibold tracking-tight">{data.yearMonth}</h2>
+              </div>
+              <div className={`rounded-full px-3 py-1 text-sm font-medium ${net >= 0 ? 'bg-emerald-500/15 text-emerald-300' : 'bg-rose-500/15 text-rose-300'}`}>
+                {net >= 0 ? '本月結餘' : '本月赤字'}
+              </div>
+            </div>
+            <div className="mt-6 grid grid-cols-3 gap-3 text-sm">
+              <div className="rounded-xl bg-white/5 p-4">
+                <div className="text-slate-400">收入</div>
+                <div className="mt-2 text-lg font-semibold text-emerald-300">{fmtMoney(totalIncome)}</div>
+              </div>
+              <div className="rounded-xl bg-white/5 p-4">
+                <div className="text-slate-400">支出</div>
+                <div className="mt-2 text-lg font-semibold text-rose-300">{fmtMoney(totalExpense)}</div>
+              </div>
+              <div className="rounded-xl bg-white/5 p-4">
+                <div className="text-slate-400">淨額</div>
+                <div className={`mt-2 text-lg font-semibold ${net >= 0 ? 'text-sky-300' : 'text-rose-300'}`}>{fmtMoney(net)}</div>
+              </div>
+            </div>
+          </section>
+
+          <section className="rounded-2xl border border-slate-200 bg-white px-6 py-6 shadow-sm">
+            <p className="text-sm text-slate-500">收支比例</p>
+            <div className="mt-5 space-y-4">
+              <div>
+                <div className="flex items-center justify-between text-sm mb-2">
+                  <span className="text-slate-600">收入佔比</span>
+                  <span className="font-medium text-emerald-600">{totalIncome + totalExpense > 0 ? Math.round((totalIncome / (totalIncome + totalExpense)) * 100) : 0}%</span>
+                </div>
+                <div className="h-3 rounded-full bg-slate-100 overflow-hidden">
+                  <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${totalIncome + totalExpense > 0 ? Math.round((totalIncome / (totalIncome + totalExpense)) * 100) : 0}%` }} />
+                </div>
+              </div>
+              <div>
+                <div className="flex items-center justify-between text-sm mb-2">
+                  <span className="text-slate-600">支出佔比</span>
+                  <span className="font-medium text-rose-600">{totalIncome + totalExpense > 0 ? Math.round((totalExpense / (totalIncome + totalExpense)) * 100) : 0}%</span>
+                </div>
+                <div className="h-3 rounded-full bg-slate-100 overflow-hidden">
+                  <div className="h-full bg-rose-500 rounded-full" style={{ width: `${totalIncome + totalExpense > 0 ? Math.round((totalExpense / (totalIncome + totalExpense)) * 100) : 0}%` }} />
+                </div>
+              </div>
+            </div>
+          </section>
         </div>
 
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">

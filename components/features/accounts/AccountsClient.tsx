@@ -25,7 +25,7 @@ function fmt(n: number | string, currency = 'TWD') {
   return (currency === 'TWD' ? 'NT$ ' : '') + num.toLocaleString('zh-TW') + (currency !== 'TWD' ? ' ' + currency : '');
 }
 
-export default function AccountsClient(_props: { user?: any } = {}) {
+export default function AccountsClient() {
   const [accounts, setAccounts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -36,7 +36,6 @@ export default function AccountsClient(_props: { user?: any } = {}) {
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    setLoading(true);
     try {
       const data = await apiGet('/api/accounts');
       setAccounts(data);
@@ -131,7 +130,6 @@ export default function AccountsClient(_props: { user?: any } = {}) {
         </div>
       )}
 
-      {/* Delete Confirmation */}
       {deleteId && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-xl">

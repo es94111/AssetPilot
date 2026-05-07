@@ -105,7 +105,16 @@
       "PowerShell(& '.specify\\\\extensions\\\\git\\\\scripts\\\\powershell\\\\create-new-feature.ps1' -Json -ShortName \"stats-reports\" \"�έp���� - �����O�B�έp�������P�H��Ƶ{����\")",
       "PowerShell(& '.specify\\\\scripts\\\\powershell\\\\check-prerequisites.ps1' -Json -PathsOnly)",
       "PowerShell(& '.specify\\\\scripts\\\\powershell\\\\setup-plan.ps1' -Json)",
-      "PowerShell(& '.specify\\\\scripts\\\\powershell\\\\check-prerequisites.ps1' -Json)"
+      "PowerShell(& '.specify\\\\scripts\\\\powershell\\\\check-prerequisites.ps1' -Json)",
+      "Bash(py skills/ui-ux-pro-max/scripts/search.py \"personal finance expense tracking stock portfolio fintech dashboard\" --design-system -p \"AssetPilot\" -f markdown)",
+      "PowerShell(py \"C:\\\\Users\\\\hongyu\\\\.claude\\\\plugins\\\\cache\\\\ui-ux-pro-max-skill\\\\ui-ux-pro-max\\\\2.5.0\\\\src\\\\ui-ux-pro-max\\\\scripts\\\\search.py\" \"personal finance expense tracking stock portfolio fintech dashboard\" --design-system -p \"AssetPilot\" -f markdown 2>&1)",
+      "Bash(npm run *)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/login)",
+      "Bash(ls \"C:\\\\Users\\\\hongyu\\\\SynologyDrive\\\\web\\\\AssetPilot\\\\node_modules\\\\sql.js\\\\dist\\\\\" 2>&1 | head -5)",
+      "Bash(cmd /c \"mklink /J \\\\\"C:\\\\Users\\\\hongyu\\\\SynologyDrive\\\\web\\\\AssetPilot\\\\.claude\\\\worktrees\\\\pensive-grothendieck-94141f\\\\node_modules\\\\\" \\\\\"C:\\\\Users\\\\hongyu\\\\SynologyDrive\\\\web\\\\AssetPilot\\\\node_modules\\\\\"\")",
+      "Bash(find . -name \".env*\" -not -path \"./node_modules/*\" 2>/dev/null | head -5)",
+      "Bash(ls node_modules/sql.js/dist/*.d.ts 2>/dev/null | head -5 && ls node_modules/@types/sql.js 2>/dev/null | head -5)",
+      "Bash(python -c \"import sys,json; p=json.load\\(sys.stdin\\); print\\(p.get\\('types',''\\),p.get\\('typings',''\\)\\)\")"
     ]
   }
 }

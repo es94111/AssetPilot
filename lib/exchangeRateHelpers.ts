@@ -1,18 +1,23 @@
-'use strict';
+// lib/exchangeRateHelpers.ts — 匯率同步邏輯
+import { getDB, queryAll, queryOne, saveDB } from './db';
+import { getUserExchangeRateMap, getExchangeRateSettings, normalizeCurrency, parseCurrencyCode } from './accountHelpers';
+import * as fxCache from './exchangeRateCache';
 
-const { getDB, queryAll, queryOne, saveDB } = require('./db');
-const { getUserExchangeRateMap, getExchangeRateSettings, normalizeCurrency, parseCurrencyCode } = require('./accountHelpers');
-const fxCache = require('./exchangeRateCache');
+export { fxCache };
 
-const FX_AUTO_SYNC_MIN_INTERVAL_MS = 30 * 60 * 1000;
+export const FX_AUTO_SYNC_MIN_INTERVAL_MS = 30 * 60 * 1000;
 const GLOBAL_FX_CACHE_TTL = 5 * 60 * 1000;
 const SHARED_AUTO_RATE_TTL = 30 * 60 * 1000;
 
-let globalFxCache = { data: null, timestamp: 0 };
-let globalFxInflight = null;
-const sharedAutoRateCache = new Map();
+interface GlobalFxData {
+  conversion_rates?: Record<string, number>;
+}
 
-async function fetchGlobalRealtimeRates() {
+let globalFxCache: { data: GlobalFxData | null; timestamp: number } = { data: null, timestamp: 0 };
+let globalFxInflight: Promise<GlobalFxData | null> | null = null;
+const sharedAutoRateCache = new Map<string, { rate: number; fetchedAt: number }>();
+
+async function fetchGlobalRealtimeRates(): Promise<GlobalFxData | null> {
   const now = Date.now();
   if (globalFxCache.data && (now - globalFxCache.timestamp) < GLOBAL_FX_CACHE_TTL) {
     return globalFxCache.data;
@@ -28,11 +33,11 @@ async function fetchGlobalRealtimeRates() {
       const res = await fetch(url, { signal: ctrl.signal });
       clearTimeout(timer);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
+      const data: GlobalFxData = await res.json();
       globalFxCache = { data, timestamp: Date.now() };
       return data;
     } catch (e) {
-      console.warn('[fxGlobal] fetch failed:', e.message);
+      console.warn('[fxGlobal] fetch failed:', (e as Error).message);
       return globalFxCache.data;
     } finally {
       globalFxInflight = null;
@@ -41,14 +46,14 @@ async function fetchGlobalRealtimeRates() {
   return globalFxInflight;
 }
 
-function resolveRateToTwd(globalData, currency) {
+function resolveRateToTwd(globalData: GlobalFxData | null, currency: string): number {
   if (!globalData || !globalData.conversion_rates) return 0;
   const rate = globalData.conversion_rates[currency];
   if (!rate || rate <= 0) return 0;
   return Math.round((1 / rate) * 1e8) / 1e8;
 }
 
-function setExchangeRateAutoUpdate(userId, autoUpdate) {
+export function setExchangeRateAutoUpdate(userId: string, autoUpdate: boolean) {
   const db = getDB();
   db.run(
     `INSERT INTO exchange_rate_settings (user_id, auto_update, last_synced_at, updated_at)
@@ -60,10 +65,16 @@ function setExchangeRateAutoUpdate(userId, autoUpdate) {
   return getExchangeRateSettings(userId);
 }
 
-async function syncExchangeRatesFromGlobalAPI(userId, requestedCurrencies = []) {
+export interface SyncExchangeRatesResult {
+  updatedAt: number;
+  updatedRates: Array<{ currency: string; rateToTwd: number }>;
+  unsupportedCurrencies: string[];
+}
+
+export async function syncExchangeRatesFromGlobalAPI(userId: string, requestedCurrencies: string[] = []): Promise<SyncExchangeRatesResult> {
   const db = getDB();
   const existingMap = getUserExchangeRateMap(userId);
-  const targets = new Set(['TWD']);
+  const targets = new Set<string>(['TWD']);
   Object.keys(existingMap).forEach(c => targets.add(c));
   requestedCurrencies.forEach(c => {
     const parsed = parseCurrencyCode(c);
@@ -78,8 +89,8 @@ async function syncExchangeRatesFromGlobalAPI(userId, requestedCurrencies = []) 
   });
   const globalData = needsApi.length > 0 ? await fetchGlobalRealtimeRates() : null;
 
-  const updated = [];
-  const unsupported = [];
+  const updated: Array<{ currency: string; rateToTwd: number }> = [];
+  const unsupported: string[] = [];
   for (const currency of targets) {
     const c = normalizeCurrency(currency);
     if (c === 'TWD') {
@@ -91,7 +102,7 @@ async function syncExchangeRatesFromGlobalAPI(userId, requestedCurrencies = []) 
       continue;
     }
     const hit = sharedAutoRateCache.get(c);
-    let rate;
+    let rate: number;
     if (hit && (now - hit.fetchedAt) < SHARED_AUTO_RATE_TTL) {
       rate = hit.rate;
     } else {
@@ -116,5 +127,3 @@ async function syncExchangeRatesFromGlobalAPI(userId, requestedCurrencies = []) 
   saveDB();
   return { updatedAt: now, updatedRates: updated, unsupportedCurrencies: unsupported };
 }
-
-module.exports = { FX_AUTO_SYNC_MIN_INTERVAL_MS, setExchangeRateAutoUpdate, syncExchangeRatesFromGlobalAPI, fxCache };

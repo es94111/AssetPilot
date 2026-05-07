@@ -40,12 +40,12 @@ export async function requireAuth(request?: any): Promise<ApiAuthResult | NextRe
     }
 
     return {
-      userId: user.id,
-      userTimezone: user.timezone || 'Asia/Taipei',
-      email: user.email || '',
-      displayName: user.display_name || '',
+      userId: user.id as string,
+      userTimezone: (user.timezone as string) || 'Asia/Taipei',
+      email: (user.email as string) || '',
+      displayName: (user.display_name as string) || '',
       isAdmin: !!user.is_admin,
-      themeMode: user.theme_mode || 'system',
+      themeMode: (user.theme_mode as string) || 'system',
     };
   }
 

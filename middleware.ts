@@ -1,5 +1,5 @@
-// middleware.js — Next.js Edge Middleware：JWT 驗證 + in-memory 速率限制
-import { NextResponse } from 'next/server';
+// middleware.ts — Next.js Edge Middleware：JWT 驗證 + in-memory 速率限制
+import { NextResponse, NextRequest } from 'next/server';
 
 // ── 公開端點（不需驗證）──
 const PUBLIC_PATHS = new Set([
@@ -31,11 +31,16 @@ const AUTH_RATE_LIMITED_PATHS = new Set([
   '/api/auth/google',
 ]);
 
-/** Map<ip, { count: number, resetAt: number }> */
-const globalRateLimitMap = new Map();
-const authRateLimitMap = new Map();
+interface RateLimitEntry {
+  count: number;
+  resetAt: number;
+}
 
-function checkRateLimit(map, ip, max) {
+/** Map<ip, { count: number, resetAt: number }> */
+const globalRateLimitMap = new Map<string, RateLimitEntry>();
+const authRateLimitMap = new Map<string, RateLimitEntry>();
+
+function checkRateLimit(map: Map<string, RateLimitEntry>, ip: string, max: number): boolean {
   const now = Date.now();
   let entry = map.get(ip);
   if (!entry || now > entry.resetAt) {
@@ -46,7 +51,7 @@ function checkRateLimit(map, ip, max) {
   return entry.count <= max;
 }
 
-function getClientIp(request) {
+function getClientIp(request: NextRequest): string {
   return (
     request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
     request.headers.get('x-real-ip') ||
@@ -54,7 +59,7 @@ function getClientIp(request) {
   );
 }
 
-export function middleware(request) {
+export function middleware(request: NextRequest): NextResponse {
   const { pathname } = request.nextUrl;
 
   // 略過 Next.js 內部路由與靜態資源

@@ -1,29 +1,57 @@
-'use strict';
-/**
- * TWSE fetch helpers for use in Next.js API routes.
- * These are stateless (no module-level caches) — caching happens in process memory
- * via the module singleton pattern when imported in the same process.
- */
+// lib/twseFetchNext.ts — TWSE/TPEx fetch helpers for Next.js API routes.
 
-const HASH_SEP = '\x01';
 const TWSE_REALTIME_CACHE_TTL = 10 * 1000; // 10s
 const STOCK_DAY_CACHE_TTL = 5 * 60 * 1000; // 5 min
 const TPEX_CACHE_TTL = 10 * 60 * 1000; // 10 min
 const TWSE_ALL_CACHE_TTL = 10 * 60 * 1000; // 10 min
 
-// Module-level caches (survive across requests within same process)
-const realtimeCache = {};
-let twseCache = { data: null, timestamp: 0 };
-let tpexCache = { data: null, timestamp: 0 };
-const stockDayCache = {};
-const tpexDayCache = {};
+export interface StockInfo {
+  found: boolean;
+  symbol: string;
+  name: string;
+  closingPrice: number;
+  isRealtime: boolean;
+  priceType: string;
+  priceSource: string;
+  dataDate: string;
+  dataTime: string;
+  timestamp?: number;
+  openingPrice?: number;
+  highestPrice?: number;
+  lowestPrice?: number;
+}
 
-function formatTwseDate(yyyymmdd) {
+export interface StockListItem {
+  Code: string;
+  Name: string;
+  ClosingPrice?: string;
+  OpeningPrice?: string;
+  HighestPrice?: string;
+  LowestPrice?: string;
+  Change?: string;
+  TradeVolume?: string;
+  Date?: string;
+  _source?: string;
+}
+
+interface CacheEntry<T> {
+  data: T;
+  timestamp: number;
+}
+
+// Module-level caches (survive across requests within same process)
+const realtimeCache: Record<string, StockInfo & { timestamp: number }> = {};
+let twseCache: { data: StockListItem[] | null; timestamp: number } = { data: null, timestamp: 0 };
+let tpexCache: { data: StockListItem[] | null; timestamp: number } = { data: null, timestamp: 0 };
+const stockDayCache: Record<string, CacheEntry<StockInfo>> = {};
+const tpexDayCache: Record<string, CacheEntry<StockInfo>> = {};
+
+function formatTwseDate(yyyymmdd: string): string {
   if (!yyyymmdd || yyyymmdd.length !== 8) return '';
   return `${yyyymmdd.slice(0, 4)}/${yyyymmdd.slice(4, 6)}/${yyyymmdd.slice(6, 8)}`;
 }
 
-async function fetchTwseRealtime(symbol) {
+export async function fetchTwseRealtime(symbol: string): Promise<(StockInfo & { timestamp: number }) | null> {
   const now = Date.now();
   const cached = realtimeCache[symbol];
   if (cached && (now - cached.timestamp) < TWSE_REALTIME_CACHE_TTL) return cached;
@@ -59,7 +87,7 @@ async function fetchTwseRealtime(symbol) {
   return null;
 }
 
-async function fetchTwseStockDay(symbol, dateStr) {
+export async function fetchTwseStockDay(symbol: string, dateStr: string): Promise<StockInfo | null> {
   const cacheKey = `${symbol}_${dateStr}`;
   const now = Date.now();
   const cached = stockDayCache[cacheKey];
@@ -79,13 +107,13 @@ async function fetchTwseStockDay(symbol, dateStr) {
     const rocMonth = dateStr.slice(4, 6);
     const rocDay = dateStr.slice(6, 8);
     const targetRoc = `${rocYear}/${rocMonth}/${rocDay}`;
-    let row = json.data.find(r => r[0] === targetRoc);
+    let row = json.data.find((r: string[]) => r[0] === targetRoc);
     if (!row) row = json.data[json.data.length - 1];
 
     const parts = row[0].split('/');
     const adYear = parseInt(parts[0]) + 1911;
     const rowDate = `${adYear}/${parts[1]}/${parts[2]}`;
-    const toN = s => parseFloat((s || '0').replace(/,/g, '')) || 0;
+    const toN = (s: string) => parseFloat((s || '0').replace(/,/g, '')) || 0;
 
     let stockName = symbol;
     const allCached = twseCache.data;
@@ -98,7 +126,7 @@ async function fetchTwseStockDay(symbol, dateStr) {
       if (m) stockName = m[1];
     }
 
-    const result = {
+    const result: StockInfo = {
       found: true, symbol, name: stockName,
       closingPrice: toN(row[6]), openingPrice: toN(row[3]),
       highestPrice: toN(row[4]), lowestPrice: toN(row[5]),
@@ -108,12 +136,12 @@ async function fetchTwseStockDay(symbol, dateStr) {
     stockDayCache[cacheKey] = { data: result, timestamp: now };
     return result;
   } catch (e) {
-    console.error('STOCK_DAY API 錯誤:', e.message);
+    console.error('STOCK_DAY API 錯誤:', (e as Error).message);
     return null;
   }
 }
 
-async function fetchTpexStockDay(symbol, dateStr) {
+export async function fetchTpexStockDay(symbol: string, dateStr: string): Promise<StockInfo | null> {
   const cacheKey = `${symbol}_${dateStr}`;
   const now = Date.now();
   const cached = tpexDayCache[cacheKey];
@@ -132,12 +160,12 @@ async function fetchTpexStockDay(symbol, dateStr) {
     if (!json.aaData || json.aaData.length === 0) return null;
 
     const row = json.aaData[json.aaData.length - 1];
-    const toN = s => parseFloat((s || '0').replace(/,/g, '')) || 0;
+    const toN = (s: string) => parseFloat((s || '0').replace(/,/g, '')) || 0;
     const parts = row[0].split('/');
     const adYear = parseInt(parts[0]) + 1911;
     const rowDate = `${adYear}/${parts[1]}/${parts[2]}`;
 
-    const result = {
+    const result: StockInfo = {
       found: true, symbol, name: json.stkName || symbol,
       closingPrice: toN(row[6]), openingPrice: toN(row[3]),
       highestPrice: toN(row[4]), lowestPrice: toN(row[5]),
@@ -147,12 +175,12 @@ async function fetchTpexStockDay(symbol, dateStr) {
     tpexDayCache[cacheKey] = { data: result, timestamp: now };
     return result;
   } catch (e) {
-    console.error('TPEx STOCK_DAY API 錯誤:', e.message);
+    console.error('TPEx STOCK_DAY API 錯誤:', (e as Error).message);
     return null;
   }
 }
 
-async function fetchTpexStockAll() {
+export async function fetchTpexStockAll(): Promise<StockListItem[]> {
   const now = Date.now();
   if (tpexCache.data && (now - tpexCache.timestamp) < TPEX_CACHE_TTL) return tpexCache.data;
   try {
@@ -162,7 +190,7 @@ async function fetchTpexStockAll() {
     });
     if (!res.ok) return tpexCache.data || [];
     const raw = await res.json();
-    const data = raw.map(r => ({
+    const data: StockListItem[] = raw.map((r: Record<string, string>) => ({
       Code: r.SecuritiesCompanyCode, Name: r.CompanyName,
       ClosingPrice: r.Close, OpeningPrice: r.Open,
       HighestPrice: r.High, LowestPrice: r.Low,
@@ -172,12 +200,12 @@ async function fetchTpexStockAll() {
     tpexCache = { data, timestamp: now };
     return data;
   } catch (e) {
-    console.error('TPEx ALL API 錯誤:', e.message);
+    console.error('TPEx ALL API 錯誤:', (e as Error).message);
     return tpexCache.data || [];
   }
 }
 
-async function fetchTwseStockAll() {
+export async function fetchTwseStockAll(): Promise<StockListItem[]> {
   const now = Date.now();
   if (twseCache.data && (now - twseCache.timestamp) < TWSE_ALL_CACHE_TTL) return twseCache.data;
   try {
@@ -186,18 +214,18 @@ async function fetchTwseStockAll() {
       fetchTpexStockAll(),
     ]);
     if (!twseRes.ok) throw new Error('TWSE API 回應錯誤');
-    const twseData = await twseRes.json();
+    const twseData: StockListItem[] = await twseRes.json();
     const merged = [...twseData, ...tpexData];
     twseCache = { data: merged, timestamp: now };
     return merged;
   } catch (e) {
-    console.error('TWSE API 錯誤:', e.message);
+    console.error('TWSE API 錯誤:', (e as Error).message);
     return twseCache.data || [];
   }
 }
 
 /** Infer stock type from symbol */
-function inferStockType(symbol) {
+export function inferStockType(symbol: string): 'etf' | 'warrant' | 'stock' {
   const s = String(symbol || '').trim();
   // ETF: 00xxx or 006xxx style (4-6 digits starting with 0)
   if (/^00\d{2,4}[A-Z]?$/.test(s)) return 'etf';
@@ -206,25 +234,27 @@ function inferStockType(symbol) {
   return 'stock';
 }
 
+export interface FetchAllResult<T> {
+  ok: boolean;
+  value?: T;
+  error?: string;
+  item: T;
+}
+
 /** Fetch all stocks with concurrency limit */
-async function fetchAllWithLimit(items, fetcher, concurrency = 5) {
-  const results = [];
+export async function fetchAllWithLimit<T>(
+  items: T[],
+  fetcher: (item: T) => Promise<unknown>,
+  concurrency = 5
+): Promise<FetchAllResult<T>[]> {
+  const results: FetchAllResult<T>[] = [];
   for (let i = 0; i < items.length; i += concurrency) {
     const batch = items.slice(i, i + concurrency);
     const settled = await Promise.allSettled(batch.map(item => fetcher(item)));
     settled.forEach((r, idx) => {
-      if (r.status === 'fulfilled') results.push({ ok: true, value: r.value, item: batch[idx] });
-      else results.push({ ok: false, error: r.reason?.message || String(r.reason), item: batch[idx] });
+      if (r.status === 'fulfilled') results.push({ ok: true, value: r.value as T, item: batch[idx] });
+      else results.push({ ok: false, error: (r.reason as Error)?.message || String(r.reason), item: batch[idx] });
     });
   }
   return results;
 }
-
-module.exports = {
-  fetchTwseRealtime,
-  fetchTwseStockDay,
-  fetchTpexStockDay,
-  fetchTwseStockAll,
-  inferStockType,
-  fetchAllWithLimit,
-};

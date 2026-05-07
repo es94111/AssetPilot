@@ -1,30 +1,52 @@
-'use strict';
-// lib/loginHelpers.js — 登入稽核、IP 查詢、系統設定等共用邏輯（從 server.js 提取）
-
-const crypto = require('crypto');
-const { getDB, queryOne, saveDB } = require('./db');
+// lib/loginHelpers.ts — 登入稽核、IP 查詢、系統設定等共用邏輯
+import crypto from 'crypto';
+import { getDB, queryOne, saveDB } from './db';
 
 const IPINFO_TOKEN = process.env.IPINFO_TOKEN || '';
 const IP_COUNTRY_CACHE_TTL_MS = 60 * 60 * 1000; // 1 小時
-const ipCountryCache = new Map();
+const ipCountryCache = new Map<string, { country: string; at: number }>();
 
 const ENV_ADMIN_IP_ALLOWLIST = parseIpAllowlist(process.env.ADMIN_IP_ALLOWLIST || '');
 
+export interface SystemSettings {
+  publicRegistration: boolean;
+  allowedRegistrationEmails: string[];
+  adminIpAllowlist: string[];
+  routeAuditMode: 'security' | 'extended' | 'minimal';
+}
+
+export interface LoginAuditResult {
+  id: string;
+  loginAt: number;
+  ipAddress: string;
+  loginMethod: string;
+  isAdminLogin: boolean;
+}
+
+export interface LoginAttemptArgs {
+  user?: { id?: string; email?: string; is_admin?: number } | null;
+  email?: string;
+  headers: Headers | Record<string, string | undefined>;
+  method?: string;
+  isSuccess?: boolean;
+  failureReason?: string;
+}
+
 // ── 工具函式 ──
 
-function uid() {
+export function uid(): string {
   return crypto.randomUUID().replace(/-/g, '');
 }
 
-function normalizeEmail(email) {
+export function normalizeEmail(email: string | null | undefined): string {
   return String(email || '').trim().toLowerCase();
 }
 
-function normalizeIp(ip) {
+export function normalizeIp(ip: string | null | undefined): string {
   return String(ip || '').trim().toLowerCase().replace(/^::ffff:/, '');
 }
 
-function isPrivateOrLocalIp(ip) {
+function isPrivateOrLocalIp(ip: string): boolean {
   const v = String(ip || '').trim().toLowerCase();
   if (!v || v === 'unknown') return true;
   if (v === '::1' || v === 'localhost') return true;
@@ -34,21 +56,21 @@ function isPrivateOrLocalIp(ip) {
   return false;
 }
 
-function parseIpAllowlist(value) {
+function parseIpAllowlist(value: string | string[]): string[] {
   const source = Array.isArray(value) ? value.join('\n') : String(value || '');
   return Array.from(new Set(
     source.split(/[\n,;\s]+/).map(v => normalizeIp(v)).filter(Boolean)
   ));
 }
 
-function parseAllowedRegistrationEmails(value) {
+export function parseAllowedRegistrationEmails(value: string | string[]): string[] {
   const source = Array.isArray(value) ? value.join('\n') : String(value || '');
   return Array.from(new Set(
     source.split(/[\n,;\s]+/).map(v => String(v || '').trim().toLowerCase()).filter(v => isValidEmail(v) || /^\*@[a-z0-9.-]+\.[a-z]{2,}$/.test(v))
   ));
 }
 
-function matchAllowlist(email, rawList) {
+export function matchAllowlist(email: string, rawList: string | string[]): boolean {
   const normalized = normalizeEmail(email);
   if (!normalized) return false;
   const list = Array.isArray(rawList) ? rawList : parseAllowedRegistrationEmails(rawList);
@@ -63,7 +85,7 @@ function matchAllowlist(email, rawList) {
   return false;
 }
 
-function isValidEmail(email) {
+export function isValidEmail(email: string | null | undefined): boolean {
   const s = normalizeEmail(email);
   if (!s || s.length > 254) return false;
   if (s.includes('..')) return false;
@@ -76,21 +98,30 @@ function isValidEmail(email) {
 
 // ── IP 工具 ──
 
+type HeadersLike = Headers | Record<string, string | undefined>;
+
+function getHeader(headers: HeadersLike, key: string): string {
+  if (typeof (headers as Headers).get === 'function') {
+    return (headers as Headers).get(key) || '';
+  }
+  return (headers as Record<string, string | undefined>)[key] || '';
+}
+
 /** NextRequest headers 版本 */
-function getRequestIpFromHeaders(headers) {
-  const forwardedFor = String(headers.get?.('x-forwarded-for') || headers['x-forwarded-for'] || '').split(',')[0].trim();
-  const realIp = headers.get?.('x-real-ip') || headers['x-real-ip'] || '';
+export function getRequestIpFromHeaders(headers: HeadersLike): string {
+  const forwardedFor = String(getHeader(headers, 'x-forwarded-for')).split(',')[0].trim();
+  const realIp = getHeader(headers, 'x-real-ip');
   const rawIp = forwardedFor || realIp || '';
   return rawIp ? normalizeIp(rawIp) : 'unknown';
 }
 
-function getCountryFromHeaders(headers) {
-  const cfCountry = String(headers.get?.('cf-ipcountry') || headers['cf-ipcountry'] || '').trim().toUpperCase();
+export function getCountryFromHeaders(headers: HeadersLike): string | null {
+  const cfCountry = String(getHeader(headers, 'cf-ipcountry')).trim().toUpperCase();
   if (cfCountry && cfCountry !== 'XX' && cfCountry !== 'T1') return cfCountry;
   return null;
 }
 
-async function fetchIpCountry(ipAddress) {
+export async function fetchIpCountry(ipAddress: string): Promise<string> {
   const ip = String(ipAddress || '').trim();
   if (!ip || ip === 'unknown') return '-';
   if (isPrivateOrLocalIp(ip)) return 'LOCAL';
@@ -117,18 +148,19 @@ async function fetchIpCountry(ipAddress) {
 
 // ── 系統設定 ──
 
-function getSystemSettings() {
+export function getSystemSettings(): SystemSettings {
   const row = queryOne('SELECT public_registration, allowed_registration_emails, admin_ip_allowlist, route_audit_mode FROM system_settings WHERE id = 1') || {
     public_registration: 1,
     allowed_registration_emails: '',
     admin_ip_allowlist: '',
     route_audit_mode: 'security',
   };
-  const allowedRegistrationEmails = parseAllowedRegistrationEmails(row.allowed_registration_emails);
-  const dbAdminIpAllowlist = parseIpAllowlist(row.admin_ip_allowlist);
+  const allowedRegistrationEmails = parseAllowedRegistrationEmails(String(row.allowed_registration_emails || ''));
+  const dbAdminIpAllowlist = parseIpAllowlist(String(row.admin_ip_allowlist || ''));
   const mergedAdminIpAllowlist = Array.from(new Set([...ENV_ADMIN_IP_ALLOWLIST, ...dbAdminIpAllowlist]));
-  const routeAuditMode = ['security', 'extended', 'minimal'].includes(row.route_audit_mode)
-    ? row.route_audit_mode : 'security';
+  const rawMode = String(row.route_audit_mode || 'security');
+  const routeAuditMode = (['security', 'extended', 'minimal'] as const).includes(rawMode as 'security')
+    ? rawMode as SystemSettings['routeAuditMode'] : 'security';
   return {
     publicRegistration: !!row.public_registration,
     allowedRegistrationEmails,
@@ -137,12 +169,12 @@ function getSystemSettings() {
   };
 }
 
-function getUserCount() {
+export function getUserCount(): number {
   const row = queryOne('SELECT COUNT(1) AS count FROM users');
   return Number(row?.count || 0);
 }
 
-function canSelfRegister(email) {
+export function canSelfRegister(email: string): { ok: boolean; error?: string } {
   const emailLower = normalizeEmail(email);
   if (!emailLower) return { ok: false, error: '電子郵件格式不正確' };
   if (getUserCount() === 0) return { ok: true };
@@ -158,7 +190,11 @@ function canSelfRegister(email) {
 
 // ── 登入稽核 ──
 
-function recordLoginAudit(user, headers, method = 'password') {
+export function recordLoginAudit(
+  user: { id?: string; email?: string; is_admin?: number } | null | undefined,
+  headers: HeadersLike,
+  method = 'password'
+): LoginAuditResult | null {
   if (!user?.id) return null;
   const loginId = uid();
   const loginAt = Date.now();
@@ -183,15 +219,16 @@ function recordLoginAudit(user, headers, method = 'password') {
   return { id: loginId, loginAt, ipAddress, loginMethod, isAdminLogin: !!isAdminLogin };
 }
 
-function recordLoginAttempt({ user = null, email = '', headers, method = 'password', isSuccess = false, failureReason = '' }) {
+export function recordLoginAttempt({ user = null, email = '', headers, method = 'password', isSuccess = false, failureReason = '' }: LoginAttemptArgs): void {
   const loginAt = Date.now();
-  const ipAddress = getRequestIpFromHeaders(headers || {});
+  const safeHeaders = (headers || {}) as HeadersLike;
+  const ipAddress = getRequestIpFromHeaders(safeHeaders);
   const loginMethod = String(method || 'password').trim().toLowerCase();
   const normalizedEmail = normalizeEmail(email || user?.email || '');
   const userId = user?.id ? String(user.id) : '';
   const isAdminLogin = user?.is_admin ? 1 : 0;
   const attemptId = uid();
-  const cfCountry = getCountryFromHeaders(headers || {});
+  const cfCountry = getCountryFromHeaders(safeHeaders);
   const db = getDB();
   db.run(
     `INSERT INTO login_attempt_logs (id, user_id, email, login_at, ip_address, login_method, is_admin_login, is_success, failure_reason, country) VALUES (?,?,?,?,?,?,?,?,?,?)`,
@@ -207,20 +244,3 @@ function recordLoginAttempt({ user = null, email = '', headers, method = 'passwo
     }).catch(() => {});
   }
 }
-
-module.exports = {
-  uid,
-  normalizeEmail,
-  normalizeIp,
-  isValidEmail,
-  parseAllowedRegistrationEmails,
-  matchAllowlist,
-  getRequestIpFromHeaders,
-  getCountryFromHeaders,
-  fetchIpCountry,
-  getSystemSettings,
-  getUserCount,
-  canSelfRegister,
-  recordLoginAudit,
-  recordLoginAttempt,
-};

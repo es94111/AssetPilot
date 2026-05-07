@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Script from 'next/script';
-import { Eye, EyeOff, Fingerprint } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
 
 declare global {
   interface Window {
@@ -32,7 +32,6 @@ export default function LoginPage() {
   const [regError, setRegError] = useState('');
   const [loading, setLoading] = useState(false);
   const [config, setConfig] = useState<any>(null);
-  const [passkeyAvailable, setPasskeyAvailable] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
   useEffect(() => {
@@ -40,15 +39,7 @@ export default function LoginPage() {
       setForm('register');
       setError('');
     }
-
-    fetch('/api/config')
-      .then(r => r.json())
-      .then(cfg => {
-        setConfig(cfg);
-        // Google script loading logic needs adaptation or replacement if using modern Auth
-      })
-      .catch(() => {});
-    if (typeof window !== 'undefined' && window.PublicKeyCredential) setPasskeyAvailable(true);
+    fetch('/api/config').then(r => r.json()).then(cfg => setConfig(cfg)).catch(() => {});
   }, []);
 
   async function handleLogin(e: React.FormEvent) {
@@ -89,15 +80,8 @@ export default function LoginPage() {
 
   async function handleGoogleLogin() {
     setError('');
-    if (!config?.googleClientId || !config?.googleCodeFlow) {
-      setError('Google 登入尚未設定完成');
-      return;
-    }
-    if (!window.google?.accounts?.oauth2?.initCodeClient) {
-      setError('Google 登入元件尚未載入');
-      return;
-    }
-
+    if (!config?.googleClientId || !config?.googleCodeFlow) { setError('Google 登入尚未設定完成'); return; }
+    if (!window.google?.accounts?.oauth2?.initCodeClient) { setError('Google 登入元件尚未載入'); return; }
     setGoogleLoading(true);
     try {
       const redirectUri = window.location.origin;
@@ -105,7 +89,6 @@ export default function LoginPage() {
       const stateData = await stateRes.json().catch(() => ({}));
       const state = stateData?.state;
       if (!state) throw new Error('無法建立 Google 登入狀態');
-
       const client = window.google.accounts.oauth2.initCodeClient({
         client_id: config.googleClientId,
         scope: 'openid email profile',
@@ -126,16 +109,13 @@ export default function LoginPage() {
             router.refresh();
           } catch (e: any) {
             setError(e.message || 'Google 登入失敗');
-          } finally {
-            setGoogleLoading(false);
-          }
+          } finally { setGoogleLoading(false); }
         },
         error_callback: (err: any) => {
           setError(err?.message || 'Google 登入已取消');
           setGoogleLoading(false);
         },
       });
-
       client.requestCode();
     } catch (e: any) {
       setError(e.message || 'Google 登入失敗');
@@ -147,84 +127,133 @@ export default function LoginPage() {
   const googleEnabled = !!config?.googleClientId && !!config?.googleCodeFlow;
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
-      {googleEnabled && (
-        <Script
-          src="https://accounts.google.com/gsi/client"
-          strategy="afterInteractive"
-        />
-      )}
-      <div className="w-full max-w-md bg-white p-8 rounded-xl shadow-lg border border-slate-200">
-        <div className="flex flex-col items-center mb-6">
-          <Image src="/logo.svg" alt="AssetPilot" width={48} height={48} />
-          <h1 className="text-2xl font-bold text-slate-900 mt-2">AssetPilot</h1>
-          <p className="text-slate-500">輕鬆管理您的每一筆收支</p>
+    <div className="login-bg">
+      {googleEnabled && <Script src="https://accounts.google.com/gsi/client" strategy="afterInteractive" />}
+
+      {/* Decorative blobs */}
+      <div className="login-blob login-blob-1" />
+      <div className="login-blob login-blob-2" />
+
+      <div className="login-card">
+        {/* Brand header */}
+        <div className="login-brand">
+          <div className="login-logo-ring">
+            <Image src="/favicon.svg" alt="AssetPilot" width={32} height={32} />
+          </div>
+          <h1 className="login-title">AssetPilot</h1>
+          <p className="login-subtitle">
+            {form === 'login' ? '歡迎回來，請登入您的帳號' : '建立您的帳號，開始記帳'}
+          </p>
         </div>
 
+        {/* Tab switcher */}
+        {registrationEnabled && (
+          <div className="login-tabs">
+            <button
+              className={`login-tab ${form === 'login' ? 'login-tab-active' : ''}`}
+              onClick={() => { setForm('login'); setError(''); }}
+            >
+              登入
+            </button>
+            <button
+              className={`login-tab ${form === 'register' ? 'login-tab-active' : ''}`}
+              onClick={() => { setForm('register'); setRegError(''); }}
+            >
+              註冊
+            </button>
+          </div>
+        )}
+
         {form === 'login' && (
-          <form className="space-y-4" onSubmit={handleLogin}>
-            <h2 className="text-xl font-semibold">登入</h2>
-            <div>
-              <label className="block text-sm font-medium text-slate-700">電子信箱</label>
-              <input type="email" required className="w-full mt-1 p-2 border rounded-md" placeholder="請輸入 Email" value={email} onChange={e => setEmail(e.target.value)} />
+          <form className="login-form" onSubmit={handleLogin}>
+            <div className="login-field">
+              <label className="login-label">電子信箱</label>
+              <input
+                type="email" required autoComplete="email"
+                className="login-input"
+                placeholder="your@email.com"
+                value={email} onChange={e => setEmail(e.target.value)}
+              />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700">密碼</label>
-              <div className="relative">
-                <input type={showPw ? 'text' : 'password'} required className="w-full mt-1 p-2 border rounded-md" placeholder="請輸入密碼" value={password} onChange={e => setPassword(e.target.value)} />
-                <button type="button" className="absolute right-2 top-3 text-slate-400" onClick={() => setShowPw(v => !v)}>
-                  {showPw ? <EyeOff size={20} /> : <Eye size={20} />}
+            <div className="login-field">
+              <label className="login-label">密碼</label>
+              <div className="login-input-wrap">
+                <input
+                  type={showPw ? 'text' : 'password'} required autoComplete="current-password"
+                  className="login-input login-input-pw"
+                  placeholder="請輸入密碼"
+                  value={password} onChange={e => setPassword(e.target.value)}
+                />
+                <button type="button" className="login-pw-toggle" onClick={() => setShowPw(v => !v)} aria-label="切換密碼顯示">
+                  {showPw ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
             </div>
-            {error && <div className="text-red-500 text-sm">{error}</div>}
-            <button type="submit" className="w-full py-2 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700" disabled={loading}>{loading ? '登入中...' : '登入'}</button>
+            {error && <p className="login-error" role="alert">{error}</p>}
+            <button type="submit" className="login-btn-primary" disabled={loading}>
+              {loading ? '登入中…' : '登入'}
+            </button>
             {googleEnabled && (
-              <button
-                type="button"
-                className="w-full py-2 border border-slate-300 rounded-md font-medium text-slate-700 hover:bg-slate-50"
-                onClick={handleGoogleLogin}
-                disabled={googleLoading}
-              >
-                {googleLoading ? 'Google 驗證中...' : '使用 Google 登入'}
+              <button type="button" className="login-btn-google" onClick={handleGoogleLogin} disabled={googleLoading}>
+                <GoogleIcon />
+                {googleLoading ? 'Google 驗證中…' : '使用 Google 登入'}
               </button>
-            )}
-            {registrationEnabled && (
-              <p className="text-center text-sm text-slate-600">
-                還沒有帳號？ <button type="button" className="text-blue-600 font-medium" onClick={() => { setForm('register'); setError(''); }}>立即註冊</button>
-              </p>
             )}
           </form>
         )}
 
         {form === 'register' && (
-          <form className="space-y-4" onSubmit={handleRegister}>
-            <h2 className="text-xl font-semibold">註冊</h2>
-            <div>
-              <label className="block text-sm font-medium text-slate-700">電子信箱</label>
-              <input type="email" required className="w-full mt-1 p-2 border rounded-md" placeholder="請輸入 Email" value={regEmail} onChange={e => setRegEmail(e.target.value)} />
+          <form className="login-form" onSubmit={handleRegister}>
+            <div className="login-field">
+              <label className="login-label">電子信箱</label>
+              <input
+                type="email" required autoComplete="email"
+                className="login-input"
+                placeholder="your@email.com"
+                value={regEmail} onChange={e => setRegEmail(e.target.value)}
+              />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700">顯示名稱</label>
-              <input type="text" required maxLength={50} className="w-full mt-1 p-2 border rounded-md" placeholder="您的暱稱" value={regName} onChange={e => setRegName(e.target.value)} />
+            <div className="login-field">
+              <label className="login-label">顯示名稱</label>
+              <input
+                type="text" required maxLength={50} autoComplete="name"
+                className="login-input"
+                placeholder="您的暱稱"
+                value={regName} onChange={e => setRegName(e.target.value)}
+              />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700">密碼</label>
-              <div className="relative">
-                <input type={showRegPw ? 'text' : 'password'} required minLength={8} className="w-full mt-1 p-2 border rounded-md" placeholder="至少8位，含大小寫英文、數字與特殊符號" value={regPassword} onChange={e => setRegPassword(e.target.value)} />
-                <button type="button" className="absolute right-2 top-3 text-slate-400" onClick={() => setShowRegPw(v => !v)}>
-                  {showRegPw ? <EyeOff size={20} /> : <Eye size={20} />}
+            <div className="login-field">
+              <label className="login-label">密碼</label>
+              <div className="login-input-wrap">
+                <input
+                  type={showRegPw ? 'text' : 'password'} required minLength={8} autoComplete="new-password"
+                  className="login-input login-input-pw"
+                  placeholder="至少 8 位，含大小寫英文與數字"
+                  value={regPassword} onChange={e => setRegPassword(e.target.value)}
+                />
+                <button type="button" className="login-pw-toggle" onClick={() => setShowRegPw(v => !v)} aria-label="切換密碼顯示">
+                  {showRegPw ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
             </div>
-            {regError && <div className="text-red-500 text-sm">{regError}</div>}
-            <button type="submit" className="w-full py-2 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700" disabled={loading}>{loading ? '註冊中...' : '立即註冊'}</button>
-            <p className="text-center text-sm text-slate-600">
-              已有帳號？ <button type="button" className="text-blue-600 font-medium" onClick={() => { setForm('login'); setRegError(''); }}>返回登入</button>
-            </p>
+            {regError && <p className="login-error" role="alert">{regError}</p>}
+            <button type="submit" className="login-btn-primary" disabled={loading}>
+              {loading ? '註冊中…' : '立即註冊'}
+            </button>
           </form>
         )}
       </div>
     </div>
+  );
+}
+
+function GoogleIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
+      <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/>
+      <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/>
+      <path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/>
+      <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/>
+    </svg>
   );
 }

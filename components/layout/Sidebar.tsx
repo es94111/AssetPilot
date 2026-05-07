@@ -2,32 +2,50 @@
 
 import { usePathname, useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { Gauge, Receipt, ChartBar, Wallet, Building2, Tags, Repeat, Briefcase, Key, User, Shield, Database, LayoutDashboard, Settings } from 'lucide-react';
+import {
+  LayoutDashboard, Receipt, ChartBar, Wallet, Building2, Tags, Repeat,
+  Briefcase, Key, User, Shield, Database, LogOut, TrendingUp, Coins,
+  BarChart3, Settings2,
+} from 'lucide-react';
 
-const NAV_ITEMS = [
-  { path: '/dashboard', label: '儀表板', icon: LayoutDashboard, requireAdmin: false },
-  { path: '/finance/transactions', label: '交易記錄', icon: Receipt, requireAdmin: false },
-  { path: '/finance/reports', label: '統計報表', icon: ChartBar, requireAdmin: false },
-  { path: '/finance/budget', label: '預算管理', icon: Wallet, requireAdmin: false },
-  { path: '/finance/accounts', label: '帳戶管理', icon: Building2, requireAdmin: false },
-  { path: '/finance/categories', label: '分類管理', icon: Tags, requireAdmin: false },
-  { path: '/finance/recurring', label: '固定收支', icon: Repeat, requireAdmin: false },
-  { path: '/stocks/portfolio', label: '持股總覽', icon: Briefcase, requireAdmin: false },
-  { path: '/stocks/transactions', label: '股票交易紀錄', icon: Receipt, requireAdmin: false },
-  { path: '/stocks/dividends', label: '股利紀錄', icon: Wallet, requireAdmin: false },
-  { path: '/stocks/realized', label: '實現損益', icon: ChartBar, requireAdmin: false },
-  { path: '/stocks/settings', label: '股票設定', icon: Key, requireAdmin: false },
-  { path: '/settings/export', label: '資料匯出匯入', icon: Database, requireAdmin: false },
-  { path: '/settings/account', label: '帳號設定', icon: User, requireAdmin: false },
-  { path: '/settings/admin', label: '管理員', icon: Shield, requireAdmin: true },
-  { path: '/api-credits', label: 'API 使用與授權', icon: Key, requireAdmin: false },
+const NAV_SECTIONS = [
+  {
+    label: '財務管理',
+    items: [
+      { path: '/dashboard',            label: '儀表板',    icon: LayoutDashboard },
+      { path: '/finance/transactions', label: '交易記錄',  icon: Receipt },
+      { path: '/finance/reports',      label: '統計報表',  icon: ChartBar },
+      { path: '/finance/budget',       label: '預算管理',  icon: Wallet },
+      { path: '/finance/accounts',     label: '帳戶管理',  icon: Building2 },
+      { path: '/finance/categories',   label: '分類管理',  icon: Tags },
+      { path: '/finance/recurring',    label: '固定收支',  icon: Repeat },
+    ],
+  },
+  {
+    label: '股票投資',
+    items: [
+      { path: '/stocks/portfolio',     label: '持股總覽',      icon: Briefcase },
+      { path: '/stocks/transactions',  label: '股票交易紀錄',  icon: TrendingUp },
+      { path: '/stocks/dividends',     label: '股利紀錄',      icon: Coins },
+      { path: '/stocks/realized',      label: '實現損益',      icon: BarChart3 },
+      { path: '/stocks/settings',      label: '股票設定',      icon: Settings2 },
+    ],
+  },
+  {
+    label: '系統設定',
+    adminOnly: false,
+    items: [
+      { path: '/settings/export',  label: '資料匯出匯入', icon: Database },
+      { path: '/settings/account', label: '帳號設定',     icon: User },
+      { path: '/api-credits',      label: 'API 授權',     icon: Key },
+      { path: '/settings/admin',   label: '管理員',       icon: Shield, requireAdmin: true },
+    ],
+  },
 ];
 
 export default function Sidebar({ user, open, onClose }: { user: any; open?: boolean; onClose?: () => void }) {
   const pathname = usePathname();
   const router = useRouter();
-
-  const visibleItems = NAV_ITEMS.filter(item => !item.requireAdmin || user?.isAdmin);
 
   async function handleLogout() {
     await fetch('/api/auth/logout', { method: 'POST' });
@@ -42,52 +60,85 @@ export default function Sidebar({ user, open, onClose }: { user: any; open?: boo
   }
 
   return (
-    <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-slate-200 flex flex-col h-full transform transition-transform duration-200 lg:static lg:translate-x-0 ${open ? 'translate-x-0' : '-translate-x-full'}`}>
-      <div className="p-4 border-b">
-        <div className="flex items-center gap-2 font-bold text-lg">
-          <Image src="/favicon.svg" alt="" width={28} height={28} />
-          <span>AssetPilot</span>
-        </div>
+    <aside
+      className={`fixed inset-y-0 left-0 z-50 flex h-full w-64 flex-col transform transition-transform duration-200 lg:static lg:translate-x-0 ${open ? 'translate-x-0' : '-translate-x-full'}`}
+      style={{ background: 'var(--surface)', borderRight: '1px solid var(--border)' }}
+    >
+      {/* Logo */}
+      <div className="flex items-center gap-2.5 px-5 py-4" style={{ borderBottom: '1px solid var(--border)' }}>
+        <Image src="/favicon.svg" alt="" width={28} height={28} />
+        <span className="text-lg font-bold tracking-tight" style={{ color: 'var(--text)' }}>AssetPilot</span>
       </div>
 
-      <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-        {visibleItems.map(item => {
-          const Icon = item.icon;
-          const active = pathname === item.path || (item.path !== '/dashboard' && pathname.startsWith(item.path));
+      {/* Nav */}
+      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-5">
+        {NAV_SECTIONS.map(section => {
+          const visibleItems = section.items.filter(item => !(item as any).requireAdmin || user?.isAdmin);
+          if (visibleItems.length === 0) return null;
           return (
-            <button
-              key={item.path}
-              onClick={() => handleNavigate(item.path)}
-              className={`flex items-center gap-3 w-full p-2 rounded-lg transition-colors ${
-                active ? 'bg-blue-50 text-blue-700' : 'text-slate-600 hover:bg-slate-100'
-              }`}
-            >
-              <Icon size={20} />
-              <span>{item.label}</span>
-            </button>
+            <div key={section.label}>
+              <p className="mb-1.5 px-2 text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>
+                {section.label}
+              </p>
+              <div className="space-y-0.5">
+                {visibleItems.map(item => {
+                  const Icon = item.icon;
+                  const active = pathname === item.path || (item.path !== '/dashboard' && pathname.startsWith(item.path));
+                  return (
+                    <button
+                      key={item.path}
+                      onClick={() => handleNavigate(item.path)}
+                      className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150 cursor-pointer"
+                      style={active
+                        ? { background: 'var(--primary-light-bg)', color: 'var(--primary)' }
+                        : { color: 'var(--text-secondary)' }
+                      }
+                      onMouseEnter={e => { if (!active) (e.currentTarget as HTMLElement).style.background = 'var(--border)'; }}
+                      onMouseLeave={e => { if (!active) (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
+                    >
+                      <Icon size={17} strokeWidth={active ? 2.2 : 1.8} />
+                      <span>{item.label}</span>
+                      {active && (
+                        <span className="ml-auto h-1.5 w-1.5 rounded-full" style={{ background: 'var(--primary)' }} />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           );
         })}
       </nav>
 
-      <div className="p-4 border-t space-y-4">
-        <div className="flex items-center gap-2 text-sm text-slate-600">
-          <User size={16} />
-          <span>{user?.displayName || user?.email || '使用者'}</span>
+      {/* User footer */}
+      <div className="px-3 pb-4" style={{ borderTop: '1px solid var(--border)', paddingTop: '12px' }}>
+        <div className="mb-2 flex items-center gap-3 rounded-lg px-3 py-2">
+          <div
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold"
+            style={{ background: 'var(--primary-light-bg)', color: 'var(--primary)' }}
+          >
+            {(user?.displayName || user?.email || 'U')[0].toUpperCase()}
+          </div>
+          <div className="min-w-0">
+            <p className="truncate text-sm font-medium" style={{ color: 'var(--text)' }}>
+              {user?.displayName || '使用者'}
+            </p>
+            <p className="truncate text-xs" style={{ color: 'var(--text-muted)' }}>
+              {user?.email || ''}
+            </p>
+          </div>
         </div>
-        <Button variant="ghost" className="w-full justify-start text-red-600" onClick={handleLogout}>
-          登出
-        </Button>
+        <button
+          onClick={handleLogout}
+          className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-150 cursor-pointer"
+          style={{ color: 'var(--danger)' }}
+          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--danger-bg)'; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
+        >
+          <LogOut size={17} strokeWidth={1.8} />
+          <span>登出</span>
+        </button>
       </div>
     </aside>
   );
-}
-
-// Minimal Button component for sidebar logout
-function Button({ variant = 'default', className = '', ...props }: any) {
-  const base = "px-4 py-2 rounded-md font-medium transition-colors";
-  const variants = {
-    default: "bg-blue-600 text-white hover:bg-blue-700",
-    ghost: "bg-transparent hover:bg-slate-100",
-  };
-  return <button className={`${base} ${variants[variant as keyof typeof variants]} ${className}`} {...props} />;
 }

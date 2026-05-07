@@ -40,6 +40,21 @@ const nextConfig = {
   eslint: { ignoreDuringBuilds: false },
   // Next.js 15 起 instrumentation.js 為穩定 API，無需 experimental.instrumentationHook
 
+  // instrumentation.ts 會被編譯給 nodejs 與 edge 兩個 runtime；
+  // edge 環境不提供 path/fs/crypto，設 fallback:false 讓 webpack 不拋錯。
+  // 實際執行時這些模組只在 NEXT_RUNTIME==='nodejs' 時才被呼叫。
+  webpack(config, { nextRuntime }) {
+    if (nextRuntime !== 'nodejs') {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        path: false,
+        fs: false,
+        crypto: false,
+      };
+    }
+    return config;
+  },
+
   async headers() {
     return [
       // 靜態資源長期快取（Next.js 以 hash 保證版本一致性）

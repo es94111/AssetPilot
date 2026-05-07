@@ -53,7 +53,22 @@ export default function AccountsClient() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [repaymentOpen, setRepaymentOpen] = useState(false);
   const [repaymentForm, setRepaymentForm] = useState({ ...EMPTY_REPAYMENT, date: new Date().toISOString().slice(0, 10) });
+  const [fxRates, setFxRates] = useState<{ currency: string; rateToTwd: number }[]>([]);
+  const [fxSettings, setFxSettings] = useState<{ autoUpdate: boolean; lastSyncedAt?: number }>({ autoUpdate: false });
+  const [newFxCurrency, setNewFxCurrency] = useState('');
+  const [newFxRate, setNewFxRate] = useState('');
+  const [fxSaving, setFxSaving] = useState(false);
+  const [fxMsg, setFxMsg] = useState('');
+  const [fxSyncing, setFxSyncing] = useState(false);
   const [repaymentError, setRepaymentError] = useState('');
+
+  const loadFxRates = useCallback(async () => {
+    try {
+      const data = await apiGet('/api/exchange-rates');
+      setFxRates(data.rates || []);
+      setFxSettings(data.settings || { autoUpdate: false });
+    } catch (_) {}
+  }, []);
 
   const load = useCallback(async () => {
     try {
@@ -65,7 +80,7 @@ export default function AccountsClient() {
     setLoading(false);
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { load(); loadFxRates(); }, [load, loadFxRates]);
 
   const bankAccounts = useMemo(() => accounts.filter((account) => account.category === 'bank'), [accounts]);
   const creditAccounts = useMemo(() => accounts.filter((account) => account.category === 'credit_card'), [accounts]);
@@ -77,6 +92,11 @@ export default function AccountsClient() {
     });
     return Array.from(map.values());
   }, [bankAccounts, creditAccounts]);
+
+  const filteredRepaymentCards = useMemo(() =>
+    creditAccounts.filter((c) => c.linkedBankId === repaymentForm.fromAccountId),
+    [creditAccounts, repaymentForm.fromAccountId]
+  );
 
   const ungroupedAccounts = useMemo(() => {
     const linkedCreditIds = new Set(creditAccounts.filter((card) => card.linkedBankId).map((card) => card.id));
@@ -148,6 +168,55 @@ export default function AccountsClient() {
     } catch (e: any) {
       setRepaymentError(e.message);
     }
+  }
+
+  async function handleFxAdd(e: React.FormEvent) {
+    e.preventDefault();
+    const currency = newFxCurrency.trim().toUpperCase();
+    const rate = Number(newFxRate);
+    if (!currency || !/^[A-Z]{3}$/.test(currency)) { setFxMsg('幣別格式錯誤（需為 3 碼英文字母）'); return; }
+    if (!(rate > 0)) { setFxMsg('請輸入有效匯率'); return; }
+    setFxSaving(true);
+    setFxMsg('');
+    try {
+      const existing = fxRates.filter((r) => r.currency !== currency && r.currency !== 'TWD');
+      const data = await apiPut('/api/exchange-rates', { rates: [...existing, { currency, rateToTwd: rate }] });
+      setFxRates(data.rates || []);
+      setFxSettings(data.settings || fxSettings);
+      setNewFxCurrency('');
+      setNewFxRate('');
+      setFxMsg('已儲存');
+    } catch (e: any) { setFxMsg(e.message || '儲存失敗'); }
+    setFxSaving(false);
+  }
+
+  async function handleFxDelete(currency: string) {
+    setFxSaving(true);
+    setFxMsg('');
+    try {
+      await apiDelete(`/api/exchange-rates/${currency}`);
+      setFxRates((prev) => prev.filter((r) => r.currency !== currency));
+    } catch (e: any) { setFxMsg(e.message || '刪除失敗'); }
+    setFxSaving(false);
+  }
+
+  async function handleFxAutoUpdate(enabled: boolean) {
+    try {
+      await apiPut('/api/exchange-rates/settings', { autoUpdate: enabled });
+      setFxSettings((s) => ({ ...s, autoUpdate: enabled }));
+    } catch (_) {}
+  }
+
+  async function handleFxSync() {
+    setFxSyncing(true);
+    setFxMsg('');
+    try {
+      const data = await apiPost('/api/exchange-rates/refresh', { currencies: fxRates.filter((r) => r.currency !== 'TWD').map((r) => r.currency) });
+      setFxRates(data.rates || []);
+      setFxSettings(data.settings || fxSettings);
+      setFxMsg(data.message || '匯率已更新');
+    } catch (e: any) { setFxMsg(e.message || '同步失敗'); }
+    setFxSyncing(false);
   }
 
   const totalAssets = accounts.filter((account) => !account.excludeFromTotal).reduce((sum, account) => sum + (Number(account.twdAccumulated) || 0), 0);
@@ -238,7 +307,19 @@ export default function AccountsClient() {
         </Dialog>
 
         {creditAccounts.length > 0 && (
-          <Button variant="outline" onClick={() => { setRepaymentForm({ ...EMPTY_REPAYMENT, date: new Date().toISOString().slice(0, 10), fromAccountId: bankAccounts[0]?.id || '', repayments: Object.fromEntries(creditAccounts.map((account) => [account.id, ''])) }); setRepaymentError(''); setRepaymentOpen(true); }}>
+          <Button variant="outline" onClick={() => {
+            const firstBankId = bankAccounts[0]?.id || '';
+            setRepaymentForm({
+              ...EMPTY_REPAYMENT,
+              date: new Date().toISOString().slice(0, 10),
+              fromAccountId: firstBankId,
+              repayments: Object.fromEntries(
+                creditAccounts.filter((c) => c.linkedBankId === firstBankId).map((c) => [c.id, ''])
+              ),
+            });
+            setRepaymentError('');
+            setRepaymentOpen(true);
+          }}>
             信用卡還款
           </Button>
         )}
@@ -281,10 +362,18 @@ export default function AccountsClient() {
               <Button variant="ghost" onClick={() => setRepaymentOpen(false)}>關閉</Button>
             </div>
             <form onSubmit={handleRepaymentSubmit} className="space-y-4">
-              <Select label="付款帳戶" options={bankAccounts.map((bank) => ({ label: bank.name, value: bank.id }))} value={repaymentForm.fromAccountId} onChange={(e) => setRepaymentForm((current) => ({ ...current, fromAccountId: e.target.value }))} />
+              <Select label="付款帳戶" options={bankAccounts.map((bank) => ({ label: bank.name, value: bank.id }))} value={repaymentForm.fromAccountId} onChange={(e) => setRepaymentForm((current) => ({
+                ...current,
+                fromAccountId: e.target.value,
+                repayments: Object.fromEntries(
+                  creditAccounts.filter((c) => c.linkedBankId === e.target.value).map((c) => [c.id, ''])
+                ),
+              }))} />
               <Input label="還款日期" type="date" value={repaymentForm.date} onChange={(e) => setRepaymentForm((current) => ({ ...current, date: e.target.value }))} />
               <div className="space-y-3">
-                {creditAccounts.map((account) => (
+                {filteredRepaymentCards.length === 0 ? (
+                  <p className="text-sm text-slate-500">此銀行沒有關聯的信用卡</p>
+                ) : filteredRepaymentCards.map((account) => (
                   <div key={account.id} className="grid grid-cols-[1fr_160px] gap-3 items-center">
                     <div>
                       <div className="font-medium">{account.name}</div>
@@ -316,6 +405,71 @@ export default function AccountsClient() {
           </div>
         </div>
       )}
+
+      {/* 匯率管理 */}
+      <section className="p-6 bg-white border border-slate-200 rounded-lg shadow-sm space-y-4">
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <h3 className="text-lg font-semibold">匯率管理</h3>
+          <div className="flex items-center gap-3 flex-wrap">
+            <label className="flex items-center gap-2 text-sm cursor-pointer">
+              <input type="checkbox" checked={fxSettings.autoUpdate} onChange={(e) => handleFxAutoUpdate(e.target.checked)} className="w-4 h-4" />
+              自動更新匯率
+            </label>
+            <Button variant="outline" size="sm" onClick={handleFxSync} disabled={fxSyncing}>
+              {fxSyncing ? '同步中...' : '立即同步'}
+            </Button>
+          </div>
+        </div>
+        {fxSettings.lastSyncedAt && (
+          <p className="text-xs text-slate-500">上次同步：{new Date(fxSettings.lastSyncedAt).toLocaleString('zh-TW')}</p>
+        )}
+        {fxRates.filter((r) => r.currency !== 'TWD').length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b text-slate-500 text-left">
+                  <th className="pb-2 pr-6">幣別</th>
+                  <th className="pb-2 pr-6">1 單位 = TWD</th>
+                  <th className="pb-2"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {fxRates.filter((r) => r.currency !== 'TWD').map((r) => (
+                  <tr key={r.currency} className="border-b last:border-0">
+                    <td className="py-2 pr-6 font-medium">{r.currency}</td>
+                    <td className="py-2 pr-6">{r.rateToTwd}</td>
+                    <td className="py-2">
+                      <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-700 h-7 px-2" onClick={() => handleFxDelete(r.currency)} disabled={fxSaving}>刪除</Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p className="text-sm text-slate-500">尚未設定任何外幣匯率</p>
+        )}
+        <form onSubmit={handleFxAdd} className="flex flex-wrap gap-2 items-end">
+          <div className="flex flex-col gap-1">
+            <label className="text-xs text-slate-500">幣別（如 USD）</label>
+            <input
+              type="text" maxLength={3} placeholder="USD"
+              className="w-24 px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              value={newFxCurrency} onChange={(e) => setNewFxCurrency(e.target.value.toUpperCase())}
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs text-slate-500">對 TWD 匯率</label>
+            <input
+              type="number" min="0.0001" step="0.0001" placeholder="32.5"
+              className="w-32 px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              value={newFxRate} onChange={(e) => setNewFxRate(e.target.value)}
+            />
+          </div>
+          <Button type="submit" size="sm" disabled={fxSaving}>新增 / 更新</Button>
+        </form>
+        {fxMsg && <p className={`text-sm ${fxMsg.includes('失敗') || fxMsg.includes('錯誤') ? 'text-red-500' : 'text-green-600'}`}>{fxMsg}</p>}
+      </section>
     </div>
   );
 }

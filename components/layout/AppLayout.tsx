@@ -33,7 +33,7 @@ export default function AppLayout({ user, children }: { user: any; children: Rea
 
   return (
     <div className="flex h-screen bg-slate-50">
-      <Sidebar user={user} />
+      <Sidebar user={user} open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       {sidebarOpen && (
         <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
       )}

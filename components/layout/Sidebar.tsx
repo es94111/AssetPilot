@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Gauge, Receipt, ChartBar, Wallet, Building2, Tags, Repeat, Briefcase, Key, User, Shield, Database, LayoutDashboard, Settings } from 'lucide-react';
@@ -24,7 +23,7 @@ const NAV_ITEMS = [
   { path: '/api-credits', label: 'API 使用與授權', icon: Key, requireAdmin: false },
 ];
 
-export default function Sidebar({ user }: { user: any }) {
+export default function Sidebar({ user, open, onClose }: { user: any; open?: boolean; onClose?: () => void }) {
   const pathname = usePathname();
   const router = useRouter();
 
@@ -32,12 +31,18 @@ export default function Sidebar({ user }: { user: any }) {
 
   async function handleLogout() {
     await fetch('/api/auth/logout', { method: 'POST' });
+    onClose?.();
     router.push('/login');
     router.refresh();
   }
 
+  function handleNavigate(path: string) {
+    onClose?.();
+    router.push(path);
+  }
+
   return (
-    <aside className="w-64 bg-white border-r border-slate-200 flex flex-col h-full">
+    <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-slate-200 flex flex-col h-full transform transition-transform duration-200 lg:static lg:translate-x-0 ${open ? 'translate-x-0' : '-translate-x-full'}`}>
       <div className="p-4 border-b">
         <div className="flex items-center gap-2 font-bold text-lg">
           <Image src="/favicon.svg" alt="" width={28} height={28} />
@@ -52,7 +57,7 @@ export default function Sidebar({ user }: { user: any }) {
           return (
             <button
               key={item.path}
-              onClick={() => router.push(item.path)}
+              onClick={() => handleNavigate(item.path)}
               className={`flex items-center gap-3 w-full p-2 rounded-lg transition-colors ${
                 active ? 'bg-blue-50 text-blue-700' : 'text-slate-600 hover:bg-slate-100'
               }`}

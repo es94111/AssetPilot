@@ -453,8 +453,6 @@ async function _runMigrations(): Promise<void> {
 
   alterIgnore("ALTER TABLE stock_transactions ADD COLUMN realized_pl REAL DEFAULT 0");
 
-  const path = getPathModule();
-  const fs = getFsModule();
   const backupsDir = path.join(process.cwd(), 'backups');
   if (!fs.existsSync(backupsDir)) fs.mkdirSync(backupsDir, { recursive: true });
 

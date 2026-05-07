@@ -6,8 +6,8 @@ import StocksTabNav from '@/components/features/stocks/StocksTabNav';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from '@/components/ui/dialog';
-import { Plus, Trash2, Edit3, Pause, Play, CalendarClock, DollarSign, StickyNote, Repeat } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Plus, Trash2, Edit3, Pause, Play, StickyNote } from 'lucide-react';
 
 const FREQ_LABELS: Record<string, string> = { daily: '每日', weekly: '每週', monthly: '每月', yearly: '每年' };
 const EMPTY_FORM = { type: 'expense', amount: '', currency: 'TWD', fxRate: '1', categoryId: '', accountId: '', frequency: 'monthly', startDate: '', note: '' };
@@ -21,6 +21,7 @@ export default function RecurringClient(_props: { user?: any } = {}) {
   const [accounts, setAccounts] = useState<any[]>([]);
   const [form, setForm] = useState(EMPTY_FORM);
   const [editId, setEditId] = useState<string | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState('');
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -79,10 +80,9 @@ export default function RecurringClient(_props: { user?: any } = {}) {
     <div className="space-y-6">
       <h2 className="text-2xl font-bold">固定收支</h2>
 
-      <Dialog>
-        <DialogTrigger asChild>
-          <Button onClick={() => { setForm({ ...EMPTY_FORM, startDate: new Date().toISOString().slice(0, 10) }); setEditId(null); setFormError(''); }}><Plus size={16} className="mr-2" /> 新增固定收支</Button>
-        </DialogTrigger>
+      <Button onClick={() => { setForm({ ...EMPTY_FORM, startDate: new Date().toISOString().slice(0, 10) }); setEditId(null); setFormError(''); setDialogOpen(true); }}><Plus size={16} className="mr-2" /> 新增固定收支</Button>
+
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
           <DialogHeader><DialogTitle>{editId ? '編輯固定收支' : '新增固定收支'}</DialogTitle></DialogHeader>
           <form onSubmit={handleSave} className="space-y-4">
@@ -96,7 +96,10 @@ export default function RecurringClient(_props: { user?: any } = {}) {
             <Input label="起始日期" type="date" value={form.startDate} onChange={e => setForm(f => ({ ...f, startDate: e.target.value }))} />
             <Input label="備註" value={form.note} onChange={e => setForm(f => ({ ...f, note: e.target.value }))} />
             {formError && <p className="text-red-500 text-sm">{formError}</p>}
-            <DialogClose asChild><Button type="submit" disabled={saving}>儲存</Button></DialogClose>
+            <div className="flex gap-2">
+              <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>取消</Button>
+              <Button type="submit" disabled={saving}>儲存</Button>
+            </div>
           </form>
         </DialogContent>
       </Dialog>
@@ -112,7 +115,7 @@ export default function RecurringClient(_props: { user?: any } = {}) {
                   <span className={`px-2 py-1 rounded text-xs ${r.type === 'income' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>{r.type === 'income' ? '收入' : '支出'}</span>
                   <div className="flex gap-1">
                     <Button variant="ghost" size="icon" onClick={() => handleToggle(r.id)}>{r.isActive ? <Pause size={16} /> : <Play size={16} />}</Button>
-                    <Button variant="ghost" size="icon" onClick={() => { setForm({ ...r, categoryId: r.category_id || r.categoryId, accountId: r.account_id || r.accountId, startDate: r.startDate || r.start_date }); setEditId(r.id); }}><Edit3 size={16} /></Button>
+                    <Button variant="ghost" size="icon" onClick={() => { setForm({ ...r, categoryId: r.category_id || r.categoryId, accountId: r.account_id || r.accountId, startDate: r.startDate || r.start_date }); setEditId(r.id); setFormError(''); setDialogOpen(true); }}><Edit3 size={16} /></Button>
                     <Button variant="ghost" size="icon" className="text-red-500" onClick={() => setDeleteId(r.id)}><Trash2 size={16} /></Button>
                   </div>
                 </div>

@@ -101,8 +101,25 @@ export async function DELETE(request, { params }) {
     return NextResponse.json({ error: '分類不存在或無權限', code: 'NotFound' }, { status: 404 });
   }
 
+  const ownTx = queryOne('SELECT id FROM transactions WHERE user_id = ? AND category_id = ? LIMIT 1', [auth.userId, id]);
+  if (ownTx) {
+    return NextResponse.json({ error: '此子分類已有交易紀錄，不可刪除' }, { status: 400 });
+  }
+
   const childRows = queryAll('SELECT id FROM categories WHERE user_id = ? AND parent_id = ?', [auth.userId, id]);
   const childIds = childRows.map(row => row.id);
+
+  if (childIds.length > 0) {
+    const placeholders = childIds.map(() => '?').join(', ');
+    const childTx = queryOne(
+      `SELECT category_id FROM transactions WHERE user_id = ? AND category_id IN (${placeholders}) LIMIT 1`,
+      [auth.userId, ...childIds]
+    );
+    if (childTx) {
+      return NextResponse.json({ error: '子分類已有交易紀錄，父分類不可刪除' }, { status: 400 });
+    }
+  }
+
   const idsToDelete = [id, ...childIds];
   const db = getDB();
   db.run('BEGIN');

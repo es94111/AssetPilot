@@ -133,6 +133,7 @@ export default function LoginPage() {
       {/* Decorative blobs */}
       <div className="login-blob login-blob-1" />
       <div className="login-blob login-blob-2" />
+      <div className="login-blob login-blob-3" />
 
       <div className="login-card">
         {/* Brand header */}

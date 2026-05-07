@@ -31,7 +31,7 @@ export default function AppLayout({ user, children }: { user: any; children: Rea
   const title = PAGE_TITLES[pathname] || 'AssetPilot';
 
   return (
-    <div className="flex h-screen" style={{ background: 'var(--bg)' }}>
+    <div className="flex h-screen" style={{ background: 'var(--app-bg)' }}>
       <Sidebar user={user} open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       {sidebarOpen && (
         <div

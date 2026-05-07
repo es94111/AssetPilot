@@ -6,7 +6,7 @@ export default function TopNav({ title, onMenuClick }: { title: string; onMenuCl
   return (
     <header
       className="sticky top-0 z-30 flex items-center gap-3 px-4 py-3 lg:hidden"
-      style={{ background: 'var(--surface)', borderBottom: '1px solid var(--border)' }}
+      style={{ background: 'var(--surface-glass)', borderBottom: '1px solid var(--glass-border)', backdropFilter: 'var(--glass-blur)', WebkitBackdropFilter: 'var(--glass-blur)' }}
     >
       <button
         className="flex h-9 w-9 items-center justify-center rounded-lg transition-colors duration-150 cursor-pointer"

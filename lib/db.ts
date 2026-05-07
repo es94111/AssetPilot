@@ -2,22 +2,9 @@
 // 開發模式：globalThis.__sqlDb 防止 HMR 重複初始化
 // 生產模式：模組層級 _db（initDB() 負責設值）
 
-// Next.js 會在 build 階段載入 route module；將 Node 內建模組載入延後到函式內，避免 top-level require 在 ESM 環境炸掉。
-function getRuntimeRequire(): NodeRequire {
-  return Function('return require')() as NodeRequire;
-}
-
-function getPathModule(): typeof import('path') {
-  return getRuntimeRequire()('path') as typeof import('path');
-}
-
-function getFsModule(): typeof import('fs') {
-  return getRuntimeRequire()('fs') as typeof import('fs');
-}
-
-function getCryptoModule(): typeof import('crypto') {
-  return getRuntimeRequire()('crypto') as typeof import('crypto');
-}
+import path from 'node:path';
+import fs from 'node:fs';
+import crypto from 'node:crypto';
 
 // ── sql.js 最小型別宣告（套件本身無 .d.ts）──
 interface SqlJsStatement {
@@ -47,7 +34,7 @@ declare global {
 const DB_ENCRYPTION_KEY = process.env.DB_ENCRYPTION_KEY || '';
 
 function getDbPath(): string {
-  return process.env.DB_PATH || getPathModule().join(process.cwd(), 'database.db');
+  return process.env.DB_PATH || path.join(process.cwd(), 'database.db');
 }
 
 // ── 加密工具（ChaCha20-Poly1305 AEAD）──
@@ -55,12 +42,10 @@ function getDbPath(): string {
 const ENC_MAGIC = Buffer.from('EADB');
 
 function deriveKey(passphrase: string, salt: Buffer): Buffer {
-  const crypto = getCryptoModule();
   return crypto.pbkdf2Sync(passphrase, salt, 100000, 32, 'sha256');
 }
 
 export function encryptBuffer(plainBuffer: Buffer, passphrase: string): Buffer {
-  const crypto = getCryptoModule();
   const salt = crypto.randomBytes(16);
   const key = deriveKey(passphrase, salt);
   const nonce = crypto.randomBytes(12);
@@ -71,7 +56,6 @@ export function encryptBuffer(plainBuffer: Buffer, passphrase: string): Buffer {
 }
 
 export function decryptBuffer(encBuffer: Buffer, passphrase: string): Buffer {
-  const crypto = getCryptoModule();
   if (encBuffer.length < 48) throw new Error('加密檔案格式錯誤：檔案太小');
   const magic = encBuffer.subarray(0, 4);
   if (!magic.equals(ENC_MAGIC)) throw new Error('非加密資料庫檔案');
@@ -96,7 +80,6 @@ let saveInFlight = false;
 let savePending = false;
 
 export function saveDB(): void {
-  const fs = getFsModule();
   const dbPath = getDbPath();
   if (saveInFlight) { savePending = true; return; }
   saveInFlight = true;
@@ -121,7 +104,6 @@ export function saveDB(): void {
 }
 
 export function saveDBSync(): void {
-  const fs = getFsModule();
   const dbPath = getDbPath();
   const data = _db!.export();
   const plain = Buffer.from(data);
@@ -135,10 +117,8 @@ export const flushOnExit = (): void => { try { saveDBSync(); } catch { /* noop *
 export async function initDB(): Promise<void> {
   if (_db) return;
 
-  const path = getPathModule();
-  const fs = getFsModule();
   const dbPath = getDbPath();
-  const initSqlJs = getRuntimeRequire()('sql.js') as (opts: { locateFile: (f: string) => string }) => Promise<SqlJsStatic>;
+  const { default: initSqlJs } = await import('sql.js') as unknown as { default: (opts: { locateFile: (f: string) => string }) => Promise<SqlJsStatic> };
   const SQL = await initSqlJs({
     locateFile: (file) => path.join(process.cwd(), 'node_modules', 'sql.js', 'dist', file),
   });

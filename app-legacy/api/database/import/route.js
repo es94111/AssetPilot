@@ -59,9 +59,8 @@ export async function POST(request) {
     }
 
     // 驗證必要資料表（不直接用主DB）
-    const initSqlJs = (await import('sql.js')).default;
-    const SQL = await initSqlJs();
-    const testDb = new SQL.Database(new Uint8Array(dbBuffer));
+    const SqlJsDatabase = getDB().constructor;
+    const testDb = new SqlJsDatabase(new Uint8Array(dbBuffer));
     const tables = testDb.exec("SELECT name FROM sqlite_master WHERE type='table'");
     const tableNames = tables.length > 0 ? tables[0].values.map(r => r[0]) : [];
     const requiredTables = ['users', 'transactions', 'accounts', 'categories', 'stocks'];

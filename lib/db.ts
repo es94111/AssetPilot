@@ -360,15 +360,19 @@ async function _runMigrations(): Promise<void> {
   db.run(`CREATE TABLE IF NOT EXISTS recurring (
     id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL,
-    name TEXT NOT NULL,
     type TEXT NOT NULL,
     amount REAL NOT NULL,
     currency TEXT DEFAULT 'TWD',
+    fx_rate REAL DEFAULT 1,
     category_id TEXT,
     account_id TEXT,
-    freq TEXT NOT NULL,
-    next_date TEXT,
+    frequency TEXT NOT NULL,
+    start_date TEXT,
+    note TEXT DEFAULT '',
     is_active INTEGER DEFAULT 1,
+    last_generated TEXT,
+    needs_attention INTEGER DEFAULT 0,
+    updated_at INTEGER DEFAULT 0,
     created_at INTEGER
   )`);
 
@@ -428,6 +432,19 @@ async function _runMigrations(): Promise<void> {
     updated_at INTEGER
   )`);
 
+  db.run(`CREATE TABLE IF NOT EXISTS stock_settings (
+    user_id TEXT PRIMARY KEY,
+    fee_rate REAL DEFAULT 0.001425,
+    fee_discount REAL DEFAULT 1,
+    fee_min_lot INTEGER DEFAULT 20,
+    fee_min_odd INTEGER DEFAULT 1,
+    sell_tax_rate_stock REAL DEFAULT 0.003,
+    sell_tax_rate_etf REAL DEFAULT 0.001,
+    sell_tax_rate_warrant REAL DEFAULT 0.001,
+    sell_tax_min INTEGER DEFAULT 1,
+    updated_at INTEGER DEFAULT 0
+  )`);
+
   alterIgnore("ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'user'");
   alterIgnore("ALTER TABLE users ADD COLUMN is_admin INTEGER DEFAULT 0");
   alterIgnore("ALTER TABLE users ADD COLUMN timezone TEXT DEFAULT 'Asia/Taipei'");
@@ -439,6 +456,7 @@ async function _runMigrations(): Promise<void> {
   alterIgnore("ALTER TABLE users ADD COLUMN token_version INTEGER DEFAULT 0");
   alterIgnore("ALTER TABLE users ADD COLUMN passkey_credentials TEXT DEFAULT '[]'");
   alterIgnore("ALTER TABLE users ADD COLUMN updated_at INTEGER DEFAULT 0");
+  alterIgnore("ALTER TABLE users ADD COLUMN is_active INTEGER DEFAULT 1");
 
   alterIgnore("ALTER TABLE accounts ADD COLUMN type TEXT DEFAULT 'checking'");
   alterIgnore("ALTER TABLE accounts ADD COLUMN balance REAL DEFAULT 0");
@@ -447,11 +465,27 @@ async function _runMigrations(): Promise<void> {
   alterIgnore("ALTER TABLE accounts ADD COLUMN is_active INTEGER DEFAULT 1");
   alterIgnore("ALTER TABLE accounts ADD COLUMN updated_at INTEGER DEFAULT 0");
   alterIgnore("ALTER TABLE accounts ADD COLUMN note TEXT DEFAULT ''");
+  alterIgnore("ALTER TABLE accounts ADD COLUMN category TEXT DEFAULT ''");
+  alterIgnore("ALTER TABLE accounts ADD COLUMN exclude_from_total INTEGER DEFAULT 0");
+  alterIgnore("ALTER TABLE accounts ADD COLUMN linked_bank_id TEXT DEFAULT ''");
+  alterIgnore("ALTER TABLE accounts ADD COLUMN overseas_fee_rate REAL DEFAULT 0");
+  alterIgnore("ALTER TABLE accounts ADD COLUMN account_type TEXT DEFAULT ''");
 
   alterIgnore("ALTER TABLE transactions ADD COLUMN transfer_to_account_id TEXT DEFAULT ''");
   alterIgnore("ALTER TABLE transactions ADD COLUMN tags TEXT DEFAULT '[]'");
+  alterIgnore("ALTER TABLE transactions ADD COLUMN fx_fee REAL DEFAULT 0");
+  alterIgnore("ALTER TABLE transactions ADD COLUMN twd_amount REAL DEFAULT 0");
+  alterIgnore("ALTER TABLE transactions ADD COLUMN exclude_from_stats INTEGER DEFAULT 0");
+  alterIgnore("ALTER TABLE transactions ADD COLUMN source_recurring_id TEXT DEFAULT ''");
+  alterIgnore("ALTER TABLE transactions ADD COLUMN scheduled_date TEXT DEFAULT ''");
+
+  alterIgnore("ALTER TABLE budgets ADD COLUMN year_month TEXT DEFAULT ''");
+
+  alterIgnore("ALTER TABLE stocks ADD COLUMN current_price REAL DEFAULT 0");
+  alterIgnore("ALTER TABLE stocks ADD COLUMN stock_type TEXT DEFAULT 'stock'");
 
   alterIgnore("ALTER TABLE stock_transactions ADD COLUMN realized_pl REAL DEFAULT 0");
+  alterIgnore("ALTER TABLE login_attempt_logs ADD COLUMN country TEXT DEFAULT ''")
 
   const backupsDir = path.join(process.cwd(), 'backups');
   if (!fs.existsSync(backupsDir)) fs.mkdirSync(backupsDir, { recursive: true });

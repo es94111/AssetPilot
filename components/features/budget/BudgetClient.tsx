@@ -50,7 +50,7 @@ export default function BudgetClient(_props: { user?: any } = {}) {
     setSaving(true);
     setFormError('');
     try {
-      const body = { categoryId: form.categoryId || null, amount: Number(form.amount), period: form.period, month };
+      const body = { categoryId: form.categoryId || null, amount: Number(form.amount), period: form.period, yearMonth: month };
       if (editId) { await apiPut(`/api/budgets/${editId}`, body); }
       else { await apiPost('/api/budgets', body); }
       await load();

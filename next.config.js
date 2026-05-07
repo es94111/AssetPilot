@@ -1,5 +1,8 @@
 const path = require('path');
 
+// 修正：worktree 根目錄需明確指定，避免 Next.js 誤用父目錄的 package-lock.json
+const PROJECT_ROOT = __dirname;
+
 // ── Windows 非 ASCII 路徑相容修正 ──
 // @vercel/nft 在 standalone 輸出時呼叫 fs.readlink，若路徑非符號連結則回傳 EINVAL。
 // Windows 上非 ASCII 路徑會觸發此問題。將 EINVAL 轉換為 ENOENT，讓 nft 正常跳過。
@@ -33,6 +36,8 @@ if (process.platform === 'win32') {
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'standalone',
+  outputFileTracingRoot: PROJECT_ROOT,
+  allowedDevOrigins: ['127.0.0.1', 'localhost'],
   serverExternalPackages: ['sql.js'],
   distDir: 'build', // ASCII-only path
   // 保留 JS/TS 混用（由 tsconfig 的 allowJs 控制），但 build 需執行完整型別與 lint 檢查
@@ -44,6 +49,13 @@ const nextConfig = {
   // edge 環境不提供 path/fs/crypto，設 fallback:false 讓 webpack 不拋錯。
   // 實際執行時這些模組只在 NEXT_RUNTIME==='nodejs' 時才被呼叫。
   webpack(config, { nextRuntime }) {
+    // 強制 webpack 優先使用 worktree 的 node_modules，避免 Next.js workspace root 偵測錯誤
+    // 導致 client bundle 與 RSC server 使用不同的 next 路徑，造成 module ID 不一致
+    config.resolve.modules = [
+      path.resolve(PROJECT_ROOT, 'node_modules'),
+      'node_modules',
+    ];
+
     if (nextRuntime !== 'nodejs') {
       config.resolve.fallback = {
         ...config.resolve.fallback,
@@ -56,20 +68,23 @@ const nextConfig = {
   },
 
   async headers() {
+    const isDev = process.env.NODE_ENV !== 'production';
     return [
-      // 靜態資源長期快取（Next.js 以 hash 保證版本一致性）
-      {
-        source: '/_next/static/(.*)',
-        headers: [
-          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
-        ],
-      },
-      {
-        source: '/public/(.*)',
-        headers: [
-          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
-        ],
-      },
+      // 靜態資源長期快取（僅 production；dev mode 下 app-pages-internals.js 等無 hash 的 chunk 不可 immutable）
+      ...(!isDev ? [
+        {
+          source: '/_next/static/(.*)',
+          headers: [
+            { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+          ],
+        },
+        {
+          source: '/public/(.*)',
+          headers: [
+            { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+          ],
+        },
+      ] : []),
       // 全域安全標頭
       {
         source: '/(.*)',

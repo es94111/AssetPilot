@@ -3,9 +3,9 @@
   "configurations": [
     {
       "name": "dev",
-      "runtimeExecutable": "node_modules\\.bin\\next.cmd",
-      "runtimeArgs": ["dev"],
-      "port": 3000,
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "port": 3001,
       "autoPort": true
     }
   ]

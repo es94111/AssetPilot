@@ -54,7 +54,7 @@ export async function requireAuth(request?: any): Promise<ApiAuthResult | NextRe
 
 export async function fetchFromExpressApi(endpoint: string) {
   const session = await requireAuth();
-  const url = `http://localhost:3000${endpoint}`;
+  const url = `http://localhost:${process.env.PORT || 3000}${endpoint}`;
   
   const res = await fetch(url, {
     headers: {

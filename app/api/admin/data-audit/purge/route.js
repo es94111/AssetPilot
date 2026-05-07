@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '../../../../../lib/apiHelpers';
-import { getDB, queryOne, saveDB } from '../../../../../lib/db.js';
+import { getDB, queryOne, saveDB } from '../../../../../lib/db';
 
 export async function POST(request) {
   const auth = await requireAdmin(request);

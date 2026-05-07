@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '../../../../../lib/apiHelpers';
-import { getDB, saveDB } from '../../../../../lib/db.js';
+import { getDB, saveDB } from '../../../../../lib/db';
 
 function parseLoginLogTarget(rawId) {
   const s = String(rawId || '').trim();

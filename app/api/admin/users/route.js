@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { requireAdmin } from '../../../../lib/apiHelpers';
-import { getDB, queryOne, queryAll, saveDB } from '../../../../lib/db.js';
-import { isValidEmail, uid } from '../../../../lib/loginHelpers.js';
-import { createDefaultsForUser } from '../../../../lib/userDefaults.js';
+import { getDB, queryOne, queryAll, saveDB } from '../../../../lib/db';
+import { isValidEmail, uid } from '../../../../lib/loginHelpers';
+import { createDefaultsForUser } from '../../../../lib/userDefaults';
 
 function validateStrongPassword(password) {
   const p = String(password || '');

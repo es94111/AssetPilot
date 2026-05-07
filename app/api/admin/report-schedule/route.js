@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '../../../../lib/apiHelpers';
-import { getDB, queryOne, queryAll, saveDB } from '../../../../lib/db.js';
-import { uid } from '../../../../lib/loginHelpers.js';
+import { getDB, queryOne, queryAll, saveDB } from '../../../../lib/db';
+import { uid } from '../../../../lib/loginHelpers';
 
 const SCHEDULE_FREQ_VALUES = ['off', 'daily', 'weekly', 'monthly'];
 const REPORT_SCHEDULE_MAX_TARGETS = 50;

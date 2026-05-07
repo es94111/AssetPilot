@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '../../../../lib/apiHelpers';
-import { getDB, queryAll, saveDB } from '../../../../lib/db.js';
-import { fetchIpCountry } from '../../../../lib/loginHelpers.js';
+import { getDB, queryAll, saveDB } from '../../../../lib/db';
+import { fetchIpCountry } from '../../../../lib/loginHelpers';
 
 async function enrichAndPersistCountry(rows, tableName) {
   const db = getDB();

@@ -43,7 +43,7 @@ export async function POST(request) {
     return NextResponse.json({ error: registerCheck.error }, { status: 403 });
   }
 
-  const { queryOne } = await import('../../../../lib/db.js');
+  const { queryOne } = await import('../../../../lib/db');
   const existing = queryOne('SELECT id FROM users WHERE email = ?', [emailLower]);
   if (existing) {
     return NextResponse.json({ error: '此電子郵件已被註冊' }, { status: 400 });

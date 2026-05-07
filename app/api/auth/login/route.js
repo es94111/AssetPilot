@@ -65,7 +65,7 @@ export async function POST(request) {
   // 固定收支與股票定期定額觸發（非阻塞）
   setImmediate(async () => {
     try {
-      const { processRecurringForUser } = await import('../../../../lib/recurringHelpers.js');
+      const { processRecurringForUser } = await import('../../../../lib/recurringHelpers');
       processRecurringForUser(user.id);
     } catch (_) {}
     try {

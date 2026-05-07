@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '../../../../../lib/apiHelpers';
-import { getDB, queryOne, queryAll, saveDB } from '../../../../../lib/db.js';
+import { getDB, queryOne, queryAll, saveDB } from '../../../../../lib/db';
 
 export async function DELETE(request, { params }) {
   const auth = await requireAdmin(request);

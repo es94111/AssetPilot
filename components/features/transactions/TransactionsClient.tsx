@@ -5,7 +5,7 @@ import { apiGet, apiPost, apiPut, apiDelete } from '../../../lib/clientApi';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 
-const EMPTY_FORM = { date: '', type: 'expense', amount: '', categoryId: '', accountId: '', note: '', excludeFromStats: false };
+const EMPTY_FORM = { date: '', type: 'expense', amount: '', categoryId: '', accountId: '', note: '', excludeFromStats: false, currency: 'TWD', fxRate: '' };
 const EMPTY_TRANSFER_FORM = { date: '', amount: '', fromAccountId: '', toAccountId: '', note: '' };
 
 function today() {
@@ -105,6 +105,8 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
       accountId: tx.account_id || tx.accountId || '',
       note: tx.note || '',
       excludeFromStats: !!(tx.excludeFromStats ?? tx.exclude_from_stats),
+      currency: tx.currency || 'TWD',
+      fxRate: tx.fxRate ? String(tx.fxRate) : '',
     });
     setEditId(tx.id);
     setFormError('');
@@ -117,6 +119,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
     if (!form.amount || Number(form.amount) <= 0) { setFormError('請輸入有效金額'); return; }
     setSaving(true);
     setFormError('');
+    const isForex = form.currency && form.currency !== 'TWD';
     const body = {
       date: form.date,
       type: form.type,
@@ -125,6 +128,9 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
       accountId: form.accountId || null,
       note: form.note,
       excludeFromStats: form.excludeFromStats,
+      currency: form.currency || 'TWD',
+      ...(isForex && { originalAmount: Number(form.amount) }),
+      ...(isForex && form.fxRate ? { fxRate: Number(form.fxRate) } : {}),
     };
     try {
       if (editId) await apiPut(`/api/transactions/${editId}`, body);
@@ -334,6 +340,9 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
                     </td>
                     <td className={tx.type === 'income' || tx.type === 'transfer_in' ? 'amount-income' : 'amount-expense'}>
                       {tx.type === 'income' || tx.type === 'transfer_in' ? '+' : '-'}{fmt(tx.originalAmount ?? tx.amount)}
+                      {tx.currency && tx.currency !== 'TWD' && (
+                        <div className="text-xs text-slate-500">{tx.currency} {Math.abs(Number(tx.originalAmount || tx.amount)).toLocaleString('zh-TW')}</div>
+                      )}
                     </td>
                     <td>
                       {!isTransfer && <button className="btn-icon" title="編輯" onClick={() => openEdit(tx)}><i className="fas fa-pencil" /></button>}
@@ -392,11 +401,20 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
             </div>
             <div className="flex flex-col gap-1">
               <label className="text-sm font-medium text-gray-700">帳戶</label>
-              <select className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" value={form.accountId} onChange={(e) => setForm((current) => ({ ...current, accountId: e.target.value }))}>
+              <select className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" value={form.accountId} onChange={(e) => {
+                const acct = accounts.find((a: any) => a.id === e.target.value);
+                setForm((current) => ({ ...current, accountId: e.target.value, currency: acct?.currency || 'TWD', fxRate: '' }));
+              }}>
                 <option value="">未指定</option>
-                {accounts.map((account: any) => <option key={account.id} value={account.id}>{account.name}</option>)}
+                {accounts.map((account: any) => <option key={account.id} value={account.id}>{account.name}{account.currency && account.currency !== 'TWD' ? ` (${account.currency})` : ''}</option>)}
               </select>
             </div>
+            {form.currency !== 'TWD' && (
+              <div className="flex flex-col gap-1">
+                <label className="text-sm font-medium text-gray-700">匯率（1 {form.currency} = ? TWD）</label>
+                <input type="number" min="0.0001" step="0.0001" placeholder="留空則使用系統匯率" className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" value={form.fxRate} onChange={(e) => setForm((current) => ({ ...current, fxRate: e.target.value }))} />
+              </div>
+            )}
             <div className="flex flex-col gap-1">
               <label className="text-sm font-medium text-gray-700">備註</label>
               <input type="text" maxLength={200} className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" value={form.note} onChange={(e) => setForm((current) => ({ ...current, note: e.target.value }))} />

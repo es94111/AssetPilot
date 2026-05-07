@@ -2,9 +2,13 @@
 // 開發模式：globalThis.__sqlDb 防止 HMR 重複初始化
 // 生產模式：模組層級 _db（initDB() 負責設值）
 
-import path from 'node:path';
-import fs from 'node:fs';
-import crypto from 'node:crypto';
+// Next.js instrumentation bundle對 node: scheme 支援不穩，改用 runtime require 避免 webpack 解析失敗。
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const path = require('path') as typeof import('path');
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const fs = require('fs') as typeof import('fs');
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const crypto = require('crypto') as typeof import('crypto');
 
 // ── sql.js 最小型別宣告（套件本身無 .d.ts）──
 interface SqlJsStatement {

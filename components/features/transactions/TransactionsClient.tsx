@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 
 const EMPTY_FORM = { date: '', type: 'expense', amount: '', categoryId: '', accountId: '', note: '', excludeFromStats: false, currency: 'TWD', fxRate: '' };
 const EMPTY_TRANSFER_FORM = { date: '', amount: '', fromAccountId: '', toAccountId: '', note: '' };
+const DEFAULT_CURRENCIES = ['TWD', 'USD', 'JPY', 'EUR', 'CNY', 'HKD', 'GBP', 'AUD', 'CAD', 'SGD'];
 
 function today() {
   return new Date().toISOString().slice(0, 10);
@@ -32,6 +33,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
   const [loading, setLoading] = useState(true);
   const [accounts, setAccounts] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
+  const [currencyOptions, setCurrencyOptions] = useState<string[]>(DEFAULT_CURRENCIES);
   const [filters, setFilters] = useState({ type: '', accountId: '', categoryId: '', dateFrom: '', dateTo: '', keyword: '' });
   const [modal, setModal] = useState(false);
   const [transferModal, setTransferModal] = useState(false);
@@ -45,6 +47,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
   const [formError, setFormError] = useState('');
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [fxLoading, setFxLoading] = useState(false);
 
   const load = useCallback(async (p = page) => {
     setLoading(true);
@@ -67,12 +70,17 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
   }, [page, pageSize, filters]);
 
   const loadMeta = useCallback(async () => {
-    const [accts, cats] = await Promise.all([
+    const [accts, cats, pinned] = await Promise.all([
       apiGet('/api/accounts').catch(() => []),
       apiGet('/api/categories').catch(() => []),
+      apiGet('/api/user/settings/pinned-currencies').catch(() => ({ pinnedCurrencies: ['TWD'] })),
     ]);
     setAccounts(accts);
     setCategories(cats);
+    const pinnedCurrencies = Array.isArray(pinned?.pinnedCurrencies) ? pinned.pinnedCurrencies : ['TWD'];
+    const accountCurrencies = (Array.isArray(accts) ? accts : []).map((account: any) => String(account.currency || 'TWD').toUpperCase());
+    const mergedCurrencies = Array.from(new Set(['TWD', ...pinnedCurrencies, ...accountCurrencies, ...DEFAULT_CURRENCIES]));
+    setCurrencyOptions(mergedCurrencies);
   }, []);
 
   useEffect(() => { loadMeta(); }, [loadMeta]);
@@ -80,11 +88,57 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
   useEffect(() => { load(page); }, [page, load]);
 
   function openAdd() {
-    setForm({ ...EMPTY_FORM, date: today(), accountId: accounts[0]?.id || '' });
+    const defaultAccountId = accounts[0]?.id || '';
+    const defaultCurrency = String(accounts[0]?.currency || 'TWD').toUpperCase();
+    setForm({ ...EMPTY_FORM, date: today(), accountId: defaultAccountId, currency: defaultCurrency, fxRate: '' });
     setEditId(null);
     setFormError('');
     setModal(true);
   }
+
+  const fetchFxRate = useCallback(async (currency: string) => {
+    const normalizedCurrency = String(currency || '').toUpperCase();
+    if (!normalizedCurrency || normalizedCurrency === 'TWD') {
+      setFxLoading(false);
+      setForm((current) => current.currency === 'TWD' ? { ...current, fxRate: '' } : current);
+      return;
+    }
+
+    setFxLoading(true);
+    try {
+      const refresh = await apiPost('/api/exchange-rates/refresh', { currencies: [normalizedCurrency] });
+      const matched = Array.isArray(refresh?.rates)
+        ? refresh.rates.find((rate: any) => rate.currency === normalizedCurrency)
+        : null;
+      if (matched?.rateToTwd) {
+        setForm((current) => current.currency === normalizedCurrency ? { ...current, fxRate: String(matched.rateToTwd) } : current);
+      }
+    } catch (_) {
+      try {
+        const existing = await apiGet('/api/exchange-rates');
+        const matched = Array.isArray(existing?.rates)
+          ? existing.rates.find((rate: any) => rate.currency === normalizedCurrency)
+          : null;
+        if (matched?.rateToTwd) {
+          setForm((current) => current.currency === normalizedCurrency ? { ...current, fxRate: String(matched.rateToTwd) } : current);
+        }
+      } catch (_) {
+        // Keep manual entry available when auto fetch fails.
+      }
+    } finally {
+      setFxLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!modal) return;
+    if (editId) return;
+    if (!form.currency || form.currency === 'TWD') {
+      setFxLoading(false);
+      return;
+    }
+    void fetchFxRate(form.currency);
+  }, [modal, editId, form.currency, fetchFxRate]);
 
   function openTransfer() {
     setTransferForm({ ...EMPTY_TRANSFER_FORM, date: today(), fromAccountId: accounts[0]?.id || '', toAccountId: accounts[1]?.id || '' });
@@ -403,7 +457,8 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
               <label className="text-sm font-medium text-gray-700">帳戶</label>
               <select className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" value={form.accountId} onChange={(e) => {
                 const acct = accounts.find((a: any) => a.id === e.target.value);
-                setForm((current) => ({ ...current, accountId: e.target.value, currency: acct?.currency || 'TWD', fxRate: '' }));
+                const nextCurrency = String(acct?.currency || 'TWD').toUpperCase();
+                setForm((current) => ({ ...current, accountId: e.target.value, currency: nextCurrency, fxRate: '' }));
               }}>
                 <option value="">未指定</option>
                 {accounts.map((account: any) => <option key={account.id} value={account.id}>{account.name}{account.currency && account.currency !== 'TWD' ? ` (${account.currency})` : ''}</option>)}
@@ -411,12 +466,15 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
             </div>
             <div className="flex flex-col gap-1">
               <label className="text-sm font-medium text-gray-700">幣別</label>
-              <input type="text" maxLength={3} placeholder="TWD" className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" value={form.currency} onChange={(e) => setForm((current) => ({ ...current, currency: e.target.value.toUpperCase(), fxRate: '' }))} />
+              <select className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" value={form.currency} onChange={(e) => setForm((current) => ({ ...current, currency: e.target.value.toUpperCase(), fxRate: '' }))}>
+                {currencyOptions.map((currency) => <option key={currency} value={currency}>{currency}</option>)}
+              </select>
             </div>
             {form.currency && form.currency !== 'TWD' && (
               <div className="flex flex-col gap-1">
                 <label className="text-sm font-medium text-gray-700">匯率（1 {form.currency} = ? TWD）</label>
                 <input type="number" min="0.0001" step="0.0001" placeholder="留空則使用系統匯率" className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" value={form.fxRate} onChange={(e) => setForm((current) => ({ ...current, fxRate: e.target.value }))} />
+                {fxLoading && <p className="text-xs text-slate-500">查詢最新匯率中...</p>}
               </div>
             )}
             <div className="flex flex-col gap-1">

@@ -40,6 +40,8 @@ COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/build/static ./build/static
 # lib/ 透過 instrumentation.js 動態 import (webpackIgnore)，未被 Next.js trace，需手動複製
 COPY --from=builder --chown=nextjs:nodejs /app/lib ./lib
+# sql.js wasm 二進位（locateFile 動態路徑，未被 nft 追蹤）
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/sql.js/dist/sql-wasm.wasm ./node_modules/sql.js/dist/sql-wasm.wasm
 
 # 持久化資料目錄（database.db、.env、SSL 憑證）
 RUN mkdir -p /app/data/SSL/Origin\ Certificates \

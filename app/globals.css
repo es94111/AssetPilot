@@ -440,3 +440,353 @@
   border-color: #c7cdd6;
 }
 .login-btn-google:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* ═══════════════════════════════════════════
+   SHARED COMPONENTS — Glassmorphism + Flat
+═══════════════════════════════════════════ */
+
+/* ── Page title ── */
+.page-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  color: var(--text);
+  line-height: 1.2;
+}
+
+/* ── Buttons ── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 16px;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+  background: var(--primary);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(79, 110, 247, 0.30);
+}
+.btn:hover:not(:disabled) {
+  background: var(--primary-dark);
+  box-shadow: 0 4px 16px rgba(79, 110, 247, 0.38);
+  transform: translateY(-1px);
+}
+.btn:active:not(:disabled) { transform: translateY(0); box-shadow: 0 1px 4px rgba(79,110,247,.20); }
+.btn:disabled { opacity: 0.55; cursor: not-allowed; }
+
+.btn-primary {
+  background: var(--primary);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(79, 110, 247, 0.30);
+}
+.btn-primary:hover:not(:disabled) {
+  background: var(--primary-dark);
+  box-shadow: 0 4px 16px rgba(79, 110, 247, 0.38);
+}
+
+.btn-ghost {
+  background: var(--surface-glass);
+  color: var(--text-secondary);
+  border: 1.5px solid var(--glass-border);
+  box-shadow: var(--shadow-glass);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+}
+.btn-ghost:hover:not(:disabled) {
+  background: rgba(79, 110, 247, 0.07);
+  color: var(--primary);
+  border-color: rgba(79, 110, 247, 0.28);
+  box-shadow: 0 2px 8px rgba(79,110,247,.12);
+}
+
+.btn-danger {
+  background: var(--danger);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(244, 63, 94, 0.25);
+}
+.btn-danger:hover:not(:disabled) {
+  background: var(--danger-dark);
+  box-shadow: 0 4px 16px rgba(244, 63, 94, 0.32);
+  transform: translateY(-1px);
+}
+
+.btn-sm {
+  height: 30px;
+  padding: 0 12px;
+  font-size: 0.8125rem;
+  border-radius: 8px;
+}
+
+/* ── Icon-only button ── */
+.btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+.btn-icon:hover {
+  background: rgba(79, 110, 247, 0.09);
+  color: var(--primary);
+}
+.btn-icon.danger:hover {
+  background: rgba(244, 63, 94, 0.09);
+  color: var(--danger);
+}
+
+/* ── Filter bar ── */
+.filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  background: var(--surface-glass);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-glass);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  padding: 12px 16px;
+}
+.filter-bar input,
+.filter-bar select {
+  height: 34px;
+  padding: 0 10px;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  color: var(--text);
+  background: var(--surface);
+  outline: none;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+.filter-bar input:focus,
+.filter-bar select:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(79, 110, 247, 0.10);
+}
+.filter-input { min-width: 180px; }
+
+/* ── Tx count ── */
+.tx-count {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin-left: auto;
+}
+
+/* ── Empty state ── */
+.empty-hint {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.9375rem;
+  padding: 56px 0;
+}
+
+/* ── Table wrapper — glass card ── */
+.table-wrap {
+  background: var(--surface-glass);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-glass);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  overflow: hidden;
+  overflow-x: auto;
+}
+.table-wrap .data-table {
+  min-width: 640px;
+}
+.table-wrap .data-table th {
+  padding: 10px 14px;
+  background: rgba(79, 110, 247, 0.04);
+}
+.table-wrap .data-table td {
+  padding: 12px 14px;
+}
+.table-wrap .data-table tr:hover td {
+  background: rgba(79, 110, 247, 0.035);
+  transition: background var(--transition-fast);
+}
+.row-selected td {
+  background: rgba(79, 110, 247, 0.07) !important;
+}
+
+/* ── Type badges (flat pills) ── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 9px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+.badge-income    { background: var(--income-bg);  color: var(--income); }
+.badge-expense   { background: var(--expense-bg); color: var(--expense); }
+.badge-transfer_in  { background: var(--net-bg); color: var(--net); }
+.badge-transfer_out { background: var(--net-bg); color: var(--net); }
+
+/* ── Amount columns ── */
+.amount-income {
+  color: var(--income);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.amount-expense {
+  color: var(--expense);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Pagination ── */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 8px 0;
+}
+.page-info {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  min-width: 64px;
+  text-align: center;
+}
+
+/* ── Modal overlay ── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.32);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 1000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.modal-overlay.active {
+  display: flex;
+  animation: overlayFadeIn 150ms ease;
+}
+@keyframes overlayFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ── Modal card — glassmorphism ── */
+.modal {
+  background: var(--surface-glass);
+  border: 1px solid var(--glass-border);
+  border-radius: 18px;
+  box-shadow: var(--shadow-glass-lg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  width: 100%;
+  max-width: 440px;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: modalPopIn 220ms cubic-bezier(.34, 1.56, .64, 1);
+}
+@keyframes modalPopIn {
+  from { opacity: 0; transform: scale(0.94) translateY(10px); }
+  to   { opacity: 1; transform: scale(1)    translateY(0); }
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 20px 0;
+}
+.modal-header h3 {
+  font-size: 1.0625rem;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.015em;
+}
+
+.modal-body {
+  padding: 16px 20px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  margin-top: 4px;
+}
+
+/* ── Form rows ── */
+.form-row {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.form-row label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text);
+}
+.form-row input,
+.form-row select {
+  height: 40px;
+  padding: 0 12px;
+  border: 1.5px solid var(--border);
+  border-radius: 9px;
+  font-size: 0.875rem;
+  color: var(--text);
+  background: var(--surface);
+  outline: none;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+.form-row input:focus,
+.form-row select:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(79, 110, 247, 0.10);
+}
+.form-row-checkbox label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.form-row-checkbox input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
+/* ── Form error ── */
+.auth-error {
+  font-size: 0.8125rem;
+  color: var(--danger);
+  background: var(--danger-bg);
+  border: 1px solid #fecdd3;
+  border-radius: 8px;
+  padding: 8px 12px;
+}

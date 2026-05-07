@@ -53,11 +53,8 @@ export async function PUT(request, { params }) {
   }
 
   if (categoryId) {
-    const cat = queryOne('SELECT id, parent_id FROM categories WHERE id = ? AND user_id = ?', [categoryId, auth.userId]);
+    const cat = queryOne('SELECT id FROM categories WHERE id = ? AND user_id = ?', [categoryId, auth.userId]);
     if (!cat) return NextResponse.json({ error: '分類不存在或無權限', code: 'ValidationError', field: 'categoryId' }, { status: 400 });
-    if (!cat.parent_id || cat.parent_id === '') {
-      return NextResponse.json({ error: '預算僅可綁定子分類；請選擇父分類下的子分類', code: 'ValidationError', field: 'categoryId' }, { status: 400 });
-    }
   }
 
   const duplicate = queryOne(

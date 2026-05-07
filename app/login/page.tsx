@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import Script from 'next/script';
 import { Eye, EyeOff, Fingerprint } from 'lucide-react';
 
 declare global {
@@ -147,6 +148,12 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
+      {googleEnabled && (
+        <Script
+          src="https://accounts.google.com/gsi/client"
+          strategy="afterInteractive"
+        />
+      )}
       <div className="w-full max-w-md bg-white p-8 rounded-xl shadow-lg border border-slate-200">
         <div className="flex flex-col items-center mb-6">
           <Image src="/logo.svg" alt="AssetPilot" width={48} height={48} />

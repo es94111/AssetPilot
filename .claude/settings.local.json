@@ -114,7 +114,11 @@
       "Bash(cmd /c \"mklink /J \\\\\"C:\\\\Users\\\\hongyu\\\\SynologyDrive\\\\web\\\\AssetPilot\\\\.claude\\\\worktrees\\\\pensive-grothendieck-94141f\\\\node_modules\\\\\" \\\\\"C:\\\\Users\\\\hongyu\\\\SynologyDrive\\\\web\\\\AssetPilot\\\\node_modules\\\\\"\")",
       "Bash(find . -name \".env*\" -not -path \"./node_modules/*\" 2>/dev/null | head -5)",
       "Bash(ls node_modules/sql.js/dist/*.d.ts 2>/dev/null | head -5 && ls node_modules/@types/sql.js 2>/dev/null | head -5)",
-      "Bash(python -c \"import sys,json; p=json.load\\(sys.stdin\\); print\\(p.get\\('types',''\\),p.get\\('typings',''\\)\\)\")"
+      "Bash(python -c \"import sys,json; p=json.load\\(sys.stdin\\); print\\(p.get\\('types',''\\),p.get\\('typings',''\\)\\)\")",
+      "Bash(python3 skills/ui-ux-pro-max/scripts/search.py \"fintech personal finance transaction management glassmorphism flat\" --design-system -p \"AssetPilot\" -f markdown)",
+      "Bash(python skills/ui-ux-pro-max/scripts/search.py \"fintech personal finance transaction management glassmorphism flat\" --design-system -p \"AssetPilot\" -f markdown)",
+      "Bash(python \"src/ui-ux-pro-max/scripts/search.py\" \"fintech personal finance transaction list glassmorphism flat design\" --design-system -p \"AssetPilot\" -f markdown)",
+      "Bash(git rebase *)"
     ]
   }
 }

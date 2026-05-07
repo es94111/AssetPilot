@@ -20,6 +20,9 @@ export default function CategoriesClient(_props: { user?: any } = {}) {
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState('');
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [dragOverScope, setDragOverScope] = useState<string | null>(null);
+  const [dragOverId, setDragOverId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try { const data = await apiGet('/api/categories'); setCategories(data); } catch (_) {}
@@ -47,6 +50,72 @@ export default function CategoriesClient(_props: { user?: any } = {}) {
     try { await apiDelete(`/api/categories/${deleteId}`); setDeleteId(null); await load(); } catch (e: any) { alert(e.message); }
   }
 
+  function openCreate() {
+    setForm({ ...EMPTY_FORM, type: activeTab });
+    setEditId(null);
+    setFormError('');
+    setDialogOpen(true);
+  }
+
+  function openEdit(category: any) {
+    setForm({
+      name: category.name,
+      type: category.type,
+      color: category.color,
+      parentId: category.parentId || '',
+      icon: category.icon || '',
+    });
+    setEditId(category.id);
+    setFormError('');
+    setDialogOpen(true);
+  }
+
+  async function handleReorder(scope: string, orderedIds: string[]) {
+    if (orderedIds.length <= 1) return;
+    await apiPost('/api/categories/reorder', {
+      scope,
+      items: orderedIds.map((id, index) => ({ id, sortOrder: index + 1 })),
+    });
+    await load();
+  }
+
+  async function handleDrop(targetId: string, scope: string) {
+    if (!draggingId || draggingId === targetId || dragOverScope !== scope) {
+      setDraggingId(null);
+      setDragOverScope(null);
+      setDragOverId(null);
+      return;
+    }
+
+    const isParentScope = scope.startsWith('parents:');
+    const scopedItems = isParentScope
+      ? parents
+      : children(scope.slice('children:'.length));
+    const orderedIds = scopedItems.map(item => item.id);
+    const fromIndex = orderedIds.indexOf(draggingId);
+    const toIndex = orderedIds.indexOf(targetId);
+    if (fromIndex === -1 || toIndex === -1) {
+      setDraggingId(null);
+      setDragOverScope(null);
+      setDragOverId(null);
+      return;
+    }
+
+    const nextIds = [...orderedIds];
+    const [moved] = nextIds.splice(fromIndex, 1);
+    nextIds.splice(toIndex, 0, moved);
+
+    setDraggingId(null);
+    setDragOverScope(null);
+    setDragOverId(null);
+
+    try {
+      await handleReorder(scope, nextIds);
+    } catch (e: any) {
+      alert(e.message);
+    }
+  }
+
   const filtered = categories.filter(c => c.type === activeTab);
   const parents = filtered.filter(c => !c.parentId);
   const children = (parentId: string) => filtered.filter(c => c.parentId === parentId);
@@ -63,7 +132,7 @@ export default function CategoriesClient(_props: { user?: any } = {}) {
         ))}
       </div>
 
-      <Button onClick={() => { setForm({ ...EMPTY_FORM, type: activeTab }); setEditId(null); setFormError(''); setDialogOpen(true); }}><Plus size={16} className="mr-2" /> 新增分類</Button>
+      <Button onClick={openCreate}><Plus size={16} className="mr-2" /> 新增分類</Button>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
@@ -86,17 +155,48 @@ export default function CategoriesClient(_props: { user?: any } = {}) {
         <div className="space-y-4">
           {parents.map(parent => (
             <div key={parent.id} className="bg-white border border-slate-200 rounded-lg shadow-sm">
-              <div className="flex items-center gap-3 p-3 font-semibold border-b">
+              <div
+                className={`flex items-center gap-3 p-3 font-semibold border-b ${draggingId === parent.id ? 'opacity-50' : ''} ${dragOverScope === `parents:${activeTab}` && dragOverId === parent.id ? 'bg-blue-50' : ''}`}
+                draggable
+                onDragStart={() => { setDraggingId(parent.id); setDragOverScope(`parents:${activeTab}`); }}
+                onDragEnd={() => { setDraggingId(null); setDragOverScope(null); setDragOverId(null); }}
+                onDragOver={(e) => {
+                  if (dragOverScope === `parents:${activeTab}`) {
+                    e.preventDefault();
+                    setDragOverId(parent.id);
+                  }
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  void handleDrop(parent.id, `parents:${activeTab}`);
+                }}
+              >
                 <span className="w-3 h-3 rounded-full" style={{ background: parent.color || '#94a3b8' }} />
                 <span className="flex-1">{parent.name}</span>
-                <Button variant="ghost" size="icon" onClick={() => { setForm({ name: parent.name, type: parent.type, color: parent.color, parentId: parent.parentId || '', icon: parent.icon || '' }); setEditId(parent.id); setFormError(''); setDialogOpen(true); }}><Edit3 size={16} /></Button>
+                <Button variant="ghost" size="icon" onClick={() => openEdit(parent)}><Edit3 size={16} /></Button>
                 <Button variant="ghost" size="icon" className="text-red-500" onClick={() => setDeleteId(parent.id)}><Trash2 size={16} /></Button>
               </div>
               {children(parent.id).map(child => (
-                <div key={child.id} className="flex items-center gap-3 p-3 pl-8 text-sm">
+                <div
+                  key={child.id}
+                  className={`flex items-center gap-3 p-3 pl-8 text-sm ${draggingId === child.id ? 'opacity-50' : ''} ${dragOverScope === `children:${parent.id}` && dragOverId === child.id ? 'bg-blue-50' : ''}`}
+                  draggable
+                  onDragStart={() => { setDraggingId(child.id); setDragOverScope(`children:${parent.id}`); }}
+                  onDragEnd={() => { setDraggingId(null); setDragOverScope(null); setDragOverId(null); }}
+                  onDragOver={(e) => {
+                    if (dragOverScope === `children:${parent.id}`) {
+                      e.preventDefault();
+                      setDragOverId(child.id);
+                    }
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    void handleDrop(child.id, `children:${parent.id}`);
+                  }}
+                >
                   <span className="w-3 h-3 rounded-full" style={{ background: child.color || parent.color || '#94a3b8' }} />
                   <span className="flex-1">{child.name}</span>
-                  <Button variant="ghost" size="icon" onClick={() => { setForm({ name: child.name, type: child.type, color: child.color, parentId: child.parentId || '', icon: child.icon || '' }); setEditId(child.id); setFormError(''); setDialogOpen(true); }}><Edit3 size={16} /></Button>
+                  <Button variant="ghost" size="icon" onClick={() => openEdit(child)}><Edit3 size={16} /></Button>
                   <Button variant="ghost" size="icon" className="text-red-500" onClick={() => setDeleteId(child.id)}><Trash2 size={16} /></Button>
                 </div>
               ))}

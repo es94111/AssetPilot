@@ -19,7 +19,19 @@ export async function GET(request) {
     const month = b.year_month;
     let usedSql = "SELECT COALESCE(SUM(twd_amount),0) AS used FROM transactions WHERE user_id = ? AND type='expense' AND date LIKE ? AND exclude_from_stats = 0";
     const usedParams = [auth.userId, month + '%'];
-    if (b.category_id) { usedSql += ' AND category_id = ?'; usedParams.push(b.category_id); }
+    if (b.category_id) {
+      const cat = queryOne('SELECT parent_id FROM categories WHERE id = ? AND user_id = ?', [b.category_id, auth.userId]);
+      const isParent = !cat?.parent_id || cat.parent_id === '';
+      if (isParent) {
+        const children = queryAll('SELECT id FROM categories WHERE parent_id = ? AND user_id = ?', [b.category_id, auth.userId]);
+        const allIds = [b.category_id, ...children.map(c => c.id)];
+        usedSql += ` AND category_id IN (${allIds.map(() => '?').join(',')})`;
+        usedParams.push(...allIds);
+      } else {
+        usedSql += ' AND category_id = ?';
+        usedParams.push(b.category_id);
+      }
+    }
     const used = queryOne(usedSql, usedParams)?.used || 0;
     return {
       id: b.id,
@@ -50,11 +62,8 @@ export async function POST(request) {
 
   const catId = categoryId || null;
   if (catId) {
-    const cat = queryOne('SELECT id, parent_id FROM categories WHERE id = ? AND user_id = ?', [catId, auth.userId]);
+    const cat = queryOne('SELECT id FROM categories WHERE id = ? AND user_id = ?', [catId, auth.userId]);
     if (!cat) return NextResponse.json({ error: '分類不存在或無權限', code: 'ValidationError', field: 'categoryId' }, { status: 400 });
-    if (!cat.parent_id || cat.parent_id === '') {
-      return NextResponse.json({ error: '預算僅可綁定子分類；請選擇父分類下的子分類', code: 'ValidationError', field: 'categoryId' }, { status: 400 });
-    }
   }
 
   const existing = queryOne('SELECT id FROM budgets WHERE user_id = ? AND year_month = ? AND category_id IS ?', [auth.userId, yearMonth, catId]);

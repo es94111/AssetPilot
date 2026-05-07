@@ -6,7 +6,7 @@ import StocksTabNav from './StocksTabNav';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Plus, Trash2, Edit3, X } from 'lucide-react';
 
@@ -26,6 +26,7 @@ export default function StockTxClient(_props: { user?: any } = {}) {
   const [filterDateTo, setFilterDateTo] = useState('');
   const [form, setForm] = useState(EMPTY_FORM);
   const [editId, setEditId] = useState<string | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState('');
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -98,28 +99,30 @@ export default function StockTxClient(_props: { user?: any } = {}) {
       </div>
 
       <div className="flex justify-between items-center">
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button onClick={() => { setForm({ ...EMPTY_FORM, date: new Date().toISOString().slice(0, 10), stockId: stocks[0]?.id || '' }); setEditId(null); }}><Plus size={16} className="mr-2" /> 新增交易</Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader><DialogTitle>{editId ? '編輯交易' : '新增交易'}</DialogTitle></DialogHeader>
-            <form onSubmit={handleSave} className="space-y-4">
-              <Select label="股票 *" options={stocks.map(s => ({ label: `${s.symbol} ${s.name}`, value: s.id }))} value={form.stockId} onChange={e => setForm(f => ({ ...f, stockId: e.target.value }))} />
-              <Select label="類型" options={[{label: '買進', value: 'buy'}, {label: '賣出', value: 'sell'}]} value={form.type} onChange={e => setForm(f => ({ ...f, type: e.target.value }))} />
-              <Input label="日期 *" type="date" value={form.date} onChange={e => setForm(f => ({ ...f, date: e.target.value }))} />
-              <Input label="股數 *" type="number" value={form.shares} onChange={e => setForm(f => ({ ...f, shares: e.target.value }))} />
-              <Input label="單價 *" type="number" value={form.price} onChange={e => setForm(f => ({ ...f, price: e.target.value }))} />
-              <Input label="手續費" type="number" value={form.fee} onChange={e => setForm(f => ({ ...f, fee: e.target.value }))} />
-              {form.type === 'sell' && <Input label="交易稅" type="number" value={form.tax} onChange={e => setForm(f => ({ ...f, tax: e.target.value }))} />}
-              <Input label="備註" value={form.note} onChange={e => setForm(f => ({ ...f, note: e.target.value }))} />
-              {formError && <p className="text-red-500 text-sm">{formError}</p>}
-              <DialogClose asChild><Button type="submit" disabled={saving}>儲存</Button></DialogClose>
-            </form>
-          </DialogContent>
-        </Dialog>
+        <Button onClick={() => { setForm({ ...EMPTY_FORM, date: new Date().toISOString().slice(0, 10), stockId: stocks[0]?.id || '' }); setEditId(null); setFormError(''); setDialogOpen(true); }}><Plus size={16} className="mr-2" /> 新增交易</Button>
         <span className="text-sm text-slate-500">共 {total} 筆</span>
       </div>
+
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>{editId ? '編輯交易' : '新增交易'}</DialogTitle></DialogHeader>
+          <form onSubmit={handleSave} className="space-y-4">
+            <Select label="股票 *" options={stocks.map(s => ({ label: `${s.symbol} ${s.name}`, value: s.id }))} value={form.stockId} onChange={e => setForm(f => ({ ...f, stockId: e.target.value }))} />
+            <Select label="類型" options={[{label: '買進', value: 'buy'}, {label: '賣出', value: 'sell'}]} value={form.type} onChange={e => setForm(f => ({ ...f, type: e.target.value }))} />
+            <Input label="日期 *" type="date" value={form.date} onChange={e => setForm(f => ({ ...f, date: e.target.value }))} />
+            <Input label="股數 *" type="number" value={form.shares} onChange={e => setForm(f => ({ ...f, shares: e.target.value }))} />
+            <Input label="單價 *" type="number" value={form.price} onChange={e => setForm(f => ({ ...f, price: e.target.value }))} />
+            <Input label="手續費" type="number" value={form.fee} onChange={e => setForm(f => ({ ...f, fee: e.target.value }))} />
+            {form.type === 'sell' && <Input label="交易稅" type="number" value={form.tax} onChange={e => setForm(f => ({ ...f, tax: e.target.value }))} />}
+            <Input label="備註" value={form.note} onChange={e => setForm(f => ({ ...f, note: e.target.value }))} />
+            {formError && <p className="text-red-500 text-sm">{formError}</p>}
+            <div className="flex gap-2">
+              <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>取消</Button>
+              <Button type="submit" disabled={saving}>儲存</Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       {loading ? <p className="text-slate-500">載入中...</p> : (
         <Table>
@@ -141,7 +144,7 @@ export default function StockTxClient(_props: { user?: any } = {}) {
                   <TableCell>${Number(t.price).toLocaleString()}</TableCell>
                   <TableCell className={isBuy ? 'text-red-600' : 'text-green-600'}>{fmt(Math.round(total))}</TableCell>
                   <TableCell className="flex gap-2">
-                    <Button variant="ghost" size="icon" onClick={() => { setForm({ stockId: t.stockId || t.stock_id, type: t.type, date: t.date, shares: t.shares, price: t.price, fee: t.fee, tax: t.tax, note: t.note }); setEditId(t.id); }}><Edit3 size={16} /></Button>
+                    <Button variant="ghost" size="icon" onClick={() => { setForm({ stockId: t.stockId || t.stock_id, type: t.type, date: t.date, shares: t.shares, price: t.price, fee: t.fee, tax: t.tax, note: t.note }); setEditId(t.id); setFormError(''); setDialogOpen(true); }}><Edit3 size={16} /></Button>
                     <Button variant="ghost" size="icon" className="text-red-600" onClick={() => setDeleteId(t.id)}><Trash2 size={16} /></Button>
                   </TableCell>
                 </TableRow>
@@ -156,6 +159,19 @@ export default function StockTxClient(_props: { user?: any } = {}) {
           <Button variant="outline" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>上一頁</Button>
           <span className="self-center">{page} / {totalPages}</span>
           <Button variant="outline" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>下一頁</Button>
+        </div>
+      )}
+
+      {deleteId && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-xl">
+            <h3 className="text-lg font-semibold mb-4">確認刪除</h3>
+            <p className="mb-4">確定要刪除此交易記錄嗎？</p>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setDeleteId(null)}>取消</Button>
+              <Button variant="destructive" onClick={handleDelete}>確認刪除</Button>
+            </div>
+          </div>
         </div>
       )}
     </div>

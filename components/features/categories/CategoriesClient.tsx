@@ -5,7 +5,7 @@ import { apiGet, apiPost, apiPut, apiDelete } from '@/lib/clientApi';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Plus, Edit3, Trash2 } from 'lucide-react';
 
 const EMPTY_FORM = { name: '', type: 'expense', color: '#94a3b8', parentId: '', icon: '' };
@@ -16,6 +16,7 @@ export default function CategoriesClient(_props: { user?: any } = {}) {
   const [activeTab, setActiveTab] = useState<'expense' | 'income'>('expense');
   const [form, setForm] = useState(EMPTY_FORM);
   const [editId, setEditId] = useState<string | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState('');
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -47,9 +48,9 @@ export default function CategoriesClient(_props: { user?: any } = {}) {
   }
 
   const filtered = categories.filter(c => c.type === activeTab);
-  const parents = filtered.filter(c => !c.parent_id);
-  const children = (parentId: string) => filtered.filter(c => c.parent_id === parentId);
-  const parentCats = categories.filter(c => c.type === form.type && !c.parent_id && c.id !== editId);
+  const parents = filtered.filter(c => !c.parentId);
+  const children = (parentId: string) => filtered.filter(c => c.parentId === parentId);
+  const parentCats = categories.filter(c => c.type === form.type && !c.parentId && c.id !== editId);
 
   return (
     <div className="space-y-6">
@@ -62,10 +63,9 @@ export default function CategoriesClient(_props: { user?: any } = {}) {
         ))}
       </div>
 
-      <Dialog>
-        <DialogTrigger asChild>
-          <Button onClick={() => { setForm({ ...EMPTY_FORM, type: activeTab }); setEditId(null); setFormError(''); }}><Plus size={16} className="mr-2" /> 新增分類</Button>
-        </DialogTrigger>
+      <Button onClick={() => { setForm({ ...EMPTY_FORM, type: activeTab }); setEditId(null); setFormError(''); setDialogOpen(true); }}><Plus size={16} className="mr-2" /> 新增分類</Button>
+
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
           <DialogHeader><DialogTitle>{editId ? '編輯分類' : '新增分類'}</DialogTitle></DialogHeader>
           <form onSubmit={handleSave} className="space-y-4">
@@ -74,7 +74,10 @@ export default function CategoriesClient(_props: { user?: any } = {}) {
             <Select label="父分類" options={[{label: '— 頂層分類 —', value: ''}, ...parentCats.map(c => ({ label: c.name, value: c.id }))]} value={form.parentId} onChange={e => setForm(f => ({ ...f, parentId: e.target.value }))} />
             <Input label="顏色" type="color" value={form.color} onChange={e => setForm(f => ({ ...f, color: e.target.value }))} className="h-10" />
             {formError && <p className="text-red-500 text-sm">{formError}</p>}
-            <DialogClose asChild><Button type="submit" disabled={saving}>儲存</Button></DialogClose>
+            <div className="flex gap-2">
+              <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>取消</Button>
+              <Button type="submit" disabled={saving}>儲存</Button>
+            </div>
           </form>
         </DialogContent>
       </Dialog>
@@ -86,14 +89,14 @@ export default function CategoriesClient(_props: { user?: any } = {}) {
               <div className="flex items-center gap-3 p-3 font-semibold border-b">
                 <span className="w-3 h-3 rounded-full" style={{ background: parent.color || '#94a3b8' }} />
                 <span className="flex-1">{parent.name}</span>
-                <Button variant="ghost" size="icon" onClick={() => { setForm({ name: parent.name, type: parent.type, color: parent.color, parentId: parent.parent_id || '', icon: parent.icon || '' }); setEditId(parent.id); }}><Edit3 size={16} /></Button>
+                <Button variant="ghost" size="icon" onClick={() => { setForm({ name: parent.name, type: parent.type, color: parent.color, parentId: parent.parentId || '', icon: parent.icon || '' }); setEditId(parent.id); setFormError(''); setDialogOpen(true); }}><Edit3 size={16} /></Button>
                 <Button variant="ghost" size="icon" className="text-red-500" onClick={() => setDeleteId(parent.id)}><Trash2 size={16} /></Button>
               </div>
               {children(parent.id).map(child => (
                 <div key={child.id} className="flex items-center gap-3 p-3 pl-8 text-sm">
                   <span className="w-3 h-3 rounded-full" style={{ background: child.color || parent.color || '#94a3b8' }} />
                   <span className="flex-1">{child.name}</span>
-                  <Button variant="ghost" size="icon" onClick={() => { setForm({ name: child.name, type: child.type, color: child.color, parentId: child.parent_id || '', icon: child.icon || '' }); setEditId(child.id); }}><Edit3 size={16} /></Button>
+                  <Button variant="ghost" size="icon" onClick={() => { setForm({ name: child.name, type: child.type, color: child.color, parentId: child.parentId || '', icon: child.icon || '' }); setEditId(child.id); setFormError(''); setDialogOpen(true); }}><Edit3 size={16} /></Button>
                   <Button variant="ghost" size="icon" className="text-red-500" onClick={() => setDeleteId(child.id)}><Trash2 size={16} /></Button>
                 </div>
               ))}

@@ -31,7 +31,7 @@ export async function editTransaction(data: z.infer<typeof transactionSchema>) {
     throw new Error("Failed to update transaction");
   }
 
-  revalidatePath("/app/finance/transactions");
+  revalidatePath("/finance/transactions");
   return { success: true };
 }
 
@@ -52,6 +52,6 @@ export async function deleteTransaction(id: string) {
     throw new Error("Failed to delete transaction");
   }
 
-  revalidatePath("/app/finance/transactions");
+  revalidatePath("/finance/transactions");
   return { success: true };
 }

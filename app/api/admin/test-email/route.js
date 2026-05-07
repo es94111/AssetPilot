@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '../../../../lib/apiHelpers';
-import { queryOne } from '../../../../lib/db.js';
+import { queryOne } from '../../../../lib/db';
 
 const EMAIL_PROVIDER_PRIMARY = process.env.EMAIL_PROVIDER_PRIMARY || '';
 const EMAIL_PROVIDER_FALLBACK = process.env.EMAIL_PROVIDER_FALLBACK || '';

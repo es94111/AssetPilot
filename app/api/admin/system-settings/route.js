@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '../../../../lib/apiHelpers';
-import { getDB, queryOne, saveDB } from '../../../../lib/db.js';
-import { getSystemSettings, parseAllowedRegistrationEmails, parseIpAllowlist } from '../../../../lib/loginHelpers.js';
+import { getDB, queryOne, saveDB } from '../../../../lib/db';
+import { getSystemSettings, parseAllowedRegistrationEmails, parseIpAllowlist } from '../../../../lib/loginHelpers';
 
 export async function GET(request) {
   const auth = await requireAdmin(request);

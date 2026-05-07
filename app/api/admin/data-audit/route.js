@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '../../../../lib/apiHelpers';
-import { queryOne, queryAll } from '../../../../lib/db.js';
+import { queryOne, queryAll } from '../../../../lib/db';
 
 function parseAuditQuery(searchParams) {
   const where = [];

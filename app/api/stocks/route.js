@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { requireAuth } from '../../../lib/apiHelpers';
 import { getDB, queryAll, queryOne, saveDB } from '../../../lib/db';
 import { uid } from '../../../lib/userDefaults';
-import moneyDecimal from '../../../lib/moneyDecimal';
+import { calcFifoLots } from '../../../lib/moneyDecimal';
 import {
   getStockSettings,
   calcStockFee,
@@ -27,7 +27,7 @@ export async function GET(request) {
       [s.id, auth.userId]
     );
 
-    const fifo = moneyDecimal.calcFifoLots(txs);
+    const fifo = calcFifoLots(txs);
 
     const dividendSyntheticShares = txs
       .filter(t => t.type === 'buy' && Number(t.price) === 0 && typeof t.note === 'string' && /\[SYNTH\] 股票股利|股票股利配發/.test(t.note))

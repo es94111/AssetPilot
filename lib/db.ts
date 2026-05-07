@@ -2,9 +2,9 @@
 // 開發模式：globalThis.__sqlDb 防止 HMR 重複初始化
 // 生產模式：模組層級 _db（initDB() 負責設值）
 
-import path from 'path';
-import fs from 'fs';
-import crypto from 'crypto';
+import path from 'node:path';
+import fs from 'node:fs';
+import crypto from 'node:crypto';
 
 // ── sql.js 最小型別宣告（套件本身無 .d.ts）──
 interface SqlJsStatement {

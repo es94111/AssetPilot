@@ -10,7 +10,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Plus, Trash2, Edit3, Pause, Play, StickyNote } from 'lucide-react';
 
 const FREQ_LABELS: Record<string, string> = { daily: '每日', weekly: '每週', monthly: '每月', yearly: '每年' };
-const EMPTY_FORM = { type: 'expense', amount: '', currency: 'TWD', fxRate: '1', categoryId: '', accountId: '', frequency: 'monthly', startDate: '', note: '' };
+const EMPTY_FORM = { type: 'expense', amount: '', currency: 'TWD', fxRate: '', categoryId: '', accountId: '', frequency: 'monthly', startDate: '', note: '' };
+const DEFAULT_CURRENCIES = ['TWD', 'USD', 'JPY', 'EUR', 'CNY', 'HKD', 'GBP', 'AUD', 'CAD', 'SGD'];
 
 function fmt(n: number | string) { return 'NT$ ' + Math.round(Number(n) || 0).toLocaleString('zh-TW'); }
 
@@ -19,29 +20,80 @@ export default function RecurringClient(_props: { user?: any } = {}) {
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState<any[]>([]);
   const [accounts, setAccounts] = useState<any[]>([]);
+  const [currencyOptions, setCurrencyOptions] = useState<string[]>(DEFAULT_CURRENCIES);
   const [form, setForm] = useState(EMPTY_FORM);
   const [editId, setEditId] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState('');
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [fxLoading, setFxLoading] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [data, cats, accts] = await Promise.all([
+      const [data, cats, accts, pinned] = await Promise.all([
         apiGet('/api/recurring').catch(() => []),
         apiGet('/api/categories').catch(() => []),
         apiGet('/api/accounts').catch(() => []),
+        apiGet('/api/user/settings/pinned-currencies').catch(() => ({ pinnedCurrencies: ['TWD'] })),
       ]);
       setRecs(data || []);
       setCategories(cats);
       setAccounts(accts);
+      const pinnedCurrencies = Array.isArray(pinned?.pinnedCurrencies) ? pinned.pinnedCurrencies : ['TWD'];
+      const accountCurrencies = (Array.isArray(accts) ? accts : []).map((account: any) => String(account.currency || 'TWD').toUpperCase());
+      const mergedCurrencies = Array.from(new Set(['TWD', ...pinnedCurrencies, ...accountCurrencies, ...DEFAULT_CURRENCIES]));
+      setCurrencyOptions(mergedCurrencies);
     } catch (_) {}
     setLoading(false);
   }, []);
 
   useEffect(() => { load(); }, [load]);
+
+  const fetchFxRate = useCallback(async (currency: string) => {
+    const normalizedCurrency = String(currency || '').toUpperCase();
+    if (!normalizedCurrency || normalizedCurrency === 'TWD') {
+      setFxLoading(false);
+      setForm((current) => current.currency === 'TWD' ? { ...current, fxRate: '' } : current);
+      return;
+    }
+
+    setFxLoading(true);
+    try {
+      const refresh = await apiPost('/api/exchange-rates/refresh', { currencies: [normalizedCurrency] });
+      const matched = Array.isArray(refresh?.rates)
+        ? refresh.rates.find((rate: any) => rate.currency === normalizedCurrency)
+        : null;
+      if (matched?.rateToTwd) {
+        setForm((current) => current.currency === normalizedCurrency ? { ...current, fxRate: String(matched.rateToTwd) } : current);
+      }
+    } catch (_) {
+      try {
+        const existing = await apiGet('/api/exchange-rates');
+        const matched = Array.isArray(existing?.rates)
+          ? existing.rates.find((rate: any) => rate.currency === normalizedCurrency)
+          : null;
+        if (matched?.rateToTwd) {
+          setForm((current) => current.currency === normalizedCurrency ? { ...current, fxRate: String(matched.rateToTwd) } : current);
+        }
+      } catch (_) {
+        // Keep manual entry available when auto fetch fails.
+      }
+    } finally {
+      setFxLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!dialogOpen) return;
+    if (editId) return;
+    if (!form.currency || form.currency === 'TWD') {
+      setFxLoading(false);
+      return;
+    }
+    void fetchFxRate(form.currency);
+  }, [dialogOpen, editId, form.currency, fetchFxRate]);
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
@@ -76,11 +128,34 @@ export default function RecurringClient(_props: { user?: any } = {}) {
     try { await apiPatch(`/api/recurring/${id}/toggle`); await load(); } catch (e: any) { alert(e.message); }
   }
 
+  function openCreate() {
+    const defaultAccountId = accounts[0]?.id || '';
+    const defaultCurrency = String(accounts[0]?.currency || 'TWD').toUpperCase();
+    setForm({ ...EMPTY_FORM, startDate: new Date().toISOString().slice(0, 10), accountId: defaultAccountId, currency: defaultCurrency, fxRate: '' });
+    setEditId(null);
+    setFormError('');
+    setDialogOpen(true);
+  }
+
+  function openEdit(rec: any) {
+    setForm({
+      ...rec,
+      categoryId: rec.category_id || rec.categoryId,
+      accountId: rec.account_id || rec.accountId,
+      startDate: rec.startDate || rec.start_date,
+      currency: String(rec.currency || 'TWD').toUpperCase(),
+      fxRate: String(rec.fxRate || rec.fx_rate || 1),
+    });
+    setEditId(rec.id);
+    setFormError('');
+    setDialogOpen(true);
+  }
+
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold">固定收支</h2>
 
-      <Button onClick={() => { setForm({ ...EMPTY_FORM, startDate: new Date().toISOString().slice(0, 10) }); setEditId(null); setFormError(''); setDialogOpen(true); }}><Plus size={16} className="mr-2" /> 新增固定收支</Button>
+      <Button onClick={openCreate}><Plus size={16} className="mr-2" /> 新增固定收支</Button>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
@@ -88,10 +163,19 @@ export default function RecurringClient(_props: { user?: any } = {}) {
           <form onSubmit={handleSave} className="space-y-4">
             <Select label="類型" options={[{label: '支出', value: 'expense'}, {label: '收入', value: 'income'}]} value={form.type} onChange={e => setForm(f => ({ ...f, type: e.target.value }))} />
             <Input label="金額 *" type="number" value={form.amount} onChange={e => setForm(f => ({ ...f, amount: e.target.value }))} />
-            <Input label="幣別" value={form.currency} onChange={e => setForm(f => ({ ...f, currency: e.target.value.toUpperCase() }))} />
-            {form.currency !== 'TWD' && <Input label="匯率" type="number" step="0.0001" value={form.fxRate} onChange={e => setForm(f => ({ ...f, fxRate: e.target.value }))} />}
+            <Select label="幣別" options={currencyOptions.map(currency => ({ label: currency, value: currency }))} value={form.currency} onChange={e => setForm(f => ({ ...f, currency: e.target.value.toUpperCase(), fxRate: '' }))} />
+            {form.currency !== 'TWD' && (
+              <div className="space-y-1">
+                <Input label="匯率" type="number" step="0.0001" value={form.fxRate} onChange={e => setForm(f => ({ ...f, fxRate: e.target.value }))} />
+                {fxLoading && <p className="text-xs text-slate-500">查詢最新匯率中...</p>}
+              </div>
+            )}
             <Select label="分類" options={[{label: '未分類', value: ''}, ...categories.map(c => ({ label: c.name, value: c.id }))]} value={form.categoryId} onChange={e => setForm(f => ({ ...f, categoryId: e.target.value }))} />
-            <Select label="帳戶" options={[{label: '未指定', value: ''}, ...accounts.map(a => ({ label: a.name, value: a.id }))]} value={form.accountId} onChange={e => setForm(f => ({ ...f, accountId: e.target.value }))} />
+            <Select label="帳戶" options={[{label: '未指定', value: ''}, ...accounts.map(a => ({ label: a.name, value: a.id }))]} value={form.accountId} onChange={e => {
+              const acct = accounts.find((account: any) => account.id === e.target.value);
+              const nextCurrency = String(acct?.currency || 'TWD').toUpperCase();
+              setForm(f => ({ ...f, accountId: e.target.value, currency: nextCurrency, fxRate: '' }));
+            }} />
             <Select label="頻率" options={Object.entries(FREQ_LABELS).map(([v, l]) => ({ label: l, value: v }))} value={form.frequency} onChange={e => setForm(f => ({ ...f, frequency: e.target.value }))} />
             <Input label="起始日期" type="date" value={form.startDate} onChange={e => setForm(f => ({ ...f, startDate: e.target.value }))} />
             <Input label="備註" value={form.note} onChange={e => setForm(f => ({ ...f, note: e.target.value }))} />
@@ -115,7 +199,7 @@ export default function RecurringClient(_props: { user?: any } = {}) {
                   <span className={`px-2 py-1 rounded text-xs ${r.type === 'income' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>{r.type === 'income' ? '收入' : '支出'}</span>
                   <div className="flex gap-1">
                     <Button variant="ghost" size="icon" onClick={() => handleToggle(r.id)}>{r.isActive ? <Pause size={16} /> : <Play size={16} />}</Button>
-                    <Button variant="ghost" size="icon" onClick={() => { setForm({ ...r, categoryId: r.category_id || r.categoryId, accountId: r.account_id || r.accountId, startDate: r.startDate || r.start_date }); setEditId(r.id); setFormError(''); setDialogOpen(true); }}><Edit3 size={16} /></Button>
+                    <Button variant="ghost" size="icon" onClick={() => openEdit(r)}><Edit3 size={16} /></Button>
                     <Button variant="ghost" size="icon" className="text-red-500" onClick={() => setDeleteId(r.id)}><Trash2 size={16} /></Button>
                   </div>
                 </div>

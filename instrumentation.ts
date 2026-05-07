@@ -1,16 +1,10 @@
 // instrumentation.ts — Next.js 15 穩定 API，無需 experimental.instrumentationHook
 // 僅在 Node.js runtime 執行（Edge runtime 不執行此檔）
-// 注意：動態 import 使用 webpackIgnore 防止 webpack 靜態分析 Node.js 專屬模組
 
 export async function register() {
   if (process.env.NEXT_RUNTIME !== 'nodejs') return;
 
-  // webpackIgnore: true — 防止 webpack 嘗試 bundle lib/db.ts（含 path/fs/crypto 內建模組）
-  // 在 standalone 模式下，相對路徑應該是相對於 instrumentation.js 所在位置
-  // .next/server/instrumentation.js -> lib/db.js is "../../lib/db.js"
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore — runtime path relative to compiled output; not resolved at compile time
-  const { initDB, flushOnExit } = await import(/* webpackIgnore: true */ '../../lib/db.js');
+  const { initDB, flushOnExit } = await import('./lib/db');
   await initDB();
 
   // 程序結束時同步寫回 DB
@@ -24,8 +18,7 @@ export async function register() {
   const SCHEDULER_TICK_MS = Number(process.env.SCHEDULER_TICK_MS) || 5 * 60 * 1000;
   setTimeout(async () => {
     try {
-      // @ts-ignore — runtime path
-      const { checkAndRunSchedule } = await import(/* webpackIgnore: true */ '../../lib/scheduler.js');
+      const { checkAndRunSchedule } = await import('./lib/scheduler');
       checkAndRunSchedule();
       setInterval(checkAndRunSchedule, SCHEDULER_TICK_MS);
     } catch (_) {
@@ -41,8 +34,7 @@ function registerAuditPruneJob() {
 
   async function tick() {
     try {
-      // @ts-ignore — runtime path
-      const { getDB } = await import(/* webpackIgnore: true */ '../../lib/db.js');
+      const { getDB } = await import('./lib/db');
       const db = getDB();
       pruneTable(db, AUDIT_RETENTION_DAYS, PRUNE_BATCH);
     } catch (e) {

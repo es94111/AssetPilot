@@ -33,6 +33,7 @@ if (process.platform === 'win32') {
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'standalone',
+  serverExternalPackages: ['sql.js'],
   distDir: 'build', // ASCII-only path
   // 保留 JS/TS 混用（由 tsconfig 的 allowJs 控制），但 build 需執行完整型別與 lint 檢查
   typescript: { ignoreBuildErrors: false },

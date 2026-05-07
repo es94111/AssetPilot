@@ -20,6 +20,7 @@ export default function CategoriesClient(_props: { user?: any } = {}) {
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState('');
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState('');
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dragOverScope, setDragOverScope] = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
@@ -47,7 +48,14 @@ export default function CategoriesClient(_props: { user?: any } = {}) {
 
   async function handleDelete() {
     if (!deleteId) return;
-    try { await apiDelete(`/api/categories/${deleteId}`); setDeleteId(null); await load(); } catch (e: any) { alert(e.message); }
+    setDeleteError('');
+    try {
+      await apiDelete(`/api/categories/${deleteId}`);
+      setDeleteId(null);
+      await load();
+    } catch (e: any) {
+      setDeleteError(e.message || '刪除失敗');
+    }
   }
 
   function openCreate() {
@@ -174,7 +182,7 @@ export default function CategoriesClient(_props: { user?: any } = {}) {
                 <span className="w-3 h-3 rounded-full" style={{ background: parent.color || '#94a3b8' }} />
                 <span className="flex-1">{parent.name}</span>
                 <Button variant="ghost" size="icon" onClick={() => openEdit(parent)}><Edit3 size={16} /></Button>
-                <Button variant="ghost" size="icon" className="text-red-500" onClick={() => setDeleteId(parent.id)}><Trash2 size={16} /></Button>
+                <Button variant="ghost" size="icon" className="text-red-500" onClick={() => { setDeleteError(''); setDeleteId(parent.id); }}><Trash2 size={16} /></Button>
               </div>
               {children(parent.id).map(child => (
                 <div
@@ -197,7 +205,7 @@ export default function CategoriesClient(_props: { user?: any } = {}) {
                   <span className="w-3 h-3 rounded-full" style={{ background: child.color || parent.color || '#94a3b8' }} />
                   <span className="flex-1">{child.name}</span>
                   <Button variant="ghost" size="icon" onClick={() => openEdit(child)}><Edit3 size={16} /></Button>
-                  <Button variant="ghost" size="icon" className="text-red-500" onClick={() => setDeleteId(child.id)}><Trash2 size={16} /></Button>
+                  <Button variant="ghost" size="icon" className="text-red-500" onClick={() => { setDeleteError(''); setDeleteId(child.id); }}><Trash2 size={16} /></Button>
                 </div>
               ))}
             </div>
@@ -210,8 +218,9 @@ export default function CategoriesClient(_props: { user?: any } = {}) {
           <div className="bg-white p-6 rounded-lg shadow-xl">
             <h3 className="text-lg font-semibold mb-4">確認刪除</h3>
             <p className="mb-4">確定要刪除此分類嗎？其子分類也將一併刪除。</p>
+            {deleteError && <p className="mb-4 text-sm text-red-500">{deleteError}</p>}
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setDeleteId(null)}>取消</Button>
+              <Button variant="outline" onClick={() => { setDeleteId(null); setDeleteError(''); }}>取消</Button>
               <Button variant="destructive" onClick={handleDelete}>確認刪除</Button>
             </div>
           </div>

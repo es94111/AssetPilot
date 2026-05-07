@@ -480,6 +480,8 @@ async function _runMigrations(): Promise<void> {
   alterIgnore("ALTER TABLE transactions ADD COLUMN scheduled_date TEXT DEFAULT ''");
 
   alterIgnore("ALTER TABLE budgets ADD COLUMN year_month TEXT DEFAULT ''");
+  alterIgnore("ALTER TABLE budgets ADD COLUMN created_at INTEGER DEFAULT 0");
+  alterIgnore("ALTER TABLE budgets ADD COLUMN updated_at INTEGER DEFAULT 0");
 
   alterIgnore("ALTER TABLE stocks ADD COLUMN current_price REAL DEFAULT 0");
   alterIgnore("ALTER TABLE stocks ADD COLUMN stock_type TEXT DEFAULT 'stock'");

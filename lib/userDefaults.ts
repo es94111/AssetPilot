@@ -1,28 +1,26 @@
-'use strict';
-// lib/userDefaults.js — 新使用者預設資料建立（從 server.js 提取）
+// lib/userDefaults.ts — 新使用者預設資料建立
+import crypto from 'crypto';
+import { getDB, queryOne, queryAll, saveDB } from './db';
 
-const crypto = require('crypto');
-const { getDB, queryOne, queryAll, saveDB } = require('./db');
-
-function uid() {
+export function uid(): string {
   return crypto.randomUUID().replace(/-/g, '');
 }
 
-function todayStr() {
+export function todayStr(): string {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-const DEFAULT_EXPENSE_PARENTS = [
+export const DEFAULT_EXPENSE_PARENTS: Array<[string, string]> = [
   ['餐飲', '#ef4444'], ['交通', '#f97316'], ['購物', '#eab308'],
   ['娛樂', '#8b5cf6'], ['居住', '#06b6d4'], ['醫療', '#ec4899'],
   ['教育', '#3b82f6'], ['其他', '#64748b'],
 ];
-const DEFAULT_INCOME_PARENTS = [
+export const DEFAULT_INCOME_PARENTS: Array<[string, string]> = [
   ['薪資', '#10b981'], ['獎金', '#14b8a6'], ['投資', '#6366f1'],
   ['兼職', '#f59e0b'], ['其他', '#71717a'],
 ];
-const DEFAULT_SUBCATEGORIES = {
+export const DEFAULT_SUBCATEGORIES: Record<string, Record<string, Array<[string, string]>>> = {
   expense: {
     '餐飲': [['早餐','#fca5a5'], ['午餐','#f87171'], ['晚餐','#dc2626'], ['飲料','#fb923c'], ['點心','#fdba74']],
     '交通': [['大眾運輸','#fdba74'], ['計程車','#fb923c'], ['加油','#f97316'], ['停車費','#ea580c'], ['高鐵/火車','#c2410c']],
@@ -42,7 +40,18 @@ const DEFAULT_SUBCATEGORIES = {
   },
 };
 
-const DEFAULT_STOCK_SETTINGS = {
+export interface DefaultStockSettings {
+  feeRate: number;
+  feeDiscount: number;
+  feeMinLot: number;
+  feeMinOdd: number;
+  sellTaxRateStock: number;
+  sellTaxRateEtf: number;
+  sellTaxRateWarrant: number;
+  sellTaxMin: number;
+}
+
+export const DEFAULT_STOCK_SETTINGS: DefaultStockSettings = {
   feeRate: 0.001425,
   feeDiscount: 1,
   feeMinLot: 20,
@@ -53,12 +62,12 @@ const DEFAULT_STOCK_SETTINGS = {
   sellTaxMin: 1,
 };
 
-function categoryDefaultKey(type, parentName, name) {
+export function categoryDefaultKey(type: string, parentName: string | null | undefined, name: string): string {
   if (parentName === null || parentName === undefined || parentName === '') return `${type}:${name}`;
   return `${type}:${parentName}:${name}`;
 }
 
-function createDefaultsForUser(userId) {
+export function createDefaultsForUser(userId: string): void {
   const db = getDB();
   let order = 0;
   for (const [name, color] of DEFAULT_EXPENSE_PARENTS) {
@@ -104,18 +113,18 @@ function createDefaultsForUser(userId) {
       DEFAULT_STOCK_SETTINGS.sellTaxRateWarrant, DEFAULT_STOCK_SETTINGS.sellTaxMin, nowMs]);
 }
 
-function backfillDefaultsForUser(userId) {
+export function backfillDefaultsForUser(userId: string): number {
   const db = getDB();
   const deletedRows = queryAll('SELECT default_key FROM deleted_defaults WHERE user_id = ?', [userId]);
-  const deletedSet = new Set(deletedRows.map(r => r.default_key));
-  let maxOrder = queryOne(
+  const deletedSet = new Set(deletedRows.map(r => r.default_key as string));
+  let maxOrder = Number(queryOne(
     'SELECT COALESCE(MAX(sort_order),0) AS m FROM categories WHERE user_id = ?',
     [userId]
-  )?.m || 0;
+  )?.m) || 0;
   let inserted = 0;
   db.run('BEGIN');
   try {
-    for (const [type, parents] of [['expense', DEFAULT_EXPENSE_PARENTS], ['income', DEFAULT_INCOME_PARENTS]]) {
+    for (const [type, parents] of [['expense', DEFAULT_EXPENSE_PARENTS], ['income', DEFAULT_INCOME_PARENTS]] as [string, Array<[string, string]>][]) {
       for (const [pName, pColor] of parents) {
         const pKey = categoryDefaultKey(type, null, pName);
         if (deletedSet.has(pKey)) continue;
@@ -136,7 +145,7 @@ function backfillDefaultsForUser(userId) {
           const sKey = categoryDefaultKey(type, pName, sName);
           if (deletedSet.has(sKey)) continue;
           const exists = queryOne('SELECT id FROM categories WHERE user_id = ? AND parent_id = ? AND name = ?',
-            [userId, parent.id, sName]);
+            [userId, parent.id as string, sName]);
           if (exists) continue;
           maxOrder++;
           db.run("INSERT INTO categories (id, user_id, name, type, color, is_default, sort_order, parent_id) VALUES (?,?,?,?,?,1,?,?)",
@@ -152,15 +161,3 @@ function backfillDefaultsForUser(userId) {
   }
   return inserted;
 }
-
-module.exports = {
-  uid,
-  todayStr,
-  createDefaultsForUser,
-  backfillDefaultsForUser,
-  DEFAULT_EXPENSE_PARENTS,
-  DEFAULT_INCOME_PARENTS,
-  DEFAULT_SUBCATEGORIES,
-  DEFAULT_STOCK_SETTINGS,
-  categoryDefaultKey,
-};

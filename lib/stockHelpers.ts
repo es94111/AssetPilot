@@ -145,7 +145,7 @@ export function validateChainConstraint(userId: string, stockId: string, txDate:
   const future = queryAll(futureSql, futureParams);
   for (const t of future) {
     cumulative += t.type === 'buy' ? Number(t.shares) : -Number(t.shares);
-    if (cumulative < 0) return { ok: false, conflictDate: t.date, expectedShares: cumulative };
+    if (cumulative < 0) return { ok: false, conflictDate: t.date as string | undefined, expectedShares: cumulative };
   }
   return { ok: true };
 }

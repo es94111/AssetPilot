@@ -1,11 +1,35 @@
-'use strict';
-// lib/db.js — sql.js 全域單例 + 持久化工具
+// lib/db.ts — sql.js 全域單例 + 持久化工具
 // 開發模式：globalThis.__sqlDb 防止 HMR 重複初始化
 // 生產模式：模組層級 _db（initDB() 負責設值）
 
-const path = require('path');
-const fs = require('fs');
-const crypto = require('crypto');
+import path from 'path';
+import fs from 'fs';
+import crypto from 'crypto';
+
+// ── sql.js 最小型別宣告（套件本身無 .d.ts）──
+interface SqlJsStatement {
+  bind(params?: Array<string | number | null | Uint8Array>): void;
+  step(): boolean;
+  getAsObject(): Record<string, string | number | null>;
+  free(): void;
+}
+
+export interface SqlJsDatabase {
+  prepare(sql: string): SqlJsStatement;
+  run(sql: string, params?: Array<string | number | null>): void;
+  exec(sql: string): Array<{ columns: string[]; values: Array<Array<string | number | null>> }>;
+  export(): Uint8Array;
+  close(): void;
+}
+
+interface SqlJsStatic {
+  Database: new (data?: Uint8Array | number[] | Buffer) => SqlJsDatabase;
+}
+
+declare global {
+  // eslint-disable-next-line no-var
+  var __sqlDb: SqlJsDatabase | undefined;
+}
 
 const DB_PATH = process.env.DB_PATH || path.join(process.cwd(), 'database.db');
 const DB_ENCRYPTION_KEY = process.env.DB_ENCRYPTION_KEY || '';
@@ -14,11 +38,11 @@ const DB_ENCRYPTION_KEY = process.env.DB_ENCRYPTION_KEY || '';
 // 格式：MAGIC(4) + SALT(16) + NONCE(12) + AUTH_TAG(16) + ENCRYPTED_DATA
 const ENC_MAGIC = Buffer.from('EADB');
 
-function deriveKey(passphrase, salt) {
+function deriveKey(passphrase: string, salt: Buffer): Buffer {
   return crypto.pbkdf2Sync(passphrase, salt, 100000, 32, 'sha256');
 }
 
-function encryptBuffer(plainBuffer, passphrase) {
+export function encryptBuffer(plainBuffer: Buffer, passphrase: string): Buffer {
   const salt = crypto.randomBytes(16);
   const key = deriveKey(passphrase, salt);
   const nonce = crypto.randomBytes(12);
@@ -28,7 +52,7 @@ function encryptBuffer(plainBuffer, passphrase) {
   return Buffer.concat([ENC_MAGIC, salt, nonce, authTag, encrypted]);
 }
 
-function decryptBuffer(encBuffer, passphrase) {
+export function decryptBuffer(encBuffer: Buffer, passphrase: string): Buffer {
   if (encBuffer.length < 48) throw new Error('加密檔案格式錯誤：檔案太小');
   const magic = encBuffer.subarray(0, 4);
   if (!magic.equals(ENC_MAGIC)) throw new Error('非加密資料庫檔案');
@@ -42,24 +66,24 @@ function decryptBuffer(encBuffer, passphrase) {
   return Buffer.concat([decipher.update(encrypted), decipher.final()]);
 }
 
-function isEncryptedDB(buffer) {
+export function isEncryptedDB(buffer: Buffer): boolean {
   if (!Buffer.isBuffer(buffer)) return false;
   return buffer.length >= 4 && buffer.subarray(0, 4).equals(ENC_MAGIC);
 }
 
 // ── 非阻塞寫檔（in-flight + pending 合併，tmp+rename 保證原子性）──
-let _db = globalThis.__sqlDb || null;
+let _db: SqlJsDatabase | null = globalThis.__sqlDb ?? null;
 let saveInFlight = false;
 let savePending = false;
 
-function saveDB() {
+export function saveDB(): void {
   if (saveInFlight) { savePending = true; return; }
   saveInFlight = true;
   (async () => {
     try {
       while (true) {
         savePending = false;
-        const data = _db.export();
+        const data = _db!.export();
         const plain = Buffer.from(data);
         const buf = DB_ENCRYPTION_KEY ? encryptBuffer(plain, DB_ENCRYPTION_KEY) : plain;
         const tmp = DB_PATH + '.tmp';
@@ -68,29 +92,31 @@ function saveDB() {
         if (!savePending) break;
       }
     } catch (e) {
-      console.error('saveDB failed:', e?.message ?? e);
+      console.error('saveDB failed:', (e as Error)?.message ?? e);
     } finally {
       saveInFlight = false;
     }
   })();
 }
 
-function saveDBSync() {
-  const data = _db.export();
+export function saveDBSync(): void {
+  const data = _db!.export();
   const plain = Buffer.from(data);
   const buf = DB_ENCRYPTION_KEY ? encryptBuffer(plain, DB_ENCRYPTION_KEY) : plain;
   fs.writeFileSync(DB_PATH, buf);
 }
 
-const flushOnExit = () => { try { saveDBSync(); } catch {} };
+export const flushOnExit = (): void => { try { saveDBSync(); } catch { /* noop */ } };
 
-// ── 初始化（含 migrations，從 server.js initDB 提取）──
-async function initDB() {
-  if (_db) return; // 已初始化
+// ── 初始化（含 migrations）──
+export async function initDB(): Promise<void> {
+  if (_db) return;
 
-  const initSqlJs = require('sql.js');
+  // webpackIgnore: sql.js contains Node.js built-ins; must not be bundled
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const initSqlJs = require('sql.js') as (opts: { locateFile: (f: string) => string }) => Promise<SqlJsStatic>;
   const SQL = await initSqlJs({
-    locateFile: (file) => path.join(process.cwd(), 'node_modules', 'sql.js', 'dist', file)
+    locateFile: (file) => path.join(process.cwd(), 'node_modules', 'sql.js', 'dist', file),
   });
 
   if (fs.existsSync(DB_PATH)) {
@@ -108,7 +134,7 @@ async function initDB() {
         _db = new SQL.Database(plain);
         console.log('已載入加密資料庫（ChaCha20-Poly1305）');
       } catch (e) {
-        console.error('資料庫解密失敗（金鑰可能不正確）:', e.message);
+        console.error('資料庫解密失敗（金鑰可能不正確）:', (e as Error).message);
         process.exit(1);
       }
     } else if (DB_ENCRYPTION_KEY) {
@@ -124,26 +150,19 @@ async function initDB() {
     if (DB_ENCRYPTION_KEY) console.log('將使用加密模式儲存新資料庫');
   }
 
-  // 同步至 globalThis 以跨越模組實例差異
   globalThis.__sqlDb = _db;
-
-  // 執行 migrations（從 server.js initDB 完整移植）
   await _runMigrations();
-
   console.log('資料庫初始化完成');
 }
 
-function getDB() {
-  // 嘗試從 globalThis 補回
-  if (!_db) {
-    _db = globalThis.__sqlDb ?? null;
-  }
+export function getDB(): SqlJsDatabase {
+  if (!_db) _db = globalThis.__sqlDb ?? null;
   if (!_db) throw new Error('DB 尚未初始化，請確認 instrumentation.js 已執行');
   return _db;
 }
 
 // ── 便利查詢工具 ──
-function queryOne(sql, params = []) {
+export function queryOne(sql: string, params: Array<string | number | null> = []): Record<string, string | number | null> | null {
   const db = getDB();
   const stmt = db.prepare(sql);
   stmt.bind(params);
@@ -156,21 +175,20 @@ function queryOne(sql, params = []) {
   return null;
 }
 
-function queryAll(sql, params = []) {
+export function queryAll(sql: string, params: Array<string | number | null> = []): Array<Record<string, string | number | null>> {
   const db = getDB();
   const stmt = db.prepare(sql);
   stmt.bind(params);
-  const rows = [];
+  const rows: Array<Record<string, string | number | null>> = [];
   while (stmt.step()) rows.push(stmt.getAsObject());
   stmt.free();
   return rows;
 }
 
-// ── Migrations（從 server.js initDB 完整移植）──
-async function _runMigrations() {
-  const db = _db;
+// ── Migrations ──
+async function _runMigrations(): Promise<void> {
+  const db = _db!;
 
-  // 基礎資料表
   db.run(`CREATE TABLE IF NOT EXISTS users (
     id TEXT PRIMARY KEY,
     email TEXT UNIQUE NOT NULL,
@@ -230,8 +248,7 @@ async function _runMigrations() {
     updated_by TEXT DEFAULT ''
   )`);
 
-  // ALTER TABLE migrations（冪等）
-  const alterIgnore = (sql) => { try { db.run(sql); } catch {} };
+  const alterIgnore = (sql: string): void => { try { db.run(sql); } catch { /* idempotent */ } };
   alterIgnore("ALTER TABLE system_settings ADD COLUMN admin_ip_allowlist TEXT DEFAULT ''");
   alterIgnore("ALTER TABLE system_settings ADD COLUMN report_schedule_freq TEXT DEFAULT 'off'");
   alterIgnore("ALTER TABLE system_settings ADD COLUMN report_schedule_hour INTEGER DEFAULT 9");
@@ -407,7 +424,6 @@ async function _runMigrations() {
     updated_at INTEGER
   )`);
 
-  // users 資料表 column migrations
   alterIgnore("ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'user'");
   alterIgnore("ALTER TABLE users ADD COLUMN is_admin INTEGER DEFAULT 0");
   alterIgnore("ALTER TABLE users ADD COLUMN timezone TEXT DEFAULT 'Asia/Taipei'");
@@ -420,7 +436,6 @@ async function _runMigrations() {
   alterIgnore("ALTER TABLE users ADD COLUMN passkey_credentials TEXT DEFAULT '[]'");
   alterIgnore("ALTER TABLE users ADD COLUMN updated_at INTEGER DEFAULT 0");
 
-  // accounts 資料表 column migrations
   alterIgnore("ALTER TABLE accounts ADD COLUMN type TEXT DEFAULT 'checking'");
   alterIgnore("ALTER TABLE accounts ADD COLUMN balance REAL DEFAULT 0");
   alterIgnore("ALTER TABLE accounts ADD COLUMN color TEXT DEFAULT '#6366f1'");
@@ -429,29 +444,22 @@ async function _runMigrations() {
   alterIgnore("ALTER TABLE accounts ADD COLUMN updated_at INTEGER DEFAULT 0");
   alterIgnore("ALTER TABLE accounts ADD COLUMN note TEXT DEFAULT ''");
 
-  // transactions 資料表 column migrations
   alterIgnore("ALTER TABLE transactions ADD COLUMN transfer_to_account_id TEXT DEFAULT ''");
   alterIgnore("ALTER TABLE transactions ADD COLUMN tags TEXT DEFAULT '[]'");
 
-  // stock_transactions 追加欄位
   alterIgnore("ALTER TABLE stock_transactions ADD COLUMN realized_pl REAL DEFAULT 0");
 
-  // backups 目錄（非資料表，確保存在）
-  const backupsDir = require('path').join(process.cwd(), 'backups');
-  if (!require('fs').existsSync(backupsDir)) {
-    require('fs').mkdirSync(backupsDir, { recursive: true });
-  }
+  const backupsDir = path.join(process.cwd(), 'backups');
+  if (!fs.existsSync(backupsDir)) fs.mkdirSync(backupsDir, { recursive: true });
 
   saveDB();
 }
 
-async function replaceDB(uint8Array) {
-  const DatabaseConstructor = getDB().constructor;
-  if (_db) { try { _db.close(); } catch (_) {} }
+export async function replaceDB(uint8Array: Uint8Array): Promise<void> {
+  const DatabaseConstructor = (getDB() as unknown as { constructor: SqlJsStatic['Database'] }).constructor;
+  if (_db) { try { _db.close(); } catch { /* noop */ } }
   _db = new DatabaseConstructor(uint8Array);
   if (process.env.NODE_ENV !== 'production') globalThis.__sqlDb = _db;
   saveDB();
   await _runMigrations();
 }
-
-module.exports = { initDB, getDB, saveDB, saveDBSync, flushOnExit, queryOne, queryAll, isEncryptedDB, encryptBuffer, decryptBuffer, replaceDB };

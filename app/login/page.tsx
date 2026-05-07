@@ -5,6 +5,18 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Eye, EyeOff, Fingerprint } from 'lucide-react';
 
+declare global {
+  interface Window {
+    google?: {
+      accounts?: {
+        oauth2?: {
+          initCodeClient: (options: Record<string, any>) => { requestCode: () => void };
+        };
+      };
+    };
+  }
+}
+
 export default function LoginPage() {
   const router = useRouter();
   const [form, setForm] = useState<'login' | 'register'>('login');
@@ -20,6 +32,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [config, setConfig] = useState<any>(null);
   const [passkeyAvailable, setPasskeyAvailable] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   useEffect(() => {
     if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('mode') === 'register') {
@@ -73,7 +86,64 @@ export default function LoginPage() {
     finally { setLoading(false); }
   }
 
+  async function handleGoogleLogin() {
+    setError('');
+    if (!config?.googleClientId || !config?.googleCodeFlow) {
+      setError('Google 登入尚未設定完成');
+      return;
+    }
+    if (!window.google?.accounts?.oauth2?.initCodeClient) {
+      setError('Google 登入元件尚未載入');
+      return;
+    }
+
+    setGoogleLoading(true);
+    try {
+      const redirectUri = window.location.origin;
+      const stateRes = await fetch('/api/auth/google/state', { cache: 'no-store' });
+      const stateData = await stateRes.json().catch(() => ({}));
+      const state = stateData?.state;
+      if (!state) throw new Error('無法建立 Google 登入狀態');
+
+      const client = window.google.accounts.oauth2.initCodeClient({
+        client_id: config.googleClientId,
+        scope: 'openid email profile',
+        ux_mode: 'popup',
+        redirect_uri: redirectUri,
+        state,
+        callback: async (response: any) => {
+          try {
+            if (!response?.code) throw new Error('未收到 Google 授權碼');
+            const res = await fetch('/api/auth/google', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ code: response.code, redirect_uri: redirectUri, state }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data.error || 'Google 登入失敗');
+            router.push('/dashboard');
+            router.refresh();
+          } catch (e: any) {
+            setError(e.message || 'Google 登入失敗');
+          } finally {
+            setGoogleLoading(false);
+          }
+        },
+        error_callback: (err: any) => {
+          setError(err?.message || 'Google 登入已取消');
+          setGoogleLoading(false);
+        },
+      });
+
+      client.requestCode();
+    } catch (e: any) {
+      setError(e.message || 'Google 登入失敗');
+      setGoogleLoading(false);
+    }
+  }
+
   const registrationEnabled = config ? config.registrationEnabled : true;
+  const googleEnabled = !!config?.googleClientId && !!config?.googleCodeFlow;
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
@@ -102,6 +172,16 @@ export default function LoginPage() {
             </div>
             {error && <div className="text-red-500 text-sm">{error}</div>}
             <button type="submit" className="w-full py-2 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700" disabled={loading}>{loading ? '登入中...' : '登入'}</button>
+            {googleEnabled && (
+              <button
+                type="button"
+                className="w-full py-2 border border-slate-300 rounded-md font-medium text-slate-700 hover:bg-slate-50"
+                onClick={handleGoogleLogin}
+                disabled={googleLoading}
+              >
+                {googleLoading ? 'Google 驗證中...' : '使用 Google 登入'}
+              </button>
+            )}
             {registrationEnabled && (
               <p className="text-center text-sm text-slate-600">
                 還沒有帳號？ <button type="button" className="text-blue-600 font-medium" onClick={() => { setForm('register'); setError(''); }}>立即註冊</button>

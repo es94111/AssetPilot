@@ -31,7 +31,7 @@ export default function BudgetClient(_props: { user?: any } = {}) {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await apiGet(`/api/budgets?month=${encodeURIComponent(month)}`);
+      const data = await apiGet(`/api/budgets?yearMonth=${encodeURIComponent(month)}`);
       setBudgets(data.budgets || data || []);
     } catch (_) {}
     setLoading(false);
@@ -70,7 +70,7 @@ export default function BudgetClient(_props: { user?: any } = {}) {
   };
 
   const totalBudget = budgets.reduce((s, b) => s + (Number(b.amount) || 0), 0);
-  const totalSpent = budgets.reduce((s, b) => s + (Number(b.spent) || 0), 0);
+  const totalSpent = budgets.reduce((s, b) => s + (Number(b.used) || 0), 0);
 
   return (
     <div className="space-y-6">
@@ -101,7 +101,17 @@ export default function BudgetClient(_props: { user?: any } = {}) {
         <DialogContent>
           <DialogHeader><DialogTitle>{editId ? '編輯預算' : '新增預算'}</DialogTitle></DialogHeader>
           <form onSubmit={handleSave} className="space-y-4">
-            <Select label="分類（留空為總預算）" options={[{label: '— 總預算 —', value: ''}, ...categories.map(c => ({ label: c.name, value: c.id }))]} value={form.categoryId} onChange={e => setForm(f => ({ ...f, categoryId: e.target.value }))} />
+            <Select label="分類（留空為總預算）" options={[
+              { label: '— 總預算 —', value: '' },
+              ...categories
+                .filter((c: any) => !c.parent_id || c.parent_id === '')
+                .flatMap((p: any) => [
+                  { label: p.name, value: p.id },
+                  ...categories
+                    .filter((c: any) => c.parent_id === p.id)
+                    .map((c: any) => ({ label: `　${c.name}`, value: c.id })),
+                ]),
+            ]} value={form.categoryId} onChange={e => setForm(f => ({ ...f, categoryId: e.target.value }))} />
             <Input label="預算金額 *" type="number" value={form.amount} onChange={e => setForm(f => ({ ...f, amount: e.target.value }))} />
             {formError && <p className="text-red-500 text-sm">{formError}</p>}
             <DialogClose asChild><Button type="submit" disabled={saving}>儲存</Button></DialogClose>
@@ -112,8 +122,8 @@ export default function BudgetClient(_props: { user?: any } = {}) {
       {loading ? <p className="text-slate-500">載入中...</p> : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {budgets.map(b => {
-            const used = pct(b.spent, b.amount);
-            const overBudget = Number(b.spent) > Number(b.amount);
+            const used = pct(b.used, b.amount);
+            const overBudget = Number(b.used) > Number(b.amount);
             const catName = b.category_id || b.categoryId ? (categories.find(c => c.id === (b.category_id || b.categoryId))?.name || '—') : '（總預算）';
             return (
               <div key={b.id} className="p-4 bg-white border border-slate-200 rounded-lg shadow-sm space-y-2">
@@ -124,7 +134,7 @@ export default function BudgetClient(_props: { user?: any } = {}) {
                     <Button variant="ghost" size="icon" className="text-red-500" onClick={() => setDeleteId(b.id)}><Trash2 size={16} /></Button>
                   </div>
                 </div>
-                <div className={`text-lg font-bold ${overBudget ? 'text-red-600' : 'text-slate-900'}`}>{fmt(b.spent)} / {fmt(b.amount)}</div>
+                <div className={`text-lg font-bold ${overBudget ? 'text-red-600' : 'text-slate-900'}`}>{fmt(b.used)} / {fmt(b.amount)}</div>
                 <div className="w-full bg-slate-100 rounded-full h-2.5">
                   <div className={`h-2.5 rounded-full ${overBudget ? 'bg-red-500' : 'bg-blue-600'}`} style={{ width: `${used}%` }}></div>
                 </div>

@@ -38,6 +38,7 @@ export default function StockSettingsClient(_props: { user?: any } = {}) {
   const [recSaving, setRecSaving] = useState(false);
   const [recFormError, setRecFormError] = useState('');
   const [stockStatusMsg, setStockStatusMsg] = useState('');
+  const [recDialogOpen, setRecDialogOpen] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -99,8 +100,30 @@ export default function StockSettingsClient(_props: { user?: any } = {}) {
       else { await apiPost('/api/stock-recurring', body); }
       const recList = await apiGet('/api/stock-recurring').catch(() => []);
       setRecs(recList || []);
+      setRecDialogOpen(false);
     } catch (e: any) { setRecFormError(e.message); }
     setRecSaving(false);
+  }
+
+  function openRecCreate() {
+    setRecForm({ ...EMPTY_REC_FORM, startDate: new Date().toISOString().slice(0, 10), stockId: stocks[0]?.id || '' });
+    setRecEditId(null);
+    setRecFormError('');
+    setRecDialogOpen(true);
+  }
+
+  function openRecEdit(rec: any) {
+    setRecForm({
+      stockId: rec.stockId || rec.stock_id,
+      amount: rec.amount,
+      frequency: rec.frequency,
+      startDate: rec.startDate || rec.start_date,
+      accountId: rec.accountId || rec.account_id || '',
+      note: rec.note || '',
+    });
+    setRecEditId(rec.id);
+    setRecFormError('');
+    setRecDialogOpen(true);
   }
 
   async function handleToggleRec(id: string, enabled: boolean) {
@@ -196,9 +219,9 @@ export default function StockSettingsClient(_props: { user?: any } = {}) {
       <div className="p-6 bg-white border border-slate-200 rounded-xl shadow-sm">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-semibold">股票定期定額</h3>
-          <Dialog>
+          <Dialog open={recDialogOpen} onOpenChange={setRecDialogOpen}>
             <DialogTrigger asChild>
-              <Button size="sm" onClick={() => { setRecForm({ ...EMPTY_REC_FORM, startDate: new Date().toISOString().slice(0, 10), stockId: stocks[0]?.id || '' }); setRecEditId(null); }}><Plus size={16} className="mr-2" /> 新增</Button>
+              <Button size="sm" onClick={openRecCreate}><Plus size={16} className="mr-2" /> 新增</Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader><DialogTitle>{recEditId ? '編輯定期定額' : '新增定期定額'}</DialogTitle></DialogHeader>
@@ -210,7 +233,10 @@ export default function StockSettingsClient(_props: { user?: any } = {}) {
                 <Select label="帳戶" options={accounts.map(a => ({ label: a.name, value: a.id }))} value={recForm.accountId} onChange={e => setRecForm(f => ({ ...f, accountId: e.target.value }))} />
                 <Input label="備註" value={recForm.note} onChange={e => setRecForm(f => ({ ...f, note: e.target.value }))} />
                 {recFormError && <p className="text-red-500 text-sm">{recFormError}</p>}
-                <DialogClose asChild><Button type="submit" disabled={recSaving}>儲存</Button></DialogClose>
+                <div className="flex gap-2">
+                  <DialogClose asChild><Button type="button" variant="outline">取消</Button></DialogClose>
+                  <Button type="submit" disabled={recSaving}>儲存</Button>
+                </div>
               </form>
             </DialogContent>
           </Dialog>
@@ -238,7 +264,7 @@ export default function StockSettingsClient(_props: { user?: any } = {}) {
                   </TableCell>
                   <TableCell className="flex gap-2">
                     <Button variant="ghost" size="icon" onClick={() => handleToggleRec(r.id, r.isActive)}>{r.isActive ? <Pause size={16} /> : <Play size={16} />}</Button>
-                    <Button variant="ghost" size="icon" onClick={() => { setRecForm({ stockId: r.stockId || r.stock_id, amount: r.amount, frequency: r.frequency, startDate: r.startDate || r.start_date, accountId: r.accountId || r.account_id, note: r.note }); setRecEditId(r.id); }}><Edit3 size={16} /></Button>
+                    <Button variant="ghost" size="icon" onClick={() => openRecEdit(r)}><Edit3 size={16} /></Button>
                     <Button variant="ghost" size="icon" className="text-red-500" onClick={() => handleDeleteRec(r.id)}><Trash2 size={16} /></Button>
                   </TableCell>
                 </TableRow>

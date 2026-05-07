@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { requireAuth } from '../../../lib/apiHelpers';
 import { queryAll } from '../../../lib/db';
-import moneyDecimal from '../../../lib/moneyDecimal';
+import { calcFifoLots } from '../../../lib/moneyDecimal';
 
 export async function GET(request) {
   const auth = await requireAuth(request);
@@ -15,7 +15,7 @@ export async function GET(request) {
       'SELECT * FROM stock_transactions WHERE stock_id = ? AND user_id = ? ORDER BY date, created_at',
       [s.id, auth.userId]
     );
-    const fifo = moneyDecimal.calcFifoLots(txs);
+    const fifo = calcFifoLots(txs);
     fifo.sellEntries.forEach(entry => {
       const t = entry.tx;
       entries.push({

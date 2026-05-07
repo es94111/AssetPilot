@@ -3,7 +3,7 @@ import { requireAuth } from '../../../../lib/apiHelpers';
 import { getDB, queryOne, saveDB } from '../../../../lib/db';
 import { normalizeCurrency, convertToTwd, normalizeDate } from '../../../../lib/accountHelpers';
 import { ownsResource, assertOptimisticLock, lockErrorResponse } from '../../../../lib/resourceHelpers';
-import moneyDecimal from '../../../../lib/moneyDecimal';
+import { computeTwdAmount } from '../../../../lib/moneyDecimal';
 
 export async function GET(request, { params }) {
   const auth = await requireAuth(request);
@@ -103,7 +103,7 @@ async function updateHandler(request, txId, auth) {
 
   const fxFee = Math.max(0, Number(body.fxFee) || 0);
   const totalTwd = converted.twdAmount + fxFee;
-  const twdAmountInt = moneyDecimal.computeTwdAmount(
+  const twdAmountInt = computeTwdAmount(
     Math.round(converted.originalAmount * 100) / 100,
     String(converted.fxRate || 1),
     fxFee

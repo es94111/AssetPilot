@@ -56,7 +56,7 @@ function isPrivateOrLocalIp(ip: string): boolean {
   return false;
 }
 
-function parseIpAllowlist(value: string | string[]): string[] {
+export function parseIpAllowlist(value: string | string[]): string[] {
   const source = Array.isArray(value) ? value.join('\n') : String(value || '');
   return Array.from(new Set(
     source.split(/[\n,;\s]+/).map(v => normalizeIp(v)).filter(Boolean)

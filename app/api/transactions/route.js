@@ -4,7 +4,7 @@ import { getDB, queryAll, queryOne, saveDB } from '../../../lib/db';
 import { normalizeCurrency, convertToTwd, normalizeDate } from '../../../lib/accountHelpers';
 import { uid } from '../../../lib/userDefaults';
 import { todayInUserTz, isValidIsoDate } from '../../../lib/userTime';
-import moneyDecimal from '../../../lib/moneyDecimal';
+import { computeTwdAmount } from '../../../lib/moneyDecimal';
 
 const SORT_REGEX = /^(date|amount|account|category|type)_(asc|desc)$/;
 
@@ -165,7 +165,7 @@ export async function POST(request) {
 
   const fxFee = Math.max(0, Number(body.fxFee) || 0);
   const totalTwd = converted.twdAmount + fxFee;
-  const twdAmountInt = moneyDecimal.computeTwdAmount(
+  const twdAmountInt = computeTwdAmount(
     Math.round(converted.originalAmount * 100) / 100,
     String(converted.fxRate || 1),
     fxFee

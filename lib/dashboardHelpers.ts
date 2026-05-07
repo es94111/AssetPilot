@@ -77,9 +77,10 @@ export function buildCategoryAggregateNodes(rows: any[]): CategoryNode[] {
 export async function getDashboardData(month?: string) {
   const session = await requireAuth();
   
-  const url = month 
-    ? `http://localhost:3000/api/dashboard?yearMonth=${month}`
-    : 'http://localhost:3000/api/dashboard';
+  const port = process.env.PORT || 3000;
+  const url = month
+    ? `http://localhost:${port}/api/dashboard?yearMonth=${month}`
+    : `http://localhost:${port}/api/dashboard`;
 
   logger.info({ url }, 'Fetching dashboard data');
 

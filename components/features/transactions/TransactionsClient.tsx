@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../../lib/clientApi';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 
 const EMPTY_FORM = { date: '', type: 'expense', amount: '', categoryId: '', accountId: '', note: '', excludeFromStats: false };
 const EMPTY_TRANSFER_FORM = { date: '', amount: '', fromAccountId: '', toAccountId: '', note: '' };
@@ -335,105 +337,101 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
         </div>
       )}
 
-      {modal && (
-        <div className="modal-overlay active" onClick={() => setModal(false)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>{editId ? '編輯交易' : '新增交易'}</h3>
-              <button className="btn-icon" onClick={() => setModal(false)}><i className="fas fa-xmark" /></button>
+      <Dialog open={modal} onOpenChange={setModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{editId ? '編輯交易' : '新增交易'}</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSave} className="space-y-3">
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium text-gray-700">日期 *</label>
+              <input type="date" required className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" value={form.date} onChange={(e) => setForm((current) => ({ ...current, date: e.target.value }))} />
             </div>
-            <form onSubmit={handleSave} className="modal-body">
-              <div className="form-row">
-                <label>日期 *</label>
-                <input type="date" required value={form.date} onChange={(e) => setForm((current) => ({ ...current, date: e.target.value }))} />
-              </div>
-              <div className="form-row">
-                <label>類型</label>
-                <select value={form.type} onChange={(e) => setForm((current) => ({ ...current, type: e.target.value, categoryId: '' }))}>
-                  <option value="income">收入</option>
-                  <option value="expense">支出</option>
-                </select>
-              </div>
-              <div className="form-row">
-                <label>金額 *</label>
-                <input type="number" required min="0.01" step="0.01" value={form.amount} onChange={(e) => setForm((current) => ({ ...current, amount: e.target.value }))} placeholder="0" />
-              </div>
-              <div className="form-row">
-                <label>分類</label>
-                <select value={form.categoryId} onChange={(e) => setForm((current) => ({ ...current, categoryId: e.target.value }))}>
-                  <option value="">未分類</option>
-                  {filteredCats.map((category: any) => <option key={category.id} value={category.id}>{category.parent_name ? `${category.parent_name} › ${category.name}` : category.name}</option>)}
-                </select>
-              </div>
-              <div className="form-row">
-                <label>帳戶</label>
-                <select value={form.accountId} onChange={(e) => setForm((current) => ({ ...current, accountId: e.target.value }))}>
-                  <option value="">未指定</option>
-                  {accounts.map((account: any) => <option key={account.id} value={account.id}>{account.name}</option>)}
-                </select>
-              </div>
-              <div className="form-row">
-                <label>備註</label>
-                <input type="text" maxLength={200} value={form.note} onChange={(e) => setForm((current) => ({ ...current, note: e.target.value }))} />
-              </div>
-              <div className="form-row form-row-checkbox">
-                <label>
-                  <input type="checkbox" checked={form.excludeFromStats} onChange={(e) => setForm((current) => ({ ...current, excludeFromStats: e.target.checked }))} /> 不計入統計
-                </label>
-              </div>
-              {formError && <div className="auth-error">{formError}</div>}
-              <div className="modal-footer">
-                <button type="button" className="btn btn-ghost" onClick={() => setModal(false)}>取消</button>
-                <button type="submit" className="btn btn-primary" disabled={saving}>{saving ? '儲存中...' : '儲存'}</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium text-gray-700">類型</label>
+              <select className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" value={form.type} onChange={(e) => setForm((current) => ({ ...current, type: e.target.value, categoryId: '' }))}>
+                <option value="income">收入</option>
+                <option value="expense">支出</option>
+              </select>
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium text-gray-700">金額 *</label>
+              <input type="number" required min="0.01" step="0.01" placeholder="0" className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" value={form.amount} onChange={(e) => setForm((current) => ({ ...current, amount: e.target.value }))} />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium text-gray-700">分類</label>
+              <select className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" value={form.categoryId} onChange={(e) => setForm((current) => ({ ...current, categoryId: e.target.value }))}>
+                <option value="">未分類</option>
+                {filteredCats.map((category: any) => <option key={category.id} value={category.id}>{category.parent_name ? `${category.parent_name} › ${category.name}` : category.name}</option>)}
+              </select>
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium text-gray-700">帳戶</label>
+              <select className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" value={form.accountId} onChange={(e) => setForm((current) => ({ ...current, accountId: e.target.value }))}>
+                <option value="">未指定</option>
+                {accounts.map((account: any) => <option key={account.id} value={account.id}>{account.name}</option>)}
+              </select>
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium text-gray-700">備註</label>
+              <input type="text" maxLength={200} className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" value={form.note} onChange={(e) => setForm((current) => ({ ...current, note: e.target.value }))} />
+            </div>
+            <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+              <input type="checkbox" checked={form.excludeFromStats} onChange={(e) => setForm((current) => ({ ...current, excludeFromStats: e.target.checked }))} /> 不計入統計
+            </label>
+            {formError && <p className="text-sm text-destructive">{formError}</p>}
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button type="button" variant="outline">取消</Button>
+              </DialogClose>
+              <Button type="submit" disabled={saving}>{saving ? '儲存中...' : '儲存'}</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
-      {transferModal && (
-        <div className="modal-overlay active" onClick={() => setTransferModal(false)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>帳戶轉帳</h3>
-              <button className="btn-icon" onClick={() => setTransferModal(false)}><i className="fas fa-xmark" /></button>
+      <Dialog open={transferModal} onOpenChange={setTransferModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>帳戶轉帳</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleTransferSave} className="space-y-3">
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium text-gray-700">日期 *</label>
+              <input type="date" required className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" value={transferForm.date} onChange={(e) => setTransferForm((current) => ({ ...current, date: e.target.value }))} />
             </div>
-            <form onSubmit={handleTransferSave} className="modal-body">
-              <div className="form-row">
-                <label>日期 *</label>
-                <input type="date" required value={transferForm.date} onChange={(e) => setTransferForm((current) => ({ ...current, date: e.target.value }))} />
-              </div>
-              <div className="form-row">
-                <label>轉出帳戶 *</label>
-                <select value={transferForm.fromAccountId} onChange={(e) => setTransferForm((current) => ({ ...current, fromAccountId: e.target.value }))}>
-                  <option value="">請選擇</option>
-                  {accounts.map((account: any) => <option key={account.id} value={account.id}>{account.name}</option>)}
-                </select>
-              </div>
-              <div className="form-row">
-                <label>轉入帳戶 *</label>
-                <select value={transferForm.toAccountId} onChange={(e) => setTransferForm((current) => ({ ...current, toAccountId: e.target.value }))}>
-                  <option value="">請選擇</option>
-                  {accounts.map((account: any) => <option key={account.id} value={account.id}>{account.name}</option>)}
-                </select>
-              </div>
-              <div className="form-row">
-                <label>金額 *</label>
-                <input type="number" required min="0.01" step="0.01" value={transferForm.amount} onChange={(e) => setTransferForm((current) => ({ ...current, amount: e.target.value }))} />
-              </div>
-              <div className="form-row">
-                <label>備註</label>
-                <input type="text" maxLength={200} value={transferForm.note} onChange={(e) => setTransferForm((current) => ({ ...current, note: e.target.value }))} />
-              </div>
-              {formError && <div className="auth-error">{formError}</div>}
-              <div className="modal-footer">
-                <button type="button" className="btn btn-ghost" onClick={() => setTransferModal(false)}>取消</button>
-                <button type="submit" className="btn btn-primary" disabled={saving}>{saving ? '建立中...' : '確認轉帳'}</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium text-gray-700">轉出帳戶 *</label>
+              <select className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" value={transferForm.fromAccountId} onChange={(e) => setTransferForm((current) => ({ ...current, fromAccountId: e.target.value }))}>
+                <option value="">請選擇</option>
+                {accounts.map((account: any) => <option key={account.id} value={account.id}>{account.name}</option>)}
+              </select>
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium text-gray-700">轉入帳戶 *</label>
+              <select className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" value={transferForm.toAccountId} onChange={(e) => setTransferForm((current) => ({ ...current, toAccountId: e.target.value }))}>
+                <option value="">請選擇</option>
+                {accounts.map((account: any) => <option key={account.id} value={account.id}>{account.name}</option>)}
+              </select>
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium text-gray-700">金額 *</label>
+              <input type="number" required min="0.01" step="0.01" className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" value={transferForm.amount} onChange={(e) => setTransferForm((current) => ({ ...current, amount: e.target.value }))} />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium text-gray-700">備註</label>
+              <input type="text" maxLength={200} className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" value={transferForm.note} onChange={(e) => setTransferForm((current) => ({ ...current, note: e.target.value }))} />
+            </div>
+            {formError && <p className="text-sm text-destructive">{formError}</p>}
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button type="button" variant="outline">取消</Button>
+              </DialogClose>
+              <Button type="submit" disabled={saving}>{saving ? '建立中...' : '確認轉帳'}</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       {batchModal && (
         <div className="modal-overlay active" onClick={() => setBatchModal(null)}>

@@ -210,12 +210,23 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
     }
   }
 
-  const filteredCats = categories.filter((category: any) => !form.type || category.type === form.type);
+  const parentIds = new Set(categories.filter((c: any) => c.parentId).map((c: any) => c.parentId));
+  const filteredCats = categories.filter((c: any) => !form.type || c.type === form.type);
+  const filteredStandalone = filteredCats.filter((c: any) => !c.parentId && !parentIds.has(c.id));
+  const filteredParents = filteredCats.filter((c: any) => !c.parentId && parentIds.has(c.id));
+  const filteredChildren = filteredCats.filter((c: any) => !!c.parentId);
+
+  const allStandalone = categories.filter((c: any) => !c.parentId && !parentIds.has(c.id));
+  const allParents = categories.filter((c: any) => !c.parentId && parentIds.has(c.id));
+  const allChildren = categories.filter((c: any) => !!c.parentId);
+
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   const getCatName = (tx: any) => {
-    const category = categories.find((item: any) => item.id === (tx.category_id || tx.categoryId));
-    return category ? (category.parent_name ? `${category.parent_name} › ${category.name}` : category.name) : (tx.cat_name || '—');
+    const cat = categories.find((c: any) => c.id === (tx.category_id || tx.categoryId));
+    if (!cat) return tx.cat_name || '—';
+    const parent = cat.parentId ? categories.find((c: any) => c.id === cat.parentId) : null;
+    return parent ? `${parent.name} › ${cat.name}` : cat.name;
   };
 
   const getAcctName = (tx: any) => {
@@ -245,7 +256,14 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
         </select>
         <select value={filters.categoryId} onChange={(e) => setFilters((current) => ({ ...current, categoryId: e.target.value }))}>
           <option value="">所有分類</option>
-          {categories.map((category: any) => <option key={category.id} value={category.id}>{category.parent_name ? `${category.parent_name} › ${category.name}` : category.name}</option>)}
+          {allStandalone.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
+          {allParents.map((parent: any) => (
+            <optgroup key={parent.id} label={parent.name}>
+              {allChildren.filter((c: any) => c.parentId === parent.id).map((c: any) => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </optgroup>
+          ))}
         </select>
         <input type="date" value={filters.dateFrom} onChange={(e) => setFilters((current) => ({ ...current, dateFrom: e.target.value }))} title="開始日期" />
         <input type="date" value={filters.dateTo} onChange={(e) => setFilters((current) => ({ ...current, dateTo: e.target.value }))} title="結束日期" />
@@ -362,7 +380,14 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
               <label className="text-sm font-medium text-gray-700">分類</label>
               <select className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" value={form.categoryId} onChange={(e) => setForm((current) => ({ ...current, categoryId: e.target.value }))}>
                 <option value="">未分類</option>
-                {filteredCats.map((category: any) => <option key={category.id} value={category.id}>{category.parent_name ? `${category.parent_name} › ${category.name}` : category.name}</option>)}
+                {filteredStandalone.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                {filteredParents.map((parent: any) => (
+                  <optgroup key={parent.id} label={parent.name}>
+                    {filteredChildren.filter((c: any) => c.parentId === parent.id).map((c: any) => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
+                    ))}
+                  </optgroup>
+                ))}
               </select>
             </div>
             <div className="flex flex-col gap-1">
@@ -446,8 +471,13 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
                   <label>新分類</label>
                   <select value={batchCategoryId} onChange={(e) => setBatchCategoryId(e.target.value)}>
                     <option value="">未分類</option>
-                    {categories.filter((category: any) => category.parent_id || category.parent_name).map((category: any) => (
-                      <option key={category.id} value={category.id}>{category.parent_name ? `${category.parent_name} › ${category.name}` : category.name}</option>
+                    {allStandalone.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    {allParents.map((parent: any) => (
+                      <optgroup key={parent.id} label={parent.name}>
+                        {allChildren.filter((c: any) => c.parentId === parent.id).map((c: any) => (
+                          <option key={c.id} value={c.id}>{c.name}</option>
+                        ))}
+                      </optgroup>
                     ))}
                   </select>
                 </div>

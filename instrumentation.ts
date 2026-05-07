@@ -1,3 +1,5 @@
+import type { SqlJsDatabase } from './lib/db';
+
 // instrumentation.ts — Next.js 15 穩定 API，無需 experimental.instrumentationHook
 // 僅在 Node.js runtime 執行（Edge runtime 不執行此檔）
 
@@ -42,7 +44,7 @@ function registerAuditPruneJob() {
     }
   }
 
-  function pruneTable(db: { exec: (sql: string) => Array<{ values?: unknown[][] }>; run: (sql: string, params?: unknown[]) => void }, retentionDays: number, batchSize: number) {
+  function pruneTable(db: Pick<SqlJsDatabase, 'exec' | 'run'>, retentionDays: number, batchSize: number) {
     const threshold = Date.now() - retentionDays * 86400 * 1000;
     // login_audit_logs
     while (true) {

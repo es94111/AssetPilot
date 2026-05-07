@@ -409,7 +409,11 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
                 {accounts.map((account: any) => <option key={account.id} value={account.id}>{account.name}{account.currency && account.currency !== 'TWD' ? ` (${account.currency})` : ''}</option>)}
               </select>
             </div>
-            {form.currency !== 'TWD' && (
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium text-gray-700">幣別</label>
+              <input type="text" maxLength={3} placeholder="TWD" className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" value={form.currency} onChange={(e) => setForm((current) => ({ ...current, currency: e.target.value.toUpperCase(), fxRate: '' }))} />
+            </div>
+            {form.currency && form.currency !== 'TWD' && (
               <div className="flex flex-col gap-1">
                 <label className="text-sm font-medium text-gray-700">匯率（1 {form.currency} = ? TWD）</label>
                 <input type="number" min="0.0001" step="0.0001" placeholder="留空則使用系統匯率" className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" value={form.fxRate} onChange={(e) => setForm((current) => ({ ...current, fxRate: e.target.value }))} />

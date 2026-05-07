@@ -13,6 +13,12 @@
   --color-danger: #f43f5e;
   --color-danger-dark: #e11d48;
 
+  --color-popover: #ffffff;
+  --color-popover-foreground: #1a1d26;
+  --color-muted: #f4f6fa;
+  --color-muted-foreground: #5c6370;
+  --color-foreground: #1a1d26;
+
   --spacing-sidebar: 256px;
   --spacing-header: 60px;
 
@@ -689,14 +695,12 @@
   to   { opacity: 1; }
 }
 
-/* ── Modal card — glassmorphism ── */
+/* ── Modal card — white background ── */
 .modal {
-  background: var(--surface-glass);
-  border: 1px solid var(--glass-border);
+  background: #ffffff;
+  border: 1px solid var(--border);
   border-radius: 18px;
   box-shadow: var(--shadow-glass-lg);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
   width: 100%;
   max-width: 440px;
   max-height: 90vh;

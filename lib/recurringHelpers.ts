@@ -1,11 +1,10 @@
-'use strict';
+// lib/recurringHelpers.ts — 固定收支處理邏輯
+import { getDB, queryOne, queryAll, saveDB } from './db';
+import { normalizeCurrency } from './accountHelpers';
+import { uid } from './userDefaults';
+import * as userTime from './userTime';
 
-const { getDB, queryOne, queryAll, saveDB } = require('./db');
-const { normalizeCurrency, convertToTwd } = require('./accountHelpers');
-const { uid } = require('./userDefaults');
-const userTime = require('./userTime');
-
-function getNextRecurringDate(prevIsoDate, freq) {
+export function getNextRecurringDate(prevIsoDate: string, freq: string): string | null {
   const m = String(prevIsoDate).match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (!m) return null;
   const y = parseInt(m[1], 10);
@@ -40,36 +39,42 @@ function getNextRecurringDate(prevIsoDate, freq) {
   return null;
 }
 
-function processOneRecurring(r, userId, userTimezone) {
+export function processOneRecurring(
+  r: Record<string, unknown>,
+  userId: string,
+  userTimezone: string
+): number {
   const db = getDB();
   if (r.category_id) {
-    const cat = queryOne('SELECT id FROM categories WHERE id = ? AND user_id = ?', [r.category_id, userId]);
+    const cat = queryOne('SELECT id FROM categories WHERE id = ? AND user_id = ?', [r.category_id as string, userId]);
     if (!cat) {
-      db.run('UPDATE recurring SET needs_attention = 1, updated_at = ? WHERE id = ?', [Date.now(), r.id]);
+      db.run('UPDATE recurring SET needs_attention = 1, updated_at = ? WHERE id = ?', [Date.now(), r.id as string]);
       return 0;
     }
   }
   if (r.account_id) {
-    const acct = queryOne('SELECT id FROM accounts WHERE id = ? AND user_id = ?', [r.account_id, userId]);
+    const acct = queryOne('SELECT id FROM accounts WHERE id = ? AND user_id = ?', [r.account_id as string, userId]);
     if (!acct) {
-      db.run('UPDATE recurring SET needs_attention = 1, updated_at = ? WHERE id = ?', [Date.now(), r.id]);
+      db.run('UPDATE recurring SET needs_attention = 1, updated_at = ? WHERE id = ?', [Date.now(), r.id as string]);
       return 0;
     }
   }
 
   const todayS = userTime.todayInUserTz(userTimezone || 'Asia/Taipei');
-  let lastGenerated = r.last_generated;
-  let scheduledDate = lastGenerated ? getNextRecurringDate(lastGenerated, r.frequency) : r.start_date;
+  let lastGenerated = r.last_generated as string | null;
+  let scheduledDate: string | null = lastGenerated
+    ? getNextRecurringDate(lastGenerated, r.frequency as string)
+    : r.start_date as string;
   let count = 0;
 
   while (scheduledDate && scheduledDate <= todayS) {
     const now = Date.now();
-    const rCurrency = normalizeCurrency(r.currency || 'TWD');
+    const rCurrency = normalizeCurrency(r.currency as string || 'TWD');
     const rFxRate = String(r.fx_rate || '1');
     const rFxRateNum = Number(rFxRate) > 0 ? Number(rFxRate) : 1;
     const rOriginalAmount = rCurrency === 'TWD'
       ? r.amount
-      : Math.round((r.amount / rFxRateNum) * 10000) / 10000;
+      : Math.round(((r.amount as number) / rFxRateNum) * 10000) / 10000;
     const twdAmount = r.amount;
 
     try {
@@ -80,24 +85,24 @@ function processOneRecurring(r, userId, userTimezone) {
           source_recurring_id, scheduled_date, created_at, updated_at)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
-          uid(), userId, r.type,
-          r.amount, rOriginalAmount, rCurrency, rFxRate, 0, twdAmount,
-          scheduledDate, r.category_id || null, r.account_id || null,
-          (r.note || '') + ' (自動)', 0, '',
-          r.id, scheduledDate,
+          uid(), userId, r.type as string,
+          r.amount as number, rOriginalAmount as number, rCurrency, rFxRate, 0, twdAmount as number,
+          scheduledDate, (r.category_id as string) || null, (r.account_id as string) || null,
+          (String(r.note || '')) + ' (自動)', 0, '',
+          r.id as string, scheduledDate,
           now, now,
         ]
       );
       db.run(
         'UPDATE recurring SET last_generated = ?, updated_at = ? WHERE id = ? AND (last_generated IS NULL OR last_generated < ?)',
-        [scheduledDate, now, r.id, scheduledDate]
+        [scheduledDate, now, r.id as string, scheduledDate]
       );
       count++;
     } catch (e) {
-      if (/UNIQUE constraint failed/i.test(String(e?.message || e))) {
+      if (/UNIQUE constraint failed/i.test(String((e as Error)?.message || e))) {
         db.run(
           'UPDATE recurring SET last_generated = ?, updated_at = ? WHERE id = ? AND (last_generated IS NULL OR last_generated < ?)',
-          [scheduledDate, now, r.id, scheduledDate]
+          [scheduledDate, now, r.id as string, scheduledDate]
         );
       } else {
         console.error('[004-recurring] INSERT failed for', r.id, scheduledDate, e);
@@ -106,19 +111,23 @@ function processOneRecurring(r, userId, userTimezone) {
     }
 
     lastGenerated = scheduledDate;
-    scheduledDate = getNextRecurringDate(lastGenerated, r.frequency);
+    scheduledDate = getNextRecurringDate(lastGenerated, r.frequency as string);
   }
 
   return count;
 }
 
-function processRecurringForUser(userId, opts = {}) {
+export interface RecurringOptions {
+  maxSync?: number;
+}
+
+export function processRecurringForUser(userId: string, opts: RecurringOptions = {}): number {
   const maxSync = opts.maxSync != null ? opts.maxSync : 30;
   let generated = 0;
   let bgScheduled = false;
 
   const userRow = queryOne('SELECT timezone FROM users WHERE id = ?', [userId]);
-  const userTimezone = (userRow && userRow.timezone) || 'Asia/Taipei';
+  const userTimezone = (userRow && userRow.timezone as string) || 'Asia/Taipei';
 
   const recs = queryAll(
     'SELECT * FROM recurring WHERE user_id = ? AND is_active = 1 AND needs_attention = 0',
@@ -146,5 +155,3 @@ function processRecurringForUser(userId, opts = {}) {
   if (generated > 0) saveDB();
   return generated;
 }
-
-module.exports = { getNextRecurringDate, processOneRecurring, processRecurringForUser };

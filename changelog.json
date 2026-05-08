@@ -1,6 +1,26 @@
 {
-  "currentVersion": "4.37.2",
+  "currentVersion": "4.37.3",
   "releases": [
+    {
+      "version": "4.37.3",
+      "date": "2026-05-08",
+      "title": "補齊 Next.js 遷移後的安全驗證差異",
+      "type": "fixed",
+      "changes": [
+        {
+          "tag": "fixed",
+          "text": "補回登入狀態驗證中的 token_version 比對，登出、修改密碼與管理員重設密碼後，舊 JWT 會依資料庫版本失效，恢復遷移前的 Token 撤銷行為。"
+        },
+        {
+          "tag": "fixed",
+          "text": "補回 Cookie 認證狀態變更請求的 Origin / Referer CSRF 檢查，並讓登出、修改密碼與刪除帳號使用一致的 Cookie 寫入與清除流程。"
+        },
+        {
+          "tag": "fixed",
+          "text": "恢復首次啟動自動載入或產生 JWT_SECRET 與 DB_ENCRYPTION_KEY 的行為，避免未設定環境變數時使用固定預設 JWT 密鑰或未加密資料庫。"
+        }
+      ]
+    },
     {
       "version": "4.37.2",
       "date": "2026-05-07",

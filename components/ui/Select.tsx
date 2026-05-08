@@ -19,11 +19,11 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select({
 }, ref) {
   return (
     <div className="mb-4">
-      {label && <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>}
+      {label && <label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">{label}</label>}
       <select
         ref={ref}
-        className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary ${
-          error ? 'border-danger focus:ring-danger' : 'border-gray-300 focus:border-primary'
+        className={`w-full px-3 py-2 border rounded-md shadow-sm bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100 dark:[color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-primary ${
+          error ? 'border-danger focus:ring-danger' : 'border-gray-300 dark:border-slate-700 focus:border-primary'
         } ${className}`}
         {...rest}
       >

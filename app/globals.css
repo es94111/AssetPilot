@@ -96,6 +96,18 @@
   a { text-decoration: none; color: inherit; }
   input, select, button, textarea { font-family: inherit; font-size: inherit; }
 
+  .dark-mode select {
+    color-scheme: dark;
+    color: var(--text);
+    background-color: var(--surface);
+    border-color: var(--border);
+  }
+
+  .dark-mode option {
+    color: var(--text);
+    background-color: var(--surface);
+  }
+
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
       animation-duration: 0.01ms !important;

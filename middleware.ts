@@ -30,6 +30,7 @@ const AUTH_RATE_LIMITED_PATHS = new Set([
   '/api/auth/register',
   '/api/auth/google',
 ]);
+const CSRF_SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 
 interface RateLimitEntry {
   count: number;
@@ -59,6 +60,23 @@ function getClientIp(request: NextRequest): string {
   );
 }
 
+function isOriginAllowed(originValue: string): boolean {
+  if (!originValue) return false;
+  const allowedOrigins = (process.env.ALLOWED_ORIGINS || '')
+    .split(',')
+    .map(s => s.trim())
+    .filter(Boolean);
+  if (allowedOrigins.length === 0) return true;
+
+  try {
+    const u = new URL(originValue);
+    const normalized = `${u.protocol}//${u.host}`;
+    return allowedOrigins.includes(normalized) || allowedOrigins.includes(originValue);
+  } catch {
+    return false;
+  }
+}
+
 export function middleware(request: NextRequest): NextResponse {
   const { pathname } = request.nextUrl;
 
@@ -86,6 +104,16 @@ export function middleware(request: NextRequest): NextResponse {
         { error: '請求過於頻繁，請稍後再試' },
         { status: 429 }
       );
+    }
+
+    const method = request.method.toUpperCase();
+    const authHeader = request.headers.get('authorization') || '';
+    const usesCookieAuth = !authHeader.startsWith('Bearer ') && !!request.cookies.get('authToken')?.value;
+    if (usesCookieAuth && !CSRF_SAFE_METHODS.has(method)) {
+      const origin = request.headers.get('origin') || request.headers.get('referer') || '';
+      if (!isOriginAllowed(origin)) {
+        return NextResponse.json({ error: '請求來源不被允許（CSRF 防護）' }, { status: 403 });
+      }
     }
   }
 

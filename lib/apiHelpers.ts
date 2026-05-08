@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
 import { requireAuth as getAuth } from './auth';
 import { verifyToken } from './auth';
 import { queryOne } from './db';
@@ -14,6 +13,35 @@ type ApiAuthResult = {
   themeMode: string;
 };
 
+const CSRF_SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
+
+function isOriginAllowed(originValue: string): boolean {
+  if (!originValue) return false;
+  const allowedOrigins = (process.env.ALLOWED_ORIGINS || '')
+    .split(',')
+    .map(s => s.trim())
+    .filter(Boolean);
+  if (allowedOrigins.length === 0) return true;
+
+  try {
+    const u = new URL(originValue);
+    const normalized = `${u.protocol}//${u.host}`;
+    return allowedOrigins.includes(normalized) || allowedOrigins.includes(originValue);
+  } catch {
+    return false;
+  }
+}
+
+function csrfErrorResponse(): NextResponse {
+  return NextResponse.json({ error: '請求來源不被允許（CSRF 防護）' }, { status: 403 });
+}
+
+function authErrorResponse(message: string): NextResponse {
+  const response = NextResponse.json({ error: message }, { status: 401 });
+  response.cookies.delete('authToken');
+  return response;
+}
+
 export function requireAuth(request: any): Promise<ApiAuthResult | NextResponse>;
 export function requireAuth(): Promise<string>;
 export async function requireAuth(request?: any): Promise<ApiAuthResult | NextResponse | string> {
@@ -23,20 +51,35 @@ export async function requireAuth(request?: any): Promise<ApiAuthResult | NextRe
       return NextResponse.json({ error: '未登入' }, { status: 401 });
     }
 
+    const method = String(request.method || 'GET').toUpperCase();
+    const authHeader = request.headers?.get?.('authorization') || '';
+    const usesCookieAuth = !authHeader.startsWith('Bearer ');
+    if (usesCookieAuth && !CSRF_SAFE_METHODS.has(method)) {
+      const origin = request.headers?.get?.('origin') || request.headers?.get?.('referer') || '';
+      if (!isOriginAllowed(origin)) return csrfErrorResponse();
+    }
+
     let userId: string;
+    let tokenVersion: number;
     try {
-      const decoded = verifyToken(token) as { userId?: string };
+      const decoded = verifyToken(token) as { userId?: string; tokenVersion?: number };
       userId = String(decoded?.userId || '');
+      tokenVersion = Number(decoded?.tokenVersion) || 0;
     } catch {
-      return NextResponse.json({ error: '登入已失效' }, { status: 401 });
+      return authErrorResponse('登入已失效');
     }
 
     const user = queryOne(
-      'SELECT id, email, display_name, is_admin, theme_mode, timezone FROM users WHERE id = ?',
+      'SELECT id, email, display_name, is_admin, theme_mode, timezone, token_version FROM users WHERE id = ?',
       [userId]
     );
     if (!user) {
-      return NextResponse.json({ error: '使用者不存在' }, { status: 401 });
+      return authErrorResponse('使用者不存在');
+    }
+
+    const dbVersion = Number(user.token_version) || 0;
+    if (tokenVersion !== dbVersion) {
+      return authErrorResponse('登入已失效，請重新登入');
     }
 
     return {
@@ -80,9 +123,8 @@ export function formatUser(user: any) {
   };
 }
 
-export async function setAuthCookie(response: Response, token: string) {
-  const cookieStore = await cookies();
-  cookieStore.set('authToken', token, {
+export function setAuthCookie(response: any, token: string) {
+  response.cookies.set('authToken', token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'strict',
@@ -92,9 +134,11 @@ export async function setAuthCookie(response: Response, token: string) {
   return response;
 }
 
-export async function clearAuthCookie() {
-  const cookieStore = await cookies();
-  cookieStore.delete('authToken');
+export function clearAuthCookie(response?: any) {
+  if (response?.cookies) {
+    response.cookies.delete('authToken');
+    return response;
+  }
 }
 
 export function requireAdmin(request: any): Promise<ApiAuthResult | NextResponse>;

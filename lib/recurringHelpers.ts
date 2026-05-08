@@ -1,5 +1,4 @@
-// lib/recurringHelpers.ts — 固定收支處理邏輯
-import { getDB, queryOne, queryAll, saveDB } from './db';
+// lib/recurringHelpers.ts — 固定收支處理邏輯import Decimal from 'decimal.js';import { getDB, queryOne, queryAll, saveDB } from './db';
 import { normalizeCurrency } from './accountHelpers';
 import { uid } from './userDefaults';
 import * as userTime from './userTime';
@@ -70,11 +69,17 @@ export function processOneRecurring(
   while (scheduledDate && scheduledDate <= todayS) {
     const now = Date.now();
     const rCurrency = normalizeCurrency(r.currency as string || 'TWD');
-    const rFxRate = String(r.fx_rate || '1');
-    const rFxRateNum = Number(rFxRate) > 0 ? Number(rFxRate) : 1;
-    const rOriginalAmount = rCurrency === 'TWD'
-      ? r.amount
-      : Math.round(((r.amount as number) / rFxRateNum) * 10000) / 10000;
+    const rFxRate = String(r.fx_rate || '1');  // decimal 字符串
+    
+    // 使用 Decimal.js 精確計算原幣數額（統一縣幣単位）
+    let rOriginalAmount: number;
+    if (rCurrency === 'TWD') {
+      rOriginalAmount = r.amount as number;
+    } else {
+      const fxRateDecimal = new Decimal(rFxRate);
+      const twdAmountDecimal = new Decimal(r.amount as number);
+      rOriginalAmount = twdAmountDecimal.dividedBy(fxRateDecimal).toDecimalPlaces(2, Decimal.ROUND_HALF_UP).toNumber();
+    }
     const twdAmount = r.amount;
 
     try {

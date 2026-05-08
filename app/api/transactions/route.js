@@ -98,7 +98,7 @@ export async function GET(request) {
     toAccountId: r.to_account_id || null,
     currency: normalizeCurrency(r.currency),
     originalAmount: Number(r.original_amount) > 0 ? Number(r.original_amount) : Number(r.amount) || 0,
-    fxRate: Number(r.fx_rate) > 0 ? Number(r.fx_rate) : 1,
+    fxRate: String(r.fx_rate || '1'),  // 保持 decimal 字符串格式以維持精度
     fxFee: Number(r.fx_fee) || 0,
     twdAmount: Number(r.twd_amount) || Number(r.amount) || 0,
     excludeFromStats: r.exclude_from_stats === 1,
@@ -164,10 +164,9 @@ export async function POST(request) {
   }
 
   const fxFee = Math.max(0, Number(body.fxFee) || 0);
-  const totalTwd = converted.twdAmount + fxFee;
   const twdAmountInt = computeTwdAmount(
     Math.round(converted.originalAmount * 100) / 100,
-    String(converted.fxRate || 1),
+    converted.fxRate,  // 已經是 decimal 字符串
     fxFee
   );
 
@@ -176,7 +175,7 @@ export async function POST(request) {
   const db = getDB();
   db.run(
     'INSERT INTO transactions (id, user_id, type, amount, currency, original_amount, fx_rate, fx_fee, twd_amount, date, category_id, account_id, note, exclude_from_stats, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
-    [id, auth.userId, type, totalTwd, converted.currency, converted.originalAmount, converted.fxRate, fxFee, twdAmountInt, date, categoryId, accountId, note || '', excludeFromStats ? 1 : 0, now, now]
+    [id, auth.userId, type, twdAmountInt, converted.currency, converted.originalAmount, converted.fxRate, fxFee, twdAmountInt, date, categoryId, accountId, note || '', excludeFromStats ? 1 : 0, now, now]
   );
   saveDB();
   return NextResponse.json({ id, twdAmount: twdAmountInt, updatedAt: now }, { status: 201 });

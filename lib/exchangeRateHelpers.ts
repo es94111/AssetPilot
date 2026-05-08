@@ -1,4 +1,5 @@
 // lib/exchangeRateHelpers.ts — 匯率同步邏輯
+import Decimal from 'decimal.js';
 import { getDB, queryAll, queryOne, saveDB } from './db';
 import { getUserExchangeRateMap, getExchangeRateSettings, normalizeCurrency, parseCurrencyCode } from './accountHelpers';
 import * as fxCache from './exchangeRateCache';
@@ -15,7 +16,7 @@ interface GlobalFxData {
 
 let globalFxCache: { data: GlobalFxData | null; timestamp: number } = { data: null, timestamp: 0 };
 let globalFxInflight: Promise<GlobalFxData | null> | null = null;
-const sharedAutoRateCache = new Map<string, { rate: number; fetchedAt: number }>();
+const sharedAutoRateCache = new Map<string, { rate: string; fetchedAt: number }>();
 
 async function fetchGlobalRealtimeRates(): Promise<GlobalFxData | null> {
   const now = Date.now();
@@ -46,11 +47,13 @@ async function fetchGlobalRealtimeRates(): Promise<GlobalFxData | null> {
   return globalFxInflight;
 }
 
-function resolveRateToTwd(globalData: GlobalFxData | null, currency: string): number {
-  if (!globalData || !globalData.conversion_rates) return 0;
+function resolveRateToTwd(globalData: GlobalFxData | null, currency: string): string {
+  if (!globalData || !globalData.conversion_rates) return '';
   const rate = globalData.conversion_rates[currency];
-  if (!rate || rate <= 0) return 0;
-  return Math.round((1 / rate) * 1e8) / 1e8;
+  if (!rate || rate <= 0) return '';
+  // 用 Decimal.js 計算反向匯率，精確到小數點後 8 位
+  const fxRate = new Decimal(1).dividedBy(new Decimal(rate)).toDecimalPlaces(8, Decimal.ROUND_HALF_UP).toString();
+  return fxRate;
 }
 
 export function setExchangeRateAutoUpdate(userId: string, autoUpdate: boolean) {
@@ -67,7 +70,7 @@ export function setExchangeRateAutoUpdate(userId: string, autoUpdate: boolean) {
 
 export interface SyncExchangeRatesResult {
   updatedAt: number;
-  updatedRates: Array<{ currency: string; rateToTwd: number }>;
+  updatedRates: Array<{ currency: string; rateToTwd: string }>;
   unsupportedCurrencies: string[];
 }
 
@@ -89,27 +92,27 @@ export async function syncExchangeRatesFromGlobalAPI(userId: string, requestedCu
   });
   const globalData = needsApi.length > 0 ? await fetchGlobalRealtimeRates() : null;
 
-  const updated: Array<{ currency: string; rateToTwd: number }> = [];
+  const updated: Array<{ currency: string; rateToTwd: string }> = [];
   const unsupported: string[] = [];
   for (const currency of targets) {
     const c = normalizeCurrency(currency);
     if (c === 'TWD') {
       db.run(
-        `INSERT INTO exchange_rates (user_id, currency, rate_to_twd, updated_at, is_manual) VALUES (?, 'TWD', 1, ?, 0)
-         ON CONFLICT(user_id, currency) DO UPDATE SET rate_to_twd = 1, updated_at = excluded.updated_at, is_manual = 0`,
+        `INSERT INTO exchange_rates (user_id, currency, rate_to_twd, updated_at, is_manual) VALUES (?, 'TWD', '1', ?, 0)
+         ON CONFLICT(user_id, currency) DO UPDATE SET rate_to_twd = '1', updated_at = excluded.updated_at, is_manual = 0`,
         [userId, now]
       );
       continue;
     }
     const hit = sharedAutoRateCache.get(c);
-    let rate: number;
+    let rate: string;
     if (hit && (now - hit.fetchedAt) < SHARED_AUTO_RATE_TTL) {
       rate = hit.rate;
     } else {
       rate = resolveRateToTwd(globalData, c);
-      if (rate > 0) sharedAutoRateCache.set(c, { rate, fetchedAt: now });
+      if (rate) sharedAutoRateCache.set(c, { rate, fetchedAt: now });
     }
-    if (!(rate > 0)) { unsupported.push(c); continue; }
+    if (!rate) { unsupported.push(c); continue; }
     db.run(
       `INSERT INTO exchange_rates (user_id, currency, rate_to_twd, updated_at, is_manual) VALUES (?, ?, ?, ?, 0)
        ON CONFLICT(user_id, currency) DO UPDATE SET rate_to_twd = excluded.rate_to_twd, updated_at = excluded.updated_at, is_manual = 0`,

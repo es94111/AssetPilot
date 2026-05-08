@@ -473,7 +473,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
             {form.currency && form.currency !== 'TWD' && (
               <div className="flex flex-col gap-1">
                 <label className="text-sm font-medium text-gray-700">匯率（1 {form.currency} = ? TWD）</label>
-                <input type="number" min="0.0001" step="0.0001" placeholder="留空則使用系統匯率" className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" value={form.fxRate} onChange={(e) => setForm((current) => ({ ...current, fxRate: e.target.value }))} />
+                <input type="number" min="0.0001" step="any" placeholder="留空則使用系統匯率" className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" value={form.fxRate} onChange={(e) => setForm((current) => ({ ...current, fxRate: e.target.value }))} />
                 {fxLoading && <p className="text-xs text-slate-500">查詢最新匯率中...</p>}
               </div>
             )}

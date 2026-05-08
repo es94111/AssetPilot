@@ -164,7 +164,7 @@ export default function CategoriesClient(_props: { user?: any } = {}) {
           {parents.map(parent => (
             <div key={parent.id} className="bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-lg shadow-sm">
               <div
-                className={`flex items-center gap-3 p-3 font-semibold border-b ${draggingId === parent.id ? 'opacity-50' : ''} ${dragOverScope === `parents:${activeTab}` && dragOverId === parent.id ? 'bg-blue-50' : ''}`}
+                className={`flex items-center gap-3 p-3 font-semibold border-b ${draggingId === parent.id ? 'opacity-50' : ''} ${dragOverScope === `parents:${activeTab}` && dragOverId === parent.id ? 'bg-blue-50 dark:bg-blue-950/40' : ''}`}
                 draggable
                 onDragStart={() => { setDraggingId(parent.id); setDragOverScope(`parents:${activeTab}`); }}
                 onDragEnd={() => { setDraggingId(null); setDragOverScope(null); setDragOverId(null); }}
@@ -187,7 +187,7 @@ export default function CategoriesClient(_props: { user?: any } = {}) {
               {children(parent.id).map(child => (
                 <div
                   key={child.id}
-                  className={`flex items-center gap-3 p-3 pl-8 text-sm ${draggingId === child.id ? 'opacity-50' : ''} ${dragOverScope === `children:${parent.id}` && dragOverId === child.id ? 'bg-blue-50' : ''}`}
+                  className={`flex items-center gap-3 p-3 pl-8 text-sm ${draggingId === child.id ? 'opacity-50' : ''} ${dragOverScope === `children:${parent.id}` && dragOverId === child.id ? 'bg-blue-50 dark:bg-blue-950/40' : ''}`}
                   draggable
                   onDragStart={() => { setDraggingId(child.id); setDragOverScope(`children:${parent.id}`); }}
                   onDragEnd={() => { setDraggingId(null); setDragOverScope(null); setDragOverId(null); }}

@@ -107,6 +107,8 @@
 
 .dark-mode {
   color-scheme: dark;
+  --color-popover: #151922;
+  --color-popover-foreground: #e8eaef;
   --bg: #0c0f16;
   --surface: #151922;
   --app-bg: linear-gradient(135deg, #0c0f16 0%, #111827 50%, #0c1a2e 100%);

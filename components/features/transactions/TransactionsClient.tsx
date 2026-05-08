@@ -393,7 +393,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
                       {tx.excludeFromStats && <div className="text-xs text-slate-500">不計入統計</div>}
                     </td>
                     <td className={tx.type === 'income' || tx.type === 'transfer_in' ? 'amount-income' : 'amount-expense'}>
-                      {tx.type === 'income' || tx.type === 'transfer_in' ? '+' : '-'}{fmt(tx.originalAmount ?? tx.amount)}
+                      {tx.type === 'income' || tx.type === 'transfer_in' ? '+' : '-'}{fmt(tx.amount)}
                       {tx.currency && tx.currency !== 'TWD' && (
                         <div className="text-xs text-slate-500">{tx.currency} {Math.abs(Number(tx.originalAmount || tx.amount)).toLocaleString('zh-TW')}</div>
                       )}

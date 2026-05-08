@@ -5,8 +5,10 @@ import Image from 'next/image';
 import {
   LayoutDashboard, Receipt, ChartBar, Wallet, Building2, Tags, Repeat,
   Briefcase, Key, User, Shield, Database, LogOut, TrendingUp, Coins,
-  BarChart3, Settings2,
+  BarChart3, Settings2, Sun, Moon, Monitor,
 } from 'lucide-react';
+import type { ElementType } from 'react';
+import { useTheme, type Theme } from '@/hooks/useTheme';
 
 const NAV_SECTIONS = [
   {
@@ -43,9 +45,16 @@ const NAV_SECTIONS = [
   },
 ];
 
+const THEME_OPTIONS: { value: Theme; icon: ElementType; label: string }[] = [
+  { value: 'light', icon: Sun, label: '亮色' },
+  { value: 'system', icon: Monitor, label: '系統' },
+  { value: 'dark', icon: Moon, label: '暗色' },
+];
+
 export default function Sidebar({ user, open, onClose }: { user: any; open?: boolean; onClose?: () => void }) {
   const pathname = usePathname();
   const router = useRouter();
+  const { theme, setTheme } = useTheme();
 
   async function handleLogout() {
     await fetch('/api/auth/logout', { method: 'POST' });
@@ -127,6 +136,23 @@ export default function Sidebar({ user, open, onClose }: { user: any; open?: boo
               {user?.email || ''}
             </p>
           </div>
+        </div>
+        <div className="mb-1 flex items-center justify-between rounded-lg px-3 py-1.5" style={{ background: 'var(--border)' }}>
+          {THEME_OPTIONS.map(({ value, icon: Icon, label }) => (
+            <button
+              key={value}
+              onClick={() => setTheme(value)}
+              title={label}
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-md py-1.5 text-xs font-medium transition-colors duration-150 cursor-pointer"
+              style={theme === value
+                ? { background: 'var(--surface)', color: 'var(--primary)', boxShadow: 'var(--shadow)' }
+                : { color: 'var(--text-muted)' }
+              }
+            >
+              <Icon size={14} strokeWidth={theme === value ? 2.2 : 1.8} />
+              <span>{label}</span>
+            </button>
+          ))}
         </div>
         <button
           onClick={handleLogout}

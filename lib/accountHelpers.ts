@@ -1,4 +1,5 @@
 // lib/accountHelpers.ts — 帳戶、貨幣、匯率共用邏輯
+import Decimal from 'decimal.js';
 import { getDB, queryOne, queryAll, saveDB } from './db';
 
 export const DEFAULT_EXCHANGE_RATES: Record<string, number> = {
@@ -59,6 +60,20 @@ export function getExchangeRateToTwd(userId: string, currencyCode: string | null
   const row = queryOne('SELECT rate_to_twd FROM exchange_rates WHERE user_id = ? AND currency = ?', [userId, c]);
   if (row && Number(row.rate_to_twd) > 0) return Number(row.rate_to_twd);
   return Number(DEFAULT_EXCHANGE_RATES[c]) || 1;
+}
+
+// 取得 decimal 字符串格式的匯率（精確到小數點後 8 位）
+export function getExchangeRateToTwdAsDecimal(userId: string, currencyCode: string | null | undefined): string {
+  const c = normalizeCurrency(currencyCode);
+  if (c === 'TWD') return '1';
+  const row = queryOne('SELECT rate_to_twd FROM exchange_rates WHERE user_id = ? AND currency = ?', [userId, c]);
+  if (row && row.rate_to_twd) {
+    const rateStr = String(row.rate_to_twd).trim();
+    if (rateStr) return rateStr;
+  }
+  // fallback 到默認匯率（轉為 decimal 字符串）
+  const defaultRate = DEFAULT_EXCHANGE_RATES[c] || 1;
+  return new Decimal(defaultRate).toDecimalPlaces(8, Decimal.ROUND_HALF_UP).toString();
 }
 
 export function convertFromTwd(twdAmount: number, currencyCode: string, userId: string): number {
@@ -128,23 +143,39 @@ export function formatAccount(
 export interface ConvertToTwdResult {
   currency: string;
   originalAmount: number;
-  fxRate: number;
+  fxRate: string;  // decimal 字符串，精確到小數點後 8 位
   twdAmount: number;
 }
 
 export function convertToTwd(
   originalAmount: number,
   currencyCode: string,
-  fxRateInput: number | null | undefined,
+  fxRateInput: number | string | null | undefined,
   userId: string
 ): ConvertToTwdResult {
   const currency = normalizeCurrency(currencyCode);
   const original = Number(originalAmount);
   if (!(original > 0)) throw new Error('金額必須大於 0');
-  const fxRate = currency === 'TWD'
-    ? 1
-    : (Number(fxRateInput) > 0 ? Number(fxRateInput) : getExchangeRateToTwd(userId, currency));
-  const twdAmount = Math.round(original * fxRate * 100) / 100;
+  
+  let fxRate: string;
+  if (currency === 'TWD') {
+    fxRate = '1';
+  } else if (fxRateInput != null && String(fxRateInput).trim()) {
+    // 使用用戶提供的匯率，轉為 decimal 字符串
+    const inputValue = new Decimal(String(fxRateInput));
+    if (inputValue.lessThanOrEqualTo(0)) {
+      throw new Error('匯率必須大於 0');
+    }
+    fxRate = inputValue.toDecimalPlaces(8, Decimal.ROUND_HALF_UP).toString();
+  } else {
+    // 從資料庫取得匯率
+    fxRate = getExchangeRateToTwdAsDecimal(userId, currency);
+  }
+  
+  // 使用 Decimal.js 精確計算 TWD 等值
+  const fxRateDecimal = new Decimal(fxRate);
+  const twdAmount = new Decimal(original).times(fxRateDecimal).toDecimalPlaces(2, Decimal.ROUND_HALF_UP).toNumber();
+  
   return { currency, originalAmount: original, fxRate, twdAmount };
 }
 

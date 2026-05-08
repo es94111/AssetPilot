@@ -102,10 +102,9 @@ async function updateHandler(request, txId, auth) {
   }
 
   const fxFee = Math.max(0, Number(body.fxFee) || 0);
-  const totalTwd = converted.twdAmount + fxFee;
   const twdAmountInt = computeTwdAmount(
     Math.round(converted.originalAmount * 100) / 100,
-    String(converted.fxRate || 1),
+    converted.fxRate,  // 已經是 decimal 字符串
     fxFee
   );
 
@@ -113,7 +112,7 @@ async function updateHandler(request, txId, auth) {
   const db = getDB();
   db.run(
     'UPDATE transactions SET type=?, amount=?, currency=?, original_amount=?, fx_rate=?, fx_fee=?, twd_amount=?, date=?, category_id=?, account_id=?, note=?, exclude_from_stats=?, updated_at=? WHERE id=? AND user_id=?',
-    [type, totalTwd, converted.currency, converted.originalAmount, converted.fxRate, fxFee, twdAmountInt, date, categoryId, accountId, note || '', excludeFromStats ? 1 : 0, nowMs, txId, auth.userId]
+    [type, twdAmountInt, converted.currency, converted.originalAmount, converted.fxRate, fxFee, twdAmountInt, date, categoryId, accountId, note || '', excludeFromStats ? 1 : 0, nowMs, txId, auth.userId]
   );
   saveDB();
   return NextResponse.json({ ok: true, updatedAt: nowMs });

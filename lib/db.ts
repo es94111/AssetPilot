@@ -320,7 +320,7 @@ async function _runMigrations(): Promise<void> {
     amount REAL NOT NULL,
     currency TEXT DEFAULT 'TWD',
     original_amount REAL DEFAULT 0,
-    fx_rate REAL DEFAULT 1,
+    fx_rate TEXT DEFAULT '1',
     date TEXT NOT NULL,
     category_id TEXT,
     account_id TEXT,
@@ -333,7 +333,7 @@ async function _runMigrations(): Promise<void> {
   db.run(`CREATE TABLE IF NOT EXISTS exchange_rates (
     user_id TEXT NOT NULL,
     currency TEXT NOT NULL,
-    rate_to_twd REAL NOT NULL,
+    rate_to_twd TEXT NOT NULL,
     updated_at INTEGER,
     PRIMARY KEY (user_id, currency)
   )`);
@@ -363,7 +363,7 @@ async function _runMigrations(): Promise<void> {
     type TEXT NOT NULL,
     amount REAL NOT NULL,
     currency TEXT DEFAULT 'TWD',
-    fx_rate REAL DEFAULT 1,
+    fx_rate TEXT DEFAULT '1',
     category_id TEXT,
     account_id TEXT,
     frequency TEXT NOT NULL,
@@ -487,7 +487,121 @@ async function _runMigrations(): Promise<void> {
   alterIgnore("ALTER TABLE stocks ADD COLUMN stock_type TEXT DEFAULT 'stock'");
 
   alterIgnore("ALTER TABLE stock_transactions ADD COLUMN realized_pl REAL DEFAULT 0");
-  alterIgnore("ALTER TABLE login_attempt_logs ADD COLUMN country TEXT DEFAULT ''")
+  alterIgnore("ALTER TABLE login_attempt_logs ADD COLUMN country TEXT DEFAULT ''");
+
+  // 檢測並進行 fx_rate 類型 migration（REAL → TEXT）
+  try {
+    const checkTxFxRate = db.exec("SELECT typeof(fx_rate) as type FROM transactions LIMIT 1");
+    if (checkTxFxRate.length > 0 && checkTxFxRate[0].values.length > 0 && checkTxFxRate[0].values[0][0] === 'real') {
+      console.log('[migration] detected transactions.fx_rate as REAL, starting migration to TEXT...');
+      db.run('BEGIN');
+      db.run(`CREATE TABLE IF NOT EXISTS transactions_new (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        type TEXT NOT NULL,
+        amount REAL NOT NULL,
+        currency TEXT DEFAULT 'TWD',
+        original_amount REAL DEFAULT 0,
+        fx_rate TEXT DEFAULT '1',
+        fx_fee REAL DEFAULT 0,
+        twd_amount REAL DEFAULT 0,
+        date TEXT NOT NULL,
+        category_id TEXT,
+        account_id TEXT,
+        to_account_id TEXT,
+        note TEXT DEFAULT '',
+        linked_id TEXT DEFAULT '',
+        exclude_from_stats INTEGER DEFAULT 0,
+        source_recurring_id TEXT DEFAULT '',
+        scheduled_date TEXT DEFAULT '',
+        tags TEXT DEFAULT '[]',
+        transfer_to_account_id TEXT DEFAULT '',
+        created_at INTEGER,
+        updated_at INTEGER
+      )`);
+      db.run(`INSERT INTO transactions_new 
+        SELECT id, user_id, type, amount, currency, original_amount, 
+               CAST(fx_rate AS TEXT), fx_fee, twd_amount,
+               date, category_id, account_id, to_account_id, note, linked_id,
+               exclude_from_stats, source_recurring_id, scheduled_date, tags, 
+               transfer_to_account_id, created_at, updated_at
+        FROM transactions`);
+      db.run('DROP TABLE transactions');
+      db.run('ALTER TABLE transactions_new RENAME TO transactions');
+      db.run(`CREATE INDEX IF NOT EXISTS idx_tx_user_date ON transactions(user_id, date DESC)`);
+      db.run(`CREATE INDEX IF NOT EXISTS idx_tx_category ON transactions(category_id)`);
+      db.run(`CREATE INDEX IF NOT EXISTS idx_tx_account ON transactions(account_id)`);
+      db.run(`CREATE INDEX IF NOT EXISTS idx_tx_source ON transactions(source_recurring_id) WHERE source_recurring_id IS NOT NULL`);
+      db.run(`CREATE UNIQUE INDEX IF NOT EXISTS idx_tx_source_scheduled ON transactions(source_recurring_id, scheduled_date) WHERE source_recurring_id IS NOT NULL`);
+      db.run('COMMIT');
+      console.log('[migration] transactions.fx_rate migration completed');
+    }
+  } catch (e) {
+    console.warn('[migration] transactions.fx_rate migration failed:', e);
+  }
+
+  // 檢測並進行 recurring.fx_rate 類型 migration
+  try {
+    const checkRecurringFxRate = db.exec("SELECT typeof(fx_rate) as type FROM recurring LIMIT 1");
+    if (checkRecurringFxRate.length > 0 && checkRecurringFxRate[0].values.length > 0 && checkRecurringFxRate[0].values[0][0] === 'real') {
+      console.log('[migration] detected recurring.fx_rate as REAL, starting migration to TEXT...');
+      db.run('BEGIN');
+      db.run(`CREATE TABLE IF NOT EXISTS recurring_new (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        type TEXT NOT NULL,
+        amount REAL NOT NULL,
+        currency TEXT DEFAULT 'TWD',
+        fx_rate TEXT DEFAULT '1',
+        category_id TEXT,
+        account_id TEXT,
+        frequency TEXT NOT NULL,
+        start_date TEXT,
+        note TEXT DEFAULT '',
+        is_active INTEGER DEFAULT 1,
+        last_generated TEXT,
+        needs_attention INTEGER DEFAULT 0,
+        updated_at INTEGER DEFAULT 0,
+        created_at INTEGER
+      )`);
+      db.run(`INSERT INTO recurring_new 
+        SELECT id, user_id, type, amount, currency, CAST(fx_rate AS TEXT),
+               category_id, account_id, frequency, start_date, note, is_active,
+               last_generated, needs_attention, updated_at, created_at
+        FROM recurring`);
+      db.run('DROP TABLE recurring');
+      db.run('ALTER TABLE recurring_new RENAME TO recurring');
+      db.run('COMMIT');
+      console.log('[migration] recurring.fx_rate migration completed');
+    }
+  } catch (e) {
+    console.warn('[migration] recurring.fx_rate migration failed:', e);
+  }
+
+  // 檢測並進行 exchange_rates.rate_to_twd 類型 migration
+  try {
+    const checkExchangeRateToTwd = db.exec("SELECT typeof(rate_to_twd) as type FROM exchange_rates LIMIT 1");
+    if (checkExchangeRateToTwd.length > 0 && checkExchangeRateToTwd[0].values.length > 0 && checkExchangeRateToTwd[0].values[0][0] === 'real') {
+      console.log('[migration] detected exchange_rates.rate_to_twd as REAL, starting migration to TEXT...');
+      db.run('BEGIN');
+      db.run(`CREATE TABLE IF NOT EXISTS exchange_rates_new (
+        user_id TEXT NOT NULL,
+        currency TEXT NOT NULL,
+        rate_to_twd TEXT NOT NULL,
+        updated_at INTEGER,
+        PRIMARY KEY (user_id, currency)
+      )`);
+      db.run(`INSERT INTO exchange_rates_new 
+        SELECT user_id, currency, CAST(rate_to_twd AS TEXT), updated_at
+        FROM exchange_rates`);
+      db.run('DROP TABLE exchange_rates');
+      db.run('ALTER TABLE exchange_rates_new RENAME TO exchange_rates');
+      db.run('COMMIT');
+      console.log('[migration] exchange_rates.rate_to_twd migration completed');
+    }
+  } catch (e) {
+    console.warn('[migration] exchange_rates.rate_to_twd migration failed:', e);
+  }
 
   const backupsDir = path.join(process.cwd(), 'backups');
   if (!fs.existsSync(backupsDir)) fs.mkdirSync(backupsDir, { recursive: true });

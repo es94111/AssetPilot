@@ -83,11 +83,11 @@ export default function BudgetClient(_props: { user?: any } = {}) {
 
       {budgets.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="p-4 bg-white border border-slate-200 rounded-lg shadow-sm">
+          <div className="p-4 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-lg shadow-sm">
             <p className="text-sm text-slate-500">本月總預算</p>
             <p className="text-2xl font-semibold text-blue-600">{fmt(totalBudget)}</p>
           </div>
-          <div className="p-4 bg-white border border-slate-200 rounded-lg shadow-sm">
+          <div className="p-4 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-lg shadow-sm">
             <p className="text-sm text-slate-500">已使用</p>
             <p className="text-2xl font-semibold text-red-600">{fmt(totalSpent)}</p>
           </div>
@@ -126,7 +126,7 @@ export default function BudgetClient(_props: { user?: any } = {}) {
             const overBudget = Number(b.used) > Number(b.amount);
             const catName = b.category_id || b.categoryId ? (categories.find(c => c.id === (b.category_id || b.categoryId))?.name || '—') : '（總預算）';
             return (
-              <div key={b.id} className="p-4 bg-white border border-slate-200 rounded-lg shadow-sm space-y-2">
+              <div key={b.id} className="p-4 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-lg shadow-sm space-y-2">
                 <div className="flex justify-between items-start">
                   <h3 className="font-semibold">{catName}</h3>
                   <div className="flex gap-1">
@@ -147,7 +147,7 @@ export default function BudgetClient(_props: { user?: any } = {}) {
 
       {deleteId && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-xl">
+          <div className="bg-white p-6 rounded-lg shadow-xl dark:bg-slate-900 dark:text-slate-100">
             <h3 className="text-lg font-semibold mb-4">確認刪除</h3>
             <p className="mb-4">確定要刪除此預算設定嗎？</p>
             <div className="flex justify-end gap-2">

@@ -81,14 +81,14 @@ export default function RealizedClient(_props: { user?: any } = {}) {
           { label: '今年實現損益', value: fmtPL(yearPL), color: plClass(yearPL) },
           { label: '已實現筆數', value: `${filtered.length} 筆` },
         ].map((item, i) => (
-          <div key={i} className="p-4 bg-white border border-slate-200 rounded-lg shadow-sm">
+          <div key={i} className="p-4 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-lg shadow-sm">
             <p className="text-sm text-slate-500">{item.label}</p>
             <p className={`text-xl font-semibold ${item.color || 'text-slate-900'}`}>{item.value}</p>
           </div>
         ))}
       </div>
 
-      <div className="flex gap-2 p-4 bg-white border border-slate-200 rounded-lg shadow-sm">
+      <div className="flex gap-2 p-4 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-lg shadow-sm">
         <Select options={stocks.map(s => ({ label: `${s.symbol} ${s.name}`, value: s.id }))} value={filterStockId} onChange={e => setFilterStockId(e.target.value)} label="股票" className="w-48" />
         {filterStockId && <Button variant="outline" onClick={() => setFilterStockId('')}>清除</Button>}
       </div>

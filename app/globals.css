@@ -1,6 +1,8 @@
 @import url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css");
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark-mode, .dark-mode *));
+
 @theme {
   --color-primary: #4f6ef7;
   --color-primary-light: #7b93fa;
@@ -695,9 +697,9 @@
   to   { opacity: 1; }
 }
 
-/* ── Modal card — white background ── */
+/* ── Modal card ── */
 .modal {
-  background: #ffffff;
+  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 18px;
   box-shadow: var(--shadow-glass-lg);

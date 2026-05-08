@@ -174,7 +174,7 @@ export default function ReportsClient(_props: { user?: any } = {}) {
         ))}
       </div>
 
-      <div className="flex flex-wrap gap-4 p-4 bg-white border border-slate-200 rounded-lg shadow-sm">
+      <div className="flex flex-wrap gap-4 p-4 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-lg shadow-sm">
         <Select options={[{ label: '本月', value: 'thisMonth' }, { label: '上月', value: 'lastMonth' }, { label: '近3個月', value: 'last3' }, { label: '近6個月', value: 'last6' }, { label: '今年', value: 'thisYear' }, { label: '自訂', value: 'custom' }]} value={period} onChange={(e) => setPeriod(e.target.value)} label="期間" className="w-40" />
         {period === 'custom' && (
           <>
@@ -186,24 +186,24 @@ export default function ReportsClient(_props: { user?: any } = {}) {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="p-4 bg-white border border-slate-200 rounded-lg shadow-sm">
+        <div className="p-4 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-lg shadow-sm">
           <p className="text-sm text-slate-500">本期合計</p>
           <p className="text-2xl font-semibold text-slate-900">{fmt(grandTotal)}</p>
         </div>
-        <div className="p-4 bg-white border border-slate-200 rounded-lg shadow-sm">
+        <div className="p-4 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-lg shadow-sm">
           <p className="text-sm text-slate-500">相較前期</p>
           <p className={`text-xl font-semibold ${(grandTotal - previousTotal) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>{compareText(grandTotal, previousTotal)}</p>
         </div>
       </div>
 
       {loading ? <p className="text-slate-500">載入中...</p> : (
-        <div className="p-6 bg-white border border-slate-200 rounded-lg shadow-sm">
+        <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-lg shadow-sm">
           <canvas ref={chartRef} className="max-h-96" />
         </div>
       )}
 
       {activeTab === 'category' && catRows.length > 0 && (
-        <div className="p-6 bg-white border border-slate-200 rounded-lg shadow-sm space-y-4">
+        <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-lg shadow-sm space-y-4">
           <div className="flex justify-between items-center border-b pb-2">
             <h3 className="font-semibold text-lg">{type === 'expense' ? '支出' : '收入'}明細</h3>
             <p className="font-bold">合計：{fmt(grandTotal)}</p>

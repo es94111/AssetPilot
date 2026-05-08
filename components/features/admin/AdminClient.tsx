@@ -397,7 +397,7 @@ export default function AdminClient(_props: { user?: any } = {}) {
 
       {activeTab === 'system' && (
         <div className="space-y-6">
-          <div className="p-6 bg-white border border-slate-200 rounded-xl shadow-sm">
+          <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-xl shadow-sm">
             <h3 className="text-lg font-semibold mb-4">系統設定</h3>
             <form onSubmit={saveSystemSettings} className="space-y-4">
               <label className="flex items-center gap-2">
@@ -417,7 +417,7 @@ export default function AdminClient(_props: { user?: any } = {}) {
             </form>
           </div>
 
-          <div className="p-6 bg-white border border-slate-200 rounded-xl shadow-sm space-y-4">
+          <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-xl shadow-sm space-y-4">
             <h3 className="text-lg font-semibold">伺服器時間</h3>
             {serverTime && (
               <div className="grid md:grid-cols-2 gap-4 text-sm text-slate-700">
@@ -437,7 +437,7 @@ export default function AdminClient(_props: { user?: any } = {}) {
       )}
 
       {activeTab === 'users' && (
-        <div className="p-6 bg-white border border-slate-200 rounded-xl shadow-sm">
+        <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-xl shadow-sm">
           <h3 className="text-lg font-semibold mb-4">使用者管理 ({users.length} 位)</h3>
           <Table>
             <TableHeader>
@@ -472,7 +472,7 @@ export default function AdminClient(_props: { user?: any } = {}) {
 
       {activeTab === 'schedules' && (
         <div className="space-y-6">
-          <div className="p-6 bg-white border border-slate-200 rounded-xl shadow-sm">
+          <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-xl shadow-sm">
             <h3 className="text-lg font-semibold mb-4">新增報表排程</h3>
             <form onSubmit={handleCreateSchedule} className="grid md:grid-cols-4 gap-4">
               <div>
@@ -495,7 +495,7 @@ export default function AdminClient(_props: { user?: any } = {}) {
             {scheduleMsg && <p className="text-sm text-slate-600 mt-3">{scheduleMsg}</p>}
           </div>
 
-          <div className="p-6 bg-white border border-slate-200 rounded-xl shadow-sm">
+          <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-xl shadow-sm">
             <h3 className="text-lg font-semibold mb-4">排程列表</h3>
             <Table>
               <TableHeader>
@@ -530,7 +530,7 @@ export default function AdminClient(_props: { user?: any } = {}) {
       )}
 
       {activeTab === 'email' && (
-        <div className="p-6 bg-white border border-slate-200 rounded-xl shadow-sm space-y-4">
+        <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-xl shadow-sm space-y-4">
           <h3 className="text-lg font-semibold">寄信通道</h3>
           {emailProviders && (
             <div className="grid md:grid-cols-2 gap-4 text-sm text-slate-700">
@@ -548,7 +548,7 @@ export default function AdminClient(_props: { user?: any } = {}) {
 
       {activeTab === 'loginAudit' && (
         <div className="space-y-6">
-          <div className="p-6 bg-white border border-slate-200 rounded-xl shadow-sm">
+          <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-xl shadow-sm">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold">管理員本人登入紀錄</h3>
               <Button variant="outline" size="sm" onClick={load}>重新整理</Button>
@@ -575,7 +575,7 @@ export default function AdminClient(_props: { user?: any } = {}) {
             </Table>
           </div>
 
-          <div className="p-6 bg-white border border-slate-200 rounded-xl shadow-sm">
+          <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-xl shadow-sm">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold">全部使用者登入紀錄</h3>
               <div className="flex gap-2">
@@ -628,7 +628,7 @@ export default function AdminClient(_props: { user?: any } = {}) {
 
       {activeTab === 'dataAudit' && (
         <div className="space-y-6">
-          <div className="p-6 bg-white border border-slate-200 rounded-xl shadow-sm space-y-4">
+          <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-xl shadow-sm space-y-4">
             <h3 className="text-lg font-semibold">資料稽核設定</h3>
             <div className="flex flex-wrap gap-3 items-end">
               <div>
@@ -644,7 +644,7 @@ export default function AdminClient(_props: { user?: any } = {}) {
             {auditMsg && <p className="text-sm text-slate-600">{auditMsg}</p>}
           </div>
 
-          <div className="p-6 bg-white border border-slate-200 rounded-xl shadow-sm">
+          <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-xl shadow-sm">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold">資料稽核紀錄</h3>
               <span className="text-sm text-slate-500">共 {auditTotal} 筆</span>
@@ -677,7 +677,7 @@ export default function AdminClient(_props: { user?: any } = {}) {
 
       {activeTab === 'certs' && (
         <div className="space-y-6">
-          <div className="p-6 bg-white border border-slate-200 rounded-xl shadow-sm space-y-4">
+          <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-xl shadow-sm space-y-4">
             <h3 className="text-lg font-semibold">Origin CA</h3>
             <div className="text-sm text-slate-600">
               {certInfo?.originCa ? `有效期間：${certInfo.originCa.validFrom} ~ ${certInfo.originCa.validTo}` : '目前未部署 Origin CA'}
@@ -689,7 +689,7 @@ export default function AdminClient(_props: { user?: any } = {}) {
             </div>
           </div>
 
-          <div className="p-6 bg-white border border-slate-200 rounded-xl shadow-sm space-y-4">
+          <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-xl shadow-sm space-y-4">
             <h3 className="text-lg font-semibold">Origin Certificate / Key</h3>
             <div className="text-sm text-slate-600 space-y-1">
               <p>{certInfo?.originCert ? `憑證有效期間：${certInfo.originCert.validFrom} ~ ${certInfo.originCert.validTo}` : '目前未部署 Origin Certificate'}</p>

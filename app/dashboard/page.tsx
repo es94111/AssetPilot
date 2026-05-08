@@ -63,15 +63,15 @@ export default async function DashboardPage(props: {
 
         {/* Overview + Ratio */}
         <div className="grid grid-cols-1 lg:grid-cols-[1.4fr_0.6fr] gap-6">
-          {/* Dark overview card */}
+          {/* Overview card */}
           <section
-            className="rounded-2xl px-6 py-6 text-white"
-            style={{ background: 'linear-gradient(135deg, #1a1d26 0%, #252a36 100%)', boxShadow: 'var(--shadow-md)' }}
+            className="rounded-2xl px-6 py-6"
+            style={{ background: 'var(--surface-glass)', border: '1px solid var(--glass-border)', boxShadow: 'var(--shadow-md)', color: 'var(--text)' }}
           >
             <div className="flex items-start justify-between gap-4 mb-6">
               <div>
-                <p className="text-sm" style={{ color: '#94a3b8' }}>本月收支概覽</p>
-                <h2 className="mt-1 text-xl font-bold tracking-tight text-white">{data.yearMonth}</h2>
+                <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>本月收支概覽</p>
+                <h2 className="mt-1 text-xl font-bold tracking-tight" style={{ color: 'var(--text)' }}>{data.yearMonth}</h2>
               </div>
               <span
                 className="rounded-full px-3 py-1 text-xs font-semibold"
@@ -89,8 +89,8 @@ export default async function DashboardPage(props: {
                 { label: '支出', value: fmtMoney(totalExpense), color: '#fb7185' },
                 { label: '淨額', value: fmtMoney(net), color: net >= 0 ? '#7dd3fc' : '#fb7185' },
               ].map(item => (
-                <div key={item.label} className="rounded-xl p-4" style={{ background: 'rgba(255,255,255,.06)' }}>
-                  <p className="text-xs" style={{ color: '#94a3b8' }}>{item.label}</p>
+                <div key={item.label} className="rounded-xl p-4" style={{ background: 'rgba(79,110,247,.07)' }}>
+                  <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>{item.label}</p>
                   <p className="mt-2 text-base font-bold" style={{ color: item.color }}>{item.value}</p>
                 </div>
               ))}

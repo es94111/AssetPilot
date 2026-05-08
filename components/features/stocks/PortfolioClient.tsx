@@ -197,7 +197,9 @@ export default function PortfolioClient(_props: { user?: any } = {}) {
                 </div>
                 <div className="grid grid-cols-2 text-sm">
                   <p>持有股數: {Number(s.totalShares).toLocaleString()}</p>
+                  <p>目前股價: {s.currentPrice > 0 ? `$${Number(s.currentPrice).toLocaleString()}` : '—'}</p>
                   <p>成本均價: ${Number(s.avgCost || 0).toLocaleString()}</p>
+                  <p>市值: {fmt(s.marketValue)}</p>
                   <p>預估損益: <span className={plClass(ep)}>{fmtPL(ep)} ({rr.toFixed(2)}%)</span></p>
                   <p>累計股利: <span className="text-orange-500">{fmt(s.totalDividend)}</span></p>
                 </div>

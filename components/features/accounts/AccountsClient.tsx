@@ -240,7 +240,7 @@ export default function AccountsClient() {
   function renderAccountCard(account: any) {
     const Icon = ACCOUNT_TYPES.find((item) => item.value === account.category)?.icon || CircleDot;
     return (
-      <div key={account.id} className="p-4 bg-white border border-slate-200 rounded-lg shadow-sm border-t-4" style={{ borderTopColor: account.color || '#4f6ef7' }}>
+      <div key={account.id} className="p-4 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-lg shadow-sm border-t-4" style={{ borderTopColor: account.color || '#4f6ef7' }}>
         <div className="flex justify-between items-start mb-2 gap-2">
           <div className="flex items-center gap-3 min-w-0">
             <Icon size={22} style={{ color: account.color || '#4f6ef7' }} />
@@ -268,11 +268,11 @@ export default function AccountsClient() {
       <h2 className="text-2xl font-bold">帳戶管理</h2>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="p-6 bg-white border border-slate-200 rounded-lg shadow-sm">
+        <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-lg shadow-sm">
           <p className="text-sm text-slate-500">總資產</p>
           <p className="text-2xl font-semibold text-blue-600">NT$ {Math.round(totalAssets).toLocaleString('zh-TW')}</p>
         </div>
-        <div className="p-6 bg-white border border-slate-200 rounded-lg shadow-sm">
+        <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-lg shadow-sm">
           <p className="text-sm text-slate-500">信用卡待還總額</p>
           <p className="text-2xl font-semibold text-rose-600">NT$ {Math.round(totalCreditOutstanding).toLocaleString('zh-TW')}</p>
         </div>
@@ -356,7 +356,7 @@ export default function AccountsClient() {
 
       {repaymentOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-2xl space-y-4">
+          <div className="bg-white p-6 rounded-lg shadow-xl dark:bg-slate-900 dark:text-slate-100 w-full max-w-2xl space-y-4">
             <div className="flex justify-between items-center">
               <h3 className="text-lg font-semibold">信用卡還款</h3>
               <Button variant="ghost" onClick={() => setRepaymentOpen(false)}>關閉</Button>
@@ -395,7 +395,7 @@ export default function AccountsClient() {
 
       {deleteId && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-xl">
+          <div className="bg-white p-6 rounded-lg shadow-xl dark:bg-slate-900 dark:text-slate-100">
             <h3 className="text-lg font-semibold mb-4">確認刪除</h3>
             <p className="mb-4">確定要刪除此帳戶嗎？</p>
             <div className="flex justify-end gap-2">
@@ -407,7 +407,7 @@ export default function AccountsClient() {
       )}
 
       {/* 匯率管理 */}
-      <section className="p-6 bg-white border border-slate-200 rounded-lg shadow-sm space-y-4">
+      <section className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-lg shadow-sm space-y-4">
         <div className="flex items-center justify-between flex-wrap gap-3">
           <h3 className="text-lg font-semibold">匯率管理</h3>
           <div className="flex items-center gap-3 flex-wrap">

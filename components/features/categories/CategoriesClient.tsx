@@ -162,7 +162,7 @@ export default function CategoriesClient(_props: { user?: any } = {}) {
       {loading ? <p className="text-slate-500">載入中...</p> : (
         <div className="space-y-4">
           {parents.map(parent => (
-            <div key={parent.id} className="bg-white border border-slate-200 rounded-lg shadow-sm">
+            <div key={parent.id} className="bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-lg shadow-sm">
               <div
                 className={`flex items-center gap-3 p-3 font-semibold border-b ${draggingId === parent.id ? 'opacity-50' : ''} ${dragOverScope === `parents:${activeTab}` && dragOverId === parent.id ? 'bg-blue-50' : ''}`}
                 draggable
@@ -215,7 +215,7 @@ export default function CategoriesClient(_props: { user?: any } = {}) {
 
       {deleteId && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-xl">
+          <div className="bg-white p-6 rounded-lg shadow-xl dark:bg-slate-900 dark:text-slate-100">
             <h3 className="text-lg font-semibold mb-4">確認刪除</h3>
             <p className="mb-4">確定要刪除此分類嗎？其子分類也將一併刪除。</p>
             {deleteError && <p className="mb-4 text-sm text-red-500">{deleteError}</p>}

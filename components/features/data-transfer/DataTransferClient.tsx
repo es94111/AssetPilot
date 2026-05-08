@@ -227,7 +227,7 @@ export default function DataTransferClient({ user }: { user: UserLike }) {
         <p className="text-slate-600">新版前端已接回 CSV 匯出匯入與整檔備份/還原。先把資料治理核心能力補回來。</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-white border border-slate-200 rounded-xl shadow-sm">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-xl shadow-sm">
         <Input label="匯出起始日" type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
         <Input label="匯出結束日" type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
       </div>
@@ -238,7 +238,7 @@ export default function DataTransferClient({ user }: { user: UserLike }) {
         {CSV_MODULES.map((module) => {
           const result = importResults[module.key];
           return (
-            <section key={module.key} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm space-y-4">
+            <section key={module.key} className="rounded-xl border border-slate-200 bg-white dark:bg-slate-900 dark:border-slate-800 p-5 shadow-sm space-y-4">
               <div>
                 <h2 className="text-lg font-semibold text-slate-900">{module.label}</h2>
                 <p className="text-sm text-slate-500 mt-1">支援 CSV 匯出與匯入。欄位：{module.columns.join(', ')}</p>
@@ -294,7 +294,7 @@ export default function DataTransferClient({ user }: { user: UserLike }) {
       </div>
 
       {user?.isAdmin && (
-        <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm space-y-4">
+        <section className="rounded-xl border border-slate-200 bg-white dark:bg-slate-900 dark:border-slate-800 p-5 shadow-sm space-y-4">
           <div>
             <h2 className="text-lg font-semibold text-slate-900">整檔備份 / 還原</h2>
             <p className="text-sm text-slate-500 mt-1">僅管理員可操作。下載完整 SQLite 備份，或上傳未加密 `.db` 檔進行還原。</p>

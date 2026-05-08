@@ -91,7 +91,7 @@ export default function StockTxClient(_props: { user?: any } = {}) {
       <h2 className="text-2xl font-bold">股票交易紀錄</h2>
       <StocksTabNav />
 
-      <div className="flex gap-2 items-center p-4 bg-white border border-slate-200 rounded-lg shadow-sm">
+      <div className="flex gap-2 items-center p-4 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-lg shadow-sm">
         <Select options={stocks.map(s => ({ label: `${s.symbol} ${s.name}`, value: s.id }))} value={filterStockId} onChange={e => setFilterStockId(e.target.value)} label="股票" className="w-48" />
         <Input type="date" value={filterDateFrom} onChange={e => setFilterDateFrom(e.target.value)} label="起始" />
         <Input type="date" value={filterDateTo} onChange={e => setFilterDateTo(e.target.value)} label="結束" />
@@ -164,7 +164,7 @@ export default function StockTxClient(_props: { user?: any } = {}) {
 
       {deleteId && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-xl">
+          <div className="bg-white p-6 rounded-lg shadow-xl dark:bg-slate-900 dark:text-slate-100">
             <h3 className="text-lg font-semibold mb-4">確認刪除</h3>
             <p className="mb-4">確定要刪除此交易記錄嗎？</p>
             <div className="flex justify-end gap-2">

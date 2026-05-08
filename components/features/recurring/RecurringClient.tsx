@@ -194,7 +194,7 @@ export default function RecurringClient(_props: { user?: any } = {}) {
             const catName = categories.find(c => c.id === (r.category_id || r.categoryId))?.name || '未分類';
             const acctName = accounts.find(a => a.id === (r.account_id || r.accountId))?.name || '未指定';
             return (
-              <div key={r.id} className={`p-4 bg-white border border-slate-200 rounded-lg shadow-sm ${!r.isActive ? 'opacity-70' : ''}`}>
+              <div key={r.id} className={`p-4 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-lg shadow-sm ${!r.isActive ? 'opacity-70' : ''}`}>
                 <div className="flex justify-between items-start mb-2">
                   <span className={`px-2 py-1 rounded text-xs ${r.type === 'income' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>{r.type === 'income' ? '收入' : '支出'}</span>
                   <div className="flex gap-1">
@@ -218,7 +218,7 @@ export default function RecurringClient(_props: { user?: any } = {}) {
 
       {deleteId && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-xl">
+          <div className="bg-white p-6 rounded-lg shadow-xl dark:bg-slate-900 dark:text-slate-100">
             <h3 className="text-lg font-semibold mb-4">確認刪除</h3>
             <p className="mb-4">確定要刪除此固定收支設定嗎？</p>
             <div className="flex justify-end gap-2">

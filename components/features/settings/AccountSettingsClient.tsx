@@ -215,14 +215,14 @@ export default function AccountSettingsClient({ user: initialUser }: { user: any
       <h2 className="text-2xl font-bold">帳號設定</h2>
 
       {/* Profile Info */}
-      <div className="p-6 bg-white border border-slate-200 rounded-xl shadow-sm">
+      <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-xl shadow-sm">
         <h3 className="text-lg font-semibold mb-4">帳號資訊</h3>
         <div className="flex gap-4 mb-2"><span className="text-slate-600 w-24">電子郵件</span><span className="font-medium">{profile?.email || '—'}</span></div>
         <div className="flex gap-4"><span className="text-slate-600 w-24">顯示名稱</span><span className="font-medium">{profile?.displayName || profile?.display_name || '—'}</span></div>
       </div>
 
       {/* Display Name */}
-      <div className="p-6 bg-white border border-slate-200 rounded-xl shadow-sm">
+      <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-xl shadow-sm">
         <h3 className="text-lg font-semibold mb-4">修改顯示名稱</h3>
         <form onSubmit={handleDisplayName}>
           <Input label="顯示名稱" value={displayName} onChange={e => setDisplayName(e.target.value)} maxLength={50} />
@@ -232,7 +232,7 @@ export default function AccountSettingsClient({ user: initialUser }: { user: any
       </div>
 
       {/* Password */}
-      <div className="p-6 bg-white border border-slate-200 rounded-xl shadow-sm">
+      <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-xl shadow-sm">
         <h3 className="text-lg font-semibold mb-4">{isGoogleOnly ? '設定本機密碼' : '修改密碼'}</h3>
         {isGoogleOnly && <p className="text-sm text-slate-500 mb-4">目前帳號僅支援 Google 登入。設定本機密碼後，即可使用電子信箱與密碼登入。</p>}
         <form onSubmit={handleChangePw} className="space-y-4">
@@ -246,7 +246,7 @@ export default function AccountSettingsClient({ user: initialUser }: { user: any
       </div>
 
       {/* Theme Mode */}
-      <div className="p-6 bg-white border border-slate-200 rounded-xl shadow-sm">
+      <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-xl shadow-sm">
         <h3 className="text-lg font-semibold mb-4">顯示主題</h3>
         <div className="flex gap-4">
           {[['system', '跟隨系統'], ['light', '淺色模式'], ['dark', '深色模式']].map(([val, label]) => (
@@ -259,7 +259,7 @@ export default function AccountSettingsClient({ user: initialUser }: { user: any
       </div>
 
       {/* Passkeys */}
-      <div className="p-6 bg-white border border-slate-200 rounded-xl shadow-sm">
+      <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-xl shadow-sm">
         <h3 className="text-lg font-semibold mb-4">Passkey 管理</h3>
         {pkError && <div className="text-red-500 text-sm mb-4">{pkError}</div>}
         {pkLoading && <p className="text-slate-500">載入中...</p>}
@@ -275,7 +275,7 @@ export default function AccountSettingsClient({ user: initialUser }: { user: any
         <Button className="mt-4" onClick={handleRegisterPasskey}>+ 新增 Passkey</Button>
       </div>
 
-      <div className="p-6 bg-white border border-slate-200 rounded-xl shadow-sm">
+      <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-xl shadow-sm">
         <h3 className="text-lg font-semibold mb-4">Google 綁定</h3>
         <p className="text-sm text-slate-500 mb-4">目前狀態：{profile?.googleLinked ? '已綁定 Google 帳號' : '尚未綁定 Google 帳號'}</p>
         <div className="flex gap-3 flex-wrap">
@@ -285,7 +285,7 @@ export default function AccountSettingsClient({ user: initialUser }: { user: any
         {googleMsg && <p className="text-sm text-slate-600 mt-3">{googleMsg}</p>}
       </div>
 
-      <div className="p-6 bg-white border border-slate-200 rounded-xl shadow-sm">
+      <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-xl shadow-sm">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold">登入稽核紀錄</h3>
           <Button variant="outline" onClick={loadLoginAudit}>重新整理</Button>
@@ -318,7 +318,7 @@ export default function AccountSettingsClient({ user: initialUser }: { user: any
         )}
       </div>
 
-      <div className="p-6 bg-white border border-red-200 rounded-xl shadow-sm">
+      <div className="p-6 bg-white border border-red-200 dark:bg-slate-900 dark:border-red-900/50 rounded-xl shadow-sm">
         <h3 className="text-lg font-semibold text-red-600 mb-4">刪除帳號</h3>
         <p className="text-sm text-slate-600 mb-4">刪除帳號後，您的交易、帳戶、股票、Passkey 與設定資料都會永久移除。</p>
         <Button variant="destructive" onClick={handleDeleteAccount}>刪除我的帳號</Button>

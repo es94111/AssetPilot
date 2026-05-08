@@ -129,7 +129,7 @@ export default function PortfolioClient(_props: { user?: any } = {}) {
           { label: '累計股利', value: fmt(totalDiv), color: 'text-orange-500' },
           { label: '整體報酬率', value: overallRate !== null ? `${overallRate >= 0 ? '+' : ''}${overallRate}%` : '—', color: plClass(overallRate || 0) },
         ].map((item, i) => (
-          <div key={i} className="p-4 bg-white border border-slate-200 rounded-lg shadow-sm">
+          <div key={i} className="p-4 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-lg shadow-sm">
             <p className="text-sm text-slate-500">{item.label}</p>
             <p className={`text-xl font-semibold ${item.color || 'text-slate-900'}`}>{item.value}</p>
           </div>
@@ -187,7 +187,7 @@ export default function PortfolioClient(_props: { user?: any } = {}) {
             const ep = Number(s.estimatedProfit) || 0;
             const rr = Number(s.returnRate) || 0;
             return (
-              <div key={s.id} className="p-4 bg-white border border-slate-200 rounded-lg shadow-sm space-y-2">
+              <div key={s.id} className="p-4 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-lg shadow-sm space-y-2">
                 <div className="flex justify-between items-start">
                   <h3 className="font-bold text-lg">{s.symbol} <span className="text-sm font-normal text-slate-500">{s.name}</span></h3>
                   <div className="flex gap-1">

@@ -5,6 +5,9 @@
 import * as path from 'path';
 import * as fs from 'fs';
 import * as crypto from 'crypto';
+import { ensureEnvSecrets } from './envSecrets';
+
+ensureEnvSecrets();
 
 // ── sql.js 最小型別宣告（套件本身無 .d.ts）──
 interface SqlJsStatement {
@@ -31,7 +34,7 @@ declare global {
   var __sqlDb: SqlJsDatabase | undefined;
 }
 
-const DB_ENCRYPTION_KEY = process.env.DB_ENCRYPTION_KEY || '';
+const DB_ENCRYPTION_KEY = process.env.DB_ENCRYPTION_KEY as string;
 
 function getDbPath(): string {
   return process.env.DB_PATH || path.join(process.cwd(), 'database.db');

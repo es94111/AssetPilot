@@ -1,6 +1,42 @@
 {
-  "currentVersion": "4.37.3",
+  "currentVersion": "4.37.4",
   "releases": [
+    {
+      "version": "4.37.4",
+      "date": "2026-05-09",
+      "title": "補齊 Passkey 登入流程並統一網站配色風格",
+      "type": "improved",
+      "changes": [
+        {
+          "tag": "new",
+          "text": "登入頁新增 Passkey 登入入口，並串接 Passkey challenge 與驗證流程；帳號設定中的 Passkey 註冊也改為使用正確的 WebAuthn payload，讓註冊、管理與登入流程完整可用。"
+        },
+        {
+          "tag": "fixed",
+          "text": "補上 Passkey 憑證資料表與登入端點速率限制，修復既有 API 已讀寫 Passkey 憑證但資料表未建立、以及認證端點防護不一致的問題。"
+        },
+        {
+          "tag": "fixed",
+          "text": "修正手機畫面新增交易視窗超出螢幕時無法滑動的問題，並讓取消與儲存按鈕在手機版維持左右排列，操作體驗與桌機版一致。"
+        },
+        {
+          "tag": "improved",
+          "text": "將「API 使用與授權」、「隱私權政策」與「服務條款」改為與首頁一致的深色公開頁風格，包含 slate 深色背景、藍綠光暈、玻璃質感卡片與一致的 sky / emerald 強調色。"
+        },
+        {
+          "tag": "improved",
+          "text": "新增網站配色風格文件，明確定義白色模式、黑色模式、品牌主色、語意色、卡片、按鈕、表單、表格與提示框的使用規則，後續 UI 調整可依同一套規範維護。"
+        },
+        {
+          "tag": "fixed",
+          "text": "修正黑色模式切換頁面或選單時短暫閃爍的問題，避免主題 hook 在讀取使用者偏好前先用系統預設覆蓋已套用的 dark-mode class。"
+        },
+        {
+          "tag": "improved",
+          "text": "補齊全站配色 token 與相容層，讓既有白底卡片、slate 文字、indigo/blue/red/green 狀態色能映射回設計系統定義的玻璃卡片、文字層級與語意色，提升白色模式與黑色模式的一致性。"
+        }
+      ]
+    },
     {
       "version": "4.37.3",
       "date": "2026-05-08",

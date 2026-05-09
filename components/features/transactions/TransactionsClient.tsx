@@ -419,7 +419,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
       )}
 
       <Dialog open={modal} onOpenChange={setModal}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-md">
           <DialogHeader>
             <DialogTitle>{editId ? '編輯交易' : '新增交易'}</DialogTitle>
           </DialogHeader>
@@ -485,7 +485,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
               <input type="checkbox" checked={form.excludeFromStats} onChange={(e) => setForm((current) => ({ ...current, excludeFromStats: e.target.checked }))} /> 不計入統計
             </label>
             {formError && <p className="text-sm text-destructive">{formError}</p>}
-            <DialogFooter>
+            <DialogFooter className="flex-row justify-end">
               <DialogClose asChild>
                 <Button type="button" variant="outline">取消</Button>
               </DialogClose>

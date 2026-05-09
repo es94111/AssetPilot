@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { client as webauthnClient } from '@passwordless-id/webauthn';
 import { apiGet, apiPut, apiPost, apiDelete } from '@/lib/clientApi';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/Input';
@@ -123,40 +124,31 @@ export default function AccountSettingsClient({ user: initialUser }: { user: any
 
   async function handleRegisterPasskey() {
     setPkError('');
-    if (typeof window.PublicKeyCredential === 'undefined') {
+    if (!webauthnClient.isAvailable()) {
       setPkError('此瀏覽器不支援 Passkey');
       return;
     }
     try {
       const { key, challenge } = await apiGet('/api/account/passkey/challenge') as { key: string; challenge: string };
-      const credOpts: PublicKeyCredentialCreationOptions = {
-        challenge: Uint8Array.from(atob(challenge.replace(/-/g, '+').replace(/_/g, '/')), (c: string) => c.charCodeAt(0)),
-        rp: { name: '記帳網頁' },
-        user: {
-          id: Uint8Array.from(key, (c: string) => c.charCodeAt(0)),
-          name: profile?.email || 'user',
-          displayName: profile?.displayName || profile?.email || 'user',
-        },
-        pubKeyCredParams: [{ alg: -7, type: 'public-key' }, { alg: -257, type: 'public-key' }],
-        authenticatorSelection: { userVerification: 'preferred' },
-        timeout: 60000,
-      };
-      const cred = await navigator.credentials.create({ publicKey: credOpts }) as PublicKeyCredential;
       const deviceName = navigator.userAgent.includes('iPhone') || navigator.userAgent.includes('iPad')
         ? 'iPhone/iPad' : navigator.userAgent.includes('Android') ? 'Android 裝置' : '電腦';
-      
-      const response = cred.response as AuthenticatorAttestationResponse;
-      
-      await apiPost('/api/account/passkey/register', {
-        id: cred.id,
-        rawId: btoa(String.fromCharCode(...new Uint8Array(cred.rawId))),
-        response: {
-          clientDataJSON: btoa(String.fromCharCode(...new Uint8Array(response.clientDataJSON))),
-          attestationObject: btoa(String.fromCharCode(...new Uint8Array(response.attestationObject))),
+
+      const registration = await webauthnClient.register({
+        challenge,
+        user: {
+          id: profile?.id || key,
+          name: profile?.email || 'user',
+          displayName: profile?.displayName || profile?.display_name || profile?.email || 'user',
         },
-        type: cred.type,
+        userVerification: 'required',
+        discoverable: 'preferred',
+        timeout: 60000,
+      });
+
+      await apiPost('/api/account/passkey/register', {
+        registration,
         deviceName,
-        key,
+        challengeKey: key,
       });
       await loadPasskeys();
     } catch (e: any) { setPkError(e.message || 'Passkey 註冊失敗'); }

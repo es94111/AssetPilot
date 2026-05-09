@@ -29,6 +29,8 @@ const AUTH_RATE_LIMITED_PATHS = new Set([
   '/api/auth/login',
   '/api/auth/register',
   '/api/auth/google',
+  '/api/auth/passkey/challenge',
+  '/api/auth/passkey/login',
 ]);
 const CSRF_SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 

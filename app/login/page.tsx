@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Script from 'next/script';
+import { client as webauthnClient } from '@passwordless-id/webauthn';
 import { Eye, EyeOff } from 'lucide-react';
 
 declare global {
@@ -33,6 +34,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [config, setConfig] = useState<any>(null);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [passkeyLoading, setPasskeyLoading] = useState(false);
 
   useEffect(() => {
     if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('mode') === 'register') {
@@ -123,6 +125,33 @@ export default function LoginPage() {
     }
   }
 
+  async function handlePasskeyLogin() {
+    setError('');
+    if (!webauthnClient.isAvailable()) { setError('此瀏覽器不支援 Passkey'); return; }
+    setPasskeyLoading(true);
+    try {
+      const challengeRes = await fetch('/api/auth/passkey/challenge', { cache: 'no-store' });
+      const { key, challenge, error: challengeError } = await challengeRes.json().catch(() => ({}));
+      if (!challengeRes.ok || !key || !challenge) throw new Error(challengeError || '無法建立 Passkey 登入挑戰');
+
+      const authentication = await webauthnClient.authenticate({
+        challenge,
+        userVerification: 'required',
+        timeout: 60000,
+      });
+      const res = await fetch('/api/auth/passkey/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ authentication, challengeKey: key }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Passkey 登入失敗');
+      router.push('/dashboard');
+      router.refresh();
+    } catch (e: any) { setError(e.message || 'Passkey 登入失敗'); }
+    finally { setPasskeyLoading(false); }
+  }
+
   const registrationEnabled = config ? config.registrationEnabled : true;
   const googleEnabled = !!config?.googleClientId && !!config?.googleCodeFlow;
 
@@ -193,6 +222,9 @@ export default function LoginPage() {
             {error && <p className="login-error" role="alert">{error}</p>}
             <button type="submit" className="login-btn-primary" disabled={loading}>
               {loading ? '登入中…' : '登入'}
+            </button>
+            <button type="button" className="login-btn-google" onClick={handlePasskeyLogin} disabled={passkeyLoading}>
+              {passkeyLoading ? 'Passkey 驗證中…' : '使用 Passkey 登入'}
             </button>
             {googleEnabled && (
               <button type="button" className="login-btn-google" onClick={handleGoogleLogin} disabled={googleLoading}>

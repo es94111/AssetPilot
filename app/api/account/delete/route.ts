@@ -4,15 +4,15 @@ import bcrypt from 'bcryptjs';
 import { requireAuth, clearAuthCookie } from '../../../../lib/apiHelpers';
 import { getDB, queryOne, saveDB } from '../../../../lib/db';
 
-function normalizeEmail(email) {
+function normalizeEmail(email: string | number | null | undefined) {
   return String(email || '').trim().toLowerCase();
 }
 
-function createHashedEmail(email) {
+function createHashedEmail(email: string | number | null | undefined) {
   return crypto.createHash('sha256').update(normalizeEmail(email)).digest('hex');
 }
 
-function deleteUserData(userId) {
+function deleteUserData(userId: string) {
   const db = getDB();
   const user = queryOne('SELECT email FROM users WHERE id = ?', [userId]);
   const hashedEmail = user ? createHashedEmail(user.email || '') : '';
@@ -33,7 +33,7 @@ function deleteUserData(userId) {
   try { db.run('COMMIT'); } catch (_) {}
 }
 
-export async function POST(request) {
+export async function POST(request: Request) {
   const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
@@ -52,7 +52,7 @@ export async function POST(request) {
 
   if (user.has_password) {
     if (!password) return NextResponse.json({ error: '請輸入密碼以確認刪除' }, { status: 400 });
-    const valid = await bcrypt.compare(password, user.password_hash);
+    const valid = await bcrypt.compare(String(password), String(user.password_hash || ''));
     if (!valid) return NextResponse.json({ error: '密碼錯誤，請重新輸入' }, { status: 400 });
   } else if (user.google_id) {
     if (!googleCredential) return NextResponse.json({ error: '請完成 Google 驗證以確認刪除帳號' }, { status: 400 });

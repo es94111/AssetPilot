@@ -30,14 +30,14 @@ function buildGoogleRedirectAllowlist() {
 }
 const googleRedirectUriAllowlist = buildGoogleRedirectAllowlist();
 
-function isAllowedGoogleRedirectUri(uri) {
+function isAllowedGoogleRedirectUri(uri: string) {
   if (!uri) return false;
   if (googleRedirectUriAllowlist.has(uri)) return true;
   const stripped = String(uri).replace(/\/$/, '');
   return googleRedirectUriAllowlist.has(stripped) || googleRedirectUriAllowlist.has(stripped + '/');
 }
 
-export async function POST(request) {
+export async function POST(request: Request) {
   const body = await request.json().catch(() => ({}));
   const { code, redirect_uri, state } = body;
   const headers = request.headers;
@@ -59,8 +59,8 @@ export async function POST(request) {
       ? [...new Set([originalRedirect, originalRedirect.endsWith('/') ? originalRedirect.slice(0, -1) : originalRedirect + '/'])]
       : [''];
 
-    let tokenData = null;
-    let tokenRes = null;
+    let tokenData: any = null;
+    let tokenRes: Response | null = null;
     for (const ru of redirectCandidates) {
       tokenRes = await fetch('https://oauth2.googleapis.com/token', {
         method: 'POST',
@@ -106,7 +106,7 @@ export async function POST(request) {
       const vals = [];
       if (!user.google_id) { updates.push('google_id = ?'); vals.push(googleId); }
       if (picture && picture !== user.avatar_url) { updates.push('avatar_url = ?'); vals.push(picture); }
-      if (name && (!user.display_name || user.display_name === user.email?.split('@')[0])) {
+      if (name && (!user.display_name || user.display_name === String(user.email || '').split('@')[0])) {
         updates.push('display_name = ?'); vals.push(name);
       }
       if (updates.length > 0) {
@@ -116,15 +116,18 @@ export async function POST(request) {
       }
     }
 
-    const currentLogin = recordLoginAudit(user, headers, 'google');
-    recordLoginAttempt({ user, email: user.email, headers, method: 'google', isSuccess: true });
-    try { backfillDefaultsForUser(user.id); } catch (e) { console.error('[backfill]', e); }
+    if (!user) return NextResponse.json({ error: '使用者不存在' }, { status: 401 });
+    const loginUser = { id: String(user.id), email: String(user.email || ''), is_admin: Number(user.is_admin) || 0 };
+    const currentLogin = recordLoginAudit(loginUser, headers, 'google');
+    recordLoginAttempt({ user: loginUser, email: loginUser.email, headers, method: 'google', isSuccess: true });
+    try { backfillDefaultsForUser(loginUser.id); } catch (e) { console.error('[backfill]', e); }
 
-    const token = signToken(user.id, Number(user.token_version) || 0);
+    const token = signToken(loginUser.id, Number(user.token_version) || 0);
     const response = NextResponse.json({ user: formatUser(user), currentLogin });
     return setAuthCookie(response, token);
   } catch (e) {
-    console.error('Google SSO 錯誤:', e.message);
-    return NextResponse.json({ error: 'Google 登入失敗：' + e.message }, { status: 500 });
+    const message = e instanceof Error ? e.message : '未知錯誤';
+    console.error('Google SSO 錯誤:', message);
+    return NextResponse.json({ error: 'Google 登入失敗：' + message }, { status: 500 });
   }
 }

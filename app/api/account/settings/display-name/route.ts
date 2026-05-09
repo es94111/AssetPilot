@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { requireAuth } from '../../../../../lib/apiHelpers';
 import { getDB, saveDB } from '../../../../../lib/db';
 
-export async function PUT(request) {
+export async function PUT(request: Request) {
   const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 

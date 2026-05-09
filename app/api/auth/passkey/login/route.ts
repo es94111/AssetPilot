@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { server as webauthnServer } from '@passwordless-id/webauthn';
+import type { CredentialInfo } from '@passwordless-id/webauthn';
 import { signToken } from '../../../../../lib/auth';
 import { getDB, queryOne, saveDB } from '../../../../../lib/db';
 import { recordLoginAudit, recordLoginAttempt } from '../../../../../lib/loginHelpers';
@@ -9,7 +10,7 @@ import { consumePasskeyChallenge } from '@/lib/passkeyChallenge';
 
 const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || '').split(',').map(s => s.trim()).filter(Boolean);
 
-function getTrustedOriginFromRequest(request) {
+function getTrustedOriginFromRequest(request: Request) {
   const reqOrigin = request.headers.get('origin');
   if (ALLOWED_ORIGINS.length > 0) {
     if (reqOrigin && ALLOWED_ORIGINS.includes(reqOrigin)) return reqOrigin;
@@ -18,7 +19,7 @@ function getTrustedOriginFromRequest(request) {
   return reqOrigin || new URL(request.url).origin;
 }
 
-export async function POST(request) {
+export async function POST(request: Request) {
   const body = await request.json().catch(() => ({}));
   const { authentication, challengeKey } = body;
   if (!authentication || !challengeKey) {
@@ -38,33 +39,35 @@ export async function POST(request) {
   if (!user) return NextResponse.json({ error: '使用者不存在' }, { status: 401 });
 
   try {
-    const credentialKey = {
-      id: cred.credential_id,
-      publicKey: cred.public_key,
-      algorithm: cred.algorithm,
-      transports: JSON.parse(cred.transports || '[]'),
+    const credentialKey: CredentialInfo = {
+      id: String(cred.credential_id || ''),
+      publicKey: String(cred.public_key || ''),
+      algorithm: String(cred.algorithm || '') as CredentialInfo['algorithm'],
+      transports: JSON.parse(String(cred.transports || '[]')),
     };
     const origin = getTrustedOriginFromRequest(request);
     const result = await webauthnServer.verifyAuthentication(authentication, credentialKey, {
       challenge: entry.challenge,
       origin,
       userVerified: true,
-      counter: cred.counter,
+      counter: Number(cred.counter) || 0,
     });
 
     getDB().run('UPDATE passkey_credentials SET counter = ? WHERE credential_id = ?', [result.counter || 0, cred.credential_id]);
     saveDB();
 
-    const currentLogin = recordLoginAudit(user, request.headers, 'passkey');
-    recordLoginAttempt({ user, email: user.email, headers: request.headers, method: 'passkey', isSuccess: true });
-    try { backfillDefaultsForUser(user.id); } catch (e) { console.error('[backfill]', e); }
+    const loginUser = { id: String(user.id), email: String(user.email || ''), is_admin: Number(user.is_admin) || 0 };
+    const currentLogin = recordLoginAudit(loginUser, request.headers, 'passkey');
+    recordLoginAttempt({ user: loginUser, email: loginUser.email, headers: request.headers, method: 'passkey', isSuccess: true });
+    try { backfillDefaultsForUser(loginUser.id); } catch (e) { console.error('[backfill]', e); }
 
-    const token = signToken(user.id, Number(user.token_version) || 0);
+    const token = signToken(loginUser.id, Number(user.token_version) || 0);
     const response = NextResponse.json({ user: formatUser(user), currentLogin });
     return setAuthCookie(response, token);
   } catch (e) {
-    console.error('Passkey 驗證失敗:', e.message);
-    recordLoginAttempt({ user, email: user.email, headers: request.headers, method: 'passkey', isSuccess: false, failureReason: 'verification_failed' });
-    return NextResponse.json({ error: 'Passkey 驗證失敗：' + e.message }, { status: 401 });
+    const message = e instanceof Error ? e.message : '未知錯誤';
+    console.error('Passkey 驗證失敗:', message);
+    recordLoginAttempt({ user: { id: String(user.id), email: String(user.email || ''), is_admin: Number(user.is_admin) || 0 }, email: String(user.email || ''), headers: request.headers, method: 'passkey', isSuccess: false, failureReason: 'verification_failed' });
+    return NextResponse.json({ error: 'Passkey 驗證失敗：' + message }, { status: 401 });
   }
 }

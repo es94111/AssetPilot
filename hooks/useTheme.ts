@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 export type Theme = 'light' | 'dark' | 'system';
 
 export function useTheme() {
-  const [theme, setThemeState] = useState<Theme>('system');
+  const [theme, setThemeState] = useState<Theme | null>(null);
 
   const applyTheme = useCallback((t: Theme) => {
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -12,11 +12,11 @@ export function useTheme() {
   }, []);
 
   useEffect(() => {
-    const stored = (localStorage.getItem('theme') as Theme) || 'system';
-    setThemeState(stored);
+    setThemeState((localStorage.getItem('theme') as Theme) || 'system');
   }, []);
 
   useEffect(() => {
+    if (!theme) return;
     applyTheme(theme);
     if (theme !== 'system') return;
     const mq = window.matchMedia('(prefers-color-scheme: dark)');
@@ -30,5 +30,5 @@ export function useTheme() {
     setThemeState(t);
   }, []);
 
-  return { theme, setTheme };
+  return { theme: theme || 'system', setTheme };
 }

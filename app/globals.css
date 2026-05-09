@@ -17,9 +17,17 @@
 
   --color-popover: #ffffff;
   --color-popover-foreground: #1a1d26;
+  --color-primary-foreground: #ffffff;
   --color-muted: #f4f6fa;
   --color-muted-foreground: #5c6370;
   --color-foreground: #1a1d26;
+  --color-background: #ffffff;
+  --color-border: #e4e7ec;
+  --color-input: #e4e7ec;
+  --color-ring: #4f6ef7;
+  --color-secondary: #eef2ff;
+  --color-secondary-foreground: #1a1d26;
+  --color-destructive: #f43f5e;
 
   --spacing-sidebar: 256px;
   --spacing-header: 60px;
@@ -121,6 +129,11 @@
   color-scheme: dark;
   --color-popover: #151922;
   --color-popover-foreground: #e8eaef;
+  --color-background: #151922;
+  --color-border: #252a36;
+  --color-input: #252a36;
+  --color-secondary: #252a36;
+  --color-secondary-foreground: #e8eaef;
   --bg: #0c0f16;
   --surface: #151922;
   --app-bg: linear-gradient(135deg, #0c0f16 0%, #111827 50%, #0c1a2e 100%);
@@ -139,6 +152,7 @@
   --today-bg: #3a2a0a;
   --success-bg: #082f2a;
   --danger-bg: #351020;
+  --primary-light-bg: rgba(79, 110, 247, 0.18);
   --today-text: #fbbf24;
   --warning-bg: #2d2000;
   --warning-border: #78550a;
@@ -214,6 +228,74 @@
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
   padding: 24px;
+}
+
+/* ── App color-system compatibility ── */
+.app-card,
+.bg-white.border.border-slate-200,
+.dark-mode .dark\:bg-slate-900.dark\:border-slate-800 {
+  background: var(--surface-glass) !important;
+  border-color: var(--glass-border) !important;
+  box-shadow: var(--shadow) !important;
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+}
+.app-muted-chip,
+.bg-slate-100 {
+  background: var(--primary-light-bg) !important;
+  color: var(--primary) !important;
+}
+.dark-mode .dark\:bg-slate-800,
+.dark-mode .bg-slate-100 {
+  background: var(--border) !important;
+  color: var(--text-secondary) !important;
+}
+.text-slate-900,
+.dark-mode .text-slate-900,
+.dark-mode .dark\:text-slate-100 {
+  color: var(--text) !important;
+}
+.text-slate-600,
+.dark-mode .text-slate-600,
+.dark-mode .dark\:text-slate-300 {
+  color: var(--text-secondary) !important;
+}
+.text-slate-500,
+.text-slate-400,
+.dark-mode .text-slate-500,
+.dark-mode .text-slate-400 {
+  color: var(--text-muted) !important;
+}
+.border-slate-200,
+.dark-mode .dark\:border-slate-800 {
+  border-color: var(--glass-border) !important;
+}
+.text-blue-600,
+.border-blue-600,
+.text-indigo-600,
+.dark-mode .dark\:text-indigo-400 {
+  color: var(--primary) !important;
+  border-color: var(--primary) !important;
+}
+.hover\:text-slate-700:hover {
+  color: var(--text) !important;
+}
+.hover\:bg-indigo-600:hover {
+  background: var(--primary) !important;
+}
+.text-green-600,
+.text-emerald-600 {
+  color: var(--success) !important;
+}
+.text-red-500,
+.text-red-600,
+.text-rose-600,
+.hover\:text-red-700:hover {
+  color: var(--danger) !important;
+}
+.border-red-200,
+.dark-mode .dark\:border-red-900\/50 {
+  border-color: rgba(244, 63, 94, 0.28) !important;
 }
 .section-card-header {
   display: flex;

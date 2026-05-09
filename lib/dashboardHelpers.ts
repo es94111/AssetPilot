@@ -1,7 +1,17 @@
 import logger from '@/lib/logger';
 import { requireAuth } from '@/lib/auth';
 
-interface CategoryNode {
+export interface DashboardCategoryAggregateRow {
+  category_id: string | number | null;
+  amount: string | number | null;
+  cat_name: string | null;
+  cat_color: string | null;
+  cat_parent_id: string | number | null;
+  cat_parent_name: string | null;
+  cat_parent_color: string | null;
+}
+
+export interface DashboardCategoryNode {
   categoryId: string | null;
   name: string;
   color: string;
@@ -10,6 +20,39 @@ interface CategoryNode {
   parentColor: string;
   total: number;
   isOtherGroup: boolean;
+}
+
+export interface RecentTransaction {
+  id: string;
+  user_id: string;
+  type: string;
+  amount: number;
+  currency?: string | null;
+  original_amount?: number | null;
+  fx_rate?: string | number | null;
+  fx_fee?: number | null;
+  twd_amount?: number | null;
+  date: string;
+  category_id?: string | null;
+  account_id?: string | null;
+  note?: string | null;
+  exclude_from_stats?: number | null;
+  created_at?: string | number | null;
+  updated_at?: string | number | null;
+  cat_name?: string | null;
+  cat_color?: string | null;
+  [key: string]: string | number | null | undefined;
+}
+
+export interface DashboardResponse {
+  yearMonth: string;
+  income: number;
+  expense: number;
+  net: number;
+  todayExpense: number;
+  catBreakdown: DashboardCategoryNode[];
+  incomeCatBreakdown: DashboardCategoryNode[];
+  recent: RecentTransaction[];
 }
 
 interface ParentChildNode {
@@ -28,15 +71,15 @@ interface ParentAggregateNode {
   otherTotal: number;
 }
 
-export function buildCategoryAggregateNodes(rows: any[]): CategoryNode[] {
+export function buildCategoryAggregateNodes(rows: DashboardCategoryAggregateRow[]): DashboardCategoryNode[] {
   const parentMap = new Map<string, ParentAggregateNode>();
   for (const r of rows) {
     const amount = Number(r.amount) || 0;
     if (amount <= 0) continue;
-    const childCategoryId = r.category_id || '';
+    const childCategoryId = r.category_id ? String(r.category_id) : '';
     const childName = r.cat_name || '未分類';
     const childColor = r.cat_color || '#94a3b8';
-    const parentId = r.cat_parent_id || '';
+    const parentId = r.cat_parent_id ? String(r.cat_parent_id) : '';
     const isLeaf = !!parentId;
     const parentKey = isLeaf ? parentId : (childCategoryId || `name:${childName}`);
     const parentName = isLeaf ? (r.cat_parent_name || '未分類') : childName;
@@ -61,7 +104,7 @@ export function buildCategoryAggregateNodes(rows: any[]): CategoryNode[] {
   }
 
   const parents = Array.from(parentMap.values()).sort((a, b) => b.total - a.total);
-  const nodes: CategoryNode[] = [];
+  const nodes: DashboardCategoryNode[] = [];
   for (const p of parents) {
     const children = Array.from(p.children.values()).sort((a, b) => b.total - a.total);
     for (const c of children) {
@@ -74,7 +117,7 @@ export function buildCategoryAggregateNodes(rows: any[]): CategoryNode[] {
   return nodes;
 }
 
-export async function getDashboardData(month?: string) {
+export async function getDashboardData(month?: string): Promise<DashboardResponse> {
   const session = await requireAuth();
   
   const port = process.env.PORT || 3000;
@@ -95,5 +138,5 @@ export async function getDashboardData(month?: string) {
     throw new Error('Failed to fetch dashboard data');
   }
 
-  return res.json();
+  return res.json() as Promise<DashboardResponse>;
 }

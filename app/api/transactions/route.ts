@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '../../../lib/apiHelpers';
 import { getDB, queryAll, queryOne, saveDB } from '../../../lib/db';
 import { normalizeCurrency, convertToTwd, normalizeDate } from '../../../lib/accountHelpers';
@@ -6,9 +6,89 @@ import { uid } from '../../../lib/userDefaults';
 import { todayInUserTz, isValidIsoDate } from '../../../lib/userTime';
 import { computeTwdAmount } from '../../../lib/moneyDecimal';
 
-const SORT_REGEX = /^(date|amount|account|category|type)_(asc|desc)$/;
+type TransactionType = 'income' | 'expense' | 'transfer_in' | 'transfer_out';
+type SortField = 'date' | 'amount' | 'account' | 'category' | 'type';
+type SortDir = 'ASC' | 'DESC';
 
-export async function GET(request) {
+interface TransactionRow {
+  id: string;
+  user_id: string;
+  type: TransactionType | string;
+  amount: number;
+  currency: string | null;
+  original_amount: number | null;
+  fx_rate: string | number | null;
+  fx_fee: number | null;
+  twd_amount: number | null;
+  date: string;
+  category_id: string | null;
+  account_id: string | null;
+  to_account_id: string | null;
+  note: string | null;
+  exclude_from_stats: number | null;
+  linked_id: string | null;
+  source_recurring_id: string | null;
+  source_recurring_name?: string | null;
+  scheduled_date: string | null;
+  created_at: string | number | null;
+  updated_at: string | number | null;
+  [key: string]: unknown;
+}
+
+interface TransactionListItem extends TransactionRow {
+  categoryId: string | null;
+  accountId: string | null;
+  toAccountId: string | null;
+  currency: string;
+  originalAmount: number;
+  fxRate: string;
+  fxFee: number;
+  twdAmount: number;
+  excludeFromStats: boolean;
+  linkedId: string;
+  sourceRecurringId: string | null;
+  sourceRecurringName: string | null;
+  scheduledDate: string | null;
+  createdAt: string | number | null;
+  updatedAt: string | number | null;
+}
+
+interface TransactionListResponse {
+  data: TransactionListItem[];
+  items: TransactionListItem[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  sort: string;
+}
+
+interface CreateTransactionRequest {
+  type?: string;
+  amount?: number | string;
+  originalAmount?: number | string;
+  currency?: string;
+  fxRate?: number | string | null;
+  fxFee?: number | string | null;
+  date?: string | null;
+  categoryId?: string | null;
+  accountId?: string | null;
+  note?: string | null;
+  excludeFromStats?: boolean;
+}
+
+const SORT_REGEX = /^(date|amount|account|category|type)_(asc|desc)$/;
+const TRANSACTION_TYPES = new Set(['income', 'expense', 'transfer_in', 'transfer_out']);
+
+function asRows<T>(rows: Array<Record<string, string | number | null>>): T[] {
+  return rows as unknown as T[];
+}
+
+function asRow<T>(row: Record<string, string | number | null> | null): T | null {
+  return row as unknown as T | null;
+}
+
+export async function GET(request: NextRequest) {
   const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
@@ -21,7 +101,7 @@ export async function GET(request) {
   const page = searchParams.get('page') || '1';
   const keyword = String(searchParams.get('keyword') || '').trim();
 
-  const limitRaw = parseInt(searchParams.get('limit'), 10);
+  const limitRaw = parseInt(searchParams.get('limit') || '', 10);
   const pageSize = Number.isFinite(limitRaw) && limitRaw > 0 ? limitRaw : 20;
   if (pageSize > 500) {
     return NextResponse.json({ error: '每頁最多 500 筆', code: 'PageSizeOutOfRange' }, { status: 400 });
@@ -32,8 +112,8 @@ export async function GET(request) {
   if (searchParams.get('sort') && !sortMatch) {
     return NextResponse.json({ error: 'sort 參數格式無效', code: 'ValidationError', field: 'sort' }, { status: 400 });
   }
-  const sortField = sortMatch ? sortMatch[1] : 'date';
-  const sortDir = sortMatch && sortMatch[2] === 'asc' ? 'ASC' : 'DESC';
+  const sortField = (sortMatch ? sortMatch[1] : 'date') as SortField;
+  const sortDir: SortDir = sortMatch && sortMatch[2] === 'asc' ? 'ASC' : 'DESC';
 
   const needJoinAcc = sortField === 'account';
   const needJoinCat = sortField === 'category';
@@ -44,7 +124,7 @@ export async function GET(request) {
 
   const today = todayInUserTz(auth.userTimezone);
   let where = 't.user_id = ?';
-  const params = [auth.userId];
+  const params: Array<string | number | null> = [auth.userId];
 
   if (dateFrom) { where += ' AND t.date >= ?'; params.push(dateFrom); }
   if (dateTo) { where += ' AND t.date <= ?'; params.push(dateTo); }
@@ -62,10 +142,10 @@ export async function GET(request) {
     const requested = String(categoryId).split(',').map(s => s.trim()).filter(Boolean);
     if (requested.length > 0) {
       const placeholders = requested.map(() => '?').join(',');
-      const childRows = queryAll(
+      const childRows = asRows<{ id: string }>(queryAll(
         `SELECT id FROM categories WHERE user_id = ? AND parent_id IN (${placeholders})`,
         [auth.userId, ...requested]
-      );
+      ));
       const expanded = new Set(requested);
       childRows.forEach(r => expanded.add(r.id));
       const ids = [...expanded];
@@ -78,27 +158,27 @@ export async function GET(request) {
   if (keyword) { where += ' AND LOWER(t.note) LIKE LOWER(?)'; params.push(`%${keyword}%`); }
 
   const countSql = `SELECT COUNT(*) as cnt FROM ${baseTable} WHERE ${where}`;
-  const total = queryOne(countSql, params)?.cnt || 0;
+  const total = Number(asRow<{ cnt: number }>(queryOne(countSql, params))?.cnt) || 0;
 
-  let orderClause;
+  let orderClause = '';
   if (sortField === 'date') orderClause = `ORDER BY t.date ${sortDir}, t.created_at DESC`;
   else if (sortField === 'amount') orderClause = `ORDER BY t.amount ${sortDir}, t.date DESC`;
   else if (sortField === 'type') orderClause = `ORDER BY t.type ${sortDir}, t.date DESC`;
   else if (sortField === 'account') orderClause = `ORDER BY acc.name ${sortDir}, t.date DESC`;
   else if (sortField === 'category') orderClause = `ORDER BY cat.name ${sortDir}, t.date DESC`;
 
-  const pageNum = parseInt(page) || 1;
+  const pageNum = parseInt(page, 10) || 1;
   const offset = (pageNum - 1) * pageSize;
   const selectCols = "t.*, COALESCE(NULLIF(r.note, ''), '（未命名配方）') AS source_recurring_name";
   const sql = `SELECT ${selectCols} FROM ${baseTable} WHERE ${where} ${orderClause} LIMIT ${pageSize} OFFSET ${offset}`;
-  const items = queryAll(sql, params).map(r => ({
+  const items = asRows<TransactionRow>(queryAll(sql, params)).map((r): TransactionListItem => ({
     ...r,
     categoryId: r.category_id,
     accountId: r.account_id,
     toAccountId: r.to_account_id || null,
     currency: normalizeCurrency(r.currency),
     originalAmount: Number(r.original_amount) > 0 ? Number(r.original_amount) : Number(r.amount) || 0,
-    fxRate: String(r.fx_rate || '1'),  // 保持 decimal 字符串格式以維持精度
+    fxRate: String(r.fx_rate || '1'),
     fxFee: Number(r.fx_fee) || 0,
     twdAmount: Number(r.twd_amount) || Number(r.amount) || 0,
     excludeFromStats: r.exclude_from_stats === 1,
@@ -110,7 +190,7 @@ export async function GET(request) {
     updatedAt: r.updated_at,
   }));
 
-  return NextResponse.json({
+  const response: TransactionListResponse = {
     data: items,
     items,
     total,
@@ -118,14 +198,16 @@ export async function GET(request) {
     pageSize,
     totalPages: Math.ceil(total / pageSize),
     sort: `${sortField}_${sortDir.toLowerCase()}`,
-  });
+  };
+
+  return NextResponse.json(response);
 }
 
-export async function POST(request) {
+export async function POST(request: NextRequest) {
   const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
-  const body = await request.json().catch(() => ({}));
+  const body = await request.json().catch(() => ({})) as CreateTransactionRequest;
   const { type, amount, categoryId, accountId, note, excludeFromStats } = body;
   const rawDate = body.date;
 
@@ -134,14 +216,14 @@ export async function POST(request) {
     : normalizeDate(rawDate);
   if (!date) return NextResponse.json({ error: '日期格式無效' }, { status: 400 });
   if (!isValidIsoDate(date)) return NextResponse.json({ error: '日期格式無效', code: 'ValidationError', field: 'date' }, { status: 400 });
-  if (!['income', 'expense', 'transfer_in', 'transfer_out'].includes(type)) {
+  if (!type || !TRANSACTION_TYPES.has(type)) {
     return NextResponse.json({ error: '交易類型無效' }, { status: 400 });
   }
 
   if (categoryId) {
     const catOwned = queryOne('SELECT id FROM categories WHERE id = ? AND user_id = ?', [categoryId, auth.userId]);
     if (!catOwned) return NextResponse.json({ error: '分類不存在或無權限' }, { status: 400 });
-    const catRow = queryOne('SELECT parent_id FROM categories WHERE id = ? AND user_id = ?', [categoryId, auth.userId]);
+    const catRow = asRow<{ parent_id: string | null }>(queryOne('SELECT parent_id FROM categories WHERE id = ? AND user_id = ?', [categoryId, auth.userId]));
     if (catRow && !catRow.parent_id) {
       return NextResponse.json({ error: '交易必須指派至子分類，不能直接掛在父分類底下' }, { status: 400 });
     }
@@ -158,15 +240,15 @@ export async function POST(request) {
 
   let converted;
   try {
-    converted = convertToTwd(body.originalAmount ?? amount, body.currency, body.fxRate, auth.userId);
+    converted = convertToTwd(Number(body.originalAmount ?? amount), body.currency || 'TWD', body.fxRate, auth.userId);
   } catch (e) {
-    return NextResponse.json({ error: e.message || '金額格式錯誤' }, { status: 400 });
+    return NextResponse.json({ error: e instanceof Error ? e.message : '金額格式錯誤' }, { status: 400 });
   }
 
   const fxFee = Math.max(0, Number(body.fxFee) || 0);
   const twdAmountInt = computeTwdAmount(
     Math.round(converted.originalAmount * 100) / 100,
-    converted.fxRate,  // 已經是 decimal 字符串
+    converted.fxRate,
     fxFee
   );
 
@@ -175,7 +257,7 @@ export async function POST(request) {
   const db = getDB();
   db.run(
     'INSERT INTO transactions (id, user_id, type, amount, currency, original_amount, fx_rate, fx_fee, twd_amount, date, category_id, account_id, note, exclude_from_stats, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
-    [id, auth.userId, type, twdAmountInt, converted.currency, converted.originalAmount, converted.fxRate, fxFee, twdAmountInt, date, categoryId, accountId, note || '', excludeFromStats ? 1 : 0, now, now]
+    [id, auth.userId, type, twdAmountInt, converted.currency, converted.originalAmount, converted.fxRate, fxFee, twdAmountInt, date, categoryId || null, accountId || null, note || '', excludeFromStats ? 1 : 0, now, now]
   );
   saveDB();
   return NextResponse.json({ id, twdAmount: twdAmountInt, updatedAt: now }, { status: 201 });

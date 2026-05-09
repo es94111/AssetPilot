@@ -1,24 +1,88 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '../../../../lib/apiHelpers';
 import { getDB, queryOne, saveDB } from '../../../../lib/db';
 import { normalizeCurrency, convertToTwd, normalizeDate } from '../../../../lib/accountHelpers';
 import { ownsResource, assertOptimisticLock, lockErrorResponse } from '../../../../lib/resourceHelpers';
 import { computeTwdAmount } from '../../../../lib/moneyDecimal';
 
-export async function GET(request, { params }) {
+type RouteContext = { params: Promise<{ txId: string }> };
+interface Auth {
+  userId: string;
+  userTimezone: string;
+  email: string;
+  displayName: string;
+  isAdmin: boolean;
+  themeMode: string;
+}
+
+interface TransactionRow {
+  id: string;
+  user_id: string;
+  type: string;
+  amount: number;
+  currency: string | null;
+  original_amount: number | null;
+  fx_rate: string | number | null;
+  fx_fee: number | null;
+  twd_amount: number | null;
+  date: string;
+  category_id: string | null;
+  account_id: string | null;
+  to_account_id: string | null;
+  note: string | null;
+  exclude_from_stats: number | null;
+  linked_id: string | null;
+  source_recurring_id: string | null;
+  scheduled_date: string | null;
+  created_at: string | number | null;
+  updated_at: string | number | null;
+}
+
+interface UpdateTransactionRequest {
+  expectedUpdatedAt?: number | string | null;
+  expected_updated_at?: number | string | null;
+  type?: string;
+  amount?: number | string;
+  originalAmount?: number | string;
+  currency?: string;
+  fxRate?: number | string | null;
+  fxFee?: number | string | null;
+  date?: string | null;
+  categoryId?: string | null;
+  accountId?: string | null;
+  note?: string | null;
+  excludeFromStats?: boolean;
+}
+
+interface DeleteTransactionRequest {
+  expectedUpdatedAt?: number | string | null;
+  expected_updated_at?: number | string | null;
+}
+
+const TRANSACTION_TYPES = new Set(['income', 'expense', 'transfer_in', 'transfer_out']);
+
+function asRow<T>(row: Record<string, string | number | null> | null): T | null {
+  return row as unknown as T | null;
+}
+
+function getOwnedTransaction(txId: string, userId: string): TransactionRow | null {
+  return ownsResource('transactions', 'id', txId, userId) as TransactionRow | null;
+}
+
+export async function GET(request: NextRequest, { params }: RouteContext) {
   const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
   const { txId } = await params;
-  const t = ownsResource('transactions', 'id', txId, auth.userId);
+  const t = getOwnedTransaction(txId, auth.userId);
   if (!t) return NextResponse.json({ error: 'NotFound' }, { status: 404 });
 
-  let sourceRecurringName = null;
+  let sourceRecurringName: string | null = null;
   if (t.source_recurring_id) {
-    const r = queryOne(
+    const r = asRow<{ source_recurring_name: string | null }>(queryOne(
       "SELECT COALESCE(NULLIF(note, ''), '（未命名配方）') AS source_recurring_name FROM recurring WHERE id = ? AND user_id = ?",
       [t.source_recurring_id, auth.userId]
-    );
+    ));
     sourceRecurringName = r ? r.source_recurring_name : null;
   }
 
@@ -46,11 +110,11 @@ export async function GET(request, { params }) {
   });
 }
 
-async function updateHandler(request, txId, auth) {
-  const existing = ownsResource('transactions', 'id', txId, auth.userId);
+async function updateHandler(request: NextRequest, txId: string, auth: Auth) {
+  const existing = getOwnedTransaction(txId, auth.userId);
   if (!existing) return NextResponse.json({ error: '資源不存在或無權限', code: 'NotFound' }, { status: 404 });
 
-  const body = await request.json().catch(() => ({}));
+  const body = await request.json().catch(() => ({})) as UpdateTransactionRequest;
 
   if (body.expectedUpdatedAt != null || body.expected_updated_at != null) {
     try {
@@ -72,14 +136,14 @@ async function updateHandler(request, txId, auth) {
   const { type, amount, categoryId, accountId, note, excludeFromStats } = body;
   const date = normalizeDate(body.date);
   if (!date) return NextResponse.json({ error: '日期格式無效' }, { status: 400 });
-  if (!['income', 'expense', 'transfer_in', 'transfer_out'].includes(type)) {
+  if (!type || !TRANSACTION_TYPES.has(type)) {
     return NextResponse.json({ error: '交易類型無效' }, { status: 400 });
   }
 
   if (categoryId) {
     const catOwned = queryOne('SELECT id FROM categories WHERE id = ? AND user_id = ?', [categoryId, auth.userId]);
     if (!catOwned) return NextResponse.json({ error: '分類不存在或無權限' }, { status: 400 });
-    const catRow = queryOne('SELECT parent_id FROM categories WHERE id = ? AND user_id = ?', [categoryId, auth.userId]);
+    const catRow = asRow<{ parent_id: string | null }>(queryOne('SELECT parent_id FROM categories WHERE id = ? AND user_id = ?', [categoryId, auth.userId]));
     if (catRow && !catRow.parent_id) {
       return NextResponse.json({ error: '交易必須指派至子分類，不能直接掛在父分類底下' }, { status: 400 });
     }
@@ -96,15 +160,15 @@ async function updateHandler(request, txId, auth) {
 
   let converted;
   try {
-    converted = convertToTwd(body.originalAmount ?? amount, body.currency, body.fxRate, auth.userId);
+    converted = convertToTwd(Number(body.originalAmount ?? amount), body.currency || 'TWD', body.fxRate, auth.userId);
   } catch (e) {
-    return NextResponse.json({ error: e.message || '金額格式錯誤' }, { status: 400 });
+    return NextResponse.json({ error: e instanceof Error ? e.message : '金額格式錯誤' }, { status: 400 });
   }
 
   const fxFee = Math.max(0, Number(body.fxFee) || 0);
   const twdAmountInt = computeTwdAmount(
     Math.round(converted.originalAmount * 100) / 100,
-    converted.fxRate,  // 已經是 decimal 字符串
+    converted.fxRate,
     fxFee
   );
 
@@ -112,39 +176,39 @@ async function updateHandler(request, txId, auth) {
   const db = getDB();
   db.run(
     'UPDATE transactions SET type=?, amount=?, currency=?, original_amount=?, fx_rate=?, fx_fee=?, twd_amount=?, date=?, category_id=?, account_id=?, note=?, exclude_from_stats=?, updated_at=? WHERE id=? AND user_id=?',
-    [type, twdAmountInt, converted.currency, converted.originalAmount, converted.fxRate, fxFee, twdAmountInt, date, categoryId, accountId, note || '', excludeFromStats ? 1 : 0, nowMs, txId, auth.userId]
+    [type, twdAmountInt, converted.currency, converted.originalAmount, converted.fxRate, fxFee, twdAmountInt, date, categoryId || null, accountId || null, note || '', excludeFromStats ? 1 : 0, nowMs, txId, auth.userId]
   );
   saveDB();
   return NextResponse.json({ ok: true, updatedAt: nowMs });
 }
 
-export async function PUT(request, { params }) {
+export async function PUT(request: NextRequest, { params }: RouteContext) {
   const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
   const { txId } = await params;
   return updateHandler(request, txId, auth);
 }
 
-export async function PATCH(request, { params }) {
+export async function PATCH(request: NextRequest, { params }: RouteContext) {
   const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
   const { txId } = await params;
   return updateHandler(request, txId, auth);
 }
 
-export async function DELETE(request, { params }) {
+export async function DELETE(request: NextRequest, { params }: RouteContext) {
   const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
   const { txId } = await params;
-  const tx = ownsResource('transactions', 'id', txId, auth.userId);
+  const tx = getOwnedTransaction(txId, auth.userId);
   if (!tx) return NextResponse.json({ error: 'NotFound' }, { status: 404 });
 
-  let expectedUpdatedAt;
+  let expectedUpdatedAt: number | string | null | undefined;
   try {
-    const body = await request.json().catch(() => ({}));
+    const body = await request.json().catch(() => ({})) as DeleteTransactionRequest;
     expectedUpdatedAt = body?.expectedUpdatedAt ?? body?.expected_updated_at;
-  } catch (_) {
+  } catch {
     const { searchParams } = new URL(request.url);
     expectedUpdatedAt = searchParams.get('expected_updated_at');
   }

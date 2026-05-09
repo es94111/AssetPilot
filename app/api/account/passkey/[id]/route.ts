@@ -2,7 +2,9 @@ import { NextResponse } from 'next/server';
 import { requireAuth } from '../../../../../lib/apiHelpers';
 import { getDB, queryOne, saveDB } from '../../../../../lib/db';
 
-export async function DELETE(request, { params }) {
+type RouteContext = { params: Promise<{ id: string }> };
+
+export async function DELETE(request: Request, { params }: RouteContext) {
   const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
@@ -15,7 +17,7 @@ export async function DELETE(request, { params }) {
   return NextResponse.json({ success: true });
 }
 
-export async function PUT(request, { params }) {
+export async function PUT(request: Request, { params }: RouteContext) {
   const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 

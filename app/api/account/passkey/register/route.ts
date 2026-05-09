@@ -8,7 +8,7 @@ function todayStr() {
   return new Date().toISOString().slice(0, 10);
 }
 
-export async function POST(request) {
+export async function POST(request: Request) {
   const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
@@ -37,6 +37,7 @@ export async function POST(request) {
     saveDB();
     return NextResponse.json({ success: true, id: result.credential.id });
   } catch (e) {
-    return NextResponse.json({ error: 'Passkey 註冊驗證失敗：' + e.message }, { status: 400 });
+    const message = e instanceof Error ? e.message : '未知錯誤';
+    return NextResponse.json({ error: 'Passkey 註冊驗證失敗：' + message }, { status: 400 });
   }
 }

@@ -4,7 +4,7 @@ import { requireAuth, setAuthCookie } from '../../../../lib/apiHelpers';
 import { getDB, queryOne, saveDB } from '../../../../lib/db';
 import { signToken } from '../../../../lib/auth';
 
-function validateStrongPassword(password) {
+function validateStrongPassword(password: string) {
   if (!password || typeof password !== 'string') return '密碼為必填';
   if (password.length < 8) return '密碼長度至少 8 字元';
   if (!/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/\d/.test(password) || !/[^a-zA-Z0-9]/.test(password)) {
@@ -13,7 +13,7 @@ function validateStrongPassword(password) {
   return null;
 }
 
-export async function PUT(request) {
+export async function PUT(request: Request) {
   const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
@@ -29,9 +29,10 @@ export async function PUT(request) {
 
   if (user.has_password) {
     if (!currentPassword) return NextResponse.json({ error: '請輸入目前密碼' }, { status: 400 });
-    const valid = await bcrypt.compare(currentPassword, user.password_hash);
+    const passwordHash = String(user.password_hash || '');
+    const valid = await bcrypt.compare(currentPassword, passwordHash);
     if (!valid) return NextResponse.json({ error: '目前密碼錯誤' }, { status: 401 });
-    const sameAsOld = await bcrypt.compare(newPassword, user.password_hash);
+    const sameAsOld = await bcrypt.compare(newPassword, passwordHash);
     if (sameAsOld) return NextResponse.json({ error: '新密碼不可與目前密碼相同' }, { status: 400 });
   }
 
@@ -40,7 +41,7 @@ export async function PUT(request) {
   saveDB();
 
   const updatedUser = queryOne('SELECT token_version FROM users WHERE id = ?', [auth.userId]);
-  const newToken = signToken(auth.userId, Number(updatedUser.token_version) || 0);
+  const newToken = signToken(auth.userId, Number(updatedUser?.token_version) || 0);
   const res = NextResponse.json({ success: true });
   setAuthCookie(res, newToken);
   return res;

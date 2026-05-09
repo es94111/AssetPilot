@@ -11,7 +11,7 @@ import {
 import { uid, todayStr, createDefaultsForUser } from '../../../../lib/userDefaults';
 import { setAuthCookie } from '../../../../lib/apiHelpers';
 
-function validateStrongPassword(password) {
+function validateStrongPassword(password: string) {
   if (!password || typeof password !== 'string') return '密碼為必填';
   if (password.length < 8) return '密碼長度至少 8 字元';
   if (!/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/\d/.test(password) || !/[^a-zA-Z0-9]/.test(password)) {
@@ -20,7 +20,7 @@ function validateStrongPassword(password) {
   return null;
 }
 
-export async function POST(request) {
+export async function POST(request: Request) {
   const body = await request.json().catch(() => ({}));
   const email = String(body.email || '');
   const password = String(body.password || '');

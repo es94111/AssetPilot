@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { requireAuth } from '../../../../lib/apiHelpers';
 import { getDB, queryOne, saveDB } from '../../../../lib/db';
 
-export async function POST(request) {
+export async function POST(request: Request) {
   const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
@@ -30,6 +30,7 @@ export async function POST(request) {
     saveDB();
     return NextResponse.json({ success: true, googleEmail, avatarUrl: picture });
   } catch (e) {
-    return NextResponse.json({ error: '綁定失敗：' + e.message }, { status: 500 });
+    const message = e instanceof Error ? e.message : '未知錯誤';
+    return NextResponse.json({ error: '綁定失敗：' + message }, { status: 500 });
   }
 }

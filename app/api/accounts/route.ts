@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '../../../lib/apiHelpers';
 import { getDB, queryAll, queryOne, saveDB } from '../../../lib/db';
 import {
@@ -7,18 +7,68 @@ import {
 } from '../../../lib/accountHelpers';
 import { uid, todayStr } from '../../../lib/userDefaults';
 
-const VALID_CATEGORIES = ['bank', 'credit_card', 'cash', 'virtual_wallet'];
+type AccountCategory = 'bank' | 'credit_card' | 'cash' | 'virtual_wallet';
 
-export async function GET(request) {
+interface AccountRow {
+  id: string;
+  user_id: string;
+  name: string;
+  category: string | null;
+  account_type: string;
+  initial_balance: number;
+  currency: string | null;
+  icon: string | null;
+  exclude_from_total: number | null;
+  linked_bank_id: string | null;
+  overseas_fee_rate: number | null;
+  created_at: string | number | null;
+  updated_at: string | number | null;
+}
+
+interface AccountTransactionRow {
+  account_id: string;
+  type: string;
+  twd_amount: number;
+}
+
+interface CreateAccountRequest {
+  name?: string;
+  initialBalance?: number | string;
+  currency?: string;
+  icon?: string;
+  category?: string;
+  accountType?: string;
+  excludeFromTotal?: boolean;
+  linkedBankId?: string | null;
+  overseasFeeRate?: number | string | null;
+}
+
+const VALID_CATEGORIES: AccountCategory[] = ['bank', 'credit_card', 'cash', 'virtual_wallet'];
+
+function asRows<T>(rows: Array<Record<string, string | number | null>>): T[] {
+  return rows as unknown as T[];
+}
+
+function asRow<T>(row: Record<string, string | number | null> | null): T | null {
+  return row as unknown as T | null;
+}
+
+function toAccountCategory(value: unknown, accountType?: string): AccountCategory {
+  return VALID_CATEGORIES.includes(value as AccountCategory)
+    ? value as AccountCategory
+    : categoryFromAccountType(accountType || '') as AccountCategory;
+}
+
+export async function GET(request: NextRequest) {
   const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
-  const accounts = queryAll('SELECT * FROM accounts WHERE user_id = ? ORDER BY created_at', [auth.userId]);
-  const txRows = queryAll(
+  const accounts = asRows<AccountRow>(queryAll('SELECT * FROM accounts WHERE user_id = ? ORDER BY created_at', [auth.userId]));
+  const txRows = asRows<AccountTransactionRow>(queryAll(
     'SELECT account_id, type, COALESCE(twd_amount, amount) as twd_amount FROM transactions WHERE user_id = ?',
     [auth.userId]
-  );
-  const twdMap = {};
+  ));
+  const twdMap: Record<string, number> = {};
   for (const r of txRows) {
     const v = Number(r.twd_amount) || 0;
     if (!twdMap[r.account_id]) twdMap[r.account_id] = 0;
@@ -49,11 +99,11 @@ export async function GET(request) {
   return NextResponse.json(result);
 }
 
-export async function POST(request) {
+export async function POST(request: NextRequest) {
   const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
-  const body = await request.json().catch(() => ({}));
+  const body = await request.json().catch(() => ({})) as CreateAccountRequest;
   const { name, initialBalance, icon, excludeFromTotal, linkedBankId } = body;
   const currency = normalizeCurrency(body.currency);
   const safeIcon = normalizeAccountIcon(icon);
@@ -61,14 +111,11 @@ export async function POST(request) {
   if (safeName.length < 1 || safeName.length > 64) {
     return NextResponse.json({ error: '名稱必須為 1~64 字元', code: 'ValidationError', field: 'name' }, { status: 400 });
   }
-  let category = body.category;
-  if (!VALID_CATEGORIES.includes(category)) {
-    category = categoryFromAccountType(body.accountType);
-  }
+  const category = toAccountCategory(body.category, body.accountType);
   const safeAccountType = accountTypeFromCategory(category);
   const safeExclude = excludeFromTotal ? 1 : 0;
 
-  let safeOverseasFeeRate = null;
+  let safeOverseasFeeRate: number | null = null;
   if (category === 'credit_card' && body.overseasFeeRate != null) {
     const v = Number(body.overseasFeeRate);
     if (!Number.isFinite(v) || v < 0 || v > 1000) {
@@ -77,9 +124,9 @@ export async function POST(request) {
     safeOverseasFeeRate = Math.round(v);
   }
 
-  let safeLinkedBankId = null;
+  let safeLinkedBankId: string | null = null;
   if (category === 'credit_card' && linkedBankId) {
-    const bankAcc = queryOne("SELECT id FROM accounts WHERE id = ? AND user_id = ? AND (category = 'bank' OR account_type = '銀行')", [linkedBankId, auth.userId]);
+    const bankAcc = asRow<{ id: string }>(queryOne("SELECT id FROM accounts WHERE id = ? AND user_id = ? AND (category = 'bank' OR account_type = '銀行')", [linkedBankId, auth.userId]));
     if (!bankAcc) return NextResponse.json({ error: '指定的銀行帳戶不存在' }, { status: 400 });
     safeLinkedBankId = linkedBankId;
   }

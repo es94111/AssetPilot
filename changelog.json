@@ -1,6 +1,22 @@
 {
-  "currentVersion": "4.37.4",
+  "currentVersion": "4.37.5",
   "releases": [
+    {
+      "version": "4.37.5",
+      "date": "2026-05-09",
+      "title": "提升認證與帳號 API 維護性",
+      "type": "improved",
+      "changes": [
+        {
+          "tag": "improved",
+          "text": "將登入、登出、註冊、Google 登入、Passkey 登入與帳號設定相關 API 路由遷移為 TypeScript，保留既有登入與帳號管理行為，同時提升後續維護時的型別安全與可讀性。"
+        },
+        {
+          "tag": "improved",
+          "text": "調整對話框底部區塊背景色，改用與彈窗語意一致的 popover 色彩，讓白色模式與黑色模式下的彈窗視覺更一致。"
+        }
+      ]
+    },
     {
       "version": "4.37.4",
       "date": "2026-05-09",

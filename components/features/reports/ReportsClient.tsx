@@ -107,10 +107,10 @@ export default function ReportsClient(_props: { user?: any } = {}) {
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chartInstanceRef = useRef<Chart | null>(null);
 
-  const fetchReport = useCallback(async () => {
+  const fetchReport = useCallback(async (opts: { silent?: boolean } = {}) => {
     const { from, to } = getDateRange(period, customFrom, customTo);
     const previous = shiftPeriod(from, to);
-    setLoading(true);
+    if (!opts.silent) setLoading(true);
     try {
       const [currentData, previousData] = await Promise.all([
         apiGet(`/api/reports?type=${type}&from=${from}&to=${to}`),
@@ -119,7 +119,7 @@ export default function ReportsClient(_props: { user?: any } = {}) {
       setReportData(currentData);
       setPreviousReportData(previousData);
     } catch (_) {}
-    setLoading(false);
+    if (!opts.silent) setLoading(false);
   }, [period, customFrom, customTo, type]);
 
   useEffect(() => { fetchReport(); }, [fetchReport]);
@@ -135,6 +135,13 @@ export default function ReportsClient(_props: { user?: any } = {}) {
       window.removeEventListener('focus', refreshVisibleReport);
       document.removeEventListener('visibilitychange', refreshVisibleReport);
     };
+  }, [fetchReport]);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      if (document.visibilityState === 'visible') void fetchReport({ silent: true });
+    }, 10000);
+    return () => window.clearInterval(timer);
   }, [fetchReport]);
 
   const catRows = useMemo(() => Array.isArray(reportData?.categoryBreakdown)

@@ -181,17 +181,12 @@ export default async function DashboardPage(props: {
                         </span>
                       ))}
                     </div>
-                    <div className="progress-track flex overflow-hidden" style={{ height: '8px' }}>
-                      {group.children.map((child: any, childIndex: number) => {
-                        const width = group.total > 0 ? (child.total / group.total) * 100 : 0;
-                        return (
-                          <div
-                            key={`${group.parentId}-${child.name}-bar-${childIndex}`}
-                            title={`${child.name} ${fmtMoney(child.total)}`}
-                            style={{ width: `${width}%`, background: child.color, height: '100%' }}
-                          />
-                        );
-                      })}
+                    <div className="progress-track" style={{ height: '8px' }}>
+                      <div
+                        className="progress-fill"
+                        title={`${group.parentName} ${fmtMoney(group.total)}`}
+                        style={{ width: `${percentOf(totalExpense, group.total)}%`, background: group.parentColor }}
+                      />
                     </div>
                   </div>
                 ))}

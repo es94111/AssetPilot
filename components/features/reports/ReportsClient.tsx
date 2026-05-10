@@ -11,6 +11,38 @@ function fmt(n: number | string) {
   return 'NT$ ' + Math.round(Number(n) || 0).toLocaleString('zh-TW');
 }
 
+function percentOf(total: number, value: number) {
+  if (!total) return 0;
+  return Math.max(4, Math.round((value / total) * 100));
+}
+
+function groupCategoryRows(rows: any[]) {
+  const groups = new Map<string, any>();
+  rows.forEach((row, index) => {
+    const parentName = row.parentName || row.name || '未分類';
+    const parentId = row.parentId || `parent-${parentName}-${index}`;
+    if (!groups.has(parentId)) {
+      groups.set(parentId, {
+        parentId,
+        parentName,
+        parentColor: row.parentColor || row.color || '#94a3b8',
+        total: 0,
+        children: [],
+      });
+    }
+    const group = groups.get(parentId);
+    const amount = Number(row.total) || 0;
+    group.total += amount;
+    group.children.push({
+      ...row,
+      name: row.name || parentName,
+      color: row.color || row.parentColor || '#94a3b8',
+      total: amount,
+    });
+  });
+  return Array.from(groups.values()).sort((a, b) => b.total - a.total);
+}
+
 function getDateRange(period: string, customFrom: string, customTo: string) {
   const now = new Date();
   let from = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -151,6 +183,7 @@ export default function ReportsClient(_props: { user?: any } = {}) {
   const grandTotal = reportData?.total || catRows.reduce((sum: number, row: any) => sum + Number(row.total), 0);
   const previousTotal = previousReportData?.total || 0;
   const selectedRow = selectedCategory ? catRows.find((row: any) => row.name === selectedCategory) : null;
+  const expenseGroups = useMemo(() => groupCategoryRows(catRows), [catRows]);
 
   function jumpToTransactions(row: any) {
     const { from, to } = getDateRange(period, customFrom, customTo);
@@ -218,7 +251,44 @@ export default function ReportsClient(_props: { user?: any } = {}) {
               </div>
             </div>
           )}
-          {catRows.map((row: any, index: number) => {
+          {type === 'expense' ? expenseGroups.map((group: any) => {
+            const percentage = grandTotal > 0 ? Math.round((Number(group.total) / grandTotal) * 100) : 0;
+            return (
+              <div key={group.parentId} className="rounded-lg px-2 py-2 text-sm">
+                <div className="flex items-center gap-3">
+                  <span className="w-3 h-3 rounded-full" style={{ background: group.parentColor }} />
+                  <span className="flex-1 text-left font-medium">{group.parentName}</span>
+                  <div className="w-32 h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                    <div className="h-full rounded-full flex overflow-hidden" style={{ width: `${percentOf(grandTotal, group.total)}%`, background: group.parentColor }}>
+                      {group.children.map((child: any, childIndex: number) => {
+                        const width = group.total > 0 ? (Number(child.total) / group.total) * 100 : 0;
+                        return (
+                          <div
+                            key={`${group.parentId}-${child.name}-bar-${childIndex}`}
+                            title={`${child.name} ${fmt(child.total)}`}
+                            style={{ width: `${width}%`, background: child.color || '#94a3b8', height: '100%' }}
+                          />
+                        );
+                      })}
+                    </div>
+                  </div>
+                  <span className="w-12 text-right">{percentage}%</span>
+                  <span className="w-24 text-right font-medium">{fmt(group.total)}</span>
+                </div>
+                <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 pl-6 text-xs text-slate-500 dark:text-slate-400">
+                  {group.children.map((child: any, childIndex: number) => {
+                    const selected = selectedCategory === child.name;
+                    return (
+                      <button key={`${group.parentId}-${child.name}-${childIndex}`} type="button" className={`inline-flex items-center gap-1.5 rounded px-1 py-0.5 transition ${selected ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-200' : 'hover:bg-slate-50 dark:hover:bg-slate-800/60'}`} onClick={() => setSelectedCategory(child.name)} onDoubleClick={() => jumpToTransactions(child)}>
+                        <span className="w-2 h-2 rounded-full" style={{ background: child.color || '#94a3b8' }} />
+                        {child.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          }) : catRows.map((row: any, index: number) => {
             const percentage = grandTotal > 0 ? Math.round((Number(row.total) / grandTotal) * 100) : 0;
             const selected = selectedCategory === row.name;
             return (

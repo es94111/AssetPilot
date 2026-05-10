@@ -124,6 +124,19 @@ export default function ReportsClient(_props: { user?: any } = {}) {
 
   useEffect(() => { fetchReport(); }, [fetchReport]);
 
+  useEffect(() => {
+    function refreshVisibleReport() {
+      if (document.visibilityState === 'visible') void fetchReport();
+    }
+
+    window.addEventListener('focus', refreshVisibleReport);
+    document.addEventListener('visibilitychange', refreshVisibleReport);
+    return () => {
+      window.removeEventListener('focus', refreshVisibleReport);
+      document.removeEventListener('visibilitychange', refreshVisibleReport);
+    };
+  }, [fetchReport]);
+
   const catRows = useMemo(() => Array.isArray(reportData?.categoryBreakdown)
     ? reportData.categoryBreakdown.filter((row: any) => Number(row.total) > 0).sort((a: any, b: any) => Number(b.total) - Number(a.total))
     : [], [reportData]);

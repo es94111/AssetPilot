@@ -18,8 +18,9 @@ export async function GET(request) {
     if (dateFrom && isValidIso8601Date(dateFrom)) { where += ' AND st.date >= ?'; params.push(dateFrom); }
     if (dateTo && isValidIso8601Date(dateTo)) { where += ' AND st.date <= ?'; params.push(dateTo); }
 
-    const sql = `SELECT st.date, st.type, st.shares, st.price, st.fee, st.tax, st.note,
-      s.symbol, s.name AS stock_name, a.name AS account_name
+    const sql = `SELECT st.date, st.type, st.shares, st.price, st.fee, st.tax, st.realized_pl,
+      st.tax_auto_calculated, st.note,
+      s.symbol, s.name AS stock_name, s.stock_type, s.currency, a.name AS account_name
       FROM stock_transactions st
       JOIN stocks s ON st.stock_id = s.id
       LEFT JOIN accounts a ON st.account_id = a.id
@@ -27,11 +28,12 @@ export async function GET(request) {
       ORDER BY st.date DESC, st.created_at DESC`;
     const rows = queryAll(sql, params);
 
-    const headers = ['日期', '股票代號', '股票名稱', '類型', '股數', '成交價', '手續費', '交易稅', '帳戶', '備註'];
+    const headers = ['日期', '股票代號', '股票名稱', '股票類型', '幣別', '類型', '股數', '成交價', '手續費', '交易稅', '已實現損益', '稅額自動計算', '帳戶', '備註'];
     const dataRows = rows.map(r => [
-      r.date || '', r.symbol || '', r.stock_name || '',
+      r.date || '', r.symbol || '', r.stock_name || '', r.stock_type || 'stock', r.currency || 'TWD',
       r.type === 'buy' ? '買進' : '賣出',
       r.shares, r.price, r.fee || 0, r.tax || 0,
+      r.realized_pl || 0, Number(r.tax_auto_calculated) === 0 ? '否' : '是',
       r.account_name || '', r.note || '',
     ]);
 

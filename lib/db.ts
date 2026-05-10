@@ -501,7 +501,12 @@ async function _runMigrations(): Promise<void> {
   alterIgnore("ALTER TABLE stocks ADD COLUMN current_price REAL DEFAULT 0");
   alterIgnore("ALTER TABLE stocks ADD COLUMN stock_type TEXT DEFAULT 'stock'");
 
+  alterIgnore("ALTER TABLE stock_transactions ADD COLUMN account_id TEXT DEFAULT ''");
   alterIgnore("ALTER TABLE stock_transactions ADD COLUMN realized_pl REAL DEFAULT 0");
+  alterIgnore("ALTER TABLE stock_transactions ADD COLUMN tax_auto_calculated INTEGER DEFAULT 1");
+  alterIgnore("ALTER TABLE stock_dividends ADD COLUMN cash_dividend REAL DEFAULT 0");
+  alterIgnore("ALTER TABLE stock_dividends ADD COLUMN stock_dividend_shares REAL DEFAULT 0");
+  alterIgnore("ALTER TABLE stock_dividends ADD COLUMN account_id TEXT DEFAULT ''");
   alterIgnore("ALTER TABLE login_attempt_logs ADD COLUMN country TEXT DEFAULT ''");
 
   // 檢測並進行 fx_rate 類型 migration（REAL → TEXT）

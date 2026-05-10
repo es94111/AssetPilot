@@ -11,6 +11,18 @@ const HASH_SEP = '\x01';
 
 import { importLocks, importProgress } from '@/lib/transactionImportState';
 
+function cell(row, ...keys) {
+  for (const key of keys) {
+    if (row[key] != null && row[key] !== '') return row[key];
+  }
+  return '';
+}
+
+function parseBool(value) {
+  const s = String(value || '').trim().toLowerCase();
+  return s === '1' || s === 'true' || s === 'yes' || s === 'y' || s === '是';
+}
+
 function acquireImportLock(userId) {
   if (importLocks.has(userId)) return false;
   importLocks.add(userId);
@@ -110,7 +122,10 @@ export async function POST(request) {
       const defaultColors = ['#6366f1', '#f59e0b', '#10b981', '#ef4444', '#3b82f6', '#8b5cf6', '#ec4899', '#14b8a6'];
       let colorIdx = 0;
       rows.forEach(row => {
-        const { type, category, account } = row;
+        const type = cell(row, 'type', '類型');
+        const category = cell(row, 'category', '分類');
+        const account = cell(row, 'account', '帳戶');
+        const transferToAccount = cell(row, 'transferToAccount', 'transfer_to_account', '轉入帳戶');
         let dbType = 'expense';
         if (type === '收入') dbType = 'income';
         else if (type === '轉出' || type === '轉入') dbType = null;
@@ -132,6 +147,13 @@ export async function POST(request) {
           accMap[account] = { id: accId, name: account };
           createdAccs.push(account);
         }
+        if (transferToAccount && !accMap[transferToAccount]) {
+          const accId = uid();
+          db.run("INSERT INTO accounts (id, user_id, name, initial_balance, icon, currency) VALUES (?,?,?,0,'fa-wallet','TWD')",
+            [accId, auth.userId, transferToAccount]);
+          accMap[transferToAccount] = { id: accId, name: transferToAccount };
+          createdAccs.push(transferToAccount);
+        }
       });
     }
 
@@ -141,7 +163,21 @@ export async function POST(request) {
     const now = Date.now();
     const parsedRows = [];
     rows.forEach((row, idx) => {
-      const { date: rawDate, type, category, amount, account, note } = row;
+      const rawDate = cell(row, 'date', '日期');
+      const type = cell(row, 'type', '類型');
+      const category = cell(row, 'category', '分類');
+      const amount = cell(row, 'amount', '金額');
+      const account = cell(row, 'account', '帳戶');
+      const note = cell(row, 'note', '備註');
+      const currency = String(cell(row, 'currency', '幣別') || 'TWD').trim() || 'TWD';
+      const originalAmount = parseFloat(cell(row, 'originalAmount', 'original_amount', '原始金額') || amount);
+      const fxRate = String(cell(row, 'fxRate', 'fx_rate', '匯率') || '1');
+      const twdAmountRaw = cell(row, 'twdAmount', 'twd_amount', '台幣金額');
+      const twdAmount = twdAmountRaw === '' ? 0 : parseFloat(twdAmountRaw);
+      const fxFee = parseFloat(cell(row, 'fxFee', 'fx_fee', '匯兌手續費') || 0);
+      const transferToAccount = cell(row, 'transferToAccount', 'transfer_to_account', '轉入帳戶');
+      const tags = String(cell(row, 'tags', '標籤') || '[]');
+      const excludeFromStats = parseBool(cell(row, 'excludeFromStats', 'exclude_from_stats', '排除統計'));
       const date = (typeof rawDate === 'string' && isValidIso8601Date(rawDate)) ? rawDate : normalizeDate(rawDate);
       const amt = parseFloat(amount);
       if (!date || !isValidIso8601Date(date)) {
@@ -179,7 +215,16 @@ export async function POST(request) {
         return;
       }
       batchHashes.add(h);
-      parsedRows.push({ idx, dbType, date, amt, catId, accId, note: noteStr });
+      let transferToAccountId = '';
+      const toAcc = accMap[transferToAccount];
+      if (toAcc) transferToAccountId = toAcc.id;
+      parsedRows.push({
+        idx, dbType, date, amt, catId, accId, note: noteStr,
+        currency, originalAmount: Number.isFinite(originalAmount) ? originalAmount : amt,
+        fxRate, twdAmount: Number.isFinite(twdAmount) ? twdAmount : 0,
+        fxFee: Number.isFinite(fxFee) ? fxFee : 0, transferToAccountId,
+        tags, excludeFromStats: excludeFromStats ? 1 : 0,
+      });
     });
 
     updateProgress(0, 'pairing');
@@ -216,8 +261,8 @@ export async function POST(request) {
     parsedRows.forEach((p, i) => {
       const linked = linkedIdMap.get(p.txId) || '';
       db.run(
-        'INSERT INTO transactions (id,user_id,type,amount,currency,original_amount,fx_rate,date,category_id,account_id,note,linked_id,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
-        [p.txId, auth.userId, p.dbType, p.amt, 'TWD', p.amt, 1, p.date, p.catId, p.accId, p.note, linked, now, now]
+        'INSERT INTO transactions (id,user_id,type,amount,currency,original_amount,fx_rate,fx_fee,twd_amount,date,category_id,account_id,note,linked_id,transfer_to_account_id,tags,exclude_from_stats,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
+        [p.txId, auth.userId, p.dbType, p.amt, p.currency, p.originalAmount, p.fxRate, p.fxFee, p.twdAmount, p.date, p.catId, p.accId, p.note, linked, p.transferToAccountId, p.tags, p.excludeFromStats, now, now]
       );
       imported++;
       if ((i + 1) % 500 === 0) updateProgress(i + 1, 'writing');

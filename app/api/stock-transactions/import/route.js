@@ -13,6 +13,19 @@ const CSV_IMPORT_MAX_ROWS = 20000;
 const importLocks = new Set();
 const importProgress = new Map();
 
+function cell(row, ...keys) {
+  for (const key of keys) {
+    if (row[key] != null && row[key] !== '') return row[key];
+  }
+  return '';
+}
+
+function parseBool(value, fallback = true) {
+  const s = String(value || '').trim().toLowerCase();
+  if (!s) return fallback;
+  return s === '1' || s === 'true' || s === 'yes' || s === 'y' || s === '是';
+}
+
 function acquireImportLock(userId) {
   if (importLocks.has(userId)) return false;
   importLocks.add(userId);
@@ -72,7 +85,20 @@ export async function POST(request) {
     failureStage = 'writing';
 
     rows.forEach((row, idx) => {
-      const { date: rawDate, symbol, name: stockName, type, shares, price, fee, tax, accountName, note } = row;
+      const rawDate = cell(row, 'date', '日期');
+      const symbol = cell(row, 'symbol', '股票代號');
+      const stockName = cell(row, 'name', '股票名稱');
+      const stockType = cell(row, 'stockType', 'stock_type', '股票類型');
+      const currency = cell(row, 'currency', '幣別') || 'TWD';
+      const type = cell(row, 'type', '類型');
+      const shares = cell(row, 'shares', '股數');
+      const price = cell(row, 'price', '成交價');
+      const fee = cell(row, 'fee', '手續費');
+      const tax = cell(row, 'tax', '交易稅');
+      const realizedPl = cell(row, 'realizedPl', 'realized_pl', '已實現損益');
+      const taxAutoCalculated = cell(row, 'taxAutoCalculated', 'tax_auto_calculated', '稅額自動計算');
+      const accountName = cell(row, 'accountName', '帳戶');
+      const note = cell(row, 'note', '備註');
       if (!rawDate || !symbol || !type || !shares || !price) {
         errors.push({ row: idx + 2, reason: `略過不完整資料（${symbol || '?'}）` });
         skipped++; return;
@@ -96,11 +122,11 @@ export async function POST(request) {
       let stock = queryOne('SELECT * FROM stocks WHERE user_id = ? AND symbol = ?', [auth.userId, symbol]);
       if (!stock) {
         const sid = uid();
-        const inferredType = inferStockType(symbol);
+        const inferredType = stockType || inferStockType(symbol);
         const fallbackName = (stockName && String(stockName).trim()) || '（未命名）';
         db.run(
-          'INSERT INTO stocks (id, user_id, symbol, name, current_price, stock_type, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
-          [sid, auth.userId, symbol, fallbackName, priceNum, inferredType, new Date().toISOString()]
+          'INSERT INTO stocks (id, user_id, symbol, name, current_price, stock_type, currency, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+          [sid, auth.userId, symbol, fallbackName, priceNum, inferredType, currency, new Date().toISOString()]
         );
         stock = queryOne('SELECT * FROM stocks WHERE id = ?', [sid]);
       } else if (stock.name === symbol && stockName && stockName !== symbol) {
@@ -119,9 +145,10 @@ export async function POST(request) {
       batchHashes.add(h);
 
       db.run(
-        'INSERT INTO stock_transactions (id, user_id, stock_id, type, date, shares, price, fee, tax, account_id, note, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        'INSERT INTO stock_transactions (id, user_id, stock_id, type, date, shares, price, fee, tax, account_id, note, created_at, realized_pl, tax_auto_calculated) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
         [uid(), auth.userId, stock.id, txType, date, shareNum, priceNum,
-         parseFloat(fee || 0), parseFloat(tax || 0), accountId, note || '', Date.now()]
+         parseFloat(fee || 0), parseFloat(tax || 0), accountId, note || '', Date.now(),
+         parseFloat(realizedPl || 0), parseBool(taxAutoCalculated, true) ? 1 : 0]
       );
       imported++;
 

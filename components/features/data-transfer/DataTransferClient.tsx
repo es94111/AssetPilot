@@ -18,11 +18,18 @@ type CsvImportResult = {
 
 const CSV_MODULES = [
   {
+    key: 'accounts',
+    label: '帳戶',
+    exportUrl: '/api/accounts/export',
+    importUrl: '/api/accounts/import',
+    columns: ['name', 'category', 'accountType', 'initialBalance', 'currency', 'icon', 'excludeFromTotal', 'linkedBankName', 'overseasFeeRate', 'note'],
+  },
+  {
     key: 'transactions',
     label: '交易記錄',
     exportUrl: '/api/transactions/export',
     importUrl: '/api/transactions/import',
-    columns: ['date', 'type', 'category', 'amount', 'account', 'note'],
+    columns: ['date', 'type', 'category', 'amount', 'currency', 'originalAmount', 'fxRate', 'twdAmount', 'fxFee', 'account', 'transferToAccount', 'excludeFromStats', 'tags', 'note'],
   },
   {
     key: 'categories',
@@ -224,7 +231,6 @@ export default function DataTransferClient({ user }: { user: UserLike }) {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-slate-900 mb-2">資料匯出匯入</h1>
-        <p className="text-slate-600">新版前端已接回 CSV 匯出匯入與整檔備份/還原。先把資料治理核心能力補回來。</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-xl shadow-sm">

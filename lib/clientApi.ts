@@ -9,7 +9,7 @@ export async function apiFetch(url: string, options: RequestInit = {}) {
 }
 
 export async function apiGet(url: string) {
-  return apiFetch(url);
+  return apiFetch(url, { cache: 'no-store' });
 }
 
 export async function apiPost(url: string, body?: any) {

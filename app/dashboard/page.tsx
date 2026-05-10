@@ -12,6 +12,33 @@ function percentOf(total: number, value: number) {
   return Math.max(4, Math.round((value / total) * 100));
 }
 
+function groupCategoryRows(rows: any[]) {
+  const groups = new Map<string, any>();
+  rows.forEach((row, index) => {
+    const parentName = row.parentName || row.name || '未分類';
+    const parentId = row.parentId || `parent-${parentName}-${index}`;
+    if (!groups.has(parentId)) {
+      groups.set(parentId, {
+        parentId,
+        parentName,
+        parentColor: row.parentColor || row.color || 'var(--text-muted)',
+        total: 0,
+        children: [],
+      });
+    }
+    const group = groups.get(parentId);
+    const amount = Number(row.total) || 0;
+    group.total += amount;
+    group.children.push({
+      name: row.name || parentName,
+      color: row.color || row.parentColor || 'var(--text-muted)',
+      total: amount,
+      isOtherGroup: row.isOtherGroup,
+    });
+  });
+  return Array.from(groups.values()).sort((a, b) => b.total - a.total);
+}
+
 export default async function DashboardPage(props: {
   searchParams: Promise<{ month?: string }>;
 }) {
@@ -20,6 +47,7 @@ export default async function DashboardPage(props: {
   const data = await getDashboardData(searchParams.month);
 
   const expenseRows = Array.isArray(data.catBreakdown) ? data.catBreakdown : [];
+  const expenseGroups = groupCategoryRows(expenseRows);
   const incomeRows = Array.isArray(data.incomeCatBreakdown) ? data.incomeCatBreakdown : [];
   const recentRows = Array.isArray(data.recent) ? data.recent : [];
   const totalExpense = Number(data.expense) || 0;
@@ -132,23 +160,38 @@ export default async function DashboardPage(props: {
               <h2 className="section-card-title">支出分類</h2>
               <span className="section-card-sub">{fmtMoney(totalExpense)}</span>
             </div>
-            {expenseRows.length === 0 ? (
+            {expenseGroups.length === 0 ? (
               <p className="text-sm" style={{ color: 'var(--text-muted)' }}>本月尚無支出資料</p>
             ) : (
               <div className="space-y-4">
-                {expenseRows.map((row: any, index: number) => (
-                  <div key={`${row.parentId}-${row.categoryId ?? index}`}>
-                    <div className="flex items-center justify-between gap-4 mb-1.5 text-sm">
+                {expenseGroups.map((group: any) => (
+                  <div key={group.parentId}>
+                    <div className="flex items-center justify-between gap-4 mb-1 text-sm">
                       <div className="flex items-center gap-2 min-w-0">
-                        <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: row.color || row.parentColor || 'var(--text-muted)' }} />
-                        <span className="truncate" style={{ color: 'var(--text)' }}>
-                          {row.parentName && row.parentName !== row.name ? `${row.parentName} › ` : ''}{row.name}
-                        </span>
+                        <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: group.parentColor }} />
+                        <span className="truncate font-medium" style={{ color: 'var(--text)' }}>{group.parentName}</span>
                       </div>
-                      <span className="font-semibold shrink-0" style={{ color: 'var(--text)' }}>{fmtMoney(row.total)}</span>
+                      <span className="font-semibold shrink-0" style={{ color: 'var(--text)' }}>{fmtMoney(group.total)}</span>
                     </div>
-                    <div className="progress-track" style={{ height: '5px' }}>
-                      <div className="progress-fill" style={{ width: `${percentOf(totalExpense, Number(row.total) || 0)}%`, background: row.color || row.parentColor || 'var(--text-muted)' }} />
+                    <div className="flex flex-wrap gap-x-3 gap-y-1 mb-2 pl-4 text-xs" style={{ color: 'var(--text-secondary)' }}>
+                      {group.children.map((child: any, childIndex: number) => (
+                        <span key={`${group.parentId}-${child.name}-${childIndex}`} className="inline-flex items-center gap-1.5">
+                          <span className="w-2 h-2 rounded-full" style={{ background: child.color }} />
+                          {child.name}
+                        </span>
+                      ))}
+                    </div>
+                    <div className="progress-track flex overflow-hidden" style={{ height: '8px' }}>
+                      {group.children.map((child: any, childIndex: number) => {
+                        const width = group.total > 0 ? (child.total / group.total) * 100 : 0;
+                        return (
+                          <div
+                            key={`${group.parentId}-${child.name}-bar-${childIndex}`}
+                            title={`${child.name} ${fmtMoney(child.total)}`}
+                            style={{ width: `${width}%`, background: child.color, height: '100%' }}
+                          />
+                        );
+                      })}
                     </div>
                   </div>
                 ))}

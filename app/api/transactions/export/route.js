@@ -26,25 +26,33 @@ export async function GET(request) {
     if (dateFrom && isValidIso8601Date(dateFrom)) { where += ' AND t.date >= ?'; params.push(dateFrom); }
     if (dateTo && isValidIso8601Date(dateTo)) { where += ' AND t.date <= ?'; params.push(dateTo); }
 
-    const sql = `SELECT t.date, t.type, t.amount, t.note,
+    const sql = `SELECT t.date, t.type, t.amount, t.currency, t.original_amount, t.fx_rate,
+      t.twd_amount, t.fx_fee, t.exclude_from_stats, t.tags, t.note,
       c.name AS cat_name, c.parent_id AS cat_parent_id,
       pc.name AS parent_cat_name,
-      a.name AS account_name
+      a.name AS account_name,
+      ta.name AS transfer_to_account_name
       FROM transactions t
       LEFT JOIN categories c ON t.category_id = c.id
       LEFT JOIN categories pc ON c.parent_id = pc.id
       LEFT JOIN accounts a ON t.account_id = a.id
+      LEFT JOIN accounts ta ON t.transfer_to_account_id = ta.id
       ${where}
       ORDER BY t.date DESC, t.created_at DESC`;
     const rows = queryAll(sql, params);
 
-    const headers = ['日期', '類型', '分類', '金額', '帳戶', '備註'];
+    const headers = ['日期', '類型', '分類', '金額', '幣別', '原始金額', '匯率', '台幣金額', '匯兌手續費', '帳戶', '轉入帳戶', '排除統計', '標籤', '備註'];
     const dataRows = rows.map(r => {
       let category = '';
       if (r.cat_name) {
         category = r.parent_cat_name ? (r.parent_cat_name + ' > ' + r.cat_name) : r.cat_name;
       }
-      return [r.date || '', txTypeToChinese(r.type), category, r.amount, r.account_name || '', r.note || ''];
+      return [
+        r.date || '', txTypeToChinese(r.type), category, r.amount,
+        r.currency || 'TWD', r.original_amount || r.amount || '', r.fx_rate || '1',
+        r.twd_amount || '', r.fx_fee || 0, r.account_name || '', r.transfer_to_account_name || '',
+        Number(r.exclude_from_stats) ? '是' : '否', r.tags || '[]', r.note || '',
+      ];
     });
 
     const csv = buildCsv(headers, dataRows);

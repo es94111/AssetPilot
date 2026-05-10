@@ -12,6 +12,13 @@ function isValidHexColor(s) {
   return typeof s === 'string' && /^#[0-9A-Fa-f]{6}$/.test(s);
 }
 
+function cell(row, ...keys) {
+  for (const key of keys) {
+    if (row[key] != null && row[key] !== '') return row[key];
+  }
+  return '';
+}
+
 function acquireImportLock(userId) {
   if (importLocks.has(userId)) return false;
   importLocks.add(userId);
@@ -63,11 +70,12 @@ export async function POST(request) {
     const parentRows = [];
     const childRows = [];
     rows.forEach((r, idx) => {
-      const type = r.type === '收入' ? 'income' : (r.type === '支出' ? 'expense' : null);
-      const name = (r.name || r['分類名稱'] || '').toString().trim();
-      const parent = (r.parent || r['上層分類'] || '').toString().trim();
-      const color = r.color || r['顏色'] || '';
-      if (!type) { errors.push({ row: idx + 2, reason: `未知類型「${r.type}」` }); skipped++; return; }
+      const rawType = cell(r, 'type', '類型');
+      const type = rawType === '收入' || rawType === 'income' ? 'income' : (rawType === '支出' || rawType === 'expense' ? 'expense' : null);
+      const name = cell(r, 'name', '分類名稱').toString().trim();
+      const parent = cell(r, 'parent', '上層分類').toString().trim();
+      const color = cell(r, 'color', '顏色') || '';
+      if (!type) { errors.push({ row: idx + 2, reason: `未知類型「${rawType}」` }); skipped++; return; }
       if (!name) { errors.push({ row: idx + 2, reason: '分類名稱為空' }); skipped++; return; }
       if (color && !isValidHexColor(color)) { errors.push({ row: idx + 2, reason: '顏色格式必須為 #RRGGBB' }); skipped++; return; }
       const item = { idx, type, name, parent, color: color || '#6366f1' };

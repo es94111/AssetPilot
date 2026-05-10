@@ -18,15 +18,16 @@ export async function GET(request) {
     if (dateFrom && isValidIso8601Date(dateFrom)) { where += ' AND sd.date >= ?'; params.push(dateFrom); }
     if (dateTo && isValidIso8601Date(dateTo)) { where += ' AND sd.date <= ?'; params.push(dateTo); }
 
-    const sql = `SELECT sd.id, sd.date, sd.cash_dividend, sd.stock_dividend_shares, sd.note,
-      s.symbol, s.name AS stock_name
+    const sql = `SELECT sd.id, sd.date, sd.cash_dividend, sd.stock_dividend_shares, sd.account_id, sd.note,
+      s.symbol, s.name AS stock_name, s.stock_type, s.currency, a.name AS dividend_account_name
       FROM stock_dividends sd
       JOIN stocks s ON sd.stock_id = s.id
+      LEFT JOIN accounts a ON sd.account_id = a.id
       ${where}
       ORDER BY sd.date DESC, sd.created_at DESC`;
     const rows = queryAll(sql, params);
 
-    const headers = ['日期', '股票代號', '股票名稱', '現金股利', '股票股利', '帳戶', '備註'];
+    const headers = ['日期', '股票代號', '股票名稱', '股票類型', '幣別', '現金股利', '股票股利', '帳戶', '備註'];
     const dataRows = rows.map(r => {
       let accountName = '';
       const cash = Number(r.cash_dividend || 0);
@@ -39,10 +40,10 @@ export async function GET(request) {
            ORDER BY t.created_at DESC LIMIT 1`,
           [auth.userId, r.date, cash, '%股利%', '%dividend%', '%' + (r.symbol || '') + '%']
         );
-        accountName = tx?.account_name || '';
+        accountName = r.dividend_account_name || tx?.account_name || '';
       }
       return [
-        r.date || '', r.symbol || '', r.stock_name || '',
+        r.date || '', r.symbol || '', r.stock_name || '', r.stock_type || 'stock', r.currency || 'TWD',
         r.cash_dividend || 0, r.stock_dividend_shares || 0,
         accountName, r.note || '',
       ];

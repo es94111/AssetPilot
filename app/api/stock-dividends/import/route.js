@@ -13,6 +13,13 @@ const CSV_IMPORT_MAX_ROWS = 20000;
 const importLocks = new Set();
 const importProgress = new Map();
 
+function cell(row, ...keys) {
+  for (const key of keys) {
+    if (row[key] != null && row[key] !== '') return row[key];
+  }
+  return '';
+}
+
 function acquireImportLock(userId) {
   if (importLocks.has(userId)) return false;
   importLocks.add(userId);
@@ -76,7 +83,15 @@ export async function POST(request) {
     failureStage = 'writing';
 
     rows.forEach((row, idx) => {
-      const { date: rawDate, symbol, name: stockName, cashDividend, stockDividend, accountName, note } = row;
+      const rawDate = cell(row, 'date', '日期');
+      const symbol = cell(row, 'symbol', '股票代號');
+      const stockName = cell(row, 'name', '股票名稱');
+      const stockType = cell(row, 'stockType', 'stock_type', '股票類型');
+      const currency = cell(row, 'currency', '幣別') || 'TWD';
+      const cashDividend = cell(row, 'cashDividend', '現金股利');
+      const stockDividend = cell(row, 'stockDividend', '股票股利');
+      const accountName = cell(row, 'accountName', '帳戶');
+      const note = cell(row, 'note', '備註');
       if (!rawDate || !symbol) {
         errors.push({ row: idx + 2, reason: `略過不完整資料（${symbol || '?'}）` });
         skipped++; return;
@@ -100,11 +115,11 @@ export async function POST(request) {
       let stock = queryOne('SELECT * FROM stocks WHERE user_id = ? AND symbol = ?', [auth.userId, symbol]);
       if (!stock) {
         const sid = uid();
-        const inferredType = inferStockType(symbol);
+        const inferredType = stockType || inferStockType(symbol);
         const fallbackName = (stockName && String(stockName).trim()) || '（未命名）';
         db.run(
-          'INSERT INTO stocks (id, user_id, symbol, name, current_price, stock_type, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
-          [sid, auth.userId, symbol, fallbackName, 0, inferredType, new Date().toISOString()]
+          'INSERT INTO stocks (id, user_id, symbol, name, current_price, stock_type, currency, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+          [sid, auth.userId, symbol, fallbackName, 0, inferredType, currency, new Date().toISOString()]
         );
         stock = queryOne('SELECT * FROM stocks WHERE id = ?', [sid]);
       } else if (stock.name === symbol && stockName && stockName !== symbol) {
@@ -146,8 +161,8 @@ export async function POST(request) {
       }
 
       db.run(
-        'INSERT INTO stock_dividends (id, user_id, stock_id, date, cash_dividend, stock_dividend_shares, note, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-        [uid(), auth.userId, stock.id, date, cash, stock_d, note || '', Date.now()]
+        'INSERT INTO stock_dividends (id, user_id, stock_id, date, cash_dividend, stock_dividend_shares, account_id, note, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [uid(), auth.userId, stock.id, date, cash, stock_d, accountId || null, note || '', Date.now()]
       );
       imported++;
 

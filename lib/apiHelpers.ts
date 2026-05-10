@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { requireAuth as getAuth } from './auth';
 import { verifyToken } from './auth';
 import { queryOne } from './db';
+import { processRecurringForUser } from './recurringHelpers';
+import { todayInUserTz } from './userTime';
 import logger from '@/lib/logger';
 
 type ApiAuthResult = {
@@ -14,6 +16,25 @@ type ApiAuthResult = {
 };
 
 const CSRF_SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
+const recurringChecks = new Map<string, string>();
+
+function processDueRecurringOncePerDay(userId: string, userTimezone: string) {
+  const today = todayInUserTz(userTimezone || 'Asia/Taipei');
+  const version = queryOne(
+    'SELECT COALESCE(MAX(updated_at), 0) AS updated_at FROM recurring WHERE user_id = ?',
+    [userId]
+  );
+  const cacheKey = `${today}:${version?.updated_at || 0}`;
+  if (recurringChecks.get(userId) === cacheKey) return;
+  recurringChecks.set(userId, cacheKey);
+
+  try {
+    processRecurringForUser(userId);
+  } catch (e) {
+    recurringChecks.delete(userId);
+    logger.error({ err: e, userId }, 'Failed to process due recurring transactions');
+  }
+}
 
 function isOriginAllowed(originValue: string): boolean {
   if (!originValue) return false;
@@ -82,7 +103,7 @@ export async function requireAuth(request?: any): Promise<ApiAuthResult | NextRe
       return authErrorResponse('登入已失效，請重新登入');
     }
 
-    return {
+    const authResult = {
       userId: user.id as string,
       userTimezone: (user.timezone as string) || 'Asia/Taipei',
       email: (user.email as string) || '',
@@ -90,6 +111,8 @@ export async function requireAuth(request?: any): Promise<ApiAuthResult | NextRe
       isAdmin: !!user.is_admin,
       themeMode: (user.theme_mode as string) || 'system',
     };
+    processDueRecurringOncePerDay(authResult.userId, authResult.userTimezone);
+    return authResult;
   }
 
   return getAuth();

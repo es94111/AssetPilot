@@ -10,7 +10,7 @@ export async function PATCH(request, { params }) {
   const r = queryOne('SELECT is_active FROM recurring WHERE id = ? AND user_id = ?', [id, auth.userId]);
   if (!r) return NextResponse.json({ error: '不存在' }, { status: 404 });
 
-  getDB().run('UPDATE recurring SET is_active = ? WHERE id = ? AND user_id = ?', [r.is_active ? 0 : 1, id, auth.userId]);
+  getDB().run('UPDATE recurring SET is_active = ?, updated_at = ? WHERE id = ? AND user_id = ?', [r.is_active ? 0 : 1, Date.now(), id, auth.userId]);
   saveDB();
   return NextResponse.json({ isActive: !r.is_active });
 }

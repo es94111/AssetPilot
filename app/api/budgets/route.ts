@@ -1,9 +1,40 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '../../../lib/apiHelpers';
 import { getDB, queryAll, queryOne, saveDB } from '../../../lib/db';
 import { uid } from '../../../lib/userDefaults';
 
-export async function GET(request) {
+interface BudgetRow {
+  id: string;
+  category_id: string | null;
+  year_month: string;
+  amount: number;
+  created_at: number | string | null;
+  updated_at: number | string | null;
+}
+
+interface BudgetCategoryRow {
+  parent_id: string | null;
+}
+
+interface BudgetChildCategoryRow {
+  id: string;
+}
+
+interface CreateBudgetRequest {
+  categoryId?: string | null;
+  amount?: number;
+  yearMonth?: string;
+}
+
+function asRows<T>(rows: Array<Record<string, string | number | null>>): T[] {
+  return rows as unknown as T[];
+}
+
+function asRow<T>(row: Record<string, string | number | null> | null): T | null {
+  return row as unknown as T | null;
+}
+
+export async function GET(request: NextRequest) {
   const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
@@ -11,19 +42,19 @@ export async function GET(request) {
   const yearMonth = searchParams.get('yearMonth') || '';
 
   let sql = 'SELECT * FROM budgets WHERE user_id = ?';
-  const params = [auth.userId];
+  const params: Array<string | number | null> = [auth.userId];
   if (yearMonth) { sql += ' AND year_month = ?'; params.push(yearMonth); }
-  const rows = queryAll(sql, params);
+  const rows = asRows<BudgetRow>(queryAll(sql, params));
 
   const result = rows.map(b => {
     const month = b.year_month;
     let usedSql = "SELECT COALESCE(SUM(twd_amount),0) AS used FROM transactions WHERE user_id = ? AND type='expense' AND date LIKE ? AND exclude_from_stats = 0";
     const usedParams = [auth.userId, month + '%'];
     if (b.category_id) {
-      const cat = queryOne('SELECT parent_id FROM categories WHERE id = ? AND user_id = ?', [b.category_id, auth.userId]);
+      const cat = asRow<BudgetCategoryRow>(queryOne('SELECT parent_id FROM categories WHERE id = ? AND user_id = ?', [b.category_id, auth.userId]));
       const isParent = !cat?.parent_id || cat.parent_id === '';
       if (isParent) {
-        const children = queryAll('SELECT id FROM categories WHERE parent_id = ? AND user_id = ?', [b.category_id, auth.userId]);
+        const children = asRows<BudgetChildCategoryRow>(queryAll('SELECT id FROM categories WHERE parent_id = ? AND user_id = ?', [b.category_id, auth.userId]));
         const allIds = [b.category_id, ...children.map(c => c.id)];
         usedSql += ` AND category_id IN (${allIds.map(() => '?').join(',')})`;
         usedParams.push(...allIds);
@@ -46,14 +77,15 @@ export async function GET(request) {
   return NextResponse.json(result);
 }
 
-export async function POST(request) {
+export async function POST(request: NextRequest) {
   const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
-  const body = await request.json().catch(() => ({}));
+  const body = await request.json().catch(() => ({})) as CreateBudgetRequest;
   const { categoryId, amount, yearMonth } = body;
+  const budgetAmount = Number(amount);
 
-  if (!Number.isInteger(amount) || amount < 1) {
+  if (!Number.isInteger(budgetAmount) || budgetAmount < 1) {
     return NextResponse.json({ error: '預算金額必須為正整數', code: 'ValidationError', field: 'amount' }, { status: 400 });
   }
   if (!yearMonth || !/^\d{4}-(0[1-9]|1[0-2])$/.test(String(yearMonth))) {
@@ -75,7 +107,7 @@ export async function POST(request) {
   const id = uid();
   getDB().run(
     'INSERT INTO budgets (id, user_id, category_id, amount, year_month, created_at, updated_at) VALUES (?,?,?,?,?,?,?)',
-    [id, auth.userId, catId, amount, yearMonth, now, now]
+    [id, auth.userId, catId, budgetAmount, yearMonth, now, now]
   );
   saveDB();
   return NextResponse.json({ ok: true, id });

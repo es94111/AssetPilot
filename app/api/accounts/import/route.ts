@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '../../../../lib/apiHelpers';
 import { getDB, queryAll, queryOne, saveDB } from '../../../../lib/db';
 import { normalizeCurrency, normalizeAccountIcon, categoryFromAccountType, accountTypeFromCategory } from '../../../../lib/accountHelpers';
@@ -9,29 +9,64 @@ import { importLocks, importProgress } from '@/lib/transactionImportState';
 
 const CSV_IMPORT_MAX_ROWS = 20000;
 
-function acquireImportLock(userId) {
+type AccountImportRow = Record<string, unknown>;
+type AccountImportFailureStage = 'validating' | 'writing' | 'finalizing';
+
+interface ImportAccountsRequest {
+  rows?: AccountImportRow[];
+}
+
+interface ImportError {
+  row: number;
+  reason: string;
+}
+
+interface AccountLookupRow {
+  id: string;
+  name: string;
+}
+
+interface ParsedAccountImportRow {
+  idx: number;
+  name: string;
+  category: string;
+  accountType: string;
+  initialBalance: number;
+  currency: string;
+  icon: string;
+  excludeFromTotal: boolean;
+  linkedBankName: string;
+  overseasFeeRate: number | null;
+  note: string;
+}
+
+function asRows<T>(rows: Array<Record<string, string | number | null>>): T[] {
+  return rows as unknown as T[];
+}
+
+function acquireImportLock(userId: string): boolean {
   if (importLocks.has(userId)) return false;
   importLocks.add(userId);
   return true;
 }
 
-function releaseImportLock(userId) {
+function releaseImportLock(userId: string): void {
   importLocks.delete(userId);
 }
 
-function cell(row, ...keys) {
+function cell(row: AccountImportRow, ...keys: string[]): unknown {
   for (const key of keys) {
     if (row[key] != null && row[key] !== '') return row[key];
   }
   return '';
 }
 
-function parseBool(value) {
+function parseBool(value: unknown): boolean {
   const s = String(value || '').trim().toLowerCase();
   return s === '1' || s === 'true' || s === 'yes' || s === 'y' || s === '是';
 }
 
-function normalizeImportedCategory(value, accountType) {
+function normalizeImportedCategory(value: unknown, accountType: string): string {
   const s = String(value || '').trim();
   if (['bank', 'credit_card', 'cash', 'virtual_wallet'].includes(s)) return s;
   if (s === '銀行') return 'bank';
@@ -41,11 +76,11 @@ function normalizeImportedCategory(value, accountType) {
   return categoryFromAccountType(accountType || 'checking');
 }
 
-export async function POST(request) {
+export async function POST(request: NextRequest) {
   const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
-  const body = await request.json().catch(() => ({}));
+  const body = await request.json().catch(() => ({})) as ImportAccountsRequest;
   const { rows } = body;
   if (!Array.isArray(rows) || rows.length === 0) return NextResponse.json({ error: '無有效資料' }, { status: 400 });
   if (rows.length > CSV_IMPORT_MAX_ROWS) return NextResponse.json({ error: `單次最多匯入 ${CSV_IMPORT_MAX_ROWS} 筆，請分批上傳` }, { status: 413 });
@@ -57,9 +92,9 @@ export async function POST(request) {
 
   let imported = 0;
   let skipped = 0;
-  const errors = [];
+  const errors: ImportError[] = [];
   let txStarted = false;
-  let failureStage = null;
+  let failureStage: AccountImportFailureStage | null = null;
   const ipAddress = getRequestIpFromHeaders(request.headers);
   const userAgent = request.headers.get('user-agent') || '';
   const userRow = queryOne('SELECT is_admin FROM users WHERE id = ?', [auth.userId]);
@@ -67,9 +102,9 @@ export async function POST(request) {
 
   try {
     failureStage = 'validating';
-    const existing = queryAll('SELECT id, name FROM accounts WHERE user_id = ?', [auth.userId]);
+    const existing = asRows<AccountLookupRow>(queryAll('SELECT id, name FROM accounts WHERE user_id = ?', [auth.userId]));
     const byName = new Map(existing.map(a => [String(a.name), a]));
-    const parsed = [];
+    const parsed: ParsedAccountImportRow[] = [];
     rows.forEach((row, idx) => {
       const name = String(cell(row, 'name', '帳戶名稱')).trim();
       if (!name) { errors.push({ row: idx + 2, reason: '帳戶名稱為空' }); skipped++; return; }
@@ -86,8 +121,8 @@ export async function POST(request) {
         category,
         accountType,
         initialBalance: Number.isFinite(initialBalance) ? initialBalance : 0,
-        currency: normalizeCurrency(cell(row, 'currency', '幣別') || 'TWD'),
-        icon: normalizeAccountIcon(cell(row, 'icon', '圖示') || 'fa-wallet'),
+        currency: normalizeCurrency(String(cell(row, 'currency', '幣別') || 'TWD')),
+        icon: normalizeAccountIcon(String(cell(row, 'icon', '圖示') || 'fa-wallet')),
         excludeFromTotal: parseBool(cell(row, 'excludeFromTotal', 'exclude_from_total', '排除總資產')),
         linkedBankName: String(cell(row, 'linkedBankName', 'linked_bank_name', '連結銀行帳戶')).trim(),
         overseasFeeRate: overseasRaw === '' ? null : Number(overseasRaw),
@@ -136,9 +171,9 @@ export async function POST(request) {
     writeOperationAudit({
       userId: auth.userId, role: userRole, action: 'import_accounts',
       ipAddress, userAgent, result: 'failed', isAdminOperation: false,
-      metadata: { rows: rows.length, failure_stage: failureStage || 'unknown', failure_reason: String(e?.message || e).slice(0, 200) },
+      metadata: { rows: rows.length, failure_stage: failureStage || 'unknown', failure_reason: String(e instanceof Error ? e.message : e).slice(0, 200) },
     });
-    return NextResponse.json({ error: '匯入失敗', message: String(e?.message || e), failedAt: failureStage || 'unknown' }, { status: 500 });
+    return NextResponse.json({ error: '匯入失敗', message: String(e instanceof Error ? e.message : e), failedAt: failureStage || 'unknown' }, { status: 500 });
   } finally {
     releaseImportLock(auth.userId);
   }

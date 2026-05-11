@@ -1,10 +1,23 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '../../../lib/apiHelpers';
 import { queryAll } from '../../../lib/db';
 import { todayInUserTz, monthInUserTz } from '../../../lib/userTime';
-import { buildCategoryAggregateNodes } from '../../../lib/dashboardHelpers';
+import { buildCategoryAggregateNodes, type DashboardCategoryAggregateRow } from '../../../lib/dashboardHelpers';
 
-export async function GET(request) {
+interface ReportTransactionRow extends DashboardCategoryAggregateRow {
+  date: string;
+}
+
+interface ReportCategoryTotal {
+  total: number;
+  color: string;
+}
+
+function asRows<T>(rows: Array<Record<string, string | number | null>>): T[] {
+  return rows as unknown as T[];
+}
+
+export async function GET(request: NextRequest) {
   const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
@@ -32,7 +45,7 @@ export async function GET(request) {
     from = String(to).slice(0, 7) + '-01';
   }
 
-  const txs = queryAll(`
+  const txs = asRows<ReportTransactionRow>(queryAll(`
     SELECT t.*, c.name as cat_name, c.color as cat_color, c.parent_id as cat_parent_id,
            p.name as cat_parent_name, p.color as cat_parent_color
     FROM transactions t
@@ -40,9 +53,9 @@ export async function GET(request) {
     LEFT JOIN categories p ON c.parent_id = p.id
     WHERE t.user_id = ? AND t.type = ? AND t.date >= ? AND t.date <= ? AND t.exclude_from_stats = 0
     ORDER BY t.date
-  `, [auth.userId, txType, from, to]);
+  `, [auth.userId, txType, from, to]));
 
-  const catMap = {};
+  const catMap: Record<string, ReportCategoryTotal> = {};
   txs.forEach(t => {
     const amount = Number(t.amount) || 0;
     const name = t.cat_name || '未分類';
@@ -53,8 +66,8 @@ export async function GET(request) {
 
   const categoryBreakdown = buildCategoryAggregateNodes(txs);
 
-  const dailyMap = {};
-  const monthlyMap = {};
+  const dailyMap: Record<string, number> = {};
+  const monthlyMap: Record<string, number> = {};
   txs.forEach(t => {
     dailyMap[t.date] = (dailyMap[t.date] || 0) + Number(t.amount);
     const mo = t.date.slice(0, 7);

@@ -1,20 +1,21 @@
 // 009-multi-timezone US1 整合測試（T012 + T013 + T014）
 // 範圍：以 in-memory sql.js + lib/userTime 模擬 PST 23:30 / 00:30 場景，
 // 驗證 transaction.date 歸屬、未來日判斷、Asia/Taipei regression-free。
-// 執行：node tests/integration/us1-natural-day.test.js
+// 執行：node tests/integration/us1-natural-day.test.ts
 
 const assert = require('node:assert/strict');
 const initSqlJs = require('sql.js');
-const ut = require('../../lib/userTime');
+const ut = require('../../lib/userTime.ts') as typeof import('../../lib/userTime');
+const tp = require('../../lib/taipeiTime.ts') as typeof import('../../lib/taipeiTime');
 
 let pass = 0;
 let fail = 0;
 
-function test(name, fn) {
+function test(name: string, fn: () => void | Promise<void>): Promise<void> {
   return Promise.resolve()
     .then(fn)
     .then(() => { console.log('  ✓', name); pass++; })
-    .catch(e => { console.error('  ✗', name); console.error('    ', e.message); fail++; });
+    .catch((e: unknown) => { console.error('  ✗', name); console.error('    ', e instanceof Error ? e.message : String(e)); fail++; });
 }
 
 (async () => {
@@ -43,13 +44,13 @@ function test(name, fn) {
   db.run("INSERT INTO users (id, email, display_name, timezone) VALUES ('u-pst', 'pst@test', 'PSTUser', 'America/Los_Angeles')");
 
   // 模擬「PST 4-30 23:30」=「UTC 5-1 06:30」=「Asia/Taipei 5-1 14:30」
-  const ms_PST_4_30_23_30 = new Date('2026-05-01T06:30:00Z').getTime();
+  const msPst4302330 = new Date('2026-05-01T06:30:00Z').getTime();
   // 模擬「PST 5-1 00:30」=「UTC 5-1 07:30」=「Asia/Taipei 5-1 15:30」
-  const ms_PST_5_1_00_30 = new Date('2026-05-01T07:30:00Z').getTime();
+  const msPst510030 = new Date('2026-05-01T07:30:00Z').getTime();
 
   // ─── User Story 1 Acceptance Scenario 1 ───
   console.log('Scenario 1: PST 23:30 新增當日支出 → 應出現於「今日」、不出現於「未來」');
-  ut.__setNowMs(ms_PST_4_30_23_30);
+  ut.__setNowMs(msPst4302330);
   const todayPst = ut.todayInUserTz('America/Los_Angeles');
   await test('PST 當地「今天」 = 2026-04-30', () => {
     assert.equal(todayPst, '2026-04-30');
@@ -73,7 +74,7 @@ function test(name, fn) {
 
   // ─── User Story 1 Acceptance Scenario 2 ───
   console.log('Scenario 2: 快進到 PST 5-1 00:30 → 上一筆進「昨日」、4 月小計仍含此筆');
-  ut.__setNowMs(ms_PST_5_1_00_30);
+  ut.__setNowMs(msPst510030);
   const newToday = ut.todayInUserTz('America/Los_Angeles');
   await test('「今天」改為 2026-05-01', () => assert.equal(newToday, '2026-05-01'));
   await test('原 4-30 那筆不在「今日」', () => {
@@ -101,7 +102,6 @@ function test(name, fn) {
     assert.equal(row[0], '2026-05-15');
   });
   // 模擬 lib/taipeiTime wrapper 行為（向後相容）
-  const tp = require('../../lib/taipeiTime');
   await test('lib/taipeiTime.todayInTaipei() 仍對 Asia/Taipei 正確（thin wrapper）', () => {
     assert.equal(tp.todayInTaipei(), '2026-05-15');
   });

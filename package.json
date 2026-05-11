@@ -7,10 +7,10 @@
     "build": "next build",
     "start": "next start",
     "test": "npm run test:tz && npm run test:fr015 && npm run check:iso",
-    "test:tz": "node tests/lib/userTime.test.js && node tests/migration/migration-009.test.js && node tests/integration/us1-natural-day.test.js && node tests/integration/us2-users-me-timezone.test.js && node tests/integration/us3-monthly-report.test.js",
-    "test:fr015": "node tests/integration/fr015-transactions-historical.test.js",
-    "check:iso": "node tools/check-iso-utc-format.js",
-    "check:sla": "node tools/sla-monthly-report.js"
+    "test:tz": "node tests/lib/userTime.test.ts && node tests/migration/migration-009.test.ts && node tests/integration/us1-natural-day.test.ts && node tests/integration/us2-users-me-timezone.test.ts && node tests/integration/us3-monthly-report.test.ts",
+    "test:fr015": "node tests/integration/fr015-transactions-historical.test.ts",
+    "check:iso": "node tools/check-iso-utc-format.ts",
+    "check:sla": "node tools/sla-monthly-report.ts"
   },
   "engines": {
     "node": ">=24.0.0 <25"

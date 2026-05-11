@@ -3,7 +3,7 @@
 // 一律以 'Asia/Taipei' 為固定 tz 參數呼叫 userTime 對應函式。
 // 後續新程式碼請直接 require('./userTime') 並傳入 req.userTimezone。
 
-import { isFutureDateForTz, isValidIsoDate, monthInUserTz, todayInUserTz } from './userTime';
+import { isFutureDateForTz, isValidIsoDate, monthInUserTz, todayInUserTz } from './userTime.ts';
 
 export function todayInTaipei(): string {
   return todayInUserTz('Asia/Taipei');

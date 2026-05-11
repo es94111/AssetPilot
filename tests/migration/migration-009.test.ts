@@ -3,19 +3,21 @@
 // 1. users.timezone 欄位存在、NOT NULL、DEFAULT 'Asia/Taipei'
 // 2. monthly_report_send_log 表存在
 // 3. UNIQUE(user_id, year_month) 約束生效（重複 INSERT 失敗）
-// 執行：node tests/migration/migration-009.test.js
+// 執行：node tests/migration/migration-009.test.ts
 
 const assert = require('node:assert/strict');
 const initSqlJs = require('sql.js');
 
+type SqlValue = string | number | Uint8Array | null;
+
 let pass = 0;
 let fail = 0;
 
-function test(name, fn) {
+function test(name: string, fn: () => void | Promise<void>): Promise<void> {
   return Promise.resolve()
     .then(fn)
     .then(() => { console.log('  ✓', name); pass++; })
-    .catch(e => { console.error('  ✗', name); console.error('    ', e.message); fail++; });
+    .catch((e: unknown) => { console.error('  ✗', name); console.error('    ', e instanceof Error ? e.message : String(e)); fail++; });
 }
 
 (async () => {
@@ -53,25 +55,27 @@ function test(name, fn) {
   console.log('users.timezone：');
   await test('users 表含 timezone 欄位', () => {
     const cols = db.exec("PRAGMA table_info(users)")[0].values;
-    const tzCol = cols.find(c => c[1] === 'timezone');
+    const tzCol = cols.find((c: SqlValue[]) => c[1] === 'timezone');
     assert.ok(tzCol, 'timezone 欄位不存在');
   });
   await test('timezone 欄位 NOT NULL', () => {
     const cols = db.exec("PRAGMA table_info(users)")[0].values;
-    const tzCol = cols.find(c => c[1] === 'timezone');
+    const tzCol = cols.find((c: SqlValue[]) => c[1] === 'timezone');
     // PRAGMA table_info 第 4 欄 (index 3) 是 notnull
+    assert.ok(tzCol, 'timezone 欄位不存在');
     assert.equal(tzCol[3], 1, `notnull = ${tzCol[3]}`);
   });
   await test("timezone DEFAULT 'Asia/Taipei'", () => {
     const cols = db.exec("PRAGMA table_info(users)")[0].values;
-    const tzCol = cols.find(c => c[1] === 'timezone');
+    const tzCol = cols.find((c: SqlValue[]) => c[1] === 'timezone');
     // 第 5 欄 (index 4) 是 dflt_value
+    assert.ok(tzCol, 'timezone 欄位不存在');
     assert.match(String(tzCol[4]), /Asia\/Taipei/);
   });
   await test('既有列被 DEFAULT 填為 Asia/Taipei', () => {
     const rows = db.exec("SELECT timezone FROM users")[0].values;
     assert.ok(rows.length === 2);
-    rows.forEach(r => assert.equal(r[0], 'Asia/Taipei'));
+    rows.forEach((r: SqlValue[]) => assert.equal(r[0], 'Asia/Taipei'));
   });
   await test('既有列無 NULL / 空字串 timezone', () => {
     const empty = db.exec("SELECT COUNT(*) FROM users WHERE timezone IS NULL OR timezone = ''")[0].values[0][0];
@@ -90,7 +94,7 @@ function test(name, fn) {
       db.run("INSERT INTO monthly_report_send_log (id, user_id, year_month, sent_at_utc) VALUES ('m2', 'u1', '2026-04', '2026-05-01T00:00:01.000Z')");
     } catch (e) {
       threw = true;
-      assert.match(String(e.message), /UNIQUE|constraint/i);
+      assert.match(e instanceof Error ? e.message : String(e), /UNIQUE|constraint/i);
     }
     assert.equal(threw, true, '第二次 INSERT 應觸發 UNIQUE 衝突但未');
   });

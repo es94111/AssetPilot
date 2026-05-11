@@ -4,20 +4,49 @@
 //   - 非法 → 400 + 原值不變 + audit log 不變
 //   - no-op（同值）→ 200 + audit log 不變
 // 不啟動 HTTP；模擬 handler 內部邏輯（與 server.js T030 等價）。
-// 執行：node tests/integration/us2-users-me-timezone.test.js
+// 執行：node tests/integration/us2-users-me-timezone.test.ts
 
 const assert = require('node:assert/strict');
 const initSqlJs = require('sql.js');
-const ut = require('../../lib/userTime');
+const ut = require('../../lib/userTime.ts') as typeof import('../../lib/userTime');
+
+type TimezoneSource = 'manual' | 'auto-detect';
+
+interface PatchBody {
+  timezone?: unknown;
+  source?: unknown;
+}
+
+interface PatchRequest {
+  ip: string;
+  userAgent: string;
+}
+
+interface PatchResponse {
+  status: number;
+  body: {
+    id?: string;
+    timezone?: unknown;
+    error?: string;
+    code?: string;
+    field?: string;
+  };
+}
+
+interface AuditMetadata {
+  from: string;
+  to: string;
+  source: TimezoneSource;
+}
 
 let pass = 0;
 let fail = 0;
 
-function test(name, fn) {
+function test(name: string, fn: () => void | Promise<void>): Promise<void> {
   return Promise.resolve()
     .then(fn)
     .then(() => { console.log('  ✓', name); pass++; })
-    .catch(e => { console.error('  ✗', name); console.error('    ', e.message); fail++; });
+    .catch((e: unknown) => { console.error('  ✗', name); console.error('    ', e instanceof Error ? e.message : String(e)); fail++; });
 }
 
 (async () => {
@@ -45,30 +74,30 @@ function test(name, fn) {
   )`);
   db.run("INSERT INTO users (id, email, display_name, timezone) VALUES ('u-tw', 'tw@test', 'Alice', 'Asia/Taipei')");
 
-  function getRow(id) {
+  function getRow(id: string): string {
     return db.exec("SELECT timezone FROM users WHERE id = ?", [id])[0].values[0][0];
   }
-  function auditCount(action) {
+  function auditCount(action: string): number {
     return db.exec("SELECT COUNT(*) FROM data_operation_audit_log WHERE action = ?", [action])[0].values[0][0];
   }
-  function auditLast() {
+  function auditLast(): AuditMetadata | null {
     const rows = db.exec("SELECT metadata FROM data_operation_audit_log ORDER BY timestamp DESC LIMIT 1");
     if (!rows[0]) return null;
-    return JSON.parse(rows[0].values[0][0]);
+    return JSON.parse(String(rows[0].values[0][0])) as AuditMetadata;
   }
 
   // 模擬 T030 PATCH handler 內部邏輯
-  function simulatePatch(userId, body, req = { ip: '127.0.0.1', userAgent: 'test' }) {
+  function simulatePatch(userId: string, body: PatchBody | null | undefined, req: PatchRequest = { ip: '127.0.0.1', userAgent: 'test' }): PatchResponse {
     const { timezone, source } = body || {};
-    if (!ut.isValidIanaTimezone(timezone)) {
+    if (typeof timezone !== 'string' || !ut.isValidIanaTimezone(timezone)) {
       return { status: 400, body: { error: '時區格式無效', code: 'ValidationError', field: 'timezone' } };
     }
     const u = db.exec("SELECT timezone FROM users WHERE id = ?", [userId])[0];
     if (!u) return { status: 404, body: { error: 'User not found', code: 'NotFound' } };
-    const prev = u.values[0][0] || 'Asia/Taipei';
+    const prev = String(u.values[0][0] || 'Asia/Taipei');
     if (prev !== timezone) {
       db.run("UPDATE users SET timezone = ? WHERE id = ?", [timezone, userId]);
-      const src = (source === 'manual' || source === 'auto-detect') ? source : 'manual';
+      const src: TimezoneSource = (source === 'manual' || source === 'auto-detect') ? source : 'manual';
       db.run(
         "INSERT INTO data_operation_audit_log (id, user_id, role, action, ip_address, user_agent, timestamp, result, is_admin_operation, metadata) VALUES (?,?,?,?,?,?,?,?,?,?)",
         [
@@ -108,6 +137,7 @@ function test(name, fn) {
   });
   await test('audit metadata source = auto-detect', () => {
     const meta = auditLast();
+    if (!meta) throw new Error('missing audit metadata');
     assert.equal(meta.source, 'auto-detect');
     assert.equal(meta.from, 'Asia/Tokyo');
     assert.equal(meta.to, 'America/Los_Angeles');
@@ -162,11 +192,13 @@ function test(name, fn) {
   await test("PATCH source='evil-injection' → 視為 manual", () => {
     simulatePatch('u-tw', { timezone: 'Pacific/Auckland', source: 'evil-injection' });
     const meta = auditLast();
+    if (!meta) throw new Error('missing audit metadata');
     assert.equal(meta.source, 'manual');
   });
   await test('PATCH 未提供 source → 視為 manual', () => {
     simulatePatch('u-tw', { timezone: 'Asia/Tokyo' });
     const meta = auditLast();
+    if (!meta) throw new Error('missing audit metadata');
     assert.equal(meta.source, 'manual');
   });
 

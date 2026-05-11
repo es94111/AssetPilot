@@ -4,19 +4,19 @@
 // （T021 範圍縮減：既有端點型別不一致，全面掃描非本 PR 範圍；
 //  本工具驗證「toIsoUtc 工具本身」+「OpenAPI 契約宣告為 .sssZ 的所有 schema 都符合」。）
 //
-// 執行：node tools/check-iso-utc-format.js
+// 執行：node tools/check-iso-utc-format.ts
 // npm 入口：npm run check:iso
 
 'use strict';
 
-const userTime = require('../lib/userTime');
+const userTime = require('../lib/userTime.ts') as typeof import('../lib/userTime');
 
 const ISO_UTC_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/;
 
 let pass = 0;
 let fail = 0;
 
-function check(name, value, expectedRegex) {
+function check(name: string, value: string, expectedRegex: RegExp): void {
   const ok = expectedRegex.test(value);
   if (ok) {
     console.log(`  ✓ ${name}`);
@@ -32,7 +32,7 @@ function check(name, value, expectedRegex) {
 console.log('=== 009 SC-004：ISO 8601 UTC 格式自動掃描 ===\n');
 
 console.log('1. lib/userTime.toIsoUtc 輸出格式：');
-const samples = [
+const samples: Array<number | Date | string> = [
   Date.now(),
   new Date(),
   '2026-04-29 07:30:00',
@@ -60,7 +60,7 @@ if (parsed === refMs) {
 }
 
 console.log('\n3. 違規輸入應拋錯：');
-const violations = [
+const violations: Array<string | null | undefined> = [
   '2026-04-29T07:30:00+08:00',
   'not-a-date',
   null,
@@ -69,7 +69,7 @@ const violations = [
 ];
 for (const v of violations) {
   let threw = false;
-  try { userTime.toIsoUtc(v); } catch (e) { threw = true; }
+  try { userTime.toIsoUtc(v); } catch (_) { threw = true; }
   if (threw) {
     console.log(`  ✓ rejects ${JSON.stringify(v)}`);
     pass++;

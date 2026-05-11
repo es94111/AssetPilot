@@ -1,5 +1,5 @@
 // 009-multi-timezone T010：lib/userTime.js 單元測試
-// 純 Node.js（無外部框架），執行：node tests/lib/userTime.test.js
+// 純 Node.js（無外部框架），執行：node tests/lib/userTime.test.ts
 // 任一斷言失敗即 process.exit(1)。
 //
 // 偏移備忘（DST 期間，2026-04-30 ~ 2026-11-01）：
@@ -8,19 +8,19 @@
 //   Pacific/Auckland NZST = UTC + 12 / NZDT = UTC + 13
 
 const assert = require('node:assert/strict');
-const ut = require('../../lib/userTime');
+const ut = require('../../lib/userTime.ts') as typeof import('../../lib/userTime');
 
 let pass = 0;
 let fail = 0;
 
-function test(name, fn) {
+function test(name: string, fn: () => void): void {
   try {
     fn();
     console.log('  ✓', name);
     pass++;
   } catch (e) {
     console.error('  ✗', name);
-    console.error('    ', e.message);
+    console.error('    ', e instanceof Error ? e.message : String(e));
     fail++;
   }
 }
@@ -35,7 +35,7 @@ test('正例 UTC', () => assert.equal(ut.isValidIanaTimezone('UTC'), true));
 test('反例 PST', () => assert.equal(ut.isValidIanaTimezone('PST'), false));
 test('反例 UTC+8', () => assert.equal(ut.isValidIanaTimezone('UTC+8'), false));
 test('反例 空字串', () => assert.equal(ut.isValidIanaTimezone(''), false));
-test('反例 null', () => assert.equal(ut.isValidIanaTimezone(null), false));
+test('反例 null', () => assert.equal(ut.isValidIanaTimezone(null as unknown as string), false));
 
 // ─── todayInUserTz / partsInTz：用 FAKE_NOW 鎖定瞬時 ───
 console.log('todayInUserTz / partsInTz：');

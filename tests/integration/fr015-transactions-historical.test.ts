@@ -1,19 +1,21 @@
 // 009 T060：FR-015 歷史不變式驗證
 // 範圍：升級前後 transactions 表的 date 欄位 baseline 完全一致
 // 做法：以 in-memory sql.js 建表 + 寫入歷史測試資料 → 跑 009 migration → 驗證 date 不變
-// 執行：node tests/integration/fr015-transactions-historical.test.js
+// 執行：node tests/integration/fr015-transactions-historical.test.ts
 
 const assert = require('node:assert/strict');
 const initSqlJs = require('sql.js');
 
+type SqlValue = string | number | Uint8Array | null;
+
 let pass = 0;
 let fail = 0;
 
-function test(name, fn) {
+function test(name: string, fn: () => void | Promise<void>): Promise<void> {
   return Promise.resolve()
     .then(fn)
     .then(() => { console.log('  ✓', name); pass++; })
-    .catch(e => { console.error('  ✗', name); console.error('    ', e.message); fail++; });
+    .catch((e: unknown) => { console.error('  ✗', name); console.error('    ', e instanceof Error ? e.message : String(e)); fail++; });
 }
 
 (async () => {
@@ -39,7 +41,7 @@ function test(name, fn) {
     '2024-01-01', '2024-12-31', '2025-06-15', '2026-02-29', // 閏年
     '2026-04-30', '2026-05-01', '2023-07-04',
   ];
-  sampleDates.forEach((d, i) => {
+  sampleDates.forEach((d: string, i: number) => {
     db.run("INSERT INTO transactions (id, user_id, type, amount, date) VALUES (?, ?, ?, ?, ?)",
       [`tx-${i}`, 'u1', 'expense', 100 * (i + 1), d]);
   });
@@ -47,7 +49,7 @@ function test(name, fn) {
   // 計算 baseline
   const baseline = db.exec("SELECT COUNT(*) AS c, MIN(date) AS mn, MAX(date) AS mx, SUM(LENGTH(date)) AS slen FROM transactions")[0].values[0];
   const baselineDates = db.exec("SELECT id, date FROM transactions ORDER BY id")[0].values
-    .map(r => `${r[0]}=${r[1]}`).join(',');
+    .map((r: SqlValue[]) => `${r[0]}=${r[1]}`).join(',');
 
   console.log('Baseline before 009 migration:');
   console.log(`  count=${baseline[0]} min=${baseline[1]} max=${baseline[2]} sumLen=${baseline[3]}`);
@@ -72,7 +74,7 @@ function test(name, fn) {
   console.log('\nFR-015 不變式驗證：');
   const after = db.exec("SELECT COUNT(*) AS c, MIN(date) AS mn, MAX(date) AS mx, SUM(LENGTH(date)) AS slen FROM transactions")[0].values[0];
   const afterDates = db.exec("SELECT id, date FROM transactions ORDER BY id")[0].values
-    .map(r => `${r[0]}=${r[1]}`).join(',');
+    .map((r: SqlValue[]) => `${r[0]}=${r[1]}`).join(',');
 
   await test('transactions COUNT(*) 不變', () => assert.equal(after[0], baseline[0]));
   await test('transactions MIN(date) 不變', () => assert.equal(after[1], baseline[1]));
@@ -84,7 +86,7 @@ function test(name, fn) {
 
   // 驗證 transactions 表 schema 沒被加欄位
   await test('transactions 表 schema 不被 009 migration 觸碰', () => {
-    const cols = db.exec("PRAGMA table_info(transactions)")[0].values.map(r => r[1]);
+    const cols = db.exec("PRAGMA table_info(transactions)")[0].values.map((r: SqlValue[]) => r[1]);
     assert.deepEqual(cols.sort(), ['id', 'user_id', 'type', 'amount', 'date'].sort());
   });
 

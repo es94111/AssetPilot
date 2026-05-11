@@ -4,12 +4,26 @@
 // 計算每筆「sent_at_utc 對應該使用者當地 1 號 00:00 UTC」的延遲分布（min / P50 / P95 / max）。
 // SC-003 要求：100 名隨機抽樣使用者 ≥ 95% 落在 0:00-0:30（即 P95 ≤ 30 分鐘）。
 //
-// 執行：node tools/sla-monthly-report.js
+// 執行：node tools/sla-monthly-report.ts
 // npm 入口：npm run check:sla
 
 'use strict';
 
-const userTime = require('../lib/userTime');
+const userTime = require('../lib/userTime.ts') as typeof import('../lib/userTime');
+
+interface SendEvent {
+  ym: string;
+  delayMin: number;
+  sentAt: number;
+  idealAt: number;
+}
+
+interface SimUser {
+  id: string;
+  timezone: string;
+  sentMonths: Set<string>;
+  sendEvents: SendEvent[];
+}
 
 const TZ_POOL = [
   'America/Los_Angeles', 'America/New_York', 'UTC',
@@ -29,7 +43,7 @@ console.log(`時區池（${TZ_POOL.length}）：${TZ_POOL.join(', ')}`);
 console.log(`模擬期間：${new Date(SIMULATION_START).toISOString()} + 31 天，每 ${TICK_MS / 60000} 分鐘心跳\n`);
 
 // 為每個 user 隨機分配 timezone
-const users = [];
+const users: SimUser[] = [];
 for (let i = 0; i < N_USERS; i++) {
   users.push({
     id: `u${i}`,
@@ -64,7 +78,7 @@ for (let t = 0; t < ticks; t++) {
 console.log(`總寄送次數：${totalSends}（不重寄）\n`);
 
 // 統計
-const allDelays = [];
+const allDelays: number[] = [];
 for (const u of users) {
   for (const ev of u.sendEvents) {
     allDelays.push(ev.delayMin);
@@ -72,7 +86,7 @@ for (const u of users) {
 }
 allDelays.sort((a, b) => a - b);
 
-function pct(p) {
+function pct(p: number): number {
   if (allDelays.length === 0) return NaN;
   const idx = Math.min(allDelays.length - 1, Math.floor(allDelays.length * p / 100));
   return allDelays[idx];
@@ -103,7 +117,7 @@ if (p95 <= 30) {
 }
 
 // ─── helpers ───
-function computeLocalDayStartUtcMs(tz, ymd) {
+function computeLocalDayStartUtcMs(tz: string, ymd: string): number {
   // 二分／反推：以 UTC midnight 為起點，依該 tz 偏移調整
   const [y, m, d] = ymd.split('-').map(s => parseInt(s, 10));
   const utcMid = Date.UTC(y, m - 1, d, 0, 0, 0);

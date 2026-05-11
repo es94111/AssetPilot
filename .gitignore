@@ -28,6 +28,9 @@ build/cache/*
 specs/
 test-results/
 docs/
+AGENTS.md
+CLAUDE.md
+SSR.md
 
 # ==========================================
 # OS-specific files (作業系統專屬檔案)

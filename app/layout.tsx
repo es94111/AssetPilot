@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "記帳網頁 - 儀表板",
-  description: "個人記帳儀表板",
+  title: "AssetPilot - 個人財務指揮中心",
+  description: "自架、加密的個人財務管理工具，整合記帳、預算、台股投資與報表分析。",
   icons: {
     icon: "/favicon.svg",
   },

@@ -97,7 +97,7 @@ export default async function Home() {
               ))}
             </div>
             <div className="mt-6 rounded-2xl border border-sky-400/20 bg-sky-400/10 p-4 text-sm leading-7 text-slate-200">
-              新版首頁現在保留公開入口，不會再把未登入訪客直接送去登入頁。這比較接近舊版產品入口的使用感。
+              未登入也能先了解 AssetPilot 的功能、資料處理方式與部署特性，再選擇登入或建立帳號。
             </div>
           </div>
         </section>
@@ -105,8 +105,8 @@ export default async function Home() {
         <section className="py-6">
           <div className="mb-8">
             <div className="text-sm font-medium uppercase tracking-[0.2em] text-slate-400">Why AssetPilot</div>
-            <h2 className="mt-3 text-3xl font-semibold tracking-tight text-white">首頁補回舊版該有的內容骨架與入口</h2>
-            <p className="mt-3 max-w-3xl text-slate-300">先讓未登入使用者看見產品是做什麼的，再決定要不要登入。這才是首頁，不是把人直接丟到 auth gate。</p>
+            <h2 className="mt-3 text-3xl font-semibold tracking-tight text-white">把日常記帳、投資追蹤與資料掌控放在同一個地方</h2>
+            <p className="mt-3 max-w-3xl text-slate-300">AssetPilot 專為自主管理個人財務而設計，從收支、預算到台股投資都能集中整理，並保留資料匯出、稽核與自架部署的彈性。</p>
           </div>
 
           <div className="grid gap-5 lg:grid-cols-2">
@@ -128,7 +128,7 @@ export default async function Home() {
           <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
             <div className="text-sm font-medium uppercase tracking-[0.2em] text-slate-400">Quick Start</div>
             <h2 className="mt-3 text-3xl font-semibold tracking-tight text-white">60 秒跑在你自己的伺服器</h2>
-            <p className="mt-4 max-w-2xl text-slate-300">舊版首頁有部署說明，這次一起補回。自動產生 JWT 與資料庫加密金鑰，支援 amd64、arm64，適合自己架在 NAS、VPS 或 Docker 主機上。</p>
+            <p className="mt-4 max-w-2xl text-slate-300">使用 Docker 快速啟動，首次執行會自動產生 JWT 與資料庫加密金鑰。支援 amd64、arm64，適合部署在 NAS、VPS 或自己的 Docker 主機上。</p>
             <div className="mt-5 flex flex-wrap gap-3 text-sm text-slate-200">
               <span className="rounded-full border border-white/10 px-3 py-1.5">約 180 MB 映像</span>
               <span className="rounded-full border border-white/10 px-3 py-1.5">amd64 + arm64</span>
@@ -157,7 +157,7 @@ export default async function Home() {
         <section className="rounded-3xl border border-white/10 bg-white/5 p-6">
           <div className="text-sm font-medium uppercase tracking-[0.2em] text-slate-400">Tech Stack</div>
           <h2 className="mt-3 text-3xl font-semibold tracking-tight text-white">技術堆疊與公開資訊入口</h2>
-          <p className="mt-4 max-w-3xl text-slate-300">舊首頁會先告訴使用者這個產品靠哪些技術和外部資料來源運作。新版也應該維持這種透明度。</p>
+          <p className="mt-4 max-w-3xl text-slate-300">清楚列出主要技術、外部資料來源與授權資訊，讓使用者在開始使用前就能掌握服務如何運作。</p>
           <div className="mt-6 flex flex-wrap gap-3">
             {STACK.map((item) => (
               <span key={item} className="rounded-full border border-white/10 bg-black/10 px-3 py-2 text-sm text-slate-200">{item}</span>

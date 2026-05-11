@@ -57,6 +57,8 @@ export default function PrivacyPage() {
             <li>使用者名稱（暱稱）</li>
             <li>加密後的密碼（使用 bcrypt 雜湊，原始密碼不存於資料庫）</li>
             <li>Google 帳號 ID（僅使用 Google SSO 登入時）</li>
+            <li>LINE 使用者識別碼（僅使用 LINE 登入或綁定時）</li>
+            <li>Passkey 公開金鑰資料（僅啟用 Passkey 登入時）</li>
           </ul>
           <h3 className="mb-2 mt-4 text-[15px] font-semibold">財務資料</h3>
           <ul className="mb-3 list-disc space-y-1.5 pl-5 text-sm/7 text-slate-600 dark:text-slate-300">
@@ -139,6 +141,7 @@ export default function PrivacyPage() {
           <p className="mb-3 text-sm/7 text-slate-600 dark:text-slate-300">本服務整合以下第三方服務，各服務均有其獨立的隱私權政策：</p>
           <ul className="mb-3 list-disc space-y-1.5 pl-5 text-sm/7 text-slate-600 dark:text-slate-300">
             <li><strong>Google Identity Services（選配）</strong>：提供 Google SSO 登入功能。</li>
+            <li><strong>LINE Login（選配）</strong>：提供 LINE 登入與帳號綁定功能。</li>
             <li><strong>TWSE 臺灣證券交易所 OpenAPI</strong>：查詢股票即時/收盤價及除權息資料時使用。僅傳送股票代號，不含任何個人資訊。</li>
             <li><strong>exchangerate-api.com</strong>：匯率自動同步功能使用。</li>
             <li><strong>Google Fonts</strong>：載入字型資源。</li>
@@ -186,9 +189,10 @@ export default function PrivacyPage() {
         </section>
 
         <div className="mt-8 border-t border-slate-200 pt-6 text-center text-xs text-slate-400 dark:border-slate-800">
-          <p>最後更新日期：2026 年 4 月 10 日</p>
+          <p>最後更新日期：2026 年 5 月 11 日</p>
           <div className="mt-2.5 flex flex-wrap justify-center gap-5">
             <a href="/terms" className="text-indigo-600 dark:text-indigo-400"><i className="fas fa-file-contract" /> 服務條款</a>
+            <a href="/api-credits" className="text-indigo-600 dark:text-indigo-400"><i className="fas fa-plug" /> API 使用與授權</a>
             <a href="/" className="text-indigo-600 dark:text-indigo-400"><i className="fas fa-house" /> 返回首頁</a>
           </div>
         </div>

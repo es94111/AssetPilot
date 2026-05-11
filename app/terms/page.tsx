@@ -48,7 +48,7 @@ export default function TermsPage() {
         <section className="mb-5 rounded-2xl border border-slate-200 bg-white px-5 py-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:px-9 sm:py-8" id="s2">
           <div className="mb-4 flex items-center gap-2.5 border-b border-slate-200 pb-3.5 text-lg font-bold dark:border-slate-800"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-sm text-slate-600 dark:bg-slate-800 dark:text-slate-400"><i className="fas fa-user-lock" /></span>2. 帳號與存取</div>
           <h3 className="mb-2 mt-4 text-[15px] font-semibold">帳號建立</h3>
-          <p className="mb-3 text-sm/7 text-slate-600 dark:text-slate-300">使用本服務須建立帳號。您可透過電子郵件與密碼，或 Google SSO（若管理員已啟用）完成註冊。</p>
+          <p className="mb-3 text-sm/7 text-slate-600 dark:text-slate-300">使用本服務須建立帳號。您可透過電子郵件與密碼，或管理員啟用的 Google、LINE、Passkey 等登入方式完成註冊或登入。</p>
           <h3 className="mb-2 mt-4 text-[15px] font-semibold">帳號安全</h3>
           <ul className="mb-3 list-disc space-y-1.5 pl-5 text-sm/7 text-slate-600 dark:text-slate-300">
             <li>您有責任妥善保管您的帳號密碼，不得與他人共用</li>
@@ -108,7 +108,7 @@ export default function TermsPage() {
             <li>不可抗力事件（天災、停電等）</li>
           </ul>
           <h3 className="mb-2 mt-4 text-[15px] font-semibold">外部服務依賴</h3>
-          <p className="mb-3 text-sm/7 text-slate-600 dark:text-slate-300">本服務部分功能依賴第三方 API（TWSE 股價、匯率 API 等）。這些外部服務的可用性不在本服務控制範圍內，相關功能可能因第三方服務中斷而暫時無法使用。</p>
+          <p className="mb-3 text-sm/7 text-slate-600 dark:text-slate-300">本服務部分功能依賴第三方 API（TWSE 股價、匯率 API、登入服務等）。這些外部服務的可用性不在本服務控制範圍內，相關功能可能因第三方服務中斷而暫時無法使用。外部來源與授權資訊可於「API 使用與授權」頁面查閱。</p>
         </section>
 
         <section className="mb-5 rounded-2xl border border-slate-200 bg-white px-5 py-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:px-9 sm:py-8" id="s7">
@@ -161,9 +161,10 @@ export default function TermsPage() {
         </section>
 
         <div className="mt-8 border-t border-slate-200 pt-6 text-center text-xs text-slate-400 dark:border-slate-800">
-          <p>最後更新日期：2026 年 4 月 10 日</p>
+          <p>最後更新日期：2026 年 5 月 11 日</p>
           <div className="mt-2.5 flex flex-wrap justify-center gap-5">
             <a href="/privacy" className="text-indigo-600 dark:text-indigo-400"><i className="fas fa-shield-halved" /> 隱私權政策</a>
+            <a href="/api-credits" className="text-indigo-600 dark:text-indigo-400"><i className="fas fa-plug" /> API 使用與授權</a>
             <a href="/" className="text-indigo-600 dark:text-indigo-400"><i className="fas fa-house" /> 返回首頁</a>
           </div>
         </div>

@@ -2,6 +2,10 @@ export const dynamic = 'force-dynamic';
 
 import externalApisData from '../../lib/external-apis.json';
 
+export const metadata = {
+  title: 'API 使用與授權 — AssetPilot',
+};
+
 export default async function ApiCreditsPage() {
   const usageNotes = [
     '匯率同步只會查公開匯率資料，不會送出個人財務明細。',
@@ -28,7 +32,7 @@ export default async function ApiCreditsPage() {
         <div className="mb-4 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-white/15 text-lg font-bold">API</div>
         <h1 className="mb-2.5 text-3xl font-extrabold md:text-4xl">API 使用與授權</h1>
         <p className="mx-auto max-w-[620px] text-sm/7 text-white/85">
-          首頁補回舊版公開入口後，這個頁面也一起恢復成未登入可查看，讓使用者先知道外部資料來源、授權與用途。
+          AssetPilot 僅在功能需要時連線至外部資料來源。本頁說明各項 API 的用途、授權資訊與資料傳送範圍。
         </p>
       </div>
 
@@ -50,8 +54,8 @@ export default async function ApiCreditsPage() {
           <section className="rounded-2xl border border-slate-200 bg-white px-6 py-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
             <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">合規與授權</h2>
             <div className="mt-3 space-y-2 text-sm/7 text-slate-600 dark:text-slate-300">
-              <p>頁面會列出每個外部來源的官方網站、用途、是否支援免費/付費方案，以及需要保留的授權標示。</p>
-              <p>如果某服務要求顯示 attribution，例如 IPinfo，這裡會明確列出，避免遷移後把授權資訊弄丟。</p>
+              <p>每個外部來源均列出官方網站、用途、免費/付費方案支援狀態，以及需要保留的授權標示。</p>
+              <p>若服務要求顯示 attribution，例如 IPinfo，本頁會明確列出，方便部署者維持必要的授權資訊。</p>
             </div>
           </section>
         </div>

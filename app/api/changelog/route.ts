@@ -72,6 +72,7 @@ function mergeChangelogs(local, remote) {
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const forceRefresh = searchParams.get('refresh') === '1';
+  const localOnly = searchParams.get('local') === '1';
 
   let local;
   try {
@@ -80,10 +81,28 @@ export async function GET(request) {
     local = { currentVersion: '0.0', releases: [] };
   }
 
+  if (localOnly) {
+    const response = NextResponse.json(local);
+    response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    response.headers.set('Pragma', 'no-cache');
+    response.headers.set('Expires', '0');
+    return response;
+  }
+
   const remote = await fetchRemoteChangelog(forceRefresh);
   const result = mergeChangelogs(local, remote);
+  const localCurrentVersion = local.currentVersion || '0.0';
+  const latestVersion = result.currentVersion || localCurrentVersion;
+  const updateAvailable = compareVersions(latestVersion, localCurrentVersion) > 0;
+  const availableReleases = (result.releases || []).filter(r => compareVersions(r.version, localCurrentVersion) > 0);
 
-  const response = NextResponse.json(result);
+  const response = NextResponse.json({
+    ...result,
+    localCurrentVersion,
+    latestVersion,
+    updateAvailable,
+    availableReleases,
+  });
   response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   response.headers.set('Pragma', 'no-cache');
   response.headers.set('Expires', '0');

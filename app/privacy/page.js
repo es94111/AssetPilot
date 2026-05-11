@@ -122,7 +122,7 @@ export default function PrivacyPage() {
           <h3 className="mb-2 mt-4 text-[15px] font-semibold">Cookie</h3>
           <p className="mb-3 text-sm/7 text-slate-600 dark:text-slate-300">本服務僅使用一個 Cookie：</p>
           <ul className="mb-3 list-disc space-y-1.5 pl-5 text-sm/7 text-slate-600 dark:text-slate-300">
-            <li><strong>auth_token</strong>（HttpOnly, Secure）：儲存 JWT 身份驗證令牌，有效期限與您設定的登入期限相同（預設 7 天），登出後立即失效。</li>
+            <li><strong>auth_token</strong>（HttpOnly, Secure）：儲存 JWT 身份驗證令牌，有效期限與您設定的登入期限相同（預設 7 天），在目前裝置登出後立即清除。</li>
           </ul>
           <h3 className="mb-2 mt-4 text-[15px] font-semibold">LocalStorage</h3>
           <p className="mb-3 text-sm/7 text-slate-600 dark:text-slate-300">本服務使用瀏覽器 LocalStorage 儲存以下偏好設定（僅限本機）：</p>

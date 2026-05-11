@@ -321,6 +321,8 @@ Webhook 回覆使用 LINE Flex Message Button：未綁定時顯示「綁定 LINE
 
 資產統計報表排程支援 Email / LINE 兩種通知方式；管理員可在「管理員設定 → 報表排程」新增排程時勾選 LINE 通知。LINE 排程通知會推送同 email 報表相近的資產摘要 Flex Message，使用者需先完成 LINE 綁定。
 
+同頁也可新增「LINE 支出提醒」，用每日 / 每週 / 每月排程提醒使用者記錄支出。提醒訊息會提供「新增支出」按鈕，點擊後依 `金額 備註 日期（日期可省略）` 的規則輸入即可記帳。
+
 ### Passkey（WebAuthn）
 
 登入後可至「個人設定 → 安全」綁定。支援 Touch ID / Face ID / Windows Hello / 硬體金鑰；採 `@passwordless-id/webauthn` 純前端實作 + 後端驗證。

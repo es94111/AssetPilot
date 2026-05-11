@@ -78,6 +78,8 @@ export default function AdminClient(_props: { user?: any } = {}) {
   const [schedules, setSchedules] = useState<any[]>([]);
   const [scheduleForm, setScheduleForm] = useState({ userId: '', freq: 'daily', hour: '9', weekday: '1', dayOfMonth: '1', notifyEmail: true, notifyLine: false });
   const [scheduleMsg, setScheduleMsg] = useState('');
+  const [expenseReminders, setExpenseReminders] = useState<any[]>([]);
+  const [expenseReminderForm, setExpenseReminderForm] = useState({ userId: '', freq: 'daily', hour: '21', weekday: '0', dayOfMonth: '1' });
 
   const [adminSelfLogs, setAdminSelfLogs] = useState<any[]>([]);
   const [allLogs, setAllLogs] = useState<any[]>([]);
@@ -92,13 +94,14 @@ export default function AdminClient(_props: { user?: any } = {}) {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [settings, userList, timeInfo, providers, certs, scheduleList, adminLogs, userLogs, retention, auditResp] = await Promise.all([
+      const [settings, userList, timeInfo, providers, certs, scheduleList, expenseReminderList, adminLogs, userLogs, retention, auditResp] = await Promise.all([
         apiGet('/api/admin/system-settings'),
         apiGet('/api/admin/users').catch(() => []),
         apiGet('/api/admin/server-time').catch(() => null),
         apiGet('/api/admin/email-providers').catch(() => null),
         apiGet('/api/admin/certs').catch(() => null),
         apiGet('/api/admin/report-schedules').catch(() => []),
+        apiGet('/api/admin/line-expense-reminders').catch(() => []),
         apiGet('/api/admin/login-audit?scope=admin-self').catch(() => ({ logs: [] })),
         apiGet('/api/admin/login-audit').catch(() => ({ logs: [] })),
         apiGet('/api/admin/data-audit/retention').catch(() => ({ retention_days: '90' })),
@@ -114,12 +117,14 @@ export default function AdminClient(_props: { user?: any } = {}) {
       setEmailProviders(providers);
       setCertInfo(certs);
       setSchedules(scheduleList || []);
+      setExpenseReminders(expenseReminderList || []);
       setAdminSelfLogs(adminLogs.logs || []);
       setAllLogs(userLogs.logs || []);
       setAuditRetention(String(retention.retention_days || '90'));
       setAuditLogs(auditResp.data || []);
       setAuditTotal(auditResp.total || 0);
       setScheduleForm((prev) => ({ ...prev, userId: userList?.[0]?.id || prev.userId || '' }));
+      setExpenseReminderForm((prev) => ({ ...prev, userId: userList?.[0]?.id || prev.userId || '' }));
     } catch (e: any) {
       setSaveMsg('載入失敗：' + e.message);
     }
@@ -234,6 +239,53 @@ export default function AdminClient(_props: { user?: any } = {}) {
       await load();
     } catch (e: any) {
       setScheduleMsg(e.message || '更新通知方式失敗');
+    }
+  }
+
+  async function handleCreateExpenseReminder(e: React.FormEvent) {
+    e.preventDefault();
+    setScheduleMsg('');
+    try {
+      await apiPost('/api/admin/line-expense-reminders', {
+        userId: expenseReminderForm.userId,
+        freq: expenseReminderForm.freq,
+        hour: Number(expenseReminderForm.hour),
+        weekday: Number(expenseReminderForm.weekday),
+        dayOfMonth: Number(expenseReminderForm.dayOfMonth),
+      });
+      setScheduleMsg('LINE 支出提醒已新增');
+      await load();
+    } catch (e: any) {
+      setScheduleMsg(e.message || '新增 LINE 支出提醒失敗');
+    }
+  }
+
+  async function handleToggleExpenseReminder(id: string, enabled: boolean) {
+    try {
+      await apiPut(`/api/admin/line-expense-reminders/${id}`, { enabled: !enabled });
+      await load();
+    } catch (e: any) {
+      setScheduleMsg(e.message || '更新 LINE 支出提醒失敗');
+    }
+  }
+
+  async function handleDeleteExpenseReminder(id: string) {
+    if (!confirm('確定要刪除此 LINE 支出提醒嗎？')) return;
+    try {
+      await apiDelete(`/api/admin/line-expense-reminders/${id}`);
+      await load();
+    } catch (e: any) {
+      setScheduleMsg(e.message || '刪除 LINE 支出提醒失敗');
+    }
+  }
+
+  async function handleRunExpenseReminderNow(id: string) {
+    try {
+      await apiPost(`/api/admin/line-expense-reminders/${id}/run-now`);
+      setScheduleMsg('LINE 支出提醒已送出');
+      await load();
+    } catch (e: any) {
+      setScheduleMsg(e.message || '立即提醒失敗');
     }
   }
 
@@ -555,6 +607,56 @@ export default function AdminClient(_props: { user?: any } = {}) {
                       <Button variant="outline" size="sm" onClick={() => handleToggleSchedule(schedule.id, schedule.enabled)}>{schedule.enabled ? '停用' : '啟用'}</Button>
                       <Button variant="outline" size="sm" onClick={() => handleRunScheduleNow(schedule.id)}>立即執行</Button>
                       <Button variant="destructive" size="sm" onClick={() => handleDeleteSchedule(schedule.id)}>刪除</Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+
+          <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-xl shadow-sm">
+            <h3 className="text-lg font-semibold mb-4">LINE 支出提醒</h3>
+            <form onSubmit={handleCreateExpenseReminder} className="grid md:grid-cols-4 gap-4 mb-5">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">使用者</label>
+                <select className="w-full p-2 border rounded-md" value={expenseReminderForm.userId} onChange={(e) => setExpenseReminderForm((prev) => ({ ...prev, userId: e.target.value }))}>
+                  {users.map((user) => <option key={user.id} value={user.id}>{user.email}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">頻率</label>
+                <select className="w-full p-2 border rounded-md" value={expenseReminderForm.freq} onChange={(e) => setExpenseReminderForm((prev) => ({ ...prev, freq: e.target.value }))}>
+                  {SCHEDULE_FREQ_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                </select>
+              </div>
+              <Input label="小時" type="number" min={0} max={23} value={expenseReminderForm.hour} onChange={(e) => setExpenseReminderForm((prev) => ({ ...prev, hour: e.target.value }))} />
+              <Button type="submit" className="self-end">新增 LINE 提醒</Button>
+              {expenseReminderForm.freq === 'weekly' && <Input label="每週星期 (0-6)" type="number" min={0} max={6} value={expenseReminderForm.weekday} onChange={(e) => setExpenseReminderForm((prev) => ({ ...prev, weekday: e.target.value }))} />}
+              {expenseReminderForm.freq === 'monthly' && <Input label="每月日期 (1-28)" type="number" min={1} max={28} value={expenseReminderForm.dayOfMonth} onChange={(e) => setExpenseReminderForm((prev) => ({ ...prev, dayOfMonth: e.target.value }))} />}
+            </form>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>使用者</TableHead>
+                  <TableHead>頻率</TableHead>
+                  <TableHead>時間</TableHead>
+                  <TableHead>上次提醒</TableHead>
+                  <TableHead>狀態</TableHead>
+                  <TableHead>操作</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {expenseReminders.map((reminder) => (
+                  <TableRow key={reminder.id}>
+                    <TableCell>{users.find((user) => user.id === reminder.userId)?.email || reminder.userId}</TableCell>
+                    <TableCell>{reminder.freq}</TableCell>
+                    <TableCell>{reminder.hour}:00 {reminder.freq === 'weekly' ? `(週 ${reminder.weekday})` : ''}{reminder.freq === 'monthly' ? `(每月 ${reminder.dayOfMonth} 日)` : ''}</TableCell>
+                    <TableCell>{fmtTs(reminder.lastRun)}</TableCell>
+                    <TableCell>{reminder.enabled ? '啟用中' : '停用'}</TableCell>
+                    <TableCell className="flex gap-2 flex-wrap">
+                      <Button variant="outline" size="sm" onClick={() => handleToggleExpenseReminder(reminder.id, reminder.enabled)}>{reminder.enabled ? '停用' : '啟用'}</Button>
+                      <Button variant="outline" size="sm" onClick={() => handleRunExpenseReminderNow(reminder.id)}>立即提醒</Button>
+                      <Button variant="destructive" size="sm" onClick={() => handleDeleteExpenseReminder(reminder.id)}>刪除</Button>
                     </TableCell>
                   </TableRow>
                 ))}

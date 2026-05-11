@@ -409,3 +409,47 @@ export function buildStatsReportFlex(displayName: string, stats: Record<string, 
     },
   };
 }
+
+export function buildExpenseReminderFlex(displayName: string): LineFlexMessage {
+  return {
+    type: 'flex',
+    altText: '記錄支出提醒',
+    contents: {
+      type: 'bubble',
+      header: {
+        type: 'box',
+        layout: 'vertical',
+        backgroundColor: '#dc2626',
+        paddingAll: '18px',
+        contents: [
+          { type: 'text', text: 'AssetPilot', color: '#fee2e2', size: 'sm', weight: 'bold' },
+          { type: 'text', text: '記得記錄今天的支出', color: '#ffffff', size: 'xl', weight: 'bold', margin: 'sm', wrap: true },
+        ],
+      },
+      body: {
+        type: 'box',
+        layout: 'vertical',
+        spacing: 'md',
+        contents: [
+          {
+            type: 'text',
+            text: `${displayName || '你'}，花 10 秒把今天的支出補上，月底比較不會漏帳。`,
+            wrap: true,
+            size: 'sm',
+            color: '#475569',
+          },
+          { type: 'text', text: '按下新增支出後，直接輸入：金額 備註 日期（日期可省略）', wrap: true, size: 'xs', color: '#64748b' },
+        ],
+      },
+      footer: {
+        type: 'box',
+        layout: 'vertical',
+        spacing: 'sm',
+        contents: [
+          postbackButton('新增支出', 'action=record&type=expense', '新增支出', 'primary'),
+          postbackButton('查看今天紀錄', 'action=query&period=today', '查詢 今天'),
+        ],
+      },
+    },
+  };
+}

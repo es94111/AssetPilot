@@ -5,12 +5,13 @@
 import crypto from 'crypto';
 import { getDB, queryAll, queryOne, saveDB } from './db';
 import { getActiveEmailProviders, sendStatsEmail } from './emailService';
-import { LINE_MESSAGING_CHANNEL_ACCESS_TOKEN, buildStatsReportFlex, pushLineMessage } from './lineMessaging';
+import { LINE_MESSAGING_CHANNEL_ACCESS_TOKEN, buildExpenseReminderFlex, buildStatsReportFlex, pushLineMessage } from './lineMessaging';
 import { buildUserStatsReport, renderStatsEmailHtml } from './statsEmailReport';
 import * as userTime from './userTime';
 
 // ── per-schedule lock set（防重複執行）──
 const runningSchedules = new Set();
+const runningExpenseReminders = new Set();
 
 // ── 求「指定 IANA 時區下、某 YYYY-MM-DD 當地 00:00」對應的 UTC ms ──
 function localDayStartMs(tz, ymd) {
@@ -238,6 +239,66 @@ async function runScheduledReportNow(scheduleId, triggeredBy = '排程') {
   }
 }
 
+async function runLineExpenseReminderNow(reminderId, triggeredBy = '排程') {
+  if (!reminderId) return { status: 'invalid', sent: 0, failed: 0, skipped: 0, reason: '未指定提醒' };
+  if (runningExpenseReminders.has(reminderId)) return { status: 'already_running', sent: 0, failed: 0, skipped: 0, reason: '此提醒已有任務進行中' };
+
+  runningExpenseReminders.add(reminderId);
+  const startedAt = Date.now();
+  try {
+    const db = getDB();
+    const reminder = queryOne('SELECT * FROM line_expense_reminders WHERE id = ?', [reminderId]);
+    if (!reminder) return { status: 'not_found', sent: 0, failed: 0, skipped: 0, reason: '提醒不存在' };
+    if (reminder.enabled === 0) return { status: 'disabled', sent: 0, failed: 0, skipped: 0, reason: '提醒已停用' };
+
+    const u = queryOne('SELECT id, display_name, is_active, line_id FROM users WHERE id = ?', [reminder.user_id]);
+    if (!u) {
+      db.run('UPDATE line_expense_reminders SET last_summary = ?, updated_at = ? WHERE id = ?',
+        [`${formatLocalSummaryTime(startedAt)} ${triggeredBy}：使用者不存在`, startedAt, reminderId]);
+      saveDB();
+      return { status: 'user_not_found', sent: 0, failed: 0, skipped: 1, reason: '使用者不存在' };
+    }
+    if (u.is_active === 0) {
+      db.run('UPDATE line_expense_reminders SET last_summary = ?, updated_at = ? WHERE id = ?',
+        [`${formatLocalSummaryTime(startedAt)} ${triggeredBy}：使用者帳號已停用，略過提醒`, startedAt, reminderId]);
+      saveDB();
+      return { status: 'skipped', sent: 0, failed: 0, skipped: 1, reason: '使用者帳號已停用' };
+    }
+    if (!LINE_MESSAGING_CHANNEL_ACCESS_TOKEN) {
+      const summary = `${formatLocalSummaryTime(startedAt)} ${triggeredBy}：LINE Messaging API 未設定`;
+      db.run('UPDATE line_expense_reminders SET last_summary = ?, updated_at = ? WHERE id = ?', [summary, startedAt, reminderId]);
+      saveDB();
+      return { status: 'no_line_service', sent: 0, failed: 1, skipped: 0, reason: 'LINE Messaging API 未設定' };
+    }
+    if (!u.line_id) {
+      const summary = `${formatLocalSummaryTime(startedAt)} ${triggeredBy}：使用者尚未綁定 LINE`;
+      db.run('UPDATE line_expense_reminders SET last_run = ?, last_summary = ?, updated_at = ? WHERE id = ?',
+        [startedAt, summary, startedAt, reminderId]);
+      saveDB();
+      return { status: 'line_not_linked', sent: 0, failed: 1, skipped: 0, reason: '使用者尚未綁定 LINE' };
+    }
+
+    try {
+      await pushLineMessage(u.line_id, [buildExpenseReminderFlex(u.display_name)]);
+      const finishedAt = Date.now();
+      const summary = `${formatLocalSummaryTime(startedAt)} ${triggeredBy}：LINE 提醒成功（完成於 ${formatLocalSummaryTime(finishedAt)}）`;
+      db.run('UPDATE line_expense_reminders SET last_run = ?, last_summary = ?, updated_at = ? WHERE id = ?',
+        [startedAt, summary, startedAt, reminderId]);
+      saveDB();
+      return { status: 'completed', sent: 1, failed: 0, skipped: 0 };
+    } catch (e) {
+      const msg = e?.message || '未知錯誤';
+      const summary = `${formatLocalSummaryTime(startedAt)} ${triggeredBy}：LINE 提醒失敗 | 錯誤：${msg}`;
+      db.run('UPDATE line_expense_reminders SET last_run = ?, last_summary = ?, updated_at = ? WHERE id = ?',
+        [startedAt, summary, startedAt, reminderId]);
+      saveDB();
+      return { status: 'failed', sent: 0, failed: 1, skipped: 0, reason: msg };
+    }
+  } finally {
+    runningExpenseReminders.delete(reminderId);
+  }
+}
+
 // ── 心跳：迭代所有 enabled=1 排程，per-user 時區判斷觸發 ──
 function checkAndRunSchedule() {
   try {
@@ -251,9 +312,19 @@ function checkAndRunSchedule() {
       if (!shouldRunSchedule(row, tz, now)) continue;
       runScheduledReportNow(row.id, '排程').catch(err => console.error('[scheduled-report]', err));
     }
+
+    const reminders = queryAll(
+      'SELECT r.*, u.timezone AS user_timezone FROM line_expense_reminders r JOIN users u ON u.id = r.user_id WHERE r.enabled = 1 AND u.is_active = 1'
+    );
+    for (const row of reminders) {
+      if (runningExpenseReminders.has(row.id)) continue;
+      const tz = row.user_timezone || 'Asia/Taipei';
+      if (!shouldRunSchedule(row, tz, now)) continue;
+      runLineExpenseReminderNow(row.id, '排程').catch(err => console.error('[line-expense-reminder]', err));
+    }
   } catch (e) {
     console.error('[scheduled-report] check error', e);
   }
 }
 
-export { checkAndRunSchedule, shouldRunSchedule, runScheduledReportNow };
+export { checkAndRunSchedule, shouldRunSchedule, runScheduledReportNow, runLineExpenseReminderNow };

@@ -475,6 +475,22 @@ async function _runMigrations(): Promise<void> {
     updated_at INTEGER NOT NULL
   )`);
 
+  db.run(`CREATE TABLE IF NOT EXISTS line_expense_reminders (
+    id              TEXT    PRIMARY KEY,
+    user_id         TEXT    NOT NULL,
+    freq            TEXT    NOT NULL,
+    hour            INTEGER NOT NULL DEFAULT 21,
+    weekday         INTEGER NOT NULL DEFAULT 0,
+    day_of_month    INTEGER NOT NULL DEFAULT 1,
+    enabled         INTEGER NOT NULL DEFAULT 1,
+    last_run        INTEGER NOT NULL DEFAULT 0,
+    last_summary    TEXT    NOT NULL DEFAULT '',
+    created_at      INTEGER NOT NULL DEFAULT 0,
+    updated_at      INTEGER NOT NULL DEFAULT 0
+  )`);
+  alterIgnore("CREATE INDEX IF NOT EXISTS idx_line_expense_reminders_user ON line_expense_reminders(user_id)");
+  alterIgnore("CREATE INDEX IF NOT EXISTS idx_line_expense_reminders_enabled_freq ON line_expense_reminders(enabled, freq)");
+
   db.run(`CREATE TABLE IF NOT EXISTS stock_settings (
     user_id TEXT PRIMARY KEY,
     fee_rate REAL DEFAULT 0.001425,

@@ -35,6 +35,7 @@ export async function DELETE(request, { params }) {
   db.run('DELETE FROM user_settings WHERE user_id = ?', [id]);
   db.run('DELETE FROM deleted_defaults WHERE user_id = ?', [id]);
   db.run('DELETE FROM report_schedules WHERE user_id = ?', [id]);
+  db.run('DELETE FROM line_expense_reminders WHERE user_id = ?', [id]);
   db.run('DELETE FROM login_audit_logs WHERE user_id = ?', [id]);
   db.run('DELETE FROM login_attempt_logs WHERE user_id = ?', [id]);
   db.run('DELETE FROM data_operation_audit_log WHERE user_id = ?', [id]);

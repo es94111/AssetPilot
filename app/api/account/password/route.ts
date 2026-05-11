@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { requireAuth, setAuthCookie } from '../../../../lib/apiHelpers';
 import { getDB, queryOne, saveDB } from '../../../../lib/db';
-import { signToken } from '../../../../lib/auth';
+import { createLoginSession, revokeAllLoginSessions } from '../../../../lib/sessionHelpers';
 
 function validateStrongPassword(password: string) {
   if (!password || typeof password !== 'string') return '密碼為必填';
@@ -41,7 +41,8 @@ export async function PUT(request: Request) {
   saveDB();
 
   const updatedUser = queryOne('SELECT token_version FROM users WHERE id = ?', [auth.userId]);
-  const newToken = signToken(auth.userId, Number(updatedUser?.token_version) || 0);
+  revokeAllLoginSessions(auth.userId);
+  const { token: newToken } = createLoginSession(auth.userId, Number(updatedUser?.token_version) || 0, request.headers);
   const res = NextResponse.json({ success: true });
   setAuthCookie(res, newToken);
   return res;

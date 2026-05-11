@@ -1,6 +1,6 @@
 # 資產管理 系統規格說明書 (SSD)
 
-**版本：** 4.37.8
+**版本：** 4.37.9
 **日期：** 2026-05-11
 **狀態：** 已實作
 
@@ -122,6 +122,8 @@
 每一次登入成功都會寫入稽核紀錄，欄位包含登入時間、IP 位址、登入方式（password / google / passkey）、以及本次登入是否以管理員身分進行；失敗登入（帳號不存在、密碼錯誤、缺少憑證、暫時鎖定）也會記錄，且註明失敗原因。IP 的國家代碼優先取自 Cloudflare 的 `CF-IPCountry` 標頭，退回時才查 ipinfo.io；內網位址標記為 `LOCAL`。
 
 一般使用者只能在「帳號設定」看自己最近的 100 筆登入紀錄。管理員另可在管理介面看自己作為管理員身分登入的最近 200 筆、以及全站的最近 500 筆（含失敗嘗試）。管理員的兩種紀錄都支援單筆刪除、多選批次刪除、手動同步，並顯示上次同步時間；即使舊資料缺少主鍵，也必須能透過備援識別（例如時間戳）刪除單筆。
+
+帳號設定頁會列出目前有效登入裝置，欄位包含裝置名稱、登入時間、登入 IP 與單一裝置「登出」操作。一般登出與單一裝置登出只撤銷該 session；修改密碼與管理員重設密碼仍會遞增 `token_version` 並撤銷所有既有 session，確保高風險帳號變更後舊裝置失效。
 
 #### 伺服器時間與 NTP 校正
 
@@ -579,6 +581,7 @@ CSV 內容經過 Formula Injection 防護處理（以 `=`、`+`、`-`、`@` 開�
 ├── 1:N → 預算 (Budget)
 ├── 1:N → 固定收支 (RecurringTransaction)
 ├── 1:N → 登入稽核 (LoginAuditLog)
+├── 1:N → 登入裝置 (LoginSession)
 ├── 1:N → 股票持倉 (Stock)
 │         ├── 1:N → 股票交易 (StockTransaction)
 │         └── 1:N → 股票股利 (StockDividend)
@@ -608,6 +611,19 @@ CSV 內容經過 Formula Injection 防護處理（以 `=`、`+`、`-`、`@` 開�
 | ip_address     | TEXT    | 客戶端 IP 位址                        | 是   |
 | login_method   | TEXT    | 登入方式（password / google / passkey）| 是   |
 | is_admin_login | INTEGER | 是否以管理員身份登入（1/0）           | 是   |
+
+#### LoginSession（登入裝置）
+
+| 欄位        | 型態    | 說明                         | 必填 |
+| ----------- | ------- | ---------------------------- | ---- |
+| id          | TEXT PK | session 主鍵                 | 是   |
+| user_id     | TEXT    | 外鍵 → User                  | 是   |
+| token_hash  | TEXT    | JWT 雜湊值                   | 是   |
+| device_name | TEXT    | 由 User-Agent 推導的裝置名稱 | 是   |
+| ip_address  | TEXT    | 登入 IP                      | 是   |
+| user_agent  | TEXT    | 登入 User-Agent              | 否   |
+| login_at    | INTEGER | 登入時間（timestamp）        | 是   |
+| revoked_at  | INTEGER | 撤銷時間；0 表示有效         | 是   |
 
 #### Transaction（交易記錄）
 
@@ -733,10 +749,12 @@ API 路徑統一以 `/api/` 為前綴。所有需認證的路由自動套用 aut
 | GET  | /api/config              | 取得前端設定（Google Client ID 等）         |
 | POST | /api/auth/register       | 使用者註冊                                  |
 | POST | /api/auth/login          | 使用者登入（回傳 `currentLogin`）           |
-| POST | /api/auth/logout         | 登出（清除 Cookie）                         |
+| POST | /api/auth/logout         | 登出目前裝置（撤銷目前 session 並清除 Cookie） |
 | GET  | /api/auth/me             | 取得當前使用者資訊                          |
 | POST | /api/auth/google         | Google SSO 登入（驗證授權碼並簽發 JWT）     |
 | GET  | /api/account/login-logs  | 取得目前使用者登入稽核紀錄（最近 100 筆）   |
+| GET  | /api/account/sessions    | 取得目前有效登入裝置                         |
+| DELETE | /api/account/sessions/:id | 登出指定登入裝置                           |
 | PUT  | /api/account/password    | 使用者自助修改密碼                          |
 
 #### Passkey（WebAuthn）
@@ -964,6 +982,7 @@ API 路徑統一以 `/api/` 為前綴。所有需認證的路由自動套用 aut
 
 | 版本 | 日期 | 變更說明 |
 | --- | --- | --- |
+| 4.37.9 | 2026-05-11 | 帳號設定新增目前登入裝置管理：新增 `login_sessions` 紀錄有效登入 session，JWT 內含 `sessionId` 並以 token 雜湊比對；`GET /api/account/sessions` 列出裝置名稱、登入時間與登入 IP，`DELETE /api/account/sessions/:id` 可登出單一裝置，登出目前裝置時同步清除 Cookie；修改密碼與管理員重設密碼仍撤銷所有既有 session 並遞增 `token_version` |
 | 4.37.8 | 2026-05-11 | 登出範圍修正：`POST /api/auth/logout` 改為只清除目前裝置的 `authToken` Cookie，不再遞增 `users.token_version`，避免 A 裝置登出時讓其他裝置同步失效；修改密碼與管理員重設密碼仍保留 `token_version` 遞增，維持高風險帳號變更後全裝置 Token 撤銷 |
 | 4.37.3 | 2026-05-08 | 安全驗證差異補齊：①Next.js `requireAuth` / `requireServerAuth` 補回 JWT `tokenVersion` 與 `users.token_version` 比對，修改密碼、管理員重設密碼後舊 Token 立即失效；②middleware 與 API auth helper 補回 Cookie 認證狀態變更請求的 Origin / Referer CSRF 檢查；③新增 `lib/envSecrets.ts`，啟動時載入 `ENV_PATH` 並在缺少 `JWT_SECRET` / `DB_ENCRYPTION_KEY` 時自動產生寫入，避免固定預設 JWT 密鑰與未加密資料庫；④`/api/account/settings/delete` 與 `/api/account/settings/password` 復用主要帳號端點，避免 Google-only 刪除帳號與修改密碼流程安全性分岔；⑤production CSP 移除 `unsafe-eval`，僅 dev mode 保留 |
 | 4.37.2 | 2026-05-07 | CI/CD build 修復 + 生產部署崩潰修正：①`lib/db.ts` 移除 `Function('return require')()` hack，改用頂層 `import * as path/fs/crypto from 'path'/'fs'/'crypto'`；`sql.js` 由 runtime require 改為 `await import('sql.js')`；②`next.config.js` 新增 `serverExternalPackages: ['sql.js']` + webpack `resolve.fallback: {path/fs/crypto: false}` for `nextRuntime !== 'nodejs'`（修正 Edge runtime 編譯時 UnhandledSchemeError / Module not found）；③新增 `types/sql.js.d.ts`（`declare module 'sql.js'`）修正 TS7016；④`lib/db.ts._runMigrations` 清除 merge 殘留的 `const path = getPathModule()` / `const fs = getFsModule()` 呼叫 |

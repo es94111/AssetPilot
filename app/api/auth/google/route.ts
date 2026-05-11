@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
-import { signToken } from '../../../../lib/auth';
 import { getDB, queryOne, saveDB } from '../../../../lib/db';
 import {
   normalizeEmail,
@@ -12,6 +11,7 @@ import {
 import { uid, todayStr, createDefaultsForUser, backfillDefaultsForUser } from '../../../../lib/userDefaults';
 import { formatUser, setAuthCookie } from '../../../../lib/apiHelpers';
 import { consumeGoogleOAuthState } from '@/lib/googleOAuthState';
+import { createLoginSession } from '../../../../lib/sessionHelpers';
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || '';
@@ -122,7 +122,7 @@ export async function POST(request: Request) {
     recordLoginAttempt({ user: loginUser, email: loginUser.email, headers, method: 'google', isSuccess: true });
     try { backfillDefaultsForUser(loginUser.id); } catch (e) { console.error('[backfill]', e); }
 
-    const token = signToken(loginUser.id, Number(user.token_version) || 0);
+    const { token } = createLoginSession(loginUser.id, Number(user.token_version) || 0, headers);
     const response = NextResponse.json({ user: formatUser(user), currentLogin });
     return setAuthCookie(response, token);
   } catch (e) {

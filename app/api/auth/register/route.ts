@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
-import { signToken } from '../../../../lib/auth';
 import { getDB, saveDB } from '../../../../lib/db';
 import {
   normalizeEmail,
@@ -10,6 +9,7 @@ import {
 } from '../../../../lib/loginHelpers';
 import { uid, todayStr, createDefaultsForUser } from '../../../../lib/userDefaults';
 import { setAuthCookie } from '../../../../lib/apiHelpers';
+import { createLoginSession } from '../../../../lib/sessionHelpers';
 
 function validateStrongPassword(password: string) {
   if (!password || typeof password !== 'string') return '密碼為必填';
@@ -63,7 +63,7 @@ export async function POST(request: Request) {
   createDefaultsForUser(id);
   saveDB();
 
-  const token = signToken(id, 0);
+  const { token } = createLoginSession(id, 0, request.headers);
   const response = NextResponse.json({
     user: { id, email: emailLower, displayName, themeMode: 'system', isAdmin: !!isAdmin }
   });

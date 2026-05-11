@@ -246,6 +246,21 @@ async function _runMigrations(): Promise<void> {
   db.run(`CREATE INDEX IF NOT EXISTS idx_login_attempt_time ON login_attempt_logs(login_at DESC)`);
   db.run(`CREATE INDEX IF NOT EXISTS idx_login_attempt_email_time ON login_attempt_logs(email, login_at DESC)`);
 
+  db.run(`CREATE TABLE IF NOT EXISTS login_sessions (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    token_hash TEXT NOT NULL,
+    device_name TEXT NOT NULL,
+    ip_address TEXT NOT NULL,
+    user_agent TEXT DEFAULT '',
+    login_at INTEGER NOT NULL,
+    last_seen_at INTEGER DEFAULT 0,
+    expires_at INTEGER DEFAULT 0,
+    revoked_at INTEGER DEFAULT 0
+  )`);
+  db.run(`CREATE INDEX IF NOT EXISTS idx_login_sessions_user_active ON login_sessions(user_id, revoked_at, login_at DESC)`);
+  db.run(`CREATE INDEX IF NOT EXISTS idx_login_sessions_token ON login_sessions(token_hash)`);
+
   db.run(`CREATE TABLE IF NOT EXISTS passkey_credentials (
     credential_id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL,

@@ -27,8 +27,8 @@ export async function requireAuth() {
   return session;
 }
 
-export function signToken(userId: string, tokenVersion: number) {
-  return jwt.sign({ userId, tokenVersion }, JWT_SECRET, { expiresIn: JWT_EXPIRES });
+export function signToken(userId: string, tokenVersion: number, sessionId?: string) {
+  return jwt.sign({ userId, tokenVersion, ...(sessionId ? { sessionId } : {}) }, JWT_SECRET, { expiresIn: JWT_EXPIRES });
 }
 
 export function verifyToken(token: string, options?: any) {

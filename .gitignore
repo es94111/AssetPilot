@@ -21,6 +21,13 @@ build/
 build/cache/*
 .next/
 .agents/
+.claude/
+.claudeskill/
+.specify/
+.vscode/
+specs/
+test-results/
+docs/
 
 # ==========================================
 # OS-specific files (作業系統專屬檔案)

@@ -165,6 +165,25 @@
   --twse-text: #fdba74;
 }
 
+.app-sidebar {
+  transform: translateX(-100%);
+}
+.app-sidebar[data-open='true'] {
+  transform: translateX(0);
+}
+
+@media (min-width: 1024px) {
+  .app-sidebar {
+    position: static;
+    transform: translateX(0);
+    flex-shrink: 0;
+  }
+
+  .app-topnav {
+    display: none;
+  }
+}
+
 .system-theme { color-scheme: light; }
 @media (prefers-color-scheme: dark) {
   .system-theme { color-scheme: dark; }

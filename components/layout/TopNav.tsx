@@ -5,7 +5,7 @@ import { Menu } from 'lucide-react';
 export default function TopNav({ title, onMenuClick }: { title: string; onMenuClick: () => void }) {
   return (
     <header
-      className="sticky top-0 z-30 flex items-center gap-3 px-4 py-3 lg:hidden"
+      className="app-topnav sticky top-0 z-30 flex items-center gap-3 px-4 py-3"
       style={{ background: 'var(--surface-glass)', borderBottom: '1px solid var(--glass-border)', backdropFilter: 'var(--glass-blur)', WebkitBackdropFilter: 'var(--glass-blur)' }}
     >
       <button

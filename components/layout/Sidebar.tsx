@@ -123,7 +123,8 @@ export default function Sidebar({ user, open, onClose }: { user: any; open?: boo
   return (
     <>
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex h-full w-64 flex-col transform transition-transform duration-200 lg:static lg:translate-x-0 ${open ? 'translate-x-0' : '-translate-x-full'}`}
+        data-open={open ? 'true' : 'false'}
+        className="app-sidebar fixed inset-y-0 left-0 z-50 flex h-full w-64 flex-col transition-transform duration-200"
         style={{ background: 'var(--surface-glass)', borderRight: '1px solid var(--glass-border)', backdropFilter: 'var(--glass-blur)', WebkitBackdropFilter: 'var(--glass-blur)' }}
       >
         {/* Logo */}

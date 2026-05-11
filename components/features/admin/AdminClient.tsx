@@ -59,6 +59,7 @@ export default function AdminClient(_props: { user?: any } = {}) {
   const [saveMsg, setSaveMsg] = useState('');
 
   const [publicRegistration, setPublicRegistration] = useState(false);
+  const [lineLoginEnabled, setLineLoginEnabled] = useState(false);
   const [allowedEmails, setAllowedEmails] = useState('');
   const [ipAllowlist, setIpAllowlist] = useState('');
 
@@ -105,6 +106,7 @@ export default function AdminClient(_props: { user?: any } = {}) {
       ]);
 
       setPublicRegistration(!!settings.publicRegistration);
+      setLineLoginEnabled(!!settings.lineLoginEnabled);
       setAllowedEmails(Array.isArray(settings.allowedRegistrationEmails) ? settings.allowedRegistrationEmails.join('\n') : '');
       setIpAllowlist(Array.isArray(settings.adminIpAllowlist) ? settings.adminIpAllowlist.join('\n') : '');
       setUsers(userList || []);
@@ -135,6 +137,7 @@ export default function AdminClient(_props: { user?: any } = {}) {
     try {
       await apiPut('/api/admin/system-settings', {
         publicRegistration,
+        lineLoginEnabled,
         allowedRegistrationEmails: allowedEmails.split('\n').map((s) => s.trim()).filter(Boolean),
         adminIpAllowlist: ipAllowlist.split('\n').map((s) => s.trim()).filter(Boolean),
       });
@@ -404,6 +407,10 @@ export default function AdminClient(_props: { user?: any } = {}) {
                 <input type="checkbox" checked={publicRegistration} onChange={(e) => setPublicRegistration(e.target.checked)} className="w-4 h-4" />
                 開放公開註冊
               </label>
+              <label className="flex items-center gap-2">
+                <input type="checkbox" checked={lineLoginEnabled} onChange={(e) => setLineLoginEnabled(e.target.checked)} className="w-4 h-4" />
+                啟用 LINE 登入
+              </label>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">允許註冊的電子郵件（每行一筆）</label>
                 <textarea rows={4} value={allowedEmails} onChange={(e) => setAllowedEmails(e.target.value)} className="w-full p-2 border rounded-md" placeholder="留空表示不限制" />
@@ -455,7 +462,7 @@ export default function AdminClient(_props: { user?: any } = {}) {
                 <TableRow key={user.id}>
                   <TableCell>{user.email}</TableCell>
                   <TableCell>{user.displayName || '—'}</TableCell>
-                  <TableCell>{[user.hasPassword ? '密碼' : null, user.googleId ? 'Google' : null].filter(Boolean).join(' + ') || '—'}</TableCell>
+                  <TableCell>{[user.hasPassword ? '密碼' : null, user.googleId ? 'Google' : null, user.lineId ? 'LINE' : null].filter(Boolean).join(' + ') || '—'}</TableCell>
                   <TableCell>{user.isAdmin ? '是' : '否'}</TableCell>
                   <TableCell>{user.createdAt ? new Date(user.createdAt).toLocaleString('zh-TW') : '—'}</TableCell>
                   <TableCell className="flex gap-2 flex-wrap">

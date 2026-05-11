@@ -151,6 +151,10 @@ export function formatUser(user: any) {
     displayName: user.display_name,
     isAdmin: !!user.is_admin,
     themeMode: user.theme_mode,
+    hasPassword: !!user.has_password,
+    googleLinked: !!user.google_id,
+    lineLinked: !!user.line_id,
+    avatarUrl: user.avatar_url || '',
   };
 }
 

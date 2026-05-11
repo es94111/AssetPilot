@@ -34,6 +34,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [config, setConfig] = useState<any>(null);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [lineLoading, setLineLoading] = useState(false);
   const [passkeyLoading, setPasskeyLoading] = useState(false);
 
   useEffect(() => {
@@ -43,6 +44,33 @@ export default function LoginPage() {
     }
     fetch('/api/config').then(r => r.json()).then(cfg => setConfig(cfg)).catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('code');
+    const state = params.get('state');
+    const expectedState = window.sessionStorage.getItem('line_oauth_state');
+    if (!code || !state || !expectedState || state !== expectedState) return;
+
+    window.sessionStorage.removeItem('line_oauth_state');
+    setLineLoading(true);
+    setError('');
+    const redirectUri = window.location.origin + window.location.pathname;
+    fetch('/api/auth/line', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code, state, redirect_uri: redirectUri }),
+    })
+      .then(async (res) => {
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || 'LINE 登入失敗');
+        router.push('/dashboard');
+        router.refresh();
+      })
+      .catch((e) => setError(e.message || 'LINE 登入失敗'))
+      .finally(() => setLineLoading(false));
+  }, [router]);
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
@@ -152,8 +180,33 @@ export default function LoginPage() {
     finally { setPasskeyLoading(false); }
   }
 
+  async function handleLineLogin() {
+    setError('');
+    if (!config?.lineChannelId || !config?.lineCodeFlow) { setError('LINE 登入尚未設定完成'); return; }
+    setLineLoading(true);
+    try {
+      const stateRes = await fetch('/api/auth/line/state', { cache: 'no-store' });
+      const { state, nonce } = await stateRes.json().catch(() => ({}));
+      if (!state || !nonce) throw new Error('無法建立 LINE 登入狀態');
+      window.sessionStorage.setItem('line_oauth_state', state);
+      const redirectUri = window.location.origin + window.location.pathname;
+      const authorizeUrl = new URL('https://access.line.me/oauth2/v2.1/authorize');
+      authorizeUrl.searchParams.set('response_type', 'code');
+      authorizeUrl.searchParams.set('client_id', config.lineChannelId);
+      authorizeUrl.searchParams.set('redirect_uri', redirectUri);
+      authorizeUrl.searchParams.set('state', state);
+      authorizeUrl.searchParams.set('scope', 'openid profile email');
+      authorizeUrl.searchParams.set('nonce', nonce);
+      window.location.href = authorizeUrl.toString();
+    } catch (e: any) {
+      setError(e.message || 'LINE 登入失敗');
+      setLineLoading(false);
+    }
+  }
+
   const registrationEnabled = config ? config.registrationEnabled : true;
   const googleEnabled = !!config?.googleClientId && !!config?.googleCodeFlow;
+  const lineEnabled = !!config?.lineChannelId && !!config?.lineCodeFlow;
 
   return (
     <div className="login-bg">
@@ -232,6 +285,12 @@ export default function LoginPage() {
                 {googleLoading ? 'Google 驗證中…' : '使用 Google 登入'}
               </button>
             )}
+            {lineEnabled && (
+              <button type="button" className="login-btn-google" onClick={handleLineLogin} disabled={lineLoading}>
+                <LineIcon />
+                {lineLoading ? 'LINE 驗證中…' : '使用 LINE 登入'}
+              </button>
+            )}
           </form>
         )}
 
@@ -277,6 +336,16 @@ export default function LoginPage() {
         )}
       </div>
     </div>
+  );
+}
+
+function LineIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
+      <rect width="18" height="18" rx="4" fill="#06C755" />
+      <path fill="#fff" d="M14.35 8.1c0-2.34-2.35-4.24-5.24-4.24S3.86 5.76 3.86 8.1c0 2.1 1.86 3.86 4.38 4.19.17.04.4.11.46.26.05.13.03.34.02.47l-.07.45c-.02.13-.11.52.45.28.56-.24 3.03-1.79 4.13-3.06.76-.83 1.12-1.67 1.12-2.59Z"/>
+      <path fill="#06C755" d="M6.47 6.94h-.37a.1.1 0 0 0-.1.1v2.29c0 .06.04.1.1.1h1.31c.06 0 .1-.04.1-.1v-.37a.1.1 0 0 0-.1-.1h-.84V7.04a.1.1 0 0 0-.1-.1Zm1.42 0h-.37a.1.1 0 0 0-.1.1v2.29c0 .06.04.1.1.1h.37c.06 0 .1-.04.1-.1V7.04a.1.1 0 0 0-.1-.1Zm2.44 0h-.37a.1.1 0 0 0-.1.1v1.36L8.82 6.98a.1.1 0 0 0-.08-.04h-.36a.1.1 0 0 0-.1.1v2.29c0 .06.04.1.1.1h.37c.06 0 .1-.04.1-.1V7.97l1.05 1.42.02.02.01.01h.01l.01.01h.39c.06 0 .1-.04.1-.1V7.04a.1.1 0 0 0-.1-.1Zm1.68.57c.06 0 .1-.04.1-.1v-.37a.1.1 0 0 0-.1-.1h-1.31a.1.1 0 0 0-.1.1v2.29c0 .06.04.1.1.1h1.31c.06 0 .1-.04.1-.1v-.37a.1.1 0 0 0-.1-.1h-.84v-.39h.84c.06 0 .1-.04.1-.1v-.37a.1.1 0 0 0-.1-.1h-.84v-.39h.84Z"/>
+    </svg>
   );
 }
 

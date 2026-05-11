@@ -294,6 +294,7 @@ async function _runMigrations(): Promise<void> {
   alterIgnore("ALTER TABLE system_settings ADD COLUMN server_time_offset INTEGER DEFAULT 0");
   alterIgnore("ALTER TABLE system_settings ADD COLUMN audit_log_retention_days TEXT DEFAULT '90'");
   alterIgnore("ALTER TABLE system_settings ADD COLUMN route_audit_mode TEXT DEFAULT 'security'");
+  alterIgnore("ALTER TABLE system_settings ADD COLUMN line_login_enabled INTEGER DEFAULT 0");
 
   db.run(`INSERT OR IGNORE INTO system_settings (id, public_registration, allowed_registration_emails, admin_ip_allowlist, updated_at, updated_by) VALUES (1, 1, '', '', ?, '')`, [Date.now()]);
 
@@ -481,6 +482,7 @@ async function _runMigrations(): Promise<void> {
   alterIgnore("ALTER TABLE users ADD COLUMN theme_mode TEXT DEFAULT 'system'");
   alterIgnore("ALTER TABLE users ADD COLUMN google_id TEXT DEFAULT ''");
   alterIgnore("ALTER TABLE users ADD COLUMN google_sub TEXT DEFAULT ''");
+  alterIgnore("ALTER TABLE users ADD COLUMN line_id TEXT DEFAULT ''");
   alterIgnore("ALTER TABLE users ADD COLUMN has_password INTEGER DEFAULT 1");
   alterIgnore("ALTER TABLE users ADD COLUMN avatar_url TEXT DEFAULT ''");
   alterIgnore("ALTER TABLE users ADD COLUMN token_version INTEGER DEFAULT 0");

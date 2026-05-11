@@ -38,6 +38,8 @@ export default function AccountSettingsClient({ user: initialUser }: { user: any
   const [sessionsLoading, setSessionsLoading] = useState(false);
   const [sessionsMsg, setSessionsMsg] = useState('');
   const [googleMsg, setGoogleMsg] = useState('');
+  const [lineMsg, setLineMsg] = useState('');
+  const [lineLoading, setLineLoading] = useState(false);
   const [deleteMsg, setDeleteMsg] = useState('');
 
   const load = useCallback(async () => {
@@ -81,12 +83,41 @@ export default function AccountSettingsClient({ user: initialUser }: { user: any
 
   useEffect(() => { load(); loadPasskeys(); loadSessions(); loadLoginAudit(); }, [load, loadPasskeys, loadSessions, loadLoginAudit]);
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('code');
+    const state = params.get('state');
+    const expectedState = window.sessionStorage.getItem('line_link_state');
+    if (!code || !state || !expectedState || state !== expectedState) return;
+
+    window.sessionStorage.removeItem('line_link_state');
+    setLineLoading(true);
+    setLineMsg('');
+    const redirectUri = window.location.origin + window.location.pathname;
+    fetch('/api/account/link-line', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code, state, redirect_uri: redirectUri }),
+    })
+      .then(async (res) => {
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || 'LINE 綁定失敗');
+        setLineMsg('LINE 帳號已綁定');
+        window.history.replaceState({}, '', window.location.pathname);
+        return load();
+      })
+      .catch((e) => setLineMsg(e.message || 'LINE 綁定失敗'))
+      .finally(() => setLineLoading(false));
+  }, [load]);
+
   async function handleChangePw(e: React.FormEvent) {
     e.preventDefault();
     setPwError('');
     setPwSuccess('');
-    const isGoogleOnly = profile?.googleLinked && !profile?.hasPassword;
-    if (!isGoogleOnly && !currentPw) { setPwError('請輸入目前密碼'); return; }
+    const oauthOnly = (profile?.googleLinked || profile?.lineLinked) && !profile?.hasPassword;
+    if (!oauthOnly && !currentPw) { setPwError('請輸入目前密碼'); return; }
     if (!newPw) { setPwError('請輸入新密碼'); return; }
     if (newPw.length < 8) { setPwError('新密碼長度至少 8 字元'); return; }
     if (!/[A-Z]/.test(newPw) || !/[a-z]/.test(newPw) || !/\d/.test(newPw) || !/[^a-zA-Z0-9]/.test(newPw)) {
@@ -96,11 +127,11 @@ export default function AccountSettingsClient({ user: initialUser }: { user: any
     setPwSaving(true);
     try {
       await apiPut('/api/account/password', {
-        currentPassword: isGoogleOnly ? undefined : currentPw,
+        currentPassword: oauthOnly ? undefined : currentPw,
         newPassword: newPw,
       });
       setCurrentPw(''); setNewPw(''); setConfirmPw('');
-      setPwSuccess(isGoogleOnly ? '密碼已設定，現在可使用密碼登入' : '密碼已更新');
+      setPwSuccess(oauthOnly ? '密碼已設定，現在可使用密碼登入' : '密碼已更新');
       await load();
     } catch (e: any) { setPwError(e.message || '更新密碼失敗'); }
     setPwSaving(false);
@@ -205,6 +236,43 @@ export default function AccountSettingsClient({ user: initialUser }: { user: any
     }
   }
 
+  async function handleLinkLine() {
+    setLineMsg('');
+    setLineLoading(true);
+    try {
+      const cfgRes = await fetch('/api/config', { cache: 'no-store' });
+      const cfg = await cfgRes.json().catch(() => ({}));
+      if (!cfg?.lineChannelId || !cfg?.lineCodeFlow) throw new Error('LINE 登入尚未設定完成');
+      const stateRes = await fetch('/api/auth/line/state', { cache: 'no-store' });
+      const { state, nonce } = await stateRes.json().catch(() => ({}));
+      if (!state || !nonce) throw new Error('無法建立 LINE 綁定狀態');
+      window.sessionStorage.setItem('line_link_state', state);
+      const redirectUri = window.location.origin + window.location.pathname;
+      const authorizeUrl = new URL('https://access.line.me/oauth2/v2.1/authorize');
+      authorizeUrl.searchParams.set('response_type', 'code');
+      authorizeUrl.searchParams.set('client_id', cfg.lineChannelId);
+      authorizeUrl.searchParams.set('redirect_uri', redirectUri);
+      authorizeUrl.searchParams.set('state', state);
+      authorizeUrl.searchParams.set('scope', 'openid profile email');
+      authorizeUrl.searchParams.set('nonce', nonce);
+      window.location.href = authorizeUrl.toString();
+    } catch (e: any) {
+      setLineMsg(e.message || 'LINE 綁定失敗');
+      setLineLoading(false);
+    }
+  }
+
+  async function handleUnlinkLine() {
+    setLineMsg('');
+    try {
+      await apiDelete('/api/account/settings/line');
+      setLineMsg('LINE 帳號已解除綁定');
+      await load();
+    } catch (e: any) {
+      setLineMsg(e.message || 'LINE 解除綁定失敗');
+    }
+  }
+
   async function handleDeleteAccount() {
     setDeleteMsg('');
     const password = window.prompt('輸入密碼以刪除帳號');
@@ -227,7 +295,7 @@ export default function AccountSettingsClient({ user: initialUser }: { user: any
 
   if (loading) return <div className="p-8 text-slate-500">載入中...</div>;
 
-  const isGoogleOnly = profile?.googleLinked && !profile?.hasPassword;
+  const isOAuthOnly = (profile?.googleLinked || profile?.lineLinked) && !profile?.hasPassword;
 
   return (
     <div className="space-y-6">
@@ -252,15 +320,15 @@ export default function AccountSettingsClient({ user: initialUser }: { user: any
 
       {/* Password */}
       <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-xl shadow-sm">
-        <h3 className="text-lg font-semibold mb-4">{isGoogleOnly ? '設定本機密碼' : '修改密碼'}</h3>
-        {isGoogleOnly && <p className="text-sm text-slate-500 mb-4">目前帳號僅支援 Google 登入。設定本機密碼後，即可使用電子信箱與密碼登入。</p>}
+        <h3 className="text-lg font-semibold mb-4">{isOAuthOnly ? '設定本機密碼' : '修改密碼'}</h3>
+        {isOAuthOnly && <p className="text-sm text-slate-500 mb-4">目前帳號僅支援第三方登入。設定本機密碼後，即可使用電子信箱與密碼登入。</p>}
         <form onSubmit={handleChangePw} className="space-y-4">
-          {!isGoogleOnly && <Input label="目前密碼" type="password" value={currentPw} onChange={e => setCurrentPw(e.target.value)} />}
+          {!isOAuthOnly && <Input label="目前密碼" type="password" value={currentPw} onChange={e => setCurrentPw(e.target.value)} />}
           <Input label="新密碼" type="password" value={newPw} onChange={e => setNewPw(e.target.value)} placeholder="至少8碼，含大小寫英文、數字、特殊符號" />
           <Input label="確認新密碼" type="password" value={confirmPw} onChange={e => setConfirmPw(e.target.value)} />
           {pwError && <div className="text-red-500 text-sm">{pwError}</div>}
           {pwSuccess && <p className="text-green-600 text-sm">{pwSuccess}</p>}
-          <Button type="submit" disabled={pwSaving}>{pwSaving ? '更新中...' : isGoogleOnly ? '設定密碼' : '更新密碼'}</Button>
+          <Button type="submit" disabled={pwSaving}>{pwSaving ? '更新中...' : isOAuthOnly ? '設定密碼' : '更新密碼'}</Button>
         </form>
       </div>
 
@@ -302,6 +370,16 @@ export default function AccountSettingsClient({ user: initialUser }: { user: any
           {profile?.googleLinked && <Button variant="outline" onClick={handleUnlinkGoogle}>解除綁定</Button>}
         </div>
         {googleMsg && <p className="text-sm text-slate-600 mt-3">{googleMsg}</p>}
+      </div>
+
+      <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-xl shadow-sm">
+        <h3 className="text-lg font-semibold mb-4">LINE 綁定</h3>
+        <p className="text-sm text-slate-500 mb-4">目前狀態：{profile?.lineLinked ? '已綁定 LINE 帳號' : '尚未綁定 LINE 帳號'}</p>
+        <div className="flex gap-3 flex-wrap">
+          {!profile?.lineLinked && <Button onClick={handleLinkLine} disabled={lineLoading}>{lineLoading ? 'LINE 驗證中…' : '綁定 LINE 帳號'}</Button>}
+          {profile?.lineLinked && <Button variant="outline" onClick={handleUnlinkLine}>解除綁定</Button>}
+        </div>
+        {lineMsg && <p className="text-sm text-slate-600 mt-3">{lineMsg}</p>}
       </div>
 
       <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-xl shadow-sm">

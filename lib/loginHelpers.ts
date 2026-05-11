@@ -13,6 +13,7 @@ export interface SystemSettings {
   allowedRegistrationEmails: string[];
   adminIpAllowlist: string[];
   routeAuditMode: 'security' | 'extended' | 'minimal';
+  lineLoginEnabled: boolean;
 }
 
 export interface LoginAuditResult {
@@ -149,11 +150,12 @@ export async function fetchIpCountry(ipAddress: string): Promise<string> {
 // ── 系統設定 ──
 
 export function getSystemSettings(): SystemSettings {
-  const row = queryOne('SELECT public_registration, allowed_registration_emails, admin_ip_allowlist, route_audit_mode FROM system_settings WHERE id = 1') || {
+  const row = queryOne('SELECT public_registration, allowed_registration_emails, admin_ip_allowlist, route_audit_mode, line_login_enabled FROM system_settings WHERE id = 1') || {
     public_registration: 1,
     allowed_registration_emails: '',
     admin_ip_allowlist: '',
     route_audit_mode: 'security',
+    line_login_enabled: 0,
   };
   const allowedRegistrationEmails = parseAllowedRegistrationEmails(String(row.allowed_registration_emails || ''));
   const dbAdminIpAllowlist = parseIpAllowlist(String(row.admin_ip_allowlist || ''));
@@ -166,6 +168,7 @@ export function getSystemSettings(): SystemSettings {
     allowedRegistrationEmails,
     adminIpAllowlist: mergedAdminIpAllowlist,
     routeAuditMode,
+    lineLoginEnabled: !!row.line_login_enabled,
   };
 }
 

@@ -21,7 +21,7 @@ export async function GET(request) {
   if (auth instanceof NextResponse) return auth;
 
   const rows = queryAll(
-    'SELECT id, email, display_name, created_at, google_id, has_password, is_admin FROM users ORDER BY created_at DESC, email ASC'
+    'SELECT id, email, display_name, created_at, google_id, line_id, has_password, is_admin FROM users ORDER BY created_at DESC, email ASC'
   );
   const users = rows.map(r => ({
     id: r.id,
@@ -29,6 +29,7 @@ export async function GET(request) {
     displayName: r.display_name,
     createdAt: r.created_at,
     googleId: r.google_id || '',
+    lineId: r.line_id || '',
     hasPassword: !!r.has_password,
     isAdmin: !!r.is_admin,
   }));

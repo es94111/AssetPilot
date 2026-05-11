@@ -20,6 +20,7 @@ export async function PUT(request) {
   try { body = await request.json(); } catch { body = {}; }
 
   const publicRegistration = !!body?.publicRegistration;
+  const lineLoginEnabled = !!body?.lineLoginEnabled;
   const allowedRegistrationEmails = parseAllowedRegistrationEmails(body?.allowedRegistrationEmails);
   const adminIpAllowlist = parseIpAllowlist(body?.adminIpAllowlist);
 
@@ -35,13 +36,13 @@ export async function PUT(request) {
   const db = getDB();
   if (routeAuditMode) {
     db.run(
-      'UPDATE system_settings SET public_registration = ?, allowed_registration_emails = ?, admin_ip_allowlist = ?, route_audit_mode = ?, updated_at = ?, updated_by = ? WHERE id = 1',
-      [publicRegistration ? 1 : 0, allowedRegistrationEmails.join('\n'), adminIpAllowlist.join('\n'), routeAuditMode, Date.now(), auth.userId]
+      'UPDATE system_settings SET public_registration = ?, line_login_enabled = ?, allowed_registration_emails = ?, admin_ip_allowlist = ?, route_audit_mode = ?, updated_at = ?, updated_by = ? WHERE id = 1',
+      [publicRegistration ? 1 : 0, lineLoginEnabled ? 1 : 0, allowedRegistrationEmails.join('\n'), adminIpAllowlist.join('\n'), routeAuditMode, Date.now(), auth.userId]
     );
   } else {
     db.run(
-      'UPDATE system_settings SET public_registration = ?, allowed_registration_emails = ?, admin_ip_allowlist = ?, updated_at = ?, updated_by = ? WHERE id = 1',
-      [publicRegistration ? 1 : 0, allowedRegistrationEmails.join('\n'), adminIpAllowlist.join('\n'), Date.now(), auth.userId]
+      'UPDATE system_settings SET public_registration = ?, line_login_enabled = ?, allowed_registration_emails = ?, admin_ip_allowlist = ?, updated_at = ?, updated_by = ? WHERE id = 1',
+      [publicRegistration ? 1 : 0, lineLoginEnabled ? 1 : 0, allowedRegistrationEmails.join('\n'), adminIpAllowlist.join('\n'), Date.now(), auth.userId]
     );
   }
   saveDB();
@@ -50,6 +51,7 @@ export async function PUT(request) {
   return NextResponse.json({
     success: true,
     publicRegistration,
+    lineLoginEnabled,
     allowedRegistrationEmails,
     adminIpAllowlist,
     routeAuditMode: routeAuditMode || currentSettings.routeAuditMode,

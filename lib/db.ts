@@ -472,8 +472,10 @@ async function _runMigrations(): Promise<void> {
     user_id TEXT NOT NULL,
     action TEXT NOT NULL,
     tx_type TEXT DEFAULT '',
+    payload TEXT DEFAULT '{}',
     updated_at INTEGER NOT NULL
   )`);
+  alterIgnore("ALTER TABLE line_bot_states ADD COLUMN payload TEXT DEFAULT '{}'");
 
   db.run(`CREATE TABLE IF NOT EXISTS line_expense_reminders (
     id              TEXT    PRIMARY KEY,

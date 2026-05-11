@@ -134,11 +134,48 @@ export function buildMainMenuFlex(appUrl: string, linked: boolean): LineFlexMess
         spacing: 'sm',
         contents: linked
           ? [
-              postbackButton('新增支出', 'action=record&type=expense', '新增支出', 'primary'),
-              postbackButton('新增收入', 'action=record&type=income', '新增收入'),
+              postbackButton('新增記錄', 'action=record_wizard', '新增記錄', 'primary'),
+              postbackButton('快速支出', 'action=record&type=expense', '新增支出'),
               postbackButton('查看紀錄', 'action=query_menu', '查看紀錄'),
             ]
           : [uriButton('綁定 LINE 帳號', bindUrl)],
+      },
+    },
+  };
+}
+
+export function buildRecordWizardStepFlex(
+  title: string,
+  lines: string[],
+  actions: Array<{ label: string; data: string; displayText?: string; primary?: boolean }>
+): LineFlexMessage {
+  return {
+    type: 'flex',
+    altText: title,
+    contents: {
+      type: 'bubble',
+      body: {
+        type: 'box',
+        layout: 'vertical',
+        spacing: 'md',
+        contents: [
+          { type: 'text', text: title, weight: 'bold', size: 'lg', wrap: true },
+          ...lines.map((line) => ({ type: 'text', text: line, size: 'sm', color: '#475569', wrap: true })),
+        ],
+      },
+      footer: {
+        type: 'box',
+        layout: 'vertical',
+        spacing: 'sm',
+        contents: [
+          ...actions.slice(0, 10).map((action, index) => postbackButton(
+            action.label,
+            action.data,
+            action.displayText || action.label,
+            action.primary || index === 0 ? 'primary' : 'secondary'
+          )),
+          postbackButton('取消', 'action=menu', '選單'),
+        ],
       },
     },
   };

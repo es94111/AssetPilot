@@ -4,6 +4,7 @@ export const LINE_MESSAGING_CHANNEL_SECRET = process.env.LINE_MESSAGING_CHANNEL_
 export const LINE_MESSAGING_CHANNEL_ACCESS_TOKEN = process.env.LINE_MESSAGING_CHANNEL_ACCESS_TOKEN || '';
 
 const LINE_REPLY_ENDPOINT = 'https://api.line.me/v2/bot/message/reply';
+const LINE_PUSH_ENDPOINT = 'https://api.line.me/v2/bot/message/push';
 
 export interface LineTextMessage {
   type: 'text';
@@ -45,6 +46,24 @@ export async function replyLineMessage(replyToken: string, messages: LineReplyMe
   if (!res.ok) {
     const detail = await res.text().catch(() => '');
     throw new Error(`LINE reply failed (${res.status}) ${detail}`);
+  }
+}
+
+export async function pushLineMessage(to: string, messages: LineReplyMessage[]): Promise<void> {
+  if (!LINE_MESSAGING_CHANNEL_ACCESS_TOKEN) {
+    throw new Error('LINE_MESSAGING_CHANNEL_ACCESS_TOKEN is not configured');
+  }
+  const res = await fetch(LINE_PUSH_ENDPOINT, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${LINE_MESSAGING_CHANNEL_ACCESS_TOKEN}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ to, messages }),
+  });
+  if (!res.ok) {
+    const detail = await res.text().catch(() => '');
+    throw new Error(`LINE push failed (${res.status}) ${detail}`);
   }
 }
 
@@ -297,6 +316,94 @@ export function buildQueryFlex(title: string, summary: string[], details: string
         contents: [
           postbackButton('新增支出', 'action=record&type=expense', '新增支出'),
           postbackButton('選單', 'action=menu', '選單'),
+        ],
+      },
+    },
+  };
+}
+
+function formatAmount(value: unknown, currency = 'TWD') {
+  const n = Number(value) || 0;
+  return `${currency} ${Math.round(n).toLocaleString('zh-TW')}`;
+}
+
+export function buildStatsReportFlex(displayName: string, stats: Record<string, any>, appUrl: string): LineFlexMessage {
+  const detailsUrl = `${appUrl.replace(/\/$/, '')}/reports`;
+  const balanceLines = Object.entries(stats.balanceByCurrency || {})
+    .slice(0, 4)
+    .map(([currency, value]) => ({
+      type: 'box',
+      layout: 'horizontal',
+      contents: [
+        { type: 'text', text: String(currency), size: 'sm', color: '#64748b', flex: 2 },
+        { type: 'text', text: formatAmount(value, String(currency)), size: 'sm', weight: 'bold', align: 'end', flex: 5 },
+      ],
+    }));
+  const categoryLines = (stats.topCategories || []).slice(0, 5).map((category: any, index: number) => ({
+    type: 'box',
+    layout: 'horizontal',
+    contents: [
+      { type: 'text', text: `${index + 1}. ${category.name || '未分類'}`, size: 'xs', color: '#64748b', flex: 4 },
+      { type: 'text', text: formatAmount(category.total), size: 'xs', weight: 'bold', align: 'end', flex: 3 },
+    ],
+  }));
+
+  return {
+    type: 'flex',
+    altText: `${stats.month || ''} 個人資產統計報表`,
+    contents: {
+      type: 'bubble',
+      size: 'mega',
+      header: {
+        type: 'box',
+        layout: 'vertical',
+        backgroundColor: '#2563eb',
+        paddingAll: '18px',
+        contents: [
+          { type: 'text', text: 'AssetPilot 資產統計報表', color: '#dbeafe', size: 'sm' },
+          { type: 'text', text: `${displayName || '使用者'}，這是 ${stats.month || ''} 的資產摘要`, color: '#ffffff', weight: 'bold', size: 'lg', wrap: true, margin: 'sm' },
+          { type: 'text', text: String(stats.period?.label || ''), color: '#bfdbfe', size: 'xs', wrap: true, margin: 'sm' },
+        ],
+      },
+      body: {
+        type: 'box',
+        layout: 'vertical',
+        spacing: 'md',
+        contents: [
+          {
+            type: 'box',
+            layout: 'vertical',
+            spacing: 'xs',
+            contents: [
+              { type: 'text', text: `本月收入：${formatAmount(stats.income)}`, size: 'sm', color: '#16a34a', weight: 'bold' },
+              { type: 'text', text: `本月支出：${formatAmount(stats.expense)}`, size: 'sm', color: '#dc2626', weight: 'bold' },
+              { type: 'text', text: `本月淨額：${formatAmount(stats.net)}`, size: 'sm', color: Number(stats.net) >= 0 ? '#0f172a' : '#dc2626', weight: 'bold' },
+            ],
+          },
+          { type: 'separator' },
+          { type: 'text', text: '帳戶餘額', size: 'sm', weight: 'bold', color: '#0f172a' },
+          ...(balanceLines.length ? balanceLines : [{ type: 'text', text: '尚無帳戶', size: 'sm', color: '#94a3b8' }]),
+          { type: 'separator' },
+          { type: 'text', text: '本月支出 Top 5', size: 'sm', weight: 'bold', color: '#0f172a' },
+          ...(categoryLines.length ? categoryLines : [{ type: 'text', text: '本月尚無支出紀錄', size: 'sm', color: '#94a3b8' }]),
+          ...(Number(stats.stockHoldings) > 0 ? [
+            { type: 'separator' },
+            { type: 'text', text: `股票投資：市值 ${formatAmount(stats.stockMarketValueTwd)}，未實現損益 ${Number(stats.stockUnrealizedPL) >= 0 ? '+' : ''}${formatAmount(stats.stockUnrealizedPL)}`, size: 'xs', color: Number(stats.stockUnrealizedPL) >= 0 ? '#16a34a' : '#dc2626', wrap: true },
+          ] : []),
+        ],
+      },
+      footer: {
+        type: 'box',
+        layout: 'vertical',
+        spacing: 'sm',
+        contents: [
+          {
+            type: 'button',
+            style: 'primary',
+            height: 'sm',
+            action: { type: 'uri', label: '查看完整報表', uri: detailsUrl },
+          },
+          postbackButton('查看 LINE 紀錄', 'action=query_menu', '查看紀錄'),
         ],
       },
     },

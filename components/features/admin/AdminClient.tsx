@@ -76,7 +76,7 @@ export default function AdminClient(_props: { user?: any } = {}) {
   const [certMsg, setCertMsg] = useState('');
 
   const [schedules, setSchedules] = useState<any[]>([]);
-  const [scheduleForm, setScheduleForm] = useState({ userId: '', freq: 'daily', hour: '9', weekday: '1', dayOfMonth: '1' });
+  const [scheduleForm, setScheduleForm] = useState({ userId: '', freq: 'daily', hour: '9', weekday: '1', dayOfMonth: '1', notifyEmail: true, notifyLine: false });
   const [scheduleMsg, setScheduleMsg] = useState('');
 
   const [adminSelfLogs, setAdminSelfLogs] = useState<any[]>([]);
@@ -190,6 +190,8 @@ export default function AdminClient(_props: { user?: any } = {}) {
         hour: Number(scheduleForm.hour),
         weekday: Number(scheduleForm.weekday),
         dayOfMonth: Number(scheduleForm.dayOfMonth),
+        notifyEmail: scheduleForm.notifyEmail,
+        notifyLine: scheduleForm.notifyLine,
       });
       setScheduleMsg('排程已新增');
       await load();
@@ -223,6 +225,15 @@ export default function AdminClient(_props: { user?: any } = {}) {
       setScheduleMsg('排程已執行');
     } catch (e: any) {
       setScheduleMsg(e.message || '立即執行失敗');
+    }
+  }
+
+  async function handleToggleScheduleChannel(id: string, field: 'notifyEmail' | 'notifyLine', value: boolean) {
+    try {
+      await apiPut(`/api/admin/report-schedules/${id}`, { [field]: !value });
+      await load();
+    } catch (e: any) {
+      setScheduleMsg(e.message || '更新通知方式失敗');
     }
   }
 
@@ -498,6 +509,16 @@ export default function AdminClient(_props: { user?: any } = {}) {
               <Button type="submit" className="self-end">新增排程</Button>
               {scheduleForm.freq === 'weekly' && <Input label="每週星期 (0-6)" type="number" min={0} max={6} value={scheduleForm.weekday} onChange={(e) => setScheduleForm((prev) => ({ ...prev, weekday: e.target.value }))} />}
               {scheduleForm.freq === 'monthly' && <Input label="每月日期 (1-28)" type="number" min={1} max={28} value={scheduleForm.dayOfMonth} onChange={(e) => setScheduleForm((prev) => ({ ...prev, dayOfMonth: e.target.value }))} />}
+              <div className="md:col-span-4 flex flex-wrap gap-4 text-sm text-slate-700">
+                <label className="inline-flex items-center gap-2">
+                  <input type="checkbox" checked={scheduleForm.notifyEmail} onChange={(e) => setScheduleForm((prev) => ({ ...prev, notifyEmail: e.target.checked }))} />
+                  Email 通知
+                </label>
+                <label className="inline-flex items-center gap-2">
+                  <input type="checkbox" checked={scheduleForm.notifyLine} onChange={(e) => setScheduleForm((prev) => ({ ...prev, notifyLine: e.target.checked }))} />
+                  LINE 通知
+                </label>
+              </div>
             </form>
             {scheduleMsg && <p className="text-sm text-slate-600 mt-3">{scheduleMsg}</p>}
           </div>
@@ -510,6 +531,7 @@ export default function AdminClient(_props: { user?: any } = {}) {
                   <TableHead>使用者</TableHead>
                   <TableHead>頻率</TableHead>
                   <TableHead>時間</TableHead>
+                  <TableHead>通知</TableHead>
                   <TableHead>上次執行</TableHead>
                   <TableHead>狀態</TableHead>
                   <TableHead>操作</TableHead>
@@ -521,6 +543,12 @@ export default function AdminClient(_props: { user?: any } = {}) {
                     <TableCell>{users.find((user) => user.id === schedule.userId)?.email || schedule.userId}</TableCell>
                     <TableCell>{schedule.freq}</TableCell>
                     <TableCell>{schedule.hour}:00 {schedule.freq === 'weekly' ? `(週 ${schedule.weekday})` : ''}{schedule.freq === 'monthly' ? `(每月 ${schedule.dayOfMonth} 日)` : ''}</TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap gap-2">
+                        <button type="button" className={`rounded border px-2 py-1 text-xs ${schedule.notifyEmail ? 'border-blue-500 text-blue-700' : 'border-slate-200 text-slate-400'}`} onClick={() => handleToggleScheduleChannel(schedule.id, 'notifyEmail', schedule.notifyEmail)}>Email</button>
+                        <button type="button" className={`rounded border px-2 py-1 text-xs ${schedule.notifyLine ? 'border-green-500 text-green-700' : 'border-slate-200 text-slate-400'}`} onClick={() => handleToggleScheduleChannel(schedule.id, 'notifyLine', schedule.notifyLine)}>LINE</button>
+                      </div>
+                    </TableCell>
                     <TableCell>{fmtTs(schedule.lastRun)}</TableCell>
                     <TableCell>{schedule.enabled ? '啟用中' : '停用'}</TableCell>
                     <TableCell className="flex gap-2 flex-wrap">

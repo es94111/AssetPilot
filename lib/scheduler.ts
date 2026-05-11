@@ -5,6 +5,7 @@
 import crypto from 'crypto';
 import { getDB, queryAll, queryOne, saveDB } from './db';
 import { getActiveEmailProviders, sendStatsEmail } from './emailService';
+import { LINE_MESSAGING_CHANNEL_ACCESS_TOKEN, buildStatsReportFlex, pushLineMessage } from './lineMessaging';
 import { buildUserStatsReport, renderStatsEmailHtml } from './statsEmailReport';
 import * as userTime from './userTime';
 
@@ -58,6 +59,14 @@ function formatLocalSummaryTime(ms) {
   return new Date(ms).toISOString();
 }
 
+function scheduleWantsEmail(schedule) {
+  return schedule.notify_email !== 0;
+}
+
+function scheduleWantsLine(schedule) {
+  return schedule.notify_line === 1;
+}
+
 // ── 嘗試寄送單一排程報表 ──
 // 完整 Email 寄送邏輯待移植；目前記錄意圖並更新 last_run 防重複觸發
 async function runScheduledReportNow(scheduleId, triggeredBy = '排程') {
@@ -72,7 +81,7 @@ async function runScheduledReportNow(scheduleId, triggeredBy = '排程') {
     if (!schedule) return { status: 'not_found', sent: 0, failed: 0, skipped: 0, reason: '排程不存在' };
     if (schedule.enabled === 0) return { status: 'disabled', sent: 0, failed: 0, skipped: 0, reason: '排程已停用' };
 
-    const u = queryOne('SELECT id, email, display_name, is_active, timezone FROM users WHERE id = ?', [schedule.user_id]);
+    const u = queryOne('SELECT id, email, display_name, is_active, timezone, line_id FROM users WHERE id = ?', [schedule.user_id]);
     if (!u) {
       db.run('UPDATE report_schedules SET last_summary = ?, updated_at = ? WHERE id = ?',
         [`${formatLocalSummaryTime(startedAt)} ${triggeredBy}：使用者不存在`, startedAt, scheduleId]);
@@ -87,7 +96,16 @@ async function runScheduledReportNow(scheduleId, triggeredBy = '排程') {
       return { status: 'skipped', sent: 0, failed: 0, skipped: 1, reason: '使用者帳號已停用' };
     }
 
-    if (!isValidEmail(u.email)) {
+    const wantsEmail = scheduleWantsEmail(schedule);
+    const wantsLine = scheduleWantsLine(schedule);
+    if (!wantsEmail && !wantsLine) {
+      const summary = `${formatLocalSummaryTime(startedAt)} ${triggeredBy}：未選擇通知方式`;
+      db.run('UPDATE report_schedules SET last_summary = ?, updated_at = ? WHERE id = ?', [summary, startedAt, scheduleId]);
+      saveDB();
+      return { status: 'no_channel', sent: 0, failed: 1, skipped: 0, reason: '未選擇通知方式' };
+    }
+
+    if (wantsEmail && !isValidEmail(u.email)) {
       const summary = `${formatLocalSummaryTime(startedAt)} ${triggeredBy}：Email 格式錯誤或未設定`;
       db.run('UPDATE report_schedules SET last_run = ?, last_summary = ?, updated_at = ? WHERE id = ?',
         [startedAt, summary, startedAt, scheduleId]);
@@ -95,11 +113,26 @@ async function runScheduledReportNow(scheduleId, triggeredBy = '排程') {
       return { status: 'invalid_email', sent: 0, failed: 1, skipped: 0, reason: 'Email 格式錯誤或未設定' };
     }
 
-    if (!getActiveEmailProviders().hasAny) {
+    if (wantsEmail && !getActiveEmailProviders().hasAny) {
       const summary = `${formatLocalSummaryTime(startedAt)} ${triggeredBy}：寄信服務未設定（請設定 EMAIL_PROVIDER_PRIMARY 環境變數）`;
       db.run('UPDATE report_schedules SET last_summary = ?, updated_at = ? WHERE id = ?', [summary, startedAt, scheduleId]);
       saveDB();
       return { status: 'no_email_service', sent: 0, failed: 1, skipped: 0, reason: '寄信服務未設定' };
+    }
+
+    if (wantsLine && !LINE_MESSAGING_CHANNEL_ACCESS_TOKEN) {
+      const summary = `${formatLocalSummaryTime(startedAt)} ${triggeredBy}：LINE Messaging API 未設定`;
+      db.run('UPDATE report_schedules SET last_summary = ?, updated_at = ? WHERE id = ?', [summary, startedAt, scheduleId]);
+      saveDB();
+      return { status: 'no_line_service', sent: 0, failed: 1, skipped: 0, reason: 'LINE Messaging API 未設定' };
+    }
+
+    if (wantsLine && !u.line_id) {
+      const summary = `${formatLocalSummaryTime(startedAt)} ${triggeredBy}：使用者尚未綁定 LINE`;
+      db.run('UPDATE report_schedules SET last_run = ?, last_summary = ?, updated_at = ? WHERE id = ?',
+        [startedAt, summary, startedAt, scheduleId]);
+      saveDB();
+      return { status: 'line_not_linked', sent: 0, failed: 1, skipped: 0, reason: '使用者尚未綁定 LINE' };
     }
 
     let dedupRowId = null;
@@ -126,22 +159,43 @@ async function runScheduledReportNow(scheduleId, triggeredBy = '排程') {
     let failed = 0;
     let provider = null;
     let errMsg = '';
+    const channelResults = [];
+    const stats = buildUserStatsReport(u.id, schedule.freq, u.timezone || 'Asia/Taipei');
 
-    try {
-      const stats = buildUserStatsReport(u.id, schedule.freq, u.timezone || 'Asia/Taipei');
-      const html = renderStatsEmailHtml(u.display_name, u.email, stats);
-      const subject = `${stats.month} 個人資產統計報表`;
-      const result = await sendStatsEmail({ to: u.email, subject, html });
-      if (result) {
-        sent = 1;
-        provider = result.provider;
-      } else {
-        failed = 1;
-        errMsg = '寄信服務未設定';
+    if (wantsEmail) {
+      try {
+        const html = renderStatsEmailHtml(u.display_name, u.email, stats);
+        const subject = `${stats.month} 個人資產統計報表`;
+        const result = await sendStatsEmail({ to: u.email, subject, html });
+        if (result) {
+          sent += 1;
+          provider = result.provider;
+          channelResults.push(`Email 成功(${provider || ''})`);
+        } else {
+          failed += 1;
+          channelResults.push('Email 失敗');
+          errMsg = '寄信服務未設定';
+        }
+      } catch (e) {
+        failed += 1;
+        const msg = e?.message || '未知錯誤';
+        channelResults.push(`Email 失敗：${msg}`);
+        errMsg = [errMsg, msg].filter(Boolean).join('；');
       }
-    } catch (e) {
-      failed = 1;
-      errMsg = e?.message || '未知錯誤';
+    }
+
+    if (wantsLine) {
+      try {
+        const appUrl = process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || `https://${process.env.APP_HOST || 'localhost'}`;
+        await pushLineMessage(u.line_id, [buildStatsReportFlex(u.display_name, stats, appUrl)]);
+        sent += 1;
+        channelResults.push('LINE 成功');
+      } catch (e) {
+        failed += 1;
+        const msg = e?.message || '未知錯誤';
+        channelResults.push(`LINE 失敗：${msg}`);
+        errMsg = [errMsg, msg].filter(Boolean).join('；');
+      }
     }
 
     if (dedupRowId && failed) {
@@ -150,14 +204,14 @@ async function runScheduledReportNow(scheduleId, triggeredBy = '排程') {
     }
 
     const finishedAt = Date.now();
-    const summaryParts = [`${formatLocalSummaryTime(startedAt)} ${triggeredBy}：${sent ? `寄送成功(${provider || ''})` : '寄送失敗'}（完成於 ${formatLocalSummaryTime(finishedAt)}）`];
+    const summaryParts = [`${formatLocalSummaryTime(startedAt)} ${triggeredBy}：${channelResults.join(' / ') || (sent ? '寄送成功' : '寄送失敗')}（完成於 ${formatLocalSummaryTime(finishedAt)}）`];
     if (errMsg) summaryParts.push(`錯誤：${errMsg}`);
     const summary = summaryParts.join(' | ');
     db.run('UPDATE report_schedules SET last_run = ?, last_summary = ?, updated_at = ? WHERE id = ?',
       [startedAt, summary, startedAt, scheduleId]);
     saveDB();
 
-    return { status: sent ? 'completed' : 'failed', sent, failed, skipped: 0, provider, reason: errMsg };
+    return { status: sent ? (failed ? 'partial' : 'completed') : 'failed', sent, failed, skipped: 0, provider, channels: channelResults, reason: errMsg };
   } finally {
     runningSchedules.delete(scheduleId);
   }

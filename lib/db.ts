@@ -305,12 +305,16 @@ async function _runMigrations(): Promise<void> {
     hour            INTEGER NOT NULL DEFAULT 9,
     weekday         INTEGER NOT NULL DEFAULT 1,
     day_of_month    INTEGER NOT NULL DEFAULT 1,
+    notify_email    INTEGER NOT NULL DEFAULT 1,
+    notify_line     INTEGER NOT NULL DEFAULT 0,
     enabled         INTEGER NOT NULL DEFAULT 1,
     last_run        INTEGER NOT NULL DEFAULT 0,
     last_summary    TEXT    NOT NULL DEFAULT '',
     created_at      INTEGER NOT NULL DEFAULT 0,
     updated_at      INTEGER NOT NULL DEFAULT 0
   )`);
+  alterIgnore("ALTER TABLE report_schedules ADD COLUMN notify_email INTEGER NOT NULL DEFAULT 1");
+  alterIgnore("ALTER TABLE report_schedules ADD COLUMN notify_line INTEGER NOT NULL DEFAULT 0");
   alterIgnore("CREATE INDEX IF NOT EXISTS idx_report_schedules_user ON report_schedules(user_id)");
   alterIgnore("CREATE INDEX IF NOT EXISTS idx_report_schedules_enabled_freq ON report_schedules(enabled, freq)");
 

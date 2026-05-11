@@ -8,6 +8,7 @@ function serializeSchedule(row) {
     id: row.id, userId: row.user_id, freq: row.freq,
     hour: Number(row.hour) || 0, weekday: Number(row.weekday) || 0,
     dayOfMonth: Number(row.day_of_month) || 1, enabled: row.enabled === 1,
+    notifyEmail: row.notify_email !== 0, notifyLine: row.notify_line === 1,
     lastRun: Number(row.last_run) || 0, lastSummary: row.last_summary || '',
     createdAt: Number(row.created_at) || 0, updatedAt: Number(row.updated_at) || 0,
   };
@@ -33,6 +34,13 @@ export async function PUT(request, { params }) {
   if (body?.weekday !== undefined) updates.weekday = clampInt(body.weekday, 0, 6, row.weekday);
   if (body?.dayOfMonth !== undefined) updates.day_of_month = clampInt(body.dayOfMonth, 1, 28, row.day_of_month);
   if (body?.enabled !== undefined) updates.enabled = body.enabled ? 1 : 0;
+  if (body?.notifyEmail !== undefined) updates.notify_email = body.notifyEmail ? 1 : 0;
+  if (body?.notifyLine !== undefined) updates.notify_line = body.notifyLine ? 1 : 0;
+  const nextNotifyEmail = updates.notify_email !== undefined ? updates.notify_email : (row.notify_email !== 0 ? 1 : 0);
+  const nextNotifyLine = updates.notify_line !== undefined ? updates.notify_line : (row.notify_line === 1 ? 1 : 0);
+  if (!nextNotifyEmail && !nextNotifyLine) {
+    return NextResponse.json({ error: '請至少選擇一種通知方式' }, { status: 400 });
+  }
   if (Object.keys(updates).length === 0) {
     return NextResponse.json({ error: '請至少更新一個欄位' }, { status: 400 });
   }

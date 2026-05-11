@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '../../../../lib/apiHelpers';
 import { getDB, queryAll, queryOne, saveDB } from '../../../../lib/db';
 import { uid } from '../../../../lib/userDefaults';
@@ -8,32 +8,69 @@ import { importLocks, importProgress } from '@/lib/transactionImportState';
 
 const CSV_IMPORT_MAX_ROWS = 20000;
 
-function isValidHexColor(s) {
+type CategoryType = 'income' | 'expense';
+type CategoryImportRow = Record<string, unknown>;
+type CategoryImportFailureStage = 'validating' | 'writing' | 'finalizing';
+
+interface ImportCategoriesRequest {
+  rows?: CategoryImportRow[];
+}
+
+interface ImportError {
+  row: number;
+  reason: string;
+}
+
+interface CategoryLookupRow {
+  id: string;
+  name: string;
+  type: CategoryType | string;
+  color: string | null;
+  parent_id?: string | null;
+}
+
+interface ParsedCategoryImportRow {
+  idx: number;
+  type: CategoryType;
+  name: string;
+  parent: string;
+  color: string;
+}
+
+function asRows<T>(rows: Array<Record<string, string | number | null>>): T[] {
+  return rows as unknown as T[];
+}
+
+function asRow<T>(row: Record<string, string | number | null> | null): T | null {
+  return row as unknown as T | null;
+}
+
+function isValidHexColor(s: unknown): s is string {
   return typeof s === 'string' && /^#[0-9A-Fa-f]{6}$/.test(s);
 }
 
-function cell(row, ...keys) {
+function cell(row: CategoryImportRow, ...keys: string[]): unknown {
   for (const key of keys) {
     if (row[key] != null && row[key] !== '') return row[key];
   }
   return '';
 }
 
-function acquireImportLock(userId) {
+function acquireImportLock(userId: string): boolean {
   if (importLocks.has(userId)) return false;
   importLocks.add(userId);
   return true;
 }
 
-function releaseImportLock(userId) {
+function releaseImportLock(userId: string): void {
   importLocks.delete(userId);
 }
 
-export async function POST(request) {
+export async function POST(request: NextRequest) {
   const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
-  const body = await request.json().catch(() => ({}));
+  const body = await request.json().catch(() => ({})) as ImportCategoriesRequest;
   const { rows } = body;
   if (!Array.isArray(rows) || rows.length === 0) {
     return NextResponse.json({ error: '無有效資料' }, { status: 400 });
@@ -52,9 +89,9 @@ export async function POST(request) {
 
   let imported = 0;
   let skipped = 0;
-  const errors = [];
+  const errors: ImportError[] = [];
   let txStarted = false;
-  let failureStage = null;
+  let failureStage: CategoryImportFailureStage | null = null;
 
   const ipAddress = getRequestIpFromHeaders(request.headers);
   const userAgent = request.headers.get('user-agent') || '';
@@ -63,18 +100,18 @@ export async function POST(request) {
 
   try {
     failureStage = 'validating';
-    const existing = queryAll('SELECT * FROM categories WHERE user_id = ?', [auth.userId]);
-    const existingByKey = new Map();
+    const existing = asRows<CategoryLookupRow>(queryAll('SELECT * FROM categories WHERE user_id = ?', [auth.userId]));
+    const existingByKey = new Map<string, CategoryLookupRow>();
     existing.forEach(c => existingByKey.set(`${c.type}|${c.name}`, c));
 
-    const parentRows = [];
-    const childRows = [];
+    const parentRows: ParsedCategoryImportRow[] = [];
+    const childRows: ParsedCategoryImportRow[] = [];
     rows.forEach((r, idx) => {
       const rawType = cell(r, 'type', '類型');
-      const type = rawType === '收入' || rawType === 'income' ? 'income' : (rawType === '支出' || rawType === 'expense' ? 'expense' : null);
-      const name = cell(r, 'name', '分類名稱').toString().trim();
-      const parent = cell(r, 'parent', '上層分類').toString().trim();
-      const color = cell(r, 'color', '顏色') || '';
+      const type: CategoryType | null = rawType === '收入' || rawType === 'income' ? 'income' : (rawType === '支出' || rawType === 'expense' ? 'expense' : null);
+      const name = String(cell(r, 'name', '分類名稱')).trim();
+      const parent = String(cell(r, 'parent', '上層分類')).trim();
+      const color = String(cell(r, 'color', '顏色') || '');
       if (!type) { errors.push({ row: idx + 2, reason: `未知類型「${rawType}」` }); skipped++; return; }
       if (!name) { errors.push({ row: idx + 2, reason: '分類名稱為空' }); skipped++; return; }
       if (color && !isValidHexColor(color)) { errors.push({ row: idx + 2, reason: '顏色格式必須為 #RRGGBB' }); skipped++; return; }
@@ -88,7 +125,7 @@ export async function POST(request) {
     txStarted = true;
     failureStage = 'writing';
 
-    const maxOrder = queryOne('SELECT COALESCE(MAX(sort_order),0) AS m FROM categories WHERE user_id = ?', [auth.userId])?.m || 0;
+    const maxOrder = Number(asRow<{ m: number }>(queryOne('SELECT COALESCE(MAX(sort_order),0) AS m FROM categories WHERE user_id = ?', [auth.userId]))?.m) || 0;
     let orderCounter = maxOrder;
 
     parentRows.forEach((p, i) => {
@@ -146,9 +183,9 @@ export async function POST(request) {
     writeOperationAudit({
       userId: auth.userId, role: userRole, action: 'import_categories',
       ipAddress, userAgent, result: 'failed', isAdminOperation: false,
-      metadata: { rows: rows.length, failure_stage: failureStage || 'unknown', failure_reason: String(e?.message || e).slice(0, 200) },
+      metadata: { rows: rows.length, failure_stage: failureStage || 'unknown', failure_reason: String(e instanceof Error ? e.message : e).slice(0, 200) },
     });
-    return NextResponse.json({ error: '匯入失敗', message: String(e?.message || e), failedAt: failureStage || 'unknown' }, { status: 500 });
+    return NextResponse.json({ error: '匯入失敗', message: String(e instanceof Error ? e.message : e), failedAt: failureStage || 'unknown' }, { status: 500 });
   } finally {
     releaseImportLock(auth.userId);
   }

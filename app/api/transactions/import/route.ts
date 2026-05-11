@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '../../../../lib/apiHelpers';
 import { getDB, queryAll, queryOne, saveDB } from '../../../../lib/db';
 import { normalizeDate } from '../../../../lib/accountHelpers';
@@ -11,33 +11,113 @@ const HASH_SEP = '\x01';
 
 import { importLocks, importProgress } from '@/lib/transactionImportState';
 
-function cell(row, ...keys) {
+type ImportPhase = 'parsing' | 'validating' | 'auto_create' | 'writing' | 'pairing' | 'finalizing';
+type TransactionType = 'income' | 'expense' | 'transfer_out' | 'transfer_in';
+type ImportTransactionRow = Record<string, unknown>;
+
+interface ImportTransactionsRequest {
+  rows?: ImportTransactionRow[];
+  autoCreate?: boolean;
+}
+
+interface ImportError {
+  row: number;
+  reason: string;
+}
+
+interface ImportWarning extends ImportError {
+  type: string;
+}
+
+interface TransactionImportResult {
+  imported: number;
+  skipped: number;
+  errors: ImportError[];
+  warnings: ImportWarning[];
+  created: { categories: string[]; accounts: string[] };
+  unknownColumns: string[];
+}
+
+interface CategoryLookupRow {
+  id: string;
+  name: string;
+  type: string;
+  parent_id?: string | null;
+}
+
+interface AccountLookupRow {
+  id: string;
+  name: string;
+}
+
+interface ExistingTransactionRow {
+  date: string;
+  type: string;
+  category_id: string | null;
+  amount: number | string;
+  account_id: string | null;
+  note: string | null;
+}
+
+interface ParsedTransactionImportRow {
+  idx: number;
+  dbType: TransactionType;
+  date: string;
+  amt: number;
+  catId: string;
+  accId: string;
+  note: string;
+  currency: string;
+  originalAmount: number;
+  fxRate: string;
+  twdAmount: number;
+  fxFee: number;
+  transferToAccountId: string;
+  tags: string;
+  excludeFromStats: 0 | 1;
+  txId?: string;
+}
+
+interface TransferGroup {
+  outs: Array<{ idx: number; txId: string }>;
+  ins: Array<{ idx: number; txId: string }>;
+}
+
+function asRows<T>(rows: Array<Record<string, string | number | null>>): T[] {
+  return rows as unknown as T[];
+}
+
+function asRow<T>(row: Record<string, string | number | null> | null): T | null {
+  return row as unknown as T | null;
+}
+
+function cell(row: ImportTransactionRow, ...keys: string[]): unknown {
   for (const key of keys) {
     if (row[key] != null && row[key] !== '') return row[key];
   }
   return '';
 }
 
-function parseBool(value) {
+function parseBool(value: unknown): boolean {
   const s = String(value || '').trim().toLowerCase();
   return s === '1' || s === 'true' || s === 'yes' || s === 'y' || s === '是';
 }
 
-function acquireImportLock(userId) {
+function acquireImportLock(userId: string): boolean {
   if (importLocks.has(userId)) return false;
   importLocks.add(userId);
   return true;
 }
 
-function releaseImportLock(userId) {
+function releaseImportLock(userId: string): void {
   importLocks.delete(userId);
 }
 
-export async function POST(request) {
+export async function POST(request: NextRequest) {
   const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
-  const body = await request.json().catch(() => ({}));
+  const body = await request.json().catch(() => ({})) as ImportTransactionsRequest;
   const { rows, autoCreate } = body;
   if (!Array.isArray(rows) || rows.length === 0) {
     return NextResponse.json({ error: '無有效資料' }, { status: 400 });
@@ -55,21 +135,21 @@ export async function POST(request) {
     startedAt: Date.now(), completedAt: null,
   });
 
-  const updateProgress = (processed, phase) => {
+  const updateProgress = (processed: number, phase: ImportPhase) => {
     const cur = importProgress.get(auth.userId);
     if (cur) importProgress.set(auth.userId, { ...cur, processed, phase });
   };
 
   let imported = 0;
   let skipped = 0;
-  const errors = [];
-  const warnings = [];
-  const createdCats = [];
-  const createdAccs = [];
-  const unknownColumnsSet = new Set();
+  const errors: ImportError[] = [];
+  const warnings: ImportWarning[] = [];
+  const createdCats: string[] = [];
+  const createdAccs: string[] = [];
+  const unknownColumnsSet = new Set<string>();
   const KNOWN_COLUMNS = new Set(['date', 'type', 'category', 'amount', 'account', 'note']);
   let txStarted = false;
-  let failureStage = null;
+  let failureStage: ImportPhase | null = null;
 
   const ipAddress = getRequestIpFromHeaders(request.headers);
   const userAgent = request.headers.get('user-agent') || '';
@@ -88,28 +168,28 @@ export async function POST(request) {
 
     updateProgress(0, 'validating');
 
-    const categories = queryAll('SELECT * FROM categories WHERE user_id = ?', [auth.userId]);
-    const accounts = queryAll('SELECT * FROM accounts WHERE user_id = ?', [auth.userId]);
-    const catMap = {};
+    const categories = asRows<CategoryLookupRow>(queryAll('SELECT * FROM categories WHERE user_id = ?', [auth.userId]));
+    const accounts = asRows<AccountLookupRow>(queryAll('SELECT * FROM accounts WHERE user_id = ?', [auth.userId]));
+    const catMap: Record<string, CategoryLookupRow> = {};
     categories.forEach(c => {
       if (c.parent_id) {
         const parent = categories.find(p => p.id === c.parent_id);
-        if (parent) catMap[parent.name + ' > ' + c.name] = c;
+        if (parent) catMap[String(parent.name) + ' > ' + String(c.name)] = c;
       }
-      if (!catMap[c.name]) catMap[c.name] = c;
+      if (!catMap[String(c.name)]) catMap[String(c.name)] = c;
     });
-    const accMap = {};
-    accounts.forEach(a => { accMap[a.name] = a; });
+    const accMap: Record<string, AccountLookupRow> = {};
+    accounts.forEach(a => { accMap[String(a.name)] = a; });
 
-    const existingTx = queryAll(
+    const existingTx = asRows<ExistingTransactionRow>(queryAll(
       'SELECT date, type, category_id, amount, account_id, note FROM transactions WHERE user_id = ?',
       [auth.userId]
-    );
-    const existingHashes = new Set();
+    ));
+    const existingHashes = new Set<string>();
     existingTx.forEach(t => {
-      existingHashes.add(makeTxHash(t.date, t.type, t.category_id, t.amount, t.account_id, t.note));
+      existingHashes.add(makeTxHash(t.date, t.type, t.category_id || '', t.amount, t.account_id || '', t.note || ''));
     });
-    const batchHashes = new Set();
+    const batchHashes = new Set<string>();
 
     const db = getDB();
     db.run('BEGIN');
@@ -117,7 +197,7 @@ export async function POST(request) {
     failureStage = 'auto_create';
 
     if (autoCreate) {
-      const maxOrder = queryOne('SELECT COALESCE(MAX(sort_order),0) as m FROM categories WHERE user_id = ?', [auth.userId])?.m || 0;
+      const maxOrder = Number(asRow<{ m: number }>(queryOne('SELECT COALESCE(MAX(sort_order),0) as m FROM categories WHERE user_id = ?', [auth.userId]))?.m) || 0;
       let orderCounter = maxOrder;
       const defaultColors = ['#6366f1', '#f59e0b', '#10b981', '#ef4444', '#3b82f6', '#8b5cf6', '#ec4899', '#14b8a6'];
       let colorIdx = 0;
@@ -126,33 +206,36 @@ export async function POST(request) {
         const category = cell(row, 'category', '分類');
         const account = cell(row, 'account', '帳戶');
         const transferToAccount = cell(row, 'transferToAccount', 'transfer_to_account', '轉入帳戶');
-        let dbType = 'expense';
+        let dbType: 'income' | 'expense' | null = 'expense';
         if (type === '收入') dbType = 'income';
         else if (type === '轉出' || type === '轉入') dbType = null;
         else if (type === '支出') dbType = 'expense';
-        if (dbType && category && !catMap[category]) {
+        const categoryName = String(category);
+        if (dbType && category && !catMap[categoryName]) {
           const catId = uid();
           orderCounter++;
           const color = defaultColors[colorIdx % defaultColors.length];
           colorIdx++;
           db.run('INSERT INTO categories (id, user_id, name, type, color, is_default, sort_order) VALUES (?,?,?,?,?,0,?)',
-            [catId, auth.userId, category, dbType, color, orderCounter]);
-          catMap[category] = { id: catId, name: category, type: dbType };
-          createdCats.push(category);
+            [catId, auth.userId, categoryName, dbType, color, orderCounter]);
+          catMap[categoryName] = { id: catId, name: categoryName, type: dbType };
+          createdCats.push(categoryName);
         }
-        if (account && !accMap[account]) {
+        const accountName = String(account);
+        if (account && !accMap[accountName]) {
           const accId = uid();
           db.run("INSERT INTO accounts (id, user_id, name, initial_balance, icon, currency) VALUES (?,?,?,0,'fa-wallet','TWD')",
-            [accId, auth.userId, account]);
-          accMap[account] = { id: accId, name: account };
-          createdAccs.push(account);
+            [accId, auth.userId, accountName]);
+          accMap[accountName] = { id: accId, name: accountName };
+          createdAccs.push(accountName);
         }
-        if (transferToAccount && !accMap[transferToAccount]) {
+        const transferAccountName = String(transferToAccount);
+        if (transferToAccount && !accMap[transferAccountName]) {
           const accId = uid();
           db.run("INSERT INTO accounts (id, user_id, name, initial_balance, icon, currency) VALUES (?,?,?,0,'fa-wallet','TWD')",
-            [accId, auth.userId, transferToAccount]);
-          accMap[transferToAccount] = { id: accId, name: transferToAccount };
-          createdAccs.push(transferToAccount);
+            [accId, auth.userId, transferAccountName]);
+          accMap[transferAccountName] = { id: accId, name: transferAccountName };
+          createdAccs.push(transferAccountName);
         }
       });
     }
@@ -161,7 +244,7 @@ export async function POST(request) {
     updateProgress(0, 'writing');
 
     const now = Date.now();
-    const parsedRows = [];
+    const parsedRows: ParsedTransactionImportRow[] = [];
     rows.forEach((row, idx) => {
       const rawDate = cell(row, 'date', '日期');
       const type = cell(row, 'type', '類型');
@@ -170,16 +253,16 @@ export async function POST(request) {
       const account = cell(row, 'account', '帳戶');
       const note = cell(row, 'note', '備註');
       const currency = String(cell(row, 'currency', '幣別') || 'TWD').trim() || 'TWD';
-      const originalAmount = parseFloat(cell(row, 'originalAmount', 'original_amount', '原始金額') || amount);
+      const originalAmount = parseFloat(String(cell(row, 'originalAmount', 'original_amount', '原始金額') || amount));
       const fxRate = String(cell(row, 'fxRate', 'fx_rate', '匯率') || '1');
       const twdAmountRaw = cell(row, 'twdAmount', 'twd_amount', '台幣金額');
-      const twdAmount = twdAmountRaw === '' ? 0 : parseFloat(twdAmountRaw);
-      const fxFee = parseFloat(cell(row, 'fxFee', 'fx_fee', '匯兌手續費') || 0);
+      const twdAmount = twdAmountRaw === '' ? 0 : parseFloat(String(twdAmountRaw));
+      const fxFee = parseFloat(String(cell(row, 'fxFee', 'fx_fee', '匯兌手續費') || 0));
       const transferToAccount = cell(row, 'transferToAccount', 'transfer_to_account', '轉入帳戶');
       const tags = String(cell(row, 'tags', '標籤') || '[]');
       const excludeFromStats = parseBool(cell(row, 'excludeFromStats', 'exclude_from_stats', '排除統計'));
-      const date = (typeof rawDate === 'string' && isValidIso8601Date(rawDate)) ? rawDate : normalizeDate(rawDate);
-      const amt = parseFloat(amount);
+      const date = (typeof rawDate === 'string' && isValidIso8601Date(rawDate)) ? rawDate : normalizeDate(String(rawDate || ''));
+      const amt = parseFloat(String(amount));
       if (!date || !isValidIso8601Date(date)) {
         errors.push({ row: idx + 2, reason: '日期格式必須為 YYYY-MM-DD' });
         skipped++;
@@ -190,7 +273,7 @@ export async function POST(request) {
         skipped++;
         return;
       }
-      let dbType = 'expense';
+      let dbType: TransactionType = 'expense';
       if (type === '收入') dbType = 'income';
       else if (type === '轉出') dbType = 'transfer_out';
       else if (type === '轉入') dbType = 'transfer_in';
@@ -202,13 +285,13 @@ export async function POST(request) {
       }
       let catId = '';
       if (dbType !== 'transfer_out' && dbType !== 'transfer_in') {
-        const cat = catMap[category];
+        const cat = catMap[String(category)];
         if (cat) catId = cat.id;
       }
       let accId = '';
-      const acc = accMap[account];
+      const acc = accMap[String(account)];
       if (acc) accId = acc.id;
-      const noteStr = note || '';
+      const noteStr = String(note || '');
       const h = makeTxHash(date, dbType, catId, amt, accId, noteStr);
       if (existingHashes.has(h) || batchHashes.has(h)) {
         skipped++;
@@ -216,7 +299,7 @@ export async function POST(request) {
       }
       batchHashes.add(h);
       let transferToAccountId = '';
-      const toAcc = accMap[transferToAccount];
+      const toAcc = accMap[String(transferToAccount)];
       if (toAcc) transferToAccountId = toAcc.id;
       parsedRows.push({
         idx, dbType, date, amt, catId, accId, note: noteStr,
@@ -228,12 +311,12 @@ export async function POST(request) {
     });
 
     updateProgress(0, 'pairing');
-    const groupMap = new Map();
+    const groupMap = new Map<string, TransferGroup>();
     parsedRows.forEach(p => {
       if (p.dbType === 'transfer_out' || p.dbType === 'transfer_in') {
         const key = `${p.date}|${p.amt}`;
         if (!groupMap.has(key)) groupMap.set(key, { outs: [], ins: [] });
-        const grp = groupMap.get(key);
+        const grp = groupMap.get(key)!;
         const txId = uid();
         p.txId = txId;
         if (p.dbType === 'transfer_out') grp.outs.push({ idx: p.idx, txId });
@@ -242,7 +325,7 @@ export async function POST(request) {
         p.txId = uid();
       }
     });
-    const linkedIdMap = new Map();
+    const linkedIdMap = new Map<string, string>();
     groupMap.forEach(grp => {
       const pairs = Math.min(grp.outs.length, grp.ins.length);
       for (let i = 0; i < pairs; i++) {
@@ -259,10 +342,11 @@ export async function POST(request) {
 
     updateProgress(0, 'writing');
     parsedRows.forEach((p, i) => {
-      const linked = linkedIdMap.get(p.txId) || '';
+      const txId = p.txId || uid();
+      const linked = linkedIdMap.get(p.txId || '') || '';
       db.run(
         'INSERT INTO transactions (id,user_id,type,amount,currency,original_amount,fx_rate,fx_fee,twd_amount,date,category_id,account_id,note,linked_id,transfer_to_account_id,tags,exclude_from_stats,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
-        [p.txId, auth.userId, p.dbType, p.amt, p.currency, p.originalAmount, p.fxRate, p.fxFee, p.twdAmount, p.date, p.catId, p.accId, p.note, linked, p.transferToAccountId, p.tags, p.excludeFromStats, now, now]
+        [txId, auth.userId, p.dbType, p.amt, p.currency, p.originalAmount, p.fxRate, p.fxFee, p.twdAmount, p.date, p.catId, p.accId, p.note, linked, p.transferToAccountId, p.tags, p.excludeFromStats, now, now]
       );
       imported++;
       if ((i + 1) % 500 === 0) updateProgress(i + 1, 'writing');
@@ -283,13 +367,14 @@ export async function POST(request) {
       metadata: { rows: rows.length, imported, skipped, errors: errors.length, warnings: warnings.length, unknown_columns: [...unknownColumnsSet] },
     });
 
-    return NextResponse.json({
+    const result: TransactionImportResult = {
       imported, skipped,
       errors: errors.slice(0, 50),
       warnings,
       created: { categories: createdCats, accounts: createdAccs },
       unknownColumns: [...unknownColumnsSet],
-    });
+    };
+    return NextResponse.json(result);
   } catch (e) {
     if (txStarted) { try { getDB().run('ROLLBACK'); } catch (_) {} }
     importProgress.set(auth.userId, { processed: 0, total: rows.length, phase: 'finalizing', startedAt: Date.now(), completedAt: Date.now() });
@@ -297,9 +382,9 @@ export async function POST(request) {
     writeOperationAudit({
       userId: auth.userId, role: userRole, action: 'import_transactions',
       ipAddress, userAgent, result: 'failed', isAdminOperation: false,
-      metadata: { rows: rows.length, failure_stage: failureStage || 'unknown', failure_reason: String(e?.message || e).slice(0, 200) },
+      metadata: { rows: rows.length, failure_stage: failureStage || 'unknown', failure_reason: String(e instanceof Error ? e.message : e).slice(0, 200) },
     });
-    return NextResponse.json({ error: '匯入失敗', message: String(e?.message || e), failedAt: failureStage || 'unknown' }, { status: 500 });
+    return NextResponse.json({ error: '匯入失敗', message: String(e instanceof Error ? e.message : e), failedAt: failureStage || 'unknown' }, { status: 500 });
   } finally {
     releaseImportLock(auth.userId);
   }

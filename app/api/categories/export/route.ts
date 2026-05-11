@@ -1,10 +1,26 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '../../../../lib/apiHelpers';
 import { queryAll, queryOne } from '../../../../lib/db';
 import { buildCsv, writeOperationAudit } from '../../../../lib/auditHelpers';
 import { getRequestIpFromHeaders } from '../../../../lib/loginHelpers';
 
-function normalizeHexColor(c) {
+type CategoryType = 'income' | 'expense';
+
+interface CategoryExportRow {
+  id: string;
+  name: string | null;
+  type: CategoryType | string | null;
+  color: string | null;
+  parent_id: string | null;
+}
+
+type CsvCell = string | number;
+
+function asRows<T>(rows: Array<Record<string, string | number | null>>): T[] {
+  return rows as unknown as T[];
+}
+
+function normalizeHexColor(c: unknown): string {
   if (!c || typeof c !== 'string') return '';
   if (/^#[0-9A-Fa-f]{6}$/.test(c)) return c.toUpperCase();
   if (/^#[0-9A-Fa-f]{3}$/.test(c)) {
@@ -13,26 +29,26 @@ function normalizeHexColor(c) {
   return c;
 }
 
-export async function GET(request) {
+export async function GET(request: NextRequest) {
   const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
   try {
-    const cats = queryAll(
+    const cats = asRows<CategoryExportRow>(queryAll(
       "SELECT * FROM categories WHERE user_id = ? ORDER BY (parent_id IS NULL OR parent_id = '') DESC, sort_order ASC, name ASC",
       [auth.userId]
-    );
-    const idMap = {};
+    ));
+    const idMap: Record<string, CategoryExportRow> = {};
     cats.forEach(c => { idMap[c.id] = c; });
     const parents = cats.filter(c => !c.parent_id);
     const children = cats.filter(c => c.parent_id);
     const headers = ['類型', '分類名稱', '上層分類', '顏色'];
-    const dataRows = [];
+    const dataRows: CsvCell[][] = [];
     parents.forEach(p => {
       dataRows.push([p.type === 'income' ? '收入' : '支出', p.name || '', '', normalizeHexColor(p.color || '')]);
     });
     children.forEach(c => {
-      const parent = idMap[c.parent_id];
+      const parent = idMap[c.parent_id || ''];
       dataRows.push([c.type === 'income' ? '收入' : '支出', c.name || '', parent?.name || '', normalizeHexColor(c.color || '')]);
     });
 
@@ -59,6 +75,6 @@ export async function GET(request) {
     });
   } catch (e) {
     console.error('export_categories failed', e);
-    return NextResponse.json({ error: '匯出失敗', message: String(e?.message || e) }, { status: 500 });
+    return NextResponse.json({ error: '匯出失敗', message: String(e instanceof Error ? e.message : e) }, { status: 500 });
   }
 }

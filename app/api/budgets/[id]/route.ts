@@ -1,12 +1,34 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '../../../../lib/apiHelpers';
 import { getDB, queryOne, saveDB } from '../../../../lib/db';
 
-function parseYearMonth(body) {
+type RouteContext = { params: Promise<{ id: string }> };
+
+interface BudgetRow {
+  id: string;
+  category_id: string | null;
+  year_month: string;
+  amount: number;
+  created_at: number | string | null;
+  updated_at: number | string | null;
+}
+
+interface BudgetRequest {
+  categoryId?: string | null;
+  amount?: number | string;
+  yearMonth?: string;
+  month?: string;
+}
+
+function asRow<T>(row: Record<string, string | number | null> | null): T | null {
+  return row as unknown as T | null;
+}
+
+function parseYearMonth(body: BudgetRequest): string {
   return body.yearMonth || body.month || '';
 }
 
-function serializeBudgetRow(row) {
+function serializeBudgetRow(row: BudgetRow) {
   return {
     id: row.id,
     categoryId: row.category_id,
@@ -17,12 +39,12 @@ function serializeBudgetRow(row) {
   };
 }
 
-export async function GET(request, { params }) {
+export async function GET(request: NextRequest, { params }: RouteContext) {
   const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
   const { id } = await params;
-  const row = queryOne('SELECT * FROM budgets WHERE id = ? AND user_id = ?', [id, auth.userId]);
+  const row = asRow<BudgetRow>(queryOne('SELECT * FROM budgets WHERE id = ? AND user_id = ?', [id, auth.userId]));
   if (!row) {
     return NextResponse.json({ error: '預算不存在或無權限', code: 'NotFound' }, { status: 404 });
   }
@@ -30,17 +52,17 @@ export async function GET(request, { params }) {
   return NextResponse.json(serializeBudgetRow(row));
 }
 
-export async function PUT(request, { params }) {
+export async function PUT(request: NextRequest, { params }: RouteContext) {
   const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
   const { id } = await params;
-  const existing = queryOne('SELECT * FROM budgets WHERE id = ? AND user_id = ?', [id, auth.userId]);
+  const existing = asRow<BudgetRow>(queryOne('SELECT * FROM budgets WHERE id = ? AND user_id = ?', [id, auth.userId]));
   if (!existing) {
     return NextResponse.json({ error: '預算不存在或無權限', code: 'NotFound' }, { status: 404 });
   }
 
-  const body = await request.json().catch(() => ({}));
+  const body = await request.json().catch(() => ({})) as BudgetRequest;
   const amount = Number(body.amount);
   const yearMonth = String(parseYearMonth(body));
   const categoryId = body.categoryId || null;
@@ -75,7 +97,7 @@ export async function PUT(request, { params }) {
   return NextResponse.json({ ok: true, id, updatedAt: now });
 }
 
-export async function DELETE(request, { params }) {
+export async function DELETE(request: NextRequest, { params }: RouteContext) {
   const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 

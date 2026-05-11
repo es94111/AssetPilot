@@ -1,15 +1,38 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '../../../../lib/apiHelpers';
 import { getDB, queryOne, saveDB } from '../../../../lib/db';
 import { normalizeDate } from '../../../../lib/accountHelpers';
 
 const BATCH_MAX = 500;
 
-export async function POST(request) {
+interface BatchUpdateFields {
+  categoryId?: string | null;
+  accountId?: string | null;
+  date?: string | null;
+}
+
+interface BatchUpdateTransactionsRequest {
+  ids?: string[];
+  fields?: BatchUpdateFields;
+  patch?: BatchUpdateFields;
+  expected_updated_at?: Record<string, number | string | null>;
+}
+
+interface TransactionLockRow {
+  id: string;
+  user_id: string;
+  updated_at: number | string | null;
+}
+
+function asRow<T>(row: Record<string, string | number | null> | null): T | null {
+  return row as unknown as T | null;
+}
+
+export async function POST(request: NextRequest) {
   const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
-  const body = await request.json().catch(() => ({}));
+  const body = await request.json().catch(() => ({})) as BatchUpdateTransactionsRequest;
   const { ids, fields, patch, expected_updated_at: expectedMap } = body || {};
   const updateFields = { ...(patch || fields || {}) };
 
@@ -37,29 +60,31 @@ export async function POST(request) {
     updateFields.date = normalizedDate;
   }
 
-  const rows = ids.map(id => queryOne(
+  const rows = ids.map(id => asRow<TransactionLockRow>(queryOne(
     'SELECT id, user_id, updated_at FROM transactions WHERE id = ? AND user_id = ?',
     [id, auth.userId]
-  ));
+  )));
   for (let i = 0; i < rows.length; i++) {
-    if (!rows[i]) return NextResponse.json({ error: 'NotFound', missingId: ids[i] }, { status: 404 });
-    if (expectedMap && expectedMap[ids[i]] != null) {
-      const expected = Number(expectedMap[ids[i]]);
-      if (Number(rows[i].updated_at) !== expected) {
+    const row = rows[i];
+    if (!row) return NextResponse.json({ error: 'NotFound', missingId: ids[i] }, { status: 404 });
+    const expectedRaw = expectedMap?.[ids[i]];
+    if (expectedRaw != null) {
+      const expected = Number(expectedRaw);
+      if (Number(row.updated_at) !== expected) {
         return NextResponse.json({
           error: 'OptimisticLockConflict',
           conflictId: ids[i],
-          serverUpdatedAt: Number(rows[i].updated_at),
+          serverUpdatedAt: Number(row.updated_at),
           message: '此筆已被其他裝置修改，請重新整理後再操作',
         }, { status: 409 });
       }
     }
   }
 
-  const allowedFields = { categoryId: 'category_id', accountId: 'account_id', date: 'date' };
-  const setClauses = [];
-  const values = [];
-  for (const [key, col] of Object.entries(allowedFields)) {
+  const allowedFields: Record<keyof BatchUpdateFields, string> = { categoryId: 'category_id', accountId: 'account_id', date: 'date' };
+  const setClauses: string[] = [];
+  const values: Array<string | number | null> = [];
+  for (const [key, col] of Object.entries(allowedFields) as Array<[keyof BatchUpdateFields, string]>) {
     if (updateFields[key] !== undefined) {
       setClauses.push(`${col} = ?`);
       values.push(updateFields[key]);
@@ -79,7 +104,7 @@ export async function POST(request) {
     db.run('COMMIT');
   } catch (e) {
     try { db.run('ROLLBACK'); } catch (_) {}
-    return NextResponse.json({ error: '批次更新失敗', message: String(e?.message || e) }, { status: 500 });
+    return NextResponse.json({ error: '批次更新失敗', message: String(e instanceof Error ? e.message : e) }, { status: 500 });
   }
   saveDB();
   return NextResponse.json({ affectedIds: ids, affectedCount: ids.length, updated: ids.length, updatedAt: nowMs });

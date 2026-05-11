@@ -1,10 +1,37 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '../../../../lib/apiHelpers';
 import { queryAll, queryOne } from '../../../../lib/db';
 import { buildCsv, writeOperationAudit, isValidIso8601Date } from '../../../../lib/auditHelpers';
 import { getRequestIpFromHeaders } from '../../../../lib/loginHelpers';
 
-function txTypeToChinese(t) {
+type TransactionExportType = 'income' | 'expense' | 'transfer_out' | 'transfer_in';
+
+interface TransactionExportRow {
+  date: string | null;
+  type: TransactionExportType | string | null;
+  amount: number | string | null;
+  currency: string | null;
+  original_amount: number | string | null;
+  fx_rate: string | number | null;
+  twd_amount: number | string | null;
+  fx_fee: number | string | null;
+  exclude_from_stats: number | string | null;
+  tags: string | null;
+  note: string | null;
+  cat_name: string | null;
+  cat_parent_id: string | null;
+  parent_cat_name: string | null;
+  account_name: string | null;
+  transfer_to_account_name: string | null;
+}
+
+type CsvCell = string | number | null;
+
+function asRows<T>(rows: Array<Record<string, string | number | null>>): T[] {
+  return rows as unknown as T[];
+}
+
+function txTypeToChinese(t: string | null) {
   if (t === 'income') return '收入';
   if (t === 'expense') return '支出';
   if (t === 'transfer_out') return '轉出';
@@ -12,7 +39,7 @@ function txTypeToChinese(t) {
   return t || '';
 }
 
-export async function GET(request) {
+export async function GET(request: NextRequest) {
   const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
@@ -39,10 +66,10 @@ export async function GET(request) {
       LEFT JOIN accounts ta ON t.transfer_to_account_id = ta.id
       ${where}
       ORDER BY t.date DESC, t.created_at DESC`;
-    const rows = queryAll(sql, params);
+    const rows = asRows<TransactionExportRow>(queryAll(sql, params));
 
     const headers = ['日期', '類型', '分類', '金額', '幣別', '原始金額', '匯率', '台幣金額', '匯兌手續費', '帳戶', '轉入帳戶', '排除統計', '標籤', '備註'];
-    const dataRows = rows.map(r => {
+    const dataRows: CsvCell[][] = rows.map(r => {
       let category = '';
       if (r.cat_name) {
         category = r.parent_cat_name ? (r.parent_cat_name + ' > ' + r.cat_name) : r.cat_name;
@@ -79,6 +106,6 @@ export async function GET(request) {
     });
   } catch (e) {
     console.error('export_transactions failed', e);
-    return NextResponse.json({ error: '匯出失敗', message: String(e?.message || e) }, { status: 500 });
+    return NextResponse.json({ error: '匯出失敗', message: String(e instanceof Error ? e.message : e) }, { status: 500 });
   }
 }

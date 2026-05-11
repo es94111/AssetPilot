@@ -1,15 +1,34 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '../../../../lib/apiHelpers';
 import { getDB, queryOne, saveDB } from '../../../../lib/db';
 import { normalizeCurrency, convertToTwd, normalizeDate } from '../../../../lib/accountHelpers';
 import { uid } from '../../../../lib/userDefaults';
 import { todayInUserTz } from '../../../../lib/userTime';
 
-export async function POST(request) {
+interface TransferRequest {
+  fromAccountId?: string;
+  fromId?: string;
+  toAccountId?: string;
+  toId?: string;
+  amount?: number | string;
+  note?: string;
+  date?: string | null;
+}
+
+interface TransferAccountRow {
+  id: string;
+  currency: string | null;
+}
+
+function asRow<T>(row: Record<string, string | number | null> | null): T | null {
+  return row as unknown as T | null;
+}
+
+export async function POST(request: NextRequest) {
   const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
-  const body = await request.json().catch(() => ({}));
+  const body = await request.json().catch(() => ({})) as TransferRequest;
   const fromId = body.fromAccountId ?? body.fromId;
   const toId = body.toAccountId ?? body.toId;
   const { amount, note } = body;
@@ -21,8 +40,8 @@ export async function POST(request) {
     return NextResponse.json({ error: '金額必須大於 0' }, { status: 400 });
   }
 
-  const fromAccount = queryOne('SELECT id, currency FROM accounts WHERE id = ? AND user_id = ?', [fromId, auth.userId]);
-  const toAccount = queryOne('SELECT id, currency FROM accounts WHERE id = ? AND user_id = ?', [toId, auth.userId]);
+  const fromAccount = asRow<TransferAccountRow>(queryOne('SELECT id, currency FROM accounts WHERE id = ? AND user_id = ?', [fromId, auth.userId]));
+  const toAccount = asRow<TransferAccountRow>(queryOne('SELECT id, currency FROM accounts WHERE id = ? AND user_id = ?', [toId, auth.userId]));
   if (!fromAccount || !toAccount) return NextResponse.json({ error: 'NotFound' }, { status: 404 });
 
   const fromCurrency = normalizeCurrency(fromAccount.currency);
@@ -38,7 +57,7 @@ export async function POST(request) {
   try {
     converted = convertToTwd(Number(amount), fromCurrency, null, auth.userId);
   } catch (e) {
-    return NextResponse.json({ error: e.message || '轉帳金額格式錯誤' }, { status: 400 });
+    return NextResponse.json({ error: e instanceof Error ? e.message : '轉帳金額格式錯誤' }, { status: 400 });
   }
 
   const now = Date.now();
@@ -60,7 +79,7 @@ export async function POST(request) {
     db.run('COMMIT');
   } catch (e) {
     try { db.run('ROLLBACK'); } catch (_) {}
-    return NextResponse.json({ error: '轉帳建立失敗', message: String(e?.message || e) }, { status: 500 });
+    return NextResponse.json({ error: '轉帳建立失敗', message: String(e instanceof Error ? e.message : e) }, { status: 500 });
   }
   saveDB();
   return NextResponse.json({

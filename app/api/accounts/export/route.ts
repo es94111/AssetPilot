@@ -1,15 +1,37 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '../../../../lib/apiHelpers';
 import { queryAll, queryOne } from '../../../../lib/db';
 import { buildCsv, writeOperationAudit } from '../../../../lib/auditHelpers';
 import { getRequestIpFromHeaders } from '../../../../lib/loginHelpers';
 
-export async function GET(request) {
+interface AccountExportRow {
+  name: string | null;
+  category: string | null;
+  account_type: string | null;
+  initial_balance: number | string | null;
+  currency: string | null;
+  icon: string | null;
+  exclude_from_total: number | string | null;
+  linked_bank_id: string | null;
+  linked_bank_name: string | null;
+  overseas_fee_rate: number | string | null;
+  note: string | null;
+  created_at: string | number | null;
+  updated_at: string | number | null;
+}
+
+type CsvCell = string | number;
+
+function asRows<T>(rows: Array<Record<string, string | number | null>>): T[] {
+  return rows as unknown as T[];
+}
+
+export async function GET(request: NextRequest) {
   const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
   try {
-    const rows = queryAll(
+    const rows = asRows<AccountExportRow>(queryAll(
       `SELECT a.name, a.category, a.account_type, a.initial_balance, a.currency, a.icon,
         a.exclude_from_total, a.linked_bank_id, linked.name AS linked_bank_name,
         a.overseas_fee_rate, a.note, a.created_at, a.updated_at
@@ -18,10 +40,10 @@ export async function GET(request) {
        WHERE a.user_id = ?
        ORDER BY a.sort_order ASC, a.created_at ASC, a.name ASC`,
       [auth.userId]
-    );
+    ));
 
     const headers = ['帳戶名稱', '類別', '帳戶類型', '初始餘額', '幣別', '圖示', '排除總資產', '連結銀行帳戶', '海外手續費率', '備註', '建立時間', '更新時間'];
-    const dataRows = rows.map(r => [
+    const dataRows: CsvCell[][] = rows.map(r => [
       r.name || '', r.category || '', r.account_type || '', r.initial_balance || 0,
       r.currency || 'TWD', r.icon || 'fa-wallet', Number(r.exclude_from_total) ? '是' : '否',
       r.linked_bank_name || '', r.overseas_fee_rate ?? '', r.note || '', r.created_at || '', r.updated_at || '',
@@ -49,6 +71,6 @@ export async function GET(request) {
     });
   } catch (e) {
     console.error('export_accounts failed', e);
-    return NextResponse.json({ error: '匯出失敗', message: String(e?.message || e) }, { status: 500 });
+    return NextResponse.json({ error: '匯出失敗', message: String(e instanceof Error ? e.message : e) }, { status: 500 });
   }
 }

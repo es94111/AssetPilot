@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
 import { server as webauthnServer } from '@passwordless-id/webauthn';
 import type { CredentialInfo } from '@passwordless-id/webauthn';
-import { signToken } from '../../../../../lib/auth';
 import { getDB, queryOne, saveDB } from '../../../../../lib/db';
 import { recordLoginAudit, recordLoginAttempt } from '../../../../../lib/loginHelpers';
 import { backfillDefaultsForUser } from '../../../../../lib/userDefaults';
 import { formatUser, setAuthCookie } from '../../../../../lib/apiHelpers';
 import { consumePasskeyChallenge } from '@/lib/passkeyChallenge';
+import { createLoginSession } from '../../../../../lib/sessionHelpers';
 
 const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || '').split(',').map(s => s.trim()).filter(Boolean);
 
@@ -61,7 +61,7 @@ export async function POST(request: Request) {
     recordLoginAttempt({ user: loginUser, email: loginUser.email, headers: request.headers, method: 'passkey', isSuccess: true });
     try { backfillDefaultsForUser(loginUser.id); } catch (e) { console.error('[backfill]', e); }
 
-    const token = signToken(loginUser.id, Number(user.token_version) || 0);
+    const { token } = createLoginSession(loginUser.id, Number(user.token_version) || 0, request.headers);
     const response = NextResponse.json({ user: formatUser(user), currentLogin });
     return setAuthCookie(response, token);
   } catch (e) {

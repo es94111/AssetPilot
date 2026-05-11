@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { requireAdmin } from '../../../../../../lib/apiHelpers';
 import { getDB, queryOne, saveDB } from '../../../../../../lib/db';
+import { revokeAllLoginSessions } from '../../../../../../lib/sessionHelpers';
 
 function validateStrongPassword(password) {
   const p = String(password || '');
@@ -38,6 +39,7 @@ export async function PUT(request, { params }) {
     [newHash, Date.now(), id]
   );
   saveDB();
+  revokeAllLoginSessions(String(id));
 
   return NextResponse.json({ ok: true });
 }

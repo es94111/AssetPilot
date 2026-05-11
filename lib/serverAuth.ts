@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { verifyToken } from './auth';
 import { queryOne } from './db';
+import { verifyLoginSession } from './sessionHelpers';
 
 export interface ServerUser {
   id: string;
@@ -15,6 +16,7 @@ export interface ServerUser {
 interface TokenPayload {
   userId?: string;
   tokenVersion?: number;
+  sessionId?: string;
 }
 
 interface UserRow {
@@ -39,10 +41,12 @@ export async function requireServerAuth(): Promise<ServerUser> {
   if (!token) redirect('/login');
   let userId: string;
   let tokenVersion: number;
+  let sessionId = '';
   try {
     const d = verifyToken(token) as TokenPayload;
     userId = String(d.userId || '');
     tokenVersion = Number(d.tokenVersion) || 0;
+    sessionId = d.sessionId ? String(d.sessionId) : '';
   } catch {
     redirect('/login');
   }
@@ -52,6 +56,7 @@ export async function requireServerAuth(): Promise<ServerUser> {
   ));
   if (!user) redirect('/login');
   if (tokenVersion !== (Number(user.token_version) || 0)) redirect('/login');
+  if (!verifyLoginSession(userId, sessionId, token)) redirect('/login');
   return {
     id: user.id,
     email: user.email,

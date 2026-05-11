@@ -34,6 +34,9 @@ export default function AccountSettingsClient({ user: initialUser }: { user: any
 
   const [loginAudit, setLoginAudit] = useState<any[]>([]);
   const [auditLoading, setAuditLoading] = useState(false);
+  const [sessions, setSessions] = useState<any[]>([]);
+  const [sessionsLoading, setSessionsLoading] = useState(false);
+  const [sessionsMsg, setSessionsMsg] = useState('');
   const [googleMsg, setGoogleMsg] = useState('');
   const [deleteMsg, setDeleteMsg] = useState('');
 
@@ -67,7 +70,16 @@ export default function AccountSettingsClient({ user: initialUser }: { user: any
     setAuditLoading(false);
   }, []);
 
-  useEffect(() => { load(); loadPasskeys(); loadLoginAudit(); }, [load, loadPasskeys, loadLoginAudit]);
+  const loadSessions = useCallback(async () => {
+    setSessionsLoading(true);
+    try {
+      const res = await apiGet('/api/account/sessions');
+      setSessions(res.sessions || []);
+    } catch (_) {}
+    setSessionsLoading(false);
+  }, []);
+
+  useEffect(() => { load(); loadPasskeys(); loadSessions(); loadLoginAudit(); }, [load, loadPasskeys, loadSessions, loadLoginAudit]);
 
   async function handleChangePw(e: React.FormEvent) {
     e.preventDefault();
@@ -120,6 +132,21 @@ export default function AccountSettingsClient({ user: initialUser }: { user: any
       await apiDelete(`/api/account/passkey/${encodeURIComponent(credId)}`);
       await loadPasskeys();
     } catch (e: any) { alert(e.message); }
+  }
+
+  async function handleLogoutSession(sessionId: string, isCurrent: boolean) {
+    setSessionsMsg('');
+    try {
+      await apiDelete(`/api/account/sessions/${encodeURIComponent(sessionId)}`);
+      if (isCurrent) {
+        window.location.href = '/login';
+        return;
+      }
+      setSessionsMsg('已登出該裝置');
+      await loadSessions();
+    } catch (e: any) {
+      setSessionsMsg(e.message || '登出裝置失敗');
+    }
   }
 
   async function handleRegisterPasskey() {
@@ -275,6 +302,45 @@ export default function AccountSettingsClient({ user: initialUser }: { user: any
           {profile?.googleLinked && <Button variant="outline" onClick={handleUnlinkGoogle}>解除綁定</Button>}
         </div>
         {googleMsg && <p className="text-sm text-slate-600 mt-3">{googleMsg}</p>}
+      </div>
+
+      <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-xl shadow-sm">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold">目前登入裝置</h3>
+          <Button variant="outline" onClick={loadSessions}>重新整理</Button>
+        </div>
+        {sessionsMsg && <p className={`text-sm mb-3 ${sessionsMsg.includes('失敗') ? 'text-red-500' : 'text-green-600'}`}>{sessionsMsg}</p>}
+        {sessionsLoading ? <p className="text-slate-500">載入中...</p> : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead>
+                <tr className="border-b text-slate-500">
+                  <th className="text-left py-2 pr-4">裝置名稱</th>
+                  <th className="text-left py-2 pr-4">登入時間</th>
+                  <th className="text-left py-2 pr-4">登入 IP</th>
+                  <th className="text-left py-2">操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sessions.map((session: any) => (
+                  <tr key={session.id} className="border-b last:border-0">
+                    <td className="py-3 pr-4 font-medium">{session.deviceName || '未知裝置'}{session.isCurrent ? '（目前裝置）' : ''}</td>
+                    <td className="py-3 pr-4">{new Date(Number(session.loginAt) || 0).toLocaleString('zh-TW')}</td>
+                    <td className="py-3 pr-4">{session.ipAddress || 'unknown'}</td>
+                    <td className="py-3">
+                      <Button variant="outline" onClick={() => handleLogoutSession(session.id, !!session.isCurrent)}>登出</Button>
+                    </td>
+                  </tr>
+                ))}
+                {sessions.length === 0 && (
+                  <tr>
+                    <td colSpan={4} className="py-3 text-slate-500">尚無登入裝置紀錄</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-xl shadow-sm">

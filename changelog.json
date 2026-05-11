@@ -1,6 +1,22 @@
 {
-  "currentVersion": "4.37.8",
+  "currentVersion": "4.37.9",
   "releases": [
+    {
+      "version": "4.37.9",
+      "date": "2026-05-11",
+      "title": "帳號設定新增目前登入裝置管理",
+      "type": "improved",
+      "changes": [
+        {
+          "tag": "new",
+          "text": "帳號設定頁新增「目前登入裝置」區塊，顯示裝置名稱、登入時間、登入 IP，並提供每台裝置的「登出」按鈕。"
+        },
+        {
+          "tag": "improved",
+          "text": "登入 Token 新增 session id 並以雜湊寫入 login_sessions，可單獨撤銷指定裝置；一般登出只撤銷目前裝置，修改密碼與管理員重設密碼仍會撤銷所有既有裝置。"
+        }
+      ]
+    },
     {
       "version": "4.37.8",
       "date": "2026-05-11",

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { requireAuth as getAuth } from './auth';
 import { verifyToken } from './auth';
 import { queryOne } from './db';
+import { verifyLoginSession } from './sessionHelpers';
 import { processRecurringForUser } from './recurringHelpers';
 import { todayInUserTz } from './userTime';
 import logger from '@/lib/logger';
@@ -13,6 +14,7 @@ type ApiAuthResult = {
   displayName: string;
   isAdmin: boolean;
   themeMode: string;
+  sessionId?: string;
 };
 
 const CSRF_SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
@@ -82,10 +84,12 @@ export async function requireAuth(request?: any): Promise<ApiAuthResult | NextRe
 
     let userId: string;
     let tokenVersion: number;
+    let sessionId = '';
     try {
-      const decoded = verifyToken(token) as { userId?: string; tokenVersion?: number };
+      const decoded = verifyToken(token) as { userId?: string; tokenVersion?: number; sessionId?: string };
       userId = String(decoded?.userId || '');
       tokenVersion = Number(decoded?.tokenVersion) || 0;
+      sessionId = decoded?.sessionId ? String(decoded.sessionId) : '';
     } catch {
       return authErrorResponse('登入已失效');
     }
@@ -102,6 +106,9 @@ export async function requireAuth(request?: any): Promise<ApiAuthResult | NextRe
     if (tokenVersion !== dbVersion) {
       return authErrorResponse('登入已失效，請重新登入');
     }
+    if (!verifyLoginSession(userId, sessionId, token)) {
+      return authErrorResponse('登入已失效，請重新登入');
+    }
 
     const authResult = {
       userId: user.id as string,
@@ -110,6 +117,7 @@ export async function requireAuth(request?: any): Promise<ApiAuthResult | NextRe
       displayName: (user.display_name as string) || '',
       isAdmin: !!user.is_admin,
       themeMode: (user.theme_mode as string) || 'system',
+      sessionId,
     };
     processDueRecurringOncePerDay(authResult.userId, authResult.userTimezone);
     return authResult;

@@ -1,15 +1,14 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import bcrypt from 'bcryptjs';
-import { signToken } from '../../../../lib/auth';
-import { queryOne, saveDB } from '../../../../lib/db';
+import { queryOne } from '../../../../lib/db';
 import {
   normalizeEmail,
-  getUserCount,
   recordLoginAudit,
   recordLoginAttempt,
 } from '../../../../lib/loginHelpers';
 import { backfillDefaultsForUser } from '../../../../lib/userDefaults';
 import { setAuthCookie, formatUser } from '../../../../lib/apiHelpers';
+import { createLoginSession } from '../../../../lib/sessionHelpers';
 
 /** Map<email, { count, lastAttempt }> — in-memory per-process */
 const loginAttempts = new Map<string, { count: number; lastAttempt: number }>();
@@ -75,7 +74,7 @@ export async function POST(request: NextRequest) {
     } catch (_) {}
   });
 
-  const token = signToken(userId, Number(user.token_version) || 0);
+  const { token } = createLoginSession(userId, Number(user.token_version) || 0, headers);
   const response = NextResponse.json({ user: formatUser(user), currentLogin });
   return setAuthCookie(response, token);
 }

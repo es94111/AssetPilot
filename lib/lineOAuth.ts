@@ -11,10 +11,8 @@ const PORT = process.env.PORT || 3000;
 function buildLineRedirectAllowlist() {
   if (LINE_OAUTH_REDIRECT_URIS.length > 0) return new Set(LINE_OAUTH_REDIRECT_URIS);
   return new Set([
-    `https://${APP_HOST}/login`,
-    `https://${APP_HOST}/settings/account`,
-    `http://localhost:${PORT}/login`,
-    `http://localhost:${PORT}/settings/account`,
+    `https://${APP_HOST}/auth/line/callback`,
+    `http://localhost:${PORT}/auth/line/callback`,
   ]);
 }
 

@@ -83,35 +83,6 @@ export default function AccountSettingsClient({ user: initialUser }: { user: any
 
   useEffect(() => { load(); loadPasskeys(); loadSessions(); loadLoginAudit(); }, [load, loadPasskeys, loadSessions, loadLoginAudit]);
 
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const params = new URLSearchParams(window.location.search);
-    const code = params.get('code');
-    const state = params.get('state');
-    const expectedState = window.sessionStorage.getItem('line_link_state');
-    if (!code || !state || !expectedState || state !== expectedState) return;
-
-    window.sessionStorage.removeItem('line_link_state');
-    setLineLoading(true);
-    setLineMsg('');
-    const redirectUri = window.location.origin + window.location.pathname;
-    fetch('/api/account/link-line', {
-      method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code, state, redirect_uri: redirectUri }),
-    })
-      .then(async (res) => {
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data.error || 'LINE 綁定失敗');
-        setLineMsg('LINE 帳號已綁定');
-        window.history.replaceState({}, '', window.location.pathname);
-        return load();
-      })
-      .catch((e) => setLineMsg(e.message || 'LINE 綁定失敗'))
-      .finally(() => setLineLoading(false));
-  }, [load]);
-
   async function handleChangePw(e: React.FormEvent) {
     e.preventDefault();
     setPwError('');
@@ -246,8 +217,9 @@ export default function AccountSettingsClient({ user: initialUser }: { user: any
       const stateRes = await fetch('/api/auth/line/state', { cache: 'no-store' });
       const { state, nonce } = await stateRes.json().catch(() => ({}));
       if (!state || !nonce) throw new Error('無法建立 LINE 綁定狀態');
-      window.sessionStorage.setItem('line_link_state', state);
-      const redirectUri = window.location.origin + window.location.pathname;
+      window.sessionStorage.setItem('line_oauth_state', state);
+      window.sessionStorage.setItem('line_oauth_flow', 'link');
+      const redirectUri = `${window.location.origin}/auth/line/callback`;
       const authorizeUrl = new URL('https://access.line.me/oauth2/v2.1/authorize');
       authorizeUrl.searchParams.set('response_type', 'code');
       authorizeUrl.searchParams.set('client_id', cfg.lineChannelId);

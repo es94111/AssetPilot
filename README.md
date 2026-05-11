@@ -45,7 +45,7 @@
 | 🐳 Docker 一鍵部署 | 單行指令啟動；JWT 與資料庫加密金鑰首次啟動自動產生並寫入持久化 volume |
 | 📊 台股深度整合 | 串接 TWSE OpenAPI：即時股價、除權息自動同步、FIFO 全精度逐筆損益 |
 | 💱 多幣別支援 | 串接 exchangerate-api.com 即時匯率，ISO 4217 白名單驗證 |
-| 🔐 多重認證 | 帳密 / Google SSO（Authorization Code Flow）/ Passkey（WebAuthn） |
+| 🔐 多重認證 | 帳密 / Google SSO / LINE Login（Authorization Code Flow）/ Passkey（WebAuthn） |
 | 🛡️ 稽核可審計 | 資料匯出匯入、備份還原、登入嘗試、路由攔截皆可追溯；保留天數可調 |
 | 🧭 URL-first SPA | 任何頁面可直連、書籤、分享；F5 重整不掉頁；上一頁 / 下一頁完整還原 |
 | 🌗 三模式主題 | system / light / dark；跨裝置同步；登入頁無 FOUC 樂觀渲染 |
@@ -90,7 +90,7 @@
 ### 系統管理
 
 - **使用者管理**：管理員可開關註冊、設定 Email 白名單、IP 白名單、新增 / 刪除 / 重設密碼
-- **登入稽核**：時間、IP、國家、方式（密碼 / Google / Passkey）、成功 / 失敗
+- **登入稽核**：時間、IP、國家、方式（密碼 / Google / LINE / Passkey）、成功 / 失敗
 - **寄信通道**：以 `EMAIL_PROVIDER_PRIMARY` / `EMAIL_PROVIDER_FALLBACK` 環境變數指定主要與備用通道（值：`smtp` / `zeabur` / `resend` / 留空），支援 SMTP（Nodemailer）、Zeabur Email（ZSend HTTP API）、Resend；可選 `EMAIL_SENDER_NAME` 為三通道統一指定寄件人顯示名稱；管理員設定頁可即時檢視各通道是否設定並寄送測試信
 - **路由稽核模式**（v4.29.0）：security（預設）/ extended（含 401 session 失效）/ minimal（路由稽核全部關閉）
 - **API 使用與授權頁**：動態列出所有外部 API 來源、配額、合規授權字樣（IPinfo `IP address data is powered by IPinfo`）
@@ -105,7 +105,7 @@
 | 後端 | Node.js ≥ 24 + Express 5 |
 | 資料庫 | SQLite（sql.js，記憶體 + 檔案持久化） |
 | 加密 | ChaCha20-Poly1305 AEAD + PBKDF2-SHA256 |
-| 認證 | JWT（HS256，httpOnly Cookie）+ bcryptjs；選配 Google OAuth Code Flow + Passkey（WebAuthn） |
+| 認證 | JWT（HS256，httpOnly Cookie）+ bcryptjs；選配 Google OAuth Code Flow + LINE Login Code Flow + Passkey（WebAuthn） |
 | 金額精度 | decimal.js（FIFO / 匯率 / 手續費分攤前後端同構共用 `lib/moneyDecimal.js`） |
 | 圖表 | Chart.js |
 | 寄信 | SMTP（Nodemailer）/ Zeabur Email（ZSend HTTP API）/ Resend；以環境變數指定主備通道，執行期 fallback |
@@ -145,6 +145,7 @@ services:
       - assetpilot-data:/app/data
     environment:
       - GOOGLE_CLIENT_ID=         # 選配
+      - LINE_CHANNEL_ID=          # 選配
       # - ALLOWED_ORIGINS=https://your-domain.com
 
 volumes:
@@ -204,6 +205,9 @@ Docker 多數參數已有合理預設，重點關注「自動產生」與「功�
 | `GOOGLE_CLIENT_ID` | SSO | Google OAuth 2.0 Client ID（留空停用 SSO） | — |
 | `GOOGLE_CLIENT_SECRET` | SSO | Google OAuth Client Secret | — |
 | `GOOGLE_OAUTH_REDIRECT_URIS` | SSO | OAuth 重定向 URI 白名單，逗號分隔 | 自動推導 |
+| `LINE_CHANNEL_ID` | SSO | LINE Login Channel ID（留空停用 LINE 登入） | — |
+| `LINE_CHANNEL_SECRET` | SSO | LINE Login Channel Secret | — |
+| `LINE_OAUTH_REDIRECT_URIS` | SSO | LINE Login callback URL 白名單，逗號分隔 | 自動推導 |
 | `ALLOWED_ORIGINS` | 安全 | CORS 白名單，逗號分隔（正式環境建議設定） | — |
 | `ADMIN_IP_ALLOWLIST` | 安全 | 管理員 IP 白名單，逗號分隔，略過速率限制 | — |
 | `EXCHANGE_RATE_API_KEY` | 選配 | exchangerate-api.com Key | `free` |
@@ -265,7 +269,7 @@ Caddy 自動申請並續期 HTTPS 憑證。
 
 ## 認證機制
 
-支援三種登入方式，皆可同時啟用：
+支援四種登入方式，皆可同時啟用：
 
 ### 帳密登入
 
@@ -280,6 +284,29 @@ Caddy 自動申請並續期 HTTPS 憑證。
 5. 未設定時 Google 登入按鈕自動隱藏，不影響其他登入方式
 
 > ⚠️ 若登入後停在 `/?code=...`，請確認重新導向 URI 與網域完全一致（含 `https://` 與尾端 `/`）。
+
+### LINE Login（Authorization Code Flow）
+
+1. 至 [LINE Developers Console](https://developers.line.biz/console/) 建立 Provider 與 LINE Login channel
+2. 在 LINE Login channel 啟用 LINE Login，並申請 / 啟用 email 權限
+3. **Callback URL**：本機 `http://localhost:3000/auth/line/callback`；正式 `https://your-domain.com/auth/line/callback`
+4. 將 `LINE_CHANNEL_ID`、`LINE_CHANNEL_SECRET` 與 `LINE_OAUTH_REDIRECT_URIS` 設為環境變數啟動
+5. 登入管理員帳號後，到「管理員設定 → 系統設定」勾選「啟用 LINE 登入」並儲存
+6. 未設定或未由管理員啟用時，LINE 登入與綁定按鈕自動隱藏
+
+`LINE_OAUTH_REDIRECT_URIS` 範例：
+
+```env
+LINE_OAUTH_REDIRECT_URIS=https://your-domain.com/auth/line/callback
+```
+
+本機開發：
+
+```env
+LINE_OAUTH_REDIRECT_URIS=http://localhost:3000/auth/line/callback
+```
+
+LINE 登入與綁定皆使用 LINE 官方 Login API v2.1：`/oauth2/v2.1/authorize`、`/token`、`/verify`，並以一次性 state + nonce 防護登入流程。
 
 ### Passkey（WebAuthn）
 
@@ -374,7 +401,7 @@ Caddy 自動申請並續期 HTTPS 憑證。
 | 速率限制 | 登入 / 註冊每 IP 每 15 分鐘最多 20 次；公開頁面每分鐘最多 120 次 |
 | Cloudflare API Shield | OpenAPI 3.2.0 Schema（`openapi.yaml`），可啟用請求驗證 |
 | CORS 控制 | `ALLOWED_ORIGINS` 白名單 |
-| OAuth 防 CSRF | Google 登入使用一次性 state（10 分鐘 TTL） |
+| OAuth 防 CSRF | Google / LINE 登入使用一次性 state；LINE 額外使用 nonce 驗證 ID Token |
 | `?next=` 開放重定向防護 | 5 條規則白名單：相對路徑 / 拒 protocol-relative / 拒 `://` / pathname 必須命中前端 ROUTES 表 |
 | 路徑遊走偵測 | catch-all 偵測 `..` / `%2e%2e` / `%252e%252e`；寫稽核日誌 |
 | Admin path 攔截 | 後端維護 `ADMIN_ONLY_PATHS` 常數陣列；非管理員命中時寫稽核並由前端渲染 404 訊息頁 |
@@ -391,6 +418,7 @@ Caddy 自動申請並續期 HTTPS 憑證。
 | TWSE OpenAPI | 台股即時股價、收盤、除權息 | <https://openapi.twse.com.tw/> |
 | exchangerate-api.com | 全球即時匯率（基礎 TWD） | <https://www.exchangerate-api.com/> |
 | Google Identity Services | Google SSO 登入 | <https://developers.google.com/identity> |
+| LINE Login API | LINE 登入與帳號綁定 | <https://developers.line.biz/en/docs/line-login/> |
 | IPinfo Lite | IP 國家查詢（合規授權字樣固定顯示於 API 使用頁） | <https://ipinfo.io/lite> |
 | SMTP（Nodemailer） | 排程信件 / 系統通知（Gmail / Outlook 等） | <https://nodemailer.com/> |
 | Zeabur Email（ZSend） | 排程信件 / 系統通知 | <https://zeabur.com/docs/en-US/email/quick-start> |

@@ -45,33 +45,6 @@ export default function LoginPage() {
     fetch('/api/config').then(r => r.json()).then(cfg => setConfig(cfg)).catch(() => {});
   }, []);
 
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const params = new URLSearchParams(window.location.search);
-    const code = params.get('code');
-    const state = params.get('state');
-    const expectedState = window.sessionStorage.getItem('line_oauth_state');
-    if (!code || !state || !expectedState || state !== expectedState) return;
-
-    window.sessionStorage.removeItem('line_oauth_state');
-    setLineLoading(true);
-    setError('');
-    const redirectUri = window.location.origin + window.location.pathname;
-    fetch('/api/auth/line', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code, state, redirect_uri: redirectUri }),
-    })
-      .then(async (res) => {
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data.error || 'LINE 登入失敗');
-        router.push('/dashboard');
-        router.refresh();
-      })
-      .catch((e) => setError(e.message || 'LINE 登入失敗'))
-      .finally(() => setLineLoading(false));
-  }, [router]);
-
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
     setError('');
@@ -189,7 +162,8 @@ export default function LoginPage() {
       const { state, nonce } = await stateRes.json().catch(() => ({}));
       if (!state || !nonce) throw new Error('無法建立 LINE 登入狀態');
       window.sessionStorage.setItem('line_oauth_state', state);
-      const redirectUri = window.location.origin + window.location.pathname;
+      window.sessionStorage.setItem('line_oauth_flow', 'login');
+      const redirectUri = `${window.location.origin}/auth/line/callback`;
       const authorizeUrl = new URL('https://access.line.me/oauth2/v2.1/authorize');
       authorizeUrl.searchParams.set('response_type', 'code');
       authorizeUrl.searchParams.set('client_id', config.lineChannelId);

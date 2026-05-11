@@ -73,8 +73,10 @@ interface RecordDraft {
   amount?: number;
   categoryId?: string;
   categoryName?: string;
+  categoryPage?: number;
   accountId?: string;
   accountName?: string;
+  accountPage?: number;
   currency?: string;
   note?: string;
 }
@@ -237,18 +239,53 @@ function listCategories(userId: string, type: TxType): CategoryRow[] {
     `SELECT c.id, c.name, p.name AS parent_name
      FROM categories c
      LEFT JOIN categories p ON p.id = c.parent_id
+     LEFT JOIN (
+       SELECT category_id, COUNT(*) AS usage_count, MAX(COALESCE(updated_at, created_at, 0)) AS last_used
+       FROM transactions
+       WHERE user_id = ? AND type = ? AND category_id IS NOT NULL AND category_id != ''
+       GROUP BY category_id
+     ) usage ON usage.category_id = c.id
      WHERE c.user_id = ? AND c.type = ? AND c.parent_id IS NOT NULL AND c.parent_id != ''
-     ORDER BY p.sort_order ASC, c.sort_order ASC, c.name ASC
-     LIMIT 30`,
-    [userId, type]
+     ORDER BY COALESCE(usage.usage_count, 0) DESC, COALESCE(usage.last_used, 0) DESC, p.sort_order ASC, c.sort_order ASC, c.name ASC`,
+    [userId, type, userId, type]
   ));
 }
 
 function listAccounts(userId: string): AccountRow[] {
   return asRows<AccountRow>(queryAll(
-    'SELECT id, name, currency FROM accounts WHERE user_id = ? AND COALESCE(is_active, 1) = 1 ORDER BY sort_order ASC, created_at ASC LIMIT 30',
-    [userId]
+    `SELECT a.id, a.name, a.currency
+     FROM accounts a
+     LEFT JOIN (
+       SELECT account_id, COUNT(*) AS usage_count, MAX(COALESCE(updated_at, created_at, 0)) AS last_used
+       FROM transactions
+       WHERE user_id = ? AND account_id IS NOT NULL AND account_id != ''
+       GROUP BY account_id
+     ) usage ON usage.account_id = a.id
+     WHERE a.user_id = ? AND COALESCE(a.is_active, 1) = 1
+     ORDER BY COALESCE(usage.usage_count, 0) DESC, COALESCE(usage.last_used, 0) DESC, a.sort_order ASC, a.created_at ASC`,
+    [userId, userId]
   ));
+}
+
+function pageItems<T>(items: T[], page: number, pageSize = 7): { page: number; totalPages: number; items: T[] } {
+  const totalPages = Math.max(1, Math.ceil(items.length / pageSize));
+  const safePage = Math.min(Math.max(0, Number(page) || 0), totalPages - 1);
+  return {
+    page: safePage,
+    totalPages,
+    items: items.slice(safePage * pageSize, safePage * pageSize + pageSize),
+  };
+}
+
+function pageActions(kind: 'category' | 'account', page: number, totalPages: number) {
+  const actions: Array<{ label: string; data: string; displayText?: string; primary?: boolean }> = [];
+  if (page > 0) {
+    actions.push({ label: '上一頁', data: `action=wizard_page&target=${kind}&page=${page - 1}`, displayText: '上一頁' });
+  }
+  if (page < totalPages - 1) {
+    actions.push({ label: '下一頁', data: `action=wizard_page&target=${kind}&page=${page + 1}`, displayText: '下一頁' });
+  }
+  return actions;
 }
 
 function recordDraftSummary(draft: RecordDraft): string[] {
@@ -290,21 +327,33 @@ function buildWizardStep(user: UserRow, step: string, draft: RecordDraft): LineR
   }
   if (step === 'record_category') {
     const categories = draft.type ? listCategories(user.id, draft.type) : [];
-    return buildRecordWizardStepFlex('新增記錄：分類', recordDraftSummary(draft), categories.slice(0, 9).map((category, index) => ({
+    const page = pageItems(categories, draft.categoryPage || 0);
+    const optionActions = page.items.map((category, index) => ({
       label: `${category.parent_name ? `${category.parent_name}/` : ''}${category.name}`.slice(0, 20),
       data: `action=wizard&step=category&value=${encodeURIComponent(category.id)}`,
       displayText: category.name,
       primary: index === 0,
-    })));
+    }));
+    return buildRecordWizardStepFlex(
+      '新增記錄：分類',
+      [...recordDraftSummary(draft), `第 ${page.page + 1} / ${page.totalPages} 頁，常用分類優先顯示。`],
+      [...optionActions, ...pageActions('category', page.page, page.totalPages)]
+    );
   }
   if (step === 'record_account') {
     const accounts = listAccounts(user.id);
-    return buildRecordWizardStepFlex('新增記錄：帳戶', recordDraftSummary(draft), accounts.slice(0, 9).map((account, index) => ({
+    const page = pageItems(accounts, draft.accountPage || 0);
+    const optionActions = page.items.map((account, index) => ({
       label: account.name.slice(0, 20),
       data: `action=wizard&step=account&value=${encodeURIComponent(account.id)}`,
       displayText: account.name,
       primary: index === 0,
-    })));
+    }));
+    return buildRecordWizardStepFlex(
+      '新增記錄：帳戶',
+      [...recordDraftSummary(draft), `第 ${page.page + 1} / ${page.totalPages} 頁，常用帳戶優先顯示。`],
+      [...optionActions, ...pageActions('account', page.page, page.totalPages)]
+    );
   }
   if (step === 'record_currency') {
     return buildRecordWizardStepFlex('新增記錄：幣別', recordDraftSummary(draft), ['TWD', 'USD', 'JPY', 'CNY', 'EUR', 'HKD'].map((currency, index) => ({
@@ -527,13 +576,30 @@ async function handleEvent(event: LineWebhookEvent, request: Request): Promise<v
       await replyLineMessage(event.replyToken, [buildWizardStep(user, 'record_date', draft)]);
       return;
     }
+    if (action === 'wizard_page') {
+      const target = params.get('target') || '';
+      const page = Math.max(0, Number(params.get('page')) || 0);
+      const state = getLineBotState(lineUserId);
+      const draft = parseStatePayload(state);
+      const nextStep = target === 'account' ? 'record_account' : 'record_category';
+      if (target === 'account') draft.accountPage = page;
+      else draft.categoryPage = page;
+      setLineBotState(lineUserId, user.id, nextStep, draft.type || '', draft);
+      await replyLineMessage(event.replyToken, [buildWizardStep(user, nextStep, draft)]);
+      return;
+    }
     if (action === 'wizard') {
       const step = params.get('step') || '';
       const value = params.get('value') || '';
       const state = getLineBotState(lineUserId);
       const draft = parseStatePayload(state);
       if (step === 'date') draft.date = normalizeDate(value) || todayInUserTz(user.timezone || 'Asia/Taipei');
-      if (step === 'type') draft.type = value === 'income' ? 'income' : 'expense';
+      if (step === 'type') {
+        draft.type = value === 'income' ? 'income' : 'expense';
+        draft.categoryId = undefined;
+        draft.categoryName = undefined;
+        draft.categoryPage = 0;
+      }
       if (step === 'category') {
         const category = asRow<CategoryRow>(queryOne(
           `SELECT c.id, c.name, p.name AS parent_name
@@ -545,6 +611,7 @@ async function handleEvent(event: LineWebhookEvent, request: Request): Promise<v
         if (category) {
           draft.categoryId = category.id;
           draft.categoryName = `${category.parent_name ? `${category.parent_name}/` : ''}${category.name}`;
+          draft.accountPage = 0;
         }
       }
       if (step === 'account') {
@@ -610,6 +677,9 @@ async function handleEvent(event: LineWebhookEvent, request: Request): Promise<v
         await replyLineMessage(event.replyToken, [textMessage('請選擇或輸入「收入」或「支出」。'), buildWizardStep(user, state.action, draft)]);
         return;
       }
+      draft.categoryId = undefined;
+      draft.categoryName = undefined;
+      draft.categoryPage = 0;
     } else if (field === 'amount') {
       const amount = Number(normalized.replace(/,/g, ''));
       if (!Number.isFinite(amount) || amount <= 0) {
@@ -634,6 +704,7 @@ async function handleEvent(event: LineWebhookEvent, request: Request): Promise<v
       }
       draft.categoryId = matched.id;
       draft.categoryName = `${matched.parent_name ? `${matched.parent_name}/` : ''}${matched.name}`;
+      draft.accountPage = 0;
     } else if (field === 'account') {
       const accounts = listAccounts(user.id);
       const matched = accounts.find((account) => account.name.toLowerCase().includes(normalized.toLowerCase()) || normalized.toLowerCase().includes(account.name.toLowerCase()));

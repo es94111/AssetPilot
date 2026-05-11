@@ -168,7 +168,7 @@ export function buildRecordWizardStepFlex(
         layout: 'vertical',
         spacing: 'sm',
         contents: [
-          ...actions.slice(0, 10).map((action, index) => postbackButton(
+          ...actions.slice(0, 9).map((action, index) => postbackButton(
             action.label,
             action.data,
             action.displayText || action.label,

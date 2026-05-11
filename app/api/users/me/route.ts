@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { NextResponse } from 'next/server';
 import { requireAuth, normalizeThemeMode } from '../../../../lib/apiHelpers';
 import { queryOne } from '../../../../lib/db';

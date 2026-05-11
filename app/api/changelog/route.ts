@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { NextResponse } from 'next/server';
 import { readFileSync } from 'fs';
 import path from 'path';

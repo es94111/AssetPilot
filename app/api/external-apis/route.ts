@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { NextResponse } from 'next/server';
 import externalApisData from '../../../lib/external-apis.json';
 

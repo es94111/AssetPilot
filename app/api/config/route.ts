@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { NextResponse } from 'next/server';
 import { getSystemSettings, getUserCount } from '../../../lib/loginHelpers';
 

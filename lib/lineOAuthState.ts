@@ -10,9 +10,10 @@ function pruneLineOAuthStates() {
   }
 }
 
-export function issueLineOAuthState(): { state: string; nonce: string } {
+export function issueLineOAuthState(flow = 'login'): { state: string; nonce: string } {
   pruneLineOAuthStates();
-  const state = crypto.randomBytes(24).toString('hex');
+  const safeFlow = flow === 'link' ? 'link' : 'login';
+  const state = `${safeFlow}.${crypto.randomBytes(24).toString('hex')}`;
   const nonce = crypto.randomBytes(24).toString('hex');
   lineOAuthStates.set(state, { issuedAt: Date.now(), nonce });
   return { state, nonce };

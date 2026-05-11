@@ -208,6 +208,8 @@ Docker 多數參數已有合理預設，重點關注「自動產生」與「功�
 | `LINE_CHANNEL_ID` | SSO | LINE Login Channel ID（留空停用 LINE 登入） | — |
 | `LINE_CHANNEL_SECRET` | SSO | LINE Login Channel Secret | — |
 | `LINE_OAUTH_REDIRECT_URIS` | SSO | LINE Login callback URL 白名單，逗號分隔 | 自動推導 |
+| `LINE_MESSAGING_CHANNEL_SECRET` | LINE Bot | LINE 官方帳號 Messaging API Channel Secret；留空時 fallback 使用 `LINE_CHANNEL_SECRET` | — |
+| `LINE_MESSAGING_CHANNEL_ACCESS_TOKEN` | LINE Bot | LINE 官方帳號 Messaging API Channel access token；設定後啟用 `/api/line/webhook` | — |
 | `ALLOWED_ORIGINS` | 安全 | CORS 白名單，逗號分隔（正式環境建議設定） | — |
 | `ADMIN_IP_ALLOWLIST` | 安全 | 管理員 IP 白名單，逗號分隔，略過速率限制 | — |
 | `EXCHANGE_RATE_API_KEY` | 選配 | exchangerate-api.com Key | `free` |
@@ -307,6 +309,15 @@ LINE_OAUTH_REDIRECT_URIS=http://localhost:3000/auth/line/callback
 ```
 
 LINE 登入與綁定皆使用 LINE 官方 Login API v2.1：`/oauth2/v2.1/authorize`、`/token`、`/verify`，並以一次性 state + nonce 防護登入流程。
+
+### LINE 官方帳號記帳
+
+1. 在同一個 LINE Developers Provider 建立或選擇 Messaging API channel，取得 Channel secret 與 long-lived Channel access token
+2. 設定 `LINE_MESSAGING_CHANNEL_SECRET`、`LINE_MESSAGING_CHANNEL_ACCESS_TOKEN`，並設定 `APP_URL=https://your-domain.com`
+3. 在 Messaging API channel 的 Webhook URL 填入 `https://your-domain.com/api/line/webhook`，啟用 Use webhook
+4. 使用者先在 AssetPilot「帳號設定」綁定 LINE 帳號，之後可在官方帳號輸入 `支出 120 午餐`、`收入 5000 薪資`、`查詢 本月`
+
+Webhook 回覆使用 LINE Flex Message Button：未綁定時顯示「綁定 LINE 帳號」URI button；記帳成功與查詢結果會提供「再記一筆支出」「查詢本月」等 message button。
 
 ### Passkey（WebAuthn）
 

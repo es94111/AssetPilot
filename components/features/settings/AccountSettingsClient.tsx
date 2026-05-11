@@ -214,11 +214,9 @@ export default function AccountSettingsClient({ user: initialUser }: { user: any
       const cfgRes = await fetch('/api/config', { cache: 'no-store' });
       const cfg = await cfgRes.json().catch(() => ({}));
       if (!cfg?.lineChannelId || !cfg?.lineCodeFlow) throw new Error('LINE 登入尚未設定完成');
-      const stateRes = await fetch('/api/auth/line/state', { cache: 'no-store' });
+      const stateRes = await fetch('/api/auth/line/state?flow=link', { cache: 'no-store' });
       const { state, nonce } = await stateRes.json().catch(() => ({}));
       if (!state || !nonce) throw new Error('無法建立 LINE 綁定狀態');
-      window.sessionStorage.setItem('line_oauth_state', state);
-      window.sessionStorage.setItem('line_oauth_flow', 'link');
       const redirectUri = `${window.location.origin}/auth/line/callback`;
       const authorizeUrl = new URL('https://access.line.me/oauth2/v2.1/authorize');
       authorizeUrl.searchParams.set('response_type', 'code');

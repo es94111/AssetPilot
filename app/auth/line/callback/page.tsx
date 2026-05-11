@@ -12,14 +12,10 @@ export default function LineCallbackPage() {
       const params = new URLSearchParams(window.location.search);
       const code = params.get('code');
       const state = params.get('state');
-      const expectedState = window.sessionStorage.getItem('line_oauth_state');
-      const flow = window.sessionStorage.getItem('line_oauth_flow') || 'login';
+      const flow = state?.startsWith('link.') ? 'link' : 'login';
 
-      window.sessionStorage.removeItem('line_oauth_state');
-      window.sessionStorage.removeItem('line_oauth_flow');
-
-      if (!code || !state || !expectedState || state !== expectedState) {
-        throw new Error('LINE 登入狀態驗證失敗，請重新操作');
+      if (!code || !state) {
+        throw new Error('LINE 未回傳授權碼，請重新操作');
       }
 
       const redirectUri = `${window.location.origin}/auth/line/callback`;

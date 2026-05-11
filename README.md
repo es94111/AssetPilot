@@ -319,6 +319,8 @@ LINE 登入與綁定皆使用 LINE 官方 Login API v2.1：`/oauth2/v2.1/authori
 
 Webhook 回覆使用 LINE Flex Message Button：未綁定時顯示「綁定 LINE 帳號」URI button；綁定後顯示主選單。按「新增支出」或「新增收入」後，再輸入 `120 午餐`、`5000 薪資` 這類金額與備註即可新增；按「查看紀錄」可查今天、昨天或本月。仍支援直接輸入 `支出 120 午餐`、`收入 5000 薪資`、`查詢 本月`。
 
+資產統計報表排程支援 Email / LINE 兩種通知方式；管理員可在「管理員設定 → 報表排程」新增排程時勾選 LINE 通知。LINE 排程通知會推送同 email 報表相近的資產摘要 Flex Message，使用者需先完成 LINE 綁定。
+
 ### Passkey（WebAuthn）
 
 登入後可至「個人設定 → 安全」綁定。支援 Touch ID / Face ID / Windows Hello / 硬體金鑰；採 `@passwordless-id/webauthn` 純前端實作 + 後端驗證。

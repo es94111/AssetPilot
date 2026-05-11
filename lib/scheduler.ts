@@ -105,7 +105,12 @@ async function runScheduledReportNow(scheduleId, triggeredBy = '排程') {
       return { status: 'no_channel', sent: 0, failed: 1, skipped: 0, reason: '未選擇通知方式' };
     }
 
-    if (wantsEmail && !isValidEmail(u.email)) {
+    const invalidEmail = wantsEmail && !isValidEmail(u.email);
+    const noEmailService = wantsEmail && !getActiveEmailProviders().hasAny;
+    const noLineService = wantsLine && !LINE_MESSAGING_CHANNEL_ACCESS_TOKEN;
+    const lineNotLinked = wantsLine && !u.line_id;
+
+    if (invalidEmail && !wantsLine) {
       const summary = `${formatLocalSummaryTime(startedAt)} ${triggeredBy}：Email 格式錯誤或未設定`;
       db.run('UPDATE report_schedules SET last_run = ?, last_summary = ?, updated_at = ? WHERE id = ?',
         [startedAt, summary, startedAt, scheduleId]);
@@ -113,21 +118,21 @@ async function runScheduledReportNow(scheduleId, triggeredBy = '排程') {
       return { status: 'invalid_email', sent: 0, failed: 1, skipped: 0, reason: 'Email 格式錯誤或未設定' };
     }
 
-    if (wantsEmail && !getActiveEmailProviders().hasAny) {
+    if (noEmailService && !wantsLine) {
       const summary = `${formatLocalSummaryTime(startedAt)} ${triggeredBy}：寄信服務未設定（請設定 EMAIL_PROVIDER_PRIMARY 環境變數）`;
       db.run('UPDATE report_schedules SET last_summary = ?, updated_at = ? WHERE id = ?', [summary, startedAt, scheduleId]);
       saveDB();
       return { status: 'no_email_service', sent: 0, failed: 1, skipped: 0, reason: '寄信服務未設定' };
     }
 
-    if (wantsLine && !LINE_MESSAGING_CHANNEL_ACCESS_TOKEN) {
+    if (noLineService && !wantsEmail) {
       const summary = `${formatLocalSummaryTime(startedAt)} ${triggeredBy}：LINE Messaging API 未設定`;
       db.run('UPDATE report_schedules SET last_summary = ?, updated_at = ? WHERE id = ?', [summary, startedAt, scheduleId]);
       saveDB();
       return { status: 'no_line_service', sent: 0, failed: 1, skipped: 0, reason: 'LINE Messaging API 未設定' };
     }
 
-    if (wantsLine && !u.line_id) {
+    if (lineNotLinked && !wantsEmail) {
       const summary = `${formatLocalSummaryTime(startedAt)} ${triggeredBy}：使用者尚未綁定 LINE`;
       db.run('UPDATE report_schedules SET last_run = ?, last_summary = ?, updated_at = ? WHERE id = ?',
         [startedAt, summary, startedAt, scheduleId]);
@@ -163,6 +168,13 @@ async function runScheduledReportNow(scheduleId, triggeredBy = '排程') {
     const stats = buildUserStatsReport(u.id, schedule.freq, u.timezone || 'Asia/Taipei');
 
     if (wantsEmail) {
+      if (invalidEmail) {
+        failed += 1;
+        channelResults.push('Email 失敗：Email 格式錯誤或未設定');
+      } else if (noEmailService) {
+        failed += 1;
+        channelResults.push('Email 失敗：寄信服務未設定');
+      } else {
       try {
         const html = renderStatsEmailHtml(u.display_name, u.email, stats);
         const subject = `${stats.month} 個人資產統計報表`;
@@ -182,9 +194,17 @@ async function runScheduledReportNow(scheduleId, triggeredBy = '排程') {
         channelResults.push(`Email 失敗：${msg}`);
         errMsg = [errMsg, msg].filter(Boolean).join('；');
       }
+      }
     }
 
     if (wantsLine) {
+      if (noLineService) {
+        failed += 1;
+        channelResults.push('LINE 失敗：LINE Messaging API 未設定');
+      } else if (lineNotLinked) {
+        failed += 1;
+        channelResults.push('LINE 失敗：使用者尚未綁定 LINE');
+      } else {
       try {
         const appUrl = process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || `https://${process.env.APP_HOST || 'localhost'}`;
         await pushLineMessage(u.line_id, [buildStatsReportFlex(u.display_name, stats, appUrl)]);
@@ -195,6 +215,7 @@ async function runScheduledReportNow(scheduleId, triggeredBy = '排程') {
         const msg = e?.message || '未知錯誤';
         channelResults.push(`LINE 失敗：${msg}`);
         errMsg = [errMsg, msg].filter(Boolean).join('；');
+      }
       }
     }
 

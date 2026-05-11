@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { apiGet, apiPost, apiPut, apiDelete } from '../../../lib/clientApi';
+import { apiGet, apiPost, apiPut, apiDelete, notifyDataChanged } from '../../../lib/clientApi';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 
@@ -192,6 +192,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
       setModal(false);
       setPage(1);
       await load(1);
+      notifyDataChanged('transactions');
     } catch (e: any) {
       setFormError(e.message);
     }
@@ -225,6 +226,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
       setTransferModal(false);
       setPage(1);
       await load(1);
+      notifyDataChanged('transactions');
     } catch (e: any) {
       setFormError(e.message);
     }
@@ -237,6 +239,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
       await apiDelete(`/api/transactions/${deleteId}`);
       setDeleteId(null);
       await load(page);
+      notifyDataChanged('transactions');
     } catch (e: any) {
       alert(e.message);
     }
@@ -249,6 +252,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
       await apiPost('/api/transactions/batch-delete', { ids: [...selected] });
       setSelected(new Set());
       await load(page);
+      notifyDataChanged('transactions');
     } catch (e: any) {
       alert(e.message);
     }
@@ -265,6 +269,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
       setBatchModal(null);
       setSelected(new Set());
       await load(page);
+      notifyDataChanged('transactions');
     } catch (e: any) {
       alert(e.message);
     }

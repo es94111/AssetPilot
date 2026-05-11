@@ -28,6 +28,13 @@ export async function apiPatch(url: string, body?: any) {
   return apiFetch(url, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
 }
 
+export const DATA_CHANGED_EVENT = 'assetpilot:data-changed';
+
+export function notifyDataChanged(scope: string) {
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(new CustomEvent(DATA_CHANGED_EVENT, { detail: { scope } }));
+}
+
 /** 格式化金額 */
 export function fmtMoney(n: number | string, currency = 'TWD') {
   const num = Math.round(Number(n) || 0);

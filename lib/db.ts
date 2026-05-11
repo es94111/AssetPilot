@@ -463,6 +463,14 @@ async function _runMigrations(): Promise<void> {
     updated_at INTEGER
   )`);
 
+  db.run(`CREATE TABLE IF NOT EXISTS line_bot_states (
+    line_user_id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    action TEXT NOT NULL,
+    tx_type TEXT DEFAULT '',
+    updated_at INTEGER NOT NULL
+  )`);
+
   db.run(`CREATE TABLE IF NOT EXISTS stock_settings (
     user_id TEXT PRIMARY KEY,
     fee_rate REAL DEFAULT 0.001425,

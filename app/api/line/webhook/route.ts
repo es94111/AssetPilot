@@ -4,8 +4,10 @@ import { getDB, queryAll, queryOne, saveDB } from '../../../../lib/db';
 import {
   LINE_MESSAGING_CHANNEL_ACCESS_TOKEN,
   LINE_MESSAGING_CHANNEL_SECRET,
-  buildActionFlex,
+  buildMainMenuFlex,
   buildQueryFlex,
+  buildQueryMenuFlex,
+  buildRecordPromptFlex,
   buildRecordFlex,
   replyLineMessage,
   textMessage,
@@ -25,6 +27,7 @@ interface LineWebhookEvent {
   replyToken?: string;
   source?: { userId?: string };
   message?: { type?: string; text?: string };
+  postback?: { data?: string };
 }
 
 interface UserRow {
@@ -52,6 +55,14 @@ interface TxRow {
   note: string | null;
   category_name: string | null;
   account_name: string | null;
+}
+
+interface LineBotStateRow {
+  line_user_id: string;
+  user_id: string;
+  action: string;
+  tx_type: string | null;
+  updated_at: number;
 }
 
 function asRows<T>(rows: Array<Record<string, string | number | null>>): T[] {
@@ -132,6 +143,47 @@ function parseRecordCommand(input: string, timezone: string): { type: TxType; am
   };
 }
 
+function parseRecordDetail(input: string, type: TxType, timezone: string): { type: TxType; amount: number; currency: string; date: string; note: string } | null {
+  const normalized = normalizeCommandText(input);
+  const dateParsed = parseDateToken(normalized, timezone);
+  let text = dateParsed.text;
+  const amountMatch = text.match(/^(\d+(?:\.\d+)?)/);
+  if (!amountMatch) return null;
+
+  const amount = Number(amountMatch[1]);
+  if (!Number.isFinite(amount) || amount <= 0) return null;
+  text = text.slice(amountMatch[0].length).trim();
+
+  const currencyMatch = text.match(/\b(TWD|USD|JPY|CNY|EUR|HKD)\b/i);
+  const currency = normalizeCurrency(currencyMatch?.[1] || 'TWD');
+  if (currencyMatch) text = text.replace(currencyMatch[0], '').trim();
+
+  return {
+    type,
+    amount,
+    currency,
+    date: dateParsed.date,
+    note: text || (type === 'expense' ? 'LINE 支出' : 'LINE 收入'),
+  };
+}
+
+function getLineBotState(lineUserId: string): LineBotStateRow | null {
+  return asRow<LineBotStateRow>(queryOne('SELECT * FROM line_bot_states WHERE line_user_id = ?', [lineUserId]));
+}
+
+function setLineBotState(lineUserId: string, userId: string, action: string, txType = ''): void {
+  getDB().run(
+    'INSERT OR REPLACE INTO line_bot_states (line_user_id, user_id, action, tx_type, updated_at) VALUES (?,?,?,?,?)',
+    [lineUserId, userId, action, txType, Date.now()]
+  );
+  saveDB();
+}
+
+function clearLineBotState(lineUserId: string): void {
+  getDB().run('DELETE FROM line_bot_states WHERE line_user_id = ?', [lineUserId]);
+  saveDB();
+}
+
 function findMatchedCategory(userId: string, type: TxType, text: string): CategoryRow | null {
   const rows = asRows<CategoryRow>(queryAll(
     `SELECT c.id, c.name, p.name AS parent_name
@@ -208,6 +260,18 @@ function queryPeriod(input: string, timezone: string): { title: string; dateFrom
   return { title: `${ym} 收支`, dateFrom: start, dateTo: endDate.toISOString().slice(0, 10) };
 }
 
+function queryTextFromPeriod(period: string): string {
+  if (period === 'today') return '查詢 今天';
+  if (period === 'yesterday') return '查詢 昨天';
+  return '查詢 本月';
+}
+
+function recordRuleText(type: TxType): string {
+  return type === 'income'
+    ? '收入輸入規則：金額 備註 日期（日期可省略）。例如：5000 薪資'
+    : '支出輸入規則：金額 備註 日期（日期可省略）。例如：120 午餐';
+}
+
 function queryTransactions(user: UserRow, input: string): LineReplyMessage {
   const period = queryPeriod(input, user.timezone || 'Asia/Taipei');
   const totals = asRow<{ income: number; expense: number }>(queryOne(
@@ -248,6 +312,7 @@ async function handleEvent(event: LineWebhookEvent, request: Request): Promise<v
   const lineUserId = event.source?.userId || '';
   const appUrl = appUrlFromRequest(request);
   const incomingText = event.message?.type === 'text' ? String(event.message.text || '') : '';
+  const postbackData = event.postback?.data || '';
 
   if (!lineUserId) {
     await replyLineMessage(event.replyToken, [textMessage('無法取得 LINE 使用者 ID。')]);
@@ -261,29 +326,73 @@ async function handleEvent(event: LineWebhookEvent, request: Request): Promise<v
 
   const normalized = normalizeCommandText(incomingText);
   if (!user) {
-    await replyLineMessage(event.replyToken, [buildActionFlex(appUrl)]);
+    await replyLineMessage(event.replyToken, [buildMainMenuFlex(appUrl, false)]);
     return;
   }
 
-  if (!normalized || /^(開始|說明|help|綁定|bind)$/i.test(normalized)) {
-    await replyLineMessage(event.replyToken, [buildActionFlex(appUrl)]);
+  if (postbackData) {
+    const params = new URLSearchParams(postbackData);
+    const action = params.get('action') || '';
+    if (action === 'menu') {
+      clearLineBotState(lineUserId);
+      await replyLineMessage(event.replyToken, [buildMainMenuFlex(appUrl, true)]);
+      return;
+    }
+    if (action === 'record') {
+      const txType = params.get('type') === 'income' ? 'income' : 'expense';
+      setLineBotState(lineUserId, user.id, 'await_record', txType);
+      await replyLineMessage(event.replyToken, [buildRecordPromptFlex(txType)]);
+      return;
+    }
+    if (action === 'query_menu') {
+      clearLineBotState(lineUserId);
+      await replyLineMessage(event.replyToken, [buildQueryMenuFlex()]);
+      return;
+    }
+    if (action === 'query') {
+      clearLineBotState(lineUserId);
+      await replyLineMessage(event.replyToken, [queryTransactions(user, queryTextFromPeriod(params.get('period') || 'month'))]);
+      return;
+    }
+  }
+
+  if (!normalized || /^(開始|說明|help|綁定|bind|選單|menu|取消)$/i.test(normalized)) {
+    clearLineBotState(lineUserId);
+    await replyLineMessage(event.replyToken, [buildMainMenuFlex(appUrl, true)]);
+    return;
+  }
+
+  const state = getLineBotState(lineUserId);
+  if (state?.action === 'await_record' && (state.tx_type === 'income' || state.tx_type === 'expense')) {
+    const detail = parseRecordDetail(normalized, state.tx_type, user.timezone || 'Asia/Taipei');
+    if (!detail) {
+      await replyLineMessage(event.replyToken, [
+        textMessage(recordRuleText(state.tx_type)),
+        buildRecordPromptFlex(state.tx_type),
+      ]);
+      return;
+    }
+    clearLineBotState(lineUserId);
+    await replyLineMessage(event.replyToken, [createTransactionFromLine(user, detail)]);
     return;
   }
 
   if (/^(查詢|查|明細|最近)/.test(normalized)) {
+    clearLineBotState(lineUserId);
     await replyLineMessage(event.replyToken, [queryTransactions(user, normalized)]);
     return;
   }
 
   const parsed = parseRecordCommand(normalized, user.timezone || 'Asia/Taipei');
   if (parsed) {
+    clearLineBotState(lineUserId);
     await replyLineMessage(event.replyToken, [createTransactionFromLine(user, parsed)]);
     return;
   }
 
   await replyLineMessage(event.replyToken, [
-    textMessage('我看不懂這個指令。可以輸入：支出 120 午餐、收入 5000 薪資、查詢 本月。'),
-    buildActionFlex(appUrl),
+    textMessage('請從選單選擇功能，或輸入：支出 120 午餐、收入 5000 薪資、查詢 本月。'),
+    buildMainMenuFlex(appUrl, true),
   ]);
 }
 

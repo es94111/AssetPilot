@@ -315,9 +315,9 @@ LINE 登入與綁定皆使用 LINE 官方 Login API v2.1：`/oauth2/v2.1/authori
 1. 在同一個 LINE Developers Provider 建立或選擇 Messaging API channel，取得 Channel secret 與 long-lived Channel access token
 2. 設定 `LINE_MESSAGING_CHANNEL_SECRET`、`LINE_MESSAGING_CHANNEL_ACCESS_TOKEN`，並設定 `APP_URL=https://your-domain.com`
 3. 在 Messaging API channel 的 Webhook URL 填入 `https://your-domain.com/api/line/webhook`，啟用 Use webhook
-4. 使用者先在 AssetPilot「帳號設定」綁定 LINE 帳號，之後可在官方帳號輸入 `支出 120 午餐`、`收入 5000 薪資`、`查詢 本月`
+4. 使用者先在 AssetPilot「帳號設定」綁定 LINE 帳號，之後可在官方帳號輸入 `選單`，用 Flex Message Button 選擇「新增支出」「新增收入」「查看紀錄」
 
-Webhook 回覆使用 LINE Flex Message Button：未綁定時顯示「綁定 LINE 帳號」URI button；記帳成功與查詢結果會提供「再記一筆支出」「查詢本月」等 message button。
+Webhook 回覆使用 LINE Flex Message Button：未綁定時顯示「綁定 LINE 帳號」URI button；綁定後顯示主選單。按「新增支出」或「新增收入」後，再輸入 `120 午餐`、`5000 薪資` 這類金額與備註即可新增；按「查看紀錄」可查今天、昨天或本月。仍支援直接輸入 `支出 120 午餐`、`收入 5000 薪資`、`查詢 本月`。
 
 ### Passkey（WebAuthn）
 

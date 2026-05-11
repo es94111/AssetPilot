@@ -90,6 +90,10 @@
     --transition-spring: 350ms cubic-bezier(.34,1.56,.64,1);
   }
 
+  html {
+    background: var(--bg);
+  }
+
   body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans TC", sans-serif;
     background: var(--app-bg);

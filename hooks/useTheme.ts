@@ -8,7 +8,10 @@ export function useTheme() {
 
   const applyTheme = useCallback((t: Theme) => {
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    document.documentElement.classList.toggle('dark-mode', t === 'dark' || (t === 'system' && prefersDark));
+    const isDark = t === 'dark' || (t === 'system' && prefersDark);
+    document.documentElement.classList.toggle('dark-mode', isDark);
+    document.documentElement.style.backgroundColor = isDark ? '#0c0f16' : '#f4f6fa';
+    document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
   }, []);
 
   useEffect(() => {

@@ -1,13 +1,32 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { apiGet, apiPost, apiPut, apiDelete, notifyDataChanged } from '../../../lib/clientApi';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 
 const EMPTY_FORM = { date: '', type: 'expense', amount: '', categoryId: '', accountId: '', note: '', excludeFromStats: false, currency: 'TWD', fxRate: '' };
 const EMPTY_TRANSFER_FORM = { date: '', amount: '', fromAccountId: '', toAccountId: '', note: '' };
+const EMPTY_FILTERS = { type: '', accountId: '', categoryId: '', dateFrom: '', dateTo: '', keyword: '' };
 const DEFAULT_CURRENCIES = ['TWD', 'USD', 'JPY', 'EUR', 'CNY', 'HKD', 'GBP', 'AUD', 'CAD', 'SGD'];
+
+type QueryParams = { get(name: string): string | null };
+
+function readPageParam(searchParams: QueryParams) {
+  return Math.max(1, Number(searchParams.get('page')) || 1);
+}
+
+function readFilters(searchParams: QueryParams) {
+  return {
+    type: searchParams.get('type') || '',
+    accountId: searchParams.get('accountId') || '',
+    categoryId: searchParams.get('categoryId') || '',
+    dateFrom: searchParams.get('dateFrom') || '',
+    dateTo: searchParams.get('dateTo') || '',
+    keyword: searchParams.get('keyword') || '',
+  };
+}
 
 function today() {
   return new Date().toISOString().slice(0, 10);
@@ -26,16 +45,20 @@ function labelForType(type: string) {
 }
 
 export default function TransactionsClient(_props: { user?: any } = {}) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const currentQuery = searchParams.toString();
   const [txs, setTxs] = useState<any[]>([]);
   const [total, setTotal] = useState(0);
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(() => readPageParam(searchParams));
   const [pageSize] = useState(20);
   const [loading, setLoading] = useState(true);
   const [accounts, setAccounts] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [currencyOptions, setCurrencyOptions] = useState<string[]>(DEFAULT_CURRENCIES);
   const [defaultCurrency, setDefaultCurrency] = useState('TWD');
-  const [filters, setFilters] = useState({ type: '', accountId: '', categoryId: '', dateFrom: '', dateTo: '', keyword: '' });
+  const [filters, setFilters] = useState(() => readFilters(searchParams));
   const [modal, setModal] = useState(false);
   const [transferModal, setTransferModal] = useState(false);
   const [batchModal, setBatchModal] = useState<'category' | 'date' | null>(null);
@@ -86,9 +109,38 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
     setCurrencyOptions(mergedCurrencies);
   }, []);
 
+  const updateFilters = useCallback((patch: Partial<typeof EMPTY_FILTERS>) => {
+    setPage(1);
+    setFilters((current) => ({ ...current, ...patch }));
+  }, []);
+
+  const clearFilters = useCallback(() => {
+    setPage(1);
+    setFilters(EMPTY_FILTERS);
+  }, []);
+
   useEffect(() => { loadMeta(); }, [loadMeta]);
-  useEffect(() => { setPage(1); load(1); }, [filters, load]);
   useEffect(() => { load(page); }, [page, load]);
+
+  useEffect(() => {
+    const nextPage = readPageParam(searchParams);
+    const nextFilters = readFilters(searchParams);
+    if (nextPage !== page) setPage(nextPage);
+    if (JSON.stringify(nextFilters) !== JSON.stringify(filters)) setFilters(nextFilters);
+  }, [currentQuery]);
+
+  useEffect(() => {
+    const params = new URLSearchParams();
+    params.set('page', String(page));
+    params.set('limit', String(pageSize));
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value) params.set(key, value);
+    });
+    const nextQuery = params.toString();
+    if (nextQuery !== currentQuery) {
+      router.replace(`${pathname}?${nextQuery}`, { scroll: false });
+    }
+  }, [currentQuery, filters, page, pageSize, pathname, router]);
 
   function openAdd() {
     const preferredAccount = accounts.find((account: any) => String(account.currency || 'TWD').toUpperCase() === defaultCurrency) || accounts[0];
@@ -311,19 +363,19 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
       </div>
 
       <div className="filter-bar">
-        <input type="text" className="filter-input" placeholder="搜尋備註..." value={filters.keyword} onChange={(e) => setFilters((current) => ({ ...current, keyword: e.target.value }))} />
-        <select value={filters.type} onChange={(e) => setFilters((current) => ({ ...current, type: e.target.value }))}>
+        <input type="text" className="filter-input" placeholder="搜尋備註..." value={filters.keyword} onChange={(e) => updateFilters({ keyword: e.target.value })} />
+        <select value={filters.type} onChange={(e) => updateFilters({ type: e.target.value })}>
           <option value="">所有類型</option>
           <option value="income">收入</option>
           <option value="expense">支出</option>
           <option value="transfer">轉帳</option>
           <option value="future">未來交易</option>
         </select>
-        <select value={filters.accountId} onChange={(e) => setFilters((current) => ({ ...current, accountId: e.target.value }))}>
+        <select value={filters.accountId} onChange={(e) => updateFilters({ accountId: e.target.value })}>
           <option value="">所有帳戶</option>
           {accounts.map((account: any) => <option key={account.id} value={account.id}>{account.name}</option>)}
         </select>
-        <select value={filters.categoryId} onChange={(e) => setFilters((current) => ({ ...current, categoryId: e.target.value }))}>
+        <select value={filters.categoryId} onChange={(e) => updateFilters({ categoryId: e.target.value })}>
           <option value="">所有分類</option>
           {allStandalone.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
           {allParents.map((parent: any) => (
@@ -334,9 +386,9 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
             </optgroup>
           ))}
         </select>
-        <input type="date" value={filters.dateFrom} onChange={(e) => setFilters((current) => ({ ...current, dateFrom: e.target.value }))} title="開始日期" />
-        <input type="date" value={filters.dateTo} onChange={(e) => setFilters((current) => ({ ...current, dateTo: e.target.value }))} title="結束日期" />
-        <button className="btn btn-ghost btn-sm" onClick={() => setFilters({ type: '', accountId: '', categoryId: '', dateFrom: '', dateTo: '', keyword: '' })}>
+        <input type="date" value={filters.dateFrom} onChange={(e) => updateFilters({ dateFrom: e.target.value })} title="開始日期" />
+        <input type="date" value={filters.dateTo} onChange={(e) => updateFilters({ dateTo: e.target.value })} title="結束日期" />
+        <button className="btn btn-ghost btn-sm" onClick={clearFilters}>
           <i className="fas fa-xmark" /> 清除
         </button>
       </div>

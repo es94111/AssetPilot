@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { apiGet } from '@/lib/clientApi';
 import StocksTabNav from './StocksTabNav';
 import { Select } from '@/components/ui/Select';
@@ -18,10 +19,14 @@ function plClass(n: number | string) {
 }
 
 export default function RealizedClient(_props: { user?: any } = {}) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const currentQuery = searchParams.toString();
   const [records, setRecords] = useState<any[]>([]);
   const [summary, setSummary] = useState<any>(null);
   const [stocks, setStocks] = useState<any[]>([]);
-  const [filterStockId, setFilterStockId] = useState('');
+  const [filterStockId, setFilterStockId] = useState(() => searchParams.get('stockId') || '');
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
@@ -56,6 +61,19 @@ export default function RealizedClient(_props: { user?: any } = {}) {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    const nextStockId = searchParams.get('stockId') || '';
+    if (nextStockId !== filterStockId) setFilterStockId(nextStockId);
+  }, [currentQuery]);
+
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (filterStockId) params.set('stockId', filterStockId);
+    const nextQuery = params.toString();
+    const nextUrl = nextQuery ? `${pathname}?${nextQuery}` : pathname;
+    if (nextQuery !== currentQuery) router.replace(nextUrl, { scroll: false });
+  }, [currentQuery, filterStockId, pathname, router]);
 
   const filtered = filterStockId ? records.filter(r => r.stockId === filterStockId) : records;
 

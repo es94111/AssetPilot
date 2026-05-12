@@ -5,7 +5,7 @@ import { apiGet } from '@/lib/clientApi';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import Chart from 'chart.js/auto';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
 function fmt(n: number | string) {
   return 'NT$ ' + Math.round(Number(n) || 0).toLocaleString('zh-TW');
@@ -93,17 +93,32 @@ function compareText(current: number, previous: number) {
   return `${sign}${fmt(delta)} (${sign}${rate}%)`;
 }
 
+function categoryRowKey(row: any) {
+  return [
+    row?.parentId || '',
+    row?.categoryId || '',
+    row?.name || '',
+    row?.isOtherGroup ? 'other' : 'item',
+  ].join('|');
+}
+
 export default function ReportsClient(_props: { user?: any } = {}) {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'category' | 'trend' | 'daily'>('category');
-  const [period, setPeriod] = useState('thisMonth');
-  const [type, setType] = useState('expense');
-  const [customFrom, setCustomFrom] = useState('');
-  const [customTo, setCustomTo] = useState('');
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const currentQuery = searchParams.toString();
+  const initialTab = searchParams.get('tab');
+  const initialPeriod = searchParams.get('period');
+  const initialType = searchParams.get('type');
+  const [activeTab, setActiveTab] = useState<'category' | 'trend' | 'daily'>(initialTab === 'trend' || initialTab === 'daily' ? initialTab : 'category');
+  const [period, setPeriod] = useState(initialPeriod || 'thisMonth');
+  const [type, setType] = useState(initialType === 'income' ? 'income' : 'expense');
+  const [customFrom, setCustomFrom] = useState(searchParams.get('from') || '');
+  const [customTo, setCustomTo] = useState(searchParams.get('to') || '');
   const [reportData, setReportData] = useState<any>(null);
   const [previousReportData, setPreviousReportData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedCategoryKey, setSelectedCategoryKey] = useState<string | null>(null);
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chartInstanceRef = useRef<Chart | null>(null);
 
@@ -123,6 +138,33 @@ export default function ReportsClient(_props: { user?: any } = {}) {
   }, [period, customFrom, customTo, type]);
 
   useEffect(() => { fetchReport(); }, [fetchReport]);
+
+  useEffect(() => {
+    const nextTab = searchParams.get('tab');
+    const nextPeriod = searchParams.get('period') || 'thisMonth';
+    const nextType = searchParams.get('type') === 'income' ? 'income' : 'expense';
+    const nextFrom = searchParams.get('from') || '';
+    const nextTo = searchParams.get('to') || '';
+    const normalizedTab = nextTab === 'trend' || nextTab === 'daily' ? nextTab : 'category';
+    if (normalizedTab !== activeTab) setActiveTab(normalizedTab);
+    if (nextPeriod !== period) setPeriod(nextPeriod);
+    if (nextType !== type) setType(nextType);
+    if (nextFrom !== customFrom) setCustomFrom(nextFrom);
+    if (nextTo !== customTo) setCustomTo(nextTo);
+  }, [currentQuery]);
+
+  useEffect(() => {
+    const params = new URLSearchParams();
+    params.set('tab', activeTab);
+    params.set('period', period);
+    params.set('type', type);
+    if (customFrom) params.set('from', customFrom);
+    if (customTo) params.set('to', customTo);
+    const nextQuery = params.toString();
+    if (nextQuery !== currentQuery) {
+      router.replace(`${pathname}?${nextQuery}`, { scroll: false });
+    }
+  }, [activeTab, period, type, customFrom, customTo, currentQuery, pathname, router]);
 
   useEffect(() => {
     function refreshVisibleReport() {
@@ -175,7 +217,7 @@ export default function ReportsClient(_props: { user?: any } = {}) {
           onClick: (_event: any, elements: any[]) => {
             if (!elements.length) return;
             const row = filtered[elements[0].index];
-            setSelectedCategory(row?.name || null);
+            setSelectedCategoryKey(row ? categoryRowKey(row) : null);
           },
         },
       };
@@ -202,17 +244,18 @@ export default function ReportsClient(_props: { user?: any } = {}) {
 
   const grandTotal = reportData?.total || catRows.reduce((sum: number, row: any) => sum + Number(row.total), 0);
   const previousTotal = previousReportData?.total || 0;
-  const selectedRow = selectedCategory ? catRows.find((row: any) => row.name === selectedCategory) : null;
+  const selectedRow = selectedCategoryKey ? catRows.find((row: any) => categoryRowKey(row) === selectedCategoryKey) : null;
   const expenseGroups = useMemo(() => groupCategoryRows(catRows), [catRows]);
 
   function jumpToTransactions(row: any) {
     const { from, to } = getDateRange(period, customFrom, customTo);
+    const categoryId = row?.categoryId || (row?.isOtherGroup ? row?.parentId : '');
     const params = new URLSearchParams({
       type,
       dateFrom: from,
       dateTo: to,
     });
-    if (row?.categoryId) params.set('categoryId', row.categoryId);
+    if (categoryId) params.set('categoryId', categoryId);
     router.push(`/finance/transactions?${params.toString()}`);
   }
 
@@ -297,9 +340,9 @@ export default function ReportsClient(_props: { user?: any } = {}) {
                 </div>
                 <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 pl-6 text-xs text-slate-500 dark:text-slate-400">
                   {group.children.map((child: any, childIndex: number) => {
-                    const selected = selectedCategory === child.name;
+                    const selected = selectedCategoryKey === categoryRowKey(child);
                     return (
-                      <button key={`${group.parentId}-${child.name}-${childIndex}`} type="button" className={`inline-flex items-center gap-1.5 rounded px-1 py-0.5 transition ${selected ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-200' : 'hover:bg-slate-50 dark:hover:bg-slate-800/60'}`} onClick={() => setSelectedCategory(child.name)} onDoubleClick={() => jumpToTransactions(child)}>
+                      <button key={`${group.parentId}-${child.name}-${childIndex}`} type="button" className={`inline-flex items-center gap-1.5 rounded px-1 py-0.5 transition ${selected ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-200' : 'hover:bg-slate-50 dark:hover:bg-slate-800/60'}`} onClick={() => setSelectedCategoryKey(categoryRowKey(child))} onDoubleClick={() => jumpToTransactions(child)}>
                         <span className="w-2 h-2 rounded-full" style={{ background: child.color || '#94a3b8' }} />
                         {child.name}
                       </button>
@@ -310,9 +353,9 @@ export default function ReportsClient(_props: { user?: any } = {}) {
             );
           }) : catRows.map((row: any, index: number) => {
             const percentage = grandTotal > 0 ? Math.round((Number(row.total) / grandTotal) * 100) : 0;
-            const selected = selectedCategory === row.name;
+            const selected = selectedCategoryKey === categoryRowKey(row);
             return (
-              <button key={`${row.parentId}-${index}`} type="button" className={`w-full flex items-center gap-3 text-sm rounded-lg px-2 py-2 transition ${selected ? 'bg-blue-50 dark:bg-blue-950/40' : 'hover:bg-slate-50 dark:hover:bg-slate-800/60'}`} onClick={() => setSelectedCategory(row.name)} onDoubleClick={() => jumpToTransactions(row)}>
+              <button key={`${row.parentId}-${index}`} type="button" className={`w-full flex items-center gap-3 text-sm rounded-lg px-2 py-2 transition ${selected ? 'bg-blue-50 dark:bg-blue-950/40' : 'hover:bg-slate-50 dark:hover:bg-slate-800/60'}`} onClick={() => setSelectedCategoryKey(categoryRowKey(row))} onDoubleClick={() => jumpToTransactions(row)}>
                 <span className="w-3 h-3 rounded-full" style={{ background: row.color || '#94a3b8' }} />
                 <span className="flex-1 text-left">{row.parentName && row.parentName !== row.name ? `${row.parentName} › ` : ''}{row.name || '未分類'}</span>
                 <div className="w-32 h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">

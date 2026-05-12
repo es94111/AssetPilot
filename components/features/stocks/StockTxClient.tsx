@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { apiGet, apiPost, apiPut, apiDelete } from '@/lib/clientApi';
 import StocksTabNav from './StocksTabNav';
 import { Button } from '@/components/ui/button';
@@ -14,16 +15,26 @@ function fmt(n: number | string) { return 'NT$ ' + Math.round(Number(n) || 0).to
 
 const EMPTY_FORM = { stockId: '', type: 'buy', date: '', shares: '', price: '', fee: '', tax: '', note: '' };
 
+type QueryParams = { get(name: string): string | null };
+
+function readPageParam(searchParams: QueryParams) {
+  return Math.max(1, Number(searchParams.get('page')) || 1);
+}
+
 export default function StockTxClient(_props: { user?: any } = {}) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const currentQuery = searchParams.toString();
   const [txs, setTxs] = useState<any[]>([]);
   const [total, setTotal] = useState(0);
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(() => readPageParam(searchParams));
   const [pageSize] = useState(20);
   const [stocks, setStocks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filterStockId, setFilterStockId] = useState('');
-  const [filterDateFrom, setFilterDateFrom] = useState('');
-  const [filterDateTo, setFilterDateTo] = useState('');
+  const [filterStockId, setFilterStockId] = useState(() => searchParams.get('stockId') || '');
+  const [filterDateFrom, setFilterDateFrom] = useState(() => searchParams.get('dateFrom') || '');
+  const [filterDateTo, setFilterDateTo] = useState(() => searchParams.get('dateTo') || '');
   const [form, setForm] = useState(EMPTY_FORM);
   const [editId, setEditId] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -51,8 +62,36 @@ export default function StockTxClient(_props: { user?: any } = {}) {
   }, []);
 
   useEffect(() => { loadMeta(); }, [loadMeta]);
-  useEffect(() => { setPage(1); load(1); }, [filterStockId, filterDateFrom, filterDateTo]);
-  useEffect(() => { load(page); }, [page]);
+  useEffect(() => { load(page); }, [page, load]);
+
+  useEffect(() => {
+    const nextPage = readPageParam(searchParams);
+    const nextStockId = searchParams.get('stockId') || '';
+    const nextDateFrom = searchParams.get('dateFrom') || '';
+    const nextDateTo = searchParams.get('dateTo') || '';
+    if (nextPage !== page) setPage(nextPage);
+    if (nextStockId !== filterStockId) setFilterStockId(nextStockId);
+    if (nextDateFrom !== filterDateFrom) setFilterDateFrom(nextDateFrom);
+    if (nextDateTo !== filterDateTo) setFilterDateTo(nextDateTo);
+  }, [currentQuery]);
+
+  useEffect(() => {
+    const params = new URLSearchParams();
+    params.set('page', String(page));
+    params.set('pageSize', String(pageSize));
+    if (filterStockId) params.set('stockId', filterStockId);
+    if (filterDateFrom) params.set('dateFrom', filterDateFrom);
+    if (filterDateTo) params.set('dateTo', filterDateTo);
+    const nextQuery = params.toString();
+    if (nextQuery !== currentQuery) {
+      router.replace(`${pathname}?${nextQuery}`, { scroll: false });
+    }
+  }, [currentQuery, filterStockId, filterDateFrom, filterDateTo, page, pageSize, pathname, router]);
+
+  function updateFilter(setter: (value: string) => void, value: string) {
+    setPage(1);
+    setter(value);
+  }
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
@@ -74,6 +113,7 @@ export default function StockTxClient(_props: { user?: any } = {}) {
     try {
       if (editId) { await apiPut(`/api/stock-transactions/${editId}`, body); }
       else { await apiPost('/api/stock-transactions', body); }
+      setPage(1);
       await load(1);
     } catch (e: any) { setFormError(e.message); }
     setSaving(false);
@@ -92,10 +132,10 @@ export default function StockTxClient(_props: { user?: any } = {}) {
       <StocksTabNav />
 
       <div className="flex gap-2 items-center p-4 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-lg shadow-sm">
-        <Select options={stocks.map(s => ({ label: `${s.symbol} ${s.name}`, value: s.id }))} value={filterStockId} onChange={e => setFilterStockId(e.target.value)} label="股票" className="w-48" />
-        <Input type="date" value={filterDateFrom} onChange={e => setFilterDateFrom(e.target.value)} label="起始" />
-        <Input type="date" value={filterDateTo} onChange={e => setFilterDateTo(e.target.value)} label="結束" />
-        <Button variant="outline" onClick={() => { setFilterStockId(''); setFilterDateFrom(''); setFilterDateTo(''); }}>清除</Button>
+        <Select options={stocks.map(s => ({ label: `${s.symbol} ${s.name}`, value: s.id }))} value={filterStockId} onChange={e => updateFilter(setFilterStockId, e.target.value)} label="股票" className="w-48" />
+        <Input type="date" value={filterDateFrom} onChange={e => updateFilter(setFilterDateFrom, e.target.value)} label="起始" />
+        <Input type="date" value={filterDateTo} onChange={e => updateFilter(setFilterDateTo, e.target.value)} label="結束" />
+        <Button variant="outline" onClick={() => { setPage(1); setFilterStockId(''); setFilterDateFrom(''); setFilterDateTo(''); }}>清除</Button>
       </div>
 
       <div className="flex justify-between items-center">

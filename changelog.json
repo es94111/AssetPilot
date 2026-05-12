@@ -1,6 +1,22 @@
 {
-  "currentVersion": "4.38.2",
+  "currentVersion": "4.38.3",
   "releases": [
+    {
+      "version": "4.38.3",
+      "date": "2026-05-12",
+      "title": "改善黑暗模式文字與背景對比",
+      "type": "fixed",
+      "changes": [
+        {
+          "tag": "fixed",
+          "text": "修正黑暗模式下部分頁面文字、表單欄位、提示框與狀態徽章因沿用淺色模式灰階或淺色背景而對比不足、難以閱讀的問題。"
+        },
+        {
+          "tag": "improved",
+          "text": "擴充全站深色主題相容層，讓既有 slate、gray、blue、green、red、amber 等 Tailwind 色彩 class 在黑暗模式下映射到可讀的文字、背景與語意色。"
+        }
+      ]
+    },
     {
       "version": "4.38.2",
       "date": "2026-05-12",

@@ -123,15 +123,15 @@ export default function PortfolioClient(_props: { user?: any } = {}) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         {[
-          { label: '股票總市值', value: fmt(totalMV), color: 'text-blue-600' },
-          { label: '總投入成本', value: fmt(totalCost) },
+          { label: '股票總市值', value: fmt(totalMV), color: 'text-[var(--primary)]' },
+          { label: '總投入成本', value: fmt(totalCost), color: 'text-[var(--text)]' },
           { label: '預估損益', value: fmtPL(totalPL), color: plClass(totalPL) },
-          { label: '累計股利', value: fmt(totalDiv), color: 'text-orange-500' },
+          { label: '累計股利', value: fmt(totalDiv), color: 'text-[var(--today)]' },
           { label: '整體報酬率', value: overallRate !== null ? `${overallRate >= 0 ? '+' : ''}${overallRate}%` : '—', color: plClass(overallRate || 0) },
         ].map((item, i) => (
-          <div key={i} className="p-4 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-lg shadow-sm">
-            <p className="text-sm text-slate-500">{item.label}</p>
-            <p className={`text-xl font-semibold ${item.color || 'text-slate-900'}`}>{item.value}</p>
+          <div key={i} className="card p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)] mb-1">{item.label}</p>
+            <p className={`text-xl font-bold ${item.color || 'text-[var(--text)]'}`}>{item.value}</p>
           </div>
         ))}
       </div>
@@ -181,27 +181,89 @@ export default function PortfolioClient(_props: { user?: any } = {}) {
         </DialogContent>
       </Dialog>
 
-      {loading ? <p className="text-slate-500">載入中...</p> : (
+      {loading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {[1, 2, 3].map(i => (
+            <div key={i} className="card p-5 space-y-3 animate-pulse">
+              <div className="flex items-center gap-2">
+                <div className="h-5 w-12 rounded-full bg-[var(--border)]" />
+                <div className="h-6 w-20 rounded bg-[var(--border)]" />
+              </div>
+              <div className="border-t border-[var(--border)] pt-3 grid grid-cols-2 gap-y-2 gap-x-4">
+                {[1,2,3,4].map(j => <div key={j} className="h-4 rounded bg-[var(--border)]" />)}
+              </div>
+              <div className="h-16 rounded-lg bg-[var(--border)]" />
+            </div>
+          ))}
+        </div>
+      ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {activeStocks.map(s => {
             const ep = Number(s.estimatedProfit) || 0;
             const rr = Number(s.returnRate) || 0;
+            const typeBadge = {
+              etf:     { label: 'ETF',  cls: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300' },
+              warrant: { label: '權證', cls: 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300' },
+              stock:   { label: '股票', cls: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300' },
+            }[s.stockType as 'etf' | 'warrant' | 'stock'] ?? { label: s.stockType, cls: 'bg-slate-100 text-slate-600' };
+            const plBg = ep > 0 ? 'bg-[var(--success-bg)]' : ep < 0 ? 'bg-[var(--danger-bg)]' : 'bg-[var(--border)]/30';
             return (
-              <div key={s.id} className="p-4 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-lg shadow-sm space-y-2">
-                <div className="flex justify-between items-start">
-                  <h3 className="font-bold text-lg">{s.symbol} <span className="text-sm font-normal text-slate-500">{s.name}</span></h3>
-                  <div className="flex gap-1">
-                    <Button variant="ghost" size="icon" onClick={() => { setForm({ symbol: s.symbol, name: s.name, stockType: s.stockType, note: s.note }); setEditId(s.id); setFormError(''); setAddDialogOpen(true); }}><Edit3 size={16} /></Button>
-                    <Button variant="ghost" size="icon" className="text-red-500" onClick={() => setDeleteId(s.id)}><Trash2 size={16} /></Button>
+              <div
+                key={s.id}
+                className="card group p-5 space-y-3 cursor-default transition-[box-shadow,transform] duration-[250ms] ease-[cubic-bezier(.4,0,.2,1)] hover:shadow-[var(--shadow-md)] hover:-translate-y-0.5"
+              >
+                {/* Header */}
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold ${typeBadge.cls}`}>
+                      {typeBadge.label}
+                    </span>
+                    <h3 className="text-xl font-bold tracking-tight text-[var(--text)] truncate">{s.symbol}</h3>
+                    <span className="text-sm text-[var(--text-secondary)] truncate">{s.name}</span>
+                  </div>
+                  <div className="flex gap-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+                    <Button variant="ghost" size="icon" onClick={() => { setForm({ symbol: s.symbol, name: s.name, stockType: s.stockType, note: s.note }); setEditId(s.id); setFormError(''); setAddDialogOpen(true); }}>
+                      <Edit3 size={15} />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="text-[var(--danger)]" onClick={() => setDeleteId(s.id)}>
+                      <Trash2 size={15} />
+                    </Button>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 text-sm">
-                  <p>持有股數: {Number(s.totalShares).toLocaleString()}</p>
-                  <p>目前股價: {s.currentPrice > 0 ? `$${Number(s.currentPrice).toLocaleString()}` : '—'}</p>
-                  <p>成本均價: ${Number(s.avgCost || 0).toLocaleString()}</p>
-                  <p>市值: {fmt(s.marketValue)}</p>
-                  <p>預估損益: <span className={plClass(ep)}>{fmtPL(ep)} ({rr.toFixed(2)}%)</span></p>
-                  <p>累計股利: <span className="text-orange-500">{fmt(s.totalDividend)}</span></p>
+
+                {/* Metrics grid */}
+                <div className="border-t border-[var(--border)] pt-3 grid grid-cols-2 gap-y-2 gap-x-4 text-sm">
+                  <div>
+                    <span className="text-[var(--text-muted)]">持有股數</span>
+                    <p className="font-medium text-[var(--text)]">{Number(s.totalShares).toLocaleString()} 股</p>
+                  </div>
+                  <div>
+                    <span className="text-[var(--text-muted)]">目前股價</span>
+                    <p className="font-medium text-[var(--text)]">{s.currentPrice > 0 ? `$${Number(s.currentPrice).toLocaleString()}` : '—'}</p>
+                  </div>
+                  <div>
+                    <span className="text-[var(--text-muted)]">成本均價</span>
+                    <p className="font-medium text-[var(--text)]">${Number(s.avgCost || 0).toLocaleString()}</p>
+                  </div>
+                  <div>
+                    <span className="text-[var(--text-muted)]">市值</span>
+                    <p className="font-medium text-[var(--text)]">{fmt(s.marketValue)}</p>
+                  </div>
+                </div>
+
+                {/* P&L block */}
+                <div className={`${plBg} rounded-lg p-3 flex items-center justify-between gap-2`}>
+                  <div>
+                    <p className="text-xs text-[var(--text-muted)] mb-0.5">預估損益</p>
+                    <p className={`text-base font-bold ${plClass(ep)}`}>
+                      {fmtPL(ep)}
+                      <span className="ml-1.5 text-sm font-semibold">{ep !== 0 ? `(${rr >= 0 ? '+' : ''}${rr.toFixed(2)}%)` : ''}</span>
+                    </p>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <p className="text-xs text-[var(--text-muted)] mb-0.5">累計股利</p>
+                    <p className="text-sm font-semibold text-[var(--today)]">{fmt(s.totalDividend)}</p>
+                  </div>
                 </div>
               </div>
             );

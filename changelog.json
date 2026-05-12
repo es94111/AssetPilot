@@ -1,6 +1,30 @@
 {
-  "currentVersion": "4.38.5",
+  "currentVersion": "4.38.6",
   "releases": [
+    {
+      "version": "4.38.6",
+      "date": "2026-05-12",
+      "title": "修復 LINE 登入與綁定流程",
+      "type": "fixed",
+      "changes": [
+        {
+          "tag": "new",
+          "text": "新增 LINE Login 官方 API 登入與帳號綁定支援，管理員可在系統設定自由啟用或停用，登入、登出與綁定邏輯與 Google SSO 保持一致。"
+        },
+        {
+          "tag": "fixed",
+          "text": "LINE Login 改用單一 callback URL `/auth/line/callback`，符合 LINE Developers Console 只能登記一組 Callback URL 的限制，登入與綁定皆共用同一路徑。"
+        },
+        {
+          "tag": "fixed",
+          "text": "修正 LINE 綁定後再使用 LINE 登入可能出現狀態檢驗失敗或 401 Unauthorized 的問題，並將 LINE 登入端點加入公開認證端點與速率限制清單。"
+        },
+        {
+          "tag": "improved",
+          "text": "LINE 登入與綁定改為先導向站內授權端點再由伺服器 302 至 LINE，避免點擊後新開分頁，讓流程在原本頁面完成。"
+        }
+      ]
+    },
     {
       "version": "4.38.5",
       "date": "2026-05-12",

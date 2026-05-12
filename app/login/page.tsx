@@ -158,18 +158,7 @@ export default function LoginPage() {
     if (!config?.lineChannelId || !config?.lineCodeFlow) { setError('LINE 登入尚未設定完成'); return; }
     setLineLoading(true);
     try {
-      const stateRes = await fetch('/api/auth/line/state?flow=login', { cache: 'no-store' });
-      const { state, nonce } = await stateRes.json().catch(() => ({}));
-      if (!state || !nonce) throw new Error('無法建立 LINE 登入狀態');
-      const redirectUri = `${window.location.origin}/auth/line/callback`;
-      const authorizeUrl = new URL('https://access.line.me/oauth2/v2.1/authorize');
-      authorizeUrl.searchParams.set('response_type', 'code');
-      authorizeUrl.searchParams.set('client_id', config.lineChannelId);
-      authorizeUrl.searchParams.set('redirect_uri', redirectUri);
-      authorizeUrl.searchParams.set('state', state);
-      authorizeUrl.searchParams.set('scope', 'openid profile email');
-      authorizeUrl.searchParams.set('nonce', nonce);
-      window.location.href = authorizeUrl.toString();
+      window.location.assign(`/api/auth/line/authorize?flow=login&origin=${encodeURIComponent(window.location.origin)}`);
     } catch (e: any) {
       setError(e.message || 'LINE 登入失敗');
       setLineLoading(false);

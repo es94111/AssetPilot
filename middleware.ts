@@ -12,6 +12,7 @@ const PUBLIC_PATHS = new Set([
   '/api/auth/google',
   '/api/auth/google/state',
   '/api/auth/line',
+  '/api/auth/line/authorize',
   '/api/auth/line/state',
   '/api/line/webhook',
   '/api/config',
@@ -33,6 +34,7 @@ const AUTH_RATE_LIMITED_PATHS = new Set([
   '/api/auth/register',
   '/api/auth/google',
   '/api/auth/line',
+  '/api/auth/line/authorize',
   '/api/auth/passkey/challenge',
   '/api/auth/passkey/login',
 ]);

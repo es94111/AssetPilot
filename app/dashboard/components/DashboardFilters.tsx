@@ -1,51 +1,84 @@
 "use client";
 
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-const filterSchema = z.object({
-  month: z.string().optional(),
-});
+function currentMonth() {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+}
 
-type FilterValues = z.infer<typeof filterSchema>;
+function normalizeMonth(value: string | null) {
+  return value && /^\d{4}-\d{2}$/.test(value) ? value : currentMonth();
+}
+
+function shiftMonth(value: string, delta: number) {
+  const [year, month] = value.split("-").map(Number);
+  const next = new Date(year, month - 1 + delta, 1);
+  return `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, "0")}`;
+}
+
+function displayMonth(value: string) {
+  const [year, month] = value.split("-");
+  return `${year} 年 ${month} 月`;
+}
 
 export function DashboardFilters() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const selectedMonth = normalizeMonth(searchParams.get("month"));
+  const thisMonth = currentMonth();
 
-  const form = useForm<FilterValues>({
-    resolver: zodResolver(filterSchema),
-    defaultValues: {
-      month: searchParams.get("month") || "",
-    },
-  });
-
-  function onSubmit(values: FilterValues) {
+  function navigateToMonth(month: string) {
     const params = new URLSearchParams(searchParams);
-    if (values.month) {
-      params.set("month", values.month);
-    } else {
+    if (month === thisMonth) {
       params.delete("month");
+    } else {
+      params.set("month", month);
     }
     const query = params.toString();
-    router.push(query ? `/dashboard?${query}` : '/dashboard');
+    router.push(query ? `/dashboard?${query}` : "/dashboard");
   }
 
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} className="mb-8 flex gap-3 items-center">
-      <input
-        {...form.register("month")}
-        placeholder="選擇月份 (YYYY-MM)"
-        className="px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full max-w-xs"
-      />
-      <button 
-        type="submit" 
-        className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors"
+    <div className="mb-8 flex flex-wrap items-center gap-2">
+      <button
+        type="button"
+        onClick={() => navigateToMonth(shiftMonth(selectedMonth, -1))}
+        className="inline-flex h-10 w-10 items-center justify-center rounded-lg border transition-colors hover:bg-slate-50 dark:hover:bg-slate-800"
+        style={{ borderColor: "var(--border)", color: "var(--text-secondary)" }}
+        title="上一月"
+        aria-label="上一月"
       >
-        篩選
+        <ChevronLeft size={18} />
       </button>
-    </form>
+      <div
+        className="inline-flex h-10 min-w-36 items-center justify-center gap-2 rounded-lg border px-4 text-sm font-semibold"
+        style={{ borderColor: "var(--border)", background: "var(--surface)", color: "var(--text)" }}
+      >
+        <CalendarDays size={16} />
+        <span>{displayMonth(selectedMonth)}</span>
+      </div>
+      <button
+        type="button"
+        onClick={() => navigateToMonth(shiftMonth(selectedMonth, 1))}
+        className="inline-flex h-10 w-10 items-center justify-center rounded-lg border transition-colors hover:bg-slate-50 dark:hover:bg-slate-800"
+        style={{ borderColor: "var(--border)", color: "var(--text-secondary)" }}
+        title="下一月"
+        aria-label="下一月"
+      >
+        <ChevronRight size={18} />
+      </button>
+      {selectedMonth !== thisMonth && (
+        <button
+          type="button"
+          onClick={() => navigateToMonth(thisMonth)}
+          className="h-10 rounded-lg border px-3 text-sm font-medium transition-colors hover:bg-slate-50 dark:hover:bg-slate-800"
+          style={{ borderColor: "var(--border)", color: "var(--text-secondary)" }}
+        >
+          本月
+        </button>
+      )}
+    </div>
   );
 }

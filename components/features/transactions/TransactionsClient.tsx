@@ -34,6 +34,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
   const [accounts, setAccounts] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [currencyOptions, setCurrencyOptions] = useState<string[]>(DEFAULT_CURRENCIES);
+  const [defaultCurrency, setDefaultCurrency] = useState('TWD');
   const [filters, setFilters] = useState({ type: '', accountId: '', categoryId: '', dateFrom: '', dateTo: '', keyword: '' });
   const [modal, setModal] = useState(false);
   const [transferModal, setTransferModal] = useState(false);
@@ -78,8 +79,10 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
     setAccounts(accts);
     setCategories(cats);
     const pinnedCurrencies = Array.isArray(pinned?.pinnedCurrencies) ? pinned.pinnedCurrencies : ['TWD'];
+    const nextDefaultCurrency = String(pinned?.defaultCurrency || 'TWD').toUpperCase();
+    setDefaultCurrency(nextDefaultCurrency);
     const accountCurrencies = (Array.isArray(accts) ? accts : []).map((account: any) => String(account.currency || 'TWD').toUpperCase());
-    const mergedCurrencies = Array.from(new Set(['TWD', ...pinnedCurrencies, ...accountCurrencies, ...DEFAULT_CURRENCIES]));
+    const mergedCurrencies = Array.from(new Set([nextDefaultCurrency, 'TWD', ...pinnedCurrencies, ...accountCurrencies, ...DEFAULT_CURRENCIES]));
     setCurrencyOptions(mergedCurrencies);
   }, []);
 
@@ -88,9 +91,10 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
   useEffect(() => { load(page); }, [page, load]);
 
   function openAdd() {
-    const defaultAccountId = accounts[0]?.id || '';
-    const defaultCurrency = String(accounts[0]?.currency || 'TWD').toUpperCase();
-    setForm({ ...EMPTY_FORM, date: today(), accountId: defaultAccountId, currency: defaultCurrency, fxRate: '' });
+    const preferredAccount = accounts.find((account: any) => String(account.currency || 'TWD').toUpperCase() === defaultCurrency) || accounts[0];
+    const defaultAccountId = preferredAccount?.id || '';
+    const nextCurrency = String(preferredAccount?.currency || defaultCurrency || 'TWD').toUpperCase();
+    setForm({ ...EMPTY_FORM, date: today(), accountId: defaultAccountId, currency: nextCurrency, fxRate: '' });
     setEditId(null);
     setFormError('');
     setModal(true);

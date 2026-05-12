@@ -26,6 +26,9 @@ export default function AccountSettingsClient({ user: initialUser }: { user: any
   // Theme
   const [themeMode, setThemeMode] = useState('system');
   const [themeSaving, setThemeSaving] = useState(false);
+  const [defaultCurrency, setDefaultCurrency] = useState('TWD');
+  const [currencySaving, setCurrencySaving] = useState(false);
+  const [currencyMsg, setCurrencyMsg] = useState('');
 
   // Passkeys
   const [passkeys, setPasskeys] = useState<any[]>([]);
@@ -50,6 +53,7 @@ export default function AccountSettingsClient({ user: initialUser }: { user: any
       setProfile(u);
       setDisplayName(u.displayName || u.display_name || '');
       setThemeMode(u.themeMode || u.theme_mode || 'system');
+      setDefaultCurrency(String(u.defaultCurrency || u.default_currency || 'TWD').toUpperCase());
     } catch (_) {}
     setLoading(false);
   }, []);
@@ -134,6 +138,26 @@ export default function AccountSettingsClient({ user: initialUser }: { user: any
       await apiDelete(`/api/account/passkey/${encodeURIComponent(credId)}`);
       await loadPasskeys();
     } catch (e: any) { alert(e.message); }
+  }
+
+  async function handleDefaultCurrency(e: React.FormEvent) {
+    e.preventDefault();
+    const currency = defaultCurrency.trim().toUpperCase();
+    if (!/^[A-Z]{3}$/.test(currency)) {
+      setCurrencyMsg('幣別格式需為 3 碼英文字母');
+      return;
+    }
+    setCurrencySaving(true);
+    setCurrencyMsg('');
+    try {
+      const res = await apiPut('/api/user/settings/default-currency', { defaultCurrency: currency });
+      setDefaultCurrency(res.defaultCurrency || currency);
+      setCurrencyMsg('預設貨幣已更新');
+      await load();
+    } catch (e: any) {
+      setCurrencyMsg(e.message || '更新預設貨幣失敗');
+    }
+    setCurrencySaving(false);
   }
 
   async function handleLogoutSession(sessionId: string, isCurrent: boolean) {
@@ -313,6 +337,15 @@ export default function AccountSettingsClient({ user: initialUser }: { user: any
             </label>
           ))}
         </div>
+      </div>
+
+      <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-xl shadow-sm">
+        <h3 className="text-lg font-semibold mb-4">預設貨幣</h3>
+        <form onSubmit={handleDefaultCurrency} className="space-y-3 max-w-xs">
+          <Input label="幣別代碼" value={defaultCurrency} onChange={e => setDefaultCurrency(e.target.value.toUpperCase())} maxLength={3} placeholder="TWD" />
+          {currencyMsg && <p className={`text-sm ${currencyMsg.includes('失敗') || currencyMsg.includes('格式') ? 'text-red-500' : 'text-green-600'}`}>{currencyMsg}</p>}
+          <Button type="submit" disabled={currencySaving}>{currencySaving ? '儲存中...' : '更新預設貨幣'}</Button>
+        </form>
       </div>
 
       {/* Passkeys */}

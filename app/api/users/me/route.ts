@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { requireAuth, normalizeThemeMode } from '../../../../lib/apiHelpers';
 import { queryOne } from '../../../../lib/db';
 import { toIsoUtc } from '../../../../lib/userTime';
+import { getOrCreateUserCurrencySettings } from '../../../../lib/userCurrencySettings';
 
 export async function GET(request) {
   const auth = await requireAuth(request);
@@ -13,6 +14,7 @@ export async function GET(request) {
     [auth.userId]
   );
   if (!u) return NextResponse.json({ error: 'User not found', code: 'NotFound' }, { status: 404 });
+  const currencySettings = getOrCreateUserCurrencySettings(auth.userId);
 
   return NextResponse.json({
     id: u.id,
@@ -24,6 +26,7 @@ export async function GET(request) {
     line_id: u.line_id || '',
     avatar_url: u.avatar_url || '',
     theme_mode: normalizeThemeMode(u.theme_mode),
+    default_currency: currencySettings.defaultCurrency,
     is_admin: !!u.is_admin,
     is_active: u.is_active == null ? true : !!u.is_active,
     created_at: toIsoUtc(u.created_at || new Date(0)),

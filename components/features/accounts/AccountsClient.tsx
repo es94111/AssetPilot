@@ -61,6 +61,7 @@ export default function AccountsClient() {
   const [fxMsg, setFxMsg] = useState('');
   const [fxSyncing, setFxSyncing] = useState(false);
   const [repaymentError, setRepaymentError] = useState('');
+  const [defaultCurrency, setDefaultCurrency] = useState('TWD');
 
   const loadFxRates = useCallback(async () => {
     try {
@@ -72,8 +73,12 @@ export default function AccountsClient() {
 
   const load = useCallback(async () => {
     try {
-      const data = await apiGet('/api/accounts');
+      const [data, settings] = await Promise.all([
+        apiGet('/api/accounts'),
+        apiGet('/api/user/settings/default-currency').catch(() => ({ defaultCurrency: 'TWD' })),
+      ]);
       setAccounts(data || []);
+      setDefaultCurrency(String(settings?.defaultCurrency || 'TWD').toUpperCase());
     } catch (e: any) {
       setError(e.message);
     }
@@ -281,7 +286,7 @@ export default function AccountsClient() {
       <div className="flex flex-wrap gap-3">
         <Dialog>
           <DialogTrigger asChild>
-            <Button onClick={() => { setForm(EMPTY_FORM); setEditId(null); setFormError(''); }}><Plus size={16} className="mr-2" /> 新增帳戶</Button>
+            <Button onClick={() => { setForm({ ...EMPTY_FORM, currency: defaultCurrency }); setEditId(null); setFormError(''); }}><Plus size={16} className="mr-2" /> 新增帳戶</Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader><DialogTitle>{editId ? '編輯帳戶' : '新增帳戶'}</DialogTitle></DialogHeader>

@@ -464,8 +464,10 @@ async function _runMigrations(): Promise<void> {
   db.run(`CREATE TABLE IF NOT EXISTS user_settings (
     user_id TEXT PRIMARY KEY,
     pinned_currencies TEXT DEFAULT '[]',
+    default_currency TEXT DEFAULT 'TWD',
     updated_at INTEGER
   )`);
+  alterIgnore("ALTER TABLE user_settings ADD COLUMN default_currency TEXT DEFAULT 'TWD'");
 
   db.run(`CREATE TABLE IF NOT EXISTS line_bot_states (
     line_user_id TEXT PRIMARY KEY,

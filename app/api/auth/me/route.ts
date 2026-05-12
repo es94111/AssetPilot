@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { requireAuth, formatUser } from '../../../../lib/apiHelpers';
 import { queryOne } from '../../../../lib/db';
+import { getOrCreateUserCurrencySettings } from '../../../../lib/userCurrencySettings';
 
 export async function GET(request: Request) {
   const auth = await requireAuth(request);
@@ -11,6 +12,7 @@ export async function GET(request: Request) {
     [auth.userId]
   );
   if (!user) return NextResponse.json({ error: '使用者不存在' }, { status: 404 });
+  const currencySettings = getOrCreateUserCurrencySettings(auth.userId);
 
-  return NextResponse.json({ user: formatUser(user) });
+  return NextResponse.json({ user: { ...formatUser(user), defaultCurrency: currencySettings.defaultCurrency } });
 }

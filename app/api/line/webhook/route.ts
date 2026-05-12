@@ -17,6 +17,7 @@ import {
 } from '../../../../lib/lineMessaging';
 import { computeTwdAmount } from '../../../../lib/moneyDecimal';
 import { uid } from '../../../../lib/userDefaults';
+import { getOrCreateUserCurrencySettings } from '../../../../lib/userCurrencySettings';
 import { isValidIsoDate, todayInUserTz } from '../../../../lib/userTime';
 
 export const runtime = 'nodejs';
@@ -123,7 +124,7 @@ function parseDateToken(raw: string, timezone: string): { date: string; text: st
   return { date: date || today, text };
 }
 
-function parseRecordCommand(input: string, timezone: string): { type: TxType; amount: number; currency: string; date: string; note: string } | null {
+function parseRecordCommand(input: string, timezone: string, fallbackCurrency = 'TWD'): { type: TxType; amount: number; currency: string; date: string; note: string } | null {
   const normalized = normalizeCommandText(input);
   const dateParsed = parseDateToken(normalized, timezone);
   let text = dateParsed.text;
@@ -147,7 +148,7 @@ function parseRecordCommand(input: string, timezone: string): { type: TxType; am
   if (!Number.isFinite(amount) || amount <= 0) return null;
 
   const currencyMatch = text.match(/\b(TWD|USD|JPY|CNY|EUR|HKD)\b/i);
-  const currency = normalizeCurrency(currencyMatch?.[1] || 'TWD');
+  const currency = normalizeCurrency(currencyMatch?.[1] || fallbackCurrency);
   if (currencyMatch) text = text.replace(currencyMatch[0], '').trim();
 
   return {
@@ -159,7 +160,7 @@ function parseRecordCommand(input: string, timezone: string): { type: TxType; am
   };
 }
 
-function parseRecordDetail(input: string, type: TxType, timezone: string): { type: TxType; amount: number; currency: string; date: string; note: string } | null {
+function parseRecordDetail(input: string, type: TxType, timezone: string, fallbackCurrency = 'TWD'): { type: TxType; amount: number; currency: string; date: string; note: string } | null {
   const normalized = normalizeCommandText(input);
   const dateParsed = parseDateToken(normalized, timezone);
   let text = dateParsed.text;
@@ -171,7 +172,7 @@ function parseRecordDetail(input: string, type: TxType, timezone: string): { typ
   text = text.slice(amountMatch[0].length).trim();
 
   const currencyMatch = text.match(/\b(TWD|USD|JPY|CNY|EUR|HKD)\b/i);
-  const currency = normalizeCurrency(currencyMatch?.[1] || 'TWD');
+  const currency = normalizeCurrency(currencyMatch?.[1] || fallbackCurrency);
   if (currencyMatch) text = text.replace(currencyMatch[0], '').trim();
 
   return {
@@ -561,6 +562,7 @@ async function handleEvent(event: LineWebhookEvent, request: Request): Promise<v
     await replyLineMessage(event.replyToken, [buildMainMenuFlex(appUrl, false)]);
     return;
   }
+  const userDefaultCurrency = getOrCreateUserCurrencySettings(user.id).defaultCurrency;
 
   if (postbackData) {
     const params = new URLSearchParams(postbackData);
@@ -571,7 +573,7 @@ async function handleEvent(event: LineWebhookEvent, request: Request): Promise<v
       return;
     }
     if (action === 'record_wizard') {
-      const draft: RecordDraft = { date: todayInUserTz(user.timezone || 'Asia/Taipei'), currency: 'TWD' };
+      const draft: RecordDraft = { date: todayInUserTz(user.timezone || 'Asia/Taipei'), currency: userDefaultCurrency };
       setLineBotState(lineUserId, user.id, 'record_date', '', draft);
       await replyLineMessage(event.replyToken, [buildWizardStep(user, 'record_date', draft)]);
       return;
@@ -622,7 +624,7 @@ async function handleEvent(event: LineWebhookEvent, request: Request): Promise<v
           draft.currency = draft.currency || normalizeCurrency(account.currency);
         }
       }
-      if (step === 'currency') draft.currency = normalizeCurrency(value || 'TWD');
+      if (step === 'currency') draft.currency = normalizeCurrency(value || userDefaultCurrency);
       if (step === 'note') draft.note = value;
       if (step === 'confirm') {
         clearLineBotState(lineUserId);
@@ -636,7 +638,7 @@ async function handleEvent(event: LineWebhookEvent, request: Request): Promise<v
     }
     if (action === 'record') {
       const txType = params.get('type') === 'income' ? 'income' : 'expense';
-      const draft: RecordDraft = { date: todayInUserTz(user.timezone || 'Asia/Taipei'), type: txType, currency: 'TWD' };
+      const draft: RecordDraft = { date: todayInUserTz(user.timezone || 'Asia/Taipei'), type: txType, currency: userDefaultCurrency };
       setLineBotState(lineUserId, user.id, 'record_date', txType, draft);
       await replyLineMessage(event.replyToken, [buildWizardStep(user, 'record_date', draft)]);
       return;
@@ -736,7 +738,7 @@ async function handleEvent(event: LineWebhookEvent, request: Request): Promise<v
   }
 
   if (state?.action === 'await_record' && (state.tx_type === 'income' || state.tx_type === 'expense')) {
-    const detail = parseRecordDetail(normalized, state.tx_type, user.timezone || 'Asia/Taipei');
+    const detail = parseRecordDetail(normalized, state.tx_type, user.timezone || 'Asia/Taipei', userDefaultCurrency);
     if (!detail) {
       await replyLineMessage(event.replyToken, [
         textMessage(recordRuleText(state.tx_type)),
@@ -755,7 +757,7 @@ async function handleEvent(event: LineWebhookEvent, request: Request): Promise<v
     return;
   }
 
-  const parsed = parseRecordCommand(normalized, user.timezone || 'Asia/Taipei');
+  const parsed = parseRecordCommand(normalized, user.timezone || 'Asia/Taipei', userDefaultCurrency);
   if (parsed) {
     clearLineBotState(lineUserId);
     await replyLineMessage(event.replyToken, [createTransactionFromLine(user, parsed)]);

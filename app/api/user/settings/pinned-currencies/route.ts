@@ -2,17 +2,18 @@
 import { NextResponse } from 'next/server';
 import { requireAuth } from '../../../../../lib/apiHelpers';
 import { getDB, queryOne, saveDB } from '../../../../../lib/db';
+import { getOrCreateUserCurrencySettings } from '../../../../../lib/userCurrencySettings';
 
 function getOrCreateRow(userId) {
-  let row = queryOne('SELECT pinned_currencies, updated_at FROM user_settings WHERE user_id = ?', [userId]);
+  let row = queryOne('SELECT pinned_currencies, default_currency, updated_at FROM user_settings WHERE user_id = ?', [userId]);
   if (!row) {
     const now = Date.now();
     getDB().run(
-      'INSERT INTO user_settings (user_id, pinned_currencies, updated_at) VALUES (?, ?, ?)',
-      [userId, '["TWD"]', now]
+      'INSERT INTO user_settings (user_id, pinned_currencies, default_currency, updated_at) VALUES (?, ?, ?, ?)',
+      [userId, '["TWD"]', 'TWD', now]
     );
     saveDB();
-    row = { pinned_currencies: '["TWD"]', updated_at: now };
+    row = { pinned_currencies: '["TWD"]', default_currency: 'TWD', updated_at: now };
   }
   return row;
 }
@@ -33,6 +34,7 @@ export async function GET(request) {
   const row = getOrCreateRow(auth.userId);
   return NextResponse.json({
     pinnedCurrencies: parsePinned(row.pinned_currencies),
+    defaultCurrency: row.default_currency || 'TWD',
     updatedAt: Number(row.updated_at) || 0,
   });
 }
@@ -64,15 +66,15 @@ export async function PUT(request) {
   }
   if (!norm.includes('TWD')) norm.unshift('TWD');
 
-  const row = queryOne('SELECT pinned_currencies, updated_at FROM user_settings WHERE user_id = ?', [auth.userId]);
+  const row = queryOne('SELECT pinned_currencies, default_currency, updated_at FROM user_settings WHERE user_id = ?', [auth.userId]);
   if (!row) {
     const now = Date.now();
     getDB().run(
-      'INSERT INTO user_settings (user_id, pinned_currencies, updated_at) VALUES (?, ?, ?)',
-      [auth.userId, JSON.stringify(norm), now]
+      'INSERT INTO user_settings (user_id, pinned_currencies, default_currency, updated_at) VALUES (?, ?, ?, ?)',
+      [auth.userId, JSON.stringify(norm), 'TWD', now]
     );
     saveDB();
-    return NextResponse.json({ pinnedCurrencies: norm, updatedAt: now });
+    return NextResponse.json({ pinnedCurrencies: norm, defaultCurrency: 'TWD', updatedAt: now });
   }
 
   const expected = body?.expected_updated_at ?? body?.expectedUpdatedAt;
@@ -94,5 +96,6 @@ export async function PUT(request) {
   );
   saveDB();
 
-  return NextResponse.json({ pinnedCurrencies: norm, updatedAt: nowMs });
+  const settings = getOrCreateUserCurrencySettings(auth.userId);
+  return NextResponse.json({ pinnedCurrencies: norm, defaultCurrency: settings.defaultCurrency, updatedAt: nowMs });
 }

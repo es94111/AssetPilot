@@ -1,6 +1,22 @@
 {
-  "currentVersion": "4.38.0",
+  "currentVersion": "4.38.1",
   "releases": [
+    {
+      "version": "4.38.1",
+      "date": "2026-05-12",
+      "title": "修補前端工具鏈相依套件安全漏洞",
+      "type": "fixed",
+      "changes": [
+        {
+          "tag": "fixed",
+          "text": "修補 PostCSS CSS stringify 輸出未跳脫 </style> 可能造成 XSS 的安全漏洞，透過套件 override 統一將 PostCSS 解析到 8.5.14，並移除 Next.js 巢狀相依中的舊版 PostCSS。"
+        },
+        {
+          "tag": "fixed",
+          "text": "修補 ip-address Address6 HTML 輸出方法可能造成 XSS 的安全漏洞，將 express-rate-limit 升級至 8.5.1，使間接相依 ip-address 更新到 10.2.0。"
+        }
+      ]
+    },
     {
       "version": "4.38.0",
       "date": "2026-05-11",

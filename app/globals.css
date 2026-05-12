@@ -23,8 +23,8 @@
   --color-popover-foreground: #1a1d26;
   --color-primary-foreground: #ffffff;
   --color-muted: #f4f6fa;
-  --color-muted-foreground: #5c6370;
-  --color-foreground: #1a1d26;
+  --color-muted-foreground: var(--text-secondary);
+  --color-foreground: var(--text);
   --color-background: #ffffff;
   --color-border: #e4e7ec;
   --color-input: #e4e7ec;
@@ -137,6 +137,8 @@
   color-scheme: dark;
   --color-popover: #151922;
   --color-popover-foreground: #e8eaef;
+  --color-foreground: #e8eaef;
+  --color-muted-foreground: #9ca3b4;
   --color-background: #151922;
   --color-border: #252a36;
   --color-input: #252a36;
@@ -360,6 +362,22 @@
 }
 .dark-mode .text-gray-800 {
   color: var(--text) !important;
+}
+.text-foreground {
+  color: var(--text) !important;
+}
+.text-muted-foreground {
+  color: var(--text-secondary) !important;
+}
+.dark-mode .text-foreground,
+.dark-mode .text-foreground *,
+.dark-mode [data-slot="table-head"],
+.dark-mode [data-slot="table-head"] * {
+  color: #e8eaef !important;
+}
+.dark-mode .text-muted-foreground,
+.dark-mode .text-muted-foreground * {
+  color: #9ca3b4 !important;
 }
 .dark-mode input:not([type="checkbox"]):not([type="radio"]),
 .dark-mode textarea {

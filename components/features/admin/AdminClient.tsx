@@ -15,9 +15,48 @@ const SCHEDULE_FREQ_OPTIONS = [
 const RETENTION_OPTIONS = ['30', '90', '180', '365', 'forever'];
 
 function fmtTs(ts: number | string) {
-  const num = Number(ts) || 0;
-  if (!num) return '—';
-  return new Date(num).toLocaleString('zh-TW');
+  if (!ts) return '—';
+  const date = typeof ts === 'number' || /^\d+$/.test(String(ts)) ? new Date(Number(ts)) : new Date(ts);
+  if (Number.isNaN(date.getTime())) return '—';
+  return date.toLocaleString('zh-TW');
+}
+
+const AUDIT_ACTION_LABELS: Record<string, string> = {
+  export_accounts: '匯出帳戶資料',
+  import_accounts: '匯入帳戶資料',
+  export_categories: '匯出分類資料',
+  import_categories: '匯入分類資料',
+  export_transactions: '匯出交易資料',
+  import_transactions: '匯入交易資料',
+  export_stock_transactions: '匯出台股交易資料',
+  import_stock_transactions: '匯入台股交易資料',
+  export_stock_dividends: '匯出台股股利資料',
+  import_stock_dividends: '匯入台股股利資料',
+  download_backup: '下載資料庫備份',
+  restore_backup: '還原資料庫備份',
+  restore_failed: '資料庫還原失敗',
+  'user.timezone.update': '更新使用者時區',
+};
+
+const AUDIT_RESULT_LABELS: Record<string, string> = {
+  success: '成功',
+  failed: '失敗',
+  rolled_back: '已復原',
+};
+
+function formatAuditAction(action: string) {
+  if (!action) return '—';
+  return AUDIT_ACTION_LABELS[action] || action;
+}
+
+function formatAuditResult(result: string) {
+  if (!result) return '—';
+  return AUDIT_RESULT_LABELS[result] || result;
+}
+
+function getAuditUserEmail(log: any, users: any[]) {
+  const user = users.find((u) => u.id === log.user_id);
+  return user?.email || log.user_email || log.email || log.user_id || '—';
 }
 
 function downloadText(filename: string, text: string, mime = 'text/plain;charset=utf-8') {
@@ -790,7 +829,7 @@ export default function AdminClient(_props: { user?: any } = {}) {
               <TableHeader>
                 <TableRow>
                   <TableHead>時間</TableHead>
-                  <TableHead>使用者</TableHead>
+                  <TableHead>使用者信箱</TableHead>
                   <TableHead>動作</TableHead>
                   <TableHead>結果</TableHead>
                   <TableHead>角色</TableHead>
@@ -799,10 +838,10 @@ export default function AdminClient(_props: { user?: any } = {}) {
               <TableBody>
                 {auditLogs.map((log) => (
                   <TableRow key={log.id}>
-                    <TableCell>{log.timestamp}</TableCell>
-                    <TableCell>{log.user_id}</TableCell>
-                    <TableCell>{log.action}</TableCell>
-                    <TableCell>{log.result}</TableCell>
+                    <TableCell>{fmtTs(log.timestamp)}</TableCell>
+                    <TableCell>{getAuditUserEmail(log, users)}</TableCell>
+                    <TableCell>{formatAuditAction(log.action)}</TableCell>
+                    <TableCell>{formatAuditResult(log.result)}</TableCell>
                     <TableCell>{log.role}</TableCell>
                   </TableRow>
                 ))}

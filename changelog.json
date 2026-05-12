@@ -1,6 +1,22 @@
 {
-  "currentVersion": "4.38.6",
+  "currentVersion": "4.38.7",
   "releases": [
+    {
+      "version": "4.38.7",
+      "date": "2026-05-12",
+      "title": "改善資料稽核紀錄顯示",
+      "type": "improved",
+      "changes": [
+        {
+          "tag": "improved",
+          "text": "資料稽核紀錄的使用者欄位改顯示使用者信箱，方便管理員快速辨識操作來源。"
+        },
+        {
+          "tag": "improved",
+          "text": "資料稽核紀錄的動作與結果改以中文說明呈現，涵蓋匯入、匯出、資料庫備份還原與時區更新等常見操作。"
+        }
+      ]
+    },
     {
       "version": "4.38.6",
       "date": "2026-05-12",

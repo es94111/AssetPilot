@@ -18,18 +18,23 @@ export async function register() {
 
   // 排程報告心跳（啟動 30s 後開始，每 SCHEDULER_TICK_MS 檢查一次）
   const SCHEDULER_TICK_MS = Number(process.env.SCHEDULER_TICK_MS) || 5 * 60 * 1000;
-  setTimeout(async () => {
+  unrefTimer(setTimeout(async () => {
     try {
       const { checkAndRunSchedule } = await import('./lib/scheduler');
       checkAndRunSchedule();
-      setInterval(checkAndRunSchedule, SCHEDULER_TICK_MS);
+      unrefTimer(setInterval(checkAndRunSchedule, SCHEDULER_TICK_MS));
     } catch (_) {
       // scheduler.js 尚未建立時靜默略過
     }
-  }, 30 * 1000);
+  }, 30 * 1000));
 }
 
 // ── 稽核日誌清除（從 server.js registerAuditPruneJob 提取）──
+function unrefTimer<T extends { unref?: () => void }>(timer: T): T {
+  timer.unref?.();
+  return timer;
+}
+
 function registerAuditPruneJob() {
   const AUDIT_RETENTION_DAYS = 90;
   const PRUNE_BATCH = 5000;
@@ -65,13 +70,13 @@ function registerAuditPruneJob() {
   }
 
   // 啟動 5s 後立即執行一次
-  setTimeout(() => tick(), 5000);
+  unrefTimer(setTimeout(() => tick(), 5000));
 
   // 之後每日午夜（伺服器時區）循環
   function scheduleNextMidnight() {
     const now = new Date();
     const next = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0, 0);
-    setTimeout(() => { tick(); scheduleNextMidnight(); }, next.getTime() - now.getTime());
+    unrefTimer(setTimeout(() => { tick(); scheduleNextMidnight(); }, next.getTime() - now.getTime()));
   }
   scheduleNextMidnight();
   console.log('[Audit Prune] registered; next run at server-local midnight');

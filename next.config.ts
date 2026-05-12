@@ -10,9 +10,8 @@ const nextConfig: NextConfig = {
   allowedDevOrigins: ['127.0.0.1', 'localhost'],
   serverExternalPackages: ['sql.js'],
   distDir: 'build', // ASCII-only path
-  // 保留 JS/TS 混用（由 tsconfig 的 allowJs 控制），但 build 需執行完整型別與 lint 檢查
+  // 保留 JS/TS 混用（由 tsconfig 的 allowJs 控制），但 build 需執行完整型別檢查
   typescript: { ignoreBuildErrors: false },
-  eslint: { ignoreDuringBuilds: false },
   // Next.js 15 起 instrumentation.js 為穩定 API，無需 experimental.instrumentationHook
 
   // instrumentation.ts 會被編譯給 nodejs 與 edge 兩個 runtime；

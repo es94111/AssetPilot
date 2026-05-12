@@ -1,6 +1,26 @@
 {
-  "currentVersion": "4.38.1",
+  "currentVersion": "4.38.2",
   "releases": [
+    {
+      "version": "4.38.2",
+      "date": "2026-05-12",
+      "title": "升級 Next.js 並修補安全告警",
+      "type": "fixed",
+      "changes": [
+        {
+          "tag": "fixed",
+          "text": "將 Next.js 從 15.5.15 升級到 16.2.6，修補 Dependabot 回報的 Next.js Middleware / Proxy bypass、快取污染、XSS、SSRF 與 DoS 等安全告警。"
+        },
+        {
+          "tag": "improved",
+          "text": "因 Next.js 16 預設改用 Turbopack，現階段保留既有 webpack 設定並讓 dev / build 顯式使用 webpack，確保現有 sql.js 與 Edge fallback 設定可正常編譯。"
+        },
+        {
+          "tag": "fixed",
+          "text": "調整 instrumentation 背景排程 timer 為不阻止程序結束，修復 production build 在 static generation 後可能因排程 timer 留存而無法自然退出的問題。"
+        }
+      ]
+    },
     {
       "version": "4.38.1",
       "date": "2026-05-12",

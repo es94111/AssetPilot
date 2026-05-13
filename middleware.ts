@@ -68,17 +68,33 @@ function getClientIp(request: NextRequest): string {
   );
 }
 
-function isOriginAllowed(originValue: string): boolean {
+function getRequestOriginCandidates(request: NextRequest): Set<string> {
+  const candidates = new Set<string>([request.nextUrl.origin]);
+  const host = request.headers.get('x-forwarded-host') || request.headers.get('host') || '';
+  if (host) {
+    const proto = request.headers.get('x-forwarded-proto') || (process.env.NODE_ENV === 'production' ? 'https' : 'http');
+    candidates.add(`${proto}://${host}`);
+  }
+  return candidates;
+}
+
+function normalizeOrigin(originValue: string): string {
+  const u = new URL(originValue);
+  return `${u.protocol}//${u.host}`;
+}
+
+function isOriginAllowed(originValue: string, request: NextRequest): boolean {
   if (!originValue) return false;
   const allowedOrigins = (process.env.ALLOWED_ORIGINS || '')
     .split(',')
     .map(s => s.trim())
     .filter(Boolean);
-  if (allowedOrigins.length === 0) return true;
 
   try {
-    const u = new URL(originValue);
-    const normalized = `${u.protocol}//${u.host}`;
+    const normalized = normalizeOrigin(originValue);
+    if (allowedOrigins.length === 0) {
+      return getRequestOriginCandidates(request).has(normalized);
+    }
     return allowedOrigins.includes(normalized) || allowedOrigins.includes(originValue);
   } catch {
     return false;
@@ -119,7 +135,7 @@ export function middleware(request: NextRequest): NextResponse {
     const usesCookieAuth = !authHeader.startsWith('Bearer ') && !!request.cookies.get('authToken')?.value;
     if (usesCookieAuth && !CSRF_SAFE_METHODS.has(method)) {
       const origin = request.headers.get('origin') || request.headers.get('referer') || '';
-      if (!isOriginAllowed(origin)) {
+      if (!isOriginAllowed(origin, request)) {
         return NextResponse.json({ error: '請求來源不被允許（CSRF 防護）' }, { status: 403 });
       }
     }

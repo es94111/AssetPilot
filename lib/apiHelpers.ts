@@ -5,6 +5,7 @@ import { queryOne } from './db';
 import { verifyLoginSession } from './sessionHelpers';
 import { processRecurringForUser } from './recurringHelpers';
 import { todayInUserTz } from './userTime';
+import { getRequestIpFromHeaders, getSystemSettings, normalizeIp } from './loginHelpers';
 import logger from '@/lib/logger';
 
 type ApiAuthResult = {
@@ -38,21 +39,48 @@ function processDueRecurringOncePerDay(userId: string, userTimezone: string) {
   }
 }
 
-function isOriginAllowed(originValue: string): boolean {
+function getRequestOriginCandidates(request: any): Set<string> {
+  const candidates = new Set<string>();
+  try {
+    if (request?.url) candidates.add(new URL(request.url).origin);
+  } catch (_) {}
+
+  const host = request?.headers?.get?.('x-forwarded-host') || request?.headers?.get?.('host') || '';
+  if (host) {
+    const proto = request?.headers?.get?.('x-forwarded-proto') || (process.env.NODE_ENV === 'production' ? 'https' : 'http');
+    candidates.add(`${proto}://${host}`);
+  }
+  return candidates;
+}
+
+function normalizeOrigin(originValue: string): string {
+  const u = new URL(originValue);
+  return `${u.protocol}//${u.host}`;
+}
+
+function isOriginAllowed(originValue: string, request?: any): boolean {
   if (!originValue) return false;
   const allowedOrigins = (process.env.ALLOWED_ORIGINS || '')
     .split(',')
     .map(s => s.trim())
     .filter(Boolean);
-  if (allowedOrigins.length === 0) return true;
 
   try {
-    const u = new URL(originValue);
-    const normalized = `${u.protocol}//${u.host}`;
+    const normalized = normalizeOrigin(originValue);
+    if (allowedOrigins.length === 0) {
+      return getRequestOriginCandidates(request).has(normalized);
+    }
     return allowedOrigins.includes(normalized) || allowedOrigins.includes(originValue);
   } catch {
     return false;
   }
+}
+
+function isAdminIpAllowed(request: any): boolean {
+  const allowlist = getSystemSettings().adminIpAllowlist;
+  if (allowlist.length === 0) return true;
+  const ip = normalizeIp(getRequestIpFromHeaders(request?.headers || {}));
+  return allowlist.includes(ip);
 }
 
 function csrfErrorResponse(): NextResponse {
@@ -79,7 +107,7 @@ export async function requireAuth(request?: any): Promise<ApiAuthResult | NextRe
     const usesCookieAuth = !authHeader.startsWith('Bearer ');
     if (usesCookieAuth && !CSRF_SAFE_METHODS.has(method)) {
       const origin = request.headers?.get?.('origin') || request.headers?.get?.('referer') || '';
-      if (!isOriginAllowed(origin)) return csrfErrorResponse();
+      if (!isOriginAllowed(origin, request)) return csrfErrorResponse();
     }
 
     let userId: string;
@@ -184,6 +212,9 @@ export async function requireAdmin(request?: any): Promise<ApiAuthResult | NextR
     if (auth instanceof NextResponse) return auth;
     if (!auth.isAdmin) {
       return NextResponse.json({ error: '需要管理員權限' }, { status: 403 });
+    }
+    if (!isAdminIpAllowed(request)) {
+      return NextResponse.json({ error: '此 IP 不允許存取管理員功能' }, { status: 403 });
     }
     return auth;
   }

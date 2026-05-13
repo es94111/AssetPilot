@@ -58,7 +58,7 @@ export function createLoginSession(userId: string, tokenVersion: number, headers
 }
 
 export function verifyLoginSession(userId: string, sessionId: string | undefined, token: string): boolean {
-  if (!sessionId) return true;
+  if (!sessionId) return false;
   const row = queryOne('SELECT token_hash, expires_at FROM login_sessions WHERE id = ? AND user_id = ? AND revoked_at = 0', [sessionId, userId]);
   if (row?.expires_at && Number(row.expires_at) <= Date.now()) return false;
   return !!row && String(row.token_hash || '') === hashToken(token);

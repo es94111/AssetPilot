@@ -1,6 +1,26 @@
 {
-  "currentVersion": "4.38.8",
+  "currentVersion": "4.38.9",
   "releases": [
+    {
+      "version": "4.38.9",
+      "date": "2026-05-13",
+      "title": "強化管理員與登入安全防護",
+      "type": "fixed",
+      "changes": [
+        {
+          "tag": "fixed",
+          "text": "管理員 API 現在會套用管理員 IP 白名單設定，避免已設定白名單卻未實際限制來源 IP。"
+        },
+        {
+          "tag": "fixed",
+          "text": "登入 session 驗證不再接受缺少 sessionId 的舊格式 JWT，確保 token 會受裝置 session 與撤銷機制控管。"
+        },
+        {
+          "tag": "fixed",
+          "text": "CSRF 來源檢查在未設定 ALLOWED_ORIGINS 時改為只允許同源請求，並支援反向代理的 forwarded host/proto 判斷。"
+        }
+      ]
+    },
     {
       "version": "4.38.8",
       "date": "2026-05-13",

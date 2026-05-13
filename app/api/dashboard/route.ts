@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '../../../lib/apiHelpers';
 import { queryAll, queryOne } from '../../../lib/db';
 import { todayInUserTz, monthInUserTz } from '../../../lib/userTime';
+import { calcBalance, getExchangeRateToTwd, normalizeCurrency } from '../../../lib/accountHelpers';
+import { calcFifoLots } from '../../../lib/moneyDecimal';
 import {
   buildCategoryAggregateNodes,
   type DashboardCategoryAggregateRow,
@@ -10,9 +12,66 @@ import {
 } from '../../../lib/dashboardHelpers';
 
 type TotalRow = { total: string | number | null };
+type AccountRow = {
+  id: string;
+  initial_balance: string | number | null;
+  currency: string | null;
+};
+type StockRow = {
+  id: string;
+  current_price: string | number | null;
+};
 
 function totalFromRow(row: Record<string, string | number | null> | null): number {
   return Number((row as TotalRow | null)?.total) || 0;
+}
+
+function getBankBalanceTwd(userId: string): number {
+  const accounts = queryAll(
+    `SELECT id, initial_balance, currency
+     FROM accounts
+     WHERE user_id = ?
+       AND COALESCE(exclude_from_total, 0) = 0
+       AND (category = 'bank' OR account_type = '銀行')`,
+    [userId]
+  ) as unknown as AccountRow[];
+
+  const total = accounts.reduce((sum, account) => {
+    const currency = normalizeCurrency(account.currency);
+    const balance = calcBalance(account.id, Number(account.initial_balance) || 0, userId, currency);
+    return sum + balance * getExchangeRateToTwd(userId, currency);
+  }, 0);
+
+  return Math.round(total);
+}
+
+function getStockMarketValue(userId: string): number {
+  const stocks = queryAll(
+    'SELECT id, current_price FROM stocks WHERE user_id = ?',
+    [userId]
+  ) as unknown as StockRow[];
+
+  const total = stocks.reduce((sum, stock) => {
+    const txs = queryAll(
+      'SELECT * FROM stock_transactions WHERE user_id = ? AND stock_id = ? ORDER BY date, created_at',
+      [userId, stock.id]
+    );
+    const divs = queryAll(
+      'SELECT stock_dividend_shares FROM stock_dividends WHERE user_id = ? AND stock_id = ?',
+      [userId, stock.id]
+    );
+    const fifo = calcFifoLots(txs);
+    const dividendSyntheticShares = txs
+      .filter(t => t.type === 'buy' && Number(t.price) === 0 && typeof t.note === 'string' && /\[SYNTH\] 股票股利|股票股利配發/.test(t.note))
+      .reduce((shareSum, t) => shareSum + Number(t.shares || 0), 0);
+    const recordedDividendShares = divs.reduce((shareSum, d) => shareSum + Number(d.stock_dividend_shares || 0), 0);
+    const missingDividendShares = Math.max(0, recordedDividendShares - dividendSyntheticShares);
+    const totalShares = fifo.totalShares.plus(missingDividendShares).toNumber();
+    if (totalShares <= 0) return sum;
+    return sum + totalShares * (Number(stock.current_price) || 0);
+  }, 0);
+
+  return Math.round(total);
 }
 
 export async function GET(request: NextRequest) {
@@ -37,6 +96,8 @@ export async function GET(request: NextRequest) {
     "SELECT COALESCE(SUM(amount),0) as total FROM transactions WHERE user_id = ? AND type='expense' AND date = ? AND exclude_from_stats = 0",
     [auth.userId, todayS]
   ));
+  const bankBalance = getBankBalanceTwd(auth.userId);
+  const stockMarketValue = getStockMarketValue(auth.userId);
 
   const catRows = queryAll(`
     SELECT t.category_id, t.amount,
@@ -76,6 +137,8 @@ export async function GET(request: NextRequest) {
     expense,
     net: income - expense,
     todayExpense,
+    bankBalance,
+    stockMarketValue,
     catBreakdown,
     incomeCatBreakdown,
     recent,

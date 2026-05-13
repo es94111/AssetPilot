@@ -70,7 +70,7 @@ export default async function DashboardPage(props: {
         </div>
 
         {/* KPI row */}
-        <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
           <div className="stat-card" style={{ borderLeft: '3px solid var(--income)' }}>
             <p className="stat-card-label">總收入</p>
             <p className="stat-card-value" style={{ color: 'var(--income)' }}>{fmtMoney(data.income)}</p>
@@ -86,6 +86,14 @@ export default async function DashboardPage(props: {
           <div className="stat-card" style={{ borderLeft: '3px solid var(--today)' }}>
             <p className="stat-card-label">今日支出</p>
             <p className="stat-card-value">{fmtMoney(data.todayExpense)}</p>
+          </div>
+          <div className="stat-card" style={{ borderLeft: '3px solid var(--primary)' }}>
+            <p className="stat-card-label">銀行帳戶</p>
+            <p className="stat-card-value">{fmtMoney(data.bankBalance)}</p>
+          </div>
+          <div className="stat-card" style={{ borderLeft: '3px solid #8b5cf6' }}>
+            <p className="stat-card-label">股票總市值</p>
+            <p className="stat-card-value">{fmtMoney(data.stockMarketValue)}</p>
           </div>
         </div>
 

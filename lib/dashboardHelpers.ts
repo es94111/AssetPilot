@@ -50,6 +50,8 @@ export interface DashboardResponse {
   expense: number;
   net: number;
   todayExpense: number;
+  bankBalance: number;
+  stockMarketValue: number;
   catBreakdown: DashboardCategoryNode[];
   incomeCatBreakdown: DashboardCategoryNode[];
   recent: RecentTransaction[];

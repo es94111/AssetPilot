@@ -423,7 +423,7 @@ CSV 內容經過 Formula Injection 防護處理（以 `=`、`+`、`-`、`@` 開�
 
 #### 交易照片附件
 
-新增交易時可附加最多 5 張照片，每張預設上限 10 MB。使用者可在新增 Modal 中選擇照片儲存位置：Server 本機儲存或 S3 相容物件儲存；S3 未設定時該選項停用。LINE 新增記錄 wizard 中可於確認前傳送照片，系統先暫存 LINE image message id，確認新增後透過 LINE message content API 下載並附到該筆交易；LINE 端使用 `TRANSACTION_PHOTO_DEFAULT_STORAGE` 決定本機或 S3。系統新增 `transaction_attachments` metadata 表，實際檔案不放 public 目錄，讀取照片需經 `/api/transactions/{txId}/attachments/{attachmentId}/file` 驗證交易與附件皆屬於目前使用者。本機儲存預設位於 `uploads/transaction-photos`，S3 設定可使用 `TRANSACTION_PHOTO_S3_*`，未設定時可 fallback 使用 `MEGA_S4_*`。
+新增交易時可附加最多 5 張照片，每張預設上限 10 MB。使用者可在新增 Modal 中選擇照片儲存位置：Server 本機儲存或 S3 相容物件儲存；S3 未設定時該選項停用。手機網頁需提供「拍照」與「選擇圖片」兩個入口，前者使用 `capture="environment"` 呼叫相機，後者允許從相簿或檔案上傳。LINE 新增記錄 wizard 中可於確認前傳送照片，系統先暫存 LINE image message id，確認新增後透過 LINE message content API 下載並附到該筆交易；LINE 端使用 `TRANSACTION_PHOTO_DEFAULT_STORAGE` 決定本機或 S3。系統新增 `transaction_attachments` metadata 表，實際檔案不放 public 目錄，讀取照片需經 `/api/transactions/{txId}/attachments/{attachmentId}/file` 驗證交易與附件皆屬於目前使用者。本機儲存預設位於 `uploads/transaction-photos`，S3 設定可使用 `TRANSACTION_PHOTO_S3_*`，未設定時可 fallback 使用 `MEGA_S4_*`。
 
 #### 不做什麼
 

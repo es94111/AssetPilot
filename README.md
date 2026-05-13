@@ -417,7 +417,7 @@ Webhook 回覆使用 LINE Flex Message Button：未綁定時顯示「綁定 LINE
 
 ### 交易照片附件
 
-- 新增交易時可選擇最多 5 張照片，每張預設 10 MB。
+- 新增交易時可選擇最多 5 張照片，每張預設 10 MB；手機網頁提供「拍照」與「選擇圖片」兩個入口，可直接呼叫相機或從相簿上傳。
 - 儲存位置可選 Server 本機或 S3 相容物件儲存；S3 未設定時 UI 會停用該選項。
 - LINE 新增記錄流程中可直接傳送照片；照片會暫存在 LINE message id，確認新增後再下載並附到該筆交易。LINE 端使用 `TRANSACTION_PHOTO_DEFAULT_STORAGE` 決定本機或 S3。
 - 照片 metadata 存於 `transaction_attachments`，實際檔案不放 public 目錄，讀取需通過 `/api/transactions/{txId}/attachments/{attachmentId}/file` 權限檢查。

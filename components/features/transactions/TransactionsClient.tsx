@@ -257,6 +257,19 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
     if (!res.ok) throw new Error(payload.error || `照片上傳失敗（HTTP ${res.status}）`);
   }
 
+  function addPhotoFiles(files: FileList | null) {
+    const incoming = Array.from(files || []).filter((file) => file.type.startsWith('image/'));
+    if (incoming.length === 0) return;
+    setPhotoFiles((current) => {
+      const merged = [...current];
+      incoming.forEach((file) => {
+        const exists = merged.some((item) => item.name === file.name && item.size === file.size && item.lastModified === file.lastModified);
+        if (!exists) merged.push(file);
+      });
+      return merged.slice(0, 5);
+    });
+  }
+
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     if (!form.date) { setFormError('請選擇日期'); return; }
@@ -605,31 +618,76 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
               <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 space-y-3">
                 <div className="flex flex-col gap-1">
                   <label className="text-sm font-medium text-gray-700">照片</label>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm file:mr-3 file:rounded-md file:border-0 file:bg-slate-100 file:px-3 file:py-1.5 file:text-sm file:font-medium"
-                    onChange={(e) => setPhotoFiles(Array.from(e.target.files || []).slice(0, 5))}
-                  />
-                  <p className="text-xs text-slate-500">最多 5 張，每張上限 {Math.round((photoStorageStatus?.maxBytes || 10 * 1024 * 1024) / 1024 / 1024)} MB。</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <label className="inline-flex min-h-10 cursor-pointer items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-100">
+                      <i className="fas fa-camera" />
+                      拍照
+                      <input
+                        type="file"
+                        accept="image/*"
+                        capture="environment"
+                        className="hidden"
+                        onChange={(e) => {
+                          addPhotoFiles(e.target.files);
+                          e.currentTarget.value = '';
+                        }}
+                      />
+                    </label>
+                    <label className="inline-flex min-h-10 cursor-pointer items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-100">
+                      <i className="fas fa-image" />
+                      選擇圖片
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        className="hidden"
+                        onChange={(e) => {
+                          addPhotoFiles(e.target.files);
+                          e.currentTarget.value = '';
+                        }}
+                      />
+                    </label>
+                  </div>
+                  <p className="text-xs text-slate-500">手機可直接拍照或從相簿選圖。最多 5 張，每張上限 {Math.round((photoStorageStatus?.maxBytes || 10 * 1024 * 1024) / 1024 / 1024)} MB。</p>
                 </div>
                 {photoFiles.length > 0 && (
-                  <div className="flex flex-col gap-1">
-                    <label className="text-sm font-medium text-gray-700">照片儲存位置</label>
-                    <select
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-                      value={photoStorage}
-                      onChange={(e) => setPhotoStorage(e.target.value === 's3' ? 's3' : 'local')}
-                    >
-                      <option value="local">Server 本機儲存</option>
-                      <option value="s3" disabled={!photoStorageStatus?.s3?.configured}>S3 相容物件儲存</option>
-                    </select>
-                    {!photoStorageStatus?.s3?.configured && (
-                      <p className="text-xs text-amber-700">
-                        S3 尚未完整設定{photoStorageStatus?.s3?.missing?.length ? `：${photoStorageStatus.s3.missing.join('、')}` : ''}
-                      </p>
-                    )}
+                  <div className="space-y-3">
+                    <div className="rounded-md border border-slate-200 bg-white px-3 py-2">
+                      <div className="mb-2 flex items-center justify-between gap-2">
+                        <p className="text-xs font-medium text-slate-600">已選照片 {photoFiles.length} / 5</p>
+                        <button type="button" className="text-xs font-medium text-slate-500 hover:text-slate-700" onClick={() => setPhotoFiles([])}>清除</button>
+                      </div>
+                      <ul className="space-y-1">
+                        {photoFiles.map((file, index) => (
+                          <li key={`${file.name}-${file.size}-${file.lastModified}`} className="flex items-center justify-between gap-2 text-xs text-slate-600">
+                            <span className="min-w-0 truncate">{file.name || `照片 ${index + 1}`}</span>
+                            <button
+                              type="button"
+                              className="shrink-0 font-medium text-slate-500 hover:text-red-600"
+                              onClick={() => setPhotoFiles((current) => current.filter((_, itemIndex) => itemIndex !== index))}
+                            >
+                              移除
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-sm font-medium text-gray-700">照片儲存位置</label>
+                      <select
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                        value={photoStorage}
+                        onChange={(e) => setPhotoStorage(e.target.value === 's3' ? 's3' : 'local')}
+                      >
+                        <option value="local">Server 本機儲存</option>
+                        <option value="s3" disabled={!photoStorageStatus?.s3?.configured}>S3 相容物件儲存</option>
+                      </select>
+                      {!photoStorageStatus?.s3?.configured && (
+                        <p className="text-xs text-amber-700">
+                          S3 尚未完整設定{photoStorageStatus?.s3?.missing?.length ? `：${photoStorageStatus.s3.missing.join('、')}` : ''}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>

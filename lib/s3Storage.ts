@@ -147,6 +147,37 @@ function signedHeadersFor(method: string, config: S3StorageConfig, key: string, 
   };
 }
 
+function decodeXmlText(value: string) {
+  return value
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&amp;/g, '&');
+}
+
+function xmlTagValue(xml: string, tag: string) {
+  const match = xml.match(new RegExp(`<${tag}>([\\s\\S]*?)<\\/${tag}>`, 'i'));
+  return match ? decodeXmlText(match[1].trim()) : '';
+}
+
+function formatS3Error(action: string, status: number, statusText: string, details: string) {
+  const code = xmlTagValue(details, 'Code');
+  const message = xmlTagValue(details, 'Message');
+  const requestId = xmlTagValue(details, 'RequestId');
+  const requestLabel = requestId ? `（RequestId: ${requestId}）` : '';
+
+  if (code === 'InvalidAccessKeyId') {
+    return `${action}失敗（HTTP ${status}）：Access Key ID 無效或格式不正確，請確認環境變數中的 Access Key ID 是從 S3 相容物件儲存服務建立的 Access Key ID，不是帳號、bucket 名稱或 Secret Access Key。${message ? `服務回覆：${message}` : ''}${requestLabel}`;
+  }
+
+  if (code || message) {
+    return `${action}失敗（HTTP ${status}）：${[code, message].filter(Boolean).join(' - ')}${requestLabel}`;
+  }
+
+  return `${action}失敗（HTTP ${status}）：${details.slice(0, 300) || statusText}`;
+}
+
 export function joinS3Key(prefix: string, key: string) {
   return [normalizePrefix(prefix), normalizePrefix(key)].filter(Boolean).join('/');
 }
@@ -164,7 +195,7 @@ export async function putS3Object(config: S3StorageConfig, key: string, body: Bu
 
   if (!response.ok) {
     const details = await response.text().catch(() => '');
-    throw new Error(`S3 上傳失敗（HTTP ${response.status}）：${details.slice(0, 300) || response.statusText}`);
+    throw new Error(formatS3Error('S3 上傳', response.status, response.statusText, details));
   }
 
   return {
@@ -182,7 +213,7 @@ export async function getS3Object(config: S3StorageConfig, key: string): Promise
   const response = await fetch(signed.url, { method: 'GET', headers: signed.headers });
   if (!response.ok) {
     const details = await response.text().catch(() => '');
-    throw new Error(`S3 讀取失敗（HTTP ${response.status}）：${details.slice(0, 300) || response.statusText}`);
+    throw new Error(formatS3Error('S3 讀取', response.status, response.statusText, details));
   }
   return response;
 }
@@ -192,6 +223,6 @@ export async function deleteS3Object(config: S3StorageConfig, key: string): Prom
   const response = await fetch(signed.url, { method: 'DELETE', headers: signed.headers });
   if (!response.ok && response.status !== 404) {
     const details = await response.text().catch(() => '');
-    throw new Error(`S3 刪除失敗（HTTP ${response.status}）：${details.slice(0, 300) || response.statusText}`);
+    throw new Error(formatS3Error('S3 刪除', response.status, response.statusText, details));
   }
 }

@@ -11,6 +11,12 @@ const EMPTY_TRANSFER_FORM = { date: '', amount: '', fromAccountId: '', toAccount
 const EMPTY_FILTERS = { type: '', accountId: '', categoryId: '', dateFrom: '', dateTo: '', keyword: '' };
 const DEFAULT_CURRENCIES = ['TWD', 'USD', 'JPY', 'EUR', 'CNY', 'HKD', 'GBP', 'AUD', 'CAD', 'SGD'];
 
+type PhotoStorageStatus = {
+  local?: { configured: boolean; directory: string };
+  s3?: { configured: boolean; missing: string[]; endpoint: string; bucket: string; prefix: string };
+  maxBytes?: number;
+};
+
 type QueryParams = { get(name: string): string | null };
 
 function readPageParam(searchParams: QueryParams) {
@@ -69,6 +75,10 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
   const [editId, setEditId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState('');
+  const [photoFiles, setPhotoFiles] = useState<File[]>([]);
+  const [photoStorage, setPhotoStorage] = useState<'local' | 's3'>('local');
+  const [photoStorageStatus, setPhotoStorageStatus] = useState<PhotoStorageStatus | null>(null);
+  const [photoUploadWarning, setPhotoUploadWarning] = useState('');
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [fxLoading, setFxLoading] = useState(false);
@@ -120,6 +130,11 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
   }, []);
 
   useEffect(() => { loadMeta(); }, [loadMeta]);
+  useEffect(() => {
+    apiGet('/api/transactions/attachments/storage')
+      .then((data) => setPhotoStorageStatus(data))
+      .catch(() => setPhotoStorageStatus(null));
+  }, []);
   useEffect(() => { load(page); }, [page, load]);
 
   useEffect(() => {
@@ -149,6 +164,9 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
     setForm({ ...EMPTY_FORM, date: today(), accountId: defaultAccountId, currency: nextCurrency, fxRate: '' });
     setEditId(null);
     setFormError('');
+    setPhotoUploadWarning('');
+    setPhotoFiles([]);
+    setPhotoStorage('local');
     setModal(true);
   }
 
@@ -220,7 +238,23 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
     });
     setEditId(tx.id);
     setFormError('');
+    setPhotoUploadWarning('');
+    setPhotoFiles([]);
     setModal(true);
+  }
+
+  async function uploadPhotos(transactionId: string) {
+    if (photoFiles.length === 0) return;
+    const data = new FormData();
+    data.set('storage', photoStorage);
+    photoFiles.forEach((file) => data.append('photos', file));
+    const res = await fetch(`/api/transactions/${transactionId}/attachments`, {
+      method: 'POST',
+      credentials: 'include',
+      body: data,
+    });
+    const payload = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(payload.error || `照片上傳失敗（HTTP ${res.status}）`);
   }
 
   async function handleSave(e: React.FormEvent) {
@@ -243,8 +277,19 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
       ...(isForex && form.fxRate ? { fxRate: Number(form.fxRate) } : {}),
     };
     try {
-      if (editId) await apiPut(`/api/transactions/${editId}`, body);
-      else await apiPost('/api/transactions', body);
+      let saved: any = null;
+      if (editId) {
+        saved = await apiPut(`/api/transactions/${editId}`, body);
+      } else {
+        saved = await apiPost('/api/transactions', body);
+        try {
+          await uploadPhotos(saved.id);
+        } catch (uploadError: any) {
+          const message = uploadError.message || '照片上傳失敗';
+          setPhotoUploadWarning(message);
+          setFormError(`交易已建立，但${message}`);
+        }
+      }
       setModal(false);
       setPage(1);
       await load(1);
@@ -452,6 +497,17 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
                       <div>{tx.note || '—'}</div>
                       {tx.sourceRecurringName && <div className="text-xs text-slate-500">來源：{tx.sourceRecurringName}</div>}
                       {tx.excludeFromStats && <div className="text-xs text-slate-500">不計入統計</div>}
+                      {tx.attachmentCount > 0 && tx.firstAttachmentId && (
+                        <a
+                          className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-sky-600 hover:text-sky-700"
+                          href={`/api/transactions/${tx.id}/attachments/${tx.firstAttachmentId}/file`}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          <i className="fas fa-image" />
+                          照片 {tx.attachmentCount}
+                        </a>
+                      )}
                     </td>
                     <td className={tx.type === 'income' || tx.type === 'transfer_in' ? 'amount-income' : 'amount-expense'}>
                       {tx.type === 'income' || tx.type === 'transfer_in' ? '+' : '-'}{fmt(tx.amount)}
@@ -545,6 +601,40 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
             <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
               <input type="checkbox" checked={form.excludeFromStats} onChange={(e) => setForm((current) => ({ ...current, excludeFromStats: e.target.checked }))} /> 不計入統計
             </label>
+            {!editId && (
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 space-y-3">
+                <div className="flex flex-col gap-1">
+                  <label className="text-sm font-medium text-gray-700">照片</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm file:mr-3 file:rounded-md file:border-0 file:bg-slate-100 file:px-3 file:py-1.5 file:text-sm file:font-medium"
+                    onChange={(e) => setPhotoFiles(Array.from(e.target.files || []).slice(0, 5))}
+                  />
+                  <p className="text-xs text-slate-500">最多 5 張，每張上限 {Math.round((photoStorageStatus?.maxBytes || 10 * 1024 * 1024) / 1024 / 1024)} MB。</p>
+                </div>
+                {photoFiles.length > 0 && (
+                  <div className="flex flex-col gap-1">
+                    <label className="text-sm font-medium text-gray-700">照片儲存位置</label>
+                    <select
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                      value={photoStorage}
+                      onChange={(e) => setPhotoStorage(e.target.value === 's3' ? 's3' : 'local')}
+                    >
+                      <option value="local">Server 本機儲存</option>
+                      <option value="s3" disabled={!photoStorageStatus?.s3?.configured}>S3 相容物件儲存</option>
+                    </select>
+                    {!photoStorageStatus?.s3?.configured && (
+                      <p className="text-xs text-amber-700">
+                        S3 尚未完整設定{photoStorageStatus?.s3?.missing?.length ? `：${photoStorageStatus.s3.missing.join('、')}` : ''}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+            {photoUploadWarning && <p className="text-sm text-amber-600">{photoUploadWarning}</p>}
             {formError && <p className="text-sm text-destructive">{formError}</p>}
             <DialogFooter className="flex-row justify-end">
               <DialogClose asChild>

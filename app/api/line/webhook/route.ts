@@ -19,6 +19,10 @@ import { computeTwdAmount } from '../../../../lib/moneyDecimal';
 import { uid } from '../../../../lib/userDefaults';
 import { getOrCreateUserCurrencySettings } from '../../../../lib/userCurrencySettings';
 import { isValidIsoDate, todayInUserTz } from '../../../../lib/userTime';
+import {
+  getDefaultTransactionPhotoStorage,
+  saveTransactionPhotoBuffer,
+} from '../../../../lib/transactionAttachments';
 
 export const runtime = 'nodejs';
 
@@ -28,7 +32,7 @@ interface LineWebhookEvent {
   type: string;
   replyToken?: string;
   source?: { userId?: string };
-  message?: { type?: string; text?: string };
+  message?: { id?: string; type?: string; text?: string; contentProvider?: { type?: string } };
   postback?: { data?: string };
 }
 
@@ -80,6 +84,7 @@ interface RecordDraft {
   accountPage?: number;
   currency?: string;
   note?: string;
+  linePhotoMessageIds?: string[];
 }
 
 function asRows<T>(rows: Array<Record<string, string | number | null>>): T[] {
@@ -298,6 +303,7 @@ function recordDraftSummary(draft: RecordDraft): string[] {
     `帳戶：${draft.accountName || '未填'}`,
     `幣別：${draft.currency || 'TWD'}`,
     `備註：${draft.note || '無'}`,
+    `照片：${draft.linePhotoMessageIds?.length ? `${draft.linePhotoMessageIds.length} 張` : '無'}`,
   ];
 }
 
@@ -369,13 +375,48 @@ function buildWizardStep(user: UserRow, step: string, draft: RecordDraft): LineR
       { label: '無備註', data: 'action=wizard&step=note&value=', displayText: '無備註', primary: true },
     ]);
   }
-  return buildRecordWizardStepFlex('確認新增記錄', recordDraftSummary(draft), [
+  return buildRecordWizardStepFlex('確認新增記錄', [...recordDraftSummary(draft), '若要附照片，可在確認前直接傳送照片。'], [
     { label: '確認新增', data: 'action=wizard&step=confirm&value=yes', displayText: '確認新增', primary: true },
     { label: '重新填寫', data: 'action=record_wizard', displayText: '重新填寫' },
   ]);
 }
 
-function createTransactionFromLine(user: UserRow, parsed: NonNullable<ReturnType<typeof parseRecordCommand>>): LineReplyMessage {
+async function downloadLineImage(messageId: string): Promise<{ body: Buffer; mimeType: string }> {
+  const res = await fetch(`https://api-data.line.me/v2/bot/message/${encodeURIComponent(messageId)}/content`, {
+    headers: { Authorization: `Bearer ${LINE_MESSAGING_CHANNEL_ACCESS_TOKEN}` },
+  });
+  if (!res.ok) {
+    const detail = await res.text().catch(() => '');
+    throw new Error(`LINE 照片下載失敗（HTTP ${res.status}）：${detail.slice(0, 120) || res.statusText}`);
+  }
+  const mimeType = res.headers.get('content-type') || 'image/jpeg';
+  return { body: Buffer.from(await res.arrayBuffer()), mimeType };
+}
+
+async function attachLinePhotos(userId: string, transactionId: string, messageIds: string[] = []): Promise<number> {
+  const ids = Array.from(new Set(messageIds.filter(Boolean))).slice(0, 5);
+  if (ids.length === 0) return 0;
+  const storage = getDefaultTransactionPhotoStorage();
+  let attached = 0;
+  for (let i = 0; i < ids.length; i += 1) {
+    const image = await downloadLineImage(ids[i]);
+    const ext = image.mimeType.includes('png') ? 'png' : image.mimeType.includes('webp') ? 'webp' : 'jpg';
+    await saveTransactionPhotoBuffer(userId, transactionId, storage, {
+      filename: `line-photo-${i + 1}.${ext}`,
+      mimeType: image.mimeType,
+      body: image.body,
+    });
+    attached += 1;
+  }
+  saveDB();
+  return attached;
+}
+
+function withPhotoLine(lines: string[], count: number): string[] {
+  return count > 0 ? [...lines, `照片：${count} 張`] : lines;
+}
+
+async function createTransactionFromLine(user: UserRow, parsed: NonNullable<ReturnType<typeof parseRecordCommand>>, linePhotoMessageIds: string[] = []): Promise<LineReplyMessage> {
   if (!isValidIsoDate(parsed.date)) {
     return textMessage('日期格式無效，請使用 YYYY-MM-DD，例如：支出 120 午餐 2026-05-11');
   }
@@ -399,18 +440,24 @@ function createTransactionFromLine(user: UserRow, parsed: NonNullable<ReturnType
     [id, user.id, parsed.type, twdAmount, converted.currency, converted.originalAmount, converted.fxRate, 0, twdAmount, parsed.date, category?.id || null, account.id, parsed.note, 0, now, now]
   );
   saveDB();
+  let attachedPhotos = 0;
+  try {
+    attachedPhotos = await attachLinePhotos(user.id, id, linePhotoMessageIds);
+  } catch (e) {
+    return textMessage(`收支紀錄已新增，但照片儲存失敗：${e instanceof Error ? e.message : '未知錯誤'}`);
+  }
 
-  return buildRecordFlex('已新增收支紀錄', [
+  return buildRecordFlex('已新增收支紀錄', withPhotoLine([
     `類型：${parsed.type === 'income' ? '收入' : '支出'}`,
     `金額：TWD ${formatMoney(twdAmount)}`,
     `日期：${parsed.date}`,
     `分類：${category ? `${category.parent_name || ''}/${category.name}`.replace(/^\//, '') : '未分類'}`,
     `帳戶：${account.name}`,
     `備註：${parsed.note}`,
-  ]);
+  ], attachedPhotos));
 }
 
-function createTransactionFromDraft(user: UserRow, draft: RecordDraft): LineReplyMessage {
+async function createTransactionFromDraft(user: UserRow, draft: RecordDraft): Promise<LineReplyMessage> {
   if (!draft.date || !isValidIsoDate(draft.date)) return textMessage('日期格式無效，請重新新增記錄。');
   if (draft.type !== 'income' && draft.type !== 'expense') return textMessage('類型無效，請重新新增記錄。');
   const amount = Number(draft.amount);
@@ -449,8 +496,14 @@ function createTransactionFromDraft(user: UserRow, draft: RecordDraft): LineRepl
     [id, user.id, draft.type, twdAmount, converted.currency, converted.originalAmount, converted.fxRate, 0, twdAmount, draft.date, category.id, account.id, note, 0, now, now]
   );
   saveDB();
+  let attachedPhotos = 0;
+  try {
+    attachedPhotos = await attachLinePhotos(user.id, id, draft.linePhotoMessageIds || []);
+  } catch (e) {
+    return textMessage(`收支紀錄已新增，但照片儲存失敗：${e instanceof Error ? e.message : '未知錯誤'}`);
+  }
 
-  return buildRecordFlex('已新增收支紀錄', [
+  return buildRecordFlex('已新增收支紀錄', withPhotoLine([
     `日期：${draft.date}`,
     `類型：${draft.type === 'income' ? '收入' : '支出'}`,
     `金額：TWD ${formatMoney(twdAmount)}`,
@@ -458,7 +511,7 @@ function createTransactionFromDraft(user: UserRow, draft: RecordDraft): LineRepl
     `帳戶：${account.name}`,
     `幣別：${converted.currency}`,
     `備註：${note || '無'}`,
-  ]);
+  ], attachedPhotos));
 }
 
 function queryPeriod(input: string, timezone: string): { title: string; dateFrom: string; dateTo: string } {
@@ -545,6 +598,7 @@ async function handleEvent(event: LineWebhookEvent, request: Request): Promise<v
   const lineUserId = event.source?.userId || '';
   const appUrl = appUrlFromRequest(request);
   const incomingText = event.message?.type === 'text' ? String(event.message.text || '') : '';
+  const incomingImageId = event.message?.type === 'image' ? String(event.message.id || '') : '';
   const postbackData = event.postback?.data || '';
 
   if (!lineUserId) {
@@ -563,6 +617,30 @@ async function handleEvent(event: LineWebhookEvent, request: Request): Promise<v
     return;
   }
   const userDefaultCurrency = getOrCreateUserCurrencySettings(user.id).defaultCurrency;
+
+  const imageState = getLineBotState(lineUserId);
+  if (incomingImageId) {
+    if (imageState?.action?.startsWith('record_')) {
+      const draft = parseStatePayload(imageState);
+      const ids = draft.linePhotoMessageIds || [];
+      if (ids.length >= 5) {
+        await replyLineMessage(event.replyToken, [textMessage('單筆交易最多附 5 張照片。'), buildWizardStep(user, imageState.action, draft)]);
+        return;
+      }
+      draft.linePhotoMessageIds = [...ids, incomingImageId];
+      setLineBotState(lineUserId, user.id, imageState.action, draft.type || '', draft);
+      await replyLineMessage(event.replyToken, [
+        textMessage(`已收到照片（${draft.linePhotoMessageIds.length}/5）。請繼續完成這筆交易，最後按「確認新增」。`),
+        buildWizardStep(user, imageState.action, draft),
+      ]);
+      return;
+    }
+    await replyLineMessage(event.replyToken, [
+      textMessage('已收到照片。請先從「新增記錄」開始，進入新增流程後再傳照片，我會把照片附到那筆交易。'),
+      buildMainMenuFlex(appUrl, true),
+    ]);
+    return;
+  }
 
   if (postbackData) {
     const params = new URLSearchParams(postbackData);
@@ -628,7 +706,7 @@ async function handleEvent(event: LineWebhookEvent, request: Request): Promise<v
       if (step === 'note') draft.note = value;
       if (step === 'confirm') {
         clearLineBotState(lineUserId);
-        await replyLineMessage(event.replyToken, [createTransactionFromDraft(user, draft)]);
+        await replyLineMessage(event.replyToken, [await createTransactionFromDraft(user, draft)]);
         return;
       }
       const nextStep = nextRecordStep(step);
@@ -724,7 +802,7 @@ async function handleEvent(event: LineWebhookEvent, request: Request): Promise<v
     } else if (field === 'confirm') {
       if (/確認|新增|yes|ok/i.test(normalized)) {
         clearLineBotState(lineUserId);
-        await replyLineMessage(event.replyToken, [createTransactionFromDraft(user, draft)]);
+        await replyLineMessage(event.replyToken, [await createTransactionFromDraft(user, draft)]);
         return;
       }
       await replyLineMessage(event.replyToken, [buildWizardStep(user, 'record_confirm', draft)]);
@@ -747,7 +825,7 @@ async function handleEvent(event: LineWebhookEvent, request: Request): Promise<v
       return;
     }
     clearLineBotState(lineUserId);
-    await replyLineMessage(event.replyToken, [createTransactionFromLine(user, detail)]);
+    await replyLineMessage(event.replyToken, [await createTransactionFromLine(user, detail)]);
     return;
   }
 
@@ -760,7 +838,7 @@ async function handleEvent(event: LineWebhookEvent, request: Request): Promise<v
   const parsed = parseRecordCommand(normalized, user.timezone || 'Asia/Taipei', userDefaultCurrency);
   if (parsed) {
     clearLineBotState(lineUserId);
-    await replyLineMessage(event.replyToken, [createTransactionFromLine(user, parsed)]);
+    await replyLineMessage(event.replyToken, [await createTransactionFromLine(user, parsed)]);
     return;
   }
 

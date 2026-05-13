@@ -1,6 +1,30 @@
 {
-  "currentVersion": "4.38.9",
+  "currentVersion": "4.39.0",
   "releases": [
+    {
+      "version": "4.39.0",
+      "date": "2026-05-13",
+      "title": "新增 MEGA S4 備份與交易照片附件",
+      "type": "new",
+      "changes": [
+        {
+          "tag": "new",
+          "text": "資料匯出匯入頁新增 MEGA S4 雲端備份，管理員可將完整 SQLite 備份手動上傳到 S3 相容物件儲存，金鑰僅由伺服器端環境變數讀取。"
+        },
+        {
+          "tag": "new",
+          "text": "新增交易時可上傳最多 5 張照片，並可選擇儲存在 Server 本機或 S3 相容物件儲存；照片需經登入授權 API 才能讀取。"
+        },
+        {
+          "tag": "new",
+          "text": "LINE 新增記錄流程支援照片附件，在確認新增前傳送照片即可自動附到該筆交易，並使用預設照片儲存位置保存。"
+        },
+        {
+          "tag": "improved",
+          "text": "API 使用與授權頁、README、SRS 與環境變數範例同步補上 MEGA S4 與交易照片附件設定說明。"
+        }
+      ]
+    },
     {
       "version": "4.38.9",
       "date": "2026-05-13",

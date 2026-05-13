@@ -51,6 +51,8 @@ interface TransactionListItem extends TransactionRow {
   scheduledDate: string | null;
   createdAt: string | number | null;
   updatedAt: string | number | null;
+  attachmentCount: number;
+  firstAttachmentId: string | null;
 }
 
 interface TransactionListResponse {
@@ -169,7 +171,10 @@ export async function GET(request: NextRequest) {
 
   const pageNum = parseInt(page, 10) || 1;
   const offset = (pageNum - 1) * pageSize;
-  const selectCols = "t.*, COALESCE(NULLIF(r.note, ''), '（未命名配方）') AS source_recurring_name";
+  const selectCols = `t.*,
+    COALESCE(NULLIF(r.note, ''), '（未命名配方）') AS source_recurring_name,
+    (SELECT COUNT(*) FROM transaction_attachments ta WHERE ta.transaction_id = t.id AND ta.user_id = t.user_id) AS attachment_count,
+    (SELECT ta.id FROM transaction_attachments ta WHERE ta.transaction_id = t.id AND ta.user_id = t.user_id ORDER BY ta.created_at ASC LIMIT 1) AS first_attachment_id`;
   const sql = `SELECT ${selectCols} FROM ${baseTable} WHERE ${where} ${orderClause} LIMIT ${pageSize} OFFSET ${offset}`;
   const items = asRows<TransactionRow>(queryAll(sql, params)).map((r): TransactionListItem => ({
     ...r,
@@ -188,6 +193,8 @@ export async function GET(request: NextRequest) {
     scheduledDate: r.scheduled_date || null,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
+    attachmentCount: Number(r.attachment_count) || 0,
+    firstAttachmentId: typeof r.first_attachment_id === 'string' ? r.first_attachment_id : null,
   }));
 
   const response: TransactionListResponse = {

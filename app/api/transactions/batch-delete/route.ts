@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '../../../../lib/apiHelpers';
 import { getDB, queryOne, saveDB } from '../../../../lib/db';
+import { deleteTransactionAttachments } from '../../../../lib/transactionAttachments';
 
 const BATCH_MAX = 500;
 
@@ -59,6 +60,7 @@ export async function POST(request: NextRequest) {
   const db = getDB();
   try {
     db.run('BEGIN');
+    await deleteTransactionAttachments(auth.userId, [...all]);
     [...all].forEach(id => db.run('DELETE FROM transactions WHERE id = ? AND user_id = ?', [id, auth.userId]));
     db.run('COMMIT');
   } catch (e) {

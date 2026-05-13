@@ -7,6 +7,8 @@ const AUDIT_METADATA_ALLOWED_KEYS = new Set([
   'dateFrom', 'dateTo', 'failure_stage', 'failure_reason',
   'unknown_columns', 'backup_path', 'before_restore_path',
   'filename', 'filterParams',
+  'bucket', 'object_key', 'endpoint', 'region',
+  'transaction_id', 'attachment_id', 'storage', 'mime_type',
   'path', 'normalizedPath', 'next', 'reason', 'rawUrl', 'pattern',
 ]);
 

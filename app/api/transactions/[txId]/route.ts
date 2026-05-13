@@ -4,6 +4,7 @@ import { getDB, queryOne, saveDB } from '../../../../lib/db';
 import { normalizeCurrency, convertToTwd, normalizeDate } from '../../../../lib/accountHelpers';
 import { ownsResource, assertOptimisticLock, lockErrorResponse } from '../../../../lib/resourceHelpers';
 import { computeTwdAmount } from '../../../../lib/moneyDecimal';
+import { deleteTransactionAttachments, listTransactionAttachments } from '../../../../lib/transactionAttachments';
 
 type RouteContext = { params: Promise<{ txId: string }> };
 interface Auth {
@@ -107,6 +108,15 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
     scheduledDate: t.scheduled_date || null,
     createdAt: t.created_at,
     updatedAt: Number(t.updated_at) || 0,
+    attachments: listTransactionAttachments(auth.userId, txId).map((item) => ({
+      id: item.id,
+      filename: item.filename,
+      mimeType: item.mime_type,
+      byteSize: Number(item.byte_size) || 0,
+      storage: item.storage,
+      createdAt: Number(item.created_at) || 0,
+      url: `/api/transactions/${txId}/attachments/${item.id}/file`,
+    })),
   });
 }
 
@@ -222,6 +232,7 @@ export async function DELETE(request: NextRequest, { params }: RouteContext) {
   }
 
   const db = getDB();
+  await deleteTransactionAttachments(auth.userId, [txId, ...(tx.linked_id ? [tx.linked_id] : [])]);
   db.run('DELETE FROM transactions WHERE id = ? AND user_id = ?', [txId, auth.userId]);
   if (tx.linked_id) {
     db.run('DELETE FROM transactions WHERE id = ? AND user_id = ?', [tx.linked_id, auth.userId]);

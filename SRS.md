@@ -49,7 +49,7 @@
 | 後端     | Node.js 24+、Express                                                                              |
 | 資料庫   | SQLite（透過 sql.js，記憶體執行 + 檔案持久化）                                                    |
 | 驗證     | JWT（httpOnly Cookie，`JWT_EXPIRES` 控制有效期）、bcryptjs、Passkey（WebAuthn）、Google SSO（選配）|
-| 外部 API | TWSE OpenAPI、exchangerate-api.com、ipinfo.io、Google Identity Services、SMTP（Nodemailer）、Zeabur Email（ZSend）、Resend |
+| 外部 API | TWSE OpenAPI、exchangerate-api.com、ipinfo.io、Google Identity Services、SMTP（Nodemailer）、Zeabur Email（ZSend）、Resend、MEGA S4 Object Storage |
 | 部署     | 原生 Node.js 或 Docker；CI 自動從 `changelog.json.currentVersion` 推導 Docker tag 與 git tag      |
 
 ### 1.4 使用者角色
@@ -419,6 +419,11 @@ CSV 內容經過 Formula Injection 防護處理（以 `=`、`+`、`-`、`@` 開�
 - TWSE：`https://openapi.twse.com.tw/`、`https://www.twse.com.tw/`
 - Google Identity Services
 - 寄信服務：SMTP（Nodemailer）、Zeabur Email（ZSend，`https://zeabur.com/docs/en-US/email/quick-start`）、Resend
+- MEGA S4 Object Storage：`https://mega.io/zh-hant/objectstorage`（管理員手動上傳完整 SQLite 備份時使用；S3 相容端點預設 `https://s3.<region>.s4.mega.io`）
+
+#### 交易照片附件
+
+新增交易時可附加最多 5 張照片，每張預設上限 10 MB。使用者可在新增 Modal 中選擇照片儲存位置：Server 本機儲存或 S3 相容物件儲存；S3 未設定時該選項停用。LINE 新增記錄 wizard 中可於確認前傳送照片，系統先暫存 LINE image message id，確認新增後透過 LINE message content API 下載並附到該筆交易；LINE 端使用 `TRANSACTION_PHOTO_DEFAULT_STORAGE` 決定本機或 S3。系統新增 `transaction_attachments` metadata 表，實際檔案不放 public 目錄，讀取照片需經 `/api/transactions/{txId}/attachments/{attachmentId}/file` 驗證交易與附件皆屬於目前使用者。本機儲存預設位於 `uploads/transaction-photos`，S3 設定可使用 `TRANSACTION_PHOTO_S3_*`，未設定時可 fallback 使用 `MEGA_S4_*`。
 
 #### 不做什麼
 

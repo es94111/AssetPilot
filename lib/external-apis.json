@@ -54,5 +54,13 @@
     "attribution": null,
     "supportsFree": true,
     "supportsPaid": true
+  },
+  {
+    "name": "MEGA S4 Object Storage",
+    "description": "管理員整檔 SQLite 備份的 S3 相容物件儲存目的地",
+    "url": "https://mega.io/zh-hant/objectstorage",
+    "attribution": null,
+    "supportsFree": false,
+    "supportsPaid": true
   }
 ]

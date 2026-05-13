@@ -92,6 +92,8 @@
 - **使用者管理**：管理員可開關註冊、設定 Email 白名單、IP 白名單、新增 / 刪除 / 重設密碼
 - **登入稽核**：時間、IP、國家、方式（密碼 / Google / LINE / Passkey）、成功 / 失敗
 - **寄信通道**：以 `EMAIL_PROVIDER_PRIMARY` / `EMAIL_PROVIDER_FALLBACK` 環境變數指定主要與備用通道（值：`smtp` / `zeabur` / `resend` / 留空），支援 SMTP（Nodemailer）、Zeabur Email（ZSend HTTP API）、Resend；可選 `EMAIL_SENDER_NAME` 為三通道統一指定寄件人顯示名稱；管理員設定頁可即時檢視各通道是否設定並寄送測試信
+- **MEGA S4 備份**：管理員可在「資料匯出匯入」頁將完整 SQLite 備份手動上傳到 MEGA S4 S3 相容 bucket，金鑰僅由伺服器端環境變數讀取
+- **交易照片附件**：新增交易時可附上照片，並選擇存放於 Server 本機或 S3 相容物件儲存；附件取用一律走登入授權 API
 - **路由稽核模式**（v4.29.0）：security（預設）/ extended（含 401 session 失效）/ minimal（路由稽核全部關閉）
 - **API 使用與授權頁**：動態列出所有外部 API 來源、配額、合規授權字樣（IPinfo `IP address data is powered by IPinfo`）
 
@@ -215,6 +217,17 @@ Docker 多數參數已有合理預設，重點關注「自動產生」與「功�
 | `EXCHANGE_RATE_API_KEY` | 選配 | exchangerate-api.com Key | `free` |
 | `IPINFO_TOKEN` | 選配 | ipinfo.io Token，提升 IP 查詢配額 | — |
 | `TWSE_MAX_CONCURRENCY` | 選配 | TWSE 並發查詢上限 | `5` |
+| `MEGA_S4_ACCESS_KEY_ID` | 選配 | MEGA S4 Access Key ID；設定後可從資料匯出匯入頁手動上傳資料庫備份 | — |
+| `MEGA_S4_SECRET_ACCESS_KEY` | 選配 | MEGA S4 Secret Access Key；僅伺服器端讀取，不回傳前端 | — |
+| `MEGA_S4_BUCKET` | 選配 | MEGA S4 備份目標 bucket | — |
+| `MEGA_S4_REGION` | 選配 | MEGA S4 region：`eu-central-1` / `eu-central-2` / `ca-central-1` / `ca-west-1` | `eu-central-1` |
+| `MEGA_S4_PREFIX` | 選配 | MEGA S4 object key 前綴 | `assetpilot` |
+| `MEGA_S4_ENDPOINT` | 選配 | 自訂 MEGA S4 S3 endpoint；留空依 region 推導 `https://s3.<region>.s4.mega.io` | — |
+| `TRANSACTION_PHOTO_LOCAL_DIR` | 選配 | 交易照片本機儲存目錄 | `<cwd>/uploads/transaction-photos` |
+| `TRANSACTION_PHOTO_MAX_BYTES` | 選配 | 單張交易照片大小上限 | `10485760` |
+| `TRANSACTION_PHOTO_DEFAULT_STORAGE` | 選配 | LINE 新增交易照片與其他非互動上傳流程的預設儲存位置：`local` / `s3` | `local` |
+| `TRANSACTION_PHOTO_S3_ACCESS_KEY_ID` / `TRANSACTION_PHOTO_S3_SECRET_ACCESS_KEY` | 選配 | 交易照片 S3 相容物件儲存金鑰；未設定時可 fallback 使用 `MEGA_S4_*` | — |
+| `TRANSACTION_PHOTO_S3_BUCKET` / `TRANSACTION_PHOTO_S3_REGION` / `TRANSACTION_PHOTO_S3_ENDPOINT` / `TRANSACTION_PHOTO_S3_PREFIX` | 選配 | 交易照片 S3 相容物件儲存 bucket、region、endpoint 與 key 前綴 | `assetpilot/transaction-photos` |
 | `SSL_CERT` / `SSL_KEY` | 選配 | Cloudflare Origin Certificate 路徑（管理員 UI 可上傳，需重啟套用） | — |
 | `EMAIL_PROVIDER_PRIMARY` | 寄信 | 主要寄信通道：`smtp` / `zeabur` / `resend` / 留空（停用） | — |
 | `EMAIL_PROVIDER_FALLBACK` | 寄信 | 備用寄信通道（同上選項；留空或與 primary 同則不啟用 fallback） | — |
@@ -402,6 +415,13 @@ Webhook 回覆使用 LINE Flex Message Button：未綁定時顯示「綁定 LINE
 - **還原**：上傳備份檔；通過驗證後寫入 `backups/before-restore-{ts}.db`；替換失敗自動回滾並回 `422 RESTORE_FAILED_ROLLED_BACK`
 - **自動備份保留**：保留最近 5 份且 ≤ 90 天；管理員可手動刪除（雙重防路徑遍歷：`path.basename` + regex）
 
+### 交易照片附件
+
+- 新增交易時可選擇最多 5 張照片，每張預設 10 MB。
+- 儲存位置可選 Server 本機或 S3 相容物件儲存；S3 未設定時 UI 會停用該選項。
+- LINE 新增記錄流程中可直接傳送照片；照片會暫存在 LINE message id，確認新增後再下載並附到該筆交易。LINE 端使用 `TRANSACTION_PHOTO_DEFAULT_STORAGE` 決定本機或 S3。
+- 照片 metadata 存於 `transaction_attachments`，實際檔案不放 public 目錄，讀取需通過 `/api/transactions/{txId}/attachments/{attachmentId}/file` 權限檢查。
+
 ---
 
 ## 安全性
@@ -438,6 +458,7 @@ Webhook 回覆使用 LINE Flex Message Button：未綁定時顯示「綁定 LINE
 | SMTP（Nodemailer） | 排程信件 / 系統通知（Gmail / Outlook 等） | <https://nodemailer.com/> |
 | Zeabur Email（ZSend） | 排程信件 / 系統通知 | <https://zeabur.com/docs/en-US/email/quick-start> |
 | Resend | 排程信件 / 系統通知 | <https://resend.com/> |
+| MEGA S4 Object Storage | 管理員整檔 SQLite 備份的 S3 相容物件儲存目的地 | <https://mega.io/zh-hant/objectstorage> |
 
 完整列表與授權字樣可在執行中應用程式的 `/api-credits` 頁面查看。
 

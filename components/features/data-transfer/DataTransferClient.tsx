@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/Input';
 
@@ -14,6 +14,15 @@ type CsvImportResult = {
   created?: { categories?: string[]; accounts?: string[] };
   message?: string;
   beforeRestorePath?: string;
+};
+
+type MegaS4Status = {
+  configured: boolean;
+  missing: string[];
+  region: string;
+  endpoint: string;
+  bucket: string;
+  prefix: string;
 };
 
 const CSV_MODULES = [
@@ -149,6 +158,8 @@ export default function DataTransferClient({ user }: { user: UserLike }) {
   const [importResults, setImportResults] = useState<Record<string, CsvImportResult | null>>({});
   const [status, setStatus] = useState('');
   const [dbStatus, setDbStatus] = useState('');
+  const [megaS4Status, setMegaS4Status] = useState<MegaS4Status | null>(null);
+  const [megaS4Message, setMegaS4Message] = useState('');
 
   const exportQuery = useMemo(() => {
     const params = new URLSearchParams();
@@ -156,6 +167,22 @@ export default function DataTransferClient({ user }: { user: UserLike }) {
     if (dateTo) params.set('dateTo', dateTo);
     return params.toString() ? `?${params.toString()}` : '';
   }, [dateFrom, dateTo]);
+
+  useEffect(() => {
+    if (!user?.isAdmin) return;
+    let cancelled = false;
+    fetch('/api/database/mega-s4', { credentials: 'include' })
+      .then((res) => res.json())
+      .then((data) => {
+        if (!cancelled) setMegaS4Status(data);
+      })
+      .catch(() => {
+        if (!cancelled) setMegaS4Status(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.isAdmin]);
 
   async function handleCsvExport(url: string, key: string) {
     setBusyKey(key);
@@ -223,6 +250,23 @@ export default function DataTransferClient({ user }: { user: UserLike }) {
       setDbStatus(data.message || '資料庫還原成功');
     } catch (e: any) {
       setDbStatus(e.message || '資料庫還原失敗');
+    }
+    setBusyKey('');
+  }
+
+  async function handleMegaS4Backup() {
+    setBusyKey('mega-s4-backup');
+    setMegaS4Message('');
+    try {
+      const res = await fetch('/api/database/mega-s4', {
+        method: 'POST',
+        credentials: 'include',
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+      setMegaS4Message(`已上傳至 ${data.bucket}/${data.key}`);
+    } catch (e: any) {
+      setMegaS4Message(e.message || 'MEGA S4 備份失敗');
     }
     setBusyKey('');
   }
@@ -322,6 +366,38 @@ export default function DataTransferClient({ user }: { user: UserLike }) {
           </div>
 
           {dbStatus && <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">{dbStatus}</div>}
+        </section>
+      )}
+
+      {user?.isAdmin && (
+        <section className="rounded-xl border border-slate-200 bg-white dark:bg-slate-900 dark:border-slate-800 p-5 shadow-sm space-y-4">
+          <div>
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">MEGA S4 雲端備份</h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+              將目前完整 SQLite 備份以上傳物件方式存入 MEGA S4 bucket。連線資訊由伺服器環境變數設定，不會在瀏覽器輸入或顯示金鑰。
+            </p>
+          </div>
+
+          <div className="grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700 dark:border-slate-800 dark:bg-slate-950/50 dark:text-slate-300 sm:grid-cols-2">
+            <p><span className="font-medium">狀態：</span>{megaS4Status?.configured ? '已設定' : '尚未完整設定'}</p>
+            <p><span className="font-medium">Region：</span>{megaS4Status?.region || 'eu-central-1'}</p>
+            <p><span className="font-medium">Bucket：</span>{megaS4Status?.bucket || '未設定'}</p>
+            <p><span className="font-medium">Prefix：</span>{megaS4Status?.prefix || 'assetpilot'}</p>
+            <p className="sm:col-span-2"><span className="font-medium">Endpoint：</span>{megaS4Status?.endpoint || 'https://s3.eu-central-1.s4.mega.io'}</p>
+            {!!megaS4Status?.missing?.length && (
+              <p className="sm:col-span-2 text-amber-700 dark:text-amber-300">
+                缺少環境變數：{megaS4Status.missing.join('、')}
+              </p>
+            )}
+          </div>
+
+          <div className="flex flex-wrap gap-3">
+            <Button onClick={handleMegaS4Backup} disabled={!megaS4Status?.configured || busyKey === 'mega-s4-backup'}>
+              {busyKey === 'mega-s4-backup' ? '上傳中...' : '上傳備份到 MEGA S4'}
+            </Button>
+          </div>
+
+          {megaS4Message && <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 dark:border-slate-800 dark:bg-slate-950/50 dark:text-slate-300">{megaS4Message}</div>}
         </section>
       )}
     </div>

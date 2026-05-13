@@ -467,6 +467,22 @@ async function _runMigrations(): Promise<void> {
     default_currency TEXT DEFAULT 'TWD',
     updated_at INTEGER
   )`);
+
+  db.run(`CREATE TABLE IF NOT EXISTS transaction_attachments (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    transaction_id TEXT NOT NULL,
+    storage TEXT NOT NULL,
+    local_path TEXT DEFAULT '',
+    object_key TEXT DEFAULT '',
+    bucket TEXT DEFAULT '',
+    endpoint TEXT DEFAULT '',
+    filename TEXT NOT NULL,
+    mime_type TEXT NOT NULL,
+    byte_size INTEGER DEFAULT 0,
+    created_at INTEGER NOT NULL
+  )`);
+  alterIgnore("CREATE INDEX IF NOT EXISTS idx_tx_attachments_tx ON transaction_attachments(user_id, transaction_id, created_at)");
   alterIgnore("ALTER TABLE user_settings ADD COLUMN default_currency TEXT DEFAULT 'TWD'");
 
   db.run(`CREATE TABLE IF NOT EXISTS line_bot_states (

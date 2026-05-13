@@ -16,6 +16,7 @@ SSL/
 .claude/scheduled_tasks.lock
 .claude/worktrees/
 backups/
+uploads/
 .specify/memory/changelog-style.md
 build/
 build/cache/*

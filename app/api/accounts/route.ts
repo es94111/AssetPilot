@@ -65,7 +65,9 @@ export async function GET(request: NextRequest) {
 
   const accounts = asRows<AccountRow>(queryAll('SELECT * FROM accounts WHERE user_id = ? ORDER BY created_at', [auth.userId]));
   const txRows = asRows<AccountTransactionRow>(queryAll(
-    'SELECT account_id, type, COALESCE(twd_amount, amount) as twd_amount FROM transactions WHERE user_id = ?',
+    `SELECT account_id, type,
+       CASE WHEN COALESCE(twd_amount, 0) > 0 THEN twd_amount ELSE amount END AS twd_amount
+     FROM transactions WHERE user_id = ?`,
     [auth.userId]
   ));
   const twdMap: Record<string, number> = {};

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/Input';
+import { Select } from '@/components/ui/Select';
 
 type UserLike = { isAdmin?: boolean };
 
@@ -160,6 +161,12 @@ export default function DataTransferClient({ user }: { user: UserLike }) {
   const [dbStatus, setDbStatus] = useState('');
   const [megaS4Status, setMegaS4Status] = useState<MegaS4Status | null>(null);
   const [megaS4Message, setMegaS4Message] = useState('');
+  const [showMegaS4Form, setShowMegaS4Form] = useState(false);
+  const [megaS4Saving, setMegaS4Saving] = useState(false);
+  const [megaS4FormData, setMegaS4FormData] = useState({
+    bucket: '', region: 'eu-central-1', endpoint: '',
+    prefix: 'assetpilot', accessKeyId: '', secretAccessKey: '',
+  });
 
   const exportQuery = useMemo(() => {
     const params = new URLSearchParams();
@@ -269,6 +276,36 @@ export default function DataTransferClient({ user }: { user: UserLike }) {
       setMegaS4Message(e.message || 'MEGA S4 備份失敗');
     }
     setBusyKey('');
+  }
+
+  async function handleMegaS4Configure(e: React.FormEvent) {
+    e.preventDefault();
+    setMegaS4Saving(true);
+    setMegaS4Message('');
+    try {
+      const payload: Record<string, string> = {};
+      if (megaS4FormData.bucket)          payload.bucket          = megaS4FormData.bucket;
+      if (megaS4FormData.region)          payload.region          = megaS4FormData.region;
+      if (megaS4FormData.endpoint)        payload.endpoint        = megaS4FormData.endpoint;
+      if (megaS4FormData.prefix)          payload.prefix          = megaS4FormData.prefix;
+      if (megaS4FormData.accessKeyId)     payload.accessKeyId     = megaS4FormData.accessKeyId;
+      if (megaS4FormData.secretAccessKey) payload.secretAccessKey = megaS4FormData.secretAccessKey;
+      if (Object.keys(payload).length === 0) { setMegaS4Message('請至少填寫一個欄位'); setMegaS4Saving(false); return; }
+      const res = await fetch('/api/database/mega-s4', {
+        method: 'PUT', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+      setMegaS4Status(data);
+      setShowMegaS4Form(false);
+      setMegaS4FormData(prev => ({ ...prev, accessKeyId: '', secretAccessKey: '' }));
+      setMegaS4Message('設定已儲存');
+    } catch (e: any) {
+      setMegaS4Message(e.message || '設定儲存失敗');
+    }
+    setMegaS4Saving(false);
   }
 
   return (
@@ -395,7 +432,62 @@ export default function DataTransferClient({ user }: { user: UserLike }) {
             <Button onClick={handleMegaS4Backup} disabled={!megaS4Status?.configured || busyKey === 'mega-s4-backup'}>
               {busyKey === 'mega-s4-backup' ? '上傳中...' : '上傳備份到 MEGA S4'}
             </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                if (!showMegaS4Form && megaS4Status) {
+                  setMegaS4FormData(prev => ({
+                    ...prev,
+                    bucket: megaS4Status.bucket || '',
+                    region: megaS4Status.region || 'eu-central-1',
+                    endpoint: megaS4Status.endpoint?.match(/^https:\/\/s3\.\w[\w-]*\.s4\.mega\.io$/) ? '' : (megaS4Status.endpoint || ''),
+                    prefix: megaS4Status.prefix || 'assetpilot',
+                    accessKeyId: '',
+                    secretAccessKey: '',
+                  }));
+                }
+                setShowMegaS4Form(prev => !prev);
+                setMegaS4Message('');
+              }}
+            >
+              {showMegaS4Form ? '取消設定' : '設定'}
+            </Button>
           </div>
+
+          {showMegaS4Form && (
+            <form
+              onSubmit={handleMegaS4Configure}
+              className="rounded-lg border border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950/50 p-4 space-y-1"
+            >
+              <p className="text-xs text-slate-500 dark:text-slate-400 pb-2">
+                設定寫入伺服器持久化設定檔，立即生效。金鑰欄位請重新輸入，不會預填。
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
+                <Input label="Bucket 名稱" value={megaS4FormData.bucket}
+                  onChange={e => setMegaS4FormData(p => ({ ...p, bucket: e.target.value }))}
+                  placeholder="my-bucket" autoComplete="off" />
+                <Select label="Region" value={megaS4FormData.region}
+                  onChange={e => setMegaS4FormData(p => ({ ...p, region: e.target.value }))}
+                  options={['eu-central-1', 'eu-central-2', 'ca-central-1', 'ca-west-1']} />
+                <Input label="Access Key ID" value={megaS4FormData.accessKeyId}
+                  onChange={e => setMegaS4FormData(p => ({ ...p, accessKeyId: e.target.value }))}
+                  placeholder="Access Key ID" autoComplete="off" spellCheck={false} />
+                <Input label="Secret Access Key" type="password" value={megaS4FormData.secretAccessKey}
+                  onChange={e => setMegaS4FormData(p => ({ ...p, secretAccessKey: e.target.value }))}
+                  placeholder="Secret Access Key" autoComplete="new-password" />
+                <Input label="Prefix（選填）" value={megaS4FormData.prefix}
+                  onChange={e => setMegaS4FormData(p => ({ ...p, prefix: e.target.value }))}
+                  placeholder="assetpilot" />
+                <Input label="Endpoint（選填，留空自動推算）" value={megaS4FormData.endpoint}
+                  onChange={e => setMegaS4FormData(p => ({ ...p, endpoint: e.target.value }))}
+                  placeholder={`https://s3.${megaS4FormData.region}.s4.mega.io`} />
+              </div>
+              <div className="flex gap-3 pt-1">
+                <Button type="submit" disabled={megaS4Saving}>{megaS4Saving ? '儲存中...' : '儲存設定'}</Button>
+                <Button type="button" variant="outline" onClick={() => setShowMegaS4Form(false)} disabled={megaS4Saving}>取消</Button>
+              </div>
+            </form>
+          )}
 
           {megaS4Message && <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 dark:border-slate-800 dark:bg-slate-950/50 dark:text-slate-300">{megaS4Message}</div>}
         </section>

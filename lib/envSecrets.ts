@@ -43,7 +43,7 @@ export function ensureEnvSecrets(): void {
     envContent = fs.readFileSync(envPath, 'utf-8');
     const values = parseEnvFile(envContent);
     for (const [key, value] of Object.entries(values)) {
-      if (process.env[key] === undefined) process.env[key] = value;
+      if (!process.env[key]) process.env[key] = value;
     }
   } catch (_) {
     // Missing env file is expected on first startup.
@@ -66,6 +66,21 @@ export function ensureEnvSecrets(): void {
   let lines = envContent ? envContent.split('\n').filter(line => line.trim() !== '') : [];
   for (const [key, value] of Object.entries(updates)) {
     lines = upsertEnvLine(lines, key, value);
+  }
+  fs.writeFileSync(envPath, `${lines.join('\n')}\n`, { encoding: 'utf-8', mode: 0o600 });
+  try { fs.chmodSync(envPath, 0o600); } catch (_) {}
+}
+
+export function writeEnvVars(updates: Record<string, string>): void {
+  const envPath = process.env.ENV_PATH || path.join(process.cwd(), '.env');
+  let envContent = '';
+  try { envContent = fs.readFileSync(envPath, 'utf-8'); } catch (_) {}
+  const dir = path.dirname(envPath);
+  fs.mkdirSync(dir, { recursive: true });
+  let lines = envContent ? envContent.split('\n').filter(line => line.trim() !== '') : [];
+  for (const [key, value] of Object.entries(updates)) {
+    lines = upsertEnvLine(lines, key, value);
+    process.env[key] = value;
   }
   fs.writeFileSync(envPath, `${lines.join('\n')}\n`, { encoding: 'utf-8', mode: 0o600 });
   try { fs.chmodSync(envPath, 0o600); } catch (_) {}

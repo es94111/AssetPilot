@@ -14,11 +14,17 @@ import { Plus, Trash2, Edit3, X } from 'lucide-react';
 function fmt(n: number | string) { return 'NT$ ' + Math.round(Number(n) || 0).toLocaleString('zh-TW'); }
 
 const EMPTY_FORM = { stockId: '', type: 'buy', date: '', shares: '', price: '', fee: '', tax: '', note: '' };
+const PAGE_SIZE_OPTIONS = [10, 20, 50, 100, 200];
 
 type QueryParams = { get(name: string): string | null };
 
 function readPageParam(searchParams: QueryParams) {
   return Math.max(1, Number(searchParams.get('page')) || 1);
+}
+
+function readPageSizeParam(searchParams: QueryParams) {
+  const value = Number(searchParams.get('pageSize')) || 20;
+  return PAGE_SIZE_OPTIONS.includes(value) ? value : 20;
 }
 
 export default function StockTxClient(_props: { user?: any } = {}) {
@@ -29,7 +35,7 @@ export default function StockTxClient(_props: { user?: any } = {}) {
   const [txs, setTxs] = useState<any[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(() => readPageParam(searchParams));
-  const [pageSize] = useState(20);
+  const [pageSize, setPageSize] = useState(() => readPageSizeParam(searchParams));
   const [stocks, setStocks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterStockId, setFilterStockId] = useState(() => searchParams.get('stockId') || '');
@@ -66,10 +72,12 @@ export default function StockTxClient(_props: { user?: any } = {}) {
 
   useEffect(() => {
     const nextPage = readPageParam(searchParams);
+    const nextPageSize = readPageSizeParam(searchParams);
     const nextStockId = searchParams.get('stockId') || '';
     const nextDateFrom = searchParams.get('dateFrom') || '';
     const nextDateTo = searchParams.get('dateTo') || '';
     if (nextPage !== page) setPage(nextPage);
+    if (nextPageSize !== pageSize) setPageSize(nextPageSize);
     if (nextStockId !== filterStockId) setFilterStockId(nextStockId);
     if (nextDateFrom !== filterDateFrom) setFilterDateFrom(nextDateFrom);
     if (nextDateTo !== filterDateTo) setFilterDateTo(nextDateTo);
@@ -140,7 +148,22 @@ export default function StockTxClient(_props: { user?: any } = {}) {
 
       <div className="flex justify-between items-center">
         <Button onClick={() => { setForm({ ...EMPTY_FORM, date: new Date().toISOString().slice(0, 10), stockId: stocks[0]?.id || '' }); setEditId(null); setFormError(''); setDialogOpen(true); }}><Plus size={16} className="mr-2" /> 新增交易</Button>
-        <span className="text-sm text-slate-500">共 {total} 筆</span>
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-slate-500">共 {total} 筆</span>
+          <label className="flex items-center gap-2 text-sm text-slate-500">
+            每頁
+            <select
+              value={pageSize}
+              onChange={(e) => {
+                setPageSize(Number(e.target.value));
+                setPage(1);
+              }}
+              className="rounded-md border border-slate-300 bg-white px-2 py-1 text-sm text-slate-700 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+            >
+              {PAGE_SIZE_OPTIONS.map((size) => <option key={size} value={size}>{size} 筆</option>)}
+            </select>
+          </label>
+        </div>
       </div>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

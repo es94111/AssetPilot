@@ -171,7 +171,7 @@ export default function DataTransferClient({ user }: { user: UserLike }) {
   useEffect(() => {
     if (!user?.isAdmin) return;
     let cancelled = false;
-    fetch('/api/database/mega-s4', { credentials: 'include' })
+    fetch('/api/database/mega-s4', { credentials: 'include', cache: 'no-store' })
       .then((res) => res.json())
       .then((data) => {
         if (!cancelled) setMegaS4Status(data);

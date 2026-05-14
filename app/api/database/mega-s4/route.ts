@@ -5,6 +5,9 @@ import { getDB } from '../../../../lib/db';
 import { writeOperationAudit } from '../../../../lib/auditHelpers';
 import { getMegaS4ConfigStatus, makeMegaS4BackupFilename, uploadMegaS4Backup } from '../../../../lib/megaS4';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 function auditBase(request, auth) {
   return {
     userId: auth.userId,
@@ -19,7 +22,11 @@ export async function GET(request) {
   const auth = await requireAdmin(request);
   if (auth instanceof NextResponse) return auth;
 
-  return NextResponse.json(getMegaS4ConfigStatus());
+  return NextResponse.json(getMegaS4ConfigStatus(), {
+    headers: {
+      'Cache-Control': 'no-store, max-age=0',
+    },
+  });
 }
 
 export async function POST(request) {

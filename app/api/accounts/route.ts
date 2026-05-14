@@ -3,7 +3,7 @@ import { requireAuth } from '../../../lib/apiHelpers';
 import { getDB, queryAll, queryOne, saveDB } from '../../../lib/db';
 import {
   normalizeCurrency, normalizeAccountIcon, categoryFromAccountType, accountTypeFromCategory,
-  calcBalance,
+  calcBalance, getExchangeRateToTwd,
 } from '../../../lib/accountHelpers';
 import { uid, todayStr } from '../../../lib/userDefaults';
 
@@ -23,12 +23,6 @@ interface AccountRow {
   overseas_fee_rate: number | null;
   created_at: string | number | null;
   updated_at: string | number | null;
-}
-
-interface AccountTransactionRow {
-  account_id: string;
-  type: string;
-  twd_amount: number;
 }
 
 interface CreateAccountRequest {
@@ -64,26 +58,10 @@ export async function GET(request: NextRequest) {
   if (auth instanceof NextResponse) return auth;
 
   const accounts = asRows<AccountRow>(queryAll('SELECT * FROM accounts WHERE user_id = ? ORDER BY created_at', [auth.userId]));
-  const txRows = asRows<AccountTransactionRow>(queryAll(
-    `SELECT account_id, type,
-       CASE WHEN COALESCE(twd_amount, 0) > 0 THEN twd_amount ELSE amount END AS twd_amount
-     FROM transactions WHERE user_id = ?`,
-    [auth.userId]
-  ));
-  const twdMap: Record<string, number> = {};
-  for (const r of txRows) {
-    const v = Number(r.twd_amount) || 0;
-    if (!twdMap[r.account_id]) twdMap[r.account_id] = 0;
-    if (r.type === 'income' || r.type === 'transfer_in') twdMap[r.account_id] += v;
-    else if (r.type === 'expense' || r.type === 'transfer_out') twdMap[r.account_id] -= v;
-  }
   const result = accounts.map(a => {
     const accountCurrency = normalizeCurrency(a.currency);
     const balance = calcBalance(a.id, a.initial_balance, auth.userId, accountCurrency);
-    const twdAcc = twdMap[a.id] || 0;
-    const twdAccumulated = accountCurrency === 'TWD'
-      ? Math.round((twdAcc + (Number(a.initial_balance) || 0)) * 100) / 100
-      : Math.round(twdAcc * 100) / 100;
+    const twdAccumulated = Math.round(balance * getExchangeRateToTwd(auth.userId, accountCurrency) * 100) / 100;
     return {
       ...a,
       icon: normalizeAccountIcon(a.icon),

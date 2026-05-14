@@ -538,6 +538,16 @@ async function _runMigrations(): Promise<void> {
   alterIgnore("ALTER TABLE users ADD COLUMN updated_at INTEGER DEFAULT 0");
   alterIgnore("ALTER TABLE users ADD COLUMN is_active INTEGER DEFAULT 1");
 
+  // 若 DB 有用戶但無管理員（is_admin 欄位以 DEFAULT 0 加入時既有用戶遺失管理員身份），
+  // 自動將最早註冊的用戶升為管理員，確保系統可存取。
+  try {
+    const adminCheck = db.exec("SELECT id FROM users WHERE is_admin = 1 LIMIT 1");
+    const hasAdmin = adminCheck.length > 0 && adminCheck[0].values.length > 0;
+    if (!hasAdmin) {
+      db.run("UPDATE users SET is_admin = 1 WHERE rowid = (SELECT MIN(rowid) FROM users)");
+    }
+  } catch (_) {}
+
   alterIgnore("ALTER TABLE accounts ADD COLUMN type TEXT DEFAULT 'checking'");
   alterIgnore("ALTER TABLE accounts ADD COLUMN balance REAL DEFAULT 0");
   alterIgnore("ALTER TABLE accounts ADD COLUMN color TEXT DEFAULT '#6366f1'");

@@ -5,7 +5,7 @@ import { apiGet, apiPost, apiPut, apiDelete } from '@/lib/clientApi';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Plus, Trash2, Edit3, Landmark, PiggyBank, Briefcase, DollarSign, CreditCard, Wallet, CircleDot } from 'lucide-react';
 
 const ACCOUNT_TYPES = [
@@ -48,6 +48,7 @@ export default function AccountsClient() {
   const [error, setError] = useState('');
   const [form, setForm] = useState(EMPTY_FORM);
   const [editId, setEditId] = useState<string | null>(null);
+  const [accountDialogOpen, setAccountDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState('');
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -131,6 +132,8 @@ export default function AccountsClient() {
       if (editId) await apiPut(`/api/accounts/${editId}`, body);
       else await apiPost('/api/accounts', body);
       await load();
+      setAccountDialogOpen(false);
+      setEditId(null);
     } catch (e: any) {
       setFormError(e.message);
     }
@@ -227,6 +230,13 @@ export default function AccountsClient() {
   const totalAssets = accounts.filter((account) => !account.excludeFromTotal).reduce((sum, account) => sum + (Number(account.twdAccumulated) || 0), 0);
   const totalCreditOutstanding = creditAccounts.reduce((sum, account) => sum + Math.max(0, -(Number(account.twdAccumulated) || 0)), 0);
 
+  function openAdd() {
+    setForm({ ...EMPTY_FORM, currency: defaultCurrency });
+    setEditId(null);
+    setFormError('');
+    setAccountDialogOpen(true);
+  }
+
   function openEdit(account: any) {
     setForm({
       name: account.name,
@@ -240,6 +250,7 @@ export default function AccountsClient() {
     });
     setEditId(account.id);
     setFormError('');
+    setAccountDialogOpen(true);
   }
 
   function renderAccountCard(account: any) {
@@ -284,10 +295,8 @@ export default function AccountsClient() {
       </div>
 
       <div className="flex flex-wrap gap-3">
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button onClick={() => { setForm({ ...EMPTY_FORM, currency: defaultCurrency }); setEditId(null); setFormError(''); }}><Plus size={16} className="mr-2" /> 新增帳戶</Button>
-          </DialogTrigger>
+        <Dialog open={accountDialogOpen} onOpenChange={setAccountDialogOpen}>
+          <Button onClick={openAdd}><Plus size={16} className="mr-2" /> 新增帳戶</Button>
           <DialogContent>
             <DialogHeader><DialogTitle>{editId ? '編輯帳戶' : '新增帳戶'}</DialogTitle></DialogHeader>
             <form onSubmit={handleSave} className="space-y-4">
@@ -306,7 +315,10 @@ export default function AccountsClient() {
                 不計入總資產
               </label>
               {formError && <p className="text-red-500 text-sm">{formError}</p>}
-              <DialogClose asChild><Button type="submit" disabled={saving}>{saving ? '儲存中...' : '儲存'}</Button></DialogClose>
+              <div className="flex justify-end gap-2">
+                <Button type="button" variant="outline" onClick={() => setAccountDialogOpen(false)}>取消</Button>
+                <Button type="submit" disabled={saving}>{saving ? '儲存中...' : '儲存'}</Button>
+              </div>
             </form>
           </DialogContent>
         </Dialog>

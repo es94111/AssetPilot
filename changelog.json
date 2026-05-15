@@ -1,6 +1,18 @@
 {
-  "currentVersion": "4.39.4",
+  "currentVersion": "4.39.5",
   "releases": [
+    {
+      "version": "4.39.5",
+      "date": "2026-05-15",
+      "title": "修正帳戶編輯視窗",
+      "type": "fixed",
+      "changes": [
+        {
+          "tag": "fixed",
+          "text": "修正帳戶管理中，新增帳戶後點擊帳戶卡片編輯按鈕無法開啟修改視窗的問題；儲存失敗時也不會再提前關閉表單。"
+        }
+      ]
+    },
     {
       "version": "4.39.4",
       "date": "2026-05-14",

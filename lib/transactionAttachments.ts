@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { getDB, queryAll } from './db';
+import { getDB, queryAll, queryOne } from './db';
 import { uid } from './userDefaults';
 import { deleteS3Object, getS3Config, getS3ConfigStatus, getS3Object, joinS3Key, putS3Object } from './s3Storage';
 
@@ -82,8 +82,11 @@ export function getTransactionPhotoStorageStatus() {
 }
 
 export function getDefaultTransactionPhotoStorage(): AttachmentStorage {
-  const requested = String(process.env.TRANSACTION_PHOTO_DEFAULT_STORAGE || 'local').trim().toLowerCase();
-  if (requested === 's3') {
+  const dbRow = queryOne('SELECT transaction_photo_storage FROM system_settings WHERE id = 1');
+  const dbStorage = String(dbRow?.transaction_photo_storage || '').trim();
+  const source = (dbStorage === 'local' || dbStorage === 's3') ? dbStorage
+    : String(process.env.TRANSACTION_PHOTO_DEFAULT_STORAGE || 'local').trim().toLowerCase();
+  if (source === 's3') {
     return getTransactionPhotoStorageStatus().s3.configured ? 's3' : 'local';
   }
   return 'local';

@@ -987,6 +987,7 @@ API 路徑統一以 `/api/` 為前綴。所有需認證的路由自動套用 aut
 
 | 版本 | 日期 | 變更說明 |
 | --- | --- | --- |
+| 4.40.0 | 2026-05-16 | 管理員可從 UI 強制設定交易照片儲存位置：system_settings 新增 transaction_photo_storage 欄位（空字串 / 'local' / 's3'）；getDefaultTransactionPhotoStorage() 優先讀取 DB 設定，再 fallback 至 TRANSACTION_PHOTO_DEFAULT_STORAGE env var；PUT /api/admin/system-settings 支援 transactionPhotoStorage 欄位；管理員「系統設定」新增儲存位置下拉選單（依環境設定／強制本機／強制 S3） |
 | 4.37.9 | 2026-05-11 | 帳號設定新增目前登入裝置管理：新增 `login_sessions` 紀錄有效登入 session，JWT 內含 `sessionId` 並以 token 雜湊比對；`GET /api/account/sessions` 列出裝置名稱、登入時間與登入 IP，`DELETE /api/account/sessions/:id` 可登出單一裝置，登出目前裝置時同步清除 Cookie；修改密碼與管理員重設密碼仍撤銷所有既有 session 並遞增 `token_version` |
 | 4.37.8 | 2026-05-11 | 登出範圍修正：`POST /api/auth/logout` 改為只清除目前裝置的 `authToken` Cookie，不再遞增 `users.token_version`，避免 A 裝置登出時讓其他裝置同步失效；修改密碼與管理員重設密碼仍保留 `token_version` 遞增，維持高風險帳號變更後全裝置 Token 撤銷 |
 | 4.37.3 | 2026-05-08 | 安全驗證差異補齊：①Next.js `requireAuth` / `requireServerAuth` 補回 JWT `tokenVersion` 與 `users.token_version` 比對，修改密碼、管理員重設密碼後舊 Token 立即失效；②middleware 與 API auth helper 補回 Cookie 認證狀態變更請求的 Origin / Referer CSRF 檢查；③新增 `lib/envSecrets.ts`，啟動時載入 `ENV_PATH` 並在缺少 `JWT_SECRET` / `DB_ENCRYPTION_KEY` 時自動產生寫入，避免固定預設 JWT 密鑰與未加密資料庫；④`/api/account/settings/delete` 與 `/api/account/settings/password` 復用主要帳號端點，避免 Google-only 刪除帳號與修改密碼流程安全性分岔；⑤production CSP 移除 `unsafe-eval`，僅 dev mode 保留 |

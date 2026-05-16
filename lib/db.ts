@@ -295,6 +295,7 @@ async function _runMigrations(): Promise<void> {
   alterIgnore("ALTER TABLE system_settings ADD COLUMN audit_log_retention_days TEXT DEFAULT '90'");
   alterIgnore("ALTER TABLE system_settings ADD COLUMN route_audit_mode TEXT DEFAULT 'security'");
   alterIgnore("ALTER TABLE system_settings ADD COLUMN line_login_enabled INTEGER DEFAULT 0");
+  alterIgnore("ALTER TABLE system_settings ADD COLUMN transaction_photo_storage TEXT DEFAULT ''")
 
   db.run(`INSERT OR IGNORE INTO system_settings (id, public_registration, allowed_registration_emails, admin_ip_allowlist, updated_at, updated_by) VALUES (1, 1, '', '', ?, '')`, [Date.now()]);
 

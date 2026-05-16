@@ -101,6 +101,7 @@ export default function AdminClient(_props: { user?: any } = {}) {
   const [lineLoginEnabled, setLineLoginEnabled] = useState(false);
   const [allowedEmails, setAllowedEmails] = useState('');
   const [ipAllowlist, setIpAllowlist] = useState('');
+  const [transactionPhotoStorage, setTransactionPhotoStorage] = useState<'' | 'local' | 's3'>('');
 
   const [serverTime, setServerTime] = useState<any>(null);
   const [serverTimeMsg, setServerTimeMsg] = useState('');
@@ -151,6 +152,7 @@ export default function AdminClient(_props: { user?: any } = {}) {
       setLineLoginEnabled(!!settings.lineLoginEnabled);
       setAllowedEmails(Array.isArray(settings.allowedRegistrationEmails) ? settings.allowedRegistrationEmails.join('\n') : '');
       setIpAllowlist(Array.isArray(settings.adminIpAllowlist) ? settings.adminIpAllowlist.join('\n') : '');
+      setTransactionPhotoStorage((settings.transactionPhotoStorage as '' | 'local' | 's3') || '');
       setUsers(userList || []);
       setServerTime(timeInfo);
       setEmailProviders(providers);
@@ -184,6 +186,7 @@ export default function AdminClient(_props: { user?: any } = {}) {
         lineLoginEnabled,
         allowedRegistrationEmails: allowedEmails.split('\n').map((s) => s.trim()).filter(Boolean),
         adminIpAllowlist: ipAllowlist.split('\n').map((s) => s.trim()).filter(Boolean),
+        transactionPhotoStorage,
       });
       setSaveMsg('設定已儲存');
     } catch (e: any) {
@@ -520,6 +523,15 @@ export default function AdminClient(_props: { user?: any } = {}) {
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">管理員 IP 白名單（每行一筆）</label>
                 <textarea rows={3} value={ipAllowlist} onChange={(e) => setIpAllowlist(e.target.value)} className="w-full p-2 border rounded-md" placeholder="留空表示不限制" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">交易憑證照片儲存位置</label>
+                <select className="w-full p-2 border rounded-md" value={transactionPhotoStorage} onChange={(e) => setTransactionPhotoStorage(e.target.value as '' | 'local' | 's3')}>
+                  <option value="">依環境設定（預設）</option>
+                  <option value="local">強制使用本機儲存</option>
+                  <option value="s3">強制使用 S3 雲端儲存</option>
+                </select>
+                <p className="text-xs text-slate-500 mt-1">設定後會覆蓋環境變數，套用至所有使用者的新上傳</p>
               </div>
               {saveMsg && <p className={`text-sm ${saveMsg.includes('失敗') ? 'text-red-500' : 'text-green-600'}`}>{saveMsg}</p>}
               <Button type="submit" disabled={saving}>{saving ? '儲存中...' : '儲存設定'}</Button>

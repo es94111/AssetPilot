@@ -33,18 +33,30 @@ export async function PUT(request) {
     routeAuditMode = candidate;
   }
 
-  const db = getDB();
-  if (routeAuditMode) {
-    db.run(
-      'UPDATE system_settings SET public_registration = ?, line_login_enabled = ?, allowed_registration_emails = ?, admin_ip_allowlist = ?, route_audit_mode = ?, updated_at = ?, updated_by = ? WHERE id = 1',
-      [publicRegistration ? 1 : 0, lineLoginEnabled ? 1 : 0, allowedRegistrationEmails.join('\n'), adminIpAllowlist.join('\n'), routeAuditMode, Date.now(), auth.userId]
-    );
-  } else {
-    db.run(
-      'UPDATE system_settings SET public_registration = ?, line_login_enabled = ?, allowed_registration_emails = ?, admin_ip_allowlist = ?, updated_at = ?, updated_by = ? WHERE id = 1',
-      [publicRegistration ? 1 : 0, lineLoginEnabled ? 1 : 0, allowedRegistrationEmails.join('\n'), adminIpAllowlist.join('\n'), Date.now(), auth.userId]
-    );
+  let transactionPhotoStorage = null;
+  if (Object.prototype.hasOwnProperty.call(body || {}, 'transactionPhotoStorage')) {
+    const candidate = String(body.transactionPhotoStorage || '').trim();
+    if (!['', 'local', 's3'].includes(candidate)) {
+      return NextResponse.json({ error: 'transactionPhotoStorage 必須為 local、s3 或空字串' }, { status: 400 });
+    }
+    transactionPhotoStorage = candidate;
   }
+
+  const db = getDB();
+  const fields = [
+    'public_registration = ?', 'line_login_enabled = ?', 'allowed_registration_emails = ?',
+    'admin_ip_allowlist = ?',
+  ];
+  const values: (string | number | null)[] = [
+    publicRegistration ? 1 : 0, lineLoginEnabled ? 1 : 0,
+    allowedRegistrationEmails.join('\n'), adminIpAllowlist.join('\n'),
+  ];
+  if (routeAuditMode !== null) { fields.push('route_audit_mode = ?'); values.push(routeAuditMode); }
+  if (transactionPhotoStorage !== null) { fields.push('transaction_photo_storage = ?'); values.push(transactionPhotoStorage); }
+  fields.push('updated_at = ?', 'updated_by = ?');
+  values.push(Date.now(), auth.userId);
+
+  db.run(`UPDATE system_settings SET ${fields.join(', ')} WHERE id = 1`, values);
   saveDB();
 
   const currentSettings = getSystemSettings();
@@ -54,6 +66,7 @@ export async function PUT(request) {
     lineLoginEnabled,
     allowedRegistrationEmails,
     adminIpAllowlist,
-    routeAuditMode: routeAuditMode || currentSettings.routeAuditMode,
+    routeAuditMode: routeAuditMode ?? currentSettings.routeAuditMode,
+    transactionPhotoStorage: transactionPhotoStorage ?? currentSettings.transactionPhotoStorage,
   });
 }

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '../../../../../lib/apiHelpers';
 import { queryOne, saveDB } from '../../../../../lib/db';
 import { writeOperationAudit } from '../../../../../lib/auditHelpers';
-import { listTransactionAttachments, saveTransactionPhoto, type AttachmentStorage } from '../../../../../lib/transactionAttachments';
+import { getDefaultTransactionPhotoStorage, listTransactionAttachments, saveTransactionPhoto } from '../../../../../lib/transactionAttachments';
 
 export const runtime = 'nodejs';
 
@@ -50,10 +50,7 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
   const formData = await request.formData().catch(() => null);
   if (!formData) return NextResponse.json({ error: '上傳內容格式無效' }, { status: 400 });
 
-  const storage = String(formData.get('storage') || 'local') as AttachmentStorage;
-  if (storage !== 'local' && storage !== 's3') {
-    return NextResponse.json({ error: '照片儲存位置無效' }, { status: 400 });
-  }
+  const storage = getDefaultTransactionPhotoStorage();
 
   const files = formData.getAll('photos').filter((item): item is File => item instanceof File && item.size > 0);
   if (files.length === 0) return NextResponse.json({ error: '請選擇照片' }, { status: 400 });

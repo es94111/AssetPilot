@@ -18,6 +18,14 @@ type PhotoStorageStatus = {
   maxBytes?: number;
 };
 
+type AttachmentItem = {
+  id: string;
+  filename: string;
+  mimeType: string;
+  byteSize: number;
+  url: string;
+};
+
 type QueryParams = { get(name: string): string | null };
 
 function readPageParam(searchParams: QueryParams) {
@@ -82,12 +90,17 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState('');
   const [photoFiles, setPhotoFiles] = useState<File[]>([]);
-  const [photoStorage, setPhotoStorage] = useState<'local' | 's3'>('local');
   const [photoStorageStatus, setPhotoStorageStatus] = useState<PhotoStorageStatus | null>(null);
   const [photoUploadWarning, setPhotoUploadWarning] = useState('');
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [fxLoading, setFxLoading] = useState(false);
+  const [attachmentPickerTxId, setAttachmentPickerTxId] = useState<string | null>(null);
+  const [attachmentPickerItems, setAttachmentPickerItems] = useState<AttachmentItem[]>([]);
+  const [attachmentPickerLoading, setAttachmentPickerLoading] = useState(false);
+  const [editAttachments, setEditAttachments] = useState<AttachmentItem[]>([]);
+  const [editAttachmentsLoading, setEditAttachmentsLoading] = useState(false);
+  const [pendingDeleteIds, setPendingDeleteIds] = useState<Set<string>>(new Set());
 
   const load = useCallback(async (p = page) => {
     setLoading(true);
@@ -174,7 +187,9 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
     setFormError('');
     setPhotoUploadWarning('');
     setPhotoFiles([]);
-    setPhotoStorage('local');
+    setEditAttachments([]);
+    setEditAttachmentsLoading(false);
+    setPendingDeleteIds(new Set());
     setModal(true);
   }
 
@@ -248,13 +263,21 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
     setFormError('');
     setPhotoUploadWarning('');
     setPhotoFiles([]);
+    setEditAttachments([]);
+    setPendingDeleteIds(new Set());
+    setEditAttachmentsLoading(tx.attachmentCount > 0);
     setModal(true);
+    if (tx.attachmentCount > 0) {
+      apiGet(`/api/transactions/${tx.id}/attachments`)
+        .then((data: any) => setEditAttachments(data.attachments || []))
+        .catch(() => {})
+        .finally(() => setEditAttachmentsLoading(false));
+    }
   }
 
   async function uploadPhotos(transactionId: string) {
     if (photoFiles.length === 0) return;
     const data = new FormData();
-    data.set('storage', photoStorage);
     photoFiles.forEach((file) => data.append('photos', file));
     const res = await fetch(`/api/transactions/${transactionId}/attachments`, {
       method: 'POST',
@@ -265,16 +288,28 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
     if (!res.ok) throw new Error(payload.error || `照片上傳失敗（HTTP ${res.status}）`);
   }
 
+  async function openAttachmentPicker(txId: string) {
+    setAttachmentPickerTxId(txId);
+    setAttachmentPickerItems([]);
+    setAttachmentPickerLoading(true);
+    try {
+      const data = await apiGet(`/api/transactions/${txId}/attachments`);
+      setAttachmentPickerItems(data.attachments || []);
+    } catch (_) {}
+    setAttachmentPickerLoading(false);
+  }
+
   function addPhotoFiles(files: FileList | null) {
     const incoming = Array.from(files || []).filter((file) => file.type.startsWith('image/'));
     if (incoming.length === 0) return;
+    const keptExisting = editAttachments.filter(a => !pendingDeleteIds.has(a.id)).length;
     setPhotoFiles((current) => {
       const merged = [...current];
       incoming.forEach((file) => {
         const exists = merged.some((item) => item.name === file.name && item.size === file.size && item.lastModified === file.lastModified);
         if (!exists) merged.push(file);
       });
-      return merged.slice(0, 5);
+      return merged.slice(0, 5 - keptExisting);
     });
   }
 
@@ -301,6 +336,18 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
       let saved: any = null;
       if (editId) {
         saved = await apiPut(`/api/transactions/${editId}`, body);
+        for (const id of pendingDeleteIds) {
+          await apiDelete(`/api/transactions/${editId}/attachments/${id}`).catch(() => {});
+        }
+        if (photoFiles.length > 0) {
+          try {
+            await uploadPhotos(editId);
+          } catch (uploadError: any) {
+            const message = uploadError.message || '照片上傳失敗';
+            setPhotoUploadWarning(message);
+            setFormError(`交易已更新，但${message}`);
+          }
+        }
       } else {
         saved = await apiPost('/api/transactions', body);
         try {
@@ -532,15 +579,26 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
                       {tx.sourceRecurringName && <div className="text-xs text-slate-500">來源：{tx.sourceRecurringName}</div>}
                       {tx.excludeFromStats && <div className="text-xs text-slate-500">不計入統計</div>}
                       {tx.attachmentCount > 0 && tx.firstAttachmentId && (
-                        <a
-                          className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-sky-600 hover:text-sky-700"
-                          href={`/api/transactions/${tx.id}/attachments/${tx.firstAttachmentId}/file`}
-                          target="_blank"
-                          rel="noreferrer"
-                        >
-                          <i className="fas fa-image" />
-                          照片 {tx.attachmentCount}
-                        </a>
+                        tx.attachmentCount === 1 ? (
+                          <a
+                            className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-sky-600 hover:text-sky-700"
+                            href={`/api/transactions/${tx.id}/attachments/${tx.firstAttachmentId}/file`}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            <i className="fas fa-image" />
+                            照片 1
+                          </a>
+                        ) : (
+                          <button
+                            type="button"
+                            className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-sky-600 hover:text-sky-700"
+                            onClick={() => openAttachmentPicker(tx.id)}
+                          >
+                            <i className="fas fa-images" />
+                            照片 {tx.attachmentCount}
+                          </button>
+                        )
                       )}
                     </td>
                     <td className={tx.type === 'income' || tx.type === 'transfer_in' ? 'amount-income' : 'amount-expense'}>
@@ -635,10 +693,29 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
             <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
               <input type="checkbox" checked={form.excludeFromStats} onChange={(e) => setForm((current) => ({ ...current, excludeFromStats: e.target.checked }))} /> 不計入統計
             </label>
-            {!editId && (
-              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 space-y-3">
-                <div className="flex flex-col gap-1">
-                  <label className="text-sm font-medium text-gray-700">照片</label>
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 space-y-3">
+              <div className="flex flex-col gap-1">
+                <label className="text-sm font-medium text-gray-700">照片</label>
+                {editId && editAttachmentsLoading && (
+                  <p className="text-xs text-slate-500">載入照片中...</p>
+                )}
+                {editId && !editAttachmentsLoading && editAttachments.filter(a => !pendingDeleteIds.has(a.id)).length > 0 && (
+                  <ul className="space-y-1 rounded-md border border-slate-200 bg-white px-3 py-2">
+                    {editAttachments.filter(a => !pendingDeleteIds.has(a.id)).map(a => (
+                      <li key={a.id} className="flex items-center justify-between gap-2 text-xs text-slate-600">
+                        <a href={a.url} target="_blank" rel="noreferrer" className="min-w-0 truncate text-sky-600 hover:text-sky-700">{a.filename || '照片'}</a>
+                        <button
+                          type="button"
+                          className="shrink-0 font-medium text-slate-500 hover:text-red-600"
+                          onClick={() => setPendingDeleteIds(prev => new Set([...prev, a.id]))}
+                        >
+                          刪除
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {editAttachments.filter(a => !pendingDeleteIds.has(a.id)).length + photoFiles.length < 5 && (
                   <div className="grid grid-cols-2 gap-2">
                     <label className="inline-flex min-h-10 cursor-pointer items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-100">
                       <i className="fas fa-camera" />
@@ -669,50 +746,34 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
                       />
                     </label>
                   </div>
-                  <p className="text-xs text-slate-500">手機可直接拍照或從相簿選圖。最多 5 張，每張上限 {Math.round((photoStorageStatus?.maxBytes || 10 * 1024 * 1024) / 1024 / 1024)} MB。</p>
-                </div>
-                {photoFiles.length > 0 && (
-                  <div className="space-y-3">
-                    <div className="rounded-md border border-slate-200 bg-white px-3 py-2">
-                      <div className="mb-2 flex items-center justify-between gap-2">
-                        <p className="text-xs font-medium text-slate-600">已選照片 {photoFiles.length} / 5</p>
-                        <button type="button" className="text-xs font-medium text-slate-500 hover:text-slate-700" onClick={() => setPhotoFiles([])}>清除</button>
-                      </div>
-                      <ul className="space-y-1">
-                        {photoFiles.map((file, index) => (
-                          <li key={`${file.name}-${file.size}-${file.lastModified}`} className="flex items-center justify-between gap-2 text-xs text-slate-600">
-                            <span className="min-w-0 truncate">{file.name || `照片 ${index + 1}`}</span>
-                            <button
-                              type="button"
-                              className="shrink-0 font-medium text-slate-500 hover:text-red-600"
-                              onClick={() => setPhotoFiles((current) => current.filter((_, itemIndex) => itemIndex !== index))}
-                            >
-                              移除
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <label className="text-sm font-medium text-gray-700">照片儲存位置</label>
-                      <select
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-                        value={photoStorage}
-                        onChange={(e) => setPhotoStorage(e.target.value === 's3' ? 's3' : 'local')}
-                      >
-                        <option value="local">Server 本機儲存</option>
-                        <option value="s3" disabled={!photoStorageStatus?.s3?.configured}>S3 相容物件儲存</option>
-                      </select>
-                      {!photoStorageStatus?.s3?.configured && (
-                        <p className="text-xs text-amber-700">
-                          S3 尚未完整設定{photoStorageStatus?.s3?.missing?.length ? `：${photoStorageStatus.s3.missing.join('、')}` : ''}
-                        </p>
-                      )}
-                    </div>
-                  </div>
                 )}
+                <p className="text-xs text-slate-500">手機可直接拍照或從相簿選圖。最多 5 張，每張上限 {Math.round((photoStorageStatus?.maxBytes || 10 * 1024 * 1024) / 1024 / 1024)} MB。</p>
               </div>
-            )}
+              {photoFiles.length > 0 && (
+                <div className="space-y-3">
+                  <div className="rounded-md border border-slate-200 bg-white px-3 py-2">
+                    <div className="mb-2 flex items-center justify-between gap-2">
+                      <p className="text-xs font-medium text-slate-600">新增照片 {photoFiles.length}</p>
+                      <button type="button" className="text-xs font-medium text-slate-500 hover:text-slate-700" onClick={() => setPhotoFiles([])}>清除</button>
+                    </div>
+                    <ul className="space-y-1">
+                      {photoFiles.map((file, index) => (
+                        <li key={`${file.name}-${file.size}-${file.lastModified}`} className="flex items-center justify-between gap-2 text-xs text-slate-600">
+                          <span className="min-w-0 truncate">{file.name || `照片 ${index + 1}`}</span>
+                          <button
+                            type="button"
+                            className="shrink-0 font-medium text-slate-500 hover:text-red-600"
+                            onClick={() => setPhotoFiles((current) => current.filter((_, itemIndex) => itemIndex !== index))}
+                          >
+                            移除
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              )}
+            </div>
             {photoUploadWarning && <p className="text-sm text-amber-600">{photoUploadWarning}</p>}
             {formError && <p className="text-sm text-destructive">{formError}</p>}
             <DialogFooter className="flex-row justify-end">
@@ -765,6 +826,40 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
               <Button type="submit" disabled={saving}>{saving ? '建立中...' : '確認轉帳'}</Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!attachmentPickerTxId} onOpenChange={(open) => { if (!open) setAttachmentPickerTxId(null); }}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>選擇照片</DialogTitle>
+          </DialogHeader>
+          {attachmentPickerLoading ? (
+            <p className="py-6 text-center text-sm text-slate-500">載入中...</p>
+          ) : (
+            <ul className="space-y-2">
+              {attachmentPickerItems.map((item, index) => (
+                <li key={item.id}>
+                  <a
+                    href={item.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-3 rounded-md border border-slate-200 p-2 text-sm hover:bg-slate-50"
+                    onClick={() => setAttachmentPickerTxId(null)}
+                  >
+                    <img
+                      src={item.url}
+                      alt={item.filename || `照片 ${index + 1}`}
+                      className="h-12 w-12 flex-none rounded object-cover"
+                      onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                    />
+                    <span className="min-w-0 flex-1 truncate text-slate-700">{item.filename || `照片 ${index + 1}`}</span>
+                    <i className="fas fa-external-link-alt flex-none text-xs text-slate-400" />
+                  </a>
+                </li>
+              ))}
+            </ul>
+          )}
         </DialogContent>
       </Dialog>
 

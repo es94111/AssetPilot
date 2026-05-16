@@ -15,6 +15,7 @@ export interface SystemSettings {
   routeAuditMode: 'security' | 'extended' | 'minimal';
   lineLoginEnabled: boolean;
   transactionPhotoStorage: 'local' | 's3' | null;
+  transactionPhotoMaxBytes: number | null;
 }
 
 export interface LoginAuditResult {
@@ -151,13 +152,14 @@ export async function fetchIpCountry(ipAddress: string): Promise<string> {
 // ── 系統設定 ──
 
 export function getSystemSettings(): SystemSettings {
-  const row = queryOne('SELECT public_registration, allowed_registration_emails, admin_ip_allowlist, route_audit_mode, line_login_enabled, transaction_photo_storage FROM system_settings WHERE id = 1') || {
+  const row = queryOne('SELECT public_registration, allowed_registration_emails, admin_ip_allowlist, route_audit_mode, line_login_enabled, transaction_photo_storage, transaction_photo_max_bytes FROM system_settings WHERE id = 1') || {
     public_registration: 1,
     allowed_registration_emails: '',
     admin_ip_allowlist: '',
     route_audit_mode: 'security',
     line_login_enabled: 0,
     transaction_photo_storage: '',
+    transaction_photo_max_bytes: 0,
   };
   const allowedRegistrationEmails = parseAllowedRegistrationEmails(String(row.allowed_registration_emails || ''));
   const dbAdminIpAllowlist = parseIpAllowlist(String(row.admin_ip_allowlist || ''));
@@ -167,6 +169,8 @@ export function getSystemSettings(): SystemSettings {
     ? rawMode as SystemSettings['routeAuditMode'] : 'security';
   const rawStorage = String(row.transaction_photo_storage || '').trim();
   const transactionPhotoStorage = (rawStorage === 'local' || rawStorage === 's3') ? rawStorage : null;
+  const dbMaxBytes = Number(row.transaction_photo_max_bytes);
+  const transactionPhotoMaxBytes = Number.isFinite(dbMaxBytes) && dbMaxBytes > 0 ? dbMaxBytes : null;
   return {
     publicRegistration: !!row.public_registration,
     allowedRegistrationEmails,
@@ -174,6 +178,7 @@ export function getSystemSettings(): SystemSettings {
     routeAuditMode,
     lineLoginEnabled: !!row.line_login_enabled,
     transactionPhotoStorage,
+    transactionPhotoMaxBytes,
   };
 }
 

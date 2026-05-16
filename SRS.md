@@ -987,6 +987,7 @@ API 路徑統一以 `/api/` 為前綴。所有需認證的路由自動套用 aut
 
 | 版本 | 日期 | 變更說明 |
 | --- | --- | --- |
+| 4.41.0 | 2026-05-16 | 交易憑證照片管理強化：①TransactionsClient 新增編輯模式照片管理（查看現有附件、個別刪除、追加新照片，合計上限 5 張）；②附件數 > 1 時改以含縮圖的多張選擇器 Dialog 顯示，先前只能直開第一張；③新增 DELETE /api/transactions/:txId/attachments/:attachmentId 端點（deleteTransactionAttachment() 支援 local/S3 兩種儲存）；④admin UI 新增「交易憑證照片大小上限（MB）」輸入欄，對應 system_settings.transaction_photo_max_bytes INTEGER 欄位（0 表示使用環境變數預設值）；maxPhotoBytes() 優先讀取 DB 設定，再 fallback 至 TRANSACTION_PHOTO_MAX_BYTES env var；PUT /api/admin/system-settings 支援 transactionPhotoMaxBytes 欄位；⑤上傳流程移除前端儲存位置 select，改由 getDefaultTransactionPhotoStorage() 伺服器端統一決定 |
 | 4.40.0 | 2026-05-16 | 管理員可從 UI 強制設定交易照片儲存位置：system_settings 新增 transaction_photo_storage 欄位（空字串 / 'local' / 's3'）；getDefaultTransactionPhotoStorage() 優先讀取 DB 設定，再 fallback 至 TRANSACTION_PHOTO_DEFAULT_STORAGE env var；PUT /api/admin/system-settings 支援 transactionPhotoStorage 欄位；管理員「系統設定」新增儲存位置下拉選單（依環境設定／強制本機／強制 S3） |
 | 4.37.9 | 2026-05-11 | 帳號設定新增目前登入裝置管理：新增 `login_sessions` 紀錄有效登入 session，JWT 內含 `sessionId` 並以 token 雜湊比對；`GET /api/account/sessions` 列出裝置名稱、登入時間與登入 IP，`DELETE /api/account/sessions/:id` 可登出單一裝置，登出目前裝置時同步清除 Cookie；修改密碼與管理員重設密碼仍撤銷所有既有 session 並遞增 `token_version` |
 | 4.37.8 | 2026-05-11 | 登出範圍修正：`POST /api/auth/logout` 改為只清除目前裝置的 `authToken` Cookie，不再遞增 `users.token_version`，避免 A 裝置登出時讓其他裝置同步失效；修改密碼與管理員重設密碼仍保留 `token_version` 遞增，維持高風險帳號變更後全裝置 Token 撤銷 |

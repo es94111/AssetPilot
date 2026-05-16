@@ -102,6 +102,7 @@ export default function AdminClient(_props: { user?: any } = {}) {
   const [allowedEmails, setAllowedEmails] = useState('');
   const [ipAllowlist, setIpAllowlist] = useState('');
   const [transactionPhotoStorage, setTransactionPhotoStorage] = useState<'' | 'local' | 's3'>('');
+  const [transactionPhotoMaxMb, setTransactionPhotoMaxMb] = useState('');
 
   const [serverTime, setServerTime] = useState<any>(null);
   const [serverTimeMsg, setServerTimeMsg] = useState('');
@@ -153,6 +154,7 @@ export default function AdminClient(_props: { user?: any } = {}) {
       setAllowedEmails(Array.isArray(settings.allowedRegistrationEmails) ? settings.allowedRegistrationEmails.join('\n') : '');
       setIpAllowlist(Array.isArray(settings.adminIpAllowlist) ? settings.adminIpAllowlist.join('\n') : '');
       setTransactionPhotoStorage((settings.transactionPhotoStorage as '' | 'local' | 's3') || '');
+      setTransactionPhotoMaxMb(settings.transactionPhotoMaxBytes ? String(Math.round(settings.transactionPhotoMaxBytes / 1024 / 1024)) : '');
       setUsers(userList || []);
       setServerTime(timeInfo);
       setEmailProviders(providers);
@@ -181,12 +183,14 @@ export default function AdminClient(_props: { user?: any } = {}) {
     setSaving(true);
     setSaveMsg('');
     try {
+      const maxMbNum = parseFloat(transactionPhotoMaxMb);
       await apiPut('/api/admin/system-settings', {
         publicRegistration,
         lineLoginEnabled,
         allowedRegistrationEmails: allowedEmails.split('\n').map((s) => s.trim()).filter(Boolean),
         adminIpAllowlist: ipAllowlist.split('\n').map((s) => s.trim()).filter(Boolean),
         transactionPhotoStorage,
+        transactionPhotoMaxBytes: transactionPhotoMaxMb === '' ? 0 : Math.round(maxMbNum * 1024 * 1024),
       });
       setSaveMsg('設定已儲存');
     } catch (e: any) {
@@ -532,6 +536,19 @@ export default function AdminClient(_props: { user?: any } = {}) {
                   <option value="s3">強制使用 S3 雲端儲存</option>
                 </select>
                 <p className="text-xs text-slate-500 mt-1">設定後會覆蓋環境變數，套用至所有使用者的新上傳</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">交易憑證照片大小上限（MB）</label>
+                <input
+                  type="number"
+                  min={1}
+                  step={1}
+                  className="w-full p-2 border rounded-md"
+                  value={transactionPhotoMaxMb}
+                  onChange={(e) => setTransactionPhotoMaxMb(e.target.value)}
+                  placeholder={`留空使用環境變數預設值（${Math.round(10485760 / 1024 / 1024)} MB）`}
+                />
+                <p className="text-xs text-slate-500 mt-1">覆蓋 TRANSACTION_PHOTO_MAX_BYTES，留空則沿用環境變數設定</p>
               </div>
               {saveMsg && <p className={`text-sm ${saveMsg.includes('失敗') ? 'text-red-500' : 'text-green-600'}`}>{saveMsg}</p>}
               <Button type="submit" disabled={saving}>{saving ? '儲存中...' : '儲存設定'}</Button>

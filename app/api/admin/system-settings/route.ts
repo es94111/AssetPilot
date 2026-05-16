@@ -42,6 +42,15 @@ export async function PUT(request) {
     transactionPhotoStorage = candidate;
   }
 
+  let transactionPhotoMaxBytes: number | null = null;
+  if (Object.prototype.hasOwnProperty.call(body || {}, 'transactionPhotoMaxBytes')) {
+    const candidate = Number(body.transactionPhotoMaxBytes);
+    if (!Number.isFinite(candidate) || candidate < 0) {
+      return NextResponse.json({ error: 'transactionPhotoMaxBytes 必須為非負整數（0 表示使用環境變數預設值）' }, { status: 400 });
+    }
+    transactionPhotoMaxBytes = Math.floor(candidate);
+  }
+
   const db = getDB();
   const fields = [
     'public_registration = ?', 'line_login_enabled = ?', 'allowed_registration_emails = ?',
@@ -53,6 +62,7 @@ export async function PUT(request) {
   ];
   if (routeAuditMode !== null) { fields.push('route_audit_mode = ?'); values.push(routeAuditMode); }
   if (transactionPhotoStorage !== null) { fields.push('transaction_photo_storage = ?'); values.push(transactionPhotoStorage); }
+  if (transactionPhotoMaxBytes !== null) { fields.push('transaction_photo_max_bytes = ?'); values.push(transactionPhotoMaxBytes); }
   fields.push('updated_at = ?', 'updated_by = ?');
   values.push(Date.now(), auth.userId);
 
@@ -68,5 +78,6 @@ export async function PUT(request) {
     adminIpAllowlist,
     routeAuditMode: routeAuditMode ?? currentSettings.routeAuditMode,
     transactionPhotoStorage: transactionPhotoStorage ?? currentSettings.transactionPhotoStorage,
+    transactionPhotoMaxBytes: transactionPhotoMaxBytes ?? currentSettings.transactionPhotoMaxBytes,
   });
 }

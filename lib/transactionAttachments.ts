@@ -48,6 +48,9 @@ function safeName(name: string) {
 }
 
 function maxPhotoBytes() {
+  const dbRow = queryOne('SELECT transaction_photo_max_bytes FROM system_settings WHERE id = 1');
+  const dbVal = Number(dbRow?.transaction_photo_max_bytes);
+  if (Number.isFinite(dbVal) && dbVal > 0) return dbVal;
   const configured = Number(process.env.TRANSACTION_PHOTO_MAX_BYTES);
   return Number.isFinite(configured) && configured > 0 ? configured : DEFAULT_MAX_BYTES;
 }
@@ -187,6 +190,28 @@ export async function readTransactionAttachment(row: TransactionAttachmentRow): 
   }
 
   throw new Error('照片儲存位置無效');
+}
+
+export async function deleteTransactionAttachment(userId: string, transactionId: string, attachmentId: string): Promise<boolean> {
+  const row = queryOne(
+    'SELECT * FROM transaction_attachments WHERE id = ? AND transaction_id = ? AND user_id = ?',
+    [attachmentId, transactionId, userId]
+  ) as unknown as TransactionAttachmentRow | null;
+  if (!row) return false;
+  const root = uploadsRoot();
+  try {
+    if (row.storage === 'local' && row.local_path) {
+      const target = path.resolve(root, row.local_path);
+      if (target.startsWith(root + path.sep)) await fs.promises.unlink(target).catch(() => {});
+    } else if (row.storage === 's3' && row.object_key) {
+      const s3Config = getPhotoS3Config();
+      await deleteS3Object(s3Config, row.object_key);
+    }
+  } catch {
+    // Delete DB row even if physical file removal fails
+  }
+  getDB().run('DELETE FROM transaction_attachments WHERE id = ? AND user_id = ?', [attachmentId, userId]);
+  return true;
 }
 
 export async function deleteTransactionAttachments(userId: string, transactionIds: string[]) {

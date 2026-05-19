@@ -121,6 +121,27 @@ export async function initDB(): Promise<void> {
   if (_db) return;
 
   const dbPath = getDbPath();
+  if (process.env.DATABASE_URL || process.env.POSTGRES_URL) {
+    try {
+      const { migrateSqliteToPostgresIfNeeded } = await import('./postgresMigration');
+      const stats = await migrateSqliteToPostgresIfNeeded({
+        dbPath,
+        encryptionKey: DB_ENCRYPTION_KEY,
+        decryptBuffer,
+        isEncryptedDB,
+      });
+      if (stats?.skipped) {
+        console.log('[postgres-migration] PostgreSQL already has this SQLite source hash; skipped');
+      } else if (stats) {
+        const importedRows = stats.tables.reduce((sum, table) => sum + table.rows, 0);
+        console.log(`[postgres-migration] migrated SQLite .db to PostgreSQL: ${stats.tables.length} tables, ${importedRows} rows`);
+      }
+    } catch (e) {
+      console.error('[postgres-migration] SQLite .db to PostgreSQL migration failed:', (e as Error)?.message ?? e);
+      if (process.env.POSTGRES_MIGRATION_REQUIRED === '1') process.exit(1);
+    }
+  }
+
   const { default: initSqlJs } = await import('sql.js') as unknown as { default: (opts: { locateFile: (f: string) => string }) => Promise<SqlJsStatic> };
   const SQL = await initSqlJs({
     locateFile: (file) => path.join(process.cwd(), 'node_modules', 'sql.js', 'dist', file),

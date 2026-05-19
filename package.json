@@ -10,6 +10,7 @@
     "test:tz": "node tests/lib/userTime.test.ts && node tests/migration/migration-009.test.ts && node tests/integration/us1-natural-day.test.ts && node tests/integration/us2-users-me-timezone.test.ts && node tests/integration/us3-monthly-report.test.ts",
     "test:fr015": "node tests/integration/fr015-transactions-historical.test.ts",
     "check:iso": "node tools/check-iso-utc-format.ts",
+    "db:migrate:postgres": "node tools/migrate-sqlite-to-postgres.ts",
     "check:sla": "node tools/sla-monthly-report.ts"
   },
   "engines": {
@@ -35,6 +36,7 @@
     "lucide-react": "^1.14.0",
     "next": "^16.2.6",
     "nodemailer": "^8.0.6",
+    "pg": "^8.21.0",
     "pino": "^10.3.1",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
@@ -53,6 +55,7 @@
   "devDependencies": {
     "@types/node": "^22.19.17",
     "@types/react": "^19.2.14",
+    "@types/pg": "^8.20.0",
     "@types/react-dom": "^19.2.3",
     "autoprefixer": "^10.5.0",
     "pino-pretty": "^13.1.3",

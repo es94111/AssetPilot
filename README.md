@@ -105,7 +105,7 @@
 | ---- | ---- |
 | 前端 | 原生 HTML / CSS / Vanilla JS (已遷移至 Next.js 15 + Tailwind CSS v4) |
 | 後端 | Node.js ≥ 24 + Express 5 |
-| 資料庫 | SQLite（sql.js，記憶體 + 檔案持久化） |
+| 資料庫 | SQLite（sql.js，記憶體 + 檔案持久化）；支援啟動時自動將既有 `.db` 匯入 PostgreSQL |
 | 加密 | ChaCha20-Poly1305 AEAD + PBKDF2-SHA256 |
 | 認證 | JWT（HS256，httpOnly Cookie）+ bcryptjs；選配 Google OAuth Code Flow + LINE Login Code Flow + Passkey（WebAuthn） |
 | 金額精度 | decimal.js（FIFO / 匯率 / 手續費分攤前後端同構共用 `lib/moneyDecimal.js`） |
@@ -171,6 +171,17 @@ npm run build
 npm run start
 ```
 
+### SQLite `.db` 自動匯入 PostgreSQL
+
+若環境變數設定 `DATABASE_URL` 或 `POSTGRES_URL`，啟動時會讀取 `DB_PATH` 指向的既有 SQLite `.db`，自動建立 PostgreSQL 資料表並匯入資料。系統會在 PostgreSQL 的 `assetpilot_migration_metadata` 表記錄來源檔案 SHA-256，來源未變更時不會重複匯入；需要強制重匯可設定 `POSTGRES_MIGRATION_FORCE=1`。
+
+```bash
+DATABASE_URL=postgres://assetpilot:assetpilot@localhost:5432/assetpilot \
+npm run db:migrate:postgres
+```
+
+`POSTGRES_MIGRATION_REQUIRED=1` 可讓啟動流程在 PostgreSQL 匯入失敗時直接中止。注意：目前此功能負責 SQLite → PostgreSQL 的資料轉移；既有 runtime 查詢仍沿用 `sql.js` / `DB_PATH`。
+
 ### Synology NAS
 
 Container Manager → Registry → 搜尋 `es94111/assetpilot` → 下載 → Create → Port `3000:3000` → 啟動。
@@ -200,6 +211,9 @@ Docker 多數參數已有合理預設，重點關注「自動產生」與「功�
 | ---- | ---- | ---- | ------ |
 | `PORT` | 基本 | 伺服器埠號 | `3000` |
 | `DB_PATH` | 基本 | 資料庫檔案路徑 | `./database.db`（Docker：`/app/data/database.db`） |
+| `DATABASE_URL` / `POSTGRES_URL` | 選配 | PostgreSQL 連線字串；設定後啟動時自動把既有 SQLite `.db` 匯入 PostgreSQL | — |
+| `POSTGRES_MIGRATION_REQUIRED` | 選配 | 設為 `1` 時，PostgreSQL 匯入失敗會中止啟動 | `0` |
+| `POSTGRES_MIGRATION_FORCE` | 選配 | 設為 `1` 時忽略來源 hash，清空目標表後重新匯入 | `0` |
 | `JWT_EXPIRES` | 基本 | JWT 有效期限 | `7d` |
 | `JWT_SECRET` | 🔑 自動 | JWT 簽章金鑰，64 字元 hex（首次啟動自動產生） | — |
 | `DB_ENCRYPTION_KEY` | 🔑 自動 | 資料庫 ChaCha20 金鑰，64 字元 hex（自動產生） | — |

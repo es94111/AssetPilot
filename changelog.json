@@ -32,6 +32,14 @@
           "text": "PostgreSQL runtime 下的整檔備份與還原改支援 AssetPilot SQL 備份檔，管理員可下載 .sql 備份並上傳同格式檔案還原，還原前會自動建立 before-restore SQL 備份。"
         },
         {
+          "tag": "fixed",
+          "text": "修正 Next.js production bundle 分割後，資料庫匯出 API 可能誤判 PostgreSQL runtime 並呼叫 SQLite .db export，導致 PostgreSQL 環境匯出失敗的問題。"
+        },
+        {
+          "tag": "improved",
+          "text": "MEGA S4 雲端備份在 PostgreSQL runtime 下會改上傳 .sql 備份檔並使用 SQL content type，不再嘗試產生 SQLite .db 檔。"
+        },
+        {
           "tag": "improved",
           "text": "Docker Compose 範例新增 PostgreSQL 服務與對應 DATABASE_URL 設定，方便自架部署時直接啟用資料庫轉移流程。"
         }

@@ -24,6 +24,10 @@
           "text": "新增 npm run db:migrate:postgres 手動轉移指令，可在正式啟動前先驗證或執行 SQLite 到 PostgreSQL 的資料搬移。"
         },
         {
+          "tag": "new",
+          "text": "新增 PostgreSQL runtime 相容層；設定 DATABASE_URL 後，系統會優先使用 PostgreSQL 讀寫，必要時可用 POSTGRES_RUNTIME=0 暫時退回 SQLite runtime。"
+        },
+        {
           "tag": "improved",
           "text": "Docker Compose 範例新增 PostgreSQL 服務與對應 DATABASE_URL 設定，方便自架部署時直接啟用資料庫轉移流程。"
         }

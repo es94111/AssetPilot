@@ -180,7 +180,7 @@ DATABASE_URL=postgres://assetpilot:assetpilot@localhost:5432/assetpilot \
 npm run db:migrate:postgres
 ```
 
-`POSTGRES_MIGRATION_REQUIRED=1` 可讓啟動流程在 PostgreSQL 匯入失敗時直接中止。注意：目前此功能負責 SQLite → PostgreSQL 的資料轉移；既有 runtime 查詢仍沿用 `sql.js` / `DB_PATH`。
+`POSTGRES_MIGRATION_REQUIRED=1` 可讓啟動流程在 PostgreSQL 匯入失敗時直接中止。設定 `DATABASE_URL` 後，系統會預設使用 PostgreSQL runtime 讀寫；若需要暫時退回 SQLite runtime，可設定 `POSTGRES_RUNTIME=0`。
 
 ### Synology NAS
 
@@ -214,6 +214,8 @@ Docker 多數參數已有合理預設，重點關注「自動產生」與「功�
 | `DATABASE_URL` / `POSTGRES_URL` | 選配 | PostgreSQL 連線字串；設定後啟動時自動把既有 SQLite `.db` 匯入 PostgreSQL | — |
 | `POSTGRES_MIGRATION_REQUIRED` | 選配 | 設為 `1` 時，PostgreSQL 匯入失敗會中止啟動 | `0` |
 | `POSTGRES_MIGRATION_FORCE` | 選配 | 設為 `1` 時忽略來源 hash，清空目標表後重新匯入 | `0` |
+| `POSTGRES_RUNTIME` | 選配 | 設為 `0` 可停用 PostgreSQL runtime，改回 SQLite/sql.js 讀寫 | `1`（有 `DATABASE_URL` 時） |
+| `POSTGRES_SYNC_RESULT_BUFFER_BYTES` | 選配 | PostgreSQL 同步相容層單次查詢結果緩衝大小 | `67108864` |
 | `JWT_EXPIRES` | 基本 | JWT 有效期限 | `7d` |
 | `JWT_SECRET` | 🔑 自動 | JWT 簽章金鑰，64 字元 hex（首次啟動自動產生） | — |
 | `DB_ENCRYPTION_KEY` | 🔑 自動 | 資料庫 ChaCha20 金鑰，64 字元 hex（自動產生） | — |

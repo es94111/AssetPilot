@@ -10,8 +10,10 @@ import { ensureEnvSecrets } from './envSecrets';
 ensureEnvSecrets();
 
 // ── sql.js 最小型別宣告（套件本身無 .d.ts）──
+type DbParam = string | number | null | Uint8Array;
+
 interface SqlJsStatement {
-  bind(params?: Array<string | number | null | Uint8Array>): void;
+  bind(params?: DbParam[]): void;
   step(): boolean;
   getAsObject(): Record<string, string | number | null>;
   free(): void;
@@ -19,7 +21,7 @@ interface SqlJsStatement {
 
 export interface SqlJsDatabase {
   prepare(sql: string): SqlJsStatement;
-  run(sql: string, params?: Array<string | number | null>): void;
+  run(sql: string, params?: DbParam[]): void;
   exec(sql: string): Array<{ columns: string[]; values: Array<Array<string | number | null>> }>;
   export(): Uint8Array;
   close(): void;
@@ -81,8 +83,10 @@ export function isEncryptedDB(buffer: Buffer): boolean {
 let _db: SqlJsDatabase | null = globalThis.__sqlDb ?? null;
 let saveInFlight = false;
 let savePending = false;
+let usingPostgresRuntime = false;
 
 export function saveDB(): void {
+  if (usingPostgresRuntime) return;
   const dbPath = getDbPath();
   if (saveInFlight) { savePending = true; return; }
   saveInFlight = true;
@@ -107,6 +111,7 @@ export function saveDB(): void {
 }
 
 export function saveDBSync(): void {
+  if (usingPostgresRuntime) return;
   const dbPath = getDbPath();
   const data = _db!.export();
   const plain = Buffer.from(data);
@@ -140,6 +145,16 @@ export async function initDB(): Promise<void> {
       console.error('[postgres-migration] SQLite .db to PostgreSQL migration failed:', (e as Error)?.message ?? e);
       if (process.env.POSTGRES_MIGRATION_REQUIRED === '1') process.exit(1);
     }
+  }
+
+  const { shouldUsePostgresRuntime, PostgresCompatDatabase } = await import('./postgresRuntime');
+  if (shouldUsePostgresRuntime()) {
+    _db = new PostgresCompatDatabase() as unknown as SqlJsDatabase;
+    usingPostgresRuntime = true;
+    globalThis.__sqlDb = _db;
+    await _runMigrations();
+    console.log('資料庫初始化完成（PostgreSQL runtime）');
+    return;
   }
 
   const { default: initSqlJs } = await import('sql.js') as unknown as { default: (opts: { locateFile: (f: string) => string }) => Promise<SqlJsStatic> };
@@ -729,6 +744,9 @@ async function _runMigrations(): Promise<void> {
 }
 
 export async function replaceDB(uint8Array: Uint8Array): Promise<void> {
+  if (usingPostgresRuntime) {
+    throw new Error('PostgreSQL runtime does not support replacing the database with a SQLite .db file');
+  }
   const DatabaseConstructor = (getDB() as unknown as { constructor: SqlJsStatic['Database'] }).constructor;
   if (_db) { try { _db.close(); } catch { /* noop */ } }
   _db = new DatabaseConstructor(uint8Array);

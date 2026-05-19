@@ -1,6 +1,34 @@
 {
-  "currentVersion": "4.41.0",
+  "currentVersion": "4.42.0",
   "releases": [
+    {
+      "version": "4.42.0",
+      "date": "2026-05-19",
+      "title": "新增 SQLite 到 PostgreSQL 自動轉移",
+      "type": "new",
+      "changes": [
+        {
+          "tag": "warning",
+          "text": "設定 PostgreSQL 連線後，系統會在啟動時自動讀取既有 SQLite .db 並匯入 PostgreSQL；建議升級前先備份資料庫與 DB_ENCRYPTION_KEY。此版本提供資料轉移能力，既有應用程式執行階段仍沿用 sql.js/DB_PATH。"
+        },
+        {
+          "tag": "new",
+          "text": "新增 DATABASE_URL / POSTGRES_URL 支援，啟動時會自動偵測 DB_PATH 指向的本地 .db 檔案，建立 PostgreSQL 資料表並搬移資料。"
+        },
+        {
+          "tag": "improved",
+          "text": "PostgreSQL 轉移流程會在 assetpilot_migration_metadata 表記錄來源檔案 SHA-256，避免相同 .db 在每次啟動時被重複匯入；需要重跑時可設定 POSTGRES_MIGRATION_FORCE=1。"
+        },
+        {
+          "tag": "new",
+          "text": "新增 npm run db:migrate:postgres 手動轉移指令，可在正式啟動前先驗證或執行 SQLite 到 PostgreSQL 的資料搬移。"
+        },
+        {
+          "tag": "improved",
+          "text": "Docker Compose 範例新增 PostgreSQL 服務與對應 DATABASE_URL 設定，方便自架部署時直接啟用資料庫轉移流程。"
+        }
+      ]
+    },
     {
       "version": "4.41.0",
       "date": "2026-05-16",

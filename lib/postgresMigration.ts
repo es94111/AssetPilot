@@ -176,7 +176,8 @@ export async function migrateSqliteToPostgresIfNeeded(options: MigrationOptions)
 
   // Keep pg out of Next's edge/instrumentation bundle. Static import() makes webpack
   // follow pgpass -> stream/net/dns even though this code only runs in Node.js.
-  const { createRequire } = await import('node:module');
+  const importModule = new Function('specifier', 'return import(specifier)') as (specifier: string) => Promise<typeof import('module')>;
+  const { createRequire } = await importModule('module');
   const runtimeRequire = createRequire(import.meta.url);
   const pgPackage = 'p' + 'g';
   const { Pool } = runtimeRequire(pgPackage) as typeof import('pg');

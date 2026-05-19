@@ -82,13 +82,35 @@ function sqliteRows<T extends object>(db: SqlJsDatabase, sql: string): T[] {
   return values.map((row) => Object.fromEntries(columns.map((column, index) => [column, row[index] ?? null])) as T);
 }
 
-function createTableSql(table: string, columns: SqliteColumn[]): string {
+function columnContainsRealValues(db: SqlJsDatabase, table: string, column: string): boolean {
+  try {
+    const result = db.exec(
+      `SELECT 1 FROM ${quoteIdent(table)} WHERE typeof(${quoteIdent(column)}) = 'real' LIMIT 1`,
+    );
+    return (result[0]?.values.length || 0) > 0;
+  } catch (_) {
+    return false;
+  }
+}
+
+function resolvePostgresType(db: SqlJsDatabase, table: string, column: SqliteColumn): string {
+  const normalized = column.type.toUpperCase();
+  if (normalized.includes('INT') && column.pk === 0 && columnContainsRealValues(db, table, column.name)) {
+    return 'DOUBLE PRECISION';
+  }
+  if (normalized.includes('INT') && column.pk === 0 && process.env.POSTGRES_MIGRATION_SQLITE_COMPAT !== '0') {
+    return 'DOUBLE PRECISION';
+  }
+  return sqliteTypeToPostgres(column.type);
+}
+
+function createTableSql(db: SqlJsDatabase, table: string, columns: SqliteColumn[]): string {
   const primaryKeys = columns.filter((column) => column.pk > 0).sort((a, b) => a.pk - b.pk);
   const singlePrimaryKey = primaryKeys.length === 1 ? primaryKeys[0].name : '';
   const columnDefs = columns.map((column) => {
     const parts = [
       quoteIdent(column.name),
-      sqliteTypeToPostgres(column.type),
+      resolvePostgresType(db, table, column),
       column.notnull || column.name === singlePrimaryKey ? 'NOT NULL' : '',
       column.name === singlePrimaryKey ? 'PRIMARY KEY' : '',
       normalizeDefault(column.dflt_value),
@@ -131,7 +153,7 @@ async function importTable(client: PoolClient, sqliteDb: SqlJsDatabase, table: s
   const columns = sqliteRows<SqliteColumn>(sqliteDb, `PRAGMA table_info(${quoteIdent(table)})`);
   if (columns.length === 0) return { rows: 0, skipped: true };
 
-  await client.query(createTableSql(table, columns));
+  await client.query(createTableSql(sqliteDb, table, columns));
 
   const count = await client.query(`SELECT COUNT(*)::int AS count FROM ${quoteIdent(table)}`);
   if (!force && Number(count.rows[0]?.count || 0) > 0) {

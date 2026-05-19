@@ -99,7 +99,10 @@ function translatePlaceholders(sql: string, params: DbValue[]): { sql: string; p
 }
 
 function translateInsertOrIgnore(sql: string): string {
-  return sql.replace(/^\s*INSERT\s+OR\s+IGNORE\s+INTO\s+/i, 'INSERT INTO ').replace(/\s*;?\s*$/u, ' ON CONFLICT DO NOTHING');
+  if (!/^\s*INSERT\s+OR\s+IGNORE\s+INTO\s+/i.test(sql)) return sql;
+  return sql
+    .replace(/^\s*INSERT\s+OR\s+IGNORE\s+INTO\s+/i, 'INSERT INTO ')
+    .replace(/\s*;?\s*$/u, ' ON CONFLICT DO NOTHING');
 }
 
 function translateRowid(sql: string): string {

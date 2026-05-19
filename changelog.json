@@ -28,6 +28,10 @@
           "text": "新增 PostgreSQL runtime 相容層；設定 DATABASE_URL 後，系統會優先使用 PostgreSQL 讀寫，必要時可用 POSTGRES_RUNTIME=0 暫時退回 SQLite runtime。"
         },
         {
+          "tag": "new",
+          "text": "PostgreSQL runtime 下的整檔備份與還原改支援 AssetPilot SQL 備份檔，管理員可下載 .sql 備份並上傳同格式檔案還原，還原前會自動建立 before-restore SQL 備份。"
+        },
+        {
           "tag": "improved",
           "text": "Docker Compose 範例新增 PostgreSQL 服務與對應 DATABASE_URL 設定，方便自架部署時直接啟用資料庫轉移流程。"
         }

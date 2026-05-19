@@ -3,8 +3,9 @@ import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
 import { requireAdmin } from '../../../../lib/apiHelpers';
-import { getDB, isEncryptedDB, saveDB, replaceDB } from '../../../../lib/db';
+import { getDB, isEncryptedDB, saveDB, replaceDB, isPostgresRuntime } from '../../../../lib/db';
 import { writeOperationAudit } from '../../../../lib/auditHelpers';
+import { createPostgresBackupSql, restorePostgresBackupSql } from '../../../../lib/postgresBackup';
 
 const BACKUPS_DIR = path.join(process.cwd(), 'backups');
 
@@ -36,6 +37,26 @@ function pruneBeforeRestoreBackups() {
   } catch (_) {}
 }
 
+function pruneBeforeRestoreSqlBackups() {
+  try {
+    if (!fs.existsSync(BACKUPS_DIR)) return;
+    const files = fs.readdirSync(BACKUPS_DIR)
+      .filter(f => f.startsWith('before-restore-') && f.endsWith('.sql'))
+      .map(f => {
+        const fp = path.join(BACKUPS_DIR, f);
+        try { return { name: f, path: fp, mtime: fs.statSync(fp).mtimeMs }; } catch (_) { return null; }
+      })
+      .filter(Boolean)
+      .sort((a, b) => b.mtime - a.mtime);
+    const NINETY_DAYS = 90 * 24 * 60 * 60 * 1000;
+    files.forEach((f, i) => {
+      if (i >= 5 || (Date.now() - f.mtime) > NINETY_DAYS) {
+        try { fs.unlinkSync(f.path); } catch (_) {}
+      }
+    });
+  } catch (_) {}
+}
+
 export async function POST(request) {
   const auth = await requireAdmin(request);
   if (auth instanceof NextResponse) return auth;
@@ -47,6 +68,40 @@ export async function POST(request) {
   try {
     const arrayBuffer = await request.arrayBuffer();
     const dbBuffer = Buffer.from(arrayBuffer);
+
+    if (isPostgresRuntime()) {
+      const sql = dbBuffer.toString('utf8').replace(/^\uFEFF/, '');
+      if (!sql.trimStart().startsWith('-- AssetPilot PostgreSQL backup')) {
+        return NextResponse.json({ error: '請上傳 AssetPilot PostgreSQL SQL 備份檔（.sql）' }, { status: 400 });
+      }
+
+      ensureBackupsDir();
+      const backupTs = makeBackupTimestamp();
+      beforeRestorePath = path.join(BACKUPS_DIR, `before-restore-${backupTs}.sql`);
+      try {
+        fs.writeFileSync(beforeRestorePath, createPostgresBackupSql(), 'utf8');
+      } catch (e) {
+        return NextResponse.json({ error: '建立還原前 PostgreSQL 備份失敗，請檢查 backups/ 目錄權限', message: String(e?.message || e) }, { status: 500 });
+      }
+
+      try {
+        restorePostgresBackupSql(sql);
+      } catch (restoreErr) {
+        console.error('PostgreSQL 還原失敗，嘗試回滾:', restoreErr);
+        try {
+          restorePostgresBackupSql(fs.readFileSync(beforeRestorePath, 'utf8'));
+          writeOperationAudit({ userId: auth.userId, role: 'admin', action: 'restore_failed', ipAddress: ip, userAgent: ua, result: 'rolled_back', isAdminOperation: true, metadata: { runtime: 'postgres', failure_stage: 'restore_postgres_sql', failure_reason: String(restoreErr?.message || restoreErr).slice(0, 200), before_restore_path: path.relative(process.cwd(), beforeRestorePath) } });
+          return NextResponse.json({ error: 'RESTORE_FAILED_ROLLED_BACK', message: 'PostgreSQL 還原失敗，已自動回復至還原前狀態', beforeRestorePath: path.relative(process.cwd(), beforeRestorePath) }, { status: 422 });
+        } catch (rollbackErr) {
+          writeOperationAudit({ userId: auth.userId, role: 'admin', action: 'restore_failed', ipAddress: ip, userAgent: ua, result: 'failed', isAdminOperation: true, metadata: { runtime: 'postgres', failure_stage: 'rollback_postgres_sql', failure_reason: String(rollbackErr?.message || rollbackErr).slice(0, 200) } });
+          return NextResponse.json({ error: 'RESTORE_FAILED_DB_UNKNOWN', message: 'PostgreSQL 主資料庫狀態未知，請聯繫管理員', beforeRestorePath: path.relative(process.cwd(), beforeRestorePath) }, { status: 500 });
+        }
+      }
+
+      pruneBeforeRestoreSqlBackups();
+      writeOperationAudit({ userId: auth.userId, role: 'admin', action: 'restore_backup', ipAddress: ip, userAgent: ua, result: 'success', isAdminOperation: true, metadata: { runtime: 'postgres', byteSize: dbBuffer.length, before_restore_path: path.relative(process.cwd(), beforeRestorePath) } });
+      return NextResponse.json({ ok: true, message: 'PostgreSQL 資料庫還原成功，請重新登入', beforeRestorePath: path.relative(process.cwd(), beforeRestorePath) });
+    }
 
     if (dbBuffer.length < 16) {
       return NextResponse.json({ error: '無效的資料庫檔案' }, { status: 400 });

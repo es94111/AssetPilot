@@ -204,6 +204,10 @@ export function getDB(): SqlJsDatabase {
   return _db;
 }
 
+export function isPostgresRuntime(): boolean {
+  return usingPostgresRuntime;
+}
+
 // ── 便利查詢工具 ──
 export function queryOne(sql: string, params: Array<string | number | null> = []): Record<string, string | number | null> | null {
   const db = getDB();

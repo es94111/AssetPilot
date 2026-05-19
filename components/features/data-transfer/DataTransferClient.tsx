@@ -384,7 +384,7 @@ export default function DataTransferClient({ user }: { user: UserLike }) {
         <section className="rounded-xl border border-slate-200 bg-white dark:bg-slate-900 dark:border-slate-800 p-5 shadow-sm space-y-4">
           <div>
             <h2 className="text-lg font-semibold text-slate-900">整檔備份 / 還原</h2>
-            <p className="text-sm text-slate-500 mt-1">僅管理員可操作。下載完整 SQLite 備份，或上傳未加密 `.db` 檔進行還原。</p>
+            <p className="text-sm text-slate-500 mt-1">僅管理員可操作。SQLite 模式下載 `.db` 備份；PostgreSQL 模式下載 `.sql` 備份，還原時請上傳對應格式。</p>
           </div>
 
           <div className="flex flex-wrap gap-3">
@@ -392,10 +392,10 @@ export default function DataTransferClient({ user }: { user: UserLike }) {
               {busyKey === 'db-export' ? '下載中...' : '下載資料庫備份'}
             </Button>
             <label className="inline-flex items-center gap-3 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 cursor-pointer hover:bg-slate-50">
-              <span>{busyKey === 'db-import' ? '還原中...' : '選擇 .db 還原'}</span>
+              <span>{busyKey === 'db-import' ? '還原中...' : '選擇備份還原'}</span>
               <input
                 type="file"
-                accept=".db,application/octet-stream,application/x-sqlite3"
+                accept=".db,.sql,application/octet-stream,application/x-sqlite3,application/sql,text/plain"
                 className="hidden"
                 onChange={(e) => handleDbImport(e.target.files?.[0] || null)}
               />

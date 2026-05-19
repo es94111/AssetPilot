@@ -85,8 +85,19 @@ let saveInFlight = false;
 let savePending = false;
 let usingPostgresRuntime = false;
 
+function canExportSqliteDb(): boolean {
+  if (usingPostgresRuntime) return false;
+  if (!_db) return false;
+  try {
+    return typeof _db.export === 'function'
+      && _db.constructor?.name !== 'PostgresCompatDatabase';
+  } catch (_) {
+    return false;
+  }
+}
+
 export function saveDB(): void {
-  if (usingPostgresRuntime) return;
+  if (!canExportSqliteDb()) return;
   const dbPath = getDbPath();
   if (saveInFlight) { savePending = true; return; }
   saveInFlight = true;
@@ -111,7 +122,7 @@ export function saveDB(): void {
 }
 
 export function saveDBSync(): void {
-  if (usingPostgresRuntime) return;
+  if (!canExportSqliteDb()) return;
   const dbPath = getDbPath();
   const data = _db!.export();
   const plain = Buffer.from(data);

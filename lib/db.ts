@@ -85,12 +85,16 @@ let saveInFlight = false;
 let savePending = false;
 let usingPostgresRuntime = false;
 
+function isPostgresCompatDb(db: SqlJsDatabase | null | undefined): boolean {
+  return db?.constructor?.name === 'PostgresCompatDatabase';
+}
+
 function canExportSqliteDb(): boolean {
   if (usingPostgresRuntime) return false;
-  if (!_db) return false;
+  const db = _db ?? globalThis.__sqlDb ?? null;
+  if (!db) return false;
   try {
-    return typeof _db.export === 'function'
-      && _db.constructor?.name !== 'PostgresCompatDatabase';
+    return typeof db.export === 'function' && !isPostgresCompatDb(db);
   } catch (_) {
     return false;
   }
@@ -216,7 +220,11 @@ export function getDB(): SqlJsDatabase {
 }
 
 export function isPostgresRuntime(): boolean {
-  return usingPostgresRuntime;
+  if (usingPostgresRuntime) return true;
+  const db = _db ?? globalThis.__sqlDb ?? null;
+  if (isPostgresCompatDb(db)) return true;
+  return !!(process.env.DATABASE_URL || process.env.POSTGRES_URL)
+    && process.env.POSTGRES_RUNTIME !== '0';
 }
 
 // ── 便利查詢工具 ──

@@ -59,6 +59,7 @@ export function createPostgresBackupSql(): string {
     WHERE table_schema = 'public'
       AND table_type = 'BASE TABLE'
       AND table_name NOT LIKE 'pg_%'
+      AND table_name NOT LIKE 'assetpilot_migration_%'
     ORDER BY table_name
   `).map((row) => String(row.table_name));
 
@@ -66,7 +67,6 @@ export function createPostgresBackupSql(): string {
     BACKUP_HEADER,
     `-- created_at: ${new Date().toISOString()}`,
     'BEGIN;',
-    'SET CONSTRAINTS ALL DEFERRED;',
     '',
   ];
 

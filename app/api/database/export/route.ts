@@ -67,6 +67,9 @@ export async function GET(request) {
     });
   } catch (e) {
     console.error('資料庫匯出失敗:', e);
-    return NextResponse.json({ error: '資料庫匯出失敗' }, { status: 500 });
+    return NextResponse.json({
+      error: '資料庫匯出失敗',
+      message: e?.message || String(e),
+    }, { status: 500 });
   }
 }

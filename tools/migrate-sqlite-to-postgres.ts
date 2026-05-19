@@ -1,10 +1,29 @@
-import 'dotenv/config';
 import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
-import { migrateSqliteToPostgresIfNeeded } from '../lib/postgresMigration';
+import { migrateSqliteToPostgresIfNeeded } from '../lib/postgresMigration.ts';
 
 const ENC_MAGIC = Buffer.from('EADB');
+
+function loadEnvFile(): void {
+  const envPath = process.env.ENV_PATH || path.join(process.cwd(), '.env');
+  let envContent = '';
+  try {
+    envContent = fs.readFileSync(envPath, 'utf-8');
+  } catch (_) {
+    return;
+  }
+
+  for (const line of envContent.split('\n')) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) continue;
+    const idx = trimmed.indexOf('=');
+    if (idx <= 0) continue;
+    const key = trimmed.slice(0, idx);
+    const value = trimmed.slice(idx + 1);
+    if (!process.env[key]) process.env[key] = value;
+  }
+}
 
 function deriveKey(passphrase: string, salt: Buffer): Buffer {
   return crypto.pbkdf2Sync(passphrase, salt, 100000, 32, 'sha256');
@@ -29,6 +48,7 @@ function isEncryptedDB(buffer: Buffer): boolean {
 }
 
 async function main(): Promise<void> {
+  loadEnvFile();
   const dbPath = process.env.DB_PATH || path.join(process.cwd(), 'database.db');
   if (!process.env.DATABASE_URL && !process.env.POSTGRES_URL) {
     throw new Error('請先設定 DATABASE_URL 或 POSTGRES_URL');

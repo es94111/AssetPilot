@@ -48,7 +48,11 @@ export async function POST(request) {
     const filename = postgresRuntime
       ? makeMegaS4BackupFilename().replace(/\.db$/u, '.sql')
       : makeMegaS4BackupFilename();
-    const result = await uploadMegaS4Backup(plain, filename);
+    const result = await uploadMegaS4Backup(
+      plain,
+      filename,
+      postgresRuntime ? 'application/sql; charset=utf-8' : 'application/x-sqlite3',
+    );
 
     writeOperationAudit({
       ...auditBase(request, auth),

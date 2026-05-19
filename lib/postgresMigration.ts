@@ -174,10 +174,11 @@ export async function migrateSqliteToPostgresIfNeeded(options: MigrationOptions)
   const sourceHash = crypto.createHash('sha256').update(plainBuffer).digest('hex');
   const force = process.env.POSTGRES_MIGRATION_FORCE === '1';
 
-  const [{ Pool }, { default: initSqlJs }] = await Promise.all([
-    import('pg'),
-    import('sql.js') as unknown as Promise<{ default: (opts: { locateFile: (file: string) => string }) => Promise<SqlJsStatic> }>,
-  ]);
+  // Keep pg out of Next's edge/instrumentation bundle. Static import() makes webpack
+  // follow pgpass -> stream/net/dns even though this code only runs in Node.js.
+  const runtimeRequire = eval('require') as NodeRequire;
+  const { Pool } = runtimeRequire('pg') as typeof import('pg');
+  const { default: initSqlJs } = await import('sql.js') as unknown as { default: (opts: { locateFile: (file: string) => string }) => Promise<SqlJsStatic> };
 
   const pool = new Pool({ connectionString });
   const client = await pool.connect();

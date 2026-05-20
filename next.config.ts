@@ -42,8 +42,8 @@ const nextConfig: NextConfig = {
   async headers() {
     const isDev = process.env.NODE_ENV !== 'production';
     const scriptSrc = isDev
-      ? "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com"
-      : "script-src 'self' 'unsafe-inline' https://accounts.google.com";
+      ? "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com https://challenges.cloudflare.com"
+      : "script-src 'self' 'unsafe-inline' https://accounts.google.com https://challenges.cloudflare.com";
     return [
       // 靜態資源長期快取（僅 production；dev mode 下 app-pages-internals.js 等無 hash 的 chunk 不可 immutable）
       ...(!isDev ? [
@@ -77,8 +77,8 @@ const nextConfig: NextConfig = {
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com",
               "font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com",
               "img-src 'self' data: https:",
-              "connect-src 'self' https://accounts.google.com",
-              "frame-src https://accounts.google.com",
+              "connect-src 'self' https://accounts.google.com https://challenges.cloudflare.com",
+              "frame-src https://accounts.google.com https://challenges.cloudflare.com",
               "object-src 'none'",
               "base-uri 'self'",
               "form-action 'self'",

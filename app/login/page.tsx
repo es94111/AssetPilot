@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Script from 'next/script';
@@ -15,6 +15,11 @@ declare global {
           initCodeClient: (options: Record<string, any>) => { requestCode: () => void };
         };
       };
+    };
+    turnstile?: {
+      render: (container: string | HTMLElement, options: Record<string, any>) => string;
+      reset: (widgetId?: string) => void;
+      remove?: (widgetId: string) => void;
     };
   }
 }
@@ -40,6 +45,10 @@ export default function LoginPage() {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [lineLoading, setLineLoading] = useState(false);
   const [passkeyLoading, setPasskeyLoading] = useState(false);
+  const [turnstileScriptLoaded, setTurnstileScriptLoaded] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState('');
+  const turnstileRef = useRef<HTMLDivElement | null>(null);
+  const turnstileWidgetId = useRef<string | null>(null);
 
   useEffect(() => {
     if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('mode') === 'register') {
@@ -49,22 +58,57 @@ export default function LoginPage() {
     fetch('/api/config').then(r => r.json()).then(cfg => setConfig(cfg)).catch(() => {});
   }, []);
 
+  const turnstileEnabled = !!config?.turnstileEnabled && !!config?.turnstileSiteKey;
+
+  useEffect(() => {
+    if (!turnstileEnabled || form !== 'login' || !turnstileScriptLoaded || !window.turnstile || !turnstileRef.current) return;
+    if (turnstileWidgetId.current) return;
+    turnstileWidgetId.current = window.turnstile.render(turnstileRef.current, {
+      sitekey: config.turnstileSiteKey,
+      action: 'login',
+      theme: 'auto',
+      callback: (token: string) => setTurnstileToken(token || ''),
+      'expired-callback': () => setTurnstileToken(''),
+      'error-callback': () => setTurnstileToken(''),
+    });
+  }, [config?.turnstileSiteKey, form, turnstileEnabled, turnstileScriptLoaded]);
+
+  useEffect(() => {
+    if (form === 'login' || !turnstileWidgetId.current) return;
+    window.turnstile?.remove?.(turnstileWidgetId.current);
+    turnstileWidgetId.current = null;
+    setTurnstileToken('');
+  }, [form]);
+
+  function resetTurnstile() {
+    if (!turnstileWidgetId.current || !window.turnstile) return;
+    window.turnstile.reset(turnstileWidgetId.current);
+    setTurnstileToken('');
+  }
+
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
     setError('');
+    if (turnstileEnabled && !turnstileToken) {
+      setError('請先完成真人驗證');
+      return;
+    }
     setLoading(true);
     try {
       const r = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, turnstileToken }),
       });
       const data = await r.json();
       if (!r.ok) throw new Error(data.error || '登入失敗');
       router.push('/dashboard');
       router.refresh();
     } catch (e: any) { setError(e.message); }
-    finally { setLoading(false); }
+    finally {
+      setLoading(false);
+      if (turnstileEnabled) resetTurnstile();
+    }
   }
 
   async function handleRegister(e: React.FormEvent) {
@@ -181,6 +225,13 @@ export default function LoginPage() {
   return (
     <div className="login-bg">
       {googleEnabled && <Script src="https://accounts.google.com/gsi/client" strategy="afterInteractive" />}
+      {turnstileEnabled && (
+        <Script
+          src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
+          strategy="afterInteractive"
+          onLoad={() => setTurnstileScriptLoaded(true)}
+        />
+      )}
 
       {/* Decorative blobs */}
       <div className="login-blob login-blob-1" />
@@ -242,8 +293,11 @@ export default function LoginPage() {
                 </button>
               </div>
             </div>
+            {turnstileEnabled && (
+              <div className="login-turnstile" ref={turnstileRef} aria-label="Cloudflare Turnstile 真人驗證" />
+            )}
             {error && <p className="login-error" role="alert">{error}</p>}
-            <button type="submit" className="login-btn-primary" disabled={loading}>
+            <button type="submit" className="login-btn-primary" disabled={loading || (turnstileEnabled && !turnstileToken)}>
               {loading ? '登入中…' : '登入'}
             </button>
             <button type="button" className="login-btn-google" onClick={handlePasskeyLogin} disabled={passkeyLoading}>

@@ -9,6 +9,7 @@ import {
 import { backfillDefaultsForUser } from '../../../../lib/userDefaults';
 import { setAuthCookie, formatUser } from '../../../../lib/apiHelpers';
 import { createLoginSession } from '../../../../lib/sessionHelpers';
+import { isTurnstileConfigured, verifyTurnstileToken } from '../../../../lib/turnstile';
 
 /** Map<email, { count, lastAttempt }> — in-memory per-process */
 const loginAttempts = new Map<string, { count: number; lastAttempt: number }>();
@@ -24,7 +25,16 @@ export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => ({}));
   const email = String(body.email || '');
   const password = String(body.password || '');
+  const turnstileToken = String(body.turnstileToken || body['cf-turnstile-response'] || '');
   const headers = request.headers;
+
+  if (isTurnstileConfigured()) {
+    const turnstile = await verifyTurnstileToken(turnstileToken, headers, 'login');
+    if (!turnstile.ok) {
+      recordLoginAttempt({ email, headers, method: 'password', isSuccess: false, failureReason: 'turnstile_failed' });
+      return NextResponse.json({ error: turnstile.error }, { status: 403 });
+    }
+  }
 
   if (!email || !password) {
     recordLoginAttempt({ email, headers, method: 'password', isSuccess: false, failureReason: 'missing_credentials' });

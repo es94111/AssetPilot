@@ -9,7 +9,7 @@ import {
 import { backfillDefaultsForUser } from '../../../../lib/userDefaults';
 import { setAuthCookie, formatUser } from '../../../../lib/apiHelpers';
 import { createLoginSession } from '../../../../lib/sessionHelpers';
-import { isTurnstileConfigured, verifyTurnstileToken } from '../../../../lib/turnstile';
+import { hasAnyTurnstileConfig, verifyTurnstileToken } from '../../../../lib/turnstile';
 
 /** Map<email, { count, lastAttempt }> — in-memory per-process */
 const loginAttempts = new Map<string, { count: number; lastAttempt: number }>();
@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
   const turnstileToken = String(body.turnstileToken || body['cf-turnstile-response'] || '');
   const headers = request.headers;
 
-  if (isTurnstileConfigured()) {
+  if (hasAnyTurnstileConfig()) {
     const turnstile = await verifyTurnstileToken(turnstileToken, headers, 'login');
     if (!turnstile.ok) {
       recordLoginAttempt({ email, headers, method: 'password', isSuccess: false, failureReason: 'turnstile_failed' });

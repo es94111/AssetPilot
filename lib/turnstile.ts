@@ -23,6 +23,10 @@ export function isTurnstileConfigured(): boolean {
   return !!(getTurnstileSiteKey() && getTurnstileSecretKey());
 }
 
+export function hasAnyTurnstileConfig(): boolean {
+  return !!(getTurnstileSiteKey() || getTurnstileSecretKey());
+}
+
 export async function verifyTurnstileToken(
   token: string,
   headers: Headers,

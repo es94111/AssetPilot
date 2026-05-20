@@ -19,6 +19,10 @@ declare global {
   }
 }
 
+function shouldDisableLineAutoLogin() {
+  return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+}
+
 export default function LoginPage() {
   const router = useRouter();
   const [form, setForm] = useState<'login' | 'register'>('login');
@@ -158,7 +162,12 @@ export default function LoginPage() {
     if (!config?.lineChannelId || !config?.lineCodeFlow) { setError('LINE 登入尚未設定完成'); return; }
     setLineLoading(true);
     try {
-      window.location.assign(`/api/auth/line/authorize?flow=login&origin=${encodeURIComponent(window.location.origin)}`);
+      const params = new URLSearchParams({
+        flow: 'login',
+        origin: window.location.origin,
+      });
+      if (shouldDisableLineAutoLogin()) params.set('disableAutoLogin', '1');
+      window.location.assign(`/api/auth/line/authorize?${params.toString()}`);
     } catch (e: any) {
       setError(e.message || 'LINE 登入失敗');
       setLineLoading(false);

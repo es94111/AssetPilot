@@ -6,6 +6,7 @@ import { isAllowedLineRedirectUri, LINE_CHANNEL_ID, LINE_CHANNEL_SECRET } from '
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const flow = url.searchParams.get('flow') === 'link' ? 'link' : 'login';
+  const disableAutoLogin = url.searchParams.get('disableAutoLogin') === '1';
   const originParam = String(url.searchParams.get('origin') || '').trim();
   const origin = originParam || url.origin;
   let redirectUri = '';
@@ -35,6 +36,9 @@ export async function GET(request: Request) {
   authorizeUrl.searchParams.set('state', state);
   authorizeUrl.searchParams.set('scope', 'openid profile email');
   authorizeUrl.searchParams.set('nonce', nonce);
+  if (disableAutoLogin) {
+    authorizeUrl.searchParams.set('disable_auto_login', 'true');
+  }
 
   return NextResponse.redirect(authorizeUrl);
 }

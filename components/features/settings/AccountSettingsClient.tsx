@@ -6,6 +6,10 @@ import { apiGet, apiPut, apiPost, apiDelete } from '@/lib/clientApi';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/Input';
 
+function shouldDisableLineAutoLogin() {
+  return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+}
+
 export default function AccountSettingsClient({ user: initialUser }: { user: any }) {
   const [profile, setProfile] = useState<any>(initialUser || null);
   const [loading, setLoading] = useState(true);
@@ -238,7 +242,12 @@ export default function AccountSettingsClient({ user: initialUser }: { user: any
       const cfgRes = await fetch('/api/config', { cache: 'no-store' });
       const cfg = await cfgRes.json().catch(() => ({}));
       if (!cfg?.lineChannelId || !cfg?.lineCodeFlow) throw new Error('LINE 登入尚未設定完成');
-      window.location.assign(`/api/auth/line/authorize?flow=link&origin=${encodeURIComponent(window.location.origin)}`);
+      const params = new URLSearchParams({
+        flow: 'link',
+        origin: window.location.origin,
+      });
+      if (shouldDisableLineAutoLogin()) params.set('disableAutoLogin', '1');
+      window.location.assign(`/api/auth/line/authorize?${params.toString()}`);
     } catch (e: any) {
       setLineMsg(e.message || 'LINE 綁定失敗');
       setLineLoading(false);

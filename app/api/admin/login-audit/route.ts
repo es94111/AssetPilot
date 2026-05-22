@@ -14,10 +14,7 @@ async function enrichAndPersistCountry(rows, tableName) {
       const country = await fetchIpCountry(ip);
       if (country && country !== '-') {
         r.country = country;
-        const rid = Number(r._rid);
-        if (rid > 0) {
-          db.run(`UPDATE ${tableName} SET country = ? WHERE rowid = ?`, [country, rid]);
-        } else if (r.id) {
+        if (r.id) {
           db.run(`UPDATE ${tableName} SET country = ? WHERE id = ?`, [country, r.id]);
         }
       }
@@ -38,7 +35,7 @@ export async function GET(request) {
 
   if (scope === 'admin-self' || scope === 'admin_self') {
     const adminLogs = queryAll(
-      `SELECT id, rowid AS _rid, login_at, ip_address, country, login_method
+      `SELECT id, login_at, ip_address, country, login_method
        FROM login_audit_logs
        WHERE user_id = ? AND is_admin_login = 1
        ORDER BY login_at DESC
@@ -49,7 +46,7 @@ export async function GET(request) {
     return NextResponse.json({
       scope: 'admin-self',
       logs: enriched.map(l => ({
-        id: l.id || (Number(l._rid) > 0 ? `rid:${Number(l._rid)}` : `ts:${Number(l.login_at) || 0}`),
+        id: l.id || `ts:${Number(l.login_at) || 0}`,
         loginAt: Number(l.login_at) || 0,
         ipAddress: l.ip_address || 'unknown',
         country: l.country || '-',
@@ -60,7 +57,7 @@ export async function GET(request) {
 
   // default: scope = 'all'
   const allUserLogs = queryAll(
-    `SELECT l.id, l.rowid AS _rid, l.user_id, l.email, l.login_at, l.ip_address, l.country, l.login_method, l.is_admin_login, l.is_success, l.failure_reason, u.display_name
+    `SELECT l.id, l.user_id, l.email, l.login_at, l.ip_address, l.country, l.login_method, l.is_admin_login, l.is_success, l.failure_reason, u.display_name
      FROM login_attempt_logs l
      LEFT JOIN users u ON u.id = l.user_id
      ORDER BY l.login_at DESC
@@ -70,7 +67,7 @@ export async function GET(request) {
   return NextResponse.json({
     scope: 'all',
     logs: enriched.map(l => ({
-      id: l.id || (Number(l._rid) > 0 ? `rid:${Number(l._rid)}` : `ts:${Number(l.login_at) || 0}`),
+      id: l.id || `ts:${Number(l.login_at) || 0}`,
       userId: l.user_id,
       email: l.email || '',
       displayName: l.display_name || '',

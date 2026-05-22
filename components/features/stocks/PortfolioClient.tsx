@@ -31,7 +31,7 @@ function parseQuoteNumber(value: unknown) {
   return Number(String(value || '').replace(/,/g, '')) || 0;
 }
 
-async function fetchUserSideStockPrices(stocks: any[]) {
+async function fetchBrowserStockPrices(stocks: any[]) {
   const activeStocks = stocks.filter(s => !s.delisted && s.id && s.symbol);
   if (activeStocks.length === 0) return { updates: [], failed: 0 };
 
@@ -73,6 +73,20 @@ async function fetchUserSideStockPrices(stocks: any[]) {
     .filter(u => u.currentPrice > 0);
 
   return { updates, failed: activeStocks.length - updates.length };
+}
+
+async function fetchUserSideStockPrices(stocks: any[]) {
+  try {
+    return await fetchBrowserStockPrices(stocks);
+  } catch (_) {
+    const fetchRes = await apiPost('/api/stocks/batch-fetch', {});
+    const results: any[] = fetchRes.results || [];
+    const successful = results.filter((r: any) => r.status === 'ok' && Number(r.currentPrice) > 0);
+    return {
+      updates: successful.map((r: any) => ({ stockId: r.stockId, currentPrice: r.currentPrice })),
+      failed: results.length - successful.length,
+    };
+  }
 }
 
 export default function PortfolioClient(_props: { user?: any } = {}) {
@@ -209,7 +223,7 @@ export default function PortfolioClient(_props: { user?: any } = {}) {
         <DialogContent>
           <DialogHeader><DialogTitle>更新股價</DialogTitle></DialogHeader>
           <div className="space-y-4">
-            <p className="text-sm text-slate-500">由瀏覽器端向台灣證交所公開 API 查詢最新股價，並更新所有持股。</p>
+            <p className="text-sm text-slate-500">優先由瀏覽器端向台灣證交所公開 API 查詢；若瀏覽器被擋，會改用登入後的 user API 代理查詢並更新持股。</p>
             {priceResult && (
               <p className="text-sm text-green-700 bg-green-50 p-3 rounded">
                 更新完成：{priceResult.updated} 支成功{priceResult.failed > 0 ? `，${priceResult.failed} 支失敗` : ''}。

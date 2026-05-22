@@ -647,7 +647,23 @@ async function _runMigrations(): Promise<void> {
   alterIgnore("ALTER TABLE stock_dividends ADD COLUMN cash_dividend REAL DEFAULT 0");
   alterIgnore("ALTER TABLE stock_dividends ADD COLUMN stock_dividend_shares REAL DEFAULT 0");
   alterIgnore("ALTER TABLE stock_dividends ADD COLUMN account_id TEXT DEFAULT ''");
+  alterIgnore("ALTER TABLE login_audit_logs ADD COLUMN id TEXT DEFAULT ''");
+  alterIgnore("ALTER TABLE login_audit_logs ADD COLUMN user_id TEXT DEFAULT ''");
+  alterIgnore("ALTER TABLE login_audit_logs ADD COLUMN email TEXT DEFAULT ''");
+  alterIgnore("ALTER TABLE login_audit_logs ADD COLUMN login_at INTEGER DEFAULT 0");
+  alterIgnore("ALTER TABLE login_audit_logs ADD COLUMN ip_address TEXT DEFAULT ''");
+  alterIgnore("ALTER TABLE login_audit_logs ADD COLUMN login_method TEXT DEFAULT 'password'");
+  alterIgnore("ALTER TABLE login_audit_logs ADD COLUMN is_admin_login INTEGER DEFAULT 0");
   alterIgnore("ALTER TABLE login_audit_logs ADD COLUMN country TEXT DEFAULT ''");
+  alterIgnore("ALTER TABLE login_attempt_logs ADD COLUMN id TEXT DEFAULT ''");
+  alterIgnore("ALTER TABLE login_attempt_logs ADD COLUMN user_id TEXT DEFAULT ''");
+  alterIgnore("ALTER TABLE login_attempt_logs ADD COLUMN email TEXT DEFAULT ''");
+  alterIgnore("ALTER TABLE login_attempt_logs ADD COLUMN login_at INTEGER DEFAULT 0");
+  alterIgnore("ALTER TABLE login_attempt_logs ADD COLUMN ip_address TEXT DEFAULT ''");
+  alterIgnore("ALTER TABLE login_attempt_logs ADD COLUMN login_method TEXT DEFAULT 'password'");
+  alterIgnore("ALTER TABLE login_attempt_logs ADD COLUMN is_admin_login INTEGER DEFAULT 0");
+  alterIgnore("ALTER TABLE login_attempt_logs ADD COLUMN is_success INTEGER DEFAULT 0");
+  alterIgnore("ALTER TABLE login_attempt_logs ADD COLUMN failure_reason TEXT DEFAULT ''");
   alterIgnore("ALTER TABLE login_attempt_logs ADD COLUMN country TEXT DEFAULT ''");
 
   // 檢測並進行 fx_rate 類型 migration（REAL → TEXT）

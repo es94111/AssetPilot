@@ -1,33 +1,21 @@
 // @ts-nocheck
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '../../../../lib/apiHelpers';
-import { getDB, queryOne, saveDB } from '../../../../lib/db';
+import {
+  MAX_SERVER_TIME_OFFSET_MS,
+  getServerTimeOffset,
+  getServerTimeSnapshot,
+  setServerTimeOffset,
+} from '../../../../lib/serverTime';
 
-// Module-level variable for server time offset (initialized from DB on first call)
-let serverTimeOffset = null;
-
-function getServerTimeOffset() {
-  if (serverTimeOffset === null) {
-    const row = queryOne('SELECT server_time_offset FROM system_settings WHERE id = 1');
-    serverTimeOffset = Number(row?.server_time_offset) || 0;
-  }
-  return serverTimeOffset;
-}
+export const runtime = 'nodejs';
 
 export async function GET(request) {
   const auth = await requireAdmin(request);
   if (auth instanceof NextResponse) return auth;
 
-  const offset = getServerTimeOffset();
-  const realNow = Date.now();
-  const effectiveNow = realNow + offset;
-
   return NextResponse.json({
-    realNow,
-    realNowIso: new Date(realNow).toISOString(),
-    effectiveNow,
-    effectiveNowIso: new Date(effectiveNow).toISOString(),
-    offsetMs: offset,
+    ...getServerTimeSnapshot(),
     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || '',
     timezoneOffsetMinutes: new Date().getTimezoneOffset(),
     uptimeSeconds: Math.floor(process.uptime()),
@@ -63,26 +51,14 @@ export async function PUT(request) {
     return NextResponse.json({ error: 'mode 必須為 reset / offset / target 其中之一' }, { status: 400 });
   }
 
-  const MAX_OFFSET = 10 * 365 * 24 * 60 * 60 * 1000;
-  if (Math.abs(offsetMs) > MAX_OFFSET) {
+  if (Math.abs(offsetMs) > MAX_SERVER_TIME_OFFSET_MS) {
     return NextResponse.json({ error: '偏移量超過 ±10 年上限' }, { status: 400 });
   }
 
-  const db = getDB();
-  db.run(
-    'UPDATE system_settings SET server_time_offset = ?, updated_at = ?, updated_by = ? WHERE id = 1',
-    [offsetMs, Date.now(), auth.userId]
-  );
-  saveDB();
-  serverTimeOffset = offsetMs;
+  setServerTimeOffset(offsetMs, auth.userId);
 
-  const realNow = Date.now();
-  const effectiveNow = realNow + serverTimeOffset;
   return NextResponse.json({
     success: true,
-    realNow,
-    effectiveNow,
-    effectiveNowIso: new Date(effectiveNow).toISOString(),
-    offsetMs: serverTimeOffset,
+    ...getServerTimeSnapshot(),
   });
 }

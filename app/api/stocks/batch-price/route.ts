@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { NextResponse } from 'next/server';
 import { requireAuth } from '../../../../lib/apiHelpers';
-import { getDB, saveDB } from '../../../../lib/db';
+import { getDB, queryOne, saveDB } from '../../../../lib/db';
 
 export async function POST(request) {
   const auth = await requireAuth(request);
@@ -20,22 +20,27 @@ export async function POST(request) {
   let updated = 0;
   const nowIso = new Date().toISOString();
 
-  updates.forEach(u => {
+  for (const u of updates) {
     const stockId = u.stockId || u.id;
-    if (!stockId) return;
+    if (!stockId) continue;
+    const existing = queryOne('SELECT id, current_price FROM stocks WHERE id = ? AND user_id = ?', [stockId, auth.userId]);
+    if (!existing) continue;
+    const currentPrice = Number.isFinite(Number(u.currentPrice))
+      ? Number(u.currentPrice)
+      : Number(existing.current_price || 0);
     if (typeof u.delisted === 'boolean') {
       db.run(
         'UPDATE stocks SET current_price = ?, delisted = ?, updated_at = ? WHERE id = ? AND user_id = ?',
-        [Number(u.currentPrice) || 0, u.delisted ? 1 : 0, nowIso, stockId, auth.userId]
+        [currentPrice, u.delisted ? 1 : 0, nowIso, stockId, auth.userId]
       );
     } else {
       db.run(
         'UPDATE stocks SET current_price = ?, updated_at = ? WHERE id = ? AND user_id = ?',
-        [Number(u.currentPrice) || 0, nowIso, stockId, auth.userId]
+        [currentPrice, nowIso, stockId, auth.userId]
       );
     }
-    updated += db.getRowsModified();
-  });
+    updated += 1;
+  }
   saveDB();
 
   return NextResponse.json({ ok: true, updated });

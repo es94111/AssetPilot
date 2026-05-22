@@ -27,6 +27,54 @@ function plClass(n: number | string) {
   return num > 0 ? 'text-green-600' : num < 0 ? 'text-red-600' : '';
 }
 
+function parseQuoteNumber(value: unknown) {
+  return Number(String(value || '').replace(/,/g, '')) || 0;
+}
+
+async function fetchUserSideStockPrices(stocks: any[]) {
+  const activeStocks = stocks.filter(s => !s.delisted && s.id && s.symbol);
+  if (activeStocks.length === 0) return { updates: [], failed: 0 };
+
+  const [twseSettled, tpexSettled] = await Promise.allSettled([
+    fetch('https://openapi.twse.com.tw/v1/exchangeReport/STOCK_DAY_ALL', { cache: 'no-store' }),
+    fetch('https://www.tpex.org.tw/openapi/v1/tpex_mainboard_daily_close_quotes', { cache: 'no-store' }),
+  ]);
+
+  const quoteMap = new Map<string, number>();
+
+  if (twseSettled.status === 'fulfilled' && twseSettled.value.ok) {
+    const twseRows = await twseSettled.value.json().catch(() => []);
+    if (Array.isArray(twseRows)) {
+      twseRows.forEach((row: any) => {
+        const code = String(row.Code || '').trim();
+        const price = parseQuoteNumber(row.ClosingPrice);
+        if (code && price > 0) quoteMap.set(code, price);
+      });
+    }
+  }
+
+  if (tpexSettled.status === 'fulfilled' && tpexSettled.value.ok) {
+    const tpexRows = await tpexSettled.value.json().catch(() => []);
+    if (Array.isArray(tpexRows)) {
+      tpexRows.forEach((row: any) => {
+        const code = String(row.SecuritiesCompanyCode || '').trim();
+        const price = parseQuoteNumber(row.Close);
+        if (code && price > 0) quoteMap.set(code, price);
+      });
+    }
+  }
+
+  if (quoteMap.size === 0) {
+    throw new Error('瀏覽器端無法取得台灣證交所行情資料');
+  }
+
+  const updates = activeStocks
+    .map(s => ({ stockId: s.id, currentPrice: quoteMap.get(String(s.symbol).trim()) || 0 }))
+    .filter(u => u.currentPrice > 0);
+
+  return { updates, failed: activeStocks.length - updates.length };
+}
+
 export default function PortfolioClient(_props: { user?: any } = {}) {
   const [stocks, setStocks] = useState<any[]>([]);
   const [summary, setSummary] = useState<any>(null);
@@ -76,15 +124,11 @@ export default function PortfolioClient(_props: { user?: any } = {}) {
     setUpdatingPrices(true);
     setPriceResult(null);
     try {
-      const fetchRes = await apiPost('/api/stocks/batch-fetch', {});
-      const results: any[] = fetchRes.results || [];
-      const successful = results.filter((r: any) => r.status === 'ok');
-      const failed = results.length - successful.length;
-      if (successful.length > 0) {
-        const updates = successful.map((r: any) => ({ stockId: r.stockId, currentPrice: r.currentPrice }));
+      const { updates, failed } = await fetchUserSideStockPrices(stocks);
+      if (updates.length > 0) {
         await apiPost('/api/stocks/batch-price', { updates });
       }
-      setPriceResult({ updated: successful.length, failed });
+      setPriceResult({ updated: updates.length, failed });
       await load();
     } catch (e: any) { alert(e.message); }
     setUpdatingPrices(false);
@@ -165,7 +209,7 @@ export default function PortfolioClient(_props: { user?: any } = {}) {
         <DialogContent>
           <DialogHeader><DialogTitle>更新股價</DialogTitle></DialogHeader>
           <div className="space-y-4">
-            <p className="text-sm text-slate-500">從台灣證交所批次查詢最新股價，並更新所有持股。</p>
+            <p className="text-sm text-slate-500">由瀏覽器端向台灣證交所公開 API 查詢最新股價，並更新所有持股。</p>
             {priceResult && (
               <p className="text-sm text-green-700 bg-green-50 p-3 rounded">
                 更新完成：{priceResult.updated} 支成功{priceResult.failed > 0 ? `，${priceResult.failed} 支失敗` : ''}。

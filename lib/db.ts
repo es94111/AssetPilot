@@ -1,230 +1,68 @@
-// lib/db.ts — sql.js 全域單例 + 持久化工具
-// 開發模式：globalThis.__sqlDb 防止 HMR 重複初始化
+// lib/db.ts — PostgreSQL runtime 全域單例
+// 開發模式：globalThis.__assetPilotDb 防止 HMR 重複初始化
 // 生產模式：模組層級 _db（initDB() 負責設值）
 
-import * as path from 'path';
-import * as fs from 'fs';
-import * as crypto from 'crypto';
 import { ensureEnvSecrets } from './envSecrets';
 
 ensureEnvSecrets();
 
-// ── sql.js 最小型別宣告（套件本身無 .d.ts）──
 type DbParam = string | number | null | Uint8Array;
 
-interface SqlJsStatement {
+interface DbStatement {
   bind(params?: DbParam[]): void;
   step(): boolean;
   getAsObject(): Record<string, string | number | null>;
   free(): void;
 }
 
-export interface SqlJsDatabase {
-  prepare(sql: string): SqlJsStatement;
+export interface DatabaseLike {
+  prepare(sql: string): DbStatement;
   run(sql: string, params?: DbParam[]): void;
   exec(sql: string): Array<{ columns: string[]; values: Array<Array<string | number | null>> }>;
-  export(): Uint8Array;
+  getRowsModified(): number;
   close(): void;
-}
-
-interface SqlJsStatic {
-  Database: new (data?: Uint8Array | number[] | Buffer) => SqlJsDatabase;
 }
 
 declare global {
   // eslint-disable-next-line no-var
-  var __sqlDb: SqlJsDatabase | undefined;
+  var __assetPilotDb: DatabaseLike | undefined;
 }
 
-const DB_ENCRYPTION_KEY = process.env.DB_ENCRYPTION_KEY as string;
-
-function getDbPath(): string {
-  return process.env.DB_PATH || path.join(process.cwd(), 'database.db');
-}
-
-// ── 加密工具（ChaCha20-Poly1305 AEAD）──
-// 格式：MAGIC(4) + SALT(16) + NONCE(12) + AUTH_TAG(16) + ENCRYPTED_DATA
-const ENC_MAGIC = Buffer.from('EADB');
-
-function deriveKey(passphrase: string, salt: Buffer): Buffer {
-  return crypto.pbkdf2Sync(passphrase, salt, 100000, 32, 'sha256');
-}
-
-export function encryptBuffer(plainBuffer: Buffer, passphrase: string): Buffer {
-  const salt = crypto.randomBytes(16);
-  const key = deriveKey(passphrase, salt);
-  const nonce = crypto.randomBytes(12);
-  const cipher = crypto.createCipheriv('chacha20-poly1305', key, nonce, { authTagLength: 16 });
-  const encrypted = Buffer.concat([cipher.update(plainBuffer), cipher.final()]);
-  const authTag = cipher.getAuthTag();
-  return Buffer.concat([ENC_MAGIC, salt, nonce, authTag, encrypted]);
-}
-
-export function decryptBuffer(encBuffer: Buffer, passphrase: string): Buffer {
-  if (encBuffer.length < 48) throw new Error('加密檔案格式錯誤：檔案太小');
-  const magic = encBuffer.subarray(0, 4);
-  if (!magic.equals(ENC_MAGIC)) throw new Error('非加密資料庫檔案');
-  const salt = encBuffer.subarray(4, 20);
-  const nonce = encBuffer.subarray(20, 32);
-  const authTag = encBuffer.subarray(32, 48);
-  const encrypted = encBuffer.subarray(48);
-  const key = deriveKey(passphrase, salt);
-  const decipher = crypto.createDecipheriv('chacha20-poly1305', key, nonce, { authTagLength: 16 });
-  decipher.setAuthTag(authTag);
-  return Buffer.concat([decipher.update(encrypted), decipher.final()]);
-}
-
-export function isEncryptedDB(buffer: Buffer): boolean {
-  if (!Buffer.isBuffer(buffer)) return false;
-  return buffer.length >= 4 && buffer.subarray(0, 4).equals(ENC_MAGIC);
-}
-
-// ── 非阻塞寫檔（in-flight + pending 合併，tmp+rename 保證原子性）──
-let _db: SqlJsDatabase | null = globalThis.__sqlDb ?? null;
-let saveInFlight = false;
-let savePending = false;
-let usingPostgresRuntime = false;
-
-function isPostgresCompatDb(db: SqlJsDatabase | null | undefined): boolean {
-  return db?.constructor?.name === 'PostgresCompatDatabase';
-}
-
-function canExportSqliteDb(): boolean {
-  if (usingPostgresRuntime) return false;
-  const db = _db ?? globalThis.__sqlDb ?? null;
-  if (!db) return false;
-  try {
-    return typeof db.export === 'function' && !isPostgresCompatDb(db);
-  } catch (_) {
-    return false;
-  }
-}
+let _db: DatabaseLike | null = globalThis.__assetPilotDb ?? null;
 
 export function saveDB(): void {
-  if (!canExportSqliteDb()) return;
-  const dbPath = getDbPath();
-  if (saveInFlight) { savePending = true; return; }
-  saveInFlight = true;
-  (async () => {
-    try {
-      while (true) {
-        savePending = false;
-        const data = _db!.export();
-        const plain = Buffer.from(data);
-        const buf = DB_ENCRYPTION_KEY ? encryptBuffer(plain, DB_ENCRYPTION_KEY) : plain;
-        const tmp = dbPath + '.tmp';
-        await fs.promises.writeFile(tmp, buf);
-        await fs.promises.rename(tmp, dbPath);
-        if (!savePending) break;
-      }
-    } catch (e) {
-      console.error('saveDB failed:', (e as Error)?.message ?? e);
-    } finally {
-      saveInFlight = false;
-    }
-  })();
+  // PostgreSQL commits writes in db.run(); kept for existing call sites.
 }
 
 export function saveDBSync(): void {
-  if (!canExportSqliteDb()) return;
-  const dbPath = getDbPath();
-  const data = _db!.export();
-  const plain = Buffer.from(data);
-  const buf = DB_ENCRYPTION_KEY ? encryptBuffer(plain, DB_ENCRYPTION_KEY) : plain;
-  fs.writeFileSync(dbPath, buf);
+  // PostgreSQL commits writes in db.run(); kept for shutdown hooks.
 }
 
-export const flushOnExit = (): void => { try { saveDBSync(); } catch { /* noop */ } };
+export const flushOnExit = (): void => {};
 
 // ── 初始化（含 migrations）──
 export async function initDB(): Promise<void> {
   if (_db) return;
 
-  const dbPath = getDbPath();
-  if (process.env.DATABASE_URL || process.env.POSTGRES_URL) {
-    try {
-      const { migrateSqliteToPostgresIfNeeded } = await import('./postgresMigration');
-      const stats = await migrateSqliteToPostgresIfNeeded({
-        dbPath,
-        encryptionKey: DB_ENCRYPTION_KEY,
-        decryptBuffer,
-        isEncryptedDB,
-      });
-      if (stats?.skipped) {
-        console.log('[postgres-migration] PostgreSQL already has this SQLite source hash; skipped');
-      } else if (stats) {
-        const importedRows = stats.tables.reduce((sum, table) => sum + table.rows, 0);
-        console.log(`[postgres-migration] migrated SQLite .db to PostgreSQL: ${stats.tables.length} tables, ${importedRows} rows`);
-      }
-    } catch (e) {
-      console.error('[postgres-migration] SQLite .db to PostgreSQL migration failed:', (e as Error)?.message ?? e);
-      if (process.env.POSTGRES_MIGRATION_REQUIRED === '1') process.exit(1);
-    }
+  if (!process.env.DATABASE_URL && !process.env.POSTGRES_URL) {
+    throw new Error('未設定 DATABASE_URL 或 POSTGRES_URL，AssetPilot 現在僅支援 PostgreSQL');
   }
 
-  const { shouldUsePostgresRuntime, PostgresCompatDatabase } = await import('./postgresRuntime');
-  if (shouldUsePostgresRuntime()) {
-    _db = new PostgresCompatDatabase() as unknown as SqlJsDatabase;
-    usingPostgresRuntime = true;
-    globalThis.__sqlDb = _db;
-    await _runMigrations();
-    console.log('資料庫初始化完成（PostgreSQL runtime）');
-    return;
-  }
-
-  const { default: initSqlJs } = await import('sql.js') as unknown as { default: (opts: { locateFile: (f: string) => string }) => Promise<SqlJsStatic> };
-  const SQL = await initSqlJs({
-    locateFile: (file) => path.join(process.cwd(), 'node_modules', 'sql.js', 'dist', file),
-  });
-
-  if (fs.existsSync(dbPath)) {
-    const fileBuffer = fs.readFileSync(dbPath);
-    const encrypted = isEncryptedDB(fileBuffer);
-
-    if (encrypted && !DB_ENCRYPTION_KEY) {
-      console.error('錯誤：資料庫已加密但未設定 DB_ENCRYPTION_KEY，無法啟動');
-      process.exit(1);
-    }
-
-    if (encrypted) {
-      try {
-        const plain = decryptBuffer(fileBuffer, DB_ENCRYPTION_KEY);
-        _db = new SQL.Database(plain);
-        console.log('已載入加密資料庫（ChaCha20-Poly1305）');
-      } catch (e) {
-        console.error('資料庫解密失敗（金鑰可能不正確）:', (e as Error).message);
-        process.exit(1);
-      }
-    } else if (DB_ENCRYPTION_KEY) {
-      _db = new SQL.Database(fileBuffer);
-      console.log('偵測到未加密資料庫，自動加密中...');
-      saveDB();
-      console.log('資料庫已自動加密完成');
-    } else {
-      _db = new SQL.Database(fileBuffer);
-    }
-  } else {
-    _db = new SQL.Database();
-    if (DB_ENCRYPTION_KEY) console.log('將使用加密模式儲存新資料庫');
-  }
-
-  globalThis.__sqlDb = _db;
+  const { PostgresCompatDatabase } = await import('./postgresRuntime');
+  _db = new PostgresCompatDatabase() as unknown as DatabaseLike;
+  globalThis.__assetPilotDb = _db;
   await _runMigrations();
-  console.log('資料庫初始化完成');
+  console.log('資料庫初始化完成（PostgreSQL）');
 }
 
-export function getDB(): SqlJsDatabase {
-  if (!_db) _db = globalThis.__sqlDb ?? null;
+export function getDB(): DatabaseLike {
+  if (!_db) _db = globalThis.__assetPilotDb ?? null;
   if (!_db) throw new Error('DB 尚未初始化，請確認 instrumentation.js 已執行');
   return _db;
 }
 
 export function isPostgresRuntime(): boolean {
-  if (usingPostgresRuntime) return true;
-  const db = _db ?? globalThis.__sqlDb ?? null;
-  if (isPostgresCompatDb(db)) return true;
-  return !!(process.env.DATABASE_URL || process.env.POSTGRES_URL)
-    && process.env.POSTGRES_RUNTIME !== '0';
+  return true;
 }
 
 // ── 便利查詢工具 ──
@@ -357,7 +195,7 @@ async function _runMigrations(): Promise<void> {
   alterIgnore("ALTER TABLE system_settings ADD COLUMN transaction_photo_storage TEXT DEFAULT ''")
   alterIgnore("ALTER TABLE system_settings ADD COLUMN transaction_photo_max_bytes INTEGER DEFAULT 0")
 
-  db.run(`INSERT OR IGNORE INTO system_settings (id, public_registration, allowed_registration_emails, admin_ip_allowlist, updated_at, updated_by) VALUES (1, 1, '', '', ?, '')`, [Date.now()]);
+  db.run(`INSERT INTO system_settings (id, public_registration, allowed_registration_emails, admin_ip_allowlist, updated_at, updated_by) VALUES (1, 1, '', '', ?, '') ON CONFLICT DO NOTHING`, [Date.now()]);
 
   db.run(`CREATE TABLE IF NOT EXISTS report_schedules (
     id              TEXT    PRIMARY KEY,
@@ -605,7 +443,7 @@ async function _runMigrations(): Promise<void> {
     const adminCheck = db.exec("SELECT id FROM users WHERE is_admin = 1 LIMIT 1");
     const hasAdmin = adminCheck.length > 0 && adminCheck[0].values.length > 0;
     if (!hasAdmin) {
-      db.run("UPDATE users SET is_admin = 1 WHERE rowid = (SELECT MIN(rowid) FROM users)");
+      db.run("UPDATE users SET is_admin = 1 WHERE id = (SELECT id FROM users ORDER BY created_at NULLS LAST, id LIMIT 1)");
     }
   } catch (_) {}
 
@@ -666,134 +504,5 @@ async function _runMigrations(): Promise<void> {
   alterIgnore("ALTER TABLE login_attempt_logs ADD COLUMN failure_reason TEXT DEFAULT ''");
   alterIgnore("ALTER TABLE login_attempt_logs ADD COLUMN country TEXT DEFAULT ''");
 
-  // 檢測並進行 fx_rate 類型 migration（REAL → TEXT）
-  try {
-    const checkTxFxRate = db.exec("SELECT typeof(fx_rate) as type FROM transactions LIMIT 1");
-    if (checkTxFxRate.length > 0 && checkTxFxRate[0].values.length > 0 && checkTxFxRate[0].values[0][0] === 'real') {
-      console.log('[migration] detected transactions.fx_rate as REAL, starting migration to TEXT...');
-      db.run('BEGIN');
-      db.run(`CREATE TABLE IF NOT EXISTS transactions_new (
-        id TEXT PRIMARY KEY,
-        user_id TEXT NOT NULL,
-        type TEXT NOT NULL,
-        amount REAL NOT NULL,
-        currency TEXT DEFAULT 'TWD',
-        original_amount REAL DEFAULT 0,
-        fx_rate TEXT DEFAULT '1',
-        fx_fee REAL DEFAULT 0,
-        twd_amount REAL DEFAULT 0,
-        date TEXT NOT NULL,
-        category_id TEXT,
-        account_id TEXT,
-        to_account_id TEXT,
-        note TEXT DEFAULT '',
-        linked_id TEXT DEFAULT '',
-        exclude_from_stats INTEGER DEFAULT 0,
-        source_recurring_id TEXT DEFAULT '',
-        scheduled_date TEXT DEFAULT '',
-        tags TEXT DEFAULT '[]',
-        transfer_to_account_id TEXT DEFAULT '',
-        created_at INTEGER,
-        updated_at INTEGER
-      )`);
-      db.run(`INSERT INTO transactions_new 
-        SELECT id, user_id, type, amount, currency, original_amount, 
-               CAST(fx_rate AS TEXT), fx_fee, twd_amount,
-               date, category_id, account_id, to_account_id, note, linked_id,
-               exclude_from_stats, source_recurring_id, scheduled_date, tags, 
-               transfer_to_account_id, created_at, updated_at
-        FROM transactions`);
-      db.run('DROP TABLE transactions');
-      db.run('ALTER TABLE transactions_new RENAME TO transactions');
-      db.run(`CREATE INDEX IF NOT EXISTS idx_tx_user_date ON transactions(user_id, date DESC)`);
-      db.run(`CREATE INDEX IF NOT EXISTS idx_tx_category ON transactions(category_id)`);
-      db.run(`CREATE INDEX IF NOT EXISTS idx_tx_account ON transactions(account_id)`);
-      db.run(`CREATE INDEX IF NOT EXISTS idx_tx_source ON transactions(source_recurring_id) WHERE source_recurring_id IS NOT NULL`);
-      db.run(`CREATE UNIQUE INDEX IF NOT EXISTS idx_tx_source_scheduled ON transactions(source_recurring_id, scheduled_date) WHERE source_recurring_id IS NOT NULL`);
-      db.run('COMMIT');
-      console.log('[migration] transactions.fx_rate migration completed');
-    }
-  } catch (e) {
-    console.warn('[migration] transactions.fx_rate migration failed:', e);
-  }
-
-  // 檢測並進行 recurring.fx_rate 類型 migration
-  try {
-    const checkRecurringFxRate = db.exec("SELECT typeof(fx_rate) as type FROM recurring LIMIT 1");
-    if (checkRecurringFxRate.length > 0 && checkRecurringFxRate[0].values.length > 0 && checkRecurringFxRate[0].values[0][0] === 'real') {
-      console.log('[migration] detected recurring.fx_rate as REAL, starting migration to TEXT...');
-      db.run('BEGIN');
-      db.run(`CREATE TABLE IF NOT EXISTS recurring_new (
-        id TEXT PRIMARY KEY,
-        user_id TEXT NOT NULL,
-        type TEXT NOT NULL,
-        amount REAL NOT NULL,
-        currency TEXT DEFAULT 'TWD',
-        fx_rate TEXT DEFAULT '1',
-        category_id TEXT,
-        account_id TEXT,
-        frequency TEXT NOT NULL,
-        start_date TEXT,
-        note TEXT DEFAULT '',
-        is_active INTEGER DEFAULT 1,
-        last_generated TEXT,
-        needs_attention INTEGER DEFAULT 0,
-        updated_at INTEGER DEFAULT 0,
-        created_at INTEGER
-      )`);
-      db.run(`INSERT INTO recurring_new 
-        SELECT id, user_id, type, amount, currency, CAST(fx_rate AS TEXT),
-               category_id, account_id, frequency, start_date, note, is_active,
-               last_generated, needs_attention, updated_at, created_at
-        FROM recurring`);
-      db.run('DROP TABLE recurring');
-      db.run('ALTER TABLE recurring_new RENAME TO recurring');
-      db.run('COMMIT');
-      console.log('[migration] recurring.fx_rate migration completed');
-    }
-  } catch (e) {
-    console.warn('[migration] recurring.fx_rate migration failed:', e);
-  }
-
-  // 檢測並進行 exchange_rates.rate_to_twd 類型 migration
-  try {
-    const checkExchangeRateToTwd = db.exec("SELECT typeof(rate_to_twd) as type FROM exchange_rates LIMIT 1");
-    if (checkExchangeRateToTwd.length > 0 && checkExchangeRateToTwd[0].values.length > 0 && checkExchangeRateToTwd[0].values[0][0] === 'real') {
-      console.log('[migration] detected exchange_rates.rate_to_twd as REAL, starting migration to TEXT...');
-      db.run('BEGIN');
-      db.run(`CREATE TABLE IF NOT EXISTS exchange_rates_new (
-        user_id TEXT NOT NULL,
-        currency TEXT NOT NULL,
-        rate_to_twd TEXT NOT NULL,
-        updated_at INTEGER,
-        PRIMARY KEY (user_id, currency)
-      )`);
-      db.run(`INSERT INTO exchange_rates_new 
-        SELECT user_id, currency, CAST(rate_to_twd AS TEXT), updated_at
-        FROM exchange_rates`);
-      db.run('DROP TABLE exchange_rates');
-      db.run('ALTER TABLE exchange_rates_new RENAME TO exchange_rates');
-      db.run('COMMIT');
-      console.log('[migration] exchange_rates.rate_to_twd migration completed');
-    }
-  } catch (e) {
-    console.warn('[migration] exchange_rates.rate_to_twd migration failed:', e);
-  }
-
-  const backupsDir = path.join(process.cwd(), 'backups');
-  if (!fs.existsSync(backupsDir)) fs.mkdirSync(backupsDir, { recursive: true });
-
   saveDB();
-}
-
-export async function replaceDB(uint8Array: Uint8Array): Promise<void> {
-  if (usingPostgresRuntime) {
-    throw new Error('PostgreSQL runtime does not support replacing the database with a SQLite .db file');
-  }
-  const DatabaseConstructor = (getDB() as unknown as { constructor: SqlJsStatic['Database'] }).constructor;
-  if (_db) { try { _db.close(); } catch { /* noop */ } }
-  _db = new DatabaseConstructor(uint8Array);
-  if (process.env.NODE_ENV !== 'production') globalThis.__sqlDb = _db;
-  saveDB();
-  await _runMigrations();
 }

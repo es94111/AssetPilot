@@ -128,7 +128,7 @@ async function processStockRecurring(userId) {
       if (actualDate !== scheduledDate) noteParts.push(`原排程 ${scheduledDate} 順延`);
       try {
         db.run(
-          'INSERT OR IGNORE INTO stock_transactions (id,user_id,stock_id,date,type,shares,price,fee,tax,account_id,note,created_at,tax_auto_calculated,recurring_plan_id,period_start_date) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
+          'INSERT INTO stock_transactions (id,user_id,stock_id,date,type,shares,price,fee,tax,account_id,note,created_at,tax_auto_calculated,recurring_plan_id,period_start_date) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT DO NOTHING',
           [uid(), userId, r.stock_id, actualDate, 'buy', shares, price, fee, 0, r.account_id || '', noteParts.filter(Boolean).join(' | '), Date.now(), 1, r.id, scheduledDate]
         );
         if (db.getRowsModified() > 0) generated++; else skipped++;

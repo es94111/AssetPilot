@@ -1,4 +1,4 @@
-import type { SqlJsDatabase } from './lib/db';
+import type { DatabaseLike } from './lib/db';
 
 // instrumentation.ts — Next.js 15 穩定 API，無需 experimental.instrumentationHook
 // 僅在 Node.js runtime 執行（Edge runtime 不執行此檔）
@@ -9,7 +9,7 @@ export async function register() {
   const { initDB, flushOnExit } = await import('./lib/db');
   await initDB();
 
-  // 程序結束時同步寫回 DB
+  // 程序結束時保留既有關閉 hook；PostgreSQL 寫入已即時 commit。
   process.once('SIGINT', () => { flushOnExit(); process.exit(0); });
   process.once('SIGTERM', () => { flushOnExit(); process.exit(0); });
 
@@ -49,7 +49,7 @@ function registerAuditPruneJob() {
     }
   }
 
-  function pruneTable(db: Pick<SqlJsDatabase, 'exec' | 'run'>, retentionDays: number, batchSize: number) {
+  function pruneTable(db: Pick<DatabaseLike, 'exec' | 'run'>, retentionDays: number, batchSize: number) {
     const threshold = Date.now() - retentionDays * 86400 * 1000;
     // login_audit_logs
     while (true) {
@@ -57,7 +57,7 @@ function registerAuditPruneJob() {
       const rows = res[0]?.values || [];
       if (rows.length === 0) break;
       const placeholders = rows.map(() => '?').join(',');
-      db.run(`DELETE FROM login_audit_logs WHERE id IN (${placeholders})`, rows.map(r => r[0]));
+      db.run(`DELETE FROM login_audit_logs WHERE id IN (${placeholders})`, rows.map((r: Array<string | number | null>) => r[0]));
       if (rows.length < batchSize) break;
     }
     // data_operation_audit_log（timestamp 欄位為 ISO 字串）

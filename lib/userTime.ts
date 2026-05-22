@@ -129,7 +129,7 @@ export function toIsoUtc(value: number | Date | string | null | undefined): stri
     if (/[+\-]\d{2}:?\d{2}$/.test(value)) {
       throw new TypeError(`toIsoUtc: 不接受帶時區偏移的輸入（${value}），必須為 UTC Z`);
     }
-    // 容錯：sqlite default 'YYYY-MM-DD HH:mm:ss' 視為 UTC
+    // 容錯：legacy database default 'YYYY-MM-DD HH:mm:ss' 視為 UTC
     let s = value;
     if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}(\.\d+)?$/.test(s)) {
       s = s.replace(' ', 'T') + 'Z';

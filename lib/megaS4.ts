@@ -99,7 +99,7 @@ export function makeMegaS4BackupFilename(date = new Date()) {
   return `assetpilot-backup-${ts}.db`;
 }
 
-export async function uploadMegaS4Backup(body: Buffer, filename: string, contentType = 'application/x-sqlite3'): Promise<MegaS4UploadResult> {
+export async function uploadMegaS4Backup(body: Buffer, filename: string, contentType = 'application/sql; charset=utf-8'): Promise<MegaS4UploadResult> {
   const config = getMegaS4Config();
   const key = makeObjectKey(config.prefix, filename);
   return putS3Object(config, key, body, contentType);

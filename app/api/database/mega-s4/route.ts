@@ -1,7 +1,6 @@
 // @ts-nocheck
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '../../../../lib/apiHelpers';
-import { getDB, isPostgresRuntime } from '../../../../lib/db';
 import { writeOperationAudit } from '../../../../lib/auditHelpers';
 import { getMegaS4ConfigStatus, makeMegaS4BackupFilename, uploadMegaS4Backup } from '../../../../lib/megaS4';
 import { writeEnvVars } from '../../../../lib/envSecrets';
@@ -41,17 +40,12 @@ export async function POST(request) {
       return NextResponse.json({ error: 'MEGA S4 尚未設定', missing: status.missing }, { status: 400 });
     }
 
-    const postgresRuntime = isPostgresRuntime();
-    const plain = postgresRuntime
-      ? Buffer.from(createPostgresBackupSql(), 'utf8')
-      : Buffer.from(getDB().export());
-    const filename = postgresRuntime
-      ? makeMegaS4BackupFilename().replace(/\.db$/u, '.sql')
-      : makeMegaS4BackupFilename();
+    const plain = Buffer.from(createPostgresBackupSql(), 'utf8');
+    const filename = makeMegaS4BackupFilename().replace(/\.db$/u, '.sql');
     const result = await uploadMegaS4Backup(
       plain,
       filename,
-      postgresRuntime ? 'application/sql; charset=utf-8' : 'application/x-sqlite3',
+      'application/sql; charset=utf-8',
     );
 
     writeOperationAudit({
@@ -65,7 +59,7 @@ export async function POST(request) {
         object_key: result.key,
         endpoint: result.endpoint,
         region: result.region,
-        runtime: postgresRuntime ? 'postgres' : 'sqlite',
+        runtime: 'postgres',
       },
     });
 

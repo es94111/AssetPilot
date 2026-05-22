@@ -100,13 +100,13 @@ export function createDefaultsForUser(userId: string): void {
     [uid(), userId, '現金', 'cash', 0, 'TWD', 'fa-wallet', 0, null, null, '現金', todayStr(), nowMs]
   );
   db.run(
-    "INSERT OR IGNORE INTO user_settings (user_id, pinned_currencies, default_currency, updated_at) VALUES (?, ?, ?, ?)",
+    "INSERT INTO user_settings (user_id, pinned_currencies, default_currency, updated_at) VALUES (?, ?, ?, ?) ON CONFLICT DO NOTHING",
     [userId, '["TWD"]', 'TWD', nowMs]
   );
-  db.run("INSERT OR IGNORE INTO exchange_rate_settings (user_id, auto_update, last_synced_at, updated_at) VALUES (?, 0, 0, ?)",
+  db.run("INSERT INTO exchange_rate_settings (user_id, auto_update, last_synced_at, updated_at) VALUES (?, 0, 0, ?) ON CONFLICT DO NOTHING",
     [userId, nowMs]);
-  db.run(`INSERT OR IGNORE INTO stock_settings (user_id, fee_rate, fee_discount, fee_min_lot, fee_min_odd, sell_tax_rate_stock, sell_tax_rate_etf, sell_tax_rate_warrant, sell_tax_min, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+  db.run(`INSERT INTO stock_settings (user_id, fee_rate, fee_discount, fee_min_lot, fee_min_odd, sell_tax_rate_stock, sell_tax_rate_etf, sell_tax_rate_warrant, sell_tax_min, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT DO NOTHING`,
     [userId, DEFAULT_STOCK_SETTINGS.feeRate, DEFAULT_STOCK_SETTINGS.feeDiscount,
       DEFAULT_STOCK_SETTINGS.feeMinLot, DEFAULT_STOCK_SETTINGS.feeMinOdd,
       DEFAULT_STOCK_SETTINGS.sellTaxRateStock, DEFAULT_STOCK_SETTINGS.sellTaxRateEtf,

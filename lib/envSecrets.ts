@@ -54,10 +54,6 @@ export function ensureEnvSecrets(): void {
     updates.JWT_SECRET = generateSecret(64);
     process.env.JWT_SECRET = updates.JWT_SECRET;
   }
-  if (!process.env.DB_ENCRYPTION_KEY) {
-    updates.DB_ENCRYPTION_KEY = generateSecret(64);
-    process.env.DB_ENCRYPTION_KEY = updates.DB_ENCRYPTION_KEY;
-  }
 
   if (Object.keys(updates).length === 0) return;
 

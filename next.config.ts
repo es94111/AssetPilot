@@ -8,7 +8,6 @@ const nextConfig: NextConfig = {
   output: 'standalone',
   outputFileTracingRoot: PROJECT_ROOT,
   allowedDevOrigins: ['127.0.0.1', 'localhost'],
-  serverExternalPackages: ['sql.js'],
   distDir: 'build', // ASCII-only path
   // 保留 JS/TS 混用（由 tsconfig 的 allowJs 控制），但 build 需執行完整型別檢查
   typescript: { ignoreBuildErrors: false },

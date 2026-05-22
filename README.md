@@ -84,7 +84,7 @@
 
 - **CSV 匯出**：交易 / 分類 / 股票交易 / 股利紀錄；純伺服端 stream + UTF-8 BOM + Formula Injection 防護
 - **CSV 匯入**：互斥鎖（重入回 409）+ 全 DB transaction 原子化 + 進度回饋每 500 筆 + ISO 8601 嚴格驗證 + 多欄重複偵測
-- **整檔備份 / 還原**：壓縮加密的 `.db` 檔案下載 / 上傳；還原失敗自動回滾至 `before-restore-{ts}.db`；管理員可列管 5 份 / 90 天內備份
+- **整檔備份 / 還原**：PostgreSQL SQL 備份下載 / 上傳；還原失敗自動回滾至 `before-restore-{ts}.sql`；管理員可列管 5 份 / 90 天內備份
 - **稽核日誌**：管理員與使用者可分別檢視；支援過濾、CSV 匯出、清空、保留天數設定（30 / 90 / 180 / 365 / forever）
 
 ### 系統管理
@@ -92,7 +92,7 @@
 - **使用者管理**：管理員可開關註冊、設定 Email 白名單、IP 白名單、新增 / 刪除 / 重設密碼
 - **登入稽核**：時間、IP、國家、方式（密碼 / Google / LINE / Passkey）、成功 / 失敗
 - **寄信通道**：以 `EMAIL_PROVIDER_PRIMARY` / `EMAIL_PROVIDER_FALLBACK` 環境變數指定主要與備用通道（值：`smtp` / `zeabur` / `resend` / 留空），支援 SMTP（Nodemailer）、Zeabur Email（ZSend HTTP API）、Resend；可選 `EMAIL_SENDER_NAME` 為三通道統一指定寄件人顯示名稱；管理員設定頁可即時檢視各通道是否設定並寄送測試信
-- **MEGA S4 備份**：管理員可在「資料匯出匯入」頁將完整 SQLite 備份手動上傳到 MEGA S4 S3 相容 bucket，金鑰僅由伺服器端環境變數讀取
+- **MEGA S4 備份**：管理員可在「資料匯出匯入」頁將完整 PostgreSQL SQL 備份手動上傳到 MEGA S4 S3 相容 bucket，金鑰僅由伺服器端環境變數讀取
 - **交易照片附件**：新增交易時可附上照片，並選擇存放於 Server 本機或 S3 相容物件儲存；附件取用一律走登入授權 API
 - **路由稽核模式**（v4.29.0）：security（預設）/ extended（含 401 session 失效）/ minimal（路由稽核全部關閉）
 - **API 使用與授權頁**：動態列出所有外部 API 來源、配額、合規授權字樣（IPinfo `IP address data is powered by IPinfo`）
@@ -105,8 +105,7 @@
 | ---- | ---- |
 | 前端 | 原生 HTML / CSS / Vanilla JS (已遷移至 Next.js 15 + Tailwind CSS v4) |
 | 後端 | Node.js ≥ 24 + Express 5 |
-| 資料庫 | SQLite（sql.js，記憶體 + 檔案持久化）；支援啟動時自動將既有 `.db` 匯入 PostgreSQL |
-| 加密 | ChaCha20-Poly1305 AEAD + PBKDF2-SHA256 |
+| 資料庫 | PostgreSQL |
 | 認證 | JWT（HS256，httpOnly Cookie）+ bcryptjs；選配 Google OAuth Code Flow + LINE Login Code Flow + Passkey（WebAuthn） |
 | 金額精度 | decimal.js（FIFO / 匯率 / 手續費分攤前後端同構共用 `lib/moneyDecimal.js`） |
 | 圖表 | Chart.js |
@@ -131,27 +130,41 @@ docker run -d \
   es94111/assetpilot:latest
 ```
 
-開啟 <http://localhost:3000> 即可使用。`JWT_SECRET` 與 `DB_ENCRYPTION_KEY` 首次啟動自動產生並寫入 `/app/data/.env`，之後重啟自動讀取。
+開啟 <http://localhost:3000> 即可使用。`JWT_SECRET` 首次啟動自動產生並寫入 `/app/data/.env`，之後重啟自動讀取。
 
 **Docker Compose 範例：**
 
 ```yaml
 services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=assetpilot
+      - POSTGRES_USER=assetpilot
+      - POSTGRES_PASSWORD=assetpilot
+    volumes:
+      - assetpilot-postgres:/var/lib/postgresql/data
+
   assetpilot:
     image: es94111/assetpilot:latest
     container_name: assetpilot
     restart: unless-stopped
+    depends_on:
+      - postgres
     ports:
       - "3000:3000"
     volumes:
       - assetpilot-data:/app/data
     environment:
+      - DATABASE_URL=postgres://assetpilot:assetpilot@postgres:5432/assetpilot
       - GOOGLE_CLIENT_ID=         # 選配
       - LINE_CHANNEL_ID=          # 選配
       # - ALLOWED_ORIGINS=https://your-domain.com
 
 volumes:
   assetpilot-data:
+  assetpilot-postgres:
 ```
 
 **映像檔：** [`es94111/assetpilot`](https://hub.docker.com/r/es94111/assetpilot)，支援 `linux/amd64` + `linux/arm64`，基底 `node:24-alpine`，~180 MB，內建每 30 秒 `/api/config` 健康檢查。
@@ -171,16 +184,9 @@ npm run build
 npm run start
 ```
 
-### SQLite `.db` 自動匯入 PostgreSQL
+### PostgreSQL
 
-若環境變數設定 `DATABASE_URL` 或 `POSTGRES_URL`，啟動時會讀取 `DB_PATH` 指向的既有 SQLite `.db`，自動建立 PostgreSQL 資料表並匯入資料。系統會在 PostgreSQL 的 `assetpilot_migration_metadata` 表記錄來源檔案 SHA-256，來源未變更時不會重複匯入；需要強制重匯可設定 `POSTGRES_MIGRATION_FORCE=1`。
-
-```bash
-DATABASE_URL=postgres://assetpilot:assetpilot@localhost:5432/assetpilot \
-npm run db:migrate:postgres
-```
-
-`POSTGRES_MIGRATION_REQUIRED=1` 可讓啟動流程在 PostgreSQL 匯入失敗時直接中止。設定 `DATABASE_URL` 後，系統會預設使用 PostgreSQL runtime 讀寫；若需要暫時退回 SQLite runtime，可設定 `POSTGRES_RUNTIME=0`。
+AssetPilot 現在僅支援 PostgreSQL。請設定 `DATABASE_URL` 或 `POSTGRES_URL`，啟動時會自動建立或補齊必要資料表與欄位。
 
 ### Synology NAS
 
@@ -190,7 +196,7 @@ Container Manager → Registry → 搜尋 `es94111/assetpilot` → 下載 → Cr
 ### Volume 備份 / 還原
 
 ```bash
-# 備份（含資料庫與金鑰；兩者缺一無法還原）
+# 備份（含應用設定與 SSL 憑證；PostgreSQL 資料請備份 assetpilot-postgres volume 或使用管理頁 SQL 備份）
 docker run --rm -v assetpilot-data:/data -v $(pwd):/backup alpine \
   tar czf /backup/assetpilot-backup.tar.gz -C /data .
 
@@ -199,7 +205,7 @@ docker run --rm -v assetpilot-data:/data -v $(pwd):/backup alpine \
   tar xzf /backup/assetpilot-backup.tar.gz -C /data
 ```
 
-> ⚠️ Volume 與 `.env` 內的金鑰為一組；切勿單獨刪除 `/app/data/.env`，否則資料庫無法解密。
+> ⚠️ PostgreSQL 資料位於資料庫 volume；`assetpilot-data` 只保存應用設定與 SSL 憑證等檔案。
 
 ---
 
@@ -210,15 +216,10 @@ Docker 多數參數已有合理預設，重點關注「自動產生」與「功�
 | 變數 | 類別 | 說明 | 預設值 |
 | ---- | ---- | ---- | ------ |
 | `PORT` | 基本 | 伺服器埠號 | `3000` |
-| `DB_PATH` | 基本 | 資料庫檔案路徑 | `./database.db`（Docker：`/app/data/database.db`） |
-| `DATABASE_URL` / `POSTGRES_URL` | 選配 | PostgreSQL 連線字串；設定後啟動時自動把既有 SQLite `.db` 匯入 PostgreSQL | — |
-| `POSTGRES_MIGRATION_REQUIRED` | 選配 | 設為 `1` 時，PostgreSQL 匯入失敗會中止啟動 | `0` |
-| `POSTGRES_MIGRATION_FORCE` | 選配 | 設為 `1` 時忽略來源 hash，清空目標表後重新匯入 | `0` |
-| `POSTGRES_RUNTIME` | 選配 | 設為 `0` 可停用 PostgreSQL runtime，改回 SQLite/sql.js 讀寫 | `1`（有 `DATABASE_URL` 時） |
+| `DATABASE_URL` / `POSTGRES_URL` | 基本 | PostgreSQL 連線字串 | — |
 | `POSTGRES_SYNC_RESULT_BUFFER_BYTES` | 選配 | PostgreSQL 同步相容層單次查詢結果緩衝大小 | `67108864` |
 | `JWT_EXPIRES` | 基本 | JWT 有效期限 | `7d` |
 | `JWT_SECRET` | 🔑 自動 | JWT 簽章金鑰，64 字元 hex（首次啟動自動產生） | — |
-| `DB_ENCRYPTION_KEY` | 🔑 自動 | 資料庫 ChaCha20 金鑰，64 字元 hex（自動產生） | — |
 | `ENV_PATH` | 🔑 自動 | 自動產生金鑰的存放路徑 | `/app/data/.env` |
 | `GOOGLE_CLIENT_ID` | SSO | Google OAuth 2.0 Client ID（留空停用 SSO） | — |
 | `GOOGLE_CLIENT_SECRET` | SSO | Google OAuth Client Secret | — |
@@ -474,7 +475,7 @@ Webhook 回覆使用 LINE Flex Message Button：未綁定時顯示「綁定 LINE
 | SMTP（Nodemailer） | 排程信件 / 系統通知（Gmail / Outlook 等） | <https://nodemailer.com/> |
 | Zeabur Email（ZSend） | 排程信件 / 系統通知 | <https://zeabur.com/docs/en-US/email/quick-start> |
 | Resend | 排程信件 / 系統通知 | <https://resend.com/> |
-| MEGA S4 Object Storage | 管理員整檔 SQLite 備份的 S3 相容物件儲存目的地 | <https://mega.io/zh-hant/objectstorage> |
+| MEGA S4 Object Storage | 管理員整檔 PostgreSQL SQL 備份的 S3 相容物件儲存目的地 | <https://mega.io/zh-hant/objectstorage> |
 
 完整列表與授權字樣可在執行中應用程式的 `/api-credits` 頁面查看。
 

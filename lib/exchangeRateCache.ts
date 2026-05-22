@@ -2,7 +2,7 @@
 // FR-023：5 分鐘 in-flight dedup + 30 分鐘 server cache。
 // FR-024：API 失敗時 fallback 至最近成功快取（< 30 分鐘）→ 使用者手動輸入。
 import Decimal from 'decimal.js';
-import type { SqlJsDatabase } from './db';
+import type { DatabaseLike } from './db';
 
 const TTL_MS = 30 * 60 * 1000;        // 30 分鐘快取
 const FETCH_TIMEOUT_MS = 2000;         // 單次外部 API 逾時
@@ -25,10 +25,10 @@ export const _cache = new Map<string, CacheEntry>();
 // In-flight requests：currency → Promise
 export const _inFlight = new Map<string, Promise<RateResult>>();
 
-// 註冊 db 物件（由 server.js 啟動時注入；避免 lib 強依賴 sql.js 載入順序）
-let _db: SqlJsDatabase | null = null;
-export function setDb(dbInstance: SqlJsDatabase): void { _db = dbInstance; }
-export function getDb(): SqlJsDatabase | null { return _db; }
+// 註冊 db 物件（由啟動流程注入；避免 cache helper 強依賴資料庫初始化順序）
+let _db: DatabaseLike | null = null;
+export function setDb(dbInstance: DatabaseLike): void { _db = dbInstance; }
+export function getDb(): DatabaseLike | null { return _db; }
 
 // 從 DB 暖機 cache（server 啟動時呼叫一次）
 export function primeFromDb(): void {

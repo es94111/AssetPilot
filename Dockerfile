@@ -22,7 +22,6 @@ WORKDIR /app
 COPY --from=builder --chown=nextjs:nodejs /app/build/standalone ./
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
-ENV DB_PATH=/app/data/database.db
 ENV ENV_PATH=/app/data/.env
 ENV SSL_PATH=/app/data/SSL
 ENV JWT_EXPIRES=7d
@@ -40,11 +39,9 @@ COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/build/static ./build/static
 # lib/ 透過 instrumentation.js 動態 import (webpackIgnore)，未被 Next.js trace，需手動複製
 COPY --from=builder --chown=nextjs:nodejs /app/lib ./lib
-# 手動維運指令（例如 npm run db:migrate:postgres）需在 runner 映像內可用
+# 手動維運指令需在 runner 映像內可用
 COPY --from=builder --chown=nextjs:nodejs /app/tools ./tools
-# sql.js wasm 二進位（locateFile 動態路徑，未被 nft 追蹤）
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/sql.js/dist/sql-wasm.wasm ./node_modules/sql.js/dist/sql-wasm.wasm
-# PostgreSQL migration uses runtime require() to keep pg out of the edge/instrumentation bundle,
+# PostgreSQL runtime uses worker_threads require() to keep pg out of the edge/instrumentation bundle,
 # so Next.js standalone tracing cannot discover these packages automatically.
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/pg ./node_modules/pg
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/pg-cloudflare ./node_modules/pg-cloudflare
@@ -61,7 +58,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/node_modules/postgres-interval ./
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/split2 ./node_modules/split2
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/xtend ./node_modules/xtend
 
-# 持久化資料目錄（database.db、.env、SSL 憑證）
+# 持久化資料目錄（.env、SSL 憑證）
 RUN mkdir -p /app/data/SSL/Origin\ Certificates \
  && chown -R nextjs:nodejs /app/data
 VOLUME /app/data

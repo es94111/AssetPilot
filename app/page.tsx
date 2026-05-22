@@ -36,7 +36,7 @@ const STATS = [
   { value: 'FIFO', label: '精度計算', sublabel: 'decimal.js 逐筆損益' },
 ];
 
-const STACK = ['Next.js 15', 'React 19', 'Tailwind CSS v4', 'SQLite (sql.js)', 'ChaCha20-Poly1305', 'JWT + WebAuthn', 'OpenAPI 3.2.0', 'Chart.js', 'Docker multi-arch'];
+const STACK = ['Next.js 15', 'React 19', 'Tailwind CSS v4', 'PostgreSQL', 'JWT + WebAuthn', 'OpenAPI 3.2.0', 'Chart.js', 'Docker multi-arch'];
 
 export default async function Home() {
   const session = await getSession();

@@ -24,6 +24,7 @@ interface StatementLike {
 const RESULT_BUFFER_BYTES = Number(process.env.POSTGRES_SYNC_RESULT_BUFFER_BYTES || 64 * 1024 * 1024);
 
 let worker: RuntimeWorker | null = null;
+let lastRowsModified = 0;
 
 function getWorker(): RuntimeWorker {
   if (!worker) {
@@ -98,21 +99,8 @@ function translatePlaceholders(sql: string, params: DbValue[]): { sql: string; p
   return { sql: out, params: outParams };
 }
 
-function translateInsertOrIgnore(sql: string): string {
-  if (!/^\s*INSERT\s+OR\s+IGNORE\s+INTO\s+/i.test(sql)) return sql;
-  return sql
-    .replace(/^\s*INSERT\s+OR\s+IGNORE\s+INTO\s+/i, 'INSERT INTO ')
-    .replace(/\s*;?\s*$/u, ' ON CONFLICT DO NOTHING');
-}
-
-function translateRowid(sql: string): string {
-  return sql.replace(/WHERE\s+rowid\s*=\s*\(\s*SELECT\s+MIN\(rowid\)\s+FROM\s+users\s*\)/i, 'WHERE id = (SELECT id FROM users ORDER BY created_at NULLS LAST, id LIMIT 1)');
-}
-
 function translateSql(sql: string, params: DbValue[] = []): { sql: string; params: DbValue[] } {
   let next = sql.trim();
-  next = translateInsertOrIgnore(next);
-  next = translateRowid(next);
   next = pgTypeofExpression(next);
   return translatePlaceholders(next, params);
 }
@@ -168,12 +156,14 @@ export class PostgresCompatDatabase {
 
   run(sql: string, params: DbValue[] = []): void {
     const query = translateSql(sql, params);
-    runPg(query.sql, query.params);
+    const result = runPg(query.sql, query.params);
+    lastRowsModified = result.rowCount;
   }
 
   exec(sql: string): Array<{ columns: string[]; values: Array<Array<string | number | null>> }> {
     const query = translateSql(sql, []);
     const result = runPg(query.sql, query.params);
+    lastRowsModified = result.rowCount;
     if (result.fields.length === 0) return [];
     return [{
       columns: result.fields,
@@ -181,16 +171,12 @@ export class PostgresCompatDatabase {
     }];
   }
 
-  export(): Uint8Array {
-    throw new Error('PostgreSQL runtime does not support SQLite .db export');
+  getRowsModified(): number {
+    return lastRowsModified;
   }
 
   close(): void {
     worker?.terminate();
     worker = null;
   }
-}
-
-export function shouldUsePostgresRuntime(): boolean {
-  return !!(process.env.DATABASE_URL || process.env.POSTGRES_URL) && process.env.POSTGRES_RUNTIME !== '0';
 }

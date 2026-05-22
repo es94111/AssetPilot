@@ -147,7 +147,7 @@ test('Date → .sssZ', () => {
   const out = ut.toIsoUtc(new Date('2026-04-29T07:30:00Z'));
   assert.equal(out, '2026-04-29T07:30:00.000Z');
 });
-test('SQLite default 字串（無 T、無 Z）→ 補 T 和 Z', () => {
+test('legacy database default 字串（無 T、無 Z）→ 補 T 和 Z', () => {
   assert.equal(ut.toIsoUtc('2026-04-29 07:30:00'), '2026-04-29T07:30:00.000Z');
 });
 test('已是 .sssZ → 不變', () => {

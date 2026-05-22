@@ -636,10 +636,14 @@ async function _runMigrations(): Promise<void> {
 
   alterIgnore("ALTER TABLE stocks ADD COLUMN current_price REAL DEFAULT 0");
   alterIgnore("ALTER TABLE stocks ADD COLUMN stock_type TEXT DEFAULT 'stock'");
+  alterIgnore("ALTER TABLE stocks ADD COLUMN delisted INTEGER DEFAULT 0");
 
   alterIgnore("ALTER TABLE stock_transactions ADD COLUMN account_id TEXT DEFAULT ''");
   alterIgnore("ALTER TABLE stock_transactions ADD COLUMN realized_pl REAL DEFAULT 0");
   alterIgnore("ALTER TABLE stock_transactions ADD COLUMN tax_auto_calculated INTEGER DEFAULT 1");
+  alterIgnore("ALTER TABLE stock_transactions ADD COLUMN recurring_plan_id TEXT DEFAULT ''");
+  alterIgnore("ALTER TABLE stock_transactions ADD COLUMN period_start_date TEXT DEFAULT ''");
+  alterIgnore("CREATE UNIQUE INDEX IF NOT EXISTS idx_stock_tx_recurring_period ON stock_transactions(user_id, recurring_plan_id, period_start_date) WHERE recurring_plan_id != '' AND period_start_date != ''");
   alterIgnore("ALTER TABLE stock_dividends ADD COLUMN cash_dividend REAL DEFAULT 0");
   alterIgnore("ALTER TABLE stock_dividends ADD COLUMN stock_dividend_shares REAL DEFAULT 0");
   alterIgnore("ALTER TABLE stock_dividends ADD COLUMN account_id TEXT DEFAULT ''");

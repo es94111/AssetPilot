@@ -164,7 +164,7 @@ export function buildUserStatsReport(userId, freq = 'daily', userTimezone = 'Asi
     LEFT JOIN categories c ON t.category_id = c.id
     LEFT JOIN categories pc ON c.parent_id = pc.id
     WHERE t.user_id = ? AND t.type = 'expense' AND t.date LIKE ? AND t.exclude_from_stats = 0
-    GROUP BY COALESCE(pc.id, c.id, 'uncategorized')
+    GROUP BY COALESCE(pc.name, c.name, '未分類'), COALESCE(pc.color, c.color, '#94a3b8')
     ORDER BY total DESC
     LIMIT 5
   `, [userId, `${month}%`]);

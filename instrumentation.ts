@@ -17,7 +17,8 @@ export async function register() {
   registerAuditPruneJob();
 
   // 排程報告心跳（啟動 30s 後開始，每 SCHEDULER_TICK_MS 檢查一次）
-  const SCHEDULER_TICK_MS = Number(process.env.SCHEDULER_TICK_MS) || 5 * 60 * 1000;
+  // 預設 1 分鐘，確保分鐘級排程（如 23:59）能準時觸發
+  const SCHEDULER_TICK_MS = Number(process.env.SCHEDULER_TICK_MS) || 60 * 1000;
   unrefTimer(setTimeout(async () => {
     try {
       const { checkAndRunSchedule } = await import('./lib/scheduler');

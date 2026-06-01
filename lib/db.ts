@@ -202,6 +202,7 @@ async function _runMigrations(): Promise<void> {
     user_id         TEXT    NOT NULL,
     freq            TEXT    NOT NULL,
     hour            INTEGER NOT NULL DEFAULT 9,
+    minute          INTEGER NOT NULL DEFAULT 0,
     weekday         INTEGER NOT NULL DEFAULT 1,
     day_of_month    INTEGER NOT NULL DEFAULT 1,
     notify_email    INTEGER NOT NULL DEFAULT 1,
@@ -214,6 +215,8 @@ async function _runMigrations(): Promise<void> {
   )`);
   alterIgnore("ALTER TABLE report_schedules ADD COLUMN notify_email INTEGER NOT NULL DEFAULT 1");
   alterIgnore("ALTER TABLE report_schedules ADD COLUMN notify_line INTEGER NOT NULL DEFAULT 0");
+  // 分鐘級排程（day_of_month = 0 代表「每月最後一天」）
+  alterIgnore("ALTER TABLE report_schedules ADD COLUMN minute INTEGER NOT NULL DEFAULT 0");
   alterIgnore("CREATE INDEX IF NOT EXISTS idx_report_schedules_user ON report_schedules(user_id)");
   alterIgnore("CREATE INDEX IF NOT EXISTS idx_report_schedules_enabled_freq ON report_schedules(enabled, freq)");
 
@@ -399,6 +402,7 @@ async function _runMigrations(): Promise<void> {
     user_id         TEXT    NOT NULL,
     freq            TEXT    NOT NULL,
     hour            INTEGER NOT NULL DEFAULT 21,
+    minute          INTEGER NOT NULL DEFAULT 0,
     weekday         INTEGER NOT NULL DEFAULT 0,
     day_of_month    INTEGER NOT NULL DEFAULT 1,
     enabled         INTEGER NOT NULL DEFAULT 1,
@@ -407,6 +411,7 @@ async function _runMigrations(): Promise<void> {
     created_at      INTEGER NOT NULL DEFAULT 0,
     updated_at      INTEGER NOT NULL DEFAULT 0
   )`);
+  alterIgnore("ALTER TABLE line_expense_reminders ADD COLUMN minute INTEGER NOT NULL DEFAULT 0");
   alterIgnore("CREATE INDEX IF NOT EXISTS idx_line_expense_reminders_user ON line_expense_reminders(user_id)");
   alterIgnore("CREATE INDEX IF NOT EXISTS idx_line_expense_reminders_enabled_freq ON line_expense_reminders(enabled, freq)");
 

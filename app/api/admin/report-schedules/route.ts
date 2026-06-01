@@ -6,8 +6,8 @@ import { getDB, queryOne, queryAll, saveDB } from '../../../../lib/db';
 function serializeSchedule(row) {
   return {
     id: row.id, userId: row.user_id, freq: row.freq,
-    hour: Number(row.hour) || 0, weekday: Number(row.weekday) || 0,
-    dayOfMonth: Number(row.day_of_month) || 1, enabled: row.enabled === 1,
+    hour: Number(row.hour) || 0, minute: Number(row.minute) || 0, weekday: Number(row.weekday) || 0,
+    dayOfMonth: Number(row.day_of_month) || 0, enabled: row.enabled === 1,
     notifyEmail: row.notify_email !== 0, notifyLine: row.notify_line === 1,
     lastRun: Number(row.last_run) || 0, lastSummary: row.last_summary || '',
     createdAt: Number(row.created_at) || 0, updatedAt: Number(row.updated_at) || 0,
@@ -47,8 +47,10 @@ export async function POST(request) {
   if (!u) return NextResponse.json({ error: '指定的使用者不存在' }, { status: 400 });
 
   const hour = clampInt(body?.hour, 0, 23, 9);
+  const minute = clampInt(body?.minute, 0, 59, 0);
   const weekday = clampInt(body?.weekday, 0, 6, 1);
-  const dayOfMonth = clampInt(body?.dayOfMonth, 1, 28, 1);
+  // dayOfMonth 0 = 每月最後一天，1-28 = 指定日期
+  const dayOfMonth = clampInt(body?.dayOfMonth, 0, 28, 1);
   const notifyEmail = body?.notifyEmail === false ? 0 : 1;
   const notifyLine = body?.notifyLine === true ? 1 : 0;
   if (!notifyEmail && !notifyLine) {
@@ -59,8 +61,8 @@ export async function POST(request) {
   const id = 'rs_' + nowMs + '_' + Math.random().toString(36).slice(2, 10);
 
   getDB().run(
-    'INSERT INTO report_schedules (id, user_id, freq, hour, weekday, day_of_month, notify_email, notify_line, enabled, last_run, last_summary, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, \'\', ?, ?)',
-    [id, userId, freq, hour, weekday, dayOfMonth, notifyEmail, notifyLine, enabled, nowMs, nowMs]
+    'INSERT INTO report_schedules (id, user_id, freq, hour, minute, weekday, day_of_month, notify_email, notify_line, enabled, last_run, last_summary, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, \'\', ?, ?)',
+    [id, userId, freq, hour, minute, weekday, dayOfMonth, notifyEmail, notifyLine, enabled, nowMs, nowMs]
   );
   saveDB();
   const row = queryOne('SELECT * FROM report_schedules WHERE id = ?', [id]);

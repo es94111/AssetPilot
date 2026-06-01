@@ -13,6 +13,11 @@ import * as userTime from './userTime';
 const runningSchedules = new Set();
 const runningExpenseReminders = new Set();
 
+// ── 某年某月（1-based）的天數，即該月最後一天 ──
+function daysInMonth(year, month) {
+  return new Date(Date.UTC(year, month, 0)).getUTCDate();
+}
+
 // ── 求「指定 IANA 時區下、某 YYYY-MM-DD 當地 00:00」對應的 UTC ms ──
 function localDayStartMs(tz, ymd) {
   const [y, m, d] = ymd.split('-').map(s => parseInt(s, 10));
@@ -35,7 +40,10 @@ function shouldRunSchedule(scheduleRow, userTimezone, nowTs = Date.now()) {
   }
   const tz = userTimezone || 'Asia/Taipei';
   const local = userTime.partsInTz(tz, nowTs);
-  if (local.hour < (Number(scheduleRow.hour) || 0)) return false;
+  // 分鐘級觸發：當地時刻須已達排定的 時:分（例如 23:59）
+  const nowMinutes = local.hour * 60 + local.minute;
+  const schedMinutes = (Number(scheduleRow.hour) || 0) * 60 + (Number(scheduleRow.minute) || 0);
+  if (nowMinutes < schedMinutes) return false;
 
   const ymd = `${local.year}-${String(local.month).padStart(2, '0')}-${String(local.day).padStart(2, '0')}`;
   const periodStart = localDayStartMs(tz, ymd);
@@ -45,7 +53,13 @@ function shouldRunSchedule(scheduleRow, userTimezone, nowTs = Date.now()) {
   } else if (scheduleRow.freq === 'weekly') {
     if (local.weekday !== (Number(scheduleRow.weekday) || 0)) return false;
   } else if (scheduleRow.freq === 'monthly') {
-    if (local.day !== (Number(scheduleRow.day_of_month) || 1)) return false;
+    const dom = Number(scheduleRow.day_of_month);
+    if (dom === 0) {
+      // 0 = 每月最後一天
+      if (local.day !== daysInMonth(local.year, local.month)) return false;
+    } else if (local.day !== (dom || 1)) {
+      return false;
+    }
   } else {
     return false;
   }

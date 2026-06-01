@@ -9,8 +9,9 @@ function serializeReminder(row) {
     userId: row.user_id,
     freq: row.freq,
     hour: Number(row.hour) || 0,
+    minute: Number(row.minute) || 0,
     weekday: Number(row.weekday) || 0,
-    dayOfMonth: Number(row.day_of_month) || 1,
+    dayOfMonth: Number(row.day_of_month) || 0,
     enabled: row.enabled === 1,
     lastRun: Number(row.last_run) || 0,
     lastSummary: row.last_summary || '',
@@ -36,8 +37,10 @@ export async function PUT(request, { params }) {
   const body = await request.json().catch(() => ({}));
   const updates = {};
   if (body?.hour !== undefined) updates.hour = clampInt(body.hour, 0, 23, row.hour);
+  if (body?.minute !== undefined) updates.minute = clampInt(body.minute, 0, 59, row.minute);
   if (body?.weekday !== undefined) updates.weekday = clampInt(body.weekday, 0, 6, row.weekday);
-  if (body?.dayOfMonth !== undefined) updates.day_of_month = clampInt(body.dayOfMonth, 1, 28, row.day_of_month);
+  // dayOfMonth 0 = 每月最後一天
+  if (body?.dayOfMonth !== undefined) updates.day_of_month = clampInt(body.dayOfMonth, 0, 28, row.day_of_month);
   if (body?.enabled !== undefined) updates.enabled = body.enabled ? 1 : 0;
   if (Object.keys(updates).length === 0) {
     return NextResponse.json({ error: '請至少更新一個欄位' }, { status: 400 });

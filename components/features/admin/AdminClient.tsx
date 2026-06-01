@@ -14,6 +14,17 @@ const SCHEDULE_FREQ_OPTIONS = [
 
 const RETENTION_OPTIONS = ['30', '90', '180', '365', 'forever'];
 
+// 每月日期下拉選項：0 = 最後一天，1-28 = 指定日期
+const DAY_OF_MONTH_OPTIONS = [{ value: '0', label: '最後一天' }, ...Array.from({ length: 28 }, (_, i) => ({ value: String(i + 1), label: `${i + 1} 日` }))];
+
+// 排程時間描述（時:分 + 頻率細節），item 來自 API 序列化結果
+function fmtScheduleTime(item: { hour: number; minute?: number; freq: string; weekday?: number; dayOfMonth?: number }) {
+  const time = `${String(item.hour).padStart(2, '0')}:${String(item.minute || 0).padStart(2, '0')}`;
+  if (item.freq === 'weekly') return `${time} (週 ${item.weekday})`;
+  if (item.freq === 'monthly') return `${time} (${Number(item.dayOfMonth) === 0 ? '每月最後一天' : `每月 ${item.dayOfMonth} 日`})`;
+  return time;
+}
+
 function fmtTs(ts: number | string) {
   if (!ts) return '—';
   const date = typeof ts === 'number' || /^\d+$/.test(String(ts)) ? new Date(Number(ts)) : new Date(ts);
@@ -117,10 +128,10 @@ export default function AdminClient(_props: { user?: any } = {}) {
   const [certMsg, setCertMsg] = useState('');
 
   const [schedules, setSchedules] = useState<any[]>([]);
-  const [scheduleForm, setScheduleForm] = useState({ userId: '', freq: 'daily', hour: '9', weekday: '1', dayOfMonth: '1', notifyEmail: true, notifyLine: false });
+  const [scheduleForm, setScheduleForm] = useState({ userId: '', freq: 'daily', hour: '9', minute: '0', weekday: '1', dayOfMonth: '1', notifyEmail: true, notifyLine: false });
   const [scheduleMsg, setScheduleMsg] = useState('');
   const [expenseReminders, setExpenseReminders] = useState<any[]>([]);
-  const [expenseReminderForm, setExpenseReminderForm] = useState({ userId: '', freq: 'daily', hour: '21', weekday: '0', dayOfMonth: '1' });
+  const [expenseReminderForm, setExpenseReminderForm] = useState({ userId: '', freq: 'daily', hour: '21', minute: '0', weekday: '0', dayOfMonth: '1' });
 
   const [adminSelfLogs, setAdminSelfLogs] = useState<any[]>([]);
   const [allLogs, setAllLogs] = useState<any[]>([]);
@@ -239,6 +250,7 @@ export default function AdminClient(_props: { user?: any } = {}) {
         userId: scheduleForm.userId,
         freq: scheduleForm.freq,
         hour: Number(scheduleForm.hour),
+        minute: Number(scheduleForm.minute),
         weekday: Number(scheduleForm.weekday),
         dayOfMonth: Number(scheduleForm.dayOfMonth),
         notifyEmail: scheduleForm.notifyEmail,
@@ -296,6 +308,7 @@ export default function AdminClient(_props: { user?: any } = {}) {
         userId: expenseReminderForm.userId,
         freq: expenseReminderForm.freq,
         hour: Number(expenseReminderForm.hour),
+        minute: Number(expenseReminderForm.minute),
         weekday: Number(expenseReminderForm.weekday),
         dayOfMonth: Number(expenseReminderForm.dayOfMonth),
       });
@@ -626,9 +639,17 @@ export default function AdminClient(_props: { user?: any } = {}) {
                 </select>
               </div>
               <Input label="小時" type="number" min={0} max={23} value={scheduleForm.hour} onChange={(e) => setScheduleForm((prev) => ({ ...prev, hour: e.target.value }))} />
+              <Input label="分鐘" type="number" min={0} max={59} value={scheduleForm.minute} onChange={(e) => setScheduleForm((prev) => ({ ...prev, minute: e.target.value }))} />
               <Button type="submit" className="self-end">新增排程</Button>
               {scheduleForm.freq === 'weekly' && <Input label="每週星期 (0-6)" type="number" min={0} max={6} value={scheduleForm.weekday} onChange={(e) => setScheduleForm((prev) => ({ ...prev, weekday: e.target.value }))} />}
-              {scheduleForm.freq === 'monthly' && <Input label="每月日期 (1-28)" type="number" min={1} max={28} value={scheduleForm.dayOfMonth} onChange={(e) => setScheduleForm((prev) => ({ ...prev, dayOfMonth: e.target.value }))} />}
+              {scheduleForm.freq === 'monthly' && (
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">每月日期</label>
+                  <select className="w-full p-2 border rounded-md" value={scheduleForm.dayOfMonth} onChange={(e) => setScheduleForm((prev) => ({ ...prev, dayOfMonth: e.target.value }))}>
+                    {DAY_OF_MONTH_OPTIONS.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                  </select>
+                </div>
+              )}
               <div className="md:col-span-4 flex flex-wrap gap-4 text-sm text-slate-700">
                 <label className="inline-flex items-center gap-2">
                   <input type="checkbox" checked={scheduleForm.notifyEmail} onChange={(e) => setScheduleForm((prev) => ({ ...prev, notifyEmail: e.target.checked }))} />
@@ -662,7 +683,7 @@ export default function AdminClient(_props: { user?: any } = {}) {
                   <TableRow key={schedule.id}>
                     <TableCell>{users.find((user) => user.id === schedule.userId)?.email || schedule.userId}</TableCell>
                     <TableCell>{schedule.freq}</TableCell>
-                    <TableCell>{schedule.hour}:00 {schedule.freq === 'weekly' ? `(週 ${schedule.weekday})` : ''}{schedule.freq === 'monthly' ? `(每月 ${schedule.dayOfMonth} 日)` : ''}</TableCell>
+                    <TableCell>{fmtScheduleTime(schedule)}</TableCell>
                     <TableCell>
                       <div className="flex flex-wrap gap-2">
                         <button type="button" className={`rounded border px-2 py-1 text-xs ${schedule.notifyEmail ? 'border-blue-500 text-blue-700' : 'border-slate-200 text-slate-400'}`} onClick={() => handleToggleScheduleChannel(schedule.id, 'notifyEmail', schedule.notifyEmail)}>Email</button>
@@ -698,9 +719,17 @@ export default function AdminClient(_props: { user?: any } = {}) {
                 </select>
               </div>
               <Input label="小時" type="number" min={0} max={23} value={expenseReminderForm.hour} onChange={(e) => setExpenseReminderForm((prev) => ({ ...prev, hour: e.target.value }))} />
+              <Input label="分鐘" type="number" min={0} max={59} value={expenseReminderForm.minute} onChange={(e) => setExpenseReminderForm((prev) => ({ ...prev, minute: e.target.value }))} />
               <Button type="submit" className="self-end">新增 LINE 提醒</Button>
               {expenseReminderForm.freq === 'weekly' && <Input label="每週星期 (0-6)" type="number" min={0} max={6} value={expenseReminderForm.weekday} onChange={(e) => setExpenseReminderForm((prev) => ({ ...prev, weekday: e.target.value }))} />}
-              {expenseReminderForm.freq === 'monthly' && <Input label="每月日期 (1-28)" type="number" min={1} max={28} value={expenseReminderForm.dayOfMonth} onChange={(e) => setExpenseReminderForm((prev) => ({ ...prev, dayOfMonth: e.target.value }))} />}
+              {expenseReminderForm.freq === 'monthly' && (
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">每月日期</label>
+                  <select className="w-full p-2 border rounded-md" value={expenseReminderForm.dayOfMonth} onChange={(e) => setExpenseReminderForm((prev) => ({ ...prev, dayOfMonth: e.target.value }))}>
+                    {DAY_OF_MONTH_OPTIONS.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                  </select>
+                </div>
+              )}
             </form>
             <Table>
               <TableHeader>
@@ -718,7 +747,7 @@ export default function AdminClient(_props: { user?: any } = {}) {
                   <TableRow key={reminder.id}>
                     <TableCell>{users.find((user) => user.id === reminder.userId)?.email || reminder.userId}</TableCell>
                     <TableCell>{reminder.freq}</TableCell>
-                    <TableCell>{reminder.hour}:00 {reminder.freq === 'weekly' ? `(週 ${reminder.weekday})` : ''}{reminder.freq === 'monthly' ? `(每月 ${reminder.dayOfMonth} 日)` : ''}</TableCell>
+                    <TableCell>{fmtScheduleTime(reminder)}</TableCell>
                     <TableCell>{fmtTs(reminder.lastRun)}</TableCell>
                     <TableCell>{reminder.enabled ? '啟用中' : '停用'}</TableCell>
                     <TableCell className="flex gap-2 flex-wrap">

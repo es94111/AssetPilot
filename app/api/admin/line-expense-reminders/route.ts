@@ -9,8 +9,9 @@ function serializeReminder(row) {
     userId: row.user_id,
     freq: row.freq,
     hour: Number(row.hour) || 0,
+    minute: Number(row.minute) || 0,
     weekday: Number(row.weekday) || 0,
-    dayOfMonth: Number(row.day_of_month) || 1,
+    dayOfMonth: Number(row.day_of_month) || 0,
     enabled: row.enabled === 1,
     lastRun: Number(row.last_run) || 0,
     lastSummary: row.last_summary || '',
@@ -52,15 +53,17 @@ export async function POST(request) {
   if (!u) return NextResponse.json({ error: '指定的使用者不存在' }, { status: 400 });
 
   const hour = clampInt(body?.hour, 0, 23, 21);
+  const minute = clampInt(body?.minute, 0, 59, 0);
   const weekday = clampInt(body?.weekday, 0, 6, 0);
-  const dayOfMonth = clampInt(body?.dayOfMonth, 1, 28, 1);
+  // dayOfMonth 0 = 每月最後一天
+  const dayOfMonth = clampInt(body?.dayOfMonth, 0, 28, 1);
   const enabled = body?.enabled === false ? 0 : 1;
   const nowMs = Date.now();
   const id = 'ler_' + nowMs + '_' + Math.random().toString(36).slice(2, 10);
 
   getDB().run(
-    'INSERT INTO line_expense_reminders (id, user_id, freq, hour, weekday, day_of_month, enabled, last_run, last_summary, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, 0, \'\', ?, ?)',
-    [id, userId, freq, hour, weekday, dayOfMonth, enabled, nowMs, nowMs]
+    'INSERT INTO line_expense_reminders (id, user_id, freq, hour, minute, weekday, day_of_month, enabled, last_run, last_summary, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, \'\', ?, ?)',
+    [id, userId, freq, hour, minute, weekday, dayOfMonth, enabled, nowMs, nowMs]
   );
   saveDB();
   const row = queryOne('SELECT * FROM line_expense_reminders WHERE id = ?', [id]);

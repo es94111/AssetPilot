@@ -1,6 +1,18 @@
 {
-  "currentVersion": "4.44.0",
+  "currentVersion": "4.44.1",
   "releases": [
+    {
+      "version": "4.44.1",
+      "date": "2026-06-04",
+      "title": "修正全新 PostgreSQL 環境首次部署啟動失敗",
+      "type": "fixed",
+      "changes": [
+        {
+          "tag": "fixed",
+          "text": "修正在全新的 PostgreSQL 資料庫首次部署時，因時間欄位數值超出範圍而導致服務無法啟動的問題；現在系統會以足夠大的數值型別建立資料表，全新環境可正常初始化。"
+        }
+      ]
+    },
     {
       "version": "4.44.0",
       "date": "2026-06-04",

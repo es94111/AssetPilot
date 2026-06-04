@@ -99,8 +99,20 @@ function translatePlaceholders(sql: string, params: DbValue[]): { sql: string; p
   return { sql: out, params: outParams };
 }
 
+// SQLite 的 INTEGER 是 64 位元，PostgreSQL 的 INTEGER 只有 32 位元（上限 ~21 億）。
+// 本專案多數 *_at 欄位儲存 Unix 毫秒時間戳（Constitution 原則 IV），會超出 int4 範圍，
+// 因此在建表／改表 DDL 時將 INTEGER 一律改用 BIGINT（與 lib/postgresMigration.ts 的型別對應一致）。
+function translateDdlTypes(sql: string): string {
+  const head = sql.slice(0, 12).toUpperCase();
+  if (head.startsWith('CREATE TABLE') || head.startsWith('ALTER TABLE')) {
+    return sql.replace(/\bINTEGER\b/gi, 'BIGINT');
+  }
+  return sql;
+}
+
 function translateSql(sql: string, params: DbValue[] = []): { sql: string; params: DbValue[] } {
   let next = sql.trim();
+  next = translateDdlTypes(next);
   next = pgTypeofExpression(next);
   return translatePlaceholders(next, params);
 }

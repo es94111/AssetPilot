@@ -26,6 +26,34 @@ type AttachmentItem = {
   url: string;
 };
 
+// 前端壓縮：縮到最長邊 1600px、JPEG quality 0.8，省上傳頻寬與 S3 空間。
+// 純瀏覽器 Canvas，無新套件；createImageBitmap 的 imageOrientation 處理 iPhone EXIF 旋轉。
+const PHOTO_MAX_EDGE = 1600;
+const PHOTO_JPEG_QUALITY = 0.8;
+
+async function compressPhoto(file: File): Promise<File> {
+  // 非可重新編碼的圖（GIF 動畫、SVG）或瀏覽器不支援 API 時，維持原檔。
+  if (!file.type.startsWith('image/') || file.type === 'image/gif' || file.type === 'image/svg+xml') return file;
+  if (typeof createImageBitmap !== 'function' || typeof document === 'undefined') return file;
+  try {
+    const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
+    const scale = Math.min(1, PHOTO_MAX_EDGE / Math.max(bitmap.width, bitmap.height));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+    canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+    const ctx = canvas.getContext('2d');
+    if (!ctx) { bitmap.close?.(); return file; }
+    ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    bitmap.close?.();
+    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/jpeg', PHOTO_JPEG_QUALITY));
+    if (!blob || blob.size >= file.size) return file; // 沒變小（如已壓縮的小圖）就用原圖
+    const name = file.name.replace(/\.\w+$/, '') + '.jpg';
+    return new File([blob], name, { type: 'image/jpeg', lastModified: file.lastModified });
+  } catch {
+    return file; // 任何解碼/繪製失敗都回退原圖，確保上傳不被壓縮中斷
+  }
+}
+
 type QueryParams = { get(name: string): string | null };
 
 function readPageParam(searchParams: QueryParams) {
@@ -277,8 +305,9 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
 
   async function uploadPhotos(transactionId: string) {
     if (photoFiles.length === 0) return;
+    const compressed = await Promise.all(photoFiles.map(compressPhoto));
     const data = new FormData();
-    photoFiles.forEach((file) => data.append('photos', file));
+    compressed.forEach((file) => data.append('photos', file));
     const res = await fetch(`/api/transactions/${transactionId}/attachments`, {
       method: 'POST',
       credentials: 'include',

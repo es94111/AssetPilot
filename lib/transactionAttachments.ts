@@ -157,6 +157,35 @@ export async function saveTransactionPhotoBuffer(userId: string, transactionId: 
   return { id, storage, filename, mimeType, byteSize: input.body.length };
 }
 
+// 從完整備份還原單張交易憑證：把圖片位元組寫入目前預設儲存（local / S3），
+// 並插入 transaction_attachments 列，保留原 attachment id、remap user_id。
+// 供 lib/userDataBundle.ts 的合併式還原使用。
+export async function restoreAttachmentFromBundle(userId: string, row: TransactionAttachmentRow, body: Buffer): Promise<void> {
+  const id = String(row.id || '');
+  if (!id) throw new Error('附件缺少 id');
+  const transactionId = String(row.transaction_id || '');
+  const filename = String(row.filename || 'photo.jpg');
+  const mimeType = String(row.mime_type || 'application/octet-stream');
+  const createdAt = Number(row.created_at) || Date.now();
+  const byteSize = body.length;
+  const storage = getDefaultTransactionPhotoStorage();
+  const db = getDB();
+
+  if (storage === 's3') {
+    const uploaded = await saveS3Photo(userId, transactionId, id, filename, mimeType, body);
+    db.run(
+      'INSERT INTO transaction_attachments (id,user_id,transaction_id,storage,local_path,object_key,bucket,endpoint,filename,mime_type,byte_size,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',
+      [id, userId, transactionId, 's3', '', uploaded.key, uploaded.bucket, uploaded.endpoint, filename, mimeType, byteSize, createdAt]
+    );
+  } else {
+    const localPath = await saveLocalPhoto(userId, transactionId, id, filename, body);
+    db.run(
+      'INSERT INTO transaction_attachments (id,user_id,transaction_id,storage,local_path,object_key,bucket,endpoint,filename,mime_type,byte_size,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',
+      [id, userId, transactionId, 'local', localPath, '', '', '', filename, mimeType, byteSize, createdAt]
+    );
+  }
+}
+
 export async function saveTransactionPhoto(userId: string, transactionId: string, storage: AttachmentStorage, file: File): Promise<AttachmentUploadResult> {
   assertImageUpload(file);
   const body = Buffer.from(await file.arrayBuffer());

@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-4.43.0-blue" alt="version">
+  <img src="https://img.shields.io/badge/version-4.44.0-blue" alt="version">
   <img src="https://img.shields.io/badge/node-%3E%3D24-brightgreen" alt="node">
   <img src="https://img.shields.io/badge/next.js-16.x-000000" alt="next.js">
   <img src="https://img.shields.io/badge/openapi-3.2.0-6BA539" alt="openapi">
@@ -448,7 +448,7 @@ Webhook 回覆使用 LINE Flex Message Button：未綁定時顯示「綁定 LINE
 | 資料庫加密 | ChaCha20-Poly1305 AEAD + PBKDF2-SHA256 金鑰推導 |
 | 密碼加密 | bcryptjs 雜湊儲存，不明文保存 |
 | XSS 防護 | 所有使用者輸入經 `escHtml()` 跳脫後才插入 DOM |
-| 安全標頭 | Helmet（HSTS、X-Content-Type-Options、Referrer-Policy） |
+| 安全標頭 | Next.js 回應標頭設定（HSTS、X-Content-Type-Options、Referrer-Policy） |
 | CSP | 限制 inline script 與外部資源來源 |
 | 速率限制 | 登入 / 註冊每 IP 每 15 分鐘最多 20 次；公開頁面每分鐘最多 120 次 |
 | Cloudflare API Shield | OpenAPI 3.2.0 Schema（`openapi.yaml`），可啟用請求驗證 |

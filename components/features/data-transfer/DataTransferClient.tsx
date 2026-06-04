@@ -159,6 +159,8 @@ export default function DataTransferClient({ user }: { user: UserLike }) {
   const [importResults, setImportResults] = useState<Record<string, CsvImportResult | null>>({});
   const [status, setStatus] = useState('');
   const [dbStatus, setDbStatus] = useState('');
+  const [bundleStatus, setBundleStatus] = useState('');
+  const [bundleError, setBundleError] = useState(false);
   const [megaS4Status, setMegaS4Status] = useState<MegaS4Status | null>(null);
   const [megaS4Message, setMegaS4Message] = useState('');
   const [showMegaS4Form, setShowMegaS4Form] = useState(false);
@@ -224,6 +226,43 @@ export default function DataTransferClient({ user }: { user: UserLike }) {
     } catch (e: any) {
       setImportResults((prev) => ({ ...prev, [moduleKey]: { message: e.message || '匯入失敗' } }));
       setStatus(e.message || '匯入失敗');
+    }
+    setBusyKey('');
+  }
+
+  async function handleBundleExport() {
+    setBusyKey('bundle-export');
+    setBundleStatus('');
+    setBundleError(false);
+    try {
+      await downloadFromUrl('/api/account/data-bundle');
+      setBundleStatus('完整備份下載完成');
+    } catch (e: any) {
+      setBundleStatus(e.message || '完整備份下載失敗');
+      setBundleError(true);
+    }
+    setBusyKey('');
+  }
+
+  async function handleBundleRestore(file: File | null) {
+    if (!file) return;
+    setBusyKey('bundle-restore');
+    setBundleStatus('');
+    setBundleError(false);
+    try {
+      const buffer = await file.arrayBuffer();
+      const res = await fetch('/api/account/data-bundle', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/octet-stream' },
+        body: buffer,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.message || data.error || `HTTP ${res.status}`);
+      setBundleStatus(data.message || '還原完成');
+    } catch (e: any) {
+      setBundleStatus(e.message || '備份還原失敗');
+      setBundleError(true);
     }
     setBusyKey('');
   }
@@ -379,6 +418,42 @@ export default function DataTransferClient({ user }: { user: UserLike }) {
           );
         })}
       </div>
+
+      <section className="rounded-xl border border-slate-200 bg-white dark:bg-slate-900 dark:border-slate-800 p-5 shadow-sm space-y-4">
+        <div>
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">完整資料備份（含圖片）</h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            一鍵打包下載你個人的全部資料（交易、帳戶、分類、預算、週期、匯率、股票，以及交易憑證圖片）為單一 ZIP。
+            上傳同一份 ZIP 即可還原。
+          </p>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            還原採<span className="font-medium text-slate-700 dark:text-slate-200">合併方式</span>：已存在的資料會自動略過，只補回缺少的；
+            <span className="font-medium text-slate-700 dark:text-slate-200">不會刪除或覆蓋你現有的資料</span>。
+          </p>
+        </div>
+
+        <div className="flex flex-wrap gap-3">
+          <Button onClick={handleBundleExport} disabled={busyKey === 'bundle-export'}>
+            {busyKey === 'bundle-export' ? '打包下載中...' : '下載完整備份'}
+          </Button>
+          <label className="inline-flex items-center gap-3 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 cursor-pointer hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800">
+            <span>{busyKey === 'bundle-restore' ? '還原中...' : '上傳備份還原'}</span>
+            <input
+              type="file"
+              accept=".zip,application/zip,application/octet-stream"
+              className="hidden"
+              disabled={busyKey === 'bundle-restore'}
+              onChange={(e) => { handleBundleRestore(e.target.files?.[0] || null); e.target.value = ''; }}
+            />
+          </label>
+        </div>
+
+        {bundleStatus && (
+          <div className={`rounded-lg border px-4 py-3 text-sm ${bundleError ? 'border-red-200 bg-red-50 text-red-700 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-300' : 'border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-800 dark:bg-slate-950/50 dark:text-slate-300'}`}>
+            {bundleStatus}
+          </div>
+        )}
+      </section>
 
       {user?.isAdmin && (
         <section className="rounded-xl border border-slate-200 bg-white dark:bg-slate-900 dark:border-slate-800 p-5 shadow-sm space-y-4">

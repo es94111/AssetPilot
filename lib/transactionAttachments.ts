@@ -47,6 +47,18 @@ function safeName(name: string) {
   return `${base}${ext || '.jpg'}`;
 }
 
+// 解析 root 底下的目標路徑，並確保結果仍位於 root 內，避免 userId/transactionId/local_path
+// 含 ../ 逃逸出儲存根目錄（path traversal）。
+function resolveWithin(root: string, ...segments: string[]): string {
+  // nosemgrep: javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal -- 下方立即用 path.relative 驗證結果仍在 root 內
+  const target = path.resolve(root, ...segments);
+  const rel = path.relative(root, target);
+  if (rel === '' || rel === '..' || rel.startsWith(`..${path.sep}`) || path.isAbsolute(rel)) {
+    throw new Error('路徑超出允許範圍');
+  }
+  return target;
+}
+
 function maxPhotoBytes() {
   const dbRow = queryOne('SELECT transaction_photo_max_bytes FROM system_settings WHERE id = 1');
   const dbVal = Number(dbRow?.transaction_photo_max_bytes);
@@ -114,10 +126,9 @@ export function assertImageUpload(input: { size: number; type?: string; mimeType
 
 async function saveLocalPhoto(userId: string, transactionId: string, id: string, filename: string, body: Buffer) {
   const root = uploadsRoot();
-  const dir = path.resolve(root, userId, transactionId);
   const targetName = `${id}-${safeName(filename)}`;
-  const target = path.resolve(dir, targetName);
-  if (!target.startsWith(root + path.sep)) throw new Error('照片儲存路徑無效');
+  const dir = resolveWithin(root, userId, transactionId);
+  const target = resolveWithin(root, userId, transactionId, targetName);
   await fs.promises.mkdir(dir, { recursive: true });
   await fs.promises.writeFile(target, body);
   return path.relative(root, target).replace(/\\/g, '/');
@@ -199,8 +210,7 @@ export async function saveTransactionPhoto(userId: string, transactionId: string
 export async function readTransactionAttachment(row: TransactionAttachmentRow): Promise<{ body: Buffer; mimeType: string; filename: string }> {
   if (row.storage === 'local') {
     const root = uploadsRoot();
-    const target = path.resolve(root, row.local_path || '');
-    if (!target.startsWith(root + path.sep)) throw new Error('照片路徑無效');
+    const target = resolveWithin(root, row.local_path || '');
     return {
       body: await fs.promises.readFile(target),
       mimeType: row.mime_type || 'application/octet-stream',
@@ -230,8 +240,8 @@ export async function deleteTransactionAttachment(userId: string, transactionId:
   const root = uploadsRoot();
   try {
     if (row.storage === 'local' && row.local_path) {
-      const target = path.resolve(root, row.local_path);
-      if (target.startsWith(root + path.sep)) await fs.promises.unlink(target).catch(() => {});
+      const target = resolveWithin(root, row.local_path);
+      await fs.promises.unlink(target).catch(() => {});
     } else if (row.storage === 's3' && row.object_key) {
       const s3Config = getPhotoS3Config();
       await deleteS3Object(s3Config, row.object_key);
@@ -256,8 +266,8 @@ export async function deleteTransactionAttachments(userId: string, transactionId
   for (const row of rows) {
     try {
       if (row.storage === 'local' && row.local_path) {
-        const target = path.resolve(root, row.local_path);
-        if (target.startsWith(root + path.sep)) await fs.promises.unlink(target).catch(() => {});
+        const target = resolveWithin(root, row.local_path);
+        await fs.promises.unlink(target).catch(() => {});
       } else if (row.storage === 's3' && row.object_key) {
         s3Config = s3Config || getPhotoS3Config();
         await deleteS3Object(s3Config, row.object_key);

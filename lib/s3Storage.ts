@@ -157,7 +157,11 @@ function decodeXmlText(value: string) {
 }
 
 function xmlTagValue(xml: string, tag: string) {
-  const match = xml.match(new RegExp(`<${tag}>([\\s\\S]*?)<\\/${tag}>`, 'i'));
+  // tag 僅來自內部固定字串（Code/Message/RequestId），仍過濾為純英數，杜絕注入特殊字元造成 ReDoS。
+  const safeTag = tag.replace(/[^A-Za-z0-9]/g, '');
+  if (!safeTag) return '';
+  // nosemgrep: javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp -- safeTag 已限制為純英數常數，無 ReDoS 風險
+  const match = xml.match(new RegExp(`<${safeTag}>([\\s\\S]*?)<\\/${safeTag}>`, 'i'));
   return match ? decodeXmlText(match[1].trim()) : '';
 }
 

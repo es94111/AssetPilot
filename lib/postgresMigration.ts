@@ -220,6 +220,7 @@ export async function migrateSqliteToPostgresIfNeeded(options: MigrationOptions)
     }
 
     const SQL = await initSqlJs({
+      // nosemgrep: javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal -- file 由 sql.js 內部以固定資產檔名（如 sql-wasm.wasm）傳入，非使用者輸入
       locateFile: (file) => path.join(process.cwd(), 'node_modules', 'sql.js', 'dist', file),
     });
     sqliteDb = new SQL.Database(plainBuffer);
@@ -236,6 +237,7 @@ export async function migrateSqliteToPostgresIfNeeded(options: MigrationOptions)
     }
 
     await upsertMetadata(client, 'sqlite_source_sha256', sourceHash);
+    // nosemgrep: javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal -- options.dbPath 為內部/CLI 遷移來源路徑，僅作為 metadata 字串記錄，無檔案存取
     await upsertMetadata(client, 'sqlite_source_path', path.resolve(options.dbPath));
     await upsertMetadata(client, 'sqlite_migrated_at', new Date().toISOString());
     await client.query('COMMIT');

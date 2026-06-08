@@ -1,0 +1,47 @@
+name: Trivy (container scan)
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+  schedule:
+    # 每週一 03:00 UTC = 11:00 Asia/Taipei
+    - cron: "0 3 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    name: Build & scan image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      # 本機建置映像（不推送），供 Trivy 掃描；PR 也能跑
+      - name: Build image (load locally)
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          platforms: linux/amd64
+          push: false
+          load: true
+          tags: assetpilot:scan
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Run Trivy vulnerability scan
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: assetpilot:scan
+          format: table
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true   # 只報「上游已有修補」的弱點，降低噪音
+          vuln-type: os,library
+          exit-code: "1"         # 掃到 CRITICAL/HIGH 就讓 CI 失敗

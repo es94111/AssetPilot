@@ -229,6 +229,44 @@ class ApiClient {
     throw ApiException(res.statusCode, _errorMessage(res));
   }
 
+  /// 取得 Google OAuth 一次性 state（防 CSRF；後端會記住並於登入時核銷）。
+  Future<String> googleState() async {
+    final m = await _getMap('/api/auth/google/state');
+    final s = m['state'];
+    if (s == null) throw ApiException(0, '無法建立 Google 登入狀態');
+    return '$s';
+  }
+
+  /// 以授權碼換登入（後端用 client_secret 與 redirectUri 向 Google 兌換）。
+  Future<void> googleLogin({
+    required String code,
+    required String redirectUri,
+    required String state,
+  }) async {
+    late http.Response res;
+    try {
+      res = await http
+          .post(
+            _uri('/api/auth/google'),
+            headers: _headers(json: true),
+            body: jsonEncode(
+                {'code': code, 'redirect_uri': redirectUri, 'state': state}),
+          )
+          .timeout(_timeout);
+    } catch (e) {
+      throw ApiException(0, '無法連線到後端（$_baseUrl）：$e');
+    }
+    if (res.statusCode == 200) {
+      _captureCookie(res);
+      if (_cookie == null) {
+        throw ApiException(200, 'Google 登入回應未包含認證 Cookie');
+      }
+      await _persistCookie();
+      return;
+    }
+    throw ApiException(res.statusCode, _errorMessage(res));
+  }
+
   Future<void> logout() async {
     try {
       await _send('POST', '/api/auth/logout');

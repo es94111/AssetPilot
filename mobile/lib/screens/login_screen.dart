@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../api_client.dart';
+import '../google_auth.dart';
 import '../widgets/turnstile_widget.dart';
 import 'register_screen.dart';
 
@@ -30,6 +31,9 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _turnstileEnabled = false;
   String? _siteKey;
   bool _registrationEnabled = false;
+  bool _googleEnabled = false;
+  String? _googleClientId;
+  bool _googleLoading = false;
 
   // Turnstile 狀態
   String? _turnstileToken;
@@ -59,16 +63,20 @@ class _LoginScreenState extends State<LoginScreen> {
             (cfg['turnstileSiteKey'] is String);
         _siteKey = cfg['turnstileSiteKey'] as String?;
         _registrationEnabled = cfg['registrationEnabled'] == true;
+        _googleEnabled = cfg['googleCodeFlow'] == true &&
+            (cfg['googleClientId'] is String);
+        _googleClientId = cfg['googleClientId'] as String?;
         _turnstileToken = null;
         _turnstileNonce++;
       });
     } catch (_) {
-      // 取不到設定（舊後端或網路問題）→ 當作無 Turnstile、不顯示註冊，
+      // 取不到設定（舊後端或網路問題）→ 當作無 Turnstile、不顯示註冊／Google，
       // 仍允許嘗試登入；若後端其實要求驗證，會回傳對應訊息。
       if (!mounted) return;
       setState(() {
         _turnstileEnabled = false;
         _registrationEnabled = false;
+        _googleEnabled = false;
       });
     } finally {
       if (mounted) setState(() => _configLoading = false);
@@ -122,6 +130,28 @@ class _LoginScreenState extends State<LoginScreen> {
       MaterialPageRoute(builder: (_) => const RegisterScreen()),
     );
     if (ok == true && mounted) widget.onLoggedIn();
+  }
+
+  Future<void> _googleSignIn() async {
+    if (_googleClientId == null) return;
+    setState(() {
+      _googleLoading = true;
+      _error = null;
+    });
+    try {
+      await ApiClient.instance.setBaseUrl(_baseUrl.text);
+      await GoogleAuth.signIn(
+        clientId: _googleClientId!,
+        baseUrl: ApiClient.instance.baseUrl,
+      );
+      if (mounted) widget.onLoggedIn();
+    } on ApiException catch (e) {
+      setState(() => _error = e.message);
+    } catch (e) {
+      setState(() => _error = 'Google 登入失敗：$e');
+    } finally {
+      if (mounted) setState(() => _googleLoading = false);
+    }
   }
 
   @override
@@ -234,6 +264,25 @@ class _LoginScreenState extends State<LoginScreen> {
                             )
                           : const Text('登入'),
                     ),
+                    if (_googleEnabled) ...[
+                      const SizedBox(height: 12),
+                      OutlinedButton.icon(
+                        onPressed: (_googleLoading || _loading)
+                            ? null
+                            : _googleSignIn,
+                        style: OutlinedButton.styleFrom(
+                            padding:
+                                const EdgeInsets.symmetric(vertical: 14)),
+                        icon: _googleLoading
+                            ? const SizedBox(
+                                height: 18,
+                                width: 18,
+                                child:
+                                    CircularProgressIndicator(strokeWidth: 2))
+                            : const Icon(Icons.account_circle_outlined),
+                        label: const Text('使用 Google 登入'),
+                      ),
+                    ],
                     if (_configLoading)
                       const Padding(
                         padding: EdgeInsets.only(top: 12),

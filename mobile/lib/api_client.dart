@@ -53,6 +53,10 @@ class ApiClient {
 
   Map<String, String> _headers({bool json = false}) => {
         if (json) 'Content-Type': 'application/json',
+        // 後端對帶 cookie 的寫入請求做 CSRF 來源檢查（middleware）。原生 App 不會
+        // 自動帶 Origin，缺少時 isOriginAllowed('') 會回 false → 403。送出與後端
+        // 同源的 Origin 讓寫入操作通過 CSRF 防護。
+        'Origin': _baseUrl,
         'Cookie': ?_cookie,
       };
 
@@ -149,14 +153,25 @@ class ApiClient {
 
   // ── 認證 ────────────────────────────────────────────────────
 
-  Future<void> login(String email, String password) async {
+  /// 後端公開設定（是否開放註冊、是否啟用 Turnstile、site key…）。
+  Future<Map<String, dynamic>> config() => _getMap('/api/config');
+
+  Future<void> login(
+    String email,
+    String password, {
+    String? turnstileToken,
+  }) async {
     late http.Response res;
     try {
       res = await http
           .post(
             _uri('/api/auth/login'),
             headers: _headers(json: true),
-            body: jsonEncode({'email': email, 'password': password}),
+            body: jsonEncode({
+              'email': email,
+              'password': password,
+              'turnstileToken': ?turnstileToken,
+            }),
           )
           .timeout(_timeout);
     } catch (e) {
@@ -172,11 +187,46 @@ class ApiClient {
         return;
       case 401:
         throw ApiException(401, '電子郵件或密碼錯誤');
+      case 403:
+        throw ApiException(403, _errorMessage(res)); // 多半是真人驗證失敗
       case 429:
-        throw ApiException(429, '登入嘗試過於頻繁，請稍後再試');
+        throw ApiException(429, _errorMessage(res));
       default:
         throw ApiException(res.statusCode, '登入失敗（HTTP ${res.statusCode}）');
     }
+  }
+
+  /// 註冊並自動登入（後端成功時直接發 Cookie）。註冊端點不需 Turnstile。
+  Future<void> register({
+    required String email,
+    required String password,
+    required String displayName,
+  }) async {
+    late http.Response res;
+    try {
+      res = await http
+          .post(
+            _uri('/api/auth/register'),
+            headers: _headers(json: true),
+            body: jsonEncode({
+              'email': email,
+              'password': password,
+              'displayName': displayName,
+            }),
+          )
+          .timeout(_timeout);
+    } catch (e) {
+      throw ApiException(0, '無法連線到後端（$_baseUrl）：$e');
+    }
+    if (res.statusCode == 200 || res.statusCode == 201) {
+      _captureCookie(res);
+      if (_cookie == null) {
+        throw ApiException(200, '註冊回應未包含認證 Cookie，請確認後端設定');
+      }
+      await _persistCookie();
+      return;
+    }
+    throw ApiException(res.statusCode, _errorMessage(res));
   }
 
   Future<void> logout() async {

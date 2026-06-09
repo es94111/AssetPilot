@@ -43,6 +43,8 @@ dependencies:
   intl: ^0.20.2
   # 圓餅圖／趨勢圖（對應 Web 的 Chart.js）
   fl_chart: ^0.69.2
+  # 登入頁的 Cloudflare Turnstile（真人驗證）以 WebView 呈現
+  webview_flutter: ^4.10.0
 
 dev_dependencies:
   flutter_test:

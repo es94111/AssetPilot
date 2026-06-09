@@ -1,0 +1,38 @@
+# 行動/其他生態的相依漏洞掃描（補 Dependabot 不支援的 ecosystem）。
+# 這裡掃 Flutter App 的 mobile/pubspec.lock（pub.dev 相依的已知 CVE）。
+# npm 已由 Dependabot 顧，不在此重複掃以免 transitive 噪音。
+# 不需 build、幾十秒；掃到漏洞 exit 非 0 → CI fail，結果印在 log（不需 GHAS）。
+name: OSV Scanner (deps)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "mobile/pubspec.lock"
+      - ".github/workflows/osv-scanner.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "mobile/pubspec.lock"
+      - ".github/workflows/osv-scanner.yml"
+  schedule:
+    - cron: "40 1 * * 1"   # 每週一 09:40 Asia/Taipei
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    name: Scan pub.dev lockfile
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Run OSV-Scanner
+        # 官方 docker image，CLI 介面穩定；有漏洞時 exit-code 非 0 → CI fail。
+        # 首次太吵可改報告模式：在 docker run 後加 `|| true`。
+        run: |
+          docker run --rm -v "${{ github.workspace }}:/src" \
+            ghcr.io/google/osv-scanner:latest \
+            --lockfile=/src/mobile/pubspec.lock

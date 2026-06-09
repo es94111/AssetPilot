@@ -67,8 +67,9 @@ export default async function Home() {
           <div>
             <div className="inline-flex items-center gap-2 rounded-full border border-emerald-400/25 bg-emerald-400/10 px-3 py-1 text-sm text-emerald-200">自托管、資料加密、AGPL v3</div>
             <h1 className="mt-5 max-w-3xl text-4xl font-semibold tracking-tight text-white sm:text-5xl lg:text-6xl">
-              你的財務指揮中心，
-              <span className="text-sky-300">從首頁就能先看清楚。</span>
+              你的財務指揮中心
+              <br />
+              <span className="text-sky-300">從首頁就能先看清楚</span>
             </h1>
             <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-300">
               整合台股投資、收支記帳、預算追蹤、報表分析與資料稽核。所有財務資料以<strong className="text-white"> ChaCha20-Poly1305 </strong>加密落地，不綁雲端、不靠訂閱，先理解產品，再決定是否登入。

@@ -1,6 +1,18 @@
 {
-  "currentVersion": "4.47.0",
+  "currentVersion": "4.47.2",
   "releases": [
+    {
+      "version": "4.47.2",
+      "date": "2026-06-09",
+      "title": "調整首頁主標語排版",
+      "type": "improved",
+      "changes": [
+        {
+          "tag": "improved",
+          "text": "首頁主標語改為兩行顯示，視覺上更清晰易讀。"
+        }
+      ]
+    },
     {
       "version": "4.47.0",
       "date": "2026-06-09",

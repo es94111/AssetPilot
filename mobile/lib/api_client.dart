@@ -26,7 +26,6 @@ class ApiClient {
   static const _kCookie = 'authCookie';
 
   /// Android 模擬器以 `10.0.2.2` 對應宿主機的 `localhost`。
-  /// 實機請改為後端的區網 IP 或網域（可在登入頁的「後端設定」修改）。
   static const defaultBaseUrl = 'http://10.0.2.2:3000';
 
   String _baseUrl = defaultBaseUrl;
@@ -35,7 +34,6 @@ class ApiClient {
   String get baseUrl => _baseUrl;
   bool get isLoggedIn => _cookie != null;
 
-  /// App 啟動時呼叫一次，載入持久化的設定。
   Future<void> init() async {
     final p = await SharedPreferences.getInstance();
     _baseUrl = p.getString(_kBaseUrl) ?? defaultBaseUrl;
@@ -48,6 +46,8 @@ class ApiClient {
     await p.setString(_kBaseUrl, _baseUrl);
   }
 
+  // ── 低階請求 ────────────────────────────────────────────────
+
   Uri _uri(String path) => Uri.parse('$_baseUrl$path');
 
   Map<String, String> _headers({bool json = false}) => {
@@ -55,8 +55,6 @@ class ApiClient {
         'Cookie': ?_cookie,
       };
 
-  /// 從回應擷取 `authToken` Cookie。用 regex 只抓 authToken 值，
-  /// 避免 `Expires=Wed, 09 Jun ...` 內的逗號干擾解析。
   void _captureCookie(http.Response res) {
     final raw = res.headers['set-cookie'];
     if (raw == null) return;
@@ -73,7 +71,83 @@ class ApiClient {
     }
   }
 
-  /// 以電子郵件密碼登入。成功後 Cookie 已儲存。
+  /// 統一發送請求，回傳已解碼的 JSON（Map 或 List）。
+  Future<dynamic> _send(
+    String method,
+    String path, {
+    Object? body,
+  }) async {
+    final hasBody = body != null;
+    late http.Response res;
+    try {
+      final uri = _uri(path);
+      final headers = _headers(json: hasBody);
+      final encoded = hasBody ? jsonEncode(body) : null;
+      final c = http.Client();
+      try {
+        switch (method) {
+          case 'GET':
+            res = await c.get(uri, headers: headers).timeout(_timeout);
+            break;
+          case 'POST':
+            res = await c
+                .post(uri, headers: headers, body: encoded)
+                .timeout(_timeout);
+            break;
+          case 'PUT':
+            res = await c
+                .put(uri, headers: headers, body: encoded)
+                .timeout(_timeout);
+            break;
+          case 'DELETE':
+            res = await c
+                .delete(uri, headers: headers, body: encoded)
+                .timeout(_timeout);
+            break;
+          default:
+            throw ArgumentError('未知的 HTTP method: $method');
+        }
+      } finally {
+        c.close();
+      }
+    } catch (e) {
+      throw ApiException(0, '無法連線到後端（$_baseUrl）：$e');
+    }
+
+    if (res.statusCode == 401) {
+      _cookie = null;
+      await _persistCookie();
+      throw ApiException(401, '登入已過期，請重新登入');
+    }
+    if (res.statusCode < 200 || res.statusCode >= 300) {
+      throw ApiException(res.statusCode, _errorMessage(res));
+    }
+    if (res.bodyBytes.isEmpty) return null;
+    return jsonDecode(utf8.decode(res.bodyBytes));
+  }
+
+  static const _timeout = Duration(seconds: 25);
+
+  String _errorMessage(http.Response res) {
+    try {
+      final body = jsonDecode(utf8.decode(res.bodyBytes));
+      if (body is Map && body['error'] != null) return '${body['error']}';
+    } catch (_) {}
+    return '請求失敗（HTTP ${res.statusCode}）';
+  }
+
+  Future<Map<String, dynamic>> _getMap(String path) async =>
+      (await _send('GET', path) as Map).cast<String, dynamic>();
+
+  Future<List<dynamic>> _getList(String path) async {
+    final r = await _send('GET', path);
+    if (r is List) return r;
+    if (r is Map && r['data'] is List) return r['data'] as List;
+    return const [];
+  }
+
+  // ── 認證 ────────────────────────────────────────────────────
+
   Future<void> login(String email, String password) async {
     late http.Response res;
     try {
@@ -83,11 +157,10 @@ class ApiClient {
             headers: _headers(json: true),
             body: jsonEncode({'email': email, 'password': password}),
           )
-          .timeout(const Duration(seconds: 20));
+          .timeout(_timeout);
     } catch (e) {
       throw ApiException(0, '無法連線到後端（$_baseUrl）：$e');
     }
-
     switch (res.statusCode) {
       case 200:
         _captureCookie(res);
@@ -107,46 +180,138 @@ class ApiClient {
 
   Future<void> logout() async {
     try {
-      await http
-          .post(_uri('/api/auth/logout'), headers: _headers())
-          .timeout(const Duration(seconds: 10));
-    } catch (_) {
-      // 即使後端登出失敗，本地仍清除 Cookie。
-    }
+      await _send('POST', '/api/auth/logout');
+    } catch (_) {}
     _cookie = null;
     await _persistCookie();
   }
 
-  /// 取得目前登入使用者；401 時清除本地 Cookie。
   Future<Map<String, dynamic>> me() async {
-    final res = await _get('/api/auth/me');
-    final body = jsonDecode(utf8.decode(res.bodyBytes)) as Map<String, dynamic>;
+    final body = await _getMap('/api/auth/me');
     return (body['user'] as Map).cast<String, dynamic>();
   }
 
-  /// 取得帳戶清單（含餘額）。
-  Future<List<dynamic>> accounts() async {
-    final res = await _get('/api/accounts');
-    return jsonDecode(utf8.decode(res.bodyBytes)) as List<dynamic>;
+  Future<void> updateDisplayName(String name) =>
+      _send('PUT', '/api/account/settings/display-name',
+          body: {'displayName': name});
+
+  // ── 帳戶 ────────────────────────────────────────────────────
+
+  Future<List<dynamic>> accounts() => _getList('/api/accounts');
+
+  Future<void> createAccount(Map<String, dynamic> body) =>
+      _send('POST', '/api/accounts', body: body);
+
+  Future<void> updateAccount(String id, Map<String, dynamic> body) =>
+      _send('PUT', '/api/accounts/$id', body: body);
+
+  Future<void> deleteAccount(String id) =>
+      _send('DELETE', '/api/accounts/$id');
+
+  // ── 分類 ────────────────────────────────────────────────────
+
+  Future<List<dynamic>> categories() => _getList('/api/categories');
+
+  Future<void> createCategory(Map<String, dynamic> body) =>
+      _send('POST', '/api/categories', body: body);
+
+  Future<void> updateCategory(String id, Map<String, dynamic> body) =>
+      _send('PUT', '/api/categories/$id', body: body);
+
+  Future<void> deleteCategory(String id) =>
+      _send('DELETE', '/api/categories/$id');
+
+  // ── 交易 ────────────────────────────────────────────────────
+
+  Future<List<dynamic>> transactions({
+    String? dateFrom,
+    String? dateTo,
+    String? type,
+    int pageSize = 100,
+  }) {
+    final q = <String, String>{'pageSize': '$pageSize', 'sort': 'date_desc'};
+    if (dateFrom != null) q['dateFrom'] = dateFrom;
+    if (dateTo != null) q['dateTo'] = dateTo;
+    if (type != null && type != 'all') q['type'] = type;
+    final qs = q.entries.map((e) => '${e.key}=${e.value}').join('&');
+    return _getList('/api/transactions?$qs');
   }
 
-  Future<http.Response> _get(String path) async {
-    late http.Response res;
-    try {
-      res = await http
-          .get(_uri(path), headers: _headers())
-          .timeout(const Duration(seconds: 20));
-    } catch (e) {
-      throw ApiException(0, '無法連線到後端（$_baseUrl）：$e');
-    }
-    if (res.statusCode == 401) {
-      _cookie = null;
-      await _persistCookie();
-      throw ApiException(401, '登入已過期，請重新登入');
-    }
-    if (res.statusCode != 200) {
-      throw ApiException(res.statusCode, '請求失敗（HTTP ${res.statusCode}）');
-    }
-    return res;
-  }
+  Future<void> createTransaction(Map<String, dynamic> body) =>
+      _send('POST', '/api/transactions', body: body);
+
+  Future<void> updateTransaction(String id, Map<String, dynamic> body) =>
+      _send('PUT', '/api/transactions/$id', body: body);
+
+  Future<void> deleteTransaction(String id) =>
+      _send('DELETE', '/api/transactions/$id');
+
+  Future<void> transfer(Map<String, dynamic> body) =>
+      _send('POST', '/api/transactions/transfer', body: body);
+
+  // ── 儀表板 ──────────────────────────────────────────────────
+
+  Future<Map<String, dynamic>> dashboard(String yearMonth) =>
+      _getMap('/api/dashboard?ym=$yearMonth');
+
+  // ── 預算 ────────────────────────────────────────────────────
+
+  Future<List<dynamic>> budgets(String yearMonth) =>
+      _getList('/api/budgets?yearMonth=$yearMonth');
+
+  Future<void> createBudget(Map<String, dynamic> body) =>
+      _send('POST', '/api/budgets', body: body);
+
+  Future<void> updateBudget(String id, Map<String, dynamic> body) =>
+      _send('PUT', '/api/budgets/$id', body: body);
+
+  Future<void> deleteBudget(String id) => _send('DELETE', '/api/budgets/$id');
+
+  // ── 固定收支 ────────────────────────────────────────────────
+
+  Future<List<dynamic>> recurring() => _getList('/api/recurring');
+
+  Future<void> createRecurring(Map<String, dynamic> body) =>
+      _send('POST', '/api/recurring', body: body);
+
+  Future<void> deleteRecurring(String id) =>
+      _send('DELETE', '/api/recurring/$id');
+
+  Future<void> toggleRecurring(String id) =>
+      _send('POST', '/api/recurring/$id/toggle');
+
+  // ── 股票 ────────────────────────────────────────────────────
+
+  Future<Map<String, dynamic>> stocks() => _getMap('/api/stocks');
+
+  Future<void> createStock(Map<String, dynamic> body) =>
+      _send('POST', '/api/stocks', body: body);
+
+  Future<void> deleteStock(String id) => _send('DELETE', '/api/stocks/$id');
+
+  Future<List<dynamic>> stockTransactions() =>
+      _getList('/api/stock-transactions');
+
+  Future<void> createStockTransaction(Map<String, dynamic> body) =>
+      _send('POST', '/api/stock-transactions', body: body);
+
+  Future<void> deleteStockTransaction(String id) =>
+      _send('DELETE', '/api/stock-transactions/$id');
+
+  Future<List<dynamic>> stockDividends() => _getList('/api/stock-dividends');
+
+  Future<List<dynamic>> stockRealized() => _getList('/api/stock-realized');
+
+  // ── 報表 ────────────────────────────────────────────────────
+
+  Future<Map<String, dynamic>> reports({
+    required String type,
+    required String from,
+    required String to,
+  }) =>
+      _getMap('/api/reports?type=$type&from=$from&to=$to');
+
+  // ── 匯率 ────────────────────────────────────────────────────
+
+  Future<List<dynamic>> exchangeRates() => _getList('/api/exchange-rates');
 }

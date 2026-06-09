@@ -156,3 +156,6 @@ postgresql/
 # 各種軟體或腳本在修改檔案前自動建立的備份檔 (目前已取消忽略)
 #*.bak
 openapi.cloudflare.yaml
+release.jks.base64.txt
+.gitignore
+release.jks

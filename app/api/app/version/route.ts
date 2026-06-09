@@ -1,26 +1,32 @@
 import { NextResponse } from 'next/server';
-import { getS3ConfigStatus, getS3Config, getS3Object } from '../../../../lib/s3Storage';
+import { getS3Config, getS3Object } from '../../../../lib/s3Storage';
+import { getMegaS4ConfigStatus } from '../../../../lib/megaS4';
 
 // Public endpoint — the mobile app polls this to learn the latest released
-// version and APK URL. The CI workflow (android-apk.yml) writes the manifest to
-// downloads/app-version.json on S3 after every signed release build.
+// version and APK URL. Release builds write the manifest to
+// downloads/app-version.json on MEGA S4 after every signed release build.
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 const MANIFEST_KEY = 'downloads/app-version.json';
 
 export async function GET() {
-  const status = getS3ConfigStatus();
+  const status = getMegaS4ConfigStatus();
   if (!status.configured) {
     return NextResponse.json(
-      { error: 'S3 尚未設定，無法取得 App 版本資訊', missing: status.missing },
+      { error: 'MEGA S4 尚未設定，無法取得 App 版本資訊', missing: status.missing },
       { status: 503 },
     );
   }
 
   try {
-    const config = getS3Config();
-    // CI uploads to bucket-root downloads/ (no prefix); read the same path.
+    const config = getS3Config('MEGA_S4', {
+      endpoint: status.endpoint,
+      region: status.region,
+      bucket: status.bucket,
+      prefix: status.prefix,
+    });
+    // App update files live at bucket-root downloads/ (no MEGA_S4_PREFIX).
     const response = await getS3Object(config, MANIFEST_KEY);
     const manifest = await response.json();
     return NextResponse.json(manifest, {

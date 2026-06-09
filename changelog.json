@@ -1,6 +1,54 @@
 {
-  "currentVersion": "4.45.0",
+  "currentVersion": "4.47.0",
   "releases": [
+    {
+      "version": "4.47.0",
+      "date": "2026-06-09",
+      "title": "App 新增版本更新查看與 Google 登入優化",
+      "type": "new",
+      "changes": [
+        {
+          "tag": "new",
+          "text": "App「更多」頁面新增「App 更新」入口，點入可查看目前安裝的版本號，系統會自動確認是否有新版本；有更新時可直接前往下載。"
+        },
+        {
+          "tag": "improved",
+          "text": "Google 登入在 App Links 網域驗證尚未完成的情況下也能正常收到授權結果，透過備用回呼方式確保登入流程不中斷。"
+        },
+        {
+          "tag": "improved",
+          "text": "App 連線位址改為固定連到 https://asset.shao.one，移除可自訂後端位址的功能，避免因設定不一致造成 Google 登入或安全驗證失敗。"
+        }
+      ]
+    },
+    {
+      "version": "4.46.0",
+      "date": "2026-06-09",
+      "title": "安卓 App 新增 Google 登入與帳號註冊",
+      "type": "new",
+      "changes": [
+        {
+          "tag": "new",
+          "text": "安卓 App 新增「使用 Google 帳號登入」功能，點一下即可透過系統瀏覽器完成 Google 授權並自動導回 App，不需輸入帳號密碼。（需後台已設定 Google 登入才會顯示此選項）"
+        },
+        {
+          "tag": "new",
+          "text": "安卓 App 新增帳號註冊功能，可直接在 App 內輸入電子郵件與密碼建立新帳號，完成後自動登入，不需先開啟網頁。（需後台已開放註冊才會顯示此入口）"
+        },
+        {
+          "tag": "fixed",
+          "text": "修正當後台啟用 Cloudflare Turnstile 真人驗證時，App 登入出現 403 錯誤的問題；App 現在會正確顯示驗證步驟，通過後才送出登入請求。"
+        },
+        {
+          "tag": "improved",
+          "text": "App 圖示更新為 AssetPilot 品牌圖示（漸層底色搭配長條圖、趨勢箭頭與金幣），更貼近產品識別，適用各密度螢幕與 Android 動態圖示。"
+        },
+        {
+          "tag": "improved",
+          "text": "App 開啟時的連線網址預設為 https://asset.shao.one，可直接連到正式服務。"
+        }
+      ]
+    },
     {
       "version": "4.45.0",
       "date": "2026-06-09",

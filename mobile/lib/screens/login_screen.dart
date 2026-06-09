@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 
 import '../api_client.dart';
+import '../widgets/turnstile_widget.dart';
+import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
-  /// 登入成功後呼叫，由 AuthGate 切換到儀表板。
+  /// 登入成功後呼叫，由 AuthGate 切換到主畫面。
   final VoidCallback onLoggedIn;
   const LoginScreen({super.key, required this.onLoggedIn});
 
@@ -23,6 +25,22 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _loading = false;
   String? _error;
 
+  // 後端設定（來自 /api/config）
+  bool _configLoading = true;
+  bool _turnstileEnabled = false;
+  String? _siteKey;
+  bool _registrationEnabled = false;
+
+  // Turnstile 狀態
+  String? _turnstileToken;
+  int _turnstileNonce = 0; // 改變即強制重建 widget（重新取得 token）
+
+  @override
+  void initState() {
+    super.initState();
+    _loadConfig();
+  }
+
   @override
   void dispose() {
     _email.dispose();
@@ -31,8 +49,51 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  Future<void> _loadConfig() async {
+    setState(() => _configLoading = true);
+    try {
+      final cfg = await ApiClient.instance.config();
+      if (!mounted) return;
+      setState(() {
+        _turnstileEnabled = cfg['turnstileEnabled'] == true &&
+            (cfg['turnstileSiteKey'] is String);
+        _siteKey = cfg['turnstileSiteKey'] as String?;
+        _registrationEnabled = cfg['registrationEnabled'] == true;
+        _turnstileToken = null;
+        _turnstileNonce++;
+      });
+    } catch (_) {
+      // 取不到設定（舊後端或網路問題）→ 當作無 Turnstile、不顯示註冊，
+      // 仍允許嘗試登入；若後端其實要求驗證，會回傳對應訊息。
+      if (!mounted) return;
+      setState(() {
+        _turnstileEnabled = false;
+        _registrationEnabled = false;
+      });
+    } finally {
+      if (mounted) setState(() => _configLoading = false);
+    }
+  }
+
+  Future<void> _applyServer() async {
+    await ApiClient.instance.setBaseUrl(_baseUrl.text);
+    if (mounted) {
+      setState(() => _baseUrl.text = ApiClient.instance.baseUrl);
+      await _loadConfig();
+    }
+  }
+
+  void _resetTurnstile() => setState(() {
+        _turnstileToken = null;
+        _turnstileNonce++;
+      });
+
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
+    if (_turnstileEnabled && _turnstileToken == null) {
+      setState(() => _error = '請先完成下方的真人驗證');
+      return;
+    }
     FocusScope.of(context).unfocus();
     setState(() {
       _loading = true;
@@ -40,15 +101,27 @@ class _LoginScreenState extends State<LoginScreen> {
     });
     try {
       await ApiClient.instance.setBaseUrl(_baseUrl.text);
-      await ApiClient.instance.login(_email.text.trim(), _password.text);
+      await ApiClient.instance.login(
+        _email.text.trim(),
+        _password.text,
+        turnstileToken: _turnstileToken,
+      );
       if (mounted) widget.onLoggedIn();
     } on ApiException catch (e) {
       setState(() => _error = e.message);
+      if (_turnstileEnabled) _resetTurnstile(); // token 單次使用，失敗後重取
     } catch (e) {
       setState(() => _error = '發生未預期的錯誤：$e');
     } finally {
       if (mounted) setState(() => _loading = false);
     }
+  }
+
+  Future<void> _goRegister() async {
+    final ok = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(builder: (_) => const RegisterScreen()),
+    );
+    if (ok == true && mounted) widget.onLoggedIn();
   }
 
   @override
@@ -110,6 +183,20 @@ class _LoginScreenState extends State<LoginScreen> {
                           (v == null || v.isEmpty) ? '請輸入密碼' : null,
                       onFieldSubmitted: (_) => _submit(),
                     ),
+                    if (_turnstileEnabled && _siteKey != null) ...[
+                      const SizedBox(height: 16),
+                      TurnstileWidget(
+                        key: ValueKey('ts_$_turnstileNonce'),
+                        siteKey: _siteKey!,
+                        baseUrl: ApiClient.instance.baseUrl,
+                        action: 'login',
+                        onToken: (t) => setState(() {
+                          _turnstileToken = t;
+                          _error = null;
+                        }),
+                        onError: (_) => setState(() => _turnstileToken = null),
+                      ),
+                    ],
                     if (_error != null) ...[
                       const SizedBox(height: 16),
                       Container(
@@ -147,7 +234,22 @@ class _LoginScreenState extends State<LoginScreen> {
                             )
                           : const Text('登入'),
                     ),
-                    const SizedBox(height: 8),
+                    if (_configLoading)
+                      const Padding(
+                        padding: EdgeInsets.only(top: 12),
+                        child: Center(
+                          child: SizedBox(
+                            height: 16,
+                            width: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        ),
+                      )
+                    else if (_registrationEnabled)
+                      TextButton(
+                        onPressed: _loading ? null : _goRegister,
+                        child: const Text('還沒有帳號？註冊'),
+                      ),
                     TextButton.icon(
                       onPressed: () => setState(
                           () => _showServerSettings = !_showServerSettings),
@@ -156,19 +258,27 @@ class _LoginScreenState extends State<LoginScreen> {
                           : Icons.expand_more),
                       label: const Text('後端設定'),
                     ),
-                    if (_showServerSettings)
+                    if (_showServerSettings) ...[
                       TextFormField(
                         controller: _baseUrl,
                         keyboardType: TextInputType.url,
                         autocorrect: false,
                         decoration: const InputDecoration(
                           labelText: '後端位址',
-                          helperText: '預設 https://asset.shao.one；可改成自架位址（本機開發用 http://10.0.2.2:3000）',
+                          helperText:
+                              '預設 https://asset.shao.one；可改成自架位址（本機開發用 http://10.0.2.2:3000）',
                           helperMaxLines: 2,
                           prefixIcon: Icon(Icons.dns_outlined),
                           border: OutlineInputBorder(),
                         ),
                       ),
+                      const SizedBox(height: 8),
+                      OutlinedButton.icon(
+                        onPressed: _configLoading ? null : _applyServer,
+                        icon: const Icon(Icons.refresh),
+                        label: const Text('套用並重新載入'),
+                      ),
+                    ],
                   ],
                 ),
               ),

@@ -109,7 +109,7 @@ async function processStockRecurring(userId) {
           if (!info?.found || !(info.closingPrice > 0)) info = await fetchTpexStockDay(stockRow.symbol, ymd);
           price = (info?.found && info.closingPrice > 0) ? info.closingPrice : Number(stockRow.current_price || 0);
         }
-      } catch (e) { console.warn(`[stock-recurring] price query failed (${r.id}, ${actualDate}):`, e.message); }
+      } catch (e) { console.warn('[stock-recurring] price query failed', { recurringId: r.id, actualDate, error: e.message }); }
 
       if (!(price > 0)) {
         db.run('UPDATE stock_recurring SET last_generated = ? WHERE id = ?', [scheduledDate, r.id]);

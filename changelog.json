@@ -1,6 +1,18 @@
 {
-  "currentVersion": "4.47.2",
+  "currentVersion": "4.47.3",
   "releases": [
+    {
+      "version": "4.47.3",
+      "date": "2026-06-09",
+      "title": "修正 App Google 登入 redirect URI 驗證失敗",
+      "type": "fixed",
+      "changes": [
+        {
+          "tag": "fixed",
+          "text": "修正 App 使用 Google 登入時後台回傳「invalid_redirect_url」的問題；後台現在會正確接受 App 的授權回呼路徑，Google 登入流程可正常完成。"
+        }
+      ]
+    },
     {
       "version": "4.47.2",
       "date": "2026-06-09",

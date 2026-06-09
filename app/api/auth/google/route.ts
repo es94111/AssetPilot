@@ -25,6 +25,8 @@ function buildGoogleRedirectAllowlist() {
   const fallback = [
     `https://${APP_HOST}/`, `https://${APP_HOST}`,
     `http://localhost:${PORT}/`, `http://localhost:${PORT}`,
+    // mobile App Link callback (fixed path used by the Android app)
+    `https://${APP_HOST}/app/google-callback`,
   ];
   return new Set(fallback);
 }

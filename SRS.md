@@ -987,6 +987,7 @@ API 路徑統一以 `/api/` 為前綴。所有需認證的路由自動套用 aut
 
 | 版本 | 日期 | 變更說明 |
 | --- | --- | --- |
+| 4.47.3 | 2026-06-09 | `app/api/auth/google/route.ts` `buildGoogleRedirectAllowlist()` fallback 新增 `https://${APP_HOST}/app/google-callback`，修正 App Google SSO 回呼時後端 allowlist 驗證失敗（`invalid_redirect_uri`） |
 | 4.47.2 | 2026-06-09 | 首頁 `app/page.tsx` 主標語改為兩行（插入 `<br />`），移除行尾逗號與句號 |
 | 4.47.1 | 2026-06-09 | `android-apk.yml` CI workflow 改上傳至 MEGA S4（`MEGA_S4_BUCKET`／`MEGA_S4_ACCESS_KEY_ID`／`MEGA_S4_SECRET_ACCESS_KEY`／`MEGA_S4_REGION`／`MEGA_S4_ENDPOINT`），與 `app/api/app/version` 讀取來源對齊，修正 App 更新畫面永遠取不到版本資訊的問題 |
 | 4.47.0 | 2026-06-09 | 安卓 App 新增 App 更新畫面（`AppUpdateScreen` 透過 `GET /api/app/version` 查 MEGA S4 版本資訊）；`GoogleAuth` 新增 `callbackScheme`/`callbackHost` 常數 + 自訂 URI scheme `assetpilot://google-callback` 備援 intent-filter，修正 App Links 未驗證時 OAuth 回呼失效；移除 `ApiClient.setBaseUrl()` 與 `SharedPreferences _kBaseUrl`，連線位址固定為 `https://asset.shao.one`；對應移除設定頁「後端位址」編輯 UI；`GET /api/app/version` 改以 `getMegaS4ConfigStatus()` 驅動，讀取 MEGA S4 的 `downloads/app-version.json`；新增 `app/app/google-callback/page.tsx`（重導向至 `assetpilot://google-callback` custom scheme） |

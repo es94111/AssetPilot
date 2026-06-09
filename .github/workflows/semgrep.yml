@@ -1,0 +1,39 @@
+name: Semgrep (SAST)
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+  schedule:
+    # 每週一 02:00 UTC = 10:00 Asia/Taipei
+    - cron: "0 2 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  semgrep:
+    name: Scan
+    runs-on: ubuntu-latest
+    # Semgrep OSS 引擎 + 公開 registry 規則集，私有 repo 免費、不需 SEMGREP_APP_TOKEN
+    container:
+      image: semgrep/semgrep
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Run Semgrep
+        # --error: 有發現就讓 CI 失敗（PR 擋下）；要先觀察可暫時拿掉 --error 改成純報告
+        run: |
+          semgrep scan \
+            --config p/default \
+            --config p/security-audit \
+            --config p/secrets \
+            --config p/javascript \
+            --config p/typescript \
+            --config p/react \
+            --config p/owasp-top-ten \
+            --error \
+            --metrics off

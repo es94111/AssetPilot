@@ -55,6 +55,19 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
 
+  # 由單一來源圖產生各密度 launcher icon（含 Android adaptive icon）
+  flutter_launcher_icons: ^0.14.4
+
+# App 圖示設定：來源圖在 assets/icon/（由 tool/gen_icon.py 依品牌 logo 產生）。
+# 重新產圖後執行：dart run flutter_launcher_icons
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "assets/icon/app_icon.png"
+  min_sdk_android: 21
+  adaptive_icon_background: "assets/icon/ic_bg.png"
+  adaptive_icon_foreground: "assets/icon/ic_fg.png"
+
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 

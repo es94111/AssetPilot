@@ -92,6 +92,15 @@ jobs:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
           set -euo pipefail
+
+          # 前置檢查：上傳前先確認 bucket 存在，避免 misconfigured S3_BUCKET 讓
+          # aws s3 cp 直接拋出難讀的 NoSuchBucket。不存在/無法存取 → 印清楚訊息並中止。
+          if ! aws s3 ls "s3://${S3_BUCKET}" --endpoint-url "$S3_ENDPOINT" >/dev/null 2>&1; then
+            echo "::error::S3 bucket 不存在或無法存取（region=${AWS_DEFAULT_REGION}）。"
+            echo "::error::請確認 S3_BUCKET 是真實 bucket 名（非 downloads 之類的前綴）、S3_REGION 與 S3_ENDPOINT 對應該 bucket 所在區域；必要時先建立：aws s3 mb s3://<bucket> --endpoint-url <endpoint> --region <region>。"
+            exit 1
+          fi
+
           APK_KEY="downloads/assetpilot-v${VERSION}.apk"
           APK_URL="${S3_ENDPOINT%/}/${S3_BUCKET}/${APK_KEY}"
 

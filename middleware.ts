@@ -103,6 +103,7 @@ function isOriginAllowed(originValue: string, request: NextRequest): boolean {
 
 export function middleware(request: NextRequest): NextResponse {
   const { pathname } = request.nextUrl;
+  const isPublicPath = PUBLIC_PATHS.has(pathname) || PUBLIC_PREFIXES.some(p => pathname.startsWith(p));
 
   // 略過 Next.js 內部路由與靜態資源
   if (SKIP_PREFIXES.some(p => pathname.startsWith(p))) {
@@ -133,7 +134,7 @@ export function middleware(request: NextRequest): NextResponse {
     const method = request.method.toUpperCase();
     const authHeader = request.headers.get('authorization') || '';
     const usesCookieAuth = !authHeader.startsWith('Bearer ') && !!request.cookies.get('authToken')?.value;
-    if (usesCookieAuth && !CSRF_SAFE_METHODS.has(method)) {
+    if (!isPublicPath && usesCookieAuth && !CSRF_SAFE_METHODS.has(method)) {
       const origin = request.headers.get('origin') || request.headers.get('referer') || '';
       if (!isOriginAllowed(origin, request)) {
         return NextResponse.json({ error: '請求來源不被允許（CSRF 防護）' }, { status: 403 });
@@ -142,8 +143,7 @@ export function middleware(request: NextRequest): NextResponse {
   }
 
   // 公開端點不需 JWT 驗證
-  if (PUBLIC_PATHS.has(pathname)) return NextResponse.next();
-  if (PUBLIC_PREFIXES.some(p => pathname.startsWith(p))) return NextResponse.next();
+  if (isPublicPath) return NextResponse.next();
 
   // 不需保護的非 API 路徑（靜態頁面等）——只保護已知的 app 路徑 + API
   const PROTECTED_PREFIXES = [

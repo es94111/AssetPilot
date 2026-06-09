@@ -22,7 +22,6 @@ function pruneBeforeRestoreBackups() {
     const files = fs.readdirSync(BACKUPS_DIR)
       .filter(f => f.startsWith('before-restore-') && f.endsWith('.sql'))
       .map(f => {
-        // nosemgrep: javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal -- f 來自 readdirSync(BACKUPS_DIR) 並經 before-restore-*.sql 過濾，非使用者輸入
         const fp = path.join(BACKUPS_DIR, f);
         try { return { name: f, path: fp, mtime: fs.statSync(fp).mtimeMs }; } catch (_) { return null; }
       })

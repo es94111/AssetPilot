@@ -109,7 +109,6 @@ async function processStockRecurring(userId) {
           if (!info?.found || !(info.closingPrice > 0)) info = await fetchTpexStockDay(stockRow.symbol, ymd);
           price = (info?.found && info.closingPrice > 0) ? info.closingPrice : Number(stockRow.current_price || 0);
         }
-      // nosemgrep: javascript.lang.security.audit.unsafe-formatstring.unsafe-formatstring -- 第一參數為已插值的字串字面值（無 %s 等格式符），e.message 為獨立參數，非格式字串注入
       } catch (e) { console.warn(`[stock-recurring] price query failed (${r.id}, ${actualDate}):`, e.message); }
 
       if (!(price > 0)) {

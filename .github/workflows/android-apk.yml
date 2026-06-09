@@ -1,8 +1,9 @@
 name: Build Android APK
 
-# Builds a signed release APK and publishes it to MEGA S4 so the app/web can
-# offer in-app (OTA) updates. Version follows the same `vX.Y.Z` tag that
-# docker-publish.yml auto-creates from changelog.json on a push to main.
+# Builds a signed release APK and publishes it to S3-compatible storage so
+# the app/web can offer in-app (OTA) updates. Version follows the same
+# `vX.Y.Z` tag that docker-publish.yml auto-creates from changelog.json on a
+# push to main.
 on:
   push:
     branches:
@@ -15,14 +16,14 @@ jobs:
   build-apk:
     runs-on: ubuntu-latest
     env:
-      MEGA_S4_BUCKET: ${{ secrets.MEGA_S4_BUCKET }}
-      MEGA_S4_ENDPOINT: ${{ secrets.MEGA_S4_ENDPOINT }}
+      S3_BUCKET: ${{ secrets.S3_BUCKET }}
+      S3_ENDPOINT: ${{ secrets.S3_ENDPOINT }}
       # Gate for the signing step (secrets can't be read directly in `if`).
       ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
@@ -73,44 +74,43 @@ jobs:
           --build-name=${{ steps.version.outputs.version }}
           --build-number=${{ github.run_number }}
 
-      # Fallback when MEGA S4 isn't configured — APK is normally distributed via
-      # MEGA S4 below. Forks/PRs without MEGA S4 secrets still get an artifact.
+      # Fallback when S3 isn't configured — APK is normally distributed via
+      # S3 below. Forks/PRs without S3 secrets still get an artifact.
       - name: Upload APK artifact
-        if: ${{ env.MEGA_S4_BUCKET == '' }}
+        if: ${{ env.S3_BUCKET == '' }}
         uses: actions/upload-artifact@v4
         with:
           name: assetpilot-apk
           path: mobile/build/app/outputs/flutter-apk/app-release.apk
 
-      - name: Publish APK + version manifest to MEGA S4
-        if: ${{ env.MEGA_S4_BUCKET != '' }}
+      - name: Publish APK + version manifest to S3
+        if: ${{ env.S3_BUCKET != '' }}
         env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.MEGA_S4_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.MEGA_S4_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: ${{ secrets.MEGA_S4_REGION }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.S3_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ secrets.S3_REGION }}
           APK_PATH: mobile/build/app/outputs/flutter-apk/app-release.apk
           VERSION: ${{ steps.version.outputs.version }}
         run: |
           set -euo pipefail
 
-          # MEGA S4 endpoint：優先使用 secret，否則由 region 推算預設值。
           REGION="${AWS_DEFAULT_REGION:-eu-central-1}"
-          ENDPOINT="${MEGA_S4_ENDPOINT:-https://s3.${REGION}.s4.mega.io}"
+          ENDPOINT="${S3_ENDPOINT:-https://s3.${REGION}.s4.mega.io}"
 
-          # 前置檢查：上傳前先確認 bucket 存在，避免 misconfigured MEGA_S4_BUCKET
+          # 前置檢查：上傳前先確認 bucket 存在，避免 misconfigured S3_BUCKET
           # 讓 aws s3 cp 拋出難讀的 NoSuchBucket。
-          if ! aws s3 ls "s3://${MEGA_S4_BUCKET}" --endpoint-url "$ENDPOINT" >/dev/null 2>&1; then
-            echo "::error::MEGA S4 bucket 不存在或無法存取（region=${REGION}）。"
-            echo "::error::請確認 MEGA_S4_BUCKET 是真實 bucket 名稱，MEGA_S4_REGION 與 MEGA_S4_ENDPOINT 對應該 bucket 所在區域。"
+          if ! aws s3 ls "s3://${S3_BUCKET}" --endpoint-url "$ENDPOINT" >/dev/null 2>&1; then
+            echo "::error::S3 bucket 不存在或無法存取（region=${REGION}）。"
+            echo "::error::請確認 S3_BUCKET 是真實 bucket 名稱，S3_REGION 與 S3_ENDPOINT 對應該 bucket 所在區域。"
             exit 1
           fi
 
           APK_KEY="downloads/assetpilot-v${VERSION}.apk"
-          APK_URL="${ENDPOINT%/}/${MEGA_S4_BUCKET}/${APK_KEY}"
+          APK_URL="${ENDPOINT%/}/${S3_BUCKET}/${APK_KEY}"
 
           # Versioned + stable "latest" copies of the APK.
-          aws s3 cp "$APK_PATH" "s3://${MEGA_S4_BUCKET}/${APK_KEY}" --endpoint-url "$ENDPOINT"
-          aws s3 cp "$APK_PATH" "s3://${MEGA_S4_BUCKET}/downloads/assetpilot-latest.apk" --endpoint-url "$ENDPOINT"
+          aws s3 cp "$APK_PATH" "s3://${S3_BUCKET}/${APK_KEY}" --endpoint-url "$ENDPOINT"
+          aws s3 cp "$APK_PATH" "s3://${S3_BUCKET}/downloads/assetpilot-latest.apk" --endpoint-url "$ENDPOINT"
 
           # Manifest read by /api/app/version for the in-app update prompt.
           cat > app-version.json <<EOF
@@ -122,7 +122,7 @@ jobs:
             "releasedAt": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
           }
           EOF
-          aws s3 cp app-version.json "s3://${MEGA_S4_BUCKET}/downloads/app-version.json" \
+          aws s3 cp app-version.json "s3://${S3_BUCKET}/downloads/app-version.json" \
             --content-type application/json --endpoint-url "$ENDPOINT"
 
           echo "Published $APK_URL"

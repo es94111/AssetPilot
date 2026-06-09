@@ -987,6 +987,7 @@ API 路徑統一以 `/api/` 為前綴。所有需認證的路由自動套用 aut
 
 | 版本 | 日期 | 變更說明 |
 | --- | --- | --- |
+| 4.47.4 | 2026-06-09 | `mobile/lib/screens/app_update_screen.dart` 移除硬編碼 `_currentVersion`/`_currentBuildNumber`，改用 `package_info_plus` `PackageInfo.fromPlatform()` 動態讀取，修正 App 更新畫面版本顯示恆為 1.0 的問題 |
 | 4.47.3 | 2026-06-09 | `app/api/auth/google/route.ts` `buildGoogleRedirectAllowlist()` fallback 新增 `https://${APP_HOST}/app/google-callback`，修正 App Google SSO 回呼時後端 allowlist 驗證失敗（`invalid_redirect_uri`） |
 | 4.47.2 | 2026-06-09 | 首頁 `app/page.tsx` 主標語改為兩行（插入 `<br />`），移除行尾逗號與句號 |
 | 4.47.1 | 2026-06-09 | `android-apk.yml` CI workflow 改上傳至 MEGA S4（`MEGA_S4_BUCKET`／`MEGA_S4_ACCESS_KEY_ID`／`MEGA_S4_SECRET_ACCESS_KEY`／`MEGA_S4_REGION`／`MEGA_S4_ENDPOINT`），與 `app/api/app/version` 讀取來源對齊，修正 App 更新畫面永遠取不到版本資訊的問題 |

@@ -1,6 +1,18 @@
 {
-  "currentVersion": "4.47.3",
+  "currentVersion": "4.47.4",
   "releases": [
+    {
+      "version": "4.47.4",
+      "date": "2026-06-09",
+      "title": "修正 Android App 版本顯示不正確",
+      "type": "fixed",
+      "changes": [
+        {
+          "tag": "fixed",
+          "text": "Android App「App 更新」頁面過去一律顯示版本 1.0，即使已安裝較新版本也無法反映正確版號；現已修正為自動讀取裝置上實際安裝的版本，確保更新提示與版本比對結果準確。"
+        }
+      ]
+    },
     {
       "version": "4.47.3",
       "date": "2026-06-09",

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'accounts_screen.dart';
+import 'app_update_screen.dart';
 import 'budgets_screen.dart';
 import 'categories_screen.dart';
 import 'recurring_screen.dart';
@@ -19,6 +20,7 @@ class MoreScreen extends StatelessWidget {
       (Icons.savings_outlined, '預算', const BudgetsScreen()),
       (Icons.repeat, '固定收支', const RecurringScreen()),
       (Icons.bar_chart, '統計報表', const ReportsScreen()),
+      (Icons.system_update_alt, 'App 更新', const AppUpdateScreen()),
     ];
     return Scaffold(
       appBar: AppBar(title: const Text('更多')),
@@ -29,8 +31,9 @@ class MoreScreen extends StatelessWidget {
               leading: Icon(icon),
               title: Text(label),
               trailing: const Icon(Icons.chevron_right),
-              onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => page)),
+              onTap: () => Navigator.of(
+                context,
+              ).push(MaterialPageRoute(builder: (_) => page)),
             ),
           const Divider(),
           ListTile(

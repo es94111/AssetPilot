@@ -15,6 +15,8 @@ import 'api_client.dart';
 /// 4. 核對 state、取出 code，POST 給後端以 client_secret 兌換並登入。
 class GoogleAuth {
   static const callbackPath = '/app/google-callback';
+  static const callbackScheme = 'assetpilot';
+  static const callbackHost = 'google-callback';
 
   /// 執行 Google 登入；成功則 [ApiClient] 已持有 Cookie。失敗拋 [ApiException]。
   static Future<void> signIn({
@@ -35,13 +37,18 @@ class GoogleAuth {
 
     final appLinks = AppLinks();
     final completer = Completer<Uri>();
-    final sub = appLinks.uriLinkStream.listen((uri) {
-      if (uri.path == callbackPath &&
+    void completeIfCallback(Uri uri) {
+      final isHttpsAppLink = uri.path == callbackPath;
+      final isCustomScheme =
+          uri.scheme == callbackScheme && uri.host == callbackHost;
+      if ((isHttpsAppLink || isCustomScheme) &&
           uri.queryParameters['code'] != null &&
           !completer.isCompleted) {
         completer.complete(uri);
       }
-    });
+    }
+
+    final sub = appLinks.uriLinkStream.listen(completeIfCallback);
 
     try {
       final launched = await launchUrl(
@@ -51,6 +58,9 @@ class GoogleAuth {
       if (!launched) {
         throw ApiException(0, '無法開啟瀏覽器進行 Google 登入');
       }
+
+      final initialUri = await appLinks.getInitialLink();
+      if (initialUri != null) completeIfCallback(initialUri);
 
       final Uri cb;
       try {

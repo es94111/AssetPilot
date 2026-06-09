@@ -38,11 +38,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('取消')),
+            onPressed: () => Navigator.pop(context),
+            child: const Text('取消'),
+          ),
           FilledButton(
-              onPressed: () => Navigator.pop(context, ctrl.text.trim()),
-              child: const Text('儲存')),
+            onPressed: () => Navigator.pop(context, ctrl.text.trim()),
+            child: const Text('儲存'),
+          ),
         ],
       ),
     );
@@ -58,48 +60,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
-  Future<void> _editBaseUrl() async {
-    final ctrl = TextEditingController(text: ApiClient.instance.baseUrl);
-    final url = await showDialog<String>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('後端位址'),
-        content: TextField(
-          controller: ctrl,
-          autofocus: true,
-          keyboardType: TextInputType.url,
-          decoration: const InputDecoration(
-              border: OutlineInputBorder(),
-              helperText: '例：http://192.168.1.10:3000'),
-        ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('取消')),
-          FilledButton(
-              onPressed: () => Navigator.pop(context, ctrl.text.trim()),
-              child: const Text('儲存')),
-        ],
-      ),
-    );
-    if (url == null || url.isEmpty) return;
-    await ApiClient.instance.setBaseUrl(url);
-    if (mounted) {
-      toast(context, '已更新，下次請求生效');
-      setState(() {});
-    }
-  }
-
   Future<void> _logout() async {
     await ApiClient.instance.logout();
     if (mounted) widget.onLoggedOut();
   }
 
   String _themeLabel(ThemeMode m) => switch (m) {
-        ThemeMode.light => '淺色',
-        ThemeMode.dark => '深色',
-        ThemeMode.system => '跟隨系統',
-      };
+    ThemeMode.light => '淺色',
+    ThemeMode.dark => '深色',
+    ThemeMode.system => '跟隨系統',
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -112,16 +82,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
           children: [
             ListTile(
               leading: CircleAvatar(
-                child: Text(user.displayName.isNotEmpty
-                    ? user.displayName.characters.first.toUpperCase()
-                    : '?'),
+                child: Text(
+                  user.displayName.isNotEmpty
+                      ? user.displayName.characters.first.toUpperCase()
+                      : '?',
+                ),
               ),
               title: Text(user.displayName),
               subtitle: Text(user.email),
               trailing: user.isAdmin
                   ? const Chip(
                       label: Text('管理員'),
-                      visualDensity: VisualDensity.compact)
+                      visualDensity: VisualDensity.compact,
+                    )
                   : null,
             ),
             const Divider(),
@@ -146,8 +119,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         for (final m in ThemeMode.values)
                           ListTile(
                             title: Text(_themeLabel(m)),
-                            trailing:
-                                mode == m ? const Icon(Icons.check) : null,
+                            trailing: mode == m
+                                ? const Icon(Icons.check)
+                                : null,
                             onTap: () => Navigator.pop(context, m),
                           ),
                       ],
@@ -157,17 +131,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 },
               ),
             ),
-            ListTile(
-              leading: const Icon(Icons.dns_outlined),
-              title: const Text('後端位址'),
-              subtitle: Text(ApiClient.instance.baseUrl),
-              onTap: _editBaseUrl,
-            ),
             const Divider(),
             ListTile(
-              leading: Icon(Icons.logout, color: Theme.of(context).colorScheme.error),
-              title: Text('登出',
-                  style: TextStyle(color: Theme.of(context).colorScheme.error)),
+              leading: Icon(
+                Icons.logout,
+                color: Theme.of(context).colorScheme.error,
+              ),
+              title: Text(
+                '登出',
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
               onTap: _logout,
             ),
           ],

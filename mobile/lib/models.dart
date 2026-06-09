@@ -59,15 +59,15 @@ class Account {
   });
 
   factory Account.fromJson(Map<String, dynamic> j) => Account(
-        id: _asStr(j['id']),
-        name: _asStr(j['name']),
-        category: _asStr(j['category']),
-        balance: _asNum(j['balance']),
-        currency: _asStr(j['currency']).isEmpty ? 'TWD' : _asStr(j['currency']),
-        initialBalance: _asNum(j['initialBalance']),
-        twdAccumulated: _asNum(j['twdAccumulated']),
-        excludeFromTotal: _asBool(j['excludeFromTotal']),
-      );
+    id: _asStr(j['id']),
+    name: _asStr(j['name']),
+    category: _asStr(j['category']),
+    balance: _asNum(j['balance']),
+    currency: _asStr(j['currency']).isEmpty ? 'TWD' : _asStr(j['currency']),
+    initialBalance: _asNum(j['initialBalance']),
+    twdAccumulated: _asNum(j['twdAccumulated']),
+    excludeFromTotal: _asBool(j['excludeFromTotal']),
+  );
 }
 
 /// `GET /api/categories` 陣列項目（父子兩層）
@@ -91,13 +91,13 @@ class Category {
   bool get isParent => parentId.isEmpty;
 
   factory Category.fromJson(Map<String, dynamic> j) => Category(
-        id: _asStr(j['id']),
-        name: _asStr(j['name']),
-        type: _asStr(j['type']),
-        color: _asStr(j['color']).isEmpty ? '#888888' : _asStr(j['color']),
-        parentId: _asStr(j['parentId']),
-        isDefault: _asBool(j['isDefault']),
-      );
+    id: _asStr(j['id']),
+    name: _asStr(j['name']),
+    type: _asStr(j['type']),
+    color: _asStr(j['color']).isEmpty ? '#888888' : _asStr(j['color']),
+    parentId: _asStr(j['parentId']),
+    isDefault: _asBool(j['isDefault']),
+  );
 }
 
 /// `GET /api/transactions` → `data[]`
@@ -127,20 +127,31 @@ class Txn {
   });
 
   factory Txn.fromJson(Map<String, dynamic> j) => Txn(
-        id: _asStr(j['id']),
-        type: _asStr(j['type']),
-        amount: _asNum(j['amount']),
-        currency:
-            _asStr(j['currency']).isEmpty ? 'TWD' : _asStr(j['currency']),
-        date: _asStr(j['date']),
-        categoryId: _asStr(j['categoryId'] ?? j['category_id']),
-        accountId: _asStr(j['accountId'] ?? j['account_id']),
-        toAccountId: _asStr(j['toAccountId'] ?? j['to_account_id']),
-        note: _asStr(j['note']),
-        catName: (j['cat_name'] ?? j['catName']) == null
-            ? null
-            : _asStr(j['cat_name'] ?? j['catName']),
-      );
+    id: _asStr(j['id']),
+    type: _asStr(j['type']),
+    amount: _asNum(j['amount']),
+    currency: _asStr(j['currency']).isEmpty ? 'TWD' : _asStr(j['currency']),
+    date: _asStr(j['date']),
+    categoryId: _asStr(j['categoryId'] ?? j['category_id']),
+    accountId: _asStr(j['accountId'] ?? j['account_id']),
+    toAccountId: _asStr(j['toAccountId'] ?? j['to_account_id']),
+    note: _asStr(j['note']),
+    catName:
+        (j['cat_name'] ??
+                j['catName'] ??
+                j['category_name'] ??
+                j['categoryName'] ??
+                (j['category'] is Map ? j['category']['name'] : null)) ==
+            null
+        ? null
+        : _asStr(
+            j['cat_name'] ??
+                j['catName'] ??
+                j['category_name'] ??
+                j['categoryName'] ??
+                (j['category'] is Map ? j['category']['name'] : null),
+          ),
+  );
 }
 
 /// 儀表板分類彙總節點（圓餅扇區）
@@ -151,10 +162,10 @@ class CatNode {
   CatNode({required this.name, required this.color, required this.total});
 
   factory CatNode.fromJson(Map<String, dynamic> j) => CatNode(
-        name: _asStr(j['name']),
-        color: _asStr(j['color']).isEmpty ? '#888888' : _asStr(j['color']),
-        total: _asNum(j['total']),
-      );
+    name: _asStr(j['name']),
+    color: _asStr(j['color']).isEmpty ? '#888888' : _asStr(j['color']),
+    total: _asNum(j['total']),
+  );
 }
 
 /// `GET /api/dashboard?ym=YYYY-MM`
@@ -220,12 +231,12 @@ class Budget {
   double get progress => amount > 0 ? (used / amount).toDouble() : 0;
 
   factory Budget.fromJson(Map<String, dynamic> j) => Budget(
-        id: _asStr(j['id']),
-        categoryId: j['categoryId'] == null ? null : _asStr(j['categoryId']),
-        yearMonth: _asStr(j['yearMonth']),
-        amount: _asNum(j['amount']),
-        used: _asNum(j['used']),
-      );
+    id: _asStr(j['id']),
+    categoryId: j['categoryId'] == null ? null : _asStr(j['categoryId']),
+    yearMonth: _asStr(j['yearMonth']),
+    amount: _asNum(j['amount']),
+    used: _asNum(j['used']),
+  );
 }
 
 /// `GET /api/recurring`
@@ -255,18 +266,17 @@ class Recurring {
   });
 
   factory Recurring.fromJson(Map<String, dynamic> j) => Recurring(
-        id: _asStr(j['id']),
-        type: _asStr(j['type']),
-        amount: _asNum(j['amount']),
-        categoryId: _asStr(j['categoryId']),
-        accountId: _asStr(j['accountId']),
-        frequency: _asStr(j['frequency']),
-        startDate: _asStr(j['startDate']),
-        note: _asStr(j['note']),
-        isActive: _asBool(j['isActive']),
-        currency:
-            _asStr(j['currency']).isEmpty ? 'TWD' : _asStr(j['currency']),
-      );
+    id: _asStr(j['id']),
+    type: _asStr(j['type']),
+    amount: _asNum(j['amount']),
+    categoryId: _asStr(j['categoryId']),
+    accountId: _asStr(j['accountId']),
+    frequency: _asStr(j['frequency']),
+    startDate: _asStr(j['startDate']),
+    note: _asStr(j['note']),
+    isActive: _asBool(j['isActive']),
+    currency: _asStr(j['currency']).isEmpty ? 'TWD' : _asStr(j['currency']),
+  );
 }
 
 /// `GET /api/stocks` → `stocks[]`
@@ -298,18 +308,18 @@ class Stock {
   });
 
   factory Stock.fromJson(Map<String, dynamic> j) => Stock(
-        id: _asStr(j['id']),
-        symbol: _asStr(j['symbol']),
-        name: _asStr(j['name']),
-        totalShares: _asNum(j['totalShares']),
-        avgCost: _asNum(j['avgCost']),
-        currentPrice: _asNum(j['currentPrice']),
-        marketValue: _asNum(j['marketValue']),
-        estimatedProfit: _asNum(j['estimatedProfit']),
-        returnRate: _asNum(j['returnRate']),
-        totalDividend: _asNum(j['totalDividend']),
-        delisted: _asBool(j['delisted']),
-      );
+    id: _asStr(j['id']),
+    symbol: _asStr(j['symbol']),
+    name: _asStr(j['name']),
+    totalShares: _asNum(j['totalShares']),
+    avgCost: _asNum(j['avgCost']),
+    currentPrice: _asNum(j['currentPrice']),
+    marketValue: _asNum(j['marketValue']),
+    estimatedProfit: _asNum(j['estimatedProfit']),
+    returnRate: _asNum(j['returnRate']),
+    totalDividend: _asNum(j['totalDividend']),
+    delisted: _asBool(j['delisted']),
+  );
 }
 
 class PortfolioSummary {
@@ -326,12 +336,13 @@ class PortfolioSummary {
   });
 
   factory PortfolioSummary.fromJson(Map<String, dynamic> j) => PortfolioSummary(
-        totalMarketValue: _asNum(j['totalMarketValue']),
-        totalCost: _asNum(j['totalCost']),
-        totalPL: _asNum(j['totalPL']),
-        totalReturnRate:
-            j['totalReturnRate'] == null ? null : _asNum(j['totalReturnRate']),
-      );
+    totalMarketValue: _asNum(j['totalMarketValue']),
+    totalCost: _asNum(j['totalCost']),
+    totalPL: _asNum(j['totalPL']),
+    totalReturnRate: j['totalReturnRate'] == null
+        ? null
+        : _asNum(j['totalReturnRate']),
+  );
 }
 
 /// `GET /api/stock-transactions`
@@ -359,16 +370,16 @@ class StockTxn {
   });
 
   factory StockTxn.fromJson(Map<String, dynamic> j) => StockTxn(
-        id: _asStr(j['id']),
-        symbol: _asStr(j['symbol']),
-        stockName: _asStr(j['stock_name'] ?? j['name']),
-        type: _asStr(j['type']),
-        shares: _asNum(j['shares']),
-        price: _asNum(j['price']),
-        fee: _asNum(j['fee']),
-        tax: _asNum(j['tax']),
-        date: _asStr(j['date']),
-      );
+    id: _asStr(j['id']),
+    symbol: _asStr(j['symbol']),
+    stockName: _asStr(j['stock_name'] ?? j['name']),
+    type: _asStr(j['type']),
+    shares: _asNum(j['shares']),
+    price: _asNum(j['price']),
+    fee: _asNum(j['fee']),
+    tax: _asNum(j['tax']),
+    date: _asStr(j['date']),
+  );
 }
 
 /// `GET /api/stock-dividends`
@@ -390,14 +401,15 @@ class Dividend {
   });
 
   factory Dividend.fromJson(Map<String, dynamic> j) => Dividend(
-        id: _asStr(j['id']),
-        symbol: _asStr(j['symbol']),
-        stockName: _asStr(j['stock_name'] ?? j['name']),
-        cashDividend: _asNum(j['cash_dividend'] ?? j['cashDividend']),
-        stockDividendShares: _asNum(
-            j['stock_dividend_shares'] ?? j['stockDividendShares']),
-        date: _asStr(j['date']),
-      );
+    id: _asStr(j['id']),
+    symbol: _asStr(j['symbol']),
+    stockName: _asStr(j['stock_name'] ?? j['name']),
+    cashDividend: _asNum(j['cash_dividend'] ?? j['cashDividend']),
+    stockDividendShares: _asNum(
+      j['stock_dividend_shares'] ?? j['stockDividendShares'],
+    ),
+    date: _asStr(j['date']),
+  );
 }
 
 /// `GET /api/stock-realized`
@@ -423,13 +435,13 @@ class RealizedPL {
   });
 
   factory RealizedPL.fromJson(Map<String, dynamic> j) => RealizedPL(
-        id: _asStr(j['id']),
-        symbol: _asStr(j['symbol']),
-        name: _asStr(j['name']),
-        shares: _asNum(j['shares']),
-        sellPrice: _asNum(j['sellPrice']),
-        realizedPL: _asNum(j['realizedPL']),
-        returnRate: _asNum(j['returnRate']),
-        date: _asStr(j['date']),
-      );
+    id: _asStr(j['id']),
+    symbol: _asStr(j['symbol']),
+    name: _asStr(j['name']),
+    shares: _asNum(j['shares']),
+    sellPrice: _asNum(j['sellPrice']),
+    realizedPL: _asNum(j['realizedPL']),
+    returnRate: _asNum(j['returnRate']),
+    date: _asStr(j['date']),
+  );
 }

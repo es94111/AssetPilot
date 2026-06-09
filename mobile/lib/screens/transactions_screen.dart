@@ -13,8 +13,14 @@ class TransactionsScreen extends StatefulWidget {
   State<TransactionsScreen> createState() => _TransactionsScreenState();
 }
 
+class _TransactionsData {
+  final List<Txn> items;
+  final Map<String, String> catName;
+  const _TransactionsData(this.items, this.catName);
+}
+
 class _TransactionsScreenState extends State<TransactionsScreen> {
-  late Future<List<Txn>> _future;
+  late Future<_TransactionsData> _future;
   String _filter = 'all'; // all / income / expense
 
   @override
@@ -23,11 +29,26 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     _future = _load();
   }
 
-  Future<List<Txn>> _load() async {
-    final list = await ApiClient.instance.transactions(type: _filter);
-    return list
+  Future<_TransactionsData> _load() async {
+    final api = ApiClient.instance;
+    final list = await api.transactions(type: _filter);
+    final catsRaw = await api.categories();
+    final items = list
         .map((e) => Txn.fromJson((e as Map).cast<String, dynamic>()))
         .toList();
+    final categories = catsRaw
+        .map((e) => Category.fromJson((e as Map).cast<String, dynamic>()))
+        .toList();
+    final parentNames = {
+      for (final c in categories.where((c) => c.isParent)) c.id: c.name,
+    };
+    final catName = {
+      for (final c in categories)
+        c.id: c.parentId.isNotEmpty && parentNames[c.parentId] != null
+            ? '${parentNames[c.parentId]} › ${c.name}'
+            : c.name,
+    };
+    return _TransactionsData(items, catName);
   }
 
   void _reload() => setState(() => _future = _load());
@@ -47,11 +68,13 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
         content: Text('確定刪除這筆${t.date}的交易？'),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('取消')),
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('取消'),
+          ),
           FilledButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('刪除')),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('刪除'),
+          ),
         ],
       ),
     );
@@ -94,13 +117,16 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
         icon: const Icon(Icons.add),
         label: const Text('記一筆'),
       ),
-      body: AsyncView<List<Txn>>(
+      body: AsyncView<_TransactionsData>(
         future: _future,
         onRetry: _reload,
-        builder: (context, list) {
+        builder: (context, data) {
+          final list = data.items;
           if (list.isEmpty) {
             return const EmptyState(
-                icon: Icons.receipt_long, message: '尚無交易，點右下角記一筆');
+              icon: Icons.receipt_long,
+              message: '尚無交易，點右下角記一筆',
+            );
           }
           return RefreshIndicator(
             onRefresh: () async => _reload(),
@@ -112,6 +138,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                 final t = list[i];
                 return _TxnTile(
                   t: t,
+                  categoryName: data.catName[t.categoryId],
                   onTap: () => t.type == 'transfer'
                       ? toast(context, '轉帳請於網頁版編輯')
                       : _openForm(t),
@@ -128,10 +155,15 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
 
 class _TxnTile extends StatelessWidget {
   final Txn t;
+  final String? categoryName;
   final VoidCallback onTap;
   final VoidCallback onLongPress;
-  const _TxnTile(
-      {required this.t, required this.onTap, required this.onLongPress});
+  const _TxnTile({
+    required this.t,
+    required this.categoryName,
+    required this.onTap,
+    required this.onLongPress,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -151,12 +183,22 @@ class _TxnTile extends StatelessWidget {
         backgroundColor: color.withValues(alpha: 0.15),
         child: Icon(icon, color: color, size: 20),
       ),
-      title: Text(t.catName?.isNotEmpty == true
-          ? t.catName!
-          : (isTransfer ? '轉帳' : (t.note.isEmpty ? '未分類' : t.note))),
+      title: Text(
+        categoryName?.isNotEmpty == true
+            ? categoryName!
+            : t.catName?.isNotEmpty == true
+            ? t.catName!
+            : (isTransfer ? '轉帳' : (t.note.isEmpty ? '未分類' : t.note)),
+      ),
       subtitle: Text(
-          [t.date, if (t.note.isNotEmpty && t.catName?.isNotEmpty == true) t.note]
-              .join('　')),
+        [
+          t.date,
+          if (t.note.isNotEmpty &&
+              (categoryName?.isNotEmpty == true ||
+                  t.catName?.isNotEmpty == true))
+            t.note,
+        ].join('　'),
+      ),
       trailing: Text(
         sign + money(t.amount, t.currency),
         style: TextStyle(fontWeight: FontWeight.bold, color: color),

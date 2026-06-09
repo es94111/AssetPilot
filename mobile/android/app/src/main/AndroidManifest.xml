@@ -38,6 +38,15 @@
                       android:host="asset.shao.one"
                       android:pathPrefix="/app/google-callback"/>
             </intent-filter>
+            <!-- Debug/local fallback: the web callback page redirects here so the
+                 App can resume OAuth without relying on App Links verification. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="assetpilot"
+                      android:host="google-callback"/>
+            </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->

@@ -22,11 +22,9 @@ class ApiClient {
   ApiClient._();
   static final ApiClient instance = ApiClient._();
 
-  static const _kBaseUrl = 'baseUrl';
   static const _kCookie = 'authCookie';
 
-  /// 預設正式後台；使用者可於登入頁或設定頁改成自架的位址。
-  /// 本機開發可改 `http://10.0.2.2:3000`（模擬器對應宿主機 localhost）。
+  /// 固定正式後台；App 不提供使用者自行修改，避免 OAuth/CSRF 設定不一致。
   static const defaultBaseUrl = 'https://asset.shao.one';
 
   String _baseUrl = defaultBaseUrl;
@@ -37,14 +35,9 @@ class ApiClient {
 
   Future<void> init() async {
     final p = await SharedPreferences.getInstance();
-    _baseUrl = p.getString(_kBaseUrl) ?? defaultBaseUrl;
+    _baseUrl = defaultBaseUrl;
+    await p.remove('baseUrl');
     _cookie = p.getString(_kCookie);
-  }
-
-  Future<void> setBaseUrl(String url) async {
-    _baseUrl = url.trim().replaceAll(RegExp(r'/+$'), '');
-    final p = await SharedPreferences.getInstance();
-    await p.setString(_kBaseUrl, _baseUrl);
   }
 
   // ── 低階請求 ────────────────────────────────────────────────
@@ -52,13 +45,13 @@ class ApiClient {
   Uri _uri(String path) => Uri.parse('$_baseUrl$path');
 
   Map<String, String> _headers({bool json = false}) => {
-        if (json) 'Content-Type': 'application/json',
-        // 後端對帶 cookie 的寫入請求做 CSRF 來源檢查（middleware）。原生 App 不會
-        // 自動帶 Origin，缺少時 isOriginAllowed('') 會回 false → 403。送出與後端
-        // 同源的 Origin 讓寫入操作通過 CSRF 防護。
-        'Origin': _baseUrl,
-        'Cookie': ?_cookie,
-      };
+    if (json) 'Content-Type': 'application/json',
+    // 後端對帶 cookie 的寫入請求做 CSRF 來源檢查（middleware）。原生 App 不會
+    // 自動帶 Origin，缺少時 isOriginAllowed('') 會回 false → 403。送出與後端
+    // 同源的 Origin 讓寫入操作通過 CSRF 防護。
+    'Origin': _baseUrl,
+    'Cookie': ?_cookie,
+  };
 
   void _captureCookie(http.Response res) {
     final raw = res.headers['set-cookie'];
@@ -77,11 +70,7 @@ class ApiClient {
   }
 
   /// 統一發送請求，回傳已解碼的 JSON（Map 或 List）。
-  Future<dynamic> _send(
-    String method,
-    String path, {
-    Object? body,
-  }) async {
+  Future<dynamic> _send(String method, String path, {Object? body}) async {
     final hasBody = body != null;
     late http.Response res;
     try {
@@ -155,6 +144,8 @@ class ApiClient {
 
   /// 後端公開設定（是否開放註冊、是否啟用 Turnstile、site key…）。
   Future<Map<String, dynamic>> config() => _getMap('/api/config');
+
+  Future<Map<String, dynamic>> appVersion() => _getMap('/api/app/version');
 
   Future<void> login(
     String email,
@@ -249,8 +240,11 @@ class ApiClient {
           .post(
             _uri('/api/auth/google'),
             headers: _headers(json: true),
-            body: jsonEncode(
-                {'code': code, 'redirect_uri': redirectUri, 'state': state}),
+            body: jsonEncode({
+              'code': code,
+              'redirect_uri': redirectUri,
+              'state': state,
+            }),
           )
           .timeout(_timeout);
     } catch (e) {
@@ -280,9 +274,11 @@ class ApiClient {
     return (body['user'] as Map).cast<String, dynamic>();
   }
 
-  Future<void> updateDisplayName(String name) =>
-      _send('PUT', '/api/account/settings/display-name',
-          body: {'displayName': name});
+  Future<void> updateDisplayName(String name) => _send(
+    'PUT',
+    '/api/account/settings/display-name',
+    body: {'displayName': name},
+  );
 
   // ── 帳戶 ────────────────────────────────────────────────────
 
@@ -294,8 +290,7 @@ class ApiClient {
   Future<void> updateAccount(String id, Map<String, dynamic> body) =>
       _send('PUT', '/api/accounts/$id', body: body);
 
-  Future<void> deleteAccount(String id) =>
-      _send('DELETE', '/api/accounts/$id');
+  Future<void> deleteAccount(String id) => _send('DELETE', '/api/accounts/$id');
 
   // ── 分類 ────────────────────────────────────────────────────
 
@@ -397,8 +392,7 @@ class ApiClient {
     required String type,
     required String from,
     required String to,
-  }) =>
-      _getMap('/api/reports?type=$type&from=$from&to=$to');
+  }) => _getMap('/api/reports?type=$type&from=$from&to=$to');
 
   // ── 匯率 ────────────────────────────────────────────────────
 

@@ -18,11 +18,8 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _email = TextEditingController();
   final _password = TextEditingController();
-  late final _baseUrl =
-      TextEditingController(text: ApiClient.instance.baseUrl);
 
   bool _obscure = true;
-  bool _showServerSettings = false;
   bool _loading = false;
   String? _error;
 
@@ -49,7 +46,6 @@ class _LoginScreenState extends State<LoginScreen> {
   void dispose() {
     _email.dispose();
     _password.dispose();
-    _baseUrl.dispose();
     super.dispose();
   }
 
@@ -59,12 +55,13 @@ class _LoginScreenState extends State<LoginScreen> {
       final cfg = await ApiClient.instance.config();
       if (!mounted) return;
       setState(() {
-        _turnstileEnabled = cfg['turnstileEnabled'] == true &&
+        _turnstileEnabled =
+            cfg['turnstileEnabled'] == true &&
             (cfg['turnstileSiteKey'] is String);
         _siteKey = cfg['turnstileSiteKey'] as String?;
         _registrationEnabled = cfg['registrationEnabled'] == true;
-        _googleEnabled = cfg['googleCodeFlow'] == true &&
-            (cfg['googleClientId'] is String);
+        _googleEnabled =
+            cfg['googleCodeFlow'] == true && (cfg['googleClientId'] is String);
         _googleClientId = cfg['googleClientId'] as String?;
         _turnstileToken = null;
         _turnstileNonce++;
@@ -83,18 +80,10 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  Future<void> _applyServer() async {
-    await ApiClient.instance.setBaseUrl(_baseUrl.text);
-    if (mounted) {
-      setState(() => _baseUrl.text = ApiClient.instance.baseUrl);
-      await _loadConfig();
-    }
-  }
-
   void _resetTurnstile() => setState(() {
-        _turnstileToken = null;
-        _turnstileNonce++;
-      });
+    _turnstileToken = null;
+    _turnstileNonce++;
+  });
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
@@ -108,7 +97,6 @@ class _LoginScreenState extends State<LoginScreen> {
       _error = null;
     });
     try {
-      await ApiClient.instance.setBaseUrl(_baseUrl.text);
       await ApiClient.instance.login(
         _email.text.trim(),
         _password.text,
@@ -126,9 +114,9 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _goRegister() async {
-    final ok = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(builder: (_) => const RegisterScreen()),
-    );
+    final ok = await Navigator.of(
+      context,
+    ).push<bool>(MaterialPageRoute(builder: (_) => const RegisterScreen()));
     if (ok == true && mounted) widget.onLoggedIn();
   }
 
@@ -139,7 +127,6 @@ class _LoginScreenState extends State<LoginScreen> {
       _error = null;
     });
     try {
-      await ApiClient.instance.setBaseUrl(_baseUrl.text);
       await GoogleAuth.signIn(
         clientId: _googleClientId!,
         baseUrl: ApiClient.instance.baseUrl,
@@ -169,18 +156,27 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Icon(Icons.account_balance_wallet_rounded,
-                        size: 64, color: theme.colorScheme.primary),
+                    Icon(
+                      Icons.account_balance_wallet_rounded,
+                      size: 64,
+                      color: theme.colorScheme.primary,
+                    ),
                     const SizedBox(height: 16),
-                    Text('AssetPilot',
-                        textAlign: TextAlign.center,
-                        style: theme.textTheme.headlineMedium
-                            ?.copyWith(fontWeight: FontWeight.bold)),
+                    Text(
+                      'AssetPilot',
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.headlineMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                     const SizedBox(height: 4),
-                    Text('資產管理 · 安卓客戶端',
-                        textAlign: TextAlign.center,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant)),
+                    Text(
+                      '資產管理 · 安卓客戶端',
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
                     const SizedBox(height: 32),
                     TextFormField(
                       controller: _email,
@@ -203,9 +199,11 @@ class _LoginScreenState extends State<LoginScreen> {
                         prefixIcon: const Icon(Icons.lock_outline),
                         border: const OutlineInputBorder(),
                         suffixIcon: IconButton(
-                          icon: Icon(_obscure
-                              ? Icons.visibility_outlined
-                              : Icons.visibility_off_outlined),
+                          icon: Icon(
+                            _obscure
+                                ? Icons.visibility_outlined
+                                : Icons.visibility_off_outlined,
+                          ),
                           onPressed: () => setState(() => _obscure = !_obscure),
                         ),
                       ),
@@ -237,15 +235,19 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         child: Row(
                           children: [
-                            Icon(Icons.error_outline,
-                                color: theme.colorScheme.onErrorContainer,
-                                size: 20),
+                            Icon(
+                              Icons.error_outline,
+                              color: theme.colorScheme.onErrorContainer,
+                              size: 20,
+                            ),
                             const SizedBox(width: 8),
                             Expanded(
-                              child: Text(_error!,
-                                  style: TextStyle(
-                                      color:
-                                          theme.colorScheme.onErrorContainer)),
+                              child: Text(
+                                _error!,
+                                style: TextStyle(
+                                  color: theme.colorScheme.onErrorContainer,
+                                ),
+                              ),
                             ),
                           ],
                         ),
@@ -255,7 +257,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     FilledButton(
                       onPressed: _loading ? null : _submit,
                       style: FilledButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 16)),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                      ),
                       child: _loading
                           ? const SizedBox(
                               height: 20,
@@ -271,14 +274,16 @@ class _LoginScreenState extends State<LoginScreen> {
                             ? null
                             : _googleSignIn,
                         style: OutlinedButton.styleFrom(
-                            padding:
-                                const EdgeInsets.symmetric(vertical: 14)),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                        ),
                         icon: _googleLoading
                             ? const SizedBox(
                                 height: 18,
                                 width: 18,
-                                child:
-                                    CircularProgressIndicator(strokeWidth: 2))
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
                             : const Icon(Icons.account_circle_outlined),
                         label: const Text('使用 Google 登入'),
                       ),
@@ -299,35 +304,6 @@ class _LoginScreenState extends State<LoginScreen> {
                         onPressed: _loading ? null : _goRegister,
                         child: const Text('還沒有帳號？註冊'),
                       ),
-                    TextButton.icon(
-                      onPressed: () => setState(
-                          () => _showServerSettings = !_showServerSettings),
-                      icon: Icon(_showServerSettings
-                          ? Icons.expand_less
-                          : Icons.expand_more),
-                      label: const Text('後端設定'),
-                    ),
-                    if (_showServerSettings) ...[
-                      TextFormField(
-                        controller: _baseUrl,
-                        keyboardType: TextInputType.url,
-                        autocorrect: false,
-                        decoration: const InputDecoration(
-                          labelText: '後端位址',
-                          helperText:
-                              '預設 https://asset.shao.one；可改成自架位址（本機開發用 http://10.0.2.2:3000）',
-                          helperMaxLines: 2,
-                          prefixIcon: Icon(Icons.dns_outlined),
-                          border: OutlineInputBorder(),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      OutlinedButton.icon(
-                        onPressed: _configLoading ? null : _applyServer,
-                        icon: const Icon(Icons.refresh),
-                        label: const Text('套用並重新載入'),
-                      ),
-                    ],
                   ],
                 ),
               ),

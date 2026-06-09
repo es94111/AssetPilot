@@ -27,6 +27,17 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+            <!-- App Link：Google OAuth 完成後瀏覽器導回此 https 路徑，由系統喚起
+                 App（需在 https://asset.shao.one/.well-known/assetlinks.json 以簽章
+                 指紋完成網域驗證，autoVerify 才會生效）。 -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="https"
+                      android:host="asset.shao.one"
+                      android:pathPrefix="/app/google-callback"/>
+            </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->

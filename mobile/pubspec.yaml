@@ -45,6 +45,10 @@ dependencies:
   fl_chart: ^0.69.2
   # 登入頁的 Cloudflare Turnstile（真人驗證）以 WebView 呈現
   webview_flutter: ^4.10.0
+  # Google SSO：以系統瀏覽器開授權頁
+  url_launcher: ^6.3.1
+  # 接收 Google OAuth 完成後導回的 App Link（深層連結）
+  app_links: ^6.3.2
 
 dev_dependencies:
   flutter_test:

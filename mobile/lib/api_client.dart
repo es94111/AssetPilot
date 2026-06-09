@@ -25,8 +25,9 @@ class ApiClient {
   static const _kBaseUrl = 'baseUrl';
   static const _kCookie = 'authCookie';
 
-  /// Android 模擬器以 `10.0.2.2` 對應宿主機的 `localhost`。
-  static const defaultBaseUrl = 'http://10.0.2.2:3000';
+  /// 預設正式後台；使用者可於登入頁或設定頁改成自架的位址。
+  /// 本機開發可改 `http://10.0.2.2:3000`（模擬器對應宿主機 localhost）。
+  static const defaultBaseUrl = 'https://asset.shao.one';
 
   String _baseUrl = defaultBaseUrl;
   String? _cookie; // 例："authToken=xxxxx"

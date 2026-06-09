@@ -2,23 +2,39 @@
 
 AssetPilot 資產管理系統的 Android App，以 Flutter 撰寫，透過現有 REST API 與後端溝通。
 
-## 目前功能
+## 功能
 
-- **登入**：`POST /api/auth/login`（電子郵件 + 密碼），自動保存 httpOnly `authToken` Cookie 並持久化，重啟 App 免再登入
-- **儀表板**：顯示使用者、各帳戶餘額，以及換算為 TWD 的總資產（`GET /api/auth/me`、`GET /api/accounts`）
-- **登出**：`POST /api/auth/logout`，清除本地 Cookie
-- **後端位址可設定**：登入頁「後端設定」可改 base URL（持久化）
+底部導覽四大分頁：**首頁 / 記帳 / 股票 / 更多**。
+
+| 模組 | 功能 | 端點 |
+|------|------|------|
+| 登入 | 帳密登入，httpOnly Cookie 持久化 | `auth/login`、`auth/me`、`auth/logout` |
+| 儀表板 | 月份切換、收入/支出/淨額、銀行餘額、股票市值、支出分類圓餅圖、最近交易 | `dashboard` |
+| 記帳 | 列表（全部/收入/支出）、新增/編輯/刪除、轉帳 | `transactions`、`transactions/transfer` |
+| 帳戶 | 列表 + 新增/編輯/刪除，多幣別、類型、排除總資產 | `accounts` |
+| 分類 | 父子兩層、顏色、收入/支出，CRUD | `categories` |
+| 預算 | 月度/分類預算進度條（四段配色）、新增/刪除 | `budgets` |
+| 固定收支 | 週期性收支列表、啟用切換、新增/刪除 | `recurring` |
+| 股票 | 持股總覽（市值/損益/報酬率）、交易、股利、已實現損益 | `stocks`、`stock-transactions`、`stock-dividends`、`stock-realized` |
+| 報表 | 自訂區間 + 收入/支出，分類圓餅圖與明細 | `reports` |
+| 設定 | 顯示名稱、主題（淺/深/系統）、後端位址、登出 | `account/settings/*` |
+
+> 尚未涵蓋：Google/LINE/Passkey 登入、CSV 匯出入、備份還原、管理員系統設定、交易照片附件。
+> 這些屬後台管理或需 OAuth/WebView，行動端優先度較低，可後續補。
 
 ## 專案結構
 
 ```text
 lib/
-├── main.dart                    # App 入口 + AuthGate（依登入狀態切換頁面）
-├── api_client.dart              # 後端 API client（單例，含 Cookie 管理）
-├── models.dart                  # AppUser / Account 資料模型
-└── screens/
-    ├── login_screen.dart        # 登入頁
-    └── dashboard_screen.dart    # 儀表板（總資產 + 帳戶清單）
+├── main.dart                 # 入口：初始化 + 載入主題
+├── app.dart                  # MaterialApp + 主題 + AuthGate + 底部導覽 shell
+├── api_client.dart           # 後端 API client（單例，Cookie 管理，所有端點）
+├── models.dart               # 資料模型（User/Account/Txn/Category/Budget/Stock…）
+├── format.dart               # 金額/顏色格式化
+├── widgets.dart              # AsyncView / EmptyState / toast 共用元件
+└── screens/                  # 各功能畫面（login / dashboard / transactions /
+                              #   accounts / categories / budgets / recurring /
+                              #   stocks / reports / settings / more）
 ```
 
 ## 開發
@@ -44,7 +60,8 @@ App 預設後端位址為 `http://10.0.2.2:3000`（Android 模擬器對應宿主
 
 ## 後續可擴充
 
-- 交易列表與新增（`/api/transactions`）
-- 股票持股與損益（`/api/stocks`）
-- 統計報表圖表（`/api/reports`）
-- Google / LINE / Passkey 登入
+- Google / LINE / Passkey 登入（需 OAuth / WebView）
+- CSV 匯出入、整檔備份還原
+- 交易照片附件（拍照上傳）
+- 股利新增與除權息同步、定期定額
+- 管理員系統設定

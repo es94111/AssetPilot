@@ -163,7 +163,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         autocorrect: false,
                         decoration: const InputDecoration(
                           labelText: '後端位址',
-                          helperText: '模擬器：http://10.0.2.2:3000；實機請填區網 IP 或網域',
+                          helperText: '預設 https://asset.shao.one；可改成自架位址（本機開發用 http://10.0.2.2:3000）',
                           helperMaxLines: 2,
                           prefixIcon: Icon(Icons.dns_outlined),
                           border: OutlineInputBorder(),

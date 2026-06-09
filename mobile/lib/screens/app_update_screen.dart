@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../api_client.dart';
 import '../widgets.dart';
-
-const _currentVersion = '1.0.0';
-const _currentBuildNumber = 1;
 
 class AppUpdateScreen extends StatefulWidget {
   const AppUpdateScreen({super.key});
@@ -15,7 +13,7 @@ class AppUpdateScreen extends StatefulWidget {
 }
 
 class _AppUpdateScreenState extends State<AppUpdateScreen> {
-  late Future<_AppVersionInfo> _future;
+  late Future<_LoadResult> _future;
 
   @override
   void initState() {
@@ -23,9 +21,14 @@ class _AppUpdateScreenState extends State<AppUpdateScreen> {
     _future = _load();
   }
 
-  Future<_AppVersionInfo> _load() async {
+  Future<_LoadResult> _load() async {
+    final info = await PackageInfo.fromPlatform();
     final json = await ApiClient.instance.appVersion();
-    return _AppVersionInfo.fromJson(json);
+    return _LoadResult(
+      currentVersion: info.version,
+      currentBuildNumber: int.tryParse(info.buildNumber) ?? 0,
+      remote: _AppVersionInfo.fromJson(json),
+    );
   }
 
   void _reload() => setState(() => _future = _load());
@@ -44,13 +47,14 @@ class _AppUpdateScreenState extends State<AppUpdateScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('App 更新')),
-      body: AsyncView<_AppVersionInfo>(
+      body: AsyncView<_LoadResult>(
         future: _future,
         onRetry: _reload,
-        builder: (context, info) {
+        builder: (context, result) {
+          final info = result.remote;
           final hasUpdate = info.isNewerThan(
-            _currentVersion,
-            _currentBuildNumber,
+            result.currentVersion,
+            result.currentBuildNumber,
           );
           return ListView(
             padding: const EdgeInsets.all(16),
@@ -66,7 +70,7 @@ class _AppUpdateScreenState extends State<AppUpdateScreen> {
                   ),
                   title: Text(hasUpdate ? '發現新版本' : '目前已是最新版本'),
                   subtitle: Text(
-                    '目前版本：$_currentVersion ($_currentBuildNumber)\n'
+                    '目前版本：${result.currentVersion} (${result.currentBuildNumber})\n'
                     '最新版本：${info.version} (${info.buildNumber})',
                   ),
                 ),
@@ -109,6 +113,18 @@ class _AppUpdateScreenState extends State<AppUpdateScreen> {
       ),
     );
   }
+}
+
+class _LoadResult {
+  final String currentVersion;
+  final int currentBuildNumber;
+  final _AppVersionInfo remote;
+
+  const _LoadResult({
+    required this.currentVersion,
+    required this.currentBuildNumber,
+    required this.remote,
+  });
 }
 
 class _AppVersionInfo {

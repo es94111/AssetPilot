@@ -7,6 +7,7 @@ import { writeOperationAudit } from '../../../../lib/auditHelpers';
 import { createPostgresBackupSql, restorePostgresBackupSql } from '../../../../lib/postgresBackup';
 
 const BACKUPS_DIR = path.join(process.cwd(), 'backups');
+const BEFORE_RESTORE_BACKUP_RE = /^before-restore-\d{14}\.sql$/;
 
 function makeBackupTimestamp() {
   return new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14);
@@ -16,13 +17,20 @@ function ensureBackupsDir() {
   try { fs.mkdirSync(BACKUPS_DIR, { recursive: true }); } catch (_) {}
 }
 
+function getBeforeRestoreBackupPath(name) {
+  const basename = path.basename(String(name || ''));
+  if (!BEFORE_RESTORE_BACKUP_RE.test(basename)) return null;
+  return `${BACKUPS_DIR}${path.sep}${basename}`;
+}
+
 function pruneBeforeRestoreBackups() {
   try {
     if (!fs.existsSync(BACKUPS_DIR)) return;
     const files = fs.readdirSync(BACKUPS_DIR)
-      .filter(f => f.startsWith('before-restore-') && f.endsWith('.sql'))
+      .filter(f => BEFORE_RESTORE_BACKUP_RE.test(f))
       .map(f => {
-        const fp = path.join(BACKUPS_DIR, f);
+        const fp = getBeforeRestoreBackupPath(f);
+        if (!fp) return null;
         try { return { name: f, path: fp, mtime: fs.statSync(fp).mtimeMs }; } catch (_) { return null; }
       })
       .filter(Boolean)
@@ -55,7 +63,10 @@ export async function POST(request) {
 
     ensureBackupsDir();
     const backupTs = makeBackupTimestamp();
-    beforeRestorePath = path.join(BACKUPS_DIR, `before-restore-${backupTs}.sql`);
+    beforeRestorePath = getBeforeRestoreBackupPath(`before-restore-${backupTs}.sql`) || '';
+    if (!beforeRestorePath) {
+      return NextResponse.json({ error: '建立還原前備份檔名失敗' }, { status: 500 });
+    }
     try {
       fs.writeFileSync(beforeRestorePath, createPostgresBackupSql(), 'utf8');
     } catch (e) {

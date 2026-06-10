@@ -65,6 +65,102 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (mounted) widget.onLoggedOut();
   }
 
+  Future<void> _deleteAccount(AppUser user) async {
+    final ctrl = TextEditingController();
+    final hasPw = user.hasPassword;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogCtx) {
+        String? error;
+        bool busy = false;
+        return StatefulBuilder(
+          builder: (dialogCtx, setLocal) => AlertDialog(
+            title: const Text('刪除帳號'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  '此操作將永久刪除您的帳號與所有資料（交易、帳戶、股票與設定），且無法復原。',
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: ctrl,
+                  autofocus: true,
+                  obscureText: hasPw,
+                  enabled: !busy,
+                  keyboardType: hasPw
+                      ? TextInputType.text
+                      : TextInputType.emailAddress,
+                  decoration: InputDecoration(
+                    border: const OutlineInputBorder(),
+                    labelText: hasPw ? '請輸入密碼以確認' : '請輸入帳號電子信箱以確認',
+                    hintText: hasPw ? null : user.email,
+                    errorText: error,
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: busy ? null : () => Navigator.pop(dialogCtx, false),
+                child: const Text('取消'),
+              ),
+              FilledButton(
+                style: FilledButton.styleFrom(
+                  backgroundColor: Theme.of(dialogCtx).colorScheme.error,
+                ),
+                onPressed: busy
+                    ? null
+                    : () async {
+                        final input = ctrl.text.trim();
+                        if (hasPw && input.isEmpty) {
+                          setLocal(() => error = '請輸入密碼以確認刪除');
+                          return;
+                        }
+                        if (!hasPw &&
+                            input.toLowerCase() != user.email.toLowerCase()) {
+                          setLocal(() => error = '請輸入正確的帳號電子信箱以確認刪除');
+                          return;
+                        }
+                        setLocal(() {
+                          busy = true;
+                          error = null;
+                        });
+                        final nav = Navigator.of(dialogCtx);
+                        try {
+                          await ApiClient.instance.deleteMyAccount(
+                            password: hasPw ? input : null,
+                            confirmEmail: hasPw ? null : input,
+                          );
+                          nav.pop(true);
+                        } catch (e) {
+                          setLocal(() {
+                            busy = false;
+                            error = '$e';
+                          });
+                        }
+                      },
+                child: busy
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text('永久刪除'),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+    if (confirmed == true && mounted) {
+      toast(context, '帳號已刪除');
+      widget.onLoggedOut();
+    }
+  }
+
   String _themeLabel(ThemeMode m) => switch (m) {
     ThemeMode.light => '淺色',
     ThemeMode.dark => '深色',
@@ -142,6 +238,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 style: TextStyle(color: Theme.of(context).colorScheme.error),
               ),
               onTap: _logout,
+            ),
+            const Divider(),
+            ListTile(
+              leading: Icon(
+                Icons.delete_forever_outlined,
+                color: Theme.of(context).colorScheme.error,
+              ),
+              title: Text(
+                '刪除帳號',
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
+              subtitle: const Text('永久刪除帳號與所有資料，無法復原'),
+              onTap: () => _deleteAccount(user),
             ),
           ],
         ),

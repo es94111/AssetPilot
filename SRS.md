@@ -987,6 +987,7 @@ API 路徑統一以 `/api/` 為前綴。所有需認證的路由自動套用 aut
 
 | 版本 | 日期 | 變更說明 |
 | --- | --- | --- |
+| 4.48.0 | 2026-06-10 | 補齊使用者帳號自助刪除：`app/api/account/delete/route.ts` 改為密碼帳號驗密碼、OAuth-only（Google／LINE）帳號驗 `confirmEmail`（移除 Web 無法產生的 id_token 依賴與 LINE 無分支死路）；`AccountSettingsClient.tsx` 以 `Modal` 取代 `window.prompt`，依 `hasPassword` 切換驗證欄位；mobile 新增原生刪除帳號流程（`AppUser.hasPassword`、`ApiClient.deleteMyAccount()`、`settings_screen.dart` 刪除帳號項目）；`app/privacy/page.tsx` 補開發者身分、隱私聯絡信箱 `assetpilot@shao.one`、無法登入時的刪除管道、兒少聲明、HTTPS 強制與 Google 登入資料揭露以符合 Play 上架要求 |
 | 4.47.4 | 2026-06-09 | `mobile/lib/screens/app_update_screen.dart` 移除硬編碼 `_currentVersion`/`_currentBuildNumber`，改用 `package_info_plus` `PackageInfo.fromPlatform()` 動態讀取，修正 App 更新畫面版本顯示恆為 1.0 的問題 |
 | 4.47.3 | 2026-06-09 | `app/api/auth/google/route.ts` `buildGoogleRedirectAllowlist()` fallback 新增 `https://${APP_HOST}/app/google-callback`，修正 App Google SSO 回呼時後端 allowlist 驗證失敗（`invalid_redirect_uri`） |
 | 4.47.2 | 2026-06-09 | 首頁 `app/page.tsx` 主標語改為兩行（插入 `<br />`），移除行尾逗號與句號 |

@@ -38,7 +38,7 @@ export async function POST(request: Request) {
   if (auth instanceof NextResponse) return auth;
 
   const body = await request.json().catch(() => ({}));
-  const { password, googleCredential } = body;
+  const { password, confirmEmail } = body;
 
   const user = queryOne('SELECT * FROM users WHERE id = ?', [auth.userId]);
   if (!user) return NextResponse.json({ error: '使用者不存在' }, { status: 404 });
@@ -51,27 +51,17 @@ export async function POST(request: Request) {
   }
 
   if (user.has_password) {
+    // Accounts with a local password: re-confirm by password.
     if (!password) return NextResponse.json({ error: '請輸入密碼以確認刪除' }, { status: 400 });
     const valid = await bcrypt.compare(String(password), String(user.password_hash || ''));
     if (!valid) return NextResponse.json({ error: '密碼錯誤，請重新輸入' }, { status: 400 });
-  } else if (user.google_id) {
-    if (!googleCredential) return NextResponse.json({ error: '請完成 Google 驗證以確認刪除帳號' }, { status: 400 });
-    const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
-    if (!GOOGLE_CLIENT_ID) return NextResponse.json({ error: 'Google SSO 未設定，無法刪除帳號' }, { status: 500 });
-    try {
-      const verifyRes = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(googleCredential)}`);
-      if (!verifyRes.ok) return NextResponse.json({ error: 'Google 憑證驗證失敗' }, { status: 401 });
-      const payload = await verifyRes.json();
-      if (payload.aud !== GOOGLE_CLIENT_ID) return NextResponse.json({ error: 'Google 憑證 audience 不符' }, { status: 401 });
-      if (payload.sub !== user.google_id) return NextResponse.json({ error: 'Google 帳號與目前登入帳號不符' }, { status: 401 });
-      if (payload.exp && Number(payload.exp) * 1000 < Date.now()) {
-        return NextResponse.json({ error: 'Google 憑證已過期，請重新驗證' }, { status: 401 });
-      }
-    } catch (_) {
-      return NextResponse.json({ error: 'Google 驗證失敗' }, { status: 500 });
-    }
   } else {
-    return NextResponse.json({ error: '此帳號無可用的二次驗證方式，請聯絡管理員刪除' }, { status: 400 });
+    // OAuth-only accounts (Google / LINE) have no local password; the caller is
+    // already authenticated via session, so re-confirm intent by typing the
+    // account's own email address.
+    if (normalizeEmail(confirmEmail) !== normalizeEmail(user.email)) {
+      return NextResponse.json({ error: '請輸入正確的帳號電子信箱以確認刪除' }, { status: 400 });
+    }
   }
 
   deleteUserData(auth.userId);

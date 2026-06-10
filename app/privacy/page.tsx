@@ -45,8 +45,9 @@ export default function PrivacyPage() {
 
         <section className="mb-5 rounded-2xl border border-slate-200 bg-white px-5 py-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:px-9 sm:py-8" id="s1">
           <div className="mb-4 flex items-center gap-2.5 border-b border-slate-200 pb-3.5 text-lg font-bold dark:border-slate-800"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-sm text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-300"><i className="fas fa-globe" /></span>1. 適用範圍</div>
-          <p className="mb-3 text-sm/7 text-slate-600 dark:text-slate-300">本隱私權政策適用於「AssetPilot」網頁應用程式（以下簡稱「本服務」）的所有使用者。當您存取或使用本服務時，即表示您同意本政策所描述的資料處理方式。</p>
-          <p className="mb-3 text-sm/7 text-slate-600 dark:text-slate-300">本服務為個人私有部署應用程式，預設僅供帳號持有人使用。若您是自行架設本服務的管理員，請確保您的使用者了解本政策內容。</p>
+          <p className="mb-3 text-sm/7 text-slate-600 dark:text-slate-300">本隱私權政策由 <strong>AssetPilot</strong>（以下簡稱「我們」）發布，適用於「AssetPilot」應用程式與網頁服務（以下簡稱「本服務」）的所有使用者。當您存取或使用本服務時，即表示您同意本政策所描述的資料處理方式。</p>
+          <p className="mb-3 text-sm/7 text-slate-600 dark:text-slate-300">本服務的官方版本由 AssetPilot 營運並負責所收集資料的處理；官方服務的預設後端為 <strong>asset.shao.one</strong>。本服務同時提供開放原始碼的自行架設（自架）選項，屬進階選配——若您改用自架部署，該部署所收集的資料將由您自身的伺服器環境負責，AssetPilot 不會接觸您自架實例中的資料。</p>
+          <p className="mb-3 text-sm/7 text-slate-600 dark:text-slate-300">本服務並非針對 13 歲以下兒童設計，我們不會在知情的情況下收集兒童的個人資料。</p>
         </section>
 
         <section className="mb-5 rounded-2xl border border-slate-200 bg-white px-5 py-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:px-9 sm:py-8" id="s2">
@@ -56,7 +57,7 @@ export default function PrivacyPage() {
             <li>電子信箱（Email）：用於帳號識別與登入</li>
             <li>使用者名稱（暱稱）</li>
             <li>加密後的密碼（使用 bcrypt 雜湊，原始密碼不存於資料庫）</li>
-            <li>Google 帳號 ID（僅使用 Google SSO 登入時）</li>
+            <li>Google 帳號資料（僅使用 Google SSO 登入時）：透過 Google 登入取得您的電子信箱、顯示名稱與 Google 帳號 ID，僅用於建立與識別帳號</li>
             <li>LINE 使用者識別碼（僅使用 LINE 登入或綁定時）</li>
             <li>Passkey 公開金鑰資料（僅啟用 Passkey 登入時）</li>
           </ul>
@@ -97,7 +98,7 @@ export default function PrivacyPage() {
           <h3 className="mb-2 mt-4 text-[15px] font-semibold">密碼安全</h3>
           <p className="mb-3 text-sm/7 text-slate-600 dark:text-slate-300">使用者密碼透過 <strong>bcrypt</strong> 演算法進行雜湊處理後才儲存，系統不保存任何明文密碼，亦無法還原原始密碼。</p>
           <h3 className="mb-2 mt-4 text-[15px] font-semibold">傳輸安全</h3>
-          <p className="mb-3 text-sm/7 text-slate-600 dark:text-slate-300">建議透過 HTTPS 存取本服務。JWT 身份驗證令牌儲存於 HttpOnly Cookie，防止 XSS 攻擊竊取認證資訊。</p>
+          <p className="mb-3 text-sm/7 text-slate-600 dark:text-slate-300">官方服務一律透過 <strong>HTTPS</strong> 進行加密傳輸（自架部署亦強烈建議啟用 HTTPS）。JWT 身份驗證令牌儲存於 HttpOnly Cookie，防止 XSS 攻擊竊取認證資訊。</p>
           <h3 className="mb-2 mt-4 text-[15px] font-semibold">安全防護措施</h3>
           <ul className="mb-3 list-disc space-y-1.5 pl-5 text-sm/7 text-slate-600 dark:text-slate-300">
             <li>HTTP 安全標頭（HSTS、X-Content-Type-Options、Referrer-Policy）</li>
@@ -106,7 +107,7 @@ export default function PrivacyPage() {
             <li>外部 CDN 資源的 SRI（子資源完整性）驗證</li>
             <li>輸入資料的 XSS 防護處理</li>
           </ul>
-          <div className="my-4 flex gap-3 rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm/7 text-indigo-800 dark:border-indigo-900 dark:bg-indigo-950/40 dark:text-indigo-300"><i className="fas fa-info-circle mt-0.5 shrink-0" /><span>本服務為自行部署架構，資料實際儲存位置取決於您的伺服器環境。管理員有責任確保伺服器本身的安全性。</span></div>
+          <div className="my-4 flex gap-3 rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm/7 text-indigo-800 dark:border-indigo-900 dark:bg-indigo-950/40 dark:text-indigo-300"><i className="fas fa-info-circle mt-0.5 shrink-0" /><span>官方服務由 AssetPilot 營運並負責資料的安全維護。若您改用自架部署，資料的實際儲存位置取決於您的伺服器環境，該環境的安全性由您自行負責。</span></div>
         </section>
 
         <section className="mb-5 rounded-2xl border border-slate-200 bg-white px-5 py-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:px-9 sm:py-8" id="s5">
@@ -157,7 +158,7 @@ export default function PrivacyPage() {
             <li><strong>查閱權</strong>：您可以在「設定 &gt; 帳號設定」中查閱您的帳號資料與登入紀錄</li>
             <li><strong>資料可攜權</strong>：您可以在「設定 &gt; 資料匯出匯入」將所有財務資料匯出為 CSV 格式</li>
             <li><strong>更正權</strong>：您可以直接編輯任何交易記錄或帳號資訊</li>
-            <li><strong>刪除權</strong>：您可以在「設定 &gt; 帳號設定」申請刪除帳號，這將永久刪除您的所有資料，此操作不可復原</li>
+            <li><strong>刪除權</strong>：您可以在「設定 &gt; 帳號設定」申請刪除帳號，這將永久刪除您的所有資料，此操作不可復原。若您無法登入而需要刪除帳號與相關資料，可寄信至 <a href="mailto:assetpilot@shao.one" className="text-indigo-600 hover:underline dark:text-indigo-400">assetpilot@shao.one</a> 提出刪除請求，我們將於核實身份後處理</li>
           </ul>
           <div className="my-4 flex gap-3 rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm/7 text-indigo-800 dark:border-indigo-900 dark:bg-indigo-950/40 dark:text-indigo-300"><i className="fas fa-triangle-exclamation mt-0.5 shrink-0" /><span>刪除帳號後，所有交易記錄、帳戶、分類、股票紀錄等資料將被永久刪除，且無法復原。建議刪除前先執行資料匯出。</span></div>
         </section>
@@ -181,15 +182,16 @@ export default function PrivacyPage() {
 
         <section className="mb-5 rounded-2xl border border-slate-200 bg-white px-5 py-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:px-9 sm:py-8" id="s11">
           <div className="mb-4 flex items-center gap-2.5 border-b border-slate-200 pb-3.5 text-lg font-bold dark:border-slate-800"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-sm text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-300"><i className="fas fa-envelope" /></span>11. 聯絡我們</div>
-          <p className="mb-3 text-sm/7 text-slate-600 dark:text-slate-300">若您對本隱私權政策有任何疑問，或需要行使上述資料權利，請透過以下方式聯絡服務管理員：</p>
+          <p className="mb-3 text-sm/7 text-slate-600 dark:text-slate-300">若您對本隱私權政策有任何疑問，或需要行使上述資料權利（包含查閱、更正、刪除等），請透過以下方式聯絡我們：</p>
           <ul className="mb-3 list-disc space-y-1.5 pl-5 text-sm/7 text-slate-600 dark:text-slate-300">
-            <li>透過「設定 &gt; 帳號設定」頁面中的意見回饋功能</li>
-            <li>或聯絡您的系統管理員</li>
+            <li>隱私聯絡信箱：<a href="mailto:assetpilot@shao.one" className="text-indigo-600 hover:underline dark:text-indigo-400">assetpilot@shao.one</a></li>
+            <li>或透過「設定 &gt; 帳號設定」頁面中的意見回饋功能</li>
+            <li>若您使用自架部署，亦可聯絡您的系統管理員</li>
           </ul>
         </section>
 
         <div className="mt-8 border-t border-slate-200 pt-6 text-center text-xs text-slate-400 dark:border-slate-800">
-          <p>最後更新日期：2026 年 5 月 11 日</p>
+          <p>最後更新日期：2026 年 6 月 10 日</p>
           <div className="mt-2.5 flex flex-wrap justify-center gap-5">
             <a href="/terms" className="text-indigo-600 dark:text-indigo-400"><i className="fas fa-file-contract" /> 服務條款</a>
             <a href="/api-credits" className="text-indigo-600 dark:text-indigo-400"><i className="fas fa-plug" /> API 使用與授權</a>

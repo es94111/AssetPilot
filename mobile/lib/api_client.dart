@@ -280,6 +280,20 @@ class ApiClient {
     body: {'displayName': name},
   );
 
+  /// 永久刪除目前登入的使用者帳號與所有資料。
+  ///
+  /// 有本機密碼的帳號傳 [password] 確認；OAuth-only（Google／LINE）帳號改傳
+  /// 與帳號相同的 [confirmEmail] 確認。成功後清除本機 Cookie（等同登出）。
+  Future<void> deleteMyAccount({String? password, String? confirmEmail}) async {
+    await _send(
+      'DELETE',
+      '/api/account/settings/delete',
+      body: {'password': ?password, 'confirmEmail': ?confirmEmail},
+    );
+    _cookie = null;
+    await _persistCookie();
+  }
+
   // ── 帳戶 ────────────────────────────────────────────────────
 
   Future<List<dynamic>> accounts() => _getList('/api/accounts');

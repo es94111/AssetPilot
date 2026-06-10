@@ -5,6 +5,7 @@ import { client as webauthnClient } from '@passwordless-id/webauthn';
 import { apiGet, apiPut, apiPost, apiDelete } from '@/lib/clientApi';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/Input';
+import Modal from '@/components/ui/Modal';
 
 function shouldDisableLineAutoLogin() {
   return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -48,6 +49,10 @@ export default function AccountSettingsClient({ user: initialUser }: { user: any
   const [lineMsg, setLineMsg] = useState('');
   const [lineLoading, setLineLoading] = useState(false);
   const [deleteMsg, setDeleteMsg] = useState('');
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deletePassword, setDeletePassword] = useState('');
+  const [deleteConfirmEmail, setDeleteConfirmEmail] = useState('');
+  const [deleting, setDeleting] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -265,24 +270,37 @@ export default function AccountSettingsClient({ user: initialUser }: { user: any
     }
   }
 
-  async function handleDeleteAccount() {
+  function openDeleteModal() {
     setDeleteMsg('');
-    const password = window.prompt('輸入密碼以刪除帳號');
-    if (password == null) return;
+    setDeletePassword('');
+    setDeleteConfirmEmail('');
+    setDeleteOpen(true);
+  }
+
+  async function confirmDeleteAccount() {
+    setDeleteMsg('');
+    const hasPassword = !!profile?.hasPassword;
+    if (hasPassword && !deletePassword) { setDeleteMsg('請輸入密碼以確認刪除'); return; }
+    if (!hasPassword && deleteConfirmEmail.trim().toLowerCase() !== String(profile?.email || '').trim().toLowerCase()) {
+      setDeleteMsg('請輸入正確的帳號電子信箱以確認刪除');
+      return;
+    }
+    setDeleting(true);
     try {
       const res = await fetch('/api/account/settings/delete', {
         method: 'DELETE',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password }),
+        body: JSON.stringify(hasPassword ? { password: deletePassword } : { confirmEmail: deleteConfirmEmail.trim() }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
-      setDeleteMsg('帳號已刪除');
+      setDeleteOpen(false);
       window.location.href = '/';
     } catch (e: any) {
       setDeleteMsg(e.message || '刪除帳號失敗');
     }
+    setDeleting(false);
   }
 
   if (loading) return <div className="p-8 text-slate-500">載入中...</div>;
@@ -457,10 +475,39 @@ export default function AccountSettingsClient({ user: initialUser }: { user: any
 
       <div className="p-6 bg-white border border-red-200 dark:bg-slate-900 dark:border-red-900/50 rounded-xl shadow-sm">
         <h3 className="text-lg font-semibold text-red-600 mb-4">刪除帳號</h3>
-        <p className="text-sm text-slate-600 mb-4">刪除帳號後，您的交易、帳戶、股票、Passkey 與設定資料都會永久移除。</p>
-        <Button variant="destructive" onClick={handleDeleteAccount}>刪除我的帳號</Button>
-        {deleteMsg && <p className="text-sm text-slate-600 mt-3">{deleteMsg}</p>}
+        <p className="text-sm text-slate-600 mb-4">刪除帳號後，您的交易、帳戶、股票、Passkey 與設定資料都會永久移除，且無法復原。</p>
+        <Button variant="destructive" onClick={openDeleteModal}>刪除我的帳號</Button>
       </div>
+
+      <Modal open={deleteOpen} onClose={() => !deleting && setDeleteOpen(false)} title="確認刪除帳號">
+        <div className="space-y-4">
+          <p className="text-sm text-red-600">此操作將永久刪除您的帳號與所有資料（交易、帳戶、股票、Passkey 與設定），且<strong>無法復原</strong>。</p>
+          {profile?.hasPassword ? (
+            <Input
+              label="請輸入密碼以確認刪除"
+              type="password"
+              value={deletePassword}
+              onChange={e => setDeletePassword(e.target.value)}
+              autoFocus
+            />
+          ) : (
+            <Input
+              label={`請輸入您的帳號電子信箱「${profile?.email || ''}」以確認刪除`}
+              type="email"
+              value={deleteConfirmEmail}
+              onChange={e => setDeleteConfirmEmail(e.target.value)}
+              placeholder={profile?.email || ''}
+              autoComplete="off"
+              autoFocus
+            />
+          )}
+          {deleteMsg && <p className="text-sm text-red-500">{deleteMsg}</p>}
+          <div className="flex justify-end gap-3 pt-2">
+            <Button variant="outline" onClick={() => setDeleteOpen(false)} disabled={deleting}>取消</Button>
+            <Button variant="destructive" onClick={confirmDeleteAccount} disabled={deleting}>{deleting ? '刪除中…' : '永久刪除帳號'}</Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

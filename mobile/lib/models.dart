@@ -12,6 +12,7 @@ class AppUser {
   final String displayName;
   final bool isAdmin;
   final String defaultCurrency;
+  final bool hasPassword;
 
   AppUser({
     required this.id,
@@ -19,6 +20,7 @@ class AppUser {
     required this.displayName,
     required this.isAdmin,
     required this.defaultCurrency,
+    required this.hasPassword,
   });
 
   factory AppUser.fromJson(Map<String, dynamic> j) {
@@ -32,6 +34,7 @@ class AppUser {
       defaultCurrency: _asStr(j['defaultCurrency']).isEmpty
           ? 'TWD'
           : _asStr(j['defaultCurrency']),
+      hasPassword: _asBool(j['hasPassword']) || _asBool(j['has_password']),
     );
   }
 }

@@ -73,3 +73,8 @@ kotlin {
 flutter {
     source = "../.."
 }
+
+dependencies {
+    // Play Integrity API：登入／註冊時取得裝置/App 完整性 token（classic / nonce 流程）
+    implementation("com.google.android.play:integrity:1.4.0")
+}

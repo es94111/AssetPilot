@@ -10,6 +10,8 @@ import { backfillDefaultsForUser } from '../../../../lib/userDefaults';
 import { setAuthCookie, formatUser } from '../../../../lib/apiHelpers';
 import { createLoginSession } from '../../../../lib/sessionHelpers';
 import { isTurnstileConfigured, verifyTurnstileToken } from '../../../../lib/turnstile';
+import { isPlayIntegrityConfigured, isPlayIntegrityEnforced, verifyIntegrity } from '../../../../lib/playIntegrity';
+import { consumeIntegrityNonce } from '../../../../lib/playIntegrityNonce';
 
 /** Map<email, { count, lastAttempt }> — in-memory per-process */
 const loginAttempts = new Map<string, { count: number; lastAttempt: number }>();
@@ -26,6 +28,8 @@ export async function POST(request: NextRequest) {
   const email = String(body.email || '');
   const password = String(body.password || '');
   const turnstileToken = String(body.turnstileToken || body['cf-turnstile-response'] || '');
+  const integrityToken = String(body.integrityToken || '');
+  const integrityNonce = String(body.integrityNonce || '');
   const headers = request.headers;
 
   if (isTurnstileConfigured()) {
@@ -64,6 +68,23 @@ export async function POST(request: NextRequest) {
     trackFailedLogin(emailLower);
     recordLoginAttempt({ user, email: emailLower, headers, method: 'password', isSuccess: false, failureReason: 'wrong_password' });
     return NextResponse.json({ error: '電子郵件或密碼錯誤' }, { status: 401 });
+  }
+
+  // Play Integrity（軟性上線）：有帶 token 且後端已設定憑證時才驗證。
+  // 預設僅記錄、放行；PLAY_INTEGRITY_ENFORCE=true 時不通過則擋下登入。
+  if (integrityToken && isPlayIntegrityConfigured()) {
+    const expectedNonce = consumeIntegrityNonce(integrityNonce) ? integrityNonce : undefined;
+    const result = await verifyIntegrity({
+      token: integrityToken,
+      expectedNonce,
+      context: 'login',
+      headers,
+      user,
+      email: emailLower,
+    });
+    if (!result.ok && isPlayIntegrityEnforced()) {
+      return NextResponse.json({ error: '裝置完整性驗證未通過，請於 Google Play 安裝的官方 App 重試' }, { status: 403 });
+    }
   }
 
   loginAttempts.delete(emailLower);

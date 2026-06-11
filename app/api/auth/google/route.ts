@@ -12,6 +12,8 @@ import { uid, todayStr, createDefaultsForUser, backfillDefaultsForUser } from '.
 import { formatUser, setAuthCookie } from '../../../../lib/apiHelpers';
 import { consumeGoogleOAuthState } from '@/lib/googleOAuthState';
 import { createLoginSession } from '../../../../lib/sessionHelpers';
+import { isPlayIntegrityConfigured, isPlayIntegrityEnforced, verifyIntegrity } from '../../../../lib/playIntegrity';
+import { consumeIntegrityNonce } from '../../../../lib/playIntegrityNonce';
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || '';
@@ -54,6 +56,17 @@ export async function POST(request: Request) {
   if (!consumeGoogleOAuthState(state)) return NextResponse.json({ error: 'state_mismatch' }, { status: 400 });
   if (!GOOGLE_CLIENT_ID) return NextResponse.json({ error: 'Google SSO 未設定' }, { status: 400 });
   if (!GOOGLE_CLIENT_SECRET) return NextResponse.json({ error: 'Google SSO 需設定 GOOGLE_CLIENT_SECRET' }, { status: 400 });
+
+  // Play Integrity（軟性上線）：App 帶 token 且已設定憑證時驗證；預設僅記錄、放行。
+  const integrityToken = String(body.integrityToken || '');
+  if (integrityToken && isPlayIntegrityConfigured()) {
+    const integrityNonce = String(body.integrityNonce || '');
+    const expectedNonce = consumeIntegrityNonce(integrityNonce) ? integrityNonce : undefined;
+    const result = await verifyIntegrity({ token: integrityToken, expectedNonce, context: 'google', headers });
+    if (!result.ok && isPlayIntegrityEnforced()) {
+      return NextResponse.json({ error: '裝置完整性驗證未通過，請於 Google Play 安裝的官方 App 重試' }, { status: 403 });
+    }
+  }
 
   try {
     const originalRedirect = String(redirect_uri || '').trim();

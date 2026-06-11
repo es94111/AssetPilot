@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'play_integrity.dart';
+
 /// API 呼叫失敗時拋出，message 已在地化為繁體中文。
 class ApiException implements Exception {
   final int statusCode;
@@ -147,11 +149,32 @@ class ApiClient {
 
   Future<Map<String, dynamic>> appVersion() => _getMap('/api/app/version');
 
+  /// 取得一次性 Play Integrity nonce（登入／註冊前向後端索取）。
+  Future<String> integrityNonce() async {
+    final m = await _getMap('/api/app/integrity/nonce');
+    return '${m['nonce'] ?? ''}';
+  }
+
+  /// 取得 Play Integrity 欄位（nonce + token）併入認證請求 body。
+  /// 軟性：任何失敗都回空 Map，不阻斷登入／註冊。
+  Future<Map<String, String>> _integrityFields() async {
+    try {
+      final nonce = await integrityNonce();
+      if (nonce.isEmpty) return const {};
+      final token = await PlayIntegrity.requestToken(nonce);
+      if (token == null) return const {};
+      return {'integrityNonce': nonce, 'integrityToken': token};
+    } catch (_) {
+      return const {};
+    }
+  }
+
   Future<void> login(
     String email,
     String password, {
     String? turnstileToken,
   }) async {
+    final integrity = await _integrityFields();
     late http.Response res;
     try {
       res = await http
@@ -162,6 +185,7 @@ class ApiClient {
               'email': email,
               'password': password,
               'turnstileToken': ?turnstileToken,
+              ...integrity,
             }),
           )
           .timeout(_timeout);
@@ -193,6 +217,7 @@ class ApiClient {
     required String password,
     required String displayName,
   }) async {
+    final integrity = await _integrityFields();
     late http.Response res;
     try {
       res = await http
@@ -203,6 +228,7 @@ class ApiClient {
               'email': email,
               'password': password,
               'displayName': displayName,
+              ...integrity,
             }),
           )
           .timeout(_timeout);
@@ -234,6 +260,7 @@ class ApiClient {
     required String redirectUri,
     required String state,
   }) async {
+    final integrity = await _integrityFields();
     late http.Response res;
     try {
       res = await http
@@ -244,6 +271,7 @@ class ApiClient {
               'code': code,
               'redirect_uri': redirectUri,
               'state': state,
+              ...integrity,
             }),
           )
           .timeout(_timeout);

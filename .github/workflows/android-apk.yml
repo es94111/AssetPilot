@@ -1,9 +1,10 @@
-name: Build Android APK
+name: Build Android App Bundle
 
-# Builds a signed release APK and publishes it to S3-compatible storage so
-# the app/web can offer in-app (OTA) updates. Version follows the same
+# Builds a signed release App Bundle (.aab) for Google Play Console and
+# publishes it to S3-compatible storage. Version follows the same
 # `vX.Y.Z` tag that docker-publish.yml auto-creates from changelog.json on a
-# push to main.
+# push to main. (APK output was dropped — Play distributes the .aab and the
+# in-app APK update flow was removed in 4.50.0.)
 on:
   push:
     branches:
@@ -48,8 +49,8 @@ jobs:
         run: flutter pub get
 
       # Decode the fixed release keystore from secrets so every build is signed
-      # with the same key (stable SHA-1 for cross-version OTA updates). When the
-      # secret is absent the build falls back to the debug key (see
+      # with the same key (stable upload key for Google Play). When the secret
+      # is absent the build falls back to the debug key (see
       # android/app/build.gradle.kts), so forks/PRs still build.
       - name: Configure release signing
         if: ${{ env.ANDROID_KEYSTORE_BASE64 != '' }}
@@ -67,17 +68,10 @@ jobs:
           keyPassword=$ANDROID_KEY_PASSWORD
           EOF
 
-      - name: Build release APK
-        working-directory: mobile
-        run: >-
-          flutter build apk --release
-          --build-name=${{ steps.version.outputs.version }}
-          --build-number=${{ github.run_number }}
-
-      # App Bundle (.aab) for Google Play Console uploads. Signed with the same
-      # release key as the APK (key.properties written above). Uploaded as a
-      # workflow artifact for manual upload to Play, and also published to S3
-      # (versioned + latest) alongside the APK below.
+      # App Bundle (.aab) for Google Play Console uploads. Signed with the
+      # release key (key.properties written above) when the keystore secret is
+      # present, otherwise the debug key. Uploaded as a workflow artifact for
+      # manual upload to Play, and also published to S3 (versioned + latest).
       - name: Build release App Bundle (AAB)
         working-directory: mobile
         run: >-
@@ -91,22 +85,12 @@ jobs:
           name: assetpilot-aab
           path: mobile/build/app/outputs/bundle/release/app-release.aab
 
-      # Fallback when S3 isn't configured — APK is normally distributed via
-      # S3 below. Forks/PRs without S3 secrets still get an artifact.
-      - name: Upload APK artifact
-        if: ${{ env.S3_BUCKET == '' }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: assetpilot-apk
-          path: mobile/build/app/outputs/flutter-apk/app-release.apk
-
-      - name: Publish APK + version manifest to S3
+      - name: Publish AAB + version manifest to S3
         if: ${{ env.S3_BUCKET != '' }}
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.S3_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: ${{ secrets.S3_REGION }}
-          APK_PATH: mobile/build/app/outputs/flutter-apk/app-release.apk
           AAB_PATH: mobile/build/app/outputs/bundle/release/app-release.aab
           VERSION: ${{ steps.version.outputs.version }}
         run: |
@@ -123,25 +107,17 @@ jobs:
             exit 1
           fi
 
-          APK_KEY="downloads/assetpilot-v${VERSION}.apk"
-          APK_URL="${ENDPOINT%/}/${S3_BUCKET}/${APK_KEY}"
           AAB_KEY="downloads/assetpilot-v${VERSION}.aab"
           AAB_URL="${ENDPOINT%/}/${S3_BUCKET}/${AAB_KEY}"
-
-          # Versioned + stable "latest" copies of the APK.
-          aws s3 cp "$APK_PATH" "s3://${S3_BUCKET}/${APK_KEY}" --endpoint-url "$ENDPOINT"
-          aws s3 cp "$APK_PATH" "s3://${S3_BUCKET}/downloads/assetpilot-latest.apk" --endpoint-url "$ENDPOINT"
 
           # Versioned + stable "latest" copies of the App Bundle (.aab).
           aws s3 cp "$AAB_PATH" "s3://${S3_BUCKET}/${AAB_KEY}" --endpoint-url "$ENDPOINT"
           aws s3 cp "$AAB_PATH" "s3://${S3_BUCKET}/downloads/assetpilot-latest.aab" --endpoint-url "$ENDPOINT"
 
-          # Manifest read by /api/app/version for the in-app update prompt.
+          # Manifest read by /api/app/version (App Bundle only).
           cat > app-version.json <<EOF
           {
             "version": "${VERSION}",
-            "apkUrl": "${APK_URL}",
-            "apkFile": "assetpilot-v${VERSION}.apk",
             "aabUrl": "${AAB_URL}",
             "aabFile": "assetpilot-v${VERSION}.aab",
             "buildNumber": ${{ github.run_number }},
@@ -151,4 +127,4 @@ jobs:
           aws s3 cp app-version.json "s3://${S3_BUCKET}/downloads/app-version.json" \
             --content-type application/json --endpoint-url "$ENDPOINT"
 
-          echo "Published $APK_URL"
+          echo "Published $AAB_URL"

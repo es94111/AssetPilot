@@ -10,6 +10,8 @@ import {
 import { uid, todayStr, createDefaultsForUser } from '../../../../lib/userDefaults';
 import { setAuthCookie } from '../../../../lib/apiHelpers';
 import { createLoginSession } from '../../../../lib/sessionHelpers';
+import { isPlayIntegrityConfigured, isPlayIntegrityEnforced, verifyIntegrity } from '../../../../lib/playIntegrity';
+import { consumeIntegrityNonce } from '../../../../lib/playIntegrityNonce';
 
 function validateStrongPassword(password: string) {
   if (!password || typeof password !== 'string') return '密碼為必填';
@@ -25,6 +27,8 @@ export async function POST(request: Request) {
   const email = String(body.email || '');
   const password = String(body.password || '');
   const displayName = String(body.displayName || '');
+  const integrityToken = String(body.integrityToken || '');
+  const integrityNonce = String(body.integrityNonce || '');
 
   if (!email || !password || !displayName) {
     return NextResponse.json({ error: '請填寫所有欄位' }, { status: 400 });
@@ -47,6 +51,22 @@ export async function POST(request: Request) {
   const existing = queryOne('SELECT id FROM users WHERE email = ?', [emailLower]);
   if (existing) {
     return NextResponse.json({ error: '此電子郵件已被註冊' }, { status: 400 });
+  }
+
+  // Play Integrity（軟性上線）：有帶 token 且已設定憑證時驗證；預設僅記錄、放行，
+  // PLAY_INTEGRITY_ENFORCE=true 時不通過則擋下註冊（防 emulator 大量註冊）。
+  if (integrityToken && isPlayIntegrityConfigured()) {
+    const expectedNonce = consumeIntegrityNonce(integrityNonce) ? integrityNonce : undefined;
+    const result = await verifyIntegrity({
+      token: integrityToken,
+      expectedNonce,
+      context: 'register',
+      headers: request.headers,
+      email: emailLower,
+    });
+    if (!result.ok && isPlayIntegrityEnforced()) {
+      return NextResponse.json({ error: '裝置完整性驗證未通過，請於 Google Play 安裝的官方 App 重試' }, { status: 403 });
+    }
   }
 
   const id = uid();

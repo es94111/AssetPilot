@@ -32,6 +32,14 @@
     "supportsPaid": false
   },
   {
+    "name": "LINE Login",
+    "description": "LINE 登入與帳號綁定",
+    "url": "https://developers.line.biz/en/docs/line-login/",
+    "attribution": null,
+    "supportsFree": true,
+    "supportsPaid": false
+  },
+  {
     "name": "SMTP（Nodemailer）",
     "description": "Email 寄送通道（管理員資產統計報表，搭配 Gmail / Outlook 等 SMTP server）",
     "url": "https://nodemailer.com",

@@ -40,8 +40,8 @@ export default function TermsPage() {
 
         <section className="mb-5 rounded-2xl border border-slate-200 bg-white px-5 py-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:px-9 sm:py-8" id="s1">
           <div className="mb-4 flex items-center gap-2.5 border-b border-slate-200 pb-3.5 text-lg font-bold dark:border-slate-800"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-sm text-slate-600 dark:bg-slate-800 dark:text-slate-400"><i className="fas fa-circle-info" /></span>1. 服務說明</div>
-          <p className="mb-3 text-sm/7 text-slate-600 dark:text-slate-300">「AssetPilot」（以下簡稱「本服務」）是一款個人財務管理網頁應用程式，提供記帳、預算管理、股票紀錄、報表分析等功能。</p>
-          <p className="mb-3 text-sm/7 text-slate-600 dark:text-slate-300">本服務採用自行部署（Self-hosted）架構，由管理員架設於自有伺服器上，供授權使用者存取使用。</p>
+          <p className="mb-3 text-sm/7 text-slate-600 dark:text-slate-300">「AssetPilot」（以下簡稱「本服務」）是一款個人財務管理應用程式，提供記帳、預算管理、股票紀錄、報表分析等功能，並以網頁及 Android 行動應用程式形式提供。</p>
+          <p className="mb-3 text-sm/7 text-slate-600 dark:text-slate-300">本服務提供官方版本與開放原始碼的自行部署（Self-hosted）兩種選項。官方版本由 AssetPilot 營運，預設後端為 <strong>asset.shao.one</strong>，並透過 Google Play 等管道提供行動應用程式；您亦可選擇自行架設於自有伺服器。本條款中提及「管理員」時，於官方服務情境即指 AssetPilot，於自行部署情境則指您的部署管理者。</p>
           <div className="my-4 flex gap-3 rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm/7 text-indigo-800 dark:border-indigo-900 dark:bg-indigo-950/40 dark:text-indigo-300"><i className="fas fa-info-circle mt-0.5 shrink-0" /><span>本服務僅供個人財務記錄與管理用途，不提供任何投資建議、財務諮詢或金融服務。</span></div>
         </section>
 
@@ -161,7 +161,7 @@ export default function TermsPage() {
         </section>
 
         <div className="mt-8 border-t border-slate-200 pt-6 text-center text-xs text-slate-400 dark:border-slate-800">
-          <p>最後更新日期：2026 年 5 月 11 日</p>
+          <p>最後更新日期：2026 年 6 月 11 日</p>
           <div className="mt-2.5 flex flex-wrap justify-center gap-5">
             <a href="/privacy" className="text-indigo-600 dark:text-indigo-400"><i className="fas fa-shield-halved" /> 隱私權政策</a>
             <a href="/api-credits" className="text-indigo-600 dark:text-indigo-400"><i className="fas fa-plug" /> API 使用與授權</a>

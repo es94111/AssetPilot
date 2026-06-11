@@ -70,6 +70,10 @@ export default function PrivacyPage() {
             <li>股票買賣紀錄與股利紀錄</li>
             <li>分類與標籤資料</li>
           </ul>
+          <h3 className="mb-2 mt-4 text-[15px] font-semibold">交易附件（選配）</h3>
+          <ul className="mb-3 list-disc space-y-1.5 pl-5 text-sm/7 text-slate-600 dark:text-slate-300">
+            <li>您可自行選擇為交易記錄附加收據相片或檔案；此功能完全選配，若您未使用，本服務不會存取您的相片或檔案</li>
+          </ul>
           <h3 className="mb-2 mt-4 text-[15px] font-semibold">系統日誌</h3>
           <ul className="mb-3 list-disc space-y-1.5 pl-5 text-sm/7 text-slate-600 dark:text-slate-300">
             <li>登入紀錄（時間、來源 IP、裝置類型）：用於安全稽核，可於帳號設定中查閱</li>
@@ -117,6 +121,8 @@ export default function PrivacyPage() {
             <li><strong>您的明確同意</strong>：在您主動執行資料匯出等操作時</li>
             <li><strong>法律要求</strong>：依法律規定或主管機關的合法命令</li>
             <li><strong>第三方 API 查詢</strong>：查詢股價時會向 TWSE 發送股票代號查詢請求（不含個人資訊）；匯率同步時向 exchangerate-api.com 查詢匯率（不含個人資訊）</li>
+            <li><strong>登入地理位置查詢</strong>：產生登入稽核紀錄時，會將登入來源 IP 傳送至 IPinfo 查詢所屬國家／地區，用於顯示登入位置（不含任何財務資料）</li>
+            <li><strong>服務營運所需的處理者</strong>：官方服務可能委由下列服務提供者協助營運——透過 SMTP（Nodemailer）、Zeabur Email 或 Resend 等郵件通道寄送您要求或訂閱的報表通知；以及將資料庫整檔備份上傳至 MEGA S4 物件儲存（加密保存）。這些提供者僅依本服務指示處理資料，不會將資料用於自身目的</li>
           </ul>
         </section>
 
@@ -145,6 +151,10 @@ export default function PrivacyPage() {
             <li><strong>LINE Login（選配）</strong>：提供 LINE 登入與帳號綁定功能。</li>
             <li><strong>TWSE 臺灣證券交易所 OpenAPI</strong>：查詢股票即時/收盤價及除權息資料時使用。僅傳送股票代號，不含任何個人資訊。</li>
             <li><strong>exchangerate-api.com</strong>：匯率自動同步功能使用。</li>
+            <li><strong>IPinfo</strong>：登入稽核時用於查詢來源 IP 的所屬國家／地區。</li>
+            <li><strong>郵件寄送通道（SMTP / Nodemailer、Zeabur Email、Resend）</strong>：寄送資產統計報表等通知郵件時使用（依官方服務設定擇一）。</li>
+            <li><strong>MEGA S4 物件儲存（選配）</strong>：官方服務的資料庫整檔備份目的地。</li>
+            <li><strong>Google Play Integrity API（僅行動版）</strong>：驗證 Android 應用程式與裝置的完整性，用於防範濫用與保護帳號安全；不會收集財務資料。</li>
             <li><strong>Google Fonts</strong>：載入字型資源。</li>
             <li><strong>Font Awesome CDN</strong>：載入圖示資源，使用 SRI 驗證確保檔案完整性。</li>
             <li><strong>Chart.js CDN</strong>：載入圖表函式庫，使用 SRI 驗證確保檔案完整性。</li>
@@ -191,7 +201,7 @@ export default function PrivacyPage() {
         </section>
 
         <div className="mt-8 border-t border-slate-200 pt-6 text-center text-xs text-slate-400 dark:border-slate-800">
-          <p>最後更新日期：2026 年 6 月 10 日</p>
+          <p>最後更新日期：2026 年 6 月 11 日</p>
           <div className="mt-2.5 flex flex-wrap justify-center gap-5">
             <a href="/terms" className="text-indigo-600 dark:text-indigo-400"><i className="fas fa-file-contract" /> 服務條款</a>
             <a href="/api-credits" className="text-indigo-600 dark:text-indigo-400"><i className="fas fa-plug" /> API 使用與授權</a>

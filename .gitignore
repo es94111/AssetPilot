@@ -159,3 +159,4 @@ openapi.cloudflare.yaml
 release.jks.base64.txt
 .gitignore
 release.jks
+data_safety_sample.csv

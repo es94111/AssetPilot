@@ -25,7 +25,7 @@ const usageNotes = [
   {
     icon: 'fa-user-check',
     title: '第三方登入',
-    text: 'Google Identity Services 僅在主動登入或綁定時啟用。',
+    text: 'Google、LINE 登入僅在主動登入或綁定時啟用。',
   },
   {
     icon: 'fa-cloud-arrow-up',
@@ -36,7 +36,7 @@ const usageNotes = [
 
 const serviceKinds = [
   { label: '資料查詢', count: 3, icon: 'fa-database' },
-  { label: '身份驗證', count: 1, icon: 'fa-key' },
+  { label: '身份驗證', count: 2, icon: 'fa-key' },
   { label: 'Email 通道', count: 3, icon: 'fa-envelope' },
   { label: '雲端備份', count: 1, icon: 'fa-cloud-arrow-up' },
 ];
@@ -198,7 +198,7 @@ export default async function ApiCreditsPage() {
         </section>
 
         <footer className="border-t border-white/10 pt-6 text-center text-xs text-slate-400">
-          <p>最後更新日期：2026 年 5 月 13 日</p>
+          <p>最後更新日期：2026 年 6 月 11 日</p>
           <div className="mt-3 flex flex-wrap justify-center gap-5">
             <a href="/privacy" className="inline-flex items-center gap-1.5 text-sky-200">
               <i className="fas fa-shield-halved" />

@@ -6,9 +6,16 @@ import '../models.dart';
 import '../widgets.dart';
 
 const _palette = [
-  '#EF4444', '#F97316', '#F59E0B', '#10B981',
-  '#06B6D4', '#3B82F6', '#6366F1', '#8B5CF6',
-  '#EC4899', '#64748B',
+  '#EF4444',
+  '#F97316',
+  '#F59E0B',
+  '#10B981',
+  '#06B6D4',
+  '#3B82F6',
+  '#6366F1',
+  '#8B5CF6',
+  '#EC4899',
+  '#64748B',
 ];
 
 class CategoriesScreen extends StatefulWidget {
@@ -65,11 +72,13 @@ class _CategoriesScreenState extends State<CategoriesScreen>
         content: Text('確定刪除「${c.name}」？'),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('取消')),
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('取消'),
+          ),
           FilledButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('刪除')),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('刪除'),
+          ),
         ],
       ),
     );
@@ -91,7 +100,10 @@ class _CategoriesScreenState extends State<CategoriesScreen>
         bottom: TabBar(
           controller: _tab,
           onTap: (_) => setState(() {}),
-          tabs: const [Tab(text: '支出'), Tab(text: '收入')],
+          tabs: const [
+            Tab(text: '支出'),
+            Tab(text: '收入'),
+          ],
         ),
       ),
       floatingActionButton: AsyncFab(
@@ -103,18 +115,14 @@ class _CategoriesScreenState extends State<CategoriesScreen>
         onRetry: _reload,
         builder: (context, all) => TabBarView(
           controller: _tab,
-          children: [
-            _buildList(all, 'expense'),
-            _buildList(all, 'income'),
-          ],
+          children: [_buildList(all, 'expense'), _buildList(all, 'income')],
         ),
       ),
     );
   }
 
   Widget _buildList(List<Category> all, String type) {
-    final parents =
-        all.where((c) => c.type == type && c.isParent).toList();
+    final parents = all.where((c) => c.type == type && c.isParent).toList();
     if (parents.isEmpty) {
       return const EmptyState(icon: Icons.category, message: '尚無分類');
     }
@@ -126,13 +134,14 @@ class _CategoriesScreenState extends State<CategoriesScreen>
           for (final p in parents) ...[
             ListTile(
               leading: _dot(p.color),
-              title: Text(p.name,
-                  style: const TextStyle(fontWeight: FontWeight.bold)),
+              title: Text(
+                p.name,
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
               onTap: () => _openForm(existing: p, all: all),
               onLongPress: () => _delete(p),
             ),
-            for (final child
-                in all.where((c) => c.parentId == p.id))
+            for (final child in all.where((c) => c.parentId == p.id))
               ListTile(
                 contentPadding: const EdgeInsets.only(left: 48, right: 16),
                 leading: _dot(child.color),
@@ -148,11 +157,10 @@ class _CategoriesScreenState extends State<CategoriesScreen>
   }
 
   Widget _dot(String color) => Container(
-        width: 16,
-        height: 16,
-        decoration:
-            BoxDecoration(color: parseColor(color), shape: BoxShape.circle),
-      );
+    width: 16,
+    height: 16,
+    decoration: BoxDecoration(color: parseColor(color), shape: BoxShape.circle),
+  );
 }
 
 /// FAB 需要分類清單才能在表單裡選父分類，因此等 future 完成才啟用。
@@ -166,8 +174,7 @@ class AsyncFab extends StatelessWidget {
     return FutureBuilder<List<Category>>(
       future: future,
       builder: (context, snap) => FloatingActionButton.extended(
-        onPressed:
-            snap.hasData ? () => onPressed(snap.data!) : null,
+        onPressed: snap.hasData ? () => onPressed(snap.data!) : null,
         icon: const Icon(Icons.add),
         label: const Text('新增分類'),
       ),
@@ -194,10 +201,9 @@ class _CategoryFormState extends State<_CategoryForm> {
   late final _name = TextEditingController(text: widget.existing?.name ?? '');
   late String _type = widget.existing?.type ?? widget.type;
   late String _color = widget.existing?.color ?? _palette.first;
-  late String? _parentId =
-      widget.existing?.parentId.isNotEmpty == true
-          ? widget.existing!.parentId
-          : null;
+  late String? _parentId = widget.existing?.parentId.isNotEmpty == true
+      ? widget.existing!.parentId
+      : null;
   bool _saving = false;
 
   bool get _isEdit => widget.existing != null;
@@ -209,7 +215,9 @@ class _CategoryFormState extends State<_CategoryForm> {
   }
 
   List<Category> get _parentOptions => widget.allCategories
-      .where((c) => c.type == _type && c.isParent && c.id != widget.existing?.id)
+      .where(
+        (c) => c.type == _type && c.isParent && c.id != widget.existing?.id,
+      )
       .toList();
 
   Future<void> _save() async {
@@ -248,13 +256,17 @@ class _CategoryFormState extends State<_CategoryForm> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(_isEdit ? '編輯分類' : '新增分類',
-                style: Theme.of(context).textTheme.titleLarge),
+            Text(
+              _isEdit ? '編輯分類' : '新增分類',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
             const SizedBox(height: 16),
             TextFormField(
               controller: _name,
               decoration: const InputDecoration(
-                  labelText: '分類名稱', border: OutlineInputBorder()),
+                labelText: '分類名稱',
+                border: OutlineInputBorder(),
+              ),
               validator: (v) =>
                   (v == null || v.trim().isEmpty) ? '請輸入名稱' : null,
             ),
@@ -275,8 +287,9 @@ class _CategoryFormState extends State<_CategoryForm> {
             DropdownButtonFormField<String?>(
               initialValue: _parentId,
               decoration: const InputDecoration(
-                  labelText: '父分類（不選＝建立父分類）',
-                  border: OutlineInputBorder()),
+                labelText: '父分類（不選＝建立父分類）',
+                border: OutlineInputBorder(),
+              ),
               items: [
                 const DropdownMenuItem(value: null, child: Text('（無，作為父分類）')),
                 for (final p in _parentOptions)
@@ -286,9 +299,9 @@ class _CategoryFormState extends State<_CategoryForm> {
             ),
             const SizedBox(height: 16),
             Align(
-                alignment: Alignment.centerLeft,
-                child: Text('顏色',
-                    style: Theme.of(context).textTheme.bodyMedium)),
+              alignment: Alignment.centerLeft,
+              child: Text('顏色', style: Theme.of(context).textTheme.bodyMedium),
+            ),
             const SizedBox(height: 8),
             Wrap(
               spacing: 10,
@@ -304,10 +317,11 @@ class _CategoryFormState extends State<_CategoryForm> {
                         color: parseColor(c),
                         shape: BoxShape.circle,
                         border: Border.all(
-                            color: _color == c
-                                ? Theme.of(context).colorScheme.primary
-                                : Colors.transparent,
-                            width: 3),
+                          color: _color == c
+                              ? Theme.of(context).colorScheme.primary
+                              : Colors.transparent,
+                          width: 3,
+                        ),
                       ),
                     ),
                   ),
@@ -317,12 +331,14 @@ class _CategoryFormState extends State<_CategoryForm> {
             FilledButton(
               onPressed: _saving ? null : _save,
               style: FilledButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 14)),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+              ),
               child: _saving
                   ? const SizedBox(
                       height: 20,
                       width: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2))
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
                   : const Text('儲存'),
             ),
           ],

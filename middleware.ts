@@ -14,6 +14,7 @@ const PUBLIC_PATHS = new Set([
   '/api/auth/line',
   '/api/auth/line/authorize',
   '/api/auth/line/state',
+  '/api/app/auth-ticket/exchange',
   '/api/line/webhook',
   '/api/config',
 ]);

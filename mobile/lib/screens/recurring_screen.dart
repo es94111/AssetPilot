@@ -19,7 +19,12 @@ class _RecurringData {
   final List<Category> categories;
   final List<Account> accounts;
   _RecurringData(
-      this.items, this.catName, this.accName, this.categories, this.accounts);
+    this.items,
+    this.catName,
+    this.accName,
+    this.categories,
+    this.accounts,
+  );
 }
 
 class RecurringScreen extends StatefulWidget {
@@ -67,8 +72,8 @@ class _RecurringScreenState extends State<RecurringScreen> {
     final changed = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
-      builder: (_) => _RecurringForm(
-          categories: data.categories, accounts: data.accounts),
+      builder: (_) =>
+          _RecurringForm(categories: data.categories, accounts: data.accounts),
     );
     if (changed == true) _reload();
   }
@@ -109,8 +114,7 @@ class _RecurringScreenState extends State<RecurringScreen> {
         onRetry: _reload,
         builder: (context, data) {
           if (data.items.isEmpty) {
-            return const EmptyState(
-                icon: Icons.repeat, message: '尚無固定收支');
+            return const EmptyState(icon: Icons.repeat, message: '尚無固定收支');
           }
           return RefreshIndicator(
             onRefresh: () async => _reload(),
@@ -123,28 +127,33 @@ class _RecurringScreenState extends State<RecurringScreen> {
                 final isIncome = r.type == 'income';
                 return ListTile(
                   leading: CircleAvatar(
-                    backgroundColor:
-                        (isIncome ? Colors.green : Colors.red)
-                            .withValues(alpha: 0.15),
-                    child: Icon(isIncome ? Icons.south_west : Icons.north_east,
-                        color: isIncome ? Colors.green : Colors.red,
-                        size: 20),
+                    backgroundColor: (isIncome ? Colors.green : Colors.red)
+                        .withValues(alpha: 0.15),
+                    child: Icon(
+                      isIncome ? Icons.south_west : Icons.north_east,
+                      color: isIncome ? Colors.green : Colors.red,
+                      size: 20,
+                    ),
                   ),
-                  title: Text(data.catName[r.categoryId] ??
-                      (r.note.isEmpty ? '未分類' : r.note)),
+                  title: Text(
+                    data.catName[r.categoryId] ??
+                        (r.note.isEmpty ? '未分類' : r.note),
+                  ),
                   subtitle: Text(
-                      '${_freqLabels[r.frequency] ?? r.frequency}・'
-                      '${data.accName[r.accountId] ?? ''}・自 ${r.startDate}'),
+                    '${_freqLabels[r.frequency] ?? r.frequency}・'
+                    '${data.accName[r.accountId] ?? ''}・自 ${r.startDate}',
+                  ),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text((isIncome ? '+' : '-') + money(r.amount, r.currency),
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: isIncome ? Colors.green : Colors.red)),
-                      Switch(
-                          value: r.isActive,
-                          onChanged: (_) => _toggle(r)),
+                      Text(
+                        (isIncome ? '+' : '-') + money(r.amount, r.currency),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: isIncome ? Colors.green : Colors.red,
+                        ),
+                      ),
+                      Switch(value: r.isActive, onChanged: (_) => _toggle(r)),
                     ],
                   ),
                   onLongPress: () => _delete(r),
@@ -181,8 +190,7 @@ class _RecurringFormState extends State<_RecurringForm> {
   @override
   void initState() {
     super.initState();
-    _accountId =
-        widget.accounts.isNotEmpty ? widget.accounts.first.id : null;
+    _accountId = widget.accounts.isNotEmpty ? widget.accounts.first.id : null;
   }
 
   @override
@@ -237,8 +245,7 @@ class _RecurringFormState extends State<_RecurringForm> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('新增固定收支',
-                style: Theme.of(context).textTheme.titleLarge),
+            Text('新增固定收支', style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 16),
             SegmentedButton<String>(
               segments: const [
@@ -256,7 +263,9 @@ class _RecurringFormState extends State<_RecurringForm> {
               controller: _amount,
               keyboardType: TextInputType.number,
               decoration: const InputDecoration(
-                  labelText: '金額', border: OutlineInputBorder()),
+                labelText: '金額',
+                border: OutlineInputBorder(),
+              ),
               validator: (v) {
                 final n = num.tryParse(v?.trim() ?? '');
                 if (n == null || n <= 0) return '請輸入大於 0 的金額';
@@ -267,7 +276,9 @@ class _RecurringFormState extends State<_RecurringForm> {
             DropdownButtonFormField<String>(
               initialValue: _frequency,
               decoration: const InputDecoration(
-                  labelText: '週期', border: OutlineInputBorder()),
+                labelText: '週期',
+                border: OutlineInputBorder(),
+              ),
               items: [
                 for (final e in _freqLabels.entries)
                   DropdownMenuItem(value: e.key, child: Text(e.value)),
@@ -279,7 +290,9 @@ class _RecurringFormState extends State<_RecurringForm> {
               initialValue: _categoryId,
               isExpanded: true,
               decoration: const InputDecoration(
-                  labelText: '分類', border: OutlineInputBorder()),
+                labelText: '分類',
+                border: OutlineInputBorder(),
+              ),
               items: [
                 for (final c in cats)
                   DropdownMenuItem(value: c.id, child: Text(c.name)),
@@ -292,7 +305,9 @@ class _RecurringFormState extends State<_RecurringForm> {
               initialValue: _accountId,
               isExpanded: true,
               decoration: const InputDecoration(
-                  labelText: '帳戶', border: OutlineInputBorder()),
+                labelText: '帳戶',
+                border: OutlineInputBorder(),
+              ),
               items: [
                 for (final a in widget.accounts)
                   DropdownMenuItem(value: a.id, child: Text(a.name)),
@@ -303,8 +318,9 @@ class _RecurringFormState extends State<_RecurringForm> {
             const SizedBox(height: 12),
             ListTile(
               shape: RoundedRectangleBorder(
-                  side: BorderSide(color: Theme.of(context).dividerColor),
-                  borderRadius: BorderRadius.circular(4)),
+                side: BorderSide(color: Theme.of(context).dividerColor),
+                borderRadius: BorderRadius.circular(4),
+              ),
               leading: const Icon(Icons.calendar_today),
               title: const Text('起始日期'),
               trailing: Text(_startStr),
@@ -322,18 +338,22 @@ class _RecurringFormState extends State<_RecurringForm> {
             TextFormField(
               controller: _note,
               decoration: const InputDecoration(
-                  labelText: '備註（選填）', border: OutlineInputBorder()),
+                labelText: '備註（選填）',
+                border: OutlineInputBorder(),
+              ),
             ),
             const SizedBox(height: 20),
             FilledButton(
               onPressed: _saving ? null : _save,
               style: FilledButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 14)),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+              ),
               child: _saving
                   ? const SizedBox(
                       height: 20,
                       width: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2))
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
                   : const Text('儲存'),
             ),
           ],

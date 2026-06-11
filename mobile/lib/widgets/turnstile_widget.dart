@@ -39,14 +39,19 @@ class _TurnstileWidgetState extends State<TurnstileWidget> {
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setBackgroundColor(Colors.transparent)
-      ..addJavaScriptChannel('TurnstileToken',
-          onMessageReceived: (m) => widget.onToken(m.message))
-      ..addJavaScriptChannel('TurnstileError',
-          onMessageReceived: (m) => widget.onError?.call(m.message))
+      ..addJavaScriptChannel(
+        'TurnstileToken',
+        onMessageReceived: (m) => widget.onToken(m.message),
+      )
+      ..addJavaScriptChannel(
+        'TurnstileError',
+        onMessageReceived: (m) => widget.onError?.call(m.message),
+      )
       ..loadHtmlString(_html, baseUrl: widget.baseUrl);
   }
 
-  String get _html => '''
+  String get _html =>
+      '''
 <!DOCTYPE html>
 <html>
 <head>
@@ -78,9 +83,6 @@ class _TurnstileWidgetState extends State<TurnstileWidget> {
   @override
   Widget build(BuildContext context) {
     // Turnstile 標準 widget 約 65px 高；留一點空間給載入與訊息。
-    return SizedBox(
-      height: 80,
-      child: WebViewWidget(controller: _controller),
-    );
+    return SizedBox(height: 80, child: WebViewWidget(controller: _controller));
   }
 }

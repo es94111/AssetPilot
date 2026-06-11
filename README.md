@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-4.50.0-blue" alt="version">
+  <img src="https://img.shields.io/badge/version-4.51.0-blue" alt="version">
   <img src="https://img.shields.io/badge/node-%3E%3D24-brightgreen" alt="node">
   <img src="https://img.shields.io/badge/next.js-16.x-000000" alt="next.js">
   <img src="https://img.shields.io/badge/openapi-3.2.0-6BA539" alt="openapi">
@@ -226,7 +226,7 @@ Docker 多數參數已有合理預設，重點關注「自動產生」與「功�
 | `GOOGLE_OAUTH_REDIRECT_URIS` | SSO | OAuth 重定向 URI 白名單，逗號分隔 | 自動推導 |
 | `LINE_CHANNEL_ID` | SSO | LINE Login Channel ID（留空停用 LINE 登入） | — |
 | `LINE_CHANNEL_SECRET` | SSO | LINE Login Channel Secret | — |
-| `LINE_OAUTH_REDIRECT_URIS` | SSO | LINE Login callback URL 白名單，逗號分隔 | 自動推導 |
+| `LINE_OAUTH_REDIRECT_URIS` | SSO | LINE Login callback URL 白名單，逗號分隔；會附加內建 Web/App callback | 自動推導 |
 | `LINE_MESSAGING_CHANNEL_SECRET` | LINE Bot | LINE 官方帳號 Messaging API Channel Secret；留空時 fallback 使用 `LINE_CHANNEL_SECRET` | — |
 | `LINE_MESSAGING_CHANNEL_ACCESS_TOKEN` | LINE Bot | LINE 官方帳號 Messaging API Channel access token；設定後啟用 `/api/line/webhook` | — |
 | `ALLOWED_ORIGINS` | 安全 | CORS 白名單，逗號分隔（正式環境建議設定） | — |
@@ -321,7 +321,7 @@ Caddy 自動申請並續期 HTTPS 憑證。
 
 1. 至 [LINE Developers Console](https://developers.line.biz/console/) 建立 Provider 與 LINE Login channel
 2. 在 LINE Login channel 啟用 LINE Login，並申請 / 啟用 email 權限
-3. **Callback URL**：本機 `http://localhost:3000/auth/line/callback`；正式 `https://your-domain.com/auth/line/callback`
+3. **Callback URL**：本機 `http://localhost:3000/auth/line/callback`、`http://localhost:3000/app/line-callback`；正式 `https://your-domain.com/auth/line/callback`、`https://your-domain.com/app/line-callback`
 4. 將 `LINE_CHANNEL_ID`、`LINE_CHANNEL_SECRET` 與 `LINE_OAUTH_REDIRECT_URIS` 設為環境變數啟動
 5. 登入管理員帳號後，到「管理員設定 → 系統設定」勾選「啟用 LINE 登入」並儲存
 6. 未設定或未由管理員啟用時，LINE 登入與綁定按鈕自動隱藏

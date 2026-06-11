@@ -1,6 +1,22 @@
 {
-  "currentVersion": "4.50.0",
+  "currentVersion": "4.51.0",
   "releases": [
+    {
+      "version": "4.51.0",
+      "date": "2026-06-11",
+      "title": "行動版新增 LINE 登入與 Passkey 登入",
+      "type": "new",
+      "changes": [
+        {
+          "tag": "new",
+          "text": "行動版（Android）新增「使用 LINE 登入」：在登入畫面可直接用 LINE 帳號登入，App 會開啟 LINE 授權頁，完成驗證後自動返回並登入。此功能需後端設定 LINE 登入並由管理員啟用，未啟用時按鈕會自動隱藏。"
+        },
+        {
+          "tag": "new",
+          "text": "行動版新增「使用 Passkey 登入」：可改用裝置的指紋、臉部辨識或螢幕鎖（PIN）免輸入密碼快速登入，比記密碼更安全也更方便；需先在帳號中註冊 Passkey 才能使用。"
+        }
+      ]
+    },
     {
       "version": "4.50.0",
       "date": "2026-06-11",

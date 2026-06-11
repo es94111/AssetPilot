@@ -28,10 +28,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
   void initState() {
     super.initState();
     final now = DateTime.now();
-    _range = DateTimeRange(
-      start: DateTime(now.year, now.month, 1),
-      end: now,
-    );
+    _range = DateTimeRange(start: DateTime(now.year, now.month, 1), end: now);
     _future = _load();
   }
 
@@ -107,7 +104,9 @@ class _ReportsScreenState extends State<ReportsScreen> {
               builder: (context, data) {
                 if (data.breakdown.isEmpty) {
                   return const EmptyState(
-                      icon: Icons.bar_chart, message: '此區間無資料');
+                    icon: Icons.bar_chart,
+                    message: '此區間無資料',
+                  );
                 }
                 final sorted = [...data.breakdown]
                   ..sort((a, b) => b.total.compareTo(a.total));
@@ -115,12 +114,12 @@ class _ReportsScreenState extends State<ReportsScreen> {
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
                   children: [
                     Center(
-                      child: Text('${_type == 'expense' ? '總支出' : '總收入'}：'
-                          '${twd(data.total)}',
-                          style: Theme.of(context)
-                              .textTheme
-                              .titleMedium
-                              ?.copyWith(fontWeight: FontWeight.bold)),
+                      child: Text(
+                        '${_type == 'expense' ? '總支出' : '總收入'}：'
+                        '${twd(data.total)}',
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.bold),
+                      ),
                     ),
                     const SizedBox(height: 16),
                     SizedBox(
@@ -139,9 +138,10 @@ class _ReportsScreenState extends State<ReportsScreen> {
                                     : '',
                                 radius: 60,
                                 titleStyle: const TextStyle(
-                                    fontSize: 11,
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold),
+                                  fontSize: 11,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                           ],
                         ),
@@ -152,15 +152,18 @@ class _ReportsScreenState extends State<ReportsScreen> {
                       ListTile(
                         dense: true,
                         leading: Container(
-                            width: 16,
-                            height: 16,
-                            decoration: BoxDecoration(
-                                color: parseColor(n.color),
-                                shape: BoxShape.circle)),
+                          width: 16,
+                          height: 16,
+                          decoration: BoxDecoration(
+                            color: parseColor(n.color),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
                         title: Text(n.name),
-                        trailing: Text(twd(n.total),
-                            style: const TextStyle(
-                                fontWeight: FontWeight.bold)),
+                        trailing: Text(
+                          twd(n.total),
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
                       ),
                   ],
                 );

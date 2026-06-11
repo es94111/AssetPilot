@@ -9,11 +9,13 @@ const APP_HOST = process.env.APP_HOST || 'localhost';
 const PORT = process.env.PORT || 3000;
 
 function buildLineRedirectAllowlist() {
-  if (LINE_OAUTH_REDIRECT_URIS.length > 0) return new Set(LINE_OAUTH_REDIRECT_URIS);
-  return new Set([
+  const fallback = [
     `https://${APP_HOST}/auth/line/callback`,
+    `https://${APP_HOST}/app/line-callback`,
     `http://localhost:${PORT}/auth/line/callback`,
-  ]);
+    `http://localhost:${PORT}/app/line-callback`,
+  ];
+  return new Set([...fallback, ...LINE_OAUTH_REDIRECT_URIS]);
 }
 
 const lineRedirectUriAllowlist = buildLineRedirectAllowlist();

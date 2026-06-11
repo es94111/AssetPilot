@@ -25,8 +25,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _future = _load();
   }
 
-  String get _ym =>
-      '${_month.year}-${_month.month.toString().padLeft(2, '0')}';
+  String get _ym => '${_month.year}-${_month.month.toString().padLeft(2, '0')}';
 
   Future<Dashboard> _load() async {
     final json = await ApiClient.instance.dashboard(_ym);
@@ -70,11 +69,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
               const SizedBox(height: 24),
               _CategoryPie(nodes: d.catBreakdown),
               const SizedBox(height: 24),
-              Text('最近交易',
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleMedium
-                      ?.copyWith(fontWeight: FontWeight.bold)),
+              Text(
+                '最近交易',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 8),
               if (d.recent.isEmpty)
                 const Padding(
@@ -95,8 +95,11 @@ class _MonthSelector extends StatelessWidget {
   final String label;
   final VoidCallback onPrev;
   final VoidCallback onNext;
-  const _MonthSelector(
-      {required this.label, required this.onPrev, required this.onNext});
+  const _MonthSelector({
+    required this.label,
+    required this.onPrev,
+    required this.onNext,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -123,12 +126,20 @@ class _SummaryGrid extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-            child: _StatCard(
-                label: '收入', value: twd(d.income), color: Colors.green)),
+          child: _StatCard(
+            label: '收入',
+            value: twd(d.income),
+            color: Colors.green,
+          ),
+        ),
         const SizedBox(width: 12),
         Expanded(
-            child: _StatCard(
-                label: '支出', value: twd(d.expense), color: Colors.red)),
+          child: _StatCard(
+            label: '支出',
+            value: twd(d.expense),
+            color: Colors.red,
+          ),
+        ),
       ],
     );
   }
@@ -138,8 +149,11 @@ class _StatCard extends StatelessWidget {
   final String label;
   final String value;
   final Color color;
-  const _StatCard(
-      {required this.label, required this.value, required this.color});
+  const _StatCard({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -151,14 +165,16 @@ class _StatCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(label,
-                style: Theme.of(context).textTheme.bodySmall),
+            Text(label, style: Theme.of(context).textTheme.bodySmall),
             const SizedBox(height: 4),
-            Text(value,
-                style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: color)),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+            ),
           ],
         ),
       ),
@@ -181,23 +197,32 @@ class _AssetRow extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('本月淨額',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onPrimaryContainer)),
+            Text(
+              '本月淨額',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onPrimaryContainer,
+              ),
+            ),
             const SizedBox(height: 4),
-            Text(signed(d.net),
-                style: theme.textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: theme.colorScheme.onPrimaryContainer)),
+            Text(
+              signed(d.net),
+              style: theme.textTheme.headlineMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: theme.colorScheme.onPrimaryContainer,
+              ),
+            ),
             const Divider(height: 24),
             Row(
               children: [
                 Expanded(
-                    child: _MiniStat(
-                        label: '銀行餘額', value: twd(d.bankBalance))),
+                  child: _MiniStat(label: '銀行餘額', value: twd(d.bankBalance)),
+                ),
                 Expanded(
-                    child: _MiniStat(
-                        label: '股票市值', value: twd(d.stockMarketValue))),
+                  child: _MiniStat(
+                    label: '股票市值',
+                    value: twd(d.stockMarketValue),
+                  ),
+                ),
               ],
             ),
           ],
@@ -218,13 +243,19 @@ class _MiniStat extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label,
-            style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onPrimaryContainer)),
-        Text(value,
-            style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: theme.colorScheme.onPrimaryContainer)),
+        Text(
+          label,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onPrimaryContainer,
+          ),
+        ),
+        Text(
+          value,
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: theme.colorScheme.onPrimaryContainer,
+          ),
+        ),
       ],
     );
   }
@@ -247,11 +278,12 @@ class _CategoryPie extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('支出分類',
-                style: Theme.of(context)
-                    .textTheme
-                    .titleMedium
-                    ?.copyWith(fontWeight: FontWeight.bold)),
+            Text(
+              '支出分類',
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 16),
             SizedBox(
               height: 180,
@@ -269,9 +301,10 @@ class _CategoryPie extends StatelessWidget {
                             : '',
                         radius: 50,
                         titleStyle: const TextStyle(
-                            fontSize: 11,
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold),
+                          fontSize: 11,
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                   ],
                 ),
@@ -287,14 +320,18 @@ class _CategoryPie extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Container(
-                          width: 12,
-                          height: 12,
-                          decoration: BoxDecoration(
-                              color: parseColor(n.color),
-                              shape: BoxShape.circle)),
+                        width: 12,
+                        height: 12,
+                        decoration: BoxDecoration(
+                          color: parseColor(n.color),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
                       const SizedBox(width: 4),
-                      Text('${n.name}　${twd(n.total)}',
-                          style: Theme.of(context).textTheme.bodySmall),
+                      Text(
+                        '${n.name}　${twd(n.total)}',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
                     ],
                   ),
               ],
@@ -318,19 +355,26 @@ class _RecentTile extends StatelessWidget {
       dense: true,
       leading: CircleAvatar(
         backgroundColor: (isIncome ? Colors.green : Colors.red).withValues(
-            alpha: 0.15),
-        child: Icon(isIncome ? Icons.south_west : Icons.north_east,
-            color: isIncome ? Colors.green : Colors.red, size: 18),
+          alpha: 0.15,
+        ),
+        child: Icon(
+          isIncome ? Icons.south_west : Icons.north_east,
+          color: isIncome ? Colors.green : Colors.red,
+          size: 18,
+        ),
       ),
-      title: Text(t.catName?.isNotEmpty == true
-          ? t.catName!
-          : (t.note.isEmpty ? '未分類' : t.note)),
+      title: Text(
+        t.catName?.isNotEmpty == true
+            ? t.catName!
+            : (t.note.isEmpty ? '未分類' : t.note),
+      ),
       subtitle: Text(t.date),
       trailing: Text(
         (isIncome ? '+' : '-') + money(t.amount, t.currency),
         style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: isIncome ? Colors.green : Colors.red),
+          fontWeight: FontWeight.bold,
+          color: isIncome ? Colors.green : Colors.red,
+        ),
       ),
     );
   }

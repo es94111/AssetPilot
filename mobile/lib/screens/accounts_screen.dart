@@ -56,11 +56,13 @@ class _AccountsScreenState extends State<AccountsScreen> {
         content: Text('確定刪除「${a.name}」？相關交易可能一併受影響。'),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('取消')),
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('取消'),
+          ),
           FilledButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('刪除')),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('刪除'),
+          ),
         ],
       ),
     );
@@ -89,7 +91,9 @@ class _AccountsScreenState extends State<AccountsScreen> {
         builder: (context, list) {
           if (list.isEmpty) {
             return const EmptyState(
-                icon: Icons.account_balance_wallet, message: '尚無帳戶');
+              icon: Icons.account_balance_wallet,
+              message: '尚無帳戶',
+            );
           }
           final total = list
               .where((a) => !a.excludeFromTotal)
@@ -108,35 +112,44 @@ class _AccountsScreenState extends State<AccountsScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('總資產（換算 TWD）',
-                            style: TextStyle(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onPrimaryContainer)),
+                        Text(
+                          '總資產（換算 TWD）',
+                          style: TextStyle(
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onPrimaryContainer,
+                          ),
+                        ),
                         const SizedBox(height: 6),
-                        Text(twd(total),
-                            style: TextStyle(
-                                fontSize: 26,
-                                fontWeight: FontWeight.bold,
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onPrimaryContainer)),
+                        Text(
+                          twd(total),
+                          style: TextStyle(
+                            fontSize: 26,
+                            fontWeight: FontWeight.bold,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onPrimaryContainer,
+                          ),
+                        ),
                       ],
                     ),
                   ),
                 ),
                 for (final a in list)
                   ListTile(
-                    leading: CircleAvatar(
-                        child: Icon(_iconFor(a.category))),
+                    leading: CircleAvatar(child: Icon(_iconFor(a.category))),
                     title: Text(a.name),
                     subtitle: Text(
-                        '${_accountCategories[a.category] ?? a.category}'
-                        '${a.excludeFromTotal ? '・不計入總資產' : ''}'),
-                    trailing: Text(money(a.balance, a.currency),
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: a.balance < 0 ? Colors.red : null)),
+                      '${_accountCategories[a.category] ?? a.category}'
+                      '${a.excludeFromTotal ? '・不計入總資產' : ''}',
+                    ),
+                    trailing: Text(
+                      money(a.balance, a.currency),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: a.balance < 0 ? Colors.red : null,
+                      ),
+                    ),
                     onTap: () => _openForm(a),
                     onLongPress: () => _delete(a),
                   ),
@@ -174,7 +187,8 @@ class _AccountFormState extends State<_AccountForm> {
   final _formKey = GlobalKey<FormState>();
   late final _name = TextEditingController(text: widget.existing?.name ?? '');
   late final _initial = TextEditingController(
-      text: widget.existing?.initialBalance.toString() ?? '0');
+    text: widget.existing?.initialBalance.toString() ?? '0',
+  );
   late String _category = widget.existing?.category.isNotEmpty == true
       ? widget.existing!.category
       : 'bank';
@@ -228,13 +242,17 @@ class _AccountFormState extends State<_AccountForm> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(_isEdit ? '編輯帳戶' : '新增帳戶',
-                style: Theme.of(context).textTheme.titleLarge),
+            Text(
+              _isEdit ? '編輯帳戶' : '新增帳戶',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
             const SizedBox(height: 16),
             TextFormField(
               controller: _name,
               decoration: const InputDecoration(
-                  labelText: '帳戶名稱', border: OutlineInputBorder()),
+                labelText: '帳戶名稱',
+                border: OutlineInputBorder(),
+              ),
               validator: (v) =>
                   (v == null || v.trim().isEmpty) ? '請輸入名稱' : null,
             ),
@@ -242,7 +260,9 @@ class _AccountFormState extends State<_AccountForm> {
             DropdownButtonFormField<String>(
               initialValue: _category,
               decoration: const InputDecoration(
-                  labelText: '類型', border: OutlineInputBorder()),
+                labelText: '類型',
+                border: OutlineInputBorder(),
+              ),
               items: [
                 for (final e in _accountCategories.entries)
                   DropdownMenuItem(value: e.key, child: Text(e.value)),
@@ -256,7 +276,9 @@ class _AccountFormState extends State<_AccountForm> {
                   child: DropdownButtonFormField<String>(
                     initialValue: _currency,
                     decoration: const InputDecoration(
-                        labelText: '幣別', border: OutlineInputBorder()),
+                      labelText: '幣別',
+                      border: OutlineInputBorder(),
+                    ),
                     items: [
                       for (final c in _currencies)
                         DropdownMenuItem(value: c, child: Text(c)),
@@ -270,9 +292,13 @@ class _AccountFormState extends State<_AccountForm> {
                     controller: _initial,
                     enabled: !_isEdit,
                     keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true, signed: true),
+                      decimal: true,
+                      signed: true,
+                    ),
                     decoration: const InputDecoration(
-                        labelText: '初始餘額', border: OutlineInputBorder()),
+                      labelText: '初始餘額',
+                      border: OutlineInputBorder(),
+                    ),
                   ),
                 ),
               ],
@@ -287,12 +313,14 @@ class _AccountFormState extends State<_AccountForm> {
             FilledButton(
               onPressed: _saving ? null : _save,
               style: FilledButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 14)),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+              ),
               child: _saving
                   ? const SizedBox(
                       height: 20,
                       width: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2))
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
                   : const Text('儲存'),
             ),
           ],

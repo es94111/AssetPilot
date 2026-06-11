@@ -74,7 +74,8 @@ class _HoldingsTabState extends State<_HoldingsTab> {
         .map((e) => Stock.fromJson((e as Map).cast<String, dynamic>()))
         .toList();
     final summary = PortfolioSummary.fromJson(
-        (json['portfolioSummary'] as Map? ?? {}).cast<String, dynamic>());
+      (json['portfolioSummary'] as Map? ?? {}).cast<String, dynamic>(),
+    );
     return _HoldingsData(stocks, summary);
   }
 
@@ -110,8 +111,7 @@ class _HoldingsTabState extends State<_HoldingsTab> {
               if (data.stocks.isEmpty)
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: 32),
-                  child: EmptyState(
-                      icon: Icons.trending_up, message: '尚無持股'),
+                  child: EmptyState(icon: Icons.trending_up, message: '尚無持股'),
                 )
               else
                 for (final s in data.stocks) _HoldingTile(s: s),
@@ -138,13 +138,18 @@ class _PortfolioCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('總市值',
-                style: TextStyle(color: theme.colorScheme.onPrimaryContainer)),
+            Text(
+              '總市值',
+              style: TextStyle(color: theme.colorScheme.onPrimaryContainer),
+            ),
             const SizedBox(height: 4),
-            Text(twd(s.totalMarketValue),
-                style: theme.textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: theme.colorScheme.onPrimaryContainer)),
+            Text(
+              twd(s.totalMarketValue),
+              style: theme.textTheme.headlineMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: theme.colorScheme.onPrimaryContainer,
+              ),
+            ),
             const Divider(height: 24),
             Row(
               children: [
@@ -152,14 +157,20 @@ class _PortfolioCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('未實現損益',
-                          style: TextStyle(
-                              fontSize: 12,
-                              color: theme.colorScheme.onPrimaryContainer)),
-                      Text(signed(s.totalPL),
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: plColor(s.totalPL, context))),
+                      Text(
+                        '未實現損益',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: theme.colorScheme.onPrimaryContainer,
+                        ),
+                      ),
+                      Text(
+                        signed(s.totalPL),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: plColor(s.totalPL, context),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -167,18 +178,22 @@ class _PortfolioCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('報酬率',
-                          style: TextStyle(
-                              fontSize: 12,
-                              color: theme.colorScheme.onPrimaryContainer)),
                       Text(
-                          s.totalReturnRate == null
-                              ? '—'
-                              : '${s.totalReturnRate!.toStringAsFixed(2)}%',
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: plColor(
-                                  s.totalReturnRate ?? 0, context))),
+                        '報酬率',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: theme.colorScheme.onPrimaryContainer,
+                        ),
+                      ),
+                      Text(
+                        s.totalReturnRate == null
+                            ? '—'
+                            : '${s.totalReturnRate!.toStringAsFixed(2)}%',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: plColor(s.totalReturnRate ?? 0, context),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -203,27 +218,38 @@ class _HoldingTile extends StatelessWidget {
       child: ListTile(
         title: Row(
           children: [
-            Text('${s.symbol} ${s.name}',
-                style: const TextStyle(fontWeight: FontWeight.bold)),
+            Text(
+              '${s.symbol} ${s.name}',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
             if (s.delisted)
               const Padding(
                 padding: EdgeInsets.only(left: 6),
-                child: Text('下市',
-                    style: TextStyle(fontSize: 11, color: Colors.grey)),
+                child: Text(
+                  '下市',
+                  style: TextStyle(fontSize: 11, color: Colors.grey),
+                ),
               ),
           ],
         ),
         subtitle: Text(
-            '${intFmt(s.totalShares)} 股・均價 ${s.avgCost}・現價 ${s.currentPrice}'),
+          '${intFmt(s.totalShares)} 股・均價 ${s.avgCost}・現價 ${s.currentPrice}',
+        ),
         trailing: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            Text(twd(s.marketValue),
-                style: const TextStyle(fontWeight: FontWeight.bold)),
-            Text('${signed(s.estimatedProfit)} (${s.returnRate}%)',
-                style: TextStyle(
-                    fontSize: 12, color: plColor(s.estimatedProfit, context))),
+            Text(
+              twd(s.marketValue),
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            Text(
+              '${signed(s.estimatedProfit)} (${s.returnRate}%)',
+              style: TextStyle(
+                fontSize: 12,
+                color: plColor(s.estimatedProfit, context),
+              ),
+            ),
           ],
         ),
       ),
@@ -298,8 +324,7 @@ class _StockTxnTabState extends State<_StockTxnTab> {
         onRetry: _reload,
         builder: (context, list) {
           if (list.isEmpty) {
-            return const EmptyState(
-                icon: Icons.swap_vert, message: '尚無股票交易');
+            return const EmptyState(icon: Icons.swap_vert, message: '尚無股票交易');
           }
           return RefreshIndicator(
             onRefresh: () async => _reload(),
@@ -314,16 +339,22 @@ class _StockTxnTabState extends State<_StockTxnTab> {
                   leading: CircleAvatar(
                     backgroundColor: (isBuy ? Colors.red : Colors.green)
                         .withValues(alpha: 0.15),
-                    child: Text(isBuy ? '買' : '賣',
-                        style: TextStyle(
-                            color: isBuy ? Colors.red : Colors.green,
-                            fontWeight: FontWeight.bold)),
+                    child: Text(
+                      isBuy ? '買' : '賣',
+                      style: TextStyle(
+                        color: isBuy ? Colors.red : Colors.green,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                   title: Text('${t.symbol} ${t.stockName}'),
                   subtitle: Text(
-                      '${t.date}・${intFmt(t.shares)} 股 @ ${t.price}'),
-                  trailing: Text(twd(t.shares * t.price),
-                      style: const TextStyle(fontWeight: FontWeight.bold)),
+                    '${t.date}・${intFmt(t.shares)} 股 @ ${t.price}',
+                  ),
+                  trailing: Text(
+                    twd(t.shares * t.price),
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
                   onLongPress: () => _delete(t),
                 );
               },
@@ -369,7 +400,9 @@ class _DividendTabState extends State<_DividendTab> {
       builder: (context, list) {
         if (list.isEmpty) {
           return const EmptyState(
-              icon: Icons.savings_outlined, message: '尚無股利紀錄');
+            icon: Icons.savings_outlined,
+            message: '尚無股利紀錄',
+          );
         }
         return RefreshIndicator(
           onRefresh: () async => _reload(),
@@ -386,13 +419,18 @@ class _DividendTabState extends State<_DividendTab> {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     if (d.cashDividend > 0)
-                      Text('現金 ${twd(d.cashDividend)}',
-                          style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.green)),
+                      Text(
+                        '現金 ${twd(d.cashDividend)}',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.green,
+                        ),
+                      ),
                     if (d.stockDividendShares > 0)
-                      Text('配股 ${intFmt(d.stockDividendShares)} 股',
-                          style: const TextStyle(fontSize: 12)),
+                      Text(
+                        '配股 ${intFmt(d.stockDividendShares)} 股',
+                        style: const TextStyle(fontSize: 12),
+                      ),
                   ],
                 ),
               );
@@ -438,7 +476,9 @@ class _RealizedTabState extends State<_RealizedTab> {
       builder: (context, list) {
         if (list.isEmpty) {
           return const EmptyState(
-              icon: Icons.account_balance, message: '尚無已實現損益');
+            icon: Icons.account_balance,
+            message: '尚無已實現損益',
+          );
         }
         final total = list.fold<num>(0, (s, r) => s + r.realizedPL);
         return RefreshIndicator(
@@ -451,12 +491,17 @@ class _RealizedTabState extends State<_RealizedTab> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('已實現損益合計',
-                        style: TextStyle(fontWeight: FontWeight.bold)),
-                    Text(signed(total),
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: plColor(total, context))),
+                    const Text(
+                      '已實現損益合計',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    Text(
+                      signed(total),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: plColor(total, context),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -464,10 +509,13 @@ class _RealizedTabState extends State<_RealizedTab> {
                 ListTile(
                   title: Text('${r.symbol} ${r.name}'),
                   subtitle: Text('${r.date}・賣 ${intFmt(r.shares)} 股'),
-                  trailing: Text('${signed(r.realizedPL)} (${r.returnRate}%)',
-                      style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: plColor(r.realizedPL, context))),
+                  trailing: Text(
+                    '${signed(r.realizedPL)} (${r.returnRate}%)',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: plColor(r.realizedPL, context),
+                    ),
+                  ),
                 ),
             ],
           ),
@@ -531,8 +579,9 @@ class _AddStockFormState extends State<_AddStockForm> {
             TextFormField(
               controller: _symbol,
               decoration: const InputDecoration(
-                  labelText: '股票代號（如 2330）',
-                  border: OutlineInputBorder()),
+                labelText: '股票代號（如 2330）',
+                border: OutlineInputBorder(),
+              ),
               validator: (v) =>
                   (v == null || v.trim().isEmpty) ? '請輸入代號' : null,
             ),
@@ -540,19 +589,22 @@ class _AddStockFormState extends State<_AddStockForm> {
             TextFormField(
               controller: _name,
               decoration: const InputDecoration(
-                  labelText: '名稱（選填，留空自動帶入）',
-                  border: OutlineInputBorder()),
+                labelText: '名稱（選填，留空自動帶入）',
+                border: OutlineInputBorder(),
+              ),
             ),
             const SizedBox(height: 20),
             FilledButton(
               onPressed: _saving ? null : _save,
               style: FilledButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 14)),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+              ),
               child: _saving
                   ? const SizedBox(
                       height: 20,
                       width: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2))
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
                   : const Text('儲存'),
             ),
           ],
@@ -626,8 +678,7 @@ class _StockTxnFormState extends State<_StockTxnForm> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('新增股票交易',
-                style: Theme.of(context).textTheme.titleLarge),
+            Text('新增股票交易', style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 16),
             SegmentedButton<String>(
               segments: const [
@@ -642,11 +693,15 @@ class _StockTxnFormState extends State<_StockTxnForm> {
               initialValue: _stockId,
               isExpanded: true,
               decoration: const InputDecoration(
-                  labelText: '股票', border: OutlineInputBorder()),
+                labelText: '股票',
+                border: OutlineInputBorder(),
+              ),
               items: [
                 for (final s in widget.stocks)
                   DropdownMenuItem(
-                      value: s.id, child: Text('${s.symbol} ${s.name}')),
+                    value: s.id,
+                    child: Text('${s.symbol} ${s.name}'),
+                  ),
               ],
               onChanged: (v) => setState(() => _stockId = v),
             ),
@@ -658,7 +713,9 @@ class _StockTxnFormState extends State<_StockTxnForm> {
                     controller: _shares,
                     keyboardType: TextInputType.number,
                     decoration: const InputDecoration(
-                        labelText: '股數', border: OutlineInputBorder()),
+                      labelText: '股數',
+                      border: OutlineInputBorder(),
+                    ),
                     validator: (v) {
                       final n = int.tryParse(v?.trim() ?? '');
                       if (n == null || n <= 0) return '正整數';
@@ -671,9 +728,12 @@ class _StockTxnFormState extends State<_StockTxnForm> {
                   child: TextFormField(
                     controller: _price,
                     keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true),
+                      decimal: true,
+                    ),
                     decoration: const InputDecoration(
-                        labelText: '價格', border: OutlineInputBorder()),
+                      labelText: '價格',
+                      border: OutlineInputBorder(),
+                    ),
                     validator: (v) {
                       final n = num.tryParse(v?.trim() ?? '');
                       if (n == null || n <= 0) return '> 0';
@@ -686,8 +746,9 @@ class _StockTxnFormState extends State<_StockTxnForm> {
             const SizedBox(height: 12),
             ListTile(
               shape: RoundedRectangleBorder(
-                  side: BorderSide(color: Theme.of(context).dividerColor),
-                  borderRadius: BorderRadius.circular(4)),
+                side: BorderSide(color: Theme.of(context).dividerColor),
+                borderRadius: BorderRadius.circular(4),
+              ),
               leading: const Icon(Icons.calendar_today),
               title: const Text('日期'),
               trailing: Text(_dateStr),
@@ -702,18 +763,22 @@ class _StockTxnFormState extends State<_StockTxnForm> {
               },
             ),
             const SizedBox(height: 8),
-            Text('手續費／交易稅由後端自動計算',
-                style: Theme.of(context).textTheme.bodySmall),
+            Text(
+              '手續費／交易稅由後端自動計算',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
             const SizedBox(height: 16),
             FilledButton(
               onPressed: _saving ? null : _save,
               style: FilledButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 14)),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+              ),
               child: _saving
                   ? const SizedBox(
                       height: 20,
                       width: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2))
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
                   : const Text('儲存'),
             ),
           ],

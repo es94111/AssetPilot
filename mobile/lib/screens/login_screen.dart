@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../api_client.dart';
 import '../google_auth.dart';
+import '../line_auth.dart';
+import '../passkey_auth.dart';
 import '../widgets/turnstile_widget.dart';
 import 'register_screen.dart';
 
@@ -31,6 +33,10 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _googleEnabled = false;
   String? _googleClientId;
   bool _googleLoading = false;
+  bool _lineEnabled = false;
+  String? _lineChannelId;
+  bool _lineLoading = false;
+  bool _passkeyLoading = false;
 
   // Turnstile 狀態
   String? _turnstileToken;
@@ -63,6 +69,9 @@ class _LoginScreenState extends State<LoginScreen> {
         _googleEnabled =
             cfg['googleCodeFlow'] == true && (cfg['googleClientId'] is String);
         _googleClientId = cfg['googleClientId'] as String?;
+        _lineEnabled =
+            cfg['lineCodeFlow'] == true && (cfg['lineChannelId'] is String);
+        _lineChannelId = cfg['lineChannelId'] as String?;
         _turnstileToken = null;
         _turnstileNonce++;
       });
@@ -74,6 +83,7 @@ class _LoginScreenState extends State<LoginScreen> {
         _turnstileEnabled = false;
         _registrationEnabled = false;
         _googleEnabled = false;
+        _lineEnabled = false;
       });
     } finally {
       if (mounted) setState(() => _configLoading = false);
@@ -138,6 +148,44 @@ class _LoginScreenState extends State<LoginScreen> {
       setState(() => _error = 'Google 登入失敗：$e');
     } finally {
       if (mounted) setState(() => _googleLoading = false);
+    }
+  }
+
+  Future<void> _lineSignIn() async {
+    if (_lineChannelId == null) return;
+    setState(() {
+      _lineLoading = true;
+      _error = null;
+    });
+    try {
+      await LineAuth.signIn(
+        channelId: _lineChannelId!,
+        baseUrl: ApiClient.instance.baseUrl,
+      );
+      if (mounted) widget.onLoggedIn();
+    } on ApiException catch (e) {
+      setState(() => _error = e.message);
+    } catch (e) {
+      setState(() => _error = 'LINE 登入失敗：$e');
+    } finally {
+      if (mounted) setState(() => _lineLoading = false);
+    }
+  }
+
+  Future<void> _passkeySignIn() async {
+    setState(() {
+      _passkeyLoading = true;
+      _error = null;
+    });
+    try {
+      await PasskeyAuth.signIn(baseUrl: ApiClient.instance.baseUrl);
+      if (mounted) widget.onLoggedIn();
+    } on ApiException catch (e) {
+      setState(() => _error = e.message);
+    } catch (e) {
+      setState(() => _error = 'Passkey 登入失敗：$e');
+    } finally {
+      if (mounted) setState(() => _passkeyLoading = false);
     }
   }
 
@@ -267,6 +315,23 @@ class _LoginScreenState extends State<LoginScreen> {
                             )
                           : const Text('登入'),
                     ),
+                    const SizedBox(height: 12),
+                    OutlinedButton.icon(
+                      onPressed: (_passkeyLoading || _loading)
+                          ? null
+                          : _passkeySignIn,
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
+                      icon: _passkeyLoading
+                          ? const SizedBox(
+                              height: 18,
+                              width: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.fingerprint_rounded),
+                      label: const Text('使用 Passkey 登入'),
+                    ),
                     if (_googleEnabled) ...[
                       const SizedBox(height: 12),
                       OutlinedButton.icon(
@@ -286,6 +351,27 @@ class _LoginScreenState extends State<LoginScreen> {
                               )
                             : const Icon(Icons.account_circle_outlined),
                         label: const Text('使用 Google 登入'),
+                      ),
+                    ],
+                    if (_lineEnabled) ...[
+                      const SizedBox(height: 12),
+                      OutlinedButton.icon(
+                        onPressed: (_lineLoading || _loading)
+                            ? null
+                            : _lineSignIn,
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                        ),
+                        icon: _lineLoading
+                            ? const SizedBox(
+                                height: 18,
+                                width: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Icon(Icons.chat_bubble_outline_rounded),
+                        label: const Text('使用 LINE 登入'),
                       ),
                     ],
                     if (_configLoading)

@@ -31,7 +31,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   String? _validatePassword(String? v) {
     final s = v ?? '';
     if (s.length < 8) return '密碼長度至少 8 字元';
-    final ok = RegExp(r'[A-Z]').hasMatch(s) &&
+    final ok =
+        RegExp(r'[A-Z]').hasMatch(s) &&
         RegExp(r'[a-z]').hasMatch(s) &&
         RegExp(r'\d').hasMatch(s) &&
         RegExp(r'[^A-Za-z0-9]').hasMatch(s);
@@ -112,9 +113,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         prefixIcon: const Icon(Icons.lock_outline),
                         border: const OutlineInputBorder(),
                         suffixIcon: IconButton(
-                          icon: Icon(_obscure
-                              ? Icons.visibility_outlined
-                              : Icons.visibility_off_outlined),
+                          icon: Icon(
+                            _obscure
+                                ? Icons.visibility_outlined
+                                : Icons.visibility_off_outlined,
+                          ),
                           onPressed: () => setState(() => _obscure = !_obscure),
                         ),
                       ),
@@ -128,21 +131,26 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           color: theme.colorScheme.errorContainer,
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: Text(_error!,
-                            style: TextStyle(
-                                color: theme.colorScheme.onErrorContainer)),
+                        child: Text(
+                          _error!,
+                          style: TextStyle(
+                            color: theme.colorScheme.onErrorContainer,
+                          ),
+                        ),
                       ),
                     ],
                     const SizedBox(height: 24),
                     FilledButton(
                       onPressed: _loading ? null : _submit,
                       style: FilledButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 16)),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                      ),
                       child: _loading
                           ? const SizedBox(
                               height: 20,
                               width: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2))
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
                           : const Text('註冊並登入'),
                     ),
                   ],

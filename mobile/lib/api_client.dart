@@ -556,6 +556,19 @@ class ApiClient {
 
   Future<List<dynamic>> stockRealized() => _getList('/api/stock-realized');
 
+  // 批次查詢所有持股最新股價（TWSE/TPEx 三段策略），回傳 { results: [...] }
+  Future<Map<String, dynamic>> batchFetchStockPrices() =>
+      _getMapFromSend('POST', '/api/stocks/batch-fetch');
+
+  // 批次寫回現價，updates: [{ stockId, currentPrice }]
+  Future<Map<String, dynamic>> batchUpdateStockPrices(
+    List<Map<String, dynamic>> updates,
+  ) => _getMapFromSend(
+    'POST',
+    '/api/stocks/batch-price',
+    body: {'updates': updates},
+  );
+
   // ── 報表 ────────────────────────────────────────────────────
 
   Future<Map<String, dynamic>> reports({

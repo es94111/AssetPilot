@@ -1,6 +1,18 @@
 {
-  "currentVersion": "4.52.0",
+  "currentVersion": "4.52.1",
   "releases": [
+    {
+      "version": "4.52.1",
+      "date": "2026-06-11",
+      "title": "修補容器映像 OpenSSL 安全漏洞",
+      "type": "fixed",
+      "changes": [
+        {
+          "tag": "fixed",
+          "text": "更新容器映像內的系統套件，修補 OpenSSL 的一項高風險安全漏洞；自托管使用者只要重新拉取最新映像即可套用，不影響任何既有功能與資料。"
+        }
+      ]
+    },
     {
       "version": "4.52.0",
       "date": "2026-06-11",

@@ -19,6 +19,10 @@ RUN npm run build
 FROM node:24-alpine AS runner
 WORKDIR /app
 
+# 修補 base image 落後的 OS 套件（如 OpenSSL libcrypto3/libssl3 CVE）。
+# Trivy 設 ignore-unfixed=true，僅會擋「上游已有修補」的弱點，故升級到 alpine repo 最新修補版即可通過掃描。
+RUN apk upgrade --no-cache
+
 COPY --from=builder --chown=nextjs:nodejs /app/build/standalone ./
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0

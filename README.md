@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-4.51.0-blue" alt="version">
+  <img src="https://img.shields.io/badge/version-4.52.0-blue" alt="version">
   <img src="https://img.shields.io/badge/node-%3E%3D24-brightgreen" alt="node">
   <img src="https://img.shields.io/badge/next.js-16.x-000000" alt="next.js">
   <img src="https://img.shields.io/badge/openapi-3.2.0-6BA539" alt="openapi">
@@ -69,6 +69,7 @@
 ### 股票投資
 
 - **持股總覽**：即時市值、未實現損益、整體報酬率、三段策略抓股價（盤中即時 / 盤後收盤 / 備援）
+- **股價自動更新**：伺服器於台股交易時段（台北時間週一~五 09:00–14:00）內每隔 N 分鐘自動抓 TWSE/TPEx 最新價寫回現價；跨使用者去重，同一代號只查一次；管理員可在「管理員設定 → 系統設定」開關、調整間隔與手動立即更新
 - **股票交易**：手續費（0.1425%，整股最低 20 元）/ 證交稅（一般股 0.3%、ETF / 權證 0.1%）自動計算可手動覆寫
 - **股利紀錄**：TWSE `TWT49U` / `TWT49UDetail` 除權息自動同步；現金股利對應入款交易帳戶反查
 - **實現損益**：FIFO 全精度（decimal.js）逐筆計算，今年 / 總損益彙總；賣出鏈式約束驗證
@@ -234,6 +235,8 @@ Docker 多數參數已有合理預設，重點關注「自動產生」與「功�
 | `EXCHANGE_RATE_API_KEY` | 選配 | exchangerate-api.com Key | `free` |
 | `IPINFO_TOKEN` | 選配 | ipinfo.io Token，提升 IP 查詢配額 | — |
 | `TWSE_MAX_CONCURRENCY` | 選配 | TWSE 並發查詢上限 | `5` |
+| `STOCK_AUTO_UPDATE_ENABLED` | 選配 | 覆寫「股價自動更新」總開關（`false` / `0` 停用；留空則沿用管理員設定，預設啟用） | — |
+| `STOCK_AUTO_UPDATE_INTERVAL_MIN` | 選配 | 覆寫股價自動更新間隔（分鐘，1–1440）；留空則沿用管理員設定 | `10` |
 | `MEGA_S4_ACCESS_KEY_ID` | 選配 | MEGA S4 Access Key ID；設定後可從資料匯出匯入頁手動上傳資料庫備份 | — |
 | `MEGA_S4_SECRET_ACCESS_KEY` | 選配 | MEGA S4 Secret Access Key；僅伺服器端讀取，不回傳前端 | — |
 | `MEGA_S4_BUCKET` | 選配 | MEGA S4 備份目標 bucket | — |
@@ -389,7 +392,7 @@ Webhook 回覆使用 LINE Flex Message Button：未綁定時顯示「綁定 LINE
 ### 股票
 
 - **新增持股**：輸入股票代號（如 `2330`），系統自動從 TWSE 查詢帶入名稱與現價；手續費、交易稅自動計算可手動修改
-- **更新股價**：三段策略 — 盤中 TWSE 即時、盤後 `STOCK_DAY` 今日收盤、其他時段 `STOCK_DAY_ALL` 備援
+- **更新股價**：三段策略 — 盤中 TWSE 即時、盤後 `STOCK_DAY` 今日收盤、其他時段 `STOCK_DAY_ALL` 備援；可手動更新，或由伺服器在交易時段內依管理員設定的間隔自動更新
 - **同步除權息**：依持股期間自動新增現金 / 股票股利，不重複；阻擋式 Modal 含進度條與取消按鈕
 
 ### CSV 匯出匯入

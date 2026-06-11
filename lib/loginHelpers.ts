@@ -16,6 +16,10 @@ export interface SystemSettings {
   lineLoginEnabled: boolean;
   transactionPhotoStorage: 'local' | 's3' | null;
   transactionPhotoMaxBytes: number | null;
+  stockAutoUpdateEnabled: boolean;
+  stockAutoUpdateIntervalMin: number;
+  stockAutoUpdateLastRun: number;
+  stockAutoUpdateLastSummary: string;
 }
 
 export interface LoginAuditResult {
@@ -152,7 +156,7 @@ export async function fetchIpCountry(ipAddress: string): Promise<string> {
 // ── 系統設定 ──
 
 export function getSystemSettings(): SystemSettings {
-  const row = queryOne('SELECT public_registration, allowed_registration_emails, admin_ip_allowlist, route_audit_mode, line_login_enabled, transaction_photo_storage, transaction_photo_max_bytes FROM system_settings WHERE id = 1') || {
+  const row = queryOne('SELECT public_registration, allowed_registration_emails, admin_ip_allowlist, route_audit_mode, line_login_enabled, transaction_photo_storage, transaction_photo_max_bytes, stock_auto_update_enabled, stock_auto_update_interval_min, stock_auto_update_last_run, stock_auto_update_last_summary FROM system_settings WHERE id = 1') || {
     public_registration: 1,
     allowed_registration_emails: '',
     admin_ip_allowlist: '',
@@ -160,6 +164,10 @@ export function getSystemSettings(): SystemSettings {
     line_login_enabled: 0,
     transaction_photo_storage: '',
     transaction_photo_max_bytes: 0,
+    stock_auto_update_enabled: 1,
+    stock_auto_update_interval_min: 10,
+    stock_auto_update_last_run: 0,
+    stock_auto_update_last_summary: '',
   };
   const allowedRegistrationEmails = parseAllowedRegistrationEmails(String(row.allowed_registration_emails || ''));
   const dbAdminIpAllowlist = parseIpAllowlist(String(row.admin_ip_allowlist || ''));
@@ -171,6 +179,8 @@ export function getSystemSettings(): SystemSettings {
   const transactionPhotoStorage = (rawStorage === 'local' || rawStorage === 's3') ? rawStorage : null;
   const dbMaxBytes = Number(row.transaction_photo_max_bytes);
   const transactionPhotoMaxBytes = Number.isFinite(dbMaxBytes) && dbMaxBytes > 0 ? dbMaxBytes : null;
+  const rawInterval = Number(row.stock_auto_update_interval_min);
+  const stockAutoUpdateIntervalMin = Number.isFinite(rawInterval) && rawInterval >= 1 ? Math.min(1440, Math.floor(rawInterval)) : 10;
   return {
     publicRegistration: !!row.public_registration,
     allowedRegistrationEmails,
@@ -179,6 +189,10 @@ export function getSystemSettings(): SystemSettings {
     lineLoginEnabled: !!row.line_login_enabled,
     transactionPhotoStorage,
     transactionPhotoMaxBytes,
+    stockAutoUpdateEnabled: row.stock_auto_update_enabled !== 0,
+    stockAutoUpdateIntervalMin,
+    stockAutoUpdateLastRun: Number(row.stock_auto_update_last_run) || 0,
+    stockAutoUpdateLastSummary: String(row.stock_auto_update_last_summary || ''),
   };
 }
 

@@ -114,6 +114,12 @@ export default function AdminClient(_props: { user?: any } = {}) {
   const [ipAllowlist, setIpAllowlist] = useState('');
   const [transactionPhotoStorage, setTransactionPhotoStorage] = useState<'' | 'local' | 's3'>('');
   const [transactionPhotoMaxMb, setTransactionPhotoMaxMb] = useState('');
+  const [stockAutoUpdateEnabled, setStockAutoUpdateEnabled] = useState(true);
+  const [stockAutoUpdateIntervalMin, setStockAutoUpdateIntervalMin] = useState('10');
+  const [stockAutoUpdateLastRun, setStockAutoUpdateLastRun] = useState(0);
+  const [stockAutoUpdateLastSummary, setStockAutoUpdateLastSummary] = useState('');
+  const [stockUpdateMsg, setStockUpdateMsg] = useState('');
+  const [stockUpdating, setStockUpdating] = useState(false);
 
   const [serverTime, setServerTime] = useState<any>(null);
   const [serverTimeMsg, setServerTimeMsg] = useState('');
@@ -166,6 +172,10 @@ export default function AdminClient(_props: { user?: any } = {}) {
       setIpAllowlist(Array.isArray(settings.adminIpAllowlist) ? settings.adminIpAllowlist.join('\n') : '');
       setTransactionPhotoStorage((settings.transactionPhotoStorage as '' | 'local' | 's3') || '');
       setTransactionPhotoMaxMb(settings.transactionPhotoMaxBytes ? String(Math.round(settings.transactionPhotoMaxBytes / 1024 / 1024)) : '');
+      setStockAutoUpdateEnabled(settings.stockAutoUpdateEnabled !== false);
+      setStockAutoUpdateIntervalMin(String(settings.stockAutoUpdateIntervalMin || 10));
+      setStockAutoUpdateLastRun(Number(settings.stockAutoUpdateLastRun) || 0);
+      setStockAutoUpdateLastSummary(String(settings.stockAutoUpdateLastSummary || ''));
       setUsers(userList || []);
       setServerTime(timeInfo);
       setEmailProviders(providers);
@@ -202,12 +212,37 @@ export default function AdminClient(_props: { user?: any } = {}) {
         adminIpAllowlist: ipAllowlist.split('\n').map((s) => s.trim()).filter(Boolean),
         transactionPhotoStorage,
         transactionPhotoMaxBytes: transactionPhotoMaxMb === '' ? 0 : Math.round(maxMbNum * 1024 * 1024),
+        stockAutoUpdateEnabled,
+        stockAutoUpdateIntervalMin: Math.min(1440, Math.max(1, parseInt(stockAutoUpdateIntervalMin, 10) || 10)),
       });
       setSaveMsg('設定已儲存');
     } catch (e: any) {
       setSaveMsg('儲存失敗：' + e.message);
     }
     setSaving(false);
+  }
+
+  async function handleStockPriceUpdateNow() {
+    setStockUpdating(true);
+    setStockUpdateMsg('');
+    try {
+      const result = await apiPost('/api/admin/stock-price-update/run-now', {});
+      if (result?.status === 'completed') {
+        setStockUpdateMsg(`已更新 ${result.updatedSymbols}/${result.totalSymbols ?? result.updatedSymbols} 檔（${result.updatedRows} 筆持股）${result.failed ? `，失敗 ${result.failed} 檔` : ''}`);
+      } else if (result?.status === 'already_running') {
+        setStockUpdateMsg('已有更新任務進行中');
+      } else {
+        setStockUpdateMsg(result?.reason || '更新失敗');
+      }
+      const settings = await apiGet('/api/admin/system-settings').catch(() => null);
+      if (settings) {
+        setStockAutoUpdateLastRun(Number(settings.stockAutoUpdateLastRun) || 0);
+        setStockAutoUpdateLastSummary(String(settings.stockAutoUpdateLastSummary || ''));
+      }
+    } catch (e: any) {
+      setStockUpdateMsg('更新失敗：' + e.message);
+    }
+    setStockUpdating(false);
   }
 
   async function handleToggleAdmin(userId: string) {
@@ -563,9 +598,43 @@ export default function AdminClient(_props: { user?: any } = {}) {
                 />
                 <p className="text-xs text-slate-500 mt-1">覆蓋 TRANSACTION_PHOTO_MAX_BYTES，留空則沿用環境變數設定</p>
               </div>
+              <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+                <label className="flex items-center gap-2">
+                  <input type="checkbox" checked={stockAutoUpdateEnabled} onChange={(e) => setStockAutoUpdateEnabled(e.target.checked)} className="w-4 h-4" />
+                  啟用股價自動更新（台股交易時段內定時抓 TWSE/TPEx 最新價）
+                </label>
+                <p className="text-xs text-slate-500 mt-1">伺服器於台北時間週一~週五 09:00–14:00 內，每隔指定分鐘數自動更新所有使用者的持股現價</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">股價更新間隔（分鐘）</label>
+                <input
+                  type="number"
+                  min={1}
+                  max={1440}
+                  step={1}
+                  className="w-full p-2 border rounded-md"
+                  value={stockAutoUpdateIntervalMin}
+                  onChange={(e) => setStockAutoUpdateIntervalMin(e.target.value)}
+                  placeholder="10"
+                />
+                <p className="text-xs text-slate-500 mt-1">1 ~ 1440 分鐘；可用環境變數 STOCK_AUTO_UPDATE_ENABLED / STOCK_AUTO_UPDATE_INTERVAL_MIN 覆寫</p>
+              </div>
               {saveMsg && <p className={`text-sm ${saveMsg.includes('失敗') ? 'text-red-500' : 'text-green-600'}`}>{saveMsg}</p>}
               <Button type="submit" disabled={saving}>{saving ? '儲存中...' : '儲存設定'}</Button>
             </form>
+          </div>
+
+          <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-xl shadow-sm space-y-3">
+            <h3 className="text-lg font-semibold">股價更新狀態</h3>
+            <div className="text-sm text-slate-700">
+              <div>上次更新：{stockAutoUpdateLastRun ? new Date(stockAutoUpdateLastRun).toLocaleString() : '尚未執行'}</div>
+              {stockAutoUpdateLastSummary && <div className="mt-1 text-slate-500 break-all">{stockAutoUpdateLastSummary}</div>}
+            </div>
+            <div className="flex items-center gap-3">
+              <Button variant="outline" onClick={handleStockPriceUpdateNow} disabled={stockUpdating}>{stockUpdating ? '更新中...' : '立即更新股價'}</Button>
+              {stockUpdateMsg && <span className={`text-sm ${stockUpdateMsg.includes('失敗') ? 'text-red-500' : 'text-slate-600'}`}>{stockUpdateMsg}</span>}
+            </div>
+            <p className="text-xs text-slate-500">手動更新會略過交易時段與間隔限制，立即抓取所有持股最新價</p>
           </div>
 
           <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-xl shadow-sm space-y-4">

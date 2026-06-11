@@ -1,11 +1,13 @@
 [
   {
-    "relation": ["delegate_permission/common.handle_all_urls"],
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
     "target": {
       "namespace": "android_app",
       "package_name": "com.assetpilot.assetpilot",
       "sha256_cert_fingerprints": [
-        "REPLACE_WITH_YOUR_APP_SHA256_FINGERPRINT"
+        "49:DB:1D:B3:23:0E:BB:25:71:C7:2F:28:15:9C:51:4A:55:4A:70:A2:A2:3A:F7:E8:CB:8B:5E:23:D9:5D:69:C2"
       ]
     }
   }

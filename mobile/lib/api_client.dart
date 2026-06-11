@@ -301,6 +301,67 @@ class ApiClient {
     throw ApiException(res.statusCode, _errorMessage(res));
   }
 
+  Future<Map<String, String>> lineState() async {
+    final m = await _getMap('/api/auth/line/state?flow=login');
+    return {'state': '${m['state'] ?? ''}', 'nonce': '${m['nonce'] ?? ''}'};
+  }
+
+  Future<void> lineLogin({
+    required String code,
+    required String redirectUri,
+    required String state,
+  }) async {
+    late http.Response res;
+    try {
+      res = await http
+          .post(
+            _uri('/api/auth/line'),
+            headers: _headers(json: true),
+            body: jsonEncode({
+              'code': code,
+              'redirect_uri': redirectUri,
+              'state': state,
+            }),
+          )
+          .timeout(_timeout);
+    } catch (e) {
+      throw ApiException(0, '無法連線到後端（$_baseUrl）：$e');
+    }
+    if (res.statusCode == 200) {
+      _captureCookie(res);
+      if (_cookie == null) {
+        throw ApiException(200, 'LINE 登入回應未包含認證 Cookie');
+      }
+      await _persistLogin();
+      return;
+    }
+    throw ApiException(res.statusCode, _errorMessage(res));
+  }
+
+  Future<void> exchangeAppAuthTicket(String ticket) async {
+    late http.Response res;
+    try {
+      res = await http
+          .post(
+            _uri('/api/app/auth-ticket/exchange'),
+            headers: _headers(json: true),
+            body: jsonEncode({'ticket': ticket}),
+          )
+          .timeout(_timeout);
+    } catch (e) {
+      throw ApiException(0, '無法連線到後端（$_baseUrl）：$e');
+    }
+    if (res.statusCode == 200) {
+      _captureCookie(res);
+      if (_cookie == null) {
+        throw ApiException(200, 'App 登入回應未包含認證 Cookie');
+      }
+      await _persistLogin();
+      return;
+    }
+    throw ApiException(res.statusCode, _errorMessage(res));
+  }
+
   Future<void> logout() async {
     try {
       await _send('POST', '/api/auth/logout');

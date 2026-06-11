@@ -3,7 +3,11 @@ import 'package:intl/intl.dart';
 
 /// 金額與顏色格式化工具。
 
-final _twd = NumberFormat.currency(locale: 'zh_TW', symbol: 'NT\$ ', decimalDigits: 0);
+final _twd = NumberFormat.currency(
+  locale: 'zh_TW',
+  symbol: 'NT\$ ',
+  decimalDigits: 0,
+);
 final _int = NumberFormat.decimalPattern('zh_TW');
 
 /// 格式化為 TWD 整數金額：NT$ 1,234

@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -21,12 +22,18 @@ class ApiException implements Exception {
 ///
 /// 後端認證採 httpOnly Cookie（JWT `authToken`）。Dart 的 [http] 套件不會自動
 /// 管理 Cookie，因此這裡手動從登入回應擷取 `Set-Cookie`，並在後續請求帶回
-/// `Cookie` 標頭。base URL 與 Cookie 皆持久化於 [SharedPreferences]。
+/// `Cookie` 標頭。為避免登入憑證以明文落地，Cookie 改存於 Android Keystore
+/// 加密的 [FlutterSecureStorage]（EncryptedSharedPreferences）。
 class ApiClient {
   ApiClient._();
   static final ApiClient instance = ApiClient._();
 
   static const _kCookie = 'authCookie';
+
+  // 認證 Cookie 的加密儲存（Android 走 Keystore 加密的 EncryptedSharedPreferences）。
+  static const _secure = FlutterSecureStorage(
+    aOptions: AndroidOptions(encryptedSharedPreferences: true),
+  );
 
   /// 固定正式後台；App 不提供使用者自行修改，避免 OAuth/CSRF 設定不一致。
   static const defaultBaseUrl = 'https://asset.shao.one';
@@ -50,7 +57,22 @@ class ApiClient {
     final p = await SharedPreferences.getInstance();
     _baseUrl = defaultBaseUrl;
     await p.remove('baseUrl');
-    _cookie = p.getString(_kCookie);
+    try {
+      _cookie = await _secure.read(key: _kCookie);
+    } catch (_) {
+      // 解密失敗（如裝置遷移後 Keystore 金鑰不可用）→ 清掉避免反覆失敗，使用者重新登入即可。
+      _cookie = null;
+      try { await _secure.delete(key: _kCookie); } catch (_) {}
+    }
+    // 一次性遷移：把舊版明文存於 SharedPreferences 的 cookie 搬進加密儲存，並清除明文殘留。
+    final legacy = p.getString(_kCookie);
+    if (legacy != null && legacy.isNotEmpty) {
+      _cookie ??= legacy;
+      if (_cookie != null) {
+        try { await _secure.write(key: _kCookie, value: _cookie!); } catch (_) {}
+      }
+      await p.remove(_kCookie);
+    }
     authState.value = isLoggedIn;
   }
 
@@ -75,11 +97,10 @@ class ApiClient {
   }
 
   Future<void> _persistCookie() async {
-    final p = await SharedPreferences.getInstance();
     if (_cookie == null) {
-      await p.remove(_kCookie);
+      await _secure.delete(key: _kCookie);
     } else {
-      await p.setString(_kCookie, _cookie!);
+      await _secure.write(key: _kCookie, value: _cookie!);
     }
   }
 

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  傳輸安全：預設禁止明文（HTTP）連線，正式後端一律走 HTTPS（asset.shao.one）。
+  僅對本機／模擬器開發用主機開放 cleartext，方便對本機後端測試；正式環境不受影響。
+  取代先前 manifest 的全域 android:usesCleartextTraffic="true"。
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false" />
+    <domain-config cleartextTrafficPermitted="true">
+        <!-- Android 模擬器存取宿主機 -->
+        <domain includeSubdomains="false">10.0.2.2</domain>
+        <!-- 本機 -->
+        <domain includeSubdomains="false">localhost</domain>
+        <domain includeSubdomains="false">127.0.0.1</domain>
+    </domain-config>
+</network-security-config>

@@ -15,14 +15,16 @@ class StocksScreen extends StatefulWidget {
 class _StocksScreenState extends State<StocksScreen>
     with SingleTickerProviderStateMixin {
   final _key = GlobalKey<_HoldingsTabState>();
+  final _divKey = GlobalKey<_DividendTabState>();
   late final TabController _tab;
   bool _updating = false;
+  bool _syncingDividends = false;
 
   @override
   void initState() {
     super.initState();
     _tab = TabController(length: 4, vsync: this);
-    // 「更新股價」動作僅在「持股」分頁顯示，切換分頁時重建 AppBar。
+    // 「更新股價」「同步股利」動作各自只在對應分頁顯示，切換分頁時重建 AppBar。
     _tab.addListener(() {
       if (mounted) setState(() {});
     });
@@ -44,29 +46,50 @@ class _StocksScreenState extends State<StocksScreen>
     }
   }
 
+  Future<void> _syncDividends() async {
+    if (_syncingDividends) return;
+    setState(() => _syncingDividends = true);
+    try {
+      await _divKey.currentState?.syncDividends();
+    } finally {
+      if (mounted) setState(() => _syncingDividends = false);
+    }
+  }
+
+  static const _appBarSpinner = Padding(
+    padding: EdgeInsets.symmetric(horizontal: 16),
+    child: Center(
+      child: SizedBox(
+        width: 20,
+        height: 20,
+        child: CircularProgressIndicator(strokeWidth: 2),
+      ),
+    ),
+  );
+
   @override
   Widget build(BuildContext context) {
     final onHoldings = _tab.index == 0;
+    final onDividends = _tab.index == 2;
     return Scaffold(
       appBar: AppBar(
         title: const Text('股票'),
         actions: [
           if (onHoldings)
             _updating
-                ? const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16),
-                    child: Center(
-                      child: SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      ),
-                    ),
-                  )
+                ? _appBarSpinner
                 : IconButton(
                     onPressed: _updatePrices,
                     icon: const Icon(Icons.refresh),
                     tooltip: '更新股價',
+                  ),
+          if (onDividends)
+            _syncingDividends
+                ? _appBarSpinner
+                : IconButton(
+                    onPressed: _syncDividends,
+                    icon: const Icon(Icons.sync),
+                    tooltip: '同步股利',
                   ),
         ],
         bottom: TabBar(
@@ -85,7 +108,7 @@ class _StocksScreenState extends State<StocksScreen>
         children: [
           _HoldingsTab(key: _key),
           const _StockTxnTab(),
-          const _DividendTab(),
+          _DividendTab(key: _divKey),
           const _RealizedTab(),
         ],
       ),
@@ -452,7 +475,7 @@ class _StockTxnTabState extends State<_StockTxnTab> {
 // ── 股利 ──────────────────────────────────────────────────────
 
 class _DividendTab extends StatefulWidget {
-  const _DividendTab();
+  const _DividendTab({super.key});
   @override
   State<_DividendTab> createState() => _DividendTabState();
 }
@@ -474,6 +497,26 @@ class _DividendTabState extends State<_DividendTab> {
   }
 
   void _reload() => setState(() => _future = _load());
+
+  // 從 TWSE 依持有期間自動同步股利，再重新載入清單。
+  // 由上層 StocksScreen 的 AppBar「同步股利」按鈕透過 GlobalKey 呼叫。
+  Future<void> syncDividends() async {
+    try {
+      final res = await ApiClient.instance.syncStockDividends();
+      final synced = (res['synced'] as num?)?.toInt() ?? 0;
+      final skipped = (res['skipped'] as num?)?.toInt() ?? 0;
+      if (!mounted) return;
+      toast(
+        context,
+        synced == 0
+            ? '沒有新的股利可同步'
+            : '已同步 $synced 筆股利${skipped > 0 ? '，略過 $skipped 筆' : ''}',
+      );
+      if (synced > 0) _reload();
+    } catch (e) {
+      if (mounted) toast(context, '同步股利失敗：$e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

@@ -87,8 +87,14 @@ class ApiClient {
   }
 
   /// 統一發送請求，回傳已解碼的 JSON（Map 或 List）。
-  Future<dynamic> _send(String method, String path, {Object? body}) async {
+  Future<dynamic> _send(
+    String method,
+    String path, {
+    Object? body,
+    Duration? timeout,
+  }) async {
     final hasBody = body != null;
+    final t = timeout ?? _timeout;
     late http.Response res;
     try {
       final uri = _uri(path);
@@ -98,22 +104,22 @@ class ApiClient {
       try {
         switch (method) {
           case 'GET':
-            res = await c.get(uri, headers: headers).timeout(_timeout);
+            res = await c.get(uri, headers: headers).timeout(t);
             break;
           case 'POST':
             res = await c
                 .post(uri, headers: headers, body: encoded)
-                .timeout(_timeout);
+                .timeout(t);
             break;
           case 'PUT':
             res = await c
                 .put(uri, headers: headers, body: encoded)
-                .timeout(_timeout);
+                .timeout(t);
             break;
           case 'DELETE':
             res = await c
                 .delete(uri, headers: headers, body: encoded)
-                .timeout(_timeout);
+                .timeout(t);
             break;
           default:
             throw ArgumentError('未知的 HTTP method: $method');
@@ -441,8 +447,10 @@ class ApiClient {
     String method,
     String path, {
     Object? body,
+    Duration? timeout,
   }) async =>
-      (await _send(method, path, body: body) as Map).cast<String, dynamic>();
+      (await _send(method, path, body: body, timeout: timeout) as Map)
+          .cast<String, dynamic>();
 
   Future<void> updateTransaction(String id, Map<String, dynamic> body) =>
       _send('PUT', '/api/transactions/$id', body: body);
@@ -553,6 +561,14 @@ class ApiClient {
       _send('DELETE', '/api/stock-transactions/$id');
 
   Future<List<dynamic>> stockDividends() => _getList('/api/stock-dividends');
+
+  // 從 TWSE 依持有期間自動同步股利，回傳 { synced, skipped, errors }。
+  // 後端會逐年查詢並含節流延遲，故放寬逾時。
+  Future<Map<String, dynamic>> syncStockDividends() => _getMapFromSend(
+    'POST',
+    '/api/stock-dividends/sync',
+    timeout: const Duration(seconds: 120),
+  );
 
   Future<List<dynamic>> stockRealized() => _getList('/api/stock-realized');
 

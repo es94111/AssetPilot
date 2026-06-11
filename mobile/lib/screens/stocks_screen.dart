@@ -12,34 +12,82 @@ class StocksScreen extends StatefulWidget {
   State<StocksScreen> createState() => _StocksScreenState();
 }
 
-class _StocksScreenState extends State<StocksScreen> {
+class _StocksScreenState extends State<StocksScreen>
+    with SingleTickerProviderStateMixin {
   final _key = GlobalKey<_HoldingsTabState>();
+  late final TabController _tab;
+  bool _updating = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _tab = TabController(length: 4, vsync: this);
+    // 「更新股價」動作僅在「持股」分頁顯示，切換分頁時重建 AppBar。
+    _tab.addListener(() {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _tab.dispose();
+    super.dispose();
+  }
+
+  Future<void> _updatePrices() async {
+    if (_updating) return;
+    setState(() => _updating = true);
+    try {
+      await _key.currentState?.updatePrices();
+    } finally {
+      if (mounted) setState(() => _updating = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return DefaultTabController(
-      length: 4,
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('股票'),
-          bottom: const TabBar(
-            isScrollable: true,
-            tabs: [
-              Tab(text: '持股'),
-              Tab(text: '交易'),
-              Tab(text: '股利'),
-              Tab(text: '損益'),
-            ],
-          ),
-        ),
-        body: TabBarView(
-          children: [
-            _HoldingsTab(key: _key),
-            const _StockTxnTab(),
-            const _DividendTab(),
-            const _RealizedTab(),
+    final onHoldings = _tab.index == 0;
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('股票'),
+        actions: [
+          if (onHoldings)
+            _updating
+                ? const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16),
+                    child: Center(
+                      child: SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    ),
+                  )
+                : IconButton(
+                    onPressed: _updatePrices,
+                    icon: const Icon(Icons.refresh),
+                    tooltip: '更新股價',
+                  ),
+        ],
+        bottom: TabBar(
+          controller: _tab,
+          isScrollable: true,
+          tabs: const [
+            Tab(text: '持股'),
+            Tab(text: '交易'),
+            Tab(text: '股利'),
+            Tab(text: '損益'),
           ],
         ),
+      ),
+      body: TabBarView(
+        controller: _tab,
+        children: [
+          _HoldingsTab(key: _key),
+          const _StockTxnTab(),
+          const _DividendTab(),
+          const _RealizedTab(),
+        ],
       ),
     );
   }
@@ -80,6 +128,41 @@ class _HoldingsTabState extends State<_HoldingsTab> {
   }
 
   void _reload() => setState(() => _future = _load());
+
+  // 從 TWSE/TPEx 批次抓最新價並寫回現價，再重新載入持股。
+  // 由上層 StocksScreen 的 AppBar「更新股價」按鈕透過 GlobalKey 呼叫。
+  Future<void> updatePrices() async {
+    try {
+      final fetched = await ApiClient.instance.batchFetchStockPrices();
+      final results = (fetched['results'] as List? ?? []);
+      final updates = <Map<String, dynamic>>[];
+      var failed = 0;
+      for (final r in results) {
+        final m = (r as Map).cast<String, dynamic>();
+        if (m['status'] == 'ok' && m['currentPrice'] != null) {
+          updates.add({
+            'stockId': m['stockId'],
+            'currentPrice': m['currentPrice'],
+          });
+        } else {
+          failed++;
+        }
+      }
+      if (updates.isNotEmpty) {
+        await ApiClient.instance.batchUpdateStockPrices(updates);
+      }
+      if (!mounted) return;
+      toast(
+        context,
+        updates.isEmpty
+            ? '沒有可更新的股價'
+            : '已更新 ${updates.length} 檔股價${failed > 0 ? '，$failed 檔查詢失敗' : ''}',
+      );
+      _reload();
+    } catch (e) {
+      if (mounted) toast(context, '更新股價失敗：$e');
+    }
+  }
 
   Future<void> _addStock() async {
     final changed = await showModalBottomSheet<bool>(

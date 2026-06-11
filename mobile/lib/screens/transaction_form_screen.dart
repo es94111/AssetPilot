@@ -99,12 +99,41 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
       toast(context, '單筆交易最多上傳 5 張照片');
       return;
     }
-    final picked = await _picker.pickMultiImage(
-      imageQuality: 82,
-      limit: remaining,
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt_outlined),
+              title: const Text('拍照'),
+              onTap: () => Navigator.pop(ctx, ImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined),
+              title: const Text('從相簿選擇'),
+              onTap: () => Navigator.pop(ctx, ImageSource.gallery),
+            ),
+          ],
+        ),
+      ),
     );
-    if (picked.isEmpty) return;
-    setState(() => _photos.addAll(picked.take(remaining)));
+    if (source == null) return;
+    if (source == ImageSource.camera) {
+      final shot = await _picker.pickImage(
+        source: ImageSource.camera,
+        imageQuality: 82,
+      );
+      if (shot == null) return;
+      setState(() => _photos.add(shot));
+    } else {
+      final picked = await _picker.pickMultiImage(
+        imageQuality: 82,
+        limit: remaining,
+      );
+      if (picked.isEmpty) return;
+      setState(() => _photos.addAll(picked.take(remaining)));
+    }
   }
 
   void _removePhoto(int index) {

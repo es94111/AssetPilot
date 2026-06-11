@@ -22,8 +22,14 @@ export async function register() {
   unrefTimer(setTimeout(async () => {
     try {
       const { checkAndRunSchedule } = await import('./lib/scheduler');
-      checkAndRunSchedule();
-      unrefTimer(setInterval(checkAndRunSchedule, SCHEDULER_TICK_MS));
+      const { checkAndRunStockPriceUpdate } = await import('./lib/stockPriceUpdater');
+      // 單一心跳同時驅動排程報表與股價自動更新；股價更新內部自我節流與交易時段閘門
+      const tick = () => {
+        checkAndRunSchedule();
+        checkAndRunStockPriceUpdate().catch((err) => console.error('[stock-price-update]', err));
+      };
+      tick();
+      unrefTimer(setInterval(tick, SCHEDULER_TICK_MS));
     } catch (_) {
       // scheduler.js 尚未建立時靜默略過
     }

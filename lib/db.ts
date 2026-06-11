@@ -194,6 +194,11 @@ async function _runMigrations(): Promise<void> {
   alterIgnore("ALTER TABLE system_settings ADD COLUMN line_login_enabled INTEGER DEFAULT 0");
   alterIgnore("ALTER TABLE system_settings ADD COLUMN transaction_photo_storage TEXT DEFAULT ''")
   alterIgnore("ALTER TABLE system_settings ADD COLUMN transaction_photo_max_bytes INTEGER DEFAULT 0")
+  // 股價自動更新（伺服器排程；台股交易時段內每 N 分鐘抓 TWSE/TPEx 最新價寫回 stocks.current_price）
+  alterIgnore("ALTER TABLE system_settings ADD COLUMN stock_auto_update_enabled INTEGER DEFAULT 1");
+  alterIgnore("ALTER TABLE system_settings ADD COLUMN stock_auto_update_interval_min INTEGER DEFAULT 10");
+  alterIgnore("ALTER TABLE system_settings ADD COLUMN stock_auto_update_last_run INTEGER DEFAULT 0");
+  alterIgnore("ALTER TABLE system_settings ADD COLUMN stock_auto_update_last_summary TEXT DEFAULT ''");
 
   db.run(`INSERT INTO system_settings (id, public_registration, allowed_registration_emails, admin_ip_allowlist, updated_at, updated_by) VALUES (1, 1, '', '', ?, '') ON CONFLICT DO NOTHING`, [Date.now()]);
 

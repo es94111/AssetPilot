@@ -51,6 +51,20 @@ export async function PUT(request) {
     transactionPhotoMaxBytes = Math.floor(candidate);
   }
 
+  let stockAutoUpdateEnabled: number | null = null;
+  if (Object.prototype.hasOwnProperty.call(body || {}, 'stockAutoUpdateEnabled')) {
+    stockAutoUpdateEnabled = body.stockAutoUpdateEnabled ? 1 : 0;
+  }
+
+  let stockAutoUpdateIntervalMin: number | null = null;
+  if (Object.prototype.hasOwnProperty.call(body || {}, 'stockAutoUpdateIntervalMin')) {
+    const candidate = Number(body.stockAutoUpdateIntervalMin);
+    if (!Number.isInteger(candidate) || candidate < 1 || candidate > 1440) {
+      return NextResponse.json({ error: 'stockAutoUpdateIntervalMin 必須為 1 ~ 1440 的整數（分鐘）' }, { status: 400 });
+    }
+    stockAutoUpdateIntervalMin = candidate;
+  }
+
   const db = getDB();
   const fields = [
     'public_registration = ?', 'line_login_enabled = ?', 'allowed_registration_emails = ?',
@@ -63,6 +77,8 @@ export async function PUT(request) {
   if (routeAuditMode !== null) { fields.push('route_audit_mode = ?'); values.push(routeAuditMode); }
   if (transactionPhotoStorage !== null) { fields.push('transaction_photo_storage = ?'); values.push(transactionPhotoStorage); }
   if (transactionPhotoMaxBytes !== null) { fields.push('transaction_photo_max_bytes = ?'); values.push(transactionPhotoMaxBytes); }
+  if (stockAutoUpdateEnabled !== null) { fields.push('stock_auto_update_enabled = ?'); values.push(stockAutoUpdateEnabled); }
+  if (stockAutoUpdateIntervalMin !== null) { fields.push('stock_auto_update_interval_min = ?'); values.push(stockAutoUpdateIntervalMin); }
   fields.push('updated_at = ?', 'updated_by = ?');
   values.push(Date.now(), auth.userId);
 
@@ -79,5 +95,7 @@ export async function PUT(request) {
     routeAuditMode: routeAuditMode ?? currentSettings.routeAuditMode,
     transactionPhotoStorage: transactionPhotoStorage ?? currentSettings.transactionPhotoStorage,
     transactionPhotoMaxBytes: transactionPhotoMaxBytes ?? currentSettings.transactionPhotoMaxBytes,
+    stockAutoUpdateEnabled: currentSettings.stockAutoUpdateEnabled,
+    stockAutoUpdateIntervalMin: currentSettings.stockAutoUpdateIntervalMin,
   });
 }

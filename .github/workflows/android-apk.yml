@@ -7,9 +7,10 @@ name: Build Android App Bundle
 # (APK output was dropped — Play distributes the .aab and the in-app APK update
 # flow was removed in 4.50.0.)
 on:
+  # 只在版本 tag 或手動/被 docker-publish 觸發的 workflow_dispatch 上跑。
+  # 不再掛 push:main，避免每次 main 推送都白建一份 .aab（Play 上傳本來就被 gate
+  # 在 tag/dispatch）。docker-publish 建好新 tag 後會以 workflow_dispatch 觸發本流程。
   push:
-    branches:
-      - main
     tags:
       - "v*"
   workflow_dispatch:

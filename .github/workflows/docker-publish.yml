@@ -43,29 +43,44 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
 
-      # ── Docker Hub ──
-      - name: Login to Docker Hub
-        uses: docker/login-action@v4
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      # ── Docker Hub 登入（主要；偶發網路逾時 → 重試 3 次）──
+      - name: Login to Docker Hub (with retry)
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+        run: |
+          ok=0
+          for i in 1 2 3; do
+            if echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin; then
+              ok=1; break
+            fi
+            echo "Docker Hub 登入第 $i 次失敗，$((i * 5))s 後重試..."; sleep $((i * 5))
+          done
+          [ "$ok" = 1 ] || { echo "::error::Docker Hub 登入連續 3 次失敗"; exit 1; }
 
-      # ── GitHub Container Registry (備用) ──
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v4
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+      # ── GitHub Container Registry 登入（備用；重試 3 次，失敗不中斷整個工作流）──
+      - name: Login to GitHub Container Registry (with retry)
+        id: ghcr_login
+        continue-on-error: true
+        env:
+          GHCR_USER: ${{ github.actor }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ok=0
+          for i in 1 2 3; do
+            if echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin; then
+              ok=1; break
+            fi
+            echo "ghcr.io 登入第 $i 次失敗，$((i * 5))s 後重試..."; sleep $((i * 5))
+          done
+          [ "$ok" = 1 ] || { echo "::warning::ghcr.io 登入連續 3 次失敗，將略過 ghcr 推送"; exit 1; }
 
-      # ── 產生標籤 ──
-      - name: Docker metadata
-        id: meta
+      # ── 標籤：Docker Hub ──
+      - name: Docker metadata (Docker Hub)
+        id: meta_dockerhub
         uses: docker/metadata-action@v6
         with:
-          images: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}
-            ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}
+          images: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
             type=raw,value=${{ steps.ver.outputs.version }},enable={{is_default_branch}}
@@ -75,14 +90,43 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
             type=sha,prefix=
 
-      # ── 建置 & 推送（支援 AMD64 + ARM64） ──
-      - name: Build and push
+      # ── 標籤：ghcr ──
+      - name: Docker metadata (ghcr)
+        id: meta_ghcr
+        uses: docker/metadata-action@v6
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=${{ steps.ver.outputs.version }},enable={{is_default_branch}}
+            type=raw,value=dev,enable=${{ github.ref == 'refs/heads/dev' }}
+            type=raw,value=dev.${{ steps.ver.outputs.version }},enable=${{ github.ref == 'refs/heads/dev' }}
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix=
+
+      # ── 建置 & 推送：Docker Hub（主要，必須成功；同時把 layer cache 寫入 gha）──
+      - name: Build and push to Docker Hub
         uses: docker/build-push-action@v7
         with:
           context: .
           platforms: linux/amd64
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ steps.meta_dockerhub.outputs.tags }}
+          labels: ${{ steps.meta_dockerhub.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      # ── 建置 & 推送：ghcr（備用；僅在 ghcr 登入成功時執行，且失敗不中斷）──
+      # 重用上一步寫入的 gha cache，實際不會重新編譯，只是把同一份 image 推到 ghcr。
+      - name: Build and push to ghcr
+        if: steps.ghcr_login.outcome == 'success'
+        continue-on-error: true
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.meta_ghcr.outputs.tags }}
+          labels: ${{ steps.meta_ghcr.outputs.labels }}
+          cache-from: type=gha

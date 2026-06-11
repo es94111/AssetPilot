@@ -74,6 +74,23 @@ jobs:
           --build-name=${{ steps.version.outputs.version }}
           --build-number=${{ github.run_number }}
 
+      # App Bundle (.aab) for Google Play Console uploads. Signed with the same
+      # release key as the APK (key.properties written above). Uploaded as a
+      # workflow artifact for manual upload to Play — unlike the APK it is not
+      # published to S3/OTA.
+      - name: Build release App Bundle (AAB)
+        working-directory: mobile
+        run: >-
+          flutter build appbundle --release
+          --build-name=${{ steps.version.outputs.version }}
+          --build-number=${{ github.run_number }}
+
+      - name: Upload AAB artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: assetpilot-aab
+          path: mobile/build/app/outputs/bundle/release/app-release.aab
+
       # Fallback when S3 isn't configured — APK is normally distributed via
       # S3 below. Forks/PRs without S3 secrets still get an artifact.
       - name: Upload APK artifact

@@ -134,15 +134,21 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
       ),
     );
     if (source == null) return;
+    // 與網頁版一致：縮到最長邊 1600px、JPEG 品質 82，省上傳頻寬與 S3 空間。
+    // image_picker 會在裝置端直接縮圖／重新編碼，免額外套件。
     if (source == ImageSource.camera) {
       final shot = await _picker.pickImage(
         source: ImageSource.camera,
+        maxWidth: 1600,
+        maxHeight: 1600,
         imageQuality: 82,
       );
       if (shot == null) return;
       setState(() => _photos.add(shot));
     } else {
       final picked = await _picker.pickMultiImage(
+        maxWidth: 1600,
+        maxHeight: 1600,
         imageQuality: 82,
         limit: remaining,
       );

@@ -114,6 +114,8 @@ export default function AdminClient(_props: { user?: any } = {}) {
   const [ipAllowlist, setIpAllowlist] = useState('');
   const [transactionPhotoStorage, setTransactionPhotoStorage] = useState<'' | 'local' | 's3'>('');
   const [transactionPhotoMaxMb, setTransactionPhotoMaxMb] = useState('');
+  const [photoCompressing, setPhotoCompressing] = useState(false);
+  const [photoCompressMsg, setPhotoCompressMsg] = useState('');
   const [stockAutoUpdateEnabled, setStockAutoUpdateEnabled] = useState(true);
   const [stockAutoUpdateIntervalMin, setStockAutoUpdateIntervalMin] = useState('10');
   const [stockAutoUpdateLastRun, setStockAutoUpdateLastRun] = useState(0);
@@ -243,6 +245,22 @@ export default function AdminClient(_props: { user?: any } = {}) {
       setStockUpdateMsg('更新失敗：' + e.message);
     }
     setStockUpdating(false);
+  }
+
+  async function handleCompressS3Photos() {
+    if (!confirm('將重新壓縮 S3 上所有尚未壓縮的交易照片，並「原地覆寫」原檔，此動作無法復原。確定執行？')) return;
+    setPhotoCompressing(true);
+    setPhotoCompressMsg('');
+    try {
+      const r = await apiPost('/api/admin/transaction-photos/compress', {});
+      const savedMb = Math.max(0, (Number(r.bytesBefore) - Number(r.bytesAfter)) / 1024 / 1024);
+      setPhotoCompressMsg(
+        `掃描 ${r.scanned} 張，壓縮 ${r.recompressed} 張，略過 ${r.skipped} 張${r.failed ? `，失敗 ${r.failed} 張` : ''}；省下約 ${savedMb.toFixed(1)} MB`
+      );
+    } catch (e: any) {
+      setPhotoCompressMsg('壓縮失敗：' + e.message);
+    }
+    setPhotoCompressing(false);
   }
 
   async function handleToggleAdmin(userId: string) {
@@ -597,6 +615,14 @@ export default function AdminClient(_props: { user?: any } = {}) {
                   placeholder={`留空使用環境變數預設值（${Math.round(10485760 / 1024 / 1024)} MB）`}
                 />
                 <p className="text-xs text-slate-500 mt-1">覆蓋 TRANSACTION_PHOTO_MAX_BYTES，留空則沿用環境變數設定</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">壓縮 S3 既有照片</label>
+                <div className="flex items-center gap-3">
+                  <Button type="button" variant="outline" onClick={handleCompressS3Photos} disabled={photoCompressing}>{photoCompressing ? '壓縮中...' : '壓縮 S3 既有照片'}</Button>
+                  {photoCompressMsg && <span className={`text-sm ${photoCompressMsg.includes('失敗') ? 'text-red-500' : 'text-slate-600'}`}>{photoCompressMsg}</span>}
+                </div>
+                <p className="text-xs text-slate-500 mt-1">將 S3 上尚未壓縮的交易照片重新編碼為最長邊 1600px／JPEG 82，原地覆寫以節省空間（不可復原）。資料量大時可能需數分鐘。</p>
               </div>
               <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
                 <label className="flex items-center gap-2">

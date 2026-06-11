@@ -617,4 +617,12 @@ class ApiClient {
   // ── 匯率 ────────────────────────────────────────────────────
 
   Future<List<dynamic>> exchangeRates() => _getList('/api/exchange-rates');
+
+  // ── 版本資訊 ────────────────────────────────────────────────
+
+  /// 取得版本更新資訊（合併後端本機與遠端分支 changelog），回傳
+  /// `{ currentVersion, latestVersion, releases: [{ version, date, title,
+  /// type, changes: [{ tag, text }] }], ... }`。
+  Future<Map<String, dynamic>> changelog({bool refresh = false}) =>
+      _getMapFromSend('GET', '/api/changelog${refresh ? '?refresh=1' : ''}');
 }

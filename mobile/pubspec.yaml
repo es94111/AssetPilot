@@ -52,6 +52,8 @@ dependencies:
   # 記帳憑證照片選取與 multipart 上傳 Content-Type
   image_picker: ^1.1.2
   http_parser: ^4.0.2
+  # 讀取 App 自身版本（versionName/Code），用於「版本資訊」頁判斷是否有新版
+  package_info_plus: ^8.3.1
 
 dev_dependencies:
   flutter_test:

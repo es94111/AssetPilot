@@ -4,6 +4,7 @@ import '../api_client.dart';
 import '../app.dart';
 import '../models.dart';
 import '../widgets.dart';
+import 'changelog_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   final VoidCallback onLoggedOut;
@@ -227,6 +228,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   );
                   if (picked != null) await setThemeMode(picked);
                 },
+              ),
+            ),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.system_update_outlined),
+              title: const Text('版本資訊'),
+              subtitle: const Text('查看目前版本與更新內容'),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const ChangelogScreen()),
               ),
             ),
             const Divider(),

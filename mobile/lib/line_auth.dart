@@ -45,16 +45,28 @@ class LineAuth {
       }
     }
 
+    // 啟動瀏覽器前先記錄目前的 initial link。getInitialLink() 會回傳「最初喚起 App
+    // 的 URI」且具持久性：上一次登入的回呼會殘留於此。若直接拿來比對，第二次登入
+    // 會立刻被舊回呼（帶舊 state）完成，導致「登入狀態不符」。
+    final staleInitialUri = await appLinks.getInitialLink();
+
     final sub = appLinks.uriLinkStream.listen(completeIfCallback);
     try {
+      // 用 in-app 瀏覽器分頁（Android Custom Tab）開授權頁，登入完成後可由
+      // closeInAppWebView() 主動關閉；外部瀏覽器無法被關閉，會在導回 App 後殘留。
       final launched = await launchUrl(
         authUrl,
-        mode: LaunchMode.externalApplication,
+        mode: LaunchMode.inAppBrowserView,
       );
       if (!launched) throw ApiException(0, '無法開啟瀏覽器進行 LINE 登入');
 
+      // 僅在 initial link 與啟動前不同（真正的冷啟動回呼）時才採用，
+      // 避免把上一次登入殘留的舊回呼當成本次結果。
       final initialUri = await appLinks.getInitialLink();
-      if (initialUri != null) completeIfCallback(initialUri);
+      if (initialUri != null &&
+          initialUri.toString() != staleInitialUri?.toString()) {
+        completeIfCallback(initialUri);
+      }
 
       final Uri cb;
       try {
@@ -72,6 +84,8 @@ class LineAuth {
       );
     } finally {
       await sub.cancel();
+      // 收到回呼導回 App 後，關閉殘留的 in-app 瀏覽器分頁（未開啟時為 no-op）。
+      await closeInAppWebView();
     }
   }
 }

@@ -38,6 +38,14 @@ class ApiClient {
   String get baseUrl => _baseUrl;
   bool get isLoggedIn => _cookie != null;
 
+  /// 顯示受認證保護的媒體（如交易照片）時，提供給 `Image.network` 的標頭。
+  /// `/file` 端點走與一般 GET 相同的 Cookie 認證。
+  Map<String, String> mediaHeaders() => _headers();
+
+  /// 交易附件原圖的完整 URL，供 `Image.network` 搭配 [mediaHeaders] 載入。
+  String attachmentFileUrl(String txId, String attachmentId) =>
+      '$_baseUrl/api/transactions/$txId/attachments/$attachmentId/file';
+
   Future<void> init() async {
     final p = await SharedPreferences.getInstance();
     _baseUrl = defaultBaseUrl;
@@ -497,6 +505,19 @@ class ApiClient {
         ? body['attachments'] as List
         : const [];
   }
+
+  /// 列出某筆交易已上傳的照片附件，回傳 `[{ id, filename, mimeType, byteSize,
+  /// storage, createdAt, url }, ...]`。
+  Future<List<dynamic>> listTransactionAttachments(String txId) async {
+    final r = await _send('GET', '/api/transactions/$txId/attachments');
+    return r is Map && r['attachments'] is List
+        ? r['attachments'] as List
+        : const [];
+  }
+
+  /// 刪除某筆交易的一張照片附件。
+  Future<void> deleteTransactionAttachment(String txId, String attachmentId) =>
+      _send('DELETE', '/api/transactions/$txId/attachments/$attachmentId');
 
   MediaType _imageContentType(String path) {
     final lower = path.toLowerCase();

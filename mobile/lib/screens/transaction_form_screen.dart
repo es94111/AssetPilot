@@ -33,6 +33,8 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
   bool _saving = false;
   final _picker = ImagePicker();
   final List<XFile> _photos = [];
+  // 編輯模式下，後端已存在的照片附件（含 id，供檢視／刪除）。
+  List<Map<String, dynamic>> _existingPhotos = [];
 
   bool get _isEdit => widget.existing != null;
 
@@ -69,6 +71,19 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
         .map((e) => Category.fromJson((e as Map).cast<String, dynamic>()))
         .toList();
     _accountId ??= _accounts.isNotEmpty ? _accounts.first.id : null;
+    final e = widget.existing;
+    if (e != null) {
+      // 附件載入失敗不應擋住整張編輯表單，靜默略過。
+      try {
+        final list = await api.listTransactionAttachments(e.id);
+        _existingPhotos = list
+            .whereType<Map>()
+            .map((m) => m.cast<String, dynamic>())
+            .toList();
+      } catch (_) {
+        _existingPhotos = [];
+      }
+    }
   }
 
   /// 僅顯示符合目前收支類型的子分類（交易必須掛在子分類）。
@@ -138,6 +153,86 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
 
   void _removePhoto(int index) {
     setState(() => _photos.removeAt(index));
+  }
+
+  /// 刪除已上傳到後端的照片（需確認）。
+  Future<void> _removeExistingPhoto(Map<String, dynamic> photo) async {
+    final id = '${photo['id'] ?? ''}';
+    if (id.isEmpty) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('刪除照片'),
+        content: const Text('確定要刪除這張已上傳的照片嗎？此動作無法復原。'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('取消'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('刪除'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    try {
+      await ApiClient.instance.deleteTransactionAttachment(
+        widget.existing!.id,
+        id,
+      );
+      if (mounted) {
+        setState(() => _existingPhotos.removeWhere((p) => '${p['id']}' == id));
+      }
+    } catch (e) {
+      if (mounted) toast(context, '$e');
+    }
+  }
+
+  /// 全螢幕檢視已上傳的照片，支援縮放。
+  void _viewExistingPhoto(Map<String, dynamic> photo) {
+    final api = ApiClient.instance;
+    final url = api.attachmentFileUrl(widget.existing!.id, '${photo['id']}');
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.black,
+        insetPadding: const EdgeInsets.all(12),
+        child: Stack(
+          children: [
+            InteractiveViewer(
+              maxScale: 5,
+              child: Center(
+                child: Image.network(
+                  url,
+                  headers: api.mediaHeaders(),
+                  fit: BoxFit.contain,
+                  loadingBuilder: (c, child, progress) => progress == null
+                      ? child
+                      : const Padding(
+                          padding: EdgeInsets.all(48),
+                          child: CircularProgressIndicator(),
+                        ),
+                  errorBuilder: (c, e, s) => const Padding(
+                    padding: EdgeInsets.all(48),
+                    child: Text('照片載入失敗', style: TextStyle(color: Colors.white)),
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              right: 0,
+              top: 0,
+              child: IconButton(
+                icon: const Icon(Icons.close, color: Colors.white),
+                onPressed: () => Navigator.pop(ctx),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _save() async {
@@ -313,6 +408,89 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
             ),
           ),
           if (_type != 'transfer') ...[
+            if (_existingPhotos.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  '已上傳照片（${_existingPhotos.length}）',
+                  style: Theme.of(context).textTheme.labelLarge,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final photo in _existingPhotos)
+                    Stack(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: InkWell(
+                            onTap: () => _viewExistingPhoto(photo),
+                            child: Image.network(
+                              ApiClient.instance.attachmentFileUrl(
+                                widget.existing!.id,
+                                '${photo['id']}',
+                              ),
+                              headers: ApiClient.instance.mediaHeaders(),
+                              width: 76,
+                              height: 76,
+                              fit: BoxFit.cover,
+                              loadingBuilder: (c, child, progress) =>
+                                  progress == null
+                                  ? child
+                                  : const SizedBox(
+                                      width: 76,
+                                      height: 76,
+                                      child: Center(
+                                        child: SizedBox(
+                                          width: 20,
+                                          height: 20,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                              errorBuilder: (c, e, s) => Container(
+                                width: 76,
+                                height: 76,
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.surfaceContainerHighest,
+                                child: const Icon(Icons.broken_image_outlined),
+                              ),
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          right: 0,
+                          top: 0,
+                          child: InkWell(
+                            onTap: _saving
+                                ? null
+                                : () => _removeExistingPhoto(photo),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.black.withValues(alpha: 0.65),
+                                shape: BoxShape.circle,
+                              ),
+                              padding: const EdgeInsets.all(3),
+                              child: const Icon(
+                                Icons.close,
+                                color: Colors.white,
+                                size: 16,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                ],
+              ),
+            ],
             const SizedBox(height: 16),
             OutlinedButton.icon(
               onPressed: _saving ? null : _pickPhotos,

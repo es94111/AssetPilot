@@ -1,10 +1,11 @@
 name: Build Android App Bundle
 
 # Builds a signed release App Bundle (.aab) for Google Play Console and
-# publishes it to S3-compatible storage. Version follows the same
-# `vX.Y.Z` tag that docker-publish.yml auto-creates from changelog.json on a
-# push to main. (APK output was dropped — Play distributes the .aab and the
-# in-app APK update flow was removed in 4.50.0.)
+# publishes it to Google Play internal testing on version tags or manual runs,
+# and to S3-compatible storage. Version follows the same `vX.Y.Z` tag that
+# docker-publish.yml auto-creates from changelog.json on a push to main.
+# (APK output was dropped — Play distributes the .aab and the in-app APK update
+# flow was removed in 4.50.0.)
 on:
   push:
     branches:
@@ -22,6 +23,7 @@ jobs:
       # Gates for steps (secrets can't be read directly in `if`).
       ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
       PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+      SHOULD_UPLOAD_PLAY: ${{ startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch' }}
 
     steps:
       - name: Checkout
@@ -45,9 +47,66 @@ jobs:
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
           echo "Resolved app version: ${VERSION}"
 
+      - name: Generate Google Play release notes
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          mkdir -p mobile/build/play-whatsnew
+          node <<'NODE'
+          const fs = require('fs');
+          const changelog = JSON.parse(fs.readFileSync('changelog.json', 'utf8'));
+          const version = process.env.VERSION;
+          const release = (changelog.releases || []).find((r) => String(r.version) === version)
+            || (changelog.releases || []).find((r) => String(r.version) === String(changelog.currentVersion))
+            || (changelog.releases || [])[0];
+
+          const lines = [];
+          if (release?.title) lines.push(String(release.title));
+          for (const change of release?.changes || []) {
+            const text = String(change?.text || '').trim();
+            if (text) lines.push(`・${text}`);
+          }
+          let notes = (lines.length ? lines.join('\n') : `AssetPilot ${version} 版本更新`).trim();
+          if (notes.length > 500) notes = notes.slice(0, 497).replace(/[\s\n。；，,;:：]+$/u, '') + '...';
+          for (const locale of ['zh-TW', 'en-US']) {
+            fs.writeFileSync(`mobile/build/play-whatsnew/whatsnew-${locale}`, notes + '\n');
+          }
+          console.log(notes);
+          NODE
+
       - name: Install dependencies
         working-directory: mobile
         run: flutter pub get
+
+      - name: Verify Google Play upload configuration
+        if: ${{ env.SHOULD_UPLOAD_PLAY == 'true' }}
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          missing=0
+          if [ -z "${PLAY_SERVICE_ACCOUNT_JSON}" ]; then
+            echo "::error::Missing PLAY_SERVICE_ACCOUNT_JSON secret; cannot upload AAB to Google Play Console."
+            missing=1
+          fi
+          if [ -z "${ANDROID_KEYSTORE_BASE64}" ]; then
+            echo "::error::Missing ANDROID_KEYSTORE_BASE64 secret; Google Play requires a release-signed AAB, not the debug fallback."
+            missing=1
+          fi
+          if [ -z "${ANDROID_KEYSTORE_PASSWORD}" ]; then
+            echo "::error::Missing ANDROID_KEYSTORE_PASSWORD secret."
+            missing=1
+          fi
+          if [ -z "${ANDROID_KEY_ALIAS}" ]; then
+            echo "::error::Missing ANDROID_KEY_ALIAS secret."
+            missing=1
+          fi
+          if [ -z "${ANDROID_KEY_PASSWORD}" ]; then
+            echo "::error::Missing ANDROID_KEY_PASSWORD secret."
+            missing=1
+          fi
+          exit "$missing"
 
       # Decode the fixed release keystore from secrets so every build is signed
       # with the same key (stable upload key for Google Play). When the secret
@@ -87,20 +146,22 @@ jobs:
           path: mobile/build/app/outputs/bundle/release/app-release.aab
 
       # Upload the .aab to Google Play Console (internal testing track).
-      # Runs only on version tags (vX.Y.Z) so routine pushes to main don't
-      # create a Play release every time. Requires:
+      # Runs on version tags (vX.Y.Z) and manual workflow_dispatch runs.
+      # Routine pushes to main still only build/upload artifacts and S3.
+      # Requires:
       #   - PLAY_SERVICE_ACCOUNT_JSON secret: full JSON key of a Google Play
       #     service account with "Release to testing tracks" permission.
       #   - The app already created on Play Console with at least one manual
       #     upload (Google requires the first AAB via the Console UI).
       #   - A signed (non-debug) build, i.e. the release keystore secret set.
       - name: Publish to Google Play (internal track)
-        if: ${{ env.PLAY_SERVICE_ACCOUNT_JSON != '' && startsWith(github.ref, 'refs/tags/v') }}
+        if: ${{ env.SHOULD_UPLOAD_PLAY == 'true' }}
         uses: r0adkll/upload-google-play@v1
         with:
           serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
           packageName: com.assetpilot.assetpilot
           releaseFiles: mobile/build/app/outputs/bundle/release/app-release.aab
+          whatsNewDirectory: mobile/build/play-whatsnew
           track: internal
           status: completed
 

@@ -51,7 +51,9 @@ class AssetPilotApp extends StatelessWidget {
         ),
         darkTheme: ThemeData(
           colorScheme: ColorScheme.fromSeed(
-              seedColor: seed, brightness: Brightness.dark),
+            seedColor: seed,
+            brightness: Brightness.dark,
+          ),
           useMaterial3: true,
         ),
         home: const AuthGate(),
@@ -69,16 +71,34 @@ class AuthGate extends StatefulWidget {
 }
 
 class _AuthGateState extends State<AuthGate> {
-  bool _loggedIn = ApiClient.instance.isLoggedIn;
+  late bool _loggedIn = ApiClient.instance.authState.value;
+
+  @override
+  void initState() {
+    super.initState();
+    ApiClient.instance.authState.addListener(_handleAuthChange);
+  }
+
+  @override
+  void dispose() {
+    ApiClient.instance.authState.removeListener(_handleAuthChange);
+    super.dispose();
+  }
+
+  void _handleAuthChange() {
+    final loggedIn = ApiClient.instance.authState.value;
+    if (mounted) setState(() => _loggedIn = loggedIn);
+    if (!loggedIn) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) Navigator.of(context).popUntil((route) => route.isFirst);
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    if (_loggedIn) {
-      return HomeShell(
-        onLoggedOut: () => setState(() => _loggedIn = false),
-      );
-    }
-    return LoginScreen(onLoggedIn: () => setState(() => _loggedIn = true));
+    if (_loggedIn) return HomeShell(onLoggedOut: () {});
+    return LoginScreen(onLoggedIn: () {});
   }
 }
 
@@ -109,21 +129,25 @@ class _HomeShellState extends State<HomeShell> {
         onDestinationSelected: (i) => setState(() => _index = i),
         destinations: const [
           NavigationDestination(
-              icon: Icon(Icons.dashboard_outlined),
-              selectedIcon: Icon(Icons.dashboard),
-              label: '首頁'),
+            icon: Icon(Icons.dashboard_outlined),
+            selectedIcon: Icon(Icons.dashboard),
+            label: '首頁',
+          ),
           NavigationDestination(
-              icon: Icon(Icons.receipt_long_outlined),
-              selectedIcon: Icon(Icons.receipt_long),
-              label: '記帳'),
+            icon: Icon(Icons.receipt_long_outlined),
+            selectedIcon: Icon(Icons.receipt_long),
+            label: '記帳',
+          ),
           NavigationDestination(
-              icon: Icon(Icons.trending_up_outlined),
-              selectedIcon: Icon(Icons.trending_up),
-              label: '股票'),
+            icon: Icon(Icons.trending_up_outlined),
+            selectedIcon: Icon(Icons.trending_up),
+            label: '股票',
+          ),
           NavigationDestination(
-              icon: Icon(Icons.menu),
-              selectedIcon: Icon(Icons.menu_open),
-              label: '更多'),
+            icon: Icon(Icons.menu),
+            selectedIcon: Icon(Icons.menu_open),
+            label: '更多',
+          ),
         ],
       ),
     );

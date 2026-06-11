@@ -1,6 +1,8 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'play_integrity.dart';
@@ -31,6 +33,7 @@ class ApiClient {
 
   String _baseUrl = defaultBaseUrl;
   String? _cookie; // 例："authToken=xxxxx"
+  final ValueNotifier<bool> authState = ValueNotifier(false);
 
   String get baseUrl => _baseUrl;
   bool get isLoggedIn => _cookie != null;
@@ -40,6 +43,7 @@ class ApiClient {
     _baseUrl = defaultBaseUrl;
     await p.remove('baseUrl');
     _cookie = p.getString(_kCookie);
+    authState.value = isLoggedIn;
   }
 
   // ── 低階請求 ────────────────────────────────────────────────
@@ -69,6 +73,17 @@ class ApiClient {
     } else {
       await p.setString(_kCookie, _cookie!);
     }
+  }
+
+  Future<void> _clearAuth() async {
+    _cookie = null;
+    await _persistCookie();
+    authState.value = false;
+  }
+
+  Future<void> _persistLogin() async {
+    await _persistCookie();
+    authState.value = isLoggedIn;
   }
 
   /// 統一發送請求，回傳已解碼的 JSON（Map 或 List）。
@@ -111,8 +126,7 @@ class ApiClient {
     }
 
     if (res.statusCode == 401) {
-      _cookie = null;
-      await _persistCookie();
+      await _clearAuth();
       throw ApiException(401, '登入已過期，請重新登入');
     }
     if (res.statusCode < 200 || res.statusCode >= 300) {
@@ -146,8 +160,6 @@ class ApiClient {
 
   /// 後端公開設定（是否開放註冊、是否啟用 Turnstile、site key…）。
   Future<Map<String, dynamic>> config() => _getMap('/api/config');
-
-  Future<Map<String, dynamic>> appVersion() => _getMap('/api/app/version');
 
   /// 取得一次性 Play Integrity nonce（登入／註冊前向後端索取）。
   Future<String> integrityNonce() async {
@@ -198,7 +210,7 @@ class ApiClient {
         if (_cookie == null) {
           throw ApiException(200, '登入回應未包含認證 Cookie，請確認後端設定');
         }
-        await _persistCookie();
+        await _persistLogin();
         return;
       case 401:
         throw ApiException(401, '電子郵件或密碼錯誤');
@@ -240,7 +252,7 @@ class ApiClient {
       if (_cookie == null) {
         throw ApiException(200, '註冊回應未包含認證 Cookie，請確認後端設定');
       }
-      await _persistCookie();
+      await _persistLogin();
       return;
     }
     throw ApiException(res.statusCode, _errorMessage(res));
@@ -283,7 +295,7 @@ class ApiClient {
       if (_cookie == null) {
         throw ApiException(200, 'Google 登入回應未包含認證 Cookie');
       }
-      await _persistCookie();
+      await _persistLogin();
       return;
     }
     throw ApiException(res.statusCode, _errorMessage(res));
@@ -293,8 +305,7 @@ class ApiClient {
     try {
       await _send('POST', '/api/auth/logout');
     } catch (_) {}
-    _cookie = null;
-    await _persistCookie();
+    await _clearAuth();
   }
 
   Future<Map<String, dynamic>> me() async {
@@ -318,8 +329,7 @@ class ApiClient {
       '/api/account/settings/delete',
       body: {'password': ?password, 'confirmEmail': ?confirmEmail},
     );
-    _cookie = null;
-    await _persistCookie();
+    await _clearAuth();
   }
 
   // ── 帳戶 ────────────────────────────────────────────────────
@@ -363,14 +373,71 @@ class ApiClient {
     return _getList('/api/transactions?$qs');
   }
 
-  Future<void> createTransaction(Map<String, dynamic> body) =>
-      _send('POST', '/api/transactions', body: body);
+  Future<Map<String, dynamic>> createTransaction(Map<String, dynamic> body) =>
+      _getMapFromSend('POST', '/api/transactions', body: body);
+
+  Future<Map<String, dynamic>> _getMapFromSend(
+    String method,
+    String path, {
+    Object? body,
+  }) async =>
+      (await _send(method, path, body: body) as Map).cast<String, dynamic>();
 
   Future<void> updateTransaction(String id, Map<String, dynamic> body) =>
       _send('PUT', '/api/transactions/$id', body: body);
 
   Future<void> deleteTransaction(String id) =>
       _send('DELETE', '/api/transactions/$id');
+
+  Future<List<dynamic>> uploadTransactionPhotos(
+    String transactionId,
+    List<String> paths,
+  ) async {
+    if (paths.isEmpty) return const [];
+    late http.Response res;
+    try {
+      final req = http.MultipartRequest(
+        'POST',
+        _uri('/api/transactions/$transactionId/attachments'),
+      );
+      req.headers.addAll(_headers());
+      for (final path in paths) {
+        req.files.add(
+          await http.MultipartFile.fromPath(
+            'photos',
+            path,
+            contentType: _imageContentType(path),
+          ),
+        );
+      }
+      final streamed = await req.send().timeout(_timeout);
+      res = await http.Response.fromStream(streamed);
+    } catch (e) {
+      throw ApiException(0, '照片上傳失敗：$e');
+    }
+
+    if (res.statusCode == 401) {
+      await _clearAuth();
+      throw ApiException(401, '登入已過期，請重新登入');
+    }
+    if (res.statusCode < 200 || res.statusCode >= 300) {
+      throw ApiException(res.statusCode, _errorMessage(res));
+    }
+    final body = jsonDecode(utf8.decode(res.bodyBytes));
+    return body is Map && body['attachments'] is List
+        ? body['attachments'] as List
+        : const [];
+  }
+
+  MediaType _imageContentType(String path) {
+    final lower = path.toLowerCase();
+    if (lower.endsWith('.png')) return MediaType('image', 'png');
+    if (lower.endsWith('.webp')) return MediaType('image', 'webp');
+    if (lower.endsWith('.gif')) return MediaType('image', 'gif');
+    if (lower.endsWith('.heic')) return MediaType('image', 'heic');
+    if (lower.endsWith('.heif')) return MediaType('image', 'heif');
+    return MediaType('image', 'jpeg');
+  }
 
   Future<void> transfer(Map<String, dynamic> body) =>
       _send('POST', '/api/transactions/transfer', body: body);

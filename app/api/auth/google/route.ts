@@ -23,14 +23,13 @@ const APP_HOST = process.env.APP_HOST || 'localhost';
 const PORT = process.env.PORT || 3000;
 
 function buildGoogleRedirectAllowlist() {
-  if (GOOGLE_OAUTH_REDIRECT_URIS.length > 0) return new Set(GOOGLE_OAUTH_REDIRECT_URIS);
   const fallback = [
     `https://${APP_HOST}/`, `https://${APP_HOST}`,
     `http://localhost:${PORT}/`, `http://localhost:${PORT}`,
     // mobile App Link callback (fixed path used by the Android app)
     `https://${APP_HOST}/app/google-callback`,
   ];
-  return new Set(fallback);
+  return new Set([...fallback, ...GOOGLE_OAUTH_REDIRECT_URIS]);
 }
 const googleRedirectUriAllowlist = buildGoogleRedirectAllowlist();
 

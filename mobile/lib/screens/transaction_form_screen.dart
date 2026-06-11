@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../api_client.dart';
 import '../models.dart';
@@ -28,6 +31,8 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
   String? _accountId;
   String? _toAccountId;
   bool _saving = false;
+  final _picker = ImagePicker();
+  final List<XFile> _photos = [];
 
   bool get _isEdit => widget.existing != null;
 
@@ -88,6 +93,24 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
   String get _dateStr =>
       '${_date.year}-${_date.month.toString().padLeft(2, '0')}-${_date.day.toString().padLeft(2, '0')}';
 
+  Future<void> _pickPhotos() async {
+    final remaining = 5 - _photos.length;
+    if (remaining <= 0) {
+      toast(context, '單筆交易最多上傳 5 張照片');
+      return;
+    }
+    final picked = await _picker.pickMultiImage(
+      imageQuality: 82,
+      limit: remaining,
+    );
+    if (picked.isEmpty) return;
+    setState(() => _photos.addAll(picked.take(remaining)));
+  }
+
+  void _removePhoto(int index) {
+    setState(() => _photos.removeAt(index));
+  }
+
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     final amount = num.parse(_amount.text.trim());
@@ -115,8 +138,21 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
         };
         if (_isEdit) {
           await api.updateTransaction(widget.existing!.id, body);
+          if (_photos.isNotEmpty) {
+            await api.uploadTransactionPhotos(
+              widget.existing!.id,
+              _photos.map((p) => p.path).toList(),
+            );
+          }
         } else {
-          await api.createTransaction(body);
+          final created = await api.createTransaction(body);
+          final id = '${created['id'] ?? ''}';
+          if (_photos.isNotEmpty && id.isNotEmpty) {
+            await api.uploadTransactionPhotos(
+              id,
+              _photos.map((p) => p.path).toList(),
+            );
+          }
         }
       }
       if (mounted) Navigator.pop(context, true);
@@ -174,8 +210,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
           const SizedBox(height: 16),
           TextFormField(
             controller: _amount,
-            keyboardType:
-                const TextInputType.numberWithOptions(decimal: true),
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
             decoration: const InputDecoration(
               labelText: '金額',
               prefixIcon: Icon(Icons.attach_money),
@@ -190,8 +225,9 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
           const SizedBox(height: 16),
           ListTile(
             shape: RoundedRectangleBorder(
-                side: BorderSide(color: Theme.of(context).dividerColor),
-                borderRadius: BorderRadius.circular(4)),
+              side: BorderSide(color: Theme.of(context).dividerColor),
+              borderRadius: BorderRadius.circular(4),
+            ),
             leading: const Icon(Icons.calendar_today),
             title: const Text('日期'),
             trailing: Text(_dateStr),
@@ -200,19 +236,21 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
           const SizedBox(height: 16),
           if (_type == 'transfer') ...[
             _accountDropdown(
-                label: '轉出帳戶',
-                value: _accountId,
-                onChanged: (v) => setState(() => _accountId = v)),
+              label: '轉出帳戶',
+              value: _accountId,
+              onChanged: (v) => setState(() => _accountId = v),
+            ),
             const SizedBox(height: 16),
             _accountDropdown(
-                label: '轉入帳戶',
-                value: _toAccountId,
-                onChanged: (v) => setState(() => _toAccountId = v),
-                validator: (v) {
-                  if (v == null) return '請選擇轉入帳戶';
-                  if (v == _accountId) return '轉出與轉入不可相同';
-                  return null;
-                }),
+              label: '轉入帳戶',
+              value: _toAccountId,
+              onChanged: (v) => setState(() => _toAccountId = v),
+              validator: (v) {
+                if (v == null) return '請選擇轉入帳戶';
+                if (v == _accountId) return '轉出與轉入不可相同';
+                return null;
+              },
+            ),
           ] else ...[
             DropdownButtonFormField<String>(
               initialValue: _categoryId,
@@ -224,17 +262,17 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
               ),
               items: [
                 for (final c in cats)
-                  DropdownMenuItem(
-                      value: c.id, child: Text(_parentName(c))),
+                  DropdownMenuItem(value: c.id, child: Text(_parentName(c))),
               ],
               onChanged: (v) => setState(() => _categoryId = v),
               validator: (v) => v == null ? '請選擇分類' : null,
             ),
             const SizedBox(height: 16),
             _accountDropdown(
-                label: '帳戶',
-                value: _accountId,
-                onChanged: (v) => setState(() => _accountId = v)),
+              label: '帳戶',
+              value: _accountId,
+              onChanged: (v) => setState(() => _accountId = v),
+            ),
           ],
           const SizedBox(height: 16),
           TextFormField(
@@ -245,16 +283,70 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
               border: OutlineInputBorder(),
             ),
           ),
+          if (_type != 'transfer') ...[
+            const SizedBox(height: 16),
+            OutlinedButton.icon(
+              onPressed: _saving ? null : _pickPhotos,
+              icon: const Icon(Icons.photo_library_outlined),
+              label: Text(
+                _photos.isEmpty ? '新增照片（選填）' : '新增照片（${_photos.length}/5）',
+              ),
+            ),
+            if (_photos.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (var i = 0; i < _photos.length; i++)
+                    Stack(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.file(
+                            File(_photos[i].path),
+                            width: 76,
+                            height: 76,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                        Positioned(
+                          right: 0,
+                          top: 0,
+                          child: InkWell(
+                            onTap: _saving ? null : () => _removePhoto(i),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.black.withValues(alpha: 0.65),
+                                shape: BoxShape.circle,
+                              ),
+                              padding: const EdgeInsets.all(3),
+                              child: const Icon(
+                                Icons.close,
+                                color: Colors.white,
+                                size: 16,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                ],
+              ),
+            ],
+          ],
           const SizedBox(height: 24),
           FilledButton(
             onPressed: _saving ? null : _save,
             style: FilledButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16)),
+              padding: const EdgeInsets.symmetric(vertical: 16),
+            ),
             child: _saving
                 ? const SizedBox(
                     height: 20,
                     width: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2))
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
                 : const Text('儲存'),
           ),
         ],
@@ -278,7 +370,10 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
       ),
       items: [
         for (final a in _accounts)
-          DropdownMenuItem(value: a.id, child: Text('${a.name}（${a.currency}）')),
+          DropdownMenuItem(
+            value: a.id,
+            child: Text('${a.name}（${a.currency}）'),
+          ),
       ],
       onChanged: onChanged,
       validator: validator ?? (v) => v == null ? '請選擇帳戶' : null,

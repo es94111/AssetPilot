@@ -49,8 +49,9 @@ dependencies:
   url_launcher: ^6.3.1
   # 接收 Google OAuth 完成後導回的 App Link（深層連結）
   app_links: ^6.3.2
-  # 動態讀取 build-name / build-number（避免寫死版本號）
-  package_info_plus: ^8.0.0
+  # 記帳憑證照片選取與 multipart 上傳 Content-Type
+  image_picker: ^1.1.2
+  http_parser: ^4.0.2
 
 dev_dependencies:
   flutter_test:

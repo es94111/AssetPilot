@@ -62,7 +62,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _logout() async {
     await ApiClient.instance.logout();
-    if (mounted) widget.onLoggedOut();
+    if (mounted) {
+      Navigator.of(context).popUntil((route) => route.isFirst);
+      widget.onLoggedOut();
+    }
   }
 
   Future<void> _deleteAccount(AppUser user) async {
@@ -81,9 +84,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  '此操作將永久刪除您的帳號與所有資料（交易、帳戶、股票與設定），且無法復原。',
-                ),
+                const Text('此操作將永久刪除您的帳號與所有資料（交易、帳戶、股票與設定），且無法復原。'),
                 const SizedBox(height: 16),
                 TextField(
                   controller: ctrl,
@@ -157,6 +158,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
     if (confirmed == true && mounted) {
       toast(context, '帳號已刪除');
+      Navigator.of(context).popUntil((route) => route.isFirst);
       widget.onLoggedOut();
     }
   }

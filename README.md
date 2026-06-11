@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-4.49.1-blue" alt="version">
+  <img src="https://img.shields.io/badge/version-4.50.0-blue" alt="version">
   <img src="https://img.shields.io/badge/node-%3E%3D24-brightgreen" alt="node">
   <img src="https://img.shields.io/badge/next.js-16.x-000000" alt="next.js">
   <img src="https://img.shields.io/badge/openapi-3.2.0-6BA539" alt="openapi">
@@ -311,7 +311,7 @@ Caddy 自動申請並續期 HTTPS 憑證。
 
 1. 至 [Google Cloud Console](https://console.cloud.google.com/) 建立 OAuth 2.0 用戶端 ID（類型：網頁應用程式）
 2. **已授權 JavaScript 來源**：本機 `http://localhost:3000`、正式 `https://your-domain.com`
-3. **已授權重新導向 URI**：本機 `http://localhost:3000/`、正式 `https://your-domain.com/`（含尾端 `/`）
+3. **已授權重新導向 URI**：本機 `http://localhost:3000/`、正式 `https://your-domain.com/`（含尾端 `/`）；Android App 另需加入 `https://your-domain.com/app/google-callback`
 4. 將 `GOOGLE_CLIENT_ID` 與 `GOOGLE_CLIENT_SECRET` 設為環境變數啟動
 5. 未設定時 Google 登入按鈕自動隱藏，不影響其他登入方式
 

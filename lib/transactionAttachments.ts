@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { getDB, queryAll, queryOne } from './db';
+import { getDB, queryAll, queryOne, saveDB } from './db';
 import { uid } from './userDefaults';
 import { deleteS3Object, getS3Config, getS3ConfigStatus, getS3Object, joinS3Key, putS3Object } from './s3Storage';
 
@@ -205,6 +205,82 @@ export async function saveTransactionPhoto(userId: string, transactionId: string
     mimeType: file.type || 'application/octet-stream',
     body,
   });
+}
+
+// 與網頁／App 客戶端壓縮一致：最長邊 1600px、JPEG 品質 82。
+const PHOTO_COMPRESS_MAX_EDGE = 1600;
+const PHOTO_COMPRESS_JPEG_QUALITY = 82;
+
+export interface CompressExistingPhotosResult {
+  scanned: number;
+  recompressed: number;
+  skipped: number;
+  failed: number;
+  bytesBefore: number;
+  bytesAfter: number;
+  errors: Array<{ id: string; error: string }>;
+}
+
+// 用 sharp 依 EXIF 轉正、縮到最長邊 1600、重新編碼為 JPEG 82。
+// 只有體積真的變小才回傳結果（代表原檔尚未壓縮）；否則回 null 視為已壓縮、略過。
+// sharp 以動態 import 延遲載入，讓一般上傳路徑不必相依此原生套件。
+async function recompressPhoto(body: Buffer): Promise<Buffer | null> {
+  const sharp = (await import('sharp')).default;
+  const out = await sharp(body)
+    .rotate()
+    .resize(PHOTO_COMPRESS_MAX_EDGE, PHOTO_COMPRESS_MAX_EDGE, { fit: 'inside', withoutEnlargement: true })
+    .jpeg({ quality: PHOTO_COMPRESS_JPEG_QUALITY })
+    .toBuffer();
+  return out.length < body.length ? out : null;
+}
+
+// 掃描 S3 上既有的交易憑證照片，將尚未壓縮者重新編碼並「原地覆寫」原檔，
+// 同步更新 DB 的 byte_size 與 mime_type。回傳處理彙總。
+export async function compressExistingS3Photos(): Promise<CompressExistingPhotosResult> {
+  const result: CompressExistingPhotosResult = {
+    scanned: 0, recompressed: 0, skipped: 0, failed: 0, bytesBefore: 0, bytesAfter: 0, errors: [],
+  };
+  const rows = queryAll(
+    "SELECT * FROM transaction_attachments WHERE storage = 's3' ORDER BY created_at ASC"
+  ) as unknown as TransactionAttachmentRow[];
+  if (rows.length === 0) return result;
+
+  const config = getPhotoS3Config();
+  const db = getDB();
+  let dirty = false;
+
+  for (const row of rows) {
+    result.scanned++;
+    const key = row.object_key || '';
+    if (!key || !String(row.mime_type || '').startsWith('image/')) {
+      result.skipped++;
+      continue;
+    }
+    try {
+      const response = await getS3Object(config, key);
+      const original = Buffer.from(await response.arrayBuffer());
+      const compressed = await recompressPhoto(original);
+      if (!compressed) {
+        result.skipped++;
+        continue;
+      }
+      await putS3Object(config, key, compressed, 'image/jpeg');
+      db.run(
+        'UPDATE transaction_attachments SET byte_size = ?, mime_type = ? WHERE id = ?',
+        [compressed.length, 'image/jpeg', row.id]
+      );
+      dirty = true;
+      result.recompressed++;
+      result.bytesBefore += original.length;
+      result.bytesAfter += compressed.length;
+    } catch (e) {
+      result.failed++;
+      result.errors.push({ id: String(row.id), error: String((e as Error)?.message || e).slice(0, 200) });
+    }
+  }
+
+  if (dirty) saveDB();
+  return result;
 }
 
 export async function readTransactionAttachment(row: TransactionAttachmentRow): Promise<{ body: Buffer; mimeType: string; filename: string }> {

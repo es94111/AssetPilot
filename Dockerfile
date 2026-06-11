@@ -61,6 +61,13 @@ COPY --from=builder --chown=nextjs:nodejs /app/node_modules/postgres-date ./node
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/postgres-interval ./node_modules/postgres-interval
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/split2 ./node_modules/split2
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/xtend ./node_modules/xtend
+# sharp（交易照片壓縮）為 serverExternalPackages，於 runtime require，需手動複製其
+# 本體與相依：平台專屬原生套件（@img/sharp-linuxmusl-*、libvips、@img/colour）、
+# detect-libc、semver。
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/sharp ./node_modules/sharp
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@img ./node_modules/@img
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/detect-libc ./node_modules/detect-libc
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/semver ./node_modules/semver
 
 # 持久化資料目錄（.env、SSL 憑證）
 RUN mkdir -p /app/data/SSL/Origin\ Certificates \

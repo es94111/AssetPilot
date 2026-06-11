@@ -190,14 +190,37 @@ class _TxnTile extends StatelessWidget {
             ? t.catName!
             : (isTransfer ? '轉帳' : (t.note.isEmpty ? '未分類' : t.note)),
       ),
-      subtitle: Text(
-        [
-          t.date,
-          if (t.note.isNotEmpty &&
-              (categoryName?.isNotEmpty == true ||
-                  t.catName?.isNotEmpty == true))
-            t.note,
-        ].join('　'),
+      subtitle: Row(
+        children: [
+          Expanded(
+            child: Text(
+              [
+                t.date,
+                if (t.note.isNotEmpty &&
+                    (categoryName?.isNotEmpty == true ||
+                        t.catName?.isNotEmpty == true))
+                  t.note,
+              ].join('　'),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          if (t.attachmentCount > 0) ...[
+            const SizedBox(width: 6),
+            Icon(
+              Icons.image_outlined,
+              size: 14,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+            const SizedBox(width: 2),
+            Text(
+              '${t.attachmentCount}',
+              style: TextStyle(
+                fontSize: 12,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+            ),
+          ],
+        ],
       ),
       trailing: Text(
         sign + money(t.amount, t.currency),

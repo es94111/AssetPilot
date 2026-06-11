@@ -7,6 +7,9 @@ const PROJECT_ROOT = __dirname;
 const nextConfig: NextConfig = {
   output: 'standalone',
   outputFileTracingRoot: PROJECT_ROOT,
+  // sharp 為原生套件（含平台專屬 .node 二進位），交由 Node 於 runtime require，
+  // 不要讓 webpack/Turbopack 打包；standalone 由 Dockerfile 手動複製其 node_modules。
+  serverExternalPackages: ['sharp'],
   allowedDevOrigins: ['127.0.0.1', 'localhost'],
   distDir: 'build', // ASCII-only path
   // 保留 JS/TS 混用（由 tsconfig 的 allowJs 控制），但 build 需執行完整型別檢查

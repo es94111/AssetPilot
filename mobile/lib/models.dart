@@ -115,6 +115,7 @@ class Txn {
   final String toAccountId;
   final String note;
   final String? catName;
+  final int attachmentCount; // 照片附件數量
 
   Txn({
     required this.id,
@@ -127,6 +128,7 @@ class Txn {
     required this.toAccountId,
     required this.note,
     required this.catName,
+    this.attachmentCount = 0,
   });
 
   factory Txn.fromJson(Map<String, dynamic> j) => Txn(
@@ -154,6 +156,8 @@ class Txn {
                 j['categoryName'] ??
                 (j['category'] is Map ? j['category']['name'] : null),
           ),
+    attachmentCount: _asNum(j['attachmentCount'] ?? j['attachment_count'])
+        .toInt(),
   );
 }
 

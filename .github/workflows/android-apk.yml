@@ -76,8 +76,8 @@ jobs:
 
       # App Bundle (.aab) for Google Play Console uploads. Signed with the same
       # release key as the APK (key.properties written above). Uploaded as a
-      # workflow artifact for manual upload to Play — unlike the APK it is not
-      # published to S3/OTA.
+      # workflow artifact for manual upload to Play, and also published to S3
+      # (versioned + latest) alongside the APK below.
       - name: Build release App Bundle (AAB)
         working-directory: mobile
         run: >-
@@ -107,6 +107,7 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: ${{ secrets.S3_REGION }}
           APK_PATH: mobile/build/app/outputs/flutter-apk/app-release.apk
+          AAB_PATH: mobile/build/app/outputs/bundle/release/app-release.aab
           VERSION: ${{ steps.version.outputs.version }}
         run: |
           set -euo pipefail
@@ -124,10 +125,16 @@ jobs:
 
           APK_KEY="downloads/assetpilot-v${VERSION}.apk"
           APK_URL="${ENDPOINT%/}/${S3_BUCKET}/${APK_KEY}"
+          AAB_KEY="downloads/assetpilot-v${VERSION}.aab"
+          AAB_URL="${ENDPOINT%/}/${S3_BUCKET}/${AAB_KEY}"
 
           # Versioned + stable "latest" copies of the APK.
           aws s3 cp "$APK_PATH" "s3://${S3_BUCKET}/${APK_KEY}" --endpoint-url "$ENDPOINT"
           aws s3 cp "$APK_PATH" "s3://${S3_BUCKET}/downloads/assetpilot-latest.apk" --endpoint-url "$ENDPOINT"
+
+          # Versioned + stable "latest" copies of the App Bundle (.aab).
+          aws s3 cp "$AAB_PATH" "s3://${S3_BUCKET}/${AAB_KEY}" --endpoint-url "$ENDPOINT"
+          aws s3 cp "$AAB_PATH" "s3://${S3_BUCKET}/downloads/assetpilot-latest.aab" --endpoint-url "$ENDPOINT"
 
           # Manifest read by /api/app/version for the in-app update prompt.
           cat > app-version.json <<EOF
@@ -135,6 +142,8 @@ jobs:
             "version": "${VERSION}",
             "apkUrl": "${APK_URL}",
             "apkFile": "assetpilot-v${VERSION}.apk",
+            "aabUrl": "${AAB_URL}",
+            "aabFile": "assetpilot-v${VERSION}.aab",
             "buildNumber": ${{ github.run_number }},
             "releasedAt": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
           }

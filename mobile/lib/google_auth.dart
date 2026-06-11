@@ -56,9 +56,12 @@ class GoogleAuth {
     final sub = appLinks.uriLinkStream.listen(completeIfCallback);
 
     try {
+      // 用 in-app 瀏覽器分頁（Android Custom Tab）開授權頁，登入完成後可由
+      // closeInAppWebView() 主動關閉；外部瀏覽器（externalApplication）無法被關閉，
+      // 會在導回 App 後殘留。
       final launched = await launchUrl(
         authUrl,
-        mode: LaunchMode.externalApplication,
+        mode: LaunchMode.inAppBrowserView,
       );
       if (!launched) {
         throw ApiException(0, '無法開啟瀏覽器進行 Google 登入');
@@ -91,6 +94,8 @@ class GoogleAuth {
       );
     } finally {
       await sub.cancel();
+      // 收到回呼導回 App 後，關閉殘留的 in-app 瀏覽器分頁（未開啟時為 no-op）。
+      await closeInAppWebView();
     }
   }
 }

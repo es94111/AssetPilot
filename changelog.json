@@ -1,6 +1,22 @@
 {
-  "currentVersion": "4.61.1",
+  "currentVersion": "4.61.2",
   "releases": [
+    {
+      "version": "4.61.2",
+      "date": "2026-06-11",
+      "title": "行動版 Google／LINE 登入完成後自動關閉登入網頁",
+      "type": "improved",
+      "changes": [
+        {
+          "tag": "improved",
+          "text": "行動版使用 Google 或 LINE 登入時，授權頁改以 App 內建的瀏覽器分頁開啟，登入完成導回 App 後會自動關閉，不再殘留一個開著的網頁需要手動關掉。"
+        },
+        {
+          "tag": "fixed",
+          "text": "一併修正 LINE 登入在登出後再次登入時可能出現「LINE 登入狀態不符，請重試」的問題，現在登出後可正常再次使用 LINE 登入。"
+        }
+      ]
+    },
     {
       "version": "4.61.1",
       "date": "2026-06-11",

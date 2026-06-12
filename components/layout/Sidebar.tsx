@@ -9,47 +9,49 @@ import {
 } from 'lucide-react';
 import { useState, type ElementType } from 'react';
 import { useTheme, type Theme } from '@/hooks/useTheme';
+import { useT } from '@/components/i18n/I18nProvider';
 import Modal from '@/components/ui/Modal';
 
+// label 以譯文鍵（labelKey）表示，於 render 時用 t() 解析。
 const NAV_SECTIONS = [
   {
-    label: '財務管理',
+    labelKey: 'nav.sections.finance',
     items: [
-      { path: '/dashboard',            label: '儀表板',    icon: LayoutDashboard },
-      { path: '/finance/transactions', label: '交易記錄',  icon: Receipt },
-      { path: '/finance/reports',      label: '統計報表',  icon: ChartBar },
-      { path: '/finance/budget',       label: '預算管理',  icon: Wallet },
-      { path: '/finance/accounts',     label: '帳戶管理',  icon: Building2 },
-      { path: '/finance/categories',   label: '分類管理',  icon: Tags },
-      { path: '/finance/recurring',    label: '固定收支',  icon: Repeat },
+      { path: '/dashboard',            labelKey: 'nav.dashboard',          icon: LayoutDashboard },
+      { path: '/finance/transactions', labelKey: 'nav.transactions',       icon: Receipt },
+      { path: '/finance/reports',      labelKey: 'nav.reports',            icon: ChartBar },
+      { path: '/finance/budget',       labelKey: 'nav.budget',             icon: Wallet },
+      { path: '/finance/accounts',     labelKey: 'nav.accounts',           icon: Building2 },
+      { path: '/finance/categories',   labelKey: 'nav.categories',         icon: Tags },
+      { path: '/finance/recurring',    labelKey: 'nav.recurring',          icon: Repeat },
     ],
   },
   {
-    label: '股票投資',
+    labelKey: 'nav.sections.stocks',
     items: [
-      { path: '/stocks/portfolio',     label: '持股總覽',      icon: Briefcase },
-      { path: '/stocks/transactions',  label: '股票交易紀錄',  icon: TrendingUp },
-      { path: '/stocks/dividends',     label: '股利紀錄',      icon: Coins },
-      { path: '/stocks/realized',      label: '實現損益',      icon: BarChart3 },
-      { path: '/stocks/settings',      label: '股票設定',      icon: Settings2 },
+      { path: '/stocks/portfolio',     labelKey: 'nav.stocksPortfolio',    icon: Briefcase },
+      { path: '/stocks/transactions',  labelKey: 'nav.stocksTransactions', icon: TrendingUp },
+      { path: '/stocks/dividends',     labelKey: 'nav.stocksDividends',    icon: Coins },
+      { path: '/stocks/realized',      labelKey: 'nav.stocksRealized',     icon: BarChart3 },
+      { path: '/stocks/settings',      labelKey: 'nav.stocksSettings',     icon: Settings2 },
     ],
   },
   {
-    label: '系統設定',
+    labelKey: 'nav.sections.system',
     adminOnly: false,
     items: [
-      { path: '/settings/export',  label: '資料匯出匯入', icon: Database },
-      { path: '/settings/account', label: '帳號設定',     icon: User },
-      { path: '/api-credits',      label: 'API 授權',     icon: Key },
-      { path: '/settings/admin',   label: '管理員',       icon: Shield, requireAdmin: true },
+      { path: '/settings/export',  labelKey: 'nav.exportImport', icon: Database },
+      { path: '/settings/account', labelKey: 'nav.account',      icon: User },
+      { path: '/api-credits',      labelKey: 'nav.apiCredits',   icon: Key },
+      { path: '/settings/admin',   labelKey: 'nav.admin',        icon: Shield, requireAdmin: true },
     ],
   },
 ];
 
-const THEME_OPTIONS: { value: Theme; icon: ElementType; label: string }[] = [
-  { value: 'light', icon: Sun, label: '亮色' },
-  { value: 'system', icon: Monitor, label: '系統' },
-  { value: 'dark', icon: Moon, label: '暗色' },
+const THEME_OPTIONS: { value: Theme; icon: ElementType; labelKey: string }[] = [
+  { value: 'light', icon: Sun, labelKey: 'shell.theme.light' },
+  { value: 'system', icon: Monitor, labelKey: 'shell.theme.system' },
+  { value: 'dark', icon: Moon, labelKey: 'shell.theme.dark' },
 ];
 
 type ChangelogItem = {
@@ -77,6 +79,7 @@ type ChangelogData = {
 export default function Sidebar({ user, open, onClose }: { user: any; open?: boolean; onClose?: () => void }) {
   const pathname = usePathname();
   const router = useRouter();
+  const { t } = useT();
   const { theme, setTheme } = useTheme();
   const [changelogOpen, setChangelogOpen] = useState(false);
   const [changelog, setChangelog] = useState<ChangelogData | null>(null);
@@ -103,17 +106,17 @@ export default function Sidebar({ user, open, onClose }: { user: any; open?: boo
     setChangelogLoading(true);
     try {
       const resp = await fetch('/api/changelog', { cache: 'no-store' });
-      if (!resp.ok) throw new Error('讀取版本資訊失敗');
+      if (!resp.ok) throw new Error(t('shell.changelog.loadFailed'));
       setChangelog(await resp.json());
     } catch (error) {
-      setChangelogError(error instanceof Error ? error.message : '讀取版本資訊失敗');
+      setChangelogError(error instanceof Error ? error.message : t('shell.changelog.loadFailed'));
     } finally {
       setChangelogLoading(false);
     }
   }
 
-  const currentVersion = changelog?.localCurrentVersion || changelog?.currentVersion || '未知';
-  const latestVersion = changelog?.latestVersion || changelog?.currentVersion || '未知';
+  const currentVersion = changelog?.localCurrentVersion || changelog?.currentVersion || t('shell.changelog.unknownVersion');
+  const latestVersion = changelog?.latestVersion || changelog?.currentVersion || t('shell.changelog.unknownVersion');
   const releasesToShow = (
     changelog?.availableReleases?.length
       ? changelog.availableReleases
@@ -139,9 +142,9 @@ export default function Sidebar({ user, open, onClose }: { user: any; open?: boo
             const visibleItems = section.items.filter(item => !(item as any).requireAdmin || user?.isAdmin);
             if (visibleItems.length === 0) return null;
             return (
-              <div key={section.label}>
+              <div key={section.labelKey}>
                 <p className="mb-1.5 px-2 text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>
-                  {section.label}
+                  {t(section.labelKey)}
                 </p>
                 <div className="space-y-0.5">
                   {visibleItems.map(item => {
@@ -160,7 +163,7 @@ export default function Sidebar({ user, open, onClose }: { user: any; open?: boo
                         onMouseLeave={e => { if (!active) (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
                       >
                         <Icon size={17} strokeWidth={active ? 2.2 : 1.8} />
-                        <span>{item.label}</span>
+                        <span>{t(item.labelKey)}</span>
                         {active && (
                           <span className="ml-auto h-1.5 w-1.5 rounded-full" style={{ background: 'var(--primary)' }} />
                         )}
@@ -184,7 +187,7 @@ export default function Sidebar({ user, open, onClose }: { user: any; open?: boo
             </div>
             <div className="min-w-0">
               <p className="truncate text-sm font-medium" style={{ color: 'var(--text)' }}>
-                {user?.displayName || '使用者'}
+                {user?.displayName || t('shell.fallbackUser')}
               </p>
               <p className="truncate text-xs" style={{ color: 'var(--text-muted)' }}>
                 {user?.email || ''}
@@ -192,11 +195,11 @@ export default function Sidebar({ user, open, onClose }: { user: any; open?: boo
             </div>
           </div>
           <div className="mb-1 flex items-center justify-between rounded-lg px-3 py-1.5" style={{ background: 'var(--border)' }}>
-            {THEME_OPTIONS.map(({ value, icon: Icon, label }) => (
+            {THEME_OPTIONS.map(({ value, icon: Icon, labelKey }) => (
               <button
                 key={value}
                 onClick={() => setTheme(value)}
-                title={label}
+                title={t(labelKey)}
                 className="flex flex-1 items-center justify-center gap-1.5 rounded-md py-1.5 text-xs font-medium transition-colors duration-150 cursor-pointer"
                 style={theme === value
                   ? { background: 'var(--surface)', color: 'var(--primary)', boxShadow: 'var(--shadow)' }
@@ -204,7 +207,7 @@ export default function Sidebar({ user, open, onClose }: { user: any; open?: boo
                 }
               >
                 <Icon size={14} strokeWidth={theme === value ? 2.2 : 1.8} />
-                <span>{label}</span>
+                <span>{t(labelKey)}</span>
               </button>
             ))}
           </div>
@@ -216,7 +219,7 @@ export default function Sidebar({ user, open, onClose }: { user: any; open?: boo
             onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
           >
             <Info size={17} strokeWidth={1.8} />
-            <span>版本資訊</span>
+            <span>{t('shell.versionInfo')}</span>
           </button>
           <button
             onClick={handleLogout}
@@ -226,7 +229,7 @@ export default function Sidebar({ user, open, onClose }: { user: any; open?: boo
             onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
           >
             <LogOut size={17} strokeWidth={1.8} />
-            <span>登出</span>
+            <span>{t('shell.logout')}</span>
           </button>
         </div>
       </aside>
@@ -234,27 +237,27 @@ export default function Sidebar({ user, open, onClose }: { user: any; open?: boo
       <Modal
         open={changelogOpen}
         onClose={() => setChangelogOpen(false)}
-        title="版本資訊"
+        title={t('shell.versionInfo')}
         className="max-h-[85vh] overflow-hidden"
       >
         {changelogLoading ? (
-          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>正在讀取版本資訊...</p>
+          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>{t('shell.changelog.loading')}</p>
         ) : changelogError ? (
           <p className="text-sm" style={{ color: 'var(--danger)' }}>{changelogError}</p>
         ) : (
           <div className="max-h-[65vh] overflow-y-auto pr-1">
             <div className="mb-4 grid gap-2 sm:grid-cols-2">
               <div className="rounded-lg px-3 py-2" style={{ background: 'var(--border)' }}>
-                <p className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>目前版本</p>
+                <p className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>{t('shell.changelog.currentVersion')}</p>
                 <p className="text-lg font-semibold" style={{ color: 'var(--text)' }}>{currentVersion}</p>
               </div>
               <div className="rounded-lg px-3 py-2" style={{ background: 'var(--primary-light-bg)', color: 'var(--primary)' }}>
-                <p className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>可更新版本</p>
-                <p className="text-lg font-semibold">{changelog?.updateAvailable ? latestVersion : '已是最新版本'}</p>
+                <p className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>{t('shell.changelog.updatableVersion')}</p>
+                <p className="text-lg font-semibold">{changelog?.updateAvailable ? latestVersion : t('shell.changelog.upToDate')}</p>
               </div>
             </div>
             <p className="mb-3 text-sm font-medium" style={{ color: 'var(--text)' }}>
-              {changelog?.updateAvailable ? '可更新內容' : '最近更新內容'}
+              {changelog?.updateAvailable ? t('shell.changelog.updatableContent') : t('shell.changelog.recentContent')}
             </p>
             <div className="space-y-4">
               {releasesToShow.map(release => (

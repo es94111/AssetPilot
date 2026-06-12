@@ -6,6 +6,7 @@ import Image from 'next/image';
 import Script from 'next/script';
 import { client as webauthnClient } from '@passwordless-id/webauthn';
 import { Eye, EyeOff } from 'lucide-react';
+import { useT } from '@/components/i18n/I18nProvider';
 
 declare global {
   interface Window {
@@ -30,6 +31,7 @@ function shouldDisableLineAutoLogin() {
 
 export default function LoginPage() {
   const router = useRouter();
+  const { t } = useT();
   const [form, setForm] = useState<'login' | 'register'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -90,7 +92,7 @@ export default function LoginPage() {
     e.preventDefault();
     setError('');
     if (turnstileEnabled && !turnstileToken) {
-      setError('請先完成真人驗證');
+      setError(t('auth.errors.turnstileRequired'));
       return;
     }
     setLoading(true);
@@ -101,7 +103,7 @@ export default function LoginPage() {
         body: JSON.stringify({ email, password, turnstileToken }),
       });
       const data = await r.json();
-      if (!r.ok) throw new Error(data.error || '登入失敗');
+      if (!r.ok) throw new Error(data.error || t('auth.errors.loginFailed'));
       router.push('/dashboard');
       router.refresh();
     } catch (e: any) { setError(e.message); }
@@ -122,7 +124,7 @@ export default function LoginPage() {
         body: JSON.stringify({ email: regEmail, displayName: regName, password: regPassword }),
       });
       const data = await r.json();
-      if (!r.ok) throw new Error(data.error || '註冊失敗');
+      if (!r.ok) throw new Error(data.error || t('auth.errors.registerFailed'));
       router.push('/dashboard');
       router.refresh();
     } catch (e: any) { setRegError(e.message); }
@@ -131,15 +133,15 @@ export default function LoginPage() {
 
   async function handleGoogleLogin() {
     setError('');
-    if (!config?.googleClientId || !config?.googleCodeFlow) { setError('Google 登入尚未設定完成'); return; }
-    if (!window.google?.accounts?.oauth2?.initCodeClient) { setError('Google 登入元件尚未載入'); return; }
+    if (!config?.googleClientId || !config?.googleCodeFlow) { setError(t('auth.errors.googleNotConfigured')); return; }
+    if (!window.google?.accounts?.oauth2?.initCodeClient) { setError(t('auth.errors.googleComponentNotLoaded')); return; }
     setGoogleLoading(true);
     try {
       const redirectUri = window.location.origin;
       const stateRes = await fetch('/api/auth/google/state', { cache: 'no-store' });
       const stateData = await stateRes.json().catch(() => ({}));
       const state = stateData?.state;
-      if (!state) throw new Error('無法建立 Google 登入狀態');
+      if (!state) throw new Error(t('auth.errors.googleStateFailed'));
       const client = window.google.accounts.oauth2.initCodeClient({
         client_id: config.googleClientId,
         scope: 'openid email profile',
@@ -148,40 +150,40 @@ export default function LoginPage() {
         state,
         callback: async (response: any) => {
           try {
-            if (!response?.code) throw new Error('未收到 Google 授權碼');
+            if (!response?.code) throw new Error(t('auth.errors.googleNoCode'));
             const res = await fetch('/api/auth/google', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ code: response.code, redirect_uri: redirectUri, state }),
             });
             const data = await res.json().catch(() => ({}));
-            if (!res.ok) throw new Error(data.error || 'Google 登入失敗');
+            if (!res.ok) throw new Error(data.error || t('auth.errors.googleFailed'));
             router.push('/dashboard');
             router.refresh();
           } catch (e: any) {
-            setError(e.message || 'Google 登入失敗');
+            setError(e.message || t('auth.errors.googleFailed'));
           } finally { setGoogleLoading(false); }
         },
         error_callback: (err: any) => {
-          setError(err?.message || 'Google 登入已取消');
+          setError(err?.message || t('auth.errors.googleCancelled'));
           setGoogleLoading(false);
         },
       });
       client.requestCode();
     } catch (e: any) {
-      setError(e.message || 'Google 登入失敗');
+      setError(e.message || t('auth.errors.googleFailed'));
       setGoogleLoading(false);
     }
   }
 
   async function handlePasskeyLogin() {
     setError('');
-    if (!webauthnClient.isAvailable()) { setError('此瀏覽器不支援 Passkey'); return; }
+    if (!webauthnClient.isAvailable()) { setError(t('auth.errors.passkeyUnsupported')); return; }
     setPasskeyLoading(true);
     try {
       const challengeRes = await fetch('/api/auth/passkey/challenge', { cache: 'no-store' });
       const { key, challenge, error: challengeError } = await challengeRes.json().catch(() => ({}));
-      if (!challengeRes.ok || !key || !challenge) throw new Error(challengeError || '無法建立 Passkey 登入挑戰');
+      if (!challengeRes.ok || !key || !challenge) throw new Error(challengeError || t('auth.errors.passkeyChallengeFailed'));
 
       const authentication = await webauthnClient.authenticate({
         challenge,
@@ -194,16 +196,16 @@ export default function LoginPage() {
         body: JSON.stringify({ authentication, challengeKey: key }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || 'Passkey 登入失敗');
+      if (!res.ok) throw new Error(data.error || t('auth.errors.passkeyFailed'));
       router.push('/dashboard');
       router.refresh();
-    } catch (e: any) { setError(e.message || 'Passkey 登入失敗'); }
+    } catch (e: any) { setError(e.message || t('auth.errors.passkeyFailed')); }
     finally { setPasskeyLoading(false); }
   }
 
   async function handleLineLogin() {
     setError('');
-    if (!config?.lineChannelId || !config?.lineCodeFlow) { setError('LINE 登入尚未設定完成'); return; }
+    if (!config?.lineChannelId || !config?.lineCodeFlow) { setError(t('auth.errors.lineNotConfigured')); return; }
     setLineLoading(true);
     try {
       const params = new URLSearchParams({
@@ -213,7 +215,7 @@ export default function LoginPage() {
       if (shouldDisableLineAutoLogin()) params.set('disableAutoLogin', '1');
       window.location.assign(`/api/auth/line/authorize?${params.toString()}`);
     } catch (e: any) {
-      setError(e.message || 'LINE 登入失敗');
+      setError(e.message || t('auth.errors.lineFailed'));
       setLineLoading(false);
     }
   }
@@ -246,7 +248,7 @@ export default function LoginPage() {
           </div>
           <h1 className="login-title">AssetPilot</h1>
           <p className="login-subtitle">
-            {form === 'login' ? '歡迎回來，請登入您的帳號' : '建立您的帳號，開始記帳'}
+            {form === 'login' ? t('auth.subtitleLogin') : t('auth.subtitleRegister')}
           </p>
         </div>
 
@@ -257,13 +259,13 @@ export default function LoginPage() {
               className={`login-tab ${form === 'login' ? 'login-tab-active' : ''}`}
               onClick={() => { setForm('login'); setError(''); }}
             >
-              登入
+              {t('auth.loginTab')}
             </button>
             <button
               className={`login-tab ${form === 'register' ? 'login-tab-active' : ''}`}
               onClick={() => { setForm('register'); setRegError(''); }}
             >
-              註冊
+              {t('auth.registerTab')}
             </button>
           </div>
         )}
@@ -271,7 +273,7 @@ export default function LoginPage() {
         {form === 'login' && (
           <form className="login-form" onSubmit={handleLogin}>
             <div className="login-field">
-              <label className="login-label">電子信箱</label>
+              <label className="login-label">{t('auth.emailLabel')}</label>
               <input
                 type="email" required autoComplete="email"
                 className="login-input"
@@ -280,39 +282,39 @@ export default function LoginPage() {
               />
             </div>
             <div className="login-field">
-              <label className="login-label">密碼</label>
+              <label className="login-label">{t('auth.passwordLabel')}</label>
               <div className="login-input-wrap">
                 <input
                   type={showPw ? 'text' : 'password'} required autoComplete="current-password"
                   className="login-input login-input-pw"
-                  placeholder="請輸入密碼"
+                  placeholder={t('auth.passwordPlaceholder')}
                   value={password} onChange={e => setPassword(e.target.value)}
                 />
-                <button type="button" className="login-pw-toggle" onClick={() => setShowPw(v => !v)} aria-label="切換密碼顯示">
+                <button type="button" className="login-pw-toggle" onClick={() => setShowPw(v => !v)} aria-label={t('auth.togglePassword')}>
                   {showPw ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
             </div>
             {turnstileEnabled && (
-              <div className="login-turnstile" ref={turnstileRef} aria-label="Cloudflare Turnstile 真人驗證" />
+              <div className="login-turnstile" ref={turnstileRef} aria-label={t('auth.turnstileAria')} />
             )}
             {error && <p className="login-error" role="alert">{error}</p>}
             <button type="submit" className="login-btn-primary" disabled={loading || (turnstileEnabled && !turnstileToken)}>
-              {loading ? '登入中…' : '登入'}
+              {loading ? t('auth.loggingIn') : t('auth.loginButton')}
             </button>
             <button type="button" className="login-btn-google" onClick={handlePasskeyLogin} disabled={passkeyLoading}>
-              {passkeyLoading ? 'Passkey 驗證中…' : '使用 Passkey 登入'}
+              {passkeyLoading ? t('auth.passkeyVerifying') : t('auth.passkeyButton')}
             </button>
             {googleEnabled && (
               <button type="button" className="login-btn-google" onClick={handleGoogleLogin} disabled={googleLoading}>
                 <GoogleIcon />
-                {googleLoading ? 'Google 驗證中…' : '使用 Google 登入'}
+                {googleLoading ? t('auth.googleVerifying') : t('auth.googleButton')}
               </button>
             )}
             {lineEnabled && (
               <button type="button" className="login-btn-google" onClick={handleLineLogin} disabled={lineLoading}>
                 <LineIcon />
-                {lineLoading ? 'LINE 驗證中…' : '使用 LINE 登入'}
+                {lineLoading ? t('auth.lineVerifying') : t('auth.lineButton')}
               </button>
             )}
           </form>
@@ -321,7 +323,7 @@ export default function LoginPage() {
         {form === 'register' && (
           <form className="login-form" onSubmit={handleRegister}>
             <div className="login-field">
-              <label className="login-label">電子信箱</label>
+              <label className="login-label">{t('auth.emailLabel')}</label>
               <input
                 type="email" required autoComplete="email"
                 className="login-input"
@@ -330,31 +332,31 @@ export default function LoginPage() {
               />
             </div>
             <div className="login-field">
-              <label className="login-label">顯示名稱</label>
+              <label className="login-label">{t('auth.displayNameLabel')}</label>
               <input
                 type="text" required maxLength={50} autoComplete="name"
                 className="login-input"
-                placeholder="您的暱稱"
+                placeholder={t('auth.displayNamePlaceholder')}
                 value={regName} onChange={e => setRegName(e.target.value)}
               />
             </div>
             <div className="login-field">
-              <label className="login-label">密碼</label>
+              <label className="login-label">{t('auth.passwordLabel')}</label>
               <div className="login-input-wrap">
                 <input
                   type={showRegPw ? 'text' : 'password'} required minLength={8} autoComplete="new-password"
                   className="login-input login-input-pw"
-                  placeholder="至少 8 位，含大小寫英文與數字"
+                  placeholder={t('auth.registerPasswordPlaceholder')}
                   value={regPassword} onChange={e => setRegPassword(e.target.value)}
                 />
-                <button type="button" className="login-pw-toggle" onClick={() => setShowRegPw(v => !v)} aria-label="切換密碼顯示">
+                <button type="button" className="login-pw-toggle" onClick={() => setShowRegPw(v => !v)} aria-label={t('auth.togglePassword')}>
                   {showRegPw ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
             </div>
             {regError && <p className="login-error" role="alert">{regError}</p>}
             <button type="submit" className="login-btn-primary" disabled={loading}>
-              {loading ? '註冊中…' : '立即註冊'}
+              {loading ? t('auth.registering') : t('auth.registerSubmit')}
             </button>
           </form>
         )}

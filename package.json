@@ -6,10 +6,12 @@
     "dev": "next dev --webpack",
     "build": "next build --webpack",
     "start": "next start",
-    "test": "npm run test:tz && npm run check:iso",
+    "test": "npm run test:tz && npm run test:photo-crypto && npm run check:iso",
     "test:tz": "node tests/lib/userTime.test.ts",
+    "test:photo-crypto": "node tests/lib/photoCryptoCore.test.ts",
     "check:iso": "node tools/check-iso-utc-format.ts",
-    "check:sla": "node tools/sla-monthly-report.ts"
+    "check:sla": "node tools/sla-monthly-report.ts",
+    "rotate:photo-key": "node tools/rotate-photo-master-key.ts"
   },
   "engines": {
     "node": ">=24.0.0 <25"

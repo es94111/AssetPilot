@@ -392,6 +392,15 @@ async function _runMigrations(): Promise<void> {
   alterIgnore("CREATE INDEX IF NOT EXISTS idx_tx_attachments_tx ON transaction_attachments(user_id, transaction_id, created_at)");
   alterIgnore("ALTER TABLE user_settings ADD COLUMN default_currency TEXT DEFAULT 'TWD'");
 
+  // 交易憑證照片的每使用者資料金鑰（DEK），已被 PHOTO_MASTER_KEY 包覆。見 lib/photoCrypto.ts。
+  db.run(`CREATE TABLE IF NOT EXISTS user_photo_keys (
+    user_id TEXT PRIMARY KEY,
+    wrapped_dek TEXT NOT NULL,
+    iv TEXT NOT NULL,
+    tag TEXT NOT NULL,
+    created_at INTEGER NOT NULL
+  )`);
+
   db.run(`CREATE TABLE IF NOT EXISTS line_bot_states (
     line_user_id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL,

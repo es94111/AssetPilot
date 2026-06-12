@@ -1,6 +1,16 @@
 {
-  "currentVersion": "4.63.0",
+  "currentVersion": "4.64.0",
   "releases": [
+    {
+      "version": "4.64.0",
+      "date": "2026-06-12",
+      "title": "LINE 登入自動開啟 LINE App + 修正版本資訊頁更新內容顯示",
+      "type": "improved",
+      "changes": [
+        { "tag": "improved", "text": "行動版 App 使用 LINE 登入時，若手機已安裝並登入 LINE App，現在會直接開啟 LINE App 一鍵授權，不必再於網頁輸入 LINE 帳號密碼；未安裝 LINE App 的手機則自動改用原本的網頁登入，登入更快也更順手。" },
+        { "tag": "fixed", "text": "修正 App「版本資訊」頁在部分情況下顯示不出可更新版本與更新說明（內容空白）的問題。現在能正確顯示目前版本、是否有新版可更新，以及各版本的更新內容。" }
+      ]
+    },
     {
       "version": "4.63.0",
       "date": "2026-06-12",

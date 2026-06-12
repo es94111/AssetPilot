@@ -22,6 +22,9 @@ class LineAuth {
       throw ApiException(0, '無法建立 LINE 登入狀態');
     }
 
+    // 不帶 disable_auto_login（預設 false）→ 啟用 LINE auto-login：裝置上已登入
+    // LINE App 時，授權頁會直接喚起 LINE App 一鍵授權，免輸入帳密；未安裝 LINE App
+    // 才 fallback 回網頁登入。
     final authUrl = Uri.https('access.line.me', '/oauth2/v2.1/authorize', {
       'response_type': 'code',
       'client_id': channelId,
@@ -29,7 +32,6 @@ class LineAuth {
       'state': state,
       'scope': 'openid profile email',
       'nonce': nonce,
-      'disable_auto_login': 'true',
     });
 
     final appLinks = AppLinks();

@@ -43,7 +43,10 @@ function loadReleaseNotes() {
   for (const language of ['zh-TW', 'en-US']) {
     const file = join(whatsNewDir, `whatsnew-${language}`);
     if (existsSync(file)) {
-      const text = readFileSync(file, 'utf8').trim();
+      // Google Play rejects release notes longer than 500 chars per language;
+      // trim() also drops the trailing newline that would otherwise count.
+      let text = readFileSync(file, 'utf8').trim();
+      if (text.length > 500) text = `${text.slice(0, 499)}…`;
       if (text) notes.push({ language, text });
     }
   }

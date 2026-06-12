@@ -21,6 +21,8 @@ function deleteUserData(userId: string) {
     'transactions', 'budgets', 'recurring', 'accounts', 'categories',
     'exchange_rates', 'exchange_rate_settings', 'stock_settings',
     'passkey_credentials',
+    // 刪除每使用者照片金鑰即「密碼學銷毀」其全部加密照片（殘留密文無法再解）。
+    'user_photo_keys',
   ];
   try { db.run('BEGIN'); } catch (_) {}
   businessTables.forEach((t) => {

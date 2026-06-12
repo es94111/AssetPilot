@@ -116,6 +116,9 @@ export default function AdminClient(_props: { user?: any } = {}) {
   const [transactionPhotoMaxMb, setTransactionPhotoMaxMb] = useState('');
   const [photoCompressing, setPhotoCompressing] = useState(false);
   const [photoCompressMsg, setPhotoCompressMsg] = useState('');
+  const [photoEncryptionEnabled, setPhotoEncryptionEnabled] = useState(false);
+  const [photoEncrypting, setPhotoEncrypting] = useState(false);
+  const [photoEncryptMsg, setPhotoEncryptMsg] = useState('');
   const [stockAutoUpdateEnabled, setStockAutoUpdateEnabled] = useState(true);
   const [stockAutoUpdateIntervalMin, setStockAutoUpdateIntervalMin] = useState('10');
   const [stockAutoUpdateLastRun, setStockAutoUpdateLastRun] = useState(0);
@@ -154,7 +157,7 @@ export default function AdminClient(_props: { user?: any } = {}) {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [settings, userList, timeInfo, providers, certs, scheduleList, expenseReminderList, adminLogs, userLogs, retention, auditResp] = await Promise.all([
+      const [settings, userList, timeInfo, providers, certs, scheduleList, expenseReminderList, adminLogs, userLogs, retention, auditResp, photoStorage] = await Promise.all([
         apiGet('/api/admin/system-settings'),
         apiGet('/api/admin/users').catch(() => []),
         apiGet('/api/admin/server-time').catch(() => null),
@@ -166,6 +169,7 @@ export default function AdminClient(_props: { user?: any } = {}) {
         apiGet('/api/admin/login-audit').catch(() => ({ logs: [] })),
         apiGet('/api/admin/data-audit/retention').catch(() => ({ retention_days: '90' })),
         apiGet('/api/admin/data-audit').catch(() => ({ data: [], total: 0 })),
+        apiGet('/api/transactions/attachments/storage').catch(() => null),
       ]);
 
       setPublicRegistration(!!settings.publicRegistration);
@@ -174,6 +178,7 @@ export default function AdminClient(_props: { user?: any } = {}) {
       setIpAllowlist(Array.isArray(settings.adminIpAllowlist) ? settings.adminIpAllowlist.join('\n') : '');
       setTransactionPhotoStorage((settings.transactionPhotoStorage as '' | 'local' | 's3') || '');
       setTransactionPhotoMaxMb(settings.transactionPhotoMaxBytes ? String(Math.round(settings.transactionPhotoMaxBytes / 1024 / 1024)) : '');
+      setPhotoEncryptionEnabled(!!photoStorage?.encryptionEnabled);
       setStockAutoUpdateEnabled(settings.stockAutoUpdateEnabled !== false);
       setStockAutoUpdateIntervalMin(String(settings.stockAutoUpdateIntervalMin || 10));
       setStockAutoUpdateLastRun(Number(settings.stockAutoUpdateLastRun) || 0);
@@ -261,6 +266,21 @@ export default function AdminClient(_props: { user?: any } = {}) {
       setPhotoCompressMsg('壓縮失敗：' + e.message);
     }
     setPhotoCompressing(false);
+  }
+
+  async function handleEncryptExistingPhotos() {
+    if (!confirm('將把所有「尚未加密」的既有交易照片就地加密（本機與 S3），並原地覆寫原檔。確定執行？')) return;
+    setPhotoEncrypting(true);
+    setPhotoEncryptMsg('');
+    try {
+      const r = await apiPost('/api/admin/transaction-photos/encrypt', {});
+      setPhotoEncryptMsg(
+        `掃描 ${r.scanned} 張，加密 ${r.encrypted} 張，已加密略過 ${r.alreadyEncrypted} 張${r.failed ? `，失敗 ${r.failed} 張` : ''}`
+      );
+    } catch (e: any) {
+      setPhotoEncryptMsg('加密失敗：' + e.message);
+    }
+    setPhotoEncrypting(false);
   }
 
   async function handleToggleAdmin(userId: string) {
@@ -623,6 +643,31 @@ export default function AdminClient(_props: { user?: any } = {}) {
                   {photoCompressMsg && <span className={`text-sm ${photoCompressMsg.includes('失敗') ? 'text-red-500' : 'text-slate-600'}`}>{photoCompressMsg}</span>}
                 </div>
                 <p className="text-xs text-slate-500 mt-1">將 S3 上尚未壓縮的交易照片重新編碼為最長邊 1600px／JPEG 82，原地覆寫以節省空間（不可復原）。資料量大時可能需數分鐘。</p>
+              </div>
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <label className="block text-sm font-medium text-slate-700">交易憑證照片加密（靜態加密）</label>
+                  {photoEncryptionEnabled ? (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                      <span className="w-1.5 h-1.5 rounded-full bg-green-500" />已啟用
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-500">
+                      <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />未啟用
+                    </span>
+                  )}
+                </div>
+                {photoEncryptionEnabled ? (
+                  <>
+                    <div className="flex items-center gap-3">
+                      <Button type="button" variant="outline" onClick={handleEncryptExistingPhotos} disabled={photoEncrypting}>{photoEncrypting ? '加密中...' : '加密既有照片'}</Button>
+                      {photoEncryptMsg && <span className={`text-sm ${photoEncryptMsg.includes('失敗') ? 'text-red-500' : 'text-slate-600'}`}>{photoEncryptMsg}</span>}
+                    </div>
+                    <p className="text-xs text-slate-500 mt-1">新上傳的照片已自動加密。此按鈕會把「尚未加密」的既有照片就地加密（本機與 S3），原地覆寫原檔。資料量大時可能需數分鐘。</p>
+                  </>
+                ) : (
+                  <p className="text-xs text-slate-500 mt-1">設定環境變數 <code className="px-1 bg-slate-100 rounded">PHOTO_MASTER_KEY</code>（<code className="px-1 bg-slate-100 rounded">openssl rand -base64 32</code>）即可啟用照片 AES-256-GCM 靜態加密。此金鑰請持久保存並備份，遺失將無法解密既有照片。</p>
+                )}
               </div>
               <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
                 <label className="flex items-center gap-2">

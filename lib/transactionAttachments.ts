@@ -3,6 +3,7 @@ import path from 'path';
 import { getDB, queryAll, queryOne, saveDB } from './db';
 import { uid } from './userDefaults';
 import { deleteS3Object, getS3Config, getS3ConfigStatus, getS3Object, joinS3Key, putS3Object } from './s3Storage';
+import { decryptPhoto, encryptPhoto, isEncryptedBlob, isPhotoEncryptionEnabled } from './photoCrypto';
 
 export type AttachmentStorage = 'local' | 's3';
 
@@ -93,6 +94,7 @@ export function getTransactionPhotoStorageStatus() {
     },
     s3,
     maxBytes: maxPhotoBytes(),
+    encryptionEnabled: isPhotoEncryptionEnabled(),
   };
 }
 
@@ -130,14 +132,16 @@ async function saveLocalPhoto(userId: string, transactionId: string, id: string,
   const dir = resolveWithin(root, userId, transactionId);
   const target = resolveWithin(root, userId, transactionId, targetName);
   await fs.promises.mkdir(dir, { recursive: true });
-  await fs.promises.writeFile(target, body);
+  // 靜態加密：啟用 PHOTO_MASTER_KEY 時寫入密文，否則原樣寫入明文（見 lib/photoCrypto.ts）。
+  await fs.promises.writeFile(target, encryptPhoto(userId, body));
   return path.relative(root, target).replace(/\\/g, '/');
 }
 
 async function saveS3Photo(userId: string, transactionId: string, id: string, filename: string, mimeType: string, body: Buffer) {
   const config = getPhotoS3Config();
   const key = joinS3Key(config.prefix, `${userId}/${transactionId}/${id}-${safeName(filename)}`);
-  const uploaded = await putS3Object(config, key, body, mimeType || 'application/octet-stream');
+  // 靜態加密：啟用時上傳密文。Content-Type 維持原圖類型以利下載命名，內容本身為密文。
+  const uploaded = await putS3Object(config, key, encryptPhoto(userId, body), mimeType || 'application/octet-stream');
   return uploaded;
 }
 
@@ -258,13 +262,14 @@ export async function compressExistingS3Photos(): Promise<CompressExistingPhotos
     }
     try {
       const response = await getS3Object(config, key);
-      const original = Buffer.from(await response.arrayBuffer());
+      // 取回的可能是密文：先解密成明文再餵給 sharp，壓縮後重新加密寫回。
+      const original = decryptPhoto(row.user_id, Buffer.from(await response.arrayBuffer()));
       const compressed = await recompressPhoto(original);
       if (!compressed) {
         result.skipped++;
         continue;
       }
-      await putS3Object(config, key, compressed, 'image/jpeg');
+      await putS3Object(config, key, encryptPhoto(row.user_id, compressed), 'image/jpeg');
       db.run(
         'UPDATE transaction_attachments SET byte_size = ?, mime_type = ? WHERE id = ?',
         [compressed.length, 'image/jpeg', row.id]
@@ -283,12 +288,69 @@ export async function compressExistingS3Photos(): Promise<CompressExistingPhotos
   return result;
 }
 
+export interface EncryptExistingPhotosResult {
+  enabled: boolean;        // PHOTO_MASTER_KEY 是否已設定（未設定則無法加密）
+  scanned: number;
+  encrypted: number;       // 本次新加密的張數
+  alreadyEncrypted: number;// 已是密文、略過
+  skipped: number;         // 無實體可處理（缺 local_path / object_key）
+  failed: number;
+  errors: Array<{ id: string; error: string }>;
+}
+
+// 批次將既有「明文」交易憑證照片就地加密（本機與 S3 皆處理），供啟用 PHOTO_MASTER_KEY
+// 後一次性升級舊資料。以 MAGIC 標頭辨識，已加密者略過；byte_size 為明文大小故不更動。
+// 直接讀原始位元組（不走 readTransactionAttachment，以免把舊明文當密文嘗試解密）。
+export async function encryptExistingPhotos(): Promise<EncryptExistingPhotosResult> {
+  const result: EncryptExistingPhotosResult = {
+    enabled: isPhotoEncryptionEnabled(),
+    scanned: 0, encrypted: 0, alreadyEncrypted: 0, skipped: 0, failed: 0, errors: [],
+  };
+  if (!result.enabled) return result; // 未設定主金鑰，呼叫端應提示先設定 PHOTO_MASTER_KEY
+
+  const rows = queryAll(
+    'SELECT * FROM transaction_attachments ORDER BY created_at ASC'
+  ) as unknown as TransactionAttachmentRow[];
+  if (rows.length === 0) return result;
+
+  const root = uploadsRoot();
+  let s3Config: ReturnType<typeof getPhotoS3Config> | null = null;
+
+  for (const row of rows) {
+    result.scanned++;
+    try {
+      if (row.storage === 'local' && row.local_path) {
+        const target = resolveWithin(root, row.local_path);
+        const stored = await fs.promises.readFile(target);
+        if (isEncryptedBlob(stored)) { result.alreadyEncrypted++; continue; }
+        await fs.promises.writeFile(target, encryptPhoto(row.user_id, stored));
+        result.encrypted++;
+      } else if (row.storage === 's3' && row.object_key) {
+        s3Config = s3Config || getPhotoS3Config();
+        const response = await getS3Object(s3Config, row.object_key);
+        const stored = Buffer.from(await response.arrayBuffer());
+        if (isEncryptedBlob(stored)) { result.alreadyEncrypted++; continue; }
+        await putS3Object(s3Config, row.object_key, encryptPhoto(row.user_id, stored), row.mime_type || 'application/octet-stream');
+        result.encrypted++;
+      } else {
+        result.skipped++;
+      }
+    } catch (e) {
+      result.failed++;
+      result.errors.push({ id: String(row.id), error: String((e as Error)?.message || e).slice(0, 200) });
+    }
+  }
+
+  return result;
+}
+
 export async function readTransactionAttachment(row: TransactionAttachmentRow): Promise<{ body: Buffer; mimeType: string; filename: string }> {
   if (row.storage === 'local') {
     const root = uploadsRoot();
     const target = resolveWithin(root, row.local_path || '');
+    const stored = await fs.promises.readFile(target);
     return {
-      body: await fs.promises.readFile(target),
+      body: decryptPhoto(row.user_id, stored),
       mimeType: row.mime_type || 'application/octet-stream',
       filename: row.filename || 'photo',
     };
@@ -297,8 +359,9 @@ export async function readTransactionAttachment(row: TransactionAttachmentRow): 
   if (row.storage === 's3') {
     const config = getPhotoS3Config();
     const response = await getS3Object(config, row.object_key || '');
+    const stored = Buffer.from(await response.arrayBuffer());
     return {
-      body: Buffer.from(await response.arrayBuffer()),
+      body: decryptPhoto(row.user_id, stored),
       mimeType: row.mime_type || response.headers.get('content-type') || 'application/octet-stream',
       filename: row.filename || 'photo',
     };

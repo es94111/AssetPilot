@@ -1,38 +1,11 @@
 import { NextResponse } from 'next/server';
-import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import { requireAuth, clearAuthCookie } from '../../../../lib/apiHelpers';
-import { getDB, queryOne, saveDB } from '../../../../lib/db';
+import { queryOne, saveDB } from '../../../../lib/db';
+import { deleteUserCompletely } from '../../../../lib/userDeletion';
 
 function normalizeEmail(email: string | number | null | undefined) {
   return String(email || '').trim().toLowerCase();
-}
-
-function createHashedEmail(email: string | number | null | undefined) {
-  return crypto.createHash('sha256').update(normalizeEmail(email)).digest('hex');
-}
-
-function deleteUserData(userId: string) {
-  const db = getDB();
-  const user = queryOne('SELECT email FROM users WHERE id = ?', [userId]);
-  const hashedEmail = user ? createHashedEmail(user.email || '') : '';
-  const businessTables = [
-    'stock_dividends', 'stock_transactions', 'stock_recurring', 'stocks',
-    'transactions', 'budgets', 'recurring', 'accounts', 'categories',
-    'exchange_rates', 'exchange_rate_settings', 'stock_settings',
-    'passkey_credentials',
-    // 刪除每使用者照片金鑰即「密碼學銷毀」其全部加密照片（殘留密文無法再解）。
-    'user_photo_keys',
-  ];
-  try { db.run('BEGIN'); } catch (_) {}
-  businessTables.forEach((t) => {
-    try { db.run(`DELETE FROM ${t} WHERE user_id = ?`, [userId]); } catch (_) {}
-  });
-  db.run('DELETE FROM login_audit_logs WHERE user_id = ?', [userId]);
-  db.run("UPDATE login_attempt_logs SET user_id = '', email = ? WHERE user_id = ? AND is_success = 0", [hashedEmail, userId]);
-  db.run('DELETE FROM login_attempt_logs WHERE user_id = ? AND is_success = 1', [userId]);
-  db.run('DELETE FROM users WHERE id = ?', [userId]);
-  try { db.run('COMMIT'); } catch (_) {}
 }
 
 export async function POST(request: Request) {
@@ -66,7 +39,7 @@ export async function POST(request: Request) {
     }
   }
 
-  deleteUserData(auth.userId);
+  await deleteUserCompletely(auth.userId);
   saveDB();
   const res = NextResponse.json({ success: true });
   clearAuthCookie(res);

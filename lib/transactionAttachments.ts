@@ -392,6 +392,45 @@ export async function deleteTransactionAttachment(userId: string, transactionId:
   return true;
 }
 
+// 刪除某使用者「全部」交易憑證照片的實體檔案（本機 + S3），不動 DB（交由呼叫端在交易內刪列）。
+// 供帳號刪除使用：確保照片不只被密碼學銷毀，連實體檔案/物件也一併移除，不殘留儲存空間。
+export async function purgeUserPhotoFiles(userId: string): Promise<{ scanned: number; s3Deleted: number; localDeleted: number; failed: number }> {
+  const result = { scanned: 0, s3Deleted: 0, localDeleted: 0, failed: 0 };
+  const rows = queryAll(
+    'SELECT * FROM transaction_attachments WHERE user_id = ?',
+    [userId]
+  ) as unknown as TransactionAttachmentRow[];
+  const root = uploadsRoot();
+  let s3Config: ReturnType<typeof getPhotoS3Config> | null = null;
+
+  for (const row of rows) {
+    result.scanned++;
+    try {
+      if (row.storage === 's3' && row.object_key) {
+        s3Config = s3Config || getPhotoS3Config();
+        await deleteS3Object(s3Config, row.object_key);
+        result.s3Deleted++;
+      } else if (row.storage === 'local' && row.local_path) {
+        const target = resolveWithin(root, row.local_path);
+        await fs.promises.unlink(target).catch(() => {});
+        result.localDeleted++;
+      }
+    } catch {
+      result.failed++;
+    }
+  }
+
+  // 收尾：移除整個使用者本機照片資料夾（含所有交易子目錄與任何殘檔）。
+  try {
+    const userDir = resolveWithin(root, userId);
+    await fs.promises.rm(userDir, { recursive: true, force: true });
+  } catch {
+    // 資料夾不存在或無法移除時忽略；個別檔案已於上方嘗試刪除。
+  }
+
+  return result;
+}
+
 export async function deleteTransactionAttachments(userId: string, transactionIds: string[]) {
   if (transactionIds.length === 0) return;
   const placeholders = transactionIds.map(() => '?').join(',');

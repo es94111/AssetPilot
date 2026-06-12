@@ -168,12 +168,15 @@ jobs:
         run: |
           set -euo pipefail
           workdir="$(mktemp -d)"
+          # Run the script from workdir so `import 'googleapis'` resolves against
+          # workdir/node_modules — Node ESM resolves bare specifiers from the
+          # importing file's directory, not the cwd.
+          cp "$GITHUB_WORKSPACE/.github/scripts/play-publish.mjs" "$workdir/play-publish.mjs"
           cd "$workdir"
           npm init -y >/dev/null 2>&1
           npm install --no-audit --no-fund googleapis@144 >/dev/null 2>&1
           printf '%s' "$PLAY_SERVICE_ACCOUNT_JSON" > sa.json
-          SA_JSON_PATH="$workdir/sa.json" \
-            node "$GITHUB_WORKSPACE/.github/scripts/play-publish.mjs"
+          SA_JSON_PATH="$workdir/sa.json" node "$workdir/play-publish.mjs"
 
       - name: Publish AAB + version manifest to S3
         if: ${{ env.S3_BUCKET != '' }}

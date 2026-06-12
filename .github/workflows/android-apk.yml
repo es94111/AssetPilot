@@ -146,7 +146,9 @@ jobs:
           name: assetpilot-aab
           path: mobile/build/app/outputs/bundle/release/app-release.aab
 
-      # Upload the .aab to Google Play Console (internal testing track).
+      # Upload the .aab to Google Play Console and assign it to BOTH the internal
+      # testing and closed testing (alpha) tracks in a single edit, then commit
+      # (closed track is sent for review automatically).
       # Runs on version tags (vX.Y.Z) and manual workflow_dispatch runs.
       # Routine pushes to main still only build/upload artifacts and S3.
       # Requires:
@@ -155,16 +157,23 @@ jobs:
       #   - The app already created on Play Console with at least one manual
       #     upload (Google requires the first AAB via the Console UI).
       #   - A signed (non-debug) build, i.e. the release keystore secret set.
-      - name: Publish to Google Play (internal track)
+      - name: Publish to Google Play (internal + alpha, auto-submit)
         if: ${{ env.SHOULD_UPLOAD_PLAY == 'true' }}
-        uses: r0adkll/upload-google-play@v1
-        with:
-          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
-          packageName: com.assetpilot.assetpilot
-          releaseFiles: mobile/build/app/outputs/bundle/release/app-release.aab
-          whatsNewDirectory: mobile/build/play-whatsnew
-          track: internal
-          status: completed
+        env:
+          PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          PACKAGE_NAME: com.assetpilot.assetpilot
+          AAB_PATH: ${{ github.workspace }}/mobile/build/app/outputs/bundle/release/app-release.aab
+          WHATSNEW_DIR: ${{ github.workspace }}/mobile/build/play-whatsnew
+          TRACKS: internal,alpha
+        run: |
+          set -euo pipefail
+          workdir="$(mktemp -d)"
+          cd "$workdir"
+          npm init -y >/dev/null 2>&1
+          npm install --no-audit --no-fund googleapis@144 >/dev/null 2>&1
+          printf '%s' "$PLAY_SERVICE_ACCOUNT_JSON" > sa.json
+          SA_JSON_PATH="$workdir/sa.json" \
+            node "$GITHUB_WORKSPACE/.github/scripts/play-publish.mjs"
 
       - name: Publish AAB + version manifest to S3
         if: ${{ env.S3_BUCKET != '' }}

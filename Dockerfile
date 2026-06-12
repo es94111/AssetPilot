@@ -45,6 +45,10 @@ COPY --from=builder --chown=nextjs:nodejs /app/build/static ./build/static
 COPY --from=builder --chown=nextjs:nodejs /app/lib ./lib
 # 手動維運指令需在 runner 映像內可用
 COPY --from=builder --chown=nextjs:nodejs /app/tools ./tools
+# /api/changelog 以 readFileSync(process.cwd()/changelog.json) 動態讀檔，standalone
+# tracing 無法發現此執行期路徑；私有 repo 又讓 raw.githubusercontent.com fallback 失效
+# (404)，故須手動複製，否則 App 版本資訊頁拿到空清單、無法顯示更新內容。
+COPY --from=builder --chown=nextjs:nodejs /app/changelog.json ./changelog.json
 # PostgreSQL runtime uses worker_threads require() to keep pg out of the edge/instrumentation bundle,
 # so Next.js standalone tracing cannot discover these packages automatically.
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/pg ./node_modules/pg

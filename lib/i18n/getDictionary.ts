@@ -13,7 +13,9 @@ type AnyRecord = Record<string, unknown>;
 /** 以 base 為骨架，用 override 覆蓋（深層）。回傳新物件，不改動 base。 */
 function deepMerge<T>(base: T, override: unknown): T {
   if (!override || typeof override !== 'object') return base;
-  const out: AnyRecord = Array.isArray(base) ? [...(base as unknown[])] as AnyRecord : { ...(base as AnyRecord) };
+  const out: AnyRecord = Array.isArray(base)
+    ? ([...(base as unknown[])] as unknown as AnyRecord)
+    : { ...(base as AnyRecord) };
   for (const [key, value] of Object.entries(override as AnyRecord)) {
     const baseVal = (base as AnyRecord)[key];
     if (baseVal && typeof baseVal === 'object' && value && typeof value === 'object') {

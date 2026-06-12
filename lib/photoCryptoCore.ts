@@ -66,7 +66,9 @@ export function wrapDek(master: Buffer, dek: Buffer): { wrapped: string; iv: str
 
 /** 用主金鑰解開被包覆的 DEK。 */
 export function unwrapDek(master: Buffer, wrapped: string, iv: string, tag: string): Buffer {
-  const decipher = crypto.createDecipheriv('aes-256-gcm', master, Buffer.from(iv, 'base64'));
+  const decipher = crypto.createDecipheriv('aes-256-gcm', master, Buffer.from(iv, 'base64'), {
+    authTagLength: TAG_LEN,
+  });
   decipher.setAuthTag(Buffer.from(tag, 'base64'));
   return Buffer.concat([decipher.update(Buffer.from(wrapped, 'base64')), decipher.final()]);
 }
@@ -84,7 +86,7 @@ export function decryptWithDek(dek: Buffer, stored: Buffer): Buffer {
   const iv = stored.subarray(MAGIC.length, MAGIC.length + IV_LEN);
   const tag = stored.subarray(MAGIC.length + IV_LEN, HEADER_LEN);
   const ciphertext = stored.subarray(HEADER_LEN);
-  const decipher = crypto.createDecipheriv('aes-256-gcm', dek, iv);
+  const decipher = crypto.createDecipheriv('aes-256-gcm', dek, iv, { authTagLength: TAG_LEN });
   decipher.setAuthTag(tag);
   return Buffer.concat([decipher.update(ciphertext), decipher.final()]);
 }

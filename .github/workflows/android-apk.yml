@@ -28,7 +28,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
@@ -141,7 +141,7 @@ jobs:
           --build-number=${{ github.run_number }}
 
       - name: Upload AAB artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: assetpilot-aab
           path: mobile/build/app/outputs/bundle/release/app-release.aab

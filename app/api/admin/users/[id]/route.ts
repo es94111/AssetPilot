@@ -1,7 +1,8 @@
 // @ts-nocheck
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '../../../../../lib/apiHelpers';
-import { getDB, queryOne, queryAll, saveDB } from '../../../../../lib/db';
+import { getDB, queryOne, saveDB } from '../../../../../lib/db';
+import { deleteUserCompletely } from '../../../../../lib/userDeletion';
 
 export async function PUT(request, { params }) {
   const auth = await requireAdmin(request);
@@ -63,28 +64,9 @@ export async function DELETE(request, { params }) {
     }
   }
 
-  const db = getDB();
-  // Delete user data from all business tables
-  db.run('DELETE FROM transactions WHERE user_id = ?', [id]);
-  db.run('DELETE FROM accounts WHERE user_id = ?', [id]);
-  db.run('DELETE FROM categories WHERE user_id = ?', [id]);
-  db.run('DELETE FROM budgets WHERE user_id = ?', [id]);
-  db.run('DELETE FROM recurring WHERE user_id = ?', [id]);
-  db.run('DELETE FROM stocks WHERE user_id = ?', [id]);
-  db.run('DELETE FROM stock_transactions WHERE user_id = ?', [id]);
-  db.run('DELETE FROM stock_dividends WHERE user_id = ?', [id]);
-  db.run('DELETE FROM stock_recurring WHERE user_id = ?', [id]);
-  db.run('DELETE FROM exchange_rates WHERE user_id = ?', [id]);
-  db.run('DELETE FROM exchange_rate_settings WHERE user_id = ?', [id]);
-  db.run('DELETE FROM user_settings WHERE user_id = ?', [id]);
-  db.run('DELETE FROM deleted_defaults WHERE user_id = ?', [id]);
-  db.run('DELETE FROM report_schedules WHERE user_id = ?', [id]);
-  db.run('DELETE FROM line_expense_reminders WHERE user_id = ?', [id]);
-  db.run('DELETE FROM login_audit_logs WHERE user_id = ?', [id]);
-  db.run('DELETE FROM login_attempt_logs WHERE user_id = ?', [id]);
-  db.run('DELETE FROM data_operation_audit_log WHERE user_id = ?', [id]);
-  db.run('DELETE FROM users WHERE id = ?', [id]);
-
+  // 完整刪除：所有 user_id 關聯資料表 + 交易憑證照片實體檔案（本機/S3）+ 全域引用。
+  // 與自助刪除帳號共用同一流程，避免漏表。
+  await deleteUserCompletely(id);
   saveDB();
 
   return NextResponse.json({ ok: true });

@@ -192,7 +192,7 @@ async function runScheduledReportNow(scheduleId, triggeredBy = '排程') {
       } else {
       try {
         const html = renderStatsEmailHtml(u.display_name, u.email, stats);
-        const subject = `${stats.month} 個人資產統計報表`;
+        const subject = stats.subject || `${stats.month} 個人資產統計報表`;
         const result = await sendStatsEmail({ to: u.email, subject, html });
         if (result) {
           sent += 1;

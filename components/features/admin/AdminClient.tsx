@@ -355,12 +355,28 @@ export default function AdminClient(_props: { user?: any } = {}) {
     }
   }
 
+  function describeRunResult(r: any): string {
+    if (!r || typeof r !== 'object') return '排程已執行';
+    const detail = Array.isArray(r.channels) && r.channels.length
+      ? r.channels.join(' / ')
+      : (r.reason || '');
+    switch (r.status) {
+      case 'completed': return `✅ 寄送成功${detail ? `：${detail}` : ''}`;
+      case 'partial': return `⚠️ 部分成功：${detail || '未知'}`;
+      case 'failed': return `❌ 寄送失敗：${detail || '未知錯誤'}`;
+      case 'skipped': return `⏭️ 已略過：${detail || '無'}`;
+      default: return detail || r.reason || r.status || '排程已執行';
+    }
+  }
+
   async function handleRunScheduleNow(id: string) {
     try {
-      await apiPost(`/api/admin/report-schedules/${id}/run-now`);
-      setScheduleMsg('排程已執行');
+      const result = await apiPost(`/api/admin/report-schedules/${id}/run-now`);
+      setScheduleMsg(describeRunResult(result));
     } catch (e: any) {
       setScheduleMsg(e.message || '立即執行失敗');
+    } finally {
+      await load();
     }
   }
 
@@ -815,6 +831,7 @@ export default function AdminClient(_props: { user?: any } = {}) {
                   <TableHead>通知</TableHead>
                   <TableHead>上次執行</TableHead>
                   <TableHead>狀態</TableHead>
+                  <TableHead>寄送結果</TableHead>
                   <TableHead>操作</TableHead>
                 </TableRow>
               </TableHeader>
@@ -832,6 +849,11 @@ export default function AdminClient(_props: { user?: any } = {}) {
                     </TableCell>
                     <TableCell>{fmtTs(schedule.lastRun)}</TableCell>
                     <TableCell>{schedule.enabled ? '啟用中' : '停用'}</TableCell>
+                    <TableCell className="max-w-[280px]">
+                      {schedule.lastSummary
+                        ? <span className="block truncate text-xs text-slate-600 dark:text-slate-300" title={schedule.lastSummary}>{schedule.lastSummary}</span>
+                        : <span className="text-xs text-slate-400">—</span>}
+                    </TableCell>
                     <TableCell className="flex gap-2 flex-wrap">
                       <Button variant="outline" size="sm" onClick={() => handleToggleSchedule(schedule.id, schedule.enabled)}>{schedule.enabled ? '停用' : '啟用'}</Button>
                       <Button variant="outline" size="sm" onClick={() => handleRunScheduleNow(schedule.id)}>立即執行</Button>

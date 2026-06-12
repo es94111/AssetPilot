@@ -364,6 +364,17 @@ function formatAmount(value: unknown, currency = 'TWD') {
   return `${currency} ${Math.round(n).toLocaleString('zh-TW')}`;
 }
 
+const WEEKDAY_ZH = ['日', '一', '二', '三', '四', '五', '六'];
+function weekdayZh(ymd: string): string {
+  const d = new Date(`${ymd}T00:00:00Z`);
+  return WEEKDAY_ZH[d.getUTCDay()] || '';
+}
+function addDaysYmd(ymd: string, delta: number): string {
+  const [y, m, d] = String(ymd).split('-').map(Number);
+  const date = new Date(Date.UTC(y, m - 1, d + delta));
+  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
+}
+
 export function buildStatsReportFlex(displayName: string, stats: Record<string, any>, appUrl: string): LineFlexMessage {
   const detailsUrl = `${appUrl.replace(/\/$/, '')}/reports`;
   const balanceLines = Object.entries(stats.balanceByCurrency || {})
@@ -376,7 +387,22 @@ export function buildStatsReportFlex(displayName: string, stats: Record<string, 
         { type: 'text', text: formatAmount(value, String(currency)), size: 'sm', weight: 'bold', align: 'end', flex: 5 },
       ],
     }));
-  const categoryLines = (stats.topCategories || []).slice(0, 5).map((category: any, index: number) => ({
+  // 每日／每週／每月報表：把「報表類型、涵蓋區間、T 為寄送時間」講清楚
+  const isDaily = stats.period?.kind === 'daily';
+  const isWeekly = stats.period?.kind === 'weekly';
+  const isMonthly = stats.period?.kind === 'monthly';
+  const isPeriodKind = isDaily || isWeekly;
+  const reportDate = String(stats.reportDate || stats.period?.end || '');
+  const reportWeekday = String(stats.reportWeekday || '');
+  const sendDate = String(stats.sendDate || '');
+  const periodStart = String(stats.period?.start || '');
+  const periodEnd = String(stats.period?.end || '');
+  const reportMonth = String(stats.reportMonth || periodStart.slice(0, 7));
+
+  // 月報用報表月（M-1）的支出分類；日／週報用本月分類
+  const catSource = isMonthly ? (stats.periodTopCategories || []) : (stats.topCategories || []);
+  const catHeading = isMonthly ? `${reportMonth} 月支出 Top 5` : '本月支出 Top 5';
+  const categoryLines = catSource.slice(0, 5).map((category: any, index: number) => ({
     type: 'box',
     layout: 'horizontal',
     contents: [
@@ -385,9 +411,94 @@ export function buildStatsReportFlex(displayName: string, stats: Record<string, 
     ],
   }));
 
+  let altText: string;
+  let headerContents: any[];
+  let banner: any[];
+  if (isDaily) {
+    altText = `每日收支報表｜${reportDate}（週${reportWeekday}）`;
+    headerContents = [
+      { type: 'text', text: 'AssetPilot · 每日收支報表', color: '#dbeafe', size: 'sm' },
+      { type: 'text', text: `${displayName || '使用者'}，${reportDate}（週${reportWeekday}）的收支`, color: '#ffffff', weight: 'bold', size: 'lg', wrap: true, margin: 'sm' },
+      { type: 'text', text: `📅 報表日 ${reportDate}　·　寄送日 ${sendDate}`, color: '#bfdbfe', size: 'xs', wrap: true, margin: 'sm' },
+    ];
+    banner = [{
+      type: 'box', layout: 'vertical', backgroundColor: '#eef2ff', cornerRadius: '8px', paddingAll: '10px',
+      contents: [{ type: 'text', text: `統計昨日（${reportDate} 週${reportWeekday}）整日收支，今日（${sendDate}）寄出`, size: 'xs', color: '#3730a3', wrap: true }],
+    }];
+  } else if (isWeekly) {
+    altText = `每週收支報表｜${periodStart} ~ ${periodEnd}`;
+    headerContents = [
+      { type: 'text', text: 'AssetPilot · 每週收支報表', color: '#dbeafe', size: 'sm' },
+      { type: 'text', text: `${displayName || '使用者'}，${periodStart} ~ ${periodEnd} 的收支`, color: '#ffffff', weight: 'bold', size: 'lg', wrap: true, margin: 'sm' },
+      { type: 'text', text: `📅 報表區間 ${periodStart} ~ ${periodEnd}　·　寄送日 ${sendDate}`, color: '#bfdbfe', size: 'xs', wrap: true, margin: 'sm' },
+    ];
+    banner = [{
+      type: 'box', layout: 'vertical', backgroundColor: '#eef2ff', cornerRadius: '8px', paddingAll: '10px',
+      contents: [{ type: 'text', text: `統計過去 7 日（${periodStart} ~ ${periodEnd}，共 7 天）收支，今日（${sendDate}）寄出`, size: 'xs', color: '#3730a3', wrap: true }],
+    }];
+  } else {
+    altText = `每月收支報表｜${reportMonth}`;
+    headerContents = [
+      { type: 'text', text: 'AssetPilot · 每月收支報表', color: '#dbeafe', size: 'sm' },
+      { type: 'text', text: `${displayName || '使用者'}，${reportMonth} 月的收支`, color: '#ffffff', weight: 'bold', size: 'lg', wrap: true, margin: 'sm' },
+      { type: 'text', text: `📅 報表月 ${reportMonth}　·　寄送日 ${sendDate}`, color: '#bfdbfe', size: 'xs', wrap: true, margin: 'sm' },
+    ];
+    banner = [{
+      type: 'box', layout: 'vertical', backgroundColor: '#eef2ff', cornerRadius: '8px', paddingAll: '10px',
+      contents: [{ type: 'text', text: `統計上月（${reportMonth}，${periodStart} ~ ${periodEnd}）整月收支，本月（${sendDate}）寄出`, size: 'xs', color: '#3730a3', wrap: true }],
+    }];
+  }
+
+  // KPI 一律以報表區間的實際收支為主角
+  const lead = isDaily ? '昨日' : isWeekly ? '本週' : '上月';
+  const kpiContents = [
+    { type: 'text', text: `${lead}收入：${formatAmount(stats.periodIncome)}`, size: 'sm', color: '#16a34a', weight: 'bold' },
+    { type: 'text', text: `${lead}支出：${formatAmount(stats.periodExpense)}`, size: 'sm', color: '#dc2626', weight: 'bold' },
+    { type: 'text', text: `${lead}淨額：${formatAmount(stats.periodNet)}`, size: 'sm', color: Number(stats.periodNet) >= 0 ? '#0f172a' : '#dc2626', weight: 'bold' },
+  ];
+
+  // 每週：每日明細（緊湊版，左日期右淨額），補滿 7 天
+  const weeklyBreakdown = isWeekly
+    ? (() => {
+        const byDate: Record<string, any> = {};
+        for (const r of (stats.dailyBreakdown || [])) byDate[r.date] = r;
+        const rows: any[] = [{ type: 'text', text: '每日明細', size: 'sm', weight: 'bold', color: '#0f172a' }];
+        let d = periodStart;
+        for (let i = 0; i < 7 && d; i++) {
+          const r = byDate[d] || { income: 0, expense: 0, net: 0 };
+          const net = Number(r.net) || (Number(r.income) || 0) - (Number(r.expense) || 0);
+          rows.push({ type: 'box', layout: 'horizontal', contents: [
+            { type: 'text', text: `${d.slice(5)} 週${weekdayZh(d)}`, size: 'xs', color: '#64748b', flex: 4 },
+            { type: 'text', text: `${net >= 0 ? '+' : ''}${formatAmount(net)}`, size: 'xs', weight: 'bold', align: 'end', color: net >= 0 ? '#0f172a' : '#dc2626', flex: 5 },
+          ] });
+          d = addDaysYmd(d, 1);
+        }
+        return [{ type: 'separator' }, ...rows];
+      })()
+    : [];
+
+  const monthlyAccrual = isPeriodKind
+    ? [
+        { type: 'separator' },
+        { type: 'text', text: `本月累計（${stats.month || ''}）`, size: 'sm', weight: 'bold', color: '#0f172a' },
+        { type: 'box', layout: 'horizontal', contents: [
+          { type: 'text', text: '收入', size: 'xs', color: '#64748b', flex: 2 },
+          { type: 'text', text: formatAmount(stats.income), size: 'xs', weight: 'bold', align: 'end', color: '#16a34a', flex: 5 },
+        ] },
+        { type: 'box', layout: 'horizontal', contents: [
+          { type: 'text', text: '支出', size: 'xs', color: '#64748b', flex: 2 },
+          { type: 'text', text: formatAmount(stats.expense), size: 'xs', weight: 'bold', align: 'end', color: '#dc2626', flex: 5 },
+        ] },
+        { type: 'box', layout: 'horizontal', contents: [
+          { type: 'text', text: '淨額', size: 'xs', color: '#64748b', flex: 2 },
+          { type: 'text', text: formatAmount(stats.net), size: 'xs', weight: 'bold', align: 'end', color: Number(stats.net) >= 0 ? '#0f172a' : '#dc2626', flex: 5 },
+        ] },
+      ]
+    : [];
+
   return {
     type: 'flex',
-    altText: `${stats.month || ''} 個人資產統計報表`,
+    altText,
     contents: {
       type: 'bubble',
       size: 'mega',
@@ -396,33 +507,28 @@ export function buildStatsReportFlex(displayName: string, stats: Record<string, 
         layout: 'vertical',
         backgroundColor: '#2563eb',
         paddingAll: '18px',
-        contents: [
-          { type: 'text', text: 'AssetPilot 資產統計報表', color: '#dbeafe', size: 'sm' },
-          { type: 'text', text: `${displayName || '使用者'}，這是 ${stats.month || ''} 的資產摘要`, color: '#ffffff', weight: 'bold', size: 'lg', wrap: true, margin: 'sm' },
-          { type: 'text', text: String(stats.period?.label || ''), color: '#bfdbfe', size: 'xs', wrap: true, margin: 'sm' },
-        ],
+        contents: headerContents,
       },
       body: {
         type: 'box',
         layout: 'vertical',
         spacing: 'md',
         contents: [
+          ...banner,
           {
             type: 'box',
             layout: 'vertical',
             spacing: 'xs',
-            contents: [
-              { type: 'text', text: `本月收入：${formatAmount(stats.income)}`, size: 'sm', color: '#16a34a', weight: 'bold' },
-              { type: 'text', text: `本月支出：${formatAmount(stats.expense)}`, size: 'sm', color: '#dc2626', weight: 'bold' },
-              { type: 'text', text: `本月淨額：${formatAmount(stats.net)}`, size: 'sm', color: Number(stats.net) >= 0 ? '#0f172a' : '#dc2626', weight: 'bold' },
-            ],
+            contents: kpiContents,
           },
+          ...weeklyBreakdown,
+          ...monthlyAccrual,
           { type: 'separator' },
           { type: 'text', text: '帳戶餘額', size: 'sm', weight: 'bold', color: '#0f172a' },
           ...(balanceLines.length ? balanceLines : [{ type: 'text', text: '尚無帳戶', size: 'sm', color: '#94a3b8' }]),
           { type: 'separator' },
-          { type: 'text', text: '本月支出 Top 5', size: 'sm', weight: 'bold', color: '#0f172a' },
-          ...(categoryLines.length ? categoryLines : [{ type: 'text', text: '本月尚無支出紀錄', size: 'sm', color: '#94a3b8' }]),
+          { type: 'text', text: catHeading, size: 'sm', weight: 'bold', color: '#0f172a' },
+          ...(categoryLines.length ? categoryLines : [{ type: 'text', text: '尚無支出紀錄', size: 'sm', color: '#94a3b8' }]),
           ...(Number(stats.stockHoldings) > 0 ? [
             { type: 'separator' },
             { type: 'text', text: `股票投資：市值 ${formatAmount(stats.stockMarketValueTwd)}，未實現損益 ${Number(stats.stockUnrealizedPL) >= 0 ? '+' : ''}${formatAmount(stats.stockUnrealizedPL)}`, size: 'xs', color: Number(stats.stockUnrealizedPL) >= 0 ? '#16a34a' : '#dc2626', wrap: true },

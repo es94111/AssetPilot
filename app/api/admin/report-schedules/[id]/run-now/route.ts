@@ -15,10 +15,10 @@ export async function POST(request, { params }) {
   try {
     const result = await runScheduledReportNow(id, '管理員手動');
     if (result.status === 'no_email_service') {
-      return NextResponse.json({ status: 'no_email_service', reason: '寄信服務未設定', ...result }, { status: 503 });
+      return NextResponse.json({ ...result, reason: '寄信服務未設定', error: '寄信服務未設定（請設定 EMAIL_PROVIDER_PRIMARY 環境變數）' }, { status: 503 });
     }
     if (result.status === 'no_line_service') {
-      return NextResponse.json({ status: 'no_line_service', reason: 'LINE Messaging API 未設定', ...result }, { status: 503 });
+      return NextResponse.json({ ...result, reason: 'LINE Messaging API 未設定', error: 'LINE Messaging API 未設定' }, { status: 503 });
     }
     return NextResponse.json(result);
   } catch (e) {

@@ -4,31 +4,35 @@ import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import Sidebar from './Sidebar';
 import TopNav from './TopNav';
+import { useT } from '@/components/i18n/I18nProvider';
 
-const PAGE_TITLES: Record<string, string> = {
-  '/dashboard':            '儀表板',
-  '/finance/transactions': '交易記錄',
-  '/finance/reports':      '統計報表',
-  '/finance/budget':       '預算管理',
-  '/finance/accounts':     '帳戶管理',
-  '/finance/categories':   '分類管理',
-  '/finance/recurring':    '固定收支',
-  '/stocks':               '持股總覽',
-  '/stocks/portfolio':     '持股總覽',
-  '/stocks/transactions':  '股票交易紀錄',
-  '/stocks/dividends':     '股票股利紀錄',
-  '/stocks/realized':      '股票實現損益',
-  '/stocks/settings':      '股票交易設定',
-  '/api-credits':          'API 使用與授權',
-  '/settings/account':     '帳號設定',
-  '/settings/admin':       '管理員',
-  '/settings/export':      '資料匯出匯入',
+// 頁首標題對應的譯文鍵，於 render 時用 t() 解析。
+const PAGE_TITLE_KEYS: Record<string, string> = {
+  '/dashboard':            'nav.dashboard',
+  '/finance/transactions': 'nav.transactions',
+  '/finance/reports':      'nav.reports',
+  '/finance/budget':       'nav.budget',
+  '/finance/accounts':     'nav.accounts',
+  '/finance/categories':   'nav.categories',
+  '/finance/recurring':    'nav.recurring',
+  '/stocks':               'nav.titleStocks',
+  '/stocks/portfolio':     'nav.stocksPortfolio',
+  '/stocks/transactions':  'nav.titleStockTransactions',
+  '/stocks/dividends':     'nav.titleStockDividends',
+  '/stocks/realized':      'nav.titleStockRealized',
+  '/stocks/settings':      'nav.titleStockSettings',
+  '/api-credits':          'nav.titleApiCredits',
+  '/settings/account':     'nav.account',
+  '/settings/admin':       'nav.admin',
+  '/settings/export':      'nav.exportImport',
 };
 
 export default function AppLayout({ user, children }: { user: any; children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const pathname = usePathname();
-  const title = PAGE_TITLES[pathname] || 'AssetPilot';
+  const { t } = useT();
+  const titleKey = PAGE_TITLE_KEYS[pathname];
+  const title = titleKey ? t(titleKey) : 'AssetPilot';
 
   return (
     <div className="flex h-screen" style={{ background: 'var(--app-bg)' }}>

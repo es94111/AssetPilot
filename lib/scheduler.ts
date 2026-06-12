@@ -7,6 +7,7 @@ import { getDB, queryAll, queryOne, saveDB } from './db';
 import { getActiveEmailProviders, sendStatsEmail } from './emailService';
 import { LINE_MESSAGING_CHANNEL_ACCESS_TOKEN, buildExpenseReminderFlex, buildStatsReportFlex, pushLineMessage } from './lineMessaging';
 import { buildUserStatsReport, renderStatsEmailHtml } from './statsEmailReport';
+import { getUserLanguage } from './i18n/userLanguage';
 import * as userTime from './userTime';
 
 // ── per-schedule lock set（防重複執行）──
@@ -180,7 +181,8 @@ async function runScheduledReportNow(scheduleId, triggeredBy = '排程') {
     let provider = null;
     let errMsg = '';
     const channelResults = [];
-    const stats = buildUserStatsReport(u.id, schedule.freq, u.timezone || 'Asia/Taipei');
+    const locale = getUserLanguage(u.id);
+    const stats = buildUserStatsReport(u.id, schedule.freq, u.timezone || 'Asia/Taipei', locale);
 
     if (wantsEmail) {
       if (invalidEmail) {
@@ -191,7 +193,7 @@ async function runScheduledReportNow(scheduleId, triggeredBy = '排程') {
         channelResults.push('Email 失敗：寄信服務未設定');
       } else {
       try {
-        const html = renderStatsEmailHtml(u.display_name, u.email, stats);
+        const html = renderStatsEmailHtml(u.display_name, u.email, stats, locale);
         const subject = stats.subject || `${stats.month} 個人資產統計報表`;
         const result = await sendStatsEmail({ to: u.email, subject, html });
         if (result) {
@@ -222,7 +224,7 @@ async function runScheduledReportNow(scheduleId, triggeredBy = '排程') {
       } else {
       try {
         const appUrl = process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || `https://${process.env.APP_HOST || 'localhost'}`;
-        await pushLineMessage(u.line_id, [buildStatsReportFlex(u.display_name, stats, appUrl)]);
+        await pushLineMessage(u.line_id, [buildStatsReportFlex(u.display_name, stats, appUrl, locale)]);
         sent += 1;
         channelResults.push('LINE 成功');
       } catch (e) {
@@ -293,7 +295,7 @@ async function runLineExpenseReminderNow(reminderId, triggeredBy = '排程') {
     }
 
     try {
-      await pushLineMessage(u.line_id, [buildExpenseReminderFlex(u.display_name)]);
+      await pushLineMessage(u.line_id, [buildExpenseReminderFlex(u.display_name, getUserLanguage(u.id))]);
       const finishedAt = Date.now();
       const summary = `${formatLocalSummaryTime(startedAt)} ${triggeredBy}：LINE 提醒成功（完成於 ${formatLocalSummaryTime(finishedAt)}）`;
       db.run('UPDATE line_expense_reminders SET last_run = ?, last_summary = ?, updated_at = ? WHERE id = ?',

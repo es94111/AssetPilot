@@ -1,8 +1,10 @@
 'use client';
 
 import { Menu } from 'lucide-react';
+import { useT } from '@/components/i18n/I18nProvider';
 
 export default function TopNav({ title, onMenuClick }: { title: string; onMenuClick: () => void }) {
+  const { t } = useT();
   return (
     <header
       className="app-topnav sticky top-0 z-30 flex items-center gap-3 px-4 py-3"
@@ -14,7 +16,7 @@ export default function TopNav({ title, onMenuClick }: { title: string; onMenuCl
         onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--border)'; }}
         onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
         onClick={onMenuClick}
-        aria-label="開啟選單"
+        aria-label={t('shell.openMenu')}
       >
         <Menu size={22} />
       </button>

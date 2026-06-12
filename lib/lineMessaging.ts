@@ -1,4 +1,6 @@
 import crypto from 'crypto';
+import { getTranslator } from './i18n/getDictionary';
+import { normalizeLocale, type Locale } from './i18n/config';
 
 export const LINE_MESSAGING_CHANNEL_SECRET = process.env.LINE_MESSAGING_CHANNEL_SECRET || process.env.LINE_CHANNEL_SECRET || '';
 export const LINE_MESSAGING_CHANNEL_ACCESS_TOKEN = process.env.LINE_MESSAGING_CHANNEL_ACCESS_TOKEN || '';
@@ -375,7 +377,9 @@ function addDaysYmd(ymd: string, delta: number): string {
   return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
 }
 
-export function buildStatsReportFlex(displayName: string, stats: Record<string, any>, appUrl: string): LineFlexMessage {
+export function buildStatsReportFlex(displayName: string, stats: Record<string, any>, appUrl: string, locale: Locale | string = 'zh-TW'): LineFlexMessage {
+  const t = getTranslator(normalizeLocale(locale));
+  const userName = displayName || t('notifications.fallbackUser');
   const detailsUrl = `${appUrl.replace(/\/$/, '')}/reports`;
   const balanceLines = Object.entries(stats.balanceByCurrency || {})
     .slice(0, 4)
@@ -401,12 +405,14 @@ export function buildStatsReportFlex(displayName: string, stats: Record<string, 
 
   // 月報用報表月（M-1）的支出分類；日／週報用本月分類
   const catSource = isMonthly ? (stats.periodTopCategories || []) : (stats.topCategories || []);
-  const catHeading = isMonthly ? `${reportMonth} 月支出 Top 5` : '本月支出 Top 5';
+  const catHeading = isMonthly
+    ? t('notifications.sections.topCategoriesMonthly', { month: reportMonth })
+    : t('notifications.sections.topCategories');
   const categoryLines = catSource.slice(0, 5).map((category: any, index: number) => ({
     type: 'box',
     layout: 'horizontal',
     contents: [
-      { type: 'text', text: `${index + 1}. ${category.name || '未分類'}`, size: 'xs', color: '#64748b', flex: 4 },
+      { type: 'text', text: `${index + 1}. ${category.name || t('notifications.labels.uncategorized')}`, size: 'xs', color: '#64748b', flex: 4 },
       { type: 'text', text: formatAmount(category.total), size: 'xs', weight: 'bold', align: 'end', flex: 3 },
     ],
   }));
@@ -415,46 +421,46 @@ export function buildStatsReportFlex(displayName: string, stats: Record<string, 
   let headerContents: any[];
   let banner: any[];
   if (isDaily) {
-    altText = `每日收支報表｜${reportDate}（週${reportWeekday}）`;
+    altText = t('notifications.subject.daily', { date: reportDate, weekday: reportWeekday });
     headerContents = [
-      { type: 'text', text: 'AssetPilot · 每日收支報表', color: '#dbeafe', size: 'sm' },
-      { type: 'text', text: `${displayName || '使用者'}，${reportDate}（週${reportWeekday}）的收支`, color: '#ffffff', weight: 'bold', size: 'lg', wrap: true, margin: 'sm' },
-      { type: 'text', text: `📅 報表日 ${reportDate}　·　寄送日 ${sendDate}`, color: '#bfdbfe', size: 'xs', wrap: true, margin: 'sm' },
+      { type: 'text', text: `${t('notifications.brand')} · ${t('notifications.reportType.daily')}`, color: '#dbeafe', size: 'sm' },
+      { type: 'text', text: t('notifications.headerTitle.daily', { name: userName, date: reportDate, weekday: reportWeekday }), color: '#ffffff', weight: 'bold', size: 'lg', wrap: true, margin: 'sm' },
+      { type: 'text', text: t('notifications.headerMeta.daily', { date: reportDate, sendDate }), color: '#bfdbfe', size: 'xs', wrap: true, margin: 'sm' },
     ];
     banner = [{
       type: 'box', layout: 'vertical', backgroundColor: '#eef2ff', cornerRadius: '8px', paddingAll: '10px',
-      contents: [{ type: 'text', text: `統計昨日（${reportDate} 週${reportWeekday}）整日收支，今日（${sendDate}）寄出`, size: 'xs', color: '#3730a3', wrap: true }],
+      contents: [{ type: 'text', text: t('notifications.banner.daily', { date: reportDate, weekday: reportWeekday, sendDate }), size: 'xs', color: '#3730a3', wrap: true }],
     }];
   } else if (isWeekly) {
-    altText = `每週收支報表｜${periodStart} ~ ${periodEnd}`;
+    altText = t('notifications.subject.weekly', { start: periodStart, end: periodEnd });
     headerContents = [
-      { type: 'text', text: 'AssetPilot · 每週收支報表', color: '#dbeafe', size: 'sm' },
-      { type: 'text', text: `${displayName || '使用者'}，${periodStart} ~ ${periodEnd} 的收支`, color: '#ffffff', weight: 'bold', size: 'lg', wrap: true, margin: 'sm' },
-      { type: 'text', text: `📅 報表區間 ${periodStart} ~ ${periodEnd}　·　寄送日 ${sendDate}`, color: '#bfdbfe', size: 'xs', wrap: true, margin: 'sm' },
+      { type: 'text', text: `${t('notifications.brand')} · ${t('notifications.reportType.weekly')}`, color: '#dbeafe', size: 'sm' },
+      { type: 'text', text: t('notifications.headerTitle.weekly', { name: userName, start: periodStart, end: periodEnd }), color: '#ffffff', weight: 'bold', size: 'lg', wrap: true, margin: 'sm' },
+      { type: 'text', text: t('notifications.headerMeta.weekly', { start: periodStart, end: periodEnd, sendDate }), color: '#bfdbfe', size: 'xs', wrap: true, margin: 'sm' },
     ];
     banner = [{
       type: 'box', layout: 'vertical', backgroundColor: '#eef2ff', cornerRadius: '8px', paddingAll: '10px',
-      contents: [{ type: 'text', text: `統計過去 7 日（${periodStart} ~ ${periodEnd}，共 7 天）收支，今日（${sendDate}）寄出`, size: 'xs', color: '#3730a3', wrap: true }],
+      contents: [{ type: 'text', text: t('notifications.banner.weekly', { start: periodStart, end: periodEnd, sendDate }), size: 'xs', color: '#3730a3', wrap: true }],
     }];
   } else {
-    altText = `每月收支報表｜${reportMonth}`;
+    altText = t('notifications.subject.monthly', { month: reportMonth });
     headerContents = [
-      { type: 'text', text: 'AssetPilot · 每月收支報表', color: '#dbeafe', size: 'sm' },
-      { type: 'text', text: `${displayName || '使用者'}，${reportMonth} 月的收支`, color: '#ffffff', weight: 'bold', size: 'lg', wrap: true, margin: 'sm' },
-      { type: 'text', text: `📅 報表月 ${reportMonth}　·　寄送日 ${sendDate}`, color: '#bfdbfe', size: 'xs', wrap: true, margin: 'sm' },
+      { type: 'text', text: `${t('notifications.brand')} · ${t('notifications.reportType.monthly')}`, color: '#dbeafe', size: 'sm' },
+      { type: 'text', text: t('notifications.headerTitle.monthly', { name: userName, month: reportMonth }), color: '#ffffff', weight: 'bold', size: 'lg', wrap: true, margin: 'sm' },
+      { type: 'text', text: t('notifications.headerMeta.monthly', { month: reportMonth, sendDate }), color: '#bfdbfe', size: 'xs', wrap: true, margin: 'sm' },
     ];
     banner = [{
       type: 'box', layout: 'vertical', backgroundColor: '#eef2ff', cornerRadius: '8px', paddingAll: '10px',
-      contents: [{ type: 'text', text: `統計上月（${reportMonth}，${periodStart} ~ ${periodEnd}）整月收支，本月（${sendDate}）寄出`, size: 'xs', color: '#3730a3', wrap: true }],
+      contents: [{ type: 'text', text: t('notifications.banner.monthly', { month: reportMonth, start: periodStart, end: periodEnd, sendDate }), size: 'xs', color: '#3730a3', wrap: true }],
     }];
   }
 
   // KPI 一律以報表區間的實際收支為主角
-  const lead = isDaily ? '昨日' : isWeekly ? '本週' : '上月';
+  const lead = t(isDaily ? 'notifications.lead.daily' : isWeekly ? 'notifications.lead.weekly' : 'notifications.lead.monthly');
   const kpiContents = [
-    { type: 'text', text: `${lead}收入：${formatAmount(stats.periodIncome)}`, size: 'sm', color: '#16a34a', weight: 'bold' },
-    { type: 'text', text: `${lead}支出：${formatAmount(stats.periodExpense)}`, size: 'sm', color: '#dc2626', weight: 'bold' },
-    { type: 'text', text: `${lead}淨額：${formatAmount(stats.periodNet)}`, size: 'sm', color: Number(stats.periodNet) >= 0 ? '#0f172a' : '#dc2626', weight: 'bold' },
+    { type: 'text', text: `${t('notifications.kpi.income', { lead })}：${formatAmount(stats.periodIncome)}`, size: 'sm', color: '#16a34a', weight: 'bold' },
+    { type: 'text', text: `${t('notifications.kpi.expense', { lead })}：${formatAmount(stats.periodExpense)}`, size: 'sm', color: '#dc2626', weight: 'bold' },
+    { type: 'text', text: `${t('notifications.kpi.net', { lead })}：${formatAmount(stats.periodNet)}`, size: 'sm', color: Number(stats.periodNet) >= 0 ? '#0f172a' : '#dc2626', weight: 'bold' },
   ];
 
   // 每週：每日明細（緊湊版，左日期右淨額），補滿 7 天
@@ -462,7 +468,7 @@ export function buildStatsReportFlex(displayName: string, stats: Record<string, 
     ? (() => {
         const byDate: Record<string, any> = {};
         for (const r of (stats.dailyBreakdown || [])) byDate[r.date] = r;
-        const rows: any[] = [{ type: 'text', text: '每日明細', size: 'sm', weight: 'bold', color: '#0f172a' }];
+        const rows: any[] = [{ type: 'text', text: t('notifications.sections.dailyDetail'), size: 'sm', weight: 'bold', color: '#0f172a' }];
         let d = periodStart;
         for (let i = 0; i < 7 && d; i++) {
           const r = byDate[d] || { income: 0, expense: 0, net: 0 };
@@ -480,17 +486,17 @@ export function buildStatsReportFlex(displayName: string, stats: Record<string, 
   const monthlyAccrual = isPeriodKind
     ? [
         { type: 'separator' },
-        { type: 'text', text: `本月累計（${stats.month || ''}）`, size: 'sm', weight: 'bold', color: '#0f172a' },
+        { type: 'text', text: t('notifications.sections.monthlyAccrual', { month: stats.month || '' }), size: 'sm', weight: 'bold', color: '#0f172a' },
         { type: 'box', layout: 'horizontal', contents: [
-          { type: 'text', text: '收入', size: 'xs', color: '#64748b', flex: 2 },
+          { type: 'text', text: t('notifications.labels.income'), size: 'xs', color: '#64748b', flex: 2 },
           { type: 'text', text: formatAmount(stats.income), size: 'xs', weight: 'bold', align: 'end', color: '#16a34a', flex: 5 },
         ] },
         { type: 'box', layout: 'horizontal', contents: [
-          { type: 'text', text: '支出', size: 'xs', color: '#64748b', flex: 2 },
+          { type: 'text', text: t('notifications.labels.expense'), size: 'xs', color: '#64748b', flex: 2 },
           { type: 'text', text: formatAmount(stats.expense), size: 'xs', weight: 'bold', align: 'end', color: '#dc2626', flex: 5 },
         ] },
         { type: 'box', layout: 'horizontal', contents: [
-          { type: 'text', text: '淨額', size: 'xs', color: '#64748b', flex: 2 },
+          { type: 'text', text: t('notifications.labels.net'), size: 'xs', color: '#64748b', flex: 2 },
           { type: 'text', text: formatAmount(stats.net), size: 'xs', weight: 'bold', align: 'end', color: Number(stats.net) >= 0 ? '#0f172a' : '#dc2626', flex: 5 },
         ] },
       ]
@@ -524,14 +530,14 @@ export function buildStatsReportFlex(displayName: string, stats: Record<string, 
           ...weeklyBreakdown,
           ...monthlyAccrual,
           { type: 'separator' },
-          { type: 'text', text: '帳戶餘額', size: 'sm', weight: 'bold', color: '#0f172a' },
-          ...(balanceLines.length ? balanceLines : [{ type: 'text', text: '尚無帳戶', size: 'sm', color: '#94a3b8' }]),
+          { type: 'text', text: t('notifications.sections.balance'), size: 'sm', weight: 'bold', color: '#0f172a' },
+          ...(balanceLines.length ? balanceLines : [{ type: 'text', text: t('notifications.empty.noAccount'), size: 'sm', color: '#94a3b8' }]),
           { type: 'separator' },
           { type: 'text', text: catHeading, size: 'sm', weight: 'bold', color: '#0f172a' },
-          ...(categoryLines.length ? categoryLines : [{ type: 'text', text: '尚無支出紀錄', size: 'sm', color: '#94a3b8' }]),
+          ...(categoryLines.length ? categoryLines : [{ type: 'text', text: t('notifications.empty.noExpense'), size: 'sm', color: '#94a3b8' }]),
           ...(Number(stats.stockHoldings) > 0 ? [
             { type: 'separator' },
-            { type: 'text', text: `股票投資：市值 ${formatAmount(stats.stockMarketValueTwd)}，未實現損益 ${Number(stats.stockUnrealizedPL) >= 0 ? '+' : ''}${formatAmount(stats.stockUnrealizedPL)}`, size: 'xs', color: Number(stats.stockUnrealizedPL) >= 0 ? '#16a34a' : '#dc2626', wrap: true },
+            { type: 'text', text: t('notifications.stockInline', { marketValue: formatAmount(stats.stockMarketValueTwd), pl: `${Number(stats.stockUnrealizedPL) >= 0 ? '+' : ''}${formatAmount(stats.stockUnrealizedPL)}` }), size: 'xs', color: Number(stats.stockUnrealizedPL) >= 0 ? '#16a34a' : '#dc2626', wrap: true },
           ] : []),
         ],
       },
@@ -544,19 +550,20 @@ export function buildStatsReportFlex(displayName: string, stats: Record<string, 
             type: 'button',
             style: 'primary',
             height: 'sm',
-            action: { type: 'uri', label: '查看完整報表', uri: detailsUrl },
+            action: { type: 'uri', label: t('notifications.cta.viewFullReport'), uri: detailsUrl },
           },
-          postbackButton('查看 LINE 紀錄', 'action=query_menu', '查看紀錄'),
+          postbackButton(t('notifications.cta.viewLineRecord'), 'action=query_menu', t('notifications.cta.viewLineRecord')),
         ],
       },
     },
   };
 }
 
-export function buildExpenseReminderFlex(displayName: string): LineFlexMessage {
+export function buildExpenseReminderFlex(displayName: string, locale: Locale | string = 'zh-TW'): LineFlexMessage {
+  const t = getTranslator(normalizeLocale(locale));
   return {
     type: 'flex',
-    altText: '記錄支出提醒',
+    altText: t('notifications.reminder.altText'),
     contents: {
       type: 'bubble',
       header: {
@@ -565,8 +572,8 @@ export function buildExpenseReminderFlex(displayName: string): LineFlexMessage {
         backgroundColor: '#dc2626',
         paddingAll: '18px',
         contents: [
-          { type: 'text', text: 'AssetPilot', color: '#fee2e2', size: 'sm', weight: 'bold' },
-          { type: 'text', text: '記得記錄今天的支出', color: '#ffffff', size: 'xl', weight: 'bold', margin: 'sm', wrap: true },
+          { type: 'text', text: t('notifications.brand'), color: '#fee2e2', size: 'sm', weight: 'bold' },
+          { type: 'text', text: t('notifications.reminder.title'), color: '#ffffff', size: 'xl', weight: 'bold', margin: 'sm', wrap: true },
         ],
       },
       body: {
@@ -576,12 +583,12 @@ export function buildExpenseReminderFlex(displayName: string): LineFlexMessage {
         contents: [
           {
             type: 'text',
-            text: `${displayName || '你'}，花 10 秒把今天的支出補上，月底比較不會漏帳。`,
+            text: t('notifications.reminder.body', { name: displayName || t('notifications.reminder.fallbackName') }),
             wrap: true,
             size: 'sm',
             color: '#475569',
           },
-          { type: 'text', text: '按下新增支出後，直接輸入：金額 備註 日期（日期可省略）', wrap: true, size: 'xs', color: '#64748b' },
+          { type: 'text', text: t('notifications.reminder.hint'), wrap: true, size: 'xs', color: '#64748b' },
         ],
       },
       footer: {
@@ -589,8 +596,8 @@ export function buildExpenseReminderFlex(displayName: string): LineFlexMessage {
         layout: 'vertical',
         spacing: 'sm',
         contents: [
-          postbackButton('新增支出', 'action=record&type=expense', '新增支出', 'primary'),
-          postbackButton('查看今天紀錄', 'action=query&period=today', '查詢 今天'),
+          postbackButton(t('notifications.reminder.addExpense'), 'action=record&type=expense', t('notifications.reminder.addExpense'), 'primary'),
+          postbackButton(t('notifications.reminder.viewToday'), 'action=query&period=today', t('notifications.reminder.viewToday')),
         ],
       },
     },

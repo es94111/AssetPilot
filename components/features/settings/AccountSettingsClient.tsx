@@ -6,6 +6,7 @@ import { apiGet, apiPut, apiPost, apiDelete } from '@/lib/clientApi';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
+import { LanguageSwitcher } from '@/components/i18n/LanguageSwitcher';
 
 function shouldDisableLineAutoLogin() {
   return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -316,6 +317,11 @@ export default function AccountSettingsClient({ user: initialUser }: { user: any
         <h3 className="text-lg font-semibold mb-4">帳號資訊</h3>
         <div className="flex gap-4 mb-2"><span className="text-slate-600 w-24">電子郵件</span><span className="font-medium">{profile?.email || '—'}</span></div>
         <div className="flex gap-4"><span className="text-slate-600 w-24">顯示名稱</span><span className="font-medium">{profile?.displayName || profile?.display_name || '—'}</span></div>
+      </div>
+
+      {/* Language */}
+      <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-xl shadow-sm">
+        <LanguageSwitcher />
       </div>
 
       {/* Display Name */}

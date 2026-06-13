@@ -712,7 +712,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
             </div>
             <div className="flex flex-col gap-1">
               <label className="text-sm font-medium text-gray-700">金額 *</label>
-              <input type="number" required min="0.01" step="0.01" placeholder="0" className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" value={form.amount} onChange={(e) => setForm((current) => ({ ...current, amount: e.target.value }))} />
+              <input type="number" required min="0.01" step="any" placeholder="0" className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" value={form.amount} onChange={(e) => setForm((current) => ({ ...current, amount: e.target.value }))} />
             </div>
             <div className="flex flex-col gap-1">
               <label className="text-sm font-medium text-gray-700">分類</label>
@@ -899,7 +899,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
             </div>
             <div className="flex flex-col gap-1">
               <label className="text-sm font-medium text-gray-700">金額 *</label>
-              <input type="number" required min="0.01" step="0.01" className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" value={transferForm.amount} onChange={(e) => setTransferForm((current) => ({ ...current, amount: e.target.value }))} />
+              <input type="number" required min="0.01" step="any" className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" value={transferForm.amount} onChange={(e) => setTransferForm((current) => ({ ...current, amount: e.target.value }))} />
             </div>
             <div className="flex flex-col gap-1">
               <label className="text-sm font-medium text-gray-700">備註</label>

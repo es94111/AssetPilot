@@ -303,7 +303,7 @@ export default function AccountsClient() {
               <Input label="帳戶名稱 *" value={form.name} onChange={(e) => setForm((current) => ({ ...current, name: e.target.value }))} />
               <Select label="類型" options={ACCOUNT_TYPES.map((item) => ({ label: item.label, value: item.value }))} value={form.category} onChange={(e) => setForm((current) => ({ ...current, category: e.target.value }))} />
               <Input label="幣別" value={form.currency} onChange={(e) => setForm((current) => ({ ...current, currency: e.target.value.toUpperCase() }))} />
-              <Input label={editId ? '初始餘額 / 目前設定' : '初始餘額'} type="number" step="0.01" value={form.initialBalance} onChange={(e) => setForm((current) => ({ ...current, initialBalance: e.target.value }))} />
+              <Input label={editId ? '初始餘額 / 目前設定' : '初始餘額'} type="number" step="any" value={form.initialBalance} onChange={(e) => setForm((current) => ({ ...current, initialBalance: e.target.value }))} />
               {form.category === 'credit_card' && (
                 <>
                   <Select label="所屬銀行" options={[{ label: '不分組', value: '' }, ...bankAccounts.map((bank) => ({ label: bank.name, value: bank.id }))]} value={form.linkedBankId} onChange={(e) => setForm((current) => ({ ...current, linkedBankId: e.target.value }))} />

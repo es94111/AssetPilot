@@ -199,7 +199,7 @@ export default function RecurringClient(_props: { user?: any } = {}) {
           <DialogHeader><DialogTitle>{editId ? '編輯固定收支' : '新增固定收支'}</DialogTitle></DialogHeader>
           <form onSubmit={handleSave} className="space-y-4">
             <Select label="類型" options={[{label: '支出', value: 'expense'}, {label: '收入', value: 'income'}]} value={form.type} onChange={e => setForm(f => ({ ...f, type: e.target.value }))} />
-            <Input label="金額 *" type="number" value={form.amount} onChange={e => setForm(f => ({ ...f, amount: e.target.value }))} />
+            <Input label="金額 *" type="number" step="any" min="0" value={form.amount} onChange={e => setForm(f => ({ ...f, amount: e.target.value }))} />
             <Select label="幣別" options={currencyOptions.map(currency => ({ label: currency, value: currency }))} value={form.currency} onChange={e => setForm(f => ({ ...f, currency: e.target.value.toUpperCase(), fxRate: '' }))} />
             {form.currency !== 'TWD' && (
               <div className="space-y-1">

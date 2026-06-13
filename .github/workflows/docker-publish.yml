@@ -11,7 +11,8 @@ env:
 
 jobs:
   build-and-push:
-    runs-on: ubuntu-latest
+    # 自建 self-hosted runner（需安裝 Docker + buildx，並能 docker login 至 Docker Hub / GHCR）。
+    runs-on: self-hosted
     permissions:
       contents: write
       packages: write

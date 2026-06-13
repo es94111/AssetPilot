@@ -16,7 +16,8 @@ permissions:
 jobs:
   scan:
     name: Build & scan image
-    runs-on: ubuntu-latest
+    # 自建 self-hosted runner（需 Docker + buildx 建置並掃描映像）。
+    runs-on: self-hosted
     steps:
       - name: Checkout
         uses: actions/checkout@v6

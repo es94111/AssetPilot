@@ -6,7 +6,7 @@ import { apiGet, apiPost, apiPut, apiDelete, notifyDataChanged } from '../../../
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 
-const EMPTY_FORM = { date: '', type: 'expense', amount: '', categoryId: '', accountId: '', note: '', excludeFromStats: false, currency: 'TWD', fxRate: '' };
+const EMPTY_FORM = { date: '', type: 'expense', amount: '', categoryId: '', accountId: '', note: '', excludeFromStats: false, currency: 'TWD', fxRate: '', fxFee: '' };
 const EMPTY_TRANSFER_FORM = { date: '', amount: '', fromAccountId: '', toAccountId: '', note: '' };
 const EMPTY_FILTERS = { type: '', accountId: '', categoryId: '', dateFrom: '', dateTo: '', keyword: '' };
 const DEFAULT_CURRENCIES = ['TWD', 'USD', 'JPY', 'EUR', 'CNY', 'HKD', 'GBP', 'AUD', 'CAD', 'SGD'];
@@ -116,6 +116,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
   const [batchDate, setBatchDate] = useState(today());
   const [editId, setEditId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [fxFeeEdited, setFxFeeEdited] = useState(false);
   const [formError, setFormError] = useState('');
   const [photoFiles, setPhotoFiles] = useState<File[]>([]);
   const [photoStorageStatus, setPhotoStorageStatus] = useState<PhotoStorageStatus | null>(null);
@@ -212,6 +213,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
     const nextCurrency = String(preferredAccount?.currency || defaultCurrency || 'TWD').toUpperCase();
     setForm({ ...EMPTY_FORM, date: today(), accountId: defaultAccountId, currency: nextCurrency, fxRate: '' });
     setEditId(null);
+    setFxFeeEdited(false);
     setFormError('');
     setPhotoUploadWarning('');
     setPhotoFiles([]);
@@ -276,6 +278,10 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
       setFormError('轉帳交易請改用刪除後重建');
       return;
     }
+    if (tx.isFxFee) {
+      setFormError('國外刷卡手續費為自動產生，請編輯對應的國外交易（修改後手續費會自動同步）');
+      return;
+    }
     setForm({
       date: tx.date || today(),
       type: tx.type || 'expense',
@@ -286,8 +292,10 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
       excludeFromStats: !!(tx.excludeFromStats ?? tx.exclude_from_stats),
       currency: tx.currency || 'TWD',
       fxRate: tx.fxRate ? String(tx.fxRate) : '',
+      fxFee: Number(tx.fxFee) > 0 ? String(Math.round(Number(tx.fxFee))) : '',
     });
     setEditId(tx.id);
+    setFxFeeEdited(Number(tx.fxFee) > 0);
     setFormError('');
     setPhotoUploadWarning('');
     setPhotoFiles([]);
@@ -360,6 +368,8 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
       currency: form.currency || 'TWD',
       ...(isForex && { originalAmount: Number(form.amount) }),
       ...(isForex && form.fxRate ? { fxRate: Number(form.fxRate) } : {}),
+      // 外幣信用卡：手續費欄位有值才送（手動覆寫）；留空交由伺服器依卡片費率自動計算。
+      ...(overseasApplies && form.fxFee !== '' ? { fxFee: Math.max(0, Number(form.fxFee) || 0) } : {}),
     };
     try {
       let saved: any = null;
@@ -497,6 +507,32 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
     return account ? account.name : (tx.account_name || '—');
   };
 
+  // 國外刷卡手續費：所選帳戶為信用卡且有海外手續費率、且為外幣交易時適用。
+  const selectedAccount = accounts.find((account: any) => account.id === form.accountId) || null;
+  const overseasFeeRate = selectedAccount && selectedAccount.category === 'credit_card'
+    ? Number(selectedAccount.overseasFeeRate) || 0
+    : 0;
+  const overseasApplies = form.type === 'expense' && form.currency !== 'TWD' && overseasFeeRate > 0;
+  const autoFxFee = (() => {
+    if (!overseasApplies) return 0;
+    const amt = Number(form.amount);
+    const rate = Number(form.fxRate);
+    if (!(amt > 0) || !(rate > 0)) return 0;
+    return Math.max(0, Math.round(amt * rate * overseasFeeRate / 1000));
+  })();
+
+  // 未手動編輯時，依當前金額/匯率自動帶入手續費；不適用時清空，交由系統處理。
+  useEffect(() => {
+    if (!modal) return;
+    if (!overseasApplies) {
+      setForm((current) => current.fxFee === '' ? current : { ...current, fxFee: '' });
+      return;
+    }
+    if (fxFeeEdited) return;
+    const next = autoFxFee > 0 ? String(autoFxFee) : '';
+    setForm((current) => current.fxFee === next ? current : { ...current, fxFee: next });
+  }, [modal, overseasApplies, autoFxFee, fxFeeEdited]);
+
   return (
     <div className="page active space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -605,6 +641,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
                     <td>{getAcctName(tx)}{tx.toAccountId ? ` → ${accounts.find((account: any) => account.id === tx.toAccountId)?.name || '—'}` : ''}</td>
                     <td>
                       <div>{tx.note || '—'}</div>
+                      {tx.isFxFee && <div className="text-xs text-amber-600">國外刷卡手續費</div>}
                       {tx.sourceRecurringName && <div className="text-xs text-slate-500">來源：{tx.sourceRecurringName}</div>}
                       {tx.excludeFromStats && <div className="text-xs text-slate-500">不計入統計</div>}
                       {tx.attachmentCount > 0 && tx.firstAttachmentId && (
@@ -637,7 +674,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
                       )}
                     </td>
                     <td>
-                      {!isTransfer && <button className="btn-icon" title="編輯" onClick={() => openEdit(tx)}><i className="fas fa-pencil" /></button>}
+                      {!isTransfer && !tx.isFxFee && <button className="btn-icon" title="編輯" onClick={() => openEdit(tx)}><i className="fas fa-pencil" /></button>}
                       <button className="btn-icon danger" title="刪除" onClick={() => setDeleteId(tx.id)}><i className="fas fa-trash" /></button>
                     </td>
                   </tr>
@@ -713,6 +750,27 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
                 <label className="text-sm font-medium text-gray-700">匯率（1 {form.currency} = ? TWD）</label>
                 <input type="number" min="0.0001" step="any" placeholder="留空則使用系統匯率" className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" value={form.fxRate} onChange={(e) => setForm((current) => ({ ...current, fxRate: e.target.value }))} />
                 {fxLoading && <p className="text-xs text-slate-500">查詢最新匯率中...</p>}
+              </div>
+            )}
+            {overseasApplies && (
+              <div className="flex flex-col gap-1">
+                <label className="text-sm font-medium text-gray-700">海外手續費（TWD）</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number" min="0" step="1" placeholder="留空則由系統依卡片費率自動計算"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                    value={form.fxFee}
+                    onChange={(e) => { setFxFeeEdited(true); setForm((current) => ({ ...current, fxFee: e.target.value })); }}
+                  />
+                  <button
+                    type="button"
+                    className="shrink-0 rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100"
+                    onClick={() => { setFxFeeEdited(false); setForm((current) => ({ ...current, fxFee: autoFxFee > 0 ? String(autoFxFee) : '' })); }}
+                  >
+                    自動計算
+                  </button>
+                </div>
+                <p className="text-xs text-slate-500">卡片海外手續費率 {overseasFeeRate}‰{autoFxFee > 0 ? `，建議值 NT$ ${autoFxFee.toLocaleString('zh-TW')}` : ''}</p>
               </div>
             )}
             <div className="flex flex-col gap-1">

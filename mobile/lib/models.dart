@@ -49,6 +49,7 @@ class Account {
   final num initialBalance;
   final num twdAccumulated;
   final bool excludeFromTotal;
+  final num overseasFeeRate; // 海外手續費率（千分點），非信用卡為 0
 
   Account({
     required this.id,
@@ -59,6 +60,7 @@ class Account {
     required this.initialBalance,
     required this.twdAccumulated,
     required this.excludeFromTotal,
+    required this.overseasFeeRate,
   });
 
   factory Account.fromJson(Map<String, dynamic> j) => Account(
@@ -70,6 +72,7 @@ class Account {
     initialBalance: _asNum(j['initialBalance']),
     twdAccumulated: _asNum(j['twdAccumulated']),
     excludeFromTotal: _asBool(j['excludeFromTotal']),
+    overseasFeeRate: _asNum(j['overseasFeeRate'] ?? j['overseas_fee_rate']),
   );
 }
 
@@ -116,6 +119,9 @@ class Txn {
   final String note;
   final String? catName;
   final int attachmentCount; // 照片附件數量
+  final bool excludeFromStats;
+  final num fxFee; // 海外刷卡手續費（TWD）
+  final bool isFxFee; // 是否為自動產生的國外刷卡手續費交易
 
   Txn({
     required this.id,
@@ -129,6 +135,9 @@ class Txn {
     required this.note,
     required this.catName,
     this.attachmentCount = 0,
+    this.excludeFromStats = false,
+    this.fxFee = 0,
+    this.isFxFee = false,
   });
 
   factory Txn.fromJson(Map<String, dynamic> j) => Txn(
@@ -141,6 +150,11 @@ class Txn {
     accountId: _asStr(j['accountId'] ?? j['account_id']),
     toAccountId: _asStr(j['toAccountId'] ?? j['to_account_id']),
     note: _asStr(j['note']),
+    excludeFromStats: _asBool(
+      j['excludeFromStats'] ?? j['exclude_from_stats'],
+    ),
+    fxFee: _asNum(j['fxFee'] ?? j['fx_fee']),
+    isFxFee: _asBool(j['isFxFee'] ?? j['is_fx_fee']),
     catName:
         (j['cat_name'] ??
                 j['catName'] ??
@@ -258,6 +272,8 @@ class Recurring {
   final String note;
   final bool isActive;
   final String currency;
+  final bool excludeFromStats;
+  final num fxFee;
 
   Recurring({
     required this.id,
@@ -270,6 +286,8 @@ class Recurring {
     required this.note,
     required this.isActive,
     required this.currency,
+    this.excludeFromStats = false,
+    this.fxFee = 0,
   });
 
   factory Recurring.fromJson(Map<String, dynamic> j) => Recurring(
@@ -283,6 +301,10 @@ class Recurring {
     note: _asStr(j['note']),
     isActive: _asBool(j['isActive']),
     currency: _asStr(j['currency']).isEmpty ? 'TWD' : _asStr(j['currency']),
+    excludeFromStats: _asBool(
+      j['excludeFromStats'] ?? j['exclude_from_stats'],
+    ),
+    fxFee: _asNum(j['fxFee'] ?? j['fx_fee']),
   );
 }
 

@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Plus, Trash2, Edit3, Pause, Play, StickyNote } from 'lucide-react';
 
 const FREQ_LABELS: Record<string, string> = { daily: '每日', weekly: '每週', monthly: '每月', yearly: '每年' };
-const EMPTY_FORM = { type: 'expense', amount: '', currency: 'TWD', fxRate: '', categoryId: '', accountId: '', frequency: 'monthly', startDate: '', note: '' };
+const EMPTY_FORM = { type: 'expense', amount: '', currency: 'TWD', fxRate: '', categoryId: '', accountId: '', frequency: 'monthly', startDate: '', note: '', excludeFromStats: false, fxFee: '' };
 const DEFAULT_CURRENCIES = ['TWD', 'USD', 'JPY', 'EUR', 'CNY', 'HKD', 'GBP', 'AUD', 'CAD', 'SGD'];
 
 function fmt(n: number | string) { return 'NT$ ' + Math.round(Number(n) || 0).toLocaleString('zh-TW'); }
@@ -29,6 +29,7 @@ export default function RecurringClient(_props: { user?: any } = {}) {
   const [formError, setFormError] = useState('');
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [fxLoading, setFxLoading] = useState(false);
+  const [fxFeeEdited, setFxFeeEdited] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -113,6 +114,9 @@ export default function RecurringClient(_props: { user?: any } = {}) {
       frequency: form.frequency,
       startDate: form.startDate,
       note: form.note,
+      excludeFromStats: form.excludeFromStats,
+      // 外幣信用卡：手續費有值才送（手動覆寫）；留空交由伺服器依卡片費率自動計算。
+      ...(overseasApplies && form.fxFee !== '' ? { fxFee: Math.max(0, Number(form.fxFee) || 0) } : {}),
     };
     try {
       if (editId) { await apiPut(`/api/recurring/${editId}`, body); }
@@ -137,6 +141,7 @@ export default function RecurringClient(_props: { user?: any } = {}) {
     const nextCurrency = String(preferredAccount?.currency || defaultCurrency || 'TWD').toUpperCase();
     setForm({ ...EMPTY_FORM, startDate: new Date().toISOString().slice(0, 10), accountId: defaultAccountId, currency: nextCurrency, fxRate: '' });
     setEditId(null);
+    setFxFeeEdited(false);
     setFormError('');
     setDialogOpen(true);
   }
@@ -149,11 +154,39 @@ export default function RecurringClient(_props: { user?: any } = {}) {
       startDate: rec.startDate || rec.start_date,
       currency: String(rec.currency || 'TWD').toUpperCase(),
       fxRate: String(rec.fxRate || rec.fx_rate || 1),
+      excludeFromStats: !!rec.excludeFromStats,
+      fxFee: Number(rec.fxFee) > 0 ? String(Math.round(Number(rec.fxFee))) : '',
     });
     setEditId(rec.id);
+    setFxFeeEdited(Number(rec.fxFee) > 0);
     setFormError('');
     setDialogOpen(true);
   }
+
+  // 國外刷卡手續費：所選帳戶為信用卡且有海外手續費率、且為外幣時適用。
+  const selectedAccount = accounts.find((account: any) => account.id === form.accountId) || null;
+  const overseasFeeRate = selectedAccount && selectedAccount.category === 'credit_card'
+    ? Number(selectedAccount.overseasFeeRate) || 0
+    : 0;
+  const overseasApplies = form.type === 'expense' && form.currency !== 'TWD' && overseasFeeRate > 0;
+  const autoFxFee = (() => {
+    if (!overseasApplies) return 0;
+    const amt = Number(form.amount);
+    const rate = Number(form.fxRate);
+    if (!(amt > 0) || !(rate > 0)) return 0;
+    return Math.max(0, Math.round(amt * rate * overseasFeeRate / 1000));
+  })();
+
+  useEffect(() => {
+    if (!dialogOpen) return;
+    if (!overseasApplies) {
+      setForm((current) => current.fxFee === '' ? current : { ...current, fxFee: '' });
+      return;
+    }
+    if (fxFeeEdited) return;
+    const next = autoFxFee > 0 ? String(autoFxFee) : '';
+    setForm((current) => current.fxFee === next ? current : { ...current, fxFee: next });
+  }, [dialogOpen, overseasApplies, autoFxFee, fxFeeEdited]);
 
   return (
     <div className="space-y-6">
@@ -174,6 +207,27 @@ export default function RecurringClient(_props: { user?: any } = {}) {
                 {fxLoading && <p className="text-xs text-slate-500">查詢最新匯率中...</p>}
               </div>
             )}
+            {overseasApplies && (
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-slate-700">海外手續費（TWD）</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number" min="0" step="1" placeholder="留空則由系統依卡片費率自動計算"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                    value={form.fxFee}
+                    onChange={e => { setFxFeeEdited(true); setForm(f => ({ ...f, fxFee: e.target.value })); }}
+                  />
+                  <button
+                    type="button"
+                    className="shrink-0 rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100"
+                    onClick={() => { setFxFeeEdited(false); setForm(f => ({ ...f, fxFee: autoFxFee > 0 ? String(autoFxFee) : '' })); }}
+                  >
+                    自動計算
+                  </button>
+                </div>
+                <p className="text-xs text-slate-500">卡片海外手續費率 {overseasFeeRate}‰{autoFxFee > 0 ? `，建議值 NT$ ${autoFxFee.toLocaleString('zh-TW')}` : ''}</p>
+              </div>
+            )}
             <Select label="分類" options={[{label: '未分類', value: ''}, ...categories.map(c => ({ label: c.name, value: c.id }))]} value={form.categoryId} onChange={e => setForm(f => ({ ...f, categoryId: e.target.value }))} />
             <Select label="帳戶" options={[{label: '未指定', value: ''}, ...accounts.map(a => ({ label: a.name, value: a.id }))]} value={form.accountId} onChange={e => {
               const acct = accounts.find((account: any) => account.id === e.target.value);
@@ -183,6 +237,10 @@ export default function RecurringClient(_props: { user?: any } = {}) {
             <Select label="頻率" options={Object.entries(FREQ_LABELS).map(([v, l]) => ({ label: l, value: v }))} value={form.frequency} onChange={e => setForm(f => ({ ...f, frequency: e.target.value }))} />
             <Input label="起始日期" type="date" value={form.startDate} onChange={e => setForm(f => ({ ...f, startDate: e.target.value }))} />
             <Input label="備註" value={form.note} onChange={e => setForm(f => ({ ...f, note: e.target.value }))} />
+            <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+              <input type="checkbox" className="w-4 h-4" checked={form.excludeFromStats} onChange={e => setForm(f => ({ ...f, excludeFromStats: e.target.checked }))} />
+              不計入統計
+            </label>
             {formError && <p className="text-red-500 text-sm">{formError}</p>}
             <div className="flex gap-2">
               <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>取消</Button>
@@ -212,6 +270,8 @@ export default function RecurringClient(_props: { user?: any } = {}) {
                   <p>分類：{catName}</p>
                   <p>帳戶：{acctName}</p>
                   <p>下次執行：{r.nextDate || '—'}</p>
+                  {Number(r.fxFee) > 0 && <p>海外手續費：NT$ {Math.round(Number(r.fxFee)).toLocaleString('zh-TW')}</p>}
+                  {r.excludeFromStats && <span className="inline-block text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded">不計入統計</span>}
                 </div>
                 {r.note && <p className="text-xs text-slate-400 mt-3 italic flex items-center gap-1"><StickyNote size={12}/> {r.note}</p>}
               </div>

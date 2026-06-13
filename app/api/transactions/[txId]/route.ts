@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '../../../../lib/apiHelpers';
 import { getDB, queryOne, saveDB } from '../../../../lib/db';
-import { normalizeCurrency, convertToTwd, normalizeDate } from '../../../../lib/accountHelpers';
+import { normalizeCurrency, convertToTwd, normalizeDate, resolveOverseasFee } from '../../../../lib/accountHelpers';
 import { ownsResource, assertOptimisticLock, lockErrorResponse } from '../../../../lib/resourceHelpers';
 import { computeTwdAmount } from '../../../../lib/moneyDecimal';
+import { insertFeeTransaction } from '../../../../lib/overseasFee';
 import { deleteTransactionAttachments, listTransactionAttachments } from '../../../../lib/transactionAttachments';
 
 type RouteContext = { params: Promise<{ txId: string }> };
@@ -32,6 +33,7 @@ interface TransactionRow {
   to_account_id: string | null;
   note: string | null;
   exclude_from_stats: number | null;
+  is_fx_fee: number | null;
   linked_id: string | null;
   source_recurring_id: string | null;
   scheduled_date: string | null;
@@ -102,6 +104,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
     categoryId: t.category_id,
     note: t.note || '',
     excludeFromStats: t.exclude_from_stats === 1,
+    isFxFee: t.is_fx_fee === 1,
     linkedId: t.linked_id || '',
     sourceRecurringId: t.source_recurring_id || null,
     sourceRecurringName,
@@ -123,6 +126,13 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
 async function updateHandler(request: NextRequest, txId: string, auth: Auth) {
   const existing = getOwnedTransaction(txId, auth.userId);
   if (!existing) return NextResponse.json({ error: '資源不存在或無權限', code: 'NotFound' }, { status: 404 });
+
+  if (existing.is_fx_fee === 1) {
+    return NextResponse.json({
+      error: '此為自動產生的國外刷卡手續費交易，請改編輯對應的國外交易（修改後手續費會自動同步）',
+      code: 'FxFeeImmutable',
+    }, { status: 422 });
+  }
 
   const body = await request.json().catch(() => ({})) as UpdateTransactionRequest;
 
@@ -175,21 +185,49 @@ async function updateHandler(request: NextRequest, txId: string, auth: Auth) {
     return NextResponse.json({ error: e instanceof Error ? e.message : '金額格式錯誤' }, { status: 400 });
   }
 
-  const fxFee = Math.max(0, Number(body.fxFee) || 0);
+  // 手續費另存為獨立交易，故原交易 twd_amount 不含手續費（fx_fee=0）。
+  const fxFee = resolveOverseasFee({
+    userId: auth.userId,
+    accountId: accountId || null,
+    currency: converted.currency,
+    twdBase: converted.twdAmount,
+    clientFxFee: body.fxFee,
+  });
   const twdAmountInt = computeTwdAmount(
     Math.round(converted.originalAmount * 100) / 100,
     converted.fxRate,
-    fxFee
+    0
   );
 
   const nowMs = Date.now();
   const db = getDB();
   db.run(
     'UPDATE transactions SET type=?, amount=?, currency=?, original_amount=?, fx_rate=?, fx_fee=?, twd_amount=?, date=?, category_id=?, account_id=?, note=?, exclude_from_stats=?, updated_at=? WHERE id=? AND user_id=?',
-    [type, twdAmountInt, converted.currency, converted.originalAmount, converted.fxRate, fxFee, twdAmountInt, date, categoryId || null, accountId || null, note || '', excludeFromStats ? 1 : 0, nowMs, txId, auth.userId]
+    [type, twdAmountInt, converted.currency, converted.originalAmount, converted.fxRate, 0, twdAmountInt, date, categoryId || null, accountId || null, note || '', excludeFromStats ? 1 : 0, nowMs, txId, auth.userId]
   );
+
+  // 同步配對的手續費獨立交易：依新狀態建立／更新／刪除（自動同步重算）。
+  const existingFeeId = existing.linked_id || '';
+  if (type === 'expense' && fxFee > 0) {
+    if (existingFeeId) {
+      db.run(
+        'UPDATE transactions SET amount=?, original_amount=?, twd_amount=?, date=?, category_id=?, account_id=?, exclude_from_stats=?, updated_at=? WHERE id=? AND user_id=? AND is_fx_fee=1',
+        [fxFee, fxFee, fxFee, date, categoryId || null, accountId || null, excludeFromStats ? 1 : 0, nowMs, existingFeeId, auth.userId]
+      );
+    } else {
+      const feeId = insertFeeTransaction(db, {
+        userId: auth.userId, mainId: txId, feeAmount: fxFee, date,
+        categoryId, accountId, excludeFromStats,
+      });
+      db.run('UPDATE transactions SET linked_id = ? WHERE id = ? AND user_id = ?', [feeId, txId, auth.userId]);
+    }
+  } else if (existingFeeId) {
+    db.run('DELETE FROM transactions WHERE id = ? AND user_id = ? AND is_fx_fee = 1', [existingFeeId, auth.userId]);
+    db.run("UPDATE transactions SET linked_id = '' WHERE id = ? AND user_id = ?", [txId, auth.userId]);
+  }
+
   saveDB();
-  return NextResponse.json({ ok: true, updatedAt: nowMs });
+  return NextResponse.json({ ok: true, fxFee, updatedAt: nowMs });
 }
 
 export async function PUT(request: NextRequest, { params }: RouteContext) {

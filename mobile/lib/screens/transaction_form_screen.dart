@@ -20,6 +20,8 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
   final _formKey = GlobalKey<FormState>();
   final _amount = TextEditingController();
   final _note = TextEditingController();
+  final _fxFee = TextEditingController();
+  bool _excludeFromStats = false;
 
   late Future<void> _loadFuture;
   List<Account> _accounts = [];
@@ -49,6 +51,8 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
       _categoryId = e.categoryId.isEmpty ? null : e.categoryId;
       _accountId = e.accountId.isEmpty ? null : e.accountId;
       _date = DateTime.tryParse(e.date) ?? DateTime.now();
+      _excludeFromStats = e.excludeFromStats;
+      if (e.fxFee > 0) _fxFee.text = e.fxFee.round().toString();
     }
     _loadFuture = _loadRefs();
   }
@@ -57,7 +61,25 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
   void dispose() {
     _amount.dispose();
     _note.dispose();
+    _fxFee.dispose();
     super.dispose();
+  }
+
+  Account? get _selectedAccount {
+    for (final a in _accounts) {
+      if (a.id == _accountId) return a;
+    }
+    return null;
+  }
+
+  /// 所選帳戶為信用卡、外幣、且有海外手續費率時，顯示手續費相關欄位。
+  bool get _overseasApplies {
+    final a = _selectedAccount;
+    return _type == 'expense' &&
+        a != null &&
+        a.category == 'credit_card' &&
+        a.currency != 'TWD' &&
+        a.overseasFeeRate > 0;
   }
 
   Future<void> _loadRefs() async {
@@ -257,7 +279,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
         });
       } else {
         final acc = _accounts.firstWhere((a) => a.id == _accountId);
-        final body = {
+        final body = <String, dynamic>{
           'type': _type,
           'amount': amount,
           'currency': acc.currency,
@@ -265,7 +287,13 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
           'categoryId': _categoryId,
           'accountId': _accountId,
           'note': _note.text.trim(),
+          'excludeFromStats': _excludeFromStats,
         };
+        // 海外手續費：有手動填則送（覆寫），否則交由伺服器依卡片費率自動計算。
+        final feeText = _fxFee.text.trim();
+        if (_overseasApplies && feeText.isNotEmpty) {
+          body['fxFee'] = num.tryParse(feeText) ?? 0;
+        }
         if (_isEdit) {
           await api.updateTransaction(widget.existing!.id, body);
           if (_photos.isNotEmpty) {
@@ -414,6 +442,29 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
             ),
           ),
           if (_type != 'transfer') ...[
+            if (_overseasApplies) ...[
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _fxFee,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                decoration: InputDecoration(
+                  labelText: '海外手續費 TWD（選填）',
+                  helperText:
+                      '此卡費率 ${_selectedAccount!.overseasFeeRate}‰，留空將自動計算',
+                  prefixIcon: const Icon(Icons.currency_exchange),
+                  border: const OutlineInputBorder(),
+                ),
+              ),
+            ],
+            const SizedBox(height: 8),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('不計入統計'),
+              value: _excludeFromStats,
+              onChanged: (v) => setState(() => _excludeFromStats = v),
+            ),
             if (_existingPhotos.isNotEmpty) ...[
               const SizedBox(height: 16),
               Align(

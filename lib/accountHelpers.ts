@@ -179,6 +179,33 @@ export function convertToTwd(
   return { currency, originalAmount: original, fxRate, twdAmount };
 }
 
+// 計算國外刷卡手續費（TWD 整數）。
+// 規則：client 明確帶 fxFee（含 0）→ 視為手動覆寫，直接採用（clamp >= 0）；
+// 否則僅在「帳戶為信用卡」且「幣別 ≠ TWD」且「overseas_fee_rate > 0」時，
+// 依 round(台幣本額 × 費率(千分點) / 1000) 自動計算；其餘為 0。
+export function resolveOverseasFee(opts: {
+  userId: string;
+  accountId: string | null | undefined;
+  currency: string;
+  twdBase: number;
+  clientFxFee: number | string | null | undefined;
+}): number {
+  const { userId, accountId, currency, twdBase, clientFxFee } = opts;
+  if (clientFxFee != null && String(clientFxFee).trim() !== '') {
+    return Math.max(0, Math.round(Number(clientFxFee) || 0));
+  }
+  if (!accountId || normalizeCurrency(currency) === 'TWD') return 0;
+  const acc = queryOne(
+    'SELECT category, account_type, overseas_fee_rate FROM accounts WHERE id = ? AND user_id = ?',
+    [accountId, userId]
+  );
+  if (!acc) return 0;
+  const isCredit = acc.category === 'credit_card' || acc.account_type === '信用卡';
+  const rate = Number(acc.overseas_fee_rate) || 0;
+  if (!isCredit || rate <= 0) return 0;
+  return Math.max(0, Math.round((Number(twdBase) || 0) * rate / 1000));
+}
+
 export function normalizeDate(dateStr: string | null | undefined): string {
   if (!dateStr) return '';
   const s = String(dateStr).trim();

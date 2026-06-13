@@ -488,6 +488,10 @@ async function _runMigrations(): Promise<void> {
   alterIgnore("ALTER TABLE transactions ADD COLUMN exclude_from_stats INTEGER DEFAULT 0");
   alterIgnore("ALTER TABLE transactions ADD COLUMN source_recurring_id TEXT DEFAULT ''");
   alterIgnore("ALTER TABLE transactions ADD COLUMN scheduled_date TEXT DEFAULT ''");
+  alterIgnore("ALTER TABLE transactions ADD COLUMN is_fx_fee INTEGER DEFAULT 0");
+
+  alterIgnore("ALTER TABLE recurring ADD COLUMN fx_fee REAL DEFAULT 0");
+  alterIgnore("ALTER TABLE recurring ADD COLUMN exclude_from_stats INTEGER DEFAULT 0");
 
   alterIgnore("ALTER TABLE budgets ADD COLUMN year_month TEXT DEFAULT ''");
   alterIgnore("ALTER TABLE budgets ADD COLUMN created_at INTEGER DEFAULT 0");

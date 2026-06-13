@@ -189,6 +189,11 @@ class _AccountFormState extends State<_AccountForm> {
   late final _initial = TextEditingController(
     text: widget.existing?.initialBalance.toString() ?? '0',
   );
+  late final _overseasFeeRate = TextEditingController(
+    text: (widget.existing?.overseasFeeRate ?? 0) > 0
+        ? widget.existing!.overseasFeeRate.toString()
+        : '',
+  );
   late String _category = widget.existing?.category.isNotEmpty == true
       ? widget.existing!.category
       : 'bank';
@@ -202,19 +207,24 @@ class _AccountFormState extends State<_AccountForm> {
   void dispose() {
     _name.dispose();
     _initial.dispose();
+    _overseasFeeRate.dispose();
     super.dispose();
   }
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _saving = true);
-    final body = {
+    final body = <String, dynamic>{
       'name': _name.text.trim(),
       'category': _category,
       'currency': _currency,
       'initialBalance': num.tryParse(_initial.text.trim()) ?? 0,
       'excludeFromTotal': _exclude,
     };
+    if (_category == 'credit_card') {
+      final raw = _overseasFeeRate.text.trim();
+      body['overseasFeeRate'] = raw.isEmpty ? null : (num.tryParse(raw) ?? 0);
+    }
     try {
       final api = ApiClient.instance;
       if (_isEdit) {
@@ -303,6 +313,20 @@ class _AccountFormState extends State<_AccountForm> {
                 ),
               ],
             ),
+            if (_category == 'credit_card') ...[
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _overseasFeeRate,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                decoration: const InputDecoration(
+                  labelText: '海外手續費率（千分點）',
+                  helperText: '例：15 代表 1.5%，外幣刷卡時自動計算手續費',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ],
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
               title: const Text('不計入總資產'),

@@ -25,7 +25,8 @@ permissions:
 jobs:
   scan:
     name: Scan pub.dev lockfile
-    runs-on: ubuntu-latest
+    # 自建 self-hosted runner（需 Docker 跑 osv-scanner 容器）。
+    runs-on: self-hosted
     steps:
       - name: Checkout
         uses: actions/checkout@v6

@@ -2,6 +2,7 @@
 import Decimal from 'decimal.js';
 import { getDB, queryOne, queryAll, saveDB } from './db';
 import { normalizeCurrency } from './accountHelpers';
+import { insertFeeTransaction } from './overseasFee';
 import { uid } from './userDefaults';
 import * as userTime from './userTime';
 
@@ -82,7 +83,11 @@ export function processOneRecurring(
       const twdAmountDecimal = new Decimal(r.amount as number);
       rOriginalAmount = twdAmountDecimal.dividedBy(fxRateDecimal).toDecimalPlaces(2, Decimal.ROUND_HALF_UP).toNumber();
     }
-    const twdAmount = r.amount;
+    // 海外手續費（固定收支設定值）另存為獨立交易；原交易 twd_amount 不含手續費。
+    const rFxFee = Math.max(0, Math.round(Number(r.fx_fee) || 0));
+    const twdAmount = Number(r.amount) || 0;
+    const rExcludeFromStats = r.exclude_from_stats ? 1 : 0;
+    const mainId = uid();
 
     try {
       db.run(
@@ -92,14 +97,26 @@ export function processOneRecurring(
           source_recurring_id, scheduled_date, created_at, updated_at)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
-          uid(), userId, r.type as string,
-          r.amount as number, rOriginalAmount as number, rCurrency, rFxRate, 0, twdAmount as number,
+          mainId, userId, r.type as string,
+          twdAmount, rOriginalAmount as number, rCurrency, rFxRate, 0, twdAmount,
           scheduledDate, (r.category_id as string) || null, (r.account_id as string) || null,
-          (String(r.note || '')) + ' (自動)', 0, '',
+          (String(r.note || '')) + ' (自動)', rExcludeFromStats, '',
           r.id as string, scheduledDate,
           now, now,
         ]
       );
+      // 外幣信用卡「支出」：另存一筆手續費獨立交易並與主交易雙向 linked。
+      if (r.type === 'expense' && rFxFee > 0) {
+        const feeId = insertFeeTransaction(db, {
+          userId, mainId, feeAmount: rFxFee, date: scheduledDate,
+          categoryId: (r.category_id as string) || null,
+          accountId: (r.account_id as string) || null,
+          excludeFromStats: rExcludeFromStats,
+          sourceRecurringId: r.id as string, scheduledDate,
+          note: (String(r.note || '')) + ' 國外刷卡手續費 (自動)',
+        });
+        db.run('UPDATE transactions SET linked_id = ? WHERE id = ?', [feeId, mainId]);
+      }
       db.run(
         'UPDATE recurring SET last_generated = ?, updated_at = ? WHERE id = ? AND (last_generated IS NULL OR last_generated < ?)',
         [scheduledDate, now, r.id as string, scheduledDate]

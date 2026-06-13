@@ -141,6 +141,8 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                   categoryName: data.catName[t.categoryId],
                   onTap: () => t.type == 'transfer'
                       ? toast(context, '轉帳請於網頁版編輯')
+                      : t.isFxFee
+                      ? toast(context, '國外刷卡手續費由原交易自動產生，請編輯對應的國外交易')
                       : _openForm(t),
                   onLongPress: () => _delete(t),
                 );

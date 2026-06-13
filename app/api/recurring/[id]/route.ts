@@ -2,7 +2,7 @@
 import { NextResponse } from 'next/server';
 import { requireAuth } from '../../../../lib/apiHelpers';
 import { getDB, queryOne, saveDB } from '../../../../lib/db';
-import { normalizeCurrency, convertToTwd, normalizeDate } from '../../../../lib/accountHelpers';
+import { normalizeCurrency, convertToTwd, normalizeDate, resolveOverseasFee } from '../../../../lib/accountHelpers';
 import { isValidIsoDate } from '../../../../lib/userTime';
 
 const VALID_RECURRING_FREQ = new Set(['daily', 'weekly', 'monthly', 'yearly']);
@@ -13,7 +13,7 @@ export async function PUT(request, { params }) {
 
   const { id } = await params;
   const body = await request.json().catch(() => ({}));
-  const { type, categoryId, accountId, frequency, startDate, note } = body;
+  const { type, categoryId, accountId, frequency, startDate, note, excludeFromStats } = body;
   let { amount, currency, fxRate } = body;
 
   if (categoryId === '__deleted_category__') {
@@ -58,9 +58,18 @@ export async function PUT(request, { params }) {
 
   const newLastGenerated = (normalizedStart !== old.start_date) ? null : old.last_generated;
 
+  const fxFee = resolveOverseasFee({
+    userId: auth.userId,
+    accountId: accountId || null,
+    currency: converted.currency,
+    twdBase: amountTwdInt,
+    clientFxFee: body.fxFee,
+  });
+  const excludeFlag = excludeFromStats != null ? (excludeFromStats ? 1 : 0) : (old.exclude_from_stats ? 1 : 0);
+
   getDB().run(
-    `UPDATE recurring SET amount = ?, category_id = ?, account_id = ?, frequency = ?, start_date = ?, note = ?, currency = ?, fx_rate = ?, last_generated = ?, needs_attention = 0, updated_at = ? WHERE id = ? AND user_id = ?`,
-    [amountTwdInt, categoryId || null, accountId || null, frequency, normalizedStart, note || '', converted.currency, String(converted.fxRate), newLastGenerated, Date.now(), id, auth.userId]
+    `UPDATE recurring SET amount = ?, category_id = ?, account_id = ?, frequency = ?, start_date = ?, note = ?, currency = ?, fx_rate = ?, fx_fee = ?, exclude_from_stats = ?, last_generated = ?, needs_attention = 0, updated_at = ? WHERE id = ? AND user_id = ?`,
+    [amountTwdInt, categoryId || null, accountId || null, frequency, normalizedStart, note || '', converted.currency, String(converted.fxRate), fxFee, excludeFlag, newLastGenerated, Date.now(), id, auth.userId]
   );
   saveDB();
   return NextResponse.json({ ok: true });

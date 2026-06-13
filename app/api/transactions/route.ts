@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '../../../lib/apiHelpers';
 import { getDB, queryAll, queryOne, saveDB } from '../../../lib/db';
-import { normalizeCurrency, convertToTwd, normalizeDate } from '../../../lib/accountHelpers';
+import { normalizeCurrency, convertToTwd, normalizeDate, resolveOverseasFee } from '../../../lib/accountHelpers';
 import { uid } from '../../../lib/userDefaults';
 import { todayInUserTz, isValidIsoDate } from '../../../lib/userTime';
 import { computeTwdAmount } from '../../../lib/moneyDecimal';
+import { insertFeeTransaction } from '../../../lib/overseasFee';
 
 type TransactionType = 'income' | 'expense' | 'transfer_in' | 'transfer_out';
 type SortField = 'date' | 'amount' | 'account' | 'category' | 'type';
@@ -26,6 +27,7 @@ interface TransactionRow {
   to_account_id: string | null;
   note: string | null;
   exclude_from_stats: number | null;
+  is_fx_fee: number | null;
   linked_id: string | null;
   source_recurring_id: string | null;
   source_recurring_name?: string | null;
@@ -45,6 +47,7 @@ interface TransactionListItem extends TransactionRow {
   fxFee: number;
   twdAmount: number;
   excludeFromStats: boolean;
+  isFxFee: boolean;
   linkedId: string;
   sourceRecurringId: string | null;
   sourceRecurringName: string | null;
@@ -187,6 +190,7 @@ export async function GET(request: NextRequest) {
     fxFee: Number(r.fx_fee) || 0,
     twdAmount: Number(r.twd_amount) || Number(r.amount) || 0,
     excludeFromStats: r.exclude_from_stats === 1,
+    isFxFee: r.is_fx_fee === 1,
     linkedId: r.linked_id || '',
     sourceRecurringId: r.source_recurring_id || null,
     sourceRecurringName: r.source_recurring_id ? (r.source_recurring_name || null) : null,
@@ -252,11 +256,18 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: e instanceof Error ? e.message : '金額格式錯誤' }, { status: 400 });
   }
 
-  const fxFee = Math.max(0, Number(body.fxFee) || 0);
+  // 國外刷卡手續費另存為獨立交易，故原交易 twd_amount 不含手續費（fx_fee=0）。
+  const fxFee = resolveOverseasFee({
+    userId: auth.userId,
+    accountId: accountId || null,
+    currency: converted.currency,
+    twdBase: converted.twdAmount,
+    clientFxFee: body.fxFee,
+  });
   const twdAmountInt = computeTwdAmount(
     Math.round(converted.originalAmount * 100) / 100,
     converted.fxRate,
-    fxFee
+    0
   );
 
   const id = uid();
@@ -264,8 +275,19 @@ export async function POST(request: NextRequest) {
   const db = getDB();
   db.run(
     'INSERT INTO transactions (id, user_id, type, amount, currency, original_amount, fx_rate, fx_fee, twd_amount, date, category_id, account_id, note, exclude_from_stats, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
-    [id, auth.userId, type, twdAmountInt, converted.currency, converted.originalAmount, converted.fxRate, fxFee, twdAmountInt, date, categoryId || null, accountId || null, note || '', excludeFromStats ? 1 : 0, now, now]
+    [id, auth.userId, type, twdAmountInt, converted.currency, converted.originalAmount, converted.fxRate, 0, twdAmountInt, date, categoryId || null, accountId || null, note || '', excludeFromStats ? 1 : 0, now, now]
   );
+
+  // 僅外幣信用卡「支出」才產生手續費列，並與原交易雙向 linked。
+  let feeId: string | null = null;
+  if (type === 'expense' && fxFee > 0) {
+    feeId = insertFeeTransaction(db, {
+      userId: auth.userId, mainId: id, feeAmount: fxFee, date,
+      categoryId, accountId, excludeFromStats,
+    });
+    db.run('UPDATE transactions SET linked_id = ? WHERE id = ? AND user_id = ?', [feeId, id, auth.userId]);
+  }
+
   saveDB();
-  return NextResponse.json({ id, twdAmount: twdAmountInt, updatedAt: now }, { status: 201 });
+  return NextResponse.json({ id, twdAmount: twdAmountInt, fxFee, feeId, updatedAt: now }, { status: 201 });
 }

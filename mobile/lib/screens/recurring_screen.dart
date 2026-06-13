@@ -180,12 +180,14 @@ class _RecurringFormState extends State<_RecurringForm> {
   final _formKey = GlobalKey<FormState>();
   final _amount = TextEditingController();
   final _note = TextEditingController();
+  final _fxFee = TextEditingController();
   String _type = 'expense';
   String _frequency = 'monthly';
   String? _categoryId;
   String? _accountId;
   DateTime _start = DateTime.now();
   bool _saving = false;
+  bool _excludeFromStats = false;
 
   @override
   void initState() {
@@ -197,11 +199,28 @@ class _RecurringFormState extends State<_RecurringForm> {
   void dispose() {
     _amount.dispose();
     _note.dispose();
+    _fxFee.dispose();
     super.dispose();
   }
 
   List<Category> get _cats =>
       widget.categories.where((c) => c.type == _type && !c.isParent).toList();
+
+  Account? get _selectedAccount {
+    for (final a in widget.accounts) {
+      if (a.id == _accountId) return a;
+    }
+    return null;
+  }
+
+  bool get _overseasApplies {
+    final a = _selectedAccount;
+    return _type == 'expense' &&
+        a != null &&
+        a.category == 'credit_card' &&
+        a.currency != 'TWD' &&
+        a.overseasFeeRate > 0;
+  }
 
   String get _startStr =>
       '${_start.year}-${_start.month.toString().padLeft(2, '0')}-${_start.day.toString().padLeft(2, '0')}';
@@ -211,7 +230,7 @@ class _RecurringFormState extends State<_RecurringForm> {
     final acc = widget.accounts.firstWhere((a) => a.id == _accountId);
     setState(() => _saving = true);
     try {
-      await ApiClient.instance.createRecurring({
+      final body = <String, dynamic>{
         'type': _type,
         'amount': num.parse(_amount.text.trim()),
         'currency': acc.currency,
@@ -220,7 +239,13 @@ class _RecurringFormState extends State<_RecurringForm> {
         'frequency': _frequency,
         'startDate': _startStr,
         'note': _note.text.trim(),
-      });
+        'excludeFromStats': _excludeFromStats,
+      };
+      final feeText = _fxFee.text.trim();
+      if (_overseasApplies && feeText.isNotEmpty) {
+        body['fxFee'] = num.tryParse(feeText) ?? 0;
+      }
+      await ApiClient.instance.createRecurring(body);
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
       if (mounted) {
@@ -341,6 +366,27 @@ class _RecurringFormState extends State<_RecurringForm> {
                 labelText: '備註（選填）',
                 border: OutlineInputBorder(),
               ),
+            ),
+            if (_overseasApplies) ...[
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _fxFee,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                decoration: InputDecoration(
+                  labelText: '海外手續費 TWD（選填）',
+                  helperText:
+                      '此卡費率 ${_selectedAccount!.overseasFeeRate}‰，留空將自動計算',
+                  border: const OutlineInputBorder(),
+                ),
+              ),
+            ],
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('不計入統計'),
+              value: _excludeFromStats,
+              onChanged: (v) => setState(() => _excludeFromStats = v),
             ),
             const SizedBox(height: 20),
             FilledButton(

@@ -17,7 +17,10 @@ on:
 
 jobs:
   build-apk:
-    runs-on: ubuntu-latest
+    # 改用自建 self-hosted runner（GitHub-hosted 額度受帳務限制時仍可建置）。
+    # runner 需具備：bash、git、curl、unzip、jq、node、aws CLI，以及 Flutter
+    # 所需的 Android SDK / JDK 環境（Flutter 本身由下方 flutter-action 安裝）。
+    runs-on: self-hosted
     env:
       S3_BUCKET: ${{ secrets.S3_BUCKET }}
       S3_ENDPOINT: ${{ secrets.S3_ENDPOINT }}

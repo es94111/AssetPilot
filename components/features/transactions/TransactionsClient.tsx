@@ -518,7 +518,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
     const amt = Number(form.amount);
     const rate = Number(form.fxRate);
     if (!(amt > 0) || !(rate > 0)) return 0;
-    return Math.max(0, Math.round(amt * rate * overseasFeeRate / 1000));
+    return Math.max(0, Math.round(amt * rate * overseasFeeRate / 100));
   })();
 
   // 未手動編輯時，依當前金額/匯率自動帶入手續費；不適用時清空，交由系統處理。
@@ -770,7 +770,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
                     自動計算
                   </button>
                 </div>
-                <p className="text-xs text-slate-500">卡片海外手續費率 {overseasFeeRate}‰{autoFxFee > 0 ? `，建議值 NT$ ${autoFxFee.toLocaleString('zh-TW')}` : ''}</p>
+                <p className="text-xs text-slate-500">卡片海外手續費率 {overseasFeeRate}%{autoFxFee > 0 ? `，建議值 NT$ ${autoFxFee.toLocaleString('zh-TW')}` : ''}</p>
               </div>
             )}
             <div className="flex flex-col gap-1">

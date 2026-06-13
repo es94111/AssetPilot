@@ -273,7 +273,7 @@ export default function AccountsClient() {
         <p className="font-bold text-lg mt-2">{fmt(account.balance, account.currency)}</p>
         {account.currency !== 'TWD' && <p className="text-sm text-slate-500 mt-1">折算總額：{fmt(account.twdAccumulated, 'TWD')}</p>}
         {account.linkedBankId && <p className="text-xs text-slate-500 mt-2">關聯銀行：{bankAccounts.find((item) => item.id === account.linkedBankId)?.name || '—'}</p>}
-        {account.overseasFeeRate != null && <p className="text-xs text-slate-500 mt-1">海外手續費率：{account.overseasFeeRate}</p>}
+        {account.overseasFeeRate != null && <p className="text-xs text-slate-500 mt-1">海外手續費率：{account.overseasFeeRate}%</p>}
         {account.excludeFromTotal && <span className="inline-block text-xs text-slate-400 bg-slate-100 px-2 py-1 rounded mt-2">不計入總資產</span>}
       </div>
     );
@@ -307,7 +307,7 @@ export default function AccountsClient() {
               {form.category === 'credit_card' && (
                 <>
                   <Select label="所屬銀行" options={[{ label: '不分組', value: '' }, ...bankAccounts.map((bank) => ({ label: bank.name, value: bank.id }))]} value={form.linkedBankId} onChange={(e) => setForm((current) => ({ ...current, linkedBankId: e.target.value }))} />
-                  <Input label="海外手續費率（千分點）" type="number" value={form.overseasFeeRate} onChange={(e) => setForm((current) => ({ ...current, overseasFeeRate: e.target.value }))} />
+                  <Input label="海外手續費率（%）" type="number" step="0.01" value={form.overseasFeeRate} onChange={(e) => setForm((current) => ({ ...current, overseasFeeRate: e.target.value }))} />
                 </>
               )}
               <label className="flex items-center gap-2">

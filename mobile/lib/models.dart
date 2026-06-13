@@ -49,7 +49,7 @@ class Account {
   final num initialBalance;
   final num twdAccumulated;
   final bool excludeFromTotal;
-  final num overseasFeeRate; // 海外手續費率（千分點），非信用卡為 0
+  final num overseasFeeRate; // 海外手續費率（百分比 %），非信用卡為 0
 
   Account({
     required this.id,

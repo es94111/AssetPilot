@@ -174,7 +174,7 @@ export default function RecurringClient(_props: { user?: any } = {}) {
     const amt = Number(form.amount);
     const rate = Number(form.fxRate);
     if (!(amt > 0) || !(rate > 0)) return 0;
-    return Math.max(0, Math.round(amt * rate * overseasFeeRate / 1000));
+    return Math.max(0, Math.round(amt * rate * overseasFeeRate / 100));
   })();
 
   useEffect(() => {
@@ -225,7 +225,7 @@ export default function RecurringClient(_props: { user?: any } = {}) {
                     自動計算
                   </button>
                 </div>
-                <p className="text-xs text-slate-500">卡片海外手續費率 {overseasFeeRate}‰{autoFxFee > 0 ? `，建議值 NT$ ${autoFxFee.toLocaleString('zh-TW')}` : ''}</p>
+                <p className="text-xs text-slate-500">卡片海外手續費率 {overseasFeeRate}%{autoFxFee > 0 ? `，建議值 NT$ ${autoFxFee.toLocaleString('zh-TW')}` : ''}</p>
               </div>
             )}
             <Select label="分類" options={[{label: '未分類', value: ''}, ...categories.map(c => ({ label: c.name, value: c.id }))]} value={form.categoryId} onChange={e => setForm(f => ({ ...f, categoryId: e.target.value }))} />

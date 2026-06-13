@@ -377,7 +377,7 @@ class _RecurringFormState extends State<_RecurringForm> {
                 decoration: InputDecoration(
                   labelText: '海外手續費 TWD（選填）',
                   helperText:
-                      '此卡費率 ${_selectedAccount!.overseasFeeRate}‰，留空將自動計算',
+                      '此卡費率 ${_selectedAccount!.overseasFeeRate}%，留空將自動計算',
                   border: const OutlineInputBorder(),
                 ),
               ),

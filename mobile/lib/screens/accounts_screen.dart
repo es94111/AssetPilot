@@ -321,8 +321,8 @@ class _AccountFormState extends State<_AccountForm> {
                   decimal: true,
                 ),
                 decoration: const InputDecoration(
-                  labelText: '海外手續費率（千分點）',
-                  helperText: '例：15 代表 1.5%，外幣刷卡時自動計算手續費',
+                  labelText: '海外手續費率（%）',
+                  helperText: '例：1.5 代表 1.5%，外幣刷卡時自動計算手續費',
                   border: OutlineInputBorder(),
                 ),
               ),

@@ -452,7 +452,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                 decoration: InputDecoration(
                   labelText: '海外手續費 TWD（選填）',
                   helperText:
-                      '此卡費率 ${_selectedAccount!.overseasFeeRate}‰，留空將自動計算',
+                      '此卡費率 ${_selectedAccount!.overseasFeeRate}%，留空將自動計算',
                   prefixIcon: const Icon(Icons.currency_exchange),
                   border: const OutlineInputBorder(),
                 ),

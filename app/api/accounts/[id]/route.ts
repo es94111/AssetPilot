@@ -147,10 +147,10 @@ async function updateAccount(request: NextRequest, id: string) {
   if (body.overseasFeeRate != null) {
     if (category === 'credit_card') {
       const v = Number(body.overseasFeeRate);
-      if (!Number.isFinite(v) || v < 0 || v > 1000) {
-        return NextResponse.json({ error: '海外手續費率須為 0~1000（千分點）', code: 'ValidationError', field: 'overseasFeeRate' }, { status: 400 });
+      if (!Number.isFinite(v) || v < 0 || v > 100) {
+        return NextResponse.json({ error: '海外手續費率須為 0~100（百分比）', code: 'ValidationError', field: 'overseasFeeRate' }, { status: 400 });
       }
-      safeOverseasFeeRate = Math.round(v);
+      safeOverseasFeeRate = Math.round(v * 100) / 100;
     } else {
       safeOverseasFeeRate = null;
     }

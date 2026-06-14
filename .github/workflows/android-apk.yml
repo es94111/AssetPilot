@@ -33,6 +33,24 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
+      # subosito/flutter-action 的 setup.sh 內部用 jq 解析 Flutter release
+      # manifest。self-hosted runner 不保證裝有 jq，這裡 just-in-time 下載一個
+      # static binary 放進 GITHUB_PATH（後續步驟含上方 action 都吃得到），
+      # 維持「不依賴 runner 預裝工具」的原則。
+      - name: Ensure jq (required by flutter-action)
+        shell: bash
+        run: |
+          if command -v jq >/dev/null 2>&1; then
+            echo "jq already present: $(command -v jq)"
+            exit 0
+          fi
+          mkdir -p "$RUNNER_TEMP/bin"
+          curl -fsSL -o "$RUNNER_TEMP/bin/jq" \
+            https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-linux-amd64
+          chmod +x "$RUNNER_TEMP/bin/jq"
+          echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
+          echo "Installed jq 1.7.1 to $RUNNER_TEMP/bin"
+
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:

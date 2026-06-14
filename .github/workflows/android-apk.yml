@@ -17,10 +17,7 @@ on:
 
 jobs:
   build-apk:
-    # 改用自建 self-hosted runner（GitHub-hosted 額度受帳務限制時仍可建置）。
-    # runner 需具備：bash、git、curl、unzip、node、aws CLI，以及 Flutter
-    # 所需的 Android SDK / JDK 環境（Flutter 本身由下方 flutter-action 安裝）。
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     env:
       S3_BUCKET: ${{ secrets.S3_BUCKET }}
       S3_ENDPOINT: ${{ secrets.S3_ENDPOINT }}
@@ -33,49 +30,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      # subosito/flutter-action 的 setup.sh 內部用 jq 解析 Flutter release
-      # manifest。self-hosted runner 不保證裝有 jq，這裡 just-in-time 下載一個
-      # static binary 放進 GITHUB_PATH（後續步驟含上方 action 都吃得到），
-      # 維持「不依賴 runner 預裝工具」的原則。
-      - name: Ensure jq (required by flutter-action)
-        shell: bash
-        run: |
-          if command -v jq >/dev/null 2>&1; then
-            echo "jq already present: $(command -v jq)"
-            exit 0
-          fi
-          mkdir -p "$RUNNER_TEMP/bin"
-          curl -fsSL -o "$RUNNER_TEMP/bin/jq" \
-            https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-linux-amd64
-          chmod +x "$RUNNER_TEMP/bin/jq"
-          echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
-          echo "Installed jq 1.7.1 to $RUNNER_TEMP/bin"
-
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: stable
           cache: true
-
-      # 後續「Generate Google Play release notes」與「Publish to Google Play」
-      # 兩步用到 node / npm。self-hosted runner 不保證裝有 Node，這裡由 action
-      # 自行佈署，維持「不依賴 runner 預裝工具」的原則。
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-
-      # Android App Bundle 的 Gradle/AGP 需要 JDK 17，以及一套 Android SDK
-      # （ANDROID_HOME）。self-hosted runner 未預裝這些，改由 action 佈署並接受
-      # 授權；self-hosted 的 tool cache 會跨 run 持久化，僅首次需下載。
-      - name: Set up JDK
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: "17"
-
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
 
       - name: Resolve version
         id: version
@@ -84,10 +43,8 @@ jobs:
           if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
             VERSION="${GITHUB_REF_NAME#v}"
           else
-            # grep/sed 解析，不依賴 runner 是否裝有 jq。
-            VERSION="$(grep -m1 '"currentVersion"' changelog.json | sed -E 's/.*"currentVersion"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/')"
+            VERSION="$(jq -r .currentVersion changelog.json)"
           fi
-          if [ -z "$VERSION" ]; then echo "::error::無法解析版本號"; exit 1; fi
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
           echo "Resolved app version: ${VERSION}"
 

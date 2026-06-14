@@ -65,6 +65,18 @@ jobs:
         with:
           node-version: "20"
 
+      # Android App Bundle 的 Gradle/AGP 需要 JDK 17，以及一套 Android SDK
+      # （ANDROID_HOME）。self-hosted runner 未預裝這些，改由 action 佈署並接受
+      # 授權；self-hosted 的 tool cache 會跨 run 持久化，僅首次需下載。
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
       - name: Resolve version
         id: version
         shell: bash

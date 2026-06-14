@@ -261,15 +261,37 @@ class _MiniStat extends StatelessWidget {
   }
 }
 
+/// 父分類彙總後的扇區（與 Web dashboard 的 groupCategoryRows 對應）。
+class _CatGroup {
+  final String name;
+  final String color;
+  num total;
+  _CatGroup({required this.name, required this.color, this.total = 0});
+}
+
 class _CategoryPie extends StatelessWidget {
   final List<CatNode> nodes;
   const _CategoryPie({required this.nodes});
 
+  /// 與 Web 儀表板「支出分類」相同的邏輯：API 回傳的子分類節點依父分類彙總，
+  /// 父分類金額為其子分類總和，再依金額由大到小排序。
+  List<_CatGroup> _groupByParent() {
+    final groups = <String, _CatGroup>{};
+    for (final n in nodes) {
+      final g = groups.putIfAbsent(
+        n.parentId,
+        () => _CatGroup(name: n.parentName, color: n.parentColor),
+      );
+      g.total += n.total;
+    }
+    return groups.values.toList()
+      ..sort((a, b) => b.total.compareTo(a.total));
+  }
+
   @override
   Widget build(BuildContext context) {
     if (nodes.isEmpty) return const SizedBox.shrink();
-    final top = [...nodes]..sort((a, b) => b.total.compareTo(a.total));
-    final shown = top.take(8).toList();
+    final shown = _groupByParent();
     final total = shown.fold<num>(0, (s, n) => s + n.total);
     return Card(
       elevation: 0,

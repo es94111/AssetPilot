@@ -192,18 +192,45 @@ class Txn {
   }
 }
 
-/// 儀表板分類彙總節點（圓餅扇區）
+/// 儀表板分類彙總節點。API 回傳的是「子分類」層級的節點，每筆都帶有所屬
+/// 父分類的 parentId / parentName / parentColor，供前端依父分類彙總（與 Web 一致）。
 class CatNode {
   final String name;
   final String color;
   final num total;
-  CatNode({required this.name, required this.color, required this.total});
+  final String parentId;
+  final String parentName;
+  final String parentColor;
+  CatNode({
+    required this.name,
+    required this.color,
+    required this.total,
+    required this.parentId,
+    required this.parentName,
+    required this.parentColor,
+  });
 
-  factory CatNode.fromJson(Map<String, dynamic> j) => CatNode(
-    name: _asStr(j['name']),
-    color: _asStr(j['color']).isEmpty ? '#888888' : _asStr(j['color']),
-    total: _asNum(j['total']),
-  );
+  factory CatNode.fromJson(Map<String, dynamic> j) {
+    final name = _asStr(j['name']);
+    final color = _asStr(j['color']).isEmpty ? '#888888' : _asStr(j['color']);
+    // fallback 規則對齊 Web dashboard 的 groupCategoryRows()。
+    final parentName = _asStr(j['parentName']).isEmpty
+        ? (name.isEmpty ? '未分類' : name)
+        : _asStr(j['parentName']);
+    final parentColor =
+        _asStr(j['parentColor']).isEmpty ? color : _asStr(j['parentColor']);
+    final parentId = _asStr(j['parentId']).isEmpty
+        ? 'parent-$parentName'
+        : _asStr(j['parentId']);
+    return CatNode(
+      name: name,
+      color: color,
+      total: _asNum(j['total']),
+      parentId: parentId,
+      parentName: parentName,
+      parentColor: parentColor,
+    );
+  }
 }
 
 /// `GET /api/dashboard?ym=YYYY-MM`

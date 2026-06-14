@@ -5,6 +5,8 @@ import '../app.dart';
 import '../models.dart';
 import '../widgets.dart';
 import 'changelog_screen.dart';
+import 'report_schedule_screen.dart';
+import 'security_screens.dart';
 
 class SettingsScreen extends StatefulWidget {
   final VoidCallback onLoggedOut;
@@ -170,6 +172,34 @@ class _SettingsScreenState extends State<SettingsScreen> {
     ThemeMode.system => '跟隨系統',
   };
 
+  Future<void> _pickLanguage() async {
+    const langs = {'zh-TW': '繁體中文', 'en': 'English'};
+    final picked = await showDialog<String>(
+      context: context,
+      builder: (_) => SimpleDialog(
+        title: const Text('語言（影響通知與網頁版）'),
+        children: [
+          for (final e in langs.entries)
+            ListTile(
+              title: Text(e.value),
+              onTap: () => Navigator.pop(context, e.key),
+            ),
+        ],
+      ),
+    );
+    if (picked == null) return;
+    try {
+      await ApiClient.instance.setLanguage(picked);
+      if (mounted) toast(context, '已更新語言：${langs[picked]}');
+    } catch (e) {
+      if (mounted) toast(context, '$e');
+    }
+  }
+
+  void _push(Widget page) => Navigator.of(
+    context,
+  ).push(MaterialPageRoute(builder: (_) => page));
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -230,14 +260,65 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 },
               ),
             ),
+            ListTile(
+              leading: const Icon(Icons.payments_outlined),
+              title: const Text('幣別設定'),
+              subtitle: const Text('預設幣別與常用幣別'),
+              onTap: () => _push(const CurrencySettingsScreen()),
+            ),
+            ListTile(
+              leading: const Icon(Icons.translate),
+              title: const Text('語言'),
+              subtitle: const Text('繁體中文 / English'),
+              onTap: _pickLanguage,
+            ),
+            ListTile(
+              leading: const Icon(Icons.notifications_outlined),
+              title: const Text('報表通知'),
+              subtitle: const Text('自訂定期收支報表寄送時間'),
+              onTap: () => _push(const ReportScheduleScreen()),
+            ),
+            const Divider(),
+            const Padding(
+              padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
+              child: Text(
+                '帳號安全',
+                style: TextStyle(fontSize: 13, color: Colors.grey),
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.password_outlined),
+              title: Text(user.hasPassword ? '修改密碼' : '設定密碼'),
+              onTap: () =>
+                  showChangePasswordSheet(context, hasPassword: user.hasPassword),
+            ),
+            ListTile(
+              leading: const Icon(Icons.key_outlined),
+              title: const Text('Passkey 管理'),
+              onTap: () => _push(const PasskeysScreen()),
+            ),
+            ListTile(
+              leading: const Icon(Icons.link),
+              title: const Text('帳號綁定'),
+              subtitle: const Text('Google / LINE'),
+              onTap: () => _push(const AccountBindingsScreen()),
+            ),
+            ListTile(
+              leading: const Icon(Icons.devices_outlined),
+              title: const Text('登入裝置'),
+              onTap: () => _push(const SessionsScreen()),
+            ),
+            ListTile(
+              leading: const Icon(Icons.history),
+              title: const Text('登入紀錄'),
+              onTap: () => _push(const LoginAuditScreen()),
+            ),
             const Divider(),
             ListTile(
               leading: const Icon(Icons.system_update_outlined),
               title: const Text('版本資訊'),
               subtitle: const Text('查看目前版本與更新內容'),
-              onTap: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const ChangelogScreen()),
-              ),
+              onTap: () => _push(const ChangelogScreen()),
             ),
             const Divider(),
             ListTile(

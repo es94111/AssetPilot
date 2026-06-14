@@ -7,6 +7,20 @@ import '../api_client.dart';
 import '../models.dart';
 import '../widgets.dart';
 
+/// 幣別下拉的預設選項；實際清單會再併入使用者帳戶的幣別與目前交易幣別。
+const _kDefaultCurrencies = [
+  'TWD',
+  'USD',
+  'JPY',
+  'EUR',
+  'CNY',
+  'HKD',
+  'GBP',
+  'AUD',
+  'CAD',
+  'SGD',
+];
+
 /// 新增／編輯交易。轉帳僅支援新增。
 class TransactionFormScreen extends StatefulWidget {
   final Txn? existing;
@@ -21,7 +35,10 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
   final _amount = TextEditingController();
   final _note = TextEditingController();
   final _fxFee = TextEditingController();
+  final _fxRate = TextEditingController();
   bool _excludeFromStats = false;
+  // 交易幣別。預設跟隨所選帳戶，但可獨立改選（外幣消費／刷卡）。
+  String _currency = 'TWD';
 
   late Future<void> _loadFuture;
   List<Account> _accounts = [];
@@ -46,12 +63,17 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
     final e = widget.existing;
     if (e != null) {
       _type = e.type == 'transfer' ? 'expense' : e.type;
-      _amount.text = e.amount.toString();
+      // 外幣交易以原幣別金額（originalAmount）編輯；TWD 交易等同 amount。
+      _amount.text = e.originalAmount.toString();
       _note.text = e.note;
       _categoryId = e.categoryId.isEmpty ? null : e.categoryId;
       _accountId = e.accountId.isEmpty ? null : e.accountId;
       _date = DateTime.tryParse(e.date) ?? DateTime.now();
       _excludeFromStats = e.excludeFromStats;
+      _currency = e.currency.isEmpty ? 'TWD' : e.currency;
+      // 帶入原交易匯率，避免儲存時被系統匯率覆寫；'1' 視為未指定。
+      final rate = num.tryParse(e.fxRate) ?? 1;
+      if (_currency != 'TWD' && rate > 0 && rate != 1) _fxRate.text = e.fxRate;
       if (e.fxFee > 0) _fxFee.text = e.fxFee.round().toString();
     }
     _loadFuture = _loadRefs();
@@ -62,6 +84,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
     _amount.dispose();
     _note.dispose();
     _fxFee.dispose();
+    _fxRate.dispose();
     super.dispose();
   }
 
@@ -72,15 +95,24 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
     return null;
   }
 
-  /// 所選帳戶為信用卡、外幣、且有海外手續費率時，顯示手續費相關欄位。
+  /// 信用卡帳戶、以外幣消費、且該卡有海外手續費率時，顯示手續費相關欄位。
+  /// 與網頁版一致：是否為外幣以「交易幣別」判斷，而非帳戶幣別。
   bool get _overseasApplies {
     final a = _selectedAccount;
     return _type == 'expense' &&
         a != null &&
         a.category == 'credit_card' &&
-        a.currency != 'TWD' &&
+        _currency != 'TWD' &&
         a.overseasFeeRate > 0;
   }
+
+  /// 幣別下拉選項：交易幣別 + TWD + 各帳戶幣別 + 常見幣別（去重、保序）。
+  List<String> get _currencyOptions => <String>{
+    _currency,
+    'TWD',
+    for (final a in _accounts) a.currency,
+    ..._kDefaultCurrencies,
+  }.toList();
 
   Future<void> _loadRefs() async {
     final api = ApiClient.instance;
@@ -93,6 +125,11 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
         .map((e) => Category.fromJson((e as Map).cast<String, dynamic>()))
         .toList();
     _accountId ??= _accounts.isNotEmpty ? _accounts.first.id : null;
+    // 新增模式：幣別預設跟隨預選帳戶。編輯模式維持原交易幣別（已於 initState 帶入）。
+    if (!_isEdit) {
+      final a = _selectedAccount;
+      if (a != null) _currency = a.currency;
+    }
     final e = widget.existing;
     if (e != null) {
       // 附件載入失敗不應擋住整張編輯表單，靜默略過。
@@ -278,17 +315,22 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
           'note': _note.text.trim(),
         });
       } else {
-        final acc = _accounts.firstWhere((a) => a.id == _accountId);
         final body = <String, dynamic>{
           'type': _type,
           'amount': amount,
-          'currency': acc.currency,
+          'currency': _currency,
           'date': _dateStr,
           'categoryId': _categoryId,
           'accountId': _accountId,
           'note': _note.text.trim(),
           'excludeFromStats': _excludeFromStats,
         };
+        // 外幣交易：金額即原幣別金額；匯率留空則由後端套系統匯率。
+        if (_currency != 'TWD') {
+          body['originalAmount'] = amount;
+          final rate = num.tryParse(_fxRate.text.trim());
+          if (rate != null && rate > 0) body['fxRate'] = rate;
+        }
         // 海外手續費：有手動填則送（覆寫），否則交由伺服器依卡片費率自動計算。
         final feeText = _fxFee.text.trim();
         if (_overseasApplies && feeText.isNotEmpty) {
@@ -429,8 +471,56 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
             _accountDropdown(
               label: '帳戶',
               value: _accountId,
-              onChanged: (v) => setState(() => _accountId = v),
+              onChanged: (v) => setState(() {
+                _accountId = v;
+                // 換帳戶時幣別跟著帳戶走，並清掉手動匯率（與網頁版一致）。
+                final a = _selectedAccount;
+                if (a != null) {
+                  _currency = a.currency;
+                  _fxRate.clear();
+                }
+              }),
             ),
+            const SizedBox(height: 16),
+            DropdownButtonFormField<String>(
+              initialValue: _currency,
+              isExpanded: true,
+              decoration: const InputDecoration(
+                labelText: '幣別',
+                prefixIcon: Icon(Icons.payments_outlined),
+                border: OutlineInputBorder(),
+              ),
+              items: [
+                for (final c in _currencyOptions)
+                  DropdownMenuItem(value: c, child: Text(c)),
+              ],
+              onChanged: (v) => setState(() {
+                _currency = v ?? 'TWD';
+                _fxRate.clear();
+              }),
+            ),
+            if (_currency != 'TWD') ...[
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _fxRate,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                decoration: InputDecoration(
+                  labelText: '匯率（1 $_currency = ? TWD）',
+                  helperText: '留空則使用系統匯率',
+                  prefixIcon: const Icon(Icons.currency_exchange),
+                  border: const OutlineInputBorder(),
+                ),
+                validator: (v) {
+                  final s = v?.trim() ?? '';
+                  if (s.isEmpty) return null;
+                  final n = num.tryParse(s);
+                  if (n == null || n <= 0) return '匯率須大於 0';
+                  return null;
+                },
+              ),
+            ],
           ],
           const SizedBox(height: 16),
           TextFormField(

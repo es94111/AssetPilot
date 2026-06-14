@@ -370,7 +370,8 @@ class _RecentTile extends StatelessWidget {
       ),
       subtitle: Text(t.date),
       trailing: Text(
-        (isIncome ? '+' : '-') + money(t.amount, t.currency),
+        // 外幣交易顯示原幣別金額，TWD 交易維持台幣金額。
+        (isIncome ? '+' : '-') + money(t.originalAmount, t.currency),
         style: TextStyle(
           fontWeight: FontWeight.bold,
           color: isIncome ? Colors.green : Colors.red,

@@ -13,6 +13,8 @@ class AppUser {
   final bool isAdmin;
   final String defaultCurrency;
   final bool hasPassword;
+  final bool googleLinked;
+  final bool lineLinked;
 
   AppUser({
     required this.id,
@@ -21,6 +23,8 @@ class AppUser {
     required this.isAdmin,
     required this.defaultCurrency,
     required this.hasPassword,
+    required this.googleLinked,
+    required this.lineLinked,
   });
 
   factory AppUser.fromJson(Map<String, dynamic> j) {
@@ -35,6 +39,8 @@ class AppUser {
           ? 'TWD'
           : _asStr(j['defaultCurrency']),
       hasPassword: _asBool(j['hasPassword']) || _asBool(j['has_password']),
+      googleLinked: _asBool(j['googleLinked']) || _asBool(j['google_linked']),
+      lineLinked: _asBool(j['lineLinked']) || _asBool(j['line_linked']),
     );
   }
 }
@@ -110,8 +116,10 @@ class Category {
 class Txn {
   final String id;
   final String type; // income / expense / transfer
-  final num amount;
+  final num amount; // 已換算的 TWD 金額（twd_amount）
+  final num originalAmount; // 原始幣別金額；TWD 交易等同 amount
   final String currency;
+  final String fxRate; // 1 外幣 = ? TWD；TWD 交易為 '1'
   final String date; // YYYY-MM-DD
   final String categoryId;
   final String accountId;
@@ -127,7 +135,9 @@ class Txn {
     required this.id,
     required this.type,
     required this.amount,
+    required this.originalAmount,
     required this.currency,
+    required this.fxRate,
     required this.date,
     required this.categoryId,
     required this.accountId,
@@ -140,12 +150,18 @@ class Txn {
     this.isFxFee = false,
   });
 
-  factory Txn.fromJson(Map<String, dynamic> j) => Txn(
-    id: _asStr(j['id']),
-    type: _asStr(j['type']),
-    amount: _asNum(j['amount']),
-    currency: _asStr(j['currency']).isEmpty ? 'TWD' : _asStr(j['currency']),
-    date: _asStr(j['date']),
+  factory Txn.fromJson(Map<String, dynamic> j) {
+    final amount = _asNum(j['amount']);
+    final orig = _asNum(j['originalAmount'] ?? j['original_amount']);
+    final rate = _asStr(j['fxRate'] ?? j['fx_rate']);
+    return Txn(
+      id: _asStr(j['id']),
+      type: _asStr(j['type']),
+      amount: amount,
+      originalAmount: orig > 0 ? orig : amount,
+      currency: _asStr(j['currency']).isEmpty ? 'TWD' : _asStr(j['currency']),
+      fxRate: rate.isEmpty ? '1' : rate,
+      date: _asStr(j['date']),
     categoryId: _asStr(j['categoryId'] ?? j['category_id']),
     accountId: _asStr(j['accountId'] ?? j['account_id']),
     toAccountId: _asStr(j['toAccountId'] ?? j['to_account_id']),
@@ -172,7 +188,8 @@ class Txn {
           ),
     attachmentCount: _asNum(j['attachmentCount'] ?? j['attachment_count'])
         .toInt(),
-  );
+    );
+  }
 }
 
 /// 儀表板分類彙總節點（圓餅扇區）
@@ -272,6 +289,7 @@ class Recurring {
   final String note;
   final bool isActive;
   final String currency;
+  final String fxRate; // 1 外幣 = ? TWD；TWD 為 '1'
   final bool excludeFromStats;
   final num fxFee;
 
@@ -286,26 +304,31 @@ class Recurring {
     required this.note,
     required this.isActive,
     required this.currency,
+    required this.fxRate,
     this.excludeFromStats = false,
     this.fxFee = 0,
   });
 
-  factory Recurring.fromJson(Map<String, dynamic> j) => Recurring(
-    id: _asStr(j['id']),
-    type: _asStr(j['type']),
-    amount: _asNum(j['amount']),
-    categoryId: _asStr(j['categoryId']),
-    accountId: _asStr(j['accountId']),
-    frequency: _asStr(j['frequency']),
-    startDate: _asStr(j['startDate']),
-    note: _asStr(j['note']),
-    isActive: _asBool(j['isActive']),
-    currency: _asStr(j['currency']).isEmpty ? 'TWD' : _asStr(j['currency']),
-    excludeFromStats: _asBool(
-      j['excludeFromStats'] ?? j['exclude_from_stats'],
-    ),
-    fxFee: _asNum(j['fxFee'] ?? j['fx_fee']),
-  );
+  factory Recurring.fromJson(Map<String, dynamic> j) {
+    final rate = _asStr(j['fxRate'] ?? j['fx_rate']);
+    return Recurring(
+      id: _asStr(j['id']),
+      type: _asStr(j['type']),
+      amount: _asNum(j['amount']),
+      categoryId: _asStr(j['categoryId']),
+      accountId: _asStr(j['accountId']),
+      frequency: _asStr(j['frequency']),
+      startDate: _asStr(j['startDate']),
+      note: _asStr(j['note']),
+      isActive: _asBool(j['isActive']),
+      currency: _asStr(j['currency']).isEmpty ? 'TWD' : _asStr(j['currency']),
+      fxRate: rate.isEmpty ? '1' : rate,
+      excludeFromStats: _asBool(
+        j['excludeFromStats'] ?? j['exclude_from_stats'],
+      ),
+      fxFee: _asNum(j['fxFee'] ?? j['fx_fee']),
+    );
+  }
 }
 
 /// `GET /api/stocks` → `stocks[]`
@@ -321,6 +344,7 @@ class Stock {
   final num returnRate;
   final num totalDividend;
   final bool delisted;
+  final String stockType; // stock / etf / warrant
 
   Stock({
     required this.id,
@@ -334,6 +358,7 @@ class Stock {
     required this.returnRate,
     required this.totalDividend,
     required this.delisted,
+    required this.stockType,
   });
 
   factory Stock.fromJson(Map<String, dynamic> j) => Stock(
@@ -348,6 +373,9 @@ class Stock {
     returnRate: _asNum(j['returnRate']),
     totalDividend: _asNum(j['totalDividend']),
     delisted: _asBool(j['delisted']),
+    stockType: _asStr(j['stockType'] ?? j['stock_type']).isEmpty
+        ? 'stock'
+        : _asStr(j['stockType'] ?? j['stock_type']),
   );
 }
 
@@ -377,6 +405,7 @@ class PortfolioSummary {
 /// `GET /api/stock-transactions`
 class StockTxn {
   final String id;
+  final String stockId;
   final String symbol;
   final String stockName;
   final String type; // buy / sell
@@ -385,9 +414,11 @@ class StockTxn {
   final num fee;
   final num tax;
   final String date;
+  final String note;
 
   StockTxn({
     required this.id,
+    required this.stockId,
     required this.symbol,
     required this.stockName,
     required this.type,
@@ -396,10 +427,12 @@ class StockTxn {
     required this.fee,
     required this.tax,
     required this.date,
+    required this.note,
   });
 
   factory StockTxn.fromJson(Map<String, dynamic> j) => StockTxn(
     id: _asStr(j['id']),
+    stockId: _asStr(j['stockId'] ?? j['stock_id']),
     symbol: _asStr(j['symbol']),
     stockName: _asStr(j['stock_name'] ?? j['name']),
     type: _asStr(j['type']),
@@ -408,29 +441,37 @@ class StockTxn {
     fee: _asNum(j['fee']),
     tax: _asNum(j['tax']),
     date: _asStr(j['date']),
+    note: _asStr(j['note']),
   );
 }
 
 /// `GET /api/stock-dividends`
 class Dividend {
   final String id;
+  final String stockId;
   final String symbol;
   final String stockName;
   final num cashDividend;
   final num stockDividendShares;
   final String date;
+  final String accountId;
+  final String note;
 
   Dividend({
     required this.id,
+    required this.stockId,
     required this.symbol,
     required this.stockName,
     required this.cashDividend,
     required this.stockDividendShares,
     required this.date,
+    required this.accountId,
+    required this.note,
   });
 
   factory Dividend.fromJson(Map<String, dynamic> j) => Dividend(
     id: _asStr(j['id']),
+    stockId: _asStr(j['stockId'] ?? j['stock_id']),
     symbol: _asStr(j['symbol']),
     stockName: _asStr(j['stock_name'] ?? j['name']),
     cashDividend: _asNum(j['cash_dividend'] ?? j['cashDividend']),
@@ -438,6 +479,151 @@ class Dividend {
       j['stock_dividend_shares'] ?? j['stockDividendShares'],
     ),
     date: _asStr(j['date']),
+    accountId: _asStr(j['accountId'] ?? j['account_id']),
+    note: _asStr(j['note']),
+  );
+}
+
+/// `GET/PUT /api/stock-settings` — 手續費／交易稅率設定
+class StockSettings {
+  final num feeRate; // 手續費率（%）
+  final num feeDiscount; // 折讓（0~1）
+  final num feeMinLot; // 整股最低手續費
+  final num feeMinOdd; // 零股最低手續費
+  final num sellTaxRateStock; // 一般股票賣出證交稅（%）
+  final num sellTaxRateEtf; // ETF 賣出證交稅（%）
+  final num sellTaxRateWarrant; // 權證賣出證交稅（%）
+  final num sellTaxMin; // 最低證交稅
+
+  StockSettings({
+    required this.feeRate,
+    required this.feeDiscount,
+    required this.feeMinLot,
+    required this.feeMinOdd,
+    required this.sellTaxRateStock,
+    required this.sellTaxRateEtf,
+    required this.sellTaxRateWarrant,
+    required this.sellTaxMin,
+  });
+
+  factory StockSettings.fromJson(Map<String, dynamic> j) => StockSettings(
+    feeRate: _asNum(j['feeRate']),
+    feeDiscount: _asNum(j['feeDiscount']),
+    feeMinLot: _asNum(j['feeMinLot']),
+    feeMinOdd: _asNum(j['feeMinOdd']),
+    sellTaxRateStock: _asNum(j['sellTaxRateStock']),
+    sellTaxRateEtf: _asNum(j['sellTaxRateEtf']),
+    sellTaxRateWarrant: _asNum(j['sellTaxRateWarrant']),
+    sellTaxMin: _asNum(j['sellTaxMin']),
+  );
+}
+
+/// `GET /api/account/sessions` → `sessions[]`
+class LoginSession {
+  final String id;
+  final String deviceName;
+  final String ip;
+  final num loginAt;
+  final bool current;
+
+  LoginSession({
+    required this.id,
+    required this.deviceName,
+    required this.ip,
+    required this.loginAt,
+    required this.current,
+  });
+
+  factory LoginSession.fromJson(Map<String, dynamic> j) => LoginSession(
+    id: _asStr(j['id'] ?? j['sessionId']),
+    deviceName: _asStr(j['deviceName'] ?? j['device_name']).isEmpty
+        ? '未知裝置'
+        : _asStr(j['deviceName'] ?? j['device_name']),
+    ip: _asStr(j['ip'] ?? j['ipAddress'] ?? j['ip_address']),
+    loginAt: _asNum(j['loginAt'] ?? j['createdAt'] ?? j['created_at']),
+    current: _asBool(j['current'] ?? j['isCurrent'] ?? j['is_current']),
+  );
+}
+
+/// `GET /api/user/login-audit` → `logs[]`
+class LoginAuditLog {
+  final num loginAt;
+  final String ipAddress;
+  final String country;
+  final String loginMethod;
+  final bool isAdminLogin;
+
+  LoginAuditLog({
+    required this.loginAt,
+    required this.ipAddress,
+    required this.country,
+    required this.loginMethod,
+    required this.isAdminLogin,
+  });
+
+  factory LoginAuditLog.fromJson(Map<String, dynamic> j) => LoginAuditLog(
+    loginAt: _asNum(j['loginAt']),
+    ipAddress: _asStr(j['ipAddress']),
+    country: _asStr(j['country']),
+    loginMethod: _asStr(j['loginMethod']),
+    isAdminLogin: _asBool(j['isAdminLogin']),
+  );
+}
+
+/// `GET /api/account/passkeys` → `passkeys[]`
+class Passkey {
+  final String id;
+  final String deviceName;
+  final num createdAt;
+
+  Passkey({required this.id, required this.deviceName, required this.createdAt});
+
+  factory Passkey.fromJson(Map<String, dynamic> j) => Passkey(
+    id: _asStr(j['id']),
+    deviceName: _asStr(j['deviceName']).isEmpty
+        ? '未命名 Passkey'
+        : _asStr(j['deviceName']),
+    createdAt: _asNum(j['createdAt']),
+  );
+}
+
+/// `GET /api/user/report-schedules` — 定期報表通知排程
+class ReportSchedule {
+  final String id;
+  final String freq; // daily / weekly / monthly
+  final int hour;
+  final int minute;
+  final int weekday; // 0=日 ... 6=六
+  final int dayOfMonth; // 0=每月最後一天，1-28
+  final bool enabled;
+  final bool notifyEmail;
+  final bool notifyLine;
+  final num lastRun;
+
+  ReportSchedule({
+    required this.id,
+    required this.freq,
+    required this.hour,
+    required this.minute,
+    required this.weekday,
+    required this.dayOfMonth,
+    required this.enabled,
+    required this.notifyEmail,
+    required this.notifyLine,
+    required this.lastRun,
+  });
+
+  factory ReportSchedule.fromJson(Map<String, dynamic> j) => ReportSchedule(
+    id: _asStr(j['id']),
+    freq: _asStr(j['freq']).isEmpty ? 'monthly' : _asStr(j['freq']),
+    hour: _asNum(j['hour']).toInt(),
+    minute: _asNum(j['minute']).toInt(),
+    weekday: _asNum(j['weekday']).toInt(),
+    dayOfMonth: _asNum(j['dayOfMonth']).toInt(),
+    enabled: _asBool(j['enabled']),
+    notifyEmail: _asBool(j['notifyEmail']),
+    notifyLine: _asBool(j['notifyLine']),
+    lastRun: _asNum(j['lastRun']),
   );
 }
 

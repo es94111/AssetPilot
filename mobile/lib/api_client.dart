@@ -459,12 +459,21 @@ class ApiClient {
     String? dateFrom,
     String? dateTo,
     String? type,
+    String? accountId,
+    String? categoryId,
+    String? keyword,
     int pageSize = 100,
   }) {
-    final q = <String, String>{'pageSize': '$pageSize', 'sort': 'date_desc'};
+    // 後端分頁參數為 limit（非 pageSize）；一併送出確保筆數生效。
+    final q = <String, String>{'limit': '$pageSize', 'sort': 'date_desc'};
     if (dateFrom != null) q['dateFrom'] = dateFrom;
     if (dateTo != null) q['dateTo'] = dateTo;
     if (type != null && type != 'all') q['type'] = type;
+    if (accountId != null && accountId.isNotEmpty) q['accountId'] = accountId;
+    if (categoryId != null && categoryId.isNotEmpty) q['categoryId'] = categoryId;
+    if (keyword != null && keyword.trim().isNotEmpty) {
+      q['keyword'] = Uri.encodeQueryComponent(keyword.trim());
+    }
     final qs = q.entries.map((e) => '${e.key}=${e.value}').join('&');
     return _getList('/api/transactions?$qs');
   }
@@ -646,4 +655,127 @@ class ApiClient {
   /// type, changes: [{ tag, text }] }], ... }`。
   Future<Map<String, dynamic>> changelog({bool refresh = false}) =>
       _getMapFromSend('GET', '/api/changelog${refresh ? '?refresh=1' : ''}');
+
+  // ── 固定收支（編輯） ────────────────────────────────────────
+  Future<void> updateRecurring(String id, Map<String, dynamic> body) =>
+      _send('PUT', '/api/recurring/$id', body: body);
+
+  // ── 股票（編輯／刪除、股利 CRUD、設定） ─────────────────────
+  Future<void> updateStock(String id, Map<String, dynamic> body) =>
+      _send('PUT', '/api/stocks/$id', body: body);
+
+  Future<void> updateStockTransaction(String id, Map<String, dynamic> body) =>
+      _send('PUT', '/api/stock-transactions/$id', body: body);
+
+  Future<void> createStockDividend(Map<String, dynamic> body) =>
+      _send('POST', '/api/stock-dividends', body: body);
+
+  Future<void> updateStockDividend(String id, Map<String, dynamic> body) =>
+      _send('PUT', '/api/stock-dividends/$id', body: body);
+
+  Future<void> deleteStockDividend(String id) =>
+      _send('DELETE', '/api/stock-dividends/$id');
+
+  Future<Map<String, dynamic>> stockSettings() =>
+      _getMap('/api/stock-settings');
+
+  Future<Map<String, dynamic>> updateStockSettings(Map<String, dynamic> body) =>
+      _getMapFromSend('PUT', '/api/stock-settings', body: body);
+
+  // ── 帳戶（信用卡還款） ──────────────────────────────────────
+  Future<void> creditCardRepayment(Map<String, dynamic> body) =>
+      _send('POST', '/api/accounts/credit-card-repayment', body: body);
+
+  // ── 使用者幣別設定 ──────────────────────────────────────────
+  Future<Map<String, dynamic>> defaultCurrency() =>
+      _getMap('/api/user/settings/default-currency');
+
+  Future<Map<String, dynamic>> setDefaultCurrency(String currency) =>
+      _getMapFromSend('PUT', '/api/user/settings/default-currency',
+          body: {'defaultCurrency': currency});
+
+  Future<Map<String, dynamic>> pinnedCurrencies() =>
+      _getMap('/api/user/settings/pinned-currencies');
+
+  Future<Map<String, dynamic>> setPinnedCurrencies(List<String> list) =>
+      _getMapFromSend('PUT', '/api/user/settings/pinned-currencies',
+          body: {'pinnedCurrencies': list});
+
+  // ── 帳號安全 ────────────────────────────────────────────────
+  /// 變更密碼。後端會輪替 token 並撤銷其他工作階段，回應帶新的認證 Cookie，
+  /// 這裡擷取並保存，避免本機在下一次請求被登出。
+  Future<void> changePassword(String? current, String next) async {
+    late http.Response res;
+    try {
+      res = await http
+          .put(
+            _uri('/api/account/settings/password'),
+            headers: _headers(json: true),
+            body: jsonEncode({
+              'currentPassword': current ?? '',
+              'newPassword': next,
+            }),
+          )
+          .timeout(_timeout);
+    } catch (e) {
+      throw ApiException(0, '無法連線到後端（$_baseUrl）：$e');
+    }
+    if (res.statusCode == 401) {
+      throw ApiException(401, _errorMessage(res));
+    }
+    if (res.statusCode < 200 || res.statusCode >= 300) {
+      throw ApiException(res.statusCode, _errorMessage(res));
+    }
+    _captureCookie(res);
+    await _persistCookie();
+  }
+
+  Future<void> setLanguage(String locale) =>
+      _send('POST', '/api/account/settings/language', body: {'locale': locale});
+
+  Future<List<dynamic>> sessions() async {
+    final r = await _send('GET', '/api/account/sessions');
+    return r is Map && r['sessions'] is List ? r['sessions'] as List : const [];
+  }
+
+  Future<void> revokeSession(String id) =>
+      _send('DELETE', '/api/account/sessions/$id');
+
+  Future<List<dynamic>> loginAudit() async {
+    final r = await _send('GET', '/api/user/login-audit');
+    return r is Map && r['logs'] is List ? r['logs'] as List : const [];
+  }
+
+  Future<List<dynamic>> passkeys() async {
+    final r = await _send('GET', '/api/account/passkeys');
+    return r is Map && r['passkeys'] is List
+        ? r['passkeys'] as List
+        : const [];
+  }
+
+  Future<void> renamePasskey(String id, String deviceName) =>
+      _send('PUT', '/api/account/passkey/$id', body: {'deviceName': deviceName});
+
+  Future<void> deletePasskey(String id) =>
+      _send('DELETE', '/api/account/passkey/$id');
+
+  Future<void> unlinkGoogle() =>
+      _send('DELETE', '/api/account/settings/google');
+
+  Future<void> unlinkLine() => _send('DELETE', '/api/account/settings/line');
+
+  // ── 定期報表通知排程 ────────────────────────────────────────
+  Future<List<dynamic>> reportSchedules() async {
+    final r = await _send('GET', '/api/user/report-schedules');
+    return r is List ? r : const [];
+  }
+
+  Future<void> createReportSchedule(Map<String, dynamic> body) =>
+      _send('POST', '/api/user/report-schedules', body: body);
+
+  Future<void> updateReportSchedule(String id, Map<String, dynamic> body) =>
+      _send('PUT', '/api/user/report-schedules/$id', body: body);
+
+  Future<void> deleteReportSchedule(String id) =>
+      _send('DELETE', '/api/user/report-schedules/$id');
 }

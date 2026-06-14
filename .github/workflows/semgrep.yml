@@ -14,8 +14,7 @@ permissions:
 jobs:
   semgrep:
     name: Scan
-    # 自建 self-hosted runner（本 job 在 semgrep 容器內執行，runner 需安裝 Docker）。
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     # Semgrep OSS 引擎 + 公開 registry 規則集，私有 repo 免費、不需 SEMGREP_APP_TOKEN
     container:
       image: semgrep/semgrep

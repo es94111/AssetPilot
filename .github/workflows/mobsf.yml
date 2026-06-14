@@ -22,8 +22,7 @@ permissions:
 jobs:
   mobsf:
     name: Build & scan APK
-    # 自建 self-hosted runner（需 Docker 跑 MobSF 容器、python3，Flutter 由 action 安裝）。
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     env:
       # 固定的本機 API key（只在 job 內、對 localhost 的 MobSF 容器用，非機密）。
       MOBSF_API_KEY: ci-local-mobsf-key

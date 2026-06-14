@@ -3,8 +3,6 @@ name: Semgrep (SAST)
 on:
   push:
     branches: [main, dev]
-  pull_request:
-    branches: [main, dev]
   schedule:
     # 每週一 02:00 UTC = 10:00 Asia/Taipei
     - cron: "0 2 * * 1"

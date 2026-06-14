@@ -10,11 +10,6 @@ on:
     paths:
       - "mobile/pubspec.lock"
       - ".github/workflows/osv-scanner.yml"
-  pull_request:
-    branches: [main]
-    paths:
-      - "mobile/pubspec.lock"
-      - ".github/workflows/osv-scanner.yml"
   schedule:
     - cron: "40 1 * * 1"   # 每週一 09:40 Asia/Taipei
   workflow_dispatch:

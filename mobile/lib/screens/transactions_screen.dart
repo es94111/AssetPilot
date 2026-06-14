@@ -133,7 +133,8 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     if (changed == true) _reload();
   }
 
-  Future<void> _delete(Txn t) async {
+  /// 刪除一筆交易（需確認）。回傳是否真的刪除成功，供滑動刪除判斷是否移除列項。
+  Future<bool> _delete(Txn t) async {
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
@@ -151,13 +152,15 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
         ],
       ),
     );
-    if (ok != true) return;
+    if (ok != true) return false;
     try {
       await ApiClient.instance.deleteTransaction(t.id);
       if (mounted) toast(context, '已刪除');
       _reload();
+      return true;
     } catch (e) {
       if (mounted) toast(context, '$e');
+      return false;
     }
   }
 
@@ -230,15 +233,27 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
               separatorBuilder: (_, _) => const Divider(height: 1),
               itemBuilder: (context, i) {
                 final t = list[i];
-                return _TxnTile(
-                  t: t,
-                  categoryName: data.catName[t.categoryId],
-                  onTap: () => t.type == 'transfer'
-                      ? toast(context, '轉帳請於網頁版編輯')
-                      : t.isFxFee
-                      ? toast(context, '國外刷卡手續費由原交易自動產生，請編輯對應的國外交易')
-                      : _openForm(t),
-                  onLongPress: () => _delete(t),
+                return Dismissible(
+                  key: ValueKey(t.id),
+                  direction: DismissDirection.endToStart,
+                  // 由 confirmDismiss 跳出確認並執行刪除；回傳 false 時列項不會被移除。
+                  confirmDismiss: (_) => _delete(t),
+                  background: Container(
+                    color: Colors.red,
+                    alignment: Alignment.centerRight,
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: const Icon(Icons.delete, color: Colors.white),
+                  ),
+                  child: _TxnTile(
+                    t: t,
+                    categoryName: data.catName[t.categoryId],
+                    onTap: () => t.type == 'transfer'
+                        ? toast(context, '轉帳請於網頁版編輯')
+                        : t.isFxFee
+                        ? toast(context, '國外刷卡手續費由原交易自動產生，請編輯對應的國外交易')
+                        : _openForm(t),
+                    onLongPress: () => _delete(t),
+                  ),
                 );
               },
             ),

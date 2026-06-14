@@ -364,10 +364,54 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
     }
   }
 
+  /// 刪除目前編輯中的交易（需確認）。國外刷卡手續費等連動交易由後端一併處理。
+  Future<void> _confirmDelete() async {
+    final e = widget.existing;
+    if (e == null) return;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('刪除交易'),
+        content: Text('確定刪除這筆 ${e.date} 的交易？此動作無法復原。'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('取消'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('刪除'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    setState(() => _saving = true);
+    try {
+      await ApiClient.instance.deleteTransaction(e.id);
+      if (mounted) Navigator.pop(context, true);
+    } catch (err) {
+      if (mounted) {
+        setState(() => _saving = false);
+        toast(context, '$err');
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(_isEdit ? '編輯交易' : '新增交易')),
+      appBar: AppBar(
+        title: Text(_isEdit ? '編輯交易' : '新增交易'),
+        actions: [
+          if (_isEdit)
+            IconButton(
+              tooltip: '刪除交易',
+              icon: const Icon(Icons.delete_outline),
+              onPressed: _saving ? null : _confirmDelete,
+            ),
+        ],
+      ),
       body: FutureBuilder<void>(
         future: _loadFuture,
         builder: (context, snap) {
@@ -392,7 +436,13 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
     return Form(
       key: _formKey,
       child: ListView(
-        padding: const EdgeInsets.all(16),
+        // 底部加上系統導覽列（edge-to-edge）高度，避免「儲存」鈕被手機功能鍵蓋住。
+        padding: EdgeInsets.fromLTRB(
+          16,
+          16,
+          16,
+          16 + MediaQuery.of(context).padding.bottom,
+        ),
         children: [
           if (!_isEdit)
             SegmentedButton<String>(

@@ -57,6 +57,14 @@ jobs:
           channel: stable
           cache: true
 
+      # 後續「Generate Google Play release notes」與「Publish to Google Play」
+      # 兩步用到 node / npm。self-hosted runner 不保證裝有 Node，這裡由 action
+      # 自行佈署，維持「不依賴 runner 預裝工具」的原則。
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
       - name: Resolve version
         id: version
         shell: bash

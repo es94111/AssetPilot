@@ -68,12 +68,15 @@ class _RecurringScreenState extends State<RecurringScreen> {
 
   void _reload() => setState(() => _future = _load());
 
-  Future<void> _add(_RecurringData data) async {
+  Future<void> _openForm(_RecurringData data, [Recurring? existing]) async {
     final changed = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
-      builder: (_) =>
-          _RecurringForm(categories: data.categories, accounts: data.accounts),
+      builder: (_) => _RecurringForm(
+        categories: data.categories,
+        accounts: data.accounts,
+        existing: existing,
+      ),
     );
     if (changed == true) _reload();
   }
@@ -104,7 +107,7 @@ class _RecurringScreenState extends State<RecurringScreen> {
       floatingActionButton: FutureBuilder<_RecurringData>(
         future: _future,
         builder: (context, snap) => FloatingActionButton.extended(
-          onPressed: snap.hasData ? () => _add(snap.data!) : null,
+          onPressed: snap.hasData ? () => _openForm(snap.data!) : null,
           icon: const Icon(Icons.add),
           label: const Text('新增'),
         ),
@@ -156,6 +159,7 @@ class _RecurringScreenState extends State<RecurringScreen> {
                       Switch(value: r.isActive, onChanged: (_) => _toggle(r)),
                     ],
                   ),
+                  onTap: () => _openForm(data, r),
                   onLongPress: () => _delete(r),
                 );
               },
@@ -167,10 +171,28 @@ class _RecurringScreenState extends State<RecurringScreen> {
   }
 }
 
+const _kRecurringCurrencies = [
+  'TWD',
+  'USD',
+  'JPY',
+  'EUR',
+  'CNY',
+  'HKD',
+  'GBP',
+  'AUD',
+  'CAD',
+  'SGD',
+];
+
 class _RecurringForm extends StatefulWidget {
   final List<Category> categories;
   final List<Account> accounts;
-  const _RecurringForm({required this.categories, required this.accounts});
+  final Recurring? existing;
+  const _RecurringForm({
+    required this.categories,
+    required this.accounts,
+    this.existing,
+  });
 
   @override
   State<_RecurringForm> createState() => _RecurringFormState();
@@ -181,25 +203,54 @@ class _RecurringFormState extends State<_RecurringForm> {
   final _amount = TextEditingController();
   final _note = TextEditingController();
   final _fxFee = TextEditingController();
+  final _fxRate = TextEditingController();
   String _type = 'expense';
   String _frequency = 'monthly';
   String? _categoryId;
   String? _accountId;
+  String _currency = 'TWD';
   DateTime _start = DateTime.now();
   bool _saving = false;
   bool _excludeFromStats = false;
 
+  bool get _isEdit => widget.existing != null;
+
   @override
   void initState() {
     super.initState();
-    _accountId = widget.accounts.isNotEmpty ? widget.accounts.first.id : null;
+    final e = widget.existing;
+    if (e != null) {
+      _type = e.type == 'income' ? 'income' : 'expense';
+      _frequency = e.frequency.isEmpty ? 'monthly' : e.frequency;
+      _categoryId = e.categoryId.isEmpty ? null : e.categoryId;
+      _accountId = e.accountId.isEmpty ? null : e.accountId;
+      _currency = e.currency.isEmpty ? 'TWD' : e.currency;
+      _start = DateTime.tryParse(e.startDate) ?? DateTime.now();
+      _excludeFromStats = e.excludeFromStats;
+      // recurring 的 amount 存的是 TWD；外幣需還原成原幣別金額再編輯。
+      final rate = num.tryParse(e.fxRate) ?? 1;
+      final shown = (_currency == 'TWD' || rate <= 0)
+          ? e.amount
+          : e.amount / rate;
+      _amount.text = _fmtAmount(shown);
+      if (_currency != 'TWD' && rate > 0 && rate != 1) _fxRate.text = e.fxRate;
+      if (e.fxFee > 0) _fxFee.text = e.fxFee.round().toString();
+    } else {
+      _accountId = widget.accounts.isNotEmpty ? widget.accounts.first.id : null;
+      final a = _selectedAccount;
+      if (a != null) _currency = a.currency;
+    }
   }
+
+  static String _fmtAmount(num v) =>
+      v % 1 == 0 ? v.toInt().toString() : v.toStringAsFixed(2);
 
   @override
   void dispose() {
     _amount.dispose();
     _note.dispose();
     _fxFee.dispose();
+    _fxRate.dispose();
     super.dispose();
   }
 
@@ -218,22 +269,29 @@ class _RecurringFormState extends State<_RecurringForm> {
     return _type == 'expense' &&
         a != null &&
         a.category == 'credit_card' &&
-        a.currency != 'TWD' &&
+        _currency != 'TWD' &&
         a.overseasFeeRate > 0;
   }
+
+  List<String> get _currencyOptions => <String>{
+    _currency,
+    'TWD',
+    for (final a in widget.accounts) a.currency,
+    ..._kRecurringCurrencies,
+  }.toList();
 
   String get _startStr =>
       '${_start.year}-${_start.month.toString().padLeft(2, '0')}-${_start.day.toString().padLeft(2, '0')}';
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
-    final acc = widget.accounts.firstWhere((a) => a.id == _accountId);
     setState(() => _saving = true);
     try {
+      final amount = num.parse(_amount.text.trim());
       final body = <String, dynamic>{
         'type': _type,
-        'amount': num.parse(_amount.text.trim()),
-        'currency': acc.currency,
+        'amount': amount,
+        'currency': _currency,
         'categoryId': _categoryId,
         'accountId': _accountId,
         'frequency': _frequency,
@@ -241,11 +299,20 @@ class _RecurringFormState extends State<_RecurringForm> {
         'note': _note.text.trim(),
         'excludeFromStats': _excludeFromStats,
       };
+      if (_currency != 'TWD') {
+        final rate = num.tryParse(_fxRate.text.trim());
+        if (rate != null && rate > 0) body['fxRate'] = rate;
+      }
       final feeText = _fxFee.text.trim();
       if (_overseasApplies && feeText.isNotEmpty) {
         body['fxFee'] = num.tryParse(feeText) ?? 0;
       }
-      await ApiClient.instance.createRecurring(body);
+      final api = ApiClient.instance;
+      if (_isEdit) {
+        await api.updateRecurring(widget.existing!.id, body);
+      } else {
+        await api.createRecurring(body);
+      }
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
       if (mounted) {
@@ -264,145 +331,202 @@ class _RecurringFormState extends State<_RecurringForm> {
     }
     return Padding(
       padding: EdgeInsets.fromLTRB(16, 16, 16, bottom + 16),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text('新增固定收支', style: Theme.of(context).textTheme.titleLarge),
-            const SizedBox(height: 16),
-            SegmentedButton<String>(
-              segments: const [
-                ButtonSegment(value: 'expense', label: Text('支出')),
-                ButtonSegment(value: 'income', label: Text('收入')),
-              ],
-              selected: {_type},
-              onSelectionChanged: (s) => setState(() {
-                _type = s.first;
-                _categoryId = null;
-              }),
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _amount,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: '金額',
-                border: OutlineInputBorder(),
+      child: SingleChildScrollView(
+        child: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                _isEdit ? '編輯固定收支' : '新增固定收支',
+                style: Theme.of(context).textTheme.titleLarge,
               ),
-              validator: (v) {
-                final n = num.tryParse(v?.trim() ?? '');
-                if (n == null || n <= 0) return '請輸入大於 0 的金額';
-                return null;
-              },
-            ),
-            const SizedBox(height: 12),
-            DropdownButtonFormField<String>(
-              initialValue: _frequency,
-              decoration: const InputDecoration(
-                labelText: '週期',
-                border: OutlineInputBorder(),
+              const SizedBox(height: 16),
+              SegmentedButton<String>(
+                segments: const [
+                  ButtonSegment(value: 'expense', label: Text('支出')),
+                  ButtonSegment(value: 'income', label: Text('收入')),
+                ],
+                selected: {_type},
+                // 後端不允許編輯後變更類型，故編輯時鎖定。
+                onSelectionChanged: _isEdit
+                    ? null
+                    : (s) => setState(() {
+                        _type = s.first;
+                        _categoryId = null;
+                      }),
               ),
-              items: [
-                for (final e in _freqLabels.entries)
-                  DropdownMenuItem(value: e.key, child: Text(e.value)),
-              ],
-              onChanged: (v) => setState(() => _frequency = v!),
-            ),
-            const SizedBox(height: 12),
-            DropdownButtonFormField<String>(
-              initialValue: _categoryId,
-              isExpanded: true,
-              decoration: const InputDecoration(
-                labelText: '分類',
-                border: OutlineInputBorder(),
-              ),
-              items: [
-                for (final c in cats)
-                  DropdownMenuItem(value: c.id, child: Text(c.name)),
-              ],
-              onChanged: (v) => setState(() => _categoryId = v),
-              validator: (v) => v == null ? '請選擇分類' : null,
-            ),
-            const SizedBox(height: 12),
-            DropdownButtonFormField<String>(
-              initialValue: _accountId,
-              isExpanded: true,
-              decoration: const InputDecoration(
-                labelText: '帳戶',
-                border: OutlineInputBorder(),
-              ),
-              items: [
-                for (final a in widget.accounts)
-                  DropdownMenuItem(value: a.id, child: Text(a.name)),
-              ],
-              onChanged: (v) => setState(() => _accountId = v),
-              validator: (v) => v == null ? '請選擇帳戶' : null,
-            ),
-            const SizedBox(height: 12),
-            ListTile(
-              shape: RoundedRectangleBorder(
-                side: BorderSide(color: Theme.of(context).dividerColor),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              leading: const Icon(Icons.calendar_today),
-              title: const Text('起始日期'),
-              trailing: Text(_startStr),
-              onTap: () async {
-                final d = await showDatePicker(
-                  context: context,
-                  initialDate: _start,
-                  firstDate: DateTime(2000),
-                  lastDate: DateTime(2100),
-                );
-                if (d != null) setState(() => _start = d);
-              },
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _note,
-              decoration: const InputDecoration(
-                labelText: '備註（選填）',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            if (_overseasApplies) ...[
               const SizedBox(height: 12),
               TextFormField(
-                controller: _fxFee,
+                controller: _amount,
                 keyboardType: const TextInputType.numberWithOptions(
                   decimal: true,
                 ),
-                decoration: InputDecoration(
-                  labelText: '海外手續費 TWD（選填）',
-                  helperText:
-                      '此卡費率 ${_selectedAccount!.overseasFeeRate}%，留空將自動計算',
-                  border: const OutlineInputBorder(),
+                decoration: const InputDecoration(
+                  labelText: '金額',
+                  border: OutlineInputBorder(),
+                ),
+                validator: (v) {
+                  final n = num.tryParse(v?.trim() ?? '');
+                  if (n == null || n <= 0) return '請輸入大於 0 的金額';
+                  return null;
+                },
+              ),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                initialValue: _currency,
+                isExpanded: true,
+                decoration: const InputDecoration(
+                  labelText: '幣別',
+                  prefixIcon: Icon(Icons.payments_outlined),
+                  border: OutlineInputBorder(),
+                ),
+                items: [
+                  for (final c in _currencyOptions)
+                    DropdownMenuItem(value: c, child: Text(c)),
+                ],
+                onChanged: (v) => setState(() {
+                  _currency = v ?? 'TWD';
+                  _fxRate.clear();
+                }),
+              ),
+              if (_currency != 'TWD') ...[
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _fxRate,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  decoration: InputDecoration(
+                    labelText: '匯率（1 $_currency = ? TWD）',
+                    helperText: '留空則使用系統匯率',
+                    prefixIcon: const Icon(Icons.currency_exchange),
+                    border: const OutlineInputBorder(),
+                  ),
+                  validator: (v) {
+                    final s = v?.trim() ?? '';
+                    if (s.isEmpty) return null;
+                    final n = num.tryParse(s);
+                    if (n == null || n <= 0) return '匯率須大於 0';
+                    return null;
+                  },
+                ),
+              ],
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                initialValue: _frequency,
+                decoration: const InputDecoration(
+                  labelText: '週期',
+                  border: OutlineInputBorder(),
+                ),
+                items: [
+                  for (final e in _freqLabels.entries)
+                    DropdownMenuItem(value: e.key, child: Text(e.value)),
+                ],
+                onChanged: (v) => setState(() => _frequency = v!),
+              ),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                initialValue: _categoryId,
+                isExpanded: true,
+                decoration: const InputDecoration(
+                  labelText: '分類',
+                  border: OutlineInputBorder(),
+                ),
+                items: [
+                  for (final c in cats)
+                    DropdownMenuItem(value: c.id, child: Text(c.name)),
+                ],
+                onChanged: (v) => setState(() => _categoryId = v),
+                validator: (v) => v == null ? '請選擇分類' : null,
+              ),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                initialValue: _accountId,
+                isExpanded: true,
+                decoration: const InputDecoration(
+                  labelText: '帳戶',
+                  border: OutlineInputBorder(),
+                ),
+                items: [
+                  for (final a in widget.accounts)
+                    DropdownMenuItem(value: a.id, child: Text(a.name)),
+                ],
+                onChanged: (v) => setState(() {
+                  _accountId = v;
+                  final a = _selectedAccount;
+                  if (a != null) {
+                    _currency = a.currency;
+                    _fxRate.clear();
+                  }
+                }),
+                validator: (v) => v == null ? '請選擇帳戶' : null,
+              ),
+              const SizedBox(height: 12),
+              ListTile(
+                shape: RoundedRectangleBorder(
+                  side: BorderSide(color: Theme.of(context).dividerColor),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                leading: const Icon(Icons.calendar_today),
+                title: const Text('起始日期'),
+                trailing: Text(_startStr),
+                onTap: () async {
+                  final d = await showDatePicker(
+                    context: context,
+                    initialDate: _start,
+                    firstDate: DateTime(2000),
+                    lastDate: DateTime(2100),
+                  );
+                  if (d != null) setState(() => _start = d);
+                },
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _note,
+                decoration: const InputDecoration(
+                  labelText: '備註（選填）',
+                  border: OutlineInputBorder(),
                 ),
               ),
-            ],
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              title: const Text('不計入統計'),
-              value: _excludeFromStats,
-              onChanged: (v) => setState(() => _excludeFromStats = v),
-            ),
-            const SizedBox(height: 20),
-            FilledButton(
-              onPressed: _saving ? null : _save,
-              style: FilledButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 14),
+              if (_overseasApplies) ...[
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _fxFee,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  decoration: InputDecoration(
+                    labelText: '海外手續費 TWD（選填）',
+                    helperText:
+                        '此卡費率 ${_selectedAccount!.overseasFeeRate}%，留空將自動計算',
+                    border: const OutlineInputBorder(),
+                  ),
+                ),
+              ],
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('不計入統計'),
+                value: _excludeFromStats,
+                onChanged: (v) => setState(() => _excludeFromStats = v),
               ),
-              child: _saving
-                  ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Text('儲存'),
-            ),
-          ],
+              const SizedBox(height: 20),
+              FilledButton(
+                onPressed: _saving ? null : _save,
+                style: FilledButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+                child: _saving
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text('儲存'),
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -39,6 +39,27 @@ class _AccountsScreenState extends State<AccountsScreen> {
 
   void _reload() => setState(() => _future = _load());
 
+  // 供 AppBar「信用卡還款」按鈕取用最近載入的帳戶清單。
+  List<Account>? _lastAccounts;
+
+  Future<void> _openRepayment(List<Account> accounts) async {
+    final cards = accounts.where((a) => a.category == 'credit_card').toList();
+    final payers = accounts.where((a) => a.category != 'credit_card').toList();
+    if (cards.isEmpty || payers.isEmpty) {
+      toast(context, '需至少一張信用卡與一個非信用卡帳戶才能還款');
+      return;
+    }
+    final changed = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) => _RepaymentSheet(cards: cards, payers: payers),
+    );
+    if (changed == true) {
+      if (mounted) toast(context, '還款已記錄');
+      _reload();
+    }
+  }
+
   Future<void> _openForm([Account? account]) async {
     final changed = await showModalBottomSheet<bool>(
       context: context,
@@ -79,7 +100,18 @@ class _AccountsScreenState extends State<AccountsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('帳戶')),
+      appBar: AppBar(
+        title: const Text('帳戶'),
+        actions: [
+          IconButton(
+            tooltip: '信用卡還款',
+            icon: const Icon(Icons.credit_score_outlined),
+            onPressed: _lastAccounts == null
+                ? null
+                : () => _openRepayment(_lastAccounts!),
+          ),
+        ],
+      ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openForm(),
         icon: const Icon(Icons.add),
@@ -89,6 +121,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
         future: _future,
         onRetry: _reload,
         builder: (context, list) {
+          _lastAccounts = list;
           if (list.isEmpty) {
             return const EmptyState(
               icon: Icons.account_balance_wallet,
@@ -346,6 +379,154 @@ class _AccountFormState extends State<_AccountForm> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Text('儲存'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// 信用卡還款：自一個非信用卡帳戶轉出，清償一或多張信用卡。
+/// 後端會為每張卡建立一對 transfer_out / transfer_in 交易。
+class _RepaymentSheet extends StatefulWidget {
+  final List<Account> cards;
+  final List<Account> payers;
+  const _RepaymentSheet({required this.cards, required this.payers});
+
+  @override
+  State<_RepaymentSheet> createState() => _RepaymentSheetState();
+}
+
+class _RepaymentSheetState extends State<_RepaymentSheet> {
+  late String? _fromAccountId = widget.payers.first.id;
+  DateTime _date = DateTime.now();
+  late final Map<String, TextEditingController> _amounts = {
+    for (final c in widget.cards) c.id: TextEditingController(),
+  };
+  bool _saving = false;
+
+  @override
+  void dispose() {
+    for (final c in _amounts.values) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  String get _dateStr =>
+      '${_date.year}-${_date.month.toString().padLeft(2, '0')}-${_date.day.toString().padLeft(2, '0')}';
+
+  Future<void> _save() async {
+    final repayments = <Map<String, dynamic>>[];
+    for (final entry in _amounts.entries) {
+      final amt = num.tryParse(entry.value.text.trim()) ?? 0;
+      if (amt > 0) repayments.add({'cardId': entry.key, 'amount': amt});
+    }
+    if (repayments.isEmpty) {
+      toast(context, '請至少填一張卡的還款金額');
+      return;
+    }
+    setState(() => _saving = true);
+    try {
+      await ApiClient.instance.creditCardRepayment({
+        'fromAccountId': _fromAccountId,
+        'date': _dateStr,
+        'repayments': repayments,
+      });
+      if (mounted) Navigator.pop(context, true);
+    } catch (e) {
+      if (mounted) {
+        setState(() => _saving = false);
+        toast(context, '$e');
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bottom = MediaQuery.of(context).viewInsets.bottom;
+    return Padding(
+      padding: EdgeInsets.fromLTRB(16, 16, 16, bottom + 16),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text('信用卡還款', style: Theme.of(context).textTheme.titleLarge),
+            const SizedBox(height: 16),
+            DropdownButtonFormField<String>(
+              initialValue: _fromAccountId,
+              isExpanded: true,
+              decoration: const InputDecoration(
+                labelText: '付款帳戶',
+                border: OutlineInputBorder(),
+              ),
+              items: [
+                for (final a in widget.payers)
+                  DropdownMenuItem(
+                    value: a.id,
+                    child: Text(
+                      '${a.name}${a.currency != 'TWD' ? '（${a.currency}）' : ''}',
+                    ),
+                  ),
+              ],
+              onChanged: (v) => setState(() => _fromAccountId = v),
+            ),
+            const SizedBox(height: 12),
+            ListTile(
+              shape: RoundedRectangleBorder(
+                side: BorderSide(color: Theme.of(context).dividerColor),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              leading: const Icon(Icons.calendar_today),
+              title: const Text('日期'),
+              trailing: Text(_dateStr),
+              onTap: () async {
+                final d = await showDatePicker(
+                  context: context,
+                  initialDate: _date,
+                  firstDate: DateTime(2000),
+                  lastDate: DateTime(2100),
+                );
+                if (d != null) setState(() => _date = d);
+              },
+            ),
+            const SizedBox(height: 12),
+            const Align(
+              alignment: Alignment.centerLeft,
+              child: Text('各卡還款金額（以卡片幣別計）'),
+            ),
+            const SizedBox(height: 8),
+            for (final c in widget.cards)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: TextFormField(
+                  controller: _amounts[c.id],
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  decoration: InputDecoration(
+                    labelText:
+                        '${c.name}${c.currency != 'TWD' ? '（${c.currency}）' : ''}',
+                    hintText: '0＝不還',
+                    border: const OutlineInputBorder(),
+                  ),
+                ),
+              ),
+            const SizedBox(height: 12),
+            FilledButton(
+              onPressed: _saving ? null : _save,
+              style: FilledButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 14),
+              ),
+              child: _saving
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Text('確認還款'),
             ),
           ],
         ),

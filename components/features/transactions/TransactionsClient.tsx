@@ -558,6 +558,8 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
           {allStandalone.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
           {allParents.map((parent: any) => (
             <optgroup key={parent.id} label={parent.name}>
+              {/* 選父分類＝篩選該父分類底下所有子分類（後端會自動展開子分類） */}
+              <option value={parent.id}>{parent.name}（全部）</option>
               {allChildren.filter((c: any) => c.parentId === parent.id).map((c: any) => (
                 <option key={c.id} value={c.id}>{c.name}</option>
               ))}

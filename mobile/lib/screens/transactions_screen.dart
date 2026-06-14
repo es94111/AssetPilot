@@ -17,7 +17,7 @@ class _TransactionsData {
   final List<Txn> items;
   final Map<String, String> catName;
   final List<Account> accounts;
-  final List<Category> categories; // 僅子分類，供篩選下拉
+  final List<Category> categories; // 篩選下拉用：父分類 + 其子分類（依序）
   const _TransactionsData(
     this.items,
     this.catName,
@@ -82,8 +82,17 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
             ? '${parentNames[c.parentId]} › ${c.name}'
             : c.name,
     };
-    final childCats = categories.where((c) => !c.isParent).toList();
-    return _TransactionsData(items, catName, accounts, childCats);
+    // 篩選下拉用清單：父分類（可選＝該父分類底下全部）後接其子分類，與 WEB 一致。
+    // 選父分類時送出父分類 id，後端會自動展開為其所有子分類。無子分類的父分類略過
+    // （交易只會掛在子分類，選了也篩不到任何結果）。
+    final filterCats = <Category>[];
+    for (final p in categories.where((c) => c.isParent)) {
+      final children = categories.where((c) => c.parentId == p.id).toList();
+      if (children.isEmpty) continue;
+      filterCats.add(p);
+      filterCats.addAll(children);
+    }
+    return _TransactionsData(items, catName, accounts, filterCats);
   }
 
   void _reload() => setState(() => _future = _load());
@@ -95,7 +104,6 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
       builder: (_) => _TxnFilterSheet(
         accounts: data.accounts,
         categories: data.categories,
-        catName: data.catName,
         dateFrom: _dateFrom,
         dateTo: _dateTo,
         accountId: _filterAccountId,
@@ -345,8 +353,7 @@ class _TxnTile extends StatelessWidget {
 /// 交易進階篩選：日期區間、帳戶、分類、關鍵字。
 class _TxnFilterSheet extends StatefulWidget {
   final List<Account> accounts;
-  final List<Category> categories; // 子分類
-  final Map<String, String> catName;
+  final List<Category> categories; // 父分類 + 其子分類（依序）
   final DateTime? dateFrom;
   final DateTime? dateTo;
   final String? accountId;
@@ -364,7 +371,6 @@ class _TxnFilterSheet extends StatefulWidget {
   const _TxnFilterSheet({
     required this.accounts,
     required this.categories,
-    required this.catName,
     required this.dateFrom,
     required this.dateTo,
     required this.accountId,
@@ -473,10 +479,17 @@ class _TxnFilterSheetState extends State<_TxnFilterSheet> {
               ),
               items: [
                 const DropdownMenuItem(value: null, child: Text('全部分類')),
+                // 父分類顯示「名稱（全部）」並可選；選了會篩出該父分類底下所有交易。
+                // 子分類縮排顯示於所屬父分類之下。
                 for (final c in widget.categories)
                   DropdownMenuItem(
                     value: c.id,
-                    child: Text(widget.catName[c.id] ?? c.name),
+                    child: Text(
+                      c.isParent ? '${c.name}（全部）' : '　${c.name}',
+                      style: c.isParent
+                          ? const TextStyle(fontWeight: FontWeight.w600)
+                          : null,
+                    ),
                   ),
               ],
               onChanged: (v) => setState(() => _categoryId = v),

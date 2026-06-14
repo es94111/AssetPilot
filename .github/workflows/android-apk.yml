@@ -18,7 +18,7 @@ on:
 jobs:
   build-apk:
     # 改用自建 self-hosted runner（GitHub-hosted 額度受帳務限制時仍可建置）。
-    # runner 需具備：bash、git、curl、unzip、jq、node、aws CLI，以及 Flutter
+    # runner 需具備：bash、git、curl、unzip、node、aws CLI，以及 Flutter
     # 所需的 Android SDK / JDK 環境（Flutter 本身由下方 flutter-action 安裝）。
     runs-on: self-hosted
     env:
@@ -46,8 +46,10 @@ jobs:
           if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
             VERSION="${GITHUB_REF_NAME#v}"
           else
-            VERSION="$(jq -r .currentVersion changelog.json)"
+            # grep/sed 解析，不依賴 runner 是否裝有 jq。
+            VERSION="$(grep -m1 '"currentVersion"' changelog.json | sed -E 's/.*"currentVersion"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/')"
           fi
+          if [ -z "$VERSION" ]; then echo "::error::無法解析版本號"; exit 1; fi
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
           echo "Resolved app version: ${VERSION}"
 

@@ -28,7 +28,8 @@ build/cache/*
 .vscode/
 specs/
 test-results/
-docs/
+docs/*
+!docs/screenshots/
 AGENTS.md
 CLAUDE.md
 SSR.md

@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  自托管、資料加密的個人資產管理網頁應用 — 記帳、預算、股票紀錄、報表、稽核日誌，一站搞定。
+  自托管、資料加密的個人資產管理平台（Web + Android App）— 記帳、預算、股票紀錄、報表、稽核日誌，一站搞定。
 </p>
 
 <p align="center">
@@ -21,6 +21,7 @@
 
 ## 目錄
 
+- [螢幕截圖](#螢幕截圖)
 - [特色](#特色)
 - [功能總覽](#功能總覽)
 - [技術架構](#技術架構)
@@ -34,6 +35,27 @@
 - [外部 API 來源](#外部-api-來源)
 - [專案治理](#專案治理)
 - [授權](#授權)
+
+---
+
+## 螢幕截圖
+
+> 以下為行動版 App（Android）實際畫面；網頁版截圖整理中。
+
+<table>
+  <tr>
+    <td align="center" width="25%"><img src="docs/screenshots/app/02-dashboard.png" width="200" alt="儀表板"><br><sub><b>儀表板</b><br>月份切換、收支淨額、支出分類圓餅</sub></td>
+    <td align="center" width="25%"><img src="docs/screenshots/app/03-transactions.png" width="200" alt="記帳"><br><sub><b>記帳</b><br>收支列表、篩選、滑動刪除</sub></td>
+    <td align="center" width="25%"><img src="docs/screenshots/app/04-stocks-holdings.png" width="200" alt="持股"><br><sub><b>持股</b><br>即時市值、未實現損益</sub></td>
+    <td align="center" width="25%"><img src="docs/screenshots/app/05-stocks-realized.png" width="200" alt="已實現損益"><br><sub><b>已實現損益</b><br>FIFO 逐筆損益彙總</sub></td>
+  </tr>
+  <tr>
+    <td align="center" width="25%"><img src="docs/screenshots/app/06-budgets.png" width="200" alt="預算"><br><sub><b>預算</b><br>月度與分類預算進度</sub></td>
+    <td align="center" width="25%"><img src="docs/screenshots/app/07-reports.png" width="200" alt="統計報表"><br><sub><b>統計報表</b><br>分類分布與趨勢</sub></td>
+    <td align="center" width="25%"><img src="docs/screenshots/app/08-more.png" width="200" alt="更多"><br><sub><b>更多</b><br>帳號安全、設定、報表通知</sub></td>
+    <td align="center" width="25%"><img src="docs/screenshots/app/01-login.png" width="200" alt="登入"><br><sub><b>登入</b><br>帳密 / Google / LINE / Passkey</sub></td>
+  </tr>
+</table>
 
 ---
 
@@ -178,7 +200,7 @@ cp .env.example .env     # 依需求編輯
 npm run dev
 ```
 
-、生 成 產 品
+**正式環境（build / start）：**
 
 ```bash
 npm run build

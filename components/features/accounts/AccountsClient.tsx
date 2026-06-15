@@ -70,6 +70,11 @@ export default function AccountsClient() {
   const [fxSyncing, setFxSyncing] = useState(false);
   const [repaymentError, setRepaymentError] = useState('');
   const [defaultCurrency, setDefaultCurrency] = useState('TWD');
+  const [cyclesOpen, setCyclesOpen] = useState(false);
+  const [cyclesAccount, setCyclesAccount] = useState<any>(null);
+  const [cyclesData, setCyclesData] = useState<any>(null);
+  const [cyclesLoading, setCyclesLoading] = useState(false);
+  const [cyclesError, setCyclesError] = useState('');
 
   const loadFxRates = useCallback(async () => {
     try {
@@ -262,6 +267,21 @@ export default function AccountsClient() {
     setAccountDialogOpen(true);
   }
 
+  async function openCycles(account: any) {
+    setCyclesAccount(account);
+    setCyclesData(null);
+    setCyclesError('');
+    setCyclesOpen(true);
+    setCyclesLoading(true);
+    try {
+      const data = await apiGet(`/api/accounts/${account.id}/cycles?count=12`);
+      setCyclesData(data);
+    } catch (e: any) {
+      setCyclesError(e?.message || '載入失敗');
+    }
+    setCyclesLoading(false);
+  }
+
   function renderAccountCard(account: any) {
     const Icon = ACCOUNT_TYPES.find((item) => item.value === account.category)?.icon || CircleDot;
     return (
@@ -294,7 +314,13 @@ export default function AccountsClient() {
             )}
           </p>
         )}
-        {account.excludeFromTotal && <span className="inline-block text-xs text-slate-400 bg-slate-100 px-2 py-1 rounded mt-2">不計入總資產</span>}
+        {account.statementClosingDay != null && account.cyclePayment != null && (
+          <p className="text-sm font-medium text-emerald-600 mt-1">本期已繳：{fmt(account.cyclePayment, account.currency)}</p>
+        )}
+        {account.statementClosingDay != null && (
+          <button type="button" onClick={() => openCycles(account)} className="text-xs text-blue-600 hover:underline mt-2">查看每期明細 ›</button>
+        )}
+        {account.excludeFromTotal && <span className="inline-block text-xs text-slate-400 bg-slate-100 px-2 py-1 rounded mt-2 ml-2">不計入總資產</span>}
       </div>
     );
   }
@@ -439,6 +465,50 @@ export default function AccountsClient() {
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setDeleteId(null)}>取消</Button>
               <Button variant="destructive" onClick={handleDelete}>確認刪除</Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {cyclesOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setCyclesOpen(false)}>
+          <div className="bg-white dark:bg-slate-900 dark:text-slate-100 rounded-lg shadow-xl w-full max-w-lg max-h-[80vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center p-5 border-b border-slate-200 dark:border-slate-800">
+              <div>
+                <h3 className="text-lg font-semibold">每期帳單明細</h3>
+                <p className="text-sm text-slate-500">{cyclesAccount?.name}　每月結帳日 {cyclesAccount?.statementClosingDay} 號</p>
+              </div>
+              <Button variant="ghost" onClick={() => setCyclesOpen(false)}>關閉</Button>
+            </div>
+            <div className="overflow-auto p-5">
+              {cyclesLoading && <p className="text-sm text-slate-500">載入中…</p>}
+              {cyclesError && <p className="text-sm text-red-500">{cyclesError}</p>}
+              {!cyclesLoading && !cyclesError && cyclesData && (
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-slate-500 border-b border-slate-200 dark:border-slate-800">
+                      <th className="text-left font-medium py-2">期間</th>
+                      <th className="text-right font-medium py-2">消費</th>
+                      <th className="text-right font-medium py-2">實際繳款</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {cyclesData.cycles?.map((c: any) => (
+                      <tr key={c.start} className="border-b border-slate-100 dark:border-slate-800/60">
+                        <td className="py-2">
+                          {mdLabel(c.start)}–{mdLabel(c.end)}
+                          {c.current && <span className="ml-2 text-xs text-blue-600 bg-blue-50 dark:bg-blue-950/40 px-1.5 py-0.5 rounded">本期</span>}
+                        </td>
+                        <td className="py-2 text-right text-rose-600">{fmt(c.spending, cyclesData.currency)}</td>
+                        <td className="py-2 text-right text-emerald-600">{fmt(c.payment, cyclesData.currency)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+              {!cyclesLoading && !cyclesError && cyclesData?.cycles?.length === 0 && (
+                <p className="text-sm text-slate-500">尚無資料</p>
+              )}
             </div>
           </div>
         </div>

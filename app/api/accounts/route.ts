@@ -71,6 +71,7 @@ export async function GET(request: NextRequest) {
     // 信用卡：若已設定每月結帳日，計算「當期帳單區間」與該卡本期消費（原幣別 expense 加總）
     const closingDay = category === 'credit_card' ? normalizeStatementClosingDay(a.statement_closing_day) : null;
     let cycleSpending: number | null = null;
+    let cyclePayment: number | null = null;
     let cycleStart: string | null = null;
     let cycleEnd: string | null = null;
     if (closingDay != null) {
@@ -79,11 +80,18 @@ export async function GET(request: NextRequest) {
         cycleStart = cycle.start;
         cycleEnd = cycle.end;
         // 與讀取/餘額邏輯一致：original_amount 為 0 的舊資料回退用 amount。
-        const sumRow = asRow<{ s: number | null }>(queryOne(
-          "SELECT COALESCE(SUM(CASE WHEN original_amount > 0 THEN original_amount ELSE amount END), 0) AS s FROM transactions WHERE user_id = ? AND account_id = ? AND type = 'expense' AND date >= ? AND date <= ?",
+        const amtExpr = 'CASE WHEN original_amount > 0 THEN original_amount ELSE amount END';
+        const spendRow = asRow<{ s: number | null }>(queryOne(
+          `SELECT COALESCE(SUM(${amtExpr}), 0) AS s FROM transactions WHERE user_id = ? AND account_id = ? AND type = 'expense' AND date >= ? AND date <= ?`,
           [auth.userId, a.id, cycle.start, cycle.end]
         ));
-        cycleSpending = Math.round((Number(sumRow?.s) || 0) * 100) / 100;
+        cycleSpending = Math.round((Number(spendRow?.s) || 0) * 100) / 100;
+        // 本期實際繳款 = 區間內轉入此卡的金額（信用卡還款／轉帳皆計）。
+        const payRow = asRow<{ s: number | null }>(queryOne(
+          `SELECT COALESCE(SUM(${amtExpr}), 0) AS s FROM transactions WHERE user_id = ? AND account_id = ? AND type = 'transfer_in' AND date >= ? AND date <= ?`,
+          [auth.userId, a.id, cycle.start, cycle.end]
+        ));
+        cyclePayment = Math.round((Number(payRow?.s) || 0) * 100) / 100;
       }
     }
 
@@ -99,6 +107,7 @@ export async function GET(request: NextRequest) {
       overseasFeeRate: a.overseas_fee_rate ?? null,
       statementClosingDay: closingDay,
       cycleSpending,
+      cyclePayment,
       cycleStart,
       cycleEnd,
       excludeFromTotal: a.exclude_from_total === 1,

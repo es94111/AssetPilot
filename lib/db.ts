@@ -482,6 +482,9 @@ async function _runMigrations(): Promise<void> {
   alterIgnore("ALTER TABLE accounts ADD COLUMN account_type TEXT DEFAULT ''");
   alterIgnore("ALTER TABLE accounts ADD COLUMN statement_closing_day INTEGER DEFAULT NULL");
 
+  // 區分手動／自動匯率：手動輸入或「立即同步」回填皆會用到此欄。
+  alterIgnore("ALTER TABLE exchange_rates ADD COLUMN is_manual INTEGER DEFAULT 0");
+
   alterIgnore("ALTER TABLE transactions ADD COLUMN transfer_to_account_id TEXT DEFAULT ''");
   alterIgnore("ALTER TABLE transactions ADD COLUMN tags TEXT DEFAULT '[]'");
   alterIgnore("ALTER TABLE transactions ADD COLUMN fx_fee REAL DEFAULT 0");

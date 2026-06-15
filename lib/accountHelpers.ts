@@ -206,6 +206,56 @@ export function resolveOverseasFee(opts: {
   return Math.max(0, Math.round((Number(twdBase) || 0) * rate / 100));
 }
 
+// 驗證／正規化信用卡每月結帳日：必須為 1~31 的整數，否則回 null（視為未設定）。
+export function normalizeStatementClosingDay(value: unknown): number | null {
+  if (value == null || value === '') return null;
+  const n = Math.floor(Number(value));
+  if (!Number.isFinite(n) || n < 1 || n > 31) return null;
+  return n;
+}
+
+// 信用卡帳單週期：給「每月結帳日」與使用者當地今天（YYYY-MM-DD），
+// 算出「當期（未出帳）」帳單區間 = 上一個結帳日的隔天 ~ 下一個（含今天）結帳日，皆含端點。
+// 遇當月天數不足（如結帳日 31 遇 2 月）自動 clamp 到當月最後一天。
+export function creditCardStatementCycle(
+  closingDay: number | null | undefined,
+  todayStr: string
+): { start: string; end: string } | null {
+  const day = normalizeStatementClosingDay(closingDay);
+  if (day == null) return null;
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(todayStr));
+  if (!m) return null;
+  const ty = Number(m[1]);
+  const tm = Number(m[2]); // 1-12
+  const td = Number(m[3]);
+
+  // mo 為 1-12；Date.UTC(y, mo, 0) = 該月最後一天
+  const daysInMonth = (y: number, mo: number) => new Date(Date.UTC(y, mo, 0)).getUTCDate();
+  const clampedClosing = (y: number, mo: number) => Math.min(day, daysInMonth(y, mo));
+
+  // 找出「下一個（含今天）結帳日」所在年月：今天已過本月結帳日則落在下個月
+  let endY = ty;
+  let endMo = tm;
+  if (td > clampedClosing(ty, tm)) {
+    endMo = tm + 1;
+    if (endMo > 12) { endMo = 1; endY = ty + 1; }
+  }
+  const endDay = clampedClosing(endY, endMo);
+
+  // 區間開始 = 上一個結帳日（end 的前一個月）的隔天
+  let prevY = endY;
+  let prevMo = endMo - 1;
+  if (prevMo < 1) { prevMo = 12; prevY = endY - 1; }
+  const startDate = new Date(Date.UTC(prevY, prevMo - 1, clampedClosing(prevY, prevMo) + 1));
+  const fmt = (y: number, mo: number, d: number) =>
+    `${y}-${String(mo).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+
+  return {
+    start: fmt(startDate.getUTCFullYear(), startDate.getUTCMonth() + 1, startDate.getUTCDate()),
+    end: fmt(endY, endMo, endDay),
+  };
+}
+
 export function normalizeDate(dateStr: string | null | undefined): string {
   if (!dateStr) return '';
   const s = String(dateStr).trim();

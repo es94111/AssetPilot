@@ -25,6 +25,7 @@ const EMPTY_FORM = {
   excludeFromTotal: false,
   linkedBankId: '',
   overseasFeeRate: '',
+  statementClosingDay: '',
 };
 
 const EMPTY_REPAYMENT = {
@@ -36,6 +37,12 @@ const EMPTY_REPAYMENT = {
 function fmt(n: number | string, currency = 'TWD') {
   const num = Math.round(Number(n) || 0);
   return (currency === 'TWD' ? 'NT$ ' : '') + num.toLocaleString('zh-TW') + (currency !== 'TWD' ? ` ${currency}` : '');
+}
+
+// 'YYYY-MM-DD' → 'M/D'，給帳單區間顯示用。
+function mdLabel(dateStr: string) {
+  const m = /^\d{4}-(\d{2})-(\d{2})$/.exec(String(dateStr || ''));
+  return m ? `${Number(m[1])}/${Number(m[2])}` : '';
 }
 
 function categoryLabel(category: string) {
@@ -127,6 +134,7 @@ export default function AccountsClient() {
       excludeFromTotal: form.excludeFromTotal,
       linkedBankId: form.category === 'credit_card' ? (form.linkedBankId || null) : null,
       overseasFeeRate: form.category === 'credit_card' && form.overseasFeeRate !== '' ? Number(form.overseasFeeRate) : null,
+      statementClosingDay: form.category === 'credit_card' && form.statementClosingDay !== '' ? Number(form.statementClosingDay) : null,
     };
     try {
       if (editId) await apiPut(`/api/accounts/${editId}`, body);
@@ -247,6 +255,7 @@ export default function AccountsClient() {
       excludeFromTotal: !!account.excludeFromTotal,
       linkedBankId: account.linkedBankId || '',
       overseasFeeRate: account.overseasFeeRate != null ? String(account.overseasFeeRate) : '',
+      statementClosingDay: account.statementClosingDay != null ? String(account.statementClosingDay) : '',
     });
     setEditId(account.id);
     setFormError('');
@@ -274,6 +283,17 @@ export default function AccountsClient() {
         {account.currency !== 'TWD' && <p className="text-sm text-slate-500 mt-1">折算總額：{fmt(account.twdAccumulated, 'TWD')}</p>}
         {account.linkedBankId && <p className="text-xs text-slate-500 mt-2">關聯銀行：{bankAccounts.find((item) => item.id === account.linkedBankId)?.name || '—'}</p>}
         {account.overseasFeeRate != null && <p className="text-xs text-slate-500 mt-1">海外手續費率：{account.overseasFeeRate}%</p>}
+        {account.statementClosingDay != null && (
+          <p className="text-xs text-slate-500 mt-2">每月結帳日：{account.statementClosingDay} 號</p>
+        )}
+        {account.statementClosingDay != null && account.cycleSpending != null && (
+          <p className="text-sm font-medium text-rose-600 mt-1">
+            本期消費：{fmt(account.cycleSpending, account.currency)}
+            {account.cycleStart && account.cycleEnd && (
+              <span className="text-xs font-normal text-slate-400 ml-1">（{mdLabel(account.cycleStart)}–{mdLabel(account.cycleEnd)}）</span>
+            )}
+          </p>
+        )}
         {account.excludeFromTotal && <span className="inline-block text-xs text-slate-400 bg-slate-100 px-2 py-1 rounded mt-2">不計入總資產</span>}
       </div>
     );
@@ -308,6 +328,7 @@ export default function AccountsClient() {
                 <>
                   <Select label="所屬銀行" options={[{ label: '不分組', value: '' }, ...bankAccounts.map((bank) => ({ label: bank.name, value: bank.id }))]} value={form.linkedBankId} onChange={(e) => setForm((current) => ({ ...current, linkedBankId: e.target.value }))} />
                   <Input label="海外手續費率（%）" type="number" step="0.01" value={form.overseasFeeRate} onChange={(e) => setForm((current) => ({ ...current, overseasFeeRate: e.target.value }))} />
+                  <Input label="結帳日（每月幾號，1~31）" type="number" min="1" max="31" step="1" placeholder="例如 15，留空則不統計本期消費" value={form.statementClosingDay} onChange={(e) => setForm((current) => ({ ...current, statementClosingDay: e.target.value }))} />
                 </>
               )}
               <label className="flex items-center gap-2">

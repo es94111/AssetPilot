@@ -171,11 +171,10 @@ class _AccountsScreenState extends State<AccountsScreen> {
                 for (final a in list)
                   ListTile(
                     leading: CircleAvatar(child: Icon(_iconFor(a.category))),
+                    isThreeLine:
+                        a.statementClosingDay != null && a.cycleSpending != null,
                     title: Text(a.name),
-                    subtitle: Text(
-                      '${_accountCategories[a.category] ?? a.category}'
-                      '${a.excludeFromTotal ? '・不計入總資產' : ''}',
-                    ),
+                    subtitle: _accountSubtitle(context, a),
                     trailing: Text(
                       money(a.balance, a.currency),
                       style: TextStyle(
@@ -192,6 +191,40 @@ class _AccountsScreenState extends State<AccountsScreen> {
         },
       ),
     );
+  }
+
+  /// 帳戶副標題：類型／不計入註記，信用卡若已設結帳日再補一行「本期消費」。
+  Widget _accountSubtitle(BuildContext context, Account a) {
+    final base =
+        '${_accountCategories[a.category] ?? a.category}'
+        '${a.excludeFromTotal ? '・不計入總資產' : ''}';
+    if (a.statementClosingDay == null || a.cycleSpending == null) {
+      return Text(base);
+    }
+    final range = (a.cycleStart != null && a.cycleEnd != null)
+        ? '（${_md(a.cycleStart!)}–${_md(a.cycleEnd!)}）'
+        : '';
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(base),
+        const SizedBox(height: 2),
+        Text(
+          '本期消費 ${money(a.cycleSpending!, a.currency)}$range',
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.error,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// 'YYYY-MM-DD' → 'M/D'
+  String _md(String iso) {
+    final m = RegExp(r'^\d{4}-(\d{2})-(\d{2})$').firstMatch(iso);
+    if (m == null) return '';
+    return '${int.parse(m.group(1)!)}/${int.parse(m.group(2)!)}';
   }
 
   IconData _iconFor(String category) {
@@ -227,6 +260,11 @@ class _AccountFormState extends State<_AccountForm> {
         ? widget.existing!.overseasFeeRate.toString()
         : '',
   );
+  late final _closingDay = TextEditingController(
+    text: (widget.existing?.statementClosingDay ?? 0) > 0
+        ? widget.existing!.statementClosingDay.toString()
+        : '',
+  );
   late String _category = widget.existing?.category.isNotEmpty == true
       ? widget.existing!.category
       : 'bank';
@@ -241,6 +279,7 @@ class _AccountFormState extends State<_AccountForm> {
     _name.dispose();
     _initial.dispose();
     _overseasFeeRate.dispose();
+    _closingDay.dispose();
     super.dispose();
   }
 
@@ -257,6 +296,8 @@ class _AccountFormState extends State<_AccountForm> {
     if (_category == 'credit_card') {
       final raw = _overseasFeeRate.text.trim();
       body['overseasFeeRate'] = raw.isEmpty ? null : (num.tryParse(raw) ?? 0);
+      final cd = _closingDay.text.trim();
+      body['statementClosingDay'] = cd.isEmpty ? null : (int.tryParse(cd) ?? 0);
     }
     try {
       final api = ApiClient.instance;
@@ -358,6 +399,23 @@ class _AccountFormState extends State<_AccountForm> {
                   helperText: '例：1.5 代表 1.5%，外幣刷卡時自動計算手續費',
                   border: OutlineInputBorder(),
                 ),
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _closingDay,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: '結帳日（每月幾號，1~31）',
+                  helperText: '設定後帳戶卡片會顯示本期帳單消費，留空則不統計',
+                  border: OutlineInputBorder(),
+                ),
+                validator: (v) {
+                  final s = v?.trim() ?? '';
+                  if (s.isEmpty) return null;
+                  final n = int.tryParse(s);
+                  if (n == null || n < 1 || n > 31) return '請輸入 1~31';
+                  return null;
+                },
               ),
             ],
             SwitchListTile(

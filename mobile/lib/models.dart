@@ -4,6 +4,14 @@
 num _asNum(dynamic v) => v is num ? v : num.tryParse('$v') ?? 0;
 String _asStr(dynamic v) => v == null ? '' : '$v';
 bool _asBool(dynamic v) => v == true || v == 1 || v == '1';
+num? _asNumOrNull(dynamic v) =>
+    v == null ? null : (v is num ? v : num.tryParse('$v'));
+int? _asIntOrNull(dynamic v) => _asNumOrNull(v)?.toInt();
+String? _asStrOrNull(dynamic v) {
+  if (v == null) return null;
+  final s = '$v';
+  return s.isEmpty ? null : s;
+}
 
 /// `GET /api/auth/me` → `user`
 class AppUser {
@@ -56,6 +64,10 @@ class Account {
   final num twdAccumulated;
   final bool excludeFromTotal;
   final num overseasFeeRate; // 海外手續費率（百分比 %），非信用卡為 0
+  final int? statementClosingDay; // 信用卡每月結帳日（1~31），未設定為 null
+  final num? cycleSpending; // 本期帳單消費（原幣別），未設結帳日為 null
+  final String? cycleStart; // 本期區間起日 YYYY-MM-DD
+  final String? cycleEnd; // 本期區間迄日 YYYY-MM-DD
 
   Account({
     required this.id,
@@ -67,6 +79,10 @@ class Account {
     required this.twdAccumulated,
     required this.excludeFromTotal,
     required this.overseasFeeRate,
+    this.statementClosingDay,
+    this.cycleSpending,
+    this.cycleStart,
+    this.cycleEnd,
   });
 
   factory Account.fromJson(Map<String, dynamic> j) => Account(
@@ -79,6 +95,12 @@ class Account {
     twdAccumulated: _asNum(j['twdAccumulated']),
     excludeFromTotal: _asBool(j['excludeFromTotal']),
     overseasFeeRate: _asNum(j['overseasFeeRate'] ?? j['overseas_fee_rate']),
+    statementClosingDay: _asIntOrNull(
+      j['statementClosingDay'] ?? j['statement_closing_day'],
+    ),
+    cycleSpending: _asNumOrNull(j['cycleSpending']),
+    cycleStart: _asStrOrNull(j['cycleStart']),
+    cycleEnd: _asStrOrNull(j['cycleEnd']),
   );
 }
 

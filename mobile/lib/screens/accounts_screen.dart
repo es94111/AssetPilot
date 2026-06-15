@@ -227,13 +227,23 @@ class _AccountsScreenState extends State<AccountsScreen> {
             fontWeight: FontWeight.w500,
           ),
         ),
-        if (a.cyclePayment != null)
-          Text(
-            '本期已繳 ${money(a.cyclePayment!, a.currency)}',
-            style: const TextStyle(
-              color: Color(0xFF2E7D32),
-              fontWeight: FontWeight.w500,
+        if (a.lastCycleSpending != null)
+          Text.rich(
+            TextSpan(
+              children: [
+                const TextSpan(text: '上期帳單 '),
+                TextSpan(
+                  text: '消費 ${money(a.lastCycleSpending!, a.currency)}',
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                ),
+                const TextSpan(text: ' / '),
+                TextSpan(
+                  text: '已繳 ${money(a.lastCyclePayment ?? 0, a.currency)}',
+                  style: const TextStyle(color: Color(0xFF2E7D32)),
+                ),
+              ],
             ),
+            style: const TextStyle(fontWeight: FontWeight.w500),
           ),
       ],
     );
@@ -674,6 +684,13 @@ class _StatementCyclesSheetState extends State<_StatementCyclesSheet> {
           Text(
             '${widget.account.name}　每月結帳日 ${widget.account.statementClosingDay} 號',
             style: Theme.of(context).textTheme.bodySmall,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '「繳款」已對應回它所清償的帳單（結帳後下一期繳清的金額算回該期）。',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
           const SizedBox(height: 12),
           ConstrainedBox(

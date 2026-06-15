@@ -440,6 +440,12 @@ class ApiClient {
 
   Future<void> deleteAccount(String id) => _send('DELETE', '/api/accounts/$id');
 
+  /// 信用卡每期帳單明細（消費／實際繳款），需該卡已設結帳日。
+  Future<Map<String, dynamic>> accountStatementCycles(
+    String id, {
+    int count = 12,
+  }) => _getMap('/api/accounts/$id/cycles?count=$count');
+
   // ── 分類 ────────────────────────────────────────────────────
 
   Future<List<dynamic>> categories() => _getList('/api/categories');

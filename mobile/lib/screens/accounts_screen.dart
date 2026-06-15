@@ -175,12 +175,23 @@ class _AccountsScreenState extends State<AccountsScreen> {
                         a.statementClosingDay != null && a.cycleSpending != null,
                     title: Text(a.name),
                     subtitle: _accountSubtitle(context, a),
-                    trailing: Text(
-                      money(a.balance, a.currency),
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: a.balance < 0 ? Colors.red : null,
-                      ),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          money(a.balance, a.currency),
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: a.balance < 0 ? Colors.red : null,
+                          ),
+                        ),
+                        if (a.statementClosingDay != null)
+                          IconButton(
+                            tooltip: '每期帳單明細',
+                            icon: const Icon(Icons.receipt_long_outlined),
+                            onPressed: () => _openCycles(a),
+                          ),
+                      ],
                     ),
                     onTap: () => _openForm(a),
                     onLongPress: () => _delete(a),
@@ -216,7 +227,24 @@ class _AccountsScreenState extends State<AccountsScreen> {
             fontWeight: FontWeight.w500,
           ),
         ),
+        if (a.cyclePayment != null)
+          Text(
+            '本期已繳 ${money(a.cyclePayment!, a.currency)}',
+            style: const TextStyle(
+              color: Color(0xFF2E7D32),
+              fontWeight: FontWeight.w500,
+            ),
+          ),
       ],
+    );
+  }
+
+  /// 開啟信用卡每期帳單明細（底部彈窗）。
+  Future<void> _openCycles(Account a) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) => _StatementCyclesSheet(account: a),
     );
   }
 
@@ -588,6 +616,156 @@ class _RepaymentSheetState extends State<_RepaymentSheet> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// 信用卡每期帳單明細：每期顯示消費與實際繳款金額（以卡片幣別計）。
+class _StatementCyclesSheet extends StatefulWidget {
+  final Account account;
+  const _StatementCyclesSheet({required this.account});
+
+  @override
+  State<_StatementCyclesSheet> createState() => _StatementCyclesSheetState();
+}
+
+class _StatementCyclesSheetState extends State<_StatementCyclesSheet> {
+  late Future<List<StatementCycle>> _future;
+  String _currency = 'TWD';
+
+  @override
+  void initState() {
+    super.initState();
+    _currency = widget.account.currency;
+    _future = _load();
+  }
+
+  Future<List<StatementCycle>> _load() async {
+    final m = await ApiClient.instance.accountStatementCycles(
+      widget.account.id,
+      count: 12,
+    );
+    final c = m['currency'];
+    if (c is String && c.isNotEmpty) _currency = c;
+    final list = (m['cycles'] as List?) ?? const [];
+    return list
+        .map((e) => StatementCycle.fromJson((e as Map).cast<String, dynamic>()))
+        .toList();
+  }
+
+  String _md(String iso) {
+    final m = RegExp(r'^\d{4}-(\d{2})-(\d{2})$').firstMatch(iso);
+    if (m == null) return iso;
+    return '${int.parse(m.group(1)!)}/${int.parse(m.group(2)!)}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bottom = MediaQuery.of(context).viewInsets.bottom;
+    return Padding(
+      padding: EdgeInsets.fromLTRB(16, 16, 16, bottom + 16),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text('每期帳單明細', style: Theme.of(context).textTheme.titleLarge),
+          const SizedBox(height: 4),
+          Text(
+            '${widget.account.name}　每月結帳日 ${widget.account.statementClosingDay} 號',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+          const SizedBox(height: 12),
+          ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.6,
+            ),
+            child: FutureBuilder<List<StatementCycle>>(
+              future: _future,
+              builder: (context, snap) {
+                if (snap.connectionState == ConnectionState.waiting) {
+                  return const Padding(
+                    padding: EdgeInsets.all(32),
+                    child: Center(child: CircularProgressIndicator()),
+                  );
+                }
+                if (snap.hasError) {
+                  return Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Center(child: Text('載入失敗：${snap.error}')),
+                  );
+                }
+                final cycles = snap.data ?? const [];
+                if (cycles.isEmpty) {
+                  return const Padding(
+                    padding: EdgeInsets.all(24),
+                    child: Center(child: Text('尚無資料')),
+                  );
+                }
+                return ListView.separated(
+                  shrinkWrap: true,
+                  itemCount: cycles.length,
+                  separatorBuilder: (_, _) => const Divider(height: 1),
+                  itemBuilder: (context, i) {
+                    final c = cycles[i];
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Row(
+                              children: [
+                                Text('${_md(c.start)}–${_md(c.end)}'),
+                                if (c.current) ...[
+                                  const SizedBox(width: 6),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 6,
+                                      vertical: 2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.primaryContainer,
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: const Text(
+                                      '本期',
+                                      style: TextStyle(fontSize: 11),
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                '消費 ${money(c.spending, _currency)}',
+                                style: const TextStyle(
+                                  color: Color(0xFFD32F2F),
+                                  fontSize: 13,
+                                ),
+                              ),
+                              Text(
+                                '已繳 ${money(c.payment, _currency)}',
+                                style: const TextStyle(
+                                  color: Color(0xFF2E7D32),
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }

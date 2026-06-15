@@ -256,6 +256,30 @@ export function creditCardStatementCycle(
   };
 }
 
+// 連續往前推算多期帳單區間：回傳最近 count 期（含當期），最新在前。
+// 以「本期起日的前一天」當作下一輪基準日，逐期往回推，邊界自然連續不重疊。
+export function creditCardStatementCycles(
+  closingDay: number | null | undefined,
+  todayStr: string,
+  count: number
+): Array<{ start: string; end: string }> {
+  const n = Math.max(1, Math.min(36, Math.floor(Number(count)) || 1));
+  const out: Array<{ start: string; end: string }> = [];
+  let cursor = todayStr;
+  for (let i = 0; i < n; i++) {
+    const c = creditCardStatementCycle(closingDay, cursor);
+    if (!c) break;
+    out.push(c);
+    // 下一輪基準 = 本期起日的前一天（即上一個結帳日）
+    const sy = Number(c.start.slice(0, 4));
+    const smo = Number(c.start.slice(5, 7));
+    const sd = Number(c.start.slice(8, 10));
+    const prev = new Date(Date.UTC(sy, smo - 1, sd - 1));
+    cursor = `${prev.getUTCFullYear()}-${String(prev.getUTCMonth() + 1).padStart(2, '0')}-${String(prev.getUTCDate()).padStart(2, '0')}`;
+  }
+  return out;
+}
+
 export function normalizeDate(dateStr: string | null | undefined): string {
   if (!dateStr) return '';
   const s = String(dateStr).trim();

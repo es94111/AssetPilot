@@ -3,6 +3,7 @@ import { requireAuth } from '../../../../lib/apiHelpers';
 import { getDB, queryAll, queryOne, saveDB } from '../../../../lib/db';
 import {
   normalizeCurrency, normalizeAccountIcon, categoryFromAccountType, accountTypeFromCategory,
+  normalizeStatementClosingDay,
 } from '../../../../lib/accountHelpers';
 import { ownsResource, assertOptimisticLock, lockErrorResponse } from '../../../../lib/resourceHelpers';
 
@@ -21,6 +22,7 @@ interface AccountRow {
   exclude_from_total: number | null;
   linked_bank_id: string | null;
   overseas_fee_rate: number | null;
+  statement_closing_day: number | null;
   updated_at: string | number | null;
 }
 
@@ -43,6 +45,7 @@ interface UpdateAccountRequest {
   excludeFromTotal?: boolean;
   linkedBankId?: string | null;
   overseasFeeRate?: number | string | null;
+  statementClosingDay?: number | string | null;
 }
 
 const VALID_CATEGORIES: AccountCategory[] = ['bank', 'credit_card', 'cash', 'virtual_wallet'];
@@ -99,6 +102,9 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
     excludeFromTotal: a.exclude_from_total === 1,
     linkedBankId: a.linked_bank_id || null,
     overseasFeeRate: a.overseas_fee_rate ?? null,
+    statementClosingDay: (a.category || categoryFromAccountType(a.account_type)) === 'credit_card'
+      ? normalizeStatementClosingDay(a.statement_closing_day)
+      : null,
     currentBalance: Math.round(balance),
     referenceCount,
     updatedAt: Number(a.updated_at) || 0,
@@ -163,11 +169,27 @@ async function updateAccount(request: NextRequest, id: string) {
     safeLinkedBankId = linkedBankId;
   }
 
+  // 結帳日：非信用卡一律清空；信用卡時，有帶值才更新（空字串視為清除），未帶則維持原值。
+  let safeClosingDay = existing.statement_closing_day ?? null;
+  if (category !== 'credit_card') {
+    safeClosingDay = null;
+  } else if (body.statementClosingDay !== undefined) {
+    if (body.statementClosingDay == null || body.statementClosingDay === '') {
+      safeClosingDay = null;
+    } else {
+      const d = normalizeStatementClosingDay(body.statementClosingDay);
+      if (d == null) {
+        return NextResponse.json({ error: '結帳日須為 1~31', code: 'ValidationError', field: 'statementClosingDay' }, { status: 400 });
+      }
+      safeClosingDay = d;
+    }
+  }
+
   const safeInitialBalance = Math.round(Number(initialBalance) || 0);
   const nowMs = Date.now();
   getDB().run(
-    'UPDATE accounts SET name = ?, category = ?, initial_balance = ?, icon = ?, currency = ?, account_type = ?, exclude_from_total = ?, linked_bank_id = ?, overseas_fee_rate = ?, updated_at = ? WHERE id = ? AND user_id = ?',
-    [safeName, category, safeInitialBalance, safeIcon, newCurrency, safeAccountType, safeExclude, safeLinkedBankId, safeOverseasFeeRate, nowMs, id, auth.userId]
+    'UPDATE accounts SET name = ?, category = ?, initial_balance = ?, icon = ?, currency = ?, account_type = ?, exclude_from_total = ?, linked_bank_id = ?, overseas_fee_rate = ?, statement_closing_day = ?, updated_at = ? WHERE id = ? AND user_id = ?',
+    [safeName, category, safeInitialBalance, safeIcon, newCurrency, safeAccountType, safeExclude, safeLinkedBankId, safeOverseasFeeRate, safeClosingDay, nowMs, id, auth.userId]
   );
   saveDB();
   return NextResponse.json({ ok: true, updatedAt: nowMs });

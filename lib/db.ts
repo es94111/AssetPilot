@@ -480,6 +480,7 @@ async function _runMigrations(): Promise<void> {
   alterIgnore("ALTER TABLE accounts ADD COLUMN linked_bank_id TEXT DEFAULT ''");
   alterIgnore("ALTER TABLE accounts ADD COLUMN overseas_fee_rate REAL DEFAULT 0");
   alterIgnore("ALTER TABLE accounts ADD COLUMN account_type TEXT DEFAULT ''");
+  alterIgnore("ALTER TABLE accounts ADD COLUMN statement_closing_day INTEGER DEFAULT NULL");
 
   alterIgnore("ALTER TABLE transactions ADD COLUMN transfer_to_account_id TEXT DEFAULT ''");
   alterIgnore("ALTER TABLE transactions ADD COLUMN tags TEXT DEFAULT '[]'");

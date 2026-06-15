@@ -280,6 +280,19 @@ export function creditCardStatementCycles(
   return out;
 }
 
+// 某張帳單（結帳日 = cycleEnd）的「繳款窗口」＝結帳日的隔天 ~ 下一個結帳日。
+// 帳單結帳後通常在下一個區間才繳清，故繳款應對應回上一張帳單。回傳該窗口 [start, end]。
+export function creditCardPaymentWindow(
+  closingDay: number | null | undefined,
+  cycleEnd: string
+): { start: string; end: string } | null {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(cycleEnd));
+  if (!m) return null;
+  const next = new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]) + 1));
+  const nextStr = `${next.getUTCFullYear()}-${String(next.getUTCMonth() + 1).padStart(2, '0')}-${String(next.getUTCDate()).padStart(2, '0')}`;
+  return creditCardStatementCycle(closingDay, nextStr);
+}
+
 export function normalizeDate(dateStr: string | null | undefined): string {
   if (!dateStr) return '';
   const s = String(dateStr).trim();

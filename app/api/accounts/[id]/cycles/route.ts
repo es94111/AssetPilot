@@ -3,7 +3,7 @@ import { requireAuth } from '../../../../../lib/apiHelpers';
 import { queryOne } from '../../../../../lib/db';
 import {
   normalizeCurrency, categoryFromAccountType, normalizeStatementClosingDay,
-  creditCardStatementCycles,
+  creditCardStatementCycles, creditCardPaymentWindow,
 } from '../../../../../lib/accountHelpers';
 import { todayInUserTz } from '../../../../../lib/userTime';
 import { ownsResource } from '../../../../../lib/resourceHelpers';
@@ -55,13 +55,17 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
     return Math.round((Number(row?.s) || 0) * 100) / 100;
   };
 
-  const cycles = creditCardStatementCycles(closingDay, today, count).map((c, idx) => ({
-    start: c.start,
-    end: c.end,
-    current: idx === 0,
-    spending: sumByType('expense', c.start, c.end),
-    payment: sumByType('transfer_in', c.start, c.end),
-  }));
+  const cycles = creditCardStatementCycles(closingDay, today, count).map((c, idx) => {
+    // 繳款對應回它所清償的帳單：此帳單結帳後的下一個區間內轉入此卡的金額才算它的繳款。
+    const pw = creditCardPaymentWindow(closingDay, c.end);
+    return {
+      start: c.start,
+      end: c.end,
+      current: idx === 0,
+      spending: sumByType('expense', c.start, c.end),
+      payment: pw ? sumByType('transfer_in', pw.start, pw.end) : 0,
+    };
+  });
 
   return NextResponse.json({
     id: a.id,

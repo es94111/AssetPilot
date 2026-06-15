@@ -66,9 +66,13 @@ class Account {
   final num overseasFeeRate; // 海外手續費率（百分比 %），非信用卡為 0
   final int? statementClosingDay; // 信用卡每月結帳日（1~31），未設定為 null
   final num? cycleSpending; // 本期帳單消費（原幣別），未設結帳日為 null
-  final num? cyclePayment; // 本期實際繳款（轉入此卡），未設結帳日為 null
   final String? cycleStart; // 本期區間起日 YYYY-MM-DD
   final String? cycleEnd; // 本期區間迄日 YYYY-MM-DD
+  // 上期帳單（最近一張已結帳）：消費與已繳（繳款對應回它所清償的帳單）
+  final num? lastCycleSpending;
+  final num? lastCyclePayment;
+  final String? lastCycleStart;
+  final String? lastCycleEnd;
 
   Account({
     required this.id,
@@ -82,9 +86,12 @@ class Account {
     required this.overseasFeeRate,
     this.statementClosingDay,
     this.cycleSpending,
-    this.cyclePayment,
     this.cycleStart,
     this.cycleEnd,
+    this.lastCycleSpending,
+    this.lastCyclePayment,
+    this.lastCycleStart,
+    this.lastCycleEnd,
   });
 
   factory Account.fromJson(Map<String, dynamic> j) => Account(
@@ -101,9 +108,12 @@ class Account {
       j['statementClosingDay'] ?? j['statement_closing_day'],
     ),
     cycleSpending: _asNumOrNull(j['cycleSpending']),
-    cyclePayment: _asNumOrNull(j['cyclePayment']),
     cycleStart: _asStrOrNull(j['cycleStart']),
     cycleEnd: _asStrOrNull(j['cycleEnd']),
+    lastCycleSpending: _asNumOrNull(j['lastCycleSpending']),
+    lastCyclePayment: _asNumOrNull(j['lastCyclePayment']),
+    lastCycleStart: _asStrOrNull(j['lastCycleStart']),
+    lastCycleEnd: _asStrOrNull(j['lastCycleEnd']),
   );
 }
 

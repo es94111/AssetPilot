@@ -4,6 +4,7 @@ import { getDB, queryAll, queryOne, saveDB } from '../../../lib/db';
 import {
   normalizeCurrency, normalizeAccountIcon, categoryFromAccountType, accountTypeFromCategory,
   calcBalance, getExchangeRateToTwd, normalizeStatementClosingDay, creditCardStatementCycle,
+  creditCardPaymentWindow,
 } from '../../../lib/accountHelpers';
 import { todayInUserTz } from '../../../lib/userTime';
 import { uid, todayStr } from '../../../lib/userDefaults';
@@ -68,30 +69,46 @@ export async function GET(request: NextRequest) {
     const twdAccumulated = Math.round(balance * getExchangeRateToTwd(auth.userId, accountCurrency) * 100) / 100;
     const category = a.category || categoryFromAccountType(a.account_type);
 
-    // 信用卡：若已設定每月結帳日，計算「當期帳單區間」與該卡本期消費（原幣別 expense 加總）
+    // 信用卡：若已設定每月結帳日，計算「本期消費」與「上期已結帳帳單的消費/已繳」。
     const closingDay = category === 'credit_card' ? normalizeStatementClosingDay(a.statement_closing_day) : null;
     let cycleSpending: number | null = null;
-    let cyclePayment: number | null = null;
     let cycleStart: string | null = null;
     let cycleEnd: string | null = null;
+    // 上期帳單（最近一張已結帳）：消費 + 已繳（繳款對應回它所清償的帳單）
+    let lastCycleStart: string | null = null;
+    let lastCycleEnd: string | null = null;
+    let lastCycleSpending: number | null = null;
+    let lastCyclePayment: number | null = null;
     if (closingDay != null) {
       const cycle = creditCardStatementCycle(closingDay, today);
       if (cycle) {
-        cycleStart = cycle.start;
-        cycleEnd = cycle.end;
         // 與讀取/餘額邏輯一致：original_amount 為 0 的舊資料回退用 amount。
         const amtExpr = 'CASE WHEN original_amount > 0 THEN original_amount ELSE amount END';
-        const spendRow = asRow<{ s: number | null }>(queryOne(
-          `SELECT COALESCE(SUM(${amtExpr}), 0) AS s FROM transactions WHERE user_id = ? AND account_id = ? AND type = 'expense' AND date >= ? AND date <= ?`,
-          [auth.userId, a.id, cycle.start, cycle.end]
+        const sumByType = (type: string, start: string, end: string): number => {
+          const row = asRow<{ s: number | null }>(queryOne(
+            `SELECT COALESCE(SUM(${amtExpr}), 0) AS s FROM transactions WHERE user_id = ? AND account_id = ? AND type = ? AND date >= ? AND date <= ?`,
+            [auth.userId, a.id, type, start, end]
+          ));
+          return Math.round((Number(row?.s) || 0) * 100) / 100;
+        };
+        cycleStart = cycle.start;
+        cycleEnd = cycle.end;
+        cycleSpending = sumByType('expense', cycle.start, cycle.end);
+
+        // 上一張已結帳帳單 = 以「本期起日的前一天」（即上一個結帳日）為基準推算
+        const prevBase = new Date(Date.UTC(
+          Number(cycle.start.slice(0, 4)), Number(cycle.start.slice(5, 7)) - 1, Number(cycle.start.slice(8, 10)) - 1
         ));
-        cycleSpending = Math.round((Number(spendRow?.s) || 0) * 100) / 100;
-        // 本期實際繳款 = 區間內轉入此卡的金額（信用卡還款／轉帳皆計）。
-        const payRow = asRow<{ s: number | null }>(queryOne(
-          `SELECT COALESCE(SUM(${amtExpr}), 0) AS s FROM transactions WHERE user_id = ? AND account_id = ? AND type = 'transfer_in' AND date >= ? AND date <= ?`,
-          [auth.userId, a.id, cycle.start, cycle.end]
-        ));
-        cyclePayment = Math.round((Number(payRow?.s) || 0) * 100) / 100;
+        const prevBaseStr = `${prevBase.getUTCFullYear()}-${String(prevBase.getUTCMonth() + 1).padStart(2, '0')}-${String(prevBase.getUTCDate()).padStart(2, '0')}`;
+        const last = creditCardStatementCycle(closingDay, prevBaseStr);
+        if (last) {
+          lastCycleStart = last.start;
+          lastCycleEnd = last.end;
+          lastCycleSpending = sumByType('expense', last.start, last.end);
+          // 上期帳單的已繳 = 其繳款窗口（結帳後的下一個區間，即本期區間）內轉入此卡的金額。
+          const pw = creditCardPaymentWindow(closingDay, last.end);
+          if (pw) lastCyclePayment = sumByType('transfer_in', pw.start, pw.end);
+        }
       }
     }
 
@@ -107,9 +124,12 @@ export async function GET(request: NextRequest) {
       overseasFeeRate: a.overseas_fee_rate ?? null,
       statementClosingDay: closingDay,
       cycleSpending,
-      cyclePayment,
       cycleStart,
       cycleEnd,
+      lastCycleStart,
+      lastCycleEnd,
+      lastCycleSpending,
+      lastCyclePayment,
       excludeFromTotal: a.exclude_from_total === 1,
       updatedAt: Number(a.updated_at) || 0,
     };

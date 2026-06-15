@@ -314,8 +314,16 @@ export default function AccountsClient() {
             )}
           </p>
         )}
-        {account.statementClosingDay != null && account.cyclePayment != null && (
-          <p className="text-sm font-medium text-emerald-600 mt-1">本期已繳：{fmt(account.cyclePayment, account.currency)}</p>
+        {account.statementClosingDay != null && account.lastCycleSpending != null && (
+          <p className="text-sm mt-1">
+            <span className="text-slate-500">上期帳單：</span>
+            <span className="font-medium text-rose-600">消費 {fmt(account.lastCycleSpending, account.currency)}</span>
+            <span className="text-slate-400"> / </span>
+            <span className="font-medium text-emerald-600">已繳 {fmt(account.lastCyclePayment ?? 0, account.currency)}</span>
+            {account.lastCycleStart && account.lastCycleEnd && (
+              <span className="text-xs font-normal text-slate-400 ml-1">（{mdLabel(account.lastCycleStart)}–{mdLabel(account.lastCycleEnd)}）</span>
+            )}
+          </p>
         )}
         {account.statementClosingDay != null && (
           <button type="button" onClick={() => openCycles(account)} className="text-xs text-blue-600 hover:underline mt-2">查看每期明細 ›</button>
@@ -481,6 +489,7 @@ export default function AccountsClient() {
               <Button variant="ghost" onClick={() => setCyclesOpen(false)}>關閉</Button>
             </div>
             <div className="overflow-auto p-5">
+              <p className="text-xs text-slate-400 mb-3">「繳款」已對應回它所清償的帳單（結帳後下一期繳清的金額算回該期帳單）。</p>
               {cyclesLoading && <p className="text-sm text-slate-500">載入中…</p>}
               {cyclesError && <p className="text-sm text-red-500">{cyclesError}</p>}
               {!cyclesLoading && !cyclesError && cyclesData && (

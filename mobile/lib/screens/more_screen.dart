@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'accounts_screen.dart';
 import 'budgets_screen.dart';
 import 'categories_screen.dart';
+import 'onboarding_screen.dart';
 import 'recurring_screen.dart';
 import 'reports_screen.dart';
 import 'settings_screen.dart';
@@ -34,6 +35,12 @@ class MoreScreen extends StatelessWidget {
               ).push(MaterialPageRoute(builder: (_) => page)),
             ),
           const Divider(),
+          ListTile(
+            leading: const Icon(Icons.help_outline),
+            title: const Text('使用教學'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => OnboardingScreen.show(context),
+          ),
           ListTile(
             leading: const Icon(Icons.settings_outlined),
             title: const Text('設定'),

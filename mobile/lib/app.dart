@@ -5,6 +5,7 @@ import 'api_client.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/more_screen.dart';
+import 'screens/onboarding_screen.dart';
 import 'screens/stocks_screen.dart';
 import 'screens/transactions_screen.dart';
 
@@ -113,6 +114,15 @@ class HomeShell extends StatefulWidget {
 
 class _HomeShellState extends State<HomeShell> {
   int _index = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    // 第一次進到主畫面時自動彈出使用教學（看過後不再出現）。
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) OnboardingScreen.showIfFirstTime(context);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {

@@ -15,6 +15,11 @@ on:
       - "v*"
   workflow_dispatch:
 
+# 最小權限：本流程只 checkout 程式碼，上傳 .aab／Play／S3 都走 secrets 而非
+# GITHUB_TOKEN，因此只需讀取 contents 即可。
+permissions:
+  contents: read
+
 jobs:
   build-apk:
     runs-on: ubuntu-latest

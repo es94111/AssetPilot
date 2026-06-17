@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'play_integrity.dart';
@@ -79,6 +80,19 @@ class ApiClient {
   // ── 低階請求 ────────────────────────────────────────────────
 
   Uri _uri(String path) => Uri.parse('$_baseUrl$path');
+
+  /// 供 Sentry Logs 使用的「安全路徑」：去掉 query string，避免把使用者搜尋
+  /// 關鍵字（`?keyword=…`）等可能機敏的查詢參數送進監控服務。路徑中的資源
+  /// ID 為不可逆的隨機字串、非個資，保留以利定位是哪個端點出錯。
+  String _logPath(String path) {
+    final q = path.indexOf('?');
+    return q == -1 ? path : path.substring(0, q);
+  }
+
+  /// 把後端回傳的統計欄位轉成筆數（同時容忍「數字」或「陣列」兩種形態），
+  /// 供 Sentry Logs 記錄同步結果用；只取數量、不含任何明細內容。
+  int _asCount(dynamic v) =>
+      v is num ? v.toInt() : (v is List ? v.length : 0);
 
   Map<String, String> _headers({bool json = false}) => {
     if (json) 'Content-Type': 'application/json',
@@ -157,14 +171,35 @@ class ApiClient {
         c.close();
       }
     } catch (e) {
+      // 連線層失敗（逾時、DNS、無網路…）。只記端點與例外型別，不帶 body/個資。
+      Sentry.logger.error(
+        'API 請求連線失敗',
+        attributes: {
+          'http.method': SentryAttribute.string(method),
+          'http.path': SentryAttribute.string(_logPath(path)),
+          'error.type': SentryAttribute.string(e.runtimeType.toString()),
+        },
+      );
       throw ApiException(0, '無法連線到後端（$_baseUrl）：$e');
     }
 
     if (res.statusCode == 401) {
       await _clearAuth();
+      Sentry.logger.info(
+        'API 回應 401，工作階段已過期並清除本機登入',
+        attributes: {'http.path': SentryAttribute.string(_logPath(path))},
+      );
       throw ApiException(401, '登入已過期，請重新登入');
     }
     if (res.statusCode < 200 || res.statusCode >= 300) {
+      Sentry.logger.warn(
+        'API 請求失敗',
+        attributes: {
+          'http.method': SentryAttribute.string(method),
+          'http.path': SentryAttribute.string(_logPath(path)),
+          'http.status_code': SentryAttribute.int(res.statusCode),
+        },
+      );
       throw ApiException(res.statusCode, _errorMessage(res));
     }
     if (res.bodyBytes.isEmpty) return null;
@@ -237,7 +272,24 @@ class ApiClient {
           )
           .timeout(_timeout);
     } catch (e) {
+      Sentry.logger.error(
+        '登入請求連線失敗',
+        attributes: {
+          'auth.method': SentryAttribute.string('password'),
+          'error.type': SentryAttribute.string(e.runtimeType.toString()),
+        },
+      );
       throw ApiException(0, '無法連線到後端（$_baseUrl）：$e');
+    }
+    // 只記登入結果與狀態碼，絕不記 email/密碼。
+    if (res.statusCode != 200) {
+      Sentry.logger.warn(
+        '登入失敗',
+        attributes: {
+          'auth.method': SentryAttribute.string('password'),
+          'http.status_code': SentryAttribute.int(res.statusCode),
+        },
+      );
     }
     switch (res.statusCode) {
       case 200:
@@ -246,6 +298,10 @@ class ApiClient {
           throw ApiException(200, '登入回應未包含認證 Cookie，請確認後端設定');
         }
         await _persistLogin();
+        Sentry.logger.info(
+          '登入成功',
+          attributes: {'auth.method': SentryAttribute.string('password')},
+        );
         return;
       case 401:
         throw ApiException(401, '電子郵件或密碼錯誤');
@@ -402,6 +458,7 @@ class ApiClient {
       await _send('POST', '/api/auth/logout');
     } catch (_) {}
     await _clearAuth();
+    Sentry.logger.info('使用者登出，已清除本機登入');
   }
 
   Future<Map<String, dynamic>> me() async {
@@ -621,11 +678,24 @@ class ApiClient {
 
   // 從 TWSE 依持有期間自動同步股利，回傳 { synced, skipped, errors }。
   // 後端會逐年查詢並含節流延遲，故放寬逾時。
-  Future<Map<String, dynamic>> syncStockDividends() => _getMapFromSend(
-    'POST',
-    '/api/stock-dividends/sync',
-    timeout: const Duration(seconds: 120),
-  );
+  Future<Map<String, dynamic>> syncStockDividends() async {
+    final r = await _getMapFromSend(
+      'POST',
+      '/api/stock-dividends/sync',
+      timeout: const Duration(seconds: 120),
+    );
+    // synced/skipped/errors 為筆數統計，非金額/個資；記錄以利觀察同步成效。
+    // 連線或非 2xx 失敗已由 _send 統一記錄，故此處只記成功結果。
+    Sentry.logger.info(
+      '股利同步完成',
+      attributes: {
+        'sync.synced': SentryAttribute.int(_asCount(r['synced'])),
+        'sync.skipped': SentryAttribute.int(_asCount(r['skipped'])),
+        'sync.errors': SentryAttribute.int(_asCount(r['errors'])),
+      },
+    );
+    return r;
+  }
 
   Future<List<dynamic>> stockRealized() => _getList('/api/stock-realized');
 

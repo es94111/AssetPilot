@@ -46,7 +46,8 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
 
   String _type = 'expense'; // expense / income / transfer
   DateTime _date = DateTime.now();
-  String? _categoryId;
+  String? _categoryId; // 實際存到後端的子分類 id
+  String? _parentCatId; // 兩段式選擇用：目前選到的父分類 id（不送後端）
   String? _accountId;
   String? _toAccountId;
   bool _saving = false;
@@ -149,10 +150,15 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
   List<Category> get _selectableCats =>
       _categories.where((c) => c.type == _type && !c.isParent).toList();
 
-  String _parentName(Category c) {
-    final p = _categories.where((x) => x.id == c.parentId);
-    return p.isEmpty ? c.name : '${p.first.name} › ${c.name}';
+  /// 有可選子分類的父分類清單（依目前收支類型過濾），保留原分類排序。
+  List<Category> get _selectableParents {
+    final parentIds = _selectableCats.map((c) => c.parentId).toSet();
+    return _categories.where((c) => parentIds.contains(c.id)).toList();
   }
+
+  /// 指定父分類底下、符合目前收支類型的子分類。
+  List<Category> _childCatsOf(String parentId) =>
+      _selectableCats.where((c) => c.parentId == parentId).toList();
 
   Future<void> _pickDate() async {
     final d = await showDatePicker(
@@ -428,9 +434,23 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
   }
 
   Widget _buildForm(BuildContext context) {
-    final cats = _selectableCats;
-    // 確保已選分類仍在清單內。
-    if (_categoryId != null && !cats.any((c) => c.id == _categoryId)) {
+    final parents = _selectableParents;
+    // 編輯既有交易時，由子分類回推其父分類，讓父分類下拉預選正確。
+    if (_categoryId != null && _parentCatId == null) {
+      final sel = _selectableCats.where((c) => c.id == _categoryId);
+      if (sel.isNotEmpty && parents.any((p) => p.id == sel.first.parentId)) {
+        _parentCatId = sel.first.parentId;
+      }
+    }
+    // 已選父分類不在清單內（例如切換收支類型後）→ 清掉父子選擇。
+    if (_parentCatId != null && !parents.any((p) => p.id == _parentCatId)) {
+      _parentCatId = null;
+      _categoryId = null;
+    }
+    final children =
+        _parentCatId == null ? <Category>[] : _childCatsOf(_parentCatId!);
+    // 已選子分類不在目前父分類底下 → 清掉。
+    if (_categoryId != null && !children.any((c) => c.id == _categoryId)) {
       _categoryId = null;
     }
     return Form(
@@ -454,6 +474,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
               selected: {_type},
               onSelectionChanged: (s) => setState(() {
                 _type = s.first;
+                _parentCatId = null;
                 _categoryId = null;
               }),
             ),
@@ -502,20 +523,44 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
               },
             ),
           ] else ...[
+            // 先選父分類。
             DropdownButtonFormField<String>(
-              initialValue: _categoryId,
+              initialValue: _parentCatId,
               isExpanded: true,
               decoration: const InputDecoration(
-                labelText: '分類',
+                labelText: '父分類',
                 prefixIcon: Icon(Icons.category_outlined),
                 border: OutlineInputBorder(),
               ),
               items: [
-                for (final c in cats)
-                  DropdownMenuItem(value: c.id, child: Text(_parentName(c))),
+                for (final p in parents)
+                  DropdownMenuItem(value: p.id, child: Text(p.name)),
               ],
-              onChanged: (v) => setState(() => _categoryId = v),
-              validator: (v) => v == null ? '請選擇分類' : null,
+              onChanged: (v) => setState(() {
+                _parentCatId = v;
+                _categoryId = null; // 換父分類時清掉已選子分類
+              }),
+              validator: (v) => v == null ? '請選擇父分類' : null,
+            ),
+            const SizedBox(height: 16),
+            // 再選該父分類底下的子分類（未選父分類前停用）。
+            DropdownButtonFormField<String>(
+              initialValue: _categoryId,
+              isExpanded: true,
+              decoration: InputDecoration(
+                labelText: '子分類',
+                prefixIcon: const Icon(Icons.subdirectory_arrow_right),
+                border: const OutlineInputBorder(),
+                hintText: _parentCatId == null ? '請先選擇父分類' : null,
+              ),
+              items: [
+                for (final c in children)
+                  DropdownMenuItem(value: c.id, child: Text(c.name)),
+              ],
+              onChanged: _parentCatId == null
+                  ? null
+                  : (v) => setState(() => _categoryId = v),
+              validator: (v) => v == null ? '請選擇子分類' : null,
             ),
             const SizedBox(height: 16),
             _accountDropdown(

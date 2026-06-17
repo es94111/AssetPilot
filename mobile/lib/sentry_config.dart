@@ -34,11 +34,12 @@ void configureSentry(SentryFlutterOptions options) {
   //   - 正式版（release）：平時完全不錄一般 session，只有發生錯誤/當機時才回溯
   //     錄一段（onErrorSampleRate=1.0），把畫面錄製的隱私衝擊降到最低。
   //   - 開發版（debug）：全程錄製，方便驗證設定。
-  // 並全程保持「遮罩所有文字與圖片」的預設，避免金額、帳號、憑證照片等外洩。
+  // 遮罩：sentry_flutter 9.x 預設即「遮罩所有文字與圖片」（Text/EditableText/
+  // RichText/Image 全打碼），正是本 App 要的行為，故不另外設定——
+  // 注意 8.x 的 `options.replay.maskAllText/maskAllImages` 在 9.x 已移除，
+  // 若要調整改用 `options.privacy.*`（預設已全遮罩，這裡毋須動）。
   options.replay.sessionSampleRate = kReleaseMode ? 0.0 : 1.0;
   options.replay.onErrorSampleRate = 1.0;
-  options.replay.maskAllText = true;
-  options.replay.maskAllImages = true;
 
   // 送出前再保險清掉可能挾帶的機敏標頭（JWT Cookie、Authorization）。
   options.beforeSend = _scrubSensitiveData;

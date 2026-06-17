@@ -138,10 +138,16 @@ jobs:
       # release key (key.properties written above) when the keystore secret is
       # present, otherwise the debug key. Uploaded as a workflow artifact for
       # manual upload to Play, and also published to S3 (versioned + latest).
+      # 只打包 ARM ABI（arm64-v8a / armeabi-v7a）。所有真實 Android 裝置都是 ARM；
+      # x86_64 只會被 Google Play 審查/Pre-Launch 的 x86_64 模擬器抓去，而 Sentry
+      # 原生層（NDK 崩潰處理 / Session Replay 的 MediaCodec 編碼）在那類模擬器上會
+      # SIGABRT（見 Sentry issue ASSETPILOT-APP-1）。排除 x86_64 後審查改用 ARM
+      # 模擬器即不再誤報，AAB 體積也更小，對真實使用者零影響。
       - name: Build release App Bundle (AAB)
         working-directory: mobile
         run: >-
           flutter build appbundle --release
+          --target-platform android-arm,android-arm64
           --build-name=${{ steps.version.outputs.version }}
           --build-number=${{ github.run_number }}
 

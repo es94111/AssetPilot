@@ -13,7 +13,8 @@ Future<void> main() async {
     appRunner: () async {
       await ApiClient.instance.init();
       await loadThemeMode();
-      runApp(const AssetPilotApp());
+      // SentryWidget 是 Session Replay 擷取畫面所需的根節點包裝。
+      runApp(SentryWidget(child: const AssetPilotApp()));
     },
   );
 }

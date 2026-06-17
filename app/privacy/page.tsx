@@ -78,6 +78,7 @@ export default function PrivacyPage() {
           <ul className="mb-3 list-disc space-y-1.5 pl-5 text-sm/7 text-slate-600 dark:text-slate-300">
             <li>登入紀錄（時間、來源 IP、裝置類型）：用於安全稽核，可於帳號設定中查閱</li>
             <li>API 請求錯誤日誌（不含個人財務內容）</li>
+            <li>當機與診斷資料（僅行動版）：當應用程式發生錯誤或當機時，透過 Sentry 收集當機堆疊、應用程式版本、作業系統版本與裝置型號等診斷資訊，用於診斷與修復問題；不含您的財務內容，亦不含廣告識別碼。詳見第 7 節</li>
           </ul>
           <div className="my-4 flex gap-3 rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm/7 text-indigo-800 dark:border-indigo-900 dark:bg-indigo-950/40 dark:text-indigo-300"><i className="fas fa-info-circle mt-0.5 shrink-0" /><span>本服務不收集廣告識別碼、行為追蹤資料或任何與財務管理無關的個人資料。</span></div>
         </section>
@@ -123,6 +124,7 @@ export default function PrivacyPage() {
             <li><strong>第三方 API 查詢</strong>：查詢股價時會向 TWSE 發送股票代號查詢請求（不含個人資訊）；匯率同步時向 exchangerate-api.com 查詢匯率（不含個人資訊）</li>
             <li><strong>登入地理位置查詢</strong>：產生登入稽核紀錄時，會將登入來源 IP 傳送至 IPinfo 查詢所屬國家／地區，用於顯示登入位置（不含任何財務資料）</li>
             <li><strong>服務營運所需的處理者</strong>：官方服務可能委由下列服務提供者協助營運——透過 SMTP（Nodemailer）、Zeabur Email 或 Resend 等郵件通道寄送您要求或訂閱的報表通知；以及將資料庫整檔備份上傳至 MEGA S4 物件儲存（加密保存）。這些提供者僅依本服務指示處理資料，不會將資料用於自身目的</li>
+            <li><strong>當機／診斷監控（僅行動版）</strong>：行動應用程式透過 Sentry 收集當機與診斷資料以維護服務穩定性；該資料不含財務內容與個人識別資訊，Sentry 僅依本服務指示處理。詳見第 7 節</li>
           </ul>
         </section>
 
@@ -155,6 +157,7 @@ export default function PrivacyPage() {
             <li><strong>郵件寄送通道（SMTP / Nodemailer、Zeabur Email、Resend）</strong>：寄送資產統計報表等通知郵件時使用（依官方服務設定擇一）。</li>
             <li><strong>MEGA S4 物件儲存（選配）</strong>：官方服務的資料庫整檔備份目的地。</li>
             <li><strong>Google Play Integrity API（僅行動版）</strong>：驗證 Android 應用程式與裝置的完整性，用於防範濫用與保護帳號安全；不會收集財務資料。</li>
+            <li><strong>Sentry（僅行動版）</strong>：應用程式當機與效能診斷監控。當發生錯誤時收集當機堆疊、應用程式與作業系統版本、裝置型號等診斷資訊，協助我們修復問題；已設定為不傳送個人識別資訊（PII）與財務內容。</li>
             <li><strong>Google Fonts</strong>：載入字型資源。</li>
             <li><strong>Font Awesome CDN</strong>：載入圖示資源，使用 SRI 驗證確保檔案完整性。</li>
             <li><strong>Chart.js CDN</strong>：載入圖表函式庫，使用 SRI 驗證確保檔案完整性。</li>
@@ -201,7 +204,7 @@ export default function PrivacyPage() {
         </section>
 
         <div className="mt-8 border-t border-slate-200 pt-6 text-center text-xs text-slate-400 dark:border-slate-800">
-          <p>最後更新日期：2026 年 6 月 11 日</p>
+          <p>最後更新日期：2026 年 6 月 17 日</p>
           <div className="mt-2.5 flex flex-wrap justify-center gap-5">
             <a href="/terms" className="text-indigo-600 dark:text-indigo-400"><i className="fas fa-file-contract" /> 服務條款</a>
             <a href="/api-credits" className="text-indigo-600 dark:text-indigo-400"><i className="fas fa-plug" /> API 使用與授權</a>

@@ -56,6 +56,9 @@ dependencies:
   flutter_secure_storage: ^9.2.2
   # 讀取 App 自身版本（versionName/Code），用於「版本資訊」頁判斷是否有新版
   package_info_plus: ^8.3.1
+  # 錯誤／崩潰監控（Sentry）。release/dist 由 package_info 自動帶入；
+  # DSN 與過濾設定見 lib/sentry_config.dart。
+  sentry_flutter: ^9.22.0
 
 dev_dependencies:
   flutter_test:

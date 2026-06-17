@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'accounts_screen.dart';
@@ -51,6 +52,15 @@ class MoreScreen extends StatelessWidget {
               ),
             ),
           ),
+          // 僅在 debug build 顯示：故意丟出例外以驗證 Sentry 是否正常收件。
+          // 正式（release）版不會出現這一項，使用者看不到。
+          if (kDebugMode)
+            ListTile(
+              leading: const Icon(Icons.bug_report_outlined),
+              title: const Text('驗證 Sentry 設定（測試用）'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => throw StateError('This is test exception'),
+            ),
         ],
       ),
     );

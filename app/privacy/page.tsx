@@ -78,7 +78,7 @@ export default function PrivacyPage() {
           <ul className="mb-3 list-disc space-y-1.5 pl-5 text-sm/7 text-slate-600 dark:text-slate-300">
             <li>登入紀錄（時間、來源 IP、裝置類型）：用於安全稽核，可於帳號設定中查閱</li>
             <li>API 請求錯誤日誌（不含個人財務內容）</li>
-            <li>當機與診斷資料（僅行動版）：當應用程式發生錯誤或當機時，透過 Sentry 收集當機堆疊、應用程式版本、作業系統版本與裝置型號等診斷資訊，用於診斷與修復問題；不含您的財務內容，亦不含廣告識別碼。詳見第 7 節</li>
+            <li>當機與診斷資料（僅行動版）：當應用程式發生錯誤或當機時，透過 Sentry 收集當機堆疊、應用程式版本、作業系統版本與裝置型號等診斷資訊，用於診斷與修復問題；不含您的財務內容，亦不含廣告識別碼。此外，發生錯誤或當機時可能擷取一小段「畫面回溯」協助我們重現問題，畫面中所有文字與圖片均已自動遮罩（含金額、帳號與憑證照片），正式版平時不會錄製、僅在出錯當下才擷取。詳見第 7 節</li>
           </ul>
           <div className="my-4 flex gap-3 rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm/7 text-indigo-800 dark:border-indigo-900 dark:bg-indigo-950/40 dark:text-indigo-300"><i className="fas fa-info-circle mt-0.5 shrink-0" /><span>本服務不收集廣告識別碼、行為追蹤資料或任何與財務管理無關的個人資料。</span></div>
         </section>
@@ -157,7 +157,7 @@ export default function PrivacyPage() {
             <li><strong>郵件寄送通道（SMTP / Nodemailer、Zeabur Email、Resend）</strong>：寄送資產統計報表等通知郵件時使用（依官方服務設定擇一）。</li>
             <li><strong>MEGA S4 物件儲存（選配）</strong>：官方服務的資料庫整檔備份目的地。</li>
             <li><strong>Google Play Integrity API（僅行動版）</strong>：驗證 Android 應用程式與裝置的完整性，用於防範濫用與保護帳號安全；不會收集財務資料。</li>
-            <li><strong>Sentry（僅行動版）</strong>：應用程式當機與效能診斷監控。當發生錯誤時收集當機堆疊、應用程式與作業系統版本、裝置型號等診斷資訊，協助我們修復問題；已設定為不傳送個人識別資訊（PII）與財務內容。</li>
+            <li><strong>Sentry（僅行動版）</strong>：應用程式當機與效能診斷監控。當發生錯誤時收集當機堆疊、應用程式與作業系統版本、裝置型號等診斷資訊，協助我們修復問題；已設定為不傳送個人識別資訊（PII）與財務內容。發生錯誤時亦可能擷取一小段已遮罩（所有文字與圖片皆打碼、不含可辨識內容）的畫面回溯以協助重現問題，正式版平時不會錄製、僅在出錯當下才擷取。</li>
             <li><strong>Google Fonts</strong>：載入字型資源。</li>
             <li><strong>Font Awesome CDN</strong>：載入圖示資源，使用 SRI 驗證確保檔案完整性。</li>
             <li><strong>Chart.js CDN</strong>：載入圖表函式庫，使用 SRI 驗證確保檔案完整性。</li>

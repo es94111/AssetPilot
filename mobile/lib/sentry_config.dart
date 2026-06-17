@@ -23,6 +23,23 @@ void configureSentry(SentryFlutterOptions options) {
   options.tracesSampleRate = 0.2;
   // 財務 App：絕不附帶可識別個資（IP、Cookie、預設 request body 等）。
   options.sendDefaultPii = false;
+  // 啟用結構化日誌（Sentry Logs），可用 `Sentry.logger` 送出 info/warn/error 等級日誌。
+  // 注意：寫 log 時不要帶入金額、Cookie、JWT 等機敏內容。
+  options.enableLogs = true;
+  // 指標（Sentry Metrics）於 SDK >= 9.11.0 預設自動啟用，無需額外設定旗標；
+  // 直接以 `Sentry.metrics.count/gauge/distribution(...)` 發送即可。
+  // 同樣注意：指標名稱與標籤勿帶入金額、個資等機敏內容。
+
+  // Session Replay（畫面回溯錄製）。本 App 為財務性質，採最保守策略：
+  //   - 正式版（release）：平時完全不錄一般 session，只有發生錯誤/當機時才回溯
+  //     錄一段（onErrorSampleRate=1.0），把畫面錄製的隱私衝擊降到最低。
+  //   - 開發版（debug）：全程錄製，方便驗證設定。
+  // 並全程保持「遮罩所有文字與圖片」的預設，避免金額、帳號、憑證照片等外洩。
+  options.replay.sessionSampleRate = kReleaseMode ? 0.0 : 1.0;
+  options.replay.onErrorSampleRate = 1.0;
+  options.replay.maskAllText = true;
+  options.replay.maskAllImages = true;
+
   // 送出前再保險清掉可能挾帶的機敏標頭（JWT Cookie、Authorization）。
   options.beforeSend = _scrubSensitiveData;
 }

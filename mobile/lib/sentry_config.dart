@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 
 /// assetpilot-app 專案的 Sentry DSN。
@@ -34,12 +35,24 @@ void configureSentry(SentryFlutterOptions options) {
   //   - 正式版（release）：平時完全不錄一般 session，只有發生錯誤/當機時才回溯
   //     錄一段（onErrorSampleRate=1.0），把畫面錄製的隱私衝擊降到最低。
   //   - 開發版（debug）：全程錄製，方便驗證設定。
-  // 遮罩：sentry_flutter 9.x 預設即「遮罩所有文字與圖片」（Text/EditableText/
-  // RichText/Image 全打碼），正是本 App 要的行為，故不另外設定——
-  // 注意 8.x 的 `options.replay.maskAllText/maskAllImages` 在 9.x 已移除，
-  // 若要調整改用 `options.privacy.*`（預設已全遮罩，這裡毋須動）。
   options.replay.sessionSampleRate = kReleaseMode ? 0.0 : 1.0;
   options.replay.onErrorSampleRate = 1.0;
+
+  // 遮罩策略：使用者的內容一律打碼，App 自身的介面圖案保留可見以便辨識畫面。
+  //   - maskAllText：所有文字（含金額、帳號、Email）全程打碼。
+  //   - maskAllImages：使用者內容圖片（交易憑證照片，以 Image.network /
+  //     Image.file 載入）全程打碼。
+  //   - maskAssetImages=false：App 打包在程式內的 asset 圖片（品牌 logo、插圖等）
+  //     非使用者資料，不打碼（此為套件預設，這裡明確標示意圖）。
+  //   - unmask<Icon>()：Flutter 的 Icon 內部以 RichText 渲染，會被 maskAllText
+  //     的 RichText 規則一併打碼，導致 App 自己的圖示（錢包、導覽列等）在回溯中
+  //     被黑掉。這裡明確解除遮罩讓 App 圖示可見；Icon 為固定字型字符、不含任何
+  //     使用者或財務資料，解除遮罩無隱私風險。
+  //   （本專案 release 未開 --obfuscate，型別名稱保留，泛型遮罩規則可靠生效。）
+  options.privacy.maskAllText = true;
+  options.privacy.maskAllImages = true;
+  options.privacy.maskAssetImages = false;
+  options.privacy.unmask<Icon>();
 
   // 送出前再保險清掉可能挾帶的機敏標頭（JWT Cookie、Authorization）。
   options.beforeSend = _scrubSensitiveData;

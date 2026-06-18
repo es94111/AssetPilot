@@ -55,8 +55,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
       );
       if (mounted) Navigator.of(context).pop(true);
     } on ApiException catch (e) {
+      if (!mounted) return; // await 期間畫面可能已被 dispose，避免 setState 崩潰
       setState(() => _error = e.message);
     } catch (e) {
+      if (!mounted) return;
       setState(() => _error = '發生未預期的錯誤：$e');
     } finally {
       if (mounted) setState(() => _loading = false);

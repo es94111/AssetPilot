@@ -114,9 +114,11 @@ class _LoginScreenState extends State<LoginScreen> {
       );
       if (mounted) widget.onLoggedIn();
     } on ApiException catch (e) {
+      if (!mounted) return; // await 期間畫面可能已被 dispose，避免 setState 崩潰
       setState(() => _error = e.message);
       if (_turnstileEnabled) _resetTurnstile(); // token 單次使用，失敗後重取
     } catch (e) {
+      if (!mounted) return;
       setState(() => _error = '發生未預期的錯誤：$e');
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -143,8 +145,10 @@ class _LoginScreenState extends State<LoginScreen> {
       );
       if (mounted) widget.onLoggedIn();
     } on ApiException catch (e) {
+      if (!mounted) return; // await 期間畫面可能已被 dispose，避免 setState 崩潰
       setState(() => _error = e.message);
     } catch (e) {
+      if (!mounted) return;
       setState(() => _error = 'Google 登入失敗：$e');
     } finally {
       if (mounted) setState(() => _googleLoading = false);
@@ -164,8 +168,10 @@ class _LoginScreenState extends State<LoginScreen> {
       );
       if (mounted) widget.onLoggedIn();
     } on ApiException catch (e) {
+      if (!mounted) return; // await 期間畫面可能已被 dispose，避免 setState 崩潰
       setState(() => _error = e.message);
     } catch (e) {
+      if (!mounted) return;
       setState(() => _error = 'LINE 登入失敗：$e');
     } finally {
       if (mounted) setState(() => _lineLoading = false);
@@ -181,8 +187,10 @@ class _LoginScreenState extends State<LoginScreen> {
       await PasskeyAuth.signIn(baseUrl: ApiClient.instance.baseUrl);
       if (mounted) widget.onLoggedIn();
     } on ApiException catch (e) {
+      if (!mounted) return; // await 期間畫面可能已被 dispose，避免 setState 崩潰
       setState(() => _error = e.message);
     } catch (e) {
+      if (!mounted) return;
       setState(() => _error = 'Passkey 登入失敗：$e');
     } finally {
       if (mounted) setState(() => _passkeyLoading = false);

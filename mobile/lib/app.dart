@@ -58,6 +58,16 @@ class AssetPilotApp extends StatelessWidget {
           useMaterial3: true,
         ),
         home: const AuthGate(),
+        // 系統或深層連結可能推送 App 未註冊的路由（例如背景啟動時 OS 傳來的
+        // route information）。本 App 採純 home 導覽、未設定具名路由，若不提供
+        // onUnknownRoute，Flutter 框架在 release 模式（assert 被移除）會對
+        // widget.onUnknownRoute 做 null check 而崩潰
+        // （ASSETPILOT-APP-2: Null check operator used on a null value）。
+        // 這裡統一導回主畫面，安全忽略未知路由。
+        onUnknownRoute: (settings) => MaterialPageRoute(
+          builder: (_) => const AuthGate(),
+          settings: const RouteSettings(name: '/'),
+        ),
       ),
     );
   }

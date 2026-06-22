@@ -143,7 +143,12 @@ class ApiClient {
       final uri = _uri(path);
       final headers = _headers(json: hasBody);
       final encoded = hasBody ? jsonEncode(body) : null;
-      final c = http.Client();
+      // 以 SentryHttpClient 包裝，讓每個 API 請求自動產生效能 span 與麵包屑
+      // （方法／路徑／狀態碼／耗時），用於監控 API 延遲造成的效能下降；
+      // 伺服器 5xx 亦會被擷取為 Sentry 事件。請求帶的 query string 由 sentry_config
+      // 的 hook 於送出前清除，避免外洩搜尋關鍵字；認證 Cookie 因 sendDefaultPii=false
+      // 不會被記錄。
+      final c = SentryHttpClient(client: http.Client());
       try {
         switch (method) {
           case 'GET':

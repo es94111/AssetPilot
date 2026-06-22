@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'api_client.dart';
@@ -46,6 +47,9 @@ class AssetPilotApp extends StatelessWidget {
         title: 'AssetPilot',
         debugShowCheckedModeBanner: false,
         themeMode: mode,
+        // 監控畫面切換的效能：為每次導覽建立 Sentry 交易，量測畫面顯示耗時與
+        // 卡頓／凍結畫格（slow/frozen frames），用於發現效能下降。
+        navigatorObservers: [SentryNavigatorObserver()],
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(seedColor: seed),
           useMaterial3: true,

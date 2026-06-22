@@ -4,6 +4,7 @@ import 'package:app_links/app_links.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'api_client.dart';
+import 'l10n.dart';
 
 class LineAuth {
   static const callbackPath = '/app/line-callback';
@@ -19,7 +20,7 @@ class LineAuth {
     final state = stateData['state'] ?? '';
     final nonce = stateData['nonce'] ?? '';
     if (state.isEmpty || nonce.isEmpty) {
-      throw ApiException(0, '無法建立 LINE 登入狀態');
+      throw ApiException(0, tr('無法建立 LINE 登入狀態'));
     }
 
     // 不帶 disable_auto_login（預設 false）→ 啟用 LINE auto-login：裝置上已登入
@@ -60,7 +61,7 @@ class LineAuth {
         authUrl,
         mode: LaunchMode.inAppBrowserView,
       );
-      if (!launched) throw ApiException(0, '無法開啟瀏覽器進行 LINE 登入');
+      if (!launched) throw ApiException(0, tr('無法開啟瀏覽器進行 LINE 登入'));
 
       // 僅在 initial link 與啟動前不同（真正的冷啟動回呼）時才採用，
       // 避免把上一次登入殘留的舊回呼當成本次結果。
@@ -72,13 +73,13 @@ class LineAuth {
 
       final Uri cb;
       try {
-        cb = await completer.future.timeout(const Duration(minutes: 5));
+        cb = await completer.future.timeout(Duration(minutes: 5));
       } on TimeoutException {
-        throw ApiException(0, 'LINE 登入逾時或已取消');
+        throw ApiException(0, tr('LINE 登入逾時或已取消'));
       }
 
       final returnedState = cb.queryParameters['state'] ?? '';
-      if (returnedState != state) throw ApiException(0, 'LINE 登入狀態不符，請重試');
+      if (returnedState != state) throw ApiException(0, tr('LINE 登入狀態不符，請重試'));
       await ApiClient.instance.lineLogin(
         code: cb.queryParameters['code']!,
         redirectUri: redirectUri,

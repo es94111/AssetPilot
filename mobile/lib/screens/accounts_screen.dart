@@ -4,12 +4,13 @@ import '../api_client.dart';
 import '../format.dart';
 import '../models.dart';
 import '../widgets.dart';
+import '../l10n.dart';
 
-const _accountCategories = {
-  'bank': '銀行',
-  'credit_card': '信用卡',
-  'cash': '現金',
-  'virtual_wallet': '電子錢包',
+Map<String, String> get _accountCategories => {
+  'bank': tr('銀行'),
+  'credit_card': tr('信用卡'),
+  'cash': tr('現金'),
+  'virtual_wallet': tr('電子錢包'),
 };
 
 const _currencies = ['TWD', 'USD', 'JPY', 'EUR', 'CNY', 'HKD', 'GBP', 'AUD'];
@@ -46,7 +47,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
     final cards = accounts.where((a) => a.category == 'credit_card').toList();
     final payers = accounts.where((a) => a.category != 'credit_card').toList();
     if (cards.isEmpty || payers.isEmpty) {
-      toast(context, '需至少一張信用卡與一個非信用卡帳戶才能還款');
+      toast(context, tr('需至少一張信用卡與一個非信用卡帳戶才能還款'));
       return;
     }
     final changed = await showModalBottomSheet<bool>(
@@ -55,7 +56,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
       builder: (_) => _RepaymentSheet(cards: cards, payers: payers),
     );
     if (changed == true) {
-      if (mounted) toast(context, '還款已記錄');
+      if (mounted) toast(context, tr('還款已記錄'));
       _reload();
     }
   }
@@ -73,16 +74,21 @@ class _AccountsScreenState extends State<AccountsScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('刪除帳戶'),
-        content: Text('確定刪除「${a.name}」？相關交易可能一併受影響。'),
+        title: Text(tr('刪除帳戶')),
+        content: Text(
+          trPair(
+            '確定刪除「${a.name}」？相關交易可能一併受影響。',
+            'Delete “${a.name}”? Related transactions may also be affected.',
+          ),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('取消'),
+            child: Text(tr('取消')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('刪除'),
+            child: Text(tr('刪除')),
           ),
         ],
       ),
@@ -90,7 +96,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
     if (ok != true) return;
     try {
       await ApiClient.instance.deleteAccount(a.id);
-      if (mounted) toast(context, '已刪除');
+      if (mounted) toast(context, tr('已刪除'));
       _reload();
     } catch (e) {
       if (mounted) toast(context, '$e');
@@ -101,11 +107,11 @@ class _AccountsScreenState extends State<AccountsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('帳戶'),
+        title: Text(tr('帳戶')),
         actions: [
           IconButton(
-            tooltip: '信用卡還款',
-            icon: const Icon(Icons.credit_score_outlined),
+            tooltip: tr('信用卡還款'),
+            icon: Icon(Icons.credit_score_outlined),
             onPressed: _lastAccounts == null
                 ? null
                 : () => _openRepayment(_lastAccounts!),
@@ -114,8 +120,8 @@ class _AccountsScreenState extends State<AccountsScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openForm(),
-        icon: const Icon(Icons.add),
-        label: const Text('新增帳戶'),
+        icon: Icon(Icons.add),
+        label: Text(tr('新增帳戶')),
       ),
       body: AsyncView<List<Account>>(
         future: _future,
@@ -123,9 +129,9 @@ class _AccountsScreenState extends State<AccountsScreen> {
         builder: (context, list) {
           _lastAccounts = list;
           if (list.isEmpty) {
-            return const EmptyState(
+            return EmptyState(
               icon: Icons.account_balance_wallet,
-              message: '尚無帳戶',
+              message: tr('尚無帳戶'),
             );
           }
           final total = list
@@ -146,14 +152,14 @@ class _AccountsScreenState extends State<AccountsScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '總資產（換算 TWD）',
+                          tr('總資產（換算 TWD）'),
                           style: TextStyle(
                             color: Theme.of(
                               context,
                             ).colorScheme.onPrimaryContainer,
                           ),
                         ),
-                        const SizedBox(height: 6),
+                        SizedBox(height: 6),
                         Text(
                           twd(total),
                           style: TextStyle(
@@ -172,7 +178,8 @@ class _AccountsScreenState extends State<AccountsScreen> {
                   ListTile(
                     leading: CircleAvatar(child: Icon(_iconFor(a.category))),
                     isThreeLine:
-                        a.statementClosingDay != null && a.cycleSpending != null,
+                        a.statementClosingDay != null &&
+                        a.cycleSpending != null,
                     title: Text(a.name),
                     subtitle: _accountSubtitle(context, a),
                     trailing: Row(
@@ -187,8 +194,8 @@ class _AccountsScreenState extends State<AccountsScreen> {
                         ),
                         if (a.statementClosingDay != null)
                           IconButton(
-                            tooltip: '每期帳單明細',
-                            icon: const Icon(Icons.receipt_long_outlined),
+                            tooltip: tr('每期帳單明細'),
+                            icon: Icon(Icons.receipt_long_outlined),
                             onPressed: () => _openCycles(a),
                           ),
                       ],
@@ -208,7 +215,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
   Widget _accountSubtitle(BuildContext context, Account a) {
     final base =
         '${_accountCategories[a.category] ?? a.category}'
-        '${a.excludeFromTotal ? '・不計入總資產' : ''}';
+        '${a.excludeFromTotal ? trPair('・不計入總資產', ' · Excluded from total assets') : ''}';
     if (a.statementClosingDay == null || a.cycleSpending == null) {
       return Text(base);
     }
@@ -219,9 +226,12 @@ class _AccountsScreenState extends State<AccountsScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(base),
-        const SizedBox(height: 2),
+        SizedBox(height: 2),
         Text(
-          '本期消費 ${money(a.cycleSpending!, a.currency)}$range',
+          trPair(
+            '本期消費 ${money(a.cycleSpending!, a.currency)}$range',
+            'Current spending ${money(a.cycleSpending!, a.currency)}$range',
+          ),
           style: TextStyle(
             color: Theme.of(context).colorScheme.error,
             fontWeight: FontWeight.w500,
@@ -231,19 +241,25 @@ class _AccountsScreenState extends State<AccountsScreen> {
           Text.rich(
             TextSpan(
               children: [
-                const TextSpan(text: '上期帳單 '),
+                TextSpan(text: tr('上期帳單 ')),
                 TextSpan(
-                  text: '消費 ${money(a.lastCycleSpending!, a.currency)}',
+                  text: trPair(
+                    '消費 ${money(a.lastCycleSpending!, a.currency)}',
+                    'Spent ${money(a.lastCycleSpending!, a.currency)}',
+                  ),
                   style: TextStyle(color: Theme.of(context).colorScheme.error),
                 ),
-                const TextSpan(text: ' / '),
+                TextSpan(text: ' / '),
                 TextSpan(
-                  text: '已繳 ${money(a.lastCyclePayment ?? 0, a.currency)}',
-                  style: const TextStyle(color: Color(0xFF2E7D32)),
+                  text: trPair(
+                    '已繳 ${money(a.lastCyclePayment ?? 0, a.currency)}',
+                    'Paid ${money(a.lastCyclePayment ?? 0, a.currency)}',
+                  ),
+                  style: TextStyle(color: Color(0xFF2E7D32)),
                 ),
               ],
             ),
-            style: const TextStyle(fontWeight: FontWeight.w500),
+            style: TextStyle(fontWeight: FontWeight.w500),
           ),
       ],
     );
@@ -365,24 +381,24 @@ class _AccountFormState extends State<_AccountForm> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              _isEdit ? '編輯帳戶' : '新增帳戶',
+              _isEdit ? tr('編輯帳戶') : tr('新增帳戶'),
               style: Theme.of(context).textTheme.titleLarge,
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             TextFormField(
               controller: _name,
-              decoration: const InputDecoration(
-                labelText: '帳戶名稱',
+              decoration: InputDecoration(
+                labelText: tr('帳戶名稱'),
                 border: OutlineInputBorder(),
               ),
               validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? '請輸入名稱' : null,
+                  (v == null || v.trim().isEmpty) ? tr('請輸入名稱') : null,
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             DropdownButtonFormField<String>(
               initialValue: _category,
-              decoration: const InputDecoration(
-                labelText: '類型',
+              decoration: InputDecoration(
+                labelText: tr('類型'),
                 border: OutlineInputBorder(),
               ),
               items: [
@@ -391,14 +407,14 @@ class _AccountFormState extends State<_AccountForm> {
               ],
               onChanged: (v) => setState(() => _category = v!),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             Row(
               children: [
                 Expanded(
                   child: DropdownButtonFormField<String>(
                     initialValue: _currency,
-                    decoration: const InputDecoration(
-                      labelText: '幣別',
+                    decoration: InputDecoration(
+                      labelText: tr('幣別'),
                       border: OutlineInputBorder(),
                     ),
                     items: [
@@ -408,7 +424,7 @@ class _AccountFormState extends State<_AccountForm> {
                     onChanged: (v) => setState(() => _currency = v!),
                   ),
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: 12),
                 Expanded(
                   child: TextFormField(
                     controller: _initial,
@@ -417,8 +433,8 @@ class _AccountFormState extends State<_AccountForm> {
                       decimal: true,
                       signed: true,
                     ),
-                    decoration: const InputDecoration(
-                      labelText: '初始餘額',
+                    decoration: InputDecoration(
+                      labelText: tr('初始餘額'),
                       border: OutlineInputBorder(),
                     ),
                   ),
@@ -426,55 +442,55 @@ class _AccountFormState extends State<_AccountForm> {
               ],
             ),
             if (_category == 'credit_card') ...[
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               TextFormField(
                 controller: _overseasFeeRate,
                 keyboardType: const TextInputType.numberWithOptions(
                   decimal: true,
                 ),
-                decoration: const InputDecoration(
-                  labelText: '海外手續費率（%）',
-                  helperText: '例：1.5 代表 1.5%，外幣刷卡時自動計算手續費',
+                decoration: InputDecoration(
+                  labelText: tr('海外手續費率（%）'),
+                  helperText: tr('例：1.5 代表 1.5%，外幣刷卡時自動計算手續費'),
                   border: OutlineInputBorder(),
                 ),
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               TextFormField(
                 controller: _closingDay,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: '結帳日（每月幾號，1~31）',
-                  helperText: '設定後帳戶卡片會顯示本期帳單消費，留空則不統計',
+                decoration: InputDecoration(
+                  labelText: tr('結帳日（每月幾號，1~31）'),
+                  helperText: tr('設定後帳戶卡片會顯示本期帳單消費，留空則不統計'),
                   border: OutlineInputBorder(),
                 ),
                 validator: (v) {
                   final s = v?.trim() ?? '';
                   if (s.isEmpty) return null;
                   final n = int.tryParse(s);
-                  if (n == null || n < 1 || n > 31) return '請輸入 1~31';
+                  if (n == null || n < 1 || n > 31) return tr('請輸入 1~31');
                   return null;
                 },
               ),
             ],
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text('不計入總資產'),
+              title: Text(tr('不計入總資產')),
               value: _exclude,
               onChanged: (v) => setState(() => _exclude = v),
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
             FilledButton(
               onPressed: _saving ? null : _save,
               style: FilledButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 14),
               ),
               child: _saving
-                  ? const SizedBox(
+                  ? SizedBox(
                       height: 20,
                       width: 20,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : const Text('儲存'),
+                  : Text(tr('儲存')),
             ),
           ],
         ),
@@ -520,7 +536,7 @@ class _RepaymentSheetState extends State<_RepaymentSheet> {
       if (amt > 0) repayments.add({'cardId': entry.key, 'amount': amt});
     }
     if (repayments.isEmpty) {
-      toast(context, '請至少填一張卡的還款金額');
+      toast(context, tr('請至少填一張卡的還款金額'));
       return;
     }
     setState(() => _saving = true);
@@ -549,13 +565,13 @@ class _RepaymentSheetState extends State<_RepaymentSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('信用卡還款', style: Theme.of(context).textTheme.titleLarge),
-            const SizedBox(height: 16),
+            Text(tr('信用卡還款'), style: Theme.of(context).textTheme.titleLarge),
+            SizedBox(height: 16),
             DropdownButtonFormField<String>(
               initialValue: _fromAccountId,
               isExpanded: true,
-              decoration: const InputDecoration(
-                labelText: '付款帳戶',
+              decoration: InputDecoration(
+                labelText: tr('付款帳戶'),
                 border: OutlineInputBorder(),
               ),
               items: [
@@ -569,14 +585,14 @@ class _RepaymentSheetState extends State<_RepaymentSheet> {
               ],
               onChanged: (v) => setState(() => _fromAccountId = v),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             ListTile(
               shape: RoundedRectangleBorder(
                 side: BorderSide(color: Theme.of(context).dividerColor),
                 borderRadius: BorderRadius.circular(4),
               ),
-              leading: const Icon(Icons.calendar_today),
-              title: const Text('日期'),
+              leading: Icon(Icons.calendar_today),
+              title: Text(tr('日期')),
               trailing: Text(_dateStr),
               onTap: () async {
                 final d = await showDatePicker(
@@ -588,12 +604,12 @@ class _RepaymentSheetState extends State<_RepaymentSheet> {
                 if (d != null) setState(() => _date = d);
               },
             ),
-            const SizedBox(height: 12),
-            const Align(
+            SizedBox(height: 12),
+            Align(
               alignment: Alignment.centerLeft,
-              child: Text('各卡還款金額（以卡片幣別計）'),
+              child: Text(tr('各卡還款金額（以卡片幣別計）')),
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
             for (final c in widget.cards)
               Padding(
                 padding: const EdgeInsets.only(bottom: 8),
@@ -605,24 +621,24 @@ class _RepaymentSheetState extends State<_RepaymentSheet> {
                   decoration: InputDecoration(
                     labelText:
                         '${c.name}${c.currency != 'TWD' ? '（${c.currency}）' : ''}',
-                    hintText: '0＝不還',
-                    border: const OutlineInputBorder(),
+                    hintText: tr('0＝不還'),
+                    border: OutlineInputBorder(),
                   ),
                 ),
               ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             FilledButton(
               onPressed: _saving ? null : _save,
               style: FilledButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 14),
               ),
               child: _saving
-                  ? const SizedBox(
+                  ? SizedBox(
                       height: 20,
                       width: 20,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : const Text('確認還款'),
+                  : Text(tr('確認還款')),
             ),
           ],
         ),
@@ -658,7 +674,7 @@ class _StatementCyclesSheetState extends State<_StatementCyclesSheet> {
     );
     final c = m['currency'];
     if (c is String && c.isNotEmpty) _currency = c;
-    final list = (m['cycles'] as List?) ?? const [];
+    final list = (m['cycles'] as List?) ?? [];
     return list
         .map((e) => StatementCycle.fromJson((e as Map).cast<String, dynamic>()))
         .toList();
@@ -679,20 +695,23 @@ class _StatementCyclesSheetState extends State<_StatementCyclesSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('每期帳單明細', style: Theme.of(context).textTheme.titleLarge),
-          const SizedBox(height: 4),
+          Text(tr('每期帳單明細'), style: Theme.of(context).textTheme.titleLarge),
+          SizedBox(height: 4),
           Text(
-            '${widget.account.name}　每月結帳日 ${widget.account.statementClosingDay} 號',
+            trPair(
+              '${widget.account.name}　每月結帳日 ${widget.account.statementClosingDay} 號',
+              '${widget.account.name} · Statement closes on day ${widget.account.statementClosingDay}',
+            ),
             style: Theme.of(context).textTheme.bodySmall,
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: 4),
           Text(
-            '「繳款」已對應回它所清償的帳單（結帳後下一期繳清的金額算回該期）。',
+            tr('「繳款」已對應回它所清償的帳單（結帳後下一期繳清的金額算回該期）。'),
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           ConstrainedBox(
             constraints: BoxConstraints(
               maxHeight: MediaQuery.of(context).size.height * 0.6,
@@ -701,7 +720,7 @@ class _StatementCyclesSheetState extends State<_StatementCyclesSheet> {
               future: _future,
               builder: (context, snap) {
                 if (snap.connectionState == ConnectionState.waiting) {
-                  return const Padding(
+                  return Padding(
                     padding: EdgeInsets.all(32),
                     child: Center(child: CircularProgressIndicator()),
                   );
@@ -709,20 +728,27 @@ class _StatementCyclesSheetState extends State<_StatementCyclesSheet> {
                 if (snap.hasError) {
                   return Padding(
                     padding: const EdgeInsets.all(24),
-                    child: Center(child: Text('載入失敗：${snap.error}')),
+                    child: Center(
+                      child: Text(
+                        trPair(
+                          '載入失敗：${snap.error}',
+                          'Failed to load: ${snap.error}',
+                        ),
+                      ),
+                    ),
                   );
                 }
-                final cycles = snap.data ?? const [];
+                final cycles = snap.data ?? [];
                 if (cycles.isEmpty) {
-                  return const Padding(
+                  return Padding(
                     padding: EdgeInsets.all(24),
-                    child: Center(child: Text('尚無資料')),
+                    child: Center(child: Text(tr('尚無資料'))),
                   );
                 }
                 return ListView.separated(
                   shrinkWrap: true,
                   itemCount: cycles.length,
-                  separatorBuilder: (_, _) => const Divider(height: 1),
+                  separatorBuilder: (_, _) => Divider(height: 1),
                   itemBuilder: (context, i) {
                     final c = cycles[i];
                     return Padding(
@@ -734,7 +760,7 @@ class _StatementCyclesSheetState extends State<_StatementCyclesSheet> {
                               children: [
                                 Text('${_md(c.start)}–${_md(c.end)}'),
                                 if (c.current) ...[
-                                  const SizedBox(width: 6),
+                                  SizedBox(width: 6),
                                   Container(
                                     padding: const EdgeInsets.symmetric(
                                       horizontal: 6,
@@ -746,8 +772,8 @@ class _StatementCyclesSheetState extends State<_StatementCyclesSheet> {
                                       ).colorScheme.primaryContainer,
                                       borderRadius: BorderRadius.circular(4),
                                     ),
-                                    child: const Text(
-                                      '本期',
+                                    child: Text(
+                                      tr('本期'),
                                       style: TextStyle(fontSize: 11),
                                     ),
                                   ),
@@ -759,15 +785,21 @@ class _StatementCyclesSheetState extends State<_StatementCyclesSheet> {
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
                               Text(
-                                '消費 ${money(c.spending, _currency)}',
-                                style: const TextStyle(
+                                trPair(
+                                  '消費 ${money(c.spending, _currency)}',
+                                  'Spent ${money(c.spending, _currency)}',
+                                ),
+                                style: TextStyle(
                                   color: Color(0xFFD32F2F),
                                   fontSize: 13,
                                 ),
                               ),
                               Text(
-                                '已繳 ${money(c.payment, _currency)}',
-                                style: const TextStyle(
+                                trPair(
+                                  '已繳 ${money(c.payment, _currency)}',
+                                  'Paid ${money(c.payment, _currency)}',
+                                ),
+                                style: TextStyle(
                                   color: Color(0xFF2E7D32),
                                   fontSize: 13,
                                 ),

@@ -1,3 +1,5 @@
+import 'l10n.dart';
+
 // AssetPilot App 資料模型。後端欄位多為 camelCase，少數為 snake_case，
 // 解析時皆以容錯方式處理。
 
@@ -222,32 +224,33 @@ class Txn {
       currency: _asStr(j['currency']).isEmpty ? 'TWD' : _asStr(j['currency']),
       fxRate: rate.isEmpty ? '1' : rate,
       date: _asStr(j['date']),
-    categoryId: _asStr(j['categoryId'] ?? j['category_id']),
-    accountId: _asStr(j['accountId'] ?? j['account_id']),
-    toAccountId: _asStr(j['toAccountId'] ?? j['to_account_id']),
-    note: _asStr(j['note']),
-    excludeFromStats: _asBool(
-      j['excludeFromStats'] ?? j['exclude_from_stats'],
-    ),
-    fxFee: _asNum(j['fxFee'] ?? j['fx_fee']),
-    isFxFee: _asBool(j['isFxFee'] ?? j['is_fx_fee']),
-    catName:
-        (j['cat_name'] ??
-                j['catName'] ??
-                j['category_name'] ??
-                j['categoryName'] ??
-                (j['category'] is Map ? j['category']['name'] : null)) ==
-            null
-        ? null
-        : _asStr(
-            j['cat_name'] ??
-                j['catName'] ??
-                j['category_name'] ??
-                j['categoryName'] ??
-                (j['category'] is Map ? j['category']['name'] : null),
-          ),
-    attachmentCount: _asNum(j['attachmentCount'] ?? j['attachment_count'])
-        .toInt(),
+      categoryId: _asStr(j['categoryId'] ?? j['category_id']),
+      accountId: _asStr(j['accountId'] ?? j['account_id']),
+      toAccountId: _asStr(j['toAccountId'] ?? j['to_account_id']),
+      note: _asStr(j['note']),
+      excludeFromStats: _asBool(
+        j['excludeFromStats'] ?? j['exclude_from_stats'],
+      ),
+      fxFee: _asNum(j['fxFee'] ?? j['fx_fee']),
+      isFxFee: _asBool(j['isFxFee'] ?? j['is_fx_fee']),
+      catName:
+          (j['cat_name'] ??
+                  j['catName'] ??
+                  j['category_name'] ??
+                  j['categoryName'] ??
+                  (j['category'] is Map ? j['category']['name'] : null)) ==
+              null
+          ? null
+          : _asStr(
+              j['cat_name'] ??
+                  j['catName'] ??
+                  j['category_name'] ??
+                  j['categoryName'] ??
+                  (j['category'] is Map ? j['category']['name'] : null),
+            ),
+      attachmentCount: _asNum(
+        j['attachmentCount'] ?? j['attachment_count'],
+      ).toInt(),
     );
   }
 }
@@ -275,10 +278,11 @@ class CatNode {
     final color = _asStr(j['color']).isEmpty ? '#888888' : _asStr(j['color']);
     // fallback 規則對齊 Web dashboard 的 groupCategoryRows()。
     final parentName = _asStr(j['parentName']).isEmpty
-        ? (name.isEmpty ? '未分類' : name)
+        ? (name.isEmpty ? tr('未分類') : name)
         : _asStr(j['parentName']);
-    final parentColor =
-        _asStr(j['parentColor']).isEmpty ? color : _asStr(j['parentColor']);
+    final parentColor = _asStr(j['parentColor']).isEmpty
+        ? color
+        : _asStr(j['parentColor']);
     final parentId = _asStr(j['parentId']).isEmpty
         ? 'parent-$parentName'
         : _asStr(j['parentId']);
@@ -624,7 +628,7 @@ class LoginSession {
   factory LoginSession.fromJson(Map<String, dynamic> j) => LoginSession(
     id: _asStr(j['id'] ?? j['sessionId']),
     deviceName: _asStr(j['deviceName'] ?? j['device_name']).isEmpty
-        ? '未知裝置'
+        ? tr('未知裝置')
         : _asStr(j['deviceName'] ?? j['device_name']),
     ip: _asStr(j['ip'] ?? j['ipAddress'] ?? j['ip_address']),
     loginAt: _asNum(j['loginAt'] ?? j['createdAt'] ?? j['created_at']),
@@ -663,12 +667,16 @@ class Passkey {
   final String deviceName;
   final num createdAt;
 
-  Passkey({required this.id, required this.deviceName, required this.createdAt});
+  Passkey({
+    required this.id,
+    required this.deviceName,
+    required this.createdAt,
+  });
 
   factory Passkey.fromJson(Map<String, dynamic> j) => Passkey(
     id: _asStr(j['id']),
     deviceName: _asStr(j['deviceName']).isEmpty
-        ? '未命名 Passkey'
+        ? tr('未命名 Passkey')
         : _asStr(j['deviceName']),
     createdAt: _asNum(j['createdAt']),
   );

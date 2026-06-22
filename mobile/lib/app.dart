@@ -9,6 +9,7 @@ import 'screens/more_screen.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/stocks_screen.dart';
 import 'screens/transactions_screen.dart';
+import 'l10n.dart';
 
 /// 全域主題模式（system / light / dark），可在設定頁切換並持久化。
 final ValueNotifier<ThemeMode> themeMode = ValueNotifier(ThemeMode.system);
@@ -41,36 +42,40 @@ class AssetPilotApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const seed = Color(0xFF2563EB); // AssetPilot 品牌藍
-    return ValueListenableBuilder<ThemeMode>(
-      valueListenable: themeMode,
-      builder: (context, mode, _) => MaterialApp(
-        title: 'AssetPilot',
-        debugShowCheckedModeBanner: false,
-        themeMode: mode,
-        // 監控畫面切換的效能：為每次導覽建立 Sentry 交易，量測畫面顯示耗時與
-        // 卡頓／凍結畫格（slow/frozen frames），用於發現效能下降。
-        navigatorObservers: [SentryNavigatorObserver()],
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: seed),
-          useMaterial3: true,
-        ),
-        darkTheme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: seed,
-            brightness: Brightness.dark,
+    return ValueListenableBuilder<String>(
+      valueListenable: appLocale,
+      builder: (context, locale, _) => ValueListenableBuilder<ThemeMode>(
+        valueListenable: themeMode,
+        builder: (context, mode, _) => MaterialApp(
+          title: 'AssetPilot',
+          debugShowCheckedModeBanner: false,
+          locale: locale == 'en' ? const Locale('en') : null,
+          themeMode: mode,
+          // 監控畫面切換的效能：為每次導覽建立 Sentry 交易，量測畫面顯示耗時與
+          // 卡頓／凍結畫格（slow/frozen frames），用於發現效能下降。
+          navigatorObservers: [SentryNavigatorObserver()],
+          theme: ThemeData(
+            colorScheme: ColorScheme.fromSeed(seedColor: seed),
+            useMaterial3: true,
           ),
-          useMaterial3: true,
-        ),
-        home: const AuthGate(),
-        // 系統或深層連結可能推送 App 未註冊的路由（例如背景啟動時 OS 傳來的
-        // route information）。本 App 採純 home 導覽、未設定具名路由，若不提供
-        // onUnknownRoute，Flutter 框架在 release 模式（assert 被移除）會對
-        // widget.onUnknownRoute 做 null check 而崩潰
-        // （ASSETPILOT-APP-2: Null check operator used on a null value）。
-        // 這裡統一導回主畫面，安全忽略未知路由。
-        onUnknownRoute: (settings) => MaterialPageRoute(
-          builder: (_) => const AuthGate(),
-          settings: const RouteSettings(name: '/'),
+          darkTheme: ThemeData(
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: seed,
+              brightness: Brightness.dark,
+            ),
+            useMaterial3: true,
+          ),
+          home: AuthGate(),
+          // 系統或深層連結可能推送 App 未註冊的路由（例如背景啟動時 OS 傳來的
+          // route information）。本 App 採純 home 導覽、未設定具名路由，若不提供
+          // onUnknownRoute，Flutter 框架在 release 模式（assert 被移除）會對
+          // widget.onUnknownRoute 做 null check 而崩潰
+          // （ASSETPILOT-APP-2: Null check operator used on a null value）。
+          // 這裡統一導回主畫面，安全忽略未知路由。
+          onUnknownRoute: (settings) => MaterialPageRoute(
+            builder: (_) => AuthGate(),
+            settings: RouteSettings(name: '/'),
+          ),
         ),
       ),
     );
@@ -141,9 +146,9 @@ class _HomeShellState extends State<HomeShell> {
   @override
   Widget build(BuildContext context) {
     final pages = [
-      const DashboardScreen(),
-      const TransactionsScreen(),
-      const StocksScreen(),
+      DashboardScreen(),
+      TransactionsScreen(),
+      StocksScreen(),
       MoreScreen(onLoggedOut: widget.onLoggedOut),
     ];
     return Scaffold(
@@ -151,26 +156,26 @@ class _HomeShellState extends State<HomeShell> {
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
         onDestinationSelected: (i) => setState(() => _index = i),
-        destinations: const [
+        destinations: [
           NavigationDestination(
             icon: Icon(Icons.dashboard_outlined),
             selectedIcon: Icon(Icons.dashboard),
-            label: '首頁',
+            label: tr('首頁'),
           ),
           NavigationDestination(
             icon: Icon(Icons.receipt_long_outlined),
             selectedIcon: Icon(Icons.receipt_long),
-            label: '記帳',
+            label: tr('記帳'),
           ),
           NavigationDestination(
             icon: Icon(Icons.trending_up_outlined),
             selectedIcon: Icon(Icons.trending_up),
-            label: '股票',
+            label: tr('股票'),
           ),
           NavigationDestination(
             icon: Icon(Icons.menu),
             selectedIcon: Icon(Icons.menu_open),
-            label: '更多',
+            label: tr('更多'),
           ),
         ],
       ),

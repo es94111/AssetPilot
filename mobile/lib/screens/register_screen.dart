@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../api_client.dart';
+import '../l10n.dart';
 
 /// 註冊畫面。註冊成功後後端直接發 Cookie（自動登入），以 `pop(true)` 回到登入頁
 /// 由其觸發進入主畫面。
@@ -30,13 +31,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   String? _validatePassword(String? v) {
     final s = v ?? '';
-    if (s.length < 8) return '密碼長度至少 8 字元';
+    if (s.length < 8) return tr('密碼長度至少 8 字元');
     final ok =
         RegExp(r'[A-Z]').hasMatch(s) &&
         RegExp(r'[a-z]').hasMatch(s) &&
         RegExp(r'\d').hasMatch(s) &&
         RegExp(r'[^A-Za-z0-9]').hasMatch(s);
-    if (!ok) return '需含大寫、小寫、數字與特殊符號';
+    if (!ok) return tr('需含大寫、小寫、數字與特殊符號');
     return null;
   }
 
@@ -59,7 +60,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       setState(() => _error = e.message);
     } catch (e) {
       if (!mounted) return;
-      setState(() => _error = '發生未預期的錯誤：$e');
+      setState(() => _error = trPair('發生未預期的錯誤：$e', 'Unexpected error: $e'));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -69,13 +70,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('註冊')),
+      appBar: AppBar(title: Text(tr('註冊'))),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(24),
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 420),
+              constraints: BoxConstraints(maxWidth: 420),
               child: Form(
                 key: _formKey,
                 child: Column(
@@ -85,35 +86,37 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       controller: _email,
                       keyboardType: TextInputType.emailAddress,
                       autocorrect: false,
-                      decoration: const InputDecoration(
-                        labelText: '電子郵件',
+                      decoration: InputDecoration(
+                        labelText: tr('電子郵件'),
                         prefixIcon: Icon(Icons.email_outlined),
                         border: OutlineInputBorder(),
                       ),
-                      validator: (v) =>
-                          (v == null || !v.contains('@')) ? '請輸入有效的電子郵件' : null,
+                      validator: (v) => (v == null || !v.contains('@'))
+                          ? tr('請輸入有效的電子郵件')
+                          : null,
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: 16),
                     TextFormField(
                       controller: _name,
-                      decoration: const InputDecoration(
-                        labelText: '顯示名稱',
+                      decoration: InputDecoration(
+                        labelText: tr('顯示名稱'),
                         prefixIcon: Icon(Icons.badge_outlined),
                         border: OutlineInputBorder(),
                       ),
-                      validator: (v) =>
-                          (v == null || v.trim().isEmpty) ? '請輸入顯示名稱' : null,
+                      validator: (v) => (v == null || v.trim().isEmpty)
+                          ? tr('請輸入顯示名稱')
+                          : null,
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: 16),
                     TextFormField(
                       controller: _password,
                       obscureText: _obscure,
                       decoration: InputDecoration(
-                        labelText: '密碼',
-                        helperText: '至少 8 字元，含大小寫、數字與特殊符號',
+                        labelText: tr('密碼'),
+                        helperText: tr('至少 8 字元，含大小寫、數字與特殊符號'),
                         helperMaxLines: 2,
-                        prefixIcon: const Icon(Icons.lock_outline),
-                        border: const OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.lock_outline),
+                        border: OutlineInputBorder(),
                         suffixIcon: IconButton(
                           icon: Icon(
                             _obscure
@@ -126,7 +129,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       validator: _validatePassword,
                     ),
                     if (_error != null) ...[
-                      const SizedBox(height: 16),
+                      SizedBox(height: 16),
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
@@ -141,19 +144,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         ),
                       ),
                     ],
-                    const SizedBox(height: 24),
+                    SizedBox(height: 24),
                     FilledButton(
                       onPressed: _loading ? null : _submit,
                       style: FilledButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
                       child: _loading
-                          ? const SizedBox(
+                          ? SizedBox(
                               height: 20,
                               width: 20,
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
-                          : const Text('註冊並登入'),
+                          : Text(tr('註冊並登入')),
                     ),
                   ],
                 ),

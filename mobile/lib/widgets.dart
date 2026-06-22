@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'l10n.dart';
+
 /// 統一的非同步載入畫面：處理 loading / error（含重試）/ 成功。
 class AsyncView<T> extends StatelessWidget {
   final Future<T> future;
@@ -46,7 +48,7 @@ class _ErrorBox extends StatelessWidget {
             const SizedBox(height: 16),
             Text(message, textAlign: TextAlign.center),
             const SizedBox(height: 16),
-            FilledButton.tonal(onPressed: onRetry, child: const Text('重試')),
+            FilledButton.tonal(onPressed: onRetry, child: Text(tr('重試'))),
           ],
         ),
       ),

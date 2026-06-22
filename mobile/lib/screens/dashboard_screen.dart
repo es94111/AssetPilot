@@ -5,6 +5,7 @@ import '../api_client.dart';
 import '../format.dart';
 import '../models.dart';
 import '../widgets.dart';
+import '../l10n.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -45,7 +46,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('AssetPilot'),
+        title: Text('AssetPilot'),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(48),
           child: _MonthSelector(
@@ -64,22 +65,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
             padding: const EdgeInsets.all(16),
             children: [
               _SummaryGrid(d: d),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               _AssetRow(d: d),
-              const SizedBox(height: 24),
+              SizedBox(height: 24),
               _CategoryPie(nodes: d.catBreakdown),
-              const SizedBox(height: 24),
+              SizedBox(height: 24),
               Text(
-                '最近交易',
+                tr('最近交易'),
                 style: Theme.of(
                   context,
                 ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
               if (d.recent.isEmpty)
-                const Padding(
+                Padding(
                   padding: EdgeInsets.symmetric(vertical: 24),
-                  child: Center(child: Text('本月尚無交易')),
+                  child: Center(child: Text(tr('本月尚無交易'))),
                 )
               else
                 ...d.recent.take(10).map((t) => _RecentTile(t: t)),
@@ -108,9 +109,9 @@ class _MonthSelector extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          IconButton(onPressed: onPrev, icon: const Icon(Icons.chevron_left)),
+          IconButton(onPressed: onPrev, icon: Icon(Icons.chevron_left)),
           Text(label, style: Theme.of(context).textTheme.titleMedium),
-          IconButton(onPressed: onNext, icon: const Icon(Icons.chevron_right)),
+          IconButton(onPressed: onNext, icon: Icon(Icons.chevron_right)),
         ],
       ),
     );
@@ -127,15 +128,15 @@ class _SummaryGrid extends StatelessWidget {
       children: [
         Expanded(
           child: _StatCard(
-            label: '收入',
+            label: tr('收入'),
             value: twd(d.income),
             color: Colors.green,
           ),
         ),
-        const SizedBox(width: 12),
+        SizedBox(width: 12),
         Expanded(
           child: _StatCard(
-            label: '支出',
+            label: tr('支出'),
             value: twd(d.expense),
             color: Colors.red,
           ),
@@ -166,7 +167,7 @@ class _StatCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(label, style: Theme.of(context).textTheme.bodySmall),
-            const SizedBox(height: 4),
+            SizedBox(height: 4),
             Text(
               value,
               style: TextStyle(
@@ -198,12 +199,12 @@ class _AssetRow extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '本月淨額',
+              tr('本月淨額'),
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onPrimaryContainer,
               ),
             ),
-            const SizedBox(height: 4),
+            SizedBox(height: 4),
             Text(
               signed(d.net),
               style: theme.textTheme.headlineMedium?.copyWith(
@@ -211,15 +212,18 @@ class _AssetRow extends StatelessWidget {
                 color: theme.colorScheme.onPrimaryContainer,
               ),
             ),
-            const Divider(height: 24),
+            Divider(height: 24),
             Row(
               children: [
                 Expanded(
-                  child: _MiniStat(label: '銀行餘額', value: twd(d.bankBalance)),
+                  child: _MiniStat(
+                    label: tr('銀行餘額'),
+                    value: twd(d.bankBalance),
+                  ),
                 ),
                 Expanded(
                   child: _MiniStat(
-                    label: '股票市值',
+                    label: tr('股票市值'),
                     value: twd(d.stockMarketValue),
                   ),
                 ),
@@ -284,8 +288,7 @@ class _CategoryPie extends StatelessWidget {
       );
       g.total += n.total;
     }
-    return groups.values.toList()
-      ..sort((a, b) => b.total.compareTo(a.total));
+    return groups.values.toList()..sort((a, b) => b.total.compareTo(a.total));
   }
 
   @override
@@ -301,12 +304,12 @@ class _CategoryPie extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '支出分類',
+              tr('支出分類'),
               style: Theme.of(
                 context,
               ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             SizedBox(
               height: 180,
               child: PieChart(
@@ -322,7 +325,7 @@ class _CategoryPie extends StatelessWidget {
                             ? '${(n.total / total * 100).round()}%'
                             : '',
                         radius: 50,
-                        titleStyle: const TextStyle(
+                        titleStyle: TextStyle(
                           fontSize: 11,
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
@@ -332,7 +335,7 @@ class _CategoryPie extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             Wrap(
               spacing: 12,
               runSpacing: 6,
@@ -349,7 +352,7 @@ class _CategoryPie extends StatelessWidget {
                           shape: BoxShape.circle,
                         ),
                       ),
-                      const SizedBox(width: 4),
+                      SizedBox(width: 4),
                       Text(
                         '${n.name}　${twd(n.total)}',
                         style: Theme.of(context).textTheme.bodySmall,
@@ -388,7 +391,7 @@ class _RecentTile extends StatelessWidget {
       title: Text(
         t.catName?.isNotEmpty == true
             ? t.catName!
-            : (t.note.isEmpty ? '未分類' : t.note),
+            : (t.note.isEmpty ? tr('未分類') : t.note),
       ),
       subtitle: Text(t.date),
       trailing: Text(

@@ -4,12 +4,13 @@ import '../api_client.dart';
 import '../format.dart';
 import '../models.dart';
 import '../widgets.dart';
+import '../l10n.dart';
 
-const _freqLabels = {
-  'daily': '每日',
-  'weekly': '每週',
-  'monthly': '每月',
-  'yearly': '每年',
+Map<String, String> get _freqLabels => {
+  'daily': tr('每日'),
+  'weekly': tr('每週'),
+  'monthly': tr('每月'),
+  'yearly': tr('每年'),
 };
 
 class _RecurringData {
@@ -93,7 +94,7 @@ class _RecurringScreenState extends State<RecurringScreen> {
   Future<void> _delete(Recurring r) async {
     try {
       await ApiClient.instance.deleteRecurring(r.id);
-      if (mounted) toast(context, '已刪除');
+      if (mounted) toast(context, tr('已刪除'));
       _reload();
     } catch (e) {
       if (mounted) toast(context, '$e');
@@ -103,13 +104,13 @@ class _RecurringScreenState extends State<RecurringScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('固定收支')),
+      appBar: AppBar(title: Text(tr('固定收支'))),
       floatingActionButton: FutureBuilder<_RecurringData>(
         future: _future,
         builder: (context, snap) => FloatingActionButton.extended(
           onPressed: snap.hasData ? () => _openForm(snap.data!) : null,
-          icon: const Icon(Icons.add),
-          label: const Text('新增'),
+          icon: Icon(Icons.add),
+          label: Text(tr('新增')),
         ),
       ),
       body: AsyncView<_RecurringData>(
@@ -117,14 +118,14 @@ class _RecurringScreenState extends State<RecurringScreen> {
         onRetry: _reload,
         builder: (context, data) {
           if (data.items.isEmpty) {
-            return const EmptyState(icon: Icons.repeat, message: '尚無固定收支');
+            return EmptyState(icon: Icons.repeat, message: tr('尚無固定收支'));
           }
           return RefreshIndicator(
             onRefresh: () async => _reload(),
             child: ListView.separated(
               padding: const EdgeInsets.only(bottom: 88),
               itemCount: data.items.length,
-              separatorBuilder: (_, _) => const Divider(height: 1),
+              separatorBuilder: (_, _) => Divider(height: 1),
               itemBuilder: (context, i) {
                 final r = data.items[i];
                 final isIncome = r.type == 'income';
@@ -140,11 +141,13 @@ class _RecurringScreenState extends State<RecurringScreen> {
                   ),
                   title: Text(
                     data.catName[r.categoryId] ??
-                        (r.note.isEmpty ? '未分類' : r.note),
+                        (r.note.isEmpty ? tr('未分類') : r.note),
                   ),
                   subtitle: Text(
-                    '${_freqLabels[r.frequency] ?? r.frequency}・'
-                    '${data.accName[r.accountId] ?? ''}・自 ${r.startDate}',
+                    trPair(
+                      '${_freqLabels[r.frequency] ?? r.frequency}・${data.accName[r.accountId] ?? ''}・自 ${r.startDate}',
+                      '${_freqLabels[r.frequency] ?? r.frequency} · ${data.accName[r.accountId] ?? ''} · From ${r.startDate}',
+                    ),
                   ),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -339,14 +342,14 @@ class _RecurringFormState extends State<_RecurringForm> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                _isEdit ? '編輯固定收支' : '新增固定收支',
+                _isEdit ? tr('編輯固定收支') : tr('新增固定收支'),
                 style: Theme.of(context).textTheme.titleLarge,
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               SegmentedButton<String>(
-                segments: const [
-                  ButtonSegment(value: 'expense', label: Text('支出')),
-                  ButtonSegment(value: 'income', label: Text('收入')),
+                segments: [
+                  ButtonSegment(value: 'expense', label: Text(tr('支出'))),
+                  ButtonSegment(value: 'income', label: Text(tr('收入'))),
                 ],
                 selected: {_type},
                 // 後端不允許編輯後變更類型，故編輯時鎖定。
@@ -357,28 +360,28 @@ class _RecurringFormState extends State<_RecurringForm> {
                         _categoryId = null;
                       }),
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               TextFormField(
                 controller: _amount,
                 keyboardType: const TextInputType.numberWithOptions(
                   decimal: true,
                 ),
-                decoration: const InputDecoration(
-                  labelText: '金額',
+                decoration: InputDecoration(
+                  labelText: tr('金額'),
                   border: OutlineInputBorder(),
                 ),
                 validator: (v) {
                   final n = num.tryParse(v?.trim() ?? '');
-                  if (n == null || n <= 0) return '請輸入大於 0 的金額';
+                  if (n == null || n <= 0) return tr('請輸入大於 0 的金額');
                   return null;
                 },
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               DropdownButtonFormField<String>(
                 initialValue: _currency,
                 isExpanded: true,
-                decoration: const InputDecoration(
-                  labelText: '幣別',
+                decoration: InputDecoration(
+                  labelText: tr('幣別'),
                   prefixIcon: Icon(Icons.payments_outlined),
                   border: OutlineInputBorder(),
                 ),
@@ -392,32 +395,35 @@ class _RecurringFormState extends State<_RecurringForm> {
                 }),
               ),
               if (_currency != 'TWD') ...[
-                const SizedBox(height: 12),
+                SizedBox(height: 12),
                 TextFormField(
                   controller: _fxRate,
                   keyboardType: const TextInputType.numberWithOptions(
                     decimal: true,
                   ),
                   decoration: InputDecoration(
-                    labelText: '匯率（1 $_currency = ? TWD）',
-                    helperText: '留空則使用系統匯率',
-                    prefixIcon: const Icon(Icons.currency_exchange),
-                    border: const OutlineInputBorder(),
+                    labelText: trPair(
+                      '匯率（1 $_currency = ? TWD）',
+                      'Exchange rate (1 $_currency = ? TWD)',
+                    ),
+                    helperText: tr('留空則使用系統匯率'),
+                    prefixIcon: Icon(Icons.currency_exchange),
+                    border: OutlineInputBorder(),
                   ),
                   validator: (v) {
                     final s = v?.trim() ?? '';
                     if (s.isEmpty) return null;
                     final n = num.tryParse(s);
-                    if (n == null || n <= 0) return '匯率須大於 0';
+                    if (n == null || n <= 0) return tr('匯率須大於 0');
                     return null;
                   },
                 ),
               ],
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               DropdownButtonFormField<String>(
                 initialValue: _frequency,
-                decoration: const InputDecoration(
-                  labelText: '週期',
+                decoration: InputDecoration(
+                  labelText: tr('週期'),
                   border: OutlineInputBorder(),
                 ),
                 items: [
@@ -426,12 +432,12 @@ class _RecurringFormState extends State<_RecurringForm> {
                 ],
                 onChanged: (v) => setState(() => _frequency = v!),
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               DropdownButtonFormField<String>(
                 initialValue: _categoryId,
                 isExpanded: true,
-                decoration: const InputDecoration(
-                  labelText: '分類',
+                decoration: InputDecoration(
+                  labelText: tr('分類'),
                   border: OutlineInputBorder(),
                 ),
                 items: [
@@ -439,14 +445,14 @@ class _RecurringFormState extends State<_RecurringForm> {
                     DropdownMenuItem(value: c.id, child: Text(c.name)),
                 ],
                 onChanged: (v) => setState(() => _categoryId = v),
-                validator: (v) => v == null ? '請選擇分類' : null,
+                validator: (v) => v == null ? tr('請選擇分類') : null,
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               DropdownButtonFormField<String>(
                 initialValue: _accountId,
                 isExpanded: true,
-                decoration: const InputDecoration(
-                  labelText: '帳戶',
+                decoration: InputDecoration(
+                  labelText: tr('帳戶'),
                   border: OutlineInputBorder(),
                 ),
                 items: [
@@ -461,16 +467,16 @@ class _RecurringFormState extends State<_RecurringForm> {
                     _fxRate.clear();
                   }
                 }),
-                validator: (v) => v == null ? '請選擇帳戶' : null,
+                validator: (v) => v == null ? tr('請選擇帳戶') : null,
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               ListTile(
                 shape: RoundedRectangleBorder(
                   side: BorderSide(color: Theme.of(context).dividerColor),
                   borderRadius: BorderRadius.circular(4),
                 ),
-                leading: const Icon(Icons.calendar_today),
-                title: const Text('起始日期'),
+                leading: Icon(Icons.calendar_today),
+                title: Text(tr('起始日期')),
                 trailing: Text(_startStr),
                 onTap: () async {
                   final d = await showDatePicker(
@@ -482,48 +488,50 @@ class _RecurringFormState extends State<_RecurringForm> {
                   if (d != null) setState(() => _start = d);
                 },
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               TextFormField(
                 controller: _note,
-                decoration: const InputDecoration(
-                  labelText: '備註（選填）',
+                decoration: InputDecoration(
+                  labelText: tr('備註（選填）'),
                   border: OutlineInputBorder(),
                 ),
               ),
               if (_overseasApplies) ...[
-                const SizedBox(height: 12),
+                SizedBox(height: 12),
                 TextFormField(
                   controller: _fxFee,
                   keyboardType: const TextInputType.numberWithOptions(
                     decimal: true,
                   ),
                   decoration: InputDecoration(
-                    labelText: '海外手續費 TWD（選填）',
-                    helperText:
-                        '此卡費率 ${_selectedAccount!.overseasFeeRate}%，留空將自動計算',
-                    border: const OutlineInputBorder(),
+                    labelText: tr('海外手續費 TWD（選填）'),
+                    helperText: trPair(
+                      '此卡費率 ${_selectedAccount!.overseasFeeRate}%，留空將自動計算',
+                      'Card rate: ${_selectedAccount!.overseasFeeRate}%. Leave blank to calculate automatically.',
+                    ),
+                    border: OutlineInputBorder(),
                   ),
                 ),
               ],
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
-                title: const Text('不計入統計'),
+                title: Text(tr('不計入統計')),
                 value: _excludeFromStats,
                 onChanged: (v) => setState(() => _excludeFromStats = v),
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: 20),
               FilledButton(
                 onPressed: _saving ? null : _save,
                 style: FilledButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
                 child: _saving
-                    ? const SizedBox(
+                    ? SizedBox(
                         height: 20,
                         width: 20,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : const Text('儲存'),
+                    : Text(tr('儲存')),
               ),
             ],
           ),

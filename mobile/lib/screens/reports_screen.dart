@@ -5,6 +5,7 @@ import '../api_client.dart';
 import '../format.dart';
 import '../models.dart';
 import '../widgets.dart';
+import '../l10n.dart';
 
 class _ReportData {
   final List<CatNode> breakdown;
@@ -70,7 +71,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('統計報表')),
+      appBar: AppBar(title: Text(tr('統計報表'))),
       body: Column(
         children: [
           Padding(
@@ -78,9 +79,9 @@ class _ReportsScreenState extends State<ReportsScreen> {
             child: Column(
               children: [
                 SegmentedButton<String>(
-                  segments: const [
-                    ButtonSegment(value: 'expense', label: Text('支出')),
-                    ButtonSegment(value: 'income', label: Text('收入')),
+                  segments: [
+                    ButtonSegment(value: 'expense', label: Text(tr('支出'))),
+                    ButtonSegment(value: 'income', label: Text(tr('收入'))),
                   ],
                   selected: {_type},
                   onSelectionChanged: (s) {
@@ -88,10 +89,10 @@ class _ReportsScreenState extends State<ReportsScreen> {
                     _reload();
                   },
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
                 OutlinedButton.icon(
                   onPressed: _pickRange,
-                  icon: const Icon(Icons.date_range),
+                  icon: Icon(Icons.date_range),
                   label: Text('${_fmt(_range.start)} ～ ${_fmt(_range.end)}'),
                 ),
               ],
@@ -103,9 +104,9 @@ class _ReportsScreenState extends State<ReportsScreen> {
               onRetry: _reload,
               builder: (context, data) {
                 if (data.breakdown.isEmpty) {
-                  return const EmptyState(
+                  return EmptyState(
                     icon: Icons.bar_chart,
-                    message: '此區間無資料',
+                    message: tr('此區間無資料'),
                   );
                 }
                 final sorted = [...data.breakdown]
@@ -115,13 +116,13 @@ class _ReportsScreenState extends State<ReportsScreen> {
                   children: [
                     Center(
                       child: Text(
-                        '${_type == 'expense' ? '總支出' : '總收入'}：'
+                        '${trPair(_type == 'expense' ? '總支出：' : '總收入：', _type == 'expense' ? 'Total expenses: ' : 'Total income: ')}'
                         '${twd(data.total)}',
                         style: Theme.of(context).textTheme.titleMedium
                             ?.copyWith(fontWeight: FontWeight.bold),
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: 16),
                     SizedBox(
                       height: 220,
                       child: PieChart(
@@ -137,7 +138,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                                     ? '${(n.total / data.total * 100).round()}%'
                                     : '',
                                 radius: 60,
-                                titleStyle: const TextStyle(
+                                titleStyle: TextStyle(
                                   fontSize: 11,
                                   color: Colors.white,
                                   fontWeight: FontWeight.bold,
@@ -147,7 +148,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: 16),
                     for (final n in sorted)
                       ListTile(
                         dense: true,
@@ -162,7 +163,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                         title: Text(n.name),
                         trailing: Text(
                           twd(n.total),
-                          style: const TextStyle(fontWeight: FontWeight.bold),
+                          style: TextStyle(fontWeight: FontWeight.bold),
                         ),
                       ),
                   ],

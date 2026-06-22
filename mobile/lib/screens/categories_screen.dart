@@ -4,6 +4,7 @@ import '../api_client.dart';
 import '../format.dart';
 import '../models.dart';
 import '../widgets.dart';
+import '../l10n.dart';
 
 const _palette = [
   '#EF4444',
@@ -58,7 +59,7 @@ class _CategoriesScreenState extends State<CategoriesScreen>
       builder: (_) => _CategoryForm(
         existing: existing,
         type: _tab.index == 0 ? 'expense' : 'income',
-        allCategories: all ?? const [],
+        allCategories: all ?? [],
       ),
     );
     if (changed == true) _reload();
@@ -68,16 +69,16 @@ class _CategoriesScreenState extends State<CategoriesScreen>
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('刪除分類'),
-        content: Text('確定刪除「${c.name}」？'),
+        title: Text(tr('刪除分類')),
+        content: Text(trPair('確定刪除「${c.name}」？', 'Delete “${c.name}”?')),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('取消'),
+            child: Text(tr('取消')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('刪除'),
+            child: Text(tr('刪除')),
           ),
         ],
       ),
@@ -85,7 +86,7 @@ class _CategoriesScreenState extends State<CategoriesScreen>
     if (ok != true) return;
     try {
       await ApiClient.instance.deleteCategory(c.id);
-      if (mounted) toast(context, '已刪除');
+      if (mounted) toast(context, tr('已刪除'));
       _reload();
     } catch (e) {
       if (mounted) toast(context, '$e');
@@ -96,13 +97,13 @@ class _CategoriesScreenState extends State<CategoriesScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('分類'),
+        title: Text(tr('分類')),
         bottom: TabBar(
           controller: _tab,
           onTap: (_) => setState(() {}),
-          tabs: const [
-            Tab(text: '支出'),
-            Tab(text: '收入'),
+          tabs: [
+            Tab(text: tr('支出')),
+            Tab(text: tr('收入')),
           ],
         ),
       ),
@@ -124,7 +125,7 @@ class _CategoriesScreenState extends State<CategoriesScreen>
   Widget _buildList(List<Category> all, String type) {
     final parents = all.where((c) => c.type == type && c.isParent).toList();
     if (parents.isEmpty) {
-      return const EmptyState(icon: Icons.category, message: '尚無分類');
+      return EmptyState(icon: Icons.category, message: tr('尚無分類'));
     }
     return RefreshIndicator(
       onRefresh: () async => _reload(),
@@ -136,7 +137,7 @@ class _CategoriesScreenState extends State<CategoriesScreen>
               leading: _dot(p.color),
               title: Text(
                 p.name,
-                style: const TextStyle(fontWeight: FontWeight.bold),
+                style: TextStyle(fontWeight: FontWeight.bold),
               ),
               onTap: () => _openForm(existing: p, all: all),
               onLongPress: () => _delete(p),
@@ -149,7 +150,7 @@ class _CategoriesScreenState extends State<CategoriesScreen>
                 onTap: () => _openForm(existing: child, all: all),
                 onLongPress: () => _delete(child),
               ),
-            const Divider(height: 1),
+            Divider(height: 1),
           ],
         ],
       ),
@@ -175,8 +176,8 @@ class AsyncFab extends StatelessWidget {
       future: future,
       builder: (context, snap) => FloatingActionButton.extended(
         onPressed: snap.hasData ? () => onPressed(snap.data!) : null,
-        icon: const Icon(Icons.add),
-        label: const Text('新增分類'),
+        icon: Icon(Icons.add),
+        label: Text(tr('新增分類')),
       ),
     );
   }
@@ -257,25 +258,25 @@ class _CategoryFormState extends State<_CategoryForm> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              _isEdit ? '編輯分類' : '新增分類',
+              _isEdit ? tr('編輯分類') : tr('新增分類'),
               style: Theme.of(context).textTheme.titleLarge,
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             TextFormField(
               controller: _name,
-              decoration: const InputDecoration(
-                labelText: '分類名稱',
+              decoration: InputDecoration(
+                labelText: tr('分類名稱'),
                 border: OutlineInputBorder(),
               ),
               validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? '請輸入名稱' : null,
+                  (v == null || v.trim().isEmpty) ? tr('請輸入名稱') : null,
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             if (!_isEdit)
               SegmentedButton<String>(
-                segments: const [
-                  ButtonSegment(value: 'expense', label: Text('支出')),
-                  ButtonSegment(value: 'income', label: Text('收入')),
+                segments: [
+                  ButtonSegment(value: 'expense', label: Text(tr('支出'))),
+                  ButtonSegment(value: 'income', label: Text(tr('收入'))),
                 ],
                 selected: {_type},
                 onSelectionChanged: (s) => setState(() {
@@ -283,26 +284,29 @@ class _CategoryFormState extends State<_CategoryForm> {
                   _parentId = null;
                 }),
               ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             DropdownButtonFormField<String?>(
               initialValue: _parentId,
-              decoration: const InputDecoration(
-                labelText: '父分類（不選＝建立父分類）',
+              decoration: InputDecoration(
+                labelText: tr('父分類（不選＝建立父分類）'),
                 border: OutlineInputBorder(),
               ),
               items: [
-                const DropdownMenuItem(value: null, child: Text('（無，作為父分類）')),
+                DropdownMenuItem(value: null, child: Text(tr('（無，作為父分類）'))),
                 for (final p in _parentOptions)
                   DropdownMenuItem(value: p.id, child: Text(p.name)),
               ],
               onChanged: (v) => setState(() => _parentId = v),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             Align(
               alignment: Alignment.centerLeft,
-              child: Text('顏色', style: Theme.of(context).textTheme.bodyMedium),
+              child: Text(
+                tr('顏色'),
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
             Wrap(
               spacing: 10,
               runSpacing: 10,
@@ -327,19 +331,19 @@ class _CategoryFormState extends State<_CategoryForm> {
                   ),
               ],
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
             FilledButton(
               onPressed: _saving ? null : _save,
               style: FilledButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 14),
               ),
               child: _saving
-                  ? const SizedBox(
+                  ? SizedBox(
                       height: 20,
                       width: 20,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : const Text('儲存'),
+                  : Text(tr('儲存')),
             ),
           ],
         ),

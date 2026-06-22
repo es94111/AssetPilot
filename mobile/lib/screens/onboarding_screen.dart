@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../l10n.dart';
 
 /// 第一次使用教學是否看過的旗標。改版調整教學內容時可遞增 key 版本讓舊用戶重看。
 const _kOnboardingSeenKey = 'onboarding_seen_v1';
@@ -12,31 +13,31 @@ class _Slide {
 }
 
 /// 教學投影片內容（對齊底部導覽：首頁／記帳／股票／更多）。
-const _slides = <_Slide>[
+List<_Slide> get _slides => <_Slide>[
   _Slide(
     Icons.account_balance_wallet_outlined,
-    '歡迎使用 AssetPilot',
-    '你的個人資產管家——記帳、預算、台股投資與統計報表，一個 App 全部搞定。花一分鐘快速認識主要功能。',
+    tr('歡迎使用 AssetPilot'),
+    tr('你的個人資產管家——記帳、預算、台股投資與統計報表，一個 App 全部搞定。花一分鐘快速認識主要功能。'),
   ),
   _Slide(
     Icons.receipt_long_outlined,
-    '隨手記一筆',
-    '在底部「記帳」分頁點右下角的「＋」即可新增收入或支出，支援多幣別與帳戶轉帳。交易往左滑可刪除、點一下可編輯。',
+    tr('隨手記一筆'),
+    tr('在底部「記帳」分頁點右下角的「＋」即可新增收入或支出，支援多幣別與帳戶轉帳。交易往左滑可刪除、點一下可編輯。'),
   ),
   _Slide(
     Icons.dashboard_outlined,
-    '掌握收支全貌',
-    '「首頁」依月份顯示收入、支出、淨額與支出分類圓餅圖，左右切換月份，一眼看懂錢花到哪裡。',
+    tr('掌握收支全貌'),
+    tr('「首頁」依月份顯示收入、支出、淨額與支出分類圓餅圖，左右切換月份，一眼看懂錢花到哪裡。'),
   ),
   _Slide(
     Icons.trending_up_outlined,
-    '追蹤台股投資',
-    '在「股票」分頁輸入股票代號（例如 2330）即可追蹤即時股價、未實現與已實現損益，系統還會自動同步除權息。',
+    tr('追蹤台股投資'),
+    tr('在「股票」分頁輸入股票代號（例如 2330）即可追蹤即時股價、未實現與已實現損益，系統還會自動同步除權息。'),
   ),
   _Slide(
     Icons.menu,
-    '預算、報表與更多',
-    '到「更多」設定每月預算、查看統計報表、管理帳戶與分類，還能設定固定收支與報表通知。準備好了，開始記錄吧！',
+    tr('預算、報表與更多'),
+    tr('到「更多」設定每月預算、查看統計報表、管理帳戶與分類，還能設定固定收支與報表通知。準備好了，開始記錄吧！'),
   ),
 ];
 
@@ -59,7 +60,7 @@ class OnboardingScreen extends StatefulWidget {
   static Future<void> _push(BuildContext context) => Navigator.of(context).push(
     MaterialPageRoute(
       fullscreenDialog: true,
-      builder: (_) => const OnboardingScreen(),
+      builder: (_) => OnboardingScreen(),
     ),
   );
 
@@ -84,7 +85,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       Navigator.of(context).pop();
     } else {
       _controller.nextPage(
-        duration: const Duration(milliseconds: 300),
+        duration: Duration(milliseconds: 300),
         curve: Curves.easeOut,
       );
     }
@@ -102,7 +103,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               alignment: Alignment.centerRight,
               child: TextButton(
                 onPressed: () => Navigator.of(context).pop(),
-                child: const Text('跳過'),
+                child: Text(tr('跳過')),
               ),
             ),
             Expanded(
@@ -130,7 +131,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                             color: cs.onPrimaryContainer,
                           ),
                         ),
-                        const SizedBox(height: 36),
+                        SizedBox(height: 36),
                         Text(
                           s.title,
                           textAlign: TextAlign.center,
@@ -138,7 +139,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        const SizedBox(height: 16),
+                        SizedBox(height: 16),
                         Text(
                           s.body,
                           textAlign: TextAlign.center,
@@ -158,7 +159,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               children: [
                 for (int i = 0; i < _slides.length; i++)
                   AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
+                    duration: Duration(milliseconds: 200),
                     margin: const EdgeInsets.symmetric(horizontal: 4),
                     width: i == _page ? 24 : 8,
                     height: 8,
@@ -169,14 +170,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   ),
               ],
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
             Padding(
               padding: const EdgeInsets.fromLTRB(32, 0, 32, 32),
               child: SizedBox(
                 width: double.infinity,
                 child: FilledButton(
                   onPressed: _next,
-                  child: Text(_isLast ? '開始使用' : '下一步'),
+                  child: Text(_isLast ? tr('開始使用') : tr('下一步')),
                 ),
               ),
             ),

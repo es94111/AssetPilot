@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../api_client.dart';
 import '../models.dart';
 import '../widgets.dart';
+import '../l10n.dart';
 
 const _kCommonCurrencies = [
   'TWD',
@@ -31,7 +32,7 @@ String _fmtTs(num ms) {
 Future<void> _openWeb(BuildContext context, String path) async {
   final url = Uri.parse('${ApiClient.instance.baseUrl}$path');
   final ok = await launchUrl(url, mode: LaunchMode.externalApplication);
-  if (!ok && context.mounted) toast(context, '無法開啟瀏覽器');
+  if (!ok && context.mounted) toast(context, tr('無法開啟瀏覽器'));
 }
 
 // ── 幣別設定（預設 + 常用） ───────────────────────────────────
@@ -77,7 +78,7 @@ class _CurrencySettingsScreenState extends State<CurrencySettingsScreen> {
       final pinned = {'TWD', ..._pinned}.toList();
       await api.setPinnedCurrencies(pinned);
       if (mounted) {
-        toast(context, '已儲存');
+        toast(context, tr('已儲存'));
         Navigator.pop(context);
       }
     } catch (e) {
@@ -91,31 +92,31 @@ class _CurrencySettingsScreenState extends State<CurrencySettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('幣別設定')),
+      appBar: AppBar(title: Text(tr('幣別設定'))),
       body: AsyncView<void>(
         future: _future,
         onRetry: () => setState(() => _future = _load()),
         builder: (context, _) => ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            Text('預設幣別', style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 8),
+            Text(tr('預設幣別'), style: Theme.of(context).textTheme.titleMedium),
+            SizedBox(height: 8),
             DropdownButtonFormField<String>(
               initialValue: _options.contains(_default) ? _default : 'TWD',
-              decoration: const InputDecoration(border: OutlineInputBorder()),
+              decoration: InputDecoration(border: OutlineInputBorder()),
               items: [
                 for (final c in _options)
                   DropdownMenuItem(value: c, child: Text(c)),
               ],
               onChanged: (v) => setState(() => _default = v ?? 'TWD'),
             ),
-            const SizedBox(height: 24),
-            Text('常用幣別', style: Theme.of(context).textTheme.titleMedium),
-            const Text(
-              'TWD 一律包含。勾選的幣別會出現在交易/固定收支的幣別清單前段。',
+            SizedBox(height: 24),
+            Text(tr('常用幣別'), style: Theme.of(context).textTheme.titleMedium),
+            Text(
+              tr('TWD 一律包含。勾選的幣別會出現在交易/固定收支的幣別清單前段。'),
               style: TextStyle(fontSize: 12, color: Colors.grey),
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
             Wrap(
               spacing: 8,
               children: [
@@ -135,19 +136,19 @@ class _CurrencySettingsScreenState extends State<CurrencySettingsScreen> {
                   ),
               ],
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
             FilledButton(
               onPressed: _saving ? null : _save,
               style: FilledButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 14),
               ),
               child: _saving
-                  ? const SizedBox(
+                  ? SizedBox(
                       height: 20,
                       width: 20,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : const Text('儲存'),
+                  : Text(tr('儲存')),
             ),
           ],
         ),
@@ -199,7 +200,7 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
         _next.text,
       );
       if (mounted) {
-        toast(context, '密碼已更新');
+        toast(context, tr('密碼已更新'));
         Navigator.pop(context);
       }
     } catch (e) {
@@ -222,61 +223,61 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              widget.hasPassword ? '修改密碼' : '設定密碼',
+              widget.hasPassword ? tr('修改密碼') : tr('設定密碼'),
               style: Theme.of(context).textTheme.titleLarge,
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             if (widget.hasPassword) ...[
               TextFormField(
                 controller: _current,
                 obscureText: true,
-                decoration: const InputDecoration(
-                  labelText: '目前密碼',
+                decoration: InputDecoration(
+                  labelText: tr('目前密碼'),
                   border: OutlineInputBorder(),
                 ),
                 validator: (v) =>
-                    (v == null || v.isEmpty) ? '請輸入目前密碼' : null,
+                    (v == null || v.isEmpty) ? tr('請輸入目前密碼') : null,
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
             ],
             TextFormField(
               controller: _next,
               obscureText: true,
-              decoration: const InputDecoration(
-                labelText: '新密碼',
-                helperText: '至少 8 字元，含大小寫、數字與特殊符號',
+              decoration: InputDecoration(
+                labelText: tr('新密碼'),
+                helperText: tr('至少 8 字元，含大小寫、數字與特殊符號'),
                 border: OutlineInputBorder(),
               ),
               validator: (v) {
                 final s = v ?? '';
-                if (s.length < 8) return '至少 8 字元';
+                if (s.length < 8) return tr('至少 8 字元');
                 final ok =
                     RegExp(r'[A-Z]').hasMatch(s) &&
                     RegExp(r'[a-z]').hasMatch(s) &&
                     RegExp(r'\d').hasMatch(s) &&
                     RegExp(r'[^A-Za-z0-9]').hasMatch(s);
-                if (!ok) return '需含大小寫、數字與特殊符號';
+                if (!ok) return tr('需含大小寫、數字與特殊符號');
                 return null;
               },
             ),
-            const SizedBox(height: 8),
-            const Text(
-              '變更後其他裝置將被登出。',
+            SizedBox(height: 8),
+            Text(
+              tr('變更後其他裝置將被登出。'),
               style: TextStyle(fontSize: 12, color: Colors.grey),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             FilledButton(
               onPressed: _saving ? null : _save,
               style: FilledButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 14),
               ),
               child: _saving
-                  ? const SizedBox(
+                  ? SizedBox(
                       height: 20,
                       width: 20,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : const Text('儲存'),
+                  : Text(tr('儲存')),
             ),
           ],
         ),
@@ -317,20 +318,20 @@ class _PasskeysScreenState extends State<PasskeysScreen> {
     final name = await showDialog<String>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('重新命名'),
+        title: Text(tr('重新命名')),
         content: TextField(
           controller: ctrl,
           autofocus: true,
-          decoration: const InputDecoration(border: OutlineInputBorder()),
+          decoration: InputDecoration(border: OutlineInputBorder()),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('取消'),
+            child: Text(tr('取消')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, ctrl.text.trim()),
-            child: const Text('儲存'),
+            child: Text(tr('儲存')),
           ),
         ],
       ),
@@ -348,16 +349,18 @@ class _PasskeysScreenState extends State<PasskeysScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('刪除 Passkey'),
-        content: Text('確定刪除「${p.deviceName}」？'),
+        title: Text(tr('刪除 Passkey')),
+        content: Text(
+          trPair('確定刪除「${p.deviceName}」？', 'Delete “${p.deviceName}”?'),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('取消'),
+            child: Text(tr('取消')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('刪除'),
+            child: Text(tr('刪除')),
           ),
         ],
       ),
@@ -365,7 +368,7 @@ class _PasskeysScreenState extends State<PasskeysScreen> {
     if (ok != true) return;
     try {
       await ApiClient.instance.deletePasskey(p.id);
-      if (mounted) toast(context, '已刪除');
+      if (mounted) toast(context, tr('已刪除'));
       _reload();
     } catch (e) {
       if (mounted) toast(context, '$e');
@@ -375,7 +378,7 @@ class _PasskeysScreenState extends State<PasskeysScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Passkey 管理')),
+      appBar: AppBar(title: Text(tr('Passkey 管理'))),
       body: AsyncView<List<Passkey>>(
         future: _future,
         onRetry: _reload,
@@ -384,32 +387,32 @@ class _PasskeysScreenState extends State<PasskeysScreen> {
           child: ListView(
             children: [
               ListTile(
-                leading: const Icon(Icons.add),
-                title: const Text('新增 Passkey'),
-                subtitle: const Text('於瀏覽器完成註冊（需裝置生物辨識）'),
+                leading: Icon(Icons.add),
+                title: Text(tr('新增 Passkey')),
+                subtitle: Text(tr('於瀏覽器完成註冊（需裝置生物辨識）')),
                 onTap: () => _openWeb(context, '/settings/account'),
               ),
-              const Divider(),
+              Divider(),
               if (list.isEmpty)
-                const Padding(
+                Padding(
                   padding: EdgeInsets.all(24),
                   child: EmptyState(
                     icon: Icons.key_outlined,
-                    message: '尚未註冊任何 Passkey',
+                    message: tr('尚未註冊任何 Passkey'),
                   ),
                 )
               else
                 for (final p in list)
                   ListTile(
-                    leading: const Icon(Icons.key),
+                    leading: Icon(Icons.key),
                     title: Text(p.deviceName),
-                    subtitle: Text('建立於 ${_fmtTs(p.createdAt)}'),
+                    subtitle: Text(tr('建立於 ${_fmtTs(p.createdAt)}')),
                     trailing: PopupMenuButton<String>(
                       onSelected: (v) =>
                           v == 'rename' ? _rename(p) : _delete(p),
-                      itemBuilder: (_) => const [
-                        PopupMenuItem(value: 'rename', child: Text('重新命名')),
-                        PopupMenuItem(value: 'delete', child: Text('刪除')),
+                      itemBuilder: (_) => [
+                        PopupMenuItem(value: 'rename', child: Text(tr('重新命名'))),
+                        PopupMenuItem(value: 'delete', child: Text(tr('刪除'))),
                       ],
                     ),
                   ),
@@ -448,16 +451,16 @@ class _AccountBindingsScreenState extends State<AccountBindingsScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: Text('解除 $provider 綁定'),
-        content: Text('確定解除與 $provider 的綁定？'),
+        title: Text(trPair('解除 $provider 綁定', 'Unlink $provider')),
+        content: Text(trPair('確定解除與 $provider 的綁定？', 'Unlink $provider?')),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('取消'),
+            child: Text(tr('取消')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('解除'),
+            child: Text(tr('解除')),
           ),
         ],
       ),
@@ -469,7 +472,7 @@ class _AccountBindingsScreenState extends State<AccountBindingsScreen> {
       } else {
         await ApiClient.instance.unlinkLine();
       }
-      if (mounted) toast(context, '已解除綁定');
+      if (mounted) toast(context, tr('已解除綁定'));
       _reload();
     } catch (e) {
       if (mounted) toast(context, '$e');
@@ -480,35 +483,35 @@ class _AccountBindingsScreenState extends State<AccountBindingsScreen> {
     leading: Icon(
       provider == 'Google' ? Icons.account_circle : Icons.chat_bubble_outline,
     ),
-    title: Text('$provider 綁定'),
-    subtitle: Text(linked ? '已綁定' : '未綁定'),
+    title: Text(trPair('$provider 綁定', '$provider connection')),
+    subtitle: Text(linked ? tr('已綁定') : tr('未綁定')),
     trailing: linked
         ? OutlinedButton(
             onPressed: () => _unlink(provider),
-            child: const Text('解除'),
+            child: Text(tr('解除')),
           )
         : OutlinedButton(
             onPressed: () => _openWeb(context, '/settings/account'),
-            child: const Text('綁定'),
+            child: Text(tr('綁定')),
           ),
   );
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('帳號綁定')),
+      appBar: AppBar(title: Text(tr('帳號綁定'))),
       body: AsyncView<AppUser>(
         future: _future,
         onRetry: _reload,
         builder: (context, user) => ListView(
           children: [
             _tile('Google', user.googleLinked),
-            const Divider(height: 1),
+            Divider(height: 1),
             _tile('LINE', user.lineLinked),
-            const Padding(
+            Padding(
               padding: EdgeInsets.all(16),
               child: Text(
-                '綁定需於瀏覽器完成授權；解除綁定前請確認仍可用其他方式登入。',
+                tr('綁定需於瀏覽器完成授權；解除綁定前請確認仍可用其他方式登入。'),
                 style: TextStyle(fontSize: 12, color: Colors.grey),
               ),
             ),
@@ -549,7 +552,7 @@ class _SessionsScreenState extends State<SessionsScreen> {
   Future<void> _revoke(LoginSession s) async {
     try {
       await ApiClient.instance.revokeSession(s.id);
-      if (mounted) toast(context, '已登出該裝置');
+      if (mounted) toast(context, tr('已登出該裝置'));
       _reload();
     } catch (e) {
       if (mounted) toast(context, '$e');
@@ -559,38 +562,38 @@ class _SessionsScreenState extends State<SessionsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('登入裝置')),
+      appBar: AppBar(title: Text(tr('登入裝置'))),
       body: AsyncView<List<LoginSession>>(
         future: _future,
         onRetry: _reload,
         builder: (context, list) {
           if (list.isEmpty) {
-            return const EmptyState(
+            return EmptyState(
               icon: Icons.devices_outlined,
-              message: '尚無登入裝置紀錄',
+              message: tr('尚無登入裝置紀錄'),
             );
           }
           return RefreshIndicator(
             onRefresh: () async => _reload(),
             child: ListView.separated(
               itemCount: list.length,
-              separatorBuilder: (_, _) => const Divider(height: 1),
+              separatorBuilder: (_, _) => Divider(height: 1),
               itemBuilder: (context, i) {
                 final s = list[i];
                 return ListTile(
-                  leading: const Icon(Icons.devices),
+                  leading: Icon(Icons.devices),
                   title: Text(s.deviceName),
                   subtitle: Text(
                     '${s.ip.isEmpty ? '—' : s.ip}・${_fmtTs(s.loginAt)}',
                   ),
                   trailing: s.current
-                      ? const Chip(
-                          label: Text('目前裝置'),
+                      ? Chip(
+                          label: Text(tr('目前裝置')),
                           visualDensity: VisualDensity.compact,
                         )
                       : TextButton(
                           onPressed: () => _revoke(s),
-                          child: const Text('登出'),
+                          child: Text(tr('登出')),
                         ),
                 );
               },
@@ -633,28 +636,25 @@ class _LoginAuditScreenState extends State<LoginAuditScreen> {
     'google' => 'Google',
     'line' => 'LINE',
     'passkey' => 'Passkey',
-    _ => '密碼',
+    _ => tr('密碼'),
   };
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('登入紀錄')),
+      appBar: AppBar(title: Text(tr('登入紀錄'))),
       body: AsyncView<List<LoginAuditLog>>(
         future: _future,
         onRetry: _reload,
         builder: (context, list) {
           if (list.isEmpty) {
-            return const EmptyState(
-              icon: Icons.history,
-              message: '尚無登入紀錄',
-            );
+            return EmptyState(icon: Icons.history, message: tr('尚無登入紀錄'));
           }
           return RefreshIndicator(
             onRefresh: () async => _reload(),
             child: ListView.separated(
               itemCount: list.length,
-              separatorBuilder: (_, _) => const Divider(height: 1),
+              separatorBuilder: (_, _) => Divider(height: 1),
               itemBuilder: (context, i) {
                 final l = list[i];
                 return ListTile(

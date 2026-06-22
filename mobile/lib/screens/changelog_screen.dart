@@ -3,6 +3,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 
 import '../api_client.dart';
 import '../widgets.dart';
+import '../l10n.dart';
 
 /// 版本資訊頁：顯示目前 App 版本、是否有可更新版本，以及各版本的更新內容。
 class ChangelogScreen extends StatefulWidget {
@@ -36,11 +37,11 @@ class _ChangelogScreenState extends State<ChangelogScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('版本資訊'),
+        title: Text(tr('版本資訊')),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh),
-            tooltip: '重新檢查',
+            icon: Icon(Icons.refresh),
+            tooltip: tr('重新檢查'),
             onPressed: _refresh,
           ),
         ],
@@ -54,16 +55,16 @@ class _ChangelogScreenState extends State<ChangelogScreen> {
             padding: const EdgeInsets.all(16),
             children: [
               _header(context, info),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               Text(
-                info.updateAvailable ? '可更新內容' : '最近更新內容',
+                info.updateAvailable ? tr('可更新內容') : tr('最近更新內容'),
                 style: Theme.of(context).textTheme.titleSmall,
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
               if (info.releasesToShow.isEmpty)
-                const Padding(
+                Padding(
                   padding: EdgeInsets.symmetric(vertical: 24),
-                  child: Center(child: Text('目前沒有更新內容')),
+                  child: Center(child: Text(tr('目前沒有更新內容'))),
                 )
               else
                 for (final r in info.releasesToShow) _releaseCard(context, r),
@@ -88,20 +89,20 @@ class _ChangelogScreenState extends State<ChangelogScreen> {
               color: upToDate ? scheme.primary : scheme.tertiary,
               size: 36,
             ),
-            const SizedBox(width: 16),
+            SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '目前版本 v${info.appVersion}',
+                    tr('目前版本 v${info.appVersion}'),
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
-                  const SizedBox(height: 4),
+                  SizedBox(height: 4),
                   Text(
                     upToDate
-                        ? '已是最新版本'
-                        : '有新版本 v${info.latestVersion} 可更新',
+                        ? tr('已是最新版本')
+                        : tr('有新版本 v${info.latestVersion} 可更新'),
                     style: TextStyle(
                       color: upToDate ? scheme.primary : scheme.tertiary,
                       fontWeight: FontWeight.w600,
@@ -134,7 +135,7 @@ class _ChangelogScreenState extends State<ChangelogScreen> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(width: 8),
+                SizedBox(width: 8),
                 Text(
                   r.date,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -144,15 +145,15 @@ class _ChangelogScreenState extends State<ChangelogScreen> {
               ],
             ),
             if (r.title.isNotEmpty) ...[
-              const SizedBox(height: 4),
+              SizedBox(height: 4),
               Text(
                 r.title,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
               ),
             ],
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
             for (final c in r.changes) _changeRow(context, c),
           ],
         ),
@@ -167,10 +168,8 @@ class _ChangelogScreenState extends State<ChangelogScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _tagChip(context, c.tag),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(c.text, style: const TextStyle(height: 1.45)),
-          ),
+          SizedBox(width: 8),
+          Expanded(child: Text(c.text, style: TextStyle(height: 1.45))),
         ],
       ),
     );
@@ -178,12 +177,12 @@ class _ChangelogScreenState extends State<ChangelogScreen> {
 
   Widget _tagChip(BuildContext context, String tag) {
     final (label, color) = switch (tag) {
-      'new' => ('新增', Colors.green),
-      'improved' => ('改進', Colors.blue),
-      'fixed' || 'fix' => ('修正', Colors.orange),
-      'removed' => ('移除', Colors.grey),
-      'warning' => ('注意', Colors.red),
-      _ => (tag.isEmpty ? '更新' : tag, Colors.grey),
+      'new' => (tr('新增'), Colors.green),
+      'improved' => (tr('改進'), Colors.blue),
+      'fixed' || 'fix' => (tr('修正'), Colors.orange),
+      'removed' => (tr('移除'), Colors.grey),
+      'warning' => (tr('注意'), Colors.red),
+      _ => (tag.isEmpty ? tr('更新') : tag, Colors.grey),
     };
     return Container(
       margin: const EdgeInsets.only(top: 2),
@@ -234,17 +233,21 @@ class _VersionInfo {
     required String appVersion,
     required Map<String, dynamic> data,
   }) {
-    final releases = (data['releases'] as List? ?? const [])
-        .whereType<Map>()
-        .map((m) => _Release.from(m.cast<String, dynamic>()))
-        .toList()
-      ..sort((a, b) => compareVersions(b.version, a.version));
-    final latest = (data['latestVersion'] ?? data['currentVersion'] ?? appVersion)
-        .toString();
+    final releases =
+        (data['releases'] as List? ?? [])
+            .whereType<Map>()
+            .map((m) => _Release.from(m.cast<String, dynamic>()))
+            .toList()
+          ..sort((a, b) => compareVersions(b.version, a.version));
+    final latest =
+        (data['latestVersion'] ?? data['currentVersion'] ?? appVersion)
+            .toString();
     final updateAvailable = compareVersions(latest, appVersion) > 0;
     // 有新版時只列比目前 App 版本新的；否則列最近數筆已包含的更新內容。
     final toShow = updateAvailable
-        ? releases.where((r) => compareVersions(r.version, appVersion) > 0).toList()
+        ? releases
+              .where((r) => compareVersions(r.version, appVersion) > 0)
+              .toList()
         : releases.take(10).toList();
     return _VersionInfo(
       appVersion: appVersion,
@@ -272,7 +275,7 @@ class _Release {
     version: '${m['version'] ?? ''}',
     date: '${m['date'] ?? ''}',
     title: '${m['title'] ?? ''}',
-    changes: (m['changes'] as List? ?? const [])
+    changes: (m['changes'] as List? ?? [])
         .whereType<Map>()
         .map((c) => _Change.from(c.cast<String, dynamic>()))
         .toList(),

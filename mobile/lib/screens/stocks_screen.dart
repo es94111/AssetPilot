@@ -5,6 +5,7 @@ import '../format.dart';
 import '../models.dart';
 import '../widgets.dart';
 import 'stock_settings_screen.dart';
+import '../l10n.dart';
 
 class StocksScreen extends StatefulWidget {
   const StocksScreen({super.key});
@@ -74,40 +75,40 @@ class _StocksScreenState extends State<StocksScreen>
     final onDividends = _tab.index == 2;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('股票'),
+        title: Text(tr('股票')),
         actions: [
           if (onHoldings)
             _updating
                 ? _appBarSpinner
                 : IconButton(
                     onPressed: _updatePrices,
-                    icon: const Icon(Icons.refresh),
-                    tooltip: '更新股價',
+                    icon: Icon(Icons.refresh),
+                    tooltip: tr('更新股價'),
                   ),
           if (onDividends)
             _syncingDividends
                 ? _appBarSpinner
                 : IconButton(
                     onPressed: _syncDividends,
-                    icon: const Icon(Icons.sync),
-                    tooltip: '同步股利',
+                    icon: Icon(Icons.sync),
+                    tooltip: tr('同步股利'),
                   ),
           IconButton(
-            tooltip: '股票設定',
-            icon: const Icon(Icons.settings_outlined),
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const StockSettingsScreen()),
-            ),
+            tooltip: tr('股票設定'),
+            icon: Icon(Icons.settings_outlined),
+            onPressed: () => Navigator.of(
+              context,
+            ).push(MaterialPageRoute(builder: (_) => StockSettingsScreen())),
           ),
         ],
         bottom: TabBar(
           controller: _tab,
           isScrollable: true,
-          tabs: const [
-            Tab(text: '持股'),
-            Tab(text: '交易'),
-            Tab(text: '股利'),
-            Tab(text: '損益'),
+          tabs: [
+            Tab(text: tr('持股')),
+            Tab(text: tr('交易')),
+            Tab(text: tr('股利')),
+            Tab(text: tr('損益')),
           ],
         ),
       ),
@@ -115,9 +116,9 @@ class _StocksScreenState extends State<StocksScreen>
         controller: _tab,
         children: [
           _HoldingsTab(key: _key),
-          const _StockTxnTab(),
+          _StockTxnTab(),
           _DividendTab(key: _divKey),
-          const _RealizedTab(),
+          _RealizedTab(),
         ],
       ),
     );
@@ -186,12 +187,17 @@ class _HoldingsTabState extends State<_HoldingsTab> {
       toast(
         context,
         updates.isEmpty
-            ? '沒有可更新的股價'
-            : '已更新 ${updates.length} 檔股價${failed > 0 ? '，$failed 檔查詢失敗' : ''}',
+            ? tr('沒有可更新的股價')
+            : trPair(
+                '已更新 ${updates.length} 檔股價${failed > 0 ? '，$failed 檔查詢失敗' : ''}',
+                'Updated ${updates.length} stocks${failed > 0 ? '; $failed lookups failed' : ''}',
+              ),
       );
       _reload();
     } catch (e) {
-      if (mounted) toast(context, '更新股價失敗：$e');
+      if (mounted) {
+        toast(context, trPair('更新股價失敗：$e', 'Failed to update prices: $e'));
+      }
     }
   }
 
@@ -199,7 +205,7 @@ class _HoldingsTabState extends State<_HoldingsTab> {
     final changed = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
-      builder: (_) => const _StockForm(),
+      builder: (_) => _StockForm(),
     );
     if (changed == true) _reload();
   }
@@ -217,16 +223,21 @@ class _HoldingsTabState extends State<_HoldingsTab> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('刪除股票'),
-        content: Text('確定刪除「${s.symbol} ${s.name}」？其所有交易與股利紀錄將一併刪除，無法復原。'),
+        title: Text(tr('刪除股票')),
+        content: Text(
+          trPair(
+            '確定刪除「${s.symbol} ${s.name}」？其所有交易與股利紀錄將一併刪除，無法復原。',
+            'Delete “${s.symbol} ${s.name}”? All of its transactions and dividends will also be deleted.',
+          ),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('取消'),
+            child: Text(tr('取消')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('刪除'),
+            child: Text(tr('刪除')),
           ),
         ],
       ),
@@ -234,7 +245,7 @@ class _HoldingsTabState extends State<_HoldingsTab> {
     if (ok != true) return;
     try {
       await ApiClient.instance.deleteStock(s.id);
-      if (mounted) toast(context, '已刪除');
+      if (mounted) toast(context, tr('已刪除'));
       _reload();
     } catch (e) {
       if (mounted) toast(context, '$e');
@@ -246,8 +257,8 @@ class _HoldingsTabState extends State<_HoldingsTab> {
     return Scaffold(
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _addStock,
-        icon: const Icon(Icons.add),
-        label: const Text('新增股票'),
+        icon: Icon(Icons.add),
+        label: Text(tr('新增股票')),
       ),
       body: AsyncView<_HoldingsData>(
         future: _future,
@@ -258,11 +269,14 @@ class _HoldingsTabState extends State<_HoldingsTab> {
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 88),
             children: [
               _PortfolioCard(s: data.summary),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               if (data.stocks.isEmpty)
-                const Padding(
+                Padding(
                   padding: EdgeInsets.symmetric(vertical: 32),
-                  child: EmptyState(icon: Icons.trending_up, message: '尚無持股'),
+                  child: EmptyState(
+                    icon: Icons.trending_up,
+                    message: tr('尚無持股'),
+                  ),
                 )
               else
                 for (final s in data.stocks)
@@ -295,10 +309,10 @@ class _PortfolioCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '總市值',
+              tr('總市值'),
               style: TextStyle(color: theme.colorScheme.onPrimaryContainer),
             ),
-            const SizedBox(height: 4),
+            SizedBox(height: 4),
             Text(
               twd(s.totalMarketValue),
               style: theme.textTheme.headlineMedium?.copyWith(
@@ -306,7 +320,7 @@ class _PortfolioCard extends StatelessWidget {
                 color: theme.colorScheme.onPrimaryContainer,
               ),
             ),
-            const Divider(height: 24),
+            Divider(height: 24),
             Row(
               children: [
                 Expanded(
@@ -314,7 +328,7 @@ class _PortfolioCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '未實現損益',
+                        tr('未實現損益'),
                         style: TextStyle(
                           fontSize: 12,
                           color: theme.colorScheme.onPrimaryContainer,
@@ -335,7 +349,7 @@ class _PortfolioCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '報酬率',
+                        tr('報酬率'),
                         style: TextStyle(
                           fontSize: 12,
                           color: theme.colorScheme.onPrimaryContainer,
@@ -384,20 +398,23 @@ class _HoldingTile extends StatelessWidget {
           children: [
             Text(
               '${s.symbol} ${s.name}',
-              style: const TextStyle(fontWeight: FontWeight.bold),
+              style: TextStyle(fontWeight: FontWeight.bold),
             ),
             if (s.delisted)
-              const Padding(
+              Padding(
                 padding: EdgeInsets.only(left: 6),
                 child: Text(
-                  '下市',
+                  tr('下市'),
                   style: TextStyle(fontSize: 11, color: Colors.grey),
                 ),
               ),
           ],
         ),
         subtitle: Text(
-          '${intFmt(s.totalShares)} 股・均價 ${s.avgCost}・現價 ${s.currentPrice}',
+          trPair(
+            '${intFmt(s.totalShares)} 股・均價 ${s.avgCost}・現價 ${s.currentPrice}',
+            '${intFmt(s.totalShares)} shares · Avg. ${s.avgCost} · Current ${s.currentPrice}',
+          ),
         ),
         trailing: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -405,7 +422,7 @@ class _HoldingTile extends StatelessWidget {
           children: [
             Text(
               twd(s.marketValue),
-              style: const TextStyle(fontWeight: FontWeight.bold),
+              style: TextStyle(fontWeight: FontWeight.bold),
             ),
             Text(
               '${signed(s.estimatedProfit)} (${s.returnRate}%)',
@@ -454,7 +471,7 @@ class _StockTxnTabState extends State<_StockTxnTab> {
         .toList();
     if (!mounted) return;
     if (stocks.isEmpty) {
-      toast(context, '請先到「持股」分頁新增股票');
+      toast(context, tr('請先到「持股」分頁新增股票'));
       return;
     }
     final changed = await showModalBottomSheet<bool>(
@@ -468,7 +485,7 @@ class _StockTxnTabState extends State<_StockTxnTab> {
   Future<void> _delete(StockTxn t) async {
     try {
       await ApiClient.instance.deleteStockTransaction(t.id);
-      if (mounted) toast(context, '已刪除');
+      if (mounted) toast(context, tr('已刪除'));
       _reload();
     } catch (e) {
       if (mounted) toast(context, '$e');
@@ -480,22 +497,22 @@ class _StockTxnTabState extends State<_StockTxnTab> {
     return Scaffold(
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openForm(),
-        icon: const Icon(Icons.add),
-        label: const Text('新增交易'),
+        icon: Icon(Icons.add),
+        label: Text(tr('新增交易')),
       ),
       body: AsyncView<List<StockTxn>>(
         future: _future,
         onRetry: _reload,
         builder: (context, list) {
           if (list.isEmpty) {
-            return const EmptyState(icon: Icons.swap_vert, message: '尚無股票交易');
+            return EmptyState(icon: Icons.swap_vert, message: tr('尚無股票交易'));
           }
           return RefreshIndicator(
             onRefresh: () async => _reload(),
             child: ListView.separated(
               padding: const EdgeInsets.only(bottom: 88),
               itemCount: list.length,
-              separatorBuilder: (_, _) => const Divider(height: 1),
+              separatorBuilder: (_, _) => Divider(height: 1),
               itemBuilder: (context, i) {
                 final t = list[i];
                 final isBuy = t.type == 'buy';
@@ -504,7 +521,7 @@ class _StockTxnTabState extends State<_StockTxnTab> {
                     backgroundColor: (isBuy ? Colors.red : Colors.green)
                         .withValues(alpha: 0.15),
                     child: Text(
-                      isBuy ? '買' : '賣',
+                      isBuy ? tr('買') : tr('賣'),
                       style: TextStyle(
                         color: isBuy ? Colors.red : Colors.green,
                         fontWeight: FontWeight.bold,
@@ -513,11 +530,14 @@ class _StockTxnTabState extends State<_StockTxnTab> {
                   ),
                   title: Text('${t.symbol} ${t.stockName}'),
                   subtitle: Text(
-                    '${t.date}・${intFmt(t.shares)} 股 @ ${t.price}',
+                    trPair(
+                      '${t.date}・${intFmt(t.shares)} 股 @ ${t.price}',
+                      '${t.date} · ${intFmt(t.shares)} shares @ ${t.price}',
+                    ),
                   ),
                   trailing: Text(
                     twd(t.shares * t.price),
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+                    style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                   onTap: () => _openForm(t),
                   onLongPress: () => _delete(t),
@@ -569,7 +589,7 @@ class _DividendTabState extends State<_DividendTab> {
         .toList();
     if (!mounted) return;
     if (stocks.isEmpty) {
-      toast(context, '請先到「持股」分頁新增股票');
+      toast(context, tr('請先到「持股」分頁新增股票'));
       return;
     }
     final changed = await showModalBottomSheet<bool>(
@@ -585,16 +605,21 @@ class _DividendTabState extends State<_DividendTab> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('刪除股利'),
-        content: Text('確定刪除 ${d.symbol} 於 ${d.date} 的股利紀錄？'),
+        title: Text(tr('刪除股利')),
+        content: Text(
+          trPair(
+            '確定刪除 ${d.symbol} 於 ${d.date} 的股利紀錄？',
+            'Delete the ${d.symbol} dividend from ${d.date}?',
+          ),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('取消'),
+            child: Text(tr('取消')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('刪除'),
+            child: Text(tr('刪除')),
           ),
         ],
       ),
@@ -602,7 +627,7 @@ class _DividendTabState extends State<_DividendTab> {
     if (ok != true) return;
     try {
       await ApiClient.instance.deleteStockDividend(d.id);
-      if (mounted) toast(context, '已刪除');
+      if (mounted) toast(context, tr('已刪除'));
       _reload();
     } catch (e) {
       if (mounted) toast(context, '$e');
@@ -620,12 +645,17 @@ class _DividendTabState extends State<_DividendTab> {
       toast(
         context,
         synced == 0
-            ? '沒有新的股利可同步'
-            : '已同步 $synced 筆股利${skipped > 0 ? '，略過 $skipped 筆' : ''}',
+            ? tr('沒有新的股利可同步')
+            : trPair(
+                '已同步 $synced 筆股利${skipped > 0 ? '，略過 $skipped 筆' : ''}',
+                'Synced $synced dividends${skipped > 0 ? '; skipped $skipped' : ''}',
+              ),
       );
       if (synced > 0) _reload();
     } catch (e) {
-      if (mounted) toast(context, '同步股利失敗：$e');
+      if (mounted) {
+        toast(context, trPair('同步股利失敗：$e', 'Failed to sync dividends: $e'));
+      }
     }
   }
 
@@ -634,17 +664,17 @@ class _DividendTabState extends State<_DividendTab> {
     return Scaffold(
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openForm(),
-        icon: const Icon(Icons.add),
-        label: const Text('新增股利'),
+        icon: Icon(Icons.add),
+        label: Text(tr('新增股利')),
       ),
       body: AsyncView<List<Dividend>>(
         future: _future,
         onRetry: _reload,
         builder: (context, list) {
           if (list.isEmpty) {
-            return const EmptyState(
+            return EmptyState(
               icon: Icons.savings_outlined,
-              message: '尚無股利紀錄',
+              message: tr('尚無股利紀錄'),
             );
           }
           return RefreshIndicator(
@@ -652,7 +682,7 @@ class _DividendTabState extends State<_DividendTab> {
             child: ListView.separated(
               padding: const EdgeInsets.only(bottom: 88),
               itemCount: list.length,
-              separatorBuilder: (_, _) => const Divider(height: 1),
+              separatorBuilder: (_, _) => Divider(height: 1),
               itemBuilder: (context, i) {
                 final d = list[i];
                 return ListTile(
@@ -661,24 +691,30 @@ class _DividendTabState extends State<_DividendTab> {
                   title: Text('${d.symbol} ${d.stockName}'),
                   subtitle: Text(d.date),
                   trailing: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    if (d.cashDividend > 0)
-                      Text(
-                        '現金 ${twd(d.cashDividend)}',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.green,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      if (d.cashDividend > 0)
+                        Text(
+                          trPair(
+                            '現金 ${twd(d.cashDividend)}',
+                            'Cash ${twd(d.cashDividend)}',
+                          ),
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.green,
+                          ),
                         ),
-                      ),
-                    if (d.stockDividendShares > 0)
-                      Text(
-                        '配股 ${intFmt(d.stockDividendShares)} 股',
-                        style: const TextStyle(fontSize: 12),
-                      ),
-                  ],
-                ),
+                      if (d.stockDividendShares > 0)
+                        Text(
+                          trPair(
+                            '配股 ${intFmt(d.stockDividendShares)} 股',
+                            '${intFmt(d.stockDividendShares)} stock-dividend shares',
+                          ),
+                          style: TextStyle(fontSize: 12),
+                        ),
+                    ],
+                  ),
                 );
               },
             ),
@@ -722,9 +758,9 @@ class _RealizedTabState extends State<_RealizedTab> {
       onRetry: _reload,
       builder: (context, list) {
         if (list.isEmpty) {
-          return const EmptyState(
+          return EmptyState(
             icon: Icons.account_balance,
-            message: '尚無已實現損益',
+            message: tr('尚無已實現損益'),
           );
         }
         final total = list.fold<num>(0, (s, r) => s + r.realizedPL);
@@ -738,8 +774,8 @@ class _RealizedTabState extends State<_RealizedTab> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      '已實現損益合計',
+                    Text(
+                      tr('已實現損益合計'),
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                     Text(
@@ -755,7 +791,12 @@ class _RealizedTabState extends State<_RealizedTab> {
               for (final r in list)
                 ListTile(
                   title: Text('${r.symbol} ${r.name}'),
-                  subtitle: Text('${r.date}・賣 ${intFmt(r.shares)} 股'),
+                  subtitle: Text(
+                    trPair(
+                      '${r.date}・賣 ${intFmt(r.shares)} 股',
+                      '${r.date} · Sold ${intFmt(r.shares)} shares',
+                    ),
+                  ),
                   trailing: Text(
                     '${signed(r.realizedPL)} (${r.returnRate}%)',
                     style: TextStyle(
@@ -774,7 +815,11 @@ class _RealizedTabState extends State<_RealizedTab> {
 
 // ── 表單 ──────────────────────────────────────────────────────
 
-const _kStockTypes = {'stock': '一般股票', 'etf': 'ETF', 'warrant': '權證'};
+Map<String, String> get _kStockTypes => {
+  'stock': tr('一般股票'),
+  'etf': 'ETF',
+  'warrant': tr('權證'),
+};
 
 class _StockForm extends StatefulWidget {
   final Stock? existing;
@@ -840,33 +885,33 @@ class _StockFormState extends State<_StockForm> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              _isEdit ? '編輯股票' : '新增股票',
+              _isEdit ? tr('編輯股票') : tr('新增股票'),
               style: Theme.of(context).textTheme.titleLarge,
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             TextFormField(
               controller: _symbol,
               enabled: !_isEdit,
-              decoration: const InputDecoration(
-                labelText: '股票代號（如 2330）',
+              decoration: InputDecoration(
+                labelText: tr('股票代號（如 2330）'),
                 border: OutlineInputBorder(),
               ),
               validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? '請輸入代號' : null,
+                  (v == null || v.trim().isEmpty) ? tr('請輸入代號') : null,
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             TextFormField(
               controller: _name,
               decoration: InputDecoration(
-                labelText: _isEdit ? '名稱' : '名稱（選填，留空自動帶入）',
-                border: const OutlineInputBorder(),
+                labelText: _isEdit ? tr('名稱') : tr('名稱（選填，留空自動帶入）'),
+                border: OutlineInputBorder(),
               ),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             DropdownButtonFormField<String>(
               initialValue: _stockType,
-              decoration: const InputDecoration(
-                labelText: '類型（影響證交稅率）',
+              decoration: InputDecoration(
+                labelText: tr('類型（影響證交稅率）'),
                 border: OutlineInputBorder(),
               ),
               items: [
@@ -875,19 +920,19 @@ class _StockFormState extends State<_StockForm> {
               ],
               onChanged: (v) => setState(() => _stockType = v ?? 'stock'),
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
             FilledButton(
               onPressed: _saving ? null : _save,
               style: FilledButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 14),
               ),
               child: _saving
-                  ? const SizedBox(
+                  ? SizedBox(
                       height: 20,
                       width: 20,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : const Text('儲存'),
+                  : Text(tr('儲存')),
             ),
           ],
         ),
@@ -1000,24 +1045,24 @@ class _StockTxnFormState extends State<_StockTxnForm> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                _isEdit ? '編輯股票交易' : '新增股票交易',
+                _isEdit ? tr('編輯股票交易') : tr('新增股票交易'),
                 style: Theme.of(context).textTheme.titleLarge,
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               SegmentedButton<String>(
-                segments: const [
-                  ButtonSegment(value: 'buy', label: Text('買進')),
-                  ButtonSegment(value: 'sell', label: Text('賣出')),
+                segments: [
+                  ButtonSegment(value: 'buy', label: Text(tr('買進'))),
+                  ButtonSegment(value: 'sell', label: Text(tr('賣出'))),
                 ],
                 selected: {_type},
                 onSelectionChanged: (s) => setState(() => _type = s.first),
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               DropdownButtonFormField<String>(
                 initialValue: _stockId,
                 isExpanded: true,
-                decoration: const InputDecoration(
-                  labelText: '股票',
+                decoration: InputDecoration(
+                  labelText: tr('股票'),
                   border: OutlineInputBorder(),
                 ),
                 items: [
@@ -1029,33 +1074,33 @@ class _StockTxnFormState extends State<_StockTxnForm> {
                 ],
                 onChanged: (v) => setState(() => _stockId = v),
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               Row(
                 children: [
                   Expanded(
                     child: TextFormField(
                       controller: _shares,
                       keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                        labelText: '股數',
+                      decoration: InputDecoration(
+                        labelText: tr('股數'),
                         border: OutlineInputBorder(),
                       ),
                       validator: (v) {
                         final n = int.tryParse(v?.trim() ?? '');
-                        if (n == null || n <= 0) return '正整數';
+                        if (n == null || n <= 0) return tr('正整數');
                         return null;
                       },
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  SizedBox(width: 12),
                   Expanded(
                     child: TextFormField(
                       controller: _price,
                       keyboardType: const TextInputType.numberWithOptions(
                         decimal: true,
                       ),
-                      decoration: const InputDecoration(
-                        labelText: '價格',
+                      decoration: InputDecoration(
+                        labelText: tr('價格'),
                         border: OutlineInputBorder(),
                       ),
                       validator: (v) {
@@ -1067,7 +1112,7 @@ class _StockTxnFormState extends State<_StockTxnForm> {
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               Row(
                 children: [
                   Expanded(
@@ -1076,37 +1121,37 @@ class _StockTxnFormState extends State<_StockTxnForm> {
                       keyboardType: const TextInputType.numberWithOptions(
                         decimal: true,
                       ),
-                      decoration: const InputDecoration(
-                        labelText: '手續費（選填）',
-                        hintText: '自動',
+                      decoration: InputDecoration(
+                        labelText: tr('手續費（選填）'),
+                        hintText: tr('自動'),
                         border: OutlineInputBorder(),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  SizedBox(width: 12),
                   Expanded(
                     child: TextFormField(
                       controller: _tax,
                       keyboardType: const TextInputType.numberWithOptions(
                         decimal: true,
                       ),
-                      decoration: const InputDecoration(
-                        labelText: '證交稅（選填）',
-                        hintText: '自動',
+                      decoration: InputDecoration(
+                        labelText: tr('證交稅（選填）'),
+                        hintText: tr('自動'),
                         border: OutlineInputBorder(),
                       ),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               ListTile(
                 shape: RoundedRectangleBorder(
                   side: BorderSide(color: Theme.of(context).dividerColor),
                   borderRadius: BorderRadius.circular(4),
                 ),
-                leading: const Icon(Icons.calendar_today),
-                title: const Text('日期'),
+                leading: Icon(Icons.calendar_today),
+                title: Text(tr('日期')),
                 trailing: Text(_dateStr),
                 onTap: () async {
                   final d = await showDatePicker(
@@ -1118,32 +1163,32 @@ class _StockTxnFormState extends State<_StockTxnForm> {
                   if (d != null) setState(() => _date = d);
                 },
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               TextFormField(
                 controller: _note,
-                decoration: const InputDecoration(
-                  labelText: '備註（選填）',
+                decoration: InputDecoration(
+                  labelText: tr('備註（選填）'),
                   border: OutlineInputBorder(),
                 ),
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
               Text(
-                '手續費／證交稅留空則由後端自動計算',
+                tr('手續費／證交稅留空則由後端自動計算'),
                 style: Theme.of(context).textTheme.bodySmall,
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               FilledButton(
                 onPressed: _saving ? null : _save,
                 style: FilledButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
                 child: _saving
-                    ? const SizedBox(
+                    ? SizedBox(
                         height: 20,
                         width: 20,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : const Text('儲存'),
+                    : Text(tr('儲存')),
               ),
             ],
           ),
@@ -1184,9 +1229,7 @@ class _DividendFormState extends State<_DividendForm> {
     super.initState();
     final e = widget.existing;
     if (e != null) {
-      _stockId = widget.stocks.any((s) => s.id == e.stockId)
-          ? e.stockId
-          : null;
+      _stockId = widget.stocks.any((s) => s.id == e.stockId) ? e.stockId : null;
       _accountId = widget.accounts.any((a) => a.id == e.accountId)
           ? e.accountId
           : null;
@@ -1215,11 +1258,11 @@ class _DividendFormState extends State<_DividendForm> {
     final cash = num.tryParse(_cash.text.trim()) ?? 0;
     final shares = num.tryParse(_shares.text.trim()) ?? 0;
     if (cash <= 0 && shares <= 0) {
-      toast(context, '現金股利與配股至少填一項');
+      toast(context, tr('現金股利與配股至少填一項'));
       return;
     }
     if (cash > 0 && _accountId == null) {
-      toast(context, '含現金股利時，入款帳戶為必填');
+      toast(context, tr('含現金股利時，入款帳戶為必填'));
       return;
     }
     setState(() => _saving = true);
@@ -1260,17 +1303,17 @@ class _DividendFormState extends State<_DividendForm> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                _isEdit ? '編輯股利' : '新增股利',
+                _isEdit ? tr('編輯股利') : tr('新增股利'),
                 style: Theme.of(context).textTheme.titleLarge,
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               DropdownButtonFormField<String>(
                 initialValue: _stockId,
                 isExpanded: true,
                 // 編輯時後端不支援更換股票，故鎖定。
                 decoration: InputDecoration(
-                  labelText: '股票',
-                  border: const OutlineInputBorder(),
+                  labelText: tr('股票'),
+                  border: OutlineInputBorder(),
                   filled: _isEdit,
                 ),
                 items: [
@@ -1280,19 +1323,17 @@ class _DividendFormState extends State<_DividendForm> {
                       child: Text('${s.symbol} ${s.name}'),
                     ),
                 ],
-                onChanged: _isEdit
-                    ? null
-                    : (v) => setState(() => _stockId = v),
-                validator: (v) => v == null ? '請選擇股票' : null,
+                onChanged: _isEdit ? null : (v) => setState(() => _stockId = v),
+                validator: (v) => v == null ? tr('請選擇股票') : null,
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               ListTile(
                 shape: RoundedRectangleBorder(
                   side: BorderSide(color: Theme.of(context).dividerColor),
                   borderRadius: BorderRadius.circular(4),
                 ),
-                leading: const Icon(Icons.calendar_today),
-                title: const Text('日期'),
+                leading: Icon(Icons.calendar_today),
+                title: Text(tr('日期')),
                 trailing: Text(_dateStr),
                 onTap: () async {
                   final d = await showDatePicker(
@@ -1304,64 +1345,64 @@ class _DividendFormState extends State<_DividendForm> {
                   if (d != null) setState(() => _date = d);
                 },
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               TextFormField(
                 controller: _cash,
                 keyboardType: const TextInputType.numberWithOptions(
                   decimal: true,
                 ),
-                decoration: const InputDecoration(
-                  labelText: '現金股利（總額，選填）',
+                decoration: InputDecoration(
+                  labelText: tr('現金股利（總額，選填）'),
                   border: OutlineInputBorder(),
                 ),
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               TextFormField(
                 controller: _shares,
                 keyboardType: const TextInputType.numberWithOptions(
                   decimal: true,
                 ),
-                decoration: const InputDecoration(
-                  labelText: '配股股數（選填）',
+                decoration: InputDecoration(
+                  labelText: tr('配股股數（選填）'),
                   border: OutlineInputBorder(),
                 ),
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               DropdownButtonFormField<String>(
                 initialValue: _accountId,
                 isExpanded: true,
-                decoration: const InputDecoration(
-                  labelText: '入款帳戶（含現金股利時必填）',
+                decoration: InputDecoration(
+                  labelText: tr('入款帳戶（含現金股利時必填）'),
                   border: OutlineInputBorder(),
                 ),
                 items: [
-                  const DropdownMenuItem(value: null, child: Text('未指定')),
+                  DropdownMenuItem(value: null, child: Text(tr('未指定'))),
                   for (final a in widget.accounts)
                     DropdownMenuItem(value: a.id, child: Text(a.name)),
                 ],
                 onChanged: (v) => setState(() => _accountId = v),
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               TextFormField(
                 controller: _note,
-                decoration: const InputDecoration(
-                  labelText: '備註（選填）',
+                decoration: InputDecoration(
+                  labelText: tr('備註（選填）'),
                   border: OutlineInputBorder(),
                 ),
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: 20),
               FilledButton(
                 onPressed: _saving ? null : _save,
                 style: FilledButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
                 child: _saving
-                    ? const SizedBox(
+                    ? SizedBox(
                         height: 20,
                         width: 20,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : const Text('儲存'),
+                    : Text(tr('儲存')),
               ),
             ],
           ),

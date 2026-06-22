@@ -4,6 +4,7 @@ import 'package:app_links/app_links.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'api_client.dart';
+import 'l10n.dart';
 
 /// Google SSO（Authorization Code Flow，系統瀏覽器 + App Link 回呼）。
 ///
@@ -64,7 +65,7 @@ class GoogleAuth {
         mode: LaunchMode.inAppBrowserView,
       );
       if (!launched) {
-        throw ApiException(0, '無法開啟瀏覽器進行 Google 登入');
+        throw ApiException(0, tr('無法開啟瀏覽器進行 Google 登入'));
       }
 
       // 僅在 initial link 與啟動前不同（真正的冷啟動回呼）時才採用，
@@ -77,14 +78,14 @@ class GoogleAuth {
 
       final Uri cb;
       try {
-        cb = await completer.future.timeout(const Duration(minutes: 5));
+        cb = await completer.future.timeout(Duration(minutes: 5));
       } on TimeoutException {
-        throw ApiException(0, 'Google 登入逾時或已取消');
+        throw ApiException(0, tr('Google 登入逾時或已取消'));
       }
 
       final returnedState = cb.queryParameters['state'] ?? '';
       if (returnedState != state) {
-        throw ApiException(0, 'Google 登入狀態不符，請重試');
+        throw ApiException(0, tr('Google 登入狀態不符，請重試'));
       }
       final code = cb.queryParameters['code']!;
       await ApiClient.instance.googleLogin(

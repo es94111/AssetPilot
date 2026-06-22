@@ -7,6 +7,7 @@ import '../widgets.dart';
 import 'changelog_screen.dart';
 import 'report_schedule_screen.dart';
 import 'security_screens.dart';
+import '../l10n.dart';
 
 class SettingsScreen extends StatefulWidget {
   final VoidCallback onLoggedOut;
@@ -33,20 +34,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final newName = await showDialog<String>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('修改顯示名稱'),
+        title: Text(tr('修改顯示名稱')),
         content: TextField(
           controller: ctrl,
           autofocus: true,
-          decoration: const InputDecoration(border: OutlineInputBorder()),
+          decoration: InputDecoration(border: OutlineInputBorder()),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('取消'),
+            child: Text(tr('取消')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, ctrl.text.trim()),
-            child: const Text('儲存'),
+            child: Text(tr('儲存')),
           ),
         ],
       ),
@@ -55,7 +56,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     try {
       await ApiClient.instance.updateDisplayName(newName);
       if (mounted) {
-        toast(context, '已更新');
+        toast(context, tr('已更新'));
         setState(() => _future = _load());
       }
     } catch (e) {
@@ -82,13 +83,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
         bool busy = false;
         return StatefulBuilder(
           builder: (dialogCtx, setLocal) => AlertDialog(
-            title: const Text('刪除帳號'),
+            title: Text(tr('刪除帳號')),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('此操作將永久刪除您的帳號與所有資料（交易、帳戶、股票與設定），且無法復原。'),
-                const SizedBox(height: 16),
+                Text(tr('此操作將永久刪除您的帳號與所有資料（交易、帳戶、股票與設定），且無法復原。')),
+                SizedBox(height: 16),
                 TextField(
                   controller: ctrl,
                   autofocus: true,
@@ -98,8 +99,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ? TextInputType.text
                       : TextInputType.emailAddress,
                   decoration: InputDecoration(
-                    border: const OutlineInputBorder(),
-                    labelText: hasPw ? '請輸入密碼以確認' : '請輸入帳號電子信箱以確認',
+                    border: OutlineInputBorder(),
+                    labelText: hasPw ? tr('請輸入密碼以確認') : tr('請輸入帳號電子信箱以確認'),
                     hintText: hasPw ? null : user.email,
                     errorText: error,
                   ),
@@ -109,7 +110,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             actions: [
               TextButton(
                 onPressed: busy ? null : () => Navigator.pop(dialogCtx, false),
-                child: const Text('取消'),
+                child: Text(tr('取消')),
               ),
               FilledButton(
                 style: FilledButton.styleFrom(
@@ -120,12 +121,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     : () async {
                         final input = ctrl.text.trim();
                         if (hasPw && input.isEmpty) {
-                          setLocal(() => error = '請輸入密碼以確認刪除');
+                          setLocal(() => error = tr('請輸入密碼以確認刪除'));
                           return;
                         }
                         if (!hasPw &&
                             input.toLowerCase() != user.email.toLowerCase()) {
-                          setLocal(() => error = '請輸入正確的帳號電子信箱以確認刪除');
+                          setLocal(() => error = tr('請輸入正確的帳號電子信箱以確認刪除'));
                           return;
                         }
                         setLocal(() {
@@ -147,12 +148,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         }
                       },
                 child: busy
-                    ? const SizedBox(
+                    ? SizedBox(
                         width: 18,
                         height: 18,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : const Text('永久刪除'),
+                    : Text(tr('永久刪除')),
               ),
             ],
           ),
@@ -160,24 +161,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
       },
     );
     if (confirmed == true && mounted) {
-      toast(context, '帳號已刪除');
+      toast(context, tr('帳號已刪除'));
       Navigator.of(context).popUntil((route) => route.isFirst);
       widget.onLoggedOut();
     }
   }
 
   String _themeLabel(ThemeMode m) => switch (m) {
-    ThemeMode.light => '淺色',
-    ThemeMode.dark => '深色',
-    ThemeMode.system => '跟隨系統',
+    ThemeMode.light => tr('淺色'),
+    ThemeMode.dark => tr('深色'),
+    ThemeMode.system => tr('跟隨系統'),
   };
 
   Future<void> _pickLanguage() async {
-    const langs = {'zh-TW': '繁體中文', 'en': 'English'};
+    final langs = {'zh-TW': tr('繁體中文'), 'en': 'English'};
     final picked = await showDialog<String>(
       context: context,
       builder: (_) => SimpleDialog(
-        title: const Text('語言（影響通知與網頁版）'),
+        title: Text(tr('語言（APP、通知與網頁版）')),
         children: [
           for (final e in langs.entries)
             ListTile(
@@ -190,20 +191,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (picked == null) return;
     try {
       await ApiClient.instance.setLanguage(picked);
-      if (mounted) toast(context, '已更新語言：${langs[picked]}');
+      await setAppLocale(picked);
+      if (mounted) toast(context, tr('已更新語言：${langs[picked]}'));
     } catch (e) {
       if (mounted) toast(context, '$e');
     }
   }
 
-  void _push(Widget page) => Navigator.of(
-    context,
-  ).push(MaterialPageRoute(builder: (_) => page));
+  void _push(Widget page) =>
+      Navigator.of(context).push(MaterialPageRoute(builder: (_) => page));
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('設定')),
+      appBar: AppBar(title: Text(tr('設定'))),
       body: AsyncView<AppUser>(
         future: _future,
         onRetry: () => setState(() => _future = _load()),
@@ -220,37 +221,35 @@ class _SettingsScreenState extends State<SettingsScreen> {
               title: Text(user.displayName),
               subtitle: Text(user.email),
               trailing: user.isAdmin
-                  ? const Chip(
-                      label: Text('管理員'),
+                  ? Chip(
+                      label: Text(tr('管理員')),
                       visualDensity: VisualDensity.compact,
                     )
                   : null,
             ),
-            const Divider(),
+            Divider(),
             ListTile(
-              leading: const Icon(Icons.badge_outlined),
-              title: const Text('顯示名稱'),
+              leading: Icon(Icons.badge_outlined),
+              title: Text(tr('顯示名稱')),
               subtitle: Text(user.displayName),
               onTap: () => _editName(user),
             ),
             ValueListenableBuilder<ThemeMode>(
               valueListenable: themeMode,
               builder: (context, mode, _) => ListTile(
-                leading: const Icon(Icons.brightness_6_outlined),
-                title: const Text('主題'),
+                leading: Icon(Icons.brightness_6_outlined),
+                title: Text(tr('主題')),
                 subtitle: Text(_themeLabel(mode)),
                 onTap: () async {
                   final picked = await showDialog<ThemeMode>(
                     context: context,
                     builder: (_) => SimpleDialog(
-                      title: const Text('選擇主題'),
+                      title: Text(tr('選擇主題')),
                       children: [
                         for (final m in ThemeMode.values)
                           ListTile(
                             title: Text(_themeLabel(m)),
-                            trailing: mode == m
-                                ? const Icon(Icons.check)
-                                : null,
+                            trailing: mode == m ? Icon(Icons.check) : null,
                             onTap: () => Navigator.pop(context, m),
                           ),
                       ],
@@ -261,88 +260,90 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ),
             ListTile(
-              leading: const Icon(Icons.payments_outlined),
-              title: const Text('幣別設定'),
-              subtitle: const Text('預設幣別與常用幣別'),
-              onTap: () => _push(const CurrencySettingsScreen()),
+              leading: Icon(Icons.payments_outlined),
+              title: Text(tr('幣別設定')),
+              subtitle: Text(tr('預設幣別與常用幣別')),
+              onTap: () => _push(CurrencySettingsScreen()),
             ),
             ListTile(
-              leading: const Icon(Icons.translate),
-              title: const Text('語言'),
-              subtitle: const Text('繁體中文 / English'),
+              leading: Icon(Icons.translate),
+              title: Text(tr('語言')),
+              subtitle: Text(tr('繁體中文 / English')),
               onTap: _pickLanguage,
             ),
             ListTile(
-              leading: const Icon(Icons.notifications_outlined),
-              title: const Text('報表通知'),
-              subtitle: const Text('自訂定期收支報表寄送時間'),
-              onTap: () => _push(const ReportScheduleScreen()),
+              leading: Icon(Icons.notifications_outlined),
+              title: Text(tr('報表通知')),
+              subtitle: Text(tr('自訂定期收支報表寄送時間')),
+              onTap: () => _push(ReportScheduleScreen()),
             ),
-            const Divider(),
-            const Padding(
+            Divider(),
+            Padding(
               padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
               child: Text(
-                '帳號安全',
+                tr('帳號安全'),
                 style: TextStyle(fontSize: 13, color: Colors.grey),
               ),
             ),
             ListTile(
-              leading: const Icon(Icons.password_outlined),
-              title: Text(user.hasPassword ? '修改密碼' : '設定密碼'),
-              onTap: () =>
-                  showChangePasswordSheet(context, hasPassword: user.hasPassword),
+              leading: Icon(Icons.password_outlined),
+              title: Text(user.hasPassword ? tr('修改密碼') : tr('設定密碼')),
+              onTap: () => showChangePasswordSheet(
+                context,
+                hasPassword: user.hasPassword,
+              ),
             ),
             ListTile(
-              leading: const Icon(Icons.key_outlined),
-              title: const Text('Passkey 管理'),
-              onTap: () => _push(const PasskeysScreen()),
+              leading: Icon(Icons.key_outlined),
+              title: Text(tr('Passkey 管理')),
+              onTap: () => _push(PasskeysScreen()),
             ),
             ListTile(
-              leading: const Icon(Icons.link),
-              title: const Text('帳號綁定'),
-              subtitle: const Text('Google / LINE'),
-              onTap: () => _push(const AccountBindingsScreen()),
+              leading: Icon(Icons.link),
+              title: Text(tr('帳號綁定')),
+              subtitle: Text('Google / LINE'),
+              onTap: () => _push(AccountBindingsScreen()),
             ),
             ListTile(
-              leading: const Icon(Icons.devices_outlined),
-              title: const Text('登入裝置'),
-              onTap: () => _push(const SessionsScreen()),
+              leading: Icon(Icons.devices_outlined),
+              title: Text(tr('登入裝置')),
+              onTap: () => _push(SessionsScreen()),
             ),
             ListTile(
-              leading: const Icon(Icons.history),
-              title: const Text('登入紀錄'),
-              onTap: () => _push(const LoginAuditScreen()),
+              leading: Icon(Icons.history),
+              title: Text(tr('登入紀錄')),
+              onTap: () => _push(LoginAuditScreen()),
             ),
-            const Divider(),
+            Divider(),
             ListTile(
-              leading: const Icon(Icons.system_update_outlined),
-              title: const Text('版本資訊'),
-              subtitle: const Text('查看目前版本與更新內容'),
-              onTap: () => _push(const ChangelogScreen()),
+              leading: Icon(Icons.system_update_outlined),
+              title: Text(tr('版本資訊')),
+              subtitle: Text(tr('查看目前版本與更新內容')),
+              onTap: () => _push(ChangelogScreen()),
             ),
-            const Divider(),
+            Divider(),
             ListTile(
               leading: Icon(
                 Icons.logout,
                 color: Theme.of(context).colorScheme.error,
               ),
               title: Text(
-                '登出',
+                tr('登出'),
                 style: TextStyle(color: Theme.of(context).colorScheme.error),
               ),
               onTap: _logout,
             ),
-            const Divider(),
+            Divider(),
             ListTile(
               leading: Icon(
                 Icons.delete_forever_outlined,
                 color: Theme.of(context).colorScheme.error,
               ),
               title: Text(
-                '刪除帳號',
+                tr('刪除帳號'),
                 style: TextStyle(color: Theme.of(context).colorScheme.error),
               ),
-              subtitle: const Text('永久刪除帳號與所有資料，無法復原'),
+              subtitle: Text(tr('永久刪除帳號與所有資料，無法復原')),
               onTap: () => _deleteAccount(user),
             ),
           ],

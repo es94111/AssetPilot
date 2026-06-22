@@ -54,8 +54,16 @@ void configureSentry(SentryFlutterOptions options) {
   options.privacy.maskAssetImages = false;
   options.privacy.unmask<Icon>();
 
-  // 送出前再保險清掉可能挾帶的機敏標頭（JWT Cookie、Authorization）。
+  // 送出前再保險清掉可能挾帶的機敏標頭（JWT Cookie、Authorization）與查詢字串。
   options.beforeSend = _scrubSensitiveData;
+
+  // HTTP 自動埋點（api_client 以 SentryHttpClient 發送）會為每個 API 請求產生
+  // 效能 span 與麵包屑，用來監控 API 延遲造成的效能下降。但 SDK 預設會把請求的
+  // query string（如搜尋 `?keyword=…`）一併記進 span 與麵包屑；本 App 為財務性質，
+  // 與 _logPath() 對 Sentry Logs 的處理一致，於送出前一律移除 http.query／
+  // http.fragment，只保留路徑、方法、狀態碼與耗時（效能診斷所需、非個資）。
+  options.beforeBreadcrumb = _scrubHttpBreadcrumb;
+  options.beforeSendTransaction = _scrubHttpSpans;
 }
 
 /// 移除事件中可能挾帶 JWT Cookie / 授權資訊的標頭，避免上傳到 Sentry。
@@ -64,15 +72,44 @@ void configureSentry(SentryFlutterOptions options) {
 /// 這些都不應離開裝置進到第三方監控服務。
 FutureOr<SentryEvent?> _scrubSensitiveData(SentryEvent event, Hint hint) {
   final request = event.request;
-  if (request != null && request.headers.isNotEmpty) {
-    final headers = Map<String, String>.from(request.headers)
+  if (request != null) {
+    // headers getter 為不可變副本，須整份替換才能移除機敏標頭。
+    request.headers = Map<String, String>.of(request.headers)
       ..removeWhere((key, _) {
         final lower = key.toLowerCase();
         return lower == 'authorization' ||
             lower == 'cookie' ||
             lower == 'set-cookie';
       });
-    event = event.copyWith(request: request.copyWith(headers: headers));
+    // SentryHttpClient 擷取失敗請求（如 5xx）為事件時，會把查詢字串放進
+    // request.queryString，可能挾帶使用者搜尋關鍵字；一律清除不送第三方。
+    request.queryString = null;
+    request.fragment = null;
   }
   return event;
+}
+
+/// 移除 HTTP 麵包屑中的查詢字串與片段（搜尋關鍵字等可能機敏內容），
+/// 保留路徑／方法／狀態碼／耗時等效能診斷所需資訊。
+Breadcrumb? _scrubHttpBreadcrumb(Breadcrumb? breadcrumb, Hint hint) {
+  if (breadcrumb?.category == 'http') {
+    breadcrumb?.data
+      ?..remove('http.query')
+      ..remove('http.fragment');
+  }
+  return breadcrumb;
+}
+
+/// 移除效能交易中各 HTTP span 的查詢字串與片段。span 結束後 removeData 會被忽略，
+/// 故直接操作 data map（getter 回傳的是即時參照）移除機敏鍵。
+FutureOr<SentryTransaction?> _scrubHttpSpans(
+  SentryTransaction transaction,
+  Hint hint,
+) {
+  for (final span in transaction.spans) {
+    span.data
+      ..remove('http.query')
+      ..remove('http.fragment');
+  }
+  return transaction;
 }

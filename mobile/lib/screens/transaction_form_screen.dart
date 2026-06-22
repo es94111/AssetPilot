@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import '../api_client.dart';
 import '../models.dart';
 import '../widgets.dart';
+import '../l10n.dart';
 
 /// 幣別下拉的預設選項；實際清單會再併入使用者帳戶的幣別與目前交易幣別。
 const _kDefaultCurrencies = [
@@ -176,7 +177,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
   Future<void> _pickPhotos() async {
     final remaining = 5 - _photos.length;
     if (remaining <= 0) {
-      toast(context, '單筆交易最多上傳 5 張照片');
+      toast(context, tr('單筆交易最多上傳 5 張照片'));
       return;
     }
     final source = await showModalBottomSheet<ImageSource>(
@@ -185,13 +186,13 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
         child: Wrap(
           children: [
             ListTile(
-              leading: const Icon(Icons.camera_alt_outlined),
-              title: const Text('拍照'),
+              leading: Icon(Icons.camera_alt_outlined),
+              title: Text(tr('拍照')),
               onTap: () => Navigator.pop(ctx, ImageSource.camera),
             ),
             ListTile(
-              leading: const Icon(Icons.photo_library_outlined),
-              title: const Text('從相簿選擇'),
+              leading: Icon(Icons.photo_library_outlined),
+              title: Text(tr('從相簿選擇')),
               onTap: () => Navigator.pop(ctx, ImageSource.gallery),
             ),
           ],
@@ -233,16 +234,16 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('刪除照片'),
-        content: const Text('確定要刪除這張已上傳的照片嗎？此動作無法復原。'),
+        title: Text(tr('刪除照片')),
+        content: Text(tr('確定要刪除這張已上傳的照片嗎？此動作無法復原。')),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('取消'),
+            child: Text(tr('取消')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('刪除'),
+            child: Text(tr('刪除')),
           ),
         ],
       ),
@@ -281,13 +282,16 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                   fit: BoxFit.contain,
                   loadingBuilder: (c, child, progress) => progress == null
                       ? child
-                      : const Padding(
+                      : Padding(
                           padding: EdgeInsets.all(48),
                           child: CircularProgressIndicator(),
                         ),
-                  errorBuilder: (c, e, s) => const Padding(
+                  errorBuilder: (c, e, s) => Padding(
                     padding: EdgeInsets.all(48),
-                    child: Text('照片載入失敗', style: TextStyle(color: Colors.white)),
+                    child: Text(
+                      tr('照片載入失敗'),
+                      style: TextStyle(color: Colors.white),
+                    ),
                   ),
                 ),
               ),
@@ -296,7 +300,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
               right: 0,
               top: 0,
               child: IconButton(
-                icon: const Icon(Icons.close, color: Colors.white),
+                icon: Icon(Icons.close, color: Colors.white),
                 onPressed: () => Navigator.pop(ctx),
               ),
             ),
@@ -377,16 +381,21 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('刪除交易'),
-        content: Text('確定刪除這筆 ${e.date} 的交易？此動作無法復原。'),
+        title: Text(tr('刪除交易')),
+        content: Text(
+          trPair(
+            '確定刪除這筆 ${e.date} 的交易？此動作無法復原。',
+            'Delete the transaction from ${e.date}? This cannot be undone.',
+          ),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('取消'),
+            child: Text(tr('取消')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('刪除'),
+            child: Text(tr('刪除')),
           ),
         ],
       ),
@@ -408,12 +417,12 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_isEdit ? '編輯交易' : '新增交易'),
+        title: Text(_isEdit ? tr('編輯交易') : tr('新增交易')),
         actions: [
           if (_isEdit)
             IconButton(
-              tooltip: '刪除交易',
-              icon: const Icon(Icons.delete_outline),
+              tooltip: tr('刪除交易'),
+              icon: Icon(Icons.delete_outline),
               onPressed: _saving ? null : _confirmDelete,
             ),
         ],
@@ -422,10 +431,14 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
         future: _loadFuture,
         builder: (context, snap) {
           if (snap.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return Center(child: CircularProgressIndicator());
           }
           if (snap.hasError) {
-            return Center(child: Text('載入失敗：${snap.error}'));
+            return Center(
+              child: Text(
+                trPair('載入失敗：${snap.error}', 'Failed to load: ${snap.error}'),
+              ),
+            );
           }
           return _buildForm(context);
         },
@@ -447,8 +460,9 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
       _parentCatId = null;
       _categoryId = null;
     }
-    final children =
-        _parentCatId == null ? <Category>[] : _childCatsOf(_parentCatId!);
+    final children = _parentCatId == null
+        ? <Category>[]
+        : _childCatsOf(_parentCatId!);
     // 已選子分類不在目前父分類底下 → 清掉。
     if (_categoryId != null && !children.any((c) => c.id == _categoryId)) {
       _categoryId = null;
@@ -466,10 +480,10 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
         children: [
           if (!_isEdit)
             SegmentedButton<String>(
-              segments: const [
-                ButtonSegment(value: 'expense', label: Text('支出')),
-                ButtonSegment(value: 'income', label: Text('收入')),
-                ButtonSegment(value: 'transfer', label: Text('轉帳')),
+              segments: [
+                ButtonSegment(value: 'expense', label: Text(tr('支出'))),
+                ButtonSegment(value: 'income', label: Text(tr('收入'))),
+                ButtonSegment(value: 'transfer', label: Text(tr('轉帳'))),
               ],
               selected: {_type},
               onSelectionChanged: (s) => setState(() {
@@ -478,47 +492,47 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                 _categoryId = null;
               }),
             ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           TextFormField(
             controller: _amount,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            decoration: const InputDecoration(
-              labelText: '金額',
+            decoration: InputDecoration(
+              labelText: tr('金額'),
               prefixIcon: Icon(Icons.attach_money),
               border: OutlineInputBorder(),
             ),
             validator: (v) {
               final n = num.tryParse(v?.trim() ?? '');
-              if (n == null || n <= 0) return '請輸入大於 0 的金額';
+              if (n == null || n <= 0) return tr('請輸入大於 0 的金額');
               return null;
             },
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           ListTile(
             shape: RoundedRectangleBorder(
               side: BorderSide(color: Theme.of(context).dividerColor),
               borderRadius: BorderRadius.circular(4),
             ),
-            leading: const Icon(Icons.calendar_today),
-            title: const Text('日期'),
+            leading: Icon(Icons.calendar_today),
+            title: Text(tr('日期')),
             trailing: Text(_dateStr),
             onTap: _pickDate,
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           if (_type == 'transfer') ...[
             _accountDropdown(
-              label: '轉出帳戶',
+              label: tr('轉出帳戶'),
               value: _accountId,
               onChanged: (v) => setState(() => _accountId = v),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             _accountDropdown(
-              label: '轉入帳戶',
+              label: tr('轉入帳戶'),
               value: _toAccountId,
               onChanged: (v) => setState(() => _toAccountId = v),
               validator: (v) {
-                if (v == null) return '請選擇轉入帳戶';
-                if (v == _accountId) return '轉出與轉入不可相同';
+                if (v == null) return tr('請選擇轉入帳戶');
+                if (v == _accountId) return tr('轉出與轉入不可相同');
                 return null;
               },
             ),
@@ -527,8 +541,8 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
             DropdownButtonFormField<String>(
               initialValue: _parentCatId,
               isExpanded: true,
-              decoration: const InputDecoration(
-                labelText: '父分類',
+              decoration: InputDecoration(
+                labelText: tr('父分類'),
                 prefixIcon: Icon(Icons.category_outlined),
                 border: OutlineInputBorder(),
               ),
@@ -540,18 +554,18 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                 _parentCatId = v;
                 _categoryId = null; // 換父分類時清掉已選子分類
               }),
-              validator: (v) => v == null ? '請選擇父分類' : null,
+              validator: (v) => v == null ? tr('請選擇父分類') : null,
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             // 再選該父分類底下的子分類（未選父分類前停用）。
             DropdownButtonFormField<String>(
               initialValue: _categoryId,
               isExpanded: true,
               decoration: InputDecoration(
-                labelText: '子分類',
-                prefixIcon: const Icon(Icons.subdirectory_arrow_right),
-                border: const OutlineInputBorder(),
-                hintText: _parentCatId == null ? '請先選擇父分類' : null,
+                labelText: tr('子分類'),
+                prefixIcon: Icon(Icons.subdirectory_arrow_right),
+                border: OutlineInputBorder(),
+                hintText: _parentCatId == null ? tr('請先選擇父分類') : null,
               ),
               items: [
                 for (final c in children)
@@ -560,11 +574,11 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
               onChanged: _parentCatId == null
                   ? null
                   : (v) => setState(() => _categoryId = v),
-              validator: (v) => v == null ? '請選擇子分類' : null,
+              validator: (v) => v == null ? tr('請選擇子分類') : null,
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             _accountDropdown(
-              label: '帳戶',
+              label: tr('帳戶'),
               value: _accountId,
               onChanged: (v) => setState(() {
                 _accountId = v;
@@ -576,12 +590,12 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                 }
               }),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             DropdownButtonFormField<String>(
               initialValue: _currency,
               isExpanded: true,
-              decoration: const InputDecoration(
-                labelText: '幣別',
+              decoration: InputDecoration(
+                labelText: tr('幣別'),
                 prefixIcon: Icon(Icons.payments_outlined),
                 border: OutlineInputBorder(),
               ),
@@ -595,71 +609,79 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
               }),
             ),
             if (_currency != 'TWD') ...[
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               TextFormField(
                 controller: _fxRate,
                 keyboardType: const TextInputType.numberWithOptions(
                   decimal: true,
                 ),
                 decoration: InputDecoration(
-                  labelText: '匯率（1 $_currency = ? TWD）',
-                  helperText: '留空則使用系統匯率',
-                  prefixIcon: const Icon(Icons.currency_exchange),
-                  border: const OutlineInputBorder(),
+                  labelText: trPair(
+                    '匯率（1 $_currency = ? TWD）',
+                    'Exchange rate (1 $_currency = ? TWD)',
+                  ),
+                  helperText: tr('留空則使用系統匯率'),
+                  prefixIcon: Icon(Icons.currency_exchange),
+                  border: OutlineInputBorder(),
                 ),
                 validator: (v) {
                   final s = v?.trim() ?? '';
                   if (s.isEmpty) return null;
                   final n = num.tryParse(s);
-                  if (n == null || n <= 0) return '匯率須大於 0';
+                  if (n == null || n <= 0) return tr('匯率須大於 0');
                   return null;
                 },
               ),
             ],
           ],
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           TextFormField(
             controller: _note,
-            decoration: const InputDecoration(
-              labelText: '備註（選填）',
+            decoration: InputDecoration(
+              labelText: tr('備註（選填）'),
               prefixIcon: Icon(Icons.notes),
               border: OutlineInputBorder(),
             ),
           ),
           if (_type != 'transfer') ...[
             if (_overseasApplies) ...[
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               TextFormField(
                 controller: _fxFee,
                 keyboardType: const TextInputType.numberWithOptions(
                   decimal: true,
                 ),
                 decoration: InputDecoration(
-                  labelText: '海外手續費 TWD（選填）',
-                  helperText:
-                      '此卡費率 ${_selectedAccount!.overseasFeeRate}%，留空將自動計算',
-                  prefixIcon: const Icon(Icons.currency_exchange),
-                  border: const OutlineInputBorder(),
+                  labelText: tr('海外手續費 TWD（選填）'),
+                  helperText: trPair(
+                    '此卡費率 ${_selectedAccount!.overseasFeeRate}%，留空將自動計算',
+                    'Card rate: ${_selectedAccount!.overseasFeeRate}%. Leave blank to calculate automatically.',
+                  ),
+                  prefixIcon: Icon(Icons.currency_exchange),
+                  border: OutlineInputBorder(),
                 ),
               ),
             ],
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text('不計入統計'),
+              title: Text(tr('不計入統計')),
               value: _excludeFromStats,
               onChanged: (v) => setState(() => _excludeFromStats = v),
             ),
             if (_existingPhotos.isNotEmpty) ...[
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  '已上傳照片（${_existingPhotos.length}）',
+                  trPair(
+                    '已上傳照片（${_existingPhotos.length}）',
+                    'Uploaded photos (${_existingPhotos.length})',
+                  ),
                   style: Theme.of(context).textTheme.labelLarge,
                 ),
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
@@ -683,7 +705,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                               loadingBuilder: (c, child, progress) =>
                                   progress == null
                                   ? child
-                                  : const SizedBox(
+                                  : SizedBox(
                                       width: 76,
                                       height: 76,
                                       child: Center(
@@ -702,7 +724,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                                 color: Theme.of(
                                   context,
                                 ).colorScheme.surfaceContainerHighest,
-                                child: const Icon(Icons.broken_image_outlined),
+                                child: Icon(Icons.broken_image_outlined),
                               ),
                             ),
                           ),
@@ -720,7 +742,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                                 shape: BoxShape.circle,
                               ),
                               padding: const EdgeInsets.all(3),
-                              child: const Icon(
+                              child: Icon(
                                 Icons.close,
                                 color: Colors.white,
                                 size: 16,
@@ -733,16 +755,21 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                 ],
               ),
             ],
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             OutlinedButton.icon(
               onPressed: _saving ? null : _pickPhotos,
-              icon: const Icon(Icons.photo_library_outlined),
+              icon: Icon(Icons.photo_library_outlined),
               label: Text(
-                _photos.isEmpty ? '新增照片（選填）' : '新增照片（${_photos.length}/5）',
+                _photos.isEmpty
+                    ? tr('新增照片（選填）')
+                    : trPair(
+                        '新增照片（${_photos.length}/5）',
+                        'Add photos (${_photos.length}/5)',
+                      ),
               ),
             ),
             if (_photos.isNotEmpty) ...[
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
@@ -770,7 +797,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                                 shape: BoxShape.circle,
                               ),
                               padding: const EdgeInsets.all(3),
-                              child: const Icon(
+                              child: Icon(
                                 Icons.close,
                                 color: Colors.white,
                                 size: 16,
@@ -784,19 +811,19 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
               ),
             ],
           ],
-          const SizedBox(height: 24),
+          SizedBox(height: 24),
           FilledButton(
             onPressed: _saving ? null : _save,
             style: FilledButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 16),
             ),
             child: _saving
-                ? const SizedBox(
+                ? SizedBox(
                     height: 20,
                     width: 20,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Text('儲存'),
+                : Text(tr('儲存')),
           ),
         ],
       ),
@@ -814,8 +841,8 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
       isExpanded: true,
       decoration: InputDecoration(
         labelText: label,
-        prefixIcon: const Icon(Icons.account_balance_wallet_outlined),
-        border: const OutlineInputBorder(),
+        prefixIcon: Icon(Icons.account_balance_wallet_outlined),
+        border: OutlineInputBorder(),
       ),
       items: [
         for (final a in _accounts)
@@ -825,7 +852,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
           ),
       ],
       onChanged: onChanged,
-      validator: validator ?? (v) => v == null ? '請選擇帳戶' : null,
+      validator: validator ?? (v) => v == null ? tr('請選擇帳戶') : null,
     );
   }
 }

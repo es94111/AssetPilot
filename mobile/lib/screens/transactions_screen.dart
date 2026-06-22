@@ -5,6 +5,7 @@ import '../format.dart';
 import '../models.dart';
 import '../widgets.dart';
 import 'transaction_form_screen.dart';
+import '../l10n.dart';
 
 class TransactionsScreen extends StatefulWidget {
   const TransactionsScreen({super.key});
@@ -146,16 +147,21 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('刪除交易'),
-        content: Text('確定刪除這筆${t.date}的交易？'),
+        title: Text(tr('刪除交易')),
+        content: Text(
+          trPair(
+            '確定刪除這筆${t.date}的交易？',
+            'Delete the transaction from ${t.date}?',
+          ),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('取消'),
+            child: Text(tr('取消')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('刪除'),
+            child: Text(tr('刪除')),
           ),
         ],
       ),
@@ -163,7 +169,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     if (ok != true) return false;
     try {
       await ApiClient.instance.deleteTransaction(t.id);
-      if (mounted) toast(context, '已刪除');
+      if (mounted) toast(context, tr('已刪除'));
       _reload();
       return true;
     } catch (e) {
@@ -179,16 +185,16 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('記帳'),
+        title: Text(tr('記帳')),
         actions: [
           if (_hasAdvancedFilter)
             IconButton(
-              tooltip: '清除篩選',
-              icon: const Icon(Icons.filter_alt_off),
+              tooltip: tr('清除篩選'),
+              icon: Icon(Icons.filter_alt_off),
               onPressed: _clearFilters,
             ),
           IconButton(
-            tooltip: '篩選',
+            tooltip: tr('篩選'),
             icon: Icon(
               _hasAdvancedFilter ? Icons.filter_alt : Icons.filter_alt_outlined,
             ),
@@ -202,10 +208,10 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
           child: Padding(
             padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
             child: SegmentedButton<String>(
-              segments: const [
-                ButtonSegment(value: 'all', label: Text('全部')),
-                ButtonSegment(value: 'income', label: Text('收入')),
-                ButtonSegment(value: 'expense', label: Text('支出')),
+              segments: [
+                ButtonSegment(value: 'all', label: Text(tr('全部'))),
+                ButtonSegment(value: 'income', label: Text(tr('收入'))),
+                ButtonSegment(value: 'expense', label: Text(tr('支出'))),
               ],
               selected: {_filter},
               onSelectionChanged: (s) {
@@ -218,8 +224,8 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openForm(),
-        icon: const Icon(Icons.add),
-        label: const Text('記一筆'),
+        icon: Icon(Icons.add),
+        label: Text(tr('記一筆')),
       ),
       body: AsyncView<_TransactionsData>(
         future: _future,
@@ -230,7 +236,9 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
           if (list.isEmpty) {
             return EmptyState(
               icon: Icons.receipt_long,
-              message: _hasAdvancedFilter ? '找不到符合篩選的交易' : '尚無交易，點右下角記一筆',
+              message: _hasAdvancedFilter
+                  ? tr('找不到符合篩選的交易')
+                  : tr('尚無交易，點右下角記一筆'),
             );
           }
           return RefreshIndicator(
@@ -238,7 +246,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
             child: ListView.separated(
               padding: const EdgeInsets.only(bottom: 88),
               itemCount: list.length,
-              separatorBuilder: (_, _) => const Divider(height: 1),
+              separatorBuilder: (_, _) => Divider(height: 1),
               itemBuilder: (context, i) {
                 final t = list[i];
                 return Dismissible(
@@ -250,15 +258,15 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                     color: Colors.red,
                     alignment: Alignment.centerRight,
                     padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: const Icon(Icons.delete, color: Colors.white),
+                    child: Icon(Icons.delete, color: Colors.white),
                   ),
                   child: _TxnTile(
                     t: t,
                     categoryName: data.catName[t.categoryId],
                     onTap: () => t.type == 'transfer'
-                        ? toast(context, '轉帳請於網頁版編輯')
+                        ? toast(context, tr('轉帳請於網頁版編輯'))
                         : t.isFxFee
-                        ? toast(context, '國外刷卡手續費由原交易自動產生，請編輯對應的國外交易')
+                        ? toast(context, tr('國外刷卡手續費由原交易自動產生，請編輯對應的國外交易'))
                         : _openForm(t),
                     onLongPress: () => _delete(t),
                   ),
@@ -307,7 +315,7 @@ class _TxnTile extends StatelessWidget {
             ? categoryName!
             : t.catName?.isNotEmpty == true
             ? t.catName!
-            : (isTransfer ? '轉帳' : (t.note.isEmpty ? '未分類' : t.note)),
+            : (isTransfer ? tr('轉帳') : (t.note.isEmpty ? tr('未分類') : t.note)),
       ),
       subtitle: Row(
         children: [
@@ -324,13 +332,13 @@ class _TxnTile extends StatelessWidget {
             ),
           ),
           if (t.attachmentCount > 0) ...[
-            const SizedBox(width: 6),
+            SizedBox(width: 6),
             Icon(
               Icons.image_outlined,
               size: 14,
               color: Theme.of(context).colorScheme.primary,
             ),
-            const SizedBox(width: 2),
+            SizedBox(width: 2),
             Text(
               '${t.attachmentCount}',
               style: TextStyle(
@@ -413,10 +421,12 @@ class _TxnFilterSheetState extends State<_TxnFilterSheet> {
   Widget build(BuildContext context) {
     final bottom = MediaQuery.of(context).viewInsets.bottom;
     // 下拉值需存在於選項中，否則重設為 null（全部）。
-    final accountId =
-        widget.accounts.any((a) => a.id == _accountId) ? _accountId : null;
-    final categoryId =
-        widget.categories.any((c) => c.id == _categoryId) ? _categoryId : null;
+    final accountId = widget.accounts.any((a) => a.id == _accountId)
+        ? _accountId
+        : null;
+    final categoryId = widget.categories.any((c) => c.id == _categoryId)
+        ? _categoryId
+        : null;
     return Padding(
       padding: EdgeInsets.fromLTRB(16, 16, 16, bottom + 16),
       child: SingleChildScrollView(
@@ -424,29 +434,29 @@ class _TxnFilterSheetState extends State<_TxnFilterSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('篩選交易', style: Theme.of(context).textTheme.titleLarge),
-            const SizedBox(height: 12),
+            Text(tr('篩選交易'), style: Theme.of(context).textTheme.titleLarge),
+            SizedBox(height: 12),
             Row(
               children: [
                 Expanded(
                   child: OutlinedButton.icon(
-                    icon: const Icon(Icons.calendar_today, size: 18),
-                    label: Text(_from == null ? '起始日' : _ymd(_from!)),
+                    icon: Icon(Icons.calendar_today, size: 18),
+                    label: Text(_from == null ? tr('起始日') : _ymd(_from!)),
                     onPressed: () => _pick(true),
                   ),
                 ),
-                const SizedBox(width: 8),
+                SizedBox(width: 8),
                 Expanded(
                   child: OutlinedButton.icon(
-                    icon: const Icon(Icons.event, size: 18),
-                    label: Text(_to == null ? '結束日' : _ymd(_to!)),
+                    icon: Icon(Icons.event, size: 18),
+                    label: Text(_to == null ? tr('結束日') : _ymd(_to!)),
                     onPressed: () => _pick(false),
                   ),
                 ),
                 if (_from != null || _to != null)
                   IconButton(
-                    icon: const Icon(Icons.clear),
-                    tooltip: '清除日期',
+                    icon: Icon(Icons.clear),
+                    tooltip: tr('清除日期'),
                     onPressed: () => setState(() {
                       _from = null;
                       _to = null;
@@ -454,56 +464,58 @@ class _TxnFilterSheetState extends State<_TxnFilterSheet> {
                   ),
               ],
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             DropdownButtonFormField<String?>(
               initialValue: accountId,
               isExpanded: true,
-              decoration: const InputDecoration(
-                labelText: '帳戶',
+              decoration: InputDecoration(
+                labelText: tr('帳戶'),
                 border: OutlineInputBorder(),
               ),
               items: [
-                const DropdownMenuItem(value: null, child: Text('全部帳戶')),
+                DropdownMenuItem(value: null, child: Text(tr('全部帳戶'))),
                 for (final a in widget.accounts)
                   DropdownMenuItem(value: a.id, child: Text(a.name)),
               ],
               onChanged: (v) => setState(() => _accountId = v),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             DropdownButtonFormField<String?>(
               initialValue: categoryId,
               isExpanded: true,
-              decoration: const InputDecoration(
-                labelText: '分類',
+              decoration: InputDecoration(
+                labelText: tr('分類'),
                 border: OutlineInputBorder(),
               ),
               items: [
-                const DropdownMenuItem(value: null, child: Text('全部分類')),
+                DropdownMenuItem(value: null, child: Text(tr('全部分類'))),
                 // 父分類顯示「名稱（全部）」並可選；選了會篩出該父分類底下所有交易。
                 // 子分類縮排顯示於所屬父分類之下。
                 for (final c in widget.categories)
                   DropdownMenuItem(
                     value: c.id,
                     child: Text(
-                      c.isParent ? '${c.name}（全部）' : '　${c.name}',
+                      c.isParent
+                          ? trPair('${c.name}（全部）', '${c.name} (all)')
+                          : '  ${c.name}',
                       style: c.isParent
-                          ? const TextStyle(fontWeight: FontWeight.w600)
+                          ? TextStyle(fontWeight: FontWeight.w600)
                           : null,
                     ),
                   ),
               ],
               onChanged: (v) => setState(() => _categoryId = v),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             TextField(
               controller: _keyword,
-              decoration: const InputDecoration(
-                labelText: '備註關鍵字',
+              decoration: InputDecoration(
+                labelText: tr('備註關鍵字'),
                 prefixIcon: Icon(Icons.search),
                 border: OutlineInputBorder(),
               ),
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
             FilledButton(
               onPressed: () {
                 widget.onApply(
@@ -518,7 +530,7 @@ class _TxnFilterSheetState extends State<_TxnFilterSheet> {
               style: FilledButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 14),
               ),
-              child: const Text('套用'),
+              child: Text(tr('套用')),
             ),
           ],
         ),

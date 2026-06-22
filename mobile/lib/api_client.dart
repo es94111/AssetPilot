@@ -8,12 +8,13 @@ import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'play_integrity.dart';
+import 'l10n.dart';
 
 /// API 呼叫失敗時拋出，message 已在地化為繁體中文。
 class ApiException implements Exception {
   final int statusCode;
   final String message;
-  ApiException(this.statusCode, this.message);
+  ApiException(this.statusCode, String message) : message = tr(message);
 
   @override
   String toString() => message;
@@ -63,14 +64,18 @@ class ApiClient {
     } catch (_) {
       // 解密失敗（如裝置遷移後 Keystore 金鑰不可用）→ 清掉避免反覆失敗，使用者重新登入即可。
       _cookie = null;
-      try { await _secure.delete(key: _kCookie); } catch (_) {}
+      try {
+        await _secure.delete(key: _kCookie);
+      } catch (_) {}
     }
     // 一次性遷移：把舊版明文存於 SharedPreferences 的 cookie 搬進加密儲存，並清除明文殘留。
     final legacy = p.getString(_kCookie);
     if (legacy != null && legacy.isNotEmpty) {
       _cookie ??= legacy;
       if (_cookie != null) {
-        try { await _secure.write(key: _kCookie, value: _cookie!); } catch (_) {}
+        try {
+          await _secure.write(key: _kCookie, value: _cookie!);
+        } catch (_) {}
       }
       await p.remove(_kCookie);
     }
@@ -91,8 +96,7 @@ class ApiClient {
 
   /// 把後端回傳的統計欄位轉成筆數（同時容忍「數字」或「陣列」兩種形態），
   /// 供 Sentry Logs 記錄同步結果用；只取數量、不含任何明細內容。
-  int _asCount(dynamic v) =>
-      v is num ? v.toInt() : (v is List ? v.length : 0);
+  int _asCount(dynamic v) => v is num ? v.toInt() : (v is List ? v.length : 0);
 
   Map<String, String> _headers({bool json = false}) => {
     if (json) 'Content-Type': 'application/json',
@@ -155,14 +159,10 @@ class ApiClient {
             res = await c.get(uri, headers: headers).timeout(t);
             break;
           case 'POST':
-            res = await c
-                .post(uri, headers: headers, body: encoded)
-                .timeout(t);
+            res = await c.post(uri, headers: headers, body: encoded).timeout(t);
             break;
           case 'PUT':
-            res = await c
-                .put(uri, headers: headers, body: encoded)
-                .timeout(t);
+            res = await c.put(uri, headers: headers, body: encoded).timeout(t);
             break;
           case 'DELETE':
             res = await c
@@ -170,7 +170,12 @@ class ApiClient {
                 .timeout(t);
             break;
           default:
-            throw ArgumentError('未知的 HTTP method: $method');
+            throw ArgumentError(
+              trPair(
+                '未知的 HTTP method: $method',
+                'Unknown HTTP method: $method',
+              ),
+            );
         }
       } finally {
         c.close();
@@ -178,7 +183,7 @@ class ApiClient {
     } catch (e) {
       // 連線層失敗（逾時、DNS、無網路…）。只記端點與例外型別，不帶 body/個資。
       Sentry.logger.error(
-        'API 請求連線失敗',
+        tr('API 請求連線失敗'),
         attributes: {
           'http.method': SentryAttribute.string(method),
           'http.path': SentryAttribute.string(_logPath(path)),
@@ -191,14 +196,14 @@ class ApiClient {
     if (res.statusCode == 401) {
       await _clearAuth();
       Sentry.logger.info(
-        'API 回應 401，工作階段已過期並清除本機登入',
+        tr('API 回應 401，工作階段已過期並清除本機登入'),
         attributes: {'http.path': SentryAttribute.string(_logPath(path))},
       );
-      throw ApiException(401, '登入已過期，請重新登入');
+      throw ApiException(401, tr('登入已過期，請重新登入'));
     }
     if (res.statusCode < 200 || res.statusCode >= 300) {
       Sentry.logger.warn(
-        'API 請求失敗',
+        tr('API 請求失敗'),
         attributes: {
           'http.method': SentryAttribute.string(method),
           'http.path': SentryAttribute.string(_logPath(path)),
@@ -228,7 +233,7 @@ class ApiClient {
     final r = await _send('GET', path);
     if (r is List) return r;
     if (r is Map && r['data'] is List) return r['data'] as List;
-    return const [];
+    return [];
   }
 
   // ── 認證 ────────────────────────────────────────────────────
@@ -247,12 +252,12 @@ class ApiClient {
   Future<Map<String, String>> _integrityFields() async {
     try {
       final nonce = await integrityNonce();
-      if (nonce.isEmpty) return const {};
+      if (nonce.isEmpty) return {};
       final token = await PlayIntegrity.requestToken(nonce);
-      if (token == null) return const {};
+      if (token == null) return {};
       return {'integrityNonce': nonce, 'integrityToken': token};
     } catch (_) {
-      return const {};
+      return {};
     }
   }
 
@@ -278,7 +283,7 @@ class ApiClient {
           .timeout(_timeout);
     } catch (e) {
       Sentry.logger.error(
-        '登入請求連線失敗',
+        tr('登入請求連線失敗'),
         attributes: {
           'auth.method': SentryAttribute.string('password'),
           'error.type': SentryAttribute.string(e.runtimeType.toString()),
@@ -289,7 +294,7 @@ class ApiClient {
     // 只記登入結果與狀態碼，絕不記 email/密碼。
     if (res.statusCode != 200) {
       Sentry.logger.warn(
-        '登入失敗',
+        tr('登入失敗'),
         attributes: {
           'auth.method': SentryAttribute.string('password'),
           'http.status_code': SentryAttribute.int(res.statusCode),
@@ -300,16 +305,16 @@ class ApiClient {
       case 200:
         _captureCookie(res);
         if (_cookie == null) {
-          throw ApiException(200, '登入回應未包含認證 Cookie，請確認後端設定');
+          throw ApiException(200, tr('登入回應未包含認證 Cookie，請確認後端設定'));
         }
         await _persistLogin();
         Sentry.logger.info(
-          '登入成功',
+          tr('登入成功'),
           attributes: {'auth.method': SentryAttribute.string('password')},
         );
         return;
       case 401:
-        throw ApiException(401, '電子郵件或密碼錯誤');
+        throw ApiException(401, tr('電子郵件或密碼錯誤'));
       case 403:
         throw ApiException(403, _errorMessage(res)); // 多半是真人驗證失敗
       case 429:
@@ -346,7 +351,7 @@ class ApiClient {
     if (res.statusCode == 200 || res.statusCode == 201) {
       _captureCookie(res);
       if (_cookie == null) {
-        throw ApiException(200, '註冊回應未包含認證 Cookie，請確認後端設定');
+        throw ApiException(200, tr('註冊回應未包含認證 Cookie，請確認後端設定'));
       }
       await _persistLogin();
       return;
@@ -358,7 +363,7 @@ class ApiClient {
   Future<String> googleState() async {
     final m = await _getMap('/api/auth/google/state');
     final s = m['state'];
-    if (s == null) throw ApiException(0, '無法建立 Google 登入狀態');
+    if (s == null) throw ApiException(0, tr('無法建立 Google 登入狀態'));
     return '$s';
   }
 
@@ -389,7 +394,7 @@ class ApiClient {
     if (res.statusCode == 200) {
       _captureCookie(res);
       if (_cookie == null) {
-        throw ApiException(200, 'Google 登入回應未包含認證 Cookie');
+        throw ApiException(200, tr('Google 登入回應未包含認證 Cookie'));
       }
       await _persistLogin();
       return;
@@ -426,7 +431,7 @@ class ApiClient {
     if (res.statusCode == 200) {
       _captureCookie(res);
       if (_cookie == null) {
-        throw ApiException(200, 'LINE 登入回應未包含認證 Cookie');
+        throw ApiException(200, tr('LINE 登入回應未包含認證 Cookie'));
       }
       await _persistLogin();
       return;
@@ -450,7 +455,7 @@ class ApiClient {
     if (res.statusCode == 200) {
       _captureCookie(res);
       if (_cookie == null) {
-        throw ApiException(200, 'App 登入回應未包含認證 Cookie');
+        throw ApiException(200, tr('App 登入回應未包含認證 Cookie'));
       }
       await _persistLogin();
       return;
@@ -463,7 +468,7 @@ class ApiClient {
       await _send('POST', '/api/auth/logout');
     } catch (_) {}
     await _clearAuth();
-    Sentry.logger.info('使用者登出，已清除本機登入');
+    Sentry.logger.info(tr('使用者登出，已清除本機登入'));
   }
 
   Future<Map<String, dynamic>> me() async {
@@ -538,7 +543,8 @@ class ApiClient {
     if (dateTo != null) q['dateTo'] = dateTo;
     if (type != null && type != 'all') q['type'] = type;
     if (accountId != null && accountId.isNotEmpty) q['accountId'] = accountId;
-    if (categoryId != null && categoryId.isNotEmpty) q['categoryId'] = categoryId;
+    if (categoryId != null && categoryId.isNotEmpty)
+      q['categoryId'] = categoryId;
     if (keyword != null && keyword.trim().isNotEmpty) {
       q['keyword'] = Uri.encodeQueryComponent(keyword.trim());
     }
@@ -554,9 +560,8 @@ class ApiClient {
     String path, {
     Object? body,
     Duration? timeout,
-  }) async =>
-      (await _send(method, path, body: body, timeout: timeout) as Map)
-          .cast<String, dynamic>();
+  }) async => (await _send(method, path, body: body, timeout: timeout) as Map)
+      .cast<String, dynamic>();
 
   Future<void> updateTransaction(String id, Map<String, dynamic> body) =>
       _send('PUT', '/api/transactions/$id', body: body);
@@ -568,7 +573,7 @@ class ApiClient {
     String transactionId,
     List<String> paths,
   ) async {
-    if (paths.isEmpty) return const [];
+    if (paths.isEmpty) return [];
     late http.Response res;
     try {
       final req = http.MultipartRequest(
@@ -593,7 +598,7 @@ class ApiClient {
 
     if (res.statusCode == 401) {
       await _clearAuth();
-      throw ApiException(401, '登入已過期，請重新登入');
+      throw ApiException(401, tr('登入已過期，請重新登入'));
     }
     if (res.statusCode < 200 || res.statusCode >= 300) {
       throw ApiException(res.statusCode, _errorMessage(res));
@@ -601,16 +606,14 @@ class ApiClient {
     final body = jsonDecode(utf8.decode(res.bodyBytes));
     return body is Map && body['attachments'] is List
         ? body['attachments'] as List
-        : const [];
+        : [];
   }
 
   /// 列出某筆交易已上傳的照片附件，回傳 `[{ id, filename, mimeType, byteSize,
   /// storage, createdAt, url }, ...]`。
   Future<List<dynamic>> listTransactionAttachments(String txId) async {
     final r = await _send('GET', '/api/transactions/$txId/attachments');
-    return r is Map && r['attachments'] is List
-        ? r['attachments'] as List
-        : const [];
+    return r is Map && r['attachments'] is List ? r['attachments'] as List : [];
   }
 
   /// 刪除某筆交易的一張照片附件。
@@ -687,12 +690,12 @@ class ApiClient {
     final r = await _getMapFromSend(
       'POST',
       '/api/stock-dividends/sync',
-      timeout: const Duration(seconds: 120),
+      timeout: Duration(seconds: 120),
     );
     // synced/skipped/errors 為筆數統計，非金額/個資；記錄以利觀察同步成效。
     // 連線或非 2xx 失敗已由 _send 統一記錄，故此處只記成功結果。
     Sentry.logger.info(
-      '股利同步完成',
+      tr('股利同步完成'),
       attributes: {
         'sync.synced': SentryAttribute.int(_asCount(r['synced'])),
         'sync.skipped': SentryAttribute.int(_asCount(r['skipped'])),
@@ -772,15 +775,21 @@ class ApiClient {
       _getMap('/api/user/settings/default-currency');
 
   Future<Map<String, dynamic>> setDefaultCurrency(String currency) =>
-      _getMapFromSend('PUT', '/api/user/settings/default-currency',
-          body: {'defaultCurrency': currency});
+      _getMapFromSend(
+        'PUT',
+        '/api/user/settings/default-currency',
+        body: {'defaultCurrency': currency},
+      );
 
   Future<Map<String, dynamic>> pinnedCurrencies() =>
       _getMap('/api/user/settings/pinned-currencies');
 
   Future<Map<String, dynamic>> setPinnedCurrencies(List<String> list) =>
-      _getMapFromSend('PUT', '/api/user/settings/pinned-currencies',
-          body: {'pinnedCurrencies': list});
+      _getMapFromSend(
+        'PUT',
+        '/api/user/settings/pinned-currencies',
+        body: {'pinnedCurrencies': list},
+      );
 
   // ── 帳號安全 ────────────────────────────────────────────────
   /// 變更密碼。後端會輪替 token 並撤銷其他工作階段，回應帶新的認證 Cookie，
@@ -816,7 +825,7 @@ class ApiClient {
 
   Future<List<dynamic>> sessions() async {
     final r = await _send('GET', '/api/account/sessions');
-    return r is Map && r['sessions'] is List ? r['sessions'] as List : const [];
+    return r is Map && r['sessions'] is List ? r['sessions'] as List : [];
   }
 
   Future<void> revokeSession(String id) =>
@@ -824,18 +833,19 @@ class ApiClient {
 
   Future<List<dynamic>> loginAudit() async {
     final r = await _send('GET', '/api/user/login-audit');
-    return r is Map && r['logs'] is List ? r['logs'] as List : const [];
+    return r is Map && r['logs'] is List ? r['logs'] as List : [];
   }
 
   Future<List<dynamic>> passkeys() async {
     final r = await _send('GET', '/api/account/passkeys');
-    return r is Map && r['passkeys'] is List
-        ? r['passkeys'] as List
-        : const [];
+    return r is Map && r['passkeys'] is List ? r['passkeys'] as List : [];
   }
 
-  Future<void> renamePasskey(String id, String deviceName) =>
-      _send('PUT', '/api/account/passkey/$id', body: {'deviceName': deviceName});
+  Future<void> renamePasskey(String id, String deviceName) => _send(
+    'PUT',
+    '/api/account/passkey/$id',
+    body: {'deviceName': deviceName},
+  );
 
   Future<void> deletePasskey(String id) =>
       _send('DELETE', '/api/account/passkey/$id');
@@ -848,7 +858,7 @@ class ApiClient {
   // ── 定期報表通知排程 ────────────────────────────────────────
   Future<List<dynamic>> reportSchedules() async {
     final r = await _send('GET', '/api/user/report-schedules');
-    return r is List ? r : const [];
+    return r is List ? r : [];
   }
 
   Future<void> createReportSchedule(Map<String, dynamic> body) =>

@@ -3,6 +3,7 @@ import 'package:sentry_flutter/sentry_flutter.dart';
 
 import 'api_client.dart';
 import 'app.dart';
+import 'l10n.dart';
 import 'sentry_config.dart';
 
 Future<void> main() async {
@@ -11,8 +12,9 @@ Future<void> main() async {
   await SentryFlutter.init(
     configureSentry,
     appRunner: () async {
-      await ApiClient.instance.init();
+      await loadAppLocale();
       await loadThemeMode();
+      await ApiClient.instance.init();
       // SentryWidget 是 Session Replay 擷取畫面所需的根節點包裝。
       runApp(SentryWidget(child: const AssetPilotApp()));
     },

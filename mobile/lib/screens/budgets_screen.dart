@@ -4,6 +4,7 @@ import '../api_client.dart';
 import '../format.dart';
 import '../models.dart';
 import '../widgets.dart';
+import '../l10n.dart';
 
 class _BudgetData {
   final List<Budget> budgets;
@@ -72,7 +73,7 @@ class _BudgetsScreenState extends State<BudgetsScreen> {
   Future<void> _delete(Budget b) async {
     try {
       await ApiClient.instance.deleteBudget(b.id);
-      if (mounted) toast(context, '已刪除');
+      if (mounted) toast(context, tr('已刪除'));
       _reload();
     } catch (e) {
       if (mounted) toast(context, '$e');
@@ -83,32 +84,32 @@ class _BudgetsScreenState extends State<BudgetsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('預算'),
+        title: Text(tr('預算')),
         actions: [
           IconButton(
             onPressed: () => _shiftMonth(-1),
-            icon: const Icon(Icons.chevron_left),
+            icon: Icon(Icons.chevron_left),
           ),
           Center(child: Text(_ym)),
           IconButton(
             onPressed: () => _shiftMonth(1),
-            icon: const Icon(Icons.chevron_right),
+            icon: Icon(Icons.chevron_right),
           ),
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _add,
-        icon: const Icon(Icons.add),
-        label: const Text('新增預算'),
+        icon: Icon(Icons.add),
+        label: Text(tr('新增預算')),
       ),
       body: AsyncView<_BudgetData>(
         future: _future,
         onRetry: _reload,
         builder: (context, data) {
           if (data.budgets.isEmpty) {
-            return const EmptyState(
+            return EmptyState(
               icon: Icons.savings_outlined,
-              message: '本月尚無預算',
+              message: tr('本月尚無預算'),
             );
           }
           return RefreshIndicator(
@@ -120,8 +121,8 @@ class _BudgetsScreenState extends State<BudgetsScreen> {
                   _BudgetTile(
                     budget: b,
                     name: b.categoryId == null
-                        ? '月度總預算'
-                        : (data.catById[b.categoryId]?.name ?? '未知分類'),
+                        ? tr('月度總預算')
+                        : (data.catById[b.categoryId]?.name ?? tr('未知分類')),
                     onDelete: () => _delete(b),
                   ),
               ],
@@ -166,17 +167,17 @@ class _BudgetTile extends StatelessWidget {
                 Expanded(
                   child: Text(
                     name,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+                    style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ),
                 IconButton(
                   visualDensity: VisualDensity.compact,
                   onPressed: onDelete,
-                  icon: const Icon(Icons.delete_outline, size: 20),
+                  icon: Icon(Icons.delete_outline, size: 20),
                 ),
               ],
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
             ClipRRect(
               borderRadius: BorderRadius.circular(6),
               child: LinearProgressIndicator(
@@ -186,7 +187,7 @@ class _BudgetTile extends StatelessWidget {
                 valueColor: AlwaysStoppedAnimation(color),
               ),
             ),
-            const SizedBox(height: 6),
+            SizedBox(height: 6),
             Text(
               '${twd(budget.used)} / ${twd(budget.amount)}'
               '　(${(p * 100).round()}%)',
@@ -249,51 +250,54 @@ class _BudgetFormState extends State<_BudgetForm> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              '新增預算（${widget.yearMonth}）',
+              trPair(
+                '新增預算（${widget.yearMonth}）',
+                'Add budget (${widget.yearMonth})',
+              ),
               style: Theme.of(context).textTheme.titleLarge,
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             DropdownButtonFormField<String?>(
               initialValue: _categoryId,
               isExpanded: true,
-              decoration: const InputDecoration(
-                labelText: '分類',
+              decoration: InputDecoration(
+                labelText: tr('分類'),
                 border: OutlineInputBorder(),
               ),
               items: [
-                const DropdownMenuItem(value: null, child: Text('月度總預算')),
+                DropdownMenuItem(value: null, child: Text(tr('月度總預算'))),
                 for (final c in widget.categories)
                   DropdownMenuItem(value: c.id, child: Text(c.name)),
               ],
               onChanged: (v) => setState(() => _categoryId = v),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             TextFormField(
               controller: _amount,
               keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: '預算金額',
+              decoration: InputDecoration(
+                labelText: tr('預算金額'),
                 border: OutlineInputBorder(),
               ),
               validator: (v) {
                 final n = num.tryParse(v?.trim() ?? '');
-                if (n == null || n <= 0) return '請輸入正整數';
+                if (n == null || n <= 0) return tr('請輸入正整數');
                 return null;
               },
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
             FilledButton(
               onPressed: _saving ? null : _save,
               style: FilledButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 14),
               ),
               child: _saving
-                  ? const SizedBox(
+                  ? SizedBox(
                       height: 20,
                       width: 20,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : const Text('儲存'),
+                  : Text(tr('儲存')),
             ),
           ],
         ),

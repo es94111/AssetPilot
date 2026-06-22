@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../api_client.dart';
 import '../models.dart';
 import '../widgets.dart';
+import '../l10n.dart';
 
 /// 股票手續費／證交稅率設定。對應網頁版「股票設定」。
 class StockSettingsScreen extends StatefulWidget {
@@ -27,7 +28,7 @@ class _StockSettingsScreenState extends State<StockSettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('股票設定')),
+      appBar: AppBar(title: Text(tr('股票設定'))),
       body: AsyncView<StockSettings>(
         future: _future,
         onRetry: () => setState(() => _future = _load()),
@@ -92,7 +93,7 @@ class _StockSettingsFormState extends State<_StockSettingsForm> {
         'sellTaxMin': num.tryParse(_taxMin.text.trim()) ?? 0,
       });
       if (mounted) {
-        toast(context, '已儲存');
+        toast(context, tr('已儲存'));
         Navigator.pop(context);
       }
     } catch (e) {
@@ -112,11 +113,11 @@ class _StockSettingsFormState extends State<_StockSettingsForm> {
         decoration: InputDecoration(
           labelText: label,
           helperText: helper,
-          border: const OutlineInputBorder(),
+          border: OutlineInputBorder(),
         ),
         validator: (v) {
           final n = num.tryParse(v?.trim() ?? '');
-          if (n == null || n < 0) return '請輸入 ≥ 0 的數字';
+          if (n == null || n < 0) return tr('請輸入 ≥ 0 的數字');
           return null;
         },
       ),
@@ -130,32 +131,32 @@ class _StockSettingsFormState extends State<_StockSettingsForm> {
       child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          Text('手續費', style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 12),
-          _num('手續費率（%）', _feeRate, helper: '券商公定 0.1425%'),
-          _num('折讓（0~1）', _feeDiscount, helper: '例：0.6 代表 6 折'),
-          _num('整股最低手續費', _feeMinLot),
-          _num('零股最低手續費', _feeMinOdd),
-          const SizedBox(height: 8),
-          Text('證交稅（賣出）', style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 12),
-          _num('一般股票（%）', _taxStock, helper: '公定 0.3%'),
-          _num('ETF（%）', _taxEtf, helper: '公定 0.1%'),
-          _num('權證（%）', _taxWarrant),
-          _num('最低證交稅', _taxMin),
-          const SizedBox(height: 8),
+          Text(tr('手續費'), style: Theme.of(context).textTheme.titleMedium),
+          SizedBox(height: 12),
+          _num(tr('手續費率（%）'), _feeRate, helper: tr('券商公定 0.1425%')),
+          _num(tr('折讓（0~1）'), _feeDiscount, helper: tr('例：0.6 代表 6 折')),
+          _num(tr('整股最低手續費'), _feeMinLot),
+          _num(tr('零股最低手續費'), _feeMinOdd),
+          SizedBox(height: 8),
+          Text(tr('證交稅（賣出）'), style: Theme.of(context).textTheme.titleMedium),
+          SizedBox(height: 12),
+          _num(tr('一般股票（%）'), _taxStock, helper: tr('公定 0.3%')),
+          _num('ETF（%）', _taxEtf, helper: tr('公定 0.1%')),
+          _num(tr('權證（%）'), _taxWarrant),
+          _num(tr('最低證交稅'), _taxMin),
+          SizedBox(height: 8),
           FilledButton(
             onPressed: _saving ? null : _save,
             style: FilledButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 14),
             ),
             child: _saving
-                ? const SizedBox(
+                ? SizedBox(
                     height: 20,
                     width: 20,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Text('儲存'),
+                : Text(tr('儲存')),
           ),
         ],
       ),

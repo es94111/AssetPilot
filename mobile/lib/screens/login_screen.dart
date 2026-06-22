@@ -6,6 +6,7 @@ import '../line_auth.dart';
 import '../passkey_auth.dart';
 import '../widgets/turnstile_widget.dart';
 import 'register_screen.dart';
+import '../l10n.dart';
 
 class LoginScreen extends StatefulWidget {
   /// 登入成功後呼叫，由 AuthGate 切換到主畫面。
@@ -98,7 +99,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     if (_turnstileEnabled && _turnstileToken == null) {
-      setState(() => _error = '請先完成下方的真人驗證');
+      setState(() => _error = tr('請先完成下方的真人驗證'));
       return;
     }
     FocusScope.of(context).unfocus();
@@ -119,7 +120,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (_turnstileEnabled) _resetTurnstile(); // token 單次使用，失敗後重取
     } catch (e) {
       if (!mounted) return;
-      setState(() => _error = '發生未預期的錯誤：$e');
+      setState(() => _error = trPair('發生未預期的錯誤：$e', 'Unexpected error: $e'));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -128,7 +129,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _goRegister() async {
     final ok = await Navigator.of(
       context,
-    ).push<bool>(MaterialPageRoute(builder: (_) => const RegisterScreen()));
+    ).push<bool>(MaterialPageRoute(builder: (_) => RegisterScreen()));
     if (ok == true && mounted) widget.onLoggedIn();
   }
 
@@ -149,7 +150,9 @@ class _LoginScreenState extends State<LoginScreen> {
       setState(() => _error = e.message);
     } catch (e) {
       if (!mounted) return;
-      setState(() => _error = 'Google 登入失敗：$e');
+      setState(
+        () => _error = trPair('Google 登入失敗：$e', 'Google sign-in failed: $e'),
+      );
     } finally {
       if (mounted) setState(() => _googleLoading = false);
     }
@@ -172,7 +175,9 @@ class _LoginScreenState extends State<LoginScreen> {
       setState(() => _error = e.message);
     } catch (e) {
       if (!mounted) return;
-      setState(() => _error = 'LINE 登入失敗：$e');
+      setState(
+        () => _error = trPair('LINE 登入失敗：$e', 'LINE sign-in failed: $e'),
+      );
     } finally {
       if (mounted) setState(() => _lineLoading = false);
     }
@@ -191,7 +196,9 @@ class _LoginScreenState extends State<LoginScreen> {
       setState(() => _error = e.message);
     } catch (e) {
       if (!mounted) return;
-      setState(() => _error = 'Passkey 登入失敗：$e');
+      setState(
+        () => _error = trPair('Passkey 登入失敗：$e', 'Passkey sign-in failed: $e'),
+      );
     } finally {
       if (mounted) setState(() => _passkeyLoading = false);
     }
@@ -206,7 +213,7 @@ class _LoginScreenState extends State<LoginScreen> {
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(24),
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 420),
+              constraints: BoxConstraints(maxWidth: 420),
               child: Form(
                 key: _formKey,
                 child: Column(
@@ -217,7 +224,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       size: 64,
                       color: theme.colorScheme.primary,
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: 16),
                     Text(
                       'AssetPilot',
                       textAlign: TextAlign.center,
@@ -225,35 +232,36 @@ class _LoginScreenState extends State<LoginScreen> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    SizedBox(height: 4),
                     Text(
-                      '資產管理 · 安卓客戶端',
+                      tr('資產管理 · 安卓客戶端'),
                       textAlign: TextAlign.center,
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
                     ),
-                    const SizedBox(height: 32),
+                    SizedBox(height: 32),
                     TextFormField(
                       controller: _email,
                       keyboardType: TextInputType.emailAddress,
                       autocorrect: false,
-                      decoration: const InputDecoration(
-                        labelText: '電子郵件',
+                      decoration: InputDecoration(
+                        labelText: tr('電子郵件'),
                         prefixIcon: Icon(Icons.email_outlined),
                         border: OutlineInputBorder(),
                       ),
-                      validator: (v) =>
-                          (v == null || !v.contains('@')) ? '請輸入有效的電子郵件' : null,
+                      validator: (v) => (v == null || !v.contains('@'))
+                          ? tr('請輸入有效的電子郵件')
+                          : null,
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: 16),
                     TextFormField(
                       controller: _password,
                       obscureText: _obscure,
                       decoration: InputDecoration(
-                        labelText: '密碼',
-                        prefixIcon: const Icon(Icons.lock_outline),
-                        border: const OutlineInputBorder(),
+                        labelText: tr('密碼'),
+                        prefixIcon: Icon(Icons.lock_outline),
+                        border: OutlineInputBorder(),
                         suffixIcon: IconButton(
                           icon: Icon(
                             _obscure
@@ -264,11 +272,11 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                       validator: (v) =>
-                          (v == null || v.isEmpty) ? '請輸入密碼' : null,
+                          (v == null || v.isEmpty) ? tr('請輸入密碼') : null,
                       onFieldSubmitted: (_) => _submit(),
                     ),
                     if (_turnstileEnabled && _siteKey != null) ...[
-                      const SizedBox(height: 16),
+                      SizedBox(height: 16),
                       TurnstileWidget(
                         key: ValueKey('ts_$_turnstileNonce'),
                         siteKey: _siteKey!,
@@ -282,7 +290,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ],
                     if (_error != null) ...[
-                      const SizedBox(height: 16),
+                      SizedBox(height: 16),
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
@@ -296,7 +304,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               color: theme.colorScheme.onErrorContainer,
                               size: 20,
                             ),
-                            const SizedBox(width: 8),
+                            SizedBox(width: 8),
                             Expanded(
                               child: Text(
                                 _error!,
@@ -309,21 +317,21 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                     ],
-                    const SizedBox(height: 24),
+                    SizedBox(height: 24),
                     FilledButton(
                       onPressed: _loading ? null : _submit,
                       style: FilledButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
                       child: _loading
-                          ? const SizedBox(
+                          ? SizedBox(
                               height: 20,
                               width: 20,
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
-                          : const Text('登入'),
+                          : Text(tr('登入')),
                     ),
-                    const SizedBox(height: 12),
+                    SizedBox(height: 12),
                     OutlinedButton.icon(
                       onPressed: (_passkeyLoading || _loading)
                           ? null
@@ -332,16 +340,16 @@ class _LoginScreenState extends State<LoginScreen> {
                         padding: const EdgeInsets.symmetric(vertical: 14),
                       ),
                       icon: _passkeyLoading
-                          ? const SizedBox(
+                          ? SizedBox(
                               height: 18,
                               width: 18,
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
-                          : const Icon(Icons.fingerprint_rounded),
-                      label: const Text('使用 Passkey 登入'),
+                          : Icon(Icons.fingerprint_rounded),
+                      label: Text(tr('使用 Passkey 登入')),
                     ),
                     if (_googleEnabled) ...[
-                      const SizedBox(height: 12),
+                      SizedBox(height: 12),
                       OutlinedButton.icon(
                         onPressed: (_googleLoading || _loading)
                             ? null
@@ -350,19 +358,19 @@ class _LoginScreenState extends State<LoginScreen> {
                           padding: const EdgeInsets.symmetric(vertical: 14),
                         ),
                         icon: _googleLoading
-                            ? const SizedBox(
+                            ? SizedBox(
                                 height: 18,
                                 width: 18,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
                                 ),
                               )
-                            : const Icon(Icons.account_circle_outlined),
-                        label: const Text('使用 Google 登入'),
+                            : Icon(Icons.account_circle_outlined),
+                        label: Text(tr('使用 Google 登入')),
                       ),
                     ],
                     if (_lineEnabled) ...[
-                      const SizedBox(height: 12),
+                      SizedBox(height: 12),
                       OutlinedButton.icon(
                         onPressed: (_lineLoading || _loading)
                             ? null
@@ -371,19 +379,19 @@ class _LoginScreenState extends State<LoginScreen> {
                           padding: const EdgeInsets.symmetric(vertical: 14),
                         ),
                         icon: _lineLoading
-                            ? const SizedBox(
+                            ? SizedBox(
                                 height: 18,
                                 width: 18,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
                                 ),
                               )
-                            : const Icon(Icons.chat_bubble_outline_rounded),
-                        label: const Text('使用 LINE 登入'),
+                            : Icon(Icons.chat_bubble_outline_rounded),
+                        label: Text(tr('使用 LINE 登入')),
                       ),
                     ],
                     if (_configLoading)
-                      const Padding(
+                      Padding(
                         padding: EdgeInsets.only(top: 12),
                         child: Center(
                           child: SizedBox(
@@ -396,7 +404,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     else if (_registrationEnabled)
                       TextButton(
                         onPressed: _loading ? null : _goRegister,
-                        child: const Text('還沒有帳號？註冊'),
+                        child: Text(tr('還沒有帳號？註冊')),
                       ),
                   ],
                 ),

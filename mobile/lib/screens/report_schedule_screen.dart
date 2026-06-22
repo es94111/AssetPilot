@@ -3,9 +3,22 @@ import 'package:flutter/material.dart';
 import '../api_client.dart';
 import '../models.dart';
 import '../widgets.dart';
+import '../l10n.dart';
 
-const _freqLabels = {'daily': '每日', 'weekly': '每週', 'monthly': '每月'};
-const _weekdays = ['日', '一', '二', '三', '四', '五', '六'];
+Map<String, String> get _freqLabels => {
+  'daily': tr('每日'),
+  'weekly': tr('每週'),
+  'monthly': tr('每月'),
+};
+List<String> get _weekdays => [
+  tr('日'),
+  tr('一'),
+  tr('二'),
+  tr('三'),
+  tr('四'),
+  tr('五'),
+  tr('六'),
+];
 
 String _two(int n) => n.toString().padLeft(2, '0');
 
@@ -17,15 +30,18 @@ String _fmtDate(num ms) {
 String _scheduleSummary(ReportSchedule s) {
   final time = '${_two(s.hour)}:${_two(s.minute)}';
   final when = switch (s.freq) {
-    'weekly' => '每週${_weekdays[s.weekday.clamp(0, 6)]}',
-    'monthly' => s.dayOfMonth == 0 ? '每月最後一天' : '每月 ${s.dayOfMonth} 號',
-    _ => '每日',
+    'weekly' => trPair(
+      '每週${_weekdays[s.weekday.clamp(0, 6)]}',
+      'Every ${_weekdays[s.weekday.clamp(0, 6)]}',
+    ),
+    'monthly' => s.dayOfMonth == 0 ? tr('每月最後一天') : tr('每月 ${s.dayOfMonth} 號'),
+    _ => tr('每日'),
   };
   final channels = [
     if (s.notifyEmail) 'Email',
     if (s.notifyLine) 'LINE',
-  ].join('／');
-  return '$when $time・$channels';
+  ].join(isEnglish ? ' / ' : '／');
+  return '$when $time${isEnglish ? ' · ' : '・'}$channels';
 }
 
 /// 定期報表通知排程：使用者自訂何時、以何種方式收到收支報表。
@@ -78,16 +94,16 @@ class _ReportScheduleScreenState extends State<ReportScheduleScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('刪除排程'),
-        content: const Text('確定刪除此報表通知排程？'),
+        title: Text(tr('刪除排程')),
+        content: Text(tr('確定刪除此報表通知排程？')),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('取消'),
+            child: Text(tr('取消')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('刪除'),
+            child: Text(tr('刪除')),
           ),
         ],
       ),
@@ -95,7 +111,7 @@ class _ReportScheduleScreenState extends State<ReportScheduleScreen> {
     if (ok != true) return;
     try {
       await ApiClient.instance.deleteReportSchedule(s.id);
-      if (mounted) toast(context, '已刪除');
+      if (mounted) toast(context, tr('已刪除'));
       _reload();
     } catch (e) {
       if (mounted) toast(context, '$e');
@@ -105,20 +121,20 @@ class _ReportScheduleScreenState extends State<ReportScheduleScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('報表通知')),
+      appBar: AppBar(title: Text(tr('報表通知'))),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openForm(),
-        icon: const Icon(Icons.add),
-        label: const Text('新增排程'),
+        icon: Icon(Icons.add),
+        label: Text(tr('新增排程')),
       ),
       body: AsyncView<List<ReportSchedule>>(
         future: _future,
         onRetry: _reload,
         builder: (context, list) {
           if (list.isEmpty) {
-            return const EmptyState(
+            return EmptyState(
               icon: Icons.notifications_none,
-              message: '尚無排程，點右下角新增\n可設定每日／每週／每月定時收到收支報表',
+              message: tr('尚無排程，點右下角新增\n可設定每日／每週／每月定時收到收支報表'),
             );
           }
           return RefreshIndicator(
@@ -126,7 +142,7 @@ class _ReportScheduleScreenState extends State<ReportScheduleScreen> {
             child: ListView.separated(
               padding: const EdgeInsets.only(bottom: 88),
               itemCount: list.length,
-              separatorBuilder: (_, _) => const Divider(height: 1),
+              separatorBuilder: (_, _) => Divider(height: 1),
               itemBuilder: (context, i) {
                 final s = list[i];
                 return ListTile(
@@ -137,7 +153,11 @@ class _ReportScheduleScreenState extends State<ReportScheduleScreen> {
                         : Colors.grey,
                   ),
                   title: Text(_scheduleSummary(s)),
-                  subtitle: Text(s.lastRun > 0 ? '上次寄送 ${_fmtDate(s.lastRun)}' : '尚未寄送'),
+                  subtitle: Text(
+                    s.lastRun > 0
+                        ? tr('上次寄送 ${_fmtDate(s.lastRun)}')
+                        : tr('尚未寄送'),
+                  ),
                   trailing: Switch(
                     value: s.enabled,
                     onChanged: (_) => _toggle(s),
@@ -206,7 +226,7 @@ class _ReportScheduleFormState extends State<_ReportScheduleForm> {
 
   Future<void> _save() async {
     if (!_notifyEmail && !_notifyLine) {
-      toast(context, '請至少選擇一種通知方式');
+      toast(context, tr('請至少選擇一種通知方式'));
       return;
     }
     setState(() => _saving = true);
@@ -247,94 +267,97 @@ class _ReportScheduleFormState extends State<_ReportScheduleForm> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              _isEdit ? '編輯報表排程' : '新增報表排程',
+              _isEdit ? tr('編輯報表排程') : tr('新增報表排程'),
               style: Theme.of(context).textTheme.titleLarge,
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             SegmentedButton<String>(
-              segments: const [
-                ButtonSegment(value: 'daily', label: Text('每日')),
-                ButtonSegment(value: 'weekly', label: Text('每週')),
-                ButtonSegment(value: 'monthly', label: Text('每月')),
+              segments: [
+                ButtonSegment(value: 'daily', label: Text(tr('每日'))),
+                ButtonSegment(value: 'weekly', label: Text(tr('每週'))),
+                ButtonSegment(value: 'monthly', label: Text(tr('每月'))),
               ],
               selected: {_freq},
               onSelectionChanged: (s) => setState(() => _freq = s.first),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             ListTile(
               shape: RoundedRectangleBorder(
                 side: BorderSide(color: Theme.of(context).dividerColor),
                 borderRadius: BorderRadius.circular(4),
               ),
-              leading: const Icon(Icons.access_time),
-              title: const Text('時間'),
+              leading: Icon(Icons.access_time),
+              title: Text(tr('時間')),
               trailing: Text('${_two(_hour)}:${_two(_minute)}'),
               onTap: _pickTime,
             ),
             if (_freq == 'weekly') ...[
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               DropdownButtonFormField<int>(
                 initialValue: _weekday,
-                decoration: const InputDecoration(
-                  labelText: '星期',
+                decoration: InputDecoration(
+                  labelText: tr('星期'),
                   border: OutlineInputBorder(),
                 ),
                 items: [
                   for (var i = 0; i < 7; i++)
-                    DropdownMenuItem(value: i, child: Text('星期${_weekdays[i]}')),
+                    DropdownMenuItem(
+                      value: i,
+                      child: Text(trPair('星期${_weekdays[i]}', _weekdays[i])),
+                    ),
                 ],
                 onChanged: (v) => setState(() => _weekday = v ?? 1),
               ),
             ],
             if (_freq == 'monthly') ...[
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               DropdownButtonFormField<int>(
                 initialValue: _dayOfMonth,
-                decoration: const InputDecoration(
-                  labelText: '日期',
+                decoration: InputDecoration(
+                  labelText: tr('日期'),
                   border: OutlineInputBorder(),
                 ),
                 items: [
-                  const DropdownMenuItem(value: 0, child: Text('每月最後一天')),
+                  DropdownMenuItem(value: 0, child: Text(tr('每月最後一天'))),
                   for (var d = 1; d <= 28; d++)
-                    DropdownMenuItem(value: d, child: Text('$d 號')),
+                    DropdownMenuItem(value: d, child: Text(tr('$d 號'))),
                 ],
                 onChanged: (v) => setState(() => _dayOfMonth = v ?? 1),
               ),
             ],
-            const SizedBox(height: 4),
+            SizedBox(height: 4),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text('Email 通知'),
+              title: Text(tr('Email 通知')),
               value: _notifyEmail,
               onChanged: (v) => setState(() => _notifyEmail = v),
             ),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text('LINE 通知'),
-              subtitle: const Text('需已綁定 LINE'),
+              title: Text(tr('LINE 通知')),
+              subtitle: Text(tr('需已綁定 LINE')),
               value: _notifyLine,
               onChanged: (v) => setState(() => _notifyLine = v),
             ),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text('啟用'),
+              title: Text(tr('啟用')),
               value: _enabled,
               onChanged: (v) => setState(() => _enabled = v),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             FilledButton(
               onPressed: _saving ? null : _save,
               style: FilledButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 14),
               ),
               child: _saving
-                  ? const SizedBox(
+                  ? SizedBox(
                       height: 20,
                       width: 20,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : const Text('儲存'),
+                  : Text(tr('儲存')),
             ),
           ],
         ),

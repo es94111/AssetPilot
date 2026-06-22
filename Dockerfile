@@ -23,6 +23,13 @@ WORKDIR /app
 # Trivy 設 ignore-unfixed=true，僅會擋「上游已有修補」的弱點，故升級到 alpine repo 最新修補版即可通過掃描。
 RUN apk upgrade --no-cache
 
+# 移除 base image 內建的 npm。standalone 入口僅需 `node server.js`，執行期完全用不到 npm，
+# 而 npm 自帶的 vendored undici（node:24-alpine 為 6.25.0）帶有 CVE-2026-12151（DoS），
+# 上游 npm 尚未隨基底映像更新。移除可同時縮小攻擊面並通過 Trivy 容器掃描。
+RUN rm -rf /usr/local/lib/node_modules/npm \
+           /usr/local/bin/npm \
+           /usr/local/bin/npx
+
 COPY --from=builder --chown=nextjs:nodejs /app/build/standalone ./
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0

@@ -152,7 +152,7 @@ jobs:
           --build-number=${{ github.run_number }}
 
       - name: Upload AAB artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: assetpilot-aab
           path: mobile/build/app/outputs/bundle/release/app-release.aab

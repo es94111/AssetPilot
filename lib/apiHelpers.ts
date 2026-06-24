@@ -20,6 +20,8 @@ type ApiAuthResult = {
 
 const CSRF_SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 const recurringChecks = new Map<string, string>();
+const stockRecurringChecks = new Map<string, string>();
+const stockRecurringInflight = new Set<string>();
 
 function processDueRecurringOncePerDay(userId: string, userTimezone: string) {
   const today = todayInUserTz(userTimezone || 'Asia/Taipei');
@@ -37,6 +39,31 @@ function processDueRecurringOncePerDay(userId: string, userTimezone: string) {
     recurringChecks.delete(userId);
     logger.error({ err: e, userId }, 'Failed to process due recurring transactions');
   }
+}
+
+function processDueStockRecurringOncePerDay(userId: string, userTimezone: string) {
+  const today = todayInUserTz(userTimezone || 'Asia/Taipei');
+  const version = queryOne(
+    "SELECT COUNT(*) AS cnt, COALESCE(MAX(COALESCE(updated_at, created_at, 0)), 0) AS updated_at, COALESCE(MAX(COALESCE(last_generated, '')), '') AS last_generated FROM stock_recurring WHERE user_id = ?",
+    [userId]
+  );
+  const cacheKey = `${today}:${version?.cnt || 0}:${version?.updated_at || 0}:${version?.last_generated || ''}`;
+  if (stockRecurringChecks.get(userId) === cacheKey || stockRecurringInflight.has(userId)) return;
+  stockRecurringChecks.set(userId, cacheKey);
+  stockRecurringInflight.add(userId);
+
+  import('./stockRecurringHelpers')
+    .then(async ({ processStockRecurringForUser }) => {
+      const result = await processStockRecurringForUser(userId, { userTimezone });
+      if (result.skipped > 0) stockRecurringChecks.delete(userId);
+    })
+    .catch((e) => {
+      stockRecurringChecks.delete(userId);
+      logger.error({ err: e, userId }, 'Failed to process due stock recurring transactions');
+    })
+    .finally(() => {
+      stockRecurringInflight.delete(userId);
+    });
 }
 
 function getRequestOriginCandidates(request: any): Set<string> {
@@ -148,6 +175,7 @@ export async function requireAuth(request?: any): Promise<ApiAuthResult | NextRe
       sessionId,
     };
     processDueRecurringOncePerDay(authResult.userId, authResult.userTimezone);
+    processDueStockRecurringOncePerDay(authResult.userId, authResult.userTimezone);
     return authResult;
   }
 

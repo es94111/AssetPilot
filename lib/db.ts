@@ -360,12 +360,19 @@ async function _runMigrations(): Promise<void> {
     id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL,
     stock_id TEXT NOT NULL,
-    freq TEXT NOT NULL,
-    shares REAL NOT NULL,
-    price REAL DEFAULT 0,
-    next_date TEXT,
+    amount REAL DEFAULT 0,
+    frequency TEXT NOT NULL DEFAULT 'monthly',
+    start_date TEXT,
+    account_id TEXT DEFAULT '',
+    note TEXT DEFAULT '',
     is_active INTEGER DEFAULT 1,
-    created_at INTEGER
+    last_generated TEXT,
+    created_at INTEGER,
+    updated_at INTEGER DEFAULT 0,
+    freq TEXT DEFAULT '',
+    shares REAL DEFAULT 0,
+    price REAL DEFAULT 0,
+    next_date TEXT
   )`);
 
   db.run(`CREATE TABLE IF NOT EXISTS user_settings (
@@ -511,6 +518,24 @@ async function _runMigrations(): Promise<void> {
   alterIgnore("ALTER TABLE stock_transactions ADD COLUMN recurring_plan_id TEXT DEFAULT ''");
   alterIgnore("ALTER TABLE stock_transactions ADD COLUMN period_start_date TEXT DEFAULT ''");
   alterIgnore("CREATE UNIQUE INDEX IF NOT EXISTS idx_stock_tx_recurring_period ON stock_transactions(user_id, recurring_plan_id, period_start_date) WHERE recurring_plan_id != '' AND period_start_date != ''");
+  alterIgnore("ALTER TABLE stock_recurring ADD COLUMN amount REAL DEFAULT 0");
+  alterIgnore("ALTER TABLE stock_recurring ADD COLUMN frequency TEXT DEFAULT 'monthly'");
+  alterIgnore("ALTER TABLE stock_recurring ADD COLUMN start_date TEXT DEFAULT ''");
+  alterIgnore("ALTER TABLE stock_recurring ADD COLUMN account_id TEXT DEFAULT ''");
+  alterIgnore("ALTER TABLE stock_recurring ADD COLUMN note TEXT DEFAULT ''");
+  alterIgnore("ALTER TABLE stock_recurring ADD COLUMN last_generated TEXT DEFAULT NULL");
+  alterIgnore("ALTER TABLE stock_recurring ADD COLUMN updated_at INTEGER DEFAULT 0");
+  alterIgnore("ALTER TABLE stock_recurring ADD COLUMN freq TEXT DEFAULT ''");
+  alterIgnore("ALTER TABLE stock_recurring ADD COLUMN shares REAL DEFAULT 0");
+  alterIgnore("ALTER TABLE stock_recurring ADD COLUMN price REAL DEFAULT 0");
+  alterIgnore("ALTER TABLE stock_recurring ADD COLUMN next_date TEXT DEFAULT ''");
+  alterIgnore("ALTER TABLE stock_recurring ALTER COLUMN freq DROP NOT NULL");
+  alterIgnore("ALTER TABLE stock_recurring ALTER COLUMN shares DROP NOT NULL");
+  alterIgnore("ALTER TABLE stock_recurring ALTER COLUMN frequency SET DEFAULT 'monthly'");
+  alterIgnore("UPDATE stock_recurring SET frequency = COALESCE(NULLIF(frequency, ''), NULLIF(freq, ''), 'monthly') WHERE frequency IS NULL OR frequency = ''");
+  alterIgnore("UPDATE stock_recurring SET start_date = COALESCE(NULLIF(start_date, ''), NULLIF(next_date, ''), '') WHERE start_date IS NULL OR start_date = ''");
+  alterIgnore("UPDATE stock_recurring SET amount = COALESCE(NULLIF(amount, 0), COALESCE(shares, 0) * COALESCE(price, 0), 0) WHERE amount IS NULL OR amount <= 0");
+  alterIgnore("UPDATE stock_recurring SET updated_at = COALESCE(NULLIF(updated_at, 0), created_at, 0) WHERE updated_at IS NULL OR updated_at = 0");
   alterIgnore("ALTER TABLE stock_dividends ADD COLUMN cash_dividend REAL DEFAULT 0");
   alterIgnore("ALTER TABLE stock_dividends ADD COLUMN stock_dividend_shares REAL DEFAULT 0");
   alterIgnore("ALTER TABLE stock_dividends ADD COLUMN account_id TEXT DEFAULT ''");

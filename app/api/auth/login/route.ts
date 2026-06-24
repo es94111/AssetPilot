@@ -100,8 +100,8 @@ export async function POST(request: NextRequest) {
       processRecurringForUser(userId);
     } catch (_) {}
     try {
-      const stockHelpers: any = await import('../../../../lib/stockHelpers');
-      await stockHelpers.processStockRecurring?.(userId);
+      const { processStockRecurringForUser } = await import('../../../../lib/stockRecurringHelpers');
+      await processStockRecurringForUser(userId, { userTimezone: String(user.timezone || 'Asia/Taipei') });
     } catch (_) {}
   });
 

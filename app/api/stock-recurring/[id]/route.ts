@@ -16,7 +16,7 @@ export async function PUT(request, { params }) {
   if (auth instanceof NextResponse) return auth;
 
   const { id } = await params;
-  const current = queryOne('SELECT id FROM stock_recurring WHERE id = ? AND user_id = ?', [id, auth.userId]);
+  const current = queryOne('SELECT id, start_date, last_generated FROM stock_recurring WHERE id = ? AND user_id = ?', [id, auth.userId]);
   if (!current) return NextResponse.json({ error: '定期定額不存在' }, { status: 404 });
 
   const body = await request.json().catch(() => ({}));
@@ -30,9 +30,10 @@ export async function PUT(request, { params }) {
   const stock = queryOne('SELECT id FROM stocks WHERE id = ? AND user_id = ?', [stockId, auth.userId]);
   if (!stock) return NextResponse.json({ error: '股票不存在' }, { status: 400 });
 
+  const newLastGenerated = startDate !== current.start_date ? null : current.last_generated;
   getDB().run(
-    'UPDATE stock_recurring SET stock_id = ?, amount = ?, frequency = ?, start_date = ?, account_id = ?, note = ? WHERE id = ? AND user_id = ?',
-    [stockId, nAmount, frequency, startDate, accountId || '', note || '', id, auth.userId]
+    'UPDATE stock_recurring SET stock_id = ?, amount = ?, frequency = ?, start_date = ?, account_id = ?, note = ?, last_generated = ?, updated_at = ? WHERE id = ? AND user_id = ?',
+    [stockId, nAmount, frequency, startDate, accountId || '', note || '', newLastGenerated, Date.now(), id, auth.userId]
   );
   saveDB();
   return NextResponse.json({ ok: true });

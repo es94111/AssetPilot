@@ -3,7 +3,19 @@ import { NextResponse } from 'next/server';
 import { requireAuth } from '../../../../lib/apiHelpers';
 import { getDB, queryOne, saveDB } from '../../../../lib/db';
 import { normalizeDate } from '../../../../lib/accountHelpers';
-import { validateChainConstraint } from '../../../../lib/stockHelpers';
+import { getStockSettings, calcStockFee, calcStockTax, validateChainConstraint } from '../../../../lib/stockHelpers';
+
+function hasManualCharge(value) {
+  return value !== undefined && value !== null && value !== '';
+}
+
+function parseCharge(value, label) {
+  const n = Number(value);
+  if (!Number.isFinite(n) || n < 0) {
+    throw new Error(`${label}不可為負或非數字`);
+  }
+  return n;
+}
 
 export async function PUT(request, { params }) {
   const auth = await requireAuth(request);
@@ -19,8 +31,15 @@ export async function PUT(request, { params }) {
   if (!(Number(shares) > 0)) return NextResponse.json({ error: '股數必須為正數' }, { status: 400 });
   if (!Number.isInteger(Number(shares))) return NextResponse.json({ error: '股數必須為整數' }, { status: 400 });
   if (!(Number(price) > 0)) return NextResponse.json({ error: '價格必須為正數' }, { status: 400 });
-  if (Number(fee) < 0 || Number(tax) < 0) {
-    return NextResponse.json({ error: '手續費/稅費不可為負' }, { status: 400 });
+  const feeProvided = hasManualCharge(fee);
+  const taxProvided = hasManualCharge(tax);
+  let manualFee = 0;
+  let manualTax = 0;
+  try {
+    if (feeProvided) manualFee = parseCharge(fee, '手續費');
+    if (taxProvided) manualTax = parseCharge(tax, '稅費');
+  } catch (e) {
+    return NextResponse.json({ error: e.message }, { status: 400 });
   }
 
   if (accountId) {
@@ -40,12 +59,19 @@ export async function PUT(request, { params }) {
   }
 
   const taxAutoCalc = (body.tax === undefined || body.tax === null || body.tax === '') ? 1 : 0;
+  const stock = queryOne('SELECT stock_type FROM stocks WHERE id = ? AND user_id = ?', [t.stock_id, auth.userId]);
+  const settings = getStockSettings(auth.userId);
+  const amount = Number(shares) * Number(price);
+  const finalFee = feeProvided ? manualFee : calcStockFee(amount, Number(shares), settings);
+  const finalTax = type === 'sell'
+    ? (taxProvided ? manualTax : calcStockTax(amount, stock?.stock_type || 'stock', settings))
+    : (taxProvided ? manualTax : 0);
   const db = getDB();
   db.run('BEGIN');
   try {
     db.run(
       'UPDATE stock_transactions SET date=?, type=?, shares=?, price=?, fee=?, tax=?, account_id=?, note=?, tax_auto_calculated=? WHERE id=? AND user_id=?',
-      [date, type, shares, price, fee || 0, tax || 0, accountId || '', note || '', taxAutoCalc, id, auth.userId]
+      [date, type, shares, price, finalFee, finalTax, accountId || '', note || '', taxAutoCalc, id, auth.userId]
     );
     db.run('COMMIT');
   } catch (e) {

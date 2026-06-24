@@ -48,9 +48,10 @@ export async function POST(request) {
   if (!stock) return NextResponse.json({ error: '股票不存在' }, { status: 400 });
 
   const id = uid();
+  const now = Date.now();
   getDB().run(
-    'INSERT INTO stock_recurring (id, user_id, stock_id, amount, frequency, start_date, account_id, note, is_active, last_generated, created_at) VALUES (?,?,?,?,?,?,?,?,1,NULL,?)',
-    [id, auth.userId, stockId, nAmount, frequency, startDate, accountId || '', note || '', Date.now()]
+    'INSERT INTO stock_recurring (id, user_id, stock_id, amount, frequency, start_date, account_id, note, is_active, last_generated, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,1,NULL,?,?)',
+    [id, auth.userId, stockId, nAmount, frequency, startDate, accountId || '', note || '', now, now]
   );
   saveDB();
   return NextResponse.json({ id });

@@ -108,16 +108,18 @@ export default function StockTxClient(_props: { user?: any } = {}) {
     if (!form.price || Number(form.price) <= 0) { setFormError('請輸入有效價格'); return; }
     setSaving(true);
     setFormError('');
-    const body = {
+    const body: Record<string, unknown> = {
       stockId: form.stockId,
       type: form.type,
       date: form.date,
       shares: Number(form.shares),
       price: Number(form.price),
-      fee: Number(form.fee) || 0,
-      tax: Number(form.tax) || 0,
       note: form.note,
     };
+    const feeText = String(form.fee ?? '').trim();
+    const taxText = String(form.tax ?? '').trim();
+    if (feeText !== '') body.fee = Number(feeText);
+    if (form.type === 'sell' && taxText !== '') body.tax = Number(taxText);
     try {
       if (editId) { await apiPut(`/api/stock-transactions/${editId}`, body); }
       else { await apiPost('/api/stock-transactions', body); }
@@ -175,8 +177,8 @@ export default function StockTxClient(_props: { user?: any } = {}) {
             <Input label="日期 *" type="date" value={form.date} onChange={e => setForm(f => ({ ...f, date: e.target.value }))} />
             <Input label="股數 *" type="number" value={form.shares} onChange={e => setForm(f => ({ ...f, shares: e.target.value }))} />
             <Input label="單價 *" type="number" value={form.price} onChange={e => setForm(f => ({ ...f, price: e.target.value }))} />
-            <Input label="手續費" type="number" value={form.fee} onChange={e => setForm(f => ({ ...f, fee: e.target.value }))} />
-            {form.type === 'sell' && <Input label="交易稅" type="number" value={form.tax} onChange={e => setForm(f => ({ ...f, tax: e.target.value }))} />}
+            <Input label="手續費" type="number" placeholder="自動計算" value={form.fee} onChange={e => setForm(f => ({ ...f, fee: e.target.value }))} />
+            {form.type === 'sell' && <Input label="交易稅" type="number" placeholder="自動計算" value={form.tax} onChange={e => setForm(f => ({ ...f, tax: e.target.value }))} />}
             <Input label="備註" value={form.note} onChange={e => setForm(f => ({ ...f, note: e.target.value }))} />
             {formError && <p className="text-red-500 text-sm">{formError}</p>}
             <div className="flex gap-2">
@@ -207,7 +209,7 @@ export default function StockTxClient(_props: { user?: any } = {}) {
                   <TableCell>${Number(t.price).toLocaleString()}</TableCell>
                   <TableCell className={isBuy ? 'text-red-600' : 'text-green-600'}>{fmt(Math.round(total))}</TableCell>
                   <TableCell className="flex gap-2">
-                    <Button variant="ghost" size="icon" onClick={() => { setForm({ stockId: t.stockId || t.stock_id, type: t.type, date: t.date, shares: t.shares, price: t.price, fee: t.fee, tax: t.tax, note: t.note }); setEditId(t.id); setFormError(''); setDialogOpen(true); }}><Edit3 size={16} /></Button>
+                    <Button variant="ghost" size="icon" onClick={() => { setForm({ stockId: t.stockId || t.stock_id, type: t.type, date: t.date, shares: String(t.shares ?? ''), price: String(t.price ?? ''), fee: t.fee != null ? String(t.fee) : '', tax: t.tax != null ? String(t.tax) : '', note: t.note || '' }); setEditId(t.id); setFormError(''); setDialogOpen(true); }}><Edit3 size={16} /></Button>
                     <Button variant="ghost" size="icon" className="text-red-600" onClick={() => setDeleteId(t.id)}><Trash2 size={16} /></Button>
                   </TableCell>
                 </TableRow>

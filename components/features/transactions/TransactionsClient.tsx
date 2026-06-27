@@ -497,8 +497,8 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
   const pageTotals = txs.reduce(
     (acc, tx) => {
       const amount = Math.abs(Number(tx.amount) || 0);
-      if (tx.type === 'income' || tx.type === 'transfer_in') acc.income += amount;
-      if (tx.type === 'expense' || tx.type === 'transfer_out') acc.expense += amount;
+      if (tx.type === 'income') acc.income += amount;
+      if (tx.type === 'expense') acc.expense += amount;
       return acc;
     },
     { income: 0, expense: 0 }

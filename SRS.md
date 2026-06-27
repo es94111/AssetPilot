@@ -1,6 +1,6 @@
 # 資產管理 系統規格說明書 (SSD)
 
-**版本：** 4.78.1
+**版本：** 4.78.2
 **日期：** 2026-06-24
 **狀態：** 已實作
 
@@ -987,6 +987,7 @@ API 路徑統一以 `/api/` 為前綴。所有需認證的路由自動套用 aut
 
 | 版本 | 日期 | 變更說明 |
 | --- | --- | --- |
+| 4.78.2 | 2026-06-27 | 修正當頁收支統計計算錯誤：TransactionsClient.tsx 的 pageTotals reducer 原本將 transfer_in 計入 income、transfer_out 計入 expense，導致轉帳交易被誤計為收支；改為僅 type==='income' 進 income、type==='expense' 進 expense，轉帳不納入統計。 |
 | 4.78.1 | 2026-06-27 | 相依套件升級至最新版（皆為同主版本 minor/patch，無破壞性變更）。`typescript` `5.9.3 → 6.0.3`、`@types/node` `22.19.17 → 24.13.2`（對齊 Node 24 runtime，連帶 `undici-types` `6.21.0 → 7.18.2`）、`next` `16.2.6 → 16.2.9`、`react`/`react-dom` `19.2.5 → 19.2.7`、`@types/react` `19.2.14 → 19.2.17`、`sharp` `0.35.0 → 0.35.2`、`pg` `8.21.0 → 8.22.0`、`resend` `6.12.2 → 6.16.0`、`lucide-react` `1.14.0 → 1.21.0`、`@base-ui/react` `1.4.1 → 1.6.0`、`tailwindcss`/`@tailwindcss/postcss` `4.2.4 → 4.3.1`、`tailwind-merge` `3.5.0 → 3.6.0`、`decimal.js` `10.4.3 → 10.6.0`、`jsonwebtoken` `9.0.2 → 9.0.3`、`@passwordless-id/webauthn` `2.3.5 → 2.4.0`、`autoprefixer` `10.5.0 → 10.5.2`、override `postcss` `8.5.14 → 8.5.15`、`uuid` `14.0.0 → 14.0.1`。`tsconfig.json` 無須調整（未用到 TS 6.0 移除的舊選項）。`package-lock.json` 以 `npm install --package-lock-only` 重生，保留 sharp 全平台 optional 二進位（linux 條目完整）。本機 tsc／Docker 不可用，型別與 build 驗證靠 CI docker-publish。 |
 | 4.78.0 | 2026-06-27 | 交易清單新增當頁收支合計統計。`TransactionsClient.tsx` 加入 `pageTotals` reducer，對當頁 `txs` 陣列累計 income（type=income/transfer_in）與 expense（type=expense/transfer_out）金額，並計算 `pageNet`。UI 以三欄 `.tx-page-summary` 格線顯示當頁收入、支出、淨收支，左邊框色分別對應 `--income`/`--expense`/`--net` CSS 變數；`pageNet < 0` 時淨收支加 `−` 前綴並套 `amount-expense` 樣式。`app/globals.css` 新增 `.tx-page-summary*` 規則，手機版（max-width: 640px）改為單欄直排。 |
 | 4.77.1 | 2026-06-24 | 修正股票定期定額與股票交易費用自動計算。①新增 `lib/stockRecurringHelpers.ts`，將原本僅存在於 `app/api/stock-recurring/process/route.ts` 的處理流程抽成共用 helper，手動執行端點、登入後背景觸發與 `requireAuth()` 每日檢查皆呼叫同一邏輯；`lib/apiHelpers.ts` 新增 per-user/day/version 快取與 in-flight 防重，若處理結果有 skipped 會清除快取，讓暫時查不到價格的排程可在同日下一次請求重試。②`app/api/auth/login/route.ts` 原本動態 import `lib/stockHelpers` 並呼叫不存在的 `processStockRecurring`，改為呼叫 `processStockRecurringForUser()`，補回登入後自動執行股票定期定額。③定期定額計算改用 `todayInUserTz()`，避免 UTC 日期落差；休市日維持順延至下一交易日；產生交易仍用 `recurring_plan_id + period_start_date` 唯一索引去重。④`lib/db.ts` 補齊 `stock_recurring` 現行 API 實際使用欄位（`amount`、`frequency`、`start_date`、`account_id`、`note`、`last_generated`、`updated_at`），保留舊欄位並遷移 `freq/next_date/shares*price` 至新欄位，讓新環境與舊資料庫都可建立與執行股票定期定額。⑤股票交易 POST/PUT 端點改為未提供 `fee` 時依 `stock_settings` 自動計算手續費，賣出且未提供 `tax` 時依股票類型自動計算證交稅；有提供數值則視為手動覆寫並驗證不可為負或非數字。⑥Web `StockTxClient` 空白手續費／交易稅欄位不再送成 0，placeholder 顯示「自動計算」，買進時不送隱藏的交易稅欄位。驗證：`npm test` 通過；`node node_modules/typescript/lib/tsc.js --noEmit` 仍受既有 e2e 測試缺 `@playwright/test` 型別阻擋，非本次改動造成。 |

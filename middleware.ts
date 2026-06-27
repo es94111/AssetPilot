@@ -17,6 +17,7 @@ const PUBLIC_PATHS = new Set([
   '/api/app/auth-ticket/exchange',
   '/api/line/webhook',
   '/api/config',
+  '/api/i18n/locale',
 ]);
 
 // passkey 端點前綴

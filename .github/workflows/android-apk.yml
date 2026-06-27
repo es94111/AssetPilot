@@ -182,16 +182,10 @@ jobs:
           NODE_OPTIONS: --dns-result-order=ipv4first
         run: |
           set -euo pipefail
-          workdir="$(mktemp -d)"
-          # Run the script from workdir so `import 'googleapis'` resolves against
-          # workdir/node_modules — Node ESM resolves bare specifiers from the
-          # importing file's directory, not the cwd.
-          cp "$GITHUB_WORKSPACE/.github/scripts/play-publish.mjs" "$workdir/play-publish.mjs"
-          cd "$workdir"
-          npm init -y >/dev/null 2>&1
-          npm install --no-audit --no-fund googleapis@144 >/dev/null 2>&1
-          printf '%s' "$PLAY_SERVICE_ACCOUNT_JSON" > sa.json
-          SA_JSON_PATH="$workdir/sa.json" node "$workdir/play-publish.mjs"
+          # 此腳本僅用 Node 內建模組（fetch/crypto），不需安裝任何相依套件。
+          sa_json="$(mktemp)"
+          printf '%s' "$PLAY_SERVICE_ACCOUNT_JSON" > "$sa_json"
+          SA_JSON_PATH="$sa_json" node "$GITHUB_WORKSPACE/.github/scripts/play-publish.mjs"
 
       - name: Publish AAB + version manifest to S3
         if: ${{ env.S3_BUCKET != '' }}

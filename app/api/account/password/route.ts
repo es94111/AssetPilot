@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import { requireAuth, setAuthCookie } from '../../../../lib/apiHelpers';
 import { getDB, queryOne, saveDB } from '../../../../lib/db';
 import { createLoginSession, revokeAllLoginSessions } from '../../../../lib/sessionHelpers';
+import { auditSensitiveAction } from '../../../../lib/auditHelpers';
 
 function validateStrongPassword(password: string) {
   if (!password || typeof password !== 'string') return '密碼為必填';
@@ -39,6 +40,12 @@ export async function PUT(request: Request) {
   const passwordHash = await bcrypt.hash(newPassword, 10);
   getDB().run('UPDATE users SET password_hash = ?, has_password = 1, token_version = COALESCE(token_version, 0) + 1 WHERE id = ?', [passwordHash, auth.userId]);
   saveDB();
+
+  // 敏感操作：使用者自行變更密碼（不記錄密碼內容）。
+  auditSensitiveAction(request, { userId: auth.userId, isAdmin: auth.isAdmin }, {
+    action: 'account.password_change',
+    metadata: { self: true },
+  });
 
   const updatedUser = queryOne('SELECT token_version FROM users WHERE id = ?', [auth.userId]);
   revokeAllLoginSessions(auth.userId);

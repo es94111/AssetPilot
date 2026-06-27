@@ -1,6 +1,7 @@
 // lib/auditHelpers.ts — 操作稽核、CSV 工具
 import { getDB, saveDB } from './db';
 import { uid } from './userDefaults';
+import { getRequestIpFromHeaders, getUserAgentFromHeaders } from './loginHelpers';
 
 const AUDIT_METADATA_ALLOWED_KEYS = new Set([
   'rows', 'imported', 'skipped', 'errors', 'warnings', 'byteSize',
@@ -10,6 +11,10 @@ const AUDIT_METADATA_ALLOWED_KEYS = new Set([
   'bucket', 'object_key', 'endpoint', 'region',
   'transaction_id', 'attachment_id', 'storage', 'mime_type',
   'path', 'normalizedPath', 'next', 'reason', 'rawUrl', 'pattern',
+  // 敏感操作（管理員權限／設定／稽核維運）詳細記錄用的欄位。
+  'target_user_id', 'target_email', 'was_admin', 'is_admin',
+  'old_role', 'new_role', 'changed_fields', 'setting', 'cert_type',
+  'deleted_count', 'requested_count', 'scope', 'log_id', 'self',
 ]);
 
 export interface WriteAuditArgs {
@@ -44,6 +49,29 @@ export function writeOperationAudit({ userId, role, action, ipAddress, userAgent
       console.error(JSON.stringify({ event: 'audit_write_failed', userId, action, result, error: String((e as Error)?.message || e) }));
     } catch (_) { /* noop */ }
   }
+}
+
+/**
+ * 從 request + 認證結果記錄一筆敏感操作稽核，自動帶入 IP、User-Agent 與角色。
+ * 用於管理員權限變更、系統設定、稽核維運等敏感操作的「詳細記錄」。
+ */
+export function auditSensitiveAction(
+  request: { headers?: unknown } | null | undefined,
+  auth: { userId?: string; isAdmin?: boolean; isSuperAdmin?: boolean } | null | undefined,
+  args: { action: string; result?: string; metadata?: Record<string, unknown> }
+): void {
+  const headers = (request?.headers || {}) as Parameters<typeof getRequestIpFromHeaders>[0];
+  const role = auth?.isSuperAdmin ? 'super_admin' : (auth?.isAdmin ? 'admin' : 'user');
+  writeOperationAudit({
+    userId: auth?.userId || '',
+    role,
+    action: args.action,
+    ipAddress: getRequestIpFromHeaders(headers),
+    userAgent: getUserAgentFromHeaders(headers),
+    result: args.result || 'success',
+    isAdminOperation: !!auth?.isAdmin,
+    metadata: args.metadata,
+  });
 }
 
 function formulaInjectionEscape(value: string): string {

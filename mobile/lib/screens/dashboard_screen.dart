@@ -354,7 +354,10 @@ class _CategoryPie extends StatelessWidget {
                       ),
                       SizedBox(width: 4),
                       Text(
-                        '${n.name}　${twd(n.total)}',
+                        // 父分類佔總支出百分比，保留小數點第一位。
+                        total > 0
+                            ? '${n.name}　${twd(n.total)}　${(n.total / total * 100).toStringAsFixed(1)}%'
+                            : '${n.name}　${twd(n.total)}',
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                     ],

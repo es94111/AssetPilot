@@ -108,7 +108,8 @@ async function _runMigrations(): Promise<void> {
     login_at INTEGER NOT NULL,
     ip_address TEXT NOT NULL,
     login_method TEXT DEFAULT 'password',
-    is_admin_login INTEGER DEFAULT 0
+    is_admin_login INTEGER DEFAULT 0,
+    user_agent TEXT DEFAULT ''
   )`);
   db.run(`CREATE INDEX IF NOT EXISTS idx_login_audit_user_time ON login_audit_logs(user_id, login_at DESC)`);
   db.run(`CREATE INDEX IF NOT EXISTS idx_login_audit_time ON login_audit_logs(login_at DESC)`);
@@ -138,7 +139,8 @@ async function _runMigrations(): Promise<void> {
     login_method TEXT DEFAULT 'password',
     is_admin_login INTEGER DEFAULT 0,
     is_success INTEGER DEFAULT 0,
-    failure_reason TEXT DEFAULT ''
+    failure_reason TEXT DEFAULT '',
+    user_agent TEXT DEFAULT ''
   )`);
   db.run(`CREATE INDEX IF NOT EXISTS idx_login_attempt_time ON login_attempt_logs(login_at DESC)`);
   db.run(`CREATE INDEX IF NOT EXISTS idx_login_attempt_email_time ON login_attempt_logs(email, login_at DESC)`);
@@ -464,6 +466,9 @@ async function _runMigrations(): Promise<void> {
   alterIgnore("ALTER TABLE users ADD COLUMN passkey_credentials TEXT DEFAULT '[]'");
   alterIgnore("ALTER TABLE users ADD COLUMN updated_at INTEGER DEFAULT 0");
   alterIgnore("ALTER TABLE users ADD COLUMN is_active INTEGER DEFAULT 1");
+  // 管理員層級：'super' = 超級管理員（完整權限）、'readonly' = 一般管理員（僅讀取）。
+  // 預設 'super'，使既有管理員升級後仍保有完整權限，不需資料遷移。僅在 is_admin=1 時有意義。
+  alterIgnore("ALTER TABLE users ADD COLUMN admin_role TEXT DEFAULT 'super'");
 
   // 若 DB 有用戶但無管理員（is_admin 欄位以 DEFAULT 0 加入時既有用戶遺失管理員身份），
   // 自動將最早註冊的用戶升為管理員，確保系統可存取。
@@ -547,6 +552,7 @@ async function _runMigrations(): Promise<void> {
   alterIgnore("ALTER TABLE login_audit_logs ADD COLUMN login_method TEXT DEFAULT 'password'");
   alterIgnore("ALTER TABLE login_audit_logs ADD COLUMN is_admin_login INTEGER DEFAULT 0");
   alterIgnore("ALTER TABLE login_audit_logs ADD COLUMN country TEXT DEFAULT ''");
+  alterIgnore("ALTER TABLE login_audit_logs ADD COLUMN user_agent TEXT DEFAULT ''");
   alterIgnore("ALTER TABLE login_attempt_logs ADD COLUMN id TEXT DEFAULT ''");
   alterIgnore("ALTER TABLE login_attempt_logs ADD COLUMN user_id TEXT DEFAULT ''");
   alterIgnore("ALTER TABLE login_attempt_logs ADD COLUMN email TEXT DEFAULT ''");
@@ -557,6 +563,7 @@ async function _runMigrations(): Promise<void> {
   alterIgnore("ALTER TABLE login_attempt_logs ADD COLUMN is_success INTEGER DEFAULT 0");
   alterIgnore("ALTER TABLE login_attempt_logs ADD COLUMN failure_reason TEXT DEFAULT ''");
   alterIgnore("ALTER TABLE login_attempt_logs ADD COLUMN country TEXT DEFAULT ''");
+  alterIgnore("ALTER TABLE login_attempt_logs ADD COLUMN user_agent TEXT DEFAULT ''");
 
   saveDB();
 }

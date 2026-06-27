@@ -2,6 +2,7 @@
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '../../../../../lib/apiHelpers';
 import { getDB, queryOne, saveDB } from '../../../../../lib/db';
+import { auditSensitiveAction } from '../../../../../lib/auditHelpers';
 
 function parseLoginLogTarget(rawId) {
   const s = String(rawId || '').trim();
@@ -46,6 +47,12 @@ export async function POST(request) {
     deleted += deleteLoginAuditSingle(db, target);
   }
   saveDB();
+
+  // 敏感操作：批次刪除登入紀錄。
+  auditSensitiveAction(request, auth, {
+    action: 'admin.login_audit.batch_delete',
+    metadata: { requested_count: ids.length, deleted_count: deleted },
+  });
 
   return NextResponse.json({ deleted });
 }

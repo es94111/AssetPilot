@@ -1,6 +1,7 @@
 // @ts-nocheck
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '../../../../lib/apiHelpers';
+import { auditSensitiveAction } from '../../../../lib/auditHelpers';
 import {
   MAX_SERVER_TIME_OFFSET_MS,
   getServerTimeOffset,
@@ -56,6 +57,12 @@ export async function PUT(request) {
   }
 
   setServerTimeOffset(offsetMs, auth.userId);
+
+  // 敏感操作：調整伺服器時間偏移（影響時間相關判斷）。
+  auditSensitiveAction(request, auth, {
+    action: 'admin.server_time.update',
+    metadata: { setting: `mode=${mode}; offsetMs=${offsetMs}` },
+  });
 
   return NextResponse.json({
     success: true,

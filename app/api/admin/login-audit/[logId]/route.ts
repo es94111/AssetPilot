@@ -2,6 +2,7 @@
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '../../../../../lib/apiHelpers';
 import { getDB, queryOne, saveDB } from '../../../../../lib/db';
+import { auditSensitiveAction } from '../../../../../lib/auditHelpers';
 
 function parseLoginLogTarget(rawId) {
   const s = String(rawId || '').trim();
@@ -41,5 +42,10 @@ export async function DELETE(request, { params }) {
   if (!deleted) return NextResponse.json({ error: '登入紀錄不存在' }, { status: 404 });
 
   saveDB();
+  // 敏感操作：刪除登入紀錄。
+  auditSensitiveAction(request, auth, {
+    action: 'admin.login_audit.delete',
+    metadata: { log_id: target.value, deleted_count: deleted },
+  });
   return NextResponse.json({ deleted });
 }

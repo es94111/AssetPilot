@@ -4,6 +4,7 @@ import bcrypt from 'bcryptjs';
 import { requireAdmin } from '../../../../../../lib/apiHelpers';
 import { getDB, queryOne, saveDB } from '../../../../../../lib/db';
 import { revokeAllLoginSessions } from '../../../../../../lib/sessionHelpers';
+import { auditSensitiveAction } from '../../../../../../lib/auditHelpers';
 
 function validateStrongPassword(password) {
   const p = String(password || '');
@@ -21,7 +22,7 @@ export async function PUT(request, { params }) {
 
   const { id } = await params;
 
-  const user = queryOne('SELECT id, password_hash FROM users WHERE id = ?', [id]);
+  const user = queryOne('SELECT id, email, password_hash FROM users WHERE id = ?', [id]);
   if (!user) return NextResponse.json({ error: '使用者不存在' }, { status: 404 });
 
   let body;
@@ -41,6 +42,16 @@ export async function PUT(request, { params }) {
   );
   saveDB();
   revokeAllLoginSessions(String(id));
+
+  // 敏感操作：管理員重設他人密碼（並登出該使用者所有工作階段）。不記錄密碼本身。
+  auditSensitiveAction(request, auth, {
+    action: 'admin.user.password_reset',
+    metadata: {
+      target_user_id: id,
+      target_email: user.email || '',
+      self: auth.userId === String(id),
+    },
+  });
 
   return NextResponse.json({ ok: true });
 }

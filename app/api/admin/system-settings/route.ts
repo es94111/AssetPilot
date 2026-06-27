@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { requireAdmin } from '../../../../lib/apiHelpers';
 import { getDB, queryOne, saveDB } from '../../../../lib/db';
 import { getSystemSettings, parseAllowedRegistrationEmails, parseIpAllowlist } from '../../../../lib/loginHelpers';
+import { auditSensitiveAction } from '../../../../lib/auditHelpers';
 
 export async function GET(request) {
   const auth = await requireAdmin(request);
@@ -65,6 +66,9 @@ export async function PUT(request) {
     stockAutoUpdateIntervalMin = candidate;
   }
 
+  // 變更前快照，用於稽核「哪些設定被改動」。
+  const before = getSystemSettings();
+
   const db = getDB();
   const fields = [
     'public_registration = ?', 'line_login_enabled = ?', 'allowed_registration_emails = ?',
@@ -86,6 +90,24 @@ export async function PUT(request) {
   saveDB();
 
   const currentSettings = getSystemSettings();
+
+  // 敏感操作：變更系統設定。詳記實際被改動的欄位（不含敏感值內容，僅欄位名稱）。
+  const changed: string[] = [];
+  if (before.publicRegistration !== publicRegistration) changed.push('publicRegistration');
+  if (before.lineLoginEnabled !== lineLoginEnabled) changed.push('lineLoginEnabled');
+  if (before.allowedRegistrationEmails.join('\n') !== allowedRegistrationEmails.join('\n')) changed.push('allowedRegistrationEmails');
+  if (before.adminIpAllowlist.join('\n') !== adminIpAllowlist.join('\n')) changed.push('adminIpAllowlist');
+  if (routeAuditMode !== null && before.routeAuditMode !== routeAuditMode) changed.push('routeAuditMode');
+  if (transactionPhotoStorage !== null && before.transactionPhotoStorage !== (transactionPhotoStorage || null)) changed.push('transactionPhotoStorage');
+  if (transactionPhotoMaxBytes !== null && before.transactionPhotoMaxBytes !== (transactionPhotoMaxBytes || null)) changed.push('transactionPhotoMaxBytes');
+  if (stockAutoUpdateEnabled !== null && before.stockAutoUpdateEnabled !== !!stockAutoUpdateEnabled) changed.push('stockAutoUpdateEnabled');
+  if (stockAutoUpdateIntervalMin !== null && before.stockAutoUpdateIntervalMin !== stockAutoUpdateIntervalMin) changed.push('stockAutoUpdateIntervalMin');
+  if (changed.length > 0) {
+    auditSensitiveAction(request, auth, {
+      action: 'admin.system_settings.update',
+      metadata: { changed_fields: changed.join(', ') },
+    });
+  }
   return NextResponse.json({
     success: true,
     publicRegistration,

@@ -642,6 +642,7 @@ class LoginAuditLog {
   final String ipAddress;
   final String country;
   final String loginMethod;
+  final String device;
   final bool isAdminLogin;
 
   LoginAuditLog({
@@ -649,6 +650,7 @@ class LoginAuditLog {
     required this.ipAddress,
     required this.country,
     required this.loginMethod,
+    required this.device,
     required this.isAdminLogin,
   });
 
@@ -657,6 +659,7 @@ class LoginAuditLog {
     ipAddress: _asStr(j['ipAddress']),
     country: _asStr(j['country']),
     loginMethod: _asStr(j['loginMethod']),
+    device: _asStr(j['device']),
     isAdminLogin: _asBool(j['isAdminLogin']),
   );
 }

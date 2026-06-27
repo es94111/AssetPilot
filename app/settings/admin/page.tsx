@@ -6,7 +6,7 @@ export default async function AdminPage() {
   const user = await requireServerAdmin();
   return (
     <AppLayout user={user}>
-      <AdminClient />
+      <AdminClient isSuperAdmin={user.isSuperAdmin} />
     </AppLayout>
   );
 }

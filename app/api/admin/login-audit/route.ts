@@ -2,7 +2,7 @@
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '../../../../lib/apiHelpers';
 import { getDB, queryAll, saveDB } from '../../../../lib/db';
-import { fetchIpCountry } from '../../../../lib/loginHelpers';
+import { fetchIpCountry, describeDevice } from '../../../../lib/loginHelpers';
 
 async function enrichAndPersistCountry(rows, tableName) {
   const db = getDB();
@@ -35,7 +35,7 @@ export async function GET(request) {
 
   if (scope === 'admin-self' || scope === 'admin_self') {
     const adminLogs = queryAll(
-      `SELECT id, login_at, ip_address, country, login_method
+      `SELECT id, login_at, ip_address, country, login_method, user_agent
        FROM login_audit_logs
        WHERE user_id = ? AND is_admin_login = 1
        ORDER BY login_at DESC
@@ -51,13 +51,15 @@ export async function GET(request) {
         ipAddress: l.ip_address || 'unknown',
         country: l.country || '-',
         loginMethod: l.login_method || 'password',
+        device: describeDevice(l.user_agent),
+        userAgent: l.user_agent || '',
       })),
     });
   }
 
   // default: scope = 'all'
   const allUserLogs = queryAll(
-    `SELECT l.id, l.user_id, l.email, l.login_at, l.ip_address, l.country, l.login_method, l.is_admin_login, l.is_success, l.failure_reason, u.display_name
+    `SELECT l.id, l.user_id, l.email, l.login_at, l.ip_address, l.country, l.login_method, l.is_admin_login, l.is_success, l.failure_reason, l.user_agent, u.display_name
      FROM login_attempt_logs l
      LEFT JOIN users u ON u.id = l.user_id
      ORDER BY l.login_at DESC
@@ -75,6 +77,8 @@ export async function GET(request) {
       ipAddress: l.ip_address || 'unknown',
       country: l.country || '-',
       loginMethod: l.login_method || 'password',
+      device: describeDevice(l.user_agent),
+      userAgent: l.user_agent || '',
       isAdminLogin: !!l.is_admin_login,
       isSuccess: !!l.is_success,
       failureReason: l.failure_reason || '',

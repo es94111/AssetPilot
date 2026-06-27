@@ -1,0 +1,1366 @@
+[
+  {
+    "id": 2000,
+    "description": "AssetPilot pre-crawl reset for zh-TW. Clears local app data, then disables the soft keyboard.",
+    "crawlStage": "pre_crawl",
+    "actions": [
+      {
+        "eventType": "ADB_SHELL_COMMAND",
+        "command": "pm clear __%APP_PACKAGE_NAME%__"
+      },
+      {
+        "eventType": "DISABLE_KEYBOARD"
+      }
+    ]
+  },
+  {
+    "id": 2001,
+    "description": "繁中登入流程。上傳前請把 Google Play 測試帳號與密碼填入 replacementText。",
+    "priority": "10",
+    "maxNumberOfRuns": 1,
+    "contextDescriptor": {
+      "condition": "element_present",
+      "elementDescriptors": [
+        {
+          "text": "電子郵件"
+        }
+      ]
+    },
+    "actions": [
+      {
+        "eventType": "WAIT_FOR_ELEMENT",
+        "delayTime": 30000,
+        "elementDescriptors": [
+          {
+            "text": "電子郵件"
+          }
+        ]
+      },
+      {
+        "description": "Google Play 測試帳號 email 填在這裡。",
+        "eventType": "VIEW_TEXT_CHANGED",
+        "replacementText": "GOOGLE_PLAY_TEST_ACCOUNT_EMAIL_HERE",
+        "elementDescriptors": [
+          {
+            "text": "電子郵件"
+          }
+        ]
+      },
+      {
+        "description": "Google Play 測試帳號 password 填在這裡。",
+        "eventType": "VIEW_TEXT_CHANGED",
+        "replacementText": "GOOGLE_PLAY_TEST_ACCOUNT_PASSWORD_HERE",
+        "elementDescriptors": [
+          {
+            "text": "密碼"
+          }
+        ]
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "登入"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 10000
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "01_after_login"
+      }
+    ]
+  },
+  {
+    "id": 2002,
+    "description": "如果登入後出現首次使用教學，就略過教學。",
+    "priority": "9",
+    "maxNumberOfRuns": 1,
+    "contextDescriptor": {
+      "condition": "element_present",
+      "elementDescriptors": [
+        {
+          "text": "歡迎使用 AssetPilot"
+        }
+      ]
+    },
+    "actions": [
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "02_onboarding"
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "跳過"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 1000
+      }
+    ]
+  },
+  {
+    "id": 2003,
+    "description": "繁中語系詳細儲存與驗證 smoke test。會建立可辨識的 Robo Play / Firebase Test Lab 測試資料；分類、股票代號、同月同分類預算會在結束前刪除，讓同一測試帳號可重複執行。",
+    "priority": "5",
+    "maxNumberOfRuns": 1,
+    "contextDescriptor": {
+      "condition": "element_present",
+      "elementDescriptors": [
+        {
+          "text": "首頁"
+        }
+      ]
+    },
+    "actions": [
+      {
+        "eventType": "WAIT_FOR_ELEMENT",
+        "delayTime": 30000,
+        "elementDescriptors": [
+          {
+            "text": "AssetPilot"
+          }
+        ]
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "03_dashboard"
+      },
+      {
+        "description": "Open transactions, exercise filters, then create a saved expense that developers can find by its note.",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "記帳"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT_FOR_ELEMENT",
+        "delayTime": 30000,
+        "elementDescriptors": [
+          {
+            "text": "全部"
+          }
+        ]
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "04_transactions_all"
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "收入"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 1000
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "05_transactions_income"
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "支出"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 1000
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "06_transactions_expenses"
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "contentDescription": "篩選"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT_FOR_ELEMENT",
+        "delayTime": 10000,
+        "elementDescriptors": [
+          {
+            "text": "篩選交易"
+          }
+        ]
+      },
+      {
+        "eventType": "VIEW_TEXT_CHANGED",
+        "replacementText": "firebase test lab",
+        "elementDescriptors": [
+          {
+            "text": "備註關鍵字"
+          }
+        ]
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "07_transaction_filter_sheet"
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "套用"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 1500
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "08_transactions_filtered"
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "contentDescription": "清除篩選"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 1000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "新增交易"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT_FOR_ELEMENT",
+        "delayTime": 30000,
+        "elementDescriptors": [
+          {
+            "text": "金額"
+          }
+        ]
+      },
+      {
+        "eventType": "VIEW_TEXT_CHANGED",
+        "replacementText": "123",
+        "elementDescriptors": [
+          {
+            "text": "金額"
+          }
+        ]
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "父分類"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 800
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "餐飲"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 800
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "子分類"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 800
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "午餐"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 800
+      },
+      {
+        "description": "Scroll lower fields into view on smaller Test Lab devices before filling the note and saving.",
+        "eventType": "ADB_SHELL_COMMAND",
+        "command": "input swipe 500 1700 500 900 300"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 800
+      },
+      {
+        "eventType": "VIEW_TEXT_CHANGED",
+        "replacementText": "Firebase Test Lab saved transaction",
+        "elementDescriptors": [
+          {
+            "text": "備註（選填）"
+          }
+        ]
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "09_add_transaction_filled"
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "儲存"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 4000
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "10_transaction_saved"
+      },
+      {
+        "description": "Create a saved account with a recognizable test name.",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "更多"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT_FOR_ELEMENT",
+        "delayTime": 15000,
+        "elementDescriptors": [
+          {
+            "text": "帳戶"
+          }
+        ]
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "11_more"
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "帳戶"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT_FOR_ELEMENT",
+        "delayTime": 30000,
+        "elementDescriptors": [
+          {
+            "text": "新增帳戶"
+          }
+        ]
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "12_accounts_before"
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "新增帳戶"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT_FOR_ELEMENT",
+        "delayTime": 15000,
+        "elementDescriptors": [
+          {
+            "text": "帳戶名稱"
+          }
+        ]
+      },
+      {
+        "eventType": "VIEW_TEXT_CHANGED",
+        "replacementText": "Robo Play Account",
+        "elementDescriptors": [
+          {
+            "text": "帳戶名稱"
+          }
+        ]
+      },
+      {
+        "eventType": "VIEW_TEXT_CHANGED",
+        "replacementText": "4567",
+        "elementDescriptors": [
+          {
+            "text": "初始餘額"
+          }
+        ]
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "13_add_account_filled"
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "儲存"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 3000
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "14_account_saved"
+      },
+      {
+        "eventType": "PRESSED_BACK"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 800
+      },
+      {
+        "description": "Create a saved recurring expense with a Firebase Test Lab note.",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "固定收支"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT_FOR_ELEMENT",
+        "delayTime": 30000,
+        "elementDescriptors": [
+          {
+            "text": "新增"
+          }
+        ]
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "15_recurring_before"
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "新增"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT_FOR_ELEMENT",
+        "delayTime": 15000,
+        "elementDescriptors": [
+          {
+            "text": "新增固定收支"
+          }
+        ]
+      },
+      {
+        "eventType": "VIEW_TEXT_CHANGED",
+        "replacementText": "88",
+        "elementDescriptors": [
+          {
+            "text": "金額"
+          }
+        ]
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "分類"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 800
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "午餐"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 800
+      },
+      {
+        "eventType": "ADB_SHELL_COMMAND",
+        "command": "input swipe 500 1700 500 900 300"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 800
+      },
+      {
+        "eventType": "VIEW_TEXT_CHANGED",
+        "replacementText": "Firebase Test Lab saved recurring",
+        "elementDescriptors": [
+          {
+            "text": "備註（選填）"
+          }
+        ]
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "16_add_recurring_filled"
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "儲存"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 4000
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "17_recurring_saved"
+      },
+      {
+        "eventType": "PRESSED_BACK"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 800
+      },
+      {
+        "description": "Open reports and capture expense/income tabs.",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "統計報表"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT_FOR_ELEMENT",
+        "delayTime": 30000,
+        "elementDescriptors": [
+          {
+            "text": "支出"
+          }
+        ]
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "18_reports_expenses"
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "收入"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 1500
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "19_reports_income"
+      },
+      {
+        "eventType": "PRESSED_BACK"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 800
+      },
+      {
+        "description": "Open settings, create a report notification schedule, and inspect non-destructive security/settings pages.",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "設定"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT_FOR_ELEMENT",
+        "delayTime": 30000,
+        "elementDescriptors": [
+          {
+            "text": "主題"
+          }
+        ]
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "20_settings"
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "主題"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT_FOR_ELEMENT",
+        "delayTime": 10000,
+        "elementDescriptors": [
+          {
+            "text": "選擇主題"
+          }
+        ]
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "21_theme_dialog"
+      },
+      {
+        "eventType": "PRESSED_BACK"
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "幣別設定"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT_FOR_ELEMENT",
+        "delayTime": 20000,
+        "elementDescriptors": [
+          {
+            "text": "預設幣別"
+          }
+        ]
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "22_currency_settings"
+      },
+      {
+        "eventType": "PRESSED_BACK"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 800
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "報表通知"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT_FOR_ELEMENT",
+        "delayTime": 20000,
+        "elementDescriptors": [
+          {
+            "text": "新增排程"
+          }
+        ]
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "23_report_notifications_before"
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "新增排程"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT_FOR_ELEMENT",
+        "delayTime": 15000,
+        "elementDescriptors": [
+          {
+            "text": "新增報表排程"
+          }
+        ]
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "每週"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 800
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "每月"
+          }
+        ]
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "24_add_report_schedule_filled"
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "儲存"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 3000
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "25_report_schedule_saved"
+      },
+      {
+        "eventType": "PRESSED_BACK"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 800
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Passkey 管理"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT_FOR_ELEMENT",
+        "delayTime": 20000,
+        "elementDescriptors": [
+          {
+            "text": "新增 Passkey"
+          }
+        ]
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "26_passkeys"
+      },
+      {
+        "eventType": "PRESSED_BACK"
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "帳號綁定"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT_FOR_ELEMENT",
+        "delayTime": 20000,
+        "elementDescriptors": [
+          {
+            "text": "Google 綁定"
+          }
+        ]
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "27_linked_accounts"
+      },
+      {
+        "eventType": "PRESSED_BACK"
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "登入裝置"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "28_signed_in_devices"
+      },
+      {
+        "eventType": "PRESSED_BACK"
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "登入紀錄"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "29_sign_in_history"
+      },
+      {
+        "eventType": "PRESSED_BACK"
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "版本資訊"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2500
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "30_version_information"
+      },
+      {
+        "eventType": "PRESSED_BACK"
+      },
+      {
+        "eventType": "PRESSED_BACK"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 800
+      },
+      {
+        "description": "Create a temporary category with a clear Robo Play name. The budget step uses it, then cleanup deletes it so repeated runs do not hit duplicate category rules.",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "分類"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT_FOR_ELEMENT",
+        "delayTime": 30000,
+        "elementDescriptors": [
+          {
+            "text": "新增分類"
+          }
+        ]
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "31_categories_before"
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "新增分類"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT_FOR_ELEMENT",
+        "delayTime": 15000,
+        "elementDescriptors": [
+          {
+            "text": "分類名稱"
+          }
+        ]
+      },
+      {
+        "eventType": "VIEW_TEXT_CHANGED",
+        "replacementText": "Robo Play Expense",
+        "elementDescriptors": [
+          {
+            "text": "分類名稱"
+          }
+        ]
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "32_add_parent_category_filled"
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "儲存"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 3000
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "33_temporary_category_saved"
+      },
+      {
+        "eventType": "PRESSED_BACK"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 800
+      },
+      {
+        "description": "Exercise stock tabs and create a saved synthetic holding.",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "股票"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT_FOR_ELEMENT",
+        "delayTime": 30000,
+        "elementDescriptors": [
+          {
+            "text": "持股"
+          }
+        ]
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "36_stocks_holdings"
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "交易"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 1000
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "37_stock_transactions"
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "股利"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 1000
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "38_stock_dividends"
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "損益"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 1000
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "39_stock_returns"
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "contentDescription": "股票設定"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT_FOR_ELEMENT",
+        "delayTime": 15000,
+        "elementDescriptors": [
+          {
+            "text": "手續費"
+          }
+        ]
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "40_stock_settings"
+      },
+      {
+        "eventType": "PRESSED_BACK"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 1000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "持股"
+          }
+        ]
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "新增股票"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT_FOR_ELEMENT",
+        "delayTime": 15000,
+        "elementDescriptors": [
+          {
+            "text": "股票代號（如 2330）"
+          }
+        ]
+      },
+      {
+        "eventType": "VIEW_TEXT_CHANGED",
+        "replacementText": "000RBT",
+        "elementDescriptors": [
+          {
+            "text": "股票代號（如 2330）"
+          }
+        ]
+      },
+      {
+        "eventType": "VIEW_TEXT_CHANGED",
+        "replacementText": "Robo Test Holding",
+        "elementDescriptors": [
+          {
+            "text": "名稱（選填，留空自動帶入）"
+          }
+        ]
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "41_add_stock_filled"
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "儲存"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 4000
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "42_stock_saved"
+      },
+      {
+        "description": "Long-press the newly saved 000RBT holding and delete it so the fixed ticker can be reused on the next run.",
+        "eventType": "ADB_SHELL_COMMAND",
+        "command": "input swipe 260 370 260 370 1400"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 1200
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "43_delete_stock_confirm"
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "刪除"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 3000
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "44_stock_deleted"
+      },
+      {
+        "description": "Create a saved monthly budget for the temporary Robo Play category, then delete it so duplicate monthly-budget rules do not block later runs.",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "更多"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT_FOR_ELEMENT",
+        "delayTime": 15000,
+        "elementDescriptors": [
+          {
+            "text": "預算"
+          }
+        ]
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "預算"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT_FOR_ELEMENT",
+        "delayTime": 30000,
+        "elementDescriptors": [
+          {
+            "text": "新增預算"
+          }
+        ]
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "45_budgets_before"
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "新增預算"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT_FOR_ELEMENT",
+        "delayTime": 15000,
+        "elementDescriptors": [
+          {
+            "text": "預算金額"
+          }
+        ]
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "分類"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 800
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Robo Play Expense"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 800
+      },
+      {
+        "eventType": "VIEW_TEXT_CHANGED",
+        "replacementText": "3210",
+        "elementDescriptors": [
+          {
+            "text": "預算金額"
+          }
+        ]
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "46_add_budget_filled"
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "儲存"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 4000
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "47_budget_saved"
+      },
+      {
+        "description": "Delete the saved Robo Play monthly budget using the budget-card delete button.",
+        "eventType": "ADB_SHELL_COMMAND",
+        "command": "input tap 980 145"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 3000
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "48_budget_deleted"
+      },
+      {
+        "description": "Return to More and open Categories to delete the temporary Robo Play category.",
+        "eventType": "PRESSED_BACK"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 800
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "分類"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT_FOR_ELEMENT",
+        "delayTime": 30000,
+        "elementDescriptors": [
+          {
+            "text": "新增分類"
+          }
+        ]
+      },
+      {
+        "description": "Scroll to the bottom of the expense category list where the temporary Robo Play category was appended.",
+        "eventType": "ADB_SHELL_COMMAND",
+        "command": "input swipe 500 1700 500 300 600"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 800
+      },
+      {
+        "eventType": "ADB_SHELL_COMMAND",
+        "command": "input swipe 500 1700 500 300 600"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 800
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "49_category_before_delete"
+      },
+      {
+        "description": "Long-press the temporary category and confirm deletion so the category name can be reused.",
+        "eventType": "ADB_SHELL_COMMAND",
+        "command": "input swipe 260 1550 260 1550 1400"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 1200
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "50_delete_category_confirm"
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "刪除"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 3000
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "51_category_deleted"
+      },
+      {
+        "description": "Stop after scripted coverage so generic Robo crawling cannot reach destructive account actions.",
+        "eventType": "TERMINATE_CRAWL"
+      }
+    ]
+  }
+]
+

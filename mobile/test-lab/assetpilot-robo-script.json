@@ -1,0 +1,1366 @@
+[
+  {
+    "id": 1000,
+    "description": "AssetPilot pre-crawl reset. Clears local app data so Test Lab starts from the login screen, then disables the soft keyboard to keep fields and buttons visible.",
+    "crawlStage": "pre_crawl",
+    "actions": [
+      {
+        "eventType": "ADB_SHELL_COMMAND",
+        "command": "pm clear __%APP_PACKAGE_NAME%__"
+      },
+      {
+        "eventType": "DISABLE_KEYBOARD"
+      }
+    ]
+  },
+  {
+    "id": 1001,
+    "description": "Login flow. Put the Google Play test account email and password in the two replacementText values below before uploading this script.",
+    "priority": "10",
+    "maxNumberOfRuns": 1,
+    "contextDescriptor": {
+      "condition": "element_present",
+      "elementDescriptors": [
+        {
+          "text": "Email"
+        }
+      ]
+    },
+    "actions": [
+      {
+        "eventType": "WAIT_FOR_ELEMENT",
+        "delayTime": 30000,
+        "elementDescriptors": [
+          {
+            "text": "Email"
+          }
+        ]
+      },
+      {
+        "description": "Google Play test account email goes here.",
+        "eventType": "VIEW_TEXT_CHANGED",
+        "replacementText": "GOOGLE_PLAY_TEST_ACCOUNT_EMAIL_HERE",
+        "elementDescriptors": [
+          {
+            "text": "Email"
+          }
+        ]
+      },
+      {
+        "description": "Google Play test account password goes here.",
+        "eventType": "VIEW_TEXT_CHANGED",
+        "replacementText": "GOOGLE_PLAY_TEST_ACCOUNT_PASSWORD_HERE",
+        "elementDescriptors": [
+          {
+            "text": "Password"
+          }
+        ]
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Sign in"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 10000
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "01_after_login"
+      }
+    ]
+  },
+  {
+    "id": 1002,
+    "description": "Dismiss the first-run onboarding carousel if it appears after login.",
+    "priority": "9",
+    "maxNumberOfRuns": 1,
+    "contextDescriptor": {
+      "condition": "element_present",
+      "elementDescriptors": [
+        {
+          "text": "Welcome to AssetPilot"
+        }
+      ]
+    },
+    "actions": [
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "02_onboarding"
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Skip"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 1000
+      }
+    ]
+  },
+  {
+    "id": 1003,
+    "description": "Detailed authenticated save-and-verify smoke test. It creates visible Robo Play / Firebase Test Lab records so developers can confirm the run from app data. Fixed duplicate-constrained records, including the temporary category, stock symbol, and monthly budget, are deleted before crawl termination so the same test account can rerun. If an earlier run failed before cleanup, remove stale Robo Play / 000RBT records once.",
+    "priority": "5",
+    "maxNumberOfRuns": 1,
+    "contextDescriptor": {
+      "condition": "element_present",
+      "elementDescriptors": [
+        {
+          "text": "Home"
+        }
+      ]
+    },
+    "actions": [
+      {
+        "eventType": "WAIT_FOR_ELEMENT",
+        "delayTime": 30000,
+        "elementDescriptors": [
+          {
+            "text": "AssetPilot"
+          }
+        ]
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "03_dashboard"
+      },
+      {
+        "description": "Open transactions, exercise filters, then create a saved expense that developers can find by its note.",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Transactions"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT_FOR_ELEMENT",
+        "delayTime": 30000,
+        "elementDescriptors": [
+          {
+            "text": "All"
+          }
+        ]
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "04_transactions_all"
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Income"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 1000
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "05_transactions_income"
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Expenses"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 1000
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "06_transactions_expenses"
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "contentDescription": "Filter"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT_FOR_ELEMENT",
+        "delayTime": 10000,
+        "elementDescriptors": [
+          {
+            "text": "Filter transactions"
+          }
+        ]
+      },
+      {
+        "eventType": "VIEW_TEXT_CHANGED",
+        "replacementText": "firebase test lab",
+        "elementDescriptors": [
+          {
+            "text": "Note keyword"
+          }
+        ]
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "07_transaction_filter_sheet"
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Apply"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 1500
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "08_transactions_filtered"
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "contentDescription": "Clear filters"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 1000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Add transaction"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT_FOR_ELEMENT",
+        "delayTime": 30000,
+        "elementDescriptors": [
+          {
+            "text": "Amount"
+          }
+        ]
+      },
+      {
+        "eventType": "VIEW_TEXT_CHANGED",
+        "replacementText": "123",
+        "elementDescriptors": [
+          {
+            "text": "Amount"
+          }
+        ]
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Parent category"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 800
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "餐飲"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 800
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Subcategory"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 800
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "午餐"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 800
+      },
+      {
+        "description": "Scroll lower fields into view on smaller Test Lab devices before filling the note and saving.",
+        "eventType": "ADB_SHELL_COMMAND",
+        "command": "input swipe 500 1700 500 900 300"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 800
+      },
+      {
+        "eventType": "VIEW_TEXT_CHANGED",
+        "replacementText": "Firebase Test Lab saved transaction",
+        "elementDescriptors": [
+          {
+            "text": "Note (optional)"
+          }
+        ]
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "09_add_transaction_filled"
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Save"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 4000
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "10_transaction_saved"
+      },
+      {
+        "description": "Create a saved account with a recognizable test name.",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "More"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT_FOR_ELEMENT",
+        "delayTime": 15000,
+        "elementDescriptors": [
+          {
+            "text": "Accounts"
+          }
+        ]
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "11_more"
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Accounts"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT_FOR_ELEMENT",
+        "delayTime": 30000,
+        "elementDescriptors": [
+          {
+            "text": "Add account"
+          }
+        ]
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "12_accounts_before"
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Add account"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT_FOR_ELEMENT",
+        "delayTime": 15000,
+        "elementDescriptors": [
+          {
+            "text": "Account name"
+          }
+        ]
+      },
+      {
+        "eventType": "VIEW_TEXT_CHANGED",
+        "replacementText": "Robo Play Account",
+        "elementDescriptors": [
+          {
+            "text": "Account name"
+          }
+        ]
+      },
+      {
+        "eventType": "VIEW_TEXT_CHANGED",
+        "replacementText": "4567",
+        "elementDescriptors": [
+          {
+            "text": "Opening balance"
+          }
+        ]
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "13_add_account_filled"
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Save"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 3000
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "14_account_saved"
+      },
+      {
+        "eventType": "PRESSED_BACK"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 800
+      },
+      {
+        "description": "Create a saved recurring expense with a Firebase Test Lab note.",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Recurring transactions"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT_FOR_ELEMENT",
+        "delayTime": 30000,
+        "elementDescriptors": [
+          {
+            "text": "Add"
+          }
+        ]
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "15_recurring_before"
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Add"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT_FOR_ELEMENT",
+        "delayTime": 15000,
+        "elementDescriptors": [
+          {
+            "text": "Add recurring transaction"
+          }
+        ]
+      },
+      {
+        "eventType": "VIEW_TEXT_CHANGED",
+        "replacementText": "88",
+        "elementDescriptors": [
+          {
+            "text": "Amount"
+          }
+        ]
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Category"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 800
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "午餐"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 800
+      },
+      {
+        "eventType": "ADB_SHELL_COMMAND",
+        "command": "input swipe 500 1700 500 900 300"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 800
+      },
+      {
+        "eventType": "VIEW_TEXT_CHANGED",
+        "replacementText": "Firebase Test Lab saved recurring",
+        "elementDescriptors": [
+          {
+            "text": "Note (optional)"
+          }
+        ]
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "16_add_recurring_filled"
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Save"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 4000
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "17_recurring_saved"
+      },
+      {
+        "eventType": "PRESSED_BACK"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 800
+      },
+      {
+        "description": "Open reports and capture expense/income tabs.",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Reports"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT_FOR_ELEMENT",
+        "delayTime": 30000,
+        "elementDescriptors": [
+          {
+            "text": "Expenses"
+          }
+        ]
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "18_reports_expenses"
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Income"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 1500
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "19_reports_income"
+      },
+      {
+        "eventType": "PRESSED_BACK"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 800
+      },
+      {
+        "description": "Open settings, create a report notification schedule, and inspect non-destructive security/settings pages.",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Settings"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT_FOR_ELEMENT",
+        "delayTime": 30000,
+        "elementDescriptors": [
+          {
+            "text": "Theme"
+          }
+        ]
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "20_settings"
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Theme"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT_FOR_ELEMENT",
+        "delayTime": 10000,
+        "elementDescriptors": [
+          {
+            "text": "Choose theme"
+          }
+        ]
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "21_theme_dialog"
+      },
+      {
+        "eventType": "PRESSED_BACK"
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Currency settings"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT_FOR_ELEMENT",
+        "delayTime": 20000,
+        "elementDescriptors": [
+          {
+            "text": "Default currency"
+          }
+        ]
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "22_currency_settings"
+      },
+      {
+        "eventType": "PRESSED_BACK"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 800
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Report notifications"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT_FOR_ELEMENT",
+        "delayTime": 20000,
+        "elementDescriptors": [
+          {
+            "text": "Add schedule"
+          }
+        ]
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "23_report_notifications_before"
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Add schedule"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT_FOR_ELEMENT",
+        "delayTime": 15000,
+        "elementDescriptors": [
+          {
+            "text": "Add report schedule"
+          }
+        ]
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Weekly"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 800
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Monthly"
+          }
+        ]
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "24_add_report_schedule_filled"
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Save"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 3000
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "25_report_schedule_saved"
+      },
+      {
+        "eventType": "PRESSED_BACK"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 800
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Manage passkeys"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT_FOR_ELEMENT",
+        "delayTime": 20000,
+        "elementDescriptors": [
+          {
+            "text": "Add passkey"
+          }
+        ]
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "26_passkeys"
+      },
+      {
+        "eventType": "PRESSED_BACK"
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Linked accounts"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT_FOR_ELEMENT",
+        "delayTime": 20000,
+        "elementDescriptors": [
+          {
+            "text": "Google connection"
+          }
+        ]
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "27_linked_accounts"
+      },
+      {
+        "eventType": "PRESSED_BACK"
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Signed-in devices"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "28_signed_in_devices"
+      },
+      {
+        "eventType": "PRESSED_BACK"
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Sign-in history"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "29_sign_in_history"
+      },
+      {
+        "eventType": "PRESSED_BACK"
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Version information"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2500
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "30_version_information"
+      },
+      {
+        "eventType": "PRESSED_BACK"
+      },
+      {
+        "eventType": "PRESSED_BACK"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 800
+      },
+      {
+        "description": "Create a temporary category with a clear Robo Play name. The budget step uses it, then cleanup deletes it so repeated runs do not hit duplicate category rules.",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Categories"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT_FOR_ELEMENT",
+        "delayTime": 30000,
+        "elementDescriptors": [
+          {
+            "text": "Add category"
+          }
+        ]
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "31_categories_before"
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Add category"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT_FOR_ELEMENT",
+        "delayTime": 15000,
+        "elementDescriptors": [
+          {
+            "text": "Category name"
+          }
+        ]
+      },
+      {
+        "eventType": "VIEW_TEXT_CHANGED",
+        "replacementText": "Robo Play Expense",
+        "elementDescriptors": [
+          {
+            "text": "Category name"
+          }
+        ]
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "32_add_parent_category_filled"
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Save"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 3000
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "33_temporary_category_saved"
+      },
+      {
+        "eventType": "PRESSED_BACK"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 800
+      },
+      {
+        "description": "Exercise stock tabs and create a saved synthetic holding.",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Stocks"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT_FOR_ELEMENT",
+        "delayTime": 30000,
+        "elementDescriptors": [
+          {
+            "text": "Holdings"
+          }
+        ]
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "36_stocks_holdings"
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Transactions"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 1000
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "37_stock_transactions"
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Dividends"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 1000
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "38_stock_dividends"
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Returns"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 1000
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "39_stock_returns"
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "contentDescription": "Stock settings"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT_FOR_ELEMENT",
+        "delayTime": 15000,
+        "elementDescriptors": [
+          {
+            "text": "Commission"
+          }
+        ]
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "40_stock_settings"
+      },
+      {
+        "eventType": "PRESSED_BACK"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 1000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Holdings"
+          }
+        ]
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Add stock"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT_FOR_ELEMENT",
+        "delayTime": 15000,
+        "elementDescriptors": [
+          {
+            "text": "Ticker (e.g. 2330)"
+          }
+        ]
+      },
+      {
+        "eventType": "VIEW_TEXT_CHANGED",
+        "replacementText": "000RBT",
+        "elementDescriptors": [
+          {
+            "text": "Ticker (e.g. 2330)"
+          }
+        ]
+      },
+      {
+        "eventType": "VIEW_TEXT_CHANGED",
+        "replacementText": "Robo Test Holding",
+        "elementDescriptors": [
+          {
+            "text": "Name (optional; filled automatically)"
+          }
+        ]
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "41_add_stock_filled"
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Save"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 4000
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "42_stock_saved"
+      },
+      {
+        "description": "Long-press the newly saved 000RBT holding and delete it so the fixed ticker can be reused on the next run.",
+        "eventType": "ADB_SHELL_COMMAND",
+        "command": "input swipe 260 370 260 370 1400"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 1200
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "43_delete_stock_confirm"
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Delete"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 3000
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "44_stock_deleted"
+      },
+      {
+        "description": "Create a saved monthly budget for the temporary Robo Play category, then delete it so duplicate monthly-budget rules do not block later runs.",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "More"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT_FOR_ELEMENT",
+        "delayTime": 15000,
+        "elementDescriptors": [
+          {
+            "text": "Budgets"
+          }
+        ]
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Budgets"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT_FOR_ELEMENT",
+        "delayTime": 30000,
+        "elementDescriptors": [
+          {
+            "text": "Add budget"
+          }
+        ]
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "45_budgets_before"
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Add budget"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT_FOR_ELEMENT",
+        "delayTime": 15000,
+        "elementDescriptors": [
+          {
+            "text": "Budget amount"
+          }
+        ]
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Category"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 800
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Robo Play Expense"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 800
+      },
+      {
+        "eventType": "VIEW_TEXT_CHANGED",
+        "replacementText": "3210",
+        "elementDescriptors": [
+          {
+            "text": "Budget amount"
+          }
+        ]
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "46_add_budget_filled"
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Save"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 4000
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "47_budget_saved"
+      },
+      {
+        "description": "Delete the saved Robo Play monthly budget using the budget-card delete button.",
+        "eventType": "ADB_SHELL_COMMAND",
+        "command": "input tap 980 145"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 3000
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "48_budget_deleted"
+      },
+      {
+        "description": "Return to More and open Categories to delete the temporary Robo Play category.",
+        "eventType": "PRESSED_BACK"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 800
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Categories"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT_FOR_ELEMENT",
+        "delayTime": 30000,
+        "elementDescriptors": [
+          {
+            "text": "Add category"
+          }
+        ]
+      },
+      {
+        "description": "Scroll to the bottom of the expense category list where the temporary Robo Play category was appended.",
+        "eventType": "ADB_SHELL_COMMAND",
+        "command": "input swipe 500 1700 500 300 600"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 800
+      },
+      {
+        "eventType": "ADB_SHELL_COMMAND",
+        "command": "input swipe 500 1700 500 300 600"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 800
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "49_category_before_delete"
+      },
+      {
+        "description": "Long-press the temporary category and confirm deletion so the category name can be reused.",
+        "eventType": "ADB_SHELL_COMMAND",
+        "command": "input swipe 260 1550 260 1550 1400"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 1200
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "50_delete_category_confirm"
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Delete"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 3000
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "51_category_deleted"
+      },
+      {
+        "description": "Stop after scripted coverage so generic Robo crawling cannot reach destructive account actions.",
+        "eventType": "TERMINATE_CRAWL"
+      }
+    ]
+  }
+]
+

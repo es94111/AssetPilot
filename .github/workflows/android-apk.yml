@@ -176,6 +176,10 @@ jobs:
           AAB_PATH: ${{ github.workspace }}/mobile/build/app/outputs/bundle/release/app-release.aab
           WHATSNEW_DIR: ${{ github.workspace }}/mobile/build/play-whatsnew
           TRACKS: internal,alpha
+          # 此 runner 連 googleapis 時 IPv6 路徑會在回應傳完前中斷
+          # （ERR_STREAM_PREMATURE_CLOSE / "Premature close"），重試無效。
+          # 強制 DNS 先回 IPv4，讓 OAuth token 與上傳走可用的 IPv4 路徑。
+          NODE_OPTIONS: --dns-result-order=ipv4first
         run: |
           set -euo pipefail
           workdir="$(mktemp -d)"

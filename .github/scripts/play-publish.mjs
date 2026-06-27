@@ -14,9 +14,19 @@
 //   TRACKS         comma-separated track ids, e.g. "internal,alpha"
 //   WHATSNEW_DIR   dir holding whatsnew-<locale> files (optional release notes)
 
+import { setDefaultResultOrder } from 'node:dns';
 import { readFileSync, createReadStream, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { google } from 'googleapis';
+
+// 此 runner 連 googleapis 的 IPv6 路徑會在回應傳完前中斷（ERR_STREAM_PREMATURE_CLOSE）。
+// 強制 DNS 先回 IPv4，讓 OAuth token 取得與 AAB 上傳走可用的 IPv4 路徑。
+// 與工作流程中的 NODE_OPTIONS=--dns-result-order=ipv4first 互為備援。
+try {
+  setDefaultResultOrder('ipv4first');
+} catch (_) {
+  // 舊版 Node 可能不支援；交由 NODE_OPTIONS 處理。
+}
 
 const packageName = requireEnv('PACKAGE_NAME');
 const aabPath = requireEnv('AAB_PATH');

@@ -1,7 +1,7 @@
 # 資產管理 系統規格說明書 (SSD)
 
-**版本：** 4.78.2
-**日期：** 2026-06-24
+**版本：** 4.79.0
+**日期：** 2026-06-27
 **狀態：** 已實作
 
 ---
@@ -987,6 +987,7 @@ API 路徑統一以 `/api/` 為前綴。所有需認證的路由自動套用 aut
 
 | 版本 | 日期 | 變更說明 |
 | --- | --- | --- |
+| 4.79.0 | 2026-06-27 | 多項強化：(1) 儀表板支出/收入分類新增父分類佔總額百分比（小數一位），WEB（app/dashboard/page.tsx 的 percentLabel）與 APP（dashboard_screen.dart 圖例）皆實作；(2) 統計報表 ReportsClient.tsx 圓餅圖加入資料指紋比對，10 秒輪詢資料未變時跳過 Chart 重建，消除閃爍；(3) 登入裝置記錄：login_audit_logs/login_attempt_logs 新增 user_agent 欄，loginHelpers.ts 新增 describeDevice() 解析 UA，admin/user login-audit API 回傳 device，AdminClient 與 AccountSettingsClient 與 mobile security_screens 顯示，mobile api_client 送出 AssetPilotApp UA；(4) 全部使用者登入紀錄前端新增 USER 與日期區間篩選；(5) 一般（唯讀）管理員：users 新增 admin_role 欄（'super'/'readonly'），requireAdmin 依 HTTP 方法擋下唯讀管理員的變更操作、新增 requireSuperAdmin 用於匯出端點（data-audit/export、database/export），serverAuth/apiHelpers 回傳 isSuperAdmin，AdminClient 依 canWrite 隱藏/停用寫入與匯出控制並提供角色指派 UI；(6) 資料稽核詳記敏感操作：auditHelpers.ts 新增 auditSensitiveAction()，於建立/刪除帳號、角色變更、重設密碼、系統設定、稽核清空、登入紀錄刪除、憑證部署/刪除、伺服器時間、帳號自助刪除/改密碼等處寫入稽核，稽核表新增詳情與 IP 欄。 |
 | 4.78.2 | 2026-06-27 | 修正當頁收支統計計算錯誤：TransactionsClient.tsx 的 pageTotals reducer 原本將 transfer_in 計入 income、transfer_out 計入 expense，導致轉帳交易被誤計為收支；改為僅 type==='income' 進 income、type==='expense' 進 expense，轉帳不納入統計。 |
 | 4.78.1 | 2026-06-27 | 相依套件升級至最新版（皆為同主版本 minor/patch，無破壞性變更）。`typescript` `5.9.3 → 6.0.3`、`@types/node` `22.19.17 → 24.13.2`（對齊 Node 24 runtime，連帶 `undici-types` `6.21.0 → 7.18.2`）、`next` `16.2.6 → 16.2.9`、`react`/`react-dom` `19.2.5 → 19.2.7`、`@types/react` `19.2.14 → 19.2.17`、`sharp` `0.35.0 → 0.35.2`、`pg` `8.21.0 → 8.22.0`、`resend` `6.12.2 → 6.16.0`、`lucide-react` `1.14.0 → 1.21.0`、`@base-ui/react` `1.4.1 → 1.6.0`、`tailwindcss`/`@tailwindcss/postcss` `4.2.4 → 4.3.1`、`tailwind-merge` `3.5.0 → 3.6.0`、`decimal.js` `10.4.3 → 10.6.0`、`jsonwebtoken` `9.0.2 → 9.0.3`、`@passwordless-id/webauthn` `2.3.5 → 2.4.0`、`autoprefixer` `10.5.0 → 10.5.2`、override `postcss` `8.5.14 → 8.5.15`、`uuid` `14.0.0 → 14.0.1`。`tsconfig.json` 無須調整（未用到 TS 6.0 移除的舊選項）。`package-lock.json` 以 `npm install --package-lock-only` 重生，保留 sharp 全平台 optional 二進位（linux 條目完整）。本機 tsc／Docker 不可用，型別與 build 驗證靠 CI docker-publish。 |
 | 4.78.0 | 2026-06-27 | 交易清單新增當頁收支合計統計。`TransactionsClient.tsx` 加入 `pageTotals` reducer，對當頁 `txs` 陣列累計 income（type=income/transfer_in）與 expense（type=expense/transfer_out）金額，並計算 `pageNet`。UI 以三欄 `.tx-page-summary` 格線顯示當頁收入、支出、淨收支，左邊框色分別對應 `--income`/`--expense`/`--net` CSS 變數；`pageNet < 0` 時淨收支加 `−` 前綴並套 `amount-expense` 樣式。`app/globals.css` 新增 `.tx-page-summary*` 規則，手機版（max-width: 640px）改為單欄直排。 |

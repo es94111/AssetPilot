@@ -460,6 +460,7 @@ export default function AccountSettingsClient({ user: initialUser }: { user: any
                   <th className="text-left py-2 pr-4">IP</th>
                   <th className="text-left py-2 pr-4">國家</th>
                   <th className="text-left py-2 pr-4">方式</th>
+                  <th className="text-left py-2 pr-4">裝置</th>
                   <th className="text-left py-2">管理員登入</th>
                 </tr>
               </thead>
@@ -470,6 +471,7 @@ export default function AccountSettingsClient({ user: initialUser }: { user: any
                     <td className="py-3 pr-4">{log.ipAddress}</td>
                     <td className="py-3 pr-4">{log.country}</td>
                     <td className="py-3 pr-4">{log.loginMethod}</td>
+                    <td className="py-3 pr-4">{log.device || '—'}</td>
                     <td className="py-3">{log.isAdminLogin ? '是' : '否'}</td>
                   </tr>
                 ))}

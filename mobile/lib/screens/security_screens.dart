@@ -658,13 +658,15 @@ class _LoginAuditScreenState extends State<LoginAuditScreen> {
               itemBuilder: (context, i) {
                 final l = list[i];
                 return ListTile(
+                  isThreeLine: l.device.isNotEmpty,
                   leading: Icon(
                     l.isAdminLogin ? Icons.shield_outlined : Icons.login,
                   ),
                   title: Text(_fmtTs(l.loginAt)),
                   subtitle: Text(
                     '${_method(l.loginMethod)}・${l.ipAddress}'
-                    '${l.country.isNotEmpty && l.country != '-' ? '・${l.country}' : ''}',
+                    '${l.country.isNotEmpty && l.country != '-' ? '・${l.country}' : ''}'
+                    '${l.device.isNotEmpty ? '\n${l.device}' : ''}',
                   ),
                 );
               },

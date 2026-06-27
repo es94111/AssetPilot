@@ -10,6 +10,7 @@ export interface ServerUser {
   email: string;
   displayName: string;
   isAdmin: boolean;
+  isSuperAdmin: boolean;
   themeMode: string;
 }
 
@@ -24,6 +25,7 @@ interface UserRow {
   email: string;
   display_name: string;
   is_admin: number | null;
+  admin_role: string | null;
   theme_mode: string | null;
   token_version: number | null;
 }
@@ -51,7 +53,7 @@ export async function requireServerAuth(): Promise<ServerUser> {
     redirect('/login');
   }
   const user = asUserRow(queryOne(
-    'SELECT id, email, display_name, is_admin, theme_mode, token_version FROM users WHERE id = ?',
+    'SELECT id, email, display_name, is_admin, admin_role, theme_mode, token_version FROM users WHERE id = ?',
     [userId]
   ));
   if (!user) redirect('/login');
@@ -62,6 +64,7 @@ export async function requireServerAuth(): Promise<ServerUser> {
     email: user.email,
     displayName: user.display_name,
     isAdmin: !!user.is_admin,
+    isSuperAdmin: !!user.is_admin && String(user.admin_role || 'super').toLowerCase() !== 'readonly',
     themeMode: user.theme_mode || 'system',
   };
 }

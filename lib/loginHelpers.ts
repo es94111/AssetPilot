@@ -122,6 +122,51 @@ export function getRequestIpFromHeaders(headers: HeadersLike): string {
   return rawIp ? normalizeIp(rawIp) : 'unknown';
 }
 
+/** 取得 User-Agent 標頭，並截斷至合理長度避免異常超長字串。 */
+export function getUserAgentFromHeaders(headers: HeadersLike): string {
+  const ua = String(getHeader(headers, 'user-agent') || '').trim();
+  return ua.slice(0, 400);
+}
+
+/**
+ * 將 User-Agent 解析為易讀的裝置描述，例如「Windows · Chrome」「iPhone · Safari」
+ * 「Android App」。無法判斷時回傳「未知裝置」。純前後端共用、不依賴外部套件。
+ */
+export function describeDevice(userAgent: string | null | undefined): string {
+  const ua = String(userAgent || '').trim();
+  if (!ua) return '未知裝置';
+
+  // AssetPilot 行動 App（Dart/Flutter http 預設 UA 或自訂 UA）。
+  if (/AssetPilot/i.test(ua)) {
+    if (/Android/i.test(ua)) return 'AssetPilot App（Android）';
+    if (/iOS|iPhone|iPad/i.test(ua)) return 'AssetPilot App（iOS）';
+    return 'AssetPilot App';
+  }
+  if (/^Dart\//i.test(ua) || /\(dart:io\)/i.test(ua)) return 'AssetPilot App';
+
+  // 作業系統 / 裝置。
+  let os = '';
+  if (/iPhone/i.test(ua)) os = 'iPhone';
+  else if (/iPad/i.test(ua)) os = 'iPad';
+  else if (/Android/i.test(ua)) os = 'Android';
+  else if (/Windows NT/i.test(ua)) os = 'Windows';
+  else if (/Mac OS X|Macintosh/i.test(ua)) os = 'macOS';
+  else if (/CrOS/i.test(ua)) os = 'ChromeOS';
+  else if (/Linux/i.test(ua)) os = 'Linux';
+
+  // 瀏覽器（順序重要：Edge/Chrome 內含其他關鍵字）。
+  let browser = '';
+  if (/Edg(e|A|iOS)?\//i.test(ua)) browser = 'Edge';
+  else if (/OPR\/|Opera/i.test(ua)) browser = 'Opera';
+  else if (/SamsungBrowser/i.test(ua)) browser = 'Samsung Internet';
+  else if (/Firefox\//i.test(ua)) browser = 'Firefox';
+  else if (/Chrome\//i.test(ua)) browser = 'Chrome';
+  else if (/Safari\//i.test(ua) && /Version\//i.test(ua)) browser = 'Safari';
+
+  const label = [os, browser].filter(Boolean).join(' · ');
+  return label || '未知裝置';
+}
+
 export function getCountryFromHeaders(headers: HeadersLike): string | null {
   const cfCountry = String(getHeader(headers, 'cf-ipcountry')).trim().toUpperCase();
   if (cfCountry && cfCountry !== 'XX' && cfCountry !== 'T1') return cfCountry;
@@ -229,10 +274,11 @@ export function recordLoginAudit(
   const loginMethod = String(method || 'password').trim().toLowerCase();
   const isAdminLogin = user.is_admin ? 1 : 0;
   const cfCountry = getCountryFromHeaders(headers);
+  const userAgent = getUserAgentFromHeaders(headers);
   const db = getDB();
   db.run(
-    `INSERT INTO login_audit_logs (id, user_id, email, login_at, ip_address, login_method, is_admin_login, country) VALUES (?,?,?,?,?,?,?,?)`,
-    [loginId, user.id, normalizeEmail(user.email), loginAt, ipAddress, loginMethod, isAdminLogin, cfCountry]
+    `INSERT INTO login_audit_logs (id, user_id, email, login_at, ip_address, login_method, is_admin_login, country, user_agent) VALUES (?,?,?,?,?,?,?,?,?)`,
+    [loginId, user.id, normalizeEmail(user.email), loginAt, ipAddress, loginMethod, isAdminLogin, cfCountry, userAgent]
   );
   saveDB();
   if (!cfCountry) {
@@ -256,10 +302,11 @@ export function recordLoginAttempt({ user = null, email = '', headers, method = 
   const isAdminLogin = user?.is_admin ? 1 : 0;
   const attemptId = uid();
   const cfCountry = getCountryFromHeaders(safeHeaders);
+  const userAgent = getUserAgentFromHeaders(safeHeaders);
   const db = getDB();
   db.run(
-    `INSERT INTO login_attempt_logs (id, user_id, email, login_at, ip_address, login_method, is_admin_login, is_success, failure_reason, country) VALUES (?,?,?,?,?,?,?,?,?,?)`,
-    [attemptId, userId, normalizedEmail, loginAt, ipAddress, loginMethod, isAdminLogin, isSuccess ? 1 : 0, isSuccess ? '' : String(failureReason || 'unknown').trim().toLowerCase(), cfCountry]
+    `INSERT INTO login_attempt_logs (id, user_id, email, login_at, ip_address, login_method, is_admin_login, is_success, failure_reason, country, user_agent) VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
+    [attemptId, userId, normalizedEmail, loginAt, ipAddress, loginMethod, isAdminLogin, isSuccess ? 1 : 0, isSuccess ? '' : String(failureReason || 'unknown').trim().toLowerCase(), cfCountry, userAgent]
   );
   saveDB();
   if (!cfCountry) {

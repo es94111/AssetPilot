@@ -1,6 +1,7 @@
 // @ts-nocheck
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '../../../../../lib/apiHelpers';
+import { auditSensitiveAction } from '../../../../../lib/auditHelpers';
 import fs from 'fs';
 import crypto from 'crypto';
 import path from 'path';
@@ -51,6 +52,11 @@ export async function POST(request) {
     if (!fs.existsSync(SSL_ORIGIN_DIR)) fs.mkdirSync(SSL_ORIGIN_DIR, { recursive: true });
     fs.writeFileSync(SSL_ORIGIN_KEY, key.trim() + '\n', 'utf-8');
   }
+  // 敏感操作：部署 Origin 憑證／私鑰。
+  auditSensitiveAction(request, auth, {
+    action: 'admin.cert.deploy',
+    metadata: { cert_type: [cert !== undefined ? 'cert' : null, key !== undefined ? 'key' : null].filter(Boolean).join('+') || 'none' },
+  });
   return NextResponse.json({ ok: true, cert: getCertInfo(SSL_ORIGIN_CERT), keyExists: fs.existsSync(SSL_ORIGIN_KEY), requiresRestart: true });
 }
 
@@ -59,5 +65,10 @@ export async function DELETE(request) {
   if (auth instanceof NextResponse) return auth;
 
   [SSL_ORIGIN_CERT, SSL_ORIGIN_KEY, SSL_ORIGIN_CA].forEach(f => { try { if (fs.existsSync(f)) fs.unlinkSync(f); } catch (_) {} });
+  // 敏感操作：刪除 Origin 憑證／私鑰／CA。
+  auditSensitiveAction(request, auth, {
+    action: 'admin.cert.delete',
+    metadata: { cert_type: 'origin_cert+key+ca' },
+  });
   return NextResponse.json({ ok: true, requiresRestart: true });
 }

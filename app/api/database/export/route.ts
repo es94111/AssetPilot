@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { NextResponse } from 'next/server';
-import { requireAdmin } from '../../../../lib/apiHelpers';
+import { requireSuperAdmin } from '../../../../lib/apiHelpers';
 import { writeOperationAudit } from '../../../../lib/auditHelpers';
 import { createPostgresBackupSql } from '../../../../lib/postgresBackup';
 
@@ -9,7 +9,7 @@ function makeBackupTimestamp() {
 }
 
 export async function GET(request) {
-  const auth = await requireAdmin(request);
+  const auth = await requireSuperAdmin(request);
   if (auth instanceof NextResponse) return auth;
 
   try {

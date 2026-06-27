@@ -12,6 +12,12 @@ function percentOf(total: number, value: number) {
   return Math.max(4, Math.round((value / total) * 100));
 }
 
+// 父分類佔總額百分比，保留小數點第一位：(分類金額 / 總額) * 100%
+function percentLabel(total: number, value: number) {
+  if (!total) return '0.0%';
+  return `${((value / total) * 100).toFixed(1)}%`;
+}
+
 function groupCategoryRows(rows: any[]) {
   const groups = new Map<string, any>();
   rows.forEach((row, index) => {
@@ -179,7 +185,10 @@ export default async function DashboardPage(props: {
                         <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: group.parentColor }} />
                         <span className="truncate font-medium" style={{ color: 'var(--text)' }}>{group.parentName}</span>
                       </div>
-                      <span className="font-semibold shrink-0" style={{ color: 'var(--text)' }}>{fmtMoney(group.total)}</span>
+                      <span className="flex items-baseline gap-2 shrink-0">
+                        <span className="font-semibold" style={{ color: 'var(--text)' }}>{fmtMoney(group.total)}</span>
+                        <span className="text-xs tabular-nums" style={{ color: 'var(--text-secondary)' }}>{percentLabel(totalExpense, group.total)}</span>
+                      </span>
                     </div>
                     <div className="flex flex-wrap gap-x-3 gap-y-1 mb-2 pl-4 text-xs" style={{ color: 'var(--text-secondary)' }}>
                       {group.children.map((child: any, childIndex: number) => (
@@ -231,7 +240,10 @@ export default async function DashboardPage(props: {
                           {row.parentName && row.parentName !== row.name ? `${row.parentName} › ` : ''}{row.name}
                         </span>
                       </div>
-                      <span className="font-semibold shrink-0" style={{ color: 'var(--text)' }}>{fmtMoney(row.total)}</span>
+                      <span className="flex items-baseline gap-2 shrink-0">
+                        <span className="font-semibold" style={{ color: 'var(--text)' }}>{fmtMoney(row.total)}</span>
+                        <span className="text-xs tabular-nums" style={{ color: 'var(--text-secondary)' }}>{percentLabel(totalIncome, Number(row.total) || 0)}</span>
+                      </span>
                     </div>
                     <div className="progress-track" style={{ height: '5px' }}>
                       <div className="progress-fill" style={{ width: `${percentOf(totalIncome, Number(row.total) || 0)}%`, background: row.color || row.parentColor || 'var(--text-muted)' }} />

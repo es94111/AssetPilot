@@ -121,6 +121,8 @@ export default function ReportsClient(_props: { user?: any } = {}) {
   const [selectedCategoryKey, setSelectedCategoryKey] = useState<string | null>(null);
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chartInstanceRef = useRef<Chart | null>(null);
+  // 圖表資料指紋：相同則跳過重建，避免 10 秒輪詢時圓餅圖一直重畫閃爍。
+  const chartSignatureRef = useRef<string | null>(null);
 
   const fetchReport = useCallback(async (opts: { silent?: boolean } = {}) => {
     const { from, to } = getDateRange(period, customFrom, customTo);
@@ -192,6 +194,19 @@ export default function ReportsClient(_props: { user?: any } = {}) {
 
   useEffect(() => {
     if (!reportData || !chartRef.current) return;
+
+    // 計算目前圖表所需資料的指紋；只有內容真的改變時才重建圖表。
+    // 這樣 10 秒的靜默輪詢若回傳相同資料就不會重畫，圓餅圖不再閃爍。
+    let signature: string;
+    if (activeTab === 'category') {
+      signature = 'category|' + type + '|' + catRows.map((r: any) => `${r.name}:${r.total}:${r.color}`).join(',');
+    } else {
+      const dataSet = activeTab === 'trend' ? (reportData?.monthlyMap || {}) : (reportData?.dailyMap || {});
+      signature = activeTab + '|' + type + '|' + Object.keys(dataSet).sort().map((k) => `${k}:${dataSet[k]}`).join(',');
+    }
+    const sameCanvas = chartInstanceRef.current?.canvas === chartRef.current;
+    if (chartInstanceRef.current && sameCanvas && chartSignatureRef.current === signature) return;
+
     if (chartInstanceRef.current) chartInstanceRef.current.destroy();
 
     const ctx = chartRef.current.getContext('2d');
@@ -239,8 +254,14 @@ export default function ReportsClient(_props: { user?: any } = {}) {
     }
 
     chartInstanceRef.current = new Chart(ctx, chartConfig);
-    return () => { chartInstanceRef.current?.destroy(); };
+    chartSignatureRef.current = signature;
   }, [reportData, activeTab, type, catRows]);
+
+  // 只在元件卸載時銷毀圖表，避免每次資料更新都被清除後重建。
+  useEffect(() => () => {
+    chartInstanceRef.current?.destroy();
+    chartInstanceRef.current = null;
+  }, []);
 
   const grandTotal = reportData?.total || catRows.reduce((sum: number, row: any) => sum + Number(row.total), 0);
   const previousTotal = previousReportData?.total || 0;

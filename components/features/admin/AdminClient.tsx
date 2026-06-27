@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { apiGet, apiPut, apiPost, apiDelete } from '@/lib/clientApi';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/Input';
@@ -47,7 +47,51 @@ const AUDIT_ACTION_LABELS: Record<string, string> = {
   restore_backup: '還原資料庫備份',
   restore_failed: '資料庫還原失敗',
   'user.timezone.update': '更新使用者時區',
+  mega_s4_backup: 'MEGA S4 雲端備份',
+  // 敏感操作
+  'admin.user.create': '建立使用者帳號',
+  'admin.user.role_change': '變更使用者權限／角色',
+  'admin.user.delete': '刪除使用者帳號',
+  'admin.user.password_reset': '重設使用者密碼',
+  'admin.system_settings.update': '變更系統設定',
+  'admin.audit.purge': '清空資料稽核日誌',
+  'admin.login_audit.delete': '刪除登入紀錄',
+  'admin.login_audit.batch_delete': '批次刪除登入紀錄',
+  'admin.cert.deploy': '部署憑證／私鑰',
+  'admin.cert.delete': '刪除憑證',
+  'admin.server_time.update': '調整伺服器時間',
+  'account.self_delete': '自助刪除帳號',
+  'account.password_change': '變更自己的密碼',
 };
+
+// 將稽核 metadata 整理為易讀的中文摘要，作為「詳情」欄位顯示。
+const AUDIT_META_LABELS: Record<string, string> = {
+  target_email: '對象', target_user_id: '對象ID', was_admin: '原為管理員', is_admin: '管理員',
+  old_role: '原角色', new_role: '新角色', changed_fields: '變更欄位', setting: '設定',
+  cert_type: '憑證類型', deleted_count: '刪除筆數', requested_count: '要求筆數',
+  scope: '範圍', log_id: '紀錄ID', self: '本人操作', filename: '檔名', rows: '筆數',
+  imported: '匯入', skipped: '略過', byteSize: '位元組',
+};
+
+const AUDIT_ROLE_VALUE_LABELS: Record<string, string> = { user: '一般使用者', readonly: '一般管理員', super: '超級管理員', admin: '管理員', super_admin: '超級管理員' };
+
+function formatAuditDetail(metadataRaw: unknown): string {
+  let meta: Record<string, unknown> = {};
+  if (typeof metadataRaw === 'string') {
+    try { meta = JSON.parse(metadataRaw || '{}'); } catch { return ''; }
+  } else if (metadataRaw && typeof metadataRaw === 'object') {
+    meta = metadataRaw as Record<string, unknown>;
+  }
+  const parts: string[] = [];
+  Object.keys(meta).forEach((k) => {
+    let v = meta[k];
+    if (v === undefined || v === null || v === '') return;
+    if (typeof v === 'boolean') v = v ? '是' : '否';
+    if ((k === 'old_role' || k === 'new_role') && typeof v === 'string') v = AUDIT_ROLE_VALUE_LABELS[v] || v;
+    parts.push(`${AUDIT_META_LABELS[k] || k}：${v}`);
+  });
+  return parts.join('，');
+}
 
 const AUDIT_RESULT_LABELS: Record<string, string> = {
   success: '成功',
@@ -101,7 +145,9 @@ async function downloadFromUrl(url: string) {
   URL.revokeObjectURL(href);
 }
 
-export default function AdminClient(_props: { user?: any } = {}) {
+export default function AdminClient(props: { user?: any; isSuperAdmin?: boolean } = {}) {
+  // 一般（唯讀）管理員：isSuperAdmin === false。預設視為超級管理員（向後相容）。
+  const canWrite = props.isSuperAdmin !== false;
   const [activeTab, setActiveTab] = useState('system');
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -148,6 +194,10 @@ export default function AdminClient(_props: { user?: any } = {}) {
   const [allLogs, setAllLogs] = useState<any[]>([]);
   const [selectedLogIds, setSelectedLogIds] = useState<string[]>([]);
   const [logMsg, setLogMsg] = useState('');
+  // 全部使用者登入紀錄的篩選條件：USER（依 email）與指定時間區間（起訖日期）。
+  const [logUserFilter, setLogUserFilter] = useState('');
+  const [logFrom, setLogFrom] = useState('');
+  const [logTo, setLogTo] = useState('');
 
   const [auditRetention, setAuditRetention] = useState('90');
   const [auditLogs, setAuditLogs] = useState<any[]>([]);
@@ -205,6 +255,34 @@ export default function AdminClient(_props: { user?: any } = {}) {
   useEffect(() => {
     load();
   }, [load]);
+
+  // 從登入紀錄彙整出現過的 USER（依 email 去重），供篩選下拉使用。
+  const logUserOptions = useMemo(() => {
+    const map = new Map<string, string>();
+    allLogs.forEach((log) => {
+      const email = log.email || '';
+      if (!email) return;
+      if (!map.has(email)) {
+        map.set(email, log.displayName ? `${email}（${log.displayName}）` : email);
+      }
+    });
+    return Array.from(map.entries())
+      .map(([value, label]) => ({ value, label }))
+      .sort((a, b) => a.value.localeCompare(b.value));
+  }, [allLogs]);
+
+  // 依 USER 與指定時間區間過濾登入紀錄；時間以當地日期的起訖整日計算。
+  const filteredLogs = useMemo(() => {
+    const fromMs = logFrom ? new Date(`${logFrom}T00:00:00`).getTime() : null;
+    const toMs = logTo ? new Date(`${logTo}T23:59:59.999`).getTime() : null;
+    return allLogs.filter((log) => {
+      if (logUserFilter && (log.email || '') !== logUserFilter) return false;
+      const ts = Number(log.loginAt) || 0;
+      if (fromMs !== null && ts < fromMs) return false;
+      if (toMs !== null && ts > toMs) return false;
+      return true;
+    });
+  }, [allLogs, logUserFilter, logFrom, logTo]);
 
   async function saveSystemSettings(e: React.FormEvent) {
     e.preventDefault();
@@ -283,14 +361,25 @@ export default function AdminClient(_props: { user?: any } = {}) {
     setPhotoEncrypting(false);
   }
 
-  async function handleToggleAdmin(userId: string) {
+  // 設定使用者角色：'user'（一般使用者）、'readonly'（一般／唯讀管理員）、'super'（超級管理員）。
+  async function handleSetUserRole(userId: string, role: 'user' | 'readonly' | 'super') {
     const target = users.find((u) => u.id === userId);
     if (!target) return;
+    const currentRole: 'user' | 'readonly' | 'super' = !target.isAdmin
+      ? 'user'
+      : (target.adminRole === 'readonly' || target.isSuperAdmin === false ? 'readonly' : 'super');
+    if (role === currentRole) return;
+    const labels: Record<string, string> = { user: '一般使用者', readonly: '一般管理員', super: '超級管理員' };
+    if (!confirm(`確定將「${target.email}」設為${labels[role]}？`)) return;
     try {
-      await apiPut(`/api/admin/users/${userId}`, { isAdmin: !target.isAdmin });
+      await apiPut(`/api/admin/users/${userId}`, { isAdmin: role !== 'user', adminRole: role === 'readonly' ? 'readonly' : 'super' });
       await load();
     } catch (e: any) {
-      alert(e.message);
+      const map: Record<string, string> = {
+        last_admin_protected: '無法撤銷：這是系統最後一位管理員。',
+        last_super_admin_protected: '無法降級：這是系統最後一位超級管理員，降級後將無人能執行變更操作。',
+      };
+      alert(map[e.message] || e.message);
     }
   }
 
@@ -546,12 +635,13 @@ export default function AdminClient(_props: { user?: any } = {}) {
 
   function handleExportLoginLogs() {
     const lines = [
-      'loginAt,ipAddress,country,loginMethod,isSuccess,email,displayName',
-      ...allLogs.map((log) => [
+      'loginAt,ipAddress,country,loginMethod,device,isSuccess,email,displayName',
+      ...filteredLogs.map((log) => [
         fmtTs(log.loginAt),
         log.ipAddress || '',
         log.country || '',
         log.loginMethod || '',
+        log.device || '',
         log.isSuccess ? 'true' : 'false',
         log.email || '',
         log.displayName || '',
@@ -596,6 +686,13 @@ export default function AdminClient(_props: { user?: any } = {}) {
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold">管理員設定</h2>
+
+      {!canWrite && (
+        <div className="flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-200">
+          <span aria-hidden>🔒</span>
+          <span>您是<strong>一般管理員</strong>，僅具<strong>讀取</strong>權限，無法修改設定、匯出資料或調整使用者權限。</span>
+        </div>
+      )}
 
       <div className="flex flex-wrap gap-2 border-b">
         {tabs.map((tab) => (
@@ -655,7 +752,7 @@ export default function AdminClient(_props: { user?: any } = {}) {
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">壓縮 S3 既有照片</label>
                 <div className="flex items-center gap-3">
-                  <Button type="button" variant="outline" onClick={handleCompressS3Photos} disabled={photoCompressing}>{photoCompressing ? '壓縮中...' : '壓縮 S3 既有照片'}</Button>
+                  <Button type="button" variant="outline" onClick={handleCompressS3Photos} disabled={photoCompressing || !canWrite}>{photoCompressing ? '壓縮中...' : '壓縮 S3 既有照片'}</Button>
                   {photoCompressMsg && <span className={`text-sm ${photoCompressMsg.includes('失敗') ? 'text-red-500' : 'text-slate-600'}`}>{photoCompressMsg}</span>}
                 </div>
                 <p className="text-xs text-slate-500 mt-1">將 S3 上尚未壓縮的交易照片重新編碼為最長邊 1600px／JPEG 82，原地覆寫以節省空間（不可復原）。資料量大時可能需數分鐘。</p>
@@ -676,7 +773,7 @@ export default function AdminClient(_props: { user?: any } = {}) {
                 {photoEncryptionEnabled ? (
                   <>
                     <div className="flex items-center gap-3">
-                      <Button type="button" variant="outline" onClick={handleEncryptExistingPhotos} disabled={photoEncrypting}>{photoEncrypting ? '加密中...' : '加密既有照片'}</Button>
+                      <Button type="button" variant="outline" onClick={handleEncryptExistingPhotos} disabled={photoEncrypting || !canWrite}>{photoEncrypting ? '加密中...' : '加密既有照片'}</Button>
                       {photoEncryptMsg && <span className={`text-sm ${photoEncryptMsg.includes('失敗') ? 'text-red-500' : 'text-slate-600'}`}>{photoEncryptMsg}</span>}
                     </div>
                     <p className="text-xs text-slate-500 mt-1">新上傳的照片已自動加密。此按鈕會把「尚未加密」的既有照片就地加密（本機與 S3），原地覆寫原檔。資料量大時可能需數分鐘。</p>
@@ -707,7 +804,7 @@ export default function AdminClient(_props: { user?: any } = {}) {
                 <p className="text-xs text-slate-500 mt-1">1 ~ 1440 分鐘；可用環境變數 STOCK_AUTO_UPDATE_ENABLED / STOCK_AUTO_UPDATE_INTERVAL_MIN 覆寫</p>
               </div>
               {saveMsg && <p className={`text-sm ${saveMsg.includes('失敗') ? 'text-red-500' : 'text-green-600'}`}>{saveMsg}</p>}
-              <Button type="submit" disabled={saving}>{saving ? '儲存中...' : '儲存設定'}</Button>
+              <Button type="submit" disabled={saving || !canWrite}>{saving ? '儲存中...' : '儲存設定'}</Button>
             </form>
           </div>
 
@@ -718,7 +815,7 @@ export default function AdminClient(_props: { user?: any } = {}) {
               {stockAutoUpdateLastSummary && <div className="mt-1 text-slate-500 break-all">{stockAutoUpdateLastSummary}</div>}
             </div>
             <div className="flex items-center gap-3">
-              <Button variant="outline" onClick={handleStockPriceUpdateNow} disabled={stockUpdating}>{stockUpdating ? '更新中...' : '立即更新股價'}</Button>
+              <Button variant="outline" onClick={handleStockPriceUpdateNow} disabled={stockUpdating || !canWrite}>{stockUpdating ? '更新中...' : '立即更新股價'}</Button>
               {stockUpdateMsg && <span className={`text-sm ${stockUpdateMsg.includes('失敗') ? 'text-red-500' : 'text-slate-600'}`}>{stockUpdateMsg}</span>}
             </div>
             <p className="text-xs text-slate-500">手動更新會略過交易時段與間隔限制，立即抓取所有持股最新價</p>
@@ -735,8 +832,8 @@ export default function AdminClient(_props: { user?: any } = {}) {
               </div>
             )}
             <div className="flex flex-wrap gap-3">
-              <Button variant="outline" onClick={handleServerTimeReset}>重設偏移</Button>
-              <Button variant="outline" onClick={handleNtpSync}>NTP 同步</Button>
+              <Button variant="outline" onClick={handleServerTimeReset} disabled={!canWrite}>重設偏移</Button>
+              <Button variant="outline" onClick={handleNtpSync} disabled={!canWrite}>NTP 同步</Button>
             </div>
             {serverTimeMsg && <p className="text-sm text-slate-600">{serverTimeMsg}</p>}
           </div>
@@ -752,26 +849,43 @@ export default function AdminClient(_props: { user?: any } = {}) {
                 <TableHead>電子郵件</TableHead>
                 <TableHead>顯示名稱</TableHead>
                 <TableHead>登入方式</TableHead>
-                <TableHead>管理員</TableHead>
+                <TableHead>角色</TableHead>
                 <TableHead>建立時間</TableHead>
-                <TableHead>操作</TableHead>
+                {canWrite && <TableHead>操作</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
-              {users.map((user) => (
-                <TableRow key={user.id}>
-                  <TableCell>{user.email}</TableCell>
-                  <TableCell>{user.displayName || '—'}</TableCell>
-                  <TableCell>{[user.hasPassword ? '密碼' : null, user.googleId ? 'Google' : null, user.lineId ? 'LINE' : null].filter(Boolean).join(' + ') || '—'}</TableCell>
-                  <TableCell>{user.isAdmin ? '是' : '否'}</TableCell>
-                  <TableCell>{user.createdAt ? new Date(user.createdAt).toLocaleString('zh-TW') : '—'}</TableCell>
-                  <TableCell className="flex gap-2 flex-wrap">
-                    <Button variant="outline" size="sm" onClick={() => handleResetPassword(user.id)}>重設密碼</Button>
-                    <Button variant="ghost" size="sm" onClick={() => handleToggleAdmin(user.id)}>{user.isAdmin ? '撤銷管理員' : '設為管理員'}</Button>
-                    <Button variant="destructive" size="sm" onClick={() => handleDeleteUser(user.id)}>刪除</Button>
-                  </TableCell>
-                </TableRow>
-              ))}
+              {users.map((user) => {
+                const role: 'user' | 'readonly' | 'super' = !user.isAdmin
+                  ? 'user'
+                  : (user.adminRole === 'readonly' || user.isSuperAdmin === false ? 'readonly' : 'super');
+                const roleLabel = role === 'user' ? '一般使用者' : role === 'readonly' ? '一般管理員（唯讀）' : '超級管理員';
+                return (
+                  <TableRow key={user.id}>
+                    <TableCell>{user.email}</TableCell>
+                    <TableCell>{user.displayName || '—'}</TableCell>
+                    <TableCell>{[user.hasPassword ? '密碼' : null, user.googleId ? 'Google' : null, user.lineId ? 'LINE' : null].filter(Boolean).join(' + ') || '—'}</TableCell>
+                    <TableCell>{roleLabel}</TableCell>
+                    <TableCell>{user.createdAt ? new Date(user.createdAt).toLocaleString('zh-TW') : '—'}</TableCell>
+                    {canWrite && (
+                      <TableCell className="flex gap-2 flex-wrap items-center">
+                        <Button variant="outline" size="sm" onClick={() => handleResetPassword(user.id)}>重設密碼</Button>
+                        <select
+                          className="p-2 border rounded-md text-sm dark:bg-slate-800 dark:border-slate-700"
+                          value={role}
+                          onChange={(e) => handleSetUserRole(user.id, e.target.value as 'user' | 'readonly' | 'super')}
+                          aria-label="設定角色"
+                        >
+                          <option value="user">一般使用者</option>
+                          <option value="readonly">一般管理員（唯讀）</option>
+                          <option value="super">超級管理員</option>
+                        </select>
+                        <Button variant="destructive" size="sm" onClick={() => handleDeleteUser(user.id)}>刪除</Button>
+                      </TableCell>
+                    )}
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </div>
@@ -796,7 +910,7 @@ export default function AdminClient(_props: { user?: any } = {}) {
               </div>
               <Input label="小時" type="number" min={0} max={23} value={scheduleForm.hour} onChange={(e) => setScheduleForm((prev) => ({ ...prev, hour: e.target.value }))} />
               <Input label="分鐘" type="number" min={0} max={59} value={scheduleForm.minute} onChange={(e) => setScheduleForm((prev) => ({ ...prev, minute: e.target.value }))} />
-              <Button type="submit" className="self-end">新增排程</Button>
+              <Button type="submit" className="self-end" disabled={!canWrite}>新增排程</Button>
               {scheduleForm.freq === 'weekly' && <Input label="每週星期 (0-6)" type="number" min={0} max={6} value={scheduleForm.weekday} onChange={(e) => setScheduleForm((prev) => ({ ...prev, weekday: e.target.value }))} />}
               {scheduleForm.freq === 'monthly' && (
                 <div>
@@ -843,8 +957,8 @@ export default function AdminClient(_props: { user?: any } = {}) {
                     <TableCell>{fmtScheduleTime(schedule)}</TableCell>
                     <TableCell>
                       <div className="flex flex-wrap gap-2">
-                        <button type="button" className={`rounded border px-2 py-1 text-xs ${schedule.notifyEmail ? 'border-blue-500 text-blue-700' : 'border-slate-200 text-slate-400'}`} onClick={() => handleToggleScheduleChannel(schedule.id, 'notifyEmail', schedule.notifyEmail)}>Email</button>
-                        <button type="button" className={`rounded border px-2 py-1 text-xs ${schedule.notifyLine ? 'border-green-500 text-green-700' : 'border-slate-200 text-slate-400'}`} onClick={() => handleToggleScheduleChannel(schedule.id, 'notifyLine', schedule.notifyLine)}>LINE</button>
+                        <button type="button" disabled={!canWrite} className={`rounded border px-2 py-1 text-xs disabled:opacity-50 ${schedule.notifyEmail ? 'border-blue-500 text-blue-700' : 'border-slate-200 text-slate-400'}`} onClick={() => handleToggleScheduleChannel(schedule.id, 'notifyEmail', schedule.notifyEmail)}>Email</button>
+                        <button type="button" disabled={!canWrite} className={`rounded border px-2 py-1 text-xs disabled:opacity-50 ${schedule.notifyLine ? 'border-green-500 text-green-700' : 'border-slate-200 text-slate-400'}`} onClick={() => handleToggleScheduleChannel(schedule.id, 'notifyLine', schedule.notifyLine)}>LINE</button>
                       </div>
                     </TableCell>
                     <TableCell>{fmtTs(schedule.lastRun)}</TableCell>
@@ -855,9 +969,13 @@ export default function AdminClient(_props: { user?: any } = {}) {
                         : <span className="text-xs text-slate-400">—</span>}
                     </TableCell>
                     <TableCell className="flex gap-2 flex-wrap">
-                      <Button variant="outline" size="sm" onClick={() => handleToggleSchedule(schedule.id, schedule.enabled)}>{schedule.enabled ? '停用' : '啟用'}</Button>
-                      <Button variant="outline" size="sm" onClick={() => handleRunScheduleNow(schedule.id)}>立即執行</Button>
-                      <Button variant="destructive" size="sm" onClick={() => handleDeleteSchedule(schedule.id)}>刪除</Button>
+                      {canWrite ? (
+                        <>
+                          <Button variant="outline" size="sm" onClick={() => handleToggleSchedule(schedule.id, schedule.enabled)}>{schedule.enabled ? '停用' : '啟用'}</Button>
+                          <Button variant="outline" size="sm" onClick={() => handleRunScheduleNow(schedule.id)}>立即執行</Button>
+                          <Button variant="destructive" size="sm" onClick={() => handleDeleteSchedule(schedule.id)}>刪除</Button>
+                        </>
+                      ) : <span className="text-xs text-slate-400">—</span>}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -882,7 +1000,7 @@ export default function AdminClient(_props: { user?: any } = {}) {
               </div>
               <Input label="小時" type="number" min={0} max={23} value={expenseReminderForm.hour} onChange={(e) => setExpenseReminderForm((prev) => ({ ...prev, hour: e.target.value }))} />
               <Input label="分鐘" type="number" min={0} max={59} value={expenseReminderForm.minute} onChange={(e) => setExpenseReminderForm((prev) => ({ ...prev, minute: e.target.value }))} />
-              <Button type="submit" className="self-end">新增 LINE 提醒</Button>
+              <Button type="submit" className="self-end" disabled={!canWrite}>新增 LINE 提醒</Button>
               {expenseReminderForm.freq === 'weekly' && <Input label="每週星期 (0-6)" type="number" min={0} max={6} value={expenseReminderForm.weekday} onChange={(e) => setExpenseReminderForm((prev) => ({ ...prev, weekday: e.target.value }))} />}
               {expenseReminderForm.freq === 'monthly' && (
                 <div>
@@ -913,9 +1031,13 @@ export default function AdminClient(_props: { user?: any } = {}) {
                     <TableCell>{fmtTs(reminder.lastRun)}</TableCell>
                     <TableCell>{reminder.enabled ? '啟用中' : '停用'}</TableCell>
                     <TableCell className="flex gap-2 flex-wrap">
-                      <Button variant="outline" size="sm" onClick={() => handleToggleExpenseReminder(reminder.id, reminder.enabled)}>{reminder.enabled ? '停用' : '啟用'}</Button>
-                      <Button variant="outline" size="sm" onClick={() => handleRunExpenseReminderNow(reminder.id)}>立即提醒</Button>
-                      <Button variant="destructive" size="sm" onClick={() => handleDeleteExpenseReminder(reminder.id)}>刪除</Button>
+                      {canWrite ? (
+                        <>
+                          <Button variant="outline" size="sm" onClick={() => handleToggleExpenseReminder(reminder.id, reminder.enabled)}>{reminder.enabled ? '停用' : '啟用'}</Button>
+                          <Button variant="outline" size="sm" onClick={() => handleRunExpenseReminderNow(reminder.id)}>立即提醒</Button>
+                          <Button variant="destructive" size="sm" onClick={() => handleDeleteExpenseReminder(reminder.id)}>刪除</Button>
+                        </>
+                      ) : <span className="text-xs text-slate-400">—</span>}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -937,7 +1059,7 @@ export default function AdminClient(_props: { user?: any } = {}) {
               <div>Resend：{emailProviders.configured?.resend ? '已設定' : '未設定'}</div>
             </div>
           )}
-          <Button onClick={handleSendTestEmail}>寄送測試信</Button>
+          <Button onClick={handleSendTestEmail} disabled={!canWrite}>寄送測試信</Button>
           {emailMsg && <p className="text-sm text-slate-600">{emailMsg}</p>}
         </div>
       )}
@@ -956,6 +1078,7 @@ export default function AdminClient(_props: { user?: any } = {}) {
                   <TableHead>IP</TableHead>
                   <TableHead>國家</TableHead>
                   <TableHead>方式</TableHead>
+                  <TableHead>裝置</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -965,6 +1088,7 @@ export default function AdminClient(_props: { user?: any } = {}) {
                     <TableCell>{log.ipAddress}</TableCell>
                     <TableCell>{log.country}</TableCell>
                     <TableCell>{log.loginMethod}</TableCell>
+                    <TableCell title={log.userAgent || ''}>{log.device || '—'}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -974,46 +1098,85 @@ export default function AdminClient(_props: { user?: any } = {}) {
           <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-xl shadow-sm">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold">全部使用者登入紀錄</h3>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={handleExportLoginLogs}>匯出 CSV</Button>
-                <Button variant="destructive" size="sm" onClick={handleDeleteSelectedLogs} disabled={selectedLogIds.length === 0}>刪除選取</Button>
+              {canWrite && (
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" onClick={handleExportLoginLogs}>匯出 CSV</Button>
+                  <Button variant="destructive" size="sm" onClick={handleDeleteSelectedLogs} disabled={selectedLogIds.length === 0}>刪除選取</Button>
+                </div>
+              )}
+            </div>
+            <div className="flex flex-wrap items-end gap-3 mb-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">USER</label>
+                <select
+                  className="w-56 p-2 border rounded-md dark:bg-slate-800 dark:border-slate-700"
+                  value={logUserFilter}
+                  onChange={(e) => setLogUserFilter(e.target.value)}
+                >
+                  <option value="">全部使用者</option>
+                  {logUserOptions.map((option) => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </select>
               </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">起始日期</label>
+                <Input type="date" value={logFrom} onChange={(e) => setLogFrom(e.target.value)} className="w-44" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">結束日期</label>
+                <Input type="date" value={logTo} onChange={(e) => setLogTo(e.target.value)} className="w-44" />
+              </div>
+              {(logUserFilter || logFrom || logTo) && (
+                <Button variant="outline" size="sm" onClick={() => { setLogUserFilter(''); setLogFrom(''); setLogTo(''); }}>清除篩選</Button>
+              )}
+              <span className="text-sm text-slate-500 ml-auto">共 {filteredLogs.length} 筆</span>
             </div>
             {logMsg && <p className="text-sm text-slate-600 mb-3">{logMsg}</p>}
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead></TableHead>
+                  {canWrite && <TableHead></TableHead>}
                   <TableHead>登入時間</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>顯示名稱</TableHead>
                   <TableHead>IP</TableHead>
                   <TableHead>國家</TableHead>
                   <TableHead>方式</TableHead>
+                  <TableHead>裝置</TableHead>
                   <TableHead>結果</TableHead>
-                  <TableHead>操作</TableHead>
+                  {canWrite && <TableHead>操作</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {allLogs.map((log) => (
+                {filteredLogs.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={canWrite ? 10 : 8} className="text-center text-slate-500 py-6">無符合條件的登入紀錄</TableCell>
+                  </TableRow>
+                ) : filteredLogs.map((log) => (
                   <TableRow key={log.id}>
-                    <TableCell>
-                      <input
-                        type="checkbox"
-                        checked={selectedLogIds.includes(log.id)}
-                        onChange={(e) => setSelectedLogIds((prev) => e.target.checked ? [...prev, log.id] : prev.filter((id) => id !== log.id))}
-                      />
-                    </TableCell>
+                    {canWrite && (
+                      <TableCell>
+                        <input
+                          type="checkbox"
+                          checked={selectedLogIds.includes(log.id)}
+                          onChange={(e) => setSelectedLogIds((prev) => e.target.checked ? [...prev, log.id] : prev.filter((id) => id !== log.id))}
+                        />
+                      </TableCell>
+                    )}
                     <TableCell>{fmtTs(log.loginAt)}</TableCell>
                     <TableCell>{log.email || '—'}</TableCell>
                     <TableCell>{log.displayName || '—'}</TableCell>
                     <TableCell>{log.ipAddress}</TableCell>
                     <TableCell>{log.country}</TableCell>
                     <TableCell>{log.loginMethod}</TableCell>
+                    <TableCell title={log.userAgent || ''}>{log.device || '—'}</TableCell>
                     <TableCell>{log.isSuccess ? '成功' : `失敗${log.failureReason ? ` (${log.failureReason})` : ''}`}</TableCell>
-                    <TableCell>
-                      <Button variant="ghost" size="sm" onClick={() => handleDeleteSingleLog(log.id)}>刪除</Button>
-                    </TableCell>
+                    {canWrite && (
+                      <TableCell>
+                        <Button variant="ghost" size="sm" onClick={() => handleDeleteSingleLog(log.id)}>刪除</Button>
+                      </TableCell>
+                    )}
                   </TableRow>
                 ))}
               </TableBody>
@@ -1029,13 +1192,17 @@ export default function AdminClient(_props: { user?: any } = {}) {
             <div className="flex flex-wrap gap-3 items-end">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">保留天數</label>
-                <select className="w-40 p-2 border rounded-md" value={auditRetention} onChange={(e) => setAuditRetention(e.target.value)}>
+                <select className="w-40 p-2 border rounded-md" value={auditRetention} onChange={(e) => setAuditRetention(e.target.value)} disabled={!canWrite}>
                   {RETENTION_OPTIONS.map((option) => <option key={option} value={option}>{option}</option>)}
                 </select>
               </div>
-              <Button variant="outline" onClick={handleSaveRetention}>儲存保留設定</Button>
-              <Button variant="outline" onClick={handleExportAudit}>匯出 CSV</Button>
-              <Button variant="destructive" onClick={handlePurgeAudit}>清空稽核日誌</Button>
+              {canWrite && (
+                <>
+                  <Button variant="outline" onClick={handleSaveRetention}>儲存保留設定</Button>
+                  <Button variant="outline" onClick={handleExportAudit}>匯出 CSV</Button>
+                  <Button variant="destructive" onClick={handlePurgeAudit}>清空稽核日誌</Button>
+                </>
+              )}
             </div>
             {auditMsg && <p className="text-sm text-slate-600">{auditMsg}</p>}
           </div>
@@ -1045,28 +1212,41 @@ export default function AdminClient(_props: { user?: any } = {}) {
               <h3 className="text-lg font-semibold">資料稽核紀錄</h3>
               <span className="text-sm text-slate-500">共 {auditTotal} 筆</span>
             </div>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>時間</TableHead>
-                  <TableHead>使用者信箱</TableHead>
-                  <TableHead>動作</TableHead>
-                  <TableHead>結果</TableHead>
-                  <TableHead>角色</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {auditLogs.map((log) => (
-                  <TableRow key={log.id}>
-                    <TableCell>{fmtTs(log.timestamp)}</TableCell>
-                    <TableCell>{getAuditUserEmail(log, users)}</TableCell>
-                    <TableCell>{formatAuditAction(log.action)}</TableCell>
-                    <TableCell>{formatAuditResult(log.result)}</TableCell>
-                    <TableCell>{log.role}</TableCell>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>時間</TableHead>
+                    <TableHead>使用者信箱</TableHead>
+                    <TableHead>動作</TableHead>
+                    <TableHead>詳情</TableHead>
+                    <TableHead>結果</TableHead>
+                    <TableHead>角色</TableHead>
+                    <TableHead>IP</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {auditLogs.map((log) => {
+                    const detail = formatAuditDetail(log.metadata);
+                    return (
+                      <TableRow key={log.id}>
+                        <TableCell>{fmtTs(log.timestamp)}</TableCell>
+                        <TableCell>{getAuditUserEmail(log, users)}</TableCell>
+                        <TableCell>{formatAuditAction(log.action)}</TableCell>
+                        <TableCell className="max-w-[320px]">
+                          {detail
+                            ? <span className="block truncate text-xs text-slate-600 dark:text-slate-300" title={`${detail}${log.user_agent ? `\n${log.user_agent}` : ''}`}>{detail}</span>
+                            : <span className="text-xs text-slate-400">—</span>}
+                        </TableCell>
+                        <TableCell>{formatAuditResult(log.result)}</TableCell>
+                        <TableCell>{AUDIT_ROLE_VALUE_LABELS[log.role] || log.role}</TableCell>
+                        <TableCell title={log.user_agent || ''}>{log.ip_address || '—'}</TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
           </div>
         </div>
       )}
@@ -1080,8 +1260,8 @@ export default function AdminClient(_props: { user?: any } = {}) {
             </div>
             <textarea rows={6} value={originCaPem} onChange={(e) => setOriginCaPem(e.target.value)} className="w-full p-2 border rounded-md font-mono text-sm" placeholder="-----BEGIN CERTIFICATE-----" />
             <div className="flex gap-3">
-              <Button onClick={handleSaveOriginCa}>部署 Origin CA</Button>
-              <Button variant="destructive" onClick={handleDeleteOriginCa}>刪除 Origin CA</Button>
+              <Button onClick={handleSaveOriginCa} disabled={!canWrite}>部署 Origin CA</Button>
+              <Button variant="destructive" onClick={handleDeleteOriginCa} disabled={!canWrite}>刪除 Origin CA</Button>
             </div>
           </div>
 
@@ -1094,8 +1274,8 @@ export default function AdminClient(_props: { user?: any } = {}) {
             <textarea rows={6} value={originCertPem} onChange={(e) => setOriginCertPem(e.target.value)} className="w-full p-2 border rounded-md font-mono text-sm" placeholder="-----BEGIN CERTIFICATE-----" />
             <textarea rows={6} value={originKeyPem} onChange={(e) => setOriginKeyPem(e.target.value)} className="w-full p-2 border rounded-md font-mono text-sm" placeholder="-----BEGIN PRIVATE KEY-----" />
             <div className="flex gap-3">
-              <Button onClick={handleSaveOriginCert}>部署 Origin Certificate / Key</Button>
-              <Button variant="destructive" onClick={handleDeleteOriginCert}>刪除全部</Button>
+              <Button onClick={handleSaveOriginCert} disabled={!canWrite}>部署 Origin Certificate / Key</Button>
+              <Button variant="destructive" onClick={handleDeleteOriginCert} disabled={!canWrite}>刪除全部</Button>
             </div>
             {certMsg && <p className="text-sm text-slate-600">{certMsg}</p>}
           </div>

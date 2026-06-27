@@ -14,11 +14,20 @@ type ApiAuthResult = {
   email: string;
   displayName: string;
   isAdmin: boolean;
+  adminRole: string;
+  isSuperAdmin: boolean;
   themeMode: string;
   sessionId?: string;
 };
 
 const CSRF_SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
+// 一般（唯讀）管理員不可執行的變更方法。
+const ADMIN_WRITE_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
+
+// 解析管理員層級：僅 admin_role === 'readonly' 視為一般（唯讀）管理員，其餘皆為超級管理員。
+export function resolveIsSuperAdmin(isAdmin: boolean, adminRole: string | null | undefined): boolean {
+  return !!isAdmin && String(adminRole || 'super').toLowerCase() !== 'readonly';
+}
 const recurringChecks = new Map<string, string>();
 const stockRecurringChecks = new Map<string, string>();
 const stockRecurringInflight = new Set<string>();
@@ -150,7 +159,7 @@ export async function requireAuth(request?: any): Promise<ApiAuthResult | NextRe
     }
 
     const user = queryOne(
-      'SELECT id, email, display_name, is_admin, theme_mode, timezone, token_version FROM users WHERE id = ?',
+      'SELECT id, email, display_name, is_admin, admin_role, theme_mode, timezone, token_version FROM users WHERE id = ?',
       [userId]
     );
     if (!user) {
@@ -171,6 +180,8 @@ export async function requireAuth(request?: any): Promise<ApiAuthResult | NextRe
       email: (user.email as string) || '',
       displayName: (user.display_name as string) || '',
       isAdmin: !!user.is_admin,
+      adminRole: (user.admin_role as string) || 'super',
+      isSuperAdmin: resolveIsSuperAdmin(!!user.is_admin, user.admin_role as string),
       themeMode: (user.theme_mode as string) || 'system',
       sessionId,
     };
@@ -206,6 +217,8 @@ export function formatUser(user: any) {
     email: user.email,
     displayName: user.display_name,
     isAdmin: !!user.is_admin,
+    adminRole: (user.admin_role as string) || 'super',
+    isSuperAdmin: resolveIsSuperAdmin(!!user.is_admin, user.admin_role),
     themeMode: user.theme_mode,
     hasPassword: !!user.has_password,
     googleLinked: !!user.google_id,
@@ -244,10 +257,28 @@ export async function requireAdmin(request?: any): Promise<ApiAuthResult | NextR
     if (!isAdminIpAllowed(request)) {
       return NextResponse.json({ error: '此 IP 不允許存取管理員功能' }, { status: 403 });
     }
+    // 一般（唯讀）管理員只能讀取：任何變更類請求（POST/PUT/PATCH/DELETE）一律擋下。
+    const method = String(request?.method || 'GET').toUpperCase();
+    if (ADMIN_WRITE_METHODS.has(method) && !auth.isSuperAdmin) {
+      return NextResponse.json({ error: '一般管理員僅具讀取權限，無法執行此操作' }, { status: 403 });
+    }
     return auth;
   }
 
   return getAuth();
+}
+
+/**
+ * 要求超級管理員（完整權限）。用於即使是 GET 也需限制的操作，例如匯出資料。
+ * 一般（唯讀）管理員會被擋下。
+ */
+export async function requireSuperAdmin(request: any): Promise<ApiAuthResult | NextResponse> {
+  const auth = await requireAdmin(request);
+  if (auth instanceof NextResponse) return auth;
+  if (!(auth as ApiAuthResult).isSuperAdmin) {
+    return NextResponse.json({ error: '一般管理員無匯出/此項權限' }, { status: 403 });
+  }
+  return auth as ApiAuthResult;
 }
 
 export function normalizeThemeMode(mode: string) {

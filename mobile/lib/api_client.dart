@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io' show Platform;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -98,12 +99,23 @@ class ApiClient {
   /// 供 Sentry Logs 記錄同步結果用；只取數量、不含任何明細內容。
   int _asCount(dynamic v) => v is num ? v.toInt() : (v is List ? v.length : 0);
 
+  // 自訂 User-Agent，讓後端登入稽核能識別這是 AssetPilot App 及其平台。
+  static final String _userAgent = () {
+    final os = Platform.isAndroid
+        ? 'Android'
+        : Platform.isIOS
+        ? 'iOS'
+        : Platform.operatingSystem;
+    return 'AssetPilotApp ($os)';
+  }();
+
   Map<String, String> _headers({bool json = false}) => {
     if (json) 'Content-Type': 'application/json',
     // 後端對帶 cookie 的寫入請求做 CSRF 來源檢查（middleware）。原生 App 不會
     // 自動帶 Origin，缺少時 isOriginAllowed('') 會回 false → 403。送出與後端
     // 同源的 Origin 讓寫入操作通過 CSRF 防護。
     'Origin': _baseUrl,
+    'User-Agent': _userAgent,
     'Cookie': ?_cookie,
   };
 

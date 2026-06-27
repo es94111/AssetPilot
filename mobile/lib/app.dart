@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -49,7 +50,13 @@ class AssetPilotApp extends StatelessWidget {
         builder: (context, mode, _) => MaterialApp(
           title: 'AssetPilot',
           debugShowCheckedModeBanner: false,
-          locale: locale == 'en' ? const Locale('en') : null,
+          locale: flutterLocaleFor(locale),
+          supportedLocales: supportedAppLocales.map(flutterLocaleFor).toList(growable: false),
+          localizationsDelegates: const [
+            GlobalMaterialLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+          ],
           themeMode: mode,
           // 監控畫面切換的效能：為每次導覽建立 Sentry 交易，量測畫面顯示耗時與
           // 卡頓／凍結畫格（slow/frozen frames），用於發現效能下降。

@@ -7,13 +7,13 @@ import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useT } from '@/components/i18n/I18nProvider';
+import { localeTag } from '@/lib/i18n/localeTag';
 import { Plus, Trash2, Edit3, Pause, Play, StickyNote } from 'lucide-react';
 
 const FREQUENCY_VALUES = ['daily', 'weekly', 'monthly', 'yearly'] as const;
 const EMPTY_FORM = { type: 'expense', amount: '', currency: 'TWD', fxRate: '', categoryId: '', accountId: '', frequency: 'monthly', startDate: '', note: '', excludeFromStats: false, fxFee: '' };
 const DEFAULT_CURRENCIES = ['TWD', 'USD', 'JPY', 'EUR', 'CNY', 'HKD', 'GBP', 'AUD', 'CAD', 'SGD'];
 
-function localeTag(locale: string) { return locale === 'en' ? 'en-US' : 'zh-TW'; }
 function fmt(n: number | string, locale: string) { return 'NT$ ' + Math.round(Number(n) || 0).toLocaleString(localeTag(locale)); }
 
 export default function RecurringClient(_props: { user?: any } = {}) {

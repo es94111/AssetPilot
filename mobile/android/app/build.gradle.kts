@@ -77,4 +77,8 @@ flutter {
 dependencies {
     // Play Integrity API：登入／註冊時取得裝置/App 完整性 token（classic / nonce 流程）
     implementation("com.google.android.play:integrity:1.4.0")
+    // Per-app language：AppCompatDelegate.setApplicationLocales 統一 App 內語言選單
+    // 與系統「應用程式資訊 → 語言」的設定來源（API 33+ 走框架 LocaleManager，
+    // 以下版本由 AppCompat 儲存並套用）。需 1.6.0+。
+    implementation("androidx.appcompat:appcompat:1.7.0")
 }

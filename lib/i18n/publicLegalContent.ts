@@ -428,32 +428,32 @@ const enPrivacySections: LegalDocumentContent['sections'] = [
 ];
 
 export function getLegalContent(kind: LegalKind, locale: Locale, t: TranslateFn): LegalDocumentContent {
-  const isEn = locale === 'en';
+  const useEnglishLegalText = locale !== 'zh-TW' && locale !== 'zh-CN';
   if (kind === 'terms') {
     return {
-      title: isEn ? 'Terms of Service' : '服務條款',
-      subtitle: isEn
+      title: t('public.common.terms'),
+      subtitle: useEnglishLegalText
         ? 'Please read these terms carefully before using the service. Continuing to use the service means you agree to them.'
         : '使用本服務前，請詳細閱讀以下條款。繼續使用即表示您同意本條款之內容。',
       icon: 'fa-file-contract',
       heroClass: 'bg-gradient-to-br from-slate-800 to-slate-700',
-      tocTitle: isEn ? 'Contents' : '目錄',
+      tocTitle: useEnglishLegalText ? 'Contents' : '目錄',
       updatedLabel: t('public.common.lastUpdated', { date: t('public.common.dates.terms') }),
-      sections: isEn ? enTermsSections : zhTermsSections,
+      sections: useEnglishLegalText ? enTermsSections : zhTermsSections,
       links: links(t).filter((link) => link.href !== '/terms'),
     };
   }
 
   return {
-    title: isEn ? 'Privacy Policy' : '隱私權政策',
-    subtitle: isEn
+    title: t('public.common.privacy'),
+    subtitle: useEnglishLegalText
       ? 'This policy explains how we collect, use, and protect your personal data.'
       : '本政策說明我們如何收集、使用及保護您的個人資料，請詳細閱讀。',
     icon: 'fa-shield-halved',
     heroClass: 'bg-gradient-to-br from-indigo-600 to-indigo-400',
-    tocTitle: isEn ? 'Contents' : '目錄',
+    tocTitle: useEnglishLegalText ? 'Contents' : '目錄',
     updatedLabel: t('public.common.lastUpdated', { date: t('public.common.dates.privacy') }),
-    sections: isEn ? enPrivacySections : zhPrivacySections,
+    sections: useEnglishLegalText ? enPrivacySections : zhPrivacySections,
     links: links(t).filter((link) => link.href !== '/privacy'),
   };
 }

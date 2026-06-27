@@ -40,8 +40,8 @@ String _scheduleSummary(ReportSchedule s) {
   final channels = [
     if (s.notifyEmail) 'Email',
     if (s.notifyLine) 'LINE',
-  ].join(isEnglish ? ' / ' : '／');
-  return '$when $time${isEnglish ? ' · ' : '・'}$channels';
+  ].join(isChineseLocale ? '／' : ' / ');
+  return '$when $time${isChineseLocale ? '・' : ' · '}$channels';
 }
 
 /// 定期報表通知排程：使用者自訂何時、以何種方式收到收支報表。

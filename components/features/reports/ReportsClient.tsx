@@ -7,8 +7,7 @@ import { Select } from '@/components/ui/Select';
 import Chart from 'chart.js/auto';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useT } from '@/components/i18n/I18nProvider';
-
-function localeTag(locale: string) { return locale === 'en' ? 'en-US' : 'zh-TW'; }
+import { localeTag } from '@/lib/i18n/localeTag';
 
 function fmt(n: number | string, locale: string) {
   return 'NT$ ' + Math.round(Number(n) || 0).toLocaleString(localeTag(locale));

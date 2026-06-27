@@ -7,16 +7,16 @@ import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from '@/components/ui/dialog';
 import { useT } from '@/components/i18n/I18nProvider';
+import { localeTag } from '@/lib/i18n/localeTag';
 import { Plus, Trash2, Edit3, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const EMPTY_FORM = { categoryId: '', amount: '', period: 'monthly' };
 
-function localeTag(locale: string) { return locale === 'en' ? 'en-US' : 'zh-TW'; }
 function fmt(n: number | string, locale: string) { return 'NT$ ' + Math.round(Number(n) || 0).toLocaleString(localeTag(locale)); }
 function formatMonthLabel(month: string, locale: string, t: (path: string, vars?: Record<string, string | number>) => string) {
   const [year, monthNumber] = month.split('-').map(Number);
-  if (locale === 'en') {
-    return new Date(year, monthNumber - 1, 1).toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
+  if (locale !== 'zh-TW' && locale !== 'zh-CN') {
+    return new Date(year, monthNumber - 1, 1).toLocaleDateString(localeTag(locale), { year: 'numeric', month: 'long' });
   }
   return t('features.budget.monthLabel', { year, month: monthNumber });
 }

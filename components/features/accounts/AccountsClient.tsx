@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useT } from '@/components/i18n/I18nProvider';
+import { localeTag } from '@/lib/i18n/localeTag';
 import { Plus, Trash2, Edit3, Landmark, DollarSign, CreditCard, Wallet, CircleDot } from 'lucide-react';
 
 const ACCOUNT_TYPES = [
@@ -34,8 +35,6 @@ const EMPTY_REPAYMENT = {
   date: '',
   repayments: {} as Record<string, string>,
 };
-
-function localeTag(locale: string) { return locale === 'en' ? 'en-US' : 'zh-TW'; }
 
 function fmt(n: number | string, currency = 'TWD', locale = 'zh-TW') {
   const num = Math.round(Number(n) || 0);

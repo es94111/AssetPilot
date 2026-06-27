@@ -6,6 +6,7 @@ import { apiGet, apiPost, apiPut, apiDelete, notifyDataChanged } from '../../../
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useT } from '@/components/i18n/I18nProvider';
+import { localeTag } from '@/lib/i18n/localeTag';
 
 const EMPTY_FORM = { date: '', type: 'expense', amount: '', categoryId: '', accountId: '', note: '', excludeFromStats: false, currency: 'TWD', fxRate: '', fxFee: '' };
 const EMPTY_TRANSFER_FORM = { date: '', amount: '', fromAccountId: '', toAccountId: '', note: '' };
@@ -80,8 +81,6 @@ function readFilters(searchParams: QueryParams) {
 function today() {
   return new Date().toISOString().slice(0, 10);
 }
-
-function localeTag(locale: string) { return locale === 'en' ? 'en-US' : 'zh-TW'; }
 
 function fmt(n: number | string, locale: string) {
   return 'NT$ ' + Math.round(Number(n) || 0).toLocaleString(localeTag(locale));

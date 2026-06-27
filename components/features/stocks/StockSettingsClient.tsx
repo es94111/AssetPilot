@@ -9,6 +9,7 @@ import { Select } from '@/components/ui/Select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useT } from '@/components/i18n/I18nProvider';
+import { localeTag } from '@/lib/i18n/localeTag';
 import { Plus, Edit3, Trash2, Pause, Play } from 'lucide-react';
 
 const FREQUENCY_VALUES = ['daily', 'weekly', 'monthly', 'yearly'] as const;
@@ -24,7 +25,6 @@ const DEFAULT_SETTINGS = {
 };
 const EMPTY_REC_FORM = { stockId: '', amount: '', frequency: 'monthly', startDate: '', accountId: '', note: '' };
 
-function localeTag(locale: string) { return locale === 'en' ? 'en-US' : 'zh-TW'; }
 function fmt(n: number | string, locale: string) { return 'NT$ ' + Math.round(Number(n) || 0).toLocaleString(localeTag(locale)); }
 
 export default function StockSettingsClient(_props: { user?: any } = {}) {

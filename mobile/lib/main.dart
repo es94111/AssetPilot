@@ -28,6 +28,7 @@ Future<void> main() async {
     configureSentry,
     appRunner: () async {
       await loadAppLocale();
+      initAppLocaleObserver();
       await loadThemeMode();
       await ApiClient.instance.init();
       // SentryWidget 是 Session Replay 擷取畫面所需的根節點包裝。

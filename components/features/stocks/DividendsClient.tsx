@@ -10,9 +10,9 @@ import { Select } from '@/components/ui/Select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useT } from '@/components/i18n/I18nProvider';
+import { localeTag } from '@/lib/i18n/localeTag';
 import { Plus, Trash2, Edit3, RefreshCw } from 'lucide-react';
 
-function localeTag(locale: string) { return locale === 'en' ? 'en-US' : 'zh-TW'; }
 function fmt(n: number | string, locale: string) { return 'NT$ ' + Math.round(Number(n) || 0).toLocaleString(localeTag(locale)); }
 
 const EMPTY_FORM = { stockId: '', date: '', cashDividend: '', stockDividendShares: '', accountId: '', note: '' };

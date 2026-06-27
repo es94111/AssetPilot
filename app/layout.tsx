@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { resolveLocale } from "@/lib/i18n/resolveLocale";
 import { getDictionary, getTranslator } from "@/lib/i18n/getDictionary";
-import { HTML_LANG } from "@/lib/i18n/config";
+import { HTML_DIR, HTML_LANG } from "@/lib/i18n/config";
 import { I18nProvider } from "@/components/i18n/I18nProvider";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -29,7 +29,7 @@ export default async function RootLayout({
   const dict = getDictionary(locale);
 
   return (
-    <html lang={HTML_LANG[locale]}>
+    <html lang={HTML_LANG[locale]} dir={HTML_DIR[locale]}>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>

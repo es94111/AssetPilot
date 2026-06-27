@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
 import { LanguageSwitcher } from '@/components/i18n/LanguageSwitcher';
 import { useT } from '@/components/i18n/I18nProvider';
+import { localeTag } from '@/lib/i18n/localeTag';
 
 function shouldDisableLineAutoLogin() {
   return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -19,7 +20,7 @@ function isMessageError(message: string) {
 
 export default function AccountSettingsClient({ user: initialUser }: { user: any }) {
   const { locale, t } = useT();
-  const dateLocale = locale === 'en' ? 'en-US' : 'zh-TW';
+  const dateLocale = localeTag(locale);
   const ta = (key: string, vars?: Record<string, string | number>) => t(`settings.account.${key}`, vars);
   const [profile, setProfile] = useState<any>(initialUser || null);
   const [loading, setLoading] = useState(true);

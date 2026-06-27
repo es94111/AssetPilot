@@ -33,15 +33,23 @@ jobs:
         env:
           VERSION: ${{ steps.ver.outputs.version }}
         run: |
-          if git rev-parse "v$VERSION" >/dev/null 2>&1; then
-            echo "Tag v$VERSION already exists, skipping"
+          # 以「遠端」是否已存在該 tag 為準（CI checkout 預設不會抓 tag，用本地
+          # git rev-parse 會誤判為不存在，接著 push 撞上遠端既有 tag 而失敗）。
+          # 若改版流程中已手動打過 vX.Y.Z（/update-docs 步驟），這裡會正確略過。
+          if git ls-remote --exit-code --tags origin "refs/tags/v$VERSION" >/dev/null 2>&1; then
+            echo "Tag v$VERSION already exists on remote, skipping"
             echo "created=false" >> "$GITHUB_OUTPUT"
           else
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git tag "v$VERSION"
-            git push origin "v$VERSION"
-            echo "created=true" >> "$GITHUB_OUTPUT"
+            # 容忍極端競態（同時有人剛推上同名 tag）：被拒時不讓整個工作流程失敗。
+            if git push origin "v$VERSION"; then
+              echo "created=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "Tag v$VERSION push rejected (already on remote), continuing"
+              echo "created=false" >> "$GITHUB_OUTPUT"
+            fi
           fi
 
       # 用 GITHUB_TOKEN push 出去的 tag 不會觸發其他 workflow（GitHub 防遞迴規則），

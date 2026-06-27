@@ -1,10 +1,22 @@
 import AppLayout from '@/components/layout/AppLayout';
 import { getDashboardData } from '@/lib/dashboardHelpers';
+import { getTranslator } from '@/lib/i18n/getDictionary';
+import { resolveLocale } from '@/lib/i18n/resolveLocale';
 import { requireServerAuth } from '@/lib/serverAuth';
 import { DashboardFilters } from './components/DashboardFilters';
 
-function fmtMoney(value: number | string) {
-  return `NT$ ${Math.round(Number(value) || 0).toLocaleString('zh-TW')}`;
+function fmtMoney(value: number | string, locale: string) {
+  const numberLocale = locale === 'en' ? 'en-US' : 'zh-TW';
+  return `NT$ ${Math.round(Number(value) || 0).toLocaleString(numberLocale)}`;
+}
+
+function fmtMonth(value: string, locale: string) {
+  const match = /^(\d{4})-(\d{2})$/.exec(value || '');
+  if (!match) return value;
+  return new Intl.DateTimeFormat(locale === 'en' ? 'en-US' : 'zh-TW', {
+    year: 'numeric',
+    month: 'long',
+  }).format(new Date(Number(match[1]), Number(match[2]) - 1, 1));
 }
 
 function percentOf(total: number, value: number) {
@@ -18,10 +30,10 @@ function percentLabel(total: number, value: number) {
   return `${((value / total) * 100).toFixed(1)}%`;
 }
 
-function groupCategoryRows(rows: any[]) {
+function groupCategoryRows(rows: any[], uncategorizedLabel: string) {
   const groups = new Map<string, any>();
   rows.forEach((row, index) => {
-    const parentName = row.parentName || row.name || '未分類';
+    const parentName = row.parentName || row.name || uncategorizedLabel;
     const parentId = row.parentId || `parent-${parentName}-${index}`;
     if (!groups.has(parentId)) {
       groups.set(parentId, {
@@ -50,10 +62,13 @@ export default async function DashboardPage(props: {
 }) {
   const searchParams = await props.searchParams;
   const user = await requireServerAuth();
+  const locale = await resolveLocale();
+  const t = getTranslator(locale);
   const data = await getDashboardData(searchParams.month);
+  const dashboardMonth = fmtMonth(data.yearMonth, locale);
 
   const expenseRows = Array.isArray(data.catBreakdown) ? data.catBreakdown : [];
-  const expenseGroups = groupCategoryRows(expenseRows);
+  const expenseGroups = groupCategoryRows(expenseRows, t('dashboard.uncategorized'));
   const incomeRows = Array.isArray(data.incomeCatBreakdown) ? data.incomeCatBreakdown : [];
   const recentRows = Array.isArray(data.recent) ? data.recent : [];
   const totalExpense = Number(data.expense) || 0;
@@ -69,8 +84,8 @@ export default async function DashboardPage(props: {
         {/* Page header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div className="page-header">
-            <h1>儀表板</h1>
-            <p>{data.yearMonth} 的收支摘要、分類分布與最近交易。</p>
+            <h1>{t('dashboard.title')}</h1>
+            <p>{t('dashboard.subtitle', { month: dashboardMonth })}</p>
           </div>
           <DashboardFilters />
         </div>
@@ -78,28 +93,28 @@ export default async function DashboardPage(props: {
         {/* KPI row */}
         <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
           <div className="stat-card" style={{ borderLeft: '3px solid var(--income)' }}>
-            <p className="stat-card-label">總收入</p>
-            <p className="stat-card-value" style={{ color: 'var(--income)' }}>{fmtMoney(data.income)}</p>
+            <p className="stat-card-label">{t('dashboard.kpi.totalIncome')}</p>
+            <p className="stat-card-value" style={{ color: 'var(--income)' }}>{fmtMoney(data.income, locale)}</p>
           </div>
           <div className="stat-card" style={{ borderLeft: '3px solid var(--expense)' }}>
-            <p className="stat-card-label">總支出</p>
-            <p className="stat-card-value" style={{ color: 'var(--expense)' }}>{fmtMoney(data.expense)}</p>
+            <p className="stat-card-label">{t('dashboard.kpi.totalExpense')}</p>
+            <p className="stat-card-value" style={{ color: 'var(--expense)' }}>{fmtMoney(data.expense, locale)}</p>
           </div>
           <div className="stat-card" style={{ borderLeft: `3px solid ${net >= 0 ? 'var(--net)' : 'var(--danger)'}` }}>
-            <p className="stat-card-label">淨額</p>
-            <p className="stat-card-value" style={{ color: net >= 0 ? 'var(--net)' : 'var(--danger)' }}>{fmtMoney(data.net)}</p>
+            <p className="stat-card-label">{t('dashboard.kpi.net')}</p>
+            <p className="stat-card-value" style={{ color: net >= 0 ? 'var(--net)' : 'var(--danger)' }}>{fmtMoney(data.net, locale)}</p>
           </div>
           <div className="stat-card" style={{ borderLeft: '3px solid var(--today)' }}>
-            <p className="stat-card-label">今日支出</p>
-            <p className="stat-card-value">{fmtMoney(data.todayExpense)}</p>
+            <p className="stat-card-label">{t('dashboard.kpi.todayExpense')}</p>
+            <p className="stat-card-value">{fmtMoney(data.todayExpense, locale)}</p>
           </div>
           <div className="stat-card" style={{ borderLeft: '3px solid var(--primary)' }}>
-            <p className="stat-card-label">銀行帳戶</p>
-            <p className="stat-card-value">{fmtMoney(data.bankBalance)}</p>
+            <p className="stat-card-label">{t('dashboard.kpi.bankAccounts')}</p>
+            <p className="stat-card-value">{fmtMoney(data.bankBalance, locale)}</p>
           </div>
           <div className="stat-card" style={{ borderLeft: '3px solid #8b5cf6' }}>
-            <p className="stat-card-label">股票總市值</p>
-            <p className="stat-card-value">{fmtMoney(data.stockMarketValue)}</p>
+            <p className="stat-card-label">{t('dashboard.kpi.stockMarketValue')}</p>
+            <p className="stat-card-value">{fmtMoney(data.stockMarketValue, locale)}</p>
           </div>
         </div>
 
@@ -112,8 +127,8 @@ export default async function DashboardPage(props: {
           >
             <div className="flex items-start justify-between gap-4 mb-6">
               <div>
-                <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>本月收支概覽</p>
-                <h2 className="mt-1 text-xl font-bold tracking-tight" style={{ color: 'var(--text)' }}>{data.yearMonth}</h2>
+                <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>{t('dashboard.overview.title')}</p>
+                <h2 className="mt-1 text-xl font-bold tracking-tight" style={{ color: 'var(--text)' }}>{dashboardMonth}</h2>
               </div>
               <span
                 className="rounded-full px-3 py-1 text-xs font-semibold"
@@ -122,14 +137,14 @@ export default async function DashboardPage(props: {
                   : { background: 'rgba(244,63,94,.15)', color: '#fb7185' }
                 }
               >
-                {net >= 0 ? '本月結餘' : '本月赤字'}
+                {net >= 0 ? t('dashboard.overview.balance') : t('dashboard.overview.deficit')}
               </span>
             </div>
             <div className="grid grid-cols-3 gap-3">
               {[
-                { label: '收入', value: fmtMoney(totalIncome), color: '#34d399' },
-                { label: '支出', value: fmtMoney(totalExpense), color: '#fb7185' },
-                { label: '淨額', value: fmtMoney(net), color: net >= 0 ? '#7dd3fc' : '#fb7185' },
+                { label: t('dashboard.overview.income'), value: fmtMoney(totalIncome, locale), color: '#34d399' },
+                { label: t('dashboard.overview.expense'), value: fmtMoney(totalExpense, locale), color: '#fb7185' },
+                { label: t('dashboard.overview.net'), value: fmtMoney(net, locale), color: net >= 0 ? '#7dd3fc' : '#fb7185' },
               ].map(item => (
                 <div key={item.label} className="rounded-xl p-4" style={{ background: 'rgba(79,110,247,.07)' }}>
                   <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>{item.label}</p>
@@ -142,12 +157,12 @@ export default async function DashboardPage(props: {
           {/* Ratio card */}
           <section className="section-card">
             <div className="section-card-header">
-              <h2 className="section-card-title">收支比例</h2>
+              <h2 className="section-card-title">{t('dashboard.ratio.title')}</h2>
             </div>
             <div className="space-y-5">
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>收入佔比</span>
+                  <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>{t('dashboard.ratio.incomeShare')}</span>
                   <span className="text-sm font-semibold" style={{ color: 'var(--income)' }}>{incomeRatio}%</span>
                 </div>
                 <div className="progress-track">
@@ -156,7 +171,7 @@ export default async function DashboardPage(props: {
               </div>
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>支出佔比</span>
+                  <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>{t('dashboard.ratio.expenseShare')}</span>
                   <span className="text-sm font-semibold" style={{ color: 'var(--expense)' }}>{expenseRatio}%</span>
                 </div>
                 <div className="progress-track">
@@ -171,11 +186,11 @@ export default async function DashboardPage(props: {
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
           <section className="section-card">
             <div className="section-card-header">
-              <h2 className="section-card-title">支出分類</h2>
-              <span className="section-card-sub">{fmtMoney(totalExpense)}</span>
+              <h2 className="section-card-title">{t('dashboard.sections.expenseCategories')}</h2>
+              <span className="section-card-sub">{fmtMoney(totalExpense, locale)}</span>
             </div>
             {expenseGroups.length === 0 ? (
-              <p className="text-sm" style={{ color: 'var(--text-muted)' }}>本月尚無支出資料</p>
+              <p className="text-sm" style={{ color: 'var(--text-muted)' }}>{t('dashboard.empty.noExpense')}</p>
             ) : (
               <div className="space-y-4">
                 {expenseGroups.map((group: any) => (
@@ -186,7 +201,7 @@ export default async function DashboardPage(props: {
                         <span className="truncate font-medium" style={{ color: 'var(--text)' }}>{group.parentName}</span>
                       </div>
                       <span className="flex items-baseline gap-2 shrink-0">
-                        <span className="font-semibold" style={{ color: 'var(--text)' }}>{fmtMoney(group.total)}</span>
+                        <span className="font-semibold" style={{ color: 'var(--text)' }}>{fmtMoney(group.total, locale)}</span>
                         <span className="text-xs tabular-nums" style={{ color: 'var(--text-secondary)' }}>{percentLabel(totalExpense, group.total)}</span>
                       </span>
                     </div>
@@ -201,7 +216,7 @@ export default async function DashboardPage(props: {
                     <div className="progress-track" style={{ height: '8px' }}>
                       <div
                         className="progress-fill flex overflow-hidden"
-                        title={`${group.parentName} ${fmtMoney(group.total)}`}
+                        title={`${group.parentName} ${fmtMoney(group.total, locale)}`}
                         style={{ width: `${percentOf(totalExpense, group.total)}%`, background: group.parentColor }}
                       >
                         {group.children.map((child: any, childIndex: number) => {
@@ -209,7 +224,7 @@ export default async function DashboardPage(props: {
                           return (
                             <div
                               key={`${group.parentId}-${child.name}-bar-${childIndex}`}
-                              title={`${child.name} ${fmtMoney(child.total)}`}
+                              title={`${child.name} ${fmtMoney(child.total, locale)}`}
                               style={{ width: `${width}%`, background: child.color, height: '100%' }}
                             />
                           );
@@ -224,11 +239,11 @@ export default async function DashboardPage(props: {
 
           <section className="section-card">
             <div className="section-card-header">
-              <h2 className="section-card-title">收入分類</h2>
-              <span className="section-card-sub">{fmtMoney(totalIncome)}</span>
+              <h2 className="section-card-title">{t('dashboard.sections.incomeCategories')}</h2>
+              <span className="section-card-sub">{fmtMoney(totalIncome, locale)}</span>
             </div>
             {incomeRows.length === 0 ? (
-              <p className="text-sm" style={{ color: 'var(--text-muted)' }}>本月尚無收入資料</p>
+              <p className="text-sm" style={{ color: 'var(--text-muted)' }}>{t('dashboard.empty.noIncome')}</p>
             ) : (
               <div className="space-y-4">
                 {incomeRows.map((row: any, index: number) => (
@@ -241,7 +256,7 @@ export default async function DashboardPage(props: {
                         </span>
                       </div>
                       <span className="flex items-baseline gap-2 shrink-0">
-                        <span className="font-semibold" style={{ color: 'var(--text)' }}>{fmtMoney(row.total)}</span>
+                        <span className="font-semibold" style={{ color: 'var(--text)' }}>{fmtMoney(row.total, locale)}</span>
                         <span className="text-xs tabular-nums" style={{ color: 'var(--text-secondary)' }}>{percentLabel(totalIncome, Number(row.total) || 0)}</span>
                       </span>
                     </div>
@@ -258,30 +273,30 @@ export default async function DashboardPage(props: {
         {/* Recent transactions */}
         <section className="section-card">
           <div className="section-card-header">
-            <h2 className="section-card-title">最近交易</h2>
-            <span className="section-card-sub">最近 {recentRows.length} 筆</span>
+            <h2 className="section-card-title">{t('dashboard.sections.recentTransactions')}</h2>
+            <span className="section-card-sub">{t('dashboard.sections.recentCount', { count: recentRows.length })}</span>
           </div>
           {recentRows.length === 0 ? (
-            <p className="text-sm" style={{ color: 'var(--text-muted)' }}>本月尚無交易資料</p>
+            <p className="text-sm" style={{ color: 'var(--text-muted)' }}>{t('dashboard.empty.noTransactions')}</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="data-table">
                 <thead>
                   <tr>
-                    <th>日期</th>
-                    <th>分類</th>
-                    <th>備註</th>
-                    <th style={{ textAlign: 'right' }}>金額</th>
+                    <th>{t('dashboard.table.date')}</th>
+                    <th>{t('dashboard.table.category')}</th>
+                    <th>{t('dashboard.table.note')}</th>
+                    <th style={{ textAlign: 'right' }}>{t('dashboard.table.amount')}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {recentRows.map((row: any) => (
                     <tr key={row.id}>
                       <td>{row.date}</td>
-                      <td>{row.cat_name || '未分類'}</td>
+                      <td>{row.cat_name || t('dashboard.uncategorized')}</td>
                       <td style={{ color: 'var(--text-secondary)' }}>{row.note || '—'}</td>
                       <td style={{ textAlign: 'right', fontWeight: 600, color: row.type === 'income' ? 'var(--income)' : 'var(--expense)' }}>
-                        {row.type === 'income' ? '+' : '−'}{fmtMoney(row.amount)}
+                        {row.type === 'income' ? '+' : '−'}{fmtMoney(row.amount, locale)}
                       </td>
                     </tr>
                   ))}

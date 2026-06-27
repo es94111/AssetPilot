@@ -1,47 +1,57 @@
+import externalApisData from '../../lib/external-apis.json';
+import { PublicLanguageSwitcher } from '@/components/i18n/PublicLanguageSwitcher';
+import { getTranslator } from '@/lib/i18n/getDictionary';
+import { resolveLocale } from '@/lib/i18n/resolveLocale';
+
 export const dynamic = 'force-dynamic';
 
-import externalApisData from '../../lib/external-apis.json';
+export async function generateMetadata() {
+  const locale = await resolveLocale();
+  const t = getTranslator(locale);
+  return {
+    title: t('public.apiCreditsPage.metadataTitle'),
+  };
+}
 
-export const metadata = {
-  title: 'API 使用與授權 — AssetPilot',
-};
+type T = ReturnType<typeof getTranslator>;
 
-const usageNotes = [
-  {
-    icon: 'fa-money-bill-trend-up',
-    title: '匯率同步',
-    text: '只查詢公開匯率資料，不會送出個人財務明細。',
-  },
-  {
-    icon: 'fa-chart-line',
-    title: '台股資料',
-    text: '僅帶股票代號與市場資料，不包含帳戶、持股成本或交易紀錄。',
-  },
-  {
-    icon: 'fa-location-dot',
-    title: '登入稽核',
-    text: 'IPinfo 僅用於登入紀錄中的國家資訊顯示。',
-  },
-  {
-    icon: 'fa-user-check',
-    title: '第三方登入',
-    text: 'Google、LINE 登入僅在主動登入或綁定時啟用。',
-  },
-  {
-    icon: 'fa-cloud-arrow-up',
-    title: '雲端備份',
-    text: 'MEGA S4 僅在管理員主動上傳備份時接收整檔資料庫檔案。',
-  },
-];
+function getUsageNotes(t: T) {
+  return [
+    { icon: 'fa-money-bill-trend-up', title: t('public.apiCreditsPage.usageNotes.fx.title'), text: t('public.apiCreditsPage.usageNotes.fx.text') },
+    { icon: 'fa-chart-line', title: t('public.apiCreditsPage.usageNotes.stock.title'), text: t('public.apiCreditsPage.usageNotes.stock.text') },
+    { icon: 'fa-location-dot', title: t('public.apiCreditsPage.usageNotes.audit.title'), text: t('public.apiCreditsPage.usageNotes.audit.text') },
+    { icon: 'fa-user-check', title: t('public.apiCreditsPage.usageNotes.login.title'), text: t('public.apiCreditsPage.usageNotes.login.text') },
+    { icon: 'fa-cloud-arrow-up', title: t('public.apiCreditsPage.usageNotes.backup.title'), text: t('public.apiCreditsPage.usageNotes.backup.text') },
+  ];
+}
 
-const serviceKinds = [
-  { label: '資料查詢', count: 3, icon: 'fa-database' },
-  { label: '身份驗證', count: 2, icon: 'fa-key' },
-  { label: 'Email 通道', count: 3, icon: 'fa-envelope' },
-  { label: '雲端備份', count: 1, icon: 'fa-cloud-arrow-up' },
-];
+function getServiceKinds(t: T) {
+  return [
+    { label: t('public.apiCreditsPage.serviceKinds.data'), count: 3, icon: 'fa-database' },
+    { label: t('public.apiCreditsPage.serviceKinds.auth'), count: 2, icon: 'fa-key' },
+    { label: t('public.apiCreditsPage.serviceKinds.email'), count: 3, icon: 'fa-envelope' },
+    { label: t('public.apiCreditsPage.serviceKinds.backup'), count: 1, icon: 'fa-cloud-arrow-up' },
+  ];
+}
+
+function translateApiDescription(name: string, fallback: string, t: T) {
+  if (name === 'exchangerate-api.com') return t('public.apiCreditsPage.descriptions.exchangeRate');
+  if (name === 'IPinfo') return t('public.apiCreditsPage.descriptions.ipinfo');
+  if (name.startsWith('TWSE')) return t('public.apiCreditsPage.descriptions.twse');
+  if (name === 'Google Identity Services') return t('public.apiCreditsPage.descriptions.google');
+  if (name === 'LINE Login') return t('public.apiCreditsPage.descriptions.line');
+  if (name.startsWith('SMTP')) return t('public.apiCreditsPage.descriptions.smtp');
+  if (name.startsWith('Zeabur')) return t('public.apiCreditsPage.descriptions.zeabur');
+  if (name === 'Resend') return t('public.apiCreditsPage.descriptions.resend');
+  if (name === 'MEGA S4 Object Storage') return t('public.apiCreditsPage.descriptions.mega');
+  return fallback;
+}
 
 export default async function ApiCreditsPage() {
+  const locale = await resolveLocale();
+  const t = getTranslator(locale);
+  const usageNotes = getUsageNotes(t);
+  const serviceKinds = getServiceKinds(t);
   const freeServices = externalApisData.filter((api) => api.supportsFree).length;
   const paidServices = externalApisData.filter((api) => api.supportsPaid).length;
   const attributionServices = externalApisData.filter((api) => api.attribution).length;
@@ -59,8 +69,9 @@ export default async function ApiCreditsPage() {
             className="inline-flex min-h-9 items-center gap-2 rounded-lg border border-sky-300/30 px-3.5 text-xs font-semibold text-sky-200 transition hover:border-sky-200/50 hover:bg-white/5 hover:text-white"
           >
             <i className="fas fa-arrow-left" />
-            返回首頁
+            {t('public.common.backHome')}
           </a>
+          <PublicLanguageSwitcher compact />
         </div>
       </nav>
 
@@ -69,21 +80,21 @@ export default async function ApiCreditsPage() {
           <div>
             <div className="mb-5 inline-flex items-center gap-2 rounded-lg border border-emerald-300/20 bg-emerald-300/10 px-3 py-1.5 text-xs font-semibold text-emerald-200">
               <i className="fas fa-plug" />
-              外部 API 透明揭露
+              {t('public.apiCreditsPage.badge')}
             </div>
             <h1 className="max-w-3xl text-3xl font-extrabold leading-tight text-white sm:text-4xl">
-              API 使用與授權
+              {t('public.apiCreditsPage.title')}
             </h1>
             <p className="mt-4 max-w-2xl text-sm/7 text-slate-300 sm:text-base/8">
-              AssetPilot 僅在功能需要時連線至外部資料來源。這裡列出各項 API 的用途、授權資訊與資料傳送範圍，方便自行部署時確認合規狀態。
+              {t('public.apiCreditsPage.description')}
             </p>
           </div>
 
           <div className="grid grid-cols-3 gap-3">
             {[
-              { label: '外部服務', value: externalApisData.length, icon: 'fa-layer-group' },
-              { label: '支援免費', value: freeServices, icon: 'fa-circle-check' },
-              { label: '需標示來源', value: attributionServices, icon: 'fa-copyright' },
+              { label: t('public.apiCreditsPage.stats.externalServices'), value: externalApisData.length, icon: 'fa-layer-group' },
+              { label: t('public.apiCreditsPage.stats.freeSupported'), value: freeServices, icon: 'fa-circle-check' },
+              { label: t('public.apiCreditsPage.stats.attributionRequired'), value: attributionServices, icon: 'fa-copyright' },
             ].map((item) => (
               <div key={item.label} className="rounded-xl border border-white/10 bg-white/[0.06] px-3 py-4 text-center shadow-sm backdrop-blur">
                 <i className={`fas ${item.icon} text-sm text-sky-200`} />
@@ -115,14 +126,14 @@ export default async function ApiCreditsPage() {
         <section className="mb-5 rounded-xl border border-white/10 bg-white/[0.05] p-5 shadow-sm backdrop-blur sm:p-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <h2 className="text-xl font-bold text-white">資料透明度</h2>
+              <h2 className="text-xl font-bold text-white">{t('public.apiCreditsPage.transparencyTitle')}</h2>
               <p className="mt-2 max-w-2xl text-sm/7 text-slate-300">
-                下列情境只傳送完成該功能所需的最小資料，不會把你的財務明細交給第三方服務。
+                {t('public.apiCreditsPage.transparencyText')}
               </p>
             </div>
             <span className="inline-flex w-fit items-center gap-2 rounded-lg border border-emerald-300/20 bg-emerald-300/10 px-3 py-1.5 text-xs font-semibold text-emerald-200">
               <i className="fas fa-shield-halved" />
-              最小必要資料原則
+              {t('public.apiCreditsPage.minNecessary')}
             </span>
           </div>
 
@@ -142,9 +153,9 @@ export default async function ApiCreditsPage() {
         <section className="mb-5 rounded-xl border border-white/10 bg-white/[0.05] p-5 shadow-sm backdrop-blur sm:p-6">
           <div className="flex flex-col gap-3 border-b border-white/10 pb-5 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <h2 className="text-xl font-bold text-white">外部服務清單</h2>
+              <h2 className="text-xl font-bold text-white">{t('public.apiCreditsPage.serviceListTitle')}</h2>
               <p className="mt-2 text-sm/7 text-slate-300">
-                共 {externalApisData.length} 項服務，其中 {freeServices} 項支援免費方案，{paidServices} 項可使用付費方案。
+                {t('public.apiCreditsPage.serviceSummary', { total: externalApisData.length, free: freeServices, paid: paidServices })}
               </p>
             </div>
             <a
@@ -152,7 +163,7 @@ export default async function ApiCreditsPage() {
               className="inline-flex min-h-9 w-fit items-center gap-2 rounded-lg border border-sky-300/25 px-3.5 text-xs font-semibold text-sky-200 transition hover:border-sky-200/50 hover:bg-white/5 hover:text-white"
             >
               <i className="fas fa-shield-halved" />
-              隱私權政策
+              {t('public.common.privacy')}
             </a>
           </div>
 
@@ -162,7 +173,7 @@ export default async function ApiCreditsPage() {
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                   <div className="min-w-0">
                     <h3 className="text-lg font-bold text-white">{api.name}</h3>
-                    <p className="mt-2 text-sm/7 text-slate-300">{api.description}</p>
+                    <p className="mt-2 text-sm/7 text-slate-300">{translateApiDescription(api.name, api.description, t)}</p>
                   </div>
                   <a
                     href={api.url}
@@ -170,7 +181,7 @@ export default async function ApiCreditsPage() {
                     rel="noreferrer"
                     className="inline-flex min-h-9 shrink-0 items-center justify-center gap-2 rounded-lg border border-white/10 px-3 text-xs font-semibold text-sky-200 transition hover:border-sky-200/50 hover:bg-white/5 hover:text-white"
                   >
-                    官方網站
+                    {t('public.apiCreditsPage.officialSite')}
                     <i className="fas fa-arrow-up-right-from-square text-[10px]" />
                   </a>
                 </div>
@@ -178,11 +189,11 @@ export default async function ApiCreditsPage() {
                 <div className="mt-4 flex flex-wrap gap-2 text-xs font-semibold">
                   <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-300/10 px-2.5 py-1.5 text-emerald-200">
                     <i className={`fas ${api.supportsFree ? 'fa-check' : 'fa-minus'}`} />
-                    免費方案 {api.supportsFree ? '支援' : '未提供'}
+                    {t('public.apiCreditsPage.freePlan')} {api.supportsFree ? t('public.apiCreditsPage.supported') : t('public.apiCreditsPage.unavailable')}
                   </span>
                   <span className="inline-flex items-center gap-1.5 rounded-lg bg-sky-300/10 px-2.5 py-1.5 text-sky-200">
                     <i className={`fas ${api.supportsPaid ? 'fa-check' : 'fa-minus'}`} />
-                    付費方案 {api.supportsPaid ? '支援' : '未提供'}
+                    {t('public.apiCreditsPage.paidPlan')} {api.supportsPaid ? t('public.apiCreditsPage.supported') : t('public.apiCreditsPage.unavailable')}
                   </span>
                 </div>
 
@@ -198,19 +209,19 @@ export default async function ApiCreditsPage() {
         </section>
 
         <footer className="border-t border-white/10 pt-6 text-center text-xs text-slate-400">
-          <p>最後更新日期：2026 年 6 月 11 日</p>
+          <p>{t('public.common.lastUpdated', { date: t('public.common.dates.apiCredits') })}</p>
           <div className="mt-3 flex flex-wrap justify-center gap-5">
             <a href="/privacy" className="inline-flex items-center gap-1.5 text-sky-200">
               <i className="fas fa-shield-halved" />
-              隱私權政策
+              {t('public.common.privacy')}
             </a>
             <a href="/terms" className="inline-flex items-center gap-1.5 text-sky-200">
               <i className="fas fa-file-contract" />
-              服務條款
+              {t('public.common.terms')}
             </a>
             <a href="/" className="inline-flex items-center gap-1.5 text-sky-200">
               <i className="fas fa-house" />
-              返回首頁
+              {t('public.common.backHome')}
             </a>
           </div>
         </footer>

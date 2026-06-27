@@ -6,9 +6,12 @@ import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import Chart from 'chart.js/auto';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useT } from '@/components/i18n/I18nProvider';
 
-function fmt(n: number | string) {
-  return 'NT$ ' + Math.round(Number(n) || 0).toLocaleString('zh-TW');
+function localeTag(locale: string) { return locale === 'en' ? 'en-US' : 'zh-TW'; }
+
+function fmt(n: number | string, locale: string) {
+  return 'NT$ ' + Math.round(Number(n) || 0).toLocaleString(localeTag(locale));
 }
 
 function percentOf(total: number, value: number) {
@@ -16,10 +19,10 @@ function percentOf(total: number, value: number) {
   return Math.max(4, Math.round((value / total) * 100));
 }
 
-function groupCategoryRows(rows: any[]) {
+function groupCategoryRows(rows: any[], uncategorized: string) {
   const groups = new Map<string, any>();
   rows.forEach((row, index) => {
-    const parentName = row.parentName || row.name || '未分類';
+    const parentName = row.parentName || row.name || uncategorized;
     const parentId = row.parentId || `parent-${parentName}-${index}`;
     if (!groups.has(parentId)) {
       groups.set(parentId, {
@@ -85,12 +88,13 @@ function shiftPeriod(from: string, to: string) {
   };
 }
 
-function compareText(current: number, previous: number) {
+function compareText(current: number, previous: number, locale: string, t: (path: string, vars?: Record<string, string | number>) => string) {
   const delta = current - previous;
   const sign = delta > 0 ? '+' : '';
-  if (previous === 0) return `${sign}${fmt(delta)}，前期無資料`;
+  const formattedDelta = `${sign}${fmt(delta, locale)}`;
+  if (previous === 0) return t('features.reports.previousNoData', { delta: formattedDelta });
   const rate = Math.round((delta / previous) * 10000) / 100;
-  return `${sign}${fmt(delta)} (${sign}${rate}%)`;
+  return t('features.reports.compareWithRate', { delta: formattedDelta, rate: `${sign}${rate}` });
 }
 
 function categoryRowKey(row: any) {
@@ -103,6 +107,7 @@ function categoryRowKey(row: any) {
 }
 
 export default function ReportsClient(_props: { user?: any } = {}) {
+  const { t, locale } = useT();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -121,7 +126,7 @@ export default function ReportsClient(_props: { user?: any } = {}) {
   const [selectedCategoryKey, setSelectedCategoryKey] = useState<string | null>(null);
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chartInstanceRef = useRef<Chart | null>(null);
-  // 圖表資料指紋：相同則跳過重建，避免 10 秒輪詢時圓餅圖一直重畫閃爍。
+  // Chart data signature: skip rebuilds when data is unchanged during polling.
   const chartSignatureRef = useRef<string | null>(null);
 
   const fetchReport = useCallback(async (opts: { silent?: boolean } = {}) => {
@@ -195,8 +200,8 @@ export default function ReportsClient(_props: { user?: any } = {}) {
   useEffect(() => {
     if (!reportData || !chartRef.current) return;
 
-    // 計算目前圖表所需資料的指紋；只有內容真的改變時才重建圖表。
-    // 這樣 10 秒的靜默輪詢若回傳相同資料就不會重畫，圓餅圖不再閃爍。
+    // Rebuild the chart only when the data signature actually changes.
+    // This keeps silent polling from causing visible chart flicker.
     let signature: string;
     if (activeTab === 'category') {
       signature = 'category|' + type + '|' + catRows.map((r: any) => `${r.name}:${r.total}:${r.color}`).join(',');
@@ -220,7 +225,7 @@ export default function ReportsClient(_props: { user?: any } = {}) {
       chartConfig = {
         type: 'pie',
         data: {
-          labels: filtered.map((row: any) => row.name || '未分類'),
+          labels: filtered.map((row: any) => row.name || t('features.common.uncategorized')),
           datasets: [{
             data: filtered.map((row: any) => Number(row.total) || 0),
             backgroundColor: filtered.map((row: any, index: number) => row.color || colors[index % colors.length]),
@@ -244,7 +249,7 @@ export default function ReportsClient(_props: { user?: any } = {}) {
         data: {
           labels: sortedKeys,
           datasets: [{
-            label: type === 'expense' ? '支出' : '收入',
+            label: type === 'expense' ? t('features.common.expense') : t('features.common.income'),
             data: sortedKeys.map((key) => Number(dataSet[key]) || 0),
             backgroundColor: type === 'expense' ? '#ef4444' : '#10b981',
           }],
@@ -255,9 +260,9 @@ export default function ReportsClient(_props: { user?: any } = {}) {
 
     chartInstanceRef.current = new Chart(ctx, chartConfig);
     chartSignatureRef.current = signature;
-  }, [reportData, activeTab, type, catRows]);
+  }, [reportData, activeTab, type, catRows, t]);
 
-  // 只在元件卸載時銷毀圖表，避免每次資料更新都被清除後重建。
+  // Destroy the chart only on unmount so data refreshes can reuse it.
   useEffect(() => () => {
     chartInstanceRef.current?.destroy();
     chartInstanceRef.current = null;
@@ -266,7 +271,7 @@ export default function ReportsClient(_props: { user?: any } = {}) {
   const grandTotal = reportData?.total || catRows.reduce((sum: number, row: any) => sum + Number(row.total), 0);
   const previousTotal = previousReportData?.total || 0;
   const selectedRow = selectedCategoryKey ? catRows.find((row: any) => categoryRowKey(row) === selectedCategoryKey) : null;
-  const expenseGroups = useMemo(() => groupCategoryRows(catRows), [catRows]);
+  const expenseGroups = useMemo(() => groupCategoryRows(catRows, t('features.common.uncategorized')), [catRows, t]);
 
   function jumpToTransactions(row: any) {
     const { from, to } = getDateRange(period, customFrom, customTo);
@@ -282,38 +287,45 @@ export default function ReportsClient(_props: { user?: any } = {}) {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold">統計報表</h2>
+      <h2 className="text-2xl font-bold">{t('features.reports.title')}</h2>
       <div className="flex gap-2 border-b">
         {(['category', 'trend', 'daily'] as const).map((tab) => (
           <button key={tab} className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === tab ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`} onClick={() => setActiveTab(tab)}>
-            {tab === 'category' ? '分類統計' : tab === 'trend' ? '趨勢分析' : '每日消費'}
+            {t(`features.reports.tabs.${tab}`)}
           </button>
         ))}
       </div>
 
       <div className="flex flex-wrap gap-4 p-4 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-lg shadow-sm">
-        <Select options={[{ label: '本月', value: 'thisMonth' }, { label: '上月', value: 'lastMonth' }, { label: '近3個月', value: 'last3' }, { label: '近6個月', value: 'last6' }, { label: '今年', value: 'thisYear' }, { label: '自訂', value: 'custom' }]} value={period} onChange={(e) => setPeriod(e.target.value)} label="期間" className="w-40" />
+        <Select options={[
+          { label: t('features.reports.periods.thisMonth'), value: 'thisMonth' },
+          { label: t('features.reports.periods.lastMonth'), value: 'lastMonth' },
+          { label: t('features.reports.periods.last3'), value: 'last3' },
+          { label: t('features.reports.periods.last6'), value: 'last6' },
+          { label: t('features.reports.periods.thisYear'), value: 'thisYear' },
+          { label: t('features.reports.periods.custom'), value: 'custom' },
+        ]} value={period} onChange={(e) => setPeriod(e.target.value)} label={t('features.reports.periodLabel')} className="w-40" />
         {period === 'custom' && (
           <>
-            <Input type="date" value={customFrom} onChange={(e) => setCustomFrom(e.target.value)} label="開始" />
-            <Input type="date" value={customTo} onChange={(e) => setCustomTo(e.target.value)} label="結束" />
+            <Input type="date" value={customFrom} onChange={(e) => setCustomFrom(e.target.value)} label={t('features.reports.start')} />
+            <Input type="date" value={customTo} onChange={(e) => setCustomTo(e.target.value)} label={t('features.reports.end')} />
           </>
         )}
-        <Select options={[{ label: '支出', value: 'expense' }, { label: '收入', value: 'income' }]} value={type} onChange={(e) => setType(e.target.value)} label="類型" className="w-32" />
+        <Select options={[{ label: t('features.common.expense'), value: 'expense' }, { label: t('features.common.income'), value: 'income' }]} value={type} onChange={(e) => setType(e.target.value)} label={t('features.common.type')} className="w-32" />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="p-4 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-lg shadow-sm">
-          <p className="text-sm text-slate-500">本期合計</p>
-          <p className="text-2xl font-semibold text-slate-900">{fmt(grandTotal)}</p>
+          <p className="text-sm text-slate-500">{t('features.reports.currentTotal')}</p>
+          <p className="text-2xl font-semibold text-slate-900">{fmt(grandTotal, locale)}</p>
         </div>
         <div className="p-4 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-lg shadow-sm">
-          <p className="text-sm text-slate-500">相較前期</p>
-          <p className={`text-xl font-semibold ${(grandTotal - previousTotal) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>{compareText(grandTotal, previousTotal)}</p>
+          <p className="text-sm text-slate-500">{t('features.reports.comparedPrevious')}</p>
+          <p className={`text-xl font-semibold ${(grandTotal - previousTotal) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>{compareText(grandTotal, previousTotal, locale, t)}</p>
         </div>
       </div>
 
-      {loading ? <p className="text-slate-500">載入中...</p> : (
+      {loading ? <p className="text-slate-500">{t('common.loading')}</p> : (
         <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-lg shadow-sm">
           <canvas ref={chartRef} className="max-h-96" />
         </div>
@@ -322,15 +334,15 @@ export default function ReportsClient(_props: { user?: any } = {}) {
       {activeTab === 'category' && catRows.length > 0 && (
         <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-lg shadow-sm space-y-4">
           <div className="flex justify-between items-center border-b pb-2">
-            <h3 className="font-semibold text-lg">{type === 'expense' ? '支出' : '收入'}明細</h3>
-            <p className="font-bold">合計：{fmt(grandTotal)}</p>
+            <h3 className="font-semibold text-lg">{t('features.reports.detailTitle', { type: type === 'expense' ? t('features.common.expense') : t('features.common.income') })}</h3>
+            <p className="font-bold">{t('features.reports.total', { amount: fmt(grandTotal, locale) })}</p>
           </div>
           {selectedRow && (
             <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800 dark:border-blue-900/60 dark:bg-blue-950/40 dark:text-blue-200">
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <span>已選取分類：<strong>{selectedRow.parentName && selectedRow.parentName !== selectedRow.name ? `${selectedRow.parentName} › ` : ''}{selectedRow.name}</strong>，金額 {fmt(selectedRow.total)}</span>
+                <span>{t('features.reports.selectedCategory')}<strong>{selectedRow.parentName && selectedRow.parentName !== selectedRow.name ? `${selectedRow.parentName} › ` : ''}{selectedRow.name}</strong>{t('features.reports.selectedCategoryAmount', { amount: fmt(selectedRow.total, locale) })}</span>
                 <button type="button" className="rounded-md border border-blue-300 px-3 py-1 text-xs font-medium hover:bg-blue-100 dark:border-blue-800 dark:hover:bg-blue-900/50" onClick={() => jumpToTransactions(selectedRow)}>
-                  查看對應交易
+                  {t('features.reports.viewTransactions')}
                 </button>
               </div>
             </div>
@@ -349,7 +361,7 @@ export default function ReportsClient(_props: { user?: any } = {}) {
                         return (
                           <div
                             key={`${group.parentId}-${child.name}-bar-${childIndex}`}
-                            title={`${child.name} ${fmt(child.total)}`}
+                            title={`${child.name} ${fmt(child.total, locale)}`}
                             style={{ width: `${width}%`, background: child.color || '#94a3b8', height: '100%' }}
                           />
                         );
@@ -357,7 +369,7 @@ export default function ReportsClient(_props: { user?: any } = {}) {
                     </div>
                   </div>
                   <span className="w-12 text-right">{percentage}%</span>
-                  <span className="w-24 text-right font-medium">{fmt(group.total)}</span>
+                  <span className="w-24 text-right font-medium">{fmt(group.total, locale)}</span>
                 </div>
                 <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 pl-6 text-xs text-slate-500 dark:text-slate-400">
                   {group.children.map((child: any, childIndex: number) => {
@@ -378,12 +390,12 @@ export default function ReportsClient(_props: { user?: any } = {}) {
             return (
               <button key={`${row.parentId}-${index}`} type="button" className={`w-full flex items-center gap-3 text-sm rounded-lg px-2 py-2 transition ${selected ? 'bg-blue-50 dark:bg-blue-950/40' : 'hover:bg-slate-50 dark:hover:bg-slate-800/60'}`} onClick={() => setSelectedCategoryKey(categoryRowKey(row))} onDoubleClick={() => jumpToTransactions(row)}>
                 <span className="w-3 h-3 rounded-full" style={{ background: row.color || '#94a3b8' }} />
-                <span className="flex-1 text-left">{row.parentName && row.parentName !== row.name ? `${row.parentName} › ` : ''}{row.name || '未分類'}</span>
+                <span className="flex-1 text-left">{row.parentName && row.parentName !== row.name ? `${row.parentName} › ` : ''}{row.name || t('features.common.uncategorized')}</span>
                 <div className="w-32 h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                   <div className="h-full rounded-full" style={{ width: `${percentage}%`, background: row.color || '#94a3b8' }} />
                 </div>
                 <span className="w-12 text-right">{percentage}%</span>
-                <span className="w-24 text-right font-medium">{fmt(row.total)}</span>
+                <span className="w-24 text-right font-medium">{fmt(row.total, locale)}</span>
               </button>
             );
           })}

@@ -1,17 +1,22 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { resolveLocale } from "@/lib/i18n/resolveLocale";
-import { getDictionary } from "@/lib/i18n/getDictionary";
+import { getDictionary, getTranslator } from "@/lib/i18n/getDictionary";
 import { HTML_LANG } from "@/lib/i18n/config";
 import { I18nProvider } from "@/components/i18n/I18nProvider";
 
-export const metadata: Metadata = {
-  title: "AssetPilot - 個人財務指揮中心",
-  description: "自架、加密的個人財務管理工具，整合記帳、預算、台股投資與報表分析。",
-  icons: {
-    icon: "/favicon.svg",
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await resolveLocale();
+  const t = getTranslator(locale);
+
+  return {
+    title: t("public.common.metadataTitle"),
+    description: t("public.common.metadataDescription"),
+    icons: {
+      icon: "/favicon.svg",
+    },
+  };
+}
 
 export default async function RootLayout({
   children,

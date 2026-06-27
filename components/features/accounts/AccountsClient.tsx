@@ -6,14 +6,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Plus, Trash2, Edit3, Landmark, PiggyBank, Briefcase, DollarSign, CreditCard, Wallet, CircleDot } from 'lucide-react';
+import { useT } from '@/components/i18n/I18nProvider';
+import { Plus, Trash2, Edit3, Landmark, DollarSign, CreditCard, Wallet, CircleDot } from 'lucide-react';
 
 const ACCOUNT_TYPES = [
-  { value: 'bank', label: '銀行帳戶', icon: Landmark },
-  { value: 'credit_card', label: '信用卡', icon: CreditCard },
-  { value: 'cash', label: '現金', icon: DollarSign },
-  { value: 'virtual_wallet', label: '電子錢包', icon: Wallet },
-  { value: 'other', label: '其他', icon: CircleDot },
+  { value: 'bank', labelKey: 'features.accounts.typeLabels.bank', icon: Landmark },
+  { value: 'credit_card', labelKey: 'features.accounts.typeLabels.credit_card', icon: CreditCard },
+  { value: 'cash', labelKey: 'features.accounts.typeLabels.cash', icon: DollarSign },
+  { value: 'virtual_wallet', labelKey: 'features.accounts.typeLabels.virtual_wallet', icon: Wallet },
+  { value: 'other', labelKey: 'features.accounts.typeLabels.other', icon: CircleDot },
 ];
 
 const EMPTY_FORM = {
@@ -34,22 +35,26 @@ const EMPTY_REPAYMENT = {
   repayments: {} as Record<string, string>,
 };
 
-function fmt(n: number | string, currency = 'TWD') {
+function localeTag(locale: string) { return locale === 'en' ? 'en-US' : 'zh-TW'; }
+
+function fmt(n: number | string, currency = 'TWD', locale = 'zh-TW') {
   const num = Math.round(Number(n) || 0);
-  return (currency === 'TWD' ? 'NT$ ' : '') + num.toLocaleString('zh-TW') + (currency !== 'TWD' ? ` ${currency}` : '');
+  return (currency === 'TWD' ? 'NT$ ' : '') + num.toLocaleString(localeTag(locale)) + (currency !== 'TWD' ? ` ${currency}` : '');
 }
 
-// 'YYYY-MM-DD' → 'M/D'，給帳單區間顯示用。
+// 'YYYY-MM-DD' -> 'M/D' for statement-cycle ranges.
 function mdLabel(dateStr: string) {
   const m = /^\d{4}-(\d{2})-(\d{2})$/.exec(String(dateStr || ''));
   return m ? `${Number(m[1])}/${Number(m[2])}` : '';
 }
 
-function categoryLabel(category: string) {
-  return ACCOUNT_TYPES.find((item) => item.value === category)?.label || category || '其他';
+function categoryLabel(category: string, t: (path: string) => string) {
+  const item = ACCOUNT_TYPES.find((entry) => entry.value === category);
+  return item ? t(item.labelKey) : category || t('features.accounts.typeLabels.other');
 }
 
 export default function AccountsClient() {
+  const { t, locale } = useT();
   const [accounts, setAccounts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -127,7 +132,7 @@ export default function AccountsClient() {
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.name.trim()) { setFormError('請輸入帳戶名稱'); return; }
+    if (!form.name.trim()) { setFormError(t('features.accounts.messages.nameRequired')); return; }
     setSaving(true);
     setFormError('');
     const body = {
@@ -170,11 +175,11 @@ export default function AccountsClient() {
       .map(([cardId, amount]) => ({ cardId, amount: Number(amount || 0) }))
       .filter((item) => item.amount > 0);
     if (!repaymentForm.fromAccountId) {
-      setRepaymentError('請選擇付款帳戶');
+      setRepaymentError(t('features.accounts.messages.repaymentAccountRequired'));
       return;
     }
     if (repayments.length === 0) {
-      setRepaymentError('請至少輸入一張信用卡的還款金額');
+      setRepaymentError(t('features.accounts.messages.repaymentAmountRequired'));
       return;
     }
     setRepaymentError('');
@@ -195,8 +200,8 @@ export default function AccountsClient() {
     e.preventDefault();
     const currency = newFxCurrency.trim().toUpperCase();
     const rate = Number(newFxRate);
-    if (!currency || !/^[A-Z]{3}$/.test(currency)) { setFxMsg('幣別格式錯誤（需為 3 碼英文字母）'); return; }
-    if (!(rate > 0)) { setFxMsg('請輸入有效匯率'); return; }
+    if (!currency || !/^[A-Z]{3}$/.test(currency)) { setFxMsg(t('features.accounts.messages.currencyInvalid')); return; }
+    if (!(rate > 0)) { setFxMsg(t('features.accounts.messages.rateInvalid')); return; }
     setFxSaving(true);
     setFxMsg('');
     try {
@@ -206,8 +211,8 @@ export default function AccountsClient() {
       setFxSettings(data.settings || fxSettings);
       setNewFxCurrency('');
       setNewFxRate('');
-      setFxMsg('已儲存');
-    } catch (e: any) { setFxMsg(e.message || '儲存失敗'); }
+      setFxMsg(t('features.accounts.messages.saved'));
+    } catch (e: any) { setFxMsg(e.message || t('features.accounts.messages.saveFailed')); }
     setFxSaving(false);
   }
 
@@ -217,7 +222,7 @@ export default function AccountsClient() {
     try {
       await apiDelete(`/api/exchange-rates/${currency}`);
       setFxRates((prev) => prev.filter((r) => r.currency !== currency));
-    } catch (e: any) { setFxMsg(e.message || '刪除失敗'); }
+    } catch (e: any) { setFxMsg(e.message || t('features.accounts.messages.deleteFailed')); }
     setFxSaving(false);
   }
 
@@ -235,8 +240,8 @@ export default function AccountsClient() {
       const data = await apiPost('/api/exchange-rates/refresh', { currencies: fxRates.filter((r) => r.currency !== 'TWD').map((r) => r.currency) });
       setFxRates(data.rates || []);
       setFxSettings(data.settings || fxSettings);
-      setFxMsg(data.message || '匯率已更新');
-    } catch (e: any) { setFxMsg(e.message || '同步失敗'); }
+      setFxMsg(data.message || t('features.accounts.messages.ratesUpdated'));
+    } catch (e: any) { setFxMsg(e.message || t('features.accounts.messages.syncFailed')); }
     setFxSyncing(false);
   }
 
@@ -277,7 +282,7 @@ export default function AccountsClient() {
       const data = await apiGet(`/api/accounts/${account.id}/cycles?count=12`);
       setCyclesData(data);
     } catch (e: any) {
-      setCyclesError(e?.message || '載入失敗');
+      setCyclesError(e?.message || t('features.accounts.messages.loadFailed'));
     }
     setCyclesLoading(false);
   }
@@ -291,7 +296,7 @@ export default function AccountsClient() {
             <Icon size={22} style={{ color: account.color || '#4f6ef7' }} />
             <div className="min-w-0">
               <h3 className="font-semibold text-lg truncate">{account.name}</h3>
-              <p className="text-sm text-slate-500">{categoryLabel(account.category)}</p>
+              <p className="text-sm text-slate-500">{categoryLabel(account.category, t)}</p>
             </div>
           </div>
           <div className="flex gap-1 shrink-0">
@@ -299,16 +304,16 @@ export default function AccountsClient() {
             <Button variant="ghost" size="icon" className="text-red-500" onClick={() => setDeleteId(account.id)}><Trash2 size={16} /></Button>
           </div>
         </div>
-        <p className="font-bold text-lg mt-2">{fmt(account.balance, account.currency)}</p>
-        {account.currency !== 'TWD' && <p className="text-sm text-slate-500 mt-1">折算總額：{fmt(account.twdAccumulated, 'TWD')}</p>}
-        {account.linkedBankId && <p className="text-xs text-slate-500 mt-2">關聯銀行：{bankAccounts.find((item) => item.id === account.linkedBankId)?.name || '—'}</p>}
-        {account.overseasFeeRate != null && <p className="text-xs text-slate-500 mt-1">海外手續費率：{account.overseasFeeRate}%</p>}
+        <p className="font-bold text-lg mt-2">{fmt(account.balance, account.currency, locale)}</p>
+        {account.currency !== 'TWD' && <p className="text-sm text-slate-500 mt-1">{t('features.accounts.convertedTotal', { amount: fmt(account.twdAccumulated, 'TWD', locale) })}</p>}
+        {account.linkedBankId && <p className="text-xs text-slate-500 mt-2">{t('features.accounts.linkedBankLine', { name: bankAccounts.find((item) => item.id === account.linkedBankId)?.name || t('features.common.notRecorded') })}</p>}
+        {account.overseasFeeRate != null && <p className="text-xs text-slate-500 mt-1">{t('features.accounts.overseasFeeRateLine', { rate: account.overseasFeeRate })}</p>}
         {account.statementClosingDay != null && (
-          <p className="text-xs text-slate-500 mt-2">每月結帳日：{account.statementClosingDay} 號</p>
+          <p className="text-xs text-slate-500 mt-2">{t('features.accounts.closingDayLine', { day: account.statementClosingDay })}</p>
         )}
         {account.statementClosingDay != null && account.cycleSpending != null && (
           <p className="text-sm font-medium text-rose-600 mt-1">
-            本期消費：{fmt(account.cycleSpending, account.currency)}
+            {t('features.accounts.cycleSpending', { amount: fmt(account.cycleSpending, account.currency, locale) })}
             {account.cycleStart && account.cycleEnd && (
               <span className="text-xs font-normal text-slate-400 ml-1">（{mdLabel(account.cycleStart)}–{mdLabel(account.cycleEnd)}）</span>
             )}
@@ -316,63 +321,63 @@ export default function AccountsClient() {
         )}
         {account.statementClosingDay != null && account.lastCycleSpending != null && (
           <p className="text-sm mt-1">
-            <span className="text-slate-500">上期帳單：</span>
-            <span className="font-medium text-rose-600">消費 {fmt(account.lastCycleSpending, account.currency)}</span>
+            <span className="text-slate-500">{t('features.accounts.lastCycleBill')}</span>
+            <span className="font-medium text-rose-600">{t('features.accounts.billSpending', { amount: fmt(account.lastCycleSpending, account.currency, locale) })}</span>
             <span className="text-slate-400"> / </span>
-            <span className="font-medium text-emerald-600">已繳 {fmt(account.lastCyclePayment ?? 0, account.currency)}</span>
+            <span className="font-medium text-emerald-600">{t('features.accounts.billPaid', { amount: fmt(account.lastCyclePayment ?? 0, account.currency, locale) })}</span>
             {account.lastCycleStart && account.lastCycleEnd && (
               <span className="text-xs font-normal text-slate-400 ml-1">（{mdLabel(account.lastCycleStart)}–{mdLabel(account.lastCycleEnd)}）</span>
             )}
           </p>
         )}
         {account.statementClosingDay != null && (
-          <button type="button" onClick={() => openCycles(account)} className="text-xs text-blue-600 hover:underline mt-2">查看每期明細 ›</button>
+          <button type="button" onClick={() => openCycles(account)} className="text-xs text-blue-600 hover:underline mt-2">{t('features.accounts.viewCycles')}</button>
         )}
-        {account.excludeFromTotal && <span className="inline-block text-xs text-slate-400 bg-slate-100 px-2 py-1 rounded mt-2 ml-2">不計入總資產</span>}
+        {account.excludeFromTotal && <span className="inline-block text-xs text-slate-400 bg-slate-100 px-2 py-1 rounded mt-2 ml-2">{t('features.accounts.excludeFromTotal')}</span>}
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold">帳戶管理</h2>
+      <h2 className="text-2xl font-bold">{t('features.accounts.title')}</h2>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-lg shadow-sm">
-          <p className="text-sm text-slate-500">總資產</p>
-          <p className="text-2xl font-semibold text-blue-600">NT$ {Math.round(totalAssets).toLocaleString('zh-TW')}</p>
+          <p className="text-sm text-slate-500">{t('features.accounts.totalAssets')}</p>
+          <p className="text-2xl font-semibold text-blue-600">NT$ {Math.round(totalAssets).toLocaleString(localeTag(locale))}</p>
         </div>
         <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-lg shadow-sm">
-          <p className="text-sm text-slate-500">信用卡待還總額</p>
-          <p className="text-2xl font-semibold text-rose-600">NT$ {Math.round(totalCreditOutstanding).toLocaleString('zh-TW')}</p>
+          <p className="text-sm text-slate-500">{t('features.accounts.creditOutstanding')}</p>
+          <p className="text-2xl font-semibold text-rose-600">NT$ {Math.round(totalCreditOutstanding).toLocaleString(localeTag(locale))}</p>
         </div>
       </div>
 
       <div className="flex flex-wrap gap-3">
         <Dialog open={accountDialogOpen} onOpenChange={setAccountDialogOpen}>
-          <Button onClick={openAdd}><Plus size={16} className="mr-2" /> 新增帳戶</Button>
+          <Button onClick={openAdd}><Plus size={16} className="mr-2" /> {t('features.accounts.addAccount')}</Button>
           <DialogContent>
-            <DialogHeader><DialogTitle>{editId ? '編輯帳戶' : '新增帳戶'}</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle>{editId ? t('features.accounts.editAccount') : t('features.accounts.newAccount')}</DialogTitle></DialogHeader>
             <form onSubmit={handleSave} className="space-y-4">
-              <Input label="帳戶名稱 *" value={form.name} onChange={(e) => setForm((current) => ({ ...current, name: e.target.value }))} />
-              <Select label="類型" options={ACCOUNT_TYPES.map((item) => ({ label: item.label, value: item.value }))} value={form.category} onChange={(e) => setForm((current) => ({ ...current, category: e.target.value }))} />
-              <Input label="幣別" value={form.currency} onChange={(e) => setForm((current) => ({ ...current, currency: e.target.value.toUpperCase() }))} />
-              <Input label={editId ? '初始餘額 / 目前設定' : '初始餘額'} type="number" step="any" value={form.initialBalance} onChange={(e) => setForm((current) => ({ ...current, initialBalance: e.target.value }))} />
+              <Input label={t('features.accounts.accountName')} value={form.name} onChange={(e) => setForm((current) => ({ ...current, name: e.target.value }))} />
+              <Select label={t('features.common.type')} options={ACCOUNT_TYPES.map((item) => ({ label: t(item.labelKey), value: item.value }))} value={form.category} onChange={(e) => setForm((current) => ({ ...current, category: e.target.value }))} />
+              <Input label={t('features.common.currency')} value={form.currency} onChange={(e) => setForm((current) => ({ ...current, currency: e.target.value.toUpperCase() }))} />
+              <Input label={editId ? t('features.accounts.initialBalanceEdit') : t('features.accounts.initialBalance')} type="number" step="any" value={form.initialBalance} onChange={(e) => setForm((current) => ({ ...current, initialBalance: e.target.value }))} />
               {form.category === 'credit_card' && (
                 <>
-                  <Select label="所屬銀行" options={[{ label: '不分組', value: '' }, ...bankAccounts.map((bank) => ({ label: bank.name, value: bank.id }))]} value={form.linkedBankId} onChange={(e) => setForm((current) => ({ ...current, linkedBankId: e.target.value }))} />
-                  <Input label="海外手續費率（%）" type="number" step="0.01" value={form.overseasFeeRate} onChange={(e) => setForm((current) => ({ ...current, overseasFeeRate: e.target.value }))} />
-                  <Input label="結帳日（每月幾號，1~31）" type="number" min="1" max="31" step="1" placeholder="例如 15，留空則不統計本期消費" value={form.statementClosingDay} onChange={(e) => setForm((current) => ({ ...current, statementClosingDay: e.target.value }))} />
+                  <Select label={t('features.accounts.linkedBank')} options={[{ label: t('features.accounts.ungrouped'), value: '' }, ...bankAccounts.map((bank) => ({ label: bank.name, value: bank.id }))]} value={form.linkedBankId} onChange={(e) => setForm((current) => ({ ...current, linkedBankId: e.target.value }))} />
+                  <Input label={t('features.accounts.overseasFeeRate')} type="number" step="0.01" value={form.overseasFeeRate} onChange={(e) => setForm((current) => ({ ...current, overseasFeeRate: e.target.value }))} />
+                  <Input label={t('features.accounts.statementClosingDay')} type="number" min="1" max="31" step="1" placeholder={t('features.accounts.statementClosingDayPlaceholder')} value={form.statementClosingDay} onChange={(e) => setForm((current) => ({ ...current, statementClosingDay: e.target.value }))} />
                 </>
               )}
               <label className="flex items-center gap-2">
                 <input type="checkbox" checked={form.excludeFromTotal} onChange={(e) => setForm((current) => ({ ...current, excludeFromTotal: e.target.checked }))} className="w-4 h-4" />
-                不計入總資產
+                {t('features.accounts.excludeFromTotal')}
               </label>
               {formError && <p className="text-red-500 text-sm">{formError}</p>}
               <div className="flex justify-end gap-2">
-                <Button type="button" variant="outline" onClick={() => setAccountDialogOpen(false)}>取消</Button>
-                <Button type="submit" disabled={saving}>{saving ? '儲存中...' : '儲存'}</Button>
+                <Button type="button" variant="outline" onClick={() => setAccountDialogOpen(false)}>{t('common.cancel')}</Button>
+                <Button type="submit" disabled={saving}>{saving ? t('common.saving') : t('common.save')}</Button>
               </div>
             </form>
           </DialogContent>
@@ -392,21 +397,21 @@ export default function AccountsClient() {
             setRepaymentError('');
             setRepaymentOpen(true);
           }}>
-            信用卡還款
+            {t('features.accounts.repayment.title')}
           </Button>
         )}
       </div>
 
       {error && <p className="text-red-500 text-sm">{error}</p>}
 
-      {loading ? <p className="text-slate-500">載入中...</p> : (
+      {loading ? <p className="text-slate-500">{t('common.loading')}</p> : (
         <div className="space-y-6">
           {groupedBanks.map((group) => (
             <section key={group.bank.id} className="space-y-3">
               <div className="flex items-center gap-2">
                 <Landmark size={18} className="text-slate-500" />
                 <h3 className="text-lg font-semibold text-slate-900">{group.bank.name}</h3>
-                <span className="text-sm text-slate-500">{fmt(group.bank.balance, group.bank.currency)}</span>
+                <span className="text-sm text-slate-500">{fmt(group.bank.balance, group.bank.currency, locale)}</span>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                 {renderAccountCard(group.bank)}
@@ -417,7 +422,7 @@ export default function AccountsClient() {
 
           {ungroupedAccounts.length > 0 && (
             <section className="space-y-3">
-              <h3 className="text-lg font-semibold text-slate-900">其他帳戶</h3>
+              <h3 className="text-lg font-semibold text-slate-900">{t('features.accounts.otherAccounts')}</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                 {ungroupedAccounts.map(renderAccountCard)}
               </div>
@@ -430,35 +435,35 @@ export default function AccountsClient() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-xl dark:bg-slate-900 dark:text-slate-100 w-full max-w-2xl space-y-4">
             <div className="flex justify-between items-center">
-              <h3 className="text-lg font-semibold">信用卡還款</h3>
-              <Button variant="ghost" onClick={() => setRepaymentOpen(false)}>關閉</Button>
+              <h3 className="text-lg font-semibold">{t('features.accounts.repayment.title')}</h3>
+              <Button variant="ghost" onClick={() => setRepaymentOpen(false)}>{t('common.close')}</Button>
             </div>
             <form onSubmit={handleRepaymentSubmit} className="space-y-4">
-              <Select label="付款帳戶" options={bankAccounts.map((bank) => ({ label: bank.name, value: bank.id }))} value={repaymentForm.fromAccountId} onChange={(e) => setRepaymentForm((current) => ({
+              <Select label={t('features.accounts.repayment.paymentAccount')} options={bankAccounts.map((bank) => ({ label: bank.name, value: bank.id }))} value={repaymentForm.fromAccountId} onChange={(e) => setRepaymentForm((current) => ({
                 ...current,
                 fromAccountId: e.target.value,
                 repayments: Object.fromEntries(
                   creditAccounts.filter((c) => c.linkedBankId === e.target.value).map((c) => [c.id, ''])
                 ),
               }))} />
-              <Input label="還款日期" type="date" value={repaymentForm.date} onChange={(e) => setRepaymentForm((current) => ({ ...current, date: e.target.value }))} />
+              <Input label={t('features.accounts.repayment.paymentDate')} type="date" value={repaymentForm.date} onChange={(e) => setRepaymentForm((current) => ({ ...current, date: e.target.value }))} />
               <div className="space-y-3">
                 {filteredRepaymentCards.length === 0 ? (
-                  <p className="text-sm text-slate-500">此銀行沒有關聯的信用卡</p>
+                  <p className="text-sm text-slate-500">{t('features.accounts.repayment.noLinkedCards')}</p>
                 ) : filteredRepaymentCards.map((account) => (
                   <div key={account.id} className="grid grid-cols-[1fr_160px] gap-3 items-center">
                     <div>
                       <div className="font-medium">{account.name}</div>
-                      <div className="text-sm text-slate-500">目前餘額：{fmt(account.balance, account.currency)}</div>
+                      <div className="text-sm text-slate-500">{t('features.accounts.repayment.currentBalance', { amount: fmt(account.balance, account.currency, locale) })}</div>
                     </div>
-                    <Input label="還款金額" type="number" step="0.01" value={repaymentForm.repayments[account.id] || ''} onChange={(e) => setRepaymentForm((current) => ({ ...current, repayments: { ...current.repayments, [account.id]: e.target.value } }))} />
+                    <Input label={t('features.accounts.repayment.repaymentAmount')} type="number" step="0.01" value={repaymentForm.repayments[account.id] || ''} onChange={(e) => setRepaymentForm((current) => ({ ...current, repayments: { ...current.repayments, [account.id]: e.target.value } }))} />
                   </div>
                 ))}
               </div>
               {repaymentError && <p className="text-red-500 text-sm">{repaymentError}</p>}
               <div className="flex justify-end gap-2">
-                <Button variant="outline" type="button" onClick={() => setRepaymentOpen(false)}>取消</Button>
-                <Button type="submit">確認還款</Button>
+                <Button variant="outline" type="button" onClick={() => setRepaymentOpen(false)}>{t('common.cancel')}</Button>
+                <Button type="submit">{t('features.accounts.repayment.confirm')}</Button>
               </div>
             </form>
           </div>
@@ -468,11 +473,11 @@ export default function AccountsClient() {
       {deleteId && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-xl dark:bg-slate-900 dark:text-slate-100">
-            <h3 className="text-lg font-semibold mb-4">確認刪除</h3>
-            <p className="mb-4">確定要刪除此帳戶嗎？</p>
+            <h3 className="text-lg font-semibold mb-4">{t('common.confirmDelete')}</h3>
+            <p className="mb-4">{t('features.accounts.deleteMessage')}</p>
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setDeleteId(null)}>取消</Button>
-              <Button variant="destructive" onClick={handleDelete}>確認刪除</Button>
+              <Button variant="outline" onClick={() => setDeleteId(null)}>{t('common.cancel')}</Button>
+              <Button variant="destructive" onClick={handleDelete}>{t('common.confirm')}</Button>
             </div>
           </div>
         </div>
@@ -483,22 +488,22 @@ export default function AccountsClient() {
           <div className="bg-white dark:bg-slate-900 dark:text-slate-100 rounded-lg shadow-xl w-full max-w-lg max-h-[80vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
             <div className="flex justify-between items-center p-5 border-b border-slate-200 dark:border-slate-800">
               <div>
-                <h3 className="text-lg font-semibold">每期帳單明細</h3>
-                <p className="text-sm text-slate-500">{cyclesAccount?.name}　每月結帳日 {cyclesAccount?.statementClosingDay} 號</p>
+                <h3 className="text-lg font-semibold">{t('features.accounts.cycles.title')}</h3>
+                <p className="text-sm text-slate-500">{t('features.accounts.cycles.closingDay', { name: cyclesAccount?.name || '', day: cyclesAccount?.statementClosingDay || '' })}</p>
               </div>
-              <Button variant="ghost" onClick={() => setCyclesOpen(false)}>關閉</Button>
+              <Button variant="ghost" onClick={() => setCyclesOpen(false)}>{t('common.close')}</Button>
             </div>
             <div className="overflow-auto p-5">
-              <p className="text-xs text-slate-400 mb-3">「繳款」已對應回它所清償的帳單（結帳後下一期繳清的金額算回該期帳單）。</p>
-              {cyclesLoading && <p className="text-sm text-slate-500">載入中…</p>}
+              <p className="text-xs text-slate-400 mb-3">{t('features.accounts.cycles.help')}</p>
+              {cyclesLoading && <p className="text-sm text-slate-500">{t('common.loading')}</p>}
               {cyclesError && <p className="text-sm text-red-500">{cyclesError}</p>}
               {!cyclesLoading && !cyclesError && cyclesData && (
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="text-slate-500 border-b border-slate-200 dark:border-slate-800">
-                      <th className="text-left font-medium py-2">期間</th>
-                      <th className="text-right font-medium py-2">消費</th>
-                      <th className="text-right font-medium py-2">實際繳款</th>
+                      <th className="text-left font-medium py-2">{t('features.accounts.cycles.period')}</th>
+                      <th className="text-right font-medium py-2">{t('features.accounts.cycles.spending')}</th>
+                      <th className="text-right font-medium py-2">{t('features.accounts.cycles.payment')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -506,47 +511,46 @@ export default function AccountsClient() {
                       <tr key={c.start} className="border-b border-slate-100 dark:border-slate-800/60">
                         <td className="py-2">
                           {mdLabel(c.start)}–{mdLabel(c.end)}
-                          {c.current && <span className="ml-2 text-xs text-blue-600 bg-blue-50 dark:bg-blue-950/40 px-1.5 py-0.5 rounded">本期</span>}
+                          {c.current && <span className="ml-2 text-xs text-blue-600 bg-blue-50 dark:bg-blue-950/40 px-1.5 py-0.5 rounded">{t('features.accounts.cycles.current')}</span>}
                         </td>
-                        <td className="py-2 text-right text-rose-600">{fmt(c.spending, cyclesData.currency)}</td>
-                        <td className="py-2 text-right text-emerald-600">{fmt(c.payment, cyclesData.currency)}</td>
+                        <td className="py-2 text-right text-rose-600">{fmt(c.spending, cyclesData.currency, locale)}</td>
+                        <td className="py-2 text-right text-emerald-600">{fmt(c.payment, cyclesData.currency, locale)}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               )}
               {!cyclesLoading && !cyclesError && cyclesData?.cycles?.length === 0 && (
-                <p className="text-sm text-slate-500">尚無資料</p>
+                <p className="text-sm text-slate-500">{t('common.noData')}</p>
               )}
             </div>
           </div>
         </div>
       )}
 
-      {/* 匯率管理 */}
       <section className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-lg shadow-sm space-y-4">
         <div className="flex items-center justify-between flex-wrap gap-3">
-          <h3 className="text-lg font-semibold">匯率管理</h3>
+          <h3 className="text-lg font-semibold">{t('features.accounts.fx.title')}</h3>
           <div className="flex items-center gap-3 flex-wrap">
             <label className="flex items-center gap-2 text-sm cursor-pointer">
               <input type="checkbox" checked={fxSettings.autoUpdate} onChange={(e) => handleFxAutoUpdate(e.target.checked)} className="w-4 h-4" />
-              自動更新匯率
+              {t('features.accounts.fx.autoUpdate')}
             </label>
             <Button variant="outline" size="sm" onClick={handleFxSync} disabled={fxSyncing}>
-              {fxSyncing ? '同步中...' : '立即同步'}
+              {fxSyncing ? t('features.accounts.fx.syncing') : t('features.accounts.fx.syncNow')}
             </Button>
           </div>
         </div>
         {fxSettings.lastSyncedAt && (
-          <p className="text-xs text-slate-500">上次同步：{new Date(fxSettings.lastSyncedAt).toLocaleString('zh-TW')}</p>
+          <p className="text-xs text-slate-500">{t('features.accounts.fx.lastSynced', { date: new Date(fxSettings.lastSyncedAt).toLocaleString(localeTag(locale)) })}</p>
         )}
         {fxRates.filter((r) => r.currency !== 'TWD').length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b text-slate-500 text-left">
-                  <th className="pb-2 pr-6">幣別</th>
-                  <th className="pb-2 pr-6">1 單位 = TWD</th>
+                  <th className="pb-2 pr-6">{t('features.accounts.fx.currency')}</th>
+                  <th className="pb-2 pr-6">{t('features.accounts.fx.unitToTwd')}</th>
                   <th className="pb-2"></th>
                 </tr>
               </thead>
@@ -556,7 +560,7 @@ export default function AccountsClient() {
                     <td className="py-2 pr-6 font-medium">{r.currency}</td>
                     <td className="py-2 pr-6">{r.rateToTwd}</td>
                     <td className="py-2">
-                      <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-700 h-7 px-2" onClick={() => handleFxDelete(r.currency)} disabled={fxSaving}>刪除</Button>
+                      <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-700 h-7 px-2" onClick={() => handleFxDelete(r.currency)} disabled={fxSaving}>{t('common.delete')}</Button>
                     </td>
                   </tr>
                 ))}
@@ -564,11 +568,11 @@ export default function AccountsClient() {
             </table>
           </div>
         ) : (
-          <p className="text-sm text-slate-500">尚未設定任何外幣匯率</p>
+          <p className="text-sm text-slate-500">{t('features.accounts.fx.empty')}</p>
         )}
         <form onSubmit={handleFxAdd} className="flex flex-wrap gap-2 items-end">
           <div className="flex flex-col gap-1">
-            <label className="text-xs text-slate-500">幣別（如 USD）</label>
+            <label className="text-xs text-slate-500">{t('features.accounts.fx.currencyLabel')}</label>
             <input
               type="text" maxLength={3} placeholder="USD"
               className="w-24 px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
@@ -576,16 +580,16 @@ export default function AccountsClient() {
             />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-xs text-slate-500">對 TWD 匯率</label>
+            <label className="text-xs text-slate-500">{t('features.accounts.fx.rateToTwd')}</label>
             <input
               type="number" min="0.0001" step="0.0001" placeholder="32.5"
               className="w-32 px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               value={newFxRate} onChange={(e) => setNewFxRate(e.target.value)}
             />
           </div>
-          <Button type="submit" size="sm" disabled={fxSaving}>新增 / 更新</Button>
+          <Button type="submit" size="sm" disabled={fxSaving}>{t('features.accounts.fx.addOrUpdate')}</Button>
         </form>
-        {fxMsg && <p className={`text-sm ${fxMsg.includes('失敗') || fxMsg.includes('錯誤') ? 'text-red-500' : 'text-green-600'}`}>{fxMsg}</p>}
+        {fxMsg && <p className={`text-sm ${fxMsg === t('features.accounts.messages.saved') || fxMsg === t('features.accounts.messages.ratesUpdated') ? 'text-green-600' : 'text-red-500'}`}>{fxMsg}</p>}
       </section>
     </div>
   );

@@ -1,6 +1,16 @@
 {
-  "currentVersion": "4.80.0",
+  "currentVersion": "4.80.1",
   "releases": [
+    {
+      "version": "4.80.1",
+      "date": "2026-06-27",
+      "title": "多語切換補強與 Android 語系宣告",
+      "type": "improved",
+      "changes": [
+        { "tag": "improved", "text": "語言偏好設定現在在登入前即會生效，在登入頁面或其他公開頁面瀏覽時，系統會正確套用您上次選擇的語言，不再需要登入後才切換。" },
+        { "tag": "improved", "text": "Android 手機 App 現已向系統正式宣告支援繁體中文（台灣）與英文。使用 Android 13 以上手機的使用者，可在手機「設定 → 應用程式語言」中單獨為 AssetPilot 指定顯示語言。" }
+      ]
+    },
     {
       "version": "4.80.0",
       "date": "2026-06-27",

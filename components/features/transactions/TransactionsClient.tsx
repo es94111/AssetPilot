@@ -5,6 +5,7 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { apiGet, apiPost, apiPut, apiDelete, notifyDataChanged } from '../../../lib/clientApi';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { useT } from '@/components/i18n/I18nProvider';
 
 const EMPTY_FORM = { date: '', type: 'expense', amount: '', categoryId: '', accountId: '', note: '', excludeFromStats: false, currency: 'TWD', fxRate: '', fxFee: '' };
 const EMPTY_TRANSFER_FORM = { date: '', amount: '', fromAccountId: '', toAccountId: '', note: '' };
@@ -26,13 +27,13 @@ type AttachmentItem = {
   url: string;
 };
 
-// 前端壓縮：縮到最長邊 1600px、JPEG quality 0.8，省上傳頻寬與 S3 空間。
-// 純瀏覽器 Canvas，無新套件；createImageBitmap 的 imageOrientation 處理 iPhone EXIF 旋轉。
+// Client-side compression: cap the longest edge at 1600px with JPEG quality 0.8
+// to reduce upload bandwidth and storage usage. Browser Canvas only; no new deps.
 const PHOTO_MAX_EDGE = 1600;
 const PHOTO_JPEG_QUALITY = 0.8;
 
 async function compressPhoto(file: File): Promise<File> {
-  // 非可重新編碼的圖（GIF 動畫、SVG）或瀏覽器不支援 API 時，維持原檔。
+  // Keep non-reencodable images and unsupported browsers on the original file.
   if (!file.type.startsWith('image/') || file.type === 'image/gif' || file.type === 'image/svg+xml') return file;
   if (typeof createImageBitmap !== 'function' || typeof document === 'undefined') return file;
   try {
@@ -46,11 +47,11 @@ async function compressPhoto(file: File): Promise<File> {
     ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
     bitmap.close?.();
     const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/jpeg', PHOTO_JPEG_QUALITY));
-    if (!blob || blob.size >= file.size) return file; // 沒變小（如已壓縮的小圖）就用原圖
+    if (!blob || blob.size >= file.size) return file; // Use the original if compression did not help.
     const name = file.name.replace(/\.\w+$/, '') + '.jpg';
     return new File([blob], name, { type: 'image/jpeg', lastModified: file.lastModified });
   } catch {
-    return file; // 任何解碼/繪製失敗都回退原圖，確保上傳不被壓縮中斷
+    return file; // Fall back to the original so upload is never blocked by compression.
   }
 }
 
@@ -80,19 +81,22 @@ function today() {
   return new Date().toISOString().slice(0, 10);
 }
 
-function fmt(n: number | string) {
-  return 'NT$ ' + Math.round(Number(n) || 0).toLocaleString('zh-TW');
+function localeTag(locale: string) { return locale === 'en' ? 'en-US' : 'zh-TW'; }
+
+function fmt(n: number | string, locale: string) {
+  return 'NT$ ' + Math.round(Number(n) || 0).toLocaleString(localeTag(locale));
 }
 
-function labelForType(type: string) {
-  if (type === 'income') return '收入';
-  if (type === 'expense') return '支出';
-  if (type === 'transfer_in') return '轉入';
-  if (type === 'transfer_out') return '轉出';
+function labelForType(type: string, t: (path: string) => string) {
+  if (type === 'income') return t('features.transactions.typeLabels.income');
+  if (type === 'expense') return t('features.transactions.typeLabels.expense');
+  if (type === 'transfer_in') return t('features.transactions.typeLabels.transfer_in');
+  if (type === 'transfer_out') return t('features.transactions.typeLabels.transfer_out');
   return type;
 }
 
 export default function TransactionsClient(_props: { user?: any } = {}) {
+  const { t, locale } = useT();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -275,11 +279,11 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
 
   function openEdit(tx: any) {
     if (tx.type === 'transfer_in' || tx.type === 'transfer_out') {
-      setFormError('轉帳交易請改用刪除後重建');
+      setFormError(t('features.transactions.messages.editTransferBlocked'));
       return;
     }
     if (tx.isFxFee) {
-      setFormError('國外刷卡手續費為自動產生，請編輯對應的國外交易（修改後手續費會自動同步）');
+      setFormError(t('features.transactions.messages.editFxFeeBlocked'));
       return;
     }
     setForm({
@@ -322,7 +326,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
       body: data,
     });
     const payload = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(payload.error || `照片上傳失敗（HTTP ${res.status}）`);
+    if (!res.ok) throw new Error(payload.error || `${t('features.transactions.messages.photoUploadFailed')} (HTTP ${res.status})`);
   }
 
   async function openAttachmentPicker(txId: string) {
@@ -352,8 +356,8 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.date) { setFormError('請選擇日期'); return; }
-    if (!form.amount || Number(form.amount) <= 0) { setFormError('請輸入有效金額'); return; }
+    if (!form.date) { setFormError(t('features.transactions.messages.dateRequired')); return; }
+    if (!form.amount || Number(form.amount) <= 0) { setFormError(t('features.transactions.messages.amountRequired')); return; }
     setSaving(true);
     setFormError('');
     const isForex = form.currency && form.currency !== 'TWD';
@@ -368,7 +372,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
       currency: form.currency || 'TWD',
       ...(isForex && { originalAmount: Number(form.amount) }),
       ...(isForex && form.fxRate ? { fxRate: Number(form.fxRate) } : {}),
-      // 外幣信用卡：手續費欄位有值才送（手動覆寫）；留空交由伺服器依卡片費率自動計算。
+      // Foreign-currency credit cards: only send a manually overridden fee.
       ...(overseasApplies && form.fxFee !== '' ? { fxFee: Math.max(0, Number(form.fxFee) || 0) } : {}),
     };
     try {
@@ -382,9 +386,9 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
           try {
             await uploadPhotos(editId);
           } catch (uploadError: any) {
-            const message = uploadError.message || '照片上傳失敗';
+            const message = uploadError.message || t('features.transactions.messages.photoUploadFailed');
             setPhotoUploadWarning(message);
-            setFormError(`交易已更新，但${message}`);
+            setFormError(t('features.transactions.updatedWithWarning', { message }));
           }
         }
       } else {
@@ -392,9 +396,9 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
         try {
           await uploadPhotos(saved.id);
         } catch (uploadError: any) {
-          const message = uploadError.message || '照片上傳失敗';
+          const message = uploadError.message || t('features.transactions.messages.photoUploadFailed');
           setPhotoUploadWarning(message);
-          setFormError(`交易已建立，但${message}`);
+          setFormError(t('features.transactions.createdWithWarning', { message }));
         }
       }
       setModal(false);
@@ -410,15 +414,15 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
   async function handleTransferSave(e: React.FormEvent) {
     e.preventDefault();
     if (!transferForm.fromAccountId || !transferForm.toAccountId) {
-      setFormError('請選擇轉出與轉入帳戶');
+      setFormError(t('features.transactions.messages.transferAccountsRequired'));
       return;
     }
     if (transferForm.fromAccountId === transferForm.toAccountId) {
-      setFormError('轉出與轉入帳戶不可相同');
+      setFormError(t('features.transactions.messages.transferSameAccount'));
       return;
     }
     if (!transferForm.amount || Number(transferForm.amount) <= 0) {
-      setFormError('請輸入有效金額');
+      setFormError(t('features.transactions.messages.amountRequired'));
       return;
     }
     setSaving(true);
@@ -455,7 +459,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
 
   async function handleBatchDelete() {
     if (selected.size === 0) return;
-    if (!confirm(`確定要刪除選取的 ${selected.size} 筆交易嗎？`)) return;
+    if (!confirm(t('features.transactions.batchDeleteConfirm', { count: selected.size }))) return;
     try {
       await apiPost('/api/transactions/batch-delete', { ids: [...selected] });
       setSelected(new Set());
@@ -507,17 +511,17 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
 
   const getCatName = (tx: any) => {
     const cat = categories.find((c: any) => c.id === (tx.category_id || tx.categoryId));
-    if (!cat) return tx.cat_name || '—';
+    if (!cat) return tx.cat_name || t('features.common.notRecorded');
     const parent = cat.parentId ? categories.find((c: any) => c.id === cat.parentId) : null;
     return parent ? `${parent.name} › ${cat.name}` : cat.name;
   };
 
   const getAcctName = (tx: any) => {
     const account = accounts.find((item: any) => item.id === (tx.account_id || tx.accountId));
-    return account ? account.name : (tx.account_name || '—');
+    return account ? account.name : (tx.account_name || t('features.common.notRecorded'));
   };
 
-  // 國外刷卡手續費：所選帳戶為信用卡且有海外手續費率、且為外幣交易時適用。
+  // Overseas card fee applies only to foreign-currency credit-card expenses.
   const selectedAccount = accounts.find((account: any) => account.id === form.accountId) || null;
   const overseasFeeRate = selectedAccount && selectedAccount.category === 'credit_card'
     ? Number(selectedAccount.overseasFeeRate) || 0
@@ -531,7 +535,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
     return Math.max(0, Math.round(amt * rate * overseasFeeRate / 100));
   })();
 
-  // 未手動編輯時，依當前金額/匯率自動帶入手續費；不適用時清空，交由系統處理。
+  // Auto-fill the fee until the user edits it manually; clear it when not applicable.
   useEffect(() => {
     if (!modal) return;
     if (!overseasApplies) {
@@ -546,56 +550,55 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
   return (
     <div className="page active space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="page-title">交易記錄</h2>
+        <h2 className="page-title">{t('features.transactions.title')}</h2>
         {formError && <div className="text-sm text-red-500">{formError}</div>}
       </div>
 
       <div className="filter-bar">
-        <input type="text" className="filter-input" placeholder="搜尋備註..." value={filters.keyword} onChange={(e) => updateFilters({ keyword: e.target.value })} />
+        <input type="text" className="filter-input" placeholder={t('features.transactions.searchPlaceholder')} value={filters.keyword} onChange={(e) => updateFilters({ keyword: e.target.value })} />
         <select value={filters.type} onChange={(e) => updateFilters({ type: e.target.value })}>
-          <option value="">所有類型</option>
-          <option value="income">收入</option>
-          <option value="expense">支出</option>
-          <option value="transfer">轉帳</option>
-          <option value="future">未來交易</option>
+          <option value="">{t('features.transactions.allTypes')}</option>
+          <option value="income">{t('features.common.income')}</option>
+          <option value="expense">{t('features.common.expense')}</option>
+          <option value="transfer">{t('features.transactions.transfer')}</option>
+          <option value="future">{t('features.transactions.future')}</option>
         </select>
         <select value={filters.accountId} onChange={(e) => updateFilters({ accountId: e.target.value })}>
-          <option value="">所有帳戶</option>
+          <option value="">{t('features.transactions.allAccounts')}</option>
           {accounts.map((account: any) => <option key={account.id} value={account.id}>{account.name}</option>)}
         </select>
         <select value={filters.categoryId} onChange={(e) => updateFilters({ categoryId: e.target.value })}>
-          <option value="">所有分類</option>
+          <option value="">{t('features.transactions.allCategories')}</option>
           {allStandalone.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
           {allParents.map((parent: any) => (
             <optgroup key={parent.id} label={parent.name}>
-              {/* 選父分類＝篩選該父分類底下所有子分類（後端會自動展開子分類） */}
-              <option value={parent.id}>{parent.name}（全部）</option>
+              <option value={parent.id}>{t('features.transactions.parentAll', { name: parent.name })}</option>
               {allChildren.filter((c: any) => c.parentId === parent.id).map((c: any) => (
                 <option key={c.id} value={c.id}>{c.name}</option>
               ))}
             </optgroup>
           ))}
         </select>
-        <input type="date" value={filters.dateFrom} onChange={(e) => updateFilters({ dateFrom: e.target.value })} title="開始日期" />
-        <input type="date" value={filters.dateTo} onChange={(e) => updateFilters({ dateTo: e.target.value })} title="結束日期" />
+        <input type="date" value={filters.dateFrom} onChange={(e) => updateFilters({ dateFrom: e.target.value })} title={t('features.transactions.startDateTitle')} />
+        <input type="date" value={filters.dateTo} onChange={(e) => updateFilters({ dateTo: e.target.value })} title={t('features.transactions.endDateTitle')} />
         <button className="btn btn-ghost btn-sm" onClick={clearFilters}>
-          <i className="fas fa-xmark" /> 清除
+          <i className="fas fa-xmark" /> {t('common.clear')}
         </button>
       </div>
 
       <div className="tx-actions flex flex-wrap gap-2 items-center">
-        <button className="btn" onClick={openAdd}><i className="fas fa-plus" /> 新增交易</button>
-        <button className="btn btn-ghost btn-sm" onClick={openTransfer}><i className="fas fa-right-left" /> 帳戶轉帳</button>
+        <button className="btn" onClick={openAdd}><i className="fas fa-plus" /> {t('features.transactions.add')}</button>
+        <button className="btn btn-ghost btn-sm" onClick={openTransfer}><i className="fas fa-right-left" /> {t('features.transactions.accountTransfer')}</button>
         {selected.size > 0 && (
           <>
-            <button className="btn btn-ghost btn-sm" onClick={() => setBatchModal('category')}><i className="fas fa-tags" /> 批次改分類</button>
-            <button className="btn btn-ghost btn-sm" onClick={() => setBatchModal('date')}><i className="fas fa-calendar" /> 批次改日期</button>
-            <button className="btn btn-danger btn-sm" onClick={handleBatchDelete}><i className="fas fa-trash" /> 刪除選取 ({selected.size})</button>
+            <button className="btn btn-ghost btn-sm" onClick={() => setBatchModal('category')}><i className="fas fa-tags" /> {t('features.transactions.batchCategory')}</button>
+            <button className="btn btn-ghost btn-sm" onClick={() => setBatchModal('date')}><i className="fas fa-calendar" /> {t('features.transactions.batchDate')}</button>
+            <button className="btn btn-danger btn-sm" onClick={handleBatchDelete}><i className="fas fa-trash" /> {t('features.transactions.deleteSelected', { count: selected.size })}</button>
           </>
         )}
-        <span className="tx-count">共 {total} 筆</span>
+        <span className="tx-count">{t('common.totalRecords', { count: total })}</span>
         <label className="ml-auto flex items-center gap-2 text-sm text-slate-500">
-          每頁
+          {t('common.perPage')}
           <select
             value={pageSize}
             onChange={(e) => {
@@ -604,30 +607,30 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
             }}
             className="rounded-md border border-slate-300 bg-white px-2 py-1 text-sm text-slate-700 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
           >
-            {PAGE_SIZE_OPTIONS.map((size) => <option key={size} value={size}>{size} 筆</option>)}
+            {PAGE_SIZE_OPTIONS.map((size) => <option key={size} value={size}>{t('common.recordsUnit', { count: size })}</option>)}
           </select>
         </label>
       </div>
 
-      <div className="tx-page-summary" aria-label="當頁交易統計">
+      <div className="tx-page-summary" aria-label={t('features.transactions.pageSummaryAria')}>
         <div className="tx-page-summary-item tx-page-summary-income">
-          <span className="tx-page-summary-label">當頁收入</span>
-          <strong className="tx-page-summary-value amount-income">{fmt(pageTotals.income)}</strong>
+          <span className="tx-page-summary-label">{t('features.transactions.pageIncome')}</span>
+          <strong className="tx-page-summary-value amount-income">{fmt(pageTotals.income, locale)}</strong>
         </div>
         <div className="tx-page-summary-item tx-page-summary-expense">
-          <span className="tx-page-summary-label">當頁支出</span>
-          <strong className="tx-page-summary-value amount-expense">{fmt(pageTotals.expense)}</strong>
+          <span className="tx-page-summary-label">{t('features.transactions.pageExpense')}</span>
+          <strong className="tx-page-summary-value amount-expense">{fmt(pageTotals.expense, locale)}</strong>
         </div>
         <div className="tx-page-summary-item tx-page-summary-net">
-          <span className="tx-page-summary-label">當頁合計</span>
+          <span className="tx-page-summary-label">{t('features.transactions.pageTotal')}</span>
           <strong className={`tx-page-summary-value ${pageNet >= 0 ? 'amount-income' : 'amount-expense'}`}>
-            {pageNet >= 0 ? '+' : '-'}{fmt(Math.abs(pageNet))}
+            {pageNet >= 0 ? '+' : '-'}{fmt(Math.abs(pageNet), locale)}
           </strong>
         </div>
       </div>
 
-      {loading && <p className="empty-hint">載入中...</p>}
-      {!loading && txs.length === 0 && <p className="empty-hint">尚無符合條件的交易記錄</p>}
+      {loading && <p className="empty-hint">{t('common.loading')}</p>}
+      {!loading && txs.length === 0 && <p className="empty-hint">{t('features.transactions.empty')}</p>}
 
       {!loading && txs.length > 0 && (
         <div className="table-wrap">
@@ -635,13 +638,13 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
             <thead>
               <tr>
                 <th><input type="checkbox" onChange={(e) => setSelected(e.target.checked ? new Set(txs.map((tx) => tx.id)) : new Set())} checked={selected.size === txs.length && txs.length > 0} /></th>
-                <th>日期</th>
-                <th>類型</th>
-                <th>分類</th>
-                <th>帳戶</th>
-                <th>備註</th>
-                <th>金額</th>
-                <th>操作</th>
+                <th>{t('features.common.date')}</th>
+                <th>{t('features.common.type')}</th>
+                <th>{t('features.recurring.category')}</th>
+                <th>{t('features.common.account')}</th>
+                <th>{t('features.common.note')}</th>
+                <th>{t('features.common.amount')}</th>
+                <th>{t('features.common.actions')}</th>
               </tr>
             </thead>
             <tbody>
@@ -663,16 +666,16 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
                     </td>
                     <td>
                       <div>{tx.date}</div>
-                      {isFuture && <div className="text-xs text-amber-600">未來交易</div>}
+                      {isFuture && <div className="text-xs text-amber-600">{t('features.transactions.future')}</div>}
                     </td>
-                    <td><span className={`badge badge-${tx.type}`}>{labelForType(tx.type)}</span></td>
-                    <td>{isTransfer ? '—' : getCatName(tx)}</td>
-                    <td>{getAcctName(tx)}{tx.toAccountId ? ` → ${accounts.find((account: any) => account.id === tx.toAccountId)?.name || '—'}` : ''}</td>
+                    <td><span className={`badge badge-${tx.type}`}>{labelForType(tx.type, t)}</span></td>
+                    <td>{isTransfer ? t('features.common.notRecorded') : getCatName(tx)}</td>
+                    <td>{getAcctName(tx)}{tx.toAccountId ? ` -> ${accounts.find((account: any) => account.id === tx.toAccountId)?.name || t('features.common.notRecorded')}` : ''}</td>
                     <td>
-                      <div>{tx.note || '—'}</div>
-                      {tx.isFxFee && <div className="text-xs text-amber-600">國外刷卡手續費</div>}
-                      {tx.sourceRecurringName && <div className="text-xs text-slate-500">來源：{tx.sourceRecurringName}</div>}
-                      {tx.excludeFromStats && <div className="text-xs text-slate-500">不計入統計</div>}
+                      <div>{tx.note || t('features.common.notRecorded')}</div>
+                      {tx.isFxFee && <div className="text-xs text-amber-600">{t('features.transactions.fxFee')}</div>}
+                      {tx.sourceRecurringName && <div className="text-xs text-slate-500">{t('features.transactions.source', { name: tx.sourceRecurringName })}</div>}
+                      {tx.excludeFromStats && <div className="text-xs text-slate-500">{t('features.common.excludeFromStats')}</div>}
                       {tx.attachmentCount > 0 && tx.firstAttachmentId && (
                         tx.attachmentCount === 1 ? (
                           <a
@@ -682,7 +685,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
                             rel="noreferrer"
                           >
                             <i className="fas fa-image" />
-                            照片 1
+                            {t('features.transactions.photoOne')}
                           </a>
                         ) : (
                           <button
@@ -691,20 +694,20 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
                             onClick={() => openAttachmentPicker(tx.id)}
                           >
                             <i className="fas fa-images" />
-                            照片 {tx.attachmentCount}
+                            {t('features.transactions.photoCount', { count: tx.attachmentCount })}
                           </button>
                         )
                       )}
                     </td>
                     <td className={tx.type === 'income' || tx.type === 'transfer_in' ? 'amount-income' : 'amount-expense'}>
-                      {tx.type === 'income' || tx.type === 'transfer_in' ? '+' : '-'}{fmt(tx.amount)}
+                      {tx.type === 'income' || tx.type === 'transfer_in' ? '+' : '-'}{fmt(tx.amount, locale)}
                       {tx.currency && tx.currency !== 'TWD' && (
-                        <div className="text-xs text-slate-500">{tx.currency} {Math.abs(Number(tx.originalAmount || tx.amount)).toLocaleString('zh-TW')}</div>
+                        <div className="text-xs text-slate-500">{tx.currency} {Math.abs(Number(tx.originalAmount || tx.amount)).toLocaleString(localeTag(locale))}</div>
                       )}
                     </td>
                     <td>
-                      {!isTransfer && !tx.isFxFee && <button className="btn-icon" title="編輯" onClick={() => openEdit(tx)}><i className="fas fa-pencil" /></button>}
-                      <button className="btn-icon danger" title="刪除" onClick={() => setDeleteId(tx.id)}><i className="fas fa-trash" /></button>
+                      {!isTransfer && !tx.isFxFee && <button className="btn-icon" title={t('common.edit')} onClick={() => openEdit(tx)}><i className="fas fa-pencil" /></button>}
+                      <button className="btn-icon danger" title={t('common.delete')} onClick={() => setDeleteId(tx.id)}><i className="fas fa-trash" /></button>
                     </td>
                   </tr>
                 );
@@ -716,37 +719,37 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
 
       {totalPages > 1 && (
         <div className="pagination">
-          <button className="btn btn-ghost btn-sm" disabled={page <= 1} onClick={() => setPage((current) => current - 1)}>‹ 上一頁</button>
+          <button className="btn btn-ghost btn-sm" disabled={page <= 1} onClick={() => setPage((current) => current - 1)}>‹ {t('common.previousPage')}</button>
           <span className="page-info">{page} / {totalPages}</span>
-          <button className="btn btn-ghost btn-sm" disabled={page >= totalPages} onClick={() => setPage((current) => current + 1)}>下一頁 ›</button>
+          <button className="btn btn-ghost btn-sm" disabled={page >= totalPages} onClick={() => setPage((current) => current + 1)}>{t('common.nextPage')} ›</button>
         </div>
       )}
 
       <Dialog open={modal} onOpenChange={setModal}>
         <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>{editId ? '編輯交易' : '新增交易'}</DialogTitle>
+            <DialogTitle>{editId ? t('features.transactions.edit') : t('features.transactions.create')}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSave} className="space-y-3">
             <div className="flex flex-col gap-1">
-              <label className="text-sm font-medium text-gray-700">日期 *</label>
+              <label className="text-sm font-medium text-gray-700">{t('features.transactions.dateRequiredLabel')}</label>
               <input type="date" required className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" value={form.date} onChange={(e) => setForm((current) => ({ ...current, date: e.target.value }))} />
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-sm font-medium text-gray-700">類型</label>
+              <label className="text-sm font-medium text-gray-700">{t('features.common.type')}</label>
               <select className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" value={form.type} onChange={(e) => setForm((current) => ({ ...current, type: e.target.value, categoryId: '' }))}>
-                <option value="income">收入</option>
-                <option value="expense">支出</option>
+                <option value="income">{t('features.common.income')}</option>
+                <option value="expense">{t('features.common.expense')}</option>
               </select>
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-sm font-medium text-gray-700">金額 *</label>
+              <label className="text-sm font-medium text-gray-700">{t('features.transactions.amountRequiredLabel')}</label>
               <input type="number" required min="0.01" step="any" placeholder="0" className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" value={form.amount} onChange={(e) => setForm((current) => ({ ...current, amount: e.target.value }))} />
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-sm font-medium text-gray-700">分類</label>
+              <label className="text-sm font-medium text-gray-700">{t('features.recurring.category')}</label>
               <select className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" value={form.categoryId} onChange={(e) => setForm((current) => ({ ...current, categoryId: e.target.value }))}>
-                <option value="">未分類</option>
+                <option value="">{t('features.common.uncategorized')}</option>
                 {filteredStandalone.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
                 {filteredParents.map((parent: any) => (
                   <optgroup key={parent.id} label={parent.name}>
@@ -758,35 +761,35 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
               </select>
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-sm font-medium text-gray-700">帳戶</label>
+              <label className="text-sm font-medium text-gray-700">{t('features.common.account')}</label>
               <select className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" value={form.accountId} onChange={(e) => {
                 const acct = accounts.find((a: any) => a.id === e.target.value);
                 const nextCurrency = String(acct?.currency || 'TWD').toUpperCase();
                 setForm((current) => ({ ...current, accountId: e.target.value, currency: nextCurrency, fxRate: '' }));
               }}>
-                <option value="">未指定</option>
+                <option value="">{t('features.common.unspecified')}</option>
                 {accounts.map((account: any) => <option key={account.id} value={account.id}>{account.name}{account.currency && account.currency !== 'TWD' ? ` (${account.currency})` : ''}</option>)}
               </select>
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-sm font-medium text-gray-700">幣別</label>
+              <label className="text-sm font-medium text-gray-700">{t('features.common.currency')}</label>
               <select className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" value={form.currency} onChange={(e) => setForm((current) => ({ ...current, currency: e.target.value.toUpperCase(), fxRate: '' }))}>
                 {currencyOptions.map((currency) => <option key={currency} value={currency}>{currency}</option>)}
               </select>
             </div>
             {form.currency && form.currency !== 'TWD' && (
               <div className="flex flex-col gap-1">
-                <label className="text-sm font-medium text-gray-700">匯率（1 {form.currency} = ? TWD）</label>
-                <input type="number" min="0.0001" step="any" placeholder="留空則使用系統匯率" className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" value={form.fxRate} onChange={(e) => setForm((current) => ({ ...current, fxRate: e.target.value }))} />
-                {fxLoading && <p className="text-xs text-slate-500">查詢最新匯率中...</p>}
+                <label className="text-sm font-medium text-gray-700">{t('features.transactions.fxRateLabel', { currency: form.currency })}</label>
+                <input type="number" min="0.0001" step="any" placeholder={t('features.transactions.fxRatePlaceholder')} className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" value={form.fxRate} onChange={(e) => setForm((current) => ({ ...current, fxRate: e.target.value }))} />
+                {fxLoading && <p className="text-xs text-slate-500">{t('features.transactions.latestRateLoading')}</p>}
               </div>
             )}
             {overseasApplies && (
               <div className="flex flex-col gap-1">
-                <label className="text-sm font-medium text-gray-700">海外手續費（TWD）</label>
+                <label className="text-sm font-medium text-gray-700">{t('features.recurring.fxFeeLabel')}</label>
                 <div className="flex items-center gap-2">
                   <input
-                    type="number" min="0" step="1" placeholder="留空則由系統依卡片費率自動計算"
+                    type="number" min="0" step="1" placeholder={t('features.transactions.fxFeePlaceholder')}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
                     value={form.fxFee}
                     onChange={(e) => { setFxFeeEdited(true); setForm((current) => ({ ...current, fxFee: e.target.value })); }}
@@ -796,36 +799,39 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
                     className="shrink-0 rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100"
                     onClick={() => { setFxFeeEdited(false); setForm((current) => ({ ...current, fxFee: autoFxFee > 0 ? String(autoFxFee) : '' })); }}
                   >
-                    自動計算
+                    {t('features.common.autoCalculate')}
                   </button>
                 </div>
-                <p className="text-xs text-slate-500">卡片海外手續費率 {overseasFeeRate}%{autoFxFee > 0 ? `，建議值 NT$ ${autoFxFee.toLocaleString('zh-TW')}` : ''}</p>
+                <p className="text-xs text-slate-500">{t('features.transactions.fxFeeHint', {
+                  rate: overseasFeeRate,
+                  suggestion: autoFxFee > 0 ? t('features.transactions.fxFeeSuggestion', { amount: autoFxFee.toLocaleString(localeTag(locale)) }) : '',
+                })}</p>
               </div>
             )}
             <div className="flex flex-col gap-1">
-              <label className="text-sm font-medium text-gray-700">備註</label>
+              <label className="text-sm font-medium text-gray-700">{t('features.common.note')}</label>
               <input type="text" maxLength={200} className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" value={form.note} onChange={(e) => setForm((current) => ({ ...current, note: e.target.value }))} />
             </div>
             <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-              <input type="checkbox" checked={form.excludeFromStats} onChange={(e) => setForm((current) => ({ ...current, excludeFromStats: e.target.checked }))} /> 不計入統計
+              <input type="checkbox" checked={form.excludeFromStats} onChange={(e) => setForm((current) => ({ ...current, excludeFromStats: e.target.checked }))} /> {t('features.common.excludeFromStats')}
             </label>
             <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 space-y-3">
               <div className="flex flex-col gap-1">
-                <label className="text-sm font-medium text-gray-700">照片</label>
+                <label className="text-sm font-medium text-gray-700">{t('features.transactions.photos')}</label>
                 {editId && editAttachmentsLoading && (
-                  <p className="text-xs text-slate-500">載入照片中...</p>
+                  <p className="text-xs text-slate-500">{t('features.transactions.loadingPhotos')}</p>
                 )}
                 {editId && !editAttachmentsLoading && editAttachments.filter(a => !pendingDeleteIds.has(a.id)).length > 0 && (
                   <ul className="space-y-1 rounded-md border border-slate-200 bg-white px-3 py-2">
                     {editAttachments.filter(a => !pendingDeleteIds.has(a.id)).map(a => (
                       <li key={a.id} className="flex items-center justify-between gap-2 text-xs text-slate-600">
-                        <a href={a.url} target="_blank" rel="noreferrer" className="min-w-0 truncate text-sky-600 hover:text-sky-700">{a.filename || '照片'}</a>
+                        <a href={a.url} target="_blank" rel="noreferrer" className="min-w-0 truncate text-sky-600 hover:text-sky-700">{a.filename || t('features.transactions.photos')}</a>
                         <button
                           type="button"
                           className="shrink-0 font-medium text-slate-500 hover:text-red-600"
                           onClick={() => setPendingDeleteIds(prev => new Set([...prev, a.id]))}
                         >
-                          刪除
+                          {t('common.delete')}
                         </button>
                       </li>
                     ))}
@@ -835,7 +841,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
                   <div className="grid grid-cols-2 gap-2">
                     <label className="inline-flex min-h-10 cursor-pointer items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-100">
                       <i className="fas fa-camera" />
-                      拍照
+                      {t('features.transactions.takePhoto')}
                       <input
                         type="file"
                         accept="image/*"
@@ -849,7 +855,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
                     </label>
                     <label className="inline-flex min-h-10 cursor-pointer items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-100">
                       <i className="fas fa-image" />
-                      選擇圖片
+                      {t('features.transactions.chooseImage')}
                       <input
                         type="file"
                         accept="image/*"
@@ -863,25 +869,25 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
                     </label>
                   </div>
                 )}
-                <p className="text-xs text-slate-500">手機可直接拍照或從相簿選圖。最多 5 張，每張上限 {Math.round((photoStorageStatus?.maxBytes || 10 * 1024 * 1024) / 1024 / 1024)} MB。</p>
+                <p className="text-xs text-slate-500">{t('features.transactions.photoHelp', { maxMb: Math.round((photoStorageStatus?.maxBytes || 10 * 1024 * 1024) / 1024 / 1024) })}</p>
               </div>
               {photoFiles.length > 0 && (
                 <div className="space-y-3">
                   <div className="rounded-md border border-slate-200 bg-white px-3 py-2">
                     <div className="mb-2 flex items-center justify-between gap-2">
-                      <p className="text-xs font-medium text-slate-600">新增照片 {photoFiles.length}</p>
-                      <button type="button" className="text-xs font-medium text-slate-500 hover:text-slate-700" onClick={() => setPhotoFiles([])}>清除</button>
+                      <p className="text-xs font-medium text-slate-600">{t('features.transactions.newPhotos', { count: photoFiles.length })}</p>
+                      <button type="button" className="text-xs font-medium text-slate-500 hover:text-slate-700" onClick={() => setPhotoFiles([])}>{t('common.clear')}</button>
                     </div>
                     <ul className="space-y-1">
                       {photoFiles.map((file, index) => (
                         <li key={`${file.name}-${file.size}-${file.lastModified}`} className="flex items-center justify-between gap-2 text-xs text-slate-600">
-                          <span className="min-w-0 truncate">{file.name || `照片 ${index + 1}`}</span>
+                          <span className="min-w-0 truncate">{file.name || t('features.transactions.photoCount', { count: index + 1 })}</span>
                           <button
                             type="button"
                             className="shrink-0 font-medium text-slate-500 hover:text-red-600"
                             onClick={() => setPhotoFiles((current) => current.filter((_, itemIndex) => itemIndex !== index))}
                           >
-                            移除
+                            {t('features.transactions.remove')}
                           </button>
                         </li>
                       ))}
@@ -894,9 +900,9 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
             {formError && <p className="text-sm text-destructive">{formError}</p>}
             <DialogFooter className="flex-row justify-end">
               <DialogClose asChild>
-                <Button type="button" variant="outline">取消</Button>
+                <Button type="button" variant="outline">{t('common.cancel')}</Button>
               </DialogClose>
-              <Button type="submit" disabled={saving}>{saving ? '儲存中...' : '儲存'}</Button>
+              <Button type="submit" disabled={saving}>{saving ? t('common.saving') : t('common.save')}</Button>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -905,41 +911,41 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
       <Dialog open={transferModal} onOpenChange={setTransferModal}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>帳戶轉帳</DialogTitle>
+            <DialogTitle>{t('features.transactions.accountTransfer')}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleTransferSave} className="space-y-3">
             <div className="flex flex-col gap-1">
-              <label className="text-sm font-medium text-gray-700">日期 *</label>
+              <label className="text-sm font-medium text-gray-700">{t('features.transactions.dateRequiredLabel')}</label>
               <input type="date" required className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" value={transferForm.date} onChange={(e) => setTransferForm((current) => ({ ...current, date: e.target.value }))} />
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-sm font-medium text-gray-700">轉出帳戶 *</label>
+              <label className="text-sm font-medium text-gray-700">{t('features.transactions.transferOut')}</label>
               <select className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" value={transferForm.fromAccountId} onChange={(e) => setTransferForm((current) => ({ ...current, fromAccountId: e.target.value }))}>
-                <option value="">請選擇</option>
+                <option value="">{t('features.transactions.selectPlaceholder')}</option>
                 {accounts.map((account: any) => <option key={account.id} value={account.id}>{account.name}</option>)}
               </select>
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-sm font-medium text-gray-700">轉入帳戶 *</label>
+              <label className="text-sm font-medium text-gray-700">{t('features.transactions.transferIn')}</label>
               <select className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" value={transferForm.toAccountId} onChange={(e) => setTransferForm((current) => ({ ...current, toAccountId: e.target.value }))}>
-                <option value="">請選擇</option>
+                <option value="">{t('features.transactions.selectPlaceholder')}</option>
                 {accounts.map((account: any) => <option key={account.id} value={account.id}>{account.name}</option>)}
               </select>
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-sm font-medium text-gray-700">金額 *</label>
+              <label className="text-sm font-medium text-gray-700">{t('features.transactions.amountRequiredLabel')}</label>
               <input type="number" required min="0.01" step="any" className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" value={transferForm.amount} onChange={(e) => setTransferForm((current) => ({ ...current, amount: e.target.value }))} />
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-sm font-medium text-gray-700">備註</label>
+              <label className="text-sm font-medium text-gray-700">{t('features.common.note')}</label>
               <input type="text" maxLength={200} className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" value={transferForm.note} onChange={(e) => setTransferForm((current) => ({ ...current, note: e.target.value }))} />
             </div>
             {formError && <p className="text-sm text-destructive">{formError}</p>}
             <DialogFooter>
               <DialogClose asChild>
-                <Button type="button" variant="outline">取消</Button>
+                <Button type="button" variant="outline">{t('common.cancel')}</Button>
               </DialogClose>
-              <Button type="submit" disabled={saving}>{saving ? '建立中...' : '確認轉帳'}</Button>
+              <Button type="submit" disabled={saving}>{saving ? t('features.transactions.creating') : t('features.transactions.confirmTransfer')}</Button>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -948,10 +954,10 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
       <Dialog open={!!attachmentPickerTxId} onOpenChange={(open) => { if (!open) setAttachmentPickerTxId(null); }}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>選擇照片</DialogTitle>
+            <DialogTitle>{t('features.transactions.choosePhoto')}</DialogTitle>
           </DialogHeader>
           {attachmentPickerLoading ? (
-            <p className="py-6 text-center text-sm text-slate-500">載入中...</p>
+            <p className="py-6 text-center text-sm text-slate-500">{t('common.loading')}</p>
           ) : (
             <ul className="space-y-2">
               {attachmentPickerItems.map((item, index) => (
@@ -965,11 +971,11 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
                   >
                     <img
                       src={item.url}
-                      alt={item.filename || `照片 ${index + 1}`}
+                      alt={item.filename || t('features.transactions.photoCount', { count: index + 1 })}
                       className="h-12 w-12 flex-none rounded object-cover"
                       onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
                     />
-                    <span className="min-w-0 flex-1 truncate text-slate-700">{item.filename || `照片 ${index + 1}`}</span>
+                    <span className="min-w-0 flex-1 truncate text-slate-700">{item.filename || t('features.transactions.photoCount', { count: index + 1 })}</span>
                     <i className="fas fa-external-link-alt flex-none text-xs text-slate-400" />
                   </a>
                 </li>
@@ -983,15 +989,15 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
         <div className="modal-overlay active" onClick={() => setBatchModal(null)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>{batchModal === 'category' ? '批次變更分類' : '批次變更日期'}</h3>
+              <h3>{batchModal === 'category' ? t('features.transactions.batchCategoryTitle') : t('features.transactions.batchDateTitle')}</h3>
               <button className="btn-icon" onClick={() => setBatchModal(null)}><i className="fas fa-xmark" /></button>
             </div>
             <div className="modal-body">
               {batchModal === 'category' ? (
                 <div className="form-row">
-                  <label>新分類</label>
+                  <label>{t('features.transactions.newCategory')}</label>
                   <select value={batchCategoryId} onChange={(e) => setBatchCategoryId(e.target.value)}>
-                    <option value="">未分類</option>
+                    <option value="">{t('features.common.uncategorized')}</option>
                     {allStandalone.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
                     {allParents.map((parent: any) => (
                       <optgroup key={parent.id} label={parent.name}>
@@ -1004,13 +1010,13 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
                 </div>
               ) : (
                 <div className="form-row">
-                  <label>新日期</label>
+                  <label>{t('features.transactions.newDate')}</label>
                   <input type="date" value={batchDate} onChange={(e) => setBatchDate(e.target.value)} />
                 </div>
               )}
               <div className="modal-footer">
-                <button className="btn btn-ghost" onClick={() => setBatchModal(null)}>取消</button>
-                <button className="btn btn-primary" onClick={handleBatchUpdate}>套用到 {selected.size} 筆</button>
+                <button className="btn btn-ghost" onClick={() => setBatchModal(null)}>{t('common.cancel')}</button>
+                <button className="btn btn-primary" onClick={handleBatchUpdate}>{t('features.transactions.applyTo', { count: selected.size })}</button>
               </div>
             </div>
           </div>
@@ -1021,14 +1027,14 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
         <div className="modal-overlay active" onClick={() => setDeleteId(null)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>確認刪除</h3>
+              <h3>{t('common.confirmDelete')}</h3>
               <button className="btn-icon" onClick={() => setDeleteId(null)}><i className="fas fa-xmark" /></button>
             </div>
             <div className="modal-body">
-              <p>確定要刪除這筆交易記錄嗎？此操作無法復原。</p>
+              <p>{t('features.transactions.deleteMessage')}</p>
               <div className="modal-footer">
-                <button className="btn btn-ghost" onClick={() => setDeleteId(null)}>取消</button>
-                <button className="btn btn-danger" onClick={handleDelete}>確認刪除</button>
+                <button className="btn btn-ghost" onClick={() => setDeleteId(null)}>{t('common.cancel')}</button>
+                <button className="btn btn-danger" onClick={handleDelete}>{t('common.confirm')}</button>
               </div>
             </div>
           </div>

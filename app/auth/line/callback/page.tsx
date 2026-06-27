@@ -2,10 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useT } from '@/components/i18n/I18nProvider';
 
 export default function LineCallbackPage() {
   const router = useRouter();
-  const [message, setMessage] = useState('正在完成 LINE 驗證...');
+  const { t } = useT();
+  const [message, setMessage] = useState(t('auth.lineCallback.completing'));
 
   useEffect(() => {
     async function completeLineFlow() {
@@ -15,7 +17,7 @@ export default function LineCallbackPage() {
       const flow = state?.startsWith('link.') ? 'link' : 'login';
 
       if (!code || !state) {
-        throw new Error('LINE 未回傳授權碼，請重新操作');
+        throw new Error(t('auth.lineCallback.missingCode'));
       }
 
       const redirectUri = `${window.location.origin}/auth/line/callback`;
@@ -27,17 +29,17 @@ export default function LineCallbackPage() {
         body: JSON.stringify({ code, state, redirect_uri: redirectUri }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || (flow === 'link' ? 'LINE 綁定失敗' : 'LINE 登入失敗'));
+      if (!res.ok) throw new Error(data.error || (flow === 'link' ? t('auth.lineCallback.linkFailed') : t('auth.lineCallback.loginFailed')));
 
       router.replace(flow === 'link' ? '/settings/account' : '/dashboard');
       router.refresh();
     }
 
     completeLineFlow().catch((e) => {
-      setMessage(e.message || 'LINE 驗證失敗');
+      setMessage(e.message || t('auth.lineCallback.verifyFailed'));
       setTimeout(() => router.replace('/login'), 1800);
     });
-  }, [router]);
+  }, [router, t]);
 
   return (
     <div className="min-h-screen grid place-items-center bg-slate-50 p-6 text-slate-700">

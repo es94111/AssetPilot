@@ -2,6 +2,7 @@
 
 import { ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useT } from "@/components/i18n/I18nProvider";
 
 function currentMonth() {
   const now = new Date();
@@ -18,14 +19,18 @@ function shiftMonth(value: string, delta: number) {
   return `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, "0")}`;
 }
 
-function displayMonth(value: string) {
-  const [year, month] = value.split("-");
-  return `${year} 年 ${month} 月`;
+function displayMonth(value: string, locale: string) {
+  const [year, month] = value.split("-").map(Number);
+  return new Intl.DateTimeFormat(locale === "en" ? "en-US" : "zh-TW", {
+    year: "numeric",
+    month: "long",
+  }).format(new Date(year, month - 1, 1));
 }
 
 export function DashboardFilters() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { locale, t } = useT();
   const selectedMonth = normalizeMonth(searchParams.get("month"));
   const thisMonth = currentMonth();
 
@@ -47,8 +52,8 @@ export function DashboardFilters() {
         onClick={() => navigateToMonth(shiftMonth(selectedMonth, -1))}
         className="inline-flex h-10 w-10 items-center justify-center rounded-lg border transition-colors hover:bg-slate-50 dark:hover:bg-slate-800"
         style={{ borderColor: "var(--border)", color: "var(--text-secondary)" }}
-        title="上一月"
-        aria-label="上一月"
+        title={t("dashboard.filters.previousMonth")}
+        aria-label={t("dashboard.filters.previousMonth")}
       >
         <ChevronLeft size={18} />
       </button>
@@ -57,15 +62,15 @@ export function DashboardFilters() {
         style={{ borderColor: "var(--border)", background: "var(--surface)", color: "var(--text)" }}
       >
         <CalendarDays size={16} />
-        <span>{displayMonth(selectedMonth)}</span>
+        <span>{displayMonth(selectedMonth, locale)}</span>
       </div>
       <button
         type="button"
         onClick={() => navigateToMonth(shiftMonth(selectedMonth, 1))}
         className="inline-flex h-10 w-10 items-center justify-center rounded-lg border transition-colors hover:bg-slate-50 dark:hover:bg-slate-800"
         style={{ borderColor: "var(--border)", color: "var(--text-secondary)" }}
-        title="下一月"
-        aria-label="下一月"
+        title={t("dashboard.filters.nextMonth")}
+        aria-label={t("dashboard.filters.nextMonth")}
       >
         <ChevronRight size={18} />
       </button>
@@ -76,7 +81,7 @@ export function DashboardFilters() {
           className="h-10 rounded-lg border px-3 text-sm font-medium transition-colors hover:bg-slate-50 dark:hover:bg-slate-800"
           style={{ borderColor: "var(--border)", color: "var(--text-secondary)" }}
         >
-          本月
+          {t("dashboard.filters.currentMonth")}
         </button>
       )}
     </div>

@@ -7,12 +7,20 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
 import { LanguageSwitcher } from '@/components/i18n/LanguageSwitcher';
+import { useT } from '@/components/i18n/I18nProvider';
 
 function shouldDisableLineAutoLogin() {
   return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 }
 
+function isMessageError(message: string) {
+  return /\u5931\u6557|\u932f\u8aa4|\u683c\u5f0f|\u4e0d\u53ef|\u8acb|failed|invalid|required|cannot|please/i.test(message);
+}
+
 export default function AccountSettingsClient({ user: initialUser }: { user: any }) {
+  const { locale, t } = useT();
+  const dateLocale = locale === 'en' ? 'en-US' : 'zh-TW';
+  const ta = (key: string, vars?: Record<string, string | number>) => t(`settings.account.${key}`, vars);
   const [profile, setProfile] = useState<any>(initialUser || null);
   const [loading, setLoading] = useState(true);
 
@@ -102,13 +110,13 @@ export default function AccountSettingsClient({ user: initialUser }: { user: any
     setPwError('');
     setPwSuccess('');
     const oauthOnly = (profile?.googleLinked || profile?.lineLinked) && !profile?.hasPassword;
-    if (!oauthOnly && !currentPw) { setPwError('請輸入目前密碼'); return; }
-    if (!newPw) { setPwError('請輸入新密碼'); return; }
-    if (newPw.length < 8) { setPwError('新密碼長度至少 8 字元'); return; }
+    if (!oauthOnly && !currentPw) { setPwError(ta('messages.currentPasswordRequired')); return; }
+    if (!newPw) { setPwError(ta('messages.newPasswordRequired')); return; }
+    if (newPw.length < 8) { setPwError(ta('messages.passwordTooShort')); return; }
     if (!/[A-Z]/.test(newPw) || !/[a-z]/.test(newPw) || !/\d/.test(newPw) || !/[^a-zA-Z0-9]/.test(newPw)) {
-      setPwError('新密碼需包含大寫字母、小寫字母、數字與特殊符號'); return;
+      setPwError(ta('messages.passwordComplexity')); return;
     }
-    if (newPw !== confirmPw) { setPwError('兩次輸入的新密碼不一致'); return; }
+    if (newPw !== confirmPw) { setPwError(ta('messages.confirmPasswordMismatch')); return; }
     setPwSaving(true);
     try {
       await apiPut('/api/account/password', {
@@ -116,22 +124,22 @@ export default function AccountSettingsClient({ user: initialUser }: { user: any
         newPassword: newPw,
       });
       setCurrentPw(''); setNewPw(''); setConfirmPw('');
-      setPwSuccess(oauthOnly ? '密碼已設定，現在可使用密碼登入' : '密碼已更新');
+      setPwSuccess(oauthOnly ? ta('messages.localPasswordSet') : ta('messages.passwordUpdated'));
       await load();
-    } catch (e: any) { setPwError(e.message || '更新密碼失敗'); }
+    } catch (e: any) { setPwError(e.message || ta('messages.passwordUpdateFailed')); }
     setPwSaving(false);
   }
 
   async function handleDisplayName(e: React.FormEvent) {
     e.preventDefault();
-    if (!displayName.trim()) { setDnMsg('顯示名稱不可空白'); return; }
+    if (!displayName.trim()) { setDnMsg(ta('messages.displayNameRequired')); return; }
     setDnSaving(true);
     setDnMsg('');
     try {
       await apiPut('/api/account/display-name', { displayName: displayName.trim() });
-      setDnMsg('顯示名稱已更新');
+      setDnMsg(ta('messages.displayNameUpdated'));
       await load();
-    } catch (e: any) { setDnMsg(e.message || '更新失敗'); }
+    } catch (e: any) { setDnMsg(e.message || ta('messages.updateFailed')); }
     setDnSaving(false);
   }
 
@@ -143,7 +151,7 @@ export default function AccountSettingsClient({ user: initialUser }: { user: any
   }
 
   async function handleDeletePasskey(credId: string) {
-    if (!confirm('確定要刪除此 Passkey 嗎？')) return;
+    if (!confirm(ta('messages.deletePasskeyConfirm'))) return;
     try {
       await apiDelete(`/api/account/passkey/${encodeURIComponent(credId)}`);
       await loadPasskeys();
@@ -154,7 +162,7 @@ export default function AccountSettingsClient({ user: initialUser }: { user: any
     e.preventDefault();
     const currency = defaultCurrency.trim().toUpperCase();
     if (!/^[A-Z]{3}$/.test(currency)) {
-      setCurrencyMsg('幣別格式需為 3 碼英文字母');
+      setCurrencyMsg(ta('messages.currencyInvalid'));
       return;
     }
     setCurrencySaving(true);
@@ -162,10 +170,10 @@ export default function AccountSettingsClient({ user: initialUser }: { user: any
     try {
       const res = await apiPut('/api/user/settings/default-currency', { defaultCurrency: currency });
       setDefaultCurrency(res.defaultCurrency || currency);
-      setCurrencyMsg('預設貨幣已更新');
+      setCurrencyMsg(ta('messages.currencyUpdated'));
       await load();
     } catch (e: any) {
-      setCurrencyMsg(e.message || '更新預設貨幣失敗');
+      setCurrencyMsg(e.message || ta('messages.currencyUpdateFailed'));
     }
     setCurrencySaving(false);
   }
@@ -178,23 +186,23 @@ export default function AccountSettingsClient({ user: initialUser }: { user: any
         window.location.href = '/login';
         return;
       }
-      setSessionsMsg('已登出該裝置');
+      setSessionsMsg(ta('messages.sessionLoggedOut'));
       await loadSessions();
     } catch (e: any) {
-      setSessionsMsg(e.message || '登出裝置失敗');
+      setSessionsMsg(e.message || ta('messages.sessionLogoutFailed'));
     }
   }
 
   async function handleRegisterPasskey() {
     setPkError('');
     if (!webauthnClient.isAvailable()) {
-      setPkError('此瀏覽器不支援 Passkey');
+      setPkError(ta('messages.passkeyUnsupported'));
       return;
     }
     try {
       const { key, challenge } = await apiGet('/api/account/passkey/challenge') as { key: string; challenge: string };
       const deviceName = navigator.userAgent.includes('iPhone') || navigator.userAgent.includes('iPad')
-        ? 'iPhone/iPad' : navigator.userAgent.includes('Android') ? 'Android 裝置' : '電腦';
+        ? 'iPhone/iPad' : navigator.userAgent.includes('Android') ? ta('messages.androidDevice') : ta('messages.computerDevice');
 
       const registration = await webauthnClient.register({
         challenge,
@@ -214,19 +222,19 @@ export default function AccountSettingsClient({ user: initialUser }: { user: any
         challengeKey: key,
       });
       await loadPasskeys();
-    } catch (e: any) { setPkError(e.message || 'Passkey 註冊失敗'); }
+    } catch (e: any) { setPkError(e.message || ta('messages.passkeyRegisterFailed')); }
   }
 
   async function handleLinkGoogle() {
     setGoogleMsg('');
-    const credential = window.prompt('請貼上 Google ID Token 以模擬綁定流程');
+    const credential = window.prompt(ta('messages.googleTokenPrompt'));
     if (!credential) return;
     try {
       await apiPost('/api/account/link-google', { credential });
-      setGoogleMsg('Google 帳號已綁定');
+      setGoogleMsg(ta('messages.googleLinked'));
       await load();
     } catch (e: any) {
-      setGoogleMsg(e.message || 'Google 綁定失敗');
+      setGoogleMsg(e.message || ta('messages.googleLinkFailed'));
     }
   }
 
@@ -234,10 +242,10 @@ export default function AccountSettingsClient({ user: initialUser }: { user: any
     setGoogleMsg('');
     try {
       await apiDelete('/api/account/settings/google');
-      setGoogleMsg('Google 帳號已解除綁定');
+      setGoogleMsg(ta('messages.googleUnlinked'));
       await load();
     } catch (e: any) {
-      setGoogleMsg(e.message || 'Google 解除綁定失敗');
+      setGoogleMsg(e.message || ta('messages.googleUnlinkFailed'));
     }
   }
 
@@ -247,7 +255,7 @@ export default function AccountSettingsClient({ user: initialUser }: { user: any
     try {
       const cfgRes = await fetch('/api/config', { cache: 'no-store' });
       const cfg = await cfgRes.json().catch(() => ({}));
-      if (!cfg?.lineChannelId || !cfg?.lineCodeFlow) throw new Error('LINE 登入尚未設定完成');
+      if (!cfg?.lineChannelId || !cfg?.lineCodeFlow) throw new Error(ta('messages.lineNotConfigured'));
       const params = new URLSearchParams({
         flow: 'link',
         origin: window.location.origin,
@@ -255,7 +263,7 @@ export default function AccountSettingsClient({ user: initialUser }: { user: any
       if (shouldDisableLineAutoLogin()) params.set('disableAutoLogin', '1');
       window.location.assign(`/api/auth/line/authorize?${params.toString()}`);
     } catch (e: any) {
-      setLineMsg(e.message || 'LINE 綁定失敗');
+      setLineMsg(e.message || ta('messages.lineLinkFailed'));
       setLineLoading(false);
     }
   }
@@ -264,10 +272,10 @@ export default function AccountSettingsClient({ user: initialUser }: { user: any
     setLineMsg('');
     try {
       await apiDelete('/api/account/settings/line');
-      setLineMsg('LINE 帳號已解除綁定');
+      setLineMsg(ta('messages.lineUnlinked'));
       await load();
     } catch (e: any) {
-      setLineMsg(e.message || 'LINE 解除綁定失敗');
+      setLineMsg(e.message || ta('messages.lineUnlinkFailed'));
     }
   }
 
@@ -281,9 +289,9 @@ export default function AccountSettingsClient({ user: initialUser }: { user: any
   async function confirmDeleteAccount() {
     setDeleteMsg('');
     const hasPassword = !!profile?.hasPassword;
-    if (hasPassword && !deletePassword) { setDeleteMsg('請輸入密碼以確認刪除'); return; }
+    if (hasPassword && !deletePassword) { setDeleteMsg(ta('messages.deletePasswordRequired')); return; }
     if (!hasPassword && deleteConfirmEmail.trim().toLowerCase() !== String(profile?.email || '').trim().toLowerCase()) {
-      setDeleteMsg('請輸入正確的帳號電子信箱以確認刪除');
+      setDeleteMsg(ta('messages.deleteEmailMismatch'));
       return;
     }
     setDeleting(true);
@@ -299,24 +307,24 @@ export default function AccountSettingsClient({ user: initialUser }: { user: any
       setDeleteOpen(false);
       window.location.href = '/';
     } catch (e: any) {
-      setDeleteMsg(e.message || '刪除帳號失敗');
+      setDeleteMsg(e.message || ta('messages.deleteFailed'));
     }
     setDeleting(false);
   }
 
-  if (loading) return <div className="p-8 text-slate-500">載入中...</div>;
+  if (loading) return <div className="p-8 text-slate-500">{t('common.loading')}</div>;
 
   const isOAuthOnly = (profile?.googleLinked || profile?.lineLinked) && !profile?.hasPassword;
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold">帳號設定</h2>
+      <h2 className="text-2xl font-bold">{ta('title')}</h2>
 
       {/* Profile Info */}
       <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-xl shadow-sm">
-        <h3 className="text-lg font-semibold mb-4">帳號資訊</h3>
-        <div className="flex gap-4 mb-2"><span className="text-slate-600 w-24">電子郵件</span><span className="font-medium">{profile?.email || '—'}</span></div>
-        <div className="flex gap-4"><span className="text-slate-600 w-24">顯示名稱</span><span className="font-medium">{profile?.displayName || profile?.display_name || '—'}</span></div>
+        <h3 className="text-lg font-semibold mb-4">{ta('profileInfo')}</h3>
+        <div className="flex gap-4 mb-2"><span className="text-slate-600 w-24">{ta('email')}</span><span className="font-medium">{profile?.email || '—'}</span></div>
+        <div className="flex gap-4"><span className="text-slate-600 w-24">{ta('displayName')}</span><span className="font-medium">{profile?.displayName || profile?.display_name || '—'}</span></div>
       </div>
 
       {/* Language */}
@@ -326,33 +334,37 @@ export default function AccountSettingsClient({ user: initialUser }: { user: any
 
       {/* Display Name */}
       <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-xl shadow-sm">
-        <h3 className="text-lg font-semibold mb-4">修改顯示名稱</h3>
+        <h3 className="text-lg font-semibold mb-4">{ta('editDisplayName')}</h3>
         <form onSubmit={handleDisplayName}>
-          <Input label="顯示名稱" value={displayName} onChange={e => setDisplayName(e.target.value)} maxLength={50} />
-          {dnMsg && <p className={`text-sm mt-2 ${dnMsg.includes('失敗') ? 'text-red-500' : 'text-green-600'}`}>{dnMsg}</p>}
-          <Button type="submit" className="mt-4" disabled={dnSaving}>{dnSaving ? '儲存中...' : '更新名稱'}</Button>
+          <Input label={ta('displayName')} value={displayName} onChange={e => setDisplayName(e.target.value)} maxLength={50} />
+          {dnMsg && <p className={`text-sm mt-2 ${isMessageError(dnMsg) ? 'text-red-500' : 'text-green-600'}`}>{dnMsg}</p>}
+          <Button type="submit" className="mt-4" disabled={dnSaving}>{dnSaving ? ta('saving') : ta('updateName')}</Button>
         </form>
       </div>
 
       {/* Password */}
       <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-xl shadow-sm">
-        <h3 className="text-lg font-semibold mb-4">{isOAuthOnly ? '設定本機密碼' : '修改密碼'}</h3>
-        {isOAuthOnly && <p className="text-sm text-slate-500 mb-4">目前帳號僅支援第三方登入。設定本機密碼後，即可使用電子信箱與密碼登入。</p>}
+        <h3 className="text-lg font-semibold mb-4">{isOAuthOnly ? ta('setLocalPassword') : ta('changePassword')}</h3>
+        {isOAuthOnly && <p className="text-sm text-slate-500 mb-4">{ta('oauthOnlyPasswordHelp')}</p>}
         <form onSubmit={handleChangePw} className="space-y-4">
-          {!isOAuthOnly && <Input label="目前密碼" type="password" value={currentPw} onChange={e => setCurrentPw(e.target.value)} />}
-          <Input label="新密碼" type="password" value={newPw} onChange={e => setNewPw(e.target.value)} placeholder="至少8碼，含大小寫英文、數字、特殊符號" />
-          <Input label="確認新密碼" type="password" value={confirmPw} onChange={e => setConfirmPw(e.target.value)} />
+          {!isOAuthOnly && <Input label={ta('currentPassword')} type="password" value={currentPw} onChange={e => setCurrentPw(e.target.value)} />}
+          <Input label={ta('newPassword')} type="password" value={newPw} onChange={e => setNewPw(e.target.value)} placeholder={ta('passwordPlaceholder')} />
+          <Input label={ta('confirmNewPassword')} type="password" value={confirmPw} onChange={e => setConfirmPw(e.target.value)} />
           {pwError && <div className="text-red-500 text-sm">{pwError}</div>}
           {pwSuccess && <p className="text-green-600 text-sm">{pwSuccess}</p>}
-          <Button type="submit" disabled={pwSaving}>{pwSaving ? '更新中...' : isOAuthOnly ? '設定密碼' : '更新密碼'}</Button>
+          <Button type="submit" disabled={pwSaving}>{pwSaving ? ta('updating') : isOAuthOnly ? ta('setPassword') : ta('updatePassword')}</Button>
         </form>
       </div>
 
       {/* Theme Mode */}
       <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-xl shadow-sm">
-        <h3 className="text-lg font-semibold mb-4">顯示主題</h3>
+        <h3 className="text-lg font-semibold mb-4">{ta('themeTitle')}</h3>
         <div className="flex gap-4">
-          {[['system', '跟隨系統'], ['light', '淺色模式'], ['dark', '深色模式']].map(([val, label]) => (
+          {[
+            ['system', ta('theme.system')],
+            ['light', ta('theme.light')],
+            ['dark', ta('theme.dark')],
+          ].map(([val, label]) => (
             <label key={val} className="flex items-center gap-2 cursor-pointer">
               <input type="radio" name="themeMode" value={val} checked={themeMode === val} onChange={() => handleTheme(val)} className="w-4 h-4" />
               {label}
@@ -362,20 +374,20 @@ export default function AccountSettingsClient({ user: initialUser }: { user: any
       </div>
 
       <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-xl shadow-sm">
-        <h3 className="text-lg font-semibold mb-4">預設貨幣</h3>
+        <h3 className="text-lg font-semibold mb-4">{ta('defaultCurrency')}</h3>
         <form onSubmit={handleDefaultCurrency} className="space-y-3 max-w-xs">
-          <Input label="幣別代碼" value={defaultCurrency} onChange={e => setDefaultCurrency(e.target.value.toUpperCase())} maxLength={3} placeholder="TWD" />
-          {currencyMsg && <p className={`text-sm ${currencyMsg.includes('失敗') || currencyMsg.includes('格式') ? 'text-red-500' : 'text-green-600'}`}>{currencyMsg}</p>}
-          <Button type="submit" disabled={currencySaving}>{currencySaving ? '儲存中...' : '更新預設貨幣'}</Button>
+          <Input label={ta('currencyCode')} value={defaultCurrency} onChange={e => setDefaultCurrency(e.target.value.toUpperCase())} maxLength={3} placeholder="TWD" />
+          {currencyMsg && <p className={`text-sm ${isMessageError(currencyMsg) ? 'text-red-500' : 'text-green-600'}`}>{currencyMsg}</p>}
+          <Button type="submit" disabled={currencySaving}>{currencySaving ? ta('saving') : ta('updateDefaultCurrency')}</Button>
         </form>
       </div>
 
       {/* Passkeys */}
       <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-xl shadow-sm">
-        <h3 className="text-lg font-semibold mb-4">Passkey 管理</h3>
+        <h3 className="text-lg font-semibold mb-4">{ta('passkeyTitle')}</h3>
         {pkError && <div className="text-red-500 text-sm mb-4">{pkError}</div>}
-        {pkLoading && <p className="text-slate-500">載入中...</p>}
-        {!pkLoading && passkeys.length === 0 && <p className="text-slate-500 text-sm">尚未註冊任何 Passkey</p>}
+        {pkLoading && <p className="text-slate-500">{t('common.loading')}</p>}
+        {!pkLoading && passkeys.length === 0 && <p className="text-slate-500 text-sm">{ta('noPasskeys')}</p>}
         <div className="space-y-2">
           {passkeys.map((pk: any) => (
             <div key={pk.id} className="flex items-center justify-between p-3 border rounded-md">
@@ -384,60 +396,60 @@ export default function AccountSettingsClient({ user: initialUser }: { user: any
             </div>
           ))}
         </div>
-        <Button className="mt-4" onClick={handleRegisterPasskey}>+ 新增 Passkey</Button>
+        <Button className="mt-4" onClick={handleRegisterPasskey}>{ta('addPasskey')}</Button>
       </div>
 
       <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-xl shadow-sm">
-        <h3 className="text-lg font-semibold mb-4">Google 綁定</h3>
-        <p className="text-sm text-slate-500 mb-4">目前狀態：{profile?.googleLinked ? '已綁定 Google 帳號' : '尚未綁定 Google 帳號'}</p>
+        <h3 className="text-lg font-semibold mb-4">{ta('googleTitle')}</h3>
+        <p className="text-sm text-slate-500 mb-4">{ta('statusPrefix')}{profile?.googleLinked ? ta('linkedGoogle') : ta('notLinkedGoogle')}</p>
         <div className="flex gap-3 flex-wrap">
-          {!profile?.googleLinked && <Button onClick={handleLinkGoogle}>綁定 Google 帳號</Button>}
-          {profile?.googleLinked && <Button variant="outline" onClick={handleUnlinkGoogle}>解除綁定</Button>}
+          {!profile?.googleLinked && <Button onClick={handleLinkGoogle}>{ta('linkGoogle')}</Button>}
+          {profile?.googleLinked && <Button variant="outline" onClick={handleUnlinkGoogle}>{ta('unlink')}</Button>}
         </div>
         {googleMsg && <p className="text-sm text-slate-600 mt-3">{googleMsg}</p>}
       </div>
 
       <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-xl shadow-sm">
-        <h3 className="text-lg font-semibold mb-4">LINE 綁定</h3>
-        <p className="text-sm text-slate-500 mb-4">目前狀態：{profile?.lineLinked ? '已綁定 LINE 帳號' : '尚未綁定 LINE 帳號'}</p>
+        <h3 className="text-lg font-semibold mb-4">{ta('lineTitle')}</h3>
+        <p className="text-sm text-slate-500 mb-4">{ta('statusPrefix')}{profile?.lineLinked ? ta('linkedLine') : ta('notLinkedLine')}</p>
         <div className="flex gap-3 flex-wrap">
-          {!profile?.lineLinked && <Button onClick={handleLinkLine} disabled={lineLoading}>{lineLoading ? 'LINE 驗證中…' : '綁定 LINE 帳號'}</Button>}
-          {profile?.lineLinked && <Button variant="outline" onClick={handleUnlinkLine}>解除綁定</Button>}
+          {!profile?.lineLinked && <Button onClick={handleLinkLine} disabled={lineLoading}>{lineLoading ? ta('lineVerifying') : ta('linkLine')}</Button>}
+          {profile?.lineLinked && <Button variant="outline" onClick={handleUnlinkLine}>{ta('unlink')}</Button>}
         </div>
         {lineMsg && <p className="text-sm text-slate-600 mt-3">{lineMsg}</p>}
       </div>
 
       <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-xl shadow-sm">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold">目前登入裝置</h3>
-          <Button variant="outline" onClick={loadSessions}>重新整理</Button>
+          <h3 className="text-lg font-semibold">{ta('sessionsTitle')}</h3>
+          <Button variant="outline" onClick={loadSessions}>{ta('refresh')}</Button>
         </div>
-        {sessionsMsg && <p className={`text-sm mb-3 ${sessionsMsg.includes('失敗') ? 'text-red-500' : 'text-green-600'}`}>{sessionsMsg}</p>}
-        {sessionsLoading ? <p className="text-slate-500">載入中...</p> : (
+        {sessionsMsg && <p className={`text-sm mb-3 ${isMessageError(sessionsMsg) ? 'text-red-500' : 'text-green-600'}`}>{sessionsMsg}</p>}
+        {sessionsLoading ? <p className="text-slate-500">{t('common.loading')}</p> : (
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
               <thead>
                 <tr className="border-b text-slate-500">
-                  <th className="text-left py-2 pr-4">裝置名稱</th>
-                  <th className="text-left py-2 pr-4">登入時間</th>
-                  <th className="text-left py-2 pr-4">登入 IP</th>
-                  <th className="text-left py-2">操作</th>
+                  <th className="text-left py-2 pr-4">{ta('deviceName')}</th>
+                  <th className="text-left py-2 pr-4">{ta('loginTime')}</th>
+                  <th className="text-left py-2 pr-4">{ta('loginIp')}</th>
+                  <th className="text-left py-2">{ta('actions')}</th>
                 </tr>
               </thead>
               <tbody>
                 {sessions.map((session: any) => (
                   <tr key={session.id} className="border-b last:border-0">
-                    <td className="py-3 pr-4 font-medium">{session.deviceName || '未知裝置'}{session.isCurrent ? '（目前裝置）' : ''}</td>
-                    <td className="py-3 pr-4">{new Date(Number(session.loginAt) || 0).toLocaleString('zh-TW')}</td>
+                    <td className="py-3 pr-4 font-medium">{session.deviceName || ta('unknownDevice')}{session.isCurrent ? ta('currentDeviceSuffix') : ''}</td>
+                    <td className="py-3 pr-4">{new Date(Number(session.loginAt) || 0).toLocaleString(dateLocale)}</td>
                     <td className="py-3 pr-4">{session.ipAddress || 'unknown'}</td>
                     <td className="py-3">
-                      <Button variant="outline" onClick={() => handleLogoutSession(session.id, !!session.isCurrent)}>登出</Button>
+                      <Button variant="outline" onClick={() => handleLogoutSession(session.id, !!session.isCurrent)}>{ta('signOut')}</Button>
                     </td>
                   </tr>
                 ))}
                 {sessions.length === 0 && (
                   <tr>
-                    <td colSpan={4} className="py-3 text-slate-500">尚無登入裝置紀錄</td>
+                    <td colSpan={4} className="py-3 text-slate-500">{ta('noSessions')}</td>
                   </tr>
                 )}
               </tbody>
@@ -448,31 +460,31 @@ export default function AccountSettingsClient({ user: initialUser }: { user: any
 
       <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-xl shadow-sm">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold">登入稽核紀錄</h3>
-          <Button variant="outline" onClick={loadLoginAudit}>重新整理</Button>
+          <h3 className="text-lg font-semibold">{ta('auditTitle')}</h3>
+          <Button variant="outline" onClick={loadLoginAudit}>{ta('refresh')}</Button>
         </div>
-        {auditLoading ? <p className="text-slate-500">載入中...</p> : (
+        {auditLoading ? <p className="text-slate-500">{t('common.loading')}</p> : (
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
               <thead>
                 <tr className="border-b text-slate-500">
-                  <th className="text-left py-2 pr-4">登入時間</th>
+                  <th className="text-left py-2 pr-4">{ta('loginTime')}</th>
                   <th className="text-left py-2 pr-4">IP</th>
-                  <th className="text-left py-2 pr-4">國家</th>
-                  <th className="text-left py-2 pr-4">方式</th>
-                  <th className="text-left py-2 pr-4">裝置</th>
-                  <th className="text-left py-2">管理員登入</th>
+                  <th className="text-left py-2 pr-4">{ta('country')}</th>
+                  <th className="text-left py-2 pr-4">{ta('method')}</th>
+                  <th className="text-left py-2 pr-4">{ta('device')}</th>
+                  <th className="text-left py-2">{ta('adminLogin')}</th>
                 </tr>
               </thead>
               <tbody>
                 {loginAudit.map((log, index) => (
                   <tr key={`${log.loginAt}-${index}`} className="border-b last:border-0">
-                    <td className="py-3 pr-4">{new Date(Number(log.loginAt) || 0).toLocaleString('zh-TW')}</td>
+                    <td className="py-3 pr-4">{new Date(Number(log.loginAt) || 0).toLocaleString(dateLocale)}</td>
                     <td className="py-3 pr-4">{log.ipAddress}</td>
                     <td className="py-3 pr-4">{log.country}</td>
                     <td className="py-3 pr-4">{log.loginMethod}</td>
                     <td className="py-3 pr-4">{log.device || '—'}</td>
-                    <td className="py-3">{log.isAdminLogin ? '是' : '否'}</td>
+                    <td className="py-3">{log.isAdminLogin ? ta('yes') : ta('no')}</td>
                   </tr>
                 ))}
               </tbody>
@@ -482,17 +494,17 @@ export default function AccountSettingsClient({ user: initialUser }: { user: any
       </div>
 
       <div className="p-6 bg-white border border-red-200 dark:bg-slate-900 dark:border-red-900/50 rounded-xl shadow-sm">
-        <h3 className="text-lg font-semibold text-red-600 mb-4">刪除帳號</h3>
-        <p className="text-sm text-slate-600 mb-4">刪除帳號後，您的交易、帳戶、股票、Passkey 與設定資料都會永久移除，且無法復原。</p>
-        <Button variant="destructive" onClick={openDeleteModal}>刪除我的帳號</Button>
+        <h3 className="text-lg font-semibold text-red-600 mb-4">{ta('deleteTitle')}</h3>
+        <p className="text-sm text-slate-600 mb-4">{ta('deleteDescription')}</p>
+        <Button variant="destructive" onClick={openDeleteModal}>{ta('deleteButton')}</Button>
       </div>
 
-      <Modal open={deleteOpen} onClose={() => !deleting && setDeleteOpen(false)} title="確認刪除帳號">
+      <Modal open={deleteOpen} onClose={() => !deleting && setDeleteOpen(false)} title={ta('deleteModalTitle')}>
         <div className="space-y-4">
-          <p className="text-sm text-red-600">此操作將永久刪除您的帳號與所有資料（交易、帳戶、股票、Passkey 與設定），且<strong>無法復原</strong>。</p>
+          <p className="text-sm text-red-600">{ta('deleteModalWarning')}</p>
           {profile?.hasPassword ? (
             <Input
-              label="請輸入密碼以確認刪除"
+              label={ta('deletePasswordLabel')}
               type="password"
               value={deletePassword}
               onChange={e => setDeletePassword(e.target.value)}
@@ -500,7 +512,7 @@ export default function AccountSettingsClient({ user: initialUser }: { user: any
             />
           ) : (
             <Input
-              label={`請輸入您的帳號電子信箱「${profile?.email || ''}」以確認刪除`}
+              label={ta('deleteEmailLabel', { email: profile?.email || '' })}
               type="email"
               value={deleteConfirmEmail}
               onChange={e => setDeleteConfirmEmail(e.target.value)}
@@ -511,8 +523,8 @@ export default function AccountSettingsClient({ user: initialUser }: { user: any
           )}
           {deleteMsg && <p className="text-sm text-red-500">{deleteMsg}</p>}
           <div className="flex justify-end gap-3 pt-2">
-            <Button variant="outline" onClick={() => setDeleteOpen(false)} disabled={deleting}>取消</Button>
-            <Button variant="destructive" onClick={confirmDeleteAccount} disabled={deleting}>{deleting ? '刪除中…' : '永久刪除帳號'}</Button>
+            <Button variant="outline" onClick={() => setDeleteOpen(false)} disabled={deleting}>{t('common.cancel')}</Button>
+            <Button variant="destructive" onClick={confirmDeleteAccount} disabled={deleting}>{deleting ? ta('deleting') : ta('deletePermanently')}</Button>
           </div>
         </div>
       </Modal>

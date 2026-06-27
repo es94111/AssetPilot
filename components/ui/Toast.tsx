@@ -35,7 +35,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         {toasts.map(t => (
           <div key={t.id} className={`px-4 py-2 rounded shadow-lg flex items-center gap-2 ${typeClasses[t.type]}`}>
             <span>{t.message}</span>
-            <button onClick={() => dismiss(t.id)} aria-label="關閉" className="hover:opacity-75">
+            <button onClick={() => dismiss(t.id)} aria-label="Close" className="hover:opacity-75">
               ✕
             </button>
           </div>

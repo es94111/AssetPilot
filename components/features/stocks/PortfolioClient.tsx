@@ -7,20 +7,18 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useT } from '@/components/i18n/I18nProvider';
 import { Plus, RefreshCw, Trash2, Edit3 } from 'lucide-react';
 
-const STOCK_TYPES = [
-  { value: 'stock', label: '股票' },
-  { value: 'etf', label: 'ETF' },
-  { value: 'warrant', label: '權證' },
-];
+const STOCK_TYPE_VALUES = ['stock', 'etf', 'warrant'] as const;
 
 const EMPTY_FORM = { symbol: '', name: '', stockType: 'stock', note: '' };
 
-function fmt(n: number | string) { return 'NT$ ' + Math.round(Number(n) || 0).toLocaleString('zh-TW'); }
-function fmtPL(n: number | string) {
+function localeTag(locale: string) { return locale === 'en' ? 'en-US' : 'zh-TW'; }
+function fmt(n: number | string, locale: string) { return 'NT$ ' + Math.round(Number(n) || 0).toLocaleString(localeTag(locale)); }
+function fmtPL(n: number | string, locale: string) {
   const num = Math.round(Number(n) || 0);
-  return `${num > 0 ? '+' : ''}NT$ ${num.toLocaleString('zh-TW')}`;
+  return `${num > 0 ? '+' : ''}NT$ ${num.toLocaleString(localeTag(locale))}`;
 }
 function plClass(n: number | string) {
   const num = Number(n) || 0;
@@ -31,7 +29,7 @@ function parseQuoteNumber(value: unknown) {
   return Number(String(value || '').replace(/,/g, '')) || 0;
 }
 
-async function fetchBrowserStockPrices(stocks: any[]) {
+async function fetchBrowserStockPrices(stocks: any[], unavailableMessage: string) {
   const activeStocks = stocks.filter(s => !s.delisted && s.id && s.symbol);
   if (activeStocks.length === 0) return { updates: [], failed: 0 };
 
@@ -65,7 +63,7 @@ async function fetchBrowserStockPrices(stocks: any[]) {
   }
 
   if (quoteMap.size === 0) {
-    throw new Error('瀏覽器端無法取得台灣證交所行情資料');
+    throw new Error(unavailableMessage);
   }
 
   const updates = activeStocks
@@ -75,9 +73,9 @@ async function fetchBrowserStockPrices(stocks: any[]) {
   return { updates, failed: activeStocks.length - updates.length };
 }
 
-async function fetchUserSideStockPrices(stocks: any[]) {
+async function fetchUserSideStockPrices(stocks: any[], unavailableMessage: string) {
   try {
-    return await fetchBrowserStockPrices(stocks);
+    return await fetchBrowserStockPrices(stocks, unavailableMessage);
   } catch (_) {
     const fetchRes = await apiPost('/api/stocks/batch-fetch', {});
     const results: any[] = fetchRes.results || [];
@@ -90,6 +88,7 @@ async function fetchUserSideStockPrices(stocks: any[]) {
 }
 
 export default function PortfolioClient(_props: { user?: any } = {}) {
+  const { t, locale } = useT();
   const [stocks, setStocks] = useState<any[]>([]);
   const [summary, setSummary] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -138,7 +137,7 @@ export default function PortfolioClient(_props: { user?: any } = {}) {
     setUpdatingPrices(true);
     setPriceResult(null);
     try {
-      const { updates, failed } = await fetchUserSideStockPrices(stocks);
+      const { updates, failed } = await fetchUserSideStockPrices(stocks, t('features.stocks.portfolio.browserQuoteUnavailable'));
       if (updates.length > 0) {
         await apiPost('/api/stocks/batch-price', { updates });
       }
@@ -150,7 +149,7 @@ export default function PortfolioClient(_props: { user?: any } = {}) {
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.symbol.trim()) { setFormError('請輸入股票代碼'); return; }
+    if (!form.symbol.trim()) { setFormError(t('features.stocks.portfolio.messages.symbolRequired')); return; }
     setSaving(true);
     setFormError('');
     const body = { symbol: form.symbol.trim().toUpperCase(), name: form.name.trim(), stockType: form.stockType, note: form.note };
@@ -173,19 +172,20 @@ export default function PortfolioClient(_props: { user?: any } = {}) {
   const totalPL = summary?.totalPL ?? stocks.reduce((s, st) => s + (Number(st.estimatedProfit) || 0), 0);
   const overallRate = summary?.totalReturnRate ?? (totalCost > 0 ? Math.round(totalPL / totalCost * 10000) / 100 : null);
   const activeStocks = stocks.filter(s => (s.totalShares || 0) > 0 || (s.totalCost || 0) > 0 || (s.marketValue || 0) > 0);
+  const stockTypeOptions = STOCK_TYPE_VALUES.map(value => ({ value, label: t(`features.stocks.common.stockType.${value}`) }));
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold">持股總覽</h2>
+      <h2 className="text-2xl font-bold">{t('features.stocks.portfolio.title')}</h2>
       <StocksTabNav />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         {[
-          { label: '股票總市值', value: fmt(totalMV), color: 'text-[var(--primary)]' },
-          { label: '總投入成本', value: fmt(totalCost), color: 'text-[var(--text)]' },
-          { label: '預估損益', value: fmtPL(totalPL), color: plClass(totalPL) },
-          { label: '累計股利', value: fmt(totalDiv), color: 'text-[var(--today)]' },
-          { label: '整體報酬率', value: overallRate !== null ? `${overallRate >= 0 ? '+' : ''}${overallRate}%` : '—', color: plClass(overallRate || 0) },
+          { label: t('features.stocks.portfolio.totalMarketValue'), value: fmt(totalMV, locale), color: 'text-[var(--primary)]' },
+          { label: t('features.stocks.portfolio.totalCost'), value: fmt(totalCost, locale), color: 'text-[var(--text)]' },
+          { label: t('features.stocks.common.estimatedPL'), value: fmtPL(totalPL, locale), color: plClass(totalPL) },
+          { label: t('features.stocks.portfolio.totalDividend'), value: fmt(totalDiv, locale), color: 'text-[var(--today)]' },
+          { label: t('features.stocks.common.overallReturnRate'), value: overallRate !== null ? `${overallRate >= 0 ? '+' : ''}${overallRate}%` : t('features.common.notRecorded'), color: plClass(overallRate || 0) },
         ].map((item, i) => (
           <div key={i} className="card p-4">
             <p className="text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)] mb-1">{item.label}</p>
@@ -195,25 +195,25 @@ export default function PortfolioClient(_props: { user?: any } = {}) {
       </div>
 
       <div className="flex gap-2">
-        <Button onClick={() => { setForm(EMPTY_FORM); setEditId(null); setFormError(''); setAddDialogOpen(true); }}><Plus size={16} className="mr-2" /> 新增股票</Button>
-        <Button variant="outline" onClick={() => { setPriceResult(null); setPriceModal(true); }}><RefreshCw size={16} className="mr-2" /> 更新股價</Button>
+        <Button onClick={() => { setForm(EMPTY_FORM); setEditId(null); setFormError(''); setAddDialogOpen(true); }}><Plus size={16} className="mr-2" /> {t('features.stocks.portfolio.addStock')}</Button>
+        <Button variant="outline" onClick={() => { setPriceResult(null); setPriceModal(true); }}><RefreshCw size={16} className="mr-2" /> {t('features.stocks.portfolio.updatePrices')}</Button>
       </div>
 
       <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
         <DialogContent>
-          <DialogHeader><DialogTitle>{editId ? '編輯股票' : '新增股票'}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{editId ? t('features.stocks.portfolio.editStock') : t('features.stocks.portfolio.newStock')}</DialogTitle></DialogHeader>
           <form onSubmit={handleSave} className="space-y-4">
             <div className="relative">
-              <Input label="股票代碼 *" value={form.symbol} onChange={e => setForm(f => ({ ...f, symbol: e.target.value }))} onBlur={handleSymbolBlur} />
-              {symbolLooking && <p className="text-xs text-slate-400 mt-1">查詢中...</p>}
+              <Input label={t('features.stocks.common.stockSymbol')} value={form.symbol} onChange={e => setForm(f => ({ ...f, symbol: e.target.value }))} onBlur={handleSymbolBlur} />
+              {symbolLooking && <p className="text-xs text-slate-400 mt-1">{t('features.stocks.common.searching')}</p>}
             </div>
-            <Input label="股票名稱" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
-            <Select label="類型" options={STOCK_TYPES} value={form.stockType} onChange={e => setForm(f => ({ ...f, stockType: e.target.value }))} />
-            <Input label="備註" value={form.note} onChange={e => setForm(f => ({ ...f, note: e.target.value }))} />
+            <Input label={t('features.stocks.common.stockName')} value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
+            <Select label={t('features.common.type')} options={stockTypeOptions} value={form.stockType} onChange={e => setForm(f => ({ ...f, stockType: e.target.value }))} />
+            <Input label={t('features.common.note')} value={form.note} onChange={e => setForm(f => ({ ...f, note: e.target.value }))} />
             {formError && <p className="text-red-500 text-sm">{formError}</p>}
             <div className="flex gap-2">
-              <Button type="button" variant="outline" onClick={() => setAddDialogOpen(false)}>取消</Button>
-              <Button type="submit" disabled={saving}>儲存</Button>
+              <Button type="button" variant="outline" onClick={() => setAddDialogOpen(false)}>{t('common.cancel')}</Button>
+              <Button type="submit" disabled={saving}>{saving ? t('common.saving') : t('common.save')}</Button>
             </div>
           </form>
         </DialogContent>
@@ -221,18 +221,18 @@ export default function PortfolioClient(_props: { user?: any } = {}) {
 
       <Dialog open={priceModal} onOpenChange={setPriceModal}>
         <DialogContent>
-          <DialogHeader><DialogTitle>更新股價</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{t('features.stocks.portfolio.updatePrices')}</DialogTitle></DialogHeader>
           <div className="space-y-4">
-            <p className="text-sm text-slate-500">優先由瀏覽器端向台灣證交所公開 API 查詢；若瀏覽器被擋，會改用登入後的 user API 代理查詢並更新持股。</p>
+            <p className="text-sm text-slate-500">{t('features.stocks.portfolio.priceModalDescription')}</p>
             {priceResult && (
               <p className="text-sm text-green-700 bg-green-50 p-3 rounded">
-                更新完成：{priceResult.updated} 支成功{priceResult.failed > 0 ? `，${priceResult.failed} 支失敗` : ''}。
+                {t(priceResult.failed > 0 ? 'features.stocks.portfolio.priceResultWithFailed' : 'features.stocks.portfolio.priceResult', { updated: priceResult.updated, failed: priceResult.failed })}
               </p>
             )}
             <div className="flex gap-2">
-              <Button variant="outline" onClick={() => setPriceModal(false)}>關閉</Button>
+              <Button variant="outline" onClick={() => setPriceModal(false)}>{t('common.close')}</Button>
               <Button onClick={handleBatchFetchPrices} disabled={updatingPrices}>
-                {updatingPrices ? '更新中...' : '批次自動更新'}
+                {updatingPrices ? t('features.stocks.portfolio.updating') : t('features.stocks.portfolio.batchUpdate')}
               </Button>
             </div>
           </div>
@@ -261,8 +261,8 @@ export default function PortfolioClient(_props: { user?: any } = {}) {
             const rr = Number(s.returnRate) || 0;
             const typeBadge = {
               etf:     { label: 'ETF',  cls: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300' },
-              warrant: { label: '權證', cls: 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300' },
-              stock:   { label: '股票', cls: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300' },
+              warrant: { label: t('features.stocks.common.stockType.warrant'), cls: 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300' },
+              stock:   { label: t('features.stocks.common.stockType.stock'), cls: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300' },
             }[s.stockType as 'etf' | 'warrant' | 'stock'] ?? { label: s.stockType, cls: 'bg-slate-100 text-slate-600' };
             const plBg = ep > 0 ? 'bg-[var(--success-bg)]' : ep < 0 ? 'bg-[var(--danger-bg)]' : 'bg-[var(--border)]/30';
             return (
@@ -292,35 +292,35 @@ export default function PortfolioClient(_props: { user?: any } = {}) {
                 {/* Metrics grid */}
                 <div className="border-t border-[var(--border)] pt-3 grid grid-cols-2 gap-y-2 gap-x-4 text-sm">
                   <div>
-                    <span className="text-[var(--text-muted)]">持有股數</span>
-                    <p className="font-medium text-[var(--text)]">{Number(s.totalShares).toLocaleString()} 股</p>
+                    <span className="text-[var(--text-muted)]">{t('features.stocks.portfolio.heldShares')}</span>
+                    <p className="font-medium text-[var(--text)]">{t('features.stocks.portfolio.shareUnit', { count: Number(s.totalShares).toLocaleString(localeTag(locale)) })}</p>
                   </div>
                   <div>
-                    <span className="text-[var(--text-muted)]">目前股價</span>
-                    <p className="font-medium text-[var(--text)]">{s.currentPrice > 0 ? `$${Number(s.currentPrice).toLocaleString()}` : '—'}</p>
+                    <span className="text-[var(--text-muted)]">{t('features.stocks.portfolio.currentPrice')}</span>
+                    <p className="font-medium text-[var(--text)]">{s.currentPrice > 0 ? `$${Number(s.currentPrice).toLocaleString(localeTag(locale))}` : t('features.common.notRecorded')}</p>
                   </div>
                   <div>
-                    <span className="text-[var(--text-muted)]">成本均價</span>
-                    <p className="font-medium text-[var(--text)]">${Number(s.avgCost || 0).toLocaleString()}</p>
+                    <span className="text-[var(--text-muted)]">{t('features.stocks.common.costAverage')}</span>
+                    <p className="font-medium text-[var(--text)]">${Number(s.avgCost || 0).toLocaleString(localeTag(locale))}</p>
                   </div>
                   <div>
-                    <span className="text-[var(--text-muted)]">市值</span>
-                    <p className="font-medium text-[var(--text)]">{fmt(s.marketValue)}</p>
+                    <span className="text-[var(--text-muted)]">{t('features.stocks.portfolio.marketValue')}</span>
+                    <p className="font-medium text-[var(--text)]">{fmt(s.marketValue, locale)}</p>
                   </div>
                 </div>
 
                 {/* P&L block */}
                 <div className={`${plBg} rounded-lg p-3 flex items-center justify-between gap-2`}>
                   <div>
-                    <p className="text-xs text-[var(--text-muted)] mb-0.5">預估損益</p>
+                    <p className="text-xs text-[var(--text-muted)] mb-0.5">{t('features.stocks.common.estimatedPL')}</p>
                     <p className={`text-base font-bold ${plClass(ep)}`}>
-                      {fmtPL(ep)}
+                      {fmtPL(ep, locale)}
                       <span className="ml-1.5 text-sm font-semibold">{ep !== 0 ? `(${rr >= 0 ? '+' : ''}${rr.toFixed(2)}%)` : ''}</span>
                     </p>
                   </div>
                   <div className="text-right shrink-0">
-                    <p className="text-xs text-[var(--text-muted)] mb-0.5">累計股利</p>
-                    <p className="text-sm font-semibold text-[var(--today)]">{fmt(s.totalDividend)}</p>
+                    <p className="text-xs text-[var(--text-muted)] mb-0.5">{t('features.stocks.portfolio.totalDividend')}</p>
+                    <p className="text-sm font-semibold text-[var(--today)]">{fmt(s.totalDividend, locale)}</p>
                   </div>
                 </div>
               </div>

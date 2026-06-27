@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
+import { useT } from '@/components/i18n/I18nProvider';
 
 type UserLike = { isAdmin?: boolean };
 
@@ -29,35 +30,35 @@ type MegaS4Status = {
 const CSV_MODULES = [
   {
     key: 'accounts',
-    label: '帳戶',
+    labelKey: 'features.dataTransfer.modules.accounts',
     exportUrl: '/api/accounts/export',
     importUrl: '/api/accounts/import',
     columns: ['name', 'category', 'accountType', 'initialBalance', 'currency', 'icon', 'excludeFromTotal', 'linkedBankName', 'overseasFeeRate', 'note'],
   },
   {
     key: 'transactions',
-    label: '交易記錄',
+    labelKey: 'features.dataTransfer.modules.transactions',
     exportUrl: '/api/transactions/export',
     importUrl: '/api/transactions/import',
     columns: ['date', 'type', 'category', 'amount', 'currency', 'originalAmount', 'fxRate', 'twdAmount', 'fxFee', 'account', 'transferToAccount', 'excludeFromStats', 'tags', 'note'],
   },
   {
     key: 'categories',
-    label: '分類',
+    labelKey: 'features.dataTransfer.modules.categories',
     exportUrl: '/api/categories/export',
     importUrl: '/api/categories/import',
     columns: ['type', 'name', 'parent', 'color'],
   },
   {
     key: 'stockTransactions',
-    label: '股票交易',
+    labelKey: 'features.dataTransfer.modules.stockTransactions',
     exportUrl: '/api/stock-transactions/export',
     importUrl: '/api/stock-transactions/import',
     columns: ['date', 'symbol', 'name', 'type', 'shares', 'price', 'fee', 'tax', 'accountName', 'note'],
   },
   {
     key: 'stockDividends',
-    label: '股利紀錄',
+    labelKey: 'features.dataTransfer.modules.stockDividends',
     exportUrl: '/api/stock-dividends/export',
     importUrl: '/api/stock-dividends/import',
     columns: ['date', 'symbol', 'name', 'cashDividend', 'stockDividend', 'accountName', 'note'],
@@ -153,6 +154,7 @@ async function downloadFromUrl(url: string) {
 }
 
 export default function DataTransferClient({ user }: { user: UserLike }) {
+  const { t } = useT();
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [busyKey, setBusyKey] = useState('');
@@ -198,9 +200,9 @@ export default function DataTransferClient({ user }: { user: UserLike }) {
     setStatus('');
     try {
       await downloadFromUrl(url + exportQuery);
-      setStatus('匯出成功');
+      setStatus(t('features.dataTransfer.messages.exportSuccess'));
     } catch (e: any) {
-      setStatus(e.message || '匯出失敗');
+      setStatus(e.message || t('features.dataTransfer.messages.exportFailed'));
     }
     setBusyKey('');
   }
@@ -212,7 +214,7 @@ export default function DataTransferClient({ user }: { user: UserLike }) {
     try {
       const text = await file.text();
       const rows = parseCsv(text);
-      if (rows.length === 0) throw new Error('CSV 沒有可匯入資料');
+      if (rows.length === 0) throw new Error(t('features.dataTransfer.messages.emptyCsv'));
       const res = await fetch(importUrl, {
         method: 'POST',
         credentials: 'include',
@@ -222,10 +224,10 @@ export default function DataTransferClient({ user }: { user: UserLike }) {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
       setImportResults((prev) => ({ ...prev, [moduleKey]: data }));
-      setStatus(`${file.name} 匯入完成`);
+      setStatus(t('features.dataTransfer.messages.importComplete', { name: file.name }));
     } catch (e: any) {
-      setImportResults((prev) => ({ ...prev, [moduleKey]: { message: e.message || '匯入失敗' } }));
-      setStatus(e.message || '匯入失敗');
+      setImportResults((prev) => ({ ...prev, [moduleKey]: { message: e.message || t('features.dataTransfer.messages.importFailed') } }));
+      setStatus(e.message || t('features.dataTransfer.messages.importFailed'));
     }
     setBusyKey('');
   }
@@ -236,9 +238,9 @@ export default function DataTransferClient({ user }: { user: UserLike }) {
     setBundleError(false);
     try {
       await downloadFromUrl('/api/account/data-bundle');
-      setBundleStatus('完整備份下載完成');
+      setBundleStatus(t('features.dataTransfer.messages.bundleExportDone'));
     } catch (e: any) {
-      setBundleStatus(e.message || '完整備份下載失敗');
+      setBundleStatus(e.message || t('features.dataTransfer.messages.bundleExportFailed'));
       setBundleError(true);
     }
     setBusyKey('');
@@ -259,9 +261,9 @@ export default function DataTransferClient({ user }: { user: UserLike }) {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.message || data.error || `HTTP ${res.status}`);
-      setBundleStatus(data.message || '還原完成');
+      setBundleStatus(data.message || t('features.dataTransfer.messages.restoreDone'));
     } catch (e: any) {
-      setBundleStatus(e.message || '備份還原失敗');
+      setBundleStatus(e.message || t('features.dataTransfer.messages.bundleRestoreFailed'));
       setBundleError(true);
     }
     setBusyKey('');
@@ -272,9 +274,9 @@ export default function DataTransferClient({ user }: { user: UserLike }) {
     setDbStatus('');
     try {
       await downloadFromUrl('/api/database/export');
-      setDbStatus('資料庫備份下載完成');
+      setDbStatus(t('features.dataTransfer.messages.dbExportDone'));
     } catch (e: any) {
-      setDbStatus(e.message || '資料庫備份失敗');
+      setDbStatus(e.message || t('features.dataTransfer.messages.dbExportFailed'));
     }
     setBusyKey('');
   }
@@ -293,9 +295,9 @@ export default function DataTransferClient({ user }: { user: UserLike }) {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.message || data.error || `HTTP ${res.status}`);
-      setDbStatus(data.message || '資料庫還原成功');
+      setDbStatus(data.message || t('features.dataTransfer.messages.dbRestoreDone'));
     } catch (e: any) {
-      setDbStatus(e.message || '資料庫還原失敗');
+      setDbStatus(e.message || t('features.dataTransfer.messages.dbRestoreFailed'));
     }
     setBusyKey('');
   }
@@ -310,9 +312,9 @@ export default function DataTransferClient({ user }: { user: UserLike }) {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
-      setMegaS4Message(`已上傳至 ${data.bucket}/${data.key}`);
+      setMegaS4Message(t('features.dataTransfer.messages.uploadedTo', { bucket: data.bucket, key: data.key }));
     } catch (e: any) {
-      setMegaS4Message(e.message || 'MEGA S4 備份失敗');
+      setMegaS4Message(e.message || t('features.dataTransfer.messages.megaBackupFailed'));
     }
     setBusyKey('');
   }
@@ -329,7 +331,7 @@ export default function DataTransferClient({ user }: { user: UserLike }) {
       if (megaS4FormData.prefix)          payload.prefix          = megaS4FormData.prefix;
       if (megaS4FormData.accessKeyId)     payload.accessKeyId     = megaS4FormData.accessKeyId;
       if (megaS4FormData.secretAccessKey) payload.secretAccessKey = megaS4FormData.secretAccessKey;
-      if (Object.keys(payload).length === 0) { setMegaS4Message('請至少填寫一個欄位'); setMegaS4Saving(false); return; }
+      if (Object.keys(payload).length === 0) { setMegaS4Message(t('features.dataTransfer.messages.requireOneField')); setMegaS4Saving(false); return; }
       const res = await fetch('/api/database/mega-s4', {
         method: 'PUT', credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -340,9 +342,9 @@ export default function DataTransferClient({ user }: { user: UserLike }) {
       setMegaS4Status(data);
       setShowMegaS4Form(false);
       setMegaS4FormData(prev => ({ ...prev, accessKeyId: '', secretAccessKey: '' }));
-      setMegaS4Message('設定已儲存');
+      setMegaS4Message(t('features.dataTransfer.messages.saved'));
     } catch (e: any) {
-      setMegaS4Message(e.message || '設定儲存失敗');
+      setMegaS4Message(e.message || t('features.dataTransfer.messages.saveFailed'));
     }
     setMegaS4Saving(false);
   }
@@ -350,12 +352,12 @@ export default function DataTransferClient({ user }: { user: UserLike }) {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900 mb-2">資料匯出匯入</h1>
+        <h1 className="text-2xl font-bold text-slate-900 mb-2">{t('features.dataTransfer.title')}</h1>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-xl shadow-sm">
-        <Input label="匯出起始日" type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
-        <Input label="匯出結束日" type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
+        <Input label={t('features.dataTransfer.exportStartDate')} type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
+        <Input label={t('features.dataTransfer.exportEndDate')} type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
       </div>
 
       {status && <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">{status}</div>}
@@ -366,16 +368,16 @@ export default function DataTransferClient({ user }: { user: UserLike }) {
           return (
             <section key={module.key} className="rounded-xl border border-slate-200 bg-white dark:bg-slate-900 dark:border-slate-800 p-5 shadow-sm space-y-4">
               <div>
-                <h2 className="text-lg font-semibold text-slate-900">{module.label}</h2>
-                <p className="text-sm text-slate-500 mt-1">支援 CSV 匯出與匯入。欄位：{module.columns.join(', ')}</p>
+                <h2 className="text-lg font-semibold text-slate-900">{t(module.labelKey)}</h2>
+                <p className="text-sm text-slate-500 mt-1">{t('features.dataTransfer.csvColumns', { columns: module.columns.join(', ') })}</p>
               </div>
 
               <div className="flex flex-wrap gap-3">
                 <Button onClick={() => handleCsvExport(module.exportUrl, `${module.key}-export`)} disabled={busyKey === `${module.key}-export`}>
-                  {busyKey === `${module.key}-export` ? '匯出中...' : '匯出 CSV'}
+                  {busyKey === `${module.key}-export` ? t('features.dataTransfer.exporting') : t('features.dataTransfer.exportCsv')}
                 </Button>
                 <label className="inline-flex items-center gap-3 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 cursor-pointer hover:bg-slate-50">
-                  <span>{busyKey === module.key ? '匯入中...' : '選擇 CSV 匯入'}</span>
+                  <span>{busyKey === module.key ? t('features.dataTransfer.importing') : t('features.dataTransfer.chooseCsv')}</span>
                   <input
                     type="file"
                     accept=".csv,text/csv"
@@ -388,26 +390,26 @@ export default function DataTransferClient({ user }: { user: UserLike }) {
               {result && (
                 <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm space-y-2">
                   {result.message && <p className="text-slate-700">{result.message}</p>}
-                  {result.imported != null && <p>匯入成功：{result.imported} 筆</p>}
-                  {result.skipped != null && <p>略過：{result.skipped} 筆</p>}
-                  {!!result.created?.categories?.length && <p>自動建立分類：{result.created.categories.join('、')}</p>}
-                  {!!result.created?.accounts?.length && <p>自動建立帳戶：{result.created.accounts.join('、')}</p>}
+                  {result.imported != null && <p>{t('features.dataTransfer.imported', { count: result.imported })}</p>}
+                  {result.skipped != null && <p>{t('features.dataTransfer.skipped', { count: result.skipped })}</p>}
+                  {!!result.created?.categories?.length && <p>{t('features.dataTransfer.createdCategories', { items: result.created.categories.join(', ') })}</p>}
+                  {!!result.created?.accounts?.length && <p>{t('features.dataTransfer.createdAccounts', { items: result.created.accounts.join(', ') })}</p>}
                   {!!result.warnings?.length && (
                     <div>
-                      <p className="font-medium">警告</p>
+                      <p className="font-medium">{t('features.dataTransfer.warning')}</p>
                       <ul className="list-disc pl-5 space-y-1">
                         {result.warnings.slice(0, 5).map((warning, index) => (
-                          <li key={`${warning.row}-${index}`}>第 {warning.row || '?'} 列：{warning.reason || warning.type || '警告'}</li>
+                          <li key={`${warning.row}-${index}`}>{t('features.dataTransfer.rowIssue', { row: warning.row || '?', reason: warning.reason || warning.type || t('features.dataTransfer.warning') })}</li>
                         ))}
                       </ul>
                     </div>
                   )}
                   {!!result.errors?.length && (
                     <div>
-                      <p className="font-medium text-red-600">錯誤</p>
+                      <p className="font-medium text-red-600">{t('features.dataTransfer.error')}</p>
                       <ul className="list-disc pl-5 space-y-1 text-red-600">
                         {result.errors.slice(0, 5).map((error, index) => (
-                          <li key={`${error.row}-${index}`}>第 {error.row || '?'} 列：{error.reason || '匯入錯誤'}</li>
+                          <li key={`${error.row}-${index}`}>{t('features.dataTransfer.rowIssue', { row: error.row || '?', reason: error.reason || t('features.dataTransfer.messages.importFailed') })}</li>
                         ))}
                       </ul>
                     </div>
@@ -421,23 +423,23 @@ export default function DataTransferClient({ user }: { user: UserLike }) {
 
       <section className="rounded-xl border border-slate-200 bg-white dark:bg-slate-900 dark:border-slate-800 p-5 shadow-sm space-y-4">
         <div>
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">完整資料備份（含圖片）</h2>
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">{t('features.dataTransfer.bundle.title')}</h2>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            一鍵打包下載你個人的全部資料（交易、帳戶、分類、預算、週期、匯率、股票，以及交易憑證圖片）為單一 ZIP。
-            上傳同一份 ZIP 即可還原。
+            {t('features.dataTransfer.bundle.description1')}
+            {t('features.dataTransfer.bundle.description2')}
           </p>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            還原採<span className="font-medium text-slate-700 dark:text-slate-200">合併方式</span>：已存在的資料會自動略過，只補回缺少的；
-            <span className="font-medium text-slate-700 dark:text-slate-200">不會刪除或覆蓋你現有的資料</span>。
+            {t('features.dataTransfer.bundle.restorePrefix')}<span className="font-medium text-slate-700 dark:text-slate-200">{t('features.dataTransfer.bundle.mergeMode')}</span>{t('features.dataTransfer.bundle.restoreMiddle')}
+            <span className="font-medium text-slate-700 dark:text-slate-200">{t('features.dataTransfer.bundle.noOverwrite')}</span>.
           </p>
         </div>
 
         <div className="flex flex-wrap gap-3">
           <Button onClick={handleBundleExport} disabled={busyKey === 'bundle-export'}>
-            {busyKey === 'bundle-export' ? '打包下載中...' : '下載完整備份'}
+            {busyKey === 'bundle-export' ? t('features.dataTransfer.bundle.downloading') : t('features.dataTransfer.bundle.download')}
           </Button>
           <label className="inline-flex items-center gap-3 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 cursor-pointer hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800">
-            <span>{busyKey === 'bundle-restore' ? '還原中...' : '上傳備份還原'}</span>
+            <span>{busyKey === 'bundle-restore' ? t('features.dataTransfer.bundle.restoring') : t('features.dataTransfer.bundle.restore')}</span>
             <input
               type="file"
               accept=".zip,application/zip,application/octet-stream"
@@ -458,16 +460,16 @@ export default function DataTransferClient({ user }: { user: UserLike }) {
       {user?.isAdmin && (
         <section className="rounded-xl border border-slate-200 bg-white dark:bg-slate-900 dark:border-slate-800 p-5 shadow-sm space-y-4">
           <div>
-            <h2 className="text-lg font-semibold text-slate-900">整檔備份 / 還原</h2>
-            <p className="text-sm text-slate-500 mt-1">僅管理員可操作。SQLite 模式下載 `.db` 備份；PostgreSQL 模式下載 `.sql` 備份，還原時請上傳對應格式。</p>
+            <h2 className="text-lg font-semibold text-slate-900">{t('features.dataTransfer.database.title')}</h2>
+            <p className="text-sm text-slate-500 mt-1">{t('features.dataTransfer.database.description')}</p>
           </div>
 
           <div className="flex flex-wrap gap-3">
             <Button onClick={handleDbExport} disabled={busyKey === 'db-export'}>
-              {busyKey === 'db-export' ? '下載中...' : '下載資料庫備份'}
+              {busyKey === 'db-export' ? t('features.dataTransfer.database.downloading') : t('features.dataTransfer.database.download')}
             </Button>
             <label className="inline-flex items-center gap-3 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 cursor-pointer hover:bg-slate-50">
-              <span>{busyKey === 'db-import' ? '還原中...' : '選擇備份還原'}</span>
+              <span>{busyKey === 'db-import' ? t('features.dataTransfer.database.restoring') : t('features.dataTransfer.database.restore')}</span>
               <input
                 type="file"
                 accept=".db,.sql,application/octet-stream,application/x-sqlite3,application/sql,text/plain"
@@ -484,28 +486,28 @@ export default function DataTransferClient({ user }: { user: UserLike }) {
       {user?.isAdmin && (
         <section className="rounded-xl border border-slate-200 bg-white dark:bg-slate-900 dark:border-slate-800 p-5 shadow-sm space-y-4">
           <div>
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">MEGA S4 雲端備份</h2>
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">{t('features.dataTransfer.mega.title')}</h2>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-              將目前完整 SQLite 備份以上傳物件方式存入 MEGA S4 bucket。連線資訊由伺服器環境變數設定，不會在瀏覽器輸入或顯示金鑰。
+              {t('features.dataTransfer.mega.description')}
             </p>
           </div>
 
           <div className="grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700 dark:border-slate-800 dark:bg-slate-950/50 dark:text-slate-300 sm:grid-cols-2">
-            <p><span className="font-medium">狀態：</span>{megaS4Status?.configured ? '已設定' : '尚未完整設定'}</p>
+            <p><span className="font-medium">{t('features.dataTransfer.mega.state')}</span>{megaS4Status?.configured ? t('features.dataTransfer.mega.configured') : t('features.dataTransfer.mega.notConfigured')}</p>
             <p><span className="font-medium">Region：</span>{megaS4Status?.region || 'eu-central-1'}</p>
-            <p><span className="font-medium">Bucket：</span>{megaS4Status?.bucket || '未設定'}</p>
+            <p><span className="font-medium">{t('features.dataTransfer.mega.bucket')}</span>{megaS4Status?.bucket || t('features.dataTransfer.mega.notConfigured')}</p>
             <p><span className="font-medium">Prefix：</span>{megaS4Status?.prefix || 'assetpilot'}</p>
             <p className="sm:col-span-2"><span className="font-medium">Endpoint：</span>{megaS4Status?.endpoint || 'https://s3.eu-central-1.s4.mega.io'}</p>
             {!!megaS4Status?.missing?.length && (
               <p className="sm:col-span-2 text-amber-700 dark:text-amber-300">
-                缺少環境變數：{megaS4Status.missing.join('、')}
+                {t('features.dataTransfer.mega.missing', { items: megaS4Status.missing.join(', ') })}
               </p>
             )}
           </div>
 
           <div className="flex flex-wrap gap-3">
             <Button onClick={handleMegaS4Backup} disabled={!megaS4Status?.configured || busyKey === 'mega-s4-backup'}>
-              {busyKey === 'mega-s4-backup' ? '上傳中...' : '上傳備份到 MEGA S4'}
+              {busyKey === 'mega-s4-backup' ? t('features.dataTransfer.mega.uploading') : t('features.dataTransfer.mega.upload')}
             </Button>
             <Button
               variant="outline"
@@ -525,7 +527,7 @@ export default function DataTransferClient({ user }: { user: UserLike }) {
                 setMegaS4Message('');
               }}
             >
-              {showMegaS4Form ? '取消設定' : '設定'}
+              {showMegaS4Form ? t('features.dataTransfer.mega.cancelConfigure') : t('features.dataTransfer.mega.configure')}
             </Button>
           </div>
 
@@ -535,10 +537,10 @@ export default function DataTransferClient({ user }: { user: UserLike }) {
               className="rounded-lg border border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950/50 p-4 space-y-1"
             >
               <p className="text-xs text-slate-500 dark:text-slate-400 pb-2">
-                設定寫入伺服器持久化設定檔，立即生效。金鑰欄位請重新輸入，不會預填。
+                {t('features.dataTransfer.mega.formHelp')}
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
-                <Input label="Bucket 名稱" value={megaS4FormData.bucket}
+                <Input label={t('features.dataTransfer.mega.bucketName')} value={megaS4FormData.bucket}
                   onChange={e => setMegaS4FormData(p => ({ ...p, bucket: e.target.value }))}
                   placeholder="my-bucket" autoComplete="off" />
                 <Select label="Region" value={megaS4FormData.region}
@@ -550,16 +552,16 @@ export default function DataTransferClient({ user }: { user: UserLike }) {
                 <Input label="Secret Access Key" type="password" value={megaS4FormData.secretAccessKey}
                   onChange={e => setMegaS4FormData(p => ({ ...p, secretAccessKey: e.target.value }))}
                   placeholder="Secret Access Key" autoComplete="new-password" />
-                <Input label="Prefix（選填）" value={megaS4FormData.prefix}
+                <Input label={t('features.dataTransfer.mega.prefix')} value={megaS4FormData.prefix}
                   onChange={e => setMegaS4FormData(p => ({ ...p, prefix: e.target.value }))}
                   placeholder="assetpilot" />
-                <Input label="Endpoint（選填，留空自動推算）" value={megaS4FormData.endpoint}
+                <Input label={t('features.dataTransfer.mega.endpoint')} value={megaS4FormData.endpoint}
                   onChange={e => setMegaS4FormData(p => ({ ...p, endpoint: e.target.value }))}
                   placeholder={`https://s3.${megaS4FormData.region}.s4.mega.io`} />
               </div>
               <div className="flex gap-3 pt-1">
-                <Button type="submit" disabled={megaS4Saving}>{megaS4Saving ? '儲存中...' : '儲存設定'}</Button>
-                <Button type="button" variant="outline" onClick={() => setShowMegaS4Form(false)} disabled={megaS4Saving}>取消</Button>
+                <Button type="submit" disabled={megaS4Saving}>{megaS4Saving ? t('common.saving') : t('features.dataTransfer.mega.saveSettings')}</Button>
+                <Button type="button" variant="outline" onClick={() => setShowMegaS4Form(false)} disabled={megaS4Saving}>{t('common.cancel')}</Button>
               </div>
             </form>
           )}

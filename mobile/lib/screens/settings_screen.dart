@@ -174,13 +174,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
   };
 
   Future<void> _pickLanguage() async {
-    final langs = {'zh-TW': tr('繁體中文'), 'en': 'English'};
     final picked = await showDialog<String>(
       context: context,
       builder: (_) => SimpleDialog(
         title: Text(tr('語言（APP、通知與網頁版）')),
         children: [
-          for (final e in langs.entries)
+          for (final e in appLocaleLabels.entries)
             ListTile(
               title: Text(e.value),
               onTap: () => Navigator.pop(context, e.key),
@@ -192,7 +191,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     try {
       await ApiClient.instance.setLanguage(picked);
       await setAppLocale(picked);
-      if (mounted) toast(context, tr('已更新語言：${langs[picked]}'));
+      if (mounted) toast(context, tr('已更新語言：${appLocaleLabels[picked]}'));
     } catch (e) {
       if (mounted) toast(context, '$e');
     }

@@ -5,7 +5,15 @@
 
 import type { Locale } from './config';
 import { zhTW, type Dictionary } from './dictionaries/zh-TW';
+import { zhCN } from './dictionaries/zh-CN';
 import { en } from './dictionaries/en';
+import { es } from './dictionaries/es';
+import { ar } from './dictionaries/ar';
+import { fr } from './dictionaries/fr';
+import { hi } from './dictionaries/hi';
+import { ptBR } from './dictionaries/pt-BR';
+import { ru } from './dictionaries/ru';
+import { ko } from './dictionaries/ko';
 import { createTranslator, type TranslateFn } from './translate';
 
 type AnyRecord = Record<string, unknown>;
@@ -27,9 +35,19 @@ function deepMerge<T>(base: T, override: unknown): T {
   return out as T;
 }
 
+const enBase = deepMerge(zhTW, en);
+
 const DICTIONARIES: Record<Locale, Dictionary> = {
   'zh-TW': zhTW,
-  en: deepMerge(zhTW, en),
+  'zh-CN': deepMerge(zhTW, zhCN),
+  en: enBase,
+  es: deepMerge(enBase, es),
+  ar: deepMerge(enBase, ar),
+  fr: deepMerge(enBase, fr),
+  hi: deepMerge(enBase, hi),
+  'pt-BR': deepMerge(enBase, ptBR),
+  ru: deepMerge(enBase, ru),
+  ko: deepMerge(enBase, ko),
 };
 
 export function getDictionary(locale: Locale): Dictionary {

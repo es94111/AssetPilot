@@ -1,19 +1,19 @@
 import AppLayout from '@/components/layout/AppLayout';
 import { getDashboardData } from '@/lib/dashboardHelpers';
 import { getTranslator } from '@/lib/i18n/getDictionary';
+import { localeTag } from '@/lib/i18n/localeTag';
 import { resolveLocale } from '@/lib/i18n/resolveLocale';
 import { requireServerAuth } from '@/lib/serverAuth';
 import { DashboardFilters } from './components/DashboardFilters';
 
 function fmtMoney(value: number | string, locale: string) {
-  const numberLocale = locale === 'en' ? 'en-US' : 'zh-TW';
-  return `NT$ ${Math.round(Number(value) || 0).toLocaleString(numberLocale)}`;
+  return `NT$ ${Math.round(Number(value) || 0).toLocaleString(localeTag(locale))}`;
 }
 
 function fmtMonth(value: string, locale: string) {
   const match = /^(\d{4})-(\d{2})$/.exec(value || '');
   if (!match) return value;
-  return new Intl.DateTimeFormat(locale === 'en' ? 'en-US' : 'zh-TW', {
+  return new Intl.DateTimeFormat(localeTag(locale), {
     year: 'numeric',
     month: 'long',
   }).format(new Date(Number(match[1]), Number(match[2]) - 1, 1));

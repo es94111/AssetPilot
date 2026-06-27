@@ -1,33 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import 'l10n.dart';
+
 /// 金額與顏色格式化工具。
 
-final _twd = NumberFormat.currency(
-  locale: 'zh_TW',
-  symbol: 'NT\$ ',
-  decimalDigits: 0,
-);
-final _int = NumberFormat.decimalPattern('zh_TW');
-
 /// 格式化為 TWD 整數金額：NT$ 1,234
-String twd(num v) => _twd.format(v);
+String twd(num v) => NumberFormat.currency(
+      locale: appIntlLocaleTag(),
+      symbol: 'NT\$ ',
+      decimalDigits: 0,
+    ).format(v);
 
 /// 千分位整數
-String intFmt(num v) => _int.format(v);
+String intFmt(num v) => NumberFormat.decimalPattern(appIntlLocaleTag()).format(v);
 
 /// 依貨幣格式化（小數兩位，TWD 不顯示小數）
 String money(num v, String currency) {
   final digits = currency == 'TWD' ? 0 : 2;
   return NumberFormat.currency(
-    locale: 'zh_TW',
+    locale: appIntlLocaleTag(),
     symbol: '$currency ',
     decimalDigits: digits,
   ).format(v);
 }
 
 /// 帶正負號的金額（用於損益）：+1,234 / -567
-String signed(num v) => (v >= 0 ? '+' : '') + _int.format(v);
+String signed(num v) => (v >= 0 ? '+' : '') + NumberFormat.decimalPattern(appIntlLocaleTag()).format(v);
 
 /// 解析 `#RRGGBB` 顏色字串，失敗回傳灰色。
 Color parseColor(String hex) {

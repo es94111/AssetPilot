@@ -8,13 +8,13 @@ import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useT } from '@/components/i18n/I18nProvider';
+import { localeTag } from '@/lib/i18n/localeTag';
 import { Plus, RefreshCw, Trash2, Edit3 } from 'lucide-react';
 
 const STOCK_TYPE_VALUES = ['stock', 'etf', 'warrant'] as const;
 
 const EMPTY_FORM = { symbol: '', name: '', stockType: 'stock', note: '' };
 
-function localeTag(locale: string) { return locale === 'en' ? 'en-US' : 'zh-TW'; }
 function fmt(n: number | string, locale: string) { return 'NT$ ' + Math.round(Number(n) || 0).toLocaleString(localeTag(locale)); }
 function fmtPL(n: number | string, locale: string) {
   const num = Math.round(Number(n) || 0);

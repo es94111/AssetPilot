@@ -1,13 +1,16 @@
 package com.assetpilot.assetpilot
 
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.os.LocaleListCompat
 import com.google.android.play.core.integrity.IntegrityManagerFactory
 import com.google.android.play.core.integrity.IntegrityTokenRequest
-import io.flutter.embedding.android.FlutterActivity
+import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 
-class MainActivity : FlutterActivity() {
+class MainActivity : FlutterFragmentActivity() {
     private val channelName = "assetpilot/play_integrity"
+    private val localeChannelName = "assetpilot/locale"
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -20,6 +23,25 @@ class MainActivity : FlutterActivity() {
                     } else {
                         requestIntegrityToken(nonce, result)
                     }
+                }
+                else -> result.notImplemented()
+            }
+        }
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, localeChannelName).setMethodCallHandler { call, result ->
+            when (call.method) {
+                // Single source of truth for the app's language. Writes to the
+                // per-app locale store shared with the system "App info →
+                // Language" screen (framework LocaleManager on API 33+,
+                // AppCompat-backed storage below that).
+                "setLocale" -> {
+                    val tag = call.argument<String>("tag")
+                    val locales = if (tag.isNullOrEmpty()) {
+                        LocaleListCompat.getEmptyLocaleList()
+                    } else {
+                        LocaleListCompat.forLanguageTags(tag)
+                    }
+                    AppCompatDelegate.setApplicationLocales(locales)
+                    result.success(null)
                 }
                 else -> result.notImplemented()
             }

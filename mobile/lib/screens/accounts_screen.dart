@@ -53,6 +53,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
     final changed = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       builder: (_) => _RepaymentSheet(cards: cards, payers: payers),
     );
     if (changed == true) {
@@ -65,6 +66,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
     final changed = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       builder: (_) => _AccountForm(existing: account),
     );
     if (changed == true) _reload();
@@ -270,6 +272,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       builder: (_) => _StatementCyclesSheet(account: a),
     );
   }

@@ -74,6 +74,7 @@ class _ReportScheduleScreenState extends State<ReportScheduleScreen> {
     final changed = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       builder: (_) => _ReportScheduleForm(existing: existing),
     );
     if (changed == true) _reload();

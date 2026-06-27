@@ -166,6 +166,7 @@ Future<void> showChangePasswordSheet(
   await showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
+    useSafeArea: true,
     builder: (_) => _ChangePasswordSheet(hasPassword: hasPassword),
   );
 }

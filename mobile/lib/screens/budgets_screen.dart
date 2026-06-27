@@ -65,6 +65,7 @@ class _BudgetsScreenState extends State<BudgetsScreen> {
     final changed = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       builder: (_) => _BudgetForm(yearMonth: _ym, categories: categories),
     );
     if (changed == true) _reload();

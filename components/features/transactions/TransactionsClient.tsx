@@ -494,6 +494,16 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
   const allChildren = categories.filter((c: any) => !!c.parentId);
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const pageTotals = txs.reduce(
+    (acc, tx) => {
+      const amount = Math.abs(Number(tx.amount) || 0);
+      if (tx.type === 'income' || tx.type === 'transfer_in') acc.income += amount;
+      if (tx.type === 'expense' || tx.type === 'transfer_out') acc.expense += amount;
+      return acc;
+    },
+    { income: 0, expense: 0 }
+  );
+  const pageNet = pageTotals.income - pageTotals.expense;
 
   const getCatName = (tx: any) => {
     const cat = categories.find((c: any) => c.id === (tx.category_id || tx.categoryId));
@@ -597,6 +607,23 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
             {PAGE_SIZE_OPTIONS.map((size) => <option key={size} value={size}>{size} 筆</option>)}
           </select>
         </label>
+      </div>
+
+      <div className="tx-page-summary" aria-label="當頁交易統計">
+        <div className="tx-page-summary-item tx-page-summary-income">
+          <span className="tx-page-summary-label">當頁收入</span>
+          <strong className="tx-page-summary-value amount-income">{fmt(pageTotals.income)}</strong>
+        </div>
+        <div className="tx-page-summary-item tx-page-summary-expense">
+          <span className="tx-page-summary-label">當頁支出</span>
+          <strong className="tx-page-summary-value amount-expense">{fmt(pageTotals.expense)}</strong>
+        </div>
+        <div className="tx-page-summary-item tx-page-summary-net">
+          <span className="tx-page-summary-label">當頁合計</span>
+          <strong className={`tx-page-summary-value ${pageNet >= 0 ? 'amount-income' : 'amount-expense'}`}>
+            {pageNet >= 0 ? '+' : '-'}{fmt(Math.abs(pageNet))}
+          </strong>
+        </div>
       </div>
 
       {loading && <p className="empty-hint">載入中...</p>}

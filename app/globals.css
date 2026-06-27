@@ -791,6 +791,45 @@
   margin-left: auto;
 }
 
+/* ── Current-page transaction summary ── */
+.tx-page-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.tx-page-summary-item {
+  min-width: 0;
+  padding: 14px 16px;
+  border: 1px solid var(--glass-border);
+  border-left-width: 3px;
+  border-radius: var(--radius);
+  background: var(--surface-glass);
+  box-shadow: var(--shadow);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+}
+.tx-page-summary-income { border-left-color: var(--income); }
+.tx-page-summary-expense { border-left-color: var(--expense); }
+.tx-page-summary-net { border-left-color: var(--net); }
+.tx-page-summary-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+.tx-page-summary-value {
+  display: block;
+  margin-top: 6px;
+  font-size: 1.125rem;
+  line-height: 1.25;
+}
+
+@media (max-width: 640px) {
+  .tx-page-summary {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* ── Empty state ── */
 .empty-hint {
   text-align: center;

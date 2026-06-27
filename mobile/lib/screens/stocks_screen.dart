@@ -205,6 +205,7 @@ class _HoldingsTabState extends State<_HoldingsTab> {
     final changed = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       builder: (_) => _StockForm(),
     );
     if (changed == true) _reload();
@@ -214,6 +215,7 @@ class _HoldingsTabState extends State<_HoldingsTab> {
     final changed = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       builder: (_) => _StockForm(existing: s),
     );
     if (changed == true) _reload();
@@ -477,6 +479,7 @@ class _StockTxnTabState extends State<_StockTxnTab> {
     final changed = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       builder: (_) => _StockTxnForm(stocks: stocks, existing: existing),
     );
     if (changed == true) _reload();
@@ -595,6 +598,7 @@ class _DividendTabState extends State<_DividendTab> {
     final changed = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       builder: (_) =>
           _DividendForm(stocks: stocks, accounts: accounts, existing: existing),
     );

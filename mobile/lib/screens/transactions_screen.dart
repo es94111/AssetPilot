@@ -102,6 +102,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     final applied = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       builder: (_) => _TxnFilterSheet(
         accounts: data.accounts,
         categories: data.categories,

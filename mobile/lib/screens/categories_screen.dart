@@ -56,6 +56,7 @@ class _CategoriesScreenState extends State<CategoriesScreen>
     final changed = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       builder: (_) => _CategoryForm(
         existing: existing,
         type: _tab.index == 0 ? 'expense' : 'income',

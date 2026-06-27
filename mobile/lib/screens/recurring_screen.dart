@@ -73,6 +73,7 @@ class _RecurringScreenState extends State<RecurringScreen> {
     final changed = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       builder: (_) => _RecurringForm(
         categories: data.categories,
         accounts: data.accounts,

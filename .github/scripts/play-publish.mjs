@@ -53,6 +53,42 @@ function loadReleaseNotes() {
   return notes;
 }
 
+// Google 的 OAuth token 端點偶發以 "Premature close" / ECONNRESET 中斷連線
+// （googleapis 內建的 gaxios 重試對這類 no-response 網路錯誤只重試 2 次就放棄）。
+// 這類錯誤發生在實際上傳之前，整個流程重跑是安全的：未 commit 的 edit 不會佔用
+// versionCode。因此對「短暫網路錯誤」做指數退避重試，真正的設定/權限錯誤仍會直接失敗。
+function isTransientError(err) {
+  const code = String(err?.code || err?.error?.code || err?.cause?.code || '');
+  const msg = String(err?.message || err?.error?.message || err || '');
+  return (
+    code === 'ERR_STREAM_PREMATURE_CLOSE' ||
+    code === 'ECONNRESET' ||
+    code === 'ETIMEDOUT' ||
+    code === 'EAI_AGAIN' ||
+    code === 'ENOTFOUND' ||
+    /premature close|socket hang ?up|ECONNRESET|ETIMEDOUT|network|timeout/i.test(msg)
+  );
+}
+
+async function withRetry(fn, { attempts = 4, baseDelayMs = 3000 } = {}) {
+  let lastErr;
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    try {
+      return await fn();
+    } catch (err) {
+      lastErr = err;
+      if (attempt === attempts || !isTransientError(err)) throw err;
+      const delayMs = baseDelayMs * 2 ** (attempt - 1);
+      console.warn(
+        `Play publish attempt ${attempt}/${attempts} failed with transient network error ` +
+          `(${err?.code || err?.message}); retrying in ${delayMs}ms...`,
+      );
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
+  }
+  throw lastErr;
+}
+
 async function main() {
   const credentials = JSON.parse(readFileSync(saPath, 'utf8'));
   const auth = new google.auth.GoogleAuth({
@@ -100,7 +136,7 @@ async function main() {
   console.log(`Committed edit ${editId} (sent for review).`);
 }
 
-main().catch((err) => {
+withRetry(main).catch((err) => {
   console.error('Play publish failed:', err?.response?.data || err);
   process.exit(1);
 });

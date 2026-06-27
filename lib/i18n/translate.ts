@@ -6,8 +6,32 @@ import type { Dictionary } from './dictionaries/zh-TW';
 
 export type { Dictionary };
 
+/**
+ * 由來源字典型別自動展開的「所有 leaf 鍵」dot-path 聯集。
+ * 用於 t() 的參數型別，讓 IDE 對靜態鍵提供自動補全與跳轉。
+ * （巢狀物件遞迴，string leaf 為終點。）
+ */
+export type I18nKey = DotPath<Dictionary>;
+
+type DotPath<T> = {
+  [K in keyof T & string]: T[K] extends string
+    ? K
+    : T[K] extends Record<string, unknown>
+      ? `${K}.${DotPath<T[K]>}`
+      : never;
+}[keyof T & string];
+
 export type TranslateVars = Record<string, string | number>;
-export type TranslateFn = (path: string, vars?: TranslateVars) => string;
+
+/**
+ * 翻譯函式型別。
+ * - `I18nKey`：已知靜態鍵 → IDE 自動補全。
+ * - `(string & {})`：保留接受任意字串的能力，使動態鍵
+ *   （如 t(`a.b.${x}`)、t(labelKey)）仍可呼叫、不破壞編譯。
+ * 靜態鍵的拼字把關交由 CI 腳本 tools/check-i18n-parity.ts，
+ * 它直接掃原始碼比對 zh-TW，比型別更不受 tsc 環境限制。
+ */
+export type TranslateFn = (path: I18nKey | (string & {}), vars?: TranslateVars) => string;
 
 function lookup(dict: Dictionary, path: string): unknown {
   return path.split('.').reduce<unknown>((acc, key) => {

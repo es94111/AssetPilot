@@ -1,0 +1,31 @@
+name: i18n Parity Check
+
+# 守住手寫 i18n 的兩個漂移破口：字典鍵對齊 + 原始碼靜態鍵驗證。
+# 腳本零相依（只 require 字典檔），不需 npm install。
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    paths:
+      - 'lib/i18n/**'
+      - 'app/**'
+      - 'components/**'
+      - 'tools/check-i18n-parity.ts'
+      - '.github/workflows/i18n-check.yml'
+  workflow_dispatch:
+
+jobs:
+  i18n-parity:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Check i18n dictionary parity & static keys
+        run: node tools/check-i18n-parity.ts

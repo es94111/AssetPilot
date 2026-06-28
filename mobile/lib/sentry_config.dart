@@ -71,6 +71,8 @@ void configureSentry(SentryFlutterOptions options) {
 /// App 以 `flutter_secure_storage` 保管登入 Cookie、並會處理金額與記帳憑證照片，
 /// 這些都不應離開裝置進到第三方監控服務。
 FutureOr<SentryEvent?> _scrubSensitiveData(SentryEvent event, Hint hint) {
+  if (_isTransientHandshakeFailure(event)) return null;
+
   final request = event.request;
   if (request != null) {
     // headers getter 為不可變副本，須整份替換才能移除機敏標頭。
@@ -87,6 +89,21 @@ FutureOr<SentryEvent?> _scrubSensitiveData(SentryEvent event, Hint hint) {
     request.fragment = null;
   }
   return event;
+}
+
+/// 丟棄行動網路或 TLS 瞬斷造成的暫時性握手失敗。
+///
+/// API client 已會把這類錯誤轉成使用者可讀的連線失敗訊息；若再由
+/// SentryHttpClient 自動上報，會形成無法從程式碼修復的單次連線雜訊。
+bool _isTransientHandshakeFailure(SentryEvent event) {
+  final exceptions = event.exceptions;
+  if (exceptions == null) return false;
+  return exceptions.any((exception) {
+    final type = exception.type ?? '';
+    final value = exception.value ?? '';
+    return type == 'HandshakeException' &&
+        value.contains('Connection terminated during handshake');
+  });
 }
 
 /// 移除 HTTP 麵包屑中的查詢字串與片段（搜尋關鍵字等可能機敏內容），

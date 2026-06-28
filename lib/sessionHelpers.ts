@@ -1,16 +1,9 @@
 import crypto from 'crypto';
 import { signToken } from './auth';
 import { getDB, queryAll, queryOne, saveDB } from './db';
-import { getRequestIpFromHeaders, uid } from './loginHelpers';
+import { describeDevice, getAppDeviceIdFromHeaders, getRequestIpFromHeaders, getUserAgentFromHeaders, uid } from './loginHelpers';
 
 type HeadersLike = Headers | Record<string, string | undefined>;
-
-function getHeader(headers: HeadersLike, key: string): string {
-  if (typeof (headers as Headers).get === 'function') {
-    return (headers as Headers).get(key) || '';
-  }
-  return (headers as Record<string, string | undefined>)[key] || '';
-}
 
 export function hashToken(token: string): string {
   return crypto.createHash('sha256').update(token).digest('hex');
@@ -46,12 +39,13 @@ function getTokenExpiresAt(token: string): number {
 export function createLoginSession(userId: string, tokenVersion: number, headers: HeadersLike): { token: string; sessionId: string } {
   const sessionId = uid();
   const token = signToken(userId, tokenVersion, sessionId);
-  const userAgent = getHeader(headers, 'user-agent');
+  const userAgent = getUserAgentFromHeaders(headers);
+  const appDeviceId = getAppDeviceIdFromHeaders(headers);
   const now = Date.now();
   getDB().run(
-    `INSERT INTO login_sessions (id, user_id, token_hash, device_name, ip_address, user_agent, login_at, last_seen_at, expires_at, revoked_at)
-     VALUES (?,?,?,?,?,?,?,?,?,0)`,
-    [sessionId, userId, hashToken(token), detectDeviceName(userAgent), getRequestIpFromHeaders(headers), userAgent, now, now, getTokenExpiresAt(token)]
+    `INSERT INTO login_sessions (id, user_id, token_hash, device_name, ip_address, user_agent, device_id, login_at, last_seen_at, expires_at, revoked_at)
+     VALUES (?,?,?,?,?,?,?,?,?,?,0)`,
+    [sessionId, userId, hashToken(token), describeDevice(userAgent) || detectDeviceName(userAgent), getRequestIpFromHeaders(headers), userAgent, appDeviceId, now, now, getTokenExpiresAt(token)]
   );
   saveDB();
   return { token, sessionId };
@@ -66,7 +60,7 @@ export function verifyLoginSession(userId: string, sessionId: string | undefined
 
 export function listLoginSessions(userId: string, currentSessionId?: string) {
   const rows = queryAll(
-    `SELECT id, device_name, ip_address, login_at FROM login_sessions
+    `SELECT id, device_name, ip_address, login_at, device_id FROM login_sessions
      WHERE user_id = ? AND revoked_at = 0 AND (expires_at = 0 OR expires_at > ?)
      ORDER BY login_at DESC`,
     [userId, Date.now()]
@@ -76,6 +70,7 @@ export function listLoginSessions(userId: string, currentSessionId?: string) {
     deviceName: String(row.device_name || '未知裝置'),
     loginAt: Number(row.login_at) || 0,
     ipAddress: String(row.ip_address || 'unknown'),
+    deviceId: String(row.device_id || ''),
     isCurrent: String(row.id || '') === String(currentSessionId || ''),
   }));
 }

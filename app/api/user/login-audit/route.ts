@@ -9,7 +9,7 @@ export async function GET(request) {
   if (auth instanceof NextResponse) return auth;
 
   const logs = queryAll(
-    `SELECT login_at, ip_address, country, login_method, is_admin_login, user_agent
+    `SELECT login_at, ip_address, country, login_method, is_admin_login, user_agent, device_id
      FROM login_audit_logs
      WHERE user_id = ?
      ORDER BY login_at DESC
@@ -24,6 +24,7 @@ export async function GET(request) {
       country: l.country || '-',
       loginMethod: l.login_method || 'password',
       device: describeDevice(l.user_agent),
+      deviceId: l.device_id || '',
       isAdminLogin: !!l.is_admin_login,
     })),
   });

@@ -113,7 +113,6 @@ async function _runMigrations(): Promise<void> {
   )`);
   db.run(`CREATE INDEX IF NOT EXISTS idx_login_audit_user_time ON login_audit_logs(user_id, login_at DESC)`);
   db.run(`CREATE INDEX IF NOT EXISTS idx_login_audit_time ON login_audit_logs(login_at DESC)`);
-  alterIgnore("ALTER TABLE login_audit_logs ADD COLUMN device_id TEXT DEFAULT ''")
 
   db.run(`CREATE TABLE IF NOT EXISTS data_operation_audit_log (
     id TEXT PRIMARY KEY,

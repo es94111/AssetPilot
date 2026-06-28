@@ -46,6 +46,7 @@ function setPath(target, dotPath, value) {
     const key = parts[i];
     if (FORBIDDEN_KEYS.has(key)) throw new Error(`Forbidden key in i18n path: ${dotPath}`);
     if (!Object.hasOwn(cursor, key)) cursor[key] = Object.create(null);
+    // nosemgrep: javascript.lang.security.audit.prototype-pollution.prototype-pollution-loop.prototype-pollution-loop -- key is pre-screened by FORBIDDEN_KEYS and cursor[key] is created via Object.create(null)
     cursor = cursor[key];
   }
   const lastKey = parts.at(-1);

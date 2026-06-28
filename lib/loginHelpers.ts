@@ -125,7 +125,16 @@ export function getRequestIpFromHeaders(headers: HeadersLike): string {
 /** 取得 User-Agent 標頭，並截斷至合理長度避免異常超長字串。 */
 export function getUserAgentFromHeaders(headers: HeadersLike): string {
   const ua = String(getHeader(headers, 'user-agent') || '').trim();
-  return ua.slice(0, 400);
+  const appDeviceId = getAppDeviceIdFromHeaders(headers);
+  const taggedUa = appDeviceId ? `${ua} AssetPilotDeviceId/${appDeviceId}` : ua;
+  return taggedUa.slice(0, 400);
+}
+
+export function getAppDeviceIdFromHeaders(headers: HeadersLike): string {
+  return String(getHeader(headers, 'x-assetpilot-device-id') || '')
+    .trim()
+    .replace(/[^a-zA-Z0-9_-]/g, '')
+    .slice(0, 64);
 }
 
 /**
@@ -135,14 +144,16 @@ export function getUserAgentFromHeaders(headers: HeadersLike): string {
 export function describeDevice(userAgent: string | null | undefined): string {
   const ua = String(userAgent || '').trim();
   if (!ua) return '未知裝置';
+  const appDeviceId = /AssetPilotDeviceId\/([a-zA-Z0-9_-]{6,64})/i.exec(ua)?.[1] || '';
+  const appDeviceLabel = appDeviceId ? ` · ID ${appDeviceId.slice(0, 8)}` : '';
 
   // AssetPilot 行動 App（Dart/Flutter http 預設 UA 或自訂 UA）。
   if (/AssetPilot/i.test(ua)) {
-    if (/Android/i.test(ua)) return 'AssetPilot App（Android）';
-    if (/iOS|iPhone|iPad/i.test(ua)) return 'AssetPilot App（iOS）';
-    return 'AssetPilot App';
+    if (/Android/i.test(ua)) return `AssetPilot App（Android）${appDeviceLabel}`;
+    if (/iOS|iPhone|iPad/i.test(ua)) return `AssetPilot App（iOS）${appDeviceLabel}`;
+    return `AssetPilot App${appDeviceLabel}`;
   }
-  if (/^Dart\//i.test(ua) || /\(dart:io\)/i.test(ua)) return 'AssetPilot App';
+  if (/^Dart\//i.test(ua) || /\(dart:io\)/i.test(ua)) return `AssetPilot App${appDeviceLabel}`;
 
   // 作業系統 / 裝置。
   let os = '';
@@ -275,10 +286,11 @@ export function recordLoginAudit(
   const isAdminLogin = user.is_admin ? 1 : 0;
   const cfCountry = getCountryFromHeaders(headers);
   const userAgent = getUserAgentFromHeaders(headers);
+  const appDeviceId = getAppDeviceIdFromHeaders(headers);
   const db = getDB();
   db.run(
-    `INSERT INTO login_audit_logs (id, user_id, email, login_at, ip_address, login_method, is_admin_login, country, user_agent) VALUES (?,?,?,?,?,?,?,?,?)`,
-    [loginId, user.id, normalizeEmail(user.email), loginAt, ipAddress, loginMethod, isAdminLogin, cfCountry, userAgent]
+    `INSERT INTO login_audit_logs (id, user_id, email, login_at, ip_address, login_method, is_admin_login, country, user_agent, device_id) VALUES (?,?,?,?,?,?,?,?,?,?)`,
+    [loginId, user.id, normalizeEmail(user.email), loginAt, ipAddress, loginMethod, isAdminLogin, cfCountry, userAgent, appDeviceId]
   );
   saveDB();
   if (!cfCountry) {
@@ -303,10 +315,11 @@ export function recordLoginAttempt({ user = null, email = '', headers, method = 
   const attemptId = uid();
   const cfCountry = getCountryFromHeaders(safeHeaders);
   const userAgent = getUserAgentFromHeaders(safeHeaders);
+  const appDeviceId = getAppDeviceIdFromHeaders(safeHeaders);
   const db = getDB();
   db.run(
-    `INSERT INTO login_attempt_logs (id, user_id, email, login_at, ip_address, login_method, is_admin_login, is_success, failure_reason, country, user_agent) VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
-    [attemptId, userId, normalizedEmail, loginAt, ipAddress, loginMethod, isAdminLogin, isSuccess ? 1 : 0, isSuccess ? '' : String(failureReason || 'unknown').trim().toLowerCase(), cfCountry, userAgent]
+    `INSERT INTO login_attempt_logs (id, user_id, email, login_at, ip_address, login_method, is_admin_login, is_success, failure_reason, country, user_agent, device_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
+    [attemptId, userId, normalizedEmail, loginAt, ipAddress, loginMethod, isAdminLogin, isSuccess ? 1 : 0, isSuccess ? '' : String(failureReason || 'unknown').trim().toLowerCase(), cfCountry, userAgent, appDeviceId]
   );
   saveDB();
   if (!cfCountry) {

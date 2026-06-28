@@ -113,6 +113,7 @@ async function _runMigrations(): Promise<void> {
   )`);
   db.run(`CREATE INDEX IF NOT EXISTS idx_login_audit_user_time ON login_audit_logs(user_id, login_at DESC)`);
   db.run(`CREATE INDEX IF NOT EXISTS idx_login_audit_time ON login_audit_logs(login_at DESC)`);
+  alterIgnore("ALTER TABLE login_audit_logs ADD COLUMN device_id TEXT DEFAULT ''")
 
   db.run(`CREATE TABLE IF NOT EXISTS data_operation_audit_log (
     id TEXT PRIMARY KEY,
@@ -553,6 +554,7 @@ async function _runMigrations(): Promise<void> {
   alterIgnore("ALTER TABLE login_audit_logs ADD COLUMN is_admin_login INTEGER DEFAULT 0");
   alterIgnore("ALTER TABLE login_audit_logs ADD COLUMN country TEXT DEFAULT ''");
   alterIgnore("ALTER TABLE login_audit_logs ADD COLUMN user_agent TEXT DEFAULT ''");
+  alterIgnore("ALTER TABLE login_audit_logs ADD COLUMN device_id TEXT DEFAULT ''");
   alterIgnore("ALTER TABLE login_attempt_logs ADD COLUMN id TEXT DEFAULT ''");
   alterIgnore("ALTER TABLE login_attempt_logs ADD COLUMN user_id TEXT DEFAULT ''");
   alterIgnore("ALTER TABLE login_attempt_logs ADD COLUMN email TEXT DEFAULT ''");
@@ -564,6 +566,8 @@ async function _runMigrations(): Promise<void> {
   alterIgnore("ALTER TABLE login_attempt_logs ADD COLUMN failure_reason TEXT DEFAULT ''");
   alterIgnore("ALTER TABLE login_attempt_logs ADD COLUMN country TEXT DEFAULT ''");
   alterIgnore("ALTER TABLE login_attempt_logs ADD COLUMN user_agent TEXT DEFAULT ''");
+  alterIgnore("ALTER TABLE login_attempt_logs ADD COLUMN device_id TEXT DEFAULT ''");
+  alterIgnore("ALTER TABLE login_sessions ADD COLUMN device_id TEXT DEFAULT ''");
 
   saveDB();
 }

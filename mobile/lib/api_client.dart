@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io' show Platform;
+import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -33,6 +34,7 @@ class ApiClient {
   static final ApiClient instance = ApiClient._();
 
   static const _kCookie = 'authCookie';
+  static const _kAppDeviceId = 'appDeviceId';
 
   // 認證 Cookie 的加密儲存（Android 走 Keystore 加密的 EncryptedSharedPreferences）。
   static const _secure = FlutterSecureStorage(
@@ -44,6 +46,7 @@ class ApiClient {
 
   String _baseUrl = defaultBaseUrl;
   String? _cookie; // 例："authToken=xxxxx"
+  String? _appDeviceId;
   final ValueNotifier<bool> authState = ValueNotifier(false);
 
   String get baseUrl => _baseUrl;
@@ -63,11 +66,20 @@ class ApiClient {
     await p.remove('baseUrl');
     try {
       _cookie = await _secure.read(key: _kCookie);
+      _appDeviceId = await _secure.read(key: _kAppDeviceId);
     } catch (_) {
       // 解密失敗（如裝置遷移後 Keystore 金鑰不可用）→ 清掉避免反覆失敗，使用者重新登入即可。
       _cookie = null;
+      _appDeviceId = null;
       try {
         await _secure.delete(key: _kCookie);
+        await _secure.delete(key: _kAppDeviceId);
+      } catch (_) {}
+    }
+    if (_appDeviceId == null || _appDeviceId!.isEmpty) {
+      _appDeviceId = _newAppDeviceId();
+      try {
+        await _secure.write(key: _kAppDeviceId, value: _appDeviceId!);
       } catch (_) {}
     }
     // 一次性遷移：把舊版明文存於 SharedPreferences 的 cookie 搬進加密儲存，並清除明文殘留。
@@ -87,6 +99,12 @@ class ApiClient {
   // ── 低階請求 ────────────────────────────────────────────────
 
   Uri _uri(String path) => Uri.parse('$_baseUrl$path');
+
+  static String _newAppDeviceId() {
+    final rng = Random.secure();
+    final bytes = List<int>.generate(16, (_) => rng.nextInt(256));
+    return bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
+  }
 
   /// 供 Sentry Logs 使用的「安全路徑」：去掉 query string，避免把使用者搜尋
   /// 關鍵字（`?keyword=…`）等可能機敏的查詢參數送進監控服務。路徑中的資源
@@ -117,6 +135,8 @@ class ApiClient {
     // 同源的 Origin 讓寫入操作通過 CSRF 防護。
     'Origin': _baseUrl,
     'User-Agent': _userAgent,
+    if (_appDeviceId != null && _appDeviceId!.isNotEmpty)
+      'X-AssetPilot-Device-Id': _appDeviceId!,
     'Cookie': ?_cookie,
   };
 

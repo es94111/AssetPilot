@@ -31,7 +31,7 @@ function shouldDisableLineAutoLogin() {
 
 export default function LoginPage() {
   const router = useRouter();
-  const { t } = useT();
+  const { t, locale } = useT();
   const [form, setForm] = useState<'login' | 'register'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -61,19 +61,27 @@ export default function LoginPage() {
   }, []);
 
   const turnstileEnabled = !!config?.turnstileEnabled && !!config?.turnstileSiteKey;
+  const turnstileLanguage = locale === 'zh-TW' ? 'zh-TW' : locale === 'zh-CN' ? 'zh-CN' : locale;
 
   useEffect(() => {
     if (!turnstileEnabled || form !== 'login' || !turnstileScriptLoaded || !window.turnstile || !turnstileRef.current) return;
     if (turnstileWidgetId.current) return;
-    turnstileWidgetId.current = window.turnstile.render(turnstileRef.current, {
+    const widgetId = window.turnstile.render(turnstileRef.current, {
       sitekey: config.turnstileSiteKey,
       action: 'login',
       theme: 'auto',
+      language: turnstileLanguage,
       callback: (token: string) => setTurnstileToken(token || ''),
       'expired-callback': () => setTurnstileToken(''),
       'error-callback': () => setTurnstileToken(''),
     });
-  }, [config?.turnstileSiteKey, form, turnstileEnabled, turnstileScriptLoaded]);
+    turnstileWidgetId.current = widgetId;
+    return () => {
+      window.turnstile?.remove?.(widgetId);
+      if (turnstileWidgetId.current === widgetId) turnstileWidgetId.current = null;
+      setTurnstileToken('');
+    };
+  }, [config?.turnstileSiteKey, form, turnstileEnabled, turnstileLanguage, turnstileScriptLoaded]);
 
   useEffect(() => {
     if (form === 'login' || !turnstileWidgetId.current) return;
@@ -93,6 +101,7 @@ export default function LoginPage() {
     setError('');
     if (turnstileEnabled && !turnstileToken) {
       setError(t('auth.errors.turnstileRequired'));
+      turnstileRef.current?.scrollIntoView({ block: 'center', behavior: 'smooth' });
       return;
     }
     setLoading(true);
@@ -299,7 +308,7 @@ export default function LoginPage() {
               <div className="login-turnstile" ref={turnstileRef} aria-label={t('auth.turnstileAria')} />
             )}
             {error && <p className="login-error" role="alert">{error}</p>}
-            <button type="submit" className="login-btn-primary" disabled={loading || (turnstileEnabled && !turnstileToken)}>
+            <button type="submit" className="login-btn-primary" disabled={loading}>
               {loading ? t('auth.loggingIn') : t('auth.loginButton')}
             </button>
             <button type="button" className="login-btn-google" onClick={handlePasskeyLogin} disabled={passkeyLoading}>

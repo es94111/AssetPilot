@@ -9,9 +9,11 @@ import {
 import { backfillDefaultsForUser } from '../../../../lib/userDefaults';
 import { setAuthCookie, formatUser } from '../../../../lib/apiHelpers';
 import { createLoginSession } from '../../../../lib/sessionHelpers';
-import { isTurnstileConfigured, verifyTurnstileToken } from '../../../../lib/turnstile';
+import { getTurnstileSiteKey, verifyTurnstileToken } from '../../../../lib/turnstile';
 import { isPlayIntegrityConfigured, isPlayIntegrityEnforced, verifyIntegrity } from '../../../../lib/playIntegrity';
 import { consumeIntegrityNonce } from '../../../../lib/playIntegrityNonce';
+import { localeFromAcceptLanguage } from '../../../../lib/i18n/config';
+import { getTranslator } from '../../../../lib/i18n/getDictionary';
 
 /** Map<email, { count, lastAttempt }> — in-memory per-process */
 const loginAttempts = new Map<string, { count: number; lastAttempt: number }>();
@@ -31,12 +33,13 @@ export async function POST(request: NextRequest) {
   const integrityToken = String(body.integrityToken || '');
   const integrityNonce = String(body.integrityNonce || '');
   const headers = request.headers;
+  const t = getTranslator(localeFromAcceptLanguage(headers.get('accept-language')));
 
-  if (isTurnstileConfigured()) {
+  if (getTurnstileSiteKey()) {
     const turnstile = await verifyTurnstileToken(turnstileToken, headers, 'login');
     if (!turnstile.ok) {
       recordLoginAttempt({ email, headers, method: 'password', isSuccess: false, failureReason: 'turnstile_failed' });
-      return NextResponse.json({ error: turnstile.error }, { status: 403 });
+      return NextResponse.json({ error: t('auth.errors.turnstileRequired') }, { status: 403 });
     }
   }
 

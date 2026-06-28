@@ -18,14 +18,14 @@ class MoreScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final items = <(IconData, String, Widget)>[
-      (Icons.account_balance_wallet_outlined, tr('帳戶'), AccountsScreen()),
-      (Icons.category_outlined, tr('分類'), CategoriesScreen()),
-      (Icons.savings_outlined, tr('預算'), BudgetsScreen()),
-      (Icons.repeat, tr('固定收支'), RecurringScreen()),
-      (Icons.bar_chart, tr('統計報表'), ReportsScreen()),
+      (Icons.account_balance_wallet_outlined, trKey('featuresCommonAccount'), AccountsScreen()),
+      (Icons.category_outlined, trKey('dashboardTableCategory'), CategoriesScreen()),
+      (Icons.savings_outlined, trKey('mobileLegacyBudgets'), BudgetsScreen()),
+      (Icons.repeat, trKey('navRecurring'), RecurringScreen()),
+      (Icons.bar_chart, trKey('navReports'), ReportsScreen()),
     ];
     return Scaffold(
-      appBar: AppBar(title: Text(tr('更多'))),
+      appBar: AppBar(title: Text(trKey('mobileLegacyMore'))),
       body: ListView(
         children: [
           for (final (icon, label, page) in items)
@@ -40,13 +40,13 @@ class MoreScreen extends StatelessWidget {
           Divider(),
           ListTile(
             leading: Icon(Icons.help_outline),
-            title: Text(tr('使用教學')),
+            title: Text(trKey('mobileLegacyGettingStarted')),
             trailing: Icon(Icons.chevron_right),
             onTap: () => OnboardingScreen.show(context),
           ),
           ListTile(
             leading: Icon(Icons.settings_outlined),
-            title: Text(tr('設定')),
+            title: Text(trKey('settingsTitle')),
             trailing: Icon(Icons.chevron_right),
             onTap: () => Navigator.of(context).push(
               MaterialPageRoute(
@@ -60,7 +60,7 @@ class MoreScreen extends StatelessWidget {
           if (kDebugMode)
             ListTile(
               leading: Icon(Icons.bug_report_outlined),
-              title: Text(tr('驗證 Sentry 設定（測試用）')),
+              title: Text(trKey('mobileLegacyTestSentryConfiguration')),
               trailing: Icon(Icons.chevron_right),
               onTap: () {
                 Sentry.metrics.count('verify_button_tapped', 1);

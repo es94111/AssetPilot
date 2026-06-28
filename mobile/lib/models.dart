@@ -278,7 +278,7 @@ class CatNode {
     final color = _asStr(j['color']).isEmpty ? '#888888' : _asStr(j['color']);
     // fallback 規則對齊 Web dashboard 的 groupCategoryRows()。
     final parentName = _asStr(j['parentName']).isEmpty
-        ? (name.isEmpty ? tr('未分類') : name)
+        ? (name.isEmpty ? trKey('dashboardUncategorized') : name)
         : _asStr(j['parentName']);
     final parentColor = _asStr(j['parentColor']).isEmpty
         ? color
@@ -628,7 +628,7 @@ class LoginSession {
   factory LoginSession.fromJson(Map<String, dynamic> j) => LoginSession(
     id: _asStr(j['id'] ?? j['sessionId']),
     deviceName: _asStr(j['deviceName'] ?? j['device_name']).isEmpty
-        ? tr('未知裝置')
+        ? trKey('settingsAccountUnknownDevice')
         : _asStr(j['deviceName'] ?? j['device_name']),
     ip: _asStr(j['ip'] ?? j['ipAddress'] ?? j['ip_address']),
     loginAt: _asNum(j['loginAt'] ?? j['createdAt'] ?? j['created_at']),
@@ -679,7 +679,7 @@ class Passkey {
   factory Passkey.fromJson(Map<String, dynamic> j) => Passkey(
     id: _asStr(j['id']),
     deviceName: _asStr(j['deviceName']).isEmpty
-        ? tr('未命名 Passkey')
+        ? trKey('mobileLegacyUnnamedPasskey')
         : _asStr(j['deviceName']),
     createdAt: _asNum(j['createdAt']),
   );

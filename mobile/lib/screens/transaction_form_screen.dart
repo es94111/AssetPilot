@@ -177,7 +177,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
   Future<void> _pickPhotos() async {
     final remaining = 5 - _photos.length;
     if (remaining <= 0) {
-      toast(context, tr('單筆交易最多上傳 5 張照片'));
+      toast(context, trKey('mobileLegacyUpTo5PhotosPerTransaction'));
       return;
     }
     final source = await showModalBottomSheet<ImageSource>(
@@ -187,12 +187,12 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
           children: [
             ListTile(
               leading: Icon(Icons.camera_alt_outlined),
-              title: Text(tr('拍照')),
+              title: Text(trKey('featuresTransactionsTakePhoto')),
               onTap: () => Navigator.pop(ctx, ImageSource.camera),
             ),
             ListTile(
               leading: Icon(Icons.photo_library_outlined),
-              title: Text(tr('從相簿選擇')),
+              title: Text(trKey('mobileLegacyChooseFromGallery')),
               onTap: () => Navigator.pop(ctx, ImageSource.gallery),
             ),
           ],
@@ -234,16 +234,18 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(tr('刪除照片')),
-        content: Text(tr('確定要刪除這張已上傳的照片嗎？此動作無法復原。')),
+        title: Text(trKey('mobileLegacyDeletePhoto')),
+        content: Text(
+          trKey('mobileLegacyDeleteThisUploadedPhotoThisCannotBeUndone'),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text(tr('取消')),
+            child: Text(trKey('commonCancel')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text(tr('刪除')),
+            child: Text(trKey('commonDelete')),
           ),
         ],
       ),
@@ -289,7 +291,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                   errorBuilder: (c, e, s) => Padding(
                     padding: EdgeInsets.all(48),
                     child: Text(
-                      tr('照片載入失敗'),
+                      trKey('mobileLegacyFailedToLoadPhoto'),
                       style: TextStyle(color: Colors.white),
                     ),
                   ),
@@ -381,21 +383,18 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(tr('刪除交易')),
+        title: Text(trKey('mobileLegacyDeleteTransaction')),
         content: Text(
-          trPair(
-            '確定刪除這筆 ${e.date} 的交易？此動作無法復原。',
-            'Delete the transaction from ${e.date}? This cannot be undone.',
-          ),
+          trKey('mobileDynamicDeleteTransactionDate', {'date': e.date}),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text(tr('取消')),
+            child: Text(trKey('commonCancel')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text(tr('刪除')),
+            child: Text(trKey('commonDelete')),
           ),
         ],
       ),
@@ -417,11 +416,15 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_isEdit ? tr('編輯交易') : tr('新增交易')),
+        title: Text(
+          _isEdit
+              ? trKey('featuresTransactionsEdit')
+              : trKey('featuresTransactionsAdd'),
+        ),
         actions: [
           if (_isEdit)
             IconButton(
-              tooltip: tr('刪除交易'),
+              tooltip: trKey('mobileLegacyDeleteTransaction'),
               icon: Icon(Icons.delete_outline),
               onPressed: _saving ? null : _confirmDelete,
             ),
@@ -436,7 +439,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
           if (snap.hasError) {
             return Center(
               child: Text(
-                trPair('載入失敗：${snap.error}', 'Failed to load: ${snap.error}'),
+                trKey('mobileDynamicFailedToLoad', {'value': snap.error}),
               ),
             );
           }
@@ -481,9 +484,18 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
           if (!_isEdit)
             SegmentedButton<String>(
               segments: [
-                ButtonSegment(value: 'expense', label: Text(tr('支出'))),
-                ButtonSegment(value: 'income', label: Text(tr('收入'))),
-                ButtonSegment(value: 'transfer', label: Text(tr('轉帳'))),
+                ButtonSegment(
+                  value: 'expense',
+                  label: Text(trKey('dashboardOverviewExpense')),
+                ),
+                ButtonSegment(
+                  value: 'income',
+                  label: Text(trKey('dashboardOverviewIncome')),
+                ),
+                ButtonSegment(
+                  value: 'transfer',
+                  label: Text(trKey('featuresTransactionsTransfer')),
+                ),
               ],
               selected: {_type},
               onSelectionChanged: (s) => setState(() {
@@ -497,13 +509,15 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
             controller: _amount,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             decoration: InputDecoration(
-              labelText: tr('金額'),
+              labelText: trKey('dashboardTableAmount'),
               prefixIcon: Icon(Icons.attach_money),
               border: OutlineInputBorder(),
             ),
             validator: (v) {
               final n = num.tryParse(v?.trim() ?? '');
-              if (n == null || n <= 0) return tr('請輸入大於 0 的金額');
+              if (n == null || n <= 0) {
+                return trKey('mobileLegacyEnterAnAmountGreaterThan0');
+              }
               return null;
             },
           ),
@@ -514,25 +528,31 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
               borderRadius: BorderRadius.circular(4),
             ),
             leading: Icon(Icons.calendar_today),
-            title: Text(tr('日期')),
+            title: Text(trKey('dashboardTableDate')),
             trailing: Text(_dateStr),
             onTap: _pickDate,
           ),
           SizedBox(height: 16),
           if (_type == 'transfer') ...[
             _accountDropdown(
-              label: tr('轉出帳戶'),
+              label: trKey('mobileLegacyFromAccount'),
               value: _accountId,
               onChanged: (v) => setState(() => _accountId = v),
             ),
             SizedBox(height: 16),
             _accountDropdown(
-              label: tr('轉入帳戶'),
+              label: trKey('mobileLegacyToAccount'),
               value: _toAccountId,
               onChanged: (v) => setState(() => _toAccountId = v),
               validator: (v) {
-                if (v == null) return tr('請選擇轉入帳戶');
-                if (v == _accountId) return tr('轉出與轉入不可相同');
+                if (v == null) {
+                  return trKey('mobileLegacySelectADestinationAccount');
+                }
+                if (v == _accountId) {
+                  return trKey(
+                    'mobileLegacyTheSourceAndDestinationAccountsMustDiffer',
+                  );
+                }
                 return null;
               },
             ),
@@ -542,7 +562,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
               initialValue: _parentCatId,
               isExpanded: true,
               decoration: InputDecoration(
-                labelText: tr('父分類'),
+                labelText: trKey('featuresCategoriesParentLabel'),
                 prefixIcon: Icon(Icons.category_outlined),
                 border: OutlineInputBorder(),
               ),
@@ -554,7 +574,8 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                 _parentCatId = v;
                 _categoryId = null; // 換父分類時清掉已選子分類
               }),
-              validator: (v) => v == null ? tr('請選擇父分類') : null,
+              validator: (v) =>
+                  v == null ? trKey('mobileLegacySelectAParentCategory') : null,
             ),
             SizedBox(height: 16),
             // 再選該父分類底下的子分類（未選父分類前停用）。
@@ -562,10 +583,12 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
               initialValue: _categoryId,
               isExpanded: true,
               decoration: InputDecoration(
-                labelText: tr('子分類'),
+                labelText: trKey('mobileLegacySubcategory'),
                 prefixIcon: Icon(Icons.subdirectory_arrow_right),
                 border: OutlineInputBorder(),
-                hintText: _parentCatId == null ? tr('請先選擇父分類') : null,
+                hintText: _parentCatId == null
+                    ? trKey('mobileLegacySelectAParentCategoryFirst')
+                    : null,
               ),
               items: [
                 for (final c in children)
@@ -574,11 +597,12 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
               onChanged: _parentCatId == null
                   ? null
                   : (v) => setState(() => _categoryId = v),
-              validator: (v) => v == null ? tr('請選擇子分類') : null,
+              validator: (v) =>
+                  v == null ? trKey('mobileLegacySelectASubcategory') : null,
             ),
             SizedBox(height: 16),
             _accountDropdown(
-              label: tr('帳戶'),
+              label: trKey('featuresCommonAccount'),
               value: _accountId,
               onChanged: (v) => setState(() {
                 _accountId = v;
@@ -595,7 +619,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
               initialValue: _currency,
               isExpanded: true,
               decoration: InputDecoration(
-                labelText: tr('幣別'),
+                labelText: trKey('featuresCommonCurrency'),
                 prefixIcon: Icon(Icons.payments_outlined),
                 border: OutlineInputBorder(),
               ),
@@ -616,11 +640,10 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                   decimal: true,
                 ),
                 decoration: InputDecoration(
-                  labelText: trPair(
-                    '匯率（1 $_currency = ? TWD）',
-                    'Exchange rate (1 $_currency = ? TWD)',
-                  ),
-                  helperText: tr('留空則使用系統匯率'),
+                  labelText: trKey('mobileDynamicExchangeRateForCurrency', {
+                    'currency': _currency,
+                  }),
+                  helperText: trKey('featuresTransactionsFxRatePlaceholder'),
                   prefixIcon: Icon(Icons.currency_exchange),
                   border: OutlineInputBorder(),
                 ),
@@ -628,7 +651,9 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                   final s = v?.trim() ?? '';
                   if (s.isEmpty) return null;
                   final n = num.tryParse(s);
-                  if (n == null || n <= 0) return tr('匯率須大於 0');
+                  if (n == null || n <= 0) {
+                    return trKey('mobileLegacyExchangeRateMustBeGreaterThan0');
+                  }
                   return null;
                 },
               ),
@@ -638,7 +663,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
           TextFormField(
             controller: _note,
             decoration: InputDecoration(
-              labelText: tr('備註（選填）'),
+              labelText: trKey('mobileLegacyNoteOptional'),
               prefixIcon: Icon(Icons.notes),
               border: OutlineInputBorder(),
             ),
@@ -652,11 +677,12 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                   decimal: true,
                 ),
                 decoration: InputDecoration(
-                  labelText: tr('海外手續費 TWD（選填）'),
-                  helperText: trPair(
-                    '此卡費率 ${_selectedAccount!.overseasFeeRate}%，留空將自動計算',
-                    'Card rate: ${_selectedAccount!.overseasFeeRate}%. Leave blank to calculate automatically.',
+                  labelText: trKey(
+                    'mobileLegacyForeignTransactionFeeInTwdOptional',
                   ),
+                  helperText: trKey('mobileDynamicCardRateAutoFee', {
+                    'rate': _selectedAccount!.overseasFeeRate,
+                  }),
                   prefixIcon: Icon(Icons.currency_exchange),
                   border: OutlineInputBorder(),
                 ),
@@ -665,7 +691,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
             SizedBox(height: 8),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
-              title: Text(tr('不計入統計')),
+              title: Text(trKey('featuresCommonExcludeFromStats')),
               value: _excludeFromStats,
               onChanged: (v) => setState(() => _excludeFromStats = v),
             ),
@@ -674,10 +700,9 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
               Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  trPair(
-                    '已上傳照片（${_existingPhotos.length}）',
-                    'Uploaded photos (${_existingPhotos.length})',
-                  ),
+                  trKey('mobileDynamicUploadedPhotosCount', {
+                    'count': _existingPhotos.length,
+                  }),
                   style: Theme.of(context).textTheme.labelLarge,
                 ),
               ),
@@ -761,11 +786,10 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
               icon: Icon(Icons.photo_library_outlined),
               label: Text(
                 _photos.isEmpty
-                    ? tr('新增照片（選填）')
-                    : trPair(
-                        '新增照片（${_photos.length}/5）',
-                        'Add photos (${_photos.length}/5)',
-                      ),
+                    ? trKey('mobileLegacyAddPhotosOptional')
+                    : trKey('mobileDynamicAddPhotosCount', {
+                        'count': _photos.length,
+                      }),
               ),
             ),
             if (_photos.isNotEmpty) ...[
@@ -823,7 +847,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                     width: 20,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : Text(tr('儲存')),
+                : Text(trKey('commonSave')),
           ),
         ],
       ),
@@ -852,7 +876,9 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
           ),
       ],
       onChanged: onChanged,
-      validator: validator ?? (v) => v == null ? tr('請選擇帳戶') : null,
+      validator:
+          validator ??
+          (v) => v == null ? trKey('mobileLegacySelectAnAccount') : null,
     );
   }
 }

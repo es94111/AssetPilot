@@ -71,7 +71,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               _CategoryPie(nodes: d.catBreakdown),
               SizedBox(height: 24),
               Text(
-                tr('最近交易'),
+                trKey('dashboardSectionsRecentTransactions'),
                 style: Theme.of(
                   context,
                 ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
@@ -80,7 +80,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               if (d.recent.isEmpty)
                 Padding(
                   padding: EdgeInsets.symmetric(vertical: 24),
-                  child: Center(child: Text(tr('本月尚無交易'))),
+                  child: Center(child: Text(trKey('mobileLegacyNoTransactionsThisMonth'))),
                 )
               else
                 ...d.recent.take(10).map((t) => _RecentTile(t: t)),
@@ -128,7 +128,7 @@ class _SummaryGrid extends StatelessWidget {
       children: [
         Expanded(
           child: _StatCard(
-            label: tr('收入'),
+            label: trKey('dashboardOverviewIncome'),
             value: twd(d.income),
             color: Colors.green,
           ),
@@ -136,7 +136,7 @@ class _SummaryGrid extends StatelessWidget {
         SizedBox(width: 12),
         Expanded(
           child: _StatCard(
-            label: tr('支出'),
+            label: trKey('dashboardOverviewExpense'),
             value: twd(d.expense),
             color: Colors.red,
           ),
@@ -199,7 +199,7 @@ class _AssetRow extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              tr('本月淨額'),
+              trKey('mobileLegacyNetThisMonth'),
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onPrimaryContainer,
               ),
@@ -217,13 +217,13 @@ class _AssetRow extends StatelessWidget {
               children: [
                 Expanded(
                   child: _MiniStat(
-                    label: tr('銀行餘額'),
+                    label: trKey('mobileLegacyBankBalance'),
                     value: twd(d.bankBalance),
                   ),
                 ),
                 Expanded(
                   child: _MiniStat(
-                    label: tr('股票市值'),
+                    label: trKey('mobileLegacyStockMarketValue'),
                     value: twd(d.stockMarketValue),
                   ),
                 ),
@@ -304,7 +304,7 @@ class _CategoryPie extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              tr('支出分類'),
+              trKey('dashboardSectionsExpenseCategories'),
               style: Theme.of(
                 context,
               ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
@@ -394,7 +394,7 @@ class _RecentTile extends StatelessWidget {
       title: Text(
         t.catName?.isNotEmpty == true
             ? t.catName!
-            : (t.note.isEmpty ? tr('未分類') : t.note),
+            : (t.note.isEmpty ? trKey('dashboardUncategorized') : t.note),
       ),
       subtitle: Text(t.date),
       trailing: Text(

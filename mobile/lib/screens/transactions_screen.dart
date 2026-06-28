@@ -148,21 +148,18 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: Text(tr('刪除交易')),
+        title: Text(trKey('mobileLegacyDeleteTransaction')),
         content: Text(
-          trPair(
-            '確定刪除這筆${t.date}的交易？',
-            'Delete the transaction from ${t.date}?',
-          ),
+          trKey('mobileDynamicDeleteTransactionCompact', {'date': t.date}),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text(tr('取消')),
+            child: Text(trKey('commonCancel')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text(tr('刪除')),
+            child: Text(trKey('commonDelete')),
           ),
         ],
       ),
@@ -170,7 +167,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     if (ok != true) return false;
     try {
       await ApiClient.instance.deleteTransaction(t.id);
-      if (mounted) toast(context, tr('已刪除'));
+      if (mounted) toast(context, trKey('mobileLegacyDeleted'));
       _reload();
       return true;
     } catch (e) {
@@ -186,16 +183,16 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(tr('記帳')),
+        title: Text(trKey('mobileLegacyTransactions8084a8ea')),
         actions: [
           if (_hasAdvancedFilter)
             IconButton(
-              tooltip: tr('清除篩選'),
+              tooltip: trKey('mobileLegacyClearFilters'),
               icon: Icon(Icons.filter_alt_off),
               onPressed: _clearFilters,
             ),
           IconButton(
-            tooltip: tr('篩選'),
+            tooltip: trKey('mobileLegacyFilter'),
             icon: Icon(
               _hasAdvancedFilter ? Icons.filter_alt : Icons.filter_alt_outlined,
             ),
@@ -210,9 +207,18 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
             padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
             child: SegmentedButton<String>(
               segments: [
-                ButtonSegment(value: 'all', label: Text(tr('全部'))),
-                ButtonSegment(value: 'income', label: Text(tr('收入'))),
-                ButtonSegment(value: 'expense', label: Text(tr('支出'))),
+                ButtonSegment(
+                  value: 'all',
+                  label: Text(trKey('mobileLegacyAll')),
+                ),
+                ButtonSegment(
+                  value: 'income',
+                  label: Text(trKey('dashboardOverviewIncome')),
+                ),
+                ButtonSegment(
+                  value: 'expense',
+                  label: Text(trKey('dashboardOverviewExpense')),
+                ),
               ],
               selected: {_filter},
               onSelectionChanged: (s) {
@@ -226,7 +232,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openForm(),
         icon: Icon(Icons.add),
-        label: Text(tr('記一筆')),
+        label: Text(trKey('mobileLegacyAddTransaction')),
       ),
       body: AsyncView<_TransactionsData>(
         future: _future,
@@ -238,8 +244,10 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
             return EmptyState(
               icon: Icons.receipt_long,
               message: _hasAdvancedFilter
-                  ? tr('找不到符合篩選的交易')
-                  : tr('尚無交易，點右下角記一筆'),
+                  ? trKey('mobileLegacyNoTransactionsMatchTheseFilters')
+                  : trKey(
+                      'mobileLegacyNoTransactionsYetTapAddTransactionToBegin',
+                    ),
             );
           }
           return RefreshIndicator(
@@ -265,9 +273,17 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                     t: t,
                     categoryName: data.catName[t.categoryId],
                     onTap: () => t.type == 'transfer'
-                        ? toast(context, tr('轉帳請於網頁版編輯'))
+                        ? toast(
+                            context,
+                            trKey('mobileLegacyEditTransfersInTheWebApp'),
+                          )
                         : t.isFxFee
-                        ? toast(context, tr('國外刷卡手續費由原交易自動產生，請編輯對應的國外交易'))
+                        ? toast(
+                            context,
+                            trKey(
+                              'mobileLegacyForeignCardFeesAreGeneratedAutomaticallyEditThe',
+                            ),
+                          )
                         : _openForm(t),
                     onLongPress: () => _delete(t),
                   ),
@@ -316,7 +332,11 @@ class _TxnTile extends StatelessWidget {
             ? categoryName!
             : t.catName?.isNotEmpty == true
             ? t.catName!
-            : (isTransfer ? tr('轉帳') : (t.note.isEmpty ? tr('未分類') : t.note)),
+            : (isTransfer
+                  ? trKey('featuresTransactionsTransfer')
+                  : (t.note.isEmpty
+                        ? trKey('dashboardUncategorized')
+                        : t.note)),
       ),
       subtitle: Row(
         children: [
@@ -435,14 +455,21 @@ class _TxnFilterSheetState extends State<_TxnFilterSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(tr('篩選交易'), style: Theme.of(context).textTheme.titleLarge),
+            Text(
+              trKey('mobileLegacyFilterTransactions'),
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
             SizedBox(height: 12),
             Row(
               children: [
                 Expanded(
                   child: OutlinedButton.icon(
                     icon: Icon(Icons.calendar_today, size: 18),
-                    label: Text(_from == null ? tr('起始日') : _ymd(_from!)),
+                    label: Text(
+                      _from == null
+                          ? trKey('mobileLegacyStartDate')
+                          : _ymd(_from!),
+                    ),
                     onPressed: () => _pick(true),
                   ),
                 ),
@@ -450,14 +477,16 @@ class _TxnFilterSheetState extends State<_TxnFilterSheet> {
                 Expanded(
                   child: OutlinedButton.icon(
                     icon: Icon(Icons.event, size: 18),
-                    label: Text(_to == null ? tr('結束日') : _ymd(_to!)),
+                    label: Text(
+                      _to == null ? trKey('mobileLegacyEndDate') : _ymd(_to!),
+                    ),
                     onPressed: () => _pick(false),
                   ),
                 ),
                 if (_from != null || _to != null)
                   IconButton(
                     icon: Icon(Icons.clear),
-                    tooltip: tr('清除日期'),
+                    tooltip: trKey('mobileLegacyClearDates'),
                     onPressed: () => setState(() {
                       _from = null;
                       _to = null;
@@ -470,11 +499,14 @@ class _TxnFilterSheetState extends State<_TxnFilterSheet> {
               initialValue: accountId,
               isExpanded: true,
               decoration: InputDecoration(
-                labelText: tr('帳戶'),
+                labelText: trKey('featuresCommonAccount'),
                 border: OutlineInputBorder(),
               ),
               items: [
-                DropdownMenuItem(value: null, child: Text(tr('全部帳戶'))),
+                DropdownMenuItem(
+                  value: null,
+                  child: Text(trKey('mobileLegacyAllAccounts')),
+                ),
                 for (final a in widget.accounts)
                   DropdownMenuItem(value: a.id, child: Text(a.name)),
               ],
@@ -485,11 +517,14 @@ class _TxnFilterSheetState extends State<_TxnFilterSheet> {
               initialValue: categoryId,
               isExpanded: true,
               decoration: InputDecoration(
-                labelText: tr('分類'),
+                labelText: trKey('dashboardTableCategory'),
                 border: OutlineInputBorder(),
               ),
               items: [
-                DropdownMenuItem(value: null, child: Text(tr('全部分類'))),
+                DropdownMenuItem(
+                  value: null,
+                  child: Text(trKey('mobileLegacyAllCategories')),
+                ),
                 // 父分類顯示「名稱（全部）」並可選；選了會篩出該父分類底下所有交易。
                 // 子分類縮排顯示於所屬父分類之下。
                 for (final c in widget.categories)
@@ -497,7 +532,7 @@ class _TxnFilterSheetState extends State<_TxnFilterSheet> {
                     value: c.id,
                     child: Text(
                       c.isParent
-                          ? trPair('${c.name}（全部）', '${c.name} (all)')
+                          ? trKey('mobileDynamicAllForName', {'name': c.name})
                           : '  ${c.name}',
                       style: c.isParent
                           ? TextStyle(fontWeight: FontWeight.w600)
@@ -511,7 +546,7 @@ class _TxnFilterSheetState extends State<_TxnFilterSheet> {
             TextField(
               controller: _keyword,
               decoration: InputDecoration(
-                labelText: tr('備註關鍵字'),
+                labelText: trKey('mobileLegacyNoteKeyword'),
                 prefixIcon: Icon(Icons.search),
                 border: OutlineInputBorder(),
               ),
@@ -531,7 +566,7 @@ class _TxnFilterSheetState extends State<_TxnFilterSheet> {
               style: FilledButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 14),
               ),
-              child: Text(tr('套用')),
+              child: Text(trKey('mobileLegacyApply')),
             ),
           ],
         ),

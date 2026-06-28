@@ -75,7 +75,7 @@ class _StocksScreenState extends State<StocksScreen>
     final onDividends = _tab.index == 2;
     return Scaffold(
       appBar: AppBar(
-        title: Text(tr('股票')),
+        title: Text(trKey('featuresCommonStock')),
         actions: [
           if (onHoldings)
             _updating
@@ -83,7 +83,7 @@ class _StocksScreenState extends State<StocksScreen>
                 : IconButton(
                     onPressed: _updatePrices,
                     icon: Icon(Icons.refresh),
-                    tooltip: tr('更新股價'),
+                    tooltip: trKey('featuresStocksPortfolioUpdatePrices'),
                   ),
           if (onDividends)
             _syncingDividends
@@ -91,10 +91,10 @@ class _StocksScreenState extends State<StocksScreen>
                 : IconButton(
                     onPressed: _syncDividends,
                     icon: Icon(Icons.sync),
-                    tooltip: tr('同步股利'),
+                    tooltip: trKey('mobileLegacySyncDividends'),
                   ),
           IconButton(
-            tooltip: tr('股票設定'),
+            tooltip: trKey('navStocksSettings'),
             icon: Icon(Icons.settings_outlined),
             onPressed: () => Navigator.of(
               context,
@@ -105,10 +105,10 @@ class _StocksScreenState extends State<StocksScreen>
           controller: _tab,
           isScrollable: true,
           tabs: [
-            Tab(text: tr('持股')),
-            Tab(text: tr('交易')),
-            Tab(text: tr('股利')),
-            Tab(text: tr('損益')),
+            Tab(text: trKey('mobileLegacyHoldings')),
+            Tab(text: trKey('mobileLegacyTransactions')),
+            Tab(text: trKey('mobileLegacyDividends')),
+            Tab(text: trKey('mobileLegacyReturns')),
           ],
         ),
       ),
@@ -187,16 +187,20 @@ class _HoldingsTabState extends State<_HoldingsTab> {
       toast(
         context,
         updates.isEmpty
-            ? tr('沒有可更新的股價')
-            : trPair(
-                '已更新 ${updates.length} 檔股價${failed > 0 ? '，$failed 檔查詢失敗' : ''}',
-                'Updated ${updates.length} stocks${failed > 0 ? '; $failed lookups failed' : ''}',
-              ),
+            ? trKey('mobileLegacyNoPricesToUpdate')
+            : failed > 0
+            ? trKey('mobileDynamicStockPricesUpdatedWithFailed', {
+                'count': updates.length,
+                'failed': failed,
+              })
+            : trKey('mobileDynamicStockPricesUpdated', {
+                'count': updates.length,
+              }),
       );
       _reload();
     } catch (e) {
       if (mounted) {
-        toast(context, trPair('更新股價失敗：$e', 'Failed to update prices: $e'));
+        toast(context, trKey('mobileDynamicFailedUpdatePrices', {'value': e}));
       }
     }
   }
@@ -225,21 +229,21 @@ class _HoldingsTabState extends State<_HoldingsTab> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: Text(tr('刪除股票')),
+        title: Text(trKey('mobileLegacyDeleteStock')),
         content: Text(
-          trPair(
-            '確定刪除「${s.symbol} ${s.name}」？其所有交易與股利紀錄將一併刪除，無法復原。',
-            'Delete “${s.symbol} ${s.name}”? All of its transactions and dividends will also be deleted.',
-          ),
+          trKey('mobileDynamicDeleteStock', {
+            'symbol': s.symbol,
+            'name': s.name,
+          }),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text(tr('取消')),
+            child: Text(trKey('commonCancel')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text(tr('刪除')),
+            child: Text(trKey('commonDelete')),
           ),
         ],
       ),
@@ -247,7 +251,7 @@ class _HoldingsTabState extends State<_HoldingsTab> {
     if (ok != true) return;
     try {
       await ApiClient.instance.deleteStock(s.id);
-      if (mounted) toast(context, tr('已刪除'));
+      if (mounted) toast(context, trKey('mobileLegacyDeleted'));
       _reload();
     } catch (e) {
       if (mounted) toast(context, '$e');
@@ -260,7 +264,7 @@ class _HoldingsTabState extends State<_HoldingsTab> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _addStock,
         icon: Icon(Icons.add),
-        label: Text(tr('新增股票')),
+        label: Text(trKey('featuresStocksPortfolioAddStock')),
       ),
       body: AsyncView<_HoldingsData>(
         future: _future,
@@ -277,7 +281,7 @@ class _HoldingsTabState extends State<_HoldingsTab> {
                   padding: EdgeInsets.symmetric(vertical: 32),
                   child: EmptyState(
                     icon: Icons.trending_up,
-                    message: tr('尚無持股'),
+                    message: trKey('mobileLegacyNoHoldingsYet'),
                   ),
                 )
               else
@@ -311,7 +315,7 @@ class _PortfolioCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              tr('總市值'),
+              trKey('mobileLegacyMarketValue'),
               style: TextStyle(color: theme.colorScheme.onPrimaryContainer),
             ),
             SizedBox(height: 4),
@@ -330,7 +334,7 @@ class _PortfolioCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        tr('未實現損益'),
+                        trKey('notificationsLabelsUnrealizedPL'),
                         style: TextStyle(
                           fontSize: 12,
                           color: theme.colorScheme.onPrimaryContainer,
@@ -351,7 +355,7 @@ class _PortfolioCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        tr('報酬率'),
+                        trKey('featuresStocksCommonReturnRate'),
                         style: TextStyle(
                           fontSize: 12,
                           color: theme.colorScheme.onPrimaryContainer,
@@ -406,17 +410,18 @@ class _HoldingTile extends StatelessWidget {
               Padding(
                 padding: EdgeInsets.only(left: 6),
                 child: Text(
-                  tr('下市'),
+                  trKey('mobileLegacyDelisted'),
                   style: TextStyle(fontSize: 11, color: Colors.grey),
                 ),
               ),
           ],
         ),
         subtitle: Text(
-          trPair(
-            '${intFmt(s.totalShares)} 股・均價 ${s.avgCost}・現價 ${s.currentPrice}',
-            '${intFmt(s.totalShares)} shares · Avg. ${s.avgCost} · Current ${s.currentPrice}',
-          ),
+          trKey('mobileDynamicStockHoldingSubtitle', {
+            'shares': intFmt(s.totalShares),
+            'avgCost': s.avgCost,
+            'currentPrice': s.currentPrice,
+          }),
         ),
         trailing: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -473,7 +478,7 @@ class _StockTxnTabState extends State<_StockTxnTab> {
         .toList();
     if (!mounted) return;
     if (stocks.isEmpty) {
-      toast(context, tr('請先到「持股」分頁新增股票'));
+      toast(context, trKey('mobileLegacyAddAStockOnTheHoldingsTabFirst'));
       return;
     }
     final changed = await showModalBottomSheet<bool>(
@@ -488,7 +493,7 @@ class _StockTxnTabState extends State<_StockTxnTab> {
   Future<void> _delete(StockTxn t) async {
     try {
       await ApiClient.instance.deleteStockTransaction(t.id);
-      if (mounted) toast(context, tr('已刪除'));
+      if (mounted) toast(context, trKey('mobileLegacyDeleted'));
       _reload();
     } catch (e) {
       if (mounted) toast(context, '$e');
@@ -501,14 +506,17 @@ class _StockTxnTabState extends State<_StockTxnTab> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openForm(),
         icon: Icon(Icons.add),
-        label: Text(tr('新增交易')),
+        label: Text(trKey('featuresTransactionsAdd')),
       ),
       body: AsyncView<List<StockTxn>>(
         future: _future,
         onRetry: _reload,
         builder: (context, list) {
           if (list.isEmpty) {
-            return EmptyState(icon: Icons.swap_vert, message: tr('尚無股票交易'));
+            return EmptyState(
+              icon: Icons.swap_vert,
+              message: trKey('mobileLegacyNoStockTransactions'),
+            );
           }
           return RefreshIndicator(
             onRefresh: () async => _reload(),
@@ -524,7 +532,9 @@ class _StockTxnTabState extends State<_StockTxnTab> {
                     backgroundColor: (isBuy ? Colors.red : Colors.green)
                         .withValues(alpha: 0.15),
                     child: Text(
-                      isBuy ? tr('買') : tr('賣'),
+                      isBuy
+                          ? trKey('mobileLegacyBuy')
+                          : trKey('mobileLegacySell'),
                       style: TextStyle(
                         color: isBuy ? Colors.red : Colors.green,
                         fontWeight: FontWeight.bold,
@@ -533,10 +543,11 @@ class _StockTxnTabState extends State<_StockTxnTab> {
                   ),
                   title: Text('${t.symbol} ${t.stockName}'),
                   subtitle: Text(
-                    trPair(
-                      '${t.date}・${intFmt(t.shares)} 股 @ ${t.price}',
-                      '${t.date} · ${intFmt(t.shares)} shares @ ${t.price}',
-                    ),
+                    trKey('mobileDynamicStockTransactionSubtitle', {
+                      'date': t.date,
+                      'shares': intFmt(t.shares),
+                      'price': t.price,
+                    }),
                   ),
                   trailing: Text(
                     twd(t.shares * t.price),
@@ -592,7 +603,7 @@ class _DividendTabState extends State<_DividendTab> {
         .toList();
     if (!mounted) return;
     if (stocks.isEmpty) {
-      toast(context, tr('請先到「持股」分頁新增股票'));
+      toast(context, trKey('mobileLegacyAddAStockOnTheHoldingsTabFirst'));
       return;
     }
     final changed = await showModalBottomSheet<bool>(
@@ -609,21 +620,21 @@ class _DividendTabState extends State<_DividendTab> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: Text(tr('刪除股利')),
+        title: Text(trKey('mobileLegacyDeleteDividend')),
         content: Text(
-          trPair(
-            '確定刪除 ${d.symbol} 於 ${d.date} 的股利紀錄？',
-            'Delete the ${d.symbol} dividend from ${d.date}?',
-          ),
+          trKey('mobileDynamicDeleteDividend', {
+            'symbol': d.symbol,
+            'date': d.date,
+          }),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text(tr('取消')),
+            child: Text(trKey('commonCancel')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text(tr('刪除')),
+            child: Text(trKey('commonDelete')),
           ),
         ],
       ),
@@ -631,7 +642,7 @@ class _DividendTabState extends State<_DividendTab> {
     if (ok != true) return;
     try {
       await ApiClient.instance.deleteStockDividend(d.id);
-      if (mounted) toast(context, tr('已刪除'));
+      if (mounted) toast(context, trKey('mobileLegacyDeleted'));
       _reload();
     } catch (e) {
       if (mounted) toast(context, '$e');
@@ -649,16 +660,18 @@ class _DividendTabState extends State<_DividendTab> {
       toast(
         context,
         synced == 0
-            ? tr('沒有新的股利可同步')
-            : trPair(
-                '已同步 $synced 筆股利${skipped > 0 ? '，略過 $skipped 筆' : ''}',
-                'Synced $synced dividends${skipped > 0 ? '; skipped $skipped' : ''}',
-              ),
+            ? trKey('mobileLegacyNoNewDividendsToSync')
+            : skipped > 0
+            ? trKey('mobileDynamicDividendsSyncedWithSkipped', {
+                'count': synced,
+                'skipped': skipped,
+              })
+            : trKey('mobileDynamicDividendsSynced', {'count': synced}),
       );
       if (synced > 0) _reload();
     } catch (e) {
       if (mounted) {
-        toast(context, trPair('同步股利失敗：$e', 'Failed to sync dividends: $e'));
+        toast(context, trKey('mobileDynamicFailedSyncDividends', {'value': e}));
       }
     }
   }
@@ -669,7 +682,7 @@ class _DividendTabState extends State<_DividendTab> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openForm(),
         icon: Icon(Icons.add),
-        label: Text(tr('新增股利')),
+        label: Text(trKey('featuresStocksDividendsAddDividend')),
       ),
       body: AsyncView<List<Dividend>>(
         future: _future,
@@ -678,7 +691,7 @@ class _DividendTabState extends State<_DividendTab> {
           if (list.isEmpty) {
             return EmptyState(
               icon: Icons.savings_outlined,
-              message: tr('尚無股利紀錄'),
+              message: trKey('mobileLegacyNoDividendRecords'),
             );
           }
           return RefreshIndicator(
@@ -700,10 +713,9 @@ class _DividendTabState extends State<_DividendTab> {
                     children: [
                       if (d.cashDividend > 0)
                         Text(
-                          trPair(
-                            '現金 ${twd(d.cashDividend)}',
-                            'Cash ${twd(d.cashDividend)}',
-                          ),
+                          trKey('mobileDynamicCashDividend', {
+                            'amount': twd(d.cashDividend),
+                          }),
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             color: Colors.green,
@@ -711,10 +723,9 @@ class _DividendTabState extends State<_DividendTab> {
                         ),
                       if (d.stockDividendShares > 0)
                         Text(
-                          trPair(
-                            '配股 ${intFmt(d.stockDividendShares)} 股',
-                            '${intFmt(d.stockDividendShares)} stock-dividend shares',
-                          ),
+                          trKey('mobileDynamicStockDividendShares', {
+                            'shares': intFmt(d.stockDividendShares),
+                          }),
                           style: TextStyle(fontSize: 12),
                         ),
                     ],
@@ -764,7 +775,7 @@ class _RealizedTabState extends State<_RealizedTab> {
         if (list.isEmpty) {
           return EmptyState(
             icon: Icons.account_balance,
-            message: tr('尚無已實現損益'),
+            message: trKey('mobileLegacyNoRealizedReturns'),
           );
         }
         final total = list.fold<num>(0, (s, r) => s + r.realizedPL);
@@ -779,7 +790,7 @@ class _RealizedTabState extends State<_RealizedTab> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      tr('已實現損益合計'),
+                      trKey('mobileLegacyTotalRealizedPL'),
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                     Text(
@@ -796,10 +807,10 @@ class _RealizedTabState extends State<_RealizedTab> {
                 ListTile(
                   title: Text('${r.symbol} ${r.name}'),
                   subtitle: Text(
-                    trPair(
-                      '${r.date}・賣 ${intFmt(r.shares)} 股',
-                      '${r.date} · Sold ${intFmt(r.shares)} shares',
-                    ),
+                    trKey('mobileDynamicRealizedTransactionSubtitle', {
+                      'date': r.date,
+                      'shares': intFmt(r.shares),
+                    }),
                   ),
                   trailing: Text(
                     '${signed(r.realizedPL)} (${r.returnRate}%)',
@@ -820,9 +831,9 @@ class _RealizedTabState extends State<_RealizedTab> {
 // ── 表單 ──────────────────────────────────────────────────────
 
 Map<String, String> get _kStockTypes => {
-  'stock': tr('一般股票'),
+  'stock': trKey('mobileLegacyStock'),
   'etf': 'ETF',
-  'warrant': tr('權證'),
+  'warrant': trKey('featuresStocksCommonStockTypeWarrant'),
 };
 
 class _StockForm extends StatefulWidget {
@@ -889,7 +900,9 @@ class _StockFormState extends State<_StockForm> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              _isEdit ? tr('編輯股票') : tr('新增股票'),
+              _isEdit
+                  ? trKey('featuresStocksPortfolioEditStock')
+                  : trKey('featuresStocksPortfolioAddStock'),
               style: Theme.of(context).textTheme.titleLarge,
             ),
             SizedBox(height: 16),
@@ -897,17 +910,20 @@ class _StockFormState extends State<_StockForm> {
               controller: _symbol,
               enabled: !_isEdit,
               decoration: InputDecoration(
-                labelText: tr('股票代號（如 2330）'),
+                labelText: trKey('mobileLegacyTickerEG2330'),
                 border: OutlineInputBorder(),
               ),
-              validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? tr('請輸入代號') : null,
+              validator: (v) => (v == null || v.trim().isEmpty)
+                  ? trKey('mobileLegacyEnterATicker')
+                  : null,
             ),
             SizedBox(height: 12),
             TextFormField(
               controller: _name,
               decoration: InputDecoration(
-                labelText: _isEdit ? tr('名稱') : tr('名稱（選填，留空自動帶入）'),
+                labelText: _isEdit
+                    ? trKey('featuresCommonName')
+                    : trKey('mobileLegacyNameOptionalFilledAutomatically'),
                 border: OutlineInputBorder(),
               ),
             ),
@@ -915,7 +931,7 @@ class _StockFormState extends State<_StockForm> {
             DropdownButtonFormField<String>(
               initialValue: _stockType,
               decoration: InputDecoration(
-                labelText: tr('類型（影響證交稅率）'),
+                labelText: trKey('mobileLegacyTypeAffectsTransactionTax'),
                 border: OutlineInputBorder(),
               ),
               items: [
@@ -936,7 +952,7 @@ class _StockFormState extends State<_StockForm> {
                       width: 20,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : Text(tr('儲存')),
+                  : Text(trKey('commonSave')),
             ),
           ],
         ),
@@ -1049,14 +1065,22 @@ class _StockTxnFormState extends State<_StockTxnForm> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                _isEdit ? tr('編輯股票交易') : tr('新增股票交易'),
+                _isEdit
+                    ? trKey('mobileLegacyEditStockTransaction')
+                    : trKey('mobileLegacyAddStockTransaction'),
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               SizedBox(height: 16),
               SegmentedButton<String>(
                 segments: [
-                  ButtonSegment(value: 'buy', label: Text(tr('買進'))),
-                  ButtonSegment(value: 'sell', label: Text(tr('賣出'))),
+                  ButtonSegment(
+                    value: 'buy',
+                    label: Text(trKey('featuresStocksCommonBuy')),
+                  ),
+                  ButtonSegment(
+                    value: 'sell',
+                    label: Text(trKey('featuresStocksCommonSell')),
+                  ),
                 ],
                 selected: {_type},
                 onSelectionChanged: (s) => setState(() => _type = s.first),
@@ -1066,7 +1090,7 @@ class _StockTxnFormState extends State<_StockTxnForm> {
                 initialValue: _stockId,
                 isExpanded: true,
                 decoration: InputDecoration(
-                  labelText: tr('股票'),
+                  labelText: trKey('featuresCommonStock'),
                   border: OutlineInputBorder(),
                 ),
                 items: [
@@ -1086,12 +1110,14 @@ class _StockTxnFormState extends State<_StockTxnForm> {
                       controller: _shares,
                       keyboardType: TextInputType.number,
                       decoration: InputDecoration(
-                        labelText: tr('股數'),
+                        labelText: trKey('featuresStocksCommonShares'),
                         border: OutlineInputBorder(),
                       ),
                       validator: (v) {
                         final n = int.tryParse(v?.trim() ?? '');
-                        if (n == null || n <= 0) return tr('正整數');
+                        if (n == null || n <= 0) {
+                          return trKey('mobileLegacyPositiveWholeNumber');
+                        }
                         return null;
                       },
                     ),
@@ -1104,7 +1130,7 @@ class _StockTxnFormState extends State<_StockTxnForm> {
                         decimal: true,
                       ),
                       decoration: InputDecoration(
-                        labelText: tr('價格'),
+                        labelText: trKey('featuresStocksCommonPrice'),
                         border: OutlineInputBorder(),
                       ),
                       validator: (v) {
@@ -1126,8 +1152,8 @@ class _StockTxnFormState extends State<_StockTxnForm> {
                         decimal: true,
                       ),
                       decoration: InputDecoration(
-                        labelText: tr('手續費（選填）'),
-                        hintText: tr('自動'),
+                        labelText: trKey('mobileLegacyFeeOptional'),
+                        hintText: trKey('mobileLegacyAutomatic'),
                         border: OutlineInputBorder(),
                       ),
                     ),
@@ -1140,8 +1166,8 @@ class _StockTxnFormState extends State<_StockTxnForm> {
                         decimal: true,
                       ),
                       decoration: InputDecoration(
-                        labelText: tr('證交稅（選填）'),
-                        hintText: tr('自動'),
+                        labelText: trKey('mobileLegacyTransactionTaxOptional'),
+                        hintText: trKey('mobileLegacyAutomatic'),
                         border: OutlineInputBorder(),
                       ),
                     ),
@@ -1155,7 +1181,7 @@ class _StockTxnFormState extends State<_StockTxnForm> {
                   borderRadius: BorderRadius.circular(4),
                 ),
                 leading: Icon(Icons.calendar_today),
-                title: Text(tr('日期')),
+                title: Text(trKey('dashboardTableDate')),
                 trailing: Text(_dateStr),
                 onTap: () async {
                   final d = await showDatePicker(
@@ -1171,13 +1197,13 @@ class _StockTxnFormState extends State<_StockTxnForm> {
               TextFormField(
                 controller: _note,
                 decoration: InputDecoration(
-                  labelText: tr('備註（選填）'),
+                  labelText: trKey('mobileLegacyNoteOptional'),
                   border: OutlineInputBorder(),
                 ),
               ),
               SizedBox(height: 8),
               Text(
-                tr('手續費／證交稅留空則由後端自動計算'),
+                trKey('mobileLegacyLeaveFeeAndTaxBlankToCalculateThem'),
                 style: Theme.of(context).textTheme.bodySmall,
               ),
               SizedBox(height: 16),
@@ -1192,7 +1218,7 @@ class _StockTxnFormState extends State<_StockTxnForm> {
                         width: 20,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : Text(tr('儲存')),
+                    : Text(trKey('commonSave')),
               ),
             ],
           ),
@@ -1262,11 +1288,14 @@ class _DividendFormState extends State<_DividendForm> {
     final cash = num.tryParse(_cash.text.trim()) ?? 0;
     final shares = num.tryParse(_shares.text.trim()) ?? 0;
     if (cash <= 0 && shares <= 0) {
-      toast(context, tr('現金股利與配股至少填一項'));
+      toast(context, trKey('mobileLegacyEnterACashOrStockDividend'));
       return;
     }
     if (cash > 0 && _accountId == null) {
-      toast(context, tr('含現金股利時，入款帳戶為必填'));
+      toast(
+        context,
+        trKey('mobileLegacyADepositAccountIsRequiredForCashDividends'),
+      );
       return;
     }
     setState(() => _saving = true);
@@ -1307,7 +1336,9 @@ class _DividendFormState extends State<_DividendForm> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                _isEdit ? tr('編輯股利') : tr('新增股利'),
+                _isEdit
+                    ? trKey('featuresStocksDividendsEditDividend')
+                    : trKey('featuresStocksDividendsAddDividend'),
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               SizedBox(height: 16),
@@ -1316,7 +1347,7 @@ class _DividendFormState extends State<_DividendForm> {
                 isExpanded: true,
                 // 編輯時後端不支援更換股票，故鎖定。
                 decoration: InputDecoration(
-                  labelText: tr('股票'),
+                  labelText: trKey('featuresCommonStock'),
                   border: OutlineInputBorder(),
                   filled: _isEdit,
                 ),
@@ -1328,7 +1359,9 @@ class _DividendFormState extends State<_DividendForm> {
                     ),
                 ],
                 onChanged: _isEdit ? null : (v) => setState(() => _stockId = v),
-                validator: (v) => v == null ? tr('請選擇股票') : null,
+                validator: (v) => v == null
+                    ? trKey('featuresStocksTransactionsMessagesStockRequired')
+                    : null,
               ),
               SizedBox(height: 12),
               ListTile(
@@ -1337,7 +1370,7 @@ class _DividendFormState extends State<_DividendForm> {
                   borderRadius: BorderRadius.circular(4),
                 ),
                 leading: Icon(Icons.calendar_today),
-                title: Text(tr('日期')),
+                title: Text(trKey('dashboardTableDate')),
                 trailing: Text(_dateStr),
                 onTap: () async {
                   final d = await showDatePicker(
@@ -1356,7 +1389,7 @@ class _DividendFormState extends State<_DividendForm> {
                   decimal: true,
                 ),
                 decoration: InputDecoration(
-                  labelText: tr('現金股利（總額，選填）'),
+                  labelText: trKey('mobileLegacyCashDividendTotalOptional'),
                   border: OutlineInputBorder(),
                 ),
               ),
@@ -1367,7 +1400,7 @@ class _DividendFormState extends State<_DividendForm> {
                   decimal: true,
                 ),
                 decoration: InputDecoration(
-                  labelText: tr('配股股數（選填）'),
+                  labelText: trKey('mobileLegacyStockDividendSharesOptional'),
                   border: OutlineInputBorder(),
                 ),
               ),
@@ -1376,11 +1409,16 @@ class _DividendFormState extends State<_DividendForm> {
                 initialValue: _accountId,
                 isExpanded: true,
                 decoration: InputDecoration(
-                  labelText: tr('入款帳戶（含現金股利時必填）'),
+                  labelText: trKey(
+                    'mobileLegacyDepositAccountRequiredForCashDividends',
+                  ),
                   border: OutlineInputBorder(),
                 ),
                 items: [
-                  DropdownMenuItem(value: null, child: Text(tr('未指定'))),
+                  DropdownMenuItem(
+                    value: null,
+                    child: Text(trKey('featuresCommonUnspecified')),
+                  ),
                   for (final a in widget.accounts)
                     DropdownMenuItem(value: a.id, child: Text(a.name)),
                 ],
@@ -1390,7 +1428,7 @@ class _DividendFormState extends State<_DividendForm> {
               TextFormField(
                 controller: _note,
                 decoration: InputDecoration(
-                  labelText: tr('備註（選填）'),
+                  labelText: trKey('mobileLegacyNoteOptional'),
                   border: OutlineInputBorder(),
                 ),
               ),
@@ -1406,7 +1444,7 @@ class _DividendFormState extends State<_DividendForm> {
                         width: 20,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : Text(tr('儲存')),
+                    : Text(trKey('commonSave')),
               ),
             ],
           ),

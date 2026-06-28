@@ -6,18 +6,18 @@ import '../widgets.dart';
 import '../l10n.dart';
 
 Map<String, String> get _freqLabels => {
-  'daily': tr('每日'),
-  'weekly': tr('每週'),
-  'monthly': tr('每月'),
+  'daily': trKey('featuresRecurringFrequencyLabelsDaily'),
+  'weekly': trKey('featuresRecurringFrequencyLabelsWeekly'),
+  'monthly': trKey('featuresRecurringFrequencyLabelsMonthly'),
 };
 List<String> get _weekdays => [
-  tr('日'),
-  tr('一'),
-  tr('二'),
-  tr('三'),
-  tr('四'),
-  tr('五'),
-  tr('六'),
+  trKey('mobileLegacyDay'),
+  trKey('mobileLegacyMon'),
+  trKey('mobileLegacyTue'),
+  trKey('mobileLegacyWed'),
+  trKey('mobileLegacyThu'),
+  trKey('mobileLegacyFri'),
+  trKey('mobileLegacySat'),
 ];
 
 String _two(int n) => n.toString().padLeft(2, '0');
@@ -30,12 +30,14 @@ String _fmtDate(num ms) {
 String _scheduleSummary(ReportSchedule s) {
   final time = '${_two(s.hour)}:${_two(s.minute)}';
   final when = switch (s.freq) {
-    'weekly' => trPair(
-      '每週${_weekdays[s.weekday.clamp(0, 6)]}',
-      'Every ${_weekdays[s.weekday.clamp(0, 6)]}',
-    ),
-    'monthly' => s.dayOfMonth == 0 ? tr('每月最後一天') : tr('每月 ${s.dayOfMonth} 號'),
-    _ => tr('每日'),
+    'weekly' => trKey('mobileDynamicEveryWeekday', {
+      'weekday': _weekdays[s.weekday.clamp(0, 6)],
+    }),
+    'monthly' =>
+      s.dayOfMonth == 0
+          ? trKey('mobileLegacyLastDayOfEachMonth')
+          : trKey('mobileDynamicMonthlyOnDay', {'day': s.dayOfMonth}),
+    _ => trKey('featuresRecurringFrequencyLabelsDaily'),
   };
   final channels = [
     if (s.notifyEmail) 'Email',
@@ -95,16 +97,18 @@ class _ReportScheduleScreenState extends State<ReportScheduleScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: Text(tr('刪除排程')),
-        content: Text(tr('確定刪除此報表通知排程？')),
+        title: Text(trKey('mobileLegacyDeleteSchedule')),
+        content: Text(
+          trKey('mobileLegacyDeleteThisReportNotificationSchedule'),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text(tr('取消')),
+            child: Text(trKey('commonCancel')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text(tr('刪除')),
+            child: Text(trKey('commonDelete')),
           ),
         ],
       ),
@@ -112,7 +116,7 @@ class _ReportScheduleScreenState extends State<ReportScheduleScreen> {
     if (ok != true) return;
     try {
       await ApiClient.instance.deleteReportSchedule(s.id);
-      if (mounted) toast(context, tr('已刪除'));
+      if (mounted) toast(context, trKey('mobileLegacyDeleted'));
       _reload();
     } catch (e) {
       if (mounted) toast(context, '$e');
@@ -122,11 +126,11 @@ class _ReportScheduleScreenState extends State<ReportScheduleScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(tr('報表通知'))),
+      appBar: AppBar(title: Text(trKey('mobileLegacyReportNotifications'))),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openForm(),
         icon: Icon(Icons.add),
-        label: Text(tr('新增排程')),
+        label: Text(trKey('mobileLegacyAddSchedule')),
       ),
       body: AsyncView<List<ReportSchedule>>(
         future: _future,
@@ -135,7 +139,7 @@ class _ReportScheduleScreenState extends State<ReportScheduleScreen> {
           if (list.isEmpty) {
             return EmptyState(
               icon: Icons.notifications_none,
-              message: tr('尚無排程，點右下角新增\n可設定每日／每週／每月定時收到收支報表'),
+              message: trKey('mobileLegacyN'),
             );
           }
           return RefreshIndicator(
@@ -156,8 +160,10 @@ class _ReportScheduleScreenState extends State<ReportScheduleScreen> {
                   title: Text(_scheduleSummary(s)),
                   subtitle: Text(
                     s.lastRun > 0
-                        ? tr('上次寄送 ${_fmtDate(s.lastRun)}')
-                        : tr('尚未寄送'),
+                        ? trKey('mobileDynamicLastSent', {
+                            'value': _fmtDate(s.lastRun),
+                          })
+                        : trKey('mobileLegacyNotSentYet'),
                   ),
                   trailing: Switch(
                     value: s.enabled,
@@ -227,7 +233,7 @@ class _ReportScheduleFormState extends State<_ReportScheduleForm> {
 
   Future<void> _save() async {
     if (!_notifyEmail && !_notifyLine) {
-      toast(context, tr('請至少選擇一種通知方式'));
+      toast(context, trKey('mobileLegacySelectAtLeastOneNotificationMethod'));
       return;
     }
     setState(() => _saving = true);
@@ -268,15 +274,26 @@ class _ReportScheduleFormState extends State<_ReportScheduleForm> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              _isEdit ? tr('編輯報表排程') : tr('新增報表排程'),
+              _isEdit
+                  ? trKey('mobileLegacyEditReportSchedule')
+                  : trKey('mobileLegacyAddReportSchedule'),
               style: Theme.of(context).textTheme.titleLarge,
             ),
             SizedBox(height: 16),
             SegmentedButton<String>(
               segments: [
-                ButtonSegment(value: 'daily', label: Text(tr('每日'))),
-                ButtonSegment(value: 'weekly', label: Text(tr('每週'))),
-                ButtonSegment(value: 'monthly', label: Text(tr('每月'))),
+                ButtonSegment(
+                  value: 'daily',
+                  label: Text(trKey('featuresRecurringFrequencyLabelsDaily')),
+                ),
+                ButtonSegment(
+                  value: 'weekly',
+                  label: Text(trKey('featuresRecurringFrequencyLabelsWeekly')),
+                ),
+                ButtonSegment(
+                  value: 'monthly',
+                  label: Text(trKey('featuresRecurringFrequencyLabelsMonthly')),
+                ),
               ],
               selected: {_freq},
               onSelectionChanged: (s) => setState(() => _freq = s.first),
@@ -288,7 +305,7 @@ class _ReportScheduleFormState extends State<_ReportScheduleForm> {
                 borderRadius: BorderRadius.circular(4),
               ),
               leading: Icon(Icons.access_time),
-              title: Text(tr('時間')),
+              title: Text(trKey('mobileLegacyTime')),
               trailing: Text('${_two(_hour)}:${_two(_minute)}'),
               onTap: _pickTime,
             ),
@@ -297,14 +314,18 @@ class _ReportScheduleFormState extends State<_ReportScheduleForm> {
               DropdownButtonFormField<int>(
                 initialValue: _weekday,
                 decoration: InputDecoration(
-                  labelText: tr('星期'),
+                  labelText: trKey('mobileLegacyDayOfWeek'),
                   border: OutlineInputBorder(),
                 ),
                 items: [
                   for (var i = 0; i < 7; i++)
                     DropdownMenuItem(
                       value: i,
-                      child: Text(trPair('星期${_weekdays[i]}', _weekdays[i])),
+                      child: Text(
+                        trKey('mobileDynamicWeekday', {
+                          'weekday': _weekdays[i],
+                        }),
+                      ),
                     ),
                 ],
                 onChanged: (v) => setState(() => _weekday = v ?? 1),
@@ -315,13 +336,19 @@ class _ReportScheduleFormState extends State<_ReportScheduleForm> {
               DropdownButtonFormField<int>(
                 initialValue: _dayOfMonth,
                 decoration: InputDecoration(
-                  labelText: tr('日期'),
+                  labelText: trKey('dashboardTableDate'),
                   border: OutlineInputBorder(),
                 ),
                 items: [
-                  DropdownMenuItem(value: 0, child: Text(tr('每月最後一天'))),
+                  DropdownMenuItem(
+                    value: 0,
+                    child: Text(trKey('mobileLegacyLastDayOfEachMonth')),
+                  ),
                   for (var d = 1; d <= 28; d++)
-                    DropdownMenuItem(value: d, child: Text(tr('$d 號'))),
+                    DropdownMenuItem(
+                      value: d,
+                      child: Text(trKey('mobileDynamicDayOfMonth', {'day': d})),
+                    ),
                 ],
                 onChanged: (v) => setState(() => _dayOfMonth = v ?? 1),
               ),
@@ -329,20 +356,20 @@ class _ReportScheduleFormState extends State<_ReportScheduleForm> {
             SizedBox(height: 4),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
-              title: Text(tr('Email 通知')),
+              title: Text(trKey('mobileLegacyEmailNotifications')),
               value: _notifyEmail,
               onChanged: (v) => setState(() => _notifyEmail = v),
             ),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
-              title: Text(tr('LINE 通知')),
-              subtitle: Text(tr('需已綁定 LINE')),
+              title: Text(trKey('mobileLegacyLineNotifications')),
+              subtitle: Text(trKey('mobileLegacyRequiresALinkedLineAccount')),
               value: _notifyLine,
               onChanged: (v) => setState(() => _notifyLine = v),
             ),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
-              title: Text(tr('啟用')),
+              title: Text(trKey('mobileLegacyEnabled')),
               value: _enabled,
               onChanged: (v) => setState(() => _enabled = v),
             ),
@@ -358,7 +385,7 @@ class _ReportScheduleFormState extends State<_ReportScheduleForm> {
                       width: 20,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : Text(tr('儲存')),
+                  : Text(trKey('commonSave')),
             ),
           ],
         ),

@@ -32,7 +32,9 @@ String _fmtTs(num ms) {
 Future<void> _openWeb(BuildContext context, String path) async {
   final url = Uri.parse('${ApiClient.instance.baseUrl}$path');
   final ok = await launchUrl(url, mode: LaunchMode.externalApplication);
-  if (!ok && context.mounted) toast(context, tr('無法開啟瀏覽器'));
+  if (!ok && context.mounted) {
+    toast(context, trKey('mobileLegacyUnableToOpenBrowser'));
+  }
 }
 
 // ── 幣別設定（預設 + 常用） ───────────────────────────────────
@@ -78,7 +80,7 @@ class _CurrencySettingsScreenState extends State<CurrencySettingsScreen> {
       final pinned = {'TWD', ..._pinned}.toList();
       await api.setPinnedCurrencies(pinned);
       if (mounted) {
-        toast(context, tr('已儲存'));
+        toast(context, trKey('featuresAccountsMessagesSaved'));
         Navigator.pop(context);
       }
     } catch (e) {
@@ -92,14 +94,17 @@ class _CurrencySettingsScreenState extends State<CurrencySettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(tr('幣別設定'))),
+      appBar: AppBar(title: Text(trKey('mobileLegacyCurrencySettings'))),
       body: AsyncView<void>(
         future: _future,
         onRetry: () => setState(() => _future = _load()),
         builder: (context, _) => ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            Text(tr('預設幣別'), style: Theme.of(context).textTheme.titleMedium),
+            Text(
+              trKey('mobileLegacyDefaultCurrency'),
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
             SizedBox(height: 8),
             DropdownButtonFormField<String>(
               initialValue: _options.contains(_default) ? _default : 'TWD',
@@ -111,9 +116,14 @@ class _CurrencySettingsScreenState extends State<CurrencySettingsScreen> {
               onChanged: (v) => setState(() => _default = v ?? 'TWD'),
             ),
             SizedBox(height: 24),
-            Text(tr('常用幣別'), style: Theme.of(context).textTheme.titleMedium),
             Text(
-              tr('TWD 一律包含。勾選的幣別會出現在交易/固定收支的幣別清單前段。'),
+              trKey('mobileLegacyFrequentlyUsedCurrencies'),
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            Text(
+              trKey(
+                'mobileLegacyTwdIsAlwaysIncludedSelectedCurrenciesAppearFirst',
+              ),
               style: TextStyle(fontSize: 12, color: Colors.grey),
             ),
             SizedBox(height: 8),
@@ -148,7 +158,7 @@ class _CurrencySettingsScreenState extends State<CurrencySettingsScreen> {
                       width: 20,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : Text(tr('儲存')),
+                  : Text(trKey('commonSave')),
             ),
           ],
         ),
@@ -201,7 +211,7 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
         _next.text,
       );
       if (mounted) {
-        toast(context, tr('密碼已更新'));
+        toast(context, trKey('settingsAccountMessagesPasswordUpdated'));
         Navigator.pop(context);
       }
     } catch (e) {
@@ -224,7 +234,9 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              widget.hasPassword ? tr('修改密碼') : tr('設定密碼'),
+              widget.hasPassword
+                  ? trKey('settingsAccountChangePassword')
+                  : trKey('settingsAccountSetPassword'),
               style: Theme.of(context).textTheme.titleLarge,
             ),
             SizedBox(height: 16),
@@ -233,11 +245,12 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
                 controller: _current,
                 obscureText: true,
                 decoration: InputDecoration(
-                  labelText: tr('目前密碼'),
+                  labelText: trKey('settingsAccountCurrentPassword'),
                   border: OutlineInputBorder(),
                 ),
-                validator: (v) =>
-                    (v == null || v.isEmpty) ? tr('請輸入目前密碼') : null,
+                validator: (v) => (v == null || v.isEmpty)
+                    ? trKey('settingsAccountMessagesCurrentPasswordRequired')
+                    : null,
               ),
               SizedBox(height: 12),
             ],
@@ -245,25 +258,33 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
               controller: _next,
               obscureText: true,
               decoration: InputDecoration(
-                labelText: tr('新密碼'),
-                helperText: tr('至少 8 字元，含大小寫、數字與特殊符號'),
+                labelText: trKey('settingsAccountNewPassword'),
+                helperText: trKey(
+                  'mobileLegacyAtLeast8CharactersWithUppercaseLowercaseNumbers',
+                ),
                 border: OutlineInputBorder(),
               ),
               validator: (v) {
                 final s = v ?? '';
-                if (s.length < 8) return tr('至少 8 字元');
+                if (s.length < 8) {
+                  return trKey('mobileLegacyAtLeast8Characters');
+                }
                 final ok =
                     RegExp(r'[A-Z]').hasMatch(s) &&
                     RegExp(r'[a-z]').hasMatch(s) &&
                     RegExp(r'\d').hasMatch(s) &&
                     RegExp(r'[^A-Za-z0-9]').hasMatch(s);
-                if (!ok) return tr('需含大小寫、數字與特殊符號');
+                if (!ok) {
+                  return trKey(
+                    'mobileLegacyIncludeUppercaseLowercaseNumbersAndSymbols',
+                  );
+                }
                 return null;
               },
             ),
             SizedBox(height: 8),
             Text(
-              tr('變更後其他裝置將被登出。'),
+              trKey('mobileLegacyOtherDevicesWillBeSignedOutAfterThis'),
               style: TextStyle(fontSize: 12, color: Colors.grey),
             ),
             SizedBox(height: 16),
@@ -278,7 +299,7 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
                       width: 20,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : Text(tr('儲存')),
+                  : Text(trKey('commonSave')),
             ),
           ],
         ),
@@ -319,7 +340,7 @@ class _PasskeysScreenState extends State<PasskeysScreen> {
     final name = await showDialog<String>(
       context: context,
       builder: (_) => AlertDialog(
-        title: Text(tr('重新命名')),
+        title: Text(trKey('mobileLegacyRename')),
         content: TextField(
           controller: ctrl,
           autofocus: true,
@@ -328,11 +349,11 @@ class _PasskeysScreenState extends State<PasskeysScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text(tr('取消')),
+            child: Text(trKey('commonCancel')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, ctrl.text.trim()),
-            child: Text(tr('儲存')),
+            child: Text(trKey('commonSave')),
           ),
         ],
       ),
@@ -350,18 +371,18 @@ class _PasskeysScreenState extends State<PasskeysScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: Text(tr('刪除 Passkey')),
+        title: Text(trKey('mobileLegacyDeletePasskey')),
         content: Text(
-          trPair('確定刪除「${p.deviceName}」？', 'Delete “${p.deviceName}”?'),
+          trKey('mobileDynamicConfirmDeleteNamed', {'name': p.deviceName}),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text(tr('取消')),
+            child: Text(trKey('commonCancel')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text(tr('刪除')),
+            child: Text(trKey('commonDelete')),
           ),
         ],
       ),
@@ -369,7 +390,7 @@ class _PasskeysScreenState extends State<PasskeysScreen> {
     if (ok != true) return;
     try {
       await ApiClient.instance.deletePasskey(p.id);
-      if (mounted) toast(context, tr('已刪除'));
+      if (mounted) toast(context, trKey('mobileLegacyDeleted'));
       _reload();
     } catch (e) {
       if (mounted) toast(context, '$e');
@@ -379,7 +400,7 @@ class _PasskeysScreenState extends State<PasskeysScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(tr('Passkey 管理'))),
+      appBar: AppBar(title: Text(trKey('settingsAccountPasskeyTitle'))),
       body: AsyncView<List<Passkey>>(
         future: _future,
         onRetry: _reload,
@@ -389,8 +410,12 @@ class _PasskeysScreenState extends State<PasskeysScreen> {
             children: [
               ListTile(
                 leading: Icon(Icons.add),
-                title: Text(tr('新增 Passkey')),
-                subtitle: Text(tr('於瀏覽器完成註冊（需裝置生物辨識）')),
+                title: Text(trKey('mobileLegacyAddPasskey')),
+                subtitle: Text(
+                  trKey(
+                    'mobileLegacyCompleteRegistrationInTheBrowserDeviceBiometricsRequired',
+                  ),
+                ),
                 onTap: () => _openWeb(context, '/settings/account'),
               ),
               Divider(),
@@ -399,7 +424,7 @@ class _PasskeysScreenState extends State<PasskeysScreen> {
                   padding: EdgeInsets.all(24),
                   child: EmptyState(
                     icon: Icons.key_outlined,
-                    message: tr('尚未註冊任何 Passkey'),
+                    message: trKey('settingsAccountNoPasskeys'),
                   ),
                 )
               else
@@ -407,13 +432,23 @@ class _PasskeysScreenState extends State<PasskeysScreen> {
                   ListTile(
                     leading: Icon(Icons.key),
                     title: Text(p.deviceName),
-                    subtitle: Text(tr('建立於 ${_fmtTs(p.createdAt)}')),
+                    subtitle: Text(
+                      trKey('mobileDynamicCreatedAt', {
+                        'value': _fmtTs(p.createdAt),
+                      }),
+                    ),
                     trailing: PopupMenuButton<String>(
                       onSelected: (v) =>
                           v == 'rename' ? _rename(p) : _delete(p),
                       itemBuilder: (_) => [
-                        PopupMenuItem(value: 'rename', child: Text(tr('重新命名'))),
-                        PopupMenuItem(value: 'delete', child: Text(tr('刪除'))),
+                        PopupMenuItem(
+                          value: 'rename',
+                          child: Text(trKey('mobileLegacyRename')),
+                        ),
+                        PopupMenuItem(
+                          value: 'delete',
+                          child: Text(trKey('commonDelete')),
+                        ),
                       ],
                     ),
                   ),
@@ -452,16 +487,20 @@ class _AccountBindingsScreenState extends State<AccountBindingsScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: Text(trPair('解除 $provider 綁定', 'Unlink $provider')),
-        content: Text(trPair('確定解除與 $provider 的綁定？', 'Unlink $provider?')),
+        title: Text(
+          trKey('mobileDynamicUnlinkProvider', {'provider': provider}),
+        ),
+        content: Text(
+          trKey('mobileDynamicConfirmUnlinkProvider', {'provider': provider}),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text(tr('取消')),
+            child: Text(trKey('commonCancel')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text(tr('解除')),
+            child: Text(trKey('mobileLegacyUnlink')),
           ),
         ],
       ),
@@ -473,7 +512,7 @@ class _AccountBindingsScreenState extends State<AccountBindingsScreen> {
       } else {
         await ApiClient.instance.unlinkLine();
       }
-      if (mounted) toast(context, tr('已解除綁定'));
+      if (mounted) toast(context, trKey('mobileLegacyUnlinked'));
       _reload();
     } catch (e) {
       if (mounted) toast(context, '$e');
@@ -484,23 +523,25 @@ class _AccountBindingsScreenState extends State<AccountBindingsScreen> {
     leading: Icon(
       provider == 'Google' ? Icons.account_circle : Icons.chat_bubble_outline,
     ),
-    title: Text(trPair('$provider 綁定', '$provider connection')),
-    subtitle: Text(linked ? tr('已綁定') : tr('未綁定')),
+    title: Text(trKey('mobileDynamicProviderBinding', {'provider': provider})),
+    subtitle: Text(
+      linked ? trKey('mobileLegacyLinked') : trKey('mobileLegacyNotLinked'),
+    ),
     trailing: linked
         ? OutlinedButton(
             onPressed: () => _unlink(provider),
-            child: Text(tr('解除')),
+            child: Text(trKey('mobileLegacyUnlink')),
           )
         : OutlinedButton(
             onPressed: () => _openWeb(context, '/settings/account'),
-            child: Text(tr('綁定')),
+            child: Text(trKey('mobileLegacyLink')),
           ),
   );
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(tr('帳號綁定'))),
+      appBar: AppBar(title: Text(trKey('mobileLegacyLinkedAccounts'))),
       body: AsyncView<AppUser>(
         future: _future,
         onRetry: _reload,
@@ -512,7 +553,9 @@ class _AccountBindingsScreenState extends State<AccountBindingsScreen> {
             Padding(
               padding: EdgeInsets.all(16),
               child: Text(
-                tr('綁定需於瀏覽器完成授權；解除綁定前請確認仍可用其他方式登入。'),
+                trKey(
+                  'mobileLegacyLinkingIsCompletedInTheBrowserBeforeUnlinking',
+                ),
                 style: TextStyle(fontSize: 12, color: Colors.grey),
               ),
             ),
@@ -553,7 +596,9 @@ class _SessionsScreenState extends State<SessionsScreen> {
   Future<void> _revoke(LoginSession s) async {
     try {
       await ApiClient.instance.revokeSession(s.id);
-      if (mounted) toast(context, tr('已登出該裝置'));
+      if (mounted) {
+        toast(context, trKey('settingsAccountMessagesSessionLoggedOut'));
+      }
       _reload();
     } catch (e) {
       if (mounted) toast(context, '$e');
@@ -563,7 +608,7 @@ class _SessionsScreenState extends State<SessionsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(tr('登入裝置'))),
+      appBar: AppBar(title: Text(trKey('mobileLegacySignedInDevices'))),
       body: AsyncView<List<LoginSession>>(
         future: _future,
         onRetry: _reload,
@@ -571,7 +616,7 @@ class _SessionsScreenState extends State<SessionsScreen> {
           if (list.isEmpty) {
             return EmptyState(
               icon: Icons.devices_outlined,
-              message: tr('尚無登入裝置紀錄'),
+              message: trKey('settingsAccountNoSessions'),
             );
           }
           return RefreshIndicator(
@@ -589,12 +634,12 @@ class _SessionsScreenState extends State<SessionsScreen> {
                   ),
                   trailing: s.current
                       ? Chip(
-                          label: Text(tr('目前裝置')),
+                          label: Text(trKey('mobileLegacyCurrentDevice')),
                           visualDensity: VisualDensity.compact,
                         )
                       : TextButton(
                           onPressed: () => _revoke(s),
-                          child: Text(tr('登出')),
+                          child: Text(trKey('shellLogout')),
                         ),
                 );
               },
@@ -637,19 +682,22 @@ class _LoginAuditScreenState extends State<LoginAuditScreen> {
     'google' => 'Google',
     'line' => 'LINE',
     'passkey' => 'Passkey',
-    _ => tr('密碼'),
+    _ => trKey('authPasswordLabel'),
   };
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(tr('登入紀錄'))),
+      appBar: AppBar(title: Text(trKey('mobileLegacySignInHistory'))),
       body: AsyncView<List<LoginAuditLog>>(
         future: _future,
         onRetry: _reload,
         builder: (context, list) {
           if (list.isEmpty) {
-            return EmptyState(icon: Icons.history, message: tr('尚無登入紀錄'));
+            return EmptyState(
+              icon: Icons.history,
+              message: trKey('mobileLegacyNoSignInHistory'),
+            );
           }
           return RefreshIndicator(
             onRefresh: () async => _reload(),

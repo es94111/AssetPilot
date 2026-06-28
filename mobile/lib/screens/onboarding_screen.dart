@@ -16,28 +16,28 @@ class _Slide {
 List<_Slide> get _slides => <_Slide>[
   _Slide(
     Icons.account_balance_wallet_outlined,
-    tr('歡迎使用 AssetPilot'),
-    tr('你的個人資產管家——記帳、預算、台股投資與統計報表，一個 App 全部搞定。花一分鐘快速認識主要功能。'),
+    trKey('mobileLegacyWelcomeToAssetpilot'),
+    trKey('mobileLegacyYourPersonalFinanceCompanionForTransactionsBudgetsTaiwan'),
   ),
   _Slide(
     Icons.receipt_long_outlined,
-    tr('隨手記一筆'),
-    tr('在底部「記帳」分頁點右下角的「＋」即可新增收入或支出，支援多幣別與帳戶轉帳。交易往左滑可刪除、點一下可編輯。'),
+    trKey('mobileLegacyLogTransactionsInSeconds'),
+    trKey('mobileLegacyTapOnTheTransactionsTabToAddIncome'),
   ),
   _Slide(
     Icons.dashboard_outlined,
-    tr('掌握收支全貌'),
-    tr('「首頁」依月份顯示收入、支出、淨額與支出分類圓餅圖，左右切換月份，一眼看懂錢花到哪裡。'),
+    trKey('mobileLegacySeeYourCompleteCashFlow'),
+    trKey('mobileLegacyHomeShowsMonthlyIncomeExpensesNetCashFlow'),
   ),
   _Slide(
     Icons.trending_up_outlined,
-    tr('追蹤台股投資'),
-    tr('在「股票」分頁輸入股票代號（例如 2330）即可追蹤即時股價、未實現與已實現損益，系統還會自動同步除權息。'),
+    trKey('mobileLegacyTrackTaiwanStocks'),
+    trKey('mobileLegacyAddATickerSuchAs2330OnThe'),
   ),
   _Slide(
     Icons.menu,
-    tr('預算、報表與更多'),
-    tr('到「更多」設定每月預算、查看統計報表、管理帳戶與分類，還能設定固定收支與報表通知。準備好了，開始記錄吧！'),
+    trKey('mobileLegacyBudgetsReportsAndMore'),
+    trKey('mobileLegacyUseMoreToSetMonthlyBudgetsViewReports'),
   ),
 ];
 
@@ -103,7 +103,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               alignment: Alignment.centerRight,
               child: TextButton(
                 onPressed: () => Navigator.of(context).pop(),
-                child: Text(tr('跳過')),
+                child: Text(trKey('mobileLegacySkip')),
               ),
             ),
             Expanded(
@@ -177,7 +177,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 width: double.infinity,
                 child: FilledButton(
                   onPressed: _next,
-                  child: Text(_isLast ? tr('開始使用') : tr('下一步')),
+                  child: Text(_isLast ? trKey('publicHomeStartUsing') : trKey('mobileLegacyNext')),
                 ),
               ),
             ),

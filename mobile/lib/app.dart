@@ -4,6 +4,7 @@ import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'api_client.dart';
+import 'generated/l10n/app_localizations.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/more_screen.dart';
@@ -51,8 +52,11 @@ class AssetPilotApp extends StatelessWidget {
           title: 'AssetPilot',
           debugShowCheckedModeBanner: false,
           locale: flutterLocaleFor(locale),
-          supportedLocales: supportedAppLocales.map(flutterLocaleFor).toList(growable: false),
+          supportedLocales: supportedAppLocales
+              .map(flutterLocaleFor)
+              .toList(growable: false),
           localizationsDelegates: const [
+            AppLocalizations.delegate,
             GlobalMaterialLocalizations.delegate,
             GlobalCupertinoLocalizations.delegate,
             GlobalWidgetsLocalizations.delegate,
@@ -167,22 +171,22 @@ class _HomeShellState extends State<HomeShell> {
           NavigationDestination(
             icon: Icon(Icons.dashboard_outlined),
             selectedIcon: Icon(Icons.dashboard),
-            label: tr('首頁'),
+            label: trKey('mobileLegacyHome'),
           ),
           NavigationDestination(
             icon: Icon(Icons.receipt_long_outlined),
             selectedIcon: Icon(Icons.receipt_long),
-            label: tr('記帳'),
+            label: trKey('mobileLegacyTransactions8084a8ea'),
           ),
           NavigationDestination(
             icon: Icon(Icons.trending_up_outlined),
             selectedIcon: Icon(Icons.trending_up),
-            label: tr('股票'),
+            label: trKey('featuresCommonStock'),
           ),
           NavigationDestination(
             icon: Icon(Icons.menu),
             selectedIcon: Icon(Icons.menu_open),
-            label: tr('更多'),
+            label: trKey('mobileLegacyMore'),
           ),
         ],
       ),

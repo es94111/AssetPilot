@@ -7,10 +7,10 @@ import '../widgets.dart';
 import '../l10n.dart';
 
 Map<String, String> get _accountCategories => {
-  'bank': tr('銀行'),
-  'credit_card': tr('信用卡'),
-  'cash': tr('現金'),
-  'virtual_wallet': tr('電子錢包'),
+  'bank': trKey('mobileLegacyBank'),
+  'credit_card': trKey('featuresAccountsTypeLabelsCredit_card'),
+  'cash': trKey('featuresAccountsTypeLabelsCash'),
+  'virtual_wallet': trKey('featuresAccountsTypeLabelsVirtual_wallet'),
 };
 
 const _currencies = ['TWD', 'USD', 'JPY', 'EUR', 'CNY', 'HKD', 'GBP', 'AUD'];
@@ -47,7 +47,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
     final cards = accounts.where((a) => a.category == 'credit_card').toList();
     final payers = accounts.where((a) => a.category != 'credit_card').toList();
     if (cards.isEmpty || payers.isEmpty) {
-      toast(context, tr('需至少一張信用卡與一個非信用卡帳戶才能還款'));
+      toast(context, trKey('mobileLegacyACreditCardAndANonCreditCard'));
       return;
     }
     final changed = await showModalBottomSheet<bool>(
@@ -57,7 +57,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
       builder: (_) => _RepaymentSheet(cards: cards, payers: payers),
     );
     if (changed == true) {
-      if (mounted) toast(context, tr('還款已記錄'));
+      if (mounted) toast(context, trKey('mobileLegacyPaymentRecorded'));
       _reload();
     }
   }
@@ -76,21 +76,18 @@ class _AccountsScreenState extends State<AccountsScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: Text(tr('刪除帳戶')),
+        title: Text(trKey('mobileLegacyDeleteAccount')),
         content: Text(
-          trPair(
-            '確定刪除「${a.name}」？相關交易可能一併受影響。',
-            'Delete “${a.name}”? Related transactions may also be affected.',
-          ),
+          trKey('mobileDynamicDeleteAccountName', {'name': a.name}),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text(tr('取消')),
+            child: Text(trKey('commonCancel')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text(tr('刪除')),
+            child: Text(trKey('commonDelete')),
           ),
         ],
       ),
@@ -98,7 +95,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
     if (ok != true) return;
     try {
       await ApiClient.instance.deleteAccount(a.id);
-      if (mounted) toast(context, tr('已刪除'));
+      if (mounted) toast(context, trKey('mobileLegacyDeleted'));
       _reload();
     } catch (e) {
       if (mounted) toast(context, '$e');
@@ -109,10 +106,10 @@ class _AccountsScreenState extends State<AccountsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(tr('帳戶')),
+        title: Text(trKey('featuresCommonAccount')),
         actions: [
           IconButton(
-            tooltip: tr('信用卡還款'),
+            tooltip: trKey('featuresAccountsRepaymentTitle'),
             icon: Icon(Icons.credit_score_outlined),
             onPressed: _lastAccounts == null
                 ? null
@@ -123,7 +120,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openForm(),
         icon: Icon(Icons.add),
-        label: Text(tr('新增帳戶')),
+        label: Text(trKey('featuresAccountsAddAccount')),
       ),
       body: AsyncView<List<Account>>(
         future: _future,
@@ -133,7 +130,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
           if (list.isEmpty) {
             return EmptyState(
               icon: Icons.account_balance_wallet,
-              message: tr('尚無帳戶'),
+              message: trKey('notificationsEmptyNoAccount'),
             );
           }
           final total = list
@@ -154,7 +151,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          tr('總資產（換算 TWD）'),
+                          trKey('mobileLegacyTotalAssetsInTwd'),
                           style: TextStyle(
                             color: Theme.of(
                               context,
@@ -196,7 +193,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
                         ),
                         if (a.statementClosingDay != null)
                           IconButton(
-                            tooltip: tr('每期帳單明細'),
+                            tooltip: trKey('featuresAccountsCyclesTitle'),
                             icon: Icon(Icons.receipt_long_outlined),
                             onPressed: () => _openCycles(a),
                           ),
@@ -217,7 +214,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
   Widget _accountSubtitle(BuildContext context, Account a) {
     final base =
         '${_accountCategories[a.category] ?? a.category}'
-        '${a.excludeFromTotal ? trPair('・不計入總資產', ' · Excluded from total assets') : ''}';
+        '${a.excludeFromTotal ? trKey('mobileLegacyMessagebde18a20') : ''}';
     if (a.statementClosingDay == null || a.cycleSpending == null) {
       return Text(base);
     }
@@ -230,10 +227,10 @@ class _AccountsScreenState extends State<AccountsScreen> {
         Text(base),
         SizedBox(height: 2),
         Text(
-          trPair(
-            '本期消費 ${money(a.cycleSpending!, a.currency)}$range',
-            'Current spending ${money(a.cycleSpending!, a.currency)}$range',
-          ),
+          trKey('mobileDynamicCurrentSpending', {
+            'amount': money(a.cycleSpending!, a.currency),
+            'range': range,
+          }),
           style: TextStyle(
             color: Theme.of(context).colorScheme.error,
             fontWeight: FontWeight.w500,
@@ -243,20 +240,18 @@ class _AccountsScreenState extends State<AccountsScreen> {
           Text.rich(
             TextSpan(
               children: [
-                TextSpan(text: tr('上期帳單 ')),
+                TextSpan(text: trKey('mobileLegacyPreviousStatement')),
                 TextSpan(
-                  text: trPair(
-                    '消費 ${money(a.lastCycleSpending!, a.currency)}',
-                    'Spent ${money(a.lastCycleSpending!, a.currency)}',
-                  ),
+                  text: trKey('mobileDynamicSpentAmount', {
+                    'amount': money(a.lastCycleSpending!, a.currency),
+                  }),
                   style: TextStyle(color: Theme.of(context).colorScheme.error),
                 ),
                 TextSpan(text: ' / '),
                 TextSpan(
-                  text: trPair(
-                    '已繳 ${money(a.lastCyclePayment ?? 0, a.currency)}',
-                    'Paid ${money(a.lastCyclePayment ?? 0, a.currency)}',
-                  ),
+                  text: trKey('mobileDynamicPaidAmount', {
+                    'amount': money(a.lastCyclePayment ?? 0, a.currency),
+                  }),
                   style: TextStyle(color: Color(0xFF2E7D32)),
                 ),
               ],
@@ -384,24 +379,27 @@ class _AccountFormState extends State<_AccountForm> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              _isEdit ? tr('編輯帳戶') : tr('新增帳戶'),
+              _isEdit
+                  ? trKey('featuresAccountsEditAccount')
+                  : trKey('featuresAccountsAddAccount'),
               style: Theme.of(context).textTheme.titleLarge,
             ),
             SizedBox(height: 16),
             TextFormField(
               controller: _name,
               decoration: InputDecoration(
-                labelText: tr('帳戶名稱'),
+                labelText: trKey('mobileLegacyAccountName'),
                 border: OutlineInputBorder(),
               ),
-              validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? tr('請輸入名稱') : null,
+              validator: (v) => (v == null || v.trim().isEmpty)
+                  ? trKey('mobileLegacyEnterAName')
+                  : null,
             ),
             SizedBox(height: 12),
             DropdownButtonFormField<String>(
               initialValue: _category,
               decoration: InputDecoration(
-                labelText: tr('類型'),
+                labelText: trKey('featuresCommonType'),
                 border: OutlineInputBorder(),
               ),
               items: [
@@ -417,7 +415,7 @@ class _AccountFormState extends State<_AccountForm> {
                   child: DropdownButtonFormField<String>(
                     initialValue: _currency,
                     decoration: InputDecoration(
-                      labelText: tr('幣別'),
+                      labelText: trKey('featuresCommonCurrency'),
                       border: OutlineInputBorder(),
                     ),
                     items: [
@@ -437,7 +435,7 @@ class _AccountFormState extends State<_AccountForm> {
                       signed: true,
                     ),
                     decoration: InputDecoration(
-                      labelText: tr('初始餘額'),
+                      labelText: trKey('featuresAccountsInitialBalance'),
                       border: OutlineInputBorder(),
                     ),
                   ),
@@ -452,8 +450,8 @@ class _AccountFormState extends State<_AccountForm> {
                   decimal: true,
                 ),
                 decoration: InputDecoration(
-                  labelText: tr('海外手續費率（%）'),
-                  helperText: tr('例：1.5 代表 1.5%，外幣刷卡時自動計算手續費'),
+                  labelText: trKey('featuresAccountsOverseasFeeRate'),
+                  helperText: trKey('mobileLegacyExample15Means15FeesAre'),
                   border: OutlineInputBorder(),
                 ),
               ),
@@ -462,22 +460,26 @@ class _AccountFormState extends State<_AccountForm> {
                 controller: _closingDay,
                 keyboardType: TextInputType.number,
                 decoration: InputDecoration(
-                  labelText: tr('結帳日（每月幾號，1~31）'),
-                  helperText: tr('設定後帳戶卡片會顯示本期帳單消費，留空則不統計'),
+                  labelText: trKey('featuresAccountsStatementClosingDay'),
+                  helperText: trKey(
+                    'mobileLegacyWhenSetTheAccountCardShowsSpendingFor',
+                  ),
                   border: OutlineInputBorder(),
                 ),
                 validator: (v) {
                   final s = v?.trim() ?? '';
                   if (s.isEmpty) return null;
                   final n = int.tryParse(s);
-                  if (n == null || n < 1 || n > 31) return tr('請輸入 1~31');
+                  if (n == null || n < 1 || n > 31) {
+                    return trKey('mobileLegacyEnterAValueFrom1To31');
+                  }
                   return null;
                 },
               ),
             ],
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
-              title: Text(tr('不計入總資產')),
+              title: Text(trKey('featuresAccountsExcludeFromTotal')),
               value: _exclude,
               onChanged: (v) => setState(() => _exclude = v),
             ),
@@ -493,7 +495,7 @@ class _AccountFormState extends State<_AccountForm> {
                       width: 20,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : Text(tr('儲存')),
+                  : Text(trKey('commonSave')),
             ),
           ],
         ),
@@ -539,7 +541,7 @@ class _RepaymentSheetState extends State<_RepaymentSheet> {
       if (amt > 0) repayments.add({'cardId': entry.key, 'amount': amt});
     }
     if (repayments.isEmpty) {
-      toast(context, tr('請至少填一張卡的還款金額'));
+      toast(context, trKey('mobileLegacyEnterAPaymentForAtLeastOneCard'));
       return;
     }
     setState(() => _saving = true);
@@ -568,13 +570,16 @@ class _RepaymentSheetState extends State<_RepaymentSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(tr('信用卡還款'), style: Theme.of(context).textTheme.titleLarge),
+            Text(
+              trKey('featuresAccountsRepaymentTitle'),
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
             SizedBox(height: 16),
             DropdownButtonFormField<String>(
               initialValue: _fromAccountId,
               isExpanded: true,
               decoration: InputDecoration(
-                labelText: tr('付款帳戶'),
+                labelText: trKey('featuresAccountsRepaymentPaymentAccount'),
                 border: OutlineInputBorder(),
               ),
               items: [
@@ -595,7 +600,7 @@ class _RepaymentSheetState extends State<_RepaymentSheet> {
                 borderRadius: BorderRadius.circular(4),
               ),
               leading: Icon(Icons.calendar_today),
-              title: Text(tr('日期')),
+              title: Text(trKey('dashboardTableDate')),
               trailing: Text(_dateStr),
               onTap: () async {
                 final d = await showDatePicker(
@@ -610,7 +615,9 @@ class _RepaymentSheetState extends State<_RepaymentSheet> {
             SizedBox(height: 12),
             Align(
               alignment: Alignment.centerLeft,
-              child: Text(tr('各卡還款金額（以卡片幣別計）')),
+              child: Text(
+                trKey('mobileLegacyPaymentAmountForEachCardInCardCurrency'),
+              ),
             ),
             SizedBox(height: 8),
             for (final c in widget.cards)
@@ -624,7 +631,7 @@ class _RepaymentSheetState extends State<_RepaymentSheet> {
                   decoration: InputDecoration(
                     labelText:
                         '${c.name}${c.currency != 'TWD' ? '（${c.currency}）' : ''}',
-                    hintText: tr('0＝不還'),
+                    hintText: trKey('mobileLegacy0NoPayment'),
                     border: OutlineInputBorder(),
                   ),
                 ),
@@ -641,7 +648,7 @@ class _RepaymentSheetState extends State<_RepaymentSheet> {
                       width: 20,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : Text(tr('確認還款')),
+                  : Text(trKey('featuresAccountsRepaymentConfirm')),
             ),
           ],
         ),
@@ -698,18 +705,21 @@ class _StatementCyclesSheetState extends State<_StatementCyclesSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(tr('每期帳單明細'), style: Theme.of(context).textTheme.titleLarge),
+          Text(
+            trKey('featuresAccountsCyclesTitle'),
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
           SizedBox(height: 4),
           Text(
-            trPair(
-              '${widget.account.name}　每月結帳日 ${widget.account.statementClosingDay} 號',
-              '${widget.account.name} · Statement closes on day ${widget.account.statementClosingDay}',
-            ),
+            trKey('mobileDynamicStatementCloses', {
+              'name': widget.account.name,
+              'day': widget.account.statementClosingDay,
+            }),
             style: Theme.of(context).textTheme.bodySmall,
           ),
           SizedBox(height: 4),
           Text(
-            tr('「繳款」已對應回它所清償的帳單（結帳後下一期繳清的金額算回該期）。'),
+            trKey('mobileLegacyPaymentsAreAssignedToTheStatementTheySettle'),
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
@@ -733,10 +743,9 @@ class _StatementCyclesSheetState extends State<_StatementCyclesSheet> {
                     padding: const EdgeInsets.all(24),
                     child: Center(
                       child: Text(
-                        trPair(
-                          '載入失敗：${snap.error}',
-                          'Failed to load: ${snap.error}',
-                        ),
+                        trKey('mobileDynamicFailedToLoad', {
+                          'value': snap.error,
+                        }),
                       ),
                     ),
                   );
@@ -745,7 +754,7 @@ class _StatementCyclesSheetState extends State<_StatementCyclesSheet> {
                 if (cycles.isEmpty) {
                   return Padding(
                     padding: EdgeInsets.all(24),
-                    child: Center(child: Text(tr('尚無資料'))),
+                    child: Center(child: Text(trKey('commonNoData'))),
                   );
                 }
                 return ListView.separated(
@@ -776,7 +785,7 @@ class _StatementCyclesSheetState extends State<_StatementCyclesSheet> {
                                       borderRadius: BorderRadius.circular(4),
                                     ),
                                     child: Text(
-                                      tr('本期'),
+                                      trKey('featuresAccountsCyclesCurrent'),
                                       style: TextStyle(fontSize: 11),
                                     ),
                                   ),
@@ -788,20 +797,18 @@ class _StatementCyclesSheetState extends State<_StatementCyclesSheet> {
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
                               Text(
-                                trPair(
-                                  '消費 ${money(c.spending, _currency)}',
-                                  'Spent ${money(c.spending, _currency)}',
-                                ),
+                                trKey('mobileDynamicSpentAmount', {
+                                  'amount': money(c.spending, _currency),
+                                }),
                                 style: TextStyle(
                                   color: Color(0xFFD32F2F),
                                   fontSize: 13,
                                 ),
                               ),
                               Text(
-                                trPair(
-                                  '已繳 ${money(c.payment, _currency)}',
-                                  'Paid ${money(c.payment, _currency)}',
-                                ),
+                                trKey('mobileDynamicPaidAmount', {
+                                  'amount': money(c.payment, _currency),
+                                }),
                                 style: TextStyle(
                                   color: Color(0xFF2E7D32),
                                   fontSize: 13,

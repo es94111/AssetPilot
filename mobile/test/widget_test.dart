@@ -7,11 +7,17 @@ import 'package:assetpilot/screens/login_screen.dart';
 import 'package:assetpilot/l10n.dart';
 
 void main() {
-  test('英文語系可翻譯 APP 字串與動態訊息', () {
+  test('英文語系可透過穩定 key 翻譯 APP 字串與動態訊息', () {
     appLocale.value = 'en';
-    expect(tr('登入'), 'Sign in');
-    expect(tr('目前版本 v1.2.3'), 'Current version v1.2.3');
-    expect(trPair('已上傳照片（2）', 'Uploaded photos (2)'), 'Uploaded photos (2)');
+    expect(trKey('authLoginButton'), 'Sign in');
+    expect(
+      trKey('mobileDynamicLanguageUpdated', {'value': 'English'}),
+      'Language updated: English',
+    );
+    expect(
+      translateLegacyServerMessage('目前版本 v1.2.3'),
+      'Current version v1.2.3',
+    );
     appLocale.value = 'zh-TW';
   });
 

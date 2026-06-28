@@ -70,16 +70,18 @@ class _CategoriesScreenState extends State<CategoriesScreen>
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: Text(tr('刪除分類')),
-        content: Text(trPair('確定刪除「${c.name}」？', 'Delete “${c.name}”?')),
+        title: Text(trKey('mobileLegacyDeleteCategory')),
+        content: Text(
+          trKey('mobileDynamicConfirmDeleteNamed', {'name': c.name}),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text(tr('取消')),
+            child: Text(trKey('commonCancel')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text(tr('刪除')),
+            child: Text(trKey('commonDelete')),
           ),
         ],
       ),
@@ -87,7 +89,7 @@ class _CategoriesScreenState extends State<CategoriesScreen>
     if (ok != true) return;
     try {
       await ApiClient.instance.deleteCategory(c.id);
-      if (mounted) toast(context, tr('已刪除'));
+      if (mounted) toast(context, trKey('mobileLegacyDeleted'));
       _reload();
     } catch (e) {
       if (mounted) toast(context, '$e');
@@ -98,13 +100,13 @@ class _CategoriesScreenState extends State<CategoriesScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(tr('分類')),
+        title: Text(trKey('dashboardTableCategory')),
         bottom: TabBar(
           controller: _tab,
           onTap: (_) => setState(() {}),
           tabs: [
-            Tab(text: tr('支出')),
-            Tab(text: tr('收入')),
+            Tab(text: trKey('dashboardOverviewExpense')),
+            Tab(text: trKey('dashboardOverviewIncome')),
           ],
         ),
       ),
@@ -126,7 +128,10 @@ class _CategoriesScreenState extends State<CategoriesScreen>
   Widget _buildList(List<Category> all, String type) {
     final parents = all.where((c) => c.type == type && c.isParent).toList();
     if (parents.isEmpty) {
-      return EmptyState(icon: Icons.category, message: tr('尚無分類'));
+      return EmptyState(
+        icon: Icons.category,
+        message: trKey('mobileLegacyNoCategoriesYet'),
+      );
     }
     return RefreshIndicator(
       onRefresh: () async => _reload(),
@@ -178,7 +183,7 @@ class AsyncFab extends StatelessWidget {
       builder: (context, snap) => FloatingActionButton.extended(
         onPressed: snap.hasData ? () => onPressed(snap.data!) : null,
         icon: Icon(Icons.add),
-        label: Text(tr('新增分類')),
+        label: Text(trKey('featuresCategoriesAddCategory')),
       ),
     );
   }
@@ -259,25 +264,34 @@ class _CategoryFormState extends State<_CategoryForm> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              _isEdit ? tr('編輯分類') : tr('新增分類'),
+              _isEdit
+                  ? trKey('featuresCategoriesEditCategory')
+                  : trKey('featuresCategoriesAddCategory'),
               style: Theme.of(context).textTheme.titleLarge,
             ),
             SizedBox(height: 16),
             TextFormField(
               controller: _name,
               decoration: InputDecoration(
-                labelText: tr('分類名稱'),
+                labelText: trKey('mobileLegacyCategoryName'),
                 border: OutlineInputBorder(),
               ),
-              validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? tr('請輸入名稱') : null,
+              validator: (v) => (v == null || v.trim().isEmpty)
+                  ? trKey('mobileLegacyEnterAName')
+                  : null,
             ),
             SizedBox(height: 12),
             if (!_isEdit)
               SegmentedButton<String>(
                 segments: [
-                  ButtonSegment(value: 'expense', label: Text(tr('支出'))),
-                  ButtonSegment(value: 'income', label: Text(tr('收入'))),
+                  ButtonSegment(
+                    value: 'expense',
+                    label: Text(trKey('dashboardOverviewExpense')),
+                  ),
+                  ButtonSegment(
+                    value: 'income',
+                    label: Text(trKey('dashboardOverviewIncome')),
+                  ),
                 ],
                 selected: {_type},
                 onSelectionChanged: (s) => setState(() {
@@ -289,11 +303,16 @@ class _CategoryFormState extends State<_CategoryForm> {
             DropdownButtonFormField<String?>(
               initialValue: _parentId,
               decoration: InputDecoration(
-                labelText: tr('父分類（不選＝建立父分類）'),
+                labelText: trKey(
+                  'mobileLegacyParentCategoryNoneCreatesAParent',
+                ),
                 border: OutlineInputBorder(),
               ),
               items: [
-                DropdownMenuItem(value: null, child: Text(tr('（無，作為父分類）'))),
+                DropdownMenuItem(
+                  value: null,
+                  child: Text(trKey('mobileLegacyNoneCreateAsParent')),
+                ),
                 for (final p in _parentOptions)
                   DropdownMenuItem(value: p.id, child: Text(p.name)),
               ],
@@ -303,7 +322,7 @@ class _CategoryFormState extends State<_CategoryForm> {
             Align(
               alignment: Alignment.centerLeft,
               child: Text(
-                tr('顏色'),
+                trKey('featuresCategoriesColorLabel'),
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
             ),
@@ -344,7 +363,7 @@ class _CategoryFormState extends State<_CategoryForm> {
                       width: 20,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : Text(tr('儲存')),
+                  : Text(trKey('commonSave')),
             ),
           ],
         ),

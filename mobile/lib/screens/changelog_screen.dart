@@ -37,11 +37,11 @@ class _ChangelogScreenState extends State<ChangelogScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(tr('版本資訊')),
+        title: Text(trKey('shellVersionInfo')),
         actions: [
           IconButton(
             icon: Icon(Icons.refresh),
-            tooltip: tr('重新檢查'),
+            tooltip: trKey('mobileLegacyCheckAgain'),
             onPressed: _refresh,
           ),
         ],
@@ -57,14 +57,18 @@ class _ChangelogScreenState extends State<ChangelogScreen> {
               _header(context, info),
               SizedBox(height: 16),
               Text(
-                info.updateAvailable ? tr('可更新內容') : tr('最近更新內容'),
+                info.updateAvailable
+                    ? trKey('shellChangelogUpdatableContent')
+                    : trKey('shellChangelogRecentContent'),
                 style: Theme.of(context).textTheme.titleSmall,
               ),
               SizedBox(height: 8),
               if (info.releasesToShow.isEmpty)
                 Padding(
                   padding: EdgeInsets.symmetric(vertical: 24),
-                  child: Center(child: Text(tr('目前沒有更新內容'))),
+                  child: Center(
+                    child: Text(trKey('mobileLegacyNoReleaseNotesAvailable')),
+                  ),
                 )
               else
                 for (final r in info.releasesToShow) _releaseCard(context, r),
@@ -95,14 +99,18 @@ class _ChangelogScreenState extends State<ChangelogScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    tr('目前版本 v${info.appVersion}'),
+                    trKey('mobileDynamicCurrentVersion', {
+                      'version': info.appVersion,
+                    }),
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                   SizedBox(height: 4),
                   Text(
                     upToDate
-                        ? tr('已是最新版本')
-                        : tr('有新版本 v${info.latestVersion} 可更新'),
+                        ? trKey('shellChangelogUpToDate')
+                        : trKey('mobileDynamicVersionAvailable', {
+                            'version': info.latestVersion,
+                          }),
                     style: TextStyle(
                       color: upToDate ? scheme.primary : scheme.tertiary,
                       fontWeight: FontWeight.w600,
@@ -177,12 +185,15 @@ class _ChangelogScreenState extends State<ChangelogScreen> {
 
   Widget _tagChip(BuildContext context, String tag) {
     final (label, color) = switch (tag) {
-      'new' => (tr('新增'), Colors.green),
-      'improved' => (tr('改進'), Colors.blue),
-      'fixed' || 'fix' => (tr('修正'), Colors.orange),
-      'removed' => (tr('移除'), Colors.grey),
-      'warning' => (tr('注意'), Colors.red),
-      _ => (tag.isEmpty ? tr('更新') : tag, Colors.grey),
+      'new' => (trKey('commonAdd'), Colors.green),
+      'improved' => (trKey('mobileLegacyImproved'), Colors.blue),
+      'fixed' || 'fix' => (trKey('mobileLegacyFixed'), Colors.orange),
+      'removed' => (trKey('featuresTransactionsRemove'), Colors.grey),
+      'warning' => (trKey('mobileLegacyNotice'), Colors.red),
+      _ => (
+        tag.isEmpty ? trKey('mobileLegacyUpdatedd9db02d0') : tag,
+        Colors.grey,
+      ),
     };
     return Container(
       margin: const EdgeInsets.only(top: 2),

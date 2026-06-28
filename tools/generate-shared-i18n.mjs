@@ -37,14 +37,20 @@ function flatten(value, prefix = '', out = []) {
   return out;
 }
 
+const FORBIDDEN_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
+
 function setPath(target, dotPath, value) {
   const parts = dotPath.split('.');
   let cursor = target;
   for (let i = 0; i < parts.length - 1; i += 1) {
-    cursor[parts[i]] ??= {};
-    cursor = cursor[parts[i]];
+    const key = parts[i];
+    if (FORBIDDEN_KEYS.has(key)) throw new Error(`Forbidden key in i18n path: ${dotPath}`);
+    if (!Object.hasOwn(cursor, key)) cursor[key] = Object.create(null);
+    cursor = cursor[key];
   }
-  cursor[parts.at(-1)] = value;
+  const lastKey = parts.at(-1);
+  if (FORBIDDEN_KEYS.has(lastKey)) throw new Error(`Forbidden key in i18n path: ${dotPath}`);
+  cursor[lastKey] = value;
 }
 
 function upperFirst(value) {

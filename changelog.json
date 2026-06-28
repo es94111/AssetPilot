@@ -1,6 +1,15 @@
 {
-  "currentVersion": "4.84.1",
+  "currentVersion": "4.84.2",
   "releases": [
+    {
+      "version": "4.84.2",
+      "date": "2026-06-28",
+      "title": "行動 App 相容性維護更新",
+      "type": "improved",
+      "changes": [
+        { "tag": "improved", "text": "手機 App 的底層網頁顯示與平台整合相依項目已更新至相容範圍內的新版本，提升日後系統與瀏覽元件更新時的穩定性。" }
+      ]
+    },
     {
       "version": "4.84.1",
       "date": "2026-06-28",

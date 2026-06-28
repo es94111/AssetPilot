@@ -1,7 +1,7 @@
 # 資產管理 系統規格說明書 (SSD)
 
-**版本：** 4.79.1
-**日期：** 2026-06-27
+**版本：** 4.84.2
+**日期：** 2026-06-28
 **狀態：** 已實作
 
 ---
@@ -987,6 +987,7 @@ API 路徑統一以 `/api/` 為前綴。所有需認證的路由自動套用 aut
 
 | 版本 | 日期 | 變更說明 |
 | --- | --- | --- |
+| 4.84.2 | 2026-06-28 | 行動 App 套件相容性維護：`mobile/pubspec.lock` 於既有 constraints 內升級 app_links_platform_interface 2.0.2 → 2.0.3、path_provider_linux 2.2.1 → 2.2.2、path_provider_platform_interface 2.1.2 → 2.1.3、shared_preferences_android 2.4.25 → 2.4.26、webview_flutter 4.13.1 → 4.14.0；未調整 direct dependency constraints，major candidates 保留人工評估。 |
 | 4.84.1 | 2026-06-28 | 登入頁 Turnstile 多語化與 UX 修正：`app/login/page.tsx` 新增 `turnstileLanguage`（從 `useT().locale` 衍生）並傳入 `window.turnstile.render()` 的 `language` 選項；useEffect 補 cleanup 函式（`turnstile.remove` + reset token），防止頁籤切換後 widget 殘留；提交時驗證失敗改以 `scrollIntoView` 提示使用者；登入按鈕 `disabled` 移除 `turnstileEnabled && !turnstileToken` 條件，改在 submit handler 做驗證。`app/api/auth/login/route.ts` 將 `isTurnstileConfigured()` 改為 `getTurnstileSiteKey()`；引入 `localeFromAcceptLanguage` + `getTranslator`，Turnstile 驗證失敗錯誤訊息改依 `Accept-Language` header 回傳本地化文字。 |
 | 4.84.0 | 2026-06-28 | login_audit_logs / login_attempt_logs / login_sessions 三個資料表新增 device_id TEXT DEFAULT '' 欄位（alterIgnore migration）；recordLoginAudit / recordLoginAttempt 從 X-AssetPilot-Device-Id header 提取 device ID 寫入 device_id 欄；createLoginSession 同步寫入 device_id；listLoginSessions 回傳 deviceId 欄位；GET /api/user/login-audit 回傳 deviceId；data_safety_export.csv PSL_DEVICE_ID 的 PSL_APP_FUNCTIONALITY 更新為 true。 |
 | 4.83.0 | 2026-06-28 | i18n 單一來源化（Shared i18n Source of Truth）：新增 `shared/i18n/locales.json`（locale 元資料：id、arbLocale、tsFile、htmlLang、dir、label、androidTag、flutter、matchPrefixes）與 10 個 ARB 字典（`shared/i18n/app_*.arb`）為唯一來源；`tools/generate-shared-i18n.mjs` 負責產出：(1) `lib/i18n/generated/config.ts`（GENERATED_LOCALES、GENERATED_HTML_LANG、GENERATED_HTML_DIR、GENERATED_LOCALE_LABELS、GENERATED_LOCALE_PREFIX_ALIASES、GENERATED_DEFAULT_LOCALE）、(2) `mobile/lib/generated/app_locales.dart`（kSupportedAppLocales、kAppLocaleLabels、kDefaultAppLocale、kLocalePrefixAliases）、(3) `mobile/lib/generated/shared_translations.dart`（各 locale 翻譯常數）。`lib/i18n/config.ts` 改 import generated config；`mobile/lib/l10n.dart` 改 import generated constants，`normalizeAppLocale` 改為 alias table 驅動。新增 `mobile/l10n.yaml`，flutter gen-l10n 讀 shared/i18n/*.arb 產出 `mobile/lib/generated/`。`package.json` 新增 `i18n:generate` 指令（`generate-shared-i18n.mjs && flutter gen-l10n`）與 `check:i18n` 加 `--check` 旗標。CI `i18n-check.yml` 擴展：setup Flutter → `npm run i18n:generate`（重生） → `git diff --exit-code` drift check → 靜態 Web key check（`t('...')` in app/components/lib） → 靜態 Flutter key check（`trKey('...')` in mobile/lib） → flutter gen-l10n 驗證。 |

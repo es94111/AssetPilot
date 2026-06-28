@@ -28,7 +28,7 @@ class PasskeyAuth {
         Uri.parse('$baseUrl/app/passkey-login'),
         mode: LaunchMode.externalApplication,
       );
-      if (!launched) throw ApiException(0, tr('無法開啟瀏覽器進行 Passkey 登入'));
+      if (!launched) throw ApiException(0, trKey('mobileLegacyUnableToOpenTheBrowserForPasskeySign'));
 
       final initialUri = await appLinks.getInitialLink();
       if (initialUri != null) completeIfCallback(initialUri);
@@ -37,7 +37,7 @@ class PasskeyAuth {
       try {
         cb = await completer.future.timeout(Duration(minutes: 5));
       } on TimeoutException {
-        throw ApiException(0, tr('Passkey 登入逾時或已取消'));
+        throw ApiException(0, trKey('mobileLegacyPasskeySignInTimedOutOrWasCancelled'));
       }
 
       await ApiClient.instance.exchangeAppAuthTicket(

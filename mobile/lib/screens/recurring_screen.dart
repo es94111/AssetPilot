@@ -7,10 +7,10 @@ import '../widgets.dart';
 import '../l10n.dart';
 
 Map<String, String> get _freqLabels => {
-  'daily': tr('每日'),
-  'weekly': tr('每週'),
-  'monthly': tr('每月'),
-  'yearly': tr('每年'),
+  'daily': trKey('featuresRecurringFrequencyLabelsDaily'),
+  'weekly': trKey('featuresRecurringFrequencyLabelsWeekly'),
+  'monthly': trKey('featuresRecurringFrequencyLabelsMonthly'),
+  'yearly': trKey('featuresRecurringFrequencyLabelsYearly'),
 };
 
 class _RecurringData {
@@ -95,7 +95,7 @@ class _RecurringScreenState extends State<RecurringScreen> {
   Future<void> _delete(Recurring r) async {
     try {
       await ApiClient.instance.deleteRecurring(r.id);
-      if (mounted) toast(context, tr('已刪除'));
+      if (mounted) toast(context, trKey('mobileLegacyDeleted'));
       _reload();
     } catch (e) {
       if (mounted) toast(context, '$e');
@@ -105,13 +105,13 @@ class _RecurringScreenState extends State<RecurringScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(tr('固定收支'))),
+      appBar: AppBar(title: Text(trKey('navRecurring'))),
       floatingActionButton: FutureBuilder<_RecurringData>(
         future: _future,
         builder: (context, snap) => FloatingActionButton.extended(
           onPressed: snap.hasData ? () => _openForm(snap.data!) : null,
           icon: Icon(Icons.add),
-          label: Text(tr('新增')),
+          label: Text(trKey('commonAdd')),
         ),
       ),
       body: AsyncView<_RecurringData>(
@@ -119,7 +119,10 @@ class _RecurringScreenState extends State<RecurringScreen> {
         onRetry: _reload,
         builder: (context, data) {
           if (data.items.isEmpty) {
-            return EmptyState(icon: Icons.repeat, message: tr('尚無固定收支'));
+            return EmptyState(
+              icon: Icons.repeat,
+              message: trKey('mobileLegacyNoRecurringTransactions'),
+            );
           }
           return RefreshIndicator(
             onRefresh: () async => _reload(),
@@ -142,13 +145,16 @@ class _RecurringScreenState extends State<RecurringScreen> {
                   ),
                   title: Text(
                     data.catName[r.categoryId] ??
-                        (r.note.isEmpty ? tr('未分類') : r.note),
+                        (r.note.isEmpty
+                            ? trKey('dashboardUncategorized')
+                            : r.note),
                   ),
                   subtitle: Text(
-                    trPair(
-                      '${_freqLabels[r.frequency] ?? r.frequency}・${data.accName[r.accountId] ?? ''}・自 ${r.startDate}',
-                      '${_freqLabels[r.frequency] ?? r.frequency} · ${data.accName[r.accountId] ?? ''} · From ${r.startDate}',
-                    ),
+                    trKey('mobileDynamicRecurringSubtitle', {
+                      'frequency': _freqLabels[r.frequency] ?? r.frequency,
+                      'account': data.accName[r.accountId] ?? '',
+                      'startDate': r.startDate,
+                    }),
                   ),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -343,14 +349,22 @@ class _RecurringFormState extends State<_RecurringForm> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                _isEdit ? tr('編輯固定收支') : tr('新增固定收支'),
+                _isEdit
+                    ? trKey('featuresRecurringEdit')
+                    : trKey('featuresRecurringAdd'),
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               SizedBox(height: 16),
               SegmentedButton<String>(
                 segments: [
-                  ButtonSegment(value: 'expense', label: Text(tr('支出'))),
-                  ButtonSegment(value: 'income', label: Text(tr('收入'))),
+                  ButtonSegment(
+                    value: 'expense',
+                    label: Text(trKey('dashboardOverviewExpense')),
+                  ),
+                  ButtonSegment(
+                    value: 'income',
+                    label: Text(trKey('dashboardOverviewIncome')),
+                  ),
                 ],
                 selected: {_type},
                 // 後端不允許編輯後變更類型，故編輯時鎖定。
@@ -368,12 +382,14 @@ class _RecurringFormState extends State<_RecurringForm> {
                   decimal: true,
                 ),
                 decoration: InputDecoration(
-                  labelText: tr('金額'),
+                  labelText: trKey('dashboardTableAmount'),
                   border: OutlineInputBorder(),
                 ),
                 validator: (v) {
                   final n = num.tryParse(v?.trim() ?? '');
-                  if (n == null || n <= 0) return tr('請輸入大於 0 的金額');
+                  if (n == null || n <= 0) {
+                    return trKey('mobileLegacyEnterAnAmountGreaterThan0');
+                  }
                   return null;
                 },
               ),
@@ -382,7 +398,7 @@ class _RecurringFormState extends State<_RecurringForm> {
                 initialValue: _currency,
                 isExpanded: true,
                 decoration: InputDecoration(
-                  labelText: tr('幣別'),
+                  labelText: trKey('featuresCommonCurrency'),
                   prefixIcon: Icon(Icons.payments_outlined),
                   border: OutlineInputBorder(),
                 ),
@@ -403,11 +419,10 @@ class _RecurringFormState extends State<_RecurringForm> {
                     decimal: true,
                   ),
                   decoration: InputDecoration(
-                    labelText: trPair(
-                      '匯率（1 $_currency = ? TWD）',
-                      'Exchange rate (1 $_currency = ? TWD)',
-                    ),
-                    helperText: tr('留空則使用系統匯率'),
+                    labelText: trKey('mobileDynamicExchangeRateForCurrency', {
+                      'currency': _currency,
+                    }),
+                    helperText: trKey('featuresTransactionsFxRatePlaceholder'),
                     prefixIcon: Icon(Icons.currency_exchange),
                     border: OutlineInputBorder(),
                   ),
@@ -415,7 +430,11 @@ class _RecurringFormState extends State<_RecurringForm> {
                     final s = v?.trim() ?? '';
                     if (s.isEmpty) return null;
                     final n = num.tryParse(s);
-                    if (n == null || n <= 0) return tr('匯率須大於 0');
+                    if (n == null || n <= 0) {
+                      return trKey(
+                        'mobileLegacyExchangeRateMustBeGreaterThan0',
+                      );
+                    }
                     return null;
                   },
                 ),
@@ -424,7 +443,7 @@ class _RecurringFormState extends State<_RecurringForm> {
               DropdownButtonFormField<String>(
                 initialValue: _frequency,
                 decoration: InputDecoration(
-                  labelText: tr('週期'),
+                  labelText: trKey('mobileLegacyFrequency'),
                   border: OutlineInputBorder(),
                 ),
                 items: [
@@ -438,7 +457,7 @@ class _RecurringFormState extends State<_RecurringForm> {
                 initialValue: _categoryId,
                 isExpanded: true,
                 decoration: InputDecoration(
-                  labelText: tr('分類'),
+                  labelText: trKey('dashboardTableCategory'),
                   border: OutlineInputBorder(),
                 ),
                 items: [
@@ -446,14 +465,15 @@ class _RecurringFormState extends State<_RecurringForm> {
                     DropdownMenuItem(value: c.id, child: Text(c.name)),
                 ],
                 onChanged: (v) => setState(() => _categoryId = v),
-                validator: (v) => v == null ? tr('請選擇分類') : null,
+                validator: (v) =>
+                    v == null ? trKey('mobileLegacySelectACategory') : null,
               ),
               SizedBox(height: 12),
               DropdownButtonFormField<String>(
                 initialValue: _accountId,
                 isExpanded: true,
                 decoration: InputDecoration(
-                  labelText: tr('帳戶'),
+                  labelText: trKey('featuresCommonAccount'),
                   border: OutlineInputBorder(),
                 ),
                 items: [
@@ -468,7 +488,8 @@ class _RecurringFormState extends State<_RecurringForm> {
                     _fxRate.clear();
                   }
                 }),
-                validator: (v) => v == null ? tr('請選擇帳戶') : null,
+                validator: (v) =>
+                    v == null ? trKey('mobileLegacySelectAnAccount') : null,
               ),
               SizedBox(height: 12),
               ListTile(
@@ -477,7 +498,7 @@ class _RecurringFormState extends State<_RecurringForm> {
                   borderRadius: BorderRadius.circular(4),
                 ),
                 leading: Icon(Icons.calendar_today),
-                title: Text(tr('起始日期')),
+                title: Text(trKey('featuresRecurringStartDate')),
                 trailing: Text(_startStr),
                 onTap: () async {
                   final d = await showDatePicker(
@@ -493,7 +514,7 @@ class _RecurringFormState extends State<_RecurringForm> {
               TextFormField(
                 controller: _note,
                 decoration: InputDecoration(
-                  labelText: tr('備註（選填）'),
+                  labelText: trKey('mobileLegacyNoteOptional'),
                   border: OutlineInputBorder(),
                 ),
               ),
@@ -505,18 +526,19 @@ class _RecurringFormState extends State<_RecurringForm> {
                     decimal: true,
                   ),
                   decoration: InputDecoration(
-                    labelText: tr('海外手續費 TWD（選填）'),
-                    helperText: trPair(
-                      '此卡費率 ${_selectedAccount!.overseasFeeRate}%，留空將自動計算',
-                      'Card rate: ${_selectedAccount!.overseasFeeRate}%. Leave blank to calculate automatically.',
+                    labelText: trKey(
+                      'mobileLegacyForeignTransactionFeeInTwdOptional',
                     ),
+                    helperText: trKey('mobileDynamicCardRateAutoFee', {
+                      'rate': _selectedAccount!.overseasFeeRate,
+                    }),
                     border: OutlineInputBorder(),
                   ),
                 ),
               ],
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
-                title: Text(tr('不計入統計')),
+                title: Text(trKey('featuresCommonExcludeFromStats')),
                 value: _excludeFromStats,
                 onChanged: (v) => setState(() => _excludeFromStats = v),
               ),
@@ -532,7 +554,7 @@ class _RecurringFormState extends State<_RecurringForm> {
                         width: 20,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : Text(tr('儲存')),
+                    : Text(trKey('commonSave')),
               ),
             ],
           ),

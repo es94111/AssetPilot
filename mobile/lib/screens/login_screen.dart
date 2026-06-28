@@ -99,7 +99,9 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     if (_turnstileEnabled && _turnstileToken == null) {
-      setState(() => _error = tr('請先完成下方的真人驗證'));
+      setState(
+        () => _error = trKey('mobileLegacyCompleteTheVerificationBelowFirst'),
+      );
       return;
     }
     FocusScope.of(context).unfocus();
@@ -120,7 +122,9 @@ class _LoginScreenState extends State<LoginScreen> {
       if (_turnstileEnabled) _resetTurnstile(); // token 單次使用，失敗後重取
     } catch (e) {
       if (!mounted) return;
-      setState(() => _error = trPair('發生未預期的錯誤：$e', 'Unexpected error: $e'));
+      setState(
+        () => _error = trKey('mobileDynamicUnexpectedError', {'value': e}),
+      );
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -151,7 +155,10 @@ class _LoginScreenState extends State<LoginScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(
-        () => _error = trPair('Google 登入失敗：$e', 'Google sign-in failed: $e'),
+        () => _error = trKey('mobileDynamicProviderLoginFailed', {
+          'provider': 'Google',
+          'error': e,
+        }),
       );
     } finally {
       if (mounted) setState(() => _googleLoading = false);
@@ -176,7 +183,10 @@ class _LoginScreenState extends State<LoginScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(
-        () => _error = trPair('LINE 登入失敗：$e', 'LINE sign-in failed: $e'),
+        () => _error = trKey('mobileDynamicProviderLoginFailed', {
+          'provider': 'LINE',
+          'error': e,
+        }),
       );
     } finally {
       if (mounted) setState(() => _lineLoading = false);
@@ -197,7 +207,10 @@ class _LoginScreenState extends State<LoginScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(
-        () => _error = trPair('Passkey 登入失敗：$e', 'Passkey sign-in failed: $e'),
+        () => _error = trKey('mobileDynamicProviderLoginFailed', {
+          'provider': 'Passkey',
+          'error': e,
+        }),
       );
     } finally {
       if (mounted) setState(() => _passkeyLoading = false);
@@ -234,7 +247,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     SizedBox(height: 4),
                     Text(
-                      tr('資產管理 · 安卓客戶端'),
+                      trKey('mobileLegacyPersonalFinanceAndroidApp'),
                       textAlign: TextAlign.center,
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
@@ -246,12 +259,12 @@ class _LoginScreenState extends State<LoginScreen> {
                       keyboardType: TextInputType.emailAddress,
                       autocorrect: false,
                       decoration: InputDecoration(
-                        labelText: tr('電子郵件'),
+                        labelText: trKey('settingsAccountEmail'),
                         prefixIcon: Icon(Icons.email_outlined),
                         border: OutlineInputBorder(),
                       ),
                       validator: (v) => (v == null || !v.contains('@'))
-                          ? tr('請輸入有效的電子郵件')
+                          ? trKey('mobileLegacyEnterAValidEmailAddress')
                           : null,
                     ),
                     SizedBox(height: 16),
@@ -259,7 +272,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       controller: _password,
                       obscureText: _obscure,
                       decoration: InputDecoration(
-                        labelText: tr('密碼'),
+                        labelText: trKey('authPasswordLabel'),
                         prefixIcon: Icon(Icons.lock_outline),
                         border: OutlineInputBorder(),
                         suffixIcon: IconButton(
@@ -271,8 +284,9 @@ class _LoginScreenState extends State<LoginScreen> {
                           onPressed: () => setState(() => _obscure = !_obscure),
                         ),
                       ),
-                      validator: (v) =>
-                          (v == null || v.isEmpty) ? tr('請輸入密碼') : null,
+                      validator: (v) => (v == null || v.isEmpty)
+                          ? trKey('authPasswordPlaceholder')
+                          : null,
                       onFieldSubmitted: (_) => _submit(),
                     ),
                     if (_turnstileEnabled && _siteKey != null) ...[
@@ -329,7 +343,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               width: 20,
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
-                          : Text(tr('登入')),
+                          : Text(trKey('authLoginTab')),
                     ),
                     SizedBox(height: 12),
                     OutlinedButton.icon(
@@ -346,7 +360,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
                           : Icon(Icons.fingerprint_rounded),
-                      label: Text(tr('使用 Passkey 登入')),
+                      label: Text(trKey('authPasskeyButton')),
                     ),
                     if (_googleEnabled) ...[
                       SizedBox(height: 12),
@@ -366,7 +380,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                               )
                             : Icon(Icons.account_circle_outlined),
-                        label: Text(tr('使用 Google 登入')),
+                        label: Text(trKey('authGoogleButton')),
                       ),
                     ],
                     if (_lineEnabled) ...[
@@ -387,7 +401,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                               )
                             : Icon(Icons.chat_bubble_outline_rounded),
-                        label: Text(tr('使用 LINE 登入')),
+                        label: Text(trKey('authLineButton')),
                       ),
                     ],
                     if (_configLoading)
@@ -404,7 +418,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     else if (_registrationEnabled)
                       TextButton(
                         onPressed: _loading ? null : _goRegister,
-                        child: Text(tr('還沒有帳號？註冊')),
+                        child: Text(
+                          trKey('mobileLegacyDonTHaveAnAccountSignUp'),
+                        ),
                       ),
                   ],
                 ),

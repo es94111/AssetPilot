@@ -74,7 +74,7 @@ class _BudgetsScreenState extends State<BudgetsScreen> {
   Future<void> _delete(Budget b) async {
     try {
       await ApiClient.instance.deleteBudget(b.id);
-      if (mounted) toast(context, tr('已刪除'));
+      if (mounted) toast(context, trKey('mobileLegacyDeleted'));
       _reload();
     } catch (e) {
       if (mounted) toast(context, '$e');
@@ -85,7 +85,7 @@ class _BudgetsScreenState extends State<BudgetsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(tr('預算')),
+        title: Text(trKey('mobileLegacyBudgets')),
         actions: [
           IconButton(
             onPressed: () => _shiftMonth(-1),
@@ -101,7 +101,7 @@ class _BudgetsScreenState extends State<BudgetsScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _add,
         icon: Icon(Icons.add),
-        label: Text(tr('新增預算')),
+        label: Text(trKey('featuresBudgetAddBudget')),
       ),
       body: AsyncView<_BudgetData>(
         future: _future,
@@ -110,7 +110,7 @@ class _BudgetsScreenState extends State<BudgetsScreen> {
           if (data.budgets.isEmpty) {
             return EmptyState(
               icon: Icons.savings_outlined,
-              message: tr('本月尚無預算'),
+              message: trKey('mobileLegacyNoBudgetThisMonth'),
             );
           }
           return RefreshIndicator(
@@ -122,8 +122,9 @@ class _BudgetsScreenState extends State<BudgetsScreen> {
                   _BudgetTile(
                     budget: b,
                     name: b.categoryId == null
-                        ? tr('月度總預算')
-                        : (data.catById[b.categoryId]?.name ?? tr('未知分類')),
+                        ? trKey('mobileLegacyMonthlyBudget')
+                        : (data.catById[b.categoryId]?.name ??
+                              trKey('mobileLegacyUnknownCategory')),
                     onDelete: () => _delete(b),
                   ),
               ],
@@ -251,10 +252,9 @@ class _BudgetFormState extends State<_BudgetForm> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              trPair(
-                '新增預算（${widget.yearMonth}）',
-                'Add budget (${widget.yearMonth})',
-              ),
+              trKey('mobileDynamicAddBudgetForMonth', {
+                'month': widget.yearMonth,
+              }),
               style: Theme.of(context).textTheme.titleLarge,
             ),
             SizedBox(height: 16),
@@ -262,11 +262,14 @@ class _BudgetFormState extends State<_BudgetForm> {
               initialValue: _categoryId,
               isExpanded: true,
               decoration: InputDecoration(
-                labelText: tr('分類'),
+                labelText: trKey('dashboardTableCategory'),
                 border: OutlineInputBorder(),
               ),
               items: [
-                DropdownMenuItem(value: null, child: Text(tr('月度總預算'))),
+                DropdownMenuItem(
+                  value: null,
+                  child: Text(trKey('mobileLegacyMonthlyBudget')),
+                ),
                 for (final c in widget.categories)
                   DropdownMenuItem(value: c.id, child: Text(c.name)),
               ],
@@ -277,12 +280,14 @@ class _BudgetFormState extends State<_BudgetForm> {
               controller: _amount,
               keyboardType: TextInputType.number,
               decoration: InputDecoration(
-                labelText: tr('預算金額'),
+                labelText: trKey('mobileLegacyBudgetAmount'),
                 border: OutlineInputBorder(),
               ),
               validator: (v) {
                 final n = num.tryParse(v?.trim() ?? '');
-                if (n == null || n <= 0) return tr('請輸入正整數');
+                if (n == null || n <= 0) {
+                  return trKey('mobileLegacyEnterAPositiveWholeNumber');
+                }
                 return null;
               },
             ),
@@ -298,7 +303,7 @@ class _BudgetFormState extends State<_BudgetForm> {
                       width: 20,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : Text(tr('儲存')),
+                  : Text(trKey('commonSave')),
             ),
           ],
         ),

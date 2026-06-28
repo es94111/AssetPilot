@@ -1,19 +1,31 @@
 name: i18n Parity Check
 
-# 守住手寫 i18n 的兩個漂移破口：字典鍵對齊 + 原始碼靜態鍵驗證。
-# 腳本零相依（只 require 字典檔），不需 npm install。
+# 守住 shared/i18n 單一來源的漂移破口：
+# - shared ARB -> Web dictionaries / Flutter ARB / Android locale_config generated output
+# - Web t('...') 靜態 key
+# - Flutter trKey('...') 靜態 key
+# - Flutter gen-l10n output
 
 on:
   push:
     branches: [main, dev]
   pull_request:
     paths:
+      - 'shared/i18n/**'
       - 'lib/i18n/**'
       - 'app/**'
       - 'components/**'
+      - 'mobile/l10n.yaml'
+      - 'mobile/lib/**'
+      - 'mobile/android/app/src/main/res/xml/locale_config.xml'
+      - 'package.json'
       - 'tools/check-i18n-parity.ts'
+      - 'tools/generate-shared-i18n.mjs'
       - '.github/workflows/i18n-check.yml'
   workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   i18n-parity:
@@ -27,5 +39,73 @@ jobs:
         with:
           node-version: 24
 
-      - name: Check i18n dictionary parity & static keys
-        run: node tools/check-i18n-parity.ts
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install Flutter dependencies
+        working-directory: mobile
+        run: flutter pub get
+
+      - name: Regenerate shared i18n outputs
+        run: npm run i18n:generate
+
+      - name: Check generated output drift
+        run: |
+          git diff --exit-code -- \
+            lib/i18n/dictionaries \
+            lib/i18n/generated \
+            mobile/android/app/src/main/res/xml/locale_config.xml \
+            mobile/lib/generated
+
+      - name: Check i18n dictionary parity & Web static keys
+        run: npm run check:i18n
+
+      - name: Check Flutter trKey references
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const path = require('path');
+
+          const root = process.cwd();
+          const sourceArb = JSON.parse(
+            fs.readFileSync(path.join(root, 'shared/i18n/app_zh_Hant_TW.arb'), 'utf8'),
+          );
+          const keys = new Set(Object.keys(sourceArb).filter((key) => !key.startsWith('@')));
+          const files = [];
+
+          function walk(dir) {
+            for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+              const file = path.join(dir, entry.name);
+              if (entry.isDirectory()) walk(file);
+              else if (entry.isFile() && file.endsWith('.dart')) files.push(file);
+            }
+          }
+
+          walk(path.join(root, 'mobile/lib'));
+          walk(path.join(root, 'mobile/test'));
+
+          const missing = [];
+          let count = 0;
+          const trKeyPattern = /trKey\(\s*'([^']+)'/g;
+
+          for (const file of files) {
+            const text = fs.readFileSync(file, 'utf8');
+            let match;
+            while ((match = trKeyPattern.exec(text)) !== null) {
+              count += 1;
+              if (!keys.has(match[1])) {
+                missing.push(`${path.relative(root, file)}: ${match[1]}`);
+              }
+            }
+          }
+
+          if (missing.length > 0) {
+            console.error(`Missing Flutter trKey keys:\n${missing.join('\n')}`);
+            process.exit(1);
+          }
+
+          console.log(`Flutter trKey keys all found: ${count} references.`);
+          NODE

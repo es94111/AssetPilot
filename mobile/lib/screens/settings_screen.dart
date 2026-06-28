@@ -34,7 +34,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final newName = await showDialog<String>(
       context: context,
       builder: (_) => AlertDialog(
-        title: Text(tr('修改顯示名稱')),
+        title: Text(trKey('settingsAccountEditDisplayName')),
         content: TextField(
           controller: ctrl,
           autofocus: true,
@@ -43,11 +43,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text(tr('取消')),
+            child: Text(trKey('commonCancel')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, ctrl.text.trim()),
-            child: Text(tr('儲存')),
+            child: Text(trKey('commonSave')),
           ),
         ],
       ),
@@ -56,7 +56,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     try {
       await ApiClient.instance.updateDisplayName(newName);
       if (mounted) {
-        toast(context, tr('已更新'));
+        toast(context, trKey('mobileLegacyUpdated'));
         setState(() => _future = _load());
       }
     } catch (e) {
@@ -83,12 +83,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
         bool busy = false;
         return StatefulBuilder(
           builder: (dialogCtx, setLocal) => AlertDialog(
-            title: Text(tr('刪除帳號')),
+            title: Text(trKey('settingsAccountDeleteTitle')),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(tr('此操作將永久刪除您的帳號與所有資料（交易、帳戶、股票與設定），且無法復原。')),
+                Text(
+                  trKey(
+                    'mobileLegacyThisPermanentlyDeletesYourAccountAndAllData',
+                  ),
+                ),
                 SizedBox(height: 16),
                 TextField(
                   controller: ctrl,
@@ -100,7 +104,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       : TextInputType.emailAddress,
                   decoration: InputDecoration(
                     border: OutlineInputBorder(),
-                    labelText: hasPw ? tr('請輸入密碼以確認') : tr('請輸入帳號電子信箱以確認'),
+                    labelText: hasPw
+                        ? trKey('mobileLegacyEnterYourPasswordToConfirm')
+                        : trKey('mobileLegacyEnterTheAccountEmailToConfirm'),
                     hintText: hasPw ? null : user.email,
                     errorText: error,
                   ),
@@ -110,7 +116,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             actions: [
               TextButton(
                 onPressed: busy ? null : () => Navigator.pop(dialogCtx, false),
-                child: Text(tr('取消')),
+                child: Text(trKey('commonCancel')),
               ),
               FilledButton(
                 style: FilledButton.styleFrom(
@@ -121,12 +127,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     : () async {
                         final input = ctrl.text.trim();
                         if (hasPw && input.isEmpty) {
-                          setLocal(() => error = tr('請輸入密碼以確認刪除'));
+                          setLocal(
+                            () => error = trKey(
+                              'settingsAccountDeletePasswordLabel',
+                            ),
+                          );
                           return;
                         }
                         if (!hasPw &&
                             input.toLowerCase() != user.email.toLowerCase()) {
-                          setLocal(() => error = tr('請輸入正確的帳號電子信箱以確認刪除'));
+                          setLocal(
+                            () => error = trKey(
+                              'settingsAccountMessagesDeleteEmailMismatch',
+                            ),
+                          );
                           return;
                         }
                         setLocal(() {
@@ -153,7 +167,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         height: 18,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : Text(tr('永久刪除')),
+                    : Text(trKey('mobileLegacyDeletePermanently')),
               ),
             ],
           ),
@@ -161,23 +175,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
       },
     );
     if (confirmed == true && mounted) {
-      toast(context, tr('帳號已刪除'));
+      toast(context, trKey('mobileLegacyAccountDeleted'));
       Navigator.of(context).popUntil((route) => route.isFirst);
       widget.onLoggedOut();
     }
   }
 
   String _themeLabel(ThemeMode m) => switch (m) {
-    ThemeMode.light => tr('淺色'),
-    ThemeMode.dark => tr('深色'),
-    ThemeMode.system => tr('跟隨系統'),
+    ThemeMode.light => trKey('mobileLegacyLight'),
+    ThemeMode.dark => trKey('mobileLegacyDark'),
+    ThemeMode.system => trKey('settingsAccountThemeSystem'),
   };
 
   Future<void> _pickLanguage() async {
     final picked = await showDialog<String>(
       context: context,
       builder: (_) => SimpleDialog(
-        title: Text(tr('語言（APP、通知與網頁版）')),
+        title: Text(trKey('mobileLegacyAppNotificationAndWebLanguage')),
         children: [
           for (final e in appLocaleLabels.entries)
             ListTile(
@@ -191,7 +205,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
     try {
       await ApiClient.instance.setLanguage(picked);
       await setAppLocale(picked);
-      if (mounted) toast(context, tr('已更新語言：${appLocaleLabels[picked]}'));
+      if (mounted) {
+        toast(
+          context,
+          trKey('mobileDynamicLanguageUpdated', {
+            'value': appLocaleLabels[picked] ?? picked,
+          }),
+        );
+      }
     } catch (e) {
       if (mounted) toast(context, '$e');
     }
@@ -203,7 +224,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(tr('設定'))),
+      appBar: AppBar(title: Text(trKey('settingsTitle'))),
       body: AsyncView<AppUser>(
         future: _future,
         onRetry: () => setState(() => _future = _load()),
@@ -221,7 +242,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               subtitle: Text(user.email),
               trailing: user.isAdmin
                   ? Chip(
-                      label: Text(tr('管理員')),
+                      label: Text(trKey('navAdmin')),
                       visualDensity: VisualDensity.compact,
                     )
                   : null,
@@ -229,7 +250,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             Divider(),
             ListTile(
               leading: Icon(Icons.badge_outlined),
-              title: Text(tr('顯示名稱')),
+              title: Text(trKey('authDisplayNameLabel')),
               subtitle: Text(user.displayName),
               onTap: () => _editName(user),
             ),
@@ -237,13 +258,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
               valueListenable: themeMode,
               builder: (context, mode, _) => ListTile(
                 leading: Icon(Icons.brightness_6_outlined),
-                title: Text(tr('主題')),
+                title: Text(trKey('mobileLegacyTheme')),
                 subtitle: Text(_themeLabel(mode)),
                 onTap: () async {
                   final picked = await showDialog<ThemeMode>(
                     context: context,
                     builder: (_) => SimpleDialog(
-                      title: Text(tr('選擇主題')),
+                      title: Text(trKey('mobileLegacyChooseTheme')),
                       children: [
                         for (final m in ThemeMode.values)
                           ListTile(
@@ -260,33 +281,41 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             ListTile(
               leading: Icon(Icons.payments_outlined),
-              title: Text(tr('幣別設定')),
-              subtitle: Text(tr('預設幣別與常用幣別')),
+              title: Text(trKey('mobileLegacyCurrencySettings')),
+              subtitle: Text(
+                trKey('mobileLegacyDefaultAndFrequentlyUsedCurrencies'),
+              ),
               onTap: () => _push(CurrencySettingsScreen()),
             ),
             ListTile(
               leading: Icon(Icons.translate),
-              title: Text(tr('語言')),
-              subtitle: Text(tr('繁體中文 / English')),
+              title: Text(trKey('commonLanguage')),
+              subtitle: Text(trKey('mobileLegacyTraditionalChineseEnglish')),
               onTap: _pickLanguage,
             ),
             ListTile(
               leading: Icon(Icons.notifications_outlined),
-              title: Text(tr('報表通知')),
-              subtitle: Text(tr('自訂定期收支報表寄送時間')),
+              title: Text(trKey('mobileLegacyReportNotifications')),
+              subtitle: Text(
+                trKey('mobileLegacyCustomizeScheduledCashFlowReports'),
+              ),
               onTap: () => _push(ReportScheduleScreen()),
             ),
             Divider(),
             Padding(
               padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
               child: Text(
-                tr('帳號安全'),
+                trKey('mobileLegacyAccountSecurity'),
                 style: TextStyle(fontSize: 13, color: Colors.grey),
               ),
             ),
             ListTile(
               leading: Icon(Icons.password_outlined),
-              title: Text(user.hasPassword ? tr('修改密碼') : tr('設定密碼')),
+              title: Text(
+                user.hasPassword
+                    ? trKey('settingsAccountChangePassword')
+                    : trKey('settingsAccountSetPassword'),
+              ),
               onTap: () => showChangePasswordSheet(
                 context,
                 hasPassword: user.hasPassword,
@@ -294,30 +323,32 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             ListTile(
               leading: Icon(Icons.key_outlined),
-              title: Text(tr('Passkey 管理')),
+              title: Text(trKey('settingsAccountPasskeyTitle')),
               onTap: () => _push(PasskeysScreen()),
             ),
             ListTile(
               leading: Icon(Icons.link),
-              title: Text(tr('帳號綁定')),
+              title: Text(trKey('mobileLegacyLinkedAccounts')),
               subtitle: Text('Google / LINE'),
               onTap: () => _push(AccountBindingsScreen()),
             ),
             ListTile(
               leading: Icon(Icons.devices_outlined),
-              title: Text(tr('登入裝置')),
+              title: Text(trKey('mobileLegacySignedInDevices')),
               onTap: () => _push(SessionsScreen()),
             ),
             ListTile(
               leading: Icon(Icons.history),
-              title: Text(tr('登入紀錄')),
+              title: Text(trKey('mobileLegacySignInHistory')),
               onTap: () => _push(LoginAuditScreen()),
             ),
             Divider(),
             ListTile(
               leading: Icon(Icons.system_update_outlined),
-              title: Text(tr('版本資訊')),
-              subtitle: Text(tr('查看目前版本與更新內容')),
+              title: Text(trKey('shellVersionInfo')),
+              subtitle: Text(
+                trKey('mobileLegacyViewTheCurrentVersionAndReleaseNotes'),
+              ),
               onTap: () => _push(ChangelogScreen()),
             ),
             Divider(),
@@ -327,7 +358,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 color: Theme.of(context).colorScheme.error,
               ),
               title: Text(
-                tr('登出'),
+                trKey('shellLogout'),
                 style: TextStyle(color: Theme.of(context).colorScheme.error),
               ),
               onTap: _logout,
@@ -339,10 +370,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 color: Theme.of(context).colorScheme.error,
               ),
               title: Text(
-                tr('刪除帳號'),
+                trKey('settingsAccountDeleteTitle'),
                 style: TextStyle(color: Theme.of(context).colorScheme.error),
               ),
-              subtitle: Text(tr('永久刪除帳號與所有資料，無法復原')),
+              subtitle: Text(
+                trKey('mobileLegacyPermanentlyDeleteYourAccountAndAllData'),
+              ),
               onTap: () => _deleteAccount(user),
             ),
           ],

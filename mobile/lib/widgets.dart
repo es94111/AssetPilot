@@ -48,7 +48,7 @@ class _ErrorBox extends StatelessWidget {
             const SizedBox(height: 16),
             Text(message, textAlign: TextAlign.center),
             const SizedBox(height: 16),
-            FilledButton.tonal(onPressed: onRetry, child: Text(tr('重試'))),
+            FilledButton.tonal(onPressed: onRetry, child: Text(trKey('mobileLegacyRetry'))),
           ],
         ),
       ),

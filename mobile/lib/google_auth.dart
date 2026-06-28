@@ -65,7 +65,7 @@ class GoogleAuth {
         mode: LaunchMode.inAppBrowserView,
       );
       if (!launched) {
-        throw ApiException(0, tr('無法開啟瀏覽器進行 Google 登入'));
+        throw ApiException(0, trKey('mobileLegacyUnableToOpenTheBrowserForGoogleSign'));
       }
 
       // 僅在 initial link 與啟動前不同（真正的冷啟動回呼）時才採用，
@@ -80,12 +80,12 @@ class GoogleAuth {
       try {
         cb = await completer.future.timeout(Duration(minutes: 5));
       } on TimeoutException {
-        throw ApiException(0, tr('Google 登入逾時或已取消'));
+        throw ApiException(0, trKey('mobileLegacyGoogleSignInTimedOutOrWasCancelled'));
       }
 
       final returnedState = cb.queryParameters['state'] ?? '';
       if (returnedState != state) {
-        throw ApiException(0, tr('Google 登入狀態不符，請重試'));
+        throw ApiException(0, trKey('mobileLegacyGoogleSignInStateMismatchTryAgain'));
       }
       final code = cb.queryParameters['code']!;
       await ApiClient.instance.googleLogin(

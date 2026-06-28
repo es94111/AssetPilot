@@ -1,0 +1,6 @@
+arb-dir: lib/generated/l10n/arb
+template-arb-file: app_zh_Hant_TW.arb
+output-localization-file: app_localizations.dart
+output-class: AppLocalizations
+output-dir: lib/generated/l10n
+nullable-getter: false

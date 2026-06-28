@@ -28,7 +28,7 @@ class _StockSettingsScreenState extends State<StockSettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(tr('股票設定'))),
+      appBar: AppBar(title: Text(trKey('navStocksSettings'))),
       body: AsyncView<StockSettings>(
         future: _future,
         onRetry: () => setState(() => _future = _load()),
@@ -93,7 +93,7 @@ class _StockSettingsFormState extends State<_StockSettingsForm> {
         'sellTaxMin': num.tryParse(_taxMin.text.trim()) ?? 0,
       });
       if (mounted) {
-        toast(context, tr('已儲存'));
+        toast(context, trKey('featuresAccountsMessagesSaved'));
         Navigator.pop(context);
       }
     } catch (e) {
@@ -117,7 +117,7 @@ class _StockSettingsFormState extends State<_StockSettingsForm> {
         ),
         validator: (v) {
           final n = num.tryParse(v?.trim() ?? '');
-          if (n == null || n < 0) return tr('請輸入 ≥ 0 的數字');
+          if (n == null || n < 0) return trKey('mobileLegacyEnterANumberGreaterThanOrEqualTo');
           return null;
         },
       ),
@@ -131,19 +131,19 @@ class _StockSettingsFormState extends State<_StockSettingsForm> {
       child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          Text(tr('手續費'), style: Theme.of(context).textTheme.titleMedium),
+          Text(trKey('featuresStocksTransactionsFeeLabel'), style: Theme.of(context).textTheme.titleMedium),
           SizedBox(height: 12),
-          _num(tr('手續費率（%）'), _feeRate, helper: tr('券商公定 0.1425%')),
-          _num(tr('折讓（0~1）'), _feeDiscount, helper: tr('例：0.6 代表 6 折')),
-          _num(tr('整股最低手續費'), _feeMinLot),
-          _num(tr('零股最低手續費'), _feeMinOdd),
+          _num(trKey('mobileLegacyCommissionRate'), _feeRate, helper: trKey('mobileLegacyStandardBrokerageRate01425')),
+          _num(trKey('mobileLegacyDiscount01'), _feeDiscount, helper: trKey('mobileLegacyExample06MeansA40Discount')),
+          _num(trKey('mobileLegacyMinimumBoardLotCommission'), _feeMinLot),
+          _num(trKey('mobileLegacyMinimumOddLotCommission'), _feeMinOdd),
           SizedBox(height: 8),
-          Text(tr('證交稅（賣出）'), style: Theme.of(context).textTheme.titleMedium),
+          Text(trKey('mobileLegacyTransactionTaxSell'), style: Theme.of(context).textTheme.titleMedium),
           SizedBox(height: 12),
-          _num(tr('一般股票（%）'), _taxStock, helper: tr('公定 0.3%')),
-          _num('ETF（%）', _taxEtf, helper: tr('公定 0.1%')),
-          _num(tr('權證（%）'), _taxWarrant),
-          _num(tr('最低證交稅'), _taxMin),
+          _num(trKey('mobileLegacyStocks'), _taxStock, helper: trKey('mobileLegacyStandardRate03')),
+          _num('ETF（%）', _taxEtf, helper: trKey('mobileLegacyStandardRate01')),
+          _num(trKey('mobileLegacyWarrants'), _taxWarrant),
+          _num(trKey('mobileLegacyMinimumTransactionTax'), _taxMin),
           SizedBox(height: 8),
           FilledButton(
             onPressed: _saving ? null : _save,
@@ -156,7 +156,7 @@ class _StockSettingsFormState extends State<_StockSettingsForm> {
                     width: 20,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : Text(tr('儲存')),
+                : Text(trKey('commonSave')),
           ),
         ],
       ),

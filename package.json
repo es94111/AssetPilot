@@ -10,7 +10,8 @@
     "test:tz": "node tests/lib/userTime.test.ts",
     "test:photo-crypto": "node tests/lib/photoCryptoCore.test.ts",
     "check:iso": "node tools/check-iso-utc-format.ts",
-    "check:i18n": "node tools/check-i18n-parity.ts",
+    "i18n:generate": "node tools/generate-shared-i18n.mjs && cd mobile && flutter gen-l10n",
+    "check:i18n": "node tools/generate-shared-i18n.mjs --check && node tools/check-i18n-parity.ts",
     "check:sla": "node tools/sla-monthly-report.ts",
     "rotate:photo-key": "node tools/rotate-photo-master-key.ts"
   },

@@ -11,11 +11,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'play_integrity.dart';
 import 'l10n.dart';
 
-/// API 呼叫失敗時拋出，message 已在地化為繁體中文。
+/// API 呼叫失敗時拋出，message 會盡量依目前 App 語系顯示。
 class ApiException implements Exception {
   final int statusCode;
   final String message;
-  ApiException(this.statusCode, String message) : message = tr(message);
+  ApiException(this.statusCode, String message)
+    : message = translateLegacyServerMessage(message);
 
   @override
   String toString() => message;
@@ -183,10 +184,7 @@ class ApiClient {
             break;
           default:
             throw ArgumentError(
-              trPair(
-                '未知的 HTTP method: $method',
-                'Unknown HTTP method: $method',
-              ),
+              trKey('mobileDynamicUnknownHttpMethod', {'method': method}),
             );
         }
       } finally {
@@ -195,7 +193,7 @@ class ApiClient {
     } catch (e) {
       // 連線層失敗（逾時、DNS、無網路…）。只記端點與例外型別，不帶 body/個資。
       Sentry.logger.error(
-        tr('API 請求連線失敗'),
+        trKey('mobileLegacyApiRequestConnectionFailed'),
         attributes: {
           'http.method': SentryAttribute.string(method),
           'http.path': SentryAttribute.string(_logPath(path)),
@@ -208,14 +206,17 @@ class ApiClient {
     if (res.statusCode == 401) {
       await _clearAuth();
       Sentry.logger.info(
-        tr('API 回應 401，工作階段已過期並清除本機登入'),
+        trKey('mobileLegacyApiReturned401TheExpiredLocalSessionWas'),
         attributes: {'http.path': SentryAttribute.string(_logPath(path))},
       );
-      throw ApiException(401, tr('登入已過期，請重新登入'));
+      throw ApiException(
+        401,
+        trKey('mobileLegacyYourSessionExpiredSignInAgain'),
+      );
     }
     if (res.statusCode < 200 || res.statusCode >= 300) {
       Sentry.logger.warn(
-        tr('API 請求失敗'),
+        trKey('mobileLegacyApiRequestFailed'),
         attributes: {
           'http.method': SentryAttribute.string(method),
           'http.path': SentryAttribute.string(_logPath(path)),
@@ -295,7 +296,7 @@ class ApiClient {
           .timeout(_timeout);
     } catch (e) {
       Sentry.logger.error(
-        tr('登入請求連線失敗'),
+        trKey('mobileLegacySignInRequestConnectionFailed'),
         attributes: {
           'auth.method': SentryAttribute.string('password'),
           'error.type': SentryAttribute.string(e.runtimeType.toString()),
@@ -306,7 +307,7 @@ class ApiClient {
     // 只記登入結果與狀態碼，絕不記 email/密碼。
     if (res.statusCode != 200) {
       Sentry.logger.warn(
-        tr('登入失敗'),
+        trKey('authErrorsLoginFailed'),
         attributes: {
           'auth.method': SentryAttribute.string('password'),
           'http.status_code': SentryAttribute.int(res.statusCode),
@@ -317,16 +318,19 @@ class ApiClient {
       case 200:
         _captureCookie(res);
         if (_cookie == null) {
-          throw ApiException(200, tr('登入回應未包含認證 Cookie，請確認後端設定'));
+          throw ApiException(
+            200,
+            trKey('mobileLegacyTheSignInResponseDidNotIncludeAn'),
+          );
         }
         await _persistLogin();
         Sentry.logger.info(
-          tr('登入成功'),
+          trKey('mobileLegacySignedIn'),
           attributes: {'auth.method': SentryAttribute.string('password')},
         );
         return;
       case 401:
-        throw ApiException(401, tr('電子郵件或密碼錯誤'));
+        throw ApiException(401, trKey('mobileLegacyIncorrectEmailOrPassword'));
       case 403:
         throw ApiException(403, _errorMessage(res)); // 多半是真人驗證失敗
       case 429:
@@ -363,7 +367,10 @@ class ApiClient {
     if (res.statusCode == 200 || res.statusCode == 201) {
       _captureCookie(res);
       if (_cookie == null) {
-        throw ApiException(200, tr('註冊回應未包含認證 Cookie，請確認後端設定'));
+        throw ApiException(
+          200,
+          trKey('mobileLegacyTheSignUpResponseDidNotIncludeAn'),
+        );
       }
       await _persistLogin();
       return;
@@ -375,7 +382,7 @@ class ApiClient {
   Future<String> googleState() async {
     final m = await _getMap('/api/auth/google/state');
     final s = m['state'];
-    if (s == null) throw ApiException(0, tr('無法建立 Google 登入狀態'));
+    if (s == null) throw ApiException(0, trKey('authErrorsGoogleStateFailed'));
     return '$s';
   }
 
@@ -406,7 +413,10 @@ class ApiClient {
     if (res.statusCode == 200) {
       _captureCookie(res);
       if (_cookie == null) {
-        throw ApiException(200, tr('Google 登入回應未包含認證 Cookie'));
+        throw ApiException(
+          200,
+          trKey('mobileLegacyTheGoogleSignInResponseDidNotInclude'),
+        );
       }
       await _persistLogin();
       return;
@@ -443,7 +453,10 @@ class ApiClient {
     if (res.statusCode == 200) {
       _captureCookie(res);
       if (_cookie == null) {
-        throw ApiException(200, tr('LINE 登入回應未包含認證 Cookie'));
+        throw ApiException(
+          200,
+          trKey('mobileLegacyTheLineSignInResponseDidNotInclude'),
+        );
       }
       await _persistLogin();
       return;
@@ -467,7 +480,10 @@ class ApiClient {
     if (res.statusCode == 200) {
       _captureCookie(res);
       if (_cookie == null) {
-        throw ApiException(200, tr('App 登入回應未包含認證 Cookie'));
+        throw ApiException(
+          200,
+          trKey('mobileLegacyTheAppSignInResponseDidNotInclude'),
+        );
       }
       await _persistLogin();
       return;
@@ -480,7 +496,7 @@ class ApiClient {
       await _send('POST', '/api/auth/logout');
     } catch (_) {}
     await _clearAuth();
-    Sentry.logger.info(tr('使用者登出，已清除本機登入'));
+    Sentry.logger.info(trKey('mobileLegacySignedOutAndClearedTheLocalSession'));
   }
 
   Future<Map<String, dynamic>> me() async {
@@ -555,8 +571,9 @@ class ApiClient {
     if (dateTo != null) q['dateTo'] = dateTo;
     if (type != null && type != 'all') q['type'] = type;
     if (accountId != null && accountId.isNotEmpty) q['accountId'] = accountId;
-    if (categoryId != null && categoryId.isNotEmpty)
+    if (categoryId != null && categoryId.isNotEmpty) {
       q['categoryId'] = categoryId;
+    }
     if (keyword != null && keyword.trim().isNotEmpty) {
       q['keyword'] = Uri.encodeQueryComponent(keyword.trim());
     }
@@ -610,7 +627,10 @@ class ApiClient {
 
     if (res.statusCode == 401) {
       await _clearAuth();
-      throw ApiException(401, tr('登入已過期，請重新登入'));
+      throw ApiException(
+        401,
+        trKey('mobileLegacyYourSessionExpiredSignInAgain'),
+      );
     }
     if (res.statusCode < 200 || res.statusCode >= 300) {
       throw ApiException(res.statusCode, _errorMessage(res));
@@ -707,7 +727,7 @@ class ApiClient {
     // synced/skipped/errors 為筆數統計，非金額/個資；記錄以利觀察同步成效。
     // 連線或非 2xx 失敗已由 _send 統一記錄，故此處只記成功結果。
     Sentry.logger.info(
-      tr('股利同步完成'),
+      trKey('mobileLegacyDividendSyncCompleted'),
       attributes: {
         'sync.synced': SentryAttribute.int(_asCount(r['synced'])),
         'sync.skipped': SentryAttribute.int(_asCount(r['skipped'])),

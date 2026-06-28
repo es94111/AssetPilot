@@ -71,7 +71,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(tr('統計報表'))),
+      appBar: AppBar(title: Text(trKey('navReports'))),
       body: Column(
         children: [
           Padding(
@@ -80,8 +80,14 @@ class _ReportsScreenState extends State<ReportsScreen> {
               children: [
                 SegmentedButton<String>(
                   segments: [
-                    ButtonSegment(value: 'expense', label: Text(tr('支出'))),
-                    ButtonSegment(value: 'income', label: Text(tr('收入'))),
+                    ButtonSegment(
+                      value: 'expense',
+                      label: Text(trKey('dashboardOverviewExpense')),
+                    ),
+                    ButtonSegment(
+                      value: 'income',
+                      label: Text(trKey('dashboardOverviewIncome')),
+                    ),
                   ],
                   selected: {_type},
                   onSelectionChanged: (s) {
@@ -106,7 +112,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                 if (data.breakdown.isEmpty) {
                   return EmptyState(
                     icon: Icons.bar_chart,
-                    message: tr('此區間無資料'),
+                    message: trKey('mobileLegacyNoDataForThisPeriod'),
                   );
                 }
                 final sorted = [...data.breakdown]
@@ -116,8 +122,12 @@ class _ReportsScreenState extends State<ReportsScreen> {
                   children: [
                     Center(
                       child: Text(
-                        '${trPair(_type == 'expense' ? '總支出：' : '總收入：', _type == 'expense' ? 'Total expenses: ' : 'Total income: ')}'
-                        '${twd(data.total)}',
+                        trKey(
+                          _type == 'expense'
+                              ? 'mobileDynamicReportTotalExpense'
+                              : 'mobileDynamicReportTotalIncome',
+                          {'total': twd(data.total)},
+                        ),
                         style: Theme.of(context).textTheme.titleMedium
                             ?.copyWith(fontWeight: FontWeight.bold),
                       ),

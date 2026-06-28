@@ -31,13 +31,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   String? _validatePassword(String? v) {
     final s = v ?? '';
-    if (s.length < 8) return tr('密碼長度至少 8 字元');
+    if (s.length < 8) {
+      return trKey('mobileLegacyPasswordMustBeAtLeast8Characters');
+    }
     final ok =
         RegExp(r'[A-Z]').hasMatch(s) &&
         RegExp(r'[a-z]').hasMatch(s) &&
         RegExp(r'\d').hasMatch(s) &&
         RegExp(r'[^A-Za-z0-9]').hasMatch(s);
-    if (!ok) return tr('需含大寫、小寫、數字與特殊符號');
+    if (!ok) {
+      return trKey(
+        'mobileLegacyIncludeUppercaseLowercaseNumbersAndSymbols21fb52f3',
+      );
+    }
     return null;
   }
 
@@ -60,7 +66,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
       setState(() => _error = e.message);
     } catch (e) {
       if (!mounted) return;
-      setState(() => _error = trPair('發生未預期的錯誤：$e', 'Unexpected error: $e'));
+      setState(
+        () => _error = trKey('mobileDynamicUnexpectedError', {'value': e}),
+      );
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -70,7 +78,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text(tr('註冊'))),
+      appBar: AppBar(title: Text(trKey('authRegisterTab'))),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -87,24 +95,24 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       keyboardType: TextInputType.emailAddress,
                       autocorrect: false,
                       decoration: InputDecoration(
-                        labelText: tr('電子郵件'),
+                        labelText: trKey('settingsAccountEmail'),
                         prefixIcon: Icon(Icons.email_outlined),
                         border: OutlineInputBorder(),
                       ),
                       validator: (v) => (v == null || !v.contains('@'))
-                          ? tr('請輸入有效的電子郵件')
+                          ? trKey('mobileLegacyEnterAValidEmailAddress')
                           : null,
                     ),
                     SizedBox(height: 16),
                     TextFormField(
                       controller: _name,
                       decoration: InputDecoration(
-                        labelText: tr('顯示名稱'),
+                        labelText: trKey('authDisplayNameLabel'),
                         prefixIcon: Icon(Icons.badge_outlined),
                         border: OutlineInputBorder(),
                       ),
                       validator: (v) => (v == null || v.trim().isEmpty)
-                          ? tr('請輸入顯示名稱')
+                          ? trKey('mobileLegacyEnterADisplayName')
                           : null,
                     ),
                     SizedBox(height: 16),
@@ -112,8 +120,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       controller: _password,
                       obscureText: _obscure,
                       decoration: InputDecoration(
-                        labelText: tr('密碼'),
-                        helperText: tr('至少 8 字元，含大小寫、數字與特殊符號'),
+                        labelText: trKey('authPasswordLabel'),
+                        helperText: trKey(
+                          'mobileLegacyAtLeast8CharactersWithUppercaseLowercaseNumbers',
+                        ),
                         helperMaxLines: 2,
                         prefixIcon: Icon(Icons.lock_outline),
                         border: OutlineInputBorder(),
@@ -156,7 +166,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               width: 20,
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
-                          : Text(tr('註冊並登入')),
+                          : Text(trKey('mobileLegacySignUpAndSignIn')),
                     ),
                   ],
                 ),

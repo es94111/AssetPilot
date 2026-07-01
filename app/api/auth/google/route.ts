@@ -14,6 +14,7 @@ import { consumeGoogleOAuthState } from '@/lib/googleOAuthState';
 import { createLoginSession } from '../../../../lib/sessionHelpers';
 import { isPlayIntegrityConfigured, isPlayIntegrityEnforced, verifyIntegrity } from '../../../../lib/playIntegrity';
 import { consumeIntegrityNonce } from '../../../../lib/playIntegrityNonce';
+import { getTurnstileSiteKey, verifyTurnstileToken } from '../../../../lib/turnstile';
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || '';
@@ -43,6 +44,7 @@ function isAllowedGoogleRedirectUri(uri: string) {
 export async function POST(request: Request) {
   const body = await request.json().catch(() => ({}));
   const { code, redirect_uri, state } = body;
+  const turnstileToken = String(body.turnstileToken || body['cf-turnstile-response'] || '');
   const headers = request.headers;
 
   if (!code) return NextResponse.json({ error: 'invalid_code' }, { status: 400 });
@@ -50,6 +52,14 @@ export async function POST(request: Request) {
   if (!isAllowedGoogleRedirectUri(String(redirect_uri || '').trim())) {
     recordLoginAttempt({ email: '', headers, method: 'google', isSuccess: false, failureReason: 'invalid_redirect_uri' });
     return NextResponse.json({ error: 'invalid_redirect_uri' }, { status: 400 });
+  }
+
+  if (getTurnstileSiteKey()) {
+    const turnstile = await verifyTurnstileToken(turnstileToken, headers, 'login');
+    if (!turnstile.ok) {
+      recordLoginAttempt({ email: '', headers, method: 'google', isSuccess: false, failureReason: 'turnstile_failed' });
+      return NextResponse.json({ error: turnstile.error || '請先完成真人驗證' }, { status: 403 });
+    }
   }
 
   if (!consumeGoogleOAuthState(state)) return NextResponse.json({ error: 'state_mismatch' }, { status: 400 });

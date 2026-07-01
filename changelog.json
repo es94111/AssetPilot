@@ -1,6 +1,16 @@
 {
-  "currentVersion": "4.84.3",
+  "currentVersion": "4.85.0",
   "releases": [
+    {
+      "version": "4.85.0",
+      "date": "2026-07-01",
+      "title": "登入人機驗證擴大至第三方登入與 Passkey",
+      "type": "improved",
+      "changes": [
+        { "tag": "improved", "text": "使用 Google 登入、LINE 登入或 Passkey 登入時，現在也會進行人機驗證，與原本的帳號密碼登入享有相同的防護，降低帳號被自動化程式嘗試登入的風險。" },
+        { "tag": "improved", "text": "手機 App 的相依套件已更新至最新相容版本，提升穩定性與安全性。" }
+      ]
+    },
     {
       "version": "4.84.3",
       "date": "2026-07-01",

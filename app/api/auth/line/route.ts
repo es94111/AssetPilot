@@ -11,8 +11,9 @@ import {
 } from '../../../../lib/loginHelpers';
 import { uid, todayStr, createDefaultsForUser, backfillDefaultsForUser } from '../../../../lib/userDefaults';
 import { formatUser, setAuthCookie } from '../../../../lib/apiHelpers';
-import { consumeLineOAuthState } from '@/lib/lineOAuthState';
+import { consumeLineOAuthStateEntry } from '@/lib/lineOAuthState';
 import { createLoginSession } from '../../../../lib/sessionHelpers';
+import { getTurnstileSiteKey } from '../../../../lib/turnstile';
 import {
   LINE_CHANNEL_ID,
   LINE_CHANNEL_SECRET,
@@ -32,8 +33,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'invalid_redirect_uri' }, { status: 400 });
   }
 
-  const nonce = consumeLineOAuthState(state);
-  if (!nonce) return NextResponse.json({ error: 'state_mismatch' }, { status: 400 });
+  const stateEntry = consumeLineOAuthStateEntry(state);
+  if (!stateEntry) return NextResponse.json({ error: 'state_mismatch' }, { status: 400 });
+  if (getTurnstileSiteKey() && stateEntry.flow === 'login' && !stateEntry.turnstileVerified) {
+    recordLoginAttempt({ email: '', headers, method: 'line', isSuccess: false, failureReason: 'turnstile_failed' });
+    return NextResponse.json({ error: '請先完成真人驗證' }, { status: 403 });
+  }
+  const nonce = stateEntry.nonce;
 
   const settings = getSystemSettings();
   if (!settings.lineLoginEnabled) return NextResponse.json({ error: 'LINE 登入未啟用' }, { status: 403 });

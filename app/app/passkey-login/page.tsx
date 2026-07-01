@@ -10,6 +10,8 @@ export default function MobilePasskeyLoginPage() {
 
   useEffect(() => {
     async function run() {
+      const params = new URLSearchParams(window.location.search);
+      const turnstileToken = params.get('turnstileToken') || '';
       if (!webauthnClient.isAvailable()) throw new Error(t('public.appCallback.passkeyUnsupported'));
 
       const challengeRes = await fetch('/api/auth/passkey/challenge', { cache: 'no-store' });
@@ -27,7 +29,7 @@ export default function MobilePasskeyLoginPage() {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ authentication, challengeKey: key }),
+        body: JSON.stringify({ authentication, challengeKey: key, turnstileToken }),
       });
       const loginData = await loginRes.json().catch(() => ({}));
       if (!loginRes.ok) throw new Error(loginData.error || t('public.appCallback.passkeyLoginFailed'));

@@ -7,6 +7,7 @@ import { backfillDefaultsForUser } from '../../../../../lib/userDefaults';
 import { formatUser, setAuthCookie } from '../../../../../lib/apiHelpers';
 import { consumePasskeyChallenge } from '@/lib/passkeyChallenge';
 import { createLoginSession } from '../../../../../lib/sessionHelpers';
+import { getTurnstileSiteKey, verifyTurnstileToken } from '../../../../../lib/turnstile';
 
 const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || '').split(',').map(s => s.trim()).filter(Boolean);
 
@@ -22,8 +23,17 @@ function getTrustedOriginFromRequest(request: Request) {
 export async function POST(request: Request) {
   const body = await request.json().catch(() => ({}));
   const { authentication, challengeKey } = body;
+  const turnstileToken = String(body.turnstileToken || body['cf-turnstile-response'] || '');
   if (!authentication || !challengeKey) {
     return NextResponse.json({ error: '缺少認證資料' }, { status: 400 });
+  }
+
+  if (getTurnstileSiteKey()) {
+    const turnstile = await verifyTurnstileToken(turnstileToken, request.headers, 'login');
+    if (!turnstile.ok) {
+      recordLoginAttempt({ email: '', headers: request.headers, method: 'passkey', isSuccess: false, failureReason: 'turnstile_failed' });
+      return NextResponse.json({ error: turnstile.error || '請先完成真人驗證' }, { status: 403 });
+    }
   }
 
   const entry = consumePasskeyChallenge(challengeKey);

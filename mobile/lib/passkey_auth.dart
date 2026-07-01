@@ -10,7 +10,10 @@ class PasskeyAuth {
   static const callbackScheme = 'assetpilot';
   static const callbackHost = 'auth-ticket';
 
-  static Future<void> signIn({required String baseUrl}) async {
+  static Future<void> signIn({
+    required String baseUrl,
+    String? turnstileToken,
+  }) async {
     final appLinks = AppLinks();
     final completer = Completer<Uri>();
     void completeIfCallback(Uri uri) {
@@ -24,8 +27,16 @@ class PasskeyAuth {
 
     final sub = appLinks.uriLinkStream.listen(completeIfCallback);
     try {
+      final passkeyUri = Uri.parse('$baseUrl/app/passkey-login');
       final launched = await launchUrl(
-        Uri.parse('$baseUrl/app/passkey-login'),
+        turnstileToken == null || turnstileToken.isEmpty
+            ? passkeyUri
+            : passkeyUri.replace(
+                queryParameters: {
+                  ...passkeyUri.queryParameters,
+                  'turnstileToken': turnstileToken,
+                },
+              ),
         mode: LaunchMode.externalApplication,
       );
       if (!launched) throw ApiException(0, trKey('mobileLegacyUnableToOpenTheBrowserForPasskeySign'));

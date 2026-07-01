@@ -14,9 +14,12 @@ class LineAuth {
   static Future<void> signIn({
     required String channelId,
     required String baseUrl,
+    String? turnstileToken,
   }) async {
     final redirectUri = '$baseUrl$callbackPath';
-    final stateData = await ApiClient.instance.lineState();
+    final stateData = await ApiClient.instance.lineState(
+      turnstileToken: turnstileToken,
+    );
     final state = stateData['state'] ?? '';
     final nonce = stateData['nonce'] ?? '';
     if (state.isEmpty || nonce.isEmpty) {

@@ -70,8 +70,14 @@ export default function LoginPage() {
       sitekey: config.turnstileSiteKey,
       action: 'login',
       theme: 'auto',
+      appearance: 'always',
       language: turnstileLanguage,
-      callback: (token: string) => setTurnstileToken(token || ''),
+      callback: (token: string) => {
+        setTurnstileToken(token || '');
+        if (token) {
+          setError(current => current === t('auth.errors.turnstileRequired') ? '' : current);
+        }
+      },
       'expired-callback': () => setTurnstileToken(''),
       'error-callback': () => setTurnstileToken(''),
     });
@@ -81,7 +87,7 @@ export default function LoginPage() {
       if (turnstileWidgetId.current === widgetId) turnstileWidgetId.current = null;
       setTurnstileToken('');
     };
-  }, [config?.turnstileSiteKey, form, turnstileEnabled, turnstileLanguage, turnstileScriptLoaded]);
+  }, [config?.turnstileSiteKey, form, t, turnstileEnabled, turnstileLanguage, turnstileScriptLoaded]);
 
   useEffect(() => {
     if (form === 'login' || !turnstileWidgetId.current) return;
@@ -96,14 +102,17 @@ export default function LoginPage() {
     setTurnstileToken('');
   }
 
+  function requireTurnstile() {
+    if (!turnstileEnabled || turnstileToken) return true;
+    setError(t('auth.errors.turnstileRequired'));
+    turnstileRef.current?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    return false;
+  }
+
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
     setError('');
-    if (turnstileEnabled && !turnstileToken) {
-      setError(t('auth.errors.turnstileRequired'));
-      turnstileRef.current?.scrollIntoView({ block: 'center', behavior: 'smooth' });
-      return;
-    }
+    if (!requireTurnstile()) return;
     setLoading(true);
     try {
       const r = await fetch('/api/auth/login', {
@@ -142,6 +151,7 @@ export default function LoginPage() {
 
   async function handleGoogleLogin() {
     setError('');
+    if (!requireTurnstile()) return;
     if (!config?.googleClientId || !config?.googleCodeFlow) { setError(t('auth.errors.googleNotConfigured')); return; }
     if (!window.google?.accounts?.oauth2?.initCodeClient) { setError(t('auth.errors.googleComponentNotLoaded')); return; }
     setGoogleLoading(true);
@@ -163,7 +173,7 @@ export default function LoginPage() {
             const res = await fetch('/api/auth/google', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ code: response.code, redirect_uri: redirectUri, state }),
+              body: JSON.stringify({ code: response.code, redirect_uri: redirectUri, state, turnstileToken }),
             });
             const data = await res.json().catch(() => ({}));
             if (!res.ok) throw new Error(data.error || t('auth.errors.googleFailed'));
@@ -171,22 +181,28 @@ export default function LoginPage() {
             router.refresh();
           } catch (e: any) {
             setError(e.message || t('auth.errors.googleFailed'));
-          } finally { setGoogleLoading(false); }
+          } finally {
+            setGoogleLoading(false);
+            if (turnstileEnabled) resetTurnstile();
+          }
         },
         error_callback: (err: any) => {
           setError(err?.message || t('auth.errors.googleCancelled'));
           setGoogleLoading(false);
+          if (turnstileEnabled) resetTurnstile();
         },
       });
       client.requestCode();
     } catch (e: any) {
       setError(e.message || t('auth.errors.googleFailed'));
       setGoogleLoading(false);
+      if (turnstileEnabled) resetTurnstile();
     }
   }
 
   async function handlePasskeyLogin() {
     setError('');
+    if (!requireTurnstile()) return;
     if (!webauthnClient.isAvailable()) { setError(t('auth.errors.passkeyUnsupported')); return; }
     setPasskeyLoading(true);
     try {
@@ -202,18 +218,22 @@ export default function LoginPage() {
       const res = await fetch('/api/auth/passkey/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ authentication, challengeKey: key }),
+        body: JSON.stringify({ authentication, challengeKey: key, turnstileToken }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || t('auth.errors.passkeyFailed'));
       router.push('/dashboard');
       router.refresh();
     } catch (e: any) { setError(e.message || t('auth.errors.passkeyFailed')); }
-    finally { setPasskeyLoading(false); }
+    finally {
+      setPasskeyLoading(false);
+      if (turnstileEnabled) resetTurnstile();
+    }
   }
 
   async function handleLineLogin() {
     setError('');
+    if (!requireTurnstile()) return;
     if (!config?.lineChannelId || !config?.lineCodeFlow) { setError(t('auth.errors.lineNotConfigured')); return; }
     setLineLoading(true);
     try {
@@ -221,6 +241,7 @@ export default function LoginPage() {
         flow: 'login',
         origin: window.location.origin,
       });
+      if (turnstileToken) params.set('turnstileToken', turnstileToken);
       if (shouldDisableLineAutoLogin()) params.set('disableAutoLogin', '1');
       window.location.assign(`/api/auth/line/authorize?${params.toString()}`);
     } catch (e: any) {

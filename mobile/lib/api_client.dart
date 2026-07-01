@@ -425,6 +425,7 @@ class ApiClient {
     required String code,
     required String redirectUri,
     required String state,
+    String? turnstileToken,
   }) async {
     final integrity = await _integrityFields();
     late http.Response res;
@@ -437,6 +438,7 @@ class ApiClient {
               'code': code,
               'redirect_uri': redirectUri,
               'state': state,
+              'turnstileToken': ?turnstileToken,
               ...integrity,
             }),
           )
@@ -458,8 +460,11 @@ class ApiClient {
     throw ApiException(res.statusCode, _errorMessage(res));
   }
 
-  Future<Map<String, String>> lineState() async {
-    final m = await _getMap('/api/auth/line/state?flow=login');
+  Future<Map<String, String>> lineState({String? turnstileToken}) async {
+    final query = turnstileToken == null || turnstileToken.isEmpty
+        ? 'flow=login'
+        : 'flow=login&turnstileToken=${Uri.encodeComponent(turnstileToken)}';
+    final m = await _getMap('/api/auth/line/state?$query');
     return {'state': '${m['state'] ?? ''}', 'nonce': '${m['nonce'] ?? ''}'};
   }
 

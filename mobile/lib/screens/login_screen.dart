@@ -96,14 +96,17 @@ class _LoginScreenState extends State<LoginScreen> {
     _turnstileNonce++;
   });
 
+  bool _requireTurnstile() {
+    if (!_turnstileEnabled || _turnstileToken != null) return true;
+    setState(
+      () => _error = trKey('mobileLegacyCompleteTheVerificationBelowFirst'),
+    );
+    return false;
+  }
+
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
-    if (_turnstileEnabled && _turnstileToken == null) {
-      setState(
-        () => _error = trKey('mobileLegacyCompleteTheVerificationBelowFirst'),
-      );
-      return;
-    }
+    if (!_requireTurnstile()) return;
     FocusScope.of(context).unfocus();
     setState(() {
       _loading = true;
@@ -139,6 +142,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _googleSignIn() async {
     if (_googleClientId == null) return;
+    if (!_requireTurnstile()) return;
+    final turnstileToken = _turnstileToken;
     setState(() {
       _googleLoading = true;
       _error = null;
@@ -147,11 +152,13 @@ class _LoginScreenState extends State<LoginScreen> {
       await GoogleAuth.signIn(
         clientId: _googleClientId!,
         baseUrl: ApiClient.instance.baseUrl,
+        turnstileToken: turnstileToken,
       );
       if (mounted) widget.onLoggedIn();
     } on ApiException catch (e) {
       if (!mounted) return; // await 期間畫面可能已被 dispose，避免 setState 崩潰
       setState(() => _error = e.message);
+      if (_turnstileEnabled) _resetTurnstile();
     } catch (e) {
       if (!mounted) return;
       setState(
@@ -160,6 +167,7 @@ class _LoginScreenState extends State<LoginScreen> {
           'error': e,
         }),
       );
+      if (_turnstileEnabled) _resetTurnstile();
     } finally {
       if (mounted) setState(() => _googleLoading = false);
     }
@@ -167,6 +175,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _lineSignIn() async {
     if (_lineChannelId == null) return;
+    if (!_requireTurnstile()) return;
+    final turnstileToken = _turnstileToken;
     setState(() {
       _lineLoading = true;
       _error = null;
@@ -175,11 +185,13 @@ class _LoginScreenState extends State<LoginScreen> {
       await LineAuth.signIn(
         channelId: _lineChannelId!,
         baseUrl: ApiClient.instance.baseUrl,
+        turnstileToken: turnstileToken,
       );
       if (mounted) widget.onLoggedIn();
     } on ApiException catch (e) {
       if (!mounted) return; // await 期間畫面可能已被 dispose，避免 setState 崩潰
       setState(() => _error = e.message);
+      if (_turnstileEnabled) _resetTurnstile();
     } catch (e) {
       if (!mounted) return;
       setState(
@@ -188,22 +200,29 @@ class _LoginScreenState extends State<LoginScreen> {
           'error': e,
         }),
       );
+      if (_turnstileEnabled) _resetTurnstile();
     } finally {
       if (mounted) setState(() => _lineLoading = false);
     }
   }
 
   Future<void> _passkeySignIn() async {
+    if (!_requireTurnstile()) return;
+    final turnstileToken = _turnstileToken;
     setState(() {
       _passkeyLoading = true;
       _error = null;
     });
     try {
-      await PasskeyAuth.signIn(baseUrl: ApiClient.instance.baseUrl);
+      await PasskeyAuth.signIn(
+        baseUrl: ApiClient.instance.baseUrl,
+        turnstileToken: turnstileToken,
+      );
       if (mounted) widget.onLoggedIn();
     } on ApiException catch (e) {
       if (!mounted) return; // await 期間畫面可能已被 dispose，避免 setState 崩潰
       setState(() => _error = e.message);
+      if (_turnstileEnabled) _resetTurnstile();
     } catch (e) {
       if (!mounted) return;
       setState(
@@ -212,6 +231,7 @@ class _LoginScreenState extends State<LoginScreen> {
           'error': e,
         }),
       );
+      if (_turnstileEnabled) _resetTurnstile();
     } finally {
       if (mounted) setState(() => _passkeyLoading = false);
     }

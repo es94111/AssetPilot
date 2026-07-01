@@ -23,6 +23,7 @@ class GoogleAuth {
   static Future<void> signIn({
     required String clientId,
     required String baseUrl,
+    String? turnstileToken,
   }) async {
     final redirectUri = '$baseUrl$callbackPath';
     final state = await ApiClient.instance.googleState();
@@ -92,6 +93,7 @@ class GoogleAuth {
         code: code,
         redirectUri: redirectUri,
         state: state,
+        turnstileToken: turnstileToken,
       );
     } finally {
       await sub.cancel();

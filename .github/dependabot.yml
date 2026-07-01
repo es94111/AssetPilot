@@ -44,7 +44,6 @@ updates:
     open-pull-requests-limit: 3
     cooldown:
       default-days: 7
-      semver-major-days: 14
     commit-message:
       prefix: "chore(ci)"
       include: scope
@@ -68,7 +67,6 @@ updates:
     open-pull-requests-limit: 2
     cooldown:
       default-days: 7
-      semver-major-days: 14
     commit-message:
       prefix: "chore(docker)"
       include: scope

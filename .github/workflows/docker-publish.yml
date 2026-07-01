@@ -19,7 +19,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           fetch-depth: 0
 
@@ -66,7 +66,7 @@ jobs:
           gh workflow run android-apk.yml --ref main
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4
+        uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4
 
       # ── Docker Hub 登入（主要；偶發網路逾時 → 重試 3 次）──
       - name: Login to Docker Hub (with retry)
@@ -103,7 +103,7 @@ jobs:
       # ── 標籤：Docker Hub ──
       - name: Docker metadata (Docker Hub)
         id: meta_dockerhub
-        uses: docker/metadata-action@v6
+        uses: docker/metadata-action@80c7e94dd9b9319bd5eb7a0e0fe9291e23a2a2e9 # v6
         with:
           images: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}
           tags: |
@@ -118,7 +118,7 @@ jobs:
       # ── 標籤：ghcr ──
       - name: Docker metadata (ghcr)
         id: meta_ghcr
-        uses: docker/metadata-action@v6
+        uses: docker/metadata-action@80c7e94dd9b9319bd5eb7a0e0fe9291e23a2a2e9 # v6
         with:
           images: ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}
           tags: |
@@ -132,7 +132,7 @@ jobs:
 
       # ── 建置 & 推送：Docker Hub（主要，必須成功；同時把 layer cache 寫入 gha）──
       - name: Build and push to Docker Hub
-        uses: docker/build-push-action@v7
+        uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7
         with:
           context: .
           platforms: linux/amd64
@@ -147,7 +147,7 @@ jobs:
       - name: Build and push to ghcr
         if: steps.ghcr_login.outcome == 'success'
         continue-on-error: true
-        uses: docker/build-push-action@v7
+        uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7
         with:
           context: .
           platforms: linux/amd64

@@ -28,10 +28,10 @@ jobs:
       MOBSF_API_KEY: ci-local-mobsf-key
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
 
       - name: Set up Flutter
-        uses: subosito/flutter-action@v2
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
         with:
           channel: stable
           cache: true
@@ -61,10 +61,10 @@ jobs:
         run: |
           APK=mobile/build/app/outputs/flutter-apk/app-release.apk
           ls -lh "$APK"
-          HASH=$(curl -sf -F "file=@${APK}" \
-                   -H "Authorization: $MOBSF_API_KEY" \
-                   http://localhost:8000/api/v1/upload \
-                 | python3 -c "import sys,json;print(json.load(sys.stdin)['hash'])")
+          curl -sf -F "file=@${APK}" \
+               -H "Authorization: $MOBSF_API_KEY" \
+               http://localhost:8000/api/v1/upload -o upload-response.json
+          HASH=$(python3 -c "import json;print(json.load(open('upload-response.json'))['hash'])")
           echo "Scan hash: $HASH"
           curl -sf -X POST http://localhost:8000/api/v1/scan \
                -H "Authorization: $MOBSF_API_KEY" \
@@ -95,7 +95,7 @@ jobs:
 
       - name: Upload MobSF report
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: mobsf-report
           path: |

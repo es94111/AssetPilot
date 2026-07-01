@@ -176,51 +176,65 @@ class ApiClient {
     final hasBody = body != null;
     final t = timeout ?? _timeout;
     late http.Response res;
-    try {
-      final uri = _uri(path);
-      final headers = _headers(json: hasBody);
-      final encoded = hasBody ? jsonEncode(body) : null;
-      // 以 SentryHttpClient 包裝，讓每個 API 請求自動產生效能 span 與麵包屑
-      // （方法／路徑／狀態碼／耗時），用於監控 API 延遲造成的效能下降；
-      // 伺服器 5xx 亦會被擷取為 Sentry 事件。請求帶的 query string 由 sentry_config
-      // 的 hook 於送出前清除，避免外洩搜尋關鍵字；認證 Cookie 因 sendDefaultPii=false
-      // 不會被記錄。
-      final c = SentryHttpClient(client: http.Client());
+    // GET 為冪等操作；後端偶發部署瞬斷／閘道逾時（502/503/504）重試一次通常
+    // 就能成功，避免把暫時性問題誤判為使用者可見的錯誤（見 Sentry
+    // ASSETPILOT-APP-A/B/C/D：/api/config、/api/dashboard、
+    // /api/auth/google|line/state 皆為此類瞬斷）。
+    for (var attempt = 0; ; attempt++) {
       try {
-        switch (method) {
-          case 'GET':
-            res = await c.get(uri, headers: headers).timeout(t);
-            break;
-          case 'POST':
-            res = await c.post(uri, headers: headers, body: encoded).timeout(t);
-            break;
-          case 'PUT':
-            res = await c.put(uri, headers: headers, body: encoded).timeout(t);
-            break;
-          case 'DELETE':
-            res = await c
-                .delete(uri, headers: headers, body: encoded)
-                .timeout(t);
-            break;
-          default:
-            throw ArgumentError(
-              trKey('mobileDynamicUnknownHttpMethod', {'method': method}),
-            );
+        final uri = _uri(path);
+        final headers = _headers(json: hasBody);
+        final encoded = hasBody ? jsonEncode(body) : null;
+        // 以 SentryHttpClient 包裝，讓每個 API 請求自動產生效能 span 與麵包屑
+        // （方法／路徑／狀態碼／耗時），用於監控 API 延遲造成的效能下降；
+        // 伺服器 5xx 亦會被擷取為 Sentry 事件。請求帶的 query string 由 sentry_config
+        // 的 hook 於送出前清除，避免外洩搜尋關鍵字；認證 Cookie 因 sendDefaultPii=false
+        // 不會被記錄。
+        final c = SentryHttpClient(client: http.Client());
+        try {
+          switch (method) {
+            case 'GET':
+              res = await c.get(uri, headers: headers).timeout(t);
+              break;
+            case 'POST':
+              res = await c.post(uri, headers: headers, body: encoded).timeout(t);
+              break;
+            case 'PUT':
+              res = await c.put(uri, headers: headers, body: encoded).timeout(t);
+              break;
+            case 'DELETE':
+              res = await c
+                  .delete(uri, headers: headers, body: encoded)
+                  .timeout(t);
+              break;
+            default:
+              throw ArgumentError(
+                trKey('mobileDynamicUnknownHttpMethod', {'method': method}),
+              );
+          }
+        } finally {
+          c.close();
         }
-      } finally {
-        c.close();
+      } catch (e) {
+        // 連線層失敗（逾時、DNS、無網路…）。只記端點與例外型別，不帶 body/個資。
+        Sentry.logger.error(
+          trKey('mobileLegacyApiRequestConnectionFailed'),
+          attributes: {
+            'http.method': SentryAttribute.string(method),
+            'http.path': SentryAttribute.string(_logPath(path)),
+            'error.type': SentryAttribute.string(e.runtimeType.toString()),
+          },
+        );
+        throw ApiException(0, '無法連線到後端（$_baseUrl）：$e');
       }
-    } catch (e) {
-      // 連線層失敗（逾時、DNS、無網路…）。只記端點與例外型別，不帶 body/個資。
-      Sentry.logger.error(
-        trKey('mobileLegacyApiRequestConnectionFailed'),
-        attributes: {
-          'http.method': SentryAttribute.string(method),
-          'http.path': SentryAttribute.string(_logPath(path)),
-          'error.type': SentryAttribute.string(e.runtimeType.toString()),
-        },
-      );
-      throw ApiException(0, '無法連線到後端（$_baseUrl）：$e');
+
+      final isGatewayTimeout =
+          res.statusCode == 502 || res.statusCode == 503 || res.statusCode == 504;
+      if (method == 'GET' && isGatewayTimeout && attempt == 0) {
+        await Future.delayed(const Duration(seconds: 2));
+        continue;
+      }
+      break;
     }
 
     if (res.statusCode == 401) {

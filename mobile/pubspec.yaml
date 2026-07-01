@@ -44,20 +44,20 @@ dependencies:
   # 金額格式化（千分位、貨幣）
   intl: ^0.20.2
   # 圓餅圖／趨勢圖（對應 Web 的 Chart.js）
-  fl_chart: ^0.69.2
+  fl_chart: ^1.2.0
   # 登入頁的 Cloudflare Turnstile（真人驗證）以 WebView 呈現
   webview_flutter: ^4.10.0
   # Google SSO：以系統瀏覽器開授權頁
   url_launcher: ^6.3.1
   # 接收 Google OAuth 完成後導回的 App Link（深層連結）
-  app_links: ^6.3.2
+  app_links: ^7.2.0
   # 記帳憑證照片選取與 multipart 上傳 Content-Type
   image_picker: ^1.1.2
   http_parser: ^4.0.2
   # 登入憑證（JWT Cookie）加密儲存：Android 走 Keystore 加密的 EncryptedSharedPreferences
-  flutter_secure_storage: ^9.2.2
+  flutter_secure_storage: ^10.3.1
   # 讀取 App 自身版本（versionName/Code），用於「版本資訊」頁判斷是否有新版
-  package_info_plus: ^8.3.1
+  package_info_plus: ^10.2.0
   # 錯誤／崩潰監控（Sentry）。release/dist 由 package_info 自動帶入；
   # DSN 與過濾設定見 lib/sentry_config.dart。
   sentry_flutter: ^9.22.0

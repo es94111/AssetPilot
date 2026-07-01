@@ -1,6 +1,16 @@
 {
-  "currentVersion": "4.84.2",
+  "currentVersion": "4.84.3",
   "releases": [
+    {
+      "version": "4.84.3",
+      "date": "2026-07-01",
+      "title": "行動 App 網路不穩時自動重試查詢",
+      "type": "fixed",
+      "changes": [
+        { "tag": "fixed", "text": "手機 App 讀取資料時若遇到伺服器短暫忙碌或部署瞬斷，會自動重試一次再顯示結果，減少因網路瞬間不穩而看到錯誤訊息的情況。" },
+        { "tag": "improved", "text": "手機 App 的相依套件已更新至最新相容版本，提升穩定性與安全性。" }
+      ]
+    },
     {
       "version": "4.84.2",
       "date": "2026-06-28",

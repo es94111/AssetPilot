@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../api_client.dart';
+import '../app_widget_sync.dart';
 import '../format.dart';
 import '../models.dart';
 import '../widgets.dart';
@@ -156,6 +157,7 @@ class _HoldingsTabState extends State<_HoldingsTab> {
     final summary = PortfolioSummary.fromJson(
       (json['portfolioSummary'] as Map? ?? {}).cast<String, dynamic>(),
     );
+    await AppWidgetSync.updatePortfolio(summary);
     return _HoldingsData(stocks, summary);
   }
 

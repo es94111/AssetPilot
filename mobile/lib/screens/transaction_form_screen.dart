@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../api_client.dart';
+import '../app_widget_sync.dart';
 import '../models.dart';
 import '../widgets.dart';
 import '../l10n.dart';
@@ -25,7 +26,14 @@ const _kDefaultCurrencies = [
 /// 新增／編輯交易。轉帳僅支援新增。
 class TransactionFormScreen extends StatefulWidget {
   final Txn? existing;
-  const TransactionFormScreen({super.key, this.existing});
+  final String? initialType;
+  final String? initialCategoryShortcut;
+  const TransactionFormScreen({
+    super.key,
+    this.existing,
+    this.initialType,
+    this.initialCategoryShortcut,
+  });
 
   @override
   State<TransactionFormScreen> createState() => _TransactionFormScreenState();
@@ -77,6 +85,13 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
       final rate = num.tryParse(e.fxRate) ?? 1;
       if (_currency != 'TWD' && rate > 0 && rate != 1) _fxRate.text = e.fxRate;
       if (e.fxFee > 0) _fxFee.text = e.fxFee.round().toString();
+    } else {
+      final initialType = widget.initialType;
+      if (initialType == 'expense' ||
+          initialType == 'income' ||
+          initialType == 'transfer') {
+        _type = initialType!;
+      }
     }
     _loadFuture = _loadRefs();
   }
@@ -131,6 +146,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
     if (!_isEdit) {
       final a = _selectedAccount;
       if (a != null) _currency = a.currency;
+      _applyInitialCategoryShortcut();
     }
     final e = widget.existing;
     if (e != null) {
@@ -146,6 +162,126 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
       }
     }
   }
+
+  void _applyInitialCategoryShortcut() {
+    final shortcut = widget.initialCategoryShortcut?.trim().toLowerCase();
+    if (shortcut == null || shortcut.isEmpty) return;
+
+    final parentNames = _shortcutParentNames(shortcut);
+    if (parentNames.isEmpty) return;
+
+    _type = 'expense';
+    final parent = _findCategory(
+      _categories.where((c) => c.type == 'expense' && c.isParent),
+      parentNames,
+    );
+    if (parent == null) return;
+
+    _parentCatId = parent.id;
+    final children = _childCatsOf(parent.id);
+    final preferredChild = _findCategory(
+      children,
+      _shortcutChildNames(shortcut),
+    );
+    _categoryId =
+        (preferredChild ?? (children.isEmpty ? null : children.first))?.id;
+  }
+
+  List<String> _shortcutParentNames(String shortcut) {
+    switch (shortcut) {
+      case 'food':
+        return [
+          '餐飲',
+          '飲食',
+          '食物',
+          'food',
+          'dining',
+          'meal',
+          'meals',
+          'restaurant',
+          'restaurants',
+        ];
+      case 'transport':
+        return [
+          '交通',
+          '交通費',
+          'transport',
+          'transportation',
+          'transit',
+          'commute',
+        ];
+      case 'shopping':
+        return [
+          '購物',
+          'shopping',
+          'shop',
+          '日用品',
+          '生活用品',
+        ];
+      default:
+        return const [];
+    }
+  }
+
+  List<String> _shortcutChildNames(String shortcut) {
+    switch (shortcut) {
+      case 'food':
+        final hour = DateTime.now().hour;
+        if (hour >= 5 && hour < 11) {
+          return ['早餐', '早午餐', 'breakfast', 'brunch', '餐飲', '飲食'];
+        }
+        if (hour >= 11 && hour < 16) {
+          return ['午餐', '便當', 'lunch', '餐飲', '飲食'];
+        }
+        if (hour >= 16 && hour < 22) {
+          return ['晚餐', 'dinner', '餐飲', '飲食'];
+        }
+        return ['飲料', '點心', '宵夜', 'drink', 'snack', '餐飲', '飲食'];
+      case 'transport':
+        return [
+          '大眾運輸',
+          '捷運',
+          '公車',
+          '火車',
+          '高鐵',
+          'transport',
+          'transit',
+        ];
+      case 'shopping':
+        return ['日用品', '生活用品', '購物', 'shopping', 'daily'];
+      default:
+        return const [];
+    }
+  }
+
+  Category? _findCategory(
+    Iterable<Category> categories,
+    List<String> candidateNames,
+  ) {
+    final normalizedCandidates = candidateNames
+        .map(_normalizeCategoryName)
+        .where((name) => name.isNotEmpty)
+        .toSet();
+    if (normalizedCandidates.isEmpty) return null;
+
+    for (final category in categories) {
+      if (normalizedCandidates.contains(_normalizeCategoryName(category.name))) {
+        return category;
+      }
+    }
+    for (final category in categories) {
+      final name = _normalizeCategoryName(category.name);
+      if (normalizedCandidates.any((candidate) {
+        return name.contains(candidate) || candidate.contains(name);
+      })) {
+        return category;
+      }
+    }
+    return null;
+  }
+
+  String _normalizeCategoryName(String value) =>
+      value.toLowerCase().replaceAll(RegExp(r'\s+'), '');
 
   /// 僅顯示符合目前收支類型的子分類（交易必須掛在子分類）。
   List<Category> get _selectableCats =>
@@ -367,12 +503,40 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
           }
         }
       }
+      await _refreshDashboardWidgets();
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
       if (mounted) {
         setState(() => _saving = false);
         toast(context, '$e');
       }
+    }
+  }
+
+  Future<void> _refreshDashboardWidgets() async {
+    try {
+      final now = DateTime.now();
+      final ym =
+          '${now.year}-${now.month.toString().padLeft(2, '0')}';
+      final json = await ApiClient.instance.dashboard(ym);
+      await AppWidgetSync.updateDashboard(Dashboard.fromJson(json));
+      final rawBudgets = await ApiClient.instance.budgets(ym);
+      final rawCategories = await ApiClient.instance.categories();
+      final budgets = rawBudgets
+          .map((e) => Budget.fromJson((e as Map).cast<String, dynamic>()))
+          .toList();
+      final categories = rawCategories
+          .map((e) => Category.fromJson((e as Map).cast<String, dynamic>()))
+          .toList();
+      await AppWidgetSync.updateBudgetAlerts(
+        yearMonth: ym,
+        budgets: budgets,
+        categoryNames: {
+          for (final category in categories) category.id: category.name,
+        },
+      );
+    } catch (_) {
+      // 小工具同步失敗不應阻斷交易儲存。
     }
   }
 

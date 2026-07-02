@@ -9,6 +9,7 @@ import 'package:http_parser/http_parser.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'app_widget_sync.dart';
 import 'play_integrity.dart';
 import 'l10n.dart';
 
@@ -159,6 +160,7 @@ class ApiClient {
     _cookie = null;
     await _persistCookie();
     authState.value = false;
+    await AppWidgetSync.clearDashboard();
   }
 
   Future<void> _persistLogin() async {

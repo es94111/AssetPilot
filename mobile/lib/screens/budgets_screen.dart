@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../api_client.dart';
+import '../app_widget_sync.dart';
 import '../format.dart';
 import '../models.dart';
 import '../widgets.dart';
@@ -40,11 +41,17 @@ class _BudgetsScreenState extends State<BudgetsScreen> {
     final budgets = raw
         .map((e) => Budget.fromJson((e as Map).cast<String, dynamic>()))
         .toList();
-    final catById = {
-      for (final e in cats)
-        Category.fromJson((e as Map).cast<String, dynamic>()).id:
-            Category.fromJson(e.cast<String, dynamic>()),
-    };
+    final categories = cats
+        .map((e) => Category.fromJson((e as Map).cast<String, dynamic>()))
+        .toList();
+    final catById = {for (final category in categories) category.id: category};
+    await AppWidgetSync.updateBudgetAlerts(
+      yearMonth: _ym,
+      budgets: budgets,
+      categoryNames: {
+        for (final category in categories) category.id: category.name,
+      },
+    );
     return _BudgetData(budgets, catById);
   }
 

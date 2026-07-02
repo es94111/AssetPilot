@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../api_client.dart';
+import '../app_widget_sync.dart';
 import '../format.dart';
 import '../models.dart';
 import '../widgets.dart';
@@ -58,6 +59,12 @@ class _RecurringScreenState extends State<RecurringScreen> {
     final accounts = accsRaw
         .map((e) => Account.fromJson((e as Map).cast<String, dynamic>()))
         .toList();
+    await AppWidgetSync.updateRecurringReminders(
+      recurring: items,
+      categoryNames: {for (final c in categories) c.id: c.name},
+      accountNames: {for (final a in accounts) a.id: a.name},
+      accounts: accounts,
+    );
     return _RecurringData(
       items,
       {for (final c in categories) c.id: c.name},

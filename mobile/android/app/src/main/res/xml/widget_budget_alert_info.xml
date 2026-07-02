@@ -3,6 +3,8 @@
     android:initialLayout="@layout/widget_budget_alert"
     android:minWidth="110dp"
     android:minHeight="110dp"
+    android:targetCellWidth="2"
+    android:targetCellHeight="2"
     android:previewLayout="@layout/widget_budget_alert"
     android:resizeMode="horizontal|vertical"
     android:updatePeriodMillis="1800000"

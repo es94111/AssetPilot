@@ -34,11 +34,18 @@ private const val KEY_HAS_BUDGET_ALERTS = "hasBudgetAlerts"
 private const val KEY_BUDGET_PERIOD = "budgetPeriod"
 private const val KEY_BUDGET_UPDATED_AT = "budgetUpdatedAtLabel"
 private const val KEY_BUDGET_COUNT = "budgetCount"
+private const val KEY_RECENT_COUNT = "recentCount"
+private const val KEY_HAS_RECURRING_REMINDERS = "hasRecurringReminders"
+private const val KEY_REMINDER_UPDATED_AT = "reminderUpdatedAtLabel"
+private const val KEY_REMINDER_COUNT = "reminderCount"
 private const val MAX_BUDGET_ALERTS = 3
+private const val MAX_RECENT_TRANSACTIONS = 5
+private const val MAX_RECURRING_REMINDERS = 5
 
 object AssetPilotWidgetStore {
     fun writeDashboard(context: Context, args: Map<*, *>) {
-        context.getSharedPreferences(WIDGET_PREFS, Context.MODE_PRIVATE)
+        val recentCount = args.int(KEY_RECENT_COUNT).coerceIn(0, MAX_RECENT_TRANSACTIONS)
+        val editor = context.getSharedPreferences(WIDGET_PREFS, Context.MODE_PRIVATE)
             .edit()
             .putBoolean(KEY_HAS_DASHBOARD, true)
             .putString(KEY_PERIOD, args.string(KEY_PERIOD, "--"))
@@ -53,7 +60,15 @@ object AssetPilotWidgetStore {
             .putString(KEY_BANK_BALANCE, args.string(KEY_BANK_BALANCE, "--"))
             .putString(KEY_STOCK_MARKET_VALUE, args.string(KEY_STOCK_MARKET_VALUE, "--"))
             .putString(KEY_TOTAL_ASSET, args.string(KEY_TOTAL_ASSET, "--"))
-            .apply()
+            .putInt(KEY_RECENT_COUNT, recentCount)
+        for (index in 0 until MAX_RECENT_TRANSACTIONS) {
+            editor
+                .putString(recentTitleKey(index), args.string(recentTitleKey(index), ""))
+                .putString(recentSubtitleKey(index), args.string(recentSubtitleKey(index), ""))
+                .putString(recentAmountKey(index), args.string(recentAmountKey(index), ""))
+                .putInt(recentToneKey(index), args.int(recentToneKey(index)).coerceIn(0, 2))
+        }
+        editor.apply()
     }
 
     fun writePortfolio(context: Context, args: Map<*, *>) {
@@ -82,6 +97,24 @@ object AssetPilotWidgetStore {
                 .putString(budgetPercentKey(index), args.string(budgetPercentKey(index), ""))
                 .putInt(budgetProgressKey(index), args.int(budgetProgressKey(index)).coerceIn(0, 100))
                 .putInt(budgetStatusKey(index), args.int(budgetStatusKey(index)).coerceIn(0, 2))
+        }
+        editor.apply()
+    }
+
+    fun writeRecurringReminders(context: Context, args: Map<*, *>) {
+        val count = args.int(KEY_REMINDER_COUNT).coerceIn(0, MAX_RECURRING_REMINDERS)
+        val editor = context.getSharedPreferences(WIDGET_PREFS, Context.MODE_PRIVATE)
+            .edit()
+            .putBoolean(KEY_HAS_RECURRING_REMINDERS, true)
+            .putString(KEY_REMINDER_UPDATED_AT, args.string(KEY_REMINDER_UPDATED_AT, ""))
+            .putInt(KEY_REMINDER_COUNT, count)
+        for (index in 0 until MAX_RECURRING_REMINDERS) {
+            editor
+                .putString(reminderTitleKey(index), args.string(reminderTitleKey(index), ""))
+                .putString(reminderDetailKey(index), args.string(reminderDetailKey(index), ""))
+                .putString(reminderAmountKey(index), args.string(reminderAmountKey(index), ""))
+                .putString(reminderDateKey(index), args.string(reminderDateKey(index), ""))
+                .putInt(reminderStatusKey(index), args.int(reminderStatusKey(index)).coerceIn(0, 2))
         }
         editor.apply()
     }
@@ -118,6 +151,24 @@ object AssetPilotWidgetStore {
         )
     }
 
+    fun readRecentTransactions(context: Context): WidgetRecentTransactionsData {
+        val prefs = context.getSharedPreferences(WIDGET_PREFS, Context.MODE_PRIVATE)
+        val count = prefs.getInt(KEY_RECENT_COUNT, 0).coerceIn(0, MAX_RECENT_TRANSACTIONS)
+        return WidgetRecentTransactionsData(
+            hasDashboard = prefs.getBoolean(KEY_HAS_DASHBOARD, false),
+            period = prefs.getString(KEY_PERIOD, "--") ?: "--",
+            updatedAt = prefs.getString(KEY_UPDATED_AT, "") ?: "",
+            items = (0 until count).map { index ->
+                WidgetRecentTransaction(
+                    title = prefs.getString(recentTitleKey(index), "") ?: "",
+                    subtitle = prefs.getString(recentSubtitleKey(index), "") ?: "",
+                    amount = prefs.getString(recentAmountKey(index), "") ?: "",
+                    tone = prefs.getInt(recentToneKey(index), 0).coerceIn(0, 2),
+                )
+            },
+        )
+    }
+
     fun readBudgetAlerts(context: Context): WidgetBudgetAlertsData {
         val prefs = context.getSharedPreferences(WIDGET_PREFS, Context.MODE_PRIVATE)
         val count = prefs.getInt(KEY_BUDGET_COUNT, 0).coerceIn(0, MAX_BUDGET_ALERTS)
@@ -137,13 +188,34 @@ object AssetPilotWidgetStore {
         )
     }
 
+    fun readRecurringReminders(context: Context): WidgetRecurringReminderData {
+        val prefs = context.getSharedPreferences(WIDGET_PREFS, Context.MODE_PRIVATE)
+        val count = prefs.getInt(KEY_REMINDER_COUNT, 0).coerceIn(0, MAX_RECURRING_REMINDERS)
+        return WidgetRecurringReminderData(
+            hasReminders = prefs.getBoolean(KEY_HAS_RECURRING_REMINDERS, false),
+            updatedAt = prefs.getString(KEY_REMINDER_UPDATED_AT, "") ?: "",
+            items = (0 until count).map { index ->
+                WidgetRecurringReminder(
+                    title = prefs.getString(reminderTitleKey(index), "") ?: "",
+                    detail = prefs.getString(reminderDetailKey(index), "") ?: "",
+                    amount = prefs.getString(reminderAmountKey(index), "") ?: "",
+                    date = prefs.getString(reminderDateKey(index), "") ?: "",
+                    status = prefs.getInt(reminderStatusKey(index), 0).coerceIn(0, 2),
+                )
+            },
+        )
+    }
+
     fun updateAllWidgets(context: Context) {
         val manager = AppWidgetManager.getInstance(context)
         MonthlyOverviewWidgetProvider.updateAll(context, manager)
         TodayExpenseWidgetProvider.updateAll(context, manager)
+        TodayExpenseLargeWidgetProvider.updateAll(context, manager)
         QuickTransactionWidgetProvider.updateAll(context, manager)
         PortfolioWidgetProvider.updateAll(context, manager)
         BudgetAlertWidgetProvider.updateAll(context, manager)
+        RecentTransactionsWidgetProvider.updateAll(context, manager)
+        RecurringBillReminderWidgetProvider.updateAll(context, manager)
     }
 }
 
@@ -168,6 +240,20 @@ data class WidgetDashboardData(
     val portfolioUpdatedAt: String,
 )
 
+data class WidgetRecentTransactionsData(
+    val hasDashboard: Boolean,
+    val period: String,
+    val updatedAt: String,
+    val items: List<WidgetRecentTransaction>,
+)
+
+data class WidgetRecentTransaction(
+    val title: String,
+    val subtitle: String,
+    val amount: String,
+    val tone: Int,
+)
+
 data class WidgetBudgetAlertsData(
     val hasAlerts: Boolean,
     val period: String,
@@ -180,6 +266,20 @@ data class WidgetBudgetAlert(
     val detail: String,
     val percent: String,
     val progress: Int,
+    val status: Int,
+)
+
+data class WidgetRecurringReminderData(
+    val hasReminders: Boolean,
+    val updatedAt: String,
+    val items: List<WidgetRecurringReminder>,
+)
+
+data class WidgetRecurringReminder(
+    val title: String,
+    val detail: String,
+    val amount: String,
+    val date: String,
     val status: Int,
 )
 
@@ -270,6 +370,52 @@ class TodayExpenseWidgetProvider : AppWidgetProvider() {
             )
             views.setOnClickPendingIntent(
                 R.id.widget_today_root,
+                AssetPilotWidgetIntents.newTransaction(context),
+            )
+            appWidgetManager.updateAppWidget(appWidgetId, views)
+        }
+    }
+}
+
+class TodayExpenseLargeWidgetProvider : AppWidgetProvider() {
+    override fun onUpdate(
+        context: Context,
+        appWidgetManager: AppWidgetManager,
+        appWidgetIds: IntArray,
+    ) {
+        appWidgetIds.forEach { update(context, appWidgetManager, it) }
+    }
+
+    companion object {
+        fun updateAll(
+            context: Context,
+            appWidgetManager: AppWidgetManager = AppWidgetManager.getInstance(context),
+        ) {
+            val ids = appWidgetManager.getAppWidgetIds(
+                ComponentName(context, TodayExpenseLargeWidgetProvider::class.java),
+            )
+            ids.forEach { update(context, appWidgetManager, it) }
+        }
+
+        private fun update(
+            context: Context,
+            appWidgetManager: AppWidgetManager,
+            appWidgetId: Int,
+        ) {
+            val data = AssetPilotWidgetStore.readDashboard(context)
+            val views = RemoteViews(context.packageName, R.layout.widget_today_expense_large)
+            views.setTextViewText(
+                R.id.widget_today_large_period,
+                if (data.hasDashboard) data.period else "尚無資料",
+            )
+            views.setTextViewText(R.id.widget_today_large_value, data.todayExpense)
+            views.setTextViewText(
+                R.id.widget_today_large_subtitle,
+                if (data.hasDashboard) "點一下記一筆" else "開啟 App 更新 Dashboard",
+            )
+            views.setTextViewText(R.id.widget_today_large_updated_at, data.updatedAt)
+            views.setOnClickPendingIntent(
+                R.id.widget_today_large_root,
                 AssetPilotWidgetIntents.newTransaction(context),
             )
             appWidgetManager.updateAppWidget(appWidgetId, views)
@@ -485,6 +631,198 @@ class BudgetAlertWidgetProvider : AppWidgetProvider() {
     }
 }
 
+class RecentTransactionsWidgetProvider : AppWidgetProvider() {
+    override fun onUpdate(
+        context: Context,
+        appWidgetManager: AppWidgetManager,
+        appWidgetIds: IntArray,
+    ) {
+        appWidgetIds.forEach { update(context, appWidgetManager, it) }
+    }
+
+    companion object {
+        private val rowIds = intArrayOf(
+            R.id.widget_recent_row_0,
+            R.id.widget_recent_row_1,
+            R.id.widget_recent_row_2,
+            R.id.widget_recent_row_3,
+            R.id.widget_recent_row_4,
+        )
+        private val titleIds = intArrayOf(
+            R.id.widget_recent_title_0,
+            R.id.widget_recent_title_1,
+            R.id.widget_recent_title_2,
+            R.id.widget_recent_title_3,
+            R.id.widget_recent_title_4,
+        )
+        private val subtitleIds = intArrayOf(
+            R.id.widget_recent_subtitle_0,
+            R.id.widget_recent_subtitle_1,
+            R.id.widget_recent_subtitle_2,
+            R.id.widget_recent_subtitle_3,
+            R.id.widget_recent_subtitle_4,
+        )
+        private val amountIds = intArrayOf(
+            R.id.widget_recent_amount_0,
+            R.id.widget_recent_amount_1,
+            R.id.widget_recent_amount_2,
+            R.id.widget_recent_amount_3,
+            R.id.widget_recent_amount_4,
+        )
+
+        fun updateAll(
+            context: Context,
+            appWidgetManager: AppWidgetManager = AppWidgetManager.getInstance(context),
+        ) {
+            val ids = appWidgetManager.getAppWidgetIds(
+                ComponentName(context, RecentTransactionsWidgetProvider::class.java),
+            )
+            ids.forEach { update(context, appWidgetManager, it) }
+        }
+
+        private fun update(
+            context: Context,
+            appWidgetManager: AppWidgetManager,
+            appWidgetId: Int,
+        ) {
+            val data = AssetPilotWidgetStore.readRecentTransactions(context)
+            val views = RemoteViews(context.packageName, R.layout.widget_recent_transactions)
+            views.setTextViewText(
+                R.id.widget_recent_period,
+                if (data.hasDashboard) data.period else "尚無資料",
+            )
+            views.setTextViewText(
+                R.id.widget_recent_empty,
+                if (data.hasDashboard) "目前沒有近期交易" else "開啟 App 更新 Dashboard",
+            )
+            views.setTextViewText(R.id.widget_recent_updated_at, data.updatedAt)
+
+            val hasRows = data.items.isNotEmpty()
+            views.setViewVisibility(R.id.widget_recent_empty, if (hasRows) View.GONE else View.VISIBLE)
+            for (index in 0 until MAX_RECENT_TRANSACTIONS) {
+                val item = data.items.getOrNull(index)
+                views.setViewVisibility(rowIds[index], if (item == null) View.GONE else View.VISIBLE)
+                if (item != null) {
+                    views.setTextViewText(titleIds[index], item.title)
+                    views.setTextViewText(subtitleIds[index], item.subtitle)
+                    views.setTextViewText(amountIds[index], item.amount)
+                    views.setTextColor(amountIds[index], toneColor(item.tone))
+                }
+            }
+            views.setOnClickPendingIntent(
+                R.id.widget_recent_root,
+                AssetPilotWidgetIntents.openApp(context),
+            )
+            appWidgetManager.updateAppWidget(appWidgetId, views)
+        }
+
+        private fun toneColor(tone: Int): Int = when (tone) {
+            1 -> Color.rgb(22, 163, 74)
+            2 -> Color.rgb(220, 38, 38)
+            else -> Color.rgb(75, 85, 99)
+        }
+    }
+}
+
+class RecurringBillReminderWidgetProvider : AppWidgetProvider() {
+    override fun onUpdate(
+        context: Context,
+        appWidgetManager: AppWidgetManager,
+        appWidgetIds: IntArray,
+    ) {
+        appWidgetIds.forEach { update(context, appWidgetManager, it) }
+    }
+
+    companion object {
+        private val rowIds = intArrayOf(
+            R.id.widget_reminder_row_0,
+            R.id.widget_reminder_row_1,
+            R.id.widget_reminder_row_2,
+            R.id.widget_reminder_row_3,
+            R.id.widget_reminder_row_4,
+        )
+        private val titleIds = intArrayOf(
+            R.id.widget_reminder_title_0,
+            R.id.widget_reminder_title_1,
+            R.id.widget_reminder_title_2,
+            R.id.widget_reminder_title_3,
+            R.id.widget_reminder_title_4,
+        )
+        private val detailIds = intArrayOf(
+            R.id.widget_reminder_detail_0,
+            R.id.widget_reminder_detail_1,
+            R.id.widget_reminder_detail_2,
+            R.id.widget_reminder_detail_3,
+            R.id.widget_reminder_detail_4,
+        )
+        private val amountIds = intArrayOf(
+            R.id.widget_reminder_amount_0,
+            R.id.widget_reminder_amount_1,
+            R.id.widget_reminder_amount_2,
+            R.id.widget_reminder_amount_3,
+            R.id.widget_reminder_amount_4,
+        )
+        private val dateIds = intArrayOf(
+            R.id.widget_reminder_date_0,
+            R.id.widget_reminder_date_1,
+            R.id.widget_reminder_date_2,
+            R.id.widget_reminder_date_3,
+            R.id.widget_reminder_date_4,
+        )
+
+        fun updateAll(
+            context: Context,
+            appWidgetManager: AppWidgetManager = AppWidgetManager.getInstance(context),
+        ) {
+            val ids = appWidgetManager.getAppWidgetIds(
+                ComponentName(context, RecurringBillReminderWidgetProvider::class.java),
+            )
+            ids.forEach { update(context, appWidgetManager, it) }
+        }
+
+        private fun update(
+            context: Context,
+            appWidgetManager: AppWidgetManager,
+            appWidgetId: Int,
+        ) {
+            val data = AssetPilotWidgetStore.readRecurringReminders(context)
+            val views = RemoteViews(context.packageName, R.layout.widget_recurring_bill_reminder)
+            views.setTextViewText(
+                R.id.widget_reminder_empty,
+                if (data.hasReminders) "目前沒有即將扣款" else "開啟 App 更新提醒",
+            )
+            views.setTextViewText(R.id.widget_reminder_updated_at, data.updatedAt)
+
+            val hasRows = data.items.isNotEmpty()
+            views.setViewVisibility(R.id.widget_reminder_empty, if (hasRows) View.GONE else View.VISIBLE)
+            for (index in 0 until MAX_RECURRING_REMINDERS) {
+                val item = data.items.getOrNull(index)
+                views.setViewVisibility(rowIds[index], if (item == null) View.GONE else View.VISIBLE)
+                if (item != null) {
+                    val color = reminderStatusColor(item.status)
+                    views.setTextViewText(titleIds[index], item.title)
+                    views.setTextViewText(detailIds[index], item.detail)
+                    views.setTextViewText(amountIds[index], item.amount)
+                    views.setTextViewText(dateIds[index], item.date)
+                    views.setTextColor(amountIds[index], Color.rgb(220, 38, 38))
+                    views.setTextColor(dateIds[index], color)
+                }
+            }
+            views.setOnClickPendingIntent(
+                R.id.widget_reminder_root,
+                AssetPilotWidgetIntents.openApp(context),
+            )
+            appWidgetManager.updateAppWidget(appWidgetId, views)
+        }
+
+        private fun reminderStatusColor(status: Int): Int = when (status) {
+            2 -> Color.rgb(220, 38, 38)
+            1 -> Color.rgb(217, 119, 6)
+            else -> Color.rgb(37, 99, 235)
+        }
+    }
+}
+
 object AssetPilotWidgetIntents {
     fun openApp(context: Context): PendingIntent {
         val intent = Intent(context, MainActivity::class.java)
@@ -545,3 +883,12 @@ private fun budgetDetailKey(index: Int) = "budgetDetail$index"
 private fun budgetPercentKey(index: Int) = "budgetPercent$index"
 private fun budgetProgressKey(index: Int) = "budgetProgress$index"
 private fun budgetStatusKey(index: Int) = "budgetStatus$index"
+private fun recentTitleKey(index: Int) = "recentTitle$index"
+private fun recentSubtitleKey(index: Int) = "recentSubtitle$index"
+private fun recentAmountKey(index: Int) = "recentAmount$index"
+private fun recentToneKey(index: Int) = "recentTone$index"
+private fun reminderTitleKey(index: Int) = "reminderTitle$index"
+private fun reminderDetailKey(index: Int) = "reminderDetail$index"
+private fun reminderAmountKey(index: Int) = "reminderAmount$index"
+private fun reminderDateKey(index: Int) = "reminderDate$index"
+private fun reminderStatusKey(index: Int) = "reminderStatus$index"

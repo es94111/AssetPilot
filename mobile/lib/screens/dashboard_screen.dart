@@ -52,19 +52,36 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
       final rawBudgets = await api.budgets(_ym);
       final rawCategories = await api.categories();
+      final rawRecurring = await api.recurring();
+      final rawAccounts = await api.accounts();
       final budgets = rawBudgets
           .map((e) => Budget.fromJson((e as Map).cast<String, dynamic>()))
           .toList();
       final categories = rawCategories
           .map((e) => Category.fromJson((e as Map).cast<String, dynamic>()))
           .toList();
+      final recurring = rawRecurring
+          .map((e) => Recurring.fromJson((e as Map).cast<String, dynamic>()))
+          .toList();
+      final accounts = rawAccounts
+          .map((e) => Account.fromJson((e as Map).cast<String, dynamic>()))
+          .toList();
       final categoryNames = {
         for (final category in categories) category.id: category.name,
+      };
+      final accountNames = {
+        for (final account in accounts) account.id: account.name,
       };
       await AppWidgetSync.updateBudgetAlerts(
         yearMonth: _ym,
         budgets: budgets,
         categoryNames: categoryNames,
+      );
+      await AppWidgetSync.updateRecurringReminders(
+        recurring: recurring,
+        categoryNames: categoryNames,
+        accountNames: accountNames,
+        accounts: accounts,
       );
     } catch (_) {
       // 第二批小工具的背景同步失敗不應影響 Dashboard 顯示。

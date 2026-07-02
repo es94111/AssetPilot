@@ -2,8 +2,10 @@
     android:description="@string/widget_today_description"
     android:initialLayout="@layout/widget_today_expense"
     android:minWidth="110dp"
-    android:minHeight="56dp"
+    android:minHeight="110dp"
+    android:targetCellWidth="2"
+    android:targetCellHeight="2"
     android:previewLayout="@layout/widget_today_expense"
-    android:resizeMode="horizontal"
+    android:resizeMode="horizontal|vertical"
     android:updatePeriodMillis="1800000"
     android:widgetCategory="home_screen" />

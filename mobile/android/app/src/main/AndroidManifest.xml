@@ -137,6 +137,18 @@
         </receiver>
 
         <receiver
+            android:name=".TodayExpenseLargeWidgetProvider"
+            android:exported="true"
+            android:label="@string/widget_today_large_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_today_expense_large_info" />
+        </receiver>
+
+        <receiver
             android:name=".PortfolioWidgetProvider"
             android:exported="true"
             android:label="@string/widget_portfolio_name">
@@ -158,6 +170,30 @@
             <meta-data
                 android:name="android.appwidget.provider"
                 android:resource="@xml/widget_budget_alert_info" />
+        </receiver>
+
+        <receiver
+            android:name=".RecentTransactionsWidgetProvider"
+            android:exported="true"
+            android:label="@string/widget_recent_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_recent_transactions_info" />
+        </receiver>
+
+        <receiver
+            android:name=".RecurringBillReminderWidgetProvider"
+            android:exported="true"
+            android:label="@string/widget_recurring_bill_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_recurring_bill_reminder_info" />
         </receiver>
     </application>
     <!-- Required to query activities that can process text, see:

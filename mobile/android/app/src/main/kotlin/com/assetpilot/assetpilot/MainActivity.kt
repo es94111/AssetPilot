@@ -67,6 +67,12 @@ class MainActivity : FlutterFragmentActivity() {
                     AssetPilotWidgetStore.updateAllWidgets(applicationContext)
                     result.success(null)
                 }
+                "updateRecurringReminders" -> {
+                    val args = call.arguments as? Map<*, *> ?: emptyMap<String, Any?>()
+                    AssetPilotWidgetStore.writeRecurringReminders(applicationContext, args)
+                    AssetPilotWidgetStore.updateAllWidgets(applicationContext)
+                    result.success(null)
+                }
                 "clearDashboard" -> {
                     AssetPilotWidgetStore.clearDashboard(applicationContext)
                     AssetPilotWidgetStore.updateAllWidgets(applicationContext)

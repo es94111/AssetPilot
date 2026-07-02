@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">AssetPilot</string>
+    <string name="widget_monthly_name">本月收支總覽</string>
+    <string name="widget_monthly_description">顯示本月收入、支出與淨額。</string>
+    <string name="widget_quick_name">快速記帳</string>
+    <string name="widget_quick_description">一鍵開啟記帳表單與常用分類捷徑。</string>
+    <string name="widget_today_name">今日花費</string>
+    <string name="widget_today_description">顯示今天已花費金額。</string>
+    <string name="widget_portfolio_name">資產淨值</string>
+    <string name="widget_portfolio_description">顯示銀行餘額、股票市值與投資組合損益。</string>
+    <string name="widget_budget_name">預算警戒</string>
+    <string name="widget_budget_description">顯示最接近超支的預算項目。</string>
+</resources>

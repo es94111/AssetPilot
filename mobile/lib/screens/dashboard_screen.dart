@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
 import '../api_client.dart';
+import '../app_widget_sync.dart';
 import '../format.dart';
 import '../models.dart';
 import '../widgets.dart';
@@ -30,7 +33,42 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Future<Dashboard> _load() async {
     final json = await ApiClient.instance.dashboard(_ym);
-    return Dashboard.fromJson(json);
+    final dashboard = Dashboard.fromJson(json);
+    await AppWidgetSync.updateDashboard(dashboard);
+    unawaited(_refreshSecondaryWidgetSnapshots());
+    return dashboard;
+  }
+
+  Future<void> _refreshSecondaryWidgetSnapshots() async {
+    try {
+      final api = ApiClient.instance;
+      final stocksJson = await api.stocks();
+      await AppWidgetSync.updatePortfolio(
+        PortfolioSummary.fromJson(
+          (stocksJson['portfolioSummary'] as Map? ?? {})
+              .cast<String, dynamic>(),
+        ),
+      );
+
+      final rawBudgets = await api.budgets(_ym);
+      final rawCategories = await api.categories();
+      final budgets = rawBudgets
+          .map((e) => Budget.fromJson((e as Map).cast<String, dynamic>()))
+          .toList();
+      final categories = rawCategories
+          .map((e) => Category.fromJson((e as Map).cast<String, dynamic>()))
+          .toList();
+      final categoryNames = {
+        for (final category in categories) category.id: category.name,
+      };
+      await AppWidgetSync.updateBudgetAlerts(
+        yearMonth: _ym,
+        budgets: budgets,
+        categoryNames: categoryNames,
+      );
+    } catch (_) {
+      // 第二批小工具的背景同步失敗不應影響 Dashboard 顯示。
+    }
   }
 
   void _reload() => setState(() => _future = _load());

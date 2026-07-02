@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:app_links/app_links.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
@@ -10,6 +13,7 @@ import 'screens/login_screen.dart';
 import 'screens/more_screen.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/stocks_screen.dart';
+import 'screens/transaction_form_screen.dart';
 import 'screens/transactions_screen.dart';
 import 'l10n.dart';
 
@@ -144,15 +148,61 @@ class HomeShell extends StatefulWidget {
 
 class _HomeShellState extends State<HomeShell> {
   int _index = 0;
+  final AppLinks _appLinks = AppLinks();
+  StreamSubscription<Uri>? _linkSubscription;
+  bool _openingDeepLink = false;
 
   @override
   void initState() {
     super.initState();
+    _linkSubscription = _appLinks.uriLinkStream.listen(_handleIncomingLink);
     // 第一次進到主畫面時自動彈出使用教學（看過後不再出現）。
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(_handleInitialLink());
       if (mounted) OnboardingScreen.showIfFirstTime(context);
     });
   }
+
+  @override
+  void dispose() {
+    _linkSubscription?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _handleInitialLink() async {
+    try {
+      final uri = await _appLinks.getInitialLink();
+      if (uri != null) await _handleIncomingLink(uri);
+    } catch (_) {}
+  }
+
+  Future<void> _handleIncomingLink(Uri uri) async {
+    if (!_isNewTransactionLink(uri) || _openingDeepLink || !mounted) return;
+
+    // 同步設旗標（await 前），擋掉冷啟動時 getInitialLink 與 uriLinkStream
+    // 對同一連結的重複投遞；但不長存去重，讓 widget 捷徑可重複點擊記帳。
+    _openingDeepLink = true;
+    try {
+      final changed = await Navigator.of(context).push<bool>(
+        MaterialPageRoute(
+          builder: (_) => TransactionFormScreen(
+            initialType: 'expense',
+            initialCategoryShortcut: uri.queryParameters['category'],
+          ),
+        ),
+      );
+      if (changed == true && mounted) {
+        setState(() => _index = 0);
+      }
+    } finally {
+      _openingDeepLink = false;
+    }
+  }
+
+  bool _isNewTransactionLink(Uri uri) =>
+      uri.scheme == 'assetpilot' &&
+      uri.host == 'transaction' &&
+      uri.path == '/new';
 
   @override
   Widget build(BuildContext context) {

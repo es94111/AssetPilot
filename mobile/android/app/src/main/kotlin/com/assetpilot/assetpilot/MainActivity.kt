@@ -11,6 +11,7 @@ import io.flutter.plugin.common.MethodChannel
 class MainActivity : FlutterFragmentActivity() {
     private val channelName = "assetpilot/play_integrity"
     private val localeChannelName = "assetpilot/locale"
+    private val widgetChannelName = "assetpilot/widgets"
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -41,6 +42,34 @@ class MainActivity : FlutterFragmentActivity() {
                         LocaleListCompat.forLanguageTags(tag)
                     }
                     AppCompatDelegate.setApplicationLocales(locales)
+                    result.success(null)
+                }
+                else -> result.notImplemented()
+            }
+        }
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, widgetChannelName).setMethodCallHandler { call, result ->
+            when (call.method) {
+                "updateDashboard" -> {
+                    val args = call.arguments as? Map<*, *> ?: emptyMap<String, Any?>()
+                    AssetPilotWidgetStore.writeDashboard(applicationContext, args)
+                    AssetPilotWidgetStore.updateAllWidgets(applicationContext)
+                    result.success(null)
+                }
+                "updatePortfolio" -> {
+                    val args = call.arguments as? Map<*, *> ?: emptyMap<String, Any?>()
+                    AssetPilotWidgetStore.writePortfolio(applicationContext, args)
+                    AssetPilotWidgetStore.updateAllWidgets(applicationContext)
+                    result.success(null)
+                }
+                "updateBudgetAlerts" -> {
+                    val args = call.arguments as? Map<*, *> ?: emptyMap<String, Any?>()
+                    AssetPilotWidgetStore.writeBudgetAlerts(applicationContext, args)
+                    AssetPilotWidgetStore.updateAllWidgets(applicationContext)
+                    result.success(null)
+                }
+                "clearDashboard" -> {
+                    AssetPilotWidgetStore.clearDashboard(applicationContext)
+                    AssetPilotWidgetStore.updateAllWidgets(applicationContext)
                     result.success(null)
                 }
                 else -> result.notImplemented()

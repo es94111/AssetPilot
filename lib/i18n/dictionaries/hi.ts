@@ -34,6 +34,7 @@ export const hi = {
     transactions: "लेन-देन",
     reports: "रिपोर्ट",
     budget: "बजट",
+    infoBoard: "जानकारी बोर्ड",
     accounts: "खाते",
     categories: "श्रेणियाँ",
     recurring: "दोहराव",

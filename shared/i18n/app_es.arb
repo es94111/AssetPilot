@@ -141,6 +141,11 @@
     "description": "Web path: nav.budget",
     "x-webPath": "nav.budget"
   },
+  "navInfoBoard": "Panel informativo",
+  "@navInfoBoard": {
+    "description": "Web path: nav.infoBoard",
+    "x-webPath": "nav.infoBoard"
+  },
   "navAccounts": "Cuentas",
   "@navAccounts": {
     "description": "Web path: nav.accounts",

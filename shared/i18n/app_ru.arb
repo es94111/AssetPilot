@@ -141,6 +141,11 @@
     "description": "Web path: nav.budget",
     "x-webPath": "nav.budget"
   },
+  "navInfoBoard": "Информационная панель",
+  "@navInfoBoard": {
+    "description": "Web path: nav.infoBoard",
+    "x-webPath": "nav.infoBoard"
+  },
   "navAccounts": "Счета",
   "@navAccounts": {
     "description": "Web path: nav.accounts",

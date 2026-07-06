@@ -34,6 +34,7 @@ export const ru = {
     transactions: "Операции",
     reports: "Отчеты",
     budget: "Бюджеты",
+    infoBoard: "Информационная панель",
     accounts: "Счета",
     categories: "Категории",
     recurring: "Регулярные",

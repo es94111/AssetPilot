@@ -9,6 +9,7 @@ import { useT } from '@/components/i18n/I18nProvider';
 // 頁首標題對應的譯文鍵，於 render 時用 t() 解析。
 const PAGE_TITLE_KEYS: Record<string, string> = {
   '/dashboard':            'nav.dashboard',
+  '/finance/info-board':   'nav.infoBoard',
   '/finance/transactions': 'nav.transactions',
   '/finance/reports':      'nav.reports',
   '/finance/budget':       'nav.budget',

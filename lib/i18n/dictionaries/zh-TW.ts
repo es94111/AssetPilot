@@ -32,6 +32,7 @@ export const zhTW = {
     transactions: "交易記錄",
     reports: "統計報表",
     budget: "預算管理",
+    infoBoard: "資訊版",
     accounts: "帳戶管理",
     categories: "分類管理",
     recurring: "固定收支",

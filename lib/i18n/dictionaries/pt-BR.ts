@@ -34,6 +34,7 @@ export const ptBR = {
     transactions: "Transações",
     reports: "Relatórios",
     budget: "Orçamentos",
+    infoBoard: "Painel de informações",
     accounts: "Contas",
     categories: "Categorias",
     recurring: "Recorrentes",

@@ -34,6 +34,7 @@ export const ko = {
     transactions: "거래",
     reports: "보고서",
     budget: "예산",
+    infoBoard: "정보 보드",
     accounts: "계좌",
     categories: "카테고리",
     recurring: "반복 거래",

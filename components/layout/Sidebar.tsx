@@ -5,7 +5,7 @@ import Image from 'next/image';
 import {
   LayoutDashboard, Receipt, ChartBar, Wallet, Building2, Tags, Repeat,
   Briefcase, Key, User, Shield, Database, LogOut, TrendingUp, Coins,
-  BarChart3, Settings2, Sun, Moon, Monitor, Info,
+  BarChart3, Settings2, Sun, Moon, Monitor, Info, TableProperties,
 } from 'lucide-react';
 import { useState, type ElementType } from 'react';
 import { useTheme, type Theme } from '@/hooks/useTheme';
@@ -18,6 +18,7 @@ const NAV_SECTIONS = [
     labelKey: 'nav.sections.finance',
     items: [
       { path: '/dashboard',            labelKey: 'nav.dashboard',          icon: LayoutDashboard },
+      { path: '/finance/info-board',   labelKey: 'nav.infoBoard',         icon: TableProperties },
       { path: '/finance/transactions', labelKey: 'nav.transactions',       icon: Receipt },
       { path: '/finance/reports',      labelKey: 'nav.reports',            icon: ChartBar },
       { path: '/finance/budget',       labelKey: 'nav.budget',             icon: Wallet },

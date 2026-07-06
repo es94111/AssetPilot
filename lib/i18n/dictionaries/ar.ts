@@ -34,6 +34,7 @@ export const ar = {
     transactions: "المعاملات",
     reports: "التقارير",
     budget: "الميزانيات",
+    infoBoard: "لوحة المعلومات",
     accounts: "الحسابات",
     categories: "التصنيفات",
     recurring: "المتكررة",

@@ -34,6 +34,7 @@ export const es = {
     transactions: "Transacciones",
     reports: "Informes",
     budget: "Presupuestos",
+    infoBoard: "Panel informativo",
     accounts: "Cuentas",
     categories: "Categorías",
     recurring: "Recurrentes",

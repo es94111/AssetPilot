@@ -34,6 +34,7 @@ export const zhCN = {
     transactions: "交易记录",
     reports: "报表",
     budget: "预算",
+    infoBoard: "信息版",
     accounts: "账户",
     categories: "分类",
     recurring: "固定收支",

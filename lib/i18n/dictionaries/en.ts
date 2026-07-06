@@ -34,6 +34,7 @@ export const en = {
     transactions: "Transactions",
     reports: "Reports",
     budget: "Budgets",
+    infoBoard: "Info board",
     accounts: "Accounts",
     categories: "Categories",
     recurring: "Recurring",

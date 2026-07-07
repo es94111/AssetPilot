@@ -94,6 +94,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get navBudget => 'Бюджеты';
 
   @override
+  String get navInfoBoard => 'Информационная панель';
+
+  @override
   String get navAccounts => 'Счета';
 
   @override

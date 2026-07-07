@@ -94,6 +94,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get navBudget => '예산';
 
   @override
+  String get navInfoBoard => '정보 보드';
+
+  @override
   String get navAccounts => '계좌';
 
   @override

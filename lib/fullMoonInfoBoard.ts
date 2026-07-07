@@ -61,7 +61,6 @@ type StockRow = {
   symbol: string;
   name: string;
   current_price: string | number | null;
-  avg_cost: string | number | null;
   currency: string | null;
 };
 
@@ -286,7 +285,7 @@ function monthlyStockValues(userId: string, stock: StockRow, year: number): numb
 
 function buildStockRows(userId: string, year: number): BoardRow[] {
   const stocks = asRows<StockRow>(queryAll(
-    `SELECT id, symbol, name, current_price, avg_cost, currency
+    `SELECT id, symbol, name, current_price, currency
      FROM stocks
      WHERE user_id = ? AND COALESCE(delisted, 0) = 0
      ORDER BY symbol, name`,

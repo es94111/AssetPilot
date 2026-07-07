@@ -514,6 +514,7 @@ async function _runMigrations(): Promise<void> {
   alterIgnore("ALTER TABLE budgets ADD COLUMN updated_at INTEGER DEFAULT 0");
 
   alterIgnore("ALTER TABLE stocks ADD COLUMN current_price REAL DEFAULT 0");
+  alterIgnore("ALTER TABLE stocks ADD COLUMN avg_cost REAL DEFAULT 0");
   alterIgnore("ALTER TABLE stocks ADD COLUMN stock_type TEXT DEFAULT 'stock'");
   alterIgnore("ALTER TABLE stocks ADD COLUMN delisted INTEGER DEFAULT 0");
 

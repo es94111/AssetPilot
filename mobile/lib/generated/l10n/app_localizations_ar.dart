@@ -94,6 +94,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get navBudget => 'الميزانيات';
 
   @override
+  String get navInfoBoard => 'لوحة المعلومات';
+
+  @override
   String get navAccounts => 'الحسابات';
 
   @override

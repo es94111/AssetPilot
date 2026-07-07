@@ -94,6 +94,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get navBudget => '預算管理';
 
   @override
+  String get navInfoBoard => '資訊版';
+
+  @override
   String get navAccounts => '帳戶管理';
 
   @override
@@ -3892,6 +3895,9 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
 
   @override
   String get navBudget => '预算';
+
+  @override
+  String get navInfoBoard => '信息版';
 
   @override
   String get navAccounts => '账户';
@@ -7697,6 +7703,9 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
 
   @override
   String get navBudget => '預算管理';
+
+  @override
+  String get navInfoBoard => '資訊版';
 
   @override
   String get navAccounts => '帳戶管理';

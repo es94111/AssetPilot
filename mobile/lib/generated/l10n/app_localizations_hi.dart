@@ -94,6 +94,9 @@ class AppLocalizationsHi extends AppLocalizations {
   String get navBudget => 'बजट';
 
   @override
+  String get navInfoBoard => 'जानकारी बोर्ड';
+
+  @override
   String get navAccounts => 'खाते';
 
   @override

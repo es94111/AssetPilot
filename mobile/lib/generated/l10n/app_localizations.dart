@@ -285,6 +285,12 @@ abstract class AppLocalizations {
   /// **'預算管理'**
   String get navBudget;
 
+  /// Web path: nav.infoBoard
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'資訊版'**
+  String get navInfoBoard;
+
   /// Web path: nav.accounts
   ///
   /// In zh_Hant_TW, this message translates to:

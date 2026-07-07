@@ -94,6 +94,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get navBudget => 'Orçamentos';
 
   @override
+  String get navInfoBoard => 'Painel de informações';
+
+  @override
   String get navAccounts => 'Contas';
 
   @override
@@ -4118,6 +4121,9 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get navBudget => 'Orçamentos';
+
+  @override
+  String get navInfoBoard => 'Painel de informações';
 
   @override
   String get navAccounts => 'Contas';

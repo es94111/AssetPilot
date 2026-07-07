@@ -1,4 +1,5 @@
 import { categoryFromAccountType, convertFromTwd, getExchangeRateToTwd, normalizeCurrency } from './accountHelpers';
+import { blankMonthsAfter, visibleThroughMonthIndexForToday } from './fullMoonInfoBoardCutoff';
 import { queryAll, queryOne } from './db';
 import { todayInUserTz } from './userTime';
 
@@ -23,6 +24,7 @@ export type BoardSection = {
 
 export type FullMoonInfoBoardData = {
   year: number;
+  visibleThroughMonthIndex: number;
   sections: BoardSection[];
   hasRecordedData: boolean;
 };
@@ -142,7 +144,7 @@ function applyTransactionToBalance(balance: number, tx: TransactionRow, accountC
   return balance;
 }
 
-function monthlyAccountBalances(userId: string, account: AccountRow, year: number): number[] {
+function monthlyAccountBalances(userId: string, account: AccountRow, year: number, visibleThroughMonthIndex: number): number[] {
   const accountCurrency = normalizeCurrency(account.currency);
   const rate = getExchangeRateToTwd(userId, accountCurrency);
   const txs = asRows<TransactionRow>(queryAll(
@@ -150,10 +152,11 @@ function monthlyAccountBalances(userId: string, account: AccountRow, year: numbe
      FROM transactions
      WHERE user_id = ? AND account_id = ? AND date <= ?
      ORDER BY date, created_at`,
-    [userId, account.id, monthEnd(year, 11)]
+    [userId, account.id, monthEnd(year, visibleThroughMonthIndex)]
   ));
 
   return FULL_MOON_MONTHS.map((_, index) => {
+    if (index > visibleThroughMonthIndex) return 0;
     const endDate = monthEnd(year, index);
     if (accountCreatedAfterMonth(account, endDate)) return 0;
 
@@ -167,7 +170,7 @@ function monthlyAccountBalances(userId: string, account: AccountRow, year: numbe
   });
 }
 
-function buildAccountRows(userId: string, year: number): { assets: BoardRow[]; debts: BoardRow[] } {
+function buildAccountRows(userId: string, year: number, visibleThroughMonthIndex: number): { assets: BoardRow[]; debts: BoardRow[] } {
   const accounts = asRows<AccountRow>(queryAll(
     `SELECT id, name, category, account_type, initial_balance, currency, exclude_from_total, created_at, sort_order
      FROM accounts
@@ -182,7 +185,7 @@ function buildAccountRows(userId: string, year: number): { assets: BoardRow[]; d
   for (const account of accounts) {
     if (Number(account.exclude_from_total) === 1) continue;
     const category = accountCategory(account);
-    const balances = monthlyAccountBalances(userId, account, year);
+    const balances = monthlyAccountBalances(userId, account, year, visibleThroughMonthIndex);
 
     if (category === 'credit_card') {
       debts.push({
@@ -203,7 +206,7 @@ function buildAccountRows(userId: string, year: number): { assets: BoardRow[]; d
   return { assets, debts };
 }
 
-function buildCategoryRows(userId: string, year: number, type: 'income' | 'expense'): BoardRow[] {
+function buildCategoryRows(userId: string, year: number, visibleThroughMonthIndex: number, type: 'income' | 'expense'): BoardRow[] {
   const rows = asRows<CategoryTransactionRow>(queryAll(
     `SELECT t.date, t.amount,
             c.name AS cat_name,
@@ -219,7 +222,7 @@ function buildCategoryRows(userId: string, year: number, type: 'income' | 'expen
        AND t.date <= ?
        AND COALESCE(t.exclude_from_stats, 0) = 0
      ORDER BY COALESCE(p.sort_order, c.sort_order, 9999), COALESCE(c.sort_order, 9999), c.name`,
-    [userId, type, `${year}-01-01`, `${year}-12-31`]
+    [userId, type, `${year}-01-01`, monthEnd(year, visibleThroughMonthIndex)]
   ));
 
   const buckets = new Map<string, {
@@ -254,23 +257,24 @@ function buildCategoryRows(userId: string, year: number, type: 'income' | 'expen
     .map(row => ({
       group: row.group,
       item: row.item,
-      values: row.values.map(roundTwd),
+      values: blankMonthsAfter(row.values.map(roundTwd), visibleThroughMonthIndex),
       tone: type === 'expense' && /投資|股票|基金|ETF/i.test(`${row.group} ${row.item}`) ? 'investment' : undefined,
     }));
 }
 
-function monthlyStockValues(userId: string, stock: StockRow, year: number): number[] {
+function monthlyStockValues(userId: string, stock: StockRow, year: number, visibleThroughMonthIndex: number): number[] {
   const txs = asRows<StockTransactionRow>(queryAll(
     `SELECT date, type, shares
      FROM stock_transactions
      WHERE user_id = ? AND stock_id = ? AND date <= ?
      ORDER BY date, created_at`,
-    [userId, stock.id, monthEnd(year, 11)]
+    [userId, stock.id, monthEnd(year, visibleThroughMonthIndex)]
   ));
   const price = Number(stock.current_price) > 0 ? Number(stock.current_price) : 0;
   const rate = getExchangeRateToTwd(userId, normalizeCurrency(stock.currency));
 
   return FULL_MOON_MONTHS.map((_, index) => {
+    if (index > visibleThroughMonthIndex) return 0;
     const endDate = monthEnd(year, index);
     const shares = txs
       .filter(tx => tx.date <= endDate)
@@ -283,7 +287,7 @@ function monthlyStockValues(userId: string, stock: StockRow, year: number): numb
   });
 }
 
-function buildStockRows(userId: string, year: number): BoardRow[] {
+function buildStockRows(userId: string, year: number, visibleThroughMonthIndex: number): BoardRow[] {
   const stocks = asRows<StockRow>(queryAll(
     `SELECT id, symbol, name, current_price, currency
      FROM stocks
@@ -296,17 +300,17 @@ function buildStockRows(userId: string, year: number): BoardRow[] {
     .map((stock): BoardRow => ({
       group: '投資',
       item: `${stock.symbol} ${stock.name}`.trim(),
-      values: monthlyStockValues(userId, stock, year),
+      values: monthlyStockValues(userId, stock, year, visibleThroughMonthIndex),
     }))
     .filter(row => row.values.some(value => value !== 0));
 }
 
-function buildCashDividendRow(userId: string, year: number): BoardRow | null {
+function buildCashDividendRow(userId: string, year: number, visibleThroughMonthIndex: number): BoardRow | null {
   const dividends = asRows<StockDividendRow>(queryAll(
     `SELECT date, cash_dividend
      FROM stock_dividends
      WHERE user_id = ? AND date >= ? AND date <= ?`,
-    [userId, `${year}-01-01`, `${year}-12-31`]
+    [userId, `${year}-01-01`, monthEnd(year, visibleThroughMonthIndex)]
   ));
   const values = emptyValues();
   for (const dividend of dividends) {
@@ -315,22 +319,24 @@ function buildCashDividendRow(userId: string, year: number): BoardRow | null {
     values[index] += Number(dividend.cash_dividend) || 0;
   }
   if (!values.some(value => value !== 0)) return null;
-  return { group: '', item: '現金股利', values: values.map(roundTwd) };
+  return { group: '', item: '現金股利', values: blankMonthsAfter(values.map(roundTwd), visibleThroughMonthIndex) };
 }
 
-function currentYearForUser(userId: string): number {
+function currentPeriodForUser(userId: string): { year: number; visibleThroughMonthIndex: number } {
   const user = asRow<{ timezone: string | null }>(queryOne('SELECT timezone FROM users WHERE id = ?', [userId]));
   const today = todayInUserTz(user?.timezone || 'Asia/Taipei');
-  return Number(today.slice(0, 4)) || new Date().getFullYear();
+  const year = Number(today.slice(0, 4)) || new Date().getFullYear();
+  const visibleThroughMonthIndex = visibleThroughMonthIndexForToday(today);
+  return { year, visibleThroughMonthIndex };
 }
 
 export function getFullMoonInfoBoardData(userId: string): FullMoonInfoBoardData {
-  const year = currentYearForUser(userId);
-  const accountRows = buildAccountRows(userId, year);
-  const stockRows = buildStockRows(userId, year);
-  const incomeRows = buildCategoryRows(userId, year, 'income');
-  const cashDividendRow = buildCashDividendRow(userId, year);
-  const expenseRows = buildCategoryRows(userId, year, 'expense');
+  const { year, visibleThroughMonthIndex } = currentPeriodForUser(userId);
+  const accountRows = buildAccountRows(userId, year, visibleThroughMonthIndex);
+  const stockRows = buildStockRows(userId, year, visibleThroughMonthIndex);
+  const incomeRows = buildCategoryRows(userId, year, visibleThroughMonthIndex, 'income');
+  const cashDividendRow = buildCashDividendRow(userId, year, visibleThroughMonthIndex);
+  const expenseRows = buildCategoryRows(userId, year, visibleThroughMonthIndex, 'expense');
 
   const sections: BoardSection[] = [
     {
@@ -365,6 +371,7 @@ export function getFullMoonInfoBoardData(userId: string): FullMoonInfoBoardData 
 
   return {
     year,
+    visibleThroughMonthIndex,
     sections,
     hasRecordedData: sections.some(section => section.rows.some(row => row.values.some(value => value !== 0))),
   };

@@ -1,5 +1,12 @@
 # Lessons
 
+## 2026-07-07 Ambiguous Chinese Bug Report Polarity
+- Mistake class: misunderstanding requirements.
+- Failure mode: Initially interpreted "現在7月，7月之後的月份是有資料的，修復錯誤" as future months should keep showing data, when the actual bug was that months after July were incorrectly showing data.
+- Detection signal: Re-reading the phrasing against the observed implementation showed account/stock balances were carried forward into August-December even though today is in July.
+- Prevention rule: For terse bug reports that state an observed behavior followed by "修復錯誤", treat the stated behavior as the likely bug unless the user explicitly says it is expected.
+- Tripwire: Before editing, write the expected/actual pair in `tasks/todo.md` and check it against the implementation symptom.
+
 ## 2026-07-06 Unicode i18n Writes
 - Mistake class: missing verification / incorrect assumption about shell encoding.
 - Failure mode: Writing non-ASCII i18n values through a PowerShell piped Python script mangled strings into `???` in ARB/generated files.

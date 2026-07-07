@@ -145,3 +145,52 @@
   - `npm run build` compiled successfully, then failed in the local environment with `spawn EPERM`.
   - Full `npx tsc --noEmit --pretty false` is blocked by existing E2E type setup: missing `@playwright/test`.
 - Lessons: added `2026-07-07 Optional Test Dependency Assumption` to `tasks/lessons.md`.
+
+# 2026-07-07 info-board-future-month-data
+
+## Goal + Acceptance Criteria
+- [x] Fix the full-moon info-board so months after the current month do not show recorded or carried-forward values.
+- [x] Current month being July means August-December cells stay blank even when account balances or future-dated records would otherwise produce values.
+- [x] Preserve the signed-in user's live-data behavior and existing dense spreadsheet layout.
+- [x] Keep the change scoped to the info-board aggregation/rendering path unless evidence requires otherwise.
+- [x] Verification includes a deterministic regression check for months after July.
+
+## Risk & Rollback
+- Risk level: medium because the page summarizes user financial records.
+- Affected components: `lib/fullMoonInfoBoard.ts`, `/finance/info-board` rendering if needed, and any targeted tests/helpers added for this behavior.
+- Rollback strategy: revert the info-board future-month data fix; no schema or data migration planned.
+- Monitoring signals: `/finance/info-board` render errors, incorrect blank cells after the current month, changed totals.
+
+## Dependencies & Environment
+- Runtime: existing Next.js and TypeScript tooling.
+- Date context: current date is 2026-07-07 in Asia/Taipei; the current-year board should only display through July.
+- No new dependencies planned.
+
+## Working Notes
+- User reported in Chinese: "滿月資訊版，現在7月，滿月資訊版7月之後的月份是有資料的，修復錯誤".
+- Corrected interpretation: the bug is that future months after the current month already show data.
+- Existing helper builds all 12 months from the user's current year and carries balances through December, so August-December can display values when today is in July.
+- Root cause: account and stock balance queries used December month-end as the cutoff, while category/dividend queries used `YYYY-12-31`; the page also rendered future monthly totals/net worth as zero instead of blank.
+- Decision: derive `visibleThroughMonthIndex` from the user's timezone-local today, use that cutoff in aggregation, blank future month totals in the table, and calculate change-based totals through the current month instead of December.
+
+## Plan
+- [x] Restate goal + acceptance criteria.
+- [x] Locate existing implementation / patterns.
+- [x] Design minimal approach + key decisions.
+- [x] Implement smallest safe slice.
+- [x] Add/adjust tests.
+- [x] Run verification (targeted regression plus type/build where practical).
+- [x] Summarize changes + verification story.
+- [x] Record lessons if any correction or mistake occurs.
+
+## Results
+- Added `lib/fullMoonInfoBoardCutoff.ts` for current-month cutoff helpers.
+- Updated `lib/fullMoonInfoBoard.ts` so account balances, stock values, income/expense rows, and dividends only aggregate through the user's current month.
+- Updated `/finance/info-board` to leave future month section totals, net worth, and monthly growth cells blank, while Total/% for change-based rows use the latest visible month.
+- Added `tests/lib/fullMoonInfoBoard.test.ts` and wired `npm run test:info-board` into `npm test`.
+- Verification:
+  - `npm run test:info-board` passed.
+  - `npx tsc -p tsconfig.codex-info-board.json --noEmit --pretty false` passed with a temporary scoped config; the config was removed after verification.
+  - `npm test` passed `test:tz`, `test:photo-crypto`, `test:info-board`, and `check:iso`, then failed at existing stale i18n generated outputs.
+  - `npm run build` timed out after 4 minutes in this environment.
+  - Full `npx tsc --noEmit --pretty false` remains blocked by existing E2E `@playwright/test` type setup.

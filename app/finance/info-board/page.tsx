@@ -7,6 +7,7 @@ import {
   type BoardSection,
   type BoardTone,
 } from '@/lib/fullMoonInfoBoard';
+import { isFutureMonthIndex } from '@/lib/fullMoonInfoBoardCutoff';
 import { localeTag } from '@/lib/i18n/localeTag';
 import { resolveLocale } from '@/lib/i18n/resolveLocale';
 import { requireServerAuth } from '@/lib/serverAuth';
@@ -27,14 +28,14 @@ function monthlyTotals(section: BoardSection) {
   return FULL_MOON_MONTHS.map((_, index) => section.rows.reduce((total, row) => total + (row.values[index] || 0), 0));
 }
 
-function change(values: number[]) {
-  return values[values.length - 1] - values[0];
+function change(values: number[], endIndex = values.length - 1) {
+  return (values[endIndex] || 0) - (values[0] || 0);
 }
 
-function growth(values: number[]) {
+function growth(values: number[], endIndex = values.length - 1) {
   const start = values[0];
   if (!start) return null;
-  return change(values) / start;
+  return change(values, endIndex) / start;
 }
 
 function formatMoney(value: number, locale: string, blankZero = true) {
@@ -47,23 +48,23 @@ function formatPercent(value: number | null) {
   return `${Math.round(value * 100)}%`;
 }
 
-function rowTotal(row: BoardRow, section: BoardSection) {
-  return section.totalMode === 'change' ? change(row.values) : sum(row.values);
+function rowTotal(row: BoardRow, section: BoardSection, visibleThroughMonthIndex: number) {
+  return section.totalMode === 'change' ? change(row.values, visibleThroughMonthIndex) : sum(row.values);
 }
 
-function sectionTotal(section: BoardSection) {
+function sectionTotal(section: BoardSection, visibleThroughMonthIndex: number) {
   const totals = monthlyTotals(section);
-  return section.totalMode === 'change' ? change(totals) : sum(totals);
+  return section.totalMode === 'change' ? change(totals, visibleThroughMonthIndex) : sum(totals);
 }
 
-function sectionPercent(section: BoardSection) {
-  if (section.totalMode === 'change') return growth(monthlyTotals(section));
-  return sectionTotal(section) ? 1 : null;
+function sectionPercent(section: BoardSection, visibleThroughMonthIndex: number) {
+  if (section.totalMode === 'change') return growth(monthlyTotals(section), visibleThroughMonthIndex);
+  return sectionTotal(section, visibleThroughMonthIndex) ? 1 : null;
 }
 
-function rowPercent(row: BoardRow, section: BoardSection, total: number) {
-  if (section.totalMode === 'change') return growth(row.values);
-  return total ? rowTotal(row, section) / total : null;
+function rowPercent(row: BoardRow, section: BoardSection, total: number, visibleThroughMonthIndex: number) {
+  if (section.totalMode === 'change') return growth(row.values, visibleThroughMonthIndex);
+  return total ? rowTotal(row, section, visibleThroughMonthIndex) / total : null;
 }
 
 export default async function InfoBoardPage() {
@@ -80,6 +81,7 @@ export default async function InfoBoardPage() {
     if (index === 0 || !netWorth[index - 1]) return null;
     return (value - netWorth[index - 1]) / netWorth[index - 1];
   });
+  const isFutureMonth = (index: number) => isFutureMonthIndex(index, board.visibleThroughMonthIndex);
 
   return (
     <AppLayout user={user}>
@@ -127,7 +129,7 @@ export default async function InfoBoardPage() {
               <tbody>
                 {sections.map(section => {
                   const totals = monthlyTotals(section);
-                  const total = sectionTotal(section);
+                  const total = sectionTotal(section, board.visibleThroughMonthIndex);
                   const sectionStyle = toneStyles[section.tone];
 
                   return (
@@ -137,7 +139,7 @@ export default async function InfoBoardPage() {
                         const style = toneStyles[rowTone];
                         const previousGroup = section.rows[rowIndex - 1]?.group;
                         const showGroup = row.group && row.group !== previousGroup;
-                        const totalValue = rowTotal(row, section);
+                        const totalValue = rowTotal(row, section, board.visibleThroughMonthIndex);
 
                         return (
                           <tr key={`${section.title}-${row.group}-${row.item}`}>
@@ -159,7 +161,7 @@ export default async function InfoBoardPage() {
                               {formatMoney(totalValue, locale, false)}
                             </td>
                             <td className="h-7 border border-[#cfcfcf] px-2 py-1.5 text-right align-middle font-semibold tabular-nums" style={{ background: sectionStyle.strongBg, color: sectionStyle.strongText }}>
-                              {formatPercent(rowPercent(row, section, total))}
+                              {formatPercent(rowPercent(row, section, total, board.visibleThroughMonthIndex))}
                             </td>
                           </tr>
                         );
@@ -170,14 +172,14 @@ export default async function InfoBoardPage() {
                         </td>
                         {totals.map((value, index) => (
                           <td key={`${section.title}-total-${FULL_MOON_MONTHS[index]}`} className="h-8 border border-[#cfcfcf] px-2 py-1.5 text-right font-bold tabular-nums" style={{ background: sectionStyle.strongBg, color: sectionStyle.strongText }}>
-                            {formatMoney(value, locale, false)}
+                            {isFutureMonth(index) ? '' : formatMoney(value, locale, false)}
                           </td>
                         ))}
                         <td className="h-8 border border-[#cfcfcf] px-2 py-1.5 text-right font-bold tabular-nums" style={{ background: sectionStyle.strongBg, color: sectionStyle.strongText }}>
                           {formatMoney(total, locale, false)}
                         </td>
                         <td className="h-8 border border-[#cfcfcf] px-2 py-1.5 text-right font-bold tabular-nums" style={{ background: sectionStyle.strongBg, color: sectionStyle.strongText }}>
-                          {formatPercent(sectionPercent(section))}
+                          {formatPercent(sectionPercent(section, board.visibleThroughMonthIndex))}
                         </td>
                       </tr>
                     </Fragment>
@@ -190,14 +192,14 @@ export default async function InfoBoardPage() {
                   </td>
                   {netWorth.map((value, index) => (
                     <td key={`net-${FULL_MOON_MONTHS[index]}`} className="h-12 border border-[#cfcfcf] bg-[#ffdb6a] px-2 py-2 text-right align-top font-bold tabular-nums text-[#6c5700]">
-                      {formatMoney(value, locale, false)}
+                      {isFutureMonth(index) ? '' : formatMoney(value, locale, false)}
                     </td>
                   ))}
                   <td className="h-12 border border-[#cfcfcf] bg-white px-2 py-2 text-right align-top font-bold tabular-nums">
-                    {formatMoney(change(netWorth), locale, false)}
+                    {formatMoney(change(netWorth, board.visibleThroughMonthIndex), locale, false)}
                   </td>
                   <td className="h-12 border border-[#cfcfcf] bg-white px-2 py-2 text-right align-top font-bold tabular-nums">
-                    {formatPercent(growth(netWorth))}
+                    {formatPercent(growth(netWorth, board.visibleThroughMonthIndex))}
                   </td>
                 </tr>
                 <tr>
@@ -206,7 +208,7 @@ export default async function InfoBoardPage() {
                   </td>
                   {monthlyGrowth.map((value, index) => (
                     <td key={`growth-${FULL_MOON_MONTHS[index]}`} className="h-9 border border-[#cfcfcf] bg-[#fff2bf] px-2 py-2 text-right font-semibold tabular-nums text-[#6c5700]">
-                      {value === null ? '' : formatPercent(value)}
+                      {isFutureMonth(index) || value === null ? '' : formatPercent(value)}
                     </td>
                   ))}
                   <td className="h-9 border border-[#cfcfcf] bg-white px-2 py-2" />

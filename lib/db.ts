@@ -493,6 +493,7 @@ async function _runMigrations(): Promise<void> {
   alterIgnore("ALTER TABLE accounts ADD COLUMN overseas_fee_rate REAL DEFAULT 0");
   alterIgnore("ALTER TABLE accounts ADD COLUMN account_type TEXT DEFAULT ''");
   alterIgnore("ALTER TABLE accounts ADD COLUMN statement_closing_day INTEGER DEFAULT NULL");
+  alterIgnore("ALTER TABLE accounts ADD COLUMN currency TEXT DEFAULT 'TWD'");
 
   // 區分手動／自動匯率：手動輸入或「立即同步」回填皆會用到此欄。
   alterIgnore("ALTER TABLE exchange_rates ADD COLUMN is_manual INTEGER DEFAULT 0");
@@ -505,9 +506,11 @@ async function _runMigrations(): Promise<void> {
   alterIgnore("ALTER TABLE transactions ADD COLUMN source_recurring_id TEXT DEFAULT ''");
   alterIgnore("ALTER TABLE transactions ADD COLUMN scheduled_date TEXT DEFAULT ''");
   alterIgnore("ALTER TABLE transactions ADD COLUMN is_fx_fee INTEGER DEFAULT 0");
+  alterIgnore("ALTER TABLE transactions ADD COLUMN currency TEXT DEFAULT 'TWD'");
 
   alterIgnore("ALTER TABLE recurring ADD COLUMN fx_fee REAL DEFAULT 0");
   alterIgnore("ALTER TABLE recurring ADD COLUMN exclude_from_stats INTEGER DEFAULT 0");
+  alterIgnore("ALTER TABLE recurring ADD COLUMN currency TEXT DEFAULT 'TWD'");
 
   alterIgnore("ALTER TABLE budgets ADD COLUMN year_month TEXT DEFAULT ''");
   alterIgnore("ALTER TABLE budgets ADD COLUMN created_at INTEGER DEFAULT 0");
@@ -517,6 +520,7 @@ async function _runMigrations(): Promise<void> {
   alterIgnore("ALTER TABLE stocks ADD COLUMN avg_cost REAL DEFAULT 0");
   alterIgnore("ALTER TABLE stocks ADD COLUMN stock_type TEXT DEFAULT 'stock'");
   alterIgnore("ALTER TABLE stocks ADD COLUMN delisted INTEGER DEFAULT 0");
+  alterIgnore("ALTER TABLE stocks ADD COLUMN currency TEXT DEFAULT 'TWD'");
 
   alterIgnore("ALTER TABLE stock_transactions ADD COLUMN account_id TEXT DEFAULT ''");
   alterIgnore("ALTER TABLE stock_transactions ADD COLUMN realized_pl REAL DEFAULT 0");

@@ -99,3 +99,49 @@
   - `npm test` passed `test:tz`, `test:photo-crypto`, and `check:iso`, then failed at existing `check:i18n` stale generated outputs. This change did not modify i18n.
   - `npm run build` did not complete before the 4-minute timeout.
 - Lessons: no new correction/postmortem entry needed.
+
+# 2026-07-07 info-board-avg-cost-schema
+
+## Goal + Acceptance Criteria
+- [x] Fix `/finance/info-board` server render failure: `column "avg_cost" does not exist`.
+- [x] Keep the page using the signed-in user's recorded data.
+- [x] Preserve existing stock/transaction behavior and avoid broad refactors.
+- [x] Verification includes targeted type/build checks or a documented reason if unavailable.
+
+## Risk & Rollback
+- Risk level: medium because this touches database schema compatibility for finance data.
+- Affected components: stock schema initialization/migration and full-moon info-board stock aggregation.
+- Rollback strategy: revert the schema/query change; if a migration column is added, it is additive and can safely remain.
+- Monitoring signals: `/finance/info-board` render errors, stock page render/API errors, migration startup logs.
+
+## Dependencies & Environment
+- Runtime: existing Next.js/PostgreSQL data access via `lib/db.ts`.
+- Reported environment: Zeabur runtime log at `2026-07-07T04:18:18Z`.
+- No new dependencies planned.
+
+## Working Notes
+- Reported error points at `/finance/info-board/page.js` and `column "avg_cost" does not exist`.
+- Initial search found `lib/fullMoonInfoBoard.ts` selects `avg_cost` from `stocks`.
+- Initial search found `lib/db.ts` includes `avg_cost` in `CREATE TABLE stocks`, but the existing-table ALTER compatibility list only adds `current_price`, `stock_type`, and `delisted`.
+
+## Plan
+- [x] Restate goal + acceptance criteria.
+- [x] Locate existing implementation / migration patterns.
+- [x] Design minimal approach + key decisions.
+- [x] Implement smallest safe slice.
+- [x] Add/adjust tests if a nearby schema/query test exists.
+- [x] Run verification (typecheck/build/manual schema sanity).
+- [x] Summarize changes + verification story.
+- [x] Record lessons if any correction or mistake occurs.
+
+## Results
+- Added an idempotent `stocks.avg_cost` compatibility migration in `lib/db.ts` so existing PostgreSQL databases catch up to the current `CREATE TABLE stocks` definition.
+- Removed the unused `avg_cost` column from the `/finance/info-board` stock aggregation query in `lib/fullMoonInfoBoard.ts`; stock market value still uses recorded transactions, current price, and currency.
+- Verification:
+  - `rg` confirmed `avg_cost` remains only in `lib/db.ts` create/alter schema lines and is no longer selected by `lib/fullMoonInfoBoard.ts`.
+  - `npx tsc -p tsconfig.codex-info-board.json --noEmit --pretty false` passed for the changed data-layer files; the temporary tsconfig was removed.
+  - Static schema sanity check passed: schema alter exists and the info-board SELECT no longer asks for `avg_cost`.
+  - `npm test` passed `test:tz`, `test:photo-crypto`, and `check:iso`, then failed at existing `check:i18n` stale generated outputs.
+  - `npm run build` compiled successfully, then failed in the local environment with `spawn EPERM`.
+  - Full `npx tsc --noEmit --pretty false` is blocked by existing E2E type setup: missing `@playwright/test`.
+- Lessons: added `2026-07-07 Optional Test Dependency Assumption` to `tasks/lessons.md`.

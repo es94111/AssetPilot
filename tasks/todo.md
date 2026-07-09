@@ -1,3 +1,53 @@
+# 2026-07-09 upgrade-project-packages-latest
+
+## Goal + Acceptance Criteria
+- [ ] Upgrade direct project npm dependencies/devDependencies/overrides to the latest registry versions available today.
+- [ ] Preserve npm lockfile consistency and existing project scripts.
+- [ ] Keep changes scoped to package metadata, lockfile, and compatibility fixes required by verification.
+- [ ] Verification covers install/lock consistency plus targeted tests/typecheck/build where feasible.
+
+## Risk & Rollback
+- Risk level: medium because this can introduce framework/compiler/runtime behavior changes.
+- Affected components: Next.js app build/runtime, TypeScript toolchain, test/tool scripts, transitive dependency tree.
+- Rollback strategy: revert `package.json`, `package-lock.json`, and any compatibility edits from this task.
+- Monitoring signals: npm resolution errors, typecheck/build/test failures, Next runtime warnings.
+
+## Dependencies & Environment
+- Package manager: npm with `package-lock.json`.
+- Runtime constraint from `package.json`: Node `>=24.0.0 <25`.
+- Registry source of truth: `npm outdated` / `npm install <pkg>@latest` against npm registry.
+
+## Working Notes
+- Existing user worktree changes are present under `mobile/test-lab/*`; do not touch or revert them.
+- Prior TypeScript 7 upgrade required explicit `npm run typecheck` before `next build --webpack`; preserve that verification path.
+- `npm outdated` initially reported only three outdated direct dependencies: `next` 16.2.9 -> 16.2.10, `resend` 6.16.0 -> 6.17.2, and `@types/node` 26.1.0 -> 26.1.1.
+- Current PATH resolves `node` to v22.22.2, but the project requires Node `>=24 <25`; verification used the installed Scoop nvm Node v24.15.0 at `$env:NVM_SYMLINK`.
+- An initial `npm install next@latest resend@latest @types/node@latest` timed out and left npm processes running; stopped those npm install processes before rerunning to avoid concurrent writes.
+- `npm install` completed after cleanup, changed 105 packages, audited 142 packages, and reported 0 vulnerabilities.
+
+## Plan
+- [x] Restate goal + acceptance criteria.
+- [x] Confirm direct dependency latest versions and package-manager behavior.
+- [x] Update package metadata and lockfile minimally.
+- [x] Run verification (install consistency, typecheck/build/tests).
+- [x] Summarize changes + verification story.
+- [x] Record lessons if any correction or mistake occurs.
+
+## Results
+- Upgraded direct npm dependencies to the latest registry versions reported on 2026-07-09:
+  - `next` `^16.2.9` -> `^16.2.10`
+  - `resend` `^6.16.0` -> `^6.17.2`
+  - `@types/node` `^26.1.0` -> `^26.1.1`
+- Updated `package-lock.json` for the new direct versions and Next SWC optional packages.
+- Verification:
+  - `npm outdated` passed with no output after the upgrade.
+  - `npm ls next resend @types/node --depth=0` resolved `next@16.2.10`, `resend@6.17.2`, and `@types/node@26.1.1`.
+  - Node 24 verification environment confirmed: `node v24.15.0`, `npm 11.12.1`.
+  - `npm run typecheck` passed under Node 24.
+  - `npm test` passed `test:tz`, `test:photo-crypto`, `test:info-board`, and `check:iso`; it still fails at the pre-existing stale i18n generated output check.
+  - `npm run build` passed under Node 24 when run outside the sandbox with build-only `AUTH_SECRET` and `DATABASE_URL`; the sandboxed run compiled successfully but failed at page-data worker spawn with `EPERM`.
+- Lessons: no user correction or new project behavior mistake to record.
+
 # 2026-07-09 typescript-7-upgrade
 
 ## Goal + Acceptance Criteria

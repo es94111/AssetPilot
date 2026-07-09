@@ -1,3 +1,52 @@
+# 2026-07-09 typescript-7-upgrade
+
+## Goal + Acceptance Criteria
+- [ ] Upgrade the project TypeScript dev dependency from 6.x to 7.x.
+- [ ] Keep the change scoped to package metadata, lockfile, and only compatibility fixes required by verification.
+- [ ] Preserve existing Next.js/npm project conventions.
+- [ ] Verification covers at least install/lock consistency plus targeted type/build/test checks where feasible.
+
+## Risk & Rollback
+- Risk level: medium because this changes compiler behavior and can surface project-wide type/config incompatibilities.
+- Affected components: TypeScript compiler, Next.js build/typecheck flow, TS-based tests/tools.
+- Rollback strategy: revert `package.json`, `package-lock.json`, and any compatibility edits from this task.
+- Monitoring signals: typecheck failures, Next build failures, TS-based tool/test failures.
+
+## Dependencies & Environment
+- Package manager: npm with `package-lock.json`.
+- Runtime constraint from `package.json`: Node `>=24.0.0 <25`.
+- Current dependency before change: `typescript` `^6.0.3`.
+
+## Working Notes
+- Existing user worktree changes are present under `mobile/test-lab/*`; do not touch or revert them.
+- npm reports `typescript@7.0.2` as `latest`; `next` is a 7.1.0 dev prerelease, so use stable `^7.0.2`.
+- Local shell Node is `v22.22.2`, while the project declares `>=24.0.0 <25`; verification may be limited by this environment mismatch.
+- TypeScript 7 no longer ships `typescript/lib/typescript.js`; Next 16.2.9 still checks for that legacy file for tsconfig path loading and built-in type validation.
+- Next/Webpack needs an explicit `@` alias in `next.config.ts` under TS7 because Next cannot load `paths` from tsconfig through the old TypeScript JS API.
+- Keep type safety in the npm build path by running an explicit `npm run typecheck` before `next build`; Next's incompatible built-in validation is skipped.
+- Add pinned `@typescript/native-preview@7.0.0-dev.20260707.2` as a Next 16 compatibility signal only, so Next does not try to auto-install legacy `typescript` during build.
+
+## Plan
+- [x] Restate goal + acceptance criteria.
+- [x] Confirm available TypeScript 7 version and peer/tooling constraints.
+- [x] Update package metadata and lockfile minimally.
+- [x] Run verification (lock consistency, typecheck/build/tests).
+- [x] Summarize changes + verification story.
+- [x] Record lessons if any correction or mistake occurs.
+
+## Results
+- Upgraded `typescript` from `^6.0.3` to `^7.0.2`; `npm ls typescript --depth=0` resolves `typescript@7.0.2`.
+- Added `@typescript/native-preview@7.0.0-dev.20260707.2` to exercise Next 16's native TypeScript compatibility path; actual typechecking still uses `typescript@7.0.2`.
+- Added `npm run typecheck` using `tsconfig.typecheck.json`, excluding the existing `tests/e2e` Playwright tests because `@playwright/test` is not installed in this workspace.
+- Changed `npm run build` to run `npm run typecheck && next build --webpack`.
+- Added an explicit Webpack `@` alias in `next.config.ts` for TS7/Next16 compatibility, and set Next's built-in type validation to skip after the explicit typecheck.
+- Verification:
+  - `npm run typecheck` passed.
+  - `npm run build` passed; Next prints its native-preview info message plus existing cache-control and middleware warnings.
+  - `npm test` passed `test:tz`, `test:photo-crypto`, `test:info-board`, and `check:iso`, then failed at existing stale i18n generated outputs.
+  - Full `npx tsc --noEmit --pretty false` remains blocked by existing E2E `@playwright/test` type setup.
+- Lesson recorded: `2026-07-09 TypeScript 7 Removed baseUrl`.
+
 # 2026-07-06 info-board-from-full-moon-budget
 
 ## Goal + Acceptance Criteria

@@ -12,8 +12,10 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ['sharp'],
   allowedDevOrigins: ['127.0.0.1', 'localhost'],
   distDir: 'build', // ASCII-only path
-  // 保留 JS/TS 混用（由 tsconfig 的 allowJs 控制），但 build 需執行完整型別檢查
-  typescript: { ignoreBuildErrors: false },
+  // Next 16 still checks for the old typescript/lib/typescript.js path, which
+  // TS 7 no longer ships. `npm run build` runs `npm run typecheck` first;
+  // @typescript/native-preview keeps Next from auto-installing legacy TS.
+  typescript: { ignoreBuildErrors: true },
   // Next.js 15 起 instrumentation.js 為穩定 API，無需 experimental.instrumentationHook
 
   // instrumentation.ts 會被編譯給 nodejs 與 edge 兩個 runtime；
@@ -24,6 +26,12 @@ const nextConfig: NextConfig = {
     // 導致 client bundle 與 RSC server 使用不同的 next 路徑，造成 module ID 不一致
     config.resolve = {
       ...config.resolve,
+      // Next 16 cannot load tsconfig paths through TS 7's new package shape,
+      // so keep the existing @/* alias explicit here.
+      alias: {
+        ...(config.resolve?.alias ?? {}),
+        '@': PROJECT_ROOT,
+      },
       modules: [
         path.resolve(PROJECT_ROOT, 'node_modules'),
         'node_modules',

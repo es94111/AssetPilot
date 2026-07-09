@@ -1,5 +1,12 @@
 # Lessons
 
+## 2026-07-09 TypeScript 7 Removed baseUrl
+- Mistake class: incorrect assumption about compiler behavior / missing verification.
+- Failure mode: Added `compilerOptions.baseUrl` as a likely Next/Webpack alias fix, but TypeScript 7 rejects `baseUrl` with TS5102 because the option has been removed.
+- Detection signal: `npm run typecheck` failed immediately with `Option 'baseUrl' has been removed`.
+- Prevention rule: Before adding legacy tsconfig options during a compiler major upgrade, verify the option against the target compiler by running the project typecheck, and prefer tool-specific resolver config when the issue is a bundler integration gap.
+- Tripwire: After any `tsconfig*.json` edit during TypeScript upgrades, run `npm run typecheck` before continuing to build fixes.
+
 ## 2026-07-07 Ambiguous Chinese Bug Report Polarity
 - Mistake class: misunderstanding requirements.
 - Failure mode: Initially interpreted "現在7月，7月之後的月份是有資料的，修復錯誤" as future months should keep showing data, when the actual bug was that months after July were incorrectly showing data.

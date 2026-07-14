@@ -9,7 +9,7 @@ import '../models.dart';
 import '../widgets.dart';
 import '../l10n.dart';
 
-/// 幣別下拉的預設選項；實際清單會再併入使用者帳戶的幣別與目前交易幣別。
+/// 幣別輸入的預設建議；實際清單會再併入使用者帳戶的幣別與目前交易幣別。
 const _kDefaultCurrencies = [
   'TWD',
   'USD',
@@ -45,8 +45,9 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
   final _note = TextEditingController();
   final _fxFee = TextEditingController();
   final _fxRate = TextEditingController();
+  TextEditingController? _currencyInput;
   bool _excludeFromStats = false;
-  // 交易幣別。預設跟隨所選帳戶，但可獨立改選（外幣消費／刷卡）。
+  // 交易幣別。預設跟隨所選帳戶，但可獨立輸入（外幣消費／刷卡）。
   String _currency = 'TWD';
 
   late Future<void> _loadFuture;
@@ -123,7 +124,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
         a.overseasFeeRate > 0;
   }
 
-  /// 幣別下拉選項：交易幣別 + TWD + 各帳戶幣別 + 常見幣別（去重、保序）。
+  /// 幣別建議選項：交易幣別 + TWD + 各帳戶幣別 + 常見幣別（去重、保序）。
   List<String> get _currencyOptions => <String>{
     _currency,
     'TWD',
@@ -145,7 +146,10 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
     // 新增模式：幣別預設跟隨預選帳戶。編輯模式維持原交易幣別（已於 initState 帶入）。
     if (!_isEdit) {
       final a = _selectedAccount;
-      if (a != null) _currency = a.currency;
+      if (a != null) {
+        _currency = a.currency;
+        _currencyInput?.text = _currency;
+      }
       _applyInitialCategoryShortcut();
     }
     final e = widget.existing;
@@ -774,27 +778,58 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                 final a = _selectedAccount;
                 if (a != null) {
                   _currency = a.currency;
+                  _currencyInput?.text = _currency;
                   _fxRate.clear();
                 }
               }),
             ),
             SizedBox(height: 16),
-            DropdownButtonFormField<String>(
-              initialValue: _currency,
-              isExpanded: true,
-              decoration: InputDecoration(
-                labelText: trKey('featuresCommonCurrency'),
-                prefixIcon: Icon(Icons.payments_outlined),
-                border: OutlineInputBorder(),
-              ),
-              items: [
-                for (final c in _currencyOptions)
-                  DropdownMenuItem(value: c, child: Text(c)),
-              ],
-              onChanged: (v) => setState(() {
-                _currency = v ?? 'TWD';
+            Autocomplete<String>(
+              initialValue: TextEditingValue(text: _currency),
+              optionsBuilder: (value) {
+                final query = value.text.trim().toUpperCase();
+                if (query.isEmpty) return _currencyOptions;
+                return _currencyOptions.where((c) => c.startsWith(query));
+              },
+              onSelected: (value) => setState(() {
+                _currency = value;
                 _fxRate.clear();
               }),
+              fieldViewBuilder:
+                  (context, controller, focusNode, onFieldSubmitted) {
+                    _currencyInput = controller;
+                    return TextFormField(
+                      controller: controller,
+                      focusNode: focusNode,
+                      maxLength: 3,
+                      textCapitalization: TextCapitalization.characters,
+                      decoration: InputDecoration(
+                        labelText: trKey('featuresCommonCurrency'),
+                        prefixIcon: Icon(Icons.payments_outlined),
+                        border: OutlineInputBorder(),
+                        counterText: '',
+                      ),
+                      onChanged: (value) {
+                        final normalized = value.trim().toUpperCase();
+                        setState(() {
+                          _currency = normalized;
+                          _fxRate.clear();
+                        });
+                        if (value != normalized) {
+                          controller.value = TextEditingValue(
+                            text: normalized,
+                            selection: TextSelection.collapsed(
+                              offset: normalized.length,
+                            ),
+                          );
+                        }
+                      },
+                      validator: (value) =>
+                          RegExp(r'^[A-Z]{3}$').hasMatch(value?.trim() ?? '')
+                          ? null
+                          : trKey('featuresAccountsMessagesCurrencyInvalid'),
+                    );
+                  },
             ),
             if (_currency != 'TWD') ...[
               SizedBox(height: 16),

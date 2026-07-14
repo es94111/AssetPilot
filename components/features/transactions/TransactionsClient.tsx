@@ -228,7 +228,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
 
   const fetchFxRate = useCallback(async (currency: string) => {
     const normalizedCurrency = String(currency || '').toUpperCase();
-    if (!normalizedCurrency || normalizedCurrency === 'TWD') {
+    if (!/^[A-Z]{3}$/.test(normalizedCurrency) || normalizedCurrency === 'TWD') {
       setFxLoading(false);
       setForm((current) => current.currency === 'TWD' ? { ...current, fxRate: '' } : current);
       return;
@@ -357,6 +357,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
     e.preventDefault();
     if (!form.date) { setFormError(t('features.transactions.messages.dateRequired')); return; }
     if (!form.amount || Number(form.amount) <= 0) { setFormError(t('features.transactions.messages.amountRequired')); return; }
+    if (!/^[A-Z]{3}$/.test(form.currency)) { setFormError(t('features.accounts.messages.currencyInvalid')); return; }
     setSaving(true);
     setFormError('');
     const isForex = form.currency && form.currency !== 'TWD';
@@ -772,9 +773,17 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
             </div>
             <div className="flex flex-col gap-1">
               <label className="text-sm font-medium text-gray-700">{t('features.common.currency')}</label>
-              <select className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" value={form.currency} onChange={(e) => setForm((current) => ({ ...current, currency: e.target.value.toUpperCase(), fxRate: '' }))}>
-                {currencyOptions.map((currency) => <option key={currency} value={currency}>{currency}</option>)}
-              </select>
+              <input
+                type="text"
+                list="transaction-currency-options"
+                maxLength={3}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                value={form.currency}
+                onChange={(e) => setForm((current) => ({ ...current, currency: e.target.value.toUpperCase(), fxRate: '' }))}
+              />
+              <datalist id="transaction-currency-options">
+                {currencyOptions.map((currency) => <option key={currency} value={currency} />)}
+              </datalist>
             </div>
             {form.currency && form.currency !== 'TWD' && (
               <div className="flex flex-col gap-1">

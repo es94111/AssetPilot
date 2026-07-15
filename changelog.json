@@ -1,6 +1,18 @@
 {
-  "currentVersion": "4.89.1",
+  "currentVersion": "4.89.2",
   "releases": [
+    {
+      "version": "4.89.2",
+      "date": "2026-07-15",
+      "title": "修正部分 Android 裝置開啟後立即閃退的問題",
+      "type": "fixed",
+      "changes": [
+        {
+          "tag": "fixed",
+          "text": "修正上一版新增桌面小工具背景更新功能後，部分 Android 裝置一開啟 App 就立即關閉、無法使用的問題；現在 App 可以正常開啟並照常使用所有功能，既有資料不受影響。"
+        }
+      ]
+    },
     {
       "version": "4.89.1",
       "date": "2026-07-15",

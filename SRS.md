@@ -987,6 +987,7 @@ API 路徑統一以 `/api/` 為前綴。所有需認證的路由自動套用 aut
 
 | 版本 | 日期 | 變更說明 |
 | --- | --- | --- |
+| 4.89.2 | 2026-07-15 | 修正 4.89.1 新增 WorkManager 後 Android release build（R8 開啟）開啟即閃退：R8 預設規則會移除 WorkManager 內部 Room 資料庫實作類別 `WorkDatabase_Impl` 的無參數建構子，導致 `androidx.startup.InitializationProvider` 初始化 `WorkManagerInitializer` 時丟出 `NoSuchMethodException`，在 `Application`/`MainActivity` 建立前就使整個 process crash（實機 logcat 確認：Samsung Android 16，`appErrorCount=10`）。新增 `mobile/android/app/proguard-rules.pro` 保留該建構子與 `RoomDatabase` 子類別，並在 `build.gradle.kts` release buildType 明確接上 `proguardFiles`；已在 emulator 以 release build 驗證全新安裝與覆蓋安裝皆可正常啟動。 |
 | 4.89.1 | 2026-07-15 | 修正 Android 桌面小工具在 Flutter App 關閉後不再更新：新增 WorkManager 定期工作，以 `flutter_secure_storage` 原生端相同設定讀取 `authCookie`，在連網時重新取得 Dashboard 快照並更新月度總覽、今日支出、資產與近期交易小工具；加入登出 generation guard、401/403 清除，以及依已安裝小工具排程／取消。交易新增、編輯、刪除後亦立即重抓 Dashboard，並新增 Kotlin JSON 解析與格式化單元測試。 |
 | 4.89.0 | 2026-07-14 | 交易表單幣別欄位由固定下拉選單改為自由輸入 + 建議清單（web: `TransactionsClient.tsx` 的 `<datalist>`；mobile: `transaction_form_screen.dart` 的 `Autocomplete<String>`），並新增送出前的 `^[A-Z]{3}$` 格式驗證，格式不符時擋下儲存並顯示錯誤訊息。 |
 | 4.88.5 | 2026-07-09 | 相依套件例行升級：`next` `^16.2.9` → `^16.2.10`、`resend` `^6.16.0` → `^6.17.2`、`@types/node` `^26.1.0` → `^26.1.1`；`package-lock.json` 以 `npm install` 同步重生（105 個套件變動，0 個已知漏洞）。Node 24 環境下 `npm run typecheck`／`npm run build`／`npm test`（`test:tz`/`test:photo-crypto`/`test:info-board`/`check:iso`）驗證通過。 |

@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-4.89.1-blue" alt="version">
+  <img src="https://img.shields.io/badge/version-4.89.2-blue" alt="version">
   <img src="https://img.shields.io/badge/node-%3E%3D24-brightgreen" alt="node">
   <img src="https://img.shields.io/badge/next.js-16.x-000000" alt="next.js">
   <img src="https://img.shields.io/badge/openapi-3.2.0-6BA539" alt="openapi">

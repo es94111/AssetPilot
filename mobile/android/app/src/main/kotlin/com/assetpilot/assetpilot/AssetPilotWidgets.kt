@@ -10,8 +10,18 @@ import android.graphics.Color
 import android.net.Uri
 import android.view.View
 import android.widget.RemoteViews
+import androidx.work.Constraints
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.NetworkType
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
+import java.util.concurrent.TimeUnit
 
 private const val WIDGET_PREFS = "assetpilot_widgets"
+private const val WIDGET_SYNC_WORK_NAME = "assetpilot-widget-background-sync"
+private const val WIDGET_SYNC_PERIOD_MINUTES = 30L
+private const val WIDGET_SYNC_FLEX_MINUTES = 10L
+private const val KEY_SYNC_GENERATION = "syncGeneration"
 private const val KEY_HAS_DASHBOARD = "hasDashboard"
 private const val KEY_PERIOD = "period"
 private const val KEY_INCOME = "incomeLabel"
@@ -123,8 +133,13 @@ object AssetPilotWidgetStore {
         context.getSharedPreferences(WIDGET_PREFS, Context.MODE_PRIVATE)
             .edit()
             .clear()
+            .putLong(KEY_SYNC_GENERATION, System.currentTimeMillis())
             .apply()
     }
+
+    fun syncGeneration(context: Context): Long =
+        context.getSharedPreferences(WIDGET_PREFS, Context.MODE_PRIVATE)
+            .getLong(KEY_SYNC_GENERATION, 0L)
 
     fun readDashboard(context: Context): WidgetDashboardData {
         val prefs = context.getSharedPreferences(WIDGET_PREFS, Context.MODE_PRIVATE)
@@ -217,6 +232,52 @@ object AssetPilotWidgetStore {
         RecentTransactionsWidgetProvider.updateAll(context, manager)
         RecurringBillReminderWidgetProvider.updateAll(context, manager)
     }
+
+    fun scheduleBackgroundSync(context: Context) {
+        if (!hasBackgroundSyncWidgets(context)) {
+            cancelBackgroundSync(context)
+            return
+        }
+        val request = PeriodicWorkRequestBuilder<AssetPilotWidgetSyncWorker>(
+            WIDGET_SYNC_PERIOD_MINUTES,
+            TimeUnit.MINUTES,
+            WIDGET_SYNC_FLEX_MINUTES,
+            TimeUnit.MINUTES,
+        )
+            .setConstraints(
+                Constraints.Builder()
+                    .setRequiredNetworkType(NetworkType.CONNECTED)
+                    .build(),
+            )
+            .build()
+        WorkManager.getInstance(context.applicationContext).enqueueUniquePeriodicWork(
+            WIDGET_SYNC_WORK_NAME,
+            ExistingPeriodicWorkPolicy.KEEP,
+            request,
+        )
+    }
+
+    fun cancelBackgroundSync(context: Context) {
+        WorkManager.getInstance(context.applicationContext)
+            .cancelUniqueWork(WIDGET_SYNC_WORK_NAME)
+    }
+
+    private fun hasBackgroundSyncWidgets(context: Context): Boolean {
+        val hasDashboard = context.getSharedPreferences(WIDGET_PREFS, Context.MODE_PRIVATE)
+            .getBoolean(KEY_HAS_DASHBOARD, false)
+        if (!hasDashboard) return false
+
+        val manager = AppWidgetManager.getInstance(context)
+        return listOf(
+            MonthlyOverviewWidgetProvider::class.java,
+            TodayExpenseWidgetProvider::class.java,
+            TodayExpenseLargeWidgetProvider::class.java,
+            PortfolioWidgetProvider::class.java,
+            RecentTransactionsWidgetProvider::class.java,
+        ).any { provider ->
+            manager.getAppWidgetIds(ComponentName(context, provider)).isNotEmpty()
+        }
+    }
 }
 
 data class WidgetDashboardData(
@@ -284,11 +345,20 @@ data class WidgetRecurringReminder(
 )
 
 class MonthlyOverviewWidgetProvider : AppWidgetProvider() {
+    override fun onEnabled(context: Context) {
+        AssetPilotWidgetStore.scheduleBackgroundSync(context)
+    }
+
+    override fun onDisabled(context: Context) {
+        AssetPilotWidgetStore.scheduleBackgroundSync(context)
+    }
+
     override fun onUpdate(
         context: Context,
         appWidgetManager: AppWidgetManager,
         appWidgetIds: IntArray,
     ) {
+        AssetPilotWidgetStore.scheduleBackgroundSync(context)
         appWidgetIds.forEach { update(context, appWidgetManager, it) }
     }
 
@@ -337,11 +407,20 @@ class MonthlyOverviewWidgetProvider : AppWidgetProvider() {
 }
 
 class TodayExpenseWidgetProvider : AppWidgetProvider() {
+    override fun onEnabled(context: Context) {
+        AssetPilotWidgetStore.scheduleBackgroundSync(context)
+    }
+
+    override fun onDisabled(context: Context) {
+        AssetPilotWidgetStore.scheduleBackgroundSync(context)
+    }
+
     override fun onUpdate(
         context: Context,
         appWidgetManager: AppWidgetManager,
         appWidgetIds: IntArray,
     ) {
+        AssetPilotWidgetStore.scheduleBackgroundSync(context)
         appWidgetIds.forEach { update(context, appWidgetManager, it) }
     }
 
@@ -378,11 +457,20 @@ class TodayExpenseWidgetProvider : AppWidgetProvider() {
 }
 
 class TodayExpenseLargeWidgetProvider : AppWidgetProvider() {
+    override fun onEnabled(context: Context) {
+        AssetPilotWidgetStore.scheduleBackgroundSync(context)
+    }
+
+    override fun onDisabled(context: Context) {
+        AssetPilotWidgetStore.scheduleBackgroundSync(context)
+    }
+
     override fun onUpdate(
         context: Context,
         appWidgetManager: AppWidgetManager,
         appWidgetIds: IntArray,
     ) {
+        AssetPilotWidgetStore.scheduleBackgroundSync(context)
         appWidgetIds.forEach { update(context, appWidgetManager, it) }
     }
 
@@ -471,11 +559,20 @@ class QuickTransactionWidgetProvider : AppWidgetProvider() {
 }
 
 class PortfolioWidgetProvider : AppWidgetProvider() {
+    override fun onEnabled(context: Context) {
+        AssetPilotWidgetStore.scheduleBackgroundSync(context)
+    }
+
+    override fun onDisabled(context: Context) {
+        AssetPilotWidgetStore.scheduleBackgroundSync(context)
+    }
+
     override fun onUpdate(
         context: Context,
         appWidgetManager: AppWidgetManager,
         appWidgetIds: IntArray,
     ) {
+        AssetPilotWidgetStore.scheduleBackgroundSync(context)
         appWidgetIds.forEach { update(context, appWidgetManager, it) }
     }
 
@@ -530,11 +627,20 @@ class PortfolioWidgetProvider : AppWidgetProvider() {
 }
 
 class BudgetAlertWidgetProvider : AppWidgetProvider() {
+    override fun onEnabled(context: Context) {
+        AssetPilotWidgetStore.scheduleBackgroundSync(context)
+    }
+
+    override fun onDisabled(context: Context) {
+        AssetPilotWidgetStore.scheduleBackgroundSync(context)
+    }
+
     override fun onUpdate(
         context: Context,
         appWidgetManager: AppWidgetManager,
         appWidgetIds: IntArray,
     ) {
+        AssetPilotWidgetStore.scheduleBackgroundSync(context)
         appWidgetIds.forEach { update(context, appWidgetManager, it) }
     }
 
@@ -632,11 +738,20 @@ class BudgetAlertWidgetProvider : AppWidgetProvider() {
 }
 
 class RecentTransactionsWidgetProvider : AppWidgetProvider() {
+    override fun onEnabled(context: Context) {
+        AssetPilotWidgetStore.scheduleBackgroundSync(context)
+    }
+
+    override fun onDisabled(context: Context) {
+        AssetPilotWidgetStore.scheduleBackgroundSync(context)
+    }
+
     override fun onUpdate(
         context: Context,
         appWidgetManager: AppWidgetManager,
         appWidgetIds: IntArray,
     ) {
+        AssetPilotWidgetStore.scheduleBackgroundSync(context)
         appWidgetIds.forEach { update(context, appWidgetManager, it) }
     }
 
@@ -725,11 +840,20 @@ class RecentTransactionsWidgetProvider : AppWidgetProvider() {
 }
 
 class RecurringBillReminderWidgetProvider : AppWidgetProvider() {
+    override fun onEnabled(context: Context) {
+        AssetPilotWidgetStore.scheduleBackgroundSync(context)
+    }
+
+    override fun onDisabled(context: Context) {
+        AssetPilotWidgetStore.scheduleBackgroundSync(context)
+    }
+
     override fun onUpdate(
         context: Context,
         appWidgetManager: AppWidgetManager,
         appWidgetIds: IntArray,
     ) {
+        AssetPilotWidgetStore.scheduleBackgroundSync(context)
         appWidgetIds.forEach { update(context, appWidgetManager, it) }
     }
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../api_client.dart';
+import '../app_widget_sync.dart';
 import '../format.dart';
 import '../models.dart';
 import '../widgets.dart';
@@ -98,6 +99,17 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
 
   void _reload() => setState(() => _future = _load());
 
+  Future<void> _refreshDashboardWidget() async {
+    try {
+      final now = DateTime.now();
+      final ym = '${now.year}-${now.month.toString().padLeft(2, '0')}';
+      final json = await ApiClient.instance.dashboard(ym);
+      await AppWidgetSync.updateDashboard(Dashboard.fromJson(json));
+    } catch (_) {
+      // 小工具同步失敗不應阻斷交易操作。
+    }
+  }
+
   Future<void> _openFilters(_TransactionsData data) async {
     final applied = await showModalBottomSheet<bool>(
       context: context,
@@ -167,6 +179,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     if (ok != true) return false;
     try {
       await ApiClient.instance.deleteTransaction(t.id);
+      await _refreshDashboardWidget();
       if (mounted) toast(context, trKey('mobileLegacyDeleted'));
       _reload();
       return true;

@@ -215,13 +215,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
           'commute',
         ];
       case 'shopping':
-        return [
-          '購物',
-          'shopping',
-          'shop',
-          '日用品',
-          '生活用品',
-        ];
+        return ['購物', 'shopping', 'shop', '日用品', '生活用品'];
       default:
         return const [];
     }
@@ -242,15 +236,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
         }
         return ['飲料', '點心', '宵夜', 'drink', 'snack', '餐飲', '飲食'];
       case 'transport':
-        return [
-          '大眾運輸',
-          '捷運',
-          '公車',
-          '火車',
-          '高鐵',
-          'transport',
-          'transit',
-        ];
+        return ['大眾運輸', '捷運', '公車', '火車', '高鐵', 'transport', 'transit'];
       case 'shopping':
         return ['日用品', '生活用品', '購物', 'shopping', 'daily'];
       default:
@@ -269,7 +255,9 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
     if (normalizedCandidates.isEmpty) return null;
 
     for (final category in categories) {
-      if (normalizedCandidates.contains(_normalizeCategoryName(category.name))) {
+      if (normalizedCandidates.contains(
+        _normalizeCategoryName(category.name),
+      )) {
         return category;
       }
     }
@@ -520,8 +508,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
   Future<void> _refreshDashboardWidgets() async {
     try {
       final now = DateTime.now();
-      final ym =
-          '${now.year}-${now.month.toString().padLeft(2, '0')}';
+      final ym = '${now.year}-${now.month.toString().padLeft(2, '0')}';
       final json = await ApiClient.instance.dashboard(ym);
       await AppWidgetSync.updateDashboard(Dashboard.fromJson(json));
       final rawBudgets = await ApiClient.instance.budgets(ym);
@@ -571,6 +558,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
     setState(() => _saving = true);
     try {
       await ApiClient.instance.deleteTransaction(e.id);
+      await _refreshDashboardWidgets();
       if (mounted) Navigator.pop(context, true);
     } catch (err) {
       if (mounted) {

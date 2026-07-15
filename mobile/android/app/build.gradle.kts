@@ -81,4 +81,10 @@ dependencies {
     // 與系統「應用程式資訊 → 語言」的設定來源（API 33+ 走框架 LocaleManager，
     // 以下版本由 AppCompat 儲存並套用）。需 1.6.0+。
     implementation("androidx.appcompat:appcompat:1.7.0")
+    // 桌面小工具需在 App 關閉後仍定期抓取最新金額；WorkManager 由 Android
+    // 依電量與網路狀態批次執行，避免自建常駐服務。
+    implementation("androidx.work:work-runtime-ktx:2.10.2")
+
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("org.json:json:20180813")
 }

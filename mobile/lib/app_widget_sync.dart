@@ -9,8 +9,8 @@ import 'models.dart';
 
 /// 將 App 內已取得的 Dashboard 快照同步給 Android 桌面小工具。
 ///
-/// 小工具只讀本機快照，不在背景直接打 API；這樣可沿用 App 既有登入流程，
-/// 也避免把 httpOnly cookie 或 API 認證邏輯複製到原生小工具。
+/// 前景資料經 MethodChannel 寫入本機快照；Android 原生端另以 WorkManager
+/// 定期更新同一份快照，讓 App 關閉後桌面金額仍能保持新鮮。
 class AppWidgetSync {
   static const _channel = MethodChannel('assetpilot/widgets');
   static const _recentLimit = 5;
@@ -96,8 +96,9 @@ class AppWidgetSync {
     for (var i = 0; i < top.length; i++) {
       final budget = top[i];
       final progress = (budget.progress * 100).round();
-      args['budgetName$i'] =
-          budget.categoryId == null ? '月度總預算' : (categoryNames[budget.categoryId] ?? '未知分類');
+      args['budgetName$i'] = budget.categoryId == null
+          ? '月度總預算'
+          : (categoryNames[budget.categoryId] ?? '未知分類');
       args['budgetDetail$i'] = '${twd(budget.used)} / ${twd(budget.amount)}';
       args['budgetPercent$i'] = '$progress%';
       args['budgetProgress$i'] = progress.clamp(0, 100);

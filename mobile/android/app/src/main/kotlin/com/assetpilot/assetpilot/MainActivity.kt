@@ -53,6 +53,7 @@ class MainActivity : FlutterFragmentActivity() {
                     val args = call.arguments as? Map<*, *> ?: emptyMap<String, Any?>()
                     AssetPilotWidgetStore.writeDashboard(applicationContext, args)
                     AssetPilotWidgetStore.updateAllWidgets(applicationContext)
+                    AssetPilotWidgetStore.scheduleBackgroundSync(applicationContext)
                     result.success(null)
                 }
                 "updatePortfolio" -> {
@@ -74,6 +75,7 @@ class MainActivity : FlutterFragmentActivity() {
                     result.success(null)
                 }
                 "clearDashboard" -> {
+                    AssetPilotWidgetStore.cancelBackgroundSync(applicationContext)
                     AssetPilotWidgetStore.clearDashboard(applicationContext)
                     AssetPilotWidgetStore.updateAllWidgets(applicationContext)
                     result.success(null)

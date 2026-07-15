@@ -60,6 +60,12 @@ android {
             } else {
                 signingConfigs.getByName("debug")
             }
+            // Explicit so proguard-rules.pro (WorkManager/Room keep rule) is
+            // guaranteed to apply regardless of Flutter's own default shrink config.
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro",
+            )
         }
     }
 }

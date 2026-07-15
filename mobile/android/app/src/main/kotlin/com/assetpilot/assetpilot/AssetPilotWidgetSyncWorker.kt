@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit
 import kotlin.math.roundToInt
 
 private const val SECURE_PREFS_NAME = "FlutterSecureStorage"
-private const val SECURE_PREFS_KEY_PREFIX = "VGhpcyBpcyB0aGUgcHJlZml4IGZvciBhIHNlY3VyZSBzdG9yYWdlCg"
+private const val SECURE_PREFS_KEY_PREFIX = "VGhpcyBpcyB0aGUgcHJlZml4IGZvciBhIHNlY3VyZSBzdG9yYWdlCg" // gitleaks:allow (fixed flutter_secure_storage key prefix, not a secret)
 private const val AUTH_COOKIE_KEY = "authCookie"
 private const val DEFAULT_API_BASE_URL = "https://asset.shao.one"
 private const val API_CONNECT_TIMEOUT_MILLIS = 10_000

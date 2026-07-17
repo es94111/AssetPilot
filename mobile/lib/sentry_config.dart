@@ -24,6 +24,10 @@ void configureSentry(SentryFlutterOptions options) {
   options.tracesSampleRate = 0.2;
   // 財務 App：絕不附帶可識別個資（IP、Cookie、預設 request body 等）。
   options.sendDefaultPii = false;
+  // API client 已把 HTTP 失敗轉為可重試的 ApiException，並另以不含個資的結構化
+  // log 記錄 path／status／例外型別。關閉 SentryHttpClient 的重複 error event，
+  // 仍保留 HTTP performance spans 與 breadcrumbs。
+  options.captureFailedRequests = false;
   // 啟用結構化日誌（Sentry Logs），可用 `Sentry.logger` 送出 info/warn/error 等級日誌。
   // 注意：寫 log 時不要帶入金額、Cookie、JWT 等機敏內容。
   options.enableLogs = true;

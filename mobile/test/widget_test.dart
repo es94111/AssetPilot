@@ -1,12 +1,127 @@
 // AssetPilot 安卓客戶端的基本 widget 測試。
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:sentry_flutter/sentry_flutter.dart';
 
+import 'package:assetpilot/api_client.dart';
 import 'package:assetpilot/screens/login_screen.dart';
 import 'package:assetpilot/l10n.dart';
+import 'package:assetpilot/sentry_config.dart';
 
 void main() {
+  test('Sentry 保留 HTTP 診斷但不重複建立已處理的失敗事件', () {
+    final options = SentryFlutterOptions();
+
+    configureSentry(options);
+
+    expect(options.captureFailedRequests, isFalse);
+    expect(options.recordHttpBreadcrumbs, isTrue);
+    expect(options.tracesSampleRate, 0.2);
+  });
+
+  test('只有首次可安全重放的 GET 暫時性狀態碼會重試', () {
+    for (final statusCode in [502, 503, 504, 521]) {
+      expect(
+        ApiClient.shouldRetryTransientGetStatus(
+          'GET',
+          '/api/config',
+          statusCode,
+          0,
+        ),
+        isTrue,
+      );
+    }
+
+    expect(
+      ApiClient.shouldRetryTransientGetStatus('GET', '/api/config', 500, 0),
+      isFalse,
+    );
+    expect(
+      ApiClient.shouldRetryTransientGetStatus('GET', '/api/config', 400, 0),
+      isFalse,
+    );
+    expect(
+      ApiClient.shouldRetryTransientGetStatus('POST', '/api/config', 503, 0),
+      isFalse,
+    );
+    expect(
+      ApiClient.shouldRetryTransientGetStatus('GET', '/api/config', 503, 1),
+      isFalse,
+    );
+    expect(
+      ApiClient.shouldRetryTransientGetStatus(
+        'GET',
+        '/api/auth/google/state',
+        503,
+        0,
+      ),
+      isFalse,
+    );
+  });
+
+  test('GET 重試暫時性傳輸例外，但排除寫入與一次性 challenge', () {
+    final clientException = http.ClientException('connection aborted');
+
+    expect(
+      ApiClient.shouldRetryTransientGetException(
+        'GET',
+        '/api/config',
+        clientException,
+        0,
+      ),
+      isTrue,
+    );
+    expect(
+      ApiClient.shouldRetryTransientGetException(
+        'GET',
+        '/api/config',
+        TimeoutException('timed out'),
+        0,
+      ),
+      isTrue,
+    );
+    expect(
+      ApiClient.shouldRetryTransientGetException(
+        'POST',
+        '/api/config',
+        clientException,
+        0,
+      ),
+      isFalse,
+    );
+    expect(
+      ApiClient.shouldRetryTransientGetException(
+        'GET',
+        '/api/config',
+        clientException,
+        1,
+      ),
+      isFalse,
+    );
+    expect(
+      ApiClient.shouldRetryTransientGetException(
+        'GET',
+        '/api/app/integrity/nonce',
+        clientException,
+        0,
+      ),
+      isFalse,
+    );
+    expect(
+      ApiClient.shouldRetryTransientGetException(
+        'GET',
+        '/api/auth/line/state?flow=login',
+        clientException,
+        0,
+      ),
+      isFalse,
+    );
+  });
+
   test('英文語系可透過穩定 key 翻譯 APP 字串與動態訊息', () {
     appLocale.value = 'en';
     expect(trKey('authLoginButton'), 'Sign in');

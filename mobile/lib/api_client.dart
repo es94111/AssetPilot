@@ -1,5 +1,6 @@
+import 'dart:async';
 import 'dart:convert';
-import 'dart:io' show Platform;
+import 'dart:io' show Platform, SocketException;
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
@@ -178,20 +179,19 @@ class ApiClient {
     final hasBody = body != null;
     final t = timeout ?? _timeout;
     late http.Response res;
-    // GET 為冪等操作；後端偶發部署瞬斷／閘道逾時（502/503/504）重試一次通常
-    // 就能成功，避免把暫時性問題誤判為使用者可見的錯誤（見 Sentry
-    // ASSETPILOT-APP-A/B/C/D：/api/config、/api/dashboard、
-    // /api/auth/google|line/state 皆為此類瞬斷）。
+    // GET 為冪等操作；後端偶發部署瞬斷／閘道逾時或行動網路切換時，重試一次
+    // 通常就能成功。寫入請求不得自動重試，以免造成重複交易。
+    Object? lastTransientGetError;
+    int? retriedStatusCode;
     for (var attempt = 0; ; attempt++) {
       try {
         final uri = _uri(path);
         final headers = _headers(json: hasBody);
         final encoded = hasBody ? jsonEncode(body) : null;
         // 以 SentryHttpClient 包裝，讓每個 API 請求自動產生效能 span 與麵包屑
-        // （方法／路徑／狀態碼／耗時），用於監控 API 延遲造成的效能下降；
-        // 伺服器 5xx 亦會被擷取為 Sentry 事件。請求帶的 query string 由 sentry_config
-        // 的 hook 於送出前清除，避免外洩搜尋關鍵字；認證 Cookie 因 sendDefaultPii=false
-        // 不會被記錄。
+        // （方法／路徑／狀態碼／耗時），用於監控 API 延遲造成的效能下降。
+        // 已處理的失敗不建立重複 error event；仍由下方結構化 log 保留安全的
+        // path／狀態碼／例外型別。query string 由 sentry_config 的 hook 清除。
         final c = SentryHttpClient(client: http.Client());
         try {
           switch (method) {
@@ -199,10 +199,14 @@ class ApiClient {
               res = await c.get(uri, headers: headers).timeout(t);
               break;
             case 'POST':
-              res = await c.post(uri, headers: headers, body: encoded).timeout(t);
+              res = await c
+                  .post(uri, headers: headers, body: encoded)
+                  .timeout(t);
               break;
             case 'PUT':
-              res = await c.put(uri, headers: headers, body: encoded).timeout(t);
+              res = await c
+                  .put(uri, headers: headers, body: encoded)
+                  .timeout(t);
               break;
             case 'DELETE':
               res = await c
@@ -218,22 +222,41 @@ class ApiClient {
           c.close();
         }
       } catch (e) {
-        // 連線層失敗（逾時、DNS、無網路…）。只記端點與例外型別，不帶 body/個資。
-        Sentry.logger.error(
+        if (shouldRetryTransientGetException(method, path, e, attempt)) {
+          lastTransientGetError = e;
+          await Future.delayed(_retryDelay);
+          continue;
+        }
+        // 已處理的連線層失敗（逾時、DNS、離線等）。只記端點與例外型別，
+        // 不帶 body/個資；這是可由 UI 重試的 warning，不是未處理的 App error。
+        Sentry.logger.warn(
           trKey('mobileLegacyApiRequestConnectionFailed'),
           attributes: {
             'http.method': SentryAttribute.string(method),
             'http.path': SentryAttribute.string(_logPath(path)),
             'error.type': SentryAttribute.string(e.runtimeType.toString()),
+            'http.retry_count': SentryAttribute.int(
+              lastTransientGetError == null ? 0 : 1,
+            ),
+            if (lastTransientGetError != null)
+              'http.previous_error_type': SentryAttribute.string(
+                lastTransientGetError.runtimeType.toString(),
+              ),
           },
         );
         throw ApiException(0, '無法連線到後端（$_baseUrl）：$e');
       }
 
-      final isGatewayTimeout =
-          res.statusCode == 502 || res.statusCode == 503 || res.statusCode == 504;
-      if (method == 'GET' && isGatewayTimeout && attempt == 0) {
-        await Future.delayed(const Duration(seconds: 2));
+      // 500 可能是可重現的應用程式錯誤，不盲目重試；502/503/504/521 才視為
+      // gateway/origin 暫時不可用。一次性 nonce/state 端點也不可自動重放。
+      if (shouldRetryTransientGetStatus(
+        method,
+        path,
+        res.statusCode,
+        attempt,
+      )) {
+        retriedStatusCode = res.statusCode;
+        await Future.delayed(_retryDelay);
         continue;
       }
       break;
@@ -257,6 +280,13 @@ class ApiClient {
           'http.method': SentryAttribute.string(method),
           'http.path': SentryAttribute.string(_logPath(path)),
           'http.status_code': SentryAttribute.int(res.statusCode),
+          'http.retry_count': SentryAttribute.int(
+            retriedStatusCode == null ? 0 : 1,
+          ),
+          if (retriedStatusCode != null)
+            'http.previous_status_code': SentryAttribute.int(
+              retriedStatusCode,
+            ),
         },
       );
       throw ApiException(res.statusCode, _errorMessage(res));
@@ -266,6 +296,38 @@ class ApiClient {
   }
 
   static const _timeout = Duration(seconds: 25);
+  static const _retryDelay = Duration(seconds: 2);
+
+  @visibleForTesting
+  static bool shouldRetryTransientGetStatus(
+    String method,
+    String path,
+    int statusCode,
+    int attempt,
+  ) =>
+      method == 'GET' &&
+      !_isSingleUseGetPath(path) &&
+      attempt == 0 &&
+      const {502, 503, 504, 521}.contains(statusCode);
+
+  @visibleForTesting
+  static bool shouldRetryTransientGetException(
+    String method,
+    String path,
+    Object error,
+    int attempt,
+  ) =>
+      method == 'GET' &&
+      !_isSingleUseGetPath(path) &&
+      attempt == 0 &&
+      (error is http.ClientException ||
+          error is TimeoutException ||
+          error is SocketException);
+
+  static bool _isSingleUseGetPath(String path) =>
+      path.startsWith('/api/app/integrity/nonce') ||
+      path.startsWith('/api/auth/google/state') ||
+      path.startsWith('/api/auth/line/state');
 
   String _errorMessage(http.Response res) {
     try {

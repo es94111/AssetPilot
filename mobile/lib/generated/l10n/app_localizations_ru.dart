@@ -4026,4 +4026,44 @@ class AppLocalizationsRu extends AppLocalizations {
   String mobileDynamicRealizedTransactionSubtitle(Object date, Object shares) {
     return '$date · Sold $shares shares';
   }
+
+  @override
+  String dashboardDataStatusQueriedAt(Object time) {
+    return 'Данные запрошены в $time';
+  }
+
+  @override
+  String get dashboardAttentionTitle => 'Требует внимания';
+
+  @override
+  String get dashboardAttentionAllClear =>
+      'Сейчас ничего не требует вашего внимания';
+
+  @override
+  String dashboardAttentionRecurring(Object count) {
+    return 'Периодические операции для проверки: $count';
+  }
+
+  @override
+  String dashboardAttentionUncategorized(Object count, Object amount) {
+    return 'Операции без категории: $count · $amount';
+  }
+
+  @override
+  String dashboardAttentionUnpriced(Object count) {
+    return 'Позиций без цены: $count';
+  }
+
+  @override
+  String get dashboardDriversTitle => 'Топ-3 факторов месяца';
+
+  @override
+  String dashboardDriversSubtitle(Object month) {
+    return 'Наибольший вклад за $month';
+  }
+
+  @override
+  String dashboardDriversShare(Object share) {
+    return '$share% этого типа';
+  }
 }

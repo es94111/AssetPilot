@@ -3868,4 +3868,43 @@ class AppLocalizationsKo extends AppLocalizations {
   String mobileDynamicRealizedTransactionSubtitle(Object date, Object shares) {
     return '$date · Sold $shares shares';
   }
+
+  @override
+  String dashboardDataStatusQueriedAt(Object time) {
+    return '데이터 조회 시간 $time';
+  }
+
+  @override
+  String get dashboardAttentionTitle => '확인 필요';
+
+  @override
+  String get dashboardAttentionAllClear => '현재 확인이 필요한 항목이 없습니다';
+
+  @override
+  String dashboardAttentionRecurring(Object count) {
+    return '반복 거래 $count건을 확인해야 합니다';
+  }
+
+  @override
+  String dashboardAttentionUncategorized(Object count, Object amount) {
+    return '미분류 거래 $count건 · $amount';
+  }
+
+  @override
+  String dashboardAttentionUnpriced(Object count) {
+    return '보유 종목 $count개에 가격이 없습니다';
+  }
+
+  @override
+  String get dashboardDriversTitle => '이번 달 상위 3개 요인';
+
+  @override
+  String dashboardDriversSubtitle(Object month) {
+    return '$month에 가장 큰 비중을 차지한 항목';
+  }
+
+  @override
+  String dashboardDriversShare(Object share) {
+    return '이 유형의 $share%';
+  }
 }

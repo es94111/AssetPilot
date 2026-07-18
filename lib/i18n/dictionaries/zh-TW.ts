@@ -57,6 +57,7 @@ export const zhTW = {
     logout: "登出",
     versionInfo: "版本資訊",
     openMenu: "開啟選單",
+    skipToContent: "跳至主要內容",
     theme: {
       light: "亮色",
       system: "系統",

@@ -59,6 +59,7 @@ export const ptBR = {
     logout: "Sair",
     versionInfo: "Informações da versão",
     openMenu: "Abrir menu",
+    skipToContent: "Ir para o conteúdo principal",
     theme: {
       light: "Claro",
       system: "Sistema",

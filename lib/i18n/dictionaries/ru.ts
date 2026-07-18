@@ -59,6 +59,7 @@ export const ru = {
     logout: "Выйти",
     versionInfo: "Версия",
     openMenu: "Открыть меню",
+    skipToContent: "Перейти к основному содержимому",
     theme: {
       light: "Светлая",
       system: "Система",

@@ -11,6 +11,8 @@ import 'package:assetpilot/api_client.dart';
 import 'package:assetpilot/screens/login_screen.dart';
 import 'package:assetpilot/l10n.dart';
 import 'package:assetpilot/sentry_config.dart';
+import 'package:assetpilot/format.dart';
+import 'package:assetpilot/theme.dart';
 
 void main() {
   test('Sentry 保留 HTTP 診斷但不重複建立已處理的失敗事件', () {
@@ -136,6 +138,18 @@ void main() {
     appLocale.value = 'zh-TW';
   });
 
+  test('金融格式保留正負方向且主題提供語義顏色', () {
+    appLocale.value = 'en';
+    expect(signed(1234), '+1,234');
+    expect(signed(-1234), '−1,234');
+    expect(signed(0), '0');
+
+    final light = assetPilotThemeFor(Brightness.light);
+    final dark = assetPilotThemeFor(Brightness.dark);
+    expect(light.income, isNot(dark.income));
+    expect(light.profit, isNot(light.loss));
+    appLocale.value = 'zh-TW';
+  });
   testWidgets('未登入時顯示登入頁', (WidgetTester tester) async {
     await tester.pumpWidget(MaterialApp(home: LoginScreen(onLoggedIn: () {})));
 

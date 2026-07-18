@@ -2,12 +2,14 @@
 
 import { usePathname, useRouter } from 'next/navigation';
 import Image from 'next/image';
+import Link from 'next/link';
 import {
   LayoutDashboard, Receipt, ChartBar, Wallet, Building2, Tags, Repeat,
   Briefcase, Key, User, Shield, Database, LogOut, TrendingUp, Coins,
   BarChart3, Settings2, Sun, Moon, Monitor, Info, TableProperties,
+  X,
 } from 'lucide-react';
-import { useState, type ElementType } from 'react';
+import { useEffect, useRef, useState, type ElementType } from 'react';
 import { useTheme, type Theme } from '@/hooks/useTheme';
 import { useT } from '@/components/i18n/I18nProvider';
 import Modal from '@/components/ui/Modal';
@@ -82,21 +84,50 @@ export default function Sidebar({ user, open, onClose }: { user: any; open?: boo
   const router = useRouter();
   const { t } = useT();
   const { theme, setTheme } = useTheme();
+  const sidebarRef = useRef<HTMLElement>(null);
   const [changelogOpen, setChangelogOpen] = useState(false);
   const [changelog, setChangelog] = useState<ChangelogData | null>(null);
   const [changelogLoading, setChangelogLoading] = useState(false);
   const [changelogError, setChangelogError] = useState('');
+
+  useEffect(() => {
+    if (!open) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        onClose?.();
+        return;
+      }
+      if (event.key !== 'Tab' || !sidebarRef.current) return;
+      const focusable = Array.from(sidebarRef.current.querySelectorAll<HTMLElement>('a[href], button:not([disabled])'))
+        .filter(element => element.offsetParent !== null);
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    const focusFrame = window.requestAnimationFrame(() => {
+      const target = sidebarRef.current?.querySelector<HTMLElement>('[aria-current="page"], a[href], button');
+      target?.focus();
+    });
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.cancelAnimationFrame(focusFrame);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [open, onClose]);
 
   async function handleLogout() {
     await fetch('/api/auth/logout', { method: 'POST' });
     onClose?.();
     router.push('/login');
     router.refresh();
-  }
-
-  function handleNavigate(path: string) {
-    onClose?.();
-    router.push(path);
   }
 
   async function handleOpenChangelog() {
@@ -127,14 +158,26 @@ export default function Sidebar({ user, open, onClose }: { user: any; open?: boo
   return (
     <>
       <aside
+        ref={sidebarRef}
+        id="assetpilot-navigation"
         data-open={open ? 'true' : 'false'}
-        className="app-sidebar fixed inset-y-0 left-0 z-50 flex h-full w-64 flex-col transition-transform duration-200"
-        style={{ background: 'var(--surface-glass)', borderRight: '1px solid var(--glass-border)', backdropFilter: 'var(--glass-blur)', WebkitBackdropFilter: 'var(--glass-blur)' }}
+        aria-label={t('nav.sections.finance')}
+        className="app-sidebar fixed inset-y-0 start-0 z-50 flex h-full w-64 flex-col overflow-y-auto transition-transform duration-200 [padding-top:env(safe-area-inset-top)] [padding-bottom:env(safe-area-inset-bottom)]"
+        style={{ background: 'var(--surface-glass)', borderInlineEnd: '1px solid var(--glass-border)', backdropFilter: 'var(--glass-blur)', WebkitBackdropFilter: 'var(--glass-blur)' }}
       >
         {/* Logo */}
-        <div className="flex items-center gap-2.5 px-5 py-4" style={{ borderBottom: '1px solid var(--border)' }}>
+        <div className="flex items-center gap-2.5 px-3 py-2.5 sm:px-5 sm:py-4" style={{ borderBottom: '1px solid var(--border)' }}>
           <Image src="/favicon.svg" alt="" width={28} height={28} />
           <span className="text-lg font-bold tracking-tight" style={{ color: 'var(--text)' }}>AssetPilot</span>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label={t('common.close')}
+            className="ms-auto flex min-h-11 min-w-11 items-center justify-center rounded-lg lg:hidden"
+            style={{ color: 'var(--text-secondary)' }}
+          >
+            <X size={20} aria-hidden="true" />
+          </button>
         </div>
 
         {/* Nav */}
@@ -152,10 +195,12 @@ export default function Sidebar({ user, open, onClose }: { user: any; open?: boo
                     const Icon = item.icon;
                     const active = pathname === item.path || (item.path !== '/dashboard' && pathname.startsWith(item.path));
                     return (
-                      <button
+                      <Link
                         key={item.path}
-                        onClick={() => handleNavigate(item.path)}
-                        className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150 cursor-pointer"
+                        href={item.path}
+                        onClick={onClose}
+                        aria-current={active ? 'page' : undefined}
+                        className="flex min-h-11 w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                         style={active
                           ? { background: 'var(--primary-light-bg)', color: 'var(--primary)' }
                           : { color: 'var(--text-secondary)' }
@@ -166,9 +211,9 @@ export default function Sidebar({ user, open, onClose }: { user: any; open?: boo
                         <Icon size={17} strokeWidth={active ? 2.2 : 1.8} />
                         <span>{t(item.labelKey)}</span>
                         {active && (
-                          <span className="ml-auto h-1.5 w-1.5 rounded-full" style={{ background: 'var(--primary)' }} />
+                          <span className="ms-auto h-1.5 w-1.5 rounded-full" style={{ background: 'var(--primary)' }} />
                         )}
-                      </button>
+                      </Link>
                     );
                   })}
                 </div>
@@ -201,13 +246,14 @@ export default function Sidebar({ user, open, onClose }: { user: any; open?: boo
                 key={value}
                 onClick={() => setTheme(value)}
                 title={t(labelKey)}
+                aria-pressed={theme === value}
                 className="flex flex-1 items-center justify-center gap-1.5 rounded-md py-1.5 text-xs font-medium transition-colors duration-150 cursor-pointer"
                 style={theme === value
                   ? { background: 'var(--surface)', color: 'var(--primary)', boxShadow: 'var(--shadow)' }
                   : { color: 'var(--text-muted)' }
                 }
               >
-                <Icon size={14} strokeWidth={theme === value ? 2.2 : 1.8} />
+                <Icon size={14} strokeWidth={theme === value ? 2.2 : 1.8} aria-hidden="true" />
                 <span>{t(labelKey)}</span>
               </button>
             ))}

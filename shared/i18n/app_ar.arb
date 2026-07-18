@@ -256,6 +256,11 @@
     "description": "Web path: shell.openMenu",
     "x-webPath": "shell.openMenu"
   },
+  "shellSkipToContent": "الانتقال إلى المحتوى الرئيسي",
+  "@shellSkipToContent": {
+    "description": "Web path: shell.skipToContent",
+    "x-webPath": "shell.skipToContent"
+  },
   "shellThemeLight": "فاتح",
   "@shellThemeLight": {
     "description": "Web path: shell.theme.light",

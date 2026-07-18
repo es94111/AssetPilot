@@ -59,6 +59,7 @@ export const ko = {
     logout: "로그아웃",
     versionInfo: "버전 정보",
     openMenu: "메뉴 열기",
+    skipToContent: "주요 콘텐츠로 건너뛰기",
     theme: {
       light: "라이트",
       system: "시스템",

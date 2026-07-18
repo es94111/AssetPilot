@@ -79,7 +79,7 @@ export default async function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
+    <main className="min-h-screen bg-slate-950 text-white">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.18),transparent_32%),radial-gradient(circle_at_80%_20%,rgba(16,185,129,0.14),transparent_24%)]" />
       <div className="relative mx-auto max-w-6xl px-6 py-8 sm:py-10">
         <header className="flex flex-col gap-5 border-b border-white/10 pb-8 sm:flex-row sm:items-center sm:justify-between">
@@ -214,6 +214,6 @@ export default async function Home() {
           </div>
         </footer>
       </div>
-    </div>
+    </main>
   );
 }

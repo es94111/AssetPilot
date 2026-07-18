@@ -255,7 +255,7 @@ export default function LoginPage() {
   const lineEnabled = !!config?.lineChannelId && !!config?.lineCodeFlow;
 
   return (
-    <div className="login-bg">
+    <main className="login-bg">
       {googleEnabled && <Script src="https://accounts.google.com/gsi/client" strategy="afterInteractive" />}
       {turnstileEnabled && (
         <Script
@@ -391,7 +391,7 @@ export default function LoginPage() {
           </form>
         )}
       </div>
-    </div>
+    </main>
   );
 }
 

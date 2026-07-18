@@ -256,6 +256,11 @@
     "description": "Web path: shell.openMenu",
     "x-webPath": "shell.openMenu"
   },
+  "shellSkipToContent": "주요 콘텐츠로 건너뛰기",
+  "@shellSkipToContent": {
+    "description": "Web path: shell.skipToContent",
+    "x-webPath": "shell.skipToContent"
+  },
   "shellThemeLight": "라이트",
   "@shellThemeLight": {
     "description": "Web path: shell.theme.light",

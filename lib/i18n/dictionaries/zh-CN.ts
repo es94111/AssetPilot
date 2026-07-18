@@ -59,6 +59,7 @@ export const zhCN = {
     logout: "退出登录",
     versionInfo: "版本信息",
     openMenu: "打开菜单",
+    skipToContent: "跳到主要内容",
     theme: {
       light: "浅色",
       system: "系统",

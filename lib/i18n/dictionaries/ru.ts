@@ -281,6 +281,21 @@ export const ru = {
       nextMonth: "Следующий месяц",
       currentMonth: "Этот месяц",
     },
+    dataStatus: {
+      queriedAt: "Данные запрошены в {time}",
+    },
+    attention: {
+      title: "Требует внимания",
+      allClear: "Сейчас ничего не требует вашего внимания",
+      recurring: "Периодические операции для проверки: {count}",
+      uncategorized: "Операции без категории: {count} · {amount}",
+      unpriced: "Позиций без цены: {count}",
+    },
+    drivers: {
+      title: "Топ-3 факторов месяца",
+      subtitle: "Наибольший вклад за {month}",
+      share: "{share}% этого типа",
+    },
   },
   public: {
     common: {

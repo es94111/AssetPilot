@@ -1,5 +1,12 @@
 # Lessons
 
+## 2026-07-18 Pure Test Modules Must Not Import Runtime Alias Dependencies
+- Mistake class: incorrect assumption about repository behavior / missing verification.
+- Failure mode: The first Dashboard insight test imported `dashboardHelpers.ts`, which also imports `@/lib/*` runtime modules; plain Node could not resolve that application alias even though the insight function itself was pure.
+- Detection signal: `npm run test:dashboard-insights` failed with `ERR_MODULE_NOT_FOUND: Cannot find package '@/lib' imported from lib/dashboardHelpers.ts`.
+- Prevention rule: Place no-dependency domain calculations in a dedicated pure module and have runtime helpers import them, so the existing plain-Node test runner never loads authentication, logging, or framework aliases.
+- Tripwire: Before adding a plain-Node test import, inspect the target module's top-level imports for `@/`, Next.js, database, auth, or browser-only dependencies; extract the pure logic first when any are present.
+
 ## 2026-07-18 UI Tokens and Progressive Disclosure Need Explicit Semantics
 - Mistake class: accessibility oversight / unsafe change scope.
 - Failure mode: A first-pass dark-mode accent token was also consumed as a white-text button background, producing insufficient contrast; category lists were truncated for progressive disclosure without labeling the view as partial.

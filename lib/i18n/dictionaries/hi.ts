@@ -281,6 +281,21 @@ export const hi = {
       nextMonth: "अगला महीना",
       currentMonth: "यह महीना",
     },
+    dataStatus: {
+      queriedAt: "डेटा पूछताछ समय {time}",
+    },
+    attention: {
+      title: "ध्यान आवश्यक",
+      allClear: "अभी किसी चीज़ पर ध्यान देने की आवश्यकता नहीं है",
+      recurring: "{count} आवर्ती लेन-देन की समीक्षा आवश्यक है",
+      uncategorized: "{count} अवर्गीकृत लेन-देन · {amount}",
+      unpriced: "{count} होल्डिंग का मूल्य उपलब्ध नहीं है",
+    },
+    drivers: {
+      title: "इस महीने के शीर्ष 3 कारक",
+      subtitle: "{month} में सबसे बड़ा योगदान",
+      share: "इस प्रकार का {share}%",
+    },
   },
   public: {
     common: {

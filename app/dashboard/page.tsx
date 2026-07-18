@@ -3,13 +3,19 @@ import {
   ArrowRight,
   ArrowUpRight,
   Building2,
+  CheckCircle2,
   CircleDollarSign,
+  Clock3,
+  CircleAlert,
   Plus,
   ReceiptText,
+  Repeat2,
+  Tag,
   TrendingUp,
 } from 'lucide-react';
 import AppLayout from '@/components/layout/AppLayout';
 import { getDashboardData } from '@/lib/dashboardHelpers';
+import { buildDashboardDrivers } from '@/lib/dashboardInsights';
 import { getTranslator } from '@/lib/i18n/getDictionary';
 import { localeTag } from '@/lib/i18n/localeTag';
 import { resolveLocale } from '@/lib/i18n/resolveLocale';
@@ -90,6 +96,7 @@ export default async function DashboardPage(props: {
   const expenseRows = Array.isArray(data.catBreakdown) ? data.catBreakdown : [];
   const expenseGroups = groupCategoryRows(expenseRows, t('dashboard.uncategorized'));
   const incomeRows = Array.isArray(data.incomeCatBreakdown) ? data.incomeCatBreakdown : [];
+  const incomeGroups = groupCategoryRows(incomeRows, t('dashboard.uncategorized'));
   const recentRows = Array.isArray(data.recent) ? data.recent : [];
   const totalExpense = Number(data.expense) || 0;
   const totalIncome = Number(data.income) || 0;
@@ -99,6 +106,42 @@ export default async function DashboardPage(props: {
     ? Math.round((totalIncome / cashflowTotal) * 100)
     : 0;
   const expenseRatio = cashflowTotal > 0 ? 100 - incomeRatio : 0;
+  const dataStatus = data.dataStatus || { generatedAt: Date.now(), unpricedHoldingCount: 0 };
+  const attentionStatus = data.attention || {
+    recurringNeedsAttentionCount: 0,
+    uncategorizedTransactionCount: 0,
+    uncategorizedAmount: 0,
+  };
+  const drivers = buildDashboardDrivers(expenseGroups, incomeGroups, totalExpense, totalIncome);
+  const attentionItems = [
+    attentionStatus.recurringNeedsAttentionCount > 0 ? {
+      key: 'recurring',
+      icon: Repeat2,
+      label: t('dashboard.attention.recurring', { count: attentionStatus.recurringNeedsAttentionCount }),
+      href: '/finance/recurring',
+    } : null,
+    attentionStatus.uncategorizedTransactionCount > 0 ? {
+      key: 'uncategorized',
+      icon: Tag,
+      label: t('dashboard.attention.uncategorized', {
+        count: attentionStatus.uncategorizedTransactionCount,
+        amount: fmtMoney(attentionStatus.uncategorizedAmount, locale),
+      }),
+      href: transactionHref(data.yearMonth, 'expense').replace('type=expense', 'categoryId=__uncategorized__'),
+    } : null,
+    dataStatus.unpricedHoldingCount > 0 ? {
+      key: 'unpriced',
+      icon: TrendingUp,
+      label: t('dashboard.attention.unpriced', { count: dataStatus.unpricedHoldingCount }),
+      href: '/stocks/portfolio',
+    } : null,
+  ].filter((item): item is NonNullable<typeof item> => item !== null).slice(0, 3);
+  const generatedAtLabel = new Intl.DateTimeFormat(localeTag(locale), {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(new Date(dataStatus.generatedAt));
 
   const quickMetrics = [
     {
@@ -210,6 +253,76 @@ export default async function DashboardPage(props: {
               <ArrowRight size={19} className="shrink-0 transition-transform group-hover:translate-x-1" style={{ color: 'var(--text-muted)' }} aria-hidden="true" />
             </Link>
           ))}
+        </div>
+
+        <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
+          <section className="section-card" aria-labelledby="dashboard-attention-title">
+            <div className="section-card-header">
+              <div>
+                <h2 id="dashboard-attention-title" className="section-card-title">{t('dashboard.attention.title')}</h2>
+                <p className="mt-1 inline-flex items-center gap-1.5 text-xs" style={{ color: 'var(--text-muted)' }}>
+                  <Clock3 size={14} aria-hidden="true" />
+                  {t('dashboard.dataStatus.queriedAt', { time: generatedAtLabel })}
+                </p>
+              </div>
+              <CircleAlert size={22} style={{ color: attentionItems.length > 0 ? 'var(--expense)' : 'var(--income)' }} aria-hidden="true" />
+            </div>
+            {attentionItems.length === 0 ? (
+              <div className="flex min-h-32 flex-col items-center justify-center rounded-2xl border border-dashed px-4 py-6 text-center" style={{ borderColor: 'var(--border)' }}>
+                <CheckCircle2 size={30} className="mb-2" style={{ color: 'var(--income)' }} aria-hidden="true" />
+                <p className="text-sm font-semibold" style={{ color: 'var(--text)' }}>{t('dashboard.attention.allClear')}</p>
+              </div>
+            ) : (
+              <ul className="space-y-2">
+                {attentionItems.map(({ key, icon: Icon, label, href }) => (
+                  <li key={key}>
+                    <Link href={href} className="group flex min-h-14 items-center gap-3 rounded-xl border px-3 py-2.5 transition-colors hover:bg-primary/5" style={{ borderColor: 'var(--border)' }}>
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl" style={{ background: 'var(--expense-bg)', color: 'var(--expense)' }}>
+                        <Icon size={18} aria-hidden="true" />
+                      </span>
+                      <span className="min-w-0 flex-1 text-sm font-medium" style={{ color: 'var(--text)' }}>{label}</span>
+                      <ArrowRight size={17} className="shrink-0 transition-transform group-hover:translate-x-1" style={{ color: 'var(--text-muted)' }} aria-hidden="true" />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          <section className="section-card" aria-labelledby="dashboard-drivers-title">
+            <div className="section-card-header">
+              <div>
+                <h2 id="dashboard-drivers-title" className="section-card-title">{t('dashboard.drivers.title')}</h2>
+                <p className="mt-1 text-sm" style={{ color: 'var(--text-muted)' }}>{t('dashboard.drivers.subtitle', { month: dashboardMonth })}</p>
+              </div>
+              <Link href="/finance/reports" className="inline-flex min-h-11 items-center gap-1 rounded-lg px-2 text-sm font-semibold text-primary hover:bg-primary/10">
+                {t('nav.reports')} <ArrowRight size={15} aria-hidden="true" />
+              </Link>
+            </div>
+            {drivers.length === 0 ? (
+              <div className="empty-hint py-10"><p>{t('dashboard.empty.noTransactions')}</p></div>
+            ) : (
+              <ol className="space-y-3">
+                {drivers.map((driver, index) => (
+                  <li key={`${driver.type}-${driver.name}`} className="grid grid-cols-[2rem_minmax(0,1fr)_auto] items-center gap-3 rounded-xl border p-3" style={{ borderColor: 'var(--border)' }}>
+                    <span className="flex h-8 w-8 items-center justify-center rounded-lg text-sm font-bold" style={{ background: 'var(--surface-hover)', color: 'var(--text-secondary)' }}>{index + 1}</span>
+                    <span className="min-w-0">
+                      <span className="flex items-center gap-2">
+                        <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: driver.color }} />
+                        <span className="truncate text-sm font-semibold" style={{ color: 'var(--text)' }}>{driver.name}</span>
+                      </span>
+                      <span className="mt-1 block text-xs" style={{ color: 'var(--text-muted)' }}>
+                        {driver.type === 'income' ? t('features.common.income') : t('features.common.expense')} · {t('dashboard.drivers.share', { share: driver.share })}
+                      </span>
+                    </span>
+                    <strong className="text-sm tabular-nums" style={{ color: driver.type === 'income' ? 'var(--income)' : 'var(--expense)' }}>
+                      {driver.type === 'income' ? '+' : '−'}{fmtMoney(driver.amount, locale)}
+                    </strong>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </section>
         </div>
 
         <div className="grid gap-6 xl:grid-cols-[1.35fr_0.65fr]">

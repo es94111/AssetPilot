@@ -281,6 +281,21 @@ export const en = {
       nextMonth: "Next month",
       currentMonth: "This month",
     },
+    dataStatus: {
+      queriedAt: "Data queried {time}",
+    },
+    attention: {
+      title: "Needs attention",
+      allClear: "Nothing needs your attention right now",
+      recurring: "{count} recurring transactions need review",
+      uncategorized: "{count} uncategorized transactions · {amount}",
+      unpriced: "{count} held positions have no price",
+    },
+    drivers: {
+      title: "Top 3 monthly drivers",
+      subtitle: "What contributes most in {month}",
+      share: "{share}% of this type",
+    },
   },
   public: {
     common: {

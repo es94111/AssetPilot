@@ -6144,5 +6144,69 @@
       "date": {},
       "shares": {}
     }
+  },
+  "dashboardDataStatusQueriedAt": "Данные запрошены в {time}",
+  "@dashboardDataStatusQueriedAt": {
+    "description": "Web path: dashboard.dataStatus.queriedAt",
+    "x-webPath": "dashboard.dataStatus.queriedAt",
+    "placeholders": {
+      "time": {}
+    }
+  },
+  "dashboardAttentionTitle": "Требует внимания",
+  "@dashboardAttentionTitle": {
+    "description": "Web path: dashboard.attention.title",
+    "x-webPath": "dashboard.attention.title"
+  },
+  "dashboardAttentionAllClear": "Сейчас ничего не требует вашего внимания",
+  "@dashboardAttentionAllClear": {
+    "description": "Web path: dashboard.attention.allClear",
+    "x-webPath": "dashboard.attention.allClear"
+  },
+  "dashboardAttentionRecurring": "Периодические операции для проверки: {count}",
+  "@dashboardAttentionRecurring": {
+    "description": "Web path: dashboard.attention.recurring",
+    "x-webPath": "dashboard.attention.recurring",
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "dashboardAttentionUncategorized": "Операции без категории: {count} · {amount}",
+  "@dashboardAttentionUncategorized": {
+    "description": "Web path: dashboard.attention.uncategorized",
+    "x-webPath": "dashboard.attention.uncategorized",
+    "placeholders": {
+      "count": {},
+      "amount": {}
+    }
+  },
+  "dashboardAttentionUnpriced": "Позиций без цены: {count}",
+  "@dashboardAttentionUnpriced": {
+    "description": "Web path: dashboard.attention.unpriced",
+    "x-webPath": "dashboard.attention.unpriced",
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "dashboardDriversTitle": "Топ-3 факторов месяца",
+  "@dashboardDriversTitle": {
+    "description": "Web path: dashboard.drivers.title",
+    "x-webPath": "dashboard.drivers.title"
+  },
+  "dashboardDriversSubtitle": "Наибольший вклад за {month}",
+  "@dashboardDriversSubtitle": {
+    "description": "Web path: dashboard.drivers.subtitle",
+    "x-webPath": "dashboard.drivers.subtitle",
+    "placeholders": {
+      "month": {}
+    }
+  },
+  "dashboardDriversShare": "{share}% этого типа",
+  "@dashboardDriversShare": {
+    "description": "Web path: dashboard.drivers.share",
+    "x-webPath": "dashboard.drivers.share",
+    "placeholders": {
+      "share": {}
+    }
   }
 }

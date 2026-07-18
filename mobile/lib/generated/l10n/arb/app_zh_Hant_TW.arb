@@ -6144,5 +6144,69 @@
       "date": {},
       "shares": {}
     }
+  },
+  "dashboardDataStatusQueriedAt": "資料查詢時間 {time}",
+  "@dashboardDataStatusQueriedAt": {
+    "description": "Web path: dashboard.dataStatus.queriedAt",
+    "x-webPath": "dashboard.dataStatus.queriedAt",
+    "placeholders": {
+      "time": {}
+    }
+  },
+  "dashboardAttentionTitle": "待處理",
+  "@dashboardAttentionTitle": {
+    "description": "Web path: dashboard.attention.title",
+    "x-webPath": "dashboard.attention.title"
+  },
+  "dashboardAttentionAllClear": "目前沒有需要處理的事項",
+  "@dashboardAttentionAllClear": {
+    "description": "Web path: dashboard.attention.allClear",
+    "x-webPath": "dashboard.attention.allClear"
+  },
+  "dashboardAttentionRecurring": "{count} 筆固定收支需要檢查",
+  "@dashboardAttentionRecurring": {
+    "description": "Web path: dashboard.attention.recurring",
+    "x-webPath": "dashboard.attention.recurring",
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "dashboardAttentionUncategorized": "{count} 筆未分類交易 · {amount}",
+  "@dashboardAttentionUncategorized": {
+    "description": "Web path: dashboard.attention.uncategorized",
+    "x-webPath": "dashboard.attention.uncategorized",
+    "placeholders": {
+      "count": {},
+      "amount": {}
+    }
+  },
+  "dashboardAttentionUnpriced": "{count} 檔持倉尚無價格",
+  "@dashboardAttentionUnpriced": {
+    "description": "Web path: dashboard.attention.unpriced",
+    "x-webPath": "dashboard.attention.unpriced",
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "dashboardDriversTitle": "本月 Top 3 驅動因素",
+  "@dashboardDriversTitle": {
+    "description": "Web path: dashboard.drivers.title",
+    "x-webPath": "dashboard.drivers.title"
+  },
+  "dashboardDriversSubtitle": "{month} 金額最高的收入與支出項目",
+  "@dashboardDriversSubtitle": {
+    "description": "Web path: dashboard.drivers.subtitle",
+    "x-webPath": "dashboard.drivers.subtitle",
+    "placeholders": {
+      "month": {}
+    }
+  },
+  "dashboardDriversShare": "占此類型 {share}%",
+  "@dashboardDriversShare": {
+    "description": "Web path: dashboard.drivers.share",
+    "x-webPath": "dashboard.drivers.share",
+    "placeholders": {
+      "share": {}
+    }
   }
 }

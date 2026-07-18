@@ -6144,5 +6144,69 @@
       "date": {},
       "shares": {}
     }
+  },
+  "dashboardDataStatusQueriedAt": "Datos consultados a las {time}",
+  "@dashboardDataStatusQueriedAt": {
+    "description": "Web path: dashboard.dataStatus.queriedAt",
+    "x-webPath": "dashboard.dataStatus.queriedAt",
+    "placeholders": {
+      "time": {}
+    }
+  },
+  "dashboardAttentionTitle": "Requiere atención",
+  "@dashboardAttentionTitle": {
+    "description": "Web path: dashboard.attention.title",
+    "x-webPath": "dashboard.attention.title"
+  },
+  "dashboardAttentionAllClear": "No hay nada que requiera tu atención ahora",
+  "@dashboardAttentionAllClear": {
+    "description": "Web path: dashboard.attention.allClear",
+    "x-webPath": "dashboard.attention.allClear"
+  },
+  "dashboardAttentionRecurring": "{count} transacciones recurrentes requieren revisión",
+  "@dashboardAttentionRecurring": {
+    "description": "Web path: dashboard.attention.recurring",
+    "x-webPath": "dashboard.attention.recurring",
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "dashboardAttentionUncategorized": "{count} transacciones sin categoría · {amount}",
+  "@dashboardAttentionUncategorized": {
+    "description": "Web path: dashboard.attention.uncategorized",
+    "x-webPath": "dashboard.attention.uncategorized",
+    "placeholders": {
+      "count": {},
+      "amount": {}
+    }
+  },
+  "dashboardAttentionUnpriced": "{count} posiciones en cartera no tienen precio",
+  "@dashboardAttentionUnpriced": {
+    "description": "Web path: dashboard.attention.unpriced",
+    "x-webPath": "dashboard.attention.unpriced",
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "dashboardDriversTitle": "3 principales factores del mes",
+  "@dashboardDriversTitle": {
+    "description": "Web path: dashboard.drivers.title",
+    "x-webPath": "dashboard.drivers.title"
+  },
+  "dashboardDriversSubtitle": "Lo que más contribuye en {month}",
+  "@dashboardDriversSubtitle": {
+    "description": "Web path: dashboard.drivers.subtitle",
+    "x-webPath": "dashboard.drivers.subtitle",
+    "placeholders": {
+      "month": {}
+    }
+  },
+  "dashboardDriversShare": "{share}% de este tipo",
+  "@dashboardDriversShare": {
+    "description": "Web path: dashboard.drivers.share",
+    "x-webPath": "dashboard.drivers.share",
+    "placeholders": {
+      "share": {}
+    }
   }
 }

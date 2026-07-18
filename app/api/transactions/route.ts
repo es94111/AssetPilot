@@ -144,6 +144,9 @@ export async function GET(request: NextRequest) {
     }
   }
   if (categoryId && categoryId !== 'all') {
+    if (categoryId === '__uncategorized__') {
+      where += " AND (t.category_id IS NULL OR t.category_id = '') AND t.type IN ('income', 'expense') AND COALESCE(t.exclude_from_stats, 0) = 0";
+    } else {
     const requested = String(categoryId).split(',').map(s => s.trim()).filter(Boolean);
     if (requested.length > 0) {
       const placeholders = requested.map(() => '?').join(',');
@@ -157,6 +160,7 @@ export async function GET(request: NextRequest) {
       const idPh = ids.map(() => '?').join(',');
       where += ` AND t.category_id IN (${idPh})`;
       params.push(...ids);
+    }
     }
   }
   if (accountId && accountId !== 'all') { where += ' AND t.account_id = ?'; params.push(accountId); }

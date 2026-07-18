@@ -52,6 +52,15 @@ export interface DashboardResponse {
   todayExpense: number;
   bankBalance: number;
   stockMarketValue: number;
+  dataStatus: {
+    generatedAt: number;
+    unpricedHoldingCount: number;
+  };
+  attention: {
+    recurringNeedsAttentionCount: number;
+    uncategorizedTransactionCount: number;
+    uncategorizedAmount: number;
+  };
   catBreakdown: DashboardCategoryNode[];
   incomeCatBreakdown: DashboardCategoryNode[];
   recent: RecentTransaction[];

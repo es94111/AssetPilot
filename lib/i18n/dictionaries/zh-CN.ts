@@ -281,6 +281,21 @@ export const zhCN = {
       nextMonth: "下个月",
       currentMonth: "本月",
     },
+    dataStatus: {
+      queriedAt: "资料查询时间 {time}",
+    },
+    attention: {
+      title: "待处理",
+      allClear: "目前没有需要处理的事项",
+      recurring: "{count} 笔固定收支需要检查",
+      uncategorized: "{count} 笔未分类交易 · {amount}",
+      unpriced: "{count} 档持仓尚无价格",
+    },
+    drivers: {
+      title: "本月 Top 3 驱动因素",
+      subtitle: "{month} 金额最高的收入与支出项目",
+      share: "占此类型 {share}%",
+    },
   },
   public: {
     common: {

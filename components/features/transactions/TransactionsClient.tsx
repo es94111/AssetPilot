@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { apiGet, apiPost, apiPut, apiDelete, notifyDataChanged } from '../../../lib/clientApi';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useT } from '@/components/i18n/I18nProvider';
 import { localeTag } from '@/lib/i18n/localeTag';
+import { ArrowLeftRight, CalendarDays, Image, Images, Pencil, Plus, Search, SlidersHorizontal, Tags, Trash2 } from 'lucide-react';
 
 const EMPTY_FORM = { date: '', type: 'expense', amount: '', categoryId: '', accountId: '', note: '', excludeFromStats: false, currency: 'TWD', fxRate: '', fxFee: '' };
 const EMPTY_TRANSFER_FORM = { date: '', amount: '', fromAccountId: '', toAccountId: '', note: '' };
@@ -112,7 +113,10 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
   const [currencyOptions, setCurrencyOptions] = useState<string[]>(DEFAULT_CURRENCIES);
   const [defaultCurrency, setDefaultCurrency] = useState('TWD');
   const [filters, setFilters] = useState(() => readFilters(searchParams));
+  const [searchDraft, setSearchDraft] = useState(() => searchParams.get('keyword') || '');
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [modal, setModal] = useState(false);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
   const [transferModal, setTransferModal] = useState(false);
   const [batchModal, setBatchModal] = useState<'category' | 'date' | null>(null);
   const [form, setForm] = useState({ ...EMPTY_FORM, date: today() });
@@ -135,8 +139,10 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
   const [editAttachments, setEditAttachments] = useState<AttachmentItem[]>([]);
   const [editAttachmentsLoading, setEditAttachmentsLoading] = useState(false);
   const [pendingDeleteIds, setPendingDeleteIds] = useState<Set<string>>(new Set());
+  const latestLoadId = useRef(0);
 
   const load = useCallback(async (p = page) => {
+    const loadId = ++latestLoadId.current;
     setLoading(true);
     try {
       const params = new URLSearchParams({
@@ -150,10 +156,12 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
         ...(filters.keyword ? { keyword: filters.keyword } : {}),
       });
       const data = await apiGet(`/api/transactions?${params}`);
-      setTxs(data.items || data.data || []);
-      setTotal(data.total || 0);
+      if (loadId === latestLoadId.current) {
+        setTxs(data.items || data.data || []);
+        setTotal(data.total || 0);
+      }
     } catch (_) {}
-    setLoading(false);
+    if (loadId === latestLoadId.current) setLoading(false);
   }, [page, pageSize, filters]);
 
   const loadMeta = useCallback(async () => {
@@ -181,7 +189,14 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
   const clearFilters = useCallback(() => {
     setPage(1);
     setFilters(EMPTY_FILTERS);
+    setSearchDraft('');
   }, []);
+
+  useEffect(() => {
+    if (searchDraft === filters.keyword) return;
+    const timer = window.setTimeout(() => updateFilters({ keyword: searchDraft }), 300);
+    return () => window.clearTimeout(timer);
+  }, [filters.keyword, searchDraft, updateFilters]);
 
   useEffect(() => { loadMeta(); }, [loadMeta]);
   useEffect(() => {
@@ -198,6 +213,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
     if (nextPage !== page) setPage(nextPage);
     if (nextPageSize !== pageSize) setPageSize(nextPageSize);
     if (JSON.stringify(nextFilters) !== JSON.stringify(filters)) setFilters(nextFilters);
+    if (nextFilters.keyword !== filters.keyword && searchDraft === filters.keyword) setSearchDraft(nextFilters.keyword);
   }, [currentQuery]);
 
   useEffect(() => {
@@ -228,6 +244,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
     setEditAttachments([]);
     setEditAttachmentsLoading(false);
     setPendingDeleteIds(new Set());
+    setAdvancedOpen(false);
     setModal(true);
   }
 
@@ -318,6 +335,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
     setPhotoFiles([]);
     setEditAttachments([]);
     setPendingDeleteIds(new Set());
+    setAdvancedOpen(true);
     setEditAttachmentsLoading(tx.attachmentCount > 0);
     setModal(true);
     if (tx.attachmentCount > 0) {
@@ -369,9 +387,9 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.date) { setFormError(t('features.transactions.messages.dateRequired')); return; }
+    if (!form.date) { setAdvancedOpen(true); setFormError(t('features.transactions.messages.dateRequired')); return; }
     if (!form.amount || Number(form.amount) <= 0) { setFormError(t('features.transactions.messages.amountRequired')); return; }
-    if (!/^[A-Z]{3}$/.test(form.currency)) { setFormError(t('features.accounts.messages.currencyInvalid')); return; }
+    if (!/^[A-Z]{3}$/.test(form.currency)) { setAdvancedOpen(true); setFormError(t('features.accounts.messages.currencyInvalid')); return; }
     setSaving(true);
     setFormError('');
     const isForex = form.currency && form.currency !== 'TWD';
@@ -561,6 +579,53 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
     setForm((current) => current.fxFee === next ? current : { ...current, fxFee: next });
   }, [modal, overseasApplies, autoFxFee, fxFeeEdited]);
 
+  const activeFilterCount = Object.entries(filters)
+    .filter(([key, value]) => key !== 'keyword' && Boolean(value)).length;
+  const filterControlClass = 'min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-700 shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100';
+  const renderFilterFields = (scope: string) => (
+    <>
+      <label className="flex min-w-0 flex-1 flex-col gap-1 text-xs font-medium text-slate-500" htmlFor={`${scope}-type`}>
+        {t('features.common.type')}
+        <select id={`${scope}-type`} className={filterControlClass} value={filters.type} onChange={(e) => updateFilters({ type: e.target.value })}>
+          <option value="">{t('features.transactions.allTypes')}</option>
+          <option value="income">{t('features.common.income')}</option>
+          <option value="expense">{t('features.common.expense')}</option>
+          <option value="transfer">{t('features.transactions.transfer')}</option>
+          <option value="future">{t('features.transactions.future')}</option>
+        </select>
+      </label>
+      <label className="flex min-w-0 flex-1 flex-col gap-1 text-xs font-medium text-slate-500" htmlFor={`${scope}-account`}>
+        {t('features.common.account')}
+        <select id={`${scope}-account`} className={filterControlClass} value={filters.accountId} onChange={(e) => updateFilters({ accountId: e.target.value })}>
+          <option value="">{t('features.transactions.allAccounts')}</option>
+          {accounts.map((account: any) => <option key={account.id} value={account.id}>{account.name}</option>)}
+        </select>
+      </label>
+      <label className="flex min-w-0 flex-1 flex-col gap-1 text-xs font-medium text-slate-500" htmlFor={`${scope}-category`}>
+        {t('features.recurring.category')}
+        <select id={`${scope}-category`} className={filterControlClass} value={filters.categoryId} onChange={(e) => updateFilters({ categoryId: e.target.value })}>
+          <option value="">{t('features.transactions.allCategories')}</option>
+          <option value="__uncategorized__">{t('features.common.uncategorized')}</option>
+          {allStandalone.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
+          {allParents.map((parent: any) => (
+            <optgroup key={parent.id} label={parent.name}>
+              <option value={parent.id}>{t('features.transactions.parentAll', { name: parent.name })}</option>
+              {allChildren.filter((c: any) => c.parentId === parent.id).map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </optgroup>
+          ))}
+        </select>
+      </label>
+      <label className="flex min-w-0 flex-1 flex-col gap-1 text-xs font-medium text-slate-500" htmlFor={`${scope}-date-from`}>
+        {t('features.transactions.startDateTitle')}
+        <input id={`${scope}-date-from`} type="date" className={filterControlClass} value={filters.dateFrom} onChange={(e) => updateFilters({ dateFrom: e.target.value })} />
+      </label>
+      <label className="flex min-w-0 flex-1 flex-col gap-1 text-xs font-medium text-slate-500" htmlFor={`${scope}-date-to`}>
+        {t('features.transactions.endDateTitle')}
+        <input id={`${scope}-date-to`} type="date" className={filterControlClass} value={filters.dateTo} onChange={(e) => updateFilters({ dateTo: e.target.value })} />
+      </label>
+    </>
+  );
+
   return (
     <div className="page active space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -568,50 +633,45 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
         {formError && <div className="text-sm text-red-500">{formError}</div>}
       </div>
 
-      <div className="filter-bar">
-        <input type="text" className="filter-input" placeholder={t('features.transactions.searchPlaceholder')} value={filters.keyword} onChange={(e) => updateFilters({ keyword: e.target.value })} />
-        <select value={filters.type} onChange={(e) => updateFilters({ type: e.target.value })}>
-          <option value="">{t('features.transactions.allTypes')}</option>
-          <option value="income">{t('features.common.income')}</option>
-          <option value="expense">{t('features.common.expense')}</option>
-          <option value="transfer">{t('features.transactions.transfer')}</option>
-          <option value="future">{t('features.transactions.future')}</option>
-        </select>
-        <select value={filters.accountId} onChange={(e) => updateFilters({ accountId: e.target.value })}>
-          <option value="">{t('features.transactions.allAccounts')}</option>
-          {accounts.map((account: any) => <option key={account.id} value={account.id}>{account.name}</option>)}
-        </select>
-        <select value={filters.categoryId} onChange={(e) => updateFilters({ categoryId: e.target.value })}>
-          <option value="">{t('features.transactions.allCategories')}</option>
-          {allStandalone.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
-          {allParents.map((parent: any) => (
-            <optgroup key={parent.id} label={parent.name}>
-              <option value={parent.id}>{t('features.transactions.parentAll', { name: parent.name })}</option>
-              {allChildren.filter((c: any) => c.parentId === parent.id).map((c: any) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </optgroup>
-          ))}
-        </select>
-        <input type="date" value={filters.dateFrom} onChange={(e) => updateFilters({ dateFrom: e.target.value })} title={t('features.transactions.startDateTitle')} />
-        <input type="date" value={filters.dateTo} onChange={(e) => updateFilters({ dateTo: e.target.value })} title={t('features.transactions.endDateTitle')} />
-        <button className="btn btn-ghost btn-sm" onClick={clearFilters}>
-          <i className="fas fa-xmark" /> {t('common.clear')}
-        </button>
+      <div className="flex items-center gap-2">
+        <label className="relative min-w-0 flex-1" htmlFor="transaction-search">
+          <span className="sr-only">{t('features.transactions.searchPlaceholder')}</span>
+          <Search size={18} className="pointer-events-none absolute start-3 top-1/2 -translate-y-1/2 text-slate-400" aria-hidden="true" />
+          <input id="transaction-search" type="search" className="min-h-11 w-full rounded-xl border border-slate-300 bg-white pe-3 ps-10 text-sm shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary dark:border-slate-700 dark:bg-slate-900" placeholder={t('features.transactions.searchPlaceholder')} value={searchDraft} onChange={(e) => setSearchDraft(e.target.value)} />
+        </label>
+        <Button type="button" variant="outline" className="min-h-11 gap-2 md:hidden" aria-expanded={filtersOpen} aria-controls="mobile-transaction-filters" onClick={() => setFiltersOpen((current) => !current)}>
+          <SlidersHorizontal size={18} aria-hidden="true" />
+          {t('mobileLegacy.filter')}{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
+        </Button>
+        <Button type="button" className="hidden min-h-11 gap-2 md:inline-flex" onClick={openAdd}>
+          <Plus size={18} aria-hidden="true" /> {t('features.transactions.add')}
+        </Button>
+      </div>
+
+      <div id="mobile-transaction-filters" className={`${filtersOpen ? 'grid' : 'hidden'} gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-900/60 md:hidden`}>
+        {renderFilterFields('mobile-filter')}
+        <div className="flex gap-2">
+          <Button type="button" variant="outline" className="min-h-11 flex-1" onClick={clearFilters}>{t('common.clear')}</Button>
+          <Button type="button" className="min-h-11 flex-1" onClick={() => setFiltersOpen(false)}>{t('common.close')}</Button>
+        </div>
+      </div>
+
+      <div className="hidden gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-900/60 md:grid md:grid-cols-2 md:items-end lg:grid-cols-3 xl:grid-cols-[repeat(5,minmax(0,1fr))_auto]">
+        {renderFilterFields('desktop-filter')}
+        <Button type="button" variant="outline" className="min-h-11 shrink-0" onClick={clearFilters}>{t('common.clear')}</Button>
       </div>
 
       <div className="tx-actions flex flex-wrap gap-2 items-center">
-        <button className="btn" onClick={openAdd}><i className="fas fa-plus" /> {t('features.transactions.add')}</button>
-        <button className="btn btn-ghost btn-sm" onClick={openTransfer}><i className="fas fa-right-left" /> {t('features.transactions.accountTransfer')}</button>
+        <Button type="button" variant="outline" className="min-h-11 gap-2" onClick={openTransfer}><ArrowLeftRight size={17} aria-hidden="true" /> {t('features.transactions.accountTransfer')}</Button>
         {selected.size > 0 && (
           <>
-            <button className="btn btn-ghost btn-sm" onClick={() => setBatchModal('category')}><i className="fas fa-tags" /> {t('features.transactions.batchCategory')}</button>
-            <button className="btn btn-ghost btn-sm" onClick={() => setBatchModal('date')}><i className="fas fa-calendar" /> {t('features.transactions.batchDate')}</button>
-            <button className="btn btn-danger btn-sm" onClick={handleBatchDelete}><i className="fas fa-trash" /> {t('features.transactions.deleteSelected', { count: selected.size })}</button>
+            <Button type="button" variant="outline" className="min-h-11 gap-2" onClick={() => setBatchModal('category')}><Tags size={17} aria-hidden="true" /> {t('features.transactions.batchCategory')}</Button>
+            <Button type="button" variant="outline" className="min-h-11 gap-2" onClick={() => setBatchModal('date')}><CalendarDays size={17} aria-hidden="true" /> {t('features.transactions.batchDate')}</Button>
+            <Button type="button" variant="destructive" className="min-h-11 gap-2" onClick={handleBatchDelete}><Trash2 size={17} aria-hidden="true" /> {t('features.transactions.deleteSelected', { count: selected.size })}</Button>
           </>
         )}
-        <span className="tx-count">{t('common.totalRecords', { count: total })}</span>
-        <label className="ml-auto flex items-center gap-2 text-sm text-slate-500">
+        <span className="tx-count" aria-live="polite">{t('common.totalRecords', { count: total })}</span>
+        <label className="ms-auto flex items-center gap-2 text-sm text-slate-500">
           {t('common.perPage')}
           <select
             value={pageSize}
@@ -619,7 +679,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
               setPageSize(Number(e.target.value));
               setPage(1);
             }}
-            className="rounded-md border border-slate-300 bg-white px-2 py-1 text-sm text-slate-700 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+            className="min-h-11 rounded-xl border border-slate-300 bg-white px-2 text-sm text-slate-700 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
           >
             {PAGE_SIZE_OPTIONS.map((size) => <option key={size} value={size}>{t('common.recordsUnit', { count: size })}</option>)}
           </select>
@@ -643,15 +703,91 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
         </div>
       </div>
 
-      {loading && <p className="empty-hint">{t('common.loading')}</p>}
+      {loading && <p className="empty-hint" role="status">{t('common.loading')}</p>}
       {!loading && txs.length === 0 && <p className="empty-hint">{t('features.transactions.empty')}</p>}
 
       {!loading && txs.length > 0 && (
-        <div className="table-wrap">
+        <>
+        <ul className="space-y-3 md:hidden" aria-busy={loading}>
+          {txs.map((tx) => {
+            const isTransfer = tx.type === 'transfer_in' || tx.type === 'transfer_out';
+            const isFuture = tx.date > today();
+            const isIncome = tx.type === 'income' || tx.type === 'transfer_in';
+            const transactionLabel = `${labelForType(tx.type, t)} · ${isTransfer ? t('features.common.notRecorded') : getCatName(tx)} · ${tx.date} · ${fmt(tx.amount, locale)}`;
+            return (
+              <li key={tx.id} className={`rounded-2xl border p-4 shadow-sm ${selected.has(tx.id) ? 'border-primary bg-primary/5' : 'border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900'}`}>
+                <div className="flex items-start gap-3">
+                  <label className="-m-2 flex h-11 w-11 shrink-0 cursor-pointer items-start justify-center p-2" aria-label={`${t('features.common.actions')}: ${transactionLabel}`}>
+                    <input
+                      type="checkbox"
+                      className="h-5 w-5 accent-primary"
+                      checked={selected.has(tx.id)}
+                      onChange={(e) => {
+                        const next = new Set(selected);
+                        if (e.target.checked) next.add(tx.id); else next.delete(tx.id);
+                        setSelected(next);
+                      }}
+                    />
+                  </label>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <span className={`badge badge-${tx.type}`}>{labelForType(tx.type, t)}</span>
+                        <h3 className="mt-2 truncate text-base font-semibold text-slate-900 dark:text-slate-100">
+                          {isTransfer ? t('features.common.notRecorded') : getCatName(tx)}
+                        </h3>
+                      </div>
+                      <div className={`max-w-[54%] shrink-0 break-words text-end text-sm font-bold tabular-nums ${isIncome ? 'amount-income' : 'amount-expense'}`}>
+                        {isIncome ? '+' : '−'}{fmt(tx.amount, locale)}
+                        {tx.currency && tx.currency !== 'TWD' && (
+                          <div className="mt-1 text-xs font-normal text-slate-500">{tx.currency} {Math.abs(Number(tx.originalAmount || tx.amount)).toLocaleString(localeTag(locale))}</div>
+                        )}
+                      </div>
+                    </div>
+                    <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 text-xs text-slate-500">
+                      <div><dt className="sr-only">{t('features.common.date')}</dt><dd>{tx.date}{isFuture ? ` · ${t('features.transactions.future')}` : ''}</dd></div>
+                      <div className="text-right"><dt className="sr-only">{t('features.common.account')}</dt><dd className="truncate">{getAcctName(tx)}{tx.toAccountId ? ` → ${accounts.find((account: any) => account.id === tx.toAccountId)?.name || t('features.common.notRecorded')}` : ''}</dd></div>
+                    </dl>
+                    {(tx.note || tx.isFxFee || tx.sourceRecurringName || tx.excludeFromStats) && (
+                      <div className="mt-3 space-y-1 border-t border-slate-100 pt-3 text-xs text-slate-500 dark:border-slate-800">
+                        {tx.note && <p className="break-words text-slate-700 dark:text-slate-300">{tx.note}</p>}
+                        {tx.isFxFee && <p className="text-amber-600">{t('features.transactions.fxFee')}</p>}
+                        {tx.sourceRecurringName && <p>{t('features.transactions.source', { name: tx.sourceRecurringName })}</p>}
+                        {tx.excludeFromStats && <p>{t('features.common.excludeFromStats')}</p>}
+                      </div>
+                    )}
+                    <div className="mt-3 flex items-center justify-between gap-2 border-t border-slate-100 pt-2 dark:border-slate-800">
+                      <div className="min-w-0 flex-1">
+                        {tx.attachmentCount > 0 && tx.firstAttachmentId && (
+                          tx.attachmentCount === 1 ? (
+                            <a className="inline-flex min-h-11 items-center gap-2 px-2 text-xs font-medium text-sky-600" href={`/api/transactions/${tx.id}/attachments/${tx.firstAttachmentId}/file`} target="_blank" rel="noreferrer">
+                              <Image size={17} aria-hidden="true" /> {t('features.transactions.photoOne')}
+                            </a>
+                          ) : (
+                            <button type="button" className="inline-flex min-h-11 items-center gap-2 px-2 text-xs font-medium text-sky-600" onClick={() => openAttachmentPicker(tx.id)}>
+                              <Images size={17} aria-hidden="true" /> {t('features.transactions.photoCount', { count: tx.attachmentCount })}
+                            </button>
+                          )
+                        )}
+                      </div>
+                      <div className="flex shrink-0 items-center gap-1">
+                        {!isTransfer && !tx.isFxFee && (
+                          <Button type="button" variant="ghost" size="icon" aria-label={`${t('common.edit')}: ${transactionLabel}`} onClick={() => openEdit(tx)}><Pencil size={18} aria-hidden="true" /></Button>
+                        )}
+                        <Button type="button" variant="ghost" size="icon" className="text-destructive" aria-label={`${t('common.delete')}: ${transactionLabel}`} onClick={() => setDeleteId(tx.id)}><Trash2 size={18} aria-hidden="true" /></Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+        <div className="table-wrap hidden md:block">
           <table className="data-table">
             <thead>
               <tr>
-                <th><input type="checkbox" onChange={(e) => setSelected(e.target.checked ? new Set(txs.map((tx) => tx.id)) : new Set())} checked={selected.size === txs.length && txs.length > 0} /></th>
+                <th><input type="checkbox" aria-label={t('features.transactions.title')} onChange={(e) => setSelected(e.target.checked ? new Set(txs.map((tx) => tx.id)) : new Set())} checked={selected.size === txs.length && txs.length > 0} /></th>
                 <th>{t('features.common.date')}</th>
                 <th>{t('features.common.type')}</th>
                 <th>{t('features.recurring.category')}</th>
@@ -669,7 +805,8 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
                   <tr key={tx.id} className={selected.has(tx.id) ? 'row-selected' : ''}>
                     <td>
                       <input
-                        type="checkbox"
+                          type="checkbox"
+                          aria-label={`${t('features.common.actions')}: ${labelForType(tx.type, t)} · ${getCatName(tx)} · ${tx.date}`}
                         checked={selected.has(tx.id)}
                         onChange={(e) => {
                           const next = new Set(selected);
@@ -720,8 +857,8 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
                       )}
                     </td>
                     <td>
-                      {!isTransfer && !tx.isFxFee && <button className="btn-icon" title={t('common.edit')} onClick={() => openEdit(tx)}><i className="fas fa-pencil" /></button>}
-                      <button className="btn-icon danger" title={t('common.delete')} onClick={() => setDeleteId(tx.id)}><i className="fas fa-trash" /></button>
+                      {!isTransfer && !tx.isFxFee && <button className="btn-icon" title={t('common.edit')} aria-label={`${t('common.edit')}: ${getCatName(tx)} · ${tx.date}`} onClick={() => openEdit(tx)}><i className="fas fa-pencil" /></button>}
+                      <button className="btn-icon danger" title={t('common.delete')} aria-label={`${t('common.delete')}: ${getCatName(tx)} · ${tx.date}`} onClick={() => setDeleteId(tx.id)}><i className="fas fa-trash" /></button>
                     </td>
                   </tr>
                 );
@@ -729,40 +866,59 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
             </tbody>
           </table>
         </div>
+        </>
       )}
 
       {totalPages > 1 && (
         <div className="pagination">
-          <button className="btn btn-ghost btn-sm" disabled={page <= 1} onClick={() => setPage((current) => current - 1)}>‹ {t('common.previousPage')}</button>
+          <Button type="button" variant="outline" className="min-h-11" disabled={page <= 1} onClick={() => setPage((current) => current - 1)}>‹ {t('common.previousPage')}</Button>
           <span className="page-info">{page} / {totalPages}</span>
-          <button className="btn btn-ghost btn-sm" disabled={page >= totalPages} onClick={() => setPage((current) => current + 1)}>{t('common.nextPage')} ›</button>
+          <Button type="button" variant="outline" className="min-h-11" disabled={page >= totalPages} onClick={() => setPage((current) => current + 1)}>{t('common.nextPage')} ›</Button>
+        </div>
+      )}
+
+      {selected.size === 0 && (
+        <Button type="button" className="fixed bottom-[calc(5.25rem+env(safe-area-inset-bottom))] end-4 z-30 min-h-12 rounded-full px-5 shadow-lg md:hidden" onClick={openAdd}>
+          <Plus size={19} aria-hidden="true" /> {t('features.transactions.add')}
+        </Button>
+      )}
+      {selected.size > 0 && (
+        <div className="fixed bottom-[calc(5.25rem+env(safe-area-inset-bottom))] inset-x-3 z-30 grid grid-cols-3 gap-2 rounded-2xl border border-slate-200 bg-white/95 p-2 shadow-xl backdrop-blur md:hidden dark:border-slate-700 dark:bg-slate-900/95">
+          <Button type="button" variant="outline" className="min-h-11 gap-2" aria-label={t('features.transactions.batchCategory')} onClick={() => setBatchModal('category')}><Tags size={18} aria-hidden="true" /><span className="sr-only">{t('features.transactions.batchCategory')}</span></Button>
+          <Button type="button" variant="outline" className="min-h-11 gap-2" aria-label={t('features.transactions.batchDate')} onClick={() => setBatchModal('date')}><CalendarDays size={18} aria-hidden="true" /><span className="sr-only">{t('features.transactions.batchDate')}</span></Button>
+          <Button type="button" variant="destructive" className="min-h-11 gap-2" aria-label={t('features.transactions.deleteSelected', { count: selected.size })} onClick={handleBatchDelete}><Trash2 size={18} aria-hidden="true" /><span className="text-xs tabular-nums">{selected.size}</span></Button>
         </div>
       )}
 
       <Dialog open={modal} onOpenChange={setModal}>
-        <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-md">
+        <DialogContent className="max-h-[calc(100dvh-1rem)] overflow-y-auto sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>{editId ? t('features.transactions.edit') : t('features.transactions.create')}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSave} className="space-y-3">
             <div className="flex flex-col gap-1">
-              <label className="text-sm font-medium text-gray-700">{t('features.transactions.dateRequiredLabel')}</label>
-              <input type="date" required className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" value={form.date} onChange={(e) => setForm((current) => ({ ...current, date: e.target.value }))} />
+              <span className="text-sm font-medium text-gray-700 dark:text-slate-200">{t('features.common.type')}</span>
+              <div className="grid grid-cols-2 gap-2" role="group" aria-label={t('features.common.type')}>
+                {(['expense', 'income'] as const).map((type) => (
+                  <button
+                    key={type}
+                    type="button"
+                    aria-pressed={form.type === type}
+                    className={`min-h-11 rounded-xl border px-3 text-sm font-semibold transition-colors ${form.type === type ? 'border-primary bg-primary text-white' : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100'}`}
+                    onClick={() => setForm((current) => ({ ...current, type, categoryId: '' }))}
+                  >
+                    {type === 'income' ? t('features.common.income') : t('features.common.expense')}
+                  </button>
+                ))}
+              </div>
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-sm font-medium text-gray-700">{t('features.common.type')}</label>
-              <select className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" value={form.type} onChange={(e) => setForm((current) => ({ ...current, type: e.target.value, categoryId: '' }))}>
-                <option value="income">{t('features.common.income')}</option>
-                <option value="expense">{t('features.common.expense')}</option>
-              </select>
+              <label htmlFor="transaction-amount" className="text-sm font-medium text-gray-700 dark:text-slate-200">{t('features.transactions.amountRequiredLabel')}</label>
+              <input id="transaction-amount" type="number" required min="0.01" step="any" inputMode="decimal" autoFocus={!editId} placeholder="0" className="min-h-12 w-full rounded-xl border border-gray-300 px-3 text-lg font-semibold shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary dark:border-slate-700 dark:bg-slate-900" value={form.amount} onChange={(e) => setForm((current) => ({ ...current, amount: e.target.value }))} />
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-sm font-medium text-gray-700">{t('features.transactions.amountRequiredLabel')}</label>
-              <input type="number" required min="0.01" step="any" placeholder="0" className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" value={form.amount} onChange={(e) => setForm((current) => ({ ...current, amount: e.target.value }))} />
-            </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-sm font-medium text-gray-700">{t('features.recurring.category')}</label>
-              <select className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" value={form.categoryId} onChange={(e) => setForm((current) => ({ ...current, categoryId: e.target.value }))}>
+              <label htmlFor="transaction-category" className="text-sm font-medium text-gray-700 dark:text-slate-200">{t('features.recurring.category')}</label>
+              <select id="transaction-category" className="min-h-11 w-full rounded-xl border border-gray-300 px-3 shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary dark:border-slate-700 dark:bg-slate-900" value={form.categoryId} onChange={(e) => setForm((current) => ({ ...current, categoryId: e.target.value }))}>
                 <option value="">{t('features.common.uncategorized')}</option>
                 {filteredStandalone.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
                 {filteredParents.map((parent: any) => (
@@ -775,8 +931,8 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
               </select>
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-sm font-medium text-gray-700">{t('features.common.account')}</label>
-              <select className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" value={form.accountId} onChange={(e) => {
+              <label htmlFor="transaction-account" className="text-sm font-medium text-gray-700 dark:text-slate-200">{t('features.common.account')}</label>
+              <select id="transaction-account" className="min-h-11 w-full rounded-xl border border-gray-300 px-3 shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary dark:border-slate-700 dark:bg-slate-900" value={form.accountId} onChange={(e) => {
                 const acct = accounts.find((a: any) => a.id === e.target.value);
                 const nextCurrency = String(acct?.currency || 'TWD').toUpperCase();
                 setForm((current) => ({ ...current, accountId: e.target.value, currency: nextCurrency, fxRate: '' }));
@@ -785,9 +941,17 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
                 {accounts.map((account: any) => <option key={account.id} value={account.id}>{account.name}{account.currency && account.currency !== 'TWD' ? ` (${account.currency})` : ''}</option>)}
               </select>
             </div>
+            <details className="rounded-xl border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-900/60" open={advancedOpen} onToggle={(event) => setAdvancedOpen(event.currentTarget.open)}>
+              <summary className="flex min-h-11 cursor-pointer items-center justify-between gap-3 px-3 text-sm font-semibold text-slate-700 dark:text-slate-200"><span>{t('mobileLegacy.more')}</span><span className="text-xs font-normal text-slate-500">{form.date}</span></summary>
+              <div className="space-y-3 border-t border-slate-200 p-3 dark:border-slate-700">
             <div className="flex flex-col gap-1">
-              <label className="text-sm font-medium text-gray-700">{t('features.common.currency')}</label>
+              <label htmlFor="transaction-date" className="text-sm font-medium text-gray-700 dark:text-slate-200">{t('features.transactions.dateRequiredLabel')}</label>
+              <input id="transaction-date" type="date" required className="min-h-11 w-full rounded-xl border border-gray-300 px-3 shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary dark:border-slate-700 dark:bg-slate-900" value={form.date} onChange={(e) => setForm((current) => ({ ...current, date: e.target.value }))} />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label htmlFor="transaction-currency" className="text-sm font-medium text-gray-700 dark:text-slate-200">{t('features.common.currency')}</label>
               <input
+                id="transaction-currency"
                 type="text"
                 list="transaction-currency-options"
                 maxLength={3}
@@ -801,24 +965,24 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
             </div>
             {form.currency && form.currency !== 'TWD' && (
               <div className="flex flex-col gap-1">
-                <label className="text-sm font-medium text-gray-700">{t('features.transactions.fxRateLabel', { currency: form.currency })}</label>
-                <input type="number" min="0.0001" step="any" placeholder={t('features.transactions.fxRatePlaceholder')} className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" value={form.fxRate} onChange={(e) => setForm((current) => ({ ...current, fxRate: e.target.value }))} />
+                <label htmlFor="transaction-fx-rate" className="text-sm font-medium text-gray-700 dark:text-slate-200">{t('features.transactions.fxRateLabel', { currency: form.currency })}</label>
+                <input id="transaction-fx-rate" type="number" min="0.0001" step="any" placeholder={t('features.transactions.fxRatePlaceholder')} className="min-h-11 w-full rounded-xl border border-gray-300 px-3 shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary dark:border-slate-700 dark:bg-slate-900" value={form.fxRate} onChange={(e) => setForm((current) => ({ ...current, fxRate: e.target.value }))} />
                 {fxLoading && <p className="text-xs text-slate-500">{t('features.transactions.latestRateLoading')}</p>}
               </div>
             )}
             {overseasApplies && (
               <div className="flex flex-col gap-1">
-                <label className="text-sm font-medium text-gray-700">{t('features.recurring.fxFeeLabel')}</label>
-                <div className="flex items-center gap-2">
+                <label htmlFor="transaction-fx-fee" className="text-sm font-medium text-gray-700 dark:text-slate-200">{t('features.recurring.fxFeeLabel')}</label>
+                <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
                   <input
-                    type="number" min="0" step="1" placeholder={t('features.transactions.fxFeePlaceholder')}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                    id="transaction-fx-fee" type="number" min="0" step="1" placeholder={t('features.transactions.fxFeePlaceholder')}
+                    className="min-h-11 min-w-0 w-full rounded-xl border border-gray-300 px-3 shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary dark:border-slate-700 dark:bg-slate-900"
                     value={form.fxFee}
                     onChange={(e) => { setFxFeeEdited(true); setForm((current) => ({ ...current, fxFee: e.target.value })); }}
                   />
                   <button
                     type="button"
-                    className="shrink-0 rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100"
+                    className="min-h-11 rounded-xl border border-slate-300 px-3 text-sm font-medium text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
                     onClick={() => { setFxFeeEdited(false); setForm((current) => ({ ...current, fxFee: autoFxFee > 0 ? String(autoFxFee) : '' })); }}
                   >
                     {t('features.common.autoCalculate')}
@@ -831,12 +995,14 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
               </div>
             )}
             <div className="flex flex-col gap-1">
-              <label className="text-sm font-medium text-gray-700">{t('features.common.note')}</label>
-              <input type="text" maxLength={200} className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" value={form.note} onChange={(e) => setForm((current) => ({ ...current, note: e.target.value }))} />
+              <label htmlFor="transaction-note" className="text-sm font-medium text-gray-700 dark:text-slate-200">{t('features.common.note')}</label>
+              <input id="transaction-note" type="text" maxLength={200} className="min-h-11 w-full rounded-xl border border-gray-300 px-3 shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary dark:border-slate-700 dark:bg-slate-900" value={form.note} onChange={(e) => setForm((current) => ({ ...current, note: e.target.value }))} />
             </div>
             <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
               <input type="checkbox" checked={form.excludeFromStats} onChange={(e) => setForm((current) => ({ ...current, excludeFromStats: e.target.checked }))} /> {t('features.common.excludeFromStats')}
             </label>
+              </div>
+            </details>
             <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 space-y-3">
               <div className="flex flex-col gap-1">
                 <label className="text-sm font-medium text-gray-700">{t('features.transactions.photos')}</label>
@@ -861,7 +1027,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
                 )}
                 {editAttachments.filter(a => !pendingDeleteIds.has(a.id)).length + photoFiles.length < 5 && (
                   <div className="grid grid-cols-2 gap-2">
-                    <label className="inline-flex min-h-10 cursor-pointer items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-100">
+                    <label className="inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-100">
                       <i className="fas fa-camera" />
                       {t('features.transactions.takePhoto')}
                       <input
@@ -875,7 +1041,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
                         }}
                       />
                     </label>
-                    <label className="inline-flex min-h-10 cursor-pointer items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-100">
+                    <label className="inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-100">
                       <i className="fas fa-image" />
                       {t('features.transactions.chooseImage')}
                       <input
@@ -919,8 +1085,8 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
               )}
             </div>
             {photoUploadWarning && <p className="text-sm text-amber-600">{photoUploadWarning}</p>}
-            {formError && <p className="text-sm text-destructive">{formError}</p>}
-            <DialogFooter className="flex-row justify-end">
+            {formError && <p className="text-sm text-destructive" role="alert" aria-live="assertive">{formError}</p>}
+            <DialogFooter className="sticky bottom-0 z-10 -mx-1 flex-row justify-end border-t border-slate-200 bg-white/95 px-1 pb-[max(0.25rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur dark:border-slate-700 dark:bg-slate-950/95">
               <DialogClose asChild>
                 <Button type="button" variant="outline">{t('common.cancel')}</Button>
               </DialogClose>

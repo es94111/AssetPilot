@@ -3984,4 +3984,44 @@ class AppLocalizationsHi extends AppLocalizations {
   String mobileDynamicRealizedTransactionSubtitle(Object date, Object shares) {
     return '$date · Sold $shares shares';
   }
+
+  @override
+  String dashboardDataStatusQueriedAt(Object time) {
+    return 'डेटा पूछताछ समय $time';
+  }
+
+  @override
+  String get dashboardAttentionTitle => 'ध्यान आवश्यक';
+
+  @override
+  String get dashboardAttentionAllClear =>
+      'अभी किसी चीज़ पर ध्यान देने की आवश्यकता नहीं है';
+
+  @override
+  String dashboardAttentionRecurring(Object count) {
+    return '$count आवर्ती लेन-देन की समीक्षा आवश्यक है';
+  }
+
+  @override
+  String dashboardAttentionUncategorized(Object count, Object amount) {
+    return '$count अवर्गीकृत लेन-देन · $amount';
+  }
+
+  @override
+  String dashboardAttentionUnpriced(Object count) {
+    return '$count होल्डिंग का मूल्य उपलब्ध नहीं है';
+  }
+
+  @override
+  String get dashboardDriversTitle => 'इस महीने के शीर्ष 3 कारक';
+
+  @override
+  String dashboardDriversSubtitle(Object month) {
+    return '$month में सबसे बड़ा योगदान';
+  }
+
+  @override
+  String dashboardDriversShare(Object share) {
+    return 'इस प्रकार का $share%';
+  }
 }

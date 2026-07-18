@@ -26,20 +26,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
     super.initState();
     final now = DateTime.now();
     _month = DateTime(now.year, now.month);
-    _future = _load();
+    _future = _load(_yearMonth(_month));
   }
 
-  String get _ym => '${_month.year}-${_month.month.toString().padLeft(2, '0')}';
+  static String _yearMonth(DateTime month) =>
+      '${month.year}-${month.month.toString().padLeft(2, '0')}';
 
-  Future<Dashboard> _load() async {
-    final json = await ApiClient.instance.dashboard(_ym);
+  String get _ym => _yearMonth(_month);
+
+  Future<Dashboard> _load(String yearMonth) async {
+    final json = await ApiClient.instance.dashboard(yearMonth);
     final dashboard = Dashboard.fromJson(json);
     await AppWidgetSync.updateDashboard(dashboard);
-    unawaited(_refreshSecondaryWidgetSnapshots());
+    unawaited(_refreshSecondaryWidgetSnapshots(yearMonth));
     return dashboard;
   }
 
-  Future<void> _refreshSecondaryWidgetSnapshots() async {
+  Future<void> _refreshSecondaryWidgetSnapshots(String yearMonth) async {
     try {
       final api = ApiClient.instance;
       final stocksJson = await api.stocks();
@@ -50,7 +53,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
       );
 
-      final rawBudgets = await api.budgets(_ym);
+      final rawBudgets = await api.budgets(yearMonth);
       final rawCategories = await api.categories();
       final rawRecurring = await api.recurring();
       final rawAccounts = await api.accounts();
@@ -73,7 +76,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         for (final account in accounts) account.id: account.name,
       };
       await AppWidgetSync.updateBudgetAlerts(
-        yearMonth: _ym,
+        yearMonth: yearMonth,
         budgets: budgets,
         categoryNames: categoryNames,
       );
@@ -88,12 +91,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
-  void _reload() => setState(() => _future = _load());
+  void _reload() {
+    final yearMonth = _ym;
+    setState(() => _future = _load(yearMonth));
+  }
 
   void _shiftMonth(int delta) {
+    final nextMonth = DateTime(_month.year, _month.month + delta);
+    final yearMonth = _yearMonth(nextMonth);
     setState(() {
-      _month = DateTime(_month.year, _month.month + delta);
-      _future = _load();
+      _month = nextMonth;
+      _future = _load(yearMonth);
     });
   }
 
@@ -112,6 +120,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
       ),
       body: AsyncView<Dashboard>(
+        key: ValueKey(_ym),
         future: _future,
         onRetry: _reload,
         builder: (context, d) => RefreshIndicator(
@@ -135,7 +144,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
               if (d.recent.isEmpty)
                 Padding(
                   padding: EdgeInsets.symmetric(vertical: 24),
-                  child: Center(child: Text(trKey('mobileLegacyNoTransactionsThisMonth'))),
+                  child: Center(
+                    child: Text(trKey('mobileLegacyNoTransactionsThisMonth')),
+                  ),
                 )
               else
                 ...d.recent.take(10).map((t) => _RecentTile(t: t)),

@@ -4034,6 +4034,45 @@ class AppLocalizationsPt extends AppLocalizations {
   String mobileDynamicRealizedTransactionSubtitle(Object date, Object shares) {
     return '$date · Sold $shares shares';
   }
+
+  @override
+  String dashboardDataStatusQueriedAt(Object time) {
+    return 'Dados consultados às $time';
+  }
+
+  @override
+  String get dashboardAttentionTitle => 'Requer atenção';
+
+  @override
+  String get dashboardAttentionAllClear => 'Nada precisa da sua atenção agora';
+
+  @override
+  String dashboardAttentionRecurring(Object count) {
+    return '$count transações recorrentes precisam de revisão';
+  }
+
+  @override
+  String dashboardAttentionUncategorized(Object count, Object amount) {
+    return '$count transações sem categoria · $amount';
+  }
+
+  @override
+  String dashboardAttentionUnpriced(Object count) {
+    return '$count posições em carteira estão sem preço';
+  }
+
+  @override
+  String get dashboardDriversTitle => '3 principais fatores do mês';
+
+  @override
+  String dashboardDriversSubtitle(Object month) {
+    return 'O que mais contribui em $month';
+  }
+
+  @override
+  String dashboardDriversShare(Object share) {
+    return '$share% deste tipo';
+  }
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -8065,5 +8104,44 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   @override
   String mobileDynamicRealizedTransactionSubtitle(Object date, Object shares) {
     return '$date · Sold $shares shares';
+  }
+
+  @override
+  String dashboardDataStatusQueriedAt(Object time) {
+    return 'Dados consultados às $time';
+  }
+
+  @override
+  String get dashboardAttentionTitle => 'Requer atenção';
+
+  @override
+  String get dashboardAttentionAllClear => 'Nada precisa da sua atenção agora';
+
+  @override
+  String dashboardAttentionRecurring(Object count) {
+    return '$count transações recorrentes precisam de revisão';
+  }
+
+  @override
+  String dashboardAttentionUncategorized(Object count, Object amount) {
+    return '$count transações sem categoria · $amount';
+  }
+
+  @override
+  String dashboardAttentionUnpriced(Object count) {
+    return '$count posições em carteira estão sem preço';
+  }
+
+  @override
+  String get dashboardDriversTitle => '3 principais fatores do mês';
+
+  @override
+  String dashboardDriversSubtitle(Object month) {
+    return 'O que mais contribui em $month';
+  }
+
+  @override
+  String dashboardDriversShare(Object share) {
+    return '$share% deste tipo';
   }
 }

@@ -7003,6 +7003,60 @@ abstract class AppLocalizations {
   /// In zh_Hant_TW, this message translates to:
   /// **'{date}・賣 {shares} 股'**
   String mobileDynamicRealizedTransactionSubtitle(Object date, Object shares);
+
+  /// Web path: dashboard.dataStatus.queriedAt
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'資料查詢時間 {time}'**
+  String dashboardDataStatusQueriedAt(Object time);
+
+  /// Web path: dashboard.attention.title
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'待處理'**
+  String get dashboardAttentionTitle;
+
+  /// Web path: dashboard.attention.allClear
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'目前沒有需要處理的事項'**
+  String get dashboardAttentionAllClear;
+
+  /// Web path: dashboard.attention.recurring
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'{count} 筆固定收支需要檢查'**
+  String dashboardAttentionRecurring(Object count);
+
+  /// Web path: dashboard.attention.uncategorized
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'{count} 筆未分類交易 · {amount}'**
+  String dashboardAttentionUncategorized(Object count, Object amount);
+
+  /// Web path: dashboard.attention.unpriced
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'{count} 檔持倉尚無價格'**
+  String dashboardAttentionUnpriced(Object count);
+
+  /// Web path: dashboard.drivers.title
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'本月 Top 3 驅動因素'**
+  String get dashboardDriversTitle;
+
+  /// Web path: dashboard.drivers.subtitle
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'{month} 金額最高的收入與支出項目'**
+  String dashboardDriversSubtitle(Object month);
+
+  /// Web path: dashboard.drivers.share
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'占此類型 {share}%'**
+  String dashboardDriversShare(Object share);
 }
 
 class _AppLocalizationsDelegate

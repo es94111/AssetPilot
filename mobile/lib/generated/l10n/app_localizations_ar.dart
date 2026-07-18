@@ -3970,4 +3970,43 @@ class AppLocalizationsAr extends AppLocalizations {
   String mobileDynamicRealizedTransactionSubtitle(Object date, Object shares) {
     return '$date · Sold $shares shares';
   }
+
+  @override
+  String dashboardDataStatusQueriedAt(Object time) {
+    return 'تم الاستعلام عن البيانات في $time';
+  }
+
+  @override
+  String get dashboardAttentionTitle => 'يتطلب الانتباه';
+
+  @override
+  String get dashboardAttentionAllClear => 'لا يوجد ما يتطلب انتباهك الآن';
+
+  @override
+  String dashboardAttentionRecurring(Object count) {
+    return 'تحتاج $count من المعاملات المتكررة إلى المراجعة';
+  }
+
+  @override
+  String dashboardAttentionUncategorized(Object count, Object amount) {
+    return '$count من المعاملات غير المصنفة · $amount';
+  }
+
+  @override
+  String dashboardAttentionUnpriced(Object count) {
+    return 'لا يوجد سعر لـ $count من المراكز المحتفظ بها';
+  }
+
+  @override
+  String get dashboardDriversTitle => 'أهم 3 عوامل هذا الشهر';
+
+  @override
+  String dashboardDriversSubtitle(Object month) {
+    return 'أكبر المساهمات في $month';
+  }
+
+  @override
+  String dashboardDriversShare(Object share) {
+    return '$share% من هذا النوع';
+  }
 }

@@ -3808,6 +3808,45 @@ class AppLocalizationsZh extends AppLocalizations {
   String mobileDynamicRealizedTransactionSubtitle(Object date, Object shares) {
     return '$date・賣 $shares 股';
   }
+
+  @override
+  String dashboardDataStatusQueriedAt(Object time) {
+    return '資料查詢時間 $time';
+  }
+
+  @override
+  String get dashboardAttentionTitle => '待處理';
+
+  @override
+  String get dashboardAttentionAllClear => '目前沒有需要處理的事項';
+
+  @override
+  String dashboardAttentionRecurring(Object count) {
+    return '$count 筆固定收支需要檢查';
+  }
+
+  @override
+  String dashboardAttentionUncategorized(Object count, Object amount) {
+    return '$count 筆未分類交易 · $amount';
+  }
+
+  @override
+  String dashboardAttentionUnpriced(Object count) {
+    return '$count 檔持倉尚無價格';
+  }
+
+  @override
+  String get dashboardDriversTitle => '本月 Top 3 驅動因素';
+
+  @override
+  String dashboardDriversSubtitle(Object month) {
+    return '$month 金額最高的收入與支出項目';
+  }
+
+  @override
+  String dashboardDriversShare(Object share) {
+    return '占此類型 $share%';
+  }
 }
 
 /// The translations for Chinese, as used in China, using the Han script (`zh_Hans_CN`).
@@ -7619,6 +7658,45 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
   String mobileDynamicRealizedTransactionSubtitle(Object date, Object shares) {
     return '$date・賣 $shares 股';
   }
+
+  @override
+  String dashboardDataStatusQueriedAt(Object time) {
+    return '资料查询时间 $time';
+  }
+
+  @override
+  String get dashboardAttentionTitle => '待处理';
+
+  @override
+  String get dashboardAttentionAllClear => '目前没有需要处理的事项';
+
+  @override
+  String dashboardAttentionRecurring(Object count) {
+    return '$count 笔固定收支需要检查';
+  }
+
+  @override
+  String dashboardAttentionUncategorized(Object count, Object amount) {
+    return '$count 笔未分类交易 · $amount';
+  }
+
+  @override
+  String dashboardAttentionUnpriced(Object count) {
+    return '$count 档持仓尚无价格';
+  }
+
+  @override
+  String get dashboardDriversTitle => '本月 Top 3 驱动因素';
+
+  @override
+  String dashboardDriversSubtitle(Object month) {
+    return '$month 金额最高的收入与支出项目';
+  }
+
+  @override
+  String dashboardDriversShare(Object share) {
+    return '占此类型 $share%';
+  }
 }
 
 /// The translations for Chinese, as used in Taiwan, using the Han script (`zh_Hant_TW`).
@@ -11424,5 +11502,44 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
   @override
   String mobileDynamicRealizedTransactionSubtitle(Object date, Object shares) {
     return '$date・賣 $shares 股';
+  }
+
+  @override
+  String dashboardDataStatusQueriedAt(Object time) {
+    return '資料查詢時間 $time';
+  }
+
+  @override
+  String get dashboardAttentionTitle => '待處理';
+
+  @override
+  String get dashboardAttentionAllClear => '目前沒有需要處理的事項';
+
+  @override
+  String dashboardAttentionRecurring(Object count) {
+    return '$count 筆固定收支需要檢查';
+  }
+
+  @override
+  String dashboardAttentionUncategorized(Object count, Object amount) {
+    return '$count 筆未分類交易 · $amount';
+  }
+
+  @override
+  String dashboardAttentionUnpriced(Object count) {
+    return '$count 檔持倉尚無價格';
+  }
+
+  @override
+  String get dashboardDriversTitle => '本月 Top 3 驅動因素';
+
+  @override
+  String dashboardDriversSubtitle(Object month) {
+    return '$month 金額最高的收入與支出項目';
+  }
+
+  @override
+  String dashboardDriversShare(Object share) {
+    return '占此類型 $share%';
   }
 }

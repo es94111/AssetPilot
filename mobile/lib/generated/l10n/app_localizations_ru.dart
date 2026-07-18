@@ -4066,4 +4066,145 @@ class AppLocalizationsRu extends AppLocalizations {
   String dashboardDriversShare(Object share) {
     return '$share% этого типа';
   }
+
+  @override
+  String get dashboardPersonalizeTrigger => 'Настроить главную';
+
+  @override
+  String get dashboardPersonalizeTitle => 'Настроить главную';
+
+  @override
+  String get dashboardPersonalizeDescription =>
+      'Выберите модули и расположите их в удобном порядке.';
+
+  @override
+  String get dashboardPersonalizeModulesAssets => 'Обзор активов';
+
+  @override
+  String get dashboardPersonalizeModulesAttention => 'Требует внимания';
+
+  @override
+  String get dashboardPersonalizeModulesWhyChanged =>
+      'Почему изменился денежный поток';
+
+  @override
+  String get dashboardPersonalizeModulesSpending => 'Категории расходов';
+
+  @override
+  String get dashboardPersonalizeModulesPortfolioHealth => 'Состояние портфеля';
+
+  @override
+  String get dashboardPersonalizeModulesIncomeRecent =>
+      'Доходы и недавние операции';
+
+  @override
+  String dashboardPersonalizeMoveUp(Object module) {
+    return 'Переместить $module вверх';
+  }
+
+  @override
+  String dashboardPersonalizeMoveDown(Object module) {
+    return 'Переместить $module вниз';
+  }
+
+  @override
+  String get dashboardPersonalizeSaved => 'Макет панели сохранён';
+
+  @override
+  String get dashboardPersonalizeSaveError =>
+      'Не удалось сохранить макет панели';
+
+  @override
+  String get dashboardPersonalizeReset => 'Сбросить';
+
+  @override
+  String get dashboardPersonalizeApply => 'Применить';
+
+  @override
+  String get dashboardComparisonTitle => 'Почему изменился денежный поток';
+
+  @override
+  String dashboardComparisonMtd(
+    Object currentStart,
+    Object currentEnd,
+    Object previousStart,
+    Object previousEnd,
+  ) {
+    return '$currentStart–$currentEnd в сравнении с $previousStart–$previousEnd';
+  }
+
+  @override
+  String dashboardComparisonFull(Object previousStart, Object previousEnd) {
+    return 'Полный месяц в сравнении с $previousStart–$previousEnd';
+  }
+
+  @override
+  String get dashboardComparisonUnavailable =>
+      'Для этого месяца нет сопоставимого предыдущего периода.';
+
+  @override
+  String get dashboardComparisonNoChanges =>
+      'Учтённый денежный поток не изменился относительно сопоставимого периода.';
+
+  @override
+  String get dashboardComparisonPreviousNet =>
+      'Предыдущий чистый денежный поток';
+
+  @override
+  String get dashboardComparisonNetChange =>
+      'Изменение чистого денежного потока';
+
+  @override
+  String get dashboardComparisonNewThisPeriod => 'Новое в этом периоде';
+
+  @override
+  String get dashboardComparisonIncreased => 'Сумма увеличилась';
+
+  @override
+  String get dashboardComparisonDecreased => 'Сумма уменьшилась';
+
+  @override
+  String get dashboardPortfolioHealthTitle =>
+      'Состояние себестоимости портфеля';
+
+  @override
+  String get dashboardPortfolioHealthSubtitle =>
+      'Текущая стоимость и остаточная стоимость FIFO';
+
+  @override
+  String get dashboardPortfolioHealthNoHoldings =>
+      'Добавьте позицию, чтобы увидеть анализ себестоимости.';
+
+  @override
+  String get dashboardPortfolioHealthMissingPrices =>
+      'Для сравнения нужны текущие цены.';
+
+  @override
+  String get dashboardPortfolioHealthMixedCurrencies =>
+      'Общий процент недоступен для позиций в разных валютах.';
+
+  @override
+  String get dashboardPortfolioHealthMarketValue =>
+      'Рыночная стоимость с ценой';
+
+  @override
+  String get dashboardPortfolioHealthCost => 'Стоимость позиций с ценой';
+
+  @override
+  String get dashboardPortfolioHealthUnrealizedGross =>
+      'Валовая нереализованная прибыль/убыток';
+
+  @override
+  String dashboardPortfolioHealthLargestHolding(Object name, Object share) {
+    return 'Крупнейшая позиция: $name · $share% оценённой стоимости';
+  }
+
+  @override
+  String get dashboardPortfolioHealthDisclaimer =>
+      'Сравниваются текущие цены и учтённая стоимость FIFO. Это не рыночный индекс и не взвешенная по времени доходность.';
+
+  @override
+  String dashboardPortfolioHealthCoverage(Object priced, Object total) {
+    return 'Покрытие ценами: $priced из $total позиций';
+  }
 }

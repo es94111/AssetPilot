@@ -4009,4 +4009,139 @@ class AppLocalizationsAr extends AppLocalizations {
   String dashboardDriversShare(Object share) {
     return '$share% من هذا النوع';
   }
+
+  @override
+  String get dashboardPersonalizeTrigger => 'تخصيص الصفحة الرئيسية';
+
+  @override
+  String get dashboardPersonalizeTitle => 'تخصيص الصفحة الرئيسية';
+
+  @override
+  String get dashboardPersonalizeDescription =>
+      'اختر الوحدات التي تظهر ورتّبها حسب طريقة استخدامك.';
+
+  @override
+  String get dashboardPersonalizeModulesAssets => 'نظرة عامة على الأصول';
+
+  @override
+  String get dashboardPersonalizeModulesAttention => 'يتطلب الانتباه';
+
+  @override
+  String get dashboardPersonalizeModulesWhyChanged => 'سبب تغير التدفق النقدي';
+
+  @override
+  String get dashboardPersonalizeModulesSpending => 'فئات المصروفات';
+
+  @override
+  String get dashboardPersonalizeModulesPortfolioHealth => 'حالة المحفظة';
+
+  @override
+  String get dashboardPersonalizeModulesIncomeRecent =>
+      'الدخل والمعاملات الأخيرة';
+
+  @override
+  String dashboardPersonalizeMoveUp(Object module) {
+    return 'نقل $module إلى أعلى';
+  }
+
+  @override
+  String dashboardPersonalizeMoveDown(Object module) {
+    return 'نقل $module إلى أسفل';
+  }
+
+  @override
+  String get dashboardPersonalizeSaved => 'تم حفظ تخطيط لوحة المعلومات';
+
+  @override
+  String get dashboardPersonalizeSaveError => 'تعذر حفظ تخطيط لوحة المعلومات';
+
+  @override
+  String get dashboardPersonalizeReset => 'إعادة ضبط';
+
+  @override
+  String get dashboardPersonalizeApply => 'تطبيق';
+
+  @override
+  String get dashboardComparisonTitle => 'سبب تغير التدفق النقدي';
+
+  @override
+  String dashboardComparisonMtd(
+    Object currentStart,
+    Object currentEnd,
+    Object previousStart,
+    Object previousEnd,
+  ) {
+    return 'مقارنة $currentStart–$currentEnd مع $previousStart–$previousEnd';
+  }
+
+  @override
+  String dashboardComparisonFull(Object previousStart, Object previousEnd) {
+    return 'مقارنة الشهر الكامل مع $previousStart–$previousEnd';
+  }
+
+  @override
+  String get dashboardComparisonUnavailable =>
+      'لا توجد فترة سابقة قابلة للمقارنة لهذا الشهر.';
+
+  @override
+  String get dashboardComparisonNoChanges =>
+      'لم يتغير التدفق النقدي المسجل عن الفترة المقارنة.';
+
+  @override
+  String get dashboardComparisonPreviousNet => 'صافي التدفق النقدي السابق';
+
+  @override
+  String get dashboardComparisonNetChange => 'تغير صافي التدفق النقدي';
+
+  @override
+  String get dashboardComparisonNewThisPeriod => 'جديد في هذه الفترة';
+
+  @override
+  String get dashboardComparisonIncreased => 'زاد المبلغ';
+
+  @override
+  String get dashboardComparisonDecreased => 'انخفض المبلغ';
+
+  @override
+  String get dashboardPortfolioHealthTitle => 'حالة أساس تكلفة المحفظة';
+
+  @override
+  String get dashboardPortfolioHealthSubtitle =>
+      'مقارنة القيمة الحالية بتكلفة FIFO المتبقية';
+
+  @override
+  String get dashboardPortfolioHealthNoHoldings =>
+      'أضف حيازة لعرض معلومات أساس التكلفة.';
+
+  @override
+  String get dashboardPortfolioHealthMissingPrices =>
+      'الأسعار الحالية مطلوبة لإظهار هذه المقارنة.';
+
+  @override
+  String get dashboardPortfolioHealthMixedCurrencies =>
+      'لا تتوفر نسبة مجمعة للحيازات بعملات متعددة.';
+
+  @override
+  String get dashboardPortfolioHealthMarketValue => 'القيمة السوقية المسعّرة';
+
+  @override
+  String get dashboardPortfolioHealthCost => 'تكلفة الحيازات المسعّرة';
+
+  @override
+  String get dashboardPortfolioHealthUnrealizedGross =>
+      'إجمالي الربح/الخسارة غير المحققة';
+
+  @override
+  String dashboardPortfolioHealthLargestHolding(Object name, Object share) {
+    return 'أكبر حيازة: $name · $share% من القيمة المسعّرة';
+  }
+
+  @override
+  String get dashboardPortfolioHealthDisclaimer =>
+      'تقارن هذه البيانات الأسعار الحالية بتكلفة FIFO المسجلة. وهي ليست معيار مؤشر سوق أو أداءً مرجحًا زمنيًا.';
+
+  @override
+  String dashboardPortfolioHealthCoverage(Object priced, Object total) {
+    return 'تغطية الأسعار: $priced من أصل $total حيازة';
+  }
 }

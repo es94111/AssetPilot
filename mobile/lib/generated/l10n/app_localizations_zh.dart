@@ -3847,6 +3847,132 @@ class AppLocalizationsZh extends AppLocalizations {
   String dashboardDriversShare(Object share) {
     return '占此類型 $share%';
   }
+
+  @override
+  String get dashboardPersonalizeTrigger => '自訂首頁';
+
+  @override
+  String get dashboardPersonalizeTitle => '自訂首頁';
+
+  @override
+  String get dashboardPersonalizeDescription => '選擇要顯示的模組，並依你的使用順序排列。';
+
+  @override
+  String get dashboardPersonalizeModulesAssets => '資產概覽';
+
+  @override
+  String get dashboardPersonalizeModulesAttention => '需要處理';
+
+  @override
+  String get dashboardPersonalizeModulesWhyChanged => '現金流為何變動';
+
+  @override
+  String get dashboardPersonalizeModulesSpending => '支出分類';
+
+  @override
+  String get dashboardPersonalizeModulesPortfolioHealth => '投資組合健檢';
+
+  @override
+  String get dashboardPersonalizeModulesIncomeRecent => '收入與近期交易';
+
+  @override
+  String dashboardPersonalizeMoveUp(Object module) {
+    return '將「$module」上移';
+  }
+
+  @override
+  String dashboardPersonalizeMoveDown(Object module) {
+    return '將「$module」下移';
+  }
+
+  @override
+  String get dashboardPersonalizeSaved => '首頁配置已儲存';
+
+  @override
+  String get dashboardPersonalizeSaveError => '無法儲存首頁配置';
+
+  @override
+  String get dashboardPersonalizeReset => '重設';
+
+  @override
+  String get dashboardPersonalizeApply => '套用';
+
+  @override
+  String get dashboardComparisonTitle => '現金流為何變動';
+
+  @override
+  String dashboardComparisonMtd(
+    Object currentStart,
+    Object currentEnd,
+    Object previousStart,
+    Object previousEnd,
+  ) {
+    return '$currentStart～$currentEnd，對比 $previousStart～$previousEnd';
+  }
+
+  @override
+  String dashboardComparisonFull(Object previousStart, Object previousEnd) {
+    return '完整月份，對比 $previousStart～$previousEnd';
+  }
+
+  @override
+  String get dashboardComparisonUnavailable => '這個月份沒有可比較的上一期間。';
+
+  @override
+  String get dashboardComparisonNoChanges => '已記錄的現金流與可比期間相同。';
+
+  @override
+  String get dashboardComparisonPreviousNet => '上期淨現金流';
+
+  @override
+  String get dashboardComparisonNetChange => '淨現金流變動';
+
+  @override
+  String get dashboardComparisonNewThisPeriod => '本期新增';
+
+  @override
+  String get dashboardComparisonIncreased => '金額增加';
+
+  @override
+  String get dashboardComparisonDecreased => '金額減少';
+
+  @override
+  String get dashboardPortfolioHealthTitle => '投資成本基礎健檢';
+
+  @override
+  String get dashboardPortfolioHealthSubtitle => '目前市值與 FIFO 剩餘成本比較';
+
+  @override
+  String get dashboardPortfolioHealthNoHoldings => '新增持股後即可查看成本基礎洞察。';
+
+  @override
+  String get dashboardPortfolioHealthMissingPrices => '需要目前價格才能提供這項比較。';
+
+  @override
+  String get dashboardPortfolioHealthMixedCurrencies => '持股包含多種幣別，暫不提供合併百分比。';
+
+  @override
+  String get dashboardPortfolioHealthMarketValue => '已有價格的市值';
+
+  @override
+  String get dashboardPortfolioHealthCost => '已有價格持股成本';
+
+  @override
+  String get dashboardPortfolioHealthUnrealizedGross => '未實現毛損益';
+
+  @override
+  String dashboardPortfolioHealthLargestHolding(Object name, Object share) {
+    return '最大持股：$name · 佔已有價格市值 $share%';
+  }
+
+  @override
+  String get dashboardPortfolioHealthDisclaimer =>
+      '這裡比較目前價格與已記錄的 FIFO 成本，不是市場指數基準或時間加權績效。';
+
+  @override
+  String dashboardPortfolioHealthCoverage(Object priced, Object total) {
+    return '價格涵蓋：$total 檔持股中有 $priced 檔';
+  }
 }
 
 /// The translations for Chinese, as used in China, using the Han script (`zh_Hans_CN`).
@@ -7697,6 +7823,132 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
   String dashboardDriversShare(Object share) {
     return '占此类型 $share%';
   }
+
+  @override
+  String get dashboardPersonalizeTrigger => '自定义首页';
+
+  @override
+  String get dashboardPersonalizeTitle => '自定义首页';
+
+  @override
+  String get dashboardPersonalizeDescription => '选择要显示的模块，并按照你的使用顺序排列。';
+
+  @override
+  String get dashboardPersonalizeModulesAssets => '资产概览';
+
+  @override
+  String get dashboardPersonalizeModulesAttention => '需要处理';
+
+  @override
+  String get dashboardPersonalizeModulesWhyChanged => '现金流为何变动';
+
+  @override
+  String get dashboardPersonalizeModulesSpending => '支出分类';
+
+  @override
+  String get dashboardPersonalizeModulesPortfolioHealth => '投资组合检查';
+
+  @override
+  String get dashboardPersonalizeModulesIncomeRecent => '收入与近期交易';
+
+  @override
+  String dashboardPersonalizeMoveUp(Object module) {
+    return '将“$module”上移';
+  }
+
+  @override
+  String dashboardPersonalizeMoveDown(Object module) {
+    return '将“$module”下移';
+  }
+
+  @override
+  String get dashboardPersonalizeSaved => '首页配置已保存';
+
+  @override
+  String get dashboardPersonalizeSaveError => '无法保存首页配置';
+
+  @override
+  String get dashboardPersonalizeReset => '重置';
+
+  @override
+  String get dashboardPersonalizeApply => '应用';
+
+  @override
+  String get dashboardComparisonTitle => '现金流为何变动';
+
+  @override
+  String dashboardComparisonMtd(
+    Object currentStart,
+    Object currentEnd,
+    Object previousStart,
+    Object previousEnd,
+  ) {
+    return '$currentStart～$currentEnd，对比 $previousStart～$previousEnd';
+  }
+
+  @override
+  String dashboardComparisonFull(Object previousStart, Object previousEnd) {
+    return '完整月份，对比 $previousStart～$previousEnd';
+  }
+
+  @override
+  String get dashboardComparisonUnavailable => '这个月份没有可比较的上一期间。';
+
+  @override
+  String get dashboardComparisonNoChanges => '已记录的现金流与可比期间相同。';
+
+  @override
+  String get dashboardComparisonPreviousNet => '上期净现金流';
+
+  @override
+  String get dashboardComparisonNetChange => '净现金流变动';
+
+  @override
+  String get dashboardComparisonNewThisPeriod => '本期新增';
+
+  @override
+  String get dashboardComparisonIncreased => '金额增加';
+
+  @override
+  String get dashboardComparisonDecreased => '金额减少';
+
+  @override
+  String get dashboardPortfolioHealthTitle => '投资成本基础检查';
+
+  @override
+  String get dashboardPortfolioHealthSubtitle => '当前市值与 FIFO 剩余成本比较';
+
+  @override
+  String get dashboardPortfolioHealthNoHoldings => '新增持仓后即可查看成本基础分析。';
+
+  @override
+  String get dashboardPortfolioHealthMissingPrices => '需要当前价格才能提供这项比较。';
+
+  @override
+  String get dashboardPortfolioHealthMixedCurrencies => '持仓包含多种币种，暂不提供合并百分比。';
+
+  @override
+  String get dashboardPortfolioHealthMarketValue => '已有价格的市值';
+
+  @override
+  String get dashboardPortfolioHealthCost => '已有价格持仓成本';
+
+  @override
+  String get dashboardPortfolioHealthUnrealizedGross => '未实现毛损益';
+
+  @override
+  String dashboardPortfolioHealthLargestHolding(Object name, Object share) {
+    return '最大持仓：$name · 占已有价格市值 $share%';
+  }
+
+  @override
+  String get dashboardPortfolioHealthDisclaimer =>
+      '这里比较当前价格与已记录的 FIFO 成本，不是市场指数基准或时间加权绩效。';
+
+  @override
+  String dashboardPortfolioHealthCoverage(Object priced, Object total) {
+    return '价格覆盖：$total 项持仓中有 $priced 项';
+  }
 }
 
 /// The translations for Chinese, as used in Taiwan, using the Han script (`zh_Hant_TW`).
@@ -11541,5 +11793,131 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
   @override
   String dashboardDriversShare(Object share) {
     return '占此類型 $share%';
+  }
+
+  @override
+  String get dashboardPersonalizeTrigger => '自訂首頁';
+
+  @override
+  String get dashboardPersonalizeTitle => '自訂首頁';
+
+  @override
+  String get dashboardPersonalizeDescription => '選擇要顯示的模組，並依你的使用順序排列。';
+
+  @override
+  String get dashboardPersonalizeModulesAssets => '資產概覽';
+
+  @override
+  String get dashboardPersonalizeModulesAttention => '需要處理';
+
+  @override
+  String get dashboardPersonalizeModulesWhyChanged => '現金流為何變動';
+
+  @override
+  String get dashboardPersonalizeModulesSpending => '支出分類';
+
+  @override
+  String get dashboardPersonalizeModulesPortfolioHealth => '投資組合健檢';
+
+  @override
+  String get dashboardPersonalizeModulesIncomeRecent => '收入與近期交易';
+
+  @override
+  String dashboardPersonalizeMoveUp(Object module) {
+    return '將「$module」上移';
+  }
+
+  @override
+  String dashboardPersonalizeMoveDown(Object module) {
+    return '將「$module」下移';
+  }
+
+  @override
+  String get dashboardPersonalizeSaved => '首頁配置已儲存';
+
+  @override
+  String get dashboardPersonalizeSaveError => '無法儲存首頁配置';
+
+  @override
+  String get dashboardPersonalizeReset => '重設';
+
+  @override
+  String get dashboardPersonalizeApply => '套用';
+
+  @override
+  String get dashboardComparisonTitle => '現金流為何變動';
+
+  @override
+  String dashboardComparisonMtd(
+    Object currentStart,
+    Object currentEnd,
+    Object previousStart,
+    Object previousEnd,
+  ) {
+    return '$currentStart～$currentEnd，對比 $previousStart～$previousEnd';
+  }
+
+  @override
+  String dashboardComparisonFull(Object previousStart, Object previousEnd) {
+    return '完整月份，對比 $previousStart～$previousEnd';
+  }
+
+  @override
+  String get dashboardComparisonUnavailable => '這個月份沒有可比較的上一期間。';
+
+  @override
+  String get dashboardComparisonNoChanges => '已記錄的現金流與可比期間相同。';
+
+  @override
+  String get dashboardComparisonPreviousNet => '上期淨現金流';
+
+  @override
+  String get dashboardComparisonNetChange => '淨現金流變動';
+
+  @override
+  String get dashboardComparisonNewThisPeriod => '本期新增';
+
+  @override
+  String get dashboardComparisonIncreased => '金額增加';
+
+  @override
+  String get dashboardComparisonDecreased => '金額減少';
+
+  @override
+  String get dashboardPortfolioHealthTitle => '投資成本基礎健檢';
+
+  @override
+  String get dashboardPortfolioHealthSubtitle => '目前市值與 FIFO 剩餘成本比較';
+
+  @override
+  String get dashboardPortfolioHealthNoHoldings => '新增持股後即可查看成本基礎洞察。';
+
+  @override
+  String get dashboardPortfolioHealthMissingPrices => '需要目前價格才能提供這項比較。';
+
+  @override
+  String get dashboardPortfolioHealthMixedCurrencies => '持股包含多種幣別，暫不提供合併百分比。';
+
+  @override
+  String get dashboardPortfolioHealthMarketValue => '已有價格的市值';
+
+  @override
+  String get dashboardPortfolioHealthCost => '已有價格持股成本';
+
+  @override
+  String get dashboardPortfolioHealthUnrealizedGross => '未實現毛損益';
+
+  @override
+  String dashboardPortfolioHealthLargestHolding(Object name, Object share) {
+    return '最大持股：$name · 佔已有價格市值 $share%';
+  }
+
+  @override
+  String get dashboardPortfolioHealthDisclaimer =>
+      '這裡比較目前價格與已記錄的 FIFO 成本，不是市場指數基準或時間加權績效。';
+
+  @override
+  String dashboardPortfolioHealthCoverage(Object priced, Object total) {
+    return '價格涵蓋：$total 檔持股中有 $priced 檔';
   }
 }

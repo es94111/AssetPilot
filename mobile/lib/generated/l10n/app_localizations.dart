@@ -7057,6 +7057,227 @@ abstract class AppLocalizations {
   /// In zh_Hant_TW, this message translates to:
   /// **'占此類型 {share}%'**
   String dashboardDriversShare(Object share);
+
+  /// Web path: dashboard.personalize.trigger
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'自訂首頁'**
+  String get dashboardPersonalizeTrigger;
+
+  /// Web path: dashboard.personalize.title
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'自訂首頁'**
+  String get dashboardPersonalizeTitle;
+
+  /// Web path: dashboard.personalize.description
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'選擇要顯示的模組，並依你的使用順序排列。'**
+  String get dashboardPersonalizeDescription;
+
+  /// Web path: dashboard.personalize.modules.assets
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'資產概覽'**
+  String get dashboardPersonalizeModulesAssets;
+
+  /// Web path: dashboard.personalize.modules.attention
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'需要處理'**
+  String get dashboardPersonalizeModulesAttention;
+
+  /// Web path: dashboard.personalize.modules.whyChanged
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'現金流為何變動'**
+  String get dashboardPersonalizeModulesWhyChanged;
+
+  /// Web path: dashboard.personalize.modules.spending
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'支出分類'**
+  String get dashboardPersonalizeModulesSpending;
+
+  /// Web path: dashboard.personalize.modules.portfolioHealth
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'投資組合健檢'**
+  String get dashboardPersonalizeModulesPortfolioHealth;
+
+  /// Web path: dashboard.personalize.modules.incomeRecent
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'收入與近期交易'**
+  String get dashboardPersonalizeModulesIncomeRecent;
+
+  /// Web path: dashboard.personalize.moveUp
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'將「{module}」上移'**
+  String dashboardPersonalizeMoveUp(Object module);
+
+  /// Web path: dashboard.personalize.moveDown
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'將「{module}」下移'**
+  String dashboardPersonalizeMoveDown(Object module);
+
+  /// Web path: dashboard.personalize.saved
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'首頁配置已儲存'**
+  String get dashboardPersonalizeSaved;
+
+  /// Web path: dashboard.personalize.saveError
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'無法儲存首頁配置'**
+  String get dashboardPersonalizeSaveError;
+
+  /// Web path: dashboard.personalize.reset
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'重設'**
+  String get dashboardPersonalizeReset;
+
+  /// Web path: dashboard.personalize.apply
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'套用'**
+  String get dashboardPersonalizeApply;
+
+  /// Web path: dashboard.comparison.title
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'現金流為何變動'**
+  String get dashboardComparisonTitle;
+
+  /// Web path: dashboard.comparison.mtd
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'{currentStart}～{currentEnd}，對比 {previousStart}～{previousEnd}'**
+  String dashboardComparisonMtd(
+    Object currentStart,
+    Object currentEnd,
+    Object previousStart,
+    Object previousEnd,
+  );
+
+  /// Web path: dashboard.comparison.full
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'完整月份，對比 {previousStart}～{previousEnd}'**
+  String dashboardComparisonFull(Object previousStart, Object previousEnd);
+
+  /// Web path: dashboard.comparison.unavailable
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'這個月份沒有可比較的上一期間。'**
+  String get dashboardComparisonUnavailable;
+
+  /// Web path: dashboard.comparison.noChanges
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'已記錄的現金流與可比期間相同。'**
+  String get dashboardComparisonNoChanges;
+
+  /// Web path: dashboard.comparison.previousNet
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'上期淨現金流'**
+  String get dashboardComparisonPreviousNet;
+
+  /// Web path: dashboard.comparison.netChange
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'淨現金流變動'**
+  String get dashboardComparisonNetChange;
+
+  /// Web path: dashboard.comparison.newThisPeriod
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'本期新增'**
+  String get dashboardComparisonNewThisPeriod;
+
+  /// Web path: dashboard.comparison.increased
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'金額增加'**
+  String get dashboardComparisonIncreased;
+
+  /// Web path: dashboard.comparison.decreased
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'金額減少'**
+  String get dashboardComparisonDecreased;
+
+  /// Web path: dashboard.portfolioHealth.title
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'投資成本基礎健檢'**
+  String get dashboardPortfolioHealthTitle;
+
+  /// Web path: dashboard.portfolioHealth.subtitle
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'目前市值與 FIFO 剩餘成本比較'**
+  String get dashboardPortfolioHealthSubtitle;
+
+  /// Web path: dashboard.portfolioHealth.noHoldings
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'新增持股後即可查看成本基礎洞察。'**
+  String get dashboardPortfolioHealthNoHoldings;
+
+  /// Web path: dashboard.portfolioHealth.missingPrices
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'需要目前價格才能提供這項比較。'**
+  String get dashboardPortfolioHealthMissingPrices;
+
+  /// Web path: dashboard.portfolioHealth.mixedCurrencies
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'持股包含多種幣別，暫不提供合併百分比。'**
+  String get dashboardPortfolioHealthMixedCurrencies;
+
+  /// Web path: dashboard.portfolioHealth.marketValue
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'已有價格的市值'**
+  String get dashboardPortfolioHealthMarketValue;
+
+  /// Web path: dashboard.portfolioHealth.cost
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'已有價格持股成本'**
+  String get dashboardPortfolioHealthCost;
+
+  /// Web path: dashboard.portfolioHealth.unrealizedGross
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'未實現毛損益'**
+  String get dashboardPortfolioHealthUnrealizedGross;
+
+  /// Web path: dashboard.portfolioHealth.largestHolding
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'最大持股：{name} · 佔已有價格市值 {share}%'**
+  String dashboardPortfolioHealthLargestHolding(Object name, Object share);
+
+  /// Web path: dashboard.portfolioHealth.disclaimer
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'這裡比較目前價格與已記錄的 FIFO 成本，不是市場指數基準或時間加權績效。'**
+  String get dashboardPortfolioHealthDisclaimer;
+
+  /// Web path: dashboard.portfolioHealth.coverage
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'價格涵蓋：{total} 檔持股中有 {priced} 檔'**
+  String dashboardPortfolioHealthCoverage(Object priced, Object total);
 }
 
 class _AppLocalizationsDelegate

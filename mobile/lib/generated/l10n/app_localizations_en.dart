@@ -4029,4 +4029,139 @@ class AppLocalizationsEn extends AppLocalizations {
   String dashboardDriversShare(Object share) {
     return '$share% of this type';
   }
+
+  @override
+  String get dashboardPersonalizeTrigger => 'Customize home';
+
+  @override
+  String get dashboardPersonalizeTitle => 'Customize home';
+
+  @override
+  String get dashboardPersonalizeDescription =>
+      'Choose which modules appear and arrange them in the order you use them.';
+
+  @override
+  String get dashboardPersonalizeModulesAssets => 'Asset overview';
+
+  @override
+  String get dashboardPersonalizeModulesAttention => 'Needs attention';
+
+  @override
+  String get dashboardPersonalizeModulesWhyChanged => 'Why cashflow changed';
+
+  @override
+  String get dashboardPersonalizeModulesSpending => 'Spending categories';
+
+  @override
+  String get dashboardPersonalizeModulesPortfolioHealth => 'Portfolio health';
+
+  @override
+  String get dashboardPersonalizeModulesIncomeRecent =>
+      'Income and recent transactions';
+
+  @override
+  String dashboardPersonalizeMoveUp(Object module) {
+    return 'Move $module up';
+  }
+
+  @override
+  String dashboardPersonalizeMoveDown(Object module) {
+    return 'Move $module down';
+  }
+
+  @override
+  String get dashboardPersonalizeSaved => 'Dashboard layout saved';
+
+  @override
+  String get dashboardPersonalizeSaveError =>
+      'Could not save the dashboard layout';
+
+  @override
+  String get dashboardPersonalizeReset => 'Reset';
+
+  @override
+  String get dashboardPersonalizeApply => 'Apply';
+
+  @override
+  String get dashboardComparisonTitle => 'Why cashflow changed';
+
+  @override
+  String dashboardComparisonMtd(
+    Object currentStart,
+    Object currentEnd,
+    Object previousStart,
+    Object previousEnd,
+  ) {
+    return '$currentStart–$currentEnd compared with $previousStart–$previousEnd';
+  }
+
+  @override
+  String dashboardComparisonFull(Object previousStart, Object previousEnd) {
+    return 'Full month compared with $previousStart–$previousEnd';
+  }
+
+  @override
+  String get dashboardComparisonUnavailable =>
+      'There is no comparable previous period for this month.';
+
+  @override
+  String get dashboardComparisonNoChanges =>
+      'Recorded cashflow is unchanged from the comparable period.';
+
+  @override
+  String get dashboardComparisonPreviousNet => 'Previous net cashflow';
+
+  @override
+  String get dashboardComparisonNetChange => 'Net cashflow change';
+
+  @override
+  String get dashboardComparisonNewThisPeriod => 'New this period';
+
+  @override
+  String get dashboardComparisonIncreased => 'Amount increased';
+
+  @override
+  String get dashboardComparisonDecreased => 'Amount decreased';
+
+  @override
+  String get dashboardPortfolioHealthTitle => 'Portfolio cost-basis health';
+
+  @override
+  String get dashboardPortfolioHealthSubtitle =>
+      'Current value compared with remaining FIFO cost';
+
+  @override
+  String get dashboardPortfolioHealthNoHoldings =>
+      'Add a holding to see cost-basis insights.';
+
+  @override
+  String get dashboardPortfolioHealthMissingPrices =>
+      'Current prices are needed before this comparison is available.';
+
+  @override
+  String get dashboardPortfolioHealthMixedCurrencies =>
+      'A combined percentage is unavailable for holdings in multiple currencies.';
+
+  @override
+  String get dashboardPortfolioHealthMarketValue => 'Priced market value';
+
+  @override
+  String get dashboardPortfolioHealthCost => 'Cost of priced holdings';
+
+  @override
+  String get dashboardPortfolioHealthUnrealizedGross => 'Unrealized gross P/L';
+
+  @override
+  String dashboardPortfolioHealthLargestHolding(Object name, Object share) {
+    return 'Largest holding: $name · $share% of priced value';
+  }
+
+  @override
+  String get dashboardPortfolioHealthDisclaimer =>
+      'This compares current prices with recorded FIFO cost. It is not a market-index benchmark or time-weighted performance.';
+
+  @override
+  String dashboardPortfolioHealthCoverage(Object priced, Object total) {
+    return 'Price coverage: $priced of $total holdings';
+  }
 }

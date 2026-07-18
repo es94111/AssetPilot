@@ -24,7 +24,7 @@
     "@base-ui/react": "^1.6.0",
     "@passwordless-id/webauthn": "^2.4.0",
     "@tailwindcss/postcss": "^4.3.2",
-    "adm-zip": "^0.5.18",
+    "adm-zip": "^0.6.0",
     "bcryptjs": "^3.0.3",
     "chart.js": "^4.5.1",
     "class-variance-authority": "^0.7.1",

@@ -7,13 +7,19 @@ import { isValidIsoDate } from '../../../../lib/userTime';
 
 const VALID_RECURRING_FREQ = new Set(['daily', 'weekly', 'monthly', 'yearly']);
 
+function resolveExcludeFromStats(body, fallback) {
+  if (body.excludeFromStats != null) return !!body.excludeFromStats;
+  if (body.includeInStats != null) return !body.includeInStats;
+  return fallback;
+}
+
 export async function PUT(request, { params }) {
   const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
   const { id } = await params;
   const body = await request.json().catch(() => ({}));
-  const { type, categoryId, accountId, frequency, startDate, note, excludeFromStats } = body;
+  const { type, categoryId, accountId, frequency, startDate, note } = body;
   let { amount, currency, fxRate } = body;
 
   if (categoryId === '__deleted_category__') {
@@ -65,11 +71,11 @@ export async function PUT(request, { params }) {
     twdBase: amountTwdInt,
     clientFxFee: body.fxFee,
   });
-  const excludeFlag = excludeFromStats != null ? (excludeFromStats ? 1 : 0) : (old.exclude_from_stats ? 1 : 0);
+  const excludeFromStats = resolveExcludeFromStats(body, !!old.exclude_from_stats);
 
   getDB().run(
     `UPDATE recurring SET amount = ?, category_id = ?, account_id = ?, frequency = ?, start_date = ?, note = ?, currency = ?, fx_rate = ?, fx_fee = ?, exclude_from_stats = ?, last_generated = ?, needs_attention = 0, updated_at = ? WHERE id = ? AND user_id = ?`,
-    [amountTwdInt, categoryId || null, accountId || null, frequency, normalizedStart, note || '', converted.currency, String(converted.fxRate), fxFee, excludeFlag, newLastGenerated, Date.now(), id, auth.userId]
+    [amountTwdInt, categoryId || null, accountId || null, frequency, normalizedStart, note || '', converted.currency, String(converted.fxRate), fxFee, excludeFromStats ? 1 : 0, newLastGenerated, Date.now(), id, auth.userId]
   );
   saveDB();
   return NextResponse.json({ ok: true });

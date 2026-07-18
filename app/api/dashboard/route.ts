@@ -148,7 +148,7 @@ export async function GET(request: NextRequest) {
   if (auth instanceof NextResponse) return auth;
 
   const { searchParams } = new URL(request.url);
-  const ymRaw = String(searchParams.get('yearMonth') || '');
+  const ymRaw = String(searchParams.get('yearMonth') || searchParams.get('ym') || '');
   const validYm = /^\d{4}-(0[1-9]|1[0-2])$/.test(ymRaw);
   const month = validYm ? ymRaw : monthInUserTz(auth.userTimezone);
   const todayS = todayInUserTz(auth.userTimezone);

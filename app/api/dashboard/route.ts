@@ -4,6 +4,7 @@ import { queryAll, queryOne } from '../../../lib/db';
 import { todayInUserTz, monthInUserTz } from '../../../lib/userTime';
 import { calcBalance, getExchangeRateToTwd, normalizeCurrency } from '../../../lib/accountHelpers';
 import { calcFifoLots } from '../../../lib/moneyDecimal';
+import { getHoldingMarketContribution } from '../../../lib/dashboardInsights';
 import {
   buildCategoryAggregateNodes,
   type DashboardCategoryAggregateRow,
@@ -21,6 +22,7 @@ type StockRow = {
   id: string;
   current_price: string | number | null;
 };
+type CountRow = { count: string | number | null };
 
 function totalFromRow(row: Record<string, string | number | null> | null): number {
   return Number((row as TotalRow | null)?.total) || 0;
@@ -45,12 +47,13 @@ function getBankBalanceTwd(userId: string): number {
   return Math.round(total);
 }
 
-function getStockMarketValue(userId: string): number {
+function getStockPortfolioStatus(userId: string): { marketValue: number; unpricedHoldingCount: number } {
   const stocks = queryAll(
     'SELECT id, current_price FROM stocks WHERE user_id = ?',
     [userId]
   ) as unknown as StockRow[];
 
+  let unpricedHoldingCount = 0;
   const total = stocks.reduce((sum, stock) => {
     const txs = queryAll(
       'SELECT * FROM stock_transactions WHERE user_id = ? AND stock_id = ? ORDER BY date, created_at',
@@ -67,11 +70,13 @@ function getStockMarketValue(userId: string): number {
     const recordedDividendShares = divs.reduce((shareSum, d) => shareSum + Number(d.stock_dividend_shares || 0), 0);
     const missingDividendShares = Math.max(0, recordedDividendShares - dividendSyntheticShares);
     const totalShares = fifo.totalShares.plus(missingDividendShares).toNumber();
-    if (totalShares <= 0) return sum;
-    return sum + totalShares * (Number(stock.current_price) || 0);
+    const currentPrice = Number(stock.current_price) || 0;
+    const contribution = getHoldingMarketContribution(totalShares, currentPrice);
+    if (contribution.unpriced) unpricedHoldingCount += 1;
+    return sum + contribution.marketValue;
   }, 0);
 
-  return Math.round(total);
+  return { marketValue: Math.round(total), unpricedHoldingCount };
 }
 
 export async function GET(request: NextRequest) {
@@ -97,7 +102,24 @@ export async function GET(request: NextRequest) {
     [auth.userId, todayS]
   ));
   const bankBalance = getBankBalanceTwd(auth.userId);
-  const stockMarketValue = getStockMarketValue(auth.userId);
+  const stockStatus = getStockPortfolioStatus(auth.userId);
+
+  const recurringNeedsAttentionCount = Number((queryOne(
+    `SELECT COUNT(*) AS count
+     FROM recurring
+     WHERE user_id = ? AND is_active = 1 AND needs_attention = 1`,
+    [auth.userId]
+  ) as CountRow | null)?.count) || 0;
+  const uncategorized = queryOne(
+    `SELECT COUNT(*) AS count, COALESCE(SUM(amount), 0) AS total
+     FROM transactions
+     WHERE user_id = ?
+       AND type IN ('income', 'expense')
+       AND date LIKE ?
+       AND exclude_from_stats = 0
+       AND (category_id IS NULL OR category_id = '')`,
+    [auth.userId, month + '%']
+  ) as (CountRow & TotalRow) | null;
 
   const catRows = queryAll(`
     SELECT t.category_id, t.amount,
@@ -138,7 +160,16 @@ export async function GET(request: NextRequest) {
     net: income - expense,
     todayExpense,
     bankBalance,
-    stockMarketValue,
+    stockMarketValue: stockStatus.marketValue,
+    dataStatus: {
+      generatedAt: Date.now(),
+      unpricedHoldingCount: stockStatus.unpricedHoldingCount,
+    },
+    attention: {
+      recurringNeedsAttentionCount,
+      uncategorizedTransactionCount: Number(uncategorized?.count) || 0,
+      uncategorizedAmount: totalFromRow(uncategorized),
+    },
     catBreakdown,
     incomeCatBreakdown,
     recent,

@@ -281,6 +281,21 @@ export const ptBR = {
       nextMonth: "Próximo mês",
       currentMonth: "Este mês",
     },
+    dataStatus: {
+      queriedAt: "Dados consultados às {time}",
+    },
+    attention: {
+      title: "Requer atenção",
+      allClear: "Nada precisa da sua atenção agora",
+      recurring: "{count} transações recorrentes precisam de revisão",
+      uncategorized: "{count} transações sem categoria · {amount}",
+      unpriced: "{count} posições em carteira estão sem preço",
+    },
+    drivers: {
+      title: "3 principais fatores do mês",
+      subtitle: "O que mais contribui em {month}",
+      share: "{share}% deste tipo",
+    },
   },
   public: {
     common: {

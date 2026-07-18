@@ -281,6 +281,21 @@ export const fr = {
       nextMonth: "Mois suivant",
       currentMonth: "Ce mois-ci",
     },
+    dataStatus: {
+      queriedAt: "Données consultées à {time}",
+    },
+    attention: {
+      title: "À vérifier",
+      allClear: "Rien ne nécessite votre attention pour le moment",
+      recurring: "{count} transactions récurrentes sont à vérifier",
+      uncategorized: "{count} transactions non catégorisées · {amount}",
+      unpriced: "{count} positions détenues n’ont pas de prix",
+    },
+    drivers: {
+      title: "3 principaux facteurs du mois",
+      subtitle: "Les principaux montants en {month}",
+      share: "{share} % de ce type",
+    },
   },
   public: {
     common: {

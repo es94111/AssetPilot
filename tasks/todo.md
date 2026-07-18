@@ -1,3 +1,82 @@
+# 2026-07-18 production-browser-screenshot-verification
+
+## Goal + Acceptance Criteria
+- [x] Authenticate to `https://asset.shao.one` with the user-provided test account without persisting credentials.
+- [x] Capture desktop Dashboard and transactions screenshots at 1440px width.
+- [ ] Capture mobile Dashboard, transactions list/filter, and add form screenshots at 375px and inspect the 320px edge case. Dashboard/list/add/320px were captured; the phase-two filter panel is absent from the deployment and cannot be captured.
+- [ ] Verify the deployed DOM contains the phase-two attention/drivers, mobile cards, filters, and quick-add hierarchy before judging responsive behavior. The deployed DOM does not contain these features.
+- [x] Record console/runtime errors, observed deployment differences, and reproducible UI issues without changing production data.
+
+## Risk & Rollback
+- Risk level: low; read-only production UI verification after login.
+- No transaction will be saved, edited, or deleted. Add dialogs and filters may be opened, but any form remains unsubmitted.
+- Screenshots are stored only in the current Codex visualization workspace and may contain the supplied test account's visible UI.
+
+## Plan
+- [x] Complete authentication and confirm the authenticated Dashboard route.
+- [x] Capture and inspect desktop Dashboard/transactions.
+- [x] Capture and inspect 375px mobile Dashboard/transactions/add form; confirm the expected phase-two filter is not deployed.
+- [x] Inspect 320px overflow, touch-target, sticky-action, and console-error signals.
+- [x] Summarize deployment parity, screenshots, and any blocking issues.
+
+## Results
+- Authentication succeeded after the user completed Cloudflare Turnstile. Credentials were used only in the browser login form and were not written to project or screenshot-report files.
+- Desktop at 1440px: Dashboard and transactions had no document-level horizontal overflow. The deployed Dashboard headings are limited to the phase-one cash-flow/category/ratio/recent sections; attention, queried-at status, and Top 3 drivers are absent.
+- Mobile at 375px: Dashboard has no horizontal overflow and its fixed four-item bottom navigation remains visible. Transactions also fit the viewport, but still use the legacy always-expanded filter block and inline Add button.
+- Mobile at 320px: transactions reported `scrollWidth === clientWidth` (305px after scrollbar), so there is no page-level horizontal overflow in the zero-data state. This does not validate transaction cards because the deployed page has no phase-two mobile cards.
+- The deployed add dialog remains the legacy form order (date → type → amount → category → account), occupies 780px of an 812px viewport, and has no sticky footer; Save/Cancel are below the initial viewport. No form was submitted and no production data was mutated.
+- Browser console had no application errors. The only messages were repeated Cloudflare Turnstile locale warnings (`zh-TW` falling back to `zh-tw`).
+- Conclusion: production screenshot verification successfully identifies a deployment-parity blocker. Deploy the current workspace/commit before repeating acceptance of phase-two Dashboard insights, mobile filters/cards, sticky batch actions, and quick-add hierarchy.
+
+# 2026-07-18 phase-2-actionable-dashboard-mobile-transactions
+
+## Goal + Acceptance Criteria
+- [x] Dashboard clearly shows when its data was queried, without presenting record or stock metadata as a market-price refresh time.
+- [x] Dashboard shows at most three actionable items with direct destinations and a clear all-good state when nothing needs attention.
+- [x] Dashboard explains the selected month with an explicitly labelled Top 3 driver list derived from existing income/expense category totals.
+- [x] Transactions use a mobile card list below the desktop breakpoint, retain every status/action from the table, and avoid horizontal page scrolling at 320px.
+- [x] Mobile filtering is collapsible, exposes an active-filter count, keeps URL deep links, and uses accessible labels and 44px controls.
+- [x] Add/edit presents the common path first (type, amount, category, account), keeps advanced fields available, and preserves existing save/FX/photo behavior.
+- [x] No schema, dependency, or financial-calculation contract changes; additive Dashboard response fields remain backward compatible.
+- [x] Verification covers targeted helper tests, i18n parity, TypeScript, the full project test suite, diff hygiene, and production build.
+
+## Risk & Rollback
+- Risk level: medium; the Dashboard response is extended and the shared transactions screen is substantially reflowed on mobile.
+- Affected components: Dashboard API/types/page and the transactions list/filter/create experience.
+- Rollback strategy: revert this section's additive Dashboard insight fields and responsive transaction markup; no data migration or cleanup is required.
+- Monitoring signals: Dashboard insight counts diverging from existing totals, lost transaction status/actions on mobile, URL filters failing to restore, clipped controls, or dialog save regressions.
+
+## Dependencies & Environment
+- Existing Next.js/React/Tailwind/Base UI/Lucide stack only; no new package is planned.
+- Existing dirty `.swarm` files and `tsconfig.tsbuildinfo` are user/generated baseline and must not be reverted or included in the task result.
+- Current Dashboard/category and transaction APIs remain the sources of truth; all queries remain scoped by authenticated `user_id`.
+
+## Working Notes
+- Official comparable-product patterns support search/filter/add at the transaction-list level, explicit edit controls, short attention queues, and Top 3 explanatory drivers.
+- Stock `updated_at` is not a reliable quote timestamp. Only an actual held position with no positive current price may be surfaced as needing attention.
+- The smallest safe first slice uses recurring attention, uncategorized current-period transactions, unpriced held stocks, and generated-at query time. Budget-overrun and period-over-period analysis remain follow-ups because their hierarchy and partial-period semantics require broader extraction/testing.
+- Desktop table behavior and the current query-string contract stay intact; mobile cards are an alternate presentation of the same `txs` data.
+
+## Plan
+- [x] Audit Dashboard data sources, transaction interactions, responsive behavior, and accessibility risks.
+- [x] Confirm phase-two scope and testable acceptance criteria from current official product patterns.
+- [x] Implement additive Dashboard status, attention, and Top 3 drivers.
+- [x] Implement mobile transaction cards, collapsible filtering, and quick-add form hierarchy.
+- [x] Add targeted tests and translations.
+- [x] Run typecheck, tests, i18n checks, diff checks, and production build.
+- [x] Record results, verification evidence, and any deferred follow-ups.
+
+## Results
+- Dashboard response now adds query-time status, active recurring-attention count, current-period uncategorized count/amount, and held positions without a positive price; all queries remain scoped to the authenticated user.
+- Dashboard presents a maximum-three attention queue with exact destinations, including a dedicated `__uncategorized__` transaction filter, plus an explicitly labelled Top 3 monthly amount-driver list and all-clear state.
+- Transactions now render full-fidelity cards below `md` while preserving the desktop table, attachments, transfer/FX/recurring/excluded states, edit/delete, selection, pagination, and batch operations.
+- Search is debounced without losing pending text during URL synchronization, stale responses cannot replace newer results, mobile filters expose active count, and selected rows get a reachable fixed batch action bar.
+- Add/edit prioritizes type, amount, category, and account; date remains visible in the advanced summary, other fields/photos stay available, validation expands hidden invalid fields, and the footer remains sticky above the mobile safe area.
+- Added four pure regression tests for Top 3 calculation and held-position valuation, including zero/negative price behavior. Added localized Dashboard insight copy for all ten supported locales and regenerated the expected Web/mobile dictionaries.
+- Verification passed on Node 24.15.0: `npm run typecheck`, `npm test`, `npm run check:i18n`, `git diff --check`, and a clean `npm run build` (147/147 static pages, exit 0).
+- Independent read-only UX and Dashboard correctness reviews found no P0 or cross-user data issue. Their P1 findings (pending-search overwrite, misleading mobile Apply semantics, and non-exact uncategorized CTA) were fixed before final verification.
+- Runtime screenshot QA was not available because this environment has no running PostgreSQL service; 320px/RTL behavior was reviewed statically and by an independent UX diff review, not claimed as browser screenshot evidence.
+
 # 2026-07-18 user-centered-ui-ux-refresh
 
 ## Goal + Acceptance Criteria

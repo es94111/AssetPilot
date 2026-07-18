@@ -281,6 +281,21 @@ export const ar = {
       nextMonth: "الشهر التالي",
       currentMonth: "هذا الشهر",
     },
+    dataStatus: {
+      queriedAt: "تم الاستعلام عن البيانات في {time}",
+    },
+    attention: {
+      title: "يتطلب الانتباه",
+      allClear: "لا يوجد ما يتطلب انتباهك الآن",
+      recurring: "تحتاج {count} من المعاملات المتكررة إلى المراجعة",
+      uncategorized: "{count} من المعاملات غير المصنفة · {amount}",
+      unpriced: "لا يوجد سعر لـ {count} من المراكز المحتفظ بها",
+    },
+    drivers: {
+      title: "أهم 3 عوامل هذا الشهر",
+      subtitle: "أكبر المساهمات في {month}",
+      share: "{share}% من هذا النوع",
+    },
   },
   public: {
     common: {

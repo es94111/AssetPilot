@@ -279,6 +279,21 @@ export const zhTW = {
       nextMonth: "下一月",
       currentMonth: "本月",
     },
+    dataStatus: {
+      queriedAt: "資料查詢時間 {time}",
+    },
+    attention: {
+      title: "待處理",
+      allClear: "目前沒有需要處理的事項",
+      recurring: "{count} 筆固定收支需要檢查",
+      uncategorized: "{count} 筆未分類交易 · {amount}",
+      unpriced: "{count} 檔持倉尚無價格",
+    },
+    drivers: {
+      title: "本月 Top 3 驅動因素",
+      subtitle: "{month} 金額最高的收入與支出項目",
+      share: "占此類型 {share}%",
+    },
   },
   public: {
     common: {

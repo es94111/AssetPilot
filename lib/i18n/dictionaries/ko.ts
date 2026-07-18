@@ -281,6 +281,21 @@ export const ko = {
       nextMonth: "다음 달",
       currentMonth: "이번 달",
     },
+    dataStatus: {
+      queriedAt: "데이터 조회 시간 {time}",
+    },
+    attention: {
+      title: "확인 필요",
+      allClear: "현재 확인이 필요한 항목이 없습니다",
+      recurring: "반복 거래 {count}건을 확인해야 합니다",
+      uncategorized: "미분류 거래 {count}건 · {amount}",
+      unpriced: "보유 종목 {count}개에 가격이 없습니다",
+    },
+    drivers: {
+      title: "이번 달 상위 3개 요인",
+      subtitle: "{month}에 가장 큰 비중을 차지한 항목",
+      share: "이 유형의 {share}%",
+    },
   },
   public: {
     common: {

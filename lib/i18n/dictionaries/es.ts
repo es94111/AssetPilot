@@ -281,6 +281,21 @@ export const es = {
       nextMonth: "Mes siguiente",
       currentMonth: "Este mes",
     },
+    dataStatus: {
+      queriedAt: "Datos consultados a las {time}",
+    },
+    attention: {
+      title: "Requiere atención",
+      allClear: "No hay nada que requiera tu atención ahora",
+      recurring: "{count} transacciones recurrentes requieren revisión",
+      uncategorized: "{count} transacciones sin categoría · {amount}",
+      unpriced: "{count} posiciones en cartera no tienen precio",
+    },
+    drivers: {
+      title: "3 principales factores del mes",
+      subtitle: "Lo que más contribuye en {month}",
+      share: "{share}% de este tipo",
+    },
   },
   public: {
     common: {

@@ -163,6 +163,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get shellOpenMenu => 'Открыть меню';
 
   @override
+  String get shellSkipToContent => 'Перейти к основному содержимому';
+
+  @override
   String get shellThemeLight => 'Светлая';
 
   @override

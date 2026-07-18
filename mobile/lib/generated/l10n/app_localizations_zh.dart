@@ -163,6 +163,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get shellOpenMenu => '開啟選單';
 
   @override
+  String get shellSkipToContent => '跳至主要內容';
+
+  @override
   String get shellThemeLight => '亮色';
 
   @override
@@ -3964,6 +3967,9 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
 
   @override
   String get shellOpenMenu => '打开菜单';
+
+  @override
+  String get shellSkipToContent => '跳到主要内容';
 
   @override
   String get shellThemeLight => '浅色';
@@ -7772,6 +7778,9 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
 
   @override
   String get shellOpenMenu => '開啟選單';
+
+  @override
+  String get shellSkipToContent => '跳至主要內容';
 
   @override
   String get shellThemeLight => '亮色';

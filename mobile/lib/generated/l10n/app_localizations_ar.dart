@@ -163,6 +163,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get shellOpenMenu => 'فتح القائمة';
 
   @override
+  String get shellSkipToContent => 'الانتقال إلى المحتوى الرئيسي';
+
+  @override
   String get shellThemeLight => 'فاتح';
 
   @override

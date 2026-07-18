@@ -423,6 +423,12 @@ abstract class AppLocalizations {
   /// **'開啟選單'**
   String get shellOpenMenu;
 
+  /// Web path: shell.skipToContent
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'跳至主要內容'**
+  String get shellSkipToContent;
+
   /// Web path: shell.theme.light
   ///
   /// In zh_Hant_TW, this message translates to:

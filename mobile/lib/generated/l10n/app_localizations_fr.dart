@@ -163,6 +163,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get shellOpenMenu => 'Ouvrir le menu';
 
   @override
+  String get shellSkipToContent => 'Aller au contenu principal';
+
+  @override
   String get shellThemeLight => 'Clair';
 
   @override

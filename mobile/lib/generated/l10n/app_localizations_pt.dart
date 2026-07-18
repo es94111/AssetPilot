@@ -163,6 +163,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get shellOpenMenu => 'Abrir menu';
 
   @override
+  String get shellSkipToContent => 'Ir para o conteúdo principal';
+
+  @override
   String get shellThemeLight => 'Claro';
 
   @override
@@ -4190,6 +4193,9 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get shellOpenMenu => 'Abrir menu';
+
+  @override
+  String get shellSkipToContent => 'Ir para o conteúdo principal';
 
   @override
   String get shellThemeLight => 'Claro';

@@ -163,6 +163,9 @@ class AppLocalizationsHi extends AppLocalizations {
   String get shellOpenMenu => 'मेन्यू खोलें';
 
   @override
+  String get shellSkipToContent => 'मुख्य सामग्री पर जाएँ';
+
+  @override
   String get shellThemeLight => 'लाइट';
 
   @override

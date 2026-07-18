@@ -105,6 +105,8 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
   const [page, setPage] = useState(() => readPageParam(searchParams));
   const [pageSize, setPageSize] = useState(() => readPageSizeParam(searchParams));
   const [loading, setLoading] = useState(true);
+  const [metaLoaded, setMetaLoaded] = useState(false);
+  const [quickCreateHandled, setQuickCreateHandled] = useState(false);
   const [accounts, setAccounts] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [currencyOptions, setCurrencyOptions] = useState<string[]>(DEFAULT_CURRENCIES);
@@ -168,6 +170,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
     const accountCurrencies = (Array.isArray(accts) ? accts : []).map((account: any) => String(account.currency || 'TWD').toUpperCase());
     const mergedCurrencies = Array.from(new Set([nextDefaultCurrency, 'TWD', ...pinnedCurrencies, ...accountCurrencies, ...DEFAULT_CURRENCIES]));
     setCurrencyOptions(mergedCurrencies);
+    setMetaLoaded(true);
   }, []);
 
   const updateFilters = useCallback((patch: Partial<typeof EMPTY_FILTERS>) => {
@@ -204,6 +207,8 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
     Object.entries(filters).forEach(([key, value]) => {
       if (value) params.set(key, value);
     });
+    const requestedAction = searchParams.get('action');
+    if (requestedAction) params.set('action', requestedAction);
     const nextQuery = params.toString();
     if (nextQuery !== currentQuery) {
       router.replace(`${pathname}?${nextQuery}`, { scroll: false });
@@ -225,6 +230,15 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
     setPendingDeleteIds(new Set());
     setModal(true);
   }
+
+  useEffect(() => {
+    if (!metaLoaded || quickCreateHandled || searchParams.get('action') !== 'add') return;
+    setQuickCreateHandled(true);
+    openAdd();
+    const params = new URLSearchParams(searchParams);
+    params.delete('action');
+    router.replace(params.size ? `${pathname}?${params.toString()}` : pathname, { scroll: false });
+  }, [currentQuery, metaLoaded, pathname, quickCreateHandled, router, searchParams]);
 
   const fetchFxRate = useCallback(async (currency: string) => {
     const normalizedCurrency = String(currency || '').toUpperCase();

@@ -59,6 +59,7 @@ export const ar = {
     logout: "تسجيل الخروج",
     versionInfo: "معلومات الإصدار",
     openMenu: "فتح القائمة",
+    skipToContent: "الانتقال إلى المحتوى الرئيسي",
     theme: {
       light: "فاتح",
       system: "النظام",

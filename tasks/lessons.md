@@ -1,5 +1,12 @@
 # Lessons
 
+## 2026-07-18 UI Tokens and Progressive Disclosure Need Explicit Semantics
+- Mistake class: accessibility oversight / unsafe change scope.
+- Failure mode: A first-pass dark-mode accent token was also consumed as a white-text button background, producing insufficient contrast; category lists were truncated for progressive disclosure without labeling the view as partial.
+- Detection signal: Independent diff review calculated the dark solid-action contrast at roughly 2.4:1 and found `slice(...)` calls while the visible totals still represented all categories.
+- Prevention rule: Separate text/link accent tokens from solid-action background tokens, calculate contrast for both themes, and never truncate financial detail unless the UI explicitly says “Top N” and exposes the remainder.
+- Tripwire: Before final UI verification, search changed views for `slice(` and shared color tokens used by both `color` and `background`; run a WCAG contrast calculation for semantic text and solid actions in light/dark themes.
+
 ## 2026-07-09 TypeScript 7 Removed baseUrl
 - Mistake class: incorrect assumption about compiler behavior / missing verification.
 - Failure mode: Added `compilerOptions.baseUrl` as a likely Next/Webpack alias fix, but TypeScript 7 rejects `baseUrl` with TS5102 because the option has been removed.

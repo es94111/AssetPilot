@@ -16,6 +16,7 @@ import 'screens/stocks_screen.dart';
 import 'screens/transaction_form_screen.dart';
 import 'screens/transactions_screen.dart';
 import 'l10n.dart';
+import 'theme.dart';
 
 /// 全域主題模式（system / light / dark），可在設定頁切換並持久化。
 final ValueNotifier<ThemeMode> themeMode = ValueNotifier(ThemeMode.system);
@@ -40,6 +41,44 @@ Future<void> setThemeMode(ThemeMode mode) async {
   themeMode.value = mode;
   final p = await SharedPreferences.getInstance();
   await p.setString(_kThemeKey, mode.name);
+}
+
+ThemeData _buildTheme(Color seed, Brightness brightness) {
+  final scheme = ColorScheme.fromSeed(
+    seedColor: seed,
+    brightness: brightness,
+  );
+  return ThemeData(
+    colorScheme: scheme,
+    useMaterial3: true,
+    extensions: [assetPilotThemeFor(brightness)],
+    visualDensity: VisualDensity.standard,
+    materialTapTargetSize: MaterialTapTargetSize.padded,
+    filledButtonTheme: FilledButtonThemeData(
+      style: FilledButton.styleFrom(
+        minimumSize: const Size(48, 48),
+        tapTargetSize: MaterialTapTargetSize.padded,
+      ),
+    ),
+    outlinedButtonTheme: OutlinedButtonThemeData(
+      style: OutlinedButton.styleFrom(
+        minimumSize: const Size(48, 48),
+        tapTargetSize: MaterialTapTargetSize.padded,
+      ),
+    ),
+    textButtonTheme: TextButtonThemeData(
+      style: TextButton.styleFrom(
+        minimumSize: const Size(48, 48),
+        tapTargetSize: MaterialTapTargetSize.padded,
+      ),
+    ),
+    iconButtonTheme: IconButtonThemeData(
+      style: IconButton.styleFrom(
+        minimumSize: const Size(48, 48),
+        tapTargetSize: MaterialTapTargetSize.padded,
+      ),
+    ),
+  );
 }
 
 class AssetPilotApp extends StatelessWidget {
@@ -69,17 +108,8 @@ class AssetPilotApp extends StatelessWidget {
           // 監控畫面切換的效能：為每次導覽建立 Sentry 交易，量測畫面顯示耗時與
           // 卡頓／凍結畫格（slow/frozen frames），用於發現效能下降。
           navigatorObservers: [SentryNavigatorObserver()],
-          theme: ThemeData(
-            colorScheme: ColorScheme.fromSeed(seedColor: seed),
-            useMaterial3: true,
-          ),
-          darkTheme: ThemeData(
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: seed,
-              brightness: Brightness.dark,
-            ),
-            useMaterial3: true,
-          ),
+          theme: _buildTheme(seed, Brightness.light),
+          darkTheme: _buildTheme(seed, Brightness.dark),
           home: AuthGate(),
           // 系統或深層連結可能推送 App 未註冊的路由（例如背景啟動時 OS 傳來的
           // route information）。本 App 採純 home 導覽、未設定具名路由，若不提供

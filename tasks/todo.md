@@ -1,3 +1,48 @@
+# 2026-07-18 user-centered-ui-ux-refresh
+
+## Goal + Acceptance Criteria
+- [x] Research comparable personal-finance and portfolio products using current, attributable sources.
+- [x] Translate the research into AssetPilot-specific information hierarchy and interaction rules.
+- [x] Refresh the authenticated Web shell and dashboard as the first complete vertical slice without changing financial calculations or API contracts.
+- [x] Preserve existing uncommitted UI/mobile work and avoid unrelated refactors.
+- [x] Improve responsive behavior, keyboard/focus behavior, touch targets, empty states, and primary-action discoverability.
+- [x] Verification covers TypeScript, targeted tests/build, and visual checks at desktop/mobile widths where feasible.
+
+## Risk & Rollback
+- Risk level: medium; shared shell and UI primitives affect all authenticated Web screens.
+- Affected components: global design tokens, app navigation, dashboard presentation, shared form/dialog/toast primitives.
+- Rollback strategy: revert only this task's additive shell/dashboard changes; no schema, API, or data changes are planned.
+- Monitoring signals: clipped content, broken navigation, inaccessible controls, layout shifts, incorrect dashboard totals.
+
+## Dependencies & Environment
+- Existing Next.js 16 / React 19 / Tailwind CSS 4 stack; no new dependency planned.
+- Existing worktree already contains UI accessibility and mobile formatting changes; treat them as user-owned baseline.
+- Visual reference sources must be current as of 2026-07-18 and cited in the handoff.
+
+## Working Notes
+- Start with the authenticated Web shell and `/dashboard` because they establish the interaction model reused by finance and stock screens.
+- Preserve the current financial aggregation behavior; this task changes hierarchy, layout, copy placement, and interaction affordances only.
+- Existing app screenshots under `docs/screenshots/app` are mobile product captures, not proof of the current Web worktree.
+
+## Plan
+- [x] Audit current implementation, design tokens, routes, and nearby tests.
+- [x] Research comparable products and extract reusable design logic.
+- [x] Define the minimal user-centered redesign and success criteria.
+- [x] Implement the shared shell/dashboard slice.
+- [x] Verify typecheck, tests/build, responsive layout, and accessibility basics.
+- [x] Summarize behavior changes, unchanged contracts, evidence, and follow-ups.
+
+## Results
+- Research compared Copilot Money, Sharesight, Kubera, Monarch Money, Empower, and Delta using current official product/help sources. The shared model is overview → explain → act, with one page-wide time scope and progressive disclosure.
+- Reworked `/dashboard` around one monthly cash-flow hero, drill-down income/expense/account/portfolio cards, a visible quick-add transaction action, responsive recent-transaction cards, and complete category details.
+- Added a four-destination mobile bottom navigation while preserving the full sidebar for lower-frequency destinations.
+- Converted sidebar and stock tabs to semantic links; added `aria-current`, theme `aria-pressed`, a translated skip link, unique main/h1 landmarks, RTL drawer direction, focus entry/trap/restore, background inert state, and 44px month controls.
+- Added `?action=add` handling so the Dashboard CTA opens the existing transaction dialog after metadata loads and then removes the one-shot action from the URL.
+- Split dark-mode text accent from solid primary action color and raised light semantic text colors. Measured contrast against white: primary 5.82:1, income/success 5.48:1, expense/danger 6.29:1, net 6.70:1, muted 4.76:1.
+- Preserved the pre-existing uncommitted shared-component and Flutter changes; no schema, API contract, dependency, or financial aggregation change was made.
+- Verification passed: `npm run typecheck`, `npm test`, `npm run check:i18n`, `git diff --check`, and `npm run build` (147/147 static pages, exit 0).
+- Runtime screenshot QA was attempted, but the local environment has no available PostgreSQL service; the dev server therefore stopped in the instrumentation hook before authenticated pages could render. No fake/mock screenshot was used as evidence.
+
 # 2026-07-09 upgrade-project-packages-latest
 
 ## Goal + Acceptance Criteria

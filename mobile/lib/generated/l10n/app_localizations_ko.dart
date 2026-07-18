@@ -163,6 +163,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get shellOpenMenu => '메뉴 열기';
 
   @override
+  String get shellSkipToContent => '주요 콘텐츠로 건너뛰기';
+
+  @override
   String get shellThemeLight => '라이트';
 
   @override

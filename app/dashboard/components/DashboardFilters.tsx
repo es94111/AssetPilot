@@ -3,6 +3,7 @@
 import { ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useT } from "@/components/i18n/I18nProvider";
+import { localeTag } from "@/lib/i18n/localeTag";
 
 function currentMonth() {
   const now = new Date();
@@ -21,7 +22,7 @@ function shiftMonth(value: string, delta: number) {
 
 function displayMonth(value: string, locale: string) {
   const [year, month] = value.split("-").map(Number);
-  return new Intl.DateTimeFormat(locale === "en" ? "en-US" : "zh-TW", {
+  return new Intl.DateTimeFormat(localeTag(locale), {
     year: "numeric",
     month: "long",
   }).format(new Date(year, month - 1, 1));
@@ -46,39 +47,39 @@ export function DashboardFilters() {
   }
 
   return (
-    <div className="mb-8 flex flex-wrap items-center gap-2">
+    <div className="flex flex-wrap items-center gap-2" role="group" aria-label={t("dashboard.filters.currentMonth")}>
       <button
         type="button"
         onClick={() => navigateToMonth(shiftMonth(selectedMonth, -1))}
-        className="inline-flex h-10 w-10 items-center justify-center rounded-lg border transition-colors hover:bg-slate-50 dark:hover:bg-slate-800"
+        className="inline-flex h-11 w-11 items-center justify-center rounded-xl border transition-colors hover:bg-slate-50 dark:hover:bg-slate-800"
         style={{ borderColor: "var(--border)", color: "var(--text-secondary)" }}
         title={t("dashboard.filters.previousMonth")}
         aria-label={t("dashboard.filters.previousMonth")}
       >
-        <ChevronLeft size={18} />
+        <ChevronLeft size={18} aria-hidden="true" />
       </button>
       <div
-        className="inline-flex h-10 min-w-36 items-center justify-center gap-2 rounded-lg border px-4 text-sm font-semibold"
+        className="inline-flex h-11 min-w-40 items-center justify-center gap-2 rounded-xl border px-4 text-sm font-semibold tabular-nums"
         style={{ borderColor: "var(--border)", background: "var(--surface)", color: "var(--text)" }}
       >
-        <CalendarDays size={16} />
+        <CalendarDays size={16} aria-hidden="true" />
         <span>{displayMonth(selectedMonth, locale)}</span>
       </div>
       <button
         type="button"
         onClick={() => navigateToMonth(shiftMonth(selectedMonth, 1))}
-        className="inline-flex h-10 w-10 items-center justify-center rounded-lg border transition-colors hover:bg-slate-50 dark:hover:bg-slate-800"
+        className="inline-flex h-11 w-11 items-center justify-center rounded-xl border transition-colors hover:bg-slate-50 dark:hover:bg-slate-800"
         style={{ borderColor: "var(--border)", color: "var(--text-secondary)" }}
         title={t("dashboard.filters.nextMonth")}
         aria-label={t("dashboard.filters.nextMonth")}
       >
-        <ChevronRight size={18} />
+        <ChevronRight size={18} aria-hidden="true" />
       </button>
       {selectedMonth !== thisMonth && (
         <button
           type="button"
           onClick={() => navigateToMonth(thisMonth)}
-          className="h-10 rounded-lg border px-3 text-sm font-medium transition-colors hover:bg-slate-50 dark:hover:bg-slate-800"
+          className="h-11 rounded-xl border px-3 text-sm font-medium transition-colors hover:bg-slate-50 dark:hover:bg-slate-800"
           style={{ borderColor: "var(--border)", color: "var(--text-secondary)" }}
         >
           {t("dashboard.filters.currentMonth")}

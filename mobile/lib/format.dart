@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import 'l10n.dart';
+import 'theme.dart';
 
 /// 金額與顏色格式化工具。
 
@@ -17,16 +18,23 @@ String intFmt(num v) => NumberFormat.decimalPattern(appIntlLocaleTag()).format(v
 
 /// 依貨幣格式化（小數兩位，TWD 不顯示小數）
 String money(num v, String currency) {
-  final digits = currency == 'TWD' ? 0 : 2;
+  final normalized = currency.trim().toUpperCase();
+  final digits = normalized == 'TWD' ? 0 : 2;
   return NumberFormat.currency(
     locale: appIntlLocaleTag(),
-    symbol: '$currency ',
+    name: normalized,
     decimalDigits: digits,
   ).format(v);
 }
 
 /// 帶正負號的金額（用於損益）：+1,234 / -567
-String signed(num v) => (v >= 0 ? '+' : '') + NumberFormat.decimalPattern(appIntlLocaleTag()).format(v);
+String signed(num v) {
+  final formatted = NumberFormat.decimalPattern(appIntlLocaleTag())
+      .format(v.abs());
+  if (v > 0) return '+$formatted';
+  if (v < 0) return '−$formatted';
+  return formatted;
+}
 
 /// 解析 `#RRGGBB` 顏色字串，失敗回傳灰色。
 Color parseColor(String hex) {
@@ -36,9 +44,24 @@ Color parseColor(String hex) {
   return value == null ? const Color(0xFF888888) : Color(value);
 }
 
-/// 損益正負對應的顏色（漲紅跌綠，符合台股慣例）。
+/// 損益正負對應的語義顏色，並保留台股漲紅跌綠慣例。
 Color plColor(num v, BuildContext context) {
-  if (v > 0) return const Color(0xFFD32F2F);
-  if (v < 0) return const Color(0xFF2E7D32);
+  final semantic = Theme.of(context).extension<AssetPilotTheme>();
+  if (v > 0) return semantic?.profit ?? const Color(0xFFD32F2F);
+  if (v < 0) return semantic?.loss ?? const Color(0xFF2E7D32);
   return Theme.of(context).colorScheme.onSurfaceVariant;
+}
+
+/// 收入／支出使用的語義顏色，避免畫面散落 raw colors。
+Color flowColor({required bool income, required BuildContext context}) {
+  final semantic = Theme.of(context).extension<AssetPilotTheme>();
+  if (income) return semantic?.income ?? Theme.of(context).colorScheme.primary;
+  return semantic?.expense ?? Theme.of(context).colorScheme.error;
+}
+
+/// 計算帶方向符號的 accessible label，供金額與圖表旁的 Semantics 使用。
+String signedLabel(num v, String label) {
+  if (v > 0) return '$label, positive';
+  if (v < 0) return '$label, negative';
+  return '$label, zero';
 }

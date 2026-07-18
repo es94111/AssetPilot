@@ -1,6 +1,7 @@
 'use client';
 
-import { usePathname, useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useT } from '@/components/i18n/I18nProvider';
 
 const TABS = [
@@ -13,27 +14,27 @@ const TABS = [
 
 export default function StocksTabNav() {
   const pathname = usePathname();
-  const router = useRouter();
   const { t } = useT();
 
   return (
-    <div className="flex gap-2 border-b border-slate-200 mb-5">
+    <nav aria-label={t('nav.titleStocks')} className="mb-5 flex gap-1 overflow-x-auto border-b border-slate-200">
       {TABS.map(tab => {
         const isActive = pathname === tab.path || (tab.path === '/stocks/portfolio' && pathname === '/stocks');
         return (
-          <button
+          <Link
             key={tab.path}
-            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+            href={tab.path}
+            aria-current={isActive ? 'page' : undefined}
+            className={`flex min-h-11 shrink-0 items-center border-b-2 px-4 py-2 text-sm font-medium transition-colors ${
               isActive 
                 ? 'border-blue-600 text-blue-600' 
                 : 'border-transparent text-slate-500 hover:text-slate-700'
             }`}
-            onClick={() => router.push(tab.path)}
           >
             {t(tab.key)}
-          </button>
+          </Link>
         );
       })}
-    </div>
+    </nav>
   );
 }

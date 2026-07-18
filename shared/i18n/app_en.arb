@@ -256,6 +256,11 @@
     "description": "Web path: shell.openMenu",
     "x-webPath": "shell.openMenu"
   },
+  "shellSkipToContent": "Skip to main content",
+  "@shellSkipToContent": {
+    "description": "Web path: shell.skipToContent",
+    "x-webPath": "shell.skipToContent"
+  },
   "shellThemeLight": "Light",
   "@shellThemeLight": {
     "description": "Web path: shell.theme.light",

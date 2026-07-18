@@ -59,6 +59,7 @@ export const hi = {
     logout: "साइन आउट",
     versionInfo: "वर्ज़न जानकारी",
     openMenu: "मेन्यू खोलें",
+    skipToContent: "मुख्य सामग्री पर जाएँ",
     theme: {
       light: "लाइट",
       system: "सिस्टम",

@@ -59,6 +59,7 @@ export const en = {
     logout: "Sign out",
     versionInfo: "Version info",
     openMenu: "Open menu",
+    skipToContent: "Skip to main content",
     theme: {
       light: "Light",
       system: "System",

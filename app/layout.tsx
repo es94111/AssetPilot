@@ -4,6 +4,7 @@ import { resolveLocale } from "@/lib/i18n/resolveLocale";
 import { getDictionary, getTranslator } from "@/lib/i18n/getDictionary";
 import { HTML_DIR, HTML_LANG } from "@/lib/i18n/config";
 import { I18nProvider } from "@/components/i18n/I18nProvider";
+import { ToastProvider } from "@/components/ui/Toast";
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await resolveLocale();
@@ -35,7 +36,9 @@ export default async function RootLayout({
       </head>
       <body className="antialiased">
         <I18nProvider locale={locale} dict={dict}>
-          <main>{children}</main>
+          <ToastProvider>
+            {children}
+          </ToastProvider>
         </I18nProvider>
       </body>
     </html>

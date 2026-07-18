@@ -59,6 +59,7 @@ export const es = {
     logout: "Cerrar sesión",
     versionInfo: "Información de versión",
     openMenu: "Abrir menú",
+    skipToContent: "Ir al contenido principal",
     theme: {
       light: "Claro",
       system: "Sistema",

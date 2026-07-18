@@ -3907,4 +3907,132 @@ class AppLocalizationsKo extends AppLocalizations {
   String dashboardDriversShare(Object share) {
     return '이 유형의 $share%';
   }
+
+  @override
+  String get dashboardPersonalizeTrigger => '홈 맞춤 설정';
+
+  @override
+  String get dashboardPersonalizeTitle => '홈 맞춤 설정';
+
+  @override
+  String get dashboardPersonalizeDescription => '표시할 모듈을 선택하고 사용 순서에 맞게 배치하세요.';
+
+  @override
+  String get dashboardPersonalizeModulesAssets => '자산 개요';
+
+  @override
+  String get dashboardPersonalizeModulesAttention => '확인 필요';
+
+  @override
+  String get dashboardPersonalizeModulesWhyChanged => '현금흐름 변동 이유';
+
+  @override
+  String get dashboardPersonalizeModulesSpending => '지출 카테고리';
+
+  @override
+  String get dashboardPersonalizeModulesPortfolioHealth => '포트폴리오 상태';
+
+  @override
+  String get dashboardPersonalizeModulesIncomeRecent => '수입 및 최근 거래';
+
+  @override
+  String dashboardPersonalizeMoveUp(Object module) {
+    return '$module 위로 이동';
+  }
+
+  @override
+  String dashboardPersonalizeMoveDown(Object module) {
+    return '$module 아래로 이동';
+  }
+
+  @override
+  String get dashboardPersonalizeSaved => '대시보드 레이아웃을 저장했습니다';
+
+  @override
+  String get dashboardPersonalizeSaveError => '대시보드 레이아웃을 저장할 수 없습니다';
+
+  @override
+  String get dashboardPersonalizeReset => '초기화';
+
+  @override
+  String get dashboardPersonalizeApply => '적용';
+
+  @override
+  String get dashboardComparisonTitle => '현금흐름 변동 이유';
+
+  @override
+  String dashboardComparisonMtd(
+    Object currentStart,
+    Object currentEnd,
+    Object previousStart,
+    Object previousEnd,
+  ) {
+    return '$currentStart–$currentEnd와 $previousStart–$previousEnd 비교';
+  }
+
+  @override
+  String dashboardComparisonFull(Object previousStart, Object previousEnd) {
+    return '전체 월과 $previousStart–$previousEnd 비교';
+  }
+
+  @override
+  String get dashboardComparisonUnavailable => '이 달에는 비교할 이전 기간이 없습니다.';
+
+  @override
+  String get dashboardComparisonNoChanges => '기록된 현금흐름이 비교 기간과 같습니다.';
+
+  @override
+  String get dashboardComparisonPreviousNet => '이전 순현금흐름';
+
+  @override
+  String get dashboardComparisonNetChange => '순현금흐름 변화';
+
+  @override
+  String get dashboardComparisonNewThisPeriod => '이번 기간 신규';
+
+  @override
+  String get dashboardComparisonIncreased => '금액 증가';
+
+  @override
+  String get dashboardComparisonDecreased => '금액 감소';
+
+  @override
+  String get dashboardPortfolioHealthTitle => '포트폴리오 원가 상태';
+
+  @override
+  String get dashboardPortfolioHealthSubtitle => '현재 가치와 남은 FIFO 원가 비교';
+
+  @override
+  String get dashboardPortfolioHealthNoHoldings =>
+      '보유 종목을 추가하면 원가 분석을 볼 수 있습니다.';
+
+  @override
+  String get dashboardPortfolioHealthMissingPrices => '이 비교에는 현재 가격이 필요합니다.';
+
+  @override
+  String get dashboardPortfolioHealthMixedCurrencies =>
+      '여러 통화의 보유 자산에는 합산 비율을 제공할 수 없습니다.';
+
+  @override
+  String get dashboardPortfolioHealthMarketValue => '가격 확인 시가';
+
+  @override
+  String get dashboardPortfolioHealthCost => '가격 확인 종목 원가';
+
+  @override
+  String get dashboardPortfolioHealthUnrealizedGross => '미실현 총손익';
+
+  @override
+  String dashboardPortfolioHealthLargestHolding(Object name, Object share) {
+    return '최대 보유 종목: $name · 가격 확인 가치의 $share%';
+  }
+
+  @override
+  String get dashboardPortfolioHealthDisclaimer =>
+      '현재 가격과 기록된 FIFO 원가를 비교한 값입니다. 시장 지수 벤치마크나 시간가중수익률이 아닙니다.';
+
+  @override
+  String dashboardPortfolioHealthCoverage(Object priced, Object total) {
+    return '가격 확인: 보유 종목 $total개 중 $priced개';
+  }
 }

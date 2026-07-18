@@ -6208,5 +6208,209 @@
     "placeholders": {
       "share": {}
     }
+  },
+  "dashboardPersonalizeTrigger": "Personalizar inicio",
+  "@dashboardPersonalizeTrigger": {
+    "description": "Web path: dashboard.personalize.trigger",
+    "x-webPath": "dashboard.personalize.trigger"
+  },
+  "dashboardPersonalizeTitle": "Personalizar inicio",
+  "@dashboardPersonalizeTitle": {
+    "description": "Web path: dashboard.personalize.title",
+    "x-webPath": "dashboard.personalize.title"
+  },
+  "dashboardPersonalizeDescription": "Elige qué módulos aparecen y ordénalos según cómo los utilizas.",
+  "@dashboardPersonalizeDescription": {
+    "description": "Web path: dashboard.personalize.description",
+    "x-webPath": "dashboard.personalize.description"
+  },
+  "dashboardPersonalizeModulesAssets": "Resumen de activos",
+  "@dashboardPersonalizeModulesAssets": {
+    "description": "Web path: dashboard.personalize.modules.assets",
+    "x-webPath": "dashboard.personalize.modules.assets"
+  },
+  "dashboardPersonalizeModulesAttention": "Requiere atención",
+  "@dashboardPersonalizeModulesAttention": {
+    "description": "Web path: dashboard.personalize.modules.attention",
+    "x-webPath": "dashboard.personalize.modules.attention"
+  },
+  "dashboardPersonalizeModulesWhyChanged": "Por qué cambió el flujo de efectivo",
+  "@dashboardPersonalizeModulesWhyChanged": {
+    "description": "Web path: dashboard.personalize.modules.whyChanged",
+    "x-webPath": "dashboard.personalize.modules.whyChanged"
+  },
+  "dashboardPersonalizeModulesSpending": "Categorías de gastos",
+  "@dashboardPersonalizeModulesSpending": {
+    "description": "Web path: dashboard.personalize.modules.spending",
+    "x-webPath": "dashboard.personalize.modules.spending"
+  },
+  "dashboardPersonalizeModulesPortfolioHealth": "Estado de la cartera",
+  "@dashboardPersonalizeModulesPortfolioHealth": {
+    "description": "Web path: dashboard.personalize.modules.portfolioHealth",
+    "x-webPath": "dashboard.personalize.modules.portfolioHealth"
+  },
+  "dashboardPersonalizeModulesIncomeRecent": "Ingresos y transacciones recientes",
+  "@dashboardPersonalizeModulesIncomeRecent": {
+    "description": "Web path: dashboard.personalize.modules.incomeRecent",
+    "x-webPath": "dashboard.personalize.modules.incomeRecent"
+  },
+  "dashboardPersonalizeMoveUp": "Subir {module}",
+  "@dashboardPersonalizeMoveUp": {
+    "description": "Web path: dashboard.personalize.moveUp",
+    "x-webPath": "dashboard.personalize.moveUp",
+    "placeholders": {
+      "module": {}
+    }
+  },
+  "dashboardPersonalizeMoveDown": "Bajar {module}",
+  "@dashboardPersonalizeMoveDown": {
+    "description": "Web path: dashboard.personalize.moveDown",
+    "x-webPath": "dashboard.personalize.moveDown",
+    "placeholders": {
+      "module": {}
+    }
+  },
+  "dashboardPersonalizeSaved": "Diseño del panel guardado",
+  "@dashboardPersonalizeSaved": {
+    "description": "Web path: dashboard.personalize.saved",
+    "x-webPath": "dashboard.personalize.saved"
+  },
+  "dashboardPersonalizeSaveError": "No se pudo guardar el diseño del panel",
+  "@dashboardPersonalizeSaveError": {
+    "description": "Web path: dashboard.personalize.saveError",
+    "x-webPath": "dashboard.personalize.saveError"
+  },
+  "dashboardPersonalizeReset": "Restablecer",
+  "@dashboardPersonalizeReset": {
+    "description": "Web path: dashboard.personalize.reset",
+    "x-webPath": "dashboard.personalize.reset"
+  },
+  "dashboardPersonalizeApply": "Aplicar",
+  "@dashboardPersonalizeApply": {
+    "description": "Web path: dashboard.personalize.apply",
+    "x-webPath": "dashboard.personalize.apply"
+  },
+  "dashboardComparisonTitle": "Por qué cambió el flujo de efectivo",
+  "@dashboardComparisonTitle": {
+    "description": "Web path: dashboard.comparison.title",
+    "x-webPath": "dashboard.comparison.title"
+  },
+  "dashboardComparisonMtd": "{currentStart}–{currentEnd} frente a {previousStart}–{previousEnd}",
+  "@dashboardComparisonMtd": {
+    "description": "Web path: dashboard.comparison.mtd",
+    "x-webPath": "dashboard.comparison.mtd",
+    "placeholders": {
+      "currentStart": {},
+      "currentEnd": {},
+      "previousStart": {},
+      "previousEnd": {}
+    }
+  },
+  "dashboardComparisonFull": "Mes completo frente a {previousStart}–{previousEnd}",
+  "@dashboardComparisonFull": {
+    "description": "Web path: dashboard.comparison.full",
+    "x-webPath": "dashboard.comparison.full",
+    "placeholders": {
+      "previousStart": {},
+      "previousEnd": {}
+    }
+  },
+  "dashboardComparisonUnavailable": "No hay un período anterior comparable para este mes.",
+  "@dashboardComparisonUnavailable": {
+    "description": "Web path: dashboard.comparison.unavailable",
+    "x-webPath": "dashboard.comparison.unavailable"
+  },
+  "dashboardComparisonNoChanges": "El flujo de efectivo registrado no cambió respecto al período comparable.",
+  "@dashboardComparisonNoChanges": {
+    "description": "Web path: dashboard.comparison.noChanges",
+    "x-webPath": "dashboard.comparison.noChanges"
+  },
+  "dashboardComparisonPreviousNet": "Flujo de efectivo neto anterior",
+  "@dashboardComparisonPreviousNet": {
+    "description": "Web path: dashboard.comparison.previousNet",
+    "x-webPath": "dashboard.comparison.previousNet"
+  },
+  "dashboardComparisonNetChange": "Cambio del flujo de efectivo neto",
+  "@dashboardComparisonNetChange": {
+    "description": "Web path: dashboard.comparison.netChange",
+    "x-webPath": "dashboard.comparison.netChange"
+  },
+  "dashboardComparisonNewThisPeriod": "Nuevo en este período",
+  "@dashboardComparisonNewThisPeriod": {
+    "description": "Web path: dashboard.comparison.newThisPeriod",
+    "x-webPath": "dashboard.comparison.newThisPeriod"
+  },
+  "dashboardComparisonIncreased": "El importe aumentó",
+  "@dashboardComparisonIncreased": {
+    "description": "Web path: dashboard.comparison.increased",
+    "x-webPath": "dashboard.comparison.increased"
+  },
+  "dashboardComparisonDecreased": "El importe disminuyó",
+  "@dashboardComparisonDecreased": {
+    "description": "Web path: dashboard.comparison.decreased",
+    "x-webPath": "dashboard.comparison.decreased"
+  },
+  "dashboardPortfolioHealthTitle": "Estado de costos de la cartera",
+  "@dashboardPortfolioHealthTitle": {
+    "description": "Web path: dashboard.portfolioHealth.title",
+    "x-webPath": "dashboard.portfolioHealth.title"
+  },
+  "dashboardPortfolioHealthSubtitle": "Valor actual frente al costo FIFO restante",
+  "@dashboardPortfolioHealthSubtitle": {
+    "description": "Web path: dashboard.portfolioHealth.subtitle",
+    "x-webPath": "dashboard.portfolioHealth.subtitle"
+  },
+  "dashboardPortfolioHealthNoHoldings": "Añade una posición para ver información de costos.",
+  "@dashboardPortfolioHealthNoHoldings": {
+    "description": "Web path: dashboard.portfolioHealth.noHoldings",
+    "x-webPath": "dashboard.portfolioHealth.noHoldings"
+  },
+  "dashboardPortfolioHealthMissingPrices": "Se necesitan precios actuales para mostrar esta comparación.",
+  "@dashboardPortfolioHealthMissingPrices": {
+    "description": "Web path: dashboard.portfolioHealth.missingPrices",
+    "x-webPath": "dashboard.portfolioHealth.missingPrices"
+  },
+  "dashboardPortfolioHealthMixedCurrencies": "No hay un porcentaje combinado para posiciones en varias divisas.",
+  "@dashboardPortfolioHealthMixedCurrencies": {
+    "description": "Web path: dashboard.portfolioHealth.mixedCurrencies",
+    "x-webPath": "dashboard.portfolioHealth.mixedCurrencies"
+  },
+  "dashboardPortfolioHealthMarketValue": "Valor de mercado con precio",
+  "@dashboardPortfolioHealthMarketValue": {
+    "description": "Web path: dashboard.portfolioHealth.marketValue",
+    "x-webPath": "dashboard.portfolioHealth.marketValue"
+  },
+  "dashboardPortfolioHealthCost": "Costo de posiciones con precio",
+  "@dashboardPortfolioHealthCost": {
+    "description": "Web path: dashboard.portfolioHealth.cost",
+    "x-webPath": "dashboard.portfolioHealth.cost"
+  },
+  "dashboardPortfolioHealthUnrealizedGross": "Ganancia/pérdida bruta no realizada",
+  "@dashboardPortfolioHealthUnrealizedGross": {
+    "description": "Web path: dashboard.portfolioHealth.unrealizedGross",
+    "x-webPath": "dashboard.portfolioHealth.unrealizedGross"
+  },
+  "dashboardPortfolioHealthLargestHolding": "Mayor posición: {name} · {share}% del valor con precio",
+  "@dashboardPortfolioHealthLargestHolding": {
+    "description": "Web path: dashboard.portfolioHealth.largestHolding",
+    "x-webPath": "dashboard.portfolioHealth.largestHolding",
+    "placeholders": {
+      "name": {},
+      "share": {}
+    }
+  },
+  "dashboardPortfolioHealthDisclaimer": "Compara los precios actuales con el costo FIFO registrado. No es un índice de mercado ni un rendimiento ponderado por tiempo.",
+  "@dashboardPortfolioHealthDisclaimer": {
+    "description": "Web path: dashboard.portfolioHealth.disclaimer",
+    "x-webPath": "dashboard.portfolioHealth.disclaimer"
+  },
+  "dashboardPortfolioHealthCoverage": "Cobertura de precios: {priced} de {total} posiciones",
+  "@dashboardPortfolioHealthCoverage": {
+    "description": "Web path: dashboard.portfolioHealth.coverage",
+    "x-webPath": "dashboard.portfolioHealth.coverage",
+    "placeholders": {
+      "priced": {},
+      "total": {}
+    }
   }
 }

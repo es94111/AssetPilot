@@ -4024,4 +4024,138 @@ class AppLocalizationsHi extends AppLocalizations {
   String dashboardDriversShare(Object share) {
     return 'इस प्रकार का $share%';
   }
+
+  @override
+  String get dashboardPersonalizeTrigger => 'होम अनुकूलित करें';
+
+  @override
+  String get dashboardPersonalizeTitle => 'होम अनुकूलित करें';
+
+  @override
+  String get dashboardPersonalizeDescription =>
+      'दिखने वाले मॉड्यूल चुनें और उपयोग के क्रम में व्यवस्थित करें।';
+
+  @override
+  String get dashboardPersonalizeModulesAssets => 'संपत्ति अवलोकन';
+
+  @override
+  String get dashboardPersonalizeModulesAttention => 'ध्यान आवश्यक';
+
+  @override
+  String get dashboardPersonalizeModulesWhyChanged => 'नकदी प्रवाह क्यों बदला';
+
+  @override
+  String get dashboardPersonalizeModulesSpending => 'खर्च श्रेणियाँ';
+
+  @override
+  String get dashboardPersonalizeModulesPortfolioHealth => 'पोर्टफोलियो स्थिति';
+
+  @override
+  String get dashboardPersonalizeModulesIncomeRecent => 'आय और हाल के लेन-देन';
+
+  @override
+  String dashboardPersonalizeMoveUp(Object module) {
+    return '$module को ऊपर ले जाएँ';
+  }
+
+  @override
+  String dashboardPersonalizeMoveDown(Object module) {
+    return '$module को नीचे ले जाएँ';
+  }
+
+  @override
+  String get dashboardPersonalizeSaved => 'डैशबोर्ड लेआउट सहेजा गया';
+
+  @override
+  String get dashboardPersonalizeSaveError =>
+      'डैशबोर्ड लेआउट सहेजा नहीं जा सका';
+
+  @override
+  String get dashboardPersonalizeReset => 'रीसेट';
+
+  @override
+  String get dashboardPersonalizeApply => 'लागू करें';
+
+  @override
+  String get dashboardComparisonTitle => 'नकदी प्रवाह क्यों बदला';
+
+  @override
+  String dashboardComparisonMtd(
+    Object currentStart,
+    Object currentEnd,
+    Object previousStart,
+    Object previousEnd,
+  ) {
+    return '$currentStart–$currentEnd की तुलना $previousStart–$previousEnd से';
+  }
+
+  @override
+  String dashboardComparisonFull(Object previousStart, Object previousEnd) {
+    return 'पूरे महीने की तुलना $previousStart–$previousEnd से';
+  }
+
+  @override
+  String get dashboardComparisonUnavailable =>
+      'इस महीने के लिए तुलना योग्य पिछली अवधि नहीं है।';
+
+  @override
+  String get dashboardComparisonNoChanges =>
+      'दर्ज नकदी प्रवाह तुलना अवधि से अपरिवर्तित है।';
+
+  @override
+  String get dashboardComparisonPreviousNet => 'पिछला शुद्ध नकदी प्रवाह';
+
+  @override
+  String get dashboardComparisonNetChange => 'शुद्ध नकदी प्रवाह में बदलाव';
+
+  @override
+  String get dashboardComparisonNewThisPeriod => 'इस अवधि में नया';
+
+  @override
+  String get dashboardComparisonIncreased => 'राशि बढ़ी';
+
+  @override
+  String get dashboardComparisonDecreased => 'राशि घटी';
+
+  @override
+  String get dashboardPortfolioHealthTitle => 'पोर्टफोलियो लागत-आधार स्थिति';
+
+  @override
+  String get dashboardPortfolioHealthSubtitle =>
+      'वर्तमान मूल्य की शेष FIFO लागत से तुलना';
+
+  @override
+  String get dashboardPortfolioHealthNoHoldings =>
+      'लागत-आधार जानकारी के लिए एक होल्डिंग जोड़ें।';
+
+  @override
+  String get dashboardPortfolioHealthMissingPrices =>
+      'इस तुलना के लिए वर्तमान कीमतें आवश्यक हैं।';
+
+  @override
+  String get dashboardPortfolioHealthMixedCurrencies =>
+      'कई मुद्राओं वाली होल्डिंग के लिए संयुक्त प्रतिशत उपलब्ध नहीं है।';
+
+  @override
+  String get dashboardPortfolioHealthMarketValue => 'कीमत उपलब्ध बाजार मूल्य';
+
+  @override
+  String get dashboardPortfolioHealthCost => 'कीमत उपलब्ध होल्डिंग की लागत';
+
+  @override
+  String get dashboardPortfolioHealthUnrealizedGross => 'अप्राप्त सकल लाभ/हानि';
+
+  @override
+  String dashboardPortfolioHealthLargestHolding(Object name, Object share) {
+    return 'सबसे बड़ी होल्डिंग: $name · कीमत उपलब्ध मूल्य का $share%';
+  }
+
+  @override
+  String get dashboardPortfolioHealthDisclaimer =>
+      'यह वर्तमान कीमतों की दर्ज FIFO लागत से तुलना है। यह बाजार सूचकांक बेंचमार्क या समय-भारित प्रदर्शन नहीं है।';
+
+  @override
+  String dashboardPortfolioHealthCoverage(Object priced, Object total) {
+    return 'कीमत कवरेज: $total में से $priced होल्डिंग';
+  }
 }

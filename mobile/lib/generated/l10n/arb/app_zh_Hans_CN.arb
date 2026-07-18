@@ -6208,5 +6208,209 @@
     "placeholders": {
       "share": {}
     }
+  },
+  "dashboardPersonalizeTrigger": "自定义首页",
+  "@dashboardPersonalizeTrigger": {
+    "description": "Web path: dashboard.personalize.trigger",
+    "x-webPath": "dashboard.personalize.trigger"
+  },
+  "dashboardPersonalizeTitle": "自定义首页",
+  "@dashboardPersonalizeTitle": {
+    "description": "Web path: dashboard.personalize.title",
+    "x-webPath": "dashboard.personalize.title"
+  },
+  "dashboardPersonalizeDescription": "选择要显示的模块，并按照你的使用顺序排列。",
+  "@dashboardPersonalizeDescription": {
+    "description": "Web path: dashboard.personalize.description",
+    "x-webPath": "dashboard.personalize.description"
+  },
+  "dashboardPersonalizeModulesAssets": "资产概览",
+  "@dashboardPersonalizeModulesAssets": {
+    "description": "Web path: dashboard.personalize.modules.assets",
+    "x-webPath": "dashboard.personalize.modules.assets"
+  },
+  "dashboardPersonalizeModulesAttention": "需要处理",
+  "@dashboardPersonalizeModulesAttention": {
+    "description": "Web path: dashboard.personalize.modules.attention",
+    "x-webPath": "dashboard.personalize.modules.attention"
+  },
+  "dashboardPersonalizeModulesWhyChanged": "现金流为何变动",
+  "@dashboardPersonalizeModulesWhyChanged": {
+    "description": "Web path: dashboard.personalize.modules.whyChanged",
+    "x-webPath": "dashboard.personalize.modules.whyChanged"
+  },
+  "dashboardPersonalizeModulesSpending": "支出分类",
+  "@dashboardPersonalizeModulesSpending": {
+    "description": "Web path: dashboard.personalize.modules.spending",
+    "x-webPath": "dashboard.personalize.modules.spending"
+  },
+  "dashboardPersonalizeModulesPortfolioHealth": "投资组合检查",
+  "@dashboardPersonalizeModulesPortfolioHealth": {
+    "description": "Web path: dashboard.personalize.modules.portfolioHealth",
+    "x-webPath": "dashboard.personalize.modules.portfolioHealth"
+  },
+  "dashboardPersonalizeModulesIncomeRecent": "收入与近期交易",
+  "@dashboardPersonalizeModulesIncomeRecent": {
+    "description": "Web path: dashboard.personalize.modules.incomeRecent",
+    "x-webPath": "dashboard.personalize.modules.incomeRecent"
+  },
+  "dashboardPersonalizeMoveUp": "将“{module}”上移",
+  "@dashboardPersonalizeMoveUp": {
+    "description": "Web path: dashboard.personalize.moveUp",
+    "x-webPath": "dashboard.personalize.moveUp",
+    "placeholders": {
+      "module": {}
+    }
+  },
+  "dashboardPersonalizeMoveDown": "将“{module}”下移",
+  "@dashboardPersonalizeMoveDown": {
+    "description": "Web path: dashboard.personalize.moveDown",
+    "x-webPath": "dashboard.personalize.moveDown",
+    "placeholders": {
+      "module": {}
+    }
+  },
+  "dashboardPersonalizeSaved": "首页配置已保存",
+  "@dashboardPersonalizeSaved": {
+    "description": "Web path: dashboard.personalize.saved",
+    "x-webPath": "dashboard.personalize.saved"
+  },
+  "dashboardPersonalizeSaveError": "无法保存首页配置",
+  "@dashboardPersonalizeSaveError": {
+    "description": "Web path: dashboard.personalize.saveError",
+    "x-webPath": "dashboard.personalize.saveError"
+  },
+  "dashboardPersonalizeReset": "重置",
+  "@dashboardPersonalizeReset": {
+    "description": "Web path: dashboard.personalize.reset",
+    "x-webPath": "dashboard.personalize.reset"
+  },
+  "dashboardPersonalizeApply": "应用",
+  "@dashboardPersonalizeApply": {
+    "description": "Web path: dashboard.personalize.apply",
+    "x-webPath": "dashboard.personalize.apply"
+  },
+  "dashboardComparisonTitle": "现金流为何变动",
+  "@dashboardComparisonTitle": {
+    "description": "Web path: dashboard.comparison.title",
+    "x-webPath": "dashboard.comparison.title"
+  },
+  "dashboardComparisonMtd": "{currentStart}～{currentEnd}，对比 {previousStart}～{previousEnd}",
+  "@dashboardComparisonMtd": {
+    "description": "Web path: dashboard.comparison.mtd",
+    "x-webPath": "dashboard.comparison.mtd",
+    "placeholders": {
+      "currentStart": {},
+      "currentEnd": {},
+      "previousStart": {},
+      "previousEnd": {}
+    }
+  },
+  "dashboardComparisonFull": "完整月份，对比 {previousStart}～{previousEnd}",
+  "@dashboardComparisonFull": {
+    "description": "Web path: dashboard.comparison.full",
+    "x-webPath": "dashboard.comparison.full",
+    "placeholders": {
+      "previousStart": {},
+      "previousEnd": {}
+    }
+  },
+  "dashboardComparisonUnavailable": "这个月份没有可比较的上一期间。",
+  "@dashboardComparisonUnavailable": {
+    "description": "Web path: dashboard.comparison.unavailable",
+    "x-webPath": "dashboard.comparison.unavailable"
+  },
+  "dashboardComparisonNoChanges": "已记录的现金流与可比期间相同。",
+  "@dashboardComparisonNoChanges": {
+    "description": "Web path: dashboard.comparison.noChanges",
+    "x-webPath": "dashboard.comparison.noChanges"
+  },
+  "dashboardComparisonPreviousNet": "上期净现金流",
+  "@dashboardComparisonPreviousNet": {
+    "description": "Web path: dashboard.comparison.previousNet",
+    "x-webPath": "dashboard.comparison.previousNet"
+  },
+  "dashboardComparisonNetChange": "净现金流变动",
+  "@dashboardComparisonNetChange": {
+    "description": "Web path: dashboard.comparison.netChange",
+    "x-webPath": "dashboard.comparison.netChange"
+  },
+  "dashboardComparisonNewThisPeriod": "本期新增",
+  "@dashboardComparisonNewThisPeriod": {
+    "description": "Web path: dashboard.comparison.newThisPeriod",
+    "x-webPath": "dashboard.comparison.newThisPeriod"
+  },
+  "dashboardComparisonIncreased": "金额增加",
+  "@dashboardComparisonIncreased": {
+    "description": "Web path: dashboard.comparison.increased",
+    "x-webPath": "dashboard.comparison.increased"
+  },
+  "dashboardComparisonDecreased": "金额减少",
+  "@dashboardComparisonDecreased": {
+    "description": "Web path: dashboard.comparison.decreased",
+    "x-webPath": "dashboard.comparison.decreased"
+  },
+  "dashboardPortfolioHealthTitle": "投资成本基础检查",
+  "@dashboardPortfolioHealthTitle": {
+    "description": "Web path: dashboard.portfolioHealth.title",
+    "x-webPath": "dashboard.portfolioHealth.title"
+  },
+  "dashboardPortfolioHealthSubtitle": "当前市值与 FIFO 剩余成本比较",
+  "@dashboardPortfolioHealthSubtitle": {
+    "description": "Web path: dashboard.portfolioHealth.subtitle",
+    "x-webPath": "dashboard.portfolioHealth.subtitle"
+  },
+  "dashboardPortfolioHealthNoHoldings": "新增持仓后即可查看成本基础分析。",
+  "@dashboardPortfolioHealthNoHoldings": {
+    "description": "Web path: dashboard.portfolioHealth.noHoldings",
+    "x-webPath": "dashboard.portfolioHealth.noHoldings"
+  },
+  "dashboardPortfolioHealthMissingPrices": "需要当前价格才能提供这项比较。",
+  "@dashboardPortfolioHealthMissingPrices": {
+    "description": "Web path: dashboard.portfolioHealth.missingPrices",
+    "x-webPath": "dashboard.portfolioHealth.missingPrices"
+  },
+  "dashboardPortfolioHealthMixedCurrencies": "持仓包含多种币种，暂不提供合并百分比。",
+  "@dashboardPortfolioHealthMixedCurrencies": {
+    "description": "Web path: dashboard.portfolioHealth.mixedCurrencies",
+    "x-webPath": "dashboard.portfolioHealth.mixedCurrencies"
+  },
+  "dashboardPortfolioHealthMarketValue": "已有价格的市值",
+  "@dashboardPortfolioHealthMarketValue": {
+    "description": "Web path: dashboard.portfolioHealth.marketValue",
+    "x-webPath": "dashboard.portfolioHealth.marketValue"
+  },
+  "dashboardPortfolioHealthCost": "已有价格持仓成本",
+  "@dashboardPortfolioHealthCost": {
+    "description": "Web path: dashboard.portfolioHealth.cost",
+    "x-webPath": "dashboard.portfolioHealth.cost"
+  },
+  "dashboardPortfolioHealthUnrealizedGross": "未实现毛损益",
+  "@dashboardPortfolioHealthUnrealizedGross": {
+    "description": "Web path: dashboard.portfolioHealth.unrealizedGross",
+    "x-webPath": "dashboard.portfolioHealth.unrealizedGross"
+  },
+  "dashboardPortfolioHealthLargestHolding": "最大持仓：{name} · 占已有价格市值 {share}%",
+  "@dashboardPortfolioHealthLargestHolding": {
+    "description": "Web path: dashboard.portfolioHealth.largestHolding",
+    "x-webPath": "dashboard.portfolioHealth.largestHolding",
+    "placeholders": {
+      "name": {},
+      "share": {}
+    }
+  },
+  "dashboardPortfolioHealthDisclaimer": "这里比较当前价格与已记录的 FIFO 成本，不是市场指数基准或时间加权绩效。",
+  "@dashboardPortfolioHealthDisclaimer": {
+    "description": "Web path: dashboard.portfolioHealth.disclaimer",
+    "x-webPath": "dashboard.portfolioHealth.disclaimer"
+  },
+  "dashboardPortfolioHealthCoverage": "价格覆盖：{total} 项持仓中有 {priced} 项",
+  "@dashboardPortfolioHealthCoverage": {
+    "description": "Web path: dashboard.portfolioHealth.coverage",
+    "x-webPath": "dashboard.portfolioHealth.coverage",
+    "placeholders": {
+      "priced": {},
+      "total": {}
+    }
   }
 }

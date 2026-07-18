@@ -381,6 +381,8 @@ async function _runMigrations(): Promise<void> {
     user_id TEXT PRIMARY KEY,
     pinned_currencies TEXT DEFAULT '[]',
     default_currency TEXT DEFAULT 'TWD',
+    dashboard_layout TEXT DEFAULT '{}',
+    dashboard_layout_updated_at INTEGER DEFAULT 0,
     updated_at INTEGER
   )`);
 
@@ -402,6 +404,9 @@ async function _runMigrations(): Promise<void> {
   alterIgnore("ALTER TABLE user_settings ADD COLUMN default_currency TEXT DEFAULT 'TWD'");
   // 使用者語言偏好（多語言）。見 lib/i18n/。預設 zh-TW；排程通知（Email/LINE）亦讀此欄。
   alterIgnore("ALTER TABLE user_settings ADD COLUMN language TEXT DEFAULT 'zh-TW'");
+  // Dashboard 模組排序與顯示偏好。JSON 僅接受 lib/dashboardPreferences.ts 的固定 allowlist。
+  alterIgnore("ALTER TABLE user_settings ADD COLUMN dashboard_layout TEXT DEFAULT '{}'");
+  alterIgnore("ALTER TABLE user_settings ADD COLUMN dashboard_layout_updated_at INTEGER DEFAULT 0");
 
   // 交易憑證照片的每使用者資料金鑰（DEK），已被 PHOTO_MASTER_KEY 包覆。見 lib/photoCrypto.ts。
   db.run(`CREATE TABLE IF NOT EXISTS user_photo_keys (

@@ -4100,4 +4100,145 @@ class AppLocalizationsEs extends AppLocalizations {
   String dashboardDriversShare(Object share) {
     return '$share% de este tipo';
   }
+
+  @override
+  String get dashboardPersonalizeTrigger => 'Personalizar inicio';
+
+  @override
+  String get dashboardPersonalizeTitle => 'Personalizar inicio';
+
+  @override
+  String get dashboardPersonalizeDescription =>
+      'Elige qué módulos aparecen y ordénalos según cómo los utilizas.';
+
+  @override
+  String get dashboardPersonalizeModulesAssets => 'Resumen de activos';
+
+  @override
+  String get dashboardPersonalizeModulesAttention => 'Requiere atención';
+
+  @override
+  String get dashboardPersonalizeModulesWhyChanged =>
+      'Por qué cambió el flujo de efectivo';
+
+  @override
+  String get dashboardPersonalizeModulesSpending => 'Categorías de gastos';
+
+  @override
+  String get dashboardPersonalizeModulesPortfolioHealth =>
+      'Estado de la cartera';
+
+  @override
+  String get dashboardPersonalizeModulesIncomeRecent =>
+      'Ingresos y transacciones recientes';
+
+  @override
+  String dashboardPersonalizeMoveUp(Object module) {
+    return 'Subir $module';
+  }
+
+  @override
+  String dashboardPersonalizeMoveDown(Object module) {
+    return 'Bajar $module';
+  }
+
+  @override
+  String get dashboardPersonalizeSaved => 'Diseño del panel guardado';
+
+  @override
+  String get dashboardPersonalizeSaveError =>
+      'No se pudo guardar el diseño del panel';
+
+  @override
+  String get dashboardPersonalizeReset => 'Restablecer';
+
+  @override
+  String get dashboardPersonalizeApply => 'Aplicar';
+
+  @override
+  String get dashboardComparisonTitle => 'Por qué cambió el flujo de efectivo';
+
+  @override
+  String dashboardComparisonMtd(
+    Object currentStart,
+    Object currentEnd,
+    Object previousStart,
+    Object previousEnd,
+  ) {
+    return '$currentStart–$currentEnd frente a $previousStart–$previousEnd';
+  }
+
+  @override
+  String dashboardComparisonFull(Object previousStart, Object previousEnd) {
+    return 'Mes completo frente a $previousStart–$previousEnd';
+  }
+
+  @override
+  String get dashboardComparisonUnavailable =>
+      'No hay un período anterior comparable para este mes.';
+
+  @override
+  String get dashboardComparisonNoChanges =>
+      'El flujo de efectivo registrado no cambió respecto al período comparable.';
+
+  @override
+  String get dashboardComparisonPreviousNet =>
+      'Flujo de efectivo neto anterior';
+
+  @override
+  String get dashboardComparisonNetChange =>
+      'Cambio del flujo de efectivo neto';
+
+  @override
+  String get dashboardComparisonNewThisPeriod => 'Nuevo en este período';
+
+  @override
+  String get dashboardComparisonIncreased => 'El importe aumentó';
+
+  @override
+  String get dashboardComparisonDecreased => 'El importe disminuyó';
+
+  @override
+  String get dashboardPortfolioHealthTitle => 'Estado de costos de la cartera';
+
+  @override
+  String get dashboardPortfolioHealthSubtitle =>
+      'Valor actual frente al costo FIFO restante';
+
+  @override
+  String get dashboardPortfolioHealthNoHoldings =>
+      'Añade una posición para ver información de costos.';
+
+  @override
+  String get dashboardPortfolioHealthMissingPrices =>
+      'Se necesitan precios actuales para mostrar esta comparación.';
+
+  @override
+  String get dashboardPortfolioHealthMixedCurrencies =>
+      'No hay un porcentaje combinado para posiciones en varias divisas.';
+
+  @override
+  String get dashboardPortfolioHealthMarketValue =>
+      'Valor de mercado con precio';
+
+  @override
+  String get dashboardPortfolioHealthCost => 'Costo de posiciones con precio';
+
+  @override
+  String get dashboardPortfolioHealthUnrealizedGross =>
+      'Ganancia/pérdida bruta no realizada';
+
+  @override
+  String dashboardPortfolioHealthLargestHolding(Object name, Object share) {
+    return 'Mayor posición: $name · $share% del valor con precio';
+  }
+
+  @override
+  String get dashboardPortfolioHealthDisclaimer =>
+      'Compara los precios actuales con el costo FIFO registrado. No es un índice de mercado ni un rendimiento ponderado por tiempo.';
+
+  @override
+  String dashboardPortfolioHealthCoverage(Object priced, Object total) {
+    return 'Cobertura de precios: $priced de $total posiciones';
+  }
 }

@@ -6208,5 +6208,209 @@
     "placeholders": {
       "share": {}
     }
+  },
+  "dashboardPersonalizeTrigger": "होम अनुकूलित करें",
+  "@dashboardPersonalizeTrigger": {
+    "description": "Web path: dashboard.personalize.trigger",
+    "x-webPath": "dashboard.personalize.trigger"
+  },
+  "dashboardPersonalizeTitle": "होम अनुकूलित करें",
+  "@dashboardPersonalizeTitle": {
+    "description": "Web path: dashboard.personalize.title",
+    "x-webPath": "dashboard.personalize.title"
+  },
+  "dashboardPersonalizeDescription": "दिखने वाले मॉड्यूल चुनें और उपयोग के क्रम में व्यवस्थित करें।",
+  "@dashboardPersonalizeDescription": {
+    "description": "Web path: dashboard.personalize.description",
+    "x-webPath": "dashboard.personalize.description"
+  },
+  "dashboardPersonalizeModulesAssets": "संपत्ति अवलोकन",
+  "@dashboardPersonalizeModulesAssets": {
+    "description": "Web path: dashboard.personalize.modules.assets",
+    "x-webPath": "dashboard.personalize.modules.assets"
+  },
+  "dashboardPersonalizeModulesAttention": "ध्यान आवश्यक",
+  "@dashboardPersonalizeModulesAttention": {
+    "description": "Web path: dashboard.personalize.modules.attention",
+    "x-webPath": "dashboard.personalize.modules.attention"
+  },
+  "dashboardPersonalizeModulesWhyChanged": "नकदी प्रवाह क्यों बदला",
+  "@dashboardPersonalizeModulesWhyChanged": {
+    "description": "Web path: dashboard.personalize.modules.whyChanged",
+    "x-webPath": "dashboard.personalize.modules.whyChanged"
+  },
+  "dashboardPersonalizeModulesSpending": "खर्च श्रेणियाँ",
+  "@dashboardPersonalizeModulesSpending": {
+    "description": "Web path: dashboard.personalize.modules.spending",
+    "x-webPath": "dashboard.personalize.modules.spending"
+  },
+  "dashboardPersonalizeModulesPortfolioHealth": "पोर्टफोलियो स्थिति",
+  "@dashboardPersonalizeModulesPortfolioHealth": {
+    "description": "Web path: dashboard.personalize.modules.portfolioHealth",
+    "x-webPath": "dashboard.personalize.modules.portfolioHealth"
+  },
+  "dashboardPersonalizeModulesIncomeRecent": "आय और हाल के लेन-देन",
+  "@dashboardPersonalizeModulesIncomeRecent": {
+    "description": "Web path: dashboard.personalize.modules.incomeRecent",
+    "x-webPath": "dashboard.personalize.modules.incomeRecent"
+  },
+  "dashboardPersonalizeMoveUp": "{module} को ऊपर ले जाएँ",
+  "@dashboardPersonalizeMoveUp": {
+    "description": "Web path: dashboard.personalize.moveUp",
+    "x-webPath": "dashboard.personalize.moveUp",
+    "placeholders": {
+      "module": {}
+    }
+  },
+  "dashboardPersonalizeMoveDown": "{module} को नीचे ले जाएँ",
+  "@dashboardPersonalizeMoveDown": {
+    "description": "Web path: dashboard.personalize.moveDown",
+    "x-webPath": "dashboard.personalize.moveDown",
+    "placeholders": {
+      "module": {}
+    }
+  },
+  "dashboardPersonalizeSaved": "डैशबोर्ड लेआउट सहेजा गया",
+  "@dashboardPersonalizeSaved": {
+    "description": "Web path: dashboard.personalize.saved",
+    "x-webPath": "dashboard.personalize.saved"
+  },
+  "dashboardPersonalizeSaveError": "डैशबोर्ड लेआउट सहेजा नहीं जा सका",
+  "@dashboardPersonalizeSaveError": {
+    "description": "Web path: dashboard.personalize.saveError",
+    "x-webPath": "dashboard.personalize.saveError"
+  },
+  "dashboardPersonalizeReset": "रीसेट",
+  "@dashboardPersonalizeReset": {
+    "description": "Web path: dashboard.personalize.reset",
+    "x-webPath": "dashboard.personalize.reset"
+  },
+  "dashboardPersonalizeApply": "लागू करें",
+  "@dashboardPersonalizeApply": {
+    "description": "Web path: dashboard.personalize.apply",
+    "x-webPath": "dashboard.personalize.apply"
+  },
+  "dashboardComparisonTitle": "नकदी प्रवाह क्यों बदला",
+  "@dashboardComparisonTitle": {
+    "description": "Web path: dashboard.comparison.title",
+    "x-webPath": "dashboard.comparison.title"
+  },
+  "dashboardComparisonMtd": "{currentStart}–{currentEnd} की तुलना {previousStart}–{previousEnd} से",
+  "@dashboardComparisonMtd": {
+    "description": "Web path: dashboard.comparison.mtd",
+    "x-webPath": "dashboard.comparison.mtd",
+    "placeholders": {
+      "currentStart": {},
+      "currentEnd": {},
+      "previousStart": {},
+      "previousEnd": {}
+    }
+  },
+  "dashboardComparisonFull": "पूरे महीने की तुलना {previousStart}–{previousEnd} से",
+  "@dashboardComparisonFull": {
+    "description": "Web path: dashboard.comparison.full",
+    "x-webPath": "dashboard.comparison.full",
+    "placeholders": {
+      "previousStart": {},
+      "previousEnd": {}
+    }
+  },
+  "dashboardComparisonUnavailable": "इस महीने के लिए तुलना योग्य पिछली अवधि नहीं है।",
+  "@dashboardComparisonUnavailable": {
+    "description": "Web path: dashboard.comparison.unavailable",
+    "x-webPath": "dashboard.comparison.unavailable"
+  },
+  "dashboardComparisonNoChanges": "दर्ज नकदी प्रवाह तुलना अवधि से अपरिवर्तित है।",
+  "@dashboardComparisonNoChanges": {
+    "description": "Web path: dashboard.comparison.noChanges",
+    "x-webPath": "dashboard.comparison.noChanges"
+  },
+  "dashboardComparisonPreviousNet": "पिछला शुद्ध नकदी प्रवाह",
+  "@dashboardComparisonPreviousNet": {
+    "description": "Web path: dashboard.comparison.previousNet",
+    "x-webPath": "dashboard.comparison.previousNet"
+  },
+  "dashboardComparisonNetChange": "शुद्ध नकदी प्रवाह में बदलाव",
+  "@dashboardComparisonNetChange": {
+    "description": "Web path: dashboard.comparison.netChange",
+    "x-webPath": "dashboard.comparison.netChange"
+  },
+  "dashboardComparisonNewThisPeriod": "इस अवधि में नया",
+  "@dashboardComparisonNewThisPeriod": {
+    "description": "Web path: dashboard.comparison.newThisPeriod",
+    "x-webPath": "dashboard.comparison.newThisPeriod"
+  },
+  "dashboardComparisonIncreased": "राशि बढ़ी",
+  "@dashboardComparisonIncreased": {
+    "description": "Web path: dashboard.comparison.increased",
+    "x-webPath": "dashboard.comparison.increased"
+  },
+  "dashboardComparisonDecreased": "राशि घटी",
+  "@dashboardComparisonDecreased": {
+    "description": "Web path: dashboard.comparison.decreased",
+    "x-webPath": "dashboard.comparison.decreased"
+  },
+  "dashboardPortfolioHealthTitle": "पोर्टफोलियो लागत-आधार स्थिति",
+  "@dashboardPortfolioHealthTitle": {
+    "description": "Web path: dashboard.portfolioHealth.title",
+    "x-webPath": "dashboard.portfolioHealth.title"
+  },
+  "dashboardPortfolioHealthSubtitle": "वर्तमान मूल्य की शेष FIFO लागत से तुलना",
+  "@dashboardPortfolioHealthSubtitle": {
+    "description": "Web path: dashboard.portfolioHealth.subtitle",
+    "x-webPath": "dashboard.portfolioHealth.subtitle"
+  },
+  "dashboardPortfolioHealthNoHoldings": "लागत-आधार जानकारी के लिए एक होल्डिंग जोड़ें।",
+  "@dashboardPortfolioHealthNoHoldings": {
+    "description": "Web path: dashboard.portfolioHealth.noHoldings",
+    "x-webPath": "dashboard.portfolioHealth.noHoldings"
+  },
+  "dashboardPortfolioHealthMissingPrices": "इस तुलना के लिए वर्तमान कीमतें आवश्यक हैं।",
+  "@dashboardPortfolioHealthMissingPrices": {
+    "description": "Web path: dashboard.portfolioHealth.missingPrices",
+    "x-webPath": "dashboard.portfolioHealth.missingPrices"
+  },
+  "dashboardPortfolioHealthMixedCurrencies": "कई मुद्राओं वाली होल्डिंग के लिए संयुक्त प्रतिशत उपलब्ध नहीं है।",
+  "@dashboardPortfolioHealthMixedCurrencies": {
+    "description": "Web path: dashboard.portfolioHealth.mixedCurrencies",
+    "x-webPath": "dashboard.portfolioHealth.mixedCurrencies"
+  },
+  "dashboardPortfolioHealthMarketValue": "कीमत उपलब्ध बाजार मूल्य",
+  "@dashboardPortfolioHealthMarketValue": {
+    "description": "Web path: dashboard.portfolioHealth.marketValue",
+    "x-webPath": "dashboard.portfolioHealth.marketValue"
+  },
+  "dashboardPortfolioHealthCost": "कीमत उपलब्ध होल्डिंग की लागत",
+  "@dashboardPortfolioHealthCost": {
+    "description": "Web path: dashboard.portfolioHealth.cost",
+    "x-webPath": "dashboard.portfolioHealth.cost"
+  },
+  "dashboardPortfolioHealthUnrealizedGross": "अप्राप्त सकल लाभ/हानि",
+  "@dashboardPortfolioHealthUnrealizedGross": {
+    "description": "Web path: dashboard.portfolioHealth.unrealizedGross",
+    "x-webPath": "dashboard.portfolioHealth.unrealizedGross"
+  },
+  "dashboardPortfolioHealthLargestHolding": "सबसे बड़ी होल्डिंग: {name} · कीमत उपलब्ध मूल्य का {share}%",
+  "@dashboardPortfolioHealthLargestHolding": {
+    "description": "Web path: dashboard.portfolioHealth.largestHolding",
+    "x-webPath": "dashboard.portfolioHealth.largestHolding",
+    "placeholders": {
+      "name": {},
+      "share": {}
+    }
+  },
+  "dashboardPortfolioHealthDisclaimer": "यह वर्तमान कीमतों की दर्ज FIFO लागत से तुलना है। यह बाजार सूचकांक बेंचमार्क या समय-भारित प्रदर्शन नहीं है।",
+  "@dashboardPortfolioHealthDisclaimer": {
+    "description": "Web path: dashboard.portfolioHealth.disclaimer",
+    "x-webPath": "dashboard.portfolioHealth.disclaimer"
+  },
+  "dashboardPortfolioHealthCoverage": "कीमत कवरेज: {total} में से {priced} होल्डिंग",
+  "@dashboardPortfolioHealthCoverage": {
+    "description": "Web path: dashboard.portfolioHealth.coverage",
+    "x-webPath": "dashboard.portfolioHealth.coverage",
+    "placeholders": {
+      "priced": {},
+      "total": {}
+    }
   }
 }

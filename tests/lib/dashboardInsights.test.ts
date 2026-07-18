@@ -1,6 +1,11 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { buildDashboardDrivers, getHoldingMarketContribution } from '../../lib/dashboardInsights.ts';
+import {
+  buildDashboardChangeDrivers,
+  buildDashboardDrivers,
+  getDashboardComparisonWindow,
+  getHoldingMarketContribution,
+} from '../../lib/dashboardInsights.ts';
 
 test('buildDashboardDrivers returns a deterministic Top 3 across income and expense groups', () => {
   const drivers = buildDashboardDrivers(
@@ -58,4 +63,47 @@ test('getHoldingMarketContribution excludes sold and non-positive-price position
   assert.deepEqual(getHoldingMarketContribution(10, 0), { marketValue: 0, unpriced: true });
   assert.deepEqual(getHoldingMarketContribution(10, -5), { marketValue: 0, unpriced: true });
   assert.deepEqual(getHoldingMarketContribution(10, 25), { marketValue: 250, unpriced: false });
+});
+
+test('current month comparison aligns elapsed days and crosses the year boundary', () => {
+  assert.deepEqual(getDashboardComparisonWindow('2026-01', '2026-01-31'), {
+    currentStart: '2026-01-01',
+    currentEnd: '2026-01-31',
+    previousStart: '2025-12-01',
+    previousEnd: '2025-12-31',
+    mode: 'monthToDate',
+  });
+  assert.deepEqual(getDashboardComparisonWindow('2026-03', '2026-03-31')?.previousEnd, '2026-02-28');
+  assert.deepEqual(getDashboardComparisonWindow('2024-03', '2024-03-31')?.previousEnd, '2024-02-29');
+});
+
+test('historical comparison uses full months and future months are unavailable', () => {
+  assert.deepEqual(getDashboardComparisonWindow('2026-06', '2026-07-18'), {
+    currentStart: '2026-06-01',
+    currentEnd: '2026-06-30',
+    previousStart: '2026-05-01',
+    previousEnd: '2026-05-31',
+    mode: 'fullMonth',
+  });
+  assert.equal(getDashboardComparisonWindow('2026-08', '2026-07-18'), null);
+});
+
+test('cashflow change drivers apply income and expense signs and stable ties', () => {
+  const drivers = buildDashboardChangeDrivers(
+    [
+      { type: 'expense', categoryId: 'food', name: 'Food', color: '#111', amount: 500 },
+      { type: 'income', categoryId: 'salary', name: 'Salary', color: '#222', amount: 1_500 },
+      { type: 'income', categoryId: 'bonus', name: 'Bonus', color: '#333', amount: 100 },
+    ],
+    [
+      { type: 'expense', categoryId: 'food', name: 'Food', color: '#111', amount: 100 },
+      { type: 'income', categoryId: 'salary', name: 'Salary', color: '#222', amount: 1_100 },
+    ]
+  );
+
+  assert.deepEqual(drivers.map(({ name, delta, netContribution, isNew }) => ({ name, delta, netContribution, isNew })), [
+    { name: 'Food', delta: 400, netContribution: -400, isNew: false },
+    { name: 'Salary', delta: 400, netContribution: 400, isNew: false },
+    { name: 'Bonus', delta: 100, netContribution: 100, isNew: true },
+  ]);
 });

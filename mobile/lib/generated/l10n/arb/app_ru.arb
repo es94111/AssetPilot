@@ -6208,5 +6208,209 @@
     "placeholders": {
       "share": {}
     }
+  },
+  "dashboardPersonalizeTrigger": "Настроить главную",
+  "@dashboardPersonalizeTrigger": {
+    "description": "Web path: dashboard.personalize.trigger",
+    "x-webPath": "dashboard.personalize.trigger"
+  },
+  "dashboardPersonalizeTitle": "Настроить главную",
+  "@dashboardPersonalizeTitle": {
+    "description": "Web path: dashboard.personalize.title",
+    "x-webPath": "dashboard.personalize.title"
+  },
+  "dashboardPersonalizeDescription": "Выберите модули и расположите их в удобном порядке.",
+  "@dashboardPersonalizeDescription": {
+    "description": "Web path: dashboard.personalize.description",
+    "x-webPath": "dashboard.personalize.description"
+  },
+  "dashboardPersonalizeModulesAssets": "Обзор активов",
+  "@dashboardPersonalizeModulesAssets": {
+    "description": "Web path: dashboard.personalize.modules.assets",
+    "x-webPath": "dashboard.personalize.modules.assets"
+  },
+  "dashboardPersonalizeModulesAttention": "Требует внимания",
+  "@dashboardPersonalizeModulesAttention": {
+    "description": "Web path: dashboard.personalize.modules.attention",
+    "x-webPath": "dashboard.personalize.modules.attention"
+  },
+  "dashboardPersonalizeModulesWhyChanged": "Почему изменился денежный поток",
+  "@dashboardPersonalizeModulesWhyChanged": {
+    "description": "Web path: dashboard.personalize.modules.whyChanged",
+    "x-webPath": "dashboard.personalize.modules.whyChanged"
+  },
+  "dashboardPersonalizeModulesSpending": "Категории расходов",
+  "@dashboardPersonalizeModulesSpending": {
+    "description": "Web path: dashboard.personalize.modules.spending",
+    "x-webPath": "dashboard.personalize.modules.spending"
+  },
+  "dashboardPersonalizeModulesPortfolioHealth": "Состояние портфеля",
+  "@dashboardPersonalizeModulesPortfolioHealth": {
+    "description": "Web path: dashboard.personalize.modules.portfolioHealth",
+    "x-webPath": "dashboard.personalize.modules.portfolioHealth"
+  },
+  "dashboardPersonalizeModulesIncomeRecent": "Доходы и недавние операции",
+  "@dashboardPersonalizeModulesIncomeRecent": {
+    "description": "Web path: dashboard.personalize.modules.incomeRecent",
+    "x-webPath": "dashboard.personalize.modules.incomeRecent"
+  },
+  "dashboardPersonalizeMoveUp": "Переместить {module} вверх",
+  "@dashboardPersonalizeMoveUp": {
+    "description": "Web path: dashboard.personalize.moveUp",
+    "x-webPath": "dashboard.personalize.moveUp",
+    "placeholders": {
+      "module": {}
+    }
+  },
+  "dashboardPersonalizeMoveDown": "Переместить {module} вниз",
+  "@dashboardPersonalizeMoveDown": {
+    "description": "Web path: dashboard.personalize.moveDown",
+    "x-webPath": "dashboard.personalize.moveDown",
+    "placeholders": {
+      "module": {}
+    }
+  },
+  "dashboardPersonalizeSaved": "Макет панели сохранён",
+  "@dashboardPersonalizeSaved": {
+    "description": "Web path: dashboard.personalize.saved",
+    "x-webPath": "dashboard.personalize.saved"
+  },
+  "dashboardPersonalizeSaveError": "Не удалось сохранить макет панели",
+  "@dashboardPersonalizeSaveError": {
+    "description": "Web path: dashboard.personalize.saveError",
+    "x-webPath": "dashboard.personalize.saveError"
+  },
+  "dashboardPersonalizeReset": "Сбросить",
+  "@dashboardPersonalizeReset": {
+    "description": "Web path: dashboard.personalize.reset",
+    "x-webPath": "dashboard.personalize.reset"
+  },
+  "dashboardPersonalizeApply": "Применить",
+  "@dashboardPersonalizeApply": {
+    "description": "Web path: dashboard.personalize.apply",
+    "x-webPath": "dashboard.personalize.apply"
+  },
+  "dashboardComparisonTitle": "Почему изменился денежный поток",
+  "@dashboardComparisonTitle": {
+    "description": "Web path: dashboard.comparison.title",
+    "x-webPath": "dashboard.comparison.title"
+  },
+  "dashboardComparisonMtd": "{currentStart}–{currentEnd} в сравнении с {previousStart}–{previousEnd}",
+  "@dashboardComparisonMtd": {
+    "description": "Web path: dashboard.comparison.mtd",
+    "x-webPath": "dashboard.comparison.mtd",
+    "placeholders": {
+      "currentStart": {},
+      "currentEnd": {},
+      "previousStart": {},
+      "previousEnd": {}
+    }
+  },
+  "dashboardComparisonFull": "Полный месяц в сравнении с {previousStart}–{previousEnd}",
+  "@dashboardComparisonFull": {
+    "description": "Web path: dashboard.comparison.full",
+    "x-webPath": "dashboard.comparison.full",
+    "placeholders": {
+      "previousStart": {},
+      "previousEnd": {}
+    }
+  },
+  "dashboardComparisonUnavailable": "Для этого месяца нет сопоставимого предыдущего периода.",
+  "@dashboardComparisonUnavailable": {
+    "description": "Web path: dashboard.comparison.unavailable",
+    "x-webPath": "dashboard.comparison.unavailable"
+  },
+  "dashboardComparisonNoChanges": "Учтённый денежный поток не изменился относительно сопоставимого периода.",
+  "@dashboardComparisonNoChanges": {
+    "description": "Web path: dashboard.comparison.noChanges",
+    "x-webPath": "dashboard.comparison.noChanges"
+  },
+  "dashboardComparisonPreviousNet": "Предыдущий чистый денежный поток",
+  "@dashboardComparisonPreviousNet": {
+    "description": "Web path: dashboard.comparison.previousNet",
+    "x-webPath": "dashboard.comparison.previousNet"
+  },
+  "dashboardComparisonNetChange": "Изменение чистого денежного потока",
+  "@dashboardComparisonNetChange": {
+    "description": "Web path: dashboard.comparison.netChange",
+    "x-webPath": "dashboard.comparison.netChange"
+  },
+  "dashboardComparisonNewThisPeriod": "Новое в этом периоде",
+  "@dashboardComparisonNewThisPeriod": {
+    "description": "Web path: dashboard.comparison.newThisPeriod",
+    "x-webPath": "dashboard.comparison.newThisPeriod"
+  },
+  "dashboardComparisonIncreased": "Сумма увеличилась",
+  "@dashboardComparisonIncreased": {
+    "description": "Web path: dashboard.comparison.increased",
+    "x-webPath": "dashboard.comparison.increased"
+  },
+  "dashboardComparisonDecreased": "Сумма уменьшилась",
+  "@dashboardComparisonDecreased": {
+    "description": "Web path: dashboard.comparison.decreased",
+    "x-webPath": "dashboard.comparison.decreased"
+  },
+  "dashboardPortfolioHealthTitle": "Состояние себестоимости портфеля",
+  "@dashboardPortfolioHealthTitle": {
+    "description": "Web path: dashboard.portfolioHealth.title",
+    "x-webPath": "dashboard.portfolioHealth.title"
+  },
+  "dashboardPortfolioHealthSubtitle": "Текущая стоимость и остаточная стоимость FIFO",
+  "@dashboardPortfolioHealthSubtitle": {
+    "description": "Web path: dashboard.portfolioHealth.subtitle",
+    "x-webPath": "dashboard.portfolioHealth.subtitle"
+  },
+  "dashboardPortfolioHealthNoHoldings": "Добавьте позицию, чтобы увидеть анализ себестоимости.",
+  "@dashboardPortfolioHealthNoHoldings": {
+    "description": "Web path: dashboard.portfolioHealth.noHoldings",
+    "x-webPath": "dashboard.portfolioHealth.noHoldings"
+  },
+  "dashboardPortfolioHealthMissingPrices": "Для сравнения нужны текущие цены.",
+  "@dashboardPortfolioHealthMissingPrices": {
+    "description": "Web path: dashboard.portfolioHealth.missingPrices",
+    "x-webPath": "dashboard.portfolioHealth.missingPrices"
+  },
+  "dashboardPortfolioHealthMixedCurrencies": "Общий процент недоступен для позиций в разных валютах.",
+  "@dashboardPortfolioHealthMixedCurrencies": {
+    "description": "Web path: dashboard.portfolioHealth.mixedCurrencies",
+    "x-webPath": "dashboard.portfolioHealth.mixedCurrencies"
+  },
+  "dashboardPortfolioHealthMarketValue": "Рыночная стоимость с ценой",
+  "@dashboardPortfolioHealthMarketValue": {
+    "description": "Web path: dashboard.portfolioHealth.marketValue",
+    "x-webPath": "dashboard.portfolioHealth.marketValue"
+  },
+  "dashboardPortfolioHealthCost": "Стоимость позиций с ценой",
+  "@dashboardPortfolioHealthCost": {
+    "description": "Web path: dashboard.portfolioHealth.cost",
+    "x-webPath": "dashboard.portfolioHealth.cost"
+  },
+  "dashboardPortfolioHealthUnrealizedGross": "Валовая нереализованная прибыль/убыток",
+  "@dashboardPortfolioHealthUnrealizedGross": {
+    "description": "Web path: dashboard.portfolioHealth.unrealizedGross",
+    "x-webPath": "dashboard.portfolioHealth.unrealizedGross"
+  },
+  "dashboardPortfolioHealthLargestHolding": "Крупнейшая позиция: {name} · {share}% оценённой стоимости",
+  "@dashboardPortfolioHealthLargestHolding": {
+    "description": "Web path: dashboard.portfolioHealth.largestHolding",
+    "x-webPath": "dashboard.portfolioHealth.largestHolding",
+    "placeholders": {
+      "name": {},
+      "share": {}
+    }
+  },
+  "dashboardPortfolioHealthDisclaimer": "Сравниваются текущие цены и учтённая стоимость FIFO. Это не рыночный индекс и не взвешенная по времени доходность.",
+  "@dashboardPortfolioHealthDisclaimer": {
+    "description": "Web path: dashboard.portfolioHealth.disclaimer",
+    "x-webPath": "dashboard.portfolioHealth.disclaimer"
+  },
+  "dashboardPortfolioHealthCoverage": "Покрытие ценами: {priced} из {total} позиций",
+  "@dashboardPortfolioHealthCoverage": {
+    "description": "Web path: dashboard.portfolioHealth.coverage",
+    "x-webPath": "dashboard.portfolioHealth.coverage",
+    "placeholders": {
+      "priced": {},
+      "total": {}
+    }
   }
 }

@@ -1,3 +1,48 @@
+# 2026-07-18 phase-3-personalized-decision-dashboard
+
+## Goal + Acceptance Criteria
+- [x] Users can open Dashboard personalization, reorder the decision modules, hide optional modules, save once, and see the same layout after refresh.
+- [x] Preferences are isolated by authenticated `user_id`, validated against a fixed module allowlist, and saved with atomic optimistic concurrency semantics.
+- [x] Dashboard explains selected-period change against the correct comparison window: current month-to-date vs prior month-to-date, historical full month vs prior full month.
+- [x] “Why changed” shows deterministic Top 3 net-change contributors with direction, amount, type, and links to the matching transaction period.
+- [x] Investment decision support compares current held-market value against remaining FIFO cost basis, shows estimated P/L and concentration, and clearly states that it is not a market-index/TWR benchmark.
+- [x] Missing historical market data, missing prices, zero cost, mixed currencies, missing baselines, and empty periods use explicit unavailable/insufficient-data states rather than fabricated percentages.
+- [x] Existing phase-one/two totals, transaction filters, mobile layouts, APIs, and user data remain backward compatible through additive response/schema fields.
+- [x] Verification covers pure period/driver calculations, preference validation, i18n parity, TypeScript, full tests, diff hygiene, and production build.
+
+## Risk & Rollback
+- Risk level: medium; this adds an authenticated preference contract and more financial interpretation to the Dashboard.
+- Affected components: additive `user_settings.dashboard_layout`, Dashboard API/types/page, one client personalization dialog, shared translations/tests.
+- Rollback strategy: revert the additive preference route/column and decision-support response/UI; the existing Dashboard fields and financial records are not rewritten.
+- Monitoring signals: comparison windows crossing month/year incorrectly, category deltas with reversed signs, preference conflicts, hidden mandatory overview, or cost-basis copy being mistaken for index performance.
+
+## Dependencies & Environment
+- Existing Next.js/React/Base UI/Lucide stack only; no new package planned.
+- Current schema has current stock prices, transactions, dividends, and FIFO lots but no historical price/index series. Market benchmark and TWR must remain explicitly unavailable in this slice.
+- User settings are already included in export/import/deletion; an additive column remains inside that existing lifecycle.
+
+## Working Notes
+- Personalization module allowlist: `assets`, `attention`, `whyChanged`, `spending`, `portfolioHealth`, `incomeRecent`; cash-flow hero remains mandatory and cannot be hidden.
+- “Why changed” operates on income/expense transaction cash flow, not total net-worth history, because the repository has no account/portfolio snapshots.
+- Investment comparison is a current cost-basis health view, not time-weighted performance and not an index benchmark.
+- For current month, prior comparison end-day is clamped to the prior month’s last day. Future selected months return an unavailable comparison rather than extrapolation.
+
+## Plan
+- [x] Confirm data availability, UX boundary, and official comparable-product patterns.
+- [x] Add pure comparison/preference helpers and regression tests.
+- [x] Add dashboard preference persistence and authenticated API.
+- [x] Extend Dashboard API with comparison and cost-basis portfolio insight.
+- [x] Add personalization and decision-support UI with empty/error states.
+- [x] Generate translations and run full verification.
+- [x] Complete independent correctness/UX review and record results.
+
+## Results
+- Added server-rendered Dashboard module ordering/visibility with a keyboard-operable customizer, fixed module allowlist, an independent `dashboard_layout_updated_at` version, and atomic compare-and-swap persistence.
+- Replaced the previous amount-only driver ranking with comparable-period cash-flow explanations. Current month uses aligned month-to-date windows; historical months use complete months; future months and missing baselines are unavailable.
+- Added a current cost-basis portfolio health view using the existing Decimal FIFO calculation, with mixed-currency, missing-price, price-coverage, empty-holding, zero-cost, and concentration safeguards. Copy explicitly distinguishes this from index/TWR performance.
+- Independent correctness/security and UX/accessibility reviews found no P0. Their P1 findings were addressed: atomic isolated preference locking, missing-baseline handling, tenant-scoped category joins, consistent driver semantics, mobile action order/saving lock, localized strings, and large-number wrapping.
+- Verification passed: `npm run typecheck`, `npm test` (including 9 Dashboard insight/preference tests), `npm run check:i18n` across 10 locales, `git diff --check`, and a clean production `npm run build` outside the Windows sandbox. The build retains existing Next.js Cache-Control and middleware deprecation warnings.
+
 # 2026-07-18 production-browser-screenshot-verification
 
 ## Goal + Acceptance Criteria

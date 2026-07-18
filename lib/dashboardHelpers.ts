@@ -1,5 +1,7 @@
 import logger from '@/lib/logger';
 import { requireAuth } from '@/lib/auth';
+import type { DashboardLayoutPreference } from '@/lib/dashboardPreferences';
+import type { DashboardChangeDriver, DashboardComparisonWindow } from '@/lib/dashboardInsights';
 
 export interface DashboardCategoryAggregateRow {
   category_id: string | number | null;
@@ -60,6 +62,37 @@ export interface DashboardResponse {
     recurringNeedsAttentionCount: number;
     uncategorizedTransactionCount: number;
     uncategorizedAmount: number;
+  };
+  preferences: {
+    layout: DashboardLayoutPreference;
+    updatedAt: number;
+  };
+  comparison: {
+    available: boolean;
+    currentTransactionCount: number;
+    previousTransactionCount: number;
+    window: DashboardComparisonWindow | null;
+    current: { income: number; expense: number; net: number };
+    previous: { income: number; expense: number; net: number } | null;
+    delta: { income: number; expense: number; net: number } | null;
+    drivers: DashboardChangeDriver[];
+  };
+  portfolioHealth: {
+    available: boolean;
+    unavailableReason: 'noHoldings' | 'missingPrices' | 'mixedCurrencies' | null;
+    currency: string | null;
+    marketValue: number;
+    totalCost: number;
+    unrealizedGrossPL: number;
+    costReturnRate: number | null;
+    pricedHoldingCount: number;
+    holdingCount: number;
+    largestHolding: {
+      name: string;
+      symbol: string;
+      marketValue: number;
+      share: number;
+    } | null;
   };
   catBreakdown: DashboardCategoryNode[];
   incomeCatBreakdown: DashboardCategoryNode[];

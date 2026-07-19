@@ -4144,4 +4144,139 @@ class AppLocalizationsAr extends AppLocalizations {
   String dashboardPortfolioHealthCoverage(Object priced, Object total) {
     return 'تغطية الأسعار: $priced من أصل $total حيازة';
   }
+
+  @override
+  String get dashboardPersonalizeModulesCashOutlook => 'توقع النقد المجدول';
+
+  @override
+  String get dashboardPersonalizeModulesSavingsScenario => 'سيناريو الادخار';
+
+  @override
+  String get dashboardCashOutlookTitle =>
+      'الثلاثون يومًا القادمة · النقد المجدول';
+
+  @override
+  String get dashboardCashOutlookSubtitle =>
+      'استنادًا إلى البنود المتكررة المؤكدة';
+
+  @override
+  String dashboardCashOutlookWindow(Object start, Object end) {
+    return '$start–$end · تقدير مجدول';
+  }
+
+  @override
+  String get dashboardCashOutlookInvalidDate => 'تعذر حساب فترة التقدير.';
+
+  @override
+  String get dashboardCashOutlookNoBankAccounts =>
+      'أضف حسابًا مصرفيًا مشمولًا قبل تقدير النقد المجدول.';
+
+  @override
+  String get dashboardCashOutlookNoSchedules =>
+      'أنشئ دخلاً أو مصروفًا متكررًا لرؤية النقد المجدول القادم.';
+
+  @override
+  String get dashboardCashOutlookNoCoveredSchedules =>
+      'راجع البنود المتكررة واربطها بحسابات مصرفية مشمولة.';
+
+  @override
+  String get dashboardCashOutlookStartingBalance =>
+      'رصيد الحسابات المصرفية حتى اليوم';
+
+  @override
+  String get dashboardCashOutlookScheduledNet => 'صافي التغير المجدول';
+
+  @override
+  String get dashboardCashOutlookClosingBalance => 'النقد المقدّر بعد 30 يومًا';
+
+  @override
+  String get dashboardCashOutlookLowestBalance => 'أدنى نقد مقدّر';
+
+  @override
+  String dashboardCashOutlookFlowSummary(
+    Object count,
+    Object income,
+    Object expense,
+  ) {
+    return '$count بنود مجدولة · الدخل $income · المصروف $expense';
+  }
+
+  @override
+  String get dashboardCashOutlookShortfallTitle =>
+      'قد ينخفض إجمالي النقد المقدّر دون الصفر';
+
+  @override
+  String dashboardCashOutlookShortfallBody(Object date, Object amount) {
+    return 'نحو $date قد يصل التقدير إلى $amount دون الصفر. راجع التواريخ والمبالغ قبل اتخاذ إجراء.';
+  }
+
+  @override
+  String get dashboardCashOutlookUpcoming => 'البنود المجدولة القادمة';
+
+  @override
+  String dashboardCashOutlookShowing(Object shown, Object total) {
+    return 'عرض $shown من $total';
+  }
+
+  @override
+  String get dashboardCashOutlookNoUpcoming =>
+      'لا توجد بنود مجدولة ضمن فترة الثلاثين يومًا هذه.';
+
+  @override
+  String dashboardCashOutlookCoverage(
+    Object included,
+    Object total,
+    Object uncovered,
+  ) {
+    return 'تمت تغطية $included من $total بنود متكررة؛ راجع $uncovered.';
+  }
+
+  @override
+  String get dashboardCashOutlookDisclaimer =>
+      'يجمع التقدير كل الحسابات المصرفية المشمولة باستخدام رصيد اليوم والبنود المتكررة المرتبطة المؤكدة. لا يعرض احتمال السحب على المكشوف في حساب واحد ولا يغيّر الأرصدة الفعلية؛ تُنشأ المعاملات المستحقة عند المعالجة التالية. تستخدم تقديرات TWD أسعار الصرف الحالية بشكل متسق.';
+
+  @override
+  String dashboardCashOutlookAttentionShortfall(Object amount, Object date) {
+    return 'قد ينقص النقد المجدول بمقدار $amount نحو $date';
+  }
+
+  @override
+  String get dashboardScenarioTitle => 'سيناريو الادخار';
+
+  @override
+  String get dashboardScenarioSubtitle =>
+      'قدّر الأثر التراكمي لتعديل شهري واحد';
+
+  @override
+  String get dashboardScenarioMonthlyAdjustment => 'تعديل الادخار الشهري (TWD)';
+
+  @override
+  String get dashboardScenarioDecrease => 'خفض التعديل الشهري بمقدار 500';
+
+  @override
+  String get dashboardScenarioIncrease => 'زيادة التعديل الشهري بمقدار 500';
+
+  @override
+  String get dashboardScenarioHorizon => 'الفترة الزمنية';
+
+  @override
+  String dashboardScenarioMonths(Object count) {
+    return '$count شهرًا';
+  }
+
+  @override
+  String get dashboardScenarioDifference => 'الفرق التراكمي';
+
+  @override
+  String dashboardScenarioSummary(
+    Object monthly,
+    Object months,
+    Object difference,
+  ) {
+    return 'ينتج عن تعديل شهري قدره $monthly لمدة $months شهرًا فرق تراكمي قدره $difference.';
+  }
+
+  @override
+  String get dashboardScenarioDisclaimer =>
+      'سيناريو بسيط: التعديل الشهري × عدد الأشهر. لا يشمل الفائدة أو عوائد السوق أو التضخم أو الضرائب، ولا يضمن نتيجة مستقبلية.';
 }

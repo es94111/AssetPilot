@@ -4158,4 +4158,138 @@ class AppLocalizationsHi extends AppLocalizations {
   String dashboardPortfolioHealthCoverage(Object priced, Object total) {
     return 'कीमत कवरेज: $total में से $priced होल्डिंग';
   }
+
+  @override
+  String get dashboardPersonalizeModulesCashOutlook => 'निर्धारित नकदी अनुमान';
+
+  @override
+  String get dashboardPersonalizeModulesSavingsScenario => 'बचत परिदृश्य';
+
+  @override
+  String get dashboardCashOutlookTitle => 'अगले 30 दिन · निर्धारित नकदी';
+
+  @override
+  String get dashboardCashOutlookSubtitle =>
+      'पुष्टि किए गए आवर्ती लेन-देन पर आधारित';
+
+  @override
+  String dashboardCashOutlookWindow(Object start, Object end) {
+    return '$start–$end · निर्धारित अनुमान';
+  }
+
+  @override
+  String get dashboardCashOutlookInvalidDate =>
+      'अनुमान अवधि की गणना नहीं हो सकी।';
+
+  @override
+  String get dashboardCashOutlookNoBankAccounts =>
+      'निर्धारित नकदी के अनुमान से पहले एक शामिल बैंक खाता जोड़ें।';
+
+  @override
+  String get dashboardCashOutlookNoSchedules =>
+      'आगामी निर्धारित नकदी देखने के लिए आवर्ती आय या खर्च बनाएँ।';
+
+  @override
+  String get dashboardCashOutlookNoCoveredSchedules =>
+      'आवर्ती प्रविष्टियों की समीक्षा करें और उन्हें शामिल बैंक खातों से जोड़ें।';
+
+  @override
+  String get dashboardCashOutlookStartingBalance => 'आज तक का बैंक शेष';
+
+  @override
+  String get dashboardCashOutlookScheduledNet => 'निर्धारित शुद्ध बदलाव';
+
+  @override
+  String get dashboardCashOutlookClosingBalance => '30 दिनों बाद अनुमानित नकदी';
+
+  @override
+  String get dashboardCashOutlookLowestBalance => 'न्यूनतम अनुमानित नकदी';
+
+  @override
+  String dashboardCashOutlookFlowSummary(
+    Object count,
+    Object income,
+    Object expense,
+  ) {
+    return '$count निर्धारित प्रविष्टियाँ · आय $income · खर्च $expense';
+  }
+
+  @override
+  String get dashboardCashOutlookShortfallTitle =>
+      'संयुक्त अनुमानित नकदी शून्य से नीचे जा सकती है';
+
+  @override
+  String dashboardCashOutlookShortfallBody(Object date, Object amount) {
+    return 'लगभग $date को अनुमान शून्य से $amount नीचे पहुँच सकता है। कार्रवाई से पहले तारीख और राशि जाँचें।';
+  }
+
+  @override
+  String get dashboardCashOutlookUpcoming => 'आगामी निर्धारित प्रविष्टियाँ';
+
+  @override
+  String dashboardCashOutlookShowing(Object shown, Object total) {
+    return '$total में से $shown दिखाए जा रहे हैं';
+  }
+
+  @override
+  String get dashboardCashOutlookNoUpcoming =>
+      'इस 30-दिन की अवधि में कोई निर्धारित प्रविष्टि नहीं है।';
+
+  @override
+  String dashboardCashOutlookCoverage(
+    Object included,
+    Object total,
+    Object uncovered,
+  ) {
+    return '$total आवर्ती प्रविष्टियों में से $included शामिल हैं; $uncovered की समीक्षा करें।';
+  }
+
+  @override
+  String get dashboardCashOutlookDisclaimer =>
+      'अनुमान सभी शामिल बैंक खातों को आज के शेष और पुष्टि किए गए जुड़े आवर्ती लेन-देन के साथ जोड़ता है। यह किसी एक खाते के संभावित ओवरड्राफ्ट को नहीं दिखाता और वास्तविक शेष नहीं बदलता; देय लेन-देन अगली प्रक्रिया में बनते हैं। TWD अनुमानों में वर्तमान विनिमय दरें लगातार उपयोग होती हैं।';
+
+  @override
+  String dashboardCashOutlookAttentionShortfall(Object amount, Object date) {
+    return 'लगभग $date को निर्धारित नकदी में $amount की कमी हो सकती है';
+  }
+
+  @override
+  String get dashboardScenarioTitle => 'बचत परिदृश्य';
+
+  @override
+  String get dashboardScenarioSubtitle =>
+      'एक मासिक बदलाव के संचयी प्रभाव का अनुमान लगाएँ';
+
+  @override
+  String get dashboardScenarioMonthlyAdjustment => 'मासिक बचत बदलाव (TWD)';
+
+  @override
+  String get dashboardScenarioDecrease => 'मासिक बदलाव 500 घटाएँ';
+
+  @override
+  String get dashboardScenarioIncrease => 'मासिक बदलाव 500 बढ़ाएँ';
+
+  @override
+  String get dashboardScenarioHorizon => 'समय अवधि';
+
+  @override
+  String dashboardScenarioMonths(Object count) {
+    return '$count महीने';
+  }
+
+  @override
+  String get dashboardScenarioDifference => 'संचयी अंतर';
+
+  @override
+  String dashboardScenarioSummary(
+    Object monthly,
+    Object months,
+    Object difference,
+  ) {
+    return '$months महीनों तक $monthly का मासिक बदलाव $difference का संचयी अंतर बनाता है।';
+  }
+
+  @override
+  String get dashboardScenarioDisclaimer =>
+      'सरल परिदृश्य: मासिक बदलाव × महीने। इसमें ब्याज, बाजार रिटर्न, मुद्रास्फीति और कर शामिल नहीं हैं तथा भविष्य का परिणाम सुनिश्चित नहीं है।';
 }

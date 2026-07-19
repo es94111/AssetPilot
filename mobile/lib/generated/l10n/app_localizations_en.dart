@@ -4164,4 +4164,140 @@ class AppLocalizationsEn extends AppLocalizations {
   String dashboardPortfolioHealthCoverage(Object priced, Object total) {
     return 'Price coverage: $priced of $total holdings';
   }
+
+  @override
+  String get dashboardPersonalizeModulesCashOutlook => 'Scheduled cash outlook';
+
+  @override
+  String get dashboardPersonalizeModulesSavingsScenario => 'Savings scenario';
+
+  @override
+  String get dashboardCashOutlookTitle => 'Next 30 days · scheduled cash';
+
+  @override
+  String get dashboardCashOutlookSubtitle =>
+      'Based on confirmed recurring entries';
+
+  @override
+  String dashboardCashOutlookWindow(Object start, Object end) {
+    return '$start–$end · Scheduled estimate';
+  }
+
+  @override
+  String get dashboardCashOutlookInvalidDate =>
+      'The estimate window could not be calculated.';
+
+  @override
+  String get dashboardCashOutlookNoBankAccounts =>
+      'Add an included bank account before estimating scheduled cash.';
+
+  @override
+  String get dashboardCashOutlookNoSchedules =>
+      'Create a recurring income or expense to see upcoming scheduled cash.';
+
+  @override
+  String get dashboardCashOutlookNoCoveredSchedules =>
+      'Review recurring entries and link them to included bank accounts.';
+
+  @override
+  String get dashboardCashOutlookStartingBalance => 'Bank balance as of today';
+
+  @override
+  String get dashboardCashOutlookScheduledNet => 'Scheduled net change';
+
+  @override
+  String get dashboardCashOutlookClosingBalance =>
+      'Estimated cash after 30 days';
+
+  @override
+  String get dashboardCashOutlookLowestBalance => 'Lowest estimated cash';
+
+  @override
+  String dashboardCashOutlookFlowSummary(
+    Object count,
+    Object income,
+    Object expense,
+  ) {
+    return '$count scheduled occurrences · Income $income · Expense $expense';
+  }
+
+  @override
+  String get dashboardCashOutlookShortfallTitle =>
+      'Estimated combined cash may fall below zero';
+
+  @override
+  String dashboardCashOutlookShortfallBody(Object date, Object amount) {
+    return 'Around $date, the estimate reaches $amount below zero. Review the timing and amounts before acting.';
+  }
+
+  @override
+  String get dashboardCashOutlookUpcoming => 'Upcoming scheduled entries';
+
+  @override
+  String dashboardCashOutlookShowing(Object shown, Object total) {
+    return 'Showing $shown of $total';
+  }
+
+  @override
+  String get dashboardCashOutlookNoUpcoming =>
+      'No scheduled occurrence falls inside this 30-day window.';
+
+  @override
+  String dashboardCashOutlookCoverage(
+    Object included,
+    Object total,
+    Object uncovered,
+  ) {
+    return '$included of $total recurring entries are covered; review $uncovered.';
+  }
+
+  @override
+  String get dashboardCashOutlookDisclaimer =>
+      'Estimate combines all included bank accounts using today\'s balance and confirmed linked recurring entries. It does not show possible overdrafts in one account or change actual balances; due transactions are created when the service next processes them. Current FX rates are used consistently for TWD estimates.';
+
+  @override
+  String dashboardCashOutlookAttentionShortfall(Object amount, Object date) {
+    return 'Scheduled cash may be short by $amount around $date';
+  }
+
+  @override
+  String get dashboardScenarioTitle => 'Savings scenario';
+
+  @override
+  String get dashboardScenarioSubtitle =>
+      'Estimate the cumulative effect of one monthly adjustment';
+
+  @override
+  String get dashboardScenarioMonthlyAdjustment =>
+      'Monthly savings adjustment (TWD)';
+
+  @override
+  String get dashboardScenarioDecrease => 'Decrease monthly adjustment by 500';
+
+  @override
+  String get dashboardScenarioIncrease => 'Increase monthly adjustment by 500';
+
+  @override
+  String get dashboardScenarioHorizon => 'Time horizon';
+
+  @override
+  String dashboardScenarioMonths(Object count) {
+    return '$count months';
+  }
+
+  @override
+  String get dashboardScenarioDifference => 'Cumulative difference';
+
+  @override
+  String dashboardScenarioSummary(
+    Object monthly,
+    Object months,
+    Object difference,
+  ) {
+    return 'A monthly adjustment of $monthly for $months months produces a cumulative difference of $difference.';
+  }
+
+  @override
+  String get dashboardScenarioDisclaimer =>
+      'Simple scenario: monthly adjustment × months. It excludes interest, market returns, inflation and taxes, and does not guarantee a future result.';
 }

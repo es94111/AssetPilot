@@ -4035,4 +4035,133 @@ class AppLocalizationsKo extends AppLocalizations {
   String dashboardPortfolioHealthCoverage(Object priced, Object total) {
     return '가격 확인: 보유 종목 $total개 중 $priced개';
   }
+
+  @override
+  String get dashboardPersonalizeModulesCashOutlook => '예정 현금 전망';
+
+  @override
+  String get dashboardPersonalizeModulesSavingsScenario => '저축 시나리오';
+
+  @override
+  String get dashboardCashOutlookTitle => '향후 30일 · 예정 현금';
+
+  @override
+  String get dashboardCashOutlookSubtitle => '확인된 정기 항목 기준';
+
+  @override
+  String dashboardCashOutlookWindow(Object start, Object end) {
+    return '$start–$end · 예정 추정치';
+  }
+
+  @override
+  String get dashboardCashOutlookInvalidDate => '추정 기간을 계산할 수 없습니다.';
+
+  @override
+  String get dashboardCashOutlookNoBankAccounts =>
+      '예정 현금을 추정하려면 포함된 은행 계좌를 추가하세요.';
+
+  @override
+  String get dashboardCashOutlookNoSchedules =>
+      '정기 수입 또는 지출을 만들어 예정 현금을 확인하세요.';
+
+  @override
+  String get dashboardCashOutlookNoCoveredSchedules =>
+      '정기 항목을 확인하고 포함된 은행 계좌에 연결하세요.';
+
+  @override
+  String get dashboardCashOutlookStartingBalance => '오늘 기준 은행 잔액';
+
+  @override
+  String get dashboardCashOutlookScheduledNet => '예정 순변동';
+
+  @override
+  String get dashboardCashOutlookClosingBalance => '30일 후 예상 현금';
+
+  @override
+  String get dashboardCashOutlookLowestBalance => '최저 추정 현금';
+
+  @override
+  String dashboardCashOutlookFlowSummary(
+    Object count,
+    Object income,
+    Object expense,
+  ) {
+    return '예정 $count건 · 수입 $income · 지출 $expense';
+  }
+
+  @override
+  String get dashboardCashOutlookShortfallTitle => '통합 추정 현금이 0 미만이 될 수 있습니다';
+
+  @override
+  String dashboardCashOutlookShortfallBody(Object date, Object amount) {
+    return '$date 전후에 추정치가 0보다 $amount 낮아질 수 있습니다. 실행 전에 날짜와 금액을 확인하세요.';
+  }
+
+  @override
+  String get dashboardCashOutlookUpcoming => '다가오는 예정 항목';
+
+  @override
+  String dashboardCashOutlookShowing(Object shown, Object total) {
+    return '$total건 중 $shown건 표시';
+  }
+
+  @override
+  String get dashboardCashOutlookNoUpcoming => '이 30일 기간에는 예정 항목이 없습니다.';
+
+  @override
+  String dashboardCashOutlookCoverage(
+    Object included,
+    Object total,
+    Object uncovered,
+  ) {
+    return '정기 항목 $total건 중 $included건 반영됨. $uncovered건을 확인하세요.';
+  }
+
+  @override
+  String get dashboardCashOutlookDisclaimer =>
+      '포함된 모든 은행 계좌를 오늘 잔액과 확인된 연결 정기 항목으로 합산한 추정치입니다. 개별 계좌의 잠재적 마이너스 잔액은 표시하지 않으며 실제 잔액도 변경하지 않습니다. 도래한 거래는 다음 처리 시 생성되고 TWD 추정에는 현재 환율을 일관되게 사용합니다.';
+
+  @override
+  String dashboardCashOutlookAttentionShortfall(Object amount, Object date) {
+    return '$date 전후에 예정 현금이 $amount 부족할 수 있습니다';
+  }
+
+  @override
+  String get dashboardScenarioTitle => '저축 시나리오';
+
+  @override
+  String get dashboardScenarioSubtitle => '월별 조정 한 가지의 누적 효과를 계산하세요';
+
+  @override
+  String get dashboardScenarioMonthlyAdjustment => '월별 저축 조정액(TWD)';
+
+  @override
+  String get dashboardScenarioDecrease => '월별 조정액 500 감소';
+
+  @override
+  String get dashboardScenarioIncrease => '월별 조정액 500 증가';
+
+  @override
+  String get dashboardScenarioHorizon => '기간';
+
+  @override
+  String dashboardScenarioMonths(Object count) {
+    return '$count개월';
+  }
+
+  @override
+  String get dashboardScenarioDifference => '누적 차이';
+
+  @override
+  String dashboardScenarioSummary(
+    Object monthly,
+    Object months,
+    Object difference,
+  ) {
+    return '매월 $monthly씩 $months개월 조정하면 누적 차이는 $difference입니다.';
+  }
+
+  @override
+  String get dashboardScenarioDisclaimer =>
+      '단순 시나리오: 월별 조정액 × 개월 수. 이자, 시장 수익률, 물가상승률, 세금은 제외하며 미래 결과를 보장하지 않습니다.';
 }

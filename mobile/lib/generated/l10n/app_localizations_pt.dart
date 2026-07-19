@@ -4213,6 +4213,144 @@ class AppLocalizationsPt extends AppLocalizations {
   String dashboardPortfolioHealthCoverage(Object priced, Object total) {
     return 'Cobertura de preços: $priced de $total posições';
   }
+
+  @override
+  String get dashboardPersonalizeModulesCashOutlook =>
+      'Previsão de caixa programado';
+
+  @override
+  String get dashboardPersonalizeModulesSavingsScenario =>
+      'Cenário de economia';
+
+  @override
+  String get dashboardCashOutlookTitle => 'Próximos 30 dias · caixa programado';
+
+  @override
+  String get dashboardCashOutlookSubtitle =>
+      'Baseado em lançamentos recorrentes confirmados';
+
+  @override
+  String dashboardCashOutlookWindow(Object start, Object end) {
+    return '$start–$end · Estimativa programada';
+  }
+
+  @override
+  String get dashboardCashOutlookInvalidDate =>
+      'Não foi possível calcular o período estimado.';
+
+  @override
+  String get dashboardCashOutlookNoBankAccounts =>
+      'Adicione uma conta bancária incluída antes de estimar o caixa programado.';
+
+  @override
+  String get dashboardCashOutlookNoSchedules =>
+      'Crie uma receita ou despesa recorrente para ver o caixa programado.';
+
+  @override
+  String get dashboardCashOutlookNoCoveredSchedules =>
+      'Revise os lançamentos recorrentes e vincule-os a contas bancárias incluídas.';
+
+  @override
+  String get dashboardCashOutlookStartingBalance => 'Saldo bancário até hoje';
+
+  @override
+  String get dashboardCashOutlookScheduledNet => 'Variação líquida programada';
+
+  @override
+  String get dashboardCashOutlookClosingBalance =>
+      'Caixa estimado após 30 dias';
+
+  @override
+  String get dashboardCashOutlookLowestBalance => 'Menor caixa estimado';
+
+  @override
+  String dashboardCashOutlookFlowSummary(
+    Object count,
+    Object income,
+    Object expense,
+  ) {
+    return '$count ocorrências programadas · Receitas $income · Despesas $expense';
+  }
+
+  @override
+  String get dashboardCashOutlookShortfallTitle =>
+      'O caixa combinado estimado pode ficar abaixo de zero';
+
+  @override
+  String dashboardCashOutlookShortfallBody(Object date, Object amount) {
+    return 'Por volta de $date, a estimativa fica $amount abaixo de zero. Revise datas e valores antes de agir.';
+  }
+
+  @override
+  String get dashboardCashOutlookUpcoming => 'Próximos lançamentos programados';
+
+  @override
+  String dashboardCashOutlookShowing(Object shown, Object total) {
+    return 'Mostrando $shown de $total';
+  }
+
+  @override
+  String get dashboardCashOutlookNoUpcoming =>
+      'Nenhuma ocorrência programada neste período de 30 dias.';
+
+  @override
+  String dashboardCashOutlookCoverage(
+    Object included,
+    Object total,
+    Object uncovered,
+  ) {
+    return '$included de $total lançamentos recorrentes estão cobertos; revise $uncovered.';
+  }
+
+  @override
+  String get dashboardCashOutlookDisclaimer =>
+      'A estimativa combina todas as contas bancárias incluídas com o saldo de hoje e lançamentos recorrentes vinculados confirmados. Ela não mostra possíveis saldos negativos de uma conta nem altera saldos reais; lançamentos vencidos são criados no próximo processamento. As estimativas em TWD usam de forma consistente as taxas atuais.';
+
+  @override
+  String dashboardCashOutlookAttentionShortfall(Object amount, Object date) {
+    return 'O caixa programado pode faltar em $amount por volta de $date';
+  }
+
+  @override
+  String get dashboardScenarioTitle => 'Cenário de economia';
+
+  @override
+  String get dashboardScenarioSubtitle =>
+      'Estime o efeito acumulado de um ajuste mensal';
+
+  @override
+  String get dashboardScenarioMonthlyAdjustment =>
+      'Ajuste mensal de economia (TWD)';
+
+  @override
+  String get dashboardScenarioDecrease => 'Diminuir o ajuste mensal em 500';
+
+  @override
+  String get dashboardScenarioIncrease => 'Aumentar o ajuste mensal em 500';
+
+  @override
+  String get dashboardScenarioHorizon => 'Horizonte de tempo';
+
+  @override
+  String dashboardScenarioMonths(Object count) {
+    return '$count meses';
+  }
+
+  @override
+  String get dashboardScenarioDifference => 'Diferença acumulada';
+
+  @override
+  String dashboardScenarioSummary(
+    Object monthly,
+    Object months,
+    Object difference,
+  ) {
+    return 'Um ajuste mensal de $monthly por $months meses produz uma diferença acumulada de $difference.';
+  }
+
+  @override
+  String get dashboardScenarioDisclaimer =>
+      'Cenário simples: ajuste mensal × meses. Exclui juros, retornos de mercado, inflação e impostos e não garante resultado futuro.';
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -8424,4 +8562,142 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String dashboardPortfolioHealthCoverage(Object priced, Object total) {
     return 'Cobertura de preços: $priced de $total posições';
   }
+
+  @override
+  String get dashboardPersonalizeModulesCashOutlook =>
+      'Previsão de caixa programado';
+
+  @override
+  String get dashboardPersonalizeModulesSavingsScenario =>
+      'Cenário de economia';
+
+  @override
+  String get dashboardCashOutlookTitle => 'Próximos 30 dias · caixa programado';
+
+  @override
+  String get dashboardCashOutlookSubtitle =>
+      'Baseado em lançamentos recorrentes confirmados';
+
+  @override
+  String dashboardCashOutlookWindow(Object start, Object end) {
+    return '$start–$end · Estimativa programada';
+  }
+
+  @override
+  String get dashboardCashOutlookInvalidDate =>
+      'Não foi possível calcular o período estimado.';
+
+  @override
+  String get dashboardCashOutlookNoBankAccounts =>
+      'Adicione uma conta bancária incluída antes de estimar o caixa programado.';
+
+  @override
+  String get dashboardCashOutlookNoSchedules =>
+      'Crie uma receita ou despesa recorrente para ver o caixa programado.';
+
+  @override
+  String get dashboardCashOutlookNoCoveredSchedules =>
+      'Revise os lançamentos recorrentes e vincule-os a contas bancárias incluídas.';
+
+  @override
+  String get dashboardCashOutlookStartingBalance => 'Saldo bancário até hoje';
+
+  @override
+  String get dashboardCashOutlookScheduledNet => 'Variação líquida programada';
+
+  @override
+  String get dashboardCashOutlookClosingBalance =>
+      'Caixa estimado após 30 dias';
+
+  @override
+  String get dashboardCashOutlookLowestBalance => 'Menor caixa estimado';
+
+  @override
+  String dashboardCashOutlookFlowSummary(
+    Object count,
+    Object income,
+    Object expense,
+  ) {
+    return '$count ocorrências programadas · Receitas $income · Despesas $expense';
+  }
+
+  @override
+  String get dashboardCashOutlookShortfallTitle =>
+      'O caixa combinado estimado pode ficar abaixo de zero';
+
+  @override
+  String dashboardCashOutlookShortfallBody(Object date, Object amount) {
+    return 'Por volta de $date, a estimativa fica $amount abaixo de zero. Revise datas e valores antes de agir.';
+  }
+
+  @override
+  String get dashboardCashOutlookUpcoming => 'Próximos lançamentos programados';
+
+  @override
+  String dashboardCashOutlookShowing(Object shown, Object total) {
+    return 'Mostrando $shown de $total';
+  }
+
+  @override
+  String get dashboardCashOutlookNoUpcoming =>
+      'Nenhuma ocorrência programada neste período de 30 dias.';
+
+  @override
+  String dashboardCashOutlookCoverage(
+    Object included,
+    Object total,
+    Object uncovered,
+  ) {
+    return '$included de $total lançamentos recorrentes estão cobertos; revise $uncovered.';
+  }
+
+  @override
+  String get dashboardCashOutlookDisclaimer =>
+      'A estimativa combina todas as contas bancárias incluídas com o saldo de hoje e lançamentos recorrentes vinculados confirmados. Ela não mostra possíveis saldos negativos de uma conta nem altera saldos reais; lançamentos vencidos são criados no próximo processamento. As estimativas em TWD usam de forma consistente as taxas atuais.';
+
+  @override
+  String dashboardCashOutlookAttentionShortfall(Object amount, Object date) {
+    return 'O caixa programado pode faltar em $amount por volta de $date';
+  }
+
+  @override
+  String get dashboardScenarioTitle => 'Cenário de economia';
+
+  @override
+  String get dashboardScenarioSubtitle =>
+      'Estime o efeito acumulado de um ajuste mensal';
+
+  @override
+  String get dashboardScenarioMonthlyAdjustment =>
+      'Ajuste mensal de economia (TWD)';
+
+  @override
+  String get dashboardScenarioDecrease => 'Diminuir o ajuste mensal em 500';
+
+  @override
+  String get dashboardScenarioIncrease => 'Aumentar o ajuste mensal em 500';
+
+  @override
+  String get dashboardScenarioHorizon => 'Horizonte de tempo';
+
+  @override
+  String dashboardScenarioMonths(Object count) {
+    return '$count meses';
+  }
+
+  @override
+  String get dashboardScenarioDifference => 'Diferença acumulada';
+
+  @override
+  String dashboardScenarioSummary(
+    Object monthly,
+    Object months,
+    Object difference,
+  ) {
+    return 'Um ajuste mensal de $monthly por $months meses produz uma diferença acumulada de $difference.';
+  }
+
+  @override
+  String get dashboardScenarioDisclaimer =>
+      'Cenário simples: ajuste mensal × meses. Exclui juros, retornos de mercado, inflação e impostos e não garante resultado futuro.';
 }

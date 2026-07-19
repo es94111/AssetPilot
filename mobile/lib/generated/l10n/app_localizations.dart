@@ -7278,6 +7278,210 @@ abstract class AppLocalizations {
   /// In zh_Hant_TW, this message translates to:
   /// **'價格涵蓋：{total} 檔持股中有 {priced} 檔'**
   String dashboardPortfolioHealthCoverage(Object priced, Object total);
+
+  /// Web path: dashboard.personalize.modules.cashOutlook
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'排程現金展望'**
+  String get dashboardPersonalizeModulesCashOutlook;
+
+  /// Web path: dashboard.personalize.modules.savingsScenario
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'儲蓄情境'**
+  String get dashboardPersonalizeModulesSavingsScenario;
+
+  /// Web path: dashboard.cashOutlook.title
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'未來 30 天・排程現金'**
+  String get dashboardCashOutlookTitle;
+
+  /// Web path: dashboard.cashOutlook.subtitle
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'依已確認的固定收支估算'**
+  String get dashboardCashOutlookSubtitle;
+
+  /// Web path: dashboard.cashOutlook.window
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'{start}～{end}・排程估算'**
+  String dashboardCashOutlookWindow(Object start, Object end);
+
+  /// Web path: dashboard.cashOutlook.invalidDate
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'無法計算估算期間。'**
+  String get dashboardCashOutlookInvalidDate;
+
+  /// Web path: dashboard.cashOutlook.noBankAccounts
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'請先新增並納入銀行帳戶，才能估算排程現金。'**
+  String get dashboardCashOutlookNoBankAccounts;
+
+  /// Web path: dashboard.cashOutlook.noSchedules
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'建立固定收入或支出後，即可查看即將發生的排程現金。'**
+  String get dashboardCashOutlookNoSchedules;
+
+  /// Web path: dashboard.cashOutlook.noCoveredSchedules
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'請檢查固定收支，並連結至已納入的銀行帳戶。'**
+  String get dashboardCashOutlookNoCoveredSchedules;
+
+  /// Web path: dashboard.cashOutlook.startingBalance
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'截至今日的銀行餘額'**
+  String get dashboardCashOutlookStartingBalance;
+
+  /// Web path: dashboard.cashOutlook.scheduledNet
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'排程淨變動'**
+  String get dashboardCashOutlookScheduledNet;
+
+  /// Web path: dashboard.cashOutlook.closingBalance
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'30 天後估算現金'**
+  String get dashboardCashOutlookClosingBalance;
+
+  /// Web path: dashboard.cashOutlook.lowestBalance
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'最低估算現金'**
+  String get dashboardCashOutlookLowestBalance;
+
+  /// Web path: dashboard.cashOutlook.flowSummary
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'{count} 筆排程・收入 {income}・支出 {expense}'**
+  String dashboardCashOutlookFlowSummary(
+    Object count,
+    Object income,
+    Object expense,
+  );
+
+  /// Web path: dashboard.cashOutlook.shortfallTitle
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'合併估算現金可能低於零'**
+  String get dashboardCashOutlookShortfallTitle;
+
+  /// Web path: dashboard.cashOutlook.shortfallBody
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'約在 {date}，估算可能低於零 {amount}。採取行動前請先檢查日期與金額。'**
+  String dashboardCashOutlookShortfallBody(Object date, Object amount);
+
+  /// Web path: dashboard.cashOutlook.upcoming
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'即將發生的排程'**
+  String get dashboardCashOutlookUpcoming;
+
+  /// Web path: dashboard.cashOutlook.showing
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'顯示 {shown}／{total} 筆'**
+  String dashboardCashOutlookShowing(Object shown, Object total);
+
+  /// Web path: dashboard.cashOutlook.noUpcoming
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'這個 30 天期間內沒有排程項目。'**
+  String get dashboardCashOutlookNoUpcoming;
+
+  /// Web path: dashboard.cashOutlook.coverage
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'已涵蓋 {included}／{total} 筆固定收支；請檢查其餘 {uncovered} 筆。'**
+  String dashboardCashOutlookCoverage(
+    Object included,
+    Object total,
+    Object uncovered,
+  );
+
+  /// Web path: dashboard.cashOutlook.disclaimer
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'估算合併所有已納入銀行帳戶，採用截至今日的餘額與已確認連結固定收支。它不會顯示單一帳戶可能透支，也不會改變實際餘額；到期交易會在服務下次處理時建立。TWD 估算一致使用目前匯率。'**
+  String get dashboardCashOutlookDisclaimer;
+
+  /// Web path: dashboard.cashOutlook.attentionShortfall
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'約在 {date}，排程現金可能短缺 {amount}'**
+  String dashboardCashOutlookAttentionShortfall(Object amount, Object date);
+
+  /// Web path: dashboard.scenario.title
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'儲蓄情境試算'**
+  String get dashboardScenarioTitle;
+
+  /// Web path: dashboard.scenario.subtitle
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'試算一項每月調整的累積影響'**
+  String get dashboardScenarioSubtitle;
+
+  /// Web path: dashboard.scenario.monthlyAdjustment
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'每月儲蓄調整（TWD）'**
+  String get dashboardScenarioMonthlyAdjustment;
+
+  /// Web path: dashboard.scenario.decrease
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'每月調整減少 500'**
+  String get dashboardScenarioDecrease;
+
+  /// Web path: dashboard.scenario.increase
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'每月調整增加 500'**
+  String get dashboardScenarioIncrease;
+
+  /// Web path: dashboard.scenario.horizon
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'試算期間'**
+  String get dashboardScenarioHorizon;
+
+  /// Web path: dashboard.scenario.months
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'{count} 個月'**
+  String dashboardScenarioMonths(Object count);
+
+  /// Web path: dashboard.scenario.difference
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'累積差額'**
+  String get dashboardScenarioDifference;
+
+  /// Web path: dashboard.scenario.summary
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'每月調整 {monthly}，持續 {months} 個月，累積差額為 {difference}。'**
+  String dashboardScenarioSummary(
+    Object monthly,
+    Object months,
+    Object difference,
+  );
+
+  /// Web path: dashboard.scenario.disclaimer
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'簡易情境：每月調整 × 月數。不包含利息、市場報酬、通膨與稅務，也不保證未來結果。'**
+  String get dashboardScenarioDisclaimer;
 }
 
 class _AppLocalizationsDelegate

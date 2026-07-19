@@ -3973,6 +3973,132 @@ class AppLocalizationsZh extends AppLocalizations {
   String dashboardPortfolioHealthCoverage(Object priced, Object total) {
     return '價格涵蓋：$total 檔持股中有 $priced 檔';
   }
+
+  @override
+  String get dashboardPersonalizeModulesCashOutlook => '排程現金展望';
+
+  @override
+  String get dashboardPersonalizeModulesSavingsScenario => '儲蓄情境';
+
+  @override
+  String get dashboardCashOutlookTitle => '未來 30 天・排程現金';
+
+  @override
+  String get dashboardCashOutlookSubtitle => '依已確認的固定收支估算';
+
+  @override
+  String dashboardCashOutlookWindow(Object start, Object end) {
+    return '$start～$end・排程估算';
+  }
+
+  @override
+  String get dashboardCashOutlookInvalidDate => '無法計算估算期間。';
+
+  @override
+  String get dashboardCashOutlookNoBankAccounts => '請先新增並納入銀行帳戶，才能估算排程現金。';
+
+  @override
+  String get dashboardCashOutlookNoSchedules => '建立固定收入或支出後，即可查看即將發生的排程現金。';
+
+  @override
+  String get dashboardCashOutlookNoCoveredSchedules => '請檢查固定收支，並連結至已納入的銀行帳戶。';
+
+  @override
+  String get dashboardCashOutlookStartingBalance => '截至今日的銀行餘額';
+
+  @override
+  String get dashboardCashOutlookScheduledNet => '排程淨變動';
+
+  @override
+  String get dashboardCashOutlookClosingBalance => '30 天後估算現金';
+
+  @override
+  String get dashboardCashOutlookLowestBalance => '最低估算現金';
+
+  @override
+  String dashboardCashOutlookFlowSummary(
+    Object count,
+    Object income,
+    Object expense,
+  ) {
+    return '$count 筆排程・收入 $income・支出 $expense';
+  }
+
+  @override
+  String get dashboardCashOutlookShortfallTitle => '合併估算現金可能低於零';
+
+  @override
+  String dashboardCashOutlookShortfallBody(Object date, Object amount) {
+    return '約在 $date，估算可能低於零 $amount。採取行動前請先檢查日期與金額。';
+  }
+
+  @override
+  String get dashboardCashOutlookUpcoming => '即將發生的排程';
+
+  @override
+  String dashboardCashOutlookShowing(Object shown, Object total) {
+    return '顯示 $shown／$total 筆';
+  }
+
+  @override
+  String get dashboardCashOutlookNoUpcoming => '這個 30 天期間內沒有排程項目。';
+
+  @override
+  String dashboardCashOutlookCoverage(
+    Object included,
+    Object total,
+    Object uncovered,
+  ) {
+    return '已涵蓋 $included／$total 筆固定收支；請檢查其餘 $uncovered 筆。';
+  }
+
+  @override
+  String get dashboardCashOutlookDisclaimer =>
+      '估算合併所有已納入銀行帳戶，採用截至今日的餘額與已確認連結固定收支。它不會顯示單一帳戶可能透支，也不會改變實際餘額；到期交易會在服務下次處理時建立。TWD 估算一致使用目前匯率。';
+
+  @override
+  String dashboardCashOutlookAttentionShortfall(Object amount, Object date) {
+    return '約在 $date，排程現金可能短缺 $amount';
+  }
+
+  @override
+  String get dashboardScenarioTitle => '儲蓄情境試算';
+
+  @override
+  String get dashboardScenarioSubtitle => '試算一項每月調整的累積影響';
+
+  @override
+  String get dashboardScenarioMonthlyAdjustment => '每月儲蓄調整（TWD）';
+
+  @override
+  String get dashboardScenarioDecrease => '每月調整減少 500';
+
+  @override
+  String get dashboardScenarioIncrease => '每月調整增加 500';
+
+  @override
+  String get dashboardScenarioHorizon => '試算期間';
+
+  @override
+  String dashboardScenarioMonths(Object count) {
+    return '$count 個月';
+  }
+
+  @override
+  String get dashboardScenarioDifference => '累積差額';
+
+  @override
+  String dashboardScenarioSummary(
+    Object monthly,
+    Object months,
+    Object difference,
+  ) {
+    return '每月調整 $monthly，持續 $months 個月，累積差額為 $difference。';
+  }
+
+  @override
+  String get dashboardScenarioDisclaimer =>
+      '簡易情境：每月調整 × 月數。不包含利息、市場報酬、通膨與稅務，也不保證未來結果。';
 }
 
 /// The translations for Chinese, as used in China, using the Han script (`zh_Hans_CN`).
@@ -7949,6 +8075,132 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
   String dashboardPortfolioHealthCoverage(Object priced, Object total) {
     return '价格覆盖：$total 项持仓中有 $priced 项';
   }
+
+  @override
+  String get dashboardPersonalizeModulesCashOutlook => '计划现金展望';
+
+  @override
+  String get dashboardPersonalizeModulesSavingsScenario => '储蓄情境';
+
+  @override
+  String get dashboardCashOutlookTitle => '未来 30 天・计划现金';
+
+  @override
+  String get dashboardCashOutlookSubtitle => '根据已确认的固定收支估算';
+
+  @override
+  String dashboardCashOutlookWindow(Object start, Object end) {
+    return '$start～$end・计划估算';
+  }
+
+  @override
+  String get dashboardCashOutlookInvalidDate => '无法计算估算期间。';
+
+  @override
+  String get dashboardCashOutlookNoBankAccounts => '请先新增并纳入银行账户，才能估算计划现金。';
+
+  @override
+  String get dashboardCashOutlookNoSchedules => '创建固定收入或支出后，即可查看即将发生的计划现金。';
+
+  @override
+  String get dashboardCashOutlookNoCoveredSchedules => '请检查固定收支，并关联至已纳入的银行账户。';
+
+  @override
+  String get dashboardCashOutlookStartingBalance => '截至今天的银行余额';
+
+  @override
+  String get dashboardCashOutlookScheduledNet => '计划净变动';
+
+  @override
+  String get dashboardCashOutlookClosingBalance => '30 天后估算现金';
+
+  @override
+  String get dashboardCashOutlookLowestBalance => '最低估算现金';
+
+  @override
+  String dashboardCashOutlookFlowSummary(
+    Object count,
+    Object income,
+    Object expense,
+  ) {
+    return '$count 笔计划・收入 $income・支出 $expense';
+  }
+
+  @override
+  String get dashboardCashOutlookShortfallTitle => '合并估算现金可能低于零';
+
+  @override
+  String dashboardCashOutlookShortfallBody(Object date, Object amount) {
+    return '约在 $date，估算可能低于零 $amount。采取行动前请先检查日期和金额。';
+  }
+
+  @override
+  String get dashboardCashOutlookUpcoming => '即将发生的计划';
+
+  @override
+  String dashboardCashOutlookShowing(Object shown, Object total) {
+    return '显示 $shown／$total 笔';
+  }
+
+  @override
+  String get dashboardCashOutlookNoUpcoming => '这个 30 天期间内没有计划项目。';
+
+  @override
+  String dashboardCashOutlookCoverage(
+    Object included,
+    Object total,
+    Object uncovered,
+  ) {
+    return '已覆盖 $included／$total 笔固定收支；请检查其余 $uncovered 笔。';
+  }
+
+  @override
+  String get dashboardCashOutlookDisclaimer =>
+      '估算合并所有已纳入银行账户，采用截至今天的余额与已确认关联固定收支。它不会显示单个账户可能透支，也不会改变实际余额；到期交易会在服务下次处理时创建。TWD 估算一致使用当前汇率。';
+
+  @override
+  String dashboardCashOutlookAttentionShortfall(Object amount, Object date) {
+    return '约在 $date，计划现金可能短缺 $amount';
+  }
+
+  @override
+  String get dashboardScenarioTitle => '储蓄情境试算';
+
+  @override
+  String get dashboardScenarioSubtitle => '试算一项每月调整的累计影响';
+
+  @override
+  String get dashboardScenarioMonthlyAdjustment => '每月储蓄调整（TWD）';
+
+  @override
+  String get dashboardScenarioDecrease => '每月调整减少 500';
+
+  @override
+  String get dashboardScenarioIncrease => '每月调整增加 500';
+
+  @override
+  String get dashboardScenarioHorizon => '试算期间';
+
+  @override
+  String dashboardScenarioMonths(Object count) {
+    return '$count 个月';
+  }
+
+  @override
+  String get dashboardScenarioDifference => '累计差额';
+
+  @override
+  String dashboardScenarioSummary(
+    Object monthly,
+    Object months,
+    Object difference,
+  ) {
+    return '每月调整 $monthly，持续 $months 个月，累计差额为 $difference。';
+  }
+
+  @override
+  String get dashboardScenarioDisclaimer =>
+      '简单情境：每月调整 × 月数。不包含利息、市场回报、通胀和税务，也不保证未来结果。';
 }
 
 /// The translations for Chinese, as used in Taiwan, using the Han script (`zh_Hant_TW`).
@@ -11920,4 +12172,130 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
   String dashboardPortfolioHealthCoverage(Object priced, Object total) {
     return '價格涵蓋：$total 檔持股中有 $priced 檔';
   }
+
+  @override
+  String get dashboardPersonalizeModulesCashOutlook => '排程現金展望';
+
+  @override
+  String get dashboardPersonalizeModulesSavingsScenario => '儲蓄情境';
+
+  @override
+  String get dashboardCashOutlookTitle => '未來 30 天・排程現金';
+
+  @override
+  String get dashboardCashOutlookSubtitle => '依已確認的固定收支估算';
+
+  @override
+  String dashboardCashOutlookWindow(Object start, Object end) {
+    return '$start～$end・排程估算';
+  }
+
+  @override
+  String get dashboardCashOutlookInvalidDate => '無法計算估算期間。';
+
+  @override
+  String get dashboardCashOutlookNoBankAccounts => '請先新增並納入銀行帳戶，才能估算排程現金。';
+
+  @override
+  String get dashboardCashOutlookNoSchedules => '建立固定收入或支出後，即可查看即將發生的排程現金。';
+
+  @override
+  String get dashboardCashOutlookNoCoveredSchedules => '請檢查固定收支，並連結至已納入的銀行帳戶。';
+
+  @override
+  String get dashboardCashOutlookStartingBalance => '截至今日的銀行餘額';
+
+  @override
+  String get dashboardCashOutlookScheduledNet => '排程淨變動';
+
+  @override
+  String get dashboardCashOutlookClosingBalance => '30 天後估算現金';
+
+  @override
+  String get dashboardCashOutlookLowestBalance => '最低估算現金';
+
+  @override
+  String dashboardCashOutlookFlowSummary(
+    Object count,
+    Object income,
+    Object expense,
+  ) {
+    return '$count 筆排程・收入 $income・支出 $expense';
+  }
+
+  @override
+  String get dashboardCashOutlookShortfallTitle => '合併估算現金可能低於零';
+
+  @override
+  String dashboardCashOutlookShortfallBody(Object date, Object amount) {
+    return '約在 $date，估算可能低於零 $amount。採取行動前請先檢查日期與金額。';
+  }
+
+  @override
+  String get dashboardCashOutlookUpcoming => '即將發生的排程';
+
+  @override
+  String dashboardCashOutlookShowing(Object shown, Object total) {
+    return '顯示 $shown／$total 筆';
+  }
+
+  @override
+  String get dashboardCashOutlookNoUpcoming => '這個 30 天期間內沒有排程項目。';
+
+  @override
+  String dashboardCashOutlookCoverage(
+    Object included,
+    Object total,
+    Object uncovered,
+  ) {
+    return '已涵蓋 $included／$total 筆固定收支；請檢查其餘 $uncovered 筆。';
+  }
+
+  @override
+  String get dashboardCashOutlookDisclaimer =>
+      '估算合併所有已納入銀行帳戶，採用截至今日的餘額與已確認連結固定收支。它不會顯示單一帳戶可能透支，也不會改變實際餘額；到期交易會在服務下次處理時建立。TWD 估算一致使用目前匯率。';
+
+  @override
+  String dashboardCashOutlookAttentionShortfall(Object amount, Object date) {
+    return '約在 $date，排程現金可能短缺 $amount';
+  }
+
+  @override
+  String get dashboardScenarioTitle => '儲蓄情境試算';
+
+  @override
+  String get dashboardScenarioSubtitle => '試算一項每月調整的累積影響';
+
+  @override
+  String get dashboardScenarioMonthlyAdjustment => '每月儲蓄調整（TWD）';
+
+  @override
+  String get dashboardScenarioDecrease => '每月調整減少 500';
+
+  @override
+  String get dashboardScenarioIncrease => '每月調整增加 500';
+
+  @override
+  String get dashboardScenarioHorizon => '試算期間';
+
+  @override
+  String dashboardScenarioMonths(Object count) {
+    return '$count 個月';
+  }
+
+  @override
+  String get dashboardScenarioDifference => '累積差額';
+
+  @override
+  String dashboardScenarioSummary(
+    Object monthly,
+    Object months,
+    Object difference,
+  ) {
+    return '每月調整 $monthly，持續 $months 個月，累積差額為 $difference。';
+  }
+
+  @override
+  String get dashboardScenarioDisclaimer =>
+      '簡易情境：每月調整 × 月數。不包含利息、市場報酬、通膨與稅務，也不保證未來結果。';
 }

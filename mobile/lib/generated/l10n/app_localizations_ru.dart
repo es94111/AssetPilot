@@ -4207,4 +4207,148 @@ class AppLocalizationsRu extends AppLocalizations {
   String dashboardPortfolioHealthCoverage(Object priced, Object total) {
     return 'Покрытие ценами: $priced из $total позиций';
   }
+
+  @override
+  String get dashboardPersonalizeModulesCashOutlook =>
+      'Прогноз запланированных средств';
+
+  @override
+  String get dashboardPersonalizeModulesSavingsScenario =>
+      'Сценарий накоплений';
+
+  @override
+  String get dashboardCashOutlookTitle =>
+      'Следующие 30 дней · запланированные средства';
+
+  @override
+  String get dashboardCashOutlookSubtitle =>
+      'На основе подтверждённых регулярных операций';
+
+  @override
+  String dashboardCashOutlookWindow(Object start, Object end) {
+    return '$start–$end · Плановая оценка';
+  }
+
+  @override
+  String get dashboardCashOutlookInvalidDate =>
+      'Не удалось рассчитать период оценки.';
+
+  @override
+  String get dashboardCashOutlookNoBankAccounts =>
+      'Добавьте учитываемый банковский счёт для оценки запланированных средств.';
+
+  @override
+  String get dashboardCashOutlookNoSchedules =>
+      'Создайте регулярный доход или расход, чтобы увидеть будущие операции.';
+
+  @override
+  String get dashboardCashOutlookNoCoveredSchedules =>
+      'Проверьте регулярные операции и свяжите их с учитываемыми банковскими счетами.';
+
+  @override
+  String get dashboardCashOutlookStartingBalance =>
+      'Баланс банковских счетов на сегодня';
+
+  @override
+  String get dashboardCashOutlookScheduledNet =>
+      'Запланированное чистое изменение';
+
+  @override
+  String get dashboardCashOutlookClosingBalance =>
+      'Оценка средств через 30 дней';
+
+  @override
+  String get dashboardCashOutlookLowestBalance => 'Минимальная оценка средств';
+
+  @override
+  String dashboardCashOutlookFlowSummary(
+    Object count,
+    Object income,
+    Object expense,
+  ) {
+    return 'Запланировано: $count · Доходы $income · Расходы $expense';
+  }
+
+  @override
+  String get dashboardCashOutlookShortfallTitle =>
+      'Общая оценка средств может стать отрицательной';
+
+  @override
+  String dashboardCashOutlookShortfallBody(Object date, Object amount) {
+    return 'Примерно $date оценка будет ниже нуля на $amount. Перед действием проверьте даты и суммы.';
+  }
+
+  @override
+  String get dashboardCashOutlookUpcoming =>
+      'Ближайшие запланированные операции';
+
+  @override
+  String dashboardCashOutlookShowing(Object shown, Object total) {
+    return 'Показано $shown из $total';
+  }
+
+  @override
+  String get dashboardCashOutlookNoUpcoming =>
+      'В этом 30-дневном периоде нет запланированных операций.';
+
+  @override
+  String dashboardCashOutlookCoverage(
+    Object included,
+    Object total,
+    Object uncovered,
+  ) {
+    return 'Учтено $included из $total регулярных операций; проверьте $uncovered.';
+  }
+
+  @override
+  String get dashboardCashOutlookDisclaimer =>
+      'Оценка объединяет все учитываемые банковские счета, сегодняшний баланс и подтверждённые связанные регулярные операции. Она не показывает возможный овердрафт отдельного счёта и не меняет фактические балансы; наступившие операции создаются при следующей обработке. Для оценок TWD последовательно используются текущие курсы.';
+
+  @override
+  String dashboardCashOutlookAttentionShortfall(Object amount, Object date) {
+    return 'Примерно $date может не хватить $amount запланированных средств';
+  }
+
+  @override
+  String get dashboardScenarioTitle => 'Сценарий накоплений';
+
+  @override
+  String get dashboardScenarioSubtitle =>
+      'Оцените накопительный эффект ежемесячного изменения';
+
+  @override
+  String get dashboardScenarioMonthlyAdjustment =>
+      'Ежемесячное изменение накоплений (TWD)';
+
+  @override
+  String get dashboardScenarioDecrease =>
+      'Уменьшить ежемесячное изменение на 500';
+
+  @override
+  String get dashboardScenarioIncrease =>
+      'Увеличить ежемесячное изменение на 500';
+
+  @override
+  String get dashboardScenarioHorizon => 'Период';
+
+  @override
+  String dashboardScenarioMonths(Object count) {
+    return '$count мес.';
+  }
+
+  @override
+  String get dashboardScenarioDifference => 'Накопительная разница';
+
+  @override
+  String dashboardScenarioSummary(
+    Object monthly,
+    Object months,
+    Object difference,
+  ) {
+    return 'Ежемесячное изменение $monthly в течение $months мес. даёт накопительную разницу $difference.';
+  }
+
+  @override
+  String get dashboardScenarioDisclaimer =>
+      'Простой сценарий: ежемесячное изменение × месяцы. Без процентов, рыночной доходности, инфляции и налогов; будущий результат не гарантируется.';
 }

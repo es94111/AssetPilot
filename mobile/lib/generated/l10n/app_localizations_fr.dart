@@ -4239,4 +4239,143 @@ class AppLocalizationsFr extends AppLocalizations {
   String dashboardPortfolioHealthCoverage(Object priced, Object total) {
     return 'Couverture des prix : $priced positions sur $total';
   }
+
+  @override
+  String get dashboardPersonalizeModulesCashOutlook =>
+      'Prévision de trésorerie planifiée';
+
+  @override
+  String get dashboardPersonalizeModulesSavingsScenario => 'Scénario d’épargne';
+
+  @override
+  String get dashboardCashOutlookTitle =>
+      '30 prochains jours · trésorerie planifiée';
+
+  @override
+  String get dashboardCashOutlookSubtitle =>
+      'Basé sur les opérations récurrentes confirmées';
+
+  @override
+  String dashboardCashOutlookWindow(Object start, Object end) {
+    return '$start–$end · Estimation planifiée';
+  }
+
+  @override
+  String get dashboardCashOutlookInvalidDate =>
+      'Impossible de calculer la période estimée.';
+
+  @override
+  String get dashboardCashOutlookNoBankAccounts =>
+      'Ajoutez un compte bancaire inclus avant d’estimer la trésorerie planifiée.';
+
+  @override
+  String get dashboardCashOutlookNoSchedules =>
+      'Créez un revenu ou une dépense récurrente pour voir la trésorerie à venir.';
+
+  @override
+  String get dashboardCashOutlookNoCoveredSchedules =>
+      'Vérifiez les opérations récurrentes et liez-les à des comptes bancaires inclus.';
+
+  @override
+  String get dashboardCashOutlookStartingBalance => 'Solde bancaire à ce jour';
+
+  @override
+  String get dashboardCashOutlookScheduledNet => 'Variation nette planifiée';
+
+  @override
+  String get dashboardCashOutlookClosingBalance =>
+      'Trésorerie estimée après 30 jours';
+
+  @override
+  String get dashboardCashOutlookLowestBalance => 'Trésorerie minimale estimée';
+
+  @override
+  String dashboardCashOutlookFlowSummary(
+    Object count,
+    Object income,
+    Object expense,
+  ) {
+    return '$count opérations planifiées · Revenus $income · Dépenses $expense';
+  }
+
+  @override
+  String get dashboardCashOutlookShortfallTitle =>
+      'La trésorerie combinée estimée pourrait devenir négative';
+
+  @override
+  String dashboardCashOutlookShortfallBody(Object date, Object amount) {
+    return 'Vers le $date, l’estimation atteint $amount sous zéro. Vérifiez les dates et montants avant d’agir.';
+  }
+
+  @override
+  String get dashboardCashOutlookUpcoming => 'Opérations planifiées à venir';
+
+  @override
+  String dashboardCashOutlookShowing(Object shown, Object total) {
+    return 'Affichage de $shown sur $total';
+  }
+
+  @override
+  String get dashboardCashOutlookNoUpcoming =>
+      'Aucune opération planifiée dans cette période de 30 jours.';
+
+  @override
+  String dashboardCashOutlookCoverage(
+    Object included,
+    Object total,
+    Object uncovered,
+  ) {
+    return '$included opérations récurrentes sur $total sont couvertes ; vérifiez-en $uncovered.';
+  }
+
+  @override
+  String get dashboardCashOutlookDisclaimer =>
+      'L’estimation combine tous les comptes bancaires inclus avec le solde du jour et les opérations récurrentes liées confirmées. Elle ne montre pas les découverts possibles d’un compte et ne modifie pas les soldes réels ; les opérations échues sont créées au prochain traitement. Les estimations TWD utilisent systématiquement les taux actuels.';
+
+  @override
+  String dashboardCashOutlookAttentionShortfall(Object amount, Object date) {
+    return 'La trésorerie planifiée pourrait manquer de $amount vers le $date';
+  }
+
+  @override
+  String get dashboardScenarioTitle => 'Scénario d’épargne';
+
+  @override
+  String get dashboardScenarioSubtitle =>
+      'Estimez l’effet cumulé d’un ajustement mensuel';
+
+  @override
+  String get dashboardScenarioMonthlyAdjustment =>
+      'Ajustement mensuel de l’épargne (TWD)';
+
+  @override
+  String get dashboardScenarioDecrease => 'Réduire l’ajustement mensuel de 500';
+
+  @override
+  String get dashboardScenarioIncrease =>
+      'Augmenter l’ajustement mensuel de 500';
+
+  @override
+  String get dashboardScenarioHorizon => 'Horizon';
+
+  @override
+  String dashboardScenarioMonths(Object count) {
+    return '$count mois';
+  }
+
+  @override
+  String get dashboardScenarioDifference => 'Écart cumulé';
+
+  @override
+  String dashboardScenarioSummary(
+    Object monthly,
+    Object months,
+    Object difference,
+  ) {
+    return 'Un ajustement mensuel de $monthly pendant $months mois produit un écart cumulé de $difference.';
+  }
+
+  @override
+  String get dashboardScenarioDisclaimer =>
+      'Scénario simple : ajustement mensuel × nombre de mois. Il exclut intérêts, rendements, inflation et fiscalité, sans garantir de résultat futur.';
 }

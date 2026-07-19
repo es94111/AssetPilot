@@ -16,6 +16,12 @@ const DEFAULT_CURRENCIES = ['TWD', 'USD', 'JPY', 'EUR', 'CNY', 'HKD', 'GBP', 'AU
 
 function fmt(n: number | string, locale: string) { return 'NT$ ' + Math.round(Number(n) || 0).toLocaleString(localeTag(locale)); }
 
+// recurring 的 amount 存的是 TWD；外幣需先還原成原幣別金額才能編輯，否則每次儲存都會再次套用匯率換算。
+function fmtAmountForEdit(n: number): string {
+  if (!Number.isFinite(n)) return '';
+  return n % 1 === 0 ? String(n) : n.toFixed(2);
+}
+
 export default function RecurringClient(_props: { user?: any } = {}) {
   const { t, locale } = useT();
   const [recs, setRecs] = useState<any[]>([]);
@@ -149,12 +155,16 @@ export default function RecurringClient(_props: { user?: any } = {}) {
   }
 
   function openEdit(rec: any) {
+    const currency = String(rec.currency || 'TWD').toUpperCase();
+    const rate = Number(rec.fxRate || rec.fx_rate) || 1;
+    const shownAmount = (currency === 'TWD' || !(rate > 0)) ? Number(rec.amount) || 0 : (Number(rec.amount) || 0) / rate;
     setForm({
       ...rec,
       categoryId: rec.category_id || rec.categoryId,
       accountId: rec.account_id || rec.accountId,
       startDate: rec.startDate || rec.start_date,
-      currency: String(rec.currency || 'TWD').toUpperCase(),
+      currency,
+      amount: fmtAmountForEdit(shownAmount),
       fxRate: String(rec.fxRate || rec.fx_rate || 1),
       excludeFromStats: !!rec.excludeFromStats,
       fxFee: Number(rec.fxFee) > 0 ? String(Math.round(Number(rec.fxFee))) : '',

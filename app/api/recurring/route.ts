@@ -10,6 +10,12 @@ import { getNextRecurringDate } from '../../../lib/recurringHelpers';
 const VALID_RECURRING_FREQ = new Set(['daily', 'weekly', 'monthly', 'yearly']);
 const VALID_RECURRING_TYPE = new Set(['income', 'expense']);
 
+function resolveExcludeFromStats(body, fallback = false) {
+  if (body.excludeFromStats != null) return !!body.excludeFromStats;
+  if (body.includeInStats != null) return !body.includeInStats;
+  return fallback;
+}
+
 export async function GET(request) {
   const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
@@ -19,6 +25,7 @@ export async function GET(request) {
     const nextDate = r.last_generated
       ? getNextRecurringDate(r.last_generated, r.frequency)
       : r.start_date;
+    const excludeFromStats = !!r.exclude_from_stats;
     return {
       id: r.id,
       type: r.type,
@@ -33,7 +40,8 @@ export async function GET(request) {
       currency: r.currency || 'TWD',
       fxRate: String(r.fx_rate != null ? r.fx_rate : '1'),
       fxFee: Number(r.fx_fee) || 0,
-      excludeFromStats: !!r.exclude_from_stats,
+      excludeFromStats,
+      includeInStats: !excludeFromStats,
       needsAttention: !!r.needs_attention,
       nextDate,
       updatedAt: r.updated_at,
@@ -46,7 +54,7 @@ export async function POST(request) {
   if (auth instanceof NextResponse) return auth;
 
   const body = await request.json().catch(() => ({}));
-  const { type, categoryId, accountId, frequency, startDate, note, excludeFromStats } = body;
+  const { type, categoryId, accountId, frequency, startDate, note } = body;
   let { amount, currency, fxRate } = body;
 
   if (!VALID_RECURRING_TYPE.has(type)) {
@@ -86,6 +94,7 @@ export async function POST(request) {
     twdBase: amountTwdInt,
     clientFxFee: body.fxFee,
   });
+  const excludeFromStats = resolveExcludeFromStats(body);
 
   const now = Date.now();
   const id = uid();

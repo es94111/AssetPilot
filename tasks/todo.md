@@ -1,3 +1,48 @@
+# 2026-07-18 phase-4-proactive-cashflow-action-loop
+
+## Goal + Acceptance Criteria
+- [x] Dashboard shows a deterministic next-30-day scheduled cash outlook based only on active, valid recurring entries linked to included bank accounts.
+- [x] Forecast totals include every occurrence in the window, handle daily/weekly/monthly/yearly schedules, month-end clamping, leap years, overdue schedules, and stable ordering.
+- [x] Users can see starting bank balance, scheduled income/expense, projected closing balance, lowest projected balance/date, price/data coverage, and an explicit calculation explanation.
+- [x] Low-balance/shortfall and incomplete-schedule conditions become actionable items with direct links; no transaction, transfer, or notification is executed automatically.
+- [x] A responsive savings scenario tool lets users adjust a monthly change and horizon, shows the deterministic difference, and clearly labels it as a simple scenario rather than a prediction or investment return.
+- [x] Cash outlook and scenario are optional Dashboard modules and participate in the existing server-rendered personalization order/visibility contract.
+- [x] Empty, partial, mixed-account, large-number, mobile 320px, keyboard, RTL, and screen-reader states remain understandable and non-alarming.
+- [x] Verification covers pure schedule/forecast calculations, TypeScript, full tests, 10-locale parity, diff hygiene, production build, and independent review.
+
+## Risk & Rollback
+- Risk level: medium; projected financial values can influence user decisions even though this slice does not mutate financial records.
+- Affected components: pure recurring schedule/forecast helpers, additive Dashboard response, Dashboard module registry/page, one client scenario component, shared translations/tests.
+- Rollback strategy: remove the two additive modules/response fields and restore the previous module allowlist; no transaction or account data is migrated or rewritten.
+- Monitoring signals: duplicate/skipped occurrences, overdue infinite loops, accountless/card recurring entries incorrectly changing bank cash, false shortfall alarms, or scenario copy being mistaken for guaranteed returns.
+
+## Dependencies & Environment
+- Existing Next.js/React/Tailwind/Base UI/Lucide/Decimal stack only; no new dependency planned.
+- `recurring.amount` is stored as canonical TWD. Bank starting balances use the current exchange-rate conversion already used by Dashboard; this is a present-value planning view, not historical FX performance.
+- Only recurring entries linked to included bank accounts can change projected bank cash. Excluded, missing-account, non-bank, inactive, or `needs_attention` entries are reported as uncovered rather than silently included.
+- The scenario tool uses user-entered monthly adjustment × horizon with no interest or market-return assumption.
+
+## Working Notes
+- Phase four is implemented as one complete loop: observe upcoming scheduled cash → flag a possible gap → explain covered/uncovered data → link to the relevant recurring/account action → simulate a user-controlled monthly adjustment.
+- Forecast window is user-timezone date-only, starting tomorrow and ending 30 days after today. Today/due history remains the recurring processor’s responsibility and is not counted twice.
+- Historical index/TWR, news explanations, cohort comparisons, and automatic transfers remain outside this slice until daily snapshots and trustworthy historical series exist.
+
+## Plan
+- [x] Confirm recurring/account/budget data invariants and official comparable-product patterns.
+- [x] Extract pure recurrence-date logic and add forecast helpers/tests.
+- [x] Extend Dashboard data contract with scheduled cash outlook and coverage.
+- [x] Add personalized cash-outlook/action UI and savings scenario interaction.
+- [x] Add translations and accessibility/responsive safeguards.
+- [x] Run full verification and independent correctness/UX review.
+
+## Results
+- Added a server-rendered 30-day scheduled-cash module with today's forecast starting balance, income/expense totals, closing cash, lowest point, first combined-cash shortfall, upcoming occurrences, explicit coverage, and direct recurring/account actions.
+- Preserved the existing Dashboard bank-balance contract while independently excluding future manual transactions from the forecast starting point. Foreign-currency schedules are valued consistently through the linked account using current rates; invalid rates, impossible dates, stale references, attention-needed rows, and non-bank/accountless schedules are uncovered instead of silently counted.
+- Added a deterministic 6/12/24-month savings-adjustment scenario with keyboard controls, concise screen-reader updates, honest cumulative-difference wording, and no interest/return/inflation/tax assumption.
+- Added both modules to Dashboard personalization, fixed the default two-column information order, generated all shared/mobile translations, and documented that the cash estimate combines accounts and cannot detect a single-account overdraft.
+- Independent correctness/security and UX/accessibility reviews found no remaining P1. Their findings were addressed: existing balance compatibility, FX-basis consistency, strict calendar validation, negative-start CTA routing, actionable coverage, responsive ordering, scenario wording, and live-region verbosity.
+- Verification passed: `npm run typecheck`, `npm test` (including 7 scheduled-cash tests), 10-locale parity with 1,217 keys, `git diff --check`, and a clean production `npm run build` outside the Windows sandbox. Existing Cache-Control and middleware-deprecation warnings remain unchanged.
+
 # 2026-07-18 phase-3-personalized-decision-dashboard
 
 ## Goal + Acceptance Criteria

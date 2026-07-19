@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '../../../lib/apiHelpers';
 import { queryAll, queryOne } from '../../../lib/db';
-import { todayInUserTz, monthInUserTz } from '../../../lib/userTime';
-import { calcBalance, getExchangeRateToTwd, normalizeCurrency } from '../../../lib/accountHelpers';
+import { todayInUserTz, monthInUserTz, isValidIsoDate } from '../../../lib/userTime';
+import { calcBalance, convertFromTwd, getExchangeRateToTwd, normalizeCurrency } from '../../../lib/accountHelpers';
 import { calcFifoLots } from '../../../lib/moneyDecimal';
 import {
   buildDashboardChangeDrivers,
@@ -11,6 +11,7 @@ import {
   type DashboardComparisonCategory,
 } from '../../../lib/dashboardInsights';
 import { parseDashboardLayout } from '../../../lib/dashboardPreferences';
+import { buildScheduledCashOutlook, getScheduledAccountImpactTwd, type ScheduledCashInput } from '../../../lib/dashboardForecast';
 import {
   buildCategoryAggregateNodes,
   type DashboardCategoryAggregateRow,
@@ -24,6 +25,12 @@ type AccountRow = {
   initial_balance: string | number | null;
   currency: string | null;
 };
+type AccountTransactionRow = {
+  type: string | null;
+  amount: string | number | null;
+  currency: string | null;
+  original_amount: string | number | null;
+};
 type StockRow = {
   id: string;
   name: string | null;
@@ -34,12 +41,35 @@ type StockRow = {
 type CountRow = { count: string | number | null };
 type SettingsRow = { dashboard_layout: string | null; dashboard_layout_updated_at: string | number | null };
 type ComparisonRow = DashboardComparisonCategory & { period: 'current' | 'previous'; transactionCount: string | number | null };
+type RecurringForecastRow = {
+  id: string;
+  type: string;
+  amount: string | number | null;
+  fx_fee: string | number | null;
+  currency: string | null;
+  fx_rate: string | number | null;
+  frequency: string;
+  start_date: string | null;
+  last_generated: string | null;
+  note: string | null;
+  account_id: string | null;
+  category_id: string | null;
+  needs_attention: string | number | null;
+  matched_account_id: string | null;
+  matched_category_id: string | null;
+};
 
 function totalFromRow(row: Record<string, string | number | null> | null): number {
   return Number((row as TotalRow | null)?.total) || 0;
 }
 
-function getBankBalanceTwd(userId: string): number {
+function getBankStatusAsOf(userId: string, throughDate: string): {
+  displayBalanceTwd: number;
+  forecastBalanceTwd: number;
+  accountIds: Set<string>;
+  accountCount: number;
+  accountDetails: Map<string, { currency: string; currentRate: number }>;
+} {
   const accounts = queryAll(
     `SELECT id, initial_balance, currency
      FROM accounts
@@ -49,13 +79,41 @@ function getBankBalanceTwd(userId: string): number {
     [userId]
   ) as unknown as AccountRow[];
 
-  const total = accounts.reduce((sum, account) => {
+  const displayBalanceTwd = accounts.reduce((sum, account) => {
     const currency = normalizeCurrency(account.currency);
     const balance = calcBalance(account.id, Number(account.initial_balance) || 0, userId, currency);
     return sum + balance * getExchangeRateToTwd(userId, currency);
   }, 0);
+  const forecastBalanceTwd = accounts.reduce((sum, account) => {
+    const currency = normalizeCurrency(account.currency);
+    let balance = Number(account.initial_balance) || 0;
+    const transactions = queryAll(
+      `SELECT type, amount, currency, original_amount
+       FROM transactions
+       WHERE account_id = ? AND user_id = ? AND date <= ?`,
+      [account.id, userId, throughDate]
+    ) as unknown as AccountTransactionRow[];
+    for (const transaction of transactions) {
+      const transactionCurrency = normalizeCurrency(transaction.currency);
+      const value = transactionCurrency === currency
+        ? (Number(transaction.original_amount) > 0 ? Number(transaction.original_amount) : Number(transaction.amount) || 0)
+        : convertFromTwd(Number(transaction.amount), currency, userId);
+      if (transaction.type === 'income' || transaction.type === 'transfer_in') balance += value;
+      else if (transaction.type === 'expense' || transaction.type === 'transfer_out') balance -= value;
+    }
+    return sum + balance * getExchangeRateToTwd(userId, currency);
+  }, 0);
 
-  return Math.round(total);
+  return {
+    displayBalanceTwd: Math.round(displayBalanceTwd),
+    forecastBalanceTwd: Math.round(forecastBalanceTwd),
+    accountIds: new Set(accounts.map(account => account.id)),
+    accountCount: accounts.length,
+    accountDetails: new Map(accounts.map(account => {
+      const currency = normalizeCurrency(account.currency);
+      return [account.id, { currency, currentRate: getExchangeRateToTwd(userId, currency) }];
+    })),
+  };
 }
 
 function getStockPortfolioStatus(userId: string): {
@@ -166,12 +224,64 @@ export async function GET(request: NextRequest) {
     "SELECT COALESCE(SUM(amount),0) as total FROM transactions WHERE user_id = ? AND type='expense' AND date = ? AND exclude_from_stats = 0",
     [auth.userId, todayS]
   ));
-  const bankBalance = getBankBalanceTwd(auth.userId);
+  const bankStatus = getBankStatusAsOf(auth.userId, todayS);
+  const bankBalance = bankStatus.displayBalanceTwd;
   const stockStatus = getStockPortfolioStatus(auth.userId);
   const settings = queryOne(
     'SELECT dashboard_layout, dashboard_layout_updated_at FROM user_settings WHERE user_id = ?',
     [auth.userId]
   ) as SettingsRow | null;
+  const recurringForecastRows = queryAll(`
+    SELECT r.id, r.type, r.amount, r.fx_fee, r.currency, r.fx_rate, r.frequency, r.start_date, r.last_generated,
+           r.note, r.account_id, r.category_id, r.needs_attention,
+           a.id AS matched_account_id,
+           c.id AS matched_category_id
+    FROM recurring r
+    LEFT JOIN accounts a ON r.account_id = a.id AND a.user_id = r.user_id
+    LEFT JOIN categories c ON r.category_id = c.id AND c.user_id = r.user_id
+    WHERE r.user_id = ? AND r.is_active = 1
+  `, [auth.userId]) as unknown as RecurringForecastRow[];
+  const forecastSchedules: ScheduledCashInput[] = recurringForecastRows.map(row => {
+    const account = row.account_id ? bankStatus.accountDetails.get(row.account_id) : null;
+    const forecastAmount = account ? getScheduledAccountImpactTwd({
+      amountTwd: Number(row.amount) || 0,
+      fxFeeTwd: row.type === 'expense' ? Number(row.fx_fee) || 0 : 0,
+      recurringCurrency: row.currency || 'TWD',
+      storedFxRate: Number(row.fx_rate) || 0,
+      accountCurrency: account.currency,
+      currentAccountRate: account.currentRate,
+    }) : null;
+    const validReference = (!row.account_id || !!row.matched_account_id)
+      && (!row.category_id || !!row.matched_category_id);
+    const hasValidAnchor = row.last_generated
+      ? isValidIsoDate(row.last_generated)
+      : isValidIsoDate(row.start_date || '');
+    const included = !row.needs_attention
+      && validReference
+      && !!row.account_id
+      && bankStatus.accountIds.has(row.account_id)
+      && (row.type === 'income' || row.type === 'expense')
+      && ['daily', 'weekly', 'monthly', 'yearly'].includes(row.frequency)
+      && hasValidAnchor
+      && forecastAmount !== null;
+    return {
+      id: row.id,
+      type: row.type === 'income' ? 'income' : 'expense',
+      amount: forecastAmount || 0,
+      frequency: row.frequency,
+      startDate: row.start_date || '',
+      lastGenerated: row.last_generated,
+      note: row.note || '',
+      included,
+    };
+  });
+  const cashOutlook = buildScheduledCashOutlook({
+    today: todayS,
+    windowDays: 30,
+    startingBalance: bankStatus.forecastBalanceTwd,
+    bankAccountCount: bankStatus.accountCount,
+    schedules: forecastSchedules,
+  });
 
   let comparisonRows: ComparisonRow[] = [];
   if (comparisonWindow) {
@@ -311,6 +421,7 @@ export async function GET(request: NextRequest) {
         : [],
     },
     portfolioHealth: stockStatus.health,
+    cashOutlook,
     catBreakdown,
     incomeCatBreakdown,
     recent,

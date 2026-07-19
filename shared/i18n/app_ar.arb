@@ -6412,5 +6412,199 @@
       "priced": {},
       "total": {}
     }
+  },
+  "dashboardPersonalizeModulesCashOutlook": "توقع النقد المجدول",
+  "@dashboardPersonalizeModulesCashOutlook": {
+    "description": "Web path: dashboard.personalize.modules.cashOutlook",
+    "x-webPath": "dashboard.personalize.modules.cashOutlook"
+  },
+  "dashboardPersonalizeModulesSavingsScenario": "سيناريو الادخار",
+  "@dashboardPersonalizeModulesSavingsScenario": {
+    "description": "Web path: dashboard.personalize.modules.savingsScenario",
+    "x-webPath": "dashboard.personalize.modules.savingsScenario"
+  },
+  "dashboardCashOutlookTitle": "الثلاثون يومًا القادمة · النقد المجدول",
+  "@dashboardCashOutlookTitle": {
+    "description": "Web path: dashboard.cashOutlook.title",
+    "x-webPath": "dashboard.cashOutlook.title"
+  },
+  "dashboardCashOutlookSubtitle": "استنادًا إلى البنود المتكررة المؤكدة",
+  "@dashboardCashOutlookSubtitle": {
+    "description": "Web path: dashboard.cashOutlook.subtitle",
+    "x-webPath": "dashboard.cashOutlook.subtitle"
+  },
+  "dashboardCashOutlookWindow": "{start}–{end} · تقدير مجدول",
+  "@dashboardCashOutlookWindow": {
+    "description": "Web path: dashboard.cashOutlook.window",
+    "x-webPath": "dashboard.cashOutlook.window",
+    "placeholders": {
+      "start": {},
+      "end": {}
+    }
+  },
+  "dashboardCashOutlookInvalidDate": "تعذر حساب فترة التقدير.",
+  "@dashboardCashOutlookInvalidDate": {
+    "description": "Web path: dashboard.cashOutlook.invalidDate",
+    "x-webPath": "dashboard.cashOutlook.invalidDate"
+  },
+  "dashboardCashOutlookNoBankAccounts": "أضف حسابًا مصرفيًا مشمولًا قبل تقدير النقد المجدول.",
+  "@dashboardCashOutlookNoBankAccounts": {
+    "description": "Web path: dashboard.cashOutlook.noBankAccounts",
+    "x-webPath": "dashboard.cashOutlook.noBankAccounts"
+  },
+  "dashboardCashOutlookNoSchedules": "أنشئ دخلاً أو مصروفًا متكررًا لرؤية النقد المجدول القادم.",
+  "@dashboardCashOutlookNoSchedules": {
+    "description": "Web path: dashboard.cashOutlook.noSchedules",
+    "x-webPath": "dashboard.cashOutlook.noSchedules"
+  },
+  "dashboardCashOutlookNoCoveredSchedules": "راجع البنود المتكررة واربطها بحسابات مصرفية مشمولة.",
+  "@dashboardCashOutlookNoCoveredSchedules": {
+    "description": "Web path: dashboard.cashOutlook.noCoveredSchedules",
+    "x-webPath": "dashboard.cashOutlook.noCoveredSchedules"
+  },
+  "dashboardCashOutlookStartingBalance": "رصيد الحسابات المصرفية حتى اليوم",
+  "@dashboardCashOutlookStartingBalance": {
+    "description": "Web path: dashboard.cashOutlook.startingBalance",
+    "x-webPath": "dashboard.cashOutlook.startingBalance"
+  },
+  "dashboardCashOutlookScheduledNet": "صافي التغير المجدول",
+  "@dashboardCashOutlookScheduledNet": {
+    "description": "Web path: dashboard.cashOutlook.scheduledNet",
+    "x-webPath": "dashboard.cashOutlook.scheduledNet"
+  },
+  "dashboardCashOutlookClosingBalance": "النقد المقدّر بعد 30 يومًا",
+  "@dashboardCashOutlookClosingBalance": {
+    "description": "Web path: dashboard.cashOutlook.closingBalance",
+    "x-webPath": "dashboard.cashOutlook.closingBalance"
+  },
+  "dashboardCashOutlookLowestBalance": "أدنى نقد مقدّر",
+  "@dashboardCashOutlookLowestBalance": {
+    "description": "Web path: dashboard.cashOutlook.lowestBalance",
+    "x-webPath": "dashboard.cashOutlook.lowestBalance"
+  },
+  "dashboardCashOutlookFlowSummary": "{count} بنود مجدولة · الدخل {income} · المصروف {expense}",
+  "@dashboardCashOutlookFlowSummary": {
+    "description": "Web path: dashboard.cashOutlook.flowSummary",
+    "x-webPath": "dashboard.cashOutlook.flowSummary",
+    "placeholders": {
+      "count": {},
+      "income": {},
+      "expense": {}
+    }
+  },
+  "dashboardCashOutlookShortfallTitle": "قد ينخفض إجمالي النقد المقدّر دون الصفر",
+  "@dashboardCashOutlookShortfallTitle": {
+    "description": "Web path: dashboard.cashOutlook.shortfallTitle",
+    "x-webPath": "dashboard.cashOutlook.shortfallTitle"
+  },
+  "dashboardCashOutlookShortfallBody": "نحو {date} قد يصل التقدير إلى {amount} دون الصفر. راجع التواريخ والمبالغ قبل اتخاذ إجراء.",
+  "@dashboardCashOutlookShortfallBody": {
+    "description": "Web path: dashboard.cashOutlook.shortfallBody",
+    "x-webPath": "dashboard.cashOutlook.shortfallBody",
+    "placeholders": {
+      "date": {},
+      "amount": {}
+    }
+  },
+  "dashboardCashOutlookUpcoming": "البنود المجدولة القادمة",
+  "@dashboardCashOutlookUpcoming": {
+    "description": "Web path: dashboard.cashOutlook.upcoming",
+    "x-webPath": "dashboard.cashOutlook.upcoming"
+  },
+  "dashboardCashOutlookShowing": "عرض {shown} من {total}",
+  "@dashboardCashOutlookShowing": {
+    "description": "Web path: dashboard.cashOutlook.showing",
+    "x-webPath": "dashboard.cashOutlook.showing",
+    "placeholders": {
+      "shown": {},
+      "total": {}
+    }
+  },
+  "dashboardCashOutlookNoUpcoming": "لا توجد بنود مجدولة ضمن فترة الثلاثين يومًا هذه.",
+  "@dashboardCashOutlookNoUpcoming": {
+    "description": "Web path: dashboard.cashOutlook.noUpcoming",
+    "x-webPath": "dashboard.cashOutlook.noUpcoming"
+  },
+  "dashboardCashOutlookCoverage": "تمت تغطية {included} من {total} بنود متكررة؛ راجع {uncovered}.",
+  "@dashboardCashOutlookCoverage": {
+    "description": "Web path: dashboard.cashOutlook.coverage",
+    "x-webPath": "dashboard.cashOutlook.coverage",
+    "placeholders": {
+      "included": {},
+      "total": {},
+      "uncovered": {}
+    }
+  },
+  "dashboardCashOutlookDisclaimer": "يجمع التقدير كل الحسابات المصرفية المشمولة باستخدام رصيد اليوم والبنود المتكررة المرتبطة المؤكدة. لا يعرض احتمال السحب على المكشوف في حساب واحد ولا يغيّر الأرصدة الفعلية؛ تُنشأ المعاملات المستحقة عند المعالجة التالية. تستخدم تقديرات TWD أسعار الصرف الحالية بشكل متسق.",
+  "@dashboardCashOutlookDisclaimer": {
+    "description": "Web path: dashboard.cashOutlook.disclaimer",
+    "x-webPath": "dashboard.cashOutlook.disclaimer"
+  },
+  "dashboardCashOutlookAttentionShortfall": "قد ينقص النقد المجدول بمقدار {amount} نحو {date}",
+  "@dashboardCashOutlookAttentionShortfall": {
+    "description": "Web path: dashboard.cashOutlook.attentionShortfall",
+    "x-webPath": "dashboard.cashOutlook.attentionShortfall",
+    "placeholders": {
+      "amount": {},
+      "date": {}
+    }
+  },
+  "dashboardScenarioTitle": "سيناريو الادخار",
+  "@dashboardScenarioTitle": {
+    "description": "Web path: dashboard.scenario.title",
+    "x-webPath": "dashboard.scenario.title"
+  },
+  "dashboardScenarioSubtitle": "قدّر الأثر التراكمي لتعديل شهري واحد",
+  "@dashboardScenarioSubtitle": {
+    "description": "Web path: dashboard.scenario.subtitle",
+    "x-webPath": "dashboard.scenario.subtitle"
+  },
+  "dashboardScenarioMonthlyAdjustment": "تعديل الادخار الشهري (TWD)",
+  "@dashboardScenarioMonthlyAdjustment": {
+    "description": "Web path: dashboard.scenario.monthlyAdjustment",
+    "x-webPath": "dashboard.scenario.monthlyAdjustment"
+  },
+  "dashboardScenarioDecrease": "خفض التعديل الشهري بمقدار 500",
+  "@dashboardScenarioDecrease": {
+    "description": "Web path: dashboard.scenario.decrease",
+    "x-webPath": "dashboard.scenario.decrease"
+  },
+  "dashboardScenarioIncrease": "زيادة التعديل الشهري بمقدار 500",
+  "@dashboardScenarioIncrease": {
+    "description": "Web path: dashboard.scenario.increase",
+    "x-webPath": "dashboard.scenario.increase"
+  },
+  "dashboardScenarioHorizon": "الفترة الزمنية",
+  "@dashboardScenarioHorizon": {
+    "description": "Web path: dashboard.scenario.horizon",
+    "x-webPath": "dashboard.scenario.horizon"
+  },
+  "dashboardScenarioMonths": "{count} شهرًا",
+  "@dashboardScenarioMonths": {
+    "description": "Web path: dashboard.scenario.months",
+    "x-webPath": "dashboard.scenario.months",
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "dashboardScenarioDifference": "الفرق التراكمي",
+  "@dashboardScenarioDifference": {
+    "description": "Web path: dashboard.scenario.difference",
+    "x-webPath": "dashboard.scenario.difference"
+  },
+  "dashboardScenarioSummary": "ينتج عن تعديل شهري قدره {monthly} لمدة {months} شهرًا فرق تراكمي قدره {difference}.",
+  "@dashboardScenarioSummary": {
+    "description": "Web path: dashboard.scenario.summary",
+    "x-webPath": "dashboard.scenario.summary",
+    "placeholders": {
+      "monthly": {},
+      "months": {},
+      "difference": {}
+    }
+  },
+  "dashboardScenarioDisclaimer": "سيناريو بسيط: التعديل الشهري × عدد الأشهر. لا يشمل الفائدة أو عوائد السوق أو التضخم أو الضرائب، ولا يضمن نتيجة مستقبلية.",
+  "@dashboardScenarioDisclaimer": {
+    "description": "Web path: dashboard.scenario.disclaimer",
+    "x-webPath": "dashboard.scenario.disclaimer"
   }
 }

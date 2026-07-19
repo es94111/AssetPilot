@@ -2,6 +2,8 @@ export const DASHBOARD_MODULE_IDS = [
   'assets',
   'attention',
   'whyChanged',
+  'cashOutlook',
+  'savingsScenario',
   'spending',
   'portfolioHealth',
   'incomeRecent',
@@ -10,13 +12,13 @@ export const DASHBOARD_MODULE_IDS = [
 export type DashboardModuleId = (typeof DASHBOARD_MODULE_IDS)[number];
 
 export interface DashboardLayoutPreference {
-  version: 1;
+  version: 2;
   moduleOrder: DashboardModuleId[];
   hiddenModules: DashboardModuleId[];
 }
 
 export const DEFAULT_DASHBOARD_LAYOUT: DashboardLayoutPreference = {
-  version: 1,
+  version: 2,
   moduleOrder: [...DASHBOARD_MODULE_IDS],
   hiddenModules: [],
 };
@@ -40,7 +42,7 @@ export function normalizeDashboardLayout(value: unknown): DashboardLayoutPrefere
     : [];
 
   return {
-    version: 1,
+    version: 2,
     moduleOrder,
     hiddenModules: [...new Set(requestedHidden)],
   };

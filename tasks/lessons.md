@@ -1,5 +1,26 @@
 # Lessons
 
+## 2026-07-18 Decimal Sign Is Not a Strict Positive-Rate Check
+- Mistake class: incorrect assumption about dependency behavior.
+- Failure mode: Used `Decimal.isPositive()` to validate an exchange rate, but Decimal.js treats positive zero as positive, allowing division by zero and returning `Infinity`.
+- Detection signal: The foreign-currency regression test expected an invalid zero rate to return `null` but received `Infinity`.
+- Prevention rule: Financial divisors must be both finite and strictly greater than zero; sign predicates alone are insufficient.
+- Tripwire: Every new rate/divisor helper needs explicit tests for zero, negative, `NaN`, and infinity-like inputs before API integration.
+
+## 2026-07-18 Generated Sources Must Settle Before Consumers Run
+- Mistake class: missing verification / unsafe execution ordering.
+- Failure mode: Ran shared-i18n generation, TypeScript checking, and a targeted Node test concurrently; the generator writes files that the typechecker reads, so the combined tool call did not complete within its expected timeout.
+- Detection signal: The parallel command produced no completion output for more than two minutes, while a subsequent generated-output check and sequential validation completed normally.
+- Prevention rule: Run source generators to completion before starting checks that consume their outputs; only parallelize read-only validations after generated files are stable.
+- Tripwire: Treat `generate`, codegen, schema generation, and formatting commands as write phases, then run `--check`, typecheck, tests, and build in a separate phase.
+
+## 2026-07-18 Native Node TypeScript Tests Need Resolvable Relative Extensions
+- Mistake class: incorrect assumption about repository behavior / missing verification.
+- Failure mode: The new pure `dashboardForecast.ts` used an extensionless relative import that Next/TypeScript accepted, but the repository's direct `node file.test.ts` runner could not resolve it.
+- Detection signal: `npm run test:dashboard-forecast` failed with `ERR_MODULE_NOT_FOUND` for `lib/recurringSchedule` even though `npm run typecheck` passed.
+- Prevention rule: Pure TypeScript modules loaded directly by Node tests must use explicit `.ts` relative imports under this project's no-emit configuration, and targeted tests must run before UI/API integration.
+- Tripwire: For every new direct-Node test module, recursively inspect its pure-module import chain for extensionless relative imports and run the targeted test independently rather than relying on a semicolon-chained command's final exit code.
+
 ## 2026-07-18 Pure Test Modules Must Not Import Runtime Alias Dependencies
 - Mistake class: incorrect assumption about repository behavior / missing verification.
 - Failure mode: The first Dashboard insight test imported `dashboardHelpers.ts`, which also imports `@/lib/*` runtime modules; plain Node could not resolve that application alias even though the insight function itself was pure.

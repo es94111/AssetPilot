@@ -6412,5 +6412,199 @@
       "priced": {},
       "total": {}
     }
+  },
+  "dashboardPersonalizeModulesCashOutlook": "Scheduled cash outlook",
+  "@dashboardPersonalizeModulesCashOutlook": {
+    "description": "Web path: dashboard.personalize.modules.cashOutlook",
+    "x-webPath": "dashboard.personalize.modules.cashOutlook"
+  },
+  "dashboardPersonalizeModulesSavingsScenario": "Savings scenario",
+  "@dashboardPersonalizeModulesSavingsScenario": {
+    "description": "Web path: dashboard.personalize.modules.savingsScenario",
+    "x-webPath": "dashboard.personalize.modules.savingsScenario"
+  },
+  "dashboardCashOutlookTitle": "Next 30 days · scheduled cash",
+  "@dashboardCashOutlookTitle": {
+    "description": "Web path: dashboard.cashOutlook.title",
+    "x-webPath": "dashboard.cashOutlook.title"
+  },
+  "dashboardCashOutlookSubtitle": "Based on confirmed recurring entries",
+  "@dashboardCashOutlookSubtitle": {
+    "description": "Web path: dashboard.cashOutlook.subtitle",
+    "x-webPath": "dashboard.cashOutlook.subtitle"
+  },
+  "dashboardCashOutlookWindow": "{start}–{end} · Scheduled estimate",
+  "@dashboardCashOutlookWindow": {
+    "description": "Web path: dashboard.cashOutlook.window",
+    "x-webPath": "dashboard.cashOutlook.window",
+    "placeholders": {
+      "start": {},
+      "end": {}
+    }
+  },
+  "dashboardCashOutlookInvalidDate": "The estimate window could not be calculated.",
+  "@dashboardCashOutlookInvalidDate": {
+    "description": "Web path: dashboard.cashOutlook.invalidDate",
+    "x-webPath": "dashboard.cashOutlook.invalidDate"
+  },
+  "dashboardCashOutlookNoBankAccounts": "Add an included bank account before estimating scheduled cash.",
+  "@dashboardCashOutlookNoBankAccounts": {
+    "description": "Web path: dashboard.cashOutlook.noBankAccounts",
+    "x-webPath": "dashboard.cashOutlook.noBankAccounts"
+  },
+  "dashboardCashOutlookNoSchedules": "Create a recurring income or expense to see upcoming scheduled cash.",
+  "@dashboardCashOutlookNoSchedules": {
+    "description": "Web path: dashboard.cashOutlook.noSchedules",
+    "x-webPath": "dashboard.cashOutlook.noSchedules"
+  },
+  "dashboardCashOutlookNoCoveredSchedules": "Review recurring entries and link them to included bank accounts.",
+  "@dashboardCashOutlookNoCoveredSchedules": {
+    "description": "Web path: dashboard.cashOutlook.noCoveredSchedules",
+    "x-webPath": "dashboard.cashOutlook.noCoveredSchedules"
+  },
+  "dashboardCashOutlookStartingBalance": "Bank balance as of today",
+  "@dashboardCashOutlookStartingBalance": {
+    "description": "Web path: dashboard.cashOutlook.startingBalance",
+    "x-webPath": "dashboard.cashOutlook.startingBalance"
+  },
+  "dashboardCashOutlookScheduledNet": "Scheduled net change",
+  "@dashboardCashOutlookScheduledNet": {
+    "description": "Web path: dashboard.cashOutlook.scheduledNet",
+    "x-webPath": "dashboard.cashOutlook.scheduledNet"
+  },
+  "dashboardCashOutlookClosingBalance": "Estimated cash after 30 days",
+  "@dashboardCashOutlookClosingBalance": {
+    "description": "Web path: dashboard.cashOutlook.closingBalance",
+    "x-webPath": "dashboard.cashOutlook.closingBalance"
+  },
+  "dashboardCashOutlookLowestBalance": "Lowest estimated cash",
+  "@dashboardCashOutlookLowestBalance": {
+    "description": "Web path: dashboard.cashOutlook.lowestBalance",
+    "x-webPath": "dashboard.cashOutlook.lowestBalance"
+  },
+  "dashboardCashOutlookFlowSummary": "{count} scheduled occurrences · Income {income} · Expense {expense}",
+  "@dashboardCashOutlookFlowSummary": {
+    "description": "Web path: dashboard.cashOutlook.flowSummary",
+    "x-webPath": "dashboard.cashOutlook.flowSummary",
+    "placeholders": {
+      "count": {},
+      "income": {},
+      "expense": {}
+    }
+  },
+  "dashboardCashOutlookShortfallTitle": "Estimated combined cash may fall below zero",
+  "@dashboardCashOutlookShortfallTitle": {
+    "description": "Web path: dashboard.cashOutlook.shortfallTitle",
+    "x-webPath": "dashboard.cashOutlook.shortfallTitle"
+  },
+  "dashboardCashOutlookShortfallBody": "Around {date}, the estimate reaches {amount} below zero. Review the timing and amounts before acting.",
+  "@dashboardCashOutlookShortfallBody": {
+    "description": "Web path: dashboard.cashOutlook.shortfallBody",
+    "x-webPath": "dashboard.cashOutlook.shortfallBody",
+    "placeholders": {
+      "date": {},
+      "amount": {}
+    }
+  },
+  "dashboardCashOutlookUpcoming": "Upcoming scheduled entries",
+  "@dashboardCashOutlookUpcoming": {
+    "description": "Web path: dashboard.cashOutlook.upcoming",
+    "x-webPath": "dashboard.cashOutlook.upcoming"
+  },
+  "dashboardCashOutlookShowing": "Showing {shown} of {total}",
+  "@dashboardCashOutlookShowing": {
+    "description": "Web path: dashboard.cashOutlook.showing",
+    "x-webPath": "dashboard.cashOutlook.showing",
+    "placeholders": {
+      "shown": {},
+      "total": {}
+    }
+  },
+  "dashboardCashOutlookNoUpcoming": "No scheduled occurrence falls inside this 30-day window.",
+  "@dashboardCashOutlookNoUpcoming": {
+    "description": "Web path: dashboard.cashOutlook.noUpcoming",
+    "x-webPath": "dashboard.cashOutlook.noUpcoming"
+  },
+  "dashboardCashOutlookCoverage": "{included} of {total} recurring entries are covered; review {uncovered}.",
+  "@dashboardCashOutlookCoverage": {
+    "description": "Web path: dashboard.cashOutlook.coverage",
+    "x-webPath": "dashboard.cashOutlook.coverage",
+    "placeholders": {
+      "included": {},
+      "total": {},
+      "uncovered": {}
+    }
+  },
+  "dashboardCashOutlookDisclaimer": "Estimate combines all included bank accounts using today's balance and confirmed linked recurring entries. It does not show possible overdrafts in one account or change actual balances; due transactions are created when the service next processes them. Current FX rates are used consistently for TWD estimates.",
+  "@dashboardCashOutlookDisclaimer": {
+    "description": "Web path: dashboard.cashOutlook.disclaimer",
+    "x-webPath": "dashboard.cashOutlook.disclaimer"
+  },
+  "dashboardCashOutlookAttentionShortfall": "Scheduled cash may be short by {amount} around {date}",
+  "@dashboardCashOutlookAttentionShortfall": {
+    "description": "Web path: dashboard.cashOutlook.attentionShortfall",
+    "x-webPath": "dashboard.cashOutlook.attentionShortfall",
+    "placeholders": {
+      "amount": {},
+      "date": {}
+    }
+  },
+  "dashboardScenarioTitle": "Savings scenario",
+  "@dashboardScenarioTitle": {
+    "description": "Web path: dashboard.scenario.title",
+    "x-webPath": "dashboard.scenario.title"
+  },
+  "dashboardScenarioSubtitle": "Estimate the cumulative effect of one monthly adjustment",
+  "@dashboardScenarioSubtitle": {
+    "description": "Web path: dashboard.scenario.subtitle",
+    "x-webPath": "dashboard.scenario.subtitle"
+  },
+  "dashboardScenarioMonthlyAdjustment": "Monthly savings adjustment (TWD)",
+  "@dashboardScenarioMonthlyAdjustment": {
+    "description": "Web path: dashboard.scenario.monthlyAdjustment",
+    "x-webPath": "dashboard.scenario.monthlyAdjustment"
+  },
+  "dashboardScenarioDecrease": "Decrease monthly adjustment by 500",
+  "@dashboardScenarioDecrease": {
+    "description": "Web path: dashboard.scenario.decrease",
+    "x-webPath": "dashboard.scenario.decrease"
+  },
+  "dashboardScenarioIncrease": "Increase monthly adjustment by 500",
+  "@dashboardScenarioIncrease": {
+    "description": "Web path: dashboard.scenario.increase",
+    "x-webPath": "dashboard.scenario.increase"
+  },
+  "dashboardScenarioHorizon": "Time horizon",
+  "@dashboardScenarioHorizon": {
+    "description": "Web path: dashboard.scenario.horizon",
+    "x-webPath": "dashboard.scenario.horizon"
+  },
+  "dashboardScenarioMonths": "{count} months",
+  "@dashboardScenarioMonths": {
+    "description": "Web path: dashboard.scenario.months",
+    "x-webPath": "dashboard.scenario.months",
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "dashboardScenarioDifference": "Cumulative difference",
+  "@dashboardScenarioDifference": {
+    "description": "Web path: dashboard.scenario.difference",
+    "x-webPath": "dashboard.scenario.difference"
+  },
+  "dashboardScenarioSummary": "A monthly adjustment of {monthly} for {months} months produces a cumulative difference of {difference}.",
+  "@dashboardScenarioSummary": {
+    "description": "Web path: dashboard.scenario.summary",
+    "x-webPath": "dashboard.scenario.summary",
+    "placeholders": {
+      "monthly": {},
+      "months": {},
+      "difference": {}
+    }
+  },
+  "dashboardScenarioDisclaimer": "Simple scenario: monthly adjustment × months. It excludes interest, market returns, inflation and taxes, and does not guarantee a future result.",
+  "@dashboardScenarioDisclaimer": {
+    "description": "Web path: dashboard.scenario.disclaimer",
+    "x-webPath": "dashboard.scenario.disclaimer"
   }
 }

@@ -6412,5 +6412,199 @@
       "priced": {},
       "total": {}
     }
+  },
+  "dashboardPersonalizeModulesCashOutlook": "Prévision de trésorerie planifiée",
+  "@dashboardPersonalizeModulesCashOutlook": {
+    "description": "Web path: dashboard.personalize.modules.cashOutlook",
+    "x-webPath": "dashboard.personalize.modules.cashOutlook"
+  },
+  "dashboardPersonalizeModulesSavingsScenario": "Scénario d’épargne",
+  "@dashboardPersonalizeModulesSavingsScenario": {
+    "description": "Web path: dashboard.personalize.modules.savingsScenario",
+    "x-webPath": "dashboard.personalize.modules.savingsScenario"
+  },
+  "dashboardCashOutlookTitle": "30 prochains jours · trésorerie planifiée",
+  "@dashboardCashOutlookTitle": {
+    "description": "Web path: dashboard.cashOutlook.title",
+    "x-webPath": "dashboard.cashOutlook.title"
+  },
+  "dashboardCashOutlookSubtitle": "Basé sur les opérations récurrentes confirmées",
+  "@dashboardCashOutlookSubtitle": {
+    "description": "Web path: dashboard.cashOutlook.subtitle",
+    "x-webPath": "dashboard.cashOutlook.subtitle"
+  },
+  "dashboardCashOutlookWindow": "{start}–{end} · Estimation planifiée",
+  "@dashboardCashOutlookWindow": {
+    "description": "Web path: dashboard.cashOutlook.window",
+    "x-webPath": "dashboard.cashOutlook.window",
+    "placeholders": {
+      "start": {},
+      "end": {}
+    }
+  },
+  "dashboardCashOutlookInvalidDate": "Impossible de calculer la période estimée.",
+  "@dashboardCashOutlookInvalidDate": {
+    "description": "Web path: dashboard.cashOutlook.invalidDate",
+    "x-webPath": "dashboard.cashOutlook.invalidDate"
+  },
+  "dashboardCashOutlookNoBankAccounts": "Ajoutez un compte bancaire inclus avant d’estimer la trésorerie planifiée.",
+  "@dashboardCashOutlookNoBankAccounts": {
+    "description": "Web path: dashboard.cashOutlook.noBankAccounts",
+    "x-webPath": "dashboard.cashOutlook.noBankAccounts"
+  },
+  "dashboardCashOutlookNoSchedules": "Créez un revenu ou une dépense récurrente pour voir la trésorerie à venir.",
+  "@dashboardCashOutlookNoSchedules": {
+    "description": "Web path: dashboard.cashOutlook.noSchedules",
+    "x-webPath": "dashboard.cashOutlook.noSchedules"
+  },
+  "dashboardCashOutlookNoCoveredSchedules": "Vérifiez les opérations récurrentes et liez-les à des comptes bancaires inclus.",
+  "@dashboardCashOutlookNoCoveredSchedules": {
+    "description": "Web path: dashboard.cashOutlook.noCoveredSchedules",
+    "x-webPath": "dashboard.cashOutlook.noCoveredSchedules"
+  },
+  "dashboardCashOutlookStartingBalance": "Solde bancaire à ce jour",
+  "@dashboardCashOutlookStartingBalance": {
+    "description": "Web path: dashboard.cashOutlook.startingBalance",
+    "x-webPath": "dashboard.cashOutlook.startingBalance"
+  },
+  "dashboardCashOutlookScheduledNet": "Variation nette planifiée",
+  "@dashboardCashOutlookScheduledNet": {
+    "description": "Web path: dashboard.cashOutlook.scheduledNet",
+    "x-webPath": "dashboard.cashOutlook.scheduledNet"
+  },
+  "dashboardCashOutlookClosingBalance": "Trésorerie estimée après 30 jours",
+  "@dashboardCashOutlookClosingBalance": {
+    "description": "Web path: dashboard.cashOutlook.closingBalance",
+    "x-webPath": "dashboard.cashOutlook.closingBalance"
+  },
+  "dashboardCashOutlookLowestBalance": "Trésorerie minimale estimée",
+  "@dashboardCashOutlookLowestBalance": {
+    "description": "Web path: dashboard.cashOutlook.lowestBalance",
+    "x-webPath": "dashboard.cashOutlook.lowestBalance"
+  },
+  "dashboardCashOutlookFlowSummary": "{count} opérations planifiées · Revenus {income} · Dépenses {expense}",
+  "@dashboardCashOutlookFlowSummary": {
+    "description": "Web path: dashboard.cashOutlook.flowSummary",
+    "x-webPath": "dashboard.cashOutlook.flowSummary",
+    "placeholders": {
+      "count": {},
+      "income": {},
+      "expense": {}
+    }
+  },
+  "dashboardCashOutlookShortfallTitle": "La trésorerie combinée estimée pourrait devenir négative",
+  "@dashboardCashOutlookShortfallTitle": {
+    "description": "Web path: dashboard.cashOutlook.shortfallTitle",
+    "x-webPath": "dashboard.cashOutlook.shortfallTitle"
+  },
+  "dashboardCashOutlookShortfallBody": "Vers le {date}, l’estimation atteint {amount} sous zéro. Vérifiez les dates et montants avant d’agir.",
+  "@dashboardCashOutlookShortfallBody": {
+    "description": "Web path: dashboard.cashOutlook.shortfallBody",
+    "x-webPath": "dashboard.cashOutlook.shortfallBody",
+    "placeholders": {
+      "date": {},
+      "amount": {}
+    }
+  },
+  "dashboardCashOutlookUpcoming": "Opérations planifiées à venir",
+  "@dashboardCashOutlookUpcoming": {
+    "description": "Web path: dashboard.cashOutlook.upcoming",
+    "x-webPath": "dashboard.cashOutlook.upcoming"
+  },
+  "dashboardCashOutlookShowing": "Affichage de {shown} sur {total}",
+  "@dashboardCashOutlookShowing": {
+    "description": "Web path: dashboard.cashOutlook.showing",
+    "x-webPath": "dashboard.cashOutlook.showing",
+    "placeholders": {
+      "shown": {},
+      "total": {}
+    }
+  },
+  "dashboardCashOutlookNoUpcoming": "Aucune opération planifiée dans cette période de 30 jours.",
+  "@dashboardCashOutlookNoUpcoming": {
+    "description": "Web path: dashboard.cashOutlook.noUpcoming",
+    "x-webPath": "dashboard.cashOutlook.noUpcoming"
+  },
+  "dashboardCashOutlookCoverage": "{included} opérations récurrentes sur {total} sont couvertes ; vérifiez-en {uncovered}.",
+  "@dashboardCashOutlookCoverage": {
+    "description": "Web path: dashboard.cashOutlook.coverage",
+    "x-webPath": "dashboard.cashOutlook.coverage",
+    "placeholders": {
+      "included": {},
+      "total": {},
+      "uncovered": {}
+    }
+  },
+  "dashboardCashOutlookDisclaimer": "L’estimation combine tous les comptes bancaires inclus avec le solde du jour et les opérations récurrentes liées confirmées. Elle ne montre pas les découverts possibles d’un compte et ne modifie pas les soldes réels ; les opérations échues sont créées au prochain traitement. Les estimations TWD utilisent systématiquement les taux actuels.",
+  "@dashboardCashOutlookDisclaimer": {
+    "description": "Web path: dashboard.cashOutlook.disclaimer",
+    "x-webPath": "dashboard.cashOutlook.disclaimer"
+  },
+  "dashboardCashOutlookAttentionShortfall": "La trésorerie planifiée pourrait manquer de {amount} vers le {date}",
+  "@dashboardCashOutlookAttentionShortfall": {
+    "description": "Web path: dashboard.cashOutlook.attentionShortfall",
+    "x-webPath": "dashboard.cashOutlook.attentionShortfall",
+    "placeholders": {
+      "amount": {},
+      "date": {}
+    }
+  },
+  "dashboardScenarioTitle": "Scénario d’épargne",
+  "@dashboardScenarioTitle": {
+    "description": "Web path: dashboard.scenario.title",
+    "x-webPath": "dashboard.scenario.title"
+  },
+  "dashboardScenarioSubtitle": "Estimez l’effet cumulé d’un ajustement mensuel",
+  "@dashboardScenarioSubtitle": {
+    "description": "Web path: dashboard.scenario.subtitle",
+    "x-webPath": "dashboard.scenario.subtitle"
+  },
+  "dashboardScenarioMonthlyAdjustment": "Ajustement mensuel de l’épargne (TWD)",
+  "@dashboardScenarioMonthlyAdjustment": {
+    "description": "Web path: dashboard.scenario.monthlyAdjustment",
+    "x-webPath": "dashboard.scenario.monthlyAdjustment"
+  },
+  "dashboardScenarioDecrease": "Réduire l’ajustement mensuel de 500",
+  "@dashboardScenarioDecrease": {
+    "description": "Web path: dashboard.scenario.decrease",
+    "x-webPath": "dashboard.scenario.decrease"
+  },
+  "dashboardScenarioIncrease": "Augmenter l’ajustement mensuel de 500",
+  "@dashboardScenarioIncrease": {
+    "description": "Web path: dashboard.scenario.increase",
+    "x-webPath": "dashboard.scenario.increase"
+  },
+  "dashboardScenarioHorizon": "Horizon",
+  "@dashboardScenarioHorizon": {
+    "description": "Web path: dashboard.scenario.horizon",
+    "x-webPath": "dashboard.scenario.horizon"
+  },
+  "dashboardScenarioMonths": "{count} mois",
+  "@dashboardScenarioMonths": {
+    "description": "Web path: dashboard.scenario.months",
+    "x-webPath": "dashboard.scenario.months",
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "dashboardScenarioDifference": "Écart cumulé",
+  "@dashboardScenarioDifference": {
+    "description": "Web path: dashboard.scenario.difference",
+    "x-webPath": "dashboard.scenario.difference"
+  },
+  "dashboardScenarioSummary": "Un ajustement mensuel de {monthly} pendant {months} mois produit un écart cumulé de {difference}.",
+  "@dashboardScenarioSummary": {
+    "description": "Web path: dashboard.scenario.summary",
+    "x-webPath": "dashboard.scenario.summary",
+    "placeholders": {
+      "monthly": {},
+      "months": {},
+      "difference": {}
+    }
+  },
+  "dashboardScenarioDisclaimer": "Scénario simple : ajustement mensuel × nombre de mois. Il exclut intérêts, rendements, inflation et fiscalité, sans garantir de résultat futur.",
+  "@dashboardScenarioDisclaimer": {
+    "description": "Web path: dashboard.scenario.disclaimer",
+    "x-webPath": "dashboard.scenario.disclaimer"
   }
 }

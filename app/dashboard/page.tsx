@@ -4,6 +4,7 @@ import {
   ArrowRight,
   ArrowUpRight,
   Building2,
+  CalendarRange,
   CheckCircle2,
   CircleAlert,
   Clock3,
@@ -11,6 +12,7 @@ import {
   Plus,
   ReceiptText,
   Repeat2,
+  ShieldAlert,
   Tag,
   TrendingDown,
   TrendingUp,
@@ -28,6 +30,7 @@ import { resolveLocale } from '@/lib/i18n/resolveLocale';
 import { requireServerAuth } from '@/lib/serverAuth';
 import { DashboardFilters } from './components/DashboardFilters';
 import { DashboardPersonalization } from './components/DashboardPersonalization';
+import { SavingsScenario } from './components/SavingsScenario';
 
 function fmtMoney(value: number | string, locale: string, currency = 'TWD') {
   const amount = (Number(value) || 0).toLocaleString(localeTag(locale), {
@@ -136,6 +139,10 @@ export default async function DashboardPage(props: { searchParams: Promise<{ mon
   const layout = normalizeDashboardLayout(data.preferences?.layout || DEFAULT_DASHBOARD_LAYOUT);
   const comparison = data.comparison;
   const portfolio = data.portfolioHealth;
+  const cashOutlook = data.cashOutlook;
+  const cashOutlookActionHref = (cashOutlook?.startingBalance ?? 0) < 0 && cashOutlook?.firstShortfallDate === cashOutlook?.today
+    ? '/finance/accounts'
+    : '/finance/recurring';
   const generatedAtLabel = new Intl.DateTimeFormat(localeTag(locale), {
     month: 'short',
     day: 'numeric',
@@ -144,6 +151,14 @@ export default async function DashboardPage(props: { searchParams: Promise<{ mon
   }).format(new Date(dataStatus.generatedAt));
 
   const attentionItems = [
+    cashOutlook?.firstShortfallDate ? {
+      key: 'cash-shortfall', icon: ShieldAlert,
+      label: t('dashboard.cashOutlook.attentionShortfall', {
+        date: fmtDate(cashOutlook.firstShortfallDate, locale),
+        amount: fmtMoney(Math.abs(cashOutlook.firstShortfallBalance || 0), locale),
+      }),
+      href: cashOutlookActionHref,
+    } : null,
     attentionStatus.recurringNeedsAttentionCount > 0 ? {
       key: 'recurring', icon: Repeat2,
       label: t('dashboard.attention.recurring', { count: attentionStatus.recurringNeedsAttentionCount }),
@@ -277,6 +292,89 @@ export default async function DashboardPage(props: { searchParams: Promise<{ mon
         )}
       </section>
     ),
+    cashOutlook: (
+      <section key="cashOutlook" className="section-card xl:col-span-2" aria-labelledby="dashboard-cash-outlook-title">
+        <div className="section-card-header">
+          <div>
+            <h2 id="dashboard-cash-outlook-title" className="section-card-title">{t('dashboard.cashOutlook.title')}</h2>
+            <p className="mt-1 text-sm" style={{ color: 'var(--text-muted)' }}>
+              {cashOutlook?.windowStart && cashOutlook.windowEnd
+                ? t('dashboard.cashOutlook.window', { start: fmtDate(cashOutlook.windowStart, locale), end: fmtDate(cashOutlook.windowEnd, locale) })
+                : t('dashboard.cashOutlook.subtitle')}
+            </p>
+          </div>
+          <CalendarRange size={22} style={{ color: 'var(--primary)' }} aria-hidden="true" />
+        </div>
+
+        {!cashOutlook?.available ? (
+          <div className="empty-hint py-8">
+            <p>{t(`dashboard.cashOutlook.${cashOutlook?.unavailableReason || 'noSchedules'}`)}</p>
+            <Link href={cashOutlook?.unavailableReason === 'noBankAccounts' ? '/finance/accounts' : '/finance/recurring'} className="mt-3 inline-flex min-h-11 items-center gap-1 rounded-lg px-3 font-semibold text-primary hover:bg-primary/10">
+              {cashOutlook?.unavailableReason === 'noBankAccounts' ? t('nav.accounts') : t('nav.recurring')} <ArrowRight size={15} aria-hidden="true" />
+            </Link>
+          </div>
+        ) : (
+          <div className="space-y-5">
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              <div className="min-w-0 rounded-xl p-4" style={{ background: 'var(--surface-hover)' }}>
+                <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{t('dashboard.cashOutlook.startingBalance')}</p>
+                <strong className="mt-1 block break-all text-lg tabular-nums" style={{ color: 'var(--text)' }}>{fmtMoney(cashOutlook.startingBalance, locale)}</strong>
+              </div>
+              <div className="min-w-0 rounded-xl p-4" style={{ background: 'var(--surface-hover)' }}>
+                <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{t('dashboard.cashOutlook.scheduledNet')}</p>
+                <strong className="mt-1 block break-all text-lg tabular-nums" style={{ color: cashOutlook.scheduledIncome - cashOutlook.scheduledExpense >= 0 ? 'var(--net)' : 'var(--danger)' }}>
+                  {cashOutlook.scheduledIncome - cashOutlook.scheduledExpense >= 0 ? '+' : '−'}{fmtMoney(Math.abs(cashOutlook.scheduledIncome - cashOutlook.scheduledExpense), locale)}
+                </strong>
+              </div>
+              <div className="min-w-0 rounded-xl p-4" style={{ background: 'var(--surface-hover)' }}>
+                <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{t('dashboard.cashOutlook.closingBalance')}</p>
+                <strong className="mt-1 block break-all text-lg tabular-nums" style={{ color: cashOutlook.projectedClosingBalance >= 0 ? 'var(--text)' : 'var(--danger)' }}>{fmtMoney(cashOutlook.projectedClosingBalance, locale)}</strong>
+              </div>
+              <div className="min-w-0 rounded-xl p-4" style={{ background: cashOutlook.firstShortfallDate ? 'var(--danger-bg)' : 'var(--net-bg)' }}>
+                <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{t('dashboard.cashOutlook.lowestBalance')}</p>
+                <strong className="mt-1 block break-all text-lg tabular-nums" style={{ color: cashOutlook.lowestProjectedBalance >= 0 ? 'var(--net)' : 'var(--danger)' }}>{fmtMoney(cashOutlook.lowestProjectedBalance, locale)}</strong>
+                {cashOutlook.lowestBalanceDate && <span className="mt-1 block text-xs" style={{ color: 'var(--text-secondary)' }}>{fmtDate(cashOutlook.lowestBalanceDate, locale)}</span>}
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-2 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between" style={{ borderColor: 'var(--border)' }}>
+              <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>{t('dashboard.cashOutlook.flowSummary', { income: fmtMoney(cashOutlook.scheduledIncome, locale), expense: fmtMoney(cashOutlook.scheduledExpense, locale), count: cashOutlook.occurrenceCount })}</span>
+              <Link href="/finance/recurring" className="inline-flex min-h-11 shrink-0 items-center gap-1 rounded-lg px-2 text-sm font-semibold text-primary hover:bg-primary/10">{t('nav.recurring')} <ArrowRight size={15} aria-hidden="true" /></Link>
+            </div>
+
+            {cashOutlook.firstShortfallDate && (
+              <div className="flex flex-col gap-3 rounded-xl p-4 sm:flex-row sm:items-start" style={{ background: 'var(--danger-bg)' }} role="status">
+                <ShieldAlert className="mt-0.5 shrink-0" size={20} style={{ color: 'var(--danger)' }} aria-hidden="true" />
+                <div className="min-w-0 flex-1"><p className="font-semibold" style={{ color: 'var(--text)' }}>{t('dashboard.cashOutlook.shortfallTitle')}</p><p className="mt-1 text-sm" style={{ color: 'var(--text-secondary)' }}>{t('dashboard.cashOutlook.shortfallBody', { date: fmtDate(cashOutlook.firstShortfallDate, locale), amount: fmtMoney(Math.abs(cashOutlook.firstShortfallBalance || 0), locale) })}</p></div>
+                <Link href={cashOutlookActionHref} className="inline-flex min-h-11 shrink-0 items-center justify-center gap-1 rounded-lg px-3 text-sm font-semibold text-primary hover:bg-primary/10">{cashOutlookActionHref === '/finance/accounts' ? t('nav.accounts') : t('nav.recurring')} <ArrowRight size={15} aria-hidden="true" /></Link>
+              </div>
+            )}
+
+            <div>
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <h3 className="text-sm font-semibold" style={{ color: 'var(--text)' }}>{t('dashboard.cashOutlook.upcoming')}</h3>
+                <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{t('dashboard.cashOutlook.showing', { shown: Math.min(5, cashOutlook.upcomingEvents.length), total: cashOutlook.occurrenceCount })}</span>
+              </div>
+              {cashOutlook.upcomingEvents.length === 0 ? (
+                <div className="empty-hint py-6"><p>{t('dashboard.cashOutlook.noUpcoming')}</p></div>
+              ) : <ol className="grid gap-2 lg:grid-cols-2">
+                {cashOutlook.upcomingEvents.slice(0, 5).map(event => (
+                  <li key={`${event.scheduleId}-${event.date}`} className="grid grid-cols-[auto_minmax(0,1fr)] gap-3 rounded-xl border p-3 sm:grid-cols-[auto_minmax(0,1fr)_auto]" style={{ borderColor: 'var(--border)' }}>
+                    <time dateTime={event.date} className="rounded-lg px-2 py-1 text-xs font-semibold tabular-nums" style={{ background: 'var(--surface-hover)', color: 'var(--text-secondary)' }}>{fmtDate(event.date, locale)}</time>
+                    <span className="min-w-0 truncate text-sm font-medium" style={{ color: 'var(--text)' }}>{event.note || (event.type === 'income' ? t('features.common.income') : t('features.common.expense'))}</span>
+                    <strong className="col-start-2 text-end text-sm tabular-nums sm:col-start-auto" style={{ color: event.type === 'income' ? 'var(--income)' : 'var(--expense)' }}>{event.type === 'income' ? '+' : '−'}{fmtMoney(event.amount, locale)}</strong>
+                  </li>
+                ))}
+              </ol>}
+            </div>
+
+            {cashOutlook.uncoveredScheduleCount > 0 && <Link href="/finance/recurring" className="flex min-h-11 items-center justify-between gap-3 rounded-xl p-3 text-sm hover:brightness-95" style={{ background: 'var(--primary-light-bg)', color: 'var(--text-secondary)' }}><span>{t('dashboard.cashOutlook.coverage', { included: cashOutlook.includedScheduleCount, total: cashOutlook.activeScheduleCount, uncovered: cashOutlook.uncoveredScheduleCount })}</span><ArrowRight size={16} className="shrink-0" aria-hidden="true" /></Link>}
+            <p className="rounded-xl border border-dashed p-3 text-xs leading-relaxed" style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}>{t('dashboard.cashOutlook.disclaimer')}</p>
+          </div>
+        )}
+      </section>
+    ),
+    savingsScenario: <SavingsScenario key="savingsScenario" />,
     spending: (
       <section key="spending" className="section-card" aria-labelledby="dashboard-expense-title">
         <div className="section-card-header">

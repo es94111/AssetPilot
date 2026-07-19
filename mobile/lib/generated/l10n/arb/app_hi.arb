@@ -6412,5 +6412,199 @@
       "priced": {},
       "total": {}
     }
+  },
+  "dashboardPersonalizeModulesCashOutlook": "निर्धारित नकदी अनुमान",
+  "@dashboardPersonalizeModulesCashOutlook": {
+    "description": "Web path: dashboard.personalize.modules.cashOutlook",
+    "x-webPath": "dashboard.personalize.modules.cashOutlook"
+  },
+  "dashboardPersonalizeModulesSavingsScenario": "बचत परिदृश्य",
+  "@dashboardPersonalizeModulesSavingsScenario": {
+    "description": "Web path: dashboard.personalize.modules.savingsScenario",
+    "x-webPath": "dashboard.personalize.modules.savingsScenario"
+  },
+  "dashboardCashOutlookTitle": "अगले 30 दिन · निर्धारित नकदी",
+  "@dashboardCashOutlookTitle": {
+    "description": "Web path: dashboard.cashOutlook.title",
+    "x-webPath": "dashboard.cashOutlook.title"
+  },
+  "dashboardCashOutlookSubtitle": "पुष्टि किए गए आवर्ती लेन-देन पर आधारित",
+  "@dashboardCashOutlookSubtitle": {
+    "description": "Web path: dashboard.cashOutlook.subtitle",
+    "x-webPath": "dashboard.cashOutlook.subtitle"
+  },
+  "dashboardCashOutlookWindow": "{start}–{end} · निर्धारित अनुमान",
+  "@dashboardCashOutlookWindow": {
+    "description": "Web path: dashboard.cashOutlook.window",
+    "x-webPath": "dashboard.cashOutlook.window",
+    "placeholders": {
+      "start": {},
+      "end": {}
+    }
+  },
+  "dashboardCashOutlookInvalidDate": "अनुमान अवधि की गणना नहीं हो सकी।",
+  "@dashboardCashOutlookInvalidDate": {
+    "description": "Web path: dashboard.cashOutlook.invalidDate",
+    "x-webPath": "dashboard.cashOutlook.invalidDate"
+  },
+  "dashboardCashOutlookNoBankAccounts": "निर्धारित नकदी के अनुमान से पहले एक शामिल बैंक खाता जोड़ें।",
+  "@dashboardCashOutlookNoBankAccounts": {
+    "description": "Web path: dashboard.cashOutlook.noBankAccounts",
+    "x-webPath": "dashboard.cashOutlook.noBankAccounts"
+  },
+  "dashboardCashOutlookNoSchedules": "आगामी निर्धारित नकदी देखने के लिए आवर्ती आय या खर्च बनाएँ।",
+  "@dashboardCashOutlookNoSchedules": {
+    "description": "Web path: dashboard.cashOutlook.noSchedules",
+    "x-webPath": "dashboard.cashOutlook.noSchedules"
+  },
+  "dashboardCashOutlookNoCoveredSchedules": "आवर्ती प्रविष्टियों की समीक्षा करें और उन्हें शामिल बैंक खातों से जोड़ें।",
+  "@dashboardCashOutlookNoCoveredSchedules": {
+    "description": "Web path: dashboard.cashOutlook.noCoveredSchedules",
+    "x-webPath": "dashboard.cashOutlook.noCoveredSchedules"
+  },
+  "dashboardCashOutlookStartingBalance": "आज तक का बैंक शेष",
+  "@dashboardCashOutlookStartingBalance": {
+    "description": "Web path: dashboard.cashOutlook.startingBalance",
+    "x-webPath": "dashboard.cashOutlook.startingBalance"
+  },
+  "dashboardCashOutlookScheduledNet": "निर्धारित शुद्ध बदलाव",
+  "@dashboardCashOutlookScheduledNet": {
+    "description": "Web path: dashboard.cashOutlook.scheduledNet",
+    "x-webPath": "dashboard.cashOutlook.scheduledNet"
+  },
+  "dashboardCashOutlookClosingBalance": "30 दिनों बाद अनुमानित नकदी",
+  "@dashboardCashOutlookClosingBalance": {
+    "description": "Web path: dashboard.cashOutlook.closingBalance",
+    "x-webPath": "dashboard.cashOutlook.closingBalance"
+  },
+  "dashboardCashOutlookLowestBalance": "न्यूनतम अनुमानित नकदी",
+  "@dashboardCashOutlookLowestBalance": {
+    "description": "Web path: dashboard.cashOutlook.lowestBalance",
+    "x-webPath": "dashboard.cashOutlook.lowestBalance"
+  },
+  "dashboardCashOutlookFlowSummary": "{count} निर्धारित प्रविष्टियाँ · आय {income} · खर्च {expense}",
+  "@dashboardCashOutlookFlowSummary": {
+    "description": "Web path: dashboard.cashOutlook.flowSummary",
+    "x-webPath": "dashboard.cashOutlook.flowSummary",
+    "placeholders": {
+      "count": {},
+      "income": {},
+      "expense": {}
+    }
+  },
+  "dashboardCashOutlookShortfallTitle": "संयुक्त अनुमानित नकदी शून्य से नीचे जा सकती है",
+  "@dashboardCashOutlookShortfallTitle": {
+    "description": "Web path: dashboard.cashOutlook.shortfallTitle",
+    "x-webPath": "dashboard.cashOutlook.shortfallTitle"
+  },
+  "dashboardCashOutlookShortfallBody": "लगभग {date} को अनुमान शून्य से {amount} नीचे पहुँच सकता है। कार्रवाई से पहले तारीख और राशि जाँचें।",
+  "@dashboardCashOutlookShortfallBody": {
+    "description": "Web path: dashboard.cashOutlook.shortfallBody",
+    "x-webPath": "dashboard.cashOutlook.shortfallBody",
+    "placeholders": {
+      "date": {},
+      "amount": {}
+    }
+  },
+  "dashboardCashOutlookUpcoming": "आगामी निर्धारित प्रविष्टियाँ",
+  "@dashboardCashOutlookUpcoming": {
+    "description": "Web path: dashboard.cashOutlook.upcoming",
+    "x-webPath": "dashboard.cashOutlook.upcoming"
+  },
+  "dashboardCashOutlookShowing": "{total} में से {shown} दिखाए जा रहे हैं",
+  "@dashboardCashOutlookShowing": {
+    "description": "Web path: dashboard.cashOutlook.showing",
+    "x-webPath": "dashboard.cashOutlook.showing",
+    "placeholders": {
+      "shown": {},
+      "total": {}
+    }
+  },
+  "dashboardCashOutlookNoUpcoming": "इस 30-दिन की अवधि में कोई निर्धारित प्रविष्टि नहीं है।",
+  "@dashboardCashOutlookNoUpcoming": {
+    "description": "Web path: dashboard.cashOutlook.noUpcoming",
+    "x-webPath": "dashboard.cashOutlook.noUpcoming"
+  },
+  "dashboardCashOutlookCoverage": "{total} आवर्ती प्रविष्टियों में से {included} शामिल हैं; {uncovered} की समीक्षा करें।",
+  "@dashboardCashOutlookCoverage": {
+    "description": "Web path: dashboard.cashOutlook.coverage",
+    "x-webPath": "dashboard.cashOutlook.coverage",
+    "placeholders": {
+      "included": {},
+      "total": {},
+      "uncovered": {}
+    }
+  },
+  "dashboardCashOutlookDisclaimer": "अनुमान सभी शामिल बैंक खातों को आज के शेष और पुष्टि किए गए जुड़े आवर्ती लेन-देन के साथ जोड़ता है। यह किसी एक खाते के संभावित ओवरड्राफ्ट को नहीं दिखाता और वास्तविक शेष नहीं बदलता; देय लेन-देन अगली प्रक्रिया में बनते हैं। TWD अनुमानों में वर्तमान विनिमय दरें लगातार उपयोग होती हैं।",
+  "@dashboardCashOutlookDisclaimer": {
+    "description": "Web path: dashboard.cashOutlook.disclaimer",
+    "x-webPath": "dashboard.cashOutlook.disclaimer"
+  },
+  "dashboardCashOutlookAttentionShortfall": "लगभग {date} को निर्धारित नकदी में {amount} की कमी हो सकती है",
+  "@dashboardCashOutlookAttentionShortfall": {
+    "description": "Web path: dashboard.cashOutlook.attentionShortfall",
+    "x-webPath": "dashboard.cashOutlook.attentionShortfall",
+    "placeholders": {
+      "amount": {},
+      "date": {}
+    }
+  },
+  "dashboardScenarioTitle": "बचत परिदृश्य",
+  "@dashboardScenarioTitle": {
+    "description": "Web path: dashboard.scenario.title",
+    "x-webPath": "dashboard.scenario.title"
+  },
+  "dashboardScenarioSubtitle": "एक मासिक बदलाव के संचयी प्रभाव का अनुमान लगाएँ",
+  "@dashboardScenarioSubtitle": {
+    "description": "Web path: dashboard.scenario.subtitle",
+    "x-webPath": "dashboard.scenario.subtitle"
+  },
+  "dashboardScenarioMonthlyAdjustment": "मासिक बचत बदलाव (TWD)",
+  "@dashboardScenarioMonthlyAdjustment": {
+    "description": "Web path: dashboard.scenario.monthlyAdjustment",
+    "x-webPath": "dashboard.scenario.monthlyAdjustment"
+  },
+  "dashboardScenarioDecrease": "मासिक बदलाव 500 घटाएँ",
+  "@dashboardScenarioDecrease": {
+    "description": "Web path: dashboard.scenario.decrease",
+    "x-webPath": "dashboard.scenario.decrease"
+  },
+  "dashboardScenarioIncrease": "मासिक बदलाव 500 बढ़ाएँ",
+  "@dashboardScenarioIncrease": {
+    "description": "Web path: dashboard.scenario.increase",
+    "x-webPath": "dashboard.scenario.increase"
+  },
+  "dashboardScenarioHorizon": "समय अवधि",
+  "@dashboardScenarioHorizon": {
+    "description": "Web path: dashboard.scenario.horizon",
+    "x-webPath": "dashboard.scenario.horizon"
+  },
+  "dashboardScenarioMonths": "{count} महीने",
+  "@dashboardScenarioMonths": {
+    "description": "Web path: dashboard.scenario.months",
+    "x-webPath": "dashboard.scenario.months",
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "dashboardScenarioDifference": "संचयी अंतर",
+  "@dashboardScenarioDifference": {
+    "description": "Web path: dashboard.scenario.difference",
+    "x-webPath": "dashboard.scenario.difference"
+  },
+  "dashboardScenarioSummary": "{months} महीनों तक {monthly} का मासिक बदलाव {difference} का संचयी अंतर बनाता है।",
+  "@dashboardScenarioSummary": {
+    "description": "Web path: dashboard.scenario.summary",
+    "x-webPath": "dashboard.scenario.summary",
+    "placeholders": {
+      "monthly": {},
+      "months": {},
+      "difference": {}
+    }
+  },
+  "dashboardScenarioDisclaimer": "सरल परिदृश्य: मासिक बदलाव × महीने। इसमें ब्याज, बाजार रिटर्न, मुद्रास्फीति और कर शामिल नहीं हैं तथा भविष्य का परिणाम सुनिश्चित नहीं है।",
+  "@dashboardScenarioDisclaimer": {
+    "description": "Web path: dashboard.scenario.disclaimer",
+    "x-webPath": "dashboard.scenario.disclaimer"
   }
 }

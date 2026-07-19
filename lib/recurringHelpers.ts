@@ -5,41 +5,9 @@ import { normalizeCurrency } from './accountHelpers';
 import { insertFeeTransaction } from './overseasFee';
 import { uid } from './userDefaults';
 import * as userTime from './userTime';
+import { getNextRecurringDate } from './recurringSchedule';
 
-export function getNextRecurringDate(prevIsoDate: string, freq: string): string | null {
-  const m = String(prevIsoDate).match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (!m) return null;
-  const y = parseInt(m[1], 10);
-  const mo = parseInt(m[2], 10);
-  const d = parseInt(m[3], 10);
-  if (freq === 'daily') {
-    const dt = new Date(Date.UTC(y, mo - 1, d));
-    dt.setUTCDate(dt.getUTCDate() + 1);
-    return dt.toISOString().slice(0, 10);
-  }
-  if (freq === 'weekly') {
-    const dt = new Date(Date.UTC(y, mo - 1, d));
-    dt.setUTCDate(dt.getUTCDate() + 7);
-    return dt.toISOString().slice(0, 10);
-  }
-  if (freq === 'monthly') {
-    let nm = mo + 1, ny = y;
-    if (nm > 12) { nm = 1; ny = y + 1; }
-    const lastDay = new Date(Date.UTC(ny, nm, 0)).getUTCDate();
-    const day = Math.min(d, lastDay);
-    return `${ny}-${String(nm).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-  }
-  if (freq === 'yearly') {
-    const ny = y + 1;
-    if (mo === 2 && d === 29) {
-      const isLeap = (ny % 4 === 0 && ny % 100 !== 0) || (ny % 400 === 0);
-      const day = isLeap ? 29 : 28;
-      return `${ny}-02-${String(day).padStart(2, '0')}`;
-    }
-    return `${ny}-${String(mo).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-  }
-  return null;
-}
+export { getNextRecurringDate } from './recurringSchedule';
 
 export function processOneRecurring(
   r: Record<string, unknown>,

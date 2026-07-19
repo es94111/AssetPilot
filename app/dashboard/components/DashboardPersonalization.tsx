@@ -23,7 +23,9 @@ import {
 const labelKeys: Record<DashboardModuleId, string> = {
   assets: "dashboard.personalize.modules.assets",
   attention: "dashboard.personalize.modules.attention",
+  cashOutlook: "dashboard.personalize.modules.cashOutlook",
   whyChanged: "dashboard.personalize.modules.whyChanged",
+  savingsScenario: "dashboard.personalize.modules.savingsScenario",
   spending: "dashboard.personalize.modules.spending",
   portfolioHealth: "dashboard.personalize.modules.portfolioHealth",
   incomeRecent: "dashboard.personalize.modules.incomeRecent",

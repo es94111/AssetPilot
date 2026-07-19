@@ -2,6 +2,7 @@ import logger from '@/lib/logger';
 import { requireAuth } from '@/lib/auth';
 import type { DashboardLayoutPreference } from '@/lib/dashboardPreferences';
 import type { DashboardChangeDriver, DashboardComparisonWindow } from '@/lib/dashboardInsights';
+import type { ScheduledCashOutlook } from '@/lib/dashboardForecast';
 
 export interface DashboardCategoryAggregateRow {
   category_id: string | number | null;
@@ -94,6 +95,7 @@ export interface DashboardResponse {
       share: number;
     } | null;
   };
+  cashOutlook: ScheduledCashOutlook;
   catBreakdown: DashboardCategoryNode[];
   incomeCatBreakdown: DashboardCategoryNode[];
   recent: RecentTransaction[];

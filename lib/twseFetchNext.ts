@@ -234,25 +234,25 @@ export function inferStockType(symbol: string): 'etf' | 'warrant' | 'stock' {
   return 'stock';
 }
 
-export interface FetchAllResult<T> {
+export interface FetchAllResult<TItem, TValue = unknown> {
   ok: boolean;
-  value?: T;
+  value?: TValue;
   error?: string;
-  item: T;
+  item: TItem;
 }
 
 /** Fetch all stocks with concurrency limit */
-export async function fetchAllWithLimit<T>(
-  items: T[],
-  fetcher: (item: T) => Promise<unknown>,
+export async function fetchAllWithLimit<TItem, TValue = unknown>(
+  items: TItem[],
+  fetcher: (item: TItem) => Promise<TValue>,
   concurrency = 5
-): Promise<FetchAllResult<T>[]> {
-  const results: FetchAllResult<T>[] = [];
+): Promise<FetchAllResult<TItem, TValue>[]> {
+  const results: FetchAllResult<TItem, TValue>[] = [];
   for (let i = 0; i < items.length; i += concurrency) {
     const batch = items.slice(i, i + concurrency);
     const settled = await Promise.allSettled(batch.map(item => fetcher(item)));
     settled.forEach((r, idx) => {
-      if (r.status === 'fulfilled') results.push({ ok: true, value: r.value as T, item: batch[idx] });
+      if (r.status === 'fulfilled') results.push({ ok: true, value: r.value, item: batch[idx] });
       else results.push({ ok: false, error: (r.reason as Error)?.message || String(r.reason), item: batch[idx] });
     });
   }

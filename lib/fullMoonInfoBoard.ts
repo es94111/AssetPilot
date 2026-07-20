@@ -1,6 +1,7 @@
 import { categoryFromAccountType, convertFromTwd, getExchangeRateToTwd, normalizeCurrency } from './accountHelpers';
 import { blankMonthsAfter, visibleThroughMonthIndexForToday } from './fullMoonInfoBoardCutoff';
 import { queryAll, queryOne } from './db';
+import { getMonthClosePrices, priceCacheKey } from './stockMonthClosePrice';
 import { todayInUserTz } from './userTime';
 
 export const FULL_MOON_MONTHS = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
@@ -262,7 +263,13 @@ function buildCategoryRows(userId: string, year: number, visibleThroughMonthInde
     }));
 }
 
-function monthlyStockValues(userId: string, stock: StockRow, year: number, visibleThroughMonthIndex: number): number[] {
+function monthlyStockValues(
+  userId: string,
+  stock: StockRow,
+  year: number,
+  visibleThroughMonthIndex: number,
+  monthClosePrices: Map<string, number>
+): number[] {
   const txs = asRows<StockTransactionRow>(queryAll(
     `SELECT date, type, shares
      FROM stock_transactions
@@ -270,7 +277,7 @@ function monthlyStockValues(userId: string, stock: StockRow, year: number, visib
      ORDER BY date, created_at`,
     [userId, stock.id, monthEnd(year, visibleThroughMonthIndex)]
   ));
-  const price = Number(stock.current_price) > 0 ? Number(stock.current_price) : 0;
+  const currentPrice = Number(stock.current_price) > 0 ? Number(stock.current_price) : 0;
   const rate = getExchangeRateToTwd(userId, normalizeCurrency(stock.currency));
 
   return FULL_MOON_MONTHS.map((_, index) => {
@@ -283,11 +290,16 @@ function monthlyStockValues(userId: string, stock: StockRow, year: number, visib
         if (tx.type === 'sell') return current - (Number(tx.shares) || 0);
         return current;
       }, 0);
+    // 已結束月份鎖定當月最後交易日收盤價；當月（尚未結束）才用目前股價，抓不到收盤價時才 fallback 回目前股價
+    const lockedPrice = index < visibleThroughMonthIndex
+      ? monthClosePrices.get(priceCacheKey(stock.symbol, year, index))
+      : undefined;
+    const price = lockedPrice !== undefined ? lockedPrice : currentPrice;
     return roundTwd(Math.max(0, shares) * price * rate);
   });
 }
 
-function buildStockRows(userId: string, year: number, visibleThroughMonthIndex: number): BoardRow[] {
+async function buildStockRows(userId: string, year: number, visibleThroughMonthIndex: number): Promise<BoardRow[]> {
   const stocks = asRows<StockRow>(queryAll(
     `SELECT id, symbol, name, current_price, currency
      FROM stocks
@@ -296,11 +308,18 @@ function buildStockRows(userId: string, year: number, visibleThroughMonthIndex: 
     [userId]
   ));
 
+  const closedMonthIndexes = Array.from({ length: visibleThroughMonthIndex }, (_, index) => index);
+  const monthClosePrices = await getMonthClosePrices(
+    stocks.map(stock => stock.symbol),
+    year,
+    closedMonthIndexes
+  );
+
   return stocks
     .map((stock): BoardRow => ({
       group: '投資',
       item: `${stock.symbol} ${stock.name}`.trim(),
-      values: monthlyStockValues(userId, stock, year, visibleThroughMonthIndex),
+      values: monthlyStockValues(userId, stock, year, visibleThroughMonthIndex, monthClosePrices),
     }))
     .filter(row => row.values.some(value => value !== 0));
 }
@@ -330,10 +349,10 @@ function currentPeriodForUser(userId: string): { year: number; visibleThroughMon
   return { year, visibleThroughMonthIndex };
 }
 
-export function getFullMoonInfoBoardData(userId: string): FullMoonInfoBoardData {
+export async function getFullMoonInfoBoardData(userId: string): Promise<FullMoonInfoBoardData> {
   const { year, visibleThroughMonthIndex } = currentPeriodForUser(userId);
   const accountRows = buildAccountRows(userId, year, visibleThroughMonthIndex);
-  const stockRows = buildStockRows(userId, year, visibleThroughMonthIndex);
+  const stockRows = await buildStockRows(userId, year, visibleThroughMonthIndex);
   const incomeRows = buildCategoryRows(userId, year, visibleThroughMonthIndex, 'income');
   const cashDividendRow = buildCashDividendRow(userId, year, visibleThroughMonthIndex);
   const expenseRows = buildCategoryRows(userId, year, visibleThroughMonthIndex, 'expense');

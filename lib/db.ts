@@ -377,6 +377,16 @@ async function _runMigrations(): Promise<void> {
     next_date TEXT
   )`);
 
+  // 股票月結收盤價快取（滿月資訊版用；依代號跨使用者共用，鎖定已結束月份最後交易日收盤價）
+  db.run(`CREATE TABLE IF NOT EXISTS stock_month_close_prices (
+    symbol TEXT NOT NULL,
+    year_month TEXT NOT NULL,
+    close_price REAL NOT NULL,
+    close_date TEXT DEFAULT '',
+    updated_at INTEGER DEFAULT 0,
+    PRIMARY KEY (symbol, year_month)
+  )`);
+
   db.run(`CREATE TABLE IF NOT EXISTS user_settings (
     user_id TEXT PRIMARY KEY,
     pinned_currencies TEXT DEFAULT '[]',

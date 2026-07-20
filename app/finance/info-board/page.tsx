@@ -70,7 +70,7 @@ function rowPercent(row: BoardRow, section: BoardSection, total: number, visible
 export default async function InfoBoardPage() {
   const user = await requireServerAuth();
   const locale = await resolveLocale();
-  const board = getFullMoonInfoBoardData(user.id);
+  const board = await getFullMoonInfoBoardData(user.id);
   const sections = board.sections;
   const assetTotals = monthlyTotals(sections[0]);
   const incomeTotals = monthlyTotals(sections[1]);

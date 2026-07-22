@@ -981,6 +981,8 @@ export const ko = {
         shareUnit: "{count}주",
         currentPrice: "현재가",
         marketValue: "평가액",
+        dividendMonths: "배당 월: {months}",
+        dividendMonthsEmpty: "아직 배당 기록이 없습니다",
         messages: {
           symbolRequired: "종목 코드를 입력하세요",
         },

@@ -981,6 +981,8 @@ export const ar = {
         shareUnit: "{count} سهم",
         currentPrice: "السعر الحالي",
         marketValue: "القيمة السوقية",
+        dividendMonths: "أشهر توزيع الأرباح: {months}",
+        dividendMonthsEmpty: "لا يوجد سجل توزيعات بعد",
         messages: {
           symbolRequired: "أدخل رمز السهم",
         },

@@ -981,6 +981,8 @@ export const hi = {
         shareUnit: "{count} शेयर",
         currentPrice: "मौजूदा कीमत",
         marketValue: "बाज़ार मूल्य",
+        dividendMonths: "लाभांश माह: {months}",
+        dividendMonthsEmpty: "अभी तक कोई लाभांश इतिहास नहीं",
         messages: {
           symbolRequired: "शेयर कोड दर्ज करें",
         },

@@ -979,6 +979,8 @@ export const zhTW = {
         shareUnit: "{count} 股",
         currentPrice: "目前股價",
         marketValue: "市值",
+        dividendMonths: "配息月份：{months}",
+        dividendMonthsEmpty: "尚無配息紀錄",
         messages: {
           symbolRequired: "請輸入股票代碼",
         },

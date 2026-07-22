@@ -4432,6 +4432,18 @@ abstract class AppLocalizations {
   /// **'市值'**
   String get featuresStocksPortfolioMarketValue;
 
+  /// Web path: features.stocks.portfolio.dividendMonths
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'配息月份：{months}'**
+  String featuresStocksPortfolioDividendMonths(Object months);
+
+  /// Web path: features.stocks.portfolio.dividendMonthsEmpty
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'尚無配息紀錄'**
+  String get featuresStocksPortfolioDividendMonthsEmpty;
+
   /// Web path: features.stocks.portfolio.messages.symbolRequired
   ///
   /// In zh_Hant_TW, this message translates to:

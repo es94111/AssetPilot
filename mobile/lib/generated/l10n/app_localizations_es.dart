@@ -2468,6 +2468,15 @@ class AppLocalizationsEs extends AppLocalizations {
   String get featuresStocksPortfolioMarketValue => 'Valor de mercado';
 
   @override
+  String featuresStocksPortfolioDividendMonths(Object months) {
+    return 'Meses de dividendo: $months';
+  }
+
+  @override
+  String get featuresStocksPortfolioDividendMonthsEmpty =>
+      'Aún no hay historial de dividendos';
+
+  @override
   String get featuresStocksPortfolioMessagesSymbolRequired =>
       'Introduce el código bursátil';
 

@@ -3760,6 +3760,19 @@
     "description": "Web path: features.stocks.portfolio.marketValue",
     "x-webPath": "features.stocks.portfolio.marketValue"
   },
+  "featuresStocksPortfolioDividendMonths": "配息月份：{months}",
+  "@featuresStocksPortfolioDividendMonths": {
+    "description": "Web path: features.stocks.portfolio.dividendMonths",
+    "x-webPath": "features.stocks.portfolio.dividendMonths",
+    "placeholders": {
+      "months": {}
+    }
+  },
+  "featuresStocksPortfolioDividendMonthsEmpty": "尚无配息记录",
+  "@featuresStocksPortfolioDividendMonthsEmpty": {
+    "description": "Web path: features.stocks.portfolio.dividendMonthsEmpty",
+    "x-webPath": "features.stocks.portfolio.dividendMonthsEmpty"
+  },
   "featuresStocksPortfolioMessagesSymbolRequired": "请输入股票代码",
   "@featuresStocksPortfolioMessagesSymbolRequired": {
     "description": "Web path: features.stocks.portfolio.messages.symbolRequired",

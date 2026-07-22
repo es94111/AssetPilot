@@ -2449,6 +2449,15 @@ class AppLocalizationsPt extends AppLocalizations {
   String get featuresStocksPortfolioMarketValue => 'Valor de mercado';
 
   @override
+  String featuresStocksPortfolioDividendMonths(Object months) {
+    return 'Meses de dividendo: $months';
+  }
+
+  @override
+  String get featuresStocksPortfolioDividendMonthsEmpty =>
+      'Ainda não há histórico de dividendos';
+
+  @override
   String get featuresStocksPortfolioMessagesSymbolRequired =>
       'Digite o código da ação';
 
@@ -6796,6 +6805,15 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get featuresStocksPortfolioMarketValue => 'Valor de mercado';
+
+  @override
+  String featuresStocksPortfolioDividendMonths(Object months) {
+    return 'Meses de dividendo: $months';
+  }
+
+  @override
+  String get featuresStocksPortfolioDividendMonthsEmpty =>
+      'Ainda não há histórico de dividendos';
 
   @override
   String get featuresStocksPortfolioMessagesSymbolRequired =>

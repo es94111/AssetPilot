@@ -2308,6 +2308,14 @@ class AppLocalizationsZh extends AppLocalizations {
   String get featuresStocksPortfolioMarketValue => '市值';
 
   @override
+  String featuresStocksPortfolioDividendMonths(Object months) {
+    return '配息月份：$months';
+  }
+
+  @override
+  String get featuresStocksPortfolioDividendMonthsEmpty => '尚無配息紀錄';
+
+  @override
   String get featuresStocksPortfolioMessagesSymbolRequired => '請輸入股票代碼';
 
   @override
@@ -6405,6 +6413,14 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
 
   @override
   String get featuresStocksPortfolioMarketValue => '市值';
+
+  @override
+  String featuresStocksPortfolioDividendMonths(Object months) {
+    return '配息月份：$months';
+  }
+
+  @override
+  String get featuresStocksPortfolioDividendMonthsEmpty => '尚无配息记录';
 
   @override
   String get featuresStocksPortfolioMessagesSymbolRequired => '请输入股票代码';
@@ -10505,6 +10521,14 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
 
   @override
   String get featuresStocksPortfolioMarketValue => '市值';
+
+  @override
+  String featuresStocksPortfolioDividendMonths(Object months) {
+    return '配息月份：$months';
+  }
+
+  @override
+  String get featuresStocksPortfolioDividendMonthsEmpty => '尚無配息紀錄';
 
   @override
   String get featuresStocksPortfolioMessagesSymbolRequired => '請輸入股票代碼';

@@ -3760,6 +3760,19 @@
     "description": "Web path: features.stocks.portfolio.marketValue",
     "x-webPath": "features.stocks.portfolio.marketValue"
   },
+  "featuresStocksPortfolioDividendMonths": "Dividend months: {months}",
+  "@featuresStocksPortfolioDividendMonths": {
+    "description": "Web path: features.stocks.portfolio.dividendMonths",
+    "x-webPath": "features.stocks.portfolio.dividendMonths",
+    "placeholders": {
+      "months": {}
+    }
+  },
+  "featuresStocksPortfolioDividendMonthsEmpty": "No dividend history yet",
+  "@featuresStocksPortfolioDividendMonthsEmpty": {
+    "description": "Web path: features.stocks.portfolio.dividendMonthsEmpty",
+    "x-webPath": "features.stocks.portfolio.dividendMonthsEmpty"
+  },
   "featuresStocksPortfolioMessagesSymbolRequired": "Please enter a stock symbol",
   "@featuresStocksPortfolioMessagesSymbolRequired": {
     "description": "Web path: features.stocks.portfolio.messages.symbolRequired",

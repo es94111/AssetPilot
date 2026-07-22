@@ -2419,6 +2419,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get featuresStocksPortfolioMarketValue => 'Market value';
 
   @override
+  String featuresStocksPortfolioDividendMonths(Object months) {
+    return 'Dividend months: $months';
+  }
+
+  @override
+  String get featuresStocksPortfolioDividendMonthsEmpty =>
+      'No dividend history yet';
+
+  @override
   String get featuresStocksPortfolioMessagesSymbolRequired =>
       'Please enter a stock symbol';
 

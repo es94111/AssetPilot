@@ -2423,6 +2423,15 @@ class AppLocalizationsHi extends AppLocalizations {
   String get featuresStocksPortfolioMarketValue => 'बाज़ार मूल्य';
 
   @override
+  String featuresStocksPortfolioDividendMonths(Object months) {
+    return 'लाभांश माह: $months';
+  }
+
+  @override
+  String get featuresStocksPortfolioDividendMonthsEmpty =>
+      'अभी तक कोई लाभांश इतिहास नहीं';
+
+  @override
   String get featuresStocksPortfolioMessagesSymbolRequired =>
       'शेयर कोड दर्ज करें';
 

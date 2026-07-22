@@ -3760,6 +3760,19 @@
     "description": "Web path: features.stocks.portfolio.marketValue",
     "x-webPath": "features.stocks.portfolio.marketValue"
   },
+  "featuresStocksPortfolioDividendMonths": "लाभांश माह: {months}",
+  "@featuresStocksPortfolioDividendMonths": {
+    "description": "Web path: features.stocks.portfolio.dividendMonths",
+    "x-webPath": "features.stocks.portfolio.dividendMonths",
+    "placeholders": {
+      "months": {}
+    }
+  },
+  "featuresStocksPortfolioDividendMonthsEmpty": "अभी तक कोई लाभांश इतिहास नहीं",
+  "@featuresStocksPortfolioDividendMonthsEmpty": {
+    "description": "Web path: features.stocks.portfolio.dividendMonthsEmpty",
+    "x-webPath": "features.stocks.portfolio.dividendMonthsEmpty"
+  },
   "featuresStocksPortfolioMessagesSymbolRequired": "शेयर कोड दर्ज करें",
   "@featuresStocksPortfolioMessagesSymbolRequired": {
     "description": "Web path: features.stocks.portfolio.messages.symbolRequired",

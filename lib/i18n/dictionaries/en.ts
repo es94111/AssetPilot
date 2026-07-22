@@ -981,6 +981,8 @@ export const en = {
         shareUnit: "{count} shares",
         currentPrice: "Current price",
         marketValue: "Market value",
+        dividendMonths: "Dividend months: {months}",
+        dividendMonthsEmpty: "No dividend history yet",
         messages: {
           symbolRequired: "Please enter a stock symbol",
         },

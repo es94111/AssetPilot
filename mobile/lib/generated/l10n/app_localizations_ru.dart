@@ -2444,6 +2444,15 @@ class AppLocalizationsRu extends AppLocalizations {
   String get featuresStocksPortfolioMarketValue => 'Рыночная стоимость';
 
   @override
+  String featuresStocksPortfolioDividendMonths(Object months) {
+    return 'Месяцы выплат: $months';
+  }
+
+  @override
+  String get featuresStocksPortfolioDividendMonthsEmpty =>
+      'Пока нет истории выплат';
+
+  @override
   String get featuresStocksPortfolioMessagesSymbolRequired => 'Введите тикер';
 
   @override

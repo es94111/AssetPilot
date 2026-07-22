@@ -49,6 +49,13 @@ export async function GET(request) {
     const returnRate = totalCost > 0 ? (estimatedProfit / totalCost * 100) : 0;
     const totalDividend = divs.reduce((sum, d) => sum + Number(d.cash_dividend || 0), 0);
     const isDelisted = !!s.delisted;
+    const dividendMonths = Array.from(new Set(
+      divs
+        .filter(d => Number(d.cash_dividend || 0) > 0 || Number(d.stock_dividend_shares || 0) > 0)
+        .map(d => Number(String(d.date || '').slice(5, 7)))
+    ))
+      .filter(m => m >= 1 && m <= 12)
+      .sort((a, b) => a - b);
 
     return {
       ...s,
@@ -63,6 +70,7 @@ export async function GET(request) {
       returnRate: Math.round(returnRate * 100) / 100,
       realizedPL: Math.round(realizedPL * 100) / 100,
       totalDividend: Math.round(totalDividend),
+      dividendMonths,
       currentPrice,
       updatedAt: s.updated_at,
       stockType: s.stock_type,

@@ -29,6 +29,16 @@ function parseQuoteNumber(value: unknown) {
   return Number(String(value || '').replace(/,/g, '')) || 0;
 }
 
+function formatDividendMonths(months: number[], locale: string) {
+  const tag = localeTag(locale);
+  const names = months.map(m => new Intl.DateTimeFormat(tag, { month: 'short' }).format(new Date(2000, m - 1, 1)));
+  try {
+    return new Intl.ListFormat(tag, { style: 'short', type: 'conjunction' }).format(names);
+  } catch (_) {
+    return names.join(', ');
+  }
+}
+
 async function fetchBrowserStockPrices(stocks: any[], unavailableMessage: string) {
   const activeStocks = stocks.filter(s => !s.delisted && s.id && s.symbol);
   if (activeStocks.length === 0) return { updates: [], failed: 0 };
@@ -288,6 +298,15 @@ export default function PortfolioClient(_props: { user?: any } = {}) {
                     </Button>
                   </div>
                 </div>
+
+                {/* ETF dividend months */}
+                {s.stockType === 'etf' && (
+                  <p className="text-xs text-[var(--text-muted)]">
+                    {Array.isArray(s.dividendMonths) && s.dividendMonths.length > 0
+                      ? t('features.stocks.portfolio.dividendMonths', { months: formatDividendMonths(s.dividendMonths, locale) })
+                      : t('features.stocks.portfolio.dividendMonthsEmpty')}
+                  </p>
+                )}
 
                 {/* Metrics grid */}
                 <div className="border-t border-[var(--border)] pt-3 grid grid-cols-2 gap-y-2 gap-x-4 text-sm">

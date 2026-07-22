@@ -2410,6 +2410,15 @@ class AppLocalizationsAr extends AppLocalizations {
   String get featuresStocksPortfolioMarketValue => 'القيمة السوقية';
 
   @override
+  String featuresStocksPortfolioDividendMonths(Object months) {
+    return 'أشهر توزيع الأرباح: $months';
+  }
+
+  @override
+  String get featuresStocksPortfolioDividendMonthsEmpty =>
+      'لا يوجد سجل توزيعات بعد';
+
+  @override
   String get featuresStocksPortfolioMessagesSymbolRequired => 'أدخل رمز السهم';
 
   @override

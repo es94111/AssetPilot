@@ -981,6 +981,8 @@ export const ptBR = {
         shareUnit: "{count} ações",
         currentPrice: "Preço atual",
         marketValue: "Valor de mercado",
+        dividendMonths: "Meses de dividendo: {months}",
+        dividendMonthsEmpty: "Ainda não há histórico de dividendos",
         messages: {
           symbolRequired: "Digite o código da ação",
         },

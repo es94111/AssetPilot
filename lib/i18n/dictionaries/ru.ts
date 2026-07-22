@@ -981,6 +981,8 @@ export const ru = {
         shareUnit: "{count} акций",
         currentPrice: "Текущая цена",
         marketValue: "Рыночная стоимость",
+        dividendMonths: "Месяцы выплат: {months}",
+        dividendMonthsEmpty: "Пока нет истории выплат",
         messages: {
           symbolRequired: "Введите тикер",
         },

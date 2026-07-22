@@ -2345,6 +2345,14 @@ class AppLocalizationsKo extends AppLocalizations {
   String get featuresStocksPortfolioMarketValue => '평가액';
 
   @override
+  String featuresStocksPortfolioDividendMonths(Object months) {
+    return '배당 월: $months';
+  }
+
+  @override
+  String get featuresStocksPortfolioDividendMonthsEmpty => '아직 배당 기록이 없습니다';
+
+  @override
   String get featuresStocksPortfolioMessagesSymbolRequired => '종목 코드를 입력하세요';
 
   @override

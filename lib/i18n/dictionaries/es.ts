@@ -981,6 +981,8 @@ export const es = {
         shareUnit: "{count} acciones",
         currentPrice: "Precio actual",
         marketValue: "Valor de mercado",
+        dividendMonths: "Meses de dividendo: {months}",
+        dividendMonthsEmpty: "Aún no hay historial de dividendos",
         messages: {
           symbolRequired: "Introduce el código bursátil",
         },

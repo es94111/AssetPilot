@@ -981,6 +981,8 @@ export const zhCN = {
         shareUnit: "{count} 股",
         currentPrice: "当前价格",
         marketValue: "市值",
+        dividendMonths: "配息月份：{months}",
+        dividendMonthsEmpty: "尚无配息记录",
         messages: {
           symbolRequired: "请输入股票代码",
         },

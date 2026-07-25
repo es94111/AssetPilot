@@ -1931,6 +1931,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get featuresTransactionsFuture => '未來交易';
 
   @override
+  String get featuresTransactionsExcludeTransfer => '排除轉帳';
+
+  @override
   String featuresTransactionsParentAll(Object name) {
     return '$name（全部）';
   }
@@ -6036,6 +6039,9 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
 
   @override
   String get featuresTransactionsFuture => '未来交易';
+
+  @override
+  String get featuresTransactionsExcludeTransfer => '排除转账';
 
   @override
   String featuresTransactionsParentAll(Object name) {
@@ -10144,6 +10150,9 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
 
   @override
   String get featuresTransactionsFuture => '未來交易';
+
+  @override
+  String get featuresTransactionsExcludeTransfer => '排除轉帳';
 
   @override
   String featuresTransactionsParentAll(Object name) {

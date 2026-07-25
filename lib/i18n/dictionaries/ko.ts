@@ -856,6 +856,7 @@ export const ko = {
       allCategories: "모든 카테고리",
       transfer: "이체",
       future: "예정 거래",
+      excludeTransfer: "이체 제외",
       parentAll: "{name} (전체)",
       startDateTitle: "시작일",
       endDateTitle: "종료일",

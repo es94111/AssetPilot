@@ -856,6 +856,7 @@ export const zhCN = {
       allCategories: "全部分类",
       transfer: "转账",
       future: "未来交易",
+      excludeTransfer: "排除转账",
       parentAll: "{name}（全部）",
       startDateTitle: "开始日期",
       endDateTitle: "结束日期",

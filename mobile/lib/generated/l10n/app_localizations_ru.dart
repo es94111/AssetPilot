@@ -2055,6 +2055,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get featuresTransactionsFuture => 'Будущие операции';
 
   @override
+  String get featuresTransactionsExcludeTransfer => 'Исключить переводы';
+
+  @override
   String featuresTransactionsParentAll(Object name) {
     return '$name (все)';
   }

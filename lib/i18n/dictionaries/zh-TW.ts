@@ -854,6 +854,7 @@ export const zhTW = {
       allCategories: "所有分類",
       transfer: "轉帳",
       future: "未來交易",
+      excludeTransfer: "排除轉帳",
       parentAll: "{name}（全部）",
       startDateTitle: "開始日期",
       endDateTitle: "結束日期",

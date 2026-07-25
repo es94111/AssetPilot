@@ -1965,6 +1965,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get featuresTransactionsFuture => '예정 거래';
 
   @override
+  String get featuresTransactionsExcludeTransfer => '이체 제외';
+
+  @override
   String featuresTransactionsParentAll(Object name) {
     return '$name (전체)';
   }

@@ -3147,6 +3147,11 @@
     "description": "Web path: features.transactions.future",
     "x-webPath": "features.transactions.future"
   },
+  "featuresTransactionsExcludeTransfer": "이체 제외",
+  "@featuresTransactionsExcludeTransfer": {
+    "description": "Web path: features.transactions.excludeTransfer",
+    "x-webPath": "features.transactions.excludeTransfer"
+  },
   "featuresTransactionsParentAll": "{name} (전체)",
   "@featuresTransactionsParentAll": {
     "description": "Web path: features.transactions.parentAll",

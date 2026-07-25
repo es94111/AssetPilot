@@ -11,7 +11,7 @@ import { ArrowLeftRight, CalendarDays, Image, Images, Pencil, Plus, Search, Slid
 
 const EMPTY_FORM = { date: '', type: 'expense', amount: '', categoryId: '', accountId: '', note: '', excludeFromStats: false, currency: 'TWD', fxRate: '', fxFee: '' };
 const EMPTY_TRANSFER_FORM = { date: '', amount: '', fromAccountId: '', toAccountId: '', note: '' };
-const EMPTY_FILTERS = { type: '', accountId: '', categoryId: '', dateFrom: '', dateTo: '', keyword: '' };
+const EMPTY_FILTERS = { type: '', accountId: '', categoryId: '', dateFrom: '', dateTo: '', keyword: '', excludeTransfer: '' };
 const DEFAULT_CURRENCIES = ['TWD', 'USD', 'JPY', 'EUR', 'CNY', 'HKD', 'GBP', 'AUD', 'CAD', 'SGD'];
 const PAGE_SIZE_OPTIONS = [10, 20, 50, 100, 200];
 
@@ -69,13 +69,18 @@ function readPageSizeParam(searchParams: QueryParams) {
 }
 
 function readFilters(searchParams: QueryParams) {
+  // Excluding transfers wins over a transfer type filter so the pair can never
+  // contradict each other, even from a hand-written URL.
+  const excludeTransfer = searchParams.get('excludeTransfer') === '1' ? '1' : '';
+  const type = searchParams.get('type') || '';
   return {
-    type: searchParams.get('type') || '',
+    type: excludeTransfer && type === 'transfer' ? '' : type,
     accountId: searchParams.get('accountId') || '',
     categoryId: searchParams.get('categoryId') || '',
     dateFrom: searchParams.get('dateFrom') || '',
     dateTo: searchParams.get('dateTo') || '',
     keyword: searchParams.get('keyword') || '',
+    excludeTransfer,
   };
 }
 
@@ -154,6 +159,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
         ...(filters.dateFrom ? { dateFrom: filters.dateFrom } : {}),
         ...(filters.dateTo ? { dateTo: filters.dateTo } : {}),
         ...(filters.keyword ? { keyword: filters.keyword } : {}),
+        ...(filters.excludeTransfer ? { excludeTransfer: '1' } : {}),
       });
       const data = await apiGet(`/api/transactions?${params}`);
       if (loadId === latestLoadId.current) {
@@ -184,6 +190,17 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
   const updateFilters = useCallback((patch: Partial<typeof EMPTY_FILTERS>) => {
     setPage(1);
     setFilters((current) => ({ ...current, ...patch }));
+  }, []);
+
+  // "Exclude transfers" and the transfer type filter contradict each other, so
+  // turning the toggle on falls back to all types.
+  const toggleExcludeTransfer = useCallback((checked: boolean) => {
+    setPage(1);
+    setFilters((current) => ({
+      ...current,
+      excludeTransfer: checked ? '1' : '',
+      type: checked && current.type === 'transfer' ? '' : current.type,
+    }));
   }, []);
 
   const clearFilters = useCallback(() => {
@@ -590,7 +607,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
           <option value="">{t('features.transactions.allTypes')}</option>
           <option value="income">{t('features.common.income')}</option>
           <option value="expense">{t('features.common.expense')}</option>
-          <option value="transfer">{t('features.transactions.transfer')}</option>
+          <option value="transfer" disabled={filters.excludeTransfer === '1'}>{t('features.transactions.transfer')}</option>
           <option value="future">{t('features.transactions.future')}</option>
         </select>
       </label>
@@ -622,6 +639,16 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
       <label className="flex min-w-0 flex-1 flex-col gap-1 text-xs font-medium text-slate-500" htmlFor={`${scope}-date-to`}>
         {t('features.transactions.endDateTitle')}
         <input id={`${scope}-date-to`} type="date" className={filterControlClass} value={filters.dateTo} onChange={(e) => updateFilters({ dateTo: e.target.value })} />
+      </label>
+      <label className="flex min-h-11 shrink-0 items-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-300" htmlFor={`${scope}-exclude-transfer`}>
+        <input
+          id={`${scope}-exclude-transfer`}
+          type="checkbox"
+          className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-2 focus:ring-primary dark:border-slate-700 dark:bg-slate-900"
+          checked={filters.excludeTransfer === '1'}
+          onChange={(e) => toggleExcludeTransfer(e.target.checked)}
+        />
+        {t('features.transactions.excludeTransfer')}
       </label>
     </>
   );
@@ -656,7 +683,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
         </div>
       </div>
 
-      <div className="hidden gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-900/60 md:grid md:grid-cols-2 md:items-end lg:grid-cols-3 xl:grid-cols-[repeat(5,minmax(0,1fr))_auto]">
+      <div className="hidden gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-900/60 md:grid md:grid-cols-2 md:items-end lg:grid-cols-3 xl:grid-cols-[repeat(5,minmax(0,1fr))_auto_auto]">
         {renderFilterFields('desktop-filter')}
         <Button type="button" variant="outline" className="min-h-11 shrink-0" onClick={clearFilters}>{t('common.clear')}</Button>
       </div>

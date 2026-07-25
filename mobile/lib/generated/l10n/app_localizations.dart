@@ -3757,6 +3757,12 @@ abstract class AppLocalizations {
   /// **'未來交易'**
   String get featuresTransactionsFuture;
 
+  /// Web path: features.transactions.excludeTransfer
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'排除轉帳'**
+  String get featuresTransactionsExcludeTransfer;
+
   /// Web path: features.transactions.parentAll
   ///
   /// In zh_Hant_TW, this message translates to:

@@ -2056,6 +2056,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get featuresTransactionsFuture => 'Transações futuras';
 
   @override
+  String get featuresTransactionsExcludeTransfer => 'Excluir transferências';
+
+  @override
   String featuresTransactionsParentAll(Object name) {
     return '$name (tudo)';
   }
@@ -6412,6 +6415,9 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get featuresTransactionsFuture => 'Transações futuras';
+
+  @override
+  String get featuresTransactionsExcludeTransfer => 'Excluir transferências';
 
   @override
   String featuresTransactionsParentAll(Object name) {

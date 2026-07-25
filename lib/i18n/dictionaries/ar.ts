@@ -856,6 +856,7 @@ export const ar = {
       allCategories: "كل التصنيفات",
       transfer: "تحويل",
       future: "معاملات مستقبلية",
+      excludeTransfer: "استبعاد التحويلات",
       parentAll: "{name} (الكل)",
       startDateTitle: "تاريخ البداية",
       endDateTitle: "تاريخ النهاية",

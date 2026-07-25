@@ -856,6 +856,7 @@ export const ru = {
       allCategories: "Все категории",
       transfer: "Перевод",
       future: "Будущие операции",
+      excludeTransfer: "Исключить переводы",
       parentAll: "{name} (все)",
       startDateTitle: "Дата начала",
       endDateTitle: "Дата окончания",

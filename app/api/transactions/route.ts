@@ -105,6 +105,8 @@ export async function GET(request: NextRequest) {
   const accountId = searchParams.get('accountId') || '';
   const page = searchParams.get('page') || '1';
   const keyword = String(searchParams.get('keyword') || '').trim();
+  const excludeTransferRaw = String(searchParams.get('excludeTransfer') || '').toLowerCase();
+  const excludeTransfer = excludeTransferRaw === '1' || excludeTransferRaw === 'true';
 
   const limitRaw = parseInt(searchParams.get('limit') || '', 10);
   const pageSize = Number.isFinite(limitRaw) && limitRaw > 0 ? limitRaw : 20;
@@ -142,6 +144,10 @@ export async function GET(request: NextRequest) {
     } else {
       where += ' AND t.type = ?'; params.push(type);
     }
+  }
+  // 排除轉帳：轉入/轉出兩腳都不列出（與 type=transfer 併用時必然無結果，由前端互斥處理）。
+  if (excludeTransfer) {
+    where += " AND t.type NOT IN ('transfer_in', 'transfer_out')";
   }
   if (categoryId && categoryId !== 'all') {
     if (categoryId === '__uncategorized__') {

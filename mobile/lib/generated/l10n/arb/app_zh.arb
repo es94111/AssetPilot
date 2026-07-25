@@ -3147,6 +3147,11 @@
     "description": "Web path: features.transactions.future",
     "x-webPath": "features.transactions.future"
   },
+  "featuresTransactionsExcludeTransfer": "排除轉帳",
+  "@featuresTransactionsExcludeTransfer": {
+    "description": "Web path: features.transactions.excludeTransfer",
+    "x-webPath": "features.transactions.excludeTransfer"
+  },
   "featuresTransactionsParentAll": "{name}（全部）",
   "@featuresTransactionsParentAll": {
     "description": "Web path: features.transactions.parentAll",

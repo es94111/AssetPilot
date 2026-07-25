@@ -856,6 +856,7 @@ export const ptBR = {
       allCategories: "Todas as categorias",
       transfer: "Transferência",
       future: "Transações futuras",
+      excludeTransfer: "Excluir transferências",
       parentAll: "{name} (tudo)",
       startDateTitle: "Data inicial",
       endDateTitle: "Data final",

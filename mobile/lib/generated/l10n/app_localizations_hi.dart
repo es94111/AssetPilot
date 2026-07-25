@@ -2037,6 +2037,9 @@ class AppLocalizationsHi extends AppLocalizations {
   String get featuresTransactionsFuture => 'भविष्य की लेन-देन';
 
   @override
+  String get featuresTransactionsExcludeTransfer => 'ट्रांसफ़र शामिल न करें';
+
+  @override
   String featuresTransactionsParentAll(Object name) {
     return '$name (सभी)';
   }

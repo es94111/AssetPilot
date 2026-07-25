@@ -2073,6 +2073,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get featuresTransactionsFuture => 'Transacciones futuras';
 
   @override
+  String get featuresTransactionsExcludeTransfer => 'Excluir transferencias';
+
+  @override
   String featuresTransactionsParentAll(Object name) {
     return '$name (todo)';
   }

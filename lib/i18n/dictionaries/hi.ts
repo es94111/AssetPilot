@@ -856,6 +856,7 @@ export const hi = {
       allCategories: "सभी श्रेणियाँ",
       transfer: "ट्रांसफ़र",
       future: "भविष्य की लेन-देन",
+      excludeTransfer: "ट्रांसफ़र शामिल न करें",
       parentAll: "{name} (सभी)",
       startDateTitle: "शुरुआत तारीख",
       endDateTitle: "समाप्ति तारीख",

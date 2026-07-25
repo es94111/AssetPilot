@@ -856,6 +856,7 @@ export const en = {
       allCategories: "All categories",
       transfer: "Transfer",
       future: "Future transactions",
+      excludeTransfer: "Exclude transfers",
       parentAll: "{name} (all)",
       startDateTitle: "Start date",
       endDateTitle: "End date",

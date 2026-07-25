@@ -856,6 +856,7 @@ export const fr = {
       allCategories: "Toutes les catégories",
       transfer: "Virement",
       future: "Transactions futures",
+      excludeTransfer: "Exclure les virements",
       parentAll: "{name} (tout)",
       startDateTitle: "Date de début",
       endDateTitle: "Date de fin",

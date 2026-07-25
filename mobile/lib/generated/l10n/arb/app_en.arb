@@ -3147,6 +3147,11 @@
     "description": "Web path: features.transactions.future",
     "x-webPath": "features.transactions.future"
   },
+  "featuresTransactionsExcludeTransfer": "Exclude transfers",
+  "@featuresTransactionsExcludeTransfer": {
+    "description": "Web path: features.transactions.excludeTransfer",
+    "x-webPath": "features.transactions.excludeTransfer"
+  },
   "featuresTransactionsParentAll": "{name} (all)",
   "@featuresTransactionsParentAll": {
     "description": "Web path: features.transactions.parentAll",

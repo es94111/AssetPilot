@@ -155,3 +155,42 @@ jobs:
           tags: ${{ steps.meta_ghcr.outputs.tags }}
           labels: ${{ steps.meta_ghcr.outputs.labels }}
           cache-from: type=gha
+
+      # ── GitHub Release（內文自 changelog.json 產生；已存在就略過）──
+      # 刻意排在推送映像檔之後：Release 一出現就代表該版本的 image 已經可以拉取。
+      # 不綁在「這次執行有建 tag」上，tag 由 /update-docs 手動推的情況也會補上
+      # Release（過去正是這樣漏掉好幾版）。main 與 tag 兩種觸發都會嘗試，先跑完的
+      # 那個建立，另一個會在下面的存在性檢查略過。
+      - name: Publish GitHub Release
+        if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.ver.outputs.version }}
+        run: |
+          # tag 觸發時以 tag 名為準（可能是補打舊版），main 觸發時用 changelog 版號。
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            TAG="$GITHUB_REF_NAME"
+            VERSION="${TAG#v}"
+          else
+            TAG="v$VERSION"
+          fi
+          if ! git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null 2>&1; then
+            echo "::warning::$TAG 不在遠端（tag 建立可能失敗），略過建立 Release"
+            exit 0
+          fi
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists, skipping"
+            exit 0
+          fi
+          NOTES_FILE="$RUNNER_TEMP/release-notes.md"
+          TITLE="$(NOTES_FILE="$NOTES_FILE" node .github/scripts/release-notes.mjs)"
+          echo "Creating release $TAG: $TITLE"
+          if gh release create "$TAG" --title "$TITLE" --notes-file "$NOTES_FILE"; then
+            echo "Created release $TAG"
+          elif gh release view "$TAG" >/dev/null 2>&1; then
+            # 競態：另一次執行剛好搶先建立，視為成功。
+            echo "Release $TAG was created concurrently, continuing"
+          else
+            echo "::error::建立 Release $TAG 失敗"
+            exit 1
+          fi

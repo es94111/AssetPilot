@@ -1,6 +1,18 @@
 {
-  "currentVersion": "4.95.1",
+  "currentVersion": "4.95.2",
   "releases": [
+    {
+      "version": "4.95.2",
+      "date": "2026-07-28",
+      "title": "修補系統相依套件安全性漏洞",
+      "type": "fixed",
+      "changes": [
+        {
+          "tag": "fixed",
+          "text": "修補系統內部相依套件的多項已知安全性漏洞，提升整體系統安全性，使用者不需要進行任何操作。"
+        }
+      ]
+    },
     {
       "version": "4.95.1",
       "date": "2026-07-25",

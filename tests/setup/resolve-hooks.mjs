@@ -20,6 +20,10 @@ function resolveWithExtension(basePathNoExt) {
 }
 
 export async function resolve(specifier, context, nextResolve) {
+  if (specifier === 'next/server') {
+    return nextResolve('next/server.js', context);
+  }
+
   if (specifier.startsWith('@/')) {
     const abs = resolveWithExtension(path.join(rootDir, specifier.slice(2)));
     if (abs) return nextResolve(pathToFileURL(abs).href, context);

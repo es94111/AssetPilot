@@ -1,3 +1,89 @@
+# 2026-07-29 openai-plugin-mcp-descriptors
+
+## Goal + Acceptance Criteria
+- [x] Every MCP tool advertises a user-facing title, read-only behavior annotations, the `mcp:read` OAuth requirement, and matching legacy `_meta.securitySchemes`.
+- [x] Raw `tools/list` responses include the OpenAI top-level `securitySchemes` extension even though the current MCP SDK only exposes the `_meta` field.
+- [x] The existing whole-resource OAuth flow continues to fail closed with RFC-compliant HTTP `401` Bearer challenges and never exposes financial tool results before authentication.
+- [x] OAuth protected-resource and authorization-server metadata point to a public MCP service document and continue to support CIMD first, DCR fallback, PKCE S256, and public clients using token authentication method `none`.
+- [x] Automated tests prove descriptor parity, least-privilege annotations, raw transport compatibility, and metadata/documentation consistency.
+
+## Risk & Rollback
+- Risk level: high because the descriptor metadata controls when an external AI client requests authorization to private financial data.
+- Affected components: MCP tool discovery responses, Streamable HTTP transport wrapping, OAuth discovery documentation, and the public MCP help page.
+- Rollback strategy: remove the additive descriptor transport wrapper and metadata helpers; the existing HTTP Bearer challenge and PAT/OAuth authentication remain unchanged.
+- Monitoring signals: tools missing the OAuth badge/link flow, `tools/list` serialization failures, requests that bypass HTTP authentication, or a scope other than `mcp:read`.
+
+## Dependencies & Environment
+- OpenAI plugin authentication and tool-descriptor references current on 2026-07-29, plus MCP Authorization specification revision 2025-11-25.
+- Existing `@modelcontextprotocol/sdk` 1.30.0 and Zod only; no new package planned.
+- The SDK currently supports `_meta.securitySchemes` but not OpenAI's top-level descriptor extension, so compatibility must be injected at the transport boundary without changing MCP request handling.
+
+## Working Notes
+- AssetPilot protects the entire MCP resource, so authentication discovery begins with HTTP `401` and `WWW-Authenticate`; tool-level metadata reinforces authorization requirements after linking.
+- OpenAI's `_meta["mcp/www_authenticate"]` result is reserved for per-tool linking or scope step-up after an MCP connection exists. It is not used here because every request is authenticated before JSON-RPC handling.
+- Tool results remain text content for backward compatibility. `outputSchema` is only required when returning `structuredContent`, which these tools do not currently return.
+- All existing tools are read-only, closed-world queries scoped to the authenticated AssetPilot user.
+
+## Plan
+- [x] Compare the three official specifications against the current OAuth and MCP implementation.
+- [x] Add reusable read-only OAuth descriptor metadata to every tool.
+- [x] Add a narrow transport compatibility layer for top-level `securitySchemes`.
+- [x] Add a public MCP service document and update OAuth metadata links.
+- [x] Add targeted regression tests and run typecheck, tests, build, and diff checks.
+- [x] Complete independent correctness/security review and record results.
+
+## Results
+- Added title, `mcp:read` OAuth schemes, matching `_meta` mirror, read-only annotations, and concise invocation states to all 11 AssetPilot tools.
+- Added a transport decorator that restores OpenAI's top-level `securitySchemes` on raw `tools/list` responses without weakening the connection-wide HTTP authentication boundary or adding dependencies.
+- Added a public `/mcp` service document and pointed protected-resource and authorization-server metadata to it; invalid-token challenges now include a safe `error_description`.
+- Verification passed: descriptor test 1/1, OAuth test 12/12 (PostgreSQL lifecycle case conditionally skipped without a DB URL), full `npm test`, TypeScript typecheck, raw WebStandard Streamable HTTP probe, `git diff --check`, and isolated production build.
+- Two independent reviews found no P0 security issue; the security review found no remaining P1/P2. A separate interoperability reviewer confirmed the raw wire fields and noted only optional future structured output/per-tool step-up enhancements.
+
+# 2026-07-29 mcp-oauth-login
+
+## Goal + Acceptance Criteria
+- [x] MCP HTTP clients can discover AssetPilot's protected-resource and OAuth authorization-server metadata without prior configuration.
+- [x] An unauthenticated MCP request returns `401` with a standards-compliant Bearer challenge containing `resource_metadata` and the least-privilege `mcp:read` scope.
+- [x] MCP clients can register through RFC 7591 Dynamic Client Registration, then complete Authorization Code + PKCE (`S256`) using the user's existing AssetPilot login session and explicit consent.
+- [x] Authorization and token requests require the exact canonical `/api/mcp` `resource`; access tokens are audience-bound, short-lived, opaque, hashed at rest, and accepted only for the owning active user.
+- [x] Refresh tokens rotate on every use, replay revokes the token family, and authorization codes are short-lived, single-use, client/redirect/resource-bound, and never logged.
+- [x] Existing manually-created MCP PATs remain backward compatible and can still be revoked from Settings.
+- [x] Redirect URI, scope, client authentication, PKCE, expired/reused code, refresh replay, wrong audience, and revoked/deleted-user failure paths are covered by deterministic tests.
+
+## Risk & Rollback
+- Risk level: high; this introduces an authorization server and grants access to private financial data.
+- Affected components: MCP HTTP authentication, OAuth discovery/registration/authorization/token/revocation routes, login return flow, database credential lifecycle, middleware public-path and rate-limit rules, MCP settings/help copy.
+- Rollback strategy: revert the additive OAuth routes/tables and restore PAT-only MCP authentication; existing PAT rows and financial records are unchanged.
+- Rollout plan: preserve PAT fallback, fail closed on any OAuth validation mismatch, and expose only the existing read-only MCP tools.
+- Monitoring signals: repeated invalid grants, refresh-token replay, redirect/resource mismatch, unexpected 401/403 rates, or tokens accepted for the wrong client/user/resource.
+
+## Dependencies & Environment
+- MCP authorization baseline: 2025-11-25 specification, OAuth 2.1 draft, RFC 8414, RFC 7591, RFC 8707, and RFC 9728.
+- Existing Next.js route handlers, PostgreSQL compatibility migrations, `@modelcontextprotocol/sdk`, Node `>=24 <25`, and existing AssetPilot cookie login only; no new dependency planned.
+- Production authorization endpoints require HTTPS. Local development permits HTTP only on loopback origins.
+
+## Working Notes
+- `/api/mcp` now accepts audience-bound OAuth access tokens or existing `ap_mcp_*` PATs. PAT-only production deployments still return normal 401 responses when `APP_URL` has not yet been configured.
+- Client registration supports public-client RFC 7591 DCR and Client ID Metadata Documents. CIMD retrieval is authenticated-first, HTTPS-only, DNS-pinned to public IPs, timeout/size/capacity bounded, single-flight, and non-redirecting.
+- Scope is a single least-privilege `mcp:read` permission because every registered MCP tool is read-only.
+- Streamable HTTP browser origins are exact-allowlisted through the canonical app origin plus `ALLOWED_ORIGINS`; native clients without `Origin` remain supported.
+
+## Plan
+- [x] Confirm existing MCP/login/database invariants and capture the PAT-only baseline.
+- [x] Add persistent OAuth client, authorization-code, and rotating token-family primitives with pure validation helpers.
+- [x] Add protected-resource/authorization-server metadata, DCR, authorize/consent, token, and revocation endpoints.
+- [x] Bind `/api/mcp` bearer validation to PAT or audience-bound OAuth access token and emit RFC-compliant challenges.
+- [x] Preserve the authorization return path across all existing login methods and update user-facing MCP guidance.
+- [x] Add regression/security tests and run targeted tests, typecheck, i18n parity, full tests, build, and diff hygiene.
+- [x] Complete independent correctness/security review and record results.
+
+## Results
+- Added MCP 2025-11-25 OAuth discovery, public-client CIMD/DCR registration, explicit consent, Authorization Code + PKCE S256, token/refresh/revocation endpoints, and the existing-login return flow.
+- Added opaque hashed credentials, five-minute single-use codes, one-hour audience-bound access tokens, 30-day rotating refresh tokens with family replay revocation, user-active checks, record cleanup, registration quotas, and strict redirect/scope/resource validation.
+- Preserved PAT compatibility, added standards-compliant Bearer challenges, exact Streamable HTTP Origin validation/CORS, Settings connection guidance, production `APP_URL` documentation, and all shared/mobile translations.
+- Independent interoperability and security reviews found no remaining P0/P1 after fixes for Origin validation, PAT-only deployments, anonymous CIMD egress, bounded registration/metadata storage, loopback redirects, repeated token parameters, and discovery preflight.
+- Verification passed: `npm run test:mcp-oauth` (12/12; PostgreSQL lifecycle case present but skipped without a local DB URL), `npm run typecheck`, full `npm test`, 10-locale parity with 1,257 keys, `git diff --check`, and an isolated production `npm run build`.
+
 # 2026-07-18 phase-4-proactive-cashflow-action-loop
 
 ## Goal + Acceptance Criteria

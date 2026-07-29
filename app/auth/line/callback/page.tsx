@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useT } from '@/components/i18n/I18nProvider';
+import { safeOAuthReturnTo } from '@/lib/loginReturn';
 
 export default function LineCallbackPage() {
   const router = useRouter();
@@ -31,7 +32,8 @@ export default function LineCallbackPage() {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || (flow === 'link' ? t('auth.lineCallback.linkFailed') : t('auth.lineCallback.loginFailed')));
 
-      router.replace(flow === 'link' ? '/settings/account' : '/dashboard');
+      const returnTo = safeOAuthReturnTo(data.returnTo);
+      router.replace(flow === 'link' ? '/settings/account' : (returnTo || '/dashboard'));
       router.refresh();
     }
 

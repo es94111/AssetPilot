@@ -236,7 +236,9 @@ export const en = {
     },
     mcp: {
       title: "MCP Connection Settings",
-      description: "Create a personal access token so MCP-compatible AI tools like ChatGPT or Claude can query your financial data read-only.",
+      description: "Connect MCP-compatible AI tools through OAuth, or create a personal access token for clients that require manual credentials.",
+      oauthTitle: "Connect with OAuth",
+      oauthDescription: "Enter the connection URL below in an MCP OAuth-compatible AI tool. AssetPilot will open a secure sign-in and consent page; no manual token is required.",
       createNew: "Create New Credential",
       nameLabel: "Name",
       namePlaceholder: "e.g. My ChatGPT",

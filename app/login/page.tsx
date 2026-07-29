@@ -7,6 +7,7 @@ import Script from 'next/script';
 import { client as webauthnClient } from '@passwordless-id/webauthn';
 import { Eye, EyeOff } from 'lucide-react';
 import { useT } from '@/components/i18n/I18nProvider';
+import { safeOAuthReturnTo } from '@/lib/loginReturn';
 
 declare global {
   interface Window {
@@ -51,6 +52,10 @@ export default function LoginPage() {
   const [turnstileToken, setTurnstileToken] = useState('');
   const turnstileRef = useRef<HTMLDivElement | null>(null);
   const turnstileWidgetId = useRef<string | null>(null);
+
+  function loginDestination() {
+    return safeOAuthReturnTo(new URLSearchParams(window.location.search).get('returnTo')) || '/dashboard';
+  }
 
   useEffect(() => {
     if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('mode') === 'register') {
@@ -122,7 +127,7 @@ export default function LoginPage() {
       });
       const data = await r.json();
       if (!r.ok) throw new Error(data.error || t('auth.errors.loginFailed'));
-      router.push('/dashboard');
+      router.push(loginDestination());
       router.refresh();
     } catch (e: any) { setError(e.message); }
     finally {
@@ -143,7 +148,7 @@ export default function LoginPage() {
       });
       const data = await r.json();
       if (!r.ok) throw new Error(data.error || t('auth.errors.registerFailed'));
-      router.push('/dashboard');
+      router.push(loginDestination());
       router.refresh();
     } catch (e: any) { setRegError(e.message); }
     finally { setLoading(false); }
@@ -177,7 +182,7 @@ export default function LoginPage() {
             });
             const data = await res.json().catch(() => ({}));
             if (!res.ok) throw new Error(data.error || t('auth.errors.googleFailed'));
-            router.push('/dashboard');
+            router.push(loginDestination());
             router.refresh();
           } catch (e: any) {
             setError(e.message || t('auth.errors.googleFailed'));
@@ -222,7 +227,7 @@ export default function LoginPage() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || t('auth.errors.passkeyFailed'));
-      router.push('/dashboard');
+      router.push(loginDestination());
       router.refresh();
     } catch (e: any) { setError(e.message || t('auth.errors.passkeyFailed')); }
     finally {
@@ -243,6 +248,8 @@ export default function LoginPage() {
       });
       if (turnstileToken) params.set('turnstileToken', turnstileToken);
       if (shouldDisableLineAutoLogin()) params.set('disableAutoLogin', '1');
+      const returnTo = loginDestination();
+      if (returnTo !== '/dashboard') params.set('returnTo', returnTo);
       window.location.assign(`/api/auth/line/authorize?${params.toString()}`);
     } catch (e: any) {
       setError(e.message || t('auth.errors.lineFailed'));

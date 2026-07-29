@@ -1,5 +1,26 @@
 # Lessons
 
+## 2026-07-29 Verify Descriptor Serialization, Not Only Helper Types
+- Mistake class: incorrect assumption about dependency behavior / missing verification.
+- Failure mode: Assumed the official `registerAppTool` helper would preserve OpenAI's top-level `securitySchemes` because its documented config accepts the field, but the installed MCP SDK 1.30 `registerTool` implementation destructures only standard fields and silently drops the extension.
+- Detection signal: Reading the installed helper and SDK runtime showed the helper delegates unchanged to `registerTool`, whose stored tool definition omits `securitySchemes`.
+- Prevention rule: For protocol extensions, inspect or probe the final serialized `tools/list` response; type acceptance and wrapper documentation do not prove the field survives runtime serialization.
+- Tripwire: Add a raw JSON-RPC descriptor test for every non-standard discovery field before adopting or upgrading MCP helper packages.
+
+## 2026-07-29 Next Route Boundary Tests Need Explicit Node Resolver Support
+- Mistake class: incorrect assumption about repository behavior / missing verification.
+- Failure mode: Added direct Node tests for Next route handlers while assuming the package subpath `next/server` would resolve exactly as it does in the Next bundler; the Node ESM runner required the exported `next/server.js` entry. The first test also mutated the readonly-typed `NODE_ENV` property directly.
+- Detection signal: `test:mcp-oauth` failed with `ERR_MODULE_NOT_FOUND` for `next/server`, then the production typecheck rejected direct assignment/deletion of `process.env.NODE_ENV`.
+- Prevention rule: When a direct Node test imports framework route handlers, add the narrow package-subpath mapping to the test-only resolver and mutate test environment keys through an explicitly mutable `Record` view with guaranteed restoration.
+- Tripwire: Run both the targeted Node test and the full project typecheck immediately after adding any route-handler integration test.
+
+## 2026-07-29 Next Build Must Not Share a Live Dev Dist Directory on Windows
+- Mistake class: environment-dependent verification assumption.
+- Failure mode: Started a production build against the normal Next `build` directory while the user's development server had files open there, causing a Windows unlink failure.
+- Detection signal: The build failed while unlinking `build/types/app`, and process inspection showed the existing dev server still using that directory.
+- Prevention rule: Preserve the user's dev process and run verification builds in a task-specific isolated `distDir`; restore any temporary config immediately after verification.
+- Tripwire: Before a Windows Next production build, check for an active dev server and select a verified workspace-contained isolated output directory when one is running.
+
 ## 2026-07-18 Decimal Sign Is Not a Strict Positive-Rate Check
 - Mistake class: incorrect assumption about dependency behavior.
 - Failure mode: Used `Decimal.isPositive()` to validate an exchange rate, but Decimal.js treats positive zero as positive, allowing division by zero and returning `Infinity`.

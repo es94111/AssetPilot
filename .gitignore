@@ -153,9 +153,8 @@ postgresql/
 # ==========================================
 # Editor and system files (編輯器與系統檔案)
 # ==========================================
-# VS Code 與 JetBrains 系列 IDE 的本機工作區設定檔 (目前已取消忽略)
-#.vscode/
-#.idea/
+# JetBrains 系列 IDE 的本機工作區設定檔
+.idea/
 # Vim 編輯器在開啟與編輯檔案時自動產生的暫存與還原檔
 *.swp
 *.swo

@@ -6635,10 +6635,20 @@
     "description": "Web path: settings.mcp.title",
     "x-webPath": "settings.mcp.title"
   },
-  "settingsMcpDescription": "创建个人访问令牌，让 ChatGPT、Claude 等支持 MCP 的 AI 工具以只读方式查询您的财务数据。",
+  "settingsMcpDescription": "通过 OAuth 连接支持 MCP 的 AI 工具，或为需要手动凭证的客户端创建个人访问令牌。",
   "@settingsMcpDescription": {
     "description": "Web path: settings.mcp.description",
     "x-webPath": "settings.mcp.description"
+  },
+  "settingsMcpOauthTitle": "使用 OAuth 连接",
+  "@settingsMcpOauthTitle": {
+    "description": "Web path: settings.mcp.oauthTitle",
+    "x-webPath": "settings.mcp.oauthTitle"
+  },
+  "settingsMcpOauthDescription": "在支持 MCP OAuth 的 AI 工具中输入下方连接地址，AssetPilot 会打开安全的登录和授权页面，无需手动创建令牌。",
+  "@settingsMcpOauthDescription": {
+    "description": "Web path: settings.mcp.oauthDescription",
+    "x-webPath": "settings.mcp.oauthDescription"
   },
   "settingsMcpCreateNew": "创建新凭证",
   "@settingsMcpCreateNew": {

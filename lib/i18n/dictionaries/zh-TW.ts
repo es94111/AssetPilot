@@ -234,7 +234,9 @@ export const zhTW = {
     },
     mcp: {
       title: "MCP 連線設定",
-      description: "建立個人化存取權杖，讓 ChatGPT、Claude 等支援 MCP 的 AI 工具以唯讀方式查詢您的財務資料。",
+      description: "透過 OAuth 連接支援 MCP 的 AI 工具，或為需要手動憑證的 client 建立個人化存取權杖。",
+      oauthTitle: "使用 OAuth 連線",
+      oauthDescription: "在支援 MCP OAuth 的 AI 工具中輸入下方連線位址，AssetPilot 會開啟安全的登入與授權頁，不需手動建立權杖。",
       createNew: "建立新憑證",
       nameLabel: "名稱",
       namePlaceholder: "例如：我的 ChatGPT",

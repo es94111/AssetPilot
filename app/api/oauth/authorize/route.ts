@@ -39,8 +39,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(oauthErrorBody(error), { status: error.status, headers: { 'Cache-Control': 'no-store' } });
   }
 
+  let issuer: string | undefined;
   try {
     const urls = getMcpOAuthUrls({ headers: request.headers, requestOrigin: request.nextUrl.origin });
+    issuer = urls.issuer;
     const authorization = validateAuthorizationRequest({
       client,
       responseType: String(form.get('response_type') || ''),
@@ -57,6 +59,7 @@ export async function POST(request: NextRequest) {
         error: 'access_denied',
         error_description: 'The resource owner denied the authorization request',
         state,
+        iss: issuer,
       });
     }
 
@@ -68,13 +71,14 @@ export async function POST(request: NextRequest) {
       scopes: authorization.scopes,
       resource: authorization.resource,
     });
-    return redirectWithOAuthResult(authorization.redirectUri, { code, state });
+    return redirectWithOAuthResult(authorization.redirectUri, { code, state, iss: issuer });
   } catch (error) {
     const body = oauthErrorBody(error);
     return redirectWithOAuthResult(redirectUri, {
       error: body.error,
       error_description: body.error_description,
       state,
+      iss: issuer,
     });
   }
 }

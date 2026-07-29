@@ -4321,7 +4321,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsMcpDescription =>
-      'Create a personal access token so MCP-compatible AI tools like ChatGPT or Claude can query your financial data read-only.';
+      'Connect MCP-compatible AI tools through OAuth, or create a personal access token for clients that require manual credentials.';
+
+  @override
+  String get settingsMcpOauthTitle => 'Connect with OAuth';
+
+  @override
+  String get settingsMcpOauthDescription =>
+      'Enter the connection URL below in an MCP OAuth-compatible AI tool. AssetPilot will open a secure sign-in and consent page; no manual token is required.';
 
   @override
   String get settingsMcpCreateNew => 'Create New Credential';

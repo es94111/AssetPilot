@@ -4402,7 +4402,14 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get settingsMcpDescription =>
-      'Crea un token de acceso personal para que herramientas de IA compatibles con MCP, como ChatGPT o Claude, puedan consultar tus datos financieros en modo de solo lectura.';
+      'Conecta herramientas de IA compatibles con MCP mediante OAuth o crea un token personal para clientes que requieran credenciales manuales.';
+
+  @override
+  String get settingsMcpOauthTitle => 'Conectar con OAuth';
+
+  @override
+  String get settingsMcpOauthDescription =>
+      'Introduce la URL de conexión en una herramienta compatible con MCP OAuth. AssetPilot abrirá una página segura de inicio de sesión y consentimiento; no necesitas crear un token manualmente.';
 
   @override
   String get settingsMcpCreateNew => 'Crear nueva credencial';

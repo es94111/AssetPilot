@@ -4184,7 +4184,14 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get settingsMcpDescription =>
-      'ChatGPT, Claude 등 MCP를 지원하는 AI 도구가 회원님의 재무 데이터를 읽기 전용으로 조회할 수 있도록 개인 액세스 토큰을 생성하세요.';
+      'MCP 호환 AI 도구를 OAuth로 연결하거나 수동 자격 증명이 필요한 클라이언트용 개인 액세스 토큰을 만드세요.';
+
+  @override
+  String get settingsMcpOauthTitle => 'OAuth로 연결';
+
+  @override
+  String get settingsMcpOauthDescription =>
+      'MCP OAuth 호환 AI 도구에 아래 연결 URL을 입력하세요. AssetPilot이 안전한 로그인 및 동의 페이지를 열며 수동 토큰은 필요하지 않습니다.';
 
   @override
   String get settingsMcpCreateNew => '새 자격 증명 만들기';

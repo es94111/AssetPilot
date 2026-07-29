@@ -7516,8 +7516,20 @@ abstract class AppLocalizations {
   /// Web path: settings.mcp.description
   ///
   /// In zh_Hant_TW, this message translates to:
-  /// **'建立個人化存取權杖，讓 ChatGPT、Claude 等支援 MCP 的 AI 工具以唯讀方式查詢您的財務資料。'**
+  /// **'透過 OAuth 連接支援 MCP 的 AI 工具，或為需要手動憑證的 client 建立個人化存取權杖。'**
   String get settingsMcpDescription;
+
+  /// Web path: settings.mcp.oauthTitle
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'使用 OAuth 連線'**
+  String get settingsMcpOauthTitle;
+
+  /// Web path: settings.mcp.oauthDescription
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'在支援 MCP OAuth 的 AI 工具中輸入下方連線位址，AssetPilot 會開啟安全的登入與授權頁，不需手動建立權杖。'**
+  String get settingsMcpOauthDescription;
 
   /// Web path: settings.mcp.createNew
   ///

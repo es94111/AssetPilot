@@ -4372,7 +4372,14 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get settingsMcpDescription =>
-      'Создайте персональный токен доступа, чтобы ИИ-инструменты с поддержкой MCP, такие как ChatGPT или Claude, могли запрашивать ваши финансовые данные только для чтения.';
+      'Подключайте ИИ-инструменты с поддержкой MCP через OAuth или создайте персональный токен для клиентов с ручным вводом учётных данных.';
+
+  @override
+  String get settingsMcpOauthTitle => 'Подключить через OAuth';
+
+  @override
+  String get settingsMcpOauthDescription =>
+      'Введите URL подключения в инструменте с поддержкой MCP OAuth. AssetPilot откроет безопасную страницу входа и согласия; ручной токен не требуется.';
 
   @override
   String get settingsMcpCreateNew => 'Создать новые учётные данные';

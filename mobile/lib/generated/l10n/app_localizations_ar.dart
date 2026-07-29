@@ -4300,7 +4300,14 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get settingsMcpDescription =>
-      'أنشئ رمز وصول شخصي حتى تتمكن أدوات الذكاء الاصطناعي المتوافقة مع MCP مثل ChatGPT أو Claude من الاستعلام عن بياناتك المالية للقراءة فقط.';
+      'اربط أدوات الذكاء الاصطناعي المتوافقة مع MCP عبر OAuth، أو أنشئ رمز وصول شخصياً للعملاء الذين يتطلبون بيانات اعتماد يدوية.';
+
+  @override
+  String get settingsMcpOauthTitle => 'الاتصال عبر OAuth';
+
+  @override
+  String get settingsMcpOauthDescription =>
+      'أدخل عنوان الاتصال أدناه في أداة تدعم MCP OAuth. سيفتح AssetPilot صفحة آمنة لتسجيل الدخول والموافقة، ولا حاجة إلى رمز يدوي.';
 
   @override
   String get settingsMcpCreateNew => 'إنشاء بيانات اعتماد جديدة';

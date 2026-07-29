@@ -4119,7 +4119,14 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get settingsMcpDescription =>
-      '建立個人化存取權杖，讓 ChatGPT、Claude 等支援 MCP 的 AI 工具以唯讀方式查詢您的財務資料。';
+      '透過 OAuth 連接支援 MCP 的 AI 工具，或為需要手動憑證的 client 建立個人化存取權杖。';
+
+  @override
+  String get settingsMcpOauthTitle => '使用 OAuth 連線';
+
+  @override
+  String get settingsMcpOauthDescription =>
+      '在支援 MCP OAuth 的 AI 工具中輸入下方連線位址，AssetPilot 會開啟安全的登入與授權頁，不需手動建立權杖。';
 
   @override
   String get settingsMcpCreateNew => '建立新憑證';
@@ -8338,7 +8345,14 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
 
   @override
   String get settingsMcpDescription =>
-      '创建个人访问令牌，让 ChatGPT、Claude 等支持 MCP 的 AI 工具以只读方式查询您的财务数据。';
+      '通过 OAuth 连接支持 MCP 的 AI 工具，或为需要手动凭证的客户端创建个人访问令牌。';
+
+  @override
+  String get settingsMcpOauthTitle => '使用 OAuth 连接';
+
+  @override
+  String get settingsMcpOauthDescription =>
+      '在支持 MCP OAuth 的 AI 工具中输入下方连接地址，AssetPilot 会打开安全的登录和授权页面，无需手动创建令牌。';
 
   @override
   String get settingsMcpCreateNew => '创建新凭证';
@@ -12552,7 +12566,14 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
 
   @override
   String get settingsMcpDescription =>
-      '建立個人化存取權杖，讓 ChatGPT、Claude 等支援 MCP 的 AI 工具以唯讀方式查詢您的財務資料。';
+      '透過 OAuth 連接支援 MCP 的 AI 工具，或為需要手動憑證的 client 建立個人化存取權杖。';
+
+  @override
+  String get settingsMcpOauthTitle => '使用 OAuth 連線';
+
+  @override
+  String get settingsMcpOauthDescription =>
+      '在支援 MCP OAuth 的 AI 工具中輸入下方連線位址，AssetPilot 會開啟安全的登入與授權頁，不需手動建立權杖。';
 
   @override
   String get settingsMcpCreateNew => '建立新憑證';

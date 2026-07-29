@@ -18,6 +18,7 @@ const PUBLIC_PATHS = new Set([
   '/api/line/webhook',
   '/api/config',
   '/api/i18n/locale',
+  '/api/mcp',
 ]);
 
 // passkey 端點前綴

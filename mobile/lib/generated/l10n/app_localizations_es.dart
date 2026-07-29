@@ -4393,4 +4393,113 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get dashboardScenarioDisclaimer =>
       'Escenario simple: ajuste mensual × meses. Excluye intereses, rentabilidad, inflación e impuestos y no garantiza resultados futuros.';
+
+  @override
+  String get navMcp => 'Conexión MCP';
+
+  @override
+  String get settingsMcpTitle => 'Configuración de conexión MCP';
+
+  @override
+  String get settingsMcpDescription =>
+      'Crea un token de acceso personal para que herramientas de IA compatibles con MCP, como ChatGPT o Claude, puedan consultar tus datos financieros en modo de solo lectura.';
+
+  @override
+  String get settingsMcpCreateNew => 'Crear nueva credencial';
+
+  @override
+  String get settingsMcpNameLabel => 'Nombre';
+
+  @override
+  String get settingsMcpNamePlaceholder => 'p. ej. Mi ChatGPT';
+
+  @override
+  String get settingsMcpExpiresAtLabel => 'Fecha de caducidad (opcional)';
+
+  @override
+  String get settingsMcpCreateButton => 'Crear credencial';
+
+  @override
+  String get settingsMcpCreating => 'Creando…';
+
+  @override
+  String get settingsMcpCreateFailed => 'Error al crear la credencial';
+
+  @override
+  String get settingsMcpNameRequired => 'El nombre es obligatorio';
+
+  @override
+  String get settingsMcpNameTooLong =>
+      'El nombre no puede superar los 100 caracteres';
+
+  @override
+  String get settingsMcpListTitle => 'Mis credenciales MCP';
+
+  @override
+  String get settingsMcpRefresh => 'Actualizar';
+
+  @override
+  String get settingsMcpNoCredentials => 'Aún no hay credenciales';
+
+  @override
+  String get settingsMcpLoadFailed => 'Error al cargar las credenciales';
+
+  @override
+  String get settingsMcpColName => 'Nombre';
+
+  @override
+  String get settingsMcpColCreatedAt => 'Creado';
+
+  @override
+  String get settingsMcpColLastUsedAt => 'Último uso';
+
+  @override
+  String get settingsMcpColStatus => 'Estado';
+
+  @override
+  String get settingsMcpColActions => 'Acciones';
+
+  @override
+  String get settingsMcpNeverUsed => 'Nunca usado';
+
+  @override
+  String get settingsMcpStatusActive => 'Activo';
+
+  @override
+  String get settingsMcpStatusExpired => 'Caducado';
+
+  @override
+  String get settingsMcpStatusRevoked => 'Revocado';
+
+  @override
+  String get settingsMcpRevokeButton => 'Revocar';
+
+  @override
+  String get settingsMcpRevokeConfirm =>
+      '¿Revocar esta credencial? Todas las consultas que la usen serán rechazadas de inmediato.';
+
+  @override
+  String get settingsMcpRevokeFailed => 'Error al revocar la credencial';
+
+  @override
+  String get settingsMcpTokenModalTitle => 'Token de acceso MCP';
+
+  @override
+  String get settingsMcpTokenWarning =>
+      'Este token solo se muestra una vez. Cópialo y guárdalo de forma segura ahora; no podrás verlo de nuevo después de cerrar.';
+
+  @override
+  String get settingsMcpTokenLabel => 'Token de acceso';
+
+  @override
+  String get settingsMcpConnectionUrlLabel => 'URL de conexión MCP';
+
+  @override
+  String get settingsMcpCopyButton => 'Copiar';
+
+  @override
+  String get settingsMcpCopied => '¡Copiado!';
+
+  @override
+  String get settingsMcpCloseConfirm => 'Ya lo copié, cerrar';
 }

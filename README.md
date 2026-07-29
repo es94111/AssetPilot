@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-4.95.2-blue" alt="version">
+  <img src="https://img.shields.io/badge/version-4.96.0-blue" alt="version">
   <img src="https://img.shields.io/badge/node-%3E%3D24-brightgreen" alt="node">
   <img src="https://img.shields.io/badge/next.js-16.x-000000" alt="next.js">
   <img src="https://img.shields.io/badge/openapi-3.2.0-6BA539" alt="openapi">
@@ -119,6 +119,12 @@
 - **交易照片附件**：新增交易時可附上照片，並選擇存放於 Server 本機或 S3 相容物件儲存；附件取用一律走登入授權 API
 - **路由稽核模式**（v4.29.0）：security（預設）/ extended（含 401 session 失效）/ minimal（路由稽核全部關閉）
 - **API 使用與授權頁**：動態列出所有外部 API 來源、配額、合規授權字樣（IPinfo `IP address data is powered by IPinfo`）
+
+### AI 助理整合（v4.96.0）
+
+- **MCP 連線**：使用者可在「設定 → MCP 連線」自行建立個人化連線金鑰，讓 ChatGPT、Claude 等支援 Model Context Protocol 標準的 AI 助理以自然語言唯讀查詢自己的交易、帳戶、預算、股票持股與損益等財務資料
+- **憑證自助管理**：可自訂名稱、選填到期時間，隨時檢視啟用 / 過期 / 已撤銷狀態並一鍵撤銷，撤銷後立即失效
+- **查詢稽核**：每次 AI 助理查詢皆記錄於既有操作稽核日誌，含時間與憑證名稱，不含實際查得的金額或明細
 
 ---
 

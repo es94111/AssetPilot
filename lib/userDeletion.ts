@@ -33,6 +33,8 @@ const USER_OWNED_TABLES = [
   'user_photo_keys',
   // 稽核
   'login_audit_logs', 'data_operation_audit_log',
+  // MCP 存取憑證
+  'mcp_credentials',
 ];
 
 function normalizeEmail(email: string | number | null | undefined): string {

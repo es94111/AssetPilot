@@ -4291,4 +4291,112 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get dashboardScenarioDisclaimer =>
       'سيناريو بسيط: التعديل الشهري × عدد الأشهر. لا يشمل الفائدة أو عوائد السوق أو التضخم أو الضرائب، ولا يضمن نتيجة مستقبلية.';
+
+  @override
+  String get navMcp => 'اتصال MCP';
+
+  @override
+  String get settingsMcpTitle => 'إعدادات اتصال MCP';
+
+  @override
+  String get settingsMcpDescription =>
+      'أنشئ رمز وصول شخصي حتى تتمكن أدوات الذكاء الاصطناعي المتوافقة مع MCP مثل ChatGPT أو Claude من الاستعلام عن بياناتك المالية للقراءة فقط.';
+
+  @override
+  String get settingsMcpCreateNew => 'إنشاء بيانات اعتماد جديدة';
+
+  @override
+  String get settingsMcpNameLabel => 'الاسم';
+
+  @override
+  String get settingsMcpNamePlaceholder => 'مثال: ChatGPT الخاص بي';
+
+  @override
+  String get settingsMcpExpiresAtLabel => 'تاريخ الانتهاء (اختياري)';
+
+  @override
+  String get settingsMcpCreateButton => 'إنشاء بيانات الاعتماد';
+
+  @override
+  String get settingsMcpCreating => 'جارٍ الإنشاء…';
+
+  @override
+  String get settingsMcpCreateFailed => 'فشل إنشاء بيانات الاعتماد';
+
+  @override
+  String get settingsMcpNameRequired => 'الاسم مطلوب';
+
+  @override
+  String get settingsMcpNameTooLong => 'لا يمكن أن يتجاوز الاسم 100 حرف';
+
+  @override
+  String get settingsMcpListTitle => 'بيانات اعتماد MCP الخاصة بي';
+
+  @override
+  String get settingsMcpRefresh => 'تحديث';
+
+  @override
+  String get settingsMcpNoCredentials => 'لا توجد بيانات اعتماد بعد';
+
+  @override
+  String get settingsMcpLoadFailed => 'فشل تحميل بيانات الاعتماد';
+
+  @override
+  String get settingsMcpColName => 'الاسم';
+
+  @override
+  String get settingsMcpColCreatedAt => 'تاريخ الإنشاء';
+
+  @override
+  String get settingsMcpColLastUsedAt => 'آخر استخدام';
+
+  @override
+  String get settingsMcpColStatus => 'الحالة';
+
+  @override
+  String get settingsMcpColActions => 'الإجراءات';
+
+  @override
+  String get settingsMcpNeverUsed => 'لم يُستخدم بعد';
+
+  @override
+  String get settingsMcpStatusActive => 'نشط';
+
+  @override
+  String get settingsMcpStatusExpired => 'منتهي الصلاحية';
+
+  @override
+  String get settingsMcpStatusRevoked => 'ملغى';
+
+  @override
+  String get settingsMcpRevokeButton => 'إلغاء';
+
+  @override
+  String get settingsMcpRevokeConfirm =>
+      'هل تريد إلغاء بيانات الاعتماد هذه؟ سيتم رفض جميع الاستعلامات التي تستخدمها فورًا.';
+
+  @override
+  String get settingsMcpRevokeFailed => 'فشل إلغاء بيانات الاعتماد';
+
+  @override
+  String get settingsMcpTokenModalTitle => 'رمز وصول MCP';
+
+  @override
+  String get settingsMcpTokenWarning =>
+      'يظهر هذا الرمز مرة واحدة فقط. انسخه واحفظه بأمان الآن؛ لن تتمكن من عرضه مرة أخرى بعد الإغلاق.';
+
+  @override
+  String get settingsMcpTokenLabel => 'رمز الوصول';
+
+  @override
+  String get settingsMcpConnectionUrlLabel => 'عنوان اتصال MCP';
+
+  @override
+  String get settingsMcpCopyButton => 'نسخ';
+
+  @override
+  String get settingsMcpCopied => 'تم النسخ!';
+
+  @override
+  String get settingsMcpCloseConfirm => 'لقد نسخته، إغلاق';
 }

@@ -1,4 +1,5 @@
 import { getDB, queryAll, queryOne, saveDB } from './db';
+import { calcFifoLots } from './moneyDecimal';
 
 export interface StockSettings {
   feeRate: number;
@@ -113,6 +114,89 @@ export function makeStockTxHash(date: string, symbol: string, type: string, shar
 export function makeDividendHash(date: string, symbol: string, cashDividend: number, stockDividend: number): string {
   const HASH_SEP = '\x01';
   return [date || '', symbol || '', String(cashDividend || ''), String(stockDividend || '')].join(HASH_SEP);
+}
+
+export interface StockRealizedPlOptions {
+  dateFrom?: string;
+  dateTo?: string;
+  stockId?: string;
+}
+
+export interface StockRealizedPlEntry {
+  transactionId: string;
+  sellDate: string;
+  stockId: string;
+  symbol: string;
+  name: string;
+  shares: number;
+  sellPrice: number;
+  costPrice: number;
+  feeAndTax: number;
+  sellRevenue: number;
+  totalCost: number;
+  realizedPL: number;
+  returnRate: number;
+}
+
+export interface StockRealizedPlSummary {
+  totalRealizedPL: number;
+  overallReturnRate: number | null;
+  ytdRealizedPL: number;
+  count: number;
+}
+
+export interface StockRealizedPlResult {
+  entries: StockRealizedPlEntry[];
+  summary: StockRealizedPlSummary;
+}
+
+// 抽取自 app/api/stock-realized-pl/route.ts（無行為變更：不帶篩選參數時輸出與抽取前完全一致）。
+// dateFrom/dateTo/stockId 為新增的篩選功能，套用於 FIFO 運算後的賣出明細，不影響 FIFO 成本計算本身。
+export function getStockRealizedPl(userId: string, options: StockRealizedPlOptions = {}): StockRealizedPlResult {
+  const { dateFrom, dateTo, stockId } = options;
+  const stocks = stockId
+    ? queryAll('SELECT * FROM stocks WHERE user_id = ? AND id = ?', [userId, stockId])
+    : queryAll('SELECT * FROM stocks WHERE user_id = ?', [userId]);
+  const entries: StockRealizedPlEntry[] = [];
+
+  stocks.forEach((s) => {
+    const txs = queryAll(
+      'SELECT * FROM stock_transactions WHERE stock_id = ? AND user_id = ? ORDER BY date, created_at',
+      [s.id, userId]
+    );
+    const fifo = calcFifoLots(txs);
+    fifo.sellEntries.forEach((entry) => {
+      const t = entry.tx as Record<string, unknown>;
+      entries.push({
+        transactionId: String(t.id), sellDate: String(t.date), stockId: String(s.id), symbol: String(s.symbol || ''), name: String(s.name || ''),
+        shares: Number(t.shares), sellPrice: Number(t.price),
+        costPrice: Math.round(entry.costPerShare.toNumber() * 100) / 100,
+        feeAndTax: Math.round(Number(t.fee || 0) + Number(t.tax || 0)),
+        sellRevenue: Math.round(entry.sellRevenue.toNumber()),
+        totalCost: Math.round(entry.totalCost.toNumber()),
+        realizedPL: Math.round(entry.realizedPL.toNumber()),
+        returnRate: Math.round(entry.returnRate.toNumber() * 100) / 100,
+      });
+    });
+  });
+
+  entries.sort((a, b) => b.sellDate.localeCompare(a.sellDate));
+  const filtered = entries.filter((e) => {
+    if (dateFrom && e.sellDate < dateFrom) return false;
+    if (dateTo && e.sellDate > dateTo) return false;
+    return true;
+  });
+
+  const totalRealizedPL = filtered.reduce((s, e) => s + e.realizedPL, 0);
+  const totalCostSum = filtered.reduce((s, e) => s + e.totalCost, 0);
+  const overallReturnRate = totalCostSum > 0 ? Math.round(totalRealizedPL / totalCostSum * 10000) / 100 : null;
+  const thisYear = String(new Date().getFullYear());
+  const ytdRealizedPL = filtered.filter((e) => e.sellDate.startsWith(thisYear)).reduce((s, e) => s + e.realizedPL, 0);
+
+  return {
+    entries: filtered,
+    summary: { totalRealizedPL, overallReturnRate, ytdRealizedPL, count: filtered.length },
+  };
 }
 
 export function getSharesAtDate(userId: string, stockId: string, date: string): number {

@@ -6624,5 +6624,180 @@
   "@dashboardScenarioDisclaimer": {
     "description": "Web path: dashboard.scenario.disclaimer",
     "x-webPath": "dashboard.scenario.disclaimer"
+  },
+  "navMcp": "اتصال MCP",
+  "@navMcp": {
+    "description": "Web path: nav.mcp",
+    "x-webPath": "nav.mcp"
+  },
+  "settingsMcpTitle": "إعدادات اتصال MCP",
+  "@settingsMcpTitle": {
+    "description": "Web path: settings.mcp.title",
+    "x-webPath": "settings.mcp.title"
+  },
+  "settingsMcpDescription": "أنشئ رمز وصول شخصي حتى تتمكن أدوات الذكاء الاصطناعي المتوافقة مع MCP مثل ChatGPT أو Claude من الاستعلام عن بياناتك المالية للقراءة فقط.",
+  "@settingsMcpDescription": {
+    "description": "Web path: settings.mcp.description",
+    "x-webPath": "settings.mcp.description"
+  },
+  "settingsMcpCreateNew": "إنشاء بيانات اعتماد جديدة",
+  "@settingsMcpCreateNew": {
+    "description": "Web path: settings.mcp.createNew",
+    "x-webPath": "settings.mcp.createNew"
+  },
+  "settingsMcpNameLabel": "الاسم",
+  "@settingsMcpNameLabel": {
+    "description": "Web path: settings.mcp.nameLabel",
+    "x-webPath": "settings.mcp.nameLabel"
+  },
+  "settingsMcpNamePlaceholder": "مثال: ChatGPT الخاص بي",
+  "@settingsMcpNamePlaceholder": {
+    "description": "Web path: settings.mcp.namePlaceholder",
+    "x-webPath": "settings.mcp.namePlaceholder"
+  },
+  "settingsMcpExpiresAtLabel": "تاريخ الانتهاء (اختياري)",
+  "@settingsMcpExpiresAtLabel": {
+    "description": "Web path: settings.mcp.expiresAtLabel",
+    "x-webPath": "settings.mcp.expiresAtLabel"
+  },
+  "settingsMcpCreateButton": "إنشاء بيانات الاعتماد",
+  "@settingsMcpCreateButton": {
+    "description": "Web path: settings.mcp.createButton",
+    "x-webPath": "settings.mcp.createButton"
+  },
+  "settingsMcpCreating": "جارٍ الإنشاء…",
+  "@settingsMcpCreating": {
+    "description": "Web path: settings.mcp.creating",
+    "x-webPath": "settings.mcp.creating"
+  },
+  "settingsMcpCreateFailed": "فشل إنشاء بيانات الاعتماد",
+  "@settingsMcpCreateFailed": {
+    "description": "Web path: settings.mcp.createFailed",
+    "x-webPath": "settings.mcp.createFailed"
+  },
+  "settingsMcpNameRequired": "الاسم مطلوب",
+  "@settingsMcpNameRequired": {
+    "description": "Web path: settings.mcp.nameRequired",
+    "x-webPath": "settings.mcp.nameRequired"
+  },
+  "settingsMcpNameTooLong": "لا يمكن أن يتجاوز الاسم 100 حرف",
+  "@settingsMcpNameTooLong": {
+    "description": "Web path: settings.mcp.nameTooLong",
+    "x-webPath": "settings.mcp.nameTooLong"
+  },
+  "settingsMcpListTitle": "بيانات اعتماد MCP الخاصة بي",
+  "@settingsMcpListTitle": {
+    "description": "Web path: settings.mcp.listTitle",
+    "x-webPath": "settings.mcp.listTitle"
+  },
+  "settingsMcpRefresh": "تحديث",
+  "@settingsMcpRefresh": {
+    "description": "Web path: settings.mcp.refresh",
+    "x-webPath": "settings.mcp.refresh"
+  },
+  "settingsMcpNoCredentials": "لا توجد بيانات اعتماد بعد",
+  "@settingsMcpNoCredentials": {
+    "description": "Web path: settings.mcp.noCredentials",
+    "x-webPath": "settings.mcp.noCredentials"
+  },
+  "settingsMcpLoadFailed": "فشل تحميل بيانات الاعتماد",
+  "@settingsMcpLoadFailed": {
+    "description": "Web path: settings.mcp.loadFailed",
+    "x-webPath": "settings.mcp.loadFailed"
+  },
+  "settingsMcpColName": "الاسم",
+  "@settingsMcpColName": {
+    "description": "Web path: settings.mcp.colName",
+    "x-webPath": "settings.mcp.colName"
+  },
+  "settingsMcpColCreatedAt": "تاريخ الإنشاء",
+  "@settingsMcpColCreatedAt": {
+    "description": "Web path: settings.mcp.colCreatedAt",
+    "x-webPath": "settings.mcp.colCreatedAt"
+  },
+  "settingsMcpColLastUsedAt": "آخر استخدام",
+  "@settingsMcpColLastUsedAt": {
+    "description": "Web path: settings.mcp.colLastUsedAt",
+    "x-webPath": "settings.mcp.colLastUsedAt"
+  },
+  "settingsMcpColStatus": "الحالة",
+  "@settingsMcpColStatus": {
+    "description": "Web path: settings.mcp.colStatus",
+    "x-webPath": "settings.mcp.colStatus"
+  },
+  "settingsMcpColActions": "الإجراءات",
+  "@settingsMcpColActions": {
+    "description": "Web path: settings.mcp.colActions",
+    "x-webPath": "settings.mcp.colActions"
+  },
+  "settingsMcpNeverUsed": "لم يُستخدم بعد",
+  "@settingsMcpNeverUsed": {
+    "description": "Web path: settings.mcp.neverUsed",
+    "x-webPath": "settings.mcp.neverUsed"
+  },
+  "settingsMcpStatusActive": "نشط",
+  "@settingsMcpStatusActive": {
+    "description": "Web path: settings.mcp.status.active",
+    "x-webPath": "settings.mcp.status.active"
+  },
+  "settingsMcpStatusExpired": "منتهي الصلاحية",
+  "@settingsMcpStatusExpired": {
+    "description": "Web path: settings.mcp.status.expired",
+    "x-webPath": "settings.mcp.status.expired"
+  },
+  "settingsMcpStatusRevoked": "ملغى",
+  "@settingsMcpStatusRevoked": {
+    "description": "Web path: settings.mcp.status.revoked",
+    "x-webPath": "settings.mcp.status.revoked"
+  },
+  "settingsMcpRevokeButton": "إلغاء",
+  "@settingsMcpRevokeButton": {
+    "description": "Web path: settings.mcp.revokeButton",
+    "x-webPath": "settings.mcp.revokeButton"
+  },
+  "settingsMcpRevokeConfirm": "هل تريد إلغاء بيانات الاعتماد هذه؟ سيتم رفض جميع الاستعلامات التي تستخدمها فورًا.",
+  "@settingsMcpRevokeConfirm": {
+    "description": "Web path: settings.mcp.revokeConfirm",
+    "x-webPath": "settings.mcp.revokeConfirm"
+  },
+  "settingsMcpRevokeFailed": "فشل إلغاء بيانات الاعتماد",
+  "@settingsMcpRevokeFailed": {
+    "description": "Web path: settings.mcp.revokeFailed",
+    "x-webPath": "settings.mcp.revokeFailed"
+  },
+  "settingsMcpTokenModalTitle": "رمز وصول MCP",
+  "@settingsMcpTokenModalTitle": {
+    "description": "Web path: settings.mcp.tokenModalTitle",
+    "x-webPath": "settings.mcp.tokenModalTitle"
+  },
+  "settingsMcpTokenWarning": "يظهر هذا الرمز مرة واحدة فقط. انسخه واحفظه بأمان الآن؛ لن تتمكن من عرضه مرة أخرى بعد الإغلاق.",
+  "@settingsMcpTokenWarning": {
+    "description": "Web path: settings.mcp.tokenWarning",
+    "x-webPath": "settings.mcp.tokenWarning"
+  },
+  "settingsMcpTokenLabel": "رمز الوصول",
+  "@settingsMcpTokenLabel": {
+    "description": "Web path: settings.mcp.tokenLabel",
+    "x-webPath": "settings.mcp.tokenLabel"
+  },
+  "settingsMcpConnectionUrlLabel": "عنوان اتصال MCP",
+  "@settingsMcpConnectionUrlLabel": {
+    "description": "Web path: settings.mcp.connectionUrlLabel",
+    "x-webPath": "settings.mcp.connectionUrlLabel"
+  },
+  "settingsMcpCopyButton": "نسخ",
+  "@settingsMcpCopyButton": {
+    "description": "Web path: settings.mcp.copyButton",
+    "x-webPath": "settings.mcp.copyButton"
+  },
+  "settingsMcpCopied": "تم النسخ!",
+  "@settingsMcpCopied": {
+    "description": "Web path: settings.mcp.copied",
+    "x-webPath": "settings.mcp.copied"
+  },
+  "settingsMcpCloseConfirm": "لقد نسخته، إغلاق",
+  "@settingsMcpCloseConfirm": {
+    "description": "Web path: settings.mcp.closeConfirm",
+    "x-webPath": "settings.mcp.closeConfirm"
   }
 }

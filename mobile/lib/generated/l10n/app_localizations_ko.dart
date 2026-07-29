@@ -4175,4 +4175,112 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get dashboardScenarioDisclaimer =>
       '단순 시나리오: 월별 조정액 × 개월 수. 이자, 시장 수익률, 물가상승률, 세금은 제외하며 미래 결과를 보장하지 않습니다.';
+
+  @override
+  String get navMcp => 'MCP 연결';
+
+  @override
+  String get settingsMcpTitle => 'MCP 연결 설정';
+
+  @override
+  String get settingsMcpDescription =>
+      'ChatGPT, Claude 등 MCP를 지원하는 AI 도구가 회원님의 재무 데이터를 읽기 전용으로 조회할 수 있도록 개인 액세스 토큰을 생성하세요.';
+
+  @override
+  String get settingsMcpCreateNew => '새 자격 증명 만들기';
+
+  @override
+  String get settingsMcpNameLabel => '이름';
+
+  @override
+  String get settingsMcpNamePlaceholder => '예: 내 ChatGPT';
+
+  @override
+  String get settingsMcpExpiresAtLabel => '만료 시간(선택 사항)';
+
+  @override
+  String get settingsMcpCreateButton => '자격 증명 생성';
+
+  @override
+  String get settingsMcpCreating => '생성 중…';
+
+  @override
+  String get settingsMcpCreateFailed => '자격 증명 생성 실패';
+
+  @override
+  String get settingsMcpNameRequired => '이름을 입력하세요';
+
+  @override
+  String get settingsMcpNameTooLong => '이름은 100자를 초과할 수 없습니다';
+
+  @override
+  String get settingsMcpListTitle => '내 MCP 자격 증명';
+
+  @override
+  String get settingsMcpRefresh => '새로고침';
+
+  @override
+  String get settingsMcpNoCredentials => '아직 자격 증명이 없습니다';
+
+  @override
+  String get settingsMcpLoadFailed => '자격 증명 목록을 불러오지 못했습니다';
+
+  @override
+  String get settingsMcpColName => '이름';
+
+  @override
+  String get settingsMcpColCreatedAt => '생성일';
+
+  @override
+  String get settingsMcpColLastUsedAt => '마지막 사용';
+
+  @override
+  String get settingsMcpColStatus => '상태';
+
+  @override
+  String get settingsMcpColActions => '작업';
+
+  @override
+  String get settingsMcpNeverUsed => '사용한 적 없음';
+
+  @override
+  String get settingsMcpStatusActive => '활성';
+
+  @override
+  String get settingsMcpStatusExpired => '만료됨';
+
+  @override
+  String get settingsMcpStatusRevoked => '취소됨';
+
+  @override
+  String get settingsMcpRevokeButton => '취소';
+
+  @override
+  String get settingsMcpRevokeConfirm =>
+      '이 자격 증명을 취소하시겠습니까? 이를 사용하는 모든 조회 요청이 즉시 거부됩니다.';
+
+  @override
+  String get settingsMcpRevokeFailed => '자격 증명 취소 실패';
+
+  @override
+  String get settingsMcpTokenModalTitle => 'MCP 액세스 토큰';
+
+  @override
+  String get settingsMcpTokenWarning =>
+      '이 토큰은 한 번만 표시됩니다. 지금 복사하여 안전하게 보관하세요. 닫은 후에는 다시 확인할 수 없습니다.';
+
+  @override
+  String get settingsMcpTokenLabel => '액세스 토큰';
+
+  @override
+  String get settingsMcpConnectionUrlLabel => 'MCP 연결 URL';
+
+  @override
+  String get settingsMcpCopyButton => '복사';
+
+  @override
+  String get settingsMcpCopied => '복사됨!';
+
+  @override
+  String get settingsMcpCloseConfirm => '복사했습니다, 닫기';
 }

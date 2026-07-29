@@ -4304,4 +4304,112 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get dashboardScenarioDisclaimer =>
       'सरल परिदृश्य: मासिक बदलाव × महीने। इसमें ब्याज, बाजार रिटर्न, मुद्रास्फीति और कर शामिल नहीं हैं तथा भविष्य का परिणाम सुनिश्चित नहीं है।';
+
+  @override
+  String get navMcp => 'MCP कनेक्शन';
+
+  @override
+  String get settingsMcpTitle => 'MCP कनेक्शन सेटिंग्स';
+
+  @override
+  String get settingsMcpDescription =>
+      'एक व्यक्तिगत एक्सेस टोकन बनाएं ताकि ChatGPT, Claude जैसे MCP-संगत AI टूल आपके वित्तीय डेटा को केवल पढ़ने के लिए क्वेरी कर सकें।';
+
+  @override
+  String get settingsMcpCreateNew => 'नई क्रेडेंशियल बनाएं';
+
+  @override
+  String get settingsMcpNameLabel => 'नाम';
+
+  @override
+  String get settingsMcpNamePlaceholder => 'उदा. मेरा ChatGPT';
+
+  @override
+  String get settingsMcpExpiresAtLabel => 'समाप्ति समय (वैकल्पिक)';
+
+  @override
+  String get settingsMcpCreateButton => 'क्रेडेंशियल बनाएं';
+
+  @override
+  String get settingsMcpCreating => 'बनाया जा रहा है…';
+
+  @override
+  String get settingsMcpCreateFailed => 'क्रेडेंशियल बनाने में विफल';
+
+  @override
+  String get settingsMcpNameRequired => 'नाम आवश्यक है';
+
+  @override
+  String get settingsMcpNameTooLong => 'नाम 100 वर्णों से अधिक नहीं हो सकता';
+
+  @override
+  String get settingsMcpListTitle => 'मेरी MCP क्रेडेंशियल';
+
+  @override
+  String get settingsMcpRefresh => 'रीफ़्रेश करें';
+
+  @override
+  String get settingsMcpNoCredentials => 'अभी तक कोई क्रेडेंशियल नहीं';
+
+  @override
+  String get settingsMcpLoadFailed => 'क्रेडेंशियल लोड करने में विफल';
+
+  @override
+  String get settingsMcpColName => 'नाम';
+
+  @override
+  String get settingsMcpColCreatedAt => 'बनाया गया';
+
+  @override
+  String get settingsMcpColLastUsedAt => 'अंतिम उपयोग';
+
+  @override
+  String get settingsMcpColStatus => 'स्थिति';
+
+  @override
+  String get settingsMcpColActions => 'क्रियाएं';
+
+  @override
+  String get settingsMcpNeverUsed => 'कभी उपयोग नहीं किया';
+
+  @override
+  String get settingsMcpStatusActive => 'सक्रिय';
+
+  @override
+  String get settingsMcpStatusExpired => 'समाप्त';
+
+  @override
+  String get settingsMcpStatusRevoked => 'निरस्त';
+
+  @override
+  String get settingsMcpRevokeButton => 'निरस्त करें';
+
+  @override
+  String get settingsMcpRevokeConfirm =>
+      'इस क्रेडेंशियल को निरस्त करें? इसका उपयोग करने वाली सभी क्वेरी तुरंत अस्वीकार कर दी जाएंगी।';
+
+  @override
+  String get settingsMcpRevokeFailed => 'क्रेडेंशियल निरस्त करने में विफल';
+
+  @override
+  String get settingsMcpTokenModalTitle => 'MCP एक्सेस टोकन';
+
+  @override
+  String get settingsMcpTokenWarning =>
+      'यह टोकन केवल एक बार दिखाया जाता है, कृपया इसे अभी कॉपी करके सुरक्षित रखें; बंद करने के बाद इसे दोबारा नहीं देखा जा सकता।';
+
+  @override
+  String get settingsMcpTokenLabel => 'एक्सेस टोकन';
+
+  @override
+  String get settingsMcpConnectionUrlLabel => 'MCP कनेक्शन URL';
+
+  @override
+  String get settingsMcpCopyButton => 'कॉपी करें';
+
+  @override
+  String get settingsMcpCopied => 'कॉपी हो गया!';
+
+  @override
+  String get settingsMcpCloseConfirm => 'मैंने कॉपी कर लिया, बंद करें';
 }

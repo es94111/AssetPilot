@@ -4390,4 +4390,113 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get dashboardScenarioDisclaimer =>
       'Scénario simple : ajustement mensuel × nombre de mois. Il exclut intérêts, rendements, inflation et fiscalité, sans garantir de résultat futur.';
+
+  @override
+  String get navMcp => 'Connexion MCP';
+
+  @override
+  String get settingsMcpTitle => 'Paramètres de connexion MCP';
+
+  @override
+  String get settingsMcpDescription =>
+      'Créez un jeton d\'accès personnel pour que les outils d\'IA compatibles MCP comme ChatGPT ou Claude puissent consulter vos données financières en lecture seule.';
+
+  @override
+  String get settingsMcpCreateNew => 'Créer un nouveau jeton';
+
+  @override
+  String get settingsMcpNameLabel => 'Nom';
+
+  @override
+  String get settingsMcpNamePlaceholder => 'ex. Mon ChatGPT';
+
+  @override
+  String get settingsMcpExpiresAtLabel => 'Date d\'expiration (facultatif)';
+
+  @override
+  String get settingsMcpCreateButton => 'Créer le jeton';
+
+  @override
+  String get settingsMcpCreating => 'Création…';
+
+  @override
+  String get settingsMcpCreateFailed => 'Échec de la création du jeton';
+
+  @override
+  String get settingsMcpNameRequired => 'Le nom est requis';
+
+  @override
+  String get settingsMcpNameTooLong =>
+      'Le nom ne peut pas dépasser 100 caractères';
+
+  @override
+  String get settingsMcpListTitle => 'Mes jetons MCP';
+
+  @override
+  String get settingsMcpRefresh => 'Actualiser';
+
+  @override
+  String get settingsMcpNoCredentials => 'Aucun jeton pour le moment';
+
+  @override
+  String get settingsMcpLoadFailed => 'Échec du chargement des jetons';
+
+  @override
+  String get settingsMcpColName => 'Nom';
+
+  @override
+  String get settingsMcpColCreatedAt => 'Créé le';
+
+  @override
+  String get settingsMcpColLastUsedAt => 'Dernière utilisation';
+
+  @override
+  String get settingsMcpColStatus => 'Statut';
+
+  @override
+  String get settingsMcpColActions => 'Actions';
+
+  @override
+  String get settingsMcpNeverUsed => 'Jamais utilisé';
+
+  @override
+  String get settingsMcpStatusActive => 'Actif';
+
+  @override
+  String get settingsMcpStatusExpired => 'Expiré';
+
+  @override
+  String get settingsMcpStatusRevoked => 'Révoqué';
+
+  @override
+  String get settingsMcpRevokeButton => 'Révoquer';
+
+  @override
+  String get settingsMcpRevokeConfirm =>
+      'Révoquer ce jeton ? Toutes les requêtes qui l\'utilisent seront immédiatement rejetées.';
+
+  @override
+  String get settingsMcpRevokeFailed => 'Échec de la révocation du jeton';
+
+  @override
+  String get settingsMcpTokenModalTitle => 'Jeton d\'accès MCP';
+
+  @override
+  String get settingsMcpTokenWarning =>
+      'Ce jeton ne s\'affiche qu\'une seule fois. Copiez-le et conservez-le en sécurité maintenant ; il ne pourra plus être consulté après fermeture.';
+
+  @override
+  String get settingsMcpTokenLabel => 'Jeton d\'accès';
+
+  @override
+  String get settingsMcpConnectionUrlLabel => 'URL de connexion MCP';
+
+  @override
+  String get settingsMcpCopyButton => 'Copier';
+
+  @override
+  String get settingsMcpCopied => 'Copié !';
+
+  @override
+  String get settingsMcpCloseConfirm => 'Je l\'ai copié, fermer';
 }

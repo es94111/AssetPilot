@@ -15,6 +15,8 @@ const AUDIT_METADATA_ALLOWED_KEYS = new Set([
   'target_user_id', 'target_email', 'was_admin', 'is_admin',
   'old_role', 'new_role', 'changed_fields', 'setting', 'cert_type',
   'deleted_count', 'requested_count', 'scope', 'log_id', 'self',
+  // MCP 查詢稽核（見 data-model.md：稽核紀錄擴充）
+  'mcp_credential_id', 'mcp_credential_name',
 ]);
 
 export interface WriteAuditArgs {

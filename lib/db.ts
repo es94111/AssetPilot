@@ -588,5 +588,18 @@ async function _runMigrations(): Promise<void> {
   alterIgnore("ALTER TABLE login_attempt_logs ADD COLUMN device_id TEXT DEFAULT ''");
   alterIgnore("ALTER TABLE login_sessions ADD COLUMN device_id TEXT DEFAULT ''");
 
+  db.run(`CREATE TABLE IF NOT EXISTS mcp_credentials (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    name TEXT NOT NULL,
+    token_hash TEXT NOT NULL,
+    created_at INTEGER NOT NULL,
+    last_used_at INTEGER DEFAULT 0,
+    expires_at INTEGER DEFAULT 0,
+    revoked_at INTEGER DEFAULT 0
+  )`);
+  alterIgnore("CREATE INDEX IF NOT EXISTS idx_mcp_credentials_user ON mcp_credentials(user_id, revoked_at)");
+  alterIgnore("CREATE UNIQUE INDEX IF NOT EXISTS idx_mcp_credentials_hash ON mcp_credentials(token_hash)");
+
   saveDB();
 }

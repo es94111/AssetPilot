@@ -4312,4 +4312,112 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get dashboardScenarioDisclaimer =>
       'Simple scenario: monthly adjustment × months. It excludes interest, market returns, inflation and taxes, and does not guarantee a future result.';
+
+  @override
+  String get navMcp => 'MCP Connection';
+
+  @override
+  String get settingsMcpTitle => 'MCP Connection Settings';
+
+  @override
+  String get settingsMcpDescription =>
+      'Create a personal access token so MCP-compatible AI tools like ChatGPT or Claude can query your financial data read-only.';
+
+  @override
+  String get settingsMcpCreateNew => 'Create New Credential';
+
+  @override
+  String get settingsMcpNameLabel => 'Name';
+
+  @override
+  String get settingsMcpNamePlaceholder => 'e.g. My ChatGPT';
+
+  @override
+  String get settingsMcpExpiresAtLabel => 'Expires At (optional)';
+
+  @override
+  String get settingsMcpCreateButton => 'Create Credential';
+
+  @override
+  String get settingsMcpCreating => 'Creating…';
+
+  @override
+  String get settingsMcpCreateFailed => 'Failed to create credential';
+
+  @override
+  String get settingsMcpNameRequired => 'Name is required';
+
+  @override
+  String get settingsMcpNameTooLong => 'Name cannot exceed 100 characters';
+
+  @override
+  String get settingsMcpListTitle => 'My MCP Credentials';
+
+  @override
+  String get settingsMcpRefresh => 'Refresh';
+
+  @override
+  String get settingsMcpNoCredentials => 'No credentials yet';
+
+  @override
+  String get settingsMcpLoadFailed => 'Failed to load credentials';
+
+  @override
+  String get settingsMcpColName => 'Name';
+
+  @override
+  String get settingsMcpColCreatedAt => 'Created At';
+
+  @override
+  String get settingsMcpColLastUsedAt => 'Last Used';
+
+  @override
+  String get settingsMcpColStatus => 'Status';
+
+  @override
+  String get settingsMcpColActions => 'Actions';
+
+  @override
+  String get settingsMcpNeverUsed => 'Never used';
+
+  @override
+  String get settingsMcpStatusActive => 'Active';
+
+  @override
+  String get settingsMcpStatusExpired => 'Expired';
+
+  @override
+  String get settingsMcpStatusRevoked => 'Revoked';
+
+  @override
+  String get settingsMcpRevokeButton => 'Revoke';
+
+  @override
+  String get settingsMcpRevokeConfirm =>
+      'Revoke this credential? All queries using it will be rejected immediately.';
+
+  @override
+  String get settingsMcpRevokeFailed => 'Failed to revoke credential';
+
+  @override
+  String get settingsMcpTokenModalTitle => 'MCP Access Token';
+
+  @override
+  String get settingsMcpTokenWarning =>
+      'This token is shown only once — copy and store it securely now. It cannot be viewed again after closing.';
+
+  @override
+  String get settingsMcpTokenLabel => 'Access Token';
+
+  @override
+  String get settingsMcpConnectionUrlLabel => 'MCP Connection URL';
+
+  @override
+  String get settingsMcpCopyButton => 'Copy';
+
+  @override
+  String get settingsMcpCopied => 'Copied!';
+
+  @override
+  String get settingsMcpCloseConfirm => 'I\'ve copied it, close';
 }

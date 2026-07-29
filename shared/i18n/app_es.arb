@@ -6624,5 +6624,180 @@
   "@dashboardScenarioDisclaimer": {
     "description": "Web path: dashboard.scenario.disclaimer",
     "x-webPath": "dashboard.scenario.disclaimer"
+  },
+  "navMcp": "Conexión MCP",
+  "@navMcp": {
+    "description": "Web path: nav.mcp",
+    "x-webPath": "nav.mcp"
+  },
+  "settingsMcpTitle": "Configuración de conexión MCP",
+  "@settingsMcpTitle": {
+    "description": "Web path: settings.mcp.title",
+    "x-webPath": "settings.mcp.title"
+  },
+  "settingsMcpDescription": "Crea un token de acceso personal para que herramientas de IA compatibles con MCP, como ChatGPT o Claude, puedan consultar tus datos financieros en modo de solo lectura.",
+  "@settingsMcpDescription": {
+    "description": "Web path: settings.mcp.description",
+    "x-webPath": "settings.mcp.description"
+  },
+  "settingsMcpCreateNew": "Crear nueva credencial",
+  "@settingsMcpCreateNew": {
+    "description": "Web path: settings.mcp.createNew",
+    "x-webPath": "settings.mcp.createNew"
+  },
+  "settingsMcpNameLabel": "Nombre",
+  "@settingsMcpNameLabel": {
+    "description": "Web path: settings.mcp.nameLabel",
+    "x-webPath": "settings.mcp.nameLabel"
+  },
+  "settingsMcpNamePlaceholder": "p. ej. Mi ChatGPT",
+  "@settingsMcpNamePlaceholder": {
+    "description": "Web path: settings.mcp.namePlaceholder",
+    "x-webPath": "settings.mcp.namePlaceholder"
+  },
+  "settingsMcpExpiresAtLabel": "Fecha de caducidad (opcional)",
+  "@settingsMcpExpiresAtLabel": {
+    "description": "Web path: settings.mcp.expiresAtLabel",
+    "x-webPath": "settings.mcp.expiresAtLabel"
+  },
+  "settingsMcpCreateButton": "Crear credencial",
+  "@settingsMcpCreateButton": {
+    "description": "Web path: settings.mcp.createButton",
+    "x-webPath": "settings.mcp.createButton"
+  },
+  "settingsMcpCreating": "Creando…",
+  "@settingsMcpCreating": {
+    "description": "Web path: settings.mcp.creating",
+    "x-webPath": "settings.mcp.creating"
+  },
+  "settingsMcpCreateFailed": "Error al crear la credencial",
+  "@settingsMcpCreateFailed": {
+    "description": "Web path: settings.mcp.createFailed",
+    "x-webPath": "settings.mcp.createFailed"
+  },
+  "settingsMcpNameRequired": "El nombre es obligatorio",
+  "@settingsMcpNameRequired": {
+    "description": "Web path: settings.mcp.nameRequired",
+    "x-webPath": "settings.mcp.nameRequired"
+  },
+  "settingsMcpNameTooLong": "El nombre no puede superar los 100 caracteres",
+  "@settingsMcpNameTooLong": {
+    "description": "Web path: settings.mcp.nameTooLong",
+    "x-webPath": "settings.mcp.nameTooLong"
+  },
+  "settingsMcpListTitle": "Mis credenciales MCP",
+  "@settingsMcpListTitle": {
+    "description": "Web path: settings.mcp.listTitle",
+    "x-webPath": "settings.mcp.listTitle"
+  },
+  "settingsMcpRefresh": "Actualizar",
+  "@settingsMcpRefresh": {
+    "description": "Web path: settings.mcp.refresh",
+    "x-webPath": "settings.mcp.refresh"
+  },
+  "settingsMcpNoCredentials": "Aún no hay credenciales",
+  "@settingsMcpNoCredentials": {
+    "description": "Web path: settings.mcp.noCredentials",
+    "x-webPath": "settings.mcp.noCredentials"
+  },
+  "settingsMcpLoadFailed": "Error al cargar las credenciales",
+  "@settingsMcpLoadFailed": {
+    "description": "Web path: settings.mcp.loadFailed",
+    "x-webPath": "settings.mcp.loadFailed"
+  },
+  "settingsMcpColName": "Nombre",
+  "@settingsMcpColName": {
+    "description": "Web path: settings.mcp.colName",
+    "x-webPath": "settings.mcp.colName"
+  },
+  "settingsMcpColCreatedAt": "Creado",
+  "@settingsMcpColCreatedAt": {
+    "description": "Web path: settings.mcp.colCreatedAt",
+    "x-webPath": "settings.mcp.colCreatedAt"
+  },
+  "settingsMcpColLastUsedAt": "Último uso",
+  "@settingsMcpColLastUsedAt": {
+    "description": "Web path: settings.mcp.colLastUsedAt",
+    "x-webPath": "settings.mcp.colLastUsedAt"
+  },
+  "settingsMcpColStatus": "Estado",
+  "@settingsMcpColStatus": {
+    "description": "Web path: settings.mcp.colStatus",
+    "x-webPath": "settings.mcp.colStatus"
+  },
+  "settingsMcpColActions": "Acciones",
+  "@settingsMcpColActions": {
+    "description": "Web path: settings.mcp.colActions",
+    "x-webPath": "settings.mcp.colActions"
+  },
+  "settingsMcpNeverUsed": "Nunca usado",
+  "@settingsMcpNeverUsed": {
+    "description": "Web path: settings.mcp.neverUsed",
+    "x-webPath": "settings.mcp.neverUsed"
+  },
+  "settingsMcpStatusActive": "Activo",
+  "@settingsMcpStatusActive": {
+    "description": "Web path: settings.mcp.status.active",
+    "x-webPath": "settings.mcp.status.active"
+  },
+  "settingsMcpStatusExpired": "Caducado",
+  "@settingsMcpStatusExpired": {
+    "description": "Web path: settings.mcp.status.expired",
+    "x-webPath": "settings.mcp.status.expired"
+  },
+  "settingsMcpStatusRevoked": "Revocado",
+  "@settingsMcpStatusRevoked": {
+    "description": "Web path: settings.mcp.status.revoked",
+    "x-webPath": "settings.mcp.status.revoked"
+  },
+  "settingsMcpRevokeButton": "Revocar",
+  "@settingsMcpRevokeButton": {
+    "description": "Web path: settings.mcp.revokeButton",
+    "x-webPath": "settings.mcp.revokeButton"
+  },
+  "settingsMcpRevokeConfirm": "¿Revocar esta credencial? Todas las consultas que la usen serán rechazadas de inmediato.",
+  "@settingsMcpRevokeConfirm": {
+    "description": "Web path: settings.mcp.revokeConfirm",
+    "x-webPath": "settings.mcp.revokeConfirm"
+  },
+  "settingsMcpRevokeFailed": "Error al revocar la credencial",
+  "@settingsMcpRevokeFailed": {
+    "description": "Web path: settings.mcp.revokeFailed",
+    "x-webPath": "settings.mcp.revokeFailed"
+  },
+  "settingsMcpTokenModalTitle": "Token de acceso MCP",
+  "@settingsMcpTokenModalTitle": {
+    "description": "Web path: settings.mcp.tokenModalTitle",
+    "x-webPath": "settings.mcp.tokenModalTitle"
+  },
+  "settingsMcpTokenWarning": "Este token solo se muestra una vez. Cópialo y guárdalo de forma segura ahora; no podrás verlo de nuevo después de cerrar.",
+  "@settingsMcpTokenWarning": {
+    "description": "Web path: settings.mcp.tokenWarning",
+    "x-webPath": "settings.mcp.tokenWarning"
+  },
+  "settingsMcpTokenLabel": "Token de acceso",
+  "@settingsMcpTokenLabel": {
+    "description": "Web path: settings.mcp.tokenLabel",
+    "x-webPath": "settings.mcp.tokenLabel"
+  },
+  "settingsMcpConnectionUrlLabel": "URL de conexión MCP",
+  "@settingsMcpConnectionUrlLabel": {
+    "description": "Web path: settings.mcp.connectionUrlLabel",
+    "x-webPath": "settings.mcp.connectionUrlLabel"
+  },
+  "settingsMcpCopyButton": "Copiar",
+  "@settingsMcpCopyButton": {
+    "description": "Web path: settings.mcp.copyButton",
+    "x-webPath": "settings.mcp.copyButton"
+  },
+  "settingsMcpCopied": "¡Copiado!",
+  "@settingsMcpCopied": {
+    "description": "Web path: settings.mcp.copied",
+    "x-webPath": "settings.mcp.copied"
+  },
+  "settingsMcpCloseConfirm": "Ya lo copié, cerrar",
+  "@settingsMcpCloseConfirm": {
+    "description": "Web path: settings.mcp.closeConfirm",
+    "x-webPath": "settings.mcp.closeConfirm"
   }
 }

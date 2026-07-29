@@ -4110,6 +4110,112 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get dashboardScenarioDisclaimer =>
       '簡易情境：每月調整 × 月數。不包含利息、市場報酬、通膨與稅務，也不保證未來結果。';
+
+  @override
+  String get navMcp => 'MCP 連線';
+
+  @override
+  String get settingsMcpTitle => 'MCP 連線設定';
+
+  @override
+  String get settingsMcpDescription =>
+      '建立個人化存取權杖，讓 ChatGPT、Claude 等支援 MCP 的 AI 工具以唯讀方式查詢您的財務資料。';
+
+  @override
+  String get settingsMcpCreateNew => '建立新憑證';
+
+  @override
+  String get settingsMcpNameLabel => '名稱';
+
+  @override
+  String get settingsMcpNamePlaceholder => '例如：我的 ChatGPT';
+
+  @override
+  String get settingsMcpExpiresAtLabel => '到期時間（選填）';
+
+  @override
+  String get settingsMcpCreateButton => '建立憑證';
+
+  @override
+  String get settingsMcpCreating => '建立中…';
+
+  @override
+  String get settingsMcpCreateFailed => '建立憑證失敗';
+
+  @override
+  String get settingsMcpNameRequired => '請輸入名稱';
+
+  @override
+  String get settingsMcpNameTooLong => '名稱不可超過 100 字元';
+
+  @override
+  String get settingsMcpListTitle => '我的 MCP 憑證';
+
+  @override
+  String get settingsMcpRefresh => '重新整理';
+
+  @override
+  String get settingsMcpNoCredentials => '尚未建立任何憑證';
+
+  @override
+  String get settingsMcpLoadFailed => '載入憑證清單失敗';
+
+  @override
+  String get settingsMcpColName => '名稱';
+
+  @override
+  String get settingsMcpColCreatedAt => '建立時間';
+
+  @override
+  String get settingsMcpColLastUsedAt => '最後使用時間';
+
+  @override
+  String get settingsMcpColStatus => '狀態';
+
+  @override
+  String get settingsMcpColActions => '操作';
+
+  @override
+  String get settingsMcpNeverUsed => '尚未使用';
+
+  @override
+  String get settingsMcpStatusActive => '啟用中';
+
+  @override
+  String get settingsMcpStatusExpired => '已過期';
+
+  @override
+  String get settingsMcpStatusRevoked => '已撤銷';
+
+  @override
+  String get settingsMcpRevokeButton => '撤銷';
+
+  @override
+  String get settingsMcpRevokeConfirm => '確定要撤銷這組憑證嗎？撤銷後所有使用此憑證的查詢將立即被拒絕。';
+
+  @override
+  String get settingsMcpRevokeFailed => '撤銷憑證失敗';
+
+  @override
+  String get settingsMcpTokenModalTitle => 'MCP 存取權杖';
+
+  @override
+  String get settingsMcpTokenWarning => '此權杖僅顯示這一次，請立即複製並妥善保存；關閉後將無法再次查看明文。';
+
+  @override
+  String get settingsMcpTokenLabel => '存取權杖';
+
+  @override
+  String get settingsMcpConnectionUrlLabel => 'MCP 連線位址';
+
+  @override
+  String get settingsMcpCopyButton => '複製';
+
+  @override
+  String get settingsMcpCopied => '已複製！';
+
+  @override
+  String get settingsMcpCloseConfirm => '我已複製，關閉視窗';
 }
 
 /// The translations for Chinese, as used in China, using the Han script (`zh_Hans_CN`).
@@ -8223,6 +8329,112 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
   @override
   String get dashboardScenarioDisclaimer =>
       '简单情境：每月调整 × 月数。不包含利息、市场回报、通胀和税务，也不保证未来结果。';
+
+  @override
+  String get navMcp => 'MCP 连接';
+
+  @override
+  String get settingsMcpTitle => 'MCP 连接设置';
+
+  @override
+  String get settingsMcpDescription =>
+      '创建个人访问令牌，让 ChatGPT、Claude 等支持 MCP 的 AI 工具以只读方式查询您的财务数据。';
+
+  @override
+  String get settingsMcpCreateNew => '创建新凭证';
+
+  @override
+  String get settingsMcpNameLabel => '名称';
+
+  @override
+  String get settingsMcpNamePlaceholder => '例如：我的 ChatGPT';
+
+  @override
+  String get settingsMcpExpiresAtLabel => '到期时间（选填）';
+
+  @override
+  String get settingsMcpCreateButton => '创建凭证';
+
+  @override
+  String get settingsMcpCreating => '创建中…';
+
+  @override
+  String get settingsMcpCreateFailed => '创建凭证失败';
+
+  @override
+  String get settingsMcpNameRequired => '请输入名称';
+
+  @override
+  String get settingsMcpNameTooLong => '名称不可超过 100 个字符';
+
+  @override
+  String get settingsMcpListTitle => '我的 MCP 凭证';
+
+  @override
+  String get settingsMcpRefresh => '刷新';
+
+  @override
+  String get settingsMcpNoCredentials => '尚未创建任何凭证';
+
+  @override
+  String get settingsMcpLoadFailed => '加载凭证列表失败';
+
+  @override
+  String get settingsMcpColName => '名称';
+
+  @override
+  String get settingsMcpColCreatedAt => '创建时间';
+
+  @override
+  String get settingsMcpColLastUsedAt => '最后使用时间';
+
+  @override
+  String get settingsMcpColStatus => '状态';
+
+  @override
+  String get settingsMcpColActions => '操作';
+
+  @override
+  String get settingsMcpNeverUsed => '尚未使用';
+
+  @override
+  String get settingsMcpStatusActive => '启用中';
+
+  @override
+  String get settingsMcpStatusExpired => '已过期';
+
+  @override
+  String get settingsMcpStatusRevoked => '已撤销';
+
+  @override
+  String get settingsMcpRevokeButton => '撤销';
+
+  @override
+  String get settingsMcpRevokeConfirm => '确定要撤销此凭证吗？撤销后所有使用此凭证的查询将立即被拒绝。';
+
+  @override
+  String get settingsMcpRevokeFailed => '撤销凭证失败';
+
+  @override
+  String get settingsMcpTokenModalTitle => 'MCP 访问令牌';
+
+  @override
+  String get settingsMcpTokenWarning => '此令牌仅显示这一次，请立即复制并妥善保存；关闭后将无法再次查看明文。';
+
+  @override
+  String get settingsMcpTokenLabel => '访问令牌';
+
+  @override
+  String get settingsMcpConnectionUrlLabel => 'MCP 连接地址';
+
+  @override
+  String get settingsMcpCopyButton => '复制';
+
+  @override
+  String get settingsMcpCopied => '已复制！';
+
+  @override
+  String get settingsMcpCloseConfirm => '我已复制，关闭窗口';
 }
 
 /// The translations for Chinese, as used in Taiwan, using the Han script (`zh_Hant_TW`).
@@ -12331,4 +12543,110 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
   @override
   String get dashboardScenarioDisclaimer =>
       '簡易情境：每月調整 × 月數。不包含利息、市場報酬、通膨與稅務，也不保證未來結果。';
+
+  @override
+  String get navMcp => 'MCP 連線';
+
+  @override
+  String get settingsMcpTitle => 'MCP 連線設定';
+
+  @override
+  String get settingsMcpDescription =>
+      '建立個人化存取權杖，讓 ChatGPT、Claude 等支援 MCP 的 AI 工具以唯讀方式查詢您的財務資料。';
+
+  @override
+  String get settingsMcpCreateNew => '建立新憑證';
+
+  @override
+  String get settingsMcpNameLabel => '名稱';
+
+  @override
+  String get settingsMcpNamePlaceholder => '例如：我的 ChatGPT';
+
+  @override
+  String get settingsMcpExpiresAtLabel => '到期時間（選填）';
+
+  @override
+  String get settingsMcpCreateButton => '建立憑證';
+
+  @override
+  String get settingsMcpCreating => '建立中…';
+
+  @override
+  String get settingsMcpCreateFailed => '建立憑證失敗';
+
+  @override
+  String get settingsMcpNameRequired => '請輸入名稱';
+
+  @override
+  String get settingsMcpNameTooLong => '名稱不可超過 100 字元';
+
+  @override
+  String get settingsMcpListTitle => '我的 MCP 憑證';
+
+  @override
+  String get settingsMcpRefresh => '重新整理';
+
+  @override
+  String get settingsMcpNoCredentials => '尚未建立任何憑證';
+
+  @override
+  String get settingsMcpLoadFailed => '載入憑證清單失敗';
+
+  @override
+  String get settingsMcpColName => '名稱';
+
+  @override
+  String get settingsMcpColCreatedAt => '建立時間';
+
+  @override
+  String get settingsMcpColLastUsedAt => '最後使用時間';
+
+  @override
+  String get settingsMcpColStatus => '狀態';
+
+  @override
+  String get settingsMcpColActions => '操作';
+
+  @override
+  String get settingsMcpNeverUsed => '尚未使用';
+
+  @override
+  String get settingsMcpStatusActive => '啟用中';
+
+  @override
+  String get settingsMcpStatusExpired => '已過期';
+
+  @override
+  String get settingsMcpStatusRevoked => '已撤銷';
+
+  @override
+  String get settingsMcpRevokeButton => '撤銷';
+
+  @override
+  String get settingsMcpRevokeConfirm => '確定要撤銷這組憑證嗎？撤銷後所有使用此憑證的查詢將立即被拒絕。';
+
+  @override
+  String get settingsMcpRevokeFailed => '撤銷憑證失敗';
+
+  @override
+  String get settingsMcpTokenModalTitle => 'MCP 存取權杖';
+
+  @override
+  String get settingsMcpTokenWarning => '此權杖僅顯示這一次，請立即複製並妥善保存；關閉後將無法再次查看明文。';
+
+  @override
+  String get settingsMcpTokenLabel => '存取權杖';
+
+  @override
+  String get settingsMcpConnectionUrlLabel => 'MCP 連線位址';
+
+  @override
+  String get settingsMcpCopyButton => '複製';
+
+  @override
+  String get settingsMcpCopied => '已複製！';
+
+  @override
+  String get settingsMcpCloseConfirm => '我已複製，關閉視窗';
 }

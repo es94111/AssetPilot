@@ -4363,4 +4363,113 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get dashboardScenarioDisclaimer =>
       'Простой сценарий: ежемесячное изменение × месяцы. Без процентов, рыночной доходности, инфляции и налогов; будущий результат не гарантируется.';
+
+  @override
+  String get navMcp => 'Подключение MCP';
+
+  @override
+  String get settingsMcpTitle => 'Настройки подключения MCP';
+
+  @override
+  String get settingsMcpDescription =>
+      'Создайте персональный токен доступа, чтобы ИИ-инструменты с поддержкой MCP, такие как ChatGPT или Claude, могли запрашивать ваши финансовые данные только для чтения.';
+
+  @override
+  String get settingsMcpCreateNew => 'Создать новые учётные данные';
+
+  @override
+  String get settingsMcpNameLabel => 'Название';
+
+  @override
+  String get settingsMcpNamePlaceholder => 'например, Мой ChatGPT';
+
+  @override
+  String get settingsMcpExpiresAtLabel => 'Срок действия (необязательно)';
+
+  @override
+  String get settingsMcpCreateButton => 'Создать учётные данные';
+
+  @override
+  String get settingsMcpCreating => 'Создание…';
+
+  @override
+  String get settingsMcpCreateFailed => 'Не удалось создать учётные данные';
+
+  @override
+  String get settingsMcpNameRequired => 'Введите название';
+
+  @override
+  String get settingsMcpNameTooLong =>
+      'Название не может превышать 100 символов';
+
+  @override
+  String get settingsMcpListTitle => 'Мои учётные данные MCP';
+
+  @override
+  String get settingsMcpRefresh => 'Обновить';
+
+  @override
+  String get settingsMcpNoCredentials => 'Пока нет учётных данных';
+
+  @override
+  String get settingsMcpLoadFailed => 'Не удалось загрузить учётные данные';
+
+  @override
+  String get settingsMcpColName => 'Название';
+
+  @override
+  String get settingsMcpColCreatedAt => 'Создано';
+
+  @override
+  String get settingsMcpColLastUsedAt => 'Последнее использование';
+
+  @override
+  String get settingsMcpColStatus => 'Статус';
+
+  @override
+  String get settingsMcpColActions => 'Действия';
+
+  @override
+  String get settingsMcpNeverUsed => 'Никогда не использовался';
+
+  @override
+  String get settingsMcpStatusActive => 'Активен';
+
+  @override
+  String get settingsMcpStatusExpired => 'Истёк';
+
+  @override
+  String get settingsMcpStatusRevoked => 'Отозван';
+
+  @override
+  String get settingsMcpRevokeButton => 'Отозвать';
+
+  @override
+  String get settingsMcpRevokeConfirm =>
+      'Отозвать эти учётные данные? Все запросы с их использованием будут немедленно отклонены.';
+
+  @override
+  String get settingsMcpRevokeFailed => 'Не удалось отозвать учётные данные';
+
+  @override
+  String get settingsMcpTokenModalTitle => 'Токен доступа MCP';
+
+  @override
+  String get settingsMcpTokenWarning =>
+      'Этот токен отображается только один раз. Скопируйте и надёжно сохраните его сейчас — после закрытия просмотреть его снова будет невозможно.';
+
+  @override
+  String get settingsMcpTokenLabel => 'Токен доступа';
+
+  @override
+  String get settingsMcpConnectionUrlLabel => 'URL подключения MCP';
+
+  @override
+  String get settingsMcpCopyButton => 'Копировать';
+
+  @override
+  String get settingsMcpCopied => 'Скопировано!';
+
+  @override
+  String get settingsMcpCloseConfirm => 'Я скопировал(а), закрыть';
 }

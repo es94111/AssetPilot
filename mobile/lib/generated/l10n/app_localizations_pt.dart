@@ -4363,6 +4363,114 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get dashboardScenarioDisclaimer =>
       'Cenário simples: ajuste mensal × meses. Exclui juros, retornos de mercado, inflação e impostos e não garante resultado futuro.';
+
+  @override
+  String get navMcp => 'Conexão MCP';
+
+  @override
+  String get settingsMcpTitle => 'Configurações de conexão MCP';
+
+  @override
+  String get settingsMcpDescription =>
+      'Crie um token de acesso pessoal para que ferramentas de IA compatíveis com MCP, como ChatGPT ou Claude, possam consultar seus dados financeiros somente leitura.';
+
+  @override
+  String get settingsMcpCreateNew => 'Criar nova credencial';
+
+  @override
+  String get settingsMcpNameLabel => 'Nome';
+
+  @override
+  String get settingsMcpNamePlaceholder => 'ex.: Meu ChatGPT';
+
+  @override
+  String get settingsMcpExpiresAtLabel => 'Expira em (opcional)';
+
+  @override
+  String get settingsMcpCreateButton => 'Criar credencial';
+
+  @override
+  String get settingsMcpCreating => 'Criando…';
+
+  @override
+  String get settingsMcpCreateFailed => 'Falha ao criar credencial';
+
+  @override
+  String get settingsMcpNameRequired => 'O nome é obrigatório';
+
+  @override
+  String get settingsMcpNameTooLong => 'O nome não pode exceder 100 caracteres';
+
+  @override
+  String get settingsMcpListTitle => 'Minhas credenciais MCP';
+
+  @override
+  String get settingsMcpRefresh => 'Atualizar';
+
+  @override
+  String get settingsMcpNoCredentials => 'Ainda não há credenciais';
+
+  @override
+  String get settingsMcpLoadFailed => 'Falha ao carregar credenciais';
+
+  @override
+  String get settingsMcpColName => 'Nome';
+
+  @override
+  String get settingsMcpColCreatedAt => 'Criado em';
+
+  @override
+  String get settingsMcpColLastUsedAt => 'Último uso';
+
+  @override
+  String get settingsMcpColStatus => 'Status';
+
+  @override
+  String get settingsMcpColActions => 'Ações';
+
+  @override
+  String get settingsMcpNeverUsed => 'Nunca usado';
+
+  @override
+  String get settingsMcpStatusActive => 'Ativo';
+
+  @override
+  String get settingsMcpStatusExpired => 'Expirado';
+
+  @override
+  String get settingsMcpStatusRevoked => 'Revogado';
+
+  @override
+  String get settingsMcpRevokeButton => 'Revogar';
+
+  @override
+  String get settingsMcpRevokeConfirm =>
+      'Revogar esta credencial? Todas as consultas que a utilizarem serão rejeitadas imediatamente.';
+
+  @override
+  String get settingsMcpRevokeFailed => 'Falha ao revogar credencial';
+
+  @override
+  String get settingsMcpTokenModalTitle => 'Token de acesso MCP';
+
+  @override
+  String get settingsMcpTokenWarning =>
+      'Este token é exibido apenas uma vez. Copie e guarde-o com segurança agora; não será possível vê-lo novamente após fechar.';
+
+  @override
+  String get settingsMcpTokenLabel => 'Token de acesso';
+
+  @override
+  String get settingsMcpConnectionUrlLabel => 'URL de conexão MCP';
+
+  @override
+  String get settingsMcpCopyButton => 'Copiar';
+
+  @override
+  String get settingsMcpCopied => 'Copiado!';
+
+  @override
+  String get settingsMcpCloseConfirm => 'Copiei, fechar';
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -8724,4 +8832,112 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   @override
   String get dashboardScenarioDisclaimer =>
       'Cenário simples: ajuste mensal × meses. Exclui juros, retornos de mercado, inflação e impostos e não garante resultado futuro.';
+
+  @override
+  String get navMcp => 'Conexão MCP';
+
+  @override
+  String get settingsMcpTitle => 'Configurações de conexão MCP';
+
+  @override
+  String get settingsMcpDescription =>
+      'Crie um token de acesso pessoal para que ferramentas de IA compatíveis com MCP, como ChatGPT ou Claude, possam consultar seus dados financeiros somente leitura.';
+
+  @override
+  String get settingsMcpCreateNew => 'Criar nova credencial';
+
+  @override
+  String get settingsMcpNameLabel => 'Nome';
+
+  @override
+  String get settingsMcpNamePlaceholder => 'ex.: Meu ChatGPT';
+
+  @override
+  String get settingsMcpExpiresAtLabel => 'Expira em (opcional)';
+
+  @override
+  String get settingsMcpCreateButton => 'Criar credencial';
+
+  @override
+  String get settingsMcpCreating => 'Criando…';
+
+  @override
+  String get settingsMcpCreateFailed => 'Falha ao criar credencial';
+
+  @override
+  String get settingsMcpNameRequired => 'O nome é obrigatório';
+
+  @override
+  String get settingsMcpNameTooLong => 'O nome não pode exceder 100 caracteres';
+
+  @override
+  String get settingsMcpListTitle => 'Minhas credenciais MCP';
+
+  @override
+  String get settingsMcpRefresh => 'Atualizar';
+
+  @override
+  String get settingsMcpNoCredentials => 'Ainda não há credenciais';
+
+  @override
+  String get settingsMcpLoadFailed => 'Falha ao carregar credenciais';
+
+  @override
+  String get settingsMcpColName => 'Nome';
+
+  @override
+  String get settingsMcpColCreatedAt => 'Criado em';
+
+  @override
+  String get settingsMcpColLastUsedAt => 'Último uso';
+
+  @override
+  String get settingsMcpColStatus => 'Status';
+
+  @override
+  String get settingsMcpColActions => 'Ações';
+
+  @override
+  String get settingsMcpNeverUsed => 'Nunca usado';
+
+  @override
+  String get settingsMcpStatusActive => 'Ativo';
+
+  @override
+  String get settingsMcpStatusExpired => 'Expirado';
+
+  @override
+  String get settingsMcpStatusRevoked => 'Revogado';
+
+  @override
+  String get settingsMcpRevokeButton => 'Revogar';
+
+  @override
+  String get settingsMcpRevokeConfirm =>
+      'Revogar esta credencial? Todas as consultas que a utilizarem serão rejeitadas imediatamente.';
+
+  @override
+  String get settingsMcpRevokeFailed => 'Falha ao revogar credencial';
+
+  @override
+  String get settingsMcpTokenModalTitle => 'Token de acesso MCP';
+
+  @override
+  String get settingsMcpTokenWarning =>
+      'Este token é exibido apenas uma vez. Copie e guarde-o com segurança agora; não será possível vê-lo novamente após fechar.';
+
+  @override
+  String get settingsMcpTokenLabel => 'Token de acesso';
+
+  @override
+  String get settingsMcpConnectionUrlLabel => 'URL de conexão MCP';
+
+  @override
+  String get settingsMcpCopyButton => 'Copiar';
+
+  @override
+  String get settingsMcpCopied => 'Copiado!';
+
+  @override
+  String get settingsMcpCloseConfirm => 'Copiei, fechar';
 }

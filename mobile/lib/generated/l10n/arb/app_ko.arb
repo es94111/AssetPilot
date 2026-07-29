@@ -6624,5 +6624,180 @@
   "@dashboardScenarioDisclaimer": {
     "description": "Web path: dashboard.scenario.disclaimer",
     "x-webPath": "dashboard.scenario.disclaimer"
+  },
+  "navMcp": "MCP 연결",
+  "@navMcp": {
+    "description": "Web path: nav.mcp",
+    "x-webPath": "nav.mcp"
+  },
+  "settingsMcpTitle": "MCP 연결 설정",
+  "@settingsMcpTitle": {
+    "description": "Web path: settings.mcp.title",
+    "x-webPath": "settings.mcp.title"
+  },
+  "settingsMcpDescription": "ChatGPT, Claude 등 MCP를 지원하는 AI 도구가 회원님의 재무 데이터를 읽기 전용으로 조회할 수 있도록 개인 액세스 토큰을 생성하세요.",
+  "@settingsMcpDescription": {
+    "description": "Web path: settings.mcp.description",
+    "x-webPath": "settings.mcp.description"
+  },
+  "settingsMcpCreateNew": "새 자격 증명 만들기",
+  "@settingsMcpCreateNew": {
+    "description": "Web path: settings.mcp.createNew",
+    "x-webPath": "settings.mcp.createNew"
+  },
+  "settingsMcpNameLabel": "이름",
+  "@settingsMcpNameLabel": {
+    "description": "Web path: settings.mcp.nameLabel",
+    "x-webPath": "settings.mcp.nameLabel"
+  },
+  "settingsMcpNamePlaceholder": "예: 내 ChatGPT",
+  "@settingsMcpNamePlaceholder": {
+    "description": "Web path: settings.mcp.namePlaceholder",
+    "x-webPath": "settings.mcp.namePlaceholder"
+  },
+  "settingsMcpExpiresAtLabel": "만료 시간(선택 사항)",
+  "@settingsMcpExpiresAtLabel": {
+    "description": "Web path: settings.mcp.expiresAtLabel",
+    "x-webPath": "settings.mcp.expiresAtLabel"
+  },
+  "settingsMcpCreateButton": "자격 증명 생성",
+  "@settingsMcpCreateButton": {
+    "description": "Web path: settings.mcp.createButton",
+    "x-webPath": "settings.mcp.createButton"
+  },
+  "settingsMcpCreating": "생성 중…",
+  "@settingsMcpCreating": {
+    "description": "Web path: settings.mcp.creating",
+    "x-webPath": "settings.mcp.creating"
+  },
+  "settingsMcpCreateFailed": "자격 증명 생성 실패",
+  "@settingsMcpCreateFailed": {
+    "description": "Web path: settings.mcp.createFailed",
+    "x-webPath": "settings.mcp.createFailed"
+  },
+  "settingsMcpNameRequired": "이름을 입력하세요",
+  "@settingsMcpNameRequired": {
+    "description": "Web path: settings.mcp.nameRequired",
+    "x-webPath": "settings.mcp.nameRequired"
+  },
+  "settingsMcpNameTooLong": "이름은 100자를 초과할 수 없습니다",
+  "@settingsMcpNameTooLong": {
+    "description": "Web path: settings.mcp.nameTooLong",
+    "x-webPath": "settings.mcp.nameTooLong"
+  },
+  "settingsMcpListTitle": "내 MCP 자격 증명",
+  "@settingsMcpListTitle": {
+    "description": "Web path: settings.mcp.listTitle",
+    "x-webPath": "settings.mcp.listTitle"
+  },
+  "settingsMcpRefresh": "새로고침",
+  "@settingsMcpRefresh": {
+    "description": "Web path: settings.mcp.refresh",
+    "x-webPath": "settings.mcp.refresh"
+  },
+  "settingsMcpNoCredentials": "아직 자격 증명이 없습니다",
+  "@settingsMcpNoCredentials": {
+    "description": "Web path: settings.mcp.noCredentials",
+    "x-webPath": "settings.mcp.noCredentials"
+  },
+  "settingsMcpLoadFailed": "자격 증명 목록을 불러오지 못했습니다",
+  "@settingsMcpLoadFailed": {
+    "description": "Web path: settings.mcp.loadFailed",
+    "x-webPath": "settings.mcp.loadFailed"
+  },
+  "settingsMcpColName": "이름",
+  "@settingsMcpColName": {
+    "description": "Web path: settings.mcp.colName",
+    "x-webPath": "settings.mcp.colName"
+  },
+  "settingsMcpColCreatedAt": "생성일",
+  "@settingsMcpColCreatedAt": {
+    "description": "Web path: settings.mcp.colCreatedAt",
+    "x-webPath": "settings.mcp.colCreatedAt"
+  },
+  "settingsMcpColLastUsedAt": "마지막 사용",
+  "@settingsMcpColLastUsedAt": {
+    "description": "Web path: settings.mcp.colLastUsedAt",
+    "x-webPath": "settings.mcp.colLastUsedAt"
+  },
+  "settingsMcpColStatus": "상태",
+  "@settingsMcpColStatus": {
+    "description": "Web path: settings.mcp.colStatus",
+    "x-webPath": "settings.mcp.colStatus"
+  },
+  "settingsMcpColActions": "작업",
+  "@settingsMcpColActions": {
+    "description": "Web path: settings.mcp.colActions",
+    "x-webPath": "settings.mcp.colActions"
+  },
+  "settingsMcpNeverUsed": "사용한 적 없음",
+  "@settingsMcpNeverUsed": {
+    "description": "Web path: settings.mcp.neverUsed",
+    "x-webPath": "settings.mcp.neverUsed"
+  },
+  "settingsMcpStatusActive": "활성",
+  "@settingsMcpStatusActive": {
+    "description": "Web path: settings.mcp.status.active",
+    "x-webPath": "settings.mcp.status.active"
+  },
+  "settingsMcpStatusExpired": "만료됨",
+  "@settingsMcpStatusExpired": {
+    "description": "Web path: settings.mcp.status.expired",
+    "x-webPath": "settings.mcp.status.expired"
+  },
+  "settingsMcpStatusRevoked": "취소됨",
+  "@settingsMcpStatusRevoked": {
+    "description": "Web path: settings.mcp.status.revoked",
+    "x-webPath": "settings.mcp.status.revoked"
+  },
+  "settingsMcpRevokeButton": "취소",
+  "@settingsMcpRevokeButton": {
+    "description": "Web path: settings.mcp.revokeButton",
+    "x-webPath": "settings.mcp.revokeButton"
+  },
+  "settingsMcpRevokeConfirm": "이 자격 증명을 취소하시겠습니까? 이를 사용하는 모든 조회 요청이 즉시 거부됩니다.",
+  "@settingsMcpRevokeConfirm": {
+    "description": "Web path: settings.mcp.revokeConfirm",
+    "x-webPath": "settings.mcp.revokeConfirm"
+  },
+  "settingsMcpRevokeFailed": "자격 증명 취소 실패",
+  "@settingsMcpRevokeFailed": {
+    "description": "Web path: settings.mcp.revokeFailed",
+    "x-webPath": "settings.mcp.revokeFailed"
+  },
+  "settingsMcpTokenModalTitle": "MCP 액세스 토큰",
+  "@settingsMcpTokenModalTitle": {
+    "description": "Web path: settings.mcp.tokenModalTitle",
+    "x-webPath": "settings.mcp.tokenModalTitle"
+  },
+  "settingsMcpTokenWarning": "이 토큰은 한 번만 표시됩니다. 지금 복사하여 안전하게 보관하세요. 닫은 후에는 다시 확인할 수 없습니다.",
+  "@settingsMcpTokenWarning": {
+    "description": "Web path: settings.mcp.tokenWarning",
+    "x-webPath": "settings.mcp.tokenWarning"
+  },
+  "settingsMcpTokenLabel": "액세스 토큰",
+  "@settingsMcpTokenLabel": {
+    "description": "Web path: settings.mcp.tokenLabel",
+    "x-webPath": "settings.mcp.tokenLabel"
+  },
+  "settingsMcpConnectionUrlLabel": "MCP 연결 URL",
+  "@settingsMcpConnectionUrlLabel": {
+    "description": "Web path: settings.mcp.connectionUrlLabel",
+    "x-webPath": "settings.mcp.connectionUrlLabel"
+  },
+  "settingsMcpCopyButton": "복사",
+  "@settingsMcpCopyButton": {
+    "description": "Web path: settings.mcp.copyButton",
+    "x-webPath": "settings.mcp.copyButton"
+  },
+  "settingsMcpCopied": "복사됨!",
+  "@settingsMcpCopied": {
+    "description": "Web path: settings.mcp.copied",
+    "x-webPath": "settings.mcp.copied"
+  },
+  "settingsMcpCloseConfirm": "복사했습니다, 닫기",
+  "@settingsMcpCloseConfirm": {
+    "description": "Web path: settings.mcp.closeConfirm",
+    "x-webPath": "settings.mcp.closeConfirm"
   }
 }

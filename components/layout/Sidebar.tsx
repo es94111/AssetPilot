@@ -7,7 +7,7 @@ import {
   LayoutDashboard, Receipt, ChartBar, Wallet, Building2, Tags, Repeat,
   Briefcase, Key, User, Shield, Database, LogOut, TrendingUp, Coins,
   BarChart3, Settings2, Sun, Moon, Monitor, Info, TableProperties,
-  X,
+  X, Plug,
 } from 'lucide-react';
 import { useEffect, useRef, useState, type ElementType } from 'react';
 import { useTheme, type Theme } from '@/hooks/useTheme';
@@ -44,6 +44,7 @@ const NAV_SECTIONS = [
     adminOnly: false,
     items: [
       { path: '/settings/export',  labelKey: 'nav.exportImport', icon: Database },
+      { path: '/settings/mcp',     labelKey: 'nav.mcp',          icon: Plug },
       { path: '/settings/account', labelKey: 'nav.account',      icon: User },
       { path: '/api-credits',      labelKey: 'nav.apiCredits',   icon: Key },
       { path: '/settings/admin',   labelKey: 'nav.admin',        icon: Shield, requireAdmin: true },

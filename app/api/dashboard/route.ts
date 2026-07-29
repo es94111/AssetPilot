@@ -3,17 +3,16 @@ import { requireAuth } from '../../../lib/apiHelpers';
 import { queryAll, queryOne } from '../../../lib/db';
 import { todayInUserTz, monthInUserTz, isValidIsoDate } from '../../../lib/userTime';
 import { calcBalance, convertFromTwd, getExchangeRateToTwd, normalizeCurrency } from '../../../lib/accountHelpers';
-import { calcFifoLots } from '../../../lib/moneyDecimal';
 import {
   buildDashboardChangeDrivers,
   getDashboardComparisonWindow,
-  getHoldingMarketContribution,
   type DashboardComparisonCategory,
 } from '../../../lib/dashboardInsights';
 import { parseDashboardLayout } from '../../../lib/dashboardPreferences';
 import { buildScheduledCashOutlook, getScheduledAccountImpactTwd, type ScheduledCashInput } from '../../../lib/dashboardForecast';
 import {
   buildCategoryAggregateNodes,
+  getStockPortfolioStatus,
   type DashboardCategoryAggregateRow,
   type DashboardResponse,
   type RecentTransaction,
@@ -30,13 +29,6 @@ type AccountTransactionRow = {
   amount: string | number | null;
   currency: string | null;
   original_amount: string | number | null;
-};
-type StockRow = {
-  id: string;
-  name: string | null;
-  symbol: string | null;
-  currency: string | null;
-  current_price: string | number | null;
 };
 type CountRow = { count: string | number | null };
 type SettingsRow = { dashboard_layout: string | null; dashboard_layout_updated_at: string | number | null };
@@ -113,91 +105,6 @@ function getBankStatusAsOf(userId: string, throughDate: string): {
       const currency = normalizeCurrency(account.currency);
       return [account.id, { currency, currentRate: getExchangeRateToTwd(userId, currency) }];
     })),
-  };
-}
-
-function getStockPortfolioStatus(userId: string): {
-  marketValue: number;
-  unpricedHoldingCount: number;
-  health: DashboardResponse['portfolioHealth'];
-} {
-  const stocks = queryAll(
-    'SELECT id, name, symbol, currency, current_price FROM stocks WHERE user_id = ?',
-    [userId]
-  ) as unknown as StockRow[];
-
-  let unpricedHoldingCount = 0;
-  let totalCost = 0;
-  const holdings: Array<{ name: string; symbol: string; currency: string; marketValue: number; priced: boolean }> = [];
-  const total = stocks.reduce((sum, stock) => {
-    const txs = queryAll(
-      'SELECT * FROM stock_transactions WHERE user_id = ? AND stock_id = ? ORDER BY date, created_at',
-      [userId, stock.id]
-    );
-    const divs = queryAll(
-      'SELECT stock_dividend_shares FROM stock_dividends WHERE user_id = ? AND stock_id = ?',
-      [userId, stock.id]
-    );
-    const fifo = calcFifoLots(txs);
-    const dividendSyntheticShares = txs
-      .filter(t => t.type === 'buy' && Number(t.price) === 0 && typeof t.note === 'string' && /\[SYNTH\] 股票股利|股票股利配發/.test(t.note))
-      .reduce((shareSum, t) => shareSum + Number(t.shares || 0), 0);
-    const recordedDividendShares = divs.reduce((shareSum, d) => shareSum + Number(d.stock_dividend_shares || 0), 0);
-    const missingDividendShares = Math.max(0, recordedDividendShares - dividendSyntheticShares);
-    const totalShares = fifo.totalShares.plus(missingDividendShares).toNumber();
-    if (totalShares <= 0) return sum;
-    const currentPrice = Number(stock.current_price) || 0;
-    const contribution = getHoldingMarketContribution(totalShares, currentPrice);
-    if (contribution.unpriced) unpricedHoldingCount += 1;
-    if (!contribution.unpriced) totalCost += fifo.totalCost.toNumber();
-    holdings.push({
-      name: stock.name || stock.symbol || '—',
-      symbol: stock.symbol || '',
-      currency: normalizeCurrency(stock.currency),
-      marketValue: contribution.marketValue,
-      priced: !contribution.unpriced,
-    });
-    return sum + contribution.marketValue;
-  }, 0);
-
-  const currencies = new Set(holdings.map(holding => holding.currency));
-  const pricedHoldings = holdings.filter(holding => holding.priced);
-  const largestHolding = pricedHoldings.sort((a, b) => b.marketValue - a.marketValue)[0] || null;
-  const portfolioCurrency = currencies.size === 1 ? [...currencies][0] : null;
-  const roundAmount = (value: number) => portfolioCurrency === 'TWD'
-    ? Math.round(value)
-    : Math.round(value * 100) / 100;
-  const roundedMarketValue = roundAmount(total);
-  const roundedTotalCost = roundAmount(totalCost);
-  const mixedCurrencies = currencies.size > 1;
-  const unavailableReason = holdings.length === 0
-    ? 'noHoldings'
-    : mixedCurrencies
-      ? 'mixedCurrencies'
-      : pricedHoldings.length === 0
-        ? 'missingPrices'
-        : null;
-
-  return {
-    marketValue: roundedMarketValue,
-    unpricedHoldingCount,
-    health: {
-      available: unavailableReason === null,
-      unavailableReason,
-      currency: portfolioCurrency,
-      marketValue: roundedMarketValue,
-      totalCost: roundedTotalCost,
-      unrealizedGrossPL: roundAmount(total - totalCost),
-      costReturnRate: totalCost > 0 ? Math.round(((total - totalCost) / totalCost) * 1000) / 10 : null,
-      pricedHoldingCount: pricedHoldings.length,
-      holdingCount: holdings.length,
-      largestHolding: largestHolding && total > 0 ? {
-        name: largestHolding.name,
-        symbol: largestHolding.symbol,
-        marketValue: roundAmount(largestHolding.marketValue),
-        share: Math.round((largestHolding.marketValue / total) * 1000) / 10,
-      } : null,
-    },
   };
 }
 

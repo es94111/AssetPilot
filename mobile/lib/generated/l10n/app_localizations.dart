@@ -7500,6 +7500,216 @@ abstract class AppLocalizations {
   /// In zh_Hant_TW, this message translates to:
   /// **'簡易情境：每月調整 × 月數。不包含利息、市場報酬、通膨與稅務，也不保證未來結果。'**
   String get dashboardScenarioDisclaimer;
+
+  /// Web path: nav.mcp
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'MCP 連線'**
+  String get navMcp;
+
+  /// Web path: settings.mcp.title
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'MCP 連線設定'**
+  String get settingsMcpTitle;
+
+  /// Web path: settings.mcp.description
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'建立個人化存取權杖，讓 ChatGPT、Claude 等支援 MCP 的 AI 工具以唯讀方式查詢您的財務資料。'**
+  String get settingsMcpDescription;
+
+  /// Web path: settings.mcp.createNew
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'建立新憑證'**
+  String get settingsMcpCreateNew;
+
+  /// Web path: settings.mcp.nameLabel
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'名稱'**
+  String get settingsMcpNameLabel;
+
+  /// Web path: settings.mcp.namePlaceholder
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'例如：我的 ChatGPT'**
+  String get settingsMcpNamePlaceholder;
+
+  /// Web path: settings.mcp.expiresAtLabel
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'到期時間（選填）'**
+  String get settingsMcpExpiresAtLabel;
+
+  /// Web path: settings.mcp.createButton
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'建立憑證'**
+  String get settingsMcpCreateButton;
+
+  /// Web path: settings.mcp.creating
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'建立中…'**
+  String get settingsMcpCreating;
+
+  /// Web path: settings.mcp.createFailed
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'建立憑證失敗'**
+  String get settingsMcpCreateFailed;
+
+  /// Web path: settings.mcp.nameRequired
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'請輸入名稱'**
+  String get settingsMcpNameRequired;
+
+  /// Web path: settings.mcp.nameTooLong
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'名稱不可超過 100 字元'**
+  String get settingsMcpNameTooLong;
+
+  /// Web path: settings.mcp.listTitle
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'我的 MCP 憑證'**
+  String get settingsMcpListTitle;
+
+  /// Web path: settings.mcp.refresh
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'重新整理'**
+  String get settingsMcpRefresh;
+
+  /// Web path: settings.mcp.noCredentials
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'尚未建立任何憑證'**
+  String get settingsMcpNoCredentials;
+
+  /// Web path: settings.mcp.loadFailed
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'載入憑證清單失敗'**
+  String get settingsMcpLoadFailed;
+
+  /// Web path: settings.mcp.colName
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'名稱'**
+  String get settingsMcpColName;
+
+  /// Web path: settings.mcp.colCreatedAt
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'建立時間'**
+  String get settingsMcpColCreatedAt;
+
+  /// Web path: settings.mcp.colLastUsedAt
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'最後使用時間'**
+  String get settingsMcpColLastUsedAt;
+
+  /// Web path: settings.mcp.colStatus
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'狀態'**
+  String get settingsMcpColStatus;
+
+  /// Web path: settings.mcp.colActions
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'操作'**
+  String get settingsMcpColActions;
+
+  /// Web path: settings.mcp.neverUsed
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'尚未使用'**
+  String get settingsMcpNeverUsed;
+
+  /// Web path: settings.mcp.status.active
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'啟用中'**
+  String get settingsMcpStatusActive;
+
+  /// Web path: settings.mcp.status.expired
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'已過期'**
+  String get settingsMcpStatusExpired;
+
+  /// Web path: settings.mcp.status.revoked
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'已撤銷'**
+  String get settingsMcpStatusRevoked;
+
+  /// Web path: settings.mcp.revokeButton
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'撤銷'**
+  String get settingsMcpRevokeButton;
+
+  /// Web path: settings.mcp.revokeConfirm
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'確定要撤銷這組憑證嗎？撤銷後所有使用此憑證的查詢將立即被拒絕。'**
+  String get settingsMcpRevokeConfirm;
+
+  /// Web path: settings.mcp.revokeFailed
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'撤銷憑證失敗'**
+  String get settingsMcpRevokeFailed;
+
+  /// Web path: settings.mcp.tokenModalTitle
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'MCP 存取權杖'**
+  String get settingsMcpTokenModalTitle;
+
+  /// Web path: settings.mcp.tokenWarning
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'此權杖僅顯示這一次，請立即複製並妥善保存；關閉後將無法再次查看明文。'**
+  String get settingsMcpTokenWarning;
+
+  /// Web path: settings.mcp.tokenLabel
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'存取權杖'**
+  String get settingsMcpTokenLabel;
+
+  /// Web path: settings.mcp.connectionUrlLabel
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'MCP 連線位址'**
+  String get settingsMcpConnectionUrlLabel;
+
+  /// Web path: settings.mcp.copyButton
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'複製'**
+  String get settingsMcpCopyButton;
+
+  /// Web path: settings.mcp.copied
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'已複製！'**
+  String get settingsMcpCopied;
+
+  /// Web path: settings.mcp.closeConfirm
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'我已複製，關閉視窗'**
+  String get settingsMcpCloseConfirm;
 }
 
 class _AppLocalizationsDelegate

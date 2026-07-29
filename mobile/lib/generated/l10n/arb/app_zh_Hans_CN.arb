@@ -6624,5 +6624,180 @@
   "@dashboardScenarioDisclaimer": {
     "description": "Web path: dashboard.scenario.disclaimer",
     "x-webPath": "dashboard.scenario.disclaimer"
+  },
+  "navMcp": "MCP 连接",
+  "@navMcp": {
+    "description": "Web path: nav.mcp",
+    "x-webPath": "nav.mcp"
+  },
+  "settingsMcpTitle": "MCP 连接设置",
+  "@settingsMcpTitle": {
+    "description": "Web path: settings.mcp.title",
+    "x-webPath": "settings.mcp.title"
+  },
+  "settingsMcpDescription": "创建个人访问令牌，让 ChatGPT、Claude 等支持 MCP 的 AI 工具以只读方式查询您的财务数据。",
+  "@settingsMcpDescription": {
+    "description": "Web path: settings.mcp.description",
+    "x-webPath": "settings.mcp.description"
+  },
+  "settingsMcpCreateNew": "创建新凭证",
+  "@settingsMcpCreateNew": {
+    "description": "Web path: settings.mcp.createNew",
+    "x-webPath": "settings.mcp.createNew"
+  },
+  "settingsMcpNameLabel": "名称",
+  "@settingsMcpNameLabel": {
+    "description": "Web path: settings.mcp.nameLabel",
+    "x-webPath": "settings.mcp.nameLabel"
+  },
+  "settingsMcpNamePlaceholder": "例如：我的 ChatGPT",
+  "@settingsMcpNamePlaceholder": {
+    "description": "Web path: settings.mcp.namePlaceholder",
+    "x-webPath": "settings.mcp.namePlaceholder"
+  },
+  "settingsMcpExpiresAtLabel": "到期时间（选填）",
+  "@settingsMcpExpiresAtLabel": {
+    "description": "Web path: settings.mcp.expiresAtLabel",
+    "x-webPath": "settings.mcp.expiresAtLabel"
+  },
+  "settingsMcpCreateButton": "创建凭证",
+  "@settingsMcpCreateButton": {
+    "description": "Web path: settings.mcp.createButton",
+    "x-webPath": "settings.mcp.createButton"
+  },
+  "settingsMcpCreating": "创建中…",
+  "@settingsMcpCreating": {
+    "description": "Web path: settings.mcp.creating",
+    "x-webPath": "settings.mcp.creating"
+  },
+  "settingsMcpCreateFailed": "创建凭证失败",
+  "@settingsMcpCreateFailed": {
+    "description": "Web path: settings.mcp.createFailed",
+    "x-webPath": "settings.mcp.createFailed"
+  },
+  "settingsMcpNameRequired": "请输入名称",
+  "@settingsMcpNameRequired": {
+    "description": "Web path: settings.mcp.nameRequired",
+    "x-webPath": "settings.mcp.nameRequired"
+  },
+  "settingsMcpNameTooLong": "名称不可超过 100 个字符",
+  "@settingsMcpNameTooLong": {
+    "description": "Web path: settings.mcp.nameTooLong",
+    "x-webPath": "settings.mcp.nameTooLong"
+  },
+  "settingsMcpListTitle": "我的 MCP 凭证",
+  "@settingsMcpListTitle": {
+    "description": "Web path: settings.mcp.listTitle",
+    "x-webPath": "settings.mcp.listTitle"
+  },
+  "settingsMcpRefresh": "刷新",
+  "@settingsMcpRefresh": {
+    "description": "Web path: settings.mcp.refresh",
+    "x-webPath": "settings.mcp.refresh"
+  },
+  "settingsMcpNoCredentials": "尚未创建任何凭证",
+  "@settingsMcpNoCredentials": {
+    "description": "Web path: settings.mcp.noCredentials",
+    "x-webPath": "settings.mcp.noCredentials"
+  },
+  "settingsMcpLoadFailed": "加载凭证列表失败",
+  "@settingsMcpLoadFailed": {
+    "description": "Web path: settings.mcp.loadFailed",
+    "x-webPath": "settings.mcp.loadFailed"
+  },
+  "settingsMcpColName": "名称",
+  "@settingsMcpColName": {
+    "description": "Web path: settings.mcp.colName",
+    "x-webPath": "settings.mcp.colName"
+  },
+  "settingsMcpColCreatedAt": "创建时间",
+  "@settingsMcpColCreatedAt": {
+    "description": "Web path: settings.mcp.colCreatedAt",
+    "x-webPath": "settings.mcp.colCreatedAt"
+  },
+  "settingsMcpColLastUsedAt": "最后使用时间",
+  "@settingsMcpColLastUsedAt": {
+    "description": "Web path: settings.mcp.colLastUsedAt",
+    "x-webPath": "settings.mcp.colLastUsedAt"
+  },
+  "settingsMcpColStatus": "状态",
+  "@settingsMcpColStatus": {
+    "description": "Web path: settings.mcp.colStatus",
+    "x-webPath": "settings.mcp.colStatus"
+  },
+  "settingsMcpColActions": "操作",
+  "@settingsMcpColActions": {
+    "description": "Web path: settings.mcp.colActions",
+    "x-webPath": "settings.mcp.colActions"
+  },
+  "settingsMcpNeverUsed": "尚未使用",
+  "@settingsMcpNeverUsed": {
+    "description": "Web path: settings.mcp.neverUsed",
+    "x-webPath": "settings.mcp.neverUsed"
+  },
+  "settingsMcpStatusActive": "启用中",
+  "@settingsMcpStatusActive": {
+    "description": "Web path: settings.mcp.status.active",
+    "x-webPath": "settings.mcp.status.active"
+  },
+  "settingsMcpStatusExpired": "已过期",
+  "@settingsMcpStatusExpired": {
+    "description": "Web path: settings.mcp.status.expired",
+    "x-webPath": "settings.mcp.status.expired"
+  },
+  "settingsMcpStatusRevoked": "已撤销",
+  "@settingsMcpStatusRevoked": {
+    "description": "Web path: settings.mcp.status.revoked",
+    "x-webPath": "settings.mcp.status.revoked"
+  },
+  "settingsMcpRevokeButton": "撤销",
+  "@settingsMcpRevokeButton": {
+    "description": "Web path: settings.mcp.revokeButton",
+    "x-webPath": "settings.mcp.revokeButton"
+  },
+  "settingsMcpRevokeConfirm": "确定要撤销此凭证吗？撤销后所有使用此凭证的查询将立即被拒绝。",
+  "@settingsMcpRevokeConfirm": {
+    "description": "Web path: settings.mcp.revokeConfirm",
+    "x-webPath": "settings.mcp.revokeConfirm"
+  },
+  "settingsMcpRevokeFailed": "撤销凭证失败",
+  "@settingsMcpRevokeFailed": {
+    "description": "Web path: settings.mcp.revokeFailed",
+    "x-webPath": "settings.mcp.revokeFailed"
+  },
+  "settingsMcpTokenModalTitle": "MCP 访问令牌",
+  "@settingsMcpTokenModalTitle": {
+    "description": "Web path: settings.mcp.tokenModalTitle",
+    "x-webPath": "settings.mcp.tokenModalTitle"
+  },
+  "settingsMcpTokenWarning": "此令牌仅显示这一次，请立即复制并妥善保存；关闭后将无法再次查看明文。",
+  "@settingsMcpTokenWarning": {
+    "description": "Web path: settings.mcp.tokenWarning",
+    "x-webPath": "settings.mcp.tokenWarning"
+  },
+  "settingsMcpTokenLabel": "访问令牌",
+  "@settingsMcpTokenLabel": {
+    "description": "Web path: settings.mcp.tokenLabel",
+    "x-webPath": "settings.mcp.tokenLabel"
+  },
+  "settingsMcpConnectionUrlLabel": "MCP 连接地址",
+  "@settingsMcpConnectionUrlLabel": {
+    "description": "Web path: settings.mcp.connectionUrlLabel",
+    "x-webPath": "settings.mcp.connectionUrlLabel"
+  },
+  "settingsMcpCopyButton": "复制",
+  "@settingsMcpCopyButton": {
+    "description": "Web path: settings.mcp.copyButton",
+    "x-webPath": "settings.mcp.copyButton"
+  },
+  "settingsMcpCopied": "已复制！",
+  "@settingsMcpCopied": {
+    "description": "Web path: settings.mcp.copied",
+    "x-webPath": "settings.mcp.copied"
+  },
+  "settingsMcpCloseConfirm": "我已复制，关闭窗口",
+  "@settingsMcpCloseConfirm": {
+    "description": "Web path: settings.mcp.closeConfirm",
+    "x-webPath": "settings.mcp.closeConfirm"
   }
 }

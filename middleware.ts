@@ -4,6 +4,7 @@ import { NextResponse, NextRequest } from 'next/server';
 // ── 公開端點（不需驗證）──
 const PUBLIC_PATHS = new Set([
   '/login',
+  '/mcp',
   '/privacy',
   '/terms',
   '/api/auth/login',
@@ -21,8 +22,8 @@ const PUBLIC_PATHS = new Set([
   '/api/mcp',
 ]);
 
-// passkey 端點前綴
-const PUBLIC_PREFIXES = ['/api/auth/passkey/'];
+// passkey / MCP OAuth 端點前綴
+const PUBLIC_PREFIXES = ['/api/auth/passkey/', '/api/oauth/'];
 
 // Next.js 內部路由 + 靜態資源
 const SKIP_PREFIXES = ['/_next/', '/favicon.', '/logo.'];
@@ -31,6 +32,10 @@ const SKIP_PREFIXES = ['/_next/', '/favicon.', '/logo.'];
 const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000; // 15 分鐘
 const RATE_LIMIT_MAX = 600; // 全域 API：每 IP 每窗口最多 600 次
 const AUTH_RATE_LIMIT_MAX = 20; // 認證端點：每 IP 每窗口最多 20 次
+const OAUTH_RATE_LIMIT_MAX = 100; // OAuth authorize/token/revoke：每 IP 每窗口最多 100 次
+const OAUTH_AUTHORIZE_PAGE_RATE_LIMIT_MAX = 30; // 授權頁可能需要擷取 CIMD，限制匿名 outbound metadata 查詢
+const OAUTH_REGISTRATION_WINDOW_MS = 60 * 60 * 1000;
+const OAUTH_REGISTRATION_RATE_LIMIT_MAX = 20; // DCR：每 IP 每小時最多 20 次
 
 const AUTH_RATE_LIMITED_PATHS = new Set([
   '/api/auth/login',
@@ -40,6 +45,11 @@ const AUTH_RATE_LIMITED_PATHS = new Set([
   '/api/auth/line/authorize',
   '/api/auth/passkey/challenge',
   '/api/auth/passkey/login',
+]);
+const OAUTH_RATE_LIMITED_PATHS = new Set([
+  '/api/oauth/authorize',
+  '/api/oauth/token',
+  '/api/oauth/revoke',
 ]);
 const CSRF_SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 
@@ -51,12 +61,20 @@ interface RateLimitEntry {
 /** Map<ip, { count: number, resetAt: number }> */
 const globalRateLimitMap = new Map<string, RateLimitEntry>();
 const authRateLimitMap = new Map<string, RateLimitEntry>();
+const oauthRateLimitMap = new Map<string, RateLimitEntry>();
+const oauthAuthorizePageRateLimitMap = new Map<string, RateLimitEntry>();
+const oauthRegistrationRateLimitMap = new Map<string, RateLimitEntry>();
 
-function checkRateLimit(map: Map<string, RateLimitEntry>, ip: string, max: number): boolean {
+function checkRateLimit(
+  map: Map<string, RateLimitEntry>,
+  ip: string,
+  max: number,
+  windowMs = RATE_LIMIT_WINDOW_MS
+): boolean {
   const now = Date.now();
   let entry = map.get(ip);
   if (!entry || now > entry.resetAt) {
-    entry = { count: 0, resetAt: now + RATE_LIMIT_WINDOW_MS };
+    entry = { count: 0, resetAt: now + windowMs };
     map.set(ip, entry);
   }
   entry.count += 1;
@@ -120,6 +138,38 @@ export function middleware(request: NextRequest): NextResponse {
     if (!checkRateLimit(authRateLimitMap, ip, AUTH_RATE_LIMIT_MAX)) {
       return NextResponse.json(
         { error: '登入嘗試次數過多，請 15 分鐘後再試' },
+        { status: 429 }
+      );
+    }
+  }
+
+  if (OAUTH_RATE_LIMITED_PATHS.has(pathname)) {
+    if (!checkRateLimit(oauthRateLimitMap, ip, OAUTH_RATE_LIMIT_MAX)) {
+      return NextResponse.json(
+        { error: 'too_many_requests', error_description: 'OAuth 請求過於頻繁，請稍後再試' },
+        { status: 429 }
+      );
+    }
+  }
+
+  if (pathname === '/oauth/authorize') {
+    if (!checkRateLimit(oauthAuthorizePageRateLimitMap, ip, OAUTH_AUTHORIZE_PAGE_RATE_LIMIT_MAX)) {
+      return NextResponse.json(
+        { error: 'too_many_requests', error_description: 'OAuth 授權請求過於頻繁，請稍後再試' },
+        { status: 429 }
+      );
+    }
+  }
+
+  if (pathname === '/api/oauth/register') {
+    if (!checkRateLimit(
+      oauthRegistrationRateLimitMap,
+      ip,
+      OAUTH_REGISTRATION_RATE_LIMIT_MAX,
+      OAUTH_REGISTRATION_WINDOW_MS
+    )) {
+      return NextResponse.json(
+        { error: 'too_many_requests', error_description: 'MCP client 註冊請求過於頻繁，請稍後再試' },
         { status: 429 }
       );
     }

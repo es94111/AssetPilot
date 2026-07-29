@@ -6,6 +6,7 @@ import { queryAll, queryOne } from './db';
 import { writeOperationAudit } from './auditHelpers';
 import { getTransactionsSummary, getStockPortfolioStatus } from './dashboardHelpers';
 import { getStockRealizedPl } from './stockHelpers';
+import { createReadOnlyOAuthToolDescriptor } from './mcpOpenAiCompatibility';
 import type { VerifyMcpTokenResult } from './mcpAuth';
 
 const MAX_PAGE_SIZE = 200;
@@ -58,6 +59,7 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
   server.registerTool(
     'list_transactions',
     {
+      ...createReadOnlyOAuthToolDescriptor('查詢交易明細', '正在查詢交易…', '交易明細已載入'),
       description: '查詢一般收支交易明細（分頁），對應既有交易列表頁',
       inputSchema: {
         dateFrom: z.string().optional(),
@@ -112,6 +114,7 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
   server.registerTool(
     'get_transactions_summary',
     {
+      ...createReadOnlyOAuthToolDescriptor('彙整收支', '正在彙整收支…', '收支彙總已完成'),
       description: '查詢指定期間的收支彙總（依分類彙總、每日/每月彙總、總計），不受筆數上限',
       inputSchema: {
         type: z.enum(['income', 'expense']).optional(),
@@ -126,7 +129,11 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
 
   server.registerTool(
     'list_accounts',
-    { description: '查詢帳戶清單（含餘額、幣別）', inputSchema: { ...paginationShape } },
+    {
+      ...createReadOnlyOAuthToolDescriptor('查詢帳戶', '正在查詢帳戶…', '帳戶清單已載入'),
+      description: '查詢帳戶清單（含餘額、幣別）',
+      inputSchema: { ...paginationShape },
+    },
     async ({ page, pageSize }) => {
       const { page: p, pageSize: ps, offset } = resolvePagination({ page, pageSize });
       return withAudit(credential, 'accounts_list', () => {
@@ -151,7 +158,11 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
 
   server.registerTool(
     'list_categories',
-    { description: '查詢收支分類清單（含階層 parentId）', inputSchema: { ...paginationShape } },
+    {
+      ...createReadOnlyOAuthToolDescriptor('查詢收支分類', '正在查詢分類…', '分類清單已載入'),
+      description: '查詢收支分類清單（含階層 parentId）',
+      inputSchema: { ...paginationShape },
+    },
     async ({ page, pageSize }) => {
       const { page: p, pageSize: ps, offset } = resolvePagination({ page, pageSize });
       return withAudit(credential, 'categories_list', () => {
@@ -175,6 +186,7 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
   server.registerTool(
     'list_budgets',
     {
+      ...createReadOnlyOAuthToolDescriptor('查詢預算', '正在查詢預算…', '預算資料已載入'),
       description: '查詢預算設定與期間內執行狀況',
       inputSchema: { yearMonth: z.string().optional(), ...paginationShape },
     },
@@ -206,7 +218,11 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
 
   server.registerTool(
     'list_recurring',
-    { description: '查詢固定收支排程清單', inputSchema: { ...paginationShape } },
+    {
+      ...createReadOnlyOAuthToolDescriptor('查詢固定收支', '正在查詢固定收支…', '固定收支已載入'),
+      description: '查詢固定收支排程清單',
+      inputSchema: { ...paginationShape },
+    },
     async ({ page, pageSize }) => {
       const { page: p, pageSize: ps, offset } = resolvePagination({ page, pageSize });
       return withAudit(credential, 'recurring_list', () => {
@@ -234,7 +250,11 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
 
   server.registerTool(
     'list_stock_holdings',
-    { description: '查詢目前股票持股（股數/均價/現價/未實現損益/幣別）', inputSchema: {} },
+    {
+      ...createReadOnlyOAuthToolDescriptor('查詢股票持股', '正在查詢股票持股…', '股票持股已載入'),
+      description: '查詢目前股票持股（股數/均價/現價/未實現損益/幣別）',
+      inputSchema: {},
+    },
     async () => withAudit(credential, 'stock_holdings', () => {
       const status = getStockPortfolioStatus(userId);
       return toolResult({ holdings: status.holdings, marketValue: status.marketValue, health: status.health });
@@ -244,6 +264,7 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
   server.registerTool(
     'list_stock_transactions',
     {
+      ...createReadOnlyOAuthToolDescriptor('查詢股票交易', '正在查詢股票交易…', '股票交易已載入'),
       description: '查詢股票買賣交易明細（分頁）',
       inputSchema: {
         stockId: z.string().optional(),
@@ -291,6 +312,7 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
   server.registerTool(
     'list_stock_dividends',
     {
+      ...createReadOnlyOAuthToolDescriptor('查詢股票股利', '正在查詢股票股利…', '股票股利已載入'),
       description: '查詢股利發放紀錄（分頁）',
       inputSchema: {
         stockId: z.string().optional(),
@@ -332,7 +354,11 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
 
   server.registerTool(
     'list_stock_recurring',
-    { description: '查詢股票定期定額排程清單', inputSchema: { ...paginationShape } },
+    {
+      ...createReadOnlyOAuthToolDescriptor('查詢股票定期定額', '正在查詢定期定額…', '定期定額已載入'),
+      description: '查詢股票定期定額排程清單',
+      inputSchema: { ...paginationShape },
+    },
     async ({ page, pageSize }) => {
       const { page: p, pageSize: ps, offset } = resolvePagination({ page, pageSize });
       return withAudit(credential, 'stock_recurring_list', () => {
@@ -362,6 +388,7 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
   server.registerTool(
     'get_stock_realized_pl',
     {
+      ...createReadOnlyOAuthToolDescriptor('查詢股票已實現損益', '正在計算已實現損益…', '已實現損益已載入'),
       description: '查詢已實現損益（逐筆明細分頁，彙總總計不受限）',
       inputSchema: {
         dateFrom: z.string().optional(),

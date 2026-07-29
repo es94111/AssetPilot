@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+import { safeOAuthReturnTo } from './loginReturn';
 
 const LINE_OAUTH_STATE_TTL_MS = 5 * 60 * 1000;
 
@@ -9,6 +10,7 @@ type LineOAuthStateEntry = {
   nonce: string;
   flow: LineOAuthFlow;
   turnstileVerified: boolean;
+  returnTo: string;
 };
 
 const lineOAuthStates = new Map<string, LineOAuthStateEntry>();
@@ -22,7 +24,7 @@ function pruneLineOAuthStates() {
 
 export function issueLineOAuthState(
   flow = 'login',
-  options: { turnstileVerified?: boolean } = {}
+  options: { turnstileVerified?: boolean; returnTo?: string } = {}
 ): { state: string; nonce: string } {
   pruneLineOAuthStates();
   const safeFlow: LineOAuthFlow = flow === 'link' ? 'link' : 'login';
@@ -33,13 +35,14 @@ export function issueLineOAuthState(
     nonce,
     flow: safeFlow,
     turnstileVerified: !!options.turnstileVerified,
+    returnTo: safeFlow === 'login' ? safeOAuthReturnTo(options.returnTo) : '',
   });
   return { state, nonce };
 }
 
 export function consumeLineOAuthStateEntry(
   state: unknown
-): { nonce: string; flow: LineOAuthFlow; turnstileVerified: boolean } | null {
+): { nonce: string; flow: LineOAuthFlow; turnstileVerified: boolean; returnTo: string } | null {
   if (typeof state !== 'string' || !state) return null;
   pruneLineOAuthStates();
   const entry = lineOAuthStates.get(state);
@@ -49,6 +52,7 @@ export function consumeLineOAuthStateEntry(
     nonce: entry.nonce,
     flow: entry.flow,
     turnstileVerified: entry.turnstileVerified,
+    returnTo: entry.returnTo,
   };
 }
 

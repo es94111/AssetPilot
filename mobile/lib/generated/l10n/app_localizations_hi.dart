@@ -4313,7 +4313,14 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get settingsMcpDescription =>
-      'एक व्यक्तिगत एक्सेस टोकन बनाएं ताकि ChatGPT, Claude जैसे MCP-संगत AI टूल आपके वित्तीय डेटा को केवल पढ़ने के लिए क्वेरी कर सकें।';
+      'MCP-संगत AI टूल को OAuth से जोड़ें, या मैन्युअल क्रेडेंशियल चाहने वाले क्लाइंट के लिए व्यक्तिगत एक्सेस टोकन बनाएं।';
+
+  @override
+  String get settingsMcpOauthTitle => 'OAuth से कनेक्ट करें';
+
+  @override
+  String get settingsMcpOauthDescription =>
+      'MCP OAuth-संगत AI टूल में नीचे दिया कनेक्शन URL दर्ज करें। AssetPilot सुरक्षित साइन-इन और सहमति पेज खोलेगा; मैन्युअल टोकन की जरूरत नहीं है।';
 
   @override
   String get settingsMcpCreateNew => 'नई क्रेडेंशियल बनाएं';

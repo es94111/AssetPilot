@@ -6635,10 +6635,20 @@
     "description": "Web path: settings.mcp.title",
     "x-webPath": "settings.mcp.title"
   },
-  "settingsMcpDescription": "Create a personal access token so MCP-compatible AI tools like ChatGPT or Claude can query your financial data read-only.",
+  "settingsMcpDescription": "Connect MCP-compatible AI tools through OAuth, or create a personal access token for clients that require manual credentials.",
   "@settingsMcpDescription": {
     "description": "Web path: settings.mcp.description",
     "x-webPath": "settings.mcp.description"
+  },
+  "settingsMcpOauthTitle": "Connect with OAuth",
+  "@settingsMcpOauthTitle": {
+    "description": "Web path: settings.mcp.oauthTitle",
+    "x-webPath": "settings.mcp.oauthTitle"
+  },
+  "settingsMcpOauthDescription": "Enter the connection URL below in an MCP OAuth-compatible AI tool. AssetPilot will open a secure sign-in and consent page; no manual token is required.",
+  "@settingsMcpOauthDescription": {
+    "description": "Web path: settings.mcp.oauthDescription",
+    "x-webPath": "settings.mcp.oauthDescription"
   },
   "settingsMcpCreateNew": "Create New Credential",
   "@settingsMcpCreateNew": {

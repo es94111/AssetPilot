@@ -601,5 +601,55 @@ async function _runMigrations(): Promise<void> {
   alterIgnore("CREATE INDEX IF NOT EXISTS idx_mcp_credentials_user ON mcp_credentials(user_id, revoked_at)");
   alterIgnore("CREATE UNIQUE INDEX IF NOT EXISTS idx_mcp_credentials_hash ON mcp_credentials(token_hash)");
 
+  db.run(`CREATE TABLE IF NOT EXISTS mcp_oauth_clients (
+    client_id TEXT PRIMARY KEY,
+    client_id_issued_at INTEGER NOT NULL,
+    redirect_uris TEXT NOT NULL,
+    token_endpoint_auth_method TEXT NOT NULL DEFAULT 'none',
+    grant_types TEXT NOT NULL DEFAULT '["authorization_code","refresh_token"]',
+    response_types TEXT NOT NULL DEFAULT '["code"]',
+    client_name TEXT NOT NULL,
+    client_uri TEXT DEFAULT '',
+    logo_uri TEXT DEFAULT '',
+    scope TEXT NOT NULL DEFAULT 'mcp:read',
+    created_at INTEGER NOT NULL
+  )`);
+  alterIgnore("CREATE INDEX IF NOT EXISTS idx_mcp_oauth_clients_created ON mcp_oauth_clients(created_at)");
+
+  db.run(`CREATE TABLE IF NOT EXISTS mcp_oauth_authorization_codes (
+    code_hash TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    client_id TEXT NOT NULL,
+    client_name TEXT NOT NULL,
+    redirect_uri TEXT NOT NULL,
+    code_challenge TEXT NOT NULL,
+    resource TEXT NOT NULL,
+    scope TEXT NOT NULL,
+    created_at INTEGER NOT NULL,
+    expires_at INTEGER NOT NULL,
+    consumed_at INTEGER DEFAULT 0
+  )`);
+  alterIgnore("CREATE INDEX IF NOT EXISTS idx_mcp_oauth_codes_user ON mcp_oauth_authorization_codes(user_id, expires_at)");
+  alterIgnore("CREATE INDEX IF NOT EXISTS idx_mcp_oauth_codes_client ON mcp_oauth_authorization_codes(client_id, expires_at)");
+
+  db.run(`CREATE TABLE IF NOT EXISTS mcp_oauth_tokens (
+    token_hash TEXT PRIMARY KEY,
+    token_type TEXT NOT NULL,
+    family_id TEXT NOT NULL,
+    user_id TEXT NOT NULL,
+    client_id TEXT NOT NULL,
+    client_name TEXT NOT NULL,
+    resource TEXT NOT NULL,
+    scope TEXT NOT NULL,
+    issued_at INTEGER NOT NULL,
+    expires_at INTEGER NOT NULL,
+    revoked_at INTEGER DEFAULT 0,
+    replaced_by_hash TEXT DEFAULT '',
+    last_used_at INTEGER DEFAULT 0
+  )`);
+  alterIgnore("CREATE INDEX IF NOT EXISTS idx_mcp_oauth_tokens_user ON mcp_oauth_tokens(user_id, revoked_at, expires_at)");
+  alterIgnore("CREATE INDEX IF NOT EXISTS idx_mcp_oauth_tokens_family ON mcp_oauth_tokens(family_id, revoked_at)");
+  alterIgnore("CREATE INDEX IF NOT EXISTS idx_mcp_oauth_tokens_client ON mcp_oauth_tokens(client_id, expires_at)");
+
   saveDB();
 }

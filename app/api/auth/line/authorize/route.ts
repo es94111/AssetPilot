@@ -10,6 +10,7 @@ export async function GET(request: Request) {
   const disableAutoLogin = url.searchParams.get('disableAutoLogin') === '1';
   const turnstileToken = String(url.searchParams.get('turnstileToken') || '');
   const originParam = String(url.searchParams.get('origin') || '').trim();
+  const returnTo = String(url.searchParams.get('returnTo') || '');
   const origin = originParam || url.origin;
   let redirectUri = '';
   let turnstileVerified = false;
@@ -39,7 +40,7 @@ export async function GET(request: Request) {
     turnstileVerified = true;
   }
 
-  const { state, nonce } = issueLineOAuthState(flow, { turnstileVerified });
+  const { state, nonce } = issueLineOAuthState(flow, { turnstileVerified, returnTo });
   const authorizeUrl = new URL('https://access.line.me/oauth2/v2.1/authorize');
   authorizeUrl.searchParams.set('response_type', 'code');
   authorizeUrl.searchParams.set('client_id', LINE_CHANNEL_ID);

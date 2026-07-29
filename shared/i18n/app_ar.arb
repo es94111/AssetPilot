@@ -6635,10 +6635,20 @@
     "description": "Web path: settings.mcp.title",
     "x-webPath": "settings.mcp.title"
   },
-  "settingsMcpDescription": "أنشئ رمز وصول شخصي حتى تتمكن أدوات الذكاء الاصطناعي المتوافقة مع MCP مثل ChatGPT أو Claude من الاستعلام عن بياناتك المالية للقراءة فقط.",
+  "settingsMcpDescription": "اربط أدوات الذكاء الاصطناعي المتوافقة مع MCP عبر OAuth، أو أنشئ رمز وصول شخصياً للعملاء الذين يتطلبون بيانات اعتماد يدوية.",
   "@settingsMcpDescription": {
     "description": "Web path: settings.mcp.description",
     "x-webPath": "settings.mcp.description"
+  },
+  "settingsMcpOauthTitle": "الاتصال عبر OAuth",
+  "@settingsMcpOauthTitle": {
+    "description": "Web path: settings.mcp.oauthTitle",
+    "x-webPath": "settings.mcp.oauthTitle"
+  },
+  "settingsMcpOauthDescription": "أدخل عنوان الاتصال أدناه في أداة تدعم MCP OAuth. سيفتح AssetPilot صفحة آمنة لتسجيل الدخول والموافقة، ولا حاجة إلى رمز يدوي.",
+  "@settingsMcpOauthDescription": {
+    "description": "Web path: settings.mcp.oauthDescription",
+    "x-webPath": "settings.mcp.oauthDescription"
   },
   "settingsMcpCreateNew": "إنشاء بيانات اعتماد جديدة",
   "@settingsMcpCreateNew": {

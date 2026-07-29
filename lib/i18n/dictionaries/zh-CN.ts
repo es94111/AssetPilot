@@ -236,7 +236,9 @@ export const zhCN = {
     },
     mcp: {
       title: "MCP 连接设置",
-      description: "创建个人访问令牌，让 ChatGPT、Claude 等支持 MCP 的 AI 工具以只读方式查询您的财务数据。",
+      description: "通过 OAuth 连接支持 MCP 的 AI 工具，或为需要手动凭证的客户端创建个人访问令牌。",
+      oauthTitle: "使用 OAuth 连接",
+      oauthDescription: "在支持 MCP OAuth 的 AI 工具中输入下方连接地址，AssetPilot 会打开安全的登录和授权页面，无需手动创建令牌。",
       createNew: "创建新凭证",
       nameLabel: "名称",
       namePlaceholder: "例如：我的 ChatGPT",

@@ -6635,10 +6635,20 @@
     "description": "Web path: settings.mcp.title",
     "x-webPath": "settings.mcp.title"
   },
-  "settingsMcpDescription": "Créez un jeton d'accès personnel pour que les outils d'IA compatibles MCP comme ChatGPT ou Claude puissent consulter vos données financières en lecture seule.",
+  "settingsMcpDescription": "Connectez les outils d'IA compatibles MCP via OAuth, ou créez un jeton personnel pour les clients qui exigent des identifiants manuels.",
   "@settingsMcpDescription": {
     "description": "Web path: settings.mcp.description",
     "x-webPath": "settings.mcp.description"
+  },
+  "settingsMcpOauthTitle": "Se connecter avec OAuth",
+  "@settingsMcpOauthTitle": {
+    "description": "Web path: settings.mcp.oauthTitle",
+    "x-webPath": "settings.mcp.oauthTitle"
+  },
+  "settingsMcpOauthDescription": "Saisissez l'URL de connexion dans un outil compatible MCP OAuth. AssetPilot ouvrira une page sécurisée de connexion et de consentement, sans jeton manuel.",
+  "@settingsMcpOauthDescription": {
+    "description": "Web path: settings.mcp.oauthDescription",
+    "x-webPath": "settings.mcp.oauthDescription"
   },
   "settingsMcpCreateNew": "Créer un nouveau jeton",
   "@settingsMcpCreateNew": {

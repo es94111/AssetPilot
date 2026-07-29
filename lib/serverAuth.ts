@@ -1,6 +1,7 @@
 // lib/serverAuth.ts - Next.js App Router server-side auth helpers
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
+import { safeOAuthReturnTo } from './loginReturn';
 import { verifyToken } from './auth';
 import { queryOne } from './db';
 import { verifyLoginSession } from './sessionHelpers';
@@ -37,10 +38,14 @@ function asUserRow(row: Record<string, string | number | null> | null): UserRow 
 /**
  * Validate authToken cookie, redirecting to /login on failure.
  */
-export async function requireServerAuth(): Promise<ServerUser> {
+export async function requireServerAuth(returnTo?: string): Promise<ServerUser> {
+  const safeReturnTo = safeOAuthReturnTo(returnTo);
+  const loginUrl = safeReturnTo
+    ? `/login?returnTo=${encodeURIComponent(safeReturnTo)}`
+    : '/login';
   const cookieStore = await cookies();
   const token = cookieStore.get('authToken')?.value;
-  if (!token) redirect('/login');
+  if (!token) redirect(loginUrl);
   let userId: string;
   let tokenVersion: number;
   let sessionId = '';
@@ -50,15 +55,15 @@ export async function requireServerAuth(): Promise<ServerUser> {
     tokenVersion = Number(d.tokenVersion) || 0;
     sessionId = d.sessionId ? String(d.sessionId) : '';
   } catch {
-    redirect('/login');
+    redirect(loginUrl);
   }
   const user = asUserRow(queryOne(
     'SELECT id, email, display_name, is_admin, admin_role, theme_mode, token_version FROM users WHERE id = ?',
     [userId]
   ));
-  if (!user) redirect('/login');
-  if (tokenVersion !== (Number(user.token_version) || 0)) redirect('/login');
-  if (!verifyLoginSession(userId, sessionId, token)) redirect('/login');
+  if (!user) redirect(loginUrl);
+  if (tokenVersion !== (Number(user.token_version) || 0)) redirect(loginUrl);
+  if (!verifyLoginSession(userId, sessionId, token)) redirect(loginUrl);
   return {
     id: user.id,
     email: user.email,

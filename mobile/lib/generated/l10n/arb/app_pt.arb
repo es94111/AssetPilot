@@ -6635,10 +6635,20 @@
     "description": "Web path: settings.mcp.title",
     "x-webPath": "settings.mcp.title"
   },
-  "settingsMcpDescription": "Crie um token de acesso pessoal para que ferramentas de IA compatíveis com MCP, como ChatGPT ou Claude, possam consultar seus dados financeiros somente leitura.",
+  "settingsMcpDescription": "Conecte ferramentas de IA compatíveis com MCP via OAuth ou crie um token pessoal para clientes que exigem credenciais manuais.",
   "@settingsMcpDescription": {
     "description": "Web path: settings.mcp.description",
     "x-webPath": "settings.mcp.description"
+  },
+  "settingsMcpOauthTitle": "Conectar com OAuth",
+  "@settingsMcpOauthTitle": {
+    "description": "Web path: settings.mcp.oauthTitle",
+    "x-webPath": "settings.mcp.oauthTitle"
+  },
+  "settingsMcpOauthDescription": "Insira a URL de conexão em uma ferramenta compatível com MCP OAuth. O AssetPilot abrirá uma página segura de login e consentimento, sem exigir token manual.",
+  "@settingsMcpOauthDescription": {
+    "description": "Web path: settings.mcp.oauthDescription",
+    "x-webPath": "settings.mcp.oauthDescription"
   },
   "settingsMcpCreateNew": "Criar nova credencial",
   "@settingsMcpCreateNew": {

@@ -236,7 +236,9 @@ export const fr = {
     },
     mcp: {
       title: "Paramètres de connexion MCP",
-      description: "Créez un jeton d'accès personnel pour que les outils d'IA compatibles MCP comme ChatGPT ou Claude puissent consulter vos données financières en lecture seule.",
+      description: "Connectez les outils d'IA compatibles MCP via OAuth, ou créez un jeton personnel pour les clients qui exigent des identifiants manuels.",
+      oauthTitle: "Se connecter avec OAuth",
+      oauthDescription: "Saisissez l'URL de connexion dans un outil compatible MCP OAuth. AssetPilot ouvrira une page sécurisée de connexion et de consentement, sans jeton manuel.",
       createNew: "Créer un nouveau jeton",
       nameLabel: "Nom",
       namePlaceholder: "ex. Mon ChatGPT",

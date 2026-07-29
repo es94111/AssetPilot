@@ -4399,7 +4399,14 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get settingsMcpDescription =>
-      'Créez un jeton d\'accès personnel pour que les outils d\'IA compatibles MCP comme ChatGPT ou Claude puissent consulter vos données financières en lecture seule.';
+      'Connectez les outils d\'IA compatibles MCP via OAuth, ou créez un jeton personnel pour les clients qui exigent des identifiants manuels.';
+
+  @override
+  String get settingsMcpOauthTitle => 'Se connecter avec OAuth';
+
+  @override
+  String get settingsMcpOauthDescription =>
+      'Saisissez l\'URL de connexion dans un outil compatible MCP OAuth. AssetPilot ouvrira une page sécurisée de connexion et de consentement, sans jeton manuel.';
 
   @override
   String get settingsMcpCreateNew => 'Créer un nouveau jeton';

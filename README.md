@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-4.96.0-blue" alt="version">
+  <img src="https://img.shields.io/badge/version-4.97.0-blue" alt="version">
   <img src="https://img.shields.io/badge/node-%3E%3D24-brightgreen" alt="node">
   <img src="https://img.shields.io/badge/next.js-16.x-000000" alt="next.js">
   <img src="https://img.shields.io/badge/openapi-3.2.0-6BA539" alt="openapi">
@@ -120,11 +120,13 @@
 - **路由稽核模式**（v4.29.0）：security（預設）/ extended（含 401 session 失效）/ minimal（路由稽核全部關閉）
 - **API 使用與授權頁**：動態列出所有外部 API 來源、配額、合規授權字樣（IPinfo `IP address data is powered by IPinfo`）
 
-### AI 助理整合（v4.96.0）
+### AI 助理整合（v4.97.0）
 
-- **MCP 連線**：使用者可在「設定 → MCP 連線」自行建立個人化連線金鑰，讓 ChatGPT、Claude 等支援 Model Context Protocol 標準的 AI 助理以自然語言唯讀查詢自己的交易、帳戶、預算、股票持股與損益等財務資料
-- **憑證自助管理**：可自訂名稱、選填到期時間，隨時檢視啟用 / 過期 / 已撤銷狀態並一鍵撤銷，撤銷後立即失效
+- **MCP OAuth 連線**：在 ChatGPT、Claude 等支援 MCP OAuth 的 AI 工具中輸入 `https://<你的網域>/api/mcp`，即可透過瀏覽器登入 AssetPilot、確認唯讀權限並完成連線；支援 Protected Resource Metadata、Authorization Server Metadata、Client ID Metadata Documents、public-client Dynamic Client Registration、Authorization Code + PKCE S256 與 rotating refresh token
+- **PAT 相容模式**：不支援 OAuth 的 client 仍可在「設定 → MCP 連線」建立個人化連線金鑰；可自訂名稱、選填到期時間，並隨時檢視或撤銷
 - **查詢稽核**：每次 AI 助理查詢皆記錄於既有操作稽核日誌，含時間與憑證名稱，不含實際查得的金額或明細
+
+正式環境啟用 MCP OAuth 前，必須將 `APP_URL` 設為對外 HTTPS origin（例如 `https://asset.example.com`）。OAuth access token 只對該 origin 的 `/api/mcp` 有效；本機開發才允許 loopback HTTP。
 
 ---
 
@@ -285,7 +287,7 @@ Docker 多數參數已有合理預設，重點關注「自動產生」與「功�
 | `ZEABUR_FROM_EMAIL` | 寄信 | Zeabur Email 寄件人，須為已驗證寄件網域 | — |
 | `RESEND_API_KEY` | 寄信 | [Resend](https://resend.com/api-keys) API Key | — |
 | `RESEND_FROM_EMAIL` | 寄信 | Resend 寄件人，須為已驗證網域信箱 | — |
-| `APP_URL` | 寄信 | 對外網址，用於信件 CTA 按鈕（留空則隱藏） | — |
+| `APP_URL` | MCP OAuth / 寄信 | 正式環境的對外 HTTPS origin；MCP OAuth 用來固定 issuer、redirect 與 `/api/mcp` resource audience，寄信 CTA 也會使用 | — |
 
 > 💡 **寄信通道**（v4.30.0 起）一律由環境變數設定。`EMAIL_PROVIDER_PRIMARY` 留空則寄信功能停用；`EMAIL_PROVIDER_FALLBACK` 僅在 primary 執行期失敗時觸發（不重試、不補寄）。對應通道的設定變數需配合補齊（例：選 `smtp` 需設 `SMTP_HOST` 等；選 `zeabur` 需設 `ZEABUR_API_KEY` 與 `ZEABUR_FROM_EMAIL`）。
 
@@ -485,6 +487,7 @@ Webhook 回覆使用 LINE Flex Message Button：未綁定時顯示「綁定 LINE
 | Cloudflare API Shield | OpenAPI 3.2.0 Schema（`openapi.yaml`），可啟用請求驗證 |
 | CORS 控制 | `ALLOWED_ORIGINS` 白名單 |
 | OAuth 防 CSRF | Google / LINE 登入使用一次性 state；LINE 額外使用 nonce 驗證 ID Token |
+| MCP OAuth 2.1 | Authorization Code + PKCE S256、精確 redirect URI、`resource` audience binding、短效 opaque access token、refresh rotation/replay family revoke；token/code 僅存 SHA-256 |
 | `?next=` 開放重定向防護 | 5 條規則白名單：相對路徑 / 拒 protocol-relative / 拒 `://` / pathname 必須命中前端 ROUTES 表 |
 | 路徑遊走偵測 | catch-all 偵測 `..` / `%2e%2e` / `%252e%252e`；寫稽核日誌 |
 | Admin path 攔截 | 後端維護 `ADMIN_ONLY_PATHS` 常數陣列；非管理員命中時寫稽核並由前端渲染 404 訊息頁 |

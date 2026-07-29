@@ -106,7 +106,7 @@ export async function POST(request: Request) {
     try { backfillDefaultsForUser(loginUser.id); } catch (e) { console.error('[backfill]', e); }
 
     const { token } = createLoginSession(loginUser.id, Number(user.token_version) || 0, headers);
-    const response = NextResponse.json({ user: formatUser(user), currentLogin });
+    const response = NextResponse.json({ user: formatUser(user), currentLogin, returnTo: stateEntry.returnTo });
     return setAuthCookie(response, token);
   } catch (e) {
     const message = e instanceof Error ? e.message : '未知錯誤';

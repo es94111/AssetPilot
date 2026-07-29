@@ -39,8 +39,12 @@ export default function McpSettingsClient() {
 
   const [newToken, setNewToken] = useState('');
   const [copied, setCopied] = useState(false);
+  const [oauthCopied, setOauthCopied] = useState(false);
+  const [connectionUrl, setConnectionUrl] = useState('/api/mcp');
 
-  const connectionUrl = typeof window !== 'undefined' ? `${window.location.origin}/api/mcp` : '/api/mcp';
+  useEffect(() => {
+    setConnectionUrl(`${window.location.origin}/api/mcp`);
+  }, []);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -88,6 +92,14 @@ export default function McpSettingsClient() {
     }
   }
 
+  async function handleOAuthCopy() {
+    try {
+      await navigator.clipboard.writeText(connectionUrl);
+    } finally {
+      setOauthCopied(true);
+    }
+  }
+
   async function handleRevoke(id: string) {
     if (!confirm(ta('revokeConfirm'))) return;
     setListMsg('');
@@ -103,6 +115,19 @@ export default function McpSettingsClient() {
     <div className="space-y-6">
       <h2 className="text-2xl font-bold">{ta('title')}</h2>
       <p className="text-sm text-slate-500">{ta('description')}</p>
+
+      <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-xl shadow-sm">
+        <h3 className="text-lg font-semibold mb-2">{ta('oauthTitle')}</h3>
+        <p className="text-sm text-slate-500 mb-4">{ta('oauthDescription')}</p>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <code className="min-w-0 flex-1 p-3 bg-slate-100 dark:bg-slate-800 rounded-md text-xs break-all">
+            {connectionUrl}
+          </code>
+          <Button onClick={handleOAuthCopy} variant="outline">
+            {oauthCopied ? ta('copied') : ta('copyButton')}
+          </Button>
+        </div>
+      </div>
 
       <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-xl shadow-sm">
         <h3 className="text-lg font-semibold mb-4">{ta('createNew')}</h3>

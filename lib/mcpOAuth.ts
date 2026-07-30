@@ -216,7 +216,9 @@ async function fetchPinnedClientMetadata(clientId: string): Promise<{ body: unkn
   if (addresses.length === 0 || addresses.some((entry) => !isPublicMetadataIp(entry.address))) {
     throw new McpOAuthError('invalid_client', 'Client metadata hostname does not resolve exclusively to public addresses');
   }
-  const selected = addresses[0];
+  // 部署環境（Zeabur）容器只有 IPv4 對外路由；dns.lookup 的 verbatim 順序可能把 AAAA 排在前面，
+  // 若直接取 addresses[0] 連到 IPv6 位址會 Network unreachable，因此優先挑 IPv4。
+  const selected = [...addresses].sort((a, b) => a.family - b.family)[0];
 
   return await new Promise((resolve, reject) => {
     const request = https.request(

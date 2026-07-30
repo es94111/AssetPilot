@@ -229,7 +229,14 @@ async function fetchPinnedClientMetadata(clientId: string): Promise<{ body: unkn
           Accept: 'application/json',
           'User-Agent': 'AssetPilot-MCP-OAuth/1.0',
         },
-        lookup: (_hostname, _options, callback) => {
+        // Node 的 Happy Eyeballs（autoSelectFamily）在偵測到雙棧位址時，會以 { all: true }
+        // 呼叫 lookup 並預期回傳位址陣列；只回傳單一位址／family 會讓內部 lookupAndConnectMultiple
+        // 讀到 undefined 而丟出 ERR_INVALID_IP_ADDRESS，導致固定住的 IPv4 選擇形同虛設。
+        lookup: (_hostname, options, callback) => {
+          if (options && typeof options === 'object' && 'all' in options && options.all) {
+            callback(null, [{ address: selected.address, family: selected.family }]);
+            return;
+          }
           callback(null, selected.address, selected.family);
         },
       },

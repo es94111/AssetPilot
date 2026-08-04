@@ -57,7 +57,7 @@ pnpm-debug.log*
 # ==========================================
 # Node.js / React / Next.js
 # ==========================================
-# 存放專案所有的相依套件，體積龐大且可隨時透過 package.json 
+# 存放專案所有的相依套件，體積龐大且可隨時透過 package.json
 node_modules/
 # Next.js 框架在開發伺服器運行或編譯時產生的建置資料夾
 .next/
@@ -167,8 +167,3 @@ release.jks.base64.txt
 release.jks
 data_safety_sample.csv
 .codex/config.toml
-.gitignore
-.gitignore
-.gitignore
-.gitignore
-.gitignore

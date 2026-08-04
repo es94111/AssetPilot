@@ -123,7 +123,34 @@ export function listTransactionAttachments(userId: string, transactionId: string
 export function assertImageUpload(input: { size: number; type?: string; mimeType?: string }) {
   if (!input || input.size <= 0) throw new Error('照片檔案無效');
   if (input.size > maxPhotoBytes()) throw new Error(`照片不可超過 ${Math.round(maxPhotoBytes() / 1024 / 1024)} MB`);
-  if (!String(input.type || input.mimeType || '').startsWith('image/')) throw new Error('只支援圖片檔案');
+  const declared = String(input.type || input.mimeType || '').toLowerCase();
+  if (!declared.startsWith('image/')) throw new Error('只支援圖片檔案');
+  // SVG 可內嵌 script，若以 inline 顯示會在瀏覽器於本站 origin 執行，一律拒絕。
+  if (declared === 'image/svg+xml') throw new Error('不支援 SVG 檔案');
+}
+
+// 點陣圖格式 magic bytes 偵測（不含 SVG——SVG 為可內嵌 script 的向量格式，一律拒絕）。
+// 上傳端只信任內容本身，不信任用戶端自報的 Content-Type。
+const RASTER_MAGIC_PATTERNS: Array<{ mime: string; match: (b: Buffer) => boolean }> = [
+  { mime: 'image/jpeg', match: (b) => b.length >= 3 && b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff },
+  {
+    mime: 'image/png',
+    match: (b) => b.length >= 8 && b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47
+      && b[4] === 0x0d && b[5] === 0x0a && b[6] === 0x1a && b[7] === 0x0a,
+  },
+  { mime: 'image/gif', match: (b) => b.length >= 6 && (b.toString('latin1', 0, 6) === 'GIF87a' || b.toString('latin1', 0, 6) === 'GIF89a') },
+  { mime: 'image/webp', match: (b) => b.length >= 12 && b.toString('latin1', 0, 4) === 'RIFF' && b.toString('latin1', 8, 12) === 'WEBP' },
+  { mime: 'image/avif', match: (b) => b.length >= 12 && b.toString('latin1', 4, 8) === 'ftyp' && (b.toString('latin1', 8, 12) === 'avif' || b.toString('latin1', 8, 12) === 'avis') },
+  { mime: 'image/heic', match: (b) => b.length >= 12 && b.toString('latin1', 4, 8) === 'ftyp' && ['heic', 'heix', 'hevc', 'hevx'].includes(b.toString('latin1', 8, 12)) },
+];
+
+// 以 magic bytes 驗證照片內容確實為點陣圖，回傳偵測到的 MIME type 作為權威值
+// （取代用戶端自報值，避免 stored XSS 前置條件）。無法辨識的內容一律拒絕。
+export function detectRasterImageMime(body: Buffer): string {
+  for (const pattern of RASTER_MAGIC_PATTERNS) {
+    if (pattern.match(body)) return pattern.mime;
+  }
+  throw new Error('照片內容無法辨識為點陣圖（不支援 SVG 或其他檔案格式）');
 }
 
 async function saveLocalPhoto(userId: string, transactionId: string, id: string, filename: string, body: Buffer) {
@@ -147,8 +174,9 @@ async function saveS3Photo(userId: string, transactionId: string, id: string, fi
 
 export async function saveTransactionPhotoBuffer(userId: string, transactionId: string, storage: AttachmentStorage, input: TransactionPhotoInput): Promise<AttachmentUploadResult> {
   const filename = input.filename || 'photo.jpg';
-  const mimeType = input.mimeType || 'application/octet-stream';
-  assertImageUpload({ size: input.body.length, mimeType });
+  assertImageUpload({ size: input.body.length, mimeType: input.mimeType });
+  // 內容驗證：以 magic bytes 確認實際為點陣圖，並以偵測結果取代用戶端自報的 MIME type。
+  const mimeType = detectRasterImageMime(input.body);
   const id = uid();
   const now = Date.now();
   const db = getDB();

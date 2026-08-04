@@ -55,7 +55,9 @@
   "overrides": {
     "postcss": "^8.5.18",
     "uuid": "^14.0.1",
-    "sharp": "^0.35.3"
+    "sharp": "^0.35.3",
+    "fast-uri": "^3.1.5",
+    "hono": "^4.12.34"
   },
   "devDependencies": {
     "@types/node": "^26.1.1",

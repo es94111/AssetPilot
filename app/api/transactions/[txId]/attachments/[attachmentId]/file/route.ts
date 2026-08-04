@@ -7,6 +7,12 @@ export const runtime = 'nodejs';
 
 type RouteContext = { params: Promise<{ txId: string; attachmentId: string }> };
 
+// 僅允許可安全 inline 顯示的點陣圖 MIME；其餘（SVG、未知類型等）一律以 attachment +
+// application/octet-stream 下載，避免瀏覽器於本站 origin 執行 SVG 內嵌 script。
+const INLINE_SAFE_IMAGE_TYPES = new Set([
+  'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/avif', 'image/heic', 'image/tiff',
+]);
+
 export async function GET(request: NextRequest, { params }: RouteContext) {
   const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
@@ -20,11 +26,14 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
 
   try {
     const file = await readTransactionAttachment(row);
+    const mimeType = file.mimeType || 'application/octet-stream';
+    const inlineSafe = INLINE_SAFE_IMAGE_TYPES.has(mimeType.toLowerCase());
     return new NextResponse(new Uint8Array(file.body), {
       status: 200,
       headers: {
-        'Content-Type': file.mimeType,
-        'Content-Disposition': `inline; filename="${encodeURIComponent(file.filename)}"`,
+        'Content-Type': inlineSafe ? mimeType : 'application/octet-stream',
+        'Content-Disposition': `${inlineSafe ? 'inline' : 'attachment'}; filename="${encodeURIComponent(file.filename)}"`,
+        'X-Content-Type-Options': 'nosniff',
         'Cache-Control': 'private, max-age=300',
       },
     });

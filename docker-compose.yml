@@ -6,7 +6,7 @@ services:
     environment:
       - POSTGRES_DB=assetpilot
       - POSTGRES_USER=assetpilot
-      - POSTGRES_PASSWORD=assetpilot
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-assetpilot}
     volumes:
       - assetpilot-postgres:/var/lib/postgresql/data
 
@@ -26,7 +26,7 @@ services:
       - PORT=3000
       - HOSTNAME=0.0.0.0
       - NEXT_TELEMETRY_DISABLED=1
-      - DATABASE_URL=postgres://assetpilot:assetpilot@postgres:5432/assetpilot
+      - DATABASE_URL=${DATABASE_URL:-postgres://assetpilot:assetpilot@postgres:5432/assetpilot}
       - ENV_PATH=/app/data/.env
       - SSL_PATH=/app/data/SSL
       - JWT_EXPIRES=7d

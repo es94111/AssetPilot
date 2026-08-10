@@ -30,6 +30,7 @@ services:
       - ENV_PATH=/app/data/.env
       - SSL_PATH=/app/data/SSL
       - JWT_EXPIRES=7d
+      - APP_JWT_EXPIRES=90d
       - GOOGLE_CLIENT_ID=
       # JWT_SECRET 首次啟動自動產生並寫入 /app/data/.env
 

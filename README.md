@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-4.97.5-blue" alt="version">
+  <img src="https://img.shields.io/badge/version-4.97.6-blue" alt="version">
   <img src="https://img.shields.io/badge/node-%3E%3D24-brightgreen" alt="node">
   <img src="https://img.shields.io/badge/next.js-16.x-000000" alt="next.js">
   <img src="https://img.shields.io/badge/openapi-3.2.0-6BA539" alt="openapi">
@@ -249,7 +249,8 @@ Docker 多數參數已有合理預設，重點關注「自動產生」與「功�
 | `PORT` | 基本 | 伺服器埠號 | `3000` |
 | `DATABASE_URL` / `POSTGRES_URL` | 基本 | PostgreSQL 連線字串 | — |
 | `POSTGRES_SYNC_RESULT_BUFFER_BYTES` | 選配 | PostgreSQL 同步相容層單次查詢結果緩衝大小 | `67108864` |
-| `JWT_EXPIRES` | 基本 | JWT 有效期限 | `7d` |
+| `JWT_EXPIRES` | 基本 | 瀏覽器登入 JWT 有效期限 | `7d` |
+| `APP_JWT_EXPIRES` | 基本 | 行動 App 登入 JWT 有效期限（Token 存於裝置端加密儲存） | `90d` |
 | `JWT_SECRET` | 🔑 自動 | JWT 簽章金鑰，64 字元 hex（首次啟動自動產生） | — |
 | `ENV_PATH` | 🔑 自動 | 自動產生金鑰的存放路徑 | `/app/data/.env` |
 | `GOOGLE_CLIENT_ID` | SSO | Google OAuth 2.0 Client ID（留空停用 SSO） | — |

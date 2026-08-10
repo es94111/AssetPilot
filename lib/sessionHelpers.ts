@@ -26,7 +26,7 @@ export function detectDeviceName(userAgent: string): string {
   return browser ? `${platform} / ${browser}` : platform;
 }
 
-function getTokenExpiresAt(token: string): number {
+export function getTokenExpiresAt(token: string): number {
   const payload = token.split('.')[1] || '';
   try {
     const decoded = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'));
@@ -38,9 +38,9 @@ function getTokenExpiresAt(token: string): number {
 
 export function createLoginSession(userId: string, tokenVersion: number, headers: HeadersLike): { token: string; sessionId: string } {
   const sessionId = uid();
-  const token = signToken(userId, tokenVersion, sessionId);
-  const userAgent = getUserAgentFromHeaders(headers);
   const appDeviceId = getAppDeviceIdFromHeaders(headers);
+  const token = signToken(userId, tokenVersion, sessionId, !!appDeviceId);
+  const userAgent = getUserAgentFromHeaders(headers);
   const now = Date.now();
   getDB().run(
     `INSERT INTO login_sessions (id, user_id, token_hash, device_name, ip_address, user_agent, device_id, login_at, last_seen_at, expires_at, revoked_at)

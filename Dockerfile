@@ -36,6 +36,7 @@ ENV HOSTNAME=0.0.0.0
 ENV ENV_PATH=/app/data/.env
 ENV SSL_PATH=/app/data/SSL
 ENV JWT_EXPIRES=7d
+ENV APP_JWT_EXPIRES=90d
 ENV GOOGLE_CLIENT_ID=
 
 # 建立非 root 使用者執行 Next.js（best practice）

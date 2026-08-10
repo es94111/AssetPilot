@@ -9,3 +9,8 @@ paths = [
   '''^\.next/''',
   '''^build/''',
 ]
+regexes = [
+  # flutter_secure_storage 固定前綴常數，非機密值；歷史 commit（新增當下未加 gitleaks:allow 行內註解）在
+  # scheduled/full-history 掃描仍會被 generic-api-key 誤判，故改用全域 regex allowlist 涵蓋所有出現處。
+  '''VGhpcyBpcyB0aGUgcHJlZml4IGZvciBhIHNlY3VyZSBzdG9yYWdlCg''',
+]

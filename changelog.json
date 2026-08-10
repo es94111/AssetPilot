@@ -1,6 +1,18 @@
 {
-  "currentVersion": "4.97.5",
+  "currentVersion": "4.97.6",
   "releases": [
+    {
+      "version": "4.97.6",
+      "date": "2026-08-10",
+      "title": "行動 App 登入效期延長為 90 天",
+      "type": "improved",
+      "changes": [
+        {
+          "tag": "improved",
+          "text": "行動 App（Android／iOS）登入效期由 7 天延長為 90 天，減少使用一段時間後就要重新輸入帳密登入的困擾；透過瀏覽器登入的效期維持不變。"
+        }
+      ]
+    },
     {
       "version": "4.97.5",
       "date": "2026-08-04",

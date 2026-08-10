@@ -1,7 +1,7 @@
 # 資產管理 系統規格說明書 (SSD)
 
-**版本：** 4.97.5
-**日期：** 2026-08-04
+**版本：** 4.97.6
+**日期：** 2026-08-10
 **狀態：** 已實作
 
 ---
@@ -105,7 +105,7 @@
 
 註冊表單要求電子郵件格式正確、密碼符合強密碼規則（至少 8 字元且含大小寫字母、數字、特殊符號），並且該電子郵件尚未被使用。送出成功後系統會自動登入、建立預設分類（含子分類）與預設帳戶（現金），使用者可立即開始記帳。Google SSO 若遇到新帳號會同樣自動建立（含預設資料），密碼欄位填入隨機雜湊，意味著該帳號之後只能透過 Google 登入；之後使用者仍可在帳號設定補設本機密碼以恢復帳密登入能力。
 
-登入成功會發放 JWT Token，存於 httpOnly Cookie（防 XSS 竊取），搭配 `SameSite=Strict` 屬性（防 CSRF），有效期由 `JWT_EXPIRES` 環境變數統一控制。登出會呼叫後端 `/api/auth/logout` 清除目前裝置的 Cookie，不影響其他裝置的登入狀態；修改密碼與管理員重設密碼才會透過 `token_version` 更新撤銷既有 Token。登入 API 回傳 `currentLogin`，讓前端立即顯示本次登入資訊。
+登入成功會發放 JWT Token，瀏覽器端存於 httpOnly Cookie（防 XSS 竊取），搭配 `SameSite=Strict` 屬性（防 CSRF），有效期由 `JWT_EXPIRES` 環境變數控制（預設 7 天）；行動 App 端 Token 存於裝置端加密儲存，有效期改由獨立的 `APP_JWT_EXPIRES` 環境變數控制（預設 90 天），後端依請求是否帶有 App 專屬裝置識別 header 判斷要套用哪一組效期。登出會呼叫後端 `/api/auth/logout` 清除目前裝置的 Cookie，不影響其他裝置的登入狀態；修改密碼與管理員重設密碼才會透過 `token_version` 更新撤銷既有 Token。登入 API 回傳 `currentLogin`，讓前端立即顯示本次登入資訊。
 
 #### Passkey（WebAuthn）
 
@@ -537,7 +537,7 @@ CSV 內容經過 Formula Injection 防護處理（以 `=`、`+`、`-`、`@` 開�
 #### 安全
 
 - 密碼 bcryptjs 加密；強密碼規則統一（大寫、小寫、數字、特殊符號、≥ 8 字元）
-- JWT Token 存 httpOnly + `SameSite=Strict` Cookie，由 `JWT_EXPIRES` 控制有效期
+- JWT Token 存 httpOnly + `SameSite=Strict` Cookie（瀏覽器）或裝置端加密儲存（行動 App），有效期分別由 `JWT_EXPIRES`（預設 7 天）／`APP_JWT_EXPIRES`（預設 90 天）控制
 - `token_version` 欄位支援 Token 撤銷
 - 所有 API 端點（除 auth 相關與 `/api/config`）套用 authMiddleware
 - 系統更新與管理員 API 僅允許 admin 身分呼叫
@@ -987,6 +987,7 @@ API 路徑統一以 `/api/` 為前綴。所有需認證的路由自動套用 aut
 
 | 版本 | 日期 | 變更說明 |
 | --- | --- | --- |
+| 4.97.6 | 2026-08-10 | 行動 App 登入 Token 效期由與網頁共用的 `JWT_EXPIRES`（預設 7 天）改為獨立的 `APP_JWT_EXPIRES`（預設 90 天，可由環境變數覆蓋），`lib/sessionHelpers.ts` 的 `createLoginSession()` 依既有 `X-AssetPilot-Device-Id` header 判斷是否為 App 登入（App 端每次請求皆會帶入該 header）並傳入 `lib/auth.ts` 的 `signToken()` 決定簽發效期；瀏覽器登入行為不變。順手修正 `lib/apiHelpers.ts` 的 `setAuthCookie()` 原本把 Cookie `maxAge` 寫死 7 天、未跟隨 Token 實際效期的問題，改為依 Token 的 `exp` claim 動態計算（匯出 `sessionHelpers.ts` 的 `getTokenExpiresAt()` 供其重用），避免日後 `JWT_EXPIRES`／`APP_JWT_EXPIRES` 調整時 Cookie 效期與 Token 實際效期不一致。`.env.example`／`README.md`／`docker-compose.yml`／`Dockerfile` 同步新增 `APP_JWT_EXPIRES` 說明與預設值。驗證：`npx tsc --noEmit` 對本次變更檔案無新增錯誤；`npm test` 通過（`check:i18n` staleness 為既有本機問題，與本次無關）。 |
 | 4.97.5 | 2026-08-04 | 安全性強化：修補 `npm audit` 回報的 2 個傳遞相依漏洞（`fast-uri` GHSA-7p8r-x3mc-p8w7 High、`hono` GHSA-8j4g-w8fx-2239 Moderate，皆經由 `@modelcontextprotocol/sdk@1.30.0` 引入），於 `package.json` `overrides` 釘 `fast-uri@^3.1.5`／`hono@^4.12.34`，`npm audit` 歸零。交易照片上傳改以 magic bytes 驗證實際內容為點陣圖（新增 `lib/transactionAttachments.ts` 的 `detectRasterImageMime()`，拒絕 SVG／無法辨識內容，`assertImageUpload` 明確拒絕 `image/svg+xml`），DB 儲存 MIME type 以偵測結果取代用戶端自報值；下載端 `app/api/transactions/[txId]/attachments/[attachmentId]/file/route.ts` 僅對白名單內點陣圖 MIME 使用 `inline`，其餘一律 `attachment`＋`application/octet-stream`，並補 `X-Content-Type-Options: nosniff`，消除 stored XSS 前置條件。`nginx.conf` 兩個 location 新增 `proxy_set_header X-Forwarded-For $remote_addr`（覆寫防偽造）／`X-Real-IP $remote_addr`／`X-Forwarded-Proto $scheme`，使 `middleware.ts` 的每 IP 速率限制不再被用戶端自報 XFF 繞過或落入共用 `'unknown'` 桶。`docker-compose.yml` 的 `POSTGRES_PASSWORD` 與 `DATABASE_URL` 改為環境變數插值（保留本機預設值），移除固定資料庫憑證。驗證：`npm audit`（含 dev）0 vulnerabilities；`npm run typecheck` 通過；`npm test` 全數通過（`check:i18n` staleness 為 Windows 本機既有問題，與本次無關）；`docker compose config` VALID；`detectRasterImageMime` 功能測試 JPEG/PNG/WebP 接受、SVG/HTML/亂碼拒絕。 |
 | 4.97.4 | 2026-07-30 | 修正 MCP OAuth 授權端點（`app/api/oauth/authorize/route.ts`）在使用者點擊「允許連線」後，仍會被瀏覽器 CSP `form-action 'self'`（`next.config.ts` 全站設定）擋下重導向的獨立成因，與先前 3 個版本修正的 CIMD／Happy Eyeballs／`iss` 參數成因均不同。根因：`/oauth/authorize` 的同意畫面是一般 `<form method="post" action="/api/oauth/authorize">`，伺服器驗證通過並核發一次性 authorization code 後，原本以 HTTP 303 `Location` 導回用戶端跨網域的 `redirect_uri`（例如 ChatGPT connector 的 `https://chatgpt.com/connector/oauth/...`）；Chrome／Firefox／Safari 對「表單送出後的重導向」仍會用原表單頁的 `form-action` 檢查目標網域，該網域未在允許清單中，瀏覽器因而靜默擋下該次導頁（僅在 DevTools console 顯示 CSP violation，畫面完全沒有反應），已核發的 code 從未送達用戶端即逾期作廢，使用者點擊同意後看不到任何回應也無法返回發起連線的 AI 工具。修法：`redirectWithOAuthResult()` 改為回傳 200 HTML（`<meta http-equiv="refresh">` + 備援連結）取代 HTTP 3xx，導頁改由已落地的同源頁面自行發起，不再落在原表單的 `form-action` 重導向鏈中，全站 CSP 設定不需變動；成功／拒絕／錯誤三種導頁路徑皆比照修正，並對插入的目標網址做 HTML escape。驗證：`npx tsc --noEmit` 無新增錯誤；`npm run test:mcp-oauth`（12/12）通過。 |
 | 4.97.3 | 2026-07-30 | 修正 MCP OAuth `fetchPinnedClientMetadata()`（`lib/mcpOAuth.ts`）在 4.97.2 IPv4 優先修正之外仍會失敗的獨立成因。根因：傳給 `https.request()` 的自訂 `lookup` 只實作舊式單一位址 callback（`callback(null, address, family)`）；Node.js（正式環境為 v24）的 Happy Eyeballs（`autoSelectFamily`，預設開啟）偵測到目標主機同時有 A/AAAA 記錄（dual-stack）時，會以 `{ all: true }` 呼叫 `lookup` 並預期回傳位址陣列，內部 `lookupAndConnectMultiple` 收到非陣列值會讀到 `undefined` 並丟出 `TypeError [ERR_INVALID_IP_ADDRESS]: Invalid IP address: undefined`，被 `fetchPinnedClientMetadata()` 的錯誤處理吞掉後仍顯示「無法授權 MCP 連線／Unable to retrieve client metadata document」。以使用者回報的 ChatGPT connector 實際 client_id（`https://chatgpt.com/oauth/{id}/client.json`，`chatgpt.com` 同時解析出 IPv4 與 IPv6）為樣本，用 `npx zeabur@latest service exec` 進入正式環境容器執行對照腳本重現：舊版 `lookup` 對該主機必定拋出上述 TypeError；即使已依 4.97.2 邏輯優先選出 IPv4 位址，只要主機是 dual-stack 就會觸發此問題，與用戶端（Claude／ChatGPT 等）無關。修法：`lookup` 依傳入的 `options.all` 決定回傳格式——為 `true` 時回傳 `[{ address, family }]` 陣列，否則沿用單一位址／family 的舊式 callback；已釘選的單一位址與 SSRF「僅接受公開 IP」驗證邏輯不變。修正後以同一支對照腳本對該 client_id 重測，成功取得 200 JSON。驗證：`npx tsc --noEmit` 無新增錯誤；`npm run test:mcp-oauth`（12/12）通過。 |

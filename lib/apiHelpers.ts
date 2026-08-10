@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { requireAuth as getAuth } from './auth';
 import { verifyToken } from './auth';
 import { queryOne } from './db';
-import { verifyLoginSession } from './sessionHelpers';
+import { verifyLoginSession, getTokenExpiresAt } from './sessionHelpers';
 import { processRecurringForUser } from './recurringHelpers';
 import { todayInUserTz } from './userTime';
 import { getRequestIpFromHeaders, getSystemSettings, normalizeIp } from './loginHelpers';
@@ -228,12 +228,16 @@ export function formatUser(user: any) {
 }
 
 export function setAuthCookie(response: any, token: string) {
+  // Cookie 的 maxAge 需跟著 Token 實際效期走（App 登入為 90 天、瀏覽器登入為 JWT_EXPIRES），
+  // 避免固定寫死 7 天導致效期較長的 Token 被瀏覽器提前丟棄 Cookie。
+  const expiresAt = getTokenExpiresAt(token);
+  const maxAge = expiresAt > Date.now() ? Math.round((expiresAt - Date.now()) / 1000) : 7 * 24 * 60 * 60;
   response.cookies.set('authToken', token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'strict',
     path: '/',
-    maxAge: 7 * 24 * 60 * 60,
+    maxAge,
   });
   return response;
 }

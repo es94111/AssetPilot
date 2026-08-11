@@ -4478,6 +4478,157 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get settingsMcpCloseConfirm => 'Copiei, fechar';
+
+  @override
+  String get adminSystemSettingsTitle => 'Configurações do sistema';
+
+  @override
+  String get adminUsersTitle => 'Gestão de usuários';
+
+  @override
+  String get adminLoginAuditTitle => 'Auditoria de login';
+
+  @override
+  String get adminPublicRegistration => 'Registro público';
+
+  @override
+  String get adminLineLoginEnabled => 'Login com LINE';
+
+  @override
+  String get adminAllowedRegistrationEmails =>
+      'Emails de registro permitidos (um por linha)';
+
+  @override
+  String get adminAdminIpAllowlist =>
+      'Lista branca de IPs de admin (uma por linha)';
+
+  @override
+  String get adminRouteAuditMode => 'Modo de auditoria';
+
+  @override
+  String get adminRouteAuditSecurity => 'Segurança';
+
+  @override
+  String get adminRouteAuditExtended => 'Estendido';
+
+  @override
+  String get adminRouteAuditMinimal => 'Mínimo';
+
+  @override
+  String get adminTransactionPhotoStorage =>
+      'Armazenamento de fotos de transações';
+
+  @override
+  String get adminPhotoStorageDefault => 'Padrão';
+
+  @override
+  String get adminPhotoStorageLocal => 'Local';
+
+  @override
+  String get adminPhotoStorageS3 => 'S3';
+
+  @override
+  String get adminTransactionPhotoMaxMb => 'Limite de fotos de transações (MB)';
+
+  @override
+  String get adminStockAutoUpdateEnabled => 'Atualização automática de preços';
+
+  @override
+  String get adminStockAutoUpdateIntervalMin =>
+      'Intervalo de atualização (minutos)';
+
+  @override
+  String get adminSaved => 'Salvo';
+
+  @override
+  String get adminOperationsTitle => 'Operações';
+
+  @override
+  String get adminRunStockUpdate => 'Atualizar preços agora';
+
+  @override
+  String get adminCompressPhotos => 'Comprimir fotos';
+
+  @override
+  String get adminEncryptPhotos => 'Criptografar fotos';
+
+  @override
+  String get adminServerTime => 'Hora do servidor';
+
+  @override
+  String get adminNtpSync => 'Sincronização NTP';
+
+  @override
+  String adminStockUpdateResult(Object updated) {
+    return '$updated preços atualizados';
+  }
+
+  @override
+  String adminPhotoCompressResult(Object recompressed) {
+    return '$recompressed fotos comprimidas';
+  }
+
+  @override
+  String adminPhotoEncryptResult(Object encrypted) {
+    return '$encrypted fotos criptografadas';
+  }
+
+  @override
+  String adminNtpSynced(Object offset) {
+    return 'Sincronizado, deslocamento $offset ms';
+  }
+
+  @override
+  String get adminAddUser => 'Adicionar usuário';
+
+  @override
+  String get adminUserCreated => 'Usuário criado';
+
+  @override
+  String get adminResetPassword => 'Redefinir senha';
+
+  @override
+  String get adminPasswordReset => 'Senha redefinida';
+
+  @override
+  String get adminRoleChanged => 'Papel atualizado';
+
+  @override
+  String get adminDeleteUser => 'Excluir usuário';
+
+  @override
+  String adminDeleteUserConfirm(Object email) {
+    return 'Excluir \"$email\"?';
+  }
+
+  @override
+  String get adminUserDeleted => 'Usuário excluído';
+
+  @override
+  String get adminNoUsers => 'Nenhum usuário ainda';
+
+  @override
+  String get adminRemoveAdmin => 'Remover admin';
+
+  @override
+  String get adminMakeAdmin => 'Tornar admin';
+
+  @override
+  String get adminPasswordTooShort =>
+      'A senha deve ter pelo menos 8 caracteres';
+
+  @override
+  String get adminNoLoginAudit => 'Nenhum registro de login ainda';
+
+  @override
+  String get adminLoginSuccess => 'Sucesso';
+
+  @override
+  String get adminLoginFailed => 'Falhou';
+
+  @override
+  String get adminScreenSubtitle =>
+      'Configurações do sistema e gestão de usuários';
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -8954,4 +9105,155 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get settingsMcpCloseConfirm => 'Copiei, fechar';
+
+  @override
+  String get adminSystemSettingsTitle => 'Configurações do sistema';
+
+  @override
+  String get adminUsersTitle => 'Gestão de usuários';
+
+  @override
+  String get adminLoginAuditTitle => 'Auditoria de login';
+
+  @override
+  String get adminPublicRegistration => 'Registro público';
+
+  @override
+  String get adminLineLoginEnabled => 'Login com LINE';
+
+  @override
+  String get adminAllowedRegistrationEmails =>
+      'Emails de registro permitidos (um por linha)';
+
+  @override
+  String get adminAdminIpAllowlist =>
+      'Lista branca de IPs de admin (uma por linha)';
+
+  @override
+  String get adminRouteAuditMode => 'Modo de auditoria';
+
+  @override
+  String get adminRouteAuditSecurity => 'Segurança';
+
+  @override
+  String get adminRouteAuditExtended => 'Estendido';
+
+  @override
+  String get adminRouteAuditMinimal => 'Mínimo';
+
+  @override
+  String get adminTransactionPhotoStorage =>
+      'Armazenamento de fotos de transações';
+
+  @override
+  String get adminPhotoStorageDefault => 'Padrão';
+
+  @override
+  String get adminPhotoStorageLocal => 'Local';
+
+  @override
+  String get adminPhotoStorageS3 => 'S3';
+
+  @override
+  String get adminTransactionPhotoMaxMb => 'Limite de fotos de transações (MB)';
+
+  @override
+  String get adminStockAutoUpdateEnabled => 'Atualização automática de preços';
+
+  @override
+  String get adminStockAutoUpdateIntervalMin =>
+      'Intervalo de atualização (minutos)';
+
+  @override
+  String get adminSaved => 'Salvo';
+
+  @override
+  String get adminOperationsTitle => 'Operações';
+
+  @override
+  String get adminRunStockUpdate => 'Atualizar preços agora';
+
+  @override
+  String get adminCompressPhotos => 'Comprimir fotos';
+
+  @override
+  String get adminEncryptPhotos => 'Criptografar fotos';
+
+  @override
+  String get adminServerTime => 'Hora do servidor';
+
+  @override
+  String get adminNtpSync => 'Sincronização NTP';
+
+  @override
+  String adminStockUpdateResult(Object updated) {
+    return '$updated preços atualizados';
+  }
+
+  @override
+  String adminPhotoCompressResult(Object recompressed) {
+    return '$recompressed fotos comprimidas';
+  }
+
+  @override
+  String adminPhotoEncryptResult(Object encrypted) {
+    return '$encrypted fotos criptografadas';
+  }
+
+  @override
+  String adminNtpSynced(Object offset) {
+    return 'Sincronizado, deslocamento $offset ms';
+  }
+
+  @override
+  String get adminAddUser => 'Adicionar usuário';
+
+  @override
+  String get adminUserCreated => 'Usuário criado';
+
+  @override
+  String get adminResetPassword => 'Redefinir senha';
+
+  @override
+  String get adminPasswordReset => 'Senha redefinida';
+
+  @override
+  String get adminRoleChanged => 'Papel atualizado';
+
+  @override
+  String get adminDeleteUser => 'Excluir usuário';
+
+  @override
+  String adminDeleteUserConfirm(Object email) {
+    return 'Excluir \"$email\"?';
+  }
+
+  @override
+  String get adminUserDeleted => 'Usuário excluído';
+
+  @override
+  String get adminNoUsers => 'Nenhum usuário ainda';
+
+  @override
+  String get adminRemoveAdmin => 'Remover admin';
+
+  @override
+  String get adminMakeAdmin => 'Tornar admin';
+
+  @override
+  String get adminPasswordTooShort =>
+      'A senha deve ter pelo menos 8 caracteres';
+
+  @override
+  String get adminNoLoginAudit => 'Nenhum registro de login ainda';
+
+  @override
+  String get adminLoginSuccess => 'Sucesso';
+
+  @override
+  String get adminLoginFailed => 'Falhou';
+
+  @override
+  String get adminScreenSubtitle =>
+      'Configurações do sistema e gestão de usuários';
 }

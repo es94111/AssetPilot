@@ -6809,5 +6809,245 @@
   "@settingsMcpCloseConfirm": {
     "description": "Web path: settings.mcp.closeConfirm",
     "x-webPath": "settings.mcp.closeConfirm"
+  },
+  "adminSystemSettingsTitle": "Configurações do sistema",
+  "@adminSystemSettingsTitle": {
+    "description": "Web path: admin.adminSystemSettingsTitle",
+    "x-webPath": "admin.adminSystemSettingsTitle"
+  },
+  "adminUsersTitle": "Gestão de usuários",
+  "@adminUsersTitle": {
+    "description": "Web path: admin.adminUsersTitle",
+    "x-webPath": "admin.adminUsersTitle"
+  },
+  "adminLoginAuditTitle": "Auditoria de login",
+  "@adminLoginAuditTitle": {
+    "description": "Web path: admin.adminLoginAuditTitle",
+    "x-webPath": "admin.adminLoginAuditTitle"
+  },
+  "adminPublicRegistration": "Registro público",
+  "@adminPublicRegistration": {
+    "description": "Web path: admin.adminPublicRegistration",
+    "x-webPath": "admin.adminPublicRegistration"
+  },
+  "adminLineLoginEnabled": "Login com LINE",
+  "@adminLineLoginEnabled": {
+    "description": "Web path: admin.adminLineLoginEnabled",
+    "x-webPath": "admin.adminLineLoginEnabled"
+  },
+  "adminAllowedRegistrationEmails": "Emails de registro permitidos (um por linha)",
+  "@adminAllowedRegistrationEmails": {
+    "description": "Web path: admin.adminAllowedRegistrationEmails",
+    "x-webPath": "admin.adminAllowedRegistrationEmails"
+  },
+  "adminAdminIpAllowlist": "Lista branca de IPs de admin (uma por linha)",
+  "@adminAdminIpAllowlist": {
+    "description": "Web path: admin.adminAdminIpAllowlist",
+    "x-webPath": "admin.adminAdminIpAllowlist"
+  },
+  "adminRouteAuditMode": "Modo de auditoria",
+  "@adminRouteAuditMode": {
+    "description": "Web path: admin.adminRouteAuditMode",
+    "x-webPath": "admin.adminRouteAuditMode"
+  },
+  "adminRouteAuditSecurity": "Segurança",
+  "@adminRouteAuditSecurity": {
+    "description": "Web path: admin.adminRouteAuditSecurity",
+    "x-webPath": "admin.adminRouteAuditSecurity"
+  },
+  "adminRouteAuditExtended": "Estendido",
+  "@adminRouteAuditExtended": {
+    "description": "Web path: admin.adminRouteAuditExtended",
+    "x-webPath": "admin.adminRouteAuditExtended"
+  },
+  "adminRouteAuditMinimal": "Mínimo",
+  "@adminRouteAuditMinimal": {
+    "description": "Web path: admin.adminRouteAuditMinimal",
+    "x-webPath": "admin.adminRouteAuditMinimal"
+  },
+  "adminTransactionPhotoStorage": "Armazenamento de fotos de transações",
+  "@adminTransactionPhotoStorage": {
+    "description": "Web path: admin.adminTransactionPhotoStorage",
+    "x-webPath": "admin.adminTransactionPhotoStorage"
+  },
+  "adminPhotoStorageDefault": "Padrão",
+  "@adminPhotoStorageDefault": {
+    "description": "Web path: admin.adminPhotoStorageDefault",
+    "x-webPath": "admin.adminPhotoStorageDefault"
+  },
+  "adminPhotoStorageLocal": "Local",
+  "@adminPhotoStorageLocal": {
+    "description": "Web path: admin.adminPhotoStorageLocal",
+    "x-webPath": "admin.adminPhotoStorageLocal"
+  },
+  "adminPhotoStorageS3": "S3",
+  "@adminPhotoStorageS3": {
+    "description": "Web path: admin.adminPhotoStorageS3",
+    "x-webPath": "admin.adminPhotoStorageS3"
+  },
+  "adminTransactionPhotoMaxMb": "Limite de fotos de transações (MB)",
+  "@adminTransactionPhotoMaxMb": {
+    "description": "Web path: admin.adminTransactionPhotoMaxMb",
+    "x-webPath": "admin.adminTransactionPhotoMaxMb"
+  },
+  "adminStockAutoUpdateEnabled": "Atualização automática de preços",
+  "@adminStockAutoUpdateEnabled": {
+    "description": "Web path: admin.adminStockAutoUpdateEnabled",
+    "x-webPath": "admin.adminStockAutoUpdateEnabled"
+  },
+  "adminStockAutoUpdateIntervalMin": "Intervalo de atualização (minutos)",
+  "@adminStockAutoUpdateIntervalMin": {
+    "description": "Web path: admin.adminStockAutoUpdateIntervalMin",
+    "x-webPath": "admin.adminStockAutoUpdateIntervalMin"
+  },
+  "adminSaved": "Salvo",
+  "@adminSaved": {
+    "description": "Web path: admin.adminSaved",
+    "x-webPath": "admin.adminSaved"
+  },
+  "adminOperationsTitle": "Operações",
+  "@adminOperationsTitle": {
+    "description": "Web path: admin.adminOperationsTitle",
+    "x-webPath": "admin.adminOperationsTitle"
+  },
+  "adminRunStockUpdate": "Atualizar preços agora",
+  "@adminRunStockUpdate": {
+    "description": "Web path: admin.adminRunStockUpdate",
+    "x-webPath": "admin.adminRunStockUpdate"
+  },
+  "adminCompressPhotos": "Comprimir fotos",
+  "@adminCompressPhotos": {
+    "description": "Web path: admin.adminCompressPhotos",
+    "x-webPath": "admin.adminCompressPhotos"
+  },
+  "adminEncryptPhotos": "Criptografar fotos",
+  "@adminEncryptPhotos": {
+    "description": "Web path: admin.adminEncryptPhotos",
+    "x-webPath": "admin.adminEncryptPhotos"
+  },
+  "adminServerTime": "Hora do servidor",
+  "@adminServerTime": {
+    "description": "Web path: admin.adminServerTime",
+    "x-webPath": "admin.adminServerTime"
+  },
+  "adminNtpSync": "Sincronização NTP",
+  "@adminNtpSync": {
+    "description": "Web path: admin.adminNtpSync",
+    "x-webPath": "admin.adminNtpSync"
+  },
+  "adminStockUpdateResult": "{updated} preços atualizados",
+  "@adminStockUpdateResult": {
+    "description": "Web path: admin.adminStockUpdateResult",
+    "x-webPath": "admin.adminStockUpdateResult",
+    "placeholders": {
+      "updated": {}
+    }
+  },
+  "adminPhotoCompressResult": "{recompressed} fotos comprimidas",
+  "@adminPhotoCompressResult": {
+    "description": "Web path: admin.adminPhotoCompressResult",
+    "x-webPath": "admin.adminPhotoCompressResult",
+    "placeholders": {
+      "recompressed": {}
+    }
+  },
+  "adminPhotoEncryptResult": "{encrypted} fotos criptografadas",
+  "@adminPhotoEncryptResult": {
+    "description": "Web path: admin.adminPhotoEncryptResult",
+    "x-webPath": "admin.adminPhotoEncryptResult",
+    "placeholders": {
+      "encrypted": {}
+    }
+  },
+  "adminNtpSynced": "Sincronizado, deslocamento {offset} ms",
+  "@adminNtpSynced": {
+    "description": "Web path: admin.adminNtpSynced",
+    "x-webPath": "admin.adminNtpSynced",
+    "placeholders": {
+      "offset": {}
+    }
+  },
+  "adminAddUser": "Adicionar usuário",
+  "@adminAddUser": {
+    "description": "Web path: admin.adminAddUser",
+    "x-webPath": "admin.adminAddUser"
+  },
+  "adminUserCreated": "Usuário criado",
+  "@adminUserCreated": {
+    "description": "Web path: admin.adminUserCreated",
+    "x-webPath": "admin.adminUserCreated"
+  },
+  "adminResetPassword": "Redefinir senha",
+  "@adminResetPassword": {
+    "description": "Web path: admin.adminResetPassword",
+    "x-webPath": "admin.adminResetPassword"
+  },
+  "adminPasswordReset": "Senha redefinida",
+  "@adminPasswordReset": {
+    "description": "Web path: admin.adminPasswordReset",
+    "x-webPath": "admin.adminPasswordReset"
+  },
+  "adminRoleChanged": "Papel atualizado",
+  "@adminRoleChanged": {
+    "description": "Web path: admin.adminRoleChanged",
+    "x-webPath": "admin.adminRoleChanged"
+  },
+  "adminDeleteUser": "Excluir usuário",
+  "@adminDeleteUser": {
+    "description": "Web path: admin.adminDeleteUser",
+    "x-webPath": "admin.adminDeleteUser"
+  },
+  "adminDeleteUserConfirm": "Excluir \"{email}\"?",
+  "@adminDeleteUserConfirm": {
+    "description": "Web path: admin.adminDeleteUserConfirm",
+    "x-webPath": "admin.adminDeleteUserConfirm",
+    "placeholders": {
+      "email": {}
+    }
+  },
+  "adminUserDeleted": "Usuário excluído",
+  "@adminUserDeleted": {
+    "description": "Web path: admin.adminUserDeleted",
+    "x-webPath": "admin.adminUserDeleted"
+  },
+  "adminNoUsers": "Nenhum usuário ainda",
+  "@adminNoUsers": {
+    "description": "Web path: admin.adminNoUsers",
+    "x-webPath": "admin.adminNoUsers"
+  },
+  "adminRemoveAdmin": "Remover admin",
+  "@adminRemoveAdmin": {
+    "description": "Web path: admin.adminRemoveAdmin",
+    "x-webPath": "admin.adminRemoveAdmin"
+  },
+  "adminMakeAdmin": "Tornar admin",
+  "@adminMakeAdmin": {
+    "description": "Web path: admin.adminMakeAdmin",
+    "x-webPath": "admin.adminMakeAdmin"
+  },
+  "adminPasswordTooShort": "A senha deve ter pelo menos 8 caracteres",
+  "@adminPasswordTooShort": {
+    "description": "Web path: admin.adminPasswordTooShort",
+    "x-webPath": "admin.adminPasswordTooShort"
+  },
+  "adminNoLoginAudit": "Nenhum registro de login ainda",
+  "@adminNoLoginAudit": {
+    "description": "Web path: admin.adminNoLoginAudit",
+    "x-webPath": "admin.adminNoLoginAudit"
+  },
+  "adminLoginSuccess": "Sucesso",
+  "@adminLoginSuccess": {
+    "description": "Web path: admin.adminLoginSuccess",
+    "x-webPath": "admin.adminLoginSuccess"
+  },
+  "adminLoginFailed": "Falhou",
+  "@adminLoginFailed": {
+    "description": "Web path: admin.adminLoginFailed",
+    "x-webPath": "admin.adminLoginFailed"
+  },
+  "adminScreenSubtitle": "Configurações do sistema e gestão de usuários",
+  "@adminScreenSubtitle": {
+    "description": "Web path: admin.adminScreenSubtitle",
+    "x-webPath": "admin.adminScreenSubtitle"
   }
 }

@@ -6809,5 +6809,245 @@
   "@settingsMcpCloseConfirm": {
     "description": "Web path: settings.mcp.closeConfirm",
     "x-webPath": "settings.mcp.closeConfirm"
+  },
+  "adminSystemSettingsTitle": "सिस्टम सेटिंग्स",
+  "@adminSystemSettingsTitle": {
+    "description": "Web path: admin.adminSystemSettingsTitle",
+    "x-webPath": "admin.adminSystemSettingsTitle"
+  },
+  "adminUsersTitle": "उपयोगकर्ता प्रबंधन",
+  "@adminUsersTitle": {
+    "description": "Web path: admin.adminUsersTitle",
+    "x-webPath": "admin.adminUsersTitle"
+  },
+  "adminLoginAuditTitle": "लॉगिन ऑडिट",
+  "@adminLoginAuditTitle": {
+    "description": "Web path: admin.adminLoginAuditTitle",
+    "x-webPath": "admin.adminLoginAuditTitle"
+  },
+  "adminPublicRegistration": "सार्वजनिक पंजीकरण",
+  "@adminPublicRegistration": {
+    "description": "Web path: admin.adminPublicRegistration",
+    "x-webPath": "admin.adminPublicRegistration"
+  },
+  "adminLineLoginEnabled": "LINE लॉगिन",
+  "@adminLineLoginEnabled": {
+    "description": "Web path: admin.adminLineLoginEnabled",
+    "x-webPath": "admin.adminLineLoginEnabled"
+  },
+  "adminAllowedRegistrationEmails": "अनुमत पंजीकरण ईमेल (प्रति पंक्ति एक)",
+  "@adminAllowedRegistrationEmails": {
+    "description": "Web path: admin.adminAllowedRegistrationEmails",
+    "x-webPath": "admin.adminAllowedRegistrationEmails"
+  },
+  "adminAdminIpAllowlist": "व्यवस्थापक IP अनुमति सूची (प्रति पंक्ति एक)",
+  "@adminAdminIpAllowlist": {
+    "description": "Web path: admin.adminAdminIpAllowlist",
+    "x-webPath": "admin.adminAdminIpAllowlist"
+  },
+  "adminRouteAuditMode": "ऑडिट मोड",
+  "@adminRouteAuditMode": {
+    "description": "Web path: admin.adminRouteAuditMode",
+    "x-webPath": "admin.adminRouteAuditMode"
+  },
+  "adminRouteAuditSecurity": "सुरक्षा",
+  "@adminRouteAuditSecurity": {
+    "description": "Web path: admin.adminRouteAuditSecurity",
+    "x-webPath": "admin.adminRouteAuditSecurity"
+  },
+  "adminRouteAuditExtended": "विस्तारित",
+  "@adminRouteAuditExtended": {
+    "description": "Web path: admin.adminRouteAuditExtended",
+    "x-webPath": "admin.adminRouteAuditExtended"
+  },
+  "adminRouteAuditMinimal": "न्यूनतम",
+  "@adminRouteAuditMinimal": {
+    "description": "Web path: admin.adminRouteAuditMinimal",
+    "x-webPath": "admin.adminRouteAuditMinimal"
+  },
+  "adminTransactionPhotoStorage": "लेनदेन फोटो भंडारण",
+  "@adminTransactionPhotoStorage": {
+    "description": "Web path: admin.adminTransactionPhotoStorage",
+    "x-webPath": "admin.adminTransactionPhotoStorage"
+  },
+  "adminPhotoStorageDefault": "डिफ़ॉल्ट",
+  "@adminPhotoStorageDefault": {
+    "description": "Web path: admin.adminPhotoStorageDefault",
+    "x-webPath": "admin.adminPhotoStorageDefault"
+  },
+  "adminPhotoStorageLocal": "स्थानीय",
+  "@adminPhotoStorageLocal": {
+    "description": "Web path: admin.adminPhotoStorageLocal",
+    "x-webPath": "admin.adminPhotoStorageLocal"
+  },
+  "adminPhotoStorageS3": "S3",
+  "@adminPhotoStorageS3": {
+    "description": "Web path: admin.adminPhotoStorageS3",
+    "x-webPath": "admin.adminPhotoStorageS3"
+  },
+  "adminTransactionPhotoMaxMb": "लेनदेन फोटो सीमा (MB)",
+  "@adminTransactionPhotoMaxMb": {
+    "description": "Web path: admin.adminTransactionPhotoMaxMb",
+    "x-webPath": "admin.adminTransactionPhotoMaxMb"
+  },
+  "adminStockAutoUpdateEnabled": "स्वचालित मूल्य अद्यतन",
+  "@adminStockAutoUpdateEnabled": {
+    "description": "Web path: admin.adminStockAutoUpdateEnabled",
+    "x-webPath": "admin.adminStockAutoUpdateEnabled"
+  },
+  "adminStockAutoUpdateIntervalMin": "अद्यतन अंतराल (मिनट)",
+  "@adminStockAutoUpdateIntervalMin": {
+    "description": "Web path: admin.adminStockAutoUpdateIntervalMin",
+    "x-webPath": "admin.adminStockAutoUpdateIntervalMin"
+  },
+  "adminSaved": "सहेजा गया",
+  "@adminSaved": {
+    "description": "Web path: admin.adminSaved",
+    "x-webPath": "admin.adminSaved"
+  },
+  "adminOperationsTitle": "संचालन",
+  "@adminOperationsTitle": {
+    "description": "Web path: admin.adminOperationsTitle",
+    "x-webPath": "admin.adminOperationsTitle"
+  },
+  "adminRunStockUpdate": "अभी मूल्य अपडेट करें",
+  "@adminRunStockUpdate": {
+    "description": "Web path: admin.adminRunStockUpdate",
+    "x-webPath": "admin.adminRunStockUpdate"
+  },
+  "adminCompressPhotos": "फोटो संपीड़ित करें",
+  "@adminCompressPhotos": {
+    "description": "Web path: admin.adminCompressPhotos",
+    "x-webPath": "admin.adminCompressPhotos"
+  },
+  "adminEncryptPhotos": "फोटो एन्क्रिप्ट करें",
+  "@adminEncryptPhotos": {
+    "description": "Web path: admin.adminEncryptPhotos",
+    "x-webPath": "admin.adminEncryptPhotos"
+  },
+  "adminServerTime": "सर्वर समय",
+  "@adminServerTime": {
+    "description": "Web path: admin.adminServerTime",
+    "x-webPath": "admin.adminServerTime"
+  },
+  "adminNtpSync": "NTP सिंक",
+  "@adminNtpSync": {
+    "description": "Web path: admin.adminNtpSync",
+    "x-webPath": "admin.adminNtpSync"
+  },
+  "adminStockUpdateResult": "{updated} मूल्य अपडेट हुए",
+  "@adminStockUpdateResult": {
+    "description": "Web path: admin.adminStockUpdateResult",
+    "x-webPath": "admin.adminStockUpdateResult",
+    "placeholders": {
+      "updated": {}
+    }
+  },
+  "adminPhotoCompressResult": "{recompressed} फोटो संपीड़ित हुईं",
+  "@adminPhotoCompressResult": {
+    "description": "Web path: admin.adminPhotoCompressResult",
+    "x-webPath": "admin.adminPhotoCompressResult",
+    "placeholders": {
+      "recompressed": {}
+    }
+  },
+  "adminPhotoEncryptResult": "{encrypted} फोटो एन्क्रिप्ट हुईं",
+  "@adminPhotoEncryptResult": {
+    "description": "Web path: admin.adminPhotoEncryptResult",
+    "x-webPath": "admin.adminPhotoEncryptResult",
+    "placeholders": {
+      "encrypted": {}
+    }
+  },
+  "adminNtpSynced": "सिंक हुआ, ऑफसेट {offset} ms",
+  "@adminNtpSynced": {
+    "description": "Web path: admin.adminNtpSynced",
+    "x-webPath": "admin.adminNtpSynced",
+    "placeholders": {
+      "offset": {}
+    }
+  },
+  "adminAddUser": "उपयोगकर्ता जोड़ें",
+  "@adminAddUser": {
+    "description": "Web path: admin.adminAddUser",
+    "x-webPath": "admin.adminAddUser"
+  },
+  "adminUserCreated": "उपयोगकर्ता बनाया गया",
+  "@adminUserCreated": {
+    "description": "Web path: admin.adminUserCreated",
+    "x-webPath": "admin.adminUserCreated"
+  },
+  "adminResetPassword": "पासवर्ड रीसेट करें",
+  "@adminResetPassword": {
+    "description": "Web path: admin.adminResetPassword",
+    "x-webPath": "admin.adminResetPassword"
+  },
+  "adminPasswordReset": "पासवर्ड रीसेट हुआ",
+  "@adminPasswordReset": {
+    "description": "Web path: admin.adminPasswordReset",
+    "x-webPath": "admin.adminPasswordReset"
+  },
+  "adminRoleChanged": "भूमिका अपडेट हुई",
+  "@adminRoleChanged": {
+    "description": "Web path: admin.adminRoleChanged",
+    "x-webPath": "admin.adminRoleChanged"
+  },
+  "adminDeleteUser": "उपयोगकर्ता हटाएं",
+  "@adminDeleteUser": {
+    "description": "Web path: admin.adminDeleteUser",
+    "x-webPath": "admin.adminDeleteUser"
+  },
+  "adminDeleteUserConfirm": "\"{email}\" हटाएं?",
+  "@adminDeleteUserConfirm": {
+    "description": "Web path: admin.adminDeleteUserConfirm",
+    "x-webPath": "admin.adminDeleteUserConfirm",
+    "placeholders": {
+      "email": {}
+    }
+  },
+  "adminUserDeleted": "उपयोगकर्ता हटाया गया",
+  "@adminUserDeleted": {
+    "description": "Web path: admin.adminUserDeleted",
+    "x-webPath": "admin.adminUserDeleted"
+  },
+  "adminNoUsers": "अभी कोई उपयोगकर्ता नहीं",
+  "@adminNoUsers": {
+    "description": "Web path: admin.adminNoUsers",
+    "x-webPath": "admin.adminNoUsers"
+  },
+  "adminRemoveAdmin": "व्यवस्थापक हटाएं",
+  "@adminRemoveAdmin": {
+    "description": "Web path: admin.adminRemoveAdmin",
+    "x-webPath": "admin.adminRemoveAdmin"
+  },
+  "adminMakeAdmin": "व्यवस्थापक बनाएं",
+  "@adminMakeAdmin": {
+    "description": "Web path: admin.adminMakeAdmin",
+    "x-webPath": "admin.adminMakeAdmin"
+  },
+  "adminPasswordTooShort": "पासवर्ड कम से कम 8 अक्षरों का होना चाहिए",
+  "@adminPasswordTooShort": {
+    "description": "Web path: admin.adminPasswordTooShort",
+    "x-webPath": "admin.adminPasswordTooShort"
+  },
+  "adminNoLoginAudit": "अभी कोई लॉगिन रिकॉर्ड नहीं",
+  "@adminNoLoginAudit": {
+    "description": "Web path: admin.adminNoLoginAudit",
+    "x-webPath": "admin.adminNoLoginAudit"
+  },
+  "adminLoginSuccess": "सफल",
+  "@adminLoginSuccess": {
+    "description": "Web path: admin.adminLoginSuccess",
+    "x-webPath": "admin.adminLoginSuccess"
+  },
+  "adminLoginFailed": "विफल",
+  "@adminLoginFailed": {
+    "description": "Web path: admin.adminLoginFailed",
+    "x-webPath": "admin.adminLoginFailed"
+  },
+  "adminScreenSubtitle": "सिस्टम सेटिंग्स और उपयोगकर्ता प्रबंधन",
+  "@adminScreenSubtitle": {
+    "description": "Web path: admin.adminScreenSubtitle",
+    "x-webPath": "admin.adminScreenSubtitle"
   }
 }

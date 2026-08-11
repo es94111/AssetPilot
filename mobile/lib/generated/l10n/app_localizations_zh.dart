@@ -4223,6 +4223,151 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get settingsMcpCloseConfirm => '我已複製，關閉視窗';
+
+  @override
+  String get adminSystemSettingsTitle => '系統設定';
+
+  @override
+  String get adminUsersTitle => '使用者管理';
+
+  @override
+  String get adminLoginAuditTitle => '登入稽核';
+
+  @override
+  String get adminPublicRegistration => '開放註冊';
+
+  @override
+  String get adminLineLoginEnabled => 'LINE 登入';
+
+  @override
+  String get adminAllowedRegistrationEmails => '允許註冊的 Email（每行一個）';
+
+  @override
+  String get adminAdminIpAllowlist => '管理員 IP 白名單（每行一個）';
+
+  @override
+  String get adminRouteAuditMode => '稽核模式';
+
+  @override
+  String get adminRouteAuditSecurity => '安全';
+
+  @override
+  String get adminRouteAuditExtended => '完整';
+
+  @override
+  String get adminRouteAuditMinimal => '精簡';
+
+  @override
+  String get adminTransactionPhotoStorage => '交易照片儲存';
+
+  @override
+  String get adminPhotoStorageDefault => '預設';
+
+  @override
+  String get adminPhotoStorageLocal => '本機';
+
+  @override
+  String get adminPhotoStorageS3 => 'S3';
+
+  @override
+  String get adminTransactionPhotoMaxMb => '交易照片上限（MB）';
+
+  @override
+  String get adminStockAutoUpdateEnabled => '股價自動更新';
+
+  @override
+  String get adminStockAutoUpdateIntervalMin => '更新間隔（分鐘）';
+
+  @override
+  String get adminSaved => '已儲存';
+
+  @override
+  String get adminOperationsTitle => '維運動作';
+
+  @override
+  String get adminRunStockUpdate => '立即更新股價';
+
+  @override
+  String get adminCompressPhotos => '壓縮照片';
+
+  @override
+  String get adminEncryptPhotos => '加密照片';
+
+  @override
+  String get adminServerTime => '伺服器時間';
+
+  @override
+  String get adminNtpSync => 'NTP 同步';
+
+  @override
+  String adminStockUpdateResult(Object updated) {
+    return '更新完成：$updated 筆';
+  }
+
+  @override
+  String adminPhotoCompressResult(Object recompressed) {
+    return '壓縮完成：$recompressed 張';
+  }
+
+  @override
+  String adminPhotoEncryptResult(Object encrypted) {
+    return '加密完成：$encrypted 張';
+  }
+
+  @override
+  String adminNtpSynced(Object offset) {
+    return '已同步，偏移 $offset ms';
+  }
+
+  @override
+  String get adminAddUser => '新增使用者';
+
+  @override
+  String get adminUserCreated => '已建立使用者';
+
+  @override
+  String get adminResetPassword => '重設密碼';
+
+  @override
+  String get adminPasswordReset => '密碼已重設';
+
+  @override
+  String get adminRoleChanged => '已更新權限';
+
+  @override
+  String get adminDeleteUser => '刪除使用者';
+
+  @override
+  String adminDeleteUserConfirm(Object email) {
+    return '確定要刪除「$email」嗎？';
+  }
+
+  @override
+  String get adminUserDeleted => '已刪除使用者';
+
+  @override
+  String get adminNoUsers => '尚無使用者';
+
+  @override
+  String get adminRemoveAdmin => '取消管理員';
+
+  @override
+  String get adminMakeAdmin => '設為管理員';
+
+  @override
+  String get adminPasswordTooShort => '密碼至少 8 個字元';
+
+  @override
+  String get adminNoLoginAudit => '尚無登入紀錄';
+
+  @override
+  String get adminLoginSuccess => '成功';
+
+  @override
+  String get adminLoginFailed => '失敗';
+
+  @override
+  String get adminScreenSubtitle => '系統設定與使用者管理';
 }
 
 /// The translations for Chinese, as used in China, using the Han script (`zh_Hans_CN`).
@@ -8449,6 +8594,151 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
 
   @override
   String get settingsMcpCloseConfirm => '我已复制，关闭窗口';
+
+  @override
+  String get adminSystemSettingsTitle => '系统设置';
+
+  @override
+  String get adminUsersTitle => '用户管理';
+
+  @override
+  String get adminLoginAuditTitle => '登录审计';
+
+  @override
+  String get adminPublicRegistration => '开放注册';
+
+  @override
+  String get adminLineLoginEnabled => 'LINE 登录';
+
+  @override
+  String get adminAllowedRegistrationEmails => '允许注册的 Email（每行一个）';
+
+  @override
+  String get adminAdminIpAllowlist => '管理员 IP 白名单（每行一个）';
+
+  @override
+  String get adminRouteAuditMode => '审计模式';
+
+  @override
+  String get adminRouteAuditSecurity => '安全';
+
+  @override
+  String get adminRouteAuditExtended => '完整';
+
+  @override
+  String get adminRouteAuditMinimal => '精简';
+
+  @override
+  String get adminTransactionPhotoStorage => '交易照片存储';
+
+  @override
+  String get adminPhotoStorageDefault => '默认';
+
+  @override
+  String get adminPhotoStorageLocal => '本地';
+
+  @override
+  String get adminPhotoStorageS3 => 'S3';
+
+  @override
+  String get adminTransactionPhotoMaxMb => '交易照片上限（MB）';
+
+  @override
+  String get adminStockAutoUpdateEnabled => '股价自动更新';
+
+  @override
+  String get adminStockAutoUpdateIntervalMin => '更新间隔（分钟）';
+
+  @override
+  String get adminSaved => '已保存';
+
+  @override
+  String get adminOperationsTitle => '运维操作';
+
+  @override
+  String get adminRunStockUpdate => '立即更新股价';
+
+  @override
+  String get adminCompressPhotos => '压缩照片';
+
+  @override
+  String get adminEncryptPhotos => '加密照片';
+
+  @override
+  String get adminServerTime => '服务器时间';
+
+  @override
+  String get adminNtpSync => 'NTP 同步';
+
+  @override
+  String adminStockUpdateResult(Object updated) {
+    return '更新完成：$updated 条';
+  }
+
+  @override
+  String adminPhotoCompressResult(Object recompressed) {
+    return '压缩完成：$recompressed 张';
+  }
+
+  @override
+  String adminPhotoEncryptResult(Object encrypted) {
+    return '加密完成：$encrypted 张';
+  }
+
+  @override
+  String adminNtpSynced(Object offset) {
+    return '已同步，偏移 $offset ms';
+  }
+
+  @override
+  String get adminAddUser => '新增用户';
+
+  @override
+  String get adminUserCreated => '已创建用户';
+
+  @override
+  String get adminResetPassword => '重置密码';
+
+  @override
+  String get adminPasswordReset => '密码已重置';
+
+  @override
+  String get adminRoleChanged => '已更新权限';
+
+  @override
+  String get adminDeleteUser => '删除用户';
+
+  @override
+  String adminDeleteUserConfirm(Object email) {
+    return '确定要删除「$email」吗？';
+  }
+
+  @override
+  String get adminUserDeleted => '已删除用户';
+
+  @override
+  String get adminNoUsers => '暂无用户';
+
+  @override
+  String get adminRemoveAdmin => '取消管理员';
+
+  @override
+  String get adminMakeAdmin => '设为管理员';
+
+  @override
+  String get adminPasswordTooShort => '密码至少 8 个字符';
+
+  @override
+  String get adminNoLoginAudit => '暂无登录记录';
+
+  @override
+  String get adminLoginSuccess => '成功';
+
+  @override
+  String get adminLoginFailed => '失败';
+
+  @override
+  String get adminScreenSubtitle => '系统设置与用户管理';
 }
 
 /// The translations for Chinese, as used in Taiwan, using the Han script (`zh_Hant_TW`).
@@ -12670,4 +12960,149 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
 
   @override
   String get settingsMcpCloseConfirm => '我已複製，關閉視窗';
+
+  @override
+  String get adminSystemSettingsTitle => '系統設定';
+
+  @override
+  String get adminUsersTitle => '使用者管理';
+
+  @override
+  String get adminLoginAuditTitle => '登入稽核';
+
+  @override
+  String get adminPublicRegistration => '開放註冊';
+
+  @override
+  String get adminLineLoginEnabled => 'LINE 登入';
+
+  @override
+  String get adminAllowedRegistrationEmails => '允許註冊的 Email（每行一個）';
+
+  @override
+  String get adminAdminIpAllowlist => '管理員 IP 白名單（每行一個）';
+
+  @override
+  String get adminRouteAuditMode => '稽核模式';
+
+  @override
+  String get adminRouteAuditSecurity => '安全';
+
+  @override
+  String get adminRouteAuditExtended => '完整';
+
+  @override
+  String get adminRouteAuditMinimal => '精簡';
+
+  @override
+  String get adminTransactionPhotoStorage => '交易照片儲存';
+
+  @override
+  String get adminPhotoStorageDefault => '預設';
+
+  @override
+  String get adminPhotoStorageLocal => '本機';
+
+  @override
+  String get adminPhotoStorageS3 => 'S3';
+
+  @override
+  String get adminTransactionPhotoMaxMb => '交易照片上限（MB）';
+
+  @override
+  String get adminStockAutoUpdateEnabled => '股價自動更新';
+
+  @override
+  String get adminStockAutoUpdateIntervalMin => '更新間隔（分鐘）';
+
+  @override
+  String get adminSaved => '已儲存';
+
+  @override
+  String get adminOperationsTitle => '維運動作';
+
+  @override
+  String get adminRunStockUpdate => '立即更新股價';
+
+  @override
+  String get adminCompressPhotos => '壓縮照片';
+
+  @override
+  String get adminEncryptPhotos => '加密照片';
+
+  @override
+  String get adminServerTime => '伺服器時間';
+
+  @override
+  String get adminNtpSync => 'NTP 同步';
+
+  @override
+  String adminStockUpdateResult(Object updated) {
+    return '更新完成：$updated 筆';
+  }
+
+  @override
+  String adminPhotoCompressResult(Object recompressed) {
+    return '壓縮完成：$recompressed 張';
+  }
+
+  @override
+  String adminPhotoEncryptResult(Object encrypted) {
+    return '加密完成：$encrypted 張';
+  }
+
+  @override
+  String adminNtpSynced(Object offset) {
+    return '已同步，偏移 $offset ms';
+  }
+
+  @override
+  String get adminAddUser => '新增使用者';
+
+  @override
+  String get adminUserCreated => '已建立使用者';
+
+  @override
+  String get adminResetPassword => '重設密碼';
+
+  @override
+  String get adminPasswordReset => '密碼已重設';
+
+  @override
+  String get adminRoleChanged => '已更新權限';
+
+  @override
+  String get adminDeleteUser => '刪除使用者';
+
+  @override
+  String adminDeleteUserConfirm(Object email) {
+    return '確定要刪除「$email」嗎？';
+  }
+
+  @override
+  String get adminUserDeleted => '已刪除使用者';
+
+  @override
+  String get adminNoUsers => '尚無使用者';
+
+  @override
+  String get adminRemoveAdmin => '取消管理員';
+
+  @override
+  String get adminMakeAdmin => '設為管理員';
+
+  @override
+  String get adminPasswordTooShort => '密碼至少 8 個字元';
+
+  @override
+  String get adminNoLoginAudit => '尚無登入紀錄';
+
+  @override
+  String get adminLoginSuccess => '成功';
+
+  @override
+  String get adminLoginFailed => '失敗';
+
+  @override
+  String get adminScreenSubtitle => '系統設定與使用者管理';
 }

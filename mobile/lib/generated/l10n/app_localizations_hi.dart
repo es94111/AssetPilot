@@ -4419,4 +4419,152 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get settingsMcpCloseConfirm => 'मैंने कॉपी कर लिया, बंद करें';
+
+  @override
+  String get adminSystemSettingsTitle => 'सिस्टम सेटिंग्स';
+
+  @override
+  String get adminUsersTitle => 'उपयोगकर्ता प्रबंधन';
+
+  @override
+  String get adminLoginAuditTitle => 'लॉगिन ऑडिट';
+
+  @override
+  String get adminPublicRegistration => 'सार्वजनिक पंजीकरण';
+
+  @override
+  String get adminLineLoginEnabled => 'LINE लॉगिन';
+
+  @override
+  String get adminAllowedRegistrationEmails =>
+      'अनुमत पंजीकरण ईमेल (प्रति पंक्ति एक)';
+
+  @override
+  String get adminAdminIpAllowlist =>
+      'व्यवस्थापक IP अनुमति सूची (प्रति पंक्ति एक)';
+
+  @override
+  String get adminRouteAuditMode => 'ऑडिट मोड';
+
+  @override
+  String get adminRouteAuditSecurity => 'सुरक्षा';
+
+  @override
+  String get adminRouteAuditExtended => 'विस्तारित';
+
+  @override
+  String get adminRouteAuditMinimal => 'न्यूनतम';
+
+  @override
+  String get adminTransactionPhotoStorage => 'लेनदेन फोटो भंडारण';
+
+  @override
+  String get adminPhotoStorageDefault => 'डिफ़ॉल्ट';
+
+  @override
+  String get adminPhotoStorageLocal => 'स्थानीय';
+
+  @override
+  String get adminPhotoStorageS3 => 'S3';
+
+  @override
+  String get adminTransactionPhotoMaxMb => 'लेनदेन फोटो सीमा (MB)';
+
+  @override
+  String get adminStockAutoUpdateEnabled => 'स्वचालित मूल्य अद्यतन';
+
+  @override
+  String get adminStockAutoUpdateIntervalMin => 'अद्यतन अंतराल (मिनट)';
+
+  @override
+  String get adminSaved => 'सहेजा गया';
+
+  @override
+  String get adminOperationsTitle => 'संचालन';
+
+  @override
+  String get adminRunStockUpdate => 'अभी मूल्य अपडेट करें';
+
+  @override
+  String get adminCompressPhotos => 'फोटो संपीड़ित करें';
+
+  @override
+  String get adminEncryptPhotos => 'फोटो एन्क्रिप्ट करें';
+
+  @override
+  String get adminServerTime => 'सर्वर समय';
+
+  @override
+  String get adminNtpSync => 'NTP सिंक';
+
+  @override
+  String adminStockUpdateResult(Object updated) {
+    return '$updated मूल्य अपडेट हुए';
+  }
+
+  @override
+  String adminPhotoCompressResult(Object recompressed) {
+    return '$recompressed फोटो संपीड़ित हुईं';
+  }
+
+  @override
+  String adminPhotoEncryptResult(Object encrypted) {
+    return '$encrypted फोटो एन्क्रिप्ट हुईं';
+  }
+
+  @override
+  String adminNtpSynced(Object offset) {
+    return 'सिंक हुआ, ऑफसेट $offset ms';
+  }
+
+  @override
+  String get adminAddUser => 'उपयोगकर्ता जोड़ें';
+
+  @override
+  String get adminUserCreated => 'उपयोगकर्ता बनाया गया';
+
+  @override
+  String get adminResetPassword => 'पासवर्ड रीसेट करें';
+
+  @override
+  String get adminPasswordReset => 'पासवर्ड रीसेट हुआ';
+
+  @override
+  String get adminRoleChanged => 'भूमिका अपडेट हुई';
+
+  @override
+  String get adminDeleteUser => 'उपयोगकर्ता हटाएं';
+
+  @override
+  String adminDeleteUserConfirm(Object email) {
+    return '\"$email\" हटाएं?';
+  }
+
+  @override
+  String get adminUserDeleted => 'उपयोगकर्ता हटाया गया';
+
+  @override
+  String get adminNoUsers => 'अभी कोई उपयोगकर्ता नहीं';
+
+  @override
+  String get adminRemoveAdmin => 'व्यवस्थापक हटाएं';
+
+  @override
+  String get adminMakeAdmin => 'व्यवस्थापक बनाएं';
+
+  @override
+  String get adminPasswordTooShort =>
+      'पासवर्ड कम से कम 8 अक्षरों का होना चाहिए';
+
+  @override
+  String get adminNoLoginAudit => 'अभी कोई लॉगिन रिकॉर्ड नहीं';
+
+  @override
+  String get adminLoginSuccess => 'सफल';
+
+  @override
+  String get adminLoginFailed => 'विफल';
+
+  @override
+  String get adminScreenSubtitle => 'सिस्टम सेटिंग्स और उपयोगकर्ता प्रबंधन';
 }

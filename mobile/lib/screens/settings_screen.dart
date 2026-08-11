@@ -4,6 +4,7 @@ import '../api_client.dart';
 import '../app.dart';
 import '../models.dart';
 import '../widgets.dart';
+import 'admin_screen.dart';
 import 'changelog_screen.dart';
 import 'report_schedule_screen.dart';
 import 'security_screens.dart';
@@ -247,7 +248,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     )
                   : null,
             ),
-            Divider(),
+            if (user.isAdmin) ...[
+              ListTile(
+                leading: Icon(Icons.admin_panel_settings_outlined),
+                title: Text(trKey('navAdmin')),
+                subtitle: Text(trKey('adminScreenSubtitle')),
+                trailing: Icon(Icons.chevron_right),
+                onTap: () => _push(AdminScreen()),
+              ),
+              Divider(),
+            ],
             ListTile(
               leading: Icon(Icons.badge_outlined),
               title: Text(trKey('authDisplayNameLabel')),

@@ -4290,4 +4290,149 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get settingsMcpCloseConfirm => '복사했습니다, 닫기';
+
+  @override
+  String get adminSystemSettingsTitle => '시스템 설정';
+
+  @override
+  String get adminUsersTitle => '사용자 관리';
+
+  @override
+  String get adminLoginAuditTitle => '로그인 감사';
+
+  @override
+  String get adminPublicRegistration => '공개 가입';
+
+  @override
+  String get adminLineLoginEnabled => 'LINE 로그인';
+
+  @override
+  String get adminAllowedRegistrationEmails => '허용된 가입 이메일 (한 줄에 하나)';
+
+  @override
+  String get adminAdminIpAllowlist => '관리자 IP 허용 목록 (한 줄에 하나)';
+
+  @override
+  String get adminRouteAuditMode => '감사 모드';
+
+  @override
+  String get adminRouteAuditSecurity => '보안';
+
+  @override
+  String get adminRouteAuditExtended => '확장';
+
+  @override
+  String get adminRouteAuditMinimal => '최소';
+
+  @override
+  String get adminTransactionPhotoStorage => '거래 사진 저장소';
+
+  @override
+  String get adminPhotoStorageDefault => '기본값';
+
+  @override
+  String get adminPhotoStorageLocal => '로컬';
+
+  @override
+  String get adminPhotoStorageS3 => 'S3';
+
+  @override
+  String get adminTransactionPhotoMaxMb => '거래 사진 한도 (MB)';
+
+  @override
+  String get adminStockAutoUpdateEnabled => '자동 가격 업데이트';
+
+  @override
+  String get adminStockAutoUpdateIntervalMin => '업데이트 간격 (분)';
+
+  @override
+  String get adminSaved => '저장됨';
+
+  @override
+  String get adminOperationsTitle => '운영';
+
+  @override
+  String get adminRunStockUpdate => '지금 가격 업데이트';
+
+  @override
+  String get adminCompressPhotos => '사진 압축';
+
+  @override
+  String get adminEncryptPhotos => '사진 암호화';
+
+  @override
+  String get adminServerTime => '서버 시간';
+
+  @override
+  String get adminNtpSync => 'NTP 동기화';
+
+  @override
+  String adminStockUpdateResult(Object updated) {
+    return '$updated개 가격 업데이트';
+  }
+
+  @override
+  String adminPhotoCompressResult(Object recompressed) {
+    return '사진 $recompressed장 압축';
+  }
+
+  @override
+  String adminPhotoEncryptResult(Object encrypted) {
+    return '사진 $encrypted장 암호화';
+  }
+
+  @override
+  String adminNtpSynced(Object offset) {
+    return '동기화됨, 오프셋 $offset ms';
+  }
+
+  @override
+  String get adminAddUser => '사용자 추가';
+
+  @override
+  String get adminUserCreated => '사용자 생성됨';
+
+  @override
+  String get adminResetPassword => '비밀번호 재설정';
+
+  @override
+  String get adminPasswordReset => '비밀번호 재설정됨';
+
+  @override
+  String get adminRoleChanged => '권한 업데이트됨';
+
+  @override
+  String get adminDeleteUser => '사용자 삭제';
+
+  @override
+  String adminDeleteUserConfirm(Object email) {
+    return '\"$email\" 삭제?';
+  }
+
+  @override
+  String get adminUserDeleted => '사용자 삭제됨';
+
+  @override
+  String get adminNoUsers => '아직 사용자가 없음';
+
+  @override
+  String get adminRemoveAdmin => '관리자 해제';
+
+  @override
+  String get adminMakeAdmin => '관리자로 설정';
+
+  @override
+  String get adminPasswordTooShort => '비밀번호는 8자 이상이어야 합니다';
+
+  @override
+  String get adminNoLoginAudit => '아직 로그인 기록 없음';
+
+  @override
+  String get adminLoginSuccess => '성공';
+
+  @override
+  String get adminLoginFailed => '실패';
+
+  @override
+  String get adminScreenSubtitle => '시스템 설정 및 사용자 관리';
 }

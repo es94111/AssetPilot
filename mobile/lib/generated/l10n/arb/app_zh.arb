@@ -6809,5 +6809,245 @@
   "@settingsMcpCloseConfirm": {
     "description": "Web path: settings.mcp.closeConfirm",
     "x-webPath": "settings.mcp.closeConfirm"
+  },
+  "adminSystemSettingsTitle": "系統設定",
+  "@adminSystemSettingsTitle": {
+    "description": "Web path: admin.adminSystemSettingsTitle",
+    "x-webPath": "admin.adminSystemSettingsTitle"
+  },
+  "adminUsersTitle": "使用者管理",
+  "@adminUsersTitle": {
+    "description": "Web path: admin.adminUsersTitle",
+    "x-webPath": "admin.adminUsersTitle"
+  },
+  "adminLoginAuditTitle": "登入稽核",
+  "@adminLoginAuditTitle": {
+    "description": "Web path: admin.adminLoginAuditTitle",
+    "x-webPath": "admin.adminLoginAuditTitle"
+  },
+  "adminPublicRegistration": "開放註冊",
+  "@adminPublicRegistration": {
+    "description": "Web path: admin.adminPublicRegistration",
+    "x-webPath": "admin.adminPublicRegistration"
+  },
+  "adminLineLoginEnabled": "LINE 登入",
+  "@adminLineLoginEnabled": {
+    "description": "Web path: admin.adminLineLoginEnabled",
+    "x-webPath": "admin.adminLineLoginEnabled"
+  },
+  "adminAllowedRegistrationEmails": "允許註冊的 Email（每行一個）",
+  "@adminAllowedRegistrationEmails": {
+    "description": "Web path: admin.adminAllowedRegistrationEmails",
+    "x-webPath": "admin.adminAllowedRegistrationEmails"
+  },
+  "adminAdminIpAllowlist": "管理員 IP 白名單（每行一個）",
+  "@adminAdminIpAllowlist": {
+    "description": "Web path: admin.adminAdminIpAllowlist",
+    "x-webPath": "admin.adminAdminIpAllowlist"
+  },
+  "adminRouteAuditMode": "稽核模式",
+  "@adminRouteAuditMode": {
+    "description": "Web path: admin.adminRouteAuditMode",
+    "x-webPath": "admin.adminRouteAuditMode"
+  },
+  "adminRouteAuditSecurity": "安全",
+  "@adminRouteAuditSecurity": {
+    "description": "Web path: admin.adminRouteAuditSecurity",
+    "x-webPath": "admin.adminRouteAuditSecurity"
+  },
+  "adminRouteAuditExtended": "完整",
+  "@adminRouteAuditExtended": {
+    "description": "Web path: admin.adminRouteAuditExtended",
+    "x-webPath": "admin.adminRouteAuditExtended"
+  },
+  "adminRouteAuditMinimal": "精簡",
+  "@adminRouteAuditMinimal": {
+    "description": "Web path: admin.adminRouteAuditMinimal",
+    "x-webPath": "admin.adminRouteAuditMinimal"
+  },
+  "adminTransactionPhotoStorage": "交易照片儲存",
+  "@adminTransactionPhotoStorage": {
+    "description": "Web path: admin.adminTransactionPhotoStorage",
+    "x-webPath": "admin.adminTransactionPhotoStorage"
+  },
+  "adminPhotoStorageDefault": "預設",
+  "@adminPhotoStorageDefault": {
+    "description": "Web path: admin.adminPhotoStorageDefault",
+    "x-webPath": "admin.adminPhotoStorageDefault"
+  },
+  "adminPhotoStorageLocal": "本機",
+  "@adminPhotoStorageLocal": {
+    "description": "Web path: admin.adminPhotoStorageLocal",
+    "x-webPath": "admin.adminPhotoStorageLocal"
+  },
+  "adminPhotoStorageS3": "S3",
+  "@adminPhotoStorageS3": {
+    "description": "Web path: admin.adminPhotoStorageS3",
+    "x-webPath": "admin.adminPhotoStorageS3"
+  },
+  "adminTransactionPhotoMaxMb": "交易照片上限（MB）",
+  "@adminTransactionPhotoMaxMb": {
+    "description": "Web path: admin.adminTransactionPhotoMaxMb",
+    "x-webPath": "admin.adminTransactionPhotoMaxMb"
+  },
+  "adminStockAutoUpdateEnabled": "股價自動更新",
+  "@adminStockAutoUpdateEnabled": {
+    "description": "Web path: admin.adminStockAutoUpdateEnabled",
+    "x-webPath": "admin.adminStockAutoUpdateEnabled"
+  },
+  "adminStockAutoUpdateIntervalMin": "更新間隔（分鐘）",
+  "@adminStockAutoUpdateIntervalMin": {
+    "description": "Web path: admin.adminStockAutoUpdateIntervalMin",
+    "x-webPath": "admin.adminStockAutoUpdateIntervalMin"
+  },
+  "adminSaved": "已儲存",
+  "@adminSaved": {
+    "description": "Web path: admin.adminSaved",
+    "x-webPath": "admin.adminSaved"
+  },
+  "adminOperationsTitle": "維運動作",
+  "@adminOperationsTitle": {
+    "description": "Web path: admin.adminOperationsTitle",
+    "x-webPath": "admin.adminOperationsTitle"
+  },
+  "adminRunStockUpdate": "立即更新股價",
+  "@adminRunStockUpdate": {
+    "description": "Web path: admin.adminRunStockUpdate",
+    "x-webPath": "admin.adminRunStockUpdate"
+  },
+  "adminCompressPhotos": "壓縮照片",
+  "@adminCompressPhotos": {
+    "description": "Web path: admin.adminCompressPhotos",
+    "x-webPath": "admin.adminCompressPhotos"
+  },
+  "adminEncryptPhotos": "加密照片",
+  "@adminEncryptPhotos": {
+    "description": "Web path: admin.adminEncryptPhotos",
+    "x-webPath": "admin.adminEncryptPhotos"
+  },
+  "adminServerTime": "伺服器時間",
+  "@adminServerTime": {
+    "description": "Web path: admin.adminServerTime",
+    "x-webPath": "admin.adminServerTime"
+  },
+  "adminNtpSync": "NTP 同步",
+  "@adminNtpSync": {
+    "description": "Web path: admin.adminNtpSync",
+    "x-webPath": "admin.adminNtpSync"
+  },
+  "adminStockUpdateResult": "更新完成：{updated} 筆",
+  "@adminStockUpdateResult": {
+    "description": "Web path: admin.adminStockUpdateResult",
+    "x-webPath": "admin.adminStockUpdateResult",
+    "placeholders": {
+      "updated": {}
+    }
+  },
+  "adminPhotoCompressResult": "壓縮完成：{recompressed} 張",
+  "@adminPhotoCompressResult": {
+    "description": "Web path: admin.adminPhotoCompressResult",
+    "x-webPath": "admin.adminPhotoCompressResult",
+    "placeholders": {
+      "recompressed": {}
+    }
+  },
+  "adminPhotoEncryptResult": "加密完成：{encrypted} 張",
+  "@adminPhotoEncryptResult": {
+    "description": "Web path: admin.adminPhotoEncryptResult",
+    "x-webPath": "admin.adminPhotoEncryptResult",
+    "placeholders": {
+      "encrypted": {}
+    }
+  },
+  "adminNtpSynced": "已同步，偏移 {offset} ms",
+  "@adminNtpSynced": {
+    "description": "Web path: admin.adminNtpSynced",
+    "x-webPath": "admin.adminNtpSynced",
+    "placeholders": {
+      "offset": {}
+    }
+  },
+  "adminAddUser": "新增使用者",
+  "@adminAddUser": {
+    "description": "Web path: admin.adminAddUser",
+    "x-webPath": "admin.adminAddUser"
+  },
+  "adminUserCreated": "已建立使用者",
+  "@adminUserCreated": {
+    "description": "Web path: admin.adminUserCreated",
+    "x-webPath": "admin.adminUserCreated"
+  },
+  "adminResetPassword": "重設密碼",
+  "@adminResetPassword": {
+    "description": "Web path: admin.adminResetPassword",
+    "x-webPath": "admin.adminResetPassword"
+  },
+  "adminPasswordReset": "密碼已重設",
+  "@adminPasswordReset": {
+    "description": "Web path: admin.adminPasswordReset",
+    "x-webPath": "admin.adminPasswordReset"
+  },
+  "adminRoleChanged": "已更新權限",
+  "@adminRoleChanged": {
+    "description": "Web path: admin.adminRoleChanged",
+    "x-webPath": "admin.adminRoleChanged"
+  },
+  "adminDeleteUser": "刪除使用者",
+  "@adminDeleteUser": {
+    "description": "Web path: admin.adminDeleteUser",
+    "x-webPath": "admin.adminDeleteUser"
+  },
+  "adminDeleteUserConfirm": "確定要刪除「{email}」嗎？",
+  "@adminDeleteUserConfirm": {
+    "description": "Web path: admin.adminDeleteUserConfirm",
+    "x-webPath": "admin.adminDeleteUserConfirm",
+    "placeholders": {
+      "email": {}
+    }
+  },
+  "adminUserDeleted": "已刪除使用者",
+  "@adminUserDeleted": {
+    "description": "Web path: admin.adminUserDeleted",
+    "x-webPath": "admin.adminUserDeleted"
+  },
+  "adminNoUsers": "尚無使用者",
+  "@adminNoUsers": {
+    "description": "Web path: admin.adminNoUsers",
+    "x-webPath": "admin.adminNoUsers"
+  },
+  "adminRemoveAdmin": "取消管理員",
+  "@adminRemoveAdmin": {
+    "description": "Web path: admin.adminRemoveAdmin",
+    "x-webPath": "admin.adminRemoveAdmin"
+  },
+  "adminMakeAdmin": "設為管理員",
+  "@adminMakeAdmin": {
+    "description": "Web path: admin.adminMakeAdmin",
+    "x-webPath": "admin.adminMakeAdmin"
+  },
+  "adminPasswordTooShort": "密碼至少 8 個字元",
+  "@adminPasswordTooShort": {
+    "description": "Web path: admin.adminPasswordTooShort",
+    "x-webPath": "admin.adminPasswordTooShort"
+  },
+  "adminNoLoginAudit": "尚無登入紀錄",
+  "@adminNoLoginAudit": {
+    "description": "Web path: admin.adminNoLoginAudit",
+    "x-webPath": "admin.adminNoLoginAudit"
+  },
+  "adminLoginSuccess": "成功",
+  "@adminLoginSuccess": {
+    "description": "Web path: admin.adminLoginSuccess",
+    "x-webPath": "admin.adminLoginSuccess"
+  },
+  "adminLoginFailed": "失敗",
+  "@adminLoginFailed": {
+    "description": "Web path: admin.adminLoginFailed",
+    "x-webPath": "admin.adminLoginFailed"
+  },
+  "adminScreenSubtitle": "系統設定與使用者管理",
+  "@adminScreenSubtitle": {
+    "description": "Web path: admin.adminScreenSubtitle",
+    "x-webPath": "admin.adminScreenSubtitle"
   }
 }

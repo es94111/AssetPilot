@@ -6809,5 +6809,245 @@
   "@settingsMcpCloseConfirm": {
     "description": "Web path: settings.mcp.closeConfirm",
     "x-webPath": "settings.mcp.closeConfirm"
+  },
+  "adminSystemSettingsTitle": "Системные настройки",
+  "@adminSystemSettingsTitle": {
+    "description": "Web path: admin.adminSystemSettingsTitle",
+    "x-webPath": "admin.adminSystemSettingsTitle"
+  },
+  "adminUsersTitle": "Управление пользователями",
+  "@adminUsersTitle": {
+    "description": "Web path: admin.adminUsersTitle",
+    "x-webPath": "admin.adminUsersTitle"
+  },
+  "adminLoginAuditTitle": "Аудит входа",
+  "@adminLoginAuditTitle": {
+    "description": "Web path: admin.adminLoginAuditTitle",
+    "x-webPath": "admin.adminLoginAuditTitle"
+  },
+  "adminPublicRegistration": "Открытая регистрация",
+  "@adminPublicRegistration": {
+    "description": "Web path: admin.adminPublicRegistration",
+    "x-webPath": "admin.adminPublicRegistration"
+  },
+  "adminLineLoginEnabled": "Вход через LINE",
+  "@adminLineLoginEnabled": {
+    "description": "Web path: admin.adminLineLoginEnabled",
+    "x-webPath": "admin.adminLineLoginEnabled"
+  },
+  "adminAllowedRegistrationEmails": "Разрешённые email для регистрации (по одному в строке)",
+  "@adminAllowedRegistrationEmails": {
+    "description": "Web path: admin.adminAllowedRegistrationEmails",
+    "x-webPath": "admin.adminAllowedRegistrationEmails"
+  },
+  "adminAdminIpAllowlist": "Белый список IP администратора (по одному в строке)",
+  "@adminAdminIpAllowlist": {
+    "description": "Web path: admin.adminAdminIpAllowlist",
+    "x-webPath": "admin.adminAdminIpAllowlist"
+  },
+  "adminRouteAuditMode": "Режим аудита",
+  "@adminRouteAuditMode": {
+    "description": "Web path: admin.adminRouteAuditMode",
+    "x-webPath": "admin.adminRouteAuditMode"
+  },
+  "adminRouteAuditSecurity": "Безопасность",
+  "@adminRouteAuditSecurity": {
+    "description": "Web path: admin.adminRouteAuditSecurity",
+    "x-webPath": "admin.adminRouteAuditSecurity"
+  },
+  "adminRouteAuditExtended": "Расширенный",
+  "@adminRouteAuditExtended": {
+    "description": "Web path: admin.adminRouteAuditExtended",
+    "x-webPath": "admin.adminRouteAuditExtended"
+  },
+  "adminRouteAuditMinimal": "Минимальный",
+  "@adminRouteAuditMinimal": {
+    "description": "Web path: admin.adminRouteAuditMinimal",
+    "x-webPath": "admin.adminRouteAuditMinimal"
+  },
+  "adminTransactionPhotoStorage": "Хранилище фото транзакций",
+  "@adminTransactionPhotoStorage": {
+    "description": "Web path: admin.adminTransactionPhotoStorage",
+    "x-webPath": "admin.adminTransactionPhotoStorage"
+  },
+  "adminPhotoStorageDefault": "По умолчанию",
+  "@adminPhotoStorageDefault": {
+    "description": "Web path: admin.adminPhotoStorageDefault",
+    "x-webPath": "admin.adminPhotoStorageDefault"
+  },
+  "adminPhotoStorageLocal": "Локально",
+  "@adminPhotoStorageLocal": {
+    "description": "Web path: admin.adminPhotoStorageLocal",
+    "x-webPath": "admin.adminPhotoStorageLocal"
+  },
+  "adminPhotoStorageS3": "S3",
+  "@adminPhotoStorageS3": {
+    "description": "Web path: admin.adminPhotoStorageS3",
+    "x-webPath": "admin.adminPhotoStorageS3"
+  },
+  "adminTransactionPhotoMaxMb": "Лимит фото транзакций (МБ)",
+  "@adminTransactionPhotoMaxMb": {
+    "description": "Web path: admin.adminTransactionPhotoMaxMb",
+    "x-webPath": "admin.adminTransactionPhotoMaxMb"
+  },
+  "adminStockAutoUpdateEnabled": "Автообновление цен",
+  "@adminStockAutoUpdateEnabled": {
+    "description": "Web path: admin.adminStockAutoUpdateEnabled",
+    "x-webPath": "admin.adminStockAutoUpdateEnabled"
+  },
+  "adminStockAutoUpdateIntervalMin": "Интервал обновления (минуты)",
+  "@adminStockAutoUpdateIntervalMin": {
+    "description": "Web path: admin.adminStockAutoUpdateIntervalMin",
+    "x-webPath": "admin.adminStockAutoUpdateIntervalMin"
+  },
+  "adminSaved": "Сохранено",
+  "@adminSaved": {
+    "description": "Web path: admin.adminSaved",
+    "x-webPath": "admin.adminSaved"
+  },
+  "adminOperationsTitle": "Операции",
+  "@adminOperationsTitle": {
+    "description": "Web path: admin.adminOperationsTitle",
+    "x-webPath": "admin.adminOperationsTitle"
+  },
+  "adminRunStockUpdate": "Обновить цены сейчас",
+  "@adminRunStockUpdate": {
+    "description": "Web path: admin.adminRunStockUpdate",
+    "x-webPath": "admin.adminRunStockUpdate"
+  },
+  "adminCompressPhotos": "Сжать фото",
+  "@adminCompressPhotos": {
+    "description": "Web path: admin.adminCompressPhotos",
+    "x-webPath": "admin.adminCompressPhotos"
+  },
+  "adminEncryptPhotos": "Зашифровать фото",
+  "@adminEncryptPhotos": {
+    "description": "Web path: admin.adminEncryptPhotos",
+    "x-webPath": "admin.adminEncryptPhotos"
+  },
+  "adminServerTime": "Время сервера",
+  "@adminServerTime": {
+    "description": "Web path: admin.adminServerTime",
+    "x-webPath": "admin.adminServerTime"
+  },
+  "adminNtpSync": "Синхронизация NTP",
+  "@adminNtpSync": {
+    "description": "Web path: admin.adminNtpSync",
+    "x-webPath": "admin.adminNtpSync"
+  },
+  "adminStockUpdateResult": "Обновлено цен: {updated}",
+  "@adminStockUpdateResult": {
+    "description": "Web path: admin.adminStockUpdateResult",
+    "x-webPath": "admin.adminStockUpdateResult",
+    "placeholders": {
+      "updated": {}
+    }
+  },
+  "adminPhotoCompressResult": "Сжато фото: {recompressed}",
+  "@adminPhotoCompressResult": {
+    "description": "Web path: admin.adminPhotoCompressResult",
+    "x-webPath": "admin.adminPhotoCompressResult",
+    "placeholders": {
+      "recompressed": {}
+    }
+  },
+  "adminPhotoEncryptResult": "Зашифровано фото: {encrypted}",
+  "@adminPhotoEncryptResult": {
+    "description": "Web path: admin.adminPhotoEncryptResult",
+    "x-webPath": "admin.adminPhotoEncryptResult",
+    "placeholders": {
+      "encrypted": {}
+    }
+  },
+  "adminNtpSynced": "Синхронизировано, смещение {offset} мс",
+  "@adminNtpSynced": {
+    "description": "Web path: admin.adminNtpSynced",
+    "x-webPath": "admin.adminNtpSynced",
+    "placeholders": {
+      "offset": {}
+    }
+  },
+  "adminAddUser": "Добавить пользователя",
+  "@adminAddUser": {
+    "description": "Web path: admin.adminAddUser",
+    "x-webPath": "admin.adminAddUser"
+  },
+  "adminUserCreated": "Пользователь создан",
+  "@adminUserCreated": {
+    "description": "Web path: admin.adminUserCreated",
+    "x-webPath": "admin.adminUserCreated"
+  },
+  "adminResetPassword": "Сбросить пароль",
+  "@adminResetPassword": {
+    "description": "Web path: admin.adminResetPassword",
+    "x-webPath": "admin.adminResetPassword"
+  },
+  "adminPasswordReset": "Пароль сброшен",
+  "@adminPasswordReset": {
+    "description": "Web path: admin.adminPasswordReset",
+    "x-webPath": "admin.adminPasswordReset"
+  },
+  "adminRoleChanged": "Роль обновлена",
+  "@adminRoleChanged": {
+    "description": "Web path: admin.adminRoleChanged",
+    "x-webPath": "admin.adminRoleChanged"
+  },
+  "adminDeleteUser": "Удалить пользователя",
+  "@adminDeleteUser": {
+    "description": "Web path: admin.adminDeleteUser",
+    "x-webPath": "admin.adminDeleteUser"
+  },
+  "adminDeleteUserConfirm": "Удалить \"{email}\"?",
+  "@adminDeleteUserConfirm": {
+    "description": "Web path: admin.adminDeleteUserConfirm",
+    "x-webPath": "admin.adminDeleteUserConfirm",
+    "placeholders": {
+      "email": {}
+    }
+  },
+  "adminUserDeleted": "Пользователь удалён",
+  "@adminUserDeleted": {
+    "description": "Web path: admin.adminUserDeleted",
+    "x-webPath": "admin.adminUserDeleted"
+  },
+  "adminNoUsers": "Пока нет пользователей",
+  "@adminNoUsers": {
+    "description": "Web path: admin.adminNoUsers",
+    "x-webPath": "admin.adminNoUsers"
+  },
+  "adminRemoveAdmin": "Убрать админа",
+  "@adminRemoveAdmin": {
+    "description": "Web path: admin.adminRemoveAdmin",
+    "x-webPath": "admin.adminRemoveAdmin"
+  },
+  "adminMakeAdmin": "Сделать админом",
+  "@adminMakeAdmin": {
+    "description": "Web path: admin.adminMakeAdmin",
+    "x-webPath": "admin.adminMakeAdmin"
+  },
+  "adminPasswordTooShort": "Пароль должен содержать не менее 8 символов",
+  "@adminPasswordTooShort": {
+    "description": "Web path: admin.adminPasswordTooShort",
+    "x-webPath": "admin.adminPasswordTooShort"
+  },
+  "adminNoLoginAudit": "Пока нет записей входа",
+  "@adminNoLoginAudit": {
+    "description": "Web path: admin.adminNoLoginAudit",
+    "x-webPath": "admin.adminNoLoginAudit"
+  },
+  "adminLoginSuccess": "Успех",
+  "@adminLoginSuccess": {
+    "description": "Web path: admin.adminLoginSuccess",
+    "x-webPath": "admin.adminLoginSuccess"
+  },
+  "adminLoginFailed": "Ошибка",
+  "@adminLoginFailed": {
+    "description": "Web path: admin.adminLoginFailed",
+    "x-webPath": "admin.adminLoginFailed"
+  },
+  "adminScreenSubtitle": "Системные настройки и управление пользователями",
+  "@adminScreenSubtitle": {
+    "description": "Web path: admin.adminScreenSubtitle",
+    "x-webPath": "admin.adminScreenSubtitle"
   }
 }

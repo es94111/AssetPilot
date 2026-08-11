@@ -213,6 +213,11 @@ class ApiClient {
                   .delete(uri, headers: headers, body: encoded)
                   .timeout(t);
               break;
+            case 'PATCH':
+              res = await c
+                  .patch(uri, headers: headers, body: encoded)
+                  .timeout(t);
+              break;
             default:
               throw ArgumentError(
                 trKey('mobileDynamicUnknownHttpMethod', {'method': method}),
@@ -846,7 +851,7 @@ class ApiClient {
   Future<Map<String, dynamic>> batchFetchStockPrices() =>
       _getMapFromSend('POST', '/api/stocks/batch-fetch');
 
-  // 批次寫回現價，updates: [{ stockId, currentPrice }]
+  // 批次寫回現價，updates: [{ stockId, currentPrice, delisted? }]
   Future<Map<String, dynamic>> batchUpdateStockPrices(
     List<Map<String, dynamic>> updates,
   ) => _getMapFromSend(
@@ -854,6 +859,29 @@ class ApiClient {
     '/api/stocks/batch-price',
     body: {'updates': updates},
   );
+
+  // ── 股票定期定額 ────────────────────────────────────────────
+
+  /// 列出定期定額設定，回傳 `[{ id, stockId, symbol, stockName, amount,
+  /// frequency, startDate, accountId, note, isActive, lastGenerated }, ...]`。
+  Future<List<dynamic>> stockRecurring() => _getList('/api/stock-recurring');
+
+  Future<void> createStockRecurring(Map<String, dynamic> body) =>
+      _send('POST', '/api/stock-recurring', body: body);
+
+  Future<void> updateStockRecurring(String id, Map<String, dynamic> body) =>
+      _send('PUT', '/api/stock-recurring/$id', body: body);
+
+  Future<void> deleteStockRecurring(String id) =>
+      _send('DELETE', '/api/stock-recurring/$id');
+
+  /// 切換定期定額啟用狀態，回傳 `{ isActive }`。
+  Future<Map<String, dynamic>> toggleStockRecurring(String id) =>
+      _getMapFromSend('PATCH', '/api/stock-recurring/$id/toggle');
+
+  /// 立即處理到期的定期定額，回傳 `{ generated, skipped, postponed }`。
+  Future<Map<String, dynamic>> processStockRecurring() =>
+      _getMapFromSend('POST', '/api/stock-recurring/process');
 
   // ── 報表 ────────────────────────────────────────────────────
 
@@ -1004,4 +1032,70 @@ class ApiClient {
 
   Future<void> deleteReportSchedule(String id) =>
       _send('DELETE', '/api/user/report-schedules/$id');
+
+  // ── 管理員：系統設定 ────────────────────────────────────────
+  /// 取得系統設定（僅管理員）。回傳 `{ publicRegistration, lineLoginEnabled,
+  /// allowedRegistrationEmails, adminIpAllowlist, routeAuditMode,
+  /// transactionPhotoStorage, transactionPhotoMaxBytes, stockAutoUpdateEnabled,
+  /// stockAutoUpdateIntervalMin, stockAutoUpdateLastRun, stockAutoUpdateLastSummary }`。
+  Future<Map<String, dynamic>> adminSystemSettings() =>
+      _getMap('/api/admin/system-settings');
+
+  /// 更新系統設定（僅超級管理員）。只送要改的欄位。
+  Future<Map<String, dynamic>> updateAdminSystemSettings(
+    Map<String, dynamic> body,
+  ) => _getMapFromSend('PUT', '/api/admin/system-settings', body: body);
+
+  // ── 管理員：使用者管理 ──────────────────────────────────────
+  /// 列出所有使用者（僅管理員）。
+  Future<List<dynamic>> adminUsers() async {
+    final r = await _send('GET', '/api/admin/users');
+    return r is List ? r : [];
+  }
+
+  /// 建立使用者（僅管理員）。body: { email, password, displayName, isAdmin? }。
+  Future<Map<String, dynamic>> adminCreateUser(Map<String, dynamic> body) =>
+      _getMapFromSend('POST', '/api/admin/users', body: body);
+
+  /// 重設使用者密碼（僅管理員）。body: { newPassword }。
+  Future<void> adminResetUserPassword(String id, String newPassword) =>
+      _send('PUT', '/api/admin/users/$id/password', body: {'newPassword': newPassword});
+
+  /// 切換管理員角色（僅管理員）。body: { isAdmin, adminRole? }。
+  Future<Map<String, dynamic>> adminUpdateUserRole(
+    String id,
+    Map<String, dynamic> body,
+  ) => _getMapFromSend('PUT', '/api/admin/users/$id', body: body);
+
+  /// 刪除使用者（僅管理員）。
+  Future<void> adminDeleteUser(String id) =>
+      _send('DELETE', '/api/admin/users/$id');
+
+  // ── 管理員：登入稽核 ────────────────────────────────────────
+  /// 管理員登入稽核（僅管理員）。回傳 `{ logs: [...] }`。
+  Future<List<dynamic>> adminLoginAudit() async {
+    final r = await _send('GET', '/api/admin/login-audit?scope=all');
+    return r is Map && r['logs'] is List ? r['logs'] as List : [];
+  }
+
+  // ── 管理員：維運動作 ────────────────────────────────────────
+  /// 立即觸發一次股價更新（略過交易時段閘門，僅管理員）。
+  Future<Map<String, dynamic>> adminRunStockPriceUpdate() =>
+      _getMapFromSend('POST', '/api/admin/stock-price-update/run-now');
+
+  /// 重新壓縮 S3 交易照片（僅管理員）。
+  Future<Map<String, dynamic>> adminCompressTransactionPhotos() =>
+      _getMapFromSend('POST', '/api/admin/transaction-photos/compress');
+
+  /// 批次加密既有明文交易照片（僅管理員）。
+  Future<Map<String, dynamic>> adminEncryptTransactionPhotos() =>
+      _getMapFromSend('POST', '/api/admin/transaction-photos/encrypt');
+
+  /// 伺服器時間快照（僅管理員）。
+  Future<Map<String, dynamic>> adminServerTime() =>
+      _getMap('/api/admin/server-time');
+
+  /// NTP 同步伺服器時間（僅管理員）。
+  Future<Map<String, dynamic>> adminNtpSync() =>
+      _getMapFromSend('POST', '/api/admin/server-time/ntp-sync');
 }

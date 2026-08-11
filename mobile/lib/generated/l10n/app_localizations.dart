@@ -7722,6 +7722,276 @@ abstract class AppLocalizations {
   /// In zh_Hant_TW, this message translates to:
   /// **'我已複製，關閉視窗'**
   String get settingsMcpCloseConfirm;
+
+  /// Web path: admin.adminSystemSettingsTitle
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'系統設定'**
+  String get adminSystemSettingsTitle;
+
+  /// Web path: admin.adminUsersTitle
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'使用者管理'**
+  String get adminUsersTitle;
+
+  /// Web path: admin.adminLoginAuditTitle
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'登入稽核'**
+  String get adminLoginAuditTitle;
+
+  /// Web path: admin.adminPublicRegistration
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'開放註冊'**
+  String get adminPublicRegistration;
+
+  /// Web path: admin.adminLineLoginEnabled
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'LINE 登入'**
+  String get adminLineLoginEnabled;
+
+  /// Web path: admin.adminAllowedRegistrationEmails
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'允許註冊的 Email（每行一個）'**
+  String get adminAllowedRegistrationEmails;
+
+  /// Web path: admin.adminAdminIpAllowlist
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'管理員 IP 白名單（每行一個）'**
+  String get adminAdminIpAllowlist;
+
+  /// Web path: admin.adminRouteAuditMode
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'稽核模式'**
+  String get adminRouteAuditMode;
+
+  /// Web path: admin.adminRouteAuditSecurity
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'安全'**
+  String get adminRouteAuditSecurity;
+
+  /// Web path: admin.adminRouteAuditExtended
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'完整'**
+  String get adminRouteAuditExtended;
+
+  /// Web path: admin.adminRouteAuditMinimal
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'精簡'**
+  String get adminRouteAuditMinimal;
+
+  /// Web path: admin.adminTransactionPhotoStorage
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'交易照片儲存'**
+  String get adminTransactionPhotoStorage;
+
+  /// Web path: admin.adminPhotoStorageDefault
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'預設'**
+  String get adminPhotoStorageDefault;
+
+  /// Web path: admin.adminPhotoStorageLocal
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'本機'**
+  String get adminPhotoStorageLocal;
+
+  /// Web path: admin.adminPhotoStorageS3
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'S3'**
+  String get adminPhotoStorageS3;
+
+  /// Web path: admin.adminTransactionPhotoMaxMb
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'交易照片上限（MB）'**
+  String get adminTransactionPhotoMaxMb;
+
+  /// Web path: admin.adminStockAutoUpdateEnabled
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'股價自動更新'**
+  String get adminStockAutoUpdateEnabled;
+
+  /// Web path: admin.adminStockAutoUpdateIntervalMin
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'更新間隔（分鐘）'**
+  String get adminStockAutoUpdateIntervalMin;
+
+  /// Web path: admin.adminSaved
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'已儲存'**
+  String get adminSaved;
+
+  /// Web path: admin.adminOperationsTitle
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'維運動作'**
+  String get adminOperationsTitle;
+
+  /// Web path: admin.adminRunStockUpdate
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'立即更新股價'**
+  String get adminRunStockUpdate;
+
+  /// Web path: admin.adminCompressPhotos
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'壓縮照片'**
+  String get adminCompressPhotos;
+
+  /// Web path: admin.adminEncryptPhotos
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'加密照片'**
+  String get adminEncryptPhotos;
+
+  /// Web path: admin.adminServerTime
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'伺服器時間'**
+  String get adminServerTime;
+
+  /// Web path: admin.adminNtpSync
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'NTP 同步'**
+  String get adminNtpSync;
+
+  /// Web path: admin.adminStockUpdateResult
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'更新完成：{updated} 筆'**
+  String adminStockUpdateResult(Object updated);
+
+  /// Web path: admin.adminPhotoCompressResult
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'壓縮完成：{recompressed} 張'**
+  String adminPhotoCompressResult(Object recompressed);
+
+  /// Web path: admin.adminPhotoEncryptResult
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'加密完成：{encrypted} 張'**
+  String adminPhotoEncryptResult(Object encrypted);
+
+  /// Web path: admin.adminNtpSynced
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'已同步，偏移 {offset} ms'**
+  String adminNtpSynced(Object offset);
+
+  /// Web path: admin.adminAddUser
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'新增使用者'**
+  String get adminAddUser;
+
+  /// Web path: admin.adminUserCreated
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'已建立使用者'**
+  String get adminUserCreated;
+
+  /// Web path: admin.adminResetPassword
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'重設密碼'**
+  String get adminResetPassword;
+
+  /// Web path: admin.adminPasswordReset
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'密碼已重設'**
+  String get adminPasswordReset;
+
+  /// Web path: admin.adminRoleChanged
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'已更新權限'**
+  String get adminRoleChanged;
+
+  /// Web path: admin.adminDeleteUser
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'刪除使用者'**
+  String get adminDeleteUser;
+
+  /// Web path: admin.adminDeleteUserConfirm
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'確定要刪除「{email}」嗎？'**
+  String adminDeleteUserConfirm(Object email);
+
+  /// Web path: admin.adminUserDeleted
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'已刪除使用者'**
+  String get adminUserDeleted;
+
+  /// Web path: admin.adminNoUsers
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'尚無使用者'**
+  String get adminNoUsers;
+
+  /// Web path: admin.adminRemoveAdmin
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'取消管理員'**
+  String get adminRemoveAdmin;
+
+  /// Web path: admin.adminMakeAdmin
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'設為管理員'**
+  String get adminMakeAdmin;
+
+  /// Web path: admin.adminPasswordTooShort
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'密碼至少 8 個字元'**
+  String get adminPasswordTooShort;
+
+  /// Web path: admin.adminNoLoginAudit
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'尚無登入紀錄'**
+  String get adminNoLoginAudit;
+
+  /// Web path: admin.adminLoginSuccess
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'成功'**
+  String get adminLoginSuccess;
+
+  /// Web path: admin.adminLoginFailed
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'失敗'**
+  String get adminLoginFailed;
+
+  /// Web path: admin.adminScreenSubtitle
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'系統設定與使用者管理'**
+  String get adminScreenSubtitle;
 }
 
 class _AppLocalizationsDelegate

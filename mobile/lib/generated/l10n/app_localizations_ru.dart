@@ -4479,4 +4479,153 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get settingsMcpCloseConfirm => 'Я скопировал(а), закрыть';
+
+  @override
+  String get adminSystemSettingsTitle => 'Системные настройки';
+
+  @override
+  String get adminUsersTitle => 'Управление пользователями';
+
+  @override
+  String get adminLoginAuditTitle => 'Аудит входа';
+
+  @override
+  String get adminPublicRegistration => 'Открытая регистрация';
+
+  @override
+  String get adminLineLoginEnabled => 'Вход через LINE';
+
+  @override
+  String get adminAllowedRegistrationEmails =>
+      'Разрешённые email для регистрации (по одному в строке)';
+
+  @override
+  String get adminAdminIpAllowlist =>
+      'Белый список IP администратора (по одному в строке)';
+
+  @override
+  String get adminRouteAuditMode => 'Режим аудита';
+
+  @override
+  String get adminRouteAuditSecurity => 'Безопасность';
+
+  @override
+  String get adminRouteAuditExtended => 'Расширенный';
+
+  @override
+  String get adminRouteAuditMinimal => 'Минимальный';
+
+  @override
+  String get adminTransactionPhotoStorage => 'Хранилище фото транзакций';
+
+  @override
+  String get adminPhotoStorageDefault => 'По умолчанию';
+
+  @override
+  String get adminPhotoStorageLocal => 'Локально';
+
+  @override
+  String get adminPhotoStorageS3 => 'S3';
+
+  @override
+  String get adminTransactionPhotoMaxMb => 'Лимит фото транзакций (МБ)';
+
+  @override
+  String get adminStockAutoUpdateEnabled => 'Автообновление цен';
+
+  @override
+  String get adminStockAutoUpdateIntervalMin => 'Интервал обновления (минуты)';
+
+  @override
+  String get adminSaved => 'Сохранено';
+
+  @override
+  String get adminOperationsTitle => 'Операции';
+
+  @override
+  String get adminRunStockUpdate => 'Обновить цены сейчас';
+
+  @override
+  String get adminCompressPhotos => 'Сжать фото';
+
+  @override
+  String get adminEncryptPhotos => 'Зашифровать фото';
+
+  @override
+  String get adminServerTime => 'Время сервера';
+
+  @override
+  String get adminNtpSync => 'Синхронизация NTP';
+
+  @override
+  String adminStockUpdateResult(Object updated) {
+    return 'Обновлено цен: $updated';
+  }
+
+  @override
+  String adminPhotoCompressResult(Object recompressed) {
+    return 'Сжато фото: $recompressed';
+  }
+
+  @override
+  String adminPhotoEncryptResult(Object encrypted) {
+    return 'Зашифровано фото: $encrypted';
+  }
+
+  @override
+  String adminNtpSynced(Object offset) {
+    return 'Синхронизировано, смещение $offset мс';
+  }
+
+  @override
+  String get adminAddUser => 'Добавить пользователя';
+
+  @override
+  String get adminUserCreated => 'Пользователь создан';
+
+  @override
+  String get adminResetPassword => 'Сбросить пароль';
+
+  @override
+  String get adminPasswordReset => 'Пароль сброшен';
+
+  @override
+  String get adminRoleChanged => 'Роль обновлена';
+
+  @override
+  String get adminDeleteUser => 'Удалить пользователя';
+
+  @override
+  String adminDeleteUserConfirm(Object email) {
+    return 'Удалить \"$email\"?';
+  }
+
+  @override
+  String get adminUserDeleted => 'Пользователь удалён';
+
+  @override
+  String get adminNoUsers => 'Пока нет пользователей';
+
+  @override
+  String get adminRemoveAdmin => 'Убрать админа';
+
+  @override
+  String get adminMakeAdmin => 'Сделать админом';
+
+  @override
+  String get adminPasswordTooShort =>
+      'Пароль должен содержать не менее 8 символов';
+
+  @override
+  String get adminNoLoginAudit => 'Пока нет записей входа';
+
+  @override
+  String get adminLoginSuccess => 'Успех';
+
+  @override
+  String get adminLoginFailed => 'Ошибка';
+
+  @override
+  String get adminScreenSubtitle =>
+      'Системные настройки и управление пользователями';
 }

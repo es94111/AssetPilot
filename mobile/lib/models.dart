@@ -21,6 +21,7 @@ class AppUser {
   final String email;
   final String displayName;
   final bool isAdmin;
+  final bool isSuperAdmin; // 一般（唯讀）管理員為 false
   final String defaultCurrency;
   final bool hasPassword;
   final bool googleLinked;
@@ -31,6 +32,7 @@ class AppUser {
     required this.email,
     required this.displayName,
     required this.isAdmin,
+    required this.isSuperAdmin,
     required this.defaultCurrency,
     required this.hasPassword,
     required this.googleLinked,
@@ -45,6 +47,7 @@ class AppUser {
       email: email,
       displayName: (name == null || '$name'.isEmpty) ? email : '$name',
       isAdmin: _asBool(j['isAdmin']) || _asBool(j['is_admin']),
+      isSuperAdmin: _asBool(j['isSuperAdmin']) || _asBool(j['is_super_admin']),
       defaultCurrency: _asStr(j['defaultCurrency']).isEmpty
           ? 'TWD'
           : _asStr(j['defaultCurrency']),
@@ -606,6 +609,49 @@ class StockSettings {
     sellTaxRateEtf: _asNum(j['sellTaxRateEtf']),
     sellTaxRateWarrant: _asNum(j['sellTaxRateWarrant']),
     sellTaxMin: _asNum(j['sellTaxMin']),
+  );
+}
+
+/// `GET/POST /api/stock-recurring` — 股票定期定額設定
+class StockRecurring {
+  final String id;
+  final String stockId;
+  final String symbol;
+  final String stockName;
+  final num amount;
+  final String frequency; // daily / weekly / monthly / yearly
+  final String startDate; // YYYY-MM-DD
+  final String accountId;
+  final String note;
+  final bool isActive;
+  final String lastGenerated; // YYYY-MM-DD 或空字串
+
+  StockRecurring({
+    required this.id,
+    required this.stockId,
+    required this.symbol,
+    required this.stockName,
+    required this.amount,
+    required this.frequency,
+    required this.startDate,
+    required this.accountId,
+    required this.note,
+    required this.isActive,
+    required this.lastGenerated,
+  });
+
+  factory StockRecurring.fromJson(Map<String, dynamic> j) => StockRecurring(
+    id: _asStr(j['id']),
+    stockId: _asStr(j['stockId'] ?? j['stock_id']),
+    symbol: _asStr(j['symbol']),
+    stockName: _asStr(j['stockName'] ?? j['stock_name']),
+    amount: _asNum(j['amount']),
+    frequency: _asStr(j['frequency']),
+    startDate: _asStr(j['startDate'] ?? j['start_date']),
+    accountId: _asStr(j['accountId'] ?? j['account_id']),
+    note: _asStr(j['note']),
+    isActive: _asBool(j['isActive'] ?? j['is_active']),
+    lastGenerated: _asStr(j['lastGenerated'] ?? j['last_generated']),
   );
 }
 

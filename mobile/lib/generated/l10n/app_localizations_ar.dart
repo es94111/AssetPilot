@@ -4406,4 +4406,152 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get settingsMcpCloseConfirm => 'لقد نسخته، إغلاق';
+
+  @override
+  String get adminSystemSettingsTitle => 'إعدادات النظام';
+
+  @override
+  String get adminUsersTitle => 'إدارة المستخدمين';
+
+  @override
+  String get adminLoginAuditTitle => 'تدقيق تسجيل الدخول';
+
+  @override
+  String get adminPublicRegistration => 'التسجيل العام';
+
+  @override
+  String get adminLineLoginEnabled => 'تسجيل الدخول عبر LINE';
+
+  @override
+  String get adminAllowedRegistrationEmails =>
+      'رسائل البريد المسموح بالتسجيل بها (واحد لكل سطر)';
+
+  @override
+  String get adminAdminIpAllowlist =>
+      'قائمة السماح لعناوين IP الخاصة بالمشرف (واحد لكل سطر)';
+
+  @override
+  String get adminRouteAuditMode => 'وضع التدقيق';
+
+  @override
+  String get adminRouteAuditSecurity => 'الأمان';
+
+  @override
+  String get adminRouteAuditExtended => 'موسّع';
+
+  @override
+  String get adminRouteAuditMinimal => 'أدنى';
+
+  @override
+  String get adminTransactionPhotoStorage => 'تخزين صور المعاملات';
+
+  @override
+  String get adminPhotoStorageDefault => 'الافتراضي';
+
+  @override
+  String get adminPhotoStorageLocal => 'محلي';
+
+  @override
+  String get adminPhotoStorageS3 => 'S3';
+
+  @override
+  String get adminTransactionPhotoMaxMb => 'حد صور المعاملات (ميجابايت)';
+
+  @override
+  String get adminStockAutoUpdateEnabled => 'تحديث الأسعار تلقائيًا';
+
+  @override
+  String get adminStockAutoUpdateIntervalMin => 'فاصل التحديث (دقائق)';
+
+  @override
+  String get adminSaved => 'تم الحفظ';
+
+  @override
+  String get adminOperationsTitle => 'عمليات';
+
+  @override
+  String get adminRunStockUpdate => 'تحديث الأسعار الآن';
+
+  @override
+  String get adminCompressPhotos => 'ضغط الصور';
+
+  @override
+  String get adminEncryptPhotos => 'تشفير الصور';
+
+  @override
+  String get adminServerTime => 'وقت الخادم';
+
+  @override
+  String get adminNtpSync => 'مزامنة NTP';
+
+  @override
+  String adminStockUpdateResult(Object updated) {
+    return 'تم تحديث $updated أسعار';
+  }
+
+  @override
+  String adminPhotoCompressResult(Object recompressed) {
+    return 'تم ضغط $recompressed صورة';
+  }
+
+  @override
+  String adminPhotoEncryptResult(Object encrypted) {
+    return 'تم تشفير $encrypted صورة';
+  }
+
+  @override
+  String adminNtpSynced(Object offset) {
+    return 'تمت المزامنة، الإزاحة $offset مللي ثانية';
+  }
+
+  @override
+  String get adminAddUser => 'إضافة مستخدم';
+
+  @override
+  String get adminUserCreated => 'تم إنشاء المستخدم';
+
+  @override
+  String get adminResetPassword => 'إعادة تعيين كلمة المرور';
+
+  @override
+  String get adminPasswordReset => 'تمت إعادة تعيين كلمة المرور';
+
+  @override
+  String get adminRoleChanged => 'تم تحديث الدور';
+
+  @override
+  String get adminDeleteUser => 'حذف المستخدم';
+
+  @override
+  String adminDeleteUserConfirm(Object email) {
+    return 'حذف \"$email\"؟';
+  }
+
+  @override
+  String get adminUserDeleted => 'تم حذف المستخدم';
+
+  @override
+  String get adminNoUsers => 'لا يوجد مستخدمون بعد';
+
+  @override
+  String get adminRemoveAdmin => 'إزالة المشرف';
+
+  @override
+  String get adminMakeAdmin => 'جعل مشرفًا';
+
+  @override
+  String get adminPasswordTooShort =>
+      'يجب أن تكون كلمة المرور 8 أحرف على الأقل';
+
+  @override
+  String get adminNoLoginAudit => 'لا توجد سجلات تسجيل دخول بعد';
+
+  @override
+  String get adminLoginSuccess => 'نجاح';
+
+  @override
+  String get adminLoginFailed => 'فشل';
+
+  @override
+  String get adminScreenSubtitle => 'إعدادات النظام وإدارة المستخدمين';
 }

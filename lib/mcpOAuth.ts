@@ -12,11 +12,13 @@ import {
   mcpRedirectUriMatches,
   normalizeMcpOAuthClientMetadata,
   parseMcpOAuthScopes,
+  isSupportedMcpOAuthClientAuthMethod,
   validateClientIdMetadataDocument,
   validateMcpResource,
   validatePkceChallenge,
   verifyPkce,
   type McpOAuthClient,
+  type McpOAuthClientAuthMethod,
   type McpOAuthClientMetadata,
 } from './mcpOAuthCore';
 import { getDB, queryOne, saveDB } from './db';
@@ -26,6 +28,7 @@ import type { VerifyMcpTokenResult } from './mcpAuth';
 const ACCESS_TOKEN_PREFIX = 'ap_mcp_oauth_access_';
 const REFRESH_TOKEN_PREFIX = 'ap_mcp_oauth_refresh_';
 const AUTHORIZATION_CODE_PREFIX = 'ap_mcp_oauth_code_';
+const CLIENT_SECRET_PREFIX = 'ap_mcp_client_secret_';
 const CLIENT_METADATA_MAX_BYTES = 5 * 1024;
 const CLIENT_METADATA_TIMEOUT_MS = 5_000;
 const CLIENT_METADATA_CACHE_MAX_AGE_MS = 60 * 60 * 1000;
@@ -39,6 +42,8 @@ interface OAuthClientRow {
   client_id_issued_at: string | number | null;
   redirect_uris: string | number;
   token_endpoint_auth_method: string | number;
+  client_secret_hash: string | number | null;
+  client_secret_expires_at: string | number | null;
   grant_types: string | number;
   response_types: string | number;
   client_name: string | number;
@@ -88,6 +93,19 @@ export interface McpOAuthTokenResponse {
   scope: string;
 }
 
+export type McpOAuthClientAuthSource = 'none' | 'basic' | 'post';
+
+export interface McpOAuthClientCredentials {
+  clientId: string;
+  source: McpOAuthClientAuthSource;
+  clientSecret?: string;
+}
+
+export interface RegisteredMcpOAuthClient extends McpOAuthClient {
+  client_secret: string;
+  client_secret_expires_at: number;
+}
+
 const clientMetadataCache = new Map<string, CachedClientMetadata>();
 const clientMetadataLoads = new Map<string, Promise<McpOAuthClient>>();
 let lastOAuthPruneAt = 0;
@@ -110,21 +128,27 @@ function parseJsonArray(value: string | number | null): string[] {
 }
 
 function clientFromRow(row: OAuthClientRow): McpOAuthClient {
+  const storedAuthMethod = String(row.token_endpoint_auth_method || 'none').trim().toLowerCase();
+  const authMethod: McpOAuthClientAuthMethod = isSupportedMcpOAuthClientAuthMethod(storedAuthMethod)
+    ? storedAuthMethod
+    : 'none';
   return {
     client_id: String(row.client_id),
     client_id_issued_at: Number(row.client_id_issued_at) || undefined,
     redirect_uris: parseJsonArray(row.redirect_uris),
-    token_endpoint_auth_method: 'none',
+    token_endpoint_auth_method: authMethod,
     grant_types: parseJsonArray(row.grant_types) as Array<'authorization_code' | 'refresh_token'>,
     response_types: ['code'],
     client_name: String(row.client_name),
     client_uri: row.client_uri ? String(row.client_uri) : undefined,
     logo_uri: row.logo_uri ? String(row.logo_uri) : undefined,
     scope: String(row.scope || MCP_OAUTH_SCOPE),
+    client_secret_hash: row.client_secret_hash ? String(row.client_secret_hash) : undefined,
+    client_secret_expires_at: Number(row.client_secret_expires_at) || undefined,
   };
 }
 
-export function registerMcpOAuthClient(input: unknown): McpOAuthClient {
+export function registerMcpOAuthClient(input: unknown): RegisteredMcpOAuthClient {
   const metadata = normalizeMcpOAuthClientMetadata(input);
   const now = Date.now();
   pruneMcpOAuthRecords(now, true);
@@ -134,16 +158,26 @@ export function registerMcpOAuthClient(input: unknown): McpOAuthClient {
   }
   const clientId = crypto.randomUUID();
   const issuedAt = Math.floor(now / 1000);
+  // Some deployed MCP clients ask for a registration secret even when they
+  // declare the public `none` method.  Issuing one is harmless for PKCE public
+  // clients, keeps the normal `none` flow available, and lets the token
+  // endpoint interoperate with those clients without storing plaintext.
+  const clientSecret = randomOpaqueValue(CLIENT_SECRET_PREFIX);
+  const clientSecretHash = hashSecret(clientSecret);
+  const clientSecretExpiresAt = 0;
   getDB().run(
     `INSERT INTO mcp_oauth_clients (
       client_id, client_id_issued_at, redirect_uris, token_endpoint_auth_method,
+      client_secret_hash, client_secret_expires_at,
       grant_types, response_types, client_name, client_uri, logo_uri, scope, created_at
-    ) VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
+    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`,
     [
       clientId,
       issuedAt,
       JSON.stringify(metadata.redirect_uris),
       metadata.token_endpoint_auth_method,
+      clientSecretHash,
+      clientSecretExpiresAt,
       JSON.stringify(metadata.grant_types),
       JSON.stringify(metadata.response_types),
       metadata.client_name,
@@ -154,17 +188,84 @@ export function registerMcpOAuthClient(input: unknown): McpOAuthClient {
     ]
   );
   saveDB();
-  return { ...metadata, client_id: clientId, client_id_issued_at: issuedAt };
+  return {
+    ...metadata,
+    client_id: clientId,
+    client_id_issued_at: issuedAt,
+    client_secret: clientSecret,
+    client_secret_expires_at: clientSecretExpiresAt,
+    client_secret_hash: clientSecretHash,
+  };
 }
 
 function getStoredMcpOAuthClient(clientId: string): McpOAuthClient | null {
   const row = queryOne(
     `SELECT client_id, client_id_issued_at, redirect_uris, token_endpoint_auth_method,
+            client_secret_hash, client_secret_expires_at,
             grant_types, response_types, client_name, client_uri, logo_uri, scope
      FROM mcp_oauth_clients WHERE client_id = ?`,
     [clientId]
   ) as unknown as OAuthClientRow | null;
   return row ? clientFromRow(row) : null;
+}
+
+function hashMatches(expectedHash: string | undefined, secret: string | undefined): boolean {
+  if (!expectedHash || !secret) return false;
+  const expected = Buffer.from(expectedHash, 'hex');
+  const actual = crypto.createHash('sha256').update(secret).digest();
+  return expected.length === actual.length && crypto.timingSafeEqual(expected, actual);
+}
+
+export function parseMcpOAuthClientCredentials(
+  authorizationHeader: string | null | undefined,
+  bodyClientId: string | undefined,
+  bodyClientSecret: string | undefined
+): McpOAuthClientCredentials {
+  const header = String(authorizationHeader || '').trim();
+  if (!header) {
+    if (!bodyClientId) throw new McpOAuthError('invalid_request', 'client_id is required');
+    return {
+      clientId: bodyClientId,
+      source: bodyClientSecret ? 'post' : 'none',
+      clientSecret: bodyClientSecret,
+    };
+  }
+
+  const match = header.match(/^Basic[ \t]+([^ \t]+)$/i);
+  if (!match) {
+    throw new McpOAuthError('invalid_client', 'Unsupported client authentication method', 401);
+  }
+  let decoded: string;
+  try {
+    decoded = Buffer.from(match[1], 'base64').toString('utf8');
+  } catch {
+    throw new McpOAuthError('invalid_client', 'Invalid HTTP Basic client credentials', 401);
+  }
+  const separator = decoded.indexOf(':');
+  if (separator <= 0) {
+    throw new McpOAuthError('invalid_client', 'Invalid HTTP Basic client credentials', 401);
+  }
+  const clientId = decoded.slice(0, separator);
+  const clientSecret = decoded.slice(separator + 1);
+  if (!clientSecret || (bodyClientId && bodyClientId !== clientId) || bodyClientSecret !== undefined) {
+    throw new McpOAuthError('invalid_client', 'Invalid or conflicting client credentials', 401);
+  }
+  return { clientId, source: 'basic', clientSecret };
+}
+
+export function verifyMcpOAuthClientAuthentication(
+  client: McpOAuthClient,
+  credentials: McpOAuthClientCredentials
+): boolean {
+  if (credentials.clientId !== client.client_id) return false;
+  if (credentials.source === 'none') return client.token_endpoint_auth_method === 'none';
+
+  // Accept either Basic or POST when the issued secret matches. This keeps
+  // interoperability with MCP clients that ignore the registered method,
+  // while still requiring an unguessable server-issued secret.
+  const expiresAt = Number(client.client_secret_expires_at) || 0;
+  if (expiresAt !== 0 && expiresAt <= Date.now()) return false;
+  return hashMatches(client.client_secret_hash, credentials.clientSecret);
 }
 
 function cacheMaxAgeMs(cacheControl: string | undefined): number {
@@ -665,7 +766,9 @@ export function revokeMcpOAuthToken(client: McpOAuthClient, token: string): void
   saveDB();
 }
 
-export function serializeRegisteredClient(client: McpOAuthClient): Record<string, unknown> {
+export function serializeRegisteredClient(
+  client: McpOAuthClient & { client_secret?: string; client_secret_expires_at?: number }
+): Record<string, unknown> {
   const result: Record<string, unknown> = {
     client_id: client.client_id,
     client_id_issued_at: client.client_id_issued_at,
@@ -676,6 +779,10 @@ export function serializeRegisteredClient(client: McpOAuthClient): Record<string
     client_name: client.client_name,
     scope: client.scope,
   };
+  if (client.client_secret) {
+    result.client_secret = client.client_secret;
+    result.client_secret_expires_at = Number(client.client_secret_expires_at) || 0;
+  }
   if (client.client_uri) result.client_uri = client.client_uri;
   if (client.logo_uri) result.logo_uri = client.logo_uri;
   return result;

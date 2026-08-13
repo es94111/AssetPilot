@@ -606,6 +606,8 @@ async function _runMigrations(): Promise<void> {
     client_id_issued_at INTEGER NOT NULL,
     redirect_uris TEXT NOT NULL,
     token_endpoint_auth_method TEXT NOT NULL DEFAULT 'none',
+    client_secret_hash TEXT DEFAULT '',
+    client_secret_expires_at INTEGER DEFAULT 0,
     grant_types TEXT NOT NULL DEFAULT '["authorization_code","refresh_token"]',
     response_types TEXT NOT NULL DEFAULT '["code"]',
     client_name TEXT NOT NULL,
@@ -614,6 +616,8 @@ async function _runMigrations(): Promise<void> {
     scope TEXT NOT NULL DEFAULT 'mcp:read',
     created_at INTEGER NOT NULL
   )`);
+  alterIgnore("ALTER TABLE mcp_oauth_clients ADD COLUMN client_secret_hash TEXT DEFAULT ''");
+  alterIgnore("ALTER TABLE mcp_oauth_clients ADD COLUMN client_secret_expires_at INTEGER DEFAULT 0");
   alterIgnore("CREATE INDEX IF NOT EXISTS idx_mcp_oauth_clients_created ON mcp_oauth_clients(created_at)");
 
   db.run(`CREATE TABLE IF NOT EXISTS mcp_oauth_authorization_codes (

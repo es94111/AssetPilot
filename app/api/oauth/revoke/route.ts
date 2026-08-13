@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { McpOAuthError, oauthErrorBody } from '@/lib/mcpOAuthCore';
-import { getMcpOAuthClient, revokeMcpOAuthToken } from '@/lib/mcpOAuth';
+import {
+  getMcpOAuthClient,
+  parseMcpOAuthClientCredentials,
+  revokeMcpOAuthToken,
+  verifyMcpOAuthClientAuthentication,
+} from '@/lib/mcpOAuth';
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -13,20 +18,30 @@ export async function OPTIONS() {
   return new NextResponse(null, { status: 204, headers: CORS_HEADERS });
 }
 
+function singleParam(form: URLSearchParams, name: string, required = true): string | undefined {
+  const values = form.getAll(name);
+  if (values.length > 1) throw new McpOAuthError('invalid_request', `${name} must not be repeated`);
+  if (required && !values[0]) throw new McpOAuthError('invalid_request', `${name} is required`);
+  return values[0] || undefined;
+}
+
 export async function POST(request: NextRequest) {
   try {
     if (!request.headers.get('content-type')?.toLowerCase().includes('application/x-www-form-urlencoded')) {
       throw new McpOAuthError('invalid_request', 'Content-Type must be application/x-www-form-urlencoded');
     }
-    if (request.headers.get('authorization')) {
-      throw new McpOAuthError('invalid_client', 'This authorization server accepts public clients only', 401);
-    }
     const form = new URLSearchParams(await request.text());
-    const clientId = form.get('client_id') || '';
-    const token = form.get('token') || '';
-    if (!clientId || !token) throw new McpOAuthError('invalid_request', 'client_id and token are required');
-    const client = await getMcpOAuthClient(clientId);
+    const credentials = parseMcpOAuthClientCredentials(
+      request.headers.get('authorization'),
+      singleParam(form, 'client_id', false),
+      singleParam(form, 'client_secret', false)
+    );
+    const token = singleParam(form, 'token')!;
+    const client = await getMcpOAuthClient(credentials.clientId);
     if (!client) throw new McpOAuthError('invalid_client', 'Unknown client_id', 401);
+    if (!verifyMcpOAuthClientAuthentication(client, credentials)) {
+      throw new McpOAuthError('invalid_client', 'Client authentication failed', 401);
+    }
     revokeMcpOAuthToken(client, token);
     return new NextResponse(null, { status: 200, headers: CORS_HEADERS });
   } catch (error) {

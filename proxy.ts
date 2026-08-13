@@ -1,4 +1,4 @@
-// middleware.ts — Next.js Edge Middleware：JWT 驗證 + in-memory 速率限制
+// proxy.ts — Next.js Proxy：JWT 驗證 + in-memory 速率限制
 import { NextResponse, NextRequest } from 'next/server';
 
 // ── 公開端點（不需驗證）──
@@ -122,7 +122,7 @@ function isOriginAllowed(originValue: string, request: NextRequest): boolean {
   }
 }
 
-export function middleware(request: NextRequest): NextResponse {
+export function proxy(request: NextRequest): NextResponse {
   const { pathname } = request.nextUrl;
   const isPublicPath = PUBLIC_PATHS.has(pathname) || PUBLIC_PREFIXES.some(p => pathname.startsWith(p));
 
@@ -219,7 +219,7 @@ export function middleware(request: NextRequest): NextResponse {
 
   // Edge runtime 無法用 jsonwebtoken（Node.js only）；
   // 僅做基本存在性檢查，完整驗證由各 API Route Handler 的 authMiddleware 負責。
-  // middleware 主要職責：防止未帶 cookie 的裸請求直達受保護頁面。
+  // proxy 主要職責：防止未帶 cookie 的裸請求直達受保護頁面。
   return NextResponse.next();
 }
 

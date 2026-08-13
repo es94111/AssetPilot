@@ -50,7 +50,7 @@ const content: LegalDocumentContent = {
             'Revocation endpoint：/api/oauth/revoke',
           ],
         },
-        { type: 'note', text: '未登入或權杖無效時，MCP endpoint 會回傳 HTTP 401 與 WWW-Authenticate，並指向 Protected Resource Metadata。' },
+        { type: 'note', text: '未登入或權杖無效時，MCP endpoint 會回傳 HTTP 401 與 WWW-Authenticate，並指向 Protected Resource Metadata；AI 工具通常會自動重新授權。若授權被撤銷或 refresh token 過期，請重新登入 AssetPilot，再回到 AI 工具重新連線。正常登出 AssetPilot 不會撤銷既有 MCP OAuth 授權。' },
       ],
     },
     {
@@ -61,10 +61,11 @@ const content: LegalDocumentContent = {
         {
           type: 'ul',
           items: [
-            'Public client token authentication method：none',
+            'Public client token authentication method：none；DCR 也支援 client_secret_basic / client_secret_post',
             'Authorization flow：Authorization Code + PKCE S256',
             'CIMD client_id 必須是公開 HTTPS metadata document URL',
             'DCR 與 CIMD 都必須提供精確的 redirect URI；ChatGPT callback URI 由 plugin 管理頁或 client metadata 提供',
+            'CIMD 只能使用 public client；需要 client secret 的 client 請使用 DCR。',
           ],
         },
       ],

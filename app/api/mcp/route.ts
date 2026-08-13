@@ -1,6 +1,6 @@
 // app/api/mcp/route.ts — MCP Streamable HTTP 端點（無狀態模式）
 // 驗證採 Authorization: Bearer <PAT 或 OAuth access token>，不接受 authToken Cookie；
-// middleware.ts 的 PUBLIC_PATHS 已將此路徑列入，略過 Cookie 閘門，驗證完全由本路由負責。
+// proxy.ts 的 PUBLIC_PATHS 已將此路徑列入，略過 Cookie 閘門，驗證完全由本路由負責。
 import { NextRequest, NextResponse } from 'next/server';
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
 import { verifyMcpToken } from '../../../lib/mcpAuth';
@@ -71,8 +71,15 @@ function unauthorized(request: NextRequest, invalidToken = false): NextResponse 
       : []),
   ];
   const challenge = `Bearer ${challengeParameters.join(', ')}`;
+  const description = invalidToken
+    ? 'MCP 授權已失效、過期或被撤銷；請重新登入 AssetPilot，並回到 AI 工具重新連線。'
+    : 'MCP 連線需要授權；請登入 AssetPilot 並完成授權。';
   return NextResponse.json(
-    { error: 'MCP 存取權杖缺漏、格式錯誤、已撤銷、已過期，或所屬帳號已刪除' },
+    {
+      error: invalidToken ? 'invalid_token' : 'authorization_required',
+      error_description: description,
+      action: 'reauthorize',
+    },
     {
       status: 401,
       headers: {

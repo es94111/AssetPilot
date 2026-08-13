@@ -20,7 +20,8 @@ function buildReturnTo(params: Record<string, string | string[] | undefined>): s
   return `/oauth/authorize?${query.toString()}`;
 }
 
-function ErrorCard({ message }: { message: string }) {
+function ErrorCard({ message, returnTo }: { message: string; returnTo?: string }) {
+  const loginHref = returnTo ? `/login?returnTo=${encodeURIComponent(returnTo)}` : '/login';
   return (
     <main className="login-bg min-h-screen grid place-items-center p-6">
       <div className="login-card max-w-lg">
@@ -30,6 +31,9 @@ function ErrorCard({ message }: { message: string }) {
           </div>
           <h1 className="login-title">無法授權 MCP 連線</h1>
           <p className="login-subtitle">{message}</p>
+          <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">
+            如果授權已失效，請<a className="font-medium text-indigo-600 underline dark:text-indigo-400" href={loginHref}>重新登入</a>，再回到 AI 工具重新連線。
+          </p>
         </div>
       </div>
     </main>
@@ -38,20 +42,21 @@ function ErrorCard({ message }: { message: string }) {
 
 export default async function McpOAuthAuthorizePage({ searchParams }: { searchParams: SearchParams }) {
   const params = await searchParams;
+  const returnTo = buildReturnTo(params);
   const clientId = first(params.client_id);
-  if (!clientId) return <ErrorCard message="授權請求缺少 client_id。" />;
-  const user = await requireServerAuth(buildReturnTo(params));
+  if (!clientId) return <ErrorCard message="授權請求缺少 client_id。" returnTo={returnTo} />;
+  const user = await requireServerAuth(returnTo);
 
   let client;
   try {
     client = await getMcpOAuthClient(clientId);
   } catch (error) {
-    return <ErrorCard message={error instanceof McpOAuthError ? error.message : '無法讀取 MCP client 資訊。'} />;
+    return <ErrorCard message={error instanceof McpOAuthError ? error.message : '無法讀取 MCP client 資訊。'} returnTo={returnTo} />;
   }
-  if (!client) return <ErrorCard message="找不到這個 MCP client，請回到 AI 工具重新連線。" />;
+  if (!client) return <ErrorCard message="找不到這個 MCP client，請回到 AI 工具重新連線。" returnTo={returnTo} />;
   const requestedRedirectUri = first(params.redirect_uri);
   if (!client.redirect_uris.some((registered) => mcpRedirectUriMatches(requestedRedirectUri, registered))) {
-    return <ErrorCard message="MCP client 的返回網址未註冊。" />;
+    return <ErrorCard message="MCP client 的返回網址未註冊。" returnTo={returnTo} />;
   }
 
   const requestHeaders = await headers();

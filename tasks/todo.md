@@ -593,3 +593,52 @@
   - `npm test` passed `test:tz`, `test:photo-crypto`, `test:info-board`, and `check:iso`, then failed at existing stale i18n generated outputs.
   - `npm run build` timed out after 4 minutes in this environment.
   - Full `npx tsc --noEmit --pretty false` remains blocked by existing E2E `@playwright/test` type setup.
+# 2026-08-13 mcp-auth-security-dependency-maintenance
+
+## Goal + Acceptance Criteria
+- [x] MCP OAuth supports public `none` clients and DCR confidential `client_secret_basic` / `client_secret_post` clients without the reported interoperability failure; client secrets are only returned at registration and stored as hashes.
+- [x] MCP authorization remains available after the initial consent; normal logout does not revoke MCP OAuth grants, and revoked/expired MCP authorization states show an actionable re-login/reconnect prompt.
+- [x] Existing PAT compatibility, read-only MCP scope, audience binding, PKCE, token rotation, and user isolation remain intact.
+- [x] Likely error paths are reproduced or statically verified, fixed with regression coverage, and the project passes the relevant test/type/build/security checks.
+- [x] Dependencies are upgraded to the latest compatible versions available in the configured registry, with lockfile and audit results recorded.
+
+## Risk & Rollback
+- Risk level: high because this changes OAuth interoperability and protects private financial MCP data.
+- Affected components: MCP OAuth metadata/registration/token validation, login return flow, MCP connection failure UX, package manifests/lockfile, and security checks.
+- Rollback strategy: revert the focused source/test changes and package lockfile together; preserve existing database rows and PAT fallback. Do not revoke stored MCP grants as part of rollout.
+- Monitoring signals: OAuth registration/authorize/token 4xx rates, repeated re-login prompts, invalid audience/scope attempts, refresh-token replay, and MCP 401/403 rates.
+
+## Dependencies & Environment
+- Runtime baseline: Node 24.16.0, npm 11.13.0, package engine `>=24.0.0 <25`.
+- Existing MCP authorization baseline: public clients, `mcp:read`, Authorization Code + PKCE S256, audience-bound tokens, and PAT compatibility.
+- Dependency upgrades must remain compatible with Next.js 16, React 19, TypeScript 7, and the repository's native Node test runner.
+
+## Working Notes
+- The reported message came from a public-client-only normalizer. DCR now accepts `none`, `client_secret_basic`, and `client_secret_post`; CIMD remains public-only because confidential CIMD `private_key_jwt` is not implemented, and the UI directs secret-capable clients to DCR.
+- DCR secrets are high-entropy, returned only in the registration response, hashed with SHA-256 in the database, and accepted through Basic or POST for client interoperability. PKCE and resource/audience validation remain mandatory.
+- Next.js 16.3's deprecated `middleware.ts` convention was migrated to `proxy.ts`; the existing production static-cache policy remains intentionally configured and produces a non-fatal Next warning.
+- The workspace contains an existing untracked `results.sarif`; preserve it and do not include it in this task unless explicitly requested.
+
+## Plan
+- [x] Capture baseline behavior for metadata/registration, unauthenticated MCP requests, login-return continuity, and current dependency/audit status.
+- [x] Implement the smallest safe OAuth/UX fix and add regression tests for the reported failure and authorization-loss/re-login paths.
+- [x] Run security and likely-error checks; fix findings that are in scope without weakening auth boundaries.
+- [x] Upgrade compatible dependencies and verify lockfile, tests, typecheck, build, and diff hygiene.
+- [x] Document results, verification evidence, and any environment-limited checks.
+
+## Results
+- OAuth metadata and DCR now advertise/support `none`, `client_secret_basic`, and `client_secret_post`; the old public-client-only error string is no longer emitted for supported DCR methods.
+- Added additive database columns for hashed DCR secrets, preserving existing clients and grants. Client secrets are never serialized from stored records.
+- Token and revocation endpoints now validate Basic/POST client authentication, while public `none` flows remain compatible. MCP 401 responses include standard `invalid_token` details plus an explicit reauthorization action.
+- OAuth consent errors now offer a login link preserving the safe `/oauth/authorize` return target. MCP help text explains re-login/reconnect recovery and that normal AssetPilot logout does not revoke MCP OAuth grants.
+- Migrated `middleware.ts` to Next 16's `proxy.ts` convention and updated references. Upgraded compatible dependencies including Next 16.3.0, React 19.2.8, MCP-compatible supporting packages, and PostCSS override/typing packages; lockfile was regenerated.
+- Verification evidence:
+  - `npm run test:mcp-oauth`: 14/14 passed.
+  - `npm run test:mcp-descriptors`: passed.
+  - `npm run typecheck`: passed.
+  - `npm test`: passed, including i18n generation/parity and ISO checks.
+  - `npm run build`: passed; only the pre-existing intentional static Cache-Control warning remains.
+  - `npm.cmd audit --audit-level=moderate`: 0 vulnerabilities.
+  - `npm outdated --json`: `{}` (no outdated packages reported by the configured registry).
+  - `git diff --check`: passed.
+- Environment limitation: PostgreSQL-backed MCP auth/OAuth lifecycle tests remain skipped when `DATABASE_URL`/`POSTGRES_URL` are absent; run `npm test` with a disposable test database before deployment for full DB-path coverage.

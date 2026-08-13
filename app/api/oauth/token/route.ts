@@ -4,6 +4,8 @@ import {
   exchangeMcpAuthorizationCode,
   exchangeMcpRefreshToken,
   getMcpOAuthClient,
+  parseMcpOAuthClientCredentials,
+  verifyMcpOAuthClientAuthentication,
 } from '@/lib/mcpOAuth';
 
 const CORS_HEADERS = {
@@ -35,17 +37,20 @@ export async function POST(request: NextRequest) {
     if (!contentType.includes('application/x-www-form-urlencoded')) {
       throw new McpOAuthError('invalid_request', 'Content-Type must be application/x-www-form-urlencoded');
     }
-    if (request.headers.get('authorization')) {
-      throw new McpOAuthError('invalid_client', 'This authorization server accepts public clients only', 401);
-    }
-
     const form = new URLSearchParams(await request.text());
-    for (const name of ['client_id', 'grant_type', 'code', 'code_verifier', 'redirect_uri', 'refresh_token', 'scope', 'resource']) {
+    for (const name of ['client_id', 'client_secret', 'grant_type', 'code', 'code_verifier', 'redirect_uri', 'refresh_token', 'scope', 'resource']) {
       singleParam(form, name, false);
     }
-    const clientId = requiredParam(form, 'client_id');
-    const client = await getMcpOAuthClient(clientId);
+    const credentials = parseMcpOAuthClientCredentials(
+      request.headers.get('authorization'),
+      singleParam(form, 'client_id', false),
+      singleParam(form, 'client_secret', false)
+    );
+    const client = await getMcpOAuthClient(credentials.clientId);
     if (!client) throw new McpOAuthError('invalid_client', 'Unknown client_id', 401);
+    if (!verifyMcpOAuthClientAuthentication(client, credentials)) {
+      throw new McpOAuthError('invalid_client', 'Client authentication failed', 401);
+    }
 
     const urls = getMcpOAuthUrls({ headers: request.headers, requestOrigin: request.nextUrl.origin });
     const grantType = requiredParam(form, 'grant_type');
@@ -74,9 +79,8 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     const status = error instanceof McpOAuthError ? error.status : 500;
     const headers: Record<string, string> = { ...CORS_HEADERS };
-    if (status === 401 && request.headers.get('authorization')) {
-      const attemptedScheme = request.headers.get('authorization')?.match(/^([A-Za-z][A-Za-z0-9+.-]*)\s/)?.[1] || 'Bearer';
-      headers['WWW-Authenticate'] = `${attemptedScheme} realm="AssetPilot MCP OAuth"`;
+    if (status === 401 && error instanceof McpOAuthError && error.code === 'invalid_client') {
+      headers['WWW-Authenticate'] = 'Basic realm="AssetPilot MCP OAuth"';
     }
     return NextResponse.json(oauthErrorBody(error), { status, headers });
   }

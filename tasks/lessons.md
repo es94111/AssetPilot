@@ -83,3 +83,10 @@
 - Detection signal: Node reported `Cannot find module 'sql.js'` for the inline sanity check.
 - Prevention rule: Before using an optional test helper or dependency that is not listed in `package.json`, verify it exists in the current workspace or choose a no-dependency check.
 - Tripwire: Run `npm ls <package> --depth=0` or check `node_modules/<package>` before writing one-off validation that depends on it.
+
+## 2026-08-13 Security Test Fixtures Must Match Production Entropy Constraints
+- Mistake class: missing verification.
+- Failure mode: A DCR response regression fixture used a short placeholder client secret and failed the test's production-length assertion.
+- Detection signal: The targeted MCP OAuth test failed before exercising serialization because the fixture was shorter than the minimum expected secret length.
+- Prevention rule: Security-sensitive fixtures must satisfy the same minimum length and shape constraints as generated production values.
+- Tripwire: Assert fixture entropy/length at test setup and use a clearly long, non-secret placeholder value.

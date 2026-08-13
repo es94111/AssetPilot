@@ -12,12 +12,18 @@ import {
   mcpRedirectUriMatches,
   normalizeMcpOAuthClientMetadata,
   parseMcpOAuthScopes,
+  isSupportedMcpOAuthClientAuthMethod,
   resolveMcpOAuthOrigin,
   validateClientIdMetadataDocument,
   validateMcpResource,
   validateMcpRedirectUri,
   verifyPkce,
 } from '../../lib/mcpOAuthCore.ts';
+import {
+  parseMcpOAuthClientCredentials,
+  serializeRegisteredClient,
+  verifyMcpOAuthClientAuthentication,
+} from '../../lib/mcpOAuth.ts';
 import {
   createMcpAuthorizationServerMetadata,
   createMcpProtectedResourceMetadata,
@@ -36,7 +42,7 @@ test('PKCE S256 使用 RFC 7636 向量並拒絕無效 verifier', () => {
   );
 });
 
-test('DCR client metadata 僅允許 public authorization-code client 與安全 redirect URI', () => {
+test('DCR client metadata 支援 public/confidential client 與安全 redirect URI', () => {
   const client = normalizeMcpOAuthClientMetadata({
     redirect_uris: ['https://client.example/callback', 'http://127.0.0.1:49152/callback'],
     token_endpoint_auth_method: 'none',
@@ -47,11 +53,26 @@ test('DCR client metadata 僅允許 public authorization-code client 與安全 r
   assert.equal(client.token_endpoint_auth_method, 'none');
   assert.deepEqual(client.grant_types, ['authorization_code', 'refresh_token']);
   assert.equal(client.scope, MCP_OAUTH_SCOPE);
+  assert.equal(isSupportedMcpOAuthClientAuthMethod(client.token_endpoint_auth_method), true);
 
+  assert.equal(
+    normalizeMcpOAuthClientMetadata({
+      redirect_uris: ['https://client.example/callback'],
+      token_endpoint_auth_method: 'client_secret_basic',
+    }).token_endpoint_auth_method,
+    'client_secret_basic'
+  );
+  assert.equal(
+    normalizeMcpOAuthClientMetadata({
+      redirect_uris: ['https://client.example/callback'],
+      token_endpoint_auth_method: 'client_secret_post',
+    }).token_endpoint_auth_method,
+    'client_secret_post'
+  );
   assert.throws(
     () => normalizeMcpOAuthClientMetadata({
       redirect_uris: ['https://client.example/callback'],
-      token_endpoint_auth_method: 'client_secret_basic',
+      token_endpoint_auth_method: 'private_key_jwt',
     }),
     (error: unknown) => error instanceof McpOAuthError && error.code === 'invalid_client_metadata'
   );
@@ -120,6 +141,87 @@ test('Client ID Metadata Document 驗證 URL、必填欄位、精確 client_id �
     }),
     (error: unknown) => error instanceof McpOAuthError && error.code === 'invalid_client'
   );
+  assert.throws(
+    () => validateClientIdMetadataDocument(clientId, {
+      client_id: clientId,
+      client_name: 'Confidential CIMD Client',
+      token_endpoint_auth_method: 'client_secret_basic',
+      redirect_uris: ['https://client.example/callback'],
+    }),
+    (error: unknown) => error instanceof McpOAuthError && error.code === 'invalid_client'
+  );
+});
+
+test('OAuth client credentials 支援 Basic、POST 與 public none，且錯誤 secret 會拒絕', () => {
+  const clientId = 'dcr-client';
+  const clientSecret = 'server-issued-client-secret-0123456789';
+  const client = {
+    client_id: clientId,
+    redirect_uris: ['https://client.example/callback'],
+    token_endpoint_auth_method: 'none' as const,
+    grant_types: ['authorization_code', 'refresh_token'] as Array<'authorization_code' | 'refresh_token'>,
+    response_types: ['code'] as ['code'],
+    client_name: 'DCR client',
+    scope: MCP_OAUTH_SCOPE,
+    client_secret_hash: crypto.createHash('sha256').update(clientSecret).digest('hex'),
+    client_secret_expires_at: 0,
+  };
+
+  assert.deepEqual(parseMcpOAuthClientCredentials(null, clientId, undefined), {
+    clientId,
+    source: 'none',
+    clientSecret: undefined,
+  });
+  assert.equal(
+    verifyMcpOAuthClientAuthentication(client, parseMcpOAuthClientCredentials(null, clientId, undefined)),
+    true
+  );
+  const basic = `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString('base64')}`;
+  assert.equal(
+    verifyMcpOAuthClientAuthentication(client, parseMcpOAuthClientCredentials(basic, undefined, undefined)),
+    true
+  );
+  assert.equal(
+    verifyMcpOAuthClientAuthentication(
+      client,
+      parseMcpOAuthClientCredentials(null, clientId, clientSecret)
+    ),
+    true
+  );
+  assert.equal(
+    verifyMcpOAuthClientAuthentication(
+      client,
+      parseMcpOAuthClientCredentials(null, clientId, 'wrong-secret')
+    ),
+    false
+  );
+  assert.throws(
+    () => parseMcpOAuthClientCredentials('Bearer not-a-client-secret', clientId, undefined),
+    (error: unknown) => error instanceof McpOAuthError && error.code === 'invalid_client'
+  );
+});
+
+test('DCR response returns a raw secret without exposing its stored hash', () => {
+  const client = {
+    client_id: 'dcr-client',
+    client_id_issued_at: Date.now(),
+    redirect_uris: ['https://client.example.com/callback'],
+    token_endpoint_auth_method: 'client_secret_basic' as const,
+    grant_types: ['authorization_code', 'refresh_token'] as Array<'authorization_code' | 'refresh_token'>,
+    response_types: ['code'] as ['code'],
+    client_name: 'Secret-capable client',
+    scope: MCP_OAUTH_SCOPE,
+    client_secret: 'server-issued-client-secret-0123456789',
+    client_secret_hash: crypto.createHash('sha256').update('server-issued-client-secret-0123456789').digest('hex'),
+    client_secret_expires_at: 0,
+  };
+  const response = serializeRegisteredClient(client);
+
+  assert.ok(client.client_secret.length >= 32);
+  assert.equal(response.client_id, client.client_id);
+  assert.equal(response.client_secret, client.client_secret);
+  assert.equal(response.client_secret_expires_at, 0);
+  assert.equal('client_secret_hash' in response, false);
 });
 
 test('Client metadata SSRF 防護只接受公開 IP', () => {
@@ -205,7 +307,8 @@ test('discovery metadata 宣告 MCP resource、PKCE、CIMD 與 DCR fallback', ()
   assert.deepEqual(authorization.code_challenge_methods_supported, ['S256']);
   assert.equal(authorization.client_id_metadata_document_supported, true);
   assert.equal(authorization.registration_endpoint, 'https://asset.example/api/oauth/register');
-  assert.deepEqual(authorization.token_endpoint_auth_methods_supported, ['none']);
+  assert.deepEqual(authorization.token_endpoint_auth_methods_supported, ['none', 'client_secret_basic', 'client_secret_post']);
+  assert.deepEqual(authorization.revocation_endpoint_auth_methods_supported, ['none', 'client_secret_basic', 'client_secret_post']);
   assert.equal(authorization.service_documentation, 'https://asset.example/mcp');
 });
 
@@ -236,6 +339,11 @@ test('MCP endpoint 在 production 未設定 APP_URL 時保留 PAT-only 401，且
     }));
     assert.equal(unauthenticated.status, 401);
     assert.match(unauthenticated.headers.get('www-authenticate') || '', /^Bearer scope="mcp:read"/);
+    assert.deepEqual(await unauthenticated.json(), {
+      error: 'authorization_required',
+      error_description: 'MCP 連線需要授權；請登入 AssetPilot 並完成授權。',
+      action: 'reauthorize',
+    });
 
     mutableEnv.APP_URL = 'https://asset.example';
     const invalidAuthorization = await mcpRoute.POST(new NextRequest('https://asset.example/api/mcp', {
@@ -244,6 +352,10 @@ test('MCP endpoint 在 production 未設定 APP_URL 時保留 PAT-only 401，且
     }));
     const challenge = invalidAuthorization.headers.get('www-authenticate') || '';
     assert.equal(invalidAuthorization.status, 401);
+    const invalidBody = await invalidAuthorization.json();
+    assert.equal(invalidBody.error, 'invalid_token');
+    assert.equal(invalidBody.action, 'reauthorize');
+    assert.match(invalidBody.error_description, /重新登入 AssetPilot/);
     assert.match(
       challenge,
       /resource_metadata="https:\/\/asset\.example\/\.well-known\/oauth-protected-resource\/api\/mcp"/

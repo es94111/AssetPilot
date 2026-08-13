@@ -6,6 +6,14 @@ export const MCP_AUTHORIZATION_CODE_TTL_MS = 5 * 60 * 1000;
 export const MCP_ACCESS_TOKEN_TTL_MS = 60 * 60 * 1000;
 export const MCP_REFRESH_TOKEN_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 
+export type McpOAuthClientAuthMethod = 'none' | 'client_secret_basic' | 'client_secret_post';
+
+const SUPPORTED_CLIENT_AUTH_METHODS = new Set<McpOAuthClientAuthMethod>([
+  'none',
+  'client_secret_basic',
+  'client_secret_post',
+]);
+
 const PKCE_VERIFIER_PATTERN = /^[A-Za-z0-9\-._~]{43,128}$/;
 const PKCE_CHALLENGE_PATTERN = /^[A-Za-z0-9_-]{43}$/;
 const LOOPBACK_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]', '::1']);
@@ -42,7 +50,7 @@ interface HeadersLike {
 
 export interface McpOAuthClientMetadata {
   redirect_uris: string[];
-  token_endpoint_auth_method: 'none';
+  token_endpoint_auth_method: McpOAuthClientAuthMethod;
   grant_types: Array<'authorization_code' | 'refresh_token'>;
   response_types: ['code'];
   client_name: string;
@@ -54,6 +62,13 @@ export interface McpOAuthClientMetadata {
 export interface McpOAuthClient extends McpOAuthClientMetadata {
   client_id: string;
   client_id_issued_at?: number;
+  /** Stored only on the server; never serialize this field to a client. */
+  client_secret_hash?: string;
+  client_secret_expires_at?: number;
+}
+
+export function isSupportedMcpOAuthClientAuthMethod(value: unknown): value is McpOAuthClientAuthMethod {
+  return typeof value === 'string' && SUPPORTED_CLIENT_AUTH_METHODS.has(value as McpOAuthClientAuthMethod);
 }
 
 function optionalString(value: unknown, maxLength: number): string | undefined {
@@ -157,9 +172,14 @@ export function normalizeMcpOAuthClientMetadata(input: unknown): McpOAuthClientM
   }
   const redirectUris = [...new Set(metadata.redirect_uris.map(validateMcpRedirectUri))];
 
-  const authMethod = metadata.token_endpoint_auth_method == null ? 'none' : String(metadata.token_endpoint_auth_method);
-  if (authMethod !== 'none') {
-    throw new McpOAuthError('invalid_client_metadata', 'Only public clients using token_endpoint_auth_method=none are supported');
+  const authMethod = metadata.token_endpoint_auth_method == null
+    ? 'none'
+    : String(metadata.token_endpoint_auth_method).trim().toLowerCase();
+  if (!isSupportedMcpOAuthClientAuthMethod(authMethod)) {
+    throw new McpOAuthError(
+      'invalid_client_metadata',
+      'Unsupported token_endpoint_auth_method; use none, client_secret_basic, or client_secret_post'
+    );
   }
 
   const grantTypes = normalizeStringArray(
@@ -181,7 +201,7 @@ export function normalizeMcpOAuthClientMetadata(input: unknown): McpOAuthClientM
 
   return {
     redirect_uris: redirectUris,
-    token_endpoint_auth_method: 'none',
+    token_endpoint_auth_method: authMethod,
     grant_types: grantTypes as Array<'authorization_code' | 'refresh_token'>,
     response_types: ['code'],
     client_name: clientName,
@@ -209,8 +229,15 @@ export function validateClientIdMetadataDocument(clientId: string, input: unknow
     throw new McpOAuthError('invalid_client', 'Client ID metadata documents must not contain shared client secrets');
   }
   try {
+    const normalized = normalizeMcpOAuthClientMetadata(document);
+    if (normalized.token_endpoint_auth_method !== 'none') {
+      throw new McpOAuthError(
+        'invalid_client',
+        'Client ID metadata documents must use token_endpoint_auth_method=none; confidential clients must use DCR'
+      );
+    }
     return {
-      ...normalizeMcpOAuthClientMetadata(document),
+      ...normalized,
       client_id: clientId,
     };
   } catch (error) {

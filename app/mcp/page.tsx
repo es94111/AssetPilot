@@ -61,11 +61,11 @@ const content: LegalDocumentContent = {
         {
           type: 'ul',
           items: [
-            'Public client token authentication method：none；DCR 也支援 client_secret_basic / client_secret_post',
+            'CIMD 與 DCR 支援 private_key_jwt（RS256/JWKS）；public none 與 DCR 的 client_secret_basic / client_secret_post 也相容',
             'Authorization flow：Authorization Code + PKCE S256',
             'CIMD client_id 必須是公開 HTTPS metadata document URL',
             'DCR 與 CIMD 都必須提供精確的 redirect URI；ChatGPT callback URI 由 plugin 管理頁或 client metadata 提供',
-            'CIMD 只能使用 public client；需要 client secret 的 client 請使用 DCR。',
+            'CIMD 的 private_key_jwt 會以 client metadata 提供的 JWKS 驗證；需要 client secret 的 client 請使用 DCR。',
           ],
         },
       ],

@@ -90,3 +90,10 @@
 - Detection signal: The targeted MCP OAuth test failed before exercising serialization because the fixture was shorter than the minimum expected secret length.
 - Prevention rule: Security-sensitive fixtures must satisfy the same minimum length and shape constraints as generated production values.
 - Tripwire: Assert fixture entropy/length at test setup and use a clearly long, non-secret placeholder value.
+
+## 2026-08-13 OAuth Client Metadata Must Be Verified Against the Actual Provider
+- Mistake class: incorrect assumption about protocol interoperability.
+- Failure mode: The first MCP OAuth fix covered public and shared-secret methods but assumed ChatGPT would use one of them; ChatGPT's live CIMD instead declared `private_key_jwt` with an RS256 JWKS.
+- Detection signal: A read-only fetch of the exact `client_id` metadata reproduced the production error and showed `token_endpoint_auth_method: private_key_jwt`.
+- Prevention rule: Before finalizing OAuth client-method support, fetch a representative provider metadata document and verify every advertised method against the authorization-server metadata and token endpoint implementation.
+- Tripwire: Keep a regression fixture for each provider-specific method, including signed assertion claims, key rotation, and replay behavior.

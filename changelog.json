@@ -1,6 +1,22 @@
 {
-  "currentVersion": "4.98.1",
+  "currentVersion": "4.98.2",
   "releases": [
+    {
+      "version": "4.98.2",
+      "date": "2026-08-13",
+      "title": "修正 ChatGPT 連線時仍會授權失敗的問題",
+      "type": "fixed",
+      "changes": [
+        {
+          "tag": "fixed",
+          "text": "修正 ChatGPT 連線 AssetPilot 的 AI 工具時，即使已完成先前版本的授權修正仍會失敗的問題；ChatGPT 使用另一種簽章式的連線密鑰驗證方式，先前版本尚未支援，現已一併支援，可正常完成連線。"
+        },
+        {
+          "tag": "improved",
+          "text": "MCP 連線說明頁面更新支援的連線密鑰驗證方式說明，讓有進階串接需求的使用者能確認自己使用的 AI 工具是否相容。"
+        }
+      ]
+    },
     {
       "version": "4.98.1",
       "date": "2026-08-13",

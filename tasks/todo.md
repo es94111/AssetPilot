@@ -614,7 +614,7 @@
 - Dependency upgrades must remain compatible with Next.js 16, React 19, TypeScript 7, and the repository's native Node test runner.
 
 ## Working Notes
-- The reported message came from a public-client-only normalizer. DCR now accepts `none`, `client_secret_basic`, and `client_secret_post`; CIMD remains public-only because confidential CIMD `private_key_jwt` is not implemented, and the UI directs secret-capable clients to DCR.
+- The original reported message came from a public-client-only normalizer. DCR accepts `none`, `client_secret_basic`, and `client_secret_post`; CIMD now additionally accepts confidential `private_key_jwt` with RS256/JWKS, while the UI documents both connection paths.
 - DCR secrets are high-entropy, returned only in the registration response, hashed with SHA-256 in the database, and accepted through Basic or POST for client interoperability. PKCE and resource/audience validation remain mandatory.
 - Next.js 16.3's deprecated `middleware.ts` convention was migrated to `proxy.ts`; the existing production static-cache policy remains intentionally configured and produces a non-fatal Next warning.
 - The workspace contains an existing untracked `results.sarif`; preserve it and do not include it in this task unless explicitly requested.
@@ -627,7 +627,7 @@
 - [x] Document results, verification evidence, and any environment-limited checks.
 
 ## Results
-- OAuth metadata and DCR now advertise/support `none`, `client_secret_basic`, and `client_secret_post`; the old public-client-only error string is no longer emitted for supported DCR methods.
+- OAuth metadata, DCR, and CIMD now advertise/support `none`, `client_secret_basic`, `client_secret_post`, and `private_key_jwt` where applicable; the old public-client-only error string is no longer emitted for the actual ChatGPT CIMD metadata.
 - Added additive database columns for hashed DCR secrets, preserving existing clients and grants. Client secrets are never serialized from stored records.
 - Token and revocation endpoints now validate Basic/POST client authentication, while public `none` flows remain compatible. MCP 401 responses include standard `invalid_token` details plus an explicit reauthorization action.
 - OAuth consent errors now offer a login link preserving the safe `/oauth/authorize` return target. MCP help text explains re-login/reconnect recovery and that normal AssetPilot logout does not revoke MCP OAuth grants.
@@ -641,4 +641,44 @@
   - `npm.cmd audit --audit-level=moderate`: 0 vulnerabilities.
   - `npm outdated --json`: `{}` (no outdated packages reported by the configured registry).
   - `git diff --check`: passed.
+- Environment limitation: PostgreSQL-backed MCP auth/OAuth lifecycle tests remain skipped when `DATABASE_URL`/`POSTGRES_URL` are absent; run `npm test` with a disposable test database before deployment for full DB-path coverage.
+
+# 2026-08-13 mcp-chatgpt-private-key-jwt
+
+## Goal + Acceptance Criteria
+- [x] ChatGPT CIMD metadata using `private_key_jwt` completes authorization-code token exchange without the unsupported-method error.
+- [x] Only RS256 assertions signed by a key from the client-provided public JWKS are accepted; issuer, subject, audience, expiry, clock skew, key strength, and one-time `jti` replay checks are enforced.
+- [x] Existing public `none`, DCR secret methods, PKCE, resource audience binding, PAT access, and grant-preserving logout behavior remain unchanged.
+- [x] The exact ChatGPT metadata shape and a generated RS256 assertion have regression coverage.
+
+## Risk & Rollback
+- Risk level: high because this adds remote-key client authentication to the OAuth token and revocation endpoints.
+- Affected components: CIMD normalization, JWKS retrieval/cache, private-key JWT verification/replay storage, OAuth token/revocation routes, discovery metadata, and MCP documentation.
+- Rollback strategy: revert this focused source/test/migration change; do not delete existing OAuth client, authorization-code, or token rows.
+- Security controls: HTTPS-only metadata/JWKS, public-DNS SSRF filtering, no redirects, bounded JSON/JWT size, RS256-only, minimum 2048-bit RSA keys, exact endpoint audience, and single-use assertion IDs.
+
+## Working Notes
+- Before deployment, production discovery advertises only `none`, `client_secret_basic`, and `client_secret_post`; the deployed ChatGPT metadata URL `https://chatgpt.com/oauth/fLSEW_QyqHY2/client.json` declares `private_key_jwt`, `jwks_uri: https://chatgpt.com/oauth/jwks.json`, and `RS256`. The source discovery response now includes `private_key_jwt`.
+- The previous error occurred while validating the CIMD document, before user consent or token issuance; no authorization was revoked.
+- Existing OAuth clients and grants are preserved; the new assertion replay table and JWKS columns are additive migrations.
+
+## Plan
+- [x] Fetch and record the exact production ChatGPT metadata and compare it with local validation.
+- [x] Add private_key_jwt CIMD validation, RS256/JWKS verification, replay protection, and discovery support.
+- [x] Add exact metadata and generated assertion regression tests.
+- [x] Run targeted/full tests, typecheck, build, audit, and final diff checks.
+
+## Results
+- OAuth CIMD normalization accepts the exact ChatGPT metadata shape and persists its HTTPS JWKS URI and RS256 signing algorithm. DCR and public-client flows retain their existing secret/PKCE behavior.
+- Token and revocation authentication now support `private_key_jwt` with bounded HTTPS JWKS retrieval, public-IP SSRF filtering, no redirects, RSA-2048 minimum keys, exact `iss`/`sub`/`aud`, bounded clock skew, and one-time `jti` replay protection.
+- Discovery metadata advertises `private_key_jwt`; the MCP UI explains the supported authentication paths and re-login recovery. Logout does not revoke MCP grants.
+- Verification evidence:
+  - `npm run test:mcp-oauth`: 15/15 passed.
+  - `npm run typecheck`: passed.
+  - `npm test`: passed.
+  - `NEXT_VERIFY_DIST_DIR=build-verify npm run build`: passed; the normal `build` directory could not be replaced because Synology/Windows locked the existing reparse-point output, while the isolated production build completed all routes and 160 static pages.
+  - `npm.cmd audit --audit-level=moderate`: 0 vulnerabilities.
+  - `npm outdated --json`: `{}` (no outdated packages reported by the configured registry).
+  - `git diff --check`: passed.
+- Deployment note: the live discovery endpoint was observed before this source change and still advertises only the three legacy methods. Deploy/restart this revision before reconnecting ChatGPT; no existing authorization grants need to be revoked.
 - Environment limitation: PostgreSQL-backed MCP auth/OAuth lifecycle tests remain skipped when `DATABASE_URL`/`POSTGRES_URL` are absent; run `npm test` with a disposable test database before deployment for full DB-path coverage.

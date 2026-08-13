@@ -22,6 +22,7 @@ import {
 import {
   parseMcpOAuthClientCredentials,
   serializeRegisteredClient,
+  verifyMcpOAuthClientAssertion,
   verifyMcpOAuthClientAuthentication,
 } from '../../lib/mcpOAuth.ts';
 import {
@@ -124,6 +125,22 @@ test('Client ID Metadata Document 驗證 URL、必填欄位、精確 client_id �
   assert.equal(client.client_id, clientId);
   assert.equal(client.client_name, 'Metadata Client');
 
+  const chatGptClient = validateClientIdMetadataDocument('https://chatgpt.com/oauth/example/client.json', {
+    client_id: 'https://chatgpt.com/oauth/example/client.json',
+    client_uri: 'https://chatgpt.com/',
+    redirect_uris: ['https://chatgpt.com/connector/oauth/example'],
+    token_endpoint_auth_method: 'private_key_jwt',
+    token_endpoint_auth_methods_supported: ['none', 'private_key_jwt'],
+    token_endpoint_auth_signing_alg: 'RS256',
+    jwks_uri: 'https://chatgpt.com/oauth/jwks.json',
+    grant_types: ['authorization_code', 'refresh_token'],
+    response_types: ['code'],
+    client_name: 'ChatGPT',
+  });
+  assert.equal(chatGptClient.token_endpoint_auth_method, 'private_key_jwt');
+  assert.equal(chatGptClient.jwks_uri, 'https://chatgpt.com/oauth/jwks.json');
+  assert.equal(chatGptClient.token_endpoint_auth_signing_alg, 'RS256');
+
   assert.throws(
     () => validateClientIdMetadataDocument(clientId, {
       client_id: 'https://attacker.example/client.json',
@@ -152,7 +169,7 @@ test('Client ID Metadata Document 驗證 URL、必填欄位、精確 client_id �
   );
 });
 
-test('OAuth client credentials 支援 Basic、POST 與 public none，且錯誤 secret 會拒絕', () => {
+test('OAuth client credentials 支援 Basic、POST 與 public none，且錯誤 secret 會拒絕', async () => {
   const clientId = 'dcr-client';
   const clientSecret = 'server-issued-client-secret-0123456789';
   const client = {
@@ -173,30 +190,67 @@ test('OAuth client credentials 支援 Basic、POST 與 public none，且錯誤 s
     clientSecret: undefined,
   });
   assert.equal(
-    verifyMcpOAuthClientAuthentication(client, parseMcpOAuthClientCredentials(null, clientId, undefined)),
+    await verifyMcpOAuthClientAuthentication(client, parseMcpOAuthClientCredentials(null, clientId, undefined), 'https://asset.example/api/oauth/token'),
     true
   );
   const basic = `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString('base64')}`;
   assert.equal(
-    verifyMcpOAuthClientAuthentication(client, parseMcpOAuthClientCredentials(basic, undefined, undefined)),
+    await verifyMcpOAuthClientAuthentication(client, parseMcpOAuthClientCredentials(basic, undefined, undefined), 'https://asset.example/api/oauth/token'),
     true
   );
   assert.equal(
-    verifyMcpOAuthClientAuthentication(
+    await verifyMcpOAuthClientAuthentication(
       client,
-      parseMcpOAuthClientCredentials(null, clientId, clientSecret)
+      parseMcpOAuthClientCredentials(null, clientId, clientSecret),
+      'https://asset.example/api/oauth/token'
     ),
     true
   );
   assert.equal(
-    verifyMcpOAuthClientAuthentication(
+    await verifyMcpOAuthClientAuthentication(
       client,
-      parseMcpOAuthClientCredentials(null, clientId, 'wrong-secret')
+      parseMcpOAuthClientCredentials(null, clientId, 'wrong-secret'),
+      'https://asset.example/api/oauth/token'
     ),
     false
   );
   assert.throws(
     () => parseMcpOAuthClientCredentials('Bearer not-a-client-secret', clientId, undefined),
+    (error: unknown) => error instanceof McpOAuthError && error.code === 'invalid_client'
+  );
+});
+
+test('private_key_jwt 驗證 RS256、client claims、audience 與 expiry', () => {
+  const { privateKey, publicKey } = crypto.generateKeyPairSync('rsa', { modulusLength: 2048 });
+  const clientId = 'https://chatgpt.com/oauth/example/client.json';
+  const audience = 'https://asset.example/api/oauth/token';
+  const nowMs = 1_700_000_000_000;
+  const jwk = {
+    ...(publicKey.export({ format: 'jwk' }) as Record<string, unknown>),
+    kid: 'test-key',
+    use: 'sig',
+    alg: 'RS256',
+  };
+  const encode = (value: unknown) => Buffer.from(JSON.stringify(value)).toString('base64url');
+  const header = encode({ alg: 'RS256', typ: 'JWT', kid: 'test-key' });
+  const payload = encode({
+    iss: clientId,
+    sub: clientId,
+    aud: audience,
+    jti: 'test-assertion-jti-0123456789',
+    iat: Math.floor(nowMs / 1000),
+    exp: Math.floor(nowMs / 1000) + 300,
+  });
+  const signingInput = `${header}.${payload}`;
+  const signature = crypto.sign('RSA-SHA256', Buffer.from(signingInput), privateKey).toString('base64url');
+  const assertion = `${signingInput}.${signature}`;
+
+  assert.deepEqual(
+    verifyMcpOAuthClientAssertion({ assertion, clientId, audience, jwks: { keys: [jwk] }, nowMs }),
+    { jti: 'test-assertion-jti-0123456789', exp: nowMs + 300_000 }
+  );
+  assert.throws(
+    () => verifyMcpOAuthClientAssertion({ assertion, clientId, audience: 'https://evil.example/token', jwks: { keys: [jwk] }, nowMs }),
     (error: unknown) => error instanceof McpOAuthError && error.code === 'invalid_client'
   );
 });
@@ -307,8 +361,8 @@ test('discovery metadata 宣告 MCP resource、PKCE、CIMD 與 DCR fallback', ()
   assert.deepEqual(authorization.code_challenge_methods_supported, ['S256']);
   assert.equal(authorization.client_id_metadata_document_supported, true);
   assert.equal(authorization.registration_endpoint, 'https://asset.example/api/oauth/register');
-  assert.deepEqual(authorization.token_endpoint_auth_methods_supported, ['none', 'client_secret_basic', 'client_secret_post']);
-  assert.deepEqual(authorization.revocation_endpoint_auth_methods_supported, ['none', 'client_secret_basic', 'client_secret_post']);
+  assert.deepEqual(authorization.token_endpoint_auth_methods_supported, ['none', 'client_secret_basic', 'client_secret_post', 'private_key_jwt']);
+  assert.deepEqual(authorization.revocation_endpoint_auth_methods_supported, ['none', 'client_secret_basic', 'client_secret_post', 'private_key_jwt']);
   assert.equal(authorization.service_documentation, 'https://asset.example/mcp');
 });
 

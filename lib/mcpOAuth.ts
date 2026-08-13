@@ -33,6 +33,11 @@ const CLIENT_METADATA_MAX_BYTES = 5 * 1024;
 const CLIENT_METADATA_TIMEOUT_MS = 5_000;
 const CLIENT_METADATA_CACHE_MAX_AGE_MS = 60 * 60 * 1000;
 const CLIENT_METADATA_CACHE_MAX_ENTRIES = 500;
+const CLIENT_ASSERTION_TYPE = 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer';
+const CLIENT_ASSERTION_MAX_BYTES = 16 * 1024;
+const CLIENT_ASSERTION_CLOCK_SKEW_MS = 60 * 1000;
+const CLIENT_JWKS_CACHE_MAX_AGE_MS = 60 * 60 * 1000;
+const CLIENT_JWKS_CACHE_MAX_ENTRIES = 100;
 const MAX_REGISTERED_OAUTH_CLIENTS = 10_000;
 const UNUSED_CLIENT_RETENTION_MS = 30 * 24 * 60 * 60 * 1000;
 const TOKEN_AUDIT_RETENTION_MS = 30 * 24 * 60 * 60 * 1000;
@@ -44,6 +49,8 @@ interface OAuthClientRow {
   token_endpoint_auth_method: string | number;
   client_secret_hash: string | number | null;
   client_secret_expires_at: string | number | null;
+  jwks_uri: string | number | null;
+  token_endpoint_auth_signing_alg: string | number | null;
   grant_types: string | number;
   response_types: string | number;
   client_name: string | number;
@@ -85,6 +92,16 @@ interface CachedClientMetadata {
   client: McpOAuthClient;
 }
 
+interface CachedClientJwks {
+  expiresAt: number;
+  keys: Array<Record<string, unknown>>;
+}
+
+interface ClientAssertionClaims {
+  jti: string;
+  exp: number;
+}
+
 export interface McpOAuthTokenResponse {
   access_token: string;
   token_type: 'Bearer';
@@ -93,21 +110,24 @@ export interface McpOAuthTokenResponse {
   scope: string;
 }
 
-export type McpOAuthClientAuthSource = 'none' | 'basic' | 'post';
+export type McpOAuthClientAuthSource = 'none' | 'basic' | 'post' | 'private_key_jwt';
 
 export interface McpOAuthClientCredentials {
   clientId: string;
   source: McpOAuthClientAuthSource;
   clientSecret?: string;
+  clientAssertionType?: string;
+  clientAssertion?: string;
 }
 
 export interface RegisteredMcpOAuthClient extends McpOAuthClient {
-  client_secret: string;
-  client_secret_expires_at: number;
+  client_secret?: string;
+  client_secret_expires_at?: number;
 }
 
 const clientMetadataCache = new Map<string, CachedClientMetadata>();
 const clientMetadataLoads = new Map<string, Promise<McpOAuthClient>>();
+const clientJwksCache = new Map<string, CachedClientJwks>();
 let lastOAuthPruneAt = 0;
 
 function hashSecret(secret: string): string {
@@ -145,11 +165,13 @@ function clientFromRow(row: OAuthClientRow): McpOAuthClient {
     scope: String(row.scope || MCP_OAUTH_SCOPE),
     client_secret_hash: row.client_secret_hash ? String(row.client_secret_hash) : undefined,
     client_secret_expires_at: Number(row.client_secret_expires_at) || undefined,
+    jwks_uri: row.jwks_uri ? String(row.jwks_uri) : undefined,
+    token_endpoint_auth_signing_alg: row.token_endpoint_auth_signing_alg === 'RS256' ? 'RS256' : undefined,
   };
 }
 
 export function registerMcpOAuthClient(input: unknown): RegisteredMcpOAuthClient {
-  const metadata = normalizeMcpOAuthClientMetadata(input);
+  const metadata = normalizeMcpOAuthClientMetadata(input, { allowPrivateKeyJwt: true });
   const now = Date.now();
   pruneMcpOAuthRecords(now, true);
   const countRow = queryOne('SELECT COUNT(*) AS count FROM mcp_oauth_clients');
@@ -162,15 +184,16 @@ export function registerMcpOAuthClient(input: unknown): RegisteredMcpOAuthClient
   // declare the public `none` method.  Issuing one is harmless for PKCE public
   // clients, keeps the normal `none` flow available, and lets the token
   // endpoint interoperate with those clients without storing plaintext.
-  const clientSecret = randomOpaqueValue(CLIENT_SECRET_PREFIX);
-  const clientSecretHash = hashSecret(clientSecret);
+  const clientSecret = metadata.token_endpoint_auth_method === 'private_key_jwt' ? '' : randomOpaqueValue(CLIENT_SECRET_PREFIX);
+  const clientSecretHash = clientSecret ? hashSecret(clientSecret) : '';
   const clientSecretExpiresAt = 0;
   getDB().run(
     `INSERT INTO mcp_oauth_clients (
       client_id, client_id_issued_at, redirect_uris, token_endpoint_auth_method,
       client_secret_hash, client_secret_expires_at,
+      jwks_uri, token_endpoint_auth_signing_alg,
       grant_types, response_types, client_name, client_uri, logo_uri, scope, created_at
-    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
     [
       clientId,
       issuedAt,
@@ -178,6 +201,8 @@ export function registerMcpOAuthClient(input: unknown): RegisteredMcpOAuthClient
       metadata.token_endpoint_auth_method,
       clientSecretHash,
       clientSecretExpiresAt,
+      metadata.jwks_uri || '',
+      metadata.token_endpoint_auth_signing_alg || '',
       JSON.stringify(metadata.grant_types),
       JSON.stringify(metadata.response_types),
       metadata.client_name,
@@ -202,6 +227,7 @@ function getStoredMcpOAuthClient(clientId: string): McpOAuthClient | null {
   const row = queryOne(
     `SELECT client_id, client_id_issued_at, redirect_uris, token_endpoint_auth_method,
             client_secret_hash, client_secret_expires_at,
+            jwks_uri, token_endpoint_auth_signing_alg,
             grant_types, response_types, client_name, client_uri, logo_uri, scope
      FROM mcp_oauth_clients WHERE client_id = ?`,
     [clientId]
@@ -216,14 +242,179 @@ function hashMatches(expectedHash: string | undefined, secret: string | undefine
   return expected.length === actual.length && crypto.timingSafeEqual(expected, actual);
 }
 
+function parseBase64UrlJson(segment: string, label: string): Record<string, unknown> {
+  if (!segment || !/^[A-Za-z0-9_-]+$/.test(segment)) {
+    throw new McpOAuthError('invalid_client', `${label} is not valid`, 401);
+  }
+  try {
+    const value: unknown = JSON.parse(Buffer.from(segment, 'base64url').toString('utf8'));
+    if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('not an object');
+    return value as Record<string, unknown>;
+  } catch {
+    throw new McpOAuthError('invalid_client', `${label} is not valid`, 401);
+  }
+}
+
+function getClientAssertionJwk(jwks: unknown, kid: string): Record<string, unknown> {
+  if (!jwks || typeof jwks !== 'object' || Array.isArray(jwks)) {
+    throw new McpOAuthError('invalid_client', 'Client JWKS is invalid', 401);
+  }
+  const keys = (jwks as { keys?: unknown }).keys;
+  if (!Array.isArray(keys)) {
+    throw new McpOAuthError('invalid_client', 'Client JWKS must contain keys', 401);
+  }
+  const key = keys.find((candidate) => (
+    candidate && typeof candidate === 'object' && !Array.isArray(candidate) &&
+    String((candidate as Record<string, unknown>).kid || '') === kid
+  ));
+  if (!key || typeof key !== 'object' || Array.isArray(key)) {
+    throw new McpOAuthError('invalid_client', 'Client assertion key was not found', 401);
+  }
+  const jwk = key as Record<string, unknown>;
+  if (jwk.kty !== 'RSA' || jwk.use === 'enc' || (jwk.use != null && jwk.use !== 'sig') || jwk.alg === 'none' || (jwk.alg != null && jwk.alg !== 'RS256')) {
+    throw new McpOAuthError('invalid_client', 'Client assertion key is not an RSA signing key', 401);
+  }
+  return jwk;
+}
+
+function audienceMatches(audience: unknown, expected: string): boolean {
+  return typeof audience === 'string'
+    ? audience === expected
+    : Array.isArray(audience) && audience.length > 0 && audience.includes(expected);
+}
+
+export function verifyMcpOAuthClientAssertion(input: {
+  assertion: string;
+  clientId: string;
+  audience: string;
+  jwks: unknown;
+  nowMs?: number;
+}): ClientAssertionClaims {
+  if (typeof input.assertion !== 'string' || Buffer.byteLength(input.assertion, 'utf8') > CLIENT_ASSERTION_MAX_BYTES) {
+    throw new McpOAuthError('invalid_client', 'Client assertion is invalid', 401);
+  }
+  const parts = input.assertion.split('.');
+  if (parts.length !== 3) throw new McpOAuthError('invalid_client', 'Client assertion is not a JWT', 401);
+  const [encodedHeader, encodedPayload, encodedSignature] = parts;
+  const header = parseBase64UrlJson(encodedHeader, 'Client assertion header');
+  const payload = parseBase64UrlJson(encodedPayload, 'Client assertion payload');
+  if (header.alg !== 'RS256' || typeof header.kid !== 'string' || !header.kid) {
+    throw new McpOAuthError('invalid_client', 'Client assertion must use RS256 and include kid', 401);
+  }
+  const jwk = getClientAssertionJwk(input.jwks, header.kid);
+
+  let publicKey: crypto.KeyObject;
+  try {
+    publicKey = crypto.createPublicKey({
+      key: jwk as crypto.webcrypto.JsonWebKey,
+      format: 'jwk',
+    });
+  } catch {
+    throw new McpOAuthError('invalid_client', 'Client assertion key could not be parsed', 401);
+  }
+  if (publicKey.asymmetricKeyType !== 'rsa' || Number(publicKey.asymmetricKeyDetails?.modulusLength || 0) < 2048) {
+    throw new McpOAuthError('invalid_client', 'Client assertion RSA key is too weak', 401);
+  }
+  let signature: Buffer;
+  try {
+    if (!/^[A-Za-z0-9_-]+$/.test(encodedSignature)) throw new Error('invalid base64url');
+    signature = Buffer.from(encodedSignature, 'base64url');
+  } catch {
+    throw new McpOAuthError('invalid_client', 'Client assertion signature is invalid', 401);
+  }
+  if (!signature.length || !crypto.verify('RSA-SHA256', Buffer.from(`${encodedHeader}.${encodedPayload}`), publicKey, signature)) {
+    throw new McpOAuthError('invalid_client', 'Client assertion signature is invalid', 401);
+  }
+
+  const now = input.nowMs ?? Date.now();
+  if (payload.iss !== input.clientId || payload.sub !== input.clientId || !audienceMatches(payload.aud, input.audience)) {
+    throw new McpOAuthError('invalid_client', 'Client assertion claims do not match this client or token endpoint', 401);
+  }
+  if (!Number.isFinite(payload.exp) || Number(payload.exp) * 1000 <= now - CLIENT_ASSERTION_CLOCK_SKEW_MS) {
+    throw new McpOAuthError('invalid_client', 'Client assertion is expired', 401);
+  }
+  if (Number(payload.exp) * 1000 > now + 10 * 60 * 1000) {
+    throw new McpOAuthError('invalid_client', 'Client assertion lifetime is too long', 401);
+  }
+  if (payload.iat != null && (!Number.isFinite(payload.iat) || Number(payload.iat) * 1000 > now + CLIENT_ASSERTION_CLOCK_SKEW_MS || Number(payload.iat) * 1000 < now - 10 * 60 * 1000)) {
+    throw new McpOAuthError('invalid_client', 'Client assertion issued-at claim is invalid', 401);
+  }
+  if (payload.nbf != null && (!Number.isFinite(payload.nbf) || Number(payload.nbf) * 1000 > now + CLIENT_ASSERTION_CLOCK_SKEW_MS)) {
+    throw new McpOAuthError('invalid_client', 'Client assertion is not active yet', 401);
+  }
+  if (typeof payload.jti !== 'string' || !/^[A-Za-z0-9._~-]{16,256}$/.test(payload.jti)) {
+    throw new McpOAuthError('invalid_client', 'Client assertion must include a unique jti', 401);
+  }
+  return { jti: payload.jti, exp: Number(payload.exp) * 1000 };
+}
+
+async function getClientJwks(client: McpOAuthClient, forceRefresh = false): Promise<unknown> {
+  if (!client.jwks_uri) throw new McpOAuthError('invalid_client', 'Client metadata does not provide jwks_uri', 401);
+  const cached = clientJwksCache.get(client.jwks_uri);
+  if (!forceRefresh && cached && cached.expiresAt > Date.now()) return { keys: cached.keys };
+  clientJwksCache.delete(client.jwks_uri);
+  const { body, cacheControl } = await fetchPinnedJson(
+    client.jwks_uri,
+    'Client JWKS',
+    CLIENT_ASSERTION_MAX_BYTES,
+    'application/json, application/jwk-set+json'
+  );
+  if (!body || typeof body !== 'object' || Array.isArray(body) || !Array.isArray((body as { keys?: unknown }).keys)) {
+    throw new McpOAuthError('invalid_client', 'Client JWKS is invalid', 401);
+  }
+  const keys = (body as { keys: unknown[] }).keys.filter((key): key is Record<string, unknown> => (
+    !!key && typeof key === 'object' && !Array.isArray(key)
+  ));
+  const maxAge = cacheMaxAgeMs(cacheControl) || 5 * 60 * 1000;
+  if (clientJwksCache.size >= CLIENT_JWKS_CACHE_MAX_ENTRIES) {
+    const oldest = clientJwksCache.keys().next().value;
+    if (oldest) clientJwksCache.delete(oldest);
+  }
+  clientJwksCache.set(client.jwks_uri, {
+    keys,
+    expiresAt: Date.now() + Math.min(maxAge, CLIENT_JWKS_CACHE_MAX_AGE_MS),
+  });
+  return { keys };
+}
+
+function consumeClientAssertion(clientId: string, jti: string, expiresAt: number): boolean {
+  const now = Date.now();
+  const db = getDB();
+  db.run('DELETE FROM mcp_oauth_client_assertions WHERE expires_at < ?', [now - TOKEN_AUDIT_RETENTION_MS]);
+  try {
+    db.run(
+      'INSERT INTO mcp_oauth_client_assertions (client_id, jti, expires_at, created_at) VALUES (?,?,?,?)',
+      [clientId, jti, expiresAt, now]
+    );
+    saveDB();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export function parseMcpOAuthClientCredentials(
   authorizationHeader: string | null | undefined,
   bodyClientId: string | undefined,
-  bodyClientSecret: string | undefined
+  bodyClientSecret: string | undefined,
+  bodyClientAssertionType?: string,
+  bodyClientAssertion?: string
 ): McpOAuthClientCredentials {
   const header = String(authorizationHeader || '').trim();
+  const hasAssertion = bodyClientAssertionType !== undefined || bodyClientAssertion !== undefined;
   if (!header) {
     if (!bodyClientId) throw new McpOAuthError('invalid_request', 'client_id is required');
+    if (hasAssertion) {
+      if (bodyClientSecret !== undefined || !bodyClientAssertionType || !bodyClientAssertion) {
+        throw new McpOAuthError('invalid_client', 'Invalid client assertion credentials', 401);
+      }
+      return {
+        clientId: bodyClientId,
+        source: 'private_key_jwt',
+        clientAssertionType: bodyClientAssertionType,
+        clientAssertion: bodyClientAssertion,
+      };
+    }
     return {
       clientId: bodyClientId,
       source: bodyClientSecret ? 'post' : 'none',
@@ -235,6 +426,7 @@ export function parseMcpOAuthClientCredentials(
   if (!match) {
     throw new McpOAuthError('invalid_client', 'Unsupported client authentication method', 401);
   }
+  if (hasAssertion) throw new McpOAuthError('invalid_client', 'Conflicting client authentication methods', 401);
   let decoded: string;
   try {
     decoded = Buffer.from(match[1], 'base64').toString('utf8');
@@ -253,12 +445,39 @@ export function parseMcpOAuthClientCredentials(
   return { clientId, source: 'basic', clientSecret };
 }
 
-export function verifyMcpOAuthClientAuthentication(
+export async function verifyMcpOAuthClientAuthentication(
   client: McpOAuthClient,
-  credentials: McpOAuthClientCredentials
-): boolean {
+  credentials: McpOAuthClientCredentials,
+  audience: string
+): Promise<boolean> {
   if (credentials.clientId !== client.client_id) return false;
   if (credentials.source === 'none') return client.token_endpoint_auth_method === 'none';
+  if (credentials.source === 'private_key_jwt') {
+    if (client.token_endpoint_auth_method !== 'private_key_jwt' || client.token_endpoint_auth_signing_alg !== 'RS256' || credentials.clientAssertionType !== CLIENT_ASSERTION_TYPE || !credentials.clientAssertion) return false;
+    let claims: ClientAssertionClaims;
+    try {
+      const jwks = await getClientJwks(client);
+      claims = verifyMcpOAuthClientAssertion({
+        assertion: credentials.clientAssertion,
+        clientId: client.client_id,
+        audience,
+        jwks,
+      });
+    } catch (error) {
+      if (error instanceof McpOAuthError && /key was not found/.test(error.message)) {
+        const jwks = await getClientJwks(client, true);
+        claims = verifyMcpOAuthClientAssertion({
+          assertion: credentials.clientAssertion,
+          clientId: client.client_id,
+          audience,
+          jwks,
+        });
+      } else {
+        throw error;
+      }
+    }
+    return consumeClientAssertion(client.client_id, claims.jti, claims.exp);
+  }
 
   // Accept either Basic or POST when the issued secret matches. This keeps
   // interoperability with MCP clients that ignore the registered method,
@@ -279,6 +498,7 @@ function pruneMcpOAuthRecords(now: number, force = false): void {
   if (!force && now - lastOAuthPruneAt < 60 * 60 * 1000) return;
   lastOAuthPruneAt = now;
   const db = getDB();
+  db.run('DELETE FROM mcp_oauth_client_assertions WHERE expires_at < ?', [now - TOKEN_AUDIT_RETENTION_MS]);
   db.run('DELETE FROM mcp_oauth_authorization_codes WHERE expires_at < ?', [now - MCP_AUTHORIZATION_CODE_TTL_MS]);
   db.run(
     `DELETE FROM mcp_oauth_tokens
@@ -295,8 +515,26 @@ function pruneMcpOAuthRecords(now: number, force = false): void {
   saveDB();
 }
 
-async function fetchPinnedClientMetadata(clientId: string): Promise<{ body: unknown; cacheControl?: string }> {
-  const url = new URL(clientId);
+function validatePinnedJsonUrl(value: string, label: string): URL {
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    throw new McpOAuthError('invalid_client', `${label} URL is invalid`);
+  }
+  if (url.protocol !== 'https:' || url.username || url.password || url.hash || value.length > CLIENT_METADATA_MAX_BYTES) {
+    throw new McpOAuthError('invalid_client', `${label} URL must use HTTPS without credentials or a fragment`);
+  }
+  return url;
+}
+
+async function fetchPinnedJson(
+  value: string,
+  label: string,
+  maxBytes: number,
+  accept = 'application/json'
+): Promise<{ body: unknown; cacheControl?: string }> {
+  const url = validatePinnedJsonUrl(value, label);
   let addresses: Array<{ address: string; family: number }>;
   let lookupTimer: ReturnType<typeof setTimeout> | undefined;
   try {
@@ -304,18 +542,18 @@ async function fetchPinnedClientMetadata(clientId: string): Promise<{ body: unkn
       dns.promises.lookup(url.hostname, { all: true, verbatim: true }),
       new Promise<never>((_, reject) => {
         lookupTimer = setTimeout(
-          () => reject(new McpOAuthError('invalid_client', 'Client metadata hostname resolution timed out')),
+          () => reject(new McpOAuthError('invalid_client', `${label} hostname resolution timed out`)),
           CLIENT_METADATA_TIMEOUT_MS
         );
       }),
     ]);
   } catch {
-    throw new McpOAuthError('invalid_client', 'Unable to resolve the client metadata hostname');
+    throw new McpOAuthError('invalid_client', `Unable to resolve the ${label.toLowerCase()} hostname`);
   } finally {
     if (lookupTimer) clearTimeout(lookupTimer);
   }
   if (addresses.length === 0 || addresses.some((entry) => !isPublicMetadataIp(entry.address))) {
-    throw new McpOAuthError('invalid_client', 'Client metadata hostname does not resolve exclusively to public addresses');
+    throw new McpOAuthError('invalid_client', `${label} hostname does not resolve exclusively to public addresses`);
   }
   // 部署環境（Zeabur）容器只有 IPv4 對外路由；dns.lookup 的 verbatim 順序可能把 AAAA 排在前面，
   // 若直接取 addresses[0] 連到 IPv6 位址會 Network unreachable，因此優先挑 IPv4。
@@ -327,7 +565,7 @@ async function fetchPinnedClientMetadata(clientId: string): Promise<{ body: unkn
       {
         method: 'GET',
         headers: {
-          Accept: 'application/json',
+          Accept: accept,
           'User-Agent': 'AssetPilot-MCP-OAuth/1.0',
         },
         // Node 的 Happy Eyeballs（autoSelectFamily）在偵測到雙棧位址時，會以 { all: true }
@@ -344,19 +582,19 @@ async function fetchPinnedClientMetadata(clientId: string): Promise<{ body: unkn
       (response) => {
         if (response.statusCode !== 200) {
           response.resume();
-          reject(new McpOAuthError('invalid_client', `Client metadata endpoint returned HTTP ${response.statusCode || 0}`));
+          reject(new McpOAuthError('invalid_client', `${label} endpoint returned HTTP ${response.statusCode || 0}`));
           return;
         }
         const contentType = String(response.headers['content-type'] || '').toLowerCase();
         if (!contentType.includes('application/json') && !contentType.includes('+json')) {
           response.resume();
-          reject(new McpOAuthError('invalid_client', 'Client metadata endpoint must return JSON'));
+          reject(new McpOAuthError('invalid_client', `${label} endpoint must return JSON`));
           return;
         }
         const declaredLength = Number(response.headers['content-length']) || 0;
-        if (declaredLength > CLIENT_METADATA_MAX_BYTES) {
+        if (declaredLength > maxBytes) {
           response.resume();
-          reject(new McpOAuthError('invalid_client', 'Client metadata document is too large'));
+          reject(new McpOAuthError('invalid_client', `${label} is too large`));
           return;
         }
 
@@ -365,8 +603,8 @@ async function fetchPinnedClientMetadata(clientId: string): Promise<{ body: unkn
         response.on('data', (chunk: Buffer | string) => {
           const bytes = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
           totalBytes += bytes.length;
-          if (totalBytes > CLIENT_METADATA_MAX_BYTES) {
-            request.destroy(new McpOAuthError('invalid_client', 'Client metadata document is too large'));
+          if (totalBytes > maxBytes) {
+            request.destroy(new McpOAuthError('invalid_client', `${label} is too large`));
             return;
           }
           chunks.push(bytes);
@@ -376,19 +614,23 @@ async function fetchPinnedClientMetadata(clientId: string): Promise<{ body: unkn
             const body = JSON.parse(Buffer.concat(chunks).toString('utf8'));
             resolve({ body, cacheControl: String(response.headers['cache-control'] || '') });
           } catch {
-            reject(new McpOAuthError('invalid_client', 'Client metadata document is not valid JSON'));
+            reject(new McpOAuthError('invalid_client', `${label} is not valid JSON`));
           }
         });
       }
     );
     request.setTimeout(CLIENT_METADATA_TIMEOUT_MS, () => {
-      request.destroy(new McpOAuthError('invalid_client', 'Client metadata request timed out'));
+      request.destroy(new McpOAuthError('invalid_client', `${label} request timed out`));
     });
     request.on('error', (error) => {
-      reject(error instanceof McpOAuthError ? error : new McpOAuthError('invalid_client', 'Unable to retrieve client metadata document'));
+      reject(error instanceof McpOAuthError ? error : new McpOAuthError('invalid_client', `Unable to retrieve ${label.toLowerCase()}`));
     });
     request.end();
   });
+}
+
+async function fetchPinnedClientMetadata(clientId: string): Promise<{ body: unknown; cacheControl?: string }> {
+  return fetchPinnedJson(clientId, 'Client metadata document', CLIENT_METADATA_MAX_BYTES);
 }
 
 async function getClientIdMetadataDocument(clientId: string): Promise<McpOAuthClient> {
@@ -783,6 +1025,8 @@ export function serializeRegisteredClient(
     result.client_secret = client.client_secret;
     result.client_secret_expires_at = Number(client.client_secret_expires_at) || 0;
   }
+  if (client.jwks_uri) result.jwks_uri = client.jwks_uri;
+  if (client.token_endpoint_auth_signing_alg) result.token_endpoint_auth_signing_alg = client.token_endpoint_auth_signing_alg;
   if (client.client_uri) result.client_uri = client.client_uri;
   if (client.logo_uri) result.logo_uri = client.logo_uri;
   return result;

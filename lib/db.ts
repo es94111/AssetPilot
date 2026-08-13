@@ -608,6 +608,8 @@ async function _runMigrations(): Promise<void> {
     token_endpoint_auth_method TEXT NOT NULL DEFAULT 'none',
     client_secret_hash TEXT DEFAULT '',
     client_secret_expires_at INTEGER DEFAULT 0,
+    jwks_uri TEXT DEFAULT '',
+    token_endpoint_auth_signing_alg TEXT DEFAULT '',
     grant_types TEXT NOT NULL DEFAULT '["authorization_code","refresh_token"]',
     response_types TEXT NOT NULL DEFAULT '["code"]',
     client_name TEXT NOT NULL,
@@ -618,7 +620,18 @@ async function _runMigrations(): Promise<void> {
   )`);
   alterIgnore("ALTER TABLE mcp_oauth_clients ADD COLUMN client_secret_hash TEXT DEFAULT ''");
   alterIgnore("ALTER TABLE mcp_oauth_clients ADD COLUMN client_secret_expires_at INTEGER DEFAULT 0");
+  alterIgnore("ALTER TABLE mcp_oauth_clients ADD COLUMN jwks_uri TEXT DEFAULT ''");
+  alterIgnore("ALTER TABLE mcp_oauth_clients ADD COLUMN token_endpoint_auth_signing_alg TEXT DEFAULT ''");
   alterIgnore("CREATE INDEX IF NOT EXISTS idx_mcp_oauth_clients_created ON mcp_oauth_clients(created_at)");
+
+  db.run(`CREATE TABLE IF NOT EXISTS mcp_oauth_client_assertions (
+    client_id TEXT NOT NULL,
+    jti TEXT NOT NULL,
+    expires_at INTEGER NOT NULL,
+    created_at INTEGER NOT NULL,
+    PRIMARY KEY (client_id, jti)
+  )`);
+  alterIgnore("CREATE INDEX IF NOT EXISTS idx_mcp_oauth_assertions_expires ON mcp_oauth_client_assertions(expires_at)");
 
   db.run(`CREATE TABLE IF NOT EXISTS mcp_oauth_authorization_codes (
     code_hash TEXT PRIMARY KEY,

@@ -6,12 +6,13 @@ export const MCP_AUTHORIZATION_CODE_TTL_MS = 5 * 60 * 1000;
 export const MCP_ACCESS_TOKEN_TTL_MS = 60 * 60 * 1000;
 export const MCP_REFRESH_TOKEN_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 
-export type McpOAuthClientAuthMethod = 'none' | 'client_secret_basic' | 'client_secret_post';
+export type McpOAuthClientAuthMethod = 'none' | 'client_secret_basic' | 'client_secret_post' | 'private_key_jwt';
 
 const SUPPORTED_CLIENT_AUTH_METHODS = new Set<McpOAuthClientAuthMethod>([
   'none',
   'client_secret_basic',
   'client_secret_post',
+  'private_key_jwt',
 ]);
 
 const PKCE_VERIFIER_PATTERN = /^[A-Za-z0-9\-._~]{43,128}$/;
@@ -57,6 +58,8 @@ export interface McpOAuthClientMetadata {
   client_uri?: string;
   logo_uri?: string;
   scope: string;
+  jwks_uri?: string;
+  token_endpoint_auth_signing_alg?: 'RS256';
 }
 
 export interface McpOAuthClient extends McpOAuthClientMetadata {
@@ -161,7 +164,10 @@ function normalizeStringArray(value: unknown, fallback: string[], field: string)
   return [...new Set(value)];
 }
 
-export function normalizeMcpOAuthClientMetadata(input: unknown): McpOAuthClientMetadata {
+export function normalizeMcpOAuthClientMetadata(
+  input: unknown,
+  options: { allowPrivateKeyJwt?: boolean } = {}
+): McpOAuthClientMetadata {
   if (!input || typeof input !== 'object' || Array.isArray(input)) {
     throw new McpOAuthError('invalid_client_metadata', 'Client metadata must be a JSON object');
   }
@@ -175,11 +181,34 @@ export function normalizeMcpOAuthClientMetadata(input: unknown): McpOAuthClientM
   const authMethod = metadata.token_endpoint_auth_method == null
     ? 'none'
     : String(metadata.token_endpoint_auth_method).trim().toLowerCase();
-  if (!isSupportedMcpOAuthClientAuthMethod(authMethod)) {
+  if (!isSupportedMcpOAuthClientAuthMethod(authMethod) || (authMethod === 'private_key_jwt' && !options.allowPrivateKeyJwt)) {
     throw new McpOAuthError(
       'invalid_client_metadata',
-      'Unsupported token_endpoint_auth_method; use none, client_secret_basic, or client_secret_post'
+      options.allowPrivateKeyJwt
+        ? 'Unsupported token_endpoint_auth_method; use none, client_secret_basic, client_secret_post, or private_key_jwt'
+        : 'Unsupported token_endpoint_auth_method; DCR supports none, client_secret_basic, or client_secret_post'
     );
+  }
+
+  const jwksUri = validateHttpsUrl(metadata.jwks_uri, 'jwks_uri');
+  const signingAlg = optionalString(metadata.token_endpoint_auth_signing_alg, 32);
+  if (authMethod === 'private_key_jwt') {
+    if (!jwksUri) {
+      throw new McpOAuthError('invalid_client_metadata', 'private_key_jwt requires jwks_uri');
+    }
+    if (signingAlg && signingAlg !== 'RS256') {
+      throw new McpOAuthError('invalid_client_metadata', 'Only RS256 private_key_jwt assertions are supported');
+    }
+    const advertisedMethods = metadata.token_endpoint_auth_methods_supported;
+    if (advertisedMethods != null) {
+      if (!Array.isArray(advertisedMethods) || advertisedMethods.some((method) => typeof method !== 'string')) {
+        throw new McpOAuthError('invalid_client_metadata', 'token_endpoint_auth_methods_supported must be an array of strings');
+      }
+      const normalizedMethods = advertisedMethods.map((method) => method.trim().toLowerCase());
+      if (!normalizedMethods.includes('private_key_jwt')) {
+        throw new McpOAuthError('invalid_client_metadata', 'Client metadata does not advertise private_key_jwt support');
+      }
+    }
   }
 
   const grantTypes = normalizeStringArray(
@@ -208,6 +237,9 @@ export function normalizeMcpOAuthClientMetadata(input: unknown): McpOAuthClientM
     client_uri: validateHttpsUrl(metadata.client_uri, 'client_uri'),
     logo_uri: validateHttpsUrl(metadata.logo_uri, 'logo_uri'),
     scope: requestedScopes.join(' '),
+    ...(authMethod === 'private_key_jwt'
+      ? { jwks_uri: jwksUri, token_endpoint_auth_signing_alg: (signingAlg || 'RS256') as 'RS256' }
+      : {}),
   };
 }
 
@@ -229,8 +261,8 @@ export function validateClientIdMetadataDocument(clientId: string, input: unknow
     throw new McpOAuthError('invalid_client', 'Client ID metadata documents must not contain shared client secrets');
   }
   try {
-    const normalized = normalizeMcpOAuthClientMetadata(document);
-    if (normalized.token_endpoint_auth_method !== 'none') {
+    const normalized = normalizeMcpOAuthClientMetadata(document, { allowPrivateKeyJwt: true });
+    if (normalized.token_endpoint_auth_method !== 'none' && normalized.token_endpoint_auth_method !== 'private_key_jwt') {
       throw new McpOAuthError(
         'invalid_client',
         'Client ID metadata documents must use token_endpoint_auth_method=none; confidential clients must use DCR'

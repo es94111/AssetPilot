@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { McpOAuthError, oauthErrorBody } from '@/lib/mcpOAuthCore';
+import { McpOAuthError, getMcpOAuthUrls, oauthErrorBody } from '@/lib/mcpOAuthCore';
 import {
   getMcpOAuthClient,
   parseMcpOAuthClientCredentials,
@@ -31,15 +31,21 @@ export async function POST(request: NextRequest) {
       throw new McpOAuthError('invalid_request', 'Content-Type must be application/x-www-form-urlencoded');
     }
     const form = new URLSearchParams(await request.text());
+    for (const name of ['client_id', 'client_secret', 'client_assertion_type', 'client_assertion', 'token']) {
+      singleParam(form, name, false);
+    }
+    const urls = getMcpOAuthUrls({ headers: request.headers, requestOrigin: request.nextUrl.origin });
     const credentials = parseMcpOAuthClientCredentials(
       request.headers.get('authorization'),
       singleParam(form, 'client_id', false),
-      singleParam(form, 'client_secret', false)
+      singleParam(form, 'client_secret', false),
+      singleParam(form, 'client_assertion_type', false),
+      singleParam(form, 'client_assertion', false)
     );
     const token = singleParam(form, 'token')!;
     const client = await getMcpOAuthClient(credentials.clientId);
     if (!client) throw new McpOAuthError('invalid_client', 'Unknown client_id', 401);
-    if (!verifyMcpOAuthClientAuthentication(client, credentials)) {
+    if (!(await verifyMcpOAuthClientAuthentication(client, credentials, urls.revocationEndpoint))) {
       throw new McpOAuthError('invalid_client', 'Client authentication failed', 401);
     }
     revokeMcpOAuthToken(client, token);

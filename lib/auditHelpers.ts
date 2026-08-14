@@ -17,6 +17,8 @@ const AUDIT_METADATA_ALLOWED_KEYS = new Set([
   'deleted_count', 'requested_count', 'scope', 'log_id', 'self',
   // MCP 查詢稽核（見 data-model.md：稽核紀錄擴充）
   'mcp_credential_id', 'mcp_credential_name',
+  // MCP 新增交易稽核（003-mcp-write-no-delete，見 data-model.md：稽核紀錄擴充）
+  'transaction_summary',
 ]);
 
 export interface WriteAuditArgs {

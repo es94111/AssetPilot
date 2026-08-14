@@ -6630,6 +6630,11 @@
     "description": "Web path: nav.mcp",
     "x-webPath": "nav.mcp"
   },
+  "navMcpConnections": "Outils IA connectés",
+  "@navMcpConnections": {
+    "description": "Web path: nav.mcpConnections",
+    "x-webPath": "nav.mcpConnections"
+  },
   "settingsMcpTitle": "Paramètres de connexion MCP",
   "@settingsMcpTitle": {
     "description": "Web path: settings.mcp.title",
@@ -6809,6 +6814,81 @@
   "@settingsMcpCloseConfirm": {
     "description": "Web path: settings.mcp.closeConfirm",
     "x-webPath": "settings.mcp.closeConfirm"
+  },
+  "settingsMcpConnectionsTitle": "Outils IA connectés",
+  "@settingsMcpConnectionsTitle": {
+    "description": "Web path: settings.mcpConnections.title",
+    "x-webPath": "settings.mcpConnections.title"
+  },
+  "settingsMcpConnectionsDescription": "Gérez si chaque outil IA connecté via OAuth MCP est autorisé à créer des transactions en votre nom.",
+  "@settingsMcpConnectionsDescription": {
+    "description": "Web path: settings.mcpConnections.description",
+    "x-webPath": "settings.mcpConnections.description"
+  },
+  "settingsMcpConnectionsListTitle": "Outils IA connectés",
+  "@settingsMcpConnectionsListTitle": {
+    "description": "Web path: settings.mcpConnections.listTitle",
+    "x-webPath": "settings.mcpConnections.listTitle"
+  },
+  "settingsMcpConnectionsRefresh": "Actualiser",
+  "@settingsMcpConnectionsRefresh": {
+    "description": "Web path: settings.mcpConnections.refresh",
+    "x-webPath": "settings.mcpConnections.refresh"
+  },
+  "settingsMcpConnectionsColClientName": "Outil IA",
+  "@settingsMcpConnectionsColClientName": {
+    "description": "Web path: settings.mcpConnections.colClientName",
+    "x-webPath": "settings.mcpConnections.colClientName"
+  },
+  "settingsMcpConnectionsColFirstConnectedAt": "Première connexion",
+  "@settingsMcpConnectionsColFirstConnectedAt": {
+    "description": "Web path: settings.mcpConnections.colFirstConnectedAt",
+    "x-webPath": "settings.mcpConnections.colFirstConnectedAt"
+  },
+  "settingsMcpConnectionsColLastUsedAt": "Dernière utilisation",
+  "@settingsMcpConnectionsColLastUsedAt": {
+    "description": "Web path: settings.mcpConnections.colLastUsedAt",
+    "x-webPath": "settings.mcpConnections.colLastUsedAt"
+  },
+  "settingsMcpConnectionsColAllowCreate": "Autoriser la création de données",
+  "@settingsMcpConnectionsColAllowCreate": {
+    "description": "Web path: settings.mcpConnections.colAllowCreate",
+    "x-webPath": "settings.mcpConnections.colAllowCreate"
+  },
+  "settingsMcpConnectionsAllowCreateLabel": "Autoriser la création de données",
+  "@settingsMcpConnectionsAllowCreateLabel": {
+    "description": "Web path: settings.mcpConnections.allowCreateLabel",
+    "x-webPath": "settings.mcpConnections.allowCreateLabel"
+  },
+  "settingsMcpConnectionsNoConnections": "Aucun outil IA connecté pour le moment",
+  "@settingsMcpConnectionsNoConnections": {
+    "description": "Web path: settings.mcpConnections.noConnections",
+    "x-webPath": "settings.mcpConnections.noConnections"
+  },
+  "settingsMcpConnectionsLoadFailed": "Échec du chargement des outils connectés",
+  "@settingsMcpConnectionsLoadFailed": {
+    "description": "Web path: settings.mcpConnections.loadFailed",
+    "x-webPath": "settings.mcpConnections.loadFailed"
+  },
+  "settingsMcpConnectionsUpdateFailed": "Échec de la mise à jour de l'autorisation",
+  "@settingsMcpConnectionsUpdateFailed": {
+    "description": "Web path: settings.mcpConnections.updateFailed",
+    "x-webPath": "settings.mcpConnections.updateFailed"
+  },
+  "settingsMcpColAllowCreate": "Autoriser la création de données",
+  "@settingsMcpColAllowCreate": {
+    "description": "Web path: settings.mcp.colAllowCreate",
+    "x-webPath": "settings.mcp.colAllowCreate"
+  },
+  "settingsMcpAllowCreateLabel": "Autoriser la création de données",
+  "@settingsMcpAllowCreateLabel": {
+    "description": "Web path: settings.mcp.allowCreateLabel",
+    "x-webPath": "settings.mcp.allowCreateLabel"
+  },
+  "settingsMcpAllowCreateUpdateFailed": "Échec de la mise à jour de l'autorisation",
+  "@settingsMcpAllowCreateUpdateFailed": {
+    "description": "Web path: settings.mcp.allowCreateUpdateFailed",
+    "x-webPath": "settings.mcp.allowCreateUpdateFailed"
   },
   "adminSystemSettingsTitle": "Paramètres système",
   "@adminSystemSettingsTitle": {

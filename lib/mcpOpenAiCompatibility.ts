@@ -20,6 +20,13 @@ const READ_ONLY_TOOL_ANNOTATIONS = {
   openWorldHint: false,
 } as const;
 
+// destructiveHint: false — 此工具只新增，不覆寫既有資料。
+const WRITE_TOOL_ANNOTATIONS = {
+  readOnlyHint: false,
+  destructiveHint: false,
+  openWorldHint: false,
+} as const;
+
 /**
  * OpenAI clients read the standard tool fields plus a back-compat auth mirror
  * from `_meta`. The top-level securitySchemes extension is injected at the
@@ -33,6 +40,22 @@ export function createReadOnlyOAuthToolDescriptor(
   return {
     title,
     annotations: READ_ONLY_TOOL_ANNOTATIONS,
+    _meta: {
+      securitySchemes: MCP_OAUTH_SECURITY_SCHEMES,
+      'openai/toolInvocation/invoking': invoking,
+      'openai/toolInvocation/invoked': invoked,
+    },
+  };
+}
+
+export function createWriteOAuthToolDescriptor(
+  title: string,
+  invoking: string,
+  invoked: string
+) {
+  return {
+    title,
+    annotations: WRITE_TOOL_ANNOTATIONS,
     _meta: {
       securitySchemes: MCP_OAUTH_SECURITY_SCHEMES,
       'openai/toolInvocation/invoking': invoking,

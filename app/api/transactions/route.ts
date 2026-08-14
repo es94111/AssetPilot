@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '../../../lib/apiHelpers';
-import { getDB, queryAll, queryOne, saveDB } from '../../../lib/db';
+import { queryAll, queryOne } from '../../../lib/db';
 import { normalizeCurrency, convertToTwd, normalizeDate, resolveOverseasFee } from '../../../lib/accountHelpers';
-import { uid } from '../../../lib/userDefaults';
 import { todayInUserTz, isValidIsoDate } from '../../../lib/userTime';
 import { computeTwdAmount } from '../../../lib/moneyDecimal';
-import { insertFeeTransaction } from '../../../lib/overseasFee';
+import { insertIncomeExpenseTransaction } from '../../../lib/transactionWriteCore';
 
 type TransactionType = 'income' | 'expense' | 'transfer_in' | 'transfer_out';
 type SortField = 'date' | 'amount' | 'account' | 'category' | 'type';
@@ -280,24 +279,20 @@ export async function POST(request: NextRequest) {
     0
   );
 
-  const id = uid();
-  const now = Date.now();
-  const db = getDB();
-  db.run(
-    'INSERT INTO transactions (id, user_id, type, amount, currency, original_amount, fx_rate, fx_fee, twd_amount, date, category_id, account_id, note, exclude_from_stats, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
-    [id, auth.userId, type, twdAmountInt, converted.currency, converted.originalAmount, converted.fxRate, 0, twdAmountInt, date, categoryId || null, accountId || null, note || '', excludeFromStats ? 1 : 0, now, now]
-  );
+  const result = insertIncomeExpenseTransaction({
+    userId: auth.userId,
+    type,
+    twdAmount: twdAmountInt,
+    currency: converted.currency,
+    originalAmount: converted.originalAmount,
+    fxRate: converted.fxRate,
+    fxFee,
+    date,
+    categoryId: categoryId || null,
+    accountId: accountId || null,
+    note: note || '',
+    excludeFromStats: !!excludeFromStats,
+  });
 
-  // 僅外幣信用卡「支出」才產生手續費列，並與原交易雙向 linked。
-  let feeId: string | null = null;
-  if (type === 'expense' && fxFee > 0) {
-    feeId = insertFeeTransaction(db, {
-      userId: auth.userId, mainId: id, feeAmount: fxFee, date,
-      categoryId, accountId, excludeFromStats,
-    });
-    db.run('UPDATE transactions SET linked_id = ? WHERE id = ? AND user_id = ?', [feeId, id, auth.userId]);
-  }
-
-  saveDB();
-  return NextResponse.json({ id, twdAmount: twdAmountInt, fxFee, feeId, updatedAt: now }, { status: 201 });
+  return NextResponse.json(result, { status: 201 });
 }

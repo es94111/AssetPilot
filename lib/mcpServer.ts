@@ -2,15 +2,22 @@
 // 所有工具皆重用既有 lib/*Helpers.ts 計算邏輯，不重新實作財務規則（見 research.md 第 4 節）
 import { z } from 'zod';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { queryAll, queryOne } from './db';
+import { getDB, queryAll, queryOne, saveDB } from './db';
 import { writeOperationAudit } from './auditHelpers';
 import { getTransactionsSummary, getStockPortfolioStatus } from './dashboardHelpers';
 import { getStockRealizedPl } from './stockHelpers';
-import { createReadOnlyOAuthToolDescriptor } from './mcpOpenAiCompatibility';
+import { createReadOnlyOAuthToolDescriptor, createWriteOAuthToolDescriptor } from './mcpOpenAiCompatibility';
+import { normalizeCurrency, convertToTwd, normalizeDate, resolveOverseasFee } from './accountHelpers';
+import { todayInUserTz, isValidIsoDate, toIsoUtc } from './userTime';
+import { computeTwdAmount } from './moneyDecimal';
+import { insertIncomeExpenseTransaction, insertTransferPair } from './transactionWriteCore';
+import { uid } from './userDefaults';
 import type { VerifyMcpTokenResult } from './mcpAuth';
 
 const MAX_PAGE_SIZE = 200;
 const DEFAULT_PAGE_SIZE = 20;
+const IDEMPOTENCY_TTL_MS = 24 * 60 * 60 * 1000;
+const TRANSACTION_TYPE_LABELS: Record<string, string> = { income: '收入', expense: '支出', transfer: '轉帳' };
 
 interface PaginationInput {
   page?: number;
@@ -30,18 +37,29 @@ function toolResult(data: unknown) {
   return { content: [{ type: 'text' as const, text: JSON.stringify(data) }] };
 }
 
-// 每次工具呼叫成功後寫入既有稽核紀錄（FR-005）；metadata 僅含資料範圍摘要，不含實際查得的金額或明細。
-function withAudit<T>(credential: VerifyMcpTokenResult, scope: string, fn: () => T): T {
+// 每次工具呼叫成功後寫入既有稽核紀錄（FR-005）；讀取類工具 metadata 僅含資料範圍摘要，
+// 不含實際查得的金額或明細。action 預設 'mcp_query' 使既有唯讀工具呼叫端不需異動；
+// create_transaction（003-mcp-write-no-delete）傳入 action='mcp_create_transaction' 與
+// extraMetadata（transaction_id／transaction_summary），此時不需要 scope，可傳 undefined
+// （JSON.stringify 會捨棄 undefined 鍵，metadata 內不會出現多餘的 scope 欄位）。
+function withAudit<T>(
+  credential: VerifyMcpTokenResult,
+  scope: string | undefined,
+  fn: () => T,
+  action = 'mcp_query',
+  extraMetadata?: Record<string, unknown>
+): T {
   const result = fn();
   writeOperationAudit({
     userId: credential.userId,
     role: 'user',
-    action: 'mcp_query',
+    action,
     result: 'success',
     metadata: {
       scope,
       mcp_credential_id: credential.credentialId,
       mcp_credential_name: credential.name,
+      ...extraMetadata,
     },
   });
   return result;
@@ -405,6 +423,154 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
       return toolResult({ items, total, page: p, pageSize: ps, totalPages: Math.ceil(total / ps), summary: result.summary });
     })
   );
+
+  // create_transaction 僅在憑證已開啟「允許新增資料」時才註冊；未開啟的連線的 tools/list
+  // 結果裡不存在這個工具（FR-005／FR-006，見 research.md 第 1 節）。刪除／修改工具則永遠
+  // 不存在於任何程式碼路徑，不因權限而有例外——不在本檔任何地方出現。
+  if (credential.allowCreate === true) {
+    server.registerTool(
+      'create_transaction',
+      {
+        ...createWriteOAuthToolDescriptor('新增交易', '正在新增交易…', '交易已新增'),
+        description: '新增一筆一般交易紀錄（收入、支出或轉帳），視同使用者本人手動建立；僅能新增，無法修改或刪除既有資料。',
+        inputSchema: {
+          type: z.string().optional().describe("交易類型：'income'（收入）｜'expense'（支出）｜'transfer'（轉帳）"),
+          amount: z.union([z.number(), z.string()]).optional().describe('交易金額，必須大於 0（以 currency 欄位所指定的幣別計）'),
+          currency: z.string().optional().describe("ISO 4217 幣別碼，預設 'TWD'"),
+          fxRate: z.number().optional().describe('手動指定匯率；未提供時自動查匯率；type=transfer 時忽略'),
+          date: z.string().optional().describe('交易日期 YYYY-MM-DD；未提供時為使用者所屬時區的今天'),
+          categoryId: z.string().optional().describe('分類 id（僅 income/expense 有意義；找不到本人所屬分類時視為未分類，不拒絕建立）'),
+          accountId: z.string().optional().describe('帳戶 id（income/expense 用；使用者僅一個帳戶時可省略，自動代入）'),
+          fromAccountId: z.string().optional().describe('轉出帳戶 id（type=transfer 時必填，須為本人所有）'),
+          toAccountId: z.string().optional().describe('轉入帳戶 id（type=transfer 時必填，須為本人所有，不可與 fromAccountId 相同）'),
+          note: z.string().optional().describe('備註全文；會存入交易本身，但不會寫入稽核日誌'),
+          idempotencyKey: z.string().optional().describe('冪等鍵；同一憑證 24 小時內以相同值重複呼叫，回傳先前建立結果，不重複建立'),
+        },
+      },
+      async ({ type, amount, currency, fxRate, date: rawDate, categoryId, accountId, fromAccountId, toAccountId, note, idempotencyKey }) => {
+        if (idempotencyKey) {
+          const cached = queryOne(
+            'SELECT response_json FROM mcp_transaction_idempotency WHERE credential_id = ? AND idempotency_key = ? AND expires_at > ?',
+            [credential.credentialId, idempotencyKey, Date.now()]
+          );
+          if (cached) {
+            return toolResult(JSON.parse(String(cached.response_json)));
+          }
+        }
+
+        if (type !== 'income' && type !== 'expense' && type !== 'transfer') {
+          throw new Error('交易類型無效');
+        }
+        const numAmount = Number(amount);
+        if (!Number.isFinite(numAmount) || numAmount <= 0) {
+          throw new Error('金額必須大於 0');
+        }
+        let date: string;
+        if (rawDate == null || String(rawDate).trim() === '') {
+          const userRow = queryOne('SELECT timezone FROM users WHERE id = ?', [userId]);
+          date = todayInUserTz((userRow?.timezone as string) || 'Asia/Taipei');
+        } else {
+          date = normalizeDate(rawDate);
+        }
+        if (!date || !isValidIsoDate(date)) {
+          throw new Error('日期格式無效');
+        }
+
+        let response: Record<string, unknown> = {};
+        let transactionIdForAudit = '';
+        let linkedTransactionIdForAudit = '';
+        let summary = '';
+
+        if (type === 'transfer') {
+          if (!fromAccountId || !toAccountId) throw new Error('缺少帳戶資訊');
+          if (fromAccountId === toAccountId) throw new Error('轉出與轉入帳戶不可相同');
+          const fromAccount = queryOne('SELECT id, currency FROM accounts WHERE id = ? AND user_id = ?', [fromAccountId, userId]);
+          const toAccount = queryOne('SELECT id, currency FROM accounts WHERE id = ? AND user_id = ?', [toAccountId, userId]);
+          if (!fromAccount || !toAccount) throw new Error('帳戶不存在或無權限');
+          const fromCurrency = normalizeCurrency(fromAccount.currency as string | null);
+          const toCurrency = normalizeCurrency(toAccount.currency as string | null);
+          if (fromCurrency !== toCurrency) {
+            throw new Error('CrossCurrencyTransfer：跨幣別請分開記一筆支出＋一筆收入');
+          }
+
+          const converted = convertToTwd(numAmount, fromCurrency, null, userId);
+          const pair = insertTransferPair({
+            userId, fromAccountId, toAccountId, fromCurrency, toCurrency,
+            twdAmount: converted.twdAmount, originalAmount: converted.originalAmount, fxRate: converted.fxRate,
+            date, note: note || '轉帳',
+          });
+          response = { transferOut: pair.transferOut, transferIn: pair.transferIn };
+          transactionIdForAudit = pair.transferOut.id;
+          linkedTransactionIdForAudit = pair.transferIn.id;
+          summary = `轉帳 ${converted.originalAmount} 元`;
+        } else {
+          const accounts = queryAll('SELECT id FROM accounts WHERE user_id = ?', [userId]);
+          let resolvedAccountId: string;
+          if (accountId) {
+            if (!accounts.some((a) => String(a.id) === accountId)) throw new Error('帳戶不存在或無權限');
+            resolvedAccountId = accountId;
+          } else if (accounts.length === 1) {
+            resolvedAccountId = String(accounts[0].id);
+          } else if (accounts.length === 0) {
+            throw new Error('帳戶不存在或無權限');
+          } else {
+            throw new Error('使用者名下有多個帳戶，請指定 accountId');
+          }
+
+          let resolvedCategoryId: string | null = null;
+          if (categoryId) {
+            const owned = queryOne('SELECT id FROM categories WHERE id = ? AND user_id = ?', [categoryId, userId]);
+            resolvedCategoryId = owned ? categoryId : null;
+          }
+
+          const converted = convertToTwd(numAmount, currency || 'TWD', fxRate, userId);
+          const fxFee = resolveOverseasFee({
+            userId, accountId: resolvedAccountId, currency: converted.currency, twdBase: converted.twdAmount, clientFxFee: undefined,
+          });
+          const twdAmountInt = computeTwdAmount(Math.round(converted.originalAmount * 100) / 100, converted.fxRate, 0);
+
+          const created = insertIncomeExpenseTransaction({
+            userId, type, twdAmount: twdAmountInt, currency: converted.currency, originalAmount: converted.originalAmount,
+            fxRate: converted.fxRate, fxFee, date, categoryId: resolvedCategoryId, accountId: resolvedAccountId,
+            note: note || '', excludeFromStats: false,
+          });
+          response = {
+            id: created.id, type, amount: converted.originalAmount, currency: converted.currency, date,
+            categoryId: resolvedCategoryId, accountId: resolvedAccountId, note: note || '',
+            createdAt: toIsoUtc(created.updatedAt),
+          };
+          transactionIdForAudit = created.id;
+          summary = `${TRANSACTION_TYPE_LABELS[type]} ${converted.originalAmount} 元`;
+        }
+
+        if (idempotencyKey) {
+          const idemNow = Date.now();
+          getDB().run(
+            `INSERT INTO mcp_transaction_idempotency
+             (id, credential_id, user_id, idempotency_key, transaction_id, linked_transaction_id, response_json, created_at, expires_at)
+             VALUES (?,?,?,?,?,?,?,?,?)
+             ON CONFLICT (credential_id, idempotency_key) DO NOTHING`,
+            [uid(), credential.credentialId, userId, idempotencyKey, transactionIdForAudit, linkedTransactionIdForAudit, JSON.stringify(response), idemNow, idemNow + IDEMPOTENCY_TTL_MS]
+          );
+          saveDB();
+          // 極端併發：兩個相同 key 的請求同時通過命中檢查，衝突後改讀已存在列，確保回應與稽核不重複建立。
+          const stored = queryOne(
+            'SELECT response_json FROM mcp_transaction_idempotency WHERE credential_id = ? AND idempotency_key = ?',
+            [credential.credentialId, idempotencyKey]
+          );
+          if (stored) response = JSON.parse(String(stored.response_json));
+        }
+
+        return withAudit(
+          credential,
+          undefined,
+          () => toolResult(response),
+          'mcp_create_transaction',
+          { transaction_id: transactionIdForAudit, transaction_summary: summary }
+        );
+      }
+    );
+  }
 
   return server;
 }

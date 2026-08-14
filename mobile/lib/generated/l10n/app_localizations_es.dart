@@ -4398,6 +4398,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get navMcp => 'Conexión MCP';
 
   @override
+  String get navMcpConnections => 'Herramientas de IA conectadas';
+
+  @override
   String get settingsMcpTitle => 'Configuración de conexión MCP';
 
   @override
@@ -4509,6 +4512,56 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get settingsMcpCloseConfirm => 'Ya lo copié, cerrar';
+
+  @override
+  String get settingsMcpConnectionsTitle => 'Herramientas de IA conectadas';
+
+  @override
+  String get settingsMcpConnectionsDescription =>
+      'Gestiona si cada herramienta de IA conectada mediante OAuth de MCP puede crear transacciones en tu nombre.';
+
+  @override
+  String get settingsMcpConnectionsListTitle => 'Herramientas de IA conectadas';
+
+  @override
+  String get settingsMcpConnectionsRefresh => 'Actualizar';
+
+  @override
+  String get settingsMcpConnectionsColClientName => 'Herramienta de IA';
+
+  @override
+  String get settingsMcpConnectionsColFirstConnectedAt => 'Primera conexión';
+
+  @override
+  String get settingsMcpConnectionsColLastUsedAt => 'Último uso';
+
+  @override
+  String get settingsMcpConnectionsColAllowCreate => 'Permitir crear datos';
+
+  @override
+  String get settingsMcpConnectionsAllowCreateLabel => 'Permitir crear datos';
+
+  @override
+  String get settingsMcpConnectionsNoConnections =>
+      'Aún no hay herramientas de IA conectadas';
+
+  @override
+  String get settingsMcpConnectionsLoadFailed =>
+      'Error al cargar las herramientas conectadas';
+
+  @override
+  String get settingsMcpConnectionsUpdateFailed =>
+      'Error al actualizar el permiso';
+
+  @override
+  String get settingsMcpColAllowCreate => 'Permitir crear datos';
+
+  @override
+  String get settingsMcpAllowCreateLabel => 'Permitir crear datos';
+
+  @override
+  String get settingsMcpAllowCreateUpdateFailed =>
+      'Error al actualizar el permiso';
 
   @override
   String get adminSystemSettingsTitle => 'Configuración del sistema';

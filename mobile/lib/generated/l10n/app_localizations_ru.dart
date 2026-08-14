@@ -4368,6 +4368,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get navMcp => 'Подключение MCP';
 
   @override
+  String get navMcpConnections => 'Подключённые ИИ-инструменты';
+
+  @override
   String get settingsMcpTitle => 'Настройки подключения MCP';
 
   @override
@@ -4479,6 +4482,59 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get settingsMcpCloseConfirm => 'Я скопировал(а), закрыть';
+
+  @override
+  String get settingsMcpConnectionsTitle => 'Подключённые ИИ-инструменты';
+
+  @override
+  String get settingsMcpConnectionsDescription =>
+      'Управляйте тем, может ли каждый ИИ-инструмент, подключённый через MCP OAuth, создавать транзакции от вашего имени.';
+
+  @override
+  String get settingsMcpConnectionsListTitle => 'Подключённые ИИ-инструменты';
+
+  @override
+  String get settingsMcpConnectionsRefresh => 'Обновить';
+
+  @override
+  String get settingsMcpConnectionsColClientName => 'ИИ-инструмент';
+
+  @override
+  String get settingsMcpConnectionsColFirstConnectedAt =>
+      'Дата первого подключения';
+
+  @override
+  String get settingsMcpConnectionsColLastUsedAt => 'Последнее использование';
+
+  @override
+  String get settingsMcpConnectionsColAllowCreate =>
+      'Разрешить создание данных';
+
+  @override
+  String get settingsMcpConnectionsAllowCreateLabel =>
+      'Разрешить создание данных';
+
+  @override
+  String get settingsMcpConnectionsNoConnections =>
+      'Пока нет подключённых ИИ-инструментов';
+
+  @override
+  String get settingsMcpConnectionsLoadFailed =>
+      'Не удалось загрузить список подключённых инструментов';
+
+  @override
+  String get settingsMcpConnectionsUpdateFailed =>
+      'Не удалось обновить разрешение';
+
+  @override
+  String get settingsMcpColAllowCreate => 'Разрешить создание данных';
+
+  @override
+  String get settingsMcpAllowCreateLabel => 'Разрешить создание данных';
+
+  @override
+  String get settingsMcpAllowCreateUpdateFailed =>
+      'Не удалось обновить разрешение';
 
   @override
   String get adminSystemSettingsTitle => 'Системные настройки';

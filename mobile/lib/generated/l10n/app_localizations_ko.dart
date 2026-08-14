@@ -4180,6 +4180,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get navMcp => 'MCP 연결';
 
   @override
+  String get navMcpConnections => '연결된 AI 도구';
+
+  @override
   String get settingsMcpTitle => 'MCP 연결 설정';
 
   @override
@@ -4290,6 +4293,52 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get settingsMcpCloseConfirm => '복사했습니다, 닫기';
+
+  @override
+  String get settingsMcpConnectionsTitle => '연결된 AI 도구';
+
+  @override
+  String get settingsMcpConnectionsDescription =>
+      'MCP OAuth로 연결된 각 AI 도구가 사용자를 대신하여 거래를 생성할 수 있는지 관리하세요.';
+
+  @override
+  String get settingsMcpConnectionsListTitle => '연결된 AI 도구';
+
+  @override
+  String get settingsMcpConnectionsRefresh => '새로고침';
+
+  @override
+  String get settingsMcpConnectionsColClientName => 'AI 도구';
+
+  @override
+  String get settingsMcpConnectionsColFirstConnectedAt => '최초 연결';
+
+  @override
+  String get settingsMcpConnectionsColLastUsedAt => '마지막 사용';
+
+  @override
+  String get settingsMcpConnectionsColAllowCreate => '데이터 생성 허용';
+
+  @override
+  String get settingsMcpConnectionsAllowCreateLabel => '데이터 생성 허용';
+
+  @override
+  String get settingsMcpConnectionsNoConnections => '아직 연결된 AI 도구가 없습니다';
+
+  @override
+  String get settingsMcpConnectionsLoadFailed => '연결된 도구 목록을 불러오지 못했습니다';
+
+  @override
+  String get settingsMcpConnectionsUpdateFailed => '권한 업데이트에 실패했습니다';
+
+  @override
+  String get settingsMcpColAllowCreate => '데이터 생성 허용';
+
+  @override
+  String get settingsMcpAllowCreateLabel => '데이터 생성 허용';
+
+  @override
+  String get settingsMcpAllowCreateUpdateFailed => '권한 업데이트에 실패했습니다';
 
   @override
   String get adminSystemSettingsTitle => '시스템 설정';

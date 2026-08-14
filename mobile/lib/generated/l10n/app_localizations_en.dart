@@ -4317,6 +4317,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navMcp => 'MCP Connection';
 
   @override
+  String get navMcpConnections => 'Connected AI Tools';
+
+  @override
   String get settingsMcpTitle => 'MCP Connection Settings';
 
   @override
@@ -4427,6 +4430,55 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsMcpCloseConfirm => 'I\'ve copied it, close';
+
+  @override
+  String get settingsMcpConnectionsTitle => 'Connected AI Tools';
+
+  @override
+  String get settingsMcpConnectionsDescription =>
+      'Manage whether each AI tool connected via MCP OAuth is allowed to create transactions on your behalf.';
+
+  @override
+  String get settingsMcpConnectionsListTitle => 'Connected AI Tools';
+
+  @override
+  String get settingsMcpConnectionsRefresh => 'Refresh';
+
+  @override
+  String get settingsMcpConnectionsColClientName => 'AI Tool';
+
+  @override
+  String get settingsMcpConnectionsColFirstConnectedAt => 'First Connected';
+
+  @override
+  String get settingsMcpConnectionsColLastUsedAt => 'Last Used';
+
+  @override
+  String get settingsMcpConnectionsColAllowCreate => 'Allow Creating Data';
+
+  @override
+  String get settingsMcpConnectionsAllowCreateLabel => 'Allow Creating Data';
+
+  @override
+  String get settingsMcpConnectionsNoConnections => 'No AI tools connected yet';
+
+  @override
+  String get settingsMcpConnectionsLoadFailed =>
+      'Failed to load connected tools';
+
+  @override
+  String get settingsMcpConnectionsUpdateFailed =>
+      'Failed to update permission';
+
+  @override
+  String get settingsMcpColAllowCreate => 'Allow Creating Data';
+
+  @override
+  String get settingsMcpAllowCreateLabel => 'Allow Creating Data';
+
+  @override
+  String get settingsMcpAllowCreateUpdateFailed =>
+      'Failed to update permission';
 
   @override
   String get adminSystemSettingsTitle => 'System settings';

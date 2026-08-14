@@ -6630,6 +6630,11 @@
     "description": "Web path: nav.mcp",
     "x-webPath": "nav.mcp"
   },
+  "navMcpConnections": "Подключённые ИИ-инструменты",
+  "@navMcpConnections": {
+    "description": "Web path: nav.mcpConnections",
+    "x-webPath": "nav.mcpConnections"
+  },
   "settingsMcpTitle": "Настройки подключения MCP",
   "@settingsMcpTitle": {
     "description": "Web path: settings.mcp.title",
@@ -6809,6 +6814,81 @@
   "@settingsMcpCloseConfirm": {
     "description": "Web path: settings.mcp.closeConfirm",
     "x-webPath": "settings.mcp.closeConfirm"
+  },
+  "settingsMcpConnectionsTitle": "Подключённые ИИ-инструменты",
+  "@settingsMcpConnectionsTitle": {
+    "description": "Web path: settings.mcpConnections.title",
+    "x-webPath": "settings.mcpConnections.title"
+  },
+  "settingsMcpConnectionsDescription": "Управляйте тем, может ли каждый ИИ-инструмент, подключённый через MCP OAuth, создавать транзакции от вашего имени.",
+  "@settingsMcpConnectionsDescription": {
+    "description": "Web path: settings.mcpConnections.description",
+    "x-webPath": "settings.mcpConnections.description"
+  },
+  "settingsMcpConnectionsListTitle": "Подключённые ИИ-инструменты",
+  "@settingsMcpConnectionsListTitle": {
+    "description": "Web path: settings.mcpConnections.listTitle",
+    "x-webPath": "settings.mcpConnections.listTitle"
+  },
+  "settingsMcpConnectionsRefresh": "Обновить",
+  "@settingsMcpConnectionsRefresh": {
+    "description": "Web path: settings.mcpConnections.refresh",
+    "x-webPath": "settings.mcpConnections.refresh"
+  },
+  "settingsMcpConnectionsColClientName": "ИИ-инструмент",
+  "@settingsMcpConnectionsColClientName": {
+    "description": "Web path: settings.mcpConnections.colClientName",
+    "x-webPath": "settings.mcpConnections.colClientName"
+  },
+  "settingsMcpConnectionsColFirstConnectedAt": "Дата первого подключения",
+  "@settingsMcpConnectionsColFirstConnectedAt": {
+    "description": "Web path: settings.mcpConnections.colFirstConnectedAt",
+    "x-webPath": "settings.mcpConnections.colFirstConnectedAt"
+  },
+  "settingsMcpConnectionsColLastUsedAt": "Последнее использование",
+  "@settingsMcpConnectionsColLastUsedAt": {
+    "description": "Web path: settings.mcpConnections.colLastUsedAt",
+    "x-webPath": "settings.mcpConnections.colLastUsedAt"
+  },
+  "settingsMcpConnectionsColAllowCreate": "Разрешить создание данных",
+  "@settingsMcpConnectionsColAllowCreate": {
+    "description": "Web path: settings.mcpConnections.colAllowCreate",
+    "x-webPath": "settings.mcpConnections.colAllowCreate"
+  },
+  "settingsMcpConnectionsAllowCreateLabel": "Разрешить создание данных",
+  "@settingsMcpConnectionsAllowCreateLabel": {
+    "description": "Web path: settings.mcpConnections.allowCreateLabel",
+    "x-webPath": "settings.mcpConnections.allowCreateLabel"
+  },
+  "settingsMcpConnectionsNoConnections": "Пока нет подключённых ИИ-инструментов",
+  "@settingsMcpConnectionsNoConnections": {
+    "description": "Web path: settings.mcpConnections.noConnections",
+    "x-webPath": "settings.mcpConnections.noConnections"
+  },
+  "settingsMcpConnectionsLoadFailed": "Не удалось загрузить список подключённых инструментов",
+  "@settingsMcpConnectionsLoadFailed": {
+    "description": "Web path: settings.mcpConnections.loadFailed",
+    "x-webPath": "settings.mcpConnections.loadFailed"
+  },
+  "settingsMcpConnectionsUpdateFailed": "Не удалось обновить разрешение",
+  "@settingsMcpConnectionsUpdateFailed": {
+    "description": "Web path: settings.mcpConnections.updateFailed",
+    "x-webPath": "settings.mcpConnections.updateFailed"
+  },
+  "settingsMcpColAllowCreate": "Разрешить создание данных",
+  "@settingsMcpColAllowCreate": {
+    "description": "Web path: settings.mcp.colAllowCreate",
+    "x-webPath": "settings.mcp.colAllowCreate"
+  },
+  "settingsMcpAllowCreateLabel": "Разрешить создание данных",
+  "@settingsMcpAllowCreateLabel": {
+    "description": "Web path: settings.mcp.allowCreateLabel",
+    "x-webPath": "settings.mcp.allowCreateLabel"
+  },
+  "settingsMcpAllowCreateUpdateFailed": "Не удалось обновить разрешение",
+  "@settingsMcpAllowCreateUpdateFailed": {
+    "description": "Web path: settings.mcp.allowCreateUpdateFailed",
+    "x-webPath": "settings.mcp.allowCreateUpdateFailed"
   },
   "adminSystemSettingsTitle": "Системные настройки",
   "@adminSystemSettingsTitle": {

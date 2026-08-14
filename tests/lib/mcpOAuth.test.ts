@@ -456,7 +456,7 @@ const DB_URL = process.env.DATABASE_URL || process.env.POSTGRES_URL;
 if (!DB_URL) {
   test('MCP OAuth DB lifecycle（略過：未設定 DATABASE_URL/POSTGRES_URL）', () => {});
 } else {
-  const { initDB, getDB } = await import('../../lib/db.ts');
+  const { initDB, getDB, queryOne } = await import('../../lib/db.ts');
   await initDB();
   after(() => { getDB().close(); });
   const {
@@ -466,6 +466,8 @@ if (!DB_URL) {
     registerMcpOAuthClient,
     revokeMcpOAuthToken,
     verifyMcpOAuthAccessToken,
+    listMcpOAuthConnections,
+    setMcpOAuthConnectionAllowCreate,
   } = await import('../../lib/mcpOAuth.ts');
 
   test('authorization code 單次兌換、access audience、refresh rotation/replay 與 revoke', () => {
@@ -558,6 +560,110 @@ if (!DB_URL) {
     } finally {
       getDB().run('DELETE FROM mcp_oauth_authorization_codes WHERE user_id = ?', [userId]);
       getDB().run('DELETE FROM mcp_oauth_tokens WHERE user_id = ?', [userId]);
+      if (clientId) getDB().run('DELETE FROM mcp_oauth_clients WHERE client_id = ?', [clientId]);
+      getDB().run('DELETE FROM users WHERE id = ?', [userId]);
+    }
+  });
+
+  test('mcp_oauth_connections：首次核發建立列、清單查詢、allow_create 開關，以及撤銷後重新授權才重置（003-mcp-write-no-delete）', () => {
+    const userId = `test_mcpoauth_conn_${crypto.randomUUID().replaceAll('-', '')}`;
+    const email = `${userId}@example.test`;
+    const expectedResource = 'https://asset.example/api/mcp';
+    let clientId = '';
+    try {
+      getDB().run(
+        `INSERT INTO users (id, email, password_hash, display_name, created_at, is_active)
+         VALUES (?,?,?,?,?,1)`,
+        [userId, email, 'test-only', 'OAuth Connections Test User', '2026-08-14']
+      );
+      const client = registerMcpOAuthClient({
+        redirect_uris: ['https://client.example/callback'],
+        token_endpoint_auth_method: 'none',
+        client_name: 'OAuth Connections Test Client',
+      });
+      clientId = client.client_id;
+
+      // (a) 首次核發 token 後應 upsert 一列 mcp_oauth_connections，allow_create 預設 0。
+      const code1 = issueMcpAuthorizationCode({
+        userId, client, redirectUri: client.redirect_uris[0], codeChallenge: RFC_7636_CHALLENGE,
+        scopes: [MCP_OAUTH_SCOPE], resource: expectedResource,
+      });
+      const tokens1 = exchangeMcpAuthorizationCode({
+        client, code: code1, codeVerifier: RFC_7636_VERIFIER, redirectUri: client.redirect_uris[0],
+        resource: expectedResource, expectedResource,
+      });
+      const connRow1 = queryOne(
+        'SELECT allow_create FROM mcp_oauth_connections WHERE user_id = ? AND client_id = ?',
+        [userId, clientId]
+      );
+      assert.ok(connRow1, '首次核發後應存在一列 mcp_oauth_connections');
+      assert.equal(Number(connRow1?.allow_create), 0);
+
+      // (b) listMcpOAuthConnections() 可查得該列。
+      const listed1 = listMcpOAuthConnections(userId);
+      const found1 = listed1.find((c) => c.clientId === clientId);
+      assert.ok(found1, 'listMcpOAuthConnections 應查得該連線');
+      assert.equal(found1?.allowCreate, false);
+
+      // (c) setMcpOAuthConnectionAllowCreate() 切換後，verifyMcpOAuthAccessToken() 反映最新值。
+      assert.equal(verifyMcpOAuthAccessToken(tokens1.access_token, expectedResource)?.allowCreate, false);
+      assert.equal(setMcpOAuthConnectionAllowCreate(userId, clientId, true), true);
+      assert.equal(verifyMcpOAuthAccessToken(tokens1.access_token, expectedResource)?.allowCreate, true);
+      assert.equal(listMcpOAuthConnections(userId).find((c) => c.clientId === clientId)?.allowCreate, true);
+
+      // (d) 授權仍有效時重新走一次授權流程（同一 client 再次授權），不應重置既有 allow_create=1。
+      const code2 = issueMcpAuthorizationCode({
+        userId, client, redirectUri: client.redirect_uris[0], codeChallenge: RFC_7636_CHALLENGE,
+        scopes: [MCP_OAUTH_SCOPE], resource: expectedResource,
+      });
+      const tokens2 = exchangeMcpAuthorizationCode({
+        client, code: code2, codeVerifier: RFC_7636_VERIFIER, redirectUri: client.redirect_uris[0],
+        resource: expectedResource, expectedResource,
+      });
+      const connRowAfterReauth = queryOne(
+        'SELECT allow_create FROM mcp_oauth_connections WHERE user_id = ? AND client_id = ?',
+        [userId, clientId]
+      );
+      assert.equal(Number(connRowAfterReauth?.allow_create), 1, '授權仍有效時重新授權不應重置 allow_create');
+
+      // (e) 授權已全數撤銷後重新走一次授權流程，allow_create 必須重置為 0。
+      revokeMcpOAuthToken(client, tokens1.access_token);
+      revokeMcpOAuthToken(client, tokens2.access_token);
+      assert.equal(verifyMcpOAuthAccessToken(tokens2.access_token, expectedResource), null);
+
+      const code3 = issueMcpAuthorizationCode({
+        userId, client, redirectUri: client.redirect_uris[0], codeChallenge: RFC_7636_CHALLENGE,
+        scopes: [MCP_OAUTH_SCOPE], resource: expectedResource,
+      });
+      exchangeMcpAuthorizationCode({
+        client, code: code3, codeVerifier: RFC_7636_VERIFIER, redirectUri: client.redirect_uris[0],
+        resource: expectedResource, expectedResource,
+      });
+      const connRowAfterRevokeReauth = queryOne(
+        'SELECT allow_create FROM mcp_oauth_connections WHERE user_id = ? AND client_id = ?',
+        [userId, clientId]
+      );
+      assert.equal(Number(connRowAfterRevokeReauth?.allow_create), 0, '撤銷後重新授權應把 allow_create 重置為 0');
+
+      // (f) 授權全數撤銷後，listMcpOAuthConnections() 不再回傳該連線，但資料列仍保留於 mcp_oauth_connections。
+      getDB().run(
+        'UPDATE mcp_oauth_tokens SET revoked_at = ? WHERE user_id = ? AND client_id = ? AND revoked_at = 0',
+        [Date.now(), userId, clientId]
+      );
+      assert.equal(
+        listMcpOAuthConnections(userId).some((c) => c.clientId === clientId),
+        false,
+        '全數撤銷後不應出現在「已連接 AI 工具」清單'
+      );
+      const rowStillExists = queryOne(
+        'SELECT client_id FROM mcp_oauth_connections WHERE user_id = ? AND client_id = ?',
+        [userId, clientId]
+      );
+      assert.ok(rowStillExists, '資料列本身應保留，只是清單不顯示');
+    } finally {
+      getDB().run('DELETE FROM mcp_oauth_authorization_codes WHERE user_id = ?', [userId]);
+      getDB().run('DELETE FROM mcp_oauth_tokens WHERE user_id = ?', [userId]);
+      getDB().run('DELETE FROM mcp_oauth_connections WHERE user_id = ?', [userId]);
       if (clientId) getDB().run('DELETE FROM mcp_oauth_clients WHERE client_id = ?', [clientId]);
       getDB().run('DELETE FROM users WHERE id = ?', [userId]);
     }

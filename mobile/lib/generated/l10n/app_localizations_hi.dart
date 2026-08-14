@@ -4309,6 +4309,9 @@ class AppLocalizationsHi extends AppLocalizations {
   String get navMcp => 'MCP कनेक्शन';
 
   @override
+  String get navMcpConnections => 'कनेक्टेड AI टूल';
+
+  @override
   String get settingsMcpTitle => 'MCP कनेक्शन सेटिंग्स';
 
   @override
@@ -4419,6 +4422,56 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get settingsMcpCloseConfirm => 'मैंने कॉपी कर लिया, बंद करें';
+
+  @override
+  String get settingsMcpConnectionsTitle => 'कनेक्टेड AI टूल';
+
+  @override
+  String get settingsMcpConnectionsDescription =>
+      'प्रबंधित करें कि MCP OAuth से जुड़ा हर AI टूल आपकी ओर से लेन-देन बनाने की अनुमति रखता है या नहीं।';
+
+  @override
+  String get settingsMcpConnectionsListTitle => 'कनेक्टेड AI टूल';
+
+  @override
+  String get settingsMcpConnectionsRefresh => 'रीफ़्रेश करें';
+
+  @override
+  String get settingsMcpConnectionsColClientName => 'AI टूल';
+
+  @override
+  String get settingsMcpConnectionsColFirstConnectedAt =>
+      'पहली बार कनेक्ट किया गया';
+
+  @override
+  String get settingsMcpConnectionsColLastUsedAt => 'अंतिम उपयोग';
+
+  @override
+  String get settingsMcpConnectionsColAllowCreate => 'डेटा बनाने की अनुमति दें';
+
+  @override
+  String get settingsMcpConnectionsAllowCreateLabel =>
+      'डेटा बनाने की अनुमति दें';
+
+  @override
+  String get settingsMcpConnectionsNoConnections =>
+      'अभी तक कोई AI टूल कनेक्ट नहीं किया गया';
+
+  @override
+  String get settingsMcpConnectionsLoadFailed =>
+      'कनेक्टेड टूल सूची लोड करने में विफल';
+
+  @override
+  String get settingsMcpConnectionsUpdateFailed => 'अनुमति अपडेट करने में विफल';
+
+  @override
+  String get settingsMcpColAllowCreate => 'डेटा बनाने की अनुमति दें';
+
+  @override
+  String get settingsMcpAllowCreateLabel => 'डेटा बनाने की अनुमति दें';
+
+  @override
+  String get settingsMcpAllowCreateUpdateFailed => 'अनुमति अपडेट करने में विफल';
 
   @override
   String get adminSystemSettingsTitle => 'सिस्टम सेटिंग्स';

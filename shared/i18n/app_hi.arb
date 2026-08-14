@@ -6630,6 +6630,11 @@
     "description": "Web path: nav.mcp",
     "x-webPath": "nav.mcp"
   },
+  "navMcpConnections": "कनेक्टेड AI टूल",
+  "@navMcpConnections": {
+    "description": "Web path: nav.mcpConnections",
+    "x-webPath": "nav.mcpConnections"
+  },
   "settingsMcpTitle": "MCP कनेक्शन सेटिंग्स",
   "@settingsMcpTitle": {
     "description": "Web path: settings.mcp.title",
@@ -6809,6 +6814,81 @@
   "@settingsMcpCloseConfirm": {
     "description": "Web path: settings.mcp.closeConfirm",
     "x-webPath": "settings.mcp.closeConfirm"
+  },
+  "settingsMcpConnectionsTitle": "कनेक्टेड AI टूल",
+  "@settingsMcpConnectionsTitle": {
+    "description": "Web path: settings.mcpConnections.title",
+    "x-webPath": "settings.mcpConnections.title"
+  },
+  "settingsMcpConnectionsDescription": "प्रबंधित करें कि MCP OAuth से जुड़ा हर AI टूल आपकी ओर से लेन-देन बनाने की अनुमति रखता है या नहीं।",
+  "@settingsMcpConnectionsDescription": {
+    "description": "Web path: settings.mcpConnections.description",
+    "x-webPath": "settings.mcpConnections.description"
+  },
+  "settingsMcpConnectionsListTitle": "कनेक्टेड AI टूल",
+  "@settingsMcpConnectionsListTitle": {
+    "description": "Web path: settings.mcpConnections.listTitle",
+    "x-webPath": "settings.mcpConnections.listTitle"
+  },
+  "settingsMcpConnectionsRefresh": "रीफ़्रेश करें",
+  "@settingsMcpConnectionsRefresh": {
+    "description": "Web path: settings.mcpConnections.refresh",
+    "x-webPath": "settings.mcpConnections.refresh"
+  },
+  "settingsMcpConnectionsColClientName": "AI टूल",
+  "@settingsMcpConnectionsColClientName": {
+    "description": "Web path: settings.mcpConnections.colClientName",
+    "x-webPath": "settings.mcpConnections.colClientName"
+  },
+  "settingsMcpConnectionsColFirstConnectedAt": "पहली बार कनेक्ट किया गया",
+  "@settingsMcpConnectionsColFirstConnectedAt": {
+    "description": "Web path: settings.mcpConnections.colFirstConnectedAt",
+    "x-webPath": "settings.mcpConnections.colFirstConnectedAt"
+  },
+  "settingsMcpConnectionsColLastUsedAt": "अंतिम उपयोग",
+  "@settingsMcpConnectionsColLastUsedAt": {
+    "description": "Web path: settings.mcpConnections.colLastUsedAt",
+    "x-webPath": "settings.mcpConnections.colLastUsedAt"
+  },
+  "settingsMcpConnectionsColAllowCreate": "डेटा बनाने की अनुमति दें",
+  "@settingsMcpConnectionsColAllowCreate": {
+    "description": "Web path: settings.mcpConnections.colAllowCreate",
+    "x-webPath": "settings.mcpConnections.colAllowCreate"
+  },
+  "settingsMcpConnectionsAllowCreateLabel": "डेटा बनाने की अनुमति दें",
+  "@settingsMcpConnectionsAllowCreateLabel": {
+    "description": "Web path: settings.mcpConnections.allowCreateLabel",
+    "x-webPath": "settings.mcpConnections.allowCreateLabel"
+  },
+  "settingsMcpConnectionsNoConnections": "अभी तक कोई AI टूल कनेक्ट नहीं किया गया",
+  "@settingsMcpConnectionsNoConnections": {
+    "description": "Web path: settings.mcpConnections.noConnections",
+    "x-webPath": "settings.mcpConnections.noConnections"
+  },
+  "settingsMcpConnectionsLoadFailed": "कनेक्टेड टूल सूची लोड करने में विफल",
+  "@settingsMcpConnectionsLoadFailed": {
+    "description": "Web path: settings.mcpConnections.loadFailed",
+    "x-webPath": "settings.mcpConnections.loadFailed"
+  },
+  "settingsMcpConnectionsUpdateFailed": "अनुमति अपडेट करने में विफल",
+  "@settingsMcpConnectionsUpdateFailed": {
+    "description": "Web path: settings.mcpConnections.updateFailed",
+    "x-webPath": "settings.mcpConnections.updateFailed"
+  },
+  "settingsMcpColAllowCreate": "डेटा बनाने की अनुमति दें",
+  "@settingsMcpColAllowCreate": {
+    "description": "Web path: settings.mcp.colAllowCreate",
+    "x-webPath": "settings.mcp.colAllowCreate"
+  },
+  "settingsMcpAllowCreateLabel": "डेटा बनाने की अनुमति दें",
+  "@settingsMcpAllowCreateLabel": {
+    "description": "Web path: settings.mcp.allowCreateLabel",
+    "x-webPath": "settings.mcp.allowCreateLabel"
+  },
+  "settingsMcpAllowCreateUpdateFailed": "अनुमति अपडेट करने में विफल",
+  "@settingsMcpAllowCreateUpdateFailed": {
+    "description": "Web path: settings.mcp.allowCreateUpdateFailed",
+    "x-webPath": "settings.mcp.allowCreateUpdateFailed"
   },
   "adminSystemSettingsTitle": "सिस्टम सेटिंग्स",
   "@adminSystemSettingsTitle": {

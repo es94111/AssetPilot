@@ -8,6 +8,7 @@ description = "Generated Next.js build artifacts can contain deterministic hashe
 paths = [
   '''^\.next/''',
   '''^build/''',
+  '''^tsconfig\.tsbuildinfo$''',
 ]
 regexes = [
   # flutter_secure_storage 固定前綴常數，非機密值；歷史 commit（新增當下未加 gitleaks:allow 行內註解）在

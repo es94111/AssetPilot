@@ -1,0 +1,34 @@
+# DAST（動態應用程式安全測試）：對正式上線網站做黑箱弱點掃描，補上面幾支
+# 靜態掃描（CodeQL/Semgrep/Trivy/gitleaks）掃不到的「執行期」問題，例如
+# security headers 缺漏、cookie 屬性、常見已知弱點特徵等。
+# 用 OWASP ZAP baseline scan：被動掃描為主、輕量主動測試，不登入、不送出表單，
+# 不會產生寫入/交易行為，對正式站安全。免費、GitHub Actions 原生跑，無需 API key。
+# 預設「報告模式」(fail_action: false)，先觀察誤報率；要 gate 就把下面改 true。
+name: ZAP baseline scan (DAST)
+
+on:
+  schedule:
+    # 每週一 04:00 UTC = 12:00 Asia/Taipei
+    - cron: "0 4 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  zap-baseline:
+    name: Scan production site
+    runs-on: ubuntu-latest
+    env:
+      TARGET_URL: https://asset.shao.one
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+
+      - name: Run ZAP baseline scan
+        uses: zaproxy/action-baseline@de8ad967d3548d44ef623df22cf95c3b0baf8b25 # v0.15.0
+        with:
+          target: ${{ env.TARGET_URL }}
+          allow_issue_writing: false
+          fail_action: false
+          artifact_name: zap-baseline-report

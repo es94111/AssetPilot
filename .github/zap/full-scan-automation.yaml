@@ -1,0 +1,95 @@
+# ZAP Automation Framework plan：認證主動掃描（測試站專用）。
+# 帳密由 workflow 在執行時把 __ZAP_AUTH_USERNAME__ / __ZAP_AUTH_PASSWORD__
+# 換成 GitHub secrets 的實際值（JSON 字串跳脫後寫入），不落地版控。
+#
+# 對應 app/login/page.tsx 的實際登入表單：
+# - 預設只顯示 login tab（單一 email + password 欄位），browser-based auth
+#   可自動辨識，不需額外 CSS selector。
+# - 成功登入後導向 /dashboard；未登入直接打 /dashboard 會被 middleware.ts
+#   302 導回 /login，回應內容含 login 頁的 email placeholder，可當作
+#   loggedOutRegex 判斷依據。
+# - Cookie 名稱固定是 authToken（見 middleware.ts）。
+#
+# 排除 /api/auth/logout：純功能性排除，不是安全豁免——蜘蛛爬到會把 ZAP
+# 自己的登入 session 登出，後面所有步驟就退化成未登入掃描。其餘端點依需求
+# 全部掃、不排除。
+env:
+  contexts:
+    - name: "assetpilot-test"
+      urls:
+        - "https://assetpilot-test.shao.one"
+      includePaths:
+        - "https://assetpilot-test\\.shao\\.one.*"
+      excludePaths:
+        - "https://assetpilot-test\\.shao\\.one/api/auth/logout.*"
+      authentication:
+        method: "browser"
+        parameters:
+          loginPageUrl: "https://assetpilot-test.shao.one/login"
+          loginPageWait: 5
+          browserId: "firefox-headless"
+        verification:
+          method: "poll"
+          pollUrl: "https://assetpilot-test.shao.one/dashboard"
+          pollFrequency: 20
+          pollUnits: "requests"
+          loggedOutRegex: "\\Qyour@email.com\\E"
+      sessionManagement:
+        method: "cookie"
+      users:
+        - name: "ci-test-user"
+          credentials:
+            username: __ZAP_AUTH_USERNAME__
+            password: __ZAP_AUTH_PASSWORD__
+  parameters:
+    failOnError: false
+    failOnWarning: false
+    progressToStdout: true
+
+jobs:
+  - type: passiveScan-config
+    parameters:
+      maxAlertsPerRule: 10
+
+  # 先用登入身份把網站爬過一輪，建立已認證的 URL 清單。
+  - type: spider
+    parameters:
+      context: "assetpilot-test"
+      user: "ci-test-user"
+      url: "https://assetpilot-test.shao.one"
+      maxDuration: 5
+
+  - type: passiveScan-wait
+    parameters:
+      maxDuration: 5
+
+  # delayInMs 節流：app 的 middleware.ts 對 /api/ 有全域 rate limit
+  # （600 次/15 分鐘/IP，登入端點另外 20 次/15 分鐘），主動掃描請求量大，
+  # 節流可以延緩觸頂，但單次掃描仍可能在 15 分鐘窗口內打到上限而看到
+  # 一批 429（不是真的漏洞，是節流生效）。要完整覆蓋可考慮拉高測試站的
+  # 限流門檻，或分批跑。
+  - type: activeScan
+    parameters:
+      context: "assetpilot-test"
+      user: "ci-test-user"
+      maxDuration: 25
+      delayInMs: 500
+    policyDefinition:
+      defaultStrength: "medium"
+      defaultThreshold: "medium"
+
+  - type: report
+    parameters:
+      template: "traditional-html"
+      reportDir: "/zap/wrk"
+      reportFile: "zap-full-scan-report"
+      reportTitle: "AssetPilot 測試站 - 認證主動掃描"
+    risks:
+      - low
+      - medium
+      - high
+    confidences:
+      - low
+      - medium
+      - high
+      - confirmed

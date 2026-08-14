@@ -1,0 +1,69 @@
+# DAST 認證主動掃描：對「測試站」（非正式站）用登入帳密跑 ZAP 主動掃描，
+# 會送攻擊 payload 打已登入頁面/API，找 SQLi/XSS/認證繞過等問題。
+# 跟 zap-baseline.yml（正式站、被動、不登入）互補，只手動觸發、不排程——
+# 主動掃描風險較高，先觀察每次結果再決定要不要排程。
+#
+# 需要兩個 repo secrets（自行在 GitHub Settings → Secrets 設定，不要貼在
+# 這個檔案或對話裡）：
+#   ZAP_AUTH_USERNAME / ZAP_AUTH_PASSWORD —— 測試站專用帳號的登入 email/密碼
+#
+# 測試站登入頁若開了 Cloudflare Turnstile，ZAP 的無頭瀏覽器登入會被擋，
+# 掃描會退化成未登入模式；authentication 步驟是否成功可從下方 job log 或
+# report 內的 Authentication 段落確認。
+name: ZAP full scan (authenticated DAST, test site)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  zap-full-scan:
+    name: Authenticated active scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+
+      - name: Render automation plan with credentials
+        env:
+          ZAP_AUTH_USERNAME: ${{ secrets.ZAP_AUTH_USERNAME }}
+          ZAP_AUTH_PASSWORD: ${{ secrets.ZAP_AUTH_PASSWORD }}
+        run: |
+          if [ -z "$ZAP_AUTH_USERNAME" ] || [ -z "$ZAP_AUTH_PASSWORD" ]; then
+            echo "::error::缺少 ZAP_AUTH_USERNAME / ZAP_AUTH_PASSWORD secret，請先在 repo Settings > Secrets 設定"
+            exit 1
+          fi
+          mkdir -p zap-wrk
+          python3 - <<'PY'
+          import json
+          import os
+
+          with open(".github/zap/full-scan-automation.yaml", encoding="utf-8") as f:
+              plan = f.read()
+
+          # json.dumps 產生的雙引號字串同時是合法 YAML flow scalar，
+          # 且會正確跳脫帳密裡的特殊字元（引號、反斜線等）。
+          plan = plan.replace("__ZAP_AUTH_USERNAME__", json.dumps(os.environ["ZAP_AUTH_USERNAME"]))
+          plan = plan.replace("__ZAP_AUTH_PASSWORD__", json.dumps(os.environ["ZAP_AUTH_PASSWORD"]))
+
+          with open("zap-wrk/automation.yaml", "w", encoding="utf-8") as f:
+              f.write(plan)
+          PY
+
+      - name: Run ZAP automation plan
+        run: |
+          docker run --rm \
+            -v "${{ github.workspace }}/zap-wrk:/zap/wrk:rw" \
+            -t ghcr.io/zaproxy/zaproxy:stable \
+            zap.sh -cmd -autorun /zap/wrk/automation.yaml
+
+      - name: Upload ZAP report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: zap-full-scan-report
+          path: zap-wrk/zap-full-scan-report.html
+          if-no-files-found: warn

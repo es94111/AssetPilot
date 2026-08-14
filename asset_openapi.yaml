@@ -1,8 +1,8 @@
-openapi: "3.0.3"
+openapi: "3.2.0"
 
 info:
   title: AssetPilot API
-  version: "4.12.0"
+  version: "4.98.2"
   description: |
     個人資產管理平台 AssetPilot 的完整 API Schema。
     供 Cloudflare API Shield Schema Validation 使用。
@@ -52,6 +52,10 @@ tags:
     description: 股票參數設定（cf-content）
   - name: StockRecurring
     description: 股票定期定額（cf-content）
+  - name: McpCredentials
+    description: MCP 個人化存取權杖（PAT）管理（cf-account-update）
+  - name: McpOAuthConnections
+    description: 已連接 AI 工具（OAuth）清單與新增資料權限管理（cf-account-update）
 
 # ─────────────────────────────────────────
 # 安全性定義
@@ -340,6 +344,68 @@ components:
           type: array
           items:
             type: string
+
+    # ── MCP 新增資料權限（003-mcp-write-no-delete） ──
+    McpCredential:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        status:
+          type: string
+          enum: [active, expired, revoked]
+        allowCreate:
+          type: boolean
+          description: 是否允許此憑證透過 MCP 新增交易；預設 false。
+        createdAt:
+          type: string
+          format: date-time
+        lastUsedAt:
+          # OpenAPI 3.1 起對齊 JSON Schema 2020-12，3.0 的 `nullable: true` 已移除，
+          # 可空型別一律寫成型別陣列。
+          type: [string, 'null']
+          format: date-time
+        expiresAt:
+          type: [string, 'null']
+          format: date-time
+      required: [id, name, status, allowCreate, createdAt]
+
+    McpCredentialAllowCreateUpdate:
+      type: object
+      properties:
+        allowCreate:
+          type: boolean
+          description: 新的「允許新增資料」狀態。
+      required: [allowCreate]
+
+    McpOAuthConnection:
+      type: object
+      properties:
+        clientId:
+          type: string
+          description: 已授權的 OAuth client id（一個 AI 工具對應一個 client_id）。
+        clientName:
+          type: string
+          description: 授權當下記錄的 client 顯示名稱快照。
+        allowCreate:
+          type: boolean
+          description: 是否允許此連線透過 MCP 新增交易；預設 false。
+        firstConnectedAt:
+          type: string
+          format: date-time
+        lastUsedAt:
+          type: string
+          format: date-time
+      required: [clientId, clientName, allowCreate, firstConnectedAt, lastUsedAt]
+
+    McpOAuthConnectionAllowCreateUpdate:
+      type: object
+      properties:
+        allowCreate:
+          type: boolean
+      required: [allowCreate]
 
 # ─────────────────────────────────────────
 # 預設安全性（全域）
@@ -1987,6 +2053,115 @@ paths:
       responses:
         "200":
           description: 執行結果
+
+  # ── MCP 新增資料權限（003-mcp-write-no-delete） ──────────
+  /api/user/mcp-credentials/{id}:
+    patch:
+      operationId: setMcpCredentialAllowCreate
+      tags: [McpCredentials]
+      summary: 開啟或關閉指定 PAT 憑證的「允許新增資料」權限
+      description: |
+        變更即時生效於後續 MCP 請求，不影響此憑證先前已成功建立的交易。
+        僅能操作使用者本人名下的憑證，找不到時回傳 404。
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/McpCredentialAllowCreateUpdate'
+      responses:
+        "200":
+          description: 已更新
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  credential:
+                    $ref: '#/components/schemas/McpCredential'
+        "400":
+          description: 請求格式錯誤
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "404":
+          description: 找不到此憑證
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/user/mcp-oauth-connections:
+    get:
+      operationId: listMcpOAuthConnections
+      tags: [McpOAuthConnections]
+      summary: 列出使用者目前已連接的 AI 工具（依 OAuth client 分組）
+      description: |
+        每一列代表使用者目前仍持有有效授權的 AI 工具（以 client_id 為單位）——判定為「存在至少
+        一項未撤銷且未過期的 token」。授權被撤銷或全數過期者不會出現在此清單；其權限設定仍保留在
+        伺服器端，但日後重新授權時會重置為關閉。清單本身獨立於 access/refresh token 的核發與輪替週期。
+      responses:
+        "200":
+          description: 已連接的 AI 工具清單
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  connections:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/McpOAuthConnection'
+
+  /api/user/mcp-oauth-connections/{clientId}:
+    patch:
+      operationId: setMcpOAuthConnectionAllowCreate
+      tags: [McpOAuthConnections]
+      summary: 開啟或關閉指定已連接 AI 工具的「允許新增資料」權限
+      description: |
+        變更立即生效，不需使用者重新走一次 OAuth 授權流程。僅能操作使用者本人名下的連線，
+        找不到時回傳 404。
+      parameters:
+        - name: clientId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/McpOAuthConnectionAllowCreateUpdate'
+      responses:
+        "200":
+          description: 已更新
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  connection:
+                    $ref: '#/components/schemas/McpOAuthConnection'
+        "400":
+          description: 請求格式錯誤
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "404":
+          description: 找不到此連線
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   # ── 管理員 / 系統 / 資料庫備份（不經過 Cloudflare，不納入 API Shield） ──
   # /api/admin/*        — 管理員設定、使用者管理、登入紀錄、憑證管理

@@ -90,3 +90,32 @@ test('tools/list 輸出 OpenAI OAuth descriptor、相容鏡像與唯讀 annotati
     await server.close();
   }
 });
+
+test('allowCreate=true 的憑證 tools/list 額外出現 create_transaction，且 annotations 標示可寫非破壞性', async () => {
+  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+
+  const server = buildMcpServer({
+    credentialId: 'descriptor-test-write',
+    userId: 'descriptor-user-write',
+    name: 'Descriptor Test (write)',
+    allowCreate: true,
+  });
+  const client = new Client({ name: 'assetpilot-descriptor-test-write', version: '1.0.0' });
+
+  try {
+    await server.connect(new OpenAiCompatibleMcpTransport(serverTransport));
+    await client.connect(clientTransport);
+    const listed = await client.listTools();
+
+    assert.deepEqual(listed.tools.map((tool) => tool.name).sort(), [...EXPECTED_TOOL_NAMES, 'create_transaction'].sort());
+
+    const createTool = listed.tools.find((tool) => tool.name === 'create_transaction');
+    assert.ok(createTool, 'create_transaction 應出現在 tools/list');
+    assert.equal(createTool?.annotations?.readOnlyHint, false, 'create_transaction readOnlyHint');
+    assert.equal(createTool?.annotations?.destructiveHint, false, 'create_transaction destructiveHint');
+    assert.equal(createTool?.annotations?.openWorldHint, false, 'create_transaction openWorldHint');
+  } finally {
+    await client.close();
+    await server.close();
+  }
+});

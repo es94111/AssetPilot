@@ -4395,6 +4395,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get navMcp => 'Connexion MCP';
 
   @override
+  String get navMcpConnections => 'Outils IA connectés';
+
+  @override
   String get settingsMcpTitle => 'Paramètres de connexion MCP';
 
   @override
@@ -4506,6 +4509,58 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get settingsMcpCloseConfirm => 'Je l\'ai copié, fermer';
+
+  @override
+  String get settingsMcpConnectionsTitle => 'Outils IA connectés';
+
+  @override
+  String get settingsMcpConnectionsDescription =>
+      'Gérez si chaque outil IA connecté via OAuth MCP est autorisé à créer des transactions en votre nom.';
+
+  @override
+  String get settingsMcpConnectionsListTitle => 'Outils IA connectés';
+
+  @override
+  String get settingsMcpConnectionsRefresh => 'Actualiser';
+
+  @override
+  String get settingsMcpConnectionsColClientName => 'Outil IA';
+
+  @override
+  String get settingsMcpConnectionsColFirstConnectedAt => 'Première connexion';
+
+  @override
+  String get settingsMcpConnectionsColLastUsedAt => 'Dernière utilisation';
+
+  @override
+  String get settingsMcpConnectionsColAllowCreate =>
+      'Autoriser la création de données';
+
+  @override
+  String get settingsMcpConnectionsAllowCreateLabel =>
+      'Autoriser la création de données';
+
+  @override
+  String get settingsMcpConnectionsNoConnections =>
+      'Aucun outil IA connecté pour le moment';
+
+  @override
+  String get settingsMcpConnectionsLoadFailed =>
+      'Échec du chargement des outils connectés';
+
+  @override
+  String get settingsMcpConnectionsUpdateFailed =>
+      'Échec de la mise à jour de l\'autorisation';
+
+  @override
+  String get settingsMcpColAllowCreate => 'Autoriser la création de données';
+
+  @override
+  String get settingsMcpAllowCreateLabel => 'Autoriser la création de données';
+
+  @override
+  String get settingsMcpAllowCreateUpdateFailed =>
+      'Échec de la mise à jour de l\'autorisation';
 
   @override
   String get adminSystemSettingsTitle => 'Paramètres système';

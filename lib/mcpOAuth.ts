@@ -21,7 +21,7 @@ import {
   type McpOAuthClientAuthMethod,
   type McpOAuthClientMetadata,
 } from './mcpOAuthCore';
-import { getDB, queryOne, saveDB } from './db';
+import { getDB, queryOne, queryAll, saveDB } from './db';
 import { uid } from './userDefaults';
 import type { VerifyMcpTokenResult } from './mcpAuth';
 
@@ -85,6 +85,15 @@ interface OAuthTokenRow {
   revoked_at: string | number | null;
   replaced_by_hash: string | number | null;
   user_is_active?: string | number | null;
+  allow_create?: string | number | null;
+}
+
+interface OAuthConnectionRow {
+  client_id: string | number;
+  client_name: string | number;
+  allow_create: string | number;
+  first_connected_at: string | number;
+  last_used_at: string | number;
 }
 
 interface CachedClientMetadata {
@@ -851,6 +860,11 @@ export function exchangeMcpAuthorizationCode(input: {
       throw new McpOAuthError('invalid_grant', 'The AssetPilot account is unavailable');
     }
 
+    const hasValidExistingToken = queryOne(
+      'SELECT 1 AS x FROM mcp_oauth_tokens WHERE user_id = ? AND client_id = ? AND revoked_at = 0 AND expires_at > ? LIMIT 1',
+      [String(row.user_id), String(row.client_id), now]
+    );
+
     const tokens = insertTokenPair({
       familyId: uid(),
       userId: String(row.user_id),
@@ -861,6 +875,17 @@ export function exchangeMcpAuthorizationCode(input: {
       now,
       allowRefresh: input.client.grant_types.includes('refresh_token'),
     });
+
+    const connectionConflictUpdate = hasValidExistingToken
+      ? 'client_name = excluded.client_name, last_used_at = excluded.last_used_at'
+      : 'client_name = excluded.client_name, last_used_at = excluded.last_used_at, allow_create = 0';
+    db.run(
+      `INSERT INTO mcp_oauth_connections (user_id, client_id, client_name, allow_create, first_connected_at, last_used_at)
+       VALUES (?, ?, ?, 0, ?, ?)
+       ON CONFLICT (user_id, client_id) DO UPDATE SET ${connectionConflictUpdate}`,
+      [String(row.user_id), String(row.client_id), String(row.client_name), now, now]
+    );
+
     db.run('COMMIT');
     saveDB();
     const { refreshTokenHash: _, ...response } = tokens;
@@ -964,9 +989,10 @@ export function verifyMcpOAuthAccessToken(token: string, expectedResource: strin
   const row = queryOne(
     `SELECT t.token_hash, t.token_type, t.family_id, t.user_id, t.client_id, t.client_name,
             t.resource, t.scope, t.expires_at, t.revoked_at, t.replaced_by_hash,
-            u.is_active AS user_is_active
+            u.is_active AS user_is_active, mc.allow_create
      FROM mcp_oauth_tokens t
      LEFT JOIN users u ON u.id = t.user_id
+     LEFT JOIN mcp_oauth_connections mc ON mc.user_id = t.user_id AND mc.client_id = t.client_id
      WHERE t.token_hash = ? AND t.token_type = 'access'`,
     [tokenHash]
   ) as unknown as OAuthTokenRow | null;
@@ -991,6 +1017,7 @@ export function verifyMcpOAuthAccessToken(token: string, expectedResource: strin
     credentialId: `oauth:${String(row.family_id)}`,
     userId: String(row.user_id),
     name: String(row.client_name || row.client_id),
+    allowCreate: Number(row.allow_create) === 1,
   };
 }
 
@@ -1006,6 +1033,48 @@ export function revokeMcpOAuthToken(client: McpOAuthClient, token: string): void
     [Date.now(), String(row.family_id)]
   );
   saveDB();
+}
+
+export interface McpOAuthConnectionSummary {
+  clientId: string;
+  clientName: string;
+  allowCreate: boolean;
+  firstConnectedAt: number;
+  lastUsedAt: number;
+}
+
+export function listMcpOAuthConnections(userId: string): McpOAuthConnectionSummary[] {
+  const now = Date.now();
+  const rows = queryAll(
+    `SELECT c.client_id, c.client_name, c.allow_create, c.first_connected_at, c.last_used_at
+     FROM mcp_oauth_connections c
+     WHERE c.user_id = ?
+       AND EXISTS (
+         SELECT 1 FROM mcp_oauth_tokens t
+         WHERE t.user_id = c.user_id AND t.client_id = c.client_id
+           AND t.revoked_at = 0 AND t.expires_at > ?
+       )
+     ORDER BY c.last_used_at DESC`,
+    [userId, now]
+  ) as unknown as OAuthConnectionRow[];
+  return rows.map((row) => ({
+    clientId: String(row.client_id),
+    clientName: String(row.client_name),
+    allowCreate: Number(row.allow_create) === 1,
+    firstConnectedAt: Number(row.first_connected_at) || 0,
+    lastUsedAt: Number(row.last_used_at) || 0,
+  }));
+}
+
+export function setMcpOAuthConnectionAllowCreate(userId: string, clientId: string, allowCreate: boolean): boolean {
+  const db = getDB();
+  db.run(
+    'UPDATE mcp_oauth_connections SET allow_create = ? WHERE user_id = ? AND client_id = ?',
+    [allowCreate ? 1 : 0, userId, clientId]
+  );
+  const hit = db.getRowsModified() > 0;
+  saveDB();
+  return hit;
 }
 
 export function serializeRegisteredClient(

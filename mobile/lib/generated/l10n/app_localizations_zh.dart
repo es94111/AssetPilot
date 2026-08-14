@@ -4115,6 +4115,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get navMcp => 'MCP 連線';
 
   @override
+  String get navMcpConnections => '已連接 AI 工具';
+
+  @override
   String get settingsMcpTitle => 'MCP 連線設定';
 
   @override
@@ -4223,6 +4226,52 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get settingsMcpCloseConfirm => '我已複製，關閉視窗';
+
+  @override
+  String get settingsMcpConnectionsTitle => '已連接 AI 工具';
+
+  @override
+  String get settingsMcpConnectionsDescription =>
+      '管理透過 MCP OAuth 連接的 AI 工具，是否允許代替你新增交易紀錄。';
+
+  @override
+  String get settingsMcpConnectionsListTitle => '已連接 AI 工具';
+
+  @override
+  String get settingsMcpConnectionsRefresh => '重新整理';
+
+  @override
+  String get settingsMcpConnectionsColClientName => 'AI 工具';
+
+  @override
+  String get settingsMcpConnectionsColFirstConnectedAt => '首次連接時間';
+
+  @override
+  String get settingsMcpConnectionsColLastUsedAt => '最後使用時間';
+
+  @override
+  String get settingsMcpConnectionsColAllowCreate => '允許新增資料';
+
+  @override
+  String get settingsMcpConnectionsAllowCreateLabel => '允許新增資料';
+
+  @override
+  String get settingsMcpConnectionsNoConnections => '尚未連接任何 AI 工具';
+
+  @override
+  String get settingsMcpConnectionsLoadFailed => '載入已連接工具清單失敗';
+
+  @override
+  String get settingsMcpConnectionsUpdateFailed => '更新新增資料權限失敗';
+
+  @override
+  String get settingsMcpColAllowCreate => '允許新增資料';
+
+  @override
+  String get settingsMcpAllowCreateLabel => '允許新增資料';
+
+  @override
+  String get settingsMcpAllowCreateUpdateFailed => '更新新增資料權限失敗';
 
   @override
   String get adminSystemSettingsTitle => '系統設定';
@@ -8486,6 +8535,9 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
   String get navMcp => 'MCP 连接';
 
   @override
+  String get navMcpConnections => '已连接 AI 工具';
+
+  @override
   String get settingsMcpTitle => 'MCP 连接设置';
 
   @override
@@ -8594,6 +8646,52 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
 
   @override
   String get settingsMcpCloseConfirm => '我已复制，关闭窗口';
+
+  @override
+  String get settingsMcpConnectionsTitle => '已连接 AI 工具';
+
+  @override
+  String get settingsMcpConnectionsDescription =>
+      '管理通过 MCP OAuth 连接的 AI 工具，是否允许代替你新增交易记录。';
+
+  @override
+  String get settingsMcpConnectionsListTitle => '已连接 AI 工具';
+
+  @override
+  String get settingsMcpConnectionsRefresh => '刷新';
+
+  @override
+  String get settingsMcpConnectionsColClientName => 'AI 工具';
+
+  @override
+  String get settingsMcpConnectionsColFirstConnectedAt => '首次连接时间';
+
+  @override
+  String get settingsMcpConnectionsColLastUsedAt => '最后使用时间';
+
+  @override
+  String get settingsMcpConnectionsColAllowCreate => '允许新增数据';
+
+  @override
+  String get settingsMcpConnectionsAllowCreateLabel => '允许新增数据';
+
+  @override
+  String get settingsMcpConnectionsNoConnections => '尚未连接任何 AI 工具';
+
+  @override
+  String get settingsMcpConnectionsLoadFailed => '加载已连接工具列表失败';
+
+  @override
+  String get settingsMcpConnectionsUpdateFailed => '更新新增数据权限失败';
+
+  @override
+  String get settingsMcpColAllowCreate => '允许新增数据';
+
+  @override
+  String get settingsMcpAllowCreateLabel => '允许新增数据';
+
+  @override
+  String get settingsMcpAllowCreateUpdateFailed => '更新新增数据权限失败';
 
   @override
   String get adminSystemSettingsTitle => '系统设置';
@@ -12852,6 +12950,9 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
   String get navMcp => 'MCP 連線';
 
   @override
+  String get navMcpConnections => '已連接 AI 工具';
+
+  @override
   String get settingsMcpTitle => 'MCP 連線設定';
 
   @override
@@ -12960,6 +13061,52 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
 
   @override
   String get settingsMcpCloseConfirm => '我已複製，關閉視窗';
+
+  @override
+  String get settingsMcpConnectionsTitle => '已連接 AI 工具';
+
+  @override
+  String get settingsMcpConnectionsDescription =>
+      '管理透過 MCP OAuth 連接的 AI 工具，是否允許代替你新增交易紀錄。';
+
+  @override
+  String get settingsMcpConnectionsListTitle => '已連接 AI 工具';
+
+  @override
+  String get settingsMcpConnectionsRefresh => '重新整理';
+
+  @override
+  String get settingsMcpConnectionsColClientName => 'AI 工具';
+
+  @override
+  String get settingsMcpConnectionsColFirstConnectedAt => '首次連接時間';
+
+  @override
+  String get settingsMcpConnectionsColLastUsedAt => '最後使用時間';
+
+  @override
+  String get settingsMcpConnectionsColAllowCreate => '允許新增資料';
+
+  @override
+  String get settingsMcpConnectionsAllowCreateLabel => '允許新增資料';
+
+  @override
+  String get settingsMcpConnectionsNoConnections => '尚未連接任何 AI 工具';
+
+  @override
+  String get settingsMcpConnectionsLoadFailed => '載入已連接工具清單失敗';
+
+  @override
+  String get settingsMcpConnectionsUpdateFailed => '更新新增資料權限失敗';
+
+  @override
+  String get settingsMcpColAllowCreate => '允許新增資料';
+
+  @override
+  String get settingsMcpAllowCreateLabel => '允許新增資料';
+
+  @override
+  String get settingsMcpAllowCreateUpdateFailed => '更新新增資料權限失敗';
 
   @override
   String get adminSystemSettingsTitle => '系統設定';

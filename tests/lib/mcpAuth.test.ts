@@ -20,6 +20,7 @@ if (!DB_URL) {
     verifyMcpToken,
     listMcpCredentials,
     revokeMcpCredential,
+    setMcpCredentialAllowCreate,
     MAX_ACTIVE_MCP_CREDENTIALS,
     McpCredentialLimitError,
   } = await import('../../lib/mcpAuth.ts');
@@ -100,6 +101,51 @@ if (!DB_URL) {
       const list = listMcpCredentials(userId);
       const found = list.find((c) => c.id === created.id);
       assert.equal(found?.status, 'expired');
+    } finally {
+      cleanupUser(userId);
+    }
+  });
+
+  test('createMcpCredential 預設 allowCreate=false，setMcpCredentialAllowCreate 可開關並反映於 verifyMcpToken／listMcpCredentials', () => {
+    const userId = 'test_mcpauth_' + uid();
+    try {
+      const created = createMcpCredential(userId, '寫入權限測試');
+
+      const verifiedBefore = verifyMcpToken(created.token);
+      assert.equal(verifiedBefore?.allowCreate, false);
+      const listedBefore = listMcpCredentials(userId).find((c) => c.id === created.id);
+      assert.equal(listedBefore?.allowCreate, false);
+
+      const opened = setMcpCredentialAllowCreate(userId, created.id, true);
+      assert.equal(opened, true);
+      const verifiedOpen = verifyMcpToken(created.token);
+      assert.equal(verifiedOpen?.allowCreate, true);
+      const listedOpen = listMcpCredentials(userId).find((c) => c.id === created.id);
+      assert.equal(listedOpen?.allowCreate, true);
+
+      const closed = setMcpCredentialAllowCreate(userId, created.id, false);
+      assert.equal(closed, true);
+      const verifiedClosed = verifyMcpToken(created.token);
+      assert.equal(verifiedClosed?.allowCreate, false);
+      const listedClosed = listMcpCredentials(userId).find((c) => c.id === created.id);
+      assert.equal(listedClosed?.allowCreate, false);
+    } finally {
+      cleanupUser(userId);
+    }
+  });
+
+  test('setMcpCredentialAllowCreate 對不存在或非本人的憑證回傳 false', () => {
+    const userId = 'test_mcpauth_' + uid();
+    try {
+      assert.equal(setMcpCredentialAllowCreate(userId, 'not-a-real-id', true), false);
+
+      const otherUserId = 'test_mcpauth_' + uid();
+      const created = createMcpCredential(otherUserId, '別人的憑證');
+      try {
+        assert.equal(setMcpCredentialAllowCreate(userId, created.id, true), false);
+      } finally {
+        cleanupUser(otherUserId);
+      }
     } finally {
       cleanupUser(userId);
     }

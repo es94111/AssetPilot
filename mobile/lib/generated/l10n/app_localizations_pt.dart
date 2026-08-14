@@ -4368,6 +4368,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get navMcp => 'Conexão MCP';
 
   @override
+  String get navMcpConnections => 'Ferramentas de IA conectadas';
+
+  @override
   String get settingsMcpTitle => 'Configurações de conexão MCP';
 
   @override
@@ -4478,6 +4481,58 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get settingsMcpCloseConfirm => 'Copiei, fechar';
+
+  @override
+  String get settingsMcpConnectionsTitle => 'Ferramentas de IA conectadas';
+
+  @override
+  String get settingsMcpConnectionsDescription =>
+      'Gerencie se cada ferramenta de IA conectada via OAuth do MCP tem permissão para criar transações em seu nome.';
+
+  @override
+  String get settingsMcpConnectionsListTitle => 'Ferramentas de IA conectadas';
+
+  @override
+  String get settingsMcpConnectionsRefresh => 'Atualizar';
+
+  @override
+  String get settingsMcpConnectionsColClientName => 'Ferramenta de IA';
+
+  @override
+  String get settingsMcpConnectionsColFirstConnectedAt => 'Primeira conexão';
+
+  @override
+  String get settingsMcpConnectionsColLastUsedAt => 'Último uso';
+
+  @override
+  String get settingsMcpConnectionsColAllowCreate =>
+      'Permitir criação de dados';
+
+  @override
+  String get settingsMcpConnectionsAllowCreateLabel =>
+      'Permitir criação de dados';
+
+  @override
+  String get settingsMcpConnectionsNoConnections =>
+      'Ainda não há ferramentas de IA conectadas';
+
+  @override
+  String get settingsMcpConnectionsLoadFailed =>
+      'Falha ao carregar as ferramentas conectadas';
+
+  @override
+  String get settingsMcpConnectionsUpdateFailed =>
+      'Falha ao atualizar a permissão';
+
+  @override
+  String get settingsMcpColAllowCreate => 'Permitir criação de dados';
+
+  @override
+  String get settingsMcpAllowCreateLabel => 'Permitir criação de dados';
+
+  @override
+  String get settingsMcpAllowCreateUpdateFailed =>
+      'Falha ao atualizar a permissão';
 
   @override
   String get adminSystemSettingsTitle => 'Configurações do sistema';
@@ -8995,6 +9050,9 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String get navMcp => 'Conexão MCP';
 
   @override
+  String get navMcpConnections => 'Ferramentas de IA conectadas';
+
+  @override
   String get settingsMcpTitle => 'Configurações de conexão MCP';
 
   @override
@@ -9105,6 +9163,58 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get settingsMcpCloseConfirm => 'Copiei, fechar';
+
+  @override
+  String get settingsMcpConnectionsTitle => 'Ferramentas de IA conectadas';
+
+  @override
+  String get settingsMcpConnectionsDescription =>
+      'Gerencie se cada ferramenta de IA conectada via OAuth do MCP tem permissão para criar transações em seu nome.';
+
+  @override
+  String get settingsMcpConnectionsListTitle => 'Ferramentas de IA conectadas';
+
+  @override
+  String get settingsMcpConnectionsRefresh => 'Atualizar';
+
+  @override
+  String get settingsMcpConnectionsColClientName => 'Ferramenta de IA';
+
+  @override
+  String get settingsMcpConnectionsColFirstConnectedAt => 'Primeira conexão';
+
+  @override
+  String get settingsMcpConnectionsColLastUsedAt => 'Último uso';
+
+  @override
+  String get settingsMcpConnectionsColAllowCreate =>
+      'Permitir criação de dados';
+
+  @override
+  String get settingsMcpConnectionsAllowCreateLabel =>
+      'Permitir criação de dados';
+
+  @override
+  String get settingsMcpConnectionsNoConnections =>
+      'Ainda não há ferramentas de IA conectadas';
+
+  @override
+  String get settingsMcpConnectionsLoadFailed =>
+      'Falha ao carregar as ferramentas conectadas';
+
+  @override
+  String get settingsMcpConnectionsUpdateFailed =>
+      'Falha ao atualizar a permissão';
+
+  @override
+  String get settingsMcpColAllowCreate => 'Permitir criação de dados';
+
+  @override
+  String get settingsMcpAllowCreateLabel => 'Permitir criação de dados';
+
+  @override
+  String get settingsMcpAllowCreateUpdateFailed =>
+      'Falha ao atualizar a permissão';
 
   @override
   String get adminSystemSettingsTitle => 'Configurações do sistema';

@@ -62,6 +62,10 @@ const AUDIT_ACTION_LABELS: Record<string, string> = {
   'admin.server_time.update': '調整伺服器時間',
   'account.self_delete': '自助刪除帳號',
   'account.password_change': '變更自己的密碼',
+  // MCP（003-mcp-write-no-delete：新增 mcp_create_transaction 標籤時，順帶補上 001 遺留的 mcp_query 標籤，
+  // 理由見 research.md 第 7 節）
+  mcp_query: 'MCP 查詢資料',
+  mcp_create_transaction: 'MCP 新增交易',
 };
 
 // 將稽核 metadata 整理為易讀的中文摘要，作為「詳情」欄位顯示。
@@ -71,6 +75,7 @@ const AUDIT_META_LABELS: Record<string, string> = {
   cert_type: '憑證類型', deleted_count: '刪除筆數', requested_count: '要求筆數',
   scope: '範圍', log_id: '紀錄ID', self: '本人操作', filename: '檔名', rows: '筆數',
   imported: '匯入', skipped: '略過', byteSize: '位元組',
+  transaction_summary: '交易摘要', mcp_credential_id: '憑證ID', mcp_credential_name: '憑證名稱',
 };
 
 const AUDIT_ROLE_VALUE_LABELS: Record<string, string> = { user: '一般使用者', readonly: '一般管理員', super: '超級管理員', admin: '管理員', super_admin: '超級管理員' };

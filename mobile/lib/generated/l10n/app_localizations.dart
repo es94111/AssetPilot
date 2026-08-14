@@ -7507,6 +7507,12 @@ abstract class AppLocalizations {
   /// **'MCP 連線'**
   String get navMcp;
 
+  /// Web path: nav.mcpConnections
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'已連接 AI 工具'**
+  String get navMcpConnections;
+
   /// Web path: settings.mcp.title
   ///
   /// In zh_Hant_TW, this message translates to:
@@ -7722,6 +7728,96 @@ abstract class AppLocalizations {
   /// In zh_Hant_TW, this message translates to:
   /// **'我已複製，關閉視窗'**
   String get settingsMcpCloseConfirm;
+
+  /// Web path: settings.mcpConnections.title
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'已連接 AI 工具'**
+  String get settingsMcpConnectionsTitle;
+
+  /// Web path: settings.mcpConnections.description
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'管理透過 MCP OAuth 連接的 AI 工具，是否允許代替你新增交易紀錄。'**
+  String get settingsMcpConnectionsDescription;
+
+  /// Web path: settings.mcpConnections.listTitle
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'已連接 AI 工具'**
+  String get settingsMcpConnectionsListTitle;
+
+  /// Web path: settings.mcpConnections.refresh
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'重新整理'**
+  String get settingsMcpConnectionsRefresh;
+
+  /// Web path: settings.mcpConnections.colClientName
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'AI 工具'**
+  String get settingsMcpConnectionsColClientName;
+
+  /// Web path: settings.mcpConnections.colFirstConnectedAt
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'首次連接時間'**
+  String get settingsMcpConnectionsColFirstConnectedAt;
+
+  /// Web path: settings.mcpConnections.colLastUsedAt
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'最後使用時間'**
+  String get settingsMcpConnectionsColLastUsedAt;
+
+  /// Web path: settings.mcpConnections.colAllowCreate
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'允許新增資料'**
+  String get settingsMcpConnectionsColAllowCreate;
+
+  /// Web path: settings.mcpConnections.allowCreateLabel
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'允許新增資料'**
+  String get settingsMcpConnectionsAllowCreateLabel;
+
+  /// Web path: settings.mcpConnections.noConnections
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'尚未連接任何 AI 工具'**
+  String get settingsMcpConnectionsNoConnections;
+
+  /// Web path: settings.mcpConnections.loadFailed
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'載入已連接工具清單失敗'**
+  String get settingsMcpConnectionsLoadFailed;
+
+  /// Web path: settings.mcpConnections.updateFailed
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'更新新增資料權限失敗'**
+  String get settingsMcpConnectionsUpdateFailed;
+
+  /// Web path: settings.mcp.colAllowCreate
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'允許新增資料'**
+  String get settingsMcpColAllowCreate;
+
+  /// Web path: settings.mcp.allowCreateLabel
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'允許新增資料'**
+  String get settingsMcpAllowCreateLabel;
+
+  /// Web path: settings.mcp.allowCreateUpdateFailed
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'更新新增資料權限失敗'**
+  String get settingsMcpAllowCreateUpdateFailed;
 
   /// Web path: admin.adminSystemSettingsTitle
   ///

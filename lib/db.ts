@@ -600,6 +600,7 @@ async function _runMigrations(): Promise<void> {
   )`);
   alterIgnore("CREATE INDEX IF NOT EXISTS idx_mcp_credentials_user ON mcp_credentials(user_id, revoked_at)");
   alterIgnore("CREATE UNIQUE INDEX IF NOT EXISTS idx_mcp_credentials_hash ON mcp_credentials(token_hash)");
+  alterIgnore("ALTER TABLE mcp_credentials ADD COLUMN allow_create INTEGER NOT NULL DEFAULT 0");
 
   db.run(`CREATE TABLE IF NOT EXISTS mcp_oauth_clients (
     client_id TEXT PRIMARY KEY,
@@ -667,6 +668,37 @@ async function _runMigrations(): Promise<void> {
   alterIgnore("CREATE INDEX IF NOT EXISTS idx_mcp_oauth_tokens_user ON mcp_oauth_tokens(user_id, revoked_at, expires_at)");
   alterIgnore("CREATE INDEX IF NOT EXISTS idx_mcp_oauth_tokens_family ON mcp_oauth_tokens(family_id, revoked_at)");
   alterIgnore("CREATE INDEX IF NOT EXISTS idx_mcp_oauth_tokens_client ON mcp_oauth_tokens(client_id, expires_at)");
+
+  db.run(`CREATE TABLE IF NOT EXISTS mcp_oauth_connections (
+    user_id TEXT NOT NULL,
+    client_id TEXT NOT NULL,
+    client_name TEXT NOT NULL,
+    allow_create INTEGER NOT NULL DEFAULT 0,
+    first_connected_at INTEGER NOT NULL,
+    last_used_at INTEGER NOT NULL,
+    PRIMARY KEY (user_id, client_id)
+  )`);
+  alterIgnore("CREATE INDEX IF NOT EXISTS idx_mcp_oauth_connections_user ON mcp_oauth_connections(user_id)");
+  alterIgnore(`INSERT INTO mcp_oauth_connections (user_id, client_id, client_name, allow_create, first_connected_at, last_used_at)
+    SELECT user_id, client_id, MIN(client_name), 0, MIN(issued_at), MAX(issued_at)
+    FROM mcp_oauth_tokens
+    WHERE revoked_at = 0
+    GROUP BY user_id, client_id
+    ON CONFLICT (user_id, client_id) DO NOTHING`);
+
+  db.run(`CREATE TABLE IF NOT EXISTS mcp_transaction_idempotency (
+    id TEXT PRIMARY KEY,
+    credential_id TEXT NOT NULL,
+    user_id TEXT NOT NULL,
+    idempotency_key TEXT NOT NULL,
+    transaction_id TEXT NOT NULL,
+    linked_transaction_id TEXT DEFAULT '',
+    response_json TEXT NOT NULL,
+    created_at INTEGER NOT NULL,
+    expires_at INTEGER NOT NULL
+  )`);
+  alterIgnore("CREATE UNIQUE INDEX IF NOT EXISTS idx_mcp_idempotency_key ON mcp_transaction_idempotency(credential_id, idempotency_key)");
+  alterIgnore("CREATE INDEX IF NOT EXISTS idx_mcp_idempotency_expires ON mcp_transaction_idempotency(expires_at)");
 
   saveDB();
 }

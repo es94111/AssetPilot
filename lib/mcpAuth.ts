@@ -4,6 +4,7 @@
 import crypto from 'crypto';
 import { getDB, queryOne, queryAll, saveDB } from './db';
 import { uid } from './userDefaults';
+import { toIsoUtc } from './userTime';
 
 export const MAX_ACTIVE_MCP_CREDENTIALS = 20;
 
@@ -20,6 +21,7 @@ export interface McpCredentialSummary {
   id: string;
   name: string;
   status: McpCredentialStatus;
+  allowCreate: boolean;
   createdAt: number;
   lastUsedAt: number | null;
   expiresAt: number | null;
@@ -37,6 +39,7 @@ export interface VerifyMcpTokenResult {
   credentialId: string;
   userId: string;
   name: string;
+  allowCreate?: boolean;
 }
 
 interface McpCredentialRow {
@@ -47,6 +50,7 @@ interface McpCredentialRow {
   last_used_at: string | number | null;
   expires_at: string | number | null;
   revoked_at: string | number | null;
+  allow_create: string | number;
 }
 
 export function generateMcpToken(): string {
@@ -90,7 +94,7 @@ export function createMcpCredential(userId: string, name: string, expiresAt = 0)
 export function verifyMcpToken(plaintext: string): VerifyMcpTokenResult | null {
   const tokenHash = hashMcpToken(plaintext);
   const row = queryOne(
-    'SELECT id, user_id, name, expires_at, revoked_at FROM mcp_credentials WHERE token_hash = ?',
+    'SELECT id, user_id, name, expires_at, revoked_at, allow_create FROM mcp_credentials WHERE token_hash = ?',
     [tokenHash]
   ) as McpCredentialRow | null;
   if (!row) return null;
@@ -102,19 +106,25 @@ export function verifyMcpToken(plaintext: string): VerifyMcpTokenResult | null {
 
   getDB().run('UPDATE mcp_credentials SET last_used_at = ? WHERE id = ?', [now, row.id]);
   saveDB();
-  return { credentialId: String(row.id), userId: String(row.user_id), name: String(row.name) };
+  return {
+    credentialId: String(row.id),
+    userId: String(row.user_id),
+    name: String(row.name),
+    allowCreate: Number(row.allow_create) === 1,
+  };
 }
 
 export function listMcpCredentials(userId: string): McpCredentialSummary[] {
   const now = Date.now();
   const rows = queryAll(
-    'SELECT id, name, created_at, last_used_at, expires_at, revoked_at FROM mcp_credentials WHERE user_id = ? ORDER BY created_at DESC',
+    'SELECT id, name, created_at, last_used_at, expires_at, revoked_at, allow_create FROM mcp_credentials WHERE user_id = ? ORDER BY created_at DESC',
     [userId]
   ) as unknown as McpCredentialRow[];
   return rows.map((row) => ({
     id: String(row.id),
     name: String(row.name),
     status: deriveStatus(row, now),
+    allowCreate: Number(row.allow_create) === 1,
     createdAt: Number(row.created_at) || 0,
     lastUsedAt: Number(row.last_used_at) || 0 ? Number(row.last_used_at) : null,
     expiresAt: Number(row.expires_at) || 0 ? Number(row.expires_at) : null,
@@ -130,4 +140,34 @@ export function revokeMcpCredential(userId: string, id: string): boolean {
   const hit = db.getRowsModified() > 0;
   saveDB();
   return hit;
+}
+
+export function setMcpCredentialAllowCreate(userId: string, id: string, allowCreate: boolean): boolean {
+  const db = getDB();
+  db.run(
+    'UPDATE mcp_credentials SET allow_create = ? WHERE id = ? AND user_id = ? AND revoked_at = 0',
+    [allowCreate ? 1 : 0, id, userId]
+  );
+  const hit = db.getRowsModified() > 0;
+  saveDB();
+  return hit;
+}
+
+// Constitution Principle IV：API 輸出時序化為既有 ISO 8601 UTC 格式；本檔內部仍以 Unix ms 儲存/比較。
+// 放在 lib/ 而非 app/api 的 route.ts，因為 Next.js route.ts 只能匯出識別的路由 handler，
+// 不能額外匯出共用函式供同目錄下的 [id]/route.ts 匯入（否則 typecheck 會報 invalid route export）。
+function isoOrNull(ms: number | null): string | null {
+  return ms == null ? null : toIsoUtc(ms);
+}
+
+export function serializeCredential(c: McpCredentialSummary) {
+  return {
+    id: c.id,
+    name: c.name,
+    status: c.status,
+    allowCreate: c.allowCreate,
+    createdAt: toIsoUtc(c.createdAt),
+    lastUsedAt: isoOrNull(c.lastUsedAt),
+    expiresAt: isoOrNull(c.expiresAt),
+  };
 }

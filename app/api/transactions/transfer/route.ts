@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '../../../../lib/apiHelpers';
-import { getDB, queryOne, saveDB } from '../../../../lib/db';
+import { queryOne } from '../../../../lib/db';
 import { normalizeCurrency, convertToTwd, normalizeDate } from '../../../../lib/accountHelpers';
-import { uid } from '../../../../lib/userDefaults';
 import { todayInUserTz } from '../../../../lib/userTime';
+import { insertTransferPair } from '../../../../lib/transactionWriteCore';
 
 interface TransferRequest {
   fromAccountId?: string;
@@ -60,31 +60,25 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: e instanceof Error ? e.message : '轉帳金額格式錯誤' }, { status: 400 });
   }
 
-  const now = Date.now();
   const txDate = normalizeDate(rawDate) || todayInUserTz(auth.userTimezone);
   const txNote = note || '轉帳';
-  const outId = uid();
-  const inId = uid();
-  const db = getDB();
+
+  let pair;
   try {
-    db.run('BEGIN');
-    db.run(
-      'INSERT INTO transactions (id,user_id,type,amount,currency,original_amount,fx_rate,fx_fee,twd_amount,date,category_id,account_id,to_account_id,note,linked_id,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
-      [outId, auth.userId, 'transfer_out', converted.twdAmount, fromCurrency, converted.originalAmount, converted.fxRate, 0, converted.twdAmount, txDate, '', fromId, toId, txNote, inId, now, now]
-    );
-    db.run(
-      'INSERT INTO transactions (id,user_id,type,amount,currency,original_amount,fx_rate,fx_fee,twd_amount,date,category_id,account_id,to_account_id,note,linked_id,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
-      [inId, auth.userId, 'transfer_in', converted.twdAmount, toCurrency, converted.originalAmount, converted.fxRate, 0, converted.twdAmount, txDate, '', toId, fromId, txNote, outId, now, now]
-    );
-    db.run('COMMIT');
+    pair = insertTransferPair({
+      userId: auth.userId,
+      fromAccountId: fromId,
+      toAccountId: toId,
+      fromCurrency,
+      toCurrency,
+      twdAmount: converted.twdAmount,
+      originalAmount: converted.originalAmount,
+      fxRate: converted.fxRate,
+      date: txDate,
+      note: txNote,
+    });
   } catch (e) {
-    try { db.run('ROLLBACK'); } catch (_) {}
     return NextResponse.json({ error: '轉帳建立失敗', message: String(e instanceof Error ? e.message : e) }, { status: 500 });
   }
-  saveDB();
-  return NextResponse.json({
-    transferOut: { id: outId, accountId: fromId, toAccountId: toId, amount: converted.originalAmount, currency: fromCurrency, date: txDate, linkedId: inId, updatedAt: now },
-    transferIn: { id: inId, accountId: toId, toAccountId: fromId, amount: converted.originalAmount, currency: toCurrency, date: txDate, linkedId: outId, updatedAt: now },
-    ok: true,
-  }, { status: 201 });
+  return NextResponse.json({ ...pair, ok: true }, { status: 201 });
 }

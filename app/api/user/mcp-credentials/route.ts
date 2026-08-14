@@ -2,26 +2,9 @@
 // 沿用既有 authToken Cookie + requireAuth() 驗證慣例（非 Bearer PAT，見 mcp-credentials.openapi.yaml）
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '../../../../lib/apiHelpers';
-import { createMcpCredential, listMcpCredentials, McpCredentialLimitError, type McpCredentialSummary } from '../../../../lib/mcpAuth';
-import { toIsoUtc } from '../../../../lib/userTime';
+import { createMcpCredential, listMcpCredentials, serializeCredential, McpCredentialLimitError } from '../../../../lib/mcpAuth';
 
 const MAX_NAME_LENGTH = 100;
-
-// Constitution Principle IV：API 輸出時序化為既有 ISO 8601 UTC 格式；lib/mcpAuth.ts 內部仍以 Unix ms 儲存/比較。
-function isoOrNull(ms: number | null): string | null {
-  return ms == null ? null : toIsoUtc(ms);
-}
-
-function serializeCredential(c: McpCredentialSummary) {
-  return {
-    id: c.id,
-    name: c.name,
-    status: c.status,
-    createdAt: toIsoUtc(c.createdAt),
-    lastUsedAt: isoOrNull(c.lastUsedAt),
-    expiresAt: isoOrNull(c.expiresAt),
-  };
-}
 
 export async function GET(request: NextRequest) {
   const auth = await requireAuth(request);
@@ -59,6 +42,7 @@ export async function POST(request: NextRequest) {
         id: created.id,
         name: created.name,
         status: 'active',
+        allowCreate: false,
         createdAt: created.createdAt,
         lastUsedAt: null,
         expiresAt: created.expiresAt || null,

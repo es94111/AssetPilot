@@ -4296,6 +4296,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get navMcp => 'اتصال MCP';
 
   @override
+  String get navMcpConnections => 'أدوات الذكاء الاصطناعي المتصلة';
+
+  @override
   String get settingsMcpTitle => 'إعدادات اتصال MCP';
 
   @override
@@ -4406,6 +4409,55 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get settingsMcpCloseConfirm => 'لقد نسخته، إغلاق';
+
+  @override
+  String get settingsMcpConnectionsTitle => 'أدوات الذكاء الاصطناعي المتصلة';
+
+  @override
+  String get settingsMcpConnectionsDescription =>
+      'إدارة ما إذا كان يُسمح لكل أداة ذكاء اصطناعي متصلة عبر MCP OAuth بإنشاء معاملات نيابةً عنك.';
+
+  @override
+  String get settingsMcpConnectionsListTitle =>
+      'أدوات الذكاء الاصطناعي المتصلة';
+
+  @override
+  String get settingsMcpConnectionsRefresh => 'تحديث';
+
+  @override
+  String get settingsMcpConnectionsColClientName => 'أداة الذكاء الاصطناعي';
+
+  @override
+  String get settingsMcpConnectionsColFirstConnectedAt => 'أول اتصال';
+
+  @override
+  String get settingsMcpConnectionsColLastUsedAt => 'آخر استخدام';
+
+  @override
+  String get settingsMcpConnectionsColAllowCreate => 'السماح بإنشاء البيانات';
+
+  @override
+  String get settingsMcpConnectionsAllowCreateLabel => 'السماح بإنشاء البيانات';
+
+  @override
+  String get settingsMcpConnectionsNoConnections =>
+      'لم يتم توصيل أي أداة ذكاء اصطناعي بعد';
+
+  @override
+  String get settingsMcpConnectionsLoadFailed =>
+      'فشل تحميل قائمة الأدوات المتصلة';
+
+  @override
+  String get settingsMcpConnectionsUpdateFailed => 'فشل تحديث الإذن';
+
+  @override
+  String get settingsMcpColAllowCreate => 'السماح بإنشاء البيانات';
+
+  @override
+  String get settingsMcpAllowCreateLabel => 'السماح بإنشاء البيانات';
+
+  @override
+  String get settingsMcpAllowCreateUpdateFailed => 'فشل تحديث الإذن';
 
   @override
   String get adminSystemSettingsTitle => 'إعدادات النظام';

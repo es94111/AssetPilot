@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { apiGet, apiPost, apiDelete } from '@/lib/clientApi';
+import { apiGet, apiPost, apiDelete, apiPatch } from '@/lib/clientApi';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
@@ -12,6 +12,7 @@ interface McpCredential {
   id: string;
   name: string;
   status: 'active' | 'expired' | 'revoked';
+  allowCreate: boolean;
   createdAt: string;
   lastUsedAt: string | null;
   expiresAt: string | null;
@@ -111,6 +112,16 @@ export default function McpSettingsClient() {
     }
   }
 
+  async function handleAllowCreateChange(id: string, next: boolean) {
+    setListMsg('');
+    try {
+      const res = await apiPatch(`/api/user/mcp-credentials/${encodeURIComponent(id)}`, { allowCreate: next });
+      setCredentials((prev) => prev.map((c) => (c.id === id ? { ...c, allowCreate: res.credential.allowCreate } : c)));
+    } catch (e: any) {
+      setListMsg(e.message || ta('allowCreateUpdateFailed'));
+    }
+  }
+
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold">{ta('title')}</h2>
@@ -158,6 +169,7 @@ export default function McpSettingsClient() {
                   <th className="text-left py-2 pr-4">{ta('colCreatedAt')}</th>
                   <th className="text-left py-2 pr-4">{ta('colLastUsedAt')}</th>
                   <th className="text-left py-2 pr-4">{ta('colStatus')}</th>
+                  <th className="text-left py-2 pr-4">{ta('colAllowCreate')}</th>
                   <th className="text-left py-2">{ta('colActions')}</th>
                 </tr>
               </thead>
@@ -171,6 +183,17 @@ export default function McpSettingsClient() {
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusBadgeClass(c.status)}`}>
                         {ta(`status.${c.status}`)}
                       </span>
+                    </td>
+                    <td className="py-3 pr-4">
+                      {c.status === 'active' && (
+                        <input
+                          type="checkbox"
+                          checked={c.allowCreate}
+                          onChange={(e) => handleAllowCreateChange(c.id, e.target.checked)}
+                          aria-label={ta('allowCreateLabel')}
+                          className="w-4 h-4"
+                        />
+                      )}
                     </td>
                     <td className="py-3">
                       {c.status === 'active' && (

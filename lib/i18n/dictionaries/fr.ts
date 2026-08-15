@@ -277,6 +277,9 @@ export const fr = {
       colAllowCreate: "Autoriser la création de données",
       allowCreateLabel: "Autoriser la création de données",
       allowCreateUpdateFailed: "Échec de la mise à jour de l'autorisation",
+      colAllowUpdateNote: "Autoriser la mise à jour des notes",
+      allowUpdateNoteLabel: "Autoriser la mise à jour des notes",
+      allowUpdateNoteUpdateFailed: "Échec de la mise à jour de l'autorisation de notes",
     },
     mcpConnections: {
       title: "Outils IA connectés",
@@ -291,6 +294,9 @@ export const fr = {
       noConnections: "Aucun outil IA connecté pour le moment",
       loadFailed: "Échec du chargement des outils connectés",
       updateFailed: "Échec de la mise à jour de l'autorisation",
+      colAllowUpdateNote: "Autoriser la mise à jour des notes",
+      allowUpdateNoteLabel: "Autoriser la mise à jour des notes",
+      allowUpdateNoteUpdateFailed: "Échec de la mise à jour de l'autorisation de notes",
     },
   },
   dashboard: {

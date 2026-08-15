@@ -6,6 +6,7 @@ import { ownsResource, assertOptimisticLock, lockErrorResponse } from '../../../
 import { computeTwdAmount } from '../../../../lib/moneyDecimal';
 import { insertFeeTransaction } from '../../../../lib/overseasFee';
 import { deleteTransactionAttachments, listTransactionAttachments } from '../../../../lib/transactionAttachments';
+import { findTransactionEditBlock } from '../../../../lib/transactionEditRules';
 
 type RouteContext = { params: Promise<{ txId: string }> };
 interface Auth {
@@ -127,11 +128,9 @@ async function updateHandler(request: NextRequest, txId: string, auth: Auth) {
   const existing = getOwnedTransaction(txId, auth.userId);
   if (!existing) return NextResponse.json({ error: '資源不存在或無權限', code: 'NotFound' }, { status: 404 });
 
-  if (existing.is_fx_fee === 1) {
-    return NextResponse.json({
-      error: '此為自動產生的國外刷卡手續費交易，請改編輯對應的國外交易（修改後手續費會自動同步）',
-      code: 'FxFeeImmutable',
-    }, { status: 422 });
+  const editBlock = findTransactionEditBlock(existing);
+  if (editBlock) {
+    return NextResponse.json({ error: editBlock.message, code: editBlock.code }, { status: editBlock.status });
   }
 
   const body = await request.json().catch(() => ({})) as UpdateTransactionRequest;

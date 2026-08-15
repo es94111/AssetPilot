@@ -4471,6 +4471,17 @@ class AppLocalizationsEn extends AppLocalizations {
       'Failed to update permission';
 
   @override
+  String get settingsMcpConnectionsColAllowUpdateNote => 'Allow Updating Notes';
+
+  @override
+  String get settingsMcpConnectionsAllowUpdateNoteLabel =>
+      'Allow Updating Notes';
+
+  @override
+  String get settingsMcpConnectionsAllowUpdateNoteUpdateFailed =>
+      'Failed to update note permission';
+
+  @override
   String get settingsMcpColAllowCreate => 'Allow Creating Data';
 
   @override
@@ -4479,6 +4490,16 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get settingsMcpAllowCreateUpdateFailed =>
       'Failed to update permission';
+
+  @override
+  String get settingsMcpColAllowUpdateNote => 'Allow Updating Notes';
+
+  @override
+  String get settingsMcpAllowUpdateNoteLabel => 'Allow Updating Notes';
+
+  @override
+  String get settingsMcpAllowUpdateNoteUpdateFailed =>
+      'Failed to update note permission';
 
   @override
   String get adminSystemSettingsTitle => 'System settings';

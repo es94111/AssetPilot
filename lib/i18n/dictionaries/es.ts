@@ -277,6 +277,9 @@ export const es = {
       colAllowCreate: "Permitir crear datos",
       allowCreateLabel: "Permitir crear datos",
       allowCreateUpdateFailed: "Error al actualizar el permiso",
+      colAllowUpdateNote: "Permitir actualizar notas",
+      allowUpdateNoteLabel: "Permitir actualizar notas",
+      allowUpdateNoteUpdateFailed: "Error al actualizar el permiso de notas",
     },
     mcpConnections: {
       title: "Herramientas de IA conectadas",
@@ -291,6 +294,9 @@ export const es = {
       noConnections: "Aún no hay herramientas de IA conectadas",
       loadFailed: "Error al cargar las herramientas conectadas",
       updateFailed: "Error al actualizar el permiso",
+      colAllowUpdateNote: "Permitir actualizar notas",
+      allowUpdateNoteLabel: "Permitir actualizar notas",
+      allowUpdateNoteUpdateFailed: "Error al actualizar el permiso de notas",
     },
   },
   dashboard: {

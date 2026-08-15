@@ -4527,6 +4527,18 @@ class AppLocalizationsRu extends AppLocalizations {
       'Не удалось обновить разрешение';
 
   @override
+  String get settingsMcpConnectionsColAllowUpdateNote =>
+      'Разрешить обновление заметок';
+
+  @override
+  String get settingsMcpConnectionsAllowUpdateNoteLabel =>
+      'Разрешить обновление заметок';
+
+  @override
+  String get settingsMcpConnectionsAllowUpdateNoteUpdateFailed =>
+      'Не удалось обновить разрешение на заметки';
+
+  @override
   String get settingsMcpColAllowCreate => 'Разрешить создание данных';
 
   @override
@@ -4535,6 +4547,16 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get settingsMcpAllowCreateUpdateFailed =>
       'Не удалось обновить разрешение';
+
+  @override
+  String get settingsMcpColAllowUpdateNote => 'Разрешить обновление заметок';
+
+  @override
+  String get settingsMcpAllowUpdateNoteLabel => 'Разрешить обновление заметок';
+
+  @override
+  String get settingsMcpAllowUpdateNoteUpdateFailed =>
+      'Не удалось обновить разрешение на заметки';
 
   @override
   String get adminSystemSettingsTitle => 'Системные настройки';

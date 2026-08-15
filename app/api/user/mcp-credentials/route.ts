@@ -43,6 +43,7 @@ export async function POST(request: NextRequest) {
         name: created.name,
         status: 'active',
         allowCreate: false,
+        allowUpdateNote: false,
         createdAt: created.createdAt,
         lastUsedAt: null,
         expiresAt: created.expiresAt || null,

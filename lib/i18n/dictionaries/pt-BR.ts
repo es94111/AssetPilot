@@ -277,6 +277,9 @@ export const ptBR = {
       colAllowCreate: "Permitir criação de dados",
       allowCreateLabel: "Permitir criação de dados",
       allowCreateUpdateFailed: "Falha ao atualizar a permissão",
+      colAllowUpdateNote: "Permitir atualizar notas",
+      allowUpdateNoteLabel: "Permitir atualizar notas",
+      allowUpdateNoteUpdateFailed: "Falha ao atualizar a permissão de notas",
     },
     mcpConnections: {
       title: "Ferramentas de IA conectadas",
@@ -291,6 +294,9 @@ export const ptBR = {
       noConnections: "Ainda não há ferramentas de IA conectadas",
       loadFailed: "Falha ao carregar as ferramentas conectadas",
       updateFailed: "Falha ao atualizar a permissão",
+      colAllowUpdateNote: "Permitir atualizar notas",
+      allowUpdateNoteLabel: "Permitir atualizar notas",
+      allowUpdateNoteUpdateFailed: "Falha ao atualizar a permissão de notas",
     },
   },
   dashboard: {

@@ -27,6 +27,16 @@ const WRITE_TOOL_ANNOTATIONS = {
   openWorldHint: false,
 } as const;
 
+// destructiveHint: true — 與 create_transaction 的刻意差異：更新備註會覆寫既有值（舊備註不可回復），
+// 不符合 MCP 規格「只做加法更新」的定義，沿用 WRITE_TOOL_ANNOTATIONS 會對客戶端發出不實訊號
+// （research.md 第 7 節）。idempotentHint: true 對應 spec Edge Cases「以相同內容重複更新結果一致」。
+const UPDATE_TOOL_ANNOTATIONS = {
+  readOnlyHint: false,
+  destructiveHint: true,
+  idempotentHint: true,
+  openWorldHint: false,
+} as const;
+
 /**
  * OpenAI clients read the standard tool fields plus a back-compat auth mirror
  * from `_meta`. The top-level securitySchemes extension is injected at the
@@ -56,6 +66,22 @@ export function createWriteOAuthToolDescriptor(
   return {
     title,
     annotations: WRITE_TOOL_ANNOTATIONS,
+    _meta: {
+      securitySchemes: MCP_OAUTH_SECURITY_SCHEMES,
+      'openai/toolInvocation/invoking': invoking,
+      'openai/toolInvocation/invoked': invoked,
+    },
+  };
+}
+
+export function createUpdateOAuthToolDescriptor(
+  title: string,
+  invoking: string,
+  invoked: string
+) {
+  return {
+    title,
+    annotations: UPDATE_TOOL_ANNOTATIONS,
     _meta: {
       securitySchemes: MCP_OAUTH_SECURITY_SCHEMES,
       'openai/toolInvocation/invoking': invoking,

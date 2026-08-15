@@ -277,6 +277,9 @@ export const en = {
       colAllowCreate: "Allow Creating Data",
       allowCreateLabel: "Allow Creating Data",
       allowCreateUpdateFailed: "Failed to update permission",
+      colAllowUpdateNote: "Allow Updating Notes",
+      allowUpdateNoteLabel: "Allow Updating Notes",
+      allowUpdateNoteUpdateFailed: "Failed to update note permission",
     },
     mcpConnections: {
       title: "Connected AI Tools",
@@ -291,6 +294,9 @@ export const en = {
       noConnections: "No AI tools connected yet",
       loadFailed: "Failed to load connected tools",
       updateFailed: "Failed to update permission",
+      colAllowUpdateNote: "Allow Updating Notes",
+      allowUpdateNoteLabel: "Allow Updating Notes",
+      allowUpdateNoteUpdateFailed: "Failed to update note permission",
     },
   },
   dashboard: {

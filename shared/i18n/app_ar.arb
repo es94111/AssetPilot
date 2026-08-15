@@ -6875,6 +6875,21 @@
     "description": "Web path: settings.mcpConnections.updateFailed",
     "x-webPath": "settings.mcpConnections.updateFailed"
   },
+  "settingsMcpConnectionsColAllowUpdateNote": "السماح بتحديث الملاحظات",
+  "@settingsMcpConnectionsColAllowUpdateNote": {
+    "description": "Web path: settings.mcpConnections.colAllowUpdateNote",
+    "x-webPath": "settings.mcpConnections.colAllowUpdateNote"
+  },
+  "settingsMcpConnectionsAllowUpdateNoteLabel": "السماح بتحديث الملاحظات",
+  "@settingsMcpConnectionsAllowUpdateNoteLabel": {
+    "description": "Web path: settings.mcpConnections.allowUpdateNoteLabel",
+    "x-webPath": "settings.mcpConnections.allowUpdateNoteLabel"
+  },
+  "settingsMcpConnectionsAllowUpdateNoteUpdateFailed": "فشل تحديث إذن الملاحظات",
+  "@settingsMcpConnectionsAllowUpdateNoteUpdateFailed": {
+    "description": "Web path: settings.mcpConnections.allowUpdateNoteUpdateFailed",
+    "x-webPath": "settings.mcpConnections.allowUpdateNoteUpdateFailed"
+  },
   "settingsMcpColAllowCreate": "السماح بإنشاء البيانات",
   "@settingsMcpColAllowCreate": {
     "description": "Web path: settings.mcp.colAllowCreate",
@@ -6889,6 +6904,21 @@
   "@settingsMcpAllowCreateUpdateFailed": {
     "description": "Web path: settings.mcp.allowCreateUpdateFailed",
     "x-webPath": "settings.mcp.allowCreateUpdateFailed"
+  },
+  "settingsMcpColAllowUpdateNote": "السماح بتحديث الملاحظات",
+  "@settingsMcpColAllowUpdateNote": {
+    "description": "Web path: settings.mcp.colAllowUpdateNote",
+    "x-webPath": "settings.mcp.colAllowUpdateNote"
+  },
+  "settingsMcpAllowUpdateNoteLabel": "السماح بتحديث الملاحظات",
+  "@settingsMcpAllowUpdateNoteLabel": {
+    "description": "Web path: settings.mcp.allowUpdateNoteLabel",
+    "x-webPath": "settings.mcp.allowUpdateNoteLabel"
+  },
+  "settingsMcpAllowUpdateNoteUpdateFailed": "فشل تحديث إذن الملاحظات",
+  "@settingsMcpAllowUpdateNoteUpdateFailed": {
+    "description": "Web path: settings.mcp.allowUpdateNoteUpdateFailed",
+    "x-webPath": "settings.mcp.allowUpdateNoteUpdateFailed"
   },
   "adminSystemSettingsTitle": "إعدادات النظام",
   "@adminSystemSettingsTitle": {

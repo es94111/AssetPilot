@@ -275,6 +275,9 @@ export const zhTW = {
       colAllowCreate: "允許新增資料",
       allowCreateLabel: "允許新增資料",
       allowCreateUpdateFailed: "更新新增資料權限失敗",
+      colAllowUpdateNote: "允許更新備註",
+      allowUpdateNoteLabel: "允許更新備註",
+      allowUpdateNoteUpdateFailed: "更新備註權限更新失敗",
     },
     mcpConnections: {
       title: "已連接 AI 工具",
@@ -289,6 +292,9 @@ export const zhTW = {
       noConnections: "尚未連接任何 AI 工具",
       loadFailed: "載入已連接工具清單失敗",
       updateFailed: "更新新增資料權限失敗",
+      colAllowUpdateNote: "允許更新備註",
+      allowUpdateNoteLabel: "允許更新備註",
+      allowUpdateNoteUpdateFailed: "更新備註權限更新失敗",
     },
   },
   dashboard: {

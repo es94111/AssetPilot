@@ -277,6 +277,9 @@ export const ar = {
       colAllowCreate: "السماح بإنشاء البيانات",
       allowCreateLabel: "السماح بإنشاء البيانات",
       allowCreateUpdateFailed: "فشل تحديث الإذن",
+      colAllowUpdateNote: "السماح بتحديث الملاحظات",
+      allowUpdateNoteLabel: "السماح بتحديث الملاحظات",
+      allowUpdateNoteUpdateFailed: "فشل تحديث إذن الملاحظات",
     },
     mcpConnections: {
       title: "أدوات الذكاء الاصطناعي المتصلة",
@@ -291,6 +294,9 @@ export const ar = {
       noConnections: "لم يتم توصيل أي أداة ذكاء اصطناعي بعد",
       loadFailed: "فشل تحميل قائمة الأدوات المتصلة",
       updateFailed: "فشل تحديث الإذن",
+      colAllowUpdateNote: "السماح بتحديث الملاحظات",
+      allowUpdateNoteLabel: "السماح بتحديث الملاحظات",
+      allowUpdateNoteUpdateFailed: "فشل تحديث إذن الملاحظات",
     },
   },
   dashboard: {

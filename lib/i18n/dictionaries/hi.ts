@@ -277,6 +277,9 @@ export const hi = {
       colAllowCreate: "डेटा बनाने की अनुमति दें",
       allowCreateLabel: "डेटा बनाने की अनुमति दें",
       allowCreateUpdateFailed: "अनुमति अपडेट करने में विफल",
+      colAllowUpdateNote: "नोट अपडेट करने की अनुमति दें",
+      allowUpdateNoteLabel: "नोट अपडेट करने की अनुमति दें",
+      allowUpdateNoteUpdateFailed: "नोट अनुमति अपडेट करने में विफल",
     },
     mcpConnections: {
       title: "कनेक्टेड AI टूल",
@@ -291,6 +294,9 @@ export const hi = {
       noConnections: "अभी तक कोई AI टूल कनेक्ट नहीं किया गया",
       loadFailed: "कनेक्टेड टूल सूची लोड करने में विफल",
       updateFailed: "अनुमति अपडेट करने में विफल",
+      colAllowUpdateNote: "नोट अपडेट करने की अनुमति दें",
+      allowUpdateNoteLabel: "नोट अपडेट करने की अनुमति दें",
+      allowUpdateNoteUpdateFailed: "नोट अनुमति अपडेट करने में विफल",
     },
   },
   dashboard: {

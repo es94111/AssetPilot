@@ -6875,6 +6875,21 @@
     "description": "Web path: settings.mcpConnections.updateFailed",
     "x-webPath": "settings.mcpConnections.updateFailed"
   },
+  "settingsMcpConnectionsColAllowUpdateNote": "नोट अपडेट करने की अनुमति दें",
+  "@settingsMcpConnectionsColAllowUpdateNote": {
+    "description": "Web path: settings.mcpConnections.colAllowUpdateNote",
+    "x-webPath": "settings.mcpConnections.colAllowUpdateNote"
+  },
+  "settingsMcpConnectionsAllowUpdateNoteLabel": "नोट अपडेट करने की अनुमति दें",
+  "@settingsMcpConnectionsAllowUpdateNoteLabel": {
+    "description": "Web path: settings.mcpConnections.allowUpdateNoteLabel",
+    "x-webPath": "settings.mcpConnections.allowUpdateNoteLabel"
+  },
+  "settingsMcpConnectionsAllowUpdateNoteUpdateFailed": "नोट अनुमति अपडेट करने में विफल",
+  "@settingsMcpConnectionsAllowUpdateNoteUpdateFailed": {
+    "description": "Web path: settings.mcpConnections.allowUpdateNoteUpdateFailed",
+    "x-webPath": "settings.mcpConnections.allowUpdateNoteUpdateFailed"
+  },
   "settingsMcpColAllowCreate": "डेटा बनाने की अनुमति दें",
   "@settingsMcpColAllowCreate": {
     "description": "Web path: settings.mcp.colAllowCreate",
@@ -6889,6 +6904,21 @@
   "@settingsMcpAllowCreateUpdateFailed": {
     "description": "Web path: settings.mcp.allowCreateUpdateFailed",
     "x-webPath": "settings.mcp.allowCreateUpdateFailed"
+  },
+  "settingsMcpColAllowUpdateNote": "नोट अपडेट करने की अनुमति दें",
+  "@settingsMcpColAllowUpdateNote": {
+    "description": "Web path: settings.mcp.colAllowUpdateNote",
+    "x-webPath": "settings.mcp.colAllowUpdateNote"
+  },
+  "settingsMcpAllowUpdateNoteLabel": "नोट अपडेट करने की अनुमति दें",
+  "@settingsMcpAllowUpdateNoteLabel": {
+    "description": "Web path: settings.mcp.allowUpdateNoteLabel",
+    "x-webPath": "settings.mcp.allowUpdateNoteLabel"
+  },
+  "settingsMcpAllowUpdateNoteUpdateFailed": "नोट अनुमति अपडेट करने में विफल",
+  "@settingsMcpAllowUpdateNoteUpdateFailed": {
+    "description": "Web path: settings.mcp.allowUpdateNoteUpdateFailed",
+    "x-webPath": "settings.mcp.allowUpdateNoteUpdateFailed"
   },
   "adminSystemSettingsTitle": "सिस्टम सेटिंग्स",
   "@adminSystemSettingsTitle": {

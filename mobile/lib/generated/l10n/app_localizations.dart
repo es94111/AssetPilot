@@ -7801,6 +7801,24 @@ abstract class AppLocalizations {
   /// **'更新新增資料權限失敗'**
   String get settingsMcpConnectionsUpdateFailed;
 
+  /// Web path: settings.mcpConnections.colAllowUpdateNote
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'允許更新備註'**
+  String get settingsMcpConnectionsColAllowUpdateNote;
+
+  /// Web path: settings.mcpConnections.allowUpdateNoteLabel
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'允許更新備註'**
+  String get settingsMcpConnectionsAllowUpdateNoteLabel;
+
+  /// Web path: settings.mcpConnections.allowUpdateNoteUpdateFailed
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'更新備註權限更新失敗'**
+  String get settingsMcpConnectionsAllowUpdateNoteUpdateFailed;
+
   /// Web path: settings.mcp.colAllowCreate
   ///
   /// In zh_Hant_TW, this message translates to:
@@ -7818,6 +7836,24 @@ abstract class AppLocalizations {
   /// In zh_Hant_TW, this message translates to:
   /// **'更新新增資料權限失敗'**
   String get settingsMcpAllowCreateUpdateFailed;
+
+  /// Web path: settings.mcp.colAllowUpdateNote
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'允許更新備註'**
+  String get settingsMcpColAllowUpdateNote;
+
+  /// Web path: settings.mcp.allowUpdateNoteLabel
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'允許更新備註'**
+  String get settingsMcpAllowUpdateNoteLabel;
+
+  /// Web path: settings.mcp.allowUpdateNoteUpdateFailed
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'更新備註權限更新失敗'**
+  String get settingsMcpAllowUpdateNoteUpdateFailed;
 
   /// Web path: admin.adminSystemSettingsTitle
   ///

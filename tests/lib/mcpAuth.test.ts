@@ -9,7 +9,7 @@ const DB_URL = process.env.DATABASE_URL || process.env.POSTGRES_URL;
 if (!DB_URL) {
   test('mcpAuth（略過：未設定 DATABASE_URL/POSTGRES_URL，需搭配 PostgreSQL 執行完整驗證）', () => {});
 } else {
-  const { initDB, getDB } = await import('../../lib/db.ts');
+  const { initDB, getDB, queryOne } = await import('../../lib/db.ts');
   // Postgres worker thread 不會自動結束行程，測試結束後需顯式關閉，否則行程會無限期掛著。
   after(() => { getDB().close(); });
   const { uid } = await import('../../lib/userDefaults.ts');
@@ -21,6 +21,7 @@ if (!DB_URL) {
     listMcpCredentials,
     revokeMcpCredential,
     setMcpCredentialAllowCreate,
+    setMcpCredentialAllowUpdateNote,
     MAX_ACTIVE_MCP_CREDENTIALS,
     McpCredentialLimitError,
   } = await import('../../lib/mcpAuth.ts');
@@ -147,6 +148,85 @@ if (!DB_URL) {
         cleanupUser(otherUserId);
       }
     } finally {
+      cleanupUser(userId);
+    }
+  });
+
+  // ── 004-mcp-update-notes-only：allowUpdateNote 權限 ──────────────────────
+
+  test('createMcpCredential 預設 allowUpdateNote=false（FR-006）', () => {
+    const userId = 'test_mcpauth_' + uid();
+    try {
+      const created = createMcpCredential(userId, '備註權限測試');
+      const verified = verifyMcpToken(created.token);
+      assert.equal(verified?.allowUpdateNote, false);
+      const listed = listMcpCredentials(userId).find((c) => c.id === created.id);
+      assert.equal(listed?.allowUpdateNote, false);
+    } finally {
+      cleanupUser(userId);
+    }
+  });
+
+  test('setMcpCredentialAllowUpdateNote 可開關並反映於 verifyMcpToken／listMcpCredentials', () => {
+    const userId = 'test_mcpauth_' + uid();
+    try {
+      const created = createMcpCredential(userId, '備註權限切換');
+      assert.equal(verifyMcpToken(created.token)?.allowUpdateNote, false);
+
+      const opened = setMcpCredentialAllowUpdateNote(userId, created.id, true);
+      assert.equal(opened, true);
+      assert.equal(verifyMcpToken(created.token)?.allowUpdateNote, true);
+      assert.equal(listMcpCredentials(userId).find((c) => c.id === created.id)?.allowUpdateNote, true);
+
+      const closed = setMcpCredentialAllowUpdateNote(userId, created.id, false);
+      assert.equal(closed, true);
+      assert.equal(verifyMcpToken(created.token)?.allowUpdateNote, false);
+      assert.equal(listMcpCredentials(userId).find((c) => c.id === created.id)?.allowUpdateNote, false);
+    } finally {
+      cleanupUser(userId);
+    }
+  });
+
+  test('權限獨立性：開 allowUpdateNote 不影響 allowCreate，反之亦然（FR-005）', () => {
+    const userId = 'test_mcpauth_' + uid();
+    try {
+      const created = createMcpCredential(userId, '獨立權限');
+
+      // 只開 allowUpdateNote —— allowCreate 仍為 false
+      setMcpCredentialAllowUpdateNote(userId, created.id, true);
+      assert.equal(verifyMcpToken(created.token)?.allowUpdateNote, true);
+      assert.equal(verifyMcpToken(created.token)?.allowCreate, false);
+
+      // 只開 allowCreate —— allowUpdateNote 仍為 false（另一組憑證）
+      const other = createMcpCredential(userId, '獨立權限2');
+      setMcpCredentialAllowCreate(userId, other.id, true);
+      assert.equal(verifyMcpToken(other.token)?.allowCreate, true);
+      assert.equal(verifyMcpToken(other.token)?.allowUpdateNote, false);
+    } finally {
+      cleanupUser(userId);
+    }
+  });
+
+  test('關閉 allowUpdateNote 不回溯影響已更新的備註（US2 Acceptance Scenario 3、FR-007）', () => {
+    const userId = 'test_mcpauth_' + uid();
+    const txId = 'test_mcpnote_tx_' + uid();
+    try {
+      const created = createMcpCredential(userId, '關閉不回溯');
+      // 模擬先前已透過 update_transaction_note 成功更新過備註（直接以 SQL 設值，不需呼叫 MCP 工具）
+      getDB().run(
+        'INSERT INTO transactions (id, user_id, type, amount, date, note, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?)',
+        [txId, userId, 'expense', 100, '2026-08-10', '先前已更新的備註', Date.now(), Date.now()]
+      );
+
+      // 關閉權限
+      const closed = setMcpCredentialAllowUpdateNote(userId, created.id, false);
+      assert.equal(closed, true);
+
+      // 備註與關閉前完全相同（未被回溯）
+      const row = queryOne('SELECT note FROM transactions WHERE id = ?', [txId]) as { note: string } | null;
+      assert.equal(row?.note, '先前已更新的備註');
+    } finally {
+      getDB().run('DELETE FROM transactions WHERE user_id = ?', [userId]);
       cleanupUser(userId);
     }
   });

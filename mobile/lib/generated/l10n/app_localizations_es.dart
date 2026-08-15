@@ -4554,6 +4554,18 @@ class AppLocalizationsEs extends AppLocalizations {
       'Error al actualizar el permiso';
 
   @override
+  String get settingsMcpConnectionsColAllowUpdateNote =>
+      'Permitir actualizar notas';
+
+  @override
+  String get settingsMcpConnectionsAllowUpdateNoteLabel =>
+      'Permitir actualizar notas';
+
+  @override
+  String get settingsMcpConnectionsAllowUpdateNoteUpdateFailed =>
+      'Error al actualizar el permiso de notas';
+
+  @override
   String get settingsMcpColAllowCreate => 'Permitir crear datos';
 
   @override
@@ -4562,6 +4574,16 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get settingsMcpAllowCreateUpdateFailed =>
       'Error al actualizar el permiso';
+
+  @override
+  String get settingsMcpColAllowUpdateNote => 'Permitir actualizar notas';
+
+  @override
+  String get settingsMcpAllowUpdateNoteLabel => 'Permitir actualizar notas';
+
+  @override
+  String get settingsMcpAllowUpdateNoteUpdateFailed =>
+      'Error al actualizar el permiso de notas';
 
   @override
   String get adminSystemSettingsTitle => 'Configuración del sistema';

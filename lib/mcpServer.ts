@@ -6,13 +6,14 @@ import { getDB, queryAll, queryOne, saveDB } from './db';
 import { writeOperationAudit } from './auditHelpers';
 import { getTransactionsSummary, getStockPortfolioStatus } from './dashboardHelpers';
 import { getStockRealizedPl } from './stockHelpers';
-import { createReadOnlyOAuthToolDescriptor, createWriteOAuthToolDescriptor } from './mcpOpenAiCompatibility';
+import { createReadOnlyOAuthToolDescriptor, createWriteOAuthToolDescriptor, createUpdateOAuthToolDescriptor } from './mcpOpenAiCompatibility';
 import { normalizeCurrency, convertToTwd, normalizeDate, resolveOverseasFee } from './accountHelpers';
 import { todayInUserTz, isValidIsoDate, toIsoUtc } from './userTime';
 import { computeTwdAmount } from './moneyDecimal';
 import { insertIncomeExpenseTransaction, insertTransferPair } from './transactionWriteCore';
 import { uid } from './userDefaults';
 import type { VerifyMcpTokenResult } from './mcpAuth';
+import { TRANSACTION_NOTE_MAX_LENGTH, findTransactionEditBlock } from './transactionEditRules';
 
 const MAX_PAGE_SIZE = 200;
 const DEFAULT_PAGE_SIZE = 20;
@@ -70,6 +71,24 @@ const paginationShape = {
   pageSize: z.number().int().min(1).optional().describe(`單頁筆數，預設 ${DEFAULT_PAGE_SIZE}，上限 ${MAX_PAGE_SIZE}`),
 };
 
+// 檔案內區域映射函式：list_transactions 與 update_transaction_note 共用同一形狀，讓 AI 端能直接
+// 比對「更新前後其他欄位未變」（FR-015）。抽出範圍限於同一檔案內，輸出鍵、順序與數值逐字元不變
+// （Principle V 第 3 款）；不 export 以限縮可見範圍。
+function mapTransactionRowForMcp(r: Record<string, string | number | null>) {
+  return {
+    id: r.id,
+    type: r.type,
+    amount: Number(r.amount) || 0,
+    currency: r.currency || 'TWD',
+    date: r.date,
+    categoryId: r.category_id || null,
+    categoryName: r.category_name || null,
+    accountId: r.account_id || null,
+    accountName: r.account_name || null,
+    note: r.note || '',
+  };
+}
+
 export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
   const { userId } = credential;
   const server = new McpServer({ name: 'assetpilot-mcp', version: '1.0.0' });
@@ -112,18 +131,7 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
            WHERE ${where} ORDER BY t.date DESC, t.created_at DESC LIMIT ${ps} OFFSET ${offset}`,
           params
         );
-        const items = rows.map((r) => ({
-          id: r.id,
-          type: r.type,
-          amount: Number(r.amount) || 0,
-          currency: r.currency || 'TWD',
-          date: r.date,
-          categoryId: r.category_id || null,
-          categoryName: r.category_name || null,
-          accountId: r.account_id || null,
-          accountName: r.account_name || null,
-          note: r.note || '',
-        }));
+        const items = rows.map(mapTransactionRowForMcp);
         return toolResult({ items, total, page: p, pageSize: ps, totalPages: Math.ceil(total / ps) });
       });
     }
@@ -425,8 +433,10 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
   );
 
   // create_transaction 僅在憑證已開啟「允許新增資料」時才註冊；未開啟的連線的 tools/list
-  // 結果裡不存在這個工具（FR-005／FR-006，見 research.md 第 1 節）。刪除／修改工具則永遠
-  // 不存在於任何程式碼路徑，不因權限而有例外——不在本檔任何地方出現。
+  // 結果裡不存在這個工具（FR-005／FR-006，見 research.md 第 1 節）。update_transaction_note 則在
+  // 「允許更新備註」開啟時另行獨立註冊——兩個 if 各自獨立判斷、不巢狀、不串接，使兩種寫入權限
+  // 彼此獨立（FR-005）。刪除／修改其他欄位的工具則永遠不存在於任何程式碼路徑，不因權限而有例外
+  // ——不在本檔任何地方出現。
   if (credential.allowCreate === true) {
     server.registerTool(
       'create_transaction',
@@ -567,6 +577,72 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
           () => toolResult(response),
           'mcp_create_transaction',
           { transaction_id: transactionIdForAudit, transaction_summary: summary }
+        );
+      }
+    );
+  }
+
+  // update_transaction_note 僅在憑證已開啟「允許更新備註」時才註冊；與上面的 create_transaction
+  // 各自獨立判斷，不巢狀、不串接（FR-005 權限獨立性）。
+  if (credential.allowUpdateNote === true) {
+    server.registerTool(
+      'update_transaction_note',
+      {
+        ...createUpdateOAuthToolDescriptor('更新交易備註', '正在更新備註…', '備註已更新'),
+        description: '更新一筆既有交易紀錄的備註文字，視同使用者本人手動編輯備註；僅能修改備註，無法變更日期、類型、分類、金額、帳戶，也無法刪除任何資料。',
+        // 不得改用 .strict()：zod 物件預設剝除未宣告鍵，正是 FR-002／User Story 3 情境 2 要求的
+        // 「夾帶其他欄位不失敗也不生效」行為。不提供陣列／批次參數（FR-001）、idempotencyKey
+        // （research.md 第 8 節）或 expectedUpdatedAt（research.md 第 5 節）。
+        inputSchema: {
+          transactionId: z.string().describe('要更新備註的交易 id（須為本人名下既有交易，可由 list_transactions 取得）'),
+          note: z.string().describe('新的備註全文；空字串代表清空備註；長度上限 200 字'),
+        },
+      },
+      async ({ transactionId, note }) => {
+        // 處理順序第 1-3 步：前置檢查，順序不可調換，任一失敗皆不變更任何資料、不寫入稽核。
+        if (String(note).length > TRANSACTION_NOTE_MAX_LENGTH) {
+          throw new Error(`備註長度不可超過 ${TRANSACTION_NOTE_MAX_LENGTH} 字`);
+        }
+        // 欄位清單須逐一列舉、禁止省略號；須涵蓋 findTransactionEditBlock() 讀取的所有欄位。
+        const row = queryOne(
+          'SELECT id, is_fx_fee FROM transactions WHERE id = ? AND user_id = ?',
+          [transactionId, userId]
+        );
+        if (!row) {
+          throw new Error('交易不存在或無權限');
+        }
+        const editBlock = findTransactionEditBlock({ is_fx_fee: row.is_fx_fee as number | null });
+        if (editBlock) {
+          throw new Error(editBlock.message);
+        }
+
+        // 處理順序第 4 步：單一 SQL 陳述式只寫 note 與 updated_at，嚴禁讀改寫（FR-002、並行編輯保證）。
+        getDB().run(
+          'UPDATE transactions SET note = ?, updated_at = ? WHERE id = ? AND user_id = ?',
+          [note, Date.now(), transactionId, userId]
+        );
+        saveDB();
+
+        // 處理順序第 5 步：重新查詢該列以組出回應（FR-015），比照 list_transactions 的查詢形狀。
+        const updated = queryOne(
+          `SELECT t.*, c.name AS category_name, a.name AS account_name
+           FROM transactions t
+           LEFT JOIN categories c ON c.id = t.category_id
+           LEFT JOIN accounts a ON a.id = t.account_id
+           WHERE t.id = ? AND t.user_id = ?`,
+          [transactionId, userId]
+        );
+        const transaction = mapTransactionRowForMcp(updated as Record<string, string | number | null>);
+        const response = { ok: true, transaction };
+
+        // 處理順序第 6 步：寫入稽核（僅成功時，FR-012）。metadata 只放 transaction_id——刻意不加
+        // transaction_summary（本功能不變更金額，違反 FR-012 保守揭露原則），更絕對不得放備註內容。
+        return withAudit(
+          credential,
+          undefined,
+          () => toolResult(response),
+          'mcp_update_transaction_note',
+          { transaction_id: transactionId }
         );
       }
     );

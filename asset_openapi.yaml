@@ -2,7 +2,7 @@ openapi: "3.2.0"
 
 info:
   title: AssetPilot API
-  version: "4.98.2"
+  version: "4.99.0"
   description: |
     個人資產管理平台 AssetPilot 的完整 API Schema。
     供 Cloudflare API Shield Schema Validation 使用。
@@ -359,6 +359,12 @@ components:
         allowCreate:
           type: boolean
           description: 是否允許此憑證透過 MCP 新增交易；預設 false。
+        allowUpdateNote:
+          type: boolean
+          description: |
+            是否允許此憑證透過 MCP 更新既有交易的備註；預設 false。
+            與 allowCreate 彼此獨立，開啟其中一項不代表取得另一項的能力。
+            本功能上線當下所有既有憑證（含 allowCreate 為 true 者）皆為 false。
         createdAt:
           type: string
           format: date-time
@@ -370,15 +376,22 @@ components:
         expiresAt:
           type: [string, 'null']
           format: date-time
-      required: [id, name, status, allowCreate, createdAt]
+      required: [id, name, status, allowCreate, allowUpdateNote, createdAt]
 
-    McpCredentialAllowCreateUpdate:
+    # 既有 McpCredentialAllowCreateUpdate 更名而來：本 body 現可攜帶兩種權限，
+    # 原名稱已不再貼切（見 research.md 第 11 節）。屬性名稱與端點路徑皆不變。
+    McpCredentialPermissionUpdate:
       type: object
+      description: |
+        兩個屬性皆為選填，但至少必須提供其中一個布林值；兩者皆未提供或型別非布林時回傳 400。
+        僅提供其中一項時，另一項維持原狀不變。
       properties:
         allowCreate:
           type: boolean
           description: 新的「允許新增資料」狀態。
-      required: [allowCreate]
+        allowUpdateNote:
+          type: boolean
+          description: 新的「允許更新備註」狀態。
 
     McpOAuthConnection:
       type: object
@@ -392,20 +405,31 @@ components:
         allowCreate:
           type: boolean
           description: 是否允許此連線透過 MCP 新增交易；預設 false。
+        allowUpdateNote:
+          type: boolean
+          description: |
+            是否允許此連線透過 MCP 更新既有交易的備註；預設 false。
+            與 allowCreate 彼此獨立。此 AI 工具的授權全數失效後重新完成授權時，
+            本欄位會與 allowCreate 一同重置為 false，須使用者再次主動開啟。
         firstConnectedAt:
           type: string
           format: date-time
         lastUsedAt:
           type: string
           format: date-time
-      required: [clientId, clientName, allowCreate, firstConnectedAt, lastUsedAt]
+      required: [clientId, clientName, allowCreate, allowUpdateNote, firstConnectedAt, lastUsedAt]
 
-    McpOAuthConnectionAllowCreateUpdate:
+    # 既有 McpOAuthConnectionAllowCreateUpdate 更名而來，理由同上。
+    McpOAuthConnectionPermissionUpdate:
       type: object
+      description: |
+        兩個屬性皆為選填，但至少必須提供其中一個布林值；兩者皆未提供或型別非布林時回傳 400。
+        僅提供其中一項時，另一項維持原狀不變。
       properties:
         allowCreate:
           type: boolean
-      required: [allowCreate]
+        allowUpdateNote:
+          type: boolean
 
 # ─────────────────────────────────────────
 # 預設安全性（全域）
@@ -2054,14 +2078,15 @@ paths:
         "200":
           description: 執行結果
 
-  # ── MCP 新增資料權限（003-mcp-write-no-delete） ──────────
+  # ── MCP 寫入權限（新增資料／更新備註，003-mcp-write-no-delete ＋ 004-mcp-update-notes-only） ──────────
   /api/user/mcp-credentials/{id}:
     patch:
-      operationId: setMcpCredentialAllowCreate
+      operationId: setMcpCredentialPermissions
       tags: [McpCredentials]
-      summary: 開啟或關閉指定 PAT 憑證的「允許新增資料」權限
+      summary: 開啟或關閉指定 PAT 憑證的 MCP 寫入權限（新增資料／更新備註）
       description: |
-        變更即時生效於後續 MCP 請求，不影響此憑證先前已成功建立的交易。
+        變更即時生效於後續 MCP 連線，不影響此憑證先前已成功建立的交易或已更新的備註。
+        兩種權限彼此獨立，可分別開關；未於 body 提供的權限維持原狀。
         僅能操作使用者本人名下的憑證，找不到時回傳 404。
       parameters:
         - name: id
@@ -2074,7 +2099,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/McpCredentialAllowCreateUpdate'
+              $ref: '#/components/schemas/McpCredentialPermissionUpdate'
       responses:
         "200":
           description: 已更新
@@ -2086,7 +2111,7 @@ paths:
                   credential:
                     $ref: '#/components/schemas/McpCredential'
         "400":
-          description: 請求格式錯誤
+          description: 請求格式錯誤（未提供任何權限欄位，或欄位非布林值）
           content:
             application/json:
               schema:
@@ -2122,12 +2147,12 @@ paths:
 
   /api/user/mcp-oauth-connections/{clientId}:
     patch:
-      operationId: setMcpOAuthConnectionAllowCreate
+      operationId: setMcpOAuthConnectionPermissions
       tags: [McpOAuthConnections]
-      summary: 開啟或關閉指定已連接 AI 工具的「允許新增資料」權限
+      summary: 開啟或關閉指定已連接 AI 工具的 MCP 寫入權限（新增資料／更新備註）
       description: |
-        變更立即生效，不需使用者重新走一次 OAuth 授權流程。僅能操作使用者本人名下的連線，
-        找不到時回傳 404。
+        變更立即生效，不需使用者重新走一次 OAuth 授權流程。兩種權限彼此獨立，可分別開關；
+        未於 body 提供的權限維持原狀。僅能操作使用者本人名下的連線，找不到時回傳 404。
       parameters:
         - name: clientId
           in: path
@@ -2139,7 +2164,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/McpOAuthConnectionAllowCreateUpdate'
+              $ref: '#/components/schemas/McpOAuthConnectionPermissionUpdate'
       responses:
         "200":
           description: 已更新
@@ -2151,7 +2176,7 @@ paths:
                   connection:
                     $ref: '#/components/schemas/McpOAuthConnection'
         "400":
-          description: 請求格式錯誤
+          description: 請求格式錯誤（未提供任何權限欄位，或欄位非布林值）
           content:
             application/json:
               schema:

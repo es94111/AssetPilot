@@ -4525,6 +4525,18 @@ class AppLocalizationsPt extends AppLocalizations {
       'Falha ao atualizar a permissão';
 
   @override
+  String get settingsMcpConnectionsColAllowUpdateNote =>
+      'Permitir atualizar notas';
+
+  @override
+  String get settingsMcpConnectionsAllowUpdateNoteLabel =>
+      'Permitir atualizar notas';
+
+  @override
+  String get settingsMcpConnectionsAllowUpdateNoteUpdateFailed =>
+      'Falha ao atualizar a permissão de notas';
+
+  @override
   String get settingsMcpColAllowCreate => 'Permitir criação de dados';
 
   @override
@@ -4533,6 +4545,16 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get settingsMcpAllowCreateUpdateFailed =>
       'Falha ao atualizar a permissão';
+
+  @override
+  String get settingsMcpColAllowUpdateNote => 'Permitir atualizar notas';
+
+  @override
+  String get settingsMcpAllowUpdateNoteLabel => 'Permitir atualizar notas';
+
+  @override
+  String get settingsMcpAllowUpdateNoteUpdateFailed =>
+      'Falha ao atualizar a permissão de notas';
 
   @override
   String get adminSystemSettingsTitle => 'Configurações do sistema';
@@ -9207,6 +9229,18 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
       'Falha ao atualizar a permissão';
 
   @override
+  String get settingsMcpConnectionsColAllowUpdateNote =>
+      'Permitir atualizar notas';
+
+  @override
+  String get settingsMcpConnectionsAllowUpdateNoteLabel =>
+      'Permitir atualizar notas';
+
+  @override
+  String get settingsMcpConnectionsAllowUpdateNoteUpdateFailed =>
+      'Falha ao atualizar a permissão de notas';
+
+  @override
   String get settingsMcpColAllowCreate => 'Permitir criação de dados';
 
   @override
@@ -9215,6 +9249,16 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   @override
   String get settingsMcpAllowCreateUpdateFailed =>
       'Falha ao atualizar a permissão';
+
+  @override
+  String get settingsMcpColAllowUpdateNote => 'Permitir atualizar notas';
+
+  @override
+  String get settingsMcpAllowUpdateNoteLabel => 'Permitir atualizar notas';
+
+  @override
+  String get settingsMcpAllowUpdateNoteUpdateFailed =>
+      'Falha ao atualizar a permissão de notas';
 
   @override
   String get adminSystemSettingsTitle => 'Configurações do sistema';

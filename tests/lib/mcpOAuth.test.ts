@@ -468,6 +468,7 @@ if (!DB_URL) {
     verifyMcpOAuthAccessToken,
     listMcpOAuthConnections,
     setMcpOAuthConnectionAllowCreate,
+    setMcpOAuthConnectionAllowUpdateNote,
   } = await import('../../lib/mcpOAuth.ts');
 
   test('authorization code 單次兌換、access audience、refresh rotation/replay 與 revoke', () => {
@@ -660,6 +661,97 @@ if (!DB_URL) {
         [userId, clientId]
       );
       assert.ok(rowStillExists, '資料列本身應保留，只是清單不顯示');
+    } finally {
+      getDB().run('DELETE FROM mcp_oauth_authorization_codes WHERE user_id = ?', [userId]);
+      getDB().run('DELETE FROM mcp_oauth_tokens WHERE user_id = ?', [userId]);
+      getDB().run('DELETE FROM mcp_oauth_connections WHERE user_id = ?', [userId]);
+      if (clientId) getDB().run('DELETE FROM mcp_oauth_clients WHERE client_id = ?', [clientId]);
+      getDB().run('DELETE FROM users WHERE id = ?', [userId]);
+    }
+  });
+
+  test('mcp_oauth_connections.allow_update_note：首次核發預設 0、setter 生效、授權仍有效不重置、撤銷後重新授權重置為 0（004-mcp-update-notes-only FR-014）', () => {
+    const userId = `test_mcpoauth_note_${crypto.randomUUID().replaceAll('-', '')}`;
+    const email = `${userId}@example.test`;
+    const expectedResource = 'https://asset.example/api/mcp';
+    let clientId = '';
+    try {
+      getDB().run(
+        `INSERT INTO users (id, email, password_hash, display_name, created_at, is_active)
+         VALUES (?,?,?,?,?,1)`,
+        [userId, email, 'test-only', 'OAuth Note Permission Test User', '2026-08-14']
+      );
+      const client = registerMcpOAuthClient({
+        redirect_uris: ['https://client.example/callback'],
+        token_endpoint_auth_method: 'none',
+        client_name: 'OAuth Note Permission Test Client',
+      });
+      clientId = client.client_id;
+
+      // (a) 首次核發 token 後 mcp_oauth_connections 該列 allow_update_note 預設 0。
+      const code1 = issueMcpAuthorizationCode({
+        userId, client, redirectUri: client.redirect_uris[0], codeChallenge: RFC_7636_CHALLENGE,
+        scopes: [MCP_OAUTH_SCOPE], resource: expectedResource,
+      });
+      const tokens1 = exchangeMcpAuthorizationCode({
+        client, code: code1, codeVerifier: RFC_7636_VERIFIER, redirectUri: client.redirect_uris[0],
+        resource: expectedResource, expectedResource,
+      });
+      const connRow1 = queryOne(
+        'SELECT allow_update_note FROM mcp_oauth_connections WHERE user_id = ? AND client_id = ?',
+        [userId, clientId]
+      );
+      assert.ok(connRow1, '首次核發後應存在一列 mcp_oauth_connections');
+      assert.equal(Number(connRow1?.allow_update_note), 0, '首次核發 allow_update_note 應為 0');
+      assert.equal(verifyMcpOAuthAccessToken(tokens1.access_token, expectedResource)?.allowUpdateNote, false);
+
+      // (b) setMcpOAuthConnectionAllowUpdateNote() 切換後，listMcpOAuthConnections() 與 verifyMcpOAuthAccessToken() 反映最新值。
+      assert.equal(setMcpOAuthConnectionAllowUpdateNote(userId, clientId, true), true);
+      assert.equal(listMcpOAuthConnections(userId).find((c) => c.clientId === clientId)?.allowUpdateNote, true);
+      assert.equal(verifyMcpOAuthAccessToken(tokens1.access_token, expectedResource)?.allowUpdateNote, true);
+      assert.equal(setMcpOAuthConnectionAllowUpdateNote(userId, clientId, false), true);
+      assert.equal(verifyMcpOAuthAccessToken(tokens1.access_token, expectedResource)?.allowUpdateNote, false);
+
+      // 重新開啟以測試後續重置
+      assert.equal(setMcpOAuthConnectionAllowUpdateNote(userId, clientId, true), true);
+      assert.equal(Number(queryOne(
+        'SELECT allow_update_note FROM mcp_oauth_connections WHERE user_id = ? AND client_id = ?',
+        [userId, clientId]
+      )?.allow_update_note), 1);
+
+      // (c) 授權仍有效時對同一 client 重跑授權流程，allow_update_note = 1 不被重置。
+      const code2 = issueMcpAuthorizationCode({
+        userId, client, redirectUri: client.redirect_uris[0], codeChallenge: RFC_7636_CHALLENGE,
+        scopes: [MCP_OAUTH_SCOPE], resource: expectedResource,
+      });
+      const tokens2 = exchangeMcpAuthorizationCode({
+        client, code: code2, codeVerifier: RFC_7636_VERIFIER, redirectUri: client.redirect_uris[0],
+        resource: expectedResource, expectedResource,
+      });
+      const connRowAfterReauth = queryOne(
+        'SELECT allow_update_note FROM mcp_oauth_connections WHERE user_id = ? AND client_id = ?',
+        [userId, clientId]
+      );
+      assert.equal(Number(connRowAfterReauth?.allow_update_note), 1, '授權仍有效時重新授權不應重置 allow_update_note');
+
+      // (d) 授權已全數撤銷後重跑授權流程，allow_update_note 必須被重置為 0。
+      revokeMcpOAuthToken(client, tokens1.access_token);
+      revokeMcpOAuthToken(client, tokens2.access_token);
+      assert.equal(verifyMcpOAuthAccessToken(tokens2.access_token, expectedResource), null);
+
+      const code3 = issueMcpAuthorizationCode({
+        userId, client, redirectUri: client.redirect_uris[0], codeChallenge: RFC_7636_CHALLENGE,
+        scopes: [MCP_OAUTH_SCOPE], resource: expectedResource,
+      });
+      exchangeMcpAuthorizationCode({
+        client, code: code3, codeVerifier: RFC_7636_VERIFIER, redirectUri: client.redirect_uris[0],
+        resource: expectedResource, expectedResource,
+      });
+      const connRowAfterRevokeReauth = queryOne(
+        'SELECT allow_update_note FROM mcp_oauth_connections WHERE user_id = ? AND client_id = ?',
+        [userId, clientId]
+      );
+      assert.equal(Number(connRowAfterRevokeReauth?.allow_update_note), 0, '撤銷後重新授權應把 allow_update_note 重置為 0');
     } finally {
       getDB().run('DELETE FROM mcp_oauth_authorization_codes WHERE user_id = ?', [userId]);
       getDB().run('DELETE FROM mcp_oauth_tokens WHERE user_id = ?', [userId]);

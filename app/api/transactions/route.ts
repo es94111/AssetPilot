@@ -31,6 +31,8 @@ interface TransactionRow {
   source_recurring_id: string | null;
   source_recurring_name?: string | null;
   scheduled_date: string | null;
+  ai_created: number | null;
+  note_ai_modified: number | null;
   created_at: string | number | null;
   updated_at: string | number | null;
   [key: string]: unknown;
@@ -47,6 +49,8 @@ interface TransactionListItem extends TransactionRow {
   twdAmount: number;
   excludeFromStats: boolean;
   isFxFee: boolean;
+  aiCreated: boolean;
+  noteAiModified: boolean;
   linkedId: string;
   sourceRecurringId: string | null;
   sourceRecurringName: string | null;
@@ -200,6 +204,8 @@ export async function GET(request: NextRequest) {
     twdAmount: Number(r.twd_amount) || Number(r.amount) || 0,
     excludeFromStats: r.exclude_from_stats === 1,
     isFxFee: r.is_fx_fee === 1,
+    aiCreated: r.ai_created === 1,
+    noteAiModified: r.note_ai_modified === 1,
     linkedId: r.linked_id || '',
     sourceRecurringId: r.source_recurring_id || null,
     sourceRecurringName: r.source_recurring_id ? (r.source_recurring_name || null) : null,

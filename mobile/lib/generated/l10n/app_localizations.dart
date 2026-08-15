@@ -3865,6 +3865,66 @@ abstract class AppLocalizations {
   /// **'國外刷卡手續費'**
   String get featuresTransactionsFxFee;
 
+  /// Web path: features.transactions.aiCreated
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'AI 建立'**
+  String get featuresTransactionsAiCreated;
+
+  /// Web path: features.transactions.noteAiModified
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'備註經 AI 修改'**
+  String get featuresTransactionsNoteAiModified;
+
+  /// Web path: features.transactions.restoreCreated
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'還原建立'**
+  String get featuresTransactionsRestoreCreated;
+
+  /// Web path: features.transactions.restoreNote
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'還原備註'**
+  String get featuresTransactionsRestoreNote;
+
+  /// Web path: features.transactions.restoreCreatedTitle
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'還原 AI 建立的交易'**
+  String get featuresTransactionsRestoreCreatedTitle;
+
+  /// Web path: features.transactions.restoreCreatedMessage
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'還原後這筆交易（含連動的轉帳或手續費交易）將被移除，且無法復原。確定要還原嗎？'**
+  String get featuresTransactionsRestoreCreatedMessage;
+
+  /// Web path: features.transactions.restoreNoteTitle
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'還原備註'**
+  String get featuresTransactionsRestoreNoteTitle;
+
+  /// Web path: features.transactions.restoreNoteConfirmMessage
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'還原後備註將復原為 AI 修改前的內容，且無法復原。確定要還原嗎？'**
+  String get featuresTransactionsRestoreNoteConfirmMessage;
+
+  /// Web path: features.transactions.restoreNoteCurrentLabel
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'目前備註'**
+  String get featuresTransactionsRestoreNoteCurrentLabel;
+
+  /// Web path: features.transactions.restoreNotePreviewLabel
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'還原後備註'**
+  String get featuresTransactionsRestoreNotePreviewLabel;
+
   /// Web path: features.transactions.photoOne
   ///
   /// In zh_Hant_TW, this message translates to:

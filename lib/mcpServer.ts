@@ -507,7 +507,7 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
           const pair = insertTransferPair({
             userId, fromAccountId, toAccountId, fromCurrency, toCurrency,
             twdAmount: converted.twdAmount, originalAmount: converted.originalAmount, fxRate: converted.fxRate,
-            date, note: note || '轉帳',
+            date, note: note || '轉帳', aiCreated: true,
           });
           response = { transferOut: pair.transferOut, transferIn: pair.transferIn };
           transactionIdForAudit = pair.transferOut.id;
@@ -542,7 +542,7 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
           const created = insertIncomeExpenseTransaction({
             userId, type, twdAmount: twdAmountInt, currency: converted.currency, originalAmount: converted.originalAmount,
             fxRate: converted.fxRate, fxFee, date, categoryId: resolvedCategoryId, accountId: resolvedAccountId,
-            note: note || '', excludeFromStats: false,
+            note: note || '', excludeFromStats: false, aiCreated: true,
           });
           response = {
             id: created.id, type, amount: converted.originalAmount, currency: converted.currency, date,
@@ -616,9 +616,10 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
           throw new Error(editBlock.message);
         }
 
-        // 處理順序第 4 步：單一 SQL 陳述式只寫 note 與 updated_at，嚴禁讀改寫（FR-002、並行編輯保證）。
+        // 處理順序第 4 步：單一 SQL 陳述式同時寫入新備註、快照（pre_ai_note = note 於同一陳述式內
+        // 取得異動前的舊值）與旗標，嚴禁讀改寫（FR-002、並行編輯保證；005 FR-003/FR-007）。
         getDB().run(
-          'UPDATE transactions SET note = ?, updated_at = ? WHERE id = ? AND user_id = ?',
+          'UPDATE transactions SET note = ?, pre_ai_note = note, note_ai_modified = 1, updated_at = ? WHERE id = ? AND user_id = ?',
           [note, Date.now(), transactionId, userId]
         );
         saveDB();

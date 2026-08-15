@@ -2093,6 +2093,40 @@ class AppLocalizationsEn extends AppLocalizations {
   String get featuresTransactionsFxFee => 'Overseas card fee';
 
   @override
+  String get featuresTransactionsAiCreated => 'AI-created';
+
+  @override
+  String get featuresTransactionsNoteAiModified => 'Note edited by AI';
+
+  @override
+  String get featuresTransactionsRestoreCreated => 'Undo creation';
+
+  @override
+  String get featuresTransactionsRestoreNote => 'Restore note';
+
+  @override
+  String get featuresTransactionsRestoreCreatedTitle =>
+      'Restore AI-created transaction';
+
+  @override
+  String get featuresTransactionsRestoreCreatedMessage =>
+      'Restoring will remove this transaction, including any linked transfer leg or fee transaction, and cannot be undone. Continue?';
+
+  @override
+  String get featuresTransactionsRestoreNoteTitle => 'Restore note';
+
+  @override
+  String get featuresTransactionsRestoreNoteConfirmMessage =>
+      'Restoring will revert the note to its content before the AI\'s edit and cannot be undone. Continue?';
+
+  @override
+  String get featuresTransactionsRestoreNoteCurrentLabel => 'Current note';
+
+  @override
+  String get featuresTransactionsRestoreNotePreviewLabel =>
+      'Note after restore';
+
+  @override
   String get featuresTransactionsPhotoOne => 'Photo 1';
 
   @override

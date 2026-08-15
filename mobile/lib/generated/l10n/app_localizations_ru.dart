@@ -2116,6 +2116,40 @@ class AppLocalizationsRu extends AppLocalizations {
   String get featuresTransactionsFxFee => 'Комиссия за зарубежную карту';
 
   @override
+  String get featuresTransactionsAiCreated => 'Создано ИИ';
+
+  @override
+  String get featuresTransactionsNoteAiModified => 'Примечание изменено ИИ';
+
+  @override
+  String get featuresTransactionsRestoreCreated => 'Отменить создание';
+
+  @override
+  String get featuresTransactionsRestoreNote => 'Восстановить заметку';
+
+  @override
+  String get featuresTransactionsRestoreCreatedTitle =>
+      'Восстановить транзакцию, созданную ИИ';
+
+  @override
+  String get featuresTransactionsRestoreCreatedMessage =>
+      'Восстановление удалит эту транзакцию (включая связанный перевод или комиссию) и не может быть отменено. Продолжить?';
+
+  @override
+  String get featuresTransactionsRestoreNoteTitle => 'Восстановить заметку';
+
+  @override
+  String get featuresTransactionsRestoreNoteConfirmMessage =>
+      'Восстановление вернёт заметку к её содержимому до редактирования ИИ и не может быть отменено. Продолжить?';
+
+  @override
+  String get featuresTransactionsRestoreNoteCurrentLabel => 'Текущая заметка';
+
+  @override
+  String get featuresTransactionsRestoreNotePreviewLabel =>
+      'Заметка после восстановления';
+
+  @override
   String get featuresTransactionsPhotoOne => 'Фото 1';
 
   @override

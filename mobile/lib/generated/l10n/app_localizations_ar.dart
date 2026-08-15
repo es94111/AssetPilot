@@ -2084,6 +2084,42 @@ class AppLocalizationsAr extends AppLocalizations {
   String get featuresTransactionsFxFee => 'رسوم بطاقة أجنبية';
 
   @override
+  String get featuresTransactionsAiCreated =>
+      'تم الإنشاء بواسطة الذكاء الاصطناعي';
+
+  @override
+  String get featuresTransactionsNoteAiModified =>
+      'تم تعديل الملاحظة بواسطة الذكاء الاصطناعي';
+
+  @override
+  String get featuresTransactionsRestoreCreated => 'تراجع عن الإنشاء';
+
+  @override
+  String get featuresTransactionsRestoreNote => 'استعادة الملاحظة';
+
+  @override
+  String get featuresTransactionsRestoreCreatedTitle =>
+      'استعادة معاملة أنشأها الذكاء الاصطناعي';
+
+  @override
+  String get featuresTransactionsRestoreCreatedMessage =>
+      'ستؤدي الاستعادة إلى إزالة هذه المعاملة (بما في ذلك أي تحويل مرتبط أو معاملة رسوم) ولا يمكن التراجع عنها. هل تريد المتابعة؟';
+
+  @override
+  String get featuresTransactionsRestoreNoteTitle => 'استعادة الملاحظة';
+
+  @override
+  String get featuresTransactionsRestoreNoteConfirmMessage =>
+      'ستؤدي الاستعادة إلى إرجاع الملاحظة إلى محتواها قبل تعديل الذكاء الاصطناعي ولا يمكن التراجع عنها. هل تريد المتابعة؟';
+
+  @override
+  String get featuresTransactionsRestoreNoteCurrentLabel => 'الملاحظة الحالية';
+
+  @override
+  String get featuresTransactionsRestoreNotePreviewLabel =>
+      'الملاحظة بعد الاستعادة';
+
+  @override
   String get featuresTransactionsPhotoOne => 'صورة واحدة';
 
   @override

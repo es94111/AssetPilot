@@ -10,6 +10,7 @@ const AUDIT_METADATA_ALLOWED_KEYS = new Set([
   'filename', 'filterParams',
   'bucket', 'object_key', 'endpoint', 'region',
   'transaction_id', 'attachment_id', 'storage', 'mime_type',
+  'linked_transaction_id',
   'path', 'normalizedPath', 'next', 'reason', 'rawUrl', 'pattern',
   // 敏感操作（管理員權限／設定／稽核維運）詳細記錄用的欄位。
   'target_user_id', 'target_email', 'was_admin', 'is_admin',

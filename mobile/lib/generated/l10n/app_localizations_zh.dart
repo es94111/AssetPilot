@@ -1991,6 +1991,38 @@ class AppLocalizationsZh extends AppLocalizations {
   String get featuresTransactionsFxFee => '國外刷卡手續費';
 
   @override
+  String get featuresTransactionsAiCreated => 'AI 建立';
+
+  @override
+  String get featuresTransactionsNoteAiModified => '備註經 AI 修改';
+
+  @override
+  String get featuresTransactionsRestoreCreated => '還原建立';
+
+  @override
+  String get featuresTransactionsRestoreNote => '還原備註';
+
+  @override
+  String get featuresTransactionsRestoreCreatedTitle => '還原 AI 建立的交易';
+
+  @override
+  String get featuresTransactionsRestoreCreatedMessage =>
+      '還原後這筆交易（含連動的轉帳或手續費交易）將被移除，且無法復原。確定要還原嗎？';
+
+  @override
+  String get featuresTransactionsRestoreNoteTitle => '還原備註';
+
+  @override
+  String get featuresTransactionsRestoreNoteConfirmMessage =>
+      '還原後備註將復原為 AI 修改前的內容，且無法復原。確定要還原嗎？';
+
+  @override
+  String get featuresTransactionsRestoreNoteCurrentLabel => '目前備註';
+
+  @override
+  String get featuresTransactionsRestoreNotePreviewLabel => '還原後備註';
+
+  @override
   String get featuresTransactionsPhotoOne => '照片 1';
 
   @override
@@ -6424,6 +6456,38 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
 
   @override
   String get featuresTransactionsFxFee => '海外刷卡手续费';
+
+  @override
+  String get featuresTransactionsAiCreated => 'AI 创建';
+
+  @override
+  String get featuresTransactionsNoteAiModified => '备注经 AI 修改';
+
+  @override
+  String get featuresTransactionsRestoreCreated => '撤销创建';
+
+  @override
+  String get featuresTransactionsRestoreNote => '还原备注';
+
+  @override
+  String get featuresTransactionsRestoreCreatedTitle => '还原 AI 创建的交易';
+
+  @override
+  String get featuresTransactionsRestoreCreatedMessage =>
+      '还原后将移除这笔交易（包括关联的转账或手续费交易），且无法恢复。确定要还原吗？';
+
+  @override
+  String get featuresTransactionsRestoreNoteTitle => '还原备注';
+
+  @override
+  String get featuresTransactionsRestoreNoteConfirmMessage =>
+      '还原后备注将恢复为 AI 修改前的内容，且无法恢复。确定要还原吗？';
+
+  @override
+  String get featuresTransactionsRestoreNoteCurrentLabel => '当前备注';
+
+  @override
+  String get featuresTransactionsRestoreNotePreviewLabel => '还原后备注';
 
   @override
   String get featuresTransactionsPhotoOne => '照片 1';
@@ -10860,6 +10924,38 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
 
   @override
   String get featuresTransactionsFxFee => '國外刷卡手續費';
+
+  @override
+  String get featuresTransactionsAiCreated => 'AI 建立';
+
+  @override
+  String get featuresTransactionsNoteAiModified => '備註經 AI 修改';
+
+  @override
+  String get featuresTransactionsRestoreCreated => '還原建立';
+
+  @override
+  String get featuresTransactionsRestoreNote => '還原備註';
+
+  @override
+  String get featuresTransactionsRestoreCreatedTitle => '還原 AI 建立的交易';
+
+  @override
+  String get featuresTransactionsRestoreCreatedMessage =>
+      '還原後這筆交易（含連動的轉帳或手續費交易）將被移除，且無法復原。確定要還原嗎？';
+
+  @override
+  String get featuresTransactionsRestoreNoteTitle => '還原備註';
+
+  @override
+  String get featuresTransactionsRestoreNoteConfirmMessage =>
+      '還原後備註將復原為 AI 修改前的內容，且無法復原。確定要還原嗎？';
+
+  @override
+  String get featuresTransactionsRestoreNoteCurrentLabel => '目前備註';
+
+  @override
+  String get featuresTransactionsRestoreNotePreviewLabel => '還原後備註';
 
   @override
   String get featuresTransactionsPhotoOne => '照片 1';

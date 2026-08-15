@@ -14,7 +14,7 @@ if (!DB_URL) {
 } else {
   const { initDB, getDB, queryOne } = await import('../../lib/db.ts');
   const { uid } = await import('../../lib/userDefaults.ts');
-  const { insertIncomeExpenseTransaction, insertTransferPair } = await import('../../lib/transactionWriteCore.ts');
+  const { insertIncomeExpenseTransaction, insertTransferPair, deleteTransactionCascade } = await import('../../lib/transactionWriteCore.ts');
 
   await initDB();
   // Postgres worker thread 不會自動結束行程，測試結束後需顯式關閉，否則行程會無限期掛著。
@@ -130,6 +130,96 @@ if (!DB_URL) {
 
       const leftover = queryOne('SELECT COUNT(*) AS cnt FROM transactions WHERE note = ?', [marker]);
       assert.equal(Number(leftover?.cnt) || 0, 0);
+    } finally {
+      cleanupUser(userId);
+    }
+  });
+
+  test('insertIncomeExpenseTransaction：不傳 aiCreated 時寫入列 ai_created=0（005 既有行為回歸）', () => {
+    const userId = 'test_txwritecore_' + uid();
+    const accountId = uid();
+    try {
+      const result = insertIncomeExpenseTransaction({
+        userId, type: 'expense', twdAmount: 200, currency: 'TWD', originalAmount: 200, fxRate: '1',
+        fxFee: 0, date: '2026-08-14', categoryId: null, accountId, note: '', excludeFromStats: false,
+      });
+      const row = queryOne('SELECT ai_created FROM transactions WHERE id = ?', [result.id]);
+      assert.equal(Number(row?.ai_created), 0);
+    } finally {
+      cleanupUser(userId);
+    }
+  });
+
+  test('insertIncomeExpenseTransaction：傳 aiCreated=true 且觸發手續費子交易時，主交易與手續費列皆 ai_created=1（005 FR-018(a)）', () => {
+    const userId = 'test_txwritecore_' + uid();
+    const accountId = uid();
+    try {
+      const result = insertIncomeExpenseTransaction({
+        userId, type: 'expense', twdAmount: 3000, currency: 'USD', originalAmount: 100, fxRate: '30',
+        fxFee: 45, date: '2026-08-14', categoryId: null, accountId, note: '海外刷卡', excludeFromStats: false,
+        aiCreated: true,
+      });
+      assert.ok(result.feeId);
+      const mainRow = queryOne('SELECT ai_created FROM transactions WHERE id = ?', [result.id]);
+      assert.equal(Number(mainRow?.ai_created), 1);
+      const feeRow = queryOne('SELECT ai_created FROM transactions WHERE id = ?', [result.feeId]);
+      assert.equal(Number(feeRow?.ai_created), 1);
+    } finally {
+      cleanupUser(userId);
+    }
+  });
+
+  test('insertTransferPair：傳 aiCreated=true 建立的兩腳皆 ai_created=1（005 FR-018(a)）', () => {
+    const userId = 'test_txwritecore_' + uid();
+    const fromAccountId = uid();
+    const toAccountId = uid();
+    try {
+      const pair = insertTransferPair({
+        userId, fromAccountId, toAccountId, fromCurrency: 'TWD', toCurrency: 'TWD',
+        twdAmount: 1000, originalAmount: 1000, fxRate: '1', date: '2026-08-14', note: '轉帳',
+        aiCreated: true,
+      });
+      const outRow = queryOne('SELECT ai_created FROM transactions WHERE id = ?', [pair.transferOut.id]);
+      const inRow = queryOne('SELECT ai_created FROM transactions WHERE id = ?', [pair.transferIn.id]);
+      assert.equal(Number(outRow?.ai_created), 1);
+      assert.equal(Number(inRow?.ai_created), 1);
+    } finally {
+      cleanupUser(userId);
+    }
+  });
+
+  test('deleteTransactionCascade：有 linkedId 時回傳兩個 id，兩列皆從資料庫消失（005 FR-018(b)）', async () => {
+    const userId = 'test_txwritecore_' + uid();
+    const fromAccountId = uid();
+    const toAccountId = uid();
+    try {
+      const pair = insertTransferPair({
+        userId, fromAccountId, toAccountId, fromCurrency: 'TWD', toCurrency: 'TWD',
+        twdAmount: 1000, originalAmount: 1000, fxRate: '1', date: '2026-08-14', note: '轉帳',
+      });
+      const removed = await deleteTransactionCascade(userId, pair.transferOut.id, pair.transferIn.id);
+      assert.deepEqual(removed, [pair.transferOut.id, pair.transferIn.id]);
+      const outRow = queryOne('SELECT id FROM transactions WHERE id = ?', [pair.transferOut.id]);
+      const inRow = queryOne('SELECT id FROM transactions WHERE id = ?', [pair.transferIn.id]);
+      assert.equal(outRow, null);
+      assert.equal(inRow, null);
+    } finally {
+      cleanupUser(userId);
+    }
+  });
+
+  test('deleteTransactionCascade：空字串 linkedId 僅刪除該筆本身，回傳陣列僅含一個 id', async () => {
+    const userId = 'test_txwritecore_' + uid();
+    const accountId = uid();
+    try {
+      const result = insertIncomeExpenseTransaction({
+        userId, type: 'expense', twdAmount: 200, currency: 'TWD', originalAmount: 200, fxRate: '1',
+        fxFee: 0, date: '2026-08-14', categoryId: null, accountId, note: '', excludeFromStats: false,
+      });
+      const removed = await deleteTransactionCascade(userId, result.id, '');
+      assert.deepEqual(removed, [result.id]);
+      const row = queryOne('SELECT id FROM transactions WHERE id = ?', [result.id]);
+      assert.equal(row, null);
     } finally {
       cleanupUser(userId);
     }

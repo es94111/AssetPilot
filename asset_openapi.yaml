@@ -2,7 +2,7 @@ openapi: "3.2.0"
 
 info:
   title: AssetPilot API
-  version: "4.99.0"
+  version: "4.101.0"
   description: |
     個人資產管理平台 AssetPilot 的完整 API Schema。
     供 Cloudflare API Shield Schema Validation 使用。
@@ -1190,6 +1190,71 @@ paths:
       responses:
         "200":
           description: 刪除成功
+
+  /api/transactions/{id}/restore-ai-created:
+    post:
+      operationId: restoreAiCreatedTransaction
+      tags: [Transactions]
+      summary: 還原（移除）一筆由 AI 透過 MCP 建立的交易
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 已還原（交易與其連動對象皆已移除）
+        "404":
+          description: 找不到此交易，或不屬於目前使用者
+        "409":
+          description: 此交易並非 AI／MCP 建立（NotRestorable），未變更任何資料
+
+  /api/transactions/{id}/restore-ai-note:
+    get:
+      operationId: previewAiNoteRestore
+      tags: [Transactions]
+      summary: 預覽「備註經 AI 修改」還原後的內容（唯讀）
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 預覽內容
+        "404":
+          description: 找不到此交易，或不屬於目前使用者
+    post:
+      operationId: restoreAiNote
+      tags: [Transactions]
+      summary: 確認執行備註還原
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [expectedUpdatedAt]
+              properties:
+                expectedUpdatedAt:
+                  type: integer
+      responses:
+        "200":
+          description: 已還原
+        "400":
+          description: 缺少或格式錯誤的 expectedUpdatedAt
+        "404":
+          description: 找不到此交易，或不屬於目前使用者
+        "409":
+          description: NoteChanged（樂觀鎖衝突）或 NotRestorable（無可還原快照），皆不變更任何資料
 
   /api/transactions/transfer:
     post:

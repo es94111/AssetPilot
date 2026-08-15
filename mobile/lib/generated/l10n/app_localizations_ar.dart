@@ -4451,6 +4451,18 @@ class AppLocalizationsAr extends AppLocalizations {
   String get settingsMcpConnectionsUpdateFailed => 'فشل تحديث الإذن';
 
   @override
+  String get settingsMcpConnectionsColAllowUpdateNote =>
+      'السماح بتحديث الملاحظات';
+
+  @override
+  String get settingsMcpConnectionsAllowUpdateNoteLabel =>
+      'السماح بتحديث الملاحظات';
+
+  @override
+  String get settingsMcpConnectionsAllowUpdateNoteUpdateFailed =>
+      'فشل تحديث إذن الملاحظات';
+
+  @override
   String get settingsMcpColAllowCreate => 'السماح بإنشاء البيانات';
 
   @override
@@ -4458,6 +4470,16 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get settingsMcpAllowCreateUpdateFailed => 'فشل تحديث الإذن';
+
+  @override
+  String get settingsMcpColAllowUpdateNote => 'السماح بتحديث الملاحظات';
+
+  @override
+  String get settingsMcpAllowUpdateNoteLabel => 'السماح بتحديث الملاحظات';
+
+  @override
+  String get settingsMcpAllowUpdateNoteUpdateFailed =>
+      'فشل تحديث إذن الملاحظات';
 
   @override
   String get adminSystemSettingsTitle => 'إعدادات النظام';

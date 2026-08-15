@@ -4332,6 +4332,16 @@ class AppLocalizationsKo extends AppLocalizations {
   String get settingsMcpConnectionsUpdateFailed => '권한 업데이트에 실패했습니다';
 
   @override
+  String get settingsMcpConnectionsColAllowUpdateNote => '메모 업데이트 허용';
+
+  @override
+  String get settingsMcpConnectionsAllowUpdateNoteLabel => '메모 업데이트 허용';
+
+  @override
+  String get settingsMcpConnectionsAllowUpdateNoteUpdateFailed =>
+      '메모 권한 업데이트에 실패했습니다';
+
+  @override
   String get settingsMcpColAllowCreate => '데이터 생성 허용';
 
   @override
@@ -4339,6 +4349,15 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get settingsMcpAllowCreateUpdateFailed => '권한 업데이트에 실패했습니다';
+
+  @override
+  String get settingsMcpColAllowUpdateNote => '메모 업데이트 허용';
+
+  @override
+  String get settingsMcpAllowUpdateNoteLabel => '메모 업데이트 허용';
+
+  @override
+  String get settingsMcpAllowUpdateNoteUpdateFailed => '메모 권한 업데이트에 실패했습니다';
 
   @override
   String get adminSystemSettingsTitle => '시스템 설정';

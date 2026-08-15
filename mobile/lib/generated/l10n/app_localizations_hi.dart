@@ -4465,6 +4465,18 @@ class AppLocalizationsHi extends AppLocalizations {
   String get settingsMcpConnectionsUpdateFailed => 'अनुमति अपडेट करने में विफल';
 
   @override
+  String get settingsMcpConnectionsColAllowUpdateNote =>
+      'नोट अपडेट करने की अनुमति दें';
+
+  @override
+  String get settingsMcpConnectionsAllowUpdateNoteLabel =>
+      'नोट अपडेट करने की अनुमति दें';
+
+  @override
+  String get settingsMcpConnectionsAllowUpdateNoteUpdateFailed =>
+      'नोट अनुमति अपडेट करने में विफल';
+
+  @override
   String get settingsMcpColAllowCreate => 'डेटा बनाने की अनुमति दें';
 
   @override
@@ -4472,6 +4484,16 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get settingsMcpAllowCreateUpdateFailed => 'अनुमति अपडेट करने में विफल';
+
+  @override
+  String get settingsMcpColAllowUpdateNote => 'नोट अपडेट करने की अनुमति दें';
+
+  @override
+  String get settingsMcpAllowUpdateNoteLabel => 'नोट अपडेट करने की अनुमति दें';
+
+  @override
+  String get settingsMcpAllowUpdateNoteUpdateFailed =>
+      'नोट अनुमति अपडेट करने में विफल';
 
   @override
   String get adminSystemSettingsTitle => 'सिस्टम सेटिंग्स';

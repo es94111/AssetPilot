@@ -13,6 +13,7 @@ export async function GET(request: NextRequest) {
     clientId: c.clientId,
     clientName: c.clientName,
     allowCreate: c.allowCreate,
+    allowUpdateNote: c.allowUpdateNote,
     firstConnectedAt: toIsoUtc(c.firstConnectedAt),
     lastUsedAt: toIsoUtc(c.lastUsedAt),
   }));

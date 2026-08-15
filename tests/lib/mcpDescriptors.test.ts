@@ -119,3 +119,85 @@ test('allowCreate=true 的憑證 tools/list 額外出現 create_transaction，�
     await server.close();
   }
 });
+
+test('allowUpdateNote=true 的憑證 tools/list 額外出現 update_transaction_note（不含 create_transaction），且 annotations 標示破壞性冪等', async () => {
+  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+
+  const server = buildMcpServer({
+    credentialId: 'descriptor-test-update',
+    userId: 'descriptor-user-update',
+    name: 'Descriptor Test (update)',
+    allowUpdateNote: true,
+  });
+  const client = new Client({ name: 'assetpilot-descriptor-test-update', version: '1.0.0' });
+
+  try {
+    await server.connect(new OpenAiCompatibleMcpTransport(serverTransport));
+    await client.connect(clientTransport);
+    const listed = await client.listTools();
+
+    const names = listed.tools.map((tool) => tool.name).sort();
+    assert.deepEqual(names, [...EXPECTED_TOOL_NAMES, 'update_transaction_note'].sort());
+    // 不含 create_transaction（未開 allowCreate）
+    assert.ok(!names.includes('create_transaction'), '不應出現 create_transaction');
+
+    const updateTool = listed.tools.find((tool) => tool.name === 'update_transaction_note');
+    assert.ok(updateTool, 'update_transaction_note 應出現在 tools/list');
+    assert.equal(updateTool?.annotations?.readOnlyHint, false, 'update_transaction_note readOnlyHint');
+    assert.equal(updateTool?.annotations?.destructiveHint, true, 'update_transaction_note destructiveHint（覆寫既有值，與 create_transaction 的刻意差異）');
+    assert.equal(updateTool?.annotations?.idempotentHint, true, 'update_transaction_note idempotentHint');
+    assert.equal(updateTool?.annotations?.openWorldHint, false, 'update_transaction_note openWorldHint');
+  } finally {
+    await client.close();
+    await server.close();
+  }
+});
+
+test('權限獨立性：allowCreate=true 但未開 allowUpdateNote 時不含 update_transaction_note；兩者皆開時兩工具同時存在', async () => {
+  // 只開 allowCreate —— 不含 update_transaction_note
+  {
+    const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+    const server = buildMcpServer({
+      credentialId: 'indep-create-only',
+      userId: 'indep-user-create',
+      name: 'Indep (create only)',
+      allowCreate: true,
+    });
+    const client = new Client({ name: 'indep-create-only', version: '1.0.0' });
+    try {
+      await server.connect(new OpenAiCompatibleMcpTransport(serverTransport));
+      await client.connect(clientTransport);
+      const listed = await client.listTools();
+      const names = listed.tools.map((tool) => tool.name);
+      assert.ok(names.includes('create_transaction'), '應含 create_transaction');
+      assert.ok(!names.includes('update_transaction_note'), '不應含 update_transaction_note');
+    } finally {
+      await client.close();
+      await server.close();
+    }
+  }
+
+  // 兩者皆開 —— 兩工具同時存在
+  {
+    const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+    const server = buildMcpServer({
+      credentialId: 'indep-both',
+      userId: 'indep-user-both',
+      name: 'Indep (both)',
+      allowCreate: true,
+      allowUpdateNote: true,
+    });
+    const client = new Client({ name: 'indep-both', version: '1.0.0' });
+    try {
+      await server.connect(new OpenAiCompatibleMcpTransport(serverTransport));
+      await client.connect(clientTransport);
+      const listed = await client.listTools();
+      const names = listed.tools.map((tool) => tool.name);
+      assert.ok(names.includes('create_transaction'), '應含 create_transaction');
+      assert.ok(names.includes('update_transaction_note'), '應含 update_transaction_note');
+    } finally {
+      await client.close();
+      await server.close();
+    }
+  }
+});

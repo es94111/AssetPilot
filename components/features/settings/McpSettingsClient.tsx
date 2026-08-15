@@ -13,6 +13,7 @@ interface McpCredential {
   name: string;
   status: 'active' | 'expired' | 'revoked';
   allowCreate: boolean;
+  allowUpdateNote: boolean;
   createdAt: string;
   lastUsedAt: string | null;
   expiresAt: string | null;
@@ -122,6 +123,16 @@ export default function McpSettingsClient() {
     }
   }
 
+  async function handleAllowUpdateNoteChange(id: string, next: boolean) {
+    setListMsg('');
+    try {
+      const res = await apiPatch(`/api/user/mcp-credentials/${encodeURIComponent(id)}`, { allowUpdateNote: next });
+      setCredentials((prev) => prev.map((c) => (c.id === id ? { ...c, allowUpdateNote: res.credential.allowUpdateNote } : c)));
+    } catch (e: any) {
+      setListMsg(e.message || ta('allowUpdateNoteUpdateFailed'));
+    }
+  }
+
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold">{ta('title')}</h2>
@@ -170,6 +181,7 @@ export default function McpSettingsClient() {
                   <th className="text-left py-2 pr-4">{ta('colLastUsedAt')}</th>
                   <th className="text-left py-2 pr-4">{ta('colStatus')}</th>
                   <th className="text-left py-2 pr-4">{ta('colAllowCreate')}</th>
+                  <th className="text-left py-2 pr-4">{ta('colAllowUpdateNote')}</th>
                   <th className="text-left py-2">{ta('colActions')}</th>
                 </tr>
               </thead>
@@ -191,6 +203,17 @@ export default function McpSettingsClient() {
                           checked={c.allowCreate}
                           onChange={(e) => handleAllowCreateChange(c.id, e.target.checked)}
                           aria-label={ta('allowCreateLabel')}
+                          className="w-4 h-4"
+                        />
+                      )}
+                    </td>
+                    <td className="py-3 pr-4">
+                      {c.status === 'active' && (
+                        <input
+                          type="checkbox"
+                          checked={c.allowUpdateNote}
+                          onChange={(e) => handleAllowUpdateNoteChange(c.id, e.target.checked)}
+                          aria-label={ta('allowUpdateNoteLabel')}
                           className="w-4 h-4"
                         />
                       )}

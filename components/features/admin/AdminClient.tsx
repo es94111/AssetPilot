@@ -66,6 +66,7 @@ const AUDIT_ACTION_LABELS: Record<string, string> = {
   // 理由見 research.md 第 7 節）
   mcp_query: 'MCP 查詢資料',
   mcp_create_transaction: 'MCP 新增交易',
+  mcp_update_transaction_note: 'MCP 更新交易備註',
 };
 
 // 將稽核 metadata 整理為易讀的中文摘要，作為「詳情」欄位顯示。

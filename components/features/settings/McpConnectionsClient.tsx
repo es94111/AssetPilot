@@ -10,6 +10,7 @@ interface McpOAuthConnection {
   clientId: string;
   clientName: string;
   allowCreate: boolean;
+  allowUpdateNote: boolean;
   firstConnectedAt: string;
   lastUsedAt: string;
 }
@@ -47,6 +48,16 @@ export default function McpConnectionsClient() {
     }
   }
 
+  async function handleAllowUpdateNoteChange(clientId: string, next: boolean) {
+    setListMsg('');
+    try {
+      const res = await apiPatch(`/api/user/mcp-oauth-connections/${encodeURIComponent(clientId)}`, { allowUpdateNote: next });
+      setConnections((prev) => prev.map((c) => (c.clientId === clientId ? { ...c, allowUpdateNote: res.connection.allowUpdateNote } : c)));
+    } catch (e: any) {
+      setListMsg(e.message || ta('allowUpdateNoteUpdateFailed'));
+    }
+  }
+
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold">{ta('title')}</h2>
@@ -70,7 +81,8 @@ export default function McpConnectionsClient() {
                   <th className="text-left py-2 pr-4">{ta('colClientName')}</th>
                   <th className="text-left py-2 pr-4">{ta('colFirstConnectedAt')}</th>
                   <th className="text-left py-2 pr-4">{ta('colLastUsedAt')}</th>
-                  <th className="text-left py-2">{ta('colAllowCreate')}</th>
+                  <th className="text-left py-2 pr-4">{ta('colAllowCreate')}</th>
+                  <th className="text-left py-2">{ta('colAllowUpdateNote')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -79,12 +91,21 @@ export default function McpConnectionsClient() {
                     <td className="py-3 pr-4 font-medium">{c.clientName}</td>
                     <td className="py-3 pr-4">{new Date(c.firstConnectedAt).toLocaleString(dateLocale)}</td>
                     <td className="py-3 pr-4">{new Date(c.lastUsedAt).toLocaleString(dateLocale)}</td>
-                    <td className="py-3">
+                    <td className="py-3 pr-4">
                       <input
                         type="checkbox"
                         checked={c.allowCreate}
                         onChange={(e) => handleAllowCreateChange(c.clientId, e.target.checked)}
                         aria-label={ta('allowCreateLabel')}
+                        className="w-4 h-4"
+                      />
+                    </td>
+                    <td className="py-3">
+                      <input
+                        type="checkbox"
+                        checked={c.allowUpdateNote}
+                        onChange={(e) => handleAllowUpdateNoteChange(c.clientId, e.target.checked)}
+                        aria-label={ta('allowUpdateNoteLabel')}
                         className="w-4 h-4"
                       />
                     </td>

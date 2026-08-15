@@ -86,12 +86,14 @@ interface OAuthTokenRow {
   replaced_by_hash: string | number | null;
   user_is_active?: string | number | null;
   allow_create?: string | number | null;
+  allow_update_note?: string | number | null;
 }
 
 interface OAuthConnectionRow {
   client_id: string | number;
   client_name: string | number;
   allow_create: string | number;
+  allow_update_note: string | number;
   first_connected_at: string | number;
   last_used_at: string | number;
 }
@@ -878,7 +880,7 @@ export function exchangeMcpAuthorizationCode(input: {
 
     const connectionConflictUpdate = hasValidExistingToken
       ? 'client_name = excluded.client_name, last_used_at = excluded.last_used_at'
-      : 'client_name = excluded.client_name, last_used_at = excluded.last_used_at, allow_create = 0';
+      : 'client_name = excluded.client_name, last_used_at = excluded.last_used_at, allow_create = 0, allow_update_note = 0';
     db.run(
       `INSERT INTO mcp_oauth_connections (user_id, client_id, client_name, allow_create, first_connected_at, last_used_at)
        VALUES (?, ?, ?, 0, ?, ?)
@@ -989,7 +991,7 @@ export function verifyMcpOAuthAccessToken(token: string, expectedResource: strin
   const row = queryOne(
     `SELECT t.token_hash, t.token_type, t.family_id, t.user_id, t.client_id, t.client_name,
             t.resource, t.scope, t.expires_at, t.revoked_at, t.replaced_by_hash,
-            u.is_active AS user_is_active, mc.allow_create
+            u.is_active AS user_is_active, mc.allow_create, mc.allow_update_note
      FROM mcp_oauth_tokens t
      LEFT JOIN users u ON u.id = t.user_id
      LEFT JOIN mcp_oauth_connections mc ON mc.user_id = t.user_id AND mc.client_id = t.client_id
@@ -1018,6 +1020,7 @@ export function verifyMcpOAuthAccessToken(token: string, expectedResource: strin
     userId: String(row.user_id),
     name: String(row.client_name || row.client_id),
     allowCreate: Number(row.allow_create) === 1,
+    allowUpdateNote: Number(row.allow_update_note) === 1,
   };
 }
 
@@ -1039,6 +1042,7 @@ export interface McpOAuthConnectionSummary {
   clientId: string;
   clientName: string;
   allowCreate: boolean;
+  allowUpdateNote: boolean;
   firstConnectedAt: number;
   lastUsedAt: number;
 }
@@ -1046,7 +1050,7 @@ export interface McpOAuthConnectionSummary {
 export function listMcpOAuthConnections(userId: string): McpOAuthConnectionSummary[] {
   const now = Date.now();
   const rows = queryAll(
-    `SELECT c.client_id, c.client_name, c.allow_create, c.first_connected_at, c.last_used_at
+    `SELECT c.client_id, c.client_name, c.allow_create, c.allow_update_note, c.first_connected_at, c.last_used_at
      FROM mcp_oauth_connections c
      WHERE c.user_id = ?
        AND EXISTS (
@@ -1061,6 +1065,7 @@ export function listMcpOAuthConnections(userId: string): McpOAuthConnectionSumma
     clientId: String(row.client_id),
     clientName: String(row.client_name),
     allowCreate: Number(row.allow_create) === 1,
+    allowUpdateNote: Number(row.allow_update_note) === 1,
     firstConnectedAt: Number(row.first_connected_at) || 0,
     lastUsedAt: Number(row.last_used_at) || 0,
   }));
@@ -1071,6 +1076,17 @@ export function setMcpOAuthConnectionAllowCreate(userId: string, clientId: strin
   db.run(
     'UPDATE mcp_oauth_connections SET allow_create = ? WHERE user_id = ? AND client_id = ?',
     [allowCreate ? 1 : 0, userId, clientId]
+  );
+  const hit = db.getRowsModified() > 0;
+  saveDB();
+  return hit;
+}
+
+export function setMcpOAuthConnectionAllowUpdateNote(userId: string, clientId: string, allowUpdateNote: boolean): boolean {
+  const db = getDB();
+  db.run(
+    'UPDATE mcp_oauth_connections SET allow_update_note = ? WHERE user_id = ? AND client_id = ?',
+    [allowUpdateNote ? 1 : 0, userId, clientId]
   );
   const hit = db.getRowsModified() > 0;
   saveDB();

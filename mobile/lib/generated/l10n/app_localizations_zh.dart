@@ -4265,6 +4265,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsMcpConnectionsUpdateFailed => '更新新增資料權限失敗';
 
   @override
+  String get settingsMcpConnectionsColAllowUpdateNote => '允許更新備註';
+
+  @override
+  String get settingsMcpConnectionsAllowUpdateNoteLabel => '允許更新備註';
+
+  @override
+  String get settingsMcpConnectionsAllowUpdateNoteUpdateFailed => '更新備註權限更新失敗';
+
+  @override
   String get settingsMcpColAllowCreate => '允許新增資料';
 
   @override
@@ -4272,6 +4281,15 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get settingsMcpAllowCreateUpdateFailed => '更新新增資料權限失敗';
+
+  @override
+  String get settingsMcpColAllowUpdateNote => '允許更新備註';
+
+  @override
+  String get settingsMcpAllowUpdateNoteLabel => '允許更新備註';
+
+  @override
+  String get settingsMcpAllowUpdateNoteUpdateFailed => '更新備註權限更新失敗';
 
   @override
   String get adminSystemSettingsTitle => '系統設定';
@@ -8685,6 +8703,15 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
   String get settingsMcpConnectionsUpdateFailed => '更新新增数据权限失败';
 
   @override
+  String get settingsMcpConnectionsColAllowUpdateNote => '允许更新备注';
+
+  @override
+  String get settingsMcpConnectionsAllowUpdateNoteLabel => '允许更新备注';
+
+  @override
+  String get settingsMcpConnectionsAllowUpdateNoteUpdateFailed => '更新备注权限失败';
+
+  @override
   String get settingsMcpColAllowCreate => '允许新增数据';
 
   @override
@@ -8692,6 +8719,15 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
 
   @override
   String get settingsMcpAllowCreateUpdateFailed => '更新新增数据权限失败';
+
+  @override
+  String get settingsMcpColAllowUpdateNote => '允许更新备注';
+
+  @override
+  String get settingsMcpAllowUpdateNoteLabel => '允许更新备注';
+
+  @override
+  String get settingsMcpAllowUpdateNoteUpdateFailed => '更新备注权限失败';
 
   @override
   String get adminSystemSettingsTitle => '系统设置';
@@ -13100,6 +13136,15 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
   String get settingsMcpConnectionsUpdateFailed => '更新新增資料權限失敗';
 
   @override
+  String get settingsMcpConnectionsColAllowUpdateNote => '允許更新備註';
+
+  @override
+  String get settingsMcpConnectionsAllowUpdateNoteLabel => '允許更新備註';
+
+  @override
+  String get settingsMcpConnectionsAllowUpdateNoteUpdateFailed => '更新備註權限更新失敗';
+
+  @override
   String get settingsMcpColAllowCreate => '允許新增資料';
 
   @override
@@ -13107,6 +13152,15 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
 
   @override
   String get settingsMcpAllowCreateUpdateFailed => '更新新增資料權限失敗';
+
+  @override
+  String get settingsMcpColAllowUpdateNote => '允許更新備註';
+
+  @override
+  String get settingsMcpAllowUpdateNoteLabel => '允許更新備註';
+
+  @override
+  String get settingsMcpAllowUpdateNoteUpdateFailed => '更新備註權限更新失敗';
 
   @override
   String get adminSystemSettingsTitle => '系統設定';

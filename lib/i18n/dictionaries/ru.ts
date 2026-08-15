@@ -277,6 +277,9 @@ export const ru = {
       colAllowCreate: "Разрешить создание данных",
       allowCreateLabel: "Разрешить создание данных",
       allowCreateUpdateFailed: "Не удалось обновить разрешение",
+      colAllowUpdateNote: "Разрешить обновление заметок",
+      allowUpdateNoteLabel: "Разрешить обновление заметок",
+      allowUpdateNoteUpdateFailed: "Не удалось обновить разрешение на заметки",
     },
     mcpConnections: {
       title: "Подключённые ИИ-инструменты",
@@ -291,6 +294,9 @@ export const ru = {
       noConnections: "Пока нет подключённых ИИ-инструментов",
       loadFailed: "Не удалось загрузить список подключённых инструментов",
       updateFailed: "Не удалось обновить разрешение",
+      colAllowUpdateNote: "Разрешить обновление заметок",
+      allowUpdateNoteLabel: "Разрешить обновление заметок",
+      allowUpdateNoteUpdateFailed: "Не удалось обновить разрешение на заметки",
     },
   },
   dashboard: {

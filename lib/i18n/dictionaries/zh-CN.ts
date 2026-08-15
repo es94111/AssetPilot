@@ -277,6 +277,9 @@ export const zhCN = {
       colAllowCreate: "允许新增数据",
       allowCreateLabel: "允许新增数据",
       allowCreateUpdateFailed: "更新新增数据权限失败",
+      colAllowUpdateNote: "允许更新备注",
+      allowUpdateNoteLabel: "允许更新备注",
+      allowUpdateNoteUpdateFailed: "更新备注权限失败",
     },
     mcpConnections: {
       title: "已连接 AI 工具",
@@ -291,6 +294,9 @@ export const zhCN = {
       noConnections: "尚未连接任何 AI 工具",
       loadFailed: "加载已连接工具列表失败",
       updateFailed: "更新新增数据权限失败",
+      colAllowUpdateNote: "允许更新备注",
+      allowUpdateNoteLabel: "允许更新备注",
+      allowUpdateNoteUpdateFailed: "更新备注权限失败",
     },
   },
   dashboard: {

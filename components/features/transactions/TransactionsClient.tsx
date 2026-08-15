@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { useT } from '@/components/i18n/I18nProvider';
 import { localeTag } from '@/lib/i18n/localeTag';
 import { ArrowLeftRight, CalendarDays, Image, Images, Pencil, Plus, Search, SlidersHorizontal, Tags, Trash2 } from 'lucide-react';
+import { TRANSACTION_NOTE_MAX_LENGTH } from '@/lib/transactionEditRules';
 
 const EMPTY_FORM = { date: '', type: 'expense', amount: '', categoryId: '', accountId: '', note: '', excludeFromStats: false, currency: 'TWD', fxRate: '', fxFee: '' };
 const EMPTY_TRANSFER_FORM = { date: '', amount: '', fromAccountId: '', toAccountId: '', note: '' };
@@ -1023,7 +1024,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
             )}
             <div className="flex flex-col gap-1">
               <label htmlFor="transaction-note" className="text-sm font-medium text-gray-700 dark:text-slate-200">{t('features.common.note')}</label>
-              <input id="transaction-note" type="text" maxLength={200} className="min-h-11 w-full rounded-xl border border-gray-300 px-3 shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary dark:border-slate-700 dark:bg-slate-900" value={form.note} onChange={(e) => setForm((current) => ({ ...current, note: e.target.value }))} />
+              <input id="transaction-note" type="text" maxLength={TRANSACTION_NOTE_MAX_LENGTH} className="min-h-11 w-full rounded-xl border border-gray-300 px-3 shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary dark:border-slate-700 dark:bg-slate-900" value={form.note} onChange={(e) => setForm((current) => ({ ...current, note: e.target.value }))} />
             </div>
             <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
               <input type="checkbox" checked={form.excludeFromStats} onChange={(e) => setForm((current) => ({ ...current, excludeFromStats: e.target.checked }))} /> {t('features.common.excludeFromStats')}
@@ -1153,7 +1154,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
             </div>
             <div className="flex flex-col gap-1">
               <label className="text-sm font-medium text-gray-700">{t('features.common.note')}</label>
-              <input type="text" maxLength={200} className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" value={transferForm.note} onChange={(e) => setTransferForm((current) => ({ ...current, note: e.target.value }))} />
+              <input type="text" maxLength={TRANSACTION_NOTE_MAX_LENGTH} className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" value={transferForm.note} onChange={(e) => setTransferForm((current) => ({ ...current, note: e.target.value }))} />
             </div>
             {formError && <p className="text-sm text-destructive">{formError}</p>}
             <DialogFooter>

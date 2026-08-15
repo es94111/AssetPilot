@@ -6875,6 +6875,21 @@
     "description": "Web path: settings.mcpConnections.updateFailed",
     "x-webPath": "settings.mcpConnections.updateFailed"
   },
+  "settingsMcpConnectionsColAllowUpdateNote": "允许更新备注",
+  "@settingsMcpConnectionsColAllowUpdateNote": {
+    "description": "Web path: settings.mcpConnections.colAllowUpdateNote",
+    "x-webPath": "settings.mcpConnections.colAllowUpdateNote"
+  },
+  "settingsMcpConnectionsAllowUpdateNoteLabel": "允许更新备注",
+  "@settingsMcpConnectionsAllowUpdateNoteLabel": {
+    "description": "Web path: settings.mcpConnections.allowUpdateNoteLabel",
+    "x-webPath": "settings.mcpConnections.allowUpdateNoteLabel"
+  },
+  "settingsMcpConnectionsAllowUpdateNoteUpdateFailed": "更新备注权限失败",
+  "@settingsMcpConnectionsAllowUpdateNoteUpdateFailed": {
+    "description": "Web path: settings.mcpConnections.allowUpdateNoteUpdateFailed",
+    "x-webPath": "settings.mcpConnections.allowUpdateNoteUpdateFailed"
+  },
   "settingsMcpColAllowCreate": "允许新增数据",
   "@settingsMcpColAllowCreate": {
     "description": "Web path: settings.mcp.colAllowCreate",
@@ -6889,6 +6904,21 @@
   "@settingsMcpAllowCreateUpdateFailed": {
     "description": "Web path: settings.mcp.allowCreateUpdateFailed",
     "x-webPath": "settings.mcp.allowCreateUpdateFailed"
+  },
+  "settingsMcpColAllowUpdateNote": "允许更新备注",
+  "@settingsMcpColAllowUpdateNote": {
+    "description": "Web path: settings.mcp.colAllowUpdateNote",
+    "x-webPath": "settings.mcp.colAllowUpdateNote"
+  },
+  "settingsMcpAllowUpdateNoteLabel": "允许更新备注",
+  "@settingsMcpAllowUpdateNoteLabel": {
+    "description": "Web path: settings.mcp.allowUpdateNoteLabel",
+    "x-webPath": "settings.mcp.allowUpdateNoteLabel"
+  },
+  "settingsMcpAllowUpdateNoteUpdateFailed": "更新备注权限失败",
+  "@settingsMcpAllowUpdateNoteUpdateFailed": {
+    "description": "Web path: settings.mcp.allowUpdateNoteUpdateFailed",
+    "x-webPath": "settings.mcp.allowUpdateNoteUpdateFailed"
   },
   "adminSystemSettingsTitle": "系统设置",
   "@adminSystemSettingsTitle": {

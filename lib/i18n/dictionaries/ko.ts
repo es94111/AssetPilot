@@ -277,6 +277,9 @@ export const ko = {
       colAllowCreate: "데이터 생성 허용",
       allowCreateLabel: "데이터 생성 허용",
       allowCreateUpdateFailed: "권한 업데이트에 실패했습니다",
+      colAllowUpdateNote: "메모 업데이트 허용",
+      allowUpdateNoteLabel: "메모 업데이트 허용",
+      allowUpdateNoteUpdateFailed: "메모 권한 업데이트에 실패했습니다",
     },
     mcpConnections: {
       title: "연결된 AI 도구",
@@ -291,6 +294,9 @@ export const ko = {
       noConnections: "아직 연결된 AI 도구가 없습니다",
       loadFailed: "연결된 도구 목록을 불러오지 못했습니다",
       updateFailed: "권한 업데이트에 실패했습니다",
+      colAllowUpdateNote: "메모 업데이트 허용",
+      allowUpdateNoteLabel: "메모 업데이트 허용",
+      allowUpdateNoteUpdateFailed: "메모 권한 업데이트에 실패했습니다",
     },
   },
   dashboard: {

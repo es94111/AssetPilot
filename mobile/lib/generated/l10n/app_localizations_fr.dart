@@ -4553,6 +4553,18 @@ class AppLocalizationsFr extends AppLocalizations {
       'Échec de la mise à jour de l\'autorisation';
 
   @override
+  String get settingsMcpConnectionsColAllowUpdateNote =>
+      'Autoriser la mise à jour des notes';
+
+  @override
+  String get settingsMcpConnectionsAllowUpdateNoteLabel =>
+      'Autoriser la mise à jour des notes';
+
+  @override
+  String get settingsMcpConnectionsAllowUpdateNoteUpdateFailed =>
+      'Échec de la mise à jour de l\'autorisation de notes';
+
+  @override
   String get settingsMcpColAllowCreate => 'Autoriser la création de données';
 
   @override
@@ -4561,6 +4573,18 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get settingsMcpAllowCreateUpdateFailed =>
       'Échec de la mise à jour de l\'autorisation';
+
+  @override
+  String get settingsMcpColAllowUpdateNote =>
+      'Autoriser la mise à jour des notes';
+
+  @override
+  String get settingsMcpAllowUpdateNoteLabel =>
+      'Autoriser la mise à jour des notes';
+
+  @override
+  String get settingsMcpAllowUpdateNoteUpdateFailed =>
+      'Échec de la mise à jour de l\'autorisation de notes';
 
   @override
   String get adminSystemSettingsTitle => 'Paramètres système';

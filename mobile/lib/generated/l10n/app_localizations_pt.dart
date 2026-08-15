@@ -2118,6 +2118,40 @@ class AppLocalizationsPt extends AppLocalizations {
   String get featuresTransactionsFxFee => 'Taxa de cartão internacional';
 
   @override
+  String get featuresTransactionsAiCreated => 'Criado por IA';
+
+  @override
+  String get featuresTransactionsNoteAiModified => 'Nota editada por IA';
+
+  @override
+  String get featuresTransactionsRestoreCreated => 'Desfazer criação';
+
+  @override
+  String get featuresTransactionsRestoreNote => 'Restaurar nota';
+
+  @override
+  String get featuresTransactionsRestoreCreatedTitle =>
+      'Restaurar transação criada por IA';
+
+  @override
+  String get featuresTransactionsRestoreCreatedMessage =>
+      'Restaurar removerá esta transação, incluindo qualquer transferência vinculada ou taxa, e não pode ser desfeito. Continuar?';
+
+  @override
+  String get featuresTransactionsRestoreNoteTitle => 'Restaurar nota';
+
+  @override
+  String get featuresTransactionsRestoreNoteConfirmMessage =>
+      'Restaurar reverterá a nota para seu conteúdo antes da edição da IA e não pode ser desfeito. Continuar?';
+
+  @override
+  String get featuresTransactionsRestoreNoteCurrentLabel => 'Nota atual';
+
+  @override
+  String get featuresTransactionsRestoreNotePreviewLabel =>
+      'Nota após restauração';
+
+  @override
   String get featuresTransactionsPhotoOne => 'Foto 1';
 
   @override
@@ -6820,6 +6854,40 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get featuresTransactionsFxFee => 'Taxa de cartão internacional';
+
+  @override
+  String get featuresTransactionsAiCreated => 'Criado por IA';
+
+  @override
+  String get featuresTransactionsNoteAiModified => 'Nota editada por IA';
+
+  @override
+  String get featuresTransactionsRestoreCreated => 'Desfazer criação';
+
+  @override
+  String get featuresTransactionsRestoreNote => 'Restaurar nota';
+
+  @override
+  String get featuresTransactionsRestoreCreatedTitle =>
+      'Restaurar transação criada por IA';
+
+  @override
+  String get featuresTransactionsRestoreCreatedMessage =>
+      'Restaurar removerá esta transação, incluindo qualquer transferência vinculada ou taxa, e não pode ser desfeito. Continuar?';
+
+  @override
+  String get featuresTransactionsRestoreNoteTitle => 'Restaurar nota';
+
+  @override
+  String get featuresTransactionsRestoreNoteConfirmMessage =>
+      'Restaurar reverterá a nota para seu conteúdo antes da edição da IA e não pode ser desfeito. Continuar?';
+
+  @override
+  String get featuresTransactionsRestoreNoteCurrentLabel => 'Nota atual';
+
+  @override
+  String get featuresTransactionsRestoreNotePreviewLabel =>
+      'Nota após restauração';
 
   @override
   String get featuresTransactionsPhotoOne => 'Foto 1';

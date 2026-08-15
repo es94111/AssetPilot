@@ -2025,6 +2025,38 @@ class AppLocalizationsKo extends AppLocalizations {
   String get featuresTransactionsFxFee => '해외 카드 수수료';
 
   @override
+  String get featuresTransactionsAiCreated => 'AI 생성';
+
+  @override
+  String get featuresTransactionsNoteAiModified => 'AI가 수정한 메모';
+
+  @override
+  String get featuresTransactionsRestoreCreated => '생성 취소';
+
+  @override
+  String get featuresTransactionsRestoreNote => '메모 복원';
+
+  @override
+  String get featuresTransactionsRestoreCreatedTitle => 'AI 생성 거래 복원';
+
+  @override
+  String get featuresTransactionsRestoreCreatedMessage =>
+      '복원하면 이 거래(연결된 이체 또는 수수료 거래 포함)가 제거되며 되돌릴 수 없습니다. 계속하시겠습니까?';
+
+  @override
+  String get featuresTransactionsRestoreNoteTitle => '메모 복원';
+
+  @override
+  String get featuresTransactionsRestoreNoteConfirmMessage =>
+      '복원하면 메모가 AI 편집 전 내용으로 되돌아가며 되돌릴 수 없습니다. 계속하시겠습니까?';
+
+  @override
+  String get featuresTransactionsRestoreNoteCurrentLabel => '현재 메모';
+
+  @override
+  String get featuresTransactionsRestoreNotePreviewLabel => '복원 후 메모';
+
+  @override
   String get featuresTransactionsPhotoOne => '사진 1장';
 
   @override

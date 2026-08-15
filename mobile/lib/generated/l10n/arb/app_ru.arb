@@ -3246,6 +3246,56 @@
     "description": "Web path: features.transactions.fxFee",
     "x-webPath": "features.transactions.fxFee"
   },
+  "featuresTransactionsAiCreated": "Создано ИИ",
+  "@featuresTransactionsAiCreated": {
+    "description": "Web path: features.transactions.aiCreated",
+    "x-webPath": "features.transactions.aiCreated"
+  },
+  "featuresTransactionsNoteAiModified": "Примечание изменено ИИ",
+  "@featuresTransactionsNoteAiModified": {
+    "description": "Web path: features.transactions.noteAiModified",
+    "x-webPath": "features.transactions.noteAiModified"
+  },
+  "featuresTransactionsRestoreCreated": "Отменить создание",
+  "@featuresTransactionsRestoreCreated": {
+    "description": "Web path: features.transactions.restoreCreated",
+    "x-webPath": "features.transactions.restoreCreated"
+  },
+  "featuresTransactionsRestoreNote": "Восстановить заметку",
+  "@featuresTransactionsRestoreNote": {
+    "description": "Web path: features.transactions.restoreNote",
+    "x-webPath": "features.transactions.restoreNote"
+  },
+  "featuresTransactionsRestoreCreatedTitle": "Восстановить транзакцию, созданную ИИ",
+  "@featuresTransactionsRestoreCreatedTitle": {
+    "description": "Web path: features.transactions.restoreCreatedTitle",
+    "x-webPath": "features.transactions.restoreCreatedTitle"
+  },
+  "featuresTransactionsRestoreCreatedMessage": "Восстановление удалит эту транзакцию (включая связанный перевод или комиссию) и не может быть отменено. Продолжить?",
+  "@featuresTransactionsRestoreCreatedMessage": {
+    "description": "Web path: features.transactions.restoreCreatedMessage",
+    "x-webPath": "features.transactions.restoreCreatedMessage"
+  },
+  "featuresTransactionsRestoreNoteTitle": "Восстановить заметку",
+  "@featuresTransactionsRestoreNoteTitle": {
+    "description": "Web path: features.transactions.restoreNoteTitle",
+    "x-webPath": "features.transactions.restoreNoteTitle"
+  },
+  "featuresTransactionsRestoreNoteConfirmMessage": "Восстановление вернёт заметку к её содержимому до редактирования ИИ и не может быть отменено. Продолжить?",
+  "@featuresTransactionsRestoreNoteConfirmMessage": {
+    "description": "Web path: features.transactions.restoreNoteConfirmMessage",
+    "x-webPath": "features.transactions.restoreNoteConfirmMessage"
+  },
+  "featuresTransactionsRestoreNoteCurrentLabel": "Текущая заметка",
+  "@featuresTransactionsRestoreNoteCurrentLabel": {
+    "description": "Web path: features.transactions.restoreNoteCurrentLabel",
+    "x-webPath": "features.transactions.restoreNoteCurrentLabel"
+  },
+  "featuresTransactionsRestoreNotePreviewLabel": "Заметка после восстановления",
+  "@featuresTransactionsRestoreNotePreviewLabel": {
+    "description": "Web path: features.transactions.restoreNotePreviewLabel",
+    "x-webPath": "features.transactions.restoreNotePreviewLabel"
+  },
   "featuresTransactionsPhotoOne": "Фото 1",
   "@featuresTransactionsPhotoOne": {
     "description": "Web path: features.transactions.photoOne",

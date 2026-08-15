@@ -189,6 +189,92 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     }
   }
 
+  /// 還原「AI 建立」的交易（需確認）：整組移除（含連動的轉帳／手續費交易）。
+  Future<void> _restoreAiCreated(Txn t) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text(trKey('featuresTransactionsRestoreCreatedTitle')),
+        content: Text(trKey('featuresTransactionsRestoreCreatedMessage')),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(trKey('commonCancel')),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(trKey('commonConfirm')),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    try {
+      await ApiClient.instance.restoreAiCreatedTransaction(t.id);
+      await _refreshDashboardWidget();
+      if (mounted) toast(context, trKey('mobileLegacyDeleted'));
+      _reload();
+    } catch (e) {
+      if (mounted) toast(context, '$e');
+    }
+  }
+
+  /// 還原「備註經 AI 修改」的交易（需確認）：先抓取預覽快照，備註復原為 AI 修改前的文字。
+  Future<void> _restoreAiNote(Txn t) async {
+    Map<String, dynamic> snapshot;
+    try {
+      snapshot = await ApiClient.instance.getAiNoteSnapshot(t.id);
+    } catch (e) {
+      if (mounted) toast(context, '$e');
+      return;
+    }
+    if (!mounted) return;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text(trKey('featuresTransactionsRestoreNoteTitle')),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(trKey('featuresTransactionsRestoreNoteConfirmMessage')),
+            const SizedBox(height: 12),
+            Text(
+              trKey('featuresTransactionsRestoreNoteCurrentLabel'),
+              style: TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+            Text('${snapshot['currentNote'] ?? ''}'),
+            const SizedBox(height: 8),
+            Text(
+              trKey('featuresTransactionsRestoreNotePreviewLabel'),
+              style: TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+            Text('${snapshot['preAiNote'] ?? ''}'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(trKey('commonCancel')),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(trKey('commonConfirm')),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    try {
+      await ApiClient.instance.restoreAiNote(t.id, snapshot['updatedAt'] as num);
+      await _refreshDashboardWidget();
+      if (mounted) toast(context, trKey('mobileLegacyDeleted'));
+      _reload();
+    } catch (e) {
+      if (mounted) toast(context, '$e');
+    }
+  }
+
   // AsyncView 載入後暫存資料，供 AppBar 篩選按鈕取用帳戶/分類清單。
   _TransactionsData? _lastData;
 
@@ -299,6 +385,8 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                           )
                         : _openForm(t),
                     onLongPress: () => _delete(t),
+                    onRestoreCreated: t.aiCreated ? () => _restoreAiCreated(t) : null,
+                    onRestoreNote: t.noteAiModified ? () => _restoreAiNote(t) : null,
                   ),
                 );
               },
@@ -315,11 +403,15 @@ class _TxnTile extends StatelessWidget {
   final String? categoryName;
   final VoidCallback onTap;
   final VoidCallback onLongPress;
+  final VoidCallback? onRestoreCreated;
+  final VoidCallback? onRestoreNote;
   const _TxnTile({
     required this.t,
     required this.categoryName,
     required this.onTap,
     required this.onLongPress,
+    this.onRestoreCreated,
+    this.onRestoreNote,
   });
 
   @override
@@ -381,12 +473,43 @@ class _TxnTile extends StatelessWidget {
               ),
             ),
           ],
+          if (t.aiCreated) ...[
+            SizedBox(width: 6),
+            Text(
+              trKey('featuresTransactionsAiCreated'),
+              style: TextStyle(fontSize: 12, color: Colors.green),
+            ),
+          ],
+          if (t.noteAiModified) ...[
+            SizedBox(width: 6),
+            Text(
+              trKey('featuresTransactionsNoteAiModified'),
+              style: TextStyle(fontSize: 12, color: Colors.blue),
+            ),
+          ],
         ],
       ),
-      trailing: Text(
-        // 外幣交易顯示原幣別金額（如 USD 100），TWD 交易維持台幣金額。
-        sign + money(t.originalAmount, t.currency),
-        style: TextStyle(fontWeight: FontWeight.bold, color: color),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            // 外幣交易顯示原幣別金額（如 USD 100），TWD 交易維持台幣金額。
+            sign + money(t.originalAmount, t.currency),
+            style: TextStyle(fontWeight: FontWeight.bold, color: color),
+          ),
+          if (t.aiCreated)
+            IconButton(
+              tooltip: trKey('featuresTransactionsRestoreCreated'),
+              icon: Icon(Icons.restore),
+              onPressed: onRestoreCreated,
+            ),
+          if (t.noteAiModified)
+            IconButton(
+              tooltip: trKey('featuresTransactionsRestoreNote'),
+              icon: Icon(Icons.undo),
+              onPressed: onRestoreNote,
+            ),
+        ],
       ),
     );
   }

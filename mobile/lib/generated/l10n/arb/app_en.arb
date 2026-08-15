@@ -3246,6 +3246,56 @@
     "description": "Web path: features.transactions.fxFee",
     "x-webPath": "features.transactions.fxFee"
   },
+  "featuresTransactionsAiCreated": "AI-created",
+  "@featuresTransactionsAiCreated": {
+    "description": "Web path: features.transactions.aiCreated",
+    "x-webPath": "features.transactions.aiCreated"
+  },
+  "featuresTransactionsNoteAiModified": "Note edited by AI",
+  "@featuresTransactionsNoteAiModified": {
+    "description": "Web path: features.transactions.noteAiModified",
+    "x-webPath": "features.transactions.noteAiModified"
+  },
+  "featuresTransactionsRestoreCreated": "Undo creation",
+  "@featuresTransactionsRestoreCreated": {
+    "description": "Web path: features.transactions.restoreCreated",
+    "x-webPath": "features.transactions.restoreCreated"
+  },
+  "featuresTransactionsRestoreNote": "Restore note",
+  "@featuresTransactionsRestoreNote": {
+    "description": "Web path: features.transactions.restoreNote",
+    "x-webPath": "features.transactions.restoreNote"
+  },
+  "featuresTransactionsRestoreCreatedTitle": "Restore AI-created transaction",
+  "@featuresTransactionsRestoreCreatedTitle": {
+    "description": "Web path: features.transactions.restoreCreatedTitle",
+    "x-webPath": "features.transactions.restoreCreatedTitle"
+  },
+  "featuresTransactionsRestoreCreatedMessage": "Restoring will remove this transaction, including any linked transfer leg or fee transaction, and cannot be undone. Continue?",
+  "@featuresTransactionsRestoreCreatedMessage": {
+    "description": "Web path: features.transactions.restoreCreatedMessage",
+    "x-webPath": "features.transactions.restoreCreatedMessage"
+  },
+  "featuresTransactionsRestoreNoteTitle": "Restore note",
+  "@featuresTransactionsRestoreNoteTitle": {
+    "description": "Web path: features.transactions.restoreNoteTitle",
+    "x-webPath": "features.transactions.restoreNoteTitle"
+  },
+  "featuresTransactionsRestoreNoteConfirmMessage": "Restoring will revert the note to its content before the AI's edit and cannot be undone. Continue?",
+  "@featuresTransactionsRestoreNoteConfirmMessage": {
+    "description": "Web path: features.transactions.restoreNoteConfirmMessage",
+    "x-webPath": "features.transactions.restoreNoteConfirmMessage"
+  },
+  "featuresTransactionsRestoreNoteCurrentLabel": "Current note",
+  "@featuresTransactionsRestoreNoteCurrentLabel": {
+    "description": "Web path: features.transactions.restoreNoteCurrentLabel",
+    "x-webPath": "features.transactions.restoreNoteCurrentLabel"
+  },
+  "featuresTransactionsRestoreNotePreviewLabel": "Note after restore",
+  "@featuresTransactionsRestoreNotePreviewLabel": {
+    "description": "Web path: features.transactions.restoreNotePreviewLabel",
+    "x-webPath": "features.transactions.restoreNotePreviewLabel"
+  },
   "featuresTransactionsPhotoOne": "Photo 1",
   "@featuresTransactionsPhotoOne": {
     "description": "Web path: features.transactions.photoOne",

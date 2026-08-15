@@ -3246,6 +3246,59 @@
     "description": "Web path: features.transactions.fxFee",
     "x-webPath": "features.transactions.fxFee"
   },
+  "featuresTransactionsAiCreated": "Creado por IA",
+  "@featuresTransactionsAiCreated": {
+    "description": "Web path: features.transactions.aiCreated",
+    "x-webPath": "features.transactions.aiCreated"
+  },
+  "featuresTransactionsNoteAiModified": "Nota editada por IA",
+  "@featuresTransactionsNoteAiModified": {
+    "description": "Web path: features.transactions.noteAiModified",
+    "x-webPath": "features.transactions.noteAiModified"
+  },
+  "featuresTransactionsRestoreCreated": "Deshacer creación",
+  "@featuresTransactionsRestoreCreated": {
+    "description": "Web path: features.transactions.restoreCreated",
+    "x-webPath": "features.transactions.restoreCreated"
+  },
+  "featuresTransactionsRestoreNote": "Restaurar nota",
+  "@featuresTransactionsRestoreNote": {
+    "description": "Web path: features.transactions.restoreNote",
+    "x-webPath": "features.transactions.restoreNote"
+  },
+  "featuresTransactionsRestoreCreatedTitle": "Restaurar transacción creada por IA",
+  "@featuresTransactionsRestoreCreatedTitle": {
+    "description": "Web path: features.transactions.restoreCreatedTitle",
+    "x-webPath": "features.transactions.restoreCreatedTitle"
+  },
+  "featuresTransactionsRestoreCreatedMessage": "Restaurar eliminará esta transacción, incluida cualquier transferencia vinculada o transacción de comisión, y no se puede deshacer. ¿Continuar?",
+  "@featuresTransactionsRestoreCreatedMessage": {
+    "description": "Web path: features.transactions.restoreCreatedMessage",
+    "x-webPath": "features.transactions.restoreCreatedMessage"
+  },
+  "featuresTransactionsRestoreNoteTitle": "Restaurar nota",
+  "@featuresTransactionsRestoreNoteTitle": {
+    "description": "Web path: features.transactions.restoreNoteTitle",
+    "x-webPath": "features.transactions.restoreNoteTitle"
+  },
+  "featuresTransactionsRestoreNoteConfirmMessage": "Restaurar revertirá la nota a su contenido antes de la edición de la IA y no se puede deshacer. ¿Continuar?",
+  "@featuresTransactionsRestoreNoteConfirmMessage": {
+    "description": "Web path: features.transactions.restoreNoteConfirmMessage",
+    "x-webPath": "features.transactions.restoreNoteConfirmMessage"
+  },
+  "featuresTransactionsRestoreNoteCurrentLabel": "Nota actual",
+  "@featuresTransactionsRestoreNoteCurrentLabel": {
+    "description": "Web path: features.transactions.restoreNoteCurrentLabel",
+    "x-webPath": "features.transactions.restoreNoteCurrentLabel"
+  },
+  "featuresTransactionsRestoreNotePreviewLabel": "Nota después de restaurar",
+  "@featuresTransactionsRestoreNotePreviewLabel": {
+    "description": "Web path: features.transactions.restoreNotePreviewLabel",
+    "x-webPath": "features.transactions.restoreNotePreviewLabel"
+  },
+
+
+
   "featuresTransactionsPhotoOne": "Foto 1",
   "@featuresTransactionsPhotoOne": {
     "description": "Web path: features.transactions.photoOne",

@@ -522,6 +522,19 @@ async function _runMigrations(): Promise<void> {
   alterIgnore("ALTER TABLE transactions ADD COLUMN scheduled_date TEXT DEFAULT ''");
   alterIgnore("ALTER TABLE transactions ADD COLUMN is_fx_fee INTEGER DEFAULT 0");
   alterIgnore("ALTER TABLE transactions ADD COLUMN currency TEXT DEFAULT 'TWD'");
+  alterIgnore("ALTER TABLE transactions ADD COLUMN ai_created INTEGER NOT NULL DEFAULT 0");
+  alterIgnore("ALTER TABLE transactions ADD COLUMN note_ai_modified INTEGER NOT NULL DEFAULT 0");
+  alterIgnore("ALTER TABLE transactions ADD COLUMN pre_ai_note TEXT NOT NULL DEFAULT ''");
+  alterIgnore(`UPDATE transactions SET ai_created = 1
+    WHERE ai_created = 0 AND id IN (
+      SELECT (metadata::jsonb->>'transaction_id')
+      FROM data_operation_audit_log
+      WHERE action = 'mcp_create_transaction'
+    )`);
+  alterIgnore(`UPDATE transactions SET ai_created = 1
+    WHERE ai_created = 0 AND id IN (
+      SELECT linked_id FROM transactions WHERE ai_created = 1 AND linked_id != ''
+    )`);
 
   alterIgnore("ALTER TABLE recurring ADD COLUMN fx_fee REAL DEFAULT 0");
   alterIgnore("ALTER TABLE recurring ADD COLUMN exclude_from_stats INTEGER DEFAULT 0");

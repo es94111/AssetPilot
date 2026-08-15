@@ -22,6 +22,8 @@ if (!DB_URL) {
 
   const userId = 'test_mcpcreate_' + uid();
   const accountId = uid();
+  const accountId2 = uid();
+  const creditCardId = uid();
   const categoryId = uid();
   const credential = { credentialId: 'test_mcpcreate_cred_' + uid(), userId, name: '測試憑證', allowCreate: true };
 
@@ -35,6 +37,14 @@ if (!DB_URL) {
     db.run(
       'INSERT INTO accounts (id, user_id, name, currency, created_at) VALUES (?,?,?,?,?)',
       [accountId, userId, '測試帳戶', 'TWD', now]
+    );
+    db.run(
+      'INSERT INTO accounts (id, user_id, name, currency, created_at) VALUES (?,?,?,?,?)',
+      [accountId2, userId, '測試帳戶二', 'TWD', now]
+    );
+    db.run(
+      'INSERT INTO accounts (id, user_id, name, currency, category, overseas_fee_rate, created_at) VALUES (?,?,?,?,?,?,?)',
+      [creditCardId, userId, '測試信用卡', 'TWD', 'credit_card', 1.5, now]
     );
     db.run(
       'INSERT INTO categories (id, user_id, name, type, parent_id) VALUES (?,?,?,?,?)',
@@ -159,5 +169,58 @@ if (!DB_URL) {
 
     const totalAfter = queryOne('SELECT COUNT(*) AS cnt FROM transactions WHERE user_id = ?', [userId]);
     assert.equal(Number(totalAfter?.cnt) || 0, Number(totalBefore?.cnt) || 0, '不應有任何資料被刪除或新增');
+  });
+
+  test('create_transaction 建立的一般交易 ai_created=1（005 FR-001(a)）', async () => {
+    await withMcpClient(async (client) => {
+      const result = await client.callTool({
+        name: 'create_transaction',
+        arguments: { type: 'expense', amount: 200, accountId, note: 'AI 建立測試' },
+      });
+      const payload = JSON.parse(firstTextContent(result));
+      const row = queryOne('SELECT ai_created FROM transactions WHERE id = ?', [payload.id]);
+      assert.equal(Number(row?.ai_created), 1);
+    });
+  });
+
+  test('create_transaction 建立的轉帳兩腳皆 ai_created=1（005 FR-018(a)）', async () => {
+    await withMcpClient(async (client) => {
+      const result = await client.callTool({
+        name: 'create_transaction',
+        arguments: { type: 'transfer', amount: 500, fromAccountId: accountId, toAccountId: accountId2, note: 'AI 轉帳' },
+      });
+      const payload = JSON.parse(firstTextContent(result));
+      const outRow = queryOne('SELECT ai_created FROM transactions WHERE id = ?', [payload.transferOut.id]);
+      const inRow = queryOne('SELECT ai_created FROM transactions WHERE id = ?', [payload.transferIn.id]);
+      assert.equal(Number(outRow?.ai_created), 1);
+      assert.equal(Number(inRow?.ai_created), 1);
+    });
+  });
+
+  test('create_transaction 觸發自動國外刷卡手續費時，主交易與手續費列皆 ai_created=1（005 FR-018(a)）', async () => {
+    await withMcpClient(async (client) => {
+      const result = await client.callTool({
+        name: 'create_transaction',
+        arguments: { type: 'expense', amount: 100, currency: 'USD', accountId: creditCardId, note: '海外刷卡' },
+      });
+      const payload = JSON.parse(firstTextContent(result));
+      const mainRow = queryOne('SELECT ai_created, linked_id FROM transactions WHERE id = ?', [payload.id]);
+      assert.equal(Number(mainRow?.ai_created), 1);
+      assert.ok(mainRow?.linked_id, '應產生手續費子交易');
+      const feeRow = queryOne('SELECT ai_created FROM transactions WHERE id = ?', [mainRow?.linked_id]);
+      assert.equal(Number(feeRow?.ai_created), 1);
+    });
+  });
+
+  test('create_transaction 帶 note 建立的交易，note_ai_modified 為 0（005 FR-004）', async () => {
+    await withMcpClient(async (client) => {
+      const result = await client.callTool({
+        name: 'create_transaction',
+        arguments: { type: 'expense', amount: 80, accountId, note: '建立當下的初始備註' },
+      });
+      const payload = JSON.parse(firstTextContent(result));
+      const row = queryOne('SELECT note_ai_modified FROM transactions WHERE id = ?', [payload.id]);
+      assert.equal(Number(row?.note_ai_modified), 0);
+    });
   });
 }

@@ -67,6 +67,8 @@ const AUDIT_ACTION_LABELS: Record<string, string> = {
   mcp_query: 'MCP 查詢資料',
   mcp_create_transaction: 'MCP 新增交易',
   mcp_update_transaction_note: 'MCP 更新交易備註',
+  restore_ai_created_transaction: '還原 AI 建立的交易',
+  restore_ai_modified_note: '還原 AI 修改的備註',
 };
 
 // 將稽核 metadata 整理為易讀的中文摘要，作為「詳情」欄位顯示。

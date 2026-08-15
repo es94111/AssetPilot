@@ -2135,6 +2135,40 @@ class AppLocalizationsEs extends AppLocalizations {
   String get featuresTransactionsFxFee => 'Comisión por compra extranjera';
 
   @override
+  String get featuresTransactionsAiCreated => 'Creado por IA';
+
+  @override
+  String get featuresTransactionsNoteAiModified => 'Nota editada por IA';
+
+  @override
+  String get featuresTransactionsRestoreCreated => 'Deshacer creación';
+
+  @override
+  String get featuresTransactionsRestoreNote => 'Restaurar nota';
+
+  @override
+  String get featuresTransactionsRestoreCreatedTitle =>
+      'Restaurar transacción creada por IA';
+
+  @override
+  String get featuresTransactionsRestoreCreatedMessage =>
+      'Restaurar eliminará esta transacción, incluida cualquier transferencia vinculada o transacción de comisión, y no se puede deshacer. ¿Continuar?';
+
+  @override
+  String get featuresTransactionsRestoreNoteTitle => 'Restaurar nota';
+
+  @override
+  String get featuresTransactionsRestoreNoteConfirmMessage =>
+      'Restaurar revertirá la nota a su contenido antes de la edición de la IA y no se puede deshacer. ¿Continuar?';
+
+  @override
+  String get featuresTransactionsRestoreNoteCurrentLabel => 'Nota actual';
+
+  @override
+  String get featuresTransactionsRestoreNotePreviewLabel =>
+      'Nota después de restaurar';
+
+  @override
   String get featuresTransactionsPhotoOne => 'Foto 1';
 
   @override

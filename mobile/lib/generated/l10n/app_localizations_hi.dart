@@ -2097,6 +2097,40 @@ class AppLocalizationsHi extends AppLocalizations {
   String get featuresTransactionsFxFee => 'विदेशी कार्ड शुल्क';
 
   @override
+  String get featuresTransactionsAiCreated => 'AI द्वारा निर्मित';
+
+  @override
+  String get featuresTransactionsNoteAiModified => 'AI द्वारा संपादित नोट';
+
+  @override
+  String get featuresTransactionsRestoreCreated => 'निर्माण पूर्ववत करें';
+
+  @override
+  String get featuresTransactionsRestoreNote => 'नोट पुनर्स्थापित करें';
+
+  @override
+  String get featuresTransactionsRestoreCreatedTitle =>
+      'AI द्वारा निर्मित लेनदेन पुनर्स्थापित करें';
+
+  @override
+  String get featuresTransactionsRestoreCreatedMessage =>
+      'पुनर्स्थापित करने पर यह लेनदेन (किसी भी लिंक किए गए स्थानांतरण या शुल्क लेनदेन सहित) हटा दिया जाएगा और इसे पूर्ववत नहीं किया जा सकता। जारी रखें?';
+
+  @override
+  String get featuresTransactionsRestoreNoteTitle => 'नोट पुनर्स्थापित करें';
+
+  @override
+  String get featuresTransactionsRestoreNoteConfirmMessage =>
+      'पुनर्स्थापित करने पर नोट AI के संपादन से पहले की सामग्री पर वापस आ जाएगा और इसे पूर्ववत नहीं किया जा सकता। जारी रखें?';
+
+  @override
+  String get featuresTransactionsRestoreNoteCurrentLabel => 'वर्तमान नोट';
+
+  @override
+  String get featuresTransactionsRestoreNotePreviewLabel =>
+      'पुनर्स्थापना के बाद नोट';
+
+  @override
   String get featuresTransactionsPhotoOne => '1 तस्वीर';
 
   @override

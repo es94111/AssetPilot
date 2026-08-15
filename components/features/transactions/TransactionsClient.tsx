@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogC
 import { Button } from '@/components/ui/button';
 import { useT } from '@/components/i18n/I18nProvider';
 import { localeTag } from '@/lib/i18n/localeTag';
-import { ArrowLeftRight, CalendarDays, Image, Images, Pencil, Plus, Search, SlidersHorizontal, Tags, Trash2 } from 'lucide-react';
+import { ArrowLeftRight, CalendarDays, Image, Images, Pencil, Plus, RotateCcw, Search, SlidersHorizontal, Tags, Trash2, Undo2 } from 'lucide-react';
 import { TRANSACTION_NOTE_MAX_LENGTH } from '@/lib/transactionEditRules';
 
 const EMPTY_FORM = { date: '', type: 'expense', amount: '', categoryId: '', accountId: '', note: '', excludeFromStats: false, currency: 'TWD', fxRate: '', fxFee: '' };
@@ -137,6 +137,9 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
   const [photoStorageStatus, setPhotoStorageStatus] = useState<PhotoStorageStatus | null>(null);
   const [photoUploadWarning, setPhotoUploadWarning] = useState('');
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [restoreCreatedId, setRestoreCreatedId] = useState<string | null>(null);
+  const [restoreNoteId, setRestoreNoteId] = useState<string | null>(null);
+  const [restoreNotePreview, setRestoreNotePreview] = useState<{ restorable: boolean; preAiNote: string | null; currentNote: string; updatedAt: number } | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [fxLoading, setFxLoading] = useState(false);
   const [attachmentPickerTxId, setAttachmentPickerTxId] = useState<string | null>(null);
@@ -507,6 +510,42 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
     }
   }
 
+  async function handleRestoreCreated() {
+    if (!restoreCreatedId) return;
+    try {
+      await apiPost(`/api/transactions/${restoreCreatedId}/restore-ai-created`);
+      setRestoreCreatedId(null);
+      await load(page);
+      notifyDataChanged('transactions');
+    } catch (e: any) {
+      alert(e.message);
+    }
+  }
+
+  async function openRestoreNote(tx: any) {
+    setRestoreNoteId(tx.id);
+    try {
+      const preview = await apiGet(`/api/transactions/${tx.id}/restore-ai-note`);
+      setRestoreNotePreview(preview);
+    } catch (e: any) {
+      alert(e.message);
+      setRestoreNoteId(null);
+    }
+  }
+
+  async function handleRestoreNote() {
+    if (!restoreNoteId) return;
+    try {
+      await apiPost(`/api/transactions/${restoreNoteId}/restore-ai-note`, { expectedUpdatedAt: restoreNotePreview?.updatedAt });
+      setRestoreNoteId(null);
+      setRestoreNotePreview(null);
+      await load(page);
+      notifyDataChanged('transactions');
+    } catch (e: any) {
+      alert(e.message);
+    }
+  }
+
   async function handleBatchDelete() {
     if (selected.size === 0) return;
     if (!confirm(t('features.transactions.batchDeleteConfirm', { count: selected.size }))) return;
@@ -776,10 +815,12 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
                       <div><dt className="sr-only">{t('features.common.date')}</dt><dd>{tx.date}{isFuture ? ` · ${t('features.transactions.future')}` : ''}</dd></div>
                       <div className="text-right"><dt className="sr-only">{t('features.common.account')}</dt><dd className="truncate">{getAcctName(tx)}{tx.toAccountId ? ` → ${accounts.find((account: any) => account.id === tx.toAccountId)?.name || t('features.common.notRecorded')}` : ''}</dd></div>
                     </dl>
-                    {(tx.note || tx.isFxFee || tx.sourceRecurringName || tx.excludeFromStats) && (
+                    {(tx.note || tx.isFxFee || tx.sourceRecurringName || tx.excludeFromStats || tx.aiCreated || tx.noteAiModified) && (
                       <div className="mt-3 space-y-1 border-t border-slate-100 pt-3 text-xs text-slate-500 dark:border-slate-800">
                         {tx.note && <p className="break-words text-slate-700 dark:text-slate-300">{tx.note}</p>}
                         {tx.isFxFee && <p className="text-amber-600">{t('features.transactions.fxFee')}</p>}
+                        {tx.aiCreated && <p className="text-emerald-600">{t('features.transactions.aiCreated')}</p>}
+                        {tx.noteAiModified && <p className="text-sky-600">{t('features.transactions.noteAiModified')}</p>}
                         {tx.sourceRecurringName && <p>{t('features.transactions.source', { name: tx.sourceRecurringName })}</p>}
                         {tx.excludeFromStats && <p>{t('features.common.excludeFromStats')}</p>}
                       </div>
@@ -801,6 +842,12 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
                       <div className="flex shrink-0 items-center gap-1">
                         {!isTransfer && !tx.isFxFee && (
                           <Button type="button" variant="ghost" size="icon" aria-label={`${t('common.edit')}: ${transactionLabel}`} onClick={() => openEdit(tx)}><Pencil size={18} aria-hidden="true" /></Button>
+                        )}
+                        {tx.aiCreated && (
+                          <Button type="button" variant="ghost" size="icon" aria-label={`${t('features.transactions.restoreCreated')}: ${transactionLabel}`} title={t('features.transactions.restoreCreated')} onClick={() => setRestoreCreatedId(tx.id)}><Undo2 size={18} aria-hidden="true" /></Button>
+                        )}
+                        {tx.noteAiModified && (
+                          <Button type="button" variant="ghost" size="icon" aria-label={`${t('features.transactions.restoreNote')}: ${transactionLabel}`} title={t('features.transactions.restoreNote')} onClick={() => openRestoreNote(tx)}><RotateCcw size={18} aria-hidden="true" /></Button>
                         )}
                         <Button type="button" variant="ghost" size="icon" className="text-destructive" aria-label={`${t('common.delete')}: ${transactionLabel}`} onClick={() => setDeleteId(tx.id)}><Trash2 size={18} aria-hidden="true" /></Button>
                       </div>
@@ -853,6 +900,8 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
                     <td>
                       <div>{tx.note || t('features.common.notRecorded')}</div>
                       {tx.isFxFee && <div className="text-xs text-amber-600">{t('features.transactions.fxFee')}</div>}
+                      {tx.aiCreated && <div className="text-xs text-emerald-600">{t('features.transactions.aiCreated')}</div>}
+                      {tx.noteAiModified && <div className="text-xs text-sky-600">{t('features.transactions.noteAiModified')}</div>}
                       {tx.sourceRecurringName && <div className="text-xs text-slate-500">{t('features.transactions.source', { name: tx.sourceRecurringName })}</div>}
                       {tx.excludeFromStats && <div className="text-xs text-slate-500">{t('features.common.excludeFromStats')}</div>}
                       {tx.attachmentCount > 0 && tx.firstAttachmentId && (
@@ -886,6 +935,8 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
                     </td>
                     <td>
                       {!isTransfer && !tx.isFxFee && <button className="btn-icon" title={t('common.edit')} aria-label={`${t('common.edit')}: ${getCatName(tx)} · ${tx.date}`} onClick={() => openEdit(tx)}><i className="fas fa-pencil" /></button>}
+                      {tx.aiCreated && <button className="btn-icon" title={t('features.transactions.restoreCreated')} aria-label={`${t('features.transactions.restoreCreated')}: ${getCatName(tx)} · ${tx.date}`} onClick={() => setRestoreCreatedId(tx.id)}><i className="fas fa-rotate-left" /></button>}
+                      {tx.noteAiModified && <button className="btn-icon" title={t('features.transactions.restoreNote')} aria-label={`${t('features.transactions.restoreNote')}: ${getCatName(tx)} · ${tx.date}`} onClick={() => openRestoreNote(tx)}><i className="fas fa-undo" /></button>}
                       <button className="btn-icon danger" title={t('common.delete')} aria-label={`${t('common.delete')}: ${getCatName(tx)} · ${tx.date}`} onClick={() => setDeleteId(tx.id)}><i className="fas fa-trash" /></button>
                     </td>
                   </tr>
@@ -1251,6 +1302,54 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
               <div className="modal-footer">
                 <button className="btn btn-ghost" onClick={() => setDeleteId(null)}>{t('common.cancel')}</button>
                 <button className="btn btn-danger" onClick={handleDelete}>{t('common.confirm')}</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {restoreCreatedId && (
+        <div className="modal-overlay active" onClick={() => setRestoreCreatedId(null)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>{t('features.transactions.restoreCreatedTitle')}</h3>
+              <button className="btn-icon" onClick={() => setRestoreCreatedId(null)}><i className="fas fa-xmark" /></button>
+            </div>
+            <div className="modal-body">
+              <p>{t('features.transactions.restoreCreatedMessage')}</p>
+              <div className="modal-footer">
+                <button className="btn btn-ghost" onClick={() => setRestoreCreatedId(null)}>{t('common.cancel')}</button>
+                <button className="btn btn-danger" onClick={handleRestoreCreated}>{t('common.confirm')}</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {restoreNoteId && (
+        <div className="modal-overlay active" onClick={() => { setRestoreNoteId(null); setRestoreNotePreview(null); }}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>{t('features.transactions.restoreNoteTitle')}</h3>
+              <button className="btn-icon" onClick={() => { setRestoreNoteId(null); setRestoreNotePreview(null); }}><i className="fas fa-xmark" /></button>
+            </div>
+            <div className="modal-body">
+              <p>{t('features.transactions.restoreNoteConfirmMessage')}</p>
+              {restoreNotePreview && (
+                <div className="mt-3 space-y-2 rounded border border-slate-200 p-3 text-sm dark:border-slate-700">
+                  <div>
+                    <div className="text-xs font-medium text-slate-500">{t('features.transactions.restoreNoteCurrentLabel')}</div>
+                    <div className="break-words text-slate-700 dark:text-slate-300">{restoreNotePreview.currentNote || '—'}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs font-medium text-slate-500">{t('features.transactions.restoreNotePreviewLabel')}</div>
+                    <div className="break-words text-slate-700 dark:text-slate-300">{restoreNotePreview.preAiNote || '—'}</div>
+                  </div>
+                </div>
+              )}
+              <div className="modal-footer">
+                <button className="btn btn-ghost" onClick={() => { setRestoreNoteId(null); setRestoreNotePreview(null); }}>{t('common.cancel')}</button>
+                <button className="btn btn-danger" onClick={handleRestoreNote}>{t('common.confirm')}</button>
               </div>
             </div>
           </div>

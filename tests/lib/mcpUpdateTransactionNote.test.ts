@@ -480,4 +480,60 @@ if (!DB_URL) {
     assert.deepEqual(accountAfter, accountBefore, '帳戶資料列不應被變更');
     assert.deepEqual(categoryAfter, categoryBefore, '分類資料列不應被變更');
   });
+
+  // ── T014: 005 備註標記與快照 ──────────────────────────────────────────
+
+  test('T014(a) 成功更新後 note_ai_modified=1、pre_ai_note 等於更新前的舊備註值（005 FR-003/FR-007）', async () => {
+    const txId = uid();
+    const db = getDB();
+    db.run(
+      'INSERT INTO transactions (id, user_id, type, amount, currency, date, category_id, account_id, note, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)',
+      [txId, userId, 'expense', 60, 'TWD', '2026-08-15', categoryId, accountId, '原始備註', Date.now(), Date.now()]
+    );
+    try {
+      await withMcpClient(async (client) => {
+        const result = await client.callTool({
+          name: 'update_transaction_note',
+          arguments: { transactionId: txId, note: 'AI 修改後的備註' },
+        });
+        assert.equal(result.isError, undefined);
+        const payload = JSON.parse(firstTextContent(result));
+        assert.equal(payload.ok, true);
+      });
+      const row = queryOne('SELECT note_ai_modified, pre_ai_note FROM transactions WHERE id = ?', [txId]);
+      assert.equal(Number(row?.note_ai_modified), 1);
+      assert.equal(row?.pre_ai_note, '原始備註');
+    } finally {
+      db.run('DELETE FROM transactions WHERE id = ?', [txId]);
+    }
+  });
+
+  test('T014(b) 連續兩次 AI 修改只保留一層：第二次之後 pre_ai_note 為第一次修改後、第二次修改前的值（005 Clarification #3）', async () => {
+    const txId = uid();
+    const db = getDB();
+    db.run(
+      'INSERT INTO transactions (id, user_id, type, amount, currency, date, category_id, account_id, note, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)',
+      [txId, userId, 'expense', 70, 'TWD', '2026-08-15', categoryId, accountId, '最原始備註', Date.now(), Date.now()]
+    );
+    try {
+      await withMcpClient(async (client) => {
+        const first = await client.callTool({
+          name: 'update_transaction_note',
+          arguments: { transactionId: txId, note: '第一次修改' },
+        });
+        assert.equal(JSON.parse(firstTextContent(first)).ok, true);
+        const second = await client.callTool({
+          name: 'update_transaction_note',
+          arguments: { transactionId: txId, note: '第二次修改' },
+        });
+        assert.equal(JSON.parse(firstTextContent(second)).ok, true);
+      });
+      const row = queryOne('SELECT note, note_ai_modified, pre_ai_note FROM transactions WHERE id = ?', [txId]);
+      assert.equal(row?.note, '第二次修改');
+      assert.equal(Number(row?.note_ai_modified), 1);
+      assert.equal(row?.pre_ai_note, '第一次修改', 'pre_ai_note 應為第一次修改後、第二次修改前的值，而非最原始值');
+    } finally {
+      db.run('DELETE FROM transactions WHERE id = ?', [txId]);
+    }
+  });
 }

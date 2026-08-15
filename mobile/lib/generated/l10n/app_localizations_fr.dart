@@ -2132,6 +2132,40 @@ class AppLocalizationsFr extends AppLocalizations {
   String get featuresTransactionsFxFee => 'Frais de carte étrangère';
 
   @override
+  String get featuresTransactionsAiCreated => 'Créé par IA';
+
+  @override
+  String get featuresTransactionsNoteAiModified => 'Note modifiée par IA';
+
+  @override
+  String get featuresTransactionsRestoreCreated => 'Annuler la création';
+
+  @override
+  String get featuresTransactionsRestoreNote => 'Restaurer la note';
+
+  @override
+  String get featuresTransactionsRestoreCreatedTitle =>
+      'Restaurer la transaction créée par IA';
+
+  @override
+  String get featuresTransactionsRestoreCreatedMessage =>
+      'La restauration supprimera cette transaction (y compris tout virement lié ou frais) et ne peut pas être annulée. Continuer ?';
+
+  @override
+  String get featuresTransactionsRestoreNoteTitle => 'Restaurer la note';
+
+  @override
+  String get featuresTransactionsRestoreNoteConfirmMessage =>
+      'La restauration ramènera la note à son contenu avant la modification de l\'IA et ne peut pas être annulée. Continuer ?';
+
+  @override
+  String get featuresTransactionsRestoreNoteCurrentLabel => 'Note actuelle';
+
+  @override
+  String get featuresTransactionsRestoreNotePreviewLabel =>
+      'Note après restauration';
+
+  @override
   String get featuresTransactionsPhotoOne => 'Photo 1';
 
   @override

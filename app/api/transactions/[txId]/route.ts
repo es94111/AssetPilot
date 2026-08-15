@@ -5,8 +5,9 @@ import { normalizeCurrency, convertToTwd, normalizeDate, resolveOverseasFee } fr
 import { ownsResource, assertOptimisticLock, lockErrorResponse } from '../../../../lib/resourceHelpers';
 import { computeTwdAmount } from '../../../../lib/moneyDecimal';
 import { insertFeeTransaction } from '../../../../lib/overseasFee';
-import { deleteTransactionAttachments, listTransactionAttachments } from '../../../../lib/transactionAttachments';
+import { listTransactionAttachments } from '../../../../lib/transactionAttachments';
 import { findTransactionEditBlock } from '../../../../lib/transactionEditRules';
+import { deleteTransactionCascade } from '../../../../lib/transactionWriteCore';
 
 type RouteContext = { params: Promise<{ txId: string }> };
 interface Auth {
@@ -38,6 +39,9 @@ interface TransactionRow {
   linked_id: string | null;
   source_recurring_id: string | null;
   scheduled_date: string | null;
+  ai_created: number | null;
+  note_ai_modified: number | null;
+  pre_ai_note: string | null;
   created_at: string | number | null;
   updated_at: string | number | null;
 }
@@ -199,10 +203,17 @@ async function updateHandler(request: NextRequest, txId: string, auth: Auth) {
   );
 
   const nowMs = Date.now();
+  // 005 FR-003／Edge Cases：整份表單覆寫協定恆送出 note，故以「新舊 note 值是否真的不同」判斷
+  // 是否清除「備註經 AI 修改」標記與快照；相同（表單重送同值）則原樣保留。純記憶體字串比對，
+  // 不新增資料庫往返（existing 已由 getOwnedTransaction() 完整 SELECT *）。
+  const nextNote = note || '';
+  const noteChanged = nextNote !== (existing.note || '');
+  const nextNoteAiModified = noteChanged ? 0 : (existing.note_ai_modified || 0);
+  const nextPreAiNote = noteChanged ? '' : (existing.pre_ai_note || '');
   const db = getDB();
   db.run(
-    'UPDATE transactions SET type=?, amount=?, currency=?, original_amount=?, fx_rate=?, fx_fee=?, twd_amount=?, date=?, category_id=?, account_id=?, note=?, exclude_from_stats=?, updated_at=? WHERE id=? AND user_id=?',
-    [type, twdAmountInt, converted.currency, converted.originalAmount, converted.fxRate, 0, twdAmountInt, date, categoryId || null, accountId || null, note || '', excludeFromStats ? 1 : 0, nowMs, txId, auth.userId]
+    'UPDATE transactions SET type=?, amount=?, currency=?, original_amount=?, fx_rate=?, fx_fee=?, twd_amount=?, date=?, category_id=?, account_id=?, note=?, exclude_from_stats=?, note_ai_modified=?, pre_ai_note=?, updated_at=? WHERE id=? AND user_id=?',
+    [type, twdAmountInt, converted.currency, converted.originalAmount, converted.fxRate, 0, twdAmountInt, date, categoryId || null, accountId || null, note || '', excludeFromStats ? 1 : 0, nextNoteAiModified, nextPreAiNote, nowMs, txId, auth.userId]
   );
 
   // 同步配對的手續費獨立交易：依新狀態建立／更新／刪除（自動同步重算）。
@@ -268,12 +279,6 @@ export async function DELETE(request: NextRequest, { params }: RouteContext) {
     }
   }
 
-  const db = getDB();
-  await deleteTransactionAttachments(auth.userId, [txId, ...(tx.linked_id ? [tx.linked_id] : [])]);
-  db.run('DELETE FROM transactions WHERE id = ? AND user_id = ?', [txId, auth.userId]);
-  if (tx.linked_id) {
-    db.run('DELETE FROM transactions WHERE id = ? AND user_id = ?', [tx.linked_id, auth.userId]);
-  }
-  saveDB();
+  await deleteTransactionCascade(auth.userId, txId, tx.linked_id || '');
   return NextResponse.json({ ok: true });
 }

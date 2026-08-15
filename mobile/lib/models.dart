@@ -195,6 +195,9 @@ class Txn {
   final bool excludeFromStats;
   final num fxFee; // 海外刷卡手續費（TWD）
   final bool isFxFee; // 是否為自動產生的國外刷卡手續費交易
+  final bool aiCreated; // 是否由 AI 透過 MCP create_transaction 建立（005）
+  final bool noteAiModified; // 備註目前值是否由 AI 透過 MCP 最近一次寫入（005）
+  final num updatedAt; // 樂觀鎖版本值（Unix ms），供還原備註端點帶回
 
   Txn({
     required this.id,
@@ -213,6 +216,9 @@ class Txn {
     this.excludeFromStats = false,
     this.fxFee = 0,
     this.isFxFee = false,
+    this.aiCreated = false,
+    this.noteAiModified = false,
+    this.updatedAt = 0,
   });
 
   factory Txn.fromJson(Map<String, dynamic> j) {
@@ -236,6 +242,9 @@ class Txn {
       ),
       fxFee: _asNum(j['fxFee'] ?? j['fx_fee']),
       isFxFee: _asBool(j['isFxFee'] ?? j['is_fx_fee']),
+      aiCreated: _asBool(j['aiCreated'] ?? j['ai_created']),
+      noteAiModified: _asBool(j['noteAiModified'] ?? j['note_ai_modified']),
+      updatedAt: _asNum(j['updatedAt'] ?? j['updated_at']),
       catName:
           (j['cat_name'] ??
                   j['catName'] ??

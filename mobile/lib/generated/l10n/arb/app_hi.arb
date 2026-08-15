@@ -3246,6 +3246,56 @@
     "description": "Web path: features.transactions.fxFee",
     "x-webPath": "features.transactions.fxFee"
   },
+  "featuresTransactionsAiCreated": "AI द्वारा निर्मित",
+  "@featuresTransactionsAiCreated": {
+    "description": "Web path: features.transactions.aiCreated",
+    "x-webPath": "features.transactions.aiCreated"
+  },
+  "featuresTransactionsNoteAiModified": "AI द्वारा संपादित नोट",
+  "@featuresTransactionsNoteAiModified": {
+    "description": "Web path: features.transactions.noteAiModified",
+    "x-webPath": "features.transactions.noteAiModified"
+  },
+  "featuresTransactionsRestoreCreated": "निर्माण पूर्ववत करें",
+  "@featuresTransactionsRestoreCreated": {
+    "description": "Web path: features.transactions.restoreCreated",
+    "x-webPath": "features.transactions.restoreCreated"
+  },
+  "featuresTransactionsRestoreNote": "नोट पुनर्स्थापित करें",
+  "@featuresTransactionsRestoreNote": {
+    "description": "Web path: features.transactions.restoreNote",
+    "x-webPath": "features.transactions.restoreNote"
+  },
+  "featuresTransactionsRestoreCreatedTitle": "AI द्वारा निर्मित लेनदेन पुनर्स्थापित करें",
+  "@featuresTransactionsRestoreCreatedTitle": {
+    "description": "Web path: features.transactions.restoreCreatedTitle",
+    "x-webPath": "features.transactions.restoreCreatedTitle"
+  },
+  "featuresTransactionsRestoreCreatedMessage": "पुनर्स्थापित करने पर यह लेनदेन (किसी भी लिंक किए गए स्थानांतरण या शुल्क लेनदेन सहित) हटा दिया जाएगा और इसे पूर्ववत नहीं किया जा सकता। जारी रखें?",
+  "@featuresTransactionsRestoreCreatedMessage": {
+    "description": "Web path: features.transactions.restoreCreatedMessage",
+    "x-webPath": "features.transactions.restoreCreatedMessage"
+  },
+  "featuresTransactionsRestoreNoteTitle": "नोट पुनर्स्थापित करें",
+  "@featuresTransactionsRestoreNoteTitle": {
+    "description": "Web path: features.transactions.restoreNoteTitle",
+    "x-webPath": "features.transactions.restoreNoteTitle"
+  },
+  "featuresTransactionsRestoreNoteConfirmMessage": "पुनर्स्थापित करने पर नोट AI के संपादन से पहले की सामग्री पर वापस आ जाएगा और इसे पूर्ववत नहीं किया जा सकता। जारी रखें?",
+  "@featuresTransactionsRestoreNoteConfirmMessage": {
+    "description": "Web path: features.transactions.restoreNoteConfirmMessage",
+    "x-webPath": "features.transactions.restoreNoteConfirmMessage"
+  },
+  "featuresTransactionsRestoreNoteCurrentLabel": "वर्तमान नोट",
+  "@featuresTransactionsRestoreNoteCurrentLabel": {
+    "description": "Web path: features.transactions.restoreNoteCurrentLabel",
+    "x-webPath": "features.transactions.restoreNoteCurrentLabel"
+  },
+  "featuresTransactionsRestoreNotePreviewLabel": "पुनर्स्थापना के बाद नोट",
+  "@featuresTransactionsRestoreNotePreviewLabel": {
+    "description": "Web path: features.transactions.restoreNotePreviewLabel",
+    "x-webPath": "features.transactions.restoreNotePreviewLabel"
+  },
   "featuresTransactionsPhotoOne": "1 तस्वीर",
   "@featuresTransactionsPhotoOne": {
     "description": "Web path: features.transactions.photoOne",

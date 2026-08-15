@@ -21,6 +21,7 @@ export interface FeeTransactionInput {
   note?: string;
   sourceRecurringId?: string;       // 來自固定收支時帶入
   scheduledDate?: string | null;    // 來自固定收支時帶入
+  aiCreated?: boolean;              // 此列是否由 AI 透過 MCP create_transaction 建立（005）
 }
 
 // 寫入一筆手續費交易（is_fx_fee=1，幣別固定 TWD），回傳其 id。
@@ -32,13 +33,14 @@ export function insertFeeTransaction(db: RunnableDB, input: FeeTransactionInput)
     `INSERT INTO transactions
      (id, user_id, type, amount, currency, original_amount, fx_rate, fx_fee, twd_amount,
       date, category_id, account_id, note, exclude_from_stats, linked_id, is_fx_fee,
-      source_recurring_id, scheduled_date, created_at, updated_at)
-     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      source_recurring_id, scheduled_date, ai_created, created_at, updated_at)
+     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
     [
       feeId, input.userId, 'expense', amount, 'TWD', amount, '1', 0, amount,
       input.date, input.categoryId || null, input.accountId || null,
       input.note || FX_FEE_NOTE, input.excludeFromStats ? 1 : 0, input.mainId, 1,
-      input.sourceRecurringId || '', input.scheduledDate ?? null, now, now,
+      input.sourceRecurringId || '', input.scheduledDate ?? null, input.aiCreated ? 1 : 0,
+      now, now,
     ]
   );
   return feeId;

@@ -120,11 +120,15 @@
 - **路由稽核模式**（v4.29.0）：security（預設）/ extended（含 401 session 失效）/ minimal（路由稽核全部關閉）
 - **API 使用與授權頁**：動態列出所有外部 API 來源、配額、合規授權字樣（IPinfo `IP address data is powered by IPinfo`）
 
-### AI 助理整合（v4.97.0）
+### AI 助理整合（v4.97.0 起）
 
-- **MCP OAuth 連線**：在 ChatGPT、Claude 等支援 MCP OAuth 的 AI 工具中輸入 `https://<你的網域>/api/mcp`，即可透過瀏覽器登入 AssetPilot、確認唯讀權限並完成連線；支援 Protected Resource Metadata、Authorization Server Metadata、Client ID Metadata Documents、public-client Dynamic Client Registration、Authorization Code + PKCE S256 與 rotating refresh token
+- **MCP OAuth 連線**：在 ChatGPT、Claude 等支援 MCP OAuth 的 AI 工具中輸入 `https://<你的網域>/api/mcp`，即可透過瀏覽器登入 AssetPilot、確認權限並完成連線；支援 Protected Resource Metadata、Authorization Server Metadata、Client ID Metadata Documents、public-client Dynamic Client Registration、Authorization Code + PKCE S256 與 rotating refresh token
 - **PAT 相容模式**：不支援 OAuth 的 client 仍可在「設定 → MCP 連線」建立個人化連線金鑰；可自訂名稱、選填到期時間，並隨時檢視或撤銷
-- **查詢稽核**：每次 AI 助理查詢皆記錄於既有操作稽核日誌，含時間與憑證名稱，不含實際查得的金額或明細
+- **AI 記帳寫入**（v4.99.0）：開啟「允許新增資料」權限的憑證／連線，可讓 AI 透過 `create_transaction` 工具新增一般交易（收入、支出、轉帳），視同使用者本人手動建立；僅能新增，無法修改或刪除既有資料；提供選填冪等鍵，24 小時內以相同鍵重複呼叫不會重複建立
+- **更新交易備註**（v4.100.0）：開啟「允許更新備註」權限的憑證／連線，可讓 AI 透過 `update_transaction_note` 工具更新一筆既有交易的備註文字（空字串代表清空，上限 200 字）；僅能修改備註，無法變更日期、類型、分類、金額、帳戶，也無法刪除任何資料
+- **逐憑證權限**：寫入能力（新增資料／更新備註）預設關閉，兩者彼此獨立；於「設定 → MCP 連線」（PAT）或「已連接 AI 工具」清單（OAuth）逐憑證開啟或關閉，變更立即生效；OAuth 授權全數失效後重新授權，寫入權限重置為關閉
+- **AI 標記與還原**（v4.101.0）：交易列表（網頁版與行動 App）為曾由 AI 建立、或目前備註由 AI 最近一次寫入的交易顯示獨立徽章；使用者可對「AI 建立」的交易一鍵還原（等同刪除，轉帳與連動的手續費交易一併移除），或對「備註經 AI 修改」的交易還原備註（可先預覽修改前原文再確認）；還原視同使用者本人操作，不受憑證目前的寫入權限或有效性影響
+- **稽核**：每次 AI 助理查詢與寫入皆記錄於既有操作稽核日誌，含時間與憑證名稱；查詢不含實際查得的金額或明細，寫入稽核不含備註全文
 
 正式環境啟用 MCP OAuth 前，必須將 `APP_URL` 設為對外 HTTPS origin（例如 `https://asset.example.com`）。OAuth access token 只對該 origin 的 `/api/mcp` 有效；本機開發才允許 loopback HTTP。
 

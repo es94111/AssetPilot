@@ -706,6 +706,16 @@ class ApiClient {
   Future<void> deleteTransaction(String id) =>
       _send('DELETE', '/api/transactions/$id');
 
+  Future<Map<String, dynamic>> restoreAiCreatedTransaction(String id) =>
+      _getMapFromSend('POST', '/api/transactions/$id/restore-ai-created');
+
+  Future<Map<String, dynamic>> restoreAiNote(String id, num expectedUpdatedAt) =>
+      _getMapFromSend('POST', '/api/transactions/$id/restore-ai-note',
+          body: {'expectedUpdatedAt': expectedUpdatedAt});
+
+  Future<Map<String, dynamic>> getAiNoteSnapshot(String id) =>
+      _getMapFromSend('GET', '/api/transactions/$id/restore-ai-note');
+
   Future<List<dynamic>> uploadTransactionPhotos(
     String transactionId,
     List<String> paths,

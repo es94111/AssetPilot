@@ -3246,6 +3246,56 @@
     "description": "Web path: features.transactions.fxFee",
     "x-webPath": "features.transactions.fxFee"
   },
+  "featuresTransactionsAiCreated": "AI 建立",
+  "@featuresTransactionsAiCreated": {
+    "description": "Web path: features.transactions.aiCreated",
+    "x-webPath": "features.transactions.aiCreated"
+  },
+  "featuresTransactionsNoteAiModified": "備註經 AI 修改",
+  "@featuresTransactionsNoteAiModified": {
+    "description": "Web path: features.transactions.noteAiModified",
+    "x-webPath": "features.transactions.noteAiModified"
+  },
+  "featuresTransactionsRestoreCreated": "還原建立",
+  "@featuresTransactionsRestoreCreated": {
+    "description": "Web path: features.transactions.restoreCreated",
+    "x-webPath": "features.transactions.restoreCreated"
+  },
+  "featuresTransactionsRestoreNote": "還原備註",
+  "@featuresTransactionsRestoreNote": {
+    "description": "Web path: features.transactions.restoreNote",
+    "x-webPath": "features.transactions.restoreNote"
+  },
+  "featuresTransactionsRestoreCreatedTitle": "還原 AI 建立的交易",
+  "@featuresTransactionsRestoreCreatedTitle": {
+    "description": "Web path: features.transactions.restoreCreatedTitle",
+    "x-webPath": "features.transactions.restoreCreatedTitle"
+  },
+  "featuresTransactionsRestoreCreatedMessage": "還原後這筆交易（含連動的轉帳或手續費交易）將被移除，且無法復原。確定要還原嗎？",
+  "@featuresTransactionsRestoreCreatedMessage": {
+    "description": "Web path: features.transactions.restoreCreatedMessage",
+    "x-webPath": "features.transactions.restoreCreatedMessage"
+  },
+  "featuresTransactionsRestoreNoteTitle": "還原備註",
+  "@featuresTransactionsRestoreNoteTitle": {
+    "description": "Web path: features.transactions.restoreNoteTitle",
+    "x-webPath": "features.transactions.restoreNoteTitle"
+  },
+  "featuresTransactionsRestoreNoteConfirmMessage": "還原後備註將復原為 AI 修改前的內容，且無法復原。確定要還原嗎？",
+  "@featuresTransactionsRestoreNoteConfirmMessage": {
+    "description": "Web path: features.transactions.restoreNoteConfirmMessage",
+    "x-webPath": "features.transactions.restoreNoteConfirmMessage"
+  },
+  "featuresTransactionsRestoreNoteCurrentLabel": "目前備註",
+  "@featuresTransactionsRestoreNoteCurrentLabel": {
+    "description": "Web path: features.transactions.restoreNoteCurrentLabel",
+    "x-webPath": "features.transactions.restoreNoteCurrentLabel"
+  },
+  "featuresTransactionsRestoreNotePreviewLabel": "還原後備註",
+  "@featuresTransactionsRestoreNotePreviewLabel": {
+    "description": "Web path: features.transactions.restoreNotePreviewLabel",
+    "x-webPath": "features.transactions.restoreNotePreviewLabel"
+  },
   "featuresTransactionsPhotoOne": "照片 1",
   "@featuresTransactionsPhotoOne": {
     "description": "Web path: features.transactions.photoOne",

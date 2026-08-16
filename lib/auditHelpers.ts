@@ -20,6 +20,11 @@ const AUDIT_METADATA_ALLOWED_KEYS = new Set([
   'mcp_credential_id', 'mcp_credential_name',
   // MCP 新增交易稽核（003-mcp-write-no-delete，見 data-model.md：稽核紀錄擴充）
   'transaction_summary',
+  // MCP 信用卡還款稽核（007-mcp-credit-card-repayment）：存還款摘要 id，對應
+  // credit_card_repayment_summaries.id（見 data-model.md：AUDIT_METADATA_ALLOWED_KEYS 新增 1 個鍵）。
+  // 刻意不重用 'transaction_id'——該鍵在既有寫入工具語意為單一交易列 id，重用會讓稽核閱讀者誤判
+  // 查詢對象（research.md 第 10 節）。
+  'repayment_summary_id',
 ]);
 
 export interface WriteAuditArgs {

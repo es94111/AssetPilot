@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '../../../../lib/apiHelpers';
-import { getDB, queryOne, saveDB } from '../../../../lib/db';
-import { normalizeCurrency, convertToTwd, convertFromTwd, normalizeDate } from '../../../../lib/accountHelpers';
-import { uid } from '../../../../lib/userDefaults';
+import { queryOne } from '../../../../lib/db';
+import { normalizeCurrency, normalizeDate } from '../../../../lib/accountHelpers';
 import { todayInUserTz } from '../../../../lib/userTime';
-import { collectPayableCards } from '../../../../lib/creditCardRepayment';
-import { allocateRepayment } from '../../../../lib/creditCardRepaymentAllocation';
+import {
+  collectPayableCards,
+  computeRepaymentAllocation,
+  executeRepayment,
+} from '../../../../lib/creditCardRepayment';
 import Decimal from 'decimal.js';
 
 interface CreditCardRepaymentItem {
@@ -24,17 +26,6 @@ interface RepaymentAccountRow {
   currency: string | null;
   account_type: string | null;
   name: string;
-}
-
-interface AllocationSnapshot {
-  cardId: string;
-  cardName: string;
-  cardCurrency: string;
-  amount: number; // 付款帳戶幣別整數
-  amountInCardCurrency: number;
-  debtAtWrite: number;
-  transferOutId: string;
-  transferInId: string;
 }
 
 function asRow<T>(row: Record<string, string | number | null> | null): T | null {
@@ -94,7 +85,6 @@ export async function POST(request: NextRequest) {
 
   const fromCurrency = normalizeCurrency(fromAccount.currency);
   const txDate = normalizeDate(rawDate) || todayInUserTz(auth.userTimezone);
-  const now = Date.now();
 
   // FR-018：以送出當下重新取得的欠款計算（不沿用前端快照）
   const payableCards = collectPayableCards(auth.userId, fromAccountId, fromCurrency);
@@ -111,98 +101,42 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // 分配（FR-002）：前置／後置條件由 allocateRepayment assert，違反時 throw
-  let allocations: ReturnType<typeof allocateRepayment>;
+  // 分配與幣別換算（FR-002、FR-010）：計算邏輯只有一份實作（lib/creditCardRepayment.ts）。
+  // 沿用同一個 try/catch 外殼——原本包的是 allocateRepayment() 例外來源，現在換了一層呼叫。
+  let details: ReturnType<typeof computeRepaymentAllocation>;
   try {
-    allocations = allocateRepayment(totalAmount, payableCards.map((c) => ({ id: c.id, debt: c.debt })));
+    details = computeRepaymentAllocation(auth.userId, fromCurrency, totalAmount, payableCards);
   } catch (e) {
     return NextResponse.json({ error: e instanceof Error ? e.message : '分配計算失敗' }, { status: 500 });
   }
 
-  // 準備快照與寫入參數
-  const summaryId = uid();
-  const snapshots: AllocationSnapshot[] = [];
-  const db = getDB();
-
-  // FR-017／017a：2N 筆交易 ＋ 1 筆摘要同一交易內完成。
-  // 沿用 lib/transactionWriteCore.ts insertTransferPair() 的 try／catch 形狀，
-  // 任何例外一律 ROLLBACK 後回 500。
+  // 2N 筆交易 ＋ 1 筆摘要的原子寫入（FR-017／017a）；既有網頁/App 路徑傳 aiCreated: false。
+  // executeRepayment() 任何例外一律 ROLLBACK 後 throw，這裡轉既有固定字串 500（逐字元相同）。
+  let result: ReturnType<typeof executeRepayment>;
   try {
-    db.run('BEGIN');
-    for (let i = 0; i < payableCards.length; i++) {
-      const card = payableCards[i];
-      const alloc = allocations[i];
-      const transferAmount = alloc.amount; // 付款帳戶幣別整數
-      const toCurrency = card.currency;
-
-      // 跨幣別換算沿用既有第 66-76 行流程，transferAmount 改由分配結果供給（FR-011）
-      const outConverted = convertToTwd(transferAmount, fromCurrency, null, auth.userId);
-      const inOriginal = toCurrency === fromCurrency
-        ? transferAmount
-        : convertFromTwd(outConverted.twdAmount, toCurrency, auth.userId);
-      const inConverted = convertToTwd(inOriginal, toCurrency, null, auth.userId);
-
-      const outId = uid();
-      const inId = uid();
-      db.run(
-        'INSERT INTO transactions (id,user_id,type,amount,currency,original_amount,fx_rate,fx_fee,twd_amount,date,category_id,account_id,to_account_id,note,linked_id,repayment_summary_id,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
-        [outId, auth.userId, 'transfer_out', outConverted.twdAmount, fromCurrency, outConverted.originalAmount, outConverted.fxRate, 0, outConverted.twdAmount, txDate, '', fromAccountId, card.id, '信用卡還款', inId, summaryId, now, now]
-      );
-      db.run(
-        'INSERT INTO transactions (id,user_id,type,amount,currency,original_amount,fx_rate,fx_fee,twd_amount,date,category_id,account_id,to_account_id,note,linked_id,repayment_summary_id,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
-        [inId, auth.userId, 'transfer_in', inConverted.twdAmount, toCurrency, inConverted.originalAmount, inConverted.fxRate, 0, inConverted.twdAmount, txDate, '', card.id, fromAccountId, '信用卡還款', outId, summaryId, now, now]
-      );
-
-      // 還款後餘額（卡片幣別）：原欠款（正）＋ 轉入金額（> 0 代表預繳）
-      snapshots.push({
-        cardId: card.id,
-        cardName: card.name,
-        cardCurrency: toCurrency,
-        amount: transferAmount,
-        amountInCardCurrency: inOriginal,
-        debtAtWrite: card.debt,
-        transferOutId: outId,
-        transferInId: inId,
-      });
-    }
-
-    // 寫入摘要（input_mode 與 from_account_name 必須明確給值，不得倚賴預設）
-    db.run(
-      'INSERT INTO credit_card_repayment_summaries (id,user_id,date,from_account_id,from_account_name,from_currency,total_amount,input_mode,allocations,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)',
-      [summaryId, auth.userId, txDate, fromAccountId, fromAccount.name, fromCurrency, totalAmount, inputMode, JSON.stringify(snapshots), now, now]
-    );
-
-    db.run('COMMIT');
-  } catch (err) {
-    try { db.run('ROLLBACK'); } catch (_) { /* 忽略回滾失敗 */ }
+    result = executeRepayment({
+      userId: auth.userId,
+      fromAccountId,
+      fromAccountName: fromAccount.name,
+      fromCurrency,
+      date: txDate,
+      totalAmount,
+      inputMode,
+      details,
+      aiCreated: false,
+    });
+  } catch {
     return NextResponse.json({ error: '還款寫入失敗，本次全部未寫入' }, { status: 500 });
   }
 
-  saveDB();
-
-  // 回應：contracts 的 RepaymentResponse
-  const responseAllocations = payableCards.map((card, i) => {
-    const alloc = allocations[i];
-    const snapshot = snapshots[i];
-    const inOriginal = snapshot.amountInCardCurrency;
-    const balanceAfter = card.debtInCardCurrency + inOriginal; // 原欠款（正） + 轉入 → 還款後餘額
-    return {
-      cardId: card.id,
-      cardName: card.name,
-      cardCurrency: card.currency,
-      amount: alloc.amount,
-      amountInCardCurrency: inOriginal,
-      balanceAfter,
-    };
-  });
-
+  // 回應：contracts 的 RepaymentResponse（形狀逐位元不變，allocations 直接使用 executeRepayment 回傳值）
   return NextResponse.json({
     ok: true,
-    summaryId,
+    summaryId: result.summaryId,
     date: txDate,
     fromAccountId,
     currency: fromCurrency,
     totalAmount,
-    allocations: responseAllocations,
+    allocations: result.allocations,
   });
 }

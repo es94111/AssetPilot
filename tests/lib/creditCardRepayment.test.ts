@@ -24,7 +24,12 @@ if (!DB_URL) {
   const { createLoginSession } = await import('../../lib/sessionHelpers.ts');
   const { NextRequest, NextResponse } = await import('next/server');
   const { convertToTwd, convertFromTwd, normalizeCurrency } = await import('../../lib/accountHelpers.ts');
-  const { collectPayableCards } = await import('../../lib/creditCardRepayment.ts');
+  const {
+    collectPayableCards,
+    computeRepaymentAllocation,
+    executeRepayment,
+    evaluateRepaymentSummary,
+  } = await import('../../lib/creditCardRepayment.ts');
   const { allocateRepayment } = await import('../../lib/creditCardRepaymentAllocation.ts');
   const repaymentRoute = await import('../../app/api/accounts/credit-card-repayment/route.ts');
   const summaryRoute = await import('../../app/api/credit-card-repayment-summaries/[id]/route.ts');
@@ -424,5 +429,91 @@ if (!DB_URL) {
     const res = await cardsRoute.GET(authedRequest('GET', url), { params: Promise.resolve({ id: cashId }) });
     const body = await res.json();
     assert.deepEqual(body.cards, [], '以非銀行帳戶為付款來源時不應納入（FR-003）');
+  });
+
+  // ── 007：三個共用函式的直接單元測試（不透過 HTTP 路由）──
+  // 驗證 computeRepaymentAllocation／executeRepayment／evaluateRepaymentSummary 的行為與既有路由一致
+  // （FR-002、FR-010、FR-012；research.md 第 13 節三層測試分工的第二層）。
+
+  test('computeRepaymentAllocation() 的 balanceAfter 與既有 POST 路由回應數值相同（FR-010）', async () => {
+    const { bankId } = setupTwdFixture();
+    const fromCurrency = 'TWD';
+    const cards = collectPayableCards(userId, bankId, fromCurrency);
+    const totalAmount = 5000;
+
+    // 直接呼叫共用函式
+    const details = computeRepaymentAllocation(userId, fromCurrency, totalAmount, cards);
+    // 透過既有路由送出（同一組輸入）
+    const url = 'http://localhost/api/accounts/credit-card-repayment';
+    const res = await repaymentRoute.POST(authedRequest('POST', url, { fromAccountId: bankId, date: '2026-08-15', totalAmount }));
+    const body = await res.json();
+
+    assert.equal(details.length, body.allocations.length);
+    for (let i = 0; i < details.length; i++) {
+      assert.equal(details[i].balanceAfter, body.allocations[i].balanceAfter, `第 ${i} 張卡 balanceAfter 應相同`);
+      assert.equal(details[i].transferAmount, body.allocations[i].amount, `第 ${i} 張卡 amount 應相同`);
+      assert.equal(details[i].inOriginal, body.allocations[i].amountInCardCurrency, `第 ${i} 張卡 amountInCardCurrency 應相同`);
+    }
+  });
+
+  test('executeRepayment() aiCreated:true 寫入 ai_created=1；aiCreated:false 寫入 ai_created=0（FR-007 單元層驗證）', async () => {
+    const { bankId } = setupTwdFixture();
+    const fromCurrency = 'TWD';
+    const cards = collectPayableCards(userId, bankId, fromCurrency);
+    const totalAmount = 5000;
+
+    // aiCreated: true（MCP 路徑）
+    const detailsTrue = computeRepaymentAllocation(userId, fromCurrency, totalAmount, cards);
+    const { summaryId: summaryIdTrue } = executeRepayment({
+      userId, fromAccountId: bankId, fromAccountName: '台銀活存', fromCurrency, date: '2026-08-15',
+      totalAmount, inputMode: 'total', details: detailsTrue, aiCreated: true,
+    });
+    const txsTrue = queryAll('SELECT ai_created FROM transactions WHERE user_id = ? AND repayment_summary_id = ?', [userId, summaryIdTrue]);
+    assert.ok(txsTrue.length >= 2 * cards.length, '應寫入 2N 筆交易');
+    assert.ok(txsTrue.every((t) => Number(t.ai_created) === 1), 'aiCreated:true 時所有交易 ai_created 應為 1');
+
+    // aiCreated: false（既有網頁/App 路徑）
+    const { bankId: bankId2 } = setupTwdFixture();
+    const cards2 = collectPayableCards(userId, bankId2, fromCurrency);
+    const detailsFalse = computeRepaymentAllocation(userId, fromCurrency, totalAmount, cards2);
+    const { summaryId: summaryIdFalse } = executeRepayment({
+      userId, fromAccountId: bankId2, fromAccountName: '台銀活存', fromCurrency, date: '2026-08-15',
+      totalAmount, inputMode: 'total', details: detailsFalse, aiCreated: false,
+    });
+    const txsFalse = queryAll('SELECT ai_created FROM transactions WHERE user_id = ? AND repayment_summary_id = ?', [userId, summaryIdFalse]);
+    assert.ok(txsFalse.every((t) => Number(t.ai_created) === 0), 'aiCreated:false 時所有交易 ai_created 應為 0');
+  });
+
+  test('evaluateRepaymentSummary()：完全未異動 stale:false 全 intact；刪除一組配對後該卡 deleted 且 stale:true（FR-012）', async () => {
+    const { bankId } = setupTwdFixture();
+    const fromCurrency = 'TWD';
+    const cards = collectPayableCards(userId, bankId, fromCurrency);
+    const totalAmount = 5000;
+    const details = computeRepaymentAllocation(userId, fromCurrency, totalAmount, cards);
+    const { summaryId } = executeRepayment({
+      userId, fromAccountId: bankId, fromAccountName: '台銀活存', fromCurrency, date: '2026-08-15',
+      totalAmount, inputMode: 'total', details, aiCreated: false,
+    });
+
+    const summary = queryOne(
+      'SELECT date, from_account_id, allocations FROM credit_card_repayment_summaries WHERE id = ? AND user_id = ?',
+      [summaryId, userId]
+    ) as { date: string; from_account_id: string; allocations: string };
+
+    // (a) 完全未異動 → stale: false，全 intact
+    const r0 = evaluateRepaymentSummary(userId, summary);
+    assert.equal(r0.stale, false);
+    assert.ok(r0.allocations.every((a) => a.status === 'intact'), '未異動時所有卡應為 intact');
+
+    // (b) 刪除其中一組配對（一張卡的轉出／轉入）→ 該卡 deleted，整體 stale: true
+    const txs = queryAll('SELECT id FROM transactions WHERE user_id = ? AND repayment_summary_id = ? AND type = ?', [userId, summaryId, 'transfer_out']);
+    const firstOutId = txs[0].id as string;
+    getDB().run('DELETE FROM transactions WHERE repayment_summary_id = ? AND linked_id = ?', [summaryId, firstOutId]);
+    getDB().run('DELETE FROM transactions WHERE id = ?', [firstOutId]);
+    saveDB();
+
+    const r1 = evaluateRepaymentSummary(userId, summary);
+    assert.equal(r1.stale, true);
+    assert.ok(r1.allocations.some((a) => a.status === 'deleted'), '刪除一組配對後應有卡為 deleted');
   });
 }

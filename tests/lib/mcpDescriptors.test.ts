@@ -8,11 +8,13 @@ import { OpenAiCompatibleMcpTransport } from '../../lib/mcpOpenAiCompatibility.t
 import { buildMcpServer } from '../../lib/mcpServer.ts';
 
 const EXPECTED_TOOL_NAMES = [
+  'get_credit_card_repayment_preview',
   'get_stock_realized_pl',
   'get_transactions_summary',
   'list_accounts',
   'list_budgets',
   'list_categories',
+  'list_credit_card_repayments',
   'list_recurring',
   'list_stock_dividends',
   'list_stock_holdings',
@@ -107,13 +109,69 @@ test('allowCreate=true 的憑證 tools/list 額外出現 create_transaction，�
     await client.connect(clientTransport);
     const listed = await client.listTools();
 
-    assert.deepEqual(listed.tools.map((tool) => tool.name).sort(), [...EXPECTED_TOOL_NAMES, 'create_transaction'].sort());
+    assert.deepEqual(listed.tools.map((tool) => tool.name).sort(), [...EXPECTED_TOOL_NAMES, 'create_transaction', 'create_credit_card_repayment'].sort());
 
     const createTool = listed.tools.find((tool) => tool.name === 'create_transaction');
     assert.ok(createTool, 'create_transaction 應出現在 tools/list');
     assert.equal(createTool?.annotations?.readOnlyHint, false, 'create_transaction readOnlyHint');
     assert.equal(createTool?.annotations?.destructiveHint, false, 'create_transaction destructiveHint');
     assert.equal(createTool?.annotations?.openWorldHint, false, 'create_transaction openWorldHint');
+  } finally {
+    await client.close();
+    await server.close();
+  }
+});
+
+test('allowCreate=true 的憑證 tools/list 額外出現 create_credit_card_repayment，且 annotations 標示可寫非破壞性（FR-003）', async () => {
+  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+
+  const server = buildMcpServer({
+    credentialId: 'descriptor-test-repay',
+    userId: 'descriptor-user-repay',
+    name: 'Descriptor Test (repay)',
+    allowCreate: true,
+  });
+  const client = new Client({ name: 'assetpilot-descriptor-test-repay', version: '1.0.0' });
+
+  try {
+    await server.connect(new OpenAiCompatibleMcpTransport(serverTransport));
+    await client.connect(clientTransport);
+    const listed = await client.listTools();
+
+    const names = listed.tools.map((tool) => tool.name);
+    assert.ok(names.includes('create_credit_card_repayment'), 'create_credit_card_repayment 應出現在 tools/list');
+
+    const repayTool = listed.tools.find((tool) => tool.name === 'create_credit_card_repayment');
+    assert.ok(repayTool, 'create_credit_card_repayment 應出現在 tools/list');
+    assert.equal(repayTool?.annotations?.readOnlyHint, false, 'create_credit_card_repayment readOnlyHint');
+    assert.equal(repayTool?.annotations?.destructiveHint, false, 'create_credit_card_repayment destructiveHint');
+    assert.equal(repayTool?.annotations?.openWorldHint, false, 'create_credit_card_repayment openWorldHint');
+  } finally {
+    await client.close();
+    await server.close();
+  }
+});
+
+test('allowCreate 未開啟的憑證 tools/list 不含 create_credit_card_repayment（FR-003）', async () => {
+  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+
+  const server = buildMcpServer({
+    credentialId: 'descriptor-test-repay-none',
+    userId: 'descriptor-user-repay-none',
+    name: 'Descriptor Test (repay none)',
+  });
+  const client = new Client({ name: 'assetpilot-descriptor-test-repay-none', version: '1.0.0' });
+
+  try {
+    await server.connect(new OpenAiCompatibleMcpTransport(serverTransport));
+    await client.connect(clientTransport);
+    const listed = await client.listTools();
+
+    const names = listed.tools.map((tool) => tool.name);
+    assert.ok(!names.includes('create_credit_card_repayment'), '未開 allowCreate 時不應出現 create_credit_card_repayment');
+    // 但兩個唯讀工具仍應存在（FR-009、FR-011：唯讀工具不受 allowCreate 影響）
+    assert.ok(names.includes('get_credit_card_repayment_preview'), 'get_credit_card_repayment_preview 無條件註冊');
+    assert.ok(names.includes('list_credit_card_repayments'), 'list_credit_card_repayments 無條件註冊');
   } finally {
     await client.close();
     await server.close();

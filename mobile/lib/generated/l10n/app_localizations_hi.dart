@@ -1904,7 +1904,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get featuresAccountsRepaymentNoLinkedCards =>
-      'इस बैंक से कोई कार्ड लिंक नहीं है';
+      'इस भुगतानकर्ता खाते के लिए कोई क्रेडिट कार्ड उपलब्ध नहीं है; कृपया पुष्टि करें कि कार्ड से जुड़ा बैंक है और वह यही भुगतानकर्ता खाता है';
 
   @override
   String featuresAccountsRepaymentCurrentBalance(Object amount) {
@@ -1916,6 +1916,45 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get featuresAccountsRepaymentConfirm => 'भुगतान की पुष्टि करें';
+
+  @override
+  String get featuresAccountsRepaymentTotalAmount => 'कुल चुकाने की राशि';
+
+  @override
+  String get featuresAccountsRepaymentTotalAmountHint =>
+      'भुगतानकर्ता खाते की मुद्रा में पूर्णांक दर्ज करें; सिस्टम प्रत्येक कार्ड के ऋण के अनुपात में आवंटित करता है';
+
+  @override
+  String featuresAccountsRepaymentTotalDebt(Object amount) {
+    return 'कुल देय: $amount';
+  }
+
+  @override
+  String get featuresAccountsRepaymentAllocationPreviewTitle =>
+      'आवंटन पूर्वावलोकन';
+
+  @override
+  String get featuresAccountsRepaymentColCard => 'कार्ड';
+
+  @override
+  String get featuresAccountsRepaymentColAllocated => 'आवंटित';
+
+  @override
+  String get featuresAccountsRepaymentColBalanceAfter => 'शेष राशि बाद में';
+
+  @override
+  String get featuresAccountsRepaymentPrepaidBadge => 'प्रीपेड';
+
+  @override
+  String featuresAccountsRepaymentPrepaidAmount(Object amount) {
+    return 'प्रीपेड $amount';
+  }
+
+  @override
+  String get featuresAccountsRepaymentResultTitle => 'चुकाना पूर्ण';
+
+  @override
+  String get featuresAccountsRepaymentResultDone => 'पूर्ण';
 
   @override
   String get featuresAccountsDeleteMessage => 'क्या यह खाता हटाना है?';
@@ -1989,6 +2028,15 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get featuresAccountsMessagesRepaymentAmountRequired =>
       'कम से कम एक कार्ड के लिए भुगतान राशि दर्ज करें';
+
+  @override
+  String get featuresAccountsMessagesRepaymentTotalAmountInvalid =>
+      'कुल चुकाने की राशि 0 से बड़ा पूर्णांक होनी चाहिए';
+
+  @override
+  String featuresAccountsMessagesRepaymentTotalAmountTooSmall(Object min) {
+    return 'राशि बहुत छोटी है; प्रत्येक कार्ड को आवंटन मिले इसके लिए न्यूनतम $min आवश्यक है';
+  }
 
   @override
   String get featuresAccountsMessagesCurrencyInvalid =>
@@ -2107,6 +2155,30 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get featuresTransactionsRestoreNote => 'नोट पुनर्स्थापित करें';
+
+  @override
+  String get featuresTransactionsViewRepaymentAllocation =>
+      'चुकाने का आवंटन देखें';
+
+  @override
+  String get featuresTransactionsRepaymentSummaryTitle =>
+      'चुकाने का आवंटन सारांश';
+
+  @override
+  String get featuresTransactionsRepaymentSummaryTotal => 'दर्ज की गई कुल राशि';
+
+  @override
+  String get featuresTransactionsRepaymentSummaryStale =>
+      'यह सारांश अब वर्तमान स्थिति से मेल नहीं खाता';
+
+  @override
+  String get featuresTransactionsRepaymentSummaryStatusIntact => 'सुसंगत';
+
+  @override
+  String get featuresTransactionsRepaymentSummaryStatusModified => 'संशोधित';
+
+  @override
+  String get featuresTransactionsRepaymentSummaryStatusDeleted => 'हटाया गया';
 
   @override
   String get featuresTransactionsRestoreCreatedTitle =>

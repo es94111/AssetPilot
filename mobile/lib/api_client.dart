@@ -940,8 +940,16 @@ class ApiClient {
       _getMapFromSend('PUT', '/api/stock-settings', body: body);
 
   // ── 帳戶（信用卡還款） ──────────────────────────────────────
-  Future<void> creditCardRepayment(Map<String, dynamic> body) =>
-      _send('POST', '/api/accounts/credit-card-repayment', body: body);
+  Future<Map<String, dynamic>> creditCardRepayment(Map<String, dynamic> body) =>
+      _getMapFromSend('POST', '/api/accounts/credit-card-repayment', body: body);
+
+  /// 取得付款帳戶的還款卡片快照（US2／FR-007a：選定／改選付款帳戶時取一次）。
+  Future<Map<String, dynamic>> getRepaymentCards(String accountId) =>
+      _getMap('/api/accounts/$accountId/repayment-cards');
+
+  /// 取得某次還款的分配摘要（含陳舊判定）。
+  Future<Map<String, dynamic>> getRepaymentSummary(String summaryId) =>
+      _getMap('/api/credit-card-repayment-summaries/$summaryId');
 
   // ── 使用者幣別設定 ──────────────────────────────────────────
   Future<Map<String, dynamic>> defaultCurrency() =>

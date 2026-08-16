@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { useT } from '@/components/i18n/I18nProvider';
 import { localeTag } from '@/lib/i18n/localeTag';
 import { Plus, Trash2, Edit3, Landmark, DollarSign, CreditCard, Wallet, CircleDot } from 'lucide-react';
+import CreditCardRepaymentDialog from './CreditCardRepaymentDialog';
 
 const ACCOUNT_TYPES = [
   { value: 'bank', labelKey: 'features.accounts.typeLabels.bank', icon: Landmark },
@@ -28,12 +29,6 @@ const EMPTY_FORM = {
   linkedBankId: '',
   overseasFeeRate: '',
   statementClosingDay: '',
-};
-
-const EMPTY_REPAYMENT = {
-  fromAccountId: '',
-  date: '',
-  repayments: {} as Record<string, string>,
 };
 
 function fmt(n: number | string, currency = 'TWD', locale = 'zh-TW') {
@@ -64,7 +59,6 @@ export default function AccountsClient() {
   const [formError, setFormError] = useState('');
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [repaymentOpen, setRepaymentOpen] = useState(false);
-  const [repaymentForm, setRepaymentForm] = useState({ ...EMPTY_REPAYMENT, date: new Date().toISOString().slice(0, 10) });
   const [fxRates, setFxRates] = useState<{ currency: string; rateToTwd: number }[]>([]);
   const [fxSettings, setFxSettings] = useState<{ autoUpdate: boolean; lastSyncedAt?: number }>({ autoUpdate: false });
   const [newFxCurrency, setNewFxCurrency] = useState('');
@@ -72,7 +66,6 @@ export default function AccountsClient() {
   const [fxSaving, setFxSaving] = useState(false);
   const [fxMsg, setFxMsg] = useState('');
   const [fxSyncing, setFxSyncing] = useState(false);
-  const [repaymentError, setRepaymentError] = useState('');
   const [defaultCurrency, setDefaultCurrency] = useState('TWD');
   const [cyclesOpen, setCyclesOpen] = useState(false);
   const [cyclesAccount, setCyclesAccount] = useState<any>(null);
@@ -114,11 +107,6 @@ export default function AccountsClient() {
     });
     return Array.from(map.values());
   }, [bankAccounts, creditAccounts]);
-
-  const filteredRepaymentCards = useMemo(() =>
-    creditAccounts.filter((c) => c.linkedBankId === repaymentForm.fromAccountId),
-    [creditAccounts, repaymentForm.fromAccountId]
-  );
 
   const ungroupedAccounts = useMemo(() => {
     const linkedCreditIds = new Set(creditAccounts.filter((card) => card.linkedBankId).map((card) => card.id));
@@ -165,33 +153,6 @@ export default function AccountsClient() {
       await load();
     } catch (e: any) {
       alert(e.message);
-    }
-  }
-
-  async function handleRepaymentSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const repayments = Object.entries(repaymentForm.repayments)
-      .map(([cardId, amount]) => ({ cardId, amount: Number(amount || 0) }))
-      .filter((item) => item.amount > 0);
-    if (!repaymentForm.fromAccountId) {
-      setRepaymentError(t('features.accounts.messages.repaymentAccountRequired'));
-      return;
-    }
-    if (repayments.length === 0) {
-      setRepaymentError(t('features.accounts.messages.repaymentAmountRequired'));
-      return;
-    }
-    setRepaymentError('');
-    try {
-      await apiPost('/api/accounts/credit-card-repayment', {
-        fromAccountId: repaymentForm.fromAccountId,
-        date: repaymentForm.date,
-        repayments,
-      });
-      setRepaymentOpen(false);
-      await load();
-    } catch (e: any) {
-      setRepaymentError(e.message);
     }
   }
 
@@ -383,19 +344,7 @@ export default function AccountsClient() {
         </Dialog>
 
         {creditAccounts.length > 0 && (
-          <Button variant="outline" onClick={() => {
-            const firstBankId = bankAccounts[0]?.id || '';
-            setRepaymentForm({
-              ...EMPTY_REPAYMENT,
-              date: new Date().toISOString().slice(0, 10),
-              fromAccountId: firstBankId,
-              repayments: Object.fromEntries(
-                creditAccounts.filter((c) => c.linkedBankId === firstBankId).map((c) => [c.id, ''])
-              ),
-            });
-            setRepaymentError('');
-            setRepaymentOpen(true);
-          }}>
+          <Button variant="outline" onClick={() => setRepaymentOpen(true)}>
             {t('features.accounts.repayment.title')}
           </Button>
         )}
@@ -430,44 +379,13 @@ export default function AccountsClient() {
         </div>
       )}
 
-      {repaymentOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-xl dark:bg-slate-900 dark:text-slate-100 w-full max-w-2xl space-y-4">
-            <div className="flex justify-between items-center">
-              <h3 className="text-lg font-semibold">{t('features.accounts.repayment.title')}</h3>
-              <Button variant="ghost" onClick={() => setRepaymentOpen(false)}>{t('common.close')}</Button>
-            </div>
-            <form onSubmit={handleRepaymentSubmit} className="space-y-4">
-              <Select label={t('features.accounts.repayment.paymentAccount')} options={bankAccounts.map((bank) => ({ label: bank.name, value: bank.id }))} value={repaymentForm.fromAccountId} onChange={(e) => setRepaymentForm((current) => ({
-                ...current,
-                fromAccountId: e.target.value,
-                repayments: Object.fromEntries(
-                  creditAccounts.filter((c) => c.linkedBankId === e.target.value).map((c) => [c.id, ''])
-                ),
-              }))} />
-              <Input label={t('features.accounts.repayment.paymentDate')} type="date" value={repaymentForm.date} onChange={(e) => setRepaymentForm((current) => ({ ...current, date: e.target.value }))} />
-              <div className="space-y-3">
-                {filteredRepaymentCards.length === 0 ? (
-                  <p className="text-sm text-slate-500">{t('features.accounts.repayment.noLinkedCards')}</p>
-                ) : filteredRepaymentCards.map((account) => (
-                  <div key={account.id} className="grid grid-cols-[1fr_160px] gap-3 items-center">
-                    <div>
-                      <div className="font-medium">{account.name}</div>
-                      <div className="text-sm text-slate-500">{t('features.accounts.repayment.currentBalance', { amount: fmt(account.balance, account.currency, locale) })}</div>
-                    </div>
-                    <Input label={t('features.accounts.repayment.repaymentAmount')} type="number" step="0.01" value={repaymentForm.repayments[account.id] || ''} onChange={(e) => setRepaymentForm((current) => ({ ...current, repayments: { ...current.repayments, [account.id]: e.target.value } }))} />
-                  </div>
-                ))}
-              </div>
-              {repaymentError && <p className="text-red-500 text-sm">{repaymentError}</p>}
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" type="button" onClick={() => setRepaymentOpen(false)}>{t('common.cancel')}</Button>
-                <Button type="submit">{t('features.accounts.repayment.confirm')}</Button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <CreditCardRepaymentDialog
+        open={repaymentOpen}
+        onClose={() => setRepaymentOpen(false)}
+        bankAccounts={bankAccounts}
+        defaultCurrency={defaultCurrency}
+        onDone={load}
+      />
 
       {deleteId && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">

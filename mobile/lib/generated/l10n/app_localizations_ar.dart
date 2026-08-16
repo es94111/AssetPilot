@@ -1891,7 +1891,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get featuresAccountsRepaymentNoLinkedCards =>
-      'لا توجد بطاقات مرتبطة بهذا البنك';
+      'لا توجد بطاقات ائتمان متاحة للسداد من هذا الحساب؛ يرجى التأكد من أن البطاقة لها بنك مرتبط وأنه هو حساب الدافع';
 
   @override
   String featuresAccountsRepaymentCurrentBalance(Object amount) {
@@ -1903,6 +1903,45 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get featuresAccountsRepaymentConfirm => 'تأكيد السداد';
+
+  @override
+  String get featuresAccountsRepaymentTotalAmount => 'إجمالي مبلغ السداد';
+
+  @override
+  String get featuresAccountsRepaymentTotalAmountHint =>
+      'أدخل عددًا صحيحًا بعملة حساب الدافع؛ يخصص النظام نسبةً حسب دين كل بطاقة';
+
+  @override
+  String featuresAccountsRepaymentTotalDebt(Object amount) {
+    return 'إجمالي المستحق: $amount';
+  }
+
+  @override
+  String get featuresAccountsRepaymentAllocationPreviewTitle =>
+      'معاينة التخصيص';
+
+  @override
+  String get featuresAccountsRepaymentColCard => 'البطاقة';
+
+  @override
+  String get featuresAccountsRepaymentColAllocated => 'المخصص';
+
+  @override
+  String get featuresAccountsRepaymentColBalanceAfter => 'الرصيد بعد';
+
+  @override
+  String get featuresAccountsRepaymentPrepaidBadge => 'مدفوع مقدمًا';
+
+  @override
+  String featuresAccountsRepaymentPrepaidAmount(Object amount) {
+    return 'مدفوع مقدمًا $amount';
+  }
+
+  @override
+  String get featuresAccountsRepaymentResultTitle => 'اكتمل السداد';
+
+  @override
+  String get featuresAccountsRepaymentResultDone => 'تم';
 
   @override
   String get featuresAccountsDeleteMessage => 'هل تريد حذف هذا الحساب؟';
@@ -1976,6 +2015,15 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get featuresAccountsMessagesRepaymentAmountRequired =>
       'أدخل مبلغ سداد لبطاقة واحدة على الأقل';
+
+  @override
+  String get featuresAccountsMessagesRepaymentTotalAmountInvalid =>
+      'يجب أن يكون إجمالي مبلغ السداد عددًا صحيحًا أكبر من 0';
+
+  @override
+  String featuresAccountsMessagesRepaymentTotalAmountTooSmall(Object min) {
+    return 'المبلغ صغير جدًا؛ يلزم $min على الأقل لتخصيص مبلغ لكل بطاقة';
+  }
 
   @override
   String get featuresAccountsMessagesCurrencyInvalid =>
@@ -2096,6 +2144,29 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get featuresTransactionsRestoreNote => 'استعادة الملاحظة';
+
+  @override
+  String get featuresTransactionsViewRepaymentAllocation => 'عرض تخصيص السداد';
+
+  @override
+  String get featuresTransactionsRepaymentSummaryTitle => 'ملخص تخصيص السداد';
+
+  @override
+  String get featuresTransactionsRepaymentSummaryTotal =>
+      'إجمالي المبلغ المدخل';
+
+  @override
+  String get featuresTransactionsRepaymentSummaryStale =>
+      'هذا الملخص لم يعد مطابقًا للحالة الحالية';
+
+  @override
+  String get featuresTransactionsRepaymentSummaryStatusIntact => 'مطابق';
+
+  @override
+  String get featuresTransactionsRepaymentSummaryStatusModified => 'معدّل';
+
+  @override
+  String get featuresTransactionsRepaymentSummaryStatusDeleted => 'محذوف';
 
   @override
   String get featuresTransactionsRestoreCreatedTitle =>

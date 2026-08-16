@@ -2932,7 +2932,7 @@
     "description": "Web path: features.accounts.repayment.paymentDate",
     "x-webPath": "features.accounts.repayment.paymentDate"
   },
-  "featuresAccountsRepaymentNoLinkedCards": "This bank has no linked credit cards",
+  "featuresAccountsRepaymentNoLinkedCards": "This payer account has no credit cards available for repayment; please confirm the card has a linked bank, and that the linked bank is this payer account",
   "@featuresAccountsRepaymentNoLinkedCards": {
     "description": "Web path: features.accounts.repayment.noLinkedCards",
     "x-webPath": "features.accounts.repayment.noLinkedCards"
@@ -3296,9 +3296,6 @@
     "description": "Web path: features.transactions.restoreNotePreviewLabel",
     "x-webPath": "features.transactions.restoreNotePreviewLabel"
   },
-
-
-
   "featuresTransactionsPhotoOne": "Photo 1",
   "@featuresTransactionsPhotoOne": {
     "description": "Web path: features.transactions.photoOne",
@@ -7212,5 +7209,114 @@
   "@adminScreenSubtitle": {
     "description": "Web path: admin.adminScreenSubtitle",
     "x-webPath": "admin.adminScreenSubtitle"
+  },
+  "featuresAccountsRepaymentTotalAmount": "Total repayment amount",
+  "@featuresAccountsRepaymentTotalAmount": {
+    "description": "Web path: features.accounts.repayment.totalAmount",
+    "x-webPath": "features.accounts.repayment.totalAmount"
+  },
+  "featuresAccountsRepaymentTotalAmountHint": "Enter an integer in the payer account currency; the system allocates proportionally by each card debt",
+  "@featuresAccountsRepaymentTotalAmountHint": {
+    "description": "Web path: features.accounts.repayment.totalAmountHint",
+    "x-webPath": "features.accounts.repayment.totalAmountHint"
+  },
+  "featuresAccountsRepaymentTotalDebt": "Total due: {amount}",
+  "@featuresAccountsRepaymentTotalDebt": {
+    "description": "Web path: features.accounts.repayment.totalDebt",
+    "x-webPath": "features.accounts.repayment.totalDebt",
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "featuresAccountsRepaymentAllocationPreviewTitle": "Allocation preview",
+  "@featuresAccountsRepaymentAllocationPreviewTitle": {
+    "description": "Web path: features.accounts.repayment.allocationPreviewTitle",
+    "x-webPath": "features.accounts.repayment.allocationPreviewTitle"
+  },
+  "featuresAccountsRepaymentColCard": "Card",
+  "@featuresAccountsRepaymentColCard": {
+    "description": "Web path: features.accounts.repayment.colCard",
+    "x-webPath": "features.accounts.repayment.colCard"
+  },
+  "featuresAccountsRepaymentColAllocated": "Allocated",
+  "@featuresAccountsRepaymentColAllocated": {
+    "description": "Web path: features.accounts.repayment.colAllocated",
+    "x-webPath": "features.accounts.repayment.colAllocated"
+  },
+  "featuresAccountsRepaymentColBalanceAfter": "Balance after",
+  "@featuresAccountsRepaymentColBalanceAfter": {
+    "description": "Web path: features.accounts.repayment.colBalanceAfter",
+    "x-webPath": "features.accounts.repayment.colBalanceAfter"
+  },
+  "featuresAccountsRepaymentPrepaidBadge": "Prepaid",
+  "@featuresAccountsRepaymentPrepaidBadge": {
+    "description": "Web path: features.accounts.repayment.prepaidBadge",
+    "x-webPath": "features.accounts.repayment.prepaidBadge"
+  },
+  "featuresAccountsRepaymentPrepaidAmount": "Prepaid {amount}",
+  "@featuresAccountsRepaymentPrepaidAmount": {
+    "description": "Web path: features.accounts.repayment.prepaidAmount",
+    "x-webPath": "features.accounts.repayment.prepaidAmount",
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "featuresAccountsRepaymentResultTitle": "Repayment complete",
+  "@featuresAccountsRepaymentResultTitle": {
+    "description": "Web path: features.accounts.repayment.resultTitle",
+    "x-webPath": "features.accounts.repayment.resultTitle"
+  },
+  "featuresAccountsRepaymentResultDone": "Done",
+  "@featuresAccountsRepaymentResultDone": {
+    "description": "Web path: features.accounts.repayment.resultDone",
+    "x-webPath": "features.accounts.repayment.resultDone"
+  },
+  "featuresAccountsMessagesRepaymentTotalAmountInvalid": "Total repayment amount must be an integer greater than 0",
+  "@featuresAccountsMessagesRepaymentTotalAmountInvalid": {
+    "description": "Web path: features.accounts.messages.repaymentTotalAmountInvalid",
+    "x-webPath": "features.accounts.messages.repaymentTotalAmountInvalid"
+  },
+  "featuresAccountsMessagesRepaymentTotalAmountTooSmall": "Amount too small; at least {min} is needed so every card gets an allocation",
+  "@featuresAccountsMessagesRepaymentTotalAmountTooSmall": {
+    "description": "Web path: features.accounts.messages.repaymentTotalAmountTooSmall",
+    "x-webPath": "features.accounts.messages.repaymentTotalAmountTooSmall",
+    "placeholders": {
+      "min": {}
+    }
+  },
+  "featuresTransactionsViewRepaymentAllocation": "View repayment allocation",
+  "@featuresTransactionsViewRepaymentAllocation": {
+    "description": "Web path: features.transactions.viewRepaymentAllocation",
+    "x-webPath": "features.transactions.viewRepaymentAllocation"
+  },
+  "featuresTransactionsRepaymentSummaryTitle": "Repayment allocation summary",
+  "@featuresTransactionsRepaymentSummaryTitle": {
+    "description": "Web path: features.transactions.repaymentSummaryTitle",
+    "x-webPath": "features.transactions.repaymentSummaryTitle"
+  },
+  "featuresTransactionsRepaymentSummaryTotal": "Input total amount",
+  "@featuresTransactionsRepaymentSummaryTotal": {
+    "description": "Web path: features.transactions.repaymentSummaryTotal",
+    "x-webPath": "features.transactions.repaymentSummaryTotal"
+  },
+  "featuresTransactionsRepaymentSummaryStale": "This summary no longer matches the current state",
+  "@featuresTransactionsRepaymentSummaryStale": {
+    "description": "Web path: features.transactions.repaymentSummaryStale",
+    "x-webPath": "features.transactions.repaymentSummaryStale"
+  },
+  "featuresTransactionsRepaymentSummaryStatusIntact": "Consistent",
+  "@featuresTransactionsRepaymentSummaryStatusIntact": {
+    "description": "Web path: features.transactions.repaymentSummaryStatusIntact",
+    "x-webPath": "features.transactions.repaymentSummaryStatusIntact"
+  },
+  "featuresTransactionsRepaymentSummaryStatusModified": "Modified",
+  "@featuresTransactionsRepaymentSummaryStatusModified": {
+    "description": "Web path: features.transactions.repaymentSummaryStatusModified",
+    "x-webPath": "features.transactions.repaymentSummaryStatusModified"
+  },
+  "featuresTransactionsRepaymentSummaryStatusDeleted": "Deleted",
+  "@featuresTransactionsRepaymentSummaryStatusDeleted": {
+    "description": "Web path: features.transactions.repaymentSummaryStatusDeleted",
+    "x-webPath": "features.transactions.repaymentSummaryStatusDeleted"
   }
 }

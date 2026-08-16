@@ -197,6 +197,7 @@ class Txn {
   final bool isFxFee; // 是否為自動產生的國外刷卡手續費交易
   final bool aiCreated; // 是否由 AI 透過 MCP create_transaction 建立（005）
   final bool noteAiModified; // 備註目前值是否由 AI 透過 MCP 最近一次寫入（005）
+  final String repaymentSummaryId; // 006：所屬還款摘要 id；非還款交易為空字串
   final num updatedAt; // 樂觀鎖版本值（Unix ms），供還原備註端點帶回
 
   Txn({
@@ -218,6 +219,7 @@ class Txn {
     this.isFxFee = false,
     this.aiCreated = false,
     this.noteAiModified = false,
+    this.repaymentSummaryId = '',
     this.updatedAt = 0,
   });
 
@@ -244,6 +246,7 @@ class Txn {
       isFxFee: _asBool(j['isFxFee'] ?? j['is_fx_fee']),
       aiCreated: _asBool(j['aiCreated'] ?? j['ai_created']),
       noteAiModified: _asBool(j['noteAiModified'] ?? j['note_ai_modified']),
+      repaymentSummaryId: _asStr(j['repaymentSummaryId'] ?? j['repayment_summary_id']),
       updatedAt: _asNum(j['updatedAt'] ?? j['updated_at']),
       catName:
           (j['cat_name'] ??
@@ -812,4 +815,129 @@ class RealizedPL {
     returnRate: _asNum(j['returnRate']),
     date: _asStr(j['date']),
   );
+}
+
+// ── 006 信用卡總金額還款 ─────────────────────────────────────────
+
+/// 本次納入還款的一張信用卡（已換算為付款帳戶幣別的正整數欠款）。
+class PayableCard {
+  final String id;
+  final String name;
+  final String currency;
+  final int debt; // 付款帳戶幣別正整數欠款
+  final num debtInCardCurrency;
+
+  PayableCard({
+    required this.id,
+    required this.name,
+    required this.currency,
+    required this.debt,
+    required this.debtInCardCurrency,
+  });
+
+  factory PayableCard.fromJson(Map<String, dynamic> j) => PayableCard(
+        id: _asStr(j['id']),
+        name: _asStr(j['name']),
+        currency: _asStr(j['currency']),
+        debt: (j['debt'] as num).toInt(),
+        debtInCardCurrency: _asNum(j['debtInCardCurrency']),
+      );
+}
+
+/// 還款分配的一張卡（送出後的實際寫入結果）。
+class RepaymentAllocation {
+  final String cardId;
+  final String cardName;
+  final String cardCurrency;
+  final int amount;
+  final num amountInCardCurrency;
+  final num balanceAfter;
+
+  RepaymentAllocation({
+    required this.cardId,
+    required this.cardName,
+    required this.cardCurrency,
+    required this.amount,
+    required this.amountInCardCurrency,
+    required this.balanceAfter,
+  });
+
+  factory RepaymentAllocation.fromJson(Map<String, dynamic> j) =>
+      RepaymentAllocation(
+        cardId: _asStr(j['cardId']),
+        cardName: _asStr(j['cardName']),
+        cardCurrency: _asStr(j['cardCurrency']),
+        amount: (j['amount'] as num).toInt(),
+        amountInCardCurrency: _asNum(j['amountInCardCurrency']),
+        balanceAfter: _asNum(j['balanceAfter']),
+      );
+}
+
+/// 還款摘要（含陳舊判定與各卡 status）。
+class RepaymentSummary {
+  final String id;
+  final String date;
+  final String fromAccountName;
+  final String fromAccountCurrency;
+  final int totalAmount;
+  final String inputMode;
+  final String createdAt;
+  final bool stale;
+  final List<RepaymentSummaryAllocation> allocations;
+
+  RepaymentSummary({
+    required this.id,
+    required this.date,
+    required this.fromAccountName,
+    required this.fromAccountCurrency,
+    required this.totalAmount,
+    required this.inputMode,
+    required this.createdAt,
+    required this.stale,
+    required this.allocations,
+  });
+
+  factory RepaymentSummary.fromJson(Map<String, dynamic> j) => RepaymentSummary(
+        id: _asStr(j['id']),
+        date: _asStr(j['date']),
+        fromAccountName: _asStr((j['fromAccount'] ?? {})['name']),
+        fromAccountCurrency: _asStr((j['fromAccount'] ?? {})['currency']),
+        totalAmount: (j['totalAmount'] as num).toInt(),
+        inputMode: _asStr(j['inputMode']),
+        createdAt: _asStr(j['createdAt']),
+        stale: _asBool(j['stale']),
+        allocations: ((j['allocations'] as List?) ?? [])
+            .map((e) => RepaymentSummaryAllocation.fromJson(
+                (e as Map).cast<String, dynamic>()))
+            .toList(),
+      );
+}
+
+/// 摘要內一張卡的分配快照與陳舊 status。
+class RepaymentSummaryAllocation {
+  final String cardId;
+  final String cardName;
+  final String cardCurrency;
+  final int amount;
+  final num amountInCardCurrency;
+  final String status; // intact / modified / deleted
+
+  RepaymentSummaryAllocation({
+    required this.cardId,
+    required this.cardName,
+    required this.cardCurrency,
+    required this.amount,
+    required this.amountInCardCurrency,
+    required this.status,
+  });
+
+  factory RepaymentSummaryAllocation.fromJson(Map<String, dynamic> j) =>
+      RepaymentSummaryAllocation(
+        cardId: _asStr(j['cardId']),
+        cardName: _asStr(j['cardName']),
+        cardCurrency: _asStr(j['cardCurrency']),
+        amount: (j['amount'] as num).toInt(),
+        amountInCardCurrency: _asNum(j['amountInCardCurrency']),
+        status: _asStr(j['status']),
+      );
 }

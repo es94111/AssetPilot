@@ -2932,7 +2932,7 @@
     "description": "Web path: features.accounts.repayment.paymentDate",
     "x-webPath": "features.accounts.repayment.paymentDate"
   },
-  "featuresAccountsRepaymentNoLinkedCards": "此銀行沒有關聯的信用卡",
+  "featuresAccountsRepaymentNoLinkedCards": "此付款帳戶目前沒有可還款的信用卡；請確認卡片已設定關聯銀行，且關聯的正是此付款帳戶",
   "@featuresAccountsRepaymentNoLinkedCards": {
     "description": "Web path: features.accounts.repayment.noLinkedCards",
     "x-webPath": "features.accounts.repayment.noLinkedCards"
@@ -2954,6 +2954,67 @@
   "@featuresAccountsRepaymentConfirm": {
     "description": "Web path: features.accounts.repayment.confirm",
     "x-webPath": "features.accounts.repayment.confirm"
+  },
+  "featuresAccountsRepaymentTotalAmount": "還款總金額",
+  "@featuresAccountsRepaymentTotalAmount": {
+    "description": "Web path: features.accounts.repayment.totalAmount",
+    "x-webPath": "features.accounts.repayment.totalAmount"
+  },
+  "featuresAccountsRepaymentTotalAmountHint": "以付款帳戶幣別輸入整數，系統依各卡欠款等比例分配",
+  "@featuresAccountsRepaymentTotalAmountHint": {
+    "description": "Web path: features.accounts.repayment.totalAmountHint",
+    "x-webPath": "features.accounts.repayment.totalAmountHint"
+  },
+  "featuresAccountsRepaymentTotalDebt": "應繳總額：{amount}",
+  "@featuresAccountsRepaymentTotalDebt": {
+    "description": "Web path: features.accounts.repayment.totalDebt",
+    "x-webPath": "features.accounts.repayment.totalDebt",
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "featuresAccountsRepaymentAllocationPreviewTitle": "分配預覽",
+  "@featuresAccountsRepaymentAllocationPreviewTitle": {
+    "description": "Web path: features.accounts.repayment.allocationPreviewTitle",
+    "x-webPath": "features.accounts.repayment.allocationPreviewTitle"
+  },
+  "featuresAccountsRepaymentColCard": "卡片",
+  "@featuresAccountsRepaymentColCard": {
+    "description": "Web path: features.accounts.repayment.colCard",
+    "x-webPath": "features.accounts.repayment.colCard"
+  },
+  "featuresAccountsRepaymentColAllocated": "分配金額",
+  "@featuresAccountsRepaymentColAllocated": {
+    "description": "Web path: features.accounts.repayment.colAllocated",
+    "x-webPath": "features.accounts.repayment.colAllocated"
+  },
+  "featuresAccountsRepaymentColBalanceAfter": "還款後餘額",
+  "@featuresAccountsRepaymentColBalanceAfter": {
+    "description": "Web path: features.accounts.repayment.colBalanceAfter",
+    "x-webPath": "features.accounts.repayment.colBalanceAfter"
+  },
+  "featuresAccountsRepaymentPrepaidBadge": "預繳",
+  "@featuresAccountsRepaymentPrepaidBadge": {
+    "description": "Web path: features.accounts.repayment.prepaidBadge",
+    "x-webPath": "features.accounts.repayment.prepaidBadge"
+  },
+  "featuresAccountsRepaymentPrepaidAmount": "預繳 {amount}",
+  "@featuresAccountsRepaymentPrepaidAmount": {
+    "description": "Web path: features.accounts.repayment.prepaidAmount",
+    "x-webPath": "features.accounts.repayment.prepaidAmount",
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "featuresAccountsRepaymentResultTitle": "還款完成",
+  "@featuresAccountsRepaymentResultTitle": {
+    "description": "Web path: features.accounts.repayment.resultTitle",
+    "x-webPath": "features.accounts.repayment.resultTitle"
+  },
+  "featuresAccountsRepaymentResultDone": "完成",
+  "@featuresAccountsRepaymentResultDone": {
+    "description": "Web path: features.accounts.repayment.resultDone",
+    "x-webPath": "features.accounts.repayment.resultDone"
   },
   "featuresAccountsDeleteMessage": "確定要刪除此帳戶嗎？",
   "@featuresAccountsDeleteMessage": {
@@ -3071,6 +3132,19 @@
   "@featuresAccountsMessagesRepaymentAmountRequired": {
     "description": "Web path: features.accounts.messages.repaymentAmountRequired",
     "x-webPath": "features.accounts.messages.repaymentAmountRequired"
+  },
+  "featuresAccountsMessagesRepaymentTotalAmountInvalid": "還款總金額須為大於 0 的整數",
+  "@featuresAccountsMessagesRepaymentTotalAmountInvalid": {
+    "description": "Web path: features.accounts.messages.repaymentTotalAmountInvalid",
+    "x-webPath": "features.accounts.messages.repaymentTotalAmountInvalid"
+  },
+  "featuresAccountsMessagesRepaymentTotalAmountTooSmall": "金額過小，至少需 {min} 才能讓每張卡都分配到",
+  "@featuresAccountsMessagesRepaymentTotalAmountTooSmall": {
+    "description": "Web path: features.accounts.messages.repaymentTotalAmountTooSmall",
+    "x-webPath": "features.accounts.messages.repaymentTotalAmountTooSmall",
+    "placeholders": {
+      "min": {}
+    }
   },
   "featuresAccountsMessagesCurrencyInvalid": "幣別格式錯誤（需為 3 碼英文字母）",
   "@featuresAccountsMessagesCurrencyInvalid": {
@@ -3265,6 +3339,41 @@
   "@featuresTransactionsRestoreNote": {
     "description": "Web path: features.transactions.restoreNote",
     "x-webPath": "features.transactions.restoreNote"
+  },
+  "featuresTransactionsViewRepaymentAllocation": "檢視還款分配",
+  "@featuresTransactionsViewRepaymentAllocation": {
+    "description": "Web path: features.transactions.viewRepaymentAllocation",
+    "x-webPath": "features.transactions.viewRepaymentAllocation"
+  },
+  "featuresTransactionsRepaymentSummaryTitle": "還款分配摘要",
+  "@featuresTransactionsRepaymentSummaryTitle": {
+    "description": "Web path: features.transactions.repaymentSummaryTitle",
+    "x-webPath": "features.transactions.repaymentSummaryTitle"
+  },
+  "featuresTransactionsRepaymentSummaryTotal": "輸入總金額",
+  "@featuresTransactionsRepaymentSummaryTotal": {
+    "description": "Web path: features.transactions.repaymentSummaryTotal",
+    "x-webPath": "features.transactions.repaymentSummaryTotal"
+  },
+  "featuresTransactionsRepaymentSummaryStale": "此摘要已與現況不符",
+  "@featuresTransactionsRepaymentSummaryStale": {
+    "description": "Web path: features.transactions.repaymentSummaryStale",
+    "x-webPath": "features.transactions.repaymentSummaryStale"
+  },
+  "featuresTransactionsRepaymentSummaryStatusIntact": "一致",
+  "@featuresTransactionsRepaymentSummaryStatusIntact": {
+    "description": "Web path: features.transactions.repaymentSummaryStatusIntact",
+    "x-webPath": "features.transactions.repaymentSummaryStatusIntact"
+  },
+  "featuresTransactionsRepaymentSummaryStatusModified": "已修改",
+  "@featuresTransactionsRepaymentSummaryStatusModified": {
+    "description": "Web path: features.transactions.repaymentSummaryStatusModified",
+    "x-webPath": "features.transactions.repaymentSummaryStatusModified"
+  },
+  "featuresTransactionsRepaymentSummaryStatusDeleted": "已刪除",
+  "@featuresTransactionsRepaymentSummaryStatusDeleted": {
+    "description": "Web path: features.transactions.repaymentSummaryStatusDeleted",
+    "x-webPath": "features.transactions.repaymentSummaryStatusDeleted"
   },
   "featuresTransactionsRestoreCreatedTitle": "還原 AI 建立的交易",
   "@featuresTransactionsRestoreCreatedTitle": {

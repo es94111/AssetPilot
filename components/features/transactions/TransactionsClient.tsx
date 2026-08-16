@@ -140,6 +140,9 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
   const [restoreCreatedId, setRestoreCreatedId] = useState<string | null>(null);
   const [restoreNoteId, setRestoreNoteId] = useState<string | null>(null);
   const [restoreNotePreview, setRestoreNotePreview] = useState<{ restorable: boolean; preAiNote: string | null; currentNote: string; updatedAt: number } | null>(null);
+  const [repaymentSummaryId, setRepaymentSummaryId] = useState<string | null>(null);
+  const [repaymentSummary, setRepaymentSummary] = useState<any | null>(null);
+  const [repaymentSummaryLoading, setRepaymentSummaryLoading] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [fxLoading, setFxLoading] = useState(false);
   const [attachmentPickerTxId, setAttachmentPickerTxId] = useState<string | null>(null);
@@ -533,6 +536,20 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
     }
   }
 
+  async function openRepaymentSummary(summaryId: string) {
+    setRepaymentSummaryId(summaryId);
+    setRepaymentSummary(null);
+    setRepaymentSummaryLoading(true);
+    try {
+      const data = await apiGet(`/api/credit-card-repayment-summaries/${summaryId}`);
+      setRepaymentSummary(data);
+    } catch (e: any) {
+      alert(e.message);
+      setRepaymentSummaryId(null);
+    }
+    setRepaymentSummaryLoading(false);
+  }
+
   async function handleRestoreNote() {
     if (!restoreNoteId) return;
     try {
@@ -815,12 +832,13 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
                       <div><dt className="sr-only">{t('features.common.date')}</dt><dd>{tx.date}{isFuture ? ` · ${t('features.transactions.future')}` : ''}</dd></div>
                       <div className="text-right"><dt className="sr-only">{t('features.common.account')}</dt><dd className="truncate">{getAcctName(tx)}{tx.toAccountId ? ` → ${accounts.find((account: any) => account.id === tx.toAccountId)?.name || t('features.common.notRecorded')}` : ''}</dd></div>
                     </dl>
-                    {(tx.note || tx.isFxFee || tx.sourceRecurringName || tx.excludeFromStats || tx.aiCreated || tx.noteAiModified) && (
+                    {(tx.note || tx.isFxFee || tx.sourceRecurringName || tx.excludeFromStats || tx.aiCreated || tx.noteAiModified || tx.repaymentSummaryId) && (
                       <div className="mt-3 space-y-1 border-t border-slate-100 pt-3 text-xs text-slate-500 dark:border-slate-800">
                         {tx.note && <p className="break-words text-slate-700 dark:text-slate-300">{tx.note}</p>}
                         {tx.isFxFee && <p className="text-amber-600">{t('features.transactions.fxFee')}</p>}
                         {tx.aiCreated && <p className="text-emerald-600">{t('features.transactions.aiCreated')}</p>}
                         {tx.noteAiModified && <p className="text-sky-600">{t('features.transactions.noteAiModified')}</p>}
+                        {tx.repaymentSummaryId && <button type="button" className="text-sky-600 hover:underline" onClick={() => openRepaymentSummary(tx.repaymentSummaryId)}>{t('features.transactions.viewRepaymentAllocation')}</button>}
                         {tx.sourceRecurringName && <p>{t('features.transactions.source', { name: tx.sourceRecurringName })}</p>}
                         {tx.excludeFromStats && <p>{t('features.common.excludeFromStats')}</p>}
                       </div>
@@ -902,6 +920,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
                       {tx.isFxFee && <div className="text-xs text-amber-600">{t('features.transactions.fxFee')}</div>}
                       {tx.aiCreated && <div className="text-xs text-emerald-600">{t('features.transactions.aiCreated')}</div>}
                       {tx.noteAiModified && <div className="text-xs text-sky-600">{t('features.transactions.noteAiModified')}</div>}
+                      {tx.repaymentSummaryId && <button type="button" className="text-xs text-sky-600 hover:underline" onClick={() => openRepaymentSummary(tx.repaymentSummaryId)}>{t('features.transactions.viewRepaymentAllocation')}</button>}
                       {tx.sourceRecurringName && <div className="text-xs text-slate-500">{t('features.transactions.source', { name: tx.sourceRecurringName })}</div>}
                       {tx.excludeFromStats && <div className="text-xs text-slate-500">{t('features.common.excludeFromStats')}</div>}
                       {tx.attachmentCount > 0 && tx.firstAttachmentId && (
@@ -1355,6 +1374,57 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
           </div>
         </div>
       )}
+
+      <Dialog open={!!repaymentSummaryId} onOpenChange={(o) => { if (!o) { setRepaymentSummaryId(null); setRepaymentSummary(null); } }}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{t('features.transactions.repaymentSummaryTitle')}</DialogTitle>
+          </DialogHeader>
+          {repaymentSummaryLoading && <p className="text-sm text-slate-500">…</p>}
+          {repaymentSummary && (
+            <div className="space-y-4">
+              {repaymentSummary.stale && (
+                <p className="text-amber-600 text-sm">{t('features.transactions.repaymentSummaryStale')}</p>
+              )}
+              <dl className="grid grid-cols-2 gap-x-3 gap-y-2 text-sm">
+                <div><dt className="text-slate-500">{t('features.common.date')}</dt><dd>{repaymentSummary.date}</dd></div>
+                <div><dt className="text-slate-500">{t('features.accounts.repayment.paymentAccount')}</dt><dd>{repaymentSummary.fromAccount?.name}</dd></div>
+                <div><dt className="text-slate-500">{t('features.transactions.repaymentSummaryTotal')}</dt><dd>{repaymentSummary.totalAmount} {repaymentSummary.fromAccount?.currency}</dd></div>
+              </dl>
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left border-b border-slate-200 dark:border-slate-800">
+                    <th className="py-1">{t('features.accounts.repayment.colCard')}</th>
+                    <th className="py-1 text-right">{t('features.accounts.repayment.colAllocated')}</th>
+                    <th className="py-1 text-right">{t('features.accounts.repayment.colBalanceAfter')}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {repaymentSummary.allocations.map((a: any) => (
+                    <tr key={a.cardId} className="border-b border-slate-100 dark:border-slate-800">
+                      <td className="py-1">
+                        <div className="font-medium">{a.cardName}</div>
+                        <span className="text-xs text-slate-500">
+                          {a.status === 'intact' && t('features.transactions.repaymentSummaryStatusIntact')}
+                          {a.status === 'modified' && t('features.transactions.repaymentSummaryStatusModified')}
+                          {a.status === 'deleted' && t('features.transactions.repaymentSummaryStatusDeleted')}
+                        </span>
+                      </td>
+                      <td className="py-1 text-right">{a.amount}</td>
+                      <td className="py-1 text-right">{a.amountInCardCurrency}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline">{t('common.close')}</Button>
+            </DialogClose>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

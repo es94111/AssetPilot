@@ -190,6 +190,73 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
   }
 
   /// 還原「AI 建立」的交易（需確認）：整組移除（含連動的轉帳／手續費交易）。
+  Future<void> _openRepaymentSummary(String summaryId) async {
+    try {
+      final data = await ApiClient.instance.getRepaymentSummary(summaryId);
+      final summary = RepaymentSummary.fromJson(data);
+      if (!mounted) return;
+      await showDialog<void>(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: Text(trKey('featuresTransactionsRepaymentSummaryTitle')),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (summary.stale)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Text(
+                      trKey('featuresTransactionsRepaymentSummaryStale'),
+                      style: TextStyle(color: Colors.orange),
+                    ),
+                  ),
+                Text(
+                  '${trKey('dashboardTableDate')}：${summary.date}',
+                ),
+                Text(
+                  '${trKey('featuresAccountsRepaymentPaymentAccount')}：${summary.fromAccountName}',
+                ),
+                Text(
+                  '${trKey('featuresTransactionsRepaymentSummaryTotal')}：${summary.totalAmount} ${summary.fromAccountCurrency}',
+                ),
+                SizedBox(height: 12),
+                for (final a in summary.allocations)
+                  ListTile(
+                    dense: true,
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(a.cardName),
+                    subtitle: Text(_summaryStatusKey(a.status)),
+                    trailing: Text('${a.amount} ${a.cardCurrency}'),
+                  ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(trKey('commonClose')),
+            ),
+          ],
+        ),
+      );
+    } catch (e) {
+      if (mounted) toast(context, '$e');
+    }
+  }
+
+  String _summaryStatusKey(String status) {
+    switch (status) {
+      case 'modified':
+        return trKey('featuresTransactionsRepaymentSummaryStatusModified');
+      case 'deleted':
+        return trKey('featuresTransactionsRepaymentSummaryStatusDeleted');
+      default:
+        return trKey('featuresTransactionsRepaymentSummaryStatusIntact');
+    }
+  }
+
   Future<void> _restoreAiCreated(Txn t) async {
     final ok = await showDialog<bool>(
       context: context,
@@ -387,6 +454,9 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                     onLongPress: () => _delete(t),
                     onRestoreCreated: t.aiCreated ? () => _restoreAiCreated(t) : null,
                     onRestoreNote: t.noteAiModified ? () => _restoreAiNote(t) : null,
+                    onViewRepaymentSummary: t.repaymentSummaryId.isNotEmpty
+                        ? () => _openRepaymentSummary(t.repaymentSummaryId)
+                        : null,
                   ),
                 );
               },
@@ -405,6 +475,7 @@ class _TxnTile extends StatelessWidget {
   final VoidCallback onLongPress;
   final VoidCallback? onRestoreCreated;
   final VoidCallback? onRestoreNote;
+  final VoidCallback? onViewRepaymentSummary;
   const _TxnTile({
     required this.t,
     required this.categoryName,
@@ -412,6 +483,7 @@ class _TxnTile extends StatelessWidget {
     required this.onLongPress,
     this.onRestoreCreated,
     this.onRestoreNote,
+    this.onViewRepaymentSummary,
   });
 
   @override
@@ -487,6 +559,13 @@ class _TxnTile extends StatelessWidget {
               style: TextStyle(fontSize: 12, color: Colors.blue),
             ),
           ],
+          if (t.repaymentSummaryId.isNotEmpty) ...[
+            SizedBox(width: 6),
+            Text(
+              trKey('featuresTransactionsViewRepaymentAllocation'),
+              style: TextStyle(fontSize: 12, color: Colors.blue),
+            ),
+          ],
         ],
       ),
       trailing: Row(
@@ -508,6 +587,12 @@ class _TxnTile extends StatelessWidget {
               tooltip: trKey('featuresTransactionsRestoreNote'),
               icon: Icon(Icons.undo),
               onPressed: onRestoreNote,
+            ),
+          if (onViewRepaymentSummary != null)
+            IconButton(
+              tooltip: trKey('featuresTransactionsViewRepaymentAllocation'),
+              icon: Icon(Icons.account_balance_wallet),
+              onPressed: onViewRepaymentSummary,
             ),
         ],
       ),

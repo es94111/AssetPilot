@@ -1834,7 +1834,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get featuresAccountsRepaymentPaymentDate => '결제일';
 
   @override
-  String get featuresAccountsRepaymentNoLinkedCards => '이 은행에 연결된 카드가 없습니다';
+  String get featuresAccountsRepaymentNoLinkedCards =>
+      '이 결제 계좌로 상환할 수 있는 신용카드가 없습니다; 카드에 연결된 은행이 있는지, 그리고 그것이 이 결제 계좌인지 확인하세요';
 
   @override
   String featuresAccountsRepaymentCurrentBalance(Object amount) {
@@ -1846,6 +1847,44 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get featuresAccountsRepaymentConfirm => '결제 확인';
+
+  @override
+  String get featuresAccountsRepaymentTotalAmount => '총 상환 금액';
+
+  @override
+  String get featuresAccountsRepaymentTotalAmountHint =>
+      '결제 계좌 통화로 정수를 입력하세요; 시스템이 각 카드 부채 비율에 따라 배분합니다';
+
+  @override
+  String featuresAccountsRepaymentTotalDebt(Object amount) {
+    return '총 결제액: $amount';
+  }
+
+  @override
+  String get featuresAccountsRepaymentAllocationPreviewTitle => '배분 미리보기';
+
+  @override
+  String get featuresAccountsRepaymentColCard => '카드';
+
+  @override
+  String get featuresAccountsRepaymentColAllocated => '배분액';
+
+  @override
+  String get featuresAccountsRepaymentColBalanceAfter => '상환 후 잔액';
+
+  @override
+  String get featuresAccountsRepaymentPrepaidBadge => '선납';
+
+  @override
+  String featuresAccountsRepaymentPrepaidAmount(Object amount) {
+    return '선납 $amount';
+  }
+
+  @override
+  String get featuresAccountsRepaymentResultTitle => '상환 완료';
+
+  @override
+  String get featuresAccountsRepaymentResultDone => '완료';
 
   @override
   String get featuresAccountsDeleteMessage => '이 계좌를 삭제할까요?';
@@ -1918,6 +1957,15 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get featuresAccountsMessagesRepaymentAmountRequired =>
       '하나 이상의 카드 결제 금액을 입력하세요';
+
+  @override
+  String get featuresAccountsMessagesRepaymentTotalAmountInvalid =>
+      '총 상환 금액은 0보다 큰 정수여야 합니다';
+
+  @override
+  String featuresAccountsMessagesRepaymentTotalAmountTooSmall(Object min) {
+    return '금액이 너무 작습니다; 각 카드에 배분되려면 최소 $min이 필요합니다';
+  }
 
   @override
   String get featuresAccountsMessagesCurrencyInvalid => '통화는 3글자 코드여야 합니다';
@@ -2035,6 +2083,28 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get featuresTransactionsRestoreNote => '메모 복원';
+
+  @override
+  String get featuresTransactionsViewRepaymentAllocation => '상환 배분 보기';
+
+  @override
+  String get featuresTransactionsRepaymentSummaryTitle => '상환 배분 요약';
+
+  @override
+  String get featuresTransactionsRepaymentSummaryTotal => '입력 총 금액';
+
+  @override
+  String get featuresTransactionsRepaymentSummaryStale =>
+      '이 요약은 현재 상태와 더 이상 일치하지 않습니다';
+
+  @override
+  String get featuresTransactionsRepaymentSummaryStatusIntact => '일치';
+
+  @override
+  String get featuresTransactionsRepaymentSummaryStatusModified => '수정됨';
+
+  @override
+  String get featuresTransactionsRepaymentSummaryStatusDeleted => '삭제됨';
 
   @override
   String get featuresTransactionsRestoreCreatedTitle => 'AI 생성 거래 복원';

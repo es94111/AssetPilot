@@ -2932,7 +2932,7 @@
     "description": "Web path: features.accounts.repayment.paymentDate",
     "x-webPath": "features.accounts.repayment.paymentDate"
   },
-  "featuresAccountsRepaymentNoLinkedCards": "لا توجد بطاقات مرتبطة بهذا البنك",
+  "featuresAccountsRepaymentNoLinkedCards": "لا توجد بطاقات ائتمان متاحة للسداد من هذا الحساب؛ يرجى التأكد من أن البطاقة لها بنك مرتبط وأنه هو حساب الدافع",
   "@featuresAccountsRepaymentNoLinkedCards": {
     "description": "Web path: features.accounts.repayment.noLinkedCards",
     "x-webPath": "features.accounts.repayment.noLinkedCards"
@@ -3296,9 +3296,6 @@
     "description": "Web path: features.transactions.restoreNotePreviewLabel",
     "x-webPath": "features.transactions.restoreNotePreviewLabel"
   },
-
-
-
   "featuresTransactionsPhotoOne": "صورة واحدة",
   "@featuresTransactionsPhotoOne": {
     "description": "Web path: features.transactions.photoOne",
@@ -7212,5 +7209,114 @@
   "@adminScreenSubtitle": {
     "description": "Web path: admin.adminScreenSubtitle",
     "x-webPath": "admin.adminScreenSubtitle"
+  },
+  "featuresAccountsRepaymentTotalAmount": "إجمالي مبلغ السداد",
+  "@featuresAccountsRepaymentTotalAmount": {
+    "description": "Web path: features.accounts.repayment.totalAmount",
+    "x-webPath": "features.accounts.repayment.totalAmount"
+  },
+  "featuresAccountsRepaymentTotalAmountHint": "أدخل عددًا صحيحًا بعملة حساب الدافع؛ يخصص النظام نسبةً حسب دين كل بطاقة",
+  "@featuresAccountsRepaymentTotalAmountHint": {
+    "description": "Web path: features.accounts.repayment.totalAmountHint",
+    "x-webPath": "features.accounts.repayment.totalAmountHint"
+  },
+  "featuresAccountsRepaymentTotalDebt": "إجمالي المستحق: {amount}",
+  "@featuresAccountsRepaymentTotalDebt": {
+    "description": "Web path: features.accounts.repayment.totalDebt",
+    "x-webPath": "features.accounts.repayment.totalDebt",
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "featuresAccountsRepaymentAllocationPreviewTitle": "معاينة التخصيص",
+  "@featuresAccountsRepaymentAllocationPreviewTitle": {
+    "description": "Web path: features.accounts.repayment.allocationPreviewTitle",
+    "x-webPath": "features.accounts.repayment.allocationPreviewTitle"
+  },
+  "featuresAccountsRepaymentColCard": "البطاقة",
+  "@featuresAccountsRepaymentColCard": {
+    "description": "Web path: features.accounts.repayment.colCard",
+    "x-webPath": "features.accounts.repayment.colCard"
+  },
+  "featuresAccountsRepaymentColAllocated": "المخصص",
+  "@featuresAccountsRepaymentColAllocated": {
+    "description": "Web path: features.accounts.repayment.colAllocated",
+    "x-webPath": "features.accounts.repayment.colAllocated"
+  },
+  "featuresAccountsRepaymentColBalanceAfter": "الرصيد بعد",
+  "@featuresAccountsRepaymentColBalanceAfter": {
+    "description": "Web path: features.accounts.repayment.colBalanceAfter",
+    "x-webPath": "features.accounts.repayment.colBalanceAfter"
+  },
+  "featuresAccountsRepaymentPrepaidBadge": "مدفوع مقدمًا",
+  "@featuresAccountsRepaymentPrepaidBadge": {
+    "description": "Web path: features.accounts.repayment.prepaidBadge",
+    "x-webPath": "features.accounts.repayment.prepaidBadge"
+  },
+  "featuresAccountsRepaymentPrepaidAmount": "مدفوع مقدمًا {amount}",
+  "@featuresAccountsRepaymentPrepaidAmount": {
+    "description": "Web path: features.accounts.repayment.prepaidAmount",
+    "x-webPath": "features.accounts.repayment.prepaidAmount",
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "featuresAccountsRepaymentResultTitle": "اكتمل السداد",
+  "@featuresAccountsRepaymentResultTitle": {
+    "description": "Web path: features.accounts.repayment.resultTitle",
+    "x-webPath": "features.accounts.repayment.resultTitle"
+  },
+  "featuresAccountsRepaymentResultDone": "تم",
+  "@featuresAccountsRepaymentResultDone": {
+    "description": "Web path: features.accounts.repayment.resultDone",
+    "x-webPath": "features.accounts.repayment.resultDone"
+  },
+  "featuresAccountsMessagesRepaymentTotalAmountInvalid": "يجب أن يكون إجمالي مبلغ السداد عددًا صحيحًا أكبر من 0",
+  "@featuresAccountsMessagesRepaymentTotalAmountInvalid": {
+    "description": "Web path: features.accounts.messages.repaymentTotalAmountInvalid",
+    "x-webPath": "features.accounts.messages.repaymentTotalAmountInvalid"
+  },
+  "featuresAccountsMessagesRepaymentTotalAmountTooSmall": "المبلغ صغير جدًا؛ يلزم {min} على الأقل لتخصيص مبلغ لكل بطاقة",
+  "@featuresAccountsMessagesRepaymentTotalAmountTooSmall": {
+    "description": "Web path: features.accounts.messages.repaymentTotalAmountTooSmall",
+    "x-webPath": "features.accounts.messages.repaymentTotalAmountTooSmall",
+    "placeholders": {
+      "min": {}
+    }
+  },
+  "featuresTransactionsViewRepaymentAllocation": "عرض تخصيص السداد",
+  "@featuresTransactionsViewRepaymentAllocation": {
+    "description": "Web path: features.transactions.viewRepaymentAllocation",
+    "x-webPath": "features.transactions.viewRepaymentAllocation"
+  },
+  "featuresTransactionsRepaymentSummaryTitle": "ملخص تخصيص السداد",
+  "@featuresTransactionsRepaymentSummaryTitle": {
+    "description": "Web path: features.transactions.repaymentSummaryTitle",
+    "x-webPath": "features.transactions.repaymentSummaryTitle"
+  },
+  "featuresTransactionsRepaymentSummaryTotal": "إجمالي المبلغ المدخل",
+  "@featuresTransactionsRepaymentSummaryTotal": {
+    "description": "Web path: features.transactions.repaymentSummaryTotal",
+    "x-webPath": "features.transactions.repaymentSummaryTotal"
+  },
+  "featuresTransactionsRepaymentSummaryStale": "هذا الملخص لم يعد مطابقًا للحالة الحالية",
+  "@featuresTransactionsRepaymentSummaryStale": {
+    "description": "Web path: features.transactions.repaymentSummaryStale",
+    "x-webPath": "features.transactions.repaymentSummaryStale"
+  },
+  "featuresTransactionsRepaymentSummaryStatusIntact": "مطابق",
+  "@featuresTransactionsRepaymentSummaryStatusIntact": {
+    "description": "Web path: features.transactions.repaymentSummaryStatusIntact",
+    "x-webPath": "features.transactions.repaymentSummaryStatusIntact"
+  },
+  "featuresTransactionsRepaymentSummaryStatusModified": "معدّل",
+  "@featuresTransactionsRepaymentSummaryStatusModified": {
+    "description": "Web path: features.transactions.repaymentSummaryStatusModified",
+    "x-webPath": "features.transactions.repaymentSummaryStatusModified"
+  },
+  "featuresTransactionsRepaymentSummaryStatusDeleted": "محذوف",
+  "@featuresTransactionsRepaymentSummaryStatusDeleted": {
+    "description": "Web path: features.transactions.repaymentSummaryStatusDeleted",
+    "x-webPath": "features.transactions.repaymentSummaryStatusDeleted"
   }
 }

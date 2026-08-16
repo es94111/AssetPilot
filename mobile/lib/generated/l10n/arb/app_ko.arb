@@ -2932,7 +2932,7 @@
     "description": "Web path: features.accounts.repayment.paymentDate",
     "x-webPath": "features.accounts.repayment.paymentDate"
   },
-  "featuresAccountsRepaymentNoLinkedCards": "이 은행에 연결된 카드가 없습니다",
+  "featuresAccountsRepaymentNoLinkedCards": "이 결제 계좌로 상환할 수 있는 신용카드가 없습니다; 카드에 연결된 은행이 있는지, 그리고 그것이 이 결제 계좌인지 확인하세요",
   "@featuresAccountsRepaymentNoLinkedCards": {
     "description": "Web path: features.accounts.repayment.noLinkedCards",
     "x-webPath": "features.accounts.repayment.noLinkedCards"
@@ -7209,5 +7209,114 @@
   "@adminScreenSubtitle": {
     "description": "Web path: admin.adminScreenSubtitle",
     "x-webPath": "admin.adminScreenSubtitle"
+  },
+  "featuresAccountsRepaymentTotalAmount": "총 상환 금액",
+  "@featuresAccountsRepaymentTotalAmount": {
+    "description": "Web path: features.accounts.repayment.totalAmount",
+    "x-webPath": "features.accounts.repayment.totalAmount"
+  },
+  "featuresAccountsRepaymentTotalAmountHint": "결제 계좌 통화로 정수를 입력하세요; 시스템이 각 카드 부채 비율에 따라 배분합니다",
+  "@featuresAccountsRepaymentTotalAmountHint": {
+    "description": "Web path: features.accounts.repayment.totalAmountHint",
+    "x-webPath": "features.accounts.repayment.totalAmountHint"
+  },
+  "featuresAccountsRepaymentTotalDebt": "총 결제액: {amount}",
+  "@featuresAccountsRepaymentTotalDebt": {
+    "description": "Web path: features.accounts.repayment.totalDebt",
+    "x-webPath": "features.accounts.repayment.totalDebt",
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "featuresAccountsRepaymentAllocationPreviewTitle": "배분 미리보기",
+  "@featuresAccountsRepaymentAllocationPreviewTitle": {
+    "description": "Web path: features.accounts.repayment.allocationPreviewTitle",
+    "x-webPath": "features.accounts.repayment.allocationPreviewTitle"
+  },
+  "featuresAccountsRepaymentColCard": "카드",
+  "@featuresAccountsRepaymentColCard": {
+    "description": "Web path: features.accounts.repayment.colCard",
+    "x-webPath": "features.accounts.repayment.colCard"
+  },
+  "featuresAccountsRepaymentColAllocated": "배분액",
+  "@featuresAccountsRepaymentColAllocated": {
+    "description": "Web path: features.accounts.repayment.colAllocated",
+    "x-webPath": "features.accounts.repayment.colAllocated"
+  },
+  "featuresAccountsRepaymentColBalanceAfter": "상환 후 잔액",
+  "@featuresAccountsRepaymentColBalanceAfter": {
+    "description": "Web path: features.accounts.repayment.colBalanceAfter",
+    "x-webPath": "features.accounts.repayment.colBalanceAfter"
+  },
+  "featuresAccountsRepaymentPrepaidBadge": "선납",
+  "@featuresAccountsRepaymentPrepaidBadge": {
+    "description": "Web path: features.accounts.repayment.prepaidBadge",
+    "x-webPath": "features.accounts.repayment.prepaidBadge"
+  },
+  "featuresAccountsRepaymentPrepaidAmount": "선납 {amount}",
+  "@featuresAccountsRepaymentPrepaidAmount": {
+    "description": "Web path: features.accounts.repayment.prepaidAmount",
+    "x-webPath": "features.accounts.repayment.prepaidAmount",
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "featuresAccountsRepaymentResultTitle": "상환 완료",
+  "@featuresAccountsRepaymentResultTitle": {
+    "description": "Web path: features.accounts.repayment.resultTitle",
+    "x-webPath": "features.accounts.repayment.resultTitle"
+  },
+  "featuresAccountsRepaymentResultDone": "완료",
+  "@featuresAccountsRepaymentResultDone": {
+    "description": "Web path: features.accounts.repayment.resultDone",
+    "x-webPath": "features.accounts.repayment.resultDone"
+  },
+  "featuresAccountsMessagesRepaymentTotalAmountInvalid": "총 상환 금액은 0보다 큰 정수여야 합니다",
+  "@featuresAccountsMessagesRepaymentTotalAmountInvalid": {
+    "description": "Web path: features.accounts.messages.repaymentTotalAmountInvalid",
+    "x-webPath": "features.accounts.messages.repaymentTotalAmountInvalid"
+  },
+  "featuresAccountsMessagesRepaymentTotalAmountTooSmall": "금액이 너무 작습니다; 각 카드에 배분되려면 최소 {min}이 필요합니다",
+  "@featuresAccountsMessagesRepaymentTotalAmountTooSmall": {
+    "description": "Web path: features.accounts.messages.repaymentTotalAmountTooSmall",
+    "x-webPath": "features.accounts.messages.repaymentTotalAmountTooSmall",
+    "placeholders": {
+      "min": {}
+    }
+  },
+  "featuresTransactionsViewRepaymentAllocation": "상환 배분 보기",
+  "@featuresTransactionsViewRepaymentAllocation": {
+    "description": "Web path: features.transactions.viewRepaymentAllocation",
+    "x-webPath": "features.transactions.viewRepaymentAllocation"
+  },
+  "featuresTransactionsRepaymentSummaryTitle": "상환 배분 요약",
+  "@featuresTransactionsRepaymentSummaryTitle": {
+    "description": "Web path: features.transactions.repaymentSummaryTitle",
+    "x-webPath": "features.transactions.repaymentSummaryTitle"
+  },
+  "featuresTransactionsRepaymentSummaryTotal": "입력 총 금액",
+  "@featuresTransactionsRepaymentSummaryTotal": {
+    "description": "Web path: features.transactions.repaymentSummaryTotal",
+    "x-webPath": "features.transactions.repaymentSummaryTotal"
+  },
+  "featuresTransactionsRepaymentSummaryStale": "이 요약은 현재 상태와 더 이상 일치하지 않습니다",
+  "@featuresTransactionsRepaymentSummaryStale": {
+    "description": "Web path: features.transactions.repaymentSummaryStale",
+    "x-webPath": "features.transactions.repaymentSummaryStale"
+  },
+  "featuresTransactionsRepaymentSummaryStatusIntact": "일치",
+  "@featuresTransactionsRepaymentSummaryStatusIntact": {
+    "description": "Web path: features.transactions.repaymentSummaryStatusIntact",
+    "x-webPath": "features.transactions.repaymentSummaryStatusIntact"
+  },
+  "featuresTransactionsRepaymentSummaryStatusModified": "수정됨",
+  "@featuresTransactionsRepaymentSummaryStatusModified": {
+    "description": "Web path: features.transactions.repaymentSummaryStatusModified",
+    "x-webPath": "features.transactions.repaymentSummaryStatusModified"
+  },
+  "featuresTransactionsRepaymentSummaryStatusDeleted": "삭제됨",
+  "@featuresTransactionsRepaymentSummaryStatusDeleted": {
+    "description": "Web path: features.transactions.repaymentSummaryStatusDeleted",
+    "x-webPath": "features.transactions.repaymentSummaryStatusDeleted"
   }
 }

@@ -2932,7 +2932,7 @@
     "description": "Web path: features.accounts.repayment.paymentDate",
     "x-webPath": "features.accounts.repayment.paymentDate"
   },
-  "featuresAccountsRepaymentNoLinkedCards": "इस बैंक से कोई कार्ड लिंक नहीं है",
+  "featuresAccountsRepaymentNoLinkedCards": "इस भुगतानकर्ता खाते के लिए कोई क्रेडिट कार्ड उपलब्ध नहीं है; कृपया पुष्टि करें कि कार्ड से जुड़ा बैंक है और वह यही भुगतानकर्ता खाता है",
   "@featuresAccountsRepaymentNoLinkedCards": {
     "description": "Web path: features.accounts.repayment.noLinkedCards",
     "x-webPath": "features.accounts.repayment.noLinkedCards"
@@ -7209,5 +7209,114 @@
   "@adminScreenSubtitle": {
     "description": "Web path: admin.adminScreenSubtitle",
     "x-webPath": "admin.adminScreenSubtitle"
+  },
+  "featuresAccountsRepaymentTotalAmount": "कुल चुकाने की राशि",
+  "@featuresAccountsRepaymentTotalAmount": {
+    "description": "Web path: features.accounts.repayment.totalAmount",
+    "x-webPath": "features.accounts.repayment.totalAmount"
+  },
+  "featuresAccountsRepaymentTotalAmountHint": "भुगतानकर्ता खाते की मुद्रा में पूर्णांक दर्ज करें; सिस्टम प्रत्येक कार्ड के ऋण के अनुपात में आवंटित करता है",
+  "@featuresAccountsRepaymentTotalAmountHint": {
+    "description": "Web path: features.accounts.repayment.totalAmountHint",
+    "x-webPath": "features.accounts.repayment.totalAmountHint"
+  },
+  "featuresAccountsRepaymentTotalDebt": "कुल देय: {amount}",
+  "@featuresAccountsRepaymentTotalDebt": {
+    "description": "Web path: features.accounts.repayment.totalDebt",
+    "x-webPath": "features.accounts.repayment.totalDebt",
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "featuresAccountsRepaymentAllocationPreviewTitle": "आवंटन पूर्वावलोकन",
+  "@featuresAccountsRepaymentAllocationPreviewTitle": {
+    "description": "Web path: features.accounts.repayment.allocationPreviewTitle",
+    "x-webPath": "features.accounts.repayment.allocationPreviewTitle"
+  },
+  "featuresAccountsRepaymentColCard": "कार्ड",
+  "@featuresAccountsRepaymentColCard": {
+    "description": "Web path: features.accounts.repayment.colCard",
+    "x-webPath": "features.accounts.repayment.colCard"
+  },
+  "featuresAccountsRepaymentColAllocated": "आवंटित",
+  "@featuresAccountsRepaymentColAllocated": {
+    "description": "Web path: features.accounts.repayment.colAllocated",
+    "x-webPath": "features.accounts.repayment.colAllocated"
+  },
+  "featuresAccountsRepaymentColBalanceAfter": "शेष राशि बाद में",
+  "@featuresAccountsRepaymentColBalanceAfter": {
+    "description": "Web path: features.accounts.repayment.colBalanceAfter",
+    "x-webPath": "features.accounts.repayment.colBalanceAfter"
+  },
+  "featuresAccountsRepaymentPrepaidBadge": "प्रीपेड",
+  "@featuresAccountsRepaymentPrepaidBadge": {
+    "description": "Web path: features.accounts.repayment.prepaidBadge",
+    "x-webPath": "features.accounts.repayment.prepaidBadge"
+  },
+  "featuresAccountsRepaymentPrepaidAmount": "प्रीपेड {amount}",
+  "@featuresAccountsRepaymentPrepaidAmount": {
+    "description": "Web path: features.accounts.repayment.prepaidAmount",
+    "x-webPath": "features.accounts.repayment.prepaidAmount",
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "featuresAccountsRepaymentResultTitle": "चुकाना पूर्ण",
+  "@featuresAccountsRepaymentResultTitle": {
+    "description": "Web path: features.accounts.repayment.resultTitle",
+    "x-webPath": "features.accounts.repayment.resultTitle"
+  },
+  "featuresAccountsRepaymentResultDone": "पूर्ण",
+  "@featuresAccountsRepaymentResultDone": {
+    "description": "Web path: features.accounts.repayment.resultDone",
+    "x-webPath": "features.accounts.repayment.resultDone"
+  },
+  "featuresAccountsMessagesRepaymentTotalAmountInvalid": "कुल चुकाने की राशि 0 से बड़ा पूर्णांक होनी चाहिए",
+  "@featuresAccountsMessagesRepaymentTotalAmountInvalid": {
+    "description": "Web path: features.accounts.messages.repaymentTotalAmountInvalid",
+    "x-webPath": "features.accounts.messages.repaymentTotalAmountInvalid"
+  },
+  "featuresAccountsMessagesRepaymentTotalAmountTooSmall": "राशि बहुत छोटी है; प्रत्येक कार्ड को आवंटन मिले इसके लिए न्यूनतम {min} आवश्यक है",
+  "@featuresAccountsMessagesRepaymentTotalAmountTooSmall": {
+    "description": "Web path: features.accounts.messages.repaymentTotalAmountTooSmall",
+    "x-webPath": "features.accounts.messages.repaymentTotalAmountTooSmall",
+    "placeholders": {
+      "min": {}
+    }
+  },
+  "featuresTransactionsViewRepaymentAllocation": "चुकाने का आवंटन देखें",
+  "@featuresTransactionsViewRepaymentAllocation": {
+    "description": "Web path: features.transactions.viewRepaymentAllocation",
+    "x-webPath": "features.transactions.viewRepaymentAllocation"
+  },
+  "featuresTransactionsRepaymentSummaryTitle": "चुकाने का आवंटन सारांश",
+  "@featuresTransactionsRepaymentSummaryTitle": {
+    "description": "Web path: features.transactions.repaymentSummaryTitle",
+    "x-webPath": "features.transactions.repaymentSummaryTitle"
+  },
+  "featuresTransactionsRepaymentSummaryTotal": "दर्ज की गई कुल राशि",
+  "@featuresTransactionsRepaymentSummaryTotal": {
+    "description": "Web path: features.transactions.repaymentSummaryTotal",
+    "x-webPath": "features.transactions.repaymentSummaryTotal"
+  },
+  "featuresTransactionsRepaymentSummaryStale": "यह सारांश अब वर्तमान स्थिति से मेल नहीं खाता",
+  "@featuresTransactionsRepaymentSummaryStale": {
+    "description": "Web path: features.transactions.repaymentSummaryStale",
+    "x-webPath": "features.transactions.repaymentSummaryStale"
+  },
+  "featuresTransactionsRepaymentSummaryStatusIntact": "सुसंगत",
+  "@featuresTransactionsRepaymentSummaryStatusIntact": {
+    "description": "Web path: features.transactions.repaymentSummaryStatusIntact",
+    "x-webPath": "features.transactions.repaymentSummaryStatusIntact"
+  },
+  "featuresTransactionsRepaymentSummaryStatusModified": "संशोधित",
+  "@featuresTransactionsRepaymentSummaryStatusModified": {
+    "description": "Web path: features.transactions.repaymentSummaryStatusModified",
+    "x-webPath": "features.transactions.repaymentSummaryStatusModified"
+  },
+  "featuresTransactionsRepaymentSummaryStatusDeleted": "हटाया गया",
+  "@featuresTransactionsRepaymentSummaryStatusDeleted": {
+    "description": "Web path: features.transactions.repaymentSummaryStatusDeleted",
+    "x-webPath": "features.transactions.repaymentSummaryStatusDeleted"
   }
 }

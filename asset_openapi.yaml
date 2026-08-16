@@ -2,7 +2,7 @@ openapi: "3.2.0"
 
 info:
   title: AssetPilot API
-  version: "4.101.0"
+  version: "4.102.0"
   description: |
     個人資產管理平台 AssetPilot 的完整 API Schema。
     供 Cloudflare API Shield Schema Validation 使用。
@@ -430,6 +430,168 @@ components:
           type: boolean
         allowUpdateNote:
           type: boolean
+
+    # ── 006 信用卡總金額還款 ──
+    RepaymentRequest:
+      type: object
+      description: |
+        totalAmount 與 repayments 至少擇一；兩者同時出現時以 totalAmount 為準（FR-019）。
+      properties:
+        fromAccountId:
+          type: string
+          description: 付款帳戶 id，不可為信用卡帳戶（FR-010）
+        date:
+          type: [string, 'null']
+          description: 還款日期 YYYY-MM-DD；省略或無法解析時以使用者時區的今日為準（FR-014）
+        totalAmount:
+          type: integer
+          minimum: 1
+          description: 本次還款總金額（付款帳戶幣別），須為大於 0 的整數且不得小於納入卡片張數（FR-008、FR-008a）
+        repayments:
+          type: array
+          description: 舊版行動 App 逐張卡片金額（過渡相容路徑）；系統加總為一筆總金額後套用自動納入與等比例分配重算（FR-019a）
+          items:
+            type: object
+            properties:
+              cardId:
+                type: string
+              amount:
+                type: number
+      required: [fromAccountId]
+
+    RepaymentAllocation:
+      type: object
+      properties:
+        cardId:
+          type: string
+        cardName:
+          type: string
+        cardCurrency:
+          type: string
+        amount:
+          type: integer
+          minimum: 1
+        amountInCardCurrency:
+          type: number
+        balanceAfter:
+          type: number
+          description: 還款後該卡餘額；大於 0 代表預繳（FR-004、FR-020）
+      required: [cardId, cardName, cardCurrency, amount, amountInCardCurrency, balanceAfter]
+
+    RepaymentResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        summaryId:
+          type: string
+        date:
+          type: string
+        fromAccountId:
+          type: string
+        currency:
+          type: string
+        totalAmount:
+          type: integer
+        allocations:
+          type: array
+          items:
+            $ref: '#/components/schemas/RepaymentAllocation'
+      required: [ok, summaryId, date, fromAccountId, currency, totalAmount, allocations]
+
+    PayableCard:
+      type: object
+      description: 本次納入還款的信用卡；陣列順序即標準順序，前端不得重排。
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        currency:
+          type: string
+        debt:
+          type: integer
+          minimum: 1
+        debtInCardCurrency:
+          type: number
+      required: [id, name, currency, debt, debtInCardCurrency]
+
+    RepaymentCardsResponse:
+      type: object
+      properties:
+        fromAccount:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+            currency:
+              type: string
+          required: [id, name, currency]
+        cards:
+          type: array
+          items:
+            $ref: '#/components/schemas/PayableCard'
+        totalDebt:
+          type: integer
+        minTotalAmount:
+          type: integer
+        snapshotAt:
+          type: string
+          format: date-time
+      required: [fromAccount, cards, totalDebt, minTotalAmount, snapshotAt]
+
+    SummaryAllocation:
+      type: object
+      properties:
+        cardId:
+          type: string
+        cardName:
+          type: string
+        cardCurrency:
+          type: string
+        amount:
+          type: integer
+        amountInCardCurrency:
+          type: number
+        status:
+          type: string
+          enum: [intact, modified, deleted]
+      required: [cardId, cardName, cardCurrency, amount, amountInCardCurrency, status]
+
+    RepaymentSummaryResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        date:
+          type: string
+        fromAccount:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+            currency:
+              type: string
+          required: [id, name, currency]
+        totalAmount:
+          type: integer
+        inputMode:
+          type: string
+          enum: [total, legacy_items]
+        createdAt:
+          type: string
+          format: date-time
+        stale:
+          type: boolean
+        allocations:
+          type: array
+          items:
+            $ref: '#/components/schemas/SummaryAllocation'
+      required: [id, date, fromAccount, totalAmount, inputMode, createdAt, stale, allocations]
 
 # ─────────────────────────────────────────
 # 預設安全性（全域）
@@ -1058,26 +1220,68 @@ paths:
     post:
       operationId: creditCardRepayment
       tags: [Accounts]
-      summary: 信用卡還款（產生轉帳紀錄）
+      summary: 信用卡還款（輸入單一總金額，系統依欠款等比例分配到各張卡）
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              required: [creditCardId, amount, date]
-              properties:
-                creditCardId:
-                  type: string
-                amount:
-                  type: number
-                date:
-                  type: string
-                note:
-                  type: string
+              $ref: '#/components/schemas/RepaymentRequest'
       responses:
         "200":
-          description: 還款成功
+          description: 還款成功，回傳本次實際寫入的分配結果
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RepaymentResponse'
+        "400":
+          description: 參數錯誤（InvalidTotalAmount／TotalAmountTooSmall／NoPayableCards）
+        "500":
+          description: 寫入失敗，本次全部未寫入（已回滾）
+
+  /api/accounts/{id}/repayment-cards:
+    get:
+      operationId: getRepaymentCards
+      tags: [Accounts]
+      summary: 取得以此帳戶為付款來源時本次納入還款的信用卡欠款快照
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 快照取得成功；cards 為空陣列代表本次無可還款卡片
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RepaymentCardsResponse'
+        "400":
+          description: 付款帳戶為信用卡（NotCreditCardPayer）
+        "404":
+          description: 帳戶不存在或不屬於本人
+
+  /api/credit-card-repayment-summaries/{id}:
+    get:
+      operationId: getCreditCardRepaymentSummary
+      tags: [Accounts]
+      summary: 取得某次信用卡還款的分配摘要（含「已與現況不符」判定）
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 摘要取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RepaymentSummaryResponse'
+        "404":
+          description: 摘要不存在或不屬於本人
 
   # ── 交易記錄 ──────────────────────────
   /api/transactions:
@@ -1120,7 +1324,9 @@ paths:
             type: integer
       responses:
         "200":
-          description: 交易清單（含分頁資訊）
+          description: |
+            交易清單（含分頁資訊）。每筆交易含唯讀衍生欄位 repaymentSummaryId
+            （非還款交易為空字串；非空代表該筆屬於某次信用卡還款摘要，可作為開啟摘要的入口）。
     post:
       operationId: createTransaction
       tags: [Transactions]

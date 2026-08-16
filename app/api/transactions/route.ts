@@ -51,6 +51,7 @@ interface TransactionListItem extends TransactionRow {
   isFxFee: boolean;
   aiCreated: boolean;
   noteAiModified: boolean;
+  repaymentSummaryId: string;
   linkedId: string;
   sourceRecurringId: string | null;
   sourceRecurringName: string | null;
@@ -206,6 +207,7 @@ export async function GET(request: NextRequest) {
     isFxFee: r.is_fx_fee === 1,
     aiCreated: r.ai_created === 1,
     noteAiModified: r.note_ai_modified === 1,
+    repaymentSummaryId: (r as { repayment_summary_id?: string }).repayment_summary_id || '',
     linkedId: r.linked_id || '',
     sourceRecurringId: r.source_recurring_id || null,
     sourceRecurringName: r.source_recurring_id ? (r.source_recurring_name || null) : null,

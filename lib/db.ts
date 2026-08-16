@@ -525,6 +525,8 @@ async function _runMigrations(): Promise<void> {
   alterIgnore("ALTER TABLE transactions ADD COLUMN ai_created INTEGER NOT NULL DEFAULT 0");
   alterIgnore("ALTER TABLE transactions ADD COLUMN note_ai_modified INTEGER NOT NULL DEFAULT 0");
   alterIgnore("ALTER TABLE transactions ADD COLUMN pre_ai_note TEXT NOT NULL DEFAULT ''");
+  // 006-credit-card-total-repayment：還款摘要外鍵（非還款交易恆為 ''）
+  alterIgnore("ALTER TABLE transactions ADD COLUMN repayment_summary_id TEXT DEFAULT ''");
   alterIgnore(`UPDATE transactions SET ai_created = 1
     WHERE ai_created = 0 AND id IN (
       SELECT (metadata::jsonb->>'transaction_id')
@@ -715,6 +717,24 @@ async function _runMigrations(): Promise<void> {
   )`);
   alterIgnore("CREATE UNIQUE INDEX IF NOT EXISTS idx_mcp_idempotency_key ON mcp_transaction_idempotency(credential_id, idempotency_key)");
   alterIgnore("CREATE INDEX IF NOT EXISTS idx_mcp_idempotency_expires ON mcp_transaction_idempotency(expires_at)");
+
+  // 006-credit-card-total-repayment：信用卡總金額還款的分配快照（FR-020a、FR-020b）。
+  // 無任何資料回填或歷史重算（FR-019c）；部署啟動自動套用。
+  db.run(`CREATE TABLE IF NOT EXISTS credit_card_repayment_summaries (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    date TEXT NOT NULL,
+    from_account_id TEXT NOT NULL,
+    from_account_name TEXT NOT NULL,
+    from_currency TEXT NOT NULL,
+    total_amount REAL NOT NULL,
+    input_mode TEXT NOT NULL DEFAULT 'total',
+    allocations TEXT NOT NULL DEFAULT '[]',
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL
+  )`);
+  alterIgnore("CREATE INDEX IF NOT EXISTS idx_ccr_summaries_user ON credit_card_repayment_summaries(user_id)");
+  alterIgnore("CREATE INDEX IF NOT EXISTS idx_transactions_repayment_summary ON transactions(repayment_summary_id) WHERE repayment_summary_id != ''");
 
   saveDB();
 }

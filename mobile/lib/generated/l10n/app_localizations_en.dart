@@ -1897,7 +1897,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get featuresAccountsRepaymentNoLinkedCards =>
-      'This bank has no linked credit cards';
+      'This payer account has no credit cards available for repayment; please confirm the card has a linked bank, and that the linked bank is this payer account';
 
   @override
   String featuresAccountsRepaymentCurrentBalance(Object amount) {
@@ -1909,6 +1909,45 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get featuresAccountsRepaymentConfirm => 'Confirm repayment';
+
+  @override
+  String get featuresAccountsRepaymentTotalAmount => 'Total repayment amount';
+
+  @override
+  String get featuresAccountsRepaymentTotalAmountHint =>
+      'Enter an integer in the payer account currency; the system allocates proportionally by each card debt';
+
+  @override
+  String featuresAccountsRepaymentTotalDebt(Object amount) {
+    return 'Total due: $amount';
+  }
+
+  @override
+  String get featuresAccountsRepaymentAllocationPreviewTitle =>
+      'Allocation preview';
+
+  @override
+  String get featuresAccountsRepaymentColCard => 'Card';
+
+  @override
+  String get featuresAccountsRepaymentColAllocated => 'Allocated';
+
+  @override
+  String get featuresAccountsRepaymentColBalanceAfter => 'Balance after';
+
+  @override
+  String get featuresAccountsRepaymentPrepaidBadge => 'Prepaid';
+
+  @override
+  String featuresAccountsRepaymentPrepaidAmount(Object amount) {
+    return 'Prepaid $amount';
+  }
+
+  @override
+  String get featuresAccountsRepaymentResultTitle => 'Repayment complete';
+
+  @override
+  String get featuresAccountsRepaymentResultDone => 'Done';
 
   @override
   String get featuresAccountsDeleteMessage => 'Delete this account?';
@@ -1984,6 +2023,15 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get featuresAccountsMessagesRepaymentAmountRequired =>
       'Enter a repayment amount for at least one credit card';
+
+  @override
+  String get featuresAccountsMessagesRepaymentTotalAmountInvalid =>
+      'Total repayment amount must be an integer greater than 0';
+
+  @override
+  String featuresAccountsMessagesRepaymentTotalAmountTooSmall(Object min) {
+    return 'Amount too small; at least $min is needed so every card gets an allocation';
+  }
 
   @override
   String get featuresAccountsMessagesCurrencyInvalid =>
@@ -2103,6 +2151,30 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get featuresTransactionsRestoreNote => 'Restore note';
+
+  @override
+  String get featuresTransactionsViewRepaymentAllocation =>
+      'View repayment allocation';
+
+  @override
+  String get featuresTransactionsRepaymentSummaryTitle =>
+      'Repayment allocation summary';
+
+  @override
+  String get featuresTransactionsRepaymentSummaryTotal => 'Input total amount';
+
+  @override
+  String get featuresTransactionsRepaymentSummaryStale =>
+      'This summary no longer matches the current state';
+
+  @override
+  String get featuresTransactionsRepaymentSummaryStatusIntact => 'Consistent';
+
+  @override
+  String get featuresTransactionsRepaymentSummaryStatusModified => 'Modified';
+
+  @override
+  String get featuresTransactionsRepaymentSummaryStatusDeleted => 'Deleted';
 
   @override
   String get featuresTransactionsRestoreCreatedTitle =>

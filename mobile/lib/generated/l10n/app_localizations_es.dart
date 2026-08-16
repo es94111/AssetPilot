@@ -1936,7 +1936,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get featuresAccountsRepaymentNoLinkedCards =>
-      'Este banco no tiene tarjetas vinculadas';
+      'Esta cuenta pagadora no tiene tarjetas de crédito para pago; confirme que la tarjeta tenga un banco vinculado y que sea esta cuenta pagadora';
 
   @override
   String featuresAccountsRepaymentCurrentBalance(Object amount) {
@@ -1948,6 +1948,45 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get featuresAccountsRepaymentConfirm => 'Confirmar pago';
+
+  @override
+  String get featuresAccountsRepaymentTotalAmount => 'Monto total de pago';
+
+  @override
+  String get featuresAccountsRepaymentTotalAmountHint =>
+      'Ingrese un número entero en la moneda de la cuenta pagadora; el sistema asigna proporcionalmente según la deuda de cada tarjeta';
+
+  @override
+  String featuresAccountsRepaymentTotalDebt(Object amount) {
+    return 'Total a pagar: $amount';
+  }
+
+  @override
+  String get featuresAccountsRepaymentAllocationPreviewTitle =>
+      'Vista previa de asignación';
+
+  @override
+  String get featuresAccountsRepaymentColCard => 'Tarjeta';
+
+  @override
+  String get featuresAccountsRepaymentColAllocated => 'Asignado';
+
+  @override
+  String get featuresAccountsRepaymentColBalanceAfter => 'Saldo después';
+
+  @override
+  String get featuresAccountsRepaymentPrepaidBadge => 'Prepagado';
+
+  @override
+  String featuresAccountsRepaymentPrepaidAmount(Object amount) {
+    return 'Prepagado $amount';
+  }
+
+  @override
+  String get featuresAccountsRepaymentResultTitle => 'Pago completado';
+
+  @override
+  String get featuresAccountsRepaymentResultDone => 'Listo';
 
   @override
   String get featuresAccountsDeleteMessage => '¿Eliminar esta cuenta?';
@@ -2023,6 +2062,15 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get featuresAccountsMessagesRepaymentAmountRequired =>
       'Introduce el pago de al menos una tarjeta';
+
+  @override
+  String get featuresAccountsMessagesRepaymentTotalAmountInvalid =>
+      'El monto total de pago debe ser un número entero mayor que 0';
+
+  @override
+  String featuresAccountsMessagesRepaymentTotalAmountTooSmall(Object min) {
+    return 'Monto demasiado pequeño; se necesita al menos $min para que cada tarjeta reciba una asignación';
+  }
 
   @override
   String get featuresAccountsMessagesCurrencyInvalid =>
@@ -2145,6 +2193,31 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get featuresTransactionsRestoreNote => 'Restaurar nota';
+
+  @override
+  String get featuresTransactionsViewRepaymentAllocation =>
+      'Ver asignación de pago';
+
+  @override
+  String get featuresTransactionsRepaymentSummaryTitle =>
+      'Resumen de asignación de pago';
+
+  @override
+  String get featuresTransactionsRepaymentSummaryTotal =>
+      'Monto total ingresado';
+
+  @override
+  String get featuresTransactionsRepaymentSummaryStale =>
+      'Este resumen ya no coincide con el estado actual';
+
+  @override
+  String get featuresTransactionsRepaymentSummaryStatusIntact => 'Consistente';
+
+  @override
+  String get featuresTransactionsRepaymentSummaryStatusModified => 'Modificado';
+
+  @override
+  String get featuresTransactionsRepaymentSummaryStatusDeleted => 'Eliminado';
 
   @override
   String get featuresTransactionsRestoreCreatedTitle =>

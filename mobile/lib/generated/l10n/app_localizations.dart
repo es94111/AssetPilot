@@ -3514,7 +3514,7 @@ abstract class AppLocalizations {
   /// Web path: features.accounts.repayment.noLinkedCards
   ///
   /// In zh_Hant_TW, this message translates to:
-  /// **'此銀行沒有關聯的信用卡'**
+  /// **'此付款帳戶目前沒有可還款的信用卡；請確認卡片已設定關聯銀行，且關聯的正是此付款帳戶'**
   String get featuresAccountsRepaymentNoLinkedCards;
 
   /// Web path: features.accounts.repayment.currentBalance
@@ -3534,6 +3534,72 @@ abstract class AppLocalizations {
   /// In zh_Hant_TW, this message translates to:
   /// **'確認還款'**
   String get featuresAccountsRepaymentConfirm;
+
+  /// Web path: features.accounts.repayment.totalAmount
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'還款總金額'**
+  String get featuresAccountsRepaymentTotalAmount;
+
+  /// Web path: features.accounts.repayment.totalAmountHint
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'以付款帳戶幣別輸入整數，系統依各卡欠款等比例分配'**
+  String get featuresAccountsRepaymentTotalAmountHint;
+
+  /// Web path: features.accounts.repayment.totalDebt
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'應繳總額：{amount}'**
+  String featuresAccountsRepaymentTotalDebt(Object amount);
+
+  /// Web path: features.accounts.repayment.allocationPreviewTitle
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'分配預覽'**
+  String get featuresAccountsRepaymentAllocationPreviewTitle;
+
+  /// Web path: features.accounts.repayment.colCard
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'卡片'**
+  String get featuresAccountsRepaymentColCard;
+
+  /// Web path: features.accounts.repayment.colAllocated
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'分配金額'**
+  String get featuresAccountsRepaymentColAllocated;
+
+  /// Web path: features.accounts.repayment.colBalanceAfter
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'還款後餘額'**
+  String get featuresAccountsRepaymentColBalanceAfter;
+
+  /// Web path: features.accounts.repayment.prepaidBadge
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'預繳'**
+  String get featuresAccountsRepaymentPrepaidBadge;
+
+  /// Web path: features.accounts.repayment.prepaidAmount
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'預繳 {amount}'**
+  String featuresAccountsRepaymentPrepaidAmount(Object amount);
+
+  /// Web path: features.accounts.repayment.resultTitle
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'還款完成'**
+  String get featuresAccountsRepaymentResultTitle;
+
+  /// Web path: features.accounts.repayment.resultDone
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'完成'**
+  String get featuresAccountsRepaymentResultDone;
 
   /// Web path: features.accounts.deleteMessage
   ///
@@ -3666,6 +3732,18 @@ abstract class AppLocalizations {
   /// In zh_Hant_TW, this message translates to:
   /// **'請至少輸入一張信用卡的還款金額'**
   String get featuresAccountsMessagesRepaymentAmountRequired;
+
+  /// Web path: features.accounts.messages.repaymentTotalAmountInvalid
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'還款總金額須為大於 0 的整數'**
+  String get featuresAccountsMessagesRepaymentTotalAmountInvalid;
+
+  /// Web path: features.accounts.messages.repaymentTotalAmountTooSmall
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'金額過小，至少需 {min} 才能讓每張卡都分配到'**
+  String featuresAccountsMessagesRepaymentTotalAmountTooSmall(Object min);
 
   /// Web path: features.accounts.messages.currencyInvalid
   ///
@@ -3888,6 +3966,48 @@ abstract class AppLocalizations {
   /// In zh_Hant_TW, this message translates to:
   /// **'還原備註'**
   String get featuresTransactionsRestoreNote;
+
+  /// Web path: features.transactions.viewRepaymentAllocation
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'檢視還款分配'**
+  String get featuresTransactionsViewRepaymentAllocation;
+
+  /// Web path: features.transactions.repaymentSummaryTitle
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'還款分配摘要'**
+  String get featuresTransactionsRepaymentSummaryTitle;
+
+  /// Web path: features.transactions.repaymentSummaryTotal
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'輸入總金額'**
+  String get featuresTransactionsRepaymentSummaryTotal;
+
+  /// Web path: features.transactions.repaymentSummaryStale
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'此摘要已與現況不符'**
+  String get featuresTransactionsRepaymentSummaryStale;
+
+  /// Web path: features.transactions.repaymentSummaryStatusIntact
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'一致'**
+  String get featuresTransactionsRepaymentSummaryStatusIntact;
+
+  /// Web path: features.transactions.repaymentSummaryStatusModified
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'已修改'**
+  String get featuresTransactionsRepaymentSummaryStatusModified;
+
+  /// Web path: features.transactions.repaymentSummaryStatusDeleted
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'已刪除'**
+  String get featuresTransactionsRepaymentSummaryStatusDeleted;
 
   /// Web path: features.transactions.restoreCreatedTitle
   ///

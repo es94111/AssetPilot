@@ -1920,7 +1920,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get featuresAccountsRepaymentNoLinkedCards =>
-      'У этого банка нет привязанных карт';
+      'У этого счёта плательщика нет кредитных карт для погашения; убедитесь, что у карты есть связанный банк и это именно счёт плательщика';
 
   @override
   String featuresAccountsRepaymentCurrentBalance(Object amount) {
@@ -1932,6 +1932,45 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get featuresAccountsRepaymentConfirm => 'Подтвердить платеж';
+
+  @override
+  String get featuresAccountsRepaymentTotalAmount => 'Общая сумма погашения';
+
+  @override
+  String get featuresAccountsRepaymentTotalAmountHint =>
+      'Введите целое число в валюте счёта плательщика; система распределяет пропорционально долгу каждой карты';
+
+  @override
+  String featuresAccountsRepaymentTotalDebt(Object amount) {
+    return 'Итого к оплате: $amount';
+  }
+
+  @override
+  String get featuresAccountsRepaymentAllocationPreviewTitle =>
+      'Предпросмотр распределения';
+
+  @override
+  String get featuresAccountsRepaymentColCard => 'Карта';
+
+  @override
+  String get featuresAccountsRepaymentColAllocated => 'Распределено';
+
+  @override
+  String get featuresAccountsRepaymentColBalanceAfter => 'Баланс после';
+
+  @override
+  String get featuresAccountsRepaymentPrepaidBadge => 'Предоплата';
+
+  @override
+  String featuresAccountsRepaymentPrepaidAmount(Object amount) {
+    return 'Предоплата $amount';
+  }
+
+  @override
+  String get featuresAccountsRepaymentResultTitle => 'Погашение завершено';
+
+  @override
+  String get featuresAccountsRepaymentResultDone => 'Готово';
 
   @override
   String get featuresAccountsDeleteMessage => 'Удалить этот счет?';
@@ -2006,6 +2045,15 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get featuresAccountsMessagesRepaymentAmountRequired =>
       'Введите платеж хотя бы по одной карте';
+
+  @override
+  String get featuresAccountsMessagesRepaymentTotalAmountInvalid =>
+      'Общая сумма погашения должна быть целым числом больше 0';
+
+  @override
+  String featuresAccountsMessagesRepaymentTotalAmountTooSmall(Object min) {
+    return 'Слишком малая сумма; необходимо минимум $min, чтобы каждая карта получила распределение';
+  }
 
   @override
   String get featuresAccountsMessagesCurrencyInvalid =>
@@ -2126,6 +2174,32 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get featuresTransactionsRestoreNote => 'Восстановить заметку';
+
+  @override
+  String get featuresTransactionsViewRepaymentAllocation =>
+      'Посмотреть распределение погашения';
+
+  @override
+  String get featuresTransactionsRepaymentSummaryTitle =>
+      'Сводка распределения погашения';
+
+  @override
+  String get featuresTransactionsRepaymentSummaryTotal =>
+      'Введённая общая сумма';
+
+  @override
+  String get featuresTransactionsRepaymentSummaryStale =>
+      'Эта сводка больше не соответствует текущему состоянию';
+
+  @override
+  String get featuresTransactionsRepaymentSummaryStatusIntact =>
+      'Соответствует';
+
+  @override
+  String get featuresTransactionsRepaymentSummaryStatusModified => 'Изменено';
+
+  @override
+  String get featuresTransactionsRepaymentSummaryStatusDeleted => 'Удалено';
 
   @override
   String get featuresTransactionsRestoreCreatedTitle =>

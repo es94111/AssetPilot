@@ -1931,7 +1931,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get featuresAccountsRepaymentNoLinkedCards =>
-      'Cette banque n’a aucune carte liée';
+      'Ce compte payeur n\'a aucune carte de crédit à rembourser ; veuillez confirmer que la carte a une banque liée et qu\'il s\'agit de ce compte payeur';
 
   @override
   String featuresAccountsRepaymentCurrentBalance(Object amount) {
@@ -1944,6 +1944,46 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get featuresAccountsRepaymentConfirm => 'Confirmer le remboursement';
+
+  @override
+  String get featuresAccountsRepaymentTotalAmount =>
+      'Montant total du remboursement';
+
+  @override
+  String get featuresAccountsRepaymentTotalAmountHint =>
+      'Saisissez un entier dans la devise du compte payeur ; le système répartit proportionnellement selon la dette de chaque carte';
+
+  @override
+  String featuresAccountsRepaymentTotalDebt(Object amount) {
+    return 'Total dû : $amount';
+  }
+
+  @override
+  String get featuresAccountsRepaymentAllocationPreviewTitle =>
+      'Aperçu de la répartition';
+
+  @override
+  String get featuresAccountsRepaymentColCard => 'Carte';
+
+  @override
+  String get featuresAccountsRepaymentColAllocated => 'Réparti';
+
+  @override
+  String get featuresAccountsRepaymentColBalanceAfter => 'Solde après';
+
+  @override
+  String get featuresAccountsRepaymentPrepaidBadge => 'Prépayé';
+
+  @override
+  String featuresAccountsRepaymentPrepaidAmount(Object amount) {
+    return 'Prépayé $amount';
+  }
+
+  @override
+  String get featuresAccountsRepaymentResultTitle => 'Remboursement terminé';
+
+  @override
+  String get featuresAccountsRepaymentResultDone => 'Terminé';
 
   @override
   String get featuresAccountsDeleteMessage => 'Supprimer ce compte ?';
@@ -2018,6 +2058,15 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get featuresAccountsMessagesRepaymentAmountRequired =>
       'Saisissez un remboursement pour au moins une carte';
+
+  @override
+  String get featuresAccountsMessagesRepaymentTotalAmountInvalid =>
+      'Le montant total du remboursement doit être un entier supérieur à 0';
+
+  @override
+  String featuresAccountsMessagesRepaymentTotalAmountTooSmall(Object min) {
+    return 'Montant trop petit ; il faut au moins $min pour que chaque carte reçoive une répartition';
+  }
 
   @override
   String get featuresAccountsMessagesCurrencyInvalid =>
@@ -2142,6 +2191,30 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get featuresTransactionsRestoreNote => 'Restaurer la note';
+
+  @override
+  String get featuresTransactionsViewRepaymentAllocation =>
+      'Voir la répartition du remboursement';
+
+  @override
+  String get featuresTransactionsRepaymentSummaryTitle =>
+      'Résumé de la répartition du remboursement';
+
+  @override
+  String get featuresTransactionsRepaymentSummaryTotal => 'Montant total saisi';
+
+  @override
+  String get featuresTransactionsRepaymentSummaryStale =>
+      'Ce résumé ne correspond plus à l\'état actuel';
+
+  @override
+  String get featuresTransactionsRepaymentSummaryStatusIntact => 'Conforme';
+
+  @override
+  String get featuresTransactionsRepaymentSummaryStatusModified => 'Modifié';
+
+  @override
+  String get featuresTransactionsRepaymentSummaryStatusDeleted => 'Supprimé';
 
   @override
   String get featuresTransactionsRestoreCreatedTitle =>

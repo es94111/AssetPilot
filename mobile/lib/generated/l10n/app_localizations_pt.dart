@@ -1921,7 +1921,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get featuresAccountsRepaymentNoLinkedCards =>
-      'Este banco não tem cartões vinculados';
+      'Esta conta pagadora não tem cartões de crédito para pagamento; confirme que o cartão tem um banco vinculado e que é esta conta pagadora';
 
   @override
   String featuresAccountsRepaymentCurrentBalance(Object amount) {
@@ -1933,6 +1933,45 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get featuresAccountsRepaymentConfirm => 'Confirmar pagamento';
+
+  @override
+  String get featuresAccountsRepaymentTotalAmount => 'Valor total do pagamento';
+
+  @override
+  String get featuresAccountsRepaymentTotalAmountHint =>
+      'Insira um número inteiro na moeda da conta pagadora; o sistema aloca proporcionalmente pela dívida de cada cartão';
+
+  @override
+  String featuresAccountsRepaymentTotalDebt(Object amount) {
+    return 'Total devido: $amount';
+  }
+
+  @override
+  String get featuresAccountsRepaymentAllocationPreviewTitle =>
+      'Pré-visualização da alocação';
+
+  @override
+  String get featuresAccountsRepaymentColCard => 'Cartão';
+
+  @override
+  String get featuresAccountsRepaymentColAllocated => 'Alocado';
+
+  @override
+  String get featuresAccountsRepaymentColBalanceAfter => 'Saldo após';
+
+  @override
+  String get featuresAccountsRepaymentPrepaidBadge => 'Pré-pago';
+
+  @override
+  String featuresAccountsRepaymentPrepaidAmount(Object amount) {
+    return 'Pré-pago $amount';
+  }
+
+  @override
+  String get featuresAccountsRepaymentResultTitle => 'Pagamento concluído';
+
+  @override
+  String get featuresAccountsRepaymentResultDone => 'Concluído';
 
   @override
   String get featuresAccountsDeleteMessage => 'Excluir esta conta?';
@@ -2006,6 +2045,15 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get featuresAccountsMessagesRepaymentAmountRequired =>
       'Informe o pagamento de pelo menos um cartão';
+
+  @override
+  String get featuresAccountsMessagesRepaymentTotalAmountInvalid =>
+      'O valor total do pagamento deve ser um inteiro maior que 0';
+
+  @override
+  String featuresAccountsMessagesRepaymentTotalAmountTooSmall(Object min) {
+    return 'Valor muito pequeno; é necessário pelo menos $min para que cada cartão receba uma alocação';
+  }
 
   @override
   String get featuresAccountsMessagesCurrencyInvalid =>
@@ -2128,6 +2176,31 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get featuresTransactionsRestoreNote => 'Restaurar nota';
+
+  @override
+  String get featuresTransactionsViewRepaymentAllocation =>
+      'Ver alocação do pagamento';
+
+  @override
+  String get featuresTransactionsRepaymentSummaryTitle =>
+      'Resumo da alocação do pagamento';
+
+  @override
+  String get featuresTransactionsRepaymentSummaryTotal =>
+      'Valor total inserido';
+
+  @override
+  String get featuresTransactionsRepaymentSummaryStale =>
+      'Este resumo não corresponde mais ao estado atual';
+
+  @override
+  String get featuresTransactionsRepaymentSummaryStatusIntact => 'Consistente';
+
+  @override
+  String get featuresTransactionsRepaymentSummaryStatusModified => 'Modificado';
+
+  @override
+  String get featuresTransactionsRepaymentSummaryStatusDeleted => 'Excluído';
 
   @override
   String get featuresTransactionsRestoreCreatedTitle =>
@@ -6659,7 +6732,7 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get featuresAccountsRepaymentNoLinkedCards =>
-      'Este banco não tem cartões vinculados';
+      'Esta conta pagadora não tem cartões de crédito para pagamento; confirme que o cartão tem um banco vinculado e que é esta conta pagadora';
 
   @override
   String featuresAccountsRepaymentCurrentBalance(Object amount) {
@@ -6671,6 +6744,45 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get featuresAccountsRepaymentConfirm => 'Confirmar pagamento';
+
+  @override
+  String get featuresAccountsRepaymentTotalAmount => 'Valor total do pagamento';
+
+  @override
+  String get featuresAccountsRepaymentTotalAmountHint =>
+      'Insira um número inteiro na moeda da conta pagadora; o sistema aloca proporcionalmente pela dívida de cada cartão';
+
+  @override
+  String featuresAccountsRepaymentTotalDebt(Object amount) {
+    return 'Total devido: $amount';
+  }
+
+  @override
+  String get featuresAccountsRepaymentAllocationPreviewTitle =>
+      'Pré-visualização da alocação';
+
+  @override
+  String get featuresAccountsRepaymentColCard => 'Cartão';
+
+  @override
+  String get featuresAccountsRepaymentColAllocated => 'Alocado';
+
+  @override
+  String get featuresAccountsRepaymentColBalanceAfter => 'Saldo após';
+
+  @override
+  String get featuresAccountsRepaymentPrepaidBadge => 'Pré-pago';
+
+  @override
+  String featuresAccountsRepaymentPrepaidAmount(Object amount) {
+    return 'Pré-pago $amount';
+  }
+
+  @override
+  String get featuresAccountsRepaymentResultTitle => 'Pagamento concluído';
+
+  @override
+  String get featuresAccountsRepaymentResultDone => 'Concluído';
 
   @override
   String get featuresAccountsDeleteMessage => 'Excluir esta conta?';
@@ -6744,6 +6856,15 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   @override
   String get featuresAccountsMessagesRepaymentAmountRequired =>
       'Informe o pagamento de pelo menos um cartão';
+
+  @override
+  String get featuresAccountsMessagesRepaymentTotalAmountInvalid =>
+      'O valor total do pagamento deve ser um inteiro maior que 0';
+
+  @override
+  String featuresAccountsMessagesRepaymentTotalAmountTooSmall(Object min) {
+    return 'Valor muito pequeno; é necessário pelo menos $min para que cada cartão receba uma alocação';
+  }
 
   @override
   String get featuresAccountsMessagesCurrencyInvalid =>
@@ -6866,6 +6987,31 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get featuresTransactionsRestoreNote => 'Restaurar nota';
+
+  @override
+  String get featuresTransactionsViewRepaymentAllocation =>
+      'Ver alocação do pagamento';
+
+  @override
+  String get featuresTransactionsRepaymentSummaryTitle =>
+      'Resumo da alocação do pagamento';
+
+  @override
+  String get featuresTransactionsRepaymentSummaryTotal =>
+      'Valor total inserido';
+
+  @override
+  String get featuresTransactionsRepaymentSummaryStale =>
+      'Este resumo não corresponde mais ao estado atual';
+
+  @override
+  String get featuresTransactionsRepaymentSummaryStatusIntact => 'Consistente';
+
+  @override
+  String get featuresTransactionsRepaymentSummaryStatusModified => 'Modificado';
+
+  @override
+  String get featuresTransactionsRepaymentSummaryStatusDeleted => 'Excluído';
 
   @override
   String get featuresTransactionsRestoreCreatedTitle =>

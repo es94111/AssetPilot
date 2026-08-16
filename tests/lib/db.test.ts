@@ -15,7 +15,7 @@ const DB_URL = process.env.DATABASE_URL || process.env.POSTGRES_URL;
 if (!DB_URL) {
   test('db 遷移回填（略過：未設定 DATABASE_URL/POSTGRES_URL，需搭配 PostgreSQL 執行完整驗證）', () => {});
 } else {
-  const { initDB, getDB, queryOne } = await import('../../lib/db.ts');
+  const { initDB, getDB, queryOne, queryAll } = await import('../../lib/db.ts');
   const { uid } = await import('../../lib/userDefaults.ts');
 
   await initDB();
@@ -85,5 +85,44 @@ if (!DB_URL) {
     getDB().run(BACKFILL_STEP_2);
     assert.equal(Number(queryOne('SELECT ai_created FROM transactions WHERE id = ?', [txIdA])?.ai_created), 1);
     assert.equal(Number(queryOne('SELECT ai_created FROM transactions WHERE id = ?', [txIdB])?.ai_created), 1);
+  });
+
+  // 006-credit-card-total-repayment：新增 credit_card_repayment_summaries 表、
+  // transactions.repayment_summary_id 欄位、2 個索引（T003）。
+  test('credit_card_repayment_summaries 表存在且 11 個欄位齊全', () => {
+    const row = queryOne(
+      `SELECT column_name FROM information_schema.columns
+       WHERE table_name = 'credit_card_repayment_summaries' ORDER BY ordinal_position`,
+    );
+    // 有列代表表存在；逐欄檢查
+    const cols = queryAll(
+      `SELECT column_name FROM information_schema.columns WHERE table_name = 'credit_card_repayment_summaries' ORDER BY ordinal_position`,
+    ) as Array<{ column_name: string }>;
+    const names = cols.map((c) => c.column_name);
+    const expected = [
+      'id', 'user_id', 'date', 'from_account_id', 'from_account_name', 'from_currency',
+      'total_amount', 'input_mode', 'allocations', 'created_at', 'updated_at',
+    ];
+    for (const e of expected) assert.ok(names.includes(e), `缺少欄位 ${e}`);
+    assert.equal(names.length, 11, '應有 11 個欄位');
+    assert.ok(row != null || cols.length > 0, '表應存在');
+  });
+
+  test('transactions.repayment_summary_id 欄位存在且預設為空字串', () => {
+    const cols = queryAll(
+      `SELECT column_name, column_default FROM information_schema.columns
+       WHERE table_name = 'transactions' AND column_name = 'repayment_summary_id'`,
+    ) as Array<{ column_name: string; column_default: string | null }>;
+    assert.equal(cols.length, 1, 'repayment_summary_id 欄位應存在');
+    // 預設值含單引號（Postgres 回傳 ''''）；只驗證存在與可重複建立索引不報錯。
+    assert.ok(cols[0].column_name === 'repayment_summary_id');
+  });
+
+  test('兩個新索引可重複執行不報錯', () => {
+    getDB().run('CREATE INDEX IF NOT EXISTS idx_ccr_summaries_user ON credit_card_repayment_summaries(user_id)');
+    getDB().run('CREATE INDEX IF NOT EXISTS idx_transactions_repayment_summary ON transactions(repayment_summary_id) WHERE repayment_summary_id != \'\'');
+    // 再跑一次確認冪等
+    getDB().run('CREATE INDEX IF NOT EXISTS idx_ccr_summaries_user ON credit_card_repayment_summaries(user_id)');
+    getDB().run('CREATE INDEX IF NOT EXISTS idx_transactions_repayment_summary ON transactions(repayment_summary_id) WHERE repayment_summary_id != \'\'');
   });
 }

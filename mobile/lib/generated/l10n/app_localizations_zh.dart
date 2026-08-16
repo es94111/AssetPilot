@@ -1800,7 +1800,8 @@ class AppLocalizationsZh extends AppLocalizations {
   String get featuresAccountsRepaymentPaymentDate => '還款日期';
 
   @override
-  String get featuresAccountsRepaymentNoLinkedCards => '此銀行沒有關聯的信用卡';
+  String get featuresAccountsRepaymentNoLinkedCards =>
+      '此付款帳戶目前沒有可還款的信用卡；請確認卡片已設定關聯銀行，且關聯的正是此付款帳戶';
 
   @override
   String featuresAccountsRepaymentCurrentBalance(Object amount) {
@@ -1812,6 +1813,44 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get featuresAccountsRepaymentConfirm => '確認還款';
+
+  @override
+  String get featuresAccountsRepaymentTotalAmount => '還款總金額';
+
+  @override
+  String get featuresAccountsRepaymentTotalAmountHint =>
+      '以付款帳戶幣別輸入整數，系統依各卡欠款等比例分配';
+
+  @override
+  String featuresAccountsRepaymentTotalDebt(Object amount) {
+    return '應繳總額：$amount';
+  }
+
+  @override
+  String get featuresAccountsRepaymentAllocationPreviewTitle => '分配預覽';
+
+  @override
+  String get featuresAccountsRepaymentColCard => '卡片';
+
+  @override
+  String get featuresAccountsRepaymentColAllocated => '分配金額';
+
+  @override
+  String get featuresAccountsRepaymentColBalanceAfter => '還款後餘額';
+
+  @override
+  String get featuresAccountsRepaymentPrepaidBadge => '預繳';
+
+  @override
+  String featuresAccountsRepaymentPrepaidAmount(Object amount) {
+    return '預繳 $amount';
+  }
+
+  @override
+  String get featuresAccountsRepaymentResultTitle => '還款完成';
+
+  @override
+  String get featuresAccountsRepaymentResultDone => '完成';
 
   @override
   String get featuresAccountsDeleteMessage => '確定要刪除此帳戶嗎？';
@@ -1884,6 +1923,15 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get featuresAccountsMessagesRepaymentAmountRequired =>
       '請至少輸入一張信用卡的還款金額';
+
+  @override
+  String get featuresAccountsMessagesRepaymentTotalAmountInvalid =>
+      '還款總金額須為大於 0 的整數';
+
+  @override
+  String featuresAccountsMessagesRepaymentTotalAmountTooSmall(Object min) {
+    return '金額過小，至少需 $min 才能讓每張卡都分配到';
+  }
 
   @override
   String get featuresAccountsMessagesCurrencyInvalid => '幣別格式錯誤（需為 3 碼英文字母）';
@@ -2001,6 +2049,27 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get featuresTransactionsRestoreNote => '還原備註';
+
+  @override
+  String get featuresTransactionsViewRepaymentAllocation => '檢視還款分配';
+
+  @override
+  String get featuresTransactionsRepaymentSummaryTitle => '還款分配摘要';
+
+  @override
+  String get featuresTransactionsRepaymentSummaryTotal => '輸入總金額';
+
+  @override
+  String get featuresTransactionsRepaymentSummaryStale => '此摘要已與現況不符';
+
+  @override
+  String get featuresTransactionsRepaymentSummaryStatusIntact => '一致';
+
+  @override
+  String get featuresTransactionsRepaymentSummaryStatusModified => '已修改';
+
+  @override
+  String get featuresTransactionsRepaymentSummaryStatusDeleted => '已刪除';
 
   @override
   String get featuresTransactionsRestoreCreatedTitle => '還原 AI 建立的交易';
@@ -6267,7 +6336,8 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
   String get featuresAccountsRepaymentPaymentDate => '还款日期';
 
   @override
-  String get featuresAccountsRepaymentNoLinkedCards => '该银行没有关联信用卡';
+  String get featuresAccountsRepaymentNoLinkedCards =>
+      '此付款账户目前没有可还款的信用卡；请确认卡片已设定关联银行，且关联的正是此付款账户';
 
   @override
   String featuresAccountsRepaymentCurrentBalance(Object amount) {
@@ -6279,6 +6349,44 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
 
   @override
   String get featuresAccountsRepaymentConfirm => '确认还款';
+
+  @override
+  String get featuresAccountsRepaymentTotalAmount => '还款总金额';
+
+  @override
+  String get featuresAccountsRepaymentTotalAmountHint =>
+      '以付款账户币别输入整数，系统依各卡欠款等比例分配';
+
+  @override
+  String featuresAccountsRepaymentTotalDebt(Object amount) {
+    return '应缴总额：$amount';
+  }
+
+  @override
+  String get featuresAccountsRepaymentAllocationPreviewTitle => '分配预览';
+
+  @override
+  String get featuresAccountsRepaymentColCard => '卡片';
+
+  @override
+  String get featuresAccountsRepaymentColAllocated => '分配金额';
+
+  @override
+  String get featuresAccountsRepaymentColBalanceAfter => '还款后余额';
+
+  @override
+  String get featuresAccountsRepaymentPrepaidBadge => '预缴';
+
+  @override
+  String featuresAccountsRepaymentPrepaidAmount(Object amount) {
+    return '预缴 $amount';
+  }
+
+  @override
+  String get featuresAccountsRepaymentResultTitle => '还款完成';
+
+  @override
+  String get featuresAccountsRepaymentResultDone => '完成';
 
   @override
   String get featuresAccountsDeleteMessage => '删除这个账户？';
@@ -6351,6 +6459,15 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
   @override
   String get featuresAccountsMessagesRepaymentAmountRequired =>
       '请至少输入一张信用卡的还款金额';
+
+  @override
+  String get featuresAccountsMessagesRepaymentTotalAmountInvalid =>
+      '还款总金额须为大于 0 的整数';
+
+  @override
+  String featuresAccountsMessagesRepaymentTotalAmountTooSmall(Object min) {
+    return '金额过小，至少需 $min 才能让每张卡都分配到';
+  }
 
   @override
   String get featuresAccountsMessagesCurrencyInvalid => '货币格式错误（需为 3 个英文字母）';
@@ -6468,6 +6585,27 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
 
   @override
   String get featuresTransactionsRestoreNote => '还原备注';
+
+  @override
+  String get featuresTransactionsViewRepaymentAllocation => '查看还款分配';
+
+  @override
+  String get featuresTransactionsRepaymentSummaryTitle => '还款分配摘要';
+
+  @override
+  String get featuresTransactionsRepaymentSummaryTotal => '输入总金额';
+
+  @override
+  String get featuresTransactionsRepaymentSummaryStale => '此摘要已与现状不符';
+
+  @override
+  String get featuresTransactionsRepaymentSummaryStatusIntact => '一致';
+
+  @override
+  String get featuresTransactionsRepaymentSummaryStatusModified => '已修改';
+
+  @override
+  String get featuresTransactionsRepaymentSummaryStatusDeleted => '已删除';
 
   @override
   String get featuresTransactionsRestoreCreatedTitle => '还原 AI 创建的交易';
@@ -10735,7 +10873,8 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
   String get featuresAccountsRepaymentPaymentDate => '還款日期';
 
   @override
-  String get featuresAccountsRepaymentNoLinkedCards => '此銀行沒有關聯的信用卡';
+  String get featuresAccountsRepaymentNoLinkedCards =>
+      '此付款帳戶目前沒有可還款的信用卡；請確認卡片已設定關聯銀行，且關聯的正是此付款帳戶';
 
   @override
   String featuresAccountsRepaymentCurrentBalance(Object amount) {
@@ -10747,6 +10886,44 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
 
   @override
   String get featuresAccountsRepaymentConfirm => '確認還款';
+
+  @override
+  String get featuresAccountsRepaymentTotalAmount => '還款總金額';
+
+  @override
+  String get featuresAccountsRepaymentTotalAmountHint =>
+      '以付款帳戶幣別輸入整數，系統依各卡欠款等比例分配';
+
+  @override
+  String featuresAccountsRepaymentTotalDebt(Object amount) {
+    return '應繳總額：$amount';
+  }
+
+  @override
+  String get featuresAccountsRepaymentAllocationPreviewTitle => '分配預覽';
+
+  @override
+  String get featuresAccountsRepaymentColCard => '卡片';
+
+  @override
+  String get featuresAccountsRepaymentColAllocated => '分配金額';
+
+  @override
+  String get featuresAccountsRepaymentColBalanceAfter => '還款後餘額';
+
+  @override
+  String get featuresAccountsRepaymentPrepaidBadge => '預繳';
+
+  @override
+  String featuresAccountsRepaymentPrepaidAmount(Object amount) {
+    return '預繳 $amount';
+  }
+
+  @override
+  String get featuresAccountsRepaymentResultTitle => '還款完成';
+
+  @override
+  String get featuresAccountsRepaymentResultDone => '完成';
 
   @override
   String get featuresAccountsDeleteMessage => '確定要刪除此帳戶嗎？';
@@ -10819,6 +10996,15 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
   @override
   String get featuresAccountsMessagesRepaymentAmountRequired =>
       '請至少輸入一張信用卡的還款金額';
+
+  @override
+  String get featuresAccountsMessagesRepaymentTotalAmountInvalid =>
+      '還款總金額須為大於 0 的整數';
+
+  @override
+  String featuresAccountsMessagesRepaymentTotalAmountTooSmall(Object min) {
+    return '金額過小，至少需 $min 才能讓每張卡都分配到';
+  }
 
   @override
   String get featuresAccountsMessagesCurrencyInvalid => '幣別格式錯誤（需為 3 碼英文字母）';
@@ -10936,6 +11122,27 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
 
   @override
   String get featuresTransactionsRestoreNote => '還原備註';
+
+  @override
+  String get featuresTransactionsViewRepaymentAllocation => '檢視還款分配';
+
+  @override
+  String get featuresTransactionsRepaymentSummaryTitle => '還款分配摘要';
+
+  @override
+  String get featuresTransactionsRepaymentSummaryTotal => '輸入總金額';
+
+  @override
+  String get featuresTransactionsRepaymentSummaryStale => '此摘要已與現況不符';
+
+  @override
+  String get featuresTransactionsRepaymentSummaryStatusIntact => '一致';
+
+  @override
+  String get featuresTransactionsRepaymentSummaryStatusModified => '已修改';
+
+  @override
+  String get featuresTransactionsRepaymentSummaryStatusDeleted => '已刪除';
 
   @override
   String get featuresTransactionsRestoreCreatedTitle => '還原 AI 建立的交易';

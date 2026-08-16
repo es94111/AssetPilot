@@ -14,6 +14,7 @@ import { insertIncomeExpenseTransaction, insertTransferPair } from './transactio
 import { uid } from './userDefaults';
 import type { VerifyMcpTokenResult } from './mcpAuth';
 import { TRANSACTION_NOTE_MAX_LENGTH, findTransactionEditBlock } from './transactionEditRules';
+import { collectPayableCards, computeRepaymentAllocation, executeRepayment, evaluateRepaymentSummary } from './creditCardRepayment';
 
 const MAX_PAGE_SIZE = 200;
 const DEFAULT_PAGE_SIZE = 20;
@@ -432,11 +433,144 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
     })
   );
 
-  // create_transaction 僅在憑證已開啟「允許新增資料」時才註冊；未開啟的連線的 tools/list
-  // 結果裡不存在這個工具（FR-005／FR-006，見 research.md 第 1 節）。update_transaction_note 則在
-  // 「允許更新備註」開啟時另行獨立註冊——兩個 if 各自獨立判斷、不巢狀、不串接，使兩種寫入權限
-  // 彼此獨立（FR-005）。刪除／修改其他欄位的工具則永遠不存在於任何程式碼路徑，不因權限而有例外
-  // ——不在本檔任何地方出現。
+  // get_credit_card_repayment_preview：在送出還款前試算分配（007-mcp-credit-card-repayment，US2）。
+  // 無條件註冊——唯讀工具，不受 allowCreate 影響（FR-009，Clarification）。
+  // 驗證規則與錯誤訊息逐字重用 create_credit_card_repayment（FR-010：計算規則一致）；差別僅在於不呼叫
+  // executeRepayment()，本工具在協定層面不存在任何觸及資料庫寫入路徑的程式碼分支。
+  server.registerTool(
+    'get_credit_card_repayment_preview',
+    {
+      ...createReadOnlyOAuthToolDescriptor('信用卡還款分配試算', '正在試算還款分配…', '試算結果已完成'),
+      description: '在送出信用卡還款前，依指定付款帳戶與總金額試算各卡的分配結果與還款後預估餘額；本工具不建立任何紀錄。',
+      inputSchema: {
+        fromAccountId: z.string().describe('付款帳戶 id（須為本人所有，且不可為信用卡帳戶）'),
+        totalAmount: z.union([z.number(), z.string()]).describe('欲試算的總金額，須為大於 0 的整數（以付款帳戶幣別計）'),
+      },
+    },
+    async ({ fromAccountId, totalAmount }) => {
+      // 第 1 步：totalAmount 為大於 0 的整數（V1，與 create_credit_card_repayment 逐字相同）
+      const numTotal = Number(totalAmount);
+      if (!Number.isInteger(numTotal) || numTotal <= 0) {
+        throw new Error('還款總金額須為大於 0 的整數');
+      }
+
+      // 第 2 步：讀取付款帳戶（V2）
+      const fromAccount = queryOne(
+        'SELECT id, currency, account_type, name FROM accounts WHERE id = ? AND user_id = ?',
+        [fromAccountId, userId]
+      );
+      if (!fromAccount) throw new Error('付款帳戶不存在');
+
+      // 第 3 步：付款帳戶不可為信用卡（V3）
+      if ((fromAccount.account_type as string | null) === '信用卡') {
+        throw new Error('付款帳戶不可為信用卡');
+      }
+
+      const fromCurrency = normalizeCurrency(fromAccount.currency as string | null);
+
+      // 第 4 步：collectPayableCards 查詢當下即時取得（V4）
+      const cards = collectPayableCards(userId, fromAccountId, fromCurrency);
+      if (cards.length === 0) {
+        throw new Error('此付款帳戶目前沒有可還款的信用卡');
+      }
+
+      // 第 5 步：V5
+      if (numTotal < cards.length) {
+        throw new Error(`金額過小，至少需 ${cards.length} 才能讓每張卡都分配到`);
+      }
+
+      // 第 6 步：計算分配（唯讀——computeRepaymentAllocation 只呼叫匯率查詢，不寫入任何資料，FR-009）
+      const details = computeRepaymentAllocation(userId, fromCurrency, numTotal, cards);
+      const totalDebt = cards.reduce((sum, c) => sum + c.debt, 0);
+      const isOverpay = numTotal > totalDebt;
+      const overpayAmount = isOverpay ? numTotal - totalDebt : 0;
+      const allocations = details.map((d) => ({
+        cardId: d.card.id,
+        cardName: d.card.name,
+        cardCurrency: d.card.currency,
+        amount: d.transferAmount,
+        amountInCardCurrency: d.inOriginal,
+        balanceAfter: d.balanceAfter,
+      }));
+
+      // 第 7 步：稽核紀錄（唯讀，action 沿用預設 'mcp_query'，scope = 'credit_card_repayment_preview'）
+      return withAudit(credential, 'credit_card_repayment_preview', () => toolResult({
+        fromAccountId,
+        currency: fromCurrency,
+        totalAmount: numTotal,
+        totalDebt,
+        cardCount: cards.length,
+        isOverpay,
+        overpayAmount,
+        allocations,
+      }));
+    }
+  );
+
+  // list_credit_card_repayments：查詢過去已建立的還款紀錄（007-mcp-credit-card-repayment，US3）。
+  // 無條件註冊——唯讀工具，不受 allowCreate 影響（FR-011，Clarification）。對頁面內每一列呼叫
+  // evaluateRepaymentSummary()（與既有單筆端點同一份陳舊判定，FR-012）。
+  server.registerTool(
+    'list_credit_card_repayments',
+    {
+      ...createReadOnlyOAuthToolDescriptor('查詢信用卡還款紀錄', '正在查詢還款紀錄…', '還款紀錄已載入'),
+      description: '查詢過去已建立的信用卡總金額還款紀錄（分頁、可依日期篩選），包含每筆的付款帳戶、日期、總金額與各卡實際分配明細；若該筆還款事後被刪除或修改，會明確標示「已與現況不符」。',
+      inputSchema: {
+        dateFrom: z.string().optional().describe('起始日期 YYYY-MM-DD（含當日），依還款日期篩選'),
+        dateTo: z.string().optional().describe('結束日期 YYYY-MM-DD（含當日），依還款日期篩選'),
+        ...paginationShape,
+      },
+    },
+    async ({ dateFrom, dateTo, page, pageSize }) => withAudit(credential, 'credit_card_repayments_list', () => {
+      const { page: p, pageSize: ps, offset } = resolvePagination({ page, pageSize });
+      // 組查詢條件：WHERE user_id = ?（必要）＋ dateFrom／dateTo
+      let where = 'user_id = ?';
+      const params: Array<string | number | null> = [userId];
+      if (dateFrom) { where += ' AND date >= ?'; params.push(dateFrom); }
+      if (dateTo) { where += ' AND date <= ?'; params.push(dateTo); }
+
+      const totalRow = queryOne(`SELECT COUNT(*) AS cnt FROM credit_card_repayment_summaries WHERE ${where}`, params);
+      const total = Number(totalRow?.cnt ?? 0);
+
+      const rows = queryAll(
+        `SELECT id, date, from_account_id, from_account_name, from_currency, total_amount, input_mode, allocations, created_at
+         FROM credit_card_repayment_summaries WHERE ${where}
+         ORDER BY date DESC, created_at DESC LIMIT ? OFFSET ?`,
+        [...params, ps, offset]
+      );
+
+      // 對每一列呼叫 evaluateRepaymentSummary() 取得各卡 status 與整體 stale（FR-011、FR-012）
+      const items = rows.map((row) => {
+        const { allocations, stale } = evaluateRepaymentSummary(userId, {
+          date: String(row.date),
+          from_account_id: String(row.from_account_id),
+          allocations: String(row.allocations ?? ''),
+        });
+        return {
+          id: row.id,
+          date: row.date,
+          fromAccount: {
+            id: row.from_account_id,
+            name: row.from_account_name,
+            currency: row.from_currency,
+          },
+          totalAmount: Number(row.total_amount),
+          inputMode: row.input_mode,
+          createdAt: toIsoUtc(row.created_at),
+          stale,
+          allocations,
+        };
+      });
+
+      return toolResult({ items, total, page: p, pageSize: ps, totalPages: Math.ceil(total / ps) });
+    })
+  );
+
+  // create_transaction 與 create_credit_card_repayment 皆僅在憑證已開啟「允許新增資料」時才註冊；
+  // 未開啟的連線的 tools/list 結果裡不存在這兩個工具（FR-003，見 research.md 第 1 節）。兩者綁同一個
+  // allowCreate 旗標、同進同出。update_transaction_note 則在「允許更新備註」開啟時另行獨立註冊——
+  // 三個 if 各自獨立判斷、不巢狀、不串接，使各種寫入權限彼此獨立。刪除／修改其他欄位的工具則永遠
+  // 不存在於任何程式碼路徑，不因權限而有例外——不在本檔任何地方出現。
   if (credential.allowCreate === true) {
     server.registerTool(
       'create_transaction',
@@ -577,6 +711,130 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
           () => toolResult(response),
           'mcp_create_transaction',
           { transaction_id: transactionIdForAudit, transaction_summary: summary }
+        );
+      }
+    );
+
+    // create_credit_card_repayment：以一個總金額代使用者送出信用卡還款（007-mcp-credit-card-repayment）。
+    // 驗證規則與錯誤訊息逐字重用既有 POST /api/accounts/credit-card-repayment 路由（research.md 第 4 節）；
+    // 計算與寫入呼叫 lib/creditCardRepayment.ts 的共用函式，與既有路由同一份實作（FR-002、FR-010）。
+    // 不在此 handler 內另寫權限判斷——此 registerTool() 呼叫本身就在 `if (allowCreate === true)` 區塊內，
+    // 結構性保證未授權連線看不到此工具（FR-003）。
+    server.registerTool(
+      'create_credit_card_repayment',
+      {
+        ...createWriteOAuthToolDescriptor('信用卡總金額還款', '正在送出信用卡還款…', '信用卡還款已完成'),
+        description: '以一個總金額代使用者送出信用卡還款，視同使用者本人在網頁版或行動 App 操作；系統會依各卡目前欠款自動等比例分配，無需逐張提供金額。',
+        inputSchema: {
+          fromAccountId: z.string().describe('付款帳戶 id（須為本人所有，且不可為信用卡帳戶，可由 list_accounts 取得）'),
+          totalAmount: z.union([z.number(), z.string()]).describe('本次還款總金額，須為大於 0 的整數（以付款帳戶幣別計）'),
+          date: z.string().optional().describe('還款日期 YYYY-MM-DD；未提供時為使用者所屬時區的今天'),
+          idempotencyKey: z.string().optional().describe('冪等鍵；同一憑證 24 小時內以相同值重複呼叫，回傳先前建立結果，不重複建立'),
+        },
+      },
+      async ({ fromAccountId, totalAmount, date: rawDate, idempotencyKey }) => {
+        // 第 1 步：冪等鍵命中檢查（比照既有 create_transaction，FR-008）
+        if (idempotencyKey) {
+          const cached = queryOne(
+            'SELECT response_json FROM mcp_transaction_idempotency WHERE credential_id = ? AND idempotency_key = ? AND expires_at > ?',
+            [credential.credentialId, idempotencyKey, Date.now()]
+          );
+          if (cached) {
+            return toolResult(JSON.parse(String(cached.response_json)));
+          }
+        }
+
+        // 第 2 步：totalAmount 為大於 0 的整數（V1，訊息逐字元重用既有路由）
+        const numTotal = Number(totalAmount);
+        if (!Number.isInteger(numTotal) || numTotal <= 0) {
+          throw new Error('還款總金額須為大於 0 的整數');
+        }
+
+        // 第 3 步：讀取付款帳戶（V2）
+        const fromAccount = queryOne(
+          'SELECT id, currency, account_type, name FROM accounts WHERE id = ? AND user_id = ?',
+          [fromAccountId, userId]
+        );
+        if (!fromAccount) throw new Error('付款帳戶不存在');
+
+        // 第 4 步：付款帳戶不可為信用卡（V3）
+        if ((fromAccount.account_type as string | null) === '信用卡') {
+          throw new Error('付款帳戶不可為信用卡');
+        }
+
+        // 第 5 步：日期解析（比照既有 create_transaction，不使用 auth.userTimezone——research.md 第 5 節）
+        let date: string;
+        if (rawDate == null || String(rawDate).trim() === '') {
+          const userRow = queryOne('SELECT timezone FROM users WHERE id = ?', [userId]);
+          date = todayInUserTz((userRow?.timezone as string) || 'Asia/Taipei');
+        } else {
+          date = normalizeDate(rawDate);
+        }
+
+        const fromCurrency = normalizeCurrency(fromAccount.currency as string | null);
+
+        // 第 6 步：collectPayableCards 送出當下重新取得（FR-010），V4
+        const cards = collectPayableCards(userId, fromAccountId, fromCurrency);
+        if (cards.length === 0) {
+          throw new Error('此付款帳戶目前沒有可還款的信用卡');
+        }
+
+        // 第 7 步：V5
+        if (numTotal < cards.length) {
+          throw new Error(`金額過小，至少需 ${cards.length} 才能讓每張卡都分配到`);
+        }
+
+        // 第 8-9 步：計算分配 → 原子寫入（aiCreated: true，FR-007）。
+        // 不額外包 try/catch——任一步驟拋出的例外直接讓 MCP SDK 轉為 isError: true，
+        // 比照既有 create_transaction 的既有手法（不像 HTTP 路由需要固定訊息殼）。
+        const details = computeRepaymentAllocation(userId, fromCurrency, numTotal, cards);
+        const { summaryId, allocations } = executeRepayment({
+          userId,
+          fromAccountId,
+          fromAccountName: fromAccount.name as string,
+          fromCurrency,
+          date,
+          totalAmount: numTotal,
+          inputMode: 'total',
+          details,
+          aiCreated: true,
+        });
+
+        // 第 10 步：寫入冪等鍵（transaction_id 存 summaryId、linked_transaction_id 存空字串，research.md 第 6 節）
+        let response = {
+          ok: true,
+          summaryId,
+          date,
+          fromAccountId,
+          currency: fromCurrency,
+          totalAmount: numTotal,
+          allocations,
+        };
+        if (idempotencyKey) {
+          const idemNow = Date.now();
+          getDB().run(
+            `INSERT INTO mcp_transaction_idempotency
+             (id, credential_id, user_id, idempotency_key, transaction_id, linked_transaction_id, response_json, created_at, expires_at)
+             VALUES (?,?,?,?,?,?,?,?,?)
+             ON CONFLICT (credential_id, idempotency_key) DO NOTHING`,
+            [uid(), credential.credentialId, userId, idempotencyKey, summaryId, '', JSON.stringify(response), idemNow, idemNow + IDEMPOTENCY_TTL_MS]
+          );
+          saveDB();
+          // 極端併發：兩個相同 key 的請求同時通過命中檢查，衝突後改讀已存在列，確保回應不重複建立。
+          const stored = queryOne(
+            'SELECT response_json FROM mcp_transaction_idempotency WHERE credential_id = ? AND idempotency_key = ?',
+            [credential.credentialId, idempotencyKey]
+          );
+          if (stored) response = JSON.parse(String(stored.response_json));
+        }
+
+        // 第 11 步：稽核紀錄（僅成功時，FR-013）——metadata 僅含摘要 id 與一句總額摘要，不含逐卡明細
+        return withAudit(
+          credential,
+          undefined,
+          () => toolResult(response),
+          'mcp_create_credit_card_repayment',
+          { repayment_summary_id: summaryId, transaction_summary: `信用卡還款 ${numTotal} 元` }
         );
       }
     );

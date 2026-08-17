@@ -55,7 +55,7 @@ dependencies:
   image_picker: ^1.1.2
   http_parser: ^4.0.2
   # 登入憑證（JWT Cookie）加密儲存：Android 走 Keystore 加密的 EncryptedSharedPreferences
-  flutter_secure_storage: ^10.3.1
+  flutter_secure_storage: ^11.0.0
   # 讀取 App 自身版本（versionName/Code），用於「版本資訊」頁判斷是否有新版
   package_info_plus: ^10.2.0
   # 錯誤／崩潰監控（Sentry）。release/dist 由 package_info 自動帶入；

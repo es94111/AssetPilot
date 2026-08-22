@@ -80,6 +80,8 @@
     --shadow-lg: var(--shadow-glass-lg);
     --success: #047857;
     --success-bg: #ecfdf5;
+    --pl-gain: #0f766e;
+    --pl-loss: #c2410c;
     --danger: #be123c;
     --danger-dark: #9f1239;
     --danger-bg: #fff1f2;
@@ -176,6 +178,8 @@
   --expense: #fb7185;
   --net: #60a5fa;
   --success: #34d399;
+  --pl-gain: #5eead4;
+  --pl-loss: #fdba74;
   --danger: #fb7185;
   --danger-dark: #f43f5e;
   --border: #252a36;
@@ -326,6 +330,208 @@
   background:
     radial-gradient(circle at 85% 10%, rgba(125, 211, 252, 0.34), transparent 34%),
     linear-gradient(135deg, #3147b8 0%, #4058d8 48%, #2563a8 100%);
+}
+
+/* ── Dashboard: editorial financial cockpit ── */
+.dashboard-page {
+  --dashboard-panel: #fffdf8;
+  --dashboard-panel-soft: #f4f0e8;
+  --surface-hover: var(--dashboard-panel-soft);
+  --dashboard-rule: #d8d3c7;
+  --dashboard-ink: #14223b;
+  --dashboard-ink-soft: #203452;
+  position: relative;
+  isolation: isolate;
+}
+
+.dashboard-page::before {
+  content: '';
+  position: absolute;
+  inset: -2rem -1rem auto;
+  height: 15rem;
+  z-index: -1;
+  pointer-events: none;
+  opacity: .42;
+  background-image: linear-gradient(to right, color-mix(in srgb, var(--dashboard-rule) 32%, transparent) 1px, transparent 1px), linear-gradient(to bottom, color-mix(in srgb, var(--dashboard-rule) 32%, transparent) 1px, transparent 1px);
+  background-size: 5rem 5rem;
+  mask-image: linear-gradient(to bottom, black, transparent);
+}
+
+.dark-mode .dashboard-page {
+  --dashboard-panel: #171c26;
+  --dashboard-panel-soft: #202735;
+  --dashboard-rule: #303949;
+  --dashboard-ink: #0d172b;
+  --dashboard-ink-soft: #172846;
+}
+
+.dashboard-page > * {
+  position: relative;
+}
+
+.dashboard-page-header {
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--dashboard-rule);
+}
+
+.dashboard-eyebrow {
+  display: block;
+  margin-bottom: .6rem;
+  color: var(--primary);
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .18em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.dashboard-page .page-header h1,
+.dashboard-page .section-card-title {
+  font-family: Georgia, "Noto Serif TC", "Noto Serif SC", ui-serif, serif;
+  letter-spacing: -.025em;
+}
+
+.dashboard-page .page-header h1 {
+  font-size: clamp(2rem, 3vw, 2.85rem);
+  font-weight: 700;
+}
+
+.dashboard-page .page-header p {
+  max-width: 42rem;
+  margin-top: .4rem;
+}
+
+.dashboard-query-status {
+  border-color: var(--dashboard-rule);
+  background: color-mix(in srgb, var(--dashboard-panel) 82%, transparent);
+  color: var(--text-muted);
+}
+
+.dashboard-status-dot {
+  width: .45rem;
+  height: .45rem;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: var(--income);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--income) 14%, transparent);
+}
+
+.dashboard-hero--editorial {
+  border: 1px solid color-mix(in srgb, #9fbaff 26%, transparent);
+  border-radius: 18px !important;
+  background: var(--dashboard-ink);
+  box-shadow: 0 18px 42px rgba(20, 34, 59, .18);
+}
+
+.dashboard-hero-gridline {
+  opacity: .22;
+  background-image: linear-gradient(to right, rgba(255,255,255,.08) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,.08) 1px, transparent 1px);
+  background-size: 5rem 5rem;
+  mask-image: linear-gradient(115deg, black 15%, transparent 75%);
+}
+
+.dashboard-hero-mark {
+  border: 1px solid rgba(255,255,255,.16);
+  box-shadow: inset 0 0 0 1.5rem rgba(255,255,255,.035), inset 0 0 0 3rem rgba(255,255,255,.035);
+  transform: rotate(18deg);
+}
+
+.dashboard-hero-label {
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-size: .72rem;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+}
+
+.dashboard-hero-value {
+  font-family: Georgia, "Noto Serif TC", "Noto Serif SC", ui-serif, serif;
+  font-weight: 500 !important;
+  letter-spacing: -.055em !important;
+}
+
+.dashboard-hero .group {
+  border-color: rgba(255,255,255,.18);
+  border-radius: 10px;
+  background: rgba(255,255,255,.06);
+}
+
+.dashboard-hero .group:hover {
+  background: rgba(255,255,255,.13);
+}
+
+.dashboard-asset-card {
+  border-color: var(--dashboard-rule) !important;
+  border-radius: 14px !important;
+  background: var(--dashboard-panel) !important;
+  box-shadow: 0 1px 0 rgba(20, 34, 59, .04) !important;
+}
+
+.dashboard-asset-card:hover {
+  border-color: color-mix(in srgb, var(--primary) 46%, var(--dashboard-rule)) !important;
+  box-shadow: 0 8px 20px rgba(20, 34, 59, .08) !important;
+}
+
+.dashboard-asset-card strong {
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-size: clamp(1.25rem, 2vw, 1.65rem);
+  letter-spacing: -.06em;
+}
+
+.dashboard-page .section-card {
+  border-color: var(--dashboard-rule);
+  border-radius: 14px;
+  background: var(--dashboard-panel) !important;
+  box-shadow: 0 1px 0 rgba(20, 34, 59, .04);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.dashboard-page .section-card-header {
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--dashboard-rule);
+}
+
+.dashboard-page .section-card-title {
+  font-size: 1.15rem;
+}
+
+.dashboard-page .section-card-sub,
+.dashboard-page .tabular-nums {
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+.dashboard-page .progress-track {
+  background: var(--dashboard-panel-soft);
+}
+
+.dashboard-page .dashboard-module-grid > * {
+  min-width: 0;
+}
+
+@media (max-width: 639px) {
+  .dashboard-page-header {
+    padding-bottom: 1rem;
+  }
+
+  .dashboard-query-status {
+    justify-content: center;
+  }
+
+  .dashboard-page .section-card {
+    padding: 18px;
+  }
+
+  .dashboard-hero-value {
+    font-size: clamp(2.25rem, 13vw, 3.8rem) !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-page .dashboard-asset-card,
+  .dashboard-page .dashboard-hero .group {
+    transition: none;
+  }
 }
 
 /* ── App color-system compatibility ── */

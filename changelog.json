@@ -1,6 +1,16 @@
 {
-  "currentVersion": "4.104.0",
+  "currentVersion": "4.105.0",
   "releases": [
+    {
+      "version": "4.105.0",
+      "date": "2026-08-22",
+      "title": "Dashboard 財務訊號總覽再強化",
+      "type": "improved",
+      "changes": [
+        { "tag": "improved", "text": "Dashboard 新增財務訊號列，將待處理提醒、現金展望期末餘額與投資組合未實現損益集中呈現，使用者可以更快掌握需要行動的重點。" },
+        { "tag": "improved", "text": "現金展望與投資損益訊號可直接前往對應頁面，並在手機上自動改為直向排列，同時保留鍵盤操作、深色模式、RTL 與減少動態效果等使用體驗。" }
+      ]
+    },
     {
       "version": "4.104.0",
       "date": "2026-08-22",

@@ -4339,6 +4339,24 @@ abstract class AppLocalizations {
   /// **'股票'**
   String get featuresStocksCommonStockLabel;
 
+  /// Web path: features.stocks.common.market
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'市場'**
+  String get featuresStocksCommonMarket;
+
+  /// Web path: features.stocks.common.marketTaiwan
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'台股'**
+  String get featuresStocksCommonMarketTaiwan;
+
+  /// Web path: features.stocks.common.marketUs
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'美股'**
+  String get featuresStocksCommonMarketUs;
+
   /// Web path: features.stocks.common.stockRequired
   ///
   /// In zh_Hant_TW, this message translates to:
@@ -4570,7 +4588,7 @@ abstract class AppLocalizations {
   /// Web path: features.stocks.portfolio.priceModalDescription
   ///
   /// In zh_Hant_TW, this message translates to:
-  /// **'優先由瀏覽器端向台灣證交所公開 API 查詢；若瀏覽器被擋，會改用登入後的 user API 代理查詢並更新持股。'**
+  /// **'台股由 TWSE 查詢，美股由 Yahoo Finance 查詢；查價失敗時不會覆蓋原有價格。'**
   String get featuresStocksPortfolioPriceModalDescription;
 
   /// Web path: features.stocks.portfolio.priceResult
@@ -4753,7 +4771,7 @@ abstract class AppLocalizations {
   /// Web path: features.stocks.dividends.syncDescription
   ///
   /// In zh_Hant_TW, this message translates to:
-  /// **'依照您的持股紀錄，從台灣證交所自動同步歷年除權息資料。'**
+  /// **'依照您的持股紀錄，自動同步台股 TWSE 與美股 Yahoo Finance 的現金股利資料。'**
   String get featuresStocksDividendsSyncDescription;
 
   /// Web path: features.stocks.dividends.syncStart

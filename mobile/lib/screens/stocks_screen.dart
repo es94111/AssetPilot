@@ -451,7 +451,7 @@ class _HoldingTile extends StatelessWidget {
         title: Row(
           children: [
             Text(
-              '${s.symbol} ${s.name}',
+              '${s.market == 'US' ? trKey('featuresStocksCommonMarketUs') : trKey('featuresStocksCommonMarketTaiwan')} · ${s.symbol} ${s.name}',
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
             if (s.delisted)
@@ -467,8 +467,8 @@ class _HoldingTile extends StatelessWidget {
         subtitle: Text(
           trKey('mobileDynamicStockHoldingSubtitle', {
             'shares': intFmt(s.totalShares),
-            'avgCost': s.avgCost,
-            'currentPrice': s.currentPrice,
+            'avgCost': money(s.avgCost, s.currency),
+            'currentPrice': money(s.currentPrice, s.currency),
           }),
         ),
         trailing: Column(
@@ -476,7 +476,7 @@ class _HoldingTile extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             Text(
-              twd(s.marketValue),
+              money(s.marketValue, s.currency),
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
             Text(
@@ -589,16 +589,18 @@ class _StockTxnTabState extends State<_StockTxnTab> {
                       ),
                     ),
                   ),
-                  title: Text('${t.symbol} ${t.stockName}'),
+                  title: Text(
+                    '${t.market == 'US' ? trKey('featuresStocksCommonMarketUs') : trKey('featuresStocksCommonMarketTaiwan')} · ${t.symbol} ${t.stockName}',
+                  ),
                   subtitle: Text(
                     trKey('mobileDynamicStockTransactionSubtitle', {
                       'date': t.date,
                       'shares': intFmt(t.shares),
-                      'price': t.price,
+                      'price': money(t.price, t.currency),
                     }),
                   ),
                   trailing: Text(
-                    twd(t.shares * t.price),
+                    money(t.shares * t.price, t.currency),
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                   onTap: () => _openForm(t),
@@ -753,7 +755,9 @@ class _DividendTabState extends State<_DividendTab> {
                 return ListTile(
                   onTap: () => _openForm(d),
                   onLongPress: () => _delete(d),
-                  title: Text('${d.symbol} ${d.stockName}'),
+                  title: Text(
+                    '${d.market == 'US' ? trKey('featuresStocksCommonMarketUs') : trKey('featuresStocksCommonMarketTaiwan')} · ${d.symbol} ${d.stockName}',
+                  ),
                   subtitle: Text(d.date),
                   trailing: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -762,7 +766,7 @@ class _DividendTabState extends State<_DividendTab> {
                       if (d.cashDividend > 0)
                         Text(
                           trKey('mobileDynamicCashDividend', {
-                            'amount': twd(d.cashDividend),
+                            'amount': money(d.cashDividend, d.currency),
                           }),
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
@@ -826,7 +830,7 @@ class _RealizedTabState extends State<_RealizedTab> {
             message: trKey('mobileLegacyNoRealizedReturns'),
           );
         }
-        final total = list.fold<num>(0, (s, r) => s + r.realizedPL);
+        final total = list.fold<num>(0, (s, r) => s + r.realizedPLTwd);
         return RefreshIndicator(
           onRefresh: () async => _reload(),
           child: ListView(
@@ -853,7 +857,9 @@ class _RealizedTabState extends State<_RealizedTab> {
               ),
               for (final r in list)
                 ListTile(
-                  title: Text('${r.symbol} ${r.name}'),
+                  title: Text(
+                    '${r.market == 'US' ? trKey('featuresStocksCommonMarketUs') : trKey('featuresStocksCommonMarketTaiwan')} · ${r.symbol} ${r.name}',
+                  ),
                   subtitle: Text(
                     trKey('mobileDynamicRealizedTransactionSubtitle', {
                       'date': r.date,
@@ -861,7 +867,7 @@ class _RealizedTabState extends State<_RealizedTab> {
                     }),
                   ),
                   trailing: Text(
-                    '${signed(r.realizedPL)} (${r.returnRate}%)',
+                    '${r.realizedPL > 0 ? '+' : ''}${money(r.realizedPL, r.currency)} (${r.returnRate}%)',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       color: plColor(r.realizedPL, context),
@@ -897,6 +903,7 @@ class _StockFormState extends State<_StockForm> {
     text: widget.existing?.symbol ?? '',
   );
   late final _name = TextEditingController(text: widget.existing?.name ?? '');
+  late String _market = widget.existing?.market ?? 'TW';
   late String _stockType = widget.existing?.stockType ?? 'stock';
   late final String _initialType = widget.existing?.stockType ?? 'stock';
   bool _saving = false;
@@ -922,6 +929,7 @@ class _StockFormState extends State<_StockForm> {
         await api.updateStock(widget.existing!.id, body);
       } else {
         await api.createStock({
+          'market': _market,
           'symbol': _symbol.text.trim(),
           'name': _name.text.trim(),
           'stockType': _stockType,
@@ -954,11 +962,33 @@ class _StockFormState extends State<_StockForm> {
               style: Theme.of(context).textTheme.titleLarge,
             ),
             SizedBox(height: 16),
+            DropdownButtonFormField<String>(
+              initialValue: _market,
+              decoration: InputDecoration(
+                labelText: trKey('featuresStocksCommonMarket'),
+                border: OutlineInputBorder(),
+              ),
+              items: [
+                DropdownMenuItem(
+                  value: 'TW',
+                  child: Text(trKey('featuresStocksCommonMarketTaiwan')),
+                ),
+                DropdownMenuItem(
+                  value: 'US',
+                  child: Text(trKey('featuresStocksCommonMarketUs')),
+                ),
+              ],
+              onChanged: _isEdit
+                  ? null
+                  : (v) => setState(() => _market = v ?? 'TW'),
+            ),
+            SizedBox(height: 12),
             TextFormField(
               controller: _symbol,
               enabled: !_isEdit,
               decoration: InputDecoration(
-                labelText: trKey('mobileLegacyTickerEG2330'),
+                labelText:
+                    '${trKey('mobileLegacyTickerEG2330')} (${_market == 'US' ? 'AAPL' : '2330'})',
                 border: OutlineInputBorder(),
               ),
               validator: (v) => (v == null || v.trim().isEmpty)
@@ -1145,7 +1175,9 @@ class _StockTxnFormState extends State<_StockTxnForm> {
                   for (final s in widget.stocks)
                     DropdownMenuItem(
                       value: s.id,
-                      child: Text('${s.symbol} ${s.name}'),
+                      child: Text(
+                        '${s.market == 'US' ? trKey('featuresStocksCommonMarketUs') : trKey('featuresStocksCommonMarketTaiwan')} · ${s.symbol} ${s.name}',
+                      ),
                     ),
                 ],
                 onChanged: (v) => setState(() => _stockId = v),
@@ -1403,7 +1435,9 @@ class _DividendFormState extends State<_DividendForm> {
                   for (final s in widget.stocks)
                     DropdownMenuItem(
                       value: s.id,
-                      child: Text('${s.symbol} ${s.name}'),
+                      child: Text(
+                        '${s.market == 'US' ? trKey('featuresStocksCommonMarketUs') : trKey('featuresStocksCommonMarketTaiwan')} · ${s.symbol} ${s.name}',
+                      ),
                     ),
                 ],
                 onChanged: _isEdit ? null : (v) => setState(() => _stockId = v),

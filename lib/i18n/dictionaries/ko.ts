@@ -1027,6 +1027,9 @@ export const ko = {
       },
       common: {
         stockLabel: "주식",
+        market: "市場",
+        marketTaiwan: "台股",
+        marketUs: "美股",
         stockRequired: "주식 *",
         stockType: {
           stock: "주식",

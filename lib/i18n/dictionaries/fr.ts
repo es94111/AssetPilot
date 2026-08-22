@@ -1027,6 +1027,9 @@ export const fr = {
       },
       common: {
         stockLabel: "Action",
+        market: "市場",
+        marketTaiwan: "台股",
+        marketUs: "美股",
         stockRequired: "Action *",
         stockType: {
           stock: "Action",

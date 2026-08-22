@@ -3681,6 +3681,21 @@
     "description": "Web path: features.stocks.common.stockLabel",
     "x-webPath": "features.stocks.common.stockLabel"
   },
+  "featuresStocksCommonMarket": "市場",
+  "@featuresStocksCommonMarket": {
+    "description": "Web path: features.stocks.common.market",
+    "x-webPath": "features.stocks.common.market"
+  },
+  "featuresStocksCommonMarketTaiwan": "台股",
+  "@featuresStocksCommonMarketTaiwan": {
+    "description": "Web path: features.stocks.common.marketTaiwan",
+    "x-webPath": "features.stocks.common.marketTaiwan"
+  },
+  "featuresStocksCommonMarketUs": "美股",
+  "@featuresStocksCommonMarketUs": {
+    "description": "Web path: features.stocks.common.marketUs",
+    "x-webPath": "features.stocks.common.marketUs"
+  },
   "featuresStocksCommonStockRequired": "股票 *",
   "@featuresStocksCommonStockRequired": {
     "description": "Web path: features.stocks.common.stockRequired",
@@ -3874,7 +3889,7 @@
     "description": "Web path: features.stocks.portfolio.updating",
     "x-webPath": "features.stocks.portfolio.updating"
   },
-  "featuresStocksPortfolioPriceModalDescription": "優先由瀏覽器端向台灣證交所公開 API 查詢；若瀏覽器被擋，會改用登入後的 user API 代理查詢並更新持股。",
+  "featuresStocksPortfolioPriceModalDescription": "台股由 TWSE 查詢，美股由 Yahoo Finance 查詢；查價失敗時不會覆蓋原有價格。",
   "@featuresStocksPortfolioPriceModalDescription": {
     "description": "Web path: features.stocks.portfolio.priceModalDescription",
     "x-webPath": "features.stocks.portfolio.priceModalDescription"
@@ -4037,7 +4052,7 @@
     "description": "Web path: features.stocks.dividends.syncExDividends",
     "x-webPath": "features.stocks.dividends.syncExDividends"
   },
-  "featuresStocksDividendsSyncDescription": "依照您的持股紀錄，從台灣證交所自動同步歷年除權息資料。",
+  "featuresStocksDividendsSyncDescription": "依照您的持股紀錄，自動同步台股 TWSE 與美股 Yahoo Finance 的現金股利資料。",
   "@featuresStocksDividendsSyncDescription": {
     "description": "Web path: features.stocks.dividends.syncDescription",
     "x-webPath": "features.stocks.dividends.syncDescription"

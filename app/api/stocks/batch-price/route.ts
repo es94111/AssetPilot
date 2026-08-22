@@ -1,7 +1,7 @@
 // @ts-nocheck
-import { NextResponse } from 'next/server';
-import { requireAuth } from '../../../../lib/apiHelpers';
-import { getDB, queryOne, saveDB } from '../../../../lib/db';
+import { NextResponse } from "next/server";
+import { requireAuth } from "../../../../lib/apiHelpers";
+import { getDB, queryOne, saveDB } from "../../../../lib/db";
 
 export async function POST(request) {
   const auth = await requireAuth(request);
@@ -11,10 +11,14 @@ export async function POST(request) {
   const updates = Array.isArray(body.updates)
     ? body.updates
     : Array.isArray(body.prices)
-      ? body.prices.map(p => ({ stockId: p.stockId || p.id, currentPrice: p.currentPrice }))
+      ? body.prices.map((p) => ({
+          stockId: p.stockId || p.id,
+          currentPrice: p.currentPrice,
+        }))
       : null;
 
-  if (!updates) return NextResponse.json({ error: '無效資料' }, { status: 400 });
+  if (!updates)
+    return NextResponse.json({ error: "無效資料" }, { status: 400 });
 
   const db = getDB();
   let updated = 0;
@@ -23,20 +27,34 @@ export async function POST(request) {
   for (const u of updates) {
     const stockId = u.stockId || u.id;
     if (!stockId) continue;
-    const existing = queryOne('SELECT id, current_price FROM stocks WHERE id = ? AND user_id = ?', [stockId, auth.userId]);
+    const existing = queryOne(
+      "SELECT id, current_price FROM stocks WHERE id = ? AND user_id = ?",
+      [stockId, auth.userId],
+    );
     if (!existing) continue;
-    const currentPrice = Number.isFinite(Number(u.currentPrice))
-      ? Number(u.currentPrice)
+    const hasPrice =
+      u.currentPrice !== undefined &&
+      u.currentPrice !== null &&
+      u.currentPrice !== "";
+    const parsedPrice = Number(u.currentPrice);
+    if (hasPrice && (!Number.isFinite(parsedPrice) || parsedPrice < 0)) {
+      return NextResponse.json(
+        { error: "股價必須為大於或等於 0 的數字" },
+        { status: 400 },
+      );
+    }
+    const currentPrice = hasPrice
+      ? parsedPrice
       : Number(existing.current_price || 0);
-    if (typeof u.delisted === 'boolean') {
+    if (typeof u.delisted === "boolean") {
       db.run(
-        'UPDATE stocks SET current_price = ?, delisted = ?, updated_at = ? WHERE id = ? AND user_id = ?',
-        [currentPrice, u.delisted ? 1 : 0, nowIso, stockId, auth.userId]
+        "UPDATE stocks SET current_price = ?, delisted = ?, updated_at = ? WHERE id = ? AND user_id = ?",
+        [currentPrice, u.delisted ? 1 : 0, nowIso, stockId, auth.userId],
       );
     } else {
       db.run(
-        'UPDATE stocks SET current_price = ?, updated_at = ? WHERE id = ? AND user_id = ?',
-        [currentPrice, nowIso, stockId, auth.userId]
+        "UPDATE stocks SET current_price = ?, updated_at = ? WHERE id = ? AND user_id = ?",
+        [currentPrice, nowIso, stockId, auth.userId],
       );
     }
     updated += 1;

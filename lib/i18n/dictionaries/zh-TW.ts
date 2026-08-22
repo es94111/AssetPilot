@@ -1025,6 +1025,9 @@ export const zhTW = {
       },
       common: {
         stockLabel: "股票",
+        market: "市場",
+        marketTaiwan: "台股",
+        marketUs: "美股",
         stockRequired: "股票 *",
         stockType: {
           stock: "股票",
@@ -1067,7 +1070,7 @@ export const zhTW = {
         updatePrices: "更新股價",
         batchUpdate: "批次自動更新",
         updating: "更新中...",
-        priceModalDescription: "優先由瀏覽器端向台灣證交所公開 API 查詢；若瀏覽器被擋，會改用登入後的 user API 代理查詢並更新持股。",
+        priceModalDescription: "台股由 TWSE 查詢，美股由 Yahoo Finance 查詢；查價失敗時不會覆蓋原有價格。",
         priceResult: "更新完成：{updated} 支成功。",
         priceResultWithFailed: "更新完成：{updated} 支成功，{failed} 支失敗。",
         browserQuoteUnavailable: "瀏覽器端無法取得台灣證交所行情資料",
@@ -1105,7 +1108,7 @@ export const zhTW = {
         editDividend: "編輯股利",
         newDividend: "新增股利",
         syncExDividends: "同步除權息",
-        syncDescription: "依照您的持股紀錄，從台灣證交所自動同步歷年除權息資料。",
+        syncDescription: "依照您的持股紀錄，自動同步台股 TWSE 與美股 Yahoo Finance 的現金股利資料。",
         syncStart: "開始同步",
         syncing: "同步中...",
         syncResult: "新增 {synced} 筆，跳過 {skipped} 筆。",

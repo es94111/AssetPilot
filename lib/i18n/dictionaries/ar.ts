@@ -1027,6 +1027,9 @@ export const ar = {
       },
       common: {
         stockLabel: "السهم",
+        market: "市場",
+        marketTaiwan: "台股",
+        marketUs: "美股",
         stockRequired: "السهم *",
         stockType: {
           stock: "سهم",

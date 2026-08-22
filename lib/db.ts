@@ -2,7 +2,7 @@
 // 開發模式：globalThis.__assetPilotDb 防止 HMR 重複初始化
 // 生產模式：模組層級 _db（initDB() 負責設值）
 
-import { ensureEnvSecrets } from './envSecrets';
+import { ensureEnvSecrets } from "./envSecrets";
 
 ensureEnvSecrets();
 
@@ -18,7 +18,9 @@ interface DbStatement {
 export interface DatabaseLike {
   prepare(sql: string): DbStatement;
   run(sql: string, params?: DbParam[]): void;
-  exec(sql: string): Array<{ columns: string[]; values: Array<Array<string | number | null>> }>;
+  exec(
+    sql: string,
+  ): Array<{ columns: string[]; values: Array<Array<string | number | null>> }>;
   getRowsModified(): number;
   close(): void;
 }
@@ -45,19 +47,22 @@ export async function initDB(): Promise<void> {
   if (_db) return;
 
   if (!process.env.DATABASE_URL && !process.env.POSTGRES_URL) {
-    throw new Error('未設定 DATABASE_URL 或 POSTGRES_URL，AssetPilot 現在僅支援 PostgreSQL');
+    throw new Error(
+      "未設定 DATABASE_URL 或 POSTGRES_URL，AssetPilot 現在僅支援 PostgreSQL",
+    );
   }
 
-  const { PostgresCompatDatabase } = await import('./postgresRuntime');
+  const { PostgresCompatDatabase } = await import("./postgresRuntime");
+  // SAFETY: PostgresCompatDatabase implements the narrow DatabaseLike adapter used by this module; the cast only bridges its structural worker-backed type.
   _db = new PostgresCompatDatabase() as unknown as DatabaseLike;
   globalThis.__assetPilotDb = _db;
   await _runMigrations();
-  console.log('資料庫初始化完成（PostgreSQL）');
+  console.log("資料庫初始化完成（PostgreSQL）");
 }
 
 export function getDB(): DatabaseLike {
   if (!_db) _db = globalThis.__assetPilotDb ?? null;
-  if (!_db) throw new Error('DB 尚未初始化，請確認 instrumentation.js 已執行');
+  if (!_db) throw new Error("DB 尚未初始化，請確認 instrumentation.js 已執行");
   return _db;
 }
 
@@ -66,7 +71,10 @@ export function isPostgresRuntime(): boolean {
 }
 
 // ── 便利查詢工具 ──
-export function queryOne(sql: string, params: Array<string | number | null> = []): Record<string, string | number | null> | null {
+export function queryOne(
+  sql: string,
+  params: Array<string | number | null> = [],
+): Record<string, string | number | null> | null {
   const db = getDB();
   const stmt = db.prepare(sql);
   stmt.bind(params);
@@ -79,7 +87,10 @@ export function queryOne(sql: string, params: Array<string | number | null> = []
   return null;
 }
 
-export function queryAll(sql: string, params: Array<string | number | null> = []): Array<Record<string, string | number | null>> {
+export function queryAll(
+  sql: string,
+  params: Array<string | number | null> = [],
+): Array<Record<string, string | number | null>> {
   const db = getDB();
   const stmt = db.prepare(sql);
   stmt.bind(params);
@@ -111,8 +122,12 @@ async function _runMigrations(): Promise<void> {
     is_admin_login INTEGER DEFAULT 0,
     user_agent TEXT DEFAULT ''
   )`);
-  db.run(`CREATE INDEX IF NOT EXISTS idx_login_audit_user_time ON login_audit_logs(user_id, login_at DESC)`);
-  db.run(`CREATE INDEX IF NOT EXISTS idx_login_audit_time ON login_audit_logs(login_at DESC)`);
+  db.run(
+    `CREATE INDEX IF NOT EXISTS idx_login_audit_user_time ON login_audit_logs(user_id, login_at DESC)`,
+  );
+  db.run(
+    `CREATE INDEX IF NOT EXISTS idx_login_audit_time ON login_audit_logs(login_at DESC)`,
+  );
 
   db.run(`CREATE TABLE IF NOT EXISTS data_operation_audit_log (
     id TEXT PRIMARY KEY,
@@ -126,9 +141,15 @@ async function _runMigrations(): Promise<void> {
     is_admin_operation INTEGER DEFAULT 0,
     metadata TEXT DEFAULT '{}'
   )`);
-  db.run(`CREATE INDEX IF NOT EXISTS idx_data_audit_user_time ON data_operation_audit_log(user_id, timestamp DESC)`);
-  db.run(`CREATE INDEX IF NOT EXISTS idx_data_audit_time ON data_operation_audit_log(timestamp DESC)`);
-  db.run(`CREATE INDEX IF NOT EXISTS idx_data_audit_action ON data_operation_audit_log(action)`);
+  db.run(
+    `CREATE INDEX IF NOT EXISTS idx_data_audit_user_time ON data_operation_audit_log(user_id, timestamp DESC)`,
+  );
+  db.run(
+    `CREATE INDEX IF NOT EXISTS idx_data_audit_time ON data_operation_audit_log(timestamp DESC)`,
+  );
+  db.run(
+    `CREATE INDEX IF NOT EXISTS idx_data_audit_action ON data_operation_audit_log(action)`,
+  );
 
   db.run(`CREATE TABLE IF NOT EXISTS login_attempt_logs (
     id TEXT PRIMARY KEY,
@@ -142,8 +163,12 @@ async function _runMigrations(): Promise<void> {
     failure_reason TEXT DEFAULT '',
     user_agent TEXT DEFAULT ''
   )`);
-  db.run(`CREATE INDEX IF NOT EXISTS idx_login_attempt_time ON login_attempt_logs(login_at DESC)`);
-  db.run(`CREATE INDEX IF NOT EXISTS idx_login_attempt_email_time ON login_attempt_logs(email, login_at DESC)`);
+  db.run(
+    `CREATE INDEX IF NOT EXISTS idx_login_attempt_time ON login_attempt_logs(login_at DESC)`,
+  );
+  db.run(
+    `CREATE INDEX IF NOT EXISTS idx_login_attempt_email_time ON login_attempt_logs(email, login_at DESC)`,
+  );
 
   db.run(`CREATE TABLE IF NOT EXISTS login_sessions (
     id TEXT PRIMARY KEY,
@@ -157,8 +182,12 @@ async function _runMigrations(): Promise<void> {
     expires_at INTEGER DEFAULT 0,
     revoked_at INTEGER DEFAULT 0
   )`);
-  db.run(`CREATE INDEX IF NOT EXISTS idx_login_sessions_user_active ON login_sessions(user_id, revoked_at, login_at DESC)`);
-  db.run(`CREATE INDEX IF NOT EXISTS idx_login_sessions_token ON login_sessions(token_hash)`);
+  db.run(
+    `CREATE INDEX IF NOT EXISTS idx_login_sessions_user_active ON login_sessions(user_id, revoked_at, login_at DESC)`,
+  );
+  db.run(
+    `CREATE INDEX IF NOT EXISTS idx_login_sessions_token ON login_sessions(token_hash)`,
+  );
 
   db.run(`CREATE TABLE IF NOT EXISTS passkey_credentials (
     credential_id TEXT PRIMARY KEY,
@@ -170,7 +199,9 @@ async function _runMigrations(): Promise<void> {
     device_name TEXT DEFAULT 'Passkey',
     created_at TEXT
   )`);
-  db.run(`CREATE INDEX IF NOT EXISTS idx_passkey_credentials_user ON passkey_credentials(user_id)`);
+  db.run(
+    `CREATE INDEX IF NOT EXISTS idx_passkey_credentials_user ON passkey_credentials(user_id)`,
+  );
 
   db.run(`CREATE TABLE IF NOT EXISTS system_settings (
     id INTEGER PRIMARY KEY CHECK(id = 1),
@@ -181,28 +212,73 @@ async function _runMigrations(): Promise<void> {
     updated_by TEXT DEFAULT ''
   )`);
 
-  const alterIgnore = (sql: string): void => { try { db.run(sql); } catch { /* idempotent */ } };
-  alterIgnore("ALTER TABLE system_settings ADD COLUMN admin_ip_allowlist TEXT DEFAULT ''");
-  alterIgnore("ALTER TABLE system_settings ADD COLUMN report_schedule_freq TEXT DEFAULT 'off'");
-  alterIgnore("ALTER TABLE system_settings ADD COLUMN report_schedule_hour INTEGER DEFAULT 9");
-  alterIgnore("ALTER TABLE system_settings ADD COLUMN report_schedule_weekday INTEGER DEFAULT 1");
-  alterIgnore("ALTER TABLE system_settings ADD COLUMN report_schedule_day_of_month INTEGER DEFAULT 1");
-  alterIgnore("ALTER TABLE system_settings ADD COLUMN report_schedule_last_run INTEGER DEFAULT 0");
-  alterIgnore("ALTER TABLE system_settings ADD COLUMN report_schedule_last_summary TEXT DEFAULT ''");
-  alterIgnore("ALTER TABLE system_settings ADD COLUMN report_schedule_user_ids TEXT DEFAULT ''");
-  alterIgnore("ALTER TABLE system_settings ADD COLUMN server_time_offset INTEGER DEFAULT 0");
-  alterIgnore("ALTER TABLE system_settings ADD COLUMN audit_log_retention_days TEXT DEFAULT '90'");
-  alterIgnore("ALTER TABLE system_settings ADD COLUMN route_audit_mode TEXT DEFAULT 'security'");
-  alterIgnore("ALTER TABLE system_settings ADD COLUMN line_login_enabled INTEGER DEFAULT 0");
-  alterIgnore("ALTER TABLE system_settings ADD COLUMN transaction_photo_storage TEXT DEFAULT ''")
-  alterIgnore("ALTER TABLE system_settings ADD COLUMN transaction_photo_max_bytes INTEGER DEFAULT 0")
+  const alterIgnore = (sql: string): void => {
+    try {
+      db.run(sql);
+    } catch {
+      /* idempotent */
+    }
+  };
+  alterIgnore(
+    "ALTER TABLE system_settings ADD COLUMN admin_ip_allowlist TEXT DEFAULT ''",
+  );
+  alterIgnore(
+    "ALTER TABLE system_settings ADD COLUMN report_schedule_freq TEXT DEFAULT 'off'",
+  );
+  alterIgnore(
+    "ALTER TABLE system_settings ADD COLUMN report_schedule_hour INTEGER DEFAULT 9",
+  );
+  alterIgnore(
+    "ALTER TABLE system_settings ADD COLUMN report_schedule_weekday INTEGER DEFAULT 1",
+  );
+  alterIgnore(
+    "ALTER TABLE system_settings ADD COLUMN report_schedule_day_of_month INTEGER DEFAULT 1",
+  );
+  alterIgnore(
+    "ALTER TABLE system_settings ADD COLUMN report_schedule_last_run INTEGER DEFAULT 0",
+  );
+  alterIgnore(
+    "ALTER TABLE system_settings ADD COLUMN report_schedule_last_summary TEXT DEFAULT ''",
+  );
+  alterIgnore(
+    "ALTER TABLE system_settings ADD COLUMN report_schedule_user_ids TEXT DEFAULT ''",
+  );
+  alterIgnore(
+    "ALTER TABLE system_settings ADD COLUMN server_time_offset INTEGER DEFAULT 0",
+  );
+  alterIgnore(
+    "ALTER TABLE system_settings ADD COLUMN audit_log_retention_days TEXT DEFAULT '90'",
+  );
+  alterIgnore(
+    "ALTER TABLE system_settings ADD COLUMN route_audit_mode TEXT DEFAULT 'security'",
+  );
+  alterIgnore(
+    "ALTER TABLE system_settings ADD COLUMN line_login_enabled INTEGER DEFAULT 0",
+  );
+  alterIgnore(
+    "ALTER TABLE system_settings ADD COLUMN transaction_photo_storage TEXT DEFAULT ''",
+  );
+  alterIgnore(
+    "ALTER TABLE system_settings ADD COLUMN transaction_photo_max_bytes INTEGER DEFAULT 0",
+  );
   // 股價自動更新（伺服器排程；台股交易時段內每 N 分鐘抓 TWSE/TPEx 最新價寫回 stocks.current_price）
-  alterIgnore("ALTER TABLE system_settings ADD COLUMN stock_auto_update_enabled INTEGER DEFAULT 1");
-  alterIgnore("ALTER TABLE system_settings ADD COLUMN stock_auto_update_interval_min INTEGER DEFAULT 10");
-  alterIgnore("ALTER TABLE system_settings ADD COLUMN stock_auto_update_last_run INTEGER DEFAULT 0");
-  alterIgnore("ALTER TABLE system_settings ADD COLUMN stock_auto_update_last_summary TEXT DEFAULT ''");
+  alterIgnore(
+    "ALTER TABLE system_settings ADD COLUMN stock_auto_update_enabled INTEGER DEFAULT 1",
+  );
+  alterIgnore(
+    "ALTER TABLE system_settings ADD COLUMN stock_auto_update_interval_min INTEGER DEFAULT 10",
+  );
+  alterIgnore(
+    "ALTER TABLE system_settings ADD COLUMN stock_auto_update_last_run INTEGER DEFAULT 0",
+  );
+  alterIgnore(
+    "ALTER TABLE system_settings ADD COLUMN stock_auto_update_last_summary TEXT DEFAULT ''",
+  );
 
-  db.run(`INSERT INTO system_settings (id, public_registration, allowed_registration_emails, admin_ip_allowlist, updated_at, updated_by) VALUES (1, 1, '', '', ?, '') ON CONFLICT DO NOTHING`, [Date.now()]);
+  db.run(
+    `INSERT INTO system_settings (id, public_registration, allowed_registration_emails, admin_ip_allowlist, updated_at, updated_by) VALUES (1, 1, '', '', ?, '') ON CONFLICT DO NOTHING`,
+    [Date.now()],
+  );
 
   db.run(`CREATE TABLE IF NOT EXISTS report_schedules (
     id              TEXT    PRIMARY KEY,
@@ -220,12 +296,22 @@ async function _runMigrations(): Promise<void> {
     created_at      INTEGER NOT NULL DEFAULT 0,
     updated_at      INTEGER NOT NULL DEFAULT 0
   )`);
-  alterIgnore("ALTER TABLE report_schedules ADD COLUMN notify_email INTEGER NOT NULL DEFAULT 1");
-  alterIgnore("ALTER TABLE report_schedules ADD COLUMN notify_line INTEGER NOT NULL DEFAULT 0");
+  alterIgnore(
+    "ALTER TABLE report_schedules ADD COLUMN notify_email INTEGER NOT NULL DEFAULT 1",
+  );
+  alterIgnore(
+    "ALTER TABLE report_schedules ADD COLUMN notify_line INTEGER NOT NULL DEFAULT 0",
+  );
   // 分鐘級排程（day_of_month = 0 代表「每月最後一天」）
-  alterIgnore("ALTER TABLE report_schedules ADD COLUMN minute INTEGER NOT NULL DEFAULT 0");
-  alterIgnore("CREATE INDEX IF NOT EXISTS idx_report_schedules_user ON report_schedules(user_id)");
-  alterIgnore("CREATE INDEX IF NOT EXISTS idx_report_schedules_enabled_freq ON report_schedules(enabled, freq)");
+  alterIgnore(
+    "ALTER TABLE report_schedules ADD COLUMN minute INTEGER NOT NULL DEFAULT 0",
+  );
+  alterIgnore(
+    "CREATE INDEX IF NOT EXISTS idx_report_schedules_user ON report_schedules(user_id)",
+  );
+  alterIgnore(
+    "CREATE INDEX IF NOT EXISTS idx_report_schedules_enabled_freq ON report_schedules(enabled, freq)",
+  );
 
   db.run(`CREATE TABLE IF NOT EXISTS categories (
     id TEXT PRIMARY KEY,
@@ -244,8 +330,12 @@ async function _runMigrations(): Promise<void> {
     deleted_at INTEGER DEFAULT 0,
     PRIMARY KEY (user_id, default_key)
   )`);
-  alterIgnore("CREATE INDEX IF NOT EXISTS idx_cat_user_parent_sort ON categories(user_id, parent_id, sort_order)");
-  alterIgnore("CREATE INDEX IF NOT EXISTS idx_cat_user_type ON categories(user_id, type)");
+  alterIgnore(
+    "CREATE INDEX IF NOT EXISTS idx_cat_user_parent_sort ON categories(user_id, parent_id, sort_order)",
+  );
+  alterIgnore(
+    "CREATE INDEX IF NOT EXISTS idx_cat_user_type ON categories(user_id, type)",
+  );
 
   db.run(`CREATE TABLE IF NOT EXISTS accounts (
     id TEXT PRIMARY KEY,
@@ -324,6 +414,7 @@ async function _runMigrations(): Promise<void> {
     id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL,
     symbol TEXT NOT NULL,
+    market TEXT DEFAULT 'TW',
     name TEXT NOT NULL,
     shares REAL DEFAULT 0,
     avg_cost REAL DEFAULT 0,
@@ -410,13 +501,23 @@ async function _runMigrations(): Promise<void> {
     byte_size INTEGER DEFAULT 0,
     created_at INTEGER NOT NULL
   )`);
-  alterIgnore("CREATE INDEX IF NOT EXISTS idx_tx_attachments_tx ON transaction_attachments(user_id, transaction_id, created_at)");
-  alterIgnore("ALTER TABLE user_settings ADD COLUMN default_currency TEXT DEFAULT 'TWD'");
+  alterIgnore(
+    "CREATE INDEX IF NOT EXISTS idx_tx_attachments_tx ON transaction_attachments(user_id, transaction_id, created_at)",
+  );
+  alterIgnore(
+    "ALTER TABLE user_settings ADD COLUMN default_currency TEXT DEFAULT 'TWD'",
+  );
   // 使用者語言偏好（多語言）。見 lib/i18n/。預設 zh-TW；排程通知（Email/LINE）亦讀此欄。
-  alterIgnore("ALTER TABLE user_settings ADD COLUMN language TEXT DEFAULT 'zh-TW'");
+  alterIgnore(
+    "ALTER TABLE user_settings ADD COLUMN language TEXT DEFAULT 'zh-TW'",
+  );
   // Dashboard 模組排序與顯示偏好。JSON 僅接受 lib/dashboardPreferences.ts 的固定 allowlist。
-  alterIgnore("ALTER TABLE user_settings ADD COLUMN dashboard_layout TEXT DEFAULT '{}'");
-  alterIgnore("ALTER TABLE user_settings ADD COLUMN dashboard_layout_updated_at INTEGER DEFAULT 0");
+  alterIgnore(
+    "ALTER TABLE user_settings ADD COLUMN dashboard_layout TEXT DEFAULT '{}'",
+  );
+  alterIgnore(
+    "ALTER TABLE user_settings ADD COLUMN dashboard_layout_updated_at INTEGER DEFAULT 0",
+  );
 
   // 交易憑證照片的每使用者資料金鑰（DEK），已被 PHOTO_MASTER_KEY 包覆。見 lib/photoCrypto.ts。
   db.run(`CREATE TABLE IF NOT EXISTS user_photo_keys (
@@ -435,7 +536,9 @@ async function _runMigrations(): Promise<void> {
     payload TEXT DEFAULT '{}',
     updated_at INTEGER NOT NULL
   )`);
-  alterIgnore("ALTER TABLE line_bot_states ADD COLUMN payload TEXT DEFAULT '{}'");
+  alterIgnore(
+    "ALTER TABLE line_bot_states ADD COLUMN payload TEXT DEFAULT '{}'",
+  );
 
   db.run(`CREATE TABLE IF NOT EXISTS line_expense_reminders (
     id              TEXT    PRIMARY KEY,
@@ -451,9 +554,15 @@ async function _runMigrations(): Promise<void> {
     created_at      INTEGER NOT NULL DEFAULT 0,
     updated_at      INTEGER NOT NULL DEFAULT 0
   )`);
-  alterIgnore("ALTER TABLE line_expense_reminders ADD COLUMN minute INTEGER NOT NULL DEFAULT 0");
-  alterIgnore("CREATE INDEX IF NOT EXISTS idx_line_expense_reminders_user ON line_expense_reminders(user_id)");
-  alterIgnore("CREATE INDEX IF NOT EXISTS idx_line_expense_reminders_enabled_freq ON line_expense_reminders(enabled, freq)");
+  alterIgnore(
+    "ALTER TABLE line_expense_reminders ADD COLUMN minute INTEGER NOT NULL DEFAULT 0",
+  );
+  alterIgnore(
+    "CREATE INDEX IF NOT EXISTS idx_line_expense_reminders_user ON line_expense_reminders(user_id)",
+  );
+  alterIgnore(
+    "CREATE INDEX IF NOT EXISTS idx_line_expense_reminders_enabled_freq ON line_expense_reminders(enabled, freq)",
+  );
 
   db.run(`CREATE TABLE IF NOT EXISTS stock_settings (
     user_id TEXT PRIMARY KEY,
@@ -470,7 +579,9 @@ async function _runMigrations(): Promise<void> {
 
   alterIgnore("ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'user'");
   alterIgnore("ALTER TABLE users ADD COLUMN is_admin INTEGER DEFAULT 0");
-  alterIgnore("ALTER TABLE users ADD COLUMN timezone TEXT DEFAULT 'Asia/Taipei'");
+  alterIgnore(
+    "ALTER TABLE users ADD COLUMN timezone TEXT DEFAULT 'Asia/Taipei'",
+  );
   alterIgnore("ALTER TABLE users ADD COLUMN theme_mode TEXT DEFAULT 'system'");
   alterIgnore("ALTER TABLE users ADD COLUMN google_id TEXT DEFAULT ''");
   alterIgnore("ALTER TABLE users ADD COLUMN google_sub TEXT DEFAULT ''");
@@ -478,7 +589,9 @@ async function _runMigrations(): Promise<void> {
   alterIgnore("ALTER TABLE users ADD COLUMN has_password INTEGER DEFAULT 1");
   alterIgnore("ALTER TABLE users ADD COLUMN avatar_url TEXT DEFAULT ''");
   alterIgnore("ALTER TABLE users ADD COLUMN token_version INTEGER DEFAULT 0");
-  alterIgnore("ALTER TABLE users ADD COLUMN passkey_credentials TEXT DEFAULT '[]'");
+  alterIgnore(
+    "ALTER TABLE users ADD COLUMN passkey_credentials TEXT DEFAULT '[]'",
+  );
   alterIgnore("ALTER TABLE users ADD COLUMN updated_at INTEGER DEFAULT 0");
   alterIgnore("ALTER TABLE users ADD COLUMN is_active INTEGER DEFAULT 1");
   // 管理員層級：'super' = 超級管理員（完整權限）、'readonly' = 一般管理員（僅讀取）。
@@ -488,12 +601,20 @@ async function _runMigrations(): Promise<void> {
   // 若 DB 有用戶但無管理員（is_admin 欄位以 DEFAULT 0 加入時既有用戶遺失管理員身份），
   // 自動將最早註冊的用戶升為管理員，確保系統可存取。
   try {
-    const adminCheck = db.exec("SELECT id FROM users WHERE is_admin = 1 LIMIT 1");
+    const adminCheck = db.exec(
+      "SELECT id FROM users WHERE is_admin = 1 LIMIT 1",
+    );
     const hasAdmin = adminCheck.length > 0 && adminCheck[0].values.length > 0;
     if (!hasAdmin) {
-      db.run("UPDATE users SET is_admin = 1 WHERE id = (SELECT id FROM users ORDER BY created_at NULLS LAST, id LIMIT 1)");
+      db.run(
+        "UPDATE users SET is_admin = 1 WHERE id = (SELECT id FROM users ORDER BY created_at NULLS LAST, id LIMIT 1)",
+      );
     }
-  } catch (_) {}
+  } catch (error) {
+    if (process.env.NODE_ENV === "development") {
+      console.warn("[db] admin backfill skipped:", (error as Error).message);
+    }
+  }
 
   alterIgnore("ALTER TABLE accounts ADD COLUMN type TEXT DEFAULT 'checking'");
   alterIgnore("ALTER TABLE accounts ADD COLUMN balance REAL DEFAULT 0");
@@ -503,30 +624,58 @@ async function _runMigrations(): Promise<void> {
   alterIgnore("ALTER TABLE accounts ADD COLUMN updated_at INTEGER DEFAULT 0");
   alterIgnore("ALTER TABLE accounts ADD COLUMN note TEXT DEFAULT ''");
   alterIgnore("ALTER TABLE accounts ADD COLUMN category TEXT DEFAULT ''");
-  alterIgnore("ALTER TABLE accounts ADD COLUMN exclude_from_total INTEGER DEFAULT 0");
+  alterIgnore(
+    "ALTER TABLE accounts ADD COLUMN exclude_from_total INTEGER DEFAULT 0",
+  );
   alterIgnore("ALTER TABLE accounts ADD COLUMN linked_bank_id TEXT DEFAULT ''");
-  alterIgnore("ALTER TABLE accounts ADD COLUMN overseas_fee_rate REAL DEFAULT 0");
+  alterIgnore(
+    "ALTER TABLE accounts ADD COLUMN overseas_fee_rate REAL DEFAULT 0",
+  );
   alterIgnore("ALTER TABLE accounts ADD COLUMN account_type TEXT DEFAULT ''");
-  alterIgnore("ALTER TABLE accounts ADD COLUMN statement_closing_day INTEGER DEFAULT NULL");
+  alterIgnore(
+    "ALTER TABLE accounts ADD COLUMN statement_closing_day INTEGER DEFAULT NULL",
+  );
   alterIgnore("ALTER TABLE accounts ADD COLUMN currency TEXT DEFAULT 'TWD'");
 
   // 區分手動／自動匯率：手動輸入或「立即同步」回填皆會用到此欄。
-  alterIgnore("ALTER TABLE exchange_rates ADD COLUMN is_manual INTEGER DEFAULT 0");
+  alterIgnore(
+    "ALTER TABLE exchange_rates ADD COLUMN is_manual INTEGER DEFAULT 0",
+  );
 
-  alterIgnore("ALTER TABLE transactions ADD COLUMN transfer_to_account_id TEXT DEFAULT ''");
+  alterIgnore(
+    "ALTER TABLE transactions ADD COLUMN transfer_to_account_id TEXT DEFAULT ''",
+  );
   alterIgnore("ALTER TABLE transactions ADD COLUMN tags TEXT DEFAULT '[]'");
   alterIgnore("ALTER TABLE transactions ADD COLUMN fx_fee REAL DEFAULT 0");
   alterIgnore("ALTER TABLE transactions ADD COLUMN twd_amount REAL DEFAULT 0");
-  alterIgnore("ALTER TABLE transactions ADD COLUMN exclude_from_stats INTEGER DEFAULT 0");
-  alterIgnore("ALTER TABLE transactions ADD COLUMN source_recurring_id TEXT DEFAULT ''");
-  alterIgnore("ALTER TABLE transactions ADD COLUMN scheduled_date TEXT DEFAULT ''");
-  alterIgnore("ALTER TABLE transactions ADD COLUMN is_fx_fee INTEGER DEFAULT 0");
-  alterIgnore("ALTER TABLE transactions ADD COLUMN currency TEXT DEFAULT 'TWD'");
-  alterIgnore("ALTER TABLE transactions ADD COLUMN ai_created INTEGER NOT NULL DEFAULT 0");
-  alterIgnore("ALTER TABLE transactions ADD COLUMN note_ai_modified INTEGER NOT NULL DEFAULT 0");
-  alterIgnore("ALTER TABLE transactions ADD COLUMN pre_ai_note TEXT NOT NULL DEFAULT ''");
+  alterIgnore(
+    "ALTER TABLE transactions ADD COLUMN exclude_from_stats INTEGER DEFAULT 0",
+  );
+  alterIgnore(
+    "ALTER TABLE transactions ADD COLUMN source_recurring_id TEXT DEFAULT ''",
+  );
+  alterIgnore(
+    "ALTER TABLE transactions ADD COLUMN scheduled_date TEXT DEFAULT ''",
+  );
+  alterIgnore(
+    "ALTER TABLE transactions ADD COLUMN is_fx_fee INTEGER DEFAULT 0",
+  );
+  alterIgnore(
+    "ALTER TABLE transactions ADD COLUMN currency TEXT DEFAULT 'TWD'",
+  );
+  alterIgnore(
+    "ALTER TABLE transactions ADD COLUMN ai_created INTEGER NOT NULL DEFAULT 0",
+  );
+  alterIgnore(
+    "ALTER TABLE transactions ADD COLUMN note_ai_modified INTEGER NOT NULL DEFAULT 0",
+  );
+  alterIgnore(
+    "ALTER TABLE transactions ADD COLUMN pre_ai_note TEXT NOT NULL DEFAULT ''",
+  );
   // 006-credit-card-total-repayment：還款摘要外鍵（非還款交易恆為 ''）
-  alterIgnore("ALTER TABLE transactions ADD COLUMN repayment_summary_id TEXT DEFAULT ''");
+  alterIgnore(
+    "ALTER TABLE transactions ADD COLUMN repayment_summary_id TEXT DEFAULT ''",
+  );
   alterIgnore(`UPDATE transactions SET ai_created = 1
     WHERE ai_created = 0 AND id IN (
       SELECT (metadata::jsonb->>'transaction_id')
@@ -539,69 +688,155 @@ async function _runMigrations(): Promise<void> {
     )`);
 
   alterIgnore("ALTER TABLE recurring ADD COLUMN fx_fee REAL DEFAULT 0");
-  alterIgnore("ALTER TABLE recurring ADD COLUMN exclude_from_stats INTEGER DEFAULT 0");
+  alterIgnore(
+    "ALTER TABLE recurring ADD COLUMN exclude_from_stats INTEGER DEFAULT 0",
+  );
   alterIgnore("ALTER TABLE recurring ADD COLUMN currency TEXT DEFAULT 'TWD'");
 
   alterIgnore("ALTER TABLE budgets ADD COLUMN year_month TEXT DEFAULT ''");
   alterIgnore("ALTER TABLE budgets ADD COLUMN created_at INTEGER DEFAULT 0");
   alterIgnore("ALTER TABLE budgets ADD COLUMN updated_at INTEGER DEFAULT 0");
 
+  alterIgnore("ALTER TABLE stocks ADD COLUMN market TEXT DEFAULT 'TW'");
+  alterIgnore(
+    "UPDATE stocks SET market = 'TW' WHERE market IS NULL OR market = ''",
+  );
   alterIgnore("ALTER TABLE stocks ADD COLUMN current_price REAL DEFAULT 0");
   alterIgnore("ALTER TABLE stocks ADD COLUMN avg_cost REAL DEFAULT 0");
   alterIgnore("ALTER TABLE stocks ADD COLUMN stock_type TEXT DEFAULT 'stock'");
   alterIgnore("ALTER TABLE stocks ADD COLUMN delisted INTEGER DEFAULT 0");
   alterIgnore("ALTER TABLE stocks ADD COLUMN currency TEXT DEFAULT 'TWD'");
 
-  alterIgnore("ALTER TABLE stock_transactions ADD COLUMN account_id TEXT DEFAULT ''");
-  alterIgnore("ALTER TABLE stock_transactions ADD COLUMN realized_pl REAL DEFAULT 0");
-  alterIgnore("ALTER TABLE stock_transactions ADD COLUMN tax_auto_calculated INTEGER DEFAULT 1");
-  alterIgnore("ALTER TABLE stock_transactions ADD COLUMN recurring_plan_id TEXT DEFAULT ''");
-  alterIgnore("ALTER TABLE stock_transactions ADD COLUMN period_start_date TEXT DEFAULT ''");
-  alterIgnore("CREATE UNIQUE INDEX IF NOT EXISTS idx_stock_tx_recurring_period ON stock_transactions(user_id, recurring_plan_id, period_start_date) WHERE recurring_plan_id != '' AND period_start_date != ''");
+  alterIgnore(
+    "ALTER TABLE stock_transactions ADD COLUMN account_id TEXT DEFAULT ''",
+  );
+  alterIgnore(
+    "ALTER TABLE stock_transactions ADD COLUMN realized_pl REAL DEFAULT 0",
+  );
+  alterIgnore(
+    "ALTER TABLE stock_transactions ADD COLUMN tax_auto_calculated INTEGER DEFAULT 1",
+  );
+  alterIgnore(
+    "ALTER TABLE stock_transactions ADD COLUMN recurring_plan_id TEXT DEFAULT ''",
+  );
+  alterIgnore(
+    "ALTER TABLE stock_transactions ADD COLUMN period_start_date TEXT DEFAULT ''",
+  );
+  alterIgnore(
+    "CREATE UNIQUE INDEX IF NOT EXISTS idx_stock_tx_recurring_period ON stock_transactions(user_id, recurring_plan_id, period_start_date) WHERE recurring_plan_id != '' AND period_start_date != ''",
+  );
   alterIgnore("ALTER TABLE stock_recurring ADD COLUMN amount REAL DEFAULT 0");
-  alterIgnore("ALTER TABLE stock_recurring ADD COLUMN frequency TEXT DEFAULT 'monthly'");
-  alterIgnore("ALTER TABLE stock_recurring ADD COLUMN start_date TEXT DEFAULT ''");
-  alterIgnore("ALTER TABLE stock_recurring ADD COLUMN account_id TEXT DEFAULT ''");
+  alterIgnore(
+    "ALTER TABLE stock_recurring ADD COLUMN frequency TEXT DEFAULT 'monthly'",
+  );
+  alterIgnore(
+    "ALTER TABLE stock_recurring ADD COLUMN start_date TEXT DEFAULT ''",
+  );
+  alterIgnore(
+    "ALTER TABLE stock_recurring ADD COLUMN account_id TEXT DEFAULT ''",
+  );
   alterIgnore("ALTER TABLE stock_recurring ADD COLUMN note TEXT DEFAULT ''");
-  alterIgnore("ALTER TABLE stock_recurring ADD COLUMN last_generated TEXT DEFAULT NULL");
-  alterIgnore("ALTER TABLE stock_recurring ADD COLUMN updated_at INTEGER DEFAULT 0");
+  alterIgnore(
+    "ALTER TABLE stock_recurring ADD COLUMN last_generated TEXT DEFAULT NULL",
+  );
+  alterIgnore(
+    "ALTER TABLE stock_recurring ADD COLUMN updated_at INTEGER DEFAULT 0",
+  );
   alterIgnore("ALTER TABLE stock_recurring ADD COLUMN freq TEXT DEFAULT ''");
   alterIgnore("ALTER TABLE stock_recurring ADD COLUMN shares REAL DEFAULT 0");
   alterIgnore("ALTER TABLE stock_recurring ADD COLUMN price REAL DEFAULT 0");
-  alterIgnore("ALTER TABLE stock_recurring ADD COLUMN next_date TEXT DEFAULT ''");
+  alterIgnore(
+    "ALTER TABLE stock_recurring ADD COLUMN next_date TEXT DEFAULT ''",
+  );
   alterIgnore("ALTER TABLE stock_recurring ALTER COLUMN freq DROP NOT NULL");
   alterIgnore("ALTER TABLE stock_recurring ALTER COLUMN shares DROP NOT NULL");
-  alterIgnore("ALTER TABLE stock_recurring ALTER COLUMN frequency SET DEFAULT 'monthly'");
-  alterIgnore("UPDATE stock_recurring SET frequency = COALESCE(NULLIF(frequency, ''), NULLIF(freq, ''), 'monthly') WHERE frequency IS NULL OR frequency = ''");
-  alterIgnore("UPDATE stock_recurring SET start_date = COALESCE(NULLIF(start_date, ''), NULLIF(next_date, ''), '') WHERE start_date IS NULL OR start_date = ''");
-  alterIgnore("UPDATE stock_recurring SET amount = COALESCE(NULLIF(amount, 0), COALESCE(shares, 0) * COALESCE(price, 0), 0) WHERE amount IS NULL OR amount <= 0");
-  alterIgnore("UPDATE stock_recurring SET updated_at = COALESCE(NULLIF(updated_at, 0), created_at, 0) WHERE updated_at IS NULL OR updated_at = 0");
-  alterIgnore("ALTER TABLE stock_dividends ADD COLUMN cash_dividend REAL DEFAULT 0");
-  alterIgnore("ALTER TABLE stock_dividends ADD COLUMN stock_dividend_shares REAL DEFAULT 0");
-  alterIgnore("ALTER TABLE stock_dividends ADD COLUMN account_id TEXT DEFAULT ''");
+  alterIgnore(
+    "ALTER TABLE stock_recurring ALTER COLUMN frequency SET DEFAULT 'monthly'",
+  );
+  alterIgnore(
+    "UPDATE stock_recurring SET frequency = COALESCE(NULLIF(frequency, ''), NULLIF(freq, ''), 'monthly') WHERE frequency IS NULL OR frequency = ''",
+  );
+  alterIgnore(
+    "UPDATE stock_recurring SET start_date = COALESCE(NULLIF(start_date, ''), NULLIF(next_date, ''), '') WHERE start_date IS NULL OR start_date = ''",
+  );
+  alterIgnore(
+    "UPDATE stock_recurring SET amount = COALESCE(NULLIF(amount, 0), COALESCE(shares, 0) * COALESCE(price, 0), 0) WHERE amount IS NULL OR amount <= 0",
+  );
+  alterIgnore(
+    "UPDATE stock_recurring SET updated_at = COALESCE(NULLIF(updated_at, 0), created_at, 0) WHERE updated_at IS NULL OR updated_at = 0",
+  );
+  alterIgnore(
+    "ALTER TABLE stock_dividends ADD COLUMN cash_dividend REAL DEFAULT 0",
+  );
+  alterIgnore(
+    "ALTER TABLE stock_dividends ADD COLUMN stock_dividend_shares REAL DEFAULT 0",
+  );
+  alterIgnore(
+    "ALTER TABLE stock_dividends ADD COLUMN account_id TEXT DEFAULT ''",
+  );
   alterIgnore("ALTER TABLE login_audit_logs ADD COLUMN id TEXT DEFAULT ''");
-  alterIgnore("ALTER TABLE login_audit_logs ADD COLUMN user_id TEXT DEFAULT ''");
+  alterIgnore(
+    "ALTER TABLE login_audit_logs ADD COLUMN user_id TEXT DEFAULT ''",
+  );
   alterIgnore("ALTER TABLE login_audit_logs ADD COLUMN email TEXT DEFAULT ''");
-  alterIgnore("ALTER TABLE login_audit_logs ADD COLUMN login_at INTEGER DEFAULT 0");
-  alterIgnore("ALTER TABLE login_audit_logs ADD COLUMN ip_address TEXT DEFAULT ''");
-  alterIgnore("ALTER TABLE login_audit_logs ADD COLUMN login_method TEXT DEFAULT 'password'");
-  alterIgnore("ALTER TABLE login_audit_logs ADD COLUMN is_admin_login INTEGER DEFAULT 0");
-  alterIgnore("ALTER TABLE login_audit_logs ADD COLUMN country TEXT DEFAULT ''");
-  alterIgnore("ALTER TABLE login_audit_logs ADD COLUMN user_agent TEXT DEFAULT ''");
-  alterIgnore("ALTER TABLE login_audit_logs ADD COLUMN device_id TEXT DEFAULT ''");
+  alterIgnore(
+    "ALTER TABLE login_audit_logs ADD COLUMN login_at INTEGER DEFAULT 0",
+  );
+  alterIgnore(
+    "ALTER TABLE login_audit_logs ADD COLUMN ip_address TEXT DEFAULT ''",
+  );
+  alterIgnore(
+    "ALTER TABLE login_audit_logs ADD COLUMN login_method TEXT DEFAULT 'password'",
+  );
+  alterIgnore(
+    "ALTER TABLE login_audit_logs ADD COLUMN is_admin_login INTEGER DEFAULT 0",
+  );
+  alterIgnore(
+    "ALTER TABLE login_audit_logs ADD COLUMN country TEXT DEFAULT ''",
+  );
+  alterIgnore(
+    "ALTER TABLE login_audit_logs ADD COLUMN user_agent TEXT DEFAULT ''",
+  );
+  alterIgnore(
+    "ALTER TABLE login_audit_logs ADD COLUMN device_id TEXT DEFAULT ''",
+  );
   alterIgnore("ALTER TABLE login_attempt_logs ADD COLUMN id TEXT DEFAULT ''");
-  alterIgnore("ALTER TABLE login_attempt_logs ADD COLUMN user_id TEXT DEFAULT ''");
-  alterIgnore("ALTER TABLE login_attempt_logs ADD COLUMN email TEXT DEFAULT ''");
-  alterIgnore("ALTER TABLE login_attempt_logs ADD COLUMN login_at INTEGER DEFAULT 0");
-  alterIgnore("ALTER TABLE login_attempt_logs ADD COLUMN ip_address TEXT DEFAULT ''");
-  alterIgnore("ALTER TABLE login_attempt_logs ADD COLUMN login_method TEXT DEFAULT 'password'");
-  alterIgnore("ALTER TABLE login_attempt_logs ADD COLUMN is_admin_login INTEGER DEFAULT 0");
-  alterIgnore("ALTER TABLE login_attempt_logs ADD COLUMN is_success INTEGER DEFAULT 0");
-  alterIgnore("ALTER TABLE login_attempt_logs ADD COLUMN failure_reason TEXT DEFAULT ''");
-  alterIgnore("ALTER TABLE login_attempt_logs ADD COLUMN country TEXT DEFAULT ''");
-  alterIgnore("ALTER TABLE login_attempt_logs ADD COLUMN user_agent TEXT DEFAULT ''");
-  alterIgnore("ALTER TABLE login_attempt_logs ADD COLUMN device_id TEXT DEFAULT ''");
-  alterIgnore("ALTER TABLE login_sessions ADD COLUMN device_id TEXT DEFAULT ''");
+  alterIgnore(
+    "ALTER TABLE login_attempt_logs ADD COLUMN user_id TEXT DEFAULT ''",
+  );
+  alterIgnore(
+    "ALTER TABLE login_attempt_logs ADD COLUMN email TEXT DEFAULT ''",
+  );
+  alterIgnore(
+    "ALTER TABLE login_attempt_logs ADD COLUMN login_at INTEGER DEFAULT 0",
+  );
+  alterIgnore(
+    "ALTER TABLE login_attempt_logs ADD COLUMN ip_address TEXT DEFAULT ''",
+  );
+  alterIgnore(
+    "ALTER TABLE login_attempt_logs ADD COLUMN login_method TEXT DEFAULT 'password'",
+  );
+  alterIgnore(
+    "ALTER TABLE login_attempt_logs ADD COLUMN is_admin_login INTEGER DEFAULT 0",
+  );
+  alterIgnore(
+    "ALTER TABLE login_attempt_logs ADD COLUMN is_success INTEGER DEFAULT 0",
+  );
+  alterIgnore(
+    "ALTER TABLE login_attempt_logs ADD COLUMN failure_reason TEXT DEFAULT ''",
+  );
+  alterIgnore(
+    "ALTER TABLE login_attempt_logs ADD COLUMN country TEXT DEFAULT ''",
+  );
+  alterIgnore(
+    "ALTER TABLE login_attempt_logs ADD COLUMN user_agent TEXT DEFAULT ''",
+  );
+  alterIgnore(
+    "ALTER TABLE login_attempt_logs ADD COLUMN device_id TEXT DEFAULT ''",
+  );
+  alterIgnore(
+    "ALTER TABLE login_sessions ADD COLUMN device_id TEXT DEFAULT ''",
+  );
 
   db.run(`CREATE TABLE IF NOT EXISTS mcp_credentials (
     id TEXT PRIMARY KEY,
@@ -613,10 +848,18 @@ async function _runMigrations(): Promise<void> {
     expires_at INTEGER DEFAULT 0,
     revoked_at INTEGER DEFAULT 0
   )`);
-  alterIgnore("CREATE INDEX IF NOT EXISTS idx_mcp_credentials_user ON mcp_credentials(user_id, revoked_at)");
-  alterIgnore("CREATE UNIQUE INDEX IF NOT EXISTS idx_mcp_credentials_hash ON mcp_credentials(token_hash)");
-  alterIgnore("ALTER TABLE mcp_credentials ADD COLUMN allow_create INTEGER NOT NULL DEFAULT 0");
-  alterIgnore("ALTER TABLE mcp_credentials ADD COLUMN allow_update_note INTEGER NOT NULL DEFAULT 0");
+  alterIgnore(
+    "CREATE INDEX IF NOT EXISTS idx_mcp_credentials_user ON mcp_credentials(user_id, revoked_at)",
+  );
+  alterIgnore(
+    "CREATE UNIQUE INDEX IF NOT EXISTS idx_mcp_credentials_hash ON mcp_credentials(token_hash)",
+  );
+  alterIgnore(
+    "ALTER TABLE mcp_credentials ADD COLUMN allow_create INTEGER NOT NULL DEFAULT 0",
+  );
+  alterIgnore(
+    "ALTER TABLE mcp_credentials ADD COLUMN allow_update_note INTEGER NOT NULL DEFAULT 0",
+  );
 
   db.run(`CREATE TABLE IF NOT EXISTS mcp_oauth_clients (
     client_id TEXT PRIMARY KEY,
@@ -635,11 +878,21 @@ async function _runMigrations(): Promise<void> {
     scope TEXT NOT NULL DEFAULT 'mcp:read',
     created_at INTEGER NOT NULL
   )`);
-  alterIgnore("ALTER TABLE mcp_oauth_clients ADD COLUMN client_secret_hash TEXT DEFAULT ''");
-  alterIgnore("ALTER TABLE mcp_oauth_clients ADD COLUMN client_secret_expires_at INTEGER DEFAULT 0");
-  alterIgnore("ALTER TABLE mcp_oauth_clients ADD COLUMN jwks_uri TEXT DEFAULT ''");
-  alterIgnore("ALTER TABLE mcp_oauth_clients ADD COLUMN token_endpoint_auth_signing_alg TEXT DEFAULT ''");
-  alterIgnore("CREATE INDEX IF NOT EXISTS idx_mcp_oauth_clients_created ON mcp_oauth_clients(created_at)");
+  alterIgnore(
+    "ALTER TABLE mcp_oauth_clients ADD COLUMN client_secret_hash TEXT DEFAULT ''",
+  );
+  alterIgnore(
+    "ALTER TABLE mcp_oauth_clients ADD COLUMN client_secret_expires_at INTEGER DEFAULT 0",
+  );
+  alterIgnore(
+    "ALTER TABLE mcp_oauth_clients ADD COLUMN jwks_uri TEXT DEFAULT ''",
+  );
+  alterIgnore(
+    "ALTER TABLE mcp_oauth_clients ADD COLUMN token_endpoint_auth_signing_alg TEXT DEFAULT ''",
+  );
+  alterIgnore(
+    "CREATE INDEX IF NOT EXISTS idx_mcp_oauth_clients_created ON mcp_oauth_clients(created_at)",
+  );
 
   db.run(`CREATE TABLE IF NOT EXISTS mcp_oauth_client_assertions (
     client_id TEXT NOT NULL,
@@ -648,7 +901,9 @@ async function _runMigrations(): Promise<void> {
     created_at INTEGER NOT NULL,
     PRIMARY KEY (client_id, jti)
   )`);
-  alterIgnore("CREATE INDEX IF NOT EXISTS idx_mcp_oauth_assertions_expires ON mcp_oauth_client_assertions(expires_at)");
+  alterIgnore(
+    "CREATE INDEX IF NOT EXISTS idx_mcp_oauth_assertions_expires ON mcp_oauth_client_assertions(expires_at)",
+  );
 
   db.run(`CREATE TABLE IF NOT EXISTS mcp_oauth_authorization_codes (
     code_hash TEXT PRIMARY KEY,
@@ -663,8 +918,12 @@ async function _runMigrations(): Promise<void> {
     expires_at INTEGER NOT NULL,
     consumed_at INTEGER DEFAULT 0
   )`);
-  alterIgnore("CREATE INDEX IF NOT EXISTS idx_mcp_oauth_codes_user ON mcp_oauth_authorization_codes(user_id, expires_at)");
-  alterIgnore("CREATE INDEX IF NOT EXISTS idx_mcp_oauth_codes_client ON mcp_oauth_authorization_codes(client_id, expires_at)");
+  alterIgnore(
+    "CREATE INDEX IF NOT EXISTS idx_mcp_oauth_codes_user ON mcp_oauth_authorization_codes(user_id, expires_at)",
+  );
+  alterIgnore(
+    "CREATE INDEX IF NOT EXISTS idx_mcp_oauth_codes_client ON mcp_oauth_authorization_codes(client_id, expires_at)",
+  );
 
   db.run(`CREATE TABLE IF NOT EXISTS mcp_oauth_tokens (
     token_hash TEXT PRIMARY KEY,
@@ -681,9 +940,15 @@ async function _runMigrations(): Promise<void> {
     replaced_by_hash TEXT DEFAULT '',
     last_used_at INTEGER DEFAULT 0
   )`);
-  alterIgnore("CREATE INDEX IF NOT EXISTS idx_mcp_oauth_tokens_user ON mcp_oauth_tokens(user_id, revoked_at, expires_at)");
-  alterIgnore("CREATE INDEX IF NOT EXISTS idx_mcp_oauth_tokens_family ON mcp_oauth_tokens(family_id, revoked_at)");
-  alterIgnore("CREATE INDEX IF NOT EXISTS idx_mcp_oauth_tokens_client ON mcp_oauth_tokens(client_id, expires_at)");
+  alterIgnore(
+    "CREATE INDEX IF NOT EXISTS idx_mcp_oauth_tokens_user ON mcp_oauth_tokens(user_id, revoked_at, expires_at)",
+  );
+  alterIgnore(
+    "CREATE INDEX IF NOT EXISTS idx_mcp_oauth_tokens_family ON mcp_oauth_tokens(family_id, revoked_at)",
+  );
+  alterIgnore(
+    "CREATE INDEX IF NOT EXISTS idx_mcp_oauth_tokens_client ON mcp_oauth_tokens(client_id, expires_at)",
+  );
 
   db.run(`CREATE TABLE IF NOT EXISTS mcp_oauth_connections (
     user_id TEXT NOT NULL,
@@ -695,8 +960,12 @@ async function _runMigrations(): Promise<void> {
     last_used_at INTEGER NOT NULL,
     PRIMARY KEY (user_id, client_id)
   )`);
-  alterIgnore("CREATE INDEX IF NOT EXISTS idx_mcp_oauth_connections_user ON mcp_oauth_connections(user_id)");
-  alterIgnore("ALTER TABLE mcp_oauth_connections ADD COLUMN allow_update_note INTEGER NOT NULL DEFAULT 0");
+  alterIgnore(
+    "CREATE INDEX IF NOT EXISTS idx_mcp_oauth_connections_user ON mcp_oauth_connections(user_id)",
+  );
+  alterIgnore(
+    "ALTER TABLE mcp_oauth_connections ADD COLUMN allow_update_note INTEGER NOT NULL DEFAULT 0",
+  );
   alterIgnore(`INSERT INTO mcp_oauth_connections (user_id, client_id, client_name, allow_create, first_connected_at, last_used_at)
     SELECT user_id, client_id, MIN(client_name), 0, MIN(issued_at), MAX(issued_at)
     FROM mcp_oauth_tokens
@@ -715,8 +984,12 @@ async function _runMigrations(): Promise<void> {
     created_at INTEGER NOT NULL,
     expires_at INTEGER NOT NULL
   )`);
-  alterIgnore("CREATE UNIQUE INDEX IF NOT EXISTS idx_mcp_idempotency_key ON mcp_transaction_idempotency(credential_id, idempotency_key)");
-  alterIgnore("CREATE INDEX IF NOT EXISTS idx_mcp_idempotency_expires ON mcp_transaction_idempotency(expires_at)");
+  alterIgnore(
+    "CREATE UNIQUE INDEX IF NOT EXISTS idx_mcp_idempotency_key ON mcp_transaction_idempotency(credential_id, idempotency_key)",
+  );
+  alterIgnore(
+    "CREATE INDEX IF NOT EXISTS idx_mcp_idempotency_expires ON mcp_transaction_idempotency(expires_at)",
+  );
 
   // 006-credit-card-total-repayment：信用卡總金額還款的分配快照（FR-020a、FR-020b）。
   // 無任何資料回填或歷史重算（FR-019c）；部署啟動自動套用。
@@ -733,8 +1006,12 @@ async function _runMigrations(): Promise<void> {
     created_at INTEGER NOT NULL,
     updated_at INTEGER NOT NULL
   )`);
-  alterIgnore("CREATE INDEX IF NOT EXISTS idx_ccr_summaries_user ON credit_card_repayment_summaries(user_id)");
-  alterIgnore("CREATE INDEX IF NOT EXISTS idx_transactions_repayment_summary ON transactions(repayment_summary_id) WHERE repayment_summary_id != ''");
+  alterIgnore(
+    "CREATE INDEX IF NOT EXISTS idx_ccr_summaries_user ON credit_card_repayment_summaries(user_id)",
+  );
+  alterIgnore(
+    "CREATE INDEX IF NOT EXISTS idx_transactions_repayment_summary ON transactions(repayment_summary_id) WHERE repayment_summary_id != ''",
+  );
 
   saveDB();
 }

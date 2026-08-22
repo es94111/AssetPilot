@@ -24,6 +24,14 @@
     "supportsPaid": false
   },
   {
+    "name": "Yahoo Finance",
+    "description": "美股即時／收盤報價、公司名稱與現金股利查詢",
+    "url": "https://finance.yahoo.com",
+    "attribution": null,
+    "supportsFree": true,
+    "supportsPaid": false
+  },
+  {
     "name": "Google Identity Services",
     "description": "Google SSO 登入",
     "url": "https://developers.google.com/identity/gsi/web",

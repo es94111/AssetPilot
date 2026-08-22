@@ -1027,6 +1027,9 @@ export const es = {
       },
       common: {
         stockLabel: "Acción",
+        market: "市場",
+        marketTaiwan: "台股",
+        marketUs: "美股",
         stockRequired: "Acción *",
         stockType: {
           stock: "Acción",

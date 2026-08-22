@@ -57,7 +57,9 @@ class _StockSettingsScreenState extends State<StockSettingsScreen> {
           .map((e) => Account.fromJson((e as Map).cast<String, dynamic>()))
           .toList(),
       recurring: (results[3] as List)
-          .map((e) => StockRecurring.fromJson((e as Map).cast<String, dynamic>()))
+          .map(
+            (e) => StockRecurring.fromJson((e as Map).cast<String, dynamic>()),
+          )
           .toList(),
     );
   }
@@ -76,15 +78,9 @@ class _StockSettingsScreenState extends State<StockSettingsScreen> {
           child: ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              _StockSettingsForm(
-                initial: data.settings,
-                onSaved: _reload,
-              ),
+              _StockSettingsForm(initial: data.settings, onSaved: _reload),
               SizedBox(height: 24),
-              _StockStatusSection(
-                stocks: data.stocks,
-                onChanged: _reload,
-              ),
+              _StockStatusSection(stocks: data.stocks, onChanged: _reload),
               SizedBox(height: 24),
               _RecurringSection(
                 stocks: data.stocks,
@@ -203,7 +199,8 @@ class _StockSettingsFormState extends State<_StockSettingsForm> {
         ),
         validator: (v) {
           final n = num.tryParse(v?.trim() ?? '');
-          if (n == null || n < 0) return trKey('mobileLegacyEnterANumberGreaterThanOrEqualTo');
+          if (n == null || n < 0)
+            return trKey('mobileLegacyEnterANumberGreaterThanOrEqualTo');
           return null;
         },
       ),
@@ -222,14 +219,29 @@ class _StockSettingsFormState extends State<_StockSettingsForm> {
             style: Theme.of(context).textTheme.titleMedium,
           ),
           SizedBox(height: 12),
-          _num(trKey('mobileLegacyCommissionRate'), _feeRate, helper: trKey('mobileLegacyStandardBrokerageRate01425')),
-          _num(trKey('mobileLegacyDiscount01'), _feeDiscount, helper: trKey('mobileLegacyExample06MeansA40Discount')),
+          _num(
+            trKey('mobileLegacyCommissionRate'),
+            _feeRate,
+            helper: trKey('mobileLegacyStandardBrokerageRate01425'),
+          ),
+          _num(
+            trKey('mobileLegacyDiscount01'),
+            _feeDiscount,
+            helper: trKey('mobileLegacyExample06MeansA40Discount'),
+          ),
           _num(trKey('mobileLegacyMinimumBoardLotCommission'), _feeMinLot),
           _num(trKey('mobileLegacyMinimumOddLotCommission'), _feeMinOdd),
           SizedBox(height: 8),
-          Text(trKey('mobileLegacyTransactionTaxSell'), style: Theme.of(context).textTheme.titleMedium),
+          Text(
+            trKey('mobileLegacyTransactionTaxSell'),
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
           SizedBox(height: 12),
-          _num(trKey('mobileLegacyStocks'), _taxStock, helper: trKey('mobileLegacyStandardRate03')),
+          _num(
+            trKey('mobileLegacyStocks'),
+            _taxStock,
+            helper: trKey('mobileLegacyStandardRate03'),
+          ),
           _num('ETF（%）', _taxEtf, helper: trKey('mobileLegacyStandardRate01')),
           _num(trKey('mobileLegacyWarrants'), _taxWarrant),
           _num(trKey('mobileLegacyMinimumTransactionTax'), _taxMin),
@@ -285,7 +297,11 @@ class _StockStatusSection extends StatelessWidget {
       onChanged();
     } catch (e) {
       if (context.mounted) {
-        toast(context, trKey('featuresStocksSettingsMessagesDelistedUpdateFailed'), isError: true);
+        toast(
+          context,
+          trKey('featuresStocksSettingsMessagesDelistedUpdateFailed'),
+          isError: true,
+        );
       }
     }
   }
@@ -311,9 +327,11 @@ class _StockStatusSection extends StatelessWidget {
               elevation: 0,
               margin: const EdgeInsets.only(bottom: 8),
               child: ListTile(
-                title: Text('${s.symbol} ${s.name}'),
+                title: Text(
+                  '${s.market == 'US' ? trKey('featuresStocksCommonMarketUs') : trKey('featuresStocksCommonMarketTaiwan')} · ${s.symbol} ${s.name}',
+                ),
                 subtitle: Text(
-                  '${trKey('featuresStocksSettingsCurrentPrice')} ${twd(s.currentPrice)}',
+                  '${trKey('featuresStocksSettingsCurrentPrice')} ${money(s.currentPrice, s.currency)}',
                 ),
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -325,7 +343,9 @@ class _StockStatusSection extends StatelessWidget {
                             : trKey('featuresStocksSettingsNormalTracking'),
                         style: TextStyle(
                           fontSize: 11,
-                          color: s.delisted ? Colors.amber.shade800 : Colors.green.shade700,
+                          color: s.delisted
+                              ? Colors.amber.shade800
+                              : Colors.green.shade700,
                         ),
                       ),
                       visualDensity: VisualDensity.compact,
@@ -369,7 +389,10 @@ class _RecurringSection extends StatelessWidget {
     _ => trKey('featuresStocksSettingsFrequencyLabelsMonthly'),
   };
 
-  Future<void> _openForm(BuildContext context, [StockRecurring? existing]) async {
+  Future<void> _openForm(
+    BuildContext context, [
+    StockRecurring? existing,
+  ]) async {
     if (stocks.isEmpty) {
       toast(context, trKey('mobileLegacyAddAStockOnTheHoldingsTabFirst'));
       return;
@@ -457,9 +480,11 @@ class _RecurringSection extends StatelessWidget {
               elevation: 0,
               margin: const EdgeInsets.only(bottom: 8),
               child: ListTile(
-                title: Text('${r.symbol} ${r.stockName}'),
+                title: Text(
+                  '${r.market == 'US' ? trKey('featuresStocksCommonMarketUs') : trKey('featuresStocksCommonMarketTaiwan')} · ${r.symbol} ${r.stockName}',
+                ),
                 subtitle: Text(
-                  '${twd(r.amount)} · ${_frequencyLabel(r.frequency)}'
+                  '${money(r.amount, r.currency)} · ${_frequencyLabel(r.frequency)}'
                   '${r.lastGenerated.isEmpty ? '' : ' · ${trKey('featuresStocksSettingsLastGenerated')} ${r.lastGenerated}'}',
                 ),
                 trailing: Row(
@@ -472,7 +497,9 @@ class _RecurringSection extends StatelessWidget {
                             : trKey('featuresStocksSettingsInactive'),
                         style: TextStyle(
                           fontSize: 11,
-                          color: r.isActive ? Colors.green.shade700 : Colors.grey,
+                          color: r.isActive
+                              ? Colors.green.shade700
+                              : Colors.grey,
                         ),
                       ),
                       visualDensity: VisualDensity.compact,
@@ -642,7 +669,9 @@ class _RecurringFormState extends State<_RecurringForm> {
                   decimal: true,
                 ),
                 decoration: InputDecoration(
-                  labelText: trKey('featuresStocksSettingsRecurringAmountLabel'),
+                  labelText: trKey(
+                    'featuresStocksSettingsRecurringAmountLabel',
+                  ),
                   border: OutlineInputBorder(),
                 ),
               ),

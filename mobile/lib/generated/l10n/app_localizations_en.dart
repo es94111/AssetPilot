@@ -2376,6 +2376,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get featuresStocksCommonStockLabel => 'Stock';
 
   @override
+  String get featuresStocksCommonMarket => 'Market';
+
+  @override
+  String get featuresStocksCommonMarketTaiwan => 'Taiwan';
+
+  @override
+  String get featuresStocksCommonMarketUs => 'US';
+
+  @override
   String get featuresStocksCommonStockRequired => 'Stock *';
 
   @override
@@ -2494,7 +2503,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get featuresStocksPortfolioPriceModalDescription =>
-      'AssetPilot first queries the public TWSE API from your browser. If the browser request is blocked, it falls back to the signed-in user API proxy and updates your holdings.';
+      'Taiwan stocks use TWSE and US stocks use Yahoo Finance; failed lookups never overwrite the existing price.';
 
   @override
   String featuresStocksPortfolioPriceResult(Object updated) {
@@ -2603,7 +2612,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get featuresStocksDividendsSyncDescription =>
-      'Automatically sync historical ex-dividend data from TWSE based on your holdings.';
+      'Automatically sync cash dividends from TWSE for Taiwan stocks and Yahoo Finance for US stocks based on your holdings.';
 
   @override
   String get featuresStocksDividendsSyncStart => 'Start sync';

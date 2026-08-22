@@ -1027,6 +1027,9 @@ export const zhCN = {
       },
       common: {
         stockLabel: "股票",
+        market: "市場",
+        marketTaiwan: "台股",
+        marketUs: "美股",
         stockRequired: "股票 *",
         stockType: {
           stock: "股票",

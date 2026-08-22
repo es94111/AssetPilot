@@ -272,6 +272,10 @@ components:
       type: object
       required: [symbol, name]
       properties:
+        market:
+          type: string
+          enum: [TW, US]
+          default: TW
         symbol:
           type: string
         name:
@@ -371,10 +375,10 @@ components:
         lastUsedAt:
           # OpenAPI 3.1 起對齊 JSON Schema 2020-12，3.0 的 `nullable: true` 已移除，
           # 可空型別一律寫成型別陣列。
-          type: [string, 'null']
+          type: [string, "null"]
           format: date-time
         expiresAt:
-          type: [string, 'null']
+          type: [string, "null"]
           format: date-time
       required: [id, name, status, allowCreate, allowUpdateNote, createdAt]
 
@@ -417,7 +421,13 @@ components:
         lastUsedAt:
           type: string
           format: date-time
-      required: [clientId, clientName, allowCreate, allowUpdateNote, firstConnectedAt, lastUsedAt]
+      required:
+        - clientId
+        - clientName
+        - allowCreate
+        - allowUpdateNote
+        - firstConnectedAt
+        - lastUsedAt
 
     # 既有 McpOAuthConnectionAllowCreateUpdate 更名而來，理由同上。
     McpOAuthConnectionPermissionUpdate:
@@ -441,7 +451,7 @@ components:
           type: string
           description: 付款帳戶 id，不可為信用卡帳戶（FR-010）
         date:
-          type: [string, 'null']
+          type: [string, "null"]
           description: 還款日期 YYYY-MM-DD；省略或無法解析時以使用者時區的今日為準（FR-014）
         totalAmount:
           type: integer
@@ -449,7 +459,8 @@ components:
           description: 本次還款總金額（付款帳戶幣別），須為大於 0 的整數且不得小於納入卡片張數（FR-008、FR-008a）
         repayments:
           type: array
-          description: 舊版行動 App 逐張卡片金額（過渡相容路徑）；系統加總為一筆總金額後套用自動納入與等比例分配重算（FR-019a）
+          description: 舊版行動 App 逐張卡片金額（過渡相容路徑）；
+            系統加總為一筆總金額後套用自動納入與等比例分配重算（FR-019a）
           items:
             type: object
             properties:
@@ -476,7 +487,13 @@ components:
         balanceAfter:
           type: number
           description: 還款後該卡餘額；大於 0 代表預繳（FR-004、FR-020）
-      required: [cardId, cardName, cardCurrency, amount, amountInCardCurrency, balanceAfter]
+      required:
+        - cardId
+        - cardName
+        - cardCurrency
+        - amount
+        - amountInCardCurrency
+        - balanceAfter
 
     RepaymentResponse:
       type: object
@@ -496,8 +513,15 @@ components:
         allocations:
           type: array
           items:
-            $ref: '#/components/schemas/RepaymentAllocation'
-      required: [ok, summaryId, date, fromAccountId, currency, totalAmount, allocations]
+            $ref: "#/components/schemas/RepaymentAllocation"
+      required:
+        - ok
+        - summaryId
+        - date
+        - fromAccountId
+        - currency
+        - totalAmount
+        - allocations
 
     PayableCard:
       type: object
@@ -532,7 +556,7 @@ components:
         cards:
           type: array
           items:
-            $ref: '#/components/schemas/PayableCard'
+            $ref: "#/components/schemas/PayableCard"
         totalDebt:
           type: integer
         minTotalAmount:
@@ -558,7 +582,13 @@ components:
         status:
           type: string
           enum: [intact, modified, deleted]
-      required: [cardId, cardName, cardCurrency, amount, amountInCardCurrency, status]
+      required:
+        - cardId
+        - cardName
+        - cardCurrency
+        - amount
+        - amountInCardCurrency
+        - status
 
     RepaymentSummaryResponse:
       type: object
@@ -590,8 +620,16 @@ components:
         allocations:
           type: array
           items:
-            $ref: '#/components/schemas/SummaryAllocation'
-      required: [id, date, fromAccount, totalAmount, inputMode, createdAt, stale, allocations]
+            $ref: "#/components/schemas/SummaryAllocation"
+      required:
+        - id
+        - date
+        - fromAccount
+        - totalAmount
+        - inputMode
+        - createdAt
+        - stale
+        - allocations
 
 # ─────────────────────────────────────────
 # 預設安全性（全域）
@@ -603,7 +641,6 @@ security:
 # 路由定義
 # ─────────────────────────────────────────
 paths:
-
   # ── 公開頁面 ──────────────────────────
   /api/config:
     get:
@@ -1026,7 +1063,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CategoryInput'
+              $ref: "#/components/schemas/CategoryInput"
       responses:
         "200":
           description: 新增成功
@@ -1100,7 +1137,7 @@ paths:
                 rates:
                   type: array
                   items:
-                    $ref: '#/components/schemas/ExchangeRateItem'
+                    $ref: "#/components/schemas/ExchangeRateItem"
       responses:
         "200":
           description: 儲存成功
@@ -1162,7 +1199,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AccountInput'
+              $ref: "#/components/schemas/AccountInput"
       responses:
         "200":
           description: 新增成功
@@ -1226,16 +1263,17 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RepaymentRequest'
+              $ref: "#/components/schemas/RepaymentRequest"
       responses:
         "200":
           description: 還款成功，回傳本次實際寫入的分配結果
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RepaymentResponse'
+                $ref: "#/components/schemas/RepaymentResponse"
         "400":
-          description: 參數錯誤（InvalidTotalAmount／TotalAmountTooSmall／NoPayableCards）
+          description: 參數錯誤（InvalidTotalAmount／TotalAmountTooSmall／
+            NoPayableCards）
         "500":
           description: 寫入失敗，本次全部未寫入（已回滾）
 
@@ -1256,7 +1294,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RepaymentCardsResponse'
+                $ref: "#/components/schemas/RepaymentCardsResponse"
         "400":
           description: 付款帳戶為信用卡（NotCreditCardPayer）
         "404":
@@ -1279,7 +1317,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RepaymentSummaryResponse'
+                $ref: "#/components/schemas/RepaymentSummaryResponse"
         "404":
           description: 摘要不存在或不屬於本人
 
@@ -1336,7 +1374,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TransactionInput'
+              $ref: "#/components/schemas/TransactionInput"
       responses:
         "200":
           description: 新增成功
@@ -1499,7 +1537,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/BatchIdsInput'
+              $ref: "#/components/schemas/BatchIdsInput"
       responses:
         "200":
           description: 刪除成功
@@ -1591,7 +1629,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/BudgetInput'
+              $ref: "#/components/schemas/BudgetInput"
       responses:
         "200":
           description: 儲存成功
@@ -1629,7 +1667,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RecurringInput'
+              $ref: "#/components/schemas/RecurringInput"
       responses:
         "200":
           description: 新增成功
@@ -1797,7 +1835,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/StockInput'
+              $ref: "#/components/schemas/StockInput"
       responses:
         "200":
           description: 新增成功
@@ -1922,7 +1960,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/StockTransactionInput'
+              $ref: "#/components/schemas/StockTransactionInput"
       responses:
         "200":
           description: 新增成功
@@ -1991,7 +2029,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/BatchIdsInput'
+              $ref: "#/components/schemas/BatchIdsInput"
       responses:
         "200":
           description: 刪除成功
@@ -2069,7 +2107,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/StockDividendInput'
+              $ref: "#/components/schemas/StockDividendInput"
       responses:
         "200":
           description: 新增成功
@@ -2131,7 +2169,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/BatchIdsInput'
+              $ref: "#/components/schemas/BatchIdsInput"
       responses:
         "200":
           description: 刪除成功
@@ -2349,7 +2387,8 @@ paths:
         "200":
           description: 執行結果
 
-  # ── MCP 寫入權限（新增資料／更新備註，003-mcp-write-no-delete ＋ 004-mcp-update-notes-only） ──────────
+  # ── MCP 寫入權限（新增資料／更新備註，003-mcp-write-no-delete ＋
+  # 004-mcp-update-notes-only） ─────────────────────────────────────────────
   /api/user/mcp-credentials/{id}:
     patch:
       operationId: setMcpCredentialPermissions
@@ -2370,7 +2409,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/McpCredentialPermissionUpdate'
+              $ref: "#/components/schemas/McpCredentialPermissionUpdate"
       responses:
         "200":
           description: 已更新
@@ -2380,19 +2419,19 @@ paths:
                 type: object
                 properties:
                   credential:
-                    $ref: '#/components/schemas/McpCredential'
+                    $ref: "#/components/schemas/McpCredential"
         "400":
           description: 請求格式錯誤（未提供任何權限欄位，或欄位非布林值）
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
         "404":
           description: 找不到此憑證
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
 
   /api/user/mcp-oauth-connections:
     get:
@@ -2414,7 +2453,7 @@ paths:
                   connections:
                     type: array
                     items:
-                      $ref: '#/components/schemas/McpOAuthConnection'
+                      $ref: "#/components/schemas/McpOAuthConnection"
 
   /api/user/mcp-oauth-connections/{clientId}:
     patch:
@@ -2435,7 +2474,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/McpOAuthConnectionPermissionUpdate'
+              $ref: "#/components/schemas/McpOAuthConnectionPermissionUpdate"
       responses:
         "200":
           description: 已更新
@@ -2445,19 +2484,19 @@ paths:
                 type: object
                 properties:
                   connection:
-                    $ref: '#/components/schemas/McpOAuthConnection'
+                    $ref: "#/components/schemas/McpOAuthConnection"
         "400":
           description: 請求格式錯誤（未提供任何權限欄位，或欄位非布林值）
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
         "404":
           description: 找不到此連線
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
 
   # ── 管理員 / 系統 / 資料庫備份（不經過 Cloudflare，不納入 API Shield） ──
   # /api/admin/*        — 管理員設定、使用者管理、登入紀錄、憑證管理

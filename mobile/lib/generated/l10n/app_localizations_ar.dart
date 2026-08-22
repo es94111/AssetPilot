@@ -2367,6 +2367,15 @@ class AppLocalizationsAr extends AppLocalizations {
   String get featuresStocksCommonStockLabel => 'السهم';
 
   @override
+  String get featuresStocksCommonMarket => '市場';
+
+  @override
+  String get featuresStocksCommonMarketTaiwan => '台股';
+
+  @override
+  String get featuresStocksCommonMarketUs => '美股';
+
+  @override
   String get featuresStocksCommonStockRequired => 'السهم *';
 
   @override

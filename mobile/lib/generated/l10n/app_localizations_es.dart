@@ -2422,6 +2422,15 @@ class AppLocalizationsEs extends AppLocalizations {
   String get featuresStocksCommonStockLabel => 'Acción';
 
   @override
+  String get featuresStocksCommonMarket => '市場';
+
+  @override
+  String get featuresStocksCommonMarketTaiwan => '台股';
+
+  @override
+  String get featuresStocksCommonMarketUs => '美股';
+
+  @override
   String get featuresStocksCommonStockRequired => 'Acción *';
 
   @override

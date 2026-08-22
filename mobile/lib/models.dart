@@ -246,7 +246,9 @@ class Txn {
       isFxFee: _asBool(j['isFxFee'] ?? j['is_fx_fee']),
       aiCreated: _asBool(j['aiCreated'] ?? j['ai_created']),
       noteAiModified: _asBool(j['noteAiModified'] ?? j['note_ai_modified']),
-      repaymentSummaryId: _asStr(j['repaymentSummaryId'] ?? j['repayment_summary_id']),
+      repaymentSummaryId: _asStr(
+        j['repaymentSummaryId'] ?? j['repayment_summary_id'],
+      ),
       updatedAt: _asNum(j['updatedAt'] ?? j['updated_at']),
       catName:
           (j['cat_name'] ??
@@ -442,6 +444,8 @@ class Stock {
   final String id;
   final String symbol;
   final String name;
+  final String market;
+  final String currency;
   final num totalShares;
   final num avgCost;
   final num currentPrice;
@@ -456,6 +460,8 @@ class Stock {
     required this.id,
     required this.symbol,
     required this.name,
+    required this.market,
+    required this.currency,
     required this.totalShares,
     required this.avgCost,
     required this.currentPrice,
@@ -471,6 +477,12 @@ class Stock {
     id: _asStr(j['id']),
     symbol: _asStr(j['symbol']),
     name: _asStr(j['name']),
+    market: _asStr(j['market']).isEmpty
+        ? 'TW'
+        : _asStr(j['market']).toUpperCase(),
+    currency: _asStr(j['currency']).isEmpty
+        ? 'TWD'
+        : _asStr(j['currency']).toUpperCase(),
     totalShares: _asNum(j['totalShares']),
     avgCost: _asNum(j['avgCost']),
     currentPrice: _asNum(j['currentPrice']),
@@ -514,6 +526,8 @@ class StockTxn {
   final String stockId;
   final String symbol;
   final String stockName;
+  final String market;
+  final String currency;
   final String type; // buy / sell
   final num shares;
   final num price;
@@ -527,6 +541,8 @@ class StockTxn {
     required this.stockId,
     required this.symbol,
     required this.stockName,
+    required this.market,
+    required this.currency,
     required this.type,
     required this.shares,
     required this.price,
@@ -541,6 +557,12 @@ class StockTxn {
     stockId: _asStr(j['stockId'] ?? j['stock_id']),
     symbol: _asStr(j['symbol']),
     stockName: _asStr(j['stock_name'] ?? j['name']),
+    market: _asStr(j['market']).isEmpty
+        ? 'TW'
+        : _asStr(j['market']).toUpperCase(),
+    currency: _asStr(j['currency']).isEmpty
+        ? 'TWD'
+        : _asStr(j['currency']).toUpperCase(),
     type: _asStr(j['type']),
     shares: _asNum(j['shares']),
     price: _asNum(j['price']),
@@ -557,6 +579,8 @@ class Dividend {
   final String stockId;
   final String symbol;
   final String stockName;
+  final String market;
+  final String currency;
   final num cashDividend;
   final num stockDividendShares;
   final String date;
@@ -568,6 +592,8 @@ class Dividend {
     required this.stockId,
     required this.symbol,
     required this.stockName,
+    required this.market,
+    required this.currency,
     required this.cashDividend,
     required this.stockDividendShares,
     required this.date,
@@ -580,6 +606,12 @@ class Dividend {
     stockId: _asStr(j['stockId'] ?? j['stock_id']),
     symbol: _asStr(j['symbol']),
     stockName: _asStr(j['stock_name'] ?? j['name']),
+    market: _asStr(j['market']).isEmpty
+        ? 'TW'
+        : _asStr(j['market']).toUpperCase(),
+    currency: _asStr(j['currency']).isEmpty
+        ? 'TWD'
+        : _asStr(j['currency']).toUpperCase(),
     cashDividend: _asNum(j['cash_dividend'] ?? j['cashDividend']),
     stockDividendShares: _asNum(
       j['stock_dividend_shares'] ?? j['stockDividendShares'],
@@ -630,6 +662,8 @@ class StockRecurring {
   final String stockId;
   final String symbol;
   final String stockName;
+  final String market;
+  final String currency;
   final num amount;
   final String frequency; // daily / weekly / monthly / yearly
   final String startDate; // YYYY-MM-DD
@@ -643,6 +677,8 @@ class StockRecurring {
     required this.stockId,
     required this.symbol,
     required this.stockName,
+    required this.market,
+    required this.currency,
     required this.amount,
     required this.frequency,
     required this.startDate,
@@ -657,6 +693,12 @@ class StockRecurring {
     stockId: _asStr(j['stockId'] ?? j['stock_id']),
     symbol: _asStr(j['symbol']),
     stockName: _asStr(j['stockName'] ?? j['stock_name']),
+    market: _asStr(j['market']).isEmpty
+        ? 'TW'
+        : _asStr(j['market']).toUpperCase(),
+    currency: _asStr(j['currency']).isEmpty
+        ? 'TWD'
+        : _asStr(j['currency']).toUpperCase(),
     amount: _asNum(j['amount']),
     frequency: _asStr(j['frequency']),
     startDate: _asStr(j['startDate'] ?? j['start_date']),
@@ -788,9 +830,12 @@ class RealizedPL {
   final String id;
   final String symbol;
   final String name;
+  final String market;
+  final String currency;
   final num shares;
   final num sellPrice;
   final num realizedPL;
+  final num realizedPLTwd;
   final num returnRate;
   final String date;
 
@@ -798,9 +843,12 @@ class RealizedPL {
     required this.id,
     required this.symbol,
     required this.name,
+    required this.market,
+    required this.currency,
     required this.shares,
     required this.sellPrice,
     required this.realizedPL,
+    required this.realizedPLTwd,
     required this.returnRate,
     required this.date,
   });
@@ -809,9 +857,18 @@ class RealizedPL {
     id: _asStr(j['id']),
     symbol: _asStr(j['symbol']),
     name: _asStr(j['name']),
+    market: _asStr(j['market']).isEmpty
+        ? 'TW'
+        : _asStr(j['market']).toUpperCase(),
+    currency: _asStr(j['currency']).isEmpty
+        ? 'TWD'
+        : _asStr(j['currency']).toUpperCase(),
     shares: _asNum(j['shares']),
     sellPrice: _asNum(j['sellPrice']),
     realizedPL: _asNum(j['realizedPL']),
+    realizedPLTwd: _asNum(
+      j['realizedPLTwd'] ?? j['realized_pl_twd'] ?? j['realizedPL'],
+    ),
     returnRate: _asNum(j['returnRate']),
     date: _asStr(j['date']),
   );
@@ -836,12 +893,12 @@ class PayableCard {
   });
 
   factory PayableCard.fromJson(Map<String, dynamic> j) => PayableCard(
-        id: _asStr(j['id']),
-        name: _asStr(j['name']),
-        currency: _asStr(j['currency']),
-        debt: (j['debt'] as num).toInt(),
-        debtInCardCurrency: _asNum(j['debtInCardCurrency']),
-      );
+    id: _asStr(j['id']),
+    name: _asStr(j['name']),
+    currency: _asStr(j['currency']),
+    debt: (j['debt'] as num).toInt(),
+    debtInCardCurrency: _asNum(j['debtInCardCurrency']),
+  );
 }
 
 /// 還款分配的一張卡（送出後的實際寫入結果）。
@@ -898,19 +955,22 @@ class RepaymentSummary {
   });
 
   factory RepaymentSummary.fromJson(Map<String, dynamic> j) => RepaymentSummary(
-        id: _asStr(j['id']),
-        date: _asStr(j['date']),
-        fromAccountName: _asStr((j['fromAccount'] ?? {})['name']),
-        fromAccountCurrency: _asStr((j['fromAccount'] ?? {})['currency']),
-        totalAmount: (j['totalAmount'] as num).toInt(),
-        inputMode: _asStr(j['inputMode']),
-        createdAt: _asStr(j['createdAt']),
-        stale: _asBool(j['stale']),
-        allocations: ((j['allocations'] as List?) ?? [])
-            .map((e) => RepaymentSummaryAllocation.fromJson(
-                (e as Map).cast<String, dynamic>()))
-            .toList(),
-      );
+    id: _asStr(j['id']),
+    date: _asStr(j['date']),
+    fromAccountName: _asStr((j['fromAccount'] ?? {})['name']),
+    fromAccountCurrency: _asStr((j['fromAccount'] ?? {})['currency']),
+    totalAmount: (j['totalAmount'] as num).toInt(),
+    inputMode: _asStr(j['inputMode']),
+    createdAt: _asStr(j['createdAt']),
+    stale: _asBool(j['stale']),
+    allocations: ((j['allocations'] as List?) ?? [])
+        .map(
+          (e) => RepaymentSummaryAllocation.fromJson(
+            (e as Map).cast<String, dynamic>(),
+          ),
+        )
+        .toList(),
+  );
 }
 
 /// 摘要內一張卡的分配快照與陳舊 status。

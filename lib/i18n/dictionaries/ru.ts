@@ -1027,6 +1027,9 @@ export const ru = {
       },
       common: {
         stockLabel: "Акция",
+        market: "市場",
+        marketTaiwan: "台股",
+        marketUs: "美股",
         stockRequired: "Акция *",
         stockType: {
           stock: "Акция",

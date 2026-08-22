@@ -2261,6 +2261,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get featuresStocksCommonStockLabel => '股票';
 
   @override
+  String get featuresStocksCommonMarket => '市場';
+
+  @override
+  String get featuresStocksCommonMarketTaiwan => '台股';
+
+  @override
+  String get featuresStocksCommonMarketUs => '美股';
+
+  @override
   String get featuresStocksCommonStockRequired => '股票 *';
 
   @override
@@ -2378,7 +2387,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get featuresStocksPortfolioPriceModalDescription =>
-      '優先由瀏覽器端向台灣證交所公開 API 查詢；若瀏覽器被擋，會改用登入後的 user API 代理查詢並更新持股。';
+      '台股由 TWSE 查詢，美股由 Yahoo Finance 查詢；查價失敗時不會覆蓋原有價格。';
 
   @override
   String featuresStocksPortfolioPriceResult(Object updated) {
@@ -2481,7 +2490,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get featuresStocksDividendsSyncDescription =>
-      '依照您的持股紀錄，從台灣證交所自動同步歷年除權息資料。';
+      '依照您的持股紀錄，自動同步台股 TWSE 與美股 Yahoo Finance 的現金股利資料。';
 
   @override
   String get featuresStocksDividendsSyncStart => '開始同步';
@@ -11334,6 +11343,15 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
   String get featuresStocksCommonStockLabel => '股票';
 
   @override
+  String get featuresStocksCommonMarket => '市場';
+
+  @override
+  String get featuresStocksCommonMarketTaiwan => '台股';
+
+  @override
+  String get featuresStocksCommonMarketUs => '美股';
+
+  @override
   String get featuresStocksCommonStockRequired => '股票 *';
 
   @override
@@ -11451,7 +11469,7 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
 
   @override
   String get featuresStocksPortfolioPriceModalDescription =>
-      '優先由瀏覽器端向台灣證交所公開 API 查詢；若瀏覽器被擋，會改用登入後的 user API 代理查詢並更新持股。';
+      '台股由 TWSE 查詢，美股由 Yahoo Finance 查詢；查價失敗時不會覆蓋原有價格。';
 
   @override
   String featuresStocksPortfolioPriceResult(Object updated) {
@@ -11554,7 +11572,7 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
 
   @override
   String get featuresStocksDividendsSyncDescription =>
-      '依照您的持股紀錄，從台灣證交所自動同步歷年除權息資料。';
+      '依照您的持股紀錄，自動同步台股 TWSE 與美股 Yahoo Finance 的現金股利資料。';
 
   @override
   String get featuresStocksDividendsSyncStart => '開始同步';

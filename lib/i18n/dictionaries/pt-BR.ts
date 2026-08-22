@@ -1027,6 +1027,9 @@ export const ptBR = {
       },
       common: {
         stockLabel: "Ação",
+        market: "市場",
+        marketTaiwan: "台股",
+        marketUs: "美股",
         stockRequired: "Ação *",
         stockType: {
           stock: "Ação",

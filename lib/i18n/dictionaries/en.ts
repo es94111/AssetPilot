@@ -1027,6 +1027,9 @@ export const en = {
       },
       common: {
         stockLabel: "Stock",
+        market: "Market",
+        marketTaiwan: "Taiwan",
+        marketUs: "US",
         stockRequired: "Stock *",
         stockType: {
           stock: "Stock",
@@ -1069,7 +1072,7 @@ export const en = {
         updatePrices: "Update prices",
         batchUpdate: "Batch auto update",
         updating: "Updating...",
-        priceModalDescription: "AssetPilot first queries the public TWSE API from your browser. If the browser request is blocked, it falls back to the signed-in user API proxy and updates your holdings.",
+        priceModalDescription: "Taiwan stocks use TWSE and US stocks use Yahoo Finance; failed lookups never overwrite the existing price.",
         priceResult: "Update complete: {updated} succeeded.",
         priceResultWithFailed: "Update complete: {updated} succeeded, {failed} failed.",
         browserQuoteUnavailable: "Unable to retrieve TWSE market data from the browser",
@@ -1107,7 +1110,7 @@ export const en = {
         editDividend: "Edit dividend",
         newDividend: "Add dividend",
         syncExDividends: "Sync ex-dividends",
-        syncDescription: "Automatically sync historical ex-dividend data from TWSE based on your holdings.",
+        syncDescription: "Automatically sync cash dividends from TWSE for Taiwan stocks and Yahoo Finance for US stocks based on your holdings.",
         syncStart: "Start sync",
         syncing: "Syncing...",
         syncResult: "Added {synced}, skipped {skipped}.",

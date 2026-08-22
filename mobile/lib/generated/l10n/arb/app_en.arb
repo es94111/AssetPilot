@@ -3572,6 +3572,21 @@
     "description": "Web path: features.stocks.common.stockLabel",
     "x-webPath": "features.stocks.common.stockLabel"
   },
+  "featuresStocksCommonMarket": "Market",
+  "@featuresStocksCommonMarket": {
+    "description": "Web path: features.stocks.common.market",
+    "x-webPath": "features.stocks.common.market"
+  },
+  "featuresStocksCommonMarketTaiwan": "Taiwan",
+  "@featuresStocksCommonMarketTaiwan": {
+    "description": "Web path: features.stocks.common.marketTaiwan",
+    "x-webPath": "features.stocks.common.marketTaiwan"
+  },
+  "featuresStocksCommonMarketUs": "US",
+  "@featuresStocksCommonMarketUs": {
+    "description": "Web path: features.stocks.common.marketUs",
+    "x-webPath": "features.stocks.common.marketUs"
+  },
   "featuresStocksCommonStockRequired": "Stock *",
   "@featuresStocksCommonStockRequired": {
     "description": "Web path: features.stocks.common.stockRequired",
@@ -3765,7 +3780,7 @@
     "description": "Web path: features.stocks.portfolio.updating",
     "x-webPath": "features.stocks.portfolio.updating"
   },
-  "featuresStocksPortfolioPriceModalDescription": "AssetPilot first queries the public TWSE API from your browser. If the browser request is blocked, it falls back to the signed-in user API proxy and updates your holdings.",
+  "featuresStocksPortfolioPriceModalDescription": "Taiwan stocks use TWSE and US stocks use Yahoo Finance; failed lookups never overwrite the existing price.",
   "@featuresStocksPortfolioPriceModalDescription": {
     "description": "Web path: features.stocks.portfolio.priceModalDescription",
     "x-webPath": "features.stocks.portfolio.priceModalDescription"
@@ -3928,7 +3943,7 @@
     "description": "Web path: features.stocks.dividends.syncExDividends",
     "x-webPath": "features.stocks.dividends.syncExDividends"
   },
-  "featuresStocksDividendsSyncDescription": "Automatically sync historical ex-dividend data from TWSE based on your holdings.",
+  "featuresStocksDividendsSyncDescription": "Automatically sync cash dividends from TWSE for Taiwan stocks and Yahoo Finance for US stocks based on your holdings.",
   "@featuresStocksDividendsSyncDescription": {
     "description": "Web path: features.stocks.dividends.syncDescription",
     "x-webPath": "features.stocks.dividends.syncDescription"

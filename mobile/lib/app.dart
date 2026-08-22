@@ -44,32 +44,102 @@ Future<void> setThemeMode(ThemeMode mode) async {
 }
 
 ThemeData _buildTheme(Color seed, Brightness brightness) {
-  final scheme = ColorScheme.fromSeed(
-    seedColor: seed,
-    brightness: brightness,
-  );
+  final isDark = brightness == Brightness.dark;
+  final scheme = ColorScheme.fromSeed(seedColor: seed, brightness: brightness)
+      .copyWith(
+        primary: isDark ? const Color(0xFF7B93FA) : const Color(0xFF3B55D9),
+        onPrimary: isDark ? const Color(0xFF0C0F16) : Colors.white,
+        primaryContainer: isDark
+            ? const Color(0xFF202B50)
+            : const Color(0xFFEEF2FF),
+        onPrimaryContainer: isDark
+            ? const Color(0xFFE8EAEF)
+            : const Color(0xFF1E293B),
+        surface: isDark ? const Color(0xFF151922) : Colors.white,
+        onSurface: isDark ? const Color(0xFFE8EAEF) : const Color(0xFF1A1D26),
+        onSurfaceVariant: isDark
+            ? const Color(0xFFCBD5E1)
+            : const Color(0xFF475569),
+        surfaceContainerHighest: isDark
+            ? const Color(0xFF19202D)
+            : const Color(0xFFF1F5F9),
+        outline: isDark ? const Color(0xFF303949) : const Color(0xFFE2E8F0),
+        outlineVariant: isDark
+            ? const Color(0xFF303949)
+            : const Color(0xFFE4E7EC),
+        error: isDark ? const Color(0xFFFCA5A5) : const Color(0xFFDC2626),
+        errorContainer: isDark
+            ? const Color(0xFF450A0A)
+            : const Color(0xFFFEF2F2),
+        onErrorContainer: isDark
+            ? const Color(0xFFFEE2E2)
+            : const Color(0xFF991B1B),
+      );
+  const radius = BorderRadius.all(Radius.circular(12));
+  final shape = RoundedRectangleBorder(borderRadius: radius);
   return ThemeData(
     colorScheme: scheme,
+    scaffoldBackgroundColor: isDark
+        ? const Color(0xFF0C0F16)
+        : const Color(0xFFF4F6FA),
     useMaterial3: true,
     extensions: [assetPilotThemeFor(brightness)],
     visualDensity: VisualDensity.standard,
     materialTapTargetSize: MaterialTapTargetSize.padded,
+    appBarTheme: AppBarTheme(
+      backgroundColor: Colors.transparent,
+      foregroundColor: scheme.onSurface,
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      surfaceTintColor: Colors.transparent,
+      centerTitle: false,
+      titleTextStyle: TextStyle(
+        color: scheme.onSurface,
+        fontSize: 22,
+        fontWeight: FontWeight.w700,
+      ),
+    ),
+    inputDecorationTheme: InputDecorationTheme(
+      filled: true,
+      fillColor: scheme.surface,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      border: OutlineInputBorder(borderRadius: radius),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: radius,
+        borderSide: BorderSide(color: scheme.outlineVariant),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: radius,
+        borderSide: BorderSide(color: scheme.primary, width: 2),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: radius,
+        borderSide: BorderSide(color: scheme.error),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: radius,
+        borderSide: BorderSide(color: scheme.error, width: 2),
+      ),
+    ),
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
         minimumSize: const Size(48, 48),
         tapTargetSize: MaterialTapTargetSize.padded,
+        shape: shape,
       ),
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
         minimumSize: const Size(48, 48),
         tapTargetSize: MaterialTapTargetSize.padded,
+        shape: shape,
       ),
     ),
     textButtonTheme: TextButtonThemeData(
       style: TextButton.styleFrom(
         minimumSize: const Size(48, 48),
         tapTargetSize: MaterialTapTargetSize.padded,
+        shape: shape,
       ),
     ),
     iconButtonTheme: IconButtonThemeData(
@@ -77,6 +147,30 @@ ThemeData _buildTheme(Color seed, Brightness brightness) {
         minimumSize: const Size(48, 48),
         tapTargetSize: MaterialTapTargetSize.padded,
       ),
+    ),
+    navigationBarTheme: NavigationBarThemeData(
+      backgroundColor: scheme.surface,
+      surfaceTintColor: Colors.transparent,
+      elevation: 1,
+      indicatorColor: scheme.primaryContainer,
+      height: 72,
+    ),
+    navigationRailTheme: NavigationRailThemeData(
+      backgroundColor: scheme.surface,
+      elevation: 1,
+      indicatorColor: scheme.primaryContainer,
+      useIndicator: true,
+    ),
+    dividerTheme: DividerThemeData(
+      color: scheme.outlineVariant,
+      space: 1,
+      thickness: 1,
+    ),
+    floatingActionButtonTheme: FloatingActionButtonThemeData(
+      backgroundColor: scheme.primary,
+      foregroundColor: scheme.onPrimary,
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
     ),
   );
 }
@@ -167,7 +261,7 @@ class _AuthGateState extends State<AuthGate> {
   }
 }
 
-/// 底部導覽主畫面：首頁 / 記帳 / 股票 / 更多。
+/// 自適應主畫面：Compact 使用底部導覽，較大視窗使用 NavigationRail。
 class HomeShell extends StatefulWidget {
   final VoidCallback onLoggedOut;
   const HomeShell({super.key, required this.onLoggedOut});
@@ -242,34 +336,73 @@ class _HomeShellState extends State<HomeShell> {
       StocksScreen(),
       MoreScreen(onLoggedOut: widget.onLoggedOut),
     ];
+    final labels = [
+      trKey('mobileLegacyHome'),
+      trKey('mobileLegacyTransactions8084a8ea'),
+      trKey('featuresCommonStock'),
+      trKey('mobileLegacyMore'),
+    ];
+    final icons = [
+      (Icons.dashboard_outlined, Icons.dashboard),
+      (Icons.receipt_long_outlined, Icons.receipt_long),
+      (Icons.trending_up_outlined, Icons.trending_up),
+      (Icons.menu, Icons.menu_open),
+    ];
+    final width = MediaQuery.sizeOf(context).width;
+    final compact = width < 600;
+    final extended = width >= 840;
+    final content = Expanded(
+      child: IndexedStack(index: _index, children: pages),
+    );
+
     return Scaffold(
-      body: IndexedStack(index: _index, children: pages),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _index,
-        onDestinationSelected: (i) => setState(() => _index = i),
-        destinations: [
-          NavigationDestination(
-            icon: Icon(Icons.dashboard_outlined),
-            selectedIcon: Icon(Icons.dashboard),
-            label: trKey('mobileLegacyHome'),
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.receipt_long_outlined),
-            selectedIcon: Icon(Icons.receipt_long),
-            label: trKey('mobileLegacyTransactions8084a8ea'),
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.trending_up_outlined),
-            selectedIcon: Icon(Icons.trending_up),
-            label: trKey('featuresCommonStock'),
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.menu),
-            selectedIcon: Icon(Icons.menu_open),
-            label: trKey('mobileLegacyMore'),
-          ),
-        ],
+      body: SafeArea(
+        top: false,
+        bottom: false,
+        child: compact
+            ? Row(children: [content])
+            : Row(
+                children: [
+                  NavigationRail(
+                    selectedIndex: _index,
+                    onDestinationSelected: (i) => setState(() => _index = i),
+                    extended: extended,
+                    groupAlignment: -0.85,
+                    leading: Padding(
+                      padding: const EdgeInsets.only(top: 16, bottom: 24),
+                      child: Icon(
+                        Icons.account_balance_wallet_rounded,
+                        color: Theme.of(context).colorScheme.primary,
+                        size: 28,
+                      ),
+                    ),
+                    destinations: [
+                      for (var i = 0; i < labels.length; i++)
+                        NavigationRailDestination(
+                          icon: Icon(icons[i].$1),
+                          selectedIcon: Icon(icons[i].$2),
+                          label: Text(labels[i]),
+                        ),
+                    ],
+                  ),
+                  content,
+                ],
+              ),
       ),
+      bottomNavigationBar: compact
+          ? NavigationBar(
+              selectedIndex: _index,
+              onDestinationSelected: (i) => setState(() => _index = i),
+              destinations: [
+                for (var i = 0; i < labels.length; i++)
+                  NavigationDestination(
+                    icon: Icon(icons[i].$1),
+                    selectedIcon: Icon(icons[i].$2),
+                    label: labels[i],
+                  ),
+              ],
+            )
+          : null,
     );
   }
 }

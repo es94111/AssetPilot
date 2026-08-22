@@ -30,7 +30,7 @@ class ApiException implements Exception {
 /// 後端認證採 httpOnly Cookie（JWT `authToken`）。Dart 的 [http] 套件不會自動
 /// 管理 Cookie，因此這裡手動從登入回應擷取 `Set-Cookie`，並在後續請求帶回
 /// `Cookie` 標頭。為避免登入憑證以明文落地，Cookie 改存於 Android Keystore
-/// 加密的 [FlutterSecureStorage]（EncryptedSharedPreferences）。
+/// 加密的 [FlutterSecureStorage]（Android Keystore-backed storage）。
 class ApiClient {
   ApiClient._();
   static final ApiClient instance = ApiClient._();
@@ -38,10 +38,8 @@ class ApiClient {
   static const _kCookie = 'authCookie';
   static const _kAppDeviceId = 'appDeviceId';
 
-  // 認證 Cookie 的加密儲存（Android 走 Keystore 加密的 EncryptedSharedPreferences）。
-  static const _secure = FlutterSecureStorage(
-    aOptions: AndroidOptions(encryptedSharedPreferences: true),
-  );
+  // 認證 Cookie 的加密儲存（Android 使用 flutter_secure_storage 的 Keystore-backed defaults）。
+  static const _secure = FlutterSecureStorage(aOptions: AndroidOptions());
 
   /// 固定正式後台；App 不提供使用者自行修改，避免 OAuth/CSRF 設定不一致。
   static const defaultBaseUrl = 'https://asset.shao.one';
@@ -289,9 +287,7 @@ class ApiClient {
             retriedStatusCode == null ? 0 : 1,
           ),
           if (retriedStatusCode != null)
-            'http.previous_status_code': SentryAttribute.int(
-              retriedStatusCode,
-            ),
+            'http.previous_status_code': SentryAttribute.int(retriedStatusCode),
         },
       );
       throw ApiException(res.statusCode, _errorMessage(res));
@@ -709,9 +705,14 @@ class ApiClient {
   Future<Map<String, dynamic>> restoreAiCreatedTransaction(String id) =>
       _getMapFromSend('POST', '/api/transactions/$id/restore-ai-created');
 
-  Future<Map<String, dynamic>> restoreAiNote(String id, num expectedUpdatedAt) =>
-      _getMapFromSend('POST', '/api/transactions/$id/restore-ai-note',
-          body: {'expectedUpdatedAt': expectedUpdatedAt});
+  Future<Map<String, dynamic>> restoreAiNote(
+    String id,
+    num expectedUpdatedAt,
+  ) => _getMapFromSend(
+    'POST',
+    '/api/transactions/$id/restore-ai-note',
+    body: {'expectedUpdatedAt': expectedUpdatedAt},
+  );
 
   Future<Map<String, dynamic>> getAiNoteSnapshot(String id) =>
       _getMapFromSend('GET', '/api/transactions/$id/restore-ai-note');
@@ -941,7 +942,11 @@ class ApiClient {
 
   // ── 帳戶（信用卡還款） ──────────────────────────────────────
   Future<Map<String, dynamic>> creditCardRepayment(Map<String, dynamic> body) =>
-      _getMapFromSend('POST', '/api/accounts/credit-card-repayment', body: body);
+      _getMapFromSend(
+        'POST',
+        '/api/accounts/credit-card-repayment',
+        body: body,
+      );
 
   /// 取得付款帳戶的還款卡片快照（US2／FR-007a：選定／改選付款帳戶時取一次）。
   Future<Map<String, dynamic>> getRepaymentCards(String accountId) =>
@@ -1076,8 +1081,11 @@ class ApiClient {
       _getMapFromSend('POST', '/api/admin/users', body: body);
 
   /// 重設使用者密碼（僅管理員）。body: { newPassword }。
-  Future<void> adminResetUserPassword(String id, String newPassword) =>
-      _send('PUT', '/api/admin/users/$id/password', body: {'newPassword': newPassword});
+  Future<void> adminResetUserPassword(String id, String newPassword) => _send(
+    'PUT',
+    '/api/admin/users/$id/password',
+    body: {'newPassword': newPassword},
+  );
 
   /// 切換管理員角色（僅管理員）。body: { isAdmin, adminRole? }。
   Future<Map<String, dynamic>> adminUpdateUserRole(

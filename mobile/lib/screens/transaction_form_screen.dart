@@ -586,6 +586,19 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
             ),
         ],
       ),
+      bottomNavigationBar: FutureBuilder<void>(
+        future: _loadFuture,
+        builder: (context, snap) {
+          if (snap.connectionState != ConnectionState.done || snap.hasError) {
+            return const SizedBox.shrink();
+          }
+          return _TransactionFormFooter(
+            saving: _saving,
+            onCancel: () => Navigator.pop(context),
+            onSave: _save,
+          );
+        },
+      ),
       body: FutureBuilder<void>(
         future: _loadFuture,
         builder: (context, snap) {
@@ -1023,19 +1036,6 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
             ],
           ],
           SizedBox(height: 24),
-          FilledButton(
-            onPressed: _saving ? null : _save,
-            style: FilledButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-            ),
-            child: _saving
-                ? SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : Text(trKey('commonSave')),
-          ),
         ],
       ),
     );
@@ -1066,6 +1066,56 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
       validator:
           validator ??
           (v) => v == null ? trKey('mobileLegacySelectAnAccount') : null,
+    );
+  }
+}
+
+class _TransactionFormFooter extends StatelessWidget {
+  final bool saving;
+  final VoidCallback onCancel;
+  final VoidCallback onSave;
+
+  const _TransactionFormFooter({
+    required this.saving,
+    required this.onCancel,
+    required this.onSave,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      top: false,
+      child: Material(
+        color: Theme.of(context).colorScheme.surface,
+        elevation: 3,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+          child: Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: saving ? null : onCancel,
+                  child: Text(trKey('commonCancel')),
+                ),
+              ),
+              SizedBox(width: 12),
+              Expanded(
+                flex: 2,
+                child: FilledButton(
+                  onPressed: saving ? null : onSave,
+                  child: saving
+                      ? SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Text(trKey('commonSave')),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

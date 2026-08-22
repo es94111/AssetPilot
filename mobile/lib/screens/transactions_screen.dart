@@ -45,6 +45,13 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
       _filterCategoryId != null ||
       _keyword.trim().isNotEmpty;
 
+  int get _activeFilterCount => [
+    _dateFrom != null || _dateTo != null,
+    _filterAccountId != null,
+    _filterCategoryId != null,
+    _keyword.trim().isNotEmpty,
+  ].where((active) => active).length;
+
   @override
   void initState() {
     super.initState();
@@ -212,9 +219,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                       style: TextStyle(color: Colors.orange),
                     ),
                   ),
-                Text(
-                  '${trKey('dashboardTableDate')}：${summary.date}',
-                ),
+                Text('${trKey('dashboardTableDate')}：${summary.date}'),
                 Text(
                   '${trKey('featuresAccountsRepaymentPaymentAccount')}：${summary.fromAccountName}',
                 ),
@@ -333,7 +338,10 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     );
     if (ok != true) return;
     try {
-      await ApiClient.instance.restoreAiNote(t.id, snapshot['updatedAt'] as num);
+      await ApiClient.instance.restoreAiNote(
+        t.id,
+        snapshot['updatedAt'] as num,
+      );
       await _refreshDashboardWidget();
       if (mounted) toast(context, trKey('mobileLegacyDeleted'));
       _reload();
@@ -358,9 +366,44 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
               onPressed: _clearFilters,
             ),
           IconButton(
-            tooltip: trKey('mobileLegacyFilter'),
-            icon: Icon(
-              _hasAdvancedFilter ? Icons.filter_alt : Icons.filter_alt_outlined,
+            tooltip: _activeFilterCount == 0
+                ? trKey('mobileLegacyFilter')
+                : '${trKey('mobileLegacyFilter')} ($_activeFilterCount)',
+            icon: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Icon(
+                  _hasAdvancedFilter
+                      ? Icons.filter_alt
+                      : Icons.filter_alt_outlined,
+                ),
+                if (_activeFilterCount > 0)
+                  Positioned(
+                    right: -8,
+                    top: -8,
+                    child: Container(
+                      constraints: const BoxConstraints(
+                        minWidth: 18,
+                        minHeight: 18,
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.primary,
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Center(
+                        child: Text(
+                          '$_activeFilterCount',
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.onPrimary,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
             ),
             onPressed: _lastData == null
                 ? null
@@ -418,10 +461,9 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
           }
           return RefreshIndicator(
             onRefresh: () async => _reload(),
-            child: ListView.separated(
-              padding: const EdgeInsets.only(bottom: 88),
+            child: ListView.builder(
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 96),
               itemCount: list.length,
-              separatorBuilder: (_, _) => Divider(height: 1),
               itemBuilder: (context, i) {
                 final t = list[i];
                 return Dismissible(
@@ -430,7 +472,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                   // 由 confirmDismiss 跳出確認並執行刪除；回傳 false 時列項不會被移除。
                   confirmDismiss: (_) => _delete(t),
                   background: Container(
-                    color: Colors.red,
+                    color: Theme.of(context).colorScheme.error,
                     alignment: Alignment.centerRight,
                     padding: const EdgeInsets.symmetric(horizontal: 24),
                     child: Icon(Icons.delete, color: Colors.white),
@@ -452,8 +494,13 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                           )
                         : _openForm(t),
                     onLongPress: () => _delete(t),
-                    onRestoreCreated: t.aiCreated ? () => _restoreAiCreated(t) : null,
-                    onRestoreNote: t.noteAiModified ? () => _restoreAiNote(t) : null,
+                    onDelete: () => _delete(t),
+                    onRestoreCreated: t.aiCreated
+                        ? () => _restoreAiCreated(t)
+                        : null,
+                    onRestoreNote: t.noteAiModified
+                        ? () => _restoreAiNote(t)
+                        : null,
                     onViewRepaymentSummary: t.repaymentSummaryId.isNotEmpty
                         ? () => _openRepaymentSummary(t.repaymentSummaryId)
                         : null,
@@ -473,6 +520,7 @@ class _TxnTile extends StatelessWidget {
   final String? categoryName;
   final VoidCallback onTap;
   final VoidCallback onLongPress;
+  final VoidCallback onDelete;
   final VoidCallback? onRestoreCreated;
   final VoidCallback? onRestoreNote;
   final VoidCallback? onViewRepaymentSummary;
@@ -481,6 +529,7 @@ class _TxnTile extends StatelessWidget {
     required this.categoryName,
     required this.onTap,
     required this.onLongPress,
+    required this.onDelete,
     this.onRestoreCreated,
     this.onRestoreNote,
     this.onViewRepaymentSummary,
@@ -488,114 +537,144 @@ class _TxnTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     final isIncome = t.type == 'income';
     final isTransfer = t.type == 'transfer';
     final color = isTransfer
-        ? Colors.blueGrey
-        : (isIncome ? Colors.green : Colors.red);
+        ? scheme.onSurfaceVariant
+        : flowColor(income: isIncome, context: context);
     final icon = isTransfer
         ? Icons.swap_horiz
         : (isIncome ? Icons.south_west : Icons.north_east);
     final sign = isTransfer ? '' : (isIncome ? '+' : '-');
-    return ListTile(
-      onTap: onTap,
-      onLongPress: onLongPress,
-      leading: CircleAvatar(
-        backgroundColor: color.withValues(alpha: 0.15),
-        child: Icon(icon, color: color, size: 20),
-      ),
-      title: Text(
-        categoryName?.isNotEmpty == true
-            ? categoryName!
-            : t.catName?.isNotEmpty == true
-            ? t.catName!
-            : (isTransfer
-                  ? trKey('featuresTransactionsTransfer')
-                  : (t.note.isEmpty
-                        ? trKey('dashboardUncategorized')
-                        : t.note)),
-      ),
-      subtitle: Row(
-        children: [
-          Expanded(
-            child: Text(
-              [
-                t.date,
-                if (t.note.isNotEmpty &&
-                    (categoryName?.isNotEmpty == true ||
-                        t.catName?.isNotEmpty == true))
-                  t.note,
-              ].join('　'),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          if (t.attachmentCount > 0) ...[
-            SizedBox(width: 6),
-            Icon(
-              Icons.image_outlined,
-              size: 14,
-              color: Theme.of(context).colorScheme.primary,
-            ),
-            SizedBox(width: 2),
-            Text(
-              '${t.attachmentCount}',
-              style: TextStyle(
-                fontSize: 12,
-                color: Theme.of(context).colorScheme.primary,
+    final title = categoryName?.isNotEmpty == true
+        ? categoryName!
+        : t.catName?.isNotEmpty == true
+        ? t.catName!
+        : (isTransfer
+              ? trKey('featuresTransactionsTransfer')
+              : (t.note.isEmpty ? trKey('dashboardUncategorized') : t.note));
+
+    return LedgerCard(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: EdgeInsets.zero,
+      child: ListTile(
+        onTap: onTap,
+        onLongPress: onLongPress,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+        leading: CircleAvatar(
+          backgroundColor: color.withValues(alpha: 0.14),
+          child: Icon(icon, color: color, size: 20),
+        ),
+        title: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),
+        subtitle: Wrap(
+          spacing: 6,
+          runSpacing: 2,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            Text(t.date),
+            if (t.note.isNotEmpty &&
+                (categoryName?.isNotEmpty == true ||
+                    t.catName?.isNotEmpty == true))
+              Text(t.note, maxLines: 1, overflow: TextOverflow.ellipsis),
+            if (t.attachmentCount > 0)
+              _TxnMeta(
+                icon: Icons.image_outlined,
+                label: '${t.attachmentCount}',
               ),
-            ),
+            if (t.aiCreated)
+              _TxnMeta(
+                icon: Icons.auto_awesome_outlined,
+                label: trKey('featuresTransactionsAiCreated'),
+              ),
+            if (t.noteAiModified)
+              _TxnMeta(
+                icon: Icons.edit_note_outlined,
+                label: trKey('featuresTransactionsNoteAiModified'),
+              ),
+            if (t.repaymentSummaryId.isNotEmpty)
+              _TxnMeta(
+                icon: Icons.account_balance_wallet_outlined,
+                label: trKey('featuresTransactionsViewRepaymentAllocation'),
+              ),
           ],
-          if (t.aiCreated) ...[
-            SizedBox(width: 6),
+        ),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
             Text(
-              trKey('featuresTransactionsAiCreated'),
-              style: TextStyle(fontSize: 12, color: Colors.green),
+              // 外幣交易顯示原幣別金額（如 USD 100），TWD 交易維持台幣金額。
+              sign + money(t.originalAmount, t.currency),
+              style: TextStyle(fontWeight: FontWeight.w700, color: color),
+            ),
+            PopupMenuButton<String>(
+              tooltip: trKey('mobileLegacyMore'),
+              onSelected: (value) {
+                switch (value) {
+                  case 'delete':
+                    onDelete();
+                    break;
+                  case 'restore-created':
+                    onRestoreCreated?.call();
+                    break;
+                  case 'restore-note':
+                    onRestoreNote?.call();
+                    break;
+                  case 'repayment':
+                    onViewRepaymentSummary?.call();
+                    break;
+                }
+              },
+              itemBuilder: (_) => [
+                if (onRestoreCreated != null)
+                  PopupMenuItem(
+                    value: 'restore-created',
+                    child: Text(trKey('featuresTransactionsRestoreCreated')),
+                  ),
+                if (onRestoreNote != null)
+                  PopupMenuItem(
+                    value: 'restore-note',
+                    child: Text(trKey('featuresTransactionsRestoreNote')),
+                  ),
+                if (onViewRepaymentSummary != null)
+                  PopupMenuItem(
+                    value: 'repayment',
+                    child: Text(
+                      trKey('featuresTransactionsViewRepaymentAllocation'),
+                    ),
+                  ),
+                PopupMenuItem(
+                  value: 'delete',
+                  child: Text(
+                    trKey('commonDelete'),
+                    style: TextStyle(color: scheme.error),
+                  ),
+                ),
+              ],
             ),
           ],
-          if (t.noteAiModified) ...[
-            SizedBox(width: 6),
-            Text(
-              trKey('featuresTransactionsNoteAiModified'),
-              style: TextStyle(fontSize: 12, color: Colors.blue),
-            ),
-          ],
-          if (t.repaymentSummaryId.isNotEmpty) ...[
-            SizedBox(width: 6),
-            Text(
-              trKey('featuresTransactionsViewRepaymentAllocation'),
-              style: TextStyle(fontSize: 12, color: Colors.blue),
-            ),
-          ],
-        ],
+        ),
       ),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            // 外幣交易顯示原幣別金額（如 USD 100），TWD 交易維持台幣金額。
-            sign + money(t.originalAmount, t.currency),
-            style: TextStyle(fontWeight: FontWeight.bold, color: color),
-          ),
-          if (t.aiCreated)
-            IconButton(
-              tooltip: trKey('featuresTransactionsRestoreCreated'),
-              icon: Icon(Icons.restore),
-              onPressed: onRestoreCreated,
-            ),
-          if (t.noteAiModified)
-            IconButton(
-              tooltip: trKey('featuresTransactionsRestoreNote'),
-              icon: Icon(Icons.undo),
-              onPressed: onRestoreNote,
-            ),
-          if (onViewRepaymentSummary != null)
-            IconButton(
-              tooltip: trKey('featuresTransactionsViewRepaymentAllocation'),
-              icon: Icon(Icons.account_balance_wallet),
-              onPressed: onViewRepaymentSummary,
-            ),
-        ],
-      ),
+    );
+  }
+}
+
+class _TxnMeta extends StatelessWidget {
+  final IconData icon;
+  final String label;
+
+  const _TxnMeta({required this.icon, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    final color = Theme.of(context).colorScheme.onSurfaceVariant;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 14, color: color),
+        SizedBox(width: 2),
+        Text(label, style: TextStyle(fontSize: 12, color: color)),
+      ],
     );
   }
 }

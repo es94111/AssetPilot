@@ -58,12 +58,11 @@ class AssetPilotTheme extends ThemeExtension<AssetPilotTheme> {
 AssetPilotTheme assetPilotThemeFor(Brightness brightness) {
   final isDark = brightness == Brightness.dark;
   return AssetPilotTheme(
-    // Positive/negative portfolio colors follow the existing Taiwan-market
-    // convention used by the app: red for gains and green for losses.
     income: isDark ? const Color(0xFF6EE7B7) : const Color(0xFF047857),
-    expense: isDark ? const Color(0xFFFF8FA3) : const Color(0xFFBE123C),
-    profit: isDark ? const Color(0xFFFF8A80) : const Color(0xFFD32F2F),
-    loss: isDark ? const Color(0xFF81C784) : const Color(0xFF2E7D32),
+    expense: isDark ? const Color(0xFFFDA4AF) : const Color(0xFFBE123C),
+    // Stock P/L deliberately uses neutral teal/orange, not danger semantics.
+    profit: isDark ? const Color(0xFF5EEAD4) : const Color(0xFF0F766E),
+    loss: isDark ? const Color(0xFFFDBA74) : const Color(0xFFC2410C),
     warning: isDark ? const Color(0xFFFCD34D) : const Color(0xFF92400E),
     stale: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569),
   );

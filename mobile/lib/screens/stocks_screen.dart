@@ -102,15 +102,17 @@ class _StocksScreenState extends State<StocksScreen>
             ).push(MaterialPageRoute(builder: (_) => StockSettingsScreen())),
           ),
         ],
-        bottom: TabBar(
-          controller: _tab,
-          isScrollable: true,
-          tabs: [
-            Tab(text: trKey('mobileLegacyHoldings')),
-            Tab(text: trKey('mobileLegacyTransactions')),
-            Tab(text: trKey('mobileLegacyDividends')),
-            Tab(text: trKey('mobileLegacyReturns')),
-          ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(56),
+          child: _StockViewSelector(
+            controller: _tab,
+            labels: [
+              trKey('mobileLegacyHoldings'),
+              trKey('mobileLegacyTransactions'),
+              trKey('mobileLegacyDividends'),
+              trKey('mobileLegacyReturns'),
+            ],
+          ),
         ),
       ),
       body: TabBarView(
@@ -121,6 +123,53 @@ class _StocksScreenState extends State<StocksScreen>
           _DividendTab(key: _divKey),
           _RealizedTab(),
         ],
+      ),
+    );
+  }
+}
+
+class _StockViewSelector extends StatelessWidget {
+  final TabController controller;
+  final List<String> labels;
+
+  const _StockViewSelector({required this.controller, required this.labels});
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: scheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: scheme.outlineVariant),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: Row(
+            children: [
+              Icon(Icons.view_list_outlined, size: 20, color: scheme.primary),
+              SizedBox(width: 8),
+              Expanded(
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<int>(
+                    value: controller.index,
+                    isExpanded: true,
+                    icon: const Icon(Icons.keyboard_arrow_down),
+                    items: [
+                      for (var i = 0; i < labels.length; i++)
+                        DropdownMenuItem(value: i, child: Text(labels[i])),
+                    ],
+                    onChanged: (value) {
+                      if (value != null) controller.animateTo(value);
+                    },
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -308,77 +357,74 @@ class _PortfolioCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Card(
-      elevation: 0,
+    return LedgerCard(
       color: theme.colorScheme.primaryContainer,
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              trKey('mobileLegacyMarketValue'),
-              style: TextStyle(color: theme.colorScheme.onPrimaryContainer),
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            trKey('mobileLegacyMarketValue'),
+            style: TextStyle(color: theme.colorScheme.onPrimaryContainer),
+          ),
+          SizedBox(height: 4),
+          Text(
+            twd(s.totalMarketValue),
+            style: theme.textTheme.headlineMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: theme.colorScheme.onPrimaryContainer,
             ),
-            SizedBox(height: 4),
-            Text(
-              twd(s.totalMarketValue),
-              style: theme.textTheme.headlineMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: theme.colorScheme.onPrimaryContainer,
+          ),
+          Divider(height: 24),
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      trKey('notificationsLabelsUnrealizedPL'),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: theme.colorScheme.onPrimaryContainer,
+                      ),
+                    ),
+                    Text(
+                      signed(s.totalPL),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: plColor(s.totalPL, context),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            Divider(height: 24),
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        trKey('notificationsLabelsUnrealizedPL'),
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: theme.colorScheme.onPrimaryContainer,
-                        ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      trKey('featuresStocksCommonReturnRate'),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: theme.colorScheme.onPrimaryContainer,
                       ),
-                      Text(
-                        signed(s.totalPL),
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: plColor(s.totalPL, context),
-                        ),
+                    ),
+                    Text(
+                      s.totalReturnRate == null
+                          ? '—'
+                          : '${s.totalReturnRate!.toStringAsFixed(2)}%',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: plColor(s.totalReturnRate ?? 0, context),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        trKey('featuresStocksCommonReturnRate'),
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: theme.colorScheme.onPrimaryContainer,
-                        ),
-                      ),
-                      Text(
-                        s.totalReturnRate == null
-                            ? '—'
-                            : '${s.totalReturnRate!.toStringAsFixed(2)}%',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: plColor(s.totalReturnRate ?? 0, context),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -396,9 +442,9 @@ class _HoldingTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 0,
+    return LedgerCard(
       margin: const EdgeInsets.only(bottom: 8),
+      padding: EdgeInsets.zero,
       child: ListTile(
         onTap: onTap,
         onLongPress: onLongPress,

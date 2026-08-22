@@ -2,6 +2,9 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  allowsFractionalShares,
+  calculateStockSharesForAmount,
+  isValidStockShareQuantity,
   isValidStockSymbol,
   normalizeStockMarket,
   normalizeStockSymbol,
@@ -27,6 +30,16 @@ test("stock markets normalize independently and keep US symbols distinct", () =>
   assert.equal(isValidStockSymbol("BRK.B", "US"), true);
   assert.equal(isValidStockSymbol("2330", "TW"), true);
   assert.equal(isValidStockSymbol("BRK/B", "US"), false);
+});
+
+test("US shares allow fractions while Taiwan shares remain whole-number only", () => {
+  assert.equal(allowsFractionalShares("US"), true);
+  assert.equal(allowsFractionalShares("TW"), false);
+  assert.equal(isValidStockShareQuantity(1.25, "US"), true);
+  assert.equal(isValidStockShareQuantity(1.25, "TW"), false);
+  assert.equal(calculateStockSharesForAmount(10, 33, "US"), 10 / 33);
+  assert.equal(calculateStockSharesForAmount(100, 33, "US"), 100 / 33);
+  assert.equal(calculateStockSharesForAmount(100, 33, "TW"), 3);
 });
 
 test("Yahoo chart quote parser uses regular market price and falls back to the last close", () => {

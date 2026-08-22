@@ -13,6 +13,40 @@ export function stockCurrency(market: unknown): "TWD" | "USD" {
   return normalizeStockMarket(market) === "US" ? "USD" : "TWD";
 }
 
+export function allowsFractionalShares(market: unknown): boolean {
+  return normalizeStockMarket(market) === "US";
+}
+
+export function isValidStockShareQuantity(
+  value: unknown,
+  market: unknown,
+): boolean {
+  const shares = Number(value);
+  return (
+    Number.isFinite(shares) &&
+    shares > 0 &&
+    (allowsFractionalShares(market) || Number.isInteger(shares))
+  );
+}
+
+export function calculateStockSharesForAmount(
+  amount: unknown,
+  price: unknown,
+  market: unknown,
+): number {
+  const amountNum = Number(amount);
+  const priceNum = Number(price);
+  if (
+    !Number.isFinite(amountNum) ||
+    !Number.isFinite(priceNum) ||
+    priceNum <= 0
+  ) {
+    return 0;
+  }
+  const shares = amountNum / priceNum;
+  return allowsFractionalShares(market) ? shares : Math.floor(shares);
+}
+
 export function normalizeStockSymbol(
   value: unknown,
   market: unknown = "TW",

@@ -4,7 +4,11 @@ import { uid } from "./userDefaults";
 import { todayInUserTz } from "./userTime";
 import { getStockSettings, calcStockFee } from "./stockHelpers";
 import { fetchTwseStockDay, fetchTpexStockDay } from "./twseFetchNext";
-import { normalizeStockMarket } from "./stockMarket";
+import {
+  calculateStockSharesForAmount,
+  isValidStockShareQuantity,
+  normalizeStockMarket,
+} from "./stockMarket";
 import { fetchUsStockCloseOnDate } from "./usStockFetch";
 
 export interface StockRecurringResult {
@@ -294,8 +298,12 @@ export async function processStockRecurringForUser(
         break;
       }
 
-      const shares = Math.floor(recurringAmount / price);
-      if (!(shares >= 1)) {
+      const shares = calculateStockSharesForAmount(
+        recurringAmount,
+        price,
+        market,
+      );
+      if (!isValidStockShareQuantity(shares, market)) {
         db.run(
           "UPDATE stock_recurring SET last_generated = ?, updated_at = ? WHERE id = ?",
           [scheduledDate, now, r.id],

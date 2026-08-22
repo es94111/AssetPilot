@@ -1,6 +1,6 @@
 # 資產管理 系統規格說明書 (SSD)
 
-**版本：** 4.109.0
+**版本：** 4.109.1
 **日期：** 2026-08-23
 **狀態：** 已實作
 
@@ -987,6 +987,7 @@ API 路徑統一以 `/api/` 為前綴。所有需認證的路由自動套用 aut
 
 | 版本 | 日期 | 變更說明 |
 | --- | --- | --- |
+| 4.109.1 | 2026-08-23 | 修正 LINE Flex Message 送出失敗：`lib/lineMessaging.ts` 的水平明細列原使用 `alignItems: "start"`，LINE Box schema 僅接受 `flex-start`／`center`／`flex-end`，導致回覆 API 以 400 拒絕整張 Flex bubble。改用 `flex-start` 保留明細標籤和值的頂端對齊，並新增 `tests/lib/lineMessaging.test.ts` payload 回歸斷言；既有 postback data、權限檢查、照片附件與交易流程不變。 |
 | 4.109.0 | 2026-08-23 | LINE 官方帳號記帳流程與 Flex Message 顯示優化：新增 `lib/lineRecordParser.ts` 集中處理今天／昨天、日期與直接記帳輸入，無效日期不再靜默改成今天；`app/api/line/webhook/route.ts` 直接記帳優先選擇相同幣別帳戶，並與 `insertIncomeExpenseTransaction()` 共用外幣信用卡手續費與交易欄位寫入規則。`lib/lineMessaging.ts` 抽出共用 header/body/footer 與標籤／值明細列，主選單、逐步記帳、查詢、完成摘要與舊版提示卡統一呈現；既有 postback data、資料權限與按鈕上限不變。新增 `tests/lib/lineRecordParser.test.ts`／`tests/lib/lineMessaging.test.ts` 與 `package.json` 測試腳本。驗證：`npm run typecheck`、LINE targeted tests、`npm test`（既有 `check:i18n` 產物過期而停止）、`npm run build` 162 頁、LSP 與 `git diff --check` 通過；PostgreSQL 整合測試因本機未設定 DB URL 略過。 |
 | 4.108.0 | 2026-08-23 | 美股交易支援正數小數股數，台股維持整數股數契約。`lib/stockMarket.ts` 新增市場感知的股數驗證與定期定額股數計算；`app/api/stock-transactions/route.ts`、`[id]/route.ts` 與匯入路徑允許 US 小數股數並仍拒絕 TW 小數股數，`lib/stockRecurringHelpers.ts` 允許美股定期定額依金額／價格產生小於 1 股的正數數量。Web `StockTxClient` 與 Flutter 股票交易表單依市場切換 decimal／integer 輸入，既有 USD 計價、FIFO、持股與損益計算不變。新增 US 小數股數、台股整數限制與定期定額計算回歸測試；驗證 `npm test`、`npm run typecheck`、`npm run check:i18n`、隔離輸出 `npm run build`、Flutter targeted analyze 與 `git diff --check` 通過，PostgreSQL 整合測試因本機未設定 DB URL 略過。 |
 | 4.107.0 | 2026-08-22 | 股票模組新增美股市場支援：`stocks` 及股票交易、股利、定期定額資料以 `market` 區分 `TW`／`US`，既有資料預設為 TW／TWD；美股以 USD 儲存並接入 Yahoo Finance 報價與股利同步。股票 CRUD、交易費用與交易稅、FIFO 已實現損益、混合幣別持股換算、批次／自動報價、CSV 匯入匯出與定期定額處理均改為市場感知，US 費用／稅額預設為 0 且保留手動覆寫。Web `PortfolioClient`、交易／股利／損益／設定頁與 Flutter `Stock` model／股票畫面同步新增市場、幣別及 USD 格式化；`asset_openapi.yaml`、MCP 股票讀取結果、外部 API attribution、shared i18n 產生輸出同步更新。新增 Yahoo quote/parser 與美股費率測試，驗證 `npm test`、`npm run typecheck`、`npm run check:i18n`、`npm run build`、Flutter targeted analyze、`git diff --check` 通過；PostgreSQL 整合測試因本機未設定 DB URL 略過。 |

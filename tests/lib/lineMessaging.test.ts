@@ -41,8 +41,11 @@ assert.match(JSON.stringify(record), /action=record&type=expense/);
 assert.match(JSON.stringify(record), /金額/);
 
 const query = buildQueryFlex('今天收支', ['收入：TWD 100', '淨額：TWD 100'], ['2026-08-23 ＋100｜午餐']);
-assert.match(JSON.stringify(query), /摘要/);
-assert.match(JSON.stringify(query), /最近明細/);
-assert.match(JSON.stringify(query), /action=record&type=expense/);
+const queryJson = JSON.stringify(query);
+assert.match(queryJson, /摘要/);
+assert.match(queryJson, /最近明細/);
+assert.match(queryJson, /\"alignItems\":\"flex-start\"/);
+assert.doesNotMatch(queryJson, /\"alignItems\":\"start\"/);
+assert.match(queryJson, /action=record&type=expense/);
 
 console.log('line messaging display tests passed');

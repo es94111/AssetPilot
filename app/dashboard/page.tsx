@@ -178,6 +178,16 @@ export default async function DashboardPage(props: { searchParams: Promise<{ mon
       href: '/stocks/portfolio',
     } : null,
   ].filter((item): item is NonNullable<typeof item> => item !== null).slice(0, 3);
+  const leadAttention = attentionItems[0];
+  const signalCashValue = cashOutlook?.available
+    ? fmtMoney(cashOutlook.projectedClosingBalance, locale)
+    : '—';
+  let signalPortfolioValue = '—';
+  if (portfolio?.available) {
+    const prefix = portfolio.unrealizedGrossPL >= 0 ? '+' : '−';
+    signalPortfolioValue = `${prefix}${fmtMoney(Math.abs(portfolio.unrealizedGrossPL), locale, portfolio.currency || 'TWD')}`;
+  }
+  const LeadAttentionIcon = leadAttention?.icon || CircleAlert;
 
   const assetCards = [
     {
@@ -488,6 +498,39 @@ export default async function DashboardPage(props: { searchParams: Promise<{ mon
               ].map(([label, value, href]) => <Link key={label} href={href} className="group min-w-0 rounded-2xl border border-white/10 bg-white/10 p-4 transition-colors hover:bg-white/16"><span className="flex items-center justify-between gap-2 text-xs font-medium text-white/90">{label}<ArrowUpRight size={15} aria-hidden="true" /></span><strong className="mt-2 block break-all text-lg font-bold text-white tabular-nums">{value}</strong></Link>)}
             </div>
           </div>
+        </section>
+
+        <section className="dashboard-signal-rail" aria-labelledby="dashboard-signal-title">
+          <div className="dashboard-signal-lead">
+            <div className="dashboard-signal-heading">
+              <span id="dashboard-signal-title" className="dashboard-signal-kicker">{t('dashboard.attention.title')}</span>
+              <span className="dashboard-signal-meta">{t('dashboard.dataStatus.queriedAt', { time: generatedAtLabel })}</span>
+            </div>
+            {leadAttention ? (
+              <Link href={leadAttention.href} className="dashboard-signal-alert group">
+                <span className="dashboard-signal-icon dashboard-signal-icon--alert"><LeadAttentionIcon size={18} aria-hidden="true" /></span>
+                <span className="dashboard-signal-alert-label">{leadAttention.label}</span>
+                <ArrowUpRight size={17} className="dashboard-signal-arrow" aria-hidden="true" />
+              </Link>
+            ) : (
+              <div className="dashboard-signal-clear" role="status">
+                <span className="dashboard-signal-icon dashboard-signal-icon--clear"><CheckCircle2 size={18} aria-hidden="true" /></span>
+                <span>{t('dashboard.attention.allClear')}</span>
+              </div>
+            )}
+          </div>
+
+          <Link href={cashOutlookActionHref} className="dashboard-signal-cell group" aria-label={`${t('dashboard.cashOutlook.closingBalance')}: ${signalCashValue}`}>
+            <span className="dashboard-signal-cell-label"><CalendarRange size={16} aria-hidden="true" />{t('dashboard.cashOutlook.closingBalance')}</span>
+            <strong className="dashboard-signal-cell-value">{signalCashValue}</strong>
+            <ArrowUpRight size={16} className="dashboard-signal-arrow" aria-hidden="true" />
+          </Link>
+
+          <Link href="/stocks/portfolio" className="dashboard-signal-cell group" aria-label={`${t('dashboard.portfolioHealth.unrealizedGross')}: ${signalPortfolioValue}`}>
+            <span className="dashboard-signal-cell-label"><Gauge size={16} aria-hidden="true" />{t('dashboard.portfolioHealth.unrealizedGross')}</span>
+            <strong className="dashboard-signal-cell-value" data-tone={portfolio?.available && portfolio.unrealizedGrossPL < 0 ? 'loss' : 'gain'}>{signalPortfolioValue}</strong>
+            <ArrowUpRight size={16} className="dashboard-signal-arrow" aria-hidden="true" />
+          </Link>
         </section>
 
         <div className="dashboard-module-grid grid gap-6 xl:grid-cols-2">

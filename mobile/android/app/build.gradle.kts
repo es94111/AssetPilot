@@ -20,7 +20,8 @@ if (hasReleaseKeystore) {
 
 android {
     namespace = "com.assetpilot.assetpilot"
-    compileSdk = flutter.compileSdkVersion
+    // flutter_secure_storage 11 publishes Android API 37 metadata.
+    compileSdk = 37
     ndkVersion = flutter.ndkVersion
 
     compileOptions {

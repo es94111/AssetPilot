@@ -12,6 +12,8 @@ import { getRequestIpFromHeaders } from "../../../../lib/loginHelpers";
 import { makeStockTxHash } from "../../../../lib/stockHelpers";
 import { inferStockType } from "../../../../lib/twseFetchNext";
 import {
+  allowsFractionalShares,
+  isValidStockShareQuantity,
   isValidStockSymbol,
   normalizeStockMarket,
   normalizeStockSymbol,
@@ -165,13 +167,16 @@ export async function POST(request) {
         skipped++;
         return;
       }
-      const shareNum = parseFloat(shares);
-      if (!(shareNum > 0) || !Number.isInteger(shareNum)) {
-        errors.push({ row: idx + 2, reason: `股數必須為正整數（${symbol}）` });
+      const shareNum = Number(shares);
+      if (!isValidStockShareQuantity(shareNum, market)) {
+        errors.push({
+          row: idx + 2,
+          reason: `股數必須為正${allowsFractionalShares(market) ? "數" : "整數"}（${symbol}）`,
+        });
         skipped++;
         return;
       }
-      const priceNum = parseFloat(price);
+      const priceNum = Number(price);
       if (!(priceNum > 0)) {
         errors.push({ row: idx + 2, reason: "成交價必須為正數" });
         skipped++;

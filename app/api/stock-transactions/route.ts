@@ -11,6 +11,7 @@ import {
   getSharesAtDate,
   validateChainConstraint,
 } from "../../../lib/stockHelpers";
+import { isValidStockShareQuantity } from "../../../lib/stockMarket";
 
 function hasManualCharge(value) {
   return value !== undefined && value !== null && value !== "";
@@ -98,11 +99,11 @@ export async function POST(request) {
   if (!["buy", "sell"].includes(type)) {
     return NextResponse.json({ error: "交易類型無效" }, { status: 400 });
   }
-  if (!(Number(shares) > 0))
+  const shareNum = Number(shares);
+  const priceNum = Number(price);
+  if (!Number.isFinite(shareNum) || !(shareNum > 0))
     return NextResponse.json({ error: "股數必須為正數" }, { status: 400 });
-  if (!Number.isInteger(Number(shares)))
-    return NextResponse.json({ error: "股數必須為整數" }, { status: 400 });
-  if (!(Number(price) > 0))
+  if (!Number.isFinite(priceNum) || !(priceNum > 0))
     return NextResponse.json({ error: "價格必須為正數" }, { status: 400 });
   const feeProvided = hasManualCharge(fee);
   const taxProvided = hasManualCharge(tax);
@@ -121,6 +122,8 @@ export async function POST(request) {
   );
   if (!stock)
     return NextResponse.json({ error: "股票不存在" }, { status: 400 });
+  if (!isValidStockShareQuantity(shareNum, stock.market))
+    return NextResponse.json({ error: "股數必須為整數" }, { status: 400 });
 
   if (accountId) {
     const acc = queryOne(
@@ -136,7 +139,7 @@ export async function POST(request) {
 
   if (type === "sell") {
     const sharesAt = getSharesAtDate(auth.userId, stockId, date);
-    if (sharesAt < Number(shares)) {
+    if (sharesAt < shareNum) {
       return NextResponse.json(
         { error: `賣出股數不可超過 ${date} 當下持有 (${sharesAt} 股)` },
         { status: 400 },
@@ -147,7 +150,7 @@ export async function POST(request) {
       stockId,
       date,
       "sell",
-      Number(shares),
+      shareNum,
     );
     if (!chain.ok) {
       return NextResponse.json(
@@ -162,10 +165,10 @@ export async function POST(request) {
   const taxAutoCalc =
     body.tax === undefined || body.tax === null || body.tax === "" ? 1 : 0;
   const settings = getStockSettings(auth.userId);
-  const amount = Number(shares) * Number(price);
+  const amount = shareNum * priceNum;
   const finalFee = feeProvided
     ? manualFee
-    : calcStockFee(amount, Number(shares), settings, stock.market || "TW");
+    : calcStockFee(amount, shareNum, settings, stock.market || "TW");
   const finalTax =
     type === "sell"
       ? taxProvided
@@ -189,8 +192,8 @@ export async function POST(request) {
       stockId,
       date,
       type,
-      shares,
-      price,
+      shareNum,
+      priceNum,
       finalFee,
       finalTax,
       accountId || "",

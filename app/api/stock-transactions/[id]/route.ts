@@ -9,6 +9,7 @@ import {
   calcStockTax,
   validateChainConstraint,
 } from "../../../../lib/stockHelpers";
+import { isValidStockShareQuantity } from "../../../../lib/stockMarket";
 
 function hasManualCharge(value) {
   return value !== undefined && value !== null && value !== "";
@@ -35,11 +36,11 @@ export async function PUT(request, { params }) {
     return NextResponse.json({ error: "日期格式無效" }, { status: 400 });
   if (!["buy", "sell"].includes(type))
     return NextResponse.json({ error: "交易類型無效" }, { status: 400 });
-  if (!(Number(shares) > 0))
+  const shareNum = Number(shares);
+  const priceNum = Number(price);
+  if (!Number.isFinite(shareNum) || !(shareNum > 0))
     return NextResponse.json({ error: "股數必須為正數" }, { status: 400 });
-  if (!Number.isInteger(Number(shares)))
-    return NextResponse.json({ error: "股數必須為整數" }, { status: 400 });
-  if (!(Number(price) > 0))
+  if (!Number.isFinite(priceNum) || !(priceNum > 0))
     return NextResponse.json({ error: "價格必須為正數" }, { status: 400 });
   const feeProvided = hasManualCharge(fee);
   const taxProvided = hasManualCharge(tax);
@@ -76,7 +77,7 @@ export async function PUT(request, { params }) {
     t.stock_id,
     date,
     type,
-    Number(shares),
+    shareNum,
     id,
   );
   if (!chain.ok) {
@@ -94,11 +95,13 @@ export async function PUT(request, { params }) {
     "SELECT stock_type, market FROM stocks WHERE id = ? AND user_id = ?",
     [t.stock_id, auth.userId],
   );
+  if (!isValidStockShareQuantity(shareNum, stock?.market || "TW"))
+    return NextResponse.json({ error: "股數必須為整數" }, { status: 400 });
   const settings = getStockSettings(auth.userId);
-  const amount = Number(shares) * Number(price);
+  const amount = shareNum * priceNum;
   const finalFee = feeProvided
     ? manualFee
-    : calcStockFee(amount, Number(shares), settings, stock?.market || "TW");
+    : calcStockFee(amount, shareNum, settings, stock?.market || "TW");
   const finalTax =
     type === "sell"
       ? taxProvided
@@ -120,8 +123,8 @@ export async function PUT(request, { params }) {
       [
         date,
         type,
-        shares,
-        price,
+        shareNum,
+        priceNum,
         finalFee,
         finalTax,
         accountId || "",

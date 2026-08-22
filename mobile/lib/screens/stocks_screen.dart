@@ -1061,6 +1061,14 @@ class _StockTxnFormState extends State<_StockTxnForm> {
   bool _saving = false;
 
   bool get _isEdit => widget.existing != null;
+  Stock? get _selectedStock {
+    for (final stock in widget.stocks) {
+      if (stock.id == _stockId) return stock;
+    }
+    return null;
+  }
+
+  bool get _allowsFractionalShares => _selectedStock?.market == 'US';
 
   @override
   void initState() {
@@ -1102,10 +1110,11 @@ class _StockTxnFormState extends State<_StockTxnForm> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _saving = true);
     try {
+      final shareNum = num.parse(_shares.text.trim());
       final body = <String, dynamic>{
         'stockId': _stockId,
         'type': _type,
-        'shares': int.parse(_shares.text.trim()),
+        'shares': shareNum,
         'price': num.parse(_price.text.trim()),
         'date': _dateStr,
         'note': _note.text.trim(),
@@ -1188,15 +1197,24 @@ class _StockTxnFormState extends State<_StockTxnForm> {
                   Expanded(
                     child: TextFormField(
                       controller: _shares,
-                      keyboardType: TextInputType.number,
+                      keyboardType: TextInputType.numberWithOptions(
+                        decimal: _allowsFractionalShares,
+                      ),
                       decoration: InputDecoration(
                         labelText: trKey('featuresStocksCommonShares'),
                         border: OutlineInputBorder(),
                       ),
                       validator: (v) {
-                        final n = int.tryParse(v?.trim() ?? '');
+                        final n = num.tryParse(v?.trim() ?? '');
                         if (n == null || n <= 0) {
-                          return trKey('mobileLegacyPositiveWholeNumber');
+                          return trKey(
+                            'featuresStocksTransactionsMessagesSharesRequired',
+                          );
+                        }
+                        if (!_allowsFractionalShares && n % 1 != 0) {
+                          return trKey(
+                            'featuresStocksTransactionsMessagesSharesRequired',
+                          );
                         }
                         return null;
                       },

@@ -23,6 +23,10 @@ import {
 } from "@/components/ui/table";
 import { useT } from "@/components/i18n/I18nProvider";
 import { localeTag } from "@/lib/i18n/localeTag";
+import {
+  allowsFractionalShares,
+  isValidStockShareQuantity,
+} from "@/lib/stockMarket";
 import { Plus, Trash2, Edit3 } from "lucide-react";
 
 function fmtCurrency(n: number | string, currency: string, locale: string) {
@@ -165,7 +169,9 @@ export default function StockTxClient(_props: { user?: any } = {}) {
       setFormError(t("features.stocks.transactions.messages.stockRequired"));
       return;
     }
-    if (!form.shares || Number(form.shares) <= 0) {
+    const selectedStock = stocks.find((s) => s.id === form.stockId);
+    const shareNum = Number(form.shares);
+    if (!isValidStockShareQuantity(shareNum, selectedStock?.market)) {
       setFormError(t("features.stocks.transactions.messages.sharesRequired"));
       return;
     }
@@ -179,7 +185,7 @@ export default function StockTxClient(_props: { user?: any } = {}) {
       stockId: form.stockId,
       type: form.type,
       date: form.date,
-      shares: Number(form.shares),
+      shares: shareNum,
       price: Number(form.price),
       note: form.note,
     };
@@ -213,6 +219,8 @@ export default function StockTxClient(_props: { user?: any } = {}) {
   }
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const selectedStock = stocks.find((s) => s.id === form.stockId);
+  const fractionalShares = allowsFractionalShares(selectedStock?.market);
 
   return (
     <div className="space-y-6">
@@ -336,6 +344,8 @@ export default function StockTxClient(_props: { user?: any } = {}) {
             <Input
               label={t("features.stocks.transactions.sharesLabel")}
               type="number"
+              min="0"
+              step={fractionalShares ? "any" : "1"}
               value={form.shares}
               onChange={(e) =>
                 setForm((f) => ({ ...f, shares: e.target.value }))

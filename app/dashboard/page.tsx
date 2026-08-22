@@ -195,9 +195,9 @@ export default async function DashboardPage(props: { searchParams: Promise<{ mon
 
   const modules: Record<DashboardModuleId, ReactNode> = {
     assets: (
-      <section key="assets" className="grid gap-4 md:grid-cols-2 xl:col-span-2" aria-label={t('dashboard.personalize.modules.assets')}>
+      <section key="assets" className="dashboard-asset-grid grid gap-4 md:grid-cols-2 xl:col-span-2" aria-label={t('dashboard.personalize.modules.assets')}>
         {assetCards.map(({ label, value, href, icon: Icon, tone, surface }) => (
-          <Link key={href} href={href} className="group flex min-h-32 items-center gap-4 rounded-2xl border p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md" style={{ background: 'var(--surface-glass)', borderColor: 'var(--glass-border)' }}>
+          <Link key={href} href={href} className="dashboard-asset-card group flex min-h-32 items-center gap-4 rounded-2xl border p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md" style={{ background: 'var(--dashboard-panel)', borderColor: 'var(--dashboard-rule)' }}>
             <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl" style={{ background: surface, color: tone }}><Icon size={23} aria-hidden="true" /></span>
             <span className="min-w-0 flex-1">
               <span className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>{label}</span>
@@ -306,14 +306,7 @@ export default async function DashboardPage(props: { searchParams: Promise<{ mon
           <CalendarRange size={22} style={{ color: 'var(--primary)' }} aria-hidden="true" />
         </div>
 
-        {!cashOutlook?.available ? (
-          <div className="empty-hint py-8">
-            <p>{t(`dashboard.cashOutlook.${cashOutlook?.unavailableReason || 'noSchedules'}`)}</p>
-            <Link href={cashOutlook?.unavailableReason === 'noBankAccounts' ? '/finance/accounts' : '/finance/recurring'} className="mt-3 inline-flex min-h-11 items-center gap-1 rounded-lg px-3 font-semibold text-primary hover:bg-primary/10">
-              {cashOutlook?.unavailableReason === 'noBankAccounts' ? t('nav.accounts') : t('nav.recurring')} <ArrowRight size={15} aria-hidden="true" />
-            </Link>
-          </div>
-        ) : (
+        {cashOutlook?.available ? (
           <div className="space-y-5">
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
               <div className="min-w-0 rounded-xl p-4" style={{ background: 'var(--surface-hover)' }}>
@@ -371,6 +364,13 @@ export default async function DashboardPage(props: { searchParams: Promise<{ mon
             {cashOutlook.uncoveredScheduleCount > 0 && <Link href="/finance/recurring" className="flex min-h-11 items-center justify-between gap-3 rounded-xl p-3 text-sm hover:brightness-95" style={{ background: 'var(--primary-light-bg)', color: 'var(--text-secondary)' }}><span>{t('dashboard.cashOutlook.coverage', { included: cashOutlook.includedScheduleCount, total: cashOutlook.activeScheduleCount, uncovered: cashOutlook.uncoveredScheduleCount })}</span><ArrowRight size={16} className="shrink-0" aria-hidden="true" /></Link>}
             <p className="rounded-xl border border-dashed p-3 text-xs leading-relaxed" style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}>{t('dashboard.cashOutlook.disclaimer')}</p>
           </div>
+        ) : (
+          <div className="empty-hint py-8">
+            <p>{t(`dashboard.cashOutlook.${cashOutlook?.unavailableReason || 'noSchedules'}`)}</p>
+            <Link href={cashOutlook?.unavailableReason === 'noBankAccounts' ? '/finance/accounts' : '/finance/recurring'} className="mt-3 inline-flex min-h-11 items-center gap-1 rounded-lg px-3 font-semibold text-primary hover:bg-primary/10">
+              {cashOutlook?.unavailableReason === 'noBankAccounts' ? t('nav.accounts') : t('nav.recurring')} <ArrowRight size={15} aria-hidden="true" />
+            </Link>
+          </div>
         )}
       </section>
     ),
@@ -402,12 +402,7 @@ export default async function DashboardPage(props: { searchParams: Promise<{ mon
           <div><h2 id="dashboard-portfolio-health-title" className="section-card-title">{t('dashboard.portfolioHealth.title')}</h2><p className="mt-1 text-sm" style={{ color: 'var(--text-muted)' }}>{t('dashboard.portfolioHealth.subtitle')}</p></div>
           <Gauge size={22} style={{ color: 'var(--primary)' }} aria-hidden="true" />
         </div>
-        {!portfolio?.available ? (
-          <div className="empty-hint py-8">
-            <p>{t(`dashboard.portfolioHealth.${portfolio?.unavailableReason || 'noHoldings'}`)}</p>
-            <Link href="/stocks/portfolio" className="mt-3 inline-flex min-h-11 items-center gap-1 rounded-lg px-3 font-semibold text-primary hover:bg-primary/10">{t('nav.stocksPortfolio')} <ArrowRight size={15} aria-hidden="true" /></Link>
-          </div>
-        ) : (
+        {portfolio?.available ? (
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <div className="rounded-xl p-3" style={{ background: 'var(--surface-hover)' }}><p className="text-xs" style={{ color: 'var(--text-muted)' }}>{t('dashboard.portfolioHealth.marketValue')}</p><strong className="mt-1 block tabular-nums" style={{ color: 'var(--text)' }}>{fmtMoney(portfolio.marketValue, locale, portfolio.currency || 'TWD')}</strong></div>
@@ -415,13 +410,18 @@ export default async function DashboardPage(props: { searchParams: Promise<{ mon
             </div>
             <div className="rounded-xl border p-4" style={{ borderColor: 'var(--border)' }}>
               <div className="flex flex-wrap items-end justify-between gap-3">
-                <div><p className="text-xs" style={{ color: 'var(--text-muted)' }}>{t('dashboard.portfolioHealth.unrealizedGross')}</p><strong className="mt-1 block text-xl tabular-nums" style={{ color: portfolio.unrealizedGrossPL >= 0 ? 'var(--net)' : 'var(--danger)' }}>{portfolio.unrealizedGrossPL >= 0 ? '+' : '−'}{fmtMoney(Math.abs(portfolio.unrealizedGrossPL), locale, portfolio.currency || 'TWD')}</strong></div>
-                <strong className="text-lg tabular-nums" style={{ color: portfolio.unrealizedGrossPL >= 0 ? 'var(--net)' : 'var(--danger)' }}>{portfolio.costReturnRate == null ? '—' : `${portfolio.costReturnRate >= 0 ? '+' : ''}${portfolio.costReturnRate}%`}</strong>
+                <div><p className="text-xs" style={{ color: 'var(--text-muted)' }}>{t('dashboard.portfolioHealth.unrealizedGross')}</p><strong className="mt-1 block text-xl tabular-nums" style={{ color: portfolio.unrealizedGrossPL >= 0 ? 'var(--pl-gain)' : 'var(--pl-loss)' }}>{portfolio.unrealizedGrossPL >= 0 ? '+' : '−'}{fmtMoney(Math.abs(portfolio.unrealizedGrossPL), locale, portfolio.currency || 'TWD')}</strong></div>
+                <strong className="text-lg tabular-nums" style={{ color: portfolio.unrealizedGrossPL >= 0 ? 'var(--pl-gain)' : 'var(--pl-loss)' }}>{portfolio.costReturnRate == null ? '—' : `${portfolio.costReturnRate >= 0 ? '+' : ''}${portfolio.costReturnRate}%`}</strong>
               </div>
             </div>
             {portfolio.largestHolding && <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>{t('dashboard.portfolioHealth.largestHolding', { name: portfolio.largestHolding.name, share: portfolio.largestHolding.share })}</p>}
             {portfolio.pricedHoldingCount < portfolio.holdingCount && <p className="rounded-xl p-3 text-sm" style={{ background: 'var(--danger-bg)', color: 'var(--text-secondary)' }}>{t('dashboard.portfolioHealth.coverage', { priced: portfolio.pricedHoldingCount, total: portfolio.holdingCount })}</p>}
             <p className="rounded-xl border border-dashed p-3 text-xs leading-relaxed" style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}>{t('dashboard.portfolioHealth.disclaimer')}</p>
+          </div>
+        ) : (
+          <div className="empty-hint py-8">
+            <p>{t(`dashboard.portfolioHealth.${portfolio?.unavailableReason || 'noHoldings'}`)}</p>
+            <Link href="/stocks/portfolio" className="mt-3 inline-flex min-h-11 items-center gap-1 rounded-lg px-3 font-semibold text-primary hover:bg-primary/10">{t('nav.stocksPortfolio')} <ArrowRight size={15} aria-hidden="true" /></Link>
           </div>
         )}
       </section>
@@ -459,20 +459,25 @@ export default async function DashboardPage(props: { searchParams: Promise<{ mon
 
   return (
     <AppLayout user={user}>
-      <div className="mx-auto w-full max-w-[1600px] space-y-6 md:space-y-8">
-        <header className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
-          <div className="page-header"><h1>{t('dashboard.title')}</h1><p>{t('dashboard.subtitle', { month: dashboardMonth })}</p></div>
+      <div className="dashboard-page mx-auto w-full max-w-[1600px] space-y-6 md:space-y-8">
+        <header className="dashboard-page-header flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
+          <div className="page-header"><span className="dashboard-eyebrow">{t('dashboard.kpi.net')}</span><h1>{t('dashboard.title')}</h1><p>{t('dashboard.subtitle', { month: dashboardMonth })}</p></div>
           <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
             <DashboardFilters />
             <DashboardPersonalization initialLayout={layout} updatedAt={data.preferences?.updatedAt || 0} />
+            <div className="dashboard-query-status inline-flex min-h-11 items-center gap-2 rounded-xl border px-3 text-xs font-medium" title={t('dashboard.dataStatus.queriedAt', { time: generatedAtLabel })}>
+              <span className="dashboard-status-dot" aria-hidden="true" />
+              <span>{t('dashboard.dataStatus.queriedAt', { time: generatedAtLabel })}</span>
+            </div>
             <Link href="/finance/transactions?action=add" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-white shadow-sm transition-transform hover:-translate-y-0.5 hover:bg-primary-dark"><Plus size={17} aria-hidden="true" />{t('features.transactions.add')}</Link>
           </div>
         </header>
 
-        <section className="dashboard-hero relative overflow-hidden rounded-[28px] p-5 text-white shadow-lg sm:p-7 lg:p-8" aria-labelledby="dashboard-overview-title">
-          <div className="pointer-events-none absolute -right-16 -top-24 h-72 w-72 rounded-full bg-white/10 blur-2xl" />
+        <section className="dashboard-hero dashboard-hero--editorial relative overflow-hidden rounded-[28px] p-5 text-white shadow-lg sm:p-7 lg:p-8" aria-labelledby="dashboard-overview-title">
+          <div className="dashboard-hero-gridline pointer-events-none absolute inset-0" aria-hidden="true" />
+          <div className="dashboard-hero-mark pointer-events-none absolute -right-10 -top-14 h-64 w-64 rounded-full" aria-hidden="true" />
           <div className="relative grid gap-7 lg:grid-cols-[1.05fr_0.95fr] lg:items-end">
-            <div className="min-w-0"><p id="dashboard-overview-title" className="text-sm font-medium text-white/90">{t('dashboard.kpi.net')}</p><h2 className="mt-1 break-all text-3xl font-extrabold tracking-[-0.04em] text-white sm:text-5xl lg:text-6xl">{fmtMoney(net, locale)}</h2><p className="mt-3 text-sm text-white/90">{dashboardMonth}</p></div>
+            <div className="min-w-0"><p id="dashboard-overview-title" className="dashboard-hero-label text-sm font-medium text-white/90">{t('dashboard.kpi.net')}</p><h2 className="dashboard-hero-value mt-1 break-all text-3xl font-extrabold tracking-[-0.04em] text-white sm:text-5xl lg:text-6xl">{fmtMoney(net, locale)}</h2><p className="mt-3 text-sm text-white/90">{dashboardMonth}</p></div>
             <div className="grid gap-3 sm:grid-cols-3">
               {[
                 [t('dashboard.overview.income'), fmtMoney(totalIncome, locale), transactionHref(data.yearMonth, 'income')],
@@ -485,7 +490,7 @@ export default async function DashboardPage(props: { searchParams: Promise<{ mon
           </div>
         </section>
 
-        <div className="grid gap-6 xl:grid-cols-2">
+        <div className="dashboard-module-grid grid gap-6 xl:grid-cols-2">
           {visibleModules.map(id => modules[id])}
         </div>
       </div>

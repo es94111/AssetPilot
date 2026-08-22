@@ -1,6 +1,6 @@
 # 資產管理 系統規格說明書 (SSD)
 
-**版本：** 4.108.0
+**版本：** 4.109.0
 **日期：** 2026-08-23
 **狀態：** 已實作
 
@@ -987,6 +987,7 @@ API 路徑統一以 `/api/` 為前綴。所有需認證的路由自動套用 aut
 
 | 版本 | 日期 | 變更說明 |
 | --- | --- | --- |
+| 4.109.0 | 2026-08-23 | LINE 官方帳號記帳流程與 Flex Message 顯示優化：新增 `lib/lineRecordParser.ts` 集中處理今天／昨天、日期與直接記帳輸入，無效日期不再靜默改成今天；`app/api/line/webhook/route.ts` 直接記帳優先選擇相同幣別帳戶，並與 `insertIncomeExpenseTransaction()` 共用外幣信用卡手續費與交易欄位寫入規則。`lib/lineMessaging.ts` 抽出共用 header/body/footer 與標籤／值明細列，主選單、逐步記帳、查詢、完成摘要與舊版提示卡統一呈現；既有 postback data、資料權限與按鈕上限不變。新增 `tests/lib/lineRecordParser.test.ts`／`tests/lib/lineMessaging.test.ts` 與 `package.json` 測試腳本。驗證：`npm run typecheck`、LINE targeted tests、`npm test`（既有 `check:i18n` 產物過期而停止）、`npm run build` 162 頁、LSP 與 `git diff --check` 通過；PostgreSQL 整合測試因本機未設定 DB URL 略過。 |
 | 4.108.0 | 2026-08-23 | 美股交易支援正數小數股數，台股維持整數股數契約。`lib/stockMarket.ts` 新增市場感知的股數驗證與定期定額股數計算；`app/api/stock-transactions/route.ts`、`[id]/route.ts` 與匯入路徑允許 US 小數股數並仍拒絕 TW 小數股數，`lib/stockRecurringHelpers.ts` 允許美股定期定額依金額／價格產生小於 1 股的正數數量。Web `StockTxClient` 與 Flutter 股票交易表單依市場切換 decimal／integer 輸入，既有 USD 計價、FIFO、持股與損益計算不變。新增 US 小數股數、台股整數限制與定期定額計算回歸測試；驗證 `npm test`、`npm run typecheck`、`npm run check:i18n`、隔離輸出 `npm run build`、Flutter targeted analyze 與 `git diff --check` 通過，PostgreSQL 整合測試因本機未設定 DB URL 略過。 |
 | 4.107.0 | 2026-08-22 | 股票模組新增美股市場支援：`stocks` 及股票交易、股利、定期定額資料以 `market` 區分 `TW`／`US`，既有資料預設為 TW／TWD；美股以 USD 儲存並接入 Yahoo Finance 報價與股利同步。股票 CRUD、交易費用與交易稅、FIFO 已實現損益、混合幣別持股換算、批次／自動報價、CSV 匯入匯出與定期定額處理均改為市場感知，US 費用／稅額預設為 0 且保留手動覆寫。Web `PortfolioClient`、交易／股利／損益／設定頁與 Flutter `Stock` model／股票畫面同步新增市場、幣別及 USD 格式化；`asset_openapi.yaml`、MCP 股票讀取結果、外部 API attribution、shared i18n 產生輸出同步更新。新增 Yahoo quote/parser 與美股費率測試，驗證 `npm test`、`npm run typecheck`、`npm run check:i18n`、`npm run build`、Flutter targeted analyze、`git diff --check` 通過；PostgreSQL 整合測試因本機未設定 DB URL 略過。 |
 | 4.106.0 | 2026-08-22 | Flutter Android App UI refresh：`mobile/lib/app.dart` 新增依窗口寬度切換的 Compact NavigationBar 與 Medium/Expanded NavigationRail；`theme.dart`／`widgets.dart` 建立 Calm Ledger 語意色、opaque surface、Material 3 controls、loading/error/empty shared surfaces。`dashboard_screen.dart` 重排 period context → net → cash flow → categories → recent transactions；`transactions_screen.dart` 新增 active filter count、explicit overflow actions、card rows；`stocks_screen.dart` 改以 view selector；`more_screen.dart` 分組 finance/settings/help；`transaction_form_screen.dart` 增加 SafeArea/IME-aware sticky footer。保留既有 REST、models、JWT/Cookie、OAuth/deep link、Turnstile、shared i18n、fl_chart、Sentry；`api_client.dart` 僅將已安裝的 `flutter_secure_storage` 11 API 由移除的 `encryptedSharedPreferences` 參數改為 AndroidOptions defaults。驗證：`flutter test` 22/22；`flutter analyze` 僅既有 Sentry experimental warning；`git diff --check` 通過。APK debug build 受現有 compileSdk 36 與 flutter_secure_storage 要求 37 不一致阻擋。 |

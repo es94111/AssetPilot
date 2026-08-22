@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-4.108.0-blue" alt="version">
+  <img src="https://img.shields.io/badge/version-4.109.0-blue" alt="version">
   <img src="https://img.shields.io/badge/node-%3E%3D24-brightgreen" alt="node">
   <img src="https://img.shields.io/badge/next.js-16.x-000000" alt="next.js">
   <img src="https://img.shields.io/badge/openapi-3.2.0-6BA539" alt="openapi">
@@ -383,9 +383,9 @@ LINE 登入與綁定皆使用 LINE 官方 Login API v2.1：`/oauth2/v2.1/authori
 1. 在同一個 LINE Developers Provider 建立或選擇 Messaging API channel，取得 Channel secret 與 long-lived Channel access token
 2. 設定 `LINE_MESSAGING_CHANNEL_SECRET`、`LINE_MESSAGING_CHANNEL_ACCESS_TOKEN`，並設定 `APP_URL=https://your-domain.com`
 3. 在 Messaging API channel 的 Webhook URL 填入 `https://your-domain.com/api/line/webhook`，啟用 Use webhook
-4. 使用者先在 AssetPilot「帳號設定」綁定 LINE 帳號，之後可在官方帳號輸入 `選單`，用 Flex Message Button 選擇「新增支出」「新增收入」「查看紀錄」
+4. 使用者先在 AssetPilot「帳號設定」綁定 LINE 帳號，之後可在官方帳號輸入 `選單`，用 Flex Message Button 選擇「新增記錄」「快速支出」或「查看紀錄」
 
-Webhook 回覆使用 LINE Flex Message Button：未綁定時顯示「綁定 LINE 帳號」URI button；綁定後顯示主選單。按「新增支出」或「新增收入」後，再輸入 `120 午餐`、`5000 薪資` 這類金額與備註即可新增；按「查看紀錄」可查今天、昨天或本月。仍支援直接輸入 `支出 120 午餐`、`收入 5000 薪資`、`查詢 本月`。
+Webhook 回覆使用 LINE Flex Message Button：未綁定時顯示「綁定 LINE 帳號」URI button；綁定後顯示主選單。「新增記錄」會依序引導填寫日期、類型、金額、分類、帳戶、幣別與備註，確認摘要後才寫入；日期可選今天／昨天或輸入日期。仍支援直接輸入 `支出 120 午餐`、`收入 5000 薪資`、`查詢 本月`。
 
 資產統計報表排程支援 Email / LINE 兩種通知方式；管理員可在「管理員設定 → 報表排程」新增排程時勾選 LINE 通知。LINE 排程通知會推送同 email 報表相近的資產摘要 Flex Message，使用者需先完成 LINE 綁定。
 

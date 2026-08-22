@@ -73,13 +73,85 @@ export function textMessage(text: string): LineTextMessage {
   return { type: 'text', text };
 }
 
-function button(label: string, text: string) {
+const FLEX_COLORS = {
+  primary: '#1d4ed8',
+  primaryText: '#ffffff',
+  primaryMuted: '#bfdbfe',
+  canvas: '#f8fafc',
+  panel: '#ffffff',
+  text: '#0f172a',
+  muted: '#64748b',
+  hint: '#eff6ff',
+  hintText: '#1e3a8a',
+  border: '#e2e8f0',
+};
+
+type FlexNode = Record<string, unknown>;
+
+function lineHeader(title: string): FlexNode {
   return {
-    type: 'button',
-    style: 'secondary',
-    height: 'sm',
-    action: { type: 'message', label, text },
+    type: 'box',
+    layout: 'vertical',
+    backgroundColor: FLEX_COLORS.primary,
+    paddingAll: '16px',
+    contents: [
+      { type: 'text', text: 'AssetPilot · LINE 記帳', color: FLEX_COLORS.primaryMuted, size: 'xs', weight: 'bold' },
+      { type: 'text', text: title, color: FLEX_COLORS.primaryText, weight: 'bold', size: 'lg', margin: 'sm', wrap: true },
+    ],
   };
+}
+
+function lineBody(contents: FlexNode[]): FlexNode {
+  return {
+    type: 'box',
+    layout: 'vertical',
+    backgroundColor: FLEX_COLORS.canvas,
+    paddingAll: '16px',
+    spacing: 'md',
+    contents,
+  };
+}
+
+function lineFooter(contents: FlexNode[]): FlexNode {
+  return {
+    type: 'box',
+    layout: 'vertical',
+    backgroundColor: FLEX_COLORS.canvas,
+    paddingAll: '12px',
+    spacing: 'sm',
+    contents,
+  };
+}
+
+function detailLine(line: string): FlexNode {
+  const separator = line.indexOf('：');
+  if (separator > 0 && separator <= 12) {
+    const label = line.slice(0, separator + 1);
+    const value = line.slice(separator + 1).trim() || '—';
+    const emphasized = label === '金額：' || label === '淨額：';
+    return {
+      type: 'box',
+      layout: 'horizontal',
+      alignItems: 'start',
+      spacing: 'sm',
+      contents: [
+        { type: 'text', text: label, size: 'xs', color: FLEX_COLORS.muted, flex: 2, wrap: true },
+        { type: 'text', text: value, size: emphasized ? 'md' : 'sm', color: FLEX_COLORS.text, weight: emphasized ? 'bold' : 'regular', align: 'end', flex: 5, wrap: true },
+      ],
+    };
+  }
+  return {
+    type: 'box',
+    layout: 'vertical',
+    backgroundColor: FLEX_COLORS.hint,
+    cornerRadius: '8px',
+    paddingAll: '9px',
+    contents: [{ type: 'text', text: line, size: 'xs', color: FLEX_COLORS.hintText, wrap: true }],
+  };
+}
+
+function detailLines(lines: string[]): FlexNode[] {
+  return lines.length > 0 ? lines.map(detailLine) : [detailLine('尚未填寫')];
 }
 
 function postbackButton(label: string, data: string, displayText: string, style: 'primary' | 'secondary' = 'secondary') {
@@ -108,40 +180,23 @@ export function buildMainMenuFlex(appUrl: string, linked: boolean): LineFlexMess
     contents: {
       type: 'bubble',
       size: 'mega',
-      header: {
-        type: 'box',
-        layout: 'vertical',
-        contents: [
-          { type: 'text', text: 'AssetPilot', weight: 'bold', color: '#2563eb', size: 'sm' },
-          { type: 'text', text: linked ? '今天要做什麼？' : '先綁定 LINE 帳號', weight: 'bold', size: 'xl', margin: 'sm' },
-        ],
-      },
-      body: {
-        type: 'box',
-        layout: 'vertical',
-        spacing: 'md',
-        contents: [
-          {
-            type: 'text',
-            text: linked ? '選擇功能後，我會接著引導你輸入金額或查看紀錄。' : '綁定後即可用官方帳號新增收入、支出與查看收支紀錄。',
-            wrap: true,
-            size: 'sm',
-            color: '#475569',
-          },
-        ],
-      },
-      footer: {
-        type: 'box',
-        layout: 'vertical',
-        spacing: 'sm',
-        contents: linked
-          ? [
-              postbackButton('新增記錄', 'action=record_wizard', '新增記錄', 'primary'),
-              postbackButton('快速支出', 'action=record&type=expense', '新增支出'),
-              postbackButton('查看紀錄', 'action=query_menu', '查看紀錄'),
-            ]
-          : [uriButton('綁定 LINE 帳號', bindUrl)],
-      },
+      header: lineHeader(linked ? '今天要做什麼？' : '先綁定 LINE 帳號'),
+      body: lineBody([
+        {
+          type: 'text',
+          text: linked ? '選擇功能後，我會接著引導你輸入金額或查看紀錄。' : '綁定後即可用官方帳號新增收入、支出與查看收支紀錄。',
+          wrap: true,
+          size: 'sm',
+          color: FLEX_COLORS.muted,
+        },
+      ]),
+      footer: lineFooter(linked
+        ? [
+            postbackButton('新增記錄', 'action=record_wizard', '新增記錄', 'primary'),
+            postbackButton('快速支出', 'action=record&type=expense', '新增支出'),
+            postbackButton('查看紀錄', 'action=query_menu', '查看紀錄'),
+          ]
+        : [uriButton('綁定 LINE 帳號', bindUrl)]),
     },
   };
 }
@@ -156,29 +211,18 @@ export function buildRecordWizardStepFlex(
     altText: title,
     contents: {
       type: 'bubble',
-      body: {
-        type: 'box',
-        layout: 'vertical',
-        spacing: 'md',
-        contents: [
-          { type: 'text', text: title, weight: 'bold', size: 'lg', wrap: true },
-          ...lines.map((line) => ({ type: 'text', text: line, size: 'sm', color: '#475569', wrap: true })),
-        ],
-      },
-      footer: {
-        type: 'box',
-        layout: 'vertical',
-        spacing: 'sm',
-        contents: [
-          ...actions.slice(0, 9).map((action, index) => postbackButton(
-            action.label,
-            action.data,
-            action.displayText || action.label,
-            action.primary || index === 0 ? 'primary' : 'secondary'
-          )),
-          postbackButton('取消', 'action=menu', '選單'),
-        ],
-      },
+      size: 'mega',
+      header: lineHeader(title),
+      body: lineBody(detailLines(lines)),
+      footer: lineFooter([
+        ...actions.slice(0, 9).map((action, index) => postbackButton(
+          action.label,
+          action.data,
+          action.displayText || action.label,
+          action.primary || index === 0 ? 'primary' : 'secondary'
+        )),
+        postbackButton('取消', 'action=menu', '選單'),
+      ]),
     },
   };
 }
@@ -191,32 +235,17 @@ export function buildRecordPromptFlex(type: 'income' | 'expense'): LineFlexMessa
     altText: title,
     contents: {
       type: 'bubble',
-      body: {
-        type: 'box',
-        layout: 'vertical',
-        spacing: 'md',
-        contents: [
-          { type: 'text', text: title, weight: 'bold', size: 'lg' },
-          {
-            type: 'text',
-            text: '請直接輸入金額與備註，我不會自動幫你送出範例文字。',
-            wrap: true,
-            size: 'sm',
-            color: '#475569',
-          },
-          { type: 'text', text: '規則：金額 備註 日期（日期可省略）', wrap: true, size: 'sm', color: '#334155' },
-          { type: 'text', text: isIncome ? '收入例：5000 薪資' : '支出例：120 午餐', wrap: true, size: 'xs', color: '#64748b' },
-          { type: 'text', text: '指定日期例：120 午餐 2026-05-11', wrap: true, size: 'xs', color: '#64748b' },
-        ],
-      },
-      footer: {
-        type: 'box',
-        layout: 'vertical',
-        spacing: 'sm',
-        contents: [
-          postbackButton('回選單', 'action=menu', '選單'),
-        ],
-      },
+      size: 'mega',
+      header: lineHeader(title),
+      body: lineBody([
+        detailLine('請直接輸入金額與備註，我不會自動幫你送出範例文字。'),
+        detailLine('規則：金額 備註 日期（日期可省略）'),
+        detailLine(isIncome ? '收入例：5000 薪資' : '支出例：120 午餐'),
+        detailLine('指定日期例：120 午餐 2026-05-11'),
+      ]),
+      footer: lineFooter([
+        postbackButton('回選單', 'action=menu', '選單'),
+      ]),
     },
   };
 }
@@ -227,25 +256,14 @@ export function buildQueryMenuFlex(): LineFlexMessage {
     altText: '查看收支紀錄',
     contents: {
       type: 'bubble',
-      body: {
-        type: 'box',
-        layout: 'vertical',
-        spacing: 'md',
-        contents: [
-          { type: 'text', text: '查看收支紀錄', weight: 'bold', size: 'lg' },
-          { type: 'text', text: '選擇要查詢的期間。', wrap: true, size: 'sm', color: '#475569' },
-        ],
-      },
-      footer: {
-        type: 'box',
-        layout: 'vertical',
-        spacing: 'sm',
-        contents: [
-          postbackButton('今天', 'action=query&period=today', '查詢 今天', 'primary'),
-          postbackButton('昨天', 'action=query&period=yesterday', '查詢 昨天'),
-          postbackButton('本月', 'action=query&period=month', '查詢 本月'),
-        ],
-      },
+      size: 'mega',
+      header: lineHeader('查看收支紀錄'),
+      body: lineBody([detailLine('選擇要查詢的期間。')]),
+      footer: lineFooter([
+        postbackButton('今天', 'action=query&period=today', '查詢 今天', 'primary'),
+        postbackButton('昨天', 'action=query&period=yesterday', '查詢 昨天'),
+        postbackButton('本月', 'action=query&period=month', '查詢 本月'),
+      ]),
     },
   };
 }
@@ -258,33 +276,16 @@ export function buildActionFlex(appUrl: string): LineFlexMessage {
     contents: {
       type: 'bubble',
       size: 'mega',
-      header: {
-        type: 'box',
-        layout: 'vertical',
-        contents: [
-          { type: 'text', text: 'AssetPilot', weight: 'bold', color: '#2563eb', size: 'sm' },
-          { type: 'text', text: 'LINE 記帳', weight: 'bold', size: 'xl', margin: 'sm' },
-        ],
-      },
-      body: {
-        type: 'box',
-        layout: 'vertical',
-        spacing: 'md',
-        contents: [
-          { type: 'text', text: '綁定後可直接在官方帳號記錄與查詢收支。', wrap: true, size: 'sm', color: '#475569' },
-          { type: 'text', text: '範例：支出 120 午餐、收入 5000 薪資、查詢 本月', wrap: true, size: 'sm', color: '#64748b' },
-        ],
-      },
-      footer: {
-        type: 'box',
-        layout: 'vertical',
-        spacing: 'sm',
-        contents: [
-          uriButton('綁定 LINE 帳號', bindUrl),
-          postbackButton('新增支出', 'action=record&type=expense', '新增支出'),
-          postbackButton('查看紀錄', 'action=query_menu', '查看紀錄'),
-        ],
-      },
+      header: lineHeader('LINE 記帳'),
+      body: lineBody([
+        detailLine('綁定後可直接在官方帳號記錄與查詢收支。'),
+        detailLine('範例：支出 120 午餐、收入 5000 薪資、查詢 本月'),
+      ]),
+      footer: lineFooter([
+        uriButton('綁定 LINE 帳號', bindUrl),
+        postbackButton('新增支出', 'action=record&type=expense', '新增支出', 'primary'),
+        postbackButton('查看紀錄', 'action=query_menu', '查看紀錄'),
+      ]),
     },
   };
 }
@@ -295,68 +296,59 @@ export function buildRecordFlex(title: string, lines: string[]): LineFlexMessage
     altText: title,
     contents: {
       type: 'bubble',
-      body: {
-        type: 'box',
-        layout: 'vertical',
-        spacing: 'sm',
-        contents: [
-          { type: 'text', text: title, weight: 'bold', size: 'lg', wrap: true },
-          ...lines.map((line) => ({ type: 'text', text: line, size: 'sm', color: '#475569', wrap: true })),
-        ],
-      },
-      footer: {
-        type: 'box',
-        layout: 'vertical',
-        spacing: 'sm',
-        contents: [
-          postbackButton('新增支出', 'action=record&type=expense', '新增支出'),
-          postbackButton('查看紀錄', 'action=query_menu', '查看紀錄'),
-        ],
-      },
+      size: 'mega',
+      header: lineHeader(title),
+      body: lineBody(detailLines(lines)),
+      footer: lineFooter([
+        postbackButton('新增支出', 'action=record&type=expense', '新增支出', 'primary'),
+        postbackButton('查看紀錄', 'action=query_menu', '查看紀錄'),
+      ]),
     },
   };
 }
 
 export function buildQueryFlex(title: string, summary: string[], details: string[]): LineFlexMessage {
-  const detailItems = details.length > 0
-    ? details.map((line) => ({ type: 'text', text: line, size: 'xs', color: '#64748b', wrap: true }))
-    : [{ type: 'text', text: '目前沒有符合條件的紀錄。', size: 'sm', color: '#64748b', wrap: true }];
+  const detailItems: FlexNode[] = details.length > 0
+    ? details.map((line) => ({
+        type: 'box',
+        layout: 'vertical',
+        backgroundColor: FLEX_COLORS.panel,
+        borderColor: FLEX_COLORS.border,
+        borderWidth: 'light',
+        cornerRadius: '8px',
+        paddingAll: '9px',
+        contents: [{ type: 'text', text: line, size: 'xs', color: FLEX_COLORS.text, wrap: true }],
+      }))
+    : [detailLine('目前沒有符合條件的紀錄。')];
 
   return {
     type: 'flex',
     altText: title,
     contents: {
       type: 'bubble',
-      body: {
-        type: 'box',
-        layout: 'vertical',
-        spacing: 'md',
-        contents: [
-          { type: 'text', text: title, weight: 'bold', size: 'lg', wrap: true },
-          {
-            type: 'box',
-            layout: 'vertical',
-            spacing: 'xs',
-            contents: summary.map((line) => ({ type: 'text', text: line, size: 'sm', color: '#334155', wrap: true })),
-          },
-          { type: 'separator', margin: 'sm' },
-          {
-            type: 'box',
-            layout: 'vertical',
-            spacing: 'xs',
-            contents: detailItems,
-          },
-        ],
-      },
-      footer: {
-        type: 'box',
-        layout: 'vertical',
-        spacing: 'sm',
-        contents: [
-          postbackButton('新增支出', 'action=record&type=expense', '新增支出'),
-          postbackButton('選單', 'action=menu', '選單'),
-        ],
-      },
+      size: 'mega',
+      header: lineHeader(title),
+      body: lineBody([
+        { type: 'text', text: '摘要', weight: 'bold', size: 'sm', color: FLEX_COLORS.text },
+        {
+          type: 'box',
+          layout: 'vertical',
+          backgroundColor: FLEX_COLORS.panel,
+          borderColor: FLEX_COLORS.border,
+          borderWidth: 'light',
+          cornerRadius: '8px',
+          paddingAll: '10px',
+          spacing: 'xs',
+          contents: detailLines(summary),
+        },
+        { type: 'separator', margin: 'sm' },
+        { type: 'text', text: '最近明細', weight: 'bold', size: 'sm', color: FLEX_COLORS.text },
+        { type: 'box', layout: 'vertical', spacing: 'sm', contents: detailItems },
+      ]),
+      footer: lineFooter([
+        postbackButton('新增支出', 'action=record&type=expense', '新增支出', 'primary'),
+        postbackButton('選單', 'action=menu', '選單'),
+      ]),
     },
   };
 }
@@ -377,7 +369,41 @@ function addDaysYmd(ymd: string, delta: number): string {
   return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
 }
 
-export function buildStatsReportFlex(displayName: string, stats: Record<string, any>, appUrl: string, locale: Locale | string = 'zh-TW'): LineFlexMessage {
+interface LineStatsCategory {
+  name?: string | null;
+  total?: number | string | null;
+}
+
+interface LineStatsDaily {
+  date: string;
+  income?: number | string | null;
+  expense?: number | string | null;
+  net?: number | string | null;
+}
+
+interface LineStats {
+  balanceByCurrency?: Record<string, number | string | null>;
+  period?: { kind?: string; start?: string; end?: string };
+  periodTopCategories?: LineStatsCategory[];
+  topCategories?: LineStatsCategory[];
+  dailyBreakdown?: LineStatsDaily[];
+  reportDate?: string | null;
+  reportWeekday?: string | null;
+  sendDate?: string | null;
+  reportMonth?: string | null;
+  periodIncome?: number | string | null;
+  periodExpense?: number | string | null;
+  periodNet?: number | string | null;
+  month?: string | null;
+  income?: number | string | null;
+  expense?: number | string | null;
+  net?: number | string | null;
+  stockHoldings?: number | string | null;
+  stockMarketValueTwd?: number | string | null;
+  stockUnrealizedPL?: number | string | null;
+}
+
+export function buildStatsReportFlex(displayName: string, stats: LineStats, appUrl: string, locale: Locale | string = 'zh-TW'): LineFlexMessage {
   const t = getTranslator(normalizeLocale(locale));
   const userName = displayName || t('notifications.fallbackUser');
   const detailsUrl = `${appUrl.replace(/\/$/, '')}/reports`;
@@ -408,7 +434,7 @@ export function buildStatsReportFlex(displayName: string, stats: Record<string, 
   const catHeading = isMonthly
     ? t('notifications.sections.topCategoriesMonthly', { month: reportMonth })
     : t('notifications.sections.topCategories');
-  const categoryLines = catSource.slice(0, 5).map((category: any, index: number) => ({
+  const categoryLines = catSource.slice(0, 5).map((category: LineStatsCategory, index: number) => ({
     type: 'box',
     layout: 'horizontal',
     contents: [
@@ -418,8 +444,8 @@ export function buildStatsReportFlex(displayName: string, stats: Record<string, 
   }));
 
   let altText: string;
-  let headerContents: any[];
-  let banner: any[];
+  let headerContents: FlexNode[];
+  let banner: FlexNode[];
   if (isDaily) {
     altText = t('notifications.subject.daily', { date: reportDate, weekday: reportWeekday });
     headerContents = [
@@ -466,9 +492,9 @@ export function buildStatsReportFlex(displayName: string, stats: Record<string, 
   // 每週：每日明細（緊湊版，左日期右淨額），補滿 7 天
   const weeklyBreakdown = isWeekly
     ? (() => {
-        const byDate: Record<string, any> = {};
+        const byDate: Record<string, LineStatsDaily> = {};
         for (const r of (stats.dailyBreakdown || [])) byDate[r.date] = r;
-        const rows: any[] = [{ type: 'text', text: t('notifications.sections.dailyDetail'), size: 'sm', weight: 'bold', color: '#0f172a' }];
+        const rows: FlexNode[] = [{ type: 'text', text: t('notifications.sections.dailyDetail'), size: 'sm', weight: 'bold', color: '#0f172a' }];
         let d = periodStart;
         for (let i = 0; i < 7 && d; i++) {
           const r = byDate[d] || { income: 0, expense: 0, net: 0 };

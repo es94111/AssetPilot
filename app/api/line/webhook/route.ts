@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { normalizeCurrency, convertToTwd, normalizeDate } from '../../../../lib/accountHelpers';
+import { normalizeCurrency, convertToTwd, resolveOverseasFee } from '../../../../lib/accountHelpers';
 import { getDB, queryAll, queryOne, saveDB } from '../../../../lib/db';
 import {
   LINE_MESSAGING_CHANNEL_ACCESS_TOKEN,
@@ -16,9 +16,16 @@ import {
   type LineReplyMessage,
 } from '../../../../lib/lineMessaging';
 import { computeTwdAmount } from '../../../../lib/moneyDecimal';
-import { uid } from '../../../../lib/userDefaults';
+import { insertIncomeExpenseTransaction } from '../../../../lib/transactionWriteCore';
 import { getOrCreateUserCurrencySettings } from '../../../../lib/userCurrencySettings';
 import { isValidIsoDate, todayInUserTz } from '../../../../lib/userTime';
+import {
+  normalizeLineText,
+  parseLineDateInput,
+  parseLineRecordCommand,
+  parseLineRecordDetail,
+  type LineTransactionType,
+} from '../../../../lib/lineRecordParser';
 import {
   getDefaultTransactionPhotoStorage,
   saveTransactionPhotoBuffer,
@@ -26,7 +33,7 @@ import {
 
 export const runtime = 'nodejs';
 
-type TxType = 'income' | 'expense';
+type TxType = LineTransactionType;
 
 interface LineWebhookEvent {
   type: string;
@@ -88,17 +95,24 @@ interface RecordDraft {
 }
 
 function asRows<T>(rows: Array<Record<string, string | number | null>>): T[] {
+  // SAFETY: query helpers return homogeneous database rows; each caller supplies the known row shape.
   return rows as unknown as T[];
 }
 
 function asRow<T>(row: Record<string, string | number | null> | null): T | null {
+  // SAFETY: query helpers return one homogeneous database row; each caller supplies the known row shape.
   return row as unknown as T | null;
 }
 
 function appUrlFromRequest(request: Request): string {
   const configured = process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || '';
   if (configured) return configured;
-  const url = new URL(request.url);
+  let url: URL;
+  try {
+    url = new URL(request.url);
+  } catch {
+    return '';
+  }
   const proto = request.headers.get('x-forwarded-proto') || url.protocol.replace(':', '');
   const host = request.headers.get('x-forwarded-host') || request.headers.get('host') || url.host;
   return `${proto}://${host}`;
@@ -106,87 +120,6 @@ function appUrlFromRequest(request: Request): string {
 
 function formatMoney(value: number): string {
   return new Intl.NumberFormat('zh-TW', { maximumFractionDigits: 2 }).format(Math.round(value * 100) / 100);
-}
-
-function normalizeCommandText(text: string): string {
-  return text.replace(/\u3000/g, ' ').replace(/\s+/g, ' ').trim();
-}
-
-function parseDateToken(raw: string, timezone: string): { date: string; text: string } {
-  let text = raw;
-  const today = todayInUserTz(timezone);
-  if (/\b今天\b/.test(text)) return { date: today, text: text.replace(/\b今天\b/g, '').trim() };
-  if (/\b昨日\b|\b昨天\b/.test(text)) {
-    const d = new Date(`${today}T00:00:00.000Z`);
-    d.setUTCDate(d.getUTCDate() - 1);
-    const date = d.toISOString().slice(0, 10);
-    return { date, text: text.replace(/\b昨日\b|\b昨天\b/g, '').trim() };
-  }
-  const match = text.match(/\b(\d{4}[-/]\d{1,2}[-/]\d{1,2}|\d{8})\b/);
-  if (!match) return { date: today, text };
-  const date = normalizeDate(match[1]);
-  text = text.replace(match[1], '').trim();
-  return { date: date || today, text };
-}
-
-function parseRecordCommand(input: string, timezone: string, fallbackCurrency = 'TWD'): { type: TxType; amount: number; currency: string; date: string; note: string } | null {
-  const normalized = normalizeCommandText(input);
-  const dateParsed = parseDateToken(normalized, timezone);
-  let text = dateParsed.text;
-  let type: TxType | null = null;
-  let amountText = '';
-
-  const signed = text.match(/^([+-])\s*(\d+(?:\.\d+)?)/);
-  if (signed) {
-    type = signed[1] === '+' ? 'income' : 'expense';
-    amountText = signed[2];
-    text = text.slice(signed[0].length).trim();
-  } else {
-    const explicit = text.match(/^(支出|花費|收入|入帳|expense|income)\s*(\d+(?:\.\d+)?)/i);
-    if (!explicit) return null;
-    type = /收入|入帳|income/i.test(explicit[1]) ? 'income' : 'expense';
-    amountText = explicit[2];
-    text = text.slice(explicit[0].length).trim();
-  }
-
-  const amount = Number(amountText);
-  if (!Number.isFinite(amount) || amount <= 0) return null;
-
-  const currencyMatch = text.match(/\b(TWD|USD|JPY|CNY|EUR|HKD)\b/i);
-  const currency = normalizeCurrency(currencyMatch?.[1] || fallbackCurrency);
-  if (currencyMatch) text = text.replace(currencyMatch[0], '').trim();
-
-  return {
-    type,
-    amount,
-    currency,
-    date: dateParsed.date,
-    note: text || (type === 'expense' ? 'LINE 支出' : 'LINE 收入'),
-  };
-}
-
-function parseRecordDetail(input: string, type: TxType, timezone: string, fallbackCurrency = 'TWD'): { type: TxType; amount: number; currency: string; date: string; note: string } | null {
-  const normalized = normalizeCommandText(input);
-  const dateParsed = parseDateToken(normalized, timezone);
-  let text = dateParsed.text;
-  const amountMatch = text.match(/^(\d+(?:\.\d+)?)/);
-  if (!amountMatch) return null;
-
-  const amount = Number(amountMatch[1]);
-  if (!Number.isFinite(amount) || amount <= 0) return null;
-  text = text.slice(amountMatch[0].length).trim();
-
-  const currencyMatch = text.match(/\b(TWD|USD|JPY|CNY|EUR|HKD)\b/i);
-  const currency = normalizeCurrency(currencyMatch?.[1] || fallbackCurrency);
-  if (currencyMatch) text = text.replace(currencyMatch[0], '').trim();
-
-  return {
-    type,
-    amount,
-    currency,
-    date: dateParsed.date,
-    note: text || (type === 'expense' ? 'LINE 支出' : 'LINE 收入'),
-  };
 }
 
 function getLineBotState(lineUserId: string): LineBotStateRow | null {
@@ -233,10 +166,15 @@ function findMatchedCategory(userId: string, type: TxType, text: string): Catego
   }) || rows.find((row) => row.name === (type === 'expense' ? '雜支' : '雜項')) || rows[0] || null;
 }
 
-function defaultAccount(userId: string): AccountRow | null {
+function defaultAccount(userId: string, currency = 'TWD'): AccountRow | null {
+  const targetCurrency = normalizeCurrency(currency);
   return asRow<AccountRow>(queryOne(
-    'SELECT id, name, currency FROM accounts WHERE user_id = ? AND COALESCE(is_active, 1) = 1 ORDER BY sort_order ASC, created_at ASC LIMIT 1',
-    [userId]
+    `SELECT id, name, currency
+     FROM accounts
+     WHERE user_id = ? AND COALESCE(is_active, 1) = 1
+     ORDER BY CASE WHEN COALESCE(currency, 'TWD') = ? THEN 0 ELSE 1 END, sort_order ASC, created_at ASC
+     LIMIT 1`,
+    [userId, targetCurrency]
   ));
 }
 
@@ -316,7 +254,7 @@ function buildWizardStep(user: UserRow, step: string, draft: RecordDraft): LineR
       d.setUTCDate(d.getUTCDate() - 1);
       return d.toISOString().slice(0, 10);
     })();
-    return buildRecordWizardStepFlex('新增記錄：日期', ['請選擇日期，或直接輸入 YYYY-MM-DD。'], [
+    return buildRecordWizardStepFlex('新增記錄：日期', ['請選擇日期，或輸入今天、昨天或 YYYY-MM-DD。'], [
       { label: '今天', data: `action=wizard&step=date&value=${today}`, displayText: '今天', primary: true },
       { label: '昨天', data: `action=wizard&step=date&value=${yesterday}`, displayText: '昨天' },
     ]);
@@ -412,15 +350,16 @@ async function attachLinePhotos(userId: string, transactionId: string, messageId
   return attached;
 }
 
-function withPhotoLine(lines: string[], count: number): string[] {
-  return count > 0 ? [...lines, `照片：${count} 張`] : lines;
+function withPhotoLine(lines: string[], count: number, fxFee = 0): string[] {
+  const withFee = fxFee > 0 ? [...lines, `外幣手續費：TWD ${formatMoney(fxFee)}`] : lines;
+  return count > 0 ? [...withFee, `照片：${count} 張`] : withFee;
 }
 
-async function createTransactionFromLine(user: UserRow, parsed: NonNullable<ReturnType<typeof parseRecordCommand>>, linePhotoMessageIds: string[] = []): Promise<LineReplyMessage> {
+async function createTransactionFromLine(user: UserRow, parsed: NonNullable<ReturnType<typeof parseLineRecordCommand>>, linePhotoMessageIds: string[] = []): Promise<LineReplyMessage> {
   if (!isValidIsoDate(parsed.date)) {
     return textMessage('日期格式無效，請使用 YYYY-MM-DD，例如：支出 120 午餐 2026-05-11');
   }
-  const account = defaultAccount(user.id);
+  const account = defaultAccount(user.id, parsed.currency);
   if (!account) {
     return textMessage('找不到可用帳戶，請先到 AssetPilot 新增帳戶。');
   }
@@ -433,13 +372,27 @@ async function createTransactionFromLine(user: UserRow, parsed: NonNullable<Retu
   }
 
   const twdAmount = computeTwdAmount(converted.originalAmount, converted.fxRate, 0);
-  const now = Date.now();
-  const id = uid();
-  getDB().run(
-    'INSERT INTO transactions (id, user_id, type, amount, currency, original_amount, fx_rate, fx_fee, twd_amount, date, category_id, account_id, note, exclude_from_stats, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
-    [id, user.id, parsed.type, twdAmount, converted.currency, converted.originalAmount, converted.fxRate, 0, twdAmount, parsed.date, category?.id || null, account.id, parsed.note, 0, now, now]
-  );
-  saveDB();
+  const fxFee = resolveOverseasFee({
+    userId: user.id,
+    accountId: account.id,
+    currency: converted.currency,
+    twdBase: converted.twdAmount,
+    clientFxFee: undefined,
+  });
+  const { id } = insertIncomeExpenseTransaction({
+    userId: user.id,
+    type: parsed.type,
+    twdAmount,
+    currency: converted.currency,
+    originalAmount: converted.originalAmount,
+    fxRate: converted.fxRate,
+    fxFee,
+    date: parsed.date,
+    categoryId: category?.id || null,
+    accountId: account.id,
+    note: parsed.note,
+    excludeFromStats: false,
+  });
   let attachedPhotos = 0;
   try {
     attachedPhotos = await attachLinePhotos(user.id, id, linePhotoMessageIds);
@@ -454,7 +407,7 @@ async function createTransactionFromLine(user: UserRow, parsed: NonNullable<Retu
     `分類：${category ? `${category.parent_name || ''}/${category.name}`.replace(/^\//, '') : '未分類'}`,
     `帳戶：${account.name}`,
     `備註：${parsed.note}`,
-  ], attachedPhotos));
+  ], attachedPhotos, fxFee));
 }
 
 async function createTransactionFromDraft(user: UserRow, draft: RecordDraft): Promise<LineReplyMessage> {
@@ -488,14 +441,28 @@ async function createTransactionFromDraft(user: UserRow, draft: RecordDraft): Pr
   }
 
   const twdAmount = computeTwdAmount(converted.originalAmount, converted.fxRate, 0);
-  const now = Date.now();
-  const id = uid();
+  const fxFee = resolveOverseasFee({
+    userId: user.id,
+    accountId: account.id,
+    currency: converted.currency,
+    twdBase: converted.twdAmount,
+    clientFxFee: undefined,
+  });
   const note = String(draft.note || '').trim();
-  getDB().run(
-    'INSERT INTO transactions (id, user_id, type, amount, currency, original_amount, fx_rate, fx_fee, twd_amount, date, category_id, account_id, note, exclude_from_stats, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
-    [id, user.id, draft.type, twdAmount, converted.currency, converted.originalAmount, converted.fxRate, 0, twdAmount, draft.date, category.id, account.id, note, 0, now, now]
-  );
-  saveDB();
+  const { id } = insertIncomeExpenseTransaction({
+    userId: user.id,
+    type: draft.type,
+    twdAmount,
+    currency: converted.currency,
+    originalAmount: converted.originalAmount,
+    fxRate: converted.fxRate,
+    fxFee,
+    date: draft.date,
+    categoryId: category.id,
+    accountId: account.id,
+    note,
+    excludeFromStats: false,
+  });
   let attachedPhotos = 0;
   try {
     attachedPhotos = await attachLinePhotos(user.id, id, draft.linePhotoMessageIds || []);
@@ -511,11 +478,11 @@ async function createTransactionFromDraft(user: UserRow, draft: RecordDraft): Pr
     `帳戶：${account.name}`,
     `幣別：${converted.currency}`,
     `備註：${note || '無'}`,
-  ], attachedPhotos));
+  ], attachedPhotos, fxFee));
 }
 
 function queryPeriod(input: string, timezone: string): { title: string; dateFrom: string; dateTo: string } {
-  const text = normalizeCommandText(input);
+  const text = normalizeLineText(input);
   const today = todayInUserTz(timezone);
   if (/今天|今日/.test(text)) return { title: '今天收支', dateFrom: today, dateTo: today };
   if (/昨天|昨日/.test(text)) {
@@ -611,7 +578,7 @@ async function handleEvent(event: LineWebhookEvent, request: Request): Promise<v
     [lineUserId]
   ));
 
-  const normalized = normalizeCommandText(incomingText);
+  const normalized = normalizeLineText(incomingText);
   if (!user) {
     await replyLineMessage(event.replyToken, [buildMainMenuFlex(appUrl, false)]);
     return;
@@ -673,7 +640,7 @@ async function handleEvent(event: LineWebhookEvent, request: Request): Promise<v
       const value = params.get('value') || '';
       const state = getLineBotState(lineUserId);
       const draft = parseStatePayload(state);
-      if (step === 'date') draft.date = normalizeDate(value) || todayInUserTz(user.timezone || 'Asia/Taipei');
+      if (step === 'date') draft.date = parseLineDateInput(value, user.timezone || 'Asia/Taipei') || todayInUserTz(user.timezone || 'Asia/Taipei');
       if (step === 'type') {
         draft.type = value === 'income' ? 'income' : 'expense';
         draft.categoryId = undefined;
@@ -744,9 +711,9 @@ async function handleEvent(event: LineWebhookEvent, request: Request): Promise<v
     const draft = parseStatePayload(state);
     const field = stateStepToField(state.action);
     if (field === 'date') {
-      const date = normalizeDate(normalized);
+      const date = parseLineDateInput(normalized, user.timezone || 'Asia/Taipei');
       if (!date) {
-        await replyLineMessage(event.replyToken, [textMessage('日期格式請使用 YYYY-MM-DD，例如 2026-05-11'), buildWizardStep(user, state.action, draft)]);
+        await replyLineMessage(event.replyToken, [textMessage('日期請輸入 YYYY-MM-DD，或輸入今天／昨天，例如 2026-05-11'), buildWizardStep(user, state.action, draft)]);
         return;
       }
       draft.date = date;
@@ -816,10 +783,17 @@ async function handleEvent(event: LineWebhookEvent, request: Request): Promise<v
   }
 
   if (state?.action === 'await_record' && (state.tx_type === 'income' || state.tx_type === 'expense')) {
-    const detail = parseRecordDetail(normalized, state.tx_type, user.timezone || 'Asia/Taipei', userDefaultCurrency);
+    const detail = parseLineRecordDetail(normalized, state.tx_type, user.timezone || 'Asia/Taipei', userDefaultCurrency);
     if (!detail) {
       await replyLineMessage(event.replyToken, [
         textMessage(recordRuleText(state.tx_type)),
+        buildRecordPromptFlex(state.tx_type),
+      ]);
+      return;
+    }
+    if (!isValidIsoDate(detail.date)) {
+      await replyLineMessage(event.replyToken, [
+        textMessage('日期格式無效，請使用 YYYY-MM-DD，例如 2026-05-11。'),
         buildRecordPromptFlex(state.tx_type),
       ]);
       return;
@@ -835,8 +809,12 @@ async function handleEvent(event: LineWebhookEvent, request: Request): Promise<v
     return;
   }
 
-  const parsed = parseRecordCommand(normalized, user.timezone || 'Asia/Taipei', userDefaultCurrency);
+  const parsed = parseLineRecordCommand(normalized, user.timezone || 'Asia/Taipei', userDefaultCurrency);
   if (parsed) {
+    if (!isValidIsoDate(parsed.date)) {
+      await replyLineMessage(event.replyToken, [textMessage('日期格式無效，請使用 YYYY-MM-DD，例如 2026-05-11。')]);
+      return;
+    }
     clearLineBotState(lineUserId);
     await replyLineMessage(event.replyToken, [await createTransactionFromLine(user, parsed)]);
     return;
@@ -858,7 +836,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'invalid_signature' }, { status: 401 });
   }
 
-  const payload = JSON.parse(body || '{}') as { events?: LineWebhookEvent[] };
+  let payload: { events?: LineWebhookEvent[] };
+  try {
+    payload = JSON.parse(body || '{}') as { events?: LineWebhookEvent[] };
+  } catch {
+    return NextResponse.json({ error: 'invalid_json' }, { status: 400 });
+  }
   const events = Array.isArray(payload.events) ? payload.events : [];
   await Promise.all(events.map((event) => handleEvent(event, request).catch((e) => {
     console.error('LINE webhook event failed:', e);

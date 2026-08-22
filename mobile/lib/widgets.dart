@@ -29,7 +29,7 @@ class AsyncView<T> extends StatelessWidget {
           return loadingBuilder?.call(context) ??
               Center(
                 child: Semantics(
-                  label: 'Loading',
+                  label: trKey('commonLoading'),
                   liveRegion: true,
                   child: CircularProgressIndicator(),
                 ),
@@ -39,10 +39,16 @@ class AsyncView<T> extends StatelessWidget {
           // If refresh failed after data was rendered, keep the data visible and
           // let the page's refresh affordance handle the transient failure.
           if (snap.hasData) return builder(context, snap.data as T);
-          return _ErrorBox(message: _safeErrorMessage(snap.error), onRetry: onRetry);
+          return _ErrorBox(
+            message: _safeErrorMessage(snap.error),
+            onRetry: onRetry,
+          );
         }
         if (!snap.hasData) {
-          return _ErrorBox(message: trKey('mobileLegacyApiRequestFailed'), onRetry: onRetry);
+          return _ErrorBox(
+            message: trKey('mobileLegacyApiRequestFailed'),
+            onRetry: onRetry,
+          );
         }
         return builder(context, snap.data as T);
       },
@@ -52,7 +58,9 @@ class AsyncView<T> extends StatelessWidget {
 
 String _safeErrorMessage(Object? error) {
   if (error is ApiException) {
-    if (error.statusCode == 0) return trKey('mobileLegacyApiRequestConnectionFailed');
+    if (error.statusCode == 0) {
+      return trKey('mobileLegacyApiRequestConnectionFailed');
+    }
     if (error.statusCode == 401) {
       return trKey('mobileLegacyApiReturned401TheExpiredLocalSessionWas');
     }
@@ -61,6 +69,66 @@ String _safeErrorMessage(Object? error) {
   // TimeoutException, SocketException and package-specific transport errors
   // must not leak endpoint URLs or implementation details into the UI.
   return trKey('mobileLegacyApiRequestConnectionFailed');
+}
+
+/// Opaque work-area surface shared by the dashboard and collection screens.
+/// It keeps the visual hierarchy stable in light/dark mode without relying on
+/// blur or decorative gradients.
+class LedgerCard extends StatelessWidget {
+  final Widget child;
+  final EdgeInsetsGeometry padding;
+  final Color? color;
+  final EdgeInsetsGeometry? margin;
+
+  const LedgerCard({
+    super.key,
+    required this.child,
+    this.padding = const EdgeInsets.all(16),
+    this.color,
+    this.margin,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Card(
+      margin: margin ?? EdgeInsets.zero,
+      elevation: 0,
+      color: color ?? scheme.surface,
+      surfaceTintColor: Colors.transparent,
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: scheme.outlineVariant),
+      ),
+      child: Padding(padding: padding, child: child),
+    );
+  }
+}
+
+class SectionHeader extends StatelessWidget {
+  final String title;
+  final Widget? trailing;
+
+  const SectionHeader({super.key, required this.title, this.trailing});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Expanded(
+          child: Text(
+            title,
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+          ),
+        ),
+        ?trailing,
+      ],
+    );
+  }
 }
 
 class _ErrorBox extends StatelessWidget {
@@ -141,10 +209,17 @@ class EmptyState extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
               ],
-              Text(message, textAlign: TextAlign.center, style: TextStyle(color: c)),
+              Text(
+                message,
+                textAlign: TextAlign.center,
+                style: TextStyle(color: c),
+              ),
               if (onAction != null && actionLabel != null) ...[
                 const SizedBox(height: 16),
-                FilledButton.tonal(onPressed: onAction, child: Text(actionLabel!)),
+                FilledButton.tonal(
+                  onPressed: onAction,
+                  child: Text(actionLabel!),
+                ),
               ],
             ],
           ),
@@ -166,13 +241,13 @@ void toast(
   final background = isError
       ? scheme.errorContainer
       : isSuccess
-          ? scheme.primaryContainer
-          : scheme.inverseSurface;
+      ? scheme.primaryContainer
+      : scheme.inverseSurface;
   final foreground = isError
       ? scheme.onErrorContainer
       : isSuccess
-          ? scheme.onPrimaryContainer
-          : scheme.onInverseSurface;
+      ? scheme.onPrimaryContainer
+      : scheme.onInverseSurface;
   ScaffoldMessenger.of(context)
     ..clearSnackBars()
     ..showSnackBar(

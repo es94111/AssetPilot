@@ -8,13 +8,14 @@ import 'theme.dart';
 
 /// 格式化為 TWD 整數金額：NT$ 1,234
 String twd(num v) => NumberFormat.currency(
-      locale: appIntlLocaleTag(),
-      symbol: 'NT\$ ',
-      decimalDigits: 0,
-    ).format(v);
+  locale: appIntlLocaleTag(),
+  symbol: 'NT\$ ',
+  decimalDigits: 0,
+).format(v);
 
 /// 千分位整數
-String intFmt(num v) => NumberFormat.decimalPattern(appIntlLocaleTag()).format(v);
+String intFmt(num v) =>
+    NumberFormat.decimalPattern(appIntlLocaleTag()).format(v);
 
 /// 依貨幣格式化（小數兩位，TWD 不顯示小數）
 String money(num v, String currency) {
@@ -29,8 +30,9 @@ String money(num v, String currency) {
 
 /// 帶正負號的金額（用於損益）：+1,234 / -567
 String signed(num v) {
-  final formatted = NumberFormat.decimalPattern(appIntlLocaleTag())
-      .format(v.abs());
+  final formatted = NumberFormat.decimalPattern(
+    appIntlLocaleTag(),
+  ).format(v.abs());
   if (v > 0) return '+$formatted';
   if (v < 0) return '−$formatted';
   return formatted;
@@ -44,7 +46,7 @@ Color parseColor(String hex) {
   return value == null ? const Color(0xFF888888) : Color(value);
 }
 
-/// 損益正負對應的語義顏色，並保留台股漲紅跌綠慣例。
+/// 損益正負對應中性的 teal/orange 語義色；不把損益誤表達為危險狀態。
 Color plColor(num v, BuildContext context) {
   final semantic = Theme.of(context).extension<AssetPilotTheme>();
   if (v > 0) return semantic?.profit ?? const Color(0xFFD32F2F);

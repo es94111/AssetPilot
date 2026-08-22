@@ -109,7 +109,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('AssetPilot'),
+        title: Text(trKey('dashboardTitle')),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(48),
           child: _MonthSelector(
@@ -126,26 +126,33 @@ class _DashboardScreenState extends State<DashboardScreen> {
         builder: (context, d) => RefreshIndicator(
           onRefresh: () async => _reload(),
           child: ListView(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
             children: [
-              _SummaryGrid(d: d),
+              _DashboardContext(month: _ym),
               SizedBox(height: 16),
               _AssetRow(d: d),
+              SizedBox(height: 12),
+              _SummaryGrid(d: d),
               SizedBox(height: 24),
               _CategoryPie(nodes: d.catBreakdown),
               SizedBox(height: 24),
-              Text(
-                trKey('dashboardSectionsRecentTransactions'),
-                style: Theme.of(
-                  context,
-                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+              SectionHeader(
+                title: trKey('dashboardSectionsRecentTransactions'),
+                trailing: Text(
+                  trKey('dashboardSectionsRecentCount', {
+                    'count': d.recent.take(10).length,
+                  }),
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
               ),
               SizedBox(height: 8),
               if (d.recent.isEmpty)
-                Padding(
-                  padding: EdgeInsets.symmetric(vertical: 24),
-                  child: Center(
-                    child: Text(trKey('mobileLegacyNoTransactionsThisMonth')),
+                LedgerCard(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    child: Center(
+                      child: Text(trKey('dashboardEmptyNoTransactions')),
+                    ),
                   ),
                 )
               else
@@ -153,6 +160,47 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _DashboardContext extends StatelessWidget {
+  final String month;
+
+  const _DashboardContext({required this.month});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return LedgerCard(
+      color: theme.colorScheme.surfaceContainerHighest,
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+      child: Row(
+        children: [
+          Icon(Icons.calendar_month_outlined, color: theme.colorScheme.primary),
+          SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  month,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                SizedBox(height: 2),
+                Text(
+                  trKey('dashboardSubtitle', {'month': month}),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodySmall,
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -196,7 +244,8 @@ class _SummaryGrid extends StatelessWidget {
           child: _StatCard(
             label: trKey('dashboardOverviewIncome'),
             value: twd(d.income),
-            color: Colors.green,
+            color: flowColor(income: true, context: context),
+            icon: Icons.south_west,
           ),
         ),
         SizedBox(width: 12),
@@ -204,7 +253,8 @@ class _SummaryGrid extends StatelessWidget {
           child: _StatCard(
             label: trKey('dashboardOverviewExpense'),
             value: twd(d.expense),
-            color: Colors.red,
+            color: flowColor(income: false, context: context),
+            icon: Icons.north_east,
           ),
         ),
       ],
@@ -216,34 +266,36 @@ class _StatCard extends StatelessWidget {
   final String label;
   final String value;
   final Color color;
+  final IconData icon;
   const _StatCard({
     required this.label,
     required this.value,
     required this.color,
+    required this.icon,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 0,
+    return LedgerCard(
       color: Theme.of(context).colorScheme.surfaceContainerHighest,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(label, style: Theme.of(context).textTheme.bodySmall),
-            SizedBox(height: 4),
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: color,
-              ),
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: color, size: 20),
+          SizedBox(height: 10),
+          Text(label, style: Theme.of(context).textTheme.bodySmall),
+          SizedBox(height: 4),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+              color: color,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -256,47 +308,47 @@ class _AssetRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Card(
-      elevation: 0,
+    return LedgerCard(
       color: theme.colorScheme.primaryContainer,
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              trKey('mobileLegacyNetThisMonth'),
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onPrimaryContainer,
-              ),
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            trKey('mobileLegacyNetThisMonth'),
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onPrimaryContainer,
             ),
-            SizedBox(height: 4),
-            Text(
+          ),
+          SizedBox(height: 4),
+          Semantics(
+            label: signedLabel(d.net, trKey('dashboardOverviewNet')),
+            child: Text(
               signed(d.net),
-              style: theme.textTheme.headlineMedium?.copyWith(
-                fontWeight: FontWeight.bold,
+              style: theme.textTheme.displaySmall?.copyWith(
+                fontWeight: FontWeight.w700,
                 color: theme.colorScheme.onPrimaryContainer,
               ),
             ),
-            Divider(height: 24),
-            Row(
-              children: [
-                Expanded(
-                  child: _MiniStat(
-                    label: trKey('mobileLegacyBankBalance'),
-                    value: twd(d.bankBalance),
-                  ),
+          ),
+          Divider(height: 24),
+          Row(
+            children: [
+              Expanded(
+                child: _MiniStat(
+                  label: trKey('mobileLegacyBankBalance'),
+                  value: twd(d.bankBalance),
                 ),
-                Expanded(
-                  child: _MiniStat(
-                    label: trKey('mobileLegacyStockMarketValue'),
-                    value: twd(d.stockMarketValue),
-                  ),
+              ),
+              Expanded(
+                child: _MiniStat(
+                  label: trKey('mobileLegacyStockMarketValue'),
+                  value: twd(d.stockMarketValue),
                 ),
-              ],
-            ),
-          ],
-        ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -336,7 +388,7 @@ class _CatGroup {
   final String name;
   final String color;
   num total;
-  _CatGroup({required this.name, required this.color, this.total = 0});
+  _CatGroup({required this.name, required this.color}) : total = 0;
 }
 
 class _CategoryPie extends StatelessWidget {
@@ -362,21 +414,17 @@ class _CategoryPie extends StatelessWidget {
     if (nodes.isEmpty) return const SizedBox.shrink();
     final shown = _groupByParent();
     final total = shown.fold<num>(0, (s, n) => s + n.total);
-    return Card(
-      elevation: 0,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              trKey('dashboardSectionsExpenseCategories'),
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 16),
-            SizedBox(
+    final summary = shown.map((n) => '${n.name} ${twd(n.total)}').join(', ');
+    return LedgerCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SectionHeader(title: trKey('dashboardSectionsExpenseCategories')),
+          SizedBox(height: 16),
+          Semantics(
+            container: true,
+            label: summary,
+            child: SizedBox(
               height: 180,
               child: PieChart(
                 PieChartData(
@@ -401,37 +449,37 @@ class _CategoryPie extends StatelessWidget {
                 ),
               ),
             ),
-            SizedBox(height: 12),
-            Wrap(
-              spacing: 12,
-              runSpacing: 6,
-              children: [
-                for (final n in shown)
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        width: 12,
-                        height: 12,
-                        decoration: BoxDecoration(
-                          color: parseColor(n.color),
-                          shape: BoxShape.circle,
-                        ),
+          ),
+          SizedBox(height: 12),
+          Wrap(
+            spacing: 12,
+            runSpacing: 6,
+            children: [
+              for (final n in shown)
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 12,
+                      height: 12,
+                      decoration: BoxDecoration(
+                        color: parseColor(n.color),
+                        shape: BoxShape.circle,
                       ),
-                      SizedBox(width: 4),
-                      Text(
-                        // 父分類佔總支出百分比，保留小數點第一位。
-                        total > 0
-                            ? '${n.name}　${twd(n.total)}　${(n.total / total * 100).toStringAsFixed(1)}%'
-                            : '${n.name}　${twd(n.total)}',
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                    ],
-                  ),
-              ],
-            ),
-          ],
-        ),
+                    ),
+                    SizedBox(width: 4),
+                    Text(
+                      // 父分類佔總支出百分比，保留小數點第一位。
+                      total > 0
+                          ? '${n.name}　${twd(n.total)}　${(n.total / total * 100).toStringAsFixed(1)}%'
+                          : '${n.name}　${twd(n.total)}',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
+                ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -444,31 +492,35 @@ class _RecentTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isIncome = t.type == 'income';
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      dense: true,
-      leading: CircleAvatar(
-        backgroundColor: (isIncome ? Colors.green : Colors.red).withValues(
-          alpha: 0.15,
+    final isTransfer = t.type == 'transfer';
+    final color = isTransfer
+        ? Theme.of(context).colorScheme.onSurfaceVariant
+        : flowColor(income: isIncome, context: context);
+    final icon = isTransfer
+        ? Icons.swap_horiz
+        : (isIncome ? Icons.south_west : Icons.north_east);
+    final sign = isTransfer ? '' : (isIncome ? '+' : '-');
+    return LedgerCard(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: EdgeInsets.zero,
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+        leading: CircleAvatar(
+          backgroundColor: color.withValues(alpha: 0.14),
+          child: Icon(icon, color: color, size: 18),
         ),
-        child: Icon(
-          isIncome ? Icons.south_west : Icons.north_east,
-          color: isIncome ? Colors.green : Colors.red,
-          size: 18,
+        title: Text(
+          t.catName?.isNotEmpty == true
+              ? t.catName!
+              : (t.note.isEmpty ? trKey('dashboardUncategorized') : t.note),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
-      ),
-      title: Text(
-        t.catName?.isNotEmpty == true
-            ? t.catName!
-            : (t.note.isEmpty ? trKey('dashboardUncategorized') : t.note),
-      ),
-      subtitle: Text(t.date),
-      trailing: Text(
-        // 外幣交易顯示原幣別金額，TWD 交易維持台幣金額。
-        (isIncome ? '+' : '-') + money(t.originalAmount, t.currency),
-        style: TextStyle(
-          fontWeight: FontWeight.bold,
-          color: isIncome ? Colors.green : Colors.red,
+        subtitle: Text(t.date),
+        trailing: Text(
+          // 外幣交易顯示原幣別金額，TWD 交易維持台幣金額。
+          sign + money(t.originalAmount, t.currency),
+          style: TextStyle(fontWeight: FontWeight.w700, color: color),
         ),
       ),
     );

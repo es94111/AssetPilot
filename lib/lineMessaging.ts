@@ -132,7 +132,7 @@ function detailLine(line: string): FlexNode {
     return {
       type: 'box',
       layout: 'horizontal',
-      alignItems: 'start',
+      alignItems: 'flex-start',
       spacing: 'sm',
       contents: [
         { type: 'text', text: label, size: 'xs', color: FLEX_COLORS.muted, flex: 2, wrap: true },

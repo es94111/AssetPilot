@@ -1,6 +1,15 @@
 {
-  "currentVersion": "4.109.0",
+  "currentVersion": "4.109.1",
   "releases": [
+    {
+      "version": "4.109.1",
+      "date": "2026-08-23",
+      "title": "修正 LINE 記帳訊息送出失敗",
+      "type": "fixed",
+      "changes": [
+        { "tag": "fixed", "text": "修正 LINE 記帳與查詢訊息無法送出的問題，現在使用者可以正常收到主選單、記帳摘要與查詢結果。" }
+      ]
+    },
     {
       "version": "4.109.0",
       "date": "2026-08-23",

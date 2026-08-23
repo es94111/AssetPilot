@@ -787,7 +787,7 @@ class ApiClient {
   // ── 儀表板 ──────────────────────────────────────────────────
 
   Future<Map<String, dynamic>> dashboard(String yearMonth) =>
-      _getMap('/api/dashboard?ym=$yearMonth');
+      _getMap('/api/dashboard?yearMonth=$yearMonth');
 
   // ── 預算 ────────────────────────────────────────────────────
 

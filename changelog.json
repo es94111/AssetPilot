@@ -1,6 +1,15 @@
 {
-  "currentVersion": "4.109.1",
+  "currentVersion": "4.109.2",
   "releases": [
+    {
+      "version": "4.109.2",
+      "date": "2026-08-23",
+      "title": "修正 App 總覽切換月份資料未更新",
+      "type": "fixed",
+      "changes": [
+        { "tag": "fixed", "text": "修正手機 App 首頁總覽切換月份時金額與統計不會更新的問題，現在選擇不同月份會正確顯示該月份的收支與交易資料。" }
+      ]
+    },
     {
       "version": "4.109.1",
       "date": "2026-08-23",

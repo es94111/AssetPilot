@@ -314,7 +314,7 @@ class CatNode {
   }
 }
 
-/// `GET /api/dashboard?ym=YYYY-MM`
+/// `GET /api/dashboard?yearMonth=YYYY-MM`
 class Dashboard {
   final String yearMonth;
   final num income;

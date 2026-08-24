@@ -133,6 +133,8 @@ function columnContainsRealValues(
   column: string,
 ): boolean {
   try {
+    // SAFETY: table and column names originate from SQLite schema metadata and
+    // quoteIdent escapes them as identifiers before this diagnostic query.
     const result = db.exec(
       `SELECT 1 FROM ${quoteIdent(table)} WHERE typeof(${quoteIdent(column)}) = 'real' LIMIT 1`,
     );
@@ -162,6 +164,8 @@ function resolvePostgresType(
 }
 
 function sqliteCreateTableSql(db: SqlJsDatabase, table: string): string {
+  // SAFETY: table is read from SQLite metadata and quoteLiteral escapes it as
+  // a SQL string value before this metadata query is executed by sql.js.
   const result = db.exec(
     `SELECT sql FROM sqlite_master WHERE type = 'table' AND name = ${quoteLiteral(table)}`,
   );
@@ -209,6 +213,8 @@ function sqliteCheckExpressions(db: SqlJsDatabase, table: string): string[] {
 }
 
 function sqliteIndexWhere(db: SqlJsDatabase, indexName: string): string {
+  // SAFETY: indexName is read from SQLite metadata and quoteLiteral escapes it
+  // as a SQL string value before this metadata query is executed by sql.js.
   const result = db.exec(
     `SELECT sql FROM sqlite_master WHERE type = 'index' AND name = ${quoteLiteral(indexName)}`,
   );
@@ -285,7 +291,7 @@ function sqliteForeignKeyDefinitions(
         : quoteIdent(String(first.table));
     const update = sqliteForeignAction(first.on_update);
     const remove = sqliteForeignAction(first.on_delete);
-    const suffix = `${update !== "NO ACTION" ? ` ON UPDATE ${update}` : ""}${remove !== "NO ACTION" ? ` ON DELETE ${remove}` : ""}`;
+    const suffix = `${update === "NO ACTION" ? "" : ` ON UPDATE ${update}`}${remove === "NO ACTION" ? "" : ` ON DELETE ${remove}`}`;
     const name = `assetpilot_fk_${table}_${id}`;
     const sql = `ALTER TABLE ${quoteIdent(table)} ADD CONSTRAINT ${quoteIdent(name)} FOREIGN KEY (${localColumns.join(", ")}) REFERENCES ${references}${suffix}`;
     return { table, name, sql };
@@ -327,6 +333,9 @@ function createTableSql(
 }
 
 async function ensureMetadataTable(client: PoolClient): Promise<void> {
+  // SAFETY: META_TABLE is a fixed internal identifier and quoteIdent prevents
+  // it from becoming SQL syntax; the DDL contains no external values.
+  // pi-lens-ignore: ast-grep:no-sql-in-code -- this migration intentionally uses parameterized PostgreSQL DDL without an ORM., ast-grep:no-sql-in-code
   await client.query(`
     CREATE TABLE IF NOT EXISTS ${quoteIdent(META_TABLE)} (
       key TEXT PRIMARY KEY,
@@ -337,6 +346,8 @@ async function ensureMetadataTable(client: PoolClient): Promise<void> {
 }
 
 async function metadataValue(client: PoolClient, key: string): Promise<string> {
+  // SAFETY: META_TABLE is fixed and `key` is passed as a bound parameter.
+  // pi-lens-ignore: ast-grep:no-sql-in-code -- this migration intentionally uses parameterized PostgreSQL SQL without an ORM., ast-grep:no-sql-in-code
   const result = await client.query(
     `SELECT value FROM ${quoteIdent(META_TABLE)} WHERE key = $1`,
     [key],
@@ -349,6 +360,8 @@ async function upsertMetadata(
   key: string,
   value: string,
 ): Promise<void> {
+  // SAFETY: META_TABLE is fixed and both metadata values are bound parameters.
+  // pi-lens-ignore: ast-grep:no-sql-in-code -- this migration intentionally uses parameterized PostgreSQL SQL without an ORM., ast-grep:no-sql-in-code
   await client.query(
     `INSERT INTO ${quoteIdent(META_TABLE)} (key, value, updated_at)
      VALUES ($1, $2, NOW())
@@ -374,6 +387,9 @@ async function importTable(
 
   await client.query(createTableSql(sqliteDb, table, columns));
 
+  // SAFETY: table is read from SQLite schema metadata and quoteIdent escapes
+  // it as an identifier; no external values are interpolated into this query.
+  // pi-lens-ignore: ast-grep:no-sql-in-code -- this migration intentionally uses parameterized PostgreSQL SQL without an ORM., ast-grep:no-sql-in-code
   const count = await client.query(
     `SELECT COUNT(*)::int AS count FROM ${quoteIdent(table)}`,
   );
@@ -465,10 +481,17 @@ export async function migrateSqliteToPostgresIfNeeded(
       return { skipped: true, sourceHash, tables: [] };
     }
 
+    const sqlWasmPath = path.join(
+      process.cwd(),
+      "node_modules",
+      "sql.js",
+      "dist",
+      "sql-wasm.wasm",
+    );
     const SQL = await initSqlJs({
-      // nosemgrep: javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal -- file 由 sql.js 內部以固定資產檔名（如 sql-wasm.wasm）傳入，非使用者輸入
-      locateFile: (file) =>
-        path.join(process.cwd(), "node_modules", "sql.js", "dist", file),
+      // sql.js always loads the package's fixed WebAssembly asset here; do not
+      // concatenate the callback-provided filename into a filesystem path.
+      locateFile: () => sqlWasmPath,
     });
     sqliteDb = new SQL.Database(plainBuffer);
 
@@ -508,11 +531,10 @@ export async function migrateSqliteToPostgresIfNeeded(
     for (const index of deferredIndexes) await client.query(index);
 
     await upsertMetadata(client, "sqlite_source_sha256", sourceHash);
-    // nosemgrep: javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal -- options.dbPath 為內部/CLI 遷移來源路徑，僅作為 metadata 字串記錄，無檔案存取
     await upsertMetadata(
       client,
       "sqlite_source_path",
-      path.resolve(options.dbPath),
+      path.basename(options.dbPath),
     );
     await upsertMetadata(
       client,

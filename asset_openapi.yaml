@@ -2,7 +2,7 @@ openapi: "3.2.0"
 
 info:
   title: AssetPilot API
-  version: "4.103.0"
+  version: "4.110.0"
   description: |
     個人資產管理平台 AssetPilot 的完整 API Schema。
     供 Cloudflare API Shield Schema Validation 使用。
@@ -20,8 +20,6 @@ tags:
     description: 系統設定與版本資訊（cf-web-page）
   - name: Auth
     description: 使用者登入驗證（cf-log-in）
-  - name: Registration
-    description: 使用者註冊（cf-sign-up）
   - name: Account
     description: 帳號設定與個人資料（cf-account-update）
   - name: Categories
@@ -328,13 +326,11 @@ components:
     # ── 管理員 ──
     AdminUserInput:
       type: object
-      required: [email, password, displayName]
+      required: [email, displayName]
       properties:
         email:
           type: string
           format: email
-        password:
-          type: string
         displayName:
           type: string
         isAdmin:
@@ -663,60 +659,6 @@ paths:
           description: Changelog JSON
 
   # ── 認證 ──────────────────────────────
-  /api/auth/register:
-    post:
-      operationId: authRegister
-      tags: [Registration]
-      summary: 註冊新使用者
-      security: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [email, password, displayName]
-              properties:
-                email:
-                  type: string
-                  format: email
-                password:
-                  type: string
-                displayName:
-                  type: string
-      responses:
-        "200":
-          description: 註冊成功
-        "400":
-          description: 參數錯誤
-
-  /api/auth/login:
-    post:
-      operationId: authLogin
-      tags: [Auth]
-      summary: 以電子郵件密碼登入
-      security: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [email, password]
-              properties:
-                email:
-                  type: string
-                  format: email
-                password:
-                  type: string
-      responses:
-        "200":
-          description: 登入成功，設定 httpOnly Cookie
-        "401":
-          description: 帳密錯誤
-        "429":
-          description: 登入失敗次數過多
-
   /api/auth/logout:
     post:
       operationId: authLogout
@@ -905,43 +847,14 @@ paths:
           application/json:
             schema:
               type: object
-              required: [password]
+              required: [confirmEmail]
               properties:
-                password:
+                confirmEmail:
                   type: string
+                  format: email
       responses:
         "200":
           description: 帳號已刪除
-
-  /api/account/password:
-    put:
-      operationId: updateAccountPassword
-      tags: [Account]
-      summary: 修改本機登入密碼（已有密碼者需驗證舊密碼；Google-only 帳號可新增本機密碼）
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [newPassword]
-              properties:
-                currentPassword:
-                  type: string
-                  description: 已設定密碼者必填
-                newPassword:
-                  type: string
-                  minLength: 8
-                  description: 至少 8 字元，需包含大寫字母、小寫字母、數字與特殊符號
-      responses:
-        "200":
-          description: 密碼已更新
-        "400":
-          description: 參數錯誤（密碼太短、未含必要字元、與舊密碼相同等）
-        "401":
-          description: 目前密碼錯誤
-        "404":
-          description: 使用者不存在
 
   /api/account/passkey/challenge:
     get:

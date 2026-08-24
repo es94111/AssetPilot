@@ -75,7 +75,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _deleteAccount(AppUser user) async {
     final ctrl = TextEditingController();
-    final hasPw = user.hasPassword;
     final confirmed = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
@@ -98,17 +97,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 TextField(
                   controller: ctrl,
                   autofocus: true,
-                  obscureText: hasPw,
+                  obscureText: false,
                   enabled: !busy,
-                  keyboardType: hasPw
-                      ? TextInputType.text
-                      : TextInputType.emailAddress,
+                  keyboardType: TextInputType.emailAddress,
                   decoration: InputDecoration(
                     border: OutlineInputBorder(),
-                    labelText: hasPw
-                        ? trKey('mobileLegacyEnterYourPasswordToConfirm')
-                        : trKey('mobileLegacyEnterTheAccountEmailToConfirm'),
-                    hintText: hasPw ? null : user.email,
+                    labelText: trKey('mobileLegacyEnterTheAccountEmailToConfirm'),
+                    hintText: user.email,
                     errorText: error,
                   ),
                 ),
@@ -127,16 +122,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ? null
                     : () async {
                         final input = ctrl.text.trim();
-                        if (hasPw && input.isEmpty) {
-                          setLocal(
-                            () => error = trKey(
-                              'settingsAccountDeletePasswordLabel',
-                            ),
-                          );
-                          return;
-                        }
-                        if (!hasPw &&
-                            input.toLowerCase() != user.email.toLowerCase()) {
+                        if (input.toLowerCase() != user.email.toLowerCase()) {
                           setLocal(
                             () => error = trKey(
                               'settingsAccountMessagesDeleteEmailMismatch',
@@ -151,8 +137,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         final nav = Navigator.of(dialogCtx);
                         try {
                           await ApiClient.instance.deleteMyAccount(
-                            password: hasPw ? input : null,
-                            confirmEmail: hasPw ? null : input,
+                            confirmEmail: input,
                           );
                           nav.pop(true);
                         } catch (e) {
@@ -317,18 +302,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
               child: Text(
                 trKey('mobileLegacyAccountSecurity'),
                 style: TextStyle(fontSize: 13, color: Colors.grey),
-              ),
-            ),
-            ListTile(
-              leading: Icon(Icons.password_outlined),
-              title: Text(
-                user.hasPassword
-                    ? trKey('settingsAccountChangePassword')
-                    : trKey('settingsAccountSetPassword'),
-              ),
-              onTap: () => showChangePasswordSheet(
-                context,
-                hasPassword: user.hasPassword,
               ),
             ),
             ListTile(

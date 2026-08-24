@@ -23,7 +23,6 @@ class AppUser {
   final bool isAdmin;
   final bool isSuperAdmin; // 一般（唯讀）管理員為 false
   final String defaultCurrency;
-  final bool hasPassword;
   final bool googleLinked;
   final bool lineLinked;
 
@@ -34,7 +33,6 @@ class AppUser {
     required this.isAdmin,
     required this.isSuperAdmin,
     required this.defaultCurrency,
-    required this.hasPassword,
     required this.googleLinked,
     required this.lineLinked,
   });
@@ -51,7 +49,6 @@ class AppUser {
       defaultCurrency: _asStr(j['defaultCurrency']).isEmpty
           ? 'TWD'
           : _asStr(j['defaultCurrency']),
-      hasPassword: _asBool(j['hasPassword']) || _asBool(j['has_password']),
       googleLinked: _asBool(j['googleLinked']) || _asBool(j['google_linked']),
       lineLinked: _asBool(j['lineLinked']) || _asBool(j['line_linked']),
     );

@@ -1,12 +1,16 @@
-import { NextResponse } from 'next/server';
-import { requireAuth as getAuth } from './auth';
-import { verifyToken } from './auth';
-import { queryOne } from './db';
-import { verifyLoginSession, getTokenExpiresAt } from './sessionHelpers';
-import { processRecurringForUser } from './recurringHelpers';
-import { todayInUserTz } from './userTime';
-import { getRequestIpFromHeaders, getSystemSettings, normalizeIp } from './loginHelpers';
-import logger from '@/lib/logger';
+import { NextResponse } from "next/server";
+import { requireAuth as getAuth } from "./auth";
+import { verifyToken } from "./auth";
+import { queryOne } from "./db";
+import { verifyLoginSession, getTokenExpiresAt } from "./sessionHelpers";
+import { processRecurringForUser } from "./recurringHelpers";
+import { todayInUserTz } from "./userTime";
+import {
+  getRequestIpFromHeaders,
+  getSystemSettings,
+  normalizeIp,
+} from "./loginHelpers";
+import logger from "@/lib/logger";
 
 type ApiAuthResult = {
   userId: string;
@@ -20,23 +24,26 @@ type ApiAuthResult = {
   sessionId?: string;
 };
 
-const CSRF_SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
+const CSRF_SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
 // 一般（唯讀）管理員不可執行的變更方法。
-const ADMIN_WRITE_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
+const ADMIN_WRITE_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 
 // 解析管理員層級：僅 admin_role === 'readonly' 視為一般（唯讀）管理員，其餘皆為超級管理員。
-export function resolveIsSuperAdmin(isAdmin: boolean, adminRole: string | null | undefined): boolean {
-  return !!isAdmin && String(adminRole || 'super').toLowerCase() !== 'readonly';
+export function resolveIsSuperAdmin(
+  isAdmin: boolean,
+  adminRole: string | null | undefined,
+): boolean {
+  return !!isAdmin && String(adminRole || "super").toLowerCase() !== "readonly";
 }
 const recurringChecks = new Map<string, string>();
 const stockRecurringChecks = new Map<string, string>();
 const stockRecurringInflight = new Set<string>();
 
 function processDueRecurringOncePerDay(userId: string, userTimezone: string) {
-  const today = todayInUserTz(userTimezone || 'Asia/Taipei');
+  const today = todayInUserTz(userTimezone || "Asia/Taipei");
   const version = queryOne(
-    'SELECT COALESCE(MAX(updated_at), 0) AS updated_at FROM recurring WHERE user_id = ?',
-    [userId]
+    "SELECT COALESCE(MAX(updated_at), 0) AS updated_at FROM recurring WHERE user_id = ?",
+    [userId],
   );
   const cacheKey = `${today}:${version?.updated_at || 0}`;
   if (recurringChecks.get(userId) === cacheKey) return;
@@ -46,29 +53,44 @@ function processDueRecurringOncePerDay(userId: string, userTimezone: string) {
     processRecurringForUser(userId);
   } catch (e) {
     recurringChecks.delete(userId);
-    logger.error({ err: e, userId }, 'Failed to process due recurring transactions');
+    logger.error(
+      { err: e, userId },
+      "Failed to process due recurring transactions",
+    );
   }
 }
 
-function processDueStockRecurringOncePerDay(userId: string, userTimezone: string) {
-  const today = todayInUserTz(userTimezone || 'Asia/Taipei');
+function processDueStockRecurringOncePerDay(
+  userId: string,
+  userTimezone: string,
+) {
+  const today = todayInUserTz(userTimezone || "Asia/Taipei");
   const version = queryOne(
     "SELECT COUNT(*) AS cnt, COALESCE(MAX(COALESCE(updated_at, created_at, 0)), 0) AS updated_at, COALESCE(MAX(COALESCE(last_generated, '')), '') AS last_generated FROM stock_recurring WHERE user_id = ?",
-    [userId]
+    [userId],
   );
-  const cacheKey = `${today}:${version?.cnt || 0}:${version?.updated_at || 0}:${version?.last_generated || ''}`;
-  if (stockRecurringChecks.get(userId) === cacheKey || stockRecurringInflight.has(userId)) return;
+  const cacheKey = `${today}:${version?.cnt || 0}:${version?.updated_at || 0}:${version?.last_generated || ""}`;
+  if (
+    stockRecurringChecks.get(userId) === cacheKey ||
+    stockRecurringInflight.has(userId)
+  )
+    return;
   stockRecurringChecks.set(userId, cacheKey);
   stockRecurringInflight.add(userId);
 
-  import('./stockRecurringHelpers')
+  import("./stockRecurringHelpers")
     .then(async ({ processStockRecurringForUser }) => {
-      const result = await processStockRecurringForUser(userId, { userTimezone });
+      const result = await processStockRecurringForUser(userId, {
+        userTimezone,
+      });
       if (result.skipped > 0) stockRecurringChecks.delete(userId);
     })
     .catch((e) => {
       stockRecurringChecks.delete(userId);
-      logger.error({ err: e, userId }, 'Failed to process due stock recurring transactions');
+      logger.error(
+        { err: e, userId },
+        "Failed to process due stock recurring transactions",
+      );
     })
     .finally(() => {
       stockRecurringInflight.delete(userId);
@@ -79,37 +101,47 @@ function getRequestOriginCandidates(request: any): Set<string> {
   const candidates = new Set<string>();
   try {
     if (request?.url) candidates.add(new URL(request.url).origin);
-  } catch (_) {}
+  } catch (_) {
+    // Ignore malformed request URLs; forwarded host candidates are still usable.
+  }
 
-  const host = request?.headers?.get?.('x-forwarded-host') || request?.headers?.get?.('host') || '';
+  const host =
+    request?.headers?.get?.("x-forwarded-host") ||
+    request?.headers?.get?.("host") ||
+    "";
   if (host) {
-    const proto = request?.headers?.get?.('x-forwarded-proto') || (process.env.NODE_ENV === 'production' ? 'https' : 'http');
+    const proto =
+      request?.headers?.get?.("x-forwarded-proto") ||
+      (process.env.NODE_ENV === "production" ? "https" : "http");
     candidates.add(`${proto}://${host}`);
   }
   return candidates;
 }
 
 function normalizeOrigin(originValue: string): string {
-  const u = new URL(originValue);
-  return `${u.protocol}//${u.host}`;
+  try {
+    const u = new URL(originValue);
+    return `${u.protocol}//${u.host}`;
+  } catch {
+    return "";
+  }
 }
 
 function isOriginAllowed(originValue: string, request?: any): boolean {
   if (!originValue) return false;
-  const allowedOrigins = (process.env.ALLOWED_ORIGINS || '')
-    .split(',')
-    .map(s => s.trim())
+  const allowedOrigins = (process.env.ALLOWED_ORIGINS || "")
+    .split(",")
+    .map((s) => s.trim())
     .filter(Boolean);
 
-  try {
-    const normalized = normalizeOrigin(originValue);
-    if (allowedOrigins.length === 0) {
-      return getRequestOriginCandidates(request).has(normalized);
-    }
-    return allowedOrigins.includes(normalized) || allowedOrigins.includes(originValue);
-  } catch {
-    return false;
+  const normalized = normalizeOrigin(originValue);
+  if (!normalized) return false;
+  if (allowedOrigins.length === 0) {
+    return getRequestOriginCandidates(request).has(normalized);
   }
+  return (
+    allowedOrigins.includes(normalized) || allowedOrigins.includes(originValue)
+  );
 }
 
 function isAdminIpAllowed(request: any): boolean {
@@ -120,73 +152,93 @@ function isAdminIpAllowed(request: any): boolean {
 }
 
 function csrfErrorResponse(): NextResponse {
-  return NextResponse.json({ error: '請求來源不被允許（CSRF 防護）' }, { status: 403 });
+  return NextResponse.json(
+    { error: "請求來源不被允許（CSRF 防護）" },
+    { status: 403 },
+  );
 }
 
 function authErrorResponse(message: string): NextResponse {
   const response = NextResponse.json({ error: message }, { status: 401 });
-  response.cookies.delete('authToken');
+  response.cookies.delete("authToken");
   return response;
 }
 
-export function requireAuth(request: any): Promise<ApiAuthResult | NextResponse>;
+export function requireAuth(
+  request: any,
+): Promise<ApiAuthResult | NextResponse>;
 export function requireAuth(): Promise<string>;
-export async function requireAuth(request?: any): Promise<ApiAuthResult | NextResponse | string> {
+export async function requireAuth(
+  request?: any,
+): Promise<ApiAuthResult | NextResponse | string> {
   if (request) {
-    const token = request.cookies?.get('authToken')?.value;
+    const token = request.cookies?.get("authToken")?.value;
     if (!token) {
-      return NextResponse.json({ error: '未登入' }, { status: 401 });
+      return NextResponse.json({ error: "未登入" }, { status: 401 });
     }
 
-    const method = String(request.method || 'GET').toUpperCase();
-    const authHeader = request.headers?.get?.('authorization') || '';
-    const usesCookieAuth = !authHeader.startsWith('Bearer ');
+    const method = String(request.method || "GET").toUpperCase();
+    const authHeader = request.headers?.get?.("authorization") || "";
+    const usesCookieAuth = !authHeader.startsWith("Bearer ");
     if (usesCookieAuth && !CSRF_SAFE_METHODS.has(method)) {
-      const origin = request.headers?.get?.('origin') || request.headers?.get?.('referer') || '';
+      const origin =
+        request.headers?.get?.("origin") ||
+        request.headers?.get?.("referer") ||
+        "";
       if (!isOriginAllowed(origin, request)) return csrfErrorResponse();
     }
 
     let userId: string;
     let tokenVersion: number;
-    let sessionId = '';
+    let sessionId = "";
     try {
-      const decoded = verifyToken(token) as { userId?: string; tokenVersion?: number; sessionId?: string };
-      userId = String(decoded?.userId || '');
+      const decoded = verifyToken(token) as {
+        userId?: string;
+        tokenVersion?: number;
+        sessionId?: string;
+      };
+      userId = String(decoded?.userId || "");
       tokenVersion = Number(decoded?.tokenVersion) || 0;
-      sessionId = decoded?.sessionId ? String(decoded.sessionId) : '';
+      sessionId = decoded?.sessionId ? String(decoded.sessionId) : "";
     } catch {
-      return authErrorResponse('登入已失效');
+      return authErrorResponse("登入已失效");
     }
 
     const user = queryOne(
-      'SELECT id, email, display_name, is_admin, admin_role, theme_mode, timezone, token_version FROM users WHERE id = ?',
-      [userId]
+      "SELECT id, email, display_name, is_admin, admin_role, theme_mode, timezone, token_version FROM users WHERE id = ?",
+      [userId],
     );
     if (!user) {
-      return authErrorResponse('使用者不存在');
+      return authErrorResponse("使用者不存在");
     }
 
     const dbVersion = Number(user.token_version) || 0;
     if (tokenVersion !== dbVersion) {
-      return authErrorResponse('登入已失效，請重新登入');
+      return authErrorResponse("登入已失效，請重新登入");
     }
     if (!verifyLoginSession(userId, sessionId, token)) {
-      return authErrorResponse('登入已失效，請重新登入');
+      return authErrorResponse("登入已失效，請重新登入");
     }
 
     const authResult = {
       userId: user.id as string,
-      userTimezone: (user.timezone as string) || 'Asia/Taipei',
-      email: (user.email as string) || '',
-      displayName: (user.display_name as string) || '',
+      userTimezone: (user.timezone as string) || "Asia/Taipei",
+      email: (user.email as string) || "",
+      displayName: (user.display_name as string) || "",
       isAdmin: !!user.is_admin,
-      adminRole: (user.admin_role as string) || 'super',
-      isSuperAdmin: resolveIsSuperAdmin(!!user.is_admin, user.admin_role as string),
-      themeMode: (user.theme_mode as string) || 'system',
+      adminRole: (user.admin_role as string) || "super",
+      isSuperAdmin: resolveIsSuperAdmin(
+        !!user.is_admin,
+        user.admin_role as string,
+      ),
+      themeMode: (user.theme_mode as string) || "system",
       sessionId,
     };
     processDueRecurringOncePerDay(authResult.userId, authResult.userTimezone);
-    processDueStockRecurringOncePerDay(authResult.userId, authResult.userTimezone);
+    processDueStockRecurringOncePerDay(
+      authResult.userId,
+      authResult.userTimezone,
+    );
     return authResult;
   }
 
@@ -196,7 +248,7 @@ export async function requireAuth(request?: any): Promise<ApiAuthResult | NextRe
 export async function fetchFromExpressApi(endpoint: string) {
   const session = await requireAuth();
   const url = `http://localhost:${process.env.PORT || 3000}${endpoint}`;
-  
+
   const res = await fetch(url, {
     headers: {
       Cookie: `authToken=${session}`,
@@ -204,8 +256,11 @@ export async function fetchFromExpressApi(endpoint: string) {
   });
 
   if (!res.ok) {
-    logger.error({ status: res.status, url }, 'Failed to fetch from Express API');
-    throw new Error('Failed to fetch from API');
+    logger.error(
+      { status: res.status, url },
+      "Failed to fetch from Express API",
+    );
+    throw new Error("Failed to fetch from API");
   }
 
   return res.json();
@@ -217,13 +272,15 @@ export function formatUser(user: any) {
     email: user.email,
     displayName: user.display_name,
     isAdmin: !!user.is_admin,
-    adminRole: (user.admin_role as string) || 'super',
+    adminRole: (user.admin_role as string) || "super",
     isSuperAdmin: resolveIsSuperAdmin(!!user.is_admin, user.admin_role),
     themeMode: user.theme_mode,
-    hasPassword: !!user.has_password,
+    // Local email/password authentication is disabled; keep the legacy field
+    // private and report the provider-only policy to clients.
+    hasPassword: false,
     googleLinked: !!user.google_id,
     lineLinked: !!user.line_id,
-    avatarUrl: user.avatar_url || '',
+    avatarUrl: user.avatar_url || "",
   };
 }
 
@@ -231,12 +288,15 @@ export function setAuthCookie(response: any, token: string) {
   // Cookie 的 maxAge 需跟著 Token 實際效期走（App 登入為 90 天、瀏覽器登入為 JWT_EXPIRES），
   // 避免固定寫死 7 天導致效期較長的 Token 被瀏覽器提前丟棄 Cookie。
   const expiresAt = getTokenExpiresAt(token);
-  const maxAge = expiresAt > Date.now() ? Math.round((expiresAt - Date.now()) / 1000) : 7 * 24 * 60 * 60;
-  response.cookies.set('authToken', token, {
+  const maxAge =
+    expiresAt > Date.now()
+      ? Math.round((expiresAt - Date.now()) / 1000)
+      : 7 * 24 * 60 * 60;
+  response.cookies.set("authToken", token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
-    path: '/',
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+    path: "/",
     maxAge,
   });
   return response;
@@ -244,27 +304,37 @@ export function setAuthCookie(response: any, token: string) {
 
 export function clearAuthCookie(response?: any) {
   if (response?.cookies) {
-    response.cookies.delete('authToken');
+    response.cookies.delete("authToken");
     return response;
   }
 }
 
-export function requireAdmin(request: any): Promise<ApiAuthResult | NextResponse>;
+export function requireAdmin(
+  request: any,
+): Promise<ApiAuthResult | NextResponse>;
 export function requireAdmin(): Promise<string>;
-export async function requireAdmin(request?: any): Promise<ApiAuthResult | NextResponse | string> {
+export async function requireAdmin(
+  request?: any,
+): Promise<ApiAuthResult | NextResponse | string> {
   if (request) {
     const auth = await requireAuth(request);
     if (auth instanceof NextResponse) return auth;
     if (!auth.isAdmin) {
-      return NextResponse.json({ error: '需要管理員權限' }, { status: 403 });
+      return NextResponse.json({ error: "需要管理員權限" }, { status: 403 });
     }
     if (!isAdminIpAllowed(request)) {
-      return NextResponse.json({ error: '此 IP 不允許存取管理員功能' }, { status: 403 });
+      return NextResponse.json(
+        { error: "此 IP 不允許存取管理員功能" },
+        { status: 403 },
+      );
     }
     // 一般（唯讀）管理員只能讀取：任何變更類請求（POST/PUT/PATCH/DELETE）一律擋下。
-    const method = String(request?.method || 'GET').toUpperCase();
+    const method = String(request?.method || "GET").toUpperCase();
     if (ADMIN_WRITE_METHODS.has(method) && !auth.isSuperAdmin) {
-      return NextResponse.json({ error: '一般管理員僅具讀取權限，無法執行此操作' }, { status: 403 });
+      return NextResponse.json(
+        { error: "一般管理員僅具讀取權限，無法執行此操作" },
+        { status: 403 },
+      );
     }
     return auth;
   }
@@ -276,17 +346,24 @@ export async function requireAdmin(request?: any): Promise<ApiAuthResult | NextR
  * 要求超級管理員（完整權限）。用於即使是 GET 也需限制的操作，例如匯出資料。
  * 一般（唯讀）管理員會被擋下。
  */
-export async function requireSuperAdmin(request: any): Promise<ApiAuthResult | NextResponse> {
+export async function requireSuperAdmin(
+  request: any,
+): Promise<ApiAuthResult | NextResponse> {
   const auth = await requireAdmin(request);
   if (auth instanceof NextResponse) return auth;
   if (!(auth as ApiAuthResult).isSuperAdmin) {
-    return NextResponse.json({ error: '一般管理員無匯出/此項權限' }, { status: 403 });
+    return NextResponse.json(
+      { error: "一般管理員無匯出/此項權限" },
+      { status: 403 },
+    );
   }
   return auth as ApiAuthResult;
 }
 
 export function normalizeThemeMode(mode: string) {
-  const v = String(mode || '').trim().toLowerCase();
-  if (v === 'light' || v === 'dark' || v === 'system') return v;
-  return 'system';
+  const v = String(mode || "")
+    .trim()
+    .toLowerCase();
+  if (v === "light" || v === "dark" || v === "system") return v;
+  return "system";
 }

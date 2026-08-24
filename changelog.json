@@ -1,6 +1,17 @@
 {
-  "currentVersion": "4.109.2",
+  "currentVersion": "4.110.0",
   "releases": [
+    {
+      "version": "4.110.0",
+      "date": "2026-08-24",
+      "title": "外部登入安全政策全面升級",
+      "type": "removed",
+      "changes": [
+        { "tag": "warning", "text": "升級後既有僅使用 Email 與密碼的帳號將無法再以原密碼登入；請在升級前先使用 Google、LINE 或 Passkey 登入並完成綁定，避免失去帳號存取權。" },
+        { "tag": "improved", "text": "使用者現在可透過 Google 或 LINE 等外部服務建立帳號與登入，也能搭配 Passkey 快速驗證；首次登入會自動完成基本帳戶設定，無須另外設定本機密碼。" },
+        { "tag": "removed", "text": "移除本機密碼登入、註冊、修改與重設功能，登入頁、帳號設定、管理員使用者管理及行動 App 不再要求或保存使用者自行輸入的密碼。" }
+      ]
+    },
     {
       "version": "4.109.2",
       "date": "2026-08-23",
@@ -1825,7 +1836,7 @@
       "changes": [
         {
           "tag": "warning",
-          "text": "設定 PostgreSQL 連線後，系統會在啟動時自動讀取既有 SQLite .db 並匯入 PostgreSQL；建議升級前先備份資料庫與 DB_ENCRYPTION_KEY。此版本提供資料轉移能力，既有應用程式執行階段仍沿用 sql.js/DB_PATH。"
+          "text": "設定 PostgreSQL 連線後，系統會在啟動時自動讀取既有 SQLite 資料並匯入 PostgreSQL；建議升級前先備份資料庫與加密金鑰。此版本提供資料轉移能力，既有應用程式執行階段仍可維持原有儲存方式。"
         },
         {
           "tag": "new",
@@ -1849,7 +1860,7 @@
         },
         {
           "tag": "fixed",
-          "text": "修正 Next.js production bundle 分割後，資料庫匯出 API 可能誤判 PostgreSQL runtime 並呼叫 SQLite .db export，導致 PostgreSQL 環境匯出失敗的問題。"
+          "text": "修正正式環境程式分割後，資料庫匯出功能可能誤判 PostgreSQL 環境並呼叫 SQLite 匯出流程，導致 PostgreSQL 環境匯出失敗的問題。"
         },
         {
           "tag": "improved",
@@ -2120,16 +2131,16 @@
     {
       "version": "4.38.2",
       "date": "2026-05-12",
-      "title": "升級 Next.js 並修補安全告警",
+      "title": "升級網站框架並修補安全告警",
       "type": "fixed",
       "changes": [
         {
           "tag": "fixed",
-          "text": "將 Next.js 從 15.5.15 升級到 16.2.6，修補 Dependabot 回報的 Next.js Middleware / Proxy bypass、快取污染、XSS、SSRF 與 DoS 等安全告警。"
+          "text": "升級網站框架至新版，修補相依套件回報的中介層繞過、快取污染、XSS、SSRF 與阻斷服務等安全告警。"
         },
         {
           "tag": "improved",
-          "text": "因應 Next.js 16 預設建置工具的調整，保留現有編譯設定以確保資料庫引擎與伺服器端模組相容，避免升級後出現建置錯誤。"
+          "text": "因應新版網站框架的預設建置工具調整，保留必要的編譯設定以確保資料庫引擎與伺服器端模組相容，避免升級後出現建置錯誤。"
         },
         {
           "tag": "fixed",
@@ -2376,7 +2387,7 @@
     {
       "version": "4.37.0",
       "date": "2026-05-06",
-      "title": "完成全站頁面遷移至 Next.js + Tailwind CSS v4",
+      "title": "完成全站頁面遷移至現代前端框架",
       "type": "improved",
       "changes": [
         {

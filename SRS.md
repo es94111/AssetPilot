@@ -1,7 +1,7 @@
 # 資產管理 系統規格說明書 (SSD)
 
-**版本：** 4.109.2
-**日期：** 2026-08-23
+**版本：** 4.110.0
+**日期：** 2026-08-24
 **狀態：** 已實作
 
 ---
@@ -39,16 +39,16 @@
 
 ### 1.2 系統概觀
 
-本系統為獨立的網頁應用程式，使用者透過瀏覽器即可使用。採前後端一體化架構，後端以 Node.js + Express 提供 API 與靜態檔服務，前端為原生 HTML / CSS / JavaScript 單頁應用程式（SPA），資料持久化使用 SQLite（透過 sql.js）。支援桌面與行動裝置瀏覽，單一部署單位即可自帶資料庫與介面運作，不依賴外部資料庫服務。
+本系統為獨立的網頁應用程式，使用者透過瀏覽器即可使用。採前後端一體化架構，前端使用 Next.js App Router、React、TypeScript 與 Tailwind CSS，後端以 Node.js + Next.js API Routes 提供頁面與 API，資料持久化使用 PostgreSQL。支援桌面與行動裝置瀏覽，單一部署單位即可自帶介面運作。
 
 ### 1.3 技術棧
 
 | 層級     | 技術                                                                                              |
 | -------- | ------------------------------------------------------------------------------------------------- |
-| 前端     | 原生 HTML / CSS / JavaScript（SPA）、Chart.js、Font Awesome 6                                     |
-| 後端     | Node.js 24+、Express                                                                              |
-| 資料庫   | SQLite（透過 sql.js，記憶體執行 + 檔案持久化）                                                    |
-| 驗證     | JWT（httpOnly Cookie，`JWT_EXPIRES` 控制有效期）、bcryptjs、Passkey（WebAuthn）、Google SSO（選配）|
+| 前端     | Next.js 16、React、TypeScript、Tailwind CSS、Chart.js                                              |
+| 後端     | Node.js 24+、Next.js API Routes                                                                   |
+| 資料庫   | PostgreSQL                                                                                         |
+| 驗證     | JWT（httpOnly Cookie）、Google OAuth、LINE Login、Passkey（WebAuthn）；不提供本機 Email／密碼登入註冊 |
 | 外部 API | TWSE OpenAPI、exchangerate-api.com、ipinfo.io、Google Identity Services、SMTP（Nodemailer）、Zeabur Email（ZSend）、Resend、MEGA S4 Object Storage |
 | 部署     | 原生 Node.js 或 Docker；CI 自動從 `changelog.json.currentVersion` 推導 Docker tag 與 git tag      |
 
@@ -56,9 +56,9 @@
 
 | 角色       | 說明                                                                 |
 | ---------- | -------------------------------------------------------------------- |
-| 管理員     | 系統首位註冊者自動成為管理員。可管理註冊政策、白名單與全站使用者帳號 |
-| 一般使用者 | 註冊後使用所有記帳、股票與報表功能                                   |
-| 訪客       | 未登入狀態，僅可瀏覽登入／註冊、隱私權政策、服務條款、公開首頁       |
+| 管理員     | 系統首位完成外部登入者自動成為管理員。可管理註冊政策、白名單與全站使用者帳號 |
+| 一般使用者 | 透過外部身份服務登入後使用所有記帳、股票與報表功能                         |
+| 訪客       | 未登入狀態，僅可瀏覽登入、隱私權政策、服務條款與公開首頁                     |
 
 ### 1.5 名詞定義
 
@@ -101,11 +101,11 @@
 
 #### 註冊與首次登入
 
-使用者可以用電子郵件與密碼建立帳號。我們不做社群帳號之外的第三方登入，目前僅提供 Google SSO 作為選配。若管理員在伺服器端設定了 `GOOGLE_CLIENT_ID`，登入頁會出現 Google 按鈕；否則完全隱藏，不影響帳號密碼登入。Google SSO 採 OAuth Authorization Code Flow，前端先向後端取得一次性 state，隨授權請求送出並於回呼時比對，後端只接受具有效 state 的授權碼。
+使用者不得以電子郵件與密碼建立帳號或登入；註冊與登入僅透過已設定的外部身份服務。Google SSO 採 OAuth Authorization Code Flow，LINE Login 採官方授權流程，前端先取得一次性 state，回呼時由後端驗證後才建立登入狀態。未設定或未啟用的外部服務按鈕會隱藏，不影響其他可用方式。
 
-註冊表單要求電子郵件格式正確、密碼符合強密碼規則（至少 8 字元且含大小寫字母、數字、特殊符號），並且該電子郵件尚未被使用。送出成功後系統會自動登入、建立預設分類（含子分類）與預設帳戶（現金），使用者可立即開始記帳。Google SSO 若遇到新帳號會同樣自動建立（含預設資料），密碼欄位填入隨機雜湊，意味著該帳號之後只能透過 Google 登入；之後使用者仍可在帳號設定補設本機密碼以恢復帳密登入能力。
+Google 或 LINE 首次登入時，若 Email 尚未存在，系統會自動建立帳號、預設分類與預設帳戶；若已存在則更新對應的外部身份綁定。Passkey 僅供既有帳號註冊與登入使用。資料庫保留舊密碼欄位作相容用途，但應用程式不再接受、設定或驗證本機密碼。
 
-登入成功會發放 JWT Token，瀏覽器端存於 httpOnly Cookie（防 XSS 竊取），搭配 `SameSite=Strict` 屬性（防 CSRF），有效期由 `JWT_EXPIRES` 環境變數控制（預設 7 天）；行動 App 端 Token 存於裝置端加密儲存，有效期改由獨立的 `APP_JWT_EXPIRES` 環境變數控制（預設 90 天），後端依請求是否帶有 App 專屬裝置識別 header 判斷要套用哪一組效期。登出會呼叫後端 `/api/auth/logout` 清除目前裝置的 Cookie，不影響其他裝置的登入狀態；修改密碼與管理員重設密碼才會透過 `token_version` 更新撤銷既有 Token。登入 API 回傳 `currentLogin`，讓前端立即顯示本次登入資訊。
+登入成功會發放 JWT Token，瀏覽器端存於 httpOnly Cookie（防 XSS 竊取），搭配 `SameSite=Strict` 屬性（防 CSRF），有效期由 `JWT_EXPIRES` 控制；行動 App 端 Token 存於裝置端加密儲存，有效期由 `APP_JWT_EXPIRES` 控制。後端依請求是否帶有 App 專屬裝置識別 header 判斷要套用哪一組效期。登出會清除目前裝置的 Cookie，不影響其他裝置的登入狀態；登入 API 回傳 `currentLogin`，讓前端立即顯示本次登入資訊。
 
 #### Passkey（WebAuthn）
 
@@ -115,15 +115,15 @@
 
 系統建立的第一個使用者自動成為管理員；若資料庫升級時尚無任何管理員，最早建立的使用者會被追認升級。這條規則沒有例外，目的是確保系統**永遠至少有一位管理員**。
 
-管理員可以控制註冊政策，包含：是否開放公開註冊、以及一份 Email 白名單。白名單非空時，只有白名單上的 Email 可以註冊（一般註冊與 Google 首次註冊都適用）；白名單為空且公開註冊關閉時，訪客無法自行註冊，只能由管理員直接建立帳號。管理員建立帳號時可指定是否授與管理員身分，可重設任一使用者的密碼，刪除帳號會一併刪除該使用者的所有關聯資料（交易、帳戶、分類、預算、股票等）。**管理員不可刪除自己，也不可讓系統剩餘的管理員歸零** — 這兩條規則對自刪與被刪皆適用。
+管理員可以控制外部服務註冊政策，包含：是否開放公開註冊、以及一份 Email 白名單。白名單非空時，只有白名單上的 Email 可以透過 Google 或 LINE 首次建立帳號；白名單為空且公開註冊關閉時，訪客無法自行註冊。管理員可直接建立沒有本機密碼的使用者資料，待該使用者以外部服務登入後完成綁定；不提供設定或重設本機密碼。刪除帳號會一併刪除該使用者的所有關聯資料（交易、帳戶、分類、預算、股票等）。**管理員不可刪除自己，也不可讓系統剩餘的管理員歸零** — 這兩條規則對自刪與被刪皆適用。
 
 #### 登入稽核
 
-每一次登入成功都會寫入稽核紀錄，欄位包含登入時間、IP 位址、登入方式（password / google / passkey）、以及本次登入是否以管理員身分進行；失敗登入（帳號不存在、密碼錯誤、缺少憑證、暫時鎖定）也會記錄，且註明失敗原因。IP 的國家代碼優先取自 Cloudflare 的 `CF-IPCountry` 標頭，退回時才查 ipinfo.io；內網位址標記為 `LOCAL`。
+每一次登入成功都會寫入稽核紀錄，欄位包含登入時間、IP 位址、登入方式（google / line / passkey）、以及本次登入是否以管理員身分進行；失敗登入（帳號不存在、外部憑證無效、缺少憑證、暫時鎖定）也會記錄，且註明失敗原因。IP 的國家代碼優先取自 Cloudflare 的 `CF-IPCountry` 標頭，退回時才查 ipinfo.io；內網位址標記為 `LOCAL`。
 
 一般使用者只能在「帳號設定」看自己最近的 100 筆登入紀錄。管理員另可在管理介面看自己作為管理員身分登入的最近 200 筆、以及全站的最近 500 筆（含失敗嘗試）。管理員的兩種紀錄都支援單筆刪除、多選批次刪除、手動同步，並顯示上次同步時間；即使舊資料缺少主鍵，也必須能透過備援識別（例如時間戳）刪除單筆。
 
-帳號設定頁會列出目前有效登入裝置，欄位包含裝置名稱、登入時間、登入 IP 與單一裝置「登出」操作。一般登出與單一裝置登出只撤銷該 session；修改密碼與管理員重設密碼仍會遞增 `token_version` 並撤銷所有既有 session，確保高風險帳號變更後舊裝置失效。
+帳號設定頁會列出目前有效登入裝置，欄位包含裝置名稱、登入時間、登入 IP 與單一裝置「登出」操作。一般登出與單一裝置登出只撤銷該 session；帳號安全設定或管理員執行高風險帳號變更時，會遞增 `token_version` 並撤銷所有既有 session，確保變更後舊裝置失效。
 
 #### 伺服器時間與 NTP 校正
 
@@ -133,8 +133,8 @@
 
 #### 安全基線
 
-- 密碼強度：至少 8 字元，含大寫、小寫、數字、特殊符號；管理員重設密碼時新舊密碼不可相同
-- `/api/auth/login`、`/api/auth/register`、`/api/auth/google` 套用速率限制（每 IP 每 15 分鐘 20 次）
+- Google／LINE／Passkey 外部登入與相容停用端點套用速率限制（每 IP 每 15 分鐘 20 次）
+- 本機密碼登入、註冊、修改與重設流程均不建立或驗證密碼
 - `/privacy`、`/terms` 亦套用速率限制
 - 所有使用者輸入經 `escHtml()` 跳脫後插入 DOM；分類顏色僅允許 `#RRGGBB` 格式（雙端驗證）
 - 啟用 CSP、HSTS、X-Content-Type-Options、Referrer-Policy；停用 `X-Powered-By`
@@ -143,7 +143,7 @@
 
 #### 不做什麼
 
-- 不做社群帳號登入除 Google 外的第三方（不支援 Facebook、Apple、Line 等）
+- 不提供本機電子郵件密碼登入、註冊、修改或重設；外部身份服務僅支援已設定的 Google、LINE 與 Passkey
 - 不做雙因素認證（2FA）；Passkey 已取代此需求
 - 不做帳號鎖定策略（連續失敗 N 次鎖定 M 分鐘），僅靠速率限制
 
@@ -601,8 +601,9 @@ CSV 內容經過 Formula Injection 防護處理（以 `=`、`+`、`-`、`@` 開�
 | ------------ | ------- | ---------- | ---- |
 | id           | TEXT PK | 主鍵       | 是   |
 | email        | TEXT    | 電子郵件   | 是   |
-| password     | TEXT    | 加密後密碼 | 是   |
-| display_name | TEXT    | 顯示名稱   | 否   |
+| password_hash | TEXT    | 舊密碼欄位的相容性雜湊，應用程式不使用於登入驗證 | 是   |
+| has_password  | INTEGER | 是否允許本機密碼驗證；固定為 0                  | 是   |
+| display_name  | TEXT    | 顯示名稱                                      | 否   |
 | created_at   | TEXT    | 建立時間   | 否   |
 
 #### LoginAuditLog（登入稽核）
@@ -614,7 +615,7 @@ CSV 內容經過 Formula Injection 防護處理（以 `=`、`+`、`-`、`@` 開�
 | email          | TEXT    | 登入當下帳號 Email                    | 是   |
 | login_at       | INTEGER | 登入時間（timestamp）                 | 是   |
 | ip_address     | TEXT    | 客戶端 IP 位址                        | 是   |
-| login_method   | TEXT    | 登入方式（password / google / passkey）| 是   |
+| login_method   | TEXT    | 登入方式（google / line / passkey）           | 是   |
 | is_admin_login | INTEGER | 是否以管理員身份登入（1/0）           | 是   |
 
 #### LoginSession（登入裝置）
@@ -752,15 +753,16 @@ API 路徑統一以 `/api/` 為前綴。所有需認證的路由自動套用 aut
 | 方法 | 端點                     | 說明                                        |
 | ---- | ------------------------ | ------------------------------------------- |
 | GET  | /api/config              | 取得前端設定（Google Client ID 等）         |
-| POST | /api/auth/register       | 使用者註冊                                  |
-| POST | /api/auth/login          | 使用者登入（回傳 `currentLogin`）           |
+| POST | /api/auth/register       | 舊版密碼註冊相容端點（固定回 410，不建立帳號） |
+| POST | /api/auth/login          | 舊版密碼登入相容端點（固定回 410，不建立登入狀態） |
 | POST | /api/auth/logout         | 登出目前裝置（撤銷目前 session 並清除 Cookie） |
 | GET  | /api/auth/me             | 取得當前使用者資訊                          |
-| POST | /api/auth/google         | Google SSO 登入（驗證授權碼並簽發 JWT）     |
+| POST | /api/auth/google         | Google SSO 登入／註冊（驗證授權碼並簽發 JWT） |
+| POST | /api/auth/line           | LINE Login 登入／註冊（驗證授權碼並簽發 JWT） |
 | GET  | /api/account/login-logs  | 取得目前使用者登入稽核紀錄（最近 100 筆）   |
 | GET  | /api/account/sessions    | 取得目前有效登入裝置                         |
 | DELETE | /api/account/sessions/:id | 登出指定登入裝置                           |
-| PUT  | /api/account/password    | 使用者自助修改密碼                          |
+| PUT  | /api/account/password    | 舊版密碼修改相容端點（固定回 410）           |
 
 #### Passkey（WebAuthn）
 
@@ -886,7 +888,7 @@ API 路徑統一以 `/api/` 為前綴。所有需認證的路由自動套用 aut
 | GET    | /api/admin/users                         | 取得使用者清單                                            |
 | POST   | /api/admin/users                         | 建立使用者（可指定是否管理員）                            |
 | DELETE | /api/admin/users/:id                     | 刪除指定使用者（不可刪除自己或最後管理員）                |
-| PUT    | /api/admin/users/:id/password            | 為任一使用者重設密碼                                      |
+| PUT    | /api/admin/users/:id/password            | 舊版密碼重設相容端點（固定回 410）                         |
 | GET    | /api/admin/login-logs                    | 取得管理員登入紀錄與全站使用者登入稽核（含失敗事件）      |
 | DELETE | /api/admin/login-logs/admin/:id          | 刪除單筆管理員登入紀錄                                    |
 | POST   | /api/admin/login-logs/admin/batch-delete | 批次刪除管理員登入紀錄（`{ ids: [...] }`）                |
@@ -987,6 +989,7 @@ API 路徑統一以 `/api/` 為前綴。所有需認證的路由自動套用 aut
 
 | 版本 | 日期 | 變更說明 |
 | --- | --- | --- |
+| 4.110.0 | 2026-08-24 | 移除本機密碼認證並限制為外部身份服務：新增 `lib/authPolicy.ts`，`/api/auth/login`、`/api/auth/register`、帳號密碼設定與管理員密碼操作固定回傳 HTTP 410 `password_auth_disabled`；Google／LINE OAuth 建立或更新使用者時強制 `has_password = 0`，既有 migration 同步停用本機密碼。Web 登入頁與行動 App 僅保留 Google、LINE、Passkey，刪除行動註冊畫面及密碼設定／管理 UI；帳號刪除改以 Email 確認，解除外部綁定時要求保留其他登入方式。同步更新 `asset_openapi.yaml`、README、隱私政策、環境變數註解，移除 `bcryptjs` 依賴。驗證：`npm run typecheck`、`npm run build`、`git diff --check` 通過；資料庫整合測試因本機未設定 `DATABASE_URL` 略過。 |
 | 4.109.2 | 2026-08-23 | 修正行動 App 儀表板切換月份資料不變：`mobile/lib/api_client.dart` 的 `dashboard()` 以 `?ym=` 查詢參數呼叫，但 `app/api/dashboard/route.ts` 僅讀取 `yearMonth`，參數被忽略後一律回退使用者時區的當月，導致切換任何月份都顯示當月資料。改送 `?yearMonth=`（與 Web 端一致），並同步修正 `mobile/lib/models.dart` 的 API 文件註解。驗證：`flutter analyze lib/api_client.dart lib/models.dart` 無問題、grep 確認無殘留 `?ym=` 呼叫。 |
 | 4.109.1 | 2026-08-23 | 修正 LINE Flex Message 送出失敗：`lib/lineMessaging.ts` 的水平明細列原使用 `alignItems: "start"`，LINE Box schema 僅接受 `flex-start`／`center`／`flex-end`，導致回覆 API 以 400 拒絕整張 Flex bubble。改用 `flex-start` 保留明細標籤和值的頂端對齊，並新增 `tests/lib/lineMessaging.test.ts` payload 回歸斷言；既有 postback data、權限檢查、照片附件與交易流程不變。 |
 | 4.109.0 | 2026-08-23 | LINE 官方帳號記帳流程與 Flex Message 顯示優化：新增 `lib/lineRecordParser.ts` 集中處理今天／昨天、日期與直接記帳輸入，無效日期不再靜默改成今天；`app/api/line/webhook/route.ts` 直接記帳優先選擇相同幣別帳戶，並與 `insertIncomeExpenseTransaction()` 共用外幣信用卡手續費與交易欄位寫入規則。`lib/lineMessaging.ts` 抽出共用 header/body/footer 與標籤／值明細列，主選單、逐步記帳、查詢、完成摘要與舊版提示卡統一呈現；既有 postback data、資料權限與按鈕上限不變。新增 `tests/lib/lineRecordParser.test.ts`／`tests/lib/lineMessaging.test.ts` 與 `package.json` 測試腳本。驗證：`npm run typecheck`、LINE targeted tests、`npm test`（既有 `check:i18n` 產物過期而停止）、`npm run build` 162 頁、LSP 與 `git diff --check` 通過；PostgreSQL 整合測試因本機未設定 DB URL 略過。 |

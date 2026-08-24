@@ -2,7 +2,7 @@ openapi: "3.2.0"
 
 info:
   title: AssetPilot API
-  version: "4.110.0"
+  version: "4.110.1"
   description: |
     個人資產管理平台 AssetPilot 的完整 API Schema。
     供 Cloudflare API Shield Schema Validation 使用。

@@ -1,6 +1,15 @@
 {
-  "currentVersion": "4.110.0",
+  "currentVersion": "4.110.1",
   "releases": [
+    {
+      "version": "4.110.1",
+      "date": "2026-08-24",
+      "title": "修正 Android App 登入頁建置錯誤",
+      "type": "fixed",
+      "changes": [
+        { "tag": "fixed", "text": "修正 Android App 登入頁在移除帳密功能後的版面語法問題，現在可正常編譯與建立正式版，Google、LINE 與 Passkey 登入流程不受影響。" }
+      ]
+    },
     {
       "version": "4.110.0",
       "date": "2026-08-24",

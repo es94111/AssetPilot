@@ -1,6 +1,6 @@
 # 資產管理 系統規格說明書 (SSD)
 
-**版本：** 4.110.0
+**版本：** 4.110.1
 **日期：** 2026-08-24
 **狀態：** 已實作
 
@@ -989,6 +989,7 @@ API 路徑統一以 `/api/` 為前綴。所有需認證的路由自動套用 aut
 
 | 版本 | 日期 | 變更說明 |
 | --- | --- | --- |
+| 4.110.1 | 2026-08-24 | 修正 Android App 登入頁移除本機密碼介面後多出一層版面結束符，導致 Dart 編譯器在正式版建置時於登入頁報語法錯誤。移除多餘結束符，Google、LINE、Passkey 登入流程與外部身份政策不變。驗證：CI Android／MobSF 建置流程應可繼續執行。 |
 | 4.110.0 | 2026-08-24 | 移除本機密碼認證並限制為外部身份服務：新增 `lib/authPolicy.ts`，`/api/auth/login`、`/api/auth/register`、帳號密碼設定與管理員密碼操作固定回傳 HTTP 410 `password_auth_disabled`；Google／LINE OAuth 建立或更新使用者時強制 `has_password = 0`，既有 migration 同步停用本機密碼。Web 登入頁與行動 App 僅保留 Google、LINE、Passkey，刪除行動註冊畫面及密碼設定／管理 UI；帳號刪除改以 Email 確認，解除外部綁定時要求保留其他登入方式。同步更新 `asset_openapi.yaml`、README、隱私政策、環境變數註解，移除 `bcryptjs` 依賴。驗證：`npm run typecheck`、`npm run build`、`git diff --check` 通過；資料庫整合測試因本機未設定 `DATABASE_URL` 略過。 |
 | 4.109.2 | 2026-08-23 | 修正行動 App 儀表板切換月份資料不變：`mobile/lib/api_client.dart` 的 `dashboard()` 以 `?ym=` 查詢參數呼叫，但 `app/api/dashboard/route.ts` 僅讀取 `yearMonth`，參數被忽略後一律回退使用者時區的當月，導致切換任何月份都顯示當月資料。改送 `?yearMonth=`（與 Web 端一致），並同步修正 `mobile/lib/models.dart` 的 API 文件註解。驗證：`flutter analyze lib/api_client.dart lib/models.dart` 無問題、grep 確認無殘留 `?ym=` 呼叫。 |
 | 4.109.1 | 2026-08-23 | 修正 LINE Flex Message 送出失敗：`lib/lineMessaging.ts` 的水平明細列原使用 `alignItems: "start"`，LINE Box schema 僅接受 `flex-start`／`center`／`flex-end`，導致回覆 API 以 400 拒絕整張 Flex bubble。改用 `flex-start` 保留明細標籤和值的頂端對齊，並新增 `tests/lib/lineMessaging.test.ts` payload 回歸斷言；既有 postback data、權限檢查、照片附件與交易流程不變。 |

@@ -3,17 +3,10 @@ import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { requireAuth } from "../../../lib/apiHelpers";
 import { getDB, queryOne, queryAll, saveDB } from "../../../lib/db";
+import { normalizeDate } from "../../../lib/accountHelpers";
 
 function uid() {
   return crypto.randomUUID().replace(/-/g, "");
-}
-
-function normalizeDate(dateStr) {
-  const s = String(dateStr || "").trim();
-  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
-  const d = new Date(s);
-  if (isNaN(d.getTime())) return "";
-  return d.toISOString().slice(0, 10);
 }
 
 export async function GET(request) {
@@ -61,6 +54,7 @@ export async function POST(request) {
   const validFreq = ["daily", "weekly", "monthly", "yearly"];
   if (
     !stockId ||
+    !Number.isFinite(nAmount) ||
     !(nAmount > 0) ||
     !startDate ||
     !validFreq.includes(frequency)

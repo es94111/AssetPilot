@@ -177,8 +177,29 @@ export async function POST(request) {
         return;
       }
       const priceNum = Number(price);
-      if (!(priceNum > 0)) {
-        errors.push({ row: idx + 2, reason: "成交價必須為正數" });
+      const feeNum = fee == null || String(fee).trim() === "" ? 0 : Number(fee);
+      const taxNum = tax == null || String(tax).trim() === "" ? 0 : Number(tax);
+      const realizedPlNum =
+        realizedPl == null || String(realizedPl).trim() === ""
+          ? 0
+          : Number(realizedPl);
+      if (!Number.isFinite(priceNum) || !(priceNum > 0)) {
+        errors.push({ row: idx + 2, reason: "成交價必須為有限且正數" });
+        skipped++;
+        return;
+      }
+      if (
+        !Number.isFinite(feeNum) ||
+        feeNum < 0 ||
+        !Number.isFinite(taxNum) ||
+        taxNum < 0 ||
+        !Number.isFinite(realizedPlNum)
+      ) {
+        errors.push({
+          row: idx + 2,
+          reason:
+            "手續費、交易稅與已實現損益必須為有限數值，手續費與交易稅不可為負",
+        });
         skipped++;
         return;
       }
@@ -250,12 +271,12 @@ export async function POST(request) {
           date,
           shareNum,
           priceNum,
-          parseFloat(fee || 0),
-          parseFloat(tax || 0),
+          feeNum,
+          taxNum,
           accountId,
           note || "",
           Date.now(),
-          parseFloat(realizedPl || 0),
+          realizedPlNum,
           parseBool(taxAutoCalculated, true) ? 1 : 0,
         ],
       );

@@ -1,6 +1,9 @@
+import { executionAsyncId } from "node:async_hooks";
+import { randomUUID } from "node:crypto";
+
 type DbValue = string | number | null | Uint8Array;
 type DbRow = Record<string, string | number | null>;
-type RuntimeWorker = import('worker_threads').Worker;
+type RuntimeWorker = import("worker_threads").Worker;
 
 interface PgQueryResult {
   rows: DbRow[];
@@ -21,30 +24,38 @@ interface StatementLike {
   free(): void;
 }
 
-const RESULT_BUFFER_BYTES = Number(process.env.POSTGRES_SYNC_RESULT_BUFFER_BYTES || 64 * 1024 * 1024);
+const RESULT_BUFFER_BYTES = Number(
+  process.env.POSTGRES_SYNC_RESULT_BUFFER_BYTES || 64 * 1024 * 1024,
+);
 
 let worker: RuntimeWorker | null = null;
 let lastRowsModified = 0;
 
 function getWorker(): RuntimeWorker {
   if (!worker) {
-    const workerThreads = (process as unknown as { getBuiltinModule?: (name: string) => typeof import('worker_threads') }).getBuiltinModule?.('worker_threads');
-    if (!workerThreads) throw new Error('worker_threads module is not available');
+    // SAFETY: the supported Node.js runtime exposes getBuiltinModule; this
+    // structural cast avoids importing worker_threads into the Next bundle.
+    const workerThreads = (
+      process as unknown as {
+        getBuiltinModule?: (name: string) => typeof import("worker_threads");
+      }
+    ).getBuiltinModule?.("worker_threads");
+    if (!workerThreads)
+      throw new Error("worker_threads module is not available");
     worker = new workerThreads.Worker(`${process.cwd()}/lib/pgSyncWorker.cjs`);
   }
   return worker;
 }
 
-function isIdentChar(char: string): boolean {
-  return /[A-Za-z0-9_."]/u.test(char);
-}
-
 function pgTypeofExpression(sql: string): string {
-  return sql.replace(/typeof\s*\(\s*([^)]+?)\s*\)/gi, 'pg_typeof($1)::text');
+  return sql.replace(/typeof\s*\(\s*([^)]+?)\s*\)/gi, "pg_typeof($1)::text");
 }
 
-function translatePlaceholders(sql: string, params: DbValue[]): { sql: string; params: DbValue[] } {
-  let out = '';
+function translatePlaceholders(
+  sql: string,
+  params: DbValue[],
+): { sql: string; params: DbValue[] } {
+  let out = "";
   const outParams: DbValue[] = [];
   let paramIndex = 0;
   let inSingle = false;
@@ -69,7 +80,7 @@ function translatePlaceholders(sql: string, params: DbValue[]): { sql: string; p
       inDouble = !inDouble;
       continue;
     }
-    if (char !== '?' || inSingle || inDouble) {
+    if (char !== "?" || inSingle || inDouble) {
       out += char;
       continue;
     }
@@ -82,10 +93,10 @@ function translatePlaceholders(sql: string, params: DbValue[]): { sql: string; p
     while (j >= 0 && /[A-Za-z]/u.test(before[j])) j -= 1;
     const op = before.slice(j + 1, opEnd).toUpperCase();
 
-    if (op === 'IS') {
-      out = before.slice(0, j + 1).replace(/\s+$/u, '');
+    if (op === "IS") {
+      out = before.slice(0, j + 1).replace(/\s+$/u, "");
       if (value === null || value === undefined) {
-        out += ' IS NULL';
+        out += " IS NULL";
       } else {
         out += ` = $${outParams.length + 1}`;
         outParams.push(value);
@@ -104,29 +115,51 @@ function translatePlaceholders(sql: string, params: DbValue[]): { sql: string; p
 // 因此在建表／改表 DDL 時將 INTEGER 一律改用 BIGINT（與 lib/postgresMigration.ts 的型別對應一致）。
 function translateDdlTypes(sql: string): string {
   const head = sql.slice(0, 12).toUpperCase();
-  if (head.startsWith('CREATE TABLE') || head.startsWith('ALTER TABLE')) {
-    return sql.replace(/\bINTEGER\b/gi, 'BIGINT');
+  if (head.startsWith("CREATE TABLE") || head.startsWith("ALTER TABLE")) {
+    return sql.replace(/\bINTEGER\b/gi, "BIGINT");
   }
   return sql;
 }
 
-function translateSql(sql: string, params: DbValue[] = []): { sql: string; params: DbValue[] } {
+function translateSql(
+  sql: string,
+  params: DbValue[] = [],
+): { sql: string; params: DbValue[] } {
   let next = sql.trim();
   next = translateDdlTypes(next);
   next = pgTypeofExpression(next);
   return translatePlaceholders(next, params);
 }
 
-function runPg(sql: string, params: DbValue[] = []): PgQueryResult {
+function runPg(
+  sql: string,
+  params: DbValue[] = [],
+  transactionId: string | null = null,
+): PgQueryResult {
   const shared = new SharedArrayBuffer(8 + RESULT_BUFFER_BYTES);
   const state = new Int32Array(shared, 0, 2);
   const bytes = new Uint8Array(shared, 8);
-  getWorker().postMessage({ sql, params, shared });
+  getWorker().postMessage({ sql, params, transactionId, shared });
   Atomics.wait(state, 0, 0);
   const length = Atomics.load(state, 1);
-  const json = Buffer.from(bytes.subarray(0, length)).toString('utf8');
-  const payload = JSON.parse(json) as PgWorkerPayload;
-  if (!payload.ok) throw new Error(payload.error || 'PostgreSQL query failed');
+  const json = Buffer.from(bytes.subarray(0, length)).toString("utf8");
+  let decoded: unknown;
+  try {
+    decoded = JSON.parse(json);
+  } catch {
+    throw new Error("PostgreSQL worker returned malformed JSON");
+  }
+  if (
+    !decoded ||
+    typeof decoded !== "object" ||
+    typeof (decoded as { ok?: unknown }).ok !== "boolean"
+  ) {
+    throw new Error("PostgreSQL worker returned an invalid payload");
+  }
+  // SAFETY: the shape guard above verifies the discriminant; result/error are
+  // optional fields represented by the PgWorkerPayload interface.
+  const payload = decoded as PgWorkerPayload;
+  if (!payload.ok) throw new Error(payload.error || "PostgreSQL query failed");
   return payload.result || { rows: [], fields: [], rowCount: 0 };
 }
 
@@ -135,11 +168,14 @@ class PostgresStatement implements StatementLike {
   private index = -1;
   private current: DbRow | null = null;
 
-  constructor(private readonly sql: string) {}
+  constructor(
+    private readonly sql: string,
+    private readonly getTransactionId: () => string | null,
+  ) {}
 
   bind(params: DbValue[] = []): void {
     const query = translateSql(this.sql, params);
-    const result = runPg(query.sql, query.params);
+    const result = runPg(query.sql, query.params, this.getTransactionId());
     this.rows = result.rows;
     this.index = -1;
     this.current = null;
@@ -161,26 +197,91 @@ class PostgresStatement implements StatementLike {
   }
 }
 
+function transactionCommand(
+  sql: string,
+): "BEGIN" | "COMMIT" | "ROLLBACK" | null {
+  const upper = sql
+    .trim()
+    .replace(/;+\s*$/u, "")
+    .toUpperCase();
+  return upper === "BEGIN" || upper === "COMMIT" || upper === "ROLLBACK"
+    ? upper
+    : null;
+}
+
 export class PostgresCompatDatabase {
+  private transactionId: string | null = null;
+  private transactionOwnerAsyncId: number | null = null;
+
+  private transactionIdForQuery(sql: string): string | null {
+    const command = transactionCommand(sql);
+    const currentAsyncId = executionAsyncId();
+
+    if (command === "BEGIN") {
+      if (this.transactionId) {
+        throw new Error("Nested PostgreSQL transactions are not supported");
+      }
+      this.transactionId = randomUUID();
+      this.transactionOwnerAsyncId = currentAsyncId;
+      return this.transactionId;
+    }
+
+    if (!this.transactionId) return null;
+    if (this.transactionOwnerAsyncId !== currentAsyncId) {
+      throw new Error(
+        "PostgreSQL transaction cannot cross an async boundary; complete it before awaiting",
+      );
+    }
+    return this.transactionId;
+  }
+
   prepare(sql: string): StatementLike {
-    return new PostgresStatement(sql);
+    return new PostgresStatement(sql, () => this.transactionIdForQuery(sql));
   }
 
   run(sql: string, params: DbValue[] = []): void {
-    const query = translateSql(sql, params);
-    const result = runPg(query.sql, query.params);
-    lastRowsModified = result.rowCount;
+    const command = transactionCommand(sql);
+    const transactionId = this.transactionIdForQuery(sql);
+    try {
+      const query = translateSql(sql, params);
+      const result = runPg(query.sql, query.params, transactionId);
+      lastRowsModified = result.rowCount;
+    } catch (error) {
+      if (command === "BEGIN") {
+        this.transactionId = null;
+        this.transactionOwnerAsyncId = null;
+      }
+      throw error;
+    } finally {
+      if (command === "COMMIT" || command === "ROLLBACK") {
+        this.transactionId = null;
+        this.transactionOwnerAsyncId = null;
+      }
+    }
   }
 
-  exec(sql: string): Array<{ columns: string[]; values: Array<Array<string | number | null>> }> {
+  exec(
+    sql: string,
+  ): Array<{
+    columns: string[];
+    values: Array<Array<string | number | null>>;
+  }> {
     const query = translateSql(sql, []);
-    const result = runPg(query.sql, query.params);
+    const result = runPg(
+      query.sql,
+      query.params,
+      this.transactionIdForQuery(sql),
+    );
     lastRowsModified = result.rowCount;
     if (result.fields.length === 0) return [];
-    return [{
-      columns: result.fields,
-      values: result.rows.map((row) => result.fields.map((field) => row[field] ?? null)),
-    }];
+    return [
+      {
+        columns: result.fields,
+        values: result.rows.map((row) =>
+          result.fields.map((field) => row[field] ?? null),
+        ),
+      },
+    ];
   }
 
   getRowsModified(): number {
@@ -188,6 +289,15 @@ export class PostgresCompatDatabase {
   }
 
   close(): void {
+    if (this.transactionId) {
+      try {
+        runPg("ROLLBACK", [], this.transactionId);
+      } catch (error) {
+        console.error("[postgres] rollback during close failed", error);
+      }
+      this.transactionId = null;
+      this.transactionOwnerAsyncId = null;
+    }
     worker?.terminate();
     worker = null;
   }

@@ -1,6 +1,6 @@
 # 資產管理 系統規格說明書 (SSD)
 
-**版本：** 4.111.0
+**版本：** 4.111.1
 **日期：** 2026-08-24
 **狀態：** 已實作
 
@@ -993,6 +993,7 @@ API 路徑統一以 `/api/` 為前綴。所有需認證的路由自動套用 aut
 
 | 版本 | 日期 | 變更說明 |
 | --- | --- | --- |
+| 4.111.1 | 2026-08-24 | 修正 `lib/postgresMigration.ts` 的 SQLite 搬移檔案處理：`sql.js` WebAssembly 資產改由固定套件檔案定位，不再將 callback 提供的名稱直接組入路徑；寫入搬移 metadata 的來源路徑改僅保存檔名，避免靜態安全掃描將該路徑判定為可穿越的檔案存取。資料內容、PostgreSQL schema／constraint／index 搬移行為不變。驗證：`npm run typecheck`、`git diff --check` 通過。 |
 | 4.111.0 | 2026-08-24 | PostgreSQL 資料完整性與寫入安全修正：`lib/db.ts` 新增 `monthly_report_send_log` 及其唯一索引／使用者外鍵，並將 `credit_card_repayment_summaries` 納入帳號刪除與資料匯出／還原；金額與投資數值欄位改用 `NUMERIC`，補上有限值、非負值、日期及核心股票關聯檢查。`lib/postgresRuntime.ts`／`lib/pgSyncWorker.cjs` 改為 transaction ID 對應 request-scoped client，禁止跨 async boundary 共用交易；`lib/transactionWriteCore.ts`、`lib/overseasFee.ts`、股票股利寫入與附件還原補償改為複合操作完整成功或回復。`lib/postgresBackup.ts`／`lib/postgresMigration.ts` 保留 UNIQUE／CHECK／FK constraints 與 indexes，SQLite REAL／INTEGER 轉 PostgreSQL 時依資料形狀保留 NUMERIC／BIGINT 精度。同步修正帳戶 PATCH 未提供欄位重設、無效轉帳日期靜默改為今天等問題。驗證：`npm run typecheck`、`npm test`、`npm run build`、`git diff --check` 通過；需 PostgreSQL 的 migration／transaction 整合案例因本機未設定 `DATABASE_URL`／`POSTGRES_URL` 略過。 |
 | 4.110.1 | 2026-08-24 | 修正 Android App 登入頁移除本機密碼介面後多出一層版面結束符，導致 Dart 編譯器在正式版建置時於登入頁報語法錯誤。移除多餘結束符，Google、LINE、Passkey 登入流程與外部身份政策不變。驗證：CI Android／MobSF 建置流程應可繼續執行。 |
 | 4.110.0 | 2026-08-24 | 移除本機密碼認證並限制為外部身份服務：新增 `lib/authPolicy.ts`，`/api/auth/login`、`/api/auth/register`、帳號密碼設定與管理員密碼操作固定回傳 HTTP 410 `password_auth_disabled`；Google／LINE OAuth 建立或更新使用者時強制 `has_password = 0`，既有 migration 同步停用本機密碼。Web 登入頁與行動 App 僅保留 Google、LINE、Passkey，刪除行動註冊畫面及密碼設定／管理 UI；帳號刪除改以 Email 確認，解除外部綁定時要求保留其他登入方式。同步更新 `asset_openapi.yaml`、README、隱私政策、環境變數註解，移除 `bcryptjs` 依賴。驗證：`npm run typecheck`、`npm run build`、`git diff --check` 通過；資料庫整合測試因本機未設定 `DATABASE_URL` 略過。 |

@@ -468,57 +468,6 @@ class _UsersTabState extends State<_UsersTab> {
 
   void _reload() => setState(() => _future = _load());
 
-  Future<void> _addUser() async {
-    final changed = await showModalBottomSheet<bool>(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      builder: (_) => _AddUserForm(),
-    );
-    if (changed == true && mounted) {
-      toast(context, trKey('adminUserCreated'));
-      _reload();
-    }
-  }
-
-  Future<void> _resetPassword(Map<String, dynamic> user) async {
-    final ctrl = TextEditingController();
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: Text(trKey('adminResetPassword')),
-        content: TextField(
-          controller: ctrl,
-          obscureText: true,
-          decoration: InputDecoration(
-            labelText: trKey('authPasswordLabel'),
-            border: OutlineInputBorder(),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text(trKey('commonCancel')),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: Text(trKey('commonSave')),
-          ),
-        ],
-      ),
-    );
-    if (ok != true) return;
-    try {
-      await ApiClient.instance.adminResetUserPassword(
-        '${user['id']}',
-        ctrl.text,
-      );
-      if (mounted) toast(context, trKey('adminPasswordReset'));
-    } catch (e) {
-      if (mounted) toast(context, '$e', isError: true);
-    }
-  }
-
   Future<void> _toggleAdmin(Map<String, dynamic> user) async {
     final next = !(user['isAdmin'] == true);
     try {
@@ -574,11 +523,6 @@ class _UsersTabState extends State<_UsersTab> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _addUser,
-        icon: Icon(Icons.person_add),
-        label: Text(trKey('adminAddUser')),
-      ),
       body: AsyncView<List<dynamic>>(
         future: _future,
         onRetry: _reload,
@@ -610,11 +554,6 @@ class _UsersTabState extends State<_UsersTab> {
                           visualDensity: VisualDensity.compact,
                         ),
                       IconButton(
-                        tooltip: trKey('adminResetPassword'),
-                        icon: Icon(Icons.password),
-                        onPressed: () => _resetPassword(u),
-                      ),
-                      IconButton(
                         tooltip: isAdmin
                             ? trKey('adminRemoveAdmin')
                             : trKey('adminMakeAdmin'),
@@ -637,123 +576,6 @@ class _UsersTabState extends State<_UsersTab> {
             ),
           );
         },
-      ),
-    );
-  }
-}
-
-class _AddUserForm extends StatefulWidget {
-  const _AddUserForm();
-  @override
-  State<_AddUserForm> createState() => _AddUserFormState();
-}
-
-class _AddUserFormState extends State<_AddUserForm> {
-  final _formKey = GlobalKey<FormState>();
-  final _email = TextEditingController();
-  final _displayName = TextEditingController();
-  final _password = TextEditingController();
-  bool _isAdmin = false;
-  bool _saving = false;
-
-  @override
-  void dispose() {
-    _email.dispose();
-    _displayName.dispose();
-    _password.dispose();
-    super.dispose();
-  }
-
-  Future<void> _save() async {
-    if (!_formKey.currentState!.validate()) return;
-    setState(() => _saving = true);
-    try {
-      await ApiClient.instance.adminCreateUser({
-        'email': _email.text.trim(),
-        'displayName': _displayName.text.trim(),
-        'password': _password.text,
-        'isAdmin': _isAdmin,
-      });
-      if (mounted) Navigator.pop(context, true);
-    } catch (e) {
-      if (mounted) {
-        setState(() => _saving = false);
-        toast(context, '$e', isError: true);
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final bottom = MediaQuery.of(context).viewInsets.bottom;
-    return Padding(
-      padding: EdgeInsets.fromLTRB(16, 16, 16, bottom + 16),
-      child: SingleChildScrollView(
-        child: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                trKey('adminAddUser'),
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-              SizedBox(height: 16),
-              TextFormField(
-                controller: _email,
-                keyboardType: TextInputType.emailAddress,
-                decoration: InputDecoration(
-                  labelText: trKey('settingsAccountEmail'),
-                  border: OutlineInputBorder(),
-                ),
-                validator: (v) => (v == null || !v.contains('@'))
-                    ? trKey('mobileLegacyEnterAValidEmailAddress')
-                    : null,
-              ),
-              SizedBox(height: 12),
-              TextFormField(
-                controller: _displayName,
-                decoration: InputDecoration(
-                  labelText: trKey('authDisplayNameLabel'),
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              SizedBox(height: 12),
-              TextFormField(
-                controller: _password,
-                obscureText: true,
-                decoration: InputDecoration(
-                  labelText: trKey('authPasswordLabel'),
-                  border: OutlineInputBorder(),
-                ),
-                validator: (v) => (v == null || v.length < 8)
-                    ? trKey('adminPasswordTooShort')
-                    : null,
-              ),
-              SizedBox(height: 12),
-              SwitchListTile(
-                title: Text(trKey('adminMakeAdmin')),
-                value: _isAdmin,
-                onChanged: (v) => setState(() => _isAdmin = v),
-              ),
-              SizedBox(height: 16),
-              FilledButton(
-                onPressed: _saving ? null : _save,
-                style: FilledButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                ),
-                child: _saving
-                    ? SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : Text(trKey('commonSave')),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
@@ -784,7 +606,7 @@ class _LoginAuditTabState extends State<_LoginAuditTab> {
     'google' => 'Google',
     'line' => 'LINE',
     'passkey' => trKey('authPasskeyButton'),
-    _ => trKey('authPasswordLabel'),
+    _ => '—',
   };
 
   @override

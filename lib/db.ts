@@ -586,7 +586,12 @@ async function _runMigrations(): Promise<void> {
   alterIgnore("ALTER TABLE users ADD COLUMN google_id TEXT DEFAULT ''");
   alterIgnore("ALTER TABLE users ADD COLUMN google_sub TEXT DEFAULT ''");
   alterIgnore("ALTER TABLE users ADD COLUMN line_id TEXT DEFAULT ''");
-  alterIgnore("ALTER TABLE users ADD COLUMN has_password INTEGER DEFAULT 1");
+  // Local password authentication is retired. Keep the legacy column for
+  // schema compatibility, but disable it for every existing account.
+  alterIgnore("ALTER TABLE users ADD COLUMN has_password INTEGER DEFAULT 0");
+  alterIgnore(
+    "UPDATE users SET has_password = 0 WHERE COALESCE(has_password, 0) <> 0",
+  );
   alterIgnore("ALTER TABLE users ADD COLUMN avatar_url TEXT DEFAULT ''");
   alterIgnore("ALTER TABLE users ADD COLUMN token_version INTEGER DEFAULT 0");
   alterIgnore(

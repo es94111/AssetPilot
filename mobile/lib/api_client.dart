@@ -359,8 +359,8 @@ class ApiClient {
     return '${m['nonce'] ?? ''}';
   }
 
-  /// 取得 Play Integrity 欄位（nonce + token）併入認證請求 body。
-  /// 軟性：任何失敗都回空 Map，不阻斷登入／註冊。
+  /// 取得 Play Integrity 欄位（nonce + token）併入第三方認證請求 body。
+  /// 軟性：任何失敗都回空 Map，不阻斷登入。
   Future<Map<String, String>> _integrityFields() async {
     try {
       final nonce = await integrityNonce();
@@ -371,110 +371,6 @@ class ApiClient {
     } catch (_) {
       return {};
     }
-  }
-
-  Future<void> login(
-    String email,
-    String password, {
-    String? turnstileToken,
-  }) async {
-    final integrity = await _integrityFields();
-    late http.Response res;
-    try {
-      res = await http
-          .post(
-            _uri('/api/auth/login'),
-            headers: _headers(json: true),
-            body: jsonEncode({
-              'email': email,
-              'password': password,
-              'turnstileToken': ?turnstileToken,
-              ...integrity,
-            }),
-          )
-          .timeout(_timeout);
-    } catch (e) {
-      Sentry.logger.error(
-        trKey('mobileLegacySignInRequestConnectionFailed'),
-        attributes: {
-          'auth.method': SentryAttribute.string('password'),
-          'error.type': SentryAttribute.string(e.runtimeType.toString()),
-        },
-      );
-      throw ApiException(0, '無法連線到後端（$_baseUrl）：$e');
-    }
-    // 只記登入結果與狀態碼，絕不記 email/密碼。
-    if (res.statusCode != 200) {
-      Sentry.logger.warn(
-        trKey('authErrorsLoginFailed'),
-        attributes: {
-          'auth.method': SentryAttribute.string('password'),
-          'http.status_code': SentryAttribute.int(res.statusCode),
-        },
-      );
-    }
-    switch (res.statusCode) {
-      case 200:
-        _captureCookie(res);
-        if (_cookie == null) {
-          throw ApiException(
-            200,
-            trKey('mobileLegacyTheSignInResponseDidNotIncludeAn'),
-          );
-        }
-        await _persistLogin();
-        Sentry.logger.info(
-          trKey('mobileLegacySignedIn'),
-          attributes: {'auth.method': SentryAttribute.string('password')},
-        );
-        return;
-      case 401:
-        throw ApiException(401, trKey('mobileLegacyIncorrectEmailOrPassword'));
-      case 403:
-        throw ApiException(403, _errorMessage(res)); // 多半是真人驗證失敗
-      case 429:
-        throw ApiException(429, _errorMessage(res));
-      default:
-        throw ApiException(res.statusCode, '登入失敗（HTTP ${res.statusCode}）');
-    }
-  }
-
-  /// 註冊並自動登入（後端成功時直接發 Cookie）。註冊端點不需 Turnstile。
-  Future<void> register({
-    required String email,
-    required String password,
-    required String displayName,
-  }) async {
-    final integrity = await _integrityFields();
-    late http.Response res;
-    try {
-      res = await http
-          .post(
-            _uri('/api/auth/register'),
-            headers: _headers(json: true),
-            body: jsonEncode({
-              'email': email,
-              'password': password,
-              'displayName': displayName,
-              ...integrity,
-            }),
-          )
-          .timeout(_timeout);
-    } catch (e) {
-      throw ApiException(0, '無法連線到後端（$_baseUrl）：$e');
-    }
-    if (res.statusCode == 200 || res.statusCode == 201) {
-      _captureCookie(res);
-      if (_cookie == null) {
-        throw ApiException(
-          200,
-          trKey('mobileLegacyTheSignUpResponseDidNotIncludeAn'),
-        );
-      }
-      await _persistLogin();
-      return;
-    }
-    throw ApiException(res.statusCode, _errorMessage(res));
   }
 
   /// 取得 Google OAuth 一次性 state（防 CSRF；後端會記住並於登入時核銷）。
@@ -616,13 +512,13 @@ class ApiClient {
 
   /// 永久刪除目前登入的使用者帳號與所有資料。
   ///
-  /// 有本機密碼的帳號傳 [password] 確認；OAuth-only（Google／LINE）帳號改傳
-  /// 與帳號相同的 [confirmEmail] 確認。成功後清除本機 Cookie（等同登出）。
-  Future<void> deleteMyAccount({String? password, String? confirmEmail}) async {
+  /// Provider-only accounts confirm deletion by entering the account email.
+  /// 成功後清除本機 Cookie（等同登出）。
+  Future<void> deleteMyAccount({required String confirmEmail}) async {
     await _send(
       'DELETE',
       '/api/account/settings/delete',
-      body: {'password': ?password, 'confirmEmail': ?confirmEmail},
+      body: {'confirmEmail': confirmEmail},
     );
     await _clearAuth();
   }
@@ -978,34 +874,6 @@ class ApiClient {
       );
 
   // ── 帳號安全 ────────────────────────────────────────────────
-  /// 變更密碼。後端會輪替 token 並撤銷其他工作階段，回應帶新的認證 Cookie，
-  /// 這裡擷取並保存，避免本機在下一次請求被登出。
-  Future<void> changePassword(String? current, String next) async {
-    late http.Response res;
-    try {
-      res = await http
-          .put(
-            _uri('/api/account/settings/password'),
-            headers: _headers(json: true),
-            body: jsonEncode({
-              'currentPassword': current ?? '',
-              'newPassword': next,
-            }),
-          )
-          .timeout(_timeout);
-    } catch (e) {
-      throw ApiException(0, '無法連線到後端（$_baseUrl）：$e');
-    }
-    if (res.statusCode == 401) {
-      throw ApiException(401, _errorMessage(res));
-    }
-    if (res.statusCode < 200 || res.statusCode >= 300) {
-      throw ApiException(res.statusCode, _errorMessage(res));
-    }
-    _captureCookie(res);
-    await _persistCookie();
-  }
-
   Future<void> setLanguage(String locale) =>
       _send('POST', '/api/account/settings/language', body: {'locale': locale});
 
@@ -1075,17 +943,6 @@ class ApiClient {
     final r = await _send('GET', '/api/admin/users');
     return r is List ? r : [];
   }
-
-  /// 建立使用者（僅管理員）。body: { email, password, displayName, isAdmin? }。
-  Future<Map<String, dynamic>> adminCreateUser(Map<String, dynamic> body) =>
-      _getMapFromSend('POST', '/api/admin/users', body: body);
-
-  /// 重設使用者密碼（僅管理員）。body: { newPassword }。
-  Future<void> adminResetUserPassword(String id, String newPassword) => _send(
-    'PUT',
-    '/api/admin/users/$id/password',
-    body: {'newPassword': newPassword},
-  );
 
   /// 切換管理員角色（僅管理員）。body: { isAdmin, adminRole? }。
   Future<Map<String, dynamic>> adminUpdateUserRole(

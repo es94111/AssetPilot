@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-4.109.2-blue" alt="version">
+  <img src="https://img.shields.io/badge/version-4.110.0-blue" alt="version">
   <img src="https://img.shields.io/badge/node-%3E%3D24-brightgreen" alt="node">
   <img src="https://img.shields.io/badge/next.js-16.x-000000" alt="next.js">
   <img src="https://img.shields.io/badge/openapi-3.2.0-6BA539" alt="openapi">
@@ -53,7 +53,7 @@
     <td align="center" width="25%"><img src="docs/screenshots/app/06-budgets.png" width="200" alt="預算"><br><sub><b>預算</b><br>月度與分類預算進度</sub></td>
     <td align="center" width="25%"><img src="docs/screenshots/app/07-reports.png" width="200" alt="統計報表"><br><sub><b>統計報表</b><br>分類分布與趨勢</sub></td>
     <td align="center" width="25%"><img src="docs/screenshots/app/08-more.png" width="200" alt="更多"><br><sub><b>更多</b><br>帳號安全、設定、報表通知</sub></td>
-    <td align="center" width="25%"><img src="docs/screenshots/app/01-login.png" width="200" alt="登入"><br><sub><b>登入</b><br>帳密 / Google / LINE / Passkey</sub></td>
+    <td align="center" width="25%"><img src="docs/screenshots/app/01-login.png" width="200" alt="登入"><br><sub><b>登入</b><br>Google / LINE / Passkey</sub></td>
   </tr>
 </table>
 
@@ -67,7 +67,7 @@
 | 🐳 Docker 一鍵部署 | 單行指令啟動；JWT 與資料庫加密金鑰首次啟動自動產生並寫入持久化 volume |
 | 📊 台股深度整合 | 串接 TWSE OpenAPI：即時股價、除權息自動同步、FIFO 全精度逐筆損益 |
 | 💱 多幣別支援 | 串接 exchangerate-api.com 即時匯率，ISO 4217 白名單驗證 |
-| 🔐 多重認證 | 帳密 / Google SSO / LINE Login（Authorization Code Flow）/ Passkey（WebAuthn） |
+| 🔐 多重認證 | Google SSO / LINE Login（Authorization Code Flow）/ Passkey（WebAuthn），不提供本機密碼 |
 | 🛡️ 稽核可審計 | 資料匯出匯入、備份還原、登入嘗試、路由攔截皆可追溯；保留天數可調 |
 | 🧭 URL-first SPA | 任何頁面可直連、書籤、分享；F5 重整不掉頁；上一頁 / 下一頁完整還原 |
 | 🌗 三模式主題 | system / light / dark；跨裝置同步；登入頁無 FOUC 樂觀渲染 |
@@ -112,8 +112,8 @@
 
 ### 系統管理
 
-- **使用者管理**：管理員可開關註冊、設定 Email 白名單、IP 白名單、新增 / 刪除 / 重設密碼
-- **登入稽核**：時間、IP、國家、方式（密碼 / Google / LINE / Passkey）、成功 / 失敗
+- **使用者管理**：管理員可開關外部服務註冊、設定 Email 白名單、IP 白名單、新增 / 刪除使用者
+- **登入稽核**：時間、IP、國家、方式（Google / LINE / Passkey）、成功 / 失敗
 - **寄信通道**：以 `EMAIL_PROVIDER_PRIMARY` / `EMAIL_PROVIDER_FALLBACK` 環境變數指定主要與備用通道（值：`smtp` / `zeabur` / `resend` / 留空），支援 SMTP（Nodemailer）、Zeabur Email（ZSend HTTP API）、Resend；可選 `EMAIL_SENDER_NAME` 為三通道統一指定寄件人顯示名稱；管理員設定頁可即時檢視各通道是否設定並寄送測試信
 - **MEGA S4 備份**：管理員可在「資料匯出匯入」頁將完整 PostgreSQL SQL 備份手動上傳到 MEGA S4 S3 相容 bucket，金鑰僅由伺服器端環境變數讀取
 - **交易照片附件**：新增交易時可附上照片，並選擇存放於 Server 本機或 S3 相容物件儲存；附件取用一律走登入授權 API
@@ -141,7 +141,7 @@
 | 前端 | 原生 HTML / CSS / Vanilla JS (已遷移至 Next.js 15 + Tailwind CSS v4) |
 | 後端 | Node.js ≥ 24 + Next.js 16 API Routes |
 | 資料庫 | PostgreSQL |
-| 認證 | JWT（HS256，httpOnly Cookie）+ bcryptjs；選配 Google OAuth Code Flow + LINE Login Code Flow + Passkey（WebAuthn） |
+| 認證 | JWT（HS256，httpOnly Cookie）+ Google OAuth Code Flow／LINE Login Code Flow／Passkey（WebAuthn）；不提供本機電子郵件密碼登入或註冊 |
 | 金額精度 | decimal.js（FIFO / 匯率 / 手續費分攤前後端同構共用 `lib/moneyDecimal.js`） |
 | 圖表 | Chart.js |
 | 寄信 | SMTP（Nodemailer）/ Zeabur Email（ZSend HTTP API）/ Resend；以環境變數指定主備通道，執行期 fallback |
@@ -339,13 +339,15 @@ Caddy 自動申請並續期 HTTPS 憑證。
 
 ## 認證機制
 
-支援四種登入方式，皆可同時啟用：
+支援三種登入方式，皆可同時啟用：
 
-### 帳密登入
+### 外部服務登入與註冊
 
-預設啟用。第一位註冊的使用者自動成為管理員。可由管理員開關「公開註冊」與「Email 白名單」。
+AssetPilot 不提供本機 Email／密碼登入、註冊、修改或重設密碼。使用者只能透過 Google、LINE 等已設定的外部服務建立帳號與登入；第一位完成外部登入的使用者自動成為管理員。管理員仍可開關外部服務註冊與設定 Email 白名單。
 
 ### Google SSO（Authorization Code Flow）
+
+Google SSO 是建議的帳號建立與登入方式；未設定時可改用 LINE 或 Passkey。
 
 1. 至 [Google Cloud Console](https://console.cloud.google.com/) 建立 OAuth 2.0 用戶端 ID（類型：網頁應用程式）
 2. **已授權 JavaScript 來源**：本機 `http://localhost:3000`、正式 `https://your-domain.com`
@@ -401,8 +403,8 @@ Webhook 回覆使用 LINE Flex Message Button：未綁定時顯示「綁定 LINE
 
 ### 首次使用
 
-1. 開啟 `http://localhost:3000` → **立即註冊**
-2. **第一位註冊的使用者自動成為管理員**
+1. 開啟 `http://localhost:3000` → 選擇 **Google** 或 **LINE** 登入
+2. **第一位完成外部登入的使用者自動成為管理員**
 3. 系統自動建立預設分類（食、衣、住、行 ...）與預設帳戶（現金、銀行帳戶）
 
 ### URL 直連
@@ -484,11 +486,11 @@ Webhook 回覆使用 LINE Flex Message Button：未綁定時顯示「綁定 LINE
 | 機制 | 說明 |
 | ---- | ---- |
 | 資料庫加密 | ChaCha20-Poly1305 AEAD + PBKDF2-SHA256 金鑰推導 |
-| 密碼加密 | bcryptjs 雜湊儲存，不明文保存 |
+| 身份驗證 | 僅接受 Google、LINE、Passkey 等外部／無密碼身份驗證方式；不建立本機密碼 |
 | XSS 防護 | 所有使用者輸入經 `escHtml()` 跳脫後才插入 DOM |
 | 安全標頭 | Next.js 回應標頭設定（HSTS、X-Content-Type-Options、Referrer-Policy） |
 | CSP | 限制 inline script 與外部資源來源 |
-| 速率限制 | 登入 / 註冊每 IP 每 15 分鐘最多 20 次；公開頁面每分鐘最多 120 次 |
+| 速率限制 | 第三方登入／Passkey 端點每 IP 每 15 分鐘最多 20 次；公開頁面每分鐘最多 120 次 |
 | Cloudflare API Shield | OpenAPI 3.2.0 Schema（`openapi.yaml`），可啟用請求驗證 |
 | CORS 控制 | `ALLOWED_ORIGINS` 白名單 |
 | OAuth 防 CSRF | Google / LINE 登入使用一次性 state；LINE 額外使用 nonce 驗證 ID Token |
@@ -530,7 +532,7 @@ Webhook 回覆使用 LINE Flex Message Button：未綁定時顯示「綁定 LINE
 | `research.md` | 技術選型決策記錄 |
 | `plan.md` | 實作計畫與檔案影響面 |
 | `data-model.md` | 資料模型與 schema 變更 |
-| `contracts/*.openapi.yaml` | API 契約 delta（OpenAPI 3.2.0）|
+| `contracts/*.openapi.yaml` | API 契約 delta（OpenAPI 3.2.0） |
 | `quickstart.md` | 手動驗證劇本 |
 | `tasks.md` | 可執行任務清單 |
 | `checklists/` | 上線前檢查表 |

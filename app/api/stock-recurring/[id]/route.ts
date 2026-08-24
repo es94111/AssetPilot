@@ -2,14 +2,7 @@
 import { NextResponse } from "next/server";
 import { requireAuth } from "../../../../lib/apiHelpers";
 import { getDB, queryOne, saveDB } from "../../../../lib/db";
-
-function normalizeDate(dateStr) {
-  const s = String(dateStr || "").trim();
-  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
-  const d = new Date(s);
-  if (isNaN(d.getTime())) return "";
-  return d.toISOString().slice(0, 10);
-}
+import { normalizeDate } from "../../../../lib/accountHelpers";
 
 export async function PUT(request, { params }) {
   const auth = await requireAuth(request);
@@ -37,6 +30,7 @@ export async function PUT(request, { params }) {
   const validFreq = ["daily", "weekly", "monthly", "yearly"];
   if (
     !stockId ||
+    !Number.isFinite(nAmount) ||
     !(nAmount > 0) ||
     !startDate ||
     !validFreq.includes(frequency)

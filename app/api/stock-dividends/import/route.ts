@@ -142,8 +142,27 @@ export async function POST(request) {
         skipped++;
         return;
       }
-      const cash = parseFloat(cashDividend || 0);
-      const stock_d = parseFloat(stockDividend || 0);
+      const cash =
+        cashDividend == null || String(cashDividend).trim() === ""
+          ? 0
+          : Number(cashDividend);
+      const stock_d =
+        stockDividend == null || String(stockDividend).trim() === ""
+          ? 0
+          : Number(stockDividend);
+      if (
+        !Number.isFinite(cash) ||
+        !Number.isFinite(stock_d) ||
+        cash < 0 ||
+        stock_d < 0
+      ) {
+        errors.push({
+          row: idx + 2,
+          reason: "股利數值必須為有限且不可為負的數值",
+        });
+        skipped++;
+        return;
+      }
       if (!cash && !stock_d) {
         errors.push({
           row: idx + 2,

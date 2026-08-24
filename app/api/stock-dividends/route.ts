@@ -71,9 +71,20 @@ export async function POST(request) {
   if (!stockId || !date)
     return NextResponse.json({ error: "必填欄位未填" }, { status: 400 });
 
-  const cash = Number(cashDividend) || 0;
-  const stkDivShares = Number(stockDividendShares) || 0;
-  if (cash < 0 || stkDivShares < 0)
+  const cash =
+    cashDividend == null || String(cashDividend).trim() === ""
+      ? 0
+      : Number(cashDividend);
+  const stkDivShares =
+    stockDividendShares == null || String(stockDividendShares).trim() === ""
+      ? 0
+      : Number(stockDividendShares);
+  if (
+    !Number.isFinite(cash) ||
+    !Number.isFinite(stkDivShares) ||
+    cash < 0 ||
+    stkDivShares < 0
+  )
     return NextResponse.json({ error: "股利不可為負" }, { status: 400 });
   if (cash === 0 && stkDivShares === 0) {
     return NextResponse.json(
@@ -109,43 +120,55 @@ export async function POST(request) {
 
   const id = uid();
   const db = getDB();
-  db.run(
-    "INSERT INTO stock_dividends (id,user_id,stock_id,date,cash_dividend,stock_dividend_shares,account_id,note,created_at) VALUES (?,?,?,?,?,?,?,?,?)",
-    [
-      id,
-      auth.userId,
-      stockId,
-      date,
-      cash,
-      stkDivShares,
-      accountId || null,
-      note || "",
-      Date.now(),
-    ],
-  );
-
   let synthTxId = null;
-  if (stkDivShares > 0) {
-    synthTxId = uid();
-    const synthNote = `[SYNTH] 股票股利配發 | ${note || ""}`.trim();
+  try {
+    db.run("BEGIN");
     db.run(
-      "INSERT INTO stock_transactions (id,user_id,stock_id,date,type,shares,price,fee,tax,account_id,note,created_at,tax_auto_calculated) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
+      "INSERT INTO stock_dividends (id,user_id,stock_id,date,cash_dividend,stock_dividend_shares,account_id,note,created_at) VALUES (?,?,?,?,?,?,?,?,?)",
       [
-        synthTxId,
+        id,
         auth.userId,
         stockId,
         date,
-        "buy",
+        cash,
         stkDivShares,
-        0,
-        0,
-        0,
-        null,
-        synthNote,
+        accountId || null,
+        note || "",
         Date.now(),
-        1,
       ],
     );
+
+    if (stkDivShares > 0) {
+      synthTxId = uid();
+      const synthNote = `[SYNTH] 股票股利配發 | ${note || ""}`.trim();
+      db.run(
+        "INSERT INTO stock_transactions (id,user_id,stock_id,date,type,shares,price,fee,tax,account_id,note,created_at,tax_auto_calculated) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        [
+          synthTxId,
+          auth.userId,
+          stockId,
+          date,
+          "buy",
+          stkDivShares,
+          0,
+          0,
+          0,
+          null,
+          synthNote,
+          Date.now(),
+          1,
+        ],
+      );
+    }
+    db.run("COMMIT");
+  } catch (error) {
+    console.error("[stock-dividends] write failed", error);
+    try {
+      db.run("ROLLBACK");
+    } catch (rollbackError) {
+      console.error("[stock-dividends] rollback failed", rollbackError);
+    }
+    return NextResponse.json({ error: "股利寫入失敗" }, { status: 500 });
   }
   saveDB();
 

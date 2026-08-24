@@ -313,6 +313,34 @@ async function _runMigrations(): Promise<void> {
     "CREATE INDEX IF NOT EXISTS idx_report_schedules_enabled_freq ON report_schedules(enabled, freq)",
   );
 
+  // 009 多時區月報表：以 user + 月份去重，寄送失敗保留紀錄且不自動重試。
+  db.run(`CREATE TABLE IF NOT EXISTS monthly_report_send_log (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    year_month TEXT NOT NULL,
+    schedule_id TEXT NOT NULL DEFAULT '',
+    sent_at_utc TEXT NOT NULL,
+    send_status TEXT NOT NULL DEFAULT 'success' CHECK(send_status IN ('success','failed')),
+    error_message TEXT NOT NULL DEFAULT '',
+    UNIQUE(user_id, year_month),
+    CONSTRAINT monthly_report_send_log_user_fk FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  )`);
+  alterIgnore(
+    "ALTER TABLE monthly_report_send_log ADD COLUMN schedule_id TEXT NOT NULL DEFAULT ''",
+  );
+  alterIgnore(
+    "ALTER TABLE monthly_report_send_log ADD COLUMN send_status TEXT NOT NULL DEFAULT 'success'",
+  );
+  alterIgnore(
+    "ALTER TABLE monthly_report_send_log ADD COLUMN error_message TEXT NOT NULL DEFAULT ''",
+  );
+  alterIgnore(
+    "CREATE UNIQUE INDEX IF NOT EXISTS idx_monthly_report_send_log_user ON monthly_report_send_log(user_id, year_month)",
+  );
+  alterIgnore(
+    "CREATE INDEX IF NOT EXISTS idx_monthly_report_send_log_schedule ON monthly_report_send_log(schedule_id, year_month DESC)",
+  );
+
   db.run(`CREATE TABLE IF NOT EXISTS categories (
     id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL,
@@ -341,7 +369,7 @@ async function _runMigrations(): Promise<void> {
     id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL,
     name TEXT NOT NULL,
-    initial_balance REAL DEFAULT 0,
+    initial_balance NUMERIC DEFAULT 0 CHECK (initial_balance::text NOT IN ('NaN', 'Infinity', '-Infinity')),
     currency TEXT DEFAULT 'TWD',
     icon TEXT DEFAULT 'fa-wallet',
     created_at TEXT
@@ -351,9 +379,9 @@ async function _runMigrations(): Promise<void> {
     id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL,
     type TEXT NOT NULL,
-    amount REAL NOT NULL,
+    amount NUMERIC NOT NULL,
     currency TEXT DEFAULT 'TWD',
-    original_amount REAL DEFAULT 0,
+    original_amount NUMERIC DEFAULT 0,
     fx_rate TEXT DEFAULT '1',
     date TEXT NOT NULL,
     category_id TEXT,
@@ -361,7 +389,9 @@ async function _runMigrations(): Promise<void> {
     note TEXT DEFAULT '',
     linked_id TEXT DEFAULT '',
     created_at INTEGER,
-    updated_at INTEGER
+    updated_at INTEGER,
+    CHECK (amount >= 0 AND amount::text NOT IN ('NaN', 'Infinity', '-Infinity')),
+    CHECK (original_amount >= 0 AND original_amount::text NOT IN ('NaN', 'Infinity', '-Infinity'))
   )`);
 
   db.run(`CREATE TABLE IF NOT EXISTS exchange_rates (
@@ -383,7 +413,7 @@ async function _runMigrations(): Promise<void> {
     id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL,
     category_id TEXT,
-    amount REAL NOT NULL,
+    amount NUMERIC NOT NULL CHECK (amount > 0 AND amount::text NOT IN ('NaN', 'Infinity', '-Infinity')),
     period TEXT DEFAULT 'monthly',
     year INTEGER,
     month INTEGER,
@@ -394,18 +424,18 @@ async function _runMigrations(): Promise<void> {
   db.run(`CREATE TABLE IF NOT EXISTS recurring (
     id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL,
-    type TEXT NOT NULL,
-    amount REAL NOT NULL,
+    type TEXT NOT NULL CHECK(type IN ('income','expense')),
+    amount NUMERIC NOT NULL CHECK (amount > 0 AND amount::text NOT IN ('NaN', 'Infinity', '-Infinity')),
     currency TEXT DEFAULT 'TWD',
     fx_rate TEXT DEFAULT '1',
     category_id TEXT,
     account_id TEXT,
-    frequency TEXT NOT NULL,
+    frequency TEXT NOT NULL CHECK(frequency IN ('daily','weekly','monthly','yearly')),
     start_date TEXT,
     note TEXT DEFAULT '',
-    is_active INTEGER DEFAULT 1,
+    is_active INTEGER DEFAULT 1 CHECK(is_active IN (0,1)),
     last_generated TEXT,
-    needs_attention INTEGER DEFAULT 0,
+    needs_attention INTEGER DEFAULT 0 CHECK(needs_attention IN (0,1)),
     updated_at INTEGER DEFAULT 0,
     created_at INTEGER
   )`);
@@ -416,8 +446,8 @@ async function _runMigrations(): Promise<void> {
     symbol TEXT NOT NULL,
     market TEXT DEFAULT 'TW',
     name TEXT NOT NULL,
-    shares REAL DEFAULT 0,
-    avg_cost REAL DEFAULT 0,
+    shares NUMERIC DEFAULT 0 CHECK (shares >= 0 AND shares::text NOT IN ('NaN', 'Infinity', '-Infinity')),
+    avg_cost NUMERIC DEFAULT 0 CHECK (avg_cost >= 0 AND avg_cost::text NOT IN ('NaN', 'Infinity', '-Infinity')),
     currency TEXT DEFAULT 'TWD',
     account_id TEXT DEFAULT '',
     created_at INTEGER,
@@ -428,12 +458,13 @@ async function _runMigrations(): Promise<void> {
     id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL,
     stock_id TEXT NOT NULL,
-    type TEXT NOT NULL,
-    shares REAL NOT NULL,
-    price REAL NOT NULL,
-    fee REAL DEFAULT 0,
-    tax REAL DEFAULT 0,
+    type TEXT NOT NULL CHECK(type IN ('buy','sell')),
+    shares NUMERIC NOT NULL CHECK (shares > 0 AND shares::text NOT IN ('NaN', 'Infinity', '-Infinity')),
+    price NUMERIC NOT NULL CHECK (price >= 0 AND price::text NOT IN ('NaN', 'Infinity', '-Infinity')),
+    fee NUMERIC DEFAULT 0 CHECK (fee >= 0 AND fee::text NOT IN ('NaN', 'Infinity', '-Infinity')),
+    tax NUMERIC DEFAULT 0 CHECK (tax >= 0 AND tax::text NOT IN ('NaN', 'Infinity', '-Infinity')),
     date TEXT NOT NULL,
+    CONSTRAINT stock_transactions_stock_fk FOREIGN KEY (stock_id) REFERENCES stocks(id) ON DELETE CASCADE,
     note TEXT DEFAULT '',
     created_at INTEGER
   )`);
@@ -442,10 +473,11 @@ async function _runMigrations(): Promise<void> {
     id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL,
     stock_id TEXT NOT NULL,
-    amount REAL NOT NULL,
-    shares REAL DEFAULT 0,
+    amount NUMERIC NOT NULL DEFAULT 0 CHECK (amount >= 0 AND amount::text NOT IN ('NaN', 'Infinity', '-Infinity')),
+    shares NUMERIC DEFAULT 0 CHECK (shares >= 0 AND shares::text NOT IN ('NaN', 'Infinity', '-Infinity')),
     date TEXT NOT NULL,
     note TEXT DEFAULT '',
+    CONSTRAINT stock_dividends_stock_fk FOREIGN KEY (stock_id) REFERENCES stocks(id) ON DELETE CASCADE,
     created_at INTEGER
   )`);
 
@@ -453,26 +485,27 @@ async function _runMigrations(): Promise<void> {
     id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL,
     stock_id TEXT NOT NULL,
-    amount REAL DEFAULT 0,
-    frequency TEXT NOT NULL DEFAULT 'monthly',
+    amount NUMERIC DEFAULT 0 CHECK (amount >= 0 AND amount::text NOT IN ('NaN', 'Infinity', '-Infinity')),
+    frequency TEXT NOT NULL DEFAULT 'monthly' CHECK(frequency IN ('daily','weekly','monthly','yearly')),
     start_date TEXT,
     account_id TEXT DEFAULT '',
     note TEXT DEFAULT '',
-    is_active INTEGER DEFAULT 1,
+    is_active INTEGER DEFAULT 1 CHECK(is_active IN (0,1)),
     last_generated TEXT,
     created_at INTEGER,
     updated_at INTEGER DEFAULT 0,
     freq TEXT DEFAULT '',
-    shares REAL DEFAULT 0,
-    price REAL DEFAULT 0,
-    next_date TEXT
+    shares NUMERIC DEFAULT 0 CHECK (shares >= 0 AND shares::text NOT IN ('NaN', 'Infinity', '-Infinity')),
+    price NUMERIC DEFAULT 0 CHECK (price >= 0 AND price::text NOT IN ('NaN', 'Infinity', '-Infinity')),
+    next_date TEXT,
+    CONSTRAINT stock_recurring_stock_fk FOREIGN KEY (stock_id) REFERENCES stocks(id) ON DELETE CASCADE
   )`);
 
   // 股票月結收盤價快取（滿月資訊版用；依代號跨使用者共用，鎖定已結束月份最後交易日收盤價）
   db.run(`CREATE TABLE IF NOT EXISTS stock_month_close_prices (
     symbol TEXT NOT NULL,
     year_month TEXT NOT NULL,
-    close_price REAL NOT NULL,
+    close_price NUMERIC NOT NULL CHECK (close_price >= 0 AND close_price::text NOT IN ('NaN', 'Infinity', '-Infinity')),
     close_date TEXT DEFAULT '',
     updated_at INTEGER DEFAULT 0,
     PRIMARY KEY (symbol, year_month)
@@ -566,13 +599,13 @@ async function _runMigrations(): Promise<void> {
 
   db.run(`CREATE TABLE IF NOT EXISTS stock_settings (
     user_id TEXT PRIMARY KEY,
-    fee_rate REAL DEFAULT 0.001425,
-    fee_discount REAL DEFAULT 1,
+    fee_rate NUMERIC DEFAULT 0.001425,
+    fee_discount NUMERIC DEFAULT 1,
     fee_min_lot INTEGER DEFAULT 20,
     fee_min_odd INTEGER DEFAULT 1,
-    sell_tax_rate_stock REAL DEFAULT 0.003,
-    sell_tax_rate_etf REAL DEFAULT 0.001,
-    sell_tax_rate_warrant REAL DEFAULT 0.001,
+    sell_tax_rate_stock NUMERIC DEFAULT 0.003,
+    sell_tax_rate_etf NUMERIC DEFAULT 0.001,
+    sell_tax_rate_warrant NUMERIC DEFAULT 0.001,
     sell_tax_min INTEGER DEFAULT 1,
     updated_at INTEGER DEFAULT 0
   )`);
@@ -622,7 +655,7 @@ async function _runMigrations(): Promise<void> {
   }
 
   alterIgnore("ALTER TABLE accounts ADD COLUMN type TEXT DEFAULT 'checking'");
-  alterIgnore("ALTER TABLE accounts ADD COLUMN balance REAL DEFAULT 0");
+  alterIgnore("ALTER TABLE accounts ADD COLUMN balance NUMERIC DEFAULT 0");
   alterIgnore("ALTER TABLE accounts ADD COLUMN color TEXT DEFAULT '#6366f1'");
   alterIgnore("ALTER TABLE accounts ADD COLUMN sort_order INTEGER DEFAULT 0");
   alterIgnore("ALTER TABLE accounts ADD COLUMN is_active INTEGER DEFAULT 1");
@@ -634,7 +667,7 @@ async function _runMigrations(): Promise<void> {
   );
   alterIgnore("ALTER TABLE accounts ADD COLUMN linked_bank_id TEXT DEFAULT ''");
   alterIgnore(
-    "ALTER TABLE accounts ADD COLUMN overseas_fee_rate REAL DEFAULT 0",
+    "ALTER TABLE accounts ADD COLUMN overseas_fee_rate NUMERIC DEFAULT 0",
   );
   alterIgnore("ALTER TABLE accounts ADD COLUMN account_type TEXT DEFAULT ''");
   alterIgnore(
@@ -651,8 +684,10 @@ async function _runMigrations(): Promise<void> {
     "ALTER TABLE transactions ADD COLUMN transfer_to_account_id TEXT DEFAULT ''",
   );
   alterIgnore("ALTER TABLE transactions ADD COLUMN tags TEXT DEFAULT '[]'");
-  alterIgnore("ALTER TABLE transactions ADD COLUMN fx_fee REAL DEFAULT 0");
-  alterIgnore("ALTER TABLE transactions ADD COLUMN twd_amount REAL DEFAULT 0");
+  alterIgnore("ALTER TABLE transactions ADD COLUMN fx_fee NUMERIC DEFAULT 0");
+  alterIgnore(
+    "ALTER TABLE transactions ADD COLUMN twd_amount NUMERIC DEFAULT 0",
+  );
   alterIgnore(
     "ALTER TABLE transactions ADD COLUMN exclude_from_stats INTEGER DEFAULT 0",
   );
@@ -692,7 +727,7 @@ async function _runMigrations(): Promise<void> {
       SELECT linked_id FROM transactions WHERE ai_created = 1 AND linked_id != ''
     )`);
 
-  alterIgnore("ALTER TABLE recurring ADD COLUMN fx_fee REAL DEFAULT 0");
+  alterIgnore("ALTER TABLE recurring ADD COLUMN fx_fee NUMERIC DEFAULT 0");
   alterIgnore(
     "ALTER TABLE recurring ADD COLUMN exclude_from_stats INTEGER DEFAULT 0",
   );
@@ -706,8 +741,8 @@ async function _runMigrations(): Promise<void> {
   alterIgnore(
     "UPDATE stocks SET market = 'TW' WHERE market IS NULL OR market = ''",
   );
-  alterIgnore("ALTER TABLE stocks ADD COLUMN current_price REAL DEFAULT 0");
-  alterIgnore("ALTER TABLE stocks ADD COLUMN avg_cost REAL DEFAULT 0");
+  alterIgnore("ALTER TABLE stocks ADD COLUMN current_price NUMERIC DEFAULT 0");
+  alterIgnore("ALTER TABLE stocks ADD COLUMN avg_cost NUMERIC DEFAULT 0");
   alterIgnore("ALTER TABLE stocks ADD COLUMN stock_type TEXT DEFAULT 'stock'");
   alterIgnore("ALTER TABLE stocks ADD COLUMN delisted INTEGER DEFAULT 0");
   alterIgnore("ALTER TABLE stocks ADD COLUMN currency TEXT DEFAULT 'TWD'");
@@ -716,7 +751,7 @@ async function _runMigrations(): Promise<void> {
     "ALTER TABLE stock_transactions ADD COLUMN account_id TEXT DEFAULT ''",
   );
   alterIgnore(
-    "ALTER TABLE stock_transactions ADD COLUMN realized_pl REAL DEFAULT 0",
+    "ALTER TABLE stock_transactions ADD COLUMN realized_pl NUMERIC DEFAULT 0",
   );
   alterIgnore(
     "ALTER TABLE stock_transactions ADD COLUMN tax_auto_calculated INTEGER DEFAULT 1",
@@ -730,7 +765,9 @@ async function _runMigrations(): Promise<void> {
   alterIgnore(
     "CREATE UNIQUE INDEX IF NOT EXISTS idx_stock_tx_recurring_period ON stock_transactions(user_id, recurring_plan_id, period_start_date) WHERE recurring_plan_id != '' AND period_start_date != ''",
   );
-  alterIgnore("ALTER TABLE stock_recurring ADD COLUMN amount REAL DEFAULT 0");
+  alterIgnore(
+    "ALTER TABLE stock_recurring ADD COLUMN amount NUMERIC DEFAULT 0",
+  );
   alterIgnore(
     "ALTER TABLE stock_recurring ADD COLUMN frequency TEXT DEFAULT 'monthly'",
   );
@@ -748,8 +785,10 @@ async function _runMigrations(): Promise<void> {
     "ALTER TABLE stock_recurring ADD COLUMN updated_at INTEGER DEFAULT 0",
   );
   alterIgnore("ALTER TABLE stock_recurring ADD COLUMN freq TEXT DEFAULT ''");
-  alterIgnore("ALTER TABLE stock_recurring ADD COLUMN shares REAL DEFAULT 0");
-  alterIgnore("ALTER TABLE stock_recurring ADD COLUMN price REAL DEFAULT 0");
+  alterIgnore(
+    "ALTER TABLE stock_recurring ADD COLUMN shares NUMERIC DEFAULT 0",
+  );
+  alterIgnore("ALTER TABLE stock_recurring ADD COLUMN price NUMERIC DEFAULT 0");
   alterIgnore(
     "ALTER TABLE stock_recurring ADD COLUMN next_date TEXT DEFAULT ''",
   );
@@ -771,10 +810,10 @@ async function _runMigrations(): Promise<void> {
     "UPDATE stock_recurring SET updated_at = COALESCE(NULLIF(updated_at, 0), created_at, 0) WHERE updated_at IS NULL OR updated_at = 0",
   );
   alterIgnore(
-    "ALTER TABLE stock_dividends ADD COLUMN cash_dividend REAL DEFAULT 0",
+    "ALTER TABLE stock_dividends ADD COLUMN cash_dividend NUMERIC DEFAULT 0",
   );
   alterIgnore(
-    "ALTER TABLE stock_dividends ADD COLUMN stock_dividend_shares REAL DEFAULT 0",
+    "ALTER TABLE stock_dividends ADD COLUMN stock_dividend_shares NUMERIC DEFAULT 0",
   );
   alterIgnore(
     "ALTER TABLE stock_dividends ADD COLUMN account_id TEXT DEFAULT ''",
@@ -1005,7 +1044,7 @@ async function _runMigrations(): Promise<void> {
     from_account_id TEXT NOT NULL,
     from_account_name TEXT NOT NULL,
     from_currency TEXT NOT NULL,
-    total_amount REAL NOT NULL,
+    total_amount NUMERIC NOT NULL CHECK (total_amount > 0 AND total_amount::text NOT IN ('NaN', 'Infinity', '-Infinity')),
     input_mode TEXT NOT NULL DEFAULT 'total',
     allocations TEXT NOT NULL DEFAULT '[]',
     created_at INTEGER NOT NULL,
@@ -1016,6 +1055,98 @@ async function _runMigrations(): Promise<void> {
   );
   alterIgnore(
     "CREATE INDEX IF NOT EXISTS idx_transactions_repayment_summary ON transactions(repayment_summary_id) WHERE repayment_summary_id != ''",
+  );
+
+  // REAL/DOUBLE PRECISION 會在 PostgreSQL 以 float4/float8 儲存金額，
+  // 大額或多次換算可能產生不可逆的四捨五入。新表使用 NUMERIC；
+  // 既有部署在此冪等轉型，保留資料值但避免後續再以二進位浮點儲存。
+  const numericTypeMigrations = [
+    "ALTER TABLE accounts ALTER COLUMN initial_balance TYPE NUMERIC USING initial_balance::numeric",
+    "ALTER TABLE accounts ALTER COLUMN balance TYPE NUMERIC USING balance::numeric",
+    "ALTER TABLE accounts ALTER COLUMN overseas_fee_rate TYPE NUMERIC USING overseas_fee_rate::numeric",
+    "ALTER TABLE transactions ALTER COLUMN amount TYPE NUMERIC USING amount::numeric",
+    "ALTER TABLE transactions ALTER COLUMN original_amount TYPE NUMERIC USING original_amount::numeric",
+    "ALTER TABLE transactions ALTER COLUMN fx_fee TYPE NUMERIC USING fx_fee::numeric",
+    "ALTER TABLE transactions ALTER COLUMN twd_amount TYPE NUMERIC USING twd_amount::numeric",
+    "ALTER TABLE budgets ALTER COLUMN amount TYPE NUMERIC USING amount::numeric",
+    "ALTER TABLE recurring ALTER COLUMN amount TYPE NUMERIC USING amount::numeric",
+    "ALTER TABLE recurring ALTER COLUMN fx_fee TYPE NUMERIC USING fx_fee::numeric",
+    "ALTER TABLE stocks ALTER COLUMN shares TYPE NUMERIC USING shares::numeric",
+    "ALTER TABLE stocks ALTER COLUMN avg_cost TYPE NUMERIC USING avg_cost::numeric",
+    "ALTER TABLE stocks ALTER COLUMN current_price TYPE NUMERIC USING current_price::numeric",
+    "ALTER TABLE stock_transactions ALTER COLUMN shares TYPE NUMERIC USING shares::numeric",
+    "ALTER TABLE stock_transactions ALTER COLUMN price TYPE NUMERIC USING price::numeric",
+    "ALTER TABLE stock_transactions ALTER COLUMN fee TYPE NUMERIC USING fee::numeric",
+    "ALTER TABLE stock_transactions ALTER COLUMN tax TYPE NUMERIC USING tax::numeric",
+    "ALTER TABLE stock_transactions ALTER COLUMN realized_pl TYPE NUMERIC USING realized_pl::numeric",
+    "ALTER TABLE stock_dividends ALTER COLUMN amount TYPE NUMERIC USING amount::numeric",
+    "ALTER TABLE stock_dividends ALTER COLUMN shares TYPE NUMERIC USING shares::numeric",
+    "ALTER TABLE stock_dividends ALTER COLUMN cash_dividend TYPE NUMERIC USING cash_dividend::numeric",
+    "ALTER TABLE stock_dividends ALTER COLUMN stock_dividend_shares TYPE NUMERIC USING stock_dividend_shares::numeric",
+    "ALTER TABLE stock_recurring ALTER COLUMN amount TYPE NUMERIC USING amount::numeric",
+    "ALTER TABLE stock_recurring ALTER COLUMN shares TYPE NUMERIC USING shares::numeric",
+    "ALTER TABLE stock_recurring ALTER COLUMN price TYPE NUMERIC USING price::numeric",
+    "ALTER TABLE stock_month_close_prices ALTER COLUMN close_price TYPE NUMERIC USING close_price::numeric",
+    "ALTER TABLE stock_settings ALTER COLUMN fee_rate TYPE NUMERIC USING fee_rate::numeric",
+    "ALTER TABLE stock_settings ALTER COLUMN fee_discount TYPE NUMERIC USING fee_discount::numeric",
+    "ALTER TABLE stock_settings ALTER COLUMN sell_tax_rate_stock TYPE NUMERIC USING sell_tax_rate_stock::numeric",
+    "ALTER TABLE stock_settings ALTER COLUMN sell_tax_rate_etf TYPE NUMERIC USING sell_tax_rate_etf::numeric",
+    "ALTER TABLE stock_settings ALTER COLUMN sell_tax_rate_warrant TYPE NUMERIC USING sell_tax_rate_warrant::numeric",
+    "ALTER TABLE credit_card_repayment_summaries ALTER COLUMN total_amount TYPE NUMERIC USING total_amount::numeric",
+  ];
+  for (const sql of numericTypeMigrations) db.run(sql);
+
+  // Existing databases may already contain historical invalid rows. NOT VALID
+  // lets PostgreSQL enforce these rules for every new INSERT/UPDATE immediately;
+  // a later maintenance migration can validate old rows after remediation.
+  const addCheck = (sql: string): void => {
+    try {
+      db.run(sql);
+    } catch {
+      /* idempotent */
+    }
+  };
+  addCheck(
+    "ALTER TABLE transactions ADD CONSTRAINT transactions_amount_nonnegative CHECK (amount >= 0 AND amount::text NOT IN ('NaN','Infinity','-Infinity')) NOT VALID",
+  );
+  addCheck(
+    "ALTER TABLE transactions ADD CONSTRAINT transactions_original_amount_nonnegative CHECK (original_amount >= 0 AND original_amount::text NOT IN ('NaN','Infinity','-Infinity')) NOT VALID",
+  );
+  addCheck(
+    "ALTER TABLE transactions ADD CONSTRAINT transactions_fx_fee_nonnegative CHECK (fx_fee >= 0 AND fx_fee::text NOT IN ('NaN','Infinity','-Infinity')) NOT VALID",
+  );
+  addCheck(
+    "ALTER TABLE transactions ADD CONSTRAINT transactions_twd_amount_nonnegative CHECK (twd_amount >= 0 AND twd_amount::text NOT IN ('NaN','Infinity','-Infinity')) NOT VALID",
+  );
+  addCheck(
+    "ALTER TABLE accounts ADD CONSTRAINT accounts_initial_balance_finite CHECK (initial_balance::text NOT IN ('NaN','Infinity','-Infinity')) NOT VALID",
+  );
+  addCheck(
+    "ALTER TABLE accounts ADD CONSTRAINT accounts_overseas_fee_rate_valid CHECK (overseas_fee_rate IS NULL OR (overseas_fee_rate >= 0 AND overseas_fee_rate <= 100 AND overseas_fee_rate::text NOT IN ('NaN','Infinity','-Infinity'))) NOT VALID",
+  );
+  addCheck(
+    "ALTER TABLE transactions ADD CONSTRAINT transactions_type_valid CHECK (type IN ('income','expense','transfer_in','transfer_out')) NOT VALID",
+  );
+  addCheck(
+    "ALTER TABLE stock_transactions ADD CONSTRAINT stock_transactions_values_nonnegative CHECK (shares > 0 AND price >= 0 AND fee >= 0 AND tax >= 0 AND shares::text NOT IN ('NaN','Infinity','-Infinity') AND price::text NOT IN ('NaN','Infinity','-Infinity') AND fee::text NOT IN ('NaN','Infinity','-Infinity') AND tax::text NOT IN ('NaN','Infinity','-Infinity')) NOT VALID",
+  );
+  addCheck(
+    "ALTER TABLE stock_dividends ADD CONSTRAINT stock_dividends_values_nonnegative CHECK (amount >= 0 AND shares >= 0 AND cash_dividend >= 0 AND stock_dividend_shares >= 0 AND amount::text NOT IN ('NaN','Infinity','-Infinity') AND shares::text NOT IN ('NaN','Infinity','-Infinity') AND cash_dividend::text NOT IN ('NaN','Infinity','-Infinity') AND stock_dividend_shares::text NOT IN ('NaN','Infinity','-Infinity')) NOT VALID",
+  );
+  addCheck(
+    "ALTER TABLE stock_recurring ADD CONSTRAINT stock_recurring_values_nonnegative CHECK (amount >= 0 AND shares >= 0 AND price >= 0 AND amount::text NOT IN ('NaN','Infinity','-Infinity') AND shares::text NOT IN ('NaN','Infinity','-Infinity') AND price::text NOT IN ('NaN','Infinity','-Infinity')) NOT VALID",
+  );
+  addCheck(
+    "ALTER TABLE monthly_report_send_log ADD CONSTRAINT monthly_report_send_log_user_fk FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE NOT VALID",
+  );
+  addCheck(
+    "ALTER TABLE stock_transactions ADD CONSTRAINT stock_transactions_stock_fk FOREIGN KEY (stock_id) REFERENCES stocks(id) ON DELETE CASCADE NOT VALID",
+  );
+  addCheck(
+    "ALTER TABLE stock_dividends ADD CONSTRAINT stock_dividends_stock_fk FOREIGN KEY (stock_id) REFERENCES stocks(id) ON DELETE CASCADE NOT VALID",
+  );
+  addCheck(
+    "ALTER TABLE stock_recurring ADD CONSTRAINT stock_recurring_stock_fk FOREIGN KEY (stock_id) REFERENCES stocks(id) ON DELETE CASCADE NOT VALID",
   );
 
   saveDB();

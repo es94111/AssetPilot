@@ -338,8 +338,8 @@
   --dashboard-panel-soft: #f4f0e8;
   --surface-hover: var(--dashboard-panel-soft);
   --dashboard-rule: #d8d3c7;
-  --dashboard-ink: #14223b;
-  --dashboard-ink-soft: #203452;
+  --dashboard-ink: #3147b8;
+  --dashboard-ink-soft: #4058d8;
   position: relative;
   isolation: isolate;
 }

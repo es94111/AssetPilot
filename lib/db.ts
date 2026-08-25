@@ -737,6 +737,11 @@ async function _runMigrations(): Promise<void> {
   alterIgnore("ALTER TABLE budgets ADD COLUMN created_at INTEGER DEFAULT 0");
   alterIgnore("ALTER TABLE budgets ADD COLUMN updated_at INTEGER DEFAULT 0");
 
+  // Some legacy PostgreSQL deployments were created from an incomplete stock
+  // schema. Ensure the columns used by the numeric-type migration exist before
+  // attempting ALTER COLUMN ... TYPE below; CREATE TABLE IF NOT EXISTS does not
+  // add missing columns to an already-existing table.
+  alterIgnore("ALTER TABLE stocks ADD COLUMN shares NUMERIC DEFAULT 0");
   alterIgnore("ALTER TABLE stocks ADD COLUMN market TEXT DEFAULT 'TW'");
   alterIgnore(
     "UPDATE stocks SET market = 'TW' WHERE market IS NULL OR market = ''",
@@ -747,6 +752,9 @@ async function _runMigrations(): Promise<void> {
   alterIgnore("ALTER TABLE stocks ADD COLUMN delisted INTEGER DEFAULT 0");
   alterIgnore("ALTER TABLE stocks ADD COLUMN currency TEXT DEFAULT 'TWD'");
 
+  alterIgnore(
+    "ALTER TABLE stock_transactions ADD COLUMN shares NUMERIC DEFAULT 0",
+  );
   alterIgnore(
     "ALTER TABLE stock_transactions ADD COLUMN account_id TEXT DEFAULT ''",
   );
@@ -808,6 +816,9 @@ async function _runMigrations(): Promise<void> {
   );
   alterIgnore(
     "UPDATE stock_recurring SET updated_at = COALESCE(NULLIF(updated_at, 0), created_at, 0) WHERE updated_at IS NULL OR updated_at = 0",
+  );
+  alterIgnore(
+    "ALTER TABLE stock_dividends ADD COLUMN shares NUMERIC DEFAULT 0",
   );
   alterIgnore(
     "ALTER TABLE stock_dividends ADD COLUMN cash_dividend NUMERIC DEFAULT 0",

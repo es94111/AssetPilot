@@ -1,6 +1,15 @@
 {
-  "currentVersion": "4.112.0",
+  "currentVersion": "4.112.1",
   "releases": [
+    {
+      "version": "4.112.1",
+      "date": "2026-08-26",
+      "title": "修正品牌入場動畫圓環未置中問題",
+      "type": "fixed",
+      "changes": [
+        { "tag": "fixed", "text": "修正品牌入場動畫中虛線圓環未精準環繞置中於品牌圖示的問題，現在圓環會正確對齊圖示中心呈現。" }
+      ]
+    },
     {
       "version": "4.112.0",
       "date": "2026-08-26",

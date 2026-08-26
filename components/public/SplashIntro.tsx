@@ -49,79 +49,81 @@ export default function SplashIntro() {
       <div className="splash-blob splash-blob-3" />
 
       <div className="splash-box">
-        <div className="splash-logo">
-          <svg viewBox="0 0 512 512" width="60" height="60" role="img">
-            <defs>
-              <linearGradient id="splashBar1" x1="0" y1="1" x2="0" y2="0">
-                <stop offset="0" stopColor="#a5b4fc" />
-                <stop offset="1" stopColor="#ffffff" />
-              </linearGradient>
-              <linearGradient id="splashBar2" x1="0" y1="1" x2="0" y2="0">
-                <stop offset="0" stopColor="#c4b5fd" />
-                <stop offset="1" stopColor="#ffffff" />
-              </linearGradient>
-              <linearGradient id="splashCoin" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0" stopColor="#fbbf24" />
-                <stop offset="1" stopColor="#f59e0b" />
-              </linearGradient>
-            </defs>
-            <rect
-              x="80"
-              y="300"
-              width="60"
-              height="130"
-              rx="12"
-              fill="url(#splashBar1)"
-              opacity="0.9"
-            />
-            <rect
-              x="165"
-              y="240"
-              width="60"
-              height="190"
-              rx="12"
-              fill="url(#splashBar2)"
-              opacity="0.95"
-            />
-            <rect
-              x="250"
-              y="180"
-              width="60"
-              height="250"
-              rx="12"
-              fill="#ffffff"
-            />
-            <polyline
-              points="110,280 195,215 280,150 380,105"
-              fill="none"
-              stroke="#ffffff"
-              strokeWidth="12"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <circle
-              cx="395"
-              cy="300"
-              r="62"
-              fill="url(#splashCoin)"
-              stroke="#ffffff"
-              strokeWidth="8"
-            />
-            <text
-              x="395"
-              y="324"
-              textAnchor="middle"
-              fontFamily="Arial, sans-serif"
-              fontWeight="bold"
-              fontSize="68"
-              fill="#ffffff"
-            >
-              $
-            </text>
-          </svg>
-        </div>
+        <div className="splash-logo-wrap">
+          <div className="splash-logo">
+            <svg viewBox="0 0 512 512" width="60" height="60" role="img">
+              <defs>
+                <linearGradient id="splashBar1" x1="0" y1="1" x2="0" y2="0">
+                  <stop offset="0" stopColor="#a5b4fc" />
+                  <stop offset="1" stopColor="#ffffff" />
+                </linearGradient>
+                <linearGradient id="splashBar2" x1="0" y1="1" x2="0" y2="0">
+                  <stop offset="0" stopColor="#c4b5fd" />
+                  <stop offset="1" stopColor="#ffffff" />
+                </linearGradient>
+                <linearGradient id="splashCoin" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0" stopColor="#fbbf24" />
+                  <stop offset="1" stopColor="#f59e0b" />
+                </linearGradient>
+              </defs>
+              <rect
+                x="80"
+                y="300"
+                width="60"
+                height="130"
+                rx="12"
+                fill="url(#splashBar1)"
+                opacity="0.9"
+              />
+              <rect
+                x="165"
+                y="240"
+                width="60"
+                height="190"
+                rx="12"
+                fill="url(#splashBar2)"
+                opacity="0.95"
+              />
+              <rect
+                x="250"
+                y="180"
+                width="60"
+                height="250"
+                rx="12"
+                fill="#ffffff"
+              />
+              <polyline
+                points="110,280 195,215 280,150 380,105"
+                fill="none"
+                stroke="#ffffff"
+                strokeWidth="12"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <circle
+                cx="395"
+                cy="300"
+                r="62"
+                fill="url(#splashCoin)"
+                stroke="#ffffff"
+                strokeWidth="8"
+              />
+              <text
+                x="395"
+                y="324"
+                textAnchor="middle"
+                fontFamily="Arial, sans-serif"
+                fontWeight="bold"
+                fontSize="68"
+                fill="#ffffff"
+              >
+                $
+              </text>
+            </svg>
+          </div>
 
-        <div className="splash-ring" />
+          <div className="splash-ring" />
+        </div>
 
         <div className="splash-name">
           Asset<span>Pilot</span>

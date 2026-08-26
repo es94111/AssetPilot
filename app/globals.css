@@ -314,7 +314,15 @@
   text-align: center;
 }
 
+.splash-logo-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .splash-logo {
+  position: relative;
   width: 104px;
   height: 104px;
   border-radius: 28px;
@@ -330,13 +338,14 @@
 }
 
 .splash-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
   width: 168px;
   height: 168px;
-  position: absolute;
+  margin: -84px 0 0 -84px;
   border-radius: 50%;
   border: 2px dashed rgba(255,255,255,.35);
-  animation: splash-ring-spin 9s linear infinite;
-  opacity: 0;
   animation-name: splash-ring-spin, splash-ring-fade;
   animation-duration: 9s, 0.7s;
   animation-timing-function: linear, ease;

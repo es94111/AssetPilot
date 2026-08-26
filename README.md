@@ -5,30 +5,31 @@
 </p>
 
 <p align="center">
-  自托管、資料加密的個人資產管理平台（Web + Android App）— 記帳、預算、股票紀錄、報表、稽核日誌，一站搞定。
+  🏠 <b>自托管</b>、🔒 <b>資料加密</b>的個人資產管理平台（Web + Android App）<br>
+  記帳、預算、台股投資、報表、稽核日誌 — 一站搞定，資料完全掌控在自己手上。
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-4.111.1-blue" alt="version">
+  <img src="https://img.shields.io/badge/version-4.111.2-blue" alt="version">
   <img src="https://img.shields.io/badge/node-%3E%3D24-brightgreen" alt="node">
   <img src="https://img.shields.io/badge/next.js-16.x-000000" alt="next.js">
+  <img src="https://img.shields.io/badge/认证-Google%2FLINE%2FPasskey-green" alt="auth">
   <img src="https://img.shields.io/badge/openapi-3.2.0-6BA539" alt="openapi">
-  <img src="https://img.shields.io/badge/license-AGPL--3.0-blue" alt="license">
   <img src="https://img.shields.io/badge/docker-ready-2496ED" alt="docker">
+  <img src="https://img.shields.io/badge/license-AGPL--3.0-blue" alt="license">
 </p>
 
 ---
 
 ## 目錄
 
+- [專案優勢](#專案優勢)
 - [螢幕截圖](#螢幕截圖)
-- [特色](#特色)
-- [功能總覽](#功能總覽)
-- [技術架構](#技術架構)
-- [快速啟動](#快速啟動)
+- [快速部屬教學](#部屬教學)
 - [環境變數](#環境變數)
 - [反向代理](#反向代理)
 - [認證機制](#認證機制)
+- [功能總覽](#功能總覽)
 - [使用指南](#使用指南)
 - [資料治理](#資料治理)
 - [安全性](#安全性)
@@ -38,123 +39,101 @@
 
 ---
 
+## 專案優勢
+
+> 為什麼要自托管一個資產管理平台，而不是用現成的記帳 App？因為 **你的財務資料，應該由你自己掌控。**
+
+| 優勢 | 說明 |
+| ---- | ---- |
+| 🏠 **自托管，資料自控** | 資料庫以 ChaCha20-Poly1305 加密儲存在**你自己的**伺服器，財務資訊**不上傳任何外部伺服器**，所有權完全屬於你。 |
+| 🐳 **一鍵 Docker 部部署** | 單行指令啟動；`JWT_SECRET` 等敏感金鑰**首次啟動自動產生**並寫入持久化 Volume，重啟自動讀取，不用手動設定密鑰。 |
+| 📊 **台股深度整合** | 串接 TWSE OpenAPI：即時股價、除權息自動同步、FIFO **全精度逐筆損益**（decimal.js）、定期定額自動順延休市日、下市凍結處理。 |
+| 💱 **多幣別支援** | 串接 exchangerate-api.com 即時匯率，ISO 4217 白名單驗證，台股／美股／外幣一體管理。 |
+| 🔐 **無密碼多重認證** | Google SSO / LINE Login / Passkey（WebAuthn）三種方式，**不提供本機密碼**——不需要記密碼，也不用怕密碼被盜。 |
+| 🛡️ **安全可審計** | CSP、SRI、CORS 白名單、記憶體內速率限制、路徑遊走偵測、Formula Injection 防護；匯出匯入、備份還原、登入嘗試全部留下稽核軌跡。 |
+| 🤖 **AI 助理整合** | 支援 **MCP OAuth 2.1**，可將 ChatGPT、Claude 等 AI 工具直接連到你的帳本，讓 AI 幫你記帳；PAT 相容模式與逐憑證寫入權限控制。 |
+| 🧭 **URL-first SPA** | 任何頁面可直連、可書籤、可分享；F5 重整不掉頁；上一頁／下一頁完整還原。 |
+| 📦 **純伺服端 CSV** | 匯出含 UTF-8 BOM + Formula Injection 防護；匯入採 DB transaction 原子化，失敗整批回滾。 |
+| 🌗 **三模式主題** | system / light / dark 跨裝置同步；登入頁無 FOUC 樂觀渲染。 |
+| 📱 **響應式 + Android App** | 桌機側邊欄常駐、行動裝置漢堡選單；另有 Android 原生 App，隨時隨地記帳。 |
+
+---
+
 ## 螢幕截圖
 
-> 以下為行動版 App（Android）實際畫面；網頁版截圖整理中。
+> 以下為 Google Play 商店行銷截圖（App 深色／淺色）與網頁版行銷截圖，皆為真實 AssetPilot 介面搭配標題文案，深色／淺色主題皆為系統內建即時切換，非後製合成。
+
+### App（Android）— 深色主題
 
 <table>
   <tr>
-    <td align="center" width="25%"><img src="docs/screenshots/app/02-dashboard.png" width="200" alt="儀表板"><br><sub><b>儀表板</b><br>月份切換、收支淨額、支出分類圓餅</sub></td>
-    <td align="center" width="25%"><img src="docs/screenshots/app/03-transactions.png" width="200" alt="記帳"><br><sub><b>記帳</b><br>收支列表、篩選、滑動刪除</sub></td>
-    <td align="center" width="25%"><img src="docs/screenshots/app/04-stocks-holdings.png" width="200" alt="持股"><br><sub><b>持股</b><br>即時市值、未實現損益</sub></td>
-    <td align="center" width="25%"><img src="docs/screenshots/app/05-stocks-realized.png" width="200" alt="已實現損益"><br><sub><b>已實現損益</b><br>FIFO 逐筆損益彙總</sub></td>
+    <td align="center" width="25%"><img src="docs/android-dark/zh-TW/01-device-bottom.png" width="200" alt="儀表板"><br><sub><b>儀表板</b><br>資產全貌，一手掌握</sub></td>
+    <td align="center" width="25%"><img src="docs/android-dark/zh-TW/02-device-bottom.png" width="200" alt="記帳"><br><sub><b>記帳</b><br>3 秒記一筆帳</sub></td>
+    <td align="center" width="25%"><img src="docs/android-dark/zh-TW/03-device-bottom.png" width="200" alt="預算"><br><sub><b>預算</b><br>設定預算，避免超支</sub></td>
+    <td align="center" width="25%"><img src="docs/android-dark/zh-TW/04-device-bottom.png" width="200" alt="持股"><br><sub><b>持股</b><br>台股持股，一手掌握</sub></td>
   </tr>
   <tr>
-    <td align="center" width="25%"><img src="docs/screenshots/app/06-budgets.png" width="200" alt="預算"><br><sub><b>預算</b><br>月度與分類預算進度</sub></td>
-    <td align="center" width="25%"><img src="docs/screenshots/app/07-reports.png" width="200" alt="統計報表"><br><sub><b>統計報表</b><br>分類分布與趨勢</sub></td>
-    <td align="center" width="25%"><img src="docs/screenshots/app/08-more.png" width="200" alt="更多"><br><sub><b>更多</b><br>帳號安全、設定、報表通知</sub></td>
-    <td align="center" width="25%"><img src="docs/screenshots/app/01-login.png" width="200" alt="登入"><br><sub><b>登入</b><br>Google / LINE / Passkey</sub></td>
+    <td align="center" width="25%"><img src="docs/android-dark/zh-TW/05-device-bottom.png" width="200" alt="已實現損益"><br><sub><b>已實現損益</b><br>清楚透明</sub></td>
+    <td align="center" width="25%"><img src="docs/android-dark/zh-TW/06-device-bottom.png" width="200" alt="統計報表"><br><sub><b>統計報表</b><br>圖表看懂現金流向</sub></td>
+    <td align="center" width="25%"><img src="docs/android-dark/zh-TW/07-device-bottom.png" width="200" alt="登入"><br><sub><b>登入</b><br>安全連線，資料加密（Google / Passkey）</sub></td>
+    <td align="center" width="25%"><img src="docs/android-dark/zh-TW/08-no-device.png" width="200" alt="總結"><br><sub><b>一站掌握</b><br>記帳、預算、股票、報表</sub></td>
+  </tr>
+</table>
+
+### App（Android）— 淺色主題
+
+<table>
+  <tr>
+    <td align="center" width="25%"><img src="docs/android-light/zh-TW/01-device-bottom.png" width="200" alt="儀表板"><br><sub><b>儀表板</b><br>資產全貌，一手掌握</sub></td>
+    <td align="center" width="25%"><img src="docs/android-light/zh-TW/02-device-bottom.png" width="200" alt="記帳"><br><sub><b>記帳</b><br>3 秒記一筆帳</sub></td>
+    <td align="center" width="25%"><img src="docs/android-light/zh-TW/03-device-bottom.png" width="200" alt="預算"><br><sub><b>預算</b><br>設定預算，避免超支</sub></td>
+    <td align="center" width="25%"><img src="docs/android-light/zh-TW/04-device-bottom.png" width="200" alt="持股"><br><sub><b>持股</b><br>台股持股，一手掌握</sub></td>
+  </tr>
+  <tr>
+    <td align="center" width="25%"><img src="docs/android-light/zh-TW/05-device-bottom.png" width="200" alt="已實現損益"><br><sub><b>已實現損益</b><br>清楚透明</sub></td>
+    <td align="center" width="25%"><img src="docs/android-light/zh-TW/06-device-bottom.png" width="200" alt="統計報表"><br><sub><b>統計報表</b><br>圖表看懂現金流向</sub></td>
+    <td align="center" width="25%"><img src="docs/android-light/zh-TW/07-device-bottom.png" width="200" alt="登入"><br><sub><b>登入</b><br>安全連線，資料加密（Google / Passkey）</sub></td>
+    <td align="center" width="25%"><img src="docs/android-light/zh-TW/08-no-device.png" width="200" alt="總結"><br><sub><b>一站掌握</b><br>記帳、預算、股票、報表</sub></td>
+  </tr>
+</table>
+
+### Web 行銷截圖
+
+<table>
+  <tr>
+    <td align="center" width="25%"><img src="docs/web-marketing/zh-TW/01-device-bottom.png" width="280" alt="儀表板"><br><sub><b>儀表板</b><br>資產全貌，一手掌握</sub></td>
+    <td align="center" width="25%"><img src="docs/web-marketing/zh-TW/02-device-bottom.png" width="280" alt="記帳"><br><sub><b>記帳</b><br>3 秒記一筆帳</sub></td>
+    <td align="center" width="25%"><img src="docs/web-marketing/zh-TW/03-device-bottom.png" width="280" alt="預算"><br><sub><b>預算</b><br>設定預算，避免超支</sub></td>
+    <td align="center" width="25%"><img src="docs/web-marketing/zh-TW/04-device-bottom.png" width="280" alt="持股"><br><sub><b>持股</b><br>台股持股，一手掌握</sub></td>
+  </tr>
+  <tr>
+    <td align="center" width="25%"><img src="docs/web-marketing/zh-TW/05-device-bottom.png" width="280" alt="已實現損益"><br><sub><b>已實現損益</b><br>清楚透明</sub></td>
+    <td align="center" width="25%"><img src="docs/web-marketing/zh-TW/06-device-bottom.png" width="280" alt="統計報表"><br><sub><b>統計報表</b><br>圖表看懂現金流向</sub></td>
+    <td align="center" width="25%"><img src="docs/web-marketing/zh-TW/07-device-bottom.png" width="280" alt="登入"><br><sub><b>登入</b><br>安全連線，資料加密（Google / Passkey）</sub></td>
+    <td align="center" width="25%"></td>
   </tr>
 </table>
 
 ---
 
-## 特色
+## 部部署教學
 
-| 特色 | 說明 |
+> 以下是完整部部署步驟，依你的環境選擇一種方式。**所有方式皆可在一小時內完成上線。**
+
+### 需求
+
+| 需求 | 說明 |
 | ---- | ---- |
-| 🏠 自托管，資料自控 | 資料庫 ChaCha20-Poly1305 加密儲存於本地，財務資訊不上傳任何外部伺服器 |
-| 🐳 Docker 一鍵部署 | 單行指令啟動；JWT 與資料庫加密金鑰首次啟動自動產生並寫入持久化 volume |
-| 📊 台股深度整合 | 串接 TWSE OpenAPI：即時股價、除權息自動同步、FIFO 全精度逐筆損益 |
-| 💱 多幣別支援 | 串接 exchangerate-api.com 即時匯率，ISO 4217 白名單驗證 |
-| 🔐 多重認證 | Google SSO / LINE Login（Authorization Code Flow）/ Passkey（WebAuthn），不提供本機密碼 |
-| 🛡️ 稽核可審計 | 資料匯出匯入、備份還原、登入嘗試、路由攔截皆可追溯；保留天數可調 |
-| 🧭 URL-first SPA | 任何頁面可直連、書籤、分享；F5 重整不掉頁；上一頁 / 下一頁完整還原 |
-| 🌗 三模式主題 | system / light / dark；跨裝置同步；登入頁無 FOUC 樂觀渲染 |
-| 📦 純伺服端 CSV | 匯出含 UTF-8 BOM + Formula Injection 防護；匯入採 DB transaction 原子化 |
-| 📜 OpenAPI 3.2.0 | 完整契約檔案，可掛載至 Cloudflare API Shield 啟用 schema 驗證 |
-| 📱 響應式設計 | 桌機側邊欄常駐、行動裝置漢堡選單；< 768px 自動切換 |
+| Docker | Docker 20.10+（或 Podman） |
+| 記憶體 | ≥ 512 MB（建議 1 GB） |
+| 磁碟 | 資料量小，一般家庭 NAS／VPS 皆足夠 |
+| 資料庫 | PostgreSQL（Compose 內建，亦支援外部） |
 
 ---
 
-## 功能總覽
+### 方式 A：單行 Docker 快速啟動（最簡單）
 
-### 收支與預算
-
-- **儀表板**：月份切換、總資產 / 收入 / 支出 / 淨額卡片、雙圓餅（含「（其他）」群組）、最近交易
-- **交易管理**：CRUD、跨帳戶轉帳（雙向配對）、批次刪除 / 變更分類 / 變更日期、未來交易標記
-- **預算管理**：月度總預算 + 分類預算；進度條四段配色（綠 / 中性 / 黃接近上限 / 紅超支）；歷史與未來月份切換
-- **帳戶管理**：多幣別、銀行 / 信用卡 / 證券 / 現金，可排除特定帳戶於總資產統計
-- **分類管理**：父子兩層、自訂顏色、CSV 匯出匯入（先父後子）
-- **固定收支**：週期性收支自動產生交易，支援外幣；登入時 server-side 觸發（30 筆軟上限 + setImmediate 背景續跑）；並發冪等保護
-
-### 股票投資
-
-- **持股總覽**：即時市值、未實現損益、整體報酬率、三段策略抓股價（盤中即時 / 盤後收盤 / 備援）
-- **股價自動更新**：伺服器於台股交易時段（台北時間週一~五 09:00–14:00）內每隔 N 分鐘自動抓 TWSE/TPEx 最新價寫回現價；跨使用者去重，同一代號只查一次；管理員可在「管理員設定 → 系統設定」開關、調整間隔與手動立即更新
-- **股票交易**：手續費（0.1425%，整股最低 20 元）/ 證交稅（一般股 0.3%、ETF / 權證 0.1%）自動計算可手動覆寫
-- **股利紀錄**：TWSE `TWT49U` / `TWT49UDetail` 除權息自動同步；現金股利對應入款交易帳戶反查
-- **實現損益**：FIFO 全精度（decimal.js）逐筆計算，今年 / 總損益彙總；賣出鏈式約束驗證
-- **定期定額**：遇 TWSE 休市日自動順延；歷史收盤價回填；`(plan_id, period_start_date)` 唯一鍵保 idempotency
-- **下市標記**：凍結最後價格，後續查價自動跳過
-
-### 統計與排程
-
-- **統計報表**：分類圓餅（單 / 雙）+ 月度趨勢 + 每日消費 + 自訂時間範圍；同型前一段對比 pill；圓餅扇區可點擊跳轉
-- **排程寄送**：多筆排程並存（每日 / 每週 / 每月，每月可指定 1–28 日或「最後一天」自動對齊各月天數）；觸發時刻精確到「時:分」（如 23:59）並以使用者時區判斷；寄信通道支援 SMTP / Zeabur Email / Resend，主要通道執行期失敗自動退回備用通道；停用期間漏掉的觸發點不溯及補寄
-
-### 資料治理（v4.28.0）
-
-- **CSV 匯出**：交易 / 分類 / 股票交易 / 股利紀錄；純伺服端 stream + UTF-8 BOM + Formula Injection 防護
-- **CSV 匯入**：互斥鎖（重入回 409）+ 全 DB transaction 原子化 + 進度回饋每 500 筆 + ISO 8601 嚴格驗證 + 多欄重複偵測
-- **整檔備份 / 還原**：PostgreSQL SQL 備份下載 / 上傳；還原失敗自動回滾至 `before-restore-{ts}.sql`；管理員可列管 5 份 / 90 天內備份
-- **稽核日誌**：管理員與使用者可分別檢視；支援過濾、CSV 匯出、清空、保留天數設定（30 / 90 / 180 / 365 / forever）
-
-### 系統管理
-
-- **使用者管理**：管理員可開關外部服務註冊、設定 Email 白名單、IP 白名單、新增 / 刪除使用者
-- **登入稽核**：時間、IP、國家、方式（Google / LINE / Passkey）、成功 / 失敗
-- **寄信通道**：以 `EMAIL_PROVIDER_PRIMARY` / `EMAIL_PROVIDER_FALLBACK` 環境變數指定主要與備用通道（值：`smtp` / `zeabur` / `resend` / 留空），支援 SMTP（Nodemailer）、Zeabur Email（ZSend HTTP API）、Resend；可選 `EMAIL_SENDER_NAME` 為三通道統一指定寄件人顯示名稱；管理員設定頁可即時檢視各通道是否設定並寄送測試信
-- **MEGA S4 備份**：管理員可在「資料匯出匯入」頁將完整 PostgreSQL SQL 備份手動上傳到 MEGA S4 S3 相容 bucket，金鑰僅由伺服器端環境變數讀取
-- **交易照片附件**：新增交易時可附上照片，並選擇存放於 Server 本機或 S3 相容物件儲存；附件取用一律走登入授權 API
-- **路由稽核模式**（v4.29.0）：security（預設）/ extended（含 401 session 失效）/ minimal（路由稽核全部關閉）
-- **API 使用與授權頁**：動態列出所有外部 API 來源、配額、合規授權字樣（IPinfo `IP address data is powered by IPinfo`）
-
-### AI 助理整合（v4.97.0 起）
-
-- **MCP OAuth 連線**：在 ChatGPT、Claude 等支援 MCP OAuth 的 AI 工具中輸入 `https://<你的網域>/api/mcp`，即可透過瀏覽器登入 AssetPilot、確認權限並完成連線；支援 Protected Resource Metadata、Authorization Server Metadata、Client ID Metadata Documents、public-client Dynamic Client Registration、Authorization Code + PKCE S256 與 rotating refresh token
-- **PAT 相容模式**：不支援 OAuth 的 client 仍可在「設定 → MCP 連線」建立個人化連線金鑰；可自訂名稱、選填到期時間，並隨時檢視或撤銷
-- **AI 記帳寫入**（v4.99.0）：開啟「允許新增資料」權限的憑證／連線，可讓 AI 透過 `create_transaction` 工具新增一般交易（收入、支出、轉帳），視同使用者本人手動建立；僅能新增，無法修改或刪除既有資料；提供選填冪等鍵，24 小時內以相同鍵重複呼叫不會重複建立
-- **更新交易備註**（v4.100.0）：開啟「允許更新備註」權限的憑證／連線，可讓 AI 透過 `update_transaction_note` 工具更新一筆既有交易的備註文字（空字串代表清空，上限 200 字）；僅能修改備註，無法變更日期、類型、分類、金額、帳戶，也無法刪除任何資料
-- **逐憑證權限**：寫入能力（新增資料／更新備註）預設關閉，兩者彼此獨立；於「設定 → MCP 連線」（PAT）或「已連接 AI 工具」清單（OAuth）逐憑證開啟或關閉，變更立即生效；OAuth 授權全數失效後重新授權，寫入權限重置為關閉
-- **AI 標記與還原**（v4.101.0）：交易列表（網頁版與行動 App）為曾由 AI 建立、或目前備註由 AI 最近一次寫入的交易顯示獨立徽章；使用者可對「AI 建立」的交易一鍵還原（等同刪除，轉帳與連動的手續費交易一併移除），或對「備註經 AI 修改」的交易還原備註（可先預覽修改前原文再確認）；還原視同使用者本人操作，不受憑證目前的寫入權限或有效性影響
-- **稽核**：每次 AI 助理查詢與寫入皆記錄於既有操作稽核日誌，含時間與憑證名稱；查詢不含實際查得的金額或明細，寫入稽核不含備註全文
-
-正式環境啟用 MCP OAuth 前，必須將 `APP_URL` 設為對外 HTTPS origin（例如 `https://asset.example.com`）。OAuth access token 只對該 origin 的 `/api/mcp` 有效；本機開發才允許 loopback HTTP。
-
----
-
-## 技術架構
-
-| 層級 | 技術 |
-| ---- | ---- |
-| 前端 | 原生 HTML / CSS / Vanilla JS (已遷移至 Next.js 15 + Tailwind CSS v4) |
-| 後端 | Node.js ≥ 24 + Next.js 16 API Routes |
-| 資料庫 | PostgreSQL |
-| 認證 | JWT（HS256，httpOnly Cookie）+ Google OAuth Code Flow／LINE Login Code Flow／Passkey（WebAuthn）；不提供本機電子郵件密碼登入或註冊 |
-| 金額精度 | decimal.js（FIFO / 匯率 / 手續費分攤前後端同構共用 `lib/moneyDecimal.js`） |
-| 圖表 | Chart.js |
-| 寄信 | SMTP（Nodemailer）/ Zeabur Email（ZSend HTTP API）/ Resend；以環境變數指定主備通道，執行期 fallback |
-| 安全 | CSP、SRI、CORS 白名單、記憶體內速率限制（`lib/rateLimiter.ts`） |
-| 契約 | OpenAPI 3.2.0（`openapi.yaml`） |
-
-**完全不引入**：前端框架（React / Vue）、router 套件（page.js / Navigo）、Modal 函式庫（micromodal）、focus-trap、icon 字型（Lucide / Heroicons）、build 工具（Vite / esbuild）。(v4.33.0 遷移至 Next.js + Tailwind v4)
-
----
-
-## 快速啟動
-
-### Docker（推薦）
+不需要 PostgreSQL 環境變數也可跑（會以內建 SQLite 相容層啟動；正式建議用 PostgreSQL，見方式 B）。
 
 ```bash
 docker run -d \
@@ -165,19 +144,31 @@ docker run -d \
   es94111/assetpilot:latest
 ```
 
-開啟 <http://localhost:3000> 即可使用。`JWT_SECRET` 首次啟動自動產生並寫入 `/app/data/.env`，之後重啟自動讀取。
+開啟 **<http://localhost:3000>** 即可使用。`JWT_SECRET` 首次啟動自動產生並寫入 `/app/data/.env`，之後重啟自動讀取。
 
-**Docker Compose 範例：**
+**部部署完成的驗收檢查：**
+
+```bash
+docker ps | grep assetpilot          # 狀態為 healthy
+docker exec assetpilot wget -qO- http://localhost:3000/api/config | head   # 回傳 200
+```
+
+---
+
+### 方式 B：Docker Compose（含 PostgreSQL，建議正式環境）
+
+建立 `docker-compose.yml`：
 
 ```yaml
 services:
   postgres:
     image: postgres:17-alpine
+    container_name: assetpilot-postgres
     restart: unless-stopped
     environment:
       - POSTGRES_DB=assetpilot
       - POSTGRES_USER=assetpilot
-      - POSTGRES_PASSWORD=assetpilot
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-assetpilot}
     volumes:
       - assetpilot-postgres:/var/lib/postgresql/data
 
@@ -192,24 +183,50 @@ services:
     volumes:
       - assetpilot-data:/app/data
     environment:
-      - DATABASE_URL=postgres://assetpilot:assetpilot@postgres:5432/assetpilot
-      - GOOGLE_CLIENT_ID=         # 選配
-      - LINE_CHANNEL_ID=          # 選配
-      # - ALLOWED_ORIGINS=https://your-domain.com
+      - PORT=3000
+      - HOSTNAME=0.0.0.0
+      - DATABASE_URL=${DATABASE_URL:-postgres://assetpilot:assetpilot@postgres:5432/assetpilot}
+      - ENV_PATH=/app/data/.env
+      - GOOGLE_CLIENT_ID=          # 選配，設定後啟用 Google 登入
+      # - LINE_CHANNEL_ID=         # 選配，LINE 登入
 
 volumes:
   assetpilot-data:
+    driver: local
   assetpilot-postgres:
+    driver: local
 ```
 
-**映像檔：** [`es94111/assetpilot`](https://hub.docker.com/r/es94111/assetpilot)，支援 `linux/amd64` + `linux/arm64`，基底 `node:24-alpine`，~180 MB，內建每 30 秒 `/api/config` 健康檢查。
-
-### Node.js 直接執行
+啟動並驗證：
 
 ```bash
-npm install              # Node.js ≥ 24
-cp .env.example .env     # 依需求編輯
-npm run dev
+docker compose up -d
+docker compose logs -f assetpilot   # 看到 "Ready" 即完成
+```
+
+> 帳號採用「外部服務登入」模式：**第一位完成 Google／LINE 登入的使用者自動成為管理員**，不需要後台手動建帳號。
+
+---
+
+### 方式 C：Synology NAS（專用教學）
+
+1. 開啟 **Container Manager → Registry**，搜尋 `es94111/assetpilot` → **下載**。
+2. 到 **Container → 新增**，選擇剛下載的映像，名稱設 `assetpilot`。
+3. **連接埠設定**：本機 `3000` 對應容器 `3000`。
+4. **儲存空間設定**：新增 Volume，掛載 `/app/data`（並可另掛 PostgreSQL 資料）。
+5. **環境變數**：加入 `PORT=3000`、`HOSTNAME=0.0.0.0`，以及選配的 `GOOGLE_CLIENT_ID` 等。
+6. 點擊 **啟動**。
+
+自訂網域請用 **DSM → 控制台 → 登入入口 → 反向代理**，並在自訂標題加入 `X-Forwarded-For: $proxy_add_x_forwarded_for`。
+
+---
+
+### 方式 D：Node.js 直接執行（開發／本機）
+
+```bash
+npm install                 # 需 Node.js ≥ 24
+cp .env.example .env        # 依需求編輯（至少設定 DATABASE_URL）
+npm run dev                 # 開發模式
 ```
 
 **正式環境（build / start）：**
@@ -219,88 +236,14 @@ npm run build
 npm run start
 ```
 
-### PostgreSQL
-
-AssetPilot 現在僅支援 PostgreSQL。請設定 `DATABASE_URL` 或 `POSTGRES_URL`，啟動時會自動建立或補齊必要資料表與欄位。
-
-### Synology NAS
-
-Container Manager → Registry → 搜尋 `es94111/assetpilot` → 下載 → Create → Port `3000:3000` → 啟動。
-自訂網域請用 DSM **控制台 → 登入入口 → 反向代理**，並在自訂標題加入 `X-Forwarded-For: $proxy_add_x_forwarded_for`。
-
-### Volume 備份 / 還原
-
-```bash
-# 備份（含應用設定與 SSL 憑證；PostgreSQL 資料請備份 assetpilot-postgres volume 或使用管理頁 SQL 備份）
-docker run --rm -v assetpilot-data:/data -v $(pwd):/backup alpine \
-  tar czf /backup/assetpilot-backup.tar.gz -C /data .
-
-# 還原
-docker run --rm -v assetpilot-data:/data -v $(pwd):/backup alpine \
-  tar xzf /backup/assetpilot-backup.tar.gz -C /data
-```
-
-> ⚠️ PostgreSQL 資料位於資料庫 volume；`assetpilot-data` 只保存應用設定與 SSL 憑證等檔案。
-
 ---
 
-## 環境變數
+### 6. 反向代理（上 HTTPS，正式必備）
 
-Docker 多數參數已有合理預設，重點關注「自動產生」與「功能選配」區塊。Node.js 直接執行請複製 `.env.example`。
+AssetPilot 本身不需掛在 HTTPS 後即可運作，但要對外上線（尤其用 Google / LINE 登入）強烈建議用反向代理。三種常見選項任選一：
 
-| 變數 | 類別 | 說明 | 預設值 |
-| ---- | ---- | ---- | ------ |
-| `PORT` | 基本 | 伺服器埠號 | `3000` |
-| `DATABASE_URL` / `POSTGRES_URL` | 基本 | PostgreSQL 連線字串 | — |
-| `POSTGRES_SYNC_RESULT_BUFFER_BYTES` | 選配 | PostgreSQL 同步相容層單次查詢結果緩衝大小 | `67108864` |
-| `JWT_EXPIRES` | 基本 | 瀏覽器登入 JWT 有效期限 | `7d` |
-| `APP_JWT_EXPIRES` | 基本 | 行動 App 登入 JWT 有效期限（Token 存於裝置端加密儲存） | `90d` |
-| `JWT_SECRET` | 🔑 自動 | JWT 簽章金鑰，64 字元 hex（首次啟動自動產生） | — |
-| `ENV_PATH` | 🔑 自動 | 自動產生金鑰的存放路徑 | `/app/data/.env` |
-| `GOOGLE_CLIENT_ID` | SSO | Google OAuth 2.0 Client ID（留空停用 SSO） | — |
-| `GOOGLE_CLIENT_SECRET` | SSO | Google OAuth Client Secret | — |
-| `GOOGLE_OAUTH_REDIRECT_URIS` | SSO | OAuth 重定向 URI 白名單，逗號分隔 | 自動推導 |
-| `LINE_CHANNEL_ID` | SSO | LINE Login Channel ID（留空停用 LINE 登入） | — |
-| `LINE_CHANNEL_SECRET` | SSO | LINE Login Channel Secret | — |
-| `LINE_OAUTH_REDIRECT_URIS` | SSO | LINE Login callback URL 白名單，逗號分隔；會附加內建 Web/App callback | 自動推導 |
-| `LINE_MESSAGING_CHANNEL_SECRET` | LINE Bot | LINE 官方帳號 Messaging API Channel Secret；留空時 fallback 使用 `LINE_CHANNEL_SECRET` | — |
-| `LINE_MESSAGING_CHANNEL_ACCESS_TOKEN` | LINE Bot | LINE 官方帳號 Messaging API Channel access token；設定後啟用 `/api/line/webhook` | — |
-| `ALLOWED_ORIGINS` | 安全 | CORS 白名單，逗號分隔（正式環境建議設定） | — |
-| `ADMIN_IP_ALLOWLIST` | 安全 | 管理員 IP 白名單，逗號分隔，略過速率限制 | — |
-| `EXCHANGE_RATE_API_KEY` | 選配 | exchangerate-api.com Key | `free` |
-| `IPINFO_TOKEN` | 選配 | ipinfo.io Token，提升 IP 查詢配額 | — |
-| `TWSE_MAX_CONCURRENCY` | 選配 | TWSE 並發查詢上限 | `5` |
-| `STOCK_AUTO_UPDATE_ENABLED` | 選配 | 覆寫「股價自動更新」總開關（`false` / `0` 停用；留空則沿用管理員設定，預設啟用） | — |
-| `STOCK_AUTO_UPDATE_INTERVAL_MIN` | 選配 | 覆寫股價自動更新間隔（分鐘，1–1440）；留空則沿用管理員設定 | `10` |
-| `MEGA_S4_ACCESS_KEY_ID` | 選配 | MEGA S4 Access Key ID；設定後可從資料匯出匯入頁手動上傳資料庫備份 | — |
-| `MEGA_S4_SECRET_ACCESS_KEY` | 選配 | MEGA S4 Secret Access Key；僅伺服器端讀取，不回傳前端 | — |
-| `MEGA_S4_BUCKET` | 選配 | MEGA S4 備份目標 bucket | — |
-| `MEGA_S4_REGION` | 選配 | MEGA S4 region：`eu-central-1` / `eu-central-2` / `ca-central-1` / `ca-west-1` | `eu-central-1` |
-| `MEGA_S4_PREFIX` | 選配 | MEGA S4 object key 前綴 | `assetpilot` |
-| `MEGA_S4_ENDPOINT` | 選配 | 自訂 MEGA S4 S3 endpoint；留空依 region 推導 `https://s3.<region>.s4.mega.io` | — |
-| `TRANSACTION_PHOTO_LOCAL_DIR` | 選配 | 交易照片本機儲存目錄 | `<cwd>/uploads/transaction-photos` |
-| `TRANSACTION_PHOTO_MAX_BYTES` | 選配 | 單張交易照片大小上限 | `10485760` |
-| `TRANSACTION_PHOTO_DEFAULT_STORAGE` | 選配 | LINE 新增交易照片與其他非互動上傳流程的預設儲存位置：`local` / `s3` | `local` |
-| `TRANSACTION_PHOTO_S3_ACCESS_KEY_ID` / `TRANSACTION_PHOTO_S3_SECRET_ACCESS_KEY` | 選配 | 交易照片 S3 相容物件儲存金鑰；未設定時可 fallback 使用 `MEGA_S4_*` | — |
-| `TRANSACTION_PHOTO_S3_BUCKET` / `TRANSACTION_PHOTO_S3_REGION` / `TRANSACTION_PHOTO_S3_ENDPOINT` / `TRANSACTION_PHOTO_S3_PREFIX` | 選配 | 交易照片 S3 相容物件儲存 bucket、region、endpoint 與 key 前綴 | `assetpilot/transaction-photos` |
-| `SSL_CERT` / `SSL_KEY` | 選配 | Cloudflare Origin Certificate 路徑（管理員 UI 可上傳，需重啟套用） | — |
-| `EMAIL_PROVIDER_PRIMARY` | 寄信 | 主要寄信通道：`smtp` / `zeabur` / `resend` / 留空（停用） | — |
-| `EMAIL_PROVIDER_FALLBACK` | 寄信 | 備用寄信通道（同上選項；留空或與 primary 同則不啟用 fallback） | — |
-| `EMAIL_SENDER_NAME` | 寄信 | 寄信人顯示名稱（三通道共用，例：`AssetPilot`）；若 FROM 變數已是 `Name <email>` 格式則尊重該通道既有設定 | — |
-| `SMTP_HOST` / `SMTP_PORT` / `SMTP_SECURE` / `SMTP_USER` / `SMTP_PASSWORD` / `SMTP_FROM` | 寄信 | SMTP 通道設定（Gmail / Outlook 等；465 走 TLS 設 `SMTP_SECURE=true`，587 走 STARTTLS 設 false） | `SMTP_PORT=587`、`SMTP_SECURE=false` |
-| `ZEABUR_API_KEY` | 寄信 | [Zeabur Email / ZSend](https://zeabur.com/docs/en-US/email/quick-start) API Key | — |
-| `ZEABUR_FROM_EMAIL` | 寄信 | Zeabur Email 寄件人，須為已驗證寄件網域 | — |
-| `RESEND_API_KEY` | 寄信 | [Resend](https://resend.com/api-keys) API Key | — |
-| `RESEND_FROM_EMAIL` | 寄信 | Resend 寄件人，須為已驗證網域信箱 | — |
-| `APP_URL` | MCP OAuth / 寄信 | 正式環境的對外 HTTPS origin；MCP OAuth 用來固定 issuer、redirect 與 `/api/mcp` resource audience，寄信 CTA 也會使用 | — |
-
-> 💡 **寄信通道**（v4.30.0 起）一律由環境變數設定。`EMAIL_PROVIDER_PRIMARY` 留空則寄信功能停用；`EMAIL_PROVIDER_FALLBACK` 僅在 primary 執行期失敗時觸發（不重試、不補寄）。對應通道的設定變數需配合補齊（例：選 `smtp` 需設 `SMTP_HOST` 等；選 `zeabur` 需設 `ZEABUR_API_KEY` 與 `ZEABUR_FROM_EMAIL`）。
-
----
-
-## 反向代理
-
-### Nginx
+<details>
+<summary><b>Nginx</b></summary>
 
 ```nginx
 server {
@@ -321,7 +264,10 @@ server {
 }
 ```
 
-### Caddy
+</details>
+
+<details>
+<summary><b>Caddy（自動 HTTPS）</b></summary>
 
 ```
 your-domain.com {
@@ -329,73 +275,147 @@ your-domain.com {
 }
 ```
 
-Caddy 自動申請並續期 HTTPS 憑證。
+Caddy 自動申請並續期 HTTPS 憑證，最省事。
+</details>
 
-### Cloudflare Tunnel
+<details>
+<summary><b>Cloudflare Tunnel（可配 API Shield）</b></summary>
 
-可直接掛 Cloudflare Tunnel 後啟用 API Shield → 上傳 `openapi.yaml` 啟用 schema 驗證。
+直接掛 Cloudflare Tunnel 後，可啟用 API Shield → 上傳 `openapi.yaml` 啟用 schema 驗證。
+</details>
+
+---
+
+### 7. 資料備份 / 還原
+
+```bash
+# 備份應用設定與 SSL 憑證（PostgreSQL 資料請備份 assetpilot-postgres volume）
+docker run --rm -v assetpilot-data:/data -v $(pwd):/backup alpine \
+  tar czf /backup/assetpilot-backup.tar.gz -C /data .
+
+# 還原
+docker run --rm -v assetpilot-data:/data -v $(pwd):/backup alpine \
+  tar xzf /backup/assetpilot-backup.tar.gz -C /data
+```
+
+> ⚠️ **PostgreSQL 資料位於資料庫 volume**；`assetpilot-data` 只保存應用設定與 SSL 憑證。強烈建議在管理員頁使用**整檔 SQL 備份／還原**功能（支援下載、還原失敗自動回滾、MEGA S4 雲端備份）。
+
+**映像檔資訊**：[`es94111/assetpilot`](https://hub.docker.com/r/es94111/assetpilot) — 支援 `linux/amd64` + `linux/arm64`，基底 `node:24-alpine`，約 180 MB，內建每 30 秒 `/api/config` 健康檢查，以非 root 使用者執行。
+
+---
+
+## 環境變數
+
+Docker 多數參數已有合理預設，只需關心「自動產生」與「功能選配」兩區塊。Node.js 直接執行請複製 `.env.example`。
+
+| 變數 | 類別 | 說明 | 預設值 |
+| ---- | ---- | ---- | ------ |
+| `PORT` | 基本 | 伺服器埠號 | `3000` |
+| `DATABASE_URL` / `POSTGRES_URL` | 基本 | PostgreSQL 連線字串 | — |
+| `JWT_EXPIRES` | 基本 | 瀏覽器登入 JWT 有效期限 | `7d` |
+| `APP_JWT_EXPIRES` | 基本 | App 登入 JWT 有效期限（Token 存於裝置端加密儲存） | `90d` |
+| `JWT_SECRET` | 🔑 自動 | JWT 簽章金鑰，64 字元 hex（首次啟動自動產生） | — |
+| `ENV_PATH` | 🔑 自動 | 自動產生金鑰的存放路徑 | `/app/data/.env` |
+| `GOOGLE_CLIENT_ID` | SSO | Google OAuth Client ID（留空停用 Google 登入） | — |
+| `GOOGLE_CLIENT_SECRET` | SSO | Google OAuth Client Secret | — |
+| `LINE_CHANNEL_ID` | SSO | LINE Login Channel ID（留空停用） | — |
+| `LINE_CHANNEL_SECRET` | SSO | LINE Login Channel Secret | — |
+| `ALLOWED_ORIGINS` | 安全 | CORS 白名單，逗號分隔（正式環境建議設定） | — |
+| `ADMIN_IP_ALLOWLIST` | 安全 | 管理員 IP 白名單，逗號分隔 | — |
+| `EXCHANGE_RATE_API_KEY` | 選配 | exchangerate-api.com Key | `free` |
+| `IPINFO_TOKEN` | 選配 | ipinfo.io Token，提升 IP 查詢配額 | — |
+| `STOCK_AUTO_UPDATE_ENABLED` | 選配 | 股價自動更新總開關 | — |
+| `STOCK_AUTO_UPDATE_INTERVAL_MIN` | 選配 | 股價自動更新間隔（分鐘） | `10` |
+| `MEGA_S4_*` | 選配 | MEGA S4 雲端備份的 S3 相容 bucket 設定 | — |
+| `TRANSACTION_PHOTO_*` | 選配 | 交易照片本機或 S3 儲存設定 | — |
+| `EMAIL_PROVIDER_PRIMARY` / `EMAIL_PROVIDER_FALLBACK` | 寄信 | 主要／備用寄信通道：`smtp` / `zeabur` / `resend` | — |
+| `SMTP_*` / `ZEABUR_*` / `RESEND_*` | 寄信 | 各寄信通道的連線設定 | — |
+| `APP_URL` | MCP OAuth / 寄信 | 正式環境的對外 HTTPS origin | — |
+
+> 💡 **寄信通道**（v4.30.0 起）一律由環境變數設定。`EMAIL_PROVIDER_PRIMARY` 留空則寄信停用；`EMAIL_PROVIDER_FALLBACK` 僅在 primary 執行期失敗時觸發。對應通道的設定變數需配合補齊。
 
 ---
 
 ## 認證機制
 
-支援三種登入方式，皆可同時啟用：
+支援三種登入方式，皆可同時啟用。**AssetPilot 不提供本機 Email／密碼登入**——使用者只能透過 Google、LINE、Passkey 等外部或無密碼方式建立帳號；第一位完成外部登入的使用者自動成為管理員。
 
-### 外部服務登入與註冊
-
-AssetPilot 不提供本機 Email／密碼登入、註冊、修改或重設密碼。使用者只能透過 Google、LINE 等已設定的外部服務建立帳號與登入；第一位完成外部登入的使用者自動成為管理員。管理員仍可開關外部服務註冊與設定 Email 白名單。
-
-### Google SSO（Authorization Code Flow）
-
-Google SSO 是建議的帳號建立與登入方式；未設定時可改用 LINE 或 Passkey。
+### Google SSO（建議）
 
 1. 至 [Google Cloud Console](https://console.cloud.google.com/) 建立 OAuth 2.0 用戶端 ID（類型：網頁應用程式）
 2. **已授權 JavaScript 來源**：本機 `http://localhost:3000`、正式 `https://your-domain.com`
 3. **已授權重新導向 URI**：本機 `http://localhost:3000/`、正式 `https://your-domain.com/`（含尾端 `/`）；Android App 另需加入 `https://your-domain.com/app/google-callback`
-4. 將 `GOOGLE_CLIENT_ID` 與 `GOOGLE_CLIENT_SECRET` 設為環境變數啟動
+4. 設定 `GOOGLE_CLIENT_ID` 與 `GOOGLE_CLIENT_SECRET` 後啟動
 5. 未設定時 Google 登入按鈕自動隱藏，不影響其他登入方式
 
 > ⚠️ 若登入後停在 `/?code=...`，請確認重新導向 URI 與網域完全一致（含 `https://` 與尾端 `/`）。
 
-### LINE Login（Authorization Code Flow）
+### LINE Login
 
-1. 至 [LINE Developers Console](https://developers.line.biz/console/) 建立 Provider 與 LINE Login channel
-2. 在 LINE Login channel 啟用 LINE Login，並申請 / 啟用 email 權限
-3. **Callback URL**：本機 `http://localhost:3000/auth/line/callback`、`http://localhost:3000/app/line-callback`；正式 `https://your-domain.com/auth/line/callback`、`https://your-domain.com/app/line-callback`
-4. 將 `LINE_CHANNEL_ID`、`LINE_CHANNEL_SECRET` 與 `LINE_OAUTH_REDIRECT_URIS` 設為環境變數啟動
-5. 登入管理員帳號後，到「管理員設定 → 系統設定」勾選「啟用 LINE 登入」並儲存
-6. 未設定或未由管理員啟用時，LINE 登入與綁定按鈕自動隱藏
-
-`LINE_OAUTH_REDIRECT_URIS` 範例：
-
-```env
-LINE_OAUTH_REDIRECT_URIS=https://your-domain.com/auth/line/callback
-```
-
-本機開發：
-
-```env
-LINE_OAUTH_REDIRECT_URIS=http://localhost:3000/auth/line/callback
-```
-
-LINE 登入與綁定皆使用 LINE 官方 Login API v2.1：`/oauth2/v2.1/authorize`、`/token`、`/verify`，並以一次性 state + nonce 防護登入流程。
-
-### LINE 官方帳號記帳
-
-1. 在同一個 LINE Developers Provider 建立或選擇 Messaging API channel，取得 Channel secret 與 long-lived Channel access token
-2. 設定 `LINE_MESSAGING_CHANNEL_SECRET`、`LINE_MESSAGING_CHANNEL_ACCESS_TOKEN`，並設定 `APP_URL=https://your-domain.com`
-3. 在 Messaging API channel 的 Webhook URL 填入 `https://your-domain.com/api/line/webhook`，啟用 Use webhook
-4. 使用者先在 AssetPilot「帳號設定」綁定 LINE 帳號，之後可在官方帳號輸入 `選單`，用 Flex Message Button 選擇「新增記錄」「快速支出」或「查看紀錄」
-
-Webhook 回覆使用 LINE Flex Message Button：未綁定時顯示「綁定 LINE 帳號」URI button；綁定後顯示主選單。「新增記錄」會依序引導填寫日期、類型、金額、分類、帳戶、幣別與備註，確認摘要後才寫入；日期可選今天／昨天或輸入日期。仍支援直接輸入 `支出 120 午餐`、`收入 5000 薪資`、`查詢 本月`。
-
-資產統計報表排程支援 Email / LINE 兩種通知方式；管理員可在「管理員設定 → 報表排程」新增排程時勾選 LINE 通知。LINE 排程通知會推送同 email 報表相近的資產摘要 Flex Message，使用者需先完成 LINE 綁定。
-
-同頁也可新增「LINE 支出提醒」，用每日 / 每週 / 每月排程（每月同樣可選指定日期或「最後一天」、觸發時刻精確到分）提醒使用者記錄支出。提醒訊息會提供「新增支出」按鈕，點擊後依 `金額 備註 日期（日期可省略）` 的規則輸入即可記帳。
+1. 至 [LINE Developers Console](https://developers.line.biz/console/) 建立 Provider 與 LINE Login channel，啟用 email 權限
+2. **Callback URL**：本機 `http://localhost:3000/auth/line/callback`、`http://localhost:3000/app/line-callback`；正式 `https://your-domain.com/auth/line/callback`、`https://your-domain.com/app/line-callback`
+3. 設定 `LINE_CHANNEL_ID`、`LINE_CHANNEL_SECRET`、`LINE_OAUTH_REDIRECT_URIS`
+4. 到「管理員設定 → 系統設定」勾選「啟用 LINE 登入」
 
 ### Passkey（WebAuthn）
 
-登入後可至「個人設定 → 安全」綁定。支援 Touch ID / Face ID / Windows Hello / 硬體金鑰；採 `@passwordless-id/webauthn` 純前端實作 + 後端驗證。
+登入後可至「個人設定 → 安全」綁定。支援 Touch ID / Face ID / Windows Hello / 硬體金鑰。
+
+### LINE 官方帳號記帳
+
+設定 `LINE_MESSAGING_CHANNEL_SECRET`、`LINE_MESSAGING_CHANNEL_ACCESS_TOKEN` 與 `APP_URL`，在 Messaging API 的 Webhook URL 填入 `https://your-domain.com/api/line/webhook`。使用者綁定 LINE 帳號後，即可在官方帳號輸入 `選單`、`支出 120 午餐`、`收入 5000 薪資` 等文字記帳。
+
+---
+
+## 功能總覽
+
+### 收支與預算
+
+- **儀表板**：月份切換、總資產／收入／支出／淨額卡片、雙圓餅（含「（其他）」群組）、最近交易
+- **交易管理**：CRUD、跨帳戶轉帳（雙向配對）、批次刪除／變更分類／變更日期、未來交易標記
+- **預算管理**：月度總預算 + 分類預算；四段配色進度條；歷史與未來月份切換
+- **帳戶管理**：多幣別、銀行／信用卡／證券／現金，可排除特定帳戶於總資產統計
+- **分類管理**：父子兩層、自訂顏色、CSV 匯出匯入
+- **固定收支**：週期性收支自動產生交易，支援外幣；登入時 server-side 觸發、並發冪等保護
+
+### 股票投資
+
+- **持股總覽**：即時市值、未實現損益、整體報酬率、三段策略抓股價（盤中即時／盤後收盤／備援）
+- **股價自動更新**：交易時段自動抓 TWSE／TPEx 最新價寫回現價；跨使用者去重、管理員可調整間隔
+- **股票交易**：手續費（0.1425%，最低 20 元）／證交稅（0.3%／ETF 權證 0.1%）自動計算可手動覆寫
+- **股利紀錄**：TWSE 除權息自動同步；現金股利對應入款交易帳戶反查
+- **實現損益**：FIFO 全精度（decimal.js）逐筆計算、今年／總損益彙總、賣出鏈式約束驗證
+- **定期定額**：遇 TWSE 休市日自動順延、歷史收盤價回填、idempotency 保證
+- **下市標記**：凍結最後價格，後續查價自動跳過
+- **美股支援**：支援美股小數股數
+
+### 統計與排程
+
+- **統計報表**：分類圓餅（單／雙）+ 月度趨勢 + 每日消費 + 自訂時間範圍；同型前一段對比 pill；圓餅扇區可點擊跳轉
+- **排程寄送**：多筆排程（每日／每週／每月，每月可指定 1–28 日或「最後一天」）；寄信通道支援 SMTP／Zeabur Email／Resend，主要通道失敗自動退備用
+
+### AI 助理整合（MCP）
+
+- **MCP OAuth 2.1**：在 ChatGPT、Claude 等工具輸入 `https://<你的網域>/api/mcp`，透過瀏覽器登入 AssetPilot、確認權限並完成連線；完整支援 PKCE S256、rotating refresh token
+- **AI 記帳寫入**（可選）：AI 可透過 `create_transaction` 新增交易、`update_transaction_note` 更新備註；僅能新增／改備註，無法修改或刪除既有資料
+- **逐憑證權限**：寫入能力預設關閉，於「設定 → MCP 連線」逐憑證開關
+- **AI 標記與還原**：交易列表為 AI 建立的交易顯示徽章，可一鍵還原
+
+> 正式環境啟用 MCP OAuth 前，務必將 `APP_URL` 設為對外 HTTPS origin。
+
+### 資料治理
+
+- **CSV 匯出**：交易／分類／股票交易／股利紀錄；純伺服器端 stream + UTF-8 BOM + Formula Injection 防護
+- **CSV 匯入**：互斥鎖（重入回 409）+ 全 DB transaction 原子化 + 進度回饋
+- **整檔備份／還原**：SQL 備份下載／上傳、還原失敗自動回滾、管理員列管 5 份／90 天
+- **稽核日誌**：管理員與使用者分開檢視；過濾、CSV 匯出、清空、保留天數設定
+- **交易照片附件**：最多 5 張、本機或 S3 儲存、讀取一律走登入授權 API
+
+### 系統管理
+
+- **使用者管理**：管理員可開關外部服務註冊、設定 Email 白名單、IP 白名單
+- **登入稽核**：時間、IP、國家、方式、成功／失敗
+- **API 使用與授權頁**：動態列出所有外部 API 來源、配額、合規授權字樣
 
 ---
 
@@ -405,11 +425,11 @@ Webhook 回覆使用 LINE Flex Message Button：未綁定時顯示「綁定 LINE
 
 1. 開啟 `http://localhost:3000` → 選擇 **Google** 或 **LINE** 登入
 2. **第一位完成外部登入的使用者自動成為管理員**
-3. 系統自動建立預設分類（食、衣、住、行 ...）與預設帳戶（現金、銀行帳戶）
+3. 系統自動建立預設分類（食、衣、住、行…）與預設帳戶（現金、銀行帳戶）
 
 ### URL 直連
 
-任何頁面皆可直接以網址訪問或加入書籤；F5 重整不掉頁；瀏覽器上一頁 / 下一頁完整還原（含捲動位置）。未登入訪客被導向 `/login?next=<原 URL>`，登入成功後自動跳回。
+任何頁面皆可直連、加入書籤；未登入訪客導向 `/login?next=<原 URL>`，登入後自動跳回。
 
 | URL | 說明 |
 | --- | --- |
@@ -420,64 +440,19 @@ Webhook 回覆使用 LINE Flex Message Button：未綁定時顯示「綁定 LINE
 | `/stocks`, `/stocks/transactions`, `/stocks/dividends`, `/stocks/realized` | 股票投資 |
 | `/settings/account`, `/settings/admin`, `/settings/export` | 設定（admin 僅管理員可見） |
 | `/api-credits` | API 使用與授權 |
-| `/privacy`, `/terms` | 隱私權政策 / 服務條款 |
 
 ### 信用卡繳費
 
-使用信用卡消費時記為「**支出**」+ 信用卡帳戶（餘額顯示負數=真實負債）。繳費時類型選「**轉帳**」，從銀行帳戶轉至信用卡帳戶，即可扣除銀行餘額並沖銷信用卡負數，不重複計算為支出。
+使用信用卡消費時記為「**支出**」+ 信用卡帳戶（餘額負數＝真實負債）。繳費時選「**轉帳**」，從銀行轉到信用卡帳戶即可沖銷負債，不重複計算為支出。
 
-### 股票
-
-- **新增持股**：輸入股票代號（如 `2330`），系統自動從 TWSE 查詢帶入名稱與現價；手續費、交易稅自動計算可手動修改
-- **更新股價**：三段策略 — 盤中 TWSE 即時、盤後 `STOCK_DAY` 今日收盤、其他時段 `STOCK_DAY_ALL` 備援；可手動更新，或由伺服器在交易時段內依管理員設定的間隔自動更新
-- **同步除權息**：依持股期間自動新增現金 / 股票股利，不重複；阻擋式 Modal 含進度條與取消按鈕
-
-### CSV 匯出匯入
+### CSV 匯出欄位
 
 | 類型 | 欄位 |
 | ---- | ---- |
 | 交易記錄 | 日期、類型、金額、幣別、分類、帳戶、備註 |
-| 分類 | 父分類 / 子分類、類型（收入 / 支出）、顏色 |
+| 分類 | 父分類／子分類、類型、顏色 |
 | 股票交易 | 日期、代號、名稱、類型、股數、成交價、手續費、交易稅、帳戶、備註 |
 | 股利紀錄 | 日期、代號、名稱、現金股利、股票股利、備註 |
-
-匯入時若股票代號不存在會自動建立；名稱不正確會以 CSV 內的名稱更新。匯入採互斥鎖 + DB transaction 原子化，發生錯誤會整批回滾。
-
----
-
-## 資料治理
-
-### 資料操作稽核日誌（v4.28.0）
-
-每次 CSV 匯出 / 匯入、整檔備份 / 還原皆寫入 `data_operation_audit_log`，欄位含使用者、IP、UA、時間、結果、metadata（如 imported / skipped / errors / byteSize）。
-
-- 一般使用者可至「個人設定 → 我的操作紀錄」檢視自己的歷史（後端強制 user_id 覆寫）
-- 管理員可至「管理員 → 資料操作稽核日誌」檢視全部，支援過濾、CSV 匯出、清空、保留天數調整（30 / 90 / 180 / 365 / forever）
-
-### 路由稽核模式（v4.29.0）
-
-`system_settings.route_audit_mode`：
-
-| 模式 | 寫入事件 |
-| --- | --- |
-| `security`（預設） | admin path blocked / open redirect blocked / static path traversal blocked |
-| `extended` | security 範圍 + 401 session_expired |
-| `minimal` | 本功能定義之路由稽核全部不寫入；既有 007 稽核行為不受影響 |
-
-切換立即生效，不需重啟。
-
-### 整檔備份 / 還原
-
-- **下載備份**：管理員可下載當前資料庫（檔名 `assetpilot-backup-{YYYYMMDDHHmmss}.db`）；按下下載前彈出敏感資料警示確認 Modal
-- **還原**：上傳備份檔；通過驗證後寫入 `backups/before-restore-{ts}.db`；替換失敗自動回滾並回 `422 RESTORE_FAILED_ROLLED_BACK`
-- **自動備份保留**：保留最近 5 份且 ≤ 90 天；管理員可手動刪除（雙重防路徑遍歷：`path.basename` + regex）
-
-### 交易照片附件
-
-- 新增交易時可選擇最多 5 張照片，每張預設 10 MB；手機網頁提供「拍照」與「選擇圖片」兩個入口，可直接呼叫相機或從相簿上傳。
-- 儲存位置可選 Server 本機或 S3 相容物件儲存；S3 未設定時 UI 會停用該選項。
-- LINE 新增記錄流程中可直接傳送照片；照片會暫存在 LINE message id，確認新增後再下載並附到該筆交易。LINE 端使用 `TRANSACTION_PHOTO_DEFAULT_STORAGE` 決定本機或 S3。
-- 照片 metadata 存於 `transaction_attachments`，實際檔案不放 public 目錄，讀取需通過 `/api/transactions/{txId}/attachments/{attachmentId}/file` 權限檢查。
 
 ---
 
@@ -486,37 +461,34 @@ Webhook 回覆使用 LINE Flex Message Button：未綁定時顯示「綁定 LINE
 | 機制 | 說明 |
 | ---- | ---- |
 | 資料庫加密 | ChaCha20-Poly1305 AEAD + PBKDF2-SHA256 金鑰推導 |
-| 身份驗證 | 僅接受 Google、LINE、Passkey 等外部／無密碼身份驗證方式；不建立本機密碼 |
+| 身份驗證 | 僅接受 Google、LINE、Passkey 等外部／無密碼方式；不建立本機密碼 |
 | XSS 防護 | 所有使用者輸入經 `escHtml()` 跳脫後才插入 DOM |
-| 安全標頭 | Next.js 回應標頭設定（HSTS、X-Content-Type-Options、Referrer-Policy） |
+| 安全標頭 | HSTS、X-Content-Type-Options、Referrer-Policy |
 | CSP | 限制 inline script 與外部資源來源 |
-| 速率限制 | 第三方登入／Passkey 端點每 IP 每 15 分鐘最多 20 次；公開頁面每分鐘最多 120 次 |
-| Cloudflare API Shield | OpenAPI 3.2.0 Schema（`openapi.yaml`），可啟用請求驗證 |
-| CORS 控制 | `ALLOWED_ORIGINS` 白名單 |
-| OAuth 防 CSRF | Google / LINE 登入使用一次性 state；LINE 額外使用 nonce 驗證 ID Token |
-| MCP OAuth 2.1 | Authorization Code + PKCE S256、精確 redirect URI、`resource` audience binding、短效 opaque access token、refresh rotation/replay family revoke；token/code 僅存 SHA-256 |
-| `?next=` 開放重定向防護 | 5 條規則白名單：相對路徑 / 拒 protocol-relative / 拒 `://` / pathname 必須命中前端 ROUTES 表 |
-| 路徑遊走偵測 | catch-all 偵測 `..` / `%2e%2e` / `%252e%252e`；寫稽核日誌 |
-| Admin path 攔截 | 後端維護 `ADMIN_ONLY_PATHS` 常數陣列；非管理員命中時寫稽核並由前端渲染 404 訊息頁 |
-| Formula Injection 防護 | CSV 匯出對所有以 `=` `+` `-` `@` 開頭的欄位前置撇號 |
-| SRI | 外部 CDN 腳本（Font Awesome、Chart.js、decimal.js）完整性驗證 |
+| 速率限制 | 登入／Passkey 端點每 IP 每 15 分鐘最多 20 次；公開頁面每分鐘最多 120 次 |
+| OAuth 防 CSRF | Google／LINE 使用一次性 state；LINE 額外 nonce 驗證 ID Token |
+| MCP OAuth 2.1 | PKCE S256、精確 redirect URI、short-lived token、refresh rotation、token 僅存 SHA-256 |
+| `?next=` 防護 | 相對路徑白名單、拒 protocol-relative、拒 `://`、pathname 必須命中前端 ROUTES 表 |
+| 路徑遊走偵測 | catch-all 偵測 `..`／`%2e%2e`／`%252e%252e`，寫稽核日誌 |
+| Formula Injection 防護 | CSV 匯出對以 `=` `+` `-` `@` 開頭欄位前置撇號 |
+| SRI | 外部 CDN 腳本完整性驗證 |
 | 登入稽核 | 記錄時間、IP、國家、方式；管理員可查失敗嘗試與帳號鎖定狀態 |
 
 ---
 
 ## 外部 API 來源
 
-| 服務 | 用途 | 連結 |
-| ---- | ---- | ---- |
-| TWSE OpenAPI | 台股即時股價、收盤、除權息 | <https://openapi.twse.com.tw/> |
-| exchangerate-api.com | 全球即時匯率（基礎 TWD） | <https://www.exchangerate-api.com/> |
-| Google Identity Services | Google SSO 登入 | <https://developers.google.com/identity> |
-| LINE Login API | LINE 登入與帳號綁定 | <https://developers.line.biz/en/docs/line-login/> |
-| IPinfo Lite | IP 國家查詢（合規授權字樣固定顯示於 API 使用頁） | <https://ipinfo.io/lite> |
-| SMTP（Nodemailer） | 排程信件 / 系統通知（Gmail / Outlook 等） | <https://nodemailer.com/> |
-| Zeabur Email（ZSend） | 排程信件 / 系統通知 | <https://zeabur.com/docs/en-US/email/quick-start> |
-| Resend | 排程信件 / 系統通知 | <https://resend.com/> |
-| MEGA S4 Object Storage | 管理員整檔 PostgreSQL SQL 備份的 S3 相容物件儲存目的地 | <https://mega.io/zh-hant/objectstorage> |
+| 服務 | 用途 |
+| ---- | ---- |
+| TWSE OpenAPI | 台股即時股價、收盤、除權息 |
+| exchangerate-api.com | 全球即時匯率（基礎 TWD） |
+| Google Identity Services | Google SSO 登入 |
+| LINE Login API | LINE 登入與帳號綁定 |
+| IPinfo Lite | IP 國家查詢（合規授權字樣固定顯示於 API 使用頁） |
+| SMTP（Nodemailer） | 排程信件／系統通知 |
+| Zeabur Email（ZSend） | 排程信件／系統通知 |
+| Resend | 排程信件／系統通知 |
+| MEGA S4 Object Storage | 管理員整備 PostgreSQL SQL 備份的 S3 相容目的地 |
 
 完整列表與授權字樣可在執行中應用程式的 `/api-credits` 頁面查看。
 
@@ -524,7 +496,7 @@ Webhook 回覆使用 LINE Flex Message Button：未綁定時顯示「綁定 LINE
 
 ## 專案治理
 
-本專案採用 [Spec-Driven Development](https://github.com/github/spec-kit) 工作流程。每個功能皆有完整的 spec → research → plan → contracts → tasks → implementation 軌跡，存於 `specs/<NNN-feature-name>/` 下。
+本專案採用 **Spec-Driven Development** 工作流程。每個功能皆有完整的 spec → research → plan → contracts → tasks → implementation 軌跡，存於 `specs/<NNN-feature-name>/` 下。
 
 | 工件 | 用途 |
 | --- | --- |

@@ -30,6 +30,11 @@ specs/
 test-results/
 docs/*
 !docs/screenshots/
+!docs/marketing-screenshots/
+docs/marketing-screenshots/*/*.log
+!docs/android-light/
+!docs/android-dark/
+!docs/web-marketing/
 AGENTS.md
 CLAUDE.md
 SSR.md

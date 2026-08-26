@@ -23,6 +23,9 @@ migrate_working_dir/
 # is commented out by default.
 #.vscode/
 
+# App 只正式支援 Android；web/ 平台檔案僅為擷取行銷截圖暫時產生（flutter create --platforms=web），不上傳。
+/web/
+
 # Flutter/Dart/Pub related
 **/doc/api/
 **/ios/Flutter/.last_build_id

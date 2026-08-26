@@ -1,0 +1,294 @@
+{
+  "schemaVersion": 2,
+  "appName": "AssetPilot",
+  "themeId": "assetpilot-light",
+  "connectedCanvas": false,
+  "locales": [
+    "zh-TW",
+    "en"
+  ],
+  "locale": "zh-TW",
+  "device": "android",
+  "orientation": "portrait",
+  "appIcon": "/app-icon.png",
+  "slidesByDevice": {
+    "iphone": [
+      {
+        "id": "s_mt9k1b0o_0",
+        "layout": "hero",
+        "label": {
+          "en": "MEET YOUR APP"
+        },
+        "headline": {
+          "en": "Sell one\nidea per slide."
+        },
+        "screenshot": ""
+      },
+      {
+        "id": "s_mt9k1b0o_1",
+        "layout": "device-bottom",
+        "label": {
+          "en": "FEATURE 01"
+        },
+        "headline": {
+          "en": "Your headline\nlives here."
+        },
+        "screenshot": ""
+      },
+      {
+        "id": "s_mt9k1b0o_2",
+        "layout": "two-devices",
+        "label": {
+          "en": "FEATURE 02"
+        },
+        "headline": {
+          "en": "Show two\nscreens at once."
+        },
+        "screenshot": "",
+        "screenshotSecondary": ""
+      },
+      {
+        "id": "s_mt9k1b0o_3",
+        "layout": "device-top",
+        "label": {
+          "en": "FEATURE 03"
+        },
+        "headline": {
+          "en": "Flip the contrast\nfor visual rhythm."
+        },
+        "screenshot": "",
+        "inverted": true
+      },
+      {
+        "id": "s_mt9k1b0o_4",
+        "layout": "no-device",
+        "label": {
+          "en": "MORE"
+        },
+        "headline": {
+          "en": "And so\nmuch more."
+        },
+        "screenshot": ""
+      }
+    ],
+    "android": [
+      {
+        "id": "ap_light_01",
+        "layout": "device-bottom",
+        "label": {
+          "zh-TW": "儀表板",
+          "en": "DASHBOARD"
+        },
+        "headline": {
+          "zh-TW": "資產全貌\n一手掌握",
+          "en": "Your net worth,\nall in one view"
+        },
+        "screenshot": "/screenshots/android/phone/{locale}/01.png"
+      },
+      {
+        "id": "ap_light_02",
+        "layout": "device-bottom",
+        "label": {
+          "zh-TW": "記帳",
+          "en": "TRANSACTIONS"
+        },
+        "headline": {
+          "zh-TW": "3 秒\n記一筆帳",
+          "en": "Log a transaction\nin seconds"
+        },
+        "screenshot": "/screenshots/android/phone/{locale}/02.png"
+      },
+      {
+        "id": "ap_light_03",
+        "layout": "device-bottom",
+        "label": {
+          "zh-TW": "預算",
+          "en": "BUDGETS"
+        },
+        "headline": {
+          "zh-TW": "設定預算\n避免超支",
+          "en": "Stay under budget\nevery month"
+        },
+        "screenshot": "/screenshots/android/phone/{locale}/03.png"
+      },
+      {
+        "id": "ap_light_04",
+        "layout": "device-bottom",
+        "label": {
+          "zh-TW": "股票",
+          "en": "STOCKS"
+        },
+        "headline": {
+          "zh-TW": "台股持股\n一手掌握",
+          "en": "Track every\nstock you own"
+        },
+        "screenshot": "/screenshots/android/phone/{locale}/04.png",
+        "transforms": {
+          "device": {
+            "x": 200.70778097982713,
+            "y": 411.33371757925113,
+            "width": 678.5844380403457,
+            "height": 1470.266282420749,
+            "rotation": 0,
+            "zIndex": 3
+          },
+          "caption": {
+            "x": 86.4,
+            "y": 153.60000000000002,
+            "width": 907.1999999999999,
+            "height": 537.6,
+            "rotation": 0,
+            "zIndex": 4
+          }
+        }
+      },
+      {
+        "id": "ap_light_05",
+        "layout": "device-bottom",
+        "label": {
+          "zh-TW": "已實現損益",
+          "en": "REALIZED P/L"
+        },
+        "headline": {
+          "zh-TW": "已實現損益\n清楚透明",
+          "en": "See your real\ninvestment returns"
+        },
+        "screenshot": "/screenshots/android/phone/{locale}/05.png"
+      },
+      {
+        "id": "ap_light_06",
+        "layout": "device-bottom",
+        "label": {
+          "zh-TW": "報表",
+          "en": "REPORTS"
+        },
+        "headline": {
+          "zh-TW": "圖表看懂\n現金流向",
+          "en": "Understand where\nyour money goes"
+        },
+        "screenshot": "/screenshots/android/phone/{locale}/06.png"
+      },
+      {
+        "id": "ap_light_07",
+        "layout": "device-bottom",
+        "label": {
+          "zh-TW": "安全性",
+          "en": "SECURITY"
+        },
+        "headline": {
+          "zh-TW": "安全連線\n資料加密",
+          "en": "Encrypted and\nsecurely connected"
+        },
+        "screenshot": "/screenshots/android/phone/{locale}/07.png"
+      },
+      {
+        "id": "ap_light_08",
+        "layout": "no-device",
+        "label": {
+          "zh-TW": "一站掌握",
+          "en": "ALL-IN-ONE"
+        },
+        "headline": {
+          "zh-TW": "記帳、預算\n股票、報表",
+          "en": "Track it all.\nOne app."
+        },
+        "screenshot": ""
+      }
+    ],
+    "ipad": [
+      {
+        "id": "s_mt9k1b0p_a",
+        "layout": "hero",
+        "label": {
+          "en": "MEET YOUR APP"
+        },
+        "headline": {
+          "en": "Made for\nthe big screen."
+        },
+        "screenshot": ""
+      },
+      {
+        "id": "s_mt9k1b0p_b",
+        "layout": "device-bottom",
+        "label": {
+          "en": "FEATURE 01"
+        },
+        "headline": {
+          "en": "Built for\nfocus."
+        },
+        "screenshot": ""
+      },
+      {
+        "id": "s_mt9k1b0p_c",
+        "layout": "device-top",
+        "label": {
+          "en": "FEATURE 02"
+        },
+        "headline": {
+          "en": "Always within reach."
+        },
+        "screenshot": "",
+        "inverted": true
+      }
+    ],
+    "android-7": [
+      {
+        "id": "s_mt9k1b0p_d",
+        "layout": "hero",
+        "label": {
+          "en": "MEET YOUR APP"
+        },
+        "headline": {
+          "en": "Pocket-sized\npower."
+        },
+        "screenshot": ""
+      },
+      {
+        "id": "s_mt9k1b0p_e",
+        "layout": "split-landscape",
+        "label": {
+          "en": "FEATURE 01"
+        },
+        "headline": {
+          "en": "Wide canvas,\nbigger ideas."
+        },
+        "screenshot": ""
+      }
+    ],
+    "android-10": [
+      {
+        "id": "s_mt9k1b0p_f",
+        "layout": "hero",
+        "label": {
+          "en": "MEET YOUR APP"
+        },
+        "headline": {
+          "en": "Made for\nthe big screen."
+        },
+        "screenshot": ""
+      },
+      {
+        "id": "s_mt9k1b0p_g",
+        "layout": "split-landscape",
+        "label": {
+          "en": "FEATURE 01"
+        },
+        "headline": {
+          "en": "Wide canvas,\nbigger ideas."
+        },
+        "screenshot": ""
+      }
+    ],
+    "feature-graphic": [
+      {
+        "id": "s_mt9k1b0p_h",
+        "layout": "feature-graphic",
+        "label": {},
+        "headline": {
+          "en": "Your tagline goes here."
+        },
+        "screenshot": ""
+      }
+    ]
+  }
+}

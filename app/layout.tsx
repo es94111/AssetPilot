@@ -5,6 +5,7 @@ import { getDictionary, getTranslator } from "@/lib/i18n/getDictionary";
 import { HTML_DIR, HTML_LANG } from "@/lib/i18n/config";
 import { I18nProvider } from "@/components/i18n/I18nProvider";
 import { ToastProvider } from "@/components/ui/Toast";
+import SplashIntro from "@/components/public/SplashIntro";
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await resolveLocale();
@@ -38,6 +39,7 @@ export default async function RootLayout({
         <I18nProvider locale={locale} dict={dict}>
           <ToastProvider>
             {children}
+            <SplashIntro />
           </ToastProvider>
         </I18nProvider>
       </body>

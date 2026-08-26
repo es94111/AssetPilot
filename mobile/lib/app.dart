@@ -12,6 +12,7 @@ import 'screens/dashboard_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/more_screen.dart';
 import 'screens/onboarding_screen.dart';
+import 'screens/splash_screen.dart';
 import 'screens/stocks_screen.dart';
 import 'screens/transaction_form_screen.dart';
 import 'screens/transactions_screen.dart';
@@ -204,7 +205,7 @@ class AssetPilotApp extends StatelessWidget {
           navigatorObservers: [SentryNavigatorObserver()],
           theme: _buildTheme(seed, Brightness.light),
           darkTheme: _buildTheme(seed, Brightness.dark),
-          home: AuthGate(),
+          home: RootGate(),
           // 系統或深層連結可能推送 App 未註冊的路由（例如背景啟動時 OS 傳來的
           // route information）。本 App 採純 home 導覽、未設定具名路由，若不提供
           // onUnknownRoute，Flutter 框架在 release 模式（assert 被移除）會對
@@ -212,12 +213,34 @@ class AssetPilotApp extends StatelessWidget {
           // （ASSETPILOT-APP-2: Null check operator used on a null value）。
           // 這裡統一導回主畫面，安全忽略未知路由。
           onUnknownRoute: (settings) => MaterialPageRoute(
-            builder: (_) => AuthGate(),
+            builder: (_) => RootGate(),
             settings: RouteSettings(name: '/'),
           ),
         ),
       ),
     );
+  }
+}
+
+/// 啟動閘道：先播放品牌入場動畫，播放完後才切到依登入狀態的 [AuthGate]。
+class RootGate extends StatefulWidget {
+  const RootGate({super.key});
+
+  @override
+  State<RootGate> createState() => _RootGateState();
+}
+
+class _RootGateState extends State<RootGate> {
+  bool _showSplash = true;
+
+  @override
+  Widget build(BuildContext context) {
+    if (_showSplash) {
+      return SplashScreen(onDone: () {
+        if (mounted) setState(() => _showSplash = false);
+      });
+    }
+    return const AuthGate();
   }
 }
 

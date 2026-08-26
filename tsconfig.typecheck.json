@@ -5,6 +5,7 @@
   },
   "exclude": [
     "node_modules",
-    "tests/e2e"
+    "tests/e2e",
+    "docs/marketing-screenshots"
   ]
 }

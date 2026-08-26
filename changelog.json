@@ -1,6 +1,15 @@
 {
-  "currentVersion": "4.111.2",
+  "currentVersion": "4.112.0",
   "releases": [
+    {
+      "version": "4.112.0",
+      "date": "2026-08-26",
+      "title": "新增網頁與 App 品牌入場動畫",
+      "type": "new",
+      "changes": [
+        { "tag": "new", "text": "開啟網頁或手機 App 時會先播放品牌入場動畫，以動態圖示與進度效果呈現 AssetPilot 品牌識別，播放完畢後自動進入原本畫面，同一次瀏覽只會播放一次。" }
+      ]
+    },
     {
       "version": "4.111.2",
       "date": "2026-08-26",

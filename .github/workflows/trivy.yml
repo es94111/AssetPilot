@@ -31,6 +31,8 @@ jobs:
           push: false
           load: true
           tags: assetpilot:scan
+          build-args: |
+            APK_UPGRADE_CACHE_BUST=${{ github.run_id }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 

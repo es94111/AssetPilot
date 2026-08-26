@@ -21,7 +21,12 @@ WORKDIR /app
 
 # 修補 base image 落後的 OS 套件（如 OpenSSL libcrypto3/libssl3 CVE）。
 # Trivy 設 ignore-unfixed=true，僅會擋「上游已有修補」的弱點，故升級到 alpine repo 最新修補版即可通過掃描。
-RUN apk upgrade --no-cache
+# CI 用 cache-from/to: type=gha 快取 layer；若不加 cache-bust，只要 base image digest
+# 沒變，這一層會被快取命中而完全不會重新執行，導致即使 Alpine repo 已有新修補版，
+# 建出來的映像仍停留在快取當下的舊版套件（曾實際造成 Trivy 掃到已修補的 CVE 卻過不了）。
+# ARG 值由 workflow 每次 build 帶入唯一值（如 run id），強制每次都重新 apk upgrade。
+ARG APK_UPGRADE_CACHE_BUST=unset
+RUN echo "apk-upgrade-cache-bust:${APK_UPGRADE_CACHE_BUST}" && apk upgrade --no-cache
 
 # 移除 base image 內建的 npm。standalone 入口僅需 `node server.js`，執行期完全用不到 npm，
 # 而 npm 自帶的 vendored undici（node:24-alpine 為 6.25.0）帶有 CVE-2026-12151（DoS），

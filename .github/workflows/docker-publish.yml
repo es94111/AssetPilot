@@ -139,6 +139,8 @@ jobs:
           push: true
           tags: ${{ steps.meta_dockerhub.outputs.tags }}
           labels: ${{ steps.meta_dockerhub.outputs.labels }}
+          build-args: |
+            APK_UPGRADE_CACHE_BUST=${{ github.run_id }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -154,6 +156,8 @@ jobs:
           push: true
           tags: ${{ steps.meta_ghcr.outputs.tags }}
           labels: ${{ steps.meta_ghcr.outputs.labels }}
+          build-args: |
+            APK_UPGRADE_CACHE_BUST=${{ github.run_id }}
           cache-from: type=gha
 
       # ── GitHub Release（內文自 changelog.json 產生；已存在就略過）──

@@ -1,0 +1,56 @@
+# 統一以 LF 存入 repo，checkout 時依各檔案類型決定工作區換行符
+# 詳細規則見 https://git-scm.com/docs/gitattributes
+
+# ── 預設：Git 自動偵測文字檔，repo 內一律存 LF ──
+* text=auto
+
+# ── 原始碼 / 設定：強制 LF（跨平台工具鏈皆可處理）──
+*.ts   text eol=lf
+*.tsx  text eol=lf
+*.js   text eol=lf
+*.mjs  text eol=lf
+*.cjs  text eol=lf
+*.json text eol=lf
+*.md   text eol=lf
+*.yml  text eol=lf
+*.yaml text eol=lf
+*.css  text eol=lf
+*.html text eol=lf
+*.svg  text eol=lf
+
+# Dart / Kotlin / Android 專案
+*.dart        text eol=lf
+*.kt          text eol=lf
+*.kts         text eol=lf
+*.gradle      text eol=lf
+*.properties  text eol=lf
+*.xml         text eol=lf
+*.arb         text eol=lf
+
+# ── 必須維持 CRLF 的檔案（Windows 批次檔）──
+*.bat  text eol=crlf
+*.cmd  text eol=crlf
+
+# ── Shell script 必須 LF（CRLF 會導致 shebang 解析失敗）──
+*.sh   text eol=lf
+
+# ── 二進位檔：一律不做任何轉換 ──
+*.png       binary
+*.jpg       binary
+*.jpeg      binary
+*.gif       binary
+*.ico       binary
+*.webp      binary
+*.ttf       binary
+*.otf       binary
+*.woff      binary
+*.woff2     binary
+*.mp4       binary
+*.pdf       binary
+*.db        binary
+*.keystore  binary
+*.jks       binary
+*.p12       binary
+*.apk       binary
+*.aar       binary
+*.jar       binary

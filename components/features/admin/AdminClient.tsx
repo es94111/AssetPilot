@@ -884,14 +884,20 @@ export default function AdminClient(
         </div>
       )}
 
-      <div className="flex flex-wrap gap-2 border-b">
+      <div className="flex flex-wrap gap-2 border-b" style={{ borderColor: 'var(--border)' }}>
         {tabs.map((tab) => (
           <button
             key={tab.id}
-            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === tab.id ? "border-blue-600 text-blue-600" : "border-transparent text-slate-500 hover:text-slate-700"}`}
+            className="relative px-4 py-2 text-sm font-medium transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            style={{ color: activeTab === tab.id ? 'var(--primary)' : 'var(--text-secondary)', fontWeight: activeTab === tab.id ? 600 : 500 }}
             onClick={() => setActiveTab(tab.id)}
           >
             {tab.label}
+            <span
+              aria-hidden="true"
+              className="absolute inset-x-2 bottom-0 h-0.5 rounded-full"
+              style={{ background: activeTab === tab.id ? 'var(--primary)' : 'transparent' }}
+            />
           </button>
         ))}
       </div>

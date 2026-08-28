@@ -18,7 +18,7 @@ export default function MobileNav() {
 
   return (
     <nav
-      aria-label={t('nav.sections.finance')}
+      aria-label={t('shell.mainNav')}
       className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-4 border-t px-2 pb-[env(safe-area-inset-bottom)] lg:hidden"
       style={{
         background: 'var(--surface-glass)',
@@ -36,11 +36,11 @@ export default function MobileNav() {
             key={path}
             href={path}
             aria-current={active ? 'page' : undefined}
-            className="flex min-h-16 min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-1 py-2 text-[11px] font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-primary"
+            className="flex min-h-16 min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-1 py-2 text-[11px] font-semibold transition-colors duration-150 active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-primary"
             style={{ color: active ? 'var(--primary)' : 'var(--text-muted)' }}
           >
             <span
-              className="flex h-7 w-12 items-center justify-center rounded-full transition-colors"
+              className="flex h-7 w-12 items-center justify-center rounded-full transition-colors duration-150"
               style={{ background: active ? 'var(--primary-light-bg)' : 'transparent' }}
             >
               <Icon size={19} strokeWidth={active ? 2.4 : 1.8} aria-hidden="true" />

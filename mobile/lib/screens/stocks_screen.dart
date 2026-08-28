@@ -5,6 +5,7 @@ import '../app_widget_sync.dart';
 import '../format.dart';
 import '../models.dart';
 import '../widgets.dart';
+import '../theme.dart';
 import 'stock_settings_screen.dart';
 import '../l10n.dart';
 
@@ -323,25 +324,37 @@ class _HoldingsTabState extends State<_HoldingsTab> {
         builder: (context, data) => RefreshIndicator(
           onRefresh: () async => _reload(),
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 88),
+            padding: const EdgeInsets.fromLTRB(
+              ApSpace.lg,
+              ApSpace.lg,
+              ApSpace.lg,
+              88,
+            ),
             children: [
               _PortfolioCard(s: data.summary),
-              SizedBox(height: 16),
+              const SizedBox(height: ApSpace.lg),
               if (data.stocks.isEmpty)
                 Padding(
-                  padding: EdgeInsets.symmetric(vertical: 32),
+                  padding: EdgeInsets.symmetric(vertical: ApSpace.xxl),
                   child: EmptyState(
                     icon: Icons.trending_up,
-                    message: trKey('mobileLegacyNoHoldingsYet'),
+                    title: trKey('mobileLegacyNoHoldingsYet'),
+                    message: trKey('featuresStocksPortfolioAddStock'),
+                    onAction: _addStock,
+                    actionLabel: trKey('featuresStocksPortfolioAddStock'),
                   ),
                 )
               else
-                for (final s in data.stocks)
-                  _HoldingTile(
-                    s: s,
-                    onTap: () => _editStock(s),
-                    onLongPress: () => _deleteStock(s),
+                ...data.stocks.indexed.map(
+                  (e) => StaggerIn(
+                    index: e.$1,
+                    child: _HoldingTile(
+                      s: e.$2,
+                      onTap: () => _editStock(e.$2),
+                      onLongPress: () => _deleteStock(e.$2),
+                    ),
                   ),
+                ),
             ],
           ),
         ),
@@ -357,25 +370,42 @@ class _PortfolioCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return LedgerCard(
-      color: theme.colorScheme.primaryContainer,
-      padding: const EdgeInsets.all(20),
+    final tokens = apTokens(context);
+    return Container(
+      padding: const EdgeInsets.all(ApSpace.xl),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: tokens.heroGradient,
+        ),
+        borderRadius: ApRadius.rXl,
+        border: Border.all(color: tokens.glassBorder),
+        boxShadow: [
+          BoxShadow(
+            color: tokens.shadow,
+            blurRadius: 20,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             trKey('mobileLegacyMarketValue'),
-            style: TextStyle(color: theme.colorScheme.onPrimaryContainer),
+            style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
           ),
-          SizedBox(height: 4),
-          Text(
-            twd(s.totalMarketValue),
+          const SizedBox(height: ApSpace.xs),
+          AnimatedTextSwap(
+            text: twd(s.totalMarketValue),
             style: theme.textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: theme.colorScheme.onPrimaryContainer,
+              fontWeight: FontWeight.w800,
+              letterSpacing: -0.5,
+              color: tokens.net,
             ),
           ),
-          Divider(height: 24),
+          const SizedBox(height: ApSpace.lg),
           Row(
             children: [
               Expanded(
@@ -386,7 +416,7 @@ class _PortfolioCard extends StatelessWidget {
                       trKey('notificationsLabelsUnrealizedPL'),
                       style: TextStyle(
                         fontSize: 12,
-                        color: theme.colorScheme.onPrimaryContainer,
+                        color: theme.colorScheme.onSurfaceVariant,
                       ),
                     ),
                     Text(
@@ -407,7 +437,7 @@ class _PortfolioCard extends StatelessWidget {
                       trKey('featuresStocksCommonReturnRate'),
                       style: TextStyle(
                         fontSize: 12,
-                        color: theme.colorScheme.onPrimaryContainer,
+                        color: theme.colorScheme.onSurfaceVariant,
                       ),
                     ),
                     Text(
@@ -443,23 +473,33 @@ class _HoldingTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return LedgerCard(
-      margin: const EdgeInsets.only(bottom: 8),
+      margin: const EdgeInsets.only(bottom: ApSpace.sm),
       padding: EdgeInsets.zero,
+      onTap: onTap,
       child: ListTile(
         onTap: onTap,
         onLongPress: onLongPress,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: ApSpace.md + 2,
+          vertical: ApSpace.xs,
+        ),
         title: Row(
           children: [
-            Text(
-              '${s.market == 'US' ? trKey('featuresStocksCommonMarketUs') : trKey('featuresStocksCommonMarketTaiwan')} · ${s.symbol} ${s.name}',
-              style: TextStyle(fontWeight: FontWeight.bold),
+            Expanded(
+              child: Text(
+                '${s.market == 'US' ? trKey('featuresStocksCommonMarketUs') : trKey('featuresStocksCommonMarketTaiwan')} · ${s.symbol} ${s.name}',
+                style: TextStyle(fontWeight: FontWeight.w700),
+              ),
             ),
             if (s.delisted)
               Padding(
                 padding: EdgeInsets.only(left: 6),
                 child: Text(
                   trKey('mobileLegacyDelisted'),
-                  style: TextStyle(fontSize: 11, color: Colors.grey),
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: apTokens(context).warning,
+                  ),
                 ),
               ),
           ],
@@ -477,7 +517,7 @@ class _HoldingTile extends StatelessWidget {
           children: [
             Text(
               money(s.marketValue, s.currency),
-              style: TextStyle(fontWeight: FontWeight.bold),
+              style: TextStyle(fontWeight: FontWeight.w700),
             ),
             Text(
               '${signed(s.estimatedProfit)} (${s.returnRate}%)',
@@ -569,42 +609,61 @@ class _StockTxnTabState extends State<_StockTxnTab> {
           return RefreshIndicator(
             onRefresh: () async => _reload(),
             child: ListView.separated(
-              padding: const EdgeInsets.only(bottom: 88),
+              padding: const EdgeInsets.fromLTRB(
+                ApSpace.lg,
+                ApSpace.sm,
+                ApSpace.lg,
+                88,
+              ),
               itemCount: list.length,
-              separatorBuilder: (_, _) => Divider(height: 1),
+              separatorBuilder: (_, _) =>
+                  const Divider(height: 1, indent: ApSpace.lg),
               itemBuilder: (context, i) {
                 final t = list[i];
                 final isBuy = t.type == 'buy';
-                return ListTile(
-                  leading: CircleAvatar(
-                    backgroundColor: (isBuy ? Colors.red : Colors.green)
-                        .withValues(alpha: 0.15),
-                    child: Text(
-                      isBuy
-                          ? trKey('mobileLegacyBuy')
-                          : trKey('mobileLegacySell'),
-                      style: TextStyle(
-                        color: isBuy ? Colors.red : Colors.green,
-                        fontWeight: FontWeight.bold,
+                final flow = flowColor(income: isBuy, context: context);
+                return StaggerIn(
+                  index: i,
+                  child: LedgerCard(
+                    margin: const EdgeInsets.only(bottom: ApSpace.sm),
+                    padding: EdgeInsets.zero,
+                    onTap: () => _openForm(t),
+                    child: ListTile(
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: ApSpace.md + 2,
+                        vertical: ApSpace.xs,
                       ),
+                      leading: CircleAvatar(
+                        backgroundColor: flow.withValues(alpha: 0.14),
+                        child: Text(
+                          isBuy
+                              ? trKey('mobileLegacyBuy')
+                              : trKey('mobileLegacySell'),
+                          style: TextStyle(
+                            color: flow,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                      title: Text(
+                        '${t.market == 'US' ? trKey('featuresStocksCommonMarketUs') : trKey('featuresStocksCommonMarketTaiwan')} · ${t.symbol} ${t.stockName}',
+                      ),
+                      subtitle: Text(
+                        trKey('mobileDynamicStockTransactionSubtitle', {
+                          'date': t.date,
+                          'shares': intFmt(t.shares),
+                          'price': money(t.price, t.currency),
+                        }),
+                      ),
+                      trailing: Text(
+                        money(t.shares * t.price, t.currency),
+                        style: TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                      onTap: () => _openForm(t),
+                      onLongPress: () => _delete(t),
                     ),
                   ),
-                  title: Text(
-                    '${t.market == 'US' ? trKey('featuresStocksCommonMarketUs') : trKey('featuresStocksCommonMarketTaiwan')} · ${t.symbol} ${t.stockName}',
-                  ),
-                  subtitle: Text(
-                    trKey('mobileDynamicStockTransactionSubtitle', {
-                      'date': t.date,
-                      'shares': intFmt(t.shares),
-                      'price': money(t.price, t.currency),
-                    }),
-                  ),
-                  trailing: Text(
-                    money(t.shares * t.price, t.currency),
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  onTap: () => _openForm(t),
-                  onLongPress: () => _delete(t),
                 );
               },
             ),
@@ -747,40 +806,58 @@ class _DividendTabState extends State<_DividendTab> {
           return RefreshIndicator(
             onRefresh: () async => _reload(),
             child: ListView.separated(
-              padding: const EdgeInsets.only(bottom: 88),
+              padding: const EdgeInsets.fromLTRB(
+                ApSpace.lg,
+                ApSpace.sm,
+                ApSpace.lg,
+                88,
+              ),
               itemCount: list.length,
-              separatorBuilder: (_, _) => Divider(height: 1),
+              separatorBuilder: (_, _) =>
+                  const Divider(height: 1, indent: ApSpace.lg),
               itemBuilder: (context, i) {
                 final d = list[i];
-                return ListTile(
-                  onTap: () => _openForm(d),
-                  onLongPress: () => _delete(d),
-                  title: Text(
-                    '${d.market == 'US' ? trKey('featuresStocksCommonMarketUs') : trKey('featuresStocksCommonMarketTaiwan')} · ${d.symbol} ${d.stockName}',
-                  ),
-                  subtitle: Text(d.date),
-                  trailing: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      if (d.cashDividend > 0)
-                        Text(
-                          trKey('mobileDynamicCashDividend', {
-                            'amount': money(d.cashDividend, d.currency),
-                          }),
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.green,
-                          ),
-                        ),
-                      if (d.stockDividendShares > 0)
-                        Text(
-                          trKey('mobileDynamicStockDividendShares', {
-                            'shares': intFmt(d.stockDividendShares),
-                          }),
-                          style: TextStyle(fontSize: 12),
-                        ),
-                    ],
+                return StaggerIn(
+                  index: i,
+                  child: LedgerCard(
+                    margin: const EdgeInsets.only(bottom: ApSpace.sm),
+                    padding: EdgeInsets.zero,
+                    onTap: () => _openForm(d),
+                    child: ListTile(
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: ApSpace.md + 2,
+                        vertical: ApSpace.xs,
+                      ),
+                      onTap: () => _openForm(d),
+                      onLongPress: () => _delete(d),
+                      title: Text(
+                        '${d.market == 'US' ? trKey('featuresStocksCommonMarketUs') : trKey('featuresStocksCommonMarketTaiwan')} · ${d.symbol} ${d.stockName}',
+                      ),
+                      subtitle: Text(d.date),
+                      trailing: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          if (d.cashDividend > 0)
+                            Text(
+                              trKey('mobileDynamicCashDividend', {
+                                'amount': money(d.cashDividend, d.currency),
+                              }),
+                              style: TextStyle(
+                                fontWeight: FontWeight.w700,
+                                color: flowColor(income: true, context: context),
+                              ),
+                            ),
+                          if (d.stockDividendShares > 0)
+                            Text(
+                              trKey('mobileDynamicStockDividendShares', {
+                                'shares': intFmt(d.stockDividendShares),
+                              }),
+                              style: TextStyle(fontSize: 12),
+                            ),
+                        ],
+                      ),
+                    ),
                   ),
                 );
               },
@@ -834,46 +911,64 @@ class _RealizedTabState extends State<_RealizedTab> {
         return RefreshIndicator(
           onRefresh: () async => _reload(),
           child: ListView(
+            padding: const EdgeInsets.fromLTRB(
+              ApSpace.lg,
+              ApSpace.sm,
+              ApSpace.lg,
+              ApSpace.xl,
+            ),
             children: [
-              Container(
-                padding: const EdgeInsets.all(16),
-                color: Theme.of(context).colorScheme.surfaceContainerHighest,
+              LedgerCard(
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
                       trKey('mobileLegacyTotalRealizedPL'),
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                      style: const TextStyle(fontWeight: FontWeight.w700),
                     ),
-                    Text(
-                      signed(total),
+                    AnimatedTextSwap(
+                      text: signed(total),
                       style: TextStyle(
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 17,
                         color: plColor(total, context),
                       ),
                     ),
                   ],
                 ),
               ),
-              for (final r in list)
-                ListTile(
-                  title: Text(
-                    '${r.market == 'US' ? trKey('featuresStocksCommonMarketUs') : trKey('featuresStocksCommonMarketTaiwan')} · ${r.symbol} ${r.name}',
-                  ),
-                  subtitle: Text(
-                    trKey('mobileDynamicRealizedTransactionSubtitle', {
-                      'date': r.date,
-                      'shares': intFmt(r.shares),
-                    }),
-                  ),
-                  trailing: Text(
-                    '${r.realizedPL > 0 ? '+' : ''}${money(r.realizedPL, r.currency)} (${r.returnRate}%)',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: plColor(r.realizedPL, context),
+              const SizedBox(height: ApSpace.md),
+              ...list.toList().asMap().entries.map(
+                (e) => StaggerIn(
+                  index: e.key,
+                  child: LedgerCard(
+                    margin: const EdgeInsets.only(bottom: ApSpace.sm),
+                    padding: EdgeInsets.zero,
+                    child: ListTile(
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: ApSpace.md + 2,
+                        vertical: ApSpace.xs,
+                      ),
+                      title: Text(
+                        '${e.value.market == 'US' ? trKey('featuresStocksCommonMarketUs') : trKey('featuresStocksCommonMarketTaiwan')} · ${e.value.symbol} ${e.value.name}',
+                      ),
+                      subtitle: Text(
+                        trKey('mobileDynamicRealizedTransactionSubtitle', {
+                          'date': e.value.date,
+                          'shares': intFmt(e.value.shares),
+                        }),
+                      ),
+                      trailing: Text(
+                        '${e.value.realizedPL > 0 ? '+' : ''}${money(e.value.realizedPL, e.value.currency)} (${e.value.returnRate}%)',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          color: plColor(e.value.realizedPL, context),
+                        ),
+                      ),
                     ),
                   ),
                 ),
+              ),
             ],
           ),
         );
@@ -1275,8 +1370,10 @@ class _StockTxnFormState extends State<_StockTxnForm> {
               SizedBox(height: 12),
               ListTile(
                 shape: RoundedRectangleBorder(
-                  side: BorderSide(color: Theme.of(context).dividerColor),
-                  borderRadius: BorderRadius.circular(4),
+                  side: BorderSide(
+                    color: Theme.of(context).colorScheme.outlineVariant,
+                  ),
+                  borderRadius: ApRadius.rSm,
                 ),
                 leading: Icon(Icons.calendar_today),
                 title: Text(trKey('dashboardTableDate')),
@@ -1466,8 +1563,10 @@ class _DividendFormState extends State<_DividendForm> {
               SizedBox(height: 12),
               ListTile(
                 shape: RoundedRectangleBorder(
-                  side: BorderSide(color: Theme.of(context).dividerColor),
-                  borderRadius: BorderRadius.circular(4),
+                  side: BorderSide(
+                    color: Theme.of(context).colorScheme.outlineVariant,
+                  ),
+                  borderRadius: ApRadius.rSm,
                 ),
                 leading: Icon(Icons.calendar_today),
                 title: Text(trKey('dashboardTableDate')),

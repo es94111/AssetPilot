@@ -7333,5 +7333,25 @@
   "@adminScreenSubtitle": {
     "description": "Web path: admin.adminScreenSubtitle",
     "x-webPath": "admin.adminScreenSubtitle"
+  },
+  "shellCloseMenu": "關閉選單",
+  "@shellCloseMenu": {
+    "description": "Web path: shell.closeMenu",
+    "x-webPath": "shell.closeMenu"
+  },
+  "shellMainNav": "主導覽列",
+  "@shellMainNav": {
+    "description": "Web path: shell.mainNav",
+    "x-webPath": "shell.mainNav"
+  },
+  "shellCollapseSidebar": "收合側邊欄",
+  "@shellCollapseSidebar": {
+    "description": "Web path: shell.collapseSidebar",
+    "x-webPath": "shell.collapseSidebar"
+  },
+  "shellExpandSidebar": "展開側邊欄",
+  "@shellExpandSidebar": {
+    "description": "Web path: shell.expandSidebar",
+    "x-webPath": "shell.expandSidebar"
   }
 }

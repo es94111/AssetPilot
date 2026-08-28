@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 
 import '../l10n.dart';
+import '../theme.dart';
 import '../widgets.dart';
 import 'accounts_screen.dart';
 import 'budgets_screen.dart';
@@ -12,6 +13,9 @@ import 'recurring_screen.dart';
 import 'reports_screen.dart';
 import 'settings_screen.dart';
 
+/// 「更多」頁：分區列出理財管理、報表分析與系統設定。
+/// 高頻功能（帳戶、預算、報表）已提升到 Dashboard 快速入口與底部分頁，
+/// 這裡保留完整入口並以語義分組，方便探索其餘功能。
 class MoreScreen extends StatelessWidget {
   final VoidCallback onLoggedOut;
   const MoreScreen({super.key, required this.onLoggedOut});
@@ -71,12 +75,20 @@ class MoreScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: Text(trKey('mobileLegacyMore'))),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
+        padding: const EdgeInsets.fromLTRB(
+          ApSpace.xl,
+          ApSpace.md,
+          ApSpace.xl,
+          ApSpace.xxl,
+        ),
         children: [
-          _MoreSection(title: trKey('navSectionsFinance'), items: finance),
-          SizedBox(height: 24),
+          _MoreSection(
+            title: trKey('navSectionsFinance'),
+            items: finance,
+          ),
+          const SizedBox(height: ApSpace.xl),
           _MoreSection(title: trKey('settingsAccountTitle'), items: system),
-          SizedBox(height: 24),
+          const SizedBox(height: ApSpace.xl),
           _MoreSection(
             title: trKey('mobileLegacyGettingStarted'),
             items: [
@@ -105,7 +117,7 @@ class _MoreSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SectionHeader(title: title),
-        SizedBox(height: 8),
+        const SizedBox(height: ApSpace.sm),
         LedgerCard(
           padding: EdgeInsets.zero,
           child: Column(
@@ -116,7 +128,8 @@ class _MoreSection extends StatelessWidget {
                   label: items[i].$2,
                   onTap: items[i].$3,
                 ),
-                if (i < items.length - 1) Divider(height: 1, indent: 68),
+                if (i < items.length - 1)
+                  const Divider(height: 1, indent: ApSpace.md * 6),
               ],
             ],
           ),
@@ -139,9 +152,22 @@ class _MoreTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return ListTile(
-      minVerticalPadding: 12,
-      leading: Icon(icon, color: Theme.of(context).colorScheme.primary),
+      minVerticalPadding: ApSpace.md,
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: ApSpace.lg,
+        vertical: ApSpace.xs,
+      ),
+      leading: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: apTokens(context).glassTint,
+          borderRadius: ApRadius.rSm,
+        ),
+        child: Icon(icon, color: scheme.primary, size: 20),
+      ),
       title: Text(label),
       trailing: const Icon(Icons.chevron_right),
       onTap: onTap,

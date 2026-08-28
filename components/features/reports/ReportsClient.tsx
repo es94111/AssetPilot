@@ -127,6 +127,17 @@ export default function ReportsClient(_props: { user?: any } = {}) {
   const chartInstanceRef = useRef<Chart | null>(null);
   // Chart data signature: skip rebuilds when data is unchanged during polling.
   const chartSignatureRef = useRef<string | null>(null);
+  // Track the active theme so charts re-render with theme-matched axis/legend colors.
+  const [isDarkTheme, setIsDarkTheme] = useState(false);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    const readTheme = () => setIsDarkTheme(root.classList.contains('dark-mode'));
+    readTheme();
+    const observer = new MutationObserver(readTheme);
+    observer.observe(root, { attributes: true, attributeFilter: ['class'] });
+    return () => observer.disconnect();
+  }, []);
 
   const fetchReport = useCallback(async (opts: { silent?: boolean } = {}) => {
     const { from, to } = getDateRange(period, customFrom, customTo);
@@ -208,6 +219,8 @@ export default function ReportsClient(_props: { user?: any } = {}) {
       const dataSet = activeTab === 'trend' ? (reportData?.monthlyMap || {}) : (reportData?.dailyMap || {});
       signature = activeTab + '|' + type + '|' + Object.keys(dataSet).sort().map((k) => `${k}:${dataSet[k]}`).join(',');
     }
+    // Theme participates in the signature so switching light/dark rebuilds the chart.
+    signature += '|theme:' + (isDarkTheme ? 'dark' : 'light');
     const sameCanvas = chartInstanceRef.current?.canvas === chartRef.current;
     if (chartInstanceRef.current && sameCanvas && chartSignatureRef.current === signature) return;
 
@@ -216,6 +229,18 @@ export default function ReportsClient(_props: { user?: any } = {}) {
     const ctx = chartRef.current.getContext('2d');
     if (!ctx) return;
 
+    // Theme-aware chrome resolved from CSS variables at render time.
+    const styles = getComputedStyle(document.documentElement);
+    const cssVar = (name: string, fallback: string) => (styles.getPropertyValue(name) || '').trim() || fallback;
+    const textColor = cssVar('--text-secondary', isDarkTheme ? '#a4adc0' : '#5c6370');
+    const gridColor = isDarkTheme ? 'rgba(255, 255, 255, 0.08)' : 'rgba(26, 29, 38, 0.08)';
+    const legendLabels = {
+      color: textColor,
+      usePointStyle: true,
+      pointStyle: 'circle' as const,
+      padding: 16,
+      font: { size: 12 },
+    };
     const colors = ['#3b82f6', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16', '#f97316', '#6366f1'];
     let chartConfig: any = { type: 'bar', data: { datasets: [] }, options: { responsive: true } };
 
@@ -228,11 +253,23 @@ export default function ReportsClient(_props: { user?: any } = {}) {
           datasets: [{
             data: filtered.map((row: any) => Number(row.total) || 0),
             backgroundColor: filtered.map((row: any, index: number) => row.color || colors[index % colors.length]),
+            borderColor: isDarkTheme ? '#151922' : '#ffffff',
+            borderWidth: 2,
+            hoverOffset: 6,
           }],
         },
         options: {
           responsive: true,
-          plugins: { legend: { position: 'bottom' } },
+          plugins: {
+            legend: { position: 'bottom', labels: legendLabels },
+            tooltip: {
+              backgroundColor: isDarkTheme ? '#1b202c' : '#1a1d26',
+              titleColor: '#e8eaef',
+              bodyColor: '#e8eaef',
+              padding: 10,
+              cornerRadius: 8,
+            },
+          },
           onClick: (_event: any, elements: any[]) => {
             if (!elements.length) return;
             const row = filtered[elements[0].index];
@@ -250,16 +287,45 @@ export default function ReportsClient(_props: { user?: any } = {}) {
           datasets: [{
             label: type === 'expense' ? t('features.common.expense') : t('features.common.income'),
             data: sortedKeys.map((key) => Number(dataSet[key]) || 0),
-            backgroundColor: type === 'expense' ? '#ef4444' : '#10b981',
+            backgroundColor: type === 'expense'
+              ? (isDarkTheme ? 'rgba(251, 113, 133, 0.75)' : 'rgba(190, 18, 60, 0.8)')
+              : (isDarkTheme ? 'rgba(52, 211, 153, 0.75)' : 'rgba(4, 120, 87, 0.8)'),
+            borderRadius: 6,
+            maxBarThickness: 48,
           }],
         },
-        options: { responsive: true, scales: { y: { beginAtZero: true } } },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: 'bottom', labels: legendLabels },
+            tooltip: {
+              backgroundColor: isDarkTheme ? '#1b202c' : '#1a1d26',
+              titleColor: '#e8eaef',
+              bodyColor: '#e8eaef',
+              padding: 10,
+              cornerRadius: 8,
+            },
+          },
+          scales: {
+            x: {
+              ticks: { color: textColor, font: { size: 11 } },
+              grid: { display: false },
+              border: { color: gridColor },
+            },
+            y: {
+              beginAtZero: true,
+              ticks: { color: textColor, font: { size: 11 } },
+              grid: { color: gridColor, drawTicks: false },
+              border: { display: false },
+            },
+          },
+        },
       };
     }
 
     chartInstanceRef.current = new Chart(ctx, chartConfig);
     chartSignatureRef.current = signature;
-  }, [reportData, activeTab, type, catRows, t]);
+  }, [reportData, activeTab, type, catRows, t, isDarkTheme]);
 
   // Destroy the chart only on unmount so data refreshes can reuse it.
   useEffect(() => () => {
@@ -287,10 +353,20 @@ export default function ReportsClient(_props: { user?: any } = {}) {
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold">{t('features.reports.title')}</h2>
-      <div className="flex gap-2 border-b">
+      <div className="flex gap-2 border-b" style={{ borderColor: 'var(--border)' }}>
         {(['category', 'trend', 'daily'] as const).map((tab) => (
-          <button key={tab} className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === tab ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`} onClick={() => setActiveTab(tab)}>
+          <button
+            key={tab}
+            className="relative px-4 py-2 text-sm font-medium transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            style={{ color: activeTab === tab ? 'var(--primary)' : 'var(--text-secondary)', fontWeight: activeTab === tab ? 600 : 500 }}
+            onClick={() => setActiveTab(tab)}
+          >
             {t(`features.reports.tabs.${tab}`)}
+            <span
+              aria-hidden="true"
+              className="absolute inset-x-2 bottom-0 h-0.5 rounded-full"
+              style={{ background: activeTab === tab ? 'var(--primary)' : 'transparent' }}
+            />
           </button>
         ))}
       </div>
@@ -324,7 +400,11 @@ export default function ReportsClient(_props: { user?: any } = {}) {
         </div>
       </div>
 
-      {loading ? <p className="text-slate-500">{t('common.loading')}</p> : (
+      {loading ? (
+        <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-lg shadow-sm space-y-3" aria-busy="true">
+          <div className="ui-skeleton h-64 w-full" />
+        </div>
+      ) : (
         <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-lg shadow-sm">
           <canvas ref={chartRef} className="max-h-96" />
         </div>

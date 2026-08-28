@@ -6,6 +6,7 @@ import '../format.dart';
 import '../models.dart';
 import '../widgets.dart';
 import '../l10n.dart';
+import '../theme.dart';
 
 Map<String, String> get _freqLabels => {
   'daily': trKey('featuresRecurringFrequencyLabelsDaily'),
@@ -133,51 +134,71 @@ class _RecurringScreenState extends State<RecurringScreen> {
           }
           return RefreshIndicator(
             onRefresh: () async => _reload(),
-            child: ListView.separated(
-              padding: const EdgeInsets.only(bottom: 88),
+            child: ListView.builder(
+              padding: const EdgeInsets.fromLTRB(
+                ApSpace.lg,
+                ApSpace.sm,
+                ApSpace.lg,
+                88,
+              ),
               itemCount: data.items.length,
-              separatorBuilder: (_, _) => Divider(height: 1),
               itemBuilder: (context, i) {
                 final r = data.items[i];
                 final isIncome = r.type == 'income';
-                return ListTile(
-                  leading: CircleAvatar(
-                    backgroundColor: (isIncome ? Colors.green : Colors.red)
-                        .withValues(alpha: 0.15),
-                    child: Icon(
-                      isIncome ? Icons.south_west : Icons.north_east,
-                      color: isIncome ? Colors.green : Colors.red,
-                      size: 20,
-                    ),
-                  ),
-                  title: Text(
-                    data.catName[r.categoryId] ??
-                        (r.note.isEmpty
-                            ? trKey('dashboardUncategorized')
-                            : r.note),
-                  ),
-                  subtitle: Text(
-                    trKey('mobileDynamicRecurringSubtitle', {
-                      'frequency': _freqLabels[r.frequency] ?? r.frequency,
-                      'account': data.accName[r.accountId] ?? '',
-                      'startDate': r.startDate,
-                    }),
-                  ),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        (isIncome ? '+' : '-') + money(r.amount, r.currency),
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: isIncome ? Colors.green : Colors.red,
+                final flow = flowColor(income: isIncome, context: context);
+                return StaggerIn(
+                  index: i,
+                  child: LedgerCard(
+                    margin: const EdgeInsets.only(bottom: ApSpace.sm),
+                    padding: EdgeInsets.zero,
+                    onTap: () => _openForm(data, r),
+                    child: ListTile(
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: ApSpace.md + 2,
+                        vertical: ApSpace.xs,
+                      ),
+                      leading: CircleAvatar(
+                        backgroundColor: flow.withValues(alpha: 0.14),
+                        child: Icon(
+                          isIncome ? Icons.south_west : Icons.north_east,
+                          color: flow,
+                          size: 20,
                         ),
                       ),
-                      Switch(value: r.isActive, onChanged: (_) => _toggle(r)),
-                    ],
+                      title: Text(
+                        data.catName[r.categoryId] ??
+                            (r.note.isEmpty
+                                ? trKey('dashboardUncategorized')
+                                : r.note),
+                      ),
+                      subtitle: Text(
+                        trKey('mobileDynamicRecurringSubtitle', {
+                          'frequency': _freqLabels[r.frequency] ?? r.frequency,
+                          'account': data.accName[r.accountId] ?? '',
+                          'startDate': r.startDate,
+                        }),
+                      ),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            (isIncome ? '+' : '-') +
+                                money(r.amount, r.currency),
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              color: flow,
+                            ),
+                          ),
+                          Switch(
+                            value: r.isActive,
+                            onChanged: (_) => _toggle(r),
+                          ),
+                        ],
+                      ),
+                      onTap: () => _openForm(data, r),
+                      onLongPress: () => _delete(r),
+                    ),
                   ),
-                  onTap: () => _openForm(data, r),
-                  onLongPress: () => _delete(r),
                 );
               },
             ),
@@ -501,8 +522,10 @@ class _RecurringFormState extends State<_RecurringForm> {
               SizedBox(height: 12),
               ListTile(
                 shape: RoundedRectangleBorder(
-                  side: BorderSide(color: Theme.of(context).dividerColor),
-                  borderRadius: BorderRadius.circular(4),
+                  side: BorderSide(
+                    color: Theme.of(context).colorScheme.outlineVariant,
+                  ),
+                  borderRadius: ApRadius.rSm,
                 ),
                 leading: Icon(Icons.calendar_today),
                 title: Text(trKey('featuresRecurringStartDate')),

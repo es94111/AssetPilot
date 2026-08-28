@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../api_client.dart';
 import '../format.dart';
 import '../models.dart';
+import '../theme.dart';
 import '../widgets.dart';
 import '../l10n.dart';
 
@@ -344,8 +345,8 @@ class _StockStatusSection extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 11,
                           color: s.delisted
-                              ? Colors.amber.shade800
-                              : Colors.green.shade700,
+                              ? apTokens(context).warning
+                              : apTokens(context).income,
                         ),
                       ),
                       visualDensity: VisualDensity.compact,
@@ -498,8 +499,8 @@ class _RecurringSection extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 11,
                           color: r.isActive
-                              ? Colors.green.shade700
-                              : Colors.grey,
+                              ? apTokens(context).income
+                              : Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                       ),
                       visualDensity: VisualDensity.compact,
@@ -691,8 +692,10 @@ class _RecurringFormState extends State<_RecurringForm> {
               SizedBox(height: 12),
               ListTile(
                 shape: RoundedRectangleBorder(
-                  side: BorderSide(color: Theme.of(context).dividerColor),
-                  borderRadius: BorderRadius.circular(4),
+                  side: BorderSide(
+                    color: Theme.of(context).colorScheme.outlineVariant,
+                  ),
+                  borderRadius: ApRadius.rSm,
                 ),
                 leading: Icon(Icons.calendar_today),
                 title: Text(trKey('featuresStocksSettingsStartDate')),

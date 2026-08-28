@@ -17,7 +17,7 @@ export default function StocksTabNav() {
   const { t } = useT();
 
   return (
-    <nav aria-label={t('nav.titleStocks')} className="mb-5 flex gap-1 overflow-x-auto border-b border-slate-200">
+    <nav aria-label={t('nav.titleStocks')} className="mb-5 flex gap-1 overflow-x-auto border-b" style={{ borderColor: 'var(--border)' }}>
       {TABS.map(tab => {
         const isActive = pathname === tab.path || (tab.path === '/stocks/portfolio' && pathname === '/stocks');
         return (
@@ -25,13 +25,20 @@ export default function StocksTabNav() {
             key={tab.path}
             href={tab.path}
             aria-current={isActive ? 'page' : undefined}
-            className={`flex min-h-11 shrink-0 items-center border-b-2 px-4 py-2 text-sm font-medium transition-colors ${
-              isActive 
-                ? 'border-blue-600 text-blue-600' 
-                : 'border-transparent text-slate-500 hover:text-slate-700'
-            }`}
+            className="relative flex min-h-11 shrink-0 items-center px-4 py-2 text-sm font-medium transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            style={{
+              color: isActive ? 'var(--primary)' : 'var(--text-secondary)',
+            }}
           >
             {t(tab.key)}
+            <span
+              aria-hidden="true"
+              className="absolute inset-x-2 bottom-0 h-0.5 rounded-full transition-all duration-200"
+              style={{
+                background: isActive ? 'var(--primary)' : 'transparent',
+                boxShadow: isActive ? '0 1px 0 0 var(--primary)' : 'none',
+              }}
+            />
           </Link>
         );
       })}

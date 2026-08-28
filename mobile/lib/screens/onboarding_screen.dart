@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../l10n.dart';
+import '../theme.dart';
 
 /// 第一次使用教學是否看過的旗標。改版調整教學內容時可遞增 key 版本讓舊用戶重看。
 const _kOnboardingSeenKey = 'onboarding_seen_v1';
@@ -95,9 +96,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
+    final tokens = apTokens(context);
     return Scaffold(
-      body: SafeArea(
-        child: Column(
+      body: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: tokens.pageGradient,
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
           children: [
             Align(
               alignment: Alignment.centerRight,
@@ -182,6 +192,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ),
             ),
           ],
+          ),
         ),
       ),
     );

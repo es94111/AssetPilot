@@ -233,7 +233,7 @@ export default function StockSettingsClient(_props: { user?: any } = {}) {
   }
 
   if (loading)
-    return <div className="p-8 text-slate-500">{t("common.loading")}</div>;
+    return <div className="p-8 space-y-4" aria-busy="true"><div className="ui-skeleton h-10 w-full" /><div className="ui-skeleton h-48 w-full" /></div>;
   const frequencyOptions = FREQUENCY_VALUES.map((value) => ({
     label: t(`features.stocks.settings.frequencyLabels.${value}`),
     value,

@@ -5,6 +5,7 @@ import '../app_widget_sync.dart';
 import '../format.dart';
 import '../models.dart';
 import '../widgets.dart';
+import '../theme.dart';
 import 'transaction_form_screen.dart';
 import '../l10n.dart';
 
@@ -216,7 +217,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                     padding: const EdgeInsets.only(bottom: 8),
                     child: Text(
                       trKey('featuresTransactionsRepaymentSummaryStale'),
-                      style: TextStyle(color: Colors.orange),
+                      style: TextStyle(color: apTokens(context).warning),
                     ),
                   ),
                 Text('${trKey('dashboardTableDate')}：${summary.date}'),
@@ -313,13 +314,19 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
             const SizedBox(height: 12),
             Text(
               trKey('featuresTransactionsRestoreNoteCurrentLabel'),
-              style: TextStyle(fontSize: 12, color: Colors.grey),
+              style: TextStyle(
+                fontSize: 12,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
             Text('${snapshot['currentNote'] ?? ''}'),
             const SizedBox(height: 8),
             Text(
               trKey('featuresTransactionsRestoreNotePreviewLabel'),
-              style: TextStyle(fontSize: 12, color: Colors.grey),
+              style: TextStyle(
+                fontSize: 12,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
             Text('${snapshot['preAiNote'] ?? ''}'),
           ],
@@ -452,58 +459,78 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
           if (list.isEmpty) {
             return EmptyState(
               icon: Icons.receipt_long,
-              message: _hasAdvancedFilter
+              title: _hasAdvancedFilter
                   ? trKey('mobileLegacyNoTransactionsMatchTheseFilters')
                   : trKey(
                       'mobileLegacyNoTransactionsYetTapAddTransactionToBegin',
                     ),
+              message: _hasAdvancedFilter
+                  ? trKey('mobileLegacyClearFilters')
+                  : trKey('mobileLegacyAddTransaction'),
+              onAction: _hasAdvancedFilter ? _clearFilters : null,
+              actionLabel: _hasAdvancedFilter
+                  ? trKey('mobileLegacyClearFilters')
+                  : null,
             );
           }
           return RefreshIndicator(
             onRefresh: () async => _reload(),
             child: ListView.builder(
-              padding: const EdgeInsets.fromLTRB(12, 8, 12, 96),
+              padding: const EdgeInsets.fromLTRB(
+                ApSpace.md + 2,
+                ApSpace.sm,
+                ApSpace.md + 2,
+                96,
+              ),
               itemCount: list.length,
               itemBuilder: (context, i) {
                 final t = list[i];
-                return Dismissible(
-                  key: ValueKey(t.id),
-                  direction: DismissDirection.endToStart,
-                  // 由 confirmDismiss 跳出確認並執行刪除；回傳 false 時列項不會被移除。
-                  confirmDismiss: (_) => _delete(t),
-                  background: Container(
-                    color: Theme.of(context).colorScheme.error,
-                    alignment: Alignment.centerRight,
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: Icon(Icons.delete, color: Colors.white),
-                  ),
-                  child: _TxnTile(
-                    t: t,
-                    categoryName: data.catName[t.categoryId],
-                    onTap: () => t.type == 'transfer'
-                        ? toast(
-                            context,
-                            trKey('mobileLegacyEditTransfersInTheWebApp'),
-                          )
-                        : t.isFxFee
-                        ? toast(
-                            context,
-                            trKey(
-                              'mobileLegacyForeignCardFeesAreGeneratedAutomaticallyEditThe',
-                            ),
-                          )
-                        : _openForm(t),
-                    onLongPress: () => _delete(t),
-                    onDelete: () => _delete(t),
-                    onRestoreCreated: t.aiCreated
-                        ? () => _restoreAiCreated(t)
-                        : null,
-                    onRestoreNote: t.noteAiModified
-                        ? () => _restoreAiNote(t)
-                        : null,
-                    onViewRepaymentSummary: t.repaymentSummaryId.isNotEmpty
-                        ? () => _openRepaymentSummary(t.repaymentSummaryId)
-                        : null,
+                return StaggerIn(
+                  index: i,
+                  child: Dismissible(
+                    key: ValueKey(t.id),
+                    direction: DismissDirection.endToStart,
+                    // 由 confirmDismiss 跳出確認並執行刪除；回傳 false 時列項不會被移除。
+                    confirmDismiss: (_) => _delete(t),
+                    background: Container(
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.error,
+                        borderRadius: ApRadius.rMd,
+                      ),
+                      alignment: Alignment.centerRight,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: ApSpace.xl,
+                      ),
+                      child: const Icon(Icons.delete, color: Colors.white),
+                    ),
+                    child: _TxnTile(
+                      t: t,
+                      categoryName: data.catName[t.categoryId],
+                      onTap: () => t.type == 'transfer'
+                          ? toast(
+                              context,
+                              trKey('mobileLegacyEditTransfersInTheWebApp'),
+                            )
+                          : t.isFxFee
+                          ? toast(
+                              context,
+                              trKey(
+                                'mobileLegacyForeignCardFeesAreGeneratedAutomaticallyEditThe',
+                              ),
+                            )
+                          : _openForm(t),
+                      onLongPress: () => _delete(t),
+                      onDelete: () => _delete(t),
+                      onRestoreCreated: t.aiCreated
+                          ? () => _restoreAiCreated(t)
+                          : null,
+                      onRestoreNote: t.noteAiModified
+                          ? () => _restoreAiNote(t)
+                          : null,
+                      onViewRepaymentSummary: t.repaymentSummaryId.isNotEmpty
+                          ? () => _openRepaymentSummary(t.repaymentSummaryId)
+                          : null,
+                    ),
                   ),
                 );
               },
@@ -556,12 +583,16 @@ class _TxnTile extends StatelessWidget {
               : (t.note.isEmpty ? trKey('dashboardUncategorized') : t.note));
 
     return LedgerCard(
-      margin: const EdgeInsets.only(bottom: 8),
+      margin: const EdgeInsets.only(bottom: ApSpace.sm),
       padding: EdgeInsets.zero,
+      onTap: onTap,
       child: ListTile(
         onTap: onTap,
         onLongPress: onLongPress,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: ApSpace.md + 2,
+          vertical: ApSpace.xs,
+        ),
         leading: CircleAvatar(
           backgroundColor: color.withValues(alpha: 0.14),
           child: Icon(icon, color: color, size: 20),
@@ -602,9 +633,9 @@ class _TxnTile extends StatelessWidget {
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
+            AnimatedTextSwap(
               // 外幣交易顯示原幣別金額（如 USD 100），TWD 交易維持台幣金額。
-              sign + money(t.originalAmount, t.currency),
+              text: sign + money(t.originalAmount, t.currency),
               style: TextStyle(fontWeight: FontWeight.w700, color: color),
             ),
             PopupMenuButton<String>(
@@ -672,7 +703,7 @@ class _TxnMeta extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Icon(icon, size: 14, color: color),
-        SizedBox(width: 2),
+        const SizedBox(width: 2),
         Text(label, style: TextStyle(fontSize: 12, color: color)),
       ],
     );

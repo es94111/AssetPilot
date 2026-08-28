@@ -5,6 +5,7 @@ import '../format.dart';
 import '../models.dart';
 import '../widgets.dart';
 import '../l10n.dart';
+import '../theme.dart';
 import '../credit_card_repayment_allocation.dart';
 
 Map<String, String> get _accountCategories => {
@@ -131,78 +132,120 @@ class _AccountsScreenState extends State<AccountsScreen> {
           if (list.isEmpty) {
             return EmptyState(
               icon: Icons.account_balance_wallet,
-              message: trKey('notificationsEmptyNoAccount'),
+              title: trKey('notificationsEmptyNoAccount'),
+              message: trKey('featuresAccountsAddAccount'),
+              onAction: () => _openForm(),
+              actionLabel: trKey('featuresAccountsAddAccount'),
             );
           }
           final total = list
               .where((a) => !a.excludeFromTotal)
               .fold<num>(0, (s, a) => s + a.twdAccumulated);
+          final tokens = apTokens(context);
           return RefreshIndicator(
             onRefresh: () async => _reload(),
             child: ListView(
-              padding: const EdgeInsets.only(bottom: 88),
+              padding: const EdgeInsets.fromLTRB(
+                ApSpace.lg,
+                ApSpace.lg,
+                ApSpace.lg,
+                88,
+              ),
               children: [
-                Card(
-                  elevation: 0,
-                  margin: const EdgeInsets.all(16),
-                  color: Theme.of(context).colorScheme.primaryContainer,
-                  child: Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          trKey('mobileLegacyTotalAssetsInTwd'),
-                          style: TextStyle(
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.onPrimaryContainer,
+                Container(
+                  padding: const EdgeInsets.all(ApSpace.xl),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: tokens.heroGradient,
+                    ),
+                    borderRadius: ApRadius.rXl,
+                    border: Border.all(color: tokens.glassBorder),
+                    boxShadow: [
+                      BoxShadow(
+                        color: tokens.shadow,
+                        blurRadius: 20,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        trKey('mobileLegacyTotalAssetsInTwd'),
+                        style: TextStyle(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      const SizedBox(height: ApSpace.xs + 2),
+                      AnimatedTextSwap(
+                        text: twd(total),
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.5,
+                          color: tokens.net,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: ApSpace.lg),
+                ...list.indexed.map(
+                  (e) => StaggerIn(
+                    index: e.$1,
+                    child: LedgerCard(
+                      margin: const EdgeInsets.only(bottom: ApSpace.sm),
+                      padding: EdgeInsets.zero,
+                      onTap: () => _openForm(e.$2),
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: ApSpace.md + 2,
+                          vertical: ApSpace.xs,
+                        ),
+                        leading: CircleAvatar(
+                          backgroundColor: tokens.glassTint,
+                          child: Icon(
+                            _iconFor(e.$2.category),
+                            size: 20,
+                            color: Theme.of(context).colorScheme.primary,
                           ),
                         ),
-                        SizedBox(height: 6),
-                        Text(
-                          twd(total),
-                          style: TextStyle(
-                            fontSize: 26,
-                            fontWeight: FontWeight.bold,
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.onPrimaryContainer,
-                          ),
+                        isThreeLine:
+                            e.$2.statementClosingDay != null &&
+                            e.$2.cycleSpending != null,
+                        title: Text(e.$2.name),
+                        subtitle: _accountSubtitle(context, e.$2),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            AnimatedTextSwap(
+                              text: money(e.$2.balance, e.$2.currency),
+                              style: TextStyle(
+                                fontWeight: FontWeight.w700,
+                                color: e.$2.balance < 0
+                                    ? tokens.expense
+                                    : Theme.of(
+                                        context,
+                                      ).colorScheme.onSurface,
+                              ),
+                            ),
+                            if (e.$2.statementClosingDay != null)
+                              IconButton(
+                                tooltip: trKey('featuresAccountsCyclesTitle'),
+                                icon: const Icon(Icons.receipt_long_outlined),
+                                onPressed: () => _openCycles(e.$2),
+                              ),
+                          ],
                         ),
-                      ],
+                      ),
                     ),
                   ),
                 ),
-                for (final a in list)
-                  ListTile(
-                    leading: CircleAvatar(child: Icon(_iconFor(a.category))),
-                    isThreeLine:
-                        a.statementClosingDay != null &&
-                        a.cycleSpending != null,
-                    title: Text(a.name),
-                    subtitle: _accountSubtitle(context, a),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          money(a.balance, a.currency),
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: a.balance < 0 ? Colors.red : null,
-                          ),
-                        ),
-                        if (a.statementClosingDay != null)
-                          IconButton(
-                            tooltip: trKey('featuresAccountsCyclesTitle'),
-                            icon: Icon(Icons.receipt_long_outlined),
-                            onPressed: () => _openCycles(a),
-                          ),
-                      ],
-                    ),
-                    onTap: () => _openForm(a),
-                    onLongPress: () => _delete(a),
-                  ),
               ],
             ),
           );
@@ -222,18 +265,19 @@ class _AccountsScreenState extends State<AccountsScreen> {
     final range = (a.cycleStart != null && a.cycleEnd != null)
         ? '（${_md(a.cycleStart!)}–${_md(a.cycleEnd!)}）'
         : '';
+    final tokens = apTokens(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(base),
-        SizedBox(height: 2),
+        const SizedBox(height: 2),
         Text(
           trKey('mobileDynamicCurrentSpending', {
             'amount': money(a.cycleSpending!, a.currency),
             'range': range,
           }),
           style: TextStyle(
-            color: Theme.of(context).colorScheme.error,
+            color: tokens.expense,
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -246,14 +290,14 @@ class _AccountsScreenState extends State<AccountsScreen> {
                   text: trKey('mobileDynamicSpentAmount', {
                     'amount': money(a.lastCycleSpending!, a.currency),
                   }),
-                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                  style: TextStyle(color: tokens.expense),
                 ),
                 TextSpan(text: ' / '),
                 TextSpan(
                   text: trKey('mobileDynamicPaidAmount', {
                     'amount': money(a.lastCyclePayment ?? 0, a.currency),
                   }),
-                  style: TextStyle(color: Color(0xFF2E7D32)),
+                  style: TextStyle(color: tokens.income),
                 ),
               ],
             ),
@@ -677,8 +721,10 @@ class _RepaymentSheetState extends State<_RepaymentSheet> {
       SizedBox(height: 12),
       ListTile(
         shape: RoundedRectangleBorder(
-          side: BorderSide(color: Theme.of(context).dividerColor),
-          borderRadius: BorderRadius.circular(4),
+          side: BorderSide(
+            color: Theme.of(context).colorScheme.outlineVariant,
+          ),
+          borderRadius: ApRadius.rSm,
         ),
         leading: Icon(Icons.calendar_today),
         title: Text(trKey('dashboardTableDate')),
@@ -731,13 +777,18 @@ class _RepaymentSheetState extends State<_RepaymentSheet> {
           child: Text(
             trKey('featuresAccountsMessagesRepaymentTotalAmountTooSmall',
                 {'min': _minTotalAmount}),
-            style: TextStyle(color: Colors.red),
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.error,
+            ),
           ),
         ),
       if (_error != null)
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 4),
-          child: Text(_error!, style: TextStyle(color: Colors.red)),
+          child: Text(
+            _error!,
+            style: TextStyle(color: Theme.of(context).colorScheme.error),
+          ),
         ),
       SizedBox(height: 12),
       FilledButton(
@@ -933,7 +984,7 @@ class _StatementCyclesSheetState extends State<_StatementCyclesSheet> {
                                   'amount': money(c.spending, _currency),
                                 }),
                                 style: TextStyle(
-                                  color: Color(0xFFD32F2F),
+                                  color: apTokens(context).expense,
                                   fontSize: 13,
                                 ),
                               ),
@@ -942,7 +993,7 @@ class _StatementCyclesSheetState extends State<_StatementCyclesSheet> {
                                   'amount': money(c.payment, _currency),
                                 }),
                                 style: TextStyle(
-                                  color: Color(0xFF2E7D32),
+                                  color: apTokens(context).income,
                                   fontSize: 13,
                                 ),
                               ),

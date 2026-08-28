@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import '../api_client.dart';
 import '../app_widget_sync.dart';
 import '../models.dart';
+import '../theme.dart';
 import '../widgets.dart';
 import '../l10n.dart';
 
@@ -693,8 +694,10 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
           SizedBox(height: 16),
           ListTile(
             shape: RoundedRectangleBorder(
-              side: BorderSide(color: Theme.of(context).dividerColor),
-              borderRadius: BorderRadius.circular(4),
+              side: BorderSide(
+                color: Theme.of(context).colorScheme.outlineVariant,
+              ),
+              borderRadius: ApRadius.rSm,
             ),
             leading: Icon(Icons.calendar_today),
             title: Text(trKey('dashboardTableDate')),

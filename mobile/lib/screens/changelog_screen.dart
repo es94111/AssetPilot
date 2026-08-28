@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 import '../api_client.dart';
+import '../theme.dart';
 import '../widgets.dart';
 import '../l10n.dart';
 
@@ -184,15 +185,20 @@ class _ChangelogScreenState extends State<ChangelogScreen> {
   }
 
   Widget _tagChip(BuildContext context, String tag) {
+    final tokens = apTokens(context);
+    final scheme = Theme.of(context).colorScheme;
     final (label, color) = switch (tag) {
-      'new' => (trKey('commonAdd'), Colors.green),
-      'improved' => (trKey('mobileLegacyImproved'), Colors.blue),
-      'fixed' || 'fix' => (trKey('mobileLegacyFixed'), Colors.orange),
-      'removed' => (trKey('featuresTransactionsRemove'), Colors.grey),
-      'warning' => (trKey('mobileLegacyNotice'), Colors.red),
+      'new' => (trKey('commonAdd'), tokens.income),
+      'improved' => (trKey('mobileLegacyImproved'), tokens.net),
+      'fixed' || 'fix' => (trKey('mobileLegacyFixed'), tokens.warning),
+      'removed' => (
+        trKey('featuresTransactionsRemove'),
+        scheme.onSurfaceVariant,
+      ),
+      'warning' => (trKey('mobileLegacyNotice'), tokens.expense),
       _ => (
         tag.isEmpty ? trKey('mobileLegacyUpdatedd9db02d0') : tag,
-        Colors.grey,
+        scheme.onSurfaceVariant,
       ),
     };
     return Container(

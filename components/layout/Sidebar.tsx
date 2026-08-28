@@ -7,7 +7,7 @@ import {
   LayoutDashboard, Receipt, ChartBar, Wallet, Building2, Tags, Repeat,
   Briefcase, Key, User, Shield, Database, LogOut, TrendingUp, Coins,
   BarChart3, Settings2, Sun, Moon, Monitor, Info, TableProperties,
-  X, Plug, Bot,
+  X, Plug, Bot, PanelLeftClose, PanelLeftOpen,
 } from 'lucide-react';
 import { useEffect, useRef, useState, type ElementType } from 'react';
 import { useTheme, type Theme } from '@/hooks/useTheme';
@@ -41,7 +41,6 @@ const NAV_SECTIONS = [
   },
   {
     labelKey: 'nav.sections.system',
-    adminOnly: false,
     items: [
       { path: '/settings/export',  labelKey: 'nav.exportImport', icon: Database },
       { path: '/settings/mcp',     labelKey: 'nav.mcp',          icon: Plug },
@@ -81,16 +80,40 @@ type ChangelogData = {
   releases?: ChangelogRelease[];
 };
 
+const SIDEBAR_COLLAPSED_KEY = 'sidebar-collapsed';
+
 export default function Sidebar({ user, open, onClose }: { user: any; open?: boolean; onClose?: () => void }) {
   const pathname = usePathname();
   const router = useRouter();
   const { t } = useT();
   const { theme, setTheme } = useTheme();
   const sidebarRef = useRef<HTMLElement>(null);
+  const [collapsed, setCollapsed] = useState(false);
   const [changelogOpen, setChangelogOpen] = useState(false);
   const [changelog, setChangelog] = useState<ChangelogData | null>(null);
   const [changelogLoading, setChangelogLoading] = useState(false);
   const [changelogError, setChangelogError] = useState('');
+
+  // Restore desktop collapse preference (mobile drawer is never collapsed).
+  useEffect(() => {
+    try {
+      setCollapsed(window.localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === '1');
+    } catch {
+      /* storage unavailable — keep expanded */
+    }
+  }, []);
+
+  const toggleCollapsed = () => {
+    setCollapsed(prev => {
+      const next = !prev;
+      try {
+        window.localStorage.setItem(SIDEBAR_COLLAPSED_KEY, next ? '1' : '0');
+      } catch {
+        /* ignore persistence failures */
+      }
+      return next;
+    });
+  };
 
   useEffect(() => {
     if (!open) return;
@@ -163,19 +186,20 @@ export default function Sidebar({ user, open, onClose }: { user: any; open?: boo
         ref={sidebarRef}
         id="assetpilot-navigation"
         data-open={open ? 'true' : 'false'}
-        aria-label={t('nav.sections.finance')}
-        className="app-sidebar fixed inset-y-0 start-0 z-50 flex h-full w-64 flex-col overflow-y-auto transition-transform duration-200 [padding-top:env(safe-area-inset-top)] [padding-bottom:env(safe-area-inset-bottom)]"
+        data-collapsed={collapsed ? 'true' : 'false'}
+        aria-label={t('shell.mainNav')}
+        className="app-sidebar group/sidebar fixed inset-y-0 start-0 z-50 flex h-full w-64 flex-col overflow-hidden transition-[width,transform] duration-200 ease-[var(--ease-out)] [padding-top:env(safe-area-inset-top)] [padding-bottom:env(safe-area-inset-bottom)] lg:data-[collapsed=true]:w-[4.5rem]"
         style={{ background: 'var(--surface-glass)', borderInlineEnd: '1px solid var(--glass-border)', backdropFilter: 'var(--glass-blur)', WebkitBackdropFilter: 'var(--glass-blur)' }}
       >
         {/* Logo */}
-        <div className="flex items-center gap-2.5 px-3 py-2.5 sm:px-5 sm:py-4" style={{ borderBottom: '1px solid var(--border)' }}>
-          <Image src="/favicon.svg" alt="" width={28} height={28} />
-          <span className="text-lg font-bold tracking-tight" style={{ color: 'var(--text)' }}>AssetPilot</span>
+        <div className="flex h-16 items-center gap-2.5 px-4" style={{ borderBottom: '1px solid var(--border)' }}>
+          <Image src="/favicon.svg" alt="" width={28} height={28} className="shrink-0" />
+          <span className="truncate text-lg font-bold tracking-tight lg:group-data-[collapsed=true]/sidebar:hidden" style={{ color: 'var(--text)' }}>AssetPilot</span>
           <button
             type="button"
             onClick={onClose}
-            aria-label={t('common.close')}
-            className="ms-auto flex min-h-11 min-w-11 items-center justify-center rounded-lg lg:hidden"
+            aria-label={t('shell.closeMenu')}
+            className="ms-auto flex min-h-11 min-w-11 items-center justify-center rounded-lg transition-colors hover:bg-[var(--surface-hover)] lg:hidden"
             style={{ color: 'var(--text-secondary)' }}
           >
             <X size={20} aria-hidden="true" />
@@ -183,14 +207,17 @@ export default function Sidebar({ user, open, onClose }: { user: any; open?: boo
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-5">
+        <nav className="flex-1 overflow-y-auto overflow-x-hidden px-3 py-4" aria-label={t('shell.mainNav')}>
           {NAV_SECTIONS.map(section => {
             const visibleItems = section.items.filter(item => !(item as any).requireAdmin || user?.isAdmin);
             if (visibleItems.length === 0) return null;
             return (
-              <div key={section.labelKey}>
-                <p className="mb-1.5 px-2 text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>
-                  {t(section.labelKey)}
+              <div key={section.labelKey} className="mb-5 last:mb-0" data-section={section.labelKey}>
+                <p
+                  className="mb-1.5 px-2 text-[0.6875rem] font-semibold uppercase tracking-[0.14em] transition-colors"
+                  style={{ color: 'var(--text-muted)' }}
+                >
+                  {collapsed ? '·' : t(section.labelKey)}
                 </p>
                 <div className="space-y-0.5">
                   {visibleItems.map(item => {
@@ -202,18 +229,18 @@ export default function Sidebar({ user, open, onClose }: { user: any; open?: boo
                         href={item.path}
                         onClick={onClose}
                         aria-current={active ? 'page' : undefined}
-                        className="flex min-h-11 w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-                        style={active
-                          ? { background: 'var(--primary-light-bg)', color: 'var(--primary)' }
-                          : { color: 'var(--text-secondary)' }
-                        }
-                        onMouseEnter={e => { if (!active) (e.currentTarget as HTMLElement).style.background = 'var(--border)'; }}
-                        onMouseLeave={e => { if (!active) (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
+                        title={collapsed ? t(item.labelKey) : undefined}
+                        className={`nav-link ${collapsed ? 'justify-center px-0' : ''}`}
                       >
-                        <Icon size={17} strokeWidth={active ? 2.2 : 1.8} />
-                        <span>{t(item.labelKey)}</span>
-                        {active && (
-                          <span className="ms-auto h-1.5 w-1.5 rounded-full" style={{ background: 'var(--primary)' }} />
+                        <Icon
+                          size={17}
+                          strokeWidth={active ? 2.2 : 1.8}
+                          className="shrink-0"
+                          aria-hidden="true"
+                        />
+                        {!collapsed && <span className="min-w-0 flex-1 truncate">{t(item.labelKey)}</span>}
+                        {active && !collapsed && (
+                          <span aria-hidden="true" className="ms-auto h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: 'var(--primary)' }} />
                         )}
                       </Link>
                     );
@@ -224,61 +251,76 @@ export default function Sidebar({ user, open, onClose }: { user: any; open?: boo
           })}
         </nav>
 
-        {/* User footer */}
+        {/* Footer: user, theme switcher, meta actions */}
         <div className="px-3 pb-4" style={{ borderTop: '1px solid var(--border)', paddingTop: '12px' }}>
-          <div className="mb-2 flex items-center gap-3 rounded-lg px-3 py-2">
+          <div className={`mb-2 flex items-center gap-3 rounded-lg px-2 py-2 ${collapsed ? 'justify-center px-0' : ''}`}>
             <div
               className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold"
               style={{ background: 'var(--primary-light-bg)', color: 'var(--primary)' }}
+              aria-hidden="true"
             >
               {(user?.displayName || user?.email || 'U')[0].toUpperCase()}
             </div>
-            <div className="min-w-0">
-              <p className="truncate text-sm font-medium" style={{ color: 'var(--text)' }}>
-                {user?.displayName || t('shell.fallbackUser')}
-              </p>
-              <p className="truncate text-xs" style={{ color: 'var(--text-muted)' }}>
-                {user?.email || ''}
-              </p>
-            </div>
+            {!collapsed && (
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium" style={{ color: 'var(--text)' }}>
+                  {user?.displayName || t('shell.fallbackUser')}
+                </p>
+                <p className="truncate text-xs" style={{ color: 'var(--text-muted)' }}>
+                  {user?.email || ''}
+                </p>
+              </div>
+            )}
           </div>
-          <div className="mb-1 flex items-center justify-between rounded-lg px-3 py-1.5" style={{ background: 'var(--border)' }}>
+          <div
+            className={`mb-1 flex items-center rounded-lg p-1 ${collapsed ? 'flex-col gap-1' : 'justify-between'}`}
+            style={{ background: 'var(--surface-subtle)' }}
+            role="group"
+            aria-label={t('settings.account.themeTitle')}
+          >
             {THEME_OPTIONS.map(({ value, icon: Icon, labelKey }) => (
               <button
                 key={value}
                 onClick={() => setTheme(value)}
                 title={t(labelKey)}
+                aria-label={t(labelKey)}
                 aria-pressed={theme === value}
-                className="flex flex-1 items-center justify-center gap-1.5 rounded-md py-1.5 text-xs font-medium transition-colors duration-150 cursor-pointer"
+                className={`flex min-h-9 items-center justify-center gap-1.5 rounded-md text-xs font-medium transition-all duration-150 cursor-pointer hover:bg-[var(--surface-hover)] ${collapsed ? 'w-9' : 'flex-1 px-2 py-1.5'}`}
                 style={theme === value
                   ? { background: 'var(--surface)', color: 'var(--primary)', boxShadow: 'var(--shadow)' }
                   : { color: 'var(--text-muted)' }
                 }
               >
                 <Icon size={14} strokeWidth={theme === value ? 2.2 : 1.8} aria-hidden="true" />
-                <span>{t(labelKey)}</span>
+                {!collapsed && <span>{t(labelKey)}</span>}
               </button>
             ))}
           </div>
           <button
-            onClick={handleOpenChangelog}
-            className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-150 cursor-pointer"
-            style={{ color: 'var(--text-secondary)' }}
-            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--border)'; }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
+            onClick={toggleCollapsed}
+            className="nav-link hidden lg:flex"
+            title={collapsed ? t('shell.expandSidebar') : t('shell.collapseSidebar')}
+            aria-expanded={!collapsed}
           >
-            <Info size={17} strokeWidth={1.8} />
-            <span>{t('shell.versionInfo')}</span>
+            {collapsed ? <PanelLeftOpen size={17} strokeWidth={1.8} aria-hidden="true" /> : <PanelLeftClose size={17} strokeWidth={1.8} aria-hidden="true" />}
+            {!collapsed && <span className="min-w-0 flex-1 truncate">{t('shell.collapseSidebar')}</span>}
+          </button>
+          <button
+            onClick={handleOpenChangelog}
+            className={`nav-link ${collapsed ? 'justify-center px-0' : ''}`}
+            title={collapsed ? t('shell.versionInfo') : undefined}
+          >
+            <Info size={17} strokeWidth={1.8} className="shrink-0" aria-hidden="true" />
+            {!collapsed && <span className="min-w-0 flex-1 truncate">{t('shell.versionInfo')}</span>}
           </button>
           <button
             onClick={handleLogout}
-            className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-150 cursor-pointer"
+            className={`nav-link ${collapsed ? 'justify-center px-0' : ''}`}
             style={{ color: 'var(--danger)' }}
-            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--danger-bg)'; }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
+            title={collapsed ? t('shell.logout') : undefined}
           >
-            <LogOut size={17} strokeWidth={1.8} />
-            <span>{t('shell.logout')}</span>
+            <LogOut size={17} strokeWidth={1.8} className="shrink-0" aria-hidden="true" />
+            {!collapsed && <span className="min-w-0 flex-1 truncate">{t('shell.logout')}</span>}
           </button>
         </div>
       </aside>
@@ -296,7 +338,7 @@ export default function Sidebar({ user, open, onClose }: { user: any; open?: boo
         ) : (
           <div className="max-h-[65vh] overflow-y-auto pr-1">
             <div className="mb-4 grid gap-2 sm:grid-cols-2">
-              <div className="rounded-lg px-3 py-2" style={{ background: 'var(--border)' }}>
+              <div className="rounded-lg px-3 py-2" style={{ background: 'var(--surface-subtle)' }}>
                 <p className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>{t('shell.changelog.currentVersion')}</p>
                 <p className="text-lg font-semibold" style={{ color: 'var(--text)' }}>{currentVersion}</p>
               </div>
@@ -326,7 +368,7 @@ export default function Sidebar({ user, open, onClose }: { user: any; open?: boo
                     {(release.changes || []).map((change, index) => (
                       <li key={`${release.version}-${index}`} className="flex gap-2 text-sm leading-6" style={{ color: 'var(--text-secondary)' }}>
                         {change.tag && (
-                          <span className="mt-0.5 h-fit rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase" style={{ background: 'var(--border)', color: 'var(--text-muted)' }}>
+                          <span className="mt-0.5 h-fit rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase" style={{ background: 'var(--surface-subtle)', color: 'var(--text-muted)' }}>
                             {change.tag}
                           </span>
                         )}

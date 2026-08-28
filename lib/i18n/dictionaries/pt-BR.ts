@@ -77,6 +77,10 @@ export const ptBR = {
       updatableContent: "Conteúdo da atualização",
       recentContent: "Atualizações recentes",
     },
+    closeMenu: "Fechar menu",
+    mainNav: "Navegação principal",
+    collapseSidebar: "Recolher barra lateral",
+    expandSidebar: "Expandir barra lateral",
   },
   auth: {
     loginTab: "Entrar",

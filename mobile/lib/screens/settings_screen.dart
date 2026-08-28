@@ -301,7 +301,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
               padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
               child: Text(
                 trKey('mobileLegacyAccountSecurity'),
-                style: TextStyle(fontSize: 13, color: Colors.grey),
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
               ),
             ),
             ListTile(

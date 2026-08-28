@@ -4,6 +4,7 @@ import '../api_client.dart';
 import '../google_auth.dart';
 import '../line_auth.dart';
 import '../passkey_auth.dart';
+import '../theme.dart';
 import '../widgets/turnstile_widget.dart';
 import '../l10n.dart';
 
@@ -186,30 +187,39 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final tokens = apTokens(context);
     return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: ConstrainedBox(
-              constraints: BoxConstraints(maxWidth: 420),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
+      body: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: tokens.pageGradient,
+          ),
+        ),
+        child: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(ApSpace.xl),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 420),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
                     Icon(
                       Icons.account_balance_wallet_rounded,
                       size: 64,
                       color: theme.colorScheme.primary,
                     ),
-                    SizedBox(height: 16),
+                    const SizedBox(height: ApSpace.lg),
                     Text(
                       'AssetPilot',
                       textAlign: TextAlign.center,
                       style: theme.textTheme.headlineMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.w800,
                       ),
                     ),
-                    SizedBox(height: 4),
+                    const SizedBox(height: ApSpace.xs),
                     Text(
                       trKey('mobileLegacyPersonalFinanceAndroidApp'),
                       textAlign: TextAlign.center,
@@ -217,9 +227,9 @@ class _LoginScreenState extends State<LoginScreen> {
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
                     ),
-                    SizedBox(height: 32),
+                    const SizedBox(height: ApSpace.xxl),
                     if (_turnstileEnabled && _siteKey != null) ...[
-                      SizedBox(height: 16),
+                      const SizedBox(height: ApSpace.lg),
                       TurnstileWidget(
                         key: ValueKey('ts_$_turnstileNonce'),
                         siteKey: _siteKey!,
@@ -233,12 +243,12 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ],
                     if (_error != null) ...[
-                      SizedBox(height: 16),
+                      const SizedBox(height: ApSpace.lg),
                       Container(
-                        padding: const EdgeInsets.all(12),
+                        padding: const EdgeInsets.all(ApSpace.md),
                         decoration: BoxDecoration(
                           color: theme.colorScheme.errorContainer,
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: ApRadius.rMd,
                         ),
                         child: Row(
                           children: [
@@ -247,7 +257,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               color: theme.colorScheme.onErrorContainer,
                               size: 20,
                             ),
-                            SizedBox(width: 8),
+                            const SizedBox(width: ApSpace.sm),
                             Expanded(
                               child: Text(
                                 _error!,
@@ -260,62 +270,71 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                     ],
-                    SizedBox(height: 24),
+                    const SizedBox(height: ApSpace.xl),
                     OutlinedButton.icon(
                       onPressed: _passkeyLoading ? null : _passkeySignIn,
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),
+                        backgroundColor: theme.colorScheme.surface.withValues(
+                          alpha: 0.85,
+                        ),
                       ),
                       icon: _passkeyLoading
-                          ? SizedBox(
+                          ? const SizedBox(
                               height: 18,
                               width: 18,
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
-                          : Icon(Icons.fingerprint_rounded),
+                          : const Icon(Icons.fingerprint_rounded),
                       label: Text(trKey('authPasskeyButton')),
                     ),
                     if (_googleEnabled) ...[
-                      SizedBox(height: 12),
+                      const SizedBox(height: ApSpace.md),
                       OutlinedButton.icon(
                         onPressed: _googleLoading ? null : _googleSignIn,
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 14),
+                          backgroundColor: theme.colorScheme.surface.withValues(
+                            alpha: 0.85,
+                          ),
                         ),
                         icon: _googleLoading
-                            ? SizedBox(
+                            ? const SizedBox(
                                 height: 18,
                                 width: 18,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
                                 ),
                               )
-                            : Icon(Icons.account_circle_outlined),
+                            : const Icon(Icons.account_circle_outlined),
                         label: Text(trKey('authGoogleButton')),
                       ),
                     ],
                     if (_lineEnabled) ...[
-                      SizedBox(height: 12),
+                      const SizedBox(height: ApSpace.md),
                       OutlinedButton.icon(
                         onPressed: _lineLoading ? null : _lineSignIn,
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 14),
+                          backgroundColor: theme.colorScheme.surface.withValues(
+                            alpha: 0.85,
+                          ),
                         ),
                         icon: _lineLoading
-                            ? SizedBox(
+                            ? const SizedBox(
                                 height: 18,
                                 width: 18,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
                                 ),
                               )
-                            : Icon(Icons.chat_bubble_outline_rounded),
+                            : const Icon(Icons.chat_bubble_outline_rounded),
                         label: Text(trKey('authLineButton')),
                       ),
                     ],
                     if (_configLoading)
-                      Padding(
-                        padding: EdgeInsets.only(top: 12),
+                      const Padding(
+                        padding: EdgeInsets.only(top: ApSpace.md),
                         child: Center(
                           child: SizedBox(
                             height: 16,
@@ -330,6 +349,7 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ),
         ),
+      ),
     );
   }
 }

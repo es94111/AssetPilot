@@ -8,7 +8,7 @@ import { Select } from '@/components/ui/Select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useT } from '@/components/i18n/I18nProvider';
 import { localeTag } from '@/lib/i18n/localeTag';
-import { Plus, Trash2, Edit3, Pause, Play, StickyNote } from 'lucide-react';
+import { Plus, Trash2, Edit3, Pause, Play, StickyNote, Repeat } from 'lucide-react';
 
 const FREQUENCY_VALUES = ['daily', 'weekly', 'monthly', 'yearly'] as const;
 const EMPTY_FORM = { type: 'expense', amount: '', currency: 'TWD', fxRate: '', categoryId: '', accountId: '', frequency: 'monthly', startDate: '', note: '', excludeFromStats: false, fxFee: '' };
@@ -266,7 +266,17 @@ export default function RecurringClient(_props: { user?: any } = {}) {
         </DialogContent>
       </Dialog>
 
-      {loading ? <p className="text-slate-500">{t('common.loading')}</p> : (
+      {loading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" aria-busy="true">
+          {Array.from({ length: 6 }).map((_, i) => <div key={i} className="ui-skeleton h-36 rounded-xl" />)}
+        </div>
+      ) : recs.length === 0 ? (
+        <div className="empty-state rounded-xl border border-dashed" style={{ borderColor: 'var(--border-strong)' }}>
+          <div className="empty-state-icon"><Repeat size={22} aria-hidden="true" /></div>
+          <p className="empty-state-title">{t('common.noData')}</p>
+          <p className="empty-state-hint">{t('nav.recurring')}</p>
+        </div>
+      ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {recs.map(r => {
             const catName = categories.find(c => c.id === (r.category_id || r.categoryId))?.name || t('features.common.uncategorized');

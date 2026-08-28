@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { Wallet } from 'lucide-react';
 import { apiGet, apiPost, apiPut, apiDelete } from '@/lib/clientApi';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/Input';
@@ -129,7 +130,17 @@ export default function BudgetClient(_props: { user?: any } = {}) {
         </DialogContent>
       </Dialog>
 
-      {loading ? <p className="text-slate-500">{t('common.loading')}</p> : (
+      {loading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4" aria-busy="true">
+          {Array.from({ length: 6 }).map((_, i) => <div key={i} className="ui-skeleton h-36 rounded-xl" />)}
+        </div>
+      ) : budgets.length === 0 ? (
+        <div className="empty-state rounded-xl border border-dashed" style={{ borderColor: 'var(--border-strong)' }}>
+          <div className="empty-state-icon"><Wallet size={22} aria-hidden="true" /></div>
+          <p className="empty-state-title">{t('common.noData')}</p>
+          <p className="empty-state-hint">{t('features.budget.totalBudget')}：{t('features.budget.addBudget')}</p>
+        </div>
+      ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {budgets.map(b => {
             const used = pct(b.used, b.amount);

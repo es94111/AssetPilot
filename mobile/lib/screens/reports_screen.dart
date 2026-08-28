@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../api_client.dart';
 import '../format.dart';
 import '../models.dart';
+import '../theme.dart';
 import '../widgets.dart';
 import '../l10n.dart';
 
@@ -68,14 +69,24 @@ class _ReportsScreenState extends State<ReportsScreen> {
     }
   }
 
+  /// 扇區百分比標籤畫在使用者自訂的分類色上，依亮度選黑或白確保對比。
+  Color _onSliceColor(Color slice) =>
+      slice.computeLuminance() > 0.55 ? const Color(0xFF1A1D26) : Colors.white;
+
   @override
   Widget build(BuildContext context) {
+    final tokens = apTokens(context);
     return Scaffold(
       appBar: AppBar(title: Text(trKey('navReports'))),
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(
+              ApSpace.lg,
+              ApSpace.md,
+              ApSpace.lg,
+              ApSpace.sm,
+            ),
             child: Column(
               children: [
                 SegmentedButton<String>(
@@ -95,10 +106,10 @@ class _ReportsScreenState extends State<ReportsScreen> {
                     _reload();
                   },
                 ),
-                SizedBox(height: 8),
+                const SizedBox(height: ApSpace.sm),
                 OutlinedButton.icon(
                   onPressed: _pickRange,
-                  icon: Icon(Icons.date_range),
+                  icon: const Icon(Icons.date_range),
                   label: Text('${_fmt(_range.start)} ～ ${_fmt(_range.end)}'),
                 ),
               ],
@@ -108,74 +119,117 @@ class _ReportsScreenState extends State<ReportsScreen> {
             child: AsyncView<_ReportData>(
               future: _future,
               onRetry: _reload,
+              loadingBuilder: (_) => const ListView(
+                padding: EdgeInsets.fromLTRB(
+                  ApSpace.lg,
+                  0,
+                  ApSpace.lg,
+                  ApSpace.xl,
+                ),
+                children: [SkeletonSummary()],
+              ),
               builder: (context, data) {
                 if (data.breakdown.isEmpty) {
                   return EmptyState(
                     icon: Icons.bar_chart,
-                    message: trKey('mobileLegacyNoDataForThisPeriod'),
+                    title: trKey('mobileLegacyNoDataForThisPeriod'),
+                    message: trKey('mobileLegacyFilterTransactions'),
                   );
                 }
                 final sorted = [...data.breakdown]
                   ..sort((a, b) => b.total.compareTo(a.total));
+                final totalColor = _type == 'expense'
+                    ? tokens.expense
+                    : tokens.income;
                 return ListView(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                  padding: const EdgeInsets.fromLTRB(
+                    ApSpace.lg,
+                    ApSpace.sm,
+                    ApSpace.lg,
+                    ApSpace.xl,
+                  ),
                   children: [
                     Center(
-                      child: Text(
-                        trKey(
+                      child: AnimatedTextSwap(
+                        text: trKey(
                           _type == 'expense'
                               ? 'mobileDynamicReportTotalExpense'
                               : 'mobileDynamicReportTotalIncome',
                           {'total': twd(data.total)},
                         ),
                         style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(fontWeight: FontWeight.bold),
+                            ?.copyWith(
+                              fontWeight: FontWeight.w800,
+                              color: totalColor,
+                            ),
                       ),
                     ),
-                    SizedBox(height: 16),
-                    SizedBox(
-                      height: 220,
-                      child: PieChart(
-                        PieChartData(
-                          sectionsSpace: 2,
-                          centerSpaceRadius: 50,
-                          sections: [
-                            for (final n in sorted.take(10))
-                              PieChartSectionData(
-                                value: n.total.toDouble(),
-                                color: parseColor(n.color),
-                                title: data.total > 0
-                                    ? '${(n.total / data.total * 100).round()}%'
-                                    : '',
-                                radius: 60,
-                                titleStyle: TextStyle(
-                                  fontSize: 11,
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                    const SizedBox(height: ApSpace.lg),
+                    LedgerCard(
+                      child: Column(
+                        children: [
+                          SizedBox(
+                            height: 220,
+                            child: PieChart(
+                              PieChartData(
+                                sectionsSpace: 2,
+                                centerSpaceRadius: 50,
+                                sections: [
+                                  for (final n in sorted.take(10))
+                                    PieChartSectionData(
+                                      value: n.total.toDouble(),
+                                      color: parseColor(n.color),
+                                      title: data.total > 0
+                                          ? '${(n.total / data.total * 100).round()}%'
+                                          : '',
+                                      radius: 60,
+                                      titleStyle: TextStyle(
+                                        fontSize: 11,
+                                        color: _onSliceColor(
+                                          parseColor(n.color),
+                                        ),
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                ],
                               ),
-                          ],
-                        ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    SizedBox(height: 16),
-                    for (final n in sorted)
-                      ListTile(
-                        dense: true,
-                        leading: Container(
-                          width: 16,
-                          height: 16,
-                          decoration: BoxDecoration(
-                            color: parseColor(n.color),
-                            shape: BoxShape.circle,
+                    const SizedBox(height: ApSpace.md),
+                    ...sorted.toList().asMap().entries.map(
+                      (e) => StaggerIn(
+                        index: e.key,
+                        child: LedgerCard(
+                          margin: const EdgeInsets.only(bottom: ApSpace.sm),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: ApSpace.lg,
+                            vertical: ApSpace.xs,
+                          ),
+                          child: ListTile(
+                            dense: true,
+                            contentPadding: EdgeInsets.zero,
+                            leading: Container(
+                              width: 16,
+                              height: 16,
+                              decoration: BoxDecoration(
+                                color: parseColor(e.value.color),
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            title: Text(e.value.name),
+                            trailing: AnimatedTextSwap(
+                              text: twd(e.value.total),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
                           ),
                         ),
-                        title: Text(n.name),
-                        trailing: Text(
-                          twd(n.total),
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
                       ),
+                    ),
                   ],
                 );
               },

@@ -77,6 +77,10 @@ export const zhCN = {
       updatableContent: "更新内容",
       recentContent: "最近更新",
     },
+    closeMenu: "关闭菜单",
+    mainNav: "主导航栏",
+    collapseSidebar: "收起侧边栏",
+    expandSidebar: "展开侧边栏",
   },
   auth: {
     loginTab: "登录",

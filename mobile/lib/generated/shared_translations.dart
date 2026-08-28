@@ -1209,6 +1209,10 @@ const kSharedSourceToKey = <String, String>{
   '成功': 'adminLoginSuccess',
   '失敗': 'adminLoginFailed',
   '系統設定與使用者管理': 'adminScreenSubtitle',
+  '關閉選單': 'shellCloseMenu',
+  '主導覽列': 'shellMainNav',
+  '收合側邊欄': 'shellCollapseSidebar',
+  '展開側邊欄': 'shellExpandSidebar',
 };
 const kSharedTranslations = <String, Map<String, String>>{
   'zh-TW': <String, String>{
@@ -2569,6 +2573,10 @@ const kSharedTranslations = <String, Map<String, String>>{
     'adminLoginSuccess': '成功',
     'adminLoginFailed': '失敗',
     'adminScreenSubtitle': '系統設定與使用者管理',
+    'shellCloseMenu': '關閉選單',
+    'shellMainNav': '主導覽列',
+    'shellCollapseSidebar': '收合側邊欄',
+    'shellExpandSidebar': '展開側邊欄',
   },
   'zh-CN': <String, String>{
     'commonSave': '保存',
@@ -3928,6 +3936,10 @@ const kSharedTranslations = <String, Map<String, String>>{
     'adminLoginSuccess': '成功',
     'adminLoginFailed': '失败',
     'adminScreenSubtitle': '系统设置与用户管理',
+    'shellCloseMenu': '关闭菜单',
+    'shellMainNav': '主导航栏',
+    'shellCollapseSidebar': '收起侧边栏',
+    'shellExpandSidebar': '展开侧边栏',
   },
   'en': <String, String>{
     'commonSave': 'Save',
@@ -5287,6 +5299,10 @@ const kSharedTranslations = <String, Map<String, String>>{
     'adminLoginSuccess': 'Success',
     'adminLoginFailed': 'Failed',
     'adminScreenSubtitle': 'System settings and user management',
+    'shellCloseMenu': 'Close menu',
+    'shellMainNav': 'Main navigation',
+    'shellCollapseSidebar': 'Collapse sidebar',
+    'shellExpandSidebar': 'Expand sidebar',
   },
   'es': <String, String>{
     'commonSave': 'Guardar',
@@ -6646,6 +6662,10 @@ const kSharedTranslations = <String, Map<String, String>>{
     'adminLoginSuccess': 'Éxito',
     'adminLoginFailed': 'Falló',
     'adminScreenSubtitle': 'Configuración del sistema y gestión de usuarios',
+    'shellCloseMenu': 'Cerrar menú',
+    'shellMainNav': 'Navegación principal',
+    'shellCollapseSidebar': 'Contraer barra lateral',
+    'shellExpandSidebar': 'Expandir barra lateral',
   },
   'ar': <String, String>{
     'commonSave': 'حفظ',
@@ -8005,6 +8025,10 @@ const kSharedTranslations = <String, Map<String, String>>{
     'adminLoginSuccess': 'نجاح',
     'adminLoginFailed': 'فشل',
     'adminScreenSubtitle': 'إعدادات النظام وإدارة المستخدمين',
+    'shellCloseMenu': 'إغلاق القائمة',
+    'shellMainNav': 'التنقل الرئيسي',
+    'shellCollapseSidebar': 'طي الشريط الجانبي',
+    'shellExpandSidebar': 'توسيع الشريط الجانبي',
   },
   'fr': <String, String>{
     'commonSave': 'Enregistrer',
@@ -9364,6 +9388,10 @@ const kSharedTranslations = <String, Map<String, String>>{
     'adminLoginSuccess': 'Succès',
     'adminLoginFailed': 'Échec',
     'adminScreenSubtitle': 'Paramètres système et gestion des utilisateurs',
+    'shellCloseMenu': 'Fermer le menu',
+    'shellMainNav': 'Navigation principale',
+    'shellCollapseSidebar': 'Réduire la barre latérale',
+    'shellExpandSidebar': 'Développer la barre latérale',
   },
   'hi': <String, String>{
     'commonSave': 'सेव करें',
@@ -10723,6 +10751,10 @@ const kSharedTranslations = <String, Map<String, String>>{
     'adminLoginSuccess': 'सफल',
     'adminLoginFailed': 'विफल',
     'adminScreenSubtitle': 'सिस्टम सेटिंग्स और उपयोगकर्ता प्रबंधन',
+    'shellCloseMenu': 'मेन्यू बंद करें',
+    'shellMainNav': 'मुख्य नेविगेशन',
+    'shellCollapseSidebar': 'साइडबार संकुचित करें',
+    'shellExpandSidebar': 'साइडबार विस्तृत करें',
   },
   'pt-BR': <String, String>{
     'commonSave': 'Salvar',
@@ -12082,6 +12114,10 @@ const kSharedTranslations = <String, Map<String, String>>{
     'adminLoginSuccess': 'Sucesso',
     'adminLoginFailed': 'Falhou',
     'adminScreenSubtitle': 'Configurações do sistema e gestão de usuários',
+    'shellCloseMenu': 'Fechar menu',
+    'shellMainNav': 'Navegação principal',
+    'shellCollapseSidebar': 'Recolher barra lateral',
+    'shellExpandSidebar': 'Expandir barra lateral',
   },
   'ru': <String, String>{
     'commonSave': 'Сохранить',
@@ -13441,6 +13477,10 @@ const kSharedTranslations = <String, Map<String, String>>{
     'adminLoginSuccess': 'Успех',
     'adminLoginFailed': 'Ошибка',
     'adminScreenSubtitle': 'Системные настройки и управление пользователями',
+    'shellCloseMenu': 'Закрыть меню',
+    'shellMainNav': 'Основная навигация',
+    'shellCollapseSidebar': 'Свернуть боковую панель',
+    'shellExpandSidebar': 'Развернуть боковую панель',
   },
   'ko': <String, String>{
     'commonSave': '저장',
@@ -14800,6 +14840,10 @@ const kSharedTranslations = <String, Map<String, String>>{
     'adminLoginSuccess': '성공',
     'adminLoginFailed': '실패',
     'adminScreenSubtitle': '시스템 설정 및 사용자 관리',
+    'shellCloseMenu': '메뉴 닫기',
+    'shellMainNav': '기본 탐색',
+    'shellCollapseSidebar': '사이드바 접기',
+    'shellExpandSidebar': '사이드바 펼치기',
   },
 };
 

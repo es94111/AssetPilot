@@ -400,7 +400,7 @@ export default function StockTxClient(_props: { user?: any } = {}) {
       </Dialog>
 
       {loading ? (
-        <p className="text-slate-500">{t("common.loading")}</p>
+        <div className="space-y-2" aria-busy="true"><div className="ui-skeleton h-12 w-full" /><div className="ui-skeleton h-12 w-full" /><div className="ui-skeleton h-12 w-full" /></div>
       ) : (
         <Table>
           <TableHeader>

@@ -7333,5 +7333,25 @@
   "@featuresTransactionsRepaymentSummaryStatusDeleted": {
     "description": "Web path: features.transactions.repaymentSummaryStatusDeleted",
     "x-webPath": "features.transactions.repaymentSummaryStatusDeleted"
+  },
+  "shellCloseMenu": "Close menu",
+  "@shellCloseMenu": {
+    "description": "Web path: shell.closeMenu",
+    "x-webPath": "shell.closeMenu"
+  },
+  "shellMainNav": "Main navigation",
+  "@shellMainNav": {
+    "description": "Web path: shell.mainNav",
+    "x-webPath": "shell.mainNav"
+  },
+  "shellCollapseSidebar": "Collapse sidebar",
+  "@shellCollapseSidebar": {
+    "description": "Web path: shell.collapseSidebar",
+    "x-webPath": "shell.collapseSidebar"
+  },
+  "shellExpandSidebar": "Expand sidebar",
+  "@shellExpandSidebar": {
+    "description": "Web path: shell.expandSidebar",
+    "x-webPath": "shell.expandSidebar"
   }
 }

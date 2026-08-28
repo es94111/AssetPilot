@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../api_client.dart';
+import '../theme.dart';
 import '../widgets.dart';
 import '../l10n.dart';
 
@@ -647,7 +648,9 @@ class _LoginAuditTabState extends State<_LoginAuditTab> {
                       ? trKey('adminLoginSuccess')
                       : trKey('adminLoginFailed'),
                   style: TextStyle(
-                    color: success ? Colors.green.shade700 : Colors.red.shade700,
+                    color: success
+                        ? apTokens(context).income
+                        : Theme.of(context).colorScheme.error,
                     fontWeight: FontWeight.bold,
                   ),
                 ),

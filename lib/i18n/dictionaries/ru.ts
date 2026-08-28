@@ -77,6 +77,10 @@ export const ru = {
       updatableContent: "Что можно обновить",
       recentContent: "Последние изменения",
     },
+    closeMenu: "Закрыть меню",
+    mainNav: "Основная навигация",
+    collapseSidebar: "Свернуть боковую панель",
+    expandSidebar: "Развернуть боковую панель",
   },
   auth: {
     loginTab: "Войти",

@@ -75,6 +75,10 @@ export const zhTW = {
       updatableContent: "可更新內容",
       recentContent: "最近更新內容",
     },
+    closeMenu: "關閉選單",
+    mainNav: "主導覽列",
+    collapseSidebar: "收合側邊欄",
+    expandSidebar: "展開側邊欄",
   },
   auth: {
     loginTab: "登入",

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../api_client.dart';
 import '../format.dart';
 import '../models.dart';
+import '../theme.dart';
 import '../widgets.dart';
 import '../l10n.dart';
 
@@ -136,27 +137,45 @@ class _CategoriesScreenState extends State<CategoriesScreen>
     return RefreshIndicator(
       onRefresh: () async => _reload(),
       child: ListView(
-        padding: const EdgeInsets.only(bottom: 88),
+        padding: const EdgeInsets.fromLTRB(
+          ApSpace.lg,
+          ApSpace.sm,
+          ApSpace.lg,
+          88,
+        ),
         children: [
           for (final p in parents) ...[
-            ListTile(
-              leading: _dot(p.color),
-              title: Text(
-                p.name,
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
+            LedgerCard(
+              margin: const EdgeInsets.only(bottom: ApSpace.xs + 2),
+              padding: EdgeInsets.zero,
               onTap: () => _openForm(existing: p, all: all),
-              onLongPress: () => _delete(p),
+              child: ListTile(
+                leading: _dot(p.color),
+                title: Text(
+                  p.name,
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
+                onTap: () => _openForm(existing: p, all: all),
+                onLongPress: () => _delete(p),
+              ),
             ),
             for (final child in all.where((c) => c.parentId == p.id))
-              ListTile(
-                contentPadding: const EdgeInsets.only(left: 48, right: 16),
-                leading: _dot(child.color),
-                title: Text(child.name),
+              LedgerCard(
+                margin: const EdgeInsets.only(bottom: ApSpace.xs + 2),
+                padding: EdgeInsets.zero,
                 onTap: () => _openForm(existing: child, all: all),
-                onLongPress: () => _delete(child),
+                child: ListTile(
+                  contentPadding: const EdgeInsets.only(
+                    left: 56,
+                    right: ApSpace.lg,
+                  ),
+                  leading: _dot(child.color),
+                  title: Text(child.name),
+                  onTap: () => _openForm(existing: child, all: all),
+                  onLongPress: () => _delete(child),
+                ),
               ),
-            Divider(height: 1),
+            const SizedBox(height: ApSpace.sm),
           ],
         ],
       ),

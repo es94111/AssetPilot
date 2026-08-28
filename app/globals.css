@@ -8,35 +8,38 @@
 @custom-variant dark (&:where(.dark-mode, .dark-mode *));
 
 @theme {
-  --color-primary: #4058d8;
+  --color-primary: var(--primary);
   --color-primary-light: #7b93fa;
   --color-primary-dark: #3b55d9;
-  --color-income: #047857;
-  --color-expense: #be123c;
-  --color-net: #1d4ed8;
+  --color-income: var(--income);
+  --color-expense: var(--expense);
+  --color-net: var(--net);
   --color-today: #f59e0b;
-  --color-success: #047857;
-  --color-danger: #be123c;
+  --color-success: var(--income);
+  --color-danger: var(--danger);
   --color-danger-dark: #9f1239;
 
-  --color-popover: #ffffff;
-  --color-popover-foreground: #1a1d26;
+  --color-popover: var(--surface);
+  --color-popover-foreground: var(--text);
   --color-primary-foreground: #ffffff;
-  --color-muted: #f4f6fa;
+  --color-muted: var(--surface-subtle);
   --color-muted-foreground: var(--text-secondary);
   --color-foreground: var(--text);
-  --color-background: #ffffff;
-  --color-border: #e4e7ec;
-  --color-input: #e4e7ec;
-  --color-ring: #4f6ef7;
-  --color-secondary: #eef2ff;
-  --color-secondary-foreground: #1a1d26;
-  --color-destructive: #be123c;
+  --color-background: var(--surface);
+  --color-border: var(--border);
+  --color-input: var(--border-strong);
+  --color-ring: var(--primary);
+  --color-secondary: var(--primary-light-bg);
+  --color-secondary-foreground: var(--text);
+  --color-destructive: var(--danger);
 
   --spacing-sidebar: 256px;
   --spacing-header: 60px;
 
   --radius-card: 14px;
+
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 @layer base {
@@ -47,10 +50,15 @@
   }
 
   :root {
+    /* ── Brand ── */
     --primary: #4058d8;
     --primary-solid: #4058d8;
     --primary-light: #7b93fa;
     --primary-dark: #3b55d9;
+    --primary-soft: rgba(79, 110, 247, 0.10);
+    --primary-soft-hover: rgba(79, 110, 247, 0.16);
+
+    /* ── Semantic money colors (brand spec) ── */
     --income: #047857;
     --income-bg: #ecfdf5;
     --expense: #be123c;
@@ -59,25 +67,41 @@
     --net-bg: #eff6ff;
     --today: #f59e0b;
     --today-bg: #fffbeb;
+
+    /* ── Surfaces ── */
     --bg: #f4f6fa;
     --surface: #ffffff;
+    --surface-subtle: #f4f6fa;
+    --surface-hover: rgba(79, 110, 247, 0.06);
+    --surface-raised: #ffffff;
     --app-bg: linear-gradient(135deg, #dde5ff 0%, #eef2ff 30%, #e0f2fe 70%, #dcfce7 100%);
     --surface-glass: rgba(255, 255, 255, 0.72);
     --glass-border: rgba(255, 255, 255, 0.85);
     --glass-blur: blur(20px);
+
+    /* ── Text (all ≥4.5:1 on surfaces) ── */
+    --text: #1a1d26;
+    --text-secondary: #5c6370;
+    --text-muted: #5f6b7d;
+    --text-on-primary: #ffffff;
+    --text-on-tint: var(--text);
+
+    /* ── Borders & shadows ── */
+    --border: #dde1ea;
+    --border-strong: #c9cfdb;
     --shadow-glass: 0 4px 16px rgba(79, 110, 247, 0.10), 0 1px 4px rgba(0, 0, 0, 0.06);
     --shadow-glass-md: 0 8px 32px rgba(79, 110, 247, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08);
     --shadow-glass-lg: 0 12px 48px rgba(79, 110, 247, 0.15), 0 4px 16px rgba(0, 0, 0, 0.10);
-    --text: #1a1d26;
-    --text-secondary: #5c6370;
-    --text-muted: #64748b;
-    --border: #e4e7ec;
+
+    /* ── Layout ── */
     --sidebar-width: 256px;
     --header-height: 60px;
     --radius: 14px;
     --shadow: var(--shadow-glass);
     --shadow-md: var(--shadow-glass-md);
     --shadow-lg: var(--shadow-glass-lg);
+
+    /* ── Status ── */
     --success: #047857;
     --success-bg: #ecfdf5;
     --pl-gain: #0f766e;
@@ -92,9 +116,17 @@
     --twse-bg: #fff7ed;
     --twse-border: #fed7aa;
     --twse-text: #9a3412;
-    --transition-fast: 150ms cubic-bezier(.4,0,.2,1);
-    --transition-normal: 250ms cubic-bezier(.4,0,.2,1);
-    --transition-spring: 350ms cubic-bezier(.34,1.56,.64,1);
+
+    /* ── Motion tokens ── */
+    --motion-fast: 150ms;
+    --motion-base: 220ms;
+    --motion-slow: 320ms;
+    --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+    --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+    --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --transition-fast: var(--motion-fast) var(--ease-standard);
+    --transition-normal: var(--motion-base) var(--ease-standard);
+    --transition-spring: 350ms var(--ease-spring);
   }
 
   html {
@@ -149,11 +181,11 @@
   --color-foreground: #e8eaef;
   --color-muted-foreground: #9ca3b4;
   --color-background: #151922;
-  --color-border: #252a36;
-  --color-input: #252a36;
-  --color-secondary: #252a36;
+  --color-border: #2b3140;
+  --color-input: #39404f;
+  --color-secondary: rgba(79, 110, 247, 0.18);
   --color-secondary-foreground: #e8eaef;
-  --color-primary: #4058d8;
+  --color-primary: #8ea2ff;
   --color-income: #34d399;
   --color-expense: #fb7185;
   --color-net: #60a5fa;
@@ -161,19 +193,35 @@
   --color-danger: #fb7185;
   --color-danger-dark: #f43f5e;
   --color-destructive: #fb7185;
+
+  /* ── Surfaces: designed dark, never pure black ── */
   --bg: #0c0f16;
   --surface: #151922;
+  --surface-subtle: #1b202c;
+  --surface-hover: rgba(142, 162, 255, 0.10);
+  --surface-raised: #1b202c;
   --app-bg: linear-gradient(135deg, #0c0f16 0%, #111827 50%, #0c1a2e 100%);
   --surface-glass: rgba(21, 25, 34, 0.78);
   --glass-border: rgba(255, 255, 255, 0.10);
   --shadow-glass: 0 4px 16px rgba(0, 0, 0, 0.40), 0 1px 4px rgba(0, 0, 0, 0.30);
   --shadow-glass-md: 0 8px 32px rgba(0, 0, 0, 0.50), 0 2px 8px rgba(0, 0, 0, 0.35);
   --shadow-glass-lg: 0 12px 48px rgba(0, 0, 0, 0.55), 0 4px 16px rgba(0, 0, 0, 0.40);
+
+  /* ── Text: brightened for contrast on #151922 ── */
   --text: #e8eaef;
-  --text-secondary: #9ca3b4;
-  --text-muted: #8b94a3;
+  --text-secondary: #a4adc0;
+  --text-muted: #8d97aa;
+  --text-on-primary: #ffffff;
+  --text-on-tint: #e8eaef;
+
+  /* ── Borders: visible on dark ── */
+  --border: #2b3140;
+  --border-strong: #3b4354;
+
   --primary: #8ea2ff;
   --primary-solid: #4058d8;
+  --primary-soft: rgba(79, 110, 247, 0.18);
+  --primary-soft-hover: rgba(79, 110, 247, 0.28);
   --income: #34d399;
   --expense: #fb7185;
   --net: #60a5fa;
@@ -182,7 +230,6 @@
   --pl-loss: #fdba74;
   --danger: #fb7185;
   --danger-dark: #f43f5e;
-  --border: #252a36;
   --income-bg: #082f2a;
   --expense-bg: #351020;
   --net-bg: #0e2245;
@@ -196,10 +243,6 @@
   --twse-bg: #431407;
   --twse-border: #7c2d12;
   --twse-text: #fdba74;
-}
-
-.dark-mode .text-primary {
-  color: var(--primary) !important;
 }
 
 .app-sidebar {
@@ -234,6 +277,12 @@
     transform: translateX(0);
   }
 
+  /* Collapsed rail: hide text labels, keep icons centered */
+  .app-sidebar[data-collapsed='true'] .nav-link {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
   .app-topnav {
     display: none;
   }
@@ -256,6 +305,85 @@
 @keyframes ui-skeleton-shimmer {
   from { background-position: 200% 0; }
   to { background-position: -200% 0; }
+}
+
+/* ── Sidebar / MobileNav link states (class-based, no JS hover) ── */
+.nav-link {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 2.5rem;
+  width: 100%;
+  border-radius: 0.625rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  transition: background-color var(--motion-fast) var(--ease-out),
+              color var(--motion-fast) var(--ease-out);
+}
+.nav-link:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+.nav-link:active {
+  background: var(--primary-soft-hover);
+}
+.nav-link[aria-current='page'] {
+  background: var(--primary-light-bg);
+  color: var(--primary);
+  font-weight: 600;
+}
+.nav-link[aria-current='page']:hover {
+  background: var(--primary-soft-hover);
+  color: var(--primary);
+}
+.nav-link:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* ── Staggered entrance for lists / card grids ── */
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.rise-in {
+  animation: rise-in var(--motion-slow) var(--ease-out) both;
+  animation-delay: calc(var(--stagger, 0) * 50ms);
+}
+
+/* ── Empty state block with optional CTA ── */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 3rem 1.5rem;
+  text-align: center;
+  color: var(--text-muted);
+}
+.empty-state .empty-state-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 999px;
+  background: var(--primary-light-bg);
+  color: var(--primary);
+  margin-bottom: 0.25rem;
+}
+.empty-state .empty-state-title {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.empty-state .empty-state-hint {
+  font-size: 0.8125rem;
+  max-width: 28rem;
+  line-height: 1.55;
 }
 
 /* ── Splash intro (brand logo animation) ── */
@@ -459,6 +587,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .ui-skeleton { animation: none; }
+  .rise-in { animation: none; }
 }
 
 /* ── Shared card ── */
@@ -913,7 +1042,17 @@
   }
 }
 
-/* ── App color-system compatibility ── */
+/* ═══════════════════════════════════════════════════════════════
+   App color-system compatibility layer
+   Legacy feature clients still author Tailwind slate/gray/semantic
+   utility classes directly. Instead of rewriting every file, we
+   remap those utilities onto the design tokens here, in one place,
+   so both themes stay consistent. New code should prefer token
+   utilities (text-foreground, bg-surface, text-income, ...) or the
+   semantic CSS variables — do not add new rules to this section.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Cards & panels: glass surface treatment ── */
 .app-card,
 .bg-white.border.border-slate-200,
 .dark-mode .dark\:bg-slate-900.dark\:border-slate-800 {
@@ -923,6 +1062,17 @@
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
 }
+/* Plain white/slate-900 surfaces (no border combo) → flat surface token.
+   Scoped away from the public marketing/legal pages, which legitimately use
+   solid white (logo tile, primary CTA) on the dark #020617 background. */
+.bg-white:not(.public-info-page .bg-white):not(main.bg-slate-950 .bg-white) {
+  background-color: var(--surface) !important;
+}
+.dark-mode .dark\:bg-slate-900 {
+  background-color: var(--surface) !important;
+}
+
+/* ── Chips & subtle fills ── */
 .app-muted-chip,
 .bg-slate-100 {
   background: var(--primary-light-bg) !important;
@@ -933,36 +1083,72 @@
   background: var(--border) !important;
   color: var(--text-secondary) !important;
 }
+.bg-slate-50 {
+  background: var(--surface-subtle) !important;
+}
+.dark-mode .bg-slate-50,
+.dark-mode .bg-gray-100 {
+  background: var(--border) !important;
+}
+.dark-mode .bg-blue-50 {
+  background: rgba(79, 110, 247, 0.14) !important;
+}
+.dark-mode .bg-green-50,
+.dark-mode .bg-green-100 {
+  background: var(--success-bg) !important;
+}
+.dark-mode .bg-red-100 {
+  background: var(--danger-bg) !important;
+}
+.dark-mode .bg-amber-100 {
+  background: var(--warning-bg) !important;
+}
+
+/* ── Text ramp: slate/gray → semantic text tokens ── */
 .text-slate-900,
-.dark-mode .text-slate-900,
-.dark-mode .text-slate-800,
-.dark-mode .text-gray-900,
-.dark-mode .text-gray-800,
+.text-gray-900,
+.text-slate-800,
+.text-gray-800,
 .dark-mode .dark\:text-slate-100 {
   color: var(--text) !important;
 }
-.dark-mode .text-slate-700,
+.text-slate-700,
+.text-gray-700,
 .text-slate-600,
-.dark-mode .text-slate-600,
-.dark-mode .text-gray-700,
-.dark-mode .text-gray-600,
+.text-gray-600,
 .dark-mode .dark\:text-slate-300 {
   color: var(--text-secondary) !important;
 }
 .text-slate-500,
+.text-gray-500,
 .text-slate-400,
-.dark-mode .text-slate-500,
-.dark-mode .text-slate-400,
-.dark-mode .text-gray-500,
-.dark-mode .text-gray-400 {
+.text-gray-400 {
   color: var(--text-muted) !important;
 }
+/* Public marketing pages sit on a dark brand background and intentionally use
+   light slate text — exempt them from the dark-app text remap above (values
+   mirror the Tailwind slate palette so the homepage keeps its original look). */
+main.bg-slate-950 .text-slate-300 { color: #cbd5e1 !important; }
+main.bg-slate-950 .text-slate-400 { color: #94a3b8 !important; }
+main.bg-slate-950 .text-slate-500 { color: #64748b !important; }
+.hover\:text-slate-700:hover,
+.hover\:text-slate-900:hover {
+  color: var(--text) !important;
+}
+
+/* ── Borders ── */
 .border-slate-200,
+.border-slate-300,
 .dark-mode .dark\:border-slate-800 {
   border-color: var(--glass-border) !important;
 }
+.hover\:border-slate-300:hover {
+  border-color: var(--border-strong) !important;
+}
+
+/* ── Accent hues → brand primary ── */
 .text-blue-600,
-.dark-mode .text-blue-700,
+.text-blue-700,
 .dark-mode .text-blue-800,
 .border-blue-600,
 .text-indigo-600,
@@ -970,12 +1156,11 @@
   color: var(--primary) !important;
   border-color: var(--primary) !important;
 }
-.hover\:text-slate-700:hover {
-  color: var(--text) !important;
-}
 .hover\:bg-indigo-600:hover {
   background: var(--primary-solid) !important;
 }
+
+/* ── Semantic hues → income / expense / today ── */
 .text-green-600,
 .text-emerald-600,
 .dark-mode .text-green-700,
@@ -991,32 +1176,14 @@
 }
 .dark-mode .text-amber-600,
 .dark-mode .text-amber-800 {
-  color: var(--today) !important;
+  color: var(--today-text) !important;
 }
 .border-red-200,
 .dark-mode .dark\:border-red-900\/50 {
   border-color: rgba(244, 63, 94, 0.28) !important;
 }
-.dark-mode .bg-blue-50 {
-  background: rgba(79, 110, 247, 0.14) !important;
-}
-.dark-mode .bg-green-50,
-.dark-mode .bg-green-100 {
-  background: var(--success-bg) !important;
-}
-.dark-mode .bg-red-100 {
-  background: var(--danger-bg) !important;
-}
-.dark-mode .bg-amber-100 {
-  background: var(--warning-bg) !important;
-}
-.dark-mode .bg-gray-100,
-.dark-mode .bg-slate-50 {
-  background: var(--border) !important;
-}
-.dark-mode .text-gray-800 {
-  color: var(--text) !important;
-}
+
+/* ── shadcn-style semantic utilities → tokens ── */
 .text-foreground {
   color: var(--text) !important;
 }
@@ -1027,12 +1194,14 @@
 .dark-mode .text-foreground *,
 .dark-mode [data-slot="table-head"],
 .dark-mode [data-slot="table-head"] * {
-  color: #e8eaef !important;
+  color: var(--text) !important;
 }
 .dark-mode .text-muted-foreground,
 .dark-mode .text-muted-foreground * {
-  color: #9ca3b4 !important;
+  color: var(--text-secondary) !important;
 }
+
+/* ── Form controls in dark ── */
 .dark-mode input:not([type="checkbox"]):not([type="radio"]),
 .dark-mode textarea {
   color: var(--text);

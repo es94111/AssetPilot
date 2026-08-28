@@ -77,6 +77,10 @@ export const fr = {
       updatableContent: "Contenu de la mise à jour",
       recentContent: "Dernières mises à jour",
     },
+    closeMenu: "Fermer le menu",
+    mainNav: "Navigation principale",
+    collapseSidebar: "Réduire la barre latérale",
+    expandSidebar: "Développer la barre latérale",
   },
   auth: {
     loginTab: "Connexion",

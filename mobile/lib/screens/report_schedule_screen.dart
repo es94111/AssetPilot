@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../api_client.dart';
 import '../models.dart';
+import '../theme.dart';
 import '../widgets.dart';
 import '../l10n.dart';
 
@@ -155,7 +156,7 @@ class _ReportScheduleScreenState extends State<ReportScheduleScreen> {
                     Icons.schedule,
                     color: s.enabled
                         ? Theme.of(context).colorScheme.primary
-                        : Colors.grey,
+                        : Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                   title: Text(_scheduleSummary(s)),
                   subtitle: Text(
@@ -301,8 +302,10 @@ class _ReportScheduleFormState extends State<_ReportScheduleForm> {
             SizedBox(height: 12),
             ListTile(
               shape: RoundedRectangleBorder(
-                side: BorderSide(color: Theme.of(context).dividerColor),
-                borderRadius: BorderRadius.circular(4),
+                side: BorderSide(
+                  color: Theme.of(context).colorScheme.outlineVariant,
+                ),
+                borderRadius: ApRadius.rSm,
               ),
               leading: Icon(Icons.access_time),
               title: Text(trKey('mobileLegacyTime')),

@@ -77,6 +77,10 @@ export const ko = {
       updatableContent: "업데이트 내용",
       recentContent: "최근 업데이트",
     },
+    closeMenu: "메뉴 닫기",
+    mainNav: "기본 탐색",
+    collapseSidebar: "사이드바 접기",
+    expandSidebar: "사이드바 펼치기",
   },
   auth: {
     loginTab: "로그인",

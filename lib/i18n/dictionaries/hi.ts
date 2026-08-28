@@ -77,6 +77,10 @@ export const hi = {
       updatableContent: "अपडेट सामग्री",
       recentContent: "हाल के अपडेट",
     },
+    closeMenu: "मेन्यू बंद करें",
+    mainNav: "मुख्य नेविगेशन",
+    collapseSidebar: "साइडबार संकुचित करें",
+    expandSidebar: "साइडबार विस्तृत करें",
   },
   auth: {
     loginTab: "साइन इन",

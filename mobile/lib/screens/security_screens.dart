@@ -124,7 +124,10 @@ class _CurrencySettingsScreenState extends State<CurrencySettingsScreen> {
               trKey(
                 'mobileLegacyTwdIsAlwaysIncludedSelectedCurrenciesAppearFirst',
               ),
-              style: TextStyle(fontSize: 12, color: Colors.grey),
+              style: TextStyle(
+                fontSize: 12,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
             SizedBox(height: 8),
             Wrap(
@@ -415,7 +418,10 @@ class _AccountBindingsScreenState extends State<AccountBindingsScreen> {
                 trKey(
                   'mobileLegacyLinkingIsCompletedInTheBrowserBeforeUnlinking',
                 ),
-                style: TextStyle(fontSize: 12, color: Colors.grey),
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
               ),
             ),
           ],

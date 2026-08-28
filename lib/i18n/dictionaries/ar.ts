@@ -77,6 +77,10 @@ export const ar = {
       updatableContent: "محتوى التحديث",
       recentContent: "آخر التحديثات",
     },
+    closeMenu: "إغلاق القائمة",
+    mainNav: "التنقل الرئيسي",
+    collapseSidebar: "طي الشريط الجانبي",
+    expandSidebar: "توسيع الشريط الجانبي",
   },
   auth: {
     loginTab: "تسجيل الدخول",

@@ -6,6 +6,7 @@ import '../format.dart';
 import '../models.dart';
 import '../widgets.dart';
 import '../l10n.dart';
+import '../theme.dart';
 
 class _BudgetData {
   final List<Budget> budgets;
@@ -117,22 +118,33 @@ class _BudgetsScreenState extends State<BudgetsScreen> {
           if (data.budgets.isEmpty) {
             return EmptyState(
               icon: Icons.savings_outlined,
-              message: trKey('mobileLegacyNoBudgetThisMonth'),
+              title: trKey('mobileLegacyNoBudgetThisMonth'),
+              message: trKey('featuresBudgetAddBudget'),
+              onAction: _add,
+              actionLabel: trKey('featuresBudgetAddBudget'),
             );
           }
           return RefreshIndicator(
             onRefresh: () async => _reload(),
             child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 88),
+              padding: const EdgeInsets.fromLTRB(
+                ApSpace.lg,
+                ApSpace.sm,
+                ApSpace.lg,
+                88,
+              ),
               children: [
-                for (final b in data.budgets)
-                  _BudgetTile(
-                    budget: b,
-                    name: b.categoryId == null
-                        ? trKey('mobileLegacyMonthlyBudget')
-                        : (data.catById[b.categoryId]?.name ??
-                              trKey('mobileLegacyUnknownCategory')),
-                    onDelete: () => _delete(b),
+                for (final (i, b) in data.budgets.indexed)
+                  StaggerIn(
+                    index: i,
+                    child: _BudgetTile(
+                      budget: b,
+                      name: b.categoryId == null
+                          ? trKey('mobileLegacyMonthlyBudget')
+                          : (data.catById[b.categoryId]?.name ??
+                                trKey('mobileLegacyUnknownCategory')),
+                      onDelete: () => _delete(b),
+                    ),
                   ),
               ],
             ),
@@ -156,53 +168,72 @@ class _BudgetTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = budget.progress;
+    final tokens = apTokens(context);
     final color = p >= 1
-        ? Colors.red
+        ? tokens.expense
         : p >= 0.9
-        ? Colors.orange
+        ? tokens.warning
         : p >= 0.7
-        ? Colors.amber
-        : Colors.green;
-    return Card(
-      elevation: 0,
-      margin: const EdgeInsets.only(bottom: 12),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+        ? tokens.loss
+        : tokens.income;
+    return LedgerCard(
+      margin: const EdgeInsets.only(bottom: ApSpace.md),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  name,
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
+              ),
+              IconButton(
+                visualDensity: VisualDensity.compact,
+                onPressed: onDelete,
+                icon: Icon(Icons.delete_outline, size: 20),
+              ),
+            ],
+          ),
+          const SizedBox(height: ApSpace.sm),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(6),
+            child: LinearProgressIndicator(
+              value: p.clamp(0, 1).toDouble(),
+              minHeight: 10,
+              borderRadius: BorderRadius.circular(5),
+              backgroundColor: color.withValues(alpha: 0.15),
+              valueColor: AlwaysStoppedAnimation(color),
+            ),
+          ),
+          const SizedBox(height: ApSpace.xs + 2),
+          Text.rich(
+            TextSpan(
+              text: twd(budget.used),
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                color: color,
+              ),
               children: [
-                Expanded(
-                  child: Text(
-                    name,
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                TextSpan(
+                  text: ' / ${twd(budget.amount)}',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w500,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
-                IconButton(
-                  visualDensity: VisualDensity.compact,
-                  onPressed: onDelete,
-                  icon: Icon(Icons.delete_outline, size: 20),
+                TextSpan(
+                  text: '　(${(p * 100).round()}%)',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w500,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ],
             ),
-            SizedBox(height: 8),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(6),
-              child: LinearProgressIndicator(
-                value: p.clamp(0, 1).toDouble(),
-                minHeight: 10,
-                backgroundColor: color.withValues(alpha: 0.15),
-                valueColor: AlwaysStoppedAnimation(color),
-              ),
-            ),
-            SizedBox(height: 6),
-            Text(
-              '${twd(budget.used)} / ${twd(budget.amount)}'
-              '　(${(p * 100).round()}%)',
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

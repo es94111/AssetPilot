@@ -9,6 +9,11 @@ import '../format.dart';
 import '../models.dart';
 import '../widgets.dart';
 import '../l10n.dart';
+import '../theme.dart';
+import 'accounts_screen.dart';
+import 'budgets_screen.dart';
+import 'transaction_form_screen.dart';
+import 'transactions_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -123,19 +128,35 @@ class _DashboardScreenState extends State<DashboardScreen> {
         key: ValueKey(_ym),
         future: _future,
         onRetry: _reload,
+        loadingBuilder: (_) => const ListView(
+          padding: EdgeInsets.fromLTRB(
+            ApSpace.xl,
+            ApSpace.lg,
+            ApSpace.xl,
+            ApSpace.xxl,
+          ),
+          children: [SkeletonSummary()],
+        ),
         builder: (context, d) => RefreshIndicator(
           onRefresh: () async => _reload(),
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
+            padding: const EdgeInsets.fromLTRB(
+              ApSpace.xl,
+              ApSpace.md,
+              ApSpace.xl,
+              ApSpace.xxl,
+            ),
             children: [
               _DashboardContext(month: _ym),
-              SizedBox(height: 16),
+              const SizedBox(height: ApSpace.lg),
               _AssetRow(d: d),
-              SizedBox(height: 12),
+              const SizedBox(height: ApSpace.lg),
               _SummaryGrid(d: d),
-              SizedBox(height: 24),
+              const SizedBox(height: ApSpace.lg),
+              _QuickAccess(onAddTxn: () => _openNewTxn()),
+              const SizedBox(height: ApSpace.xl),
               _CategoryPie(nodes: d.catBreakdown),
-              SizedBox(height: 24),
+              const SizedBox(height: ApSpace.xl),
               SectionHeader(
                 title: trKey('dashboardSectionsRecentTransactions'),
                 trailing: Text(
@@ -145,23 +166,35 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ),
-              SizedBox(height: 8),
+              const SizedBox(height: ApSpace.sm),
               if (d.recent.isEmpty)
                 LedgerCard(
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    padding: const EdgeInsets.symmetric(vertical: ApSpace.lg),
                     child: Center(
                       child: Text(trKey('dashboardEmptyNoTransactions')),
                     ),
                   ),
                 )
               else
-                ...d.recent.take(10).map((t) => _RecentTile(t: t)),
+                ...d.recent
+                    .take(10)
+                    .toList()
+                    .asMap()
+                    .entries
+                    .map((e) => StaggerIn(index: e.key, child: _RecentTile(t: e.value))),
             ],
           ),
         ),
       ),
     );
+  }
+
+  Future<void> _openNewTxn() async {
+    final changed = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(builder: (_) => const TransactionFormScreen()),
+    );
+    if (changed == true) _reload();
   }
 }
 
@@ -173,31 +206,27 @@ class _DashboardContext extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return LedgerCard(
-      color: theme.colorScheme.surfaceContainerHighest,
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+    final tokens = apTokens(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: ApSpace.lg,
+        vertical: ApSpace.md + 2,
+      ),
+      decoration: BoxDecoration(
+        color: tokens.glassTint,
+        borderRadius: ApRadius.rMd,
+        border: Border.all(color: tokens.glassBorder),
+      ),
       child: Row(
         children: [
           Icon(Icons.calendar_month_outlined, color: theme.colorScheme.primary),
-          SizedBox(width: 12),
+          const SizedBox(width: ApSpace.md),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  month,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                SizedBox(height: 2),
-                Text(
-                  trKey('dashboardSubtitle', {'month': month}),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.bodySmall,
-                ),
-              ],
+            child: Text(
+              trKey('dashboardSubtitle', {'month': month}),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.bodySmall,
             ),
           ),
         ],
@@ -219,14 +248,140 @@ class _MonthSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.only(bottom: ApSpace.sm),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          IconButton(onPressed: onPrev, icon: Icon(Icons.chevron_left)),
-          Text(label, style: Theme.of(context).textTheme.titleMedium),
-          IconButton(onPressed: onNext, icon: Icon(Icons.chevron_right)),
+          IconButton(
+            tooltip: trKey('dashboardFiltersPreviousMonth'),
+            onPressed: onPrev,
+            icon: const Icon(Icons.chevron_left),
+          ),
+          AnimatedTextSwap(
+            text: label,
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          IconButton(
+            tooltip: trKey('dashboardFiltersNextMonth'),
+            onPressed: onNext,
+            icon: const Icon(Icons.chevron_right),
+          ),
         ],
+      ),
+    );
+  }
+}
+
+/// 快速入口：把埋在「更多」的高頻功能（帳戶、預算、報表、記一筆）
+/// 提升到 Dashboard，降低點擊深度。
+class _QuickAccess extends StatelessWidget {
+  final VoidCallback onAddTxn;
+  const _QuickAccess({required this.onAddTxn});
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = apTokens(context);
+    final scheme = Theme.of(context).colorScheme;
+    final items = <(IconData, String, Color, VoidCallback)>[
+      (
+        Icons.add_circle_outline,
+        trKey('mobileLegacyAddTransaction'),
+        scheme.primary,
+        onAddTxn,
+      ),
+      (
+        Icons.account_balance_wallet_outlined,
+        trKey('featuresCommonAccount'),
+        tokens.net,
+        () => _push(context, AccountsScreen()),
+      ),
+      (
+        Icons.savings_outlined,
+        trKey('mobileLegacyBudgets'),
+        tokens.warning,
+        () => _push(context, BudgetsScreen()),
+      ),
+      (
+        Icons.receipt_long_outlined,
+        trKey('mobileLegacyTransactions8084a8ea'),
+        tokens.income,
+        () => _push(context, TransactionsScreen()),
+      ),
+    ];
+    return Row(
+      children: [
+        for (var i = 0; i < items.length; i++) ...[
+          if (i > 0) const SizedBox(width: ApSpace.sm),
+          Expanded(
+            child: _QuickTile(
+              icon: items[i].$1,
+              label: items[i].$2,
+              color: items[i].$3,
+              onTap: items[i].$4,
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  void _push(BuildContext context, Widget page) =>
+      Navigator.of(context).push(MaterialPageRoute(builder: (_) => page));
+}
+
+class _QuickTile extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _QuickTile({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: ApRadius.rMd,
+          child: Ink(
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              borderRadius: ApRadius.rMd,
+              border: Border.all(color: apTokens(context).glassBorder),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: ApSpace.md),
+              child: Column(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: 0.14),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(icon, size: 20, color: color),
+                  ),
+                  const SizedBox(height: ApSpace.xs),
+                  Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.labelMedium,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -248,7 +403,7 @@ class _SummaryGrid extends StatelessWidget {
             icon: Icons.south_west,
           ),
         ),
-        SizedBox(width: 12),
+        const SizedBox(width: ApSpace.md),
         Expanded(
           child: _StatCard(
             label: trKey('dashboardOverviewExpense'),
@@ -277,19 +432,16 @@ class _StatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return LedgerCard(
-      color: Theme.of(context).colorScheme.surfaceContainerHighest,
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(ApSpace.lg - 2),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(icon, color: color, size: 20),
-          SizedBox(height: 10),
+          const SizedBox(height: ApSpace.md),
           Text(label, style: Theme.of(context).textTheme.bodySmall),
-          SizedBox(height: 4),
-          Text(
-            value,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+          const SizedBox(height: ApSpace.xs),
+          AnimatedTextSwap(
+            text: value,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w700,
               color: color,
@@ -308,30 +460,47 @@ class _AssetRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return LedgerCard(
-      color: theme.colorScheme.primaryContainer,
-      padding: const EdgeInsets.all(20),
+    final tokens = apTokens(context);
+    return Container(
+      padding: const EdgeInsets.all(ApSpace.xl),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: tokens.heroGradient,
+        ),
+        borderRadius: ApRadius.rXl,
+        border: Border.all(color: tokens.glassBorder),
+        boxShadow: [
+          BoxShadow(
+            color: tokens.shadow,
+            blurRadius: 20,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             trKey('mobileLegacyNetThisMonth'),
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onPrimaryContainer,
+              color: theme.colorScheme.onSurfaceVariant,
             ),
           ),
-          SizedBox(height: 4),
+          const SizedBox(height: ApSpace.xs),
           Semantics(
             label: signedLabel(d.net, trKey('dashboardOverviewNet')),
-            child: Text(
-              signed(d.net),
+            child: AnimatedTextSwap(
+              text: signed(d.net),
               style: theme.textTheme.displaySmall?.copyWith(
-                fontWeight: FontWeight.w700,
-                color: theme.colorScheme.onPrimaryContainer,
+                fontWeight: FontWeight.w800,
+                letterSpacing: -0.5,
+                color: d.net >= 0 ? tokens.net : tokens.expense,
               ),
             ),
           ),
-          Divider(height: 24),
+          const SizedBox(height: ApSpace.lg),
           Row(
             children: [
               Expanded(
@@ -368,14 +537,15 @@ class _MiniStat extends StatelessWidget {
         Text(
           label,
           style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onPrimaryContainer,
+            color: theme.colorScheme.onSurfaceVariant,
           ),
         ),
-        Text(
-          value,
+        const SizedBox(height: 2),
+        AnimatedTextSwap(
+          text: value,
           style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: theme.colorScheme.onPrimaryContainer,
+            fontWeight: FontWeight.w700,
+            color: theme.colorScheme.onSurface,
           ),
         ),
       ],
@@ -409,6 +579,10 @@ class _CategoryPie extends StatelessWidget {
     return groups.values.toList()..sort((a, b) => b.total.compareTo(a.total));
   }
 
+  /// 扇區百分比標籤畫在使用者自訂的分類色上，依亮度選黑或白確保對比。
+  Color _onSliceColor(Color slice) =>
+      slice.computeLuminance() > 0.55 ? const Color(0xFF1A1D26) : Colors.white;
+
   @override
   Widget build(BuildContext context) {
     if (nodes.isEmpty) return const SizedBox.shrink();
@@ -420,7 +594,7 @@ class _CategoryPie extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SectionHeader(title: trKey('dashboardSectionsExpenseCategories')),
-          SizedBox(height: 16),
+          const SizedBox(height: ApSpace.lg),
           Semantics(
             container: true,
             label: summary,
@@ -441,7 +615,7 @@ class _CategoryPie extends StatelessWidget {
                         radius: 50,
                         titleStyle: TextStyle(
                           fontSize: 11,
-                          color: Colors.white,
+                          color: _onSliceColor(parseColor(n.color)),
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -450,10 +624,10 @@ class _CategoryPie extends StatelessWidget {
               ),
             ),
           ),
-          SizedBox(height: 12),
+          const SizedBox(height: ApSpace.md),
           Wrap(
-            spacing: 12,
-            runSpacing: 6,
+            spacing: ApSpace.md,
+            runSpacing: ApSpace.xs + 2,
             children: [
               for (final n in shown)
                 Row(
@@ -467,7 +641,7 @@ class _CategoryPie extends StatelessWidget {
                         shape: BoxShape.circle,
                       ),
                     ),
-                    SizedBox(width: 4),
+                    const SizedBox(width: ApSpace.xs),
                     Text(
                       // 父分類佔總支出百分比，保留小數點第一位。
                       total > 0
@@ -501,10 +675,13 @@ class _RecentTile extends StatelessWidget {
         : (isIncome ? Icons.south_west : Icons.north_east);
     final sign = isTransfer ? '' : (isIncome ? '+' : '-');
     return LedgerCard(
-      margin: const EdgeInsets.only(bottom: 8),
+      margin: const EdgeInsets.only(bottom: ApSpace.sm),
       padding: EdgeInsets.zero,
       child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: ApSpace.md + 2,
+          vertical: ApSpace.xs,
+        ),
         leading: CircleAvatar(
           backgroundColor: color.withValues(alpha: 0.14),
           child: Icon(icon, color: color, size: 18),
@@ -517,9 +694,9 @@ class _RecentTile extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
         ),
         subtitle: Text(t.date),
-        trailing: Text(
+        trailing: AnimatedTextSwap(
           // 外幣交易顯示原幣別金額，TWD 交易維持台幣金額。
-          sign + money(t.originalAmount, t.currency),
+          text: sign + money(t.originalAmount, t.currency),
           style: TextStyle(fontWeight: FontWeight.w700, color: color),
         ),
       ),

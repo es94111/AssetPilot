@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useT } from '@/components/i18n/I18nProvider';
-import { Plus, Edit3, Trash2 } from 'lucide-react';
+import { Plus, Edit3, Trash2, Tags } from 'lucide-react';
 
 const EMPTY_FORM = { name: '', type: 'expense', color: '#94a3b8', parentId: '', icon: '' };
 
@@ -134,10 +134,20 @@ export default function CategoriesClient(_props: { user?: any } = {}) {
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold">{t('features.categories.title')}</h2>
-      <div className="flex gap-2 border-b">
+      <div className="flex gap-2 border-b" style={{ borderColor: 'var(--border)' }}>
         {(['expense', 'income'] as const).map(tab => (
-          <button key={tab} className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === tab ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`} onClick={() => setActiveTab(tab)}>
+          <button
+            key={tab}
+            className="relative px-4 py-2 text-sm font-medium transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            style={{ color: activeTab === tab ? 'var(--primary)' : 'var(--text-secondary)', fontWeight: activeTab === tab ? 600 : 500 }}
+            onClick={() => setActiveTab(tab)}
+          >
             {tab === 'expense' ? t('features.categories.expenseTab') : t('features.categories.incomeTab')}
+            <span
+              aria-hidden="true"
+              className="absolute inset-x-2 bottom-0 h-0.5 rounded-full"
+              style={{ background: activeTab === tab ? 'var(--primary)' : 'transparent' }}
+            />
           </button>
         ))}
       </div>
@@ -161,7 +171,16 @@ export default function CategoriesClient(_props: { user?: any } = {}) {
         </DialogContent>
       </Dialog>
 
-      {loading ? <p className="text-slate-500">{t('common.loading')}</p> : (
+      {loading ? (
+        <div className="space-y-4" aria-busy="true">
+          {Array.from({ length: 3 }).map((_, i) => <div key={i} className="ui-skeleton h-24 rounded-xl" />)}
+        </div>
+      ) : parents.length === 0 ? (
+        <div className="empty-state rounded-xl border border-dashed" style={{ borderColor: 'var(--border-strong)' }}>
+          <div className="empty-state-icon"><Tags size={22} aria-hidden="true" /></div>
+          <p className="empty-state-title">{t('common.noData')}</p>
+        </div>
+      ) : (
         <div className="space-y-4">
           {parents.map(parent => (
             <div key={parent.id} className="bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-lg shadow-sm">

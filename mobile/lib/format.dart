@@ -48,18 +48,21 @@ Color parseColor(String hex) {
 
 /// 損益正負對應中性的 teal/orange 語義色；不把損益誤表達為危險狀態。
 Color plColor(num v, BuildContext context) {
-  final semantic = Theme.of(context).extension<AssetPilotTheme>();
-  if (v > 0) return semantic?.profit ?? const Color(0xFFD32F2F);
-  if (v < 0) return semantic?.loss ?? const Color(0xFF2E7D32);
+  final semantic = apTokens(context);
+  if (v > 0) return semantic.profit;
+  if (v < 0) return semantic.loss;
   return Theme.of(context).colorScheme.onSurfaceVariant;
 }
 
 /// 收入／支出使用的語義顏色，避免畫面散落 raw colors。
 Color flowColor({required bool income, required BuildContext context}) {
-  final semantic = Theme.of(context).extension<AssetPilotTheme>();
-  if (income) return semantic?.income ?? Theme.of(context).colorScheme.primary;
-  return semantic?.expense ?? Theme.of(context).colorScheme.error;
+  final semantic = apTokens(context);
+  if (income) return semantic.income;
+  return semantic.expense;
 }
+
+/// 淨額／總覽統計語義色。
+Color netColor(BuildContext context) => apTokens(context).net;
 
 /// 計算帶方向符號的 accessible label，供金額與圖表旁的 Semantics 使用。
 String signedLabel(num v, String label) {

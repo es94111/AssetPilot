@@ -77,6 +77,10 @@ export const en = {
       updatableContent: "What's new",
       recentContent: "Recent updates",
     },
+    closeMenu: "Close menu",
+    mainNav: "Main navigation",
+    collapseSidebar: "Collapse sidebar",
+    expandSidebar: "Expand sidebar",
   },
   auth: {
     loginTab: "Sign in",

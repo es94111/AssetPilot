@@ -267,6 +267,30 @@ class LedgerCard extends StatelessWidget {
     final tokens = apTokens(context);
     final scheme = Theme.of(context).colorScheme;
     final radius = borderRadius ?? ApRadius.rLg;
+    final isDark = scheme.brightness == Brightness.dark;
+    // 暖中性兩層陰影（品牌規範：不用藍色陰影）——亮色為
+    // `0 3px 12px` + `0 1px 3px` 暖棕；暗色單層加深即可。
+    final shadows = isDark
+        ? <BoxShadow>[
+            BoxShadow(
+              color: tokens.shadow,
+              blurRadius: 16,
+              offset: const Offset(0, 4),
+            ),
+          ]
+        : <BoxShadow>[
+            const BoxShadow(
+              color: Color(0x0F3C2D1E), // rgba(60,45,30,.06)
+              blurRadius: 12,
+              offset: Offset(0, 3),
+            ),
+            BoxShadow(
+              // 淡陰影層：rgba(60,45,30,.05)（0x0D ≈ .05 直接表達）。
+              color: Color(0x0D3C2D1E),
+              blurRadius: 3,
+              offset: Offset(0, 1),
+            ),
+          ];
     final content = Padding(padding: padding, child: child);
     Widget card = DecoratedBox(
       decoration: BoxDecoration(
@@ -274,13 +298,7 @@ class LedgerCard extends StatelessWidget {
         gradient: gradient,
         borderRadius: radius,
         border: Border.all(color: tokens.glassBorder),
-        boxShadow: [
-          BoxShadow(
-            color: tokens.shadow,
-            blurRadius: 16,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        boxShadow: shadows,
       ),
       child: content,
     );
@@ -322,9 +340,8 @@ class SectionHeader extends StatelessWidget {
         Expanded(
           child: Text(
             title,
-            style: Theme.of(
-              context,
-            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+            // 區塊標題用 display 襯線（中文字符自動 fallback 系統字）。
+            style: Theme.of(context).textTheme.titleMedium,
           ),
         ),
         if (trailing != null) trailing!,

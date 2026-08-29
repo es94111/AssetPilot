@@ -482,10 +482,12 @@ class _AssetRow extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // 暖赭實心背景上的文字固定用暖白／奶油白，確保對比
+          //（亮色模式的 heroGradient 為深赭→淡赭）。
           Text(
             trKey('mobileLegacyNetThisMonth'),
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+              color: const Color(0xFFEFDFD2),
             ),
           ),
           const SizedBox(height: ApSpace.xs),
@@ -495,8 +497,10 @@ class _AssetRow extends StatelessWidget {
               text: signed(d.net),
               style: theme.textTheme.displaySmall?.copyWith(
                 fontWeight: FontWeight.w800,
-                letterSpacing: -0.5,
-                color: d.net >= 0 ? tokens.net : tokens.expense,
+                fontFeatures: const [FontFeature.tabularFigures()],
+                // 暖底上不以語義色表達淨額正負（規範：金額可讀性優先），
+                // 改以符號表達方向。
+                color: const Color(0xFFFFF4E8),
               ),
             ),
           ),
@@ -531,13 +535,14 @@ class _MiniStat extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    // 位於暖赭 hero 底上：文字固定暖白／奶油白以確保對比。
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
           style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
+            color: const Color(0xCCEFE0D2),
           ),
         ),
         const SizedBox(height: 2),
@@ -545,7 +550,8 @@ class _MiniStat extends StatelessWidget {
           text: value,
           style: theme.textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.w700,
-            color: theme.colorScheme.onSurface,
+            fontFeatures: const [FontFeature.tabularFigures()],
+            color: const Color(0xFFFFF4E8),
           ),
         ),
       ],
@@ -581,7 +587,7 @@ class _CategoryPie extends StatelessWidget {
 
   /// 扇區百分比標籤畫在使用者自訂的分類色上，依亮度選黑或白確保對比。
   Color _onSliceColor(Color slice) =>
-      slice.computeLuminance() > 0.55 ? const Color(0xFF1A1D26) : Colors.white;
+      slice.computeLuminance() > 0.55 ? const Color(0xFF26221C) : Colors.white;
 
   @override
   Widget build(BuildContext context) {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../l10n.dart';
+import '../theme.dart';
 
 /// AssetPilot 品牌入場動畫畫面。
 ///
@@ -59,31 +60,31 @@ class _SplashScreenState extends State<SplashScreen>
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // 深色漸層背景，呼應品牌深色金融控制台風格。
+          // 暖夜漸層背景，呼應品牌「Warm Console」金融控制台風格。
           const DecoratedBox(
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [Color(0xFF0C0F16), Color(0xFF111827), Color(0xFF0C1A2E)],
+                colors: [Color(0xFF141210), Color(0xFF1D1A16), Color(0xFF241712)],
               ),
             ),
           ),
-          // 柔和的品牌光暈 blob。
+          // 柔和的品牌光暈 blob：暖赭為主，松綠／赭金點綴。
           Positioned(
             top: -120,
             left: -100,
-            child: _Blob(color: const Color(0xFF4F6EF7), size: 320),
+            child: _Blob(color: const Color(0xFFB0521C), size: 320),
           ),
           Positioned(
             bottom: -120,
             right: -100,
-            child: _Blob(color: const Color(0xFF10B981), size: 280),
+            child: _Blob(color: const Color(0xFF5F8D7A), size: 280),
           ),
           Positioned(
             top: 320,
             left: 40,
-            child: _Blob(color: const Color(0xFFF59E0B), size: 220),
+            child: _Blob(color: const Color(0xFFD98A4A), size: 220),
           ),
           Center(
             child: Column(
@@ -96,13 +97,13 @@ class _SplashScreenState extends State<SplashScreen>
                 const SizedBox(height: 28),
                 FadeTransition(
                   opacity: fadeIn,
-                  child: const Text(
+                  child: Text(
                     'AssetPilot',
                     style: TextStyle(
                       fontSize: 34,
                       fontWeight: FontWeight.w800,
-                      letterSpacing: -0.5,
-                      color: Colors.white,
+                      fontFamily: apDisplayFontFamily,
+                      color: const Color(0xFFECE7DE),
                     ),
                   ),
                 ),
@@ -114,7 +115,7 @@ class _SplashScreenState extends State<SplashScreen>
                     style: const TextStyle(
                       fontSize: 13,
                       letterSpacing: 4,
-                      color: Colors.white54,
+                      color: Color(0x99ECE7DE),
                     ),
                   ),
                 ),
@@ -127,8 +128,8 @@ class _SplashScreenState extends State<SplashScreen>
                     child: LinearProgressIndicator(
                       value: progress.value,
                       minHeight: 3,
-                      color: const Color(0xFF4F6EF7),
-                      backgroundColor: Colors.white12,
+                      color: const Color(0xFFE2A377),
+                      backgroundColor: const Color(0x1AECE7DE),
                     ),
                   ),
                 ),
@@ -178,11 +179,12 @@ class _BrandLogo extends StatelessWidget {
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+          // 暖赭 135° hero 漸層（品牌規範）。
+          colors: [Color(0xFF994215), Color(0xFFB0521C), Color(0xFFD98A4A)],
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF4F6EF7).withValues(alpha: 0.4),
+            color: const Color(0xFFB0521C).withValues(alpha: 0.4),
             blurRadius: 30,
             offset: const Offset(0, 12),
           ),
@@ -247,7 +249,7 @@ class _LogoPainter extends CustomPainter {
       ..shader = const LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
-        colors: [Color(0xFFFBBF24), Color(0xFFF59E0B)],
+        colors: [Color(0xFFE5B567), Color(0xFFD98A4A)],
       ).createShader(
         Rect.fromCircle(center: Offset(w * 0.85, h * 0.74), radius: w * 0.16),
       );

@@ -103,6 +103,14 @@ flutter:
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
 
+  # 標題襯線字體（Warm Console display：與 Web `--font-display` 同款）。
+  # 變數字體含 wght 100-900 軸，打包單檔即可涵蓋所有粗細；
+  # 中文字符不含於此字體，自動 fallback 系統字。
+  fonts:
+    - family: Fraunces
+      fonts:
+        - asset: assets/fonts/Fraunces-Variable.ttf
+
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
 

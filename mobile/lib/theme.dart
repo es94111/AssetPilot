@@ -12,12 +12,13 @@ abstract final class ApSpace {
   static const double xxl = 32;
 }
 
-/// 圓角尺度（金融控制台：中等偏大的柔和圓角）。
+/// 圓角尺度（Warm Console：10 → 12 → 16 → 20px 柔和圓角階梯，
+/// 與 Web `--radius-sm/md/lg` 一致）。
 abstract final class ApRadius {
   static const double sm = 10;
-  static const double md = 14;
-  static const double lg = 18;
-  static const double xl = 24;
+  static const double md = 12;
+  static const double lg = 16;
+  static const double xl = 20;
   static const double pill = 999;
 
   static const BorderRadius rSm = BorderRadius.all(Radius.circular(sm));
@@ -49,7 +50,8 @@ bool apReduceMotion(BuildContext context) =>
 ///
 /// 補充 [ColorScheme] 讓 income / expense / net / success / warning 等語義色
 /// 在淺色與深色主題各自使用對比度足夠的色階（深色模式為去飽和的 tonal 色，
-/// 不是反色）。金額一律使用語義色，不可任意替換（品牌規範）。
+/// 不是反色）。金額一律使用語義色，不可任意替換（品牌規範：
+/// 收入松綠、支出磚紅、淨值赭金 —— 見「網站配色風格.md」）。
 @immutable
 class AssetPilotTheme extends ThemeExtension<AssetPilotTheme> {
   /// 收入金額、正向現金流。
@@ -79,20 +81,27 @@ class AssetPilotTheme extends ThemeExtension<AssetPilotTheme> {
   /// 資訊提示。
   final Color info;
 
-  /// 玻璃卡片邊框（淺色＝實色灰線、深色＝ white/10）。
+  /// 玻璃卡片邊框（淺色＝實色暖灰線、深色＝暖白/10）。
   final Color glassBorder;
+
+  /// 輸入框、表頭等需要更明顯分隔的邊框。
+  final Color borderStrong;
 
   /// 玻璃卡片上的淡淡品牌染色（低透明度 primary）。
   final Color glassTint;
 
-  /// 卡片陰影基色（搭配 LedgerCard 的兩層陰影使用）。
+  /// 卡片陰影基色（搭配 LedgerCard 的兩層陰影使用；暖中性，非藍）。
   final Color shadow;
 
-  /// 主視覺漸層（Dashboard hero、登入卡）。
+  /// 主視覺漸層（Dashboard hero、登入卡）：暖赭 135°。
   final List<Color> heroGradient;
 
-  /// App 外層柔和漸層（登入、引導頁背景）。
+  /// App 外層柔和漸層（登入、引導頁背景）：暖棉紙／暖夜。
   final List<Color> pageGradient;
+
+  /// 圖表類別色盤（暖赭為首、接語意色、之後暖色階輪替；
+  /// 與 Web ReportsClient 同組）。
+  final List<Color> chartPalette;
 
   const AssetPilotTheme({
     required this.income,
@@ -105,52 +114,75 @@ class AssetPilotTheme extends ThemeExtension<AssetPilotTheme> {
     required this.success,
     required this.info,
     required this.glassBorder,
+    required this.borderStrong,
     required this.glassTint,
     required this.shadow,
     required this.heroGradient,
     required this.pageGradient,
+    required this.chartPalette,
   });
 
   static AssetPilotTheme forBrightness(Brightness brightness) {
     final isDark = brightness == Brightness.dark;
     return isDark
-        // 深色模式：去飽和的 tonal 亮色，避免純飽和色在暗底上刺眼。
+        // 暖夜：暖黑底 + 去飽和的 tonal 亮色，避免純飽和色在暗底上刺眼。
         ? const AssetPilotTheme(
-            income: Color(0xFF34D399),
-            expense: Color(0xFFFB7185),
+            income: Color(0xFF6CC29B),
+            expense: Color(0xFFE08279),
             // 股票 P/L 刻意使用中性 teal/orange，不採用危險語義。
             profit: Color(0xFF5EEAD4),
             loss: Color(0xFFFDBA74),
-            warning: Color(0xFFFBBF24),
-            stale: Color(0xFF8B94A3),
-            net: Color(0xFF60A5FA),
-            success: Color(0xFF34D399),
-            info: Color(0xFF7DD3FC),
-            glassBorder: Color(0x1AFFFFFF), // white/10
-            glassTint: Color(0x147B93FA),
+            warning: Color(0xFFE5B567),
+            stale: Color(0xFF8F857A),
+            net: Color(0xFFD3A35C),
+            success: Color(0xFF6CC29B),
+            info: Color(0xFFD3B083),
+            glassBorder: Color(0x1AECE7DE), // 暖白/10
+            borderStrong: Color(0x29ECE7DE), // 暖白/16
+            glassTint: Color(0x1AE2A377),
             shadow: Color(0x66000000),
-            heroGradient: [Color(0xFF1C2742), Color(0xFF151F35)],
-            pageGradient: [Color(0xFF0C0F16), Color(0xFF111827), Color(0xFF0C1A2E)],
+            heroGradient: [Color(0xFF2A1810), Color(0xFF241712)],
+            pageGradient: [Color(0xFF141210), Color(0xFF1D1A16)],
+            chartPalette: [
+              Color(0xFFE09A5F),
+              Color(0xFF6CC29B),
+              Color(0xFFD3A35C),
+              Color(0xFFE08279),
+              Color(0xFFD98A4A),
+              Color(0xFF7FA893),
+              Color(0xFFC98A3D),
+              Color(0xFFB96A5C),
+              Color(0xFF97A87B),
+              Color(0xFFBC8455),
+            ],
           )
         : const AssetPilotTheme(
-            income: Color(0xFF047857),
-            expense: Color(0xFFBE123C),
+            income: Color(0xFF1E6B52),
+            expense: Color(0xFFB3372F),
             profit: Color(0xFF0F766E),
             loss: Color(0xFFC2410C),
             warning: Color(0xFFB45309),
-            stale: Color(0xFF94A3B8),
-            net: Color(0xFF1D4ED8),
-            success: Color(0xFF047857),
-            info: Color(0xFF0369A1),
-            glassBorder: Color(0xFFE4E7EC),
-            glassTint: Color(0x0A4F6EF7),
-            shadow: Color(0x144F6EF7),
-            heroGradient: [Color(0xFFE4EAFF), Color(0xFFDCEBFF), Color(0xFFDFF3EA)],
-            pageGradient: [
-              Color(0xFFDDE5FF),
-              Color(0xFFEEF2FF),
-              Color(0xFFE0F2FE),
-              Color(0xFFDCFCE7),
+            stale: Color(0xFFA79C8D),
+            net: Color(0xFF8A5A1F),
+            success: Color(0xFF1E6B52),
+            info: Color(0xFF9A6A2F),
+            glassBorder: Color(0xFFE6DFD3),
+            borderStrong: Color(0xFFD3C9B8),
+            glassTint: Color(0x0FB0521C),
+            shadow: Color(0x0F3C2D1E),
+            heroGradient: [Color(0xFF994215), Color(0xFFB0521C), Color(0xFFD98A4A)],
+            pageGradient: [Color(0xFFF8F5EF), Color(0xFFF4F0E8)],
+            chartPalette: [
+              Color(0xFFB0521C),
+              Color(0xFF1E6B52),
+              Color(0xFF8A5A1F),
+              Color(0xFFB3372F),
+              Color(0xFFD98A4A),
+              Color(0xFF5F8D7A),
+              Color(0xFFC98A3D),
+              Color(0xFF9C4A3A),
+              Color(0xFF7D9464),
+              Color(0xFFA8683A),
             ],
           );
   }
@@ -167,10 +199,12 @@ class AssetPilotTheme extends ThemeExtension<AssetPilotTheme> {
     Color? success,
     Color? info,
     Color? glassBorder,
+    Color? borderStrong,
     Color? glassTint,
     Color? shadow,
     List<Color>? heroGradient,
     List<Color>? pageGradient,
+    List<Color>? chartPalette,
   }) {
     return AssetPilotTheme(
       income: income ?? this.income,
@@ -183,10 +217,12 @@ class AssetPilotTheme extends ThemeExtension<AssetPilotTheme> {
       success: success ?? this.success,
       info: info ?? this.info,
       glassBorder: glassBorder ?? this.glassBorder,
+      borderStrong: borderStrong ?? this.borderStrong,
       glassTint: glassTint ?? this.glassTint,
       shadow: shadow ?? this.shadow,
       heroGradient: heroGradient ?? this.heroGradient,
       pageGradient: pageGradient ?? this.pageGradient,
+      chartPalette: chartPalette ?? this.chartPalette,
     );
   }
 
@@ -209,10 +245,13 @@ class AssetPilotTheme extends ThemeExtension<AssetPilotTheme> {
       success: Color.lerp(success, other.success, t) ?? success,
       info: Color.lerp(info, other.info, t) ?? info,
       glassBorder: Color.lerp(glassBorder, other.glassBorder, t) ?? glassBorder,
+      borderStrong: Color.lerp(borderStrong, other.borderStrong, t)
+          ?? borderStrong,
       glassTint: Color.lerp(glassTint, other.glassTint, t) ?? glassTint,
       shadow: Color.lerp(shadow, other.shadow, t) ?? shadow,
       heroGradient: lerpList(heroGradient, other.heroGradient),
       pageGradient: lerpList(pageGradient, other.pageGradient),
+      chartPalette: lerpList(chartPalette, other.chartPalette),
     );
   }
 }
@@ -231,71 +270,113 @@ AssetPilotTheme apTokensFor(Brightness brightness) =>
 AssetPilotTheme assetPilotThemeFor(Brightness brightness) =>
     AssetPilotTheme.forBrightness(brightness);
 
+// ── Typography helpers ────────────────────────────────────────
+
+/// 標題襯線字體（與 Web display 同款）。內含拉丁字形；中文字符自動
+/// fallback 到系統字體，不影響中文排版。
+const String apDisplayFontFamily = 'Fraunces';
+
+/// 金額／數字樣式：tabular figures 使多位數金額直向對齊、跳動最小。
+/// 規範要求金額與表格數字一律等寬。
+TextStyle apMoneyStyle(
+  BuildContext context, {
+  double? fontSize,
+  FontWeight? fontWeight,
+  Color? color,
+  double? height,
+}) {
+  return TextStyle(
+    fontSize: fontSize,
+    fontWeight: fontWeight ?? FontWeight.w600,
+    color: color,
+    height: height,
+    fontFeatures: const [FontFeature.tabularFigures()],
+  );
+}
+
 // ── Theme builder ─────────────────────────────────────────────
 
-/// 品牌色板（網站配色風格.md）：Primary #4F6EF7 / PrimaryDark #3B55D9 /
-/// 深色模式 PrimaryLight #7B93FA。
+/// 品牌色板（網站配色風格.md「Warm Console」）：暖赭 Primary #B0521C /
+/// PrimarySolid #A8481A / PrimaryDark #994215；深色模式（暖夜）主色為
+/// 亮赭 #E2A377，實心按鈕維持深赭 #A8481A 配白字。
 ThemeData buildAssetPilotTheme(Brightness brightness) {
   final isDark = brightness == Brightness.dark;
   final tokens = apTokensFor(brightness);
+
+  // 實心主按鈕底色：雙主題皆為深赭（暗底白字對比 5.16:1）。
+  const primarySolid = Color(0xFFA8481A);
   final scheme = ColorScheme(
     brightness: brightness,
-    primary: isDark ? const Color(0xFF7B93FA) : const Color(0xFF4F6EF7),
-    onPrimary: isDark ? const Color(0xFF0C1226) : Colors.white,
+    // 暗色模式 primary 用亮赭（文字、連結、圖示），實心按鈕由下方
+    // FilledButtonTheme 覆寫為 primarySolid。
+    primary: isDark ? const Color(0xFFE2A377) : const Color(0xFFB0521C),
+    onPrimary: isDark ? const Color(0xFF2A1810) : Colors.white,
     primaryContainer: isDark
-        ? const Color(0xFF253158)
-        : const Color(0xFFE4EAFF),
+        ? const Color(0xFF3A2417)
+        : const Color(0xFFF6E3D3),
     onPrimaryContainer: isDark
-        ? const Color(0xFFDCE3FF)
-        : const Color(0xFF1E2A6E),
-    secondary: isDark ? const Color(0xFF8FA6FB) : const Color(0xFF3B55D9),
-    onSecondary: isDark ? const Color(0xFF0C1226) : Colors.white,
+        ? const Color(0xFFF1D4B8)
+        : const Color(0xFF6E320E),
+    secondary: isDark ? const Color(0xFFD3A35C) : const Color(0xFF8A5A1F),
+    onSecondary: isDark ? const Color(0xFF241712) : Colors.white,
     secondaryContainer: isDark
-        ? const Color(0xFF1E2A4D)
-        : const Color(0xFFE8EDFF),
+        ? const Color(0xFF2E2312)
+        : const Color(0xFFF1E6CF),
     onSecondaryContainer: isDark
-        ? const Color(0xFFD5DEFF)
-        : const Color(0xFF24307A),
-    tertiary: isDark ? const Color(0xFF5EEAD4) : const Color(0xFF0F766E),
-    onTertiary: isDark ? const Color(0xFF0B3B33) : Colors.white,
+        ? const Color(0xFFE7D6B2)
+        : const Color(0xFF59390F),
+    tertiary: isDark ? const Color(0xFF6CC29B) : const Color(0xFF1E6B52),
+    onTertiary: isDark ? const Color(0xFF0D241B) : Colors.white,
     tertiaryContainer: isDark
-        ? const Color(0xFF134E4A)
-        : const Color(0xFFCCFBF1),
+        ? const Color(0xFF1C3A2D)
+        : const Color(0xFFD9EDE4),
     onTertiaryContainer: isDark
-        ? const Color(0xFFCCFBF1)
-        : const Color(0xFF134E4A),
-    error: isDark ? const Color(0xFFFCA5A5) : const Color(0xFFDC2626),
-    onError: isDark ? const Color(0xFF4C0505) : Colors.white,
+        ? const Color(0xFFC4E8D6)
+        : const Color(0xFF14503D),
+    error: isDark ? const Color(0xFFE08279) : const Color(0xFFB3372F),
+    onError: isDark ? const Color(0xFF3B120E) : Colors.white,
     errorContainer: isDark
-        ? const Color(0xFF450A0A)
-        : const Color(0xFFFEF2F2),
+        ? const Color(0xFF3B1D19)
+        : const Color(0xFFF9E4E1),
     onErrorContainer: isDark
-        ? const Color(0xFFFEE2E2)
-        : const Color(0xFF991B1B),
-    surface: isDark ? const Color(0xFF151922) : Colors.white,
-    onSurface: isDark ? const Color(0xFFE8EAEF) : const Color(0xFF1A1D26),
+        ? const Color(0xFFF3C1BB)
+        : const Color(0xFF8A2B24),
+    // 暖棉紙（亮）：卡片近白 #FFFDF9；暖夜（暗）：暖黑卡片 #1D1A16。
+    surface: isDark ? const Color(0xFF1D1A16) : const Color(0xFFFFFDF9),
+    onSurface: isDark ? const Color(0xFFECE7DE) : const Color(0xFF26221C),
     surfaceContainerLowest: isDark
-        ? const Color(0xFF10141C)
-        : Colors.white,
-    surfaceContainerLow: isDark ? const Color(0xFF12161F) : const Color(0xFFF8FAFC),
-    surfaceContainer: isDark ? const Color(0xFF171C27) : const Color(0xFFF1F4F9),
-    surfaceContainerHigh: isDark ? const Color(0xFF1B2230) : const Color(0xFFEAEFF5),
+        ? const Color(0xFF181512)
+        : const Color(0xFFFFFDF9),
+    surfaceContainerLow: isDark
+        ? const Color(0xFF191612)
+        : const Color(0xFFF8F5EF),
+    surfaceContainer: isDark
+        ? const Color(0xFF1E1A15)
+        : const Color(0xFFF4F0E8),
+    surfaceContainerHigh: isDark
+        ? const Color(0xFF242019)
+        : const Color(0xFFEFE9DF),
     surfaceContainerHighest: isDark
-        ? const Color(0xFF202839)
-        : const Color(0xFFE4EAF1),
-    onSurfaceVariant: isDark ? const Color(0xFF9CA3B4) : const Color(0xFF5C6370),
-    outline: isDark ? const Color(0xFF303B4D) : const Color(0xFFD8DEE9),
-    outlineVariant: isDark ? const Color(0xFF262F3E) : const Color(0xFFE4E7EC),
-    inverseSurface: isDark ? const Color(0xFFE8EAEF) : const Color(0xFF2A2F3A),
-    onInverseSurface: isDark ? const Color(0xFF1A1D26) : const Color(0xFFF1F5F9),
-    inversePrimary: isDark ? const Color(0xFF3B55D9) : const Color(0xFFAABFFF),
+        ? const Color(0xFF2A251E)
+        : const Color(0xFFEAE3D6),
+    onSurfaceVariant: isDark ? const Color(0xFFB3A99C) : const Color(0xFF6B6157),
+    outline: isDark ? const Color(0xFF4A433A) : const Color(0xFFD3C9B8),
+    outlineVariant: isDark
+        ? const Color(0x1AECE7DE)
+        : const Color(0xFFE6DFD3),
+    inverseSurface: isDark
+        ? const Color(0xFFECE7DE)
+        : const Color(0xFF2C2822),
+    onInverseSurface: isDark
+        ? const Color(0xFF26221C)
+        : const Color(0xFFF7F4EE),
+    inversePrimary: isDark ? const Color(0xFFB0521C) : const Color(0xFFE2A377),
     shadow: Colors.black,
     scrim: Colors.black,
-    surfaceTint: isDark ? const Color(0xFF7B93FA) : const Color(0xFF4F6EF7),
+    surfaceTint: isDark ? const Color(0xFFE2A377) : const Color(0xFFB0521C),
   );
 
   final radiusMd = ApRadius.rMd;
-  final radiusLg = ApRadius.rLg;
   final shapeMd = RoundedRectangleBorder(borderRadius: radiusMd);
 
   TextStyle titleStyle({double? size, FontWeight? weight}) => TextStyle(
@@ -303,13 +384,15 @@ ThemeData buildAssetPilotTheme(Brightness brightness) {
     fontWeight: weight ?? FontWeight.w700,
     color: scheme.onSurface,
     height: 1.25,
+    // 標題套襯線 display 字體；中文字符自動 fallback 系統字。
+    fontFamily: apDisplayFontFamily,
   );
 
   return ThemeData(
     colorScheme: scheme,
     scaffoldBackgroundColor: isDark
-        ? const Color(0xFF0C0F16)
-        : const Color(0xFFF4F6FA),
+        ? const Color(0xFF141210)
+        : const Color(0xFFF7F4EE),
     useMaterial3: true,
     extensions: [tokens],
     visualDensity: VisualDensity.standard,
@@ -321,7 +404,12 @@ ThemeData buildAssetPilotTheme(Brightness brightness) {
       headlineSmall: titleStyle(size: 22),
       titleLarge: titleStyle(size: 19),
       titleMedium: titleStyle(size: 16),
-      titleSmall: titleStyle(size: 14, weight: FontWeight.w600),
+      titleSmall: TextStyle(
+        fontSize: 14,
+        fontWeight: FontWeight.w600,
+        color: scheme.onSurface,
+        height: 1.25,
+      ),
       bodyLarge: TextStyle(color: scheme.onSurface, height: 1.45),
       bodyMedium: TextStyle(color: scheme.onSurface, height: 1.4),
       bodySmall: TextStyle(color: scheme.onSurfaceVariant, height: 1.35),
@@ -349,8 +437,10 @@ ThemeData buildAssetPilotTheme(Brightness brightness) {
       titleTextStyle: TextStyle(
         color: scheme.onSurface,
         fontSize: 21,
-        fontWeight: FontWeight.w800,
-        letterSpacing: -0.3,
+        fontWeight: FontWeight.w700,
+        fontFamily: apDisplayFontFamily,
+        // 中文不套負字距（品牌規範）；負字距只限拉丁 display 標題。
+        height: 1.25,
       ),
     ),
     inputDecorationTheme: InputDecorationTheme(
@@ -363,11 +453,11 @@ ThemeData buildAssetPilotTheme(Brightness brightness) {
       border: OutlineInputBorder(borderRadius: radiusMd),
       enabledBorder: OutlineInputBorder(
         borderRadius: radiusMd,
-        borderSide: BorderSide(color: scheme.outlineVariant),
+        borderSide: BorderSide(color: tokens.borderStrong),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: radiusMd,
-        borderSide: BorderSide(color: scheme.primary, width: 2),
+        borderSide: const BorderSide(color: primarySolid, width: 2),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: radiusMd,
@@ -380,6 +470,10 @@ ThemeData buildAssetPilotTheme(Brightness brightness) {
     ),
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
+        // 實心主按鈕：深赭底白字（雙主題一致；暗色模式 primary 文字色
+        // 為亮赭，但實心按鈕依規範維持深赭）。
+        backgroundColor: primarySolid,
+        foregroundColor: Colors.white,
         minimumSize: const Size(48, 48),
         tapTargetSize: MaterialTapTargetSize.padded,
         shape: shapeMd,
@@ -391,7 +485,11 @@ ThemeData buildAssetPilotTheme(Brightness brightness) {
         minimumSize: const Size(48, 48),
         tapTargetSize: MaterialTapTargetSize.padded,
         shape: shapeMd,
-        side: BorderSide(color: scheme.outline),
+        side: BorderSide(
+          color: isDark
+              ? const Color(0x26ECE7DE) // 暖白/15
+              : scheme.outline,
+        ),
         textStyle: const TextStyle(fontWeight: FontWeight.w600),
       ),
     ),
@@ -400,6 +498,7 @@ ThemeData buildAssetPilotTheme(Brightness brightness) {
         minimumSize: const Size(48, 48),
         tapTargetSize: MaterialTapTargetSize.padded,
         shape: shapeMd,
+        foregroundColor: scheme.primary,
         textStyle: const TextStyle(fontWeight: FontWeight.w600),
       ),
     ),
@@ -414,7 +513,7 @@ ThemeData buildAssetPilotTheme(Brightness brightness) {
       selectedColor: scheme.primaryContainer,
       labelStyle: TextStyle(color: scheme.onSurface, fontSize: 12),
       secondaryLabelStyle: TextStyle(color: scheme.onPrimaryContainer),
-      side: BorderSide(color: scheme.outlineVariant),
+      side: BorderSide(color: tokens.glassBorder),
       shape: RoundedRectangleBorder(borderRadius: ApRadius.rSm),
       padding: const EdgeInsets.symmetric(
         horizontal: ApSpace.md,
@@ -443,7 +542,7 @@ ThemeData buildAssetPilotTheme(Brightness brightness) {
       ),
       trackColor: WidgetStateProperty.resolveWith(
         (states) => states.contains(WidgetState.selected)
-            ? scheme.primary
+            ? (isDark ? const Color(0xFFB0521C) : scheme.primary)
             : scheme.surfaceContainerHighest,
       ),
     ),
@@ -494,7 +593,7 @@ ThemeData buildAssetPilotTheme(Brightness brightness) {
       unselectedLabelTextStyle: TextStyle(color: scheme.onSurfaceVariant),
     ),
     dividerTheme: DividerThemeData(
-      color: scheme.outlineVariant,
+      color: tokens.glassBorder,
       space: 1,
       thickness: 1,
     ),
@@ -503,16 +602,16 @@ ThemeData buildAssetPilotTheme(Brightness brightness) {
       linearTrackColor: scheme.surfaceContainerHighest,
       circularTrackColor: scheme.surfaceContainerHighest,
     ),
-    floatingActionButtonTheme: FloatingActionButtonThemeData(
-      backgroundColor: scheme.primary,
-      foregroundColor: scheme.onPrimary,
+    floatingActionButtonTheme: const FloatingActionButtonThemeData(
+      backgroundColor: primarySolid,
+      foregroundColor: Colors.white,
       elevation: 3,
       shape: RoundedRectangleBorder(borderRadius: ApRadius.rMd),
     ),
     segmentedButtonTheme: SegmentedButtonThemeData(
       style: SegmentedButton.styleFrom(
         shape: RoundedRectangleBorder(borderRadius: radiusMd),
-        side: BorderSide(color: scheme.outlineVariant),
+        side: BorderSide(color: tokens.glassBorder),
         selectedForegroundColor: scheme.onPrimaryContainer,
         selectedBackgroundColor: scheme.primaryContainer,
       ),

@@ -38,12 +38,13 @@ String signed(num v) {
   return formatted;
 }
 
-/// 解析 `#RRGGBB` 顏色字串，失敗回傳灰色。
+/// 解析 `#RRGGBB` 顏色字串，失敗回傳暖色盤 fallback（灰色會讓暖棉紙
+/// 版面顯得突兀，改用品牌暖赭）。
 Color parseColor(String hex) {
   var h = hex.replaceAll('#', '').trim();
   if (h.length == 6) h = 'FF$h';
   final value = int.tryParse(h, radix: 16);
-  return value == null ? const Color(0xFF888888) : Color(value);
+  return value == null ? const Color(0xFFB0521C) : Color(value);
 }
 
 /// 損益正負對應中性的 teal/orange 語義色；不把損益誤表達為危險狀態。

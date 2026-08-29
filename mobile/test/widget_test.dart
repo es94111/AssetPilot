@@ -148,15 +148,30 @@ void main() {
     final dark = assetPilotThemeFor(Brightness.dark);
     expect(light.income, isNot(dark.income));
     expect(light.profit, isNot(light.loss));
+
+    // Warm Console 規範（網站配色風格.md）：語意色固定、
+    // 圓角階梯 10/12/16/20、圖表色盤暖赭為首。
+    expect(light.income, const Color(0xFF1E6B52)); // 松綠
+    expect(light.expense, const Color(0xFFB3372F)); // 磚紅
+    expect(light.net, const Color(0xFF8A5A1F)); // 赭金
+    expect(dark.income, const Color(0xFF6CC29B));
+    expect(dark.expense, const Color(0xFFE08279));
+    expect(dark.net, const Color(0xFFD3A35C));
+    expect(light.chartPalette.first, const Color(0xFFB0521C));
+    expect(light.chartPalette.length, dark.chartPalette.length);
+    expect(ApRadius.sm, 10);
+    expect(ApRadius.md, 12);
+    expect(ApRadius.lg, 16);
+    expect(ApRadius.xl, 20);
     appLocale.value = 'zh-TW';
   });
   testWidgets('未登入時顯示登入頁', (WidgetTester tester) async {
     await tester.pumpWidget(MaterialApp(home: LoginScreen(onLoggedIn: () {})));
+    await tester.pump();
 
-    // 標題與登入按鈕應存在。
+    // 標題與 Passkey 登入按鈕應存在（現行登入頁以 passkey 為主，
+    // 不再有內建帳號密碼表單）。
     expect(find.text('AssetPilot'), findsOneWidget);
-    expect(find.text('登入'), findsWidgets);
-    expect(find.text('電子郵件'), findsOneWidget);
-    expect(find.text('密碼'), findsOneWidget);
+    expect(find.text('使用 Passkey 登入'), findsOneWidget);
   });
 }

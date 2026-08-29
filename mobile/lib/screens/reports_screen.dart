@@ -71,7 +71,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
 
   /// 扇區百分比標籤畫在使用者自訂的分類色上，依亮度選黑或白確保對比。
   Color _onSliceColor(Color slice) =>
-      slice.computeLuminance() > 0.55 ? const Color(0xFF1A1D26) : Colors.white;
+      slice.computeLuminance() > 0.55 ? const Color(0xFF26221C) : Colors.white;
 
   @override
   Widget build(BuildContext context) {

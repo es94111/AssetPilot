@@ -8,16 +8,17 @@ import '../widgets.dart';
 import '../l10n.dart';
 
 const _palette = [
-  '#EF4444',
-  '#F97316',
-  '#F59E0B',
-  '#10B981',
-  '#06B6D4',
-  '#3B82F6',
-  '#6366F1',
-  '#8B5CF6',
-  '#EC4899',
-  '#64748B',
+  // 分類色盤跟隨 Warm Console 暖色階（與 Web 圖表色盤同組）。
+  '#B0521C',
+  '#1E6B52',
+  '#8A5A1F',
+  '#B3372F',
+  '#D98A4A',
+  '#5F8D7A',
+  '#C98A3D',
+  '#9C4A3A',
+  '#7D9464',
+  '#A8683A',
 ];
 
 class CategoriesScreen extends StatefulWidget {

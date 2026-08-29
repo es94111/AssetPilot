@@ -4761,4 +4761,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get adminScreenSubtitle => 'System settings and user management';
+
+  @override
+  String get shellCloseMenu => 'Close menu';
+
+  @override
+  String get shellMainNav => 'Main navigation';
+
+  @override
+  String get shellCollapseSidebar => 'Collapse sidebar';
+
+  @override
+  String get shellExpandSidebar => 'Expand sidebar';
 }

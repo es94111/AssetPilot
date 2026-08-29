@@ -119,14 +119,14 @@ class _ReportsScreenState extends State<ReportsScreen> {
             child: AsyncView<_ReportData>(
               future: _future,
               onRetry: _reload,
-              loadingBuilder: (_) => const ListView(
-                padding: EdgeInsets.fromLTRB(
+              loadingBuilder: (_) => ListView(
+                padding: const EdgeInsets.fromLTRB(
                   ApSpace.lg,
                   0,
                   ApSpace.lg,
                   ApSpace.xl,
                 ),
-                children: [SkeletonSummary()],
+                children: const [SkeletonSummary()],
               ),
               builder: (context, data) {
                 if (data.breakdown.isEmpty) {

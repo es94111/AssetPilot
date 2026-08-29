@@ -4823,4 +4823,16 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get adminScreenSubtitle =>
       'Системные настройки и управление пользователями';
+
+  @override
+  String get shellCloseMenu => 'Закрыть меню';
+
+  @override
+  String get shellMainNav => 'Основная навигация';
+
+  @override
+  String get shellCollapseSidebar => 'Свернуть боковую панель';
+
+  @override
+  String get shellExpandSidebar => 'Развернуть боковую панель';
 }

@@ -4744,4 +4744,16 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get adminScreenSubtitle => 'إعدادات النظام وإدارة المستخدمين';
+
+  @override
+  String get shellCloseMenu => 'إغلاق القائمة';
+
+  @override
+  String get shellMainNav => 'التنقل الرئيسي';
+
+  @override
+  String get shellCollapseSidebar => 'طي الشريط الجانبي';
+
+  @override
+  String get shellExpandSidebar => 'توسيع الشريط الجانبي';
 }

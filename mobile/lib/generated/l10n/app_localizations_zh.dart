@@ -4545,6 +4545,18 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get adminScreenSubtitle => '系統設定與使用者管理';
+
+  @override
+  String get shellCloseMenu => '關閉選單';
+
+  @override
+  String get shellMainNav => '主導覽列';
+
+  @override
+  String get shellCollapseSidebar => '收合側邊欄';
+
+  @override
+  String get shellExpandSidebar => '展開側邊欄';
 }
 
 /// The translations for Chinese, as used in China, using the Han script (`zh_Hans_CN`).
@@ -9084,6 +9096,18 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
 
   @override
   String get adminScreenSubtitle => '系统设置与用户管理';
+
+  @override
+  String get shellCloseMenu => '关闭菜单';
+
+  @override
+  String get shellMainNav => '主导航栏';
+
+  @override
+  String get shellCollapseSidebar => '收起侧边栏';
+
+  @override
+  String get shellExpandSidebar => '展开侧边栏';
 }
 
 /// The translations for Chinese, as used in Taiwan, using the Han script (`zh_Hant_TW`).
@@ -13627,4 +13651,16 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
 
   @override
   String get adminScreenSubtitle => '系統設定與使用者管理';
+
+  @override
+  String get shellCloseMenu => '關閉選單';
+
+  @override
+  String get shellMainNav => '主導覽列';
+
+  @override
+  String get shellCollapseSidebar => '收合側邊欄';
+
+  @override
+  String get shellExpandSidebar => '展開側邊欄';
 }

@@ -128,14 +128,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
         key: ValueKey(_ym),
         future: _future,
         onRetry: _reload,
-        loadingBuilder: (_) => const ListView(
-          padding: EdgeInsets.fromLTRB(
+        loadingBuilder: (_) => ListView(
+          padding: const EdgeInsets.fromLTRB(
             ApSpace.xl,
             ApSpace.lg,
             ApSpace.xl,
             ApSpace.xxl,
           ),
-          children: [SkeletonSummary()],
+          children: const [SkeletonSummary()],
         ),
         builder: (context, d) => RefreshIndicator(
           onRefresh: () async => _reload(),

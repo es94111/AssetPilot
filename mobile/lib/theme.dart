@@ -510,13 +510,11 @@ ThemeData buildAssetPilotTheme(Brightness brightness) {
       shape: RoundedRectangleBorder(borderRadius: ApRadius.rMd),
     ),
     segmentedButtonTheme: SegmentedButtonThemeData(
-      style: ButtonStyle(
-        shape: WidgetStatePropertyAll(
-          RoundedRectangleBorder(borderRadius: radiusMd),
-        ),
-        side: WidgetStatePropertyAll(BorderSide(color: scheme.outlineVariant)),
-        selectedForegroundColor: WidgetStatePropertyAll(scheme.onPrimaryContainer),
-        selectedBackground: WidgetStatePropertyAll(scheme.primaryContainer),
+      style: SegmentedButton.styleFrom(
+        shape: RoundedRectangleBorder(borderRadius: radiusMd),
+        side: BorderSide(color: scheme.outlineVariant),
+        selectedForegroundColor: scheme.onPrimaryContainer,
+        selectedBackgroundColor: scheme.primaryContainer,
       ),
     ),
   );

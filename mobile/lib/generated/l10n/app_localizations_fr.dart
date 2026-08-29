@@ -4853,4 +4853,16 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get adminScreenSubtitle =>
       'Paramètres système et gestion des utilisateurs';
+
+  @override
+  String get shellCloseMenu => 'Fermer le menu';
+
+  @override
+  String get shellMainNav => 'Navigation principale';
+
+  @override
+  String get shellCollapseSidebar => 'Réduire la barre latérale';
+
+  @override
+  String get shellExpandSidebar => 'Développer la barre latérale';
 }

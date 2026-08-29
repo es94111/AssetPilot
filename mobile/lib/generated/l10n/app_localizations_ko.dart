@@ -4614,4 +4614,16 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get adminScreenSubtitle => '시스템 설정 및 사용자 관리';
+
+  @override
+  String get shellCloseMenu => '메뉴 닫기';
+
+  @override
+  String get shellMainNav => '기본 탐색';
+
+  @override
+  String get shellCollapseSidebar => '사이드바 접기';
+
+  @override
+  String get shellExpandSidebar => '사이드바 펼치기';
 }

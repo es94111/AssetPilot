@@ -4757,4 +4757,16 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get adminScreenSubtitle => 'सिस्टम सेटिंग्स और उपयोगकर्ता प्रबंधन';
+
+  @override
+  String get shellCloseMenu => 'मेन्यू बंद करें';
+
+  @override
+  String get shellMainNav => 'मुख्य नेविगेशन';
+
+  @override
+  String get shellCollapseSidebar => 'साइडबार संकुचित करें';
+
+  @override
+  String get shellExpandSidebar => 'साइडबार विस्तृत करें';
 }

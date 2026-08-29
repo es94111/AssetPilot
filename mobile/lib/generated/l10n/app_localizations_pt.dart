@@ -4822,6 +4822,18 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get adminScreenSubtitle =>
       'Configurações do sistema e gestão de usuários';
+
+  @override
+  String get shellCloseMenu => 'Fechar menu';
+
+  @override
+  String get shellMainNav => 'Navegação principal';
+
+  @override
+  String get shellCollapseSidebar => 'Recolher barra lateral';
+
+  @override
+  String get shellExpandSidebar => 'Expandir barra lateral';
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -9633,4 +9645,16 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   @override
   String get adminScreenSubtitle =>
       'Configurações do sistema e gestão de usuários';
+
+  @override
+  String get shellCloseMenu => 'Fechar menu';
+
+  @override
+  String get shellMainNav => 'Navegação principal';
+
+  @override
+  String get shellCollapseSidebar => 'Recolher barra lateral';
+
+  @override
+  String get shellExpandSidebar => 'Expandir barra lateral';
 }

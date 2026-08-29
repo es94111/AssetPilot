@@ -8322,6 +8322,30 @@ abstract class AppLocalizations {
   /// In zh_Hant_TW, this message translates to:
   /// **'系統設定與使用者管理'**
   String get adminScreenSubtitle;
+
+  /// Web path: shell.closeMenu
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'關閉選單'**
+  String get shellCloseMenu;
+
+  /// Web path: shell.mainNav
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'主導覽列'**
+  String get shellMainNav;
+
+  /// Web path: shell.collapseSidebar
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'收合側邊欄'**
+  String get shellCollapseSidebar;
+
+  /// Web path: shell.expandSidebar
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'展開側邊欄'**
+  String get shellExpandSidebar;
 }
 
 class _AppLocalizationsDelegate

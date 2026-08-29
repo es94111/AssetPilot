@@ -1,9 +1,42 @@
+import {
+  ArrowLeft, ArrowUpRight, ChartLine, Check, CircleCheck, CloudUpload, Copyright,
+  Database, FileText, House, Info, Key, Layers, Mail, MapPin, Minus, Plug,
+  ShieldCheck, TrendingUp, UserCheck
+} from 'lucide-react';
+import type { ComponentType, SVGProps } from 'react';
+
+type LucideIcon = ComponentType<SVGProps<SVGSVGElement> & { size?: number | string; strokeWidth?: number | string }>;
+
 import externalApisData from '../../lib/external-apis.json';
 import { PublicLanguageSwitcher } from '@/components/i18n/PublicLanguageSwitcher';
 import { getTranslator } from '@/lib/i18n/getDictionary';
 import { resolveLocale } from '@/lib/i18n/resolveLocale';
 
 export const dynamic = 'force-dynamic';
+
+// 資料端以 kebab 名稱字串描述圖示，於此解析為 lucide 元件。
+const API_CREDIT_ICONS: Record<string, LucideIcon> = {
+  'arrow-left': ArrowLeft,
+  'chart-line': ChartLine,
+  'circle-check': CircleCheck,
+  'cloud-upload': CloudUpload,
+  'copyright': Copyright,
+  'database': Database,
+  'file-text': FileText,
+  'house': House,
+  'key': Key,
+  'layers': Layers,
+  'mail': Mail,
+  'map-pin': MapPin,
+  'shield-check': ShieldCheck,
+  'trending-up': TrendingUp,
+  'user-check': UserCheck,
+};
+
+function ApiCreditIcon({ name, size = 15 }: { name: string; size?: number }) {
+  const Icon = API_CREDIT_ICONS[name] ?? Info;
+  return <Icon size={size} strokeWidth={1.8} aria-hidden="true" />;
+}
 
 export async function generateMetadata() {
   const locale = await resolveLocale();
@@ -17,20 +50,20 @@ type T = ReturnType<typeof getTranslator>;
 
 function getUsageNotes(t: T) {
   return [
-    { icon: 'fa-money-bill-trend-up', title: t('public.apiCreditsPage.usageNotes.fx.title'), text: t('public.apiCreditsPage.usageNotes.fx.text') },
-    { icon: 'fa-chart-line', title: t('public.apiCreditsPage.usageNotes.stock.title'), text: t('public.apiCreditsPage.usageNotes.stock.text') },
-    { icon: 'fa-location-dot', title: t('public.apiCreditsPage.usageNotes.audit.title'), text: t('public.apiCreditsPage.usageNotes.audit.text') },
-    { icon: 'fa-user-check', title: t('public.apiCreditsPage.usageNotes.login.title'), text: t('public.apiCreditsPage.usageNotes.login.text') },
-    { icon: 'fa-cloud-arrow-up', title: t('public.apiCreditsPage.usageNotes.backup.title'), text: t('public.apiCreditsPage.usageNotes.backup.text') },
+    { icon: 'trending-up', title: t('public.apiCreditsPage.usageNotes.fx.title'), text: t('public.apiCreditsPage.usageNotes.fx.text') },
+    { icon: 'chart-line', title: t('public.apiCreditsPage.usageNotes.stock.title'), text: t('public.apiCreditsPage.usageNotes.stock.text') },
+    { icon: 'map-pin', title: t('public.apiCreditsPage.usageNotes.audit.title'), text: t('public.apiCreditsPage.usageNotes.audit.text') },
+    { icon: 'user-check', title: t('public.apiCreditsPage.usageNotes.login.title'), text: t('public.apiCreditsPage.usageNotes.login.text') },
+    { icon: 'cloud-upload', title: t('public.apiCreditsPage.usageNotes.backup.title'), text: t('public.apiCreditsPage.usageNotes.backup.text') },
   ];
 }
 
 function getServiceKinds(t: T) {
   return [
-    { label: t('public.apiCreditsPage.serviceKinds.data'), count: 3, icon: 'fa-database' },
-    { label: t('public.apiCreditsPage.serviceKinds.auth'), count: 2, icon: 'fa-key' },
-    { label: t('public.apiCreditsPage.serviceKinds.email'), count: 3, icon: 'fa-envelope' },
-    { label: t('public.apiCreditsPage.serviceKinds.backup'), count: 1, icon: 'fa-cloud-arrow-up' },
+    { label: t('public.apiCreditsPage.serviceKinds.data'), count: 3, icon: 'database' },
+    { label: t('public.apiCreditsPage.serviceKinds.auth'), count: 2, icon: 'key' },
+    { label: t('public.apiCreditsPage.serviceKinds.email'), count: 3, icon: 'mail' },
+    { label: t('public.apiCreditsPage.serviceKinds.backup'), count: 1, icon: 'cloud-upload' },
   ];
 }
 
@@ -68,7 +101,7 @@ export default async function ApiCreditsPage() {
             href="/"
             className="inline-flex min-h-9 items-center gap-2 rounded-lg border border-sky-300/30 px-3.5 text-xs font-semibold text-sky-200 transition hover:border-sky-200/50 hover:bg-white/5 hover:text-white"
           >
-            <i className="fas fa-arrow-left" />
+            <ArrowLeft size={14} strokeWidth={1.8} aria-hidden="true" />
             {t('public.common.backHome')}
           </a>
           <PublicLanguageSwitcher compact />
@@ -79,7 +112,7 @@ export default async function ApiCreditsPage() {
         <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-end">
           <div>
             <div className="mb-5 inline-flex items-center gap-2 rounded-lg border border-emerald-300/20 bg-emerald-300/10 px-3 py-1.5 text-xs font-semibold text-emerald-200">
-              <i className="fas fa-plug" />
+              <Plug size={14} strokeWidth={1.8} aria-hidden="true" />
               {t('public.apiCreditsPage.badge')}
             </div>
             <h1 className="max-w-3xl text-3xl font-extrabold leading-tight text-white sm:text-4xl">
@@ -92,12 +125,12 @@ export default async function ApiCreditsPage() {
 
           <div className="grid grid-cols-3 gap-3">
             {[
-              { label: t('public.apiCreditsPage.stats.externalServices'), value: externalApisData.length, icon: 'fa-layer-group' },
-              { label: t('public.apiCreditsPage.stats.freeSupported'), value: freeServices, icon: 'fa-circle-check' },
-              { label: t('public.apiCreditsPage.stats.attributionRequired'), value: attributionServices, icon: 'fa-copyright' },
+              { label: t('public.apiCreditsPage.stats.externalServices'), value: externalApisData.length, icon: 'layers' },
+              { label: t('public.apiCreditsPage.stats.freeSupported'), value: freeServices, icon: 'circle-check' },
+              { label: t('public.apiCreditsPage.stats.attributionRequired'), value: attributionServices, icon: 'copyright' },
             ].map((item) => (
               <div key={item.label} className="rounded-xl border border-white/10 bg-white/[0.06] px-3 py-4 text-center shadow-sm backdrop-blur">
-                <i className={`fas ${item.icon} text-sm text-sky-200`} />
+                <ApiCreditIcon name={item.icon} />
                 <p className="mt-2 text-2xl font-bold text-white">{item.value}</p>
                 <p className="mt-1 text-[11px] font-medium text-slate-400">{item.label}</p>
               </div>
@@ -116,7 +149,7 @@ export default async function ApiCreditsPage() {
                   <p className="mt-1 text-2xl font-bold text-white">{kind.count}</p>
                 </div>
                 <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-sky-300/10 text-sky-200">
-                  <i className={`fas ${kind.icon}`} />
+                  <ApiCreditIcon name={kind.icon} />
                 </span>
               </div>
             </div>
@@ -132,7 +165,7 @@ export default async function ApiCreditsPage() {
               </p>
             </div>
             <span className="inline-flex w-fit items-center gap-2 rounded-lg border border-emerald-300/20 bg-emerald-300/10 px-3 py-1.5 text-xs font-semibold text-emerald-200">
-              <i className="fas fa-shield-halved" />
+              <ShieldCheck size={14} strokeWidth={1.8} aria-hidden="true" />
               {t('public.apiCreditsPage.minNecessary')}
             </span>
           </div>
@@ -141,7 +174,7 @@ export default async function ApiCreditsPage() {
             {usageNotes.map((note) => (
               <div key={note.title} className="rounded-lg border border-white/10 bg-slate-950/35 p-4">
                 <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-lg bg-sky-300/10 text-sky-200">
-                  <i className={`fas ${note.icon}`} />
+                  <ApiCreditIcon name={note.icon} />
                 </div>
                 <h3 className="text-sm font-bold text-white">{note.title}</h3>
                 <p className="mt-2 text-sm/6 text-slate-300">{note.text}</p>
@@ -162,7 +195,7 @@ export default async function ApiCreditsPage() {
               href="/privacy"
               className="inline-flex min-h-9 w-fit items-center gap-2 rounded-lg border border-sky-300/25 px-3.5 text-xs font-semibold text-sky-200 transition hover:border-sky-200/50 hover:bg-white/5 hover:text-white"
             >
-              <i className="fas fa-shield-halved" />
+              <ShieldCheck size={14} strokeWidth={1.8} aria-hidden="true" />
               {t('public.common.privacy')}
             </a>
           </div>
@@ -182,24 +215,24 @@ export default async function ApiCreditsPage() {
                     className="inline-flex min-h-9 shrink-0 items-center justify-center gap-2 rounded-lg border border-white/10 px-3 text-xs font-semibold text-sky-200 transition hover:border-sky-200/50 hover:bg-white/5 hover:text-white"
                   >
                     {t('public.apiCreditsPage.officialSite')}
-                    <i className="fas fa-arrow-up-right-from-square text-[10px]" />
+                    <ArrowUpRight size={11} strokeWidth={1.8} aria-hidden="true" />
                   </a>
                 </div>
 
                 <div className="mt-4 flex flex-wrap gap-2 text-xs font-semibold">
                   <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-300/10 px-2.5 py-1.5 text-emerald-200">
-                    <i className={`fas ${api.supportsFree ? 'fa-check' : 'fa-minus'}`} />
+                    <i className={`fas ${api.supportsFree ? 'check' : 'minus'}`} />
                     {t('public.apiCreditsPage.freePlan')} {api.supportsFree ? t('public.apiCreditsPage.supported') : t('public.apiCreditsPage.unavailable')}
                   </span>
                   <span className="inline-flex items-center gap-1.5 rounded-lg bg-sky-300/10 px-2.5 py-1.5 text-sky-200">
-                    <i className={`fas ${api.supportsPaid ? 'fa-check' : 'fa-minus'}`} />
+                    <i className={`fas ${api.supportsPaid ? 'check' : 'minus'}`} />
                     {t('public.apiCreditsPage.paidPlan')} {api.supportsPaid ? t('public.apiCreditsPage.supported') : t('public.apiCreditsPage.unavailable')}
                   </span>
                 </div>
 
                 {api.attribution && (
                   <div className="mt-4 rounded-lg border border-amber-300/20 bg-amber-300/10 px-4 py-3 text-sm/6 text-amber-100">
-                    <i className="fas fa-circle-info mr-2" />
+                    <Info size={14} strokeWidth={1.8} aria-hidden="true" className="me-2 inline" />
                     {api.attribution}
                   </div>
                 )}
@@ -212,15 +245,15 @@ export default async function ApiCreditsPage() {
           <p>{t('public.common.lastUpdated', { date: t('public.common.dates.apiCredits') })}</p>
           <div className="mt-3 flex flex-wrap justify-center gap-5">
             <a href="/privacy" className="inline-flex items-center gap-1.5 text-sky-200">
-              <i className="fas fa-shield-halved" />
+              <ShieldCheck size={14} strokeWidth={1.8} aria-hidden="true" />
               {t('public.common.privacy')}
             </a>
             <a href="/terms" className="inline-flex items-center gap-1.5 text-sky-200">
-              <i className="fas fa-file-contract" />
+              <FileText size={14} strokeWidth={1.8} aria-hidden="true" />
               {t('public.common.terms')}
             </a>
             <a href="/" className="inline-flex items-center gap-1.5 text-sky-200">
-              <i className="fas fa-house" />
+              <House size={14} strokeWidth={1.8} aria-hidden="true" />
               {t('public.common.backHome')}
             </a>
           </div>

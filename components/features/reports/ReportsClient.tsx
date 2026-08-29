@@ -232,8 +232,8 @@ export default function ReportsClient(_props: { user?: any } = {}) {
     // Theme-aware chrome resolved from CSS variables at render time.
     const styles = getComputedStyle(document.documentElement);
     const cssVar = (name: string, fallback: string) => (styles.getPropertyValue(name) || '').trim() || fallback;
-    const textColor = cssVar('--text-secondary', isDarkTheme ? '#a4adc0' : '#5c6370');
-    const gridColor = isDarkTheme ? 'rgba(255, 255, 255, 0.08)' : 'rgba(26, 29, 38, 0.08)';
+    const textColor = cssVar('--text-secondary', isDarkTheme ? '#b3a99c' : '#6b6157');
+    const gridColor = isDarkTheme ? 'rgba(255, 255, 255, 0.08)' : 'rgba(38, 34, 28, 0.08)';
     const legendLabels = {
       color: textColor,
       usePointStyle: true,
@@ -241,7 +241,8 @@ export default function ReportsClient(_props: { user?: any } = {}) {
       padding: 16,
       font: { size: 12 },
     };
-    const colors = ['#3b82f6', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16', '#f97316', '#6366f1'];
+    // Warm Console palette: 暖赭為首，後接語意色與暖色階輪替。
+    const colors = ['#b0521c', '#1e6b52', '#8a5a1f', '#b3372f', '#d98a4a', '#5f8d7a', '#c98a3d', '#9c4a3a', '#7d9464', '#a8683a'];
     let chartConfig: any = { type: 'bar', data: { datasets: [] }, options: { responsive: true } };
 
     if (activeTab === 'category') {
@@ -253,7 +254,7 @@ export default function ReportsClient(_props: { user?: any } = {}) {
           datasets: [{
             data: filtered.map((row: any) => Number(row.total) || 0),
             backgroundColor: filtered.map((row: any, index: number) => row.color || colors[index % colors.length]),
-            borderColor: isDarkTheme ? '#151922' : '#ffffff',
+            borderColor: isDarkTheme ? '#1d1a16' : '#fffdf9',
             borderWidth: 2,
             hoverOffset: 6,
           }],
@@ -263,9 +264,9 @@ export default function ReportsClient(_props: { user?: any } = {}) {
           plugins: {
             legend: { position: 'bottom', labels: legendLabels },
             tooltip: {
-              backgroundColor: isDarkTheme ? '#1b202c' : '#1a1d26',
-              titleColor: '#e8eaef',
-              bodyColor: '#e8eaef',
+              backgroundColor: isDarkTheme ? '#242019' : '#26221c',
+              titleColor: '#ece7de',
+              bodyColor: '#ece7de',
               padding: 10,
               cornerRadius: 8,
             },
@@ -288,8 +289,8 @@ export default function ReportsClient(_props: { user?: any } = {}) {
             label: type === 'expense' ? t('features.common.expense') : t('features.common.income'),
             data: sortedKeys.map((key) => Number(dataSet[key]) || 0),
             backgroundColor: type === 'expense'
-              ? (isDarkTheme ? 'rgba(251, 113, 133, 0.75)' : 'rgba(190, 18, 60, 0.8)')
-              : (isDarkTheme ? 'rgba(52, 211, 153, 0.75)' : 'rgba(4, 120, 87, 0.8)'),
+              ? (isDarkTheme ? 'rgba(224, 130, 121, 0.75)' : 'rgba(179, 55, 47, 0.8)')
+              : (isDarkTheme ? 'rgba(108, 194, 155, 0.75)' : 'rgba(30, 107, 82, 0.8)'),
             borderRadius: 6,
             maxBarThickness: 48,
           }],
@@ -299,9 +300,9 @@ export default function ReportsClient(_props: { user?: any } = {}) {
           plugins: {
             legend: { position: 'bottom', labels: legendLabels },
             tooltip: {
-              backgroundColor: isDarkTheme ? '#1b202c' : '#1a1d26',
-              titleColor: '#e8eaef',
-              bodyColor: '#e8eaef',
+              backgroundColor: isDarkTheme ? '#242019' : '#26221c',
+              titleColor: '#ece7de',
+              bodyColor: '#ece7de',
               padding: 10,
               cornerRadius: 8,
             },

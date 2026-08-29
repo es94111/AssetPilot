@@ -9,18 +9,18 @@ export const metadata: Metadata = {
 const content: LegalDocumentContent = {
   title: 'AssetPilot MCP / OAuth',
   subtitle: '供 ChatGPT、Codex 與其他 MCP client 使用的公開連線與授權說明。',
-  icon: 'fa-plug',
+  icon: 'plug',
   heroClass: 'bg-gradient-to-br from-indigo-700 via-violet-700 to-slate-900',
   tocTitle: '連線文件',
   updatedLabel: '更新日期：2026 年 7 月 29 日 · MCP Authorization 2025-11-25',
   links: [
-    { href: '/', icon: 'fa-house', label: '首頁' },
-    { href: '/settings/mcp', icon: 'fa-gear', label: '登入後管理 MCP' },
-    { href: '/privacy', icon: 'fa-shield-halved', label: '隱私權政策' },
+    { href: '/', icon: 'house', label: '首頁' },
+    { href: '/settings/mcp', icon: 'settings', label: '登入後管理 MCP' },
+    { href: '/privacy', icon: 'shield-check', label: '隱私權政策' },
   ],
   sections: [
     {
-      icon: 'fa-link',
+      icon: 'link',
       title: '連線設定',
       blocks: [
         { type: 'p', text: 'MCP Streamable HTTP endpoint 是本站 origin 下的 /api/mcp。所有 MCP 請求都必須使用 Authorization: Bearer 存取權杖。' },
@@ -36,7 +36,7 @@ const content: LegalDocumentContent = {
       ],
     },
     {
-      icon: 'fa-compass',
+      icon: 'compass',
       title: 'OAuth discovery',
       blocks: [
         {
@@ -54,7 +54,7 @@ const content: LegalDocumentContent = {
       ],
     },
     {
-      icon: 'fa-id-card',
+      icon: 'id-card',
       title: 'Client registration',
       blocks: [
         { type: 'p', text: 'Authorization Server 同時宣告 Client ID Metadata Documents（CIMD）與 Dynamic Client Registration（DCR）。OpenAI host 可優先使用 CIMD，或在 plugin builder 選用 DCR。' },
@@ -71,7 +71,7 @@ const content: LegalDocumentContent = {
       ],
     },
     {
-      icon: 'fa-lock',
+      icon: 'lock',
       title: '安全限制',
       blocks: [
         {

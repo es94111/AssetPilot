@@ -6,11 +6,12 @@ export type Theme = 'light' | 'dark' | 'system';
 export function useTheme() {
   const [theme, setThemeState] = useState<Theme | null>(null);
 
+  // 與 lib/themeScript.ts 行為一致：只切 class 與 colorScheme，
+  // 背景色交給 CSS token（html background），避免 inline style 蓋過主題變數。
   const applyTheme = useCallback((t: Theme) => {
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     const isDark = t === 'dark' || (t === 'system' && prefersDark);
     document.documentElement.classList.toggle('dark-mode', isDark);
-    document.documentElement.style.backgroundColor = isDark ? '#0c0f16' : '#f4f6fa';
     document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
   }, []);
 

@@ -81,6 +81,8 @@ node_modules/
 # ==========================================
 # 漸進式編譯產生的狀態快取檔，能大幅加速 TS 專案的後續編譯速度
 *.tsbuildinfo
+# Next.js 自動產生的型別參考檔 (next dev / next build 會重新生成，內容依版本而異)
+next-env.d.ts
 
 # ==========================================
 # Python / FastAPI / Alembic

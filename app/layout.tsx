@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Fraunces, Inter } from "next/font/google";
 import "./globals.css";
 import { resolveLocale } from "@/lib/i18n/resolveLocale";
 import { getDictionary, getTranslator } from "@/lib/i18n/getDictionary";
@@ -6,6 +7,21 @@ import { HTML_DIR, HTML_LANG } from "@/lib/i18n/config";
 import { I18nProvider } from "@/components/i18n/I18nProvider";
 import { ToastProvider } from "@/components/ui/Toast";
 import SplashIntro from "@/components/public/SplashIntro";
+import { themeInitScript } from "@/lib/themeScript";
+
+// 標題字與內文字分開載入：Fraunces 走暖感襯線 display，Inter 維持內文可讀性。
+const fraunces = Fraunces({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-display",
+  axes: ["opsz"],
+});
+
+const inter = Inter({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-sans",
+});
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await resolveLocale();
@@ -25,8 +41,6 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const themeInitScript = `(function(){try{var t=localStorage.getItem('theme')||'system';var d=window.matchMedia('(prefers-color-scheme:dark)').matches;var dark=t==='dark'||(t==='system'&&d);var root=document.documentElement;if(dark){root.classList.add('dark-mode');root.style.backgroundColor='#0c0f16';root.style.colorScheme='dark';}else{root.style.backgroundColor='#f4f6fa';root.style.colorScheme='light';}}catch(e){}})();`;
-
   const locale = await resolveLocale();
   const dict = getDictionary(locale);
 
@@ -35,7 +49,7 @@ export default async function RootLayout({
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
-      <body className="antialiased">
+      <body className={`${inter.variable} ${fraunces.variable} antialiased`}>
         <I18nProvider locale={locale} dict={dict}>
           <ToastProvider>
             {children}

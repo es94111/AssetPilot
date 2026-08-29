@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogC
 import { Button } from '@/components/ui/button';
 import { useT } from '@/components/i18n/I18nProvider';
 import { localeTag } from '@/lib/i18n/localeTag';
-import { ArrowLeftRight, CalendarDays, Image, Images, Pencil, Plus, RotateCcw, Search, SlidersHorizontal, Tags, Trash2, Undo2 } from 'lucide-react';
+import { ArrowLeftRight, ArrowUpRight, CalendarDays, Image, Images, Pencil, Plus, RotateCcw, Search, SlidersHorizontal, Tags, Trash2, Undo2, X } from 'lucide-react';
 import { TRANSACTION_NOTE_MAX_LENGTH } from '@/lib/transactionEditRules';
 
 const EMPTY_FORM = { date: '', type: 'expense', amount: '', categoryId: '', accountId: '', note: '', excludeFromStats: false, currency: 'TWD', fxRate: '', fxFee: '' };
@@ -931,7 +931,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
                             target="_blank"
                             rel="noreferrer"
                           >
-                            <i className="fas fa-image" />
+                            <Image size={13} strokeWidth={1.8} aria-hidden="true" />
                             {t('features.transactions.photoOne')}
                           </a>
                         ) : (
@@ -940,7 +940,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
                             className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-sky-600 hover:text-sky-700"
                             onClick={() => openAttachmentPicker(tx.id)}
                           >
-                            <i className="fas fa-images" />
+                            <Images size={13} strokeWidth={1.8} aria-hidden="true" />
                             {t('features.transactions.photoCount', { count: tx.attachmentCount })}
                           </button>
                         )
@@ -953,10 +953,10 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
                       )}
                     </td>
                     <td>
-                      {!isTransfer && !tx.isFxFee && <button className="btn-icon" title={t('common.edit')} aria-label={`${t('common.edit')}: ${getCatName(tx)} · ${tx.date}`} onClick={() => openEdit(tx)}><i className="fas fa-pencil" /></button>}
-                      {tx.aiCreated && <button className="btn-icon" title={t('features.transactions.restoreCreated')} aria-label={`${t('features.transactions.restoreCreated')}: ${getCatName(tx)} · ${tx.date}`} onClick={() => setRestoreCreatedId(tx.id)}><i className="fas fa-rotate-left" /></button>}
-                      {tx.noteAiModified && <button className="btn-icon" title={t('features.transactions.restoreNote')} aria-label={`${t('features.transactions.restoreNote')}: ${getCatName(tx)} · ${tx.date}`} onClick={() => openRestoreNote(tx)}><i className="fas fa-undo" /></button>}
-                      <button className="btn-icon danger" title={t('common.delete')} aria-label={`${t('common.delete')}: ${getCatName(tx)} · ${tx.date}`} onClick={() => setDeleteId(tx.id)}><i className="fas fa-trash" /></button>
+                      {!isTransfer && !tx.isFxFee && <button className="btn-icon" title={t('common.edit')} aria-label={`${t('common.edit')}: ${getCatName(tx)} · ${tx.date}`} onClick={() => openEdit(tx)}><Pencil size={15} strokeWidth={1.8} aria-hidden="true" /></button>}
+                      {tx.aiCreated && <button className="btn-icon" title={t('features.transactions.restoreCreated')} aria-label={`${t('features.transactions.restoreCreated')}: ${getCatName(tx)} · ${tx.date}`} onClick={() => setRestoreCreatedId(tx.id)}><RotateCcw size={15} strokeWidth={1.8} aria-hidden="true" /></button>}
+                      {tx.noteAiModified && <button className="btn-icon" title={t('features.transactions.restoreNote')} aria-label={`${t('features.transactions.restoreNote')}: ${getCatName(tx)} · ${tx.date}`} onClick={() => openRestoreNote(tx)}><Undo2 size={15} strokeWidth={1.8} aria-hidden="true" /></button>}
+                      <button className="btn-icon danger" title={t('common.delete')} aria-label={`${t('common.delete')}: ${getCatName(tx)} · ${tx.date}`} onClick={() => setDeleteId(tx.id)}><Trash2 size={15} strokeWidth={1.8} aria-hidden="true" /></button>
                     </td>
                   </tr>
                 );
@@ -976,12 +976,12 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
       )}
 
       {selected.size === 0 && (
-        <Button type="button" className="fixed bottom-[calc(5.25rem+env(safe-area-inset-bottom))] end-4 z-30 min-h-12 rounded-full px-5 shadow-lg md:hidden" onClick={openAdd}>
+        <Button type="button" className="fixed bottom-[calc(4.5rem+0.75rem+env(safe-area-inset-bottom))] end-4 z-30 min-h-12 rounded-full px-5 shadow-lg md:hidden" onClick={openAdd}>
           <Plus size={19} aria-hidden="true" /> {t('features.transactions.add')}
         </Button>
       )}
       {selected.size > 0 && (
-        <div className="fixed bottom-[calc(5.25rem+env(safe-area-inset-bottom))] inset-x-3 z-30 grid grid-cols-3 gap-2 rounded-2xl border border-slate-200 bg-white/95 p-2 shadow-xl backdrop-blur md:hidden dark:border-slate-700 dark:bg-slate-900/95">
+        <div className="fixed bottom-[calc(4.5rem+0.75rem+env(safe-area-inset-bottom))] inset-x-3 z-30 grid grid-cols-3 gap-2 rounded-2xl border border-slate-200 bg-white/95 p-2 shadow-xl backdrop-blur md:hidden dark:border-slate-700 dark:bg-slate-900/95">
           <Button type="button" variant="outline" className="min-h-11 gap-2" aria-label={t('features.transactions.batchCategory')} onClick={() => setBatchModal('category')}><Tags size={18} aria-hidden="true" /><span className="sr-only">{t('features.transactions.batchCategory')}</span></Button>
           <Button type="button" variant="outline" className="min-h-11 gap-2" aria-label={t('features.transactions.batchDate')} onClick={() => setBatchModal('date')}><CalendarDays size={18} aria-hidden="true" /><span className="sr-only">{t('features.transactions.batchDate')}</span></Button>
           <Button type="button" variant="destructive" className="min-h-11 gap-2" aria-label={t('features.transactions.deleteSelected', { count: selected.size })} onClick={handleBatchDelete}><Trash2 size={18} aria-hidden="true" /><span className="text-xs tabular-nums">{selected.size}</span></Button>
@@ -1126,7 +1126,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
                 {editAttachments.filter(a => !pendingDeleteIds.has(a.id)).length + photoFiles.length < 5 && (
                   <div className="grid grid-cols-2 gap-2">
                     <label className="inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-100">
-                      <i className="fas fa-camera" />
+                      <Images size={15} strokeWidth={1.8} aria-hidden="true" />
                       {t('features.transactions.takePhoto')}
                       <input
                         type="file"
@@ -1140,7 +1140,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
                       />
                     </label>
                     <label className="inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-100">
-                      <i className="fas fa-image" />
+                      <Image size={13} strokeWidth={1.8} aria-hidden="true" />
                       {t('features.transactions.chooseImage')}
                       <input
                         type="file"
@@ -1262,7 +1262,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
                       onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
                     />
                     <span className="min-w-0 flex-1 truncate text-slate-700">{item.filename || t('features.transactions.photoCount', { count: index + 1 })}</span>
-                    <i className="fas fa-external-link-alt flex-none text-xs text-slate-400" />
+                    <ArrowUpRight size={12} strokeWidth={1.8} aria-hidden="true" className="flex-none text-slate-400" />
                   </a>
                 </li>
               ))}
@@ -1276,7 +1276,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>{batchModal === 'category' ? t('features.transactions.batchCategoryTitle') : t('features.transactions.batchDateTitle')}</h3>
-              <button className="btn-icon" onClick={() => setBatchModal(null)}><i className="fas fa-xmark" /></button>
+              <button className="btn-icon" onClick={() => setBatchModal(null)}><X size={15} strokeWidth={1.8} aria-hidden="true" /></button>
             </div>
             <div className="modal-body">
               {batchModal === 'category' ? (
@@ -1314,7 +1314,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>{t('common.confirmDelete')}</h3>
-              <button className="btn-icon" onClick={() => setDeleteId(null)}><i className="fas fa-xmark" /></button>
+              <button className="btn-icon" onClick={() => setDeleteId(null)}><X size={15} strokeWidth={1.8} aria-hidden="true" /></button>
             </div>
             <div className="modal-body">
               <p>{t('features.transactions.deleteMessage')}</p>
@@ -1332,7 +1332,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>{t('features.transactions.restoreCreatedTitle')}</h3>
-              <button className="btn-icon" onClick={() => setRestoreCreatedId(null)}><i className="fas fa-xmark" /></button>
+              <button className="btn-icon" onClick={() => setRestoreCreatedId(null)}><X size={15} strokeWidth={1.8} aria-hidden="true" /></button>
             </div>
             <div className="modal-body">
               <p>{t('features.transactions.restoreCreatedMessage')}</p>
@@ -1350,7 +1350,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>{t('features.transactions.restoreNoteTitle')}</h3>
-              <button className="btn-icon" onClick={() => { setRestoreNoteId(null); setRestoreNotePreview(null); }}><i className="fas fa-xmark" /></button>
+              <button className="btn-icon" onClick={() => { setRestoreNoteId(null); setRestoreNotePreview(null); }}><X size={15} strokeWidth={1.8} aria-hidden="true" /></button>
             </div>
             <div className="modal-body">
               <p>{t('features.transactions.restoreNoteConfirmMessage')}</p>

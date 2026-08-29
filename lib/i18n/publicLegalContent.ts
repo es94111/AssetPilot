@@ -8,26 +8,26 @@ function links(t: TranslateFn) {
   return [
     {
       href: "/privacy",
-      icon: "fa-shield-halved",
+      icon: "shield-check",
       label: t("public.common.privacy"),
     },
     {
       href: "/terms",
-      icon: "fa-file-contract",
+      icon: "file-text",
       label: t("public.common.terms"),
     },
     {
       href: "/api-credits",
-      icon: "fa-plug",
+      icon: "plug",
       label: t("public.common.apiCredits"),
     },
-    { href: "/", icon: "fa-house", label: t("public.common.backHome") },
+    { href: "/", icon: "house", label: t("public.common.backHome") },
   ];
 }
 
 const zhTermsSections: LegalDocumentContent["sections"] = [
   {
-    icon: "fa-circle-info",
+    icon: "info",
     title: "服務說明",
     blocks: [
       {
@@ -45,7 +45,7 @@ const zhTermsSections: LegalDocumentContent["sections"] = [
     ],
   },
   {
-    icon: "fa-user-lock",
+    icon: "lock-keyhole",
     title: "帳號與存取",
     blocks: [
       { type: "h3", text: "帳號建立" },
@@ -70,7 +70,7 @@ const zhTermsSections: LegalDocumentContent["sections"] = [
     ],
   },
   {
-    icon: "fa-user-check",
+    icon: "user-check",
     title: "使用者責任",
     blocks: [
       { type: "p", text: "使用本服務時，您同意：" },
@@ -86,7 +86,7 @@ const zhTermsSections: LegalDocumentContent["sections"] = [
     ],
   },
   {
-    icon: "fa-ban",
+    icon: "ban",
     title: "禁止行為",
     blocks: [
       { type: "p", text: "使用本服務時，嚴格禁止以下行為：" },
@@ -109,7 +109,7 @@ const zhTermsSections: LegalDocumentContent["sections"] = [
     ],
   },
   {
-    icon: "fa-database",
+    icon: "database",
     title: "資料所有權",
     blocks: [
       { type: "h3", text: "您的資料" },
@@ -135,7 +135,7 @@ const zhTermsSections: LegalDocumentContent["sections"] = [
     ],
   },
   {
-    icon: "fa-server",
+    icon: "server",
     title: "服務可用性",
     blocks: [
       {
@@ -150,7 +150,7 @@ const zhTermsSections: LegalDocumentContent["sections"] = [
     ],
   },
   {
-    icon: "fa-circle-exclamation",
+    icon: "circle-alert",
     title: "免責聲明",
     blocks: [
       {
@@ -164,7 +164,7 @@ const zhTermsSections: LegalDocumentContent["sections"] = [
     ],
   },
   {
-    icon: "fa-scale-balanced",
+    icon: "scale",
     title: "責任限制",
     blocks: [
       {
@@ -178,7 +178,7 @@ const zhTermsSections: LegalDocumentContent["sections"] = [
     ],
   },
   {
-    icon: "fa-file-pen",
+    icon: "file-pen-line",
     title: "條款修改",
     blocks: [
       {
@@ -192,7 +192,7 @@ const zhTermsSections: LegalDocumentContent["sections"] = [
     ],
   },
   {
-    icon: "fa-power-off",
+    icon: "power",
     title: "終止服務",
     blocks: [
       { type: "h3", text: "使用者終止" },
@@ -208,7 +208,7 @@ const zhTermsSections: LegalDocumentContent["sections"] = [
     ],
   },
   {
-    icon: "fa-envelope",
+    icon: "mail",
     title: "聯絡方式",
     blocks: [
       {
@@ -221,7 +221,7 @@ const zhTermsSections: LegalDocumentContent["sections"] = [
 
 const enTermsSections: LegalDocumentContent["sections"] = [
   {
-    icon: "fa-circle-info",
+    icon: "info",
     title: "Service Description",
     blocks: [
       {
@@ -239,7 +239,7 @@ const enTermsSections: LegalDocumentContent["sections"] = [
     ],
   },
   {
-    icon: "fa-user-lock",
+    icon: "lock-keyhole",
     title: "Accounts and Access",
     blocks: [
       { type: "h3", text: "Account creation" },
@@ -264,7 +264,7 @@ const enTermsSections: LegalDocumentContent["sections"] = [
     ],
   },
   {
-    icon: "fa-user-check",
+    icon: "user-check",
     title: "User Responsibilities",
     blocks: [
       { type: "p", text: "When using the service, you agree to:" },
@@ -280,7 +280,7 @@ const enTermsSections: LegalDocumentContent["sections"] = [
     ],
   },
   {
-    icon: "fa-ban",
+    icon: "ban",
     title: "Prohibited Conduct",
     blocks: [
       { type: "p", text: "The following conduct is strictly prohibited:" },
@@ -303,7 +303,7 @@ const enTermsSections: LegalDocumentContent["sections"] = [
     ],
   },
   {
-    icon: "fa-database",
+    icon: "database",
     title: "Data Ownership",
     blocks: [
       { type: "h3", text: "Your data" },
@@ -329,7 +329,7 @@ const enTermsSections: LegalDocumentContent["sections"] = [
     ],
   },
   {
-    icon: "fa-server",
+    icon: "server",
     title: "Service Availability",
     blocks: [
       {
@@ -344,7 +344,7 @@ const enTermsSections: LegalDocumentContent["sections"] = [
     ],
   },
   {
-    icon: "fa-circle-exclamation",
+    icon: "circle-alert",
     title: "Disclaimer",
     blocks: [
       {
@@ -358,7 +358,7 @@ const enTermsSections: LegalDocumentContent["sections"] = [
     ],
   },
   {
-    icon: "fa-scale-balanced",
+    icon: "scale",
     title: "Limitation of Liability",
     blocks: [
       {
@@ -372,7 +372,7 @@ const enTermsSections: LegalDocumentContent["sections"] = [
     ],
   },
   {
-    icon: "fa-file-pen",
+    icon: "file-pen-line",
     title: "Changes to Terms",
     blocks: [
       {
@@ -386,7 +386,7 @@ const enTermsSections: LegalDocumentContent["sections"] = [
     ],
   },
   {
-    icon: "fa-power-off",
+    icon: "power",
     title: "Termination",
     blocks: [
       { type: "h3", text: "User termination" },
@@ -402,7 +402,7 @@ const enTermsSections: LegalDocumentContent["sections"] = [
     ],
   },
   {
-    icon: "fa-envelope",
+    icon: "mail",
     title: "Contact",
     blocks: [
       {
@@ -415,7 +415,7 @@ const enTermsSections: LegalDocumentContent["sections"] = [
 
 const zhPrivacySections: LegalDocumentContent["sections"] = [
   {
-    icon: "fa-globe",
+    icon: "globe",
     title: "適用範圍",
     blocks: [
       {
@@ -433,7 +433,7 @@ const zhPrivacySections: LegalDocumentContent["sections"] = [
     ],
   },
   {
-    icon: "fa-database",
+    icon: "database",
     title: "收集的資料",
     blocks: [
       { type: "h3", text: "帳號資料" },
@@ -475,7 +475,7 @@ const zhPrivacySections: LegalDocumentContent["sections"] = [
     ],
   },
   {
-    icon: "fa-bullseye",
+    icon: "target",
     title: "資料使用目的",
     blocks: [
       {
@@ -495,7 +495,7 @@ const zhPrivacySections: LegalDocumentContent["sections"] = [
     ],
   },
   {
-    icon: "fa-lock",
+    icon: "lock",
     title: "資料儲存與安全",
     blocks: [
       { type: "h3", text: "加密儲存" },
@@ -525,7 +525,7 @@ const zhPrivacySections: LegalDocumentContent["sections"] = [
     ],
   },
   {
-    icon: "fa-share-nodes",
+    icon: "share-2",
     title: "資料分享",
     blocks: [
       {
@@ -546,7 +546,7 @@ const zhPrivacySections: LegalDocumentContent["sections"] = [
     ],
   },
   {
-    icon: "fa-cookie-bite",
+    icon: "cookie",
     title: "Cookie 與本地儲存",
     blocks: [
       {
@@ -560,7 +560,7 @@ const zhPrivacySections: LegalDocumentContent["sections"] = [
     ],
   },
   {
-    icon: "fa-plug",
+    icon: "plug",
     title: "第三方服務整合",
     blocks: [
       {
@@ -578,7 +578,7 @@ const zhPrivacySections: LegalDocumentContent["sections"] = [
     ],
   },
   {
-    icon: "fa-user-shield",
+    icon: "shield-user",
     title: "您的權利",
     blocks: [
       {
@@ -597,7 +597,7 @@ const zhPrivacySections: LegalDocumentContent["sections"] = [
     ],
   },
   {
-    icon: "fa-clock-rotate-left",
+    icon: "history",
     title: "資料保留期限",
     blocks: [
       {
@@ -607,7 +607,7 @@ const zhPrivacySections: LegalDocumentContent["sections"] = [
     ],
   },
   {
-    icon: "fa-file-pen",
+    icon: "file-pen-line",
     title: "政策更新",
     blocks: [
       {
@@ -618,7 +618,7 @@ const zhPrivacySections: LegalDocumentContent["sections"] = [
     ],
   },
   {
-    icon: "fa-envelope",
+    icon: "mail",
     title: "聯絡我們",
     blocks: [
       {
@@ -631,7 +631,7 @@ const zhPrivacySections: LegalDocumentContent["sections"] = [
 
 const enPrivacySections: LegalDocumentContent["sections"] = [
   {
-    icon: "fa-globe",
+    icon: "globe",
     title: "Scope",
     blocks: [
       {
@@ -649,7 +649,7 @@ const enPrivacySections: LegalDocumentContent["sections"] = [
     ],
   },
   {
-    icon: "fa-database",
+    icon: "database",
     title: "Data We Collect",
     blocks: [
       { type: "h3", text: "Account data" },
@@ -691,7 +691,7 @@ const enPrivacySections: LegalDocumentContent["sections"] = [
     ],
   },
   {
-    icon: "fa-bullseye",
+    icon: "target",
     title: "How We Use Data",
     blocks: [
       {
@@ -711,7 +711,7 @@ const enPrivacySections: LegalDocumentContent["sections"] = [
     ],
   },
   {
-    icon: "fa-lock",
+    icon: "lock",
     title: "Storage and Security",
     blocks: [
       { type: "h3", text: "Encryption at rest" },
@@ -741,7 +741,7 @@ const enPrivacySections: LegalDocumentContent["sections"] = [
     ],
   },
   {
-    icon: "fa-share-nodes",
+    icon: "share-2",
     title: "Data Sharing",
     blocks: [
       {
@@ -762,7 +762,7 @@ const enPrivacySections: LegalDocumentContent["sections"] = [
     ],
   },
   {
-    icon: "fa-cookie-bite",
+    icon: "cookie",
     title: "Cookies and Local Storage",
     blocks: [
       {
@@ -776,7 +776,7 @@ const enPrivacySections: LegalDocumentContent["sections"] = [
     ],
   },
   {
-    icon: "fa-plug",
+    icon: "plug",
     title: "Third-Party Services",
     blocks: [
       {
@@ -794,7 +794,7 @@ const enPrivacySections: LegalDocumentContent["sections"] = [
     ],
   },
   {
-    icon: "fa-user-shield",
+    icon: "shield-user",
     title: "Your Rights",
     blocks: [
       {
@@ -813,7 +813,7 @@ const enPrivacySections: LegalDocumentContent["sections"] = [
     ],
   },
   {
-    icon: "fa-clock-rotate-left",
+    icon: "history",
     title: "Retention",
     blocks: [
       {
@@ -823,7 +823,7 @@ const enPrivacySections: LegalDocumentContent["sections"] = [
     ],
   },
   {
-    icon: "fa-file-pen",
+    icon: "file-pen-line",
     title: "Policy Updates",
     blocks: [
       {
@@ -837,7 +837,7 @@ const enPrivacySections: LegalDocumentContent["sections"] = [
     ],
   },
   {
-    icon: "fa-envelope",
+    icon: "mail",
     title: "Contact Us",
     blocks: [
       {
@@ -860,7 +860,7 @@ export function getLegalContent(
       subtitle: useEnglishLegalText
         ? "Please read these terms carefully before using the service. Continuing to use the service means you agree to them."
         : "使用本服務前，請詳細閱讀以下條款。繼續使用即表示您同意本條款之內容。",
-      icon: "fa-file-contract",
+      icon: "file-text",
       heroClass: "bg-gradient-to-br from-slate-800 to-slate-700",
       tocTitle: useEnglishLegalText ? "Contents" : "目錄",
       updatedLabel: t("public.common.lastUpdated", {
@@ -876,7 +876,7 @@ export function getLegalContent(
     subtitle: useEnglishLegalText
       ? "This policy explains how we collect, use, and protect your personal data."
       : "本政策說明我們如何收集、使用及保護您的個人資料，請詳細閱讀。",
-    icon: "fa-shield-halved",
+    icon: "shield-check",
     heroClass: "bg-gradient-to-br from-indigo-600 to-indigo-400",
     tocTitle: useEnglishLegalText ? "Contents" : "目錄",
     updatedLabel: t("public.common.lastUpdated", {

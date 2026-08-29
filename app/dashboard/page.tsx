@@ -199,7 +199,7 @@ export default async function DashboardPage(props: { searchParams: Promise<{ mon
       value: portfolio?.unavailableReason === 'mixedCurrencies'
         ? '—'
         : fmtMoney(data.stockMarketValue, locale, portfolio?.currency || 'TWD'),
-      href: '/stocks/portfolio', icon: TrendingUp, tone: '#7c3aed', surface: 'rgba(124, 58, 237, 0.10)',
+      href: '/stocks/portfolio', icon: TrendingUp, tone: 'var(--net)', surface: 'var(--net-bg)',
     },
   ];
 
@@ -207,7 +207,7 @@ export default async function DashboardPage(props: { searchParams: Promise<{ mon
     assets: (
       <section key="assets" className="dashboard-asset-grid grid gap-4 md:grid-cols-2 xl:col-span-2" aria-label={t('dashboard.personalize.modules.assets')}>
         {assetCards.map(({ label, value, href, icon: Icon, tone, surface }) => (
-          <Link key={href} href={href} className="dashboard-asset-card group flex min-h-32 items-center gap-4 rounded-2xl border p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md" style={{ background: 'var(--dashboard-panel)', borderColor: 'var(--dashboard-rule)' }}>
+          <Link key={href} href={href} className="dashboard-asset-card group flex min-h-32 items-center gap-4 rounded-2xl border p-5 shadow-sm" style={{ background: 'var(--surface-glass)', borderColor: 'var(--glass-border)' }}>
             <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl" style={{ background: surface, color: tone }}><Icon size={23} aria-hidden="true" /></span>
             <span className="min-w-0 flex-1">
               <span className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>{label}</span>
@@ -479,11 +479,11 @@ export default async function DashboardPage(props: { searchParams: Promise<{ mon
               <span className="dashboard-status-dot" aria-hidden="true" />
               <span>{t('dashboard.dataStatus.queriedAt', { time: generatedAtLabel })}</span>
             </div>
-            <Link href="/finance/transactions?action=add" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-white shadow-sm transition-transform hover:-translate-y-0.5 hover:bg-primary-dark"><Plus size={17} aria-hidden="true" />{t('features.transactions.add')}</Link>
+            <Link href="/finance/transactions?action=add" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-primary-solid px-4 text-sm font-semibold text-white shadow-sm transition-all hover:bg-primary-dark hover:shadow-md active:scale-[0.98]"><Plus size={17} aria-hidden="true" />{t('features.transactions.add')}</Link>
           </div>
         </header>
 
-        <section className="dashboard-hero dashboard-hero--editorial relative overflow-hidden rounded-[28px] p-5 text-white shadow-lg sm:p-7 lg:p-8" aria-labelledby="dashboard-overview-title">
+        <section className="dashboard-hero relative overflow-hidden rounded-[20px] p-5 text-white shadow-lg sm:p-7 lg:p-8" aria-labelledby="dashboard-overview-title">
           <div className="dashboard-hero-gridline pointer-events-none absolute inset-0" aria-hidden="true" />
           <div className="dashboard-hero-mark pointer-events-none absolute -right-10 -top-14 h-64 w-64 rounded-full" aria-hidden="true" />
           <div className="relative grid gap-7 lg:grid-cols-[1.05fr_0.95fr] lg:items-end">

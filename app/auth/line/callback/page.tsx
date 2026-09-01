@@ -17,6 +17,11 @@ export default function LineCallbackPage() {
       const state = params.get('state');
       const flow = state?.startsWith('link.') ? 'link' : 'login';
 
+      // Scrub the one-time code/state out of the visible URL/browser history
+      // immediately: they are bearer-like material for the (short) window
+      // before the server consumes them (AUTH-VULN-07).
+      window.history.replaceState({}, '', window.location.pathname);
+
       if (!code || !state) {
         throw new Error(t('auth.lineCallback.missingCode'));
       }

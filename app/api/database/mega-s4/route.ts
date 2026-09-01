@@ -3,7 +3,9 @@ import { NextResponse } from 'next/server';
 import { requireAdmin } from '../../../../lib/apiHelpers';
 import { writeOperationAudit } from '../../../../lib/auditHelpers';
 import { getMegaS4ConfigStatus, makeMegaS4BackupFilename, uploadMegaS4Backup } from '../../../../lib/megaS4';
+import { assertSafeS3Endpoint } from '../../../../lib/s3Storage';
 import { writeEnvVars } from '../../../../lib/envSecrets';
+import { getRequestIpFromHeaders } from '../../../../lib/loginHelpers';
 import { createPostgresBackupSql } from '../../../../lib/postgresBackup';
 
 export const dynamic = 'force-dynamic';
@@ -13,7 +15,7 @@ function auditBase(request, auth) {
   return {
     userId: auth.userId,
     role: 'admin',
-    ipAddress: request.headers.get('x-forwarded-for')?.split(',')[0].trim() || 'unknown',
+    ipAddress: getRequestIpFromHeaders(request.headers),
     userAgent: request.headers.get('user-agent') || '',
     isAdminOperation: true,
   };
@@ -101,6 +103,18 @@ export async function PUT(request) {
 
   if (Object.keys(updates).length === 0) {
     return NextResponse.json({ error: '未提供任何欄位' }, { status: 400 });
+  }
+
+  if (updates['MEGA_S4_ENDPOINT']) {
+    const rawEndpoint = updates['MEGA_S4_ENDPOINT'];
+    const normalizedEndpoint = /^https?:\/\//i.test(rawEndpoint)
+      ? rawEndpoint
+      : `https://${rawEndpoint}`;
+    try {
+      await assertSafeS3Endpoint(normalizedEndpoint);
+    } catch (e) {
+      return NextResponse.json({ error: e?.message || 'S3 endpoint 驗證失敗' }, { status: 400 });
+    }
   }
 
   writeEnvVars(updates);

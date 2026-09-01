@@ -1,19 +1,22 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { queryOne } from '../../../../../lib/db';
-import { setAuthCookie, formatUser } from '../../../../../lib/apiHelpers';
+import { setAuthCookie, formatUser, isActiveUserFlag } from '../../../../../lib/apiHelpers';
 import { consumeAppAuthTicket } from '../../../../../lib/appAuthTicket';
 import { createLoginSession } from '../../../../../lib/sessionHelpers';
 import { recordLoginAudit, recordLoginAttempt } from '../../../../../lib/loginHelpers';
 
 export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => ({}));
-  const userId = consumeAppAuthTicket(body.ticket);
+  const userId = consumeAppAuthTicket(body.ticket, body.deviceNonce);
   if (!userId) {
     return NextResponse.json({ error: 'App 登入憑證已過期或無效' }, { status: 401 });
   }
 
   const user = queryOne('SELECT * FROM users WHERE id = ?', [userId]);
   if (!user) return NextResponse.json({ error: '使用者不存在' }, { status: 401 });
+  if (!isActiveUserFlag(user.is_active)) {
+    return NextResponse.json({ error: '帳號已停用，請聯繫管理員' }, { status: 403 });
+  }
 
   const loginUser = { id: String(user.id), email: String(user.email || ''), is_admin: Number(user.is_admin) || 0 };
   const currentLogin = recordLoginAudit(loginUser, request.headers, 'passkey');

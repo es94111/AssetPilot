@@ -1,6 +1,7 @@
 // lib/loginHelpers.ts — 登入稽核、IP 查詢、系統設定等共用邏輯
 import crypto from "crypto";
 import { getDB, queryOne, saveDB } from "./db";
+import { getClientIpFromHeaders } from "./requestIp";
 
 const IPINFO_TOKEN = process.env.IPINFO_TOKEN || "";
 const IP_COUNTRY_CACHE_TTL_MS = 60 * 60 * 1000; // 1 小時
@@ -153,14 +154,13 @@ function getHeader(headers: HeadersLike, key: string): string {
   return (headers as Record<string, string | undefined>)[key] || "";
 }
 
-/** NextRequest headers 版本 */
+/**
+ * NextRequest headers 版本。委派給 lib/requestIp.ts：預設（未信任代理鏈時）
+ * 取 XFF 最後一段而非第一段，避免直連客戶端自報的偽造前段被當成真實 IP，
+ * 繞過下方的管理員 IP 白名單／登入稽核／速率限制（見安全報告 AUTH-VULN-06）。
+ */
 export function getRequestIpFromHeaders(headers: HeadersLike): string {
-  const forwardedFor = String(getHeader(headers, "x-forwarded-for"))
-    .split(",")[0]
-    .trim();
-  const realIp = getHeader(headers, "x-real-ip");
-  const rawIp = forwardedFor || realIp || "";
-  return rawIp ? normalizeIp(rawIp) : "unknown";
+  return getClientIpFromHeaders(headers);
 }
 
 /** 取得 User-Agent 標頭，並截斷至合理長度避免異常超長字串。 */

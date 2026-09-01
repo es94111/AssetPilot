@@ -1,5 +1,7 @@
 // proxy.ts — Next.js Proxy：JWT 驗證 + in-memory 速率限制
 import { NextResponse, NextRequest } from 'next/server';
+import { getClientIpFromHeaders } from './lib/requestIp';
+import { checkRateLimit as checkRateLimitSafe } from './lib/rateLimit';
 
 // ── 公開端點（不需驗證）──
 const PUBLIC_PATHS = new Set([
@@ -65,28 +67,20 @@ const oauthRateLimitMap = new Map<string, RateLimitEntry>();
 const oauthAuthorizePageRateLimitMap = new Map<string, RateLimitEntry>();
 const oauthRegistrationRateLimitMap = new Map<string, RateLimitEntry>();
 
+// 委派給 lib/rateLimit.ts（含 Map 容量上限保護）與 lib/requestIp.ts
+// （信任代理策略見該檔頭註解；預設取 XFF 最後一段，需搭配會覆寫 XFF 的反向
+// 代理才能防止客戶端偽造來源 IP 繞過下方速率限制 — 見安全報告 AUTH-VULN-06）。
 function checkRateLimit(
   map: Map<string, RateLimitEntry>,
   ip: string,
   max: number,
   windowMs = RATE_LIMIT_WINDOW_MS
 ): boolean {
-  const now = Date.now();
-  let entry = map.get(ip);
-  if (!entry || now > entry.resetAt) {
-    entry = { count: 0, resetAt: now + windowMs };
-    map.set(ip, entry);
-  }
-  entry.count += 1;
-  return entry.count <= max;
+  return checkRateLimitSafe(map, ip, max, windowMs);
 }
 
 function getClientIp(request: NextRequest): string {
-  return (
-    request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
-    request.headers.get('x-real-ip') ||
-    'unknown'
-  );
+  return getClientIpFromHeaders(request.headers);
 }
 
 function getRequestOriginCandidates(request: NextRequest): Set<string> {

@@ -4,21 +4,11 @@ import type { CredentialInfo } from '@passwordless-id/webauthn';
 import { getDB, queryOne, saveDB } from '../../../../../lib/db';
 import { recordLoginAudit, recordLoginAttempt } from '../../../../../lib/loginHelpers';
 import { backfillDefaultsForUser } from '../../../../../lib/userDefaults';
-import { formatUser, setAuthCookie } from '../../../../../lib/apiHelpers';
+import { formatUser, isActiveUserFlag, setAuthCookie } from '../../../../../lib/apiHelpers';
 import { consumePasskeyChallenge } from '@/lib/passkeyChallenge';
 import { createLoginSession } from '../../../../../lib/sessionHelpers';
 import { getTurnstileSiteKey, verifyTurnstileToken } from '../../../../../lib/turnstile';
-
-const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || '').split(',').map(s => s.trim()).filter(Boolean);
-
-function getTrustedOriginFromRequest(request: Request) {
-  const reqOrigin = request.headers.get('origin');
-  if (ALLOWED_ORIGINS.length > 0) {
-    if (reqOrigin && ALLOWED_ORIGINS.includes(reqOrigin)) return reqOrigin;
-    return ALLOWED_ORIGINS[0];
-  }
-  return reqOrigin || new URL(request.url).origin;
-}
+import { resolvePasskeyExpectedOrigin } from '@/lib/originPolicy';
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => ({}));
@@ -47,6 +37,10 @@ export async function POST(request: Request) {
 
   const user = queryOne('SELECT * FROM users WHERE id = ?', [cred.user_id]);
   if (!user) return NextResponse.json({ error: '使用者不存在' }, { status: 401 });
+  if (!isActiveUserFlag(user.is_active)) {
+    recordLoginAttempt({ email: String(user.email || ''), headers: request.headers, method: 'passkey', isSuccess: false, failureReason: 'account_disabled' });
+    return NextResponse.json({ error: '帳號已停用，請聯繫管理員' }, { status: 403 });
+  }
 
   try {
     const credentialKey: CredentialInfo = {
@@ -55,7 +49,10 @@ export async function POST(request: Request) {
       algorithm: String(cred.algorithm || '') as CredentialInfo['algorithm'],
       transports: JSON.parse(String(cred.transports || '[]')),
     };
-    const origin = getTrustedOriginFromRequest(request);
+    const { origin } = resolvePasskeyExpectedOrigin(request.headers.get('origin'));
+    if (!origin) {
+      return NextResponse.json({ error: '伺服器未設定允許的網域（ALLOWED_ORIGINS），無法驗證 Passkey' }, { status: 500 });
+    }
     const result = await webauthnServer.verifyAuthentication(authentication, credentialKey, {
       challenge: entry.challenge,
       origin,

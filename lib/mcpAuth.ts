@@ -5,6 +5,7 @@ import crypto from 'crypto';
 import { getDB, queryOne, queryAll, saveDB } from './db';
 import { uid } from './userDefaults';
 import { toIsoUtc } from './userTime';
+import { isActiveUserFlag } from './userActive';
 
 export const MAX_ACTIVE_MCP_CREDENTIALS = 20;
 
@@ -97,10 +98,18 @@ export function createMcpCredential(userId: string, name: string, expiresAt = 0)
 export function verifyMcpToken(plaintext: string): VerifyMcpTokenResult | null {
   const tokenHash = hashMcpToken(plaintext);
   const row = queryOne(
-    'SELECT id, user_id, name, expires_at, revoked_at, allow_create, allow_update_note FROM mcp_credentials WHERE token_hash = ?',
+    `SELECT mc.id, mc.user_id, mc.name, mc.expires_at, mc.revoked_at, mc.allow_create, mc.allow_update_note,
+            u.is_active AS user_is_active
+       FROM mcp_credentials mc
+       JOIN users u ON u.id = mc.user_id
+      WHERE mc.token_hash = ?`,
     [tokenHash]
-  ) as McpCredentialRow | null;
+  ) as (McpCredentialRow & { user_is_active: unknown }) | null;
   if (!row) return null;
+
+  // Deactivated accounts must lose MCP access even while their PAT is otherwise
+  // still valid (not expired/revoked); fail closed for missing/null values.
+  if (!isActiveUserFlag(row.user_is_active)) return null;
 
   const now = Date.now();
   if (Number(row.revoked_at) !== 0) return null;

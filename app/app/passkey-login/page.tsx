@@ -12,6 +12,9 @@ export default function MobilePasskeyLoginPage() {
     async function run() {
       const params = new URLSearchParams(window.location.search);
       const turnstileToken = params.get('turnstileToken') || '';
+      const deviceNonce = params.get('deviceNonce') || '';
+      // 清除網址列中的 turnstileToken/deviceNonce（AUTH-VULN-07）。
+      window.history.replaceState({}, '', window.location.pathname);
       if (!webauthnClient.isAvailable()) throw new Error(t('public.appCallback.passkeyUnsupported'));
 
       const challengeRes = await fetch('/api/auth/passkey/challenge', { cache: 'no-store' });
@@ -35,7 +38,10 @@ export default function MobilePasskeyLoginPage() {
       if (!loginRes.ok) throw new Error(loginData.error || t('public.appCallback.passkeyLoginFailed'));
 
       setMessage(t('public.appCallback.returningApp'));
-      const ticketRes = await fetch('/api/app/auth-ticket', {
+      const ticketUrl = deviceNonce
+        ? `/api/app/auth-ticket?deviceNonce=${encodeURIComponent(deviceNonce)}`
+        : '/api/app/auth-ticket';
+      const ticketRes = await fetch(ticketUrl, {
         method: 'POST',
         credentials: 'include',
       });

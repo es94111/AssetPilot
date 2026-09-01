@@ -28,8 +28,19 @@ if (!DB_URL) {
 
   await initDB();
 
+  // verifyMcpToken 現在會 JOIN users 檢查 is_active（見安全報告 AUTHZ-VULN-03：
+  // 停用帳號的 MCP PAT 不應繼續有效），因此測試憑證必須綁定一筆真實存在、
+  // is_active 預設為 1 的 users 列，才能驗證「有效權杖」情境。
+  function createTestUser(userId: string): void {
+    getDB().run(
+      'INSERT INTO users (id, email, password_hash, display_name, created_at) VALUES (?,?,?,?,?)',
+      [userId, `${userId}@test.local`, 'test', 'Test User', new Date().toISOString().slice(0, 10)]
+    );
+  }
+
   function cleanupUser(userId: string): void {
     getDB().run('DELETE FROM mcp_credentials WHERE user_id = ?', [userId]);
+    getDB().run('DELETE FROM users WHERE id = ?', [userId]);
   }
 
   test('generateMcpToken 產生 ap_mcp_ 前綴的高熵權杖', () => {
@@ -47,6 +58,7 @@ if (!DB_URL) {
 
   test('createMcpCredential 建立後 verifyMcpToken 可查找並更新 last_used_at', () => {
     const userId = 'test_mcpauth_' + uid();
+    createTestUser(userId);
     try {
       const created = createMcpCredential(userId, '我的 ChatGPT');
       assert.ok(created.token.startsWith('ap_mcp_'));
@@ -73,6 +85,7 @@ if (!DB_URL) {
 
   test('revokeMcpCredential 撤銷後 verifyMcpToken 回傳 null，且再次撤銷回傳 false', () => {
     const userId = 'test_mcpauth_' + uid();
+    createTestUser(userId);
     try {
       const created = createMcpCredential(userId, '測試撤銷');
       assert.ok(verifyMcpToken(created.token));
@@ -109,6 +122,7 @@ if (!DB_URL) {
 
   test('createMcpCredential 預設 allowCreate=false，setMcpCredentialAllowCreate 可開關並反映於 verifyMcpToken／listMcpCredentials', () => {
     const userId = 'test_mcpauth_' + uid();
+    createTestUser(userId);
     try {
       const created = createMcpCredential(userId, '寫入權限測試');
 
@@ -156,6 +170,7 @@ if (!DB_URL) {
 
   test('createMcpCredential 預設 allowUpdateNote=false（FR-006）', () => {
     const userId = 'test_mcpauth_' + uid();
+    createTestUser(userId);
     try {
       const created = createMcpCredential(userId, '備註權限測試');
       const verified = verifyMcpToken(created.token);
@@ -169,6 +184,7 @@ if (!DB_URL) {
 
   test('setMcpCredentialAllowUpdateNote 可開關並反映於 verifyMcpToken／listMcpCredentials', () => {
     const userId = 'test_mcpauth_' + uid();
+    createTestUser(userId);
     try {
       const created = createMcpCredential(userId, '備註權限切換');
       assert.equal(verifyMcpToken(created.token)?.allowUpdateNote, false);
@@ -189,6 +205,7 @@ if (!DB_URL) {
 
   test('權限獨立性：開 allowUpdateNote 不影響 allowCreate，反之亦然（FR-005）', () => {
     const userId = 'test_mcpauth_' + uid();
+    createTestUser(userId);
     try {
       const created = createMcpCredential(userId, '獨立權限');
 
@@ -227,6 +244,23 @@ if (!DB_URL) {
       assert.equal(row?.note, '先前已更新的備註');
     } finally {
       getDB().run('DELETE FROM transactions WHERE user_id = ?', [userId]);
+      cleanupUser(userId);
+    }
+  });
+
+  test('帳號被停用（is_active=0）後，其原本有效的 MCP PAT 應立即失效（AUTHZ-VULN-03）', () => {
+    const userId = 'test_mcpauth_' + uid();
+    createTestUser(userId);
+    try {
+      const created = createMcpCredential(userId, '停用帳號測試');
+      assert.ok(verifyMcpToken(created.token), '停用前應可驗證通過');
+
+      getDB().run('UPDATE users SET is_active = 0 WHERE id = ?', [userId]);
+      assert.equal(verifyMcpToken(created.token), null, '停用後應立即拒絕，即使 PAT 本身未過期/未撤銷');
+
+      getDB().run('UPDATE users SET is_active = 1 WHERE id = ?', [userId]);
+      assert.ok(verifyMcpToken(created.token), '重新啟用後應恢復可驗證');
+    } finally {
       cleanupUser(userId);
     }
   });

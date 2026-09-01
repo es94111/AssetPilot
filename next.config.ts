@@ -74,6 +74,17 @@ const nextConfig: NextConfig = {
       {
         source: '/(.*)',
         headers: [
+          // 僅 production 送出 HSTS：本機/dev 常見 http://localhost，強制 HTTPS
+          // 會破壞開發體驗。正式環境的邊緣代理需確實終止 TLS 並將 HTTP 導向
+          // HTTPS（見 nginx.conf），HSTS 才能保護首次造訪與後續降級攻擊。
+          ...(!isDev
+            ? [
+                {
+                  key: 'Strict-Transport-Security',
+                  value: 'max-age=31536000; includeSubDomains',
+                },
+              ]
+            : []),
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
           { key: 'X-XSS-Protection', value: '1; mode=block' },

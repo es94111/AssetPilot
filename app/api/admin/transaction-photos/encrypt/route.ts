@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/apiHelpers';
 import { writeOperationAudit } from '@/lib/auditHelpers';
+import { getRequestIpFromHeaders } from '@/lib/loginHelpers';
 import { encryptExistingPhotos } from '@/lib/transactionAttachments';
 
 export const runtime = 'nodejs';
@@ -8,7 +9,7 @@ export const maxDuration = 300;
 
 function requestMeta(request: NextRequest) {
   return {
-    ipAddress: request.headers.get('x-forwarded-for')?.split(',')[0].trim() || 'unknown',
+    ipAddress: getRequestIpFromHeaders(request.headers),
     userAgent: request.headers.get('user-agent') || '',
   };
 }

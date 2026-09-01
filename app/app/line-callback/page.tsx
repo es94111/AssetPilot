@@ -15,6 +15,10 @@ export default async function MobileLineCallbackPage() {
             (function () {
               var target = 'assetpilot://line-callback' + window.location.search;
               window.location.replace(target);
+              // 見 app/app/google-callback/page.tsx 同段註解（AUTH-VULN-07）。
+              if (window.history && window.history.replaceState) {
+                window.history.replaceState({}, '', window.location.pathname);
+              }
             })();
           `,
         }}

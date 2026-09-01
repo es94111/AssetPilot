@@ -3,6 +3,7 @@ import { server as webauthnServer } from '@passwordless-id/webauthn';
 import { requireAuth } from '../../../../../lib/apiHelpers';
 import { getDB, queryOne, saveDB } from '../../../../../lib/db';
 import { consumePasskeyChallenge } from '@/lib/passkeyChallenge';
+import { resolvePasskeyExpectedOrigin } from '@/lib/originPolicy';
 
 function todayStr() {
   return new Date().toISOString().slice(0, 10);
@@ -23,7 +24,14 @@ export async function POST(request: Request) {
   }
 
   try {
-    const origin = request.headers.get('origin') || (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000');
+    // WebAuthn 的 origin 綁定必須比對伺服器端信任清單，不可直接採用請求自帶的
+    // Origin 標頭（等同自我比對，永遠通過，失去 origin 綁定應有的防護）。
+    const { origin } = resolvePasskeyExpectedOrigin(
+      request.headers.get('origin'),
+    );
+    if (!origin) {
+      return NextResponse.json({ error: '伺服器未設定允許的網域（ALLOWED_ORIGINS），無法驗證 Passkey' }, { status: 500 });
+    }
     const expected = { challenge: entry.challenge, origin, userVerified: true };
     const result = await webauthnServer.verifyRegistration(registration, expected);
 

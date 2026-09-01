@@ -22,6 +22,7 @@ class LineAuth {
     );
     final state = stateData['state'] ?? '';
     final nonce = stateData['nonce'] ?? '';
+    final bindingToken = stateData['bindingToken'] ?? '';
     if (state.isEmpty || nonce.isEmpty) {
       throw ApiException(0, trKey('mobileLegacyUnableToCreateLineSignInState'));
     }
@@ -87,6 +88,7 @@ class LineAuth {
         code: cb.queryParameters['code']!,
         redirectUri: redirectUri,
         state: state,
+        bindingToken: bindingToken,
       );
     } finally {
       await sub.cancel();

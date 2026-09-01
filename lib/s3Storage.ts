@@ -276,7 +276,12 @@ export async function assertSafeS3Endpoint(rawEndpoint: string): Promise<void> {
 
 async function safeS3Fetch(url: string, init: { method: string; headers: Record<string, string>; body?: Uint8Array }): Promise<Response> {
   const response = await fetch(url, {
-    ...init,
+    method: init.method,
+    headers: init.headers,
+    // Cast needed: some TypeScript/lib.dom combinations infer a Uint8Array
+    // generic parameter that doesn't structurally match BodyInit, even though
+    // a Uint8Array is a valid fetch() body at runtime.
+    body: init.body as BodyInit | undefined,
     redirect: 'manual',
     signal: AbortSignal.timeout(S3_REQUEST_TIMEOUT_MS),
   });

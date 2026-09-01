@@ -2,6 +2,7 @@
 import { NextResponse } from 'next/server';
 import { requireSuperAdmin } from '../../../../lib/apiHelpers';
 import { writeOperationAudit } from '../../../../lib/auditHelpers';
+import { getRequestIpFromHeaders } from '../../../../lib/loginHelpers';
 import { createPostgresBackupSql } from '../../../../lib/postgresBackup';
 
 function makeBackupTimestamp() {
@@ -22,7 +23,7 @@ export async function GET(request) {
       userId: auth.userId,
       role: 'admin',
       action: 'download_backup',
-      ipAddress: request.headers.get('x-forwarded-for')?.split(',')[0].trim() || 'unknown',
+      ipAddress: getRequestIpFromHeaders(request.headers),
       userAgent: request.headers.get('user-agent') || '',
       result: 'success',
       isAdminOperation: true,

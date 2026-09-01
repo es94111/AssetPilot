@@ -11,6 +11,7 @@ import {
   normalizeIp,
 } from "./loginHelpers";
 import logger from "@/lib/logger";
+import { isActiveUserFlag } from "./userActive";
 
 type ApiAuthResult = {
   userId: string;
@@ -23,6 +24,10 @@ type ApiAuthResult = {
   themeMode: string;
   sessionId?: string;
 };
+
+// 重新匯出：既有呼叫端（各登入路由）沿用 from "lib/apiHelpers" 匯入，
+// 實際定義移至零相依的 lib/userActive.ts（見該檔案註解說明原因）。
+export { isActiveUserFlag };
 
 const CSRF_SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
 // 一般（唯讀）管理員不可執行的變更方法。
@@ -205,11 +210,16 @@ export async function requireAuth(
     }
 
     const user = queryOne(
-      "SELECT id, email, display_name, is_admin, admin_role, theme_mode, timezone, token_version FROM users WHERE id = ?",
+      "SELECT id, email, display_name, is_admin, admin_role, theme_mode, timezone, token_version, is_active FROM users WHERE id = ?",
       [userId],
     );
     if (!user) {
       return authErrorResponse("使用者不存在");
+    }
+    // Deactivated accounts must lose authorization immediately, even with a
+    // still-valid session record; fail closed for missing/null values.
+    if (!isActiveUserFlag(user.is_active)) {
+      return authErrorResponse("帳號已停用，請聯繫管理員");
     }
 
     const dbVersion = Number(user.token_version) || 0;

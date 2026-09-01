@@ -374,11 +374,14 @@ class ApiClient {
   }
 
   /// 取得 Google OAuth 一次性 state（防 CSRF；後端會記住並於登入時核銷）。
-  Future<String> googleState() async {
+  /// bindingToken 需在 [googleLogin] 原樣送回，證明兌換請求與取得 state 的
+  /// 是同一個呼叫端，避免 OAuth 登入 CSRF（攻擊者用自己的 code+state 誘使
+  /// 受害者的已登入畫面送出兌換請求）。
+  Future<Map<String, String>> googleState() async {
     final m = await _getMap('/api/auth/google/state');
     final s = m['state'];
     if (s == null) throw ApiException(0, trKey('authErrorsGoogleStateFailed'));
-    return '$s';
+    return {'state': '$s', 'bindingToken': '${m['bindingToken'] ?? ''}'};
   }
 
   /// 以授權碼換登入（後端用 client_secret 與 redirectUri 向 Google 兌換）。
@@ -386,6 +389,7 @@ class ApiClient {
     required String code,
     required String redirectUri,
     required String state,
+    required String bindingToken,
     String? turnstileToken,
   }) async {
     final integrity = await _integrityFields();
@@ -399,6 +403,7 @@ class ApiClient {
               'code': code,
               'redirect_uri': redirectUri,
               'state': state,
+              'bindingToken': bindingToken,
               'turnstileToken': ?turnstileToken,
               ...integrity,
             }),
@@ -421,18 +426,24 @@ class ApiClient {
     throw ApiException(res.statusCode, _errorMessage(res));
   }
 
+  /// bindingToken 需在 [lineLogin] 原樣送回，理由同 [googleState]。
   Future<Map<String, String>> lineState({String? turnstileToken}) async {
     final query = turnstileToken == null || turnstileToken.isEmpty
         ? 'flow=login'
         : 'flow=login&turnstileToken=${Uri.encodeComponent(turnstileToken)}';
     final m = await _getMap('/api/auth/line/state?$query');
-    return {'state': '${m['state'] ?? ''}', 'nonce': '${m['nonce'] ?? ''}'};
+    return {
+      'state': '${m['state'] ?? ''}',
+      'nonce': '${m['nonce'] ?? ''}',
+      'bindingToken': '${m['bindingToken'] ?? ''}',
+    };
   }
 
   Future<void> lineLogin({
     required String code,
     required String redirectUri,
     required String state,
+    required String bindingToken,
   }) async {
     late http.Response res;
     try {
@@ -444,6 +455,7 @@ class ApiClient {
               'code': code,
               'redirect_uri': redirectUri,
               'state': state,
+              'bindingToken': bindingToken,
             }),
           )
           .timeout(_timeout);
@@ -464,14 +476,14 @@ class ApiClient {
     throw ApiException(res.statusCode, _errorMessage(res));
   }
 
-  Future<void> exchangeAppAuthTicket(String ticket) async {
+  Future<void> exchangeAppAuthTicket(String ticket, {String? deviceNonce}) async {
     late http.Response res;
     try {
       res = await http
           .post(
             _uri('/api/app/auth-ticket/exchange'),
             headers: _headers(json: true),
-            body: jsonEncode({'ticket': ticket}),
+            body: jsonEncode({'ticket': ticket, 'deviceNonce': ?deviceNonce}),
           )
           .timeout(_timeout);
     } catch (e) {

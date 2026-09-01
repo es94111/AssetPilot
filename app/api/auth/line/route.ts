@@ -14,7 +14,11 @@ import {
   createDefaultsForUser,
   backfillDefaultsForUser,
 } from "../../../../lib/userDefaults";
-import { formatUser, setAuthCookie } from "../../../../lib/apiHelpers";
+import {
+  formatUser,
+  isActiveUserFlag,
+  setAuthCookie,
+} from "../../../../lib/apiHelpers";
 import { consumeLineOAuthStateEntry } from "@/lib/lineOAuthState";
 import { createLoginSession } from "../../../../lib/sessionHelpers";
 import { getTurnstileSiteKey } from "../../../../lib/turnstile";
@@ -26,9 +30,11 @@ import {
   verifyLineIdToken,
 } from "../../../../lib/lineOAuth";
 
+const LINE_OAUTH_TXN_COOKIE = "line_oauth_txn";
+
 export async function POST(request: Request) {
   const body = await request.json().catch(() => ({}));
-  const { code, redirect_uri, state } = body;
+  const { code, redirect_uri, state, bindingToken: bodyBindingToken } = body;
   const headers = request.headers;
 
   if (!code)
@@ -48,8 +54,35 @@ export async function POST(request: Request) {
   }
 
   const stateEntry = consumeLineOAuthStateEntry(state);
-  if (!stateEntry)
+  // The login consumer must only ever accept a state minted for the login
+  // flow — a link-flow state (issued without the login Turnstile challenge)
+  // must never be usable here, otherwise Turnstile enforcement can be
+  // bypassed by requesting a link-flow state instead (AUTH-VULN-03 /
+  // AUTHZ-VULN-05).
+  if (!stateEntry || stateEntry.flow !== "login")
     return NextResponse.json({ error: "state_mismatch" }, { status: 400 });
+
+  // Browser/client binding: proves this request comes from the same party
+  // that initiated the OAuth flow, not a relayed code+state pair submitted
+  // from a different (victim) browser/session (AUTH-VULN-02).
+  const cookieBindingToken = (request as any).cookies?.get?.(
+    LINE_OAUTH_TXN_COOKIE,
+  )?.value;
+  const providedBindingToken = String(bodyBindingToken || cookieBindingToken || "");
+  if (
+    !stateEntry.bindingToken ||
+    providedBindingToken !== stateEntry.bindingToken
+  ) {
+    recordLoginAttempt({
+      email: "",
+      headers,
+      method: "line",
+      isSuccess: false,
+      failureReason: "binding_mismatch",
+    });
+    return NextResponse.json({ error: "state_mismatch" }, { status: 400 });
+  }
+
   if (
     getTurnstileSiteKey() &&
     stateEntry.flow === "login" &&
@@ -203,6 +236,16 @@ export async function POST(request: Request) {
 
     if (!user)
       return NextResponse.json({ error: "使用者不存在" }, { status: 401 });
+    if (!isActiveUserFlag(user.is_active)) {
+      recordLoginAttempt({
+        email: String(user.email || ""),
+        headers,
+        method: "line",
+        isSuccess: false,
+        failureReason: "account_disabled",
+      });
+      return NextResponse.json({ error: "帳號已停用，請聯繫管理員" }, { status: 403 });
+    }
     const loginUser = {
       id: String(user.id),
       email: String(user.email || ""),
@@ -232,6 +275,7 @@ export async function POST(request: Request) {
       currentLogin,
       returnTo: stateEntry.returnTo,
     });
+    response.cookies.delete(LINE_OAUTH_TXN_COOKIE);
     return setAuthCookie(response, token);
   } catch (e) {
     const message = e instanceof Error ? e.message : "未知錯誤";

@@ -18,8 +18,12 @@ services:
     restart: unless-stopped
     depends_on:
       - postgres
+    # 僅綁定 loopback：nginx.conf 透過 Docker 內部網路以服務名稱
+    # （http://assetpilot:3000）連線，不需要把 3000 對外發布到所有介面。
+    # 對外發布會讓任何人略過 nginx（見 nginx.conf 對 XFF/X-Real-IP 的覆寫）
+    # 直連 Node，偽造 X-Forwarded-For 繞過應用層速率限制（AUTH-VULN-06）。
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
     volumes:
       - assetpilot-data:/app/data
     environment:

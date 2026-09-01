@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '../../../../../lib/apiHelpers';
 import { queryOne, saveDB } from '../../../../../lib/db';
 import { writeOperationAudit } from '../../../../../lib/auditHelpers';
+import { getRequestIpFromHeaders } from '../../../../../lib/loginHelpers';
 import { getDefaultTransactionPhotoStorage, listTransactionAttachments, saveTransactionPhoto } from '../../../../../lib/transactionAttachments';
 
 export const runtime = 'nodejs';
@@ -14,7 +15,7 @@ function ownsTransaction(txId: string, userId: string) {
 
 function requestMeta(request: NextRequest) {
   return {
-    ipAddress: request.headers.get('x-forwarded-for')?.split(',')[0].trim() || 'unknown',
+    ipAddress: getRequestIpFromHeaders(request.headers),
     userAgent: request.headers.get('user-agent') || '',
   };
 }

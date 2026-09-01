@@ -78,6 +78,170 @@ export function isAssetPilotPostgresBackup(sql: string): boolean {
   return sql.trimStart().startsWith(BACKUP_HEADER);
 }
 
+// ── Restore-time SQL grammar allowlist ──────────────────────────────────────
+// A predictable header comment alone does not stop an attacker from appending
+// arbitrary SQL after it. Before executing an uploaded "backup", the file is
+// tokenized and every top-level statement must match one of the shapes this
+// module itself generates in createPostgresBackupSql(). Anything else — a
+// second statement type, a function/procedure body, a role/extension change,
+// dollar-quoting, block comments — is rejected outright. This is defense in
+// depth for an already super-admin-gated route, not a general SQL sandbox.
+const MAX_RESTORE_SQL_BYTES = 200 * 1024 * 1024; // 200MB
+const MAX_RESTORE_STATEMENTS = 500_000;
+
+// Function/keyword substrings that have no place in a generated backup and
+// could otherwise hide inside a permissive CREATE TABLE/INDEX/CONSTRAINT
+// clause (e.g. a DEFAULT or index predicate expression).
+const DANGEROUS_SQL_SUBSTRINGS = [
+  "pg_read_file",
+  "pg_read_binary_file",
+  "pg_ls_dir",
+  "pg_ls_logdir",
+  "pg_ls_waldir",
+  "pg_stat_file",
+  "pg_reload_conf",
+  "pg_rotate_logfile",
+  "pg_terminate_backend",
+  "pg_cancel_backend",
+  "lo_import",
+  "lo_export",
+  "dblink",
+  "copy ",
+  "\\copy",
+  "pg_sleep",
+  "current_setting",
+  "set_config",
+  "create function",
+  "create procedure",
+  "create extension",
+  "create role",
+  "create user",
+  "alter role",
+  "alter user",
+  "alter system",
+  "grant ",
+  "revoke ",
+  "do $",
+  "do  $",
+  "execute ",
+  "copy(",
+];
+
+const RESTORE_STATEMENT_PATTERNS: RegExp[] = [
+  /^BEGIN$/i,
+  /^COMMIT$/i,
+  /^DROP TABLE IF EXISTS "(?:[^"]|"")+" CASCADE$/i,
+  /^CREATE TABLE "(?:[^"]|"")+" \([\s\S]*\)$/i,
+  /^ALTER TABLE "(?:[^"]|"")+" ADD CONSTRAINT "(?:[^"]|"")+" [\s\S]+$/i,
+  /^CREATE (?:UNIQUE )?INDEX\s+[\s\S]+\s+ON\s+[\s\S]+$/i,
+  /^INSERT INTO "(?:[^"]|"")+" \([\s\S]*?\) VALUES \([\s\S]*\)$/i,
+];
+
+class RestoreValidationError extends Error {}
+
+// Splits `sql` into top-level (`;`-terminated) statements while respecting
+// single-quoted string literals and double-quoted identifiers, and dropping
+// line comments. Dollar-quoting and block comments are not part of the
+// generated grammar, so encountering either is treated as invalid input.
+function splitTopLevelStatements(sql: string): string[] {
+  const statements: string[] = [];
+  let current = "";
+  let i = 0;
+  const n = sql.length;
+  while (i < n) {
+    const ch = sql[i];
+    if (ch === "'" || ch === '"') {
+      const quote = ch;
+      let j = i + 1;
+      while (j < n) {
+        if (sql[j] === quote) {
+          if (sql[j + 1] === quote) {
+            j += 2;
+            continue;
+          }
+          j += 1;
+          break;
+        }
+        j += 1;
+      }
+      current += sql.slice(i, j);
+      i = j;
+      continue;
+    }
+    if (ch === "-" && sql[i + 1] === "-") {
+      let j = i;
+      while (j < n && sql[j] !== "\n") j += 1;
+      i = j;
+      continue;
+    }
+    if (ch === "/" && sql[i + 1] === "*") {
+      throw new RestoreValidationError("備份檔包含不支援的區塊註解");
+    }
+    if (ch === "$") {
+      throw new RestoreValidationError("備份檔包含不支援的字元序列（$）");
+    }
+    if (ch === ";") {
+      statements.push(current);
+      current = "";
+      i += 1;
+      continue;
+    }
+    current += ch;
+    i += 1;
+  }
+  if (current.trim()) statements.push(current);
+  return statements;
+}
+
+export function assertRestorableBackupSql(sql: string): void {
+  if (Buffer.byteLength(sql, "utf8") > MAX_RESTORE_SQL_BYTES) {
+    throw new Error(
+      `備份檔過大（上限 ${Math.round(MAX_RESTORE_SQL_BYTES / 1024 / 1024)}MB）`,
+    );
+  }
+
+  let statements: string[];
+  try {
+    statements = splitTopLevelStatements(sql);
+  } catch (e) {
+    if (e instanceof RestoreValidationError) throw new Error(e.message);
+    throw e;
+  }
+
+  if (statements.length > MAX_RESTORE_STATEMENTS) {
+    throw new Error(
+      `備份檔陳述式數量過多（上限 ${MAX_RESTORE_STATEMENTS}）`,
+    );
+  }
+
+  for (const raw of statements) {
+    const stmt = raw.trim();
+    if (!stmt) continue;
+
+    const matched = RESTORE_STATEMENT_PATTERNS.some((pattern) =>
+      pattern.test(stmt),
+    );
+    if (!matched) {
+      throw new Error("備份檔包含不符合預期格式的 SQL 陳述式，已拒絕還原");
+    }
+
+    // INSERT statements carry only literal row data (never itself executed as
+    // SQL), so the keyword blocklist below is scoped to DDL statements, where
+    // a crafted DEFAULT/CHECK/index-predicate expression could otherwise hide
+    // a dangerous function call. Applying it to INSERT data too would risk
+    // false positives on ordinary user text (e.g. a transaction note).
+    const isInsert = /^INSERT INTO /i.test(stmt);
+    if (!isInsert) {
+      const lower = stmt.toLowerCase();
+      for (const needle of DANGEROUS_SQL_SUBSTRINGS) {
+        if (lower.includes(needle)) {
+          throw new Error("備份檔包含不允許的 SQL 內容");
+        }
+      }
+    }
+  }
+}
+
 export function createPostgresBackupSql(): string {
   const tables = queryAll(`
     SELECT table_name
@@ -212,5 +376,6 @@ export function restorePostgresBackupSql(sql: string): void {
   if (!isAssetPilotPostgresBackup(sql)) {
     throw new Error("檔案不是 AssetPilot PostgreSQL SQL 備份");
   }
+  assertRestorableBackupSql(sql);
   getDB().run(sql);
 }

@@ -26,7 +26,9 @@ class GoogleAuth {
     String? turnstileToken,
   }) async {
     final redirectUri = '$baseUrl$callbackPath';
-    final state = await ApiClient.instance.googleState();
+    final stateData = await ApiClient.instance.googleState();
+    final state = stateData['state'] ?? '';
+    final bindingToken = stateData['bindingToken'] ?? '';
 
     final authUrl = Uri.https('accounts.google.com', '/o/oauth2/v2/auth', {
       'client_id': clientId,
@@ -93,6 +95,7 @@ class GoogleAuth {
         code: code,
         redirectUri: redirectUri,
         state: state,
+        bindingToken: bindingToken,
         turnstileToken: turnstileToken,
       );
     } finally {

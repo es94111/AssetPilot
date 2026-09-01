@@ -4,6 +4,7 @@ import fs from 'fs';
 import path from 'path';
 import { requireAdmin } from '../../../../lib/apiHelpers';
 import { writeOperationAudit } from '../../../../lib/auditHelpers';
+import { getRequestIpFromHeaders } from '../../../../lib/loginHelpers';
 import { createPostgresBackupSql, restorePostgresBackupSql } from '../../../../lib/postgresBackup';
 
 const BACKUPS_DIR = path.join(process.cwd(), 'backups');
@@ -48,7 +49,7 @@ export async function POST(request) {
   const auth = await requireAdmin(request);
   if (auth instanceof NextResponse) return auth;
 
-  const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim() || 'unknown';
+  const ip = getRequestIpFromHeaders(request.headers);
   const ua = request.headers.get('user-agent') || '';
 
   let beforeRestorePath = '';

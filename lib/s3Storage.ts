@@ -1,4 +1,6 @@
 import crypto from 'crypto';
+import dns from 'node:dns/promises';
+import net from 'node:net';
 
 export interface S3ConfigStatus {
   configured: boolean;
@@ -182,13 +184,147 @@ function formatS3Error(action: string, status: number, statusText: string, detai
   return `${action}失敗（HTTP ${status}）：${details.slice(0, 300) || statusText}`;
 }
 
+// ── SSRF hardening for the admin-configurable S3 endpoint ──────────────────
+// The endpoint (host/port/scheme) is admin-supplied config, not a fixed trusted
+// origin, so every real request re-validates it: HTTPS only, and the resolved
+// address must not fall inside a private/loopback/link-local/multicast/reserved
+// range (this also blocks the common 169.254.169.254 cloud metadata target).
+// Redirects are disabled and responses are read with a byte cap and timeout.
+//
+// Known residual risk: between the DNS lookup here and the actual `fetch()`
+// connect, a malicious/compromised DNS name could in principle re-resolve to a
+// different (internal) address ("DNS rebinding"). Fully pinning the validated
+// IP for the TLS connection would require a custom dispatcher/agent (e.g. the
+// `undici` package), which is not a dependency of this project; the short
+// validate-then-fetch window plus the address-range check and https+redirect
+// restrictions are the practical mitigation given this route is already
+// gated behind super-admin authentication.
+const S3_REQUEST_TIMEOUT_MS = 20_000;
+const S3_MAX_RESPONSE_BYTES = 1024 * 1024 * 1024; // 1GB safety cap (backups/photos)
+
+function isDisallowedIPv4(ip: string): boolean {
+  const parts = ip.split('.').map((p) => Number(p));
+  if (parts.length !== 4 || parts.some((p) => !Number.isInteger(p) || p < 0 || p > 255)) return true;
+  const [a, b] = parts;
+  if (a === 0) return true; // 0.0.0.0/8 "this network"
+  if (a === 10) return true; // RFC1918
+  if (a === 127) return true; // loopback
+  if (a === 169 && b === 254) return true; // link-local incl. cloud metadata 169.254.169.254
+  if (a === 172 && b >= 16 && b <= 31) return true; // RFC1918
+  if (a === 192 && b === 168) return true; // RFC1918
+  if (a === 100 && b >= 64 && b <= 127) return true; // CGNAT (RFC6598)
+  if (a === 192 && b === 0 && parts[2] === 0) return true; // IETF protocol assignments
+  if (a === 198 && (b === 18 || b === 19)) return true; // benchmarking
+  if (a >= 224) return true; // multicast (224-239) + reserved/broadcast (240-255)
+  return false;
+}
+
+function isDisallowedIPv6(rawIp: string): boolean {
+  const ip = rawIp.toLowerCase();
+  if (ip === '::1' || ip === '::') return true; // loopback / unspecified
+  if (ip.startsWith('::ffff:')) {
+    const mapped = ip.slice('::ffff:'.length);
+    return net.isIP(mapped) === 4 ? isDisallowedIPv4(mapped) : true;
+  }
+  // fe80::/10 link-local
+  if (/^fe[89ab][0-9a-f]:/.test(ip)) return true;
+  // fc00::/7 unique local
+  if (ip.startsWith('fc') || ip.startsWith('fd')) return true;
+  // ff00::/8 multicast
+  if (ip.startsWith('ff')) return true;
+  // 64:ff9b::/96 NAT64 well-known prefix (can reach internal IPv4 space)
+  if (ip.startsWith('64:ff9b:')) return true;
+  return false;
+}
+
+function isDisallowedIp(ip: string): boolean {
+  if (!ip) return true;
+  return net.isIP(ip) === 4 ? isDisallowedIPv4(ip) : isDisallowedIPv6(ip);
+}
+
+/** Validates an S3-compatible endpoint is HTTPS and does not resolve to a private/reserved address. Throws on failure. */
+export async function assertSafeS3Endpoint(rawEndpoint: string): Promise<void> {
+  let url: URL;
+  try {
+    url = new URL(rawEndpoint);
+  } catch {
+    throw new Error('S3 endpoint 網址格式錯誤');
+  }
+  if (url.protocol !== 'https:') {
+    throw new Error('S3 endpoint 必須使用 HTTPS');
+  }
+
+  const hostname = url.hostname.replace(/^\[|\]$/g, '');
+  if (net.isIP(hostname)) {
+    if (isDisallowedIp(hostname)) {
+      throw new Error('S3 endpoint 不可指向內部或保留位址');
+    }
+    return;
+  }
+
+  let addresses: string[];
+  try {
+    const results = await dns.lookup(hostname, { all: true, verbatim: true });
+    addresses = results.map((r) => r.address);
+  } catch {
+    throw new Error('S3 endpoint 主機名稱無法解析');
+  }
+  if (addresses.length === 0 || addresses.some(isDisallowedIp)) {
+    throw new Error('S3 endpoint 解析為內部或保留位址，已拒絕');
+  }
+}
+
+async function safeS3Fetch(url: string, init: { method: string; headers: Record<string, string>; body?: Uint8Array }): Promise<Response> {
+  const response = await fetch(url, {
+    ...init,
+    redirect: 'manual',
+    signal: AbortSignal.timeout(S3_REQUEST_TIMEOUT_MS),
+  });
+  if (response.status >= 300 && response.status < 400) {
+    throw new Error(`S3 請求被拒絕：不允許的重新導向（HTTP ${response.status}）`);
+  }
+  return response;
+}
+
+// Reads a response body into a Buffer while enforcing S3_MAX_RESPONSE_BYTES,
+// returning a new same-shaped Response so callers keep using headers/status.
+async function readBoundedResponse(response: Response): Promise<Response> {
+  const declaredLength = Number(response.headers.get('content-length') || 0);
+  if (declaredLength > S3_MAX_RESPONSE_BYTES) {
+    throw new Error('S3 回應內容過大，已拒絕');
+  }
+  if (!response.body) {
+    return new Response(null, { status: response.status, headers: response.headers });
+  }
+  const reader = response.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    if (value) {
+      total += value.byteLength;
+      if (total > S3_MAX_RESPONSE_BYTES) {
+        await reader.cancel().catch(() => {});
+        throw new Error('S3 回應內容過大，已拒絕');
+      }
+      chunks.push(value);
+    }
+  }
+  return new Response(Buffer.concat(chunks.map((c) => Buffer.from(c))), {
+    status: response.status,
+    headers: response.headers,
+  });
+}
+
 export function joinS3Key(prefix: string, key: string) {
   return [normalizePrefix(prefix), normalizePrefix(key)].filter(Boolean).join('/');
 }
 
 export async function putS3Object(config: S3StorageConfig, key: string, body: Buffer, contentType: string): Promise<S3ObjectResult> {
+  await assertSafeS3Endpoint(config.endpoint);
   const signed = signedHeadersFor('PUT', config, key, body, contentType);
-  const response = await fetch(signed.url, {
+  const response = await safeS3Fetch(signed.url, {
     method: 'PUT',
     headers: {
       ...signed.headers,
@@ -213,18 +349,20 @@ export async function putS3Object(config: S3StorageConfig, key: string, body: Bu
 }
 
 export async function getS3Object(config: S3StorageConfig, key: string): Promise<Response> {
+  await assertSafeS3Endpoint(config.endpoint);
   const signed = signedHeadersFor('GET', config, key, null);
-  const response = await fetch(signed.url, { method: 'GET', headers: signed.headers });
+  const response = await safeS3Fetch(signed.url, { method: 'GET', headers: signed.headers });
   if (!response.ok) {
     const details = await response.text().catch(() => '');
     throw new Error(formatS3Error('S3 讀取', response.status, response.statusText, details));
   }
-  return response;
+  return readBoundedResponse(response);
 }
 
 export async function deleteS3Object(config: S3StorageConfig, key: string): Promise<void> {
+  await assertSafeS3Endpoint(config.endpoint);
   const signed = signedHeadersFor('DELETE', config, key, null);
-  const response = await fetch(signed.url, { method: 'DELETE', headers: signed.headers });
+  const response = await safeS3Fetch(signed.url, { method: 'DELETE', headers: signed.headers });
   if (!response.ok && response.status !== 404) {
     const details = await response.text().catch(() => '');
     throw new Error(formatS3Error('S3 刪除', response.status, response.statusText, details));

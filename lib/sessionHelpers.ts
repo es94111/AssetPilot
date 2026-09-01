@@ -51,11 +51,32 @@ export function createLoginSession(userId: string, tokenVersion: number, headers
   return { token, sessionId };
 }
 
+// A stolen/leaked session token would otherwise stay replayable for the full
+// absolute expiry (7d browser / up to 90d app) regardless of activity. Idle
+// timeout adds a second, activity-based expiry on top of that. last_seen_at
+// is only written when it's stale by more than the throttle window, so this
+// does not add a DB write to every authenticated request.
+const SESSION_IDLE_TIMEOUT_MS =
+  (Number(process.env.SESSION_IDLE_TIMEOUT_DAYS) || 14) * 24 * 60 * 60 * 1000;
+const LAST_SEEN_UPDATE_THROTTLE_MS = 5 * 60 * 1000;
+
 export function verifyLoginSession(userId: string, sessionId: string | undefined, token: string): boolean {
   if (!sessionId) return false;
-  const row = queryOne('SELECT token_hash, expires_at FROM login_sessions WHERE id = ? AND user_id = ? AND revoked_at = 0', [sessionId, userId]);
-  if (row?.expires_at && Number(row.expires_at) <= Date.now()) return false;
-  return !!row && String(row.token_hash || '') === hashToken(token);
+  const row = queryOne('SELECT token_hash, expires_at, last_seen_at FROM login_sessions WHERE id = ? AND user_id = ? AND revoked_at = 0', [sessionId, userId]);
+  if (!row) return false;
+  if (row.expires_at && Number(row.expires_at) <= Date.now()) return false;
+
+  const now = Date.now();
+  const lastSeenAt = Number(row.last_seen_at) || 0;
+  if (lastSeenAt && (now - lastSeenAt) > SESSION_IDLE_TIMEOUT_MS) return false;
+
+  if (String(row.token_hash || '') !== hashToken(token)) return false;
+
+  if (!lastSeenAt || (now - lastSeenAt) > LAST_SEEN_UPDATE_THROTTLE_MS) {
+    getDB().run('UPDATE login_sessions SET last_seen_at = ? WHERE id = ?', [now, sessionId]);
+    saveDB();
+  }
+  return true;
 }
 
 export function listLoginSessions(userId: string, currentSessionId?: string) {

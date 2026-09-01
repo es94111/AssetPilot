@@ -70,6 +70,20 @@ function safeName(name: string) {
   return `${base}${ext || ".jpg"}`;
 }
 
+// 備份 bundle 內的 transaction_id / attachment id 皆須符合伺服器產生的 uid() 格式
+// （crypto.randomUUID() 去掉連字號，32 位小寫十六進位）。還原流程用這兩個欄位組出
+// 實體路徑／S3 key，若不驗證格式，惡意 bundle 可放入含 "../" 的 transaction_id，
+// 使結果雖仍位於全域 uploads root 內、卻逃出當前使用者自己的子目錄（見安全報告
+// INJ-VULN-02）。saveTransactionPhotoBuffer 一般上傳路徑的 id 一律由 uid() 產生，
+// 不受此限制影響；本檢查只用於「還原他人可控 bundle 內容」的路徑。
+const SERVER_ID_PATTERN = /^[0-9a-f]{32}$/;
+
+function assertServerGeneratedId(value: string, label: string): void {
+  if (!SERVER_ID_PATTERN.test(value)) {
+    throw new Error(`${label}格式無效，拒絕還原`);
+  }
+}
+
 // 解析 root 底下的目標路徑，並確保結果仍位於 root 內，避免 userId/transactionId/local_path
 // 含 ../ 逃逸出儲存根目錄（path traversal）。
 function resolveWithin(root: string, ...segments: string[]): string {
@@ -373,7 +387,9 @@ export async function restoreAttachmentFromBundle(
 ): Promise<void> {
   const id = String(row.id || "");
   if (!id) throw new Error("附件缺少 id");
+  assertServerGeneratedId(id, "附件 id");
   const transactionId = String(row.transaction_id || "");
+  assertServerGeneratedId(transactionId, "交易 id");
   const filename = String(row.filename || "photo.jpg");
   const mimeType = String(row.mime_type || "application/octet-stream");
   const createdAt = Number(row.created_at) || Date.now();

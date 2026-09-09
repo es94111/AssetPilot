@@ -20,6 +20,7 @@ const PUBLIC_PATHS = new Set([
   '/api/app/auth-ticket/exchange',
   '/api/line/webhook',
   '/api/config',
+  '/api/health',
   '/api/i18n/locale',
   '/api/mcp',
 ]);

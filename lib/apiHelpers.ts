@@ -12,6 +12,7 @@ import {
 } from "./loginHelpers";
 import logger from "@/lib/logger";
 import { isActiveUserFlag } from "./userActive";
+import { triggerUserRequestMaintenance } from "./requestMaintenance";
 
 type ApiAuthResult = {
   userId: string;
@@ -246,6 +247,10 @@ export async function requireAuth(
     };
     processDueRecurringOncePerDay(authResult.userId, authResult.userTimezone);
     processDueStockRecurringOncePerDay(
+      authResult.userId,
+      authResult.userTimezone,
+    );
+    triggerUserRequestMaintenance(
       authResult.userId,
       authResult.userTimezone,
     );

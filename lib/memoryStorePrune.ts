@@ -1,18 +1,16 @@
-// lib/memoryStorePrune.ts — in-memory 帶 TTL Map 的過期清掃
+// lib/memoryStorePrune.ts — in-memory 帶 TTL Map 的請求期間清掃
 //
-// 安全背景：OAuth state、passkey challenge、auth ticket 等 in-memory store 的
+// OAuth state、passkey challenge、auth ticket 等 in-memory store 的
 // 過期 entry 原本只在「同一個 key 再被存取」時才會刪除；長期運行的程序中，
-// 未再被存取的過期 entry 會持續累積（記憶體緩慢洩漏）。此工具提供定期清掃。
+// 未再被存取的過期 entry 會持續累積（記憶體緩慢洩漏）。各 store 本身已在
+// issue/consume 時清掃；這裡只保留註冊介面，不建立常駐 timer。
 //
-// 注意：Edge runtime 無 setInterval；proxy.ts 的限流 Map 由 rateLimit.ts 的
-// 容量上限保護。本模組供 Node runtime 的 lib 模組使用。
+// 這樣可避免純記憶體維護工作在沒有使用者時仍於伺服器背景執行。
 
-const timers = new Set<ReturnType<typeof setInterval>>();
-
-const PRUNE_TIMER_KEY = Symbol.for('assetpilot.pruneTimer') as unknown as any;
+const registeredMaps = new Set();
 
 /**
- * 為一個 Map 註冊定期清掃。同一個 Map 重複註冊不會產生多個 timer。
+ * 為一個 Map 註冊請求期間清掃的狀態。同一個 Map 重複註冊不會重複登記。
  * @returns 清除函式（測試用）
  */
 export function registerTtlMapPrune<K, V>(
@@ -20,36 +18,20 @@ export function registerTtlMapPrune<K, V>(
   isExpired: (value: V) => boolean,
   intervalMs = 5 * 60 * 1000,
 ): () => void {
-  const existing = map.get(PRUNE_TIMER_KEY as K);
-  if (existing) return () => {};
-
-  const timer = setInterval(() => {
-    try {
-      for (const [key, value] of map) {
-        if (isExpired(value)) map.delete(key);
-      }
-    } catch (_) {
-      // 清掃失敗不影響服務
-    }
-  }, intervalMs);
-  // 不阻擋程序結束
-  if (typeof timer === 'object' && timer !== null && 'unref' in timer) {
-    (timer as { unref?: () => void }).unref?.();
-  }
-  timers.add(timer);
+  // 保留參數以維持既有呼叫端 API；清掃由各 Map 的使用者在請求期間完成。
+  void isExpired;
+  void intervalMs;
+  const registeredMap = map as unknown as Map<unknown, unknown>;
+  if (registeredMaps.has(registeredMap)) return () => {};
+  registeredMaps.add(registeredMap);
 
   const cleanup = () => {
-    clearInterval(timer);
-    timers.delete(timer);
-    map.delete(PRUNE_TIMER_KEY as K);
+    registeredMaps.delete(registeredMap);
   };
-  // 以 symbol key 記錄，避免汙染正常 key 空間（僅用於防重複註冊）
-  map.set(PRUNE_TIMER_KEY as K, timer as unknown as V);
   return cleanup;
 }
 
-/** 測試後清理所有 timer */
+/** 測試後清理註冊狀態（保留既有測試 API 名稱） */
 export function clearAllTtlMapTimers(): void {
-  for (const timer of timers) clearInterval(timer);
-  timers.clear();
+  registeredMaps.clear();
 }

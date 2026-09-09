@@ -315,32 +315,43 @@ async function runLineExpenseReminderNow(reminderId, triggeredBy = '排程') {
   }
 }
 
-// ── 心跳：迭代所有 enabled=1 排程，per-user 時區判斷觸發 ──
-function checkAndRunSchedule() {
+// ── 使用者請求觸發：只檢查目前使用者的排程 ──
+// 不使用 setInterval / setTimeout，沒有使用者請求時不會查詢資料庫或寄送通知。
+const USER_SCHEDULE_CHECK_COOLDOWN_MS = 30 * 1000;
+const lastUserScheduleCheckAt = new Map();
+
+function runDueSchedulesForUser(userId, userTimezone = 'Asia/Taipei', now = Date.now()) {
+  if (!userId) return;
+
+  const key = String(userId);
+  const lastCheckAt = Number(lastUserScheduleCheckAt.get(key) || 0);
+  if (now - lastCheckAt < USER_SCHEDULE_CHECK_COOLDOWN_MS) return;
+  lastUserScheduleCheckAt.set(key, now);
+
   try {
     const rows = queryAll(
-      'SELECT s.*, u.timezone AS user_timezone FROM report_schedules s JOIN users u ON u.id = s.user_id WHERE s.enabled = 1 AND u.is_active = 1'
+      'SELECT * FROM report_schedules WHERE enabled = 1 AND user_id = ?',
+      [userId],
     );
-    const now = Date.now();
     for (const row of rows) {
       if (runningSchedules.has(row.id)) continue;
-      const tz = row.user_timezone || 'Asia/Taipei';
-      if (!shouldRunSchedule(row, tz, now)) continue;
-      runScheduledReportNow(row.id, '排程').catch(err => console.error('[scheduled-report]', err));
+      if (!shouldRunSchedule(row, userTimezone, now)) continue;
+      runScheduledReportNow(row.id, '使用者操作').catch(err => console.error('[scheduled-report]', err));
     }
 
     const reminders = queryAll(
-      'SELECT r.*, u.timezone AS user_timezone FROM line_expense_reminders r JOIN users u ON u.id = r.user_id WHERE r.enabled = 1 AND u.is_active = 1'
+      'SELECT * FROM line_expense_reminders WHERE enabled = 1 AND user_id = ?',
+      [userId],
     );
     for (const row of reminders) {
       if (runningExpenseReminders.has(row.id)) continue;
-      const tz = row.user_timezone || 'Asia/Taipei';
-      if (!shouldRunSchedule(row, tz, now)) continue;
-      runLineExpenseReminderNow(row.id, '排程').catch(err => console.error('[line-expense-reminder]', err));
+      if (!shouldRunSchedule(row, userTimezone, now)) continue;
+      runLineExpenseReminderNow(row.id, '使用者操作').catch(err => console.error('[line-expense-reminder]', err));
     }
   } catch (e) {
-    console.error('[scheduled-report] check error', e);
+    lastUserScheduleCheckAt.delete(key);
+    console.error('[scheduled-report] user-triggered check error', e);
   }
 }
 
-export { checkAndRunSchedule, shouldRunSchedule, runScheduledReportNow, runLineExpenseReminderNow };
+export { runDueSchedulesForUser, shouldRunSchedule, runScheduledReportNow, runLineExpenseReminderNow };

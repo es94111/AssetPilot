@@ -38,6 +38,7 @@ RUN rm -rf /usr/local/lib/node_modules/npm \
 COPY --from=builder --chown=nextjs:nodejs /app/build/standalone ./
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
+ENV NEXT_TELEMETRY_DISABLED=1
 ENV ENV_PATH=/app/data/.env
 ENV SSL_PATH=/app/data/SSL
 ENV JWT_EXPIRES=7d
@@ -54,7 +55,7 @@ RUN addgroup --system --gid 1001 nodejs \
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 # Next.js 靜態資產（含編譯後 CSS/JS）
 COPY --from=builder --chown=nextjs:nodejs /app/build/static ./build/static
-# lib/ 透過 instrumentation.js 動態 import (webpackIgnore)，未被 Next.js trace，需手動複製
+# lib/ 透過伺服器執行期 dynamic import 使用，部分路徑未被 Next.js trace，需手動複製
 COPY --from=builder --chown=nextjs:nodejs /app/lib ./lib
 # 手動維運指令需在 runner 映像內可用
 COPY --from=builder --chown=nextjs:nodejs /app/tools ./tools
@@ -93,10 +94,6 @@ VOLUME /app/data
 
 USER nextjs
 EXPOSE 3000
-
-# 健康檢查（使用 Next.js API route /api/config 回傳 200 視為健康）
-HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/api/config || exit 1
 
 # Next.js standalone 入口（.next/standalone/server.js）
 CMD ["node", "server.js"]

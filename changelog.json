@@ -1,6 +1,26 @@
 {
-  "currentVersion": "4.112.3",
+  "currentVersion": "4.112.4",
   "releases": [
+    {
+      "version": "4.112.4",
+      "date": "2026-09-09",
+      "title": "改善 Railway 閒置服務休眠與請求觸發排程",
+      "type": "improved",
+      "changes": [
+        {
+          "tag": "fixed",
+          "text": "移除 Dockerfile 的持續性 HEALTHCHECK，避免服務在沒有使用者時週期性請求資料庫。"
+        },
+        {
+          "tag": "improved",
+          "text": "新增完全不查資料庫的 /api/health 健康端點，供 Railway 部署健康檢查使用。"
+        },
+        {
+          "tag": "changed",
+          "text": "報表、LINE 提醒、股價更新與稽核清理改為只在已驗證使用者請求時觸發，沒有使用者時不建立常駐背景排程。"
+        }
+      ]
+    },
     {
       "version": "4.112.3",
       "date": "2026-09-01",

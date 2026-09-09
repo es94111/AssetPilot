@@ -214,8 +214,20 @@ export async function runStockPriceUpdate(triggeredBy = "排程") {
   }
 }
 
-// 心跳入口：判斷啟用 / 時段 / 節流後決定是否執行
-export async function checkAndRunStockPriceUpdate() {
+// 使用者請求入口的節流：避免前端同時發出多個 API 請求時重複查詢設定。
+const USER_TRIGGER_CHECK_COOLDOWN_MS = 30 * 1000;
+let lastUserTriggeredCheckAt = 0;
+
+export async function checkAndRunStockPriceUpdateOnUserRequest() {
+  const now = Date.now();
+  if (now - lastUserTriggeredCheckAt < USER_TRIGGER_CHECK_COOLDOWN_MS) return;
+  lastUserTriggeredCheckAt = now;
+  await checkAndRunStockPriceUpdate('使用者操作');
+}
+
+// 判斷啟用 / 時段 / 節流後決定是否執行。
+// 此函式不自行建立計時器；目前唯一的自動入口是上面的使用者請求入口。
+export async function checkAndRunStockPriceUpdate(triggeredBy = '使用者操作') {
   try {
     const row = queryOne(
       "SELECT stock_auto_update_enabled, stock_auto_update_interval_min, stock_auto_update_last_run FROM system_settings WHERE id = 1",
@@ -235,7 +247,7 @@ export async function checkAndRunStockPriceUpdate() {
     const lastRun = Number(row.stock_auto_update_last_run) || 0;
     if (now - lastRun < intervalMs) return;
 
-    await runStockPriceUpdate("排程");
+    await runStockPriceUpdate(triggeredBy);
   } catch (e) {
     console.error("[stock-price-update] check error", e);
   }

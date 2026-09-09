@@ -1,6 +1,22 @@
 {
-  "currentVersion": "4.112.4",
+  "currentVersion": "4.112.5",
   "releases": [
+    {
+      "version": "4.112.5",
+      "date": "2026-09-09",
+      "title": "修復 GitHub Security 與依賴漏洞",
+      "type": "fixed",
+      "changes": [
+        {
+          "tag": "fixed",
+          "text": "修復 GitHub Dependabot 報告的 Node.js 依賴漏洞：移除有風險的 adm-zip、升級 sharp，並同步更新 Next.js、Nodemailer、Hono 與 qs 的鎖定版本。"
+        },
+        {
+          "tag": "fixed",
+          "text": "強化完整資料備份還原：加入 ZIP CRC 驗證、附件大小與檔案格式檢查，並避免解壓縮期間持有資料庫交易。"
+        }
+      ]
+    },
     {
       "version": "4.112.4",
       "date": "2026-09-09",

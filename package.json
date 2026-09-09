@@ -47,11 +47,11 @@
     "@modelcontextprotocol/sdk": "^1.30.0",
     "@passwordless-id/webauthn": "^2.4.0",
     "@tailwindcss/postcss": "^4.3.3",
-    "adm-zip": "^0.6.0",
     "chart.js": "^4.5.1",
     "class-variance-authority": "^0.7.1",
     "decimal.js": "^10.6.0",
     "jsonwebtoken": "^9.0.3",
+    "jszip": "^3.10.1",
     "lucide-react": "^1.31.0",
     "next": "^16.3.3",
     "nodemailer": "^9.1.1",
@@ -60,7 +60,7 @@
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "resend": "^6.20.0",
-    "sharp": "^0.35.3",
+    "sharp": "^0.35.4",
     "tailwind-merge": "^3.6.0",
     "tailwindcss": "^4.3.3",
     "zod": "^4.4.3"
@@ -68,9 +68,9 @@
   "overrides": {
     "postcss": "^8.5.26",
     "uuid": "^14.0.1",
-    "sharp": "^0.35.3",
+    "sharp": "^0.35.4",
     "fast-uri": "^3.1.7",
-    "hono": "^4.12.34"
+    "hono": "^4.13.5"
   },
   "devDependencies": {
     "@types/node": "^26.2.0",

@@ -5,7 +5,7 @@
 // 還原：上傳同格式 ZIP，採「合併式」——依主鍵查重，已存在略過、不存在才新增；
 //       既有資料一律不刪除/不覆蓋。資料列在 BEGIN/COMMIT 內寫入；圖片先完成儲存，
 //       若資料列失敗則以補償刪除已寫入的圖片與 metadata。
-import AdmZip from "adm-zip";
+import JSZip from "jszip";
 import { getDB, saveDB, queryAll, queryOne } from "./db";
 import {
   deleteTransactionAttachment,
@@ -104,13 +104,13 @@ export async function exportUserBundle(
   filename: string;
   counts: Record<string, number>;
 }> {
-  const zip = new AdmZip();
+  const zip = new JSZip();
   const counts: Record<string, number> = {};
 
   for (const { table } of DATA_TABLES) {
     const rows = queryAll(`SELECT * FROM ${table} WHERE user_id = ?`, [userId]);
     counts[table] = rows.length;
-    zip.addFile(
+    zip.file(
       `data/${table}.json`,
       Buffer.from(JSON.stringify(rows), "utf8"),
     );
@@ -124,7 +124,7 @@ export async function exportUserBundle(
     [userId],
   ) as unknown as TransactionAttachmentRow[];
   counts[ATTACHMENTS_TABLE] = attachments.length;
-  zip.addFile(
+  zip.file(
     `data/${ATTACHMENTS_TABLE}.json`,
     Buffer.from(JSON.stringify(attachments), "utf8"),
   );
@@ -133,7 +133,7 @@ export async function exportUserBundle(
   for (const row of attachments) {
     try {
       const { body } = await readTransactionAttachment(row);
-      zip.addFile(`attachments/${row.id}`, body);
+      zip.file(`attachments/${row.id}`, body);
       imageCount += 1;
     } catch {
       // 圖片實體缺失（檔案被刪/S3 不可達）時保留 metadata、略過實體，不中斷整包匯出
@@ -149,12 +149,12 @@ export async function exportUserBundle(
     userId,
     counts,
   };
-  zip.addFile(
+  zip.file(
     "manifest.json",
     Buffer.from(JSON.stringify(manifest, null, 2), "utf8"),
   );
 
-  const buffer = zip.toBuffer();
+  const buffer = await zip.generateAsync({ type: "nodebuffer" });
   const filename = `assetpilot-backup-${userId.slice(0, 8)}-${bundleTimestamp()}.zip`;
   return { buffer, filename, counts };
 }
@@ -192,14 +192,14 @@ function insertRow(
   );
 }
 
-function readJsonEntry(
-  zip: InstanceType<typeof AdmZip>,
+async function readJsonEntry(
+  zip: JSZip,
   name: string,
-): JsonValue | null {
-  const entry = zip.getEntry(name);
-  if (!entry) return null;
+): Promise<JsonValue | null> {
+  const entry = zip.file(name);
+  if (!entry || entry.dir) return null;
   try {
-    const parsed: unknown = JSON.parse(entry.getData().toString("utf8"));
+    const parsed: unknown = JSON.parse(await entry.async("string"));
     if (!isJsonValue(parsed)) throw new Error("not-json-value");
     return parsed;
   } catch {
@@ -211,14 +211,14 @@ export async function restoreUserBundle(
   userId: string,
   zipBuffer: Buffer,
 ): Promise<RestoreSummary> {
-  let zip: InstanceType<typeof AdmZip>;
+  let zip: JSZip;
   try {
-    zip = new AdmZip(zipBuffer);
+    zip = await JSZip.loadAsync(zipBuffer, { checkCRC32: true });
   } catch {
     throw new BundleError("無法讀取 ZIP 檔，請確認上傳的是未損毀的備份檔");
   }
 
-  const manifestValue = readJsonEntry(zip, "manifest.json");
+  const manifestValue = await readJsonEntry(zip, "manifest.json");
   if (!isJsonObject(manifestValue))
     throw new BundleError(
       "備份檔缺少 manifest.json，請確認這是 AssetPilot 完整備份",
@@ -242,7 +242,14 @@ export async function restoreUserBundle(
   // adapter holds a transaction connection. Restore files first, then perform
   // all database-row work in one synchronous transaction. If row work fails,
   // compensate by deleting files/rows already restored in this phase.
-  const attachmentRows = readJsonEntry(zip, `data/${ATTACHMENTS_TABLE}.json`);
+  const attachmentRows = await readJsonEntry(
+    zip,
+    `data/${ATTACHMENTS_TABLE}.json`,
+  );
+  const tableRows = new Map<string, JsonValue | null>();
+  for (const { table } of DATA_TABLES) {
+    tableRows.set(table, await readJsonEntry(zip, `data/${table}.json`));
+  }
   try {
     if (Array.isArray(attachmentRows)) {
       for (const raw of attachmentRows) {
@@ -256,7 +263,7 @@ export async function restoreUserBundle(
           perTable[ATTACHMENTS_TABLE].skipped += 1;
           continue;
         }
-        const imgEntry = zip.getEntry(`attachments/${id}`);
+        const imgEntry = zip.file(`attachments/${id}`);
         if (!imgEntry) {
           attachmentsFailed += 1;
           continue;
@@ -267,7 +274,7 @@ export async function restoreUserBundle(
           await restoreAttachmentFromBundle(
             userId,
             row as unknown as TransactionAttachmentRow,
-            imgEntry.getData(),
+            await imgEntry.async("nodebuffer"),
           );
           restoredAttachments.push({
             transactionId: String(row.transaction_id || ""),
@@ -284,7 +291,7 @@ export async function restoreUserBundle(
     db.run("BEGIN");
     for (const { table, keys } of DATA_TABLES) {
       perTable[table] = { inserted: 0, skipped: 0 };
-      const rows = readJsonEntry(zip, `data/${table}.json`);
+      const rows = tableRows.get(table);
       if (!Array.isArray(rows)) continue;
       for (const raw of rows) {
         if (!isJsonObject(raw)) continue;

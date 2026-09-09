@@ -391,7 +391,10 @@ export async function restoreAttachmentFromBundle(
   const transactionId = String(row.transaction_id || "");
   assertServerGeneratedId(transactionId, "交易 id");
   const filename = String(row.filename || "photo.jpg");
-  const mimeType = String(row.mime_type || "application/octet-stream");
+  // Backup metadata is user-controlled input. Re-validate the bytes and use
+  // the detected type instead of trusting the archived MIME value.
+  const detectedMimeType = detectRasterImageMime(body);
+  assertImageUpload({ size: body.length, mimeType: detectedMimeType });
   const createdAt = Number(row.created_at) || Date.now();
   const byteSize = body.length;
   const storage = getDefaultTransactionPhotoStorage();
@@ -405,7 +408,7 @@ export async function restoreAttachmentFromBundle(
         transactionId,
         id,
         filename,
-        mimeType,
+        detectedMimeType,
         body,
       );
       db.run(
@@ -420,7 +423,7 @@ export async function restoreAttachmentFromBundle(
           uploaded.bucket,
           uploaded.endpoint,
           filename,
-          mimeType,
+          detectedMimeType,
           byteSize,
           createdAt,
         ],
@@ -460,7 +463,7 @@ export async function restoreAttachmentFromBundle(
           "",
           "",
           filename,
-          mimeType,
+          detectedMimeType,
           byteSize,
           createdAt,
         ],

@@ -1,6 +1,26 @@
 {
-  "currentVersion": "4.112.5",
+  "currentVersion": "4.112.6",
   "releases": [
+    {
+      "version": "4.112.6",
+      "date": "2026-09-10",
+      "title": "修復資料庫暫時斷線後網站無法恢復的問題",
+      "type": "fixed",
+      "changes": [
+        {
+          "tag": "fixed",
+          "text": "修正網站啟動時 PostgreSQL 暫時無法連線會導致 Internal Server Error 的問題，改為回應可重試的暫時不可用狀態。"
+        },
+        {
+          "tag": "fixed",
+          "text": "新增資料庫背景重試與指數退避機制，資料庫恢復後網站會自動重新建立連線，不需重啟服務。"
+        },
+        {
+          "tag": "improved",
+          "text": "限制 PostgreSQL 啟動連線逾時，避免資料庫異常時拖住 Next.js 啟動與請求處理。"
+        }
+      ]
+    },
     {
       "version": "4.112.5",
       "date": "2026-09-09",

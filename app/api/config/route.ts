@@ -1,5 +1,6 @@
 // @ts-nocheck
 import { NextResponse } from "next/server";
+import { DatabaseUnavailableError } from "../../../lib/db";
 import { getSystemSettings, getUserCount } from "../../../lib/loginHelpers";
 import {
   getTurnstileSiteKey,
@@ -12,32 +13,48 @@ const LINE_CHANNEL_ID = process.env.LINE_CHANNEL_ID || "";
 const LINE_CHANNEL_SECRET = process.env.LINE_CHANNEL_SECRET || "";
 
 export async function GET() {
-  const settings = getSystemSettings();
-  const userCount = getUserCount();
-  // Local email/password registration is disabled. This flag is kept false so
-  // older clients do not render the retired password registration screen.
-  const oauthRegistrationEnabled =
-    userCount === 0 ||
-    settings.publicRegistration ||
-    settings.allowedRegistrationEmails.length > 0;
-  return NextResponse.json({
-    googleClientId: GOOGLE_CLIENT_ID || null,
-    googleCodeFlow: !!(GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET),
-    lineChannelId:
-      settings.lineLoginEnabled && LINE_CHANNEL_ID && LINE_CHANNEL_SECRET
-        ? LINE_CHANNEL_ID
-        : null,
-    lineCodeFlow: !!(
-      settings.lineLoginEnabled &&
-      LINE_CHANNEL_ID &&
-      LINE_CHANNEL_SECRET
-    ),
-    turnstileSiteKey: getTurnstileSiteKey() || null,
-    turnstileEnabled: !!getTurnstileSiteKey(),
-    turnstileVerificationEnabled: isTurnstileConfigured(),
-    registrationEnabled: false,
-    oauthRegistrationEnabled,
-    publicRegistration: settings.publicRegistration,
-    allowlistEnabled: settings.allowedRegistrationEmails.length > 0,
-  });
+  try {
+    const settings = getSystemSettings();
+    const userCount = getUserCount();
+    // Local email/password registration is disabled. This flag is kept false so
+    // older clients do not render the retired password registration screen.
+    const oauthRegistrationEnabled =
+      userCount === 0 ||
+      settings.publicRegistration ||
+      settings.allowedRegistrationEmails.length > 0;
+    return NextResponse.json({
+      googleClientId: GOOGLE_CLIENT_ID || null,
+      googleCodeFlow: !!(GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET),
+      lineChannelId:
+        settings.lineLoginEnabled && LINE_CHANNEL_ID && LINE_CHANNEL_SECRET
+          ? LINE_CHANNEL_ID
+          : null,
+      lineCodeFlow: !!(
+        settings.lineLoginEnabled &&
+        LINE_CHANNEL_ID &&
+        LINE_CHANNEL_SECRET
+      ),
+      turnstileSiteKey: getTurnstileSiteKey() || null,
+      turnstileEnabled: !!getTurnstileSiteKey(),
+      turnstileVerificationEnabled: isTurnstileConfigured(),
+      registrationEnabled: false,
+      oauthRegistrationEnabled,
+      publicRegistration: settings.publicRegistration,
+      allowlistEnabled: settings.allowedRegistrationEmails.length > 0,
+    });
+  } catch (error) {
+    if (error instanceof DatabaseUnavailableError) {
+      return NextResponse.json(
+        {
+          error: "資料庫連線暫時不可用，請稍後再試",
+          code: error.code,
+        },
+        {
+          status: 503,
+          headers: { "Retry-After": "5", "Cache-Control": "no-store" },
+        },
+      );
+    }
+    throw error;
+  }
 }

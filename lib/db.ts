@@ -31,6 +31,20 @@ declare global {
 }
 
 let _db: DatabaseLike | null = globalThis.__assetPilotDb ?? null;
+let initializationPromise: Promise<void> | null = null;
+let retryTimer: ReturnType<typeof setTimeout> | null = null;
+let retryDelayMs = 1_000;
+
+const DB_RETRY_MAX_DELAY_MS = 30_000;
+
+export class DatabaseUnavailableError extends Error {
+  readonly code = "DATABASE_UNAVAILABLE";
+
+  constructor() {
+    super("資料庫目前無法連線，請稍後再試");
+    this.name = "DatabaseUnavailableError";
+  }
+}
 
 export function saveDB(): void {
   // PostgreSQL commits writes in db.run(); kept for existing call sites.
@@ -42,27 +56,107 @@ export function saveDBSync(): void {
 
 export const flushOnExit = (): void => {};
 
-// ── 初始化（含 migrations）──
-export async function initDB(): Promise<void> {
-  if (_db) return;
+function hasDatabaseConfig(): boolean {
+  return Boolean(process.env.DATABASE_URL || process.env.POSTGRES_URL);
+}
 
-  if (!process.env.DATABASE_URL && !process.env.POSTGRES_URL) {
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
+function clearRetryTimer(): void {
+  if (retryTimer) {
+    clearTimeout(retryTimer);
+    retryTimer = null;
+  }
+  retryDelayMs = 1_000;
+}
+
+function scheduleInitializationRetry(): void {
+  if (_db || retryTimer || !hasDatabaseConfig()) return;
+
+  const delay = retryDelayMs;
+  retryDelayMs = Math.min(retryDelayMs * 2, DB_RETRY_MAX_DELAY_MS);
+  retryTimer = setTimeout(() => {
+    retryTimer = null;
+    void initDB().catch((error: unknown) => {
+      // initDB() schedules the next attempt. Keep this catch attached so a
+      // transient database outage never becomes an unhandled rejection.
+      console.warn("[db] PostgreSQL reconnect failed:", errorMessage(error));
+    });
+  }, delay);
+
+  // A reconnect attempt must not keep an otherwise idle Railway service
+  // alive. The HTTP server remains the only ref'ed handle.
+  (retryTimer as unknown as { unref?: () => void }).unref?.();
+}
+
+function requestInitialization(): void {
+  if (_db || initializationPromise || retryTimer || !hasDatabaseConfig()) return;
+  void initDB().catch(() => {});
+}
+
+async function initializeDB(): Promise<void> {
+  if (!hasDatabaseConfig()) {
     throw new Error(
       "未設定 DATABASE_URL 或 POSTGRES_URL，AssetPilot 現在僅支援 PostgreSQL",
     );
   }
 
   const { PostgresCompatDatabase } = await import("./postgresRuntime");
+  // Do not publish the adapter until every migration succeeds. Publishing a
+  // half-initialized adapter would make later initDB() calls return early and
+  // permanently strand the process after a transient startup outage.
   // SAFETY: PostgresCompatDatabase implements the narrow DatabaseLike adapter used by this module; the cast only bridges its structural worker-backed type.
-  _db = new PostgresCompatDatabase() as unknown as DatabaseLike;
-  globalThis.__assetPilotDb = _db;
-  await _runMigrations();
-  console.log("資料庫初始化完成（PostgreSQL）");
+  const candidate = new PostgresCompatDatabase() as unknown as DatabaseLike;
+  try {
+    await _runMigrations(candidate);
+    _db = candidate;
+    globalThis.__assetPilotDb = candidate;
+    clearRetryTimer();
+    console.log("資料庫初始化完成（PostgreSQL）");
+  } catch (error) {
+    try {
+      candidate.close();
+    } catch (closeError) {
+      console.error(
+        "[db] failed to close PostgreSQL adapter after initialization error:",
+        errorMessage(closeError),
+      );
+    }
+    throw error;
+  }
+}
+
+// ── 初始化（含 migrations）──
+export async function initDB(): Promise<void> {
+  if (_db) return;
+  if (initializationPromise) return initializationPromise;
+  // An explicit initDB() call is allowed to bring a recovery attempt forward;
+  // getDB() itself leaves the scheduled backoff untouched.
+  if (retryTimer) clearRetryTimer();
+
+  const currentPromise = initializeDB();
+  initializationPromise = currentPromise;
+  try {
+    await currentPromise;
+  } catch (error) {
+    scheduleInitializationRetry();
+    throw error;
+  } finally {
+    if (initializationPromise === currentPromise) initializationPromise = null;
+  }
 }
 
 export function getDB(): DatabaseLike {
   if (!_db) _db = globalThis.__assetPilotDb ?? null;
-  if (!_db) throw new Error("DB 尚未初始化，請確認 instrumentation.js 已執行");
+  if (!_db) {
+    // Requests can arrive while instrumentation is waiting for a database
+    // that is temporarily offline. Start/reuse the async retry without
+    // making this synchronous compatibility API pretend it can await it.
+    requestInitialization();
+    throw new DatabaseUnavailableError();
+  }
   return _db;
 }
 
@@ -101,9 +195,7 @@ export function queryAll(
 }
 
 // ── Migrations ──
-async function _runMigrations(): Promise<void> {
-  const db = _db!;
-
+async function _runMigrations(db: DatabaseLike): Promise<void> {
   db.run(`CREATE TABLE IF NOT EXISTS users (
     id TEXT PRIMARY KEY,
     email TEXT UNIQUE NOT NULL,

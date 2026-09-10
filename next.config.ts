@@ -2,7 +2,7 @@ import path from 'node:path';
 import type { NextConfig } from 'next';
 
 // 修正：worktree 根目錄需明確指定，避免 Next.js 誤用父目錄的 package-lock.json
-const PROJECT_ROOT = __dirname;
+const PROJECT_ROOT = process.cwd();
 
 const nextConfig: NextConfig = {
   output: 'standalone',

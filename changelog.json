@@ -1,6 +1,22 @@
 {
-  "currentVersion": "4.112.6",
+  "currentVersion": "4.112.7",
   "releases": [
+    {
+      "version": "4.112.7",
+      "date": "2026-09-11",
+      "title": "升級網站相依套件，強化穩定性與安全性",
+      "type": "improved",
+      "changes": [
+        {
+          "tag": "improved",
+          "text": "將 Next.js、React、Nodemailer、Resend、Zod、Lucide React 與其他網站相依套件更新至最新穩定版本，提升相容性、穩定性與安全性。"
+        },
+        {
+          "tag": "improved",
+          "text": "同步更新 npm 鎖定檔與相依套件安全性設定；本次為幕後維護更新，不影響既有操作方式與資料。"
+        }
+      ]
+    },
     {
       "version": "4.112.6",
       "date": "2026-09-10",

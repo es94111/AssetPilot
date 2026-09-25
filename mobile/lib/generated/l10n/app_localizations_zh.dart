@@ -1744,6 +1744,21 @@ class AppLocalizationsZh extends AppLocalizations {
       '例如 15，留空則不統計本期消費';
 
   @override
+  @override
+  String get featuresAccountsCardActive => '卡片启用';
+
+  @override
+  String get featuresAccountsCardActiveHint => '启用后才能记录此卡的新消费';
+
+  @override
+  String get featuresAccountsCardDisabled => '卡片已停用';
+
+  @override
+  String get featuresAccountsEnableCard => '启用卡片';
+
+  @override
+  String get featuresAccountsDisableCard => '停用卡片';
+
   String get featuresAccountsExcludeFromTotal => '不計入總資產';
 
   @override

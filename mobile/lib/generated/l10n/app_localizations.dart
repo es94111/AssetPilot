@@ -3431,6 +3431,36 @@ abstract class AppLocalizations {
   ///
   /// In zh_Hant_TW, this message translates to:
   /// **'不計入總資產'**
+  /// Web path: features.accounts.cardActive
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'信用卡啟用'**
+  String get featuresAccountsCardActive;
+
+  /// Web path: features.accounts.cardActiveHint
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'啟用後才能記錄此卡的新消費'**
+  String get featuresAccountsCardActiveHint;
+
+  /// Web path: features.accounts.cardDisabled
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'信用卡已停用'**
+  String get featuresAccountsCardDisabled;
+
+  /// Web path: features.accounts.enableCard
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'啟用卡片'**
+  String get featuresAccountsEnableCard;
+
+  /// Web path: features.accounts.disableCard
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'停用卡片'**
+  String get featuresAccountsDisableCard;
+
   String get featuresAccountsExcludeFromTotal;
 
   /// Web path: features.accounts.otherAccounts

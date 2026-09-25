@@ -46,6 +46,7 @@ interface CreateAccountRequest {
   linkedBankId?: string | null;
   overseasFeeRate?: number | string | null;
   statementClosingDay?: number | string | null;
+  isActive?: boolean;
 }
 
 const VALID_CATEGORIES: AccountCategory[] = [
@@ -202,6 +203,7 @@ export async function POST(request: NextRequest) {
   const category = toAccountCategory(body.category, body.accountType);
   const safeAccountType = accountTypeFromCategory(category);
   const safeExclude = excludeFromTotal ? 1 : 0;
+  const safeActive = category === "credit_card" && body.isActive === false ? 0 : 1;
 
   let safeOverseasFeeRate: number | null = null;
   if (category === "credit_card" && body.overseasFeeRate != null) {
@@ -272,7 +274,7 @@ export async function POST(request: NextRequest) {
   const nowMs = Date.now();
   const safeInitialBalance = Math.round(parsedInitialBalance);
   getDB().run(
-    "INSERT INTO accounts (id, user_id, name, category, initial_balance, currency, icon, exclude_from_total, linked_bank_id, overseas_fee_rate, statement_closing_day, account_type, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+    "INSERT INTO accounts (id, user_id, name, category, initial_balance, currency, icon, exclude_from_total, linked_bank_id, overseas_fee_rate, statement_closing_day, account_type, is_active, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
     [
       id,
       auth.userId,
@@ -286,6 +288,7 @@ export async function POST(request: NextRequest) {
       safeOverseasFeeRate,
       safeClosingDay,
       safeAccountType,
+      safeActive,
       todayStr(),
       nowMs,
     ],
@@ -305,7 +308,7 @@ export async function POST(request: NextRequest) {
       linkedBankId: safeLinkedBankId,
       overseasFeeRate: safeOverseasFeeRate,
       statementClosingDay: safeClosingDay,
-      isActive: true,
+      isActive: safeActive === 1,
       updatedAt: nowMs,
     },
     { status: 201 },

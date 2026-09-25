@@ -86,6 +86,7 @@ class Account {
     required this.initialBalance,
     required this.twdAccumulated,
     required this.excludeFromTotal,
+    required this.isActive,
     required this.overseasFeeRate,
     this.statementClosingDay,
     this.cycleSpending,

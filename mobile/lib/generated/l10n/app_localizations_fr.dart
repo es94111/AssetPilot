@@ -1876,7 +1876,8 @@ class AppLocalizationsFr extends AppLocalizations {
   String get featuresAccountsCardActive => 'Carte active';
 
   @override
-  String get featuresAccountsCardActiveHint => 'Activez cette option pour enregistrer de nouveaux achats avec la carte';
+  String get featuresAccountsCardActiveHint =>
+      'Activez cette option pour enregistrer de nouveaux achats avec la carte';
 
   @override
   String get featuresAccountsCardDisabled => 'Carte désactivée';

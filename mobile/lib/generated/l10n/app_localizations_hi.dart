@@ -1850,7 +1850,8 @@ class AppLocalizationsHi extends AppLocalizations {
   String get featuresAccountsCardActive => 'कार्ड सक्रिय';
 
   @override
-  String get featuresAccountsCardActiveHint => 'कार्ड से नई खरीदारी दर्ज करने के लिए इसे सक्षम करें';
+  String get featuresAccountsCardActiveHint =>
+      'कार्ड से नई खरीदारी दर्ज करने के लिए इसे सक्षम करें';
 
   @override
   String get featuresAccountsCardDisabled => 'कार्ड निष्क्रिय';

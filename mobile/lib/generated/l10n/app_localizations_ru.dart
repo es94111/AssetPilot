@@ -1866,7 +1866,8 @@ class AppLocalizationsRu extends AppLocalizations {
   String get featuresAccountsCardActive => 'Карта активна';
 
   @override
-  String get featuresAccountsCardActiveHint => 'Включите, чтобы записывать новые покупки по карте';
+  String get featuresAccountsCardActiveHint =>
+      'Включите, чтобы записывать новые покупки по карте';
 
   @override
   String get featuresAccountsCardDisabled => 'Карта отключена';

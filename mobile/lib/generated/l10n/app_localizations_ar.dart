@@ -1837,7 +1837,8 @@ class AppLocalizationsAr extends AppLocalizations {
   String get featuresAccountsCardActive => 'البطاقة نشطة';
 
   @override
-  String get featuresAccountsCardActiveHint => 'فعّل هذا الخيار للسماح بتسجيل مشتريات جديدة بالبطاقة';
+  String get featuresAccountsCardActiveHint =>
+      'فعّل هذا الخيار للسماح بتسجيل مشتريات جديدة بالبطاقة';
 
   @override
   String get featuresAccountsCardDisabled => 'البطاقة متوقفة';

@@ -6711,6 +6711,22 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
       'Exemplo: 15. Em branco não calcula o gasto do ciclo atual.';
 
   @override
+  String get featuresAccountsCardActive => 'Cartão ativo';
+
+  @override
+  String get featuresAccountsCardActiveHint =>
+      'Ative para registrar novas compras no cartão';
+
+  @override
+  String get featuresAccountsCardDisabled => 'Cartão desativado';
+
+  @override
+  String get featuresAccountsEnableCard => 'Ativar cartão';
+
+  @override
+  String get featuresAccountsDisableCard => 'Desativar cartão';
+
+  @override
   String get featuresAccountsExcludeFromTotal => 'Excluir dos ativos totais';
 
   @override

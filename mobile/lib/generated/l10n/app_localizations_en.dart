@@ -1843,7 +1843,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get featuresAccountsCardActive => 'Card active';
 
   @override
-  String get featuresAccountsCardActiveHint => 'Enable this to allow new purchases on the card';
+  String get featuresAccountsCardActiveHint =>
+      'Enable this to allow new purchases on the card';
 
   @override
   String get featuresAccountsCardDisabled => 'Card disabled';

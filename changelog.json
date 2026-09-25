@@ -1,6 +1,26 @@
 {
-  "currentVersion": "4.112.7",
+  "currentVersion": "4.112.8",
   "releases": [
+    {
+      "version": "4.112.8",
+      "date": "2026-09-25",
+      "title": "新增信用卡停用功能，強化異常刷卡防護",
+      "type": "improved",
+      "changes": [
+        {
+          "tag": "improved",
+          "text": "新增信用卡啟用／停用控制，遇到疑似盜刷或卡片異常時可立即停用，並可隨時重新啟用。"
+        },
+        {
+          "tag": "fixed",
+          "text": "停用信用卡後，網站、App、MCP、LINE、固定收支與交易編輯流程都會阻止新增刷卡消費；既有帳單與還款紀錄仍可正常查看與處理。"
+        },
+        {
+          "tag": "improved",
+          "text": "同步補齊 Web 與 Flutter 多語系文字，並修正產生檔案的一致性檢查。"
+        }
+      ]
+    },
     {
       "version": "4.112.7",
       "date": "2026-09-11",

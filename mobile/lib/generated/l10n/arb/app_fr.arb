@@ -2841,6 +2841,31 @@
     "description": "Web path: features.accounts.statementClosingDayPlaceholder",
     "x-webPath": "features.accounts.statementClosingDayPlaceholder"
   },
+  "featuresAccountsCardActive": "Carte active",
+  "@featuresAccountsCardActive": {
+    "description": "Web path: features.accounts.cardActive",
+    "x-webPath": "features.accounts.cardActive"
+  },
+  "featuresAccountsCardActiveHint": "Activez cette option pour enregistrer de nouveaux achats avec la carte",
+  "@featuresAccountsCardActiveHint": {
+    "description": "Web path: features.accounts.cardActiveHint",
+    "x-webPath": "features.accounts.cardActiveHint"
+  },
+  "featuresAccountsCardDisabled": "Carte désactivée",
+  "@featuresAccountsCardDisabled": {
+    "description": "Web path: features.accounts.cardDisabled",
+    "x-webPath": "features.accounts.cardDisabled"
+  },
+  "featuresAccountsEnableCard": "Activer la carte",
+  "@featuresAccountsEnableCard": {
+    "description": "Web path: features.accounts.enableCard",
+    "x-webPath": "features.accounts.enableCard"
+  },
+  "featuresAccountsDisableCard": "Désactiver la carte",
+  "@featuresAccountsDisableCard": {
+    "description": "Web path: features.accounts.disableCard",
+    "x-webPath": "features.accounts.disableCard"
+  },
   "featuresAccountsExcludeFromTotal": "Exclure des actifs totaux",
   "@featuresAccountsExcludeFromTotal": {
     "description": "Web path: features.accounts.excludeFromTotal",

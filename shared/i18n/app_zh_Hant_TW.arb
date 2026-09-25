@@ -2841,6 +2841,31 @@
     "description": "Web path: features.accounts.statementClosingDayPlaceholder",
     "x-webPath": "features.accounts.statementClosingDayPlaceholder"
   },
+  "featuresAccountsCardActive": "信用卡啟用",
+  "@featuresAccountsCardActive": {
+    "description": "Web path: features.accounts.cardActive",
+    "x-webPath": "features.accounts.cardActive"
+  },
+  "featuresAccountsCardActiveHint": "啟用後才能記錄此卡的新消費",
+  "@featuresAccountsCardActiveHint": {
+    "description": "Web path: features.accounts.cardActiveHint",
+    "x-webPath": "features.accounts.cardActiveHint"
+  },
+  "featuresAccountsCardDisabled": "信用卡已停用",
+  "@featuresAccountsCardDisabled": {
+    "description": "Web path: features.accounts.cardDisabled",
+    "x-webPath": "features.accounts.cardDisabled"
+  },
+  "featuresAccountsEnableCard": "啟用卡片",
+  "@featuresAccountsEnableCard": {
+    "description": "Web path: features.accounts.enableCard",
+    "x-webPath": "features.accounts.enableCard"
+  },
+  "featuresAccountsDisableCard": "停用卡片",
+  "@featuresAccountsDisableCard": {
+    "description": "Web path: features.accounts.disableCard",
+    "x-webPath": "features.accounts.disableCard"
+  },
   "featuresAccountsExcludeFromTotal": "不計入總資產",
   "@featuresAccountsExcludeFromTotal": {
     "description": "Web path: features.accounts.excludeFromTotal",

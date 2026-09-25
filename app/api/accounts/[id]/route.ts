@@ -30,6 +30,7 @@ interface AccountRow {
   linked_bank_id: string | null;
   overseas_fee_rate: number | null;
   statement_closing_day: number | null;
+  is_active: number | null;
   updated_at: string | number | null;
 }
 
@@ -53,6 +54,7 @@ interface UpdateAccountRequest {
   linkedBankId?: string | null;
   overseasFeeRate?: number | string | null;
   statementClosingDay?: number | string | null;
+  isActive?: boolean;
 }
 
 const VALID_CATEGORIES: AccountCategory[] = [
@@ -137,6 +139,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
       (a.category || categoryFromAccountType(a.account_type)) === "credit_card"
         ? normalizeStatementClosingDay(a.statement_closing_day)
         : null,
+    isActive: a.is_active !== 0,
     currentBalance: Math.round(balance),
     referenceCount,
     updatedAt: Number(a.updated_at) || 0,
@@ -198,6 +201,16 @@ async function updateAccount(request: NextRequest, id: string) {
       : excludeFromTotal
         ? 1
         : 0;
+  const safeActive =
+    category === "credit_card"
+      ? body.isActive === undefined
+        ? existing.is_active === 0
+          ? 0
+          : 1
+        : body.isActive
+          ? 1
+          : 0
+      : 1;
 
   if (newCurrency && newCurrency !== normalizeCurrency(existing.currency)) {
     const refCount =
@@ -305,7 +318,7 @@ async function updateAccount(request: NextRequest, id: string) {
   }
   const nowMs = Date.now();
   getDB().run(
-    "UPDATE accounts SET name = ?, category = ?, initial_balance = ?, icon = ?, currency = ?, account_type = ?, exclude_from_total = ?, linked_bank_id = ?, overseas_fee_rate = ?, statement_closing_day = ?, updated_at = ? WHERE id = ? AND user_id = ?",
+    "UPDATE accounts SET name = ?, category = ?, initial_balance = ?, icon = ?, currency = ?, account_type = ?, exclude_from_total = ?, linked_bank_id = ?, overseas_fee_rate = ?, statement_closing_day = ?, is_active = ?, updated_at = ? WHERE id = ? AND user_id = ?",
     [
       safeName,
       category,
@@ -317,6 +330,7 @@ async function updateAccount(request: NextRequest, id: string) {
       safeLinkedBankId,
       safeOverseasFeeRate,
       safeClosingDay,
+      safeActive,
       nowMs,
       id,
       auth.userId,

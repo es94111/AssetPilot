@@ -1,14 +1,14 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { apiGet, apiPost, apiPut, apiDelete } from '@/lib/clientApi';
+import { apiGet, apiPost, apiPut, apiPatch, apiDelete } from '@/lib/clientApi';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useT } from '@/components/i18n/I18nProvider';
 import { localeTag } from '@/lib/i18n/localeTag';
-import { Plus, Trash2, Edit3, Landmark, DollarSign, CreditCard, Wallet, CircleDot } from 'lucide-react';
+import { Plus, Trash2, Edit3, Landmark, DollarSign, CreditCard, Wallet, CircleDot, Power } from 'lucide-react';
 import CreditCardRepaymentDialog from './CreditCardRepaymentDialog';
 
 const ACCOUNT_TYPES = [
@@ -29,6 +29,7 @@ const EMPTY_FORM = {
   linkedBankId: '',
   overseasFeeRate: '',
   statementClosingDay: '',
+  isActive: true,
 };
 
 function fmt(n: number | string, currency = 'TWD', locale = 'zh-TW') {
@@ -132,6 +133,7 @@ export default function AccountsClient() {
       linkedBankId: form.category === 'credit_card' ? (form.linkedBankId || null) : null,
       overseasFeeRate: form.category === 'credit_card' && form.overseasFeeRate !== '' ? Number(form.overseasFeeRate) : null,
       statementClosingDay: form.category === 'credit_card' && form.statementClosingDay !== '' ? Number(form.statementClosingDay) : null,
+      isActive: form.category === 'credit_card' ? form.isActive : true,
     };
     try {
       if (editId) await apiPut(`/api/accounts/${editId}`, body);
@@ -226,10 +228,21 @@ export default function AccountsClient() {
       linkedBankId: account.linkedBankId || '',
       overseasFeeRate: account.overseasFeeRate != null ? String(account.overseasFeeRate) : '',
       statementClosingDay: account.statementClosingDay != null ? String(account.statementClosingDay) : '',
+      isActive: account.isActive !== false,
     });
     setEditId(account.id);
     setFormError('');
     setAccountDialogOpen(true);
+  }
+
+  async function toggleCard(account: any) {
+    if (account.category !== 'credit_card') return;
+    try {
+      await apiPatch(`/api/accounts/${account.id}`, { isActive: account.isActive === false });
+      await load();
+    } catch (e: any) {
+      alert(e.message || t('features.accounts.messages.saveFailed'));
+    }
   }
 
   async function openCycles(account: any) {
@@ -250,16 +263,24 @@ export default function AccountsClient() {
   function renderAccountCard(account: any) {
     const Icon = ACCOUNT_TYPES.find((item) => item.value === account.category)?.icon || CircleDot;
     return (
-      <div key={account.id} className="p-4 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-lg shadow-sm border-t-4" style={{ borderTopColor: account.color || '#4f6ef7' }}>
+      <div key={account.id} className={`p-4 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-lg shadow-sm border-t-4 ${account.category === 'credit_card' && account.isActive === false ? 'opacity-70' : ''}`} style={{ borderTopColor: account.color || '#4f6ef7' }}>
         <div className="flex justify-between items-start mb-2 gap-2">
           <div className="flex items-center gap-3 min-w-0">
             <Icon size={22} style={{ color: account.color || '#4f6ef7' }} />
             <div className="min-w-0">
               <h3 className="font-semibold text-lg truncate">{account.name}</h3>
-              <p className="text-sm text-slate-500">{categoryLabel(account.category, t)}</p>
+              <div className="flex items-center gap-2">
+                <p className="text-sm text-slate-500">{categoryLabel(account.category, t)}</p>
+                {account.category === 'credit_card' && account.isActive === false && <span className="text-xs text-amber-700 bg-amber-100 px-2 py-0.5 rounded">{t('features.accounts.cardDisabled')}</span>}
+              </div>
             </div>
           </div>
           <div className="flex gap-1 shrink-0">
+            {account.category === 'credit_card' && (
+              <Button variant="ghost" size="icon" className={account.isActive === false ? 'text-emerald-600' : 'text-amber-600'} onClick={() => toggleCard(account)} title={account.isActive === false ? t('features.accounts.enableCard') : t('features.accounts.disableCard')}>
+                <Power size={16} />
+              </Button>
+            )}
             <Button variant="ghost" size="icon" onClick={() => openEdit(account)}><Edit3 size={16} /></Button>
             <Button variant="ghost" size="icon" className="text-red-500" onClick={() => setDeleteId(account.id)}><Trash2 size={16} /></Button>
           </div>
@@ -328,6 +349,10 @@ export default function AccountsClient() {
                   <Select label={t('features.accounts.linkedBank')} options={[{ label: t('features.accounts.ungrouped'), value: '' }, ...bankAccounts.map((bank) => ({ label: bank.name, value: bank.id }))]} value={form.linkedBankId} onChange={(e) => setForm((current) => ({ ...current, linkedBankId: e.target.value }))} />
                   <Input label={t('features.accounts.overseasFeeRate')} type="number" step="0.01" value={form.overseasFeeRate} onChange={(e) => setForm((current) => ({ ...current, overseasFeeRate: e.target.value }))} />
                   <Input label={t('features.accounts.statementClosingDay')} type="number" min="1" max="31" step="1" placeholder={t('features.accounts.statementClosingDayPlaceholder')} value={form.statementClosingDay} onChange={(e) => setForm((current) => ({ ...current, statementClosingDay: e.target.value }))} />
+                 <label className="flex items-center gap-2">
+                   <input type="checkbox" checked={form.isActive} onChange={(e) => setForm((current) => ({ ...current, isActive: e.target.checked }))} className="w-4 h-4" />
+                   {t('features.accounts.cardActive')}
+                 </label>
                 </>
               )}
               <label className="flex items-center gap-2">

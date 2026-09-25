@@ -2841,6 +2841,31 @@
     "description": "Web path: features.accounts.statementClosingDayPlaceholder",
     "x-webPath": "features.accounts.statementClosingDayPlaceholder"
   },
+  "featuresAccountsCardActive": "Cartão ativo",
+  "@featuresAccountsCardActive": {
+    "description": "Web path: features.accounts.cardActive",
+    "x-webPath": "features.accounts.cardActive"
+  },
+  "featuresAccountsCardActiveHint": "Ative para registrar novas compras no cartão",
+  "@featuresAccountsCardActiveHint": {
+    "description": "Web path: features.accounts.cardActiveHint",
+    "x-webPath": "features.accounts.cardActiveHint"
+  },
+  "featuresAccountsCardDisabled": "Cartão desativado",
+  "@featuresAccountsCardDisabled": {
+    "description": "Web path: features.accounts.cardDisabled",
+    "x-webPath": "features.accounts.cardDisabled"
+  },
+  "featuresAccountsEnableCard": "Ativar cartão",
+  "@featuresAccountsEnableCard": {
+    "description": "Web path: features.accounts.enableCard",
+    "x-webPath": "features.accounts.enableCard"
+  },
+  "featuresAccountsDisableCard": "Desativar cartão",
+  "@featuresAccountsDisableCard": {
+    "description": "Web path: features.accounts.disableCard",
+    "x-webPath": "features.accounts.disableCard"
+  },
   "featuresAccountsExcludeFromTotal": "Excluir dos ativos totais",
   "@featuresAccountsExcludeFromTotal": {
     "description": "Web path: features.accounts.excludeFromTotal",

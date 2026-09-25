@@ -2841,6 +2841,31 @@
     "description": "Web path: features.accounts.statementClosingDayPlaceholder",
     "x-webPath": "features.accounts.statementClosingDayPlaceholder"
   },
+  "featuresAccountsCardActive": "البطاقة نشطة",
+  "@featuresAccountsCardActive": {
+    "description": "Web path: features.accounts.cardActive",
+    "x-webPath": "features.accounts.cardActive"
+  },
+  "featuresAccountsCardActiveHint": "فعّل هذا الخيار للسماح بتسجيل مشتريات جديدة بالبطاقة",
+  "@featuresAccountsCardActiveHint": {
+    "description": "Web path: features.accounts.cardActiveHint",
+    "x-webPath": "features.accounts.cardActiveHint"
+  },
+  "featuresAccountsCardDisabled": "البطاقة متوقفة",
+  "@featuresAccountsCardDisabled": {
+    "description": "Web path: features.accounts.cardDisabled",
+    "x-webPath": "features.accounts.cardDisabled"
+  },
+  "featuresAccountsEnableCard": "إعادة تفعيل البطاقة",
+  "@featuresAccountsEnableCard": {
+    "description": "Web path: features.accounts.enableCard",
+    "x-webPath": "features.accounts.enableCard"
+  },
+  "featuresAccountsDisableCard": "إيقاف البطاقة",
+  "@featuresAccountsDisableCard": {
+    "description": "Web path: features.accounts.disableCard",
+    "x-webPath": "features.accounts.disableCard"
+  },
   "featuresAccountsExcludeFromTotal": "عدم تضمينه في إجمالي الأصول",
   "@featuresAccountsExcludeFromTotal": {
     "description": "Web path: features.accounts.excludeFromTotal",

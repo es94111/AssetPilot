@@ -218,7 +218,23 @@ class _AccountsScreenState extends State<AccountsScreen> {
                         isThreeLine:
                             e.$2.statementClosingDay != null &&
                             e.$2.cycleSpending != null,
-                        title: Text(e.$2.name),
+                        title: Row(
+                          children: [
+                            Expanded(child: Text(e.$2.name)),
+                            if (e.$2.category == 'credit_card' && !e.$2.isActive)
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: Theme.of(context).colorScheme.errorContainer,
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  trKey('featuresAccountsCardDisabled'),
+                                  style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onErrorContainer),
+                                ),
+                              ),
+                          ],
+                        ),
                         subtitle: _accountSubtitle(context, e.$2),
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
@@ -367,6 +383,7 @@ class _AccountFormState extends State<_AccountForm> {
       : 'bank';
   late String _currency = widget.existing?.currency ?? 'TWD';
   late bool _exclude = widget.existing?.excludeFromTotal ?? false;
+  late bool _isActive = widget.existing?.isActive ?? true;
   bool _saving = false;
 
   bool get _isEdit => widget.existing != null;
@@ -389,6 +406,7 @@ class _AccountFormState extends State<_AccountForm> {
       'currency': _currency,
       'initialBalance': num.tryParse(_initial.text.trim()) ?? 0,
       'excludeFromTotal': _exclude,
+      if (_category == 'credit_card') 'isActive': _isActive,
     };
     if (_category == 'credit_card') {
       final raw = _overseasFeeRate.text.trim();
@@ -430,6 +448,14 @@ class _AccountFormState extends State<_AccountForm> {
               style: Theme.of(context).textTheme.titleLarge,
             ),
             SizedBox(height: 16),
+            if (_category == 'credit_card')
+              SwitchListTile.adaptive(
+                contentPadding: EdgeInsets.zero,
+                title: Text(trKey('featuresAccountsCardActive')),
+                subtitle: Text(trKey('featuresAccountsCardActiveHint')),
+                value: _isActive,
+                onChanged: (value) => setState(() => _isActive = value),
+              ),
             TextFormField(
               controller: _name,
               decoration: InputDecoration(

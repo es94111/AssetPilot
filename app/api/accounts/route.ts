@@ -30,6 +30,7 @@ interface AccountRow {
   linked_bank_id: string | null;
   overseas_fee_rate: number | null;
   statement_closing_day: number | null;
+  is_active: number | null;
   created_at: string | number | null;
   updated_at: string | number | null;
 }
@@ -176,6 +177,7 @@ export async function GET(request: NextRequest) {
       lastCycleSpending,
       lastCyclePayment,
       excludeFromTotal: a.exclude_from_total === 1,
+      isActive: a.is_active !== 0,
       updatedAt: Number(a.updated_at) || 0,
     };
   });
@@ -303,6 +305,7 @@ export async function POST(request: NextRequest) {
       linkedBankId: safeLinkedBankId,
       overseasFeeRate: safeOverseasFeeRate,
       statementClosingDay: safeClosingDay,
+      isActive: true,
       updatedAt: nowMs,
     },
     { status: 201 },

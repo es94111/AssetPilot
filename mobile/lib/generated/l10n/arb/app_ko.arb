@@ -2841,6 +2841,31 @@
     "description": "Web path: features.accounts.statementClosingDayPlaceholder",
     "x-webPath": "features.accounts.statementClosingDayPlaceholder"
   },
+  "featuresAccountsCardActive": "카드 활성화",
+  "@featuresAccountsCardActive": {
+    "description": "Web path: features.accounts.cardActive",
+    "x-webPath": "features.accounts.cardActive"
+  },
+  "featuresAccountsCardActiveHint": "카드의 새 결제를 기록하려면 활성화하세요",
+  "@featuresAccountsCardActiveHint": {
+    "description": "Web path: features.accounts.cardActiveHint",
+    "x-webPath": "features.accounts.cardActiveHint"
+  },
+  "featuresAccountsCardDisabled": "카드 비활성화됨",
+  "@featuresAccountsCardDisabled": {
+    "description": "Web path: features.accounts.cardDisabled",
+    "x-webPath": "features.accounts.cardDisabled"
+  },
+  "featuresAccountsEnableCard": "카드 활성화",
+  "@featuresAccountsEnableCard": {
+    "description": "Web path: features.accounts.enableCard",
+    "x-webPath": "features.accounts.enableCard"
+  },
+  "featuresAccountsDisableCard": "카드 비활성화",
+  "@featuresAccountsDisableCard": {
+    "description": "Web path: features.accounts.disableCard",
+    "x-webPath": "features.accounts.disableCard"
+  },
   "featuresAccountsExcludeFromTotal": "총자산에 포함하지 않음",
   "@featuresAccountsExcludeFromTotal": {
     "description": "Web path: features.accounts.excludeFromTotal",

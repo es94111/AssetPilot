@@ -4,7 +4,7 @@
 // INSERT 邏輯與回應形狀完全一致（FR-011）。呼叫端須先完成驗證與金額換算
 // （convertToTwd／resolveOverseasFee／computeTwdAmount），本模組只做 INSERT 陳述式
 // 與回應物件組裝，不重新驗證。
-import { getDB, saveDB } from "./db";
+import { getDB, queryOne, saveDB } from "./db";
 import { uid } from "./userDefaults";
 import { insertFeeTransaction } from "./overseasFee";
 import { deleteTransactionAttachments } from "./transactionAttachments";
@@ -33,6 +33,18 @@ export interface InsertIncomeExpenseResult {
   updatedAt: number;
 }
 
+export function isDisabledCreditCard(userId: string, accountId: string | null): boolean {
+  if (!accountId) return false;
+  const account = queryOne(
+    "SELECT category, account_type, is_active FROM accounts WHERE id = ? AND user_id = ?",
+    [accountId, userId],
+  );
+  return (
+    (account?.category === "credit_card" || account?.account_type === "信用卡") &&
+    account?.is_active === 0
+  );
+}
+
 export function insertIncomeExpenseTransaction(
   input: InsertIncomeExpenseInput,
 ): InsertIncomeExpenseResult {
@@ -40,6 +52,10 @@ export function insertIncomeExpenseTransaction(
   const now = Date.now();
   const db = getDB();
   let feeId: string | null = null;
+
+  if (input.type === "expense" && isDisabledCreditCard(input.userId, input.accountId)) {
+    throw new Error("此信用卡已停用，無法新增刷卡消費");
+  }
 
   try {
     db.run("BEGIN");

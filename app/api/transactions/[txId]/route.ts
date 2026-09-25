@@ -7,7 +7,7 @@ import { computeTwdAmount } from '../../../../lib/moneyDecimal';
 import { insertFeeTransaction } from '../../../../lib/overseasFee';
 import { listTransactionAttachments } from '../../../../lib/transactionAttachments';
 import { findTransactionEditBlock } from '../../../../lib/transactionEditRules';
-import { deleteTransactionCascade } from '../../../../lib/transactionWriteCore';
+import { deleteTransactionCascade, isDisabledCreditCard } from '../../../../lib/transactionWriteCore';
 
 type RouteContext = { params: Promise<{ txId: string }> };
 interface Auth {
@@ -174,6 +174,9 @@ async function updateHandler(request: NextRequest, txId: string, auth: Auth) {
   if (accountId) {
     const accOwned = queryOne('SELECT id FROM accounts WHERE id = ? AND user_id = ?', [accountId, auth.userId]);
     if (!accOwned) return NextResponse.json({ error: '帳戶不存在或無權限' }, { status: 400 });
+  }
+  if (type === 'expense' && isDisabledCreditCard(auth.userId, accountId || null)) {
+    return NextResponse.json({ error: '此信用卡已停用，無法新增刷卡消費', code: 'CreditCardDisabled' }, { status: 409 });
   }
 
   const numAmt = Number(body.originalAmount ?? amount);

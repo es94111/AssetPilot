@@ -1105,7 +1105,7 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
           summary = `轉帳 ${converted.originalAmount} 元`;
         } else {
           const accounts = queryAll(
-            "SELECT id FROM accounts WHERE user_id = ?",
+            "SELECT id, category, account_type, is_active FROM accounts WHERE user_id = ?",
             [userId],
           );
           let resolvedAccountId: string;
@@ -1119,6 +1119,11 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
             throw new Error("帳戶不存在或無權限");
           } else {
             throw new Error("使用者名下有多個帳戶，請指定 accountId");
+          }
+          const selectedAccount = accounts.find((a) => String(a.id) === resolvedAccountId);
+          const isCreditCard = selectedAccount?.category === "credit_card" || selectedAccount?.account_type === "信用卡";
+          if (type === "expense" && isCreditCard && selectedAccount?.is_active === 0) {
+            throw new Error("此信用卡已停用，無法新增刷卡消費");
           }
 
           let resolvedCategoryId: string | null = null;

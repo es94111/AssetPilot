@@ -1863,6 +1863,22 @@ class AppLocalizationsRu extends AppLocalizations {
       'Например: 15. Оставьте пустым, чтобы не считать текущий цикл.';
 
   @override
+  String get featuresAccountsCardActive => 'Карта активна';
+
+  @override
+  String get featuresAccountsCardActiveHint =>
+      'Включите, чтобы записывать новые покупки по карте';
+
+  @override
+  String get featuresAccountsCardDisabled => 'Карта отключена';
+
+  @override
+  String get featuresAccountsEnableCard => 'Включить карту';
+
+  @override
+  String get featuresAccountsDisableCard => 'Отключить карту';
+
+  @override
   String get featuresAccountsExcludeFromTotal => 'Не включать в активы всего';
 
   @override

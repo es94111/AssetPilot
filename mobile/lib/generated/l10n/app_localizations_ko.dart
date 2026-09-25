@@ -1778,6 +1778,21 @@ class AppLocalizationsKo extends AppLocalizations {
       '예: 15. 현재 주기를 계산하지 않으려면 비워 두세요.';
 
   @override
+  String get featuresAccountsCardActive => '카드 활성화';
+
+  @override
+  String get featuresAccountsCardActiveHint => '카드의 새 결제를 기록하려면 활성화하세요';
+
+  @override
+  String get featuresAccountsCardDisabled => '카드 비활성화됨';
+
+  @override
+  String get featuresAccountsEnableCard => '카드 활성화';
+
+  @override
+  String get featuresAccountsDisableCard => '카드 비활성화';
+
+  @override
   String get featuresAccountsExcludeFromTotal => '총자산에 포함하지 않음';
 
   @override

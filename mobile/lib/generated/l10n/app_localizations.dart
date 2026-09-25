@@ -3427,6 +3427,36 @@ abstract class AppLocalizations {
   /// **'例如 15，留空則不統計本期消費'**
   String get featuresAccountsStatementClosingDayPlaceholder;
 
+  /// Web path: features.accounts.cardActive
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'信用卡啟用'**
+  String get featuresAccountsCardActive;
+
+  /// Web path: features.accounts.cardActiveHint
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'啟用後才能記錄此卡的新消費'**
+  String get featuresAccountsCardActiveHint;
+
+  /// Web path: features.accounts.cardDisabled
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'信用卡已停用'**
+  String get featuresAccountsCardDisabled;
+
+  /// Web path: features.accounts.enableCard
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'啟用卡片'**
+  String get featuresAccountsEnableCard;
+
+  /// Web path: features.accounts.disableCard
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'停用卡片'**
+  String get featuresAccountsDisableCard;
+
   /// Web path: features.accounts.excludeFromTotal
   ///
   /// In zh_Hant_TW, this message translates to:

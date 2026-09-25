@@ -1873,6 +1873,22 @@ class AppLocalizationsFr extends AppLocalizations {
       'Exemple : 15. Laisser vide pour ne pas calculer le cycle courant.';
 
   @override
+  String get featuresAccountsCardActive => 'Carte active';
+
+  @override
+  String get featuresAccountsCardActiveHint =>
+      'Activez cette option pour enregistrer de nouveaux achats avec la carte';
+
+  @override
+  String get featuresAccountsCardDisabled => 'Carte désactivée';
+
+  @override
+  String get featuresAccountsEnableCard => 'Activer la carte';
+
+  @override
+  String get featuresAccountsDisableCard => 'Désactiver la carte';
+
+  @override
   String get featuresAccountsExcludeFromTotal => 'Exclure des actifs totaux';
 
   @override

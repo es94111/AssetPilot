@@ -65,6 +65,7 @@ class Account {
   final num initialBalance;
   final num twdAccumulated;
   final bool excludeFromTotal;
+  final bool isActive;
   final num overseasFeeRate; // 海外手續費率（百分比 %），非信用卡為 0
   final int? statementClosingDay; // 信用卡每月結帳日（1~31），未設定為 null
   final num? cycleSpending; // 本期帳單消費（原幣別），未設結帳日為 null
@@ -85,6 +86,7 @@ class Account {
     required this.initialBalance,
     required this.twdAccumulated,
     required this.excludeFromTotal,
+    required this.isActive,
     required this.overseasFeeRate,
     this.statementClosingDay,
     this.cycleSpending,
@@ -105,6 +107,7 @@ class Account {
     initialBalance: _asNum(j['initialBalance']),
     twdAccumulated: _asNum(j['twdAccumulated']),
     excludeFromTotal: _asBool(j['excludeFromTotal']),
+    isActive: j['isActive'] == null ? true : _asBool(j['isActive']),
     overseasFeeRate: _asNum(j['overseasFeeRate'] ?? j['overseas_fee_rate']),
     statementClosingDay: _asIntOrNull(
       j['statementClosingDay'] ?? j['statement_closing_day'],

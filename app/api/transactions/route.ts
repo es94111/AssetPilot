@@ -257,8 +257,12 @@ export async function POST(request: NextRequest) {
     }
   }
   if (accountId) {
-    const accOwned = queryOne('SELECT id FROM accounts WHERE id = ? AND user_id = ?', [accountId, auth.userId]);
+    const accOwned = asRow<{ id: string; category: string | null; account_type: string | null; is_active: number | null }>(queryOne('SELECT id, category, account_type, is_active FROM accounts WHERE id = ? AND user_id = ?', [accountId, auth.userId]));
     if (!accOwned) return NextResponse.json({ error: '帳戶不存在或無權限' }, { status: 400 });
+    const isCreditCard = accOwned.category === 'credit_card' || accOwned.account_type === '信用卡';
+    if (type === 'expense' && isCreditCard && accOwned.is_active === 0) {
+      return NextResponse.json({ error: '此信用卡已停用，無法新增刷卡消費', code: 'CreditCardDisabled' }, { status: 409 });
+    }
   }
 
   const numAmt = Number(body.originalAmount ?? amount);

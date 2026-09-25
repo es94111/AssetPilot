@@ -3427,10 +3427,6 @@ abstract class AppLocalizations {
   /// **'例如 15，留空則不統計本期消費'**
   String get featuresAccountsStatementClosingDayPlaceholder;
 
-  /// Web path: features.accounts.excludeFromTotal
-  ///
-  /// In zh_Hant_TW, this message translates to:
-  /// **'不計入總資產'**
   /// Web path: features.accounts.cardActive
   ///
   /// In zh_Hant_TW, this message translates to:
@@ -3461,6 +3457,10 @@ abstract class AppLocalizations {
   /// **'停用卡片'**
   String get featuresAccountsDisableCard;
 
+  /// Web path: features.accounts.excludeFromTotal
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'不計入總資產'**
   String get featuresAccountsExcludeFromTotal;
 
   /// Web path: features.accounts.otherAccounts

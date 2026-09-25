@@ -1840,7 +1840,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Example: 15. Leave blank to skip current-cycle spending.';
 
   @override
-  @override
   String get featuresAccountsCardActive => 'Card active';
 
   @override
@@ -1855,6 +1854,7 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get featuresAccountsDisableCard => 'Disable card';
 
+  @override
   String get featuresAccountsExcludeFromTotal => 'Exclude from total assets';
 
   @override

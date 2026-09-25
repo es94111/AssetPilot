@@ -3,6 +3,7 @@ import Decimal from 'decimal.js';
 import { getDB, queryOne, queryAll, saveDB } from './db';
 import { normalizeCurrency } from './accountHelpers';
 import { insertFeeTransaction } from './overseasFee';
+import { isDisabledCreditCard } from './transactionWriteCore';
 import { uid } from './userDefaults';
 import * as userTime from './userTime';
 import { getNextRecurringDate } from './recurringSchedule';
@@ -24,8 +25,9 @@ export function processOneRecurring(
   }
   if (r.account_id) {
     const acct = queryOne('SELECT id FROM accounts WHERE id = ? AND user_id = ?', [r.account_id as string, userId]);
-    if (!acct) {
+    if (!acct || (r.type === 'expense' && isDisabledCreditCard(userId, r.account_id as string))) {
       db.run('UPDATE recurring SET needs_attention = 1, updated_at = ? WHERE id = ?', [Date.now(), r.id as string]);
+      saveDB();
       return 0;
     }
   }

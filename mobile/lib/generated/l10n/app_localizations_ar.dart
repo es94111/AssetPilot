@@ -1834,7 +1834,6 @@ class AppLocalizationsAr extends AppLocalizations {
       'مثال: 15. اتركه فارغًا إذا لم تكن تريد حساب الدورة الحالية.';
 
   @override
-  @override
   String get featuresAccountsCardActive => 'البطاقة نشطة';
 
   @override
@@ -1849,6 +1848,7 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get featuresAccountsDisableCard => 'إيقاف البطاقة';
 
+  @override
   String get featuresAccountsExcludeFromTotal => 'عدم تضمينه في إجمالي الأصول';
 
   @override

@@ -1879,7 +1879,6 @@ class AppLocalizationsEs extends AppLocalizations {
       'Ejemplo: 15. En blanco no calcula el gasto del ciclo actual.';
 
   @override
-  @override
   String get featuresAccountsCardActive => 'Tarjeta activa';
 
   @override
@@ -1894,6 +1893,7 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get featuresAccountsDisableCard => 'Desactivar tarjeta';
 
+  @override
   String get featuresAccountsExcludeFromTotal => 'Excluir del patrimonio total';
 
   @override

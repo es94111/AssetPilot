@@ -33,6 +33,18 @@ export interface InsertIncomeExpenseResult {
   updatedAt: number;
 }
 
+export function isDisabledCreditCard(userId: string, accountId: string | null): boolean {
+  if (!accountId) return false;
+  const account = queryOne(
+    "SELECT category, account_type, is_active FROM accounts WHERE id = ? AND user_id = ?",
+    [accountId, userId],
+  );
+  return (
+    (account?.category === "credit_card" || account?.account_type === "信用卡") &&
+    account?.is_active === 0
+  );
+}
+
 export function insertIncomeExpenseTransaction(
   input: InsertIncomeExpenseInput,
 ): InsertIncomeExpenseResult {
@@ -41,15 +53,8 @@ export function insertIncomeExpenseTransaction(
   const db = getDB();
   let feeId: string | null = null;
 
-  if (input.type === "expense" && input.accountId) {
-    const account = queryOne(
-      "SELECT category, account_type, is_active FROM accounts WHERE id = ? AND user_id = ?",
-      [input.accountId, input.userId],
-    );
-    const isCreditCard = account?.category === "credit_card" || account?.account_type === "信用卡";
-    if (isCreditCard && account?.is_active === 0) {
-      throw new Error("此信用卡已停用，無法新增刷卡消費");
-    }
+  if (input.type === "expense" && isDisabledCreditCard(input.userId, input.accountId)) {
+    throw new Error("此信用卡已停用，無法新增刷卡消費");
   }
 
   try {

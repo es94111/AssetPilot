@@ -1847,7 +1847,6 @@ class AppLocalizationsHi extends AppLocalizations {
       'जैसे: 15. मौजूदा साइकिल गणना नहीं करनी हो तो खाली छोड़ें।';
 
   @override
-  @override
   String get featuresAccountsCardActive => 'कार्ड सक्रिय';
 
   @override
@@ -1862,6 +1861,7 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get featuresAccountsDisableCard => 'कार्ड निष्क्रिय करें';
 
+  @override
   String get featuresAccountsExcludeFromTotal => 'कुल संपत्ति में शामिल न करें';
 
   @override

@@ -1873,7 +1873,6 @@ class AppLocalizationsFr extends AppLocalizations {
       'Exemple : 15. Laisser vide pour ne pas calculer le cycle courant.';
 
   @override
-  @override
   String get featuresAccountsCardActive => 'Carte active';
 
   @override
@@ -1888,6 +1887,7 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get featuresAccountsDisableCard => 'Désactiver la carte';
 
+  @override
   String get featuresAccountsExcludeFromTotal => 'Exclure des actifs totaux';
 
   @override

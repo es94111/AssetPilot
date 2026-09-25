@@ -1778,7 +1778,6 @@ class AppLocalizationsKo extends AppLocalizations {
       '예: 15. 현재 주기를 계산하지 않으려면 비워 두세요.';
 
   @override
-  @override
   String get featuresAccountsCardActive => '카드 활성화';
 
   @override
@@ -1793,6 +1792,7 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get featuresAccountsDisableCard => '카드 비활성화';
 
+  @override
   String get featuresAccountsExcludeFromTotal => '총자산에 포함하지 않음';
 
   @override

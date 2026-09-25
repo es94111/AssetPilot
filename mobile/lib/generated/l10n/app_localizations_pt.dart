@@ -6714,8 +6714,7 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String get featuresAccountsCardActive => 'Cartão ativo';
 
   @override
-  String get featuresAccountsCardActiveHint =>
-      'Ative para registrar novas compras no cartão';
+  String get featuresAccountsCardActiveHint => 'Ative para registrar novas compras no cartão';
 
   @override
   String get featuresAccountsCardDisabled => 'Cartão desativado';

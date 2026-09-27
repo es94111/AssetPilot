@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import Link from "next/link";
 import Script from "next/script";
 import { client as webauthnClient } from "@passwordless-id/webauthn";
 import { useT } from "@/components/i18n/I18nProvider";
@@ -281,16 +282,14 @@ export default function LoginPage() {
         />
       )}
 
-      <div className="login-blob login-blob-1" />
-      <div className="login-blob login-blob-2" />
-      <div className="login-blob login-blob-3" />
-
       <div className="login-card">
         <div className="login-brand">
-          <div className="login-logo-ring">
-            <Image src="/favicon.svg" alt="AssetPilot" width={32} height={32} />
-          </div>
-          <h1 className="login-title">AssetPilot</h1>
+          <Link href="/" className="login-home-link" aria-label="AssetPilot">
+            <span className="login-logo-ring">
+              <Image src="/favicon.svg" alt="" width={32} height={32} />
+            </span>
+            <h1 className="login-title">AssetPilot</h1>
+          </Link>
           <p className="login-subtitle">{t("auth.subtitleLogin")}</p>
         </div>
 

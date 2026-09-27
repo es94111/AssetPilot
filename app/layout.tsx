@@ -45,7 +45,7 @@ export default async function RootLayout({
   const dict = getDictionary(locale);
 
   return (
-    <html lang={HTML_LANG[locale]} dir={HTML_DIR[locale]}>
+    <html lang={HTML_LANG[locale]} dir={HTML_DIR[locale]} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>

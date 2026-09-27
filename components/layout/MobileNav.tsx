@@ -20,7 +20,7 @@ export default function MobileNav() {
   return (
     <nav
       aria-label={t('shell.mainNav')}
-      className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t px-2 pb-[env(safe-area-inset-bottom)] lg:hidden"
+      className="app-mobile-nav fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t px-2 pb-[env(safe-area-inset-bottom)] lg:hidden"
       style={{
         background: 'var(--surface-glass)',
         borderColor: 'var(--glass-border)',

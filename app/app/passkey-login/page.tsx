@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { client as webauthnClient } from '@passwordless-id/webauthn';
 import { useT } from '@/components/i18n/I18nProvider';
+import { AppCallbackStatus } from '@/components/public/AppCallbackStatus';
 
 export default function MobilePasskeyLoginPage() {
   const { t } = useT();
@@ -55,9 +56,6 @@ export default function MobilePasskeyLoginPage() {
   }, [t]);
 
   return (
-    <main style={{ fontFamily: 'system-ui, sans-serif', padding: 24 }}>
-      <h1>{t('public.appCallback.passkeyTitle')}</h1>
-      <p>{message}</p>
-    </main>
+    <AppCallbackStatus title={t('public.appCallback.passkeyTitle')} message={message} />
   );
 }

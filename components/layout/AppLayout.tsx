@@ -73,7 +73,7 @@ export default function AppLayout({ user, children }: { user: any; children: Rea
           menuButtonRef={menuButtonRef}
           onMenuClick={() => sidebarOpen ? closeSidebar() : setSidebarOpen(true)}
         />
-        <main id="main-content" tabIndex={-1} className="flex-1 overflow-y-auto p-4 pb-24 md:p-6 md:pb-24 lg:p-8 lg:pb-8">
+        <main id="main-content" tabIndex={-1} className="app-main w-full max-w-[1700px] flex-1 overflow-y-auto p-4 pb-24 md:p-6 md:pb-24 lg:p-8 lg:pb-8">
           {!contentProvidesHeading && <h1 className="sr-only">{title}</h1>}
           {children}
         </main>

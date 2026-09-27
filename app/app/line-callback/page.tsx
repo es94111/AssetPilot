@@ -1,14 +1,13 @@
 import { getTranslator } from '@/lib/i18n/getDictionary';
 import { resolveLocale } from '@/lib/i18n/resolveLocale';
+import { AppCallbackStatus } from '@/components/public/AppCallbackStatus';
 
 export default async function MobileLineCallbackPage() {
   const locale = await resolveLocale();
   const t = getTranslator(locale);
 
   return (
-    <main style={{ fontFamily: 'system-ui, sans-serif', padding: 24 }}>
-      <h1>{t('public.appCallback.returningTitle')}</h1>
-      <p>{t('public.appCallback.returningBody')}</p>
+    <AppCallbackStatus title={t('public.appCallback.returningTitle')} message={t('public.appCallback.returningBody')}>
       <script
         dangerouslySetInnerHTML={{
           __html: `
@@ -23,6 +22,6 @@ export default async function MobileLineCallbackPage() {
           `,
         }}
       />
-    </main>
+    </AppCallbackStatus>
   );
 }

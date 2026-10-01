@@ -1,6 +1,18 @@
 {
-  "currentVersion": "4.112.9",
+  "currentVersion": "4.112.10",
   "releases": [
+    {
+      "version": "4.112.10",
+      "date": "2026-10-01",
+      "title": "修補 NAT64 IPv6 位址分類安全漏洞",
+      "type": "fixed",
+      "changes": [
+        {
+          "tag": "fixed",
+          "text": "將 ip-address 傳遞相依套件更新至 10.7.2，修正 NAT64 local-use（64:ff9b:1::/48）位址被誤判為公網位址的問題。"
+        }
+      ]
+    },
     {
       "version": "4.112.9",
       "date": "2026-09-27",

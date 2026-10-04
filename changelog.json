@@ -1,6 +1,22 @@
 {
-  "currentVersion": "4.112.10",
+  "currentVersion": "4.113.0",
   "releases": [
+    {
+      "version": "4.113.0",
+      "date": "2026-10-04",
+      "title": "一鍵匯入 NouriLedger",
+      "type": "new",
+      "changes": [
+        {
+          "tag": "new",
+          "text": "「設定 → 匯出」新增「搬家到 NouriLedger」：在 NouriLedger 登入並確認「舊帳號 → 新帳號」後，自動把你的帳戶、分類、交易（含附件）、預算、固定收支與股票資料複製過去；金額以精確數值匯出，可重複匯入且不會產生重複資料，AssetPilot 的資料不會被刪除。需由管理員設定 NOURILEDGER_ORIGIN 後才會顯示。"
+        },
+        {
+          "tag": "improved",
+          "text": "十種語言新增 NouriLedger 匯入卡片文案；登入後可回到指定的匯入授權頁。"
+        }
+      ]
+    },
     {
       "version": "4.112.10",
       "date": "2026-10-01",

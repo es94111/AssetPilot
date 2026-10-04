@@ -2578,6 +2578,21 @@
     "description": "Web path: features.dataTransfer.messages.saveFailed",
     "x-webPath": "features.dataTransfer.messages.saveFailed"
   },
+  "featuresDataTransferNouriledgerTitle": "Move to NouriLedger (new version)",
+  "@featuresDataTransferNouriledgerTitle": {
+    "description": "Web path: features.dataTransfer.nouriledger.title",
+    "x-webPath": "features.dataTransfer.nouriledger.title"
+  },
+  "featuresDataTransferNouriledgerDescription": "Copy your transactions, accounts, budgets, stocks and receipt photos to NouriLedger in one step. You sign in to NouriLedger and confirm once; nothing here is deleted or changed, and importing again never creates duplicates.",
+  "@featuresDataTransferNouriledgerDescription": {
+    "description": "Web path: features.dataTransfer.nouriledger.description",
+    "x-webPath": "features.dataTransfer.nouriledger.description"
+  },
+  "featuresDataTransferNouriledgerButton": "Import to NouriLedger in one click",
+  "@featuresDataTransferNouriledgerButton": {
+    "description": "Web path: features.dataTransfer.nouriledger.button",
+    "x-webPath": "features.dataTransfer.nouriledger.button"
+  },
   "featuresDataTransferBundleTitle": "Full data backup (including images)",
   "@featuresDataTransferBundleTitle": {
     "description": "Web path: features.dataTransfer.bundle.title",

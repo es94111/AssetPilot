@@ -798,6 +798,11 @@ export const en = {
         saved: "Settings saved",
         saveFailed: "Failed to save settings",
       },
+      nouriledger: {
+        title: "Move to NouriLedger (new version)",
+        description: "Copy your transactions, accounts, budgets, stocks and receipt photos to NouriLedger in one step. You sign in to NouriLedger and confirm once; nothing here is deleted or changed, and importing again never creates duplicates.",
+        button: "Import to NouriLedger in one click",
+      },
       bundle: {
         title: "Full data backup (including images)",
         description1: "Download all of your personal data, including transactions, accounts, categories, budgets, recurring items, exchange rates, stocks, and receipt images, as one ZIP.",

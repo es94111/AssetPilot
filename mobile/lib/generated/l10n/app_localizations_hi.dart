@@ -1671,6 +1671,18 @@ class AppLocalizationsHi extends AppLocalizations {
       'सेटिंग्स सेव नहीं हो पाईं';
 
   @override
+  String get featuresDataTransferNouriledgerTitle =>
+      'नए संस्करण NouriLedger पर जाएँ';
+
+  @override
+  String get featuresDataTransferNouriledgerDescription =>
+      'अपने लेन-देन, खाते, बजट, शेयर और रसीद की तस्वीरें एक ही चरण में NouriLedger में कॉपी करें। आप NouriLedger में साइन इन करके केवल एक बार पुष्टि करते हैं; यहाँ का डेटा न हटाया जाएगा न बदला जाएगा, और दोबारा आयात करने से डुप्लिकेट नहीं बनेंगे।';
+
+  @override
+  String get featuresDataTransferNouriledgerButton =>
+      'एक क्लिक में NouriLedger में आयात करें';
+
+  @override
   String get featuresDataTransferBundleTitle =>
       'पूरा डेटा बैकअप (तस्वीरों सहित)';
 

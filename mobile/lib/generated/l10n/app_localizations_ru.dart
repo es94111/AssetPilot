@@ -1687,6 +1687,18 @@ class AppLocalizationsRu extends AppLocalizations {
       'Не удалось сохранить настройки';
 
   @override
+  String get featuresDataTransferNouriledgerTitle =>
+      'Перейти на NouriLedger (новая версия)';
+
+  @override
+  String get featuresDataTransferNouriledgerDescription =>
+      'Скопируйте транзакции, счета, бюджеты, акции и фото чеков в NouriLedger за один шаг. Вы входите в NouriLedger и подтверждаете один раз; здесь ничего не удаляется и не изменяется, а повторный импорт не создаёт дубликатов.';
+
+  @override
+  String get featuresDataTransferNouriledgerButton =>
+      'Импортировать в NouriLedger в один клик';
+
+  @override
   String get featuresDataTransferBundleTitle =>
       'Полная копия данных (с изображениями)';
 

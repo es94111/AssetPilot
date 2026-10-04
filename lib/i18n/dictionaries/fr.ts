@@ -798,6 +798,11 @@ export const fr = {
         saved: "Paramètres enregistrés",
         saveFailed: "Échec de l’enregistrement des paramètres",
       },
+      nouriledger: {
+        title: "Passer à NouriLedger (nouvelle version)",
+        description: "Copiez vos transactions, comptes, budgets, actions et photos de reçus vers NouriLedger en une seule étape. Vous vous connectez à NouriLedger et confirmez une fois ; rien n'est supprimé ni modifié ici, et une nouvelle importation ne crée pas de doublons.",
+        button: "Importer dans NouriLedger en un clic",
+      },
       bundle: {
         title: "Sauvegarde complète des données (images incluses)",
         description1: "Téléchargez en un ZIP toutes vos données personnelles : transactions, comptes, catégories, budgets, cycles, taux de change, actions et images de justificatifs.",

@@ -798,6 +798,11 @@ export const zhCN = {
         saved: "设置已保存",
         saveFailed: "设置保存失败",
       },
+      nouriledger: {
+        title: "迁移到新版 NouriLedger｜养财日记",
+        description: "一键把交易、账户、预算、股票和收据照片复制到 NouriLedger。需要在新站登录并确认一次；这里的数据不会被删除或修改，重复导入也不会产生重复数据。",
+        button: "一键导入到 NouriLedger",
+      },
       bundle: {
         title: "完整数据备份（含图片）",
         description1: "一键打包下载你的全部个人数据（交易、账户、分类、预算、账期、汇率、股票，以及交易凭证图片）为单一 ZIP。",

@@ -23,6 +23,8 @@ export async function resolve(specifier, context, nextResolve) {
   if (specifier === 'next/server') {
     return nextResolve('next/server.js', context);
   }
+  // `next` has no "exports" map, so Node's ESM resolver needs the explicit .js for these (lib/auth.ts imports them).
+  if (specifier === 'next/headers' || specifier === 'next/navigation') return nextResolve(`${specifier}.js`, context);
 
   if (specifier.startsWith('@/')) {
     const abs = resolveWithExtension(path.join(rootDir, specifier.slice(2)));

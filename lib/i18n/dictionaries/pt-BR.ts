@@ -798,6 +798,11 @@ export const ptBR = {
         saved: "Configurações salvas",
         saveFailed: "Não foi possível salvar as configurações",
       },
+      nouriledger: {
+        title: "Migrar para o NouriLedger (nova versão)",
+        description: "Copie suas transações, contas, orçamentos, ações e fotos de recibos para o NouriLedger em uma única etapa. Você entra no NouriLedger e confirma uma vez; nada aqui é apagado ou alterado, e importar novamente não cria duplicatas.",
+        button: "Importar para o NouriLedger com um clique",
+      },
       bundle: {
         title: "Backup completo de dados (inclui imagens)",
         description1: "Baixe em um único ZIP todos os seus dados pessoais: transações, contas, categorias, orçamentos, ciclos, câmbio, ações e imagens de comprovantes.",

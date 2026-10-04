@@ -29,8 +29,10 @@ export const MAX_ATTACHMENT_BYTES = 20 * 1024 * 1024;
 export const MAX_PACKAGE_BYTES = 240 * 1024 * 1024;
 /** 同時讀取的附件數（限制記憶體中同時存在的檔案數量）。 */
 export const READ_CONCURRENCY = 4;
-/** NouriLedger 只接受 32 位十六進位的來源使用者 ID（去掉連字號的 UUID）。 */
-export const SOURCE_USER_ID_RE = /^[a-f0-9]{32}$/u;
+/** Account IDs are opaque database keys. Accept historical text IDs, bounded to the importer contract. */
+export const SOURCE_USER_ID_RE = /^[^\u0000-\u001f\u007f]{1,200}$/u;
+/** Transaction attachment IDs are generated as compact UUIDs and also name ZIP entries. */
+const ATTACHMENT_ID_RE = /^[a-f0-9]{32}$/u;
 
 export class UnsupportedAccountError extends Error {
   constructor() { super('unsupported_account'); this.name = 'UnsupportedAccountError'; }
@@ -129,7 +131,7 @@ export async function buildAssetPilotPackage(userId: string, readAttachment: Att
   let resized = 0;
   let loadedBytes = 0;
   const load = async (row: Row): Promise<{ row: Row; bytes: Buffer | null }> => {
-    if (typeof row.id !== 'string' || !SOURCE_USER_ID_RE.test(row.id) || typeof row.transaction_id !== 'string' || !row.transaction_id) return { row, bytes: null };
+    if (typeof row.id !== 'string' || !ATTACHMENT_ID_RE.test(row.id) || typeof row.transaction_id !== 'string' || !row.transaction_id) return { row, bytes: null };
     try { return { row, bytes: await readAttachment(row) }; } catch { return { row, bytes: null }; }
   };
   // 讀檔彼此獨立，所以一次讀幾個；結果仍依原順序套用。檔案累計超過上限就立刻中止，不把整個帳號的附件都載入記憶體。

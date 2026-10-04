@@ -2578,6 +2578,21 @@
     "description": "Web path: features.dataTransfer.messages.saveFailed",
     "x-webPath": "features.dataTransfer.messages.saveFailed"
   },
+  "featuresDataTransferNouriledgerTitle": "الانتقال إلى NouriLedger (الإصدار الجديد)",
+  "@featuresDataTransferNouriledgerTitle": {
+    "description": "Web path: features.dataTransfer.nouriledger.title",
+    "x-webPath": "features.dataTransfer.nouriledger.title"
+  },
+  "featuresDataTransferNouriledgerDescription": "انسخ معاملاتك وحساباتك وميزانياتك وأسهمك وصور الإيصالات إلى NouriLedger بخطوة واحدة. تسجّل الدخول إلى NouriLedger وتؤكد مرة واحدة؛ لا يُحذف أو يُعدَّل أي شيء هنا، ولا تؤدي إعادة الاستيراد إلى تكرار البيانات.",
+  "@featuresDataTransferNouriledgerDescription": {
+    "description": "Web path: features.dataTransfer.nouriledger.description",
+    "x-webPath": "features.dataTransfer.nouriledger.description"
+  },
+  "featuresDataTransferNouriledgerButton": "استيراد إلى NouriLedger بنقرة واحدة",
+  "@featuresDataTransferNouriledgerButton": {
+    "description": "Web path: features.dataTransfer.nouriledger.button",
+    "x-webPath": "features.dataTransfer.nouriledger.button"
+  },
   "featuresDataTransferBundleTitle": "نسخة بيانات كاملة (مع الصور)",
   "@featuresDataTransferBundleTitle": {
     "description": "Web path: features.dataTransfer.bundle.title",

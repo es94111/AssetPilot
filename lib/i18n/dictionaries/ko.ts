@@ -798,6 +798,11 @@ export const ko = {
         saved: "설정이 저장되었습니다",
         saveFailed: "설정을 저장하지 못했습니다",
       },
+      nouriledger: {
+        title: "새 버전 NouriLedger로 옮기기",
+        description: "거래, 계정, 예산, 주식, 영수증 사진을 한 번에 NouriLedger로 복사합니다. NouriLedger에 로그인해 한 번만 확인하면 됩니다. 이곳의 데이터는 삭제되거나 변경되지 않으며, 다시 가져와도 중복되지 않습니다.",
+        button: "NouriLedger로 한 번에 가져오기",
+      },
       bundle: {
         title: "전체 데이터 백업 (사진 포함)",
         description1: "거래, 계좌, 카테고리, 예산, 청구 주기, 환율, 주식, 영수증 사진 등 모든 개인 데이터를 하나의 ZIP으로 다운로드합니다.",

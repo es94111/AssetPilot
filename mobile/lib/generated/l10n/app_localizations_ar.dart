@@ -1660,6 +1660,18 @@ class AppLocalizationsAr extends AppLocalizations {
   String get featuresDataTransferMessagesSaveFailed => 'تعذر حفظ الإعدادات';
 
   @override
+  String get featuresDataTransferNouriledgerTitle =>
+      'الانتقال إلى NouriLedger (الإصدار الجديد)';
+
+  @override
+  String get featuresDataTransferNouriledgerDescription =>
+      'انسخ معاملاتك وحساباتك وميزانياتك وأسهمك وصور الإيصالات إلى NouriLedger بخطوة واحدة. تسجّل الدخول إلى NouriLedger وتؤكد مرة واحدة؛ لا يُحذف أو يُعدَّل أي شيء هنا، ولا تؤدي إعادة الاستيراد إلى تكرار البيانات.';
+
+  @override
+  String get featuresDataTransferNouriledgerButton =>
+      'استيراد إلى NouriLedger بنقرة واحدة';
+
+  @override
   String get featuresDataTransferBundleTitle => 'نسخة بيانات كاملة (مع الصور)';
 
   @override

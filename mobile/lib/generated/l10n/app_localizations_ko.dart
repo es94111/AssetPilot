@@ -1611,6 +1611,16 @@ class AppLocalizationsKo extends AppLocalizations {
   String get featuresDataTransferMessagesSaveFailed => '설정을 저장하지 못했습니다';
 
   @override
+  String get featuresDataTransferNouriledgerTitle => '새 버전 NouriLedger로 옮기기';
+
+  @override
+  String get featuresDataTransferNouriledgerDescription =>
+      '거래, 계정, 예산, 주식, 영수증 사진을 한 번에 NouriLedger로 복사합니다. NouriLedger에 로그인해 한 번만 확인하면 됩니다. 이곳의 데이터는 삭제되거나 변경되지 않으며, 다시 가져와도 중복되지 않습니다.';
+
+  @override
+  String get featuresDataTransferNouriledgerButton => 'NouriLedger로 한 번에 가져오기';
+
+  @override
   String get featuresDataTransferBundleTitle => '전체 데이터 백업 (사진 포함)';
 
   @override

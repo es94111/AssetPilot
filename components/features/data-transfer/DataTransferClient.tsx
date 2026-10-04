@@ -153,7 +153,7 @@ async function downloadFromUrl(url: string) {
   URL.revokeObjectURL(href);
 }
 
-export default function DataTransferClient({ user }: { user: UserLike }) {
+export default function DataTransferClient({ user, nouriLedgerStartUrl = null }: { user: UserLike; nouriLedgerStartUrl?: string | null }) {
   const { t } = useT();
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
@@ -354,6 +354,19 @@ export default function DataTransferClient({ user }: { user: UserLike }) {
       <div>
         <h1 className="text-2xl font-bold text-slate-900 mb-2">{t('features.dataTransfer.title')}</h1>
       </div>
+
+      {nouriLedgerStartUrl && (
+        <section className="rounded-xl border border-slate-200 bg-white dark:bg-slate-900 dark:border-slate-800 p-5 shadow-sm space-y-3">
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">{t('features.dataTransfer.nouriledger.title')}</h2>
+          <p className="text-sm text-slate-600 dark:text-slate-400">{t('features.dataTransfer.nouriledger.description')}</p>
+          <a
+            href={nouriLedgerStartUrl}
+            className="inline-flex items-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+          >
+            {t('features.dataTransfer.nouriledger.button')}
+          </a>
+        </section>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-xl shadow-sm">
         <Input label={t('features.dataTransfer.exportStartDate')} type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />

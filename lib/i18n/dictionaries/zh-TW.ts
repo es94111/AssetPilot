@@ -796,6 +796,11 @@ export const zhTW = {
         saved: "設定已儲存",
         saveFailed: "設定儲存失敗",
       },
+      nouriledger: {
+        title: "搬到新版 NouriLedger｜養財日記",
+        description: "一鍵把交易、帳戶、預算、股票與收據照片複製到 NouriLedger。需要在新站登入並確認一次；這裡的資料不會被刪除或修改，重複匯入也不會產生重複資料。",
+        button: "一鍵匯入到 NouriLedger",
+      },
       bundle: {
         title: "完整資料備份（含圖片）",
         description1: "一鍵打包下載你個人的全部資料（交易、帳戶、分類、預算、週期、匯率、股票，以及交易憑證圖片）為單一 ZIP。",

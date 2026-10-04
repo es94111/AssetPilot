@@ -1669,6 +1669,18 @@ class AppLocalizationsEn extends AppLocalizations {
       'Failed to save settings';
 
   @override
+  String get featuresDataTransferNouriledgerTitle =>
+      'Move to NouriLedger (new version)';
+
+  @override
+  String get featuresDataTransferNouriledgerDescription =>
+      'Copy your transactions, accounts, budgets, stocks and receipt photos to NouriLedger in one step. You sign in to NouriLedger and confirm once; nothing here is deleted or changed, and importing again never creates duplicates.';
+
+  @override
+  String get featuresDataTransferNouriledgerButton =>
+      'Import to NouriLedger in one click';
+
+  @override
   String get featuresDataTransferBundleTitle =>
       'Full data backup (including images)';
 

@@ -23,6 +23,10 @@ const PUBLIC_PATHS = new Set([
   '/api/health',
   '/api/i18n/locale',
   '/api/mcp',
+  // 一鍵匯入 NouriLedger：authorize 自行檢查登入並導向登入頁；userinfo／export 只靠 code + PKCE verifier 驗證。
+  '/api/migration/nouriledger/authorize',
+  '/api/migration/nouriledger/userinfo',
+  '/api/migration/nouriledger/export',
 ]);
 
 // passkey / MCP OAuth 端點前綴

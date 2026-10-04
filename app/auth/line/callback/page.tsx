@@ -39,6 +39,8 @@ export default function LineCallbackPage() {
       if (!res.ok) throw new Error(data.error || (flow === 'link' ? t('auth.lineCallback.linkFailed') : t('auth.lineCallback.loginFailed')));
 
       const returnTo = safeOAuthReturnTo(data.returnTo);
+      // API-route targets (e.g. the one-click import authorize step) need a full navigation, not a client transition.
+      if (flow !== 'link' && returnTo.startsWith('/api/')) { window.location.assign(returnTo); return; }
       router.replace(flow === 'link' ? '/settings/account' : (returnTo || '/dashboard'));
       router.refresh();
     }

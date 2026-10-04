@@ -30,7 +30,9 @@ async function readBodyLimited(request: Request, maxBytes: number): Promise<stri
     if (done) break;
     total += value.byteLength;
     if (total > maxBytes) {
-      await reader.cancel().catch(() => {});
+      // 只停止讀取、不取消串流：取消會銷毀 socket，使 keep-alive 連線（以及共用它的反向代理連線池）被重設。
+      // 回應之後，伺服器會自行丟棄尚未讀完的剩餘內容。
+      reader.releaseLock();
       return null;
     }
     chunks.push(value);

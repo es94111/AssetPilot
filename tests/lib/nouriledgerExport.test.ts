@@ -136,9 +136,9 @@ if (!usable) {
     assert.match(result.warnings[0], /^1 張交易照片在舊站已無法讀取/u);
   });
 
-  test('an account id NouriLedger cannot represent is refused up front, and an oversized total is rejected', async () => {
-    await assert.rejects(() => exporter.buildAssetPilotPackage('not-a-32-hex-id'), exporter.UnsupportedAccountError);
-    await assert.rejects(() => exporter.buildAssetPilotPackage(`${alice.slice(0, 31)}Z`), exporter.UnsupportedAccountError);
+  test('invalid account IDs are refused up front, and an oversized total is rejected', async () => {
+    await assert.rejects(() => exporter.buildAssetPilotPackage('x'.repeat(201)), exporter.UnsupportedAccountError);
+    await assert.rejects(() => exporter.buildAssetPilotPackage('invalid\u0000id'), exporter.UnsupportedAccountError);
 
     const crowded = uid();
     extraUsers.push(crowded);

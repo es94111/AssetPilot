@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic';
 export async function POST(request: NextRequest) {
   const grant = await resolveGrant(request, { consume: false, scope: 'userinfo', limit: 20 });
   if (!grant.ok) return grant.response;
-  // 提早告知：ID 格式不是 NouriLedger 支援的 32 位十六進位時，匯出一定會失敗。
+  // Account IDs are opaque source keys; reject only IDs outside the bounded text contract.
   if (!SOURCE_USER_ID_RE.test(grant.userId)) return failure('unsupported_account', 422);
   const summary = summarizeAssetUser(grant.userId);
   if (!summary) return failure('invalid_grant', 400);

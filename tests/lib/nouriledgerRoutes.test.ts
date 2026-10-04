@@ -173,7 +173,7 @@ if (!usable) {
     assert.equal((await post(userinfoRoute, grant)).status, 200, '被拒絕的請求沒有燒掉真正的 code');
   });
 
-  test('disabled accounts, revoked sessions and unsupported ids cannot redeem a code', async () => {
+  test('disabled accounts and revoked sessions cannot redeem a code, while historical IDs are supported', async () => {
     const disabled = makeUser({ active: 0 });
     assert.equal((await post(userinfoRoute, grantFor(disabled))).status, 400);
     assert.equal((await post(exportRoute, grantFor(disabled))).status, 400);
@@ -188,8 +188,7 @@ if (!usable) {
     const legacy = makeUser({ id: `legacy-${uid()}`.slice(0, 20) });
     for (const route of [userinfoRoute, exportRoute]) {
       const response = await post(route, grantFor(legacy));
-      assert.equal(response.status, 422);
-      assert.deepEqual(await response.json(), { error: 'unsupported_account' });
+      assert.equal(response.status, 200);
     }
     assert.equal((await post(exportRoute, grantFor({ id: 'no-such-user', tokenVersion: 0 }))).status, 400);
   });

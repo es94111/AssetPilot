@@ -1,6 +1,18 @@
 {
-  "currentVersion": "4.113.0",
+  "currentVersion": "4.113.1",
   "releases": [
+    {
+      "version": "4.113.1",
+      "date": "2026-10-04",
+      "title": "修正 NouriLedger 歷史使用者 ID 驗證",
+      "type": "fixed",
+      "changes": [
+        {
+          "tag": "fixed",
+          "text": "NouriLedger 匯入流程支援歷史文本使用者 ID 格式，並同步調整使用者資訊驗證與測試案例。"
+        }
+      ]
+    },
     {
       "version": "4.113.0",
       "date": "2026-10-04",

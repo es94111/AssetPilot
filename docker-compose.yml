@@ -30,6 +30,7 @@ services:
       - PORT=3000
       - HOSTNAME=0.0.0.0
       - NEXT_TELEMETRY_DISABLED=1
+      - NOURILEDGER_ORIGIN=${NOURILEDGER_ORIGIN-https://nouriledger.shao.one}
       - DATABASE_URL=${DATABASE_URL:-postgres://assetpilot:assetpilot@postgres:5432/assetpilot}
       - ENV_PATH=/app/data/.env
       - SSL_PATH=/app/data/SSL

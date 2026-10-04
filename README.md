@@ -414,7 +414,7 @@ Docker 多數參數已有合理預設，只需關心「自動產生」與「功�
 
 #### 一鍵匯入 NouriLedger（選用）
 
-設定 `NOURILEDGER_ORIGIN`（例如 `https://nouriledger.shao.one`，須與新站的 `APP_URL` 相同）後，「資料匯出入」頁會出現「一鍵匯入到 NouriLedger」按鈕；未設定則功能完全關閉（端點回 404）。
+官方 Docker Compose 預設使用 `https://nouriledger.shao.one`；部署時也可設定 `NOURILEDGER_ORIGIN`，且須與新站的 `APP_URL` 相同。「資料匯出入」頁會出現「一鍵匯入到 NouriLedger」按鈕；明確設為空值則功能完全關閉（端點回 404）。
 
 流程：按鈕 → 新站登入 → 新站確認頁顯示「舊帳號 → 新帳號」→ 使用者按「開始匯入」→ 新站以伺服器對伺服器方式取回**該使用者自己的資料與交易照片**。
 
@@ -422,7 +422,7 @@ Docker 多數參數已有合理預設，只需關心「自動產生」與「功�
 - 匯出為精確版 `assetpilot-user-bundle`：以獨立唯讀連線（`REPEATABLE READ READ ONLY`）取得一致快照，NUMERIC／bigint 一律以文字讀出（不經本站 runtime 的 `Number()` 轉換），每個檔案附 SHA-256。讀不到的照片會略過並在新站顯示警告。
 - 這是「複製」，本站資料不會被刪除或修改；可重複匯入，新站不會產生重複資料。
 - 端點：`GET /api/migration/nouriledger/authorize`（瀏覽器，需登入）、`POST …/userinfo`、`POST …/export`（伺服器對伺服器，僅靠 code + verifier）。
-- 回滾：清空 `NOURILEDGER_ORIGIN` 並重啟。
+- 回滾：將 `NOURILEDGER_ORIGIN` 明確設為空值並重新建立 app 容器。
 - 測試：`npm run test:nouriledger-handoff`、`test:nouriledger-export`、`test:nouriledger-routes`（後兩者需 `DATABASE_URL` 指向本機 PostgreSQL，否則自動略過）。
 
 ### 系統管理

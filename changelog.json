@@ -1,6 +1,18 @@
 {
-  "currentVersion": "4.113.1",
+  "currentVersion": "4.113.2",
   "releases": [
+    {
+      "version": "4.113.2",
+      "date": "2026-10-04",
+      "title": "啟用 NouriLedger 正式站一鍵搬家",
+      "type": "fixed",
+      "changes": [
+        {
+          "tag": "improved",
+          "text": "官方 Docker Compose 預設連至 NouriLedger 正式站；在 AssetPilot「資料匯出入」頁即可一鍵搬移本人資料，並於新站確認後開始匯入。"
+        }
+      ]
+    },
     {
       "version": "4.113.1",
       "date": "2026-10-04",

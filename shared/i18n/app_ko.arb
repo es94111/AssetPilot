@@ -2578,6 +2578,21 @@
     "description": "Web path: features.dataTransfer.messages.saveFailed",
     "x-webPath": "features.dataTransfer.messages.saveFailed"
   },
+  "featuresDataTransferNouriledgerTitle": "새 버전 NouriLedger로 옮기기",
+  "@featuresDataTransferNouriledgerTitle": {
+    "description": "Web path: features.dataTransfer.nouriledger.title",
+    "x-webPath": "features.dataTransfer.nouriledger.title"
+  },
+  "featuresDataTransferNouriledgerDescription": "거래, 계정, 예산, 주식, 영수증 사진을 한 번에 NouriLedger로 복사합니다. NouriLedger에 로그인해 한 번만 확인하면 됩니다. 이곳의 데이터는 삭제되거나 변경되지 않으며, 다시 가져와도 중복되지 않습니다.",
+  "@featuresDataTransferNouriledgerDescription": {
+    "description": "Web path: features.dataTransfer.nouriledger.description",
+    "x-webPath": "features.dataTransfer.nouriledger.description"
+  },
+  "featuresDataTransferNouriledgerButton": "NouriLedger로 한 번에 가져오기",
+  "@featuresDataTransferNouriledgerButton": {
+    "description": "Web path: features.dataTransfer.nouriledger.button",
+    "x-webPath": "features.dataTransfer.nouriledger.button"
+  },
   "featuresDataTransferBundleTitle": "전체 데이터 백업 (사진 포함)",
   "@featuresDataTransferBundleTitle": {
     "description": "Web path: features.dataTransfer.bundle.title",

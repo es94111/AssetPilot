@@ -1692,6 +1692,18 @@ class AppLocalizationsPt extends AppLocalizations {
       'Não foi possível salvar as configurações';
 
   @override
+  String get featuresDataTransferNouriledgerTitle =>
+      'Migrar para o NouriLedger (nova versão)';
+
+  @override
+  String get featuresDataTransferNouriledgerDescription =>
+      'Copie suas transações, contas, orçamentos, ações e fotos de recibos para o NouriLedger em uma única etapa. Você entra no NouriLedger e confirma uma vez; nada aqui é apagado ou alterado, e importar novamente não cria duplicatas.';
+
+  @override
+  String get featuresDataTransferNouriledgerButton =>
+      'Importar para o NouriLedger com um clique';
+
+  @override
   String get featuresDataTransferBundleTitle =>
       'Backup completo de dados (inclui imagens)';
 
@@ -6538,6 +6550,18 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   @override
   String get featuresDataTransferMessagesSaveFailed =>
       'Não foi possível salvar as configurações';
+
+  @override
+  String get featuresDataTransferNouriledgerTitle =>
+      'Migrar para o NouriLedger (nova versão)';
+
+  @override
+  String get featuresDataTransferNouriledgerDescription =>
+      'Copie suas transações, contas, orçamentos, ações e fotos de recibos para o NouriLedger em uma única etapa. Você entra no NouriLedger e confirma uma vez; nada aqui é apagado ou alterado, e importar novamente não cria duplicatas.';
+
+  @override
+  String get featuresDataTransferNouriledgerButton =>
+      'Importar para o NouriLedger com um clique';
 
   @override
   String get featuresDataTransferBundleTitle =>

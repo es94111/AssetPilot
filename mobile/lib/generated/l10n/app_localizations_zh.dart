@@ -1581,6 +1581,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get featuresDataTransferMessagesSaveFailed => '設定儲存失敗';
 
   @override
+  String get featuresDataTransferNouriledgerTitle => '搬到新版 NouriLedger｜養財日記';
+
+  @override
+  String get featuresDataTransferNouriledgerDescription =>
+      '一鍵把交易、帳戶、預算、股票與收據照片複製到 NouriLedger。需要在新站登入並確認一次；這裡的資料不會被刪除或修改，重複匯入也不會產生重複資料。';
+
+  @override
+  String get featuresDataTransferNouriledgerButton => '一鍵匯入到 NouriLedger';
+
+  @override
   String get featuresDataTransferBundleTitle => '完整資料備份（含圖片）';
 
   @override
@@ -6153,6 +6163,16 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
   String get featuresDataTransferMessagesSaveFailed => '设置保存失败';
 
   @override
+  String get featuresDataTransferNouriledgerTitle => '迁移到新版 NouriLedger｜养财日记';
+
+  @override
+  String get featuresDataTransferNouriledgerDescription =>
+      '一键把交易、账户、预算、股票和收据照片复制到 NouriLedger。需要在新站登录并确认一次；这里的数据不会被删除或修改，重复导入也不会产生重复数据。';
+
+  @override
+  String get featuresDataTransferNouriledgerButton => '一键导入到 NouriLedger';
+
+  @override
   String get featuresDataTransferBundleTitle => '完整数据备份（含图片）';
 
   @override
@@ -10715,6 +10735,16 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
 
   @override
   String get featuresDataTransferMessagesSaveFailed => '設定儲存失敗';
+
+  @override
+  String get featuresDataTransferNouriledgerTitle => '搬到新版 NouriLedger｜養財日記';
+
+  @override
+  String get featuresDataTransferNouriledgerDescription =>
+      '一鍵把交易、帳戶、預算、股票與收據照片複製到 NouriLedger。需要在新站登入並確認一次；這裡的資料不會被刪除或修改，重複匯入也不會產生重複資料。';
+
+  @override
+  String get featuresDataTransferNouriledgerButton => '一鍵匯入到 NouriLedger';
 
   @override
   String get featuresDataTransferBundleTitle => '完整資料備份（含圖片）';

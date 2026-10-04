@@ -48,6 +48,16 @@ export default function LoginPage() {
   const turnstileRef = useRef<HTMLDivElement | null>(null);
   const turnstileWidgetId = useRef<string | null>(null);
 
+  // API routes are not pages: a full navigation lets the browser follow their redirect (e.g. on to NouriLedger).
+  function goToLoginDestination() {
+    const destination = loginDestination();
+    if (destination.startsWith("/api/")) {
+      window.location.assign(destination);
+      return;
+    }
+    router.push(destination);
+  }
+
   function loginDestination() {
     return (
       safeOAuthReturnTo(
@@ -167,7 +177,7 @@ export default function LoginPage() {
             const data = await res.json().catch(() => ({}));
             if (!res.ok)
               throw new Error(data.error || t("auth.errors.googleFailed"));
-            router.push(loginDestination());
+            goToLoginDestination();
             router.refresh();
           } catch (e: any) {
             setError(e.message || t("auth.errors.googleFailed"));
@@ -229,7 +239,7 @@ export default function LoginPage() {
       const data = await res.json().catch(() => ({}));
       if (!res.ok)
         throw new Error(data.error || t("auth.errors.passkeyFailed"));
-      router.push(loginDestination());
+      goToLoginDestination();
       router.refresh();
     } catch (e: any) {
       setError(e.message || t("auth.errors.passkeyFailed"));

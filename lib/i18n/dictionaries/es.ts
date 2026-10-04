@@ -798,6 +798,11 @@ export const es = {
         saved: "Ajustes guardados",
         saveFailed: "No se pudieron guardar los ajustes",
       },
+      nouriledger: {
+        title: "Pasar a NouriLedger (nueva versión)",
+        description: "Copia tus transacciones, cuentas, presupuestos, acciones y fotos de recibos a NouriLedger en un solo paso. Inicias sesión en NouriLedger y confirmas una vez; aquí no se borra ni se modifica nada, y volver a importar no crea duplicados.",
+        button: "Importar a NouriLedger con un clic",
+      },
       bundle: {
         title: "Copia completa de datos (incluye imágenes)",
         description1: "Descarga en un solo ZIP todos tus datos personales: transacciones, cuentas, categorías, presupuestos, ciclos, tipos de cambio, acciones e imágenes de comprobantes.",

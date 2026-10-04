@@ -3115,6 +3115,24 @@ abstract class AppLocalizations {
   /// **'設定儲存失敗'**
   String get featuresDataTransferMessagesSaveFailed;
 
+  /// Web path: features.dataTransfer.nouriledger.title
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'搬到新版 NouriLedger｜養財日記'**
+  String get featuresDataTransferNouriledgerTitle;
+
+  /// Web path: features.dataTransfer.nouriledger.description
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'一鍵把交易、帳戶、預算、股票與收據照片複製到 NouriLedger。需要在新站登入並確認一次；這裡的資料不會被刪除或修改，重複匯入也不會產生重複資料。'**
+  String get featuresDataTransferNouriledgerDescription;
+
+  /// Web path: features.dataTransfer.nouriledger.button
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'一鍵匯入到 NouriLedger'**
+  String get featuresDataTransferNouriledgerButton;
+
   /// Web path: features.dataTransfer.bundle.title
   ///
   /// In zh_Hant_TW, this message translates to:

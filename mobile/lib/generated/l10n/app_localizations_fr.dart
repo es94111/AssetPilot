@@ -1693,6 +1693,18 @@ class AppLocalizationsFr extends AppLocalizations {
       'Échec de l’enregistrement des paramètres';
 
   @override
+  String get featuresDataTransferNouriledgerTitle =>
+      'Passer à NouriLedger (nouvelle version)';
+
+  @override
+  String get featuresDataTransferNouriledgerDescription =>
+      'Copiez vos transactions, comptes, budgets, actions et photos de reçus vers NouriLedger en une seule étape. Vous vous connectez à NouriLedger et confirmez une fois ; rien n\'est supprimé ni modifié ici, et une nouvelle importation ne crée pas de doublons.';
+
+  @override
+  String get featuresDataTransferNouriledgerButton =>
+      'Importer dans NouriLedger en un clic';
+
+  @override
   String get featuresDataTransferBundleTitle =>
       'Sauvegarde complète des données (images incluses)';
 

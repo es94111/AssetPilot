@@ -2578,6 +2578,21 @@
     "description": "Web path: features.dataTransfer.messages.saveFailed",
     "x-webPath": "features.dataTransfer.messages.saveFailed"
   },
+  "featuresDataTransferNouriledgerTitle": "नए संस्करण NouriLedger पर जाएँ",
+  "@featuresDataTransferNouriledgerTitle": {
+    "description": "Web path: features.dataTransfer.nouriledger.title",
+    "x-webPath": "features.dataTransfer.nouriledger.title"
+  },
+  "featuresDataTransferNouriledgerDescription": "अपने लेन-देन, खाते, बजट, शेयर और रसीद की तस्वीरें एक ही चरण में NouriLedger में कॉपी करें। आप NouriLedger में साइन इन करके केवल एक बार पुष्टि करते हैं; यहाँ का डेटा न हटाया जाएगा न बदला जाएगा, और दोबारा आयात करने से डुप्लिकेट नहीं बनेंगे।",
+  "@featuresDataTransferNouriledgerDescription": {
+    "description": "Web path: features.dataTransfer.nouriledger.description",
+    "x-webPath": "features.dataTransfer.nouriledger.description"
+  },
+  "featuresDataTransferNouriledgerButton": "एक क्लिक में NouriLedger में आयात करें",
+  "@featuresDataTransferNouriledgerButton": {
+    "description": "Web path: features.dataTransfer.nouriledger.button",
+    "x-webPath": "features.dataTransfer.nouriledger.button"
+  },
   "featuresDataTransferBundleTitle": "पूरा डेटा बैकअप (तस्वीरों सहित)",
   "@featuresDataTransferBundleTitle": {
     "description": "Web path: features.dataTransfer.bundle.title",

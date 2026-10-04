@@ -2578,6 +2578,21 @@
     "description": "Web path: features.dataTransfer.messages.saveFailed",
     "x-webPath": "features.dataTransfer.messages.saveFailed"
   },
+  "featuresDataTransferNouriledgerTitle": "Перейти на NouriLedger (новая версия)",
+  "@featuresDataTransferNouriledgerTitle": {
+    "description": "Web path: features.dataTransfer.nouriledger.title",
+    "x-webPath": "features.dataTransfer.nouriledger.title"
+  },
+  "featuresDataTransferNouriledgerDescription": "Скопируйте транзакции, счета, бюджеты, акции и фото чеков в NouriLedger за один шаг. Вы входите в NouriLedger и подтверждаете один раз; здесь ничего не удаляется и не изменяется, а повторный импорт не создаёт дубликатов.",
+  "@featuresDataTransferNouriledgerDescription": {
+    "description": "Web path: features.dataTransfer.nouriledger.description",
+    "x-webPath": "features.dataTransfer.nouriledger.description"
+  },
+  "featuresDataTransferNouriledgerButton": "Импортировать в NouriLedger в один клик",
+  "@featuresDataTransferNouriledgerButton": {
+    "description": "Web path: features.dataTransfer.nouriledger.button",
+    "x-webPath": "features.dataTransfer.nouriledger.button"
+  },
   "featuresDataTransferBundleTitle": "Полная копия данных (с изображениями)",
   "@featuresDataTransferBundleTitle": {
     "description": "Web path: features.dataTransfer.bundle.title",

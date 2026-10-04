@@ -159,6 +159,20 @@ if (!usable) {
     assert.equal((await post(userinfoRoute, grant)).status, 200, 'none of the failed attempts burned the genuine code');
   });
 
+  test('oversized request bodies are refused without being parsed, and the genuine code survives', async () => {
+    const user = makeUser();
+    const grant = grantFor(user);
+    for (const route of [userinfoRoute, exportRoute]) {
+      assert.deepEqual(await (await post(route, { ...grant, padding: 'x'.repeat(32 * 1024) })).json(), { error: 'invalid_request' }, '串流本文超過上限');
+      const declared = await route.POST(new NextRequest('https://asset.example.test/api/migration/nouriledger/x', {
+        method: 'POST', headers: { 'content-type': 'application/json', 'content-length': String(1_000_000) }, body: JSON.stringify(grant),
+      }));
+      assert.equal(declared.status, 400);
+      assert.deepEqual(await declared.json(), { error: 'invalid_request' }, '宣告長度超過上限');
+    }
+    assert.equal((await post(userinfoRoute, grant)).status, 200, '被拒絕的請求沒有燒掉真正的 code');
+  });
+
   test('disabled accounts, revoked sessions and unsupported ids cannot redeem a code', async () => {
     const disabled = makeUser({ active: 0 });
     assert.equal((await post(userinfoRoute, grantFor(disabled))).status, 400);

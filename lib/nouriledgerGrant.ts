@@ -14,6 +14,30 @@ const perUserLimits = new Map<string, RateLimitEntry>();
 
 export type GrantResult = { ok: true; userId: string } | { ok: false; response: NextResponse };
 
+/** 請求本文只有 code、PKCE verifier 與一個網址；這兩個端點是公開的，所以在驗章之前先限制大小。 */
+const MAX_BODY_BYTES = 16 * 1024;
+
+/** 最多讀 `maxBytes` 的本文（先看宣告長度，串流時再檢查一次）；超過則回傳 null。 */
+async function readBodyLimited(request: Request, maxBytes: number): Promise<string | null> {
+  const declared = Number(request.headers.get('content-length'));
+  if (Number.isFinite(declared) && declared > maxBytes) return null;
+  if (!request.body) return '';
+  const reader = request.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > maxBytes) {
+      await reader.cancel().catch(() => {});
+      return null;
+    }
+    chunks.push(value);
+  }
+  return Buffer.concat(chunks, total).toString('utf8');
+}
+
 export async function resolveGrant(
   request: Request,
   options: { consume: boolean; scope: 'userinfo' | 'export'; limit: number },
@@ -21,8 +45,11 @@ export async function resolveGrant(
   const origin = getNouriLedgerOrigin();
   if (!origin) return { ok: false, response: failure('not_found', 404) };
 
+  let raw: string | null;
+  try { raw = await readBodyLimited(request, MAX_BODY_BYTES); } catch { raw = null; }
+  if (raw === null) return { ok: false, response: failure('invalid_request', 400) };
   let body: unknown = null;
-  try { body = await request.json(); } catch { /* 下方回報 invalid_request */ }
+  try { body = JSON.parse(raw); } catch { /* 下方回報 invalid_request */ }
   let payload;
   try {
     payload = redeemGrant(body, origin, { consume: false });

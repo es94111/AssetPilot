@@ -155,6 +155,48 @@ if (!usable) {
     assert.match(skipped.warnings[0], /^14 張交易照片超過 20 MB/u);
   });
 
+  test('attachments are read a few at a time without crossing their bytes, and an oversized account is rejected before everything is loaded', async () => {
+    const insertUser = (id: string, name: string) => {
+      extraUsers.push(id);
+      db.run('INSERT INTO users(id,email,password_hash,display_name,created_at) VALUES(?,?,?,?,?)', [id, `${id}@nouri-export.invalid`, 'unused', name, new Date().toISOString()]);
+    };
+    const insertAttachment = (id: string, user: string, filename: string, size: number) => db.run(
+      'INSERT INTO transaction_attachments(id,user_id,transaction_id,storage,filename,mime_type,byte_size,created_at) VALUES(?,?,?,?,?,?,?,?)',
+      [id, user, uid(), 'local', filename, 'image/jpeg', size, now],
+    );
+
+    const owner = uid();
+    insertUser(owner, 'Parallel');
+    const ids = Array.from({ length: 10 }, (_, index) => { const id = uid(); insertAttachment(id, owner, `p${index}.jpg`, 8); return id; });
+    let active = 0;
+    let peak = 0;
+    const reader = async (row: Record<string, unknown>) => {
+      active += 1;
+      peak = Math.max(peak, active);
+      await new Promise((resolve) => setTimeout(resolve, 15));
+      active -= 1;
+      return Buffer.from(`b-${String(row.filename)}`.padEnd(8, '_'));
+    };
+    const { buffer } = await exporter.buildAssetPilotPackage(owner, reader);
+    assert.ok(peak > 1, 'reads overlap');
+    assert.ok(peak <= exporter.READ_CONCURRENCY, 'but only a bounded number at a time');
+    const zip = await open(buffer);
+    const metadata = await json(zip, 'data/transaction_attachments.json');
+    assert.deepEqual(metadata.map((row) => row.id), [...ids].sort(), 'the metadata keeps the database order');
+    for (const row of metadata) {
+      assert.equal((await zip.file(`attachments/${String(row.id)}`)!.async('string')), `b-${String(row.filename)}`.padEnd(8, '_'), 'each file carries its own bytes');
+    }
+
+    const crowded = uid();
+    insertUser(crowded, 'Many');
+    for (let index = 0; index < 30; index += 1) insertAttachment(uid(), crowded, `m${index}.jpg`, exporter.MAX_ATTACHMENT_BYTES - 1024);
+    let reads = 0;
+    const big = Buffer.alloc(exporter.MAX_ATTACHMENT_BYTES - 1024, 7);
+    await assert.rejects(() => exporter.buildAssetPilotPackage(crowded, async () => { reads += 1; return big; }), exporter.PackageTooLargeError);
+    assert.ok(reads < 30, `stopped early instead of loading everything (read ${reads} of 30)`);
+    assert.ok(reads <= 13 + exporter.READ_CONCURRENCY, 'at most the batch in which the limit was crossed');
+  });
+
   test('the summary for the confirmation page counts only the account\'s own rows', () => {
     const summary = exporter.summarizeAssetUser(alice)!;
     assert.deepEqual(summary.account, { email: `${alice}@nouri-export.invalid`, name: 'Alice' });

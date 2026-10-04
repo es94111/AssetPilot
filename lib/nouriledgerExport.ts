@@ -27,6 +27,8 @@ const ATTACHMENTS_TABLE = 'transaction_attachments';
 export const MAX_ATTACHMENT_BYTES = 20 * 1024 * 1024;
 /** 低於 NouriLedger 256 MiB 單包上限，留一點餘裕。 */
 export const MAX_PACKAGE_BYTES = 240 * 1024 * 1024;
+/** 同時讀取的附件數（限制記憶體中同時存在的檔案數量）。 */
+export const READ_CONCURRENCY = 4;
 /** NouriLedger 只接受 32 位十六進位的來源使用者 ID（去掉連字號的 UUID）。 */
 export const SOURCE_USER_ID_RE = /^[a-f0-9]{32}$/u;
 
@@ -125,16 +127,24 @@ export async function buildAssetPilotPackage(userId: string, readAttachment: Att
   let unreadable = 0;
   let oversized = 0;
   let resized = 0;
-  for (const row of attachments) {
-    if (typeof row.id !== 'string' || !SOURCE_USER_ID_RE.test(row.id) || typeof row.transaction_id !== 'string' || !row.transaction_id) { unreadable += 1; continue; }
-    let bytes: Buffer | null = null;
-    try { bytes = await readAttachment(row); } catch { bytes = null; }
-    if (!bytes || bytes.length === 0) { unreadable += 1; continue; }
-    if (bytes.length > MAX_ATTACHMENT_BYTES) { oversized += 1; continue; }
-    // 以實際檔案為準：NouriLedger 會拒絕宣告大小與內容不符的附件。
-    let metadata = row;
-    if (Number(row.byte_size) !== bytes.length) { metadata = { ...row, byte_size: String(bytes.length) }; resized += 1; }
-    files.push({ row: metadata, bytes });
+  let loadedBytes = 0;
+  const load = async (row: Row): Promise<{ row: Row; bytes: Buffer | null }> => {
+    if (typeof row.id !== 'string' || !SOURCE_USER_ID_RE.test(row.id) || typeof row.transaction_id !== 'string' || !row.transaction_id) return { row, bytes: null };
+    try { return { row, bytes: await readAttachment(row) }; } catch { return { row, bytes: null }; }
+  };
+  // 讀檔彼此獨立，所以一次讀幾個；結果仍依原順序套用。檔案累計超過上限就立刻中止，不把整個帳號的附件都載入記憶體。
+  for (let start = 0; start < attachments.length; start += READ_CONCURRENCY) {
+    const loaded = await Promise.all(attachments.slice(start, start + READ_CONCURRENCY).map(load));
+    for (const { row, bytes } of loaded) {
+      if (!bytes || bytes.length === 0) { unreadable += 1; continue; }
+      if (bytes.length > MAX_ATTACHMENT_BYTES) { oversized += 1; continue; }
+      loadedBytes += bytes.length;
+      if (loadedBytes > MAX_PACKAGE_BYTES) throw new PackageTooLargeError();
+      // 以實際檔案為準：NouriLedger 會拒絕宣告大小與內容不符的附件。
+      let metadata = row;
+      if (Number(row.byte_size) !== bytes.length) { metadata = { ...row, byte_size: String(bytes.length) }; resized += 1; }
+      files.push({ row: metadata, bytes });
+    }
   }
 
   const warnings: string[] = [];

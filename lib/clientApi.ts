@@ -9,26 +9,15 @@ export async function apiFetch(url: string, options: RequestInit = {}) {
 }
 
 /**
- * 判斷錯誤是否為「連線層失敗」而非伺服器拒絕（007-pwa-offline-entry）。
+ * 只把 fetch 的連線層錯誤分類為可進離線佇列。
  *
- * 以錯誤型別為主要判準：fetch 在離線／DNS 失敗／連線中斷時會 reject 一個
- * TypeError（訊息如 "Failed to fetch"），而 apiFetch 對非 2xx 會拋出一般 Error。
- * 因此 TypeError 一律視為連線問題。
- *
- * `navigator.onLine === false` 只作為次級提示，且僅在錯誤不是「伺服器回應」時採用：
- * navigator.onLine 並不可靠（LAN-only／captive portal／VPN 常誤報離線），若讓它
- * 覆蓋伺服器實際回傳的驗證錯誤（例如 400／409），使用者會看不到真正原因，交易卻被
- * 當成離線項目送往佇列。伺服器回應的錯誤帶有 HTTP 狀態訊息，故明確排除。
+ * 不以 `navigator.onLine` 判斷：該屬性在 LAN-only、VPN、captive portal 等情境常不可靠，
+ * 若伺服器已回覆 4xx 但瀏覽器仍回報 offline，會把驗證失敗誤當成已儲存的離線交易。
+ * 原生 fetch 的網路／DNS／離線失敗會 reject `TypeError`；HTTP 非 2xx 則由 apiFetch
+ * 拋出一般 `Error`，必須讓使用者看到真正的伺服器訊息。
  */
 export function isNetworkError(error: unknown): boolean {
-  if (error instanceof TypeError) return true;
-  // apiFetch 對非 2xx 拋出一般 Error；帶有「HTTP <code>」或伺服器訊息者不是連線問題。
-  if (error instanceof Error && /^HTTP \d{3}$/.test(error.message)) return false;
-  if (typeof navigator !== 'undefined' && navigator.onLine === false) {
-    // 仍可能是連線層失敗（fetch 逾時等），但已排除伺服器明確回應的情形。
-    return true;
-  }
-  return false;
+  return error instanceof TypeError;
 }
 
 export async function apiGet(url: string) {

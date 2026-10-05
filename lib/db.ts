@@ -822,12 +822,15 @@ async function _runMigrations(db: DatabaseLike): Promise<void> {
       "CREATE UNIQUE INDEX IF NOT EXISTS idx_transactions_client_ref ON transactions(user_id, client_ref) WHERE client_ref != ''",
     );
   } catch (indexError) {
-    const indexRow = db.exec(
-      "SELECT indexname FROM pg_indexes WHERE tablename = 'transactions' AND indexname = 'idx_transactions_client_ref'",
+    const indexRows = db.exec(
+      "SELECT indexdef FROM pg_indexes WHERE tablename = 'transactions' AND indexname = 'idx_transactions_client_ref'",
     );
-    if ((indexRow[0]?.values?.length ?? 0) === 0) {
-      throw indexError;
-    }
+    const indexDef = String(indexRows[0]?.values?.[0]?.[0] ?? '');
+    const validIndex =
+      /CREATE UNIQUE INDEX/i.test(indexDef) &&
+      /\(user_id, client_ref\)/i.test(indexDef) &&
+      /WHERE.*client_ref/i.test(indexDef);
+    if (!validIndex) throw indexError;
   }
   alterIgnore(`UPDATE transactions SET ai_created = 1
     WHERE ai_created = 0 AND id IN (

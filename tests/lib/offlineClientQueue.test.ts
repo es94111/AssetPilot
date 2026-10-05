@@ -24,6 +24,8 @@ function installBrowserShim() {
   const windowShim = {
     localStorage: {
       broken: false,
+      get length() { return store.size; },
+      key(index: number) { return [...store.keys()][index] ?? null; },
       getItem(key: string) {
         return store.has(key) ? store.get(key)! : null;
       },
@@ -106,6 +108,7 @@ test('離線排入 → 恢復連線後自動送出：成功項目自佇列移除
   const shim = installBrowserShim();
   try {
     const mod = await import('../../lib/clientOfflineQueue.ts');
+    mod.setOfflineQueueUser('sync-user');
 
     const received: string[] = [];
     window.addEventListener('assetpilot:data-changed', (event) => {
@@ -134,7 +137,7 @@ test('離線排入 → 恢復連線後自動送出：成功項目自佇列移除
 
     assert.deepEqual(summary, { pending: 0, failed: 0, total: 0 });
     assert.equal(mod.getQueue().length, 0, '成功項目應自佇列移除');
-    assert.deepEqual(received, ['transactions'], '成功送出後應派送一次 data-changed');
+    assert.deepEqual(received, ['transactions:offline-sync'], '成功送出後應派送 offline-sync data-changed');
   } finally {
     shim.restore();
   }
@@ -144,6 +147,7 @@ test('可重試失敗（網路層）：留在佇列並累積嘗試次數', async
   const shim = installBrowserShim();
   try {
     const mod = await import('../../lib/clientOfflineQueue.ts');
+    mod.setOfflineQueueUser('network-failure-user');
     shim.setOnline(true);
     shim.setResponder(() => ({ status: 0, throws: true }));
     const { item } = mod.enqueueOffline('transaction', { amount: 1 });
@@ -166,6 +170,7 @@ test('5xx 視為可重試；4xx 視為不可重試並停止本輪送出', async 
   const shim = installBrowserShim();
   try {
     const mod = await import('../../lib/clientOfflineQueue.ts');
+    mod.setOfflineQueueUser('status-failure-user');
     shim.setOnline(true);
 
     shim.setResponder(() => ({ status: 503 }));
@@ -198,6 +203,7 @@ test('retryItem 讓使用者重試失敗項目並在成功後清空', async () =
   const shim = installBrowserShim();
   try {
     const mod = await import('../../lib/clientOfflineQueue.ts');
+    mod.setOfflineQueueUser('retry-user');
     shim.setOnline(true);
     shim.setResponder(() => ({ status: 400, json: { error: '資料錯誤' } }));
     mod.enqueueOffline('transaction', { amount: 1 });
@@ -220,12 +226,38 @@ test('discardItem 由使用者放棄項目', async () => {
   const shim = installBrowserShim();
   try {
     const mod = await import('../../lib/clientOfflineQueue.ts');
+    mod.setOfflineQueueUser('discard-user');
     const { item } = mod.enqueueOffline('transaction', { amount: 1 });
     assert.equal(mod.getQueue().length, 1);
     mod.discardItem(item.id);
     assert.equal(mod.getQueue().length, 0);
     // 持久化層也應同步（重新解析仍是空的）。
     assert.deepEqual(JSON.parse(shim.store.get(STORAGE_KEY) ?? '[]'), []);
+  } finally {
+    shim.restore();
+  }
+});
+
+test('在線連線錯誤後入列會立即重試，不必等待下一個 online 事件', async () => {
+  const shim = installBrowserShim();
+  try {
+    const mod = await import('../../lib/clientOfflineQueue.ts');
+    mod.setOfflineQueueUser('auto-flush-user');
+    shim.setOnline(true);
+    const stop = mod.startOfflineSync(() => {});
+    try {
+      const { persisted } = mod.enqueueOffline('transaction', { amount: 42 });
+      assert.equal(persisted, true);
+      // queue-change 應立即觸發 flush；等待背景 Promise 微任務完成。
+      for (let i = 0; i < 20 && mod.getQueue().length > 0; i += 1) {
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      }
+      assert.equal(shim.calls.length, 1, '入列後應立即送出一次');
+      assert.equal(mod.getQueue().length, 0, '成功送出後佇列應清空');
+    } finally {
+      stop();
+      mod.setOfflineQueueUser(null);
+    }
   } finally {
     shim.restore();
   }
@@ -240,6 +272,13 @@ test('切換使用者會清除前一位使用者尚未同步的佇列（避免�
     mod.enqueueOffline('transaction', { amount: 999, note: 'A 的離線交易' });
     assert.equal(mod.getQueue().length, 1);
     assert.ok(shim.store.has('assetpilot.offlineQueue.user-a'));
+
+    // 登出後停用自動同步但保留本人未同步資料，重新登入同一帳號可恢復。
+    mod.notifyOfflineQueueLogout();
+    assert.equal(mod.getQueue().length, 0, '登出時不應再向網路送出佇列');
+    assert.ok(shim.store.has('assetpilot.offlineQueue.user-a'), '同一使用者重新登入仍可恢復佇列');
+    mod.setOfflineQueueUser('user-a');
+    assert.equal(mod.getQueue().length, 1);
 
     // 同一裝置換使用者登入：前一位的資料必須消失，且不會殘留在自己的鍵之下。
     mod.setOfflineQueueUser('user-b');
@@ -271,10 +310,16 @@ test('本機儲存不可用時 enqueueOffline 回報未持久化（不可謊稱�
   const shim = installBrowserShim();
   try {
     const mod = await import('../../lib/clientOfflineQueue.ts');
+    // 模擬登出後未綁定使用者：不可寫入共用 base key 或謊稱成功。
+    mod.notifyOfflineQueueLogout();
+    const { persisted } = mod.enqueueOffline('transaction', { amount: 1 });
+    assert.equal(persisted, false);
+    assert.equal(mod.getQueue().length, 0);
+    mod.setOfflineQueueUser('storage-failure-user');
     // 模擬隱私模式／配額用盡：寫入不生效（setItem 靜默失敗）。
     shim.breakStorage();
-    const { persisted } = mod.enqueueOffline('transaction', { amount: 1 });
-    assert.equal(persisted, false, '無法寫入時應回報 persisted=false');
+    const result = mod.enqueueOffline('transaction', { amount: 1 });
+    assert.equal(result.persisted, false, '無法寫入時應回報 persisted=false');
     assert.equal(mod.getQueue().length, 0, '未持久化即代表資料不在佇列中');
   } finally {
     shim.restore();

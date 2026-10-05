@@ -12,9 +12,13 @@
  *（iOS Safari 尚未支援，且前端已有 online 事件重送機制）。
  */
 
-const VERSION = 'v1';
+const VERSION = 'v4.113.0';
 const SHELL_CACHE = `assetpilot-shell-${VERSION}`;
 const OFFLINE_URL = '/offline';
+// 每次 service worker 啟用週期至多 revalidate 一次離線頁，避免已安裝用戶在
+// SW cache key 未變的部署後長期看到舊版內容；也避免每次導覽都多打一個請求。
+let shellRevalidated = false;
+let shellRevalidationInFlight = false;
 
 /** App Shell：安裝時必定快取的公開靜態資源（不含任何使用者資料）。 */
 const SHELL_ASSETS = [
@@ -90,7 +94,15 @@ async function fetchAndCache(request) {
 /** 導覽請求：network-first；離線時只回退離線說明頁，絕不回退已登入頁面。 */
 async function handleNavigation(request) {
   try {
-    return await fetch(request);
+    const response = await fetch(request);
+    // 僅快取公開的離線說明頁，且每次線上導覽成功後更新快取；一般已登入 HTML
+    // 永不快取，避免共用裝置離線時洩漏財務畫面。此更新亦確保 SW bytes／VERSION
+    // 未變的部署仍能更新 `/offline` 內容。
+    if (new URL(request.url).pathname === OFFLINE_URL && response && response.ok && response.type === 'basic') {
+      const cache = await caches.open(SHELL_CACHE);
+      await cache.put(OFFLINE_URL, response.clone());
+    }
+    return response;
   } catch {
     const shell = await caches.match(OFFLINE_URL);
     if (shell) return shell;
@@ -133,6 +145,17 @@ self.addEventListener('fetch', (event) => {
   if (url.pathname.startsWith('/api/')) return;
 
   if (request.mode === 'navigate') {
+    // 每次 SW 啟用週期成功後至多 revalidate 一次離線頁；失敗（例如使用者離線）時
+    // 不標記完成，下一次導覽仍會重試。Cache key 版本另於每次 release 同步更新。
+    if (!shellRevalidated && !shellRevalidationInFlight) {
+      shellRevalidationInFlight = true;
+      event.waitUntil(
+        fetchAndCache(OFFLINE_URL)
+          .then(() => { shellRevalidated = true; })
+          .catch(() => undefined)
+          .finally(() => { shellRevalidationInFlight = false; })
+      );
+    }
     event.respondWith(handleNavigation(request));
     return;
   }

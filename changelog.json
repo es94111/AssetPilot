@@ -13,7 +13,7 @@
         },
         {
           "tag": "added",
-          "text": "新增離線記帳：沒有網路時新增的收支與轉帳會先存入本機佇列，恢復連線後自動送出並以 Toast 提示。"
+          "text": "離線記帳：沒有網路時新增的收支與轉帳會先存入依使用者分隔的本機佇列，寫入後回讀驗證；切換帳號時清除前一位使用者未同步資料，恢復連線後自動送出並以 Toast 提示。儲存空間不可用時明確提示失敗，不會謊稱已保存。"
         },
         {
           "tag": "added",
@@ -21,7 +21,7 @@
         },
         {
           "tag": "security",
-          "text": "Service Worker 僅快取公開靜態資源，不快取 API 回應與已登入頁面，避免顯示過期餘額或在共用裝置外洩帳戶畫面；CSP 新增 worker-src 與 manifest-src，維持既有 default-src 'self' 不變。"
+          "text": "Service Worker 僅快取公開靜態資源，不快取 API 回應與已登入頁面，避免顯示過期餘額或在共用裝置外洩帳戶畫面；固定路徑的公開靜態資源於每次啟用週期背景重新驗證，並以與 `changelog.json.currentVersion` 一致的 cache version 清除舊殼層；CSP 新增 worker-src 與 manifest-src，維持既有 default-src 'self' 不變。"
         }
       ]
     },

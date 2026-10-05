@@ -248,7 +248,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
     const goOnline = () => setOffline(false);
     const onDataChanged = (event: Event) => {
       const scope = (event as CustomEvent<{ scope?: string }>).detail?.scope;
-      if (!scope || scope === 'transactions') void load();
+      if (scope === 'transactions:offline-sync') void load();
     };
     window.addEventListener('offline', goOffline);
     window.addEventListener('online', goOnline);

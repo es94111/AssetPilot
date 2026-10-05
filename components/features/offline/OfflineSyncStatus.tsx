@@ -16,7 +16,9 @@ import { useToast } from '@/components/ui/Toast';
 import {
   discardItem,
   getFailedItems,
+  OFFLINE_QUEUE_LOGOUT_SIGNAL,
   retryItem,
+  setOfflineQueueUser,
   startOfflineSync,
 } from '@/lib/clientOfflineQueue';
 import type { OfflineQueueItem, QueueSummary } from '@/lib/offlineQueueCore';
@@ -25,7 +27,7 @@ function isBrowserOffline(): boolean {
   return typeof navigator !== 'undefined' && navigator.onLine === false;
 }
 
-export default function OfflineSyncStatus() {
+export default function OfflineSyncStatus({ userId }: { userId: string }) {
   const { t } = useT();
   const showToast = useToast();
   const [summary, setSummary] = useState<QueueSummary>({ pending: 0, failed: 0, total: 0 });
@@ -33,11 +35,25 @@ export default function OfflineSyncStatus() {
   const [offline, setOffline] = useState(isBrowserOffline);
 
   useEffect(() => {
+    // 身分切換／清理必須先於自動同步，否則子元件的 effect 可能在 AppLayout
+    // 綁定 userId 前先以舊／未綁定的 key 讀取並送出佇列。
+    setOfflineQueueUser(userId);
     const stop = startOfflineSync((next) => {
       setSummary(next);
       setFailed(getFailedItems());
     });
     return stop;
+  }, [userId]);
+
+  useEffect(() => {
+    const onStorage = (event: StorageEvent) => {
+      if (event.key === OFFLINE_QUEUE_LOGOUT_SIGNAL && event.newValue) {
+        // 同一瀏覽器的其他分頁共用 auth cookie；任何分頁登出時皆停止本頁同步。
+        setOfflineQueueUser(null);
+      }
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
   }, []);
 
   useEffect(() => {

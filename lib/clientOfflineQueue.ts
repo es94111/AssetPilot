@@ -30,8 +30,9 @@ import {
 import { notifyDataChanged } from './clientApi';
 
 const STORAGE_PREFIX = 'assetpilot.offlineQueue';
-// 舊版未區分使用者的固定鍵；升級後清除，避免跨使用者殘留財務資料。
+/** 舊版未區分使用者的固定鍵；登入時一次性清除，避免跨使用者殘留財務資料。 */
 const LEGACY_STORAGE_KEY = 'assetpilot.offlineQueue.v1';
+export const OFFLINE_QUEUE_LOGOUT_SIGNAL = 'assetpilot.offlineQueue.logout';
 
 // 目前登入使用者。佇列以使用者區分，避免共用裝置上把前一位使用者的財務資料
 // 在下一位使用者登入後送出（見 setOfflineQueueUser）。
@@ -50,18 +51,46 @@ function storageKey(): string {
 export function setOfflineQueueUser(userId: string | null): void {
   const next = userId ? String(userId) : null;
   if (next === activeUserId) return;
-  // 先清掉「舊」使用者的鍵，再切換身分。
   if (typeof window !== 'undefined') {
     try {
-      window.localStorage.removeItem(storageKey());
-      // 一次性移除舊版未區分使用者的殘留資料。
+      // 移除未綁定使用者的 base key 與舊版固定 key，避免登出後在匿名狀態下再次入列。
+      window.localStorage.removeItem(STORAGE_PREFIX);
       window.localStorage.removeItem(LEGACY_STORAGE_KEY);
+      // 直接切換登入者時清除舊使用者佇列；登出（next=null）則先保留本人 key，讓同一
+      // 使用者重新登入可恢復未同步項目。下一位使用者登入時會清除所有其他 user keys。
+      if (activeUserId && next && next !== activeUserId) {
+        window.localStorage.removeItem(`${STORAGE_PREFIX}.${activeUserId}`);
+      }
+      if (next) {
+        const keepKey = `${STORAGE_PREFIX}.${next}`;
+        const staleKeys: string[] = [];
+        for (let i = 0; i < window.localStorage.length; i += 1) {
+          const key = window.localStorage.key(i);
+          if (key?.startsWith(`${STORAGE_PREFIX}.`) && key !== LEGACY_STORAGE_KEY && key !== keepKey) {
+            staleKeys.push(key);
+          }
+        }
+        for (const key of staleKeys) window.localStorage.removeItem(key);
+        // 一次性清除舊版未分隔使用者的佇列。
+        window.localStorage.removeItem(LEGACY_STORAGE_KEY);
+      }
     } catch {
-      /* 無法存取儲存空間時無資料可清 */
+      /* 儲存空間不可用時仍切換記憶體身分；未綁定 user id 時同步會 fail closed */
     }
     window.dispatchEvent(new CustomEvent(OFFLINE_QUEUE_EVENT));
   }
   activeUserId = next;
+}
+
+/** 登出時先停用本頁佇列並通知其他分頁，防止共用 cookie 切換身分後仍送出舊資料。 */
+export function notifyOfflineQueueLogout(): void {
+  setOfflineQueueUser(null);
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(OFFLINE_QUEUE_LOGOUT_SIGNAL, String(Date.now()));
+  } catch {
+    /* 跨分頁通知不可用時，本分頁仍已停用佇列 */
+  }
 }
 
 /** 佇列變更事件（同頁多個元件共用一份狀態）。 */
@@ -83,7 +112,7 @@ function readQueue(): OfflineQueueItem[] {
 }
 
 /** 寫入並回讀驗證；回傳是否確實持久化（供呼叫端決定能否顯示「已儲存」）。 */
-function writeQueue(items: OfflineQueueItem[]): boolean {
+function writeQueue(items: OfflineQueueItem[], syncItemId?: string): boolean {
   if (typeof window === 'undefined') return false;
   let persisted = false;
   try {
@@ -96,7 +125,7 @@ function writeQueue(items: OfflineQueueItem[]): boolean {
   } catch {
     persisted = false;
   }
-  window.dispatchEvent(new CustomEvent(OFFLINE_QUEUE_EVENT));
+  window.dispatchEvent(new CustomEvent(OFFLINE_QUEUE_EVENT, { detail: { syncItemId } }));
   return persisted;
 }
 
@@ -118,7 +147,10 @@ export function enqueueOffline(
   payload: Record<string, unknown>
 ): { item: OfflineQueueItem; persisted: boolean } {
   const item = createQueueItem({ kind, payload, now: Date.now() });
-  const persisted = writeQueue(enqueue(readQueue(), item));
+  // 未綁定已驗證使用者（登出／跨分頁身分切換期間）一律 fail closed，不能寫入
+  // 共用 base key，否則下一位使用者可能在不知情下收到這筆離線交易。
+  if (!activeUserId) return { item, persisted: false };
+  const persisted = writeQueue(enqueue(readQueue(), item), item.id);
   return { item, persisted };
 }
 
@@ -128,7 +160,7 @@ export function discardItem(id: string): void {
 
 export function retryItem(id: string): void {
   writeQueue(resetForRetry(readQueue(), id));
-  void flushOfflineQueue();
+  void flushOfflineQueue(new Set([id]));
 }
 
 /** 是否處於離線（或瀏覽器不支援時視為在線，交由實際 fetch 決定）。 */
@@ -183,14 +215,21 @@ let flushInFlight: Promise<QueueSummary> | null = null;
  * 嘗試送出佇列中所有待處理項目（依建立順序，避免轉帳腳與其收支交錯）。
  * 併發呼叫共用同一個 in-flight promise，避免重複送出。
  */
-export async function flushOfflineQueue(): Promise<QueueSummary> {
+export async function flushOfflineQueue(onlyIds?: Set<string>): Promise<QueueSummary> {
   if (flushInFlight) return flushInFlight;
   flushInFlight = (async () => {
+    const ownerId = activeUserId;
     const changedScopes = new Set<string>();
     const successfulIds: string[] = [];
+    const candidates = ownerId
+      ? pendingItems(readQueue()).filter((item) => !onlyIds || onlyIds.has(item.id))
+      : [];
 
-    for (const item of pendingItems(readQueue())) {
+    for (const item of candidates) {
+      // 登出／另一個分頁切換帳號時，不可把舊使用者佇列的後續項目帶到新 session。
+      if (!ownerId || activeUserId !== ownerId) break;
       const outcome = await sendItem(item);
+      if (activeUserId !== ownerId) break;
       if (outcome.ok) {
         successfulIds.push(item.id);
         if (outcome.scope) changedScopes.add(outcome.scope);
@@ -205,11 +244,13 @@ export async function flushOfflineQueue(): Promise<QueueSummary> {
       }
     }
 
-    if (successfulIds.length > 0) {
+    if (successfulIds.length > 0 && activeUserId === ownerId) {
       let remaining = readQueue();
       for (const id of successfulIds) remaining = removeItem(remaining, id);
       writeQueue(remaining);
-      for (const scope of changedScopes) notifyDataChanged(scope);
+      // 僅在離線同步成功時派送專用 scope：TransactionsClient 會刷新交易清單；
+      // 一般線上儲存路徑已自行 reload，不能共用同一個 scope 以免重複請求／舊頁覆寫。
+      for (const scope of changedScopes) notifyDataChanged(`${scope}:offline-sync`);
     }
 
     return summarizeQueue(readQueue());
@@ -246,11 +287,16 @@ export function startOfflineSync(onSummary: (summary: QueueSummary) => void): ()
     const pending = pendingItems(readQueue());
     if (pending.length === 0) return;
     const maxAttempts = Math.max(...pending.map((item) => item.attempts));
-    timer = setTimeout(() => void run(), retryDelayMs(maxAttempts + 1));
+    timer = setTimeout(() => void run(), retryDelayMs(maxAttempts));
   };
 
   const run = async () => {
     if (disposed) return;
+    // Fail closed while logged out or before the authenticated user is bound.
+    if (!activeUserId) {
+      onSummary({ pending: 0, failed: 0, total: 0 });
+      return;
+    }
     if (isOffline()) {
       onSummary(getQueueSummary());
       return;
@@ -261,7 +307,30 @@ export function startOfflineSync(onSummary: (summary: QueueSummary) => void): ()
   };
 
   const handleOnline = () => void run();
-  const handleQueueChange = () => onSummary(getQueueSummary());
+  const handleQueueChange = (event: Event) => {
+    const summary = getQueueSummary();
+    onSummary(summary);
+    const syncItemId = (event as CustomEvent<{ syncItemId?: string }>).detail?.syncItemId;
+    if (!syncItemId || isOffline()) return;
+
+    if (!flushInFlight) {
+      void run();
+      return;
+    }
+
+    // If an enqueue happened while an unrelated flush was already in-flight, that flush's
+    // candidate snapshot cannot contain the new id. Wait for it, then send this item alone
+    // so transient network failures do not leave it pending until a future `online` event.
+    void (async () => {
+      const currentFlush = flushInFlight;
+      if (currentFlush) await currentFlush.catch(() => undefined);
+      await Promise.resolve();
+      if (disposed || isOffline() || !pendingItems(readQueue()).some((item) => item.id === syncItemId)) return;
+      const next = await flushOfflineQueue(new Set([syncItemId]));
+      onSummary(next);
+      scheduleNext();
+    })();
+  };
 
   window.addEventListener('online', handleOnline);
   window.addEventListener(OFFLINE_QUEUE_EVENT, handleQueueChange);

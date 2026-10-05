@@ -4834,4 +4834,8 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get featuresPwaInstallAction => 'इंस्टॉल';
+
+  @override
+  String get featuresOfflineListUnavailable =>
+      'आप ऑफ़लाइन हैं, इसलिए लेन-देन सूची लोड नहीं हो सकती। ऑफ़लाइन जोड़े गए लेन-देन फिर से कनेक्ट होने पर सिंक हो जाते हैं।';
 }

@@ -4821,4 +4821,8 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get featuresPwaInstallAction => 'تثبيت';
+
+  @override
+  String get featuresOfflineListUnavailable =>
+      'أنت غير متصل، لذا لا يمكن تحميل قائمة المعاملات. تتم مزامنة المعاملات المضافة دون اتصال تلقائيًا عند عودة الاتصال.';
 }

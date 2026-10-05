@@ -7437,5 +7437,10 @@
   "@featuresPwaInstallAction": {
     "description": "Web path: features.pwa.installAction",
     "x-webPath": "features.pwa.installAction"
+  },
+  "featuresOfflineListUnavailable": "Você está offline, então a lista de transações não pode ser carregada. As transações adicionadas offline sincronizam ao reconectar.",
+  "@featuresOfflineListUnavailable": {
+    "description": "Web path: features.offline.listUnavailable",
+    "x-webPath": "features.offline.listUnavailable"
   }
 }

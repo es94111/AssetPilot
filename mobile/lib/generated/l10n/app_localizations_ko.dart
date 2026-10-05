@@ -4689,4 +4689,8 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get featuresPwaInstallAction => '설치';
+
+  @override
+  String get featuresOfflineListUnavailable =>
+      '오프라인 상태라 거래 목록을 불러올 수 없습니다. 오프라인에서 추가한 거래는 다시 연결되면 자동으로 동기화됩니다.';
 }

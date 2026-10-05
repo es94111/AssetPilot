@@ -1192,6 +1192,7 @@ export const zhTW = {
       pageTitle: "目前離線",
       pageBody: "你的裝置目前沒有網路連線。已快取的頁面仍可開啟；離線新增的交易會在恢復連線後自動同步。",
       pageAction: "前往交易記錄",
+      listUnavailable: "目前離線，無法載入交易清單；離線新增的交易會在恢復連線後自動同步。",
     },
     pwa: {
       installTitle: "安裝 AssetPilot",

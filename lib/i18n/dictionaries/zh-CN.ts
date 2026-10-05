@@ -1194,6 +1194,7 @@ export const zhCN = {
       pageTitle: "当前离线",
       pageBody: "你的设备当前没有网络连线。已缓存的页面仍可打开；离线新增的交易会在恢复连线后自动同步。",
       pageAction: "前往交易记录",
+      listUnavailable: "当前离线，无法载入交易清单；离线新增的交易会在恢复连线后自动同步。",
     },
     pwa: {
       installTitle: "安装 AssetPilot",

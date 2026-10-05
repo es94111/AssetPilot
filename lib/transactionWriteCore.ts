@@ -195,6 +195,8 @@ export interface InsertTransferPairResult {
  * 依 (user_id, client_ref) 找回已寫入的轉帳配對（007-pwa-offline-entry）。
  * 形狀與 `insertTransferPair` 的新建結果完全一致，讓重送無法被前端察覺。
  *
+ * client_ref 只寫在 transfer_out 腳（見下方 insertTransferPair 註解），故先以
+ * client_ref 找出轉出腳，再沿 linked_id 取回轉入腳。
  * 僅 SELECT 基底 CREATE TABLE 即保證存在的欄位，避開 `to_account_id` 與
  * `transfer_to_account_id` 兩種命名在新舊部署間的分歧；轉出腳的 toAccountId
  * 語意等同轉入腳的 accountId，故直接由配對關係推導。
@@ -209,10 +211,12 @@ function findExistingTransferByClientRef(
     [userId, clientRef],
   );
   if (!outRow) return null;
-  const inRow = queryOne(
-    "SELECT id, account_id, amount, currency, date, linked_id, updated_at FROM transactions WHERE user_id = ? AND client_ref = ? AND type = 'transfer_in'",
-    [userId, clientRef],
-  );
+  const inRow = outRow.linked_id
+    ? queryOne(
+        "SELECT id, account_id, amount, currency, date, linked_id, updated_at FROM transactions WHERE user_id = ? AND id = ? AND type = 'transfer_in'",
+        [userId, outRow.linked_id],
+      )
+    : null;
   const leg = (
     row: Record<string, string | number | null>,
     toAccountId: string,
@@ -290,7 +294,9 @@ export function insertTransferPair(
         input.note,
         outId,
         input.aiCreated ? 1 : 0,
-        input.clientRef || "",
+        // client_ref 僅寫在轉出腳：唯一索引為 (user_id, client_ref)，若兩腳都寫同一
+        // 值，轉入腳會撞唯一鍵而使整組轉帳 rollback（離線轉帳將永遠失敗）。
+        "",
         now,
         now,
       ],

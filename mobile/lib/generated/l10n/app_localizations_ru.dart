@@ -4900,4 +4900,8 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get featuresPwaInstallAction => 'Установить';
+
+  @override
+  String get featuresOfflineListUnavailable =>
+      'Нет подключения, поэтому список операций не загружается. Операции, добавленные офлайн, синхронизируются после подключения.';
 }

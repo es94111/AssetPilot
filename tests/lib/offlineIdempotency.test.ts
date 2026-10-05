@@ -18,9 +18,21 @@ if (!DB_URL) {
 } else {
   const { initDB, getDB, queryOne, queryAll } = await import('../../lib/db.ts');
   const { uid } = await import('../../lib/userDefaults.ts');
-  const { insertIncomeExpenseTransaction } = await import('../../lib/transactionWriteCore.ts');
+  const { insertIncomeExpenseTransaction, insertTransferPair } = await import('../../lib/transactionWriteCore.ts');
 
   await initDB();
+
+  // 既有部署的 transactions 同時有 to_account_id 與 transfer_to_account_id 兩種命名
+  //（見歷史 SQLite schema 的 rebuild）；但新版全新 PostgreSQL 只建 transfer_to_account_id，
+  // 而 insertTransferPair 仍寫入 to_account_id，導致「全新 DB 無法建立轉帳」是既有問題
+  //（與本功能無關，已於 PR 說明）。此處偵測該環境限制：若 to_account_id 不存在，就略過
+  // 轉帳去重測試，避免把既有問題誤判為本次回歸。
+  const hasLegacyToAccountColumn = Boolean(
+    queryOne(
+      "SELECT column_name FROM information_schema.columns WHERE table_name = 'transactions' AND column_name = 'to_account_id'",
+    ),
+  );
+
   after(() => { getDB().close(); });
 
   function cleanup(userId: string): void {
@@ -130,6 +142,61 @@ if (!DB_URL) {
         [userId],
       );
       assert.equal(empties.length, 2);
+    } finally {
+      cleanup(userId);
+    }
+  });
+
+  test('轉帳冪等：相同 client_ref 重送僅一組配對，且 client_ref 只落在轉出腳', { skip: !hasLegacyToAccountColumn ? '此環境缺少 to_account_id 欄位（既有問題，非本次回歸）' : false }, () => {
+    const userId = 'test_offline_idem_tr_' + uid();
+    const fromAccountId = uid();
+    const toAccountId = uid();
+    const clientRef = 'c1c2c3d4e5f60718293a4b5c6d7e8f92';
+    seedUser(userId, fromAccountId);
+    getDB().run(
+      'INSERT INTO accounts (id, user_id, name, currency) VALUES (?,?,?,?)',
+      [toAccountId, userId, '轉入帳戶', 'TWD'],
+    );
+    try {
+      const first = insertTransferPair({
+        userId,
+        fromAccountId,
+        toAccountId,
+        fromCurrency: 'TWD',
+        toCurrency: 'TWD',
+        twdAmount: 500,
+        originalAmount: 500,
+        fxRate: '1',
+        date: '2026-10-05',
+        note: '離線轉帳',
+        clientRef,
+      });
+      // 唯一索引為 (user_id, client_ref)：若兩腳都寫同一 client_ref，轉入腳會撞唯一鍵
+      // 而使整組 rollback —— 這裡同時驗證兩腳都成功寫入。
+      const second = insertTransferPair({
+        userId,
+        fromAccountId,
+        toAccountId,
+        fromCurrency: 'TWD',
+        toCurrency: 'TWD',
+        twdAmount: 500,
+        originalAmount: 500,
+        fxRate: '1',
+        date: '2026-10-05',
+        note: '離線轉帳',
+        clientRef,
+      });
+      assert.equal(second.transferOut.id, first.transferOut.id, '重送應回傳同一轉出腳');
+      assert.equal(second.transferIn.id, first.transferIn.id, '重送應回傳同一轉入腳');
+
+      const legs = queryAll(
+        'SELECT id, type, client_ref FROM transactions WHERE user_id = ? ORDER BY type',
+        [userId],
+      );
+      assert.equal(legs.length, 2, '重送不應新增配對，應恆為兩腳');
+      const withRef = legs.filter((row) => String(row.client_ref) === clientRef);
+      assert.equal(withRef.length, 1, 'client_ref 僅能落在一個轉出腳');
+      assert.equal(String(withRef[0].type), 'transfer_out');
     } finally {
       cleanup(userId);
     }

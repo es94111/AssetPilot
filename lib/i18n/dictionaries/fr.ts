@@ -1194,6 +1194,7 @@ export const fr = {
       pageTitle: "Vous êtes hors ligne",
       pageBody: "Cet appareil n’a pas de connexion réseau. Les pages en cache restent accessibles et les transactions hors ligne se synchronisent au retour de la connexion.",
       pageAction: "Aller aux transactions",
+      listUnavailable: "Vous êtes hors ligne, la liste des transactions ne peut pas se charger. Les transactions ajoutées hors ligne se synchronisent au retour de la connexion.",
     },
     pwa: {
       installTitle: "Installer AssetPilot",

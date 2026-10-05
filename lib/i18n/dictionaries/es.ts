@@ -1194,6 +1194,7 @@ export const es = {
       pageTitle: "Estás sin conexión",
       pageBody: "Este dispositivo no tiene conexión de red. Las páginas en caché siguen abriéndose y las transacciones sin conexión se sincronizan al reconectar.",
       pageAction: "Ir a transacciones",
+      listUnavailable: "Estás sin conexión, por lo que la lista de transacciones no puede cargarse. Las transacciones añadidas sin conexión se sincronizan al reconectar.",
     },
     pwa: {
       installTitle: "Instalar AssetPilot",

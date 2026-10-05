@@ -4930,4 +4930,8 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get featuresPwaInstallAction => 'Installer';
+
+  @override
+  String get featuresOfflineListUnavailable =>
+      'Vous êtes hors ligne, la liste des transactions ne peut pas se charger. Les transactions ajoutées hors ligne se synchronisent au retour de la connexion.';
 }

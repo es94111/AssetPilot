@@ -4838,4 +4838,8 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get featuresPwaInstallAction => 'Install';
+
+  @override
+  String get featuresOfflineListUnavailable =>
+      'You are offline, so the transaction list cannot load. Transactions added offline sync automatically once you reconnect.';
 }

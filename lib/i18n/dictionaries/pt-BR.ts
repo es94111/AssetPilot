@@ -1194,6 +1194,7 @@ export const ptBR = {
       pageTitle: "Você está offline",
       pageBody: "Este dispositivo não tem conexão de rede. Páginas em cache continuam abrindo, e as transações offline sincronizam quando você se reconectar.",
       pageAction: "Ir para transações",
+      listUnavailable: "Você está offline, então a lista de transações não pode ser carregada. As transações adicionadas offline sincronizam ao reconectar.",
     },
     pwa: {
       installTitle: "Instalar o AssetPilot",

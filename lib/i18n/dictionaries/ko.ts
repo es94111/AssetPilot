@@ -1194,6 +1194,7 @@ export const ko = {
       pageTitle: "오프라인 상태입니다",
       pageBody: "이 기기에 네트워크 연결이 없습니다. 캐시된 페이지는 계속 열리고, 오프라인 거래는 다시 연결되면 자동으로 동기화됩니다.",
       pageAction: "거래 내역으로 이동",
+      listUnavailable: "오프라인 상태라 거래 목록을 불러올 수 없습니다. 오프라인에서 추가한 거래는 다시 연결되면 자동으로 동기화됩니다.",
     },
     pwa: {
       installTitle: "AssetPilot 설치",

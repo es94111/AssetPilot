@@ -7437,5 +7437,10 @@
   "@featuresPwaInstallAction": {
     "description": "Web path: features.pwa.installAction",
     "x-webPath": "features.pwa.installAction"
+  },
+  "featuresOfflineListUnavailable": "当前离线，无法载入交易清单；离线新增的交易会在恢复连线后自动同步。",
+  "@featuresOfflineListUnavailable": {
+    "description": "Web path: features.offline.listUnavailable",
+    "x-webPath": "features.offline.listUnavailable"
   }
 }

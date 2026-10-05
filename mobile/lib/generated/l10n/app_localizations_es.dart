@@ -4930,4 +4930,8 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get featuresPwaInstallAction => 'Instalar';
+
+  @override
+  String get featuresOfflineListUnavailable =>
+      'Estás sin conexión, por lo que la lista de transacciones no puede cargarse. Las transacciones añadidas sin conexión se sincronizan al reconectar.';
 }

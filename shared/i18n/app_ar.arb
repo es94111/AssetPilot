@@ -7437,5 +7437,10 @@
   "@featuresPwaInstallAction": {
     "description": "Web path: features.pwa.installAction",
     "x-webPath": "features.pwa.installAction"
+  },
+  "featuresOfflineListUnavailable": "أنت غير متصل، لذا لا يمكن تحميل قائمة المعاملات. تتم مزامنة المعاملات المضافة دون اتصال تلقائيًا عند عودة الاتصال.",
+  "@featuresOfflineListUnavailable": {
+    "description": "Web path: features.offline.listUnavailable",
+    "x-webPath": "features.offline.listUnavailable"
   }
 }

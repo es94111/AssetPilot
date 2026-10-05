@@ -4618,6 +4618,10 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get featuresPwaInstallAction => '安裝';
+
+  @override
+  String get featuresOfflineListUnavailable =>
+      '目前離線，無法載入交易清單；離線新增的交易會在恢復連線後自動同步。';
 }
 
 /// The translations for Chinese, as used in China, using the Han script (`zh_Hans_CN`).
@@ -9230,6 +9234,10 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
 
   @override
   String get featuresPwaInstallAction => '安装';
+
+  @override
+  String get featuresOfflineListUnavailable =>
+      '当前离线，无法载入交易清单；离线新增的交易会在恢复连线后自动同步。';
 }
 
 /// The translations for Chinese, as used in Taiwan, using the Han script (`zh_Hant_TW`).
@@ -13846,4 +13854,8 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
 
   @override
   String get featuresPwaInstallAction => '安裝';
+
+  @override
+  String get featuresOfflineListUnavailable =>
+      '目前離線，無法載入交易清單；離線新增的交易會在恢復連線後自動同步。';
 }

@@ -4899,6 +4899,10 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get featuresPwaInstallAction => 'Instalar';
+
+  @override
+  String get featuresOfflineListUnavailable =>
+      'Você está offline, então a lista de transações não pode ser carregada. As transações adicionadas offline sincronizam ao reconectar.';
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -9787,4 +9791,8 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get featuresPwaInstallAction => 'Instalar';
+
+  @override
+  String get featuresOfflineListUnavailable =>
+      'Você está offline, então a lista de transações não pode ser carregada. As transações adicionadas offline sincronizam ao reconectar.';
 }

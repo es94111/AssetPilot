@@ -1194,6 +1194,7 @@ export const en = {
       pageTitle: "You are offline",
       pageBody: "This device has no network connection. Cached pages still open, and offline transactions sync automatically once you reconnect.",
       pageAction: "Go to transactions",
+      listUnavailable: "You are offline, so the transaction list cannot load. Transactions added offline sync automatically once you reconnect.",
     },
     pwa: {
       installTitle: "Install AssetPilot",

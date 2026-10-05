@@ -8454,6 +8454,12 @@ abstract class AppLocalizations {
   /// In zh_Hant_TW, this message translates to:
   /// **'安裝'**
   String get featuresPwaInstallAction;
+
+  /// Web path: features.offline.listUnavailable
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'目前離線，無法載入交易清單；離線新增的交易會在恢復連線後自動同步。'**
+  String get featuresOfflineListUnavailable;
 }
 
 class _AppLocalizationsDelegate

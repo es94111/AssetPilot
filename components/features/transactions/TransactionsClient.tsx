@@ -154,6 +154,8 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
   const [editAttachments, setEditAttachments] = useState<AttachmentItem[]>([]);
   const [editAttachmentsLoading, setEditAttachmentsLoading] = useState(false);
   const [pendingDeleteIds, setPendingDeleteIds] = useState<Set<string>>(new Set());
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [offline, setOffline] = useState(false);
   const latestLoadId = useRef(0);
 
   const load = useCallback(async (p = page) => {
@@ -175,8 +177,13 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
       if (loadId === latestLoadId.current) {
         setTxs(data.items || data.data || []);
         setTotal(data.total || 0);
+        setLoadFailed(false);
       }
-    } catch (_) {}
+    } catch (_) {
+      // 清單載入失敗（最常見是離線）：不再顯示「尚無資料」誤導使用者以為資料不見，
+      // 改由下方依離線狀態顯示對應說明。
+      if (loadId === latestLoadId.current) setLoadFailed(true);
+    }
     if (loadId === latestLoadId.current) setLoading(false);
   }, [page, pageSize, filters]);
 
@@ -232,6 +239,24 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
       .catch(() => setPhotoStorageStatus(null));
   }, []);
   useEffect(() => { load(page); }, [page, load]);
+
+  // 追蹤瀏覽器離線狀態，並在恢復連線後重載清單：
+  //  - 離線狀態供清單載入失敗時顯示正確說明（不再誤顯示「尚無資料」）。
+  //  - 恢復連線時重載，讓離線期間新增、之後由 OfflineSyncStatus 同步完成的交易出現。
+  useEffect(() => {
+    const goOffline = () => setOffline(true);
+    const goOnline = () => {
+      setOffline(false);
+      void load(page);
+    };
+    window.addEventListener('offline', goOffline);
+    window.addEventListener('online', goOnline);
+    setOffline(typeof navigator !== 'undefined' && navigator.onLine === false);
+    return () => {
+      window.removeEventListener('offline', goOffline);
+      window.removeEventListener('online', goOnline);
+    };
+  }, [load, page]);
 
   useEffect(() => {
     const nextPage = readPageParam(searchParams);
@@ -816,7 +841,13 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
       </div>
 
       {loading && <p className="empty-hint" role="status">{t('common.loading')}</p>}
-      {!loading && txs.length === 0 && <p className="empty-hint">{t('features.transactions.empty')}</p>}
+      {!loading && txs.length === 0 && (
+        <p className="empty-hint">
+          {loadFailed && offline
+            ? t('features.offline.listUnavailable')
+            : t('features.transactions.empty')}
+        </p>
+      )}
 
       {!loading && txs.length > 0 && (
         <>

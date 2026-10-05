@@ -70,13 +70,10 @@ export default function OfflineSyncStatus() {
   }
 
   function handleDiscard(id: string) {
+    // discardItem 會同步派送佇列變更事件，訂閱端已以真實佇列重新計算 summary；
+    // 這裡不可再手動遞減，否則會重複扣減而顯示錯誤的待同步筆數。
     discardItem(id);
     setFailed(getFailedItems());
-    setSummary((current) => ({
-      ...current,
-      failed: Math.max(0, current.failed - 1),
-      total: Math.max(0, current.total - 1),
-    }));
   }
 
   const showPendingBar = offline || summary.pending > 0;

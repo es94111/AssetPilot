@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -2469,6 +2470,55 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get featuresStocksPortfolioCurrentPrice => '현재가';
+
+  @override
+  String get featuresStocksPortfolioHistoryChart => '가격 히스토리';
+
+  @override
+  String get featuresStocksPortfolioIntervalDay => '일';
+
+  @override
+  String get featuresStocksPortfolioIntervalWeek => '주';
+
+  @override
+  String get featuresStocksPortfolioIntervalMonth => '월';
+
+  @override
+  String get featuresStocksPortfolioChartInterval => '간격';
+
+  @override
+  String get featuresStocksPortfolioChartLoading => '과거 가격을 불러오는 중...';
+
+  @override
+  String get featuresStocksPortfolioChartNoData => '이 기간에 과거 가격 데이터가 없습니다';
+
+  @override
+  String get featuresStocksPortfolioChartUnavailable =>
+      '과거 가격을 일시적으로 불러올 수 없습니다. 나중에 다시 시도해 주세요.';
+
+  @override
+  String get featuresStocksPortfolioChartOpen => '시가';
+
+  @override
+  String get featuresStocksPortfolioChartHigh => '고가';
+
+  @override
+  String get featuresStocksPortfolioChartLow => '저가';
+
+  @override
+  String get featuresStocksPortfolioChartClose => '종가';
+
+  @override
+  String get featuresStocksPortfolioChartBuy => '매수';
+
+  @override
+  String get featuresStocksPortfolioChartSell => '매도';
+
+  @override
+  String get featuresStocksPortfolioChartRising => '상승 마감';
+
+  @override
+  String get featuresStocksPortfolioChartFalling => '하락 마감';
 
   @override
   String get featuresStocksPortfolioMarketValue => '평가액';

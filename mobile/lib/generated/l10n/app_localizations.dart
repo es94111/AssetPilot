@@ -4660,6 +4660,102 @@ abstract class AppLocalizations {
   /// **'目前股價'**
   String get featuresStocksPortfolioCurrentPrice;
 
+  /// Web path: features.stocks.portfolio.historyChart
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'歷史 K 線'**
+  String get featuresStocksPortfolioHistoryChart;
+
+  /// Web path: features.stocks.portfolio.intervalDay
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'日'**
+  String get featuresStocksPortfolioIntervalDay;
+
+  /// Web path: features.stocks.portfolio.intervalWeek
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'週'**
+  String get featuresStocksPortfolioIntervalWeek;
+
+  /// Web path: features.stocks.portfolio.intervalMonth
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'月'**
+  String get featuresStocksPortfolioIntervalMonth;
+
+  /// Web path: features.stocks.portfolio.chartInterval
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'K 線週期'**
+  String get featuresStocksPortfolioChartInterval;
+
+  /// Web path: features.stocks.portfolio.chartLoading
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'載入歷史股價中...'**
+  String get featuresStocksPortfolioChartLoading;
+
+  /// Web path: features.stocks.portfolio.chartNoData
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'此期間沒有歷史股價資料'**
+  String get featuresStocksPortfolioChartNoData;
+
+  /// Web path: features.stocks.portfolio.chartUnavailable
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'歷史股價暫時無法取得，請稍後再試。'**
+  String get featuresStocksPortfolioChartUnavailable;
+
+  /// Web path: features.stocks.portfolio.chartOpen
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'開盤'**
+  String get featuresStocksPortfolioChartOpen;
+
+  /// Web path: features.stocks.portfolio.chartHigh
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'最高'**
+  String get featuresStocksPortfolioChartHigh;
+
+  /// Web path: features.stocks.portfolio.chartLow
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'最低'**
+  String get featuresStocksPortfolioChartLow;
+
+  /// Web path: features.stocks.portfolio.chartClose
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'收盤'**
+  String get featuresStocksPortfolioChartClose;
+
+  /// Web path: features.stocks.portfolio.chartBuy
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'買進'**
+  String get featuresStocksPortfolioChartBuy;
+
+  /// Web path: features.stocks.portfolio.chartSell
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'賣出'**
+  String get featuresStocksPortfolioChartSell;
+
+  /// Web path: features.stocks.portfolio.chartRising
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'收漲'**
+  String get featuresStocksPortfolioChartRising;
+
+  /// Web path: features.stocks.portfolio.chartFalling
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'收跌'**
+  String get featuresStocksPortfolioChartFalling;
+
   /// Web path: features.stocks.portfolio.marketValue
   ///
   /// In zh_Hant_TW, this message translates to:

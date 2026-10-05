@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -2552,6 +2553,57 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get featuresStocksPortfolioCurrentPrice => 'मौजूदा कीमत';
+
+  @override
+  String get featuresStocksPortfolioHistoryChart => 'ऐतिहासिक मूल्य चार्ट';
+
+  @override
+  String get featuresStocksPortfolioIntervalDay => 'दिन';
+
+  @override
+  String get featuresStocksPortfolioIntervalWeek => 'सप्ताह';
+
+  @override
+  String get featuresStocksPortfolioIntervalMonth => 'महीना';
+
+  @override
+  String get featuresStocksPortfolioChartInterval => 'अंतराल';
+
+  @override
+  String get featuresStocksPortfolioChartLoading =>
+      'ऐतिहासिक मूल्य लोड हो रहे हैं...';
+
+  @override
+  String get featuresStocksPortfolioChartNoData =>
+      'इस अवधि के लिए ऐतिहासिक मूल्य उपलब्ध नहीं हैं';
+
+  @override
+  String get featuresStocksPortfolioChartUnavailable =>
+      'ऐतिहासिक मूल्य अभी उपलब्ध नहीं हैं। कृपया बाद में प्रयास करें।';
+
+  @override
+  String get featuresStocksPortfolioChartOpen => 'खुला';
+
+  @override
+  String get featuresStocksPortfolioChartHigh => 'उच्च';
+
+  @override
+  String get featuresStocksPortfolioChartLow => 'निम्न';
+
+  @override
+  String get featuresStocksPortfolioChartClose => 'बंद';
+
+  @override
+  String get featuresStocksPortfolioChartBuy => 'खरीद';
+
+  @override
+  String get featuresStocksPortfolioChartSell => 'बिक्री';
+
+  @override
+  String get featuresStocksPortfolioChartRising => 'ऊपर बंद';
+
+  @override
+  String get featuresStocksPortfolioChartFalling => 'नीचे बंद';
 
   @override
   String get featuresStocksPortfolioMarketValue => 'बाज़ार मूल्य';

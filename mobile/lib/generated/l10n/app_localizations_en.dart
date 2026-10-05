@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -2548,6 +2549,56 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get featuresStocksPortfolioCurrentPrice => 'Current price';
+
+  @override
+  String get featuresStocksPortfolioHistoryChart => 'Price history';
+
+  @override
+  String get featuresStocksPortfolioIntervalDay => 'Day';
+
+  @override
+  String get featuresStocksPortfolioIntervalWeek => 'Week';
+
+  @override
+  String get featuresStocksPortfolioIntervalMonth => 'Month';
+
+  @override
+  String get featuresStocksPortfolioChartInterval => 'Interval';
+
+  @override
+  String get featuresStocksPortfolioChartLoading => 'Loading price history...';
+
+  @override
+  String get featuresStocksPortfolioChartNoData =>
+      'No historical prices for this period';
+
+  @override
+  String get featuresStocksPortfolioChartUnavailable =>
+      'Price history is temporarily unavailable. Please try again later.';
+
+  @override
+  String get featuresStocksPortfolioChartOpen => 'Open';
+
+  @override
+  String get featuresStocksPortfolioChartHigh => 'High';
+
+  @override
+  String get featuresStocksPortfolioChartLow => 'Low';
+
+  @override
+  String get featuresStocksPortfolioChartClose => 'Close';
+
+  @override
+  String get featuresStocksPortfolioChartBuy => 'Buy';
+
+  @override
+  String get featuresStocksPortfolioChartSell => 'Sell';
+
+  @override
+  String get featuresStocksPortfolioChartRising => 'Up close';
+
+  @override
+  String get featuresStocksPortfolioChartFalling => 'Down close';
 
   @override
   String get featuresStocksPortfolioMarketValue => 'Market value';

@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -2592,6 +2593,57 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get featuresStocksPortfolioCurrentPrice => 'Prix actuel';
+
+  @override
+  String get featuresStocksPortfolioHistoryChart => 'Historique des cours';
+
+  @override
+  String get featuresStocksPortfolioIntervalDay => 'Jour';
+
+  @override
+  String get featuresStocksPortfolioIntervalWeek => 'Semaine';
+
+  @override
+  String get featuresStocksPortfolioIntervalMonth => 'Mois';
+
+  @override
+  String get featuresStocksPortfolioChartInterval => 'Intervalle';
+
+  @override
+  String get featuresStocksPortfolioChartLoading =>
+      'Chargement de l’historique des cours...';
+
+  @override
+  String get featuresStocksPortfolioChartNoData =>
+      'Aucun cours historique pour cette période';
+
+  @override
+  String get featuresStocksPortfolioChartUnavailable =>
+      'L’historique des cours est temporairement indisponible. Réessayez plus tard.';
+
+  @override
+  String get featuresStocksPortfolioChartOpen => 'Ouverture';
+
+  @override
+  String get featuresStocksPortfolioChartHigh => 'Plus haut';
+
+  @override
+  String get featuresStocksPortfolioChartLow => 'Plus bas';
+
+  @override
+  String get featuresStocksPortfolioChartClose => 'Clôture';
+
+  @override
+  String get featuresStocksPortfolioChartBuy => 'Achat';
+
+  @override
+  String get featuresStocksPortfolioChartSell => 'Vente';
+
+  @override
+  String get featuresStocksPortfolioChartRising => 'Clôture en hausse';
+
+  @override
+  String get featuresStocksPortfolioChartFalling => 'Clôture en baisse';
 
   @override
   String get featuresStocksPortfolioMarketValue => 'Valeur de marché';

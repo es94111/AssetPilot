@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -2431,6 +2432,54 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get featuresStocksPortfolioCurrentPrice => '目前股價';
+
+  @override
+  String get featuresStocksPortfolioHistoryChart => '歷史 K 線';
+
+  @override
+  String get featuresStocksPortfolioIntervalDay => '日';
+
+  @override
+  String get featuresStocksPortfolioIntervalWeek => '週';
+
+  @override
+  String get featuresStocksPortfolioIntervalMonth => '月';
+
+  @override
+  String get featuresStocksPortfolioChartInterval => 'K 線週期';
+
+  @override
+  String get featuresStocksPortfolioChartLoading => '載入歷史股價中...';
+
+  @override
+  String get featuresStocksPortfolioChartNoData => '此期間沒有歷史股價資料';
+
+  @override
+  String get featuresStocksPortfolioChartUnavailable => '歷史股價暫時無法取得，請稍後再試。';
+
+  @override
+  String get featuresStocksPortfolioChartOpen => '開盤';
+
+  @override
+  String get featuresStocksPortfolioChartHigh => '最高';
+
+  @override
+  String get featuresStocksPortfolioChartLow => '最低';
+
+  @override
+  String get featuresStocksPortfolioChartClose => '收盤';
+
+  @override
+  String get featuresStocksPortfolioChartBuy => '買進';
+
+  @override
+  String get featuresStocksPortfolioChartSell => '賣出';
+
+  @override
+  String get featuresStocksPortfolioChartRising => '收漲';
+
+  @override
+  String get featuresStocksPortfolioChartFalling => '收跌';
 
   @override
   String get featuresStocksPortfolioMarketValue => '市值';
@@ -7053,6 +7102,54 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
 
   @override
   String get featuresStocksPortfolioCurrentPrice => '当前价格';
+
+  @override
+  String get featuresStocksPortfolioHistoryChart => '历史 K 线';
+
+  @override
+  String get featuresStocksPortfolioIntervalDay => '日';
+
+  @override
+  String get featuresStocksPortfolioIntervalWeek => '周';
+
+  @override
+  String get featuresStocksPortfolioIntervalMonth => '月';
+
+  @override
+  String get featuresStocksPortfolioChartInterval => 'K 线周期';
+
+  @override
+  String get featuresStocksPortfolioChartLoading => '正在加载历史股价...';
+
+  @override
+  String get featuresStocksPortfolioChartNoData => '此期间没有历史股价数据';
+
+  @override
+  String get featuresStocksPortfolioChartUnavailable => '历史股价暂时无法获取，请稍后再试。';
+
+  @override
+  String get featuresStocksPortfolioChartOpen => '开盘';
+
+  @override
+  String get featuresStocksPortfolioChartHigh => '最高';
+
+  @override
+  String get featuresStocksPortfolioChartLow => '最低';
+
+  @override
+  String get featuresStocksPortfolioChartClose => '收盘';
+
+  @override
+  String get featuresStocksPortfolioChartBuy => '买入';
+
+  @override
+  String get featuresStocksPortfolioChartSell => '卖出';
+
+  @override
+  String get featuresStocksPortfolioChartRising => '收涨';
+
+  @override
+  String get featuresStocksPortfolioChartFalling => '收跌';
 
   @override
   String get featuresStocksPortfolioMarketValue => '市值';
@@ -11685,6 +11782,54 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
 
   @override
   String get featuresStocksPortfolioCurrentPrice => '目前股價';
+
+  @override
+  String get featuresStocksPortfolioHistoryChart => '歷史 K 線';
+
+  @override
+  String get featuresStocksPortfolioIntervalDay => '日';
+
+  @override
+  String get featuresStocksPortfolioIntervalWeek => '週';
+
+  @override
+  String get featuresStocksPortfolioIntervalMonth => '月';
+
+  @override
+  String get featuresStocksPortfolioChartInterval => 'K 線週期';
+
+  @override
+  String get featuresStocksPortfolioChartLoading => '載入歷史股價中...';
+
+  @override
+  String get featuresStocksPortfolioChartNoData => '此期間沒有歷史股價資料';
+
+  @override
+  String get featuresStocksPortfolioChartUnavailable => '歷史股價暫時無法取得，請稍後再試。';
+
+  @override
+  String get featuresStocksPortfolioChartOpen => '開盤';
+
+  @override
+  String get featuresStocksPortfolioChartHigh => '最高';
+
+  @override
+  String get featuresStocksPortfolioChartLow => '最低';
+
+  @override
+  String get featuresStocksPortfolioChartClose => '收盤';
+
+  @override
+  String get featuresStocksPortfolioChartBuy => '買進';
+
+  @override
+  String get featuresStocksPortfolioChartSell => '賣出';
+
+  @override
+  String get featuresStocksPortfolioChartRising => '收漲';
+
+  @override
+  String get featuresStocksPortfolioChartFalling => '收跌';
 
   @override
   String get featuresStocksPortfolioMarketValue => '市值';

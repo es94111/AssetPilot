@@ -1,6 +1,18 @@
 {
-  "currentVersion": "4.113.0",
+  "currentVersion": "4.114.0",
   "releases": [
+    {
+      "version": "4.114.0",
+      "date": "2026-10-05",
+      "title": "歷史股價 K 線圖表",
+      "type": "new",
+      "changes": [
+        {
+          "tag": "new",
+          "text": "新增支援 TWSE／TPEx 的快取歷史日 OHLC 查詢端點，並提供日／週／月 K 線圖與交易買入／賣出標記；圖表支援主題與多語系（#254、#267）。"
+        }
+      ]
+    },
     {
       "version": "4.113.0",
       "date": "2026-10-05",

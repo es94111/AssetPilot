@@ -1767,6 +1767,93 @@ paths:
         "200":
           description: 新增成功
 
+  /api/stocks/{id}/history:
+    get:
+      operationId: getStockPriceHistory
+      tags: [Stocks]
+      summary: 取得台股歷史日 K 線與目前使用者的交易點位
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: from
+          in: query
+          description: 起始日期（預設為一年前）
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          description: 結束日期（預設為今天）
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: 歷史股價與個人交易點位
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  symbol:
+                    type: string
+                  name:
+                    type: string
+                  market:
+                    type: string
+                    enum: [TW]
+                  from:
+                    type: string
+                    format: date
+                  to:
+                    type: string
+                    format: date
+                  candles:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        date:
+                          type: string
+                          format: date
+                        open:
+                          type: number
+                        high:
+                          type: number
+                        low:
+                          type: number
+                        close:
+                          type: number
+                        volume:
+                          type: number
+                          description: 成交股數（櫃買成交張數已換算為股）
+                  transactions:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        date:
+                          type: string
+                          format: date
+                        type:
+                          type: string
+                          enum: [buy, sell]
+                        shares:
+                          type: number
+                        price:
+                          type: number
+        "400":
+          description: 日期無效、查詢期間過長或不支援的市場
+        "404":
+          description: 股票不存在或不屬於目前使用者
+        "503":
+          description: 歷史股價服務暫時無法回應
+
   /api/stocks/{id}:
     put:
       operationId: updateStock

@@ -2581,6 +2581,57 @@ class AppLocalizationsPt extends AppLocalizations {
   String get featuresStocksPortfolioCurrentPrice => 'Preço atual';
 
   @override
+  String get featuresStocksPortfolioHistoryChart => 'Histórico de preços';
+
+  @override
+  String get featuresStocksPortfolioIntervalDay => 'Dia';
+
+  @override
+  String get featuresStocksPortfolioIntervalWeek => 'Semana';
+
+  @override
+  String get featuresStocksPortfolioIntervalMonth => 'Mês';
+
+  @override
+  String get featuresStocksPortfolioChartInterval => 'Intervalo';
+
+  @override
+  String get featuresStocksPortfolioChartLoading =>
+      'Carregando histórico de preços...';
+
+  @override
+  String get featuresStocksPortfolioChartNoData =>
+      'Não há preços históricos para este período';
+
+  @override
+  String get featuresStocksPortfolioChartUnavailable =>
+      'O histórico de preços está temporariamente indisponível. Tente novamente mais tarde.';
+
+  @override
+  String get featuresStocksPortfolioChartOpen => 'Abertura';
+
+  @override
+  String get featuresStocksPortfolioChartHigh => 'Máxima';
+
+  @override
+  String get featuresStocksPortfolioChartLow => 'Mínima';
+
+  @override
+  String get featuresStocksPortfolioChartClose => 'Fechamento';
+
+  @override
+  String get featuresStocksPortfolioChartBuy => 'Compra';
+
+  @override
+  String get featuresStocksPortfolioChartSell => 'Venda';
+
+  @override
+  String get featuresStocksPortfolioChartRising => 'Fechamento em alta';
+
+  @override
+  String get featuresStocksPortfolioChartFalling => 'Fechamento em baixa';
+
+  @override
   String get featuresStocksPortfolioMarketValue => 'Valor de mercado';
 
   @override
@@ -7480,6 +7531,57 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get featuresStocksPortfolioCurrentPrice => 'Preço atual';
+
+  @override
+  String get featuresStocksPortfolioHistoryChart => 'Histórico de preços';
+
+  @override
+  String get featuresStocksPortfolioIntervalDay => 'Dia';
+
+  @override
+  String get featuresStocksPortfolioIntervalWeek => 'Semana';
+
+  @override
+  String get featuresStocksPortfolioIntervalMonth => 'Mês';
+
+  @override
+  String get featuresStocksPortfolioChartInterval => 'Intervalo';
+
+  @override
+  String get featuresStocksPortfolioChartLoading =>
+      'Carregando histórico de preços...';
+
+  @override
+  String get featuresStocksPortfolioChartNoData =>
+      'Não há preços históricos para este período';
+
+  @override
+  String get featuresStocksPortfolioChartUnavailable =>
+      'O histórico de preços está temporariamente indisponível. Tente novamente mais tarde.';
+
+  @override
+  String get featuresStocksPortfolioChartOpen => 'Abertura';
+
+  @override
+  String get featuresStocksPortfolioChartHigh => 'Máxima';
+
+  @override
+  String get featuresStocksPortfolioChartLow => 'Mínima';
+
+  @override
+  String get featuresStocksPortfolioChartClose => 'Fechamento';
+
+  @override
+  String get featuresStocksPortfolioChartBuy => 'Compra';
+
+  @override
+  String get featuresStocksPortfolioChartSell => 'Venda';
+
+  @override
+  String get featuresStocksPortfolioChartRising => 'Fechamento em alta';
+
+  @override
+  String get featuresStocksPortfolioChartFalling => 'Fechamento em baixa';
 
   @override
   String get featuresStocksPortfolioMarketValue => 'Valor de mercado';

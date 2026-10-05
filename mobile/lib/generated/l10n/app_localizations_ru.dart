@@ -2577,6 +2577,56 @@ class AppLocalizationsRu extends AppLocalizations {
   String get featuresStocksPortfolioCurrentPrice => 'Текущая цена';
 
   @override
+  String get featuresStocksPortfolioHistoryChart => 'История цен';
+
+  @override
+  String get featuresStocksPortfolioIntervalDay => 'День';
+
+  @override
+  String get featuresStocksPortfolioIntervalWeek => 'Неделя';
+
+  @override
+  String get featuresStocksPortfolioIntervalMonth => 'Месяц';
+
+  @override
+  String get featuresStocksPortfolioChartInterval => 'Интервал';
+
+  @override
+  String get featuresStocksPortfolioChartLoading => 'Загрузка истории цен...';
+
+  @override
+  String get featuresStocksPortfolioChartNoData =>
+      'За этот период нет исторических цен';
+
+  @override
+  String get featuresStocksPortfolioChartUnavailable =>
+      'История цен временно недоступна. Попробуйте позже.';
+
+  @override
+  String get featuresStocksPortfolioChartOpen => 'Открытие';
+
+  @override
+  String get featuresStocksPortfolioChartHigh => 'Максимум';
+
+  @override
+  String get featuresStocksPortfolioChartLow => 'Минимум';
+
+  @override
+  String get featuresStocksPortfolioChartClose => 'Закрытие';
+
+  @override
+  String get featuresStocksPortfolioChartBuy => 'Покупка';
+
+  @override
+  String get featuresStocksPortfolioChartSell => 'Продажа';
+
+  @override
+  String get featuresStocksPortfolioChartRising => 'Закрытие выше';
+
+  @override
+  String get featuresStocksPortfolioChartFalling => 'Закрытие ниже';
+
+  @override
   String get featuresStocksPortfolioMarketValue => 'Рыночная стоимость';
 
   @override

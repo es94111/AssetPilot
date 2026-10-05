@@ -2600,6 +2600,57 @@ class AppLocalizationsEs extends AppLocalizations {
   String get featuresStocksPortfolioCurrentPrice => 'Precio actual';
 
   @override
+  String get featuresStocksPortfolioHistoryChart => 'Historial de precios';
+
+  @override
+  String get featuresStocksPortfolioIntervalDay => 'Día';
+
+  @override
+  String get featuresStocksPortfolioIntervalWeek => 'Semana';
+
+  @override
+  String get featuresStocksPortfolioIntervalMonth => 'Mes';
+
+  @override
+  String get featuresStocksPortfolioChartInterval => 'Intervalo';
+
+  @override
+  String get featuresStocksPortfolioChartLoading =>
+      'Cargando el historial de precios...';
+
+  @override
+  String get featuresStocksPortfolioChartNoData =>
+      'No hay precios históricos para este período';
+
+  @override
+  String get featuresStocksPortfolioChartUnavailable =>
+      'El historial de precios no está disponible temporalmente. Inténtalo más tarde.';
+
+  @override
+  String get featuresStocksPortfolioChartOpen => 'Apertura';
+
+  @override
+  String get featuresStocksPortfolioChartHigh => 'Máximo';
+
+  @override
+  String get featuresStocksPortfolioChartLow => 'Mínimo';
+
+  @override
+  String get featuresStocksPortfolioChartClose => 'Cierre';
+
+  @override
+  String get featuresStocksPortfolioChartBuy => 'Compra';
+
+  @override
+  String get featuresStocksPortfolioChartSell => 'Venta';
+
+  @override
+  String get featuresStocksPortfolioChartRising => 'Cierre al alza';
+
+  @override
+  String get featuresStocksPortfolioChartFalling => 'Cierre a la baja';
+
+  @override
   String get featuresStocksPortfolioMarketValue => 'Valor de mercado';
 
   @override

@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { apiGet, apiPost, apiPut, apiDelete } from "@/lib/clientApi";
 import StocksTabNav from "./StocksTabNav";
+import StockHistoryDialog from "./StockHistoryDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
@@ -186,6 +187,7 @@ export default function PortfolioClient(_props: { user?: any } = {}) {
     updated: number;
     failed: number;
   } | null>(null);
+  const [historyStock, setHistoryStock] = useState<any>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -699,11 +701,29 @@ export default function PortfolioClient(_props: { user?: any } = {}) {
                     </p>
                   </div>
                 </div>
+                {String(s.market || "TW").toUpperCase() === "TW" && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    onClick={() => setHistoryStock(s)}
+                  >
+                    {t("features.stocks.portfolio.historyChart")}
+                  </Button>
+                )}
               </div>
             );
           })}
         </div>
       )}
+      <StockHistoryDialog
+        stock={historyStock}
+        open={!!historyStock}
+        onOpenChange={(open) => {
+          if (!open) setHistoryStock(null);
+        }}
+      />
     </div>
   );
 }

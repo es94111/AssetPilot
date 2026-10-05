@@ -2542,6 +2542,57 @@ class AppLocalizationsAr extends AppLocalizations {
   String get featuresStocksPortfolioCurrentPrice => 'السعر الحالي';
 
   @override
+  String get featuresStocksPortfolioHistoryChart => 'الرسم البياني التاريخي';
+
+  @override
+  String get featuresStocksPortfolioIntervalDay => 'يومي';
+
+  @override
+  String get featuresStocksPortfolioIntervalWeek => 'أسبوعي';
+
+  @override
+  String get featuresStocksPortfolioIntervalMonth => 'شهري';
+
+  @override
+  String get featuresStocksPortfolioChartInterval => 'الفترة';
+
+  @override
+  String get featuresStocksPortfolioChartLoading =>
+      'جارٍ تحميل الأسعار التاريخية...';
+
+  @override
+  String get featuresStocksPortfolioChartNoData =>
+      'لا توجد بيانات أسعار تاريخية لهذه الفترة';
+
+  @override
+  String get featuresStocksPortfolioChartUnavailable =>
+      'تعذّر تحميل الأسعار التاريخية مؤقتًا. حاول لاحقًا.';
+
+  @override
+  String get featuresStocksPortfolioChartOpen => 'الافتتاح';
+
+  @override
+  String get featuresStocksPortfolioChartHigh => 'الأعلى';
+
+  @override
+  String get featuresStocksPortfolioChartLow => 'الأدنى';
+
+  @override
+  String get featuresStocksPortfolioChartClose => 'الإغلاق';
+
+  @override
+  String get featuresStocksPortfolioChartBuy => 'شراء';
+
+  @override
+  String get featuresStocksPortfolioChartSell => 'بيع';
+
+  @override
+  String get featuresStocksPortfolioChartRising => 'إغلاق مرتفع';
+
+  @override
+  String get featuresStocksPortfolioChartFalling => 'إغلاق منخفض';
+
+  @override
   String get featuresStocksPortfolioMarketValue => 'القيمة السوقية';
 
   @override

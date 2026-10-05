@@ -109,6 +109,8 @@
     --pl-gain: #1e6b52;
     --pl-loss: #b3372f;
     --danger: #b3372f;
+    --chart-buy: #2563eb;
+    --chart-sell: #a21caf;
     --danger-dark: #992b24;
     --danger-bg: #fbeeec;
     --primary-light-bg: #f7ece1;
@@ -244,6 +246,8 @@
   --pl-gain: #6cc29b;
   --pl-loss: #e08279;
   --danger: #e08279;
+  --chart-buy: #60a5fa;
+  --chart-sell: #e879f9;
   --danger-dark: #b23e34;
   --income-bg: #1a2620;
   --expense-bg: #2b1b18;

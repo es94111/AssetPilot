@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Fraunces, Inter } from "next/font/google";
 import "./globals.css";
 import { resolveLocale } from "@/lib/i18n/resolveLocale";
@@ -30,9 +30,28 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: t("public.common.metadataTitle"),
     description: t("public.common.metadataDescription"),
+    applicationName: "AssetPilot",
+    manifest: "/manifest.webmanifest",
+    appleWebApp: {
+      capable: true,
+      title: "AssetPilot",
+      statusBarStyle: "default",
+    },
     icons: {
       icon: "/favicon.svg",
+      apple: "/icons/icon-192.png",
     },
+  };
+}
+
+// theme-color 需與 manifest 的 theme_color 一致，讓 Android 安裝後的狀態列與
+// standalone 視窗外框相符（Next.js 16 要求 themeColor 由 viewport 匯出）。
+export function generateViewport(): Viewport {
+  return {
+    themeColor: [
+      { media: "(prefers-color-scheme: light)", color: "#b0521c" },
+      { media: "(prefers-color-scheme: dark)", color: "#141210" },
+    ],
   };
 }
 

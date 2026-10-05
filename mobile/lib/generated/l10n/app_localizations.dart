@@ -8376,6 +8376,102 @@ abstract class AppLocalizations {
   /// In zh_Hant_TW, this message translates to:
   /// **'展開側邊欄'**
   String get shellExpandSidebar;
+
+  /// Web path: features.offline.queued
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'已離線儲存，恢復連線後會自動同步'**
+  String get featuresOfflineOfflineQueued;
+
+  /// Web path: features.offline.notice
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'目前離線中，新增的交易會先存在本機'**
+  String get featuresOfflineOfflineNotice;
+
+  /// Web path: features.offline.pendingSync
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'待同步 {count} 筆交易'**
+  String featuresOfflinePendingSync(Object count);
+
+  /// Web path: features.offline.syncFailedToast
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'有 {count} 筆交易同步失敗，請選擇重試或捨棄'**
+  String featuresOfflineSyncFailedToast(Object count);
+
+  /// Web path: features.offline.itemFailed
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'同步失敗：{message}'**
+  String featuresOfflineItemFailed(Object message);
+
+  /// Web path: features.offline.retry
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'重試'**
+  String get featuresOfflineRetry;
+
+  /// Web path: features.offline.discard
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'捨棄'**
+  String get featuresOfflineDiscard;
+
+  /// Web path: features.offline.pageTitle
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'目前離線'**
+  String get featuresOfflinePageTitle;
+
+  /// Web path: features.offline.pageBody
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'你的裝置目前沒有網路連線。已快取的頁面仍可開啟；離線新增的交易會在恢復連線後自動同步。'**
+  String get featuresOfflinePageBody;
+
+  /// Web path: features.offline.pageAction
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'前往交易記錄'**
+  String get featuresOfflinePageAction;
+
+  /// Web path: features.pwa.installTitle
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'安裝 AssetPilot'**
+  String get featuresPwaInstallTitle;
+
+  /// Web path: features.pwa.installHint
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'安裝到主畫面，像 App 一樣開啟並支援離線記帳'**
+  String get featuresPwaInstallHint;
+
+  /// Web path: features.pwa.installAction
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'安裝'**
+  String get featuresPwaInstallAction;
+
+  /// Web path: features.offline.listUnavailable
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'目前離線，無法載入交易清單；離線新增的交易會在恢復連線後自動同步。'**
+  String get featuresOfflineListUnavailable;
+
+  /// Web path: features.offline.saveFailed
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'無法在此瀏覽器儲存離線資料（可能為隱私模式或儲存空間已滿），請檢查網路後重試。'**
+  String get featuresOfflineSaveFailed;
+
+  /// Web path: features.offline.queuedPhotosSkipped
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'已離線儲存；已選 {count} 張照片不會上傳，恢復連線後可再補上'**
+  String featuresOfflineQueuedPhotosSkipped(Object count);
 }
 
 class _AppLocalizationsDelegate

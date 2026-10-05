@@ -7363,5 +7363,97 @@
   "@shellExpandSidebar": {
     "description": "Web path: shell.expandSidebar",
     "x-webPath": "shell.expandSidebar"
+  },
+  "featuresOfflineOfflineQueued": "Enregistré hors ligne. La synchronisation se fera automatiquement au retour de la connexion.",
+  "@featuresOfflineOfflineQueued": {
+    "description": "Web path: features.offline.queued",
+    "x-webPath": "features.offline.queued"
+  },
+  "featuresOfflineOfflineNotice": "Vous êtes hors ligne. Les nouvelles transactions sont d’abord stockées sur cet appareil.",
+  "@featuresOfflineOfflineNotice": {
+    "description": "Web path: features.offline.notice",
+    "x-webPath": "features.offline.notice"
+  },
+  "featuresOfflinePendingSync": "{count} transaction(s) en attente de synchronisation",
+  "@featuresOfflinePendingSync": {
+    "description": "Web path: features.offline.pendingSync",
+    "x-webPath": "features.offline.pendingSync",
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "featuresOfflineSyncFailedToast": "{count} transaction(s) n’ont pas pu être synchronisées. Choisissez réessayer ou abandonner.",
+  "@featuresOfflineSyncFailedToast": {
+    "description": "Web path: features.offline.syncFailedToast",
+    "x-webPath": "features.offline.syncFailedToast",
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "featuresOfflineItemFailed": "Échec de la synchronisation : {message}",
+  "@featuresOfflineItemFailed": {
+    "description": "Web path: features.offline.itemFailed",
+    "x-webPath": "features.offline.itemFailed",
+    "placeholders": {
+      "message": {}
+    }
+  },
+  "featuresOfflineRetry": "Réessayer",
+  "@featuresOfflineRetry": {
+    "description": "Web path: features.offline.retry",
+    "x-webPath": "features.offline.retry"
+  },
+  "featuresOfflineDiscard": "Abandonner",
+  "@featuresOfflineDiscard": {
+    "description": "Web path: features.offline.discard",
+    "x-webPath": "features.offline.discard"
+  },
+  "featuresOfflinePageTitle": "Vous êtes hors ligne",
+  "@featuresOfflinePageTitle": {
+    "description": "Web path: features.offline.pageTitle",
+    "x-webPath": "features.offline.pageTitle"
+  },
+  "featuresOfflinePageBody": "Cet appareil n’a pas de connexion réseau. Les pages en cache restent accessibles et les transactions hors ligne se synchronisent au retour de la connexion.",
+  "@featuresOfflinePageBody": {
+    "description": "Web path: features.offline.pageBody",
+    "x-webPath": "features.offline.pageBody"
+  },
+  "featuresOfflinePageAction": "Aller aux transactions",
+  "@featuresOfflinePageAction": {
+    "description": "Web path: features.offline.pageAction",
+    "x-webPath": "features.offline.pageAction"
+  },
+  "featuresPwaInstallTitle": "Installer AssetPilot",
+  "@featuresPwaInstallTitle": {
+    "description": "Web path: features.pwa.installTitle",
+    "x-webPath": "features.pwa.installTitle"
+  },
+  "featuresPwaInstallHint": "Ajoutez-le à l’écran d’accueil pour l’ouvrir comme une app et saisir hors ligne",
+  "@featuresPwaInstallHint": {
+    "description": "Web path: features.pwa.installHint",
+    "x-webPath": "features.pwa.installHint"
+  },
+  "featuresPwaInstallAction": "Installer",
+  "@featuresPwaInstallAction": {
+    "description": "Web path: features.pwa.installAction",
+    "x-webPath": "features.pwa.installAction"
+  },
+  "featuresOfflineListUnavailable": "Vous êtes hors ligne, la liste des transactions ne peut pas se charger. Les transactions ajoutées hors ligne se synchronisent au retour de la connexion.",
+  "@featuresOfflineListUnavailable": {
+    "description": "Web path: features.offline.listUnavailable",
+    "x-webPath": "features.offline.listUnavailable"
+  },
+  "featuresOfflineSaveFailed": "Ce navigateur ne peut pas stocker de données hors ligne (navigation privée ou stockage plein). Vérifiez la connexion et réessayez.",
+  "@featuresOfflineSaveFailed": {
+    "description": "Web path: features.offline.saveFailed",
+    "x-webPath": "features.offline.saveFailed"
+  },
+  "featuresOfflineQueuedPhotosSkipped": "Enregistré hors ligne. Les {count} photo(s) sélectionnée(s) ne seront pas envoyées ; ajoutez-les à nouveau après reconnexion.",
+  "@featuresOfflineQueuedPhotosSkipped": {
+    "description": "Web path: features.offline.queuedPhotosSkipped",
+    "x-webPath": "features.offline.queuedPhotosSkipped",
+    "placeholders": {
+      "count": {}
+    }
   }
 }

@@ -2,10 +2,12 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { apiGet, apiPost, apiPut, apiDelete, notifyDataChanged } from '../../../lib/clientApi';
+import { apiGet, apiPost, apiPut, apiDelete, notifyDataChanged, isNetworkError, DATA_CHANGED_EVENT } from '../../../lib/clientApi';
+import { enqueueOffline } from '../../../lib/clientOfflineQueue';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useT } from '@/components/i18n/I18nProvider';
+import { useToast } from '@/components/ui/Toast';
 import { localeTag } from '@/lib/i18n/localeTag';
 import { ArrowLeftRight, ArrowUpRight, CalendarDays, Image, Images, Pencil, Plus, RotateCcw, Search, SlidersHorizontal, Tags, Trash2, Undo2, X } from 'lucide-react';
 import { TRANSACTION_NOTE_MAX_LENGTH } from '@/lib/transactionEditRules';
@@ -103,6 +105,7 @@ function labelForType(type: string, t: (path: string) => string) {
 
 export default function TransactionsClient(_props: { user?: any } = {}) {
   const { t, locale } = useT();
+  const showToast = useToast();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -151,6 +154,8 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
   const [editAttachments, setEditAttachments] = useState<AttachmentItem[]>([]);
   const [editAttachmentsLoading, setEditAttachmentsLoading] = useState(false);
   const [pendingDeleteIds, setPendingDeleteIds] = useState<Set<string>>(new Set());
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [offline, setOffline] = useState(false);
   const latestLoadId = useRef(0);
 
   const load = useCallback(async (p = page) => {
@@ -172,8 +177,13 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
       if (loadId === latestLoadId.current) {
         setTxs(data.items || data.data || []);
         setTotal(data.total || 0);
+        setLoadFailed(false);
       }
-    } catch (_) {}
+    } catch (_) {
+      // 清單載入失敗（最常見是離線）：不再顯示「尚無資料」誤導使用者以為資料不見，
+      // 改由下方依離線狀態顯示對應說明。
+      if (loadId === latestLoadId.current) setLoadFailed(true);
+    }
     if (loadId === latestLoadId.current) setLoading(false);
   }, [page, pageSize, filters]);
 
@@ -229,6 +239,27 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
       .catch(() => setPhotoStorageStatus(null));
   }, []);
   useEffect(() => { load(page); }, [page, load]);
+
+  // 追蹤瀏覽器離線狀態，供清單載入失敗時顯示正確說明（不再誤顯示「尚無資料」）；
+  // 並訂閱資料變更事件，讓離線佇列同步成功後（flushOfflineQueue 會 notifyDataChanged）
+  // 清單立即重載，使用者才看得到剛同步進來的交易。
+  useEffect(() => {
+    const goOffline = () => setOffline(true);
+    const goOnline = () => setOffline(false);
+    const onDataChanged = (event: Event) => {
+      const scope = (event as CustomEvent<{ scope?: string }>).detail?.scope;
+      if (scope === 'transactions:offline-sync') void load();
+    };
+    window.addEventListener('offline', goOffline);
+    window.addEventListener('online', goOnline);
+    window.addEventListener(DATA_CHANGED_EVENT, onDataChanged);
+    setOffline(typeof navigator !== 'undefined' && navigator.onLine === false);
+    return () => {
+      window.removeEventListener('offline', goOffline);
+      window.removeEventListener('online', goOnline);
+      window.removeEventListener(DATA_CHANGED_EVENT, onDataChanged);
+    };
+  }, [load]);
 
   useEffect(() => {
     const nextPage = readPageParam(searchParams);
@@ -448,7 +479,29 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
           }
         }
       } else {
-        saved = await apiPost('/api/transactions', body);
+        try {
+          saved = await apiPost('/api/transactions', body);
+        } catch (networkError: any) {
+          if (!isNetworkError(networkError)) throw networkError;
+          // 離線（或連線中斷）：改存本機佇列，恢復連線後由 OfflineSyncStatus 自動送出。
+          const { persisted } = enqueueOffline('transaction', body);
+          if (!persisted) {
+            // 本機儲存不可用（隱私模式／配額用盡）：不可謊稱已儲存，必須讓使用者知道。
+            setFormError(t('features.offline.saveFailed'));
+            setSaving(false);
+            return;
+          }
+          setModal(false);
+          setPage(1);
+          // 離線路徑不送出照片；若使用者有選照片必須明確告知會被捨棄（與線上路的警告一致）。
+          if (photoFiles.length > 0) {
+            showToast(t('features.offline.queuedPhotosSkipped', { count: photoFiles.length }), 'info');
+          } else {
+            showToast(t('features.offline.queued'), 'info');
+          }
+          setSaving(false);
+          return;
+        }
         try {
           await uploadPhotos(saved.id);
         } catch (uploadError: any) {
@@ -496,7 +549,25 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
       await load(1);
       notifyDataChanged('transactions');
     } catch (e: any) {
-      setFormError(e.message);
+      if (isNetworkError(e)) {
+        // 離線：整筆轉帳（含配對兩腳）排入佇列，恢復連線後一次送出。
+        const { persisted } = enqueueOffline('transfer', {
+          date: transferForm.date,
+          amount: Number(transferForm.amount),
+          fromAccountId: transferForm.fromAccountId,
+          toAccountId: transferForm.toAccountId,
+          note: transferForm.note,
+        });
+        if (!persisted) {
+          setFormError(t('features.offline.saveFailed'));
+        } else {
+          setTransferModal(false);
+          setPage(1);
+          showToast(t('features.offline.queued'), 'info');
+        }
+      } else {
+        setFormError(e.message);
+      }
     }
     setSaving(false);
   }
@@ -788,7 +859,13 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
       </div>
 
       {loading && <p className="empty-hint" role="status">{t('common.loading')}</p>}
-      {!loading && txs.length === 0 && <p className="empty-hint">{t('features.transactions.empty')}</p>}
+      {!loading && txs.length === 0 && (
+        <p className="empty-hint">
+          {loadFailed && offline
+            ? t('features.offline.listUnavailable')
+            : t('features.transactions.empty')}
+        </p>
+      )}
 
       {!loading && txs.length > 0 && (
         <>

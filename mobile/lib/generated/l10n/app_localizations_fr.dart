@@ -4881,4 +4881,66 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get shellExpandSidebar => 'Développer la barre latérale';
+
+  @override
+  String get featuresOfflineOfflineQueued =>
+      'Enregistré hors ligne. La synchronisation se fera automatiquement au retour de la connexion.';
+
+  @override
+  String get featuresOfflineOfflineNotice =>
+      'Vous êtes hors ligne. Les nouvelles transactions sont d’abord stockées sur cet appareil.';
+
+  @override
+  String featuresOfflinePendingSync(Object count) {
+    return '$count transaction(s) en attente de synchronisation';
+  }
+
+  @override
+  String featuresOfflineSyncFailedToast(Object count) {
+    return '$count transaction(s) n’ont pas pu être synchronisées. Choisissez réessayer ou abandonner.';
+  }
+
+  @override
+  String featuresOfflineItemFailed(Object message) {
+    return 'Échec de la synchronisation : $message';
+  }
+
+  @override
+  String get featuresOfflineRetry => 'Réessayer';
+
+  @override
+  String get featuresOfflineDiscard => 'Abandonner';
+
+  @override
+  String get featuresOfflinePageTitle => 'Vous êtes hors ligne';
+
+  @override
+  String get featuresOfflinePageBody =>
+      'Cet appareil n’a pas de connexion réseau. Les pages en cache restent accessibles et les transactions hors ligne se synchronisent au retour de la connexion.';
+
+  @override
+  String get featuresOfflinePageAction => 'Aller aux transactions';
+
+  @override
+  String get featuresPwaInstallTitle => 'Installer AssetPilot';
+
+  @override
+  String get featuresPwaInstallHint =>
+      'Ajoutez-le à l’écran d’accueil pour l’ouvrir comme une app et saisir hors ligne';
+
+  @override
+  String get featuresPwaInstallAction => 'Installer';
+
+  @override
+  String get featuresOfflineListUnavailable =>
+      'Vous êtes hors ligne, la liste des transactions ne peut pas se charger. Les transactions ajoutées hors ligne se synchronisent au retour de la connexion.';
+
+  @override
+  String get featuresOfflineSaveFailed =>
+      'Ce navigateur ne peut pas stocker de données hors ligne (navigation privée ou stockage plein). Vérifiez la connexion et réessayez.';
+
+  @override
+  String featuresOfflineQueuedPhotosSkipped(Object count) {
+    return 'Enregistré hors ligne. Les $count photo(s) sélectionnée(s) ne seront pas envoyées ; ajoutez-les à nouveau après reconnexion.';
+  }
 }

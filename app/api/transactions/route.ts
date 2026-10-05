@@ -23,7 +23,7 @@ interface TransactionRow {
   date: string;
   category_id: string | null;
   account_id: string | null;
-  to_account_id: string | null;
+  transfer_to_account_id: string | null;
   note: string | null;
   exclude_from_stats: number | null;
   is_fx_fee: number | null;
@@ -84,7 +84,12 @@ interface CreateTransactionRequest {
   accountId?: string | null;
   note?: string | null;
   excludeFromStats?: boolean;
+  /** 離線記帳的 idempotency key（007）；線上直接新增時省略。 */
+  clientRef?: string | null;
 }
+
+/** 離線 idempotency key 形狀驗證：限 32 碼十六進位，避免使用者塞任意長字串。 */
+const CLIENT_REF_REGEX = /^[a-f0-9]{32}$/;
 
 const SORT_REGEX = /^(date|amount|account|category|type)_(asc|desc)$/;
 const TRANSACTION_TYPES = new Set(['income', 'expense', 'transfer_in', 'transfer_out']);
@@ -197,7 +202,7 @@ export async function GET(request: NextRequest) {
     ...r,
     categoryId: r.category_id,
     accountId: r.account_id,
-    toAccountId: r.to_account_id || null,
+    toAccountId: r.transfer_to_account_id || null,
     currency: normalizeCurrency(r.currency),
     originalAmount: Number(r.original_amount) > 0 ? Number(r.original_amount) : Number(r.amount) || 0,
     fxRate: String(r.fx_rate || '1'),
@@ -304,6 +309,7 @@ export async function POST(request: NextRequest) {
     accountId: accountId || null,
     note: note || '',
     excludeFromStats: !!excludeFromStats,
+    clientRef: typeof body.clientRef === 'string' && CLIENT_REF_REGEX.test(body.clientRef) ? body.clientRef : undefined,
   });
 
   return NextResponse.json(result, { status: 201 });

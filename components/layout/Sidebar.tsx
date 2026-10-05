@@ -12,6 +12,7 @@ import {
 import { useEffect, useRef, useState, type ElementType } from 'react';
 import { useTheme, type Theme } from '@/hooks/useTheme';
 import { useT } from '@/components/i18n/I18nProvider';
+import { notifyOfflineQueueLogout } from '@/lib/clientOfflineQueue';
 import Modal from '@/components/ui/Modal';
 
 // label 以譯文鍵（labelKey）表示，於 render 時用 t() 解析。
@@ -150,6 +151,7 @@ export default function Sidebar({ user, open, onClose }: { user: any; open?: boo
 
   async function handleLogout() {
     await fetch('/api/auth/logout', { method: 'POST' });
+    notifyOfflineQueueLogout();
     onClose?.();
     router.push('/login');
     router.refresh();

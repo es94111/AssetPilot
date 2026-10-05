@@ -7378,5 +7378,97 @@
   "@shellExpandSidebar": {
     "description": "Web path: shell.expandSidebar",
     "x-webPath": "shell.expandSidebar"
+  },
+  "featuresOfflineOfflineQueued": "Saved offline. It will sync automatically once you are back online.",
+  "@featuresOfflineOfflineQueued": {
+    "description": "Web path: features.offline.queued",
+    "x-webPath": "features.offline.queued"
+  },
+  "featuresOfflineOfflineNotice": "You are offline. New transactions are stored on this device first.",
+  "@featuresOfflineOfflineNotice": {
+    "description": "Web path: features.offline.notice",
+    "x-webPath": "features.offline.notice"
+  },
+  "featuresOfflinePendingSync": "{count} transaction(s) waiting to sync",
+  "@featuresOfflinePendingSync": {
+    "description": "Web path: features.offline.pendingSync",
+    "x-webPath": "features.offline.pendingSync",
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "featuresOfflineSyncFailedToast": "{count} transaction(s) failed to sync. Choose retry or discard.",
+  "@featuresOfflineSyncFailedToast": {
+    "description": "Web path: features.offline.syncFailedToast",
+    "x-webPath": "features.offline.syncFailedToast",
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "featuresOfflineItemFailed": "Sync failed: {message}",
+  "@featuresOfflineItemFailed": {
+    "description": "Web path: features.offline.itemFailed",
+    "x-webPath": "features.offline.itemFailed",
+    "placeholders": {
+      "message": {}
+    }
+  },
+  "featuresOfflineRetry": "Retry",
+  "@featuresOfflineRetry": {
+    "description": "Web path: features.offline.retry",
+    "x-webPath": "features.offline.retry"
+  },
+  "featuresOfflineDiscard": "Discard",
+  "@featuresOfflineDiscard": {
+    "description": "Web path: features.offline.discard",
+    "x-webPath": "features.offline.discard"
+  },
+  "featuresOfflinePageTitle": "You are offline",
+  "@featuresOfflinePageTitle": {
+    "description": "Web path: features.offline.pageTitle",
+    "x-webPath": "features.offline.pageTitle"
+  },
+  "featuresOfflinePageBody": "This device has no network connection. Cached pages still open, and offline transactions sync automatically once you reconnect.",
+  "@featuresOfflinePageBody": {
+    "description": "Web path: features.offline.pageBody",
+    "x-webPath": "features.offline.pageBody"
+  },
+  "featuresOfflinePageAction": "Go to transactions",
+  "@featuresOfflinePageAction": {
+    "description": "Web path: features.offline.pageAction",
+    "x-webPath": "features.offline.pageAction"
+  },
+  "featuresPwaInstallTitle": "Install AssetPilot",
+  "@featuresPwaInstallTitle": {
+    "description": "Web path: features.pwa.installTitle",
+    "x-webPath": "features.pwa.installTitle"
+  },
+  "featuresPwaInstallHint": "Add to your home screen to open like an app and keep offline entry",
+  "@featuresPwaInstallHint": {
+    "description": "Web path: features.pwa.installHint",
+    "x-webPath": "features.pwa.installHint"
+  },
+  "featuresPwaInstallAction": "Install",
+  "@featuresPwaInstallAction": {
+    "description": "Web path: features.pwa.installAction",
+    "x-webPath": "features.pwa.installAction"
+  },
+  "featuresOfflineListUnavailable": "You are offline, so the transaction list cannot load. Transactions added offline sync automatically once you reconnect.",
+  "@featuresOfflineListUnavailable": {
+    "description": "Web path: features.offline.listUnavailable",
+    "x-webPath": "features.offline.listUnavailable"
+  },
+  "featuresOfflineSaveFailed": "This browser cannot store offline data (private mode or storage full). Check your connection and try again.",
+  "@featuresOfflineSaveFailed": {
+    "description": "Web path: features.offline.saveFailed",
+    "x-webPath": "features.offline.saveFailed"
+  },
+  "featuresOfflineQueuedPhotosSkipped": "Saved offline. The {count} selected photo(s) will not upload; add them again after reconnecting.",
+  "@featuresOfflineQueuedPhotosSkipped": {
+    "description": "Web path: features.offline.queuedPhotosSkipped",
+    "x-webPath": "features.offline.queuedPhotosSkipped",
+    "placeholders": {
+      "count": {}
+    }
   }
 }

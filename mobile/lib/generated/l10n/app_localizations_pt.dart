@@ -4850,6 +4850,68 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get shellExpandSidebar => 'Expandir barra lateral';
+
+  @override
+  String get featuresOfflineOfflineQueued =>
+      'Salvo offline. Sincronizará automaticamente quando você voltar a ficar online.';
+
+  @override
+  String get featuresOfflineOfflineNotice =>
+      'Você está offline. As novas transações são armazenadas primeiro neste dispositivo.';
+
+  @override
+  String featuresOfflinePendingSync(Object count) {
+    return '$count transação(ões) aguardando sincronização';
+  }
+
+  @override
+  String featuresOfflineSyncFailedToast(Object count) {
+    return '$count transação(ões) falharam ao sincronizar. Escolha tentar novamente ou descartar.';
+  }
+
+  @override
+  String featuresOfflineItemFailed(Object message) {
+    return 'Falha na sincronização: $message';
+  }
+
+  @override
+  String get featuresOfflineRetry => 'Tentar novamente';
+
+  @override
+  String get featuresOfflineDiscard => 'Descartar';
+
+  @override
+  String get featuresOfflinePageTitle => 'Você está offline';
+
+  @override
+  String get featuresOfflinePageBody =>
+      'Este dispositivo não tem conexão de rede. Páginas em cache continuam abrindo, e as transações offline sincronizam quando você se reconectar.';
+
+  @override
+  String get featuresOfflinePageAction => 'Ir para transações';
+
+  @override
+  String get featuresPwaInstallTitle => 'Instalar o AssetPilot';
+
+  @override
+  String get featuresPwaInstallHint =>
+      'Adicione à tela inicial para abrir como app e lançar lançamentos offline';
+
+  @override
+  String get featuresPwaInstallAction => 'Instalar';
+
+  @override
+  String get featuresOfflineListUnavailable =>
+      'Você está offline, então a lista de transações não pode ser carregada. As transações adicionadas offline sincronizam ao reconectar.';
+
+  @override
+  String get featuresOfflineSaveFailed =>
+      'Este navegador não pode armazenar dados offline (modo privado ou armazenamento cheio). Verifique a conexão e tente novamente.';
+
+  @override
+  String featuresOfflineQueuedPhotosSkipped(Object count) {
+    return 'Salvo offline. As $count foto(s) selecionadas não serão enviadas; adicione novamente ao reconectar.';
+  }
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -9689,4 +9751,66 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get shellExpandSidebar => 'Expandir barra lateral';
+
+  @override
+  String get featuresOfflineOfflineQueued =>
+      'Salvo offline. Sincronizará automaticamente quando você voltar a ficar online.';
+
+  @override
+  String get featuresOfflineOfflineNotice =>
+      'Você está offline. As novas transações são armazenadas primeiro neste dispositivo.';
+
+  @override
+  String featuresOfflinePendingSync(Object count) {
+    return '$count transação(ões) aguardando sincronização';
+  }
+
+  @override
+  String featuresOfflineSyncFailedToast(Object count) {
+    return '$count transação(ões) falharam ao sincronizar. Escolha tentar novamente ou descartar.';
+  }
+
+  @override
+  String featuresOfflineItemFailed(Object message) {
+    return 'Falha na sincronização: $message';
+  }
+
+  @override
+  String get featuresOfflineRetry => 'Tentar novamente';
+
+  @override
+  String get featuresOfflineDiscard => 'Descartar';
+
+  @override
+  String get featuresOfflinePageTitle => 'Você está offline';
+
+  @override
+  String get featuresOfflinePageBody =>
+      'Este dispositivo não tem conexão de rede. Páginas em cache continuam abrindo, e as transações offline sincronizam quando você se reconectar.';
+
+  @override
+  String get featuresOfflinePageAction => 'Ir para transações';
+
+  @override
+  String get featuresPwaInstallTitle => 'Instalar o AssetPilot';
+
+  @override
+  String get featuresPwaInstallHint =>
+      'Adicione à tela inicial para abrir como app e lançar lançamentos offline';
+
+  @override
+  String get featuresPwaInstallAction => 'Instalar';
+
+  @override
+  String get featuresOfflineListUnavailable =>
+      'Você está offline, então a lista de transações não pode ser carregada. As transações adicionadas offline sincronizam ao reconectar.';
+
+  @override
+  String get featuresOfflineSaveFailed =>
+      'Este navegador não pode armazenar dados offline (modo privado ou armazenamento cheio). Verifique a conexão e tente novamente.';
+
+  @override
+  String featuresOfflineQueuedPhotosSkipped(Object count) {
+    return 'Salvo offline. As $count foto(s) selecionadas não serão enviadas; adicione novamente ao reconectar.';
+  }
 }

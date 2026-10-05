@@ -775,6 +775,20 @@ async function _runMigrations(db: DatabaseLike): Promise<void> {
   alterIgnore(
     "ALTER TABLE transactions ADD COLUMN transfer_to_account_id TEXT DEFAULT ''",
   );
+  // 既有 SQLite / PostgreSQL schema 曾使用 `to_account_id`，目前唯一欄位為
+  // `transfer_to_account_id`。若舊欄存在，將既有轉帳目的帳戶回填至 canonical 欄位；
+  // 新 PostgreSQL schema 沒有舊欄時略過。所有新寫入與讀取統一使用 transfer_to_account_id。
+  const transactionColumnRows = db.exec(
+    "SELECT column_name FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'transactions'",
+  );
+  const transactionColumns = new Set(
+    (transactionColumnRows[0]?.values ?? []).map((row) => String(row[0])),
+  );
+  if (transactionColumns.has('to_account_id')) {
+    db.run(
+      "UPDATE transactions SET transfer_to_account_id = to_account_id WHERE COALESCE(transfer_to_account_id, '') = '' AND COALESCE(to_account_id, '') != ''",
+    );
+  }
   alterIgnore("ALTER TABLE transactions ADD COLUMN tags TEXT DEFAULT '[]'");
   alterIgnore("ALTER TABLE transactions ADD COLUMN fx_fee NUMERIC DEFAULT 0");
   alterIgnore(
@@ -808,6 +822,30 @@ async function _runMigrations(db: DatabaseLike): Promise<void> {
   alterIgnore(
     "ALTER TABLE transactions ADD COLUMN repayment_summary_id TEXT DEFAULT ''",
   );
+  // 007-pwa-offline-entry：離線記帳的 idempotency key（線上建立恆為 ''）。
+  // 伺服器以 (user_id, client_ref) 唯一索引去重，離線佇列恢復連線後重送不會產生重複交易。
+  alterIgnore(
+    "ALTER TABLE transactions ADD COLUMN client_ref TEXT NOT NULL DEFAULT ''",
+  );
+  // 唯一索引不能透過 alterIgnore 建立：alterIgnore 會吞掉所有錯誤（假設是「已存在」），
+  // 但這個索引是離線重送去重的唯一後盾。若它因故建立失敗，就必須讓啟動失敗而非靜默略過，
+  // 否則重送會悄悄產生重複交易。改為先嘗試建立，失敗時以 pg_indexes 確認索引確實存在，
+  // 「已存在」才視為成功，其餘一律往外拋。
+  try {
+    db.run(
+      "CREATE UNIQUE INDEX IF NOT EXISTS idx_transactions_client_ref ON transactions(user_id, client_ref) WHERE client_ref != ''",
+    );
+  } catch (indexError) {
+    const indexRows = db.exec(
+      "SELECT indexdef FROM pg_indexes WHERE tablename = 'transactions' AND indexname = 'idx_transactions_client_ref'",
+    );
+    const indexDef = String(indexRows[0]?.values?.[0]?.[0] ?? '');
+    const validIndex =
+      /CREATE UNIQUE INDEX/i.test(indexDef) &&
+      /\(user_id, client_ref\)/i.test(indexDef) &&
+      /WHERE.*client_ref/i.test(indexDef);
+    if (!validIndex) throw indexError;
+  }
   alterIgnore(`UPDATE transactions SET ai_created = 1
     WHERE ai_created = 0 AND id IN (
       SELECT (metadata::jsonb->>'transaction_id')

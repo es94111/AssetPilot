@@ -4772,4 +4772,66 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get shellExpandSidebar => 'توسيع الشريط الجانبي';
+
+  @override
+  String get featuresOfflineOfflineQueued =>
+      'تم الحفظ دون اتصال. ستتم المزامنة تلقائيًا عند عودة الاتصال.';
+
+  @override
+  String get featuresOfflineOfflineNotice =>
+      'أنت غير متصل. تُحفظ المعاملات الجديدة على هذا الجهاز أولًا.';
+
+  @override
+  String featuresOfflinePendingSync(Object count) {
+    return '$count معاملة في انتظار المزامنة';
+  }
+
+  @override
+  String featuresOfflineSyncFailedToast(Object count) {
+    return 'فشلت مزامنة $count معاملة. اختر إعادة المحاولة أو التجاهل.';
+  }
+
+  @override
+  String featuresOfflineItemFailed(Object message) {
+    return 'فشلت المزامنة: $message';
+  }
+
+  @override
+  String get featuresOfflineRetry => 'إعادة المحاولة';
+
+  @override
+  String get featuresOfflineDiscard => 'تجاهل';
+
+  @override
+  String get featuresOfflinePageTitle => 'أنت غير متصل';
+
+  @override
+  String get featuresOfflinePageBody =>
+      'لا يوجد اتصال بالشبكة على هذا الجهاز. تظل الصفحات المخزّنة متاحة، وتتم مزامنة المعاملات عند عودة الاتصال.';
+
+  @override
+  String get featuresOfflinePageAction => 'الانتقال إلى المعاملات';
+
+  @override
+  String get featuresPwaInstallTitle => 'تثبيت AssetPilot';
+
+  @override
+  String get featuresPwaInstallHint =>
+      'أضفه إلى الشاشة الرئيسية لفتحه كتطبيق وتسجيل المعاملات دون اتصال';
+
+  @override
+  String get featuresPwaInstallAction => 'تثبيت';
+
+  @override
+  String get featuresOfflineListUnavailable =>
+      'أنت غير متصل، لذا لا يمكن تحميل قائمة المعاملات. تتم مزامنة المعاملات المضافة دون اتصال تلقائيًا عند عودة الاتصال.';
+
+  @override
+  String get featuresOfflineSaveFailed =>
+      'لا يمكن لهذا المتصفح تخزين البيانات دون اتصال (وضع التصفح الخاص أو مساحة التخزين ممتلئة). تحقق من الاتصال وحاول مجددًا.';
+
+  @override
+  String featuresOfflineQueuedPhotosSkipped(Object count) {
+    return 'تم الحفظ دون اتصال. لن يتم رفع $count صورة محددة؛ أضفها مرة أخرى بعد إعادة الاتصال.';
+  }
 }

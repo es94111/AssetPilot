@@ -32,7 +32,7 @@ interface TransactionRow {
   date: string;
   category_id: string | null;
   account_id: string | null;
-  to_account_id: string | null;
+  transfer_to_account_id: string | null;
   note: string | null;
   exclude_from_stats: number | null;
   is_fx_fee: number | null;
@@ -97,7 +97,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
   return NextResponse.json({
     id: t.id,
     accountId: t.account_id,
-    toAccountId: t.to_account_id || null,
+    toAccountId: t.transfer_to_account_id || null,
     type: t.type,
     amount: t.amount,
     currency: normalizeCurrency(t.currency),

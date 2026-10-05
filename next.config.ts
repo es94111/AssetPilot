@@ -69,6 +69,29 @@ const nextConfig: NextConfig = {
             { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
           ],
         },
+        // PWA 圖示與 manifest 由 Service Worker pre-cache（見 public/sw.js）；
+        // 帶雜湊語意但路徑固定，故給短快取並允許重新驗證，避免更新圖示後
+        // 使用者長時間拿到舊版。sw.js 本身一律不快取，否則新版無法生效。
+        {
+          source: '/icons/(.*)',
+          headers: [
+            { key: 'Cache-Control', value: 'public, max-age=86400, stale-while-revalidate=604800' },
+          ],
+        },
+        {
+          source: '/manifest.webmanifest',
+          headers: [
+            { key: 'Cache-Control', value: 'public, max-age=3600, must-revalidate' },
+            { key: 'Content-Type', value: 'application/manifest+json' },
+          ],
+        },
+        {
+          source: '/sw.js',
+          headers: [
+            { key: 'Cache-Control', value: 'no-cache, no-store, must-revalidate' },
+            { key: 'Service-Worker-Allowed', value: '/' },
+          ],
+        },
       ] : []),
       // 全域安全標頭
       {
@@ -95,6 +118,10 @@ const nextConfig: NextConfig = {
             value: [
               "default-src 'self'",
               scriptSrc,
+              // Service Worker 註冊需要明確的 worker-src；manifest 需要 manifest-src，
+              // 否則會被 default-src 'self' 以外的嚴格政策擋下（PWA 無法註冊／安裝）。
+              "worker-src 'self'",
+              "manifest-src 'self'",
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com",
               "font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com",
               "img-src 'self' data: https:",

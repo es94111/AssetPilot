@@ -5,6 +5,8 @@ import { usePathname } from 'next/navigation';
 import Sidebar from './Sidebar';
 import TopNav from './TopNav';
 import MobileNav from './MobileNav';
+import OfflineSyncStatus from '@/components/features/offline/OfflineSyncStatus';
+import PwaRegistrar from '@/components/features/pwa/PwaRegistrar';
 import { useT } from '@/components/i18n/I18nProvider';
 
 // 頁首標題對應的譯文鍵，於 render 時用 t() 解析。
@@ -45,6 +47,8 @@ export default function AppLayout({ user, children }: { user: any; children: Rea
     window.requestAnimationFrame(() => menuButtonRef.current?.focus());
   }, []);
 
+  // 綁定目前登入使用者由 OfflineSyncStatus 在啟動同步前完成，避免 child effect
+  // 先於此 layout effect 執行、使舊佇列以未綁定使用者的 key 開始同步。
   return (
     <div className="flex min-h-dvh" style={{ background: 'var(--app-bg)' }}>
       <a
@@ -81,6 +85,8 @@ export default function AppLayout({ user, children }: { user: any; children: Rea
       <div inert={sidebarOpen ? true : undefined} aria-hidden={sidebarOpen ? true : undefined}>
         <MobileNav />
       </div>
+      <OfflineSyncStatus userId={String(user?.id ?? '')} />
+      <PwaRegistrar />
     </div>
   );
 }

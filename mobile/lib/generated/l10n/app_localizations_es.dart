@@ -4881,4 +4881,66 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get shellExpandSidebar => 'Expandir barra lateral';
+
+  @override
+  String get featuresOfflineOfflineQueued =>
+      'Guardado sin conexión. Se sincronizará automáticamente al recuperar la conexión.';
+
+  @override
+  String get featuresOfflineOfflineNotice =>
+      'Estás sin conexión. Las nuevas transacciones se guardan primero en este dispositivo.';
+
+  @override
+  String featuresOfflinePendingSync(Object count) {
+    return '$count transacción(es) pendientes de sincronizar';
+  }
+
+  @override
+  String featuresOfflineSyncFailedToast(Object count) {
+    return '$count transacción(es) no se pudieron sincronizar. Elige reintentar o descartar.';
+  }
+
+  @override
+  String featuresOfflineItemFailed(Object message) {
+    return 'Error de sincronización: $message';
+  }
+
+  @override
+  String get featuresOfflineRetry => 'Reintentar';
+
+  @override
+  String get featuresOfflineDiscard => 'Descartar';
+
+  @override
+  String get featuresOfflinePageTitle => 'Estás sin conexión';
+
+  @override
+  String get featuresOfflinePageBody =>
+      'Este dispositivo no tiene conexión de red. Las páginas en caché siguen abriéndose y las transacciones sin conexión se sincronizan al reconectar.';
+
+  @override
+  String get featuresOfflinePageAction => 'Ir a transacciones';
+
+  @override
+  String get featuresPwaInstallTitle => 'Instalar AssetPilot';
+
+  @override
+  String get featuresPwaInstallHint =>
+      'Añádelo a la pantalla de inicio para abrirlo como una app y registrar sin conexión';
+
+  @override
+  String get featuresPwaInstallAction => 'Instalar';
+
+  @override
+  String get featuresOfflineListUnavailable =>
+      'Estás sin conexión, por lo que la lista de transacciones no puede cargarse. Las transacciones añadidas sin conexión se sincronizan al reconectar.';
+
+  @override
+  String get featuresOfflineSaveFailed =>
+      'Este navegador no puede guardar datos sin conexión (modo privado o almacenamiento lleno). Revisa la conexión e inténtalo de nuevo.';
+
+  @override
+  String featuresOfflineQueuedPhotosSkipped(Object count) {
+    return 'Guardado sin conexión. Las $count foto(s) seleccionadas no se subirán; vuelve a añadirlas al reconectar.';
+  }
 }

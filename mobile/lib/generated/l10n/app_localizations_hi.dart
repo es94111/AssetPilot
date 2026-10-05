@@ -4785,4 +4785,66 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get shellExpandSidebar => 'साइडबार विस्तृत करें';
+
+  @override
+  String get featuresOfflineOfflineQueued =>
+      'ऑफ़लाइन सहेजा गया। कनेक्शन लौटने पर यह अपने आप सिंक हो जाएगा।';
+
+  @override
+  String get featuresOfflineOfflineNotice =>
+      'आप ऑफ़लाइन हैं। नए लेन-देन पहले इस डिवाइस पर सहेजे जाते हैं।';
+
+  @override
+  String featuresOfflinePendingSync(Object count) {
+    return '$count लेन-देन सिंक होने बाकी हैं';
+  }
+
+  @override
+  String featuresOfflineSyncFailedToast(Object count) {
+    return '$count लेन-देन सिंक नहीं हो सके। पुनः प्रयास या हटाना चुनें।';
+  }
+
+  @override
+  String featuresOfflineItemFailed(Object message) {
+    return 'सिंक विफल: $message';
+  }
+
+  @override
+  String get featuresOfflineRetry => 'पुनः प्रयास';
+
+  @override
+  String get featuresOfflineDiscard => 'हटाएँ';
+
+  @override
+  String get featuresOfflinePageTitle => 'आप ऑफ़लाइन हैं';
+
+  @override
+  String get featuresOfflinePageBody =>
+      'इस डिवाइस पर नेटवर्क कनेक्शन नहीं है। कैश किए गए पेज खुलते रहते हैं, और ऑफ़लाइन लेन-देन फिर से कनेक्ट होने पर सिंक हो जाते हैं।';
+
+  @override
+  String get featuresOfflinePageAction => 'लेन-देन पर जाएँ';
+
+  @override
+  String get featuresPwaInstallTitle => 'AssetPilot इंस्टॉल करें';
+
+  @override
+  String get featuresPwaInstallHint =>
+      'होम स्क्रीन पर जोड़ें ताकि ऐप की तरह खुले और ऑफ़लाइन प्रविष्टि काम करे';
+
+  @override
+  String get featuresPwaInstallAction => 'इंस्टॉल';
+
+  @override
+  String get featuresOfflineListUnavailable =>
+      'आप ऑफ़लाइन हैं, इसलिए लेन-देन सूची लोड नहीं हो सकती। ऑफ़लाइन जोड़े गए लेन-देन फिर से कनेक्ट होने पर सिंक हो जाते हैं।';
+
+  @override
+  String get featuresOfflineSaveFailed =>
+      'यह ब्राउज़र ऑफ़लाइन डेटा संग्रहीत नहीं कर सकता (निजी मोड या संग्रहण भरा हुआ)। कनेक्शन जाँचें और पुनः प्रयास करें।';
+
+  @override
+  String featuresOfflineQueuedPhotosSkipped(Object count) {
+    return 'ऑफ़लाइन सहेजा गया। चयनित $count फ़ोटो अपलोड नहीं होंगी; फिर से कनेक्ट होने पर दोबारा जोड़ें।';
+  }
 }

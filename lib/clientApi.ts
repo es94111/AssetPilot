@@ -8,6 +8,18 @@ export async function apiFetch(url: string, options: RequestInit = {}) {
   return data;
 }
 
+/**
+ * 只把 fetch 的連線層錯誤分類為可進離線佇列。
+ *
+ * 不以 `navigator.onLine` 判斷：該屬性在 LAN-only、VPN、captive portal 等情境常不可靠，
+ * 若伺服器已回覆 4xx 但瀏覽器仍回報 offline，會把驗證失敗誤當成已儲存的離線交易。
+ * 原生 fetch 的網路／DNS／離線失敗會 reject `TypeError`；HTTP 非 2xx 則由 apiFetch
+ * 拋出一般 `Error`，必須讓使用者看到真正的伺服器訊息。
+ */
+export function isNetworkError(error: unknown): boolean {
+  return error instanceof TypeError;
+}
+
 export async function apiGet(url: string) {
   return apiFetch(url, { cache: 'no-store' });
 }

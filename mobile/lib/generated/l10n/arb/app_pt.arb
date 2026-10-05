@@ -7363,5 +7363,97 @@
   "@shellExpandSidebar": {
     "description": "Web path: shell.expandSidebar",
     "x-webPath": "shell.expandSidebar"
+  },
+  "featuresOfflineOfflineQueued": "Salvo offline. Sincronizará automaticamente quando você voltar a ficar online.",
+  "@featuresOfflineOfflineQueued": {
+    "description": "Web path: features.offline.queued",
+    "x-webPath": "features.offline.queued"
+  },
+  "featuresOfflineOfflineNotice": "Você está offline. As novas transações são armazenadas primeiro neste dispositivo.",
+  "@featuresOfflineOfflineNotice": {
+    "description": "Web path: features.offline.notice",
+    "x-webPath": "features.offline.notice"
+  },
+  "featuresOfflinePendingSync": "{count} transação(ões) aguardando sincronização",
+  "@featuresOfflinePendingSync": {
+    "description": "Web path: features.offline.pendingSync",
+    "x-webPath": "features.offline.pendingSync",
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "featuresOfflineSyncFailedToast": "{count} transação(ões) falharam ao sincronizar. Escolha tentar novamente ou descartar.",
+  "@featuresOfflineSyncFailedToast": {
+    "description": "Web path: features.offline.syncFailedToast",
+    "x-webPath": "features.offline.syncFailedToast",
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "featuresOfflineItemFailed": "Falha na sincronização: {message}",
+  "@featuresOfflineItemFailed": {
+    "description": "Web path: features.offline.itemFailed",
+    "x-webPath": "features.offline.itemFailed",
+    "placeholders": {
+      "message": {}
+    }
+  },
+  "featuresOfflineRetry": "Tentar novamente",
+  "@featuresOfflineRetry": {
+    "description": "Web path: features.offline.retry",
+    "x-webPath": "features.offline.retry"
+  },
+  "featuresOfflineDiscard": "Descartar",
+  "@featuresOfflineDiscard": {
+    "description": "Web path: features.offline.discard",
+    "x-webPath": "features.offline.discard"
+  },
+  "featuresOfflinePageTitle": "Você está offline",
+  "@featuresOfflinePageTitle": {
+    "description": "Web path: features.offline.pageTitle",
+    "x-webPath": "features.offline.pageTitle"
+  },
+  "featuresOfflinePageBody": "Este dispositivo não tem conexão de rede. Páginas em cache continuam abrindo, e as transações offline sincronizam quando você se reconectar.",
+  "@featuresOfflinePageBody": {
+    "description": "Web path: features.offline.pageBody",
+    "x-webPath": "features.offline.pageBody"
+  },
+  "featuresOfflinePageAction": "Ir para transações",
+  "@featuresOfflinePageAction": {
+    "description": "Web path: features.offline.pageAction",
+    "x-webPath": "features.offline.pageAction"
+  },
+  "featuresPwaInstallTitle": "Instalar o AssetPilot",
+  "@featuresPwaInstallTitle": {
+    "description": "Web path: features.pwa.installTitle",
+    "x-webPath": "features.pwa.installTitle"
+  },
+  "featuresPwaInstallHint": "Adicione à tela inicial para abrir como app e lançar lançamentos offline",
+  "@featuresPwaInstallHint": {
+    "description": "Web path: features.pwa.installHint",
+    "x-webPath": "features.pwa.installHint"
+  },
+  "featuresPwaInstallAction": "Instalar",
+  "@featuresPwaInstallAction": {
+    "description": "Web path: features.pwa.installAction",
+    "x-webPath": "features.pwa.installAction"
+  },
+  "featuresOfflineListUnavailable": "Você está offline, então a lista de transações não pode ser carregada. As transações adicionadas offline sincronizam ao reconectar.",
+  "@featuresOfflineListUnavailable": {
+    "description": "Web path: features.offline.listUnavailable",
+    "x-webPath": "features.offline.listUnavailable"
+  },
+  "featuresOfflineSaveFailed": "Este navegador não pode armazenar dados offline (modo privado ou armazenamento cheio). Verifique a conexão e tente novamente.",
+  "@featuresOfflineSaveFailed": {
+    "description": "Web path: features.offline.saveFailed",
+    "x-webPath": "features.offline.saveFailed"
+  },
+  "featuresOfflineQueuedPhotosSkipped": "Salvo offline. As {count} foto(s) selecionadas não serão enviadas; adicione novamente ao reconectar.",
+  "@featuresOfflineQueuedPhotosSkipped": {
+    "description": "Web path: features.offline.queuedPhotosSkipped",
+    "x-webPath": "features.offline.queuedPhotosSkipped",
+    "placeholders": {
+      "count": {}
+    }
   }
 }

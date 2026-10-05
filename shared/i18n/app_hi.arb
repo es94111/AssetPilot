@@ -3835,6 +3835,86 @@
     "description": "Web path: features.stocks.portfolio.currentPrice",
     "x-webPath": "features.stocks.portfolio.currentPrice"
   },
+  "featuresStocksPortfolioHistoryChart": "ऐतिहासिक मूल्य चार्ट",
+  "@featuresStocksPortfolioHistoryChart": {
+    "description": "Web path: features.stocks.portfolio.historyChart",
+    "x-webPath": "features.stocks.portfolio.historyChart"
+  },
+  "featuresStocksPortfolioIntervalDay": "दिन",
+  "@featuresStocksPortfolioIntervalDay": {
+    "description": "Web path: features.stocks.portfolio.intervalDay",
+    "x-webPath": "features.stocks.portfolio.intervalDay"
+  },
+  "featuresStocksPortfolioIntervalWeek": "सप्ताह",
+  "@featuresStocksPortfolioIntervalWeek": {
+    "description": "Web path: features.stocks.portfolio.intervalWeek",
+    "x-webPath": "features.stocks.portfolio.intervalWeek"
+  },
+  "featuresStocksPortfolioIntervalMonth": "महीना",
+  "@featuresStocksPortfolioIntervalMonth": {
+    "description": "Web path: features.stocks.portfolio.intervalMonth",
+    "x-webPath": "features.stocks.portfolio.intervalMonth"
+  },
+  "featuresStocksPortfolioChartInterval": "अंतराल",
+  "@featuresStocksPortfolioChartInterval": {
+    "description": "Web path: features.stocks.portfolio.chartInterval",
+    "x-webPath": "features.stocks.portfolio.chartInterval"
+  },
+  "featuresStocksPortfolioChartLoading": "ऐतिहासिक मूल्य लोड हो रहे हैं...",
+  "@featuresStocksPortfolioChartLoading": {
+    "description": "Web path: features.stocks.portfolio.chartLoading",
+    "x-webPath": "features.stocks.portfolio.chartLoading"
+  },
+  "featuresStocksPortfolioChartNoData": "इस अवधि के लिए ऐतिहासिक मूल्य उपलब्ध नहीं हैं",
+  "@featuresStocksPortfolioChartNoData": {
+    "description": "Web path: features.stocks.portfolio.chartNoData",
+    "x-webPath": "features.stocks.portfolio.chartNoData"
+  },
+  "featuresStocksPortfolioChartUnavailable": "ऐतिहासिक मूल्य अभी उपलब्ध नहीं हैं। कृपया बाद में प्रयास करें।",
+  "@featuresStocksPortfolioChartUnavailable": {
+    "description": "Web path: features.stocks.portfolio.chartUnavailable",
+    "x-webPath": "features.stocks.portfolio.chartUnavailable"
+  },
+  "featuresStocksPortfolioChartOpen": "खुला",
+  "@featuresStocksPortfolioChartOpen": {
+    "description": "Web path: features.stocks.portfolio.chartOpen",
+    "x-webPath": "features.stocks.portfolio.chartOpen"
+  },
+  "featuresStocksPortfolioChartHigh": "उच्च",
+  "@featuresStocksPortfolioChartHigh": {
+    "description": "Web path: features.stocks.portfolio.chartHigh",
+    "x-webPath": "features.stocks.portfolio.chartHigh"
+  },
+  "featuresStocksPortfolioChartLow": "निम्न",
+  "@featuresStocksPortfolioChartLow": {
+    "description": "Web path: features.stocks.portfolio.chartLow",
+    "x-webPath": "features.stocks.portfolio.chartLow"
+  },
+  "featuresStocksPortfolioChartClose": "बंद",
+  "@featuresStocksPortfolioChartClose": {
+    "description": "Web path: features.stocks.portfolio.chartClose",
+    "x-webPath": "features.stocks.portfolio.chartClose"
+  },
+  "featuresStocksPortfolioChartBuy": "खरीद",
+  "@featuresStocksPortfolioChartBuy": {
+    "description": "Web path: features.stocks.portfolio.chartBuy",
+    "x-webPath": "features.stocks.portfolio.chartBuy"
+  },
+  "featuresStocksPortfolioChartSell": "बिक्री",
+  "@featuresStocksPortfolioChartSell": {
+    "description": "Web path: features.stocks.portfolio.chartSell",
+    "x-webPath": "features.stocks.portfolio.chartSell"
+  },
+  "featuresStocksPortfolioChartRising": "ऊपर बंद",
+  "@featuresStocksPortfolioChartRising": {
+    "description": "Web path: features.stocks.portfolio.chartRising",
+    "x-webPath": "features.stocks.portfolio.chartRising"
+  },
+  "featuresStocksPortfolioChartFalling": "नीचे बंद",
+  "@featuresStocksPortfolioChartFalling": {
+    "description": "Web path: features.stocks.portfolio.chartFalling",
+    "x-webPath": "features.stocks.portfolio.chartFalling"
+  },
   "featuresStocksPortfolioMarketValue": "बाज़ार मूल्य",
   "@featuresStocksPortfolioMarketValue": {
     "description": "Web path: features.stocks.portfolio.marketValue",

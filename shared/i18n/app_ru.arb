@@ -3835,6 +3835,86 @@
     "description": "Web path: features.stocks.portfolio.currentPrice",
     "x-webPath": "features.stocks.portfolio.currentPrice"
   },
+  "featuresStocksPortfolioHistoryChart": "История цен",
+  "@featuresStocksPortfolioHistoryChart": {
+    "description": "Web path: features.stocks.portfolio.historyChart",
+    "x-webPath": "features.stocks.portfolio.historyChart"
+  },
+  "featuresStocksPortfolioIntervalDay": "День",
+  "@featuresStocksPortfolioIntervalDay": {
+    "description": "Web path: features.stocks.portfolio.intervalDay",
+    "x-webPath": "features.stocks.portfolio.intervalDay"
+  },
+  "featuresStocksPortfolioIntervalWeek": "Неделя",
+  "@featuresStocksPortfolioIntervalWeek": {
+    "description": "Web path: features.stocks.portfolio.intervalWeek",
+    "x-webPath": "features.stocks.portfolio.intervalWeek"
+  },
+  "featuresStocksPortfolioIntervalMonth": "Месяц",
+  "@featuresStocksPortfolioIntervalMonth": {
+    "description": "Web path: features.stocks.portfolio.intervalMonth",
+    "x-webPath": "features.stocks.portfolio.intervalMonth"
+  },
+  "featuresStocksPortfolioChartInterval": "Интервал",
+  "@featuresStocksPortfolioChartInterval": {
+    "description": "Web path: features.stocks.portfolio.chartInterval",
+    "x-webPath": "features.stocks.portfolio.chartInterval"
+  },
+  "featuresStocksPortfolioChartLoading": "Загрузка истории цен...",
+  "@featuresStocksPortfolioChartLoading": {
+    "description": "Web path: features.stocks.portfolio.chartLoading",
+    "x-webPath": "features.stocks.portfolio.chartLoading"
+  },
+  "featuresStocksPortfolioChartNoData": "За этот период нет исторических цен",
+  "@featuresStocksPortfolioChartNoData": {
+    "description": "Web path: features.stocks.portfolio.chartNoData",
+    "x-webPath": "features.stocks.portfolio.chartNoData"
+  },
+  "featuresStocksPortfolioChartUnavailable": "История цен временно недоступна. Попробуйте позже.",
+  "@featuresStocksPortfolioChartUnavailable": {
+    "description": "Web path: features.stocks.portfolio.chartUnavailable",
+    "x-webPath": "features.stocks.portfolio.chartUnavailable"
+  },
+  "featuresStocksPortfolioChartOpen": "Открытие",
+  "@featuresStocksPortfolioChartOpen": {
+    "description": "Web path: features.stocks.portfolio.chartOpen",
+    "x-webPath": "features.stocks.portfolio.chartOpen"
+  },
+  "featuresStocksPortfolioChartHigh": "Максимум",
+  "@featuresStocksPortfolioChartHigh": {
+    "description": "Web path: features.stocks.portfolio.chartHigh",
+    "x-webPath": "features.stocks.portfolio.chartHigh"
+  },
+  "featuresStocksPortfolioChartLow": "Минимум",
+  "@featuresStocksPortfolioChartLow": {
+    "description": "Web path: features.stocks.portfolio.chartLow",
+    "x-webPath": "features.stocks.portfolio.chartLow"
+  },
+  "featuresStocksPortfolioChartClose": "Закрытие",
+  "@featuresStocksPortfolioChartClose": {
+    "description": "Web path: features.stocks.portfolio.chartClose",
+    "x-webPath": "features.stocks.portfolio.chartClose"
+  },
+  "featuresStocksPortfolioChartBuy": "Покупка",
+  "@featuresStocksPortfolioChartBuy": {
+    "description": "Web path: features.stocks.portfolio.chartBuy",
+    "x-webPath": "features.stocks.portfolio.chartBuy"
+  },
+  "featuresStocksPortfolioChartSell": "Продажа",
+  "@featuresStocksPortfolioChartSell": {
+    "description": "Web path: features.stocks.portfolio.chartSell",
+    "x-webPath": "features.stocks.portfolio.chartSell"
+  },
+  "featuresStocksPortfolioChartRising": "Закрытие выше",
+  "@featuresStocksPortfolioChartRising": {
+    "description": "Web path: features.stocks.portfolio.chartRising",
+    "x-webPath": "features.stocks.portfolio.chartRising"
+  },
+  "featuresStocksPortfolioChartFalling": "Закрытие ниже",
+  "@featuresStocksPortfolioChartFalling": {
+    "description": "Web path: features.stocks.portfolio.chartFalling",
+    "x-webPath": "features.stocks.portfolio.chartFalling"
+  },
   "featuresStocksPortfolioMarketValue": "Рыночная стоимость",
   "@featuresStocksPortfolioMarketValue": {
     "description": "Web path: features.stocks.portfolio.marketValue",

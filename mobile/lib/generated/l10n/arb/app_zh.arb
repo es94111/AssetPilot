@@ -3959,6 +3959,86 @@
     "description": "Web path: features.stocks.portfolio.currentPrice",
     "x-webPath": "features.stocks.portfolio.currentPrice"
   },
+  "featuresStocksPortfolioHistoryChart": "歷史 K 線",
+  "@featuresStocksPortfolioHistoryChart": {
+    "description": "Web path: features.stocks.portfolio.historyChart",
+    "x-webPath": "features.stocks.portfolio.historyChart"
+  },
+  "featuresStocksPortfolioIntervalDay": "日",
+  "@featuresStocksPortfolioIntervalDay": {
+    "description": "Web path: features.stocks.portfolio.intervalDay",
+    "x-webPath": "features.stocks.portfolio.intervalDay"
+  },
+  "featuresStocksPortfolioIntervalWeek": "週",
+  "@featuresStocksPortfolioIntervalWeek": {
+    "description": "Web path: features.stocks.portfolio.intervalWeek",
+    "x-webPath": "features.stocks.portfolio.intervalWeek"
+  },
+  "featuresStocksPortfolioIntervalMonth": "月",
+  "@featuresStocksPortfolioIntervalMonth": {
+    "description": "Web path: features.stocks.portfolio.intervalMonth",
+    "x-webPath": "features.stocks.portfolio.intervalMonth"
+  },
+  "featuresStocksPortfolioChartInterval": "K 線週期",
+  "@featuresStocksPortfolioChartInterval": {
+    "description": "Web path: features.stocks.portfolio.chartInterval",
+    "x-webPath": "features.stocks.portfolio.chartInterval"
+  },
+  "featuresStocksPortfolioChartLoading": "載入歷史股價中...",
+  "@featuresStocksPortfolioChartLoading": {
+    "description": "Web path: features.stocks.portfolio.chartLoading",
+    "x-webPath": "features.stocks.portfolio.chartLoading"
+  },
+  "featuresStocksPortfolioChartNoData": "此期間沒有歷史股價資料",
+  "@featuresStocksPortfolioChartNoData": {
+    "description": "Web path: features.stocks.portfolio.chartNoData",
+    "x-webPath": "features.stocks.portfolio.chartNoData"
+  },
+  "featuresStocksPortfolioChartUnavailable": "歷史股價暫時無法取得，請稍後再試。",
+  "@featuresStocksPortfolioChartUnavailable": {
+    "description": "Web path: features.stocks.portfolio.chartUnavailable",
+    "x-webPath": "features.stocks.portfolio.chartUnavailable"
+  },
+  "featuresStocksPortfolioChartOpen": "開盤",
+  "@featuresStocksPortfolioChartOpen": {
+    "description": "Web path: features.stocks.portfolio.chartOpen",
+    "x-webPath": "features.stocks.portfolio.chartOpen"
+  },
+  "featuresStocksPortfolioChartHigh": "最高",
+  "@featuresStocksPortfolioChartHigh": {
+    "description": "Web path: features.stocks.portfolio.chartHigh",
+    "x-webPath": "features.stocks.portfolio.chartHigh"
+  },
+  "featuresStocksPortfolioChartLow": "最低",
+  "@featuresStocksPortfolioChartLow": {
+    "description": "Web path: features.stocks.portfolio.chartLow",
+    "x-webPath": "features.stocks.portfolio.chartLow"
+  },
+  "featuresStocksPortfolioChartClose": "收盤",
+  "@featuresStocksPortfolioChartClose": {
+    "description": "Web path: features.stocks.portfolio.chartClose",
+    "x-webPath": "features.stocks.portfolio.chartClose"
+  },
+  "featuresStocksPortfolioChartBuy": "買進",
+  "@featuresStocksPortfolioChartBuy": {
+    "description": "Web path: features.stocks.portfolio.chartBuy",
+    "x-webPath": "features.stocks.portfolio.chartBuy"
+  },
+  "featuresStocksPortfolioChartSell": "賣出",
+  "@featuresStocksPortfolioChartSell": {
+    "description": "Web path: features.stocks.portfolio.chartSell",
+    "x-webPath": "features.stocks.portfolio.chartSell"
+  },
+  "featuresStocksPortfolioChartRising": "收漲",
+  "@featuresStocksPortfolioChartRising": {
+    "description": "Web path: features.stocks.portfolio.chartRising",
+    "x-webPath": "features.stocks.portfolio.chartRising"
+  },
+  "featuresStocksPortfolioChartFalling": "收跌",
+  "@featuresStocksPortfolioChartFalling": {
+    "description": "Web path: features.stocks.portfolio.chartFalling",
+    "x-webPath": "features.stocks.portfolio.chartFalling"
+  },
   "featuresStocksPortfolioMarketValue": "市值",
   "@featuresStocksPortfolioMarketValue": {
     "description": "Web path: features.stocks.portfolio.marketValue",

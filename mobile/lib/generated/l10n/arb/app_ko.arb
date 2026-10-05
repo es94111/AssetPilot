@@ -3835,6 +3835,86 @@
     "description": "Web path: features.stocks.portfolio.currentPrice",
     "x-webPath": "features.stocks.portfolio.currentPrice"
   },
+  "featuresStocksPortfolioHistoryChart": "가격 히스토리",
+  "@featuresStocksPortfolioHistoryChart": {
+    "description": "Web path: features.stocks.portfolio.historyChart",
+    "x-webPath": "features.stocks.portfolio.historyChart"
+  },
+  "featuresStocksPortfolioIntervalDay": "일",
+  "@featuresStocksPortfolioIntervalDay": {
+    "description": "Web path: features.stocks.portfolio.intervalDay",
+    "x-webPath": "features.stocks.portfolio.intervalDay"
+  },
+  "featuresStocksPortfolioIntervalWeek": "주",
+  "@featuresStocksPortfolioIntervalWeek": {
+    "description": "Web path: features.stocks.portfolio.intervalWeek",
+    "x-webPath": "features.stocks.portfolio.intervalWeek"
+  },
+  "featuresStocksPortfolioIntervalMonth": "월",
+  "@featuresStocksPortfolioIntervalMonth": {
+    "description": "Web path: features.stocks.portfolio.intervalMonth",
+    "x-webPath": "features.stocks.portfolio.intervalMonth"
+  },
+  "featuresStocksPortfolioChartInterval": "간격",
+  "@featuresStocksPortfolioChartInterval": {
+    "description": "Web path: features.stocks.portfolio.chartInterval",
+    "x-webPath": "features.stocks.portfolio.chartInterval"
+  },
+  "featuresStocksPortfolioChartLoading": "과거 가격을 불러오는 중...",
+  "@featuresStocksPortfolioChartLoading": {
+    "description": "Web path: features.stocks.portfolio.chartLoading",
+    "x-webPath": "features.stocks.portfolio.chartLoading"
+  },
+  "featuresStocksPortfolioChartNoData": "이 기간에 과거 가격 데이터가 없습니다",
+  "@featuresStocksPortfolioChartNoData": {
+    "description": "Web path: features.stocks.portfolio.chartNoData",
+    "x-webPath": "features.stocks.portfolio.chartNoData"
+  },
+  "featuresStocksPortfolioChartUnavailable": "과거 가격을 일시적으로 불러올 수 없습니다. 나중에 다시 시도해 주세요.",
+  "@featuresStocksPortfolioChartUnavailable": {
+    "description": "Web path: features.stocks.portfolio.chartUnavailable",
+    "x-webPath": "features.stocks.portfolio.chartUnavailable"
+  },
+  "featuresStocksPortfolioChartOpen": "시가",
+  "@featuresStocksPortfolioChartOpen": {
+    "description": "Web path: features.stocks.portfolio.chartOpen",
+    "x-webPath": "features.stocks.portfolio.chartOpen"
+  },
+  "featuresStocksPortfolioChartHigh": "고가",
+  "@featuresStocksPortfolioChartHigh": {
+    "description": "Web path: features.stocks.portfolio.chartHigh",
+    "x-webPath": "features.stocks.portfolio.chartHigh"
+  },
+  "featuresStocksPortfolioChartLow": "저가",
+  "@featuresStocksPortfolioChartLow": {
+    "description": "Web path: features.stocks.portfolio.chartLow",
+    "x-webPath": "features.stocks.portfolio.chartLow"
+  },
+  "featuresStocksPortfolioChartClose": "종가",
+  "@featuresStocksPortfolioChartClose": {
+    "description": "Web path: features.stocks.portfolio.chartClose",
+    "x-webPath": "features.stocks.portfolio.chartClose"
+  },
+  "featuresStocksPortfolioChartBuy": "매수",
+  "@featuresStocksPortfolioChartBuy": {
+    "description": "Web path: features.stocks.portfolio.chartBuy",
+    "x-webPath": "features.stocks.portfolio.chartBuy"
+  },
+  "featuresStocksPortfolioChartSell": "매도",
+  "@featuresStocksPortfolioChartSell": {
+    "description": "Web path: features.stocks.portfolio.chartSell",
+    "x-webPath": "features.stocks.portfolio.chartSell"
+  },
+  "featuresStocksPortfolioChartRising": "상승 마감",
+  "@featuresStocksPortfolioChartRising": {
+    "description": "Web path: features.stocks.portfolio.chartRising",
+    "x-webPath": "features.stocks.portfolio.chartRising"
+  },
+  "featuresStocksPortfolioChartFalling": "하락 마감",
+  "@featuresStocksPortfolioChartFalling": {
+    "description": "Web path: features.stocks.portfolio.chartFalling",
+    "x-webPath": "features.stocks.portfolio.chartFalling"
+  },
   "featuresStocksPortfolioMarketValue": "평가액",
   "@featuresStocksPortfolioMarketValue": {
     "description": "Web path: features.stocks.portfolio.marketValue",

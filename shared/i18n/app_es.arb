@@ -3835,6 +3835,86 @@
     "description": "Web path: features.stocks.portfolio.currentPrice",
     "x-webPath": "features.stocks.portfolio.currentPrice"
   },
+  "featuresStocksPortfolioHistoryChart": "Historial de precios",
+  "@featuresStocksPortfolioHistoryChart": {
+    "description": "Web path: features.stocks.portfolio.historyChart",
+    "x-webPath": "features.stocks.portfolio.historyChart"
+  },
+  "featuresStocksPortfolioIntervalDay": "Día",
+  "@featuresStocksPortfolioIntervalDay": {
+    "description": "Web path: features.stocks.portfolio.intervalDay",
+    "x-webPath": "features.stocks.portfolio.intervalDay"
+  },
+  "featuresStocksPortfolioIntervalWeek": "Semana",
+  "@featuresStocksPortfolioIntervalWeek": {
+    "description": "Web path: features.stocks.portfolio.intervalWeek",
+    "x-webPath": "features.stocks.portfolio.intervalWeek"
+  },
+  "featuresStocksPortfolioIntervalMonth": "Mes",
+  "@featuresStocksPortfolioIntervalMonth": {
+    "description": "Web path: features.stocks.portfolio.intervalMonth",
+    "x-webPath": "features.stocks.portfolio.intervalMonth"
+  },
+  "featuresStocksPortfolioChartInterval": "Intervalo",
+  "@featuresStocksPortfolioChartInterval": {
+    "description": "Web path: features.stocks.portfolio.chartInterval",
+    "x-webPath": "features.stocks.portfolio.chartInterval"
+  },
+  "featuresStocksPortfolioChartLoading": "Cargando el historial de precios...",
+  "@featuresStocksPortfolioChartLoading": {
+    "description": "Web path: features.stocks.portfolio.chartLoading",
+    "x-webPath": "features.stocks.portfolio.chartLoading"
+  },
+  "featuresStocksPortfolioChartNoData": "No hay precios históricos para este período",
+  "@featuresStocksPortfolioChartNoData": {
+    "description": "Web path: features.stocks.portfolio.chartNoData",
+    "x-webPath": "features.stocks.portfolio.chartNoData"
+  },
+  "featuresStocksPortfolioChartUnavailable": "El historial de precios no está disponible temporalmente. Inténtalo más tarde.",
+  "@featuresStocksPortfolioChartUnavailable": {
+    "description": "Web path: features.stocks.portfolio.chartUnavailable",
+    "x-webPath": "features.stocks.portfolio.chartUnavailable"
+  },
+  "featuresStocksPortfolioChartOpen": "Apertura",
+  "@featuresStocksPortfolioChartOpen": {
+    "description": "Web path: features.stocks.portfolio.chartOpen",
+    "x-webPath": "features.stocks.portfolio.chartOpen"
+  },
+  "featuresStocksPortfolioChartHigh": "Máximo",
+  "@featuresStocksPortfolioChartHigh": {
+    "description": "Web path: features.stocks.portfolio.chartHigh",
+    "x-webPath": "features.stocks.portfolio.chartHigh"
+  },
+  "featuresStocksPortfolioChartLow": "Mínimo",
+  "@featuresStocksPortfolioChartLow": {
+    "description": "Web path: features.stocks.portfolio.chartLow",
+    "x-webPath": "features.stocks.portfolio.chartLow"
+  },
+  "featuresStocksPortfolioChartClose": "Cierre",
+  "@featuresStocksPortfolioChartClose": {
+    "description": "Web path: features.stocks.portfolio.chartClose",
+    "x-webPath": "features.stocks.portfolio.chartClose"
+  },
+  "featuresStocksPortfolioChartBuy": "Compra",
+  "@featuresStocksPortfolioChartBuy": {
+    "description": "Web path: features.stocks.portfolio.chartBuy",
+    "x-webPath": "features.stocks.portfolio.chartBuy"
+  },
+  "featuresStocksPortfolioChartSell": "Venta",
+  "@featuresStocksPortfolioChartSell": {
+    "description": "Web path: features.stocks.portfolio.chartSell",
+    "x-webPath": "features.stocks.portfolio.chartSell"
+  },
+  "featuresStocksPortfolioChartRising": "Cierre al alza",
+  "@featuresStocksPortfolioChartRising": {
+    "description": "Web path: features.stocks.portfolio.chartRising",
+    "x-webPath": "features.stocks.portfolio.chartRising"
+  },
+  "featuresStocksPortfolioChartFalling": "Cierre a la baja",
+  "@featuresStocksPortfolioChartFalling": {
+    "description": "Web path: features.stocks.portfolio.chartFalling",
+    "x-webPath": "features.stocks.portfolio.chartFalling"
+  },
   "featuresStocksPortfolioMarketValue": "Valor de mercado",
   "@featuresStocksPortfolioMarketValue": {
     "description": "Web path: features.stocks.portfolio.marketValue",

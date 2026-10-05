@@ -197,8 +197,7 @@ export interface InsertTransferPairResult {
  *
  * client_ref 只寫在 transfer_out 腳（見下方 insertTransferPair 註解），故先以
  * client_ref 找出轉出腳，再沿 linked_id 取回轉入腳。
- * 僅 SELECT 基底 CREATE TABLE 即保證存在的欄位，避開 `to_account_id` 與
- * `transfer_to_account_id` 兩種命名在新舊部署間的分歧；轉出腳的 toAccountId
+ * 僅 SELECT 基底 CREATE TABLE 即保證存在的欄位；轉出腳的 toAccountId
  * 語意等同轉入腳的 accountId，故直接由配對關係推導。
  */
 function findExistingTransferByClientRef(
@@ -252,7 +251,7 @@ export function insertTransferPair(
   try {
     db.run("BEGIN");
     db.run(
-      "INSERT INTO transactions (id,user_id,type,amount,currency,original_amount,fx_rate,fx_fee,twd_amount,date,category_id,account_id,to_account_id,note,linked_id,ai_created,client_ref,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+      "INSERT INTO transactions (id,user_id,type,amount,currency,original_amount,fx_rate,fx_fee,twd_amount,date,category_id,account_id,transfer_to_account_id,note,linked_id,ai_created,client_ref,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
       [
         outId,
         input.userId,
@@ -276,7 +275,7 @@ export function insertTransferPair(
       ],
     );
     db.run(
-      "INSERT INTO transactions (id,user_id,type,amount,currency,original_amount,fx_rate,fx_fee,twd_amount,date,category_id,account_id,to_account_id,note,linked_id,ai_created,client_ref,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+      "INSERT INTO transactions (id,user_id,type,amount,currency,original_amount,fx_rate,fx_fee,twd_amount,date,category_id,account_id,transfer_to_account_id,note,linked_id,ai_created,client_ref,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
       [
         inId,
         input.userId,

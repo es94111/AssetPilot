@@ -272,16 +272,19 @@ test('切換使用者會清除前一位使用者尚未同步的佇列（避免�
     mod.enqueueOffline('transaction', { amount: 999, note: 'A 的離線交易' });
     assert.equal(mod.getQueue().length, 1);
     assert.ok(shim.store.has('assetpilot.offlineQueue.user-a'));
+    assert.equal(JSON.parse(shim.store.get('assetpilot.offlineQueue.auth') ?? '{}').userId, 'user-a');
 
     // 登出後停用自動同步但保留本人未同步資料，重新登入同一帳號可恢復。
     mod.notifyOfflineQueueLogout();
     assert.equal(mod.getQueue().length, 0, '登出時不應再向網路送出佇列');
+    assert.equal(JSON.parse(shim.store.get('assetpilot.offlineQueue.auth') ?? '{}').userId, null);
     assert.ok(shim.store.has('assetpilot.offlineQueue.user-a'), '同一使用者重新登入仍可恢復佇列');
     mod.setOfflineQueueUser('user-a');
     assert.equal(mod.getQueue().length, 1);
 
     // 同一裝置換使用者登入：前一位的資料必須消失，且不會殘留在自己的鍵之下。
     mod.setOfflineQueueUser('user-b');
+    assert.equal(JSON.parse(shim.store.get('assetpilot.offlineQueue.auth') ?? '{}').userId, 'user-b');
     assert.equal(mod.getQueue().length, 0, '切換使用者後不得看到前一位的項目');
 
     const { persisted } = mod.enqueueOffline('transaction', { amount: 1 });

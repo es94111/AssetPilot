@@ -23,7 +23,7 @@ interface TransactionRow {
   date: string;
   category_id: string | null;
   account_id: string | null;
-  to_account_id: string | null;
+  transfer_to_account_id: string | null;
   note: string | null;
   exclude_from_stats: number | null;
   is_fx_fee: number | null;
@@ -202,7 +202,7 @@ export async function GET(request: NextRequest) {
     ...r,
     categoryId: r.category_id,
     accountId: r.account_id,
-    toAccountId: r.to_account_id || null,
+    toAccountId: r.transfer_to_account_id || null,
     currency: normalizeCurrency(r.currency),
     originalAmount: Number(r.original_amount) > 0 ? Number(r.original_amount) : Number(r.amount) || 0,
     fxRate: String(r.fx_rate || '1'),

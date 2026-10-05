@@ -16,7 +16,8 @@ import { useToast } from '@/components/ui/Toast';
 import {
   discardItem,
   getFailedItems,
-  OFFLINE_QUEUE_LOGOUT_SIGNAL,
+  flushOfflineQueue,
+  OFFLINE_QUEUE_AUTH_SIGNAL,
   retryItem,
   setOfflineQueueUser,
   startOfflineSync,
@@ -47,9 +48,20 @@ export default function OfflineSyncStatus({ userId }: { userId: string }) {
 
   useEffect(() => {
     const onStorage = (event: StorageEvent) => {
-      if (event.key === OFFLINE_QUEUE_LOGOUT_SIGNAL && event.newValue) {
-        // 同一瀏覽器的其他分頁共用 auth cookie；任何分頁登出時皆停止本頁同步。
-        setOfflineQueueUser(null);
+      if (event.key !== OFFLINE_QUEUE_AUTH_SIGNAL || !event.newValue) return;
+      try {
+        const signal = JSON.parse(event.newValue) as { userId?: string | null };
+        const signaledUserId = signal.userId ? String(signal.userId) : null;
+        if (signaledUserId === userId) {
+          // 同一使用者在其他分頁重新登入：重新綁定並恢復自己的佇列同步。
+          setOfflineQueueUser(userId, { broadcast: false });
+          void flushOfflineQueue();
+        } else {
+          // 不廣播回去：否則舊分頁收到新身份訊號後設 null，會再把新分頁也登出。
+          setOfflineQueueUser(null, { broadcast: false });
+        }
+      } catch {
+        setOfflineQueueUser(null, { broadcast: false });
       }
     };
     window.addEventListener('storage', onStorage);

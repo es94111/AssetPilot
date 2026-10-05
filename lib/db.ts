@@ -775,6 +775,20 @@ async function _runMigrations(db: DatabaseLike): Promise<void> {
   alterIgnore(
     "ALTER TABLE transactions ADD COLUMN transfer_to_account_id TEXT DEFAULT ''",
   );
+  // 既有 SQLite / PostgreSQL schema 曾使用 `to_account_id`，目前唯一欄位為
+  // `transfer_to_account_id`。若舊欄存在，將既有轉帳目的帳戶回填至 canonical 欄位；
+  // 新 PostgreSQL schema 沒有舊欄時略過。所有新寫入與讀取統一使用 transfer_to_account_id。
+  const transactionColumnRows = db.exec(
+    "SELECT column_name FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'transactions'",
+  );
+  const transactionColumns = new Set(
+    (transactionColumnRows[0]?.values ?? []).map((row) => String(row[0])),
+  );
+  if (transactionColumns.has('to_account_id')) {
+    db.run(
+      "UPDATE transactions SET transfer_to_account_id = to_account_id WHERE COALESCE(transfer_to_account_id, '') = '' AND COALESCE(to_account_id, '') != ''",
+    );
+  }
   alterIgnore("ALTER TABLE transactions ADD COLUMN tags TEXT DEFAULT '[]'");
   alterIgnore("ALTER TABLE transactions ADD COLUMN fx_fee NUMERIC DEFAULT 0");
   alterIgnore(

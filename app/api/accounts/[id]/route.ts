@@ -118,7 +118,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
     Number(
       asRow<{ c: number }>(
         queryOne(
-          "SELECT COUNT(*) AS c FROM transactions WHERE (account_id = ? OR to_account_id = ?) AND user_id = ?",
+          "SELECT COUNT(*) AS c FROM transactions WHERE (account_id = ? OR transfer_to_account_id = ?) AND user_id = ?",
           [a.id, a.id, auth.userId],
         ),
       )?.c,
@@ -217,7 +217,7 @@ async function updateAccount(request: NextRequest, id: string) {
       Number(
         asRow<{ c: number }>(
           queryOne(
-            "SELECT COUNT(*) AS c FROM transactions WHERE (account_id = ? OR to_account_id = ?) AND user_id = ?",
+            "SELECT COUNT(*) AS c FROM transactions WHERE (account_id = ? OR transfer_to_account_id = ?) AND user_id = ?",
             [id, id, auth.userId],
           ),
         )?.c,
@@ -399,7 +399,7 @@ export async function DELETE(request: NextRequest, { params }: RouteContext) {
     Number(
       asRow<{ c: number }>(
         queryOne(
-          "SELECT COUNT(*) AS c FROM transactions WHERE (account_id = ? OR to_account_id = ?) AND user_id = ?",
+          "SELECT COUNT(*) AS c FROM transactions WHERE (account_id = ? OR transfer_to_account_id = ?) AND user_id = ?",
           [id, id, auth.userId],
         ),
       )?.c,

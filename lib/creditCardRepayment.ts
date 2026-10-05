@@ -242,11 +242,11 @@ export function executeRepayment(params: ExecuteRepaymentParams): ExecuteRepayme
       const outId = uid();
       const inId = uid();
       db.run(
-        'INSERT INTO transactions (id,user_id,type,amount,currency,original_amount,fx_rate,fx_fee,twd_amount,date,category_id,account_id,to_account_id,note,linked_id,repayment_summary_id,ai_created,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
+        'INSERT INTO transactions (id,user_id,type,amount,currency,original_amount,fx_rate,fx_fee,twd_amount,date,category_id,account_id,transfer_to_account_id,note,linked_id,repayment_summary_id,ai_created,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
         [outId, userId, 'transfer_out', outConverted.twdAmount, fromCurrency, outConverted.originalAmount, outConverted.fxRate, 0, outConverted.twdAmount, txDate, '', fromAccountId, card.id, '信用卡還款', inId, summaryId, aiCreatedFlag, now, now]
       );
       db.run(
-        'INSERT INTO transactions (id,user_id,type,amount,currency,original_amount,fx_rate,fx_fee,twd_amount,date,category_id,account_id,to_account_id,note,linked_id,repayment_summary_id,ai_created,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
+        'INSERT INTO transactions (id,user_id,type,amount,currency,original_amount,fx_rate,fx_fee,twd_amount,date,category_id,account_id,transfer_to_account_id,note,linked_id,repayment_summary_id,ai_created,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
         [inId, userId, 'transfer_in', inConverted.twdAmount, toCurrency, inConverted.originalAmount, inConverted.fxRate, 0, inConverted.twdAmount, txDate, '', card.id, fromAccountId, '信用卡還款', outId, summaryId, aiCreatedFlag, now, now]
       );
 
@@ -331,7 +331,7 @@ export function evaluateRepaymentSummary(
   interface TxRow {
     date: string;
     account_id: string;
-    to_account_id: string | null;
+    transfer_to_account_id: string | null;
     original_amount: number;
     amount: number;
   }
@@ -348,11 +348,11 @@ export function evaluateRepaymentSummary(
   let anyStale = false;
   const allocations: RepaymentAllocationStatus[] = snapshots.map((snap) => {
     const outRow = asRow<TxRow>(queryOne(
-      'SELECT date, account_id, to_account_id, original_amount, amount FROM transactions WHERE id = ? AND user_id = ?',
+      'SELECT date, account_id, transfer_to_account_id, original_amount, amount FROM transactions WHERE id = ? AND user_id = ?',
       [snap.transferOutId, userId]
     ));
     const inRow = asRow<TxRow>(queryOne(
-      'SELECT date, account_id, to_account_id, original_amount, amount FROM transactions WHERE id = ? AND user_id = ?',
+      'SELECT date, account_id, transfer_to_account_id, original_amount, amount FROM transactions WHERE id = ? AND user_id = ?',
       [snap.transferInId, userId]
     ));
 
@@ -364,8 +364,8 @@ export function evaluateRepaymentSummary(
       if (outRow.date !== summary.date || inRow.date !== summary.date) {
         status = 'modified';
       }
-      // 轉出列：account_id = 付款帳戶、to_account_id = 該卡
-      else if (outRow.account_id !== summary.from_account_id || outRow.to_account_id !== snap.cardId) {
+      // 轉出列：account_id = 付款帳戶、transfer_to_account_id = 該卡
+      else if (outRow.account_id !== summary.from_account_id || outRow.transfer_to_account_id !== snap.cardId) {
         status = 'modified';
       }
       // 轉入列：account_id = 該卡

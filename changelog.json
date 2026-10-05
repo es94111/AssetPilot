@@ -22,6 +22,14 @@
         {
           "tag": "security",
           "text": "Service Worker 僅快取公開靜態資源，不快取 API 回應與已登入頁面，避免顯示過期餘額或在共用裝置外洩帳戶畫面；固定路徑的公開靜態資源於每次啟用週期背景重新驗證，並以與 `changelog.json.currentVersion` 一致的 cache version 清除舊殼層；CSP 新增 worker-src 與 manifest-src，維持既有 default-src 'self' 不變。"
+        },
+        {
+          "tag": "fixed",
+          "text": "修正 PostgreSQL 轉帳目的帳戶欄位相容性：新寫入與讀取統一使用 transfer_to_account_id，並在啟動遷移時將舊 schema 的 to_account_id 既有值回填，確保全新及既有 PostgreSQL 部署的轉帳與信用卡還款流程可正常運作。"
+        },
+        {
+          "tag": "fixed",
+          "text": "修正全新 PostgreSQL 部署的轉帳寫入欄位不一致：統一以 transfer_to_account_id 寫入與讀取，並將舊 schema to_account_id 的既有值回填，涵蓋一般轉帳、信用卡還款、交易查詢與刪除帳戶引用檢查。"
         }
       ]
     },

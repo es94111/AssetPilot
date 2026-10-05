@@ -32,7 +32,8 @@ import { notifyDataChanged } from './clientApi';
 const STORAGE_PREFIX = 'assetpilot.offlineQueue';
 /** 舊版未區分使用者的固定鍵；登入時一次性清除，避免跨使用者殘留財務資料。 */
 const LEGACY_STORAGE_KEY = 'assetpilot.offlineQueue.v1';
-export const OFFLINE_QUEUE_LOGOUT_SIGNAL = 'assetpilot.offlineQueue.logout';
+/** 跨分頁共享 auth cookie 的身份變更通知（值只含 user id／nonce，不含財務資料）。 */
+export const OFFLINE_QUEUE_AUTH_SIGNAL = 'assetpilot.offlineQueue.auth';
 
 // 目前登入使用者。佇列以使用者區分，避免共用裝置上把前一位使用者的財務資料
 // 在下一位使用者登入後送出（見 setOfflineQueueUser）。
@@ -42,15 +43,34 @@ function storageKey(): string {
   return activeUserId ? `${STORAGE_PREFIX}.${activeUserId}` : STORAGE_PREFIX;
 }
 
+function publishAuthSignal(userId: string | null): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(
+      OFFLINE_QUEUE_AUTH_SIGNAL,
+      JSON.stringify({ userId, nonce: `${Date.now()}-${Math.random()}` }),
+    );
+  } catch {
+    /* 無法跨分頁通知時，本分頁仍依 activeUserId 停止同步 */
+  }
+}
+
 /**
  * 綁定（或解除）目前登入使用者，並在切換使用者時清除前一位使用者尚未同步的資料。
  *
- * 佇列含金額、日期、備註與帳戶／分類 id 等財務內容；若跨使用者保留，共用瀏覽器上
- * 後一位使用者登入時會以「自己的」session 送出前一位的資料。因此切換身分即清空。
+ * 佇列含金額、日期、備註與帳戶／分類 id 等財務內容；共享 cookie 的其他分頁若登入不同
+ * 使用者，也必須停用舊分頁同步，避免舊佇列被新 session 送出。
  */
-export function setOfflineQueueUser(userId: string | null): void {
+export function setOfflineQueueUser(
+  userId: string | null,
+  options: { broadcast?: boolean } = {},
+): void {
   const next = userId ? String(userId) : null;
-  if (next === activeUserId) return;
+  const broadcast = options.broadcast !== false;
+  if (next === activeUserId) {
+    if (broadcast) publishAuthSignal(next);
+    return;
+  }
   if (typeof window !== 'undefined') {
     try {
       // 移除未綁定使用者的 base key 與舊版固定 key，避免登出後在匿名狀態下再次入列。
@@ -66,31 +86,31 @@ export function setOfflineQueueUser(userId: string | null): void {
         const staleKeys: string[] = [];
         for (let i = 0; i < window.localStorage.length; i += 1) {
           const key = window.localStorage.key(i);
-          if (key?.startsWith(`${STORAGE_PREFIX}.`) && key !== LEGACY_STORAGE_KEY && key !== keepKey) {
+          if (
+            key?.startsWith(`${STORAGE_PREFIX}.`) &&
+            key !== LEGACY_STORAGE_KEY &&
+            key !== OFFLINE_QUEUE_AUTH_SIGNAL &&
+            key !== keepKey
+          ) {
             staleKeys.push(key);
           }
         }
         for (const key of staleKeys) window.localStorage.removeItem(key);
-        // 一次性清除舊版未分隔使用者的佇列。
-        window.localStorage.removeItem(LEGACY_STORAGE_KEY);
       }
     } catch {
       /* 儲存空間不可用時仍切換記憶體身分；未綁定 user id 時同步會 fail closed */
     }
+    activeUserId = next;
     window.dispatchEvent(new CustomEvent(OFFLINE_QUEUE_EVENT));
+  } else {
+    activeUserId = next;
   }
-  activeUserId = next;
+  if (broadcast) publishAuthSignal(next);
 }
 
 /** 登出時先停用本頁佇列並通知其他分頁，防止共用 cookie 切換身分後仍送出舊資料。 */
 export function notifyOfflineQueueLogout(): void {
   setOfflineQueueUser(null);
-  if (typeof window === 'undefined') return;
-  try {
-    window.localStorage.setItem(OFFLINE_QUEUE_LOGOUT_SIGNAL, String(Date.now()));
-  } catch {
-    /* 跨分頁通知不可用時，本分頁仍已停用佇列 */
-  }
 }
 
 /** 佇列變更事件（同頁多個元件共用一份狀態）。 */

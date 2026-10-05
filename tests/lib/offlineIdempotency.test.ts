@@ -22,17 +22,6 @@ if (!DB_URL) {
 
   await initDB();
 
-  // 既有部署的 transactions 同時有 to_account_id 與 transfer_to_account_id 兩種命名
-  //（見歷史 SQLite schema 的 rebuild）；但新版全新 PostgreSQL 只建 transfer_to_account_id，
-  // 而 insertTransferPair 仍寫入 to_account_id，導致「全新 DB 無法建立轉帳」是既有問題
-  //（與本功能無關，已於 PR 說明）。此處偵測該環境限制：若 to_account_id 不存在，就略過
-  // 轉帳去重測試，避免把既有問題誤判為本次回歸。
-  const hasLegacyToAccountColumn = Boolean(
-    queryOne(
-      "SELECT column_name FROM information_schema.columns WHERE table_name = 'transactions' AND column_name = 'to_account_id'",
-    ),
-  );
-
   after(() => { getDB().close(); });
 
   function cleanup(userId: string): void {
@@ -147,7 +136,7 @@ if (!DB_URL) {
     }
   });
 
-  test('轉帳冪等：相同 client_ref 重送僅一組配對，且 client_ref 只落在轉出腳', { skip: !hasLegacyToAccountColumn ? '此環境缺少 to_account_id 欄位（既有問題，非本次回歸）' : false }, () => {
+  test('轉帳冪等：相同 client_ref 重送僅一組配對，且 client_ref 只落在轉出腳', () => {
     const userId = 'test_offline_idem_tr_' + uid();
     const fromAccountId = uid();
     const toAccountId = uid();

@@ -1231,6 +1231,8 @@ const kSharedSourceToKey = <String, String>{
   '安裝到主畫面，像 App 一樣開啟並支援離線記帳': 'featuresPwaInstallHint',
   '安裝': 'featuresPwaInstallAction',
   '目前離線，無法載入交易清單；離線新增的交易會在恢復連線後自動同步。': 'featuresOfflineListUnavailable',
+  '無法在此瀏覽器儲存離線資料（可能為隱私模式或儲存空間已滿），請檢查網路後重試。': 'featuresOfflineSaveFailed',
+  '已離線儲存；已選 {count} 張照片不會上傳，恢復連線後可再補上': 'featuresOfflineQueuedPhotosSkipped',
 };
 const kSharedTranslations = <String, Map<String, String>>{
   'zh-TW': <String, String>{
@@ -2614,6 +2616,8 @@ const kSharedTranslations = <String, Map<String, String>>{
     'featuresPwaInstallHint': '安裝到主畫面，像 App 一樣開啟並支援離線記帳',
     'featuresPwaInstallAction': '安裝',
     'featuresOfflineListUnavailable': '目前離線，無法載入交易清單；離線新增的交易會在恢復連線後自動同步。',
+    'featuresOfflineSaveFailed': '無法在此瀏覽器儲存離線資料（可能為隱私模式或儲存空間已滿），請檢查網路後重試。',
+    'featuresOfflineQueuedPhotosSkipped': '已離線儲存；已選 {count} 張照片不會上傳，恢復連線後可再補上',
   },
   'zh-CN': <String, String>{
     'commonSave': '保存',
@@ -3996,6 +4000,8 @@ const kSharedTranslations = <String, Map<String, String>>{
     'featuresPwaInstallHint': '安装到主画面，像 App 一样打开并支持离线记账',
     'featuresPwaInstallAction': '安装',
     'featuresOfflineListUnavailable': '当前离线，无法载入交易清单；离线新增的交易会在恢复连线后自动同步。',
+    'featuresOfflineSaveFailed': '无法在此浏览器保存离线数据（可能为隐私模式或储存空间已满），请检查网络后重试。',
+    'featuresOfflineQueuedPhotosSkipped': '已离线保存；已选 {count} 张照片不会上传，恢复连线后可再补上',
   },
   'en': <String, String>{
     'commonSave': 'Save',
@@ -5378,6 +5384,8 @@ const kSharedTranslations = <String, Map<String, String>>{
     'featuresPwaInstallHint': 'Add to your home screen to open like an app and keep offline entry',
     'featuresPwaInstallAction': 'Install',
     'featuresOfflineListUnavailable': 'You are offline, so the transaction list cannot load. Transactions added offline sync automatically once you reconnect.',
+    'featuresOfflineSaveFailed': 'This browser cannot store offline data (private mode or storage full). Check your connection and try again.',
+    'featuresOfflineQueuedPhotosSkipped': 'Saved offline. The {count} selected photo(s) will not upload; add them again after reconnecting.',
   },
   'es': <String, String>{
     'commonSave': 'Guardar',
@@ -6760,6 +6768,8 @@ const kSharedTranslations = <String, Map<String, String>>{
     'featuresPwaInstallHint': 'Añádelo a la pantalla de inicio para abrirlo como una app y registrar sin conexión',
     'featuresPwaInstallAction': 'Instalar',
     'featuresOfflineListUnavailable': 'Estás sin conexión, por lo que la lista de transacciones no puede cargarse. Las transacciones añadidas sin conexión se sincronizan al reconectar.',
+    'featuresOfflineSaveFailed': 'Este navegador no puede guardar datos sin conexión (modo privado o almacenamiento lleno). Revisa la conexión e inténtalo de nuevo.',
+    'featuresOfflineQueuedPhotosSkipped': 'Guardado sin conexión. Las {count} foto(s) seleccionadas no se subirán; vuelve a añadirlas al reconectar.',
   },
   'ar': <String, String>{
     'commonSave': 'حفظ',
@@ -8142,6 +8152,8 @@ const kSharedTranslations = <String, Map<String, String>>{
     'featuresPwaInstallHint': 'أضفه إلى الشاشة الرئيسية لفتحه كتطبيق وتسجيل المعاملات دون اتصال',
     'featuresPwaInstallAction': 'تثبيت',
     'featuresOfflineListUnavailable': 'أنت غير متصل، لذا لا يمكن تحميل قائمة المعاملات. تتم مزامنة المعاملات المضافة دون اتصال تلقائيًا عند عودة الاتصال.',
+    'featuresOfflineSaveFailed': 'لا يمكن لهذا المتصفح تخزين البيانات دون اتصال (وضع التصفح الخاص أو مساحة التخزين ممتلئة). تحقق من الاتصال وحاول مجددًا.',
+    'featuresOfflineQueuedPhotosSkipped': 'تم الحفظ دون اتصال. لن يتم رفع {count} صورة محددة؛ أضفها مرة أخرى بعد إعادة الاتصال.',
   },
   'fr': <String, String>{
     'commonSave': 'Enregistrer',
@@ -9524,6 +9536,8 @@ const kSharedTranslations = <String, Map<String, String>>{
     'featuresPwaInstallHint': 'Ajoutez-le à l’écran d’accueil pour l’ouvrir comme une app et saisir hors ligne',
     'featuresPwaInstallAction': 'Installer',
     'featuresOfflineListUnavailable': 'Vous êtes hors ligne, la liste des transactions ne peut pas se charger. Les transactions ajoutées hors ligne se synchronisent au retour de la connexion.',
+    'featuresOfflineSaveFailed': 'Ce navigateur ne peut pas stocker de données hors ligne (navigation privée ou stockage plein). Vérifiez la connexion et réessayez.',
+    'featuresOfflineQueuedPhotosSkipped': 'Enregistré hors ligne. Les {count} photo(s) sélectionnée(s) ne seront pas envoyées ; ajoutez-les à nouveau après reconnexion.',
   },
   'hi': <String, String>{
     'commonSave': 'सेव करें',
@@ -10906,6 +10920,8 @@ const kSharedTranslations = <String, Map<String, String>>{
     'featuresPwaInstallHint': 'होम स्क्रीन पर जोड़ें ताकि ऐप की तरह खुले और ऑफ़लाइन प्रविष्टि काम करे',
     'featuresPwaInstallAction': 'इंस्टॉल',
     'featuresOfflineListUnavailable': 'आप ऑफ़लाइन हैं, इसलिए लेन-देन सूची लोड नहीं हो सकती। ऑफ़लाइन जोड़े गए लेन-देन फिर से कनेक्ट होने पर सिंक हो जाते हैं।',
+    'featuresOfflineSaveFailed': 'यह ब्राउज़र ऑफ़लाइन डेटा संग्रहीत नहीं कर सकता (निजी मोड या संग्रहण भरा हुआ)। कनेक्शन जाँचें और पुनः प्रयास करें।',
+    'featuresOfflineQueuedPhotosSkipped': 'ऑफ़लाइन सहेजा गया। चयनित {count} फ़ोटो अपलोड नहीं होंगी; फिर से कनेक्ट होने पर दोबारा जोड़ें।',
   },
   'pt-BR': <String, String>{
     'commonSave': 'Salvar',
@@ -12288,6 +12304,8 @@ const kSharedTranslations = <String, Map<String, String>>{
     'featuresPwaInstallHint': 'Adicione à tela inicial para abrir como app e lançar lançamentos offline',
     'featuresPwaInstallAction': 'Instalar',
     'featuresOfflineListUnavailable': 'Você está offline, então a lista de transações não pode ser carregada. As transações adicionadas offline sincronizam ao reconectar.',
+    'featuresOfflineSaveFailed': 'Este navegador não pode armazenar dados offline (modo privado ou armazenamento cheio). Verifique a conexão e tente novamente.',
+    'featuresOfflineQueuedPhotosSkipped': 'Salvo offline. As {count} foto(s) selecionadas não serão enviadas; adicione novamente ao reconectar.',
   },
   'ru': <String, String>{
     'commonSave': 'Сохранить',
@@ -13670,6 +13688,8 @@ const kSharedTranslations = <String, Map<String, String>>{
     'featuresPwaInstallHint': 'Добавьте на главный экран, чтобы открывать как приложение и вносить записи офлайн',
     'featuresPwaInstallAction': 'Установить',
     'featuresOfflineListUnavailable': 'Нет подключения, поэтому список операций не загружается. Операции, добавленные офлайн, синхронизируются после подключения.',
+    'featuresOfflineSaveFailed': 'Этот браузер не может сохранить данные офлайн (режим инкогнито или хранилище заполнено). Проверьте соединение и повторите.',
+    'featuresOfflineQueuedPhotosSkipped': 'Сохранено офлайн. Выбранные фото ({count}) не будут загружены; добавьте их снова после подключения.',
   },
   'ko': <String, String>{
     'commonSave': '저장',
@@ -15052,6 +15072,8 @@ const kSharedTranslations = <String, Map<String, String>>{
     'featuresPwaInstallHint': '홈 화면에 추가하면 앱처럼 열리고 오프라인 입력도 지원합니다',
     'featuresPwaInstallAction': '설치',
     'featuresOfflineListUnavailable': '오프라인 상태라 거래 목록을 불러올 수 없습니다. 오프라인에서 추가한 거래는 다시 연결되면 자동으로 동기화됩니다.',
+    'featuresOfflineSaveFailed': '이 브라우저에서 오프라인 데이터를 저장할 수 없습니다(시크릿 모드 또는 저장 공간 부족). 연결을 확인한 뒤 다시 시도하세요.',
+    'featuresOfflineQueuedPhotosSkipped': '오프라인으로 저장되었습니다. 선택한 사진 {count}장은 업로드되지 않으니 연결 후 다시 추가하세요.',
   },
 };
 

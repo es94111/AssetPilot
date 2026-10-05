@@ -7442,5 +7442,18 @@
   "@featuresOfflineListUnavailable": {
     "description": "Web path: features.offline.listUnavailable",
     "x-webPath": "features.offline.listUnavailable"
+  },
+  "featuresOfflineSaveFailed": "Este navegador no puede guardar datos sin conexión (modo privado o almacenamiento lleno). Revisa la conexión e inténtalo de nuevo.",
+  "@featuresOfflineSaveFailed": {
+    "description": "Web path: features.offline.saveFailed",
+    "x-webPath": "features.offline.saveFailed"
+  },
+  "featuresOfflineQueuedPhotosSkipped": "Guardado sin conexión. Las {count} foto(s) seleccionadas no se subirán; vuelve a añadirlas al reconectar.",
+  "@featuresOfflineQueuedPhotosSkipped": {
+    "description": "Web path: features.offline.queuedPhotosSkipped",
+    "x-webPath": "features.offline.queuedPhotosSkipped",
+    "placeholders": {
+      "count": {}
+    }
   }
 }

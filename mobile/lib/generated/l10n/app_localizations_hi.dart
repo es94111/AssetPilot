@@ -4838,4 +4838,13 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get featuresOfflineListUnavailable =>
       'आप ऑफ़लाइन हैं, इसलिए लेन-देन सूची लोड नहीं हो सकती। ऑफ़लाइन जोड़े गए लेन-देन फिर से कनेक्ट होने पर सिंक हो जाते हैं।';
+
+  @override
+  String get featuresOfflineSaveFailed =>
+      'यह ब्राउज़र ऑफ़लाइन डेटा संग्रहीत नहीं कर सकता (निजी मोड या संग्रहण भरा हुआ)। कनेक्शन जाँचें और पुनः प्रयास करें।';
+
+  @override
+  String featuresOfflineQueuedPhotosSkipped(Object count) {
+    return 'ऑफ़लाइन सहेजा गया। चयनित $count फ़ोटो अपलोड नहीं होंगी; फिर से कनेक्ट होने पर दोबारा जोड़ें।';
+  }
 }

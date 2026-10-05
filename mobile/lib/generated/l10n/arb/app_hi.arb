@@ -7442,5 +7442,18 @@
   "@featuresOfflineListUnavailable": {
     "description": "Web path: features.offline.listUnavailable",
     "x-webPath": "features.offline.listUnavailable"
+  },
+  "featuresOfflineSaveFailed": "यह ब्राउज़र ऑफ़लाइन डेटा संग्रहीत नहीं कर सकता (निजी मोड या संग्रहण भरा हुआ)। कनेक्शन जाँचें और पुनः प्रयास करें।",
+  "@featuresOfflineSaveFailed": {
+    "description": "Web path: features.offline.saveFailed",
+    "x-webPath": "features.offline.saveFailed"
+  },
+  "featuresOfflineQueuedPhotosSkipped": "ऑफ़लाइन सहेजा गया। चयनित {count} फ़ोटो अपलोड नहीं होंगी; फिर से कनेक्ट होने पर दोबारा जोड़ें।",
+  "@featuresOfflineQueuedPhotosSkipped": {
+    "description": "Web path: features.offline.queuedPhotosSkipped",
+    "x-webPath": "features.offline.queuedPhotosSkipped",
+    "placeholders": {
+      "count": {}
+    }
   }
 }

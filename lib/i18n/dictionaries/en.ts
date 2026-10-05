@@ -1195,6 +1195,8 @@ export const en = {
       pageBody: "This device has no network connection. Cached pages still open, and offline transactions sync automatically once you reconnect.",
       pageAction: "Go to transactions",
       listUnavailable: "You are offline, so the transaction list cannot load. Transactions added offline sync automatically once you reconnect.",
+      saveFailed: "This browser cannot store offline data (private mode or storage full). Check your connection and try again.",
+      queuedPhotosSkipped: "Saved offline. The {count} selected photo(s) will not upload; add them again after reconnecting.",
     },
     pwa: {
       installTitle: "Install AssetPilot",

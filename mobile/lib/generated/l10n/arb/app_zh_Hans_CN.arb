@@ -7442,5 +7442,18 @@
   "@featuresOfflineListUnavailable": {
     "description": "Web path: features.offline.listUnavailable",
     "x-webPath": "features.offline.listUnavailable"
+  },
+  "featuresOfflineSaveFailed": "无法在此浏览器保存离线数据（可能为隐私模式或储存空间已满），请检查网络后重试。",
+  "@featuresOfflineSaveFailed": {
+    "description": "Web path: features.offline.saveFailed",
+    "x-webPath": "features.offline.saveFailed"
+  },
+  "featuresOfflineQueuedPhotosSkipped": "已离线保存；已选 {count} 张照片不会上传，恢复连线后可再补上",
+  "@featuresOfflineQueuedPhotosSkipped": {
+    "description": "Web path: features.offline.queuedPhotosSkipped",
+    "x-webPath": "features.offline.queuedPhotosSkipped",
+    "placeholders": {
+      "count": {}
+    }
   }
 }

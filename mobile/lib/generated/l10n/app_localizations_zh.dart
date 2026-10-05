@@ -4622,6 +4622,15 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get featuresOfflineListUnavailable =>
       '目前離線，無法載入交易清單；離線新增的交易會在恢復連線後自動同步。';
+
+  @override
+  String get featuresOfflineSaveFailed =>
+      '無法在此瀏覽器儲存離線資料（可能為隱私模式或儲存空間已滿），請檢查網路後重試。';
+
+  @override
+  String featuresOfflineQueuedPhotosSkipped(Object count) {
+    return '已離線儲存；已選 $count 張照片不會上傳，恢復連線後可再補上';
+  }
 }
 
 /// The translations for Chinese, as used in China, using the Han script (`zh_Hans_CN`).
@@ -9238,6 +9247,15 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
   @override
   String get featuresOfflineListUnavailable =>
       '当前离线，无法载入交易清单；离线新增的交易会在恢复连线后自动同步。';
+
+  @override
+  String get featuresOfflineSaveFailed =>
+      '无法在此浏览器保存离线数据（可能为隐私模式或储存空间已满），请检查网络后重试。';
+
+  @override
+  String featuresOfflineQueuedPhotosSkipped(Object count) {
+    return '已离线保存；已选 $count 张照片不会上传，恢复连线后可再补上';
+  }
 }
 
 /// The translations for Chinese, as used in Taiwan, using the Han script (`zh_Hant_TW`).
@@ -13858,4 +13876,13 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
   @override
   String get featuresOfflineListUnavailable =>
       '目前離線，無法載入交易清單；離線新增的交易會在恢復連線後自動同步。';
+
+  @override
+  String get featuresOfflineSaveFailed =>
+      '無法在此瀏覽器儲存離線資料（可能為隱私模式或儲存空間已滿），請檢查網路後重試。';
+
+  @override
+  String featuresOfflineQueuedPhotosSkipped(Object count) {
+    return '已離線儲存；已選 $count 張照片不會上傳，恢復連線後可再補上';
+  }
 }

@@ -4934,4 +4934,13 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get featuresOfflineListUnavailable =>
       'Vous êtes hors ligne, la liste des transactions ne peut pas se charger. Les transactions ajoutées hors ligne se synchronisent au retour de la connexion.';
+
+  @override
+  String get featuresOfflineSaveFailed =>
+      'Ce navigateur ne peut pas stocker de données hors ligne (navigation privée ou stockage plein). Vérifiez la connexion et réessayez.';
+
+  @override
+  String featuresOfflineQueuedPhotosSkipped(Object count) {
+    return 'Enregistré hors ligne. Les $count photo(s) sélectionnée(s) ne seront pas envoyées ; ajoutez-les à nouveau après reconnexion.';
+  }
 }

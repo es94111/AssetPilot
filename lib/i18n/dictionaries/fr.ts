@@ -1195,6 +1195,8 @@ export const fr = {
       pageBody: "Cet appareil n’a pas de connexion réseau. Les pages en cache restent accessibles et les transactions hors ligne se synchronisent au retour de la connexion.",
       pageAction: "Aller aux transactions",
       listUnavailable: "Vous êtes hors ligne, la liste des transactions ne peut pas se charger. Les transactions ajoutées hors ligne se synchronisent au retour de la connexion.",
+      saveFailed: "Ce navigateur ne peut pas stocker de données hors ligne (navigation privée ou stockage plein). Vérifiez la connexion et réessayez.",
+      queuedPhotosSkipped: "Enregistré hors ligne. Les {count} photo(s) sélectionnée(s) ne seront pas envoyées ; ajoutez-les à nouveau après reconnexion.",
     },
     pwa: {
       installTitle: "Installer AssetPilot",

@@ -23,9 +23,18 @@ function installBrowserShim() {
 
   const windowShim = {
     localStorage: {
-      getItem: (key: string) => (store.has(key) ? store.get(key)! : null),
-      setItem: (key: string, value: string) => { store.set(key, value); },
-      removeItem: (key: string) => { store.delete(key); },
+      broken: false,
+      getItem(key: string) {
+        return store.has(key) ? store.get(key)! : null;
+      },
+      setItem(this: { broken: boolean }, key: string, value: string) {
+        // 模擬隱私模式／配額用盡：呼叫不拋錯，但寫入不生效（回讀仍為舊值）。
+        if (this.broken) return;
+        store.set(key, value);
+      },
+      removeItem(key: string) {
+        store.delete(key);
+      },
     },
     addEventListener: (type: string, handler: (event: unknown) => void) => {
       if (!listeners.has(type)) listeners.set(type, new Set());
@@ -80,6 +89,8 @@ function installBrowserShim() {
     store,
     setResponder: (next: typeof responder) => { responder = next; },
     setOnline: (value: boolean) => { (globalThis.navigator as { onLine: boolean }).onLine = value; },
+    /** 模擬隱私模式／配額用盡：寫入不生效，但 setItem 不拋錯。 */
+    breakStorage: () => { (windowShim.localStorage as unknown as { broken: boolean }).broken = true; },
     restore: () => {
       for (const { name, descriptor } of restoreValues) {
         if (descriptor) Object.defineProperty(globalThis, name, descriptor);
@@ -89,7 +100,7 @@ function installBrowserShim() {
   };
 }
 
-const STORAGE_KEY = 'assetpilot.offlineQueue.v1';
+const STORAGE_KEY = 'assetpilot.offlineQueue';
 
 test('離線排入 → 恢復連線後自動送出：成功項目自佇列移除並派送 data-changed', async () => {
   const shim = installBrowserShim();
@@ -103,8 +114,9 @@ test('離線排入 → 恢復連線後自動送出：成功項目自佇列移除
 
     // 離線時排入兩筆（一收支、一轉帳）。
     shim.setOnline(false);
-    const tx = mod.enqueueOffline('transaction', { date: '2026-10-05', type: 'expense', amount: 100 });
-    const tr = mod.enqueueOffline('transfer', { date: '2026-10-05', amount: 50, fromAccountId: 'a', toAccountId: 'b' });
+    const { item: tx, persisted: txPersisted } = mod.enqueueOffline('transaction', { date: '2026-10-05', type: 'expense', amount: 100 });
+    const { item: tr } = mod.enqueueOffline('transfer', { date: '2026-10-05', amount: 50, fromAccountId: 'a', toAccountId: 'b' });
+    assert.equal(txPersisted, true, '項目應確實寫入本機儲存');
     assert.equal(mod.getQueueSummary().pending, 2);
     assert.equal(shim.calls.length, 0, '離線時不應送出任何請求');
 
@@ -134,7 +146,7 @@ test('可重試失敗（網路層）：留在佇列並累積嘗試次數', async
     const mod = await import('../../lib/clientOfflineQueue.ts');
     shim.setOnline(true);
     shim.setResponder(() => ({ status: 0, throws: true }));
-    const item = mod.enqueueOffline('transaction', { amount: 1 });
+    const { item } = mod.enqueueOffline('transaction', { amount: 1 });
 
     const summary = await mod.flushOfflineQueue();
 
@@ -165,7 +177,7 @@ test('5xx 視為可重試；4xx 視為不可重試並停止本輪送出', async 
 
     // 4xx：標記 failed，且不再嘗試後續項目。
     shim.setResponder(() => ({ status: 422, json: { error: '帳戶不存在或無權限' } }));
-    const bad = mod.enqueueOffline('transaction', { amount: 2 });
+    const { item: bad } = mod.enqueueOffline('transaction', { amount: 2 });
     mod.enqueueOffline('transaction', { amount: 3 });
     const before = shim.calls.length;
     summary = await mod.flushOfflineQueue();
@@ -208,12 +220,62 @@ test('discardItem 由使用者放棄項目', async () => {
   const shim = installBrowserShim();
   try {
     const mod = await import('../../lib/clientOfflineQueue.ts');
-    const item = mod.enqueueOffline('transaction', { amount: 1 });
+    const { item } = mod.enqueueOffline('transaction', { amount: 1 });
     assert.equal(mod.getQueue().length, 1);
     mod.discardItem(item.id);
     assert.equal(mod.getQueue().length, 0);
     // 持久化層也應同步（重新解析仍是空的）。
     assert.deepEqual(JSON.parse(shim.store.get(STORAGE_KEY) ?? '[]'), []);
+  } finally {
+    shim.restore();
+  }
+});
+
+test('切換使用者會清除前一位使用者尚未同步的佇列（避免跨使用者外洩）', async () => {
+  const shim = installBrowserShim();
+  try {
+    const mod = await import('../../lib/clientOfflineQueue.ts');
+
+    mod.setOfflineQueueUser('user-a');
+    mod.enqueueOffline('transaction', { amount: 999, note: 'A 的離線交易' });
+    assert.equal(mod.getQueue().length, 1);
+    assert.ok(shim.store.has('assetpilot.offlineQueue.user-a'));
+
+    // 同一裝置換使用者登入：前一位的資料必須消失，且不會殘留在自己的鍵之下。
+    mod.setOfflineQueueUser('user-b');
+    assert.equal(mod.getQueue().length, 0, '切換使用者後不得看到前一位的項目');
+
+    const { persisted } = mod.enqueueOffline('transaction', { amount: 1 });
+    assert.equal(persisted, true);
+    assert.equal(mod.getQueue().length, 1);
+    assert.ok(shim.store.has('assetpilot.offlineQueue.user-b'));
+    assert.ok(!shim.store.has('assetpilot.offlineQueue.user-a'), 'A 的鍵應被清除');
+  } finally {
+    shim.restore();
+  }
+});
+
+test('setOfflineQueueUser 亦清除舊版未區分使用者的殘留鍵', async () => {
+  const shim = installBrowserShim();
+  try {
+    const mod = await import('../../lib/clientOfflineQueue.ts');
+    shim.store.set('assetpilot.offlineQueue.v1', JSON.stringify([{ id: 'x'.repeat(32), kind: 'transaction', payload: {}, createdAt: 1, attempts: 0, status: 'pending' }]));
+    mod.setOfflineQueueUser('user-a');
+    assert.ok(!shim.store.has('assetpilot.offlineQueue.v1'), '舊版固定鍵應被移除');
+  } finally {
+    shim.restore();
+  }
+});
+
+test('本機儲存不可用時 enqueueOffline 回報未持久化（不可謊稱已儲存）', async () => {
+  const shim = installBrowserShim();
+  try {
+    const mod = await import('../../lib/clientOfflineQueue.ts');
+    // 模擬隱私模式／配額用盡：寫入不生效（setItem 靜默失敗）。
+    shim.breakStorage();
+    const { persisted } = mod.enqueueOffline('transaction', { amount: 1 });
+    assert.equal(persisted, false, '無法寫入時應回報 persisted=false');
+    assert.equal(mod.getQueue().length, 0, '未持久化即代表資料不在佇列中');
   } finally {
     shim.restore();
   }

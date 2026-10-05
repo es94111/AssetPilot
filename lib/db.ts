@@ -813,9 +813,22 @@ async function _runMigrations(db: DatabaseLike): Promise<void> {
   alterIgnore(
     "ALTER TABLE transactions ADD COLUMN client_ref TEXT NOT NULL DEFAULT ''",
   );
-  alterIgnore(
-    "CREATE UNIQUE INDEX IF NOT EXISTS idx_transactions_client_ref ON transactions(user_id, client_ref) WHERE client_ref != ''",
-  );
+  // 唯一索引不能透過 alterIgnore 建立：alterIgnore 會吞掉所有錯誤（假設是「已存在」），
+  // 但這個索引是離線重送去重的唯一後盾。若它因故建立失敗，就必須讓啟動失敗而非靜默略過，
+  // 否則重送會悄悄產生重複交易。改為先嘗試建立，失敗時以 pg_indexes 確認索引確實存在，
+  // 「已存在」才視為成功，其餘一律往外拋。
+  try {
+    db.run(
+      "CREATE UNIQUE INDEX IF NOT EXISTS idx_transactions_client_ref ON transactions(user_id, client_ref) WHERE client_ref != ''",
+    );
+  } catch (indexError) {
+    const indexRow = db.exec(
+      "SELECT indexname FROM pg_indexes WHERE tablename = 'transactions' AND indexname = 'idx_transactions_client_ref'",
+    );
+    if ((indexRow[0]?.values?.length ?? 0) === 0) {
+      throw indexError;
+    }
+  }
   alterIgnore(`UPDATE transactions SET ai_created = 1
     WHERE ai_created = 0 AND id IN (
       SELECT (metadata::jsonb->>'transaction_id')

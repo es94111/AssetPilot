@@ -7442,5 +7442,18 @@
   "@featuresOfflineListUnavailable": {
     "description": "Web path: features.offline.listUnavailable",
     "x-webPath": "features.offline.listUnavailable"
+  },
+  "featuresOfflineSaveFailed": "Este navegador não pode armazenar dados offline (modo privado ou armazenamento cheio). Verifique a conexão e tente novamente.",
+  "@featuresOfflineSaveFailed": {
+    "description": "Web path: features.offline.saveFailed",
+    "x-webPath": "features.offline.saveFailed"
+  },
+  "featuresOfflineQueuedPhotosSkipped": "Salvo offline. As {count} foto(s) selecionadas não serão enviadas; adicione novamente ao reconectar.",
+  "@featuresOfflineQueuedPhotosSkipped": {
+    "description": "Web path: features.offline.queuedPhotosSkipped",
+    "x-webPath": "features.offline.queuedPhotosSkipped",
+    "placeholders": {
+      "count": {}
+    }
   }
 }

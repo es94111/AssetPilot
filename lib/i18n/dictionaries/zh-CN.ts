@@ -1195,6 +1195,8 @@ export const zhCN = {
       pageBody: "你的设备当前没有网络连线。已缓存的页面仍可打开；离线新增的交易会在恢复连线后自动同步。",
       pageAction: "前往交易记录",
       listUnavailable: "当前离线，无法载入交易清单；离线新增的交易会在恢复连线后自动同步。",
+      saveFailed: "无法在此浏览器保存离线数据（可能为隐私模式或储存空间已满），请检查网络后重试。",
+      queuedPhotosSkipped: "已离线保存；已选 {count} 张照片不会上传，恢复连线后可再补上",
     },
     pwa: {
       installTitle: "安装 AssetPilot",

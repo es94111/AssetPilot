@@ -60,6 +60,33 @@ function isCacheableStatic(url) {
   );
 }
 
+/**
+ * 路徑固定、內容會隨部署更新的公開資源。這些必須在背景重新驗證，
+ * 否則 SW 的 VERSION 不變時，既有使用者會永遠拿到舊版離線頁／manifest／圖示
+ *（next.config.ts 的 cache headers 也因請求改由 SW 處理而失效）。
+ * `/_next/static/**` 以內容雜湊命名，可安全長快取而不需重新驗證。
+ */
+function needsRevalidation(url) {
+  return (
+    !url.pathname.startsWith('/_next/static/') &&
+    (url.pathname === OFFLINE_URL ||
+      url.pathname === '/manifest.webmanifest' ||
+      url.pathname === '/logo.svg' ||
+      url.pathname === '/favicon.svg' ||
+      url.pathname.startsWith('/icons/'))
+  );
+}
+
+/** 抓取並寫入快取（供首次填入與背景重新驗證共用）。 */
+async function fetchAndCache(request) {
+  const response = await fetch(request);
+  if (response && response.ok && response.type === 'basic') {
+    const copy = response.clone();
+    await caches.open(SHELL_CACHE).then((cache) => cache.put(request, copy));
+  }
+  return response;
+}
+
 /** 導覽請求：network-first；離線時只回退離線說明頁，絕不回退已登入頁面。 */
 async function handleNavigation(request) {
   try {
@@ -74,17 +101,22 @@ async function handleNavigation(request) {
   }
 }
 
-/** 靜態資源：cache-first（Next 以內容雜湊命名，安全長快取）。 */
-async function handleStatic(request) {
+/**
+ * 靜態資源：cache-first；固定路徑資源另做 stale-while-revalidate，
+ * 讓部署更新能傳遞到已安裝 SW 的既有使用者。
+ */
+async function handleStatic(request, url, event) {
   const cached = await caches.match(request);
-  if (cached) return cached;
-  try {
-    const response = await fetch(request);
-    if (response && response.ok && response.type === 'basic') {
-      const copy = response.clone();
-      caches.open(SHELL_CACHE).then((cache) => cache.put(request, copy)).catch(() => undefined);
+  if (cached) {
+    if (needsRevalidation(url)) {
+      // 背景更新：立即回快取版本，同時抓新版寫回，下次載入即為最新。
+      const revalidate = fetchAndCache(request).catch(() => undefined);
+      if (event && typeof event.waitUntil === 'function') event.waitUntil(revalidate);
     }
-    return response;
+    return cached;
+  }
+  try {
+    return await fetchAndCache(request);
   } catch {
     return new Response('', { status: 504, statusText: 'Gateway Timeout' });
   }
@@ -106,7 +138,7 @@ self.addEventListener('fetch', (event) => {
   }
 
   if (isCacheableStatic(url)) {
-    event.respondWith(handleStatic(request));
+    event.respondWith(handleStatic(request, url, event));
   }
 });
 

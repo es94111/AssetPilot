@@ -29,7 +29,40 @@ import {
 } from './offlineQueueCore';
 import { notifyDataChanged } from './clientApi';
 
-const STORAGE_KEY = 'assetpilot.offlineQueue.v1';
+const STORAGE_PREFIX = 'assetpilot.offlineQueue';
+// 舊版未區分使用者的固定鍵；升級後清除，避免跨使用者殘留財務資料。
+const LEGACY_STORAGE_KEY = 'assetpilot.offlineQueue.v1';
+
+// 目前登入使用者。佇列以使用者區分，避免共用裝置上把前一位使用者的財務資料
+// 在下一位使用者登入後送出（見 setOfflineQueueUser）。
+let activeUserId: string | null = null;
+
+function storageKey(): string {
+  return activeUserId ? `${STORAGE_PREFIX}.${activeUserId}` : STORAGE_PREFIX;
+}
+
+/**
+ * 綁定（或解除）目前登入使用者，並在切換使用者時清除前一位使用者尚未同步的資料。
+ *
+ * 佇列含金額、日期、備註與帳戶／分類 id 等財務內容；若跨使用者保留，共用瀏覽器上
+ * 後一位使用者登入時會以「自己的」session 送出前一位的資料。因此切換身分即清空。
+ */
+export function setOfflineQueueUser(userId: string | null): void {
+  const next = userId ? String(userId) : null;
+  if (next === activeUserId) return;
+  // 先清掉「舊」使用者的鍵，再切換身分。
+  if (typeof window !== 'undefined') {
+    try {
+      window.localStorage.removeItem(storageKey());
+      // 一次性移除舊版未區分使用者的殘留資料。
+      window.localStorage.removeItem(LEGACY_STORAGE_KEY);
+    } catch {
+      /* 無法存取儲存空間時無資料可清 */
+    }
+    window.dispatchEvent(new CustomEvent(OFFLINE_QUEUE_EVENT));
+  }
+  activeUserId = next;
+}
 
 /** 佇列變更事件（同頁多個元件共用一份狀態）。 */
 export const OFFLINE_QUEUE_EVENT = 'assetpilot:offline-queue-changed';
@@ -43,20 +76,28 @@ const ENDPOINTS: Record<OfflineQueueKind, { url: string; scope: string }> = {
 function readQueue(): OfflineQueueItem[] {
   if (typeof window === 'undefined') return [];
   try {
-    return parseQueue(window.localStorage.getItem(STORAGE_KEY));
+    return parseQueue(window.localStorage.getItem(storageKey()));
   } catch {
     return [];
   }
 }
 
-function writeQueue(items: OfflineQueueItem[]): void {
-  if (typeof window === 'undefined') return;
+/** 寫入並回讀驗證；回傳是否確實持久化（供呼叫端決定能否顯示「已儲存」）。 */
+function writeQueue(items: OfflineQueueItem[]): boolean {
+  if (typeof window === 'undefined') return false;
+  let persisted = false;
   try {
-    window.localStorage.setItem(STORAGE_KEY, serializeQueue(items));
+    const key = storageKey();
+    const serialized = serializeQueue(items);
+    window.localStorage.setItem(key, serialized);
+    // 回讀驗證：儲存空間不可用（SecurityError）或配額不足時 setItem 可能靜默失敗，
+    // 若不驗證就會對使用者謊稱「已離線儲存」而實際遺失資料。
+    persisted = window.localStorage.getItem(key) === serialized;
   } catch {
-    // 配額用盡（例如隱私模式）時放棄持久化，仍讓本回合的記憶體佇列可用。
+    persisted = false;
   }
   window.dispatchEvent(new CustomEvent(OFFLINE_QUEUE_EVENT));
+  return persisted;
 }
 
 export function getQueue(): OfflineQueueItem[] {
@@ -69,15 +110,16 @@ export function getQueueSummary(): QueueSummary {
 
 /**
  * 把一筆交易／轉帳排入離線佇列。
- * 回傳產生的項目（含 idempotency key），供呼叫端在送出時原樣附上。
+ * 回傳產生的項目與是否確實寫入本機儲存；`persisted` 為 false 時呼叫端必須改以
+ * 錯誤提示（而非「已離線儲存」），否則使用者會誤以為交易已保存而實際遺失。
  */
 export function enqueueOffline(
   kind: OfflineQueueKind,
   payload: Record<string, unknown>
-): OfflineQueueItem {
+): { item: OfflineQueueItem; persisted: boolean } {
   const item = createQueueItem({ kind, payload, now: Date.now() });
-  writeQueue(enqueue(readQueue(), item));
-  return item;
+  const persisted = writeQueue(enqueue(readQueue(), item));
+  return { item, persisted };
 }
 
 export function discardItem(id: string): void {

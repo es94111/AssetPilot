@@ -1195,6 +1195,8 @@ export const ptBR = {
       pageBody: "Este dispositivo não tem conexão de rede. Páginas em cache continuam abrindo, e as transações offline sincronizam quando você se reconectar.",
       pageAction: "Ir para transações",
       listUnavailable: "Você está offline, então a lista de transações não pode ser carregada. As transações adicionadas offline sincronizam ao reconectar.",
+      saveFailed: "Este navegador não pode armazenar dados offline (modo privado ou armazenamento cheio). Verifique a conexão e tente novamente.",
+      queuedPhotosSkipped: "Salvo offline. As {count} foto(s) selecionadas não serão enviadas; adicione novamente ao reconectar.",
     },
     pwa: {
       installTitle: "Instalar o AssetPilot",

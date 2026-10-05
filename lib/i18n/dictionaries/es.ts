@@ -1195,6 +1195,8 @@ export const es = {
       pageBody: "Este dispositivo no tiene conexión de red. Las páginas en caché siguen abriéndose y las transacciones sin conexión se sincronizan al reconectar.",
       pageAction: "Ir a transacciones",
       listUnavailable: "Estás sin conexión, por lo que la lista de transacciones no puede cargarse. Las transacciones añadidas sin conexión se sincronizan al reconectar.",
+      saveFailed: "Este navegador no puede guardar datos sin conexión (modo privado o almacenamiento lleno). Revisa la conexión e inténtalo de nuevo.",
+      queuedPhotosSkipped: "Guardado sin conexión. Las {count} foto(s) seleccionadas no se subirán; vuelve a añadirlas al reconectar.",
     },
     pwa: {
       installTitle: "Instalar AssetPilot",

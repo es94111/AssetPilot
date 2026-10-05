@@ -8460,6 +8460,18 @@ abstract class AppLocalizations {
   /// In zh_Hant_TW, this message translates to:
   /// **'目前離線，無法載入交易清單；離線新增的交易會在恢復連線後自動同步。'**
   String get featuresOfflineListUnavailable;
+
+  /// Web path: features.offline.saveFailed
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'無法在此瀏覽器儲存離線資料（可能為隱私模式或儲存空間已滿），請檢查網路後重試。'**
+  String get featuresOfflineSaveFailed;
+
+  /// Web path: features.offline.queuedPhotosSkipped
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'已離線儲存；已選 {count} 張照片不會上傳，恢復連線後可再補上'**
+  String featuresOfflineQueuedPhotosSkipped(Object count);
 }
 
 class _AppLocalizationsDelegate

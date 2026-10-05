@@ -4934,4 +4934,13 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get featuresOfflineListUnavailable =>
       'Estás sin conexión, por lo que la lista de transacciones no puede cargarse. Las transacciones añadidas sin conexión se sincronizan al reconectar.';
+
+  @override
+  String get featuresOfflineSaveFailed =>
+      'Este navegador no puede guardar datos sin conexión (modo privado o almacenamiento lleno). Revisa la conexión e inténtalo de nuevo.';
+
+  @override
+  String featuresOfflineQueuedPhotosSkipped(Object count) {
+    return 'Guardado sin conexión. Las $count foto(s) seleccionadas no se subirán; vuelve a añadirlas al reconectar.';
+  }
 }

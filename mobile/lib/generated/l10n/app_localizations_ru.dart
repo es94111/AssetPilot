@@ -4904,4 +4904,13 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get featuresOfflineListUnavailable =>
       'Нет подключения, поэтому список операций не загружается. Операции, добавленные офлайн, синхронизируются после подключения.';
+
+  @override
+  String get featuresOfflineSaveFailed =>
+      'Этот браузер не может сохранить данные офлайн (режим инкогнито или хранилище заполнено). Проверьте соединение и повторите.';
+
+  @override
+  String featuresOfflineQueuedPhotosSkipped(Object count) {
+    return 'Сохранено офлайн. Выбранные фото ($count) не будут загружены; добавьте их снова после подключения.';
+  }
 }

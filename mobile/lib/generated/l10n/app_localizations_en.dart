@@ -4842,4 +4842,13 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get featuresOfflineListUnavailable =>
       'You are offline, so the transaction list cannot load. Transactions added offline sync automatically once you reconnect.';
+
+  @override
+  String get featuresOfflineSaveFailed =>
+      'This browser cannot store offline data (private mode or storage full). Check your connection and try again.';
+
+  @override
+  String featuresOfflineQueuedPhotosSkipped(Object count) {
+    return 'Saved offline. The $count selected photo(s) will not upload; add them again after reconnecting.';
+  }
 }

@@ -1193,6 +1193,8 @@ export const zhTW = {
       pageBody: "你的裝置目前沒有網路連線。已快取的頁面仍可開啟；離線新增的交易會在恢復連線後自動同步。",
       pageAction: "前往交易記錄",
       listUnavailable: "目前離線，無法載入交易清單；離線新增的交易會在恢復連線後自動同步。",
+      saveFailed: "無法在此瀏覽器儲存離線資料（可能為隱私模式或儲存空間已滿），請檢查網路後重試。",
+      queuedPhotosSkipped: "已離線儲存；已選 {count} 張照片不會上傳，恢復連線後可再補上",
     },
     pwa: {
       installTitle: "安裝 AssetPilot",

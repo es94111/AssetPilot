@@ -4693,4 +4693,13 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get featuresOfflineListUnavailable =>
       '오프라인 상태라 거래 목록을 불러올 수 없습니다. 오프라인에서 추가한 거래는 다시 연결되면 자동으로 동기화됩니다.';
+
+  @override
+  String get featuresOfflineSaveFailed =>
+      '이 브라우저에서 오프라인 데이터를 저장할 수 없습니다(시크릿 모드 또는 저장 공간 부족). 연결을 확인한 뒤 다시 시도하세요.';
+
+  @override
+  String featuresOfflineQueuedPhotosSkipped(Object count) {
+    return '오프라인으로 저장되었습니다. 선택한 사진 $count장은 업로드되지 않으니 연결 후 다시 추가하세요.';
+  }
 }

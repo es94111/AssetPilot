@@ -1,12 +1,13 @@
 'use client';
 
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import Sidebar from './Sidebar';
 import TopNav from './TopNav';
 import MobileNav from './MobileNav';
 import OfflineSyncStatus from '@/components/features/offline/OfflineSyncStatus';
 import PwaRegistrar from '@/components/features/pwa/PwaRegistrar';
+import { setOfflineQueueUser } from '@/lib/clientOfflineQueue';
 import { useT } from '@/components/i18n/I18nProvider';
 
 // 頁首標題對應的譯文鍵，於 render 時用 t() 解析。
@@ -46,6 +47,12 @@ export default function AppLayout({ user, children }: { user: any; children: Rea
     setSidebarOpen(false);
     window.requestAnimationFrame(() => menuButtonRef.current?.focus());
   }, []);
+
+  // 綁定目前登入使用者：離線佇列以使用者區分，切換身分時清除前一位使用者的
+  // 未同步資料，避免共用裝置上以他人 session 送出前一位的財務資料。
+  useEffect(() => {
+    setOfflineQueueUser(user?.id ? String(user.id) : null);
+  }, [user?.id]);
 
   return (
     <div className="flex min-h-dvh" style={{ background: 'var(--app-bg)' }}>

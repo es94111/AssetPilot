@@ -4825,4 +4825,13 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get featuresOfflineListUnavailable =>
       'أنت غير متصل، لذا لا يمكن تحميل قائمة المعاملات. تتم مزامنة المعاملات المضافة دون اتصال تلقائيًا عند عودة الاتصال.';
+
+  @override
+  String get featuresOfflineSaveFailed =>
+      'لا يمكن لهذا المتصفح تخزين البيانات دون اتصال (وضع التصفح الخاص أو مساحة التخزين ممتلئة). تحقق من الاتصال وحاول مجددًا.';
+
+  @override
+  String featuresOfflineQueuedPhotosSkipped(Object count) {
+    return 'تم الحفظ دون اتصال. لن يتم رفع $count صورة محددة؛ أضفها مرة أخرى بعد إعادة الاتصال.';
+  }
 }

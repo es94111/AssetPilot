@@ -7442,5 +7442,18 @@
   "@featuresOfflineListUnavailable": {
     "description": "Web path: features.offline.listUnavailable",
     "x-webPath": "features.offline.listUnavailable"
+  },
+  "featuresOfflineSaveFailed": "이 브라우저에서 오프라인 데이터를 저장할 수 없습니다(시크릿 모드 또는 저장 공간 부족). 연결을 확인한 뒤 다시 시도하세요.",
+  "@featuresOfflineSaveFailed": {
+    "description": "Web path: features.offline.saveFailed",
+    "x-webPath": "features.offline.saveFailed"
+  },
+  "featuresOfflineQueuedPhotosSkipped": "오프라인으로 저장되었습니다. 선택한 사진 {count}장은 업로드되지 않으니 연결 후 다시 추가하세요.",
+  "@featuresOfflineQueuedPhotosSkipped": {
+    "description": "Web path: features.offline.queuedPhotosSkipped",
+    "x-webPath": "features.offline.queuedPhotosSkipped",
+    "placeholders": {
+      "count": {}
+    }
   }
 }

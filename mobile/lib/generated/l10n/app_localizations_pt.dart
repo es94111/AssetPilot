@@ -4903,6 +4903,15 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get featuresOfflineListUnavailable =>
       'Você está offline, então a lista de transações não pode ser carregada. As transações adicionadas offline sincronizam ao reconectar.';
+
+  @override
+  String get featuresOfflineSaveFailed =>
+      'Este navegador não pode armazenar dados offline (modo privado ou armazenamento cheio). Verifique a conexão e tente novamente.';
+
+  @override
+  String featuresOfflineQueuedPhotosSkipped(Object count) {
+    return 'Salvo offline. As $count foto(s) selecionadas não serão enviadas; adicione novamente ao reconectar.';
+  }
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -9795,4 +9804,13 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   @override
   String get featuresOfflineListUnavailable =>
       'Você está offline, então a lista de transações não pode ser carregada. As transações adicionadas offline sincronizam ao reconectar.';
+
+  @override
+  String get featuresOfflineSaveFailed =>
+      'Este navegador não pode armazenar dados offline (modo privado ou armazenamento cheio). Verifique a conexão e tente novamente.';
+
+  @override
+  String featuresOfflineQueuedPhotosSkipped(Object count) {
+    return 'Salvo offline. As $count foto(s) selecionadas não serão enviadas; adicione novamente ao reconectar.';
+  }
 }

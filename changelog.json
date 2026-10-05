@@ -1,6 +1,30 @@
 {
-  "currentVersion": "4.112.10",
+  "currentVersion": "4.113.0",
   "releases": [
+    {
+      "version": "4.113.0",
+      "date": "2026-10-05",
+      "title": "PWA 支援與離線記帳",
+      "type": "new",
+      "changes": [
+        {
+          "tag": "added",
+          "text": "新增 Web App Manifest 與安裝提示（名稱、圖示、theme_color 與亮色主題一致），並加入 Service Worker，離線或網路不穩時仍可開啟基本頁面（公開資源採 cache-first、導覽 network-first、失敗回退離線說明頁）。"
+        },
+        {
+          "tag": "added",
+          "text": "新增離線記帳：沒有網路時新增的收支與轉帳會先存入本機佇列，恢復連線後自動送出並以 Toast 提示。"
+        },
+        {
+          "tag": "added",
+          "text": "同步衝突策略明確定義：離線交易帶 clientRef，伺服器以 (user_id, client_ref) 唯一索引去重（重送不產生重複交易）；可重試錯誤以指數退避自動重試，不可重試錯誤改提示使用者選擇重試或捨棄。"
+        },
+        {
+          "tag": "security",
+          "text": "Service Worker 僅快取公開靜態資源，不快取 API 回應與已登入頁面，避免顯示過期餘額或在共用裝置外洩帳戶畫面；CSP 新增 worker-src 與 manifest-src，維持既有 default-src 'self' 不變。"
+        }
+      ]
+    },
     {
       "version": "4.112.10",
       "date": "2026-10-01",

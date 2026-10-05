@@ -1183,6 +1183,23 @@ export const es = {
         },
       },
     },
+    offline: {
+      queued: "Guardado sin conexión. Se sincronizará automáticamente al recuperar la conexión.",
+      notice: "Estás sin conexión. Las nuevas transacciones se guardan primero en este dispositivo.",
+      pendingSync: "{count} transacción(es) pendientes de sincronizar",
+      syncFailedToast: "{count} transacción(es) no se pudieron sincronizar. Elige reintentar o descartar.",
+      itemFailed: "Error de sincronización: {message}",
+      retry: "Reintentar",
+      discard: "Descartar",
+      pageTitle: "Estás sin conexión",
+      pageBody: "Este dispositivo no tiene conexión de red. Las páginas en caché siguen abriéndose y las transacciones sin conexión se sincronizan al reconectar.",
+      pageAction: "Ir a transacciones",
+    },
+    pwa: {
+      installTitle: "Instalar AssetPilot",
+      installHint: "Añádelo a la pantalla de inicio para abrirlo como una app y registrar sin conexión",
+      installAction: "Instalar",
+    },
   },
   notifications: {
     brand: "AssetPilot",

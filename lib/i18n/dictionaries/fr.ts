@@ -1183,6 +1183,23 @@ export const fr = {
         },
       },
     },
+    offline: {
+      queued: "Enregistré hors ligne. La synchronisation se fera automatiquement au retour de la connexion.",
+      notice: "Vous êtes hors ligne. Les nouvelles transactions sont d’abord stockées sur cet appareil.",
+      pendingSync: "{count} transaction(s) en attente de synchronisation",
+      syncFailedToast: "{count} transaction(s) n’ont pas pu être synchronisées. Choisissez réessayer ou abandonner.",
+      itemFailed: "Échec de la synchronisation : {message}",
+      retry: "Réessayer",
+      discard: "Abandonner",
+      pageTitle: "Vous êtes hors ligne",
+      pageBody: "Cet appareil n’a pas de connexion réseau. Les pages en cache restent accessibles et les transactions hors ligne se synchronisent au retour de la connexion.",
+      pageAction: "Aller aux transactions",
+    },
+    pwa: {
+      installTitle: "Installer AssetPilot",
+      installHint: "Ajoutez-le à l’écran d’accueil pour l’ouvrir comme une app et saisir hors ligne",
+      installAction: "Installer",
+    },
   },
   notifications: {
     brand: "AssetPilot",

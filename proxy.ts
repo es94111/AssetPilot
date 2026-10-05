@@ -23,6 +23,7 @@ const PUBLIC_PATHS = new Set([
   '/api/health',
   '/api/i18n/locale',
   '/api/mcp',
+  '/offline',
 ]);
 
 // passkey / MCP OAuth 端點前綴
@@ -30,6 +31,12 @@ const PUBLIC_PREFIXES = ['/api/auth/passkey/', '/api/oauth/'];
 
 // Next.js 內部路由 + 靜態資源
 const SKIP_PREFIXES = ['/_next/', '/favicon.', '/logo.'];
+
+// PWA 靜態資源：Service Worker 與 manifest 必須能在未登入時取得，
+// 否則瀏覽器無法完成 SW 註冊與 PWA 安裝（見 007-pwa-offline-entry）。圖示同理，
+// 安裝提示與離線頁都需要它們，且這些檔案不含任何使用者資料。
+const PWA_STATIC_PATHS = new Set(['/sw.js', '/manifest.webmanifest']);
+const PWA_STATIC_PREFIXES = ['/icons/'];
 
 // ── in-memory 速率限制（Edge runtime 可用）──
 const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000; // 15 分鐘
@@ -123,6 +130,11 @@ export function proxy(request: NextRequest): NextResponse {
 
   // 略過 Next.js 內部路由與靜態資源
   if (SKIP_PREFIXES.some(p => pathname.startsWith(p))) {
+    return NextResponse.next();
+  }
+
+  // PWA 靜態資源：不套用速率限制、不做登入導向（見上方常數說明）。
+  if (PWA_STATIC_PATHS.has(pathname) || PWA_STATIC_PREFIXES.some(p => pathname.startsWith(p))) {
     return NextResponse.next();
   }
 

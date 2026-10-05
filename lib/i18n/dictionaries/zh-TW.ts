@@ -1181,6 +1181,23 @@ export const zhTW = {
         },
       },
     },
+    offline: {
+      queued: "已離線儲存，恢復連線後會自動同步",
+      notice: "目前離線中，新增的交易會先存在本機",
+      pendingSync: "待同步 {count} 筆交易",
+      syncFailedToast: "有 {count} 筆交易同步失敗，請選擇重試或捨棄",
+      itemFailed: "同步失敗：{message}",
+      retry: "重試",
+      discard: "捨棄",
+      pageTitle: "目前離線",
+      pageBody: "你的裝置目前沒有網路連線。已快取的頁面仍可開啟；離線新增的交易會在恢復連線後自動同步。",
+      pageAction: "前往交易記錄",
+    },
+    pwa: {
+      installTitle: "安裝 AssetPilot",
+      installHint: "安裝到主畫面，像 App 一樣開啟並支援離線記帳",
+      installAction: "安裝",
+    },
   },
   notifications: {
     brand: "AssetPilot",

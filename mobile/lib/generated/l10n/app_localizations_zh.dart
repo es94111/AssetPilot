@@ -4572,6 +4572,52 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get shellExpandSidebar => '展開側邊欄';
+
+  @override
+  String get featuresOfflineOfflineQueued => '已離線儲存，恢復連線後會自動同步';
+
+  @override
+  String get featuresOfflineOfflineNotice => '目前離線中，新增的交易會先存在本機';
+
+  @override
+  String featuresOfflinePendingSync(Object count) {
+    return '待同步 $count 筆交易';
+  }
+
+  @override
+  String featuresOfflineSyncFailedToast(Object count) {
+    return '有 $count 筆交易同步失敗，請選擇重試或捨棄';
+  }
+
+  @override
+  String featuresOfflineItemFailed(Object message) {
+    return '同步失敗：$message';
+  }
+
+  @override
+  String get featuresOfflineRetry => '重試';
+
+  @override
+  String get featuresOfflineDiscard => '捨棄';
+
+  @override
+  String get featuresOfflinePageTitle => '目前離線';
+
+  @override
+  String get featuresOfflinePageBody =>
+      '你的裝置目前沒有網路連線。已快取的頁面仍可開啟；離線新增的交易會在恢復連線後自動同步。';
+
+  @override
+  String get featuresOfflinePageAction => '前往交易記錄';
+
+  @override
+  String get featuresPwaInstallTitle => '安裝 AssetPilot';
+
+  @override
+  String get featuresPwaInstallHint => '安裝到主畫面，像 App 一樣開啟並支援離線記帳';
+
+  @override
+  String get featuresPwaInstallAction => '安裝';
 }
 
 /// The translations for Chinese, as used in China, using the Han script (`zh_Hans_CN`).
@@ -9138,6 +9184,52 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
 
   @override
   String get shellExpandSidebar => '展开侧边栏';
+
+  @override
+  String get featuresOfflineOfflineQueued => '已离线保存，恢复连线后会自动同步';
+
+  @override
+  String get featuresOfflineOfflineNotice => '当前离线，新增的交易会先保存在本机';
+
+  @override
+  String featuresOfflinePendingSync(Object count) {
+    return '待同步 $count 笔交易';
+  }
+
+  @override
+  String featuresOfflineSyncFailedToast(Object count) {
+    return '有 $count 笔交易同步失败，请选择重试或舍弃';
+  }
+
+  @override
+  String featuresOfflineItemFailed(Object message) {
+    return '同步失败：$message';
+  }
+
+  @override
+  String get featuresOfflineRetry => '重试';
+
+  @override
+  String get featuresOfflineDiscard => '舍弃';
+
+  @override
+  String get featuresOfflinePageTitle => '当前离线';
+
+  @override
+  String get featuresOfflinePageBody =>
+      '你的设备当前没有网络连线。已缓存的页面仍可打开；离线新增的交易会在恢复连线后自动同步。';
+
+  @override
+  String get featuresOfflinePageAction => '前往交易记录';
+
+  @override
+  String get featuresPwaInstallTitle => '安装 AssetPilot';
+
+  @override
+  String get featuresPwaInstallHint => '安装到主画面，像 App 一样打开并支持离线记账';
+
+  @override
+  String get featuresPwaInstallAction => '安装';
 }
 
 /// The translations for Chinese, as used in Taiwan, using the Han script (`zh_Hant_TW`).
@@ -13708,4 +13800,50 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
 
   @override
   String get shellExpandSidebar => '展開側邊欄';
+
+  @override
+  String get featuresOfflineOfflineQueued => '已離線儲存，恢復連線後會自動同步';
+
+  @override
+  String get featuresOfflineOfflineNotice => '目前離線中，新增的交易會先存在本機';
+
+  @override
+  String featuresOfflinePendingSync(Object count) {
+    return '待同步 $count 筆交易';
+  }
+
+  @override
+  String featuresOfflineSyncFailedToast(Object count) {
+    return '有 $count 筆交易同步失敗，請選擇重試或捨棄';
+  }
+
+  @override
+  String featuresOfflineItemFailed(Object message) {
+    return '同步失敗：$message';
+  }
+
+  @override
+  String get featuresOfflineRetry => '重試';
+
+  @override
+  String get featuresOfflineDiscard => '捨棄';
+
+  @override
+  String get featuresOfflinePageTitle => '目前離線';
+
+  @override
+  String get featuresOfflinePageBody =>
+      '你的裝置目前沒有網路連線。已快取的頁面仍可開啟；離線新增的交易會在恢復連線後自動同步。';
+
+  @override
+  String get featuresOfflinePageAction => '前往交易記錄';
+
+  @override
+  String get featuresPwaInstallTitle => '安裝 AssetPilot';
+
+  @override
+  String get featuresPwaInstallHint => '安裝到主畫面，像 App 一樣開啟並支援離線記帳';
+
+  @override
+  String get featuresPwaInstallAction => '安裝';
 }

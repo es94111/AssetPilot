@@ -1183,6 +1183,23 @@ export const zhCN = {
         },
       },
     },
+    offline: {
+      queued: "已离线保存，恢复连线后会自动同步",
+      notice: "当前离线，新增的交易会先保存在本机",
+      pendingSync: "待同步 {count} 笔交易",
+      syncFailedToast: "有 {count} 笔交易同步失败，请选择重试或舍弃",
+      itemFailed: "同步失败：{message}",
+      retry: "重试",
+      discard: "舍弃",
+      pageTitle: "当前离线",
+      pageBody: "你的设备当前没有网络连线。已缓存的页面仍可打开；离线新增的交易会在恢复连线后自动同步。",
+      pageAction: "前往交易记录",
+    },
+    pwa: {
+      installTitle: "安装 AssetPilot",
+      installHint: "安装到主画面，像 App 一样打开并支持离线记账",
+      installAction: "安装",
+    },
   },
   notifications: {
     brand: "AssetPilot",

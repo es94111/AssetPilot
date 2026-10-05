@@ -55,7 +55,7 @@
 | 🧭 **URL-first SPA** | 任何頁面可直連、可書籤、可分享；F5 重整不掉頁；上一頁／下一頁完整還原。 |
 | 📦 **純伺服端 CSV** | 匯出含 UTF-8 BOM + Formula Injection 防護；匯入採 DB transaction 原子化，失敗整批回滾。 |
 | 🌗 **三模式主題** | system / light / dark 跨裝置同步；登入頁無 FOUC 樂觀渲染。 |
-| 📱 **響應式 + Android App** | 桌機側邊欄常駐、行動裝置漢堡選單；另有 Android 原生 App，隨時隨地記帳。 |
+| 📱 **響應式 + PWA + Android App** | 桌機側邊欄常駐、行動裝置漢堡選單；可安裝為 PWA、**離線也能先記帳**（恢復連線自動同步）；另有 Android 原生 App，隨時隨地記帳。 |
 
 ---
 
@@ -378,6 +378,13 @@ Docker 多數參數已有合理預設，只需關心「自動產生」與「功�
 - **分類管理**：父子兩層、自訂顏色、CSV 匯出匯入
 - **固定收支**：週期性收支自動產生交易，支援外幣；登入時 server-side 觸發、並發冪等保護
 
+### PWA 與離線記帳
+
+- **可安裝**：附 Web App Manifest 與安裝提示，加到主畫面後以 standalone 模式開啟
+- **離線可用**：Service Worker 快取靜態資源（manifest、圖示、字型、Next chunk），離線時開啟 `/offline` 說明頁；**絕不快取 API 回應或已登入頁面**，避免在共用裝置外洩財務畫面
+- **離線記帳**：離線新增的收支／轉帳存入本機佇列（localStorage），恢復連線後自動送出
+- **同步衝突策略**：每筆離線交易帶 client 產生的 `clientRef`，伺服器以 `(user_id, client_ref)` 唯一索引去重——重送不產生重複交易（伺服器為最後寫入權威）；可重試錯誤（離線／5xx／429）以指數退避重試，不可重試錯誤（4xx 驗證失敗）標記失敗並提示使用者選擇「重試」或「捨棄」
+
 ### 股票投資
 
 - **持股總覽**：即時市值、未實現損益、整體報酬率、三段策略抓股價（盤中即時／盤後收盤／備援）
@@ -464,7 +471,8 @@ Docker 多數參數已有合理預設，只需關心「自動產生」與「功�
 | 身份驗證 | 僅接受 Google、LINE、Passkey 等外部／無密碼方式；不建立本機密碼 |
 | XSS 防護 | 所有使用者輸入經 `escHtml()` 跳脫後才插入 DOM |
 | 安全標頭 | HSTS、X-Content-Type-Options、Referrer-Policy |
-| CSP | 限制 inline script 與外部資源來源 |
+| CSP | 限制 inline script 與外部資源來源；`worker-src 'self'`／`manifest-src 'self'` 供 PWA 使用 |
+| Service Worker | 僅快取公開靜態資源；不快取 API 回應與已登入頁面 |
 | 速率限制 | 登入／Passkey 端點每 IP 每 15 分鐘最多 20 次；公開頁面每分鐘最多 120 次 |
 | OAuth 防 CSRF | Google／LINE 使用一次性 state；LINE 額外 nonce 驗證 ID Token |
 | MCP OAuth 2.1 | PKCE S256、精確 redirect URI、short-lived token、refresh rotation、token 僅存 SHA-256 |

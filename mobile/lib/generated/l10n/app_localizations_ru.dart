@@ -4851,4 +4851,53 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get shellExpandSidebar => 'Развернуть боковую панель';
+
+  @override
+  String get featuresOfflineOfflineQueued =>
+      'Сохранено офлайн. Синхронизация произойдёт автоматически при восстановлении соединения.';
+
+  @override
+  String get featuresOfflineOfflineNotice =>
+      'Нет подключения. Новые операции сначала сохраняются на этом устройстве.';
+
+  @override
+  String featuresOfflinePendingSync(Object count) {
+    return '$count операций ожидают синхронизации';
+  }
+
+  @override
+  String featuresOfflineSyncFailedToast(Object count) {
+    return 'Не удалось синхронизировать $count операций. Выберите повтор или удаление.';
+  }
+
+  @override
+  String featuresOfflineItemFailed(Object message) {
+    return 'Ошибка синхронизации: $message';
+  }
+
+  @override
+  String get featuresOfflineRetry => 'Повторить';
+
+  @override
+  String get featuresOfflineDiscard => 'Удалить';
+
+  @override
+  String get featuresOfflinePageTitle => 'Нет подключения';
+
+  @override
+  String get featuresOfflinePageBody =>
+      'На этом устройстве нет сети. Страницы из кэша по-прежнему открываются, а офлайн-операции синхронизируются после подключения.';
+
+  @override
+  String get featuresOfflinePageAction => 'К операциям';
+
+  @override
+  String get featuresPwaInstallTitle => 'Установить AssetPilot';
+
+  @override
+  String get featuresPwaInstallHint =>
+      'Добавьте на главный экран, чтобы открывать как приложение и вносить записи офлайн';
+
+  @override
+  String get featuresPwaInstallAction => 'Установить';
 }

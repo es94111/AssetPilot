@@ -84,7 +84,12 @@ interface CreateTransactionRequest {
   accountId?: string | null;
   note?: string | null;
   excludeFromStats?: boolean;
+  /** 離線記帳的 idempotency key（007）；線上直接新增時省略。 */
+  clientRef?: string | null;
 }
+
+/** 離線 idempotency key 形狀驗證：限 32 碼十六進位，避免使用者塞任意長字串。 */
+const CLIENT_REF_REGEX = /^[a-f0-9]{32}$/;
 
 const SORT_REGEX = /^(date|amount|account|category|type)_(asc|desc)$/;
 const TRANSACTION_TYPES = new Set(['income', 'expense', 'transfer_in', 'transfer_out']);
@@ -304,6 +309,7 @@ export async function POST(request: NextRequest) {
     accountId: accountId || null,
     note: note || '',
     excludeFromStats: !!excludeFromStats,
+    clientRef: typeof body.clientRef === 'string' && CLIENT_REF_REGEX.test(body.clientRef) ? body.clientRef : undefined,
   });
 
   return NextResponse.json(result, { status: 201 });

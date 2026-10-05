@@ -4789,4 +4789,53 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get shellExpandSidebar => 'Expand sidebar';
+
+  @override
+  String get featuresOfflineOfflineQueued =>
+      'Saved offline. It will sync automatically once you are back online.';
+
+  @override
+  String get featuresOfflineOfflineNotice =>
+      'You are offline. New transactions are stored on this device first.';
+
+  @override
+  String featuresOfflinePendingSync(Object count) {
+    return '$count transaction(s) waiting to sync';
+  }
+
+  @override
+  String featuresOfflineSyncFailedToast(Object count) {
+    return '$count transaction(s) failed to sync. Choose retry or discard.';
+  }
+
+  @override
+  String featuresOfflineItemFailed(Object message) {
+    return 'Sync failed: $message';
+  }
+
+  @override
+  String get featuresOfflineRetry => 'Retry';
+
+  @override
+  String get featuresOfflineDiscard => 'Discard';
+
+  @override
+  String get featuresOfflinePageTitle => 'You are offline';
+
+  @override
+  String get featuresOfflinePageBody =>
+      'This device has no network connection. Cached pages still open, and offline transactions sync automatically once you reconnect.';
+
+  @override
+  String get featuresOfflinePageAction => 'Go to transactions';
+
+  @override
+  String get featuresPwaInstallTitle => 'Install AssetPilot';
+
+  @override
+  String get featuresPwaInstallHint =>
+      'Add to your home screen to open like an app and keep offline entry';
+
+  @override
+  String get featuresPwaInstallAction => 'Install';
 }

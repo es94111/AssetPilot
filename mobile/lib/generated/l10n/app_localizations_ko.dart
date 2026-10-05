@@ -4641,4 +4641,52 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get shellExpandSidebar => '사이드바 펼치기';
+
+  @override
+  String get featuresOfflineOfflineQueued =>
+      '오프라인으로 저장되었습니다. 연결되면 자동으로 동기화됩니다.';
+
+  @override
+  String get featuresOfflineOfflineNotice =>
+      '오프라인 상태입니다. 새 거래는 먼저 이 기기에 저장됩니다.';
+
+  @override
+  String featuresOfflinePendingSync(Object count) {
+    return '$count건의 거래가 동기화 대기 중';
+  }
+
+  @override
+  String featuresOfflineSyncFailedToast(Object count) {
+    return '$count건의 거래 동기화에 실패했습니다. 재시도 또는 삭제를 선택하세요.';
+  }
+
+  @override
+  String featuresOfflineItemFailed(Object message) {
+    return '동기화 실패: $message';
+  }
+
+  @override
+  String get featuresOfflineRetry => '재시도';
+
+  @override
+  String get featuresOfflineDiscard => '삭제';
+
+  @override
+  String get featuresOfflinePageTitle => '오프라인 상태입니다';
+
+  @override
+  String get featuresOfflinePageBody =>
+      '이 기기에 네트워크 연결이 없습니다. 캐시된 페이지는 계속 열리고, 오프라인 거래는 다시 연결되면 자동으로 동기화됩니다.';
+
+  @override
+  String get featuresOfflinePageAction => '거래 내역으로 이동';
+
+  @override
+  String get featuresPwaInstallTitle => 'AssetPilot 설치';
+
+  @override
+  String get featuresPwaInstallHint => '홈 화면에 추가하면 앱처럼 열리고 오프라인 입력도 지원합니다';
+
+  @override
+  String get featuresPwaInstallAction => '설치';
 }

@@ -7363,5 +7363,79 @@
   "@shellExpandSidebar": {
     "description": "Web path: shell.expandSidebar",
     "x-webPath": "shell.expandSidebar"
+  },
+  "featuresOfflineOfflineQueued": "Guardado sin conexión. Se sincronizará automáticamente al recuperar la conexión.",
+  "@featuresOfflineOfflineQueued": {
+    "description": "Web path: features.offline.queued",
+    "x-webPath": "features.offline.queued"
+  },
+  "featuresOfflineOfflineNotice": "Estás sin conexión. Las nuevas transacciones se guardan primero en este dispositivo.",
+  "@featuresOfflineOfflineNotice": {
+    "description": "Web path: features.offline.notice",
+    "x-webPath": "features.offline.notice"
+  },
+  "featuresOfflinePendingSync": "{count} transacción(es) pendientes de sincronizar",
+  "@featuresOfflinePendingSync": {
+    "description": "Web path: features.offline.pendingSync",
+    "x-webPath": "features.offline.pendingSync",
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "featuresOfflineSyncFailedToast": "{count} transacción(es) no se pudieron sincronizar. Elige reintentar o descartar.",
+  "@featuresOfflineSyncFailedToast": {
+    "description": "Web path: features.offline.syncFailedToast",
+    "x-webPath": "features.offline.syncFailedToast",
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "featuresOfflineItemFailed": "Error de sincronización: {message}",
+  "@featuresOfflineItemFailed": {
+    "description": "Web path: features.offline.itemFailed",
+    "x-webPath": "features.offline.itemFailed",
+    "placeholders": {
+      "message": {}
+    }
+  },
+  "featuresOfflineRetry": "Reintentar",
+  "@featuresOfflineRetry": {
+    "description": "Web path: features.offline.retry",
+    "x-webPath": "features.offline.retry"
+  },
+  "featuresOfflineDiscard": "Descartar",
+  "@featuresOfflineDiscard": {
+    "description": "Web path: features.offline.discard",
+    "x-webPath": "features.offline.discard"
+  },
+  "featuresOfflinePageTitle": "Estás sin conexión",
+  "@featuresOfflinePageTitle": {
+    "description": "Web path: features.offline.pageTitle",
+    "x-webPath": "features.offline.pageTitle"
+  },
+  "featuresOfflinePageBody": "Este dispositivo no tiene conexión de red. Las páginas en caché siguen abriéndose y las transacciones sin conexión se sincronizan al reconectar.",
+  "@featuresOfflinePageBody": {
+    "description": "Web path: features.offline.pageBody",
+    "x-webPath": "features.offline.pageBody"
+  },
+  "featuresOfflinePageAction": "Ir a transacciones",
+  "@featuresOfflinePageAction": {
+    "description": "Web path: features.offline.pageAction",
+    "x-webPath": "features.offline.pageAction"
+  },
+  "featuresPwaInstallTitle": "Instalar AssetPilot",
+  "@featuresPwaInstallTitle": {
+    "description": "Web path: features.pwa.installTitle",
+    "x-webPath": "features.pwa.installTitle"
+  },
+  "featuresPwaInstallHint": "Añádelo a la pantalla de inicio para abrirlo como una app y registrar sin conexión",
+  "@featuresPwaInstallHint": {
+    "description": "Web path: features.pwa.installHint",
+    "x-webPath": "features.pwa.installHint"
+  },
+  "featuresPwaInstallAction": "Instalar",
+  "@featuresPwaInstallAction": {
+    "description": "Web path: features.pwa.installAction",
+    "x-webPath": "features.pwa.installAction"
   }
 }

@@ -7363,5 +7363,79 @@
   "@shellExpandSidebar": {
     "description": "Web path: shell.expandSidebar",
     "x-webPath": "shell.expandSidebar"
+  },
+  "featuresOfflineOfflineQueued": "تم الحفظ دون اتصال. ستتم المزامنة تلقائيًا عند عودة الاتصال.",
+  "@featuresOfflineOfflineQueued": {
+    "description": "Web path: features.offline.queued",
+    "x-webPath": "features.offline.queued"
+  },
+  "featuresOfflineOfflineNotice": "أنت غير متصل. تُحفظ المعاملات الجديدة على هذا الجهاز أولًا.",
+  "@featuresOfflineOfflineNotice": {
+    "description": "Web path: features.offline.notice",
+    "x-webPath": "features.offline.notice"
+  },
+  "featuresOfflinePendingSync": "{count} معاملة في انتظار المزامنة",
+  "@featuresOfflinePendingSync": {
+    "description": "Web path: features.offline.pendingSync",
+    "x-webPath": "features.offline.pendingSync",
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "featuresOfflineSyncFailedToast": "فشلت مزامنة {count} معاملة. اختر إعادة المحاولة أو التجاهل.",
+  "@featuresOfflineSyncFailedToast": {
+    "description": "Web path: features.offline.syncFailedToast",
+    "x-webPath": "features.offline.syncFailedToast",
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "featuresOfflineItemFailed": "فشلت المزامنة: {message}",
+  "@featuresOfflineItemFailed": {
+    "description": "Web path: features.offline.itemFailed",
+    "x-webPath": "features.offline.itemFailed",
+    "placeholders": {
+      "message": {}
+    }
+  },
+  "featuresOfflineRetry": "إعادة المحاولة",
+  "@featuresOfflineRetry": {
+    "description": "Web path: features.offline.retry",
+    "x-webPath": "features.offline.retry"
+  },
+  "featuresOfflineDiscard": "تجاهل",
+  "@featuresOfflineDiscard": {
+    "description": "Web path: features.offline.discard",
+    "x-webPath": "features.offline.discard"
+  },
+  "featuresOfflinePageTitle": "أنت غير متصل",
+  "@featuresOfflinePageTitle": {
+    "description": "Web path: features.offline.pageTitle",
+    "x-webPath": "features.offline.pageTitle"
+  },
+  "featuresOfflinePageBody": "لا يوجد اتصال بالشبكة على هذا الجهاز. تظل الصفحات المخزّنة متاحة، وتتم مزامنة المعاملات عند عودة الاتصال.",
+  "@featuresOfflinePageBody": {
+    "description": "Web path: features.offline.pageBody",
+    "x-webPath": "features.offline.pageBody"
+  },
+  "featuresOfflinePageAction": "الانتقال إلى المعاملات",
+  "@featuresOfflinePageAction": {
+    "description": "Web path: features.offline.pageAction",
+    "x-webPath": "features.offline.pageAction"
+  },
+  "featuresPwaInstallTitle": "تثبيت AssetPilot",
+  "@featuresPwaInstallTitle": {
+    "description": "Web path: features.pwa.installTitle",
+    "x-webPath": "features.pwa.installTitle"
+  },
+  "featuresPwaInstallHint": "أضفه إلى الشاشة الرئيسية لفتحه كتطبيق وتسجيل المعاملات دون اتصال",
+  "@featuresPwaInstallHint": {
+    "description": "Web path: features.pwa.installHint",
+    "x-webPath": "features.pwa.installHint"
+  },
+  "featuresPwaInstallAction": "تثبيت",
+  "@featuresPwaInstallAction": {
+    "description": "Web path: features.pwa.installAction",
+    "x-webPath": "features.pwa.installAction"
   }
 }

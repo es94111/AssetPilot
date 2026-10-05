@@ -8,6 +8,17 @@ export async function apiFetch(url: string, options: RequestInit = {}) {
   return data;
 }
 
+/**
+ * 判斷錯誤是否為「連線層失敗」而非伺服器拒絕（007-pwa-offline-entry）。
+ * fetch 在離線／DNS 失敗／連線中斷時會 reject 一個 TypeError（訊息如
+ * "Failed to fetch"），與 apiFetch 針對非 2xx 拋出的 Error 不同：
+ * 前者適合改走離線佇列，後者（驗證錯誤）必須讓使用者看到並修正。
+ */
+export function isNetworkError(error: unknown): boolean {
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) return true;
+  return error instanceof TypeError;
+}
+
 export async function apiGet(url: string) {
   return apiFetch(url, { cache: 'no-store' });
 }

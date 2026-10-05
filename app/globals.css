@@ -1595,6 +1595,20 @@
   padding: 56px 0;
 }
 
+/* ── Offline sync status (007-pwa-offline-entry) ── */
+.offline-sync-bar,
+.offline-sync-item {
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .offline-sync-bar,
+  .offline-sync-item {
+    animation: rise-in var(--motion-base) var(--ease-out) both;
+  }
+}
+
 /* ── Table wrapper — glass card ── */
 .table-wrap {
   background: var(--surface-glass);

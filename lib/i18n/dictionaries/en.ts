@@ -1183,6 +1183,23 @@ export const en = {
         },
       },
     },
+    offline: {
+      queued: "Saved offline. It will sync automatically once you are back online.",
+      notice: "You are offline. New transactions are stored on this device first.",
+      pendingSync: "{count} transaction(s) waiting to sync",
+      syncFailedToast: "{count} transaction(s) failed to sync. Choose retry or discard.",
+      itemFailed: "Sync failed: {message}",
+      retry: "Retry",
+      discard: "Discard",
+      pageTitle: "You are offline",
+      pageBody: "This device has no network connection. Cached pages still open, and offline transactions sync automatically once you reconnect.",
+      pageAction: "Go to transactions",
+    },
+    pwa: {
+      installTitle: "Install AssetPilot",
+      installHint: "Add to your home screen to open like an app and keep offline entry",
+      installAction: "Install",
+    },
   },
   notifications: {
     brand: "AssetPilot",

@@ -214,6 +214,14 @@ components:
         fxFee:
           type: number
           description: 海外刷卡手續費（TWD）
+        clientRef:
+          type: string
+          pattern: "^[a-f0-9]{32}$"
+          description: |
+            離線記帳的 idempotency key（007-pwa-offline-entry）。離線新增的交易由
+            client 產生此值；伺服器以 (user_id, client_ref) 唯一索引去重，同一
+            clientRef 重送不會產生重複交易，並回傳與新建相同的結果。線上直接新增時省略；
+            格式不符時視為未提供。
 
     # ── 預算 ──
     BudgetInput:
@@ -1436,6 +1444,12 @@ paths:
                   type: string
                 note:
                   type: string
+                clientRef:
+                  type: string
+                  pattern: "^[a-f0-9]{32}$"
+                  description: |
+                    離線記帳的 idempotency key（007-pwa-offline-entry）；同一 clientRef 重送
+                    不產生重複的轉帳配對。線上直接新增時省略。
       responses:
         "200":
           description: 轉帳成功

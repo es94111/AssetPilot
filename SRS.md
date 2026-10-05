@@ -1,7 +1,7 @@
 # 資產管理 系統規格說明書 (SSD)
 
-**版本：** 4.111.1
-**日期：** 2026-08-24
+**版本：** 4.113.0
+**日期：** 2026-10-05
 **狀態：** 已實作
 
 ---
@@ -516,9 +516,50 @@ CSV 內容經過 Formula Injection 防護處理（以 `=`、`+`、`-`、`@` 開�
 
 #### 不做什麼
 
-- 不做 PWA／離線模式，留給未來版本
-- 不做多語系（i18n），全站僅支援繁體中文
 - 不做使用者自訂主題色，主色調鎖定紫色
+
+### 2.9 PWA 與離線記帳
+
+核心目標：讓 Web 端在沒有網路或網路不穩時仍能開啟、且能先把交易記下來，恢復連線後自動送回伺服器，不會因斷線而遺失記帳。
+
+#### Web App Manifest 與安裝
+
+- `public/manifest.webmanifest` 定義 `name`、`short_name`、`theme_color`（`#b0521c`，與亮色主題一致）、`background_color`、`display: standalone`、`start_url: /dashboard`、192／512 一般圖示與 512 maskable 圖示，以及「新增交易」「儀表板」兩個快捷方式
+- `app/layout.tsx` 輸出 `<link rel="manifest">` 與 `theme-color`（由 `generateViewport` 依 `prefers-color-scheme` 切換亮／暗色），並設定 `appleWebApp`
+- 登入後畫面掛載 `components/features/pwa/PwaRegistrar.tsx`：production 下註冊 `/sw.js`，並監聽 `beforeinstallprompt` 提供 App 內一鍵安裝提示（可關閉，記錄於 `localStorage`）
+
+#### Service Worker 快取策略
+
+- `public/sw.js`（手寫，無建置相依）於 install 階段 pre-cache 公開資源：`/offline`、manifest、圖示、`logo.svg`、`favicon.svg`
+- 導覽請求採 network-first；離線時僅回退至公開的 `/offline` 說明頁
+- **絕不快取 `/api/` 回應**：財務資料一律即時取得，避免顯示過期餘額
+- **絕不快取已登入的 HTML 頁面**：本系統為財務工具，共用裝置上若把帳戶畫面寫入 Cache Storage，下一位使用者離線時可能看到前一位的資料
+- 靜態資源（`/_next/static/`、圖示、manifest）採 cache-first；`sw.js` 本身以 `no-cache, no-store` 送出，確保新版立即生效
+- `next.config.ts` 的 CSP 新增 `worker-src 'self'` 與 `manifest-src 'self'`，維持既有 `default-src 'self'` 政策不變
+
+#### 離線記帳佇列
+
+- 純邏輯模組 `lib/offlineQueueCore.ts`（不依賴瀏覽器或伺服器端 API，可獨立單元測試）定義佇列項目形狀、解析／序列化、去重、容量上限（200 筆）、重試與指數退避（5 秒起、上限 5 分鐘、最多自動重試 5 次）與 `isRetryableStatus`
+- 瀏覽器 I/O 模組 `lib/clientOfflineQueue.ts` 以 `localStorage`（key `assetpilot.offlineQueue.v1`）持久化，並監聽 `online` 事件自動送出
+- `components/features/transactions/TransactionsClient.tsx` 於新增收支／轉帳遇上連線層失敗（`isNetworkError`）時改存入佇列，並以 Toast 提示
+- `components/features/offline/OfflineSyncStatus.tsx`（掛載於 `AppLayout`）顯示離線／待同步筆數，並對失敗項目提供「重試」與「捨棄」
+
+#### 同步衝突處理策略
+
+明確定義為兩層，而非留白：
+
+1. **伺服器為最後寫入權威（去重即冪等）**：每筆離線項目帶一組 client 產生的 32 碼十六進位 `clientRef`；`transactions` 新增 `client_ref TEXT NOT NULL DEFAULT ''` 欄位與 `(user_id, client_ref)` 部分唯一索引（`client_ref != ''`）。重送同一筆不會產生第二筆，`insertIncomeExpenseTransaction`／`insertTransferPair` 會改讀已寫入的列，以與新建完全相同的回應形狀回傳，前端無法區分「新建」與「去重」。線上直接新增（`clientRef` 為空）維持既有行為不變。
+2. **不可自動解決者交還使用者**：可重試失敗（網路層、408／425／429／5xx）留佇列指數退避重試；不可重試失敗（其餘 4xx，例如帳戶已刪除或信用卡已停用）標記為 `failed`，以提示讓使用者選擇重試或捨棄。
+
+#### 端點
+
+- `POST /api/transactions` 與 `POST /api/transactions/transfer` 新增選填 `clientRef`（`^[a-f0-9]{32}$`，格式不符時視為未提供，不影響既有請求）
+
+#### 不做什麼
+
+- 不做 background sync 背景送出（iOS Safari 尚未支援，改以前景 `online` 事件重送）
+- 不做整頁 HTML pre-cache（清單變動快且會與伺服器渲染版本競態）
+- 不快取任何 API 回應或已登入頁面（見上）
 
 ---
 
@@ -547,6 +588,7 @@ CSV 內容經過 Formula Injection 防護處理（以 `=`、`+`、`-`、`@` 開�
 - IDOR 防護：驗證 `accountId`、`categoryId`、`stockId` 擁有者
 - CSV Formula Injection 防護
 - CSP、HSTS、X-Content-Type-Options、Referrer-Policy；停用 `X-Powered-By`
+- CSP 另含 `worker-src 'self'` 與 `manifest-src 'self'` 供 PWA 使用；Service Worker 僅快取公開靜態資源，不快取 API 回應與已登入頁面（v4.113.0 新增）
 - 外部 CDN 腳本 SRI `integrity` 屬性
 - `/api/auth/login`、`/api/auth/register`、`/api/auth/google` 套用較嚴格速率限制（每 IP 每 15 分鐘 20 次）；`/privacy`、`/terms` 沿用既有靜態頁桶
 - 全域 `/api` 速率限制：每 IP 每 15 分鐘 600 次（v4.31.0 新增；CodeQL `js/missing-rate-limiting`）
@@ -993,6 +1035,7 @@ API 路徑統一以 `/api/` 為前綴。所有需認證的路由自動套用 aut
 
 | 版本 | 日期 | 變更說明 |
 | --- | --- | --- |
+| 4.113.0 | 2026-10-05 | 新增 PWA 支援與離線記帳（007-pwa-offline-entry）。PWA：`public/manifest.webmanifest`（名稱、`theme_color` 與亮色主題一致、192／512 一般與 512 maskable 圖示、新增交易／儀表板快捷方式）、`public/icons/*.png`（由 `logo.svg` 以 sharp 產生）、`app/layout.tsx` 輸出 manifest 連結與 `generateViewport` 的 `theme-color`；`components/features/pwa/PwaRegistrar.tsx` 於 production 註冊 Service Worker 並監聽 `beforeinstallprompt` 提供一鍵安裝提示（可關閉）。Service Worker：`public/sw.js` install 階段 pre-cache 公開資源、導覽 network-first、離線回退公開的 `/offline` 說明頁；**不快取 `/api/` 回應、也不快取已登入 HTML 頁面**，避免顯示過期餘額或在共用裝置外洩帳戶畫面；`next.config.ts` 的 CSP 新增 `worker-src 'self'` 與 `manifest-src 'self'`（維持 `default-src 'self'` 不變），並為 manifest／圖示／`sw.js` 設定對應 `Cache-Control`（`sw.js` 為 `no-store`）；`proxy.ts` 讓 `/sw.js`、`/manifest.webmanifest`、`/icons/*`、`/offline` 免於登入導向，否則瀏覽器無法註冊 SW。離線記帳：新增零相依純模組 `lib/offlineQueueCore.ts`（佇列形狀、解析容錯、去重、容量上限 200、指數退避 5 秒至 5 分鐘、最多自動重試 5 次、`isRetryableStatus`）與瀏覽器 I/O 模組 `lib/clientOfflineQueue.ts`（localStorage 持久化、`online` 事件自動送出、併發送出共用 in-flight promise）；`components/features/transactions/TransactionsClient.tsx` 於新增收支／轉帳遇連線層失敗（新增 `lib/clientApi.ts` 的 `isNetworkError`）時改存佇列並以 Toast 提示；`components/features/offline/OfflineSyncStatus.tsx`（掛載於 `AppLayout`）顯示離線／待同步筆數並對失敗項目提供重試／捨棄。衝突策略：`lib/db.ts` 新增 `transactions.client_ref TEXT NOT NULL DEFAULT ''` 與 `(user_id, client_ref)` 部分唯一索引；`lib/transactionWriteCore.ts` 的 `insertIncomeExpenseTransaction`／`insertTransferPair` 接受 `clientRef`，重送時改讀已寫入的列並以與新建相同的回應形狀回傳（伺服器為最後寫入權威、冪等），並處理併發競態；`app/api/transactions/route.ts` 與 `.../transfer/route.ts` 接受選填 `clientRef`（`^[a-f0-9]{32}$`，格式不符視為未提供）。i18n：`shared/i18n/app_*.arb` 新增 `features.offline.*`（10 鍵）與 `features.pwa.*`（3 鍵），重新產生 Web 字典與 Flutter l10n。測試：新增 `tests/lib/offlineQueue.test.ts`（13 項純函式）與 `tests/lib/offlineIdempotency.test.ts`（4 項需 PostgreSQL），皆納入 `npm test`。驗證：`npm run typecheck`、`npm test`（含 `check:i18n` `check:iso`）、`npm run build`、以本機 PostgreSQL 執行兩支新測試全數通過；實測 `next start` 下 manifest／`sw.js`／圖示／`/offline` 回應標頭與內容正確，`/dashboard` 未登入仍 307 導向 `/login`、`/api/transactions` 未登入仍 401。已知非本次範圍：`insertTransferPair` 對 PostgreSQL 使用 `to_account_id` 而 DDL 為 `transfer_to_account_id`，轉帳寫入於 PostgreSQL 失敗（`tests/lib/transactionWriteCore.test.ts` 3 項轉帳案例失敗，已用 `git stash` 確認於本次變更前即存在）。 |
 | 4.112.3 | 2026-09-01 | 修補第三方滲透測試報告列出的 16 項漏洞（injection/auth/authz/SSRF）。Injection：`lib/postgresBackup.ts` 新增 `assertRestorableBackupSql()`，還原前以 tokenizer 逐一驗證每個 top-level SQL 陳述式須符合 `createPostgresBackupSql()` 自身產生的固定文法（僅允許 BEGIN/COMMIT/DROP TABLE IF EXISTS/CREATE TABLE/ALTER TABLE ADD CONSTRAINT/CREATE INDEX/INSERT INTO），DDL 陳述式另以危險函式黑名單檢查，並加上檔案大小與陳述式數量上限；`lib/transactionAttachments.ts` 的 `restoreAttachmentFromBundle()` 要求 bundle 內 `transaction_id`／附件 `id` 須符合伺服器產生的 32 碼十六進位格式，阻斷路徑穿越。Authn/Authz：`lib/apiHelpers.ts` 的 `requireAuth()`、`lib/mcpAuth.ts` 的 `verifyMcpToken()`（改為 JOIN users）與 Google/LINE/Passkey/App ticket 四條既有使用者登入路徑新增 `users.is_active` fail-closed 檢查（判斷式抽至零相依的新檔 `lib/userActive.ts`，避免 `mcpAuth.ts` 意外引入 `next/headers` 相依鏈）；`lib/sessionHelpers.ts` 的 `verifyLoginSession()` 新增閒置逾時（`SESSION_IDLE_TIMEOUT_DAYS`，預設 14 天，`last_seen_at` 節流寫入）。OAuth CSRF：`lib/lineOAuthState.ts`／`lib/googleOAuthState.ts` 的 state 記錄新增 `bindingToken`（web 走 httpOnly cookie、行動 App 走 JSON 欄位顯式回傳，`mobile/lib/api_client.dart`／`line_auth.dart`／`google_auth.dart` 同步調整），LINE 綁定流程另需在核發時綁定已登入 `userId`/`sessionId` 並於核銷時比對；`app/api/auth/line/route.ts`、`app/api/account/link-line/route.ts` 改為嚴格核對 state 的 `flow` 欄位，杜絕以連結流程繞過登入流程的 Turnstile 驗證。SSRF：`lib/s3Storage.ts` 新增 `assertSafeS3Endpoint()`（僅接受 HTTPS、DNS 解析後排除私有/迴環/連結本地/多播位址範圍，含 IPv4/IPv6），`putS3Object`/`getS3Object`/`deleteS3Object` 一律先驗證、`redirect:'manual'` 並限制逾時與回應大小；`app/api/database/mega-s4/route.ts` 的 PUT 端點存檔前先行驗證。App ticket：`lib/appAuthTicket.ts` 新增 `deviceNonce` 綁定（App 端 `mobile/lib/passkey_auth.dart` 產生並僅透過 outbound URL 傳遞，兌換時需原樣附上）。基礎設施：`proxy.ts`／`lib/loginHelpers.ts` 改用新增的零相依 `lib/requestIp.ts`（預設信任 XFF 最後一段而非可偽造的第一段）與 `lib/rateLimit.ts`（Map 容量上限保護）；`docker-compose.yml` 的對外連接埠改綁 `127.0.0.1`；`next.config.ts` 正式環境新增 HSTS 標頭；同時修補 `app/api/account/passkey/register/route.ts`／`app/api/auth/passkey/login/route.ts` 的 WebAuthn origin 自我比對問題（改用新增的 `lib/originPolicy.ts` 允許清單，fail-closed）。回歸測試：`tests/lib/mcpAuth.test.ts` 修正測試 fixture（`createMcpCredential` 前需先建立對應 `users` 列）並新增停用帳號 PAT 立即失效的回歸測試。驗證：`npm run typecheck`（TypeScript 5.7.3，因 TS7 native-preview 於本機 Windows 缺對應平台二進位改用）、`dart analyze` 全數通過；以臨時 PostgreSQL 容器執行 `test:mcp-auth`（14/14）、`test:mcp-oauth`（17/17）、`test:db-migrations`（4/6，2 項失敗為既有問題與本次變更無關，已用 `git stash` 對照原始程式碼確認）。 |
 | 4.112.1 | 2026-08-26 | 修正品牌入場動畫圓環未置中問題：`app/globals.css` 新增 `.splash-logo-wrap` 包裹容器並賦予 `.splash-logo` 定位語境，`.splash-ring` 改以 `top:50%; left:50%; margin:-84px 0 0 -84px` 精準置中於圖示，並移除與 `animation-name` 多值宣告衝突的 `animation` 簡寫及重複 `opacity:0`；`components/public/SplashIntro.tsx` 同步調整 DOM 結構以套用新容器。驗證：`npm run typecheck` 通過。 |
 | 4.112.0 | 2026-08-26 | 新增品牌入場動畫：`components/public/SplashIntro.tsx` 於 `app/layout.tsx` 掛載，網頁載入時顯示一次性 CSS keyframes 動畫（logo 彈出、漸層光暈、進度條），以 `sessionStorage` 記錄同一工作階段只播放一次，並支援 `prefers-reduced-motion`；對應樣式定義於 `app/globals.css`。Flutter App 新增 `mobile/lib/screens/splash_screen.dart`，`app.dart` 新增 `RootGate` 於啟動時先播放品牌動畫（`AnimationController` 驅動 logo 彈跳、漸層背景、進度條），完成後才切換至原有 `AuthGate` 依登入狀態導向。另外 `mobile/analysis_options.yaml` 的 analyzer 排除清單新增 `build/`／`android/`／`ios/`／`web/`／`windows/`／`macos/`／`linux/` 平台產生目錄，避免這些自動產生檔案污染靜態分析結果。驗證：`npm run typecheck` 通過。 |

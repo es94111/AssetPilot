@@ -1183,6 +1183,23 @@ export const ptBR = {
         },
       },
     },
+    offline: {
+      queued: "Salvo offline. Sincronizará automaticamente quando você voltar a ficar online.",
+      notice: "Você está offline. As novas transações são armazenadas primeiro neste dispositivo.",
+      pendingSync: "{count} transação(ões) aguardando sincronização",
+      syncFailedToast: "{count} transação(ões) falharam ao sincronizar. Escolha tentar novamente ou descartar.",
+      itemFailed: "Falha na sincronização: {message}",
+      retry: "Tentar novamente",
+      discard: "Descartar",
+      pageTitle: "Você está offline",
+      pageBody: "Este dispositivo não tem conexão de rede. Páginas em cache continuam abrindo, e as transações offline sincronizam quando você se reconectar.",
+      pageAction: "Ir para transações",
+    },
+    pwa: {
+      installTitle: "Instalar o AssetPilot",
+      installHint: "Adicione à tela inicial para abrir como app e lançar lançamentos offline",
+      installAction: "Instalar",
+    },
   },
   notifications: {
     brand: "AssetPilot",

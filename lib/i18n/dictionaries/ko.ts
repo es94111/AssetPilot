@@ -1183,6 +1183,23 @@ export const ko = {
         },
       },
     },
+    offline: {
+      queued: "오프라인으로 저장되었습니다. 연결되면 자동으로 동기화됩니다.",
+      notice: "오프라인 상태입니다. 새 거래는 먼저 이 기기에 저장됩니다.",
+      pendingSync: "{count}건의 거래가 동기화 대기 중",
+      syncFailedToast: "{count}건의 거래 동기화에 실패했습니다. 재시도 또는 삭제를 선택하세요.",
+      itemFailed: "동기화 실패: {message}",
+      retry: "재시도",
+      discard: "삭제",
+      pageTitle: "오프라인 상태입니다",
+      pageBody: "이 기기에 네트워크 연결이 없습니다. 캐시된 페이지는 계속 열리고, 오프라인 거래는 다시 연결되면 자동으로 동기화됩니다.",
+      pageAction: "거래 내역으로 이동",
+    },
+    pwa: {
+      installTitle: "AssetPilot 설치",
+      installHint: "홈 화면에 추가하면 앱처럼 열리고 오프라인 입력도 지원합니다",
+      installAction: "설치",
+    },
   },
   notifications: {
     brand: "AssetPilot",

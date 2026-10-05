@@ -808,6 +808,14 @@ async function _runMigrations(db: DatabaseLike): Promise<void> {
   alterIgnore(
     "ALTER TABLE transactions ADD COLUMN repayment_summary_id TEXT DEFAULT ''",
   );
+  // 007-pwa-offline-entry：離線記帳的 idempotency key（線上建立恆為 ''）。
+  // 伺服器以 (user_id, client_ref) 唯一索引去重，離線佇列恢復連線後重送不會產生重複交易。
+  alterIgnore(
+    "ALTER TABLE transactions ADD COLUMN client_ref TEXT NOT NULL DEFAULT ''",
+  );
+  alterIgnore(
+    "CREATE UNIQUE INDEX IF NOT EXISTS idx_transactions_client_ref ON transactions(user_id, client_ref) WHERE client_ref != ''",
+  );
   alterIgnore(`UPDATE transactions SET ai_created = 1
     WHERE ai_created = 0 AND id IN (
       SELECT (metadata::jsonb->>'transaction_id')

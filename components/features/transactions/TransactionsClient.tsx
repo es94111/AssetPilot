@@ -2,10 +2,12 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { apiGet, apiPost, apiPut, apiDelete, notifyDataChanged } from '../../../lib/clientApi';
+import { apiGet, apiPost, apiPut, apiDelete, notifyDataChanged, isNetworkError } from '../../../lib/clientApi';
+import { enqueueOffline } from '../../../lib/clientOfflineQueue';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useT } from '@/components/i18n/I18nProvider';
+import { useToast } from '@/components/ui/Toast';
 import { localeTag } from '@/lib/i18n/localeTag';
 import { ArrowLeftRight, ArrowUpRight, CalendarDays, Image, Images, Pencil, Plus, RotateCcw, Search, SlidersHorizontal, Tags, Trash2, Undo2, X } from 'lucide-react';
 import { TRANSACTION_NOTE_MAX_LENGTH } from '@/lib/transactionEditRules';
@@ -103,6 +105,7 @@ function labelForType(type: string, t: (path: string) => string) {
 
 export default function TransactionsClient(_props: { user?: any } = {}) {
   const { t, locale } = useT();
+  const showToast = useToast();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -448,7 +451,18 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
           }
         }
       } else {
-        saved = await apiPost('/api/transactions', body);
+        try {
+          saved = await apiPost('/api/transactions', body);
+        } catch (networkError: any) {
+          if (!isNetworkError(networkError)) throw networkError;
+          // 離線（或連線中斷）：改存本機佇列，恢復連線後由 OfflineSyncStatus 自動送出。
+          enqueueOffline('transaction', body);
+          setModal(false);
+          setPage(1);
+          showToast(t('features.offline.queued'), 'info');
+          setSaving(false);
+          return;
+        }
         try {
           await uploadPhotos(saved.id);
         } catch (uploadError: any) {
@@ -496,7 +510,21 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
       await load(1);
       notifyDataChanged('transactions');
     } catch (e: any) {
-      setFormError(e.message);
+      if (isNetworkError(e)) {
+        // 離線：整筆轉帳（含配對兩腳）排入佇列，恢復連線後一次送出。
+        enqueueOffline('transfer', {
+          date: transferForm.date,
+          amount: Number(transferForm.amount),
+          fromAccountId: transferForm.fromAccountId,
+          toAccountId: transferForm.toAccountId,
+          note: transferForm.note,
+        });
+        setTransferModal(false);
+        setPage(1);
+        showToast(t('features.offline.queued'), 'info');
+      } else {
+        setFormError(e.message);
+      }
     }
     setSaving(false);
   }

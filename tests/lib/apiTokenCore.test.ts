@@ -13,6 +13,7 @@ import {
   RETRY_BASE_MS,
   RETRY_MAX_MS,
   WEBHOOK_SIGNATURE_TOLERANCE_SECONDS,
+  GCM_TAG_LENGTH,
   ApiTokenError,
   generateApiToken,
   hashApiToken,
@@ -163,6 +164,16 @@ test('decryptSecret 對錯誤主密鑰或竄改密文拋出錯誤（不可靜默
   const flipped = Buffer.from(data, 'base64');
   flipped[0] = flipped[0] ^ 0xff;
   assert.throws(() => decryptSecret(`${iv}.${tag}.${flipped.toString('base64')}`, MASTER));
+});
+
+test('decryptSecret 拒絕被截短的 GCM 認證標籤（避免偽造密文）', () => {
+  const encrypted = encryptSecret('secret-value', MASTER);
+  const [iv, tag, data] = encrypted.split('.');
+  const tagBytes = Buffer.from(tag, 'base64');
+  assert.equal(tagBytes.length, GCM_TAG_LENGTH);
+  // 只留前 8 bytes：若不驗證長度，Node 可能接受較短的標籤
+  const shortTag = tagBytes.subarray(0, 8).toString('base64');
+  assert.throws(() => decryptSecret(`${iv}.${shortTag}.${data}`, MASTER));
 });
 
 test('signWebhookPayload 產生 t／v1 格式簽章，且可被 verifyWebhookSignature 驗證', () => {

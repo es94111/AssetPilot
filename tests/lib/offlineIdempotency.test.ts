@@ -90,6 +90,12 @@ if (!DB_URL) {
       assert.equal(first.twdAmount, 200);
       assert.equal(second.twdAmount, 200, '去重回應需與新建形狀一致');
 
+      // inserted 旗標讓呼叫端能區分「真的新增」與「去重」，
+      // 據此避免重複發出 transaction.created 等外部事件（issue #258）。
+      assert.equal(first.inserted, true, '首次寫入應標記 inserted=true');
+      assert.equal(second.inserted, false, '去重回應應標記 inserted=false');
+      assert.equal(third.inserted, false);
+
       const rows = queryAll(
         'SELECT id FROM transactions WHERE user_id = ? AND client_ref = ?',
         [userId, clientRef],

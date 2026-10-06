@@ -1198,6 +1198,81 @@ async function _runMigrations(db: DatabaseLike): Promise<void> {
     "CREATE INDEX IF NOT EXISTS idx_transactions_repayment_summary ON transactions(repayment_summary_id) WHERE repayment_summary_id != ''",
   );
 
+  // 008-api-token-webhook：第三方自動化整合用的 API Token 與 Webhook 訂閱（issue #258）。
+  // Token 只存雜湊（token_hash，不可逆）；Webhook 簽章密鑰需於投遞時取回明文計算 HMAC，
+  // 故以 AES-256-GCM 加密後存於 secret_encrypted（見 lib/apiTokenCore.ts 的設計取捨）。
+  db.run(`CREATE TABLE IF NOT EXISTS api_tokens (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    name TEXT NOT NULL,
+    token_hash TEXT NOT NULL,
+    token_prefix TEXT NOT NULL DEFAULT '',
+    scopes TEXT NOT NULL DEFAULT '',
+    created_at INTEGER NOT NULL,
+    last_used_at INTEGER DEFAULT 0,
+    expires_at INTEGER DEFAULT 0,
+    revoked_at INTEGER DEFAULT 0
+  )`);
+  alterIgnore(
+    "CREATE INDEX IF NOT EXISTS idx_api_tokens_user ON api_tokens(user_id, revoked_at)",
+  );
+  alterIgnore(
+    "CREATE UNIQUE INDEX IF NOT EXISTS idx_api_tokens_hash ON api_tokens(token_hash)",
+  );
+  // 既有部署（早於本功能）不會有 token_prefix 欄位，於啟動時冪等補上。
+  alterIgnore(
+    "ALTER TABLE api_tokens ADD COLUMN token_prefix TEXT NOT NULL DEFAULT ''",
+  );
+
+  db.run(`CREATE TABLE IF NOT EXISTS webhook_subscriptions (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    url TEXT NOT NULL,
+    secret_encrypted TEXT NOT NULL,
+    secret_prefix TEXT NOT NULL DEFAULT '',
+    events TEXT NOT NULL DEFAULT '',
+    active INTEGER NOT NULL DEFAULT 1,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL,
+    last_success_at INTEGER DEFAULT 0,
+    last_failure_at INTEGER DEFAULT 0
+  )`);
+  alterIgnore(
+    "CREATE INDEX IF NOT EXISTS idx_webhook_subs_user ON webhook_subscriptions(user_id, active)",
+  );
+  alterIgnore(
+    "ALTER TABLE webhook_subscriptions ADD COLUMN secret_prefix TEXT NOT NULL DEFAULT ''",
+  );
+
+  // 投遞紀錄：保留每次嘗試的結果供使用者查詢（issue #258 驗收條件 4）。
+  // request_body／response_body 皆截斷儲存，避免無界成長。
+  db.run(`CREATE TABLE IF NOT EXISTS webhook_deliveries (
+    id TEXT PRIMARY KEY,
+    subscription_id TEXT NOT NULL,
+    user_id TEXT NOT NULL,
+    event_type TEXT NOT NULL,
+    payload TEXT NOT NULL,
+    status TEXT NOT NULL,
+    attempts INTEGER NOT NULL DEFAULT 0,
+    last_status_code INTEGER DEFAULT 0,
+    last_error TEXT DEFAULT '',
+    response_body TEXT DEFAULT '',
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL,
+    next_retry_at INTEGER DEFAULT 0,
+    delivered_at INTEGER DEFAULT 0
+  )`);
+  alterIgnore(
+    "CREATE INDEX IF NOT EXISTS idx_webhook_deliveries_sub ON webhook_deliveries(subscription_id, created_at)",
+  );
+  alterIgnore(
+    "CREATE INDEX IF NOT EXISTS idx_webhook_deliveries_user ON webhook_deliveries(user_id, created_at)",
+  );
+  // 重試掃描只找待重試且已到排程時間的列。
+  alterIgnore(
+    "CREATE INDEX IF NOT EXISTS idx_webhook_deliveries_pending ON webhook_deliveries(status, next_retry_at)",
+  );
+
   // REAL/DOUBLE PRECISION 會在 PostgreSQL 以 float4/float8 儲存金額，
   // 大額或多次換算可能產生不可逆的四捨五入。新表使用 NUMERIC；
   // 既有部署在此冪等轉型，保留資料值但避免後續再以二進位浮點儲存。

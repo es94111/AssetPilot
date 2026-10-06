@@ -32,6 +32,12 @@ export interface InsertIncomeExpenseResult {
   fxFee: number;
   feeId: string | null;
   updatedAt: number;
+  /**
+   * 本次呼叫是否真的 INSERT 了新列。離線重送以 client_ref 去重時為 false，
+   * 呼叫端據此避免重複發出「交易新增」等外部事件（issue #258 冪等性）。
+   * 既有欄位語意不變；新增欄位為向後相容的擴充。
+   */
+  inserted: boolean;
 }
 
 /**
@@ -45,6 +51,7 @@ export interface InsertIncomeExpenseResult {
 function findExistingByClientRef(
   userId: string,
   clientRef: string | undefined,
+  inserted = false,
 ): InsertIncomeExpenseResult | null {
   if (!clientRef) return null;
   const row = queryOne(
@@ -62,6 +69,7 @@ function findExistingByClientRef(
     fxFee: feeRow ? Number(feeRow.amount) || 0 : 0,
     feeId: feeRow ? String(feeRow.id) : null,
     updatedAt: Number(row.updated_at) || 0,
+    inserted,
   };
 }
 
@@ -83,7 +91,6 @@ export function insertIncomeExpenseTransaction(
   // 離線重送先去重：同一 client_ref 已寫入過就直接回傳既有列（冪等）。
   const existing = findExistingByClientRef(input.userId, input.clientRef);
   if (existing) return existing;
-
   const id = uid();
   const now = Date.now();
   const db = getDB();
@@ -144,7 +151,7 @@ export function insertIncomeExpenseTransaction(
       console.error("[transactionWriteCore] rollback failed", rollbackError);
     }
     // 併發競態（同一 client_ref 兩個請求同時通過前置檢查）：唯一索引讓後到者
-    // 失敗，此時改讀已寫入的列回傳，維持與新建相同的回應形狀。
+    // 失敗，此時改讀已寫入的列回傳，維持與新建相同的回應形狀（inserted=false 表示本次未新增）。
     const raced = findExistingByClientRef(input.userId, input.clientRef);
     if (raced) return raced;
     throw error;
@@ -157,6 +164,7 @@ export function insertIncomeExpenseTransaction(
     fxFee: input.fxFee,
     feeId,
     updatedAt: now,
+    inserted: true,
   };
 }
 

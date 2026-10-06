@@ -410,6 +410,30 @@ Docker 多數參數已有合理預設，只需關心「自動產生」與「功�
 
 > 正式環境啟用 MCP OAuth 前，務必將 `APP_URL` 設為對外 HTTPS origin。
 
+### API Token 與 Webhook（第三方自動化整合）
+
+除 MCP 之外，也提供通用 REST 整合介面，讓使用者自行串接自動化流程（issue #258）。
+
+- **API Token**：於 `POST /api/user/api-tokens` 建立，明文僅回傳一次，儲存時只留 SHA-256 雜湊；
+  逐 Token 的權限範圍（`transactions:read`／`transactions:write`／`webhooks:manage`），以
+  `Authorization: Bearer ap_api_…` 呼叫。每個帳號最多 20 組啟用中的 Token，可設定到期時間與撤銷。
+- **公開 REST 端點**：`GET /api/v1/transactions`（需 `transactions:read`）列出交易、
+  `POST /api/v1/transactions`（需 `transactions:write`）新增交易並觸發 `transaction.created` Webhook。
+  這組端點不使用 `authToken` Cookie，僅接受 Bearer 權杖；未帶／失效權杖回 401，缺少對應 scope 回 403。
+- **Webhook 訂閱**：於 `POST /api/user/webhooks` 訂閱 `transaction.created`／`transaction.updated`／
+  `transaction.deleted`。目標必須為公開 HTTPS 網址（拒絕 `http://`、loopback 與私網位址）。
+- **HMAC 簽章**：每次投遞帶 `X-AssetPilot-Signature: t=<unix 秒>,v1=<hex>`，簽章內容為
+  `${timestamp}.${rawBody}`（HMAC-SHA256，密鑰以 AES-256-GCM 加密後存於資料庫）；
+  接收端可比對時間戳（容忍 5 分鐘）抵抗重放。
+- **重試與紀錄**：失敗依指數退避重試（最多 5 次，30 秒起、上限 1 小時）；429／5xx 重試，
+  其餘 4xx 視為永久失敗。待投遞佇列會在每次已驗證的請求中順帶排空；
+  投遞紀錄可於 `GET /api/user/webhooks/deliveries` 查詢。
+- **稽核**：Token 與 Webhook 的建立／更新／刪除皆寫入稽核日誌（僅記錄識別碼與名稱，
+  絕不記錄 Token 明文或簽章密鑰）。
+
+> Webhook 簽章密鑰的加密主金鑰為 `API_TOKEN_ENCRYPTION_KEY`；未設定時首次啟動會自動產生
+> 並寫入 `.env`（比照 `JWT_SECRET`）。一旦有訂閱後請勿更換。
+
 ### 資料治理
 
 - **CSV 匯出**：交易／分類／股票交易／股利紀錄；純伺服器端 stream + UTF-8 BOM + Formula Injection 防護
@@ -476,6 +500,8 @@ Docker 多數參數已有合理預設，只需關心「自動產生」與「功�
 | 速率限制 | 登入／Passkey 端點每 IP 每 15 分鐘最多 20 次；公開頁面每分鐘最多 120 次 |
 | OAuth 防 CSRF | Google／LINE 使用一次性 state；LINE 額外 nonce 驗證 ID Token |
 | MCP OAuth 2.1 | PKCE S256、精確 redirect URI、short-lived token、refresh rotation、token 僅存 SHA-256 |
+| API Token | 明文僅回傳一次、僅存 SHA-256 雜湊、逐 Token scope、停用帳號立即失效 |
+| Webhook | 僅接受公開 HTTPS 目標（防 SSRF）、HMAC-SHA256 簽章附時間戳、密鑰 AES-256-GCM 加密儲存、指數退避重試 |
 | `?next=` 防護 | 相對路徑白名單、拒 protocol-relative、拒 `://`、pathname 必須命中前端 ROUTES 表 |
 | 路徑遊走偵測 | catch-all 偵測 `..`／`%2e%2e`／`%252e%252e`，寫稽核日誌 |
 | Formula Injection 防護 | CSV 匯出對以 `=` `+` `-` `@` 開頭欄位前置撇號 |

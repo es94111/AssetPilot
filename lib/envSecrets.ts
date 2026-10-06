@@ -55,6 +55,14 @@ export function ensureEnvSecrets(): void {
     process.env.JWT_SECRET = updates.JWT_SECRET;
   }
 
+  // Webhook 簽章密鑰以 AES-256-GCM 加密後存入資料庫（見 lib/apiTokenCore.ts）。
+  // 與 JWT_SECRET 相同，缺少時自動產生，讓自架部署無須額外設定即可使用 Webhook；
+  // 一旦有訂閱後就不可更換（更換後既有密鑰將無法解密）。
+  if (!process.env.API_TOKEN_ENCRYPTION_KEY) {
+    updates.API_TOKEN_ENCRYPTION_KEY = generateSecret(64);
+    process.env.API_TOKEN_ENCRYPTION_KEY = updates.API_TOKEN_ENCRYPTION_KEY;
+  }
+
   if (Object.keys(updates).length === 0) return;
 
   const dir = path.dirname(envPath);

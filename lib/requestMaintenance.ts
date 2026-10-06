@@ -5,7 +5,12 @@ const AUDIT_RETENTION_DAYS = 90;
 const AUDIT_PRUNE_BATCH_SIZE = 5_000;
 const AUDIT_PRUNE_COOLDOWN_MS = 24 * 60 * 60 * 1000;
 
+// Webhook 待投遞佇列的排空間隔。重試最快 30 秒後才到期，故每 15 秒掃描一次
+// 已足以在到期後立即投遞，同時避免每個請求都做一次全表掃描。
+const WEBHOOK_DRAIN_COOLDOWN_MS = 15 * 1000;
+
 let lastAuditPruneAt = 0;
+let lastWebhookDrainAt = 0;
 
 function pruneAuditTable(
   db: Pick<DatabaseLike, 'exec' | 'run'>,
@@ -72,4 +77,13 @@ export function triggerUserRequestMaintenance(userId: string, userTimezone: stri
   void import('./stockPriceUpdater')
     .then(({ checkAndRunStockPriceUpdateOnUserRequest }) => checkAndRunStockPriceUpdateOnUserRequest())
     .catch((error) => console.error('[stock-price-update] user-triggered import failed', error));
+
+  // Webhook 待投遞佇列的排空（issue #258）。原本僅在「本次請求剛好排入事件」時觸發，
+  // 導致重試永遠不會被後續請求拾起；改為已驗證請求順帶排空到期項目（含冷卻時間）。
+  if (now - lastWebhookDrainAt >= WEBHOOK_DRAIN_COOLDOWN_MS) {
+    lastWebhookDrainAt = now;
+    void import('./webhookHelpers')
+      .then(({ runDueWebhookDeliveries }) => runDueWebhookDeliveries(now))
+      .catch((error) => console.error('[webhook] user-triggered delivery drain failed', error));
+  }
 }

@@ -8,6 +8,7 @@ import { insertFeeTransaction } from '../../../../lib/overseasFee';
 import { listTransactionAttachments } from '../../../../lib/transactionAttachments';
 import { findTransactionEditBlock } from '../../../../lib/transactionEditRules';
 import { deleteTransactionCascade, isDisabledCreditCard } from '../../../../lib/transactionWriteCore';
+import { emitTransactionEvent } from '../../../../lib/transactionWebhooks';
 
 type RouteContext = { params: Promise<{ txId: string }> };
 interface Auth {
@@ -240,6 +241,16 @@ async function updateHandler(request: NextRequest, txId: string, auth: Auth) {
   }
 
   saveDB();
+  emitTransactionEvent(auth.userId, 'transaction.updated', {
+    id: txId,
+    type,
+    amount: twdAmountInt,
+    currency: converted.currency,
+    date,
+    account_id: accountId || null,
+    category_id: categoryId || null,
+    note: nextNote,
+  });
   return NextResponse.json({ ok: true, fxFee, updatedAt: nowMs });
 }
 
@@ -283,5 +294,15 @@ export async function DELETE(request: NextRequest, { params }: RouteContext) {
   }
 
   await deleteTransactionCascade(auth.userId, txId, tx.linked_id || '');
+  emitTransactionEvent(auth.userId, 'transaction.deleted', {
+    id: txId,
+    type: tx.type,
+    amount: Number(tx.amount) || 0,
+    currency: tx.currency || 'TWD',
+    date: tx.date || '',
+    account_id: tx.account_id || null,
+    category_id: tx.category_id || null,
+    note: tx.note || '',
+  });
   return NextResponse.json({ ok: true });
 }

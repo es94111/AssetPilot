@@ -7550,5 +7550,142 @@
     "placeholders": {
       "count": {}
     }
+  },
+  "navCalendar": "行事曆",
+  "@navCalendar": {
+    "description": "Web path: nav.calendar",
+    "x-webPath": "nav.calendar"
+  },
+  "featuresCalendarTitle": "行事曆",
+  "@featuresCalendarTitle": {
+    "description": "Web path: features.calendar.title",
+    "x-webPath": "features.calendar.title"
+  },
+  "featuresCalendarSubtitle": "查看交易、股利日期與固定收支排程",
+  "@featuresCalendarSubtitle": {
+    "description": "Web path: features.calendar.subtitle",
+    "x-webPath": "features.calendar.subtitle"
+  },
+  "featuresCalendarMonth": "月",
+  "@featuresCalendarMonth": {
+    "description": "Web path: features.calendar.month",
+    "x-webPath": "features.calendar.month"
+  },
+  "featuresCalendarWeek": "週",
+  "@featuresCalendarWeek": {
+    "description": "Web path: features.calendar.week",
+    "x-webPath": "features.calendar.week"
+  },
+  "featuresCalendarToday": "今天",
+  "@featuresCalendarToday": {
+    "description": "Web path: features.calendar.today",
+    "x-webPath": "features.calendar.today"
+  },
+  "featuresCalendarViewMode": "行事曆檢視模式",
+  "@featuresCalendarViewMode": {
+    "description": "Web path: features.calendar.viewMode",
+    "x-webPath": "features.calendar.viewMode"
+  },
+  "featuresCalendarPrevious": "上一個期間",
+  "@featuresCalendarPrevious": {
+    "description": "Web path: features.calendar.previous",
+    "x-webPath": "features.calendar.previous"
+  },
+  "featuresCalendarNext": "下一個期間",
+  "@featuresCalendarNext": {
+    "description": "Web path: features.calendar.next",
+    "x-webPath": "features.calendar.next"
+  },
+  "featuresCalendarLoadFailed": "行事曆資料載入失敗，請稍後重試。",
+  "@featuresCalendarLoadFailed": {
+    "description": "Web path: features.calendar.loadFailed",
+    "x-webPath": "features.calendar.loadFailed"
+  },
+  "featuresCalendarEventCount": "共 {count} 個項目",
+  "@featuresCalendarEventCount": {
+    "description": "Web path: features.calendar.eventCount",
+    "x-webPath": "features.calendar.eventCount",
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "featuresCalendarNoEvents": "當天沒有項目",
+  "@featuresCalendarNoEvents": {
+    "description": "Web path: features.calendar.noEvents",
+    "x-webPath": "features.calendar.noEvents"
+  },
+  "featuresCalendarAddTransaction": "新增當日交易",
+  "@featuresCalendarAddTransaction": {
+    "description": "Web path: features.calendar.addTransaction",
+    "x-webPath": "features.calendar.addTransaction"
+  },
+  "featuresCalendarTransactionCount": "{count} 筆交易",
+  "@featuresCalendarTransactionCount": {
+    "description": "Web path: features.calendar.transactionCount",
+    "x-webPath": "features.calendar.transactionCount",
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "featuresCalendarDividendCount": "{count} 筆股利",
+  "@featuresCalendarDividendCount": {
+    "description": "Web path: features.calendar.dividendCount",
+    "x-webPath": "features.calendar.dividendCount",
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "featuresCalendarRecurringCount": "{count} 筆排程",
+  "@featuresCalendarRecurringCount": {
+    "description": "Web path: features.calendar.recurringCount",
+    "x-webPath": "features.calendar.recurringCount",
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "featuresCalendarTransaction": "交易",
+  "@featuresCalendarTransaction": {
+    "description": "Web path: features.calendar.transaction",
+    "x-webPath": "features.calendar.transaction"
+  },
+  "featuresCalendarDividend": "股利",
+  "@featuresCalendarDividend": {
+    "description": "Web path: features.calendar.dividend",
+    "x-webPath": "features.calendar.dividend"
+  },
+  "featuresCalendarReadOnlySchedule": "固定收支（唯讀）",
+  "@featuresCalendarReadOnlySchedule": {
+    "description": "Web path: features.calendar.readOnlySchedule",
+    "x-webPath": "features.calendar.readOnlySchedule"
+  },
+  "featuresCalendarRecurringIncome": "預計收入",
+  "@featuresCalendarRecurringIncome": {
+    "description": "Web path: features.calendar.recurringIncome",
+    "x-webPath": "features.calendar.recurringIncome"
+  },
+  "featuresCalendarRecurringExpense": "預計支出",
+  "@featuresCalendarRecurringExpense": {
+    "description": "Web path: features.calendar.recurringExpense",
+    "x-webPath": "features.calendar.recurringExpense"
+  },
+  "featuresCalendarShares": "股",
+  "@featuresCalendarShares": {
+    "description": "Web path: features.calendar.shares",
+    "x-webPath": "features.calendar.shares"
+  },
+  "featuresCalendarEventTypesIncome": "收入",
+  "@featuresCalendarEventTypesIncome": {
+    "description": "Web path: features.calendar.eventTypes.income",
+    "x-webPath": "features.calendar.eventTypes.income"
+  },
+  "featuresCalendarEventTypesExpense": "支出",
+  "@featuresCalendarEventTypesExpense": {
+    "description": "Web path: features.calendar.eventTypes.expense",
+    "x-webPath": "features.calendar.eventTypes.expense"
+  },
+  "featuresCalendarEventTypesTransfer": "轉帳",
+  "@featuresCalendarEventTypesTransfer": {
+    "description": "Web path: features.calendar.eventTypes.transfer",
+    "x-webPath": "features.calendar.eventTypes.transfer"
   }
 }

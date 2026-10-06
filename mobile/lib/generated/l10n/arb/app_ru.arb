@@ -7535,5 +7535,142 @@
     "placeholders": {
       "count": {}
     }
+  },
+  "navCalendar": "Календарь",
+  "@navCalendar": {
+    "description": "Web path: nav.calendar",
+    "x-webPath": "nav.calendar"
+  },
+  "featuresCalendarTitle": "Календарь",
+  "@featuresCalendarTitle": {
+    "description": "Web path: features.calendar.title",
+    "x-webPath": "features.calendar.title"
+  },
+  "featuresCalendarSubtitle": "Просматривайте операции, даты дивидендов и регулярные платежи",
+  "@featuresCalendarSubtitle": {
+    "description": "Web path: features.calendar.subtitle",
+    "x-webPath": "features.calendar.subtitle"
+  },
+  "featuresCalendarMonth": "Месяц",
+  "@featuresCalendarMonth": {
+    "description": "Web path: features.calendar.month",
+    "x-webPath": "features.calendar.month"
+  },
+  "featuresCalendarWeek": "Неделя",
+  "@featuresCalendarWeek": {
+    "description": "Web path: features.calendar.week",
+    "x-webPath": "features.calendar.week"
+  },
+  "featuresCalendarToday": "Сегодня",
+  "@featuresCalendarToday": {
+    "description": "Web path: features.calendar.today",
+    "x-webPath": "features.calendar.today"
+  },
+  "featuresCalendarViewMode": "Режим просмотра календаря",
+  "@featuresCalendarViewMode": {
+    "description": "Web path: features.calendar.viewMode",
+    "x-webPath": "features.calendar.viewMode"
+  },
+  "featuresCalendarPrevious": "Предыдущий период",
+  "@featuresCalendarPrevious": {
+    "description": "Web path: features.calendar.previous",
+    "x-webPath": "features.calendar.previous"
+  },
+  "featuresCalendarNext": "Следующий период",
+  "@featuresCalendarNext": {
+    "description": "Web path: features.calendar.next",
+    "x-webPath": "features.calendar.next"
+  },
+  "featuresCalendarLoadFailed": "Не удалось загрузить календарь. Попробуйте ещё раз.",
+  "@featuresCalendarLoadFailed": {
+    "description": "Web path: features.calendar.loadFailed",
+    "x-webPath": "features.calendar.loadFailed"
+  },
+  "featuresCalendarEventCount": "{count} событий",
+  "@featuresCalendarEventCount": {
+    "description": "Web path: features.calendar.eventCount",
+    "x-webPath": "features.calendar.eventCount",
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "featuresCalendarNoEvents": "На этот день нет событий",
+  "@featuresCalendarNoEvents": {
+    "description": "Web path: features.calendar.noEvents",
+    "x-webPath": "features.calendar.noEvents"
+  },
+  "featuresCalendarAddTransaction": "Добавить операцию",
+  "@featuresCalendarAddTransaction": {
+    "description": "Web path: features.calendar.addTransaction",
+    "x-webPath": "features.calendar.addTransaction"
+  },
+  "featuresCalendarTransactionCount": "{count} операций",
+  "@featuresCalendarTransactionCount": {
+    "description": "Web path: features.calendar.transactionCount",
+    "x-webPath": "features.calendar.transactionCount",
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "featuresCalendarDividendCount": "{count} дивидендов",
+  "@featuresCalendarDividendCount": {
+    "description": "Web path: features.calendar.dividendCount",
+    "x-webPath": "features.calendar.dividendCount",
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "featuresCalendarRecurringCount": "{count} расписаний",
+  "@featuresCalendarRecurringCount": {
+    "description": "Web path: features.calendar.recurringCount",
+    "x-webPath": "features.calendar.recurringCount",
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "featuresCalendarTransaction": "Операция",
+  "@featuresCalendarTransaction": {
+    "description": "Web path: features.calendar.transaction",
+    "x-webPath": "features.calendar.transaction"
+  },
+  "featuresCalendarDividend": "Дивиденд",
+  "@featuresCalendarDividend": {
+    "description": "Web path: features.calendar.dividend",
+    "x-webPath": "features.calendar.dividend"
+  },
+  "featuresCalendarReadOnlySchedule": "Регулярное (только чтение)",
+  "@featuresCalendarReadOnlySchedule": {
+    "description": "Web path: features.calendar.readOnlySchedule",
+    "x-webPath": "features.calendar.readOnlySchedule"
+  },
+  "featuresCalendarRecurringIncome": "Запланированный доход",
+  "@featuresCalendarRecurringIncome": {
+    "description": "Web path: features.calendar.recurringIncome",
+    "x-webPath": "features.calendar.recurringIncome"
+  },
+  "featuresCalendarRecurringExpense": "Запланированный расход",
+  "@featuresCalendarRecurringExpense": {
+    "description": "Web path: features.calendar.recurringExpense",
+    "x-webPath": "features.calendar.recurringExpense"
+  },
+  "featuresCalendarShares": "акций",
+  "@featuresCalendarShares": {
+    "description": "Web path: features.calendar.shares",
+    "x-webPath": "features.calendar.shares"
+  },
+  "featuresCalendarEventTypesIncome": "Доход",
+  "@featuresCalendarEventTypesIncome": {
+    "description": "Web path: features.calendar.eventTypes.income",
+    "x-webPath": "features.calendar.eventTypes.income"
+  },
+  "featuresCalendarEventTypesExpense": "Расход",
+  "@featuresCalendarEventTypesExpense": {
+    "description": "Web path: features.calendar.eventTypes.expense",
+    "x-webPath": "features.calendar.eventTypes.expense"
+  },
+  "featuresCalendarEventTypesTransfer": "Перевод",
+  "@featuresCalendarEventTypesTransfer": {
+    "description": "Web path: features.calendar.eventTypes.transfer",
+    "x-webPath": "features.calendar.eventTypes.transfer"
   }
 }

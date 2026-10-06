@@ -2,12 +2,13 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ChartBar, LayoutDashboard, Receipt, Briefcase, User } from 'lucide-react';
+import { CalendarDays, ChartBar, LayoutDashboard, Receipt, Briefcase, User } from 'lucide-react';
 import { useT } from '@/components/i18n/I18nProvider';
 
 const MOBILE_NAV_ITEMS = [
   { path: '/dashboard', labelKey: 'nav.dashboard', icon: LayoutDashboard },
   { path: '/finance/transactions', labelKey: 'nav.transactions', icon: Receipt },
+  { path: '/finance/calendar', labelKey: 'nav.calendar', icon: CalendarDays },
   { path: '/finance/reports', labelKey: 'nav.reports', icon: ChartBar },
   { path: '/stocks/portfolio', labelKey: 'nav.stocksPortfolio', icon: Briefcase },
   { path: '/settings/account', labelKey: 'nav.account', icon: User },
@@ -20,7 +21,7 @@ export default function MobileNav() {
   return (
     <nav
       aria-label={t('shell.mainNav')}
-      className="app-mobile-nav fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t px-2 pb-[env(safe-area-inset-bottom)] lg:hidden"
+      className="app-mobile-nav fixed inset-x-0 bottom-0 z-30 grid grid-cols-6 border-t px-2 pb-[env(safe-area-inset-bottom)] lg:hidden"
       style={{
         background: 'var(--surface-glass)',
         borderColor: 'var(--glass-border)',

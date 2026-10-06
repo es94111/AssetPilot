@@ -13,6 +13,7 @@ export interface ServerUser {
   isAdmin: boolean;
   isSuperAdmin: boolean;
   themeMode: string;
+  timezone: string;
 }
 
 interface TokenPayload {
@@ -28,6 +29,7 @@ interface UserRow {
   is_admin: number | null;
   admin_role: string | null;
   theme_mode: string | null;
+  timezone: string | null;
   token_version: number | null;
 }
 
@@ -58,7 +60,7 @@ export async function requireServerAuth(returnTo?: string): Promise<ServerUser> 
     redirect(loginUrl);
   }
   const user = asUserRow(queryOne(
-    'SELECT id, email, display_name, is_admin, admin_role, theme_mode, token_version FROM users WHERE id = ?',
+    'SELECT id, email, display_name, is_admin, admin_role, theme_mode, timezone, token_version FROM users WHERE id = ?',
     [userId]
   ));
   if (!user) redirect(loginUrl);
@@ -71,6 +73,7 @@ export async function requireServerAuth(returnTo?: string): Promise<ServerUser> 
     isAdmin: !!user.is_admin,
     isSuperAdmin: !!user.is_admin && String(user.admin_role || 'super').toLowerCase() !== 'readonly',
     themeMode: user.theme_mode || 'system',
+    timezone: user.timezone || 'Asia/Taipei',
   };
 }
 

@@ -7535,5 +7535,142 @@
     "placeholders": {
       "count": {}
     }
+  },
+  "navCalendar": "캘린더",
+  "@navCalendar": {
+    "description": "Web path: nav.calendar",
+    "x-webPath": "nav.calendar"
+  },
+  "featuresCalendarTitle": "캘린더",
+  "@featuresCalendarTitle": {
+    "description": "Web path: features.calendar.title",
+    "x-webPath": "features.calendar.title"
+  },
+  "featuresCalendarSubtitle": "거래, 배당일 및 반복 일정을 확인하세요",
+  "@featuresCalendarSubtitle": {
+    "description": "Web path: features.calendar.subtitle",
+    "x-webPath": "features.calendar.subtitle"
+  },
+  "featuresCalendarMonth": "월",
+  "@featuresCalendarMonth": {
+    "description": "Web path: features.calendar.month",
+    "x-webPath": "features.calendar.month"
+  },
+  "featuresCalendarWeek": "주",
+  "@featuresCalendarWeek": {
+    "description": "Web path: features.calendar.week",
+    "x-webPath": "features.calendar.week"
+  },
+  "featuresCalendarToday": "오늘",
+  "@featuresCalendarToday": {
+    "description": "Web path: features.calendar.today",
+    "x-webPath": "features.calendar.today"
+  },
+  "featuresCalendarViewMode": "캘린더 보기 모드",
+  "@featuresCalendarViewMode": {
+    "description": "Web path: features.calendar.viewMode",
+    "x-webPath": "features.calendar.viewMode"
+  },
+  "featuresCalendarPrevious": "이전 기간",
+  "@featuresCalendarPrevious": {
+    "description": "Web path: features.calendar.previous",
+    "x-webPath": "features.calendar.previous"
+  },
+  "featuresCalendarNext": "다음 기간",
+  "@featuresCalendarNext": {
+    "description": "Web path: features.calendar.next",
+    "x-webPath": "features.calendar.next"
+  },
+  "featuresCalendarLoadFailed": "캘린더 데이터를 불러오지 못했습니다. 다시 시도해 주세요.",
+  "@featuresCalendarLoadFailed": {
+    "description": "Web path: features.calendar.loadFailed",
+    "x-webPath": "features.calendar.loadFailed"
+  },
+  "featuresCalendarEventCount": "항목 {count}개",
+  "@featuresCalendarEventCount": {
+    "description": "Web path: features.calendar.eventCount",
+    "x-webPath": "features.calendar.eventCount",
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "featuresCalendarNoEvents": "이 날짜에 일정이 없습니다",
+  "@featuresCalendarNoEvents": {
+    "description": "Web path: features.calendar.noEvents",
+    "x-webPath": "features.calendar.noEvents"
+  },
+  "featuresCalendarAddTransaction": "거래 추가",
+  "@featuresCalendarAddTransaction": {
+    "description": "Web path: features.calendar.addTransaction",
+    "x-webPath": "features.calendar.addTransaction"
+  },
+  "featuresCalendarTransactionCount": "거래 {count}건",
+  "@featuresCalendarTransactionCount": {
+    "description": "Web path: features.calendar.transactionCount",
+    "x-webPath": "features.calendar.transactionCount",
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "featuresCalendarDividendCount": "배당 {count}건",
+  "@featuresCalendarDividendCount": {
+    "description": "Web path: features.calendar.dividendCount",
+    "x-webPath": "features.calendar.dividendCount",
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "featuresCalendarRecurringCount": "반복 일정 {count}건",
+  "@featuresCalendarRecurringCount": {
+    "description": "Web path: features.calendar.recurringCount",
+    "x-webPath": "features.calendar.recurringCount",
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "featuresCalendarTransaction": "거래",
+  "@featuresCalendarTransaction": {
+    "description": "Web path: features.calendar.transaction",
+    "x-webPath": "features.calendar.transaction"
+  },
+  "featuresCalendarDividend": "배당",
+  "@featuresCalendarDividend": {
+    "description": "Web path: features.calendar.dividend",
+    "x-webPath": "features.calendar.dividend"
+  },
+  "featuresCalendarReadOnlySchedule": "반복 일정 (읽기 전용)",
+  "@featuresCalendarReadOnlySchedule": {
+    "description": "Web path: features.calendar.readOnlySchedule",
+    "x-webPath": "features.calendar.readOnlySchedule"
+  },
+  "featuresCalendarRecurringIncome": "예정 수입",
+  "@featuresCalendarRecurringIncome": {
+    "description": "Web path: features.calendar.recurringIncome",
+    "x-webPath": "features.calendar.recurringIncome"
+  },
+  "featuresCalendarRecurringExpense": "예정 지출",
+  "@featuresCalendarRecurringExpense": {
+    "description": "Web path: features.calendar.recurringExpense",
+    "x-webPath": "features.calendar.recurringExpense"
+  },
+  "featuresCalendarShares": "주",
+  "@featuresCalendarShares": {
+    "description": "Web path: features.calendar.shares",
+    "x-webPath": "features.calendar.shares"
+  },
+  "featuresCalendarEventTypesIncome": "수입",
+  "@featuresCalendarEventTypesIncome": {
+    "description": "Web path: features.calendar.eventTypes.income",
+    "x-webPath": "features.calendar.eventTypes.income"
+  },
+  "featuresCalendarEventTypesExpense": "지출",
+  "@featuresCalendarEventTypesExpense": {
+    "description": "Web path: features.calendar.eventTypes.expense",
+    "x-webPath": "features.calendar.eventTypes.expense"
+  },
+  "featuresCalendarEventTypesTransfer": "이체",
+  "@featuresCalendarEventTypesTransfer": {
+    "description": "Web path: features.calendar.eventTypes.transfer",
+    "x-webPath": "features.calendar.eventTypes.transfer"
   }
 }

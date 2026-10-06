@@ -7535,5 +7535,142 @@
     "placeholders": {
       "count": {}
     }
+  },
+  "navCalendar": "Calendrier",
+  "@navCalendar": {
+    "description": "Web path: nav.calendar",
+    "x-webPath": "nav.calendar"
+  },
+  "featuresCalendarTitle": "Calendrier",
+  "@featuresCalendarTitle": {
+    "description": "Web path: features.calendar.title",
+    "x-webPath": "features.calendar.title"
+  },
+  "featuresCalendarSubtitle": "Consultez les transactions, les dates de dividendes et les échéances récurrentes",
+  "@featuresCalendarSubtitle": {
+    "description": "Web path: features.calendar.subtitle",
+    "x-webPath": "features.calendar.subtitle"
+  },
+  "featuresCalendarMonth": "Mois",
+  "@featuresCalendarMonth": {
+    "description": "Web path: features.calendar.month",
+    "x-webPath": "features.calendar.month"
+  },
+  "featuresCalendarWeek": "Semaine",
+  "@featuresCalendarWeek": {
+    "description": "Web path: features.calendar.week",
+    "x-webPath": "features.calendar.week"
+  },
+  "featuresCalendarToday": "Aujourd’hui",
+  "@featuresCalendarToday": {
+    "description": "Web path: features.calendar.today",
+    "x-webPath": "features.calendar.today"
+  },
+  "featuresCalendarViewMode": "Mode d’affichage du calendrier",
+  "@featuresCalendarViewMode": {
+    "description": "Web path: features.calendar.viewMode",
+    "x-webPath": "features.calendar.viewMode"
+  },
+  "featuresCalendarPrevious": "Période précédente",
+  "@featuresCalendarPrevious": {
+    "description": "Web path: features.calendar.previous",
+    "x-webPath": "features.calendar.previous"
+  },
+  "featuresCalendarNext": "Période suivante",
+  "@featuresCalendarNext": {
+    "description": "Web path: features.calendar.next",
+    "x-webPath": "features.calendar.next"
+  },
+  "featuresCalendarLoadFailed": "Impossible de charger le calendrier. Veuillez réessayer.",
+  "@featuresCalendarLoadFailed": {
+    "description": "Web path: features.calendar.loadFailed",
+    "x-webPath": "features.calendar.loadFailed"
+  },
+  "featuresCalendarEventCount": "{count} événements",
+  "@featuresCalendarEventCount": {
+    "description": "Web path: features.calendar.eventCount",
+    "x-webPath": "features.calendar.eventCount",
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "featuresCalendarNoEvents": "Aucun événement ce jour-là",
+  "@featuresCalendarNoEvents": {
+    "description": "Web path: features.calendar.noEvents",
+    "x-webPath": "features.calendar.noEvents"
+  },
+  "featuresCalendarAddTransaction": "Ajouter une transaction",
+  "@featuresCalendarAddTransaction": {
+    "description": "Web path: features.calendar.addTransaction",
+    "x-webPath": "features.calendar.addTransaction"
+  },
+  "featuresCalendarTransactionCount": "{count} transactions",
+  "@featuresCalendarTransactionCount": {
+    "description": "Web path: features.calendar.transactionCount",
+    "x-webPath": "features.calendar.transactionCount",
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "featuresCalendarDividendCount": "{count} dividendes",
+  "@featuresCalendarDividendCount": {
+    "description": "Web path: features.calendar.dividendCount",
+    "x-webPath": "features.calendar.dividendCount",
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "featuresCalendarRecurringCount": "{count} échéances",
+  "@featuresCalendarRecurringCount": {
+    "description": "Web path: features.calendar.recurringCount",
+    "x-webPath": "features.calendar.recurringCount",
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "featuresCalendarTransaction": "Transaction",
+  "@featuresCalendarTransaction": {
+    "description": "Web path: features.calendar.transaction",
+    "x-webPath": "features.calendar.transaction"
+  },
+  "featuresCalendarDividend": "Dividende",
+  "@featuresCalendarDividend": {
+    "description": "Web path: features.calendar.dividend",
+    "x-webPath": "features.calendar.dividend"
+  },
+  "featuresCalendarReadOnlySchedule": "Récurrent (lecture seule)",
+  "@featuresCalendarReadOnlySchedule": {
+    "description": "Web path: features.calendar.readOnlySchedule",
+    "x-webPath": "features.calendar.readOnlySchedule"
+  },
+  "featuresCalendarRecurringIncome": "Revenu prévu",
+  "@featuresCalendarRecurringIncome": {
+    "description": "Web path: features.calendar.recurringIncome",
+    "x-webPath": "features.calendar.recurringIncome"
+  },
+  "featuresCalendarRecurringExpense": "Dépense prévue",
+  "@featuresCalendarRecurringExpense": {
+    "description": "Web path: features.calendar.recurringExpense",
+    "x-webPath": "features.calendar.recurringExpense"
+  },
+  "featuresCalendarShares": "actions",
+  "@featuresCalendarShares": {
+    "description": "Web path: features.calendar.shares",
+    "x-webPath": "features.calendar.shares"
+  },
+  "featuresCalendarEventTypesIncome": "Revenu",
+  "@featuresCalendarEventTypesIncome": {
+    "description": "Web path: features.calendar.eventTypes.income",
+    "x-webPath": "features.calendar.eventTypes.income"
+  },
+  "featuresCalendarEventTypesExpense": "Dépense",
+  "@featuresCalendarEventTypesExpense": {
+    "description": "Web path: features.calendar.eventTypes.expense",
+    "x-webPath": "features.calendar.eventTypes.expense"
+  },
+  "featuresCalendarEventTypesTransfer": "Virement",
+  "@featuresCalendarEventTypesTransfer": {
+    "description": "Web path: features.calendar.eventTypes.transfer",
+    "x-webPath": "features.calendar.eventTypes.transfer"
   }
 }

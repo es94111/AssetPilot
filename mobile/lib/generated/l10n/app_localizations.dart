@@ -8568,6 +8568,156 @@ abstract class AppLocalizations {
   /// In zh_Hant_TW, this message translates to:
   /// **'已離線儲存；已選 {count} 張照片不會上傳，恢復連線後可再補上'**
   String featuresOfflineQueuedPhotosSkipped(Object count);
+
+  /// Web path: nav.calendar
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'行事曆'**
+  String get navCalendar;
+
+  /// Web path: features.calendar.title
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'行事曆'**
+  String get featuresCalendarTitle;
+
+  /// Web path: features.calendar.subtitle
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'查看交易、股利日期與固定收支排程'**
+  String get featuresCalendarSubtitle;
+
+  /// Web path: features.calendar.month
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'月'**
+  String get featuresCalendarMonth;
+
+  /// Web path: features.calendar.week
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'週'**
+  String get featuresCalendarWeek;
+
+  /// Web path: features.calendar.today
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'今天'**
+  String get featuresCalendarToday;
+
+  /// Web path: features.calendar.viewMode
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'行事曆檢視模式'**
+  String get featuresCalendarViewMode;
+
+  /// Web path: features.calendar.previous
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'上一個期間'**
+  String get featuresCalendarPrevious;
+
+  /// Web path: features.calendar.next
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'下一個期間'**
+  String get featuresCalendarNext;
+
+  /// Web path: features.calendar.loadFailed
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'行事曆資料載入失敗，請稍後重試。'**
+  String get featuresCalendarLoadFailed;
+
+  /// Web path: features.calendar.eventCount
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'共 {count} 個項目'**
+  String featuresCalendarEventCount(Object count);
+
+  /// Web path: features.calendar.noEvents
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'當天沒有項目'**
+  String get featuresCalendarNoEvents;
+
+  /// Web path: features.calendar.addTransaction
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'新增當日交易'**
+  String get featuresCalendarAddTransaction;
+
+  /// Web path: features.calendar.transactionCount
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'{count} 筆交易'**
+  String featuresCalendarTransactionCount(Object count);
+
+  /// Web path: features.calendar.dividendCount
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'{count} 筆股利'**
+  String featuresCalendarDividendCount(Object count);
+
+  /// Web path: features.calendar.recurringCount
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'{count} 筆排程'**
+  String featuresCalendarRecurringCount(Object count);
+
+  /// Web path: features.calendar.transaction
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'交易'**
+  String get featuresCalendarTransaction;
+
+  /// Web path: features.calendar.dividend
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'股利'**
+  String get featuresCalendarDividend;
+
+  /// Web path: features.calendar.readOnlySchedule
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'固定收支（唯讀）'**
+  String get featuresCalendarReadOnlySchedule;
+
+  /// Web path: features.calendar.recurringIncome
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'預計收入'**
+  String get featuresCalendarRecurringIncome;
+
+  /// Web path: features.calendar.recurringExpense
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'預計支出'**
+  String get featuresCalendarRecurringExpense;
+
+  /// Web path: features.calendar.shares
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'股'**
+  String get featuresCalendarShares;
+
+  /// Web path: features.calendar.eventTypes.income
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'收入'**
+  String get featuresCalendarEventTypesIncome;
+
+  /// Web path: features.calendar.eventTypes.expense
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'支出'**
+  String get featuresCalendarEventTypesExpense;
+
+  /// Web path: features.calendar.eventTypes.transfer
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'轉帳'**
+  String get featuresCalendarEventTypesTransfer;
 }
 
 class _AppLocalizationsDelegate

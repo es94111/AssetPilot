@@ -14,6 +14,7 @@ const PAGE_TITLE_KEYS: Record<string, string> = {
   '/dashboard':            'nav.dashboard',
   '/finance/info-board':   'nav.infoBoard',
   '/finance/transactions': 'nav.transactions',
+  '/finance/calendar':     'nav.calendar',
   '/finance/reports':      'nav.reports',
   '/finance/budget':       'nav.budget',
   '/finance/accounts':     'nav.accounts',

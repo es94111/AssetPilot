@@ -4898,4 +4898,89 @@ class AppLocalizationsHi extends AppLocalizations {
   String featuresOfflineQueuedPhotosSkipped(Object count) {
     return 'ऑफ़लाइन सहेजा गया। चयनित $count फ़ोटो अपलोड नहीं होंगी; फिर से कनेक्ट होने पर दोबारा जोड़ें।';
   }
+
+  @override
+  String get navCalendar => 'कैलेंडर';
+
+  @override
+  String get featuresCalendarTitle => 'कैलेंडर';
+
+  @override
+  String get featuresCalendarSubtitle =>
+      'लेन-देन, लाभांश की तारीखें और आवर्ती अनुसूचियाँ देखें';
+
+  @override
+  String get featuresCalendarMonth => 'माह';
+
+  @override
+  String get featuresCalendarWeek => 'सप्ताह';
+
+  @override
+  String get featuresCalendarToday => 'आज';
+
+  @override
+  String get featuresCalendarViewMode => 'कैलेंडर दृश्य मोड';
+
+  @override
+  String get featuresCalendarPrevious => 'पिछली अवधि';
+
+  @override
+  String get featuresCalendarNext => 'अगली अवधि';
+
+  @override
+  String get featuresCalendarLoadFailed =>
+      'कैलेंडर डेटा लोड नहीं हो सका। कृपया फिर से प्रयास करें।';
+
+  @override
+  String featuresCalendarEventCount(Object count) {
+    return '$count इवेंट';
+  }
+
+  @override
+  String get featuresCalendarNoEvents => 'इस दिन कोई इवेंट नहीं है';
+
+  @override
+  String get featuresCalendarAddTransaction => 'लेन-देन जोड़ें';
+
+  @override
+  String featuresCalendarTransactionCount(Object count) {
+    return '$count लेन-देन';
+  }
+
+  @override
+  String featuresCalendarDividendCount(Object count) {
+    return '$count लाभांश';
+  }
+
+  @override
+  String featuresCalendarRecurringCount(Object count) {
+    return '$count अनुसूचियाँ';
+  }
+
+  @override
+  String get featuresCalendarTransaction => 'लेन-देन';
+
+  @override
+  String get featuresCalendarDividend => 'लाभांश';
+
+  @override
+  String get featuresCalendarReadOnlySchedule => 'आवर्ती (केवल-पढ़ने योग्य)';
+
+  @override
+  String get featuresCalendarRecurringIncome => 'अनुसूचित आय';
+
+  @override
+  String get featuresCalendarRecurringExpense => 'अनुसूचित खर्च';
+
+  @override
+  String get featuresCalendarShares => 'शेयर';
+
+  @override
+  String get featuresCalendarEventTypesIncome => 'आय';
+
+  @override
+  String get featuresCalendarEventTypesExpense => 'खर्च';
+
+  @override
+  String get featuresCalendarEventTypesTransfer => 'स्थानांतरण';
 }

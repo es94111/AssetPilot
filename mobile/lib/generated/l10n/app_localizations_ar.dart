@@ -4885,4 +4885,89 @@ class AppLocalizationsAr extends AppLocalizations {
   String featuresOfflineQueuedPhotosSkipped(Object count) {
     return 'تم الحفظ دون اتصال. لن يتم رفع $count صورة محددة؛ أضفها مرة أخرى بعد إعادة الاتصال.';
   }
+
+  @override
+  String get navCalendar => 'التقويم';
+
+  @override
+  String get featuresCalendarTitle => 'التقويم';
+
+  @override
+  String get featuresCalendarSubtitle =>
+      'اعرض المعاملات وتواريخ الأرباح وجداول التكرار';
+
+  @override
+  String get featuresCalendarMonth => 'شهر';
+
+  @override
+  String get featuresCalendarWeek => 'أسبوع';
+
+  @override
+  String get featuresCalendarToday => 'اليوم';
+
+  @override
+  String get featuresCalendarViewMode => 'وضع عرض التقويم';
+
+  @override
+  String get featuresCalendarPrevious => 'الفترة السابقة';
+
+  @override
+  String get featuresCalendarNext => 'الفترة التالية';
+
+  @override
+  String get featuresCalendarLoadFailed =>
+      'تعذر تحميل بيانات التقويم. يُرجى المحاولة مرة أخرى.';
+
+  @override
+  String featuresCalendarEventCount(Object count) {
+    return '$count أحداث';
+  }
+
+  @override
+  String get featuresCalendarNoEvents => 'لا توجد أحداث لهذا اليوم';
+
+  @override
+  String get featuresCalendarAddTransaction => 'إضافة معاملة';
+
+  @override
+  String featuresCalendarTransactionCount(Object count) {
+    return '$count معاملات';
+  }
+
+  @override
+  String featuresCalendarDividendCount(Object count) {
+    return '$count أرباح';
+  }
+
+  @override
+  String featuresCalendarRecurringCount(Object count) {
+    return '$count جداول';
+  }
+
+  @override
+  String get featuresCalendarTransaction => 'معاملة';
+
+  @override
+  String get featuresCalendarDividend => 'توزيعات أرباح';
+
+  @override
+  String get featuresCalendarReadOnlySchedule => 'متكرر (للقراءة فقط)';
+
+  @override
+  String get featuresCalendarRecurringIncome => 'دخل مجدول';
+
+  @override
+  String get featuresCalendarRecurringExpense => 'مصروف مجدول';
+
+  @override
+  String get featuresCalendarShares => 'أسهم';
+
+  @override
+  String get featuresCalendarEventTypesIncome => 'دخل';
+
+  @override
+  String get featuresCalendarEventTypesExpense => 'مصروف';
+
+  @override
+  String get featuresCalendarEventTypesTransfer => 'تحويل';
 }

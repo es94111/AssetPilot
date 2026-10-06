@@ -4963,6 +4963,91 @@ class AppLocalizationsPt extends AppLocalizations {
   String featuresOfflineQueuedPhotosSkipped(Object count) {
     return 'Salvo offline. As $count foto(s) selecionadas não serão enviadas; adicione novamente ao reconectar.';
   }
+
+  @override
+  String get navCalendar => 'Calendário';
+
+  @override
+  String get featuresCalendarTitle => 'Calendário';
+
+  @override
+  String get featuresCalendarSubtitle =>
+      'Veja transações, datas de dividendos e agendamentos recorrentes';
+
+  @override
+  String get featuresCalendarMonth => 'Mês';
+
+  @override
+  String get featuresCalendarWeek => 'Semana';
+
+  @override
+  String get featuresCalendarToday => 'Hoje';
+
+  @override
+  String get featuresCalendarViewMode => 'Modo de visualização do calendário';
+
+  @override
+  String get featuresCalendarPrevious => 'Período anterior';
+
+  @override
+  String get featuresCalendarNext => 'Próximo período';
+
+  @override
+  String get featuresCalendarLoadFailed =>
+      'Não foi possível carregar o calendário. Tente novamente.';
+
+  @override
+  String featuresCalendarEventCount(Object count) {
+    return '$count eventos';
+  }
+
+  @override
+  String get featuresCalendarNoEvents => 'Nenhum evento neste dia';
+
+  @override
+  String get featuresCalendarAddTransaction => 'Adicionar transação';
+
+  @override
+  String featuresCalendarTransactionCount(Object count) {
+    return '$count transações';
+  }
+
+  @override
+  String featuresCalendarDividendCount(Object count) {
+    return '$count dividendos';
+  }
+
+  @override
+  String featuresCalendarRecurringCount(Object count) {
+    return '$count agendamentos';
+  }
+
+  @override
+  String get featuresCalendarTransaction => 'Transação';
+
+  @override
+  String get featuresCalendarDividend => 'Dividendo';
+
+  @override
+  String get featuresCalendarReadOnlySchedule => 'Recorrente (somente leitura)';
+
+  @override
+  String get featuresCalendarRecurringIncome => 'Receita programada';
+
+  @override
+  String get featuresCalendarRecurringExpense => 'Despesa programada';
+
+  @override
+  String get featuresCalendarShares => 'ações';
+
+  @override
+  String get featuresCalendarEventTypesIncome => 'Receita';
+
+  @override
+  String get featuresCalendarEventTypesExpense => 'Despesa';
+
+  @override
+  String get featuresCalendarEventTypesTransfer => 'Transferência';
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -9915,4 +10000,89 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String featuresOfflineQueuedPhotosSkipped(Object count) {
     return 'Salvo offline. As $count foto(s) selecionadas não serão enviadas; adicione novamente ao reconectar.';
   }
+
+  @override
+  String get navCalendar => 'Calendário';
+
+  @override
+  String get featuresCalendarTitle => 'Calendário';
+
+  @override
+  String get featuresCalendarSubtitle =>
+      'Veja transações, datas de dividendos e agendamentos recorrentes';
+
+  @override
+  String get featuresCalendarMonth => 'Mês';
+
+  @override
+  String get featuresCalendarWeek => 'Semana';
+
+  @override
+  String get featuresCalendarToday => 'Hoje';
+
+  @override
+  String get featuresCalendarViewMode => 'Modo de visualização do calendário';
+
+  @override
+  String get featuresCalendarPrevious => 'Período anterior';
+
+  @override
+  String get featuresCalendarNext => 'Próximo período';
+
+  @override
+  String get featuresCalendarLoadFailed =>
+      'Não foi possível carregar o calendário. Tente novamente.';
+
+  @override
+  String featuresCalendarEventCount(Object count) {
+    return '$count eventos';
+  }
+
+  @override
+  String get featuresCalendarNoEvents => 'Nenhum evento neste dia';
+
+  @override
+  String get featuresCalendarAddTransaction => 'Adicionar transação';
+
+  @override
+  String featuresCalendarTransactionCount(Object count) {
+    return '$count transações';
+  }
+
+  @override
+  String featuresCalendarDividendCount(Object count) {
+    return '$count dividendos';
+  }
+
+  @override
+  String featuresCalendarRecurringCount(Object count) {
+    return '$count agendamentos';
+  }
+
+  @override
+  String get featuresCalendarTransaction => 'Transação';
+
+  @override
+  String get featuresCalendarDividend => 'Dividendo';
+
+  @override
+  String get featuresCalendarReadOnlySchedule => 'Recorrente (somente leitura)';
+
+  @override
+  String get featuresCalendarRecurringIncome => 'Receita programada';
+
+  @override
+  String get featuresCalendarRecurringExpense => 'Despesa programada';
+
+  @override
+  String get featuresCalendarShares => 'ações';
+
+  @override
+  String get featuresCalendarEventTypesIncome => 'Receita';
+
+  @override
+  String get featuresCalendarEventTypesExpense => 'Despesa';
+
+  @override
+  String get featuresCalendarEventTypesTransfer => 'Transferência';
 }

@@ -11,6 +11,7 @@ import { useToast } from '@/components/ui/Toast';
 import { localeTag } from '@/lib/i18n/localeTag';
 import { ArrowLeftRight, ArrowUpRight, CalendarDays, Image, Images, Pencil, Plus, RotateCcw, Search, SlidersHorizontal, Tags, Trash2, Undo2, X } from 'lucide-react';
 import { TRANSACTION_NOTE_MAX_LENGTH } from '@/lib/transactionEditRules';
+import { isCalendarIsoDate } from '@/lib/calendarDates';
 
 const EMPTY_FORM = { date: '', type: 'expense', amount: '', categoryId: '', accountId: '', note: '', excludeFromStats: false, currency: 'TWD', fxRate: '', fxFee: '' };
 const EMPTY_TRANSFER_FORM = { date: '', amount: '', fromAccountId: '', toAccountId: '', note: '' };
@@ -279,18 +280,24 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
       if (value) params.set(key, value);
     });
     const requestedAction = searchParams.get('action');
-    if (requestedAction) params.set('action', requestedAction);
+    if (requestedAction && (requestedAction !== 'add' || !quickCreateHandled)) {
+      params.set('action', requestedAction);
+      if (requestedAction === 'add') {
+        const requestedDate = searchParams.get('date');
+        if (requestedDate) params.set('date', requestedDate);
+      }
+    }
     const nextQuery = params.toString();
     if (nextQuery !== currentQuery) {
       router.replace(`${pathname}?${nextQuery}`, { scroll: false });
     }
-  }, [currentQuery, filters, page, pageSize, pathname, router]);
+  }, [currentQuery, filters, page, pageSize, pathname, quickCreateHandled, router, searchParams]);
 
-  function openAdd() {
+  function openAdd(dateOverride?: string) {
     const preferredAccount = accounts.find((account: any) => String(account.currency || 'TWD').toUpperCase() === defaultCurrency) || accounts[0];
     const defaultAccountId = preferredAccount?.id || '';
     const nextCurrency = String(preferredAccount?.currency || defaultCurrency || 'TWD').toUpperCase();
-    setForm({ ...EMPTY_FORM, date: today(), accountId: defaultAccountId, currency: nextCurrency, fxRate: '' });
+    setForm({ ...EMPTY_FORM, date: dateOverride && isCalendarIsoDate(dateOverride) ? dateOverride : today(), accountId: defaultAccountId, currency: nextCurrency, fxRate: '' });
     setEditId(null);
     setFxFeeEdited(false);
     setFormError('');
@@ -306,11 +313,8 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
   useEffect(() => {
     if (!metaLoaded || quickCreateHandled || searchParams.get('action') !== 'add') return;
     setQuickCreateHandled(true);
-    openAdd();
-    const params = new URLSearchParams(searchParams);
-    params.delete('action');
-    router.replace(params.size ? `${pathname}?${params.toString()}` : pathname, { scroll: false });
-  }, [currentQuery, metaLoaded, pathname, quickCreateHandled, router, searchParams]);
+    openAdd(searchParams.get('date') || undefined);
+  }, [currentQuery, metaLoaded, pathname, quickCreateHandled, searchParams]);
 
   const fetchFxRate = useCallback(async (currency: string) => {
     const normalizedCurrency = String(currency || '').toUpperCase();
@@ -798,7 +802,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
           <SlidersHorizontal size={18} aria-hidden="true" />
           {t('mobileLegacy.filter')}{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
         </Button>
-        <Button type="button" className="hidden min-h-11 gap-2 md:inline-flex" onClick={openAdd}>
+        <Button type="button" className="hidden min-h-11 gap-2 md:inline-flex" onClick={() => openAdd()}>
           <Plus size={18} aria-hidden="true" /> {t('features.transactions.add')}
         </Button>
       </div>
@@ -1053,7 +1057,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
       )}
 
       {selected.size === 0 && (
-        <Button type="button" className="fixed bottom-[calc(4.5rem+0.75rem+env(safe-area-inset-bottom))] end-4 z-30 min-h-12 rounded-full px-5 shadow-lg md:hidden" onClick={openAdd}>
+        <Button type="button" className="fixed bottom-[calc(4.5rem+0.75rem+env(safe-area-inset-bottom))] end-4 z-30 min-h-12 rounded-full px-5 shadow-lg md:hidden" onClick={() => openAdd()}>
           <Plus size={19} aria-hidden="true" /> {t('features.transactions.add')}
         </Button>
       )}

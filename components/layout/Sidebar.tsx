@@ -4,7 +4,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import {
-  LayoutDashboard, Receipt, ChartBar, Wallet, Building2, Tags, Repeat,
+  LayoutDashboard, Receipt, ChartBar, Wallet, Building2, Tags, Repeat, CalendarDays,
   Briefcase, Key, User, Shield, Database, LogOut, TrendingUp, Coins,
   BarChart3, Settings2, Sun, Moon, Monitor, Info, TableProperties,
   X, Plug, Bot, PanelLeftClose, PanelLeftOpen,
@@ -23,6 +23,7 @@ const NAV_SECTIONS = [
       { path: '/dashboard',            labelKey: 'nav.dashboard',          icon: LayoutDashboard },
       { path: '/finance/info-board',   labelKey: 'nav.infoBoard',         icon: TableProperties },
       { path: '/finance/transactions', labelKey: 'nav.transactions',       icon: Receipt },
+      { path: '/finance/calendar',     labelKey: 'nav.calendar',           icon: CalendarDays },
       { path: '/finance/reports',      labelKey: 'nav.reports',            icon: ChartBar },
       { path: '/finance/budget',       labelKey: 'nav.budget',             icon: Wallet },
       { path: '/finance/accounts',     labelKey: 'nav.accounts',           icon: Building2 },

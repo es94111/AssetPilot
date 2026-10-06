@@ -4994,4 +4994,89 @@ class AppLocalizationsFr extends AppLocalizations {
   String featuresOfflineQueuedPhotosSkipped(Object count) {
     return 'Enregistré hors ligne. Les $count photo(s) sélectionnée(s) ne seront pas envoyées ; ajoutez-les à nouveau après reconnexion.';
   }
+
+  @override
+  String get navCalendar => 'Calendrier';
+
+  @override
+  String get featuresCalendarTitle => 'Calendrier';
+
+  @override
+  String get featuresCalendarSubtitle =>
+      'Consultez les transactions, les dates de dividendes et les échéances récurrentes';
+
+  @override
+  String get featuresCalendarMonth => 'Mois';
+
+  @override
+  String get featuresCalendarWeek => 'Semaine';
+
+  @override
+  String get featuresCalendarToday => 'Aujourd’hui';
+
+  @override
+  String get featuresCalendarViewMode => 'Mode d’affichage du calendrier';
+
+  @override
+  String get featuresCalendarPrevious => 'Période précédente';
+
+  @override
+  String get featuresCalendarNext => 'Période suivante';
+
+  @override
+  String get featuresCalendarLoadFailed =>
+      'Impossible de charger le calendrier. Veuillez réessayer.';
+
+  @override
+  String featuresCalendarEventCount(Object count) {
+    return '$count événements';
+  }
+
+  @override
+  String get featuresCalendarNoEvents => 'Aucun événement ce jour-là';
+
+  @override
+  String get featuresCalendarAddTransaction => 'Ajouter une transaction';
+
+  @override
+  String featuresCalendarTransactionCount(Object count) {
+    return '$count transactions';
+  }
+
+  @override
+  String featuresCalendarDividendCount(Object count) {
+    return '$count dividendes';
+  }
+
+  @override
+  String featuresCalendarRecurringCount(Object count) {
+    return '$count échéances';
+  }
+
+  @override
+  String get featuresCalendarTransaction => 'Transaction';
+
+  @override
+  String get featuresCalendarDividend => 'Dividende';
+
+  @override
+  String get featuresCalendarReadOnlySchedule => 'Récurrent (lecture seule)';
+
+  @override
+  String get featuresCalendarRecurringIncome => 'Revenu prévu';
+
+  @override
+  String get featuresCalendarRecurringExpense => 'Dépense prévue';
+
+  @override
+  String get featuresCalendarShares => 'actions';
+
+  @override
+  String get featuresCalendarEventTypesIncome => 'Revenu';
+
+  @override
+  String get featuresCalendarEventTypesExpense => 'Dépense';
+
+  @override
+  String get featuresCalendarEventTypesTransfer => 'Virement';
 }

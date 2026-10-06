@@ -4963,4 +4963,89 @@ class AppLocalizationsRu extends AppLocalizations {
   String featuresOfflineQueuedPhotosSkipped(Object count) {
     return 'Сохранено офлайн. Выбранные фото ($count) не будут загружены; добавьте их снова после подключения.';
   }
+
+  @override
+  String get navCalendar => 'Календарь';
+
+  @override
+  String get featuresCalendarTitle => 'Календарь';
+
+  @override
+  String get featuresCalendarSubtitle =>
+      'Просматривайте операции, даты дивидендов и регулярные платежи';
+
+  @override
+  String get featuresCalendarMonth => 'Месяц';
+
+  @override
+  String get featuresCalendarWeek => 'Неделя';
+
+  @override
+  String get featuresCalendarToday => 'Сегодня';
+
+  @override
+  String get featuresCalendarViewMode => 'Режим просмотра календаря';
+
+  @override
+  String get featuresCalendarPrevious => 'Предыдущий период';
+
+  @override
+  String get featuresCalendarNext => 'Следующий период';
+
+  @override
+  String get featuresCalendarLoadFailed =>
+      'Не удалось загрузить календарь. Попробуйте ещё раз.';
+
+  @override
+  String featuresCalendarEventCount(Object count) {
+    return '$count событий';
+  }
+
+  @override
+  String get featuresCalendarNoEvents => 'На этот день нет событий';
+
+  @override
+  String get featuresCalendarAddTransaction => 'Добавить операцию';
+
+  @override
+  String featuresCalendarTransactionCount(Object count) {
+    return '$count операций';
+  }
+
+  @override
+  String featuresCalendarDividendCount(Object count) {
+    return '$count дивидендов';
+  }
+
+  @override
+  String featuresCalendarRecurringCount(Object count) {
+    return '$count расписаний';
+  }
+
+  @override
+  String get featuresCalendarTransaction => 'Операция';
+
+  @override
+  String get featuresCalendarDividend => 'Дивиденд';
+
+  @override
+  String get featuresCalendarReadOnlySchedule => 'Регулярное (только чтение)';
+
+  @override
+  String get featuresCalendarRecurringIncome => 'Запланированный доход';
+
+  @override
+  String get featuresCalendarRecurringExpense => 'Запланированный расход';
+
+  @override
+  String get featuresCalendarShares => 'акций';
+
+  @override
+  String get featuresCalendarEventTypesIncome => 'Доход';
+
+  @override
+  String get featuresCalendarEventTypesExpense => 'Расход';
+
+  @override
+  String get featuresCalendarEventTypesTransfer => 'Перевод';
 }

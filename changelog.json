@@ -1,6 +1,18 @@
 {
-  "currentVersion": "4.116.0",
+  "currentVersion": "4.116.1",
   "releases": [
+    {
+      "version": "4.116.1",
+      "date": "2026-10-06",
+      "title": "修補 Webhook 簽章密鑰的 GCM 標籤長度",
+      "type": "fixed",
+      "changes": [
+        {
+          "tag": "security",
+          "text": "Webhook 簽章密鑰的 AES-256-GCM 解密明確指定認證標籤長度並驗證長度，避免 Node 接受被截短的標籤而遭偽造密文或還原隱式金鑰（Semgrep gcm-no-tag-length）。"
+        }
+      ]
+    },
     {
       "version": "4.116.0",
       "date": "2026-10-06",

@@ -289,10 +289,14 @@ export function deriveEncryptionKey(masterSecret: string): Buffer {
   return crypto.createHash('sha256').update(masterSecret).digest();
 }
 
+// GCM 認證標籤長度（bytes）。加解密兩端都必須明確指定，
+// 否則 Node 可能接受被截短的標籤，導致密文偽造（見 Semgrep gcm-no-tag-length）。
+export const GCM_TAG_LENGTH = 16;
+
 export function encryptSecret(plaintext: string, masterSecret: string): string {
   const key = deriveEncryptionKey(masterSecret);
   const iv = crypto.randomBytes(12);
-  const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
+  const cipher = crypto.createCipheriv('aes-256-gcm', key, iv, { authTagLength: GCM_TAG_LENGTH });
   const ciphertext = Buffer.concat([cipher.update(plaintext, 'utf8'), cipher.final()]);
   const tag = cipher.getAuthTag();
   return `${iv.toString('base64')}.${tag.toString('base64')}.${ciphertext.toString('base64')}`;
@@ -303,8 +307,12 @@ export function decryptSecret(payload: string, masterSecret: string): string {
   if (parts.length !== 3) throw new Error('Webhook 簽章密鑰格式無效');
   const [ivB64, tagB64, dataB64] = parts;
   const key = deriveEncryptionKey(masterSecret);
-  const decipher = crypto.createDecipheriv('aes-256-gcm', key, Buffer.from(ivB64, 'base64'));
-  decipher.setAuthTag(Buffer.from(tagB64, 'base64'));
+  const tag = Buffer.from(tagB64, 'base64');
+  // 明確傳入 authTagLength 並驗證長度：若不指定，Node 可能接受較短的 tag，
+  // 讓攻擊者偽造密文或還原 GCM 隱式金鑰（Semgrep gcm-no-tag-length）。
+  if (tag.length !== GCM_TAG_LENGTH) throw new Error('Webhook 簽章密鑰格式無效');
+  const decipher = crypto.createDecipheriv('aes-256-gcm', key, Buffer.from(ivB64, 'base64'), { authTagLength: GCM_TAG_LENGTH });
+  decipher.setAuthTag(tag);
   return Buffer.concat([
     decipher.update(Buffer.from(dataB64, 'base64')),
     decipher.final(),

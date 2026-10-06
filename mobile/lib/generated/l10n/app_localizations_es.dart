@@ -5394,4 +5394,8 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get settingsApiIntegrationCloseConfirm =>
       'He copiado la clave, cerrar';
+
+  @override
+  String get settingsApiIntegrationCopyFailed =>
+      'No se pudo copiar — puede que el copiado automático esté bloqueado; selecciona el valor de arriba y cópialo manualmente';
 }

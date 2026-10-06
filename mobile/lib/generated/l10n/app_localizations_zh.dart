@@ -5052,6 +5052,10 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get settingsApiIntegrationCloseConfirm => '我已複製，關閉視窗';
+
+  @override
+  String get settingsApiIntegrationCopyFailed =>
+      '複製失敗（此環境可能不允許自動複製），請手動選取上方內容複製';
 }
 
 /// The translations for Chinese, as used in China, using the Han script (`zh_Hans_CN`).
@@ -10097,6 +10101,10 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
 
   @override
   String get settingsApiIntegrationCloseConfirm => '我已复制，关闭窗口';
+
+  @override
+  String get settingsApiIntegrationCopyFailed =>
+      '复制失败（此环境可能不允许自动复制），请手动选取上方内容复制';
 }
 
 /// The translations for Chinese, as used in Taiwan, using the Han script (`zh_Hant_TW`).
@@ -15146,4 +15154,8 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
 
   @override
   String get settingsApiIntegrationCloseConfirm => '我已複製，關閉視窗';
+
+  @override
+  String get settingsApiIntegrationCopyFailed =>
+      '複製失敗（此環境可能不允許自動複製），請手動選取上方內容複製';
 }

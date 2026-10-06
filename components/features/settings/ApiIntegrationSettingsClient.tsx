@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { apiGet, apiPost, apiPatch, apiDelete } from '@/lib/clientApi';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/Input';
@@ -101,6 +101,7 @@ export default function ApiIntegrationSettingsClient() {
   const [tokenError, setTokenError] = useState('');
   const [newToken, setNewToken] = useState('');
   const [tokenCopied, setTokenCopied] = useState(false);
+  const [tokenCopyError, setTokenCopyError] = useState('');
 
   const [subscriptions, setSubscriptions] = useState<WebhookSubscription[]>([]);
   const [subscriptionsLoading, setSubscriptionsLoading] = useState(true);
@@ -116,11 +117,13 @@ export default function ApiIntegrationSettingsClient() {
 
   const [newSecret, setNewSecret] = useState('');
   const [secretCopied, setSecretCopied] = useState(false);
+  const [secretCopyError, setSecretCopyError] = useState('');
 
   const [deliveries, setDeliveries] = useState<WebhookDelivery[]>([]);
   const [deliveriesLoading, setDeliveriesLoading] = useState(true);
   const [deliveriesMsg, setDeliveriesMsg] = useState('');
   const [deliveryFilter, setDeliveryFilter] = useState('');
+  const deliveryRequestSeq = useRef(0);
 
   const loadTokens = useCallback(async () => {
     setTokensLoading(true);
@@ -149,16 +152,23 @@ export default function ApiIntegrationSettingsClient() {
   }, []);
 
   const loadDeliveries = useCallback(async (subscriptionId: string) => {
+    // 依序認領請求：切換篩選時可能有多次載入同時進行，只讓最後一次的結果生效，
+    // 避免較慢的舊回應覆蓋新篩選的結果（畫面顯示的訂閱與 Select 不一致）。
+    deliveryRequestSeq.current += 1;
+    const seq = deliveryRequestSeq.current;
     setDeliveriesLoading(true);
     try {
       const query = subscriptionId ? `?subscriptionId=${encodeURIComponent(subscriptionId)}` : '';
       const res = await apiGet(`/api/user/webhooks/deliveries${query}`);
+      if (seq !== deliveryRequestSeq.current) return;
       setDeliveries(res.deliveries || []);
       setDeliveriesMsg('');
     } catch (e: any) {
+      if (seq !== deliveryRequestSeq.current) return;
       setDeliveriesMsg(e.message || ta('loadDeliveriesFailed'));
+    } finally {
+      if (seq === deliveryRequestSeq.current) setDeliveriesLoading(false);
     }
-    setDeliveriesLoading(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -166,11 +176,25 @@ export default function ApiIntegrationSettingsClient() {
   useEffect(() => { loadSubscriptions(); }, [loadSubscriptions]);
   useEffect(() => { loadDeliveries(''); }, [loadDeliveries]);
 
-  async function copyToClipboard(value: string, onDone: () => void) {
+  /**
+   * 複製到剪貼簿，並在真的寫入成功後才回報成功。
+   *
+   * 不可用 finally 回報成功：非安全脈絡（自架常見的 http://<區網 IP>:3000）下
+   * navigator.clipboard 不存在，寫入會失敗；若仍標記為「已複製」，使用者就能在
+   * 沒有實際複製到的情況下關閉一次性視窗，Token 明文與簽章密鑰將永久遺失
+   * （後端只存雜湊／密文，且 secret 僅在建立時回傳一次）。
+   * 因此改為只在成功時設定 copied，失敗時顯示錯誤並保持關閉鈕停用。
+   */
+  async function copyToClipboard(
+    value: string,
+    onSuccess: () => void,
+    onFailure: (message: string) => void,
+  ) {
     try {
       await navigator.clipboard.writeText(value);
-    } finally {
-      onDone();
+      onSuccess();
+    } catch (e: any) {
+      onFailure(e?.message || ta('copyFailed'));
     }
   }
 
@@ -191,6 +215,7 @@ export default function ApiIntegrationSettingsClient() {
       const res = await apiPost('/api/user/api-tokens', body);
       setNewToken(res.secret || '');
       setTokenCopied(false);
+      setTokenCopyError('');
       setTokenName('');
       setTokenExpiresAt('');
       setTokenScopes(defaultApiTokenScopes());
@@ -226,6 +251,7 @@ export default function ApiIntegrationSettingsClient() {
       const res = await apiPost('/api/user/webhooks', { url: trimmed, events: webhookEvents });
       setNewSecret(res.secret || '');
       setSecretCopied(false);
+      setSecretCopyError('');
       setWebhookUrl('');
       setWebhookEvents(defaultWebhookEvents());
       await loadSubscriptions();
@@ -700,9 +726,13 @@ export default function ApiIntegrationSettingsClient() {
         <div className="space-y-4">
           <p className="text-sm text-amber-600">{ta('tokenModalWarning')}</p>
           <code className={CODE_CLASS}>{newToken}</code>
-          <Button variant="outline" onClick={() => copyToClipboard(newToken, () => setTokenCopied(true))}>
+          <Button
+            variant="outline"
+            onClick={() => copyToClipboard(newToken, () => setTokenCopied(true), setTokenCopyError)}
+          >
             {tokenCopied ? t('common.copied') : t('common.copy')}
           </Button>
+          {tokenCopyError && <p role="alert" className="text-sm text-red-500">{tokenCopyError}</p>}
           <div className="flex justify-end pt-2">
             <Button onClick={() => setNewToken('')} disabled={!tokenCopied}>
               {ta('closeConfirm')}
@@ -719,9 +749,13 @@ export default function ApiIntegrationSettingsClient() {
         <div className="space-y-4">
           <p className="text-sm text-amber-600">{ta('webhookSecretModalWarning')}</p>
           <code className={CODE_CLASS}>{newSecret}</code>
-          <Button variant="outline" onClick={() => copyToClipboard(newSecret, () => setSecretCopied(true))}>
+          <Button
+            variant="outline"
+            onClick={() => copyToClipboard(newSecret, () => setSecretCopied(true), setSecretCopyError)}
+          >
             {secretCopied ? t('common.copied') : t('common.copy')}
           </Button>
+          {secretCopyError && <p role="alert" className="text-sm text-red-500">{secretCopyError}</p>}
           <div>
             <p className="mb-1 block text-sm font-medium text-slate-600 dark:text-slate-300">
               {ta('webhookSignatureHeaderLabel')}

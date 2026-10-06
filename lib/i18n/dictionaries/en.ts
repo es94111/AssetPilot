@@ -401,6 +401,7 @@ export const en = {
       urlRequired: "Enter the target URL",
       eventRequired: "Select at least one event type",
       closeConfirm: "I've copied it, close",
+      copyFailed: "Copy failed — automatic copying may be blocked here, so select and copy the value above manually",
     },
   },
   dashboard: {

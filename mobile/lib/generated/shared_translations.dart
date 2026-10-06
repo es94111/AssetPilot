@@ -1325,6 +1325,7 @@ const kSharedSourceToKey = <String, String>{
   '刪除 Webhook 訂閱失敗': 'settingsApiIntegrationDeleteWebhookFailed',
   '請輸入目標網址': 'settingsApiIntegrationUrlRequired',
   '請至少勾選一個事件類型': 'settingsApiIntegrationEventRequired',
+  '複製失敗（此環境可能不允許自動複製），請手動選取上方內容複製': 'settingsApiIntegrationCopyFailed',
 };
 const kSharedTranslations = <String, Map<String, String>>{
   'zh-TW': <String, String>{
@@ -2844,6 +2845,7 @@ const kSharedTranslations = <String, Map<String, String>>{
     'settingsApiIntegrationUrlRequired': '請輸入目標網址',
     'settingsApiIntegrationEventRequired': '請至少勾選一個事件類型',
     'settingsApiIntegrationCloseConfirm': '我已複製，關閉視窗',
+    'settingsApiIntegrationCopyFailed': '複製失敗（此環境可能不允許自動複製），請手動選取上方內容複製',
   },
   'zh-CN': <String, String>{
     'commonSave': '保存',
@@ -4362,6 +4364,7 @@ const kSharedTranslations = <String, Map<String, String>>{
     'settingsApiIntegrationUrlRequired': '请输入目标网址',
     'settingsApiIntegrationEventRequired': '请至少勾选一个事件类型',
     'settingsApiIntegrationCloseConfirm': '我已复制，关闭窗口',
+    'settingsApiIntegrationCopyFailed': '复制失败（此环境可能不允许自动复制），请手动选取上方内容复制',
   },
   'en': <String, String>{
     'commonSave': 'Save',
@@ -5880,6 +5883,7 @@ const kSharedTranslations = <String, Map<String, String>>{
     'settingsApiIntegrationUrlRequired': 'Enter the target URL',
     'settingsApiIntegrationEventRequired': 'Select at least one event type',
     'settingsApiIntegrationCloseConfirm': 'I\'ve copied it, close',
+    'settingsApiIntegrationCopyFailed': 'Copy failed — automatic copying may be blocked here, so select and copy the value above manually',
   },
   'es': <String, String>{
     'commonSave': 'Guardar',
@@ -7398,6 +7402,7 @@ const kSharedTranslations = <String, Map<String, String>>{
     'settingsApiIntegrationUrlRequired': 'Introduce la URL de destino',
     'settingsApiIntegrationEventRequired': 'Selecciona al menos un tipo de evento',
     'settingsApiIntegrationCloseConfirm': 'He copiado la clave, cerrar',
+    'settingsApiIntegrationCopyFailed': 'No se pudo copiar — puede que el copiado automático esté bloqueado; selecciona el valor de arriba y cópialo manualmente',
   },
   'ar': <String, String>{
     'commonSave': 'حفظ',
@@ -8916,6 +8921,7 @@ const kSharedTranslations = <String, Map<String, String>>{
     'settingsApiIntegrationUrlRequired': 'أدخل عنوان الهدف',
     'settingsApiIntegrationEventRequired': 'اختر نوع حدث واحدًا على الأقل',
     'settingsApiIntegrationCloseConfirm': 'لقد نسخت المفتاح، إغلاق',
+    'settingsApiIntegrationCopyFailed': 'فشل النسخ — قد يكون النسخ التلقائي محظورًا؛ حدّد القيمة أعلاه وانسخها يدويًا',
   },
   'fr': <String, String>{
     'commonSave': 'Enregistrer',
@@ -10434,6 +10440,7 @@ const kSharedTranslations = <String, Map<String, String>>{
     'settingsApiIntegrationUrlRequired': 'Saisissez l\'URL cible',
     'settingsApiIntegrationEventRequired': 'Sélectionnez au moins un type d\'événement',
     'settingsApiIntegrationCloseConfirm': 'J\'ai copié la clé, fermer',
+    'settingsApiIntegrationCopyFailed': 'Échec de la copie — la copie automatique est peut-être bloquée ; sélectionnez la valeur ci-dessus et copiez-la manuellement',
   },
   'hi': <String, String>{
     'commonSave': 'सेव करें',
@@ -11952,6 +11959,7 @@ const kSharedTranslations = <String, Map<String, String>>{
     'settingsApiIntegrationUrlRequired': 'लक्ष्य URL दर्ज करें',
     'settingsApiIntegrationEventRequired': 'कम से कम एक इवेंट प्रकार चुनें',
     'settingsApiIntegrationCloseConfirm': 'मैंने कॉपी कर लिया, बंद करें',
+    'settingsApiIntegrationCopyFailed': 'कॉपी नहीं हो सका — यहाँ स्वतः कॉपी अवरुद्ध हो सकती है; ऊपर दिया मान चुनकर मैन्युअल रूप से कॉपी करें',
   },
   'pt-BR': <String, String>{
     'commonSave': 'Salvar',
@@ -13470,6 +13478,7 @@ const kSharedTranslations = <String, Map<String, String>>{
     'settingsApiIntegrationUrlRequired': 'Informe a URL de destino',
     'settingsApiIntegrationEventRequired': 'Selecione ao menos um tipo de evento',
     'settingsApiIntegrationCloseConfirm': 'Já copiei, fechar',
+    'settingsApiIntegrationCopyFailed': 'Falha ao copiar — a cópia automática pode estar bloqueada; selecione o valor acima e copie manualmente',
   },
   'ru': <String, String>{
     'commonSave': 'Сохранить',
@@ -14988,6 +14997,7 @@ const kSharedTranslations = <String, Map<String, String>>{
     'settingsApiIntegrationUrlRequired': 'Введите целевой URL',
     'settingsApiIntegrationEventRequired': 'Выберите хотя бы один тип события',
     'settingsApiIntegrationCloseConfirm': 'Я скопировал, закрыть',
+    'settingsApiIntegrationCopyFailed': 'Не удалось скопировать — автоматическое копирование может быть заблокировано; выделите значение выше и скопируйте вручную',
   },
   'ko': <String, String>{
     'commonSave': '저장',
@@ -16506,6 +16516,7 @@ const kSharedTranslations = <String, Map<String, String>>{
     'settingsApiIntegrationUrlRequired': '대상 URL을 입력하세요',
     'settingsApiIntegrationEventRequired': '이벤트 유형을 하나 이상 선택하세요',
     'settingsApiIntegrationCloseConfirm': '복사했습니다, 닫기',
+    'settingsApiIntegrationCopyFailed': '복사하지 못했습니다. 자동 복사가 차단된 환경일 수 있으니 위 값을 선택해 직접 복사하세요',
   },
 };
 

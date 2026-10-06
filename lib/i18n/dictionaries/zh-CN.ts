@@ -401,6 +401,7 @@ export const zhCN = {
       urlRequired: "请输入目标网址",
       eventRequired: "请至少勾选一个事件类型",
       closeConfirm: "我已复制，关闭窗口",
+      copyFailed: "复制失败（此环境可能不允许自动复制），请手动选取上方内容复制",
     },
   },
   dashboard: {

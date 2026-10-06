@@ -401,6 +401,7 @@ export const ptBR = {
       urlRequired: "Informe a URL de destino",
       eventRequired: "Selecione ao menos um tipo de evento",
       closeConfirm: "Já copiei, fechar",
+      copyFailed: "Falha ao copiar — a cópia automática pode estar bloqueada; selecione o valor acima e copie manualmente",
     },
   },
   dashboard: {

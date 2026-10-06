@@ -5295,4 +5295,8 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsApiIntegrationCloseConfirm => 'I\'ve copied it, close';
+
+  @override
+  String get settingsApiIntegrationCopyFailed =>
+      'Copy failed — automatic copying may be blocked here, so select and copy the value above manually';
 }

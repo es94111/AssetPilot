@@ -399,6 +399,7 @@ export const zhTW = {
       urlRequired: "請輸入目標網址",
       eventRequired: "請至少勾選一個事件類型",
       closeConfirm: "我已複製，關閉視窗",
+      copyFailed: "複製失敗（此環境可能不允許自動複製），請手動選取上方內容複製",
     },
   },
   dashboard: {

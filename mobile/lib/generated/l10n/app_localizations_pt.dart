@@ -5360,6 +5360,10 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get settingsApiIntegrationCloseConfirm => 'Já copiei, fechar';
+
+  @override
+  String get settingsApiIntegrationCopyFailed =>
+      'Falha ao copiar — a cópia automática pode estar bloqueada; selecione o valor acima e copie manualmente';
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -10708,4 +10712,8 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get settingsApiIntegrationCloseConfirm => 'Já copiei, fechar';
+
+  @override
+  String get settingsApiIntegrationCopyFailed =>
+      'Falha ao copiar — a cópia automática pode estar bloqueada; selecione o valor acima e copie manualmente';
 }

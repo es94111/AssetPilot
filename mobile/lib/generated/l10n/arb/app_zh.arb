@@ -8152,5 +8152,10 @@
   "@settingsApiIntegrationCloseConfirm": {
     "description": "Web path: settings.apiIntegration.closeConfirm",
     "x-webPath": "settings.apiIntegration.closeConfirm"
+  },
+  "settingsApiIntegrationCopyFailed": "複製失敗（此環境可能不允許自動複製），請手動選取上方內容複製",
+  "@settingsApiIntegrationCopyFailed": {
+    "description": "Web path: settings.apiIntegration.copyFailed",
+    "x-webPath": "settings.apiIntegration.copyFailed"
   }
 }

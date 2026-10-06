@@ -88,8 +88,24 @@ test('toggleOption 切換勾選並固定回傳 canonical 順序', () => {
     toggleOption(['transactions:write'], 'transactions:read', all),
     ['transactions:read', 'transactions:write'],
   );
-  // 重複加入不會產生重複項
+  // 已存在的值再切換一次是「移除」，不是重複加入
   assert.deepEqual(toggleOption(['webhooks:manage'], 'webhooks:manage', all), []);
+  // 帶有重複項的輸入經 Set 去重後，再切換一次仍為移除
+  assert.deepEqual(
+    toggleOption(['transactions:read', 'transactions:read'], 'transactions:read', all),
+    [],
+  );
+});
+
+test('toggleOption 的輸出不含重複項且只保留已知值', () => {
+  // all 本身即為已知值清單，重複輸入經去重後不會產生重複輸出
+  const result = toggleOption(
+    ['transactions:read', 'transactions:read', 'transactions:write'],
+    'webhooks:manage',
+    SCOPES,
+  );
+  assert.deepEqual(result, ['transactions:read', 'transactions:write', 'webhooks:manage']);
+  assert.equal(new Set(result).size, result.length);
 });
 
 test('toggleOption 不修改傳入的陣列', () => {

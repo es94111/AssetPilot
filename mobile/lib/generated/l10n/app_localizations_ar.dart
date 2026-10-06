@@ -5271,4 +5271,8 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get settingsApiIntegrationCloseConfirm => 'لقد نسخت المفتاح، إغلاق';
+
+  @override
+  String get settingsApiIntegrationCopyFailed =>
+      'فشل النسخ — قد يكون النسخ التلقائي محظورًا؛ حدّد القيمة أعلاه وانسخها يدويًا';
 }

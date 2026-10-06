@@ -5393,4 +5393,8 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get settingsApiIntegrationCloseConfirm => 'J\'ai copié la clé, fermer';
+
+  @override
+  String get settingsApiIntegrationCopyFailed =>
+      'Échec de la copie — la copie automatique est peut-être bloquée ; sélectionnez la valeur ci-dessus et copiez-la manuellement';
 }

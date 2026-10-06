@@ -8137,5 +8137,10 @@
   "@settingsApiIntegrationCloseConfirm": {
     "description": "Web path: settings.apiIntegration.closeConfirm",
     "x-webPath": "settings.apiIntegration.closeConfirm"
+  },
+  "settingsApiIntegrationCopyFailed": "복사하지 못했습니다. 자동 복사가 차단된 환경일 수 있으니 위 값을 선택해 직접 복사하세요",
+  "@settingsApiIntegrationCopyFailed": {
+    "description": "Web path: settings.apiIntegration.copyFailed",
+    "x-webPath": "settings.apiIntegration.copyFailed"
   }
 }

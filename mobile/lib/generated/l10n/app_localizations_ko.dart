@@ -5125,4 +5125,8 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get settingsApiIntegrationCloseConfirm => '복사했습니다, 닫기';
+
+  @override
+  String get settingsApiIntegrationCopyFailed =>
+      '복사하지 못했습니다. 자동 복사가 차단된 환경일 수 있으니 위 값을 선택해 직접 복사하세요';
 }

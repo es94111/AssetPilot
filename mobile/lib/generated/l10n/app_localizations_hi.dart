@@ -5292,4 +5292,8 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get settingsApiIntegrationCloseConfirm =>
       'मैंने कॉपी कर लिया, बंद करें';
+
+  @override
+  String get settingsApiIntegrationCopyFailed =>
+      'कॉपी नहीं हो सका — यहाँ स्वतः कॉपी अवरुद्ध हो सकती है; ऊपर दिया मान चुनकर मैन्युअल रूप से कॉपी करें';
 }

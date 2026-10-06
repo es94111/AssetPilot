@@ -401,6 +401,7 @@ export const es = {
       urlRequired: "Introduce la URL de destino",
       eventRequired: "Selecciona al menos un tipo de evento",
       closeConfirm: "He copiado la clave, cerrar",
+      copyFailed: "No se pudo copiar — puede que el copiado automático esté bloqueado; selecciona el valor de arriba y cópialo manualmente",
     },
   },
   dashboard: {

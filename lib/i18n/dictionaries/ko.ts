@@ -401,6 +401,7 @@ export const ko = {
       urlRequired: "대상 URL을 입력하세요",
       eventRequired: "이벤트 유형을 하나 이상 선택하세요",
       closeConfirm: "복사했습니다, 닫기",
+      copyFailed: "복사하지 못했습니다. 자동 복사가 차단된 환경일 수 있으니 위 값을 선택해 직접 복사하세요",
     },
   },
   dashboard: {

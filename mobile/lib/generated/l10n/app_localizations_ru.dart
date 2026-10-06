@@ -5357,4 +5357,8 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get settingsApiIntegrationCloseConfirm => 'Я скопировал, закрыть';
+
+  @override
+  String get settingsApiIntegrationCopyFailed =>
+      'Не удалось скопировать — автоматическое копирование может быть заблокировано; выделите значение выше и скопируйте вручную';
 }

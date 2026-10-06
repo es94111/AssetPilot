@@ -401,6 +401,7 @@ export const fr = {
       urlRequired: "Saisissez l'URL cible",
       eventRequired: "Sélectionnez au moins un type d'événement",
       closeConfirm: "J'ai copié la clé, fermer",
+      copyFailed: "Échec de la copie — la copie automatique est peut-être bloquée ; sélectionnez la valeur ci-dessus et copiez-la manuellement",
     },
   },
   dashboard: {

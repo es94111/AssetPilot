@@ -1,6 +1,22 @@
 {
-  "currentVersion": "4.115.1",
+  "currentVersion": "4.116.0",
   "releases": [
+    {
+      "version": "4.116.0",
+      "date": "2026-10-06",
+      "title": "API Token 與 Webhook 第三方自動化整合",
+      "type": "new",
+      "changes": [
+        {
+          "tag": "new",
+          "text": "新增 API Token 與 Webhook，讓使用者可自行串接自動化流程：權杖可設定逐 Token 的權限範圍（讀取交易／新增交易／管理 Webhook），明文僅顯示一次並以 SHA-256 雜湊儲存，可隨時撤銷。"
+        },
+        {
+          "tag": "new",
+          "text": "Webhook 可訂閱交易新增、修改與刪除事件，每次投遞附 HMAC-SHA256 簽章（含時間戳，可抵抗重放），並提供投遞紀錄查詢；失敗依指數退避自動重試。#258、#274"
+        }
+      ]
+    },
     {
       "version": "4.115.1",
       "date": "2026-10-06",

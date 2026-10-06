@@ -57,18 +57,22 @@ Secure cookie，故 `context.addCookies()` 注入已登入 session 的作法不�
 
 截圖比對需要與執行環境（OS／字型／GPU 算繪）完全一致的基準圖，在本機或
 非 CI 環境產生的 PNG 套用到 GitHub Actions ubuntu runner 幾乎必定會因 1px
-級的算繪差異而失敗。因此本次 PR **不包含** `*-snapshots/` 基準圖。
+級的算繪差異而失敗。`tests/e2e/visual.test.ts-snapshots/` 內的基準圖皆是
+透過 `.github/workflows/e2e.yml` 的 `workflow_dispatch` →
+`update-visual-snapshots` job（在與正式 CI 相同的 ubuntu runner 上）產生，
+再下載 artifact 人工檢視後提交，確保與 `e2e` job 的比對環境一致。
 
-首次啟用後，請由維護者：
+畫面有調整、基準圖需要更新時，請由維護者重複同樣流程：
 
 1. 到 Actions 頁面手動觸發 `.github/workflows/e2e.yml` 的
    `workflow_dispatch`（會額外執行 `update-visual-snapshots` job）。
 2. 下載該次執行產生的 `visual-snapshots` artifact。
-3. 人工檢視每張截圖無異狀後，解壓到對應的
-   `tests/e2e/*-snapshots/` 目錄並提交。
-4. 之後 `e2e` job 的 `visual.test.ts` 才會開始實際比對差異；畫面有調整時，
-   重新跑一次同樣流程更新基準圖即可（或本機執行
-   `npm run test:e2e:update-snapshots`）。
+3. 人工檢視每張截圖無異狀後，覆蓋到對應的
+   `tests/e2e/visual.test.ts-snapshots/` 目錄並提交。
+
+本機也可以執行 `npm run test:e2e:update-snapshots` 更新基準圖，但產出的
+檔名會帶本機平台（例如 `-darwin.png`），不會覆蓋 CI 用的 `-linux.png`
+基準圖，僅適合本機除錯比對，不要提交。
 
 ## CI
 

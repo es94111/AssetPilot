@@ -5,13 +5,11 @@
 // 儀表板的 hero 淨額卡片，資料由固定金額的測試交易產生，排除時間戳記等
 // 動態區塊），降低 flaky 的機率。
 //
-// 基準圖（*-snapshots/）刻意不在本次 PR 內建立：Playwright 的截圖比對
-// 需要與執行環境完全一致的字型/算繪結果，在本機（非 CI runner）產生的
-// 基準圖套用到 GitHub Actions ubuntu runner 幾乎必定失敗。請於合併後，
-// 由維護者於 `.github/workflows/e2e.yml` 的
-// "Update visual snapshots"（workflow_dispatch）手動觸發一次，
-// 下載產生的 snapshot artifact 並提交，後續 CI 才會開始比對差異。
-// 詳見 tests/e2e/README.md。
+// 基準圖（tests/e2e/visual.test.ts-snapshots/*-linux.png）透過
+// `.github/workflows/e2e.yml` 的 "Update visual snapshots"
+// （workflow_dispatch）在與正式 CI 相同的 ubuntu runner 上產生、人工檢視
+// 後提交，確保與比對環境一致。畫面調整後如何重新產生基準圖，詳見
+// tests/e2e/README.md。
 import { test, expect } from './support/fixtures';
 import { createE2ETransaction } from './support/testUser';
 import { forceTheme, type ThemeMode } from './support/theme';

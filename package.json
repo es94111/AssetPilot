@@ -41,6 +41,11 @@
     "test:offline-client": "node --experimental-transform-types --import ./tests/setup/register.mjs tests/lib/offlineClientQueue.test.ts",
     "test:offline-idempotency": "node --experimental-transform-types --import ./tests/setup/register.mjs tests/lib/offlineIdempotency.test.ts",
     "test": "npm run test:tz && npm run test:calendar && npm run test:photo-crypto && npm run test:info-board && npm run test:dashboard-insights && npm run test:dashboard-preferences && npm run test:dashboard-forecast && npm run test:mcp-auth && npm run test:mcp-oauth && npm run test:mcp-descriptors && npm run test:stock-helpers && npm run test:us-stock && npm run test:stock-history && npm run test:dashboard-helpers && npm run test:transaction-write-core && npm run test:mcp-create-transaction && npm run test:transaction-edit-rules && npm run test:mcp-update-note && npm run test:repayment-allocation && npm run test:db-migrations && npm run test:transactions-manual-edit && npm run test:credit-card-repayment && npm run test:mcp-credit-card-repayment && npm run test:line-record && npm run test:line-messaging && npm run test:transaction-restore && npm run test:api-token-core && npm run test:api-token-webhook && npm run test:api-integration-ui && npm run test:offline-queue && npm run test:client-api-offline && npm run test:offline-client && npm run test:offline-idempotency && npm run check:iso && npm run check:i18n",
+    "test:e2e": "playwright test",
+    "test:e2e:update-snapshots": "playwright test --update-snapshots",
+    "test:e2e:ui": "playwright test --ui",
+    "test:a11y": "playwright test tests/e2e/accessibility.test.ts",
+    "test:visual": "playwright test tests/e2e/visual.test.ts",
     "i18n:generate": "node tools/generate-shared-i18n.mjs && cd mobile && flutter gen-l10n",
     "check:iso": "node tools/check-iso-utc-format.ts",
     "check:contrast": "node tools/check-contrast.mjs",
@@ -85,6 +90,8 @@
     "proxy-addr": "^2.0.8"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
+    "@playwright/test": "^1.56.0",
     "@types/node": "^26.5.1",
     "@types/pg": "^8.23.1",
     "@types/react": "^19.3.0",

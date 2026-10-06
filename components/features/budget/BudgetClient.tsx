@@ -87,9 +87,11 @@ export default function BudgetClient(_props: { user?: any } = {}) {
     <div className="space-y-6">
       <h2 className="text-2xl font-bold">{t('features.budget.title')}</h2>
       <div className="flex items-center gap-4 justify-center">
-        <Button variant="ghost" size="icon" onClick={() => changeMonth(-1)}><ChevronLeft /></Button>
+        {/* 純圖示按鈕需要 aria-label 才有可讀名稱（issue #264 無障礙檢測抓到的
+            critical 違規：button-name）。沿用儀表板月份切換已有的翻譯字串。 */}
+        <Button variant="ghost" size="icon" aria-label={t('dashboard.filters.previousMonth')} onClick={() => changeMonth(-1)}><ChevronLeft /></Button>
         <span className="font-semibold">{formatMonthLabel(month, locale, t)}</span>
-        <Button variant="ghost" size="icon" onClick={() => changeMonth(1)}><ChevronRight /></Button>
+        <Button variant="ghost" size="icon" aria-label={t('dashboard.filters.nextMonth')} onClick={() => changeMonth(1)}><ChevronRight /></Button>
       </div>
 
       {budgets.length > 0 && (

@@ -28,6 +28,8 @@ build/cache/*
 .vscode/
 specs/
 test-results/
+playwright-report/
+blob-report/
 docs/*
 !docs/screenshots/
 !docs/marketing-screenshots/

@@ -4901,4 +4901,89 @@ class AppLocalizationsEn extends AppLocalizations {
   String featuresOfflineQueuedPhotosSkipped(Object count) {
     return 'Saved offline. The $count selected photo(s) will not upload; add them again after reconnecting.';
   }
+
+  @override
+  String get navCalendar => 'Calendar';
+
+  @override
+  String get featuresCalendarTitle => 'Calendar';
+
+  @override
+  String get featuresCalendarSubtitle =>
+      'View transactions, dividend dates, and recurring schedules';
+
+  @override
+  String get featuresCalendarMonth => 'Month';
+
+  @override
+  String get featuresCalendarWeek => 'Week';
+
+  @override
+  String get featuresCalendarToday => 'Today';
+
+  @override
+  String get featuresCalendarViewMode => 'Calendar view mode';
+
+  @override
+  String get featuresCalendarPrevious => 'Previous period';
+
+  @override
+  String get featuresCalendarNext => 'Next period';
+
+  @override
+  String get featuresCalendarLoadFailed =>
+      'Could not load calendar data. Please try again.';
+
+  @override
+  String featuresCalendarEventCount(Object count) {
+    return '$count events';
+  }
+
+  @override
+  String get featuresCalendarNoEvents => 'No events for this day';
+
+  @override
+  String get featuresCalendarAddTransaction => 'Add transaction';
+
+  @override
+  String featuresCalendarTransactionCount(Object count) {
+    return '$count transactions';
+  }
+
+  @override
+  String featuresCalendarDividendCount(Object count) {
+    return '$count dividends';
+  }
+
+  @override
+  String featuresCalendarRecurringCount(Object count) {
+    return '$count schedules';
+  }
+
+  @override
+  String get featuresCalendarTransaction => 'Transaction';
+
+  @override
+  String get featuresCalendarDividend => 'Dividend';
+
+  @override
+  String get featuresCalendarReadOnlySchedule => 'Recurring (read-only)';
+
+  @override
+  String get featuresCalendarRecurringIncome => 'Scheduled income';
+
+  @override
+  String get featuresCalendarRecurringExpense => 'Scheduled expense';
+
+  @override
+  String get featuresCalendarShares => 'shares';
+
+  @override
+  String get featuresCalendarEventTypesIncome => 'Income';
+
+  @override
+  String get featuresCalendarEventTypesExpense => 'Expense';
+
+  @override
+  String get featuresCalendarEventTypesTransfer => 'Transfer';
 }

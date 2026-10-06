@@ -4751,4 +4751,87 @@ class AppLocalizationsKo extends AppLocalizations {
   String featuresOfflineQueuedPhotosSkipped(Object count) {
     return '오프라인으로 저장되었습니다. 선택한 사진 $count장은 업로드되지 않으니 연결 후 다시 추가하세요.';
   }
+
+  @override
+  String get navCalendar => '캘린더';
+
+  @override
+  String get featuresCalendarTitle => '캘린더';
+
+  @override
+  String get featuresCalendarSubtitle => '거래, 배당일 및 반복 일정을 확인하세요';
+
+  @override
+  String get featuresCalendarMonth => '월';
+
+  @override
+  String get featuresCalendarWeek => '주';
+
+  @override
+  String get featuresCalendarToday => '오늘';
+
+  @override
+  String get featuresCalendarViewMode => '캘린더 보기 모드';
+
+  @override
+  String get featuresCalendarPrevious => '이전 기간';
+
+  @override
+  String get featuresCalendarNext => '다음 기간';
+
+  @override
+  String get featuresCalendarLoadFailed => '캘린더 데이터를 불러오지 못했습니다. 다시 시도해 주세요.';
+
+  @override
+  String featuresCalendarEventCount(Object count) {
+    return '항목 $count개';
+  }
+
+  @override
+  String get featuresCalendarNoEvents => '이 날짜에 일정이 없습니다';
+
+  @override
+  String get featuresCalendarAddTransaction => '거래 추가';
+
+  @override
+  String featuresCalendarTransactionCount(Object count) {
+    return '거래 $count건';
+  }
+
+  @override
+  String featuresCalendarDividendCount(Object count) {
+    return '배당 $count건';
+  }
+
+  @override
+  String featuresCalendarRecurringCount(Object count) {
+    return '반복 일정 $count건';
+  }
+
+  @override
+  String get featuresCalendarTransaction => '거래';
+
+  @override
+  String get featuresCalendarDividend => '배당';
+
+  @override
+  String get featuresCalendarReadOnlySchedule => '반복 일정 (읽기 전용)';
+
+  @override
+  String get featuresCalendarRecurringIncome => '예정 수입';
+
+  @override
+  String get featuresCalendarRecurringExpense => '예정 지출';
+
+  @override
+  String get featuresCalendarShares => '주';
+
+  @override
+  String get featuresCalendarEventTypesIncome => '수입';
+
+  @override
+  String get featuresCalendarEventTypesExpense => '지출';
+
+  @override
+  String get featuresCalendarEventTypesTransfer => '이체';
 }

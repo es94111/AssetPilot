@@ -4679,6 +4679,89 @@ class AppLocalizationsZh extends AppLocalizations {
   String featuresOfflineQueuedPhotosSkipped(Object count) {
     return '已離線儲存；已選 $count 張照片不會上傳，恢復連線後可再補上';
   }
+
+  @override
+  String get navCalendar => '行事曆';
+
+  @override
+  String get featuresCalendarTitle => '行事曆';
+
+  @override
+  String get featuresCalendarSubtitle => '查看交易、股利日期與固定收支排程';
+
+  @override
+  String get featuresCalendarMonth => '月';
+
+  @override
+  String get featuresCalendarWeek => '週';
+
+  @override
+  String get featuresCalendarToday => '今天';
+
+  @override
+  String get featuresCalendarViewMode => '行事曆檢視模式';
+
+  @override
+  String get featuresCalendarPrevious => '上一個期間';
+
+  @override
+  String get featuresCalendarNext => '下一個期間';
+
+  @override
+  String get featuresCalendarLoadFailed => '行事曆資料載入失敗，請稍後重試。';
+
+  @override
+  String featuresCalendarEventCount(Object count) {
+    return '共 $count 個項目';
+  }
+
+  @override
+  String get featuresCalendarNoEvents => '當天沒有項目';
+
+  @override
+  String get featuresCalendarAddTransaction => '新增當日交易';
+
+  @override
+  String featuresCalendarTransactionCount(Object count) {
+    return '$count 筆交易';
+  }
+
+  @override
+  String featuresCalendarDividendCount(Object count) {
+    return '$count 筆股利';
+  }
+
+  @override
+  String featuresCalendarRecurringCount(Object count) {
+    return '$count 筆排程';
+  }
+
+  @override
+  String get featuresCalendarTransaction => '交易';
+
+  @override
+  String get featuresCalendarDividend => '股利';
+
+  @override
+  String get featuresCalendarReadOnlySchedule => '固定收支（唯讀）';
+
+  @override
+  String get featuresCalendarRecurringIncome => '預計收入';
+
+  @override
+  String get featuresCalendarRecurringExpense => '預計支出';
+
+  @override
+  String get featuresCalendarShares => '股';
+
+  @override
+  String get featuresCalendarEventTypesIncome => '收入';
+
+  @override
+  String get featuresCalendarEventTypesExpense => '支出';
+
+  @override
+  String get featuresCalendarEventTypesTransfer => '轉帳';
 }
 
 /// The translations for Chinese, as used in China, using the Han script (`zh_Hans_CN`).
@@ -9352,6 +9435,89 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
   String featuresOfflineQueuedPhotosSkipped(Object count) {
     return '已离线保存；已选 $count 张照片不会上传，恢复连线后可再补上';
   }
+
+  @override
+  String get navCalendar => '日历';
+
+  @override
+  String get featuresCalendarTitle => '日历';
+
+  @override
+  String get featuresCalendarSubtitle => '查看交易、股利日期和固定收支计划';
+
+  @override
+  String get featuresCalendarMonth => '月';
+
+  @override
+  String get featuresCalendarWeek => '周';
+
+  @override
+  String get featuresCalendarToday => '今天';
+
+  @override
+  String get featuresCalendarViewMode => '日历视图模式';
+
+  @override
+  String get featuresCalendarPrevious => '上一个期间';
+
+  @override
+  String get featuresCalendarNext => '下一个期间';
+
+  @override
+  String get featuresCalendarLoadFailed => '日历数据加载失败，请稍后重试。';
+
+  @override
+  String featuresCalendarEventCount(Object count) {
+    return '共 $count 个项目';
+  }
+
+  @override
+  String get featuresCalendarNoEvents => '当天没有项目';
+
+  @override
+  String get featuresCalendarAddTransaction => '新增当天交易';
+
+  @override
+  String featuresCalendarTransactionCount(Object count) {
+    return '$count 笔交易';
+  }
+
+  @override
+  String featuresCalendarDividendCount(Object count) {
+    return '$count 笔股利';
+  }
+
+  @override
+  String featuresCalendarRecurringCount(Object count) {
+    return '$count 个计划';
+  }
+
+  @override
+  String get featuresCalendarTransaction => '交易';
+
+  @override
+  String get featuresCalendarDividend => '股利';
+
+  @override
+  String get featuresCalendarReadOnlySchedule => '固定收支（只读）';
+
+  @override
+  String get featuresCalendarRecurringIncome => '预计收入';
+
+  @override
+  String get featuresCalendarRecurringExpense => '预计支出';
+
+  @override
+  String get featuresCalendarShares => '股';
+
+  @override
+  String get featuresCalendarEventTypesIncome => '收入';
+
+  @override
+  String get featuresCalendarEventTypesExpense => '支出';
+
+  @override
+  String get featuresCalendarEventTypesTransfer => '转账';
 }
 
 /// The translations for Chinese, as used in Taiwan, using the Han script (`zh_Hant_TW`).
@@ -14029,4 +14195,87 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
   String featuresOfflineQueuedPhotosSkipped(Object count) {
     return '已離線儲存；已選 $count 張照片不會上傳，恢復連線後可再補上';
   }
+
+  @override
+  String get navCalendar => '行事曆';
+
+  @override
+  String get featuresCalendarTitle => '行事曆';
+
+  @override
+  String get featuresCalendarSubtitle => '查看交易、股利日期與固定收支排程';
+
+  @override
+  String get featuresCalendarMonth => '月';
+
+  @override
+  String get featuresCalendarWeek => '週';
+
+  @override
+  String get featuresCalendarToday => '今天';
+
+  @override
+  String get featuresCalendarViewMode => '行事曆檢視模式';
+
+  @override
+  String get featuresCalendarPrevious => '上一個期間';
+
+  @override
+  String get featuresCalendarNext => '下一個期間';
+
+  @override
+  String get featuresCalendarLoadFailed => '行事曆資料載入失敗，請稍後重試。';
+
+  @override
+  String featuresCalendarEventCount(Object count) {
+    return '共 $count 個項目';
+  }
+
+  @override
+  String get featuresCalendarNoEvents => '當天沒有項目';
+
+  @override
+  String get featuresCalendarAddTransaction => '新增當日交易';
+
+  @override
+  String featuresCalendarTransactionCount(Object count) {
+    return '$count 筆交易';
+  }
+
+  @override
+  String featuresCalendarDividendCount(Object count) {
+    return '$count 筆股利';
+  }
+
+  @override
+  String featuresCalendarRecurringCount(Object count) {
+    return '$count 筆排程';
+  }
+
+  @override
+  String get featuresCalendarTransaction => '交易';
+
+  @override
+  String get featuresCalendarDividend => '股利';
+
+  @override
+  String get featuresCalendarReadOnlySchedule => '固定收支（唯讀）';
+
+  @override
+  String get featuresCalendarRecurringIncome => '預計收入';
+
+  @override
+  String get featuresCalendarRecurringExpense => '預計支出';
+
+  @override
+  String get featuresCalendarShares => '股';
+
+  @override
+  String get featuresCalendarEventTypesIncome => '收入';
+
+  @override
+  String get featuresCalendarEventTypesExpense => '支出';
+
+  @override
+  String get featuresCalendarEventTypesTransfer => '轉帳';
 }

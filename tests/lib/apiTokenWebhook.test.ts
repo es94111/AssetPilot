@@ -587,8 +587,7 @@ if (!DB_URL) {
     }
   });
 
-  test('requireApiToken 解析 Bearer 權杖並依 scope 放行／拒絕', async () => {
-    const { requireApiToken, extractBearerToken } = await import('../../lib/apiTokenRequestAuth.ts');
+  test('requireApiToken 解析 Bearer 權杖並依 scope 放行／拒絕', async () => {    const { requireApiToken, extractBearerToken } = await import('../../lib/apiTokenRequestAuth.ts');
     const userId = 'test_apitoken_' + uid();
     createTestUser(userId);
     try {
@@ -626,6 +625,79 @@ if (!DB_URL) {
       assert.equal((revoked as { status: number }).status, 401);
     } finally {
       cleanupUser(userId);
+    }
+  });
+
+  test('/api/v1 POST 拒絕其他使用者的分類／帳戶 id（避免跨使用者寫入）', async () => {
+    const v1 = await import('../../app/api/v1/transactions/route.ts');
+    const { NextRequest } = await import('next/server');
+
+    const owner = 'test_v1_owner_' + uid();
+    const attacker = 'test_v1_attacker_' + uid();
+    createTestUser(owner);
+    createTestUser(attacker);
+    const ownerCat = uid();
+    const ownerAcc = uid();
+    const ownerParentCat = uid();
+    try {
+      // 建立子分類（parent）與帳戶，供持有人使用
+      getDB().run(
+        'INSERT INTO categories (id, user_id, name, type, parent_id) VALUES (?,?,?,?,?)',
+        [ownerParentCat, owner, '餐飲', 'expense', ''],
+      );
+      getDB().run(
+        'INSERT INTO categories (id, user_id, name, type, parent_id) VALUES (?,?,?,?,?)',
+        [ownerCat, owner, '午餐', 'expense', ownerParentCat],
+      );
+      getDB().run(
+        'INSERT INTO accounts (id, user_id, name, currency) VALUES (?,?,?,?)',
+        [ownerAcc, owner, '現金', 'TWD'],
+      );
+
+      const attackerToken = createApiToken(attacker, '攻擊者', ['transactions:write', 'transactions:read']);
+      const post = (payload: Record<string, unknown>) =>
+        v1.POST(
+          new NextRequest('http://localhost/api/v1/transactions', {
+            method: 'POST',
+            headers: { authorization: `Bearer ${attackerToken.token}`, 'content-type': 'application/json' },
+            body: JSON.stringify(payload),
+          }),
+        );
+
+      // 持有他人的 categoryId / accountId 必須被拒絕
+      const foreignCat = await post({ type: 'expense', amount: 100, categoryId: ownerCat, accountId: ownerAcc });
+      assert.equal(foreignCat.status, 400);
+      assert.equal((await foreignCat.json()).code, 'ValidationError');
+
+      const foreignAcc = await post({ type: 'expense', amount: 100, accountId: ownerAcc });
+      assert.equal(foreignAcc.status, 400);
+
+      // 父分類不可直接掛交易
+      const parentCat = await post({ type: 'expense', amount: 100, categoryId: ownerParentCat });
+      assert.equal(parentCat.status, 400);
+
+      // 完全不存在的 id 亦拒絕
+      assert.equal((await post({ type: 'expense', amount: 100, categoryId: uid() })).status, 400);
+
+      // 未寫入任何交易
+      const rows = queryAll('SELECT id FROM transactions WHERE user_id = ?', [attacker]);
+      assert.equal(rows.length, 0, '被拒絕的請求不得寫入交易');
+
+      // 沒有分類／帳戶的正當請求仍可成功，並觸發 transaction.created
+      createWebhookSubscription(attacker, 'https://example.com/hooks', ['transaction.created']);
+      const ok = await post({ type: 'expense', amount: 100, note: '正常寫入' });
+      assert.equal(ok.status, 201);
+      assert.equal((await ok.json()).transaction.note, '正常寫入');
+      assert.equal(listWebhookDeliveries(attacker)[0].eventType, 'transaction.created');
+    } finally {
+      getDB().run('DELETE FROM webhook_deliveries WHERE user_id = ?', [attacker]);
+      getDB().run('DELETE FROM webhook_subscriptions WHERE user_id = ?', [attacker]);
+      getDB().run('DELETE FROM transactions WHERE user_id = ?', [attacker]);
+      getDB().run('DELETE FROM transactions WHERE user_id = ?', [owner]);
+      getDB().run('DELETE FROM accounts WHERE user_id IN (?,?)', [owner, attacker]);
+      getDB().run('DELETE FROM categories WHERE user_id = ?', [owner]);
+      cleanupUser(owner);
+      cleanupUser(attacker);
     }
   });
 

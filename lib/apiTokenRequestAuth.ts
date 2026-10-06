@@ -18,6 +18,25 @@ export function extractBearerToken(authorizationHeader: string | null): string |
   return token || null;
 }
 
+// 排空冷卻：重試最快 30 秒後才到期，故每 15 秒最多排空一次即可。
+// 沒有這層冷卻時，只使用 API Token 的用戶端每個請求都會觸發一次掃描。
+const DRAIN_COOLDOWN_MS = 15 * 1000;
+let lastDrainAt = 0;
+
+function drainDeliveriesOnce(): void {
+  const now = Date.now();
+  if (now - lastDrainAt < DRAIN_COOLDOWN_MS) return;
+  lastDrainAt = now;
+  void import('./transactionWebhooks')
+    .then(({ triggerWebhookDeliveryDrain }) => triggerWebhookDeliveryDrain())
+    .catch((error) => console.error('[webhook] token-request delivery drain failed', error));
+}
+
+/** 測試用：重設冷卻狀態。 */
+export function _resetApiTokenDrainCooldown(): void {
+  lastDrainAt = 0;
+}
+
 function unauthorized(message: string): NextResponse {
   // WWW-Authenticate 讓用戶端知道應改用 Bearer 權杖（RFC 6750）。
   return NextResponse.json(
@@ -53,6 +72,10 @@ export function requireApiToken(
       { status: 403, headers: { 'Cache-Control': 'no-store' } },
     );
   }
+
+  // 只使用 API Token 的用戶端不會經過 Cookie 認證路徑，若不在這裡觸發，
+  // 失敗的 Webhook 投遞將永遠沒有請求可以把它們拾起（issue #258 review）。
+  drainDeliveriesOnce();
 
   return verified;
 }

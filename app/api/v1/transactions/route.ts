@@ -6,7 +6,7 @@
 // 與站內 /api/transactions 共用相同的寫入核心與換算邏輯，差別只在認證方式
 // （Authorization: Bearer ap_api_…）與回應欄位（對外穩定欄位，不含內部 AI 旗標）。
 import { NextRequest, NextResponse } from 'next/server';
-import { queryAll } from '../../../../lib/db';
+import { queryAll, queryOne } from '../../../../lib/db';
 import { convertToTwd, resolveOverseasFee } from '../../../../lib/accountHelpers';
 import { todayInUserTz, isValidIsoDate } from '../../../../lib/userTime';
 import { computeTwdAmount } from '../../../../lib/moneyDecimal';
@@ -146,6 +146,37 @@ export async function POST(request: NextRequest) {
   const categoryId = body.categoryId ? String(body.categoryId) : null;
   const accountId = body.accountId ? String(body.accountId) : null;
   const note = String(body.note || '');
+
+  // 與站內 /api/transactions 相同：分類／帳戶必須屬於呼叫者，且分類需為子分類。
+  // 缺這層檢查會讓其他使用者的 id 被寫入自己的交易，並在報表中顯示他人分類名稱（issue #258 review）。
+  if (categoryId) {
+    const catRow = queryOne(
+      'SELECT id, parent_id FROM categories WHERE id = ? AND user_id = ?',
+      [categoryId, auth.userId],
+    );
+    if (!catRow) {
+      return jsonNoStore({ error: '分類不存在或無權限', code: 'ValidationError', field: 'categoryId' }, { status: 400 });
+    }
+    if (!catRow.parent_id) {
+      return jsonNoStore(
+        { error: '交易必須指派至子分類，不能直接掛在父分類底下', code: 'ValidationError', field: 'categoryId' },
+        { status: 400 },
+      );
+    }
+  }
+  if (accountId) {
+    const accRow = queryOne(
+      'SELECT id, category, account_type, is_active FROM accounts WHERE id = ? AND user_id = ?',
+      [accountId, auth.userId],
+    );
+    if (!accRow) {
+      return jsonNoStore({ error: '帳戶不存在或無權限', code: 'ValidationError', field: 'accountId' }, { status: 400 });
+    }
+    const isCreditCard = accRow.category === 'credit_card' || accRow.account_type === '信用卡';
+    if (type === 'expense' && isCreditCard && Number(accRow.is_active) === 0) {
+      return jsonNoStore({ error: '此信用卡已停用，無法新增刷卡消費', code: 'CreditCardDisabled' }, { status: 409 });
+    }
+  }
 
   // 國外刷卡手續費另存為獨立交易，故原交易 twd_amount 不含手續費（fx_fee=0）。
   const fxFee = resolveOverseasFee({

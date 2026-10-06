@@ -2,6 +2,7 @@
 // 刻意不加 DATABASE_URL 略過守衛：本檔只測 lib/apiTokenCore.ts 的零相依函式，
 // 因此在沒有 PostgreSQL 的環境也能驗證（與 transactionEditRules.test.ts 相同策略）。
 import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
 import test from 'node:test';
 import {
   API_TOKEN_PREFIX,
@@ -41,16 +42,15 @@ test('generateApiToken 產生 ap_api_ 前綴的高熵權杖，且每次不同', 
 
 test('hashApiToken 具決定性（可供雜湊索引查找），且不同權杖雜湊不同', () => {
   const token = generateApiToken();
-  assert.equal(hashApiToken(token), hashApiToken(token));
-  assert.notEqual(hashApiToken(token), hashApiToken(generateApiToken()));
-  // 雜湊為 sha256 hex，且與明文權杖本身不同（不得以明文形式儲存）
   const hash = hashApiToken(token);
-  assert.match(hash, /^[0-9a-f]{64}$/);
-  assert.notEqual(hash, token);
-  // 明文一旦落成雜湊即不可回復：sha256(雜湊) 不應等於雜湊，也不應等於任何權杖
-  assert.notEqual(hashApiToken(hash), hash);
-  // 以相同明文比對才命中（雜湊查找語意）
   assert.equal(hashApiToken(token), hash);
+  assert.notEqual(hashApiToken(token), hashApiToken(generateApiToken()));
+  // 雜湊為 sha256 hex，且等於 sha256(明文)（儲存的是雜湊而不是明文）
+  assert.match(hash, /^[0-9a-f]{64}$/);
+  assert.equal(hash, crypto.createHash('sha256').update(token).digest('hex'));
+  // 明文一旦落成雜湊即不可回復：sha256(雜湊) 與雜湊不同，也不會命中任何權杖
+  assert.notEqual(hashApiToken(hash), hash);
+  assert.equal(hashApiToken(hash), hashApiToken(hashApiToken(token)));
 });
 
 test('generateWebhookSecret 產生 whsec_ 前綴密鑰', () => {
@@ -120,6 +120,14 @@ test('validateWebhookUrl 只接受 HTTPS 公開網址（避免 SSRF 與明文傳
     'https://[fe80::1]/hooks',
     'https://[fd00::1]/hooks',
     'https://[::ffff:127.0.0.1]/hooks',
+    'https://[::ffff:0:127.0.0.1]/hooks',
+    'https://[64:ff9b::7f00:1]/hooks',
+    'https://[2002:7f00:1::]/hooks',
+    'https://[2002:a9fe:a9fe::]/hooks',
+    'https://localhost./hooks',
+    'https://LOCALHOST./hooks',
+    'https://foo.localhost./hooks',
+    'https://internal.local./hooks',
     'https://user:pass@example.com/hooks',
     'not-a-url',
     '',
@@ -130,6 +138,11 @@ test('validateWebhookUrl 只接受 HTTPS 公開網址（避免 SSRF 與明文傳
   // 公開位址仍須放行（避免過度封鎖）
   assert.equal(validateWebhookUrl('https://8.8.8.8/hooks'), 'https://8.8.8.8/hooks');
   assert.equal(validateWebhookUrl('https://[2001:4860:4860::8888]/hooks'), 'https://[2001:4860:4860::8888]/hooks');
+  // 6to4／NAT64 指向公開位址時亦須放行
+  assert.ok(validateWebhookUrl('https://[2002:0808:0808::]/hooks'));
+  assert.ok(validateWebhookUrl('https://[64:ff9b::808:808]/hooks'));
+  // 一般公開網域的尾端點（FQDN 寫法）仍可通過
+  assert.ok(validateWebhookUrl('https://example.com./hooks'));
 });
 
 test('encryptSecret／decryptSecret 可往返，且密文不含明文', () => {

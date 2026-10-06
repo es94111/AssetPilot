@@ -151,9 +151,11 @@ export function validateWebhookUrl(raw: unknown): string {
   return parsed.toString();
 }
 
-/** 去除 IPv6 中括號並轉小寫，供本機／私網判定使用。 */
+/** 去除 IPv6 中括號、尾端網域點（FQDN 寫法）並轉小寫，供本機／私網判定使用。 */
 function normalizeHost(hostname: string): string {
-  return hostname.toLowerCase().replace(/^\[|\]$/g, '');
+  // 'localhost.' 與 'localhost' 解析到同一位置，但 URL 解析器會保留尾端的點；
+  // 不去除會讓 exact-match 與 suffix 檢查同時失效（SSRF 繞過）。
+  return hostname.toLowerCase().replace(/^\[|\]$/g, '').replace(/\.+$/, '');
 }
 
 function ipv4ToInt(ip: string): number | null {
@@ -224,25 +226,44 @@ function parseIpv6(input: string): number[] | null {
   return nums;
 }
 
-function ipv6ToIpv4(groups: number[]): string | null {
-  // ::ffff:a.b.c.d / ::a.b.c.d：前 5 組為 0，第 6 組為 0 或 ffff
-  const isMapped = groups.slice(0, 5).every((g) => g === 0) && (groups[5] === 0xffff || groups[5] === 0);
-  if (!isMapped) return null;
-  const n = ((groups[6] << 16) | groups[7]) >>> 0;
-  return [n >>> 24, (n >>> 16) & 0xff, (n >>> 8) & 0xff, n & 0xff].join('.');
+/**
+ * 抽出 IPv6 位址中嵌入的 IPv4（若無則回傳 null）。
+ * 涵蓋 IPv4 對應／相容（::ffff:x.x.x.x、::x.x.x.x、::ffff:0:x.x.x.x）、
+ * NAT64 well-known prefix（64:ff9b::/96）與 6to4（2002::/16）。
+ * 這些寫法都能把流量導向內網，但不會以點分十進位出現在原始字串中，
+ * 因此必須先還原成 IPv4 再用 IPv4 規則判定。
+ */
+function embeddedIpv4(groups: number[]): string | null {
+  const toDotted = (hi: number, lo: number): string =>
+    [hi >> 8, hi & 0xff, lo >> 8, lo & 0xff].join('.');
+  // 前 5 組為 0：IPv4 對應／相容位址，位址位於最後 32 位元
+  if (groups.slice(0, 5).every((g) => g === 0)) return toDotted(groups[6], groups[7]);
+  // ::ffff:0:x.x.x.x：IPv4-translated 位址（RFC 2765）
+  if (groups.slice(0, 4).every((g) => g === 0) && groups[4] === 0xffff && groups[5] === 0) {
+    return toDotted(groups[6], groups[7]);
+  }
+  // NAT64 well-known prefix 64:ff9b::/96
+  if (groups[0] === 0x64 && groups[1] === 0xff9b && groups.slice(2, 6).every((g) => g === 0)) {
+    return toDotted(groups[6], groups[7]);
+  }
+  // 6to4：2002:AABB:CCDD::/48，AABBCCDD 即嵌入的 IPv4
+  if (groups[0] === 0x2002) return toDotted(groups[1], groups[2]);
+  return null;
 }
 
 function isPrivateIpv6(ip: string): boolean {
   const groups = parseIpv6(ip);
   if (!groups) return false;
 
-  // IPv4 對應／相容位址：以 IPv4 規則判定（Node 會把 ::ffff:a.b.c.d 正規化為 ::ffff:xxxx:xxxx）。
-  const mapped = ipv6ToIpv4(groups);
-  if (mapped) return isBlockedHost(mapped);
+  // 先處理兩個特例，避免它們被下方的「嵌入 IPv4」規則誤判為 0.0.0.x。
+  if (groups.every((g) => g === 0)) return true; // ::（未指定）
+  if (groups.slice(0, 7).every((g) => g === 0) && groups[7] === 1) return true; // ::1（loopback）
+
+  // 任何可還原成 IPv4 的嵌入形式，一律以 IPv4 規則判定。
+  const embedded = embeddedIpv4(groups);
+  if (embedded) return isBlockedHost(embedded);
 
   const [g0] = groups;
-  if (groups.every((g) => g === 0)) return true; // ::
-  if (groups.slice(0, 7).every((g) => g === 0) && groups[7] === 1) return true; // ::1
   if ((g0 & 0xffc0) === 0xfe80) return true; // link-local fe80::/10
   if ((g0 & 0xfe00) === 0xfc00) return true; // unique-local fc00::/7
   if ((g0 & 0xff00) === 0xff00) return true; // multicast ff00::/8

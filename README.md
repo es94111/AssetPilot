@@ -417,13 +417,17 @@ Docker 多數參數已有合理預設，只需關心「自動產生」與「功�
 - **API Token**：於 `POST /api/user/api-tokens` 建立，明文僅回傳一次，儲存時只留 SHA-256 雜湊；
   逐 Token 的權限範圍（`transactions:read`／`transactions:write`／`webhooks:manage`），以
   `Authorization: Bearer ap_api_…` 呼叫。每個帳號最多 20 組啟用中的 Token，可設定到期時間與撤銷。
+- **公開 REST 端點**：`GET /api/v1/transactions`（需 `transactions:read`）列出交易、
+  `POST /api/v1/transactions`（需 `transactions:write`）新增交易並觸發 `transaction.created` Webhook。
+  這組端點不使用 `authToken` Cookie，僅接受 Bearer 權杖；未帶／失效權杖回 401，缺少對應 scope 回 403。
 - **Webhook 訂閱**：於 `POST /api/user/webhooks` 訂閱 `transaction.created`／`transaction.updated`／
   `transaction.deleted`。目標必須為公開 HTTPS 網址（拒絕 `http://`、loopback 與私網位址）。
 - **HMAC 簽章**：每次投遞帶 `X-AssetPilot-Signature: t=<unix 秒>,v1=<hex>`，簽章內容為
   `${timestamp}.${rawBody}`（HMAC-SHA256，密鑰以 AES-256-GCM 加密後存於資料庫）；
   接收端可比對時間戳（容忍 5 分鐘）抵抗重放。
 - **重試與紀錄**：失敗依指數退避重試（最多 5 次，30 秒起、上限 1 小時）；429／5xx 重試，
-  其餘 4xx 視為永久失敗。投遞紀錄可於 `GET /api/user/webhooks/deliveries` 查詢。
+  其餘 4xx 視為永久失敗。待投遞佇列會在每次已驗證的請求中順帶排空；
+  投遞紀錄可於 `GET /api/user/webhooks/deliveries` 查詢。
 - **稽核**：Token 與 Webhook 的建立／更新／刪除皆寫入稽核日誌（僅記錄識別碼與名稱，
   絕不記錄 Token 明文或簽章密鑰）。
 

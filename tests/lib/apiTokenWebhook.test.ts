@@ -36,8 +36,10 @@ if (!DB_URL) {
     attemptWebhookDelivery,
     runDueWebhookDeliveries,
     serializeWebhookDelivery,
+    serializeWebhookSubscription,
   } = await import('../../lib/webhookHelpers.ts');
   const { buildTransactionEventData } = await import('../../lib/transactionWebhooks.ts');
+  const { decryptSecret, hashApiToken: hashToken } = await import('../../lib/apiTokenCore.ts');
 
   await initDB();
 
@@ -68,7 +70,9 @@ if (!DB_URL) {
       const row = queryOne('SELECT token_hash, token_prefix, scopes FROM api_tokens WHERE id = ?', [created.id]);
       assert.ok(row);
       assert.notEqual(String(row?.token_hash), created.token);
-      assert.ok(!String(row?.token_hash).includes(created.token));
+      assert.match(String(row?.token_hash), /^[0-9a-f]{64}$/);
+      // 雜湊即等於 sha256(明文)，證明儲存的確實是雜湊而非明文
+      assert.equal(String(row?.token_hash), hashToken(created.token));
       assert.equal(String(row?.token_prefix), created.prefix);
       assert.equal(String(row?.scopes), 'transactions:read transactions:write');
 
@@ -186,15 +190,18 @@ if (!DB_URL) {
         created.subscription.id,
       ]);
       assert.ok(row);
-      assert.ok(!String(row?.secret_encrypted).includes(created.secret));
-      assert.match(String(row?.secret_encrypted), /^[A-Za-z0-9+/=]+\.[A-Za-z0-9+/=]+\.[A-Za-z0-9+/=]+$/);
+      // 密文為 iv.tag.ciphertext 三段 base64，且解密後必須等於原密鑰
+      const encrypted = String(row?.secret_encrypted);
+      assert.match(encrypted, /^[A-Za-z0-9+/=]+\.[A-Za-z0-9+/=]+\.[A-Za-z0-9+/=]+$/);
+      assert.equal(decryptSecret(encrypted, process.env.API_TOKEN_ENCRYPTION_KEY as string), created.secret);
       assert.equal(String(row?.secret_prefix), created.secret.slice(0, 14));
 
       // 列表／查詢不應回傳明文密鑰
       const fetched = getWebhookSubscription(userId, created.subscription.id);
       assert.ok(fetched);
       assert.equal(fetched?.secretPrefix, created.secret.slice(0, 14));
-      assert.ok(!JSON.stringify(fetched).includes(created.secret));
+      assert.equal(JSON.stringify(fetched).includes(created.secret), false);
+      assert.equal(JSON.stringify(serializeWebhookSubscription(fetched!)).includes(created.secret), false);
     } finally {
       cleanupUser(userId);
     }
@@ -289,8 +296,7 @@ if (!DB_URL) {
     }
   });
 
-  test('buildTransactionEventData 只輸出對外欄位（不含 AI 內部欄位）', () => {
-    const data = buildTransactionEventData({
+  test('buildTransactionEventData 只輸出對外欄位（不含 AI 內部欄位）', () => {    const data = buildTransactionEventData({
       id: 'tx1',
       type: 'expense',
       amount: 250,
@@ -552,6 +558,73 @@ if (!DB_URL) {
       assert.equal(hitCount, 1);
     } finally {
       await new Promise<void>((resolve) => server.close(() => resolve()));
+      cleanupUser(userId);
+    }
+  });
+
+  test('簽章密鑰無法解密時直接永久失敗（不再無意義重試）', async () => {
+    const userId = 'test_webhook_' + uid();
+    createTestUser(userId);
+    try {
+      const created = createWebhookSubscription(userId, 'https://example.com/hooks', ['transaction.created']);
+      enqueueWebhookEvent(userId, 'transaction.created', { id: 'tx1' });
+      const deliveryId = listWebhookDeliveries(userId)[0].id;
+
+      // 模擬主金鑰更換／資料損毀
+      getDB().run('UPDATE webhook_subscriptions SET secret_encrypted = ? WHERE id = ?', [
+        'corrupted.corrupted.corrupted',
+        created.subscription.id,
+      ]);
+
+      assert.equal(await attemptWebhookDelivery(deliveryId), 'failed');
+      const failed = listWebhookDeliveries(userId)[0];
+      assert.equal(failed.status, 'failed');
+      assert.match(failed.lastError, /簽章密鑰/);
+      const row = queryOne('SELECT next_retry_at FROM webhook_deliveries WHERE id = ?', [deliveryId]);
+      assert.equal(Number(row?.next_retry_at), 0);
+    } finally {
+      cleanupUser(userId);
+    }
+  });
+
+  test('requireApiToken 解析 Bearer 權杖並依 scope 放行／拒絕', async () => {
+    const { requireApiToken, extractBearerToken } = await import('../../lib/apiTokenRequestAuth.ts');
+    const userId = 'test_apitoken_' + uid();
+    createTestUser(userId);
+    try {
+      const readOnly = createApiToken(userId, '讀取用', ['transactions:read']);
+      const writeOnly = createApiToken(userId, '寫入用', ['transactions:write']);
+
+      // 標頭解析
+      assert.equal(extractBearerToken(`Bearer ${readOnly.token}`), readOnly.token);
+      assert.equal(extractBearerToken(`bearer ${readOnly.token}`), null, '前綴需區分大小寫');
+      assert.equal(extractBearerToken('Basic abc'), null);
+      assert.equal(extractBearerToken(null), null);
+      assert.equal(extractBearerToken('Bearer   '), null);
+
+      const headersOf = (value: string | null) => ({ headers: { get: (n: string) => (n.toLowerCase() === 'authorization' ? value : null) } });
+
+      // 具備 scope 時回傳驗證結果（而非 NextResponse）
+      const ok = requireApiToken(headersOf(`Bearer ${readOnly.token}`), 'transactions:read');
+      assert.ok(!(ok instanceof (await import('next/server')).NextResponse));
+      assert.equal((ok as { userId: string }).userId, userId);
+
+      // 缺少 scope 時 403
+      const forbidden = requireApiToken(headersOf(`Bearer ${readOnly.token}`), 'transactions:write');
+      assert.ok(forbidden instanceof (await import('next/server')).NextResponse);
+      assert.equal((forbidden as { status: number }).status, 403);
+
+      // 未帶／帶錯權杖時 401
+      const missing = requireApiToken(headersOf(null), 'transactions:read');
+      assert.equal((missing as { status: number }).status, 401);
+      const bad = requireApiToken(headersOf('Bearer ap_api_nope'), 'transactions:read');
+      assert.equal((bad as { status: number }).status, 401);
+
+      // 已撤銷的權杖立即失效
+      revokeApiToken(userId, writeOnly.id);
+      const revoked = requireApiToken(headersOf(`Bearer ${writeOnly.token}`), 'transactions:write');
+      assert.equal((revoked as { status: number }).status, 401);
+    } finally {
       cleanupUser(userId);
     }
   });

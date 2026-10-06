@@ -72,4 +72,10 @@ export function triggerUserRequestMaintenance(userId: string, userTimezone: stri
   void import('./stockPriceUpdater')
     .then(({ checkAndRunStockPriceUpdateOnUserRequest }) => checkAndRunStockPriceUpdateOnUserRequest())
     .catch((error) => console.error('[stock-price-update] user-triggered import failed', error));
+
+  // Webhook 待投遞佇列的排空（issue #258）。原本僅在「本次請求剛好排入事件」時觸發，
+  // 導致重試永遠不會被後續請求拾起；改為每次已驗證請求都順帶排空一次到期項目。
+  void import('./webhookHelpers')
+    .then(({ runDueWebhookDeliveries }) => runDueWebhookDeliveries(now))
+    .catch((error) => console.error('[webhook] user-triggered delivery drain failed', error));
 }

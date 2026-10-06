@@ -106,18 +106,16 @@ export function parseWebhookEvents(raw: unknown): WebhookEvent[] {
 // ── Webhook 目標網址驗證 ──
 
 const WEBHOOK_URL_MAX_LENGTH = 2048;
-const LOOPBACK_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]', '::1', '0.0.0.0']);
-
-function isPrivateIpv4(host: string): boolean {
-  const m = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(host);
-  if (!m) return false;
-  const [a, b] = [Number(m[1]), Number(m[2])];
-  if (a === 10 || a === 127) return true;
-  if (a === 172 && b >= 16 && b <= 31) return true;
-  if (a === 192 && b === 168) return true;
-  if (a === 169 && b === 254) return true;
-  return false;
-}
+const LOOPBACK_HOSTS = new Set([
+  'localhost',
+  'localhost.localdomain',
+  'ip6-localhost',
+  'ip6-loopback',
+  '0.0.0.0',
+  '127.0.0.1',
+  '::1',
+  '::',
+]);
 
 /**
  * Webhook 目標必須為 HTTPS 公開網址，避免 SSRF 指向內網或本機服務。
@@ -140,11 +138,124 @@ export function validateWebhookUrl(raw: unknown): string {
   if (parsed.protocol !== 'https:') {
     throw new ApiTokenError('Webhook 目標網址必須使用 HTTPS', 400, 'InsecureWebhookUrl');
   }
-  const host = parsed.hostname.toLowerCase();
-  if (LOOPBACK_HOSTS.has(host) || isPrivateIpv4(host)) {
+  if (parsed.username || parsed.password) {
+    throw new ApiTokenError('Webhook 目標網址不得包含帳號密碼', 400, 'InsecureWebhookUrl');
+  }
+
+  // hostname 對 IPv6 會回傳含中括號的形式，且可能為非正規化寫法
+  // （如 [0:0:0:0:0:0:0:1]、[::ffff:127.0.0.1]），比對前先正規化。
+  const host = normalizeHost(parsed.hostname);
+  if (isBlockedHost(host)) {
     throw new ApiTokenError('Webhook 目標網址不得指向本機或內部網路', 400, 'InsecureWebhookUrl');
   }
   return parsed.toString();
+}
+
+/** 去除 IPv6 中括號並轉小寫，供本機／私網判定使用。 */
+function normalizeHost(hostname: string): string {
+  return hostname.toLowerCase().replace(/^\[|\]$/g, '');
+}
+
+function ipv4ToInt(ip: string): number | null {
+  const m = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(ip);
+  if (!m) return null;
+  const parts = [Number(m[1]), Number(m[2]), Number(m[3]), Number(m[4])];
+  if (parts.some((p) => p > 255)) return null;
+  return ((parts[0] << 24) >>> 0) + (parts[1] << 16) + (parts[2] << 8) + parts[3];
+}
+
+function isPrivateIpv4(ip: string): boolean {
+  const n = ipv4ToInt(ip);
+  if (n == null) return false;
+  const inRange = (base: string, bits: number): boolean => {
+    const baseInt = ipv4ToInt(base);
+    if (baseInt == null) return false;
+    const mask = bits === 0 ? 0 : (0xffffffff << (32 - bits)) >>> 0;
+    return (n & mask) === (baseInt & mask);
+  };
+  return (
+    inRange('0.0.0.0', 8) || // 0.0.0.0/8（含 0.0.0.0）
+    inRange('10.0.0.0', 8) ||
+    inRange('100.64.0.0', 10) || // CGNAT
+    inRange('127.0.0.0', 8) ||
+    inRange('169.254.0.0', 16) || // link-local（含雲端 metadata 169.254.169.254）
+    inRange('172.16.0.0', 12) ||
+    inRange('192.0.0.0', 24) ||
+    inRange('192.168.0.0', 16) ||
+    inRange('198.18.0.0', 15) || // benchmarking
+    inRange('224.0.0.0', 4) || // multicast
+    inRange('240.0.0.0', 4) // reserved（含 255.255.255.255）
+  );
+}
+
+/** 將 IPv6 字串展開為 8 組 16 位元整數；無法解析時回傳 null。 */
+function parseIpv6(input: string): number[] | null {
+  let value = input.toLowerCase();
+  // 尾端可能帶有 IPv4（如 ::ffff:127.0.0.1），先抽出。
+  const v4Tail = /(?:^|:)(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$/.exec(value);
+  if (v4Tail) {
+    const n = ipv4ToInt(v4Tail[1]);
+    if (n == null) return null;
+    value = value.slice(0, value.length - v4Tail[1].length).replace(/:$/, '');
+    const hi = (n >>> 16) & 0xffff;
+    const lo = n & 0xffff;
+    if (value === '') return [0, 0, 0, 0, 0, 0xffff, hi, lo];
+    value += `:${hi.toString(16)}:${lo.toString(16)}`;
+  }
+
+  const doubleColon = value.indexOf('::');
+  if (doubleColon !== -1 && value.indexOf('::', doubleColon + 1) !== -1) return null; // 只允許一個 ::
+
+  const head = doubleColon === -1 ? value : value.slice(0, doubleColon);
+  const tail = doubleColon === -1 ? '' : value.slice(doubleColon + 2);
+  const headParts = head === '' ? [] : head.split(':');
+  const tailParts = tail === '' ? [] : tail.split(':');
+  if (headParts.length + tailParts.length > 8) return null;
+
+  const pad = new Array(8 - headParts.length - tailParts.length).fill('0');
+  const groups = [...headParts, ...pad, ...tailParts];
+  if (groups.length !== 8) return null;
+
+  const nums: number[] = [];
+  for (const g of groups) {
+    if (!/^[0-9a-f]{1,4}$/.test(g)) return null;
+    nums.push(parseInt(g, 16));
+  }
+  return nums;
+}
+
+function ipv6ToIpv4(groups: number[]): string | null {
+  // ::ffff:a.b.c.d / ::a.b.c.d：前 5 組為 0，第 6 組為 0 或 ffff
+  const isMapped = groups.slice(0, 5).every((g) => g === 0) && (groups[5] === 0xffff || groups[5] === 0);
+  if (!isMapped) return null;
+  const n = ((groups[6] << 16) | groups[7]) >>> 0;
+  return [n >>> 24, (n >>> 16) & 0xff, (n >>> 8) & 0xff, n & 0xff].join('.');
+}
+
+function isPrivateIpv6(ip: string): boolean {
+  const groups = parseIpv6(ip);
+  if (!groups) return false;
+
+  // IPv4 對應／相容位址：以 IPv4 規則判定（Node 會把 ::ffff:a.b.c.d 正規化為 ::ffff:xxxx:xxxx）。
+  const mapped = ipv6ToIpv4(groups);
+  if (mapped) return isBlockedHost(mapped);
+
+  const [g0] = groups;
+  if (groups.every((g) => g === 0)) return true; // ::
+  if (groups.slice(0, 7).every((g) => g === 0) && groups[7] === 1) return true; // ::1
+  if ((g0 & 0xffc0) === 0xfe80) return true; // link-local fe80::/10
+  if ((g0 & 0xfe00) === 0xfc00) return true; // unique-local fc00::/7
+  if ((g0 & 0xff00) === 0xff00) return true; // multicast ff00::/8
+  return false;
+}
+
+function isBlockedHost(hostname: string): boolean {
+  if (!hostname) return true;
+  if (LOOPBACK_HOSTS.has(hostname)) return true;
+  if (hostname.endsWith('.localhost') || hostname.endsWith('.local')) return true;
+  if (isPrivateIpv4(hostname)) return true;
+  if (hostname.includes(':') && isPrivateIpv6(hostname)) return true;
+  return false;
 }
 
 // ── 簽章密鑰的加密封裝（AES-256-GCM）──

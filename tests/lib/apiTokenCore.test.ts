@@ -43,9 +43,14 @@ test('hashApiToken 具決定性（可供雜湊索引查找），且不同權杖�
   const token = generateApiToken();
   assert.equal(hashApiToken(token), hashApiToken(token));
   assert.notEqual(hashApiToken(token), hashApiToken(generateApiToken()));
-  // 雜湊為 sha256 hex，不得包含明文
-  assert.match(hashApiToken(token), /^[0-9a-f]{64}$/);
-  assert.ok(!hashApiToken(token).includes(token));
+  // 雜湊為 sha256 hex，且與明文權杖本身不同（不得以明文形式儲存）
+  const hash = hashApiToken(token);
+  assert.match(hash, /^[0-9a-f]{64}$/);
+  assert.notEqual(hash, token);
+  // 明文一旦落成雜湊即不可回復：sha256(雜湊) 不應等於雜湊，也不應等於任何權杖
+  assert.notEqual(hashApiToken(hash), hash);
+  // 以相同明文比對才命中（雜湊查找語意）
+  assert.equal(hashApiToken(token), hash);
 });
 
 test('generateWebhookSecret 產生 whsec_ 前綴密鑰', () => {
@@ -94,17 +99,37 @@ test('validateWebhookUrl 只接受 HTTPS 公開網址（避免 SSRF 與明文傳
   for (const bad of [
     'http://example.com/hooks',
     'https://localhost/hooks',
+    'https://localhost.localdomain/hooks',
+    'https://foo.localhost/hooks',
+    'https://internal.local/hooks',
     'https://127.0.0.1/hooks',
+    'https://127.1.2.3/hooks',
+    'https://0.0.0.0/hooks',
+    'https://0.1.2.3/hooks',
     'https://10.0.0.5/hooks',
     'https://192.168.1.10/hooks',
     'https://172.16.0.1/hooks',
+    'https://172.31.255.254/hooks',
+    'https://100.64.0.1/hooks',
     'https://169.254.169.254/latest/meta-data',
+    'https://198.18.0.1/hooks',
+    'https://240.0.0.1/hooks',
+    'https://255.255.255.255/hooks',
+    'https://[::1]/hooks',
+    'https://[::]/hooks',
+    'https://[fe80::1]/hooks',
+    'https://[fd00::1]/hooks',
+    'https://[::ffff:127.0.0.1]/hooks',
+    'https://user:pass@example.com/hooks',
     'not-a-url',
     '',
     null,
   ]) {
     assert.throws(() => validateWebhookUrl(bad), ApiTokenError, `應拒絕：${String(bad)}`);
   }
+  // 公開位址仍須放行（避免過度封鎖）
+  assert.equal(validateWebhookUrl('https://8.8.8.8/hooks'), 'https://8.8.8.8/hooks');
+  assert.equal(validateWebhookUrl('https://[2001:4860:4860::8888]/hooks'), 'https://[2001:4860:4860::8888]/hooks');
 });
 
 test('encryptSecret／decryptSecret 可往返，且密文不含明文', () => {
@@ -120,6 +145,11 @@ test('decryptSecret 對錯誤主密鑰或竄改密文拋出錯誤（不可靜默
   const encrypted = encryptSecret('secret-value', MASTER);
   assert.throws(() => decryptSecret(encrypted, 'another-master'));
   assert.throws(() => decryptSecret('not-a-valid-payload', MASTER));
+  // 竄改密文（GCM tag 驗證必須失敗，而非回傳錯值）
+  const [iv, tag, data] = encrypted.split('.');
+  const flipped = Buffer.from(data, 'base64');
+  flipped[0] = flipped[0] ^ 0xff;
+  assert.throws(() => decryptSecret(`${iv}.${tag}.${flipped.toString('base64')}`, MASTER));
 });
 
 test('signWebhookPayload 產生 t／v1 格式簽章，且可被 verifyWebhookSignature 驗證', () => {

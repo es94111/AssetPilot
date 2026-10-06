@@ -99,6 +99,7 @@ export function createApiToken(
   scopes: unknown,
   expiresAt = 0,
 ): CreateApiTokenResult {
+  // 先驗證輸入再檢查名額：名額已滿時仍應對無效輸入回報參數錯誤，而非誤導性的上限錯誤。
   const safeName = normalizeName(name);
   const parsedScopes = parseApiTokenScopes(scopes);
   const now = Date.now();

@@ -313,17 +313,21 @@ export async function POST(request: NextRequest) {
     clientRef: typeof body.clientRef === 'string' && CLIENT_REF_REGEX.test(body.clientRef) ? body.clientRef : undefined,
   });
 
-  // Webhook：交易新增事件（issue #258）。emit 為盡力而為，失敗不影響交易本身。
-  emitTransactionEvent(auth.userId, 'transaction.created', {
-    id: result.id,
-    type,
-    amount: twdAmountInt,
-    currency: converted.currency,
-    date,
-    account_id: accountId || null,
-    category_id: categoryId || null,
-    note: note || '',
-  });
+  // Webhook：交易新增事件（issue #258）。僅在本次真的新增列時發出，
+  // 離線重送（client_ref 去重，inserted=false）不重複發出，維持事件冪等。
+  // emit 為盡力而為，失敗不影響交易本身。
+  if (result.inserted) {
+    emitTransactionEvent(auth.userId, 'transaction.created', {
+      id: result.id,
+      type,
+      amount: twdAmountInt,
+      currency: converted.currency,
+      date,
+      account_id: accountId || null,
+      category_id: categoryId || null,
+      note: note || '',
+    });
+  }
 
   return NextResponse.json(result, { status: 201 });
 }

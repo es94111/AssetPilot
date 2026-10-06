@@ -393,16 +393,30 @@ export async function attemptWebhookDelivery(
   }
 
   const attempts = (Number(delivery.attempts) || 0) + 1;
-  const rawBody = String(delivery.payload);
+  const payload = String(delivery.payload);
   let outcome: DeliveryAttemptOutcome;
+  let secret: string;
   try {
-    outcome = await postDelivery(
-      String(sub.url),
-      decryptSecret(String(sub.secret_encrypted), masterSecret()),
-      deliveryId,
-      String(delivery.event_type),
-      rawBody,
+    secret = decryptSecret(String(sub.secret_encrypted), masterSecret());
+  } catch (e) {
+    // 主金鑰被更換或資料損毀時無法再簽章，此訂閱已不可能成功投遞；
+    // 直接永久失敗，並在錯誤訊息標明原因，避免無意義地重試 5 次。
+    const reason = `無法解密簽章密鑰（請重新建立此 Webhook 訂閱）：${(e instanceof Error ? e.message : String(e)).slice(0, ERROR_MAX)}`;
+    getDB().run(
+      'UPDATE webhook_deliveries SET status = ?, attempts = ?, last_error = ?, updated_at = ?, next_retry_at = 0 WHERE id = ?',
+      ['failed', attempts, reason, now, deliveryId],
     );
+    getDB().run('UPDATE webhook_subscriptions SET last_failure_at = ?, updated_at = ? WHERE id = ?', [
+      now,
+      now,
+      String(sub.id),
+    ]);
+    saveDB();
+    return 'failed';
+  }
+
+  try {
+    outcome = await postDelivery(String(sub.url), secret, deliveryId, String(delivery.event_type), payload);
   } catch (e) {
     outcome = {
       ok: false,

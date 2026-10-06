@@ -1,3 +1,44 @@
+# 2026-10-06 api-token-webhook-settings-ui
+
+## Goal + Acceptance Criteria
+- [x] 設定頁可建立／列出／撤銷 API Token，並可勾選權限範圍（scope）。
+- [x] 建立後以一次性提示顯示明文權杖，並提供複製按鈕；離開頁面後不再顯示。
+- [x] 設定頁可建立／編輯／刪除 Webhook 訂閱（網址、事件類型、啟用狀態）。
+- [x] 建立後以一次性提示顯示簽章密鑰，並附上簽章驗證說明（`X-AssetPilot-Signature` 格式）。
+- [x] 可查詢投遞紀錄（事件類型、狀態、嘗試次數、狀態碼、錯誤訊息），並可依訂閱篩選。
+- [x] 新增 i18n 字串（`settings.*`），通過 `npm run check:i18n`。
+
+## Risk & Rollback
+- Risk level: medium — 頁面本身只呼叫 #258 既有且已寫入稽核的 API，不新增資料表或端點；風險集中於一次性憑證的顯示與複製流程。
+- Affected components: `app/settings/api-integration`、`components/features/settings/ApiIntegrationSettingsClient.tsx`、`lib/apiIntegrationUi.ts`、`components/layout/{Sidebar,AppLayout}`、`shared/i18n`、`package.json`（新增測試腳本）。
+- Rollback strategy: 移除新增頁面與導覽項目、刪除 `tests/lib/apiIntegrationUi.test.ts` 與 `package.json` 腳本，再 `npm run i18n:generate` 重新產生字典；後端與既有資料完全不受影響。
+- Monitoring signals: 一次性 Modal 未顯示即被關閉、撤銷後仍可呼叫（應為 401）、Webhook 建立被拒（非 HTTPS 或私網）時的錯誤訊息是否可讀。
+
+## Dependencies & Environment
+- 依賴 #258 已完成的後端 API（`/api/user/api-tokens`、`/api/user/webhooks`、`/api/user/webhooks/deliveries`）。
+- 既有 Next.js App Router、`useT()` i18n、`lib/clientApi`、Base UI `Modal`／`Button`／`Input`／`Select`；不新增任何相依套件。
+- `lib/apiIntegrationUi.ts` 刻意不 import `lib/apiTokenCore.ts`（後者相依 `node:crypto`，會被帶進 client bundle）。
+
+## Working Notes
+- 一次性憑證沿用 `McpSettingsClient` 的互動慣例：Modal 需按「我已複製，關閉視窗」才可關閉（`disabled={!copied}`），關閉後 state 清空，重新整理即消失。
+- 權限範圍與事件清單在 UI 是常數複述；正確性由測試斷言與 `lib/apiTokenCore.ts` 的 `API_TOKEN_SCOPES`／`WEBHOOK_EVENTS` 完全一致，避免兩邊漂移。
+- 所有 labelKey 都是動態組出（`ta()` 前綴 + 物件鍵），繞過 `check:i18n` 的靜態鍵掃描，因此測試另外逐鍵查詢 zh-TW 字典，補住漏譯破口。
+- 編輯 Webhook 時以 `intersectKnown()` 過濾未知事件並依 canonical 順序重排，避免後端回應的未知值污染表單。
+
+## Plan
+- [x] 確認 #258 後端契約（回應欄位、一次性 `secret`、狀態值、錯誤碼）。
+- [x] 追加 93 個 i18n 鍵（`nav.apiIntegration`、`common.refresh|copy|copied`、`settings.apiIntegration.*`）並重新產生 Web／Flutter 產物。
+- [x] 新增零相依 `lib/apiIntegrationUi.ts` 與 `tests/lib/apiIntegrationUi.test.ts`，並納入 `npm test`。
+- [x] 新增設定頁與 client 元件，加上側邊欄與頁首標題。
+- [x] 執行 `npm run typecheck`、`npm test`、`npm run build`、`git diff --check`。
+- [x] 更新 README／SRS／changelog 發行資訊。
+
+## Results
+- 新增 `/settings/api-integration`：Token 建立（含 scope 勾選與到期時間）、清單（前綴／範圍／狀態／三個時間欄位）與撤銷；Webhook 建立、行內編輯（網址／事件／啟用狀態）與刪除；投遞紀錄清單與依訂閱篩選。
+- 一次性憑證：Token 明文與 Webhook 簽章密鑰皆於建立後以 Modal 顯示，需確認已複製才能關閉；簽鑰 Modal 附 `X-AssetPilot-Signature: t=<unix 秒>,v1=<hex>` 與 5 分鐘時間戳容忍度說明。
+- i18n 共 1,516 鍵、10 語言完全對齊；新增 3 種語系檔案僅 Flutter 端既有的 3 筆未翻譯警告（與本次變更無關，已用 `git stash` 對照確認）。
+- 驗證：`npm run typecheck` 通過；`npm test` 全數通過（含新增 8 項 `test:api-integration-ui`、`check:iso`、`check:i18n`）；`npm run build` 通過且 `/settings/api-integration` 已列於路由輸出；`git diff --check` 無空白問題。
+
 # 2026-07-29 openai-plugin-mcp-descriptors
 
 ## Goal + Acceptance Criteria

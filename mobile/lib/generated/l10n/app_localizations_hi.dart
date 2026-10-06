@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -4983,4 +4984,312 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get featuresCalendarEventTypesTransfer => 'स्थानांतरण';
+
+  @override
+  String get navApiIntegration => 'API एकीकरण';
+
+  @override
+  String get commonRefresh => 'रीफ़्रेश करें';
+
+  @override
+  String get commonCopy => 'कॉपी करें';
+
+  @override
+  String get commonCopied => 'कॉपी हो गया!';
+
+  @override
+  String get settingsApiIntegrationTitle => 'API एकीकरण सेटिंग्स';
+
+  @override
+  String get settingsApiIntegrationDescription =>
+      'REST API को कॉल करने वाली तृतीय-पक्ष सेवाओं के लिए API टोकन बनाएँ और Webhook से लेन-देन की घटनाओं की सदस्यता लें।';
+
+  @override
+  String get settingsApiIntegrationTokenTitle => 'API टोकन';
+
+  @override
+  String get settingsApiIntegrationTokenDescription =>
+      'टोकन में चुनी जा सकने वाली अनुमतियाँ होती हैं और सादा टेक्स्ट केवल एक बार दिखाया जाता है — बनाने के तुरंत बाद इसे सहेजें। प्रति खाता अधिकतम 20 सक्रिय टोकन।';
+
+  @override
+  String get settingsApiIntegrationTokenCreateTitle => 'नया टोकन बनाएँ';
+
+  @override
+  String get settingsApiIntegrationTokenNameLabel => 'नाम';
+
+  @override
+  String get settingsApiIntegrationTokenNamePlaceholder =>
+      'उदाहरण: व्यक्तिगत ऑटोमेशन स्क्रिप्ट';
+
+  @override
+  String get settingsApiIntegrationTokenExpiresAtLabel =>
+      'समाप्ति तिथि (वैकल्पिक)';
+
+  @override
+  String get settingsApiIntegrationTokenScopesLabel => 'अनुमतियाँ';
+
+  @override
+  String get settingsApiIntegrationTokenCreateButton => 'टोकन बनाएँ';
+
+  @override
+  String get settingsApiIntegrationTokenCreating => 'बनाया जा रहा है…';
+
+  @override
+  String get settingsApiIntegrationTokenListTitle => 'मेरे API टोकन';
+
+  @override
+  String get settingsApiIntegrationTokenNoItems =>
+      'अभी तक कोई API टोकन नहीं बनाया';
+
+  @override
+  String get settingsApiIntegrationTokenStatusActive => 'सक्रिय';
+
+  @override
+  String get settingsApiIntegrationTokenStatusExpired => 'समाप्त';
+
+  @override
+  String get settingsApiIntegrationTokenStatusRevoked => 'रद्द';
+
+  @override
+  String get settingsApiIntegrationTokenRevokeButton => 'रद्द करें';
+
+  @override
+  String get settingsApiIntegrationTokenRevokeConfirm =>
+      'यह API टोकन रद्द करें? इसका उपयोग करने वाले सभी कॉल तुरंत अस्वीकार होंगे।';
+
+  @override
+  String get settingsApiIntegrationTokenRevoked => 'API टोकन रद्द कर दिया गया';
+
+  @override
+  String get settingsApiIntegrationTokenModalTitle => 'API टोकन बन गया';
+
+  @override
+  String get settingsApiIntegrationTokenModalWarning =>
+      'यह टोकन केवल एक बार दिखाया जाता है; अभी कॉपी करके सहेजें। बंद करने के बाद सादा टेक्स्ट दोबारा नहीं दिखेगा।';
+
+  @override
+  String get settingsApiIntegrationTokenNameRequired => 'नाम दर्ज करें';
+
+  @override
+  String get settingsApiIntegrationTokenScopeRequired =>
+      'कम से कम एक अनुमति चुनें';
+
+  @override
+  String get settingsApiIntegrationColName => 'नाम';
+
+  @override
+  String get settingsApiIntegrationColPrefix => 'उपसर्ग';
+
+  @override
+  String get settingsApiIntegrationColScopes => 'अनुमतियाँ';
+
+  @override
+  String get settingsApiIntegrationColStatus => 'स्थिति';
+
+  @override
+  String get settingsApiIntegrationColCreatedAt => 'बनाया गया';
+
+  @override
+  String get settingsApiIntegrationColLastUsedAt => 'अंतिम उपयोग';
+
+  @override
+  String get settingsApiIntegrationColExpiresAt => 'समाप्ति';
+
+  @override
+  String get settingsApiIntegrationColActions => 'कार्रवाई';
+
+  @override
+  String get settingsApiIntegrationNeverUsed => 'कभी उपयोग नहीं';
+
+  @override
+  String get settingsApiIntegrationNeverExpires => 'कभी समाप्त नहीं';
+
+  @override
+  String get settingsApiIntegrationScopeTransactionsRead => 'लेन-देन पढ़ें';
+
+  @override
+  String get settingsApiIntegrationScopeTransactionsWrite => 'लेन-देन बनाएँ';
+
+  @override
+  String get settingsApiIntegrationScopeWebhooksManage =>
+      'Webhook प्रबंधित करें';
+
+  @override
+  String get settingsApiIntegrationWebhookTitle => 'Webhook सदस्यताएँ';
+
+  @override
+  String get settingsApiIntegrationWebhookDescription =>
+      'लेन-देन की घटनाओं की सदस्यता लें। लक्ष्य URL सार्वजनिक HTTPS होना चाहिए और स्थानीय या आंतरिक नेटवर्क की ओर नहीं होना चाहिए।';
+
+  @override
+  String get settingsApiIntegrationWebhookCreateTitle => 'नई सदस्यता बनाएँ';
+
+  @override
+  String get settingsApiIntegrationWebhookUrlLabel => 'लक्ष्य URL';
+
+  @override
+  String get settingsApiIntegrationWebhookUrlPlaceholder =>
+      'उदाहरण: https://example.com/hooks/assetpilot';
+
+  @override
+  String get settingsApiIntegrationWebhookEventsLabel => 'इवेंट प्रकार';
+
+  @override
+  String get settingsApiIntegrationWebhookActiveLabel =>
+      'यह सदस्यता सक्रिय करें';
+
+  @override
+  String get settingsApiIntegrationWebhookCreateButton => 'सदस्यता बनाएँ';
+
+  @override
+  String get settingsApiIntegrationWebhookSaveButton => 'परिवर्तन सहेजें';
+
+  @override
+  String get settingsApiIntegrationWebhookCancelEdit => 'संपादन रद्द करें';
+
+  @override
+  String get settingsApiIntegrationWebhookListTitle => 'मेरी Webhook सदस्यताएँ';
+
+  @override
+  String get settingsApiIntegrationWebhookNoItems =>
+      'अभी तक कोई सदस्यता नहीं बनाई';
+
+  @override
+  String get settingsApiIntegrationColUrl => 'लक्ष्य URL';
+
+  @override
+  String get settingsApiIntegrationColEvents => 'इवेंट';
+
+  @override
+  String get settingsApiIntegrationColEnabled => 'स्थिति';
+
+  @override
+  String get settingsApiIntegrationColLastSuccess => 'अंतिम सफल';
+
+  @override
+  String get settingsApiIntegrationColLastFailure => 'अंतिम विफल';
+
+  @override
+  String get settingsApiIntegrationWebhookEnabled => 'सक्रिय';
+
+  @override
+  String get settingsApiIntegrationWebhookDisabled => 'निष्क्रिय';
+
+  @override
+  String get settingsApiIntegrationWebhookEditButton => 'संपादित करें';
+
+  @override
+  String get settingsApiIntegrationWebhookDeleteButton => 'हटाएँ';
+
+  @override
+  String get settingsApiIntegrationWebhookDeleteConfirm =>
+      'यह सदस्यता हटाएँ? इसके डिलीवरी रिकॉर्ड भी हट जाएँगे और इसे वापस नहीं लाया जा सकता।';
+
+  @override
+  String get settingsApiIntegrationWebhookSecretModalTitle =>
+      'Webhook हस्ताक्षर कुंजी';
+
+  @override
+  String get settingsApiIntegrationWebhookSecretModalWarning =>
+      'यह हस्ताक्षर कुंजी केवल एक बार दिखाई जाती है; अभी कॉपी करके सहेजें। बंद करने के बाद इसे दोबारा नहीं पाया जा सकेगा।';
+
+  @override
+  String get settingsApiIntegrationWebhookSignatureHeaderLabel =>
+      'हस्ताक्षर हेडर प्रारूप';
+
+  @override
+  String get settingsApiIntegrationWebhookSignatureHint =>
+      'हस्ताक्षर टाइमस्टैम्प, एक बिंदु और मूल अनुरोध बॉडी पर गणना किया गया HMAC-SHA256 है। दोबारा भेजे जाने से बचने के लिए टाइमस्टैम्प की तुलना करें (5 मिनट की सहनशीलता)।';
+
+  @override
+  String get settingsApiIntegrationDeliveryTitle => 'डिलीवरी रिकॉर्ड';
+
+  @override
+  String get settingsApiIntegrationDeliveryDescription =>
+      'हाल के Webhook डिलीवरी परिणाम और विफलता के कारण देखें।';
+
+  @override
+  String get settingsApiIntegrationDeliveryFilterLabel =>
+      'सदस्यता से फ़िल्टर करें';
+
+  @override
+  String get settingsApiIntegrationDeliveryAllSubscriptions => 'सभी सदस्यताएँ';
+
+  @override
+  String get settingsApiIntegrationDeliveryNoItems =>
+      'अभी कोई डिलीवरी रिकॉर्ड नहीं';
+
+  @override
+  String get settingsApiIntegrationDeliveryStatusPending => 'लंबित';
+
+  @override
+  String get settingsApiIntegrationDeliveryStatusSuccess => 'सफल';
+
+  @override
+  String get settingsApiIntegrationDeliveryStatusFailed => 'विफल';
+
+  @override
+  String get settingsApiIntegrationColEventType => 'इवेंट';
+
+  @override
+  String get settingsApiIntegrationColAttempts => 'प्रयास';
+
+  @override
+  String get settingsApiIntegrationColStatusCode => 'स्थिति कोड';
+
+  @override
+  String get settingsApiIntegrationColDeliveredAt => 'डिलीवरी समय';
+
+  @override
+  String get settingsApiIntegrationColError => 'त्रुटि संदेश';
+
+  @override
+  String get settingsApiIntegrationEventCreated => 'लेन-देन बनाया गया';
+
+  @override
+  String get settingsApiIntegrationEventUpdated => 'लेन-देन बदला गया';
+
+  @override
+  String get settingsApiIntegrationEventDeleted => 'लेन-देन हटाया गया';
+
+  @override
+  String get settingsApiIntegrationLoadTokensFailed =>
+      'API टोकन लोड नहीं हो सके';
+
+  @override
+  String get settingsApiIntegrationLoadWebhooksFailed =>
+      'Webhook सदस्यताएँ लोड नहीं हो सकीं';
+
+  @override
+  String get settingsApiIntegrationLoadDeliveriesFailed =>
+      'डिलीवरी रिकॉर्ड लोड नहीं हो सके';
+
+  @override
+  String get settingsApiIntegrationCreateTokenFailed => 'API टोकन नहीं बन सका';
+
+  @override
+  String get settingsApiIntegrationRevokeTokenFailed =>
+      'API टोकन रद्द नहीं हो सका';
+
+  @override
+  String get settingsApiIntegrationCreateWebhookFailed => 'सदस्यता नहीं बन सकी';
+
+  @override
+  String get settingsApiIntegrationUpdateWebhookFailed =>
+      'सदस्यता अपडेट नहीं हो सकी';
+
+  @override
+  String get settingsApiIntegrationDeleteWebhookFailed =>
+      'सदस्यता हटाई नहीं जा सकी';
+
+  @override
+  String get settingsApiIntegrationUrlRequired => 'लक्ष्य URL दर्ज करें';
+
+  @override
+  String get settingsApiIntegrationEventRequired =>
+      'कम से कम एक इवेंट प्रकार चुनें';
+
+  @override
+  String get settingsApiIntegrationCloseConfirm =>
+      'मैंने कॉपी कर लिया, बंद करें';
 }

@@ -1,5 +1,19 @@
 # Lessons
 
+## 2026-10-06 Keep Node-Only Modules Out of Client Bundles, and Prove It
+- Mistake class: architectural hazard avoided by design / verification gap.
+- Failure mode: The new `'use client'` settings page needed the authoritative scope and event lists that live in `lib/apiTokenCore.ts`, but that module imports `node:crypto` for token hashing and HMAC signing; importing it from a client component would pull Node built-ins into the browser bundle.
+- Detection signal: The module's top-level import list showed `node:crypto`, and the build output only warns at bundle-analysis time, so the mistake usually surfaces as a runtime failure or a silent bundle-size regression rather than a typecheck error.
+- Prevention rule: Duplicate tiny constant lists in a zero-dependency client module rather than importing server-only helpers, and add a test that asserts the duplicate exactly equals the server's authoritative list so the two cannot drift.
+- Tripwire: Before importing any `lib/*` module into a `'use client'` file, inspect its top-level imports for `node:*`, `next/headers`, and database modules; when duplication is chosen, add a parity assertion in the same commit.
+
+## 2026-10-06 i18n Generation Writes Files, So Do Not Stash Around It
+- Mistake class: unsafe execution ordering / missing verification.
+- Failure mode: To check whether Flutter's `untranslated message(s)` warnings were pre-existing, `git stash` was run, then `npm run i18n:generate` regenerated tracked output files, and the following `git stash pop` aborted because the newly regenerated files conflicted with the stash.
+- Detection signal: `git stash pop` failed with "Your local changes ... would be overwritten by merge" listing the generated `mobile/lib/generated/l10n/*.dart` files.
+- Prevention rule: Treat `npm run i18n:generate` as a write phase that dirties tracked files; to compare against a baseline, use `git stash` plus an explicit `git checkout -- .` before popping, or inspect the warning source directly instead of stashing.
+- Tripwire: Never run a generator between `git stash` and `git stash pop`; verify with `git status` before popping.
+
 ## 2026-07-29 Verify Descriptor Serialization, Not Only Helper Types
 - Mistake class: incorrect assumption about dependency behavior / missing verification.
 - Failure mode: Assumed the official `registerAppTool` helper would preserve OpenAI's top-level `securitySchemes` because its documented config accepts the field, but the installed MCP SDK 1.30 `registerTool` implementation destructures only standard fields and silently drops the extension.

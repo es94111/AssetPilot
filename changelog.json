@@ -1,6 +1,26 @@
 {
-  "currentVersion": "4.116.1",
+  "currentVersion": "4.117.0",
   "releases": [
+    {
+      "version": "4.117.0",
+      "date": "2026-10-06",
+      "title": "API Token 與 Webhook 設定頁介面",
+      "type": "new",
+      "changes": [
+        {
+          "tag": "new",
+          "text": "新增「設定 → API 整合」頁面，可直接以介面管理 API Token 與 Webhook，不必再手動呼叫 REST API：Token 可勾選權限範圍（讀取交易／新增交易／管理 Webhook）、列出前綴與狀態並隨時撤銷。"
+        },
+        {
+          "tag": "new",
+          "text": "Webhook 訂閱可建立、行內編輯（網址／事件／啟用狀態）與刪除，並可依訂閱篩選投遞紀錄（事件、狀態、嘗試次數、狀態碼、錯誤訊息）。"
+        },
+        {
+          "tag": "security",
+          "text": "Token 明文與 Webhook 簽章密鑰只在建立後顯示一次，需確認已複製才能關閉，離開頁面即不再顯示；簽鑰視窗同時附上 X-AssetPilot-Signature 格式與時間戳比對說明。#273"
+        }
+      ]
+    },
     {
       "version": "4.116.1",
       "date": "2026-10-06",

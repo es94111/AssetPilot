@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -4970,4 +4971,304 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get featuresCalendarEventTypesTransfer => 'تحويل';
+
+  @override
+  String get navApiIntegration => 'تكامل API';
+
+  @override
+  String get commonRefresh => 'تحديث';
+
+  @override
+  String get commonCopy => 'نسخ';
+
+  @override
+  String get commonCopied => 'تم النسخ!';
+
+  @override
+  String get settingsApiIntegrationTitle => 'إعدادات تكامل API';
+
+  @override
+  String get settingsApiIntegrationDescription =>
+      'أنشئ رموز API للخدمات الخارجية التي تستدعي واجهة REST، واشترك في أحداث المعاملات عبر Webhook.';
+
+  @override
+  String get settingsApiIntegrationTokenTitle => 'رموز API';
+
+  @override
+  String get settingsApiIntegrationTokenDescription =>
+      'تحمل الرموز نطاقات صلاحيات قابلة للاختيار، ويُعرض النص الصريح مرة واحدة فقط؛ احفظه فور الإنشاء. يمكن لكل حساب الاحتفاظ بما يصل إلى 20 رمزًا نشطًا.';
+
+  @override
+  String get settingsApiIntegrationTokenCreateTitle => 'إنشاء رمز جديد';
+
+  @override
+  String get settingsApiIntegrationTokenNameLabel => 'الاسم';
+
+  @override
+  String get settingsApiIntegrationTokenNamePlaceholder =>
+      'مثال: سكربت أتمتة شخصي';
+
+  @override
+  String get settingsApiIntegrationTokenExpiresAtLabel =>
+      'تاريخ الانتهاء (اختياري)';
+
+  @override
+  String get settingsApiIntegrationTokenScopesLabel => 'نطاقات الصلاحيات';
+
+  @override
+  String get settingsApiIntegrationTokenCreateButton => 'إنشاء الرمز';
+
+  @override
+  String get settingsApiIntegrationTokenCreating => 'جارٍ الإنشاء…';
+
+  @override
+  String get settingsApiIntegrationTokenListTitle => 'رموز API الخاصة بي';
+
+  @override
+  String get settingsApiIntegrationTokenNoItems => 'لم تُنشئ أي رمز API بعد';
+
+  @override
+  String get settingsApiIntegrationTokenStatusActive => 'نشط';
+
+  @override
+  String get settingsApiIntegrationTokenStatusExpired => 'منتهي';
+
+  @override
+  String get settingsApiIntegrationTokenStatusRevoked => 'ملغى';
+
+  @override
+  String get settingsApiIntegrationTokenRevokeButton => 'إلغاء';
+
+  @override
+  String get settingsApiIntegrationTokenRevokeConfirm =>
+      'هل تريد إلغاء هذا الرمز؟ ستُرفض فورًا أي استدعاءات تستخدمه.';
+
+  @override
+  String get settingsApiIntegrationTokenRevoked => 'تم إلغاء رمز API';
+
+  @override
+  String get settingsApiIntegrationTokenModalTitle => 'تم إنشاء رمز API';
+
+  @override
+  String get settingsApiIntegrationTokenModalWarning =>
+      'يُعرض هذا الرمز مرة واحدة فقط؛ انسخه واحفظه الآن. بعد الإغلاق لن يظهر النص الصريح مرة أخرى.';
+
+  @override
+  String get settingsApiIntegrationTokenNameRequired => 'أدخل اسمًا';
+
+  @override
+  String get settingsApiIntegrationTokenScopeRequired =>
+      'اختر نطاق صلاحية واحدًا على الأقل';
+
+  @override
+  String get settingsApiIntegrationColName => 'الاسم';
+
+  @override
+  String get settingsApiIntegrationColPrefix => 'البادئة';
+
+  @override
+  String get settingsApiIntegrationColScopes => 'نطاقات الصلاحيات';
+
+  @override
+  String get settingsApiIntegrationColStatus => 'الحالة';
+
+  @override
+  String get settingsApiIntegrationColCreatedAt => 'تاريخ الإنشاء';
+
+  @override
+  String get settingsApiIntegrationColLastUsedAt => 'آخر استخدام';
+
+  @override
+  String get settingsApiIntegrationColExpiresAt => 'تاريخ الانتهاء';
+
+  @override
+  String get settingsApiIntegrationColActions => 'إجراءات';
+
+  @override
+  String get settingsApiIntegrationNeverUsed => 'لم يُستخدم';
+
+  @override
+  String get settingsApiIntegrationNeverExpires => 'لا ينتهي';
+
+  @override
+  String get settingsApiIntegrationScopeTransactionsRead => 'قراءة المعاملات';
+
+  @override
+  String get settingsApiIntegrationScopeTransactionsWrite => 'إنشاء المعاملات';
+
+  @override
+  String get settingsApiIntegrationScopeWebhooksManage => 'إدارة Webhook';
+
+  @override
+  String get settingsApiIntegrationWebhookTitle => 'اشتراكات Webhook';
+
+  @override
+  String get settingsApiIntegrationWebhookDescription =>
+      'اشترك في أحداث المعاملات. يجب أن يكون عنوان الهدف HTTPS عامًا وألا يشير إلى الشبكة المحلية أو الداخلية.';
+
+  @override
+  String get settingsApiIntegrationWebhookCreateTitle => 'إنشاء اشتراك';
+
+  @override
+  String get settingsApiIntegrationWebhookUrlLabel => 'عنوان الهدف';
+
+  @override
+  String get settingsApiIntegrationWebhookUrlPlaceholder =>
+      'مثال: https://example.com/hooks/assetpilot';
+
+  @override
+  String get settingsApiIntegrationWebhookEventsLabel => 'أنواع الأحداث';
+
+  @override
+  String get settingsApiIntegrationWebhookActiveLabel => 'تفعيل هذا الاشتراك';
+
+  @override
+  String get settingsApiIntegrationWebhookCreateButton => 'إنشاء الاشتراك';
+
+  @override
+  String get settingsApiIntegrationWebhookSaveButton => 'حفظ التغييرات';
+
+  @override
+  String get settingsApiIntegrationWebhookCancelEdit => 'إلغاء التعديل';
+
+  @override
+  String get settingsApiIntegrationWebhookListTitle =>
+      'اشتراكات Webhook الخاصة بي';
+
+  @override
+  String get settingsApiIntegrationWebhookNoItems => 'لم تُنشئ أي اشتراك بعد';
+
+  @override
+  String get settingsApiIntegrationColUrl => 'عنوان الهدف';
+
+  @override
+  String get settingsApiIntegrationColEvents => 'الأحداث';
+
+  @override
+  String get settingsApiIntegrationColEnabled => 'الحالة';
+
+  @override
+  String get settingsApiIntegrationColLastSuccess => 'آخر نجاح';
+
+  @override
+  String get settingsApiIntegrationColLastFailure => 'آخر فشل';
+
+  @override
+  String get settingsApiIntegrationWebhookEnabled => 'مفعّل';
+
+  @override
+  String get settingsApiIntegrationWebhookDisabled => 'معطّل';
+
+  @override
+  String get settingsApiIntegrationWebhookEditButton => 'تعديل';
+
+  @override
+  String get settingsApiIntegrationWebhookDeleteButton => 'حذف';
+
+  @override
+  String get settingsApiIntegrationWebhookDeleteConfirm =>
+      'هل تريد حذف هذا الاشتراك؟ ستُحذف أيضًا سجلات التسليم المرتبطة به ولا يمكن التراجع.';
+
+  @override
+  String get settingsApiIntegrationWebhookSecretModalTitle =>
+      'مفتاح توقيع Webhook';
+
+  @override
+  String get settingsApiIntegrationWebhookSecretModalWarning =>
+      'يُعرض مفتاح التوقيع هذا مرة واحدة فقط؛ انسخه واحفظه الآن. بعد الإغلاق لن يمكن استرجاعه.';
+
+  @override
+  String get settingsApiIntegrationWebhookSignatureHeaderLabel =>
+      'تنسيق ترويسة التوقيع';
+
+  @override
+  String get settingsApiIntegrationWebhookSignatureHint =>
+      'التوقيع هو HMAC-SHA256 محسوب على الطابع الزمني ونقطة ثم جسم الطلب الأصلي. قارن الطابع الزمني (بهامش 5 دقائق) لمنع إعادة الإرسال.';
+
+  @override
+  String get settingsApiIntegrationDeliveryTitle => 'سجلات التسليم';
+
+  @override
+  String get settingsApiIntegrationDeliveryDescription =>
+      'اطّلع على نتائج التسليم الأخيرة وأسباب الفشل.';
+
+  @override
+  String get settingsApiIntegrationDeliveryFilterLabel => 'تصفية حسب الاشتراك';
+
+  @override
+  String get settingsApiIntegrationDeliveryAllSubscriptions => 'كل الاشتراكات';
+
+  @override
+  String get settingsApiIntegrationDeliveryNoItems => 'لا توجد سجلات تسليم بعد';
+
+  @override
+  String get settingsApiIntegrationDeliveryStatusPending => 'قيد الانتظار';
+
+  @override
+  String get settingsApiIntegrationDeliveryStatusSuccess => 'ناجح';
+
+  @override
+  String get settingsApiIntegrationDeliveryStatusFailed => 'فاشل';
+
+  @override
+  String get settingsApiIntegrationColEventType => 'الحدث';
+
+  @override
+  String get settingsApiIntegrationColAttempts => 'المحاولات';
+
+  @override
+  String get settingsApiIntegrationColStatusCode => 'رمز الحالة';
+
+  @override
+  String get settingsApiIntegrationColDeliveredAt => 'وقت التسليم';
+
+  @override
+  String get settingsApiIntegrationColError => 'رسالة الخطأ';
+
+  @override
+  String get settingsApiIntegrationEventCreated => 'أُنشئت معاملة';
+
+  @override
+  String get settingsApiIntegrationEventUpdated => 'عُدّلت معاملة';
+
+  @override
+  String get settingsApiIntegrationEventDeleted => 'حُذفت معاملة';
+
+  @override
+  String get settingsApiIntegrationLoadTokensFailed => 'تعذّر تحميل رموز API';
+
+  @override
+  String get settingsApiIntegrationLoadWebhooksFailed =>
+      'تعذّر تحميل اشتراكات Webhook';
+
+  @override
+  String get settingsApiIntegrationLoadDeliveriesFailed =>
+      'تعذّر تحميل سجلات التسليم';
+
+  @override
+  String get settingsApiIntegrationCreateTokenFailed => 'تعذّر إنشاء رمز API';
+
+  @override
+  String get settingsApiIntegrationRevokeTokenFailed => 'تعذّر إلغاء رمز API';
+
+  @override
+  String get settingsApiIntegrationCreateWebhookFailed =>
+      'تعذّر إنشاء الاشتراك';
+
+  @override
+  String get settingsApiIntegrationUpdateWebhookFailed =>
+      'تعذّر تحديث الاشتراك';
+
+  @override
+  String get settingsApiIntegrationDeleteWebhookFailed => 'تعذّر حذف الاشتراك';
+
+  @override
+  String get settingsApiIntegrationUrlRequired => 'أدخل عنوان الهدف';
+
+  @override
+  String get settingsApiIntegrationEventRequired =>
+      'اختر نوع حدث واحدًا على الأقل';
+
+  @override
+  String get settingsApiIntegrationCloseConfirm => 'لقد نسخت المفتاح، إغلاق';
 }

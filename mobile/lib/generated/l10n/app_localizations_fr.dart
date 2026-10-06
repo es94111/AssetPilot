@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -5079,4 +5080,317 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get featuresCalendarEventTypesTransfer => 'Virement';
+
+  @override
+  String get navApiIntegration => 'Intégration API';
+
+  @override
+  String get commonRefresh => 'Actualiser';
+
+  @override
+  String get commonCopy => 'Copier';
+
+  @override
+  String get commonCopied => 'Copié !';
+
+  @override
+  String get settingsApiIntegrationTitle => 'Paramètres d\'intégration API';
+
+  @override
+  String get settingsApiIntegrationDescription =>
+      'Créez des jetons d\'API pour que des services tiers appellent l\'API REST, et abonnez-vous aux événements de transactions avec des webhooks.';
+
+  @override
+  String get settingsApiIntegrationTokenTitle => 'Jetons d\'API';
+
+  @override
+  String get settingsApiIntegrationTokenDescription =>
+      'Les jetons portent des permissions sélectionnables et leur valeur en clair n\'est affichée qu\'une fois ; enregistrez-la juste après la création. Chaque compte peut détenir jusqu\'à 20 jetons actifs.';
+
+  @override
+  String get settingsApiIntegrationTokenCreateTitle => 'Créer un jeton';
+
+  @override
+  String get settingsApiIntegrationTokenNameLabel => 'Nom';
+
+  @override
+  String get settingsApiIntegrationTokenNamePlaceholder =>
+      'Par exemple : script d\'automatisation personnel';
+
+  @override
+  String get settingsApiIntegrationTokenExpiresAtLabel =>
+      'Date d\'expiration (facultatif)';
+
+  @override
+  String get settingsApiIntegrationTokenScopesLabel => 'Permissions';
+
+  @override
+  String get settingsApiIntegrationTokenCreateButton => 'Créer le jeton';
+
+  @override
+  String get settingsApiIntegrationTokenCreating => 'Création…';
+
+  @override
+  String get settingsApiIntegrationTokenListTitle => 'Mes jetons d\'API';
+
+  @override
+  String get settingsApiIntegrationTokenNoItems =>
+      'Aucun jeton d\'API créé pour le moment';
+
+  @override
+  String get settingsApiIntegrationTokenStatusActive => 'Actif';
+
+  @override
+  String get settingsApiIntegrationTokenStatusExpired => 'Expiré';
+
+  @override
+  String get settingsApiIntegrationTokenStatusRevoked => 'Révoqué';
+
+  @override
+  String get settingsApiIntegrationTokenRevokeButton => 'Révoquer';
+
+  @override
+  String get settingsApiIntegrationTokenRevokeConfirm =>
+      'Révoquer ce jeton d\'API ? Les appels qui l\'utilisent seront immédiatement refusés.';
+
+  @override
+  String get settingsApiIntegrationTokenRevoked => 'Jeton d\'API révoqué';
+
+  @override
+  String get settingsApiIntegrationTokenModalTitle => 'Jeton d\'API créé';
+
+  @override
+  String get settingsApiIntegrationTokenModalWarning =>
+      'Ce jeton n\'est affiché qu\'une seule fois : copiez-le et conservez-le maintenant. Après fermeture, la valeur en clair ne sera plus accessible.';
+
+  @override
+  String get settingsApiIntegrationTokenNameRequired => 'Saisissez un nom';
+
+  @override
+  String get settingsApiIntegrationTokenScopeRequired =>
+      'Sélectionnez au moins une permission';
+
+  @override
+  String get settingsApiIntegrationColName => 'Nom';
+
+  @override
+  String get settingsApiIntegrationColPrefix => 'Préfixe';
+
+  @override
+  String get settingsApiIntegrationColScopes => 'Permissions';
+
+  @override
+  String get settingsApiIntegrationColStatus => 'Statut';
+
+  @override
+  String get settingsApiIntegrationColCreatedAt => 'Créé le';
+
+  @override
+  String get settingsApiIntegrationColLastUsedAt => 'Dernière utilisation';
+
+  @override
+  String get settingsApiIntegrationColExpiresAt => 'Expire le';
+
+  @override
+  String get settingsApiIntegrationColActions => 'Actions';
+
+  @override
+  String get settingsApiIntegrationNeverUsed => 'Jamais utilisé';
+
+  @override
+  String get settingsApiIntegrationNeverExpires => 'Sans expiration';
+
+  @override
+  String get settingsApiIntegrationScopeTransactionsRead =>
+      'Lire les transactions';
+
+  @override
+  String get settingsApiIntegrationScopeTransactionsWrite =>
+      'Créer des transactions';
+
+  @override
+  String get settingsApiIntegrationScopeWebhooksManage => 'Gérer les webhooks';
+
+  @override
+  String get settingsApiIntegrationWebhookTitle => 'Abonnements webhook';
+
+  @override
+  String get settingsApiIntegrationWebhookDescription =>
+      'Abonnez-vous aux événements de transactions. L\'URL cible doit être un HTTPS public et ne peut pas pointer vers le réseau local ou interne.';
+
+  @override
+  String get settingsApiIntegrationWebhookCreateTitle => 'Créer un abonnement';
+
+  @override
+  String get settingsApiIntegrationWebhookUrlLabel => 'URL cible';
+
+  @override
+  String get settingsApiIntegrationWebhookUrlPlaceholder =>
+      'Par exemple : https://example.com/hooks/assetpilot';
+
+  @override
+  String get settingsApiIntegrationWebhookEventsLabel => 'Types d\'événement';
+
+  @override
+  String get settingsApiIntegrationWebhookActiveLabel =>
+      'Activer cet abonnement';
+
+  @override
+  String get settingsApiIntegrationWebhookCreateButton => 'Créer l\'abonnement';
+
+  @override
+  String get settingsApiIntegrationWebhookSaveButton => 'Enregistrer';
+
+  @override
+  String get settingsApiIntegrationWebhookCancelEdit =>
+      'Annuler la modification';
+
+  @override
+  String get settingsApiIntegrationWebhookListTitle =>
+      'Mes abonnements webhook';
+
+  @override
+  String get settingsApiIntegrationWebhookNoItems =>
+      'Aucun abonnement créé pour le moment';
+
+  @override
+  String get settingsApiIntegrationColUrl => 'URL cible';
+
+  @override
+  String get settingsApiIntegrationColEvents => 'Événements';
+
+  @override
+  String get settingsApiIntegrationColEnabled => 'Statut';
+
+  @override
+  String get settingsApiIntegrationColLastSuccess => 'Dernier succès';
+
+  @override
+  String get settingsApiIntegrationColLastFailure => 'Dernier échec';
+
+  @override
+  String get settingsApiIntegrationWebhookEnabled => 'Actif';
+
+  @override
+  String get settingsApiIntegrationWebhookDisabled => 'Désactivé';
+
+  @override
+  String get settingsApiIntegrationWebhookEditButton => 'Modifier';
+
+  @override
+  String get settingsApiIntegrationWebhookDeleteButton => 'Supprimer';
+
+  @override
+  String get settingsApiIntegrationWebhookDeleteConfirm =>
+      'Supprimer cet abonnement ? Son historique de livraison sera également supprimé, sans possibilité de restauration.';
+
+  @override
+  String get settingsApiIntegrationWebhookSecretModalTitle =>
+      'Clé de signature du webhook';
+
+  @override
+  String get settingsApiIntegrationWebhookSecretModalWarning =>
+      'Cette clé de signature n\'est affichée qu\'une seule fois : copiez-la et conservez-la maintenant. Après fermeture, elle ne pourra plus être récupérée.';
+
+  @override
+  String get settingsApiIntegrationWebhookSignatureHeaderLabel =>
+      'Format de l\'en-tête de signature';
+
+  @override
+  String get settingsApiIntegrationWebhookSignatureHint =>
+      'La signature est un HMAC-SHA256 calculé sur l\'horodatage, un point et le corps brut de la requête. Comparez l\'horodatage (tolérance de 5 minutes) pour éviter les rejeux.';
+
+  @override
+  String get settingsApiIntegrationDeliveryTitle => 'Historique des livraisons';
+
+  @override
+  String get settingsApiIntegrationDeliveryDescription =>
+      'Consultez les livraisons récentes et la cause des échecs.';
+
+  @override
+  String get settingsApiIntegrationDeliveryFilterLabel =>
+      'Filtrer par abonnement';
+
+  @override
+  String get settingsApiIntegrationDeliveryAllSubscriptions =>
+      'Tous les abonnements';
+
+  @override
+  String get settingsApiIntegrationDeliveryNoItems =>
+      'Aucune livraison enregistrée';
+
+  @override
+  String get settingsApiIntegrationDeliveryStatusPending => 'En attente';
+
+  @override
+  String get settingsApiIntegrationDeliveryStatusSuccess => 'Réussie';
+
+  @override
+  String get settingsApiIntegrationDeliveryStatusFailed => 'Échouée';
+
+  @override
+  String get settingsApiIntegrationColEventType => 'Événement';
+
+  @override
+  String get settingsApiIntegrationColAttempts => 'Tentatives';
+
+  @override
+  String get settingsApiIntegrationColStatusCode => 'Code HTTP';
+
+  @override
+  String get settingsApiIntegrationColDeliveredAt => 'Livré le';
+
+  @override
+  String get settingsApiIntegrationColError => 'Message d\'erreur';
+
+  @override
+  String get settingsApiIntegrationEventCreated => 'Transaction créée';
+
+  @override
+  String get settingsApiIntegrationEventUpdated => 'Transaction modifiée';
+
+  @override
+  String get settingsApiIntegrationEventDeleted => 'Transaction supprimée';
+
+  @override
+  String get settingsApiIntegrationLoadTokensFailed =>
+      'Échec du chargement des jetons d\'API';
+
+  @override
+  String get settingsApiIntegrationLoadWebhooksFailed =>
+      'Échec du chargement des abonnements webhook';
+
+  @override
+  String get settingsApiIntegrationLoadDeliveriesFailed =>
+      'Échec du chargement de l\'historique des livraisons';
+
+  @override
+  String get settingsApiIntegrationCreateTokenFailed =>
+      'Échec de la création du jeton d\'API';
+
+  @override
+  String get settingsApiIntegrationRevokeTokenFailed =>
+      'Échec de la révocation du jeton d\'API';
+
+  @override
+  String get settingsApiIntegrationCreateWebhookFailed =>
+      'Échec de la création de l\'abonnement';
+
+  @override
+  String get settingsApiIntegrationUpdateWebhookFailed =>
+      'Échec de la mise à jour de l\'abonnement';
+
+  @override
+  String get settingsApiIntegrationDeleteWebhookFailed =>
+      'Échec de la suppression de l\'abonnement';
+
+  @override
+  String get settingsApiIntegrationUrlRequired => 'Saisissez l\'URL cible';
+
+  @override
+  String get settingsApiIntegrationEventRequired =>
+      'Sélectionnez au moins un type d\'événement';
+
+  @override
+  String get settingsApiIntegrationCloseConfirm => 'J\'ai copié la clé, fermer';
 }

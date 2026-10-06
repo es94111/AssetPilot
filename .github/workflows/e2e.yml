@@ -122,7 +122,7 @@ jobs:
       # 下載 artifact 後請人工檢視每張截圖，確認無異狀再提交到
       # tests/e2e/**/*-snapshots/。
       - name: Generate baseline snapshots
-        run: npm run test:e2e:update-snapshots -- tests/e2e/visual.test.ts
+        run: npx playwright test tests/e2e/visual.test.ts --update-snapshots=all
         env:
           CI: "true"
 

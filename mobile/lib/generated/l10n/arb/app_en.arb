@@ -7687,5 +7687,475 @@
   "@featuresCalendarEventTypesTransfer": {
     "description": "Web path: features.calendar.eventTypes.transfer",
     "x-webPath": "features.calendar.eventTypes.transfer"
+  },
+  "navApiIntegration": "API integration",
+  "@navApiIntegration": {
+    "description": "Web path: nav.apiIntegration",
+    "x-webPath": "nav.apiIntegration"
+  },
+  "commonRefresh": "Refresh",
+  "@commonRefresh": {
+    "description": "Web path: common.refresh",
+    "x-webPath": "common.refresh"
+  },
+  "commonCopy": "Copy",
+  "@commonCopy": {
+    "description": "Web path: common.copy",
+    "x-webPath": "common.copy"
+  },
+  "commonCopied": "Copied!",
+  "@commonCopied": {
+    "description": "Web path: common.copied",
+    "x-webPath": "common.copied"
+  },
+  "settingsApiIntegrationTitle": "API integration settings",
+  "@settingsApiIntegrationTitle": {
+    "description": "Web path: settings.apiIntegration.title",
+    "x-webPath": "settings.apiIntegration.title"
+  },
+  "settingsApiIntegrationDescription": "Create API tokens for third-party services that call the REST API, and subscribe to transaction events with webhooks.",
+  "@settingsApiIntegrationDescription": {
+    "description": "Web path: settings.apiIntegration.description",
+    "x-webPath": "settings.apiIntegration.description"
+  },
+  "settingsApiIntegrationTokenTitle": "API tokens",
+  "@settingsApiIntegrationTokenTitle": {
+    "description": "Web path: settings.apiIntegration.tokenTitle",
+    "x-webPath": "settings.apiIntegration.tokenTitle"
+  },
+  "settingsApiIntegrationTokenDescription": "Tokens carry selectable scopes, and their plaintext is shown only once — save it right after creating. Each account can hold up to 20 active tokens.",
+  "@settingsApiIntegrationTokenDescription": {
+    "description": "Web path: settings.apiIntegration.tokenDescription",
+    "x-webPath": "settings.apiIntegration.tokenDescription"
+  },
+  "settingsApiIntegrationTokenCreateTitle": "Create new token",
+  "@settingsApiIntegrationTokenCreateTitle": {
+    "description": "Web path: settings.apiIntegration.tokenCreateTitle",
+    "x-webPath": "settings.apiIntegration.tokenCreateTitle"
+  },
+  "settingsApiIntegrationTokenNameLabel": "Name",
+  "@settingsApiIntegrationTokenNameLabel": {
+    "description": "Web path: settings.apiIntegration.tokenNameLabel",
+    "x-webPath": "settings.apiIntegration.tokenNameLabel"
+  },
+  "settingsApiIntegrationTokenNamePlaceholder": "For example: personal automation script",
+  "@settingsApiIntegrationTokenNamePlaceholder": {
+    "description": "Web path: settings.apiIntegration.tokenNamePlaceholder",
+    "x-webPath": "settings.apiIntegration.tokenNamePlaceholder"
+  },
+  "settingsApiIntegrationTokenExpiresAtLabel": "Expiry (optional)",
+  "@settingsApiIntegrationTokenExpiresAtLabel": {
+    "description": "Web path: settings.apiIntegration.tokenExpiresAtLabel",
+    "x-webPath": "settings.apiIntegration.tokenExpiresAtLabel"
+  },
+  "settingsApiIntegrationTokenScopesLabel": "Scopes",
+  "@settingsApiIntegrationTokenScopesLabel": {
+    "description": "Web path: settings.apiIntegration.tokenScopesLabel",
+    "x-webPath": "settings.apiIntegration.tokenScopesLabel"
+  },
+  "settingsApiIntegrationTokenCreateButton": "Create token",
+  "@settingsApiIntegrationTokenCreateButton": {
+    "description": "Web path: settings.apiIntegration.tokenCreateButton",
+    "x-webPath": "settings.apiIntegration.tokenCreateButton"
+  },
+  "settingsApiIntegrationTokenCreating": "Creating…",
+  "@settingsApiIntegrationTokenCreating": {
+    "description": "Web path: settings.apiIntegration.tokenCreating",
+    "x-webPath": "settings.apiIntegration.tokenCreating"
+  },
+  "settingsApiIntegrationTokenListTitle": "My API tokens",
+  "@settingsApiIntegrationTokenListTitle": {
+    "description": "Web path: settings.apiIntegration.tokenListTitle",
+    "x-webPath": "settings.apiIntegration.tokenListTitle"
+  },
+  "settingsApiIntegrationTokenNoItems": "No API tokens created yet",
+  "@settingsApiIntegrationTokenNoItems": {
+    "description": "Web path: settings.apiIntegration.tokenNoItems",
+    "x-webPath": "settings.apiIntegration.tokenNoItems"
+  },
+  "settingsApiIntegrationTokenStatusActive": "Active",
+  "@settingsApiIntegrationTokenStatusActive": {
+    "description": "Web path: settings.apiIntegration.tokenStatusActive",
+    "x-webPath": "settings.apiIntegration.tokenStatusActive"
+  },
+  "settingsApiIntegrationTokenStatusExpired": "Expired",
+  "@settingsApiIntegrationTokenStatusExpired": {
+    "description": "Web path: settings.apiIntegration.tokenStatusExpired",
+    "x-webPath": "settings.apiIntegration.tokenStatusExpired"
+  },
+  "settingsApiIntegrationTokenStatusRevoked": "Revoked",
+  "@settingsApiIntegrationTokenStatusRevoked": {
+    "description": "Web path: settings.apiIntegration.tokenStatusRevoked",
+    "x-webPath": "settings.apiIntegration.tokenStatusRevoked"
+  },
+  "settingsApiIntegrationTokenRevokeButton": "Revoke",
+  "@settingsApiIntegrationTokenRevokeButton": {
+    "description": "Web path: settings.apiIntegration.tokenRevokeButton",
+    "x-webPath": "settings.apiIntegration.tokenRevokeButton"
+  },
+  "settingsApiIntegrationTokenRevokeConfirm": "Revoke this API token? Calls using it will be rejected immediately.",
+  "@settingsApiIntegrationTokenRevokeConfirm": {
+    "description": "Web path: settings.apiIntegration.tokenRevokeConfirm",
+    "x-webPath": "settings.apiIntegration.tokenRevokeConfirm"
+  },
+  "settingsApiIntegrationTokenRevoked": "API token revoked",
+  "@settingsApiIntegrationTokenRevoked": {
+    "description": "Web path: settings.apiIntegration.tokenRevoked",
+    "x-webPath": "settings.apiIntegration.tokenRevoked"
+  },
+  "settingsApiIntegrationTokenModalTitle": "API token created",
+  "@settingsApiIntegrationTokenModalTitle": {
+    "description": "Web path: settings.apiIntegration.tokenModalTitle",
+    "x-webPath": "settings.apiIntegration.tokenModalTitle"
+  },
+  "settingsApiIntegrationTokenModalWarning": "This token is shown only once — copy and store it now. After closing, the plaintext can no longer be viewed.",
+  "@settingsApiIntegrationTokenModalWarning": {
+    "description": "Web path: settings.apiIntegration.tokenModalWarning",
+    "x-webPath": "settings.apiIntegration.tokenModalWarning"
+  },
+  "settingsApiIntegrationTokenNameRequired": "Enter a name",
+  "@settingsApiIntegrationTokenNameRequired": {
+    "description": "Web path: settings.apiIntegration.tokenNameRequired",
+    "x-webPath": "settings.apiIntegration.tokenNameRequired"
+  },
+  "settingsApiIntegrationTokenScopeRequired": "Select at least one scope",
+  "@settingsApiIntegrationTokenScopeRequired": {
+    "description": "Web path: settings.apiIntegration.tokenScopeRequired",
+    "x-webPath": "settings.apiIntegration.tokenScopeRequired"
+  },
+  "settingsApiIntegrationColName": "Name",
+  "@settingsApiIntegrationColName": {
+    "description": "Web path: settings.apiIntegration.colName",
+    "x-webPath": "settings.apiIntegration.colName"
+  },
+  "settingsApiIntegrationColPrefix": "Prefix",
+  "@settingsApiIntegrationColPrefix": {
+    "description": "Web path: settings.apiIntegration.colPrefix",
+    "x-webPath": "settings.apiIntegration.colPrefix"
+  },
+  "settingsApiIntegrationColScopes": "Scopes",
+  "@settingsApiIntegrationColScopes": {
+    "description": "Web path: settings.apiIntegration.colScopes",
+    "x-webPath": "settings.apiIntegration.colScopes"
+  },
+  "settingsApiIntegrationColStatus": "Status",
+  "@settingsApiIntegrationColStatus": {
+    "description": "Web path: settings.apiIntegration.colStatus",
+    "x-webPath": "settings.apiIntegration.colStatus"
+  },
+  "settingsApiIntegrationColCreatedAt": "Created",
+  "@settingsApiIntegrationColCreatedAt": {
+    "description": "Web path: settings.apiIntegration.colCreatedAt",
+    "x-webPath": "settings.apiIntegration.colCreatedAt"
+  },
+  "settingsApiIntegrationColLastUsedAt": "Last used",
+  "@settingsApiIntegrationColLastUsedAt": {
+    "description": "Web path: settings.apiIntegration.colLastUsedAt",
+    "x-webPath": "settings.apiIntegration.colLastUsedAt"
+  },
+  "settingsApiIntegrationColExpiresAt": "Expires",
+  "@settingsApiIntegrationColExpiresAt": {
+    "description": "Web path: settings.apiIntegration.colExpiresAt",
+    "x-webPath": "settings.apiIntegration.colExpiresAt"
+  },
+  "settingsApiIntegrationColActions": "Actions",
+  "@settingsApiIntegrationColActions": {
+    "description": "Web path: settings.apiIntegration.colActions",
+    "x-webPath": "settings.apiIntegration.colActions"
+  },
+  "settingsApiIntegrationNeverUsed": "Never used",
+  "@settingsApiIntegrationNeverUsed": {
+    "description": "Web path: settings.apiIntegration.neverUsed",
+    "x-webPath": "settings.apiIntegration.neverUsed"
+  },
+  "settingsApiIntegrationNeverExpires": "Never expires",
+  "@settingsApiIntegrationNeverExpires": {
+    "description": "Web path: settings.apiIntegration.neverExpires",
+    "x-webPath": "settings.apiIntegration.neverExpires"
+  },
+  "settingsApiIntegrationScopeTransactionsRead": "Read transactions",
+  "@settingsApiIntegrationScopeTransactionsRead": {
+    "description": "Web path: settings.apiIntegration.scope.transactionsRead",
+    "x-webPath": "settings.apiIntegration.scope.transactionsRead"
+  },
+  "settingsApiIntegrationScopeTransactionsWrite": "Create transactions",
+  "@settingsApiIntegrationScopeTransactionsWrite": {
+    "description": "Web path: settings.apiIntegration.scope.transactionsWrite",
+    "x-webPath": "settings.apiIntegration.scope.transactionsWrite"
+  },
+  "settingsApiIntegrationScopeWebhooksManage": "Manage webhooks",
+  "@settingsApiIntegrationScopeWebhooksManage": {
+    "description": "Web path: settings.apiIntegration.scope.webhooksManage",
+    "x-webPath": "settings.apiIntegration.scope.webhooksManage"
+  },
+  "settingsApiIntegrationWebhookTitle": "Webhook subscriptions",
+  "@settingsApiIntegrationWebhookTitle": {
+    "description": "Web path: settings.apiIntegration.webhookTitle",
+    "x-webPath": "settings.apiIntegration.webhookTitle"
+  },
+  "settingsApiIntegrationWebhookDescription": "Subscribe to transaction events. The target URL must be public HTTPS and cannot point to a local or internal network.",
+  "@settingsApiIntegrationWebhookDescription": {
+    "description": "Web path: settings.apiIntegration.webhookDescription",
+    "x-webPath": "settings.apiIntegration.webhookDescription"
+  },
+  "settingsApiIntegrationWebhookCreateTitle": "Create subscription",
+  "@settingsApiIntegrationWebhookCreateTitle": {
+    "description": "Web path: settings.apiIntegration.webhookCreateTitle",
+    "x-webPath": "settings.apiIntegration.webhookCreateTitle"
+  },
+  "settingsApiIntegrationWebhookUrlLabel": "Target URL",
+  "@settingsApiIntegrationWebhookUrlLabel": {
+    "description": "Web path: settings.apiIntegration.webhookUrlLabel",
+    "x-webPath": "settings.apiIntegration.webhookUrlLabel"
+  },
+  "settingsApiIntegrationWebhookUrlPlaceholder": "For example: https://example.com/hooks/assetpilot",
+  "@settingsApiIntegrationWebhookUrlPlaceholder": {
+    "description": "Web path: settings.apiIntegration.webhookUrlPlaceholder",
+    "x-webPath": "settings.apiIntegration.webhookUrlPlaceholder"
+  },
+  "settingsApiIntegrationWebhookEventsLabel": "Event types",
+  "@settingsApiIntegrationWebhookEventsLabel": {
+    "description": "Web path: settings.apiIntegration.webhookEventsLabel",
+    "x-webPath": "settings.apiIntegration.webhookEventsLabel"
+  },
+  "settingsApiIntegrationWebhookActiveLabel": "Enable this subscription",
+  "@settingsApiIntegrationWebhookActiveLabel": {
+    "description": "Web path: settings.apiIntegration.webhookActiveLabel",
+    "x-webPath": "settings.apiIntegration.webhookActiveLabel"
+  },
+  "settingsApiIntegrationWebhookCreateButton": "Create subscription",
+  "@settingsApiIntegrationWebhookCreateButton": {
+    "description": "Web path: settings.apiIntegration.webhookCreateButton",
+    "x-webPath": "settings.apiIntegration.webhookCreateButton"
+  },
+  "settingsApiIntegrationWebhookSaveButton": "Save changes",
+  "@settingsApiIntegrationWebhookSaveButton": {
+    "description": "Web path: settings.apiIntegration.webhookSaveButton",
+    "x-webPath": "settings.apiIntegration.webhookSaveButton"
+  },
+  "settingsApiIntegrationWebhookCancelEdit": "Cancel editing",
+  "@settingsApiIntegrationWebhookCancelEdit": {
+    "description": "Web path: settings.apiIntegration.webhookCancelEdit",
+    "x-webPath": "settings.apiIntegration.webhookCancelEdit"
+  },
+  "settingsApiIntegrationWebhookListTitle": "My webhook subscriptions",
+  "@settingsApiIntegrationWebhookListTitle": {
+    "description": "Web path: settings.apiIntegration.webhookListTitle",
+    "x-webPath": "settings.apiIntegration.webhookListTitle"
+  },
+  "settingsApiIntegrationWebhookNoItems": "No subscriptions created yet",
+  "@settingsApiIntegrationWebhookNoItems": {
+    "description": "Web path: settings.apiIntegration.webhookNoItems",
+    "x-webPath": "settings.apiIntegration.webhookNoItems"
+  },
+  "settingsApiIntegrationColUrl": "Target URL",
+  "@settingsApiIntegrationColUrl": {
+    "description": "Web path: settings.apiIntegration.colUrl",
+    "x-webPath": "settings.apiIntegration.colUrl"
+  },
+  "settingsApiIntegrationColEvents": "Events",
+  "@settingsApiIntegrationColEvents": {
+    "description": "Web path: settings.apiIntegration.colEvents",
+    "x-webPath": "settings.apiIntegration.colEvents"
+  },
+  "settingsApiIntegrationColEnabled": "Status",
+  "@settingsApiIntegrationColEnabled": {
+    "description": "Web path: settings.apiIntegration.colEnabled",
+    "x-webPath": "settings.apiIntegration.colEnabled"
+  },
+  "settingsApiIntegrationColLastSuccess": "Last success",
+  "@settingsApiIntegrationColLastSuccess": {
+    "description": "Web path: settings.apiIntegration.colLastSuccess",
+    "x-webPath": "settings.apiIntegration.colLastSuccess"
+  },
+  "settingsApiIntegrationColLastFailure": "Last failure",
+  "@settingsApiIntegrationColLastFailure": {
+    "description": "Web path: settings.apiIntegration.colLastFailure",
+    "x-webPath": "settings.apiIntegration.colLastFailure"
+  },
+  "settingsApiIntegrationWebhookEnabled": "Enabled",
+  "@settingsApiIntegrationWebhookEnabled": {
+    "description": "Web path: settings.apiIntegration.webhookEnabled",
+    "x-webPath": "settings.apiIntegration.webhookEnabled"
+  },
+  "settingsApiIntegrationWebhookDisabled": "Disabled",
+  "@settingsApiIntegrationWebhookDisabled": {
+    "description": "Web path: settings.apiIntegration.webhookDisabled",
+    "x-webPath": "settings.apiIntegration.webhookDisabled"
+  },
+  "settingsApiIntegrationWebhookEditButton": "Edit",
+  "@settingsApiIntegrationWebhookEditButton": {
+    "description": "Web path: settings.apiIntegration.webhookEditButton",
+    "x-webPath": "settings.apiIntegration.webhookEditButton"
+  },
+  "settingsApiIntegrationWebhookDeleteButton": "Delete",
+  "@settingsApiIntegrationWebhookDeleteButton": {
+    "description": "Web path: settings.apiIntegration.webhookDeleteButton",
+    "x-webPath": "settings.apiIntegration.webhookDeleteButton"
+  },
+  "settingsApiIntegrationWebhookDeleteConfirm": "Delete this subscription? Its delivery records will be removed too and this cannot be undone.",
+  "@settingsApiIntegrationWebhookDeleteConfirm": {
+    "description": "Web path: settings.apiIntegration.webhookDeleteConfirm",
+    "x-webPath": "settings.apiIntegration.webhookDeleteConfirm"
+  },
+  "settingsApiIntegrationWebhookSecretModalTitle": "Webhook signing secret",
+  "@settingsApiIntegrationWebhookSecretModalTitle": {
+    "description": "Web path: settings.apiIntegration.webhookSecretModalTitle",
+    "x-webPath": "settings.apiIntegration.webhookSecretModalTitle"
+  },
+  "settingsApiIntegrationWebhookSecretModalWarning": "This signing secret is shown only once — copy and store it now. After closing, it cannot be retrieved again.",
+  "@settingsApiIntegrationWebhookSecretModalWarning": {
+    "description": "Web path: settings.apiIntegration.webhookSecretModalWarning",
+    "x-webPath": "settings.apiIntegration.webhookSecretModalWarning"
+  },
+  "settingsApiIntegrationWebhookSignatureHeaderLabel": "Signature header format",
+  "@settingsApiIntegrationWebhookSignatureHeaderLabel": {
+    "description": "Web path: settings.apiIntegration.webhookSignatureHeaderLabel",
+    "x-webPath": "settings.apiIntegration.webhookSignatureHeaderLabel"
+  },
+  "settingsApiIntegrationWebhookSignatureHint": "The signature is an HMAC-SHA256 over the timestamp, a period, and the raw request body. Compare the timestamp (5-minute tolerance) to resist replay attacks.",
+  "@settingsApiIntegrationWebhookSignatureHint": {
+    "description": "Web path: settings.apiIntegration.webhookSignatureHint",
+    "x-webPath": "settings.apiIntegration.webhookSignatureHint"
+  },
+  "settingsApiIntegrationDeliveryTitle": "Delivery records",
+  "@settingsApiIntegrationDeliveryTitle": {
+    "description": "Web path: settings.apiIntegration.deliveryTitle",
+    "x-webPath": "settings.apiIntegration.deliveryTitle"
+  },
+  "settingsApiIntegrationDeliveryDescription": "Review recent webhook delivery results and failure reasons.",
+  "@settingsApiIntegrationDeliveryDescription": {
+    "description": "Web path: settings.apiIntegration.deliveryDescription",
+    "x-webPath": "settings.apiIntegration.deliveryDescription"
+  },
+  "settingsApiIntegrationDeliveryFilterLabel": "Filter by subscription",
+  "@settingsApiIntegrationDeliveryFilterLabel": {
+    "description": "Web path: settings.apiIntegration.deliveryFilterLabel",
+    "x-webPath": "settings.apiIntegration.deliveryFilterLabel"
+  },
+  "settingsApiIntegrationDeliveryAllSubscriptions": "All subscriptions",
+  "@settingsApiIntegrationDeliveryAllSubscriptions": {
+    "description": "Web path: settings.apiIntegration.deliveryAllSubscriptions",
+    "x-webPath": "settings.apiIntegration.deliveryAllSubscriptions"
+  },
+  "settingsApiIntegrationDeliveryNoItems": "No delivery records yet",
+  "@settingsApiIntegrationDeliveryNoItems": {
+    "description": "Web path: settings.apiIntegration.deliveryNoItems",
+    "x-webPath": "settings.apiIntegration.deliveryNoItems"
+  },
+  "settingsApiIntegrationDeliveryStatusPending": "Pending",
+  "@settingsApiIntegrationDeliveryStatusPending": {
+    "description": "Web path: settings.apiIntegration.deliveryStatusPending",
+    "x-webPath": "settings.apiIntegration.deliveryStatusPending"
+  },
+  "settingsApiIntegrationDeliveryStatusSuccess": "Success",
+  "@settingsApiIntegrationDeliveryStatusSuccess": {
+    "description": "Web path: settings.apiIntegration.deliveryStatusSuccess",
+    "x-webPath": "settings.apiIntegration.deliveryStatusSuccess"
+  },
+  "settingsApiIntegrationDeliveryStatusFailed": "Failed",
+  "@settingsApiIntegrationDeliveryStatusFailed": {
+    "description": "Web path: settings.apiIntegration.deliveryStatusFailed",
+    "x-webPath": "settings.apiIntegration.deliveryStatusFailed"
+  },
+  "settingsApiIntegrationColEventType": "Event",
+  "@settingsApiIntegrationColEventType": {
+    "description": "Web path: settings.apiIntegration.colEventType",
+    "x-webPath": "settings.apiIntegration.colEventType"
+  },
+  "settingsApiIntegrationColAttempts": "Attempts",
+  "@settingsApiIntegrationColAttempts": {
+    "description": "Web path: settings.apiIntegration.colAttempts",
+    "x-webPath": "settings.apiIntegration.colAttempts"
+  },
+  "settingsApiIntegrationColStatusCode": "Status code",
+  "@settingsApiIntegrationColStatusCode": {
+    "description": "Web path: settings.apiIntegration.colStatusCode",
+    "x-webPath": "settings.apiIntegration.colStatusCode"
+  },
+  "settingsApiIntegrationColDeliveredAt": "Delivered",
+  "@settingsApiIntegrationColDeliveredAt": {
+    "description": "Web path: settings.apiIntegration.colDeliveredAt",
+    "x-webPath": "settings.apiIntegration.colDeliveredAt"
+  },
+  "settingsApiIntegrationColError": "Error message",
+  "@settingsApiIntegrationColError": {
+    "description": "Web path: settings.apiIntegration.colError",
+    "x-webPath": "settings.apiIntegration.colError"
+  },
+  "settingsApiIntegrationEventCreated": "Transaction created",
+  "@settingsApiIntegrationEventCreated": {
+    "description": "Web path: settings.apiIntegration.event.created",
+    "x-webPath": "settings.apiIntegration.event.created"
+  },
+  "settingsApiIntegrationEventUpdated": "Transaction updated",
+  "@settingsApiIntegrationEventUpdated": {
+    "description": "Web path: settings.apiIntegration.event.updated",
+    "x-webPath": "settings.apiIntegration.event.updated"
+  },
+  "settingsApiIntegrationEventDeleted": "Transaction deleted",
+  "@settingsApiIntegrationEventDeleted": {
+    "description": "Web path: settings.apiIntegration.event.deleted",
+    "x-webPath": "settings.apiIntegration.event.deleted"
+  },
+  "settingsApiIntegrationLoadTokensFailed": "Failed to load API tokens",
+  "@settingsApiIntegrationLoadTokensFailed": {
+    "description": "Web path: settings.apiIntegration.loadTokensFailed",
+    "x-webPath": "settings.apiIntegration.loadTokensFailed"
+  },
+  "settingsApiIntegrationLoadWebhooksFailed": "Failed to load webhook subscriptions",
+  "@settingsApiIntegrationLoadWebhooksFailed": {
+    "description": "Web path: settings.apiIntegration.loadWebhooksFailed",
+    "x-webPath": "settings.apiIntegration.loadWebhooksFailed"
+  },
+  "settingsApiIntegrationLoadDeliveriesFailed": "Failed to load delivery records",
+  "@settingsApiIntegrationLoadDeliveriesFailed": {
+    "description": "Web path: settings.apiIntegration.loadDeliveriesFailed",
+    "x-webPath": "settings.apiIntegration.loadDeliveriesFailed"
+  },
+  "settingsApiIntegrationCreateTokenFailed": "Failed to create API token",
+  "@settingsApiIntegrationCreateTokenFailed": {
+    "description": "Web path: settings.apiIntegration.createTokenFailed",
+    "x-webPath": "settings.apiIntegration.createTokenFailed"
+  },
+  "settingsApiIntegrationRevokeTokenFailed": "Failed to revoke API token",
+  "@settingsApiIntegrationRevokeTokenFailed": {
+    "description": "Web path: settings.apiIntegration.revokeTokenFailed",
+    "x-webPath": "settings.apiIntegration.revokeTokenFailed"
+  },
+  "settingsApiIntegrationCreateWebhookFailed": "Failed to create subscription",
+  "@settingsApiIntegrationCreateWebhookFailed": {
+    "description": "Web path: settings.apiIntegration.createWebhookFailed",
+    "x-webPath": "settings.apiIntegration.createWebhookFailed"
+  },
+  "settingsApiIntegrationUpdateWebhookFailed": "Failed to update subscription",
+  "@settingsApiIntegrationUpdateWebhookFailed": {
+    "description": "Web path: settings.apiIntegration.updateWebhookFailed",
+    "x-webPath": "settings.apiIntegration.updateWebhookFailed"
+  },
+  "settingsApiIntegrationDeleteWebhookFailed": "Failed to delete subscription",
+  "@settingsApiIntegrationDeleteWebhookFailed": {
+    "description": "Web path: settings.apiIntegration.deleteWebhookFailed",
+    "x-webPath": "settings.apiIntegration.deleteWebhookFailed"
+  },
+  "settingsApiIntegrationUrlRequired": "Enter the target URL",
+  "@settingsApiIntegrationUrlRequired": {
+    "description": "Web path: settings.apiIntegration.urlRequired",
+    "x-webPath": "settings.apiIntegration.urlRequired"
+  },
+  "settingsApiIntegrationEventRequired": "Select at least one event type",
+  "@settingsApiIntegrationEventRequired": {
+    "description": "Web path: settings.apiIntegration.eventRequired",
+    "x-webPath": "settings.apiIntegration.eventRequired"
+  },
+  "settingsApiIntegrationCloseConfirm": "I've copied it, close",
+  "@settingsApiIntegrationCloseConfirm": {
+    "description": "Web path: settings.apiIntegration.closeConfirm",
+    "x-webPath": "settings.apiIntegration.closeConfirm"
+  },
+  "settingsApiIntegrationCopyFailed": "Copy failed — automatic copying may be blocked here, so select and copy the value above manually",
+  "@settingsApiIntegrationCopyFailed": {
+    "description": "Web path: settings.apiIntegration.copyFailed",
+    "x-webPath": "settings.apiIntegration.copyFailed"
   }
 }

@@ -7672,5 +7672,475 @@
   "@featuresCalendarEventTypesTransfer": {
     "description": "Web path: features.calendar.eventTypes.transfer",
     "x-webPath": "features.calendar.eventTypes.transfer"
+  },
+  "navApiIntegration": "API 연동",
+  "@navApiIntegration": {
+    "description": "Web path: nav.apiIntegration",
+    "x-webPath": "nav.apiIntegration"
+  },
+  "commonRefresh": "새로고침",
+  "@commonRefresh": {
+    "description": "Web path: common.refresh",
+    "x-webPath": "common.refresh"
+  },
+  "commonCopy": "복사",
+  "@commonCopy": {
+    "description": "Web path: common.copy",
+    "x-webPath": "common.copy"
+  },
+  "commonCopied": "복사되었습니다!",
+  "@commonCopied": {
+    "description": "Web path: common.copied",
+    "x-webPath": "common.copied"
+  },
+  "settingsApiIntegrationTitle": "API 연동 설정",
+  "@settingsApiIntegrationTitle": {
+    "description": "Web path: settings.apiIntegration.title",
+    "x-webPath": "settings.apiIntegration.title"
+  },
+  "settingsApiIntegrationDescription": "REST API를 호출하는 외부 서비스를 위한 API 토큰을 만들고 Webhook으로 거래 이벤트를 구독하세요.",
+  "@settingsApiIntegrationDescription": {
+    "description": "Web path: settings.apiIntegration.description",
+    "x-webPath": "settings.apiIntegration.description"
+  },
+  "settingsApiIntegrationTokenTitle": "API 토큰",
+  "@settingsApiIntegrationTokenTitle": {
+    "description": "Web path: settings.apiIntegration.tokenTitle",
+    "x-webPath": "settings.apiIntegration.tokenTitle"
+  },
+  "settingsApiIntegrationTokenDescription": "토큰에는 선택 가능한 권한 범위가 있으며 평문은 한 번만 표시되므로 만든 직후 저장하세요. 계정당 활성 토큰은 최대 20개입니다.",
+  "@settingsApiIntegrationTokenDescription": {
+    "description": "Web path: settings.apiIntegration.tokenDescription",
+    "x-webPath": "settings.apiIntegration.tokenDescription"
+  },
+  "settingsApiIntegrationTokenCreateTitle": "새 토큰 만들기",
+  "@settingsApiIntegrationTokenCreateTitle": {
+    "description": "Web path: settings.apiIntegration.tokenCreateTitle",
+    "x-webPath": "settings.apiIntegration.tokenCreateTitle"
+  },
+  "settingsApiIntegrationTokenNameLabel": "이름",
+  "@settingsApiIntegrationTokenNameLabel": {
+    "description": "Web path: settings.apiIntegration.tokenNameLabel",
+    "x-webPath": "settings.apiIntegration.tokenNameLabel"
+  },
+  "settingsApiIntegrationTokenNamePlaceholder": "예: 개인 자동화 스크립트",
+  "@settingsApiIntegrationTokenNamePlaceholder": {
+    "description": "Web path: settings.apiIntegration.tokenNamePlaceholder",
+    "x-webPath": "settings.apiIntegration.tokenNamePlaceholder"
+  },
+  "settingsApiIntegrationTokenExpiresAtLabel": "만료 시간 (선택)",
+  "@settingsApiIntegrationTokenExpiresAtLabel": {
+    "description": "Web path: settings.apiIntegration.tokenExpiresAtLabel",
+    "x-webPath": "settings.apiIntegration.tokenExpiresAtLabel"
+  },
+  "settingsApiIntegrationTokenScopesLabel": "권한 범위",
+  "@settingsApiIntegrationTokenScopesLabel": {
+    "description": "Web path: settings.apiIntegration.tokenScopesLabel",
+    "x-webPath": "settings.apiIntegration.tokenScopesLabel"
+  },
+  "settingsApiIntegrationTokenCreateButton": "토큰 만들기",
+  "@settingsApiIntegrationTokenCreateButton": {
+    "description": "Web path: settings.apiIntegration.tokenCreateButton",
+    "x-webPath": "settings.apiIntegration.tokenCreateButton"
+  },
+  "settingsApiIntegrationTokenCreating": "만드는 중…",
+  "@settingsApiIntegrationTokenCreating": {
+    "description": "Web path: settings.apiIntegration.tokenCreating",
+    "x-webPath": "settings.apiIntegration.tokenCreating"
+  },
+  "settingsApiIntegrationTokenListTitle": "내 API 토큰",
+  "@settingsApiIntegrationTokenListTitle": {
+    "description": "Web path: settings.apiIntegration.tokenListTitle",
+    "x-webPath": "settings.apiIntegration.tokenListTitle"
+  },
+  "settingsApiIntegrationTokenNoItems": "아직 API 토큰이 없습니다",
+  "@settingsApiIntegrationTokenNoItems": {
+    "description": "Web path: settings.apiIntegration.tokenNoItems",
+    "x-webPath": "settings.apiIntegration.tokenNoItems"
+  },
+  "settingsApiIntegrationTokenStatusActive": "사용 중",
+  "@settingsApiIntegrationTokenStatusActive": {
+    "description": "Web path: settings.apiIntegration.tokenStatusActive",
+    "x-webPath": "settings.apiIntegration.tokenStatusActive"
+  },
+  "settingsApiIntegrationTokenStatusExpired": "만료됨",
+  "@settingsApiIntegrationTokenStatusExpired": {
+    "description": "Web path: settings.apiIntegration.tokenStatusExpired",
+    "x-webPath": "settings.apiIntegration.tokenStatusExpired"
+  },
+  "settingsApiIntegrationTokenStatusRevoked": "취소됨",
+  "@settingsApiIntegrationTokenStatusRevoked": {
+    "description": "Web path: settings.apiIntegration.tokenStatusRevoked",
+    "x-webPath": "settings.apiIntegration.tokenStatusRevoked"
+  },
+  "settingsApiIntegrationTokenRevokeButton": "취소",
+  "@settingsApiIntegrationTokenRevokeButton": {
+    "description": "Web path: settings.apiIntegration.tokenRevokeButton",
+    "x-webPath": "settings.apiIntegration.tokenRevokeButton"
+  },
+  "settingsApiIntegrationTokenRevokeConfirm": "이 API 토큰을 취소할까요? 이 토큰을 사용하는 호출은 즉시 거부됩니다.",
+  "@settingsApiIntegrationTokenRevokeConfirm": {
+    "description": "Web path: settings.apiIntegration.tokenRevokeConfirm",
+    "x-webPath": "settings.apiIntegration.tokenRevokeConfirm"
+  },
+  "settingsApiIntegrationTokenRevoked": "API 토큰이 취소되었습니다",
+  "@settingsApiIntegrationTokenRevoked": {
+    "description": "Web path: settings.apiIntegration.tokenRevoked",
+    "x-webPath": "settings.apiIntegration.tokenRevoked"
+  },
+  "settingsApiIntegrationTokenModalTitle": "API 토큰이 생성되었습니다",
+  "@settingsApiIntegrationTokenModalTitle": {
+    "description": "Web path: settings.apiIntegration.tokenModalTitle",
+    "x-webPath": "settings.apiIntegration.tokenModalTitle"
+  },
+  "settingsApiIntegrationTokenModalWarning": "이 토큰은 한 번만 표시됩니다. 지금 복사해 안전하게 보관하세요. 닫으면 평문을 다시 볼 수 없습니다.",
+  "@settingsApiIntegrationTokenModalWarning": {
+    "description": "Web path: settings.apiIntegration.tokenModalWarning",
+    "x-webPath": "settings.apiIntegration.tokenModalWarning"
+  },
+  "settingsApiIntegrationTokenNameRequired": "이름을 입력하세요",
+  "@settingsApiIntegrationTokenNameRequired": {
+    "description": "Web path: settings.apiIntegration.tokenNameRequired",
+    "x-webPath": "settings.apiIntegration.tokenNameRequired"
+  },
+  "settingsApiIntegrationTokenScopeRequired": "권한 범위를 하나 이상 선택하세요",
+  "@settingsApiIntegrationTokenScopeRequired": {
+    "description": "Web path: settings.apiIntegration.tokenScopeRequired",
+    "x-webPath": "settings.apiIntegration.tokenScopeRequired"
+  },
+  "settingsApiIntegrationColName": "이름",
+  "@settingsApiIntegrationColName": {
+    "description": "Web path: settings.apiIntegration.colName",
+    "x-webPath": "settings.apiIntegration.colName"
+  },
+  "settingsApiIntegrationColPrefix": "접두사",
+  "@settingsApiIntegrationColPrefix": {
+    "description": "Web path: settings.apiIntegration.colPrefix",
+    "x-webPath": "settings.apiIntegration.colPrefix"
+  },
+  "settingsApiIntegrationColScopes": "권한 범위",
+  "@settingsApiIntegrationColScopes": {
+    "description": "Web path: settings.apiIntegration.colScopes",
+    "x-webPath": "settings.apiIntegration.colScopes"
+  },
+  "settingsApiIntegrationColStatus": "상태",
+  "@settingsApiIntegrationColStatus": {
+    "description": "Web path: settings.apiIntegration.colStatus",
+    "x-webPath": "settings.apiIntegration.colStatus"
+  },
+  "settingsApiIntegrationColCreatedAt": "생성 시간",
+  "@settingsApiIntegrationColCreatedAt": {
+    "description": "Web path: settings.apiIntegration.colCreatedAt",
+    "x-webPath": "settings.apiIntegration.colCreatedAt"
+  },
+  "settingsApiIntegrationColLastUsedAt": "마지막 사용",
+  "@settingsApiIntegrationColLastUsedAt": {
+    "description": "Web path: settings.apiIntegration.colLastUsedAt",
+    "x-webPath": "settings.apiIntegration.colLastUsedAt"
+  },
+  "settingsApiIntegrationColExpiresAt": "만료 시간",
+  "@settingsApiIntegrationColExpiresAt": {
+    "description": "Web path: settings.apiIntegration.colExpiresAt",
+    "x-webPath": "settings.apiIntegration.colExpiresAt"
+  },
+  "settingsApiIntegrationColActions": "작업",
+  "@settingsApiIntegrationColActions": {
+    "description": "Web path: settings.apiIntegration.colActions",
+    "x-webPath": "settings.apiIntegration.colActions"
+  },
+  "settingsApiIntegrationNeverUsed": "사용 안 함",
+  "@settingsApiIntegrationNeverUsed": {
+    "description": "Web path: settings.apiIntegration.neverUsed",
+    "x-webPath": "settings.apiIntegration.neverUsed"
+  },
+  "settingsApiIntegrationNeverExpires": "만료 없음",
+  "@settingsApiIntegrationNeverExpires": {
+    "description": "Web path: settings.apiIntegration.neverExpires",
+    "x-webPath": "settings.apiIntegration.neverExpires"
+  },
+  "settingsApiIntegrationScopeTransactionsRead": "거래 조회",
+  "@settingsApiIntegrationScopeTransactionsRead": {
+    "description": "Web path: settings.apiIntegration.scope.transactionsRead",
+    "x-webPath": "settings.apiIntegration.scope.transactionsRead"
+  },
+  "settingsApiIntegrationScopeTransactionsWrite": "거래 생성",
+  "@settingsApiIntegrationScopeTransactionsWrite": {
+    "description": "Web path: settings.apiIntegration.scope.transactionsWrite",
+    "x-webPath": "settings.apiIntegration.scope.transactionsWrite"
+  },
+  "settingsApiIntegrationScopeWebhooksManage": "Webhook 관리",
+  "@settingsApiIntegrationScopeWebhooksManage": {
+    "description": "Web path: settings.apiIntegration.scope.webhooksManage",
+    "x-webPath": "settings.apiIntegration.scope.webhooksManage"
+  },
+  "settingsApiIntegrationWebhookTitle": "Webhook 구독",
+  "@settingsApiIntegrationWebhookTitle": {
+    "description": "Web path: settings.apiIntegration.webhookTitle",
+    "x-webPath": "settings.apiIntegration.webhookTitle"
+  },
+  "settingsApiIntegrationWebhookDescription": "거래 이벤트를 구독합니다. 대상 URL은 공개 HTTPS여야 하며 로컬 또는 내부 네트워크를 가리킬 수 없습니다.",
+  "@settingsApiIntegrationWebhookDescription": {
+    "description": "Web path: settings.apiIntegration.webhookDescription",
+    "x-webPath": "settings.apiIntegration.webhookDescription"
+  },
+  "settingsApiIntegrationWebhookCreateTitle": "새 구독 만들기",
+  "@settingsApiIntegrationWebhookCreateTitle": {
+    "description": "Web path: settings.apiIntegration.webhookCreateTitle",
+    "x-webPath": "settings.apiIntegration.webhookCreateTitle"
+  },
+  "settingsApiIntegrationWebhookUrlLabel": "대상 URL",
+  "@settingsApiIntegrationWebhookUrlLabel": {
+    "description": "Web path: settings.apiIntegration.webhookUrlLabel",
+    "x-webPath": "settings.apiIntegration.webhookUrlLabel"
+  },
+  "settingsApiIntegrationWebhookUrlPlaceholder": "예: https://example.com/hooks/assetpilot",
+  "@settingsApiIntegrationWebhookUrlPlaceholder": {
+    "description": "Web path: settings.apiIntegration.webhookUrlPlaceholder",
+    "x-webPath": "settings.apiIntegration.webhookUrlPlaceholder"
+  },
+  "settingsApiIntegrationWebhookEventsLabel": "이벤트 유형",
+  "@settingsApiIntegrationWebhookEventsLabel": {
+    "description": "Web path: settings.apiIntegration.webhookEventsLabel",
+    "x-webPath": "settings.apiIntegration.webhookEventsLabel"
+  },
+  "settingsApiIntegrationWebhookActiveLabel": "이 구독 사용",
+  "@settingsApiIntegrationWebhookActiveLabel": {
+    "description": "Web path: settings.apiIntegration.webhookActiveLabel",
+    "x-webPath": "settings.apiIntegration.webhookActiveLabel"
+  },
+  "settingsApiIntegrationWebhookCreateButton": "구독 만들기",
+  "@settingsApiIntegrationWebhookCreateButton": {
+    "description": "Web path: settings.apiIntegration.webhookCreateButton",
+    "x-webPath": "settings.apiIntegration.webhookCreateButton"
+  },
+  "settingsApiIntegrationWebhookSaveButton": "변경 사항 저장",
+  "@settingsApiIntegrationWebhookSaveButton": {
+    "description": "Web path: settings.apiIntegration.webhookSaveButton",
+    "x-webPath": "settings.apiIntegration.webhookSaveButton"
+  },
+  "settingsApiIntegrationWebhookCancelEdit": "편집 취소",
+  "@settingsApiIntegrationWebhookCancelEdit": {
+    "description": "Web path: settings.apiIntegration.webhookCancelEdit",
+    "x-webPath": "settings.apiIntegration.webhookCancelEdit"
+  },
+  "settingsApiIntegrationWebhookListTitle": "내 Webhook 구독",
+  "@settingsApiIntegrationWebhookListTitle": {
+    "description": "Web path: settings.apiIntegration.webhookListTitle",
+    "x-webPath": "settings.apiIntegration.webhookListTitle"
+  },
+  "settingsApiIntegrationWebhookNoItems": "아직 구독이 없습니다",
+  "@settingsApiIntegrationWebhookNoItems": {
+    "description": "Web path: settings.apiIntegration.webhookNoItems",
+    "x-webPath": "settings.apiIntegration.webhookNoItems"
+  },
+  "settingsApiIntegrationColUrl": "대상 URL",
+  "@settingsApiIntegrationColUrl": {
+    "description": "Web path: settings.apiIntegration.colUrl",
+    "x-webPath": "settings.apiIntegration.colUrl"
+  },
+  "settingsApiIntegrationColEvents": "이벤트",
+  "@settingsApiIntegrationColEvents": {
+    "description": "Web path: settings.apiIntegration.colEvents",
+    "x-webPath": "settings.apiIntegration.colEvents"
+  },
+  "settingsApiIntegrationColEnabled": "상태",
+  "@settingsApiIntegrationColEnabled": {
+    "description": "Web path: settings.apiIntegration.colEnabled",
+    "x-webPath": "settings.apiIntegration.colEnabled"
+  },
+  "settingsApiIntegrationColLastSuccess": "마지막 성공",
+  "@settingsApiIntegrationColLastSuccess": {
+    "description": "Web path: settings.apiIntegration.colLastSuccess",
+    "x-webPath": "settings.apiIntegration.colLastSuccess"
+  },
+  "settingsApiIntegrationColLastFailure": "마지막 실패",
+  "@settingsApiIntegrationColLastFailure": {
+    "description": "Web path: settings.apiIntegration.colLastFailure",
+    "x-webPath": "settings.apiIntegration.colLastFailure"
+  },
+  "settingsApiIntegrationWebhookEnabled": "사용 중",
+  "@settingsApiIntegrationWebhookEnabled": {
+    "description": "Web path: settings.apiIntegration.webhookEnabled",
+    "x-webPath": "settings.apiIntegration.webhookEnabled"
+  },
+  "settingsApiIntegrationWebhookDisabled": "중지됨",
+  "@settingsApiIntegrationWebhookDisabled": {
+    "description": "Web path: settings.apiIntegration.webhookDisabled",
+    "x-webPath": "settings.apiIntegration.webhookDisabled"
+  },
+  "settingsApiIntegrationWebhookEditButton": "편집",
+  "@settingsApiIntegrationWebhookEditButton": {
+    "description": "Web path: settings.apiIntegration.webhookEditButton",
+    "x-webPath": "settings.apiIntegration.webhookEditButton"
+  },
+  "settingsApiIntegrationWebhookDeleteButton": "삭제",
+  "@settingsApiIntegrationWebhookDeleteButton": {
+    "description": "Web path: settings.apiIntegration.webhookDeleteButton",
+    "x-webPath": "settings.apiIntegration.webhookDeleteButton"
+  },
+  "settingsApiIntegrationWebhookDeleteConfirm": "이 구독을 삭제할까요? 관련 전송 기록도 함께 삭제되며 되돌릴 수 없습니다.",
+  "@settingsApiIntegrationWebhookDeleteConfirm": {
+    "description": "Web path: settings.apiIntegration.webhookDeleteConfirm",
+    "x-webPath": "settings.apiIntegration.webhookDeleteConfirm"
+  },
+  "settingsApiIntegrationWebhookSecretModalTitle": "Webhook 서명 키",
+  "@settingsApiIntegrationWebhookSecretModalTitle": {
+    "description": "Web path: settings.apiIntegration.webhookSecretModalTitle",
+    "x-webPath": "settings.apiIntegration.webhookSecretModalTitle"
+  },
+  "settingsApiIntegrationWebhookSecretModalWarning": "이 서명 키는 한 번만 표시됩니다. 지금 복사해 보관하세요. 닫으면 다시 가져올 수 없습니다.",
+  "@settingsApiIntegrationWebhookSecretModalWarning": {
+    "description": "Web path: settings.apiIntegration.webhookSecretModalWarning",
+    "x-webPath": "settings.apiIntegration.webhookSecretModalWarning"
+  },
+  "settingsApiIntegrationWebhookSignatureHeaderLabel": "서명 헤더 형식",
+  "@settingsApiIntegrationWebhookSignatureHeaderLabel": {
+    "description": "Web path: settings.apiIntegration.webhookSignatureHeaderLabel",
+    "x-webPath": "settings.apiIntegration.webhookSignatureHeaderLabel"
+  },
+  "settingsApiIntegrationWebhookSignatureHint": "서명은 타임스탬프, 마침표, 원본 요청 본문에 대한 HMAC-SHA256입니다. 재전송 공격을 막으려면 타임스탬프를 비교하세요(허용 오차 5분).",
+  "@settingsApiIntegrationWebhookSignatureHint": {
+    "description": "Web path: settings.apiIntegration.webhookSignatureHint",
+    "x-webPath": "settings.apiIntegration.webhookSignatureHint"
+  },
+  "settingsApiIntegrationDeliveryTitle": "전송 기록",
+  "@settingsApiIntegrationDeliveryTitle": {
+    "description": "Web path: settings.apiIntegration.deliveryTitle",
+    "x-webPath": "settings.apiIntegration.deliveryTitle"
+  },
+  "settingsApiIntegrationDeliveryDescription": "최근 Webhook 전송 결과와 실패 원인을 확인하세요.",
+  "@settingsApiIntegrationDeliveryDescription": {
+    "description": "Web path: settings.apiIntegration.deliveryDescription",
+    "x-webPath": "settings.apiIntegration.deliveryDescription"
+  },
+  "settingsApiIntegrationDeliveryFilterLabel": "구독으로 필터",
+  "@settingsApiIntegrationDeliveryFilterLabel": {
+    "description": "Web path: settings.apiIntegration.deliveryFilterLabel",
+    "x-webPath": "settings.apiIntegration.deliveryFilterLabel"
+  },
+  "settingsApiIntegrationDeliveryAllSubscriptions": "모든 구독",
+  "@settingsApiIntegrationDeliveryAllSubscriptions": {
+    "description": "Web path: settings.apiIntegration.deliveryAllSubscriptions",
+    "x-webPath": "settings.apiIntegration.deliveryAllSubscriptions"
+  },
+  "settingsApiIntegrationDeliveryNoItems": "아직 전송 기록이 없습니다",
+  "@settingsApiIntegrationDeliveryNoItems": {
+    "description": "Web path: settings.apiIntegration.deliveryNoItems",
+    "x-webPath": "settings.apiIntegration.deliveryNoItems"
+  },
+  "settingsApiIntegrationDeliveryStatusPending": "대기 중",
+  "@settingsApiIntegrationDeliveryStatusPending": {
+    "description": "Web path: settings.apiIntegration.deliveryStatusPending",
+    "x-webPath": "settings.apiIntegration.deliveryStatusPending"
+  },
+  "settingsApiIntegrationDeliveryStatusSuccess": "성공",
+  "@settingsApiIntegrationDeliveryStatusSuccess": {
+    "description": "Web path: settings.apiIntegration.deliveryStatusSuccess",
+    "x-webPath": "settings.apiIntegration.deliveryStatusSuccess"
+  },
+  "settingsApiIntegrationDeliveryStatusFailed": "실패",
+  "@settingsApiIntegrationDeliveryStatusFailed": {
+    "description": "Web path: settings.apiIntegration.deliveryStatusFailed",
+    "x-webPath": "settings.apiIntegration.deliveryStatusFailed"
+  },
+  "settingsApiIntegrationColEventType": "이벤트",
+  "@settingsApiIntegrationColEventType": {
+    "description": "Web path: settings.apiIntegration.colEventType",
+    "x-webPath": "settings.apiIntegration.colEventType"
+  },
+  "settingsApiIntegrationColAttempts": "시도 횟수",
+  "@settingsApiIntegrationColAttempts": {
+    "description": "Web path: settings.apiIntegration.colAttempts",
+    "x-webPath": "settings.apiIntegration.colAttempts"
+  },
+  "settingsApiIntegrationColStatusCode": "상태 코드",
+  "@settingsApiIntegrationColStatusCode": {
+    "description": "Web path: settings.apiIntegration.colStatusCode",
+    "x-webPath": "settings.apiIntegration.colStatusCode"
+  },
+  "settingsApiIntegrationColDeliveredAt": "전송 시간",
+  "@settingsApiIntegrationColDeliveredAt": {
+    "description": "Web path: settings.apiIntegration.colDeliveredAt",
+    "x-webPath": "settings.apiIntegration.colDeliveredAt"
+  },
+  "settingsApiIntegrationColError": "오류 메시지",
+  "@settingsApiIntegrationColError": {
+    "description": "Web path: settings.apiIntegration.colError",
+    "x-webPath": "settings.apiIntegration.colError"
+  },
+  "settingsApiIntegrationEventCreated": "거래 생성",
+  "@settingsApiIntegrationEventCreated": {
+    "description": "Web path: settings.apiIntegration.event.created",
+    "x-webPath": "settings.apiIntegration.event.created"
+  },
+  "settingsApiIntegrationEventUpdated": "거래 수정",
+  "@settingsApiIntegrationEventUpdated": {
+    "description": "Web path: settings.apiIntegration.event.updated",
+    "x-webPath": "settings.apiIntegration.event.updated"
+  },
+  "settingsApiIntegrationEventDeleted": "거래 삭제",
+  "@settingsApiIntegrationEventDeleted": {
+    "description": "Web path: settings.apiIntegration.event.deleted",
+    "x-webPath": "settings.apiIntegration.event.deleted"
+  },
+  "settingsApiIntegrationLoadTokensFailed": "API 토큰을 불러오지 못했습니다",
+  "@settingsApiIntegrationLoadTokensFailed": {
+    "description": "Web path: settings.apiIntegration.loadTokensFailed",
+    "x-webPath": "settings.apiIntegration.loadTokensFailed"
+  },
+  "settingsApiIntegrationLoadWebhooksFailed": "Webhook 구독을 불러오지 못했습니다",
+  "@settingsApiIntegrationLoadWebhooksFailed": {
+    "description": "Web path: settings.apiIntegration.loadWebhooksFailed",
+    "x-webPath": "settings.apiIntegration.loadWebhooksFailed"
+  },
+  "settingsApiIntegrationLoadDeliveriesFailed": "전송 기록을 불러오지 못했습니다",
+  "@settingsApiIntegrationLoadDeliveriesFailed": {
+    "description": "Web path: settings.apiIntegration.loadDeliveriesFailed",
+    "x-webPath": "settings.apiIntegration.loadDeliveriesFailed"
+  },
+  "settingsApiIntegrationCreateTokenFailed": "API 토큰을 만들지 못했습니다",
+  "@settingsApiIntegrationCreateTokenFailed": {
+    "description": "Web path: settings.apiIntegration.createTokenFailed",
+    "x-webPath": "settings.apiIntegration.createTokenFailed"
+  },
+  "settingsApiIntegrationRevokeTokenFailed": "API 토큰을 취소하지 못했습니다",
+  "@settingsApiIntegrationRevokeTokenFailed": {
+    "description": "Web path: settings.apiIntegration.revokeTokenFailed",
+    "x-webPath": "settings.apiIntegration.revokeTokenFailed"
+  },
+  "settingsApiIntegrationCreateWebhookFailed": "구독을 만들지 못했습니다",
+  "@settingsApiIntegrationCreateWebhookFailed": {
+    "description": "Web path: settings.apiIntegration.createWebhookFailed",
+    "x-webPath": "settings.apiIntegration.createWebhookFailed"
+  },
+  "settingsApiIntegrationUpdateWebhookFailed": "구독을 업데이트하지 못했습니다",
+  "@settingsApiIntegrationUpdateWebhookFailed": {
+    "description": "Web path: settings.apiIntegration.updateWebhookFailed",
+    "x-webPath": "settings.apiIntegration.updateWebhookFailed"
+  },
+  "settingsApiIntegrationDeleteWebhookFailed": "구독을 삭제하지 못했습니다",
+  "@settingsApiIntegrationDeleteWebhookFailed": {
+    "description": "Web path: settings.apiIntegration.deleteWebhookFailed",
+    "x-webPath": "settings.apiIntegration.deleteWebhookFailed"
+  },
+  "settingsApiIntegrationUrlRequired": "대상 URL을 입력하세요",
+  "@settingsApiIntegrationUrlRequired": {
+    "description": "Web path: settings.apiIntegration.urlRequired",
+    "x-webPath": "settings.apiIntegration.urlRequired"
+  },
+  "settingsApiIntegrationEventRequired": "이벤트 유형을 하나 이상 선택하세요",
+  "@settingsApiIntegrationEventRequired": {
+    "description": "Web path: settings.apiIntegration.eventRequired",
+    "x-webPath": "settings.apiIntegration.eventRequired"
+  },
+  "settingsApiIntegrationCloseConfirm": "복사했습니다, 닫기",
+  "@settingsApiIntegrationCloseConfirm": {
+    "description": "Web path: settings.apiIntegration.closeConfirm",
+    "x-webPath": "settings.apiIntegration.closeConfirm"
+  },
+  "settingsApiIntegrationCopyFailed": "복사하지 못했습니다. 자동 복사가 차단된 환경일 수 있으니 위 값을 선택해 직접 복사하세요",
+  "@settingsApiIntegrationCopyFailed": {
+    "description": "Web path: settings.apiIntegration.copyFailed",
+    "x-webPath": "settings.apiIntegration.copyFailed"
   }
 }

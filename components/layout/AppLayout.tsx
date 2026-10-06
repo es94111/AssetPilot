@@ -30,6 +30,9 @@ const PAGE_TITLE_KEYS: Record<string, string> = {
   '/settings/account':     'nav.account',
   '/settings/admin':       'nav.admin',
   '/settings/export':      'nav.exportImport',
+  '/settings/mcp':         'nav.mcp',
+  '/settings/mcp-connections': 'nav.mcpConnections',
+  '/settings/api-integration': 'nav.apiIntegration',
 };
 
 export default function AppLayout({ user, children }: { user: any; children: React.ReactNode }) {

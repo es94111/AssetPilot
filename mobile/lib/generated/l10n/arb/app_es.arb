@@ -7672,5 +7672,475 @@
   "@featuresCalendarEventTypesTransfer": {
     "description": "Web path: features.calendar.eventTypes.transfer",
     "x-webPath": "features.calendar.eventTypes.transfer"
+  },
+  "navApiIntegration": "Integración API",
+  "@navApiIntegration": {
+    "description": "Web path: nav.apiIntegration",
+    "x-webPath": "nav.apiIntegration"
+  },
+  "commonRefresh": "Actualizar",
+  "@commonRefresh": {
+    "description": "Web path: common.refresh",
+    "x-webPath": "common.refresh"
+  },
+  "commonCopy": "Copiar",
+  "@commonCopy": {
+    "description": "Web path: common.copy",
+    "x-webPath": "common.copy"
+  },
+  "commonCopied": "¡Copiado!",
+  "@commonCopied": {
+    "description": "Web path: common.copied",
+    "x-webPath": "common.copied"
+  },
+  "settingsApiIntegrationTitle": "Configuración de integración de API",
+  "@settingsApiIntegrationTitle": {
+    "description": "Web path: settings.apiIntegration.title",
+    "x-webPath": "settings.apiIntegration.title"
+  },
+  "settingsApiIntegrationDescription": "Crea tokens de API para que servicios externos llamen a la API REST, y suscríbete a eventos de transacciones con webhooks.",
+  "@settingsApiIntegrationDescription": {
+    "description": "Web path: settings.apiIntegration.description",
+    "x-webPath": "settings.apiIntegration.description"
+  },
+  "settingsApiIntegrationTokenTitle": "Tokens de API",
+  "@settingsApiIntegrationTokenTitle": {
+    "description": "Web path: settings.apiIntegration.tokenTitle",
+    "x-webPath": "settings.apiIntegration.tokenTitle"
+  },
+  "settingsApiIntegrationTokenDescription": "Los tokens tienen permisos seleccionables y su texto plano se muestra una sola vez; guárdalo justo después de crearlo. Cada cuenta admite hasta 20 tokens activos.",
+  "@settingsApiIntegrationTokenDescription": {
+    "description": "Web path: settings.apiIntegration.tokenDescription",
+    "x-webPath": "settings.apiIntegration.tokenDescription"
+  },
+  "settingsApiIntegrationTokenCreateTitle": "Crear nuevo token",
+  "@settingsApiIntegrationTokenCreateTitle": {
+    "description": "Web path: settings.apiIntegration.tokenCreateTitle",
+    "x-webPath": "settings.apiIntegration.tokenCreateTitle"
+  },
+  "settingsApiIntegrationTokenNameLabel": "Nombre",
+  "@settingsApiIntegrationTokenNameLabel": {
+    "description": "Web path: settings.apiIntegration.tokenNameLabel",
+    "x-webPath": "settings.apiIntegration.tokenNameLabel"
+  },
+  "settingsApiIntegrationTokenNamePlaceholder": "Por ejemplo: script de automatización personal",
+  "@settingsApiIntegrationTokenNamePlaceholder": {
+    "description": "Web path: settings.apiIntegration.tokenNamePlaceholder",
+    "x-webPath": "settings.apiIntegration.tokenNamePlaceholder"
+  },
+  "settingsApiIntegrationTokenExpiresAtLabel": "Fecha de expiración (opcional)",
+  "@settingsApiIntegrationTokenExpiresAtLabel": {
+    "description": "Web path: settings.apiIntegration.tokenExpiresAtLabel",
+    "x-webPath": "settings.apiIntegration.tokenExpiresAtLabel"
+  },
+  "settingsApiIntegrationTokenScopesLabel": "Permisos",
+  "@settingsApiIntegrationTokenScopesLabel": {
+    "description": "Web path: settings.apiIntegration.tokenScopesLabel",
+    "x-webPath": "settings.apiIntegration.tokenScopesLabel"
+  },
+  "settingsApiIntegrationTokenCreateButton": "Crear token",
+  "@settingsApiIntegrationTokenCreateButton": {
+    "description": "Web path: settings.apiIntegration.tokenCreateButton",
+    "x-webPath": "settings.apiIntegration.tokenCreateButton"
+  },
+  "settingsApiIntegrationTokenCreating": "Creando…",
+  "@settingsApiIntegrationTokenCreating": {
+    "description": "Web path: settings.apiIntegration.tokenCreating",
+    "x-webPath": "settings.apiIntegration.tokenCreating"
+  },
+  "settingsApiIntegrationTokenListTitle": "Mis tokens de API",
+  "@settingsApiIntegrationTokenListTitle": {
+    "description": "Web path: settings.apiIntegration.tokenListTitle",
+    "x-webPath": "settings.apiIntegration.tokenListTitle"
+  },
+  "settingsApiIntegrationTokenNoItems": "Aún no has creado ningún token de API",
+  "@settingsApiIntegrationTokenNoItems": {
+    "description": "Web path: settings.apiIntegration.tokenNoItems",
+    "x-webPath": "settings.apiIntegration.tokenNoItems"
+  },
+  "settingsApiIntegrationTokenStatusActive": "Activo",
+  "@settingsApiIntegrationTokenStatusActive": {
+    "description": "Web path: settings.apiIntegration.tokenStatusActive",
+    "x-webPath": "settings.apiIntegration.tokenStatusActive"
+  },
+  "settingsApiIntegrationTokenStatusExpired": "Expirado",
+  "@settingsApiIntegrationTokenStatusExpired": {
+    "description": "Web path: settings.apiIntegration.tokenStatusExpired",
+    "x-webPath": "settings.apiIntegration.tokenStatusExpired"
+  },
+  "settingsApiIntegrationTokenStatusRevoked": "Revocado",
+  "@settingsApiIntegrationTokenStatusRevoked": {
+    "description": "Web path: settings.apiIntegration.tokenStatusRevoked",
+    "x-webPath": "settings.apiIntegration.tokenStatusRevoked"
+  },
+  "settingsApiIntegrationTokenRevokeButton": "Revocar",
+  "@settingsApiIntegrationTokenRevokeButton": {
+    "description": "Web path: settings.apiIntegration.tokenRevokeButton",
+    "x-webPath": "settings.apiIntegration.tokenRevokeButton"
+  },
+  "settingsApiIntegrationTokenRevokeConfirm": "¿Revocar este token de API? Las llamadas que lo usen se rechazarán de inmediato.",
+  "@settingsApiIntegrationTokenRevokeConfirm": {
+    "description": "Web path: settings.apiIntegration.tokenRevokeConfirm",
+    "x-webPath": "settings.apiIntegration.tokenRevokeConfirm"
+  },
+  "settingsApiIntegrationTokenRevoked": "Token de API revocado",
+  "@settingsApiIntegrationTokenRevoked": {
+    "description": "Web path: settings.apiIntegration.tokenRevoked",
+    "x-webPath": "settings.apiIntegration.tokenRevoked"
+  },
+  "settingsApiIntegrationTokenModalTitle": "Token de API creado",
+  "@settingsApiIntegrationTokenModalTitle": {
+    "description": "Web path: settings.apiIntegration.tokenModalTitle",
+    "x-webPath": "settings.apiIntegration.tokenModalTitle"
+  },
+  "settingsApiIntegrationTokenModalWarning": "Este token se muestra una sola vez; cópialo y guárdalo ahora. Una vez cerrado, no podrás volver a ver el texto plano.",
+  "@settingsApiIntegrationTokenModalWarning": {
+    "description": "Web path: settings.apiIntegration.tokenModalWarning",
+    "x-webPath": "settings.apiIntegration.tokenModalWarning"
+  },
+  "settingsApiIntegrationTokenNameRequired": "Introduce un nombre",
+  "@settingsApiIntegrationTokenNameRequired": {
+    "description": "Web path: settings.apiIntegration.tokenNameRequired",
+    "x-webPath": "settings.apiIntegration.tokenNameRequired"
+  },
+  "settingsApiIntegrationTokenScopeRequired": "Selecciona al menos un permiso",
+  "@settingsApiIntegrationTokenScopeRequired": {
+    "description": "Web path: settings.apiIntegration.tokenScopeRequired",
+    "x-webPath": "settings.apiIntegration.tokenScopeRequired"
+  },
+  "settingsApiIntegrationColName": "Nombre",
+  "@settingsApiIntegrationColName": {
+    "description": "Web path: settings.apiIntegration.colName",
+    "x-webPath": "settings.apiIntegration.colName"
+  },
+  "settingsApiIntegrationColPrefix": "Prefijo",
+  "@settingsApiIntegrationColPrefix": {
+    "description": "Web path: settings.apiIntegration.colPrefix",
+    "x-webPath": "settings.apiIntegration.colPrefix"
+  },
+  "settingsApiIntegrationColScopes": "Permisos",
+  "@settingsApiIntegrationColScopes": {
+    "description": "Web path: settings.apiIntegration.colScopes",
+    "x-webPath": "settings.apiIntegration.colScopes"
+  },
+  "settingsApiIntegrationColStatus": "Estado",
+  "@settingsApiIntegrationColStatus": {
+    "description": "Web path: settings.apiIntegration.colStatus",
+    "x-webPath": "settings.apiIntegration.colStatus"
+  },
+  "settingsApiIntegrationColCreatedAt": "Creado",
+  "@settingsApiIntegrationColCreatedAt": {
+    "description": "Web path: settings.apiIntegration.colCreatedAt",
+    "x-webPath": "settings.apiIntegration.colCreatedAt"
+  },
+  "settingsApiIntegrationColLastUsedAt": "Último uso",
+  "@settingsApiIntegrationColLastUsedAt": {
+    "description": "Web path: settings.apiIntegration.colLastUsedAt",
+    "x-webPath": "settings.apiIntegration.colLastUsedAt"
+  },
+  "settingsApiIntegrationColExpiresAt": "Expira",
+  "@settingsApiIntegrationColExpiresAt": {
+    "description": "Web path: settings.apiIntegration.colExpiresAt",
+    "x-webPath": "settings.apiIntegration.colExpiresAt"
+  },
+  "settingsApiIntegrationColActions": "Acciones",
+  "@settingsApiIntegrationColActions": {
+    "description": "Web path: settings.apiIntegration.colActions",
+    "x-webPath": "settings.apiIntegration.colActions"
+  },
+  "settingsApiIntegrationNeverUsed": "Sin usar",
+  "@settingsApiIntegrationNeverUsed": {
+    "description": "Web path: settings.apiIntegration.neverUsed",
+    "x-webPath": "settings.apiIntegration.neverUsed"
+  },
+  "settingsApiIntegrationNeverExpires": "No expira",
+  "@settingsApiIntegrationNeverExpires": {
+    "description": "Web path: settings.apiIntegration.neverExpires",
+    "x-webPath": "settings.apiIntegration.neverExpires"
+  },
+  "settingsApiIntegrationScopeTransactionsRead": "Leer transacciones",
+  "@settingsApiIntegrationScopeTransactionsRead": {
+    "description": "Web path: settings.apiIntegration.scope.transactionsRead",
+    "x-webPath": "settings.apiIntegration.scope.transactionsRead"
+  },
+  "settingsApiIntegrationScopeTransactionsWrite": "Crear transacciones",
+  "@settingsApiIntegrationScopeTransactionsWrite": {
+    "description": "Web path: settings.apiIntegration.scope.transactionsWrite",
+    "x-webPath": "settings.apiIntegration.scope.transactionsWrite"
+  },
+  "settingsApiIntegrationScopeWebhooksManage": "Gestionar webhooks",
+  "@settingsApiIntegrationScopeWebhooksManage": {
+    "description": "Web path: settings.apiIntegration.scope.webhooksManage",
+    "x-webPath": "settings.apiIntegration.scope.webhooksManage"
+  },
+  "settingsApiIntegrationWebhookTitle": "Suscripciones de webhook",
+  "@settingsApiIntegrationWebhookTitle": {
+    "description": "Web path: settings.apiIntegration.webhookTitle",
+    "x-webPath": "settings.apiIntegration.webhookTitle"
+  },
+  "settingsApiIntegrationWebhookDescription": "Suscríbete a eventos de transacciones. La URL de destino debe ser HTTPS público y no puede apuntar a la red local ni interna.",
+  "@settingsApiIntegrationWebhookDescription": {
+    "description": "Web path: settings.apiIntegration.webhookDescription",
+    "x-webPath": "settings.apiIntegration.webhookDescription"
+  },
+  "settingsApiIntegrationWebhookCreateTitle": "Crear suscripción",
+  "@settingsApiIntegrationWebhookCreateTitle": {
+    "description": "Web path: settings.apiIntegration.webhookCreateTitle",
+    "x-webPath": "settings.apiIntegration.webhookCreateTitle"
+  },
+  "settingsApiIntegrationWebhookUrlLabel": "URL de destino",
+  "@settingsApiIntegrationWebhookUrlLabel": {
+    "description": "Web path: settings.apiIntegration.webhookUrlLabel",
+    "x-webPath": "settings.apiIntegration.webhookUrlLabel"
+  },
+  "settingsApiIntegrationWebhookUrlPlaceholder": "Por ejemplo: https://example.com/hooks/assetpilot",
+  "@settingsApiIntegrationWebhookUrlPlaceholder": {
+    "description": "Web path: settings.apiIntegration.webhookUrlPlaceholder",
+    "x-webPath": "settings.apiIntegration.webhookUrlPlaceholder"
+  },
+  "settingsApiIntegrationWebhookEventsLabel": "Tipos de evento",
+  "@settingsApiIntegrationWebhookEventsLabel": {
+    "description": "Web path: settings.apiIntegration.webhookEventsLabel",
+    "x-webPath": "settings.apiIntegration.webhookEventsLabel"
+  },
+  "settingsApiIntegrationWebhookActiveLabel": "Activar esta suscripción",
+  "@settingsApiIntegrationWebhookActiveLabel": {
+    "description": "Web path: settings.apiIntegration.webhookActiveLabel",
+    "x-webPath": "settings.apiIntegration.webhookActiveLabel"
+  },
+  "settingsApiIntegrationWebhookCreateButton": "Crear suscripción",
+  "@settingsApiIntegrationWebhookCreateButton": {
+    "description": "Web path: settings.apiIntegration.webhookCreateButton",
+    "x-webPath": "settings.apiIntegration.webhookCreateButton"
+  },
+  "settingsApiIntegrationWebhookSaveButton": "Guardar cambios",
+  "@settingsApiIntegrationWebhookSaveButton": {
+    "description": "Web path: settings.apiIntegration.webhookSaveButton",
+    "x-webPath": "settings.apiIntegration.webhookSaveButton"
+  },
+  "settingsApiIntegrationWebhookCancelEdit": "Cancelar edición",
+  "@settingsApiIntegrationWebhookCancelEdit": {
+    "description": "Web path: settings.apiIntegration.webhookCancelEdit",
+    "x-webPath": "settings.apiIntegration.webhookCancelEdit"
+  },
+  "settingsApiIntegrationWebhookListTitle": "Mis suscripciones de webhook",
+  "@settingsApiIntegrationWebhookListTitle": {
+    "description": "Web path: settings.apiIntegration.webhookListTitle",
+    "x-webPath": "settings.apiIntegration.webhookListTitle"
+  },
+  "settingsApiIntegrationWebhookNoItems": "Aún no has creado ninguna suscripción",
+  "@settingsApiIntegrationWebhookNoItems": {
+    "description": "Web path: settings.apiIntegration.webhookNoItems",
+    "x-webPath": "settings.apiIntegration.webhookNoItems"
+  },
+  "settingsApiIntegrationColUrl": "URL de destino",
+  "@settingsApiIntegrationColUrl": {
+    "description": "Web path: settings.apiIntegration.colUrl",
+    "x-webPath": "settings.apiIntegration.colUrl"
+  },
+  "settingsApiIntegrationColEvents": "Eventos",
+  "@settingsApiIntegrationColEvents": {
+    "description": "Web path: settings.apiIntegration.colEvents",
+    "x-webPath": "settings.apiIntegration.colEvents"
+  },
+  "settingsApiIntegrationColEnabled": "Estado",
+  "@settingsApiIntegrationColEnabled": {
+    "description": "Web path: settings.apiIntegration.colEnabled",
+    "x-webPath": "settings.apiIntegration.colEnabled"
+  },
+  "settingsApiIntegrationColLastSuccess": "Último éxito",
+  "@settingsApiIntegrationColLastSuccess": {
+    "description": "Web path: settings.apiIntegration.colLastSuccess",
+    "x-webPath": "settings.apiIntegration.colLastSuccess"
+  },
+  "settingsApiIntegrationColLastFailure": "Último fallo",
+  "@settingsApiIntegrationColLastFailure": {
+    "description": "Web path: settings.apiIntegration.colLastFailure",
+    "x-webPath": "settings.apiIntegration.colLastFailure"
+  },
+  "settingsApiIntegrationWebhookEnabled": "Activa",
+  "@settingsApiIntegrationWebhookEnabled": {
+    "description": "Web path: settings.apiIntegration.webhookEnabled",
+    "x-webPath": "settings.apiIntegration.webhookEnabled"
+  },
+  "settingsApiIntegrationWebhookDisabled": "Desactivada",
+  "@settingsApiIntegrationWebhookDisabled": {
+    "description": "Web path: settings.apiIntegration.webhookDisabled",
+    "x-webPath": "settings.apiIntegration.webhookDisabled"
+  },
+  "settingsApiIntegrationWebhookEditButton": "Editar",
+  "@settingsApiIntegrationWebhookEditButton": {
+    "description": "Web path: settings.apiIntegration.webhookEditButton",
+    "x-webPath": "settings.apiIntegration.webhookEditButton"
+  },
+  "settingsApiIntegrationWebhookDeleteButton": "Eliminar",
+  "@settingsApiIntegrationWebhookDeleteButton": {
+    "description": "Web path: settings.apiIntegration.webhookDeleteButton",
+    "x-webPath": "settings.apiIntegration.webhookDeleteButton"
+  },
+  "settingsApiIntegrationWebhookDeleteConfirm": "¿Eliminar esta suscripción? También se eliminarán sus registros de entrega y no se puede deshacer.",
+  "@settingsApiIntegrationWebhookDeleteConfirm": {
+    "description": "Web path: settings.apiIntegration.webhookDeleteConfirm",
+    "x-webPath": "settings.apiIntegration.webhookDeleteConfirm"
+  },
+  "settingsApiIntegrationWebhookSecretModalTitle": "Clave de firma del webhook",
+  "@settingsApiIntegrationWebhookSecretModalTitle": {
+    "description": "Web path: settings.apiIntegration.webhookSecretModalTitle",
+    "x-webPath": "settings.apiIntegration.webhookSecretModalTitle"
+  },
+  "settingsApiIntegrationWebhookSecretModalWarning": "Esta clave de firma se muestra una sola vez; cópiala y guárdala ahora. Una vez cerrado, no podrás recuperarla.",
+  "@settingsApiIntegrationWebhookSecretModalWarning": {
+    "description": "Web path: settings.apiIntegration.webhookSecretModalWarning",
+    "x-webPath": "settings.apiIntegration.webhookSecretModalWarning"
+  },
+  "settingsApiIntegrationWebhookSignatureHeaderLabel": "Formato del encabezado de firma",
+  "@settingsApiIntegrationWebhookSignatureHeaderLabel": {
+    "description": "Web path: settings.apiIntegration.webhookSignatureHeaderLabel",
+    "x-webPath": "settings.apiIntegration.webhookSignatureHeaderLabel"
+  },
+  "settingsApiIntegrationWebhookSignatureHint": "La firma es un HMAC-SHA256 sobre la marca de tiempo, un punto y el cuerpo original de la solicitud. Compara la marca de tiempo (tolerancia de 5 minutos) para evitar ataques de repetición.",
+  "@settingsApiIntegrationWebhookSignatureHint": {
+    "description": "Web path: settings.apiIntegration.webhookSignatureHint",
+    "x-webPath": "settings.apiIntegration.webhookSignatureHint"
+  },
+  "settingsApiIntegrationDeliveryTitle": "Registros de entrega",
+  "@settingsApiIntegrationDeliveryTitle": {
+    "description": "Web path: settings.apiIntegration.deliveryTitle",
+    "x-webPath": "settings.apiIntegration.deliveryTitle"
+  },
+  "settingsApiIntegrationDeliveryDescription": "Consulta los resultados recientes de entrega y los motivos de fallo.",
+  "@settingsApiIntegrationDeliveryDescription": {
+    "description": "Web path: settings.apiIntegration.deliveryDescription",
+    "x-webPath": "settings.apiIntegration.deliveryDescription"
+  },
+  "settingsApiIntegrationDeliveryFilterLabel": "Filtrar por suscripción",
+  "@settingsApiIntegrationDeliveryFilterLabel": {
+    "description": "Web path: settings.apiIntegration.deliveryFilterLabel",
+    "x-webPath": "settings.apiIntegration.deliveryFilterLabel"
+  },
+  "settingsApiIntegrationDeliveryAllSubscriptions": "Todas las suscripciones",
+  "@settingsApiIntegrationDeliveryAllSubscriptions": {
+    "description": "Web path: settings.apiIntegration.deliveryAllSubscriptions",
+    "x-webPath": "settings.apiIntegration.deliveryAllSubscriptions"
+  },
+  "settingsApiIntegrationDeliveryNoItems": "Aún no hay registros de entrega",
+  "@settingsApiIntegrationDeliveryNoItems": {
+    "description": "Web path: settings.apiIntegration.deliveryNoItems",
+    "x-webPath": "settings.apiIntegration.deliveryNoItems"
+  },
+  "settingsApiIntegrationDeliveryStatusPending": "Pendiente",
+  "@settingsApiIntegrationDeliveryStatusPending": {
+    "description": "Web path: settings.apiIntegration.deliveryStatusPending",
+    "x-webPath": "settings.apiIntegration.deliveryStatusPending"
+  },
+  "settingsApiIntegrationDeliveryStatusSuccess": "Correcta",
+  "@settingsApiIntegrationDeliveryStatusSuccess": {
+    "description": "Web path: settings.apiIntegration.deliveryStatusSuccess",
+    "x-webPath": "settings.apiIntegration.deliveryStatusSuccess"
+  },
+  "settingsApiIntegrationDeliveryStatusFailed": "Fallida",
+  "@settingsApiIntegrationDeliveryStatusFailed": {
+    "description": "Web path: settings.apiIntegration.deliveryStatusFailed",
+    "x-webPath": "settings.apiIntegration.deliveryStatusFailed"
+  },
+  "settingsApiIntegrationColEventType": "Evento",
+  "@settingsApiIntegrationColEventType": {
+    "description": "Web path: settings.apiIntegration.colEventType",
+    "x-webPath": "settings.apiIntegration.colEventType"
+  },
+  "settingsApiIntegrationColAttempts": "Intentos",
+  "@settingsApiIntegrationColAttempts": {
+    "description": "Web path: settings.apiIntegration.colAttempts",
+    "x-webPath": "settings.apiIntegration.colAttempts"
+  },
+  "settingsApiIntegrationColStatusCode": "Código de estado",
+  "@settingsApiIntegrationColStatusCode": {
+    "description": "Web path: settings.apiIntegration.colStatusCode",
+    "x-webPath": "settings.apiIntegration.colStatusCode"
+  },
+  "settingsApiIntegrationColDeliveredAt": "Entregado",
+  "@settingsApiIntegrationColDeliveredAt": {
+    "description": "Web path: settings.apiIntegration.colDeliveredAt",
+    "x-webPath": "settings.apiIntegration.colDeliveredAt"
+  },
+  "settingsApiIntegrationColError": "Mensaje de error",
+  "@settingsApiIntegrationColError": {
+    "description": "Web path: settings.apiIntegration.colError",
+    "x-webPath": "settings.apiIntegration.colError"
+  },
+  "settingsApiIntegrationEventCreated": "Transacción creada",
+  "@settingsApiIntegrationEventCreated": {
+    "description": "Web path: settings.apiIntegration.event.created",
+    "x-webPath": "settings.apiIntegration.event.created"
+  },
+  "settingsApiIntegrationEventUpdated": "Transacción modificada",
+  "@settingsApiIntegrationEventUpdated": {
+    "description": "Web path: settings.apiIntegration.event.updated",
+    "x-webPath": "settings.apiIntegration.event.updated"
+  },
+  "settingsApiIntegrationEventDeleted": "Transacción eliminada",
+  "@settingsApiIntegrationEventDeleted": {
+    "description": "Web path: settings.apiIntegration.event.deleted",
+    "x-webPath": "settings.apiIntegration.event.deleted"
+  },
+  "settingsApiIntegrationLoadTokensFailed": "No se pudieron cargar los tokens de API",
+  "@settingsApiIntegrationLoadTokensFailed": {
+    "description": "Web path: settings.apiIntegration.loadTokensFailed",
+    "x-webPath": "settings.apiIntegration.loadTokensFailed"
+  },
+  "settingsApiIntegrationLoadWebhooksFailed": "No se pudieron cargar las suscripciones de webhook",
+  "@settingsApiIntegrationLoadWebhooksFailed": {
+    "description": "Web path: settings.apiIntegration.loadWebhooksFailed",
+    "x-webPath": "settings.apiIntegration.loadWebhooksFailed"
+  },
+  "settingsApiIntegrationLoadDeliveriesFailed": "No se pudieron cargar los registros de entrega",
+  "@settingsApiIntegrationLoadDeliveriesFailed": {
+    "description": "Web path: settings.apiIntegration.loadDeliveriesFailed",
+    "x-webPath": "settings.apiIntegration.loadDeliveriesFailed"
+  },
+  "settingsApiIntegrationCreateTokenFailed": "No se pudo crear el token de API",
+  "@settingsApiIntegrationCreateTokenFailed": {
+    "description": "Web path: settings.apiIntegration.createTokenFailed",
+    "x-webPath": "settings.apiIntegration.createTokenFailed"
+  },
+  "settingsApiIntegrationRevokeTokenFailed": "No se pudo revocar el token de API",
+  "@settingsApiIntegrationRevokeTokenFailed": {
+    "description": "Web path: settings.apiIntegration.revokeTokenFailed",
+    "x-webPath": "settings.apiIntegration.revokeTokenFailed"
+  },
+  "settingsApiIntegrationCreateWebhookFailed": "No se pudo crear la suscripción",
+  "@settingsApiIntegrationCreateWebhookFailed": {
+    "description": "Web path: settings.apiIntegration.createWebhookFailed",
+    "x-webPath": "settings.apiIntegration.createWebhookFailed"
+  },
+  "settingsApiIntegrationUpdateWebhookFailed": "No se pudo actualizar la suscripción",
+  "@settingsApiIntegrationUpdateWebhookFailed": {
+    "description": "Web path: settings.apiIntegration.updateWebhookFailed",
+    "x-webPath": "settings.apiIntegration.updateWebhookFailed"
+  },
+  "settingsApiIntegrationDeleteWebhookFailed": "No se pudo eliminar la suscripción",
+  "@settingsApiIntegrationDeleteWebhookFailed": {
+    "description": "Web path: settings.apiIntegration.deleteWebhookFailed",
+    "x-webPath": "settings.apiIntegration.deleteWebhookFailed"
+  },
+  "settingsApiIntegrationUrlRequired": "Introduce la URL de destino",
+  "@settingsApiIntegrationUrlRequired": {
+    "description": "Web path: settings.apiIntegration.urlRequired",
+    "x-webPath": "settings.apiIntegration.urlRequired"
+  },
+  "settingsApiIntegrationEventRequired": "Selecciona al menos un tipo de evento",
+  "@settingsApiIntegrationEventRequired": {
+    "description": "Web path: settings.apiIntegration.eventRequired",
+    "x-webPath": "settings.apiIntegration.eventRequired"
+  },
+  "settingsApiIntegrationCloseConfirm": "He copiado la clave, cerrar",
+  "@settingsApiIntegrationCloseConfirm": {
+    "description": "Web path: settings.apiIntegration.closeConfirm",
+    "x-webPath": "settings.apiIntegration.closeConfirm"
+  },
+  "settingsApiIntegrationCopyFailed": "No se pudo copiar — puede que el copiado automático esté bloqueado; selecciona el valor de arriba y cópialo manualmente",
+  "@settingsApiIntegrationCopyFailed": {
+    "description": "Web path: settings.apiIntegration.copyFailed",
+    "x-webPath": "settings.apiIntegration.copyFailed"
   }
 }

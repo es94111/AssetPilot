@@ -8718,6 +8718,570 @@ abstract class AppLocalizations {
   /// In zh_Hant_TW, this message translates to:
   /// **'轉帳'**
   String get featuresCalendarEventTypesTransfer;
+
+  /// Web path: nav.apiIntegration
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'API 整合'**
+  String get navApiIntegration;
+
+  /// Web path: common.refresh
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'重新整理'**
+  String get commonRefresh;
+
+  /// Web path: common.copy
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'複製'**
+  String get commonCopy;
+
+  /// Web path: common.copied
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'已複製！'**
+  String get commonCopied;
+
+  /// Web path: settings.apiIntegration.title
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'API 整合設定'**
+  String get settingsApiIntegrationTitle;
+
+  /// Web path: settings.apiIntegration.description
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'建立 API Token 供第三方服務呼叫 REST API，並透過 Webhook 訂閱交易異動事件。'**
+  String get settingsApiIntegrationDescription;
+
+  /// Web path: settings.apiIntegration.tokenTitle
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'API Token'**
+  String get settingsApiIntegrationTokenTitle;
+
+  /// Web path: settings.apiIntegration.tokenDescription
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'權杖可設定權限範圍，明文僅顯示一次，請在建立後立即妥善保存。每個帳號最多 20 組啟用中的權杖。'**
+  String get settingsApiIntegrationTokenDescription;
+
+  /// Web path: settings.apiIntegration.tokenCreateTitle
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'建立新 Token'**
+  String get settingsApiIntegrationTokenCreateTitle;
+
+  /// Web path: settings.apiIntegration.tokenNameLabel
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'名稱'**
+  String get settingsApiIntegrationTokenNameLabel;
+
+  /// Web path: settings.apiIntegration.tokenNamePlaceholder
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'例如：個人自動化腳本'**
+  String get settingsApiIntegrationTokenNamePlaceholder;
+
+  /// Web path: settings.apiIntegration.tokenExpiresAtLabel
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'到期時間（選填）'**
+  String get settingsApiIntegrationTokenExpiresAtLabel;
+
+  /// Web path: settings.apiIntegration.tokenScopesLabel
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'權限範圍'**
+  String get settingsApiIntegrationTokenScopesLabel;
+
+  /// Web path: settings.apiIntegration.tokenCreateButton
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'建立 Token'**
+  String get settingsApiIntegrationTokenCreateButton;
+
+  /// Web path: settings.apiIntegration.tokenCreating
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'建立中…'**
+  String get settingsApiIntegrationTokenCreating;
+
+  /// Web path: settings.apiIntegration.tokenListTitle
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'我的 API Token'**
+  String get settingsApiIntegrationTokenListTitle;
+
+  /// Web path: settings.apiIntegration.tokenNoItems
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'尚未建立任何 API Token'**
+  String get settingsApiIntegrationTokenNoItems;
+
+  /// Web path: settings.apiIntegration.tokenStatusActive
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'啟用中'**
+  String get settingsApiIntegrationTokenStatusActive;
+
+  /// Web path: settings.apiIntegration.tokenStatusExpired
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'已過期'**
+  String get settingsApiIntegrationTokenStatusExpired;
+
+  /// Web path: settings.apiIntegration.tokenStatusRevoked
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'已撤銷'**
+  String get settingsApiIntegrationTokenStatusRevoked;
+
+  /// Web path: settings.apiIntegration.tokenRevokeButton
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'撤銷'**
+  String get settingsApiIntegrationTokenRevokeButton;
+
+  /// Web path: settings.apiIntegration.tokenRevokeConfirm
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'確定要撤銷這個 API Token 嗎？撤銷後使用此權杖的呼叫將立即被拒絕。'**
+  String get settingsApiIntegrationTokenRevokeConfirm;
+
+  /// Web path: settings.apiIntegration.tokenRevoked
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'API Token 已撤銷'**
+  String get settingsApiIntegrationTokenRevoked;
+
+  /// Web path: settings.apiIntegration.tokenModalTitle
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'API Token 已建立'**
+  String get settingsApiIntegrationTokenModalTitle;
+
+  /// Web path: settings.apiIntegration.tokenModalWarning
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'此權杖僅顯示這一次，請立即複製並妥善保存；關閉後將無法再次查看明文。'**
+  String get settingsApiIntegrationTokenModalWarning;
+
+  /// Web path: settings.apiIntegration.tokenNameRequired
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'請輸入名稱'**
+  String get settingsApiIntegrationTokenNameRequired;
+
+  /// Web path: settings.apiIntegration.tokenScopeRequired
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'請至少勾選一個權限範圍'**
+  String get settingsApiIntegrationTokenScopeRequired;
+
+  /// Web path: settings.apiIntegration.colName
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'名稱'**
+  String get settingsApiIntegrationColName;
+
+  /// Web path: settings.apiIntegration.colPrefix
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'權杖前綴'**
+  String get settingsApiIntegrationColPrefix;
+
+  /// Web path: settings.apiIntegration.colScopes
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'權限範圍'**
+  String get settingsApiIntegrationColScopes;
+
+  /// Web path: settings.apiIntegration.colStatus
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'狀態'**
+  String get settingsApiIntegrationColStatus;
+
+  /// Web path: settings.apiIntegration.colCreatedAt
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'建立時間'**
+  String get settingsApiIntegrationColCreatedAt;
+
+  /// Web path: settings.apiIntegration.colLastUsedAt
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'最後使用時間'**
+  String get settingsApiIntegrationColLastUsedAt;
+
+  /// Web path: settings.apiIntegration.colExpiresAt
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'到期時間'**
+  String get settingsApiIntegrationColExpiresAt;
+
+  /// Web path: settings.apiIntegration.colActions
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'操作'**
+  String get settingsApiIntegrationColActions;
+
+  /// Web path: settings.apiIntegration.neverUsed
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'尚未使用'**
+  String get settingsApiIntegrationNeverUsed;
+
+  /// Web path: settings.apiIntegration.neverExpires
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'永不過期'**
+  String get settingsApiIntegrationNeverExpires;
+
+  /// Web path: settings.apiIntegration.scope.transactionsRead
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'讀取交易'**
+  String get settingsApiIntegrationScopeTransactionsRead;
+
+  /// Web path: settings.apiIntegration.scope.transactionsWrite
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'新增交易'**
+  String get settingsApiIntegrationScopeTransactionsWrite;
+
+  /// Web path: settings.apiIntegration.scope.webhooksManage
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'管理 Webhook'**
+  String get settingsApiIntegrationScopeWebhooksManage;
+
+  /// Web path: settings.apiIntegration.webhookTitle
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'Webhook 訂閱'**
+  String get settingsApiIntegrationWebhookTitle;
+
+  /// Web path: settings.apiIntegration.webhookDescription
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'訂閱交易異動事件；目標網址必須為公開 HTTPS，且不得指向本機或內部網路。'**
+  String get settingsApiIntegrationWebhookDescription;
+
+  /// Web path: settings.apiIntegration.webhookCreateTitle
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'建立新訂閱'**
+  String get settingsApiIntegrationWebhookCreateTitle;
+
+  /// Web path: settings.apiIntegration.webhookUrlLabel
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'目標網址'**
+  String get settingsApiIntegrationWebhookUrlLabel;
+
+  /// Web path: settings.apiIntegration.webhookUrlPlaceholder
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'例如：https://example.com/hooks/assetpilot'**
+  String get settingsApiIntegrationWebhookUrlPlaceholder;
+
+  /// Web path: settings.apiIntegration.webhookEventsLabel
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'事件類型'**
+  String get settingsApiIntegrationWebhookEventsLabel;
+
+  /// Web path: settings.apiIntegration.webhookActiveLabel
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'啟用此訂閱'**
+  String get settingsApiIntegrationWebhookActiveLabel;
+
+  /// Web path: settings.apiIntegration.webhookCreateButton
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'建立訂閱'**
+  String get settingsApiIntegrationWebhookCreateButton;
+
+  /// Web path: settings.apiIntegration.webhookSaveButton
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'儲存變更'**
+  String get settingsApiIntegrationWebhookSaveButton;
+
+  /// Web path: settings.apiIntegration.webhookCancelEdit
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'取消編輯'**
+  String get settingsApiIntegrationWebhookCancelEdit;
+
+  /// Web path: settings.apiIntegration.webhookListTitle
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'我的 Webhook 訂閱'**
+  String get settingsApiIntegrationWebhookListTitle;
+
+  /// Web path: settings.apiIntegration.webhookNoItems
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'尚未建立任何 Webhook 訂閱'**
+  String get settingsApiIntegrationWebhookNoItems;
+
+  /// Web path: settings.apiIntegration.colUrl
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'目標網址'**
+  String get settingsApiIntegrationColUrl;
+
+  /// Web path: settings.apiIntegration.colEvents
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'事件類型'**
+  String get settingsApiIntegrationColEvents;
+
+  /// Web path: settings.apiIntegration.colEnabled
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'狀態'**
+  String get settingsApiIntegrationColEnabled;
+
+  /// Web path: settings.apiIntegration.colLastSuccess
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'上次成功'**
+  String get settingsApiIntegrationColLastSuccess;
+
+  /// Web path: settings.apiIntegration.colLastFailure
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'上次失敗'**
+  String get settingsApiIntegrationColLastFailure;
+
+  /// Web path: settings.apiIntegration.webhookEnabled
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'啟用中'**
+  String get settingsApiIntegrationWebhookEnabled;
+
+  /// Web path: settings.apiIntegration.webhookDisabled
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'已停用'**
+  String get settingsApiIntegrationWebhookDisabled;
+
+  /// Web path: settings.apiIntegration.webhookEditButton
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'編輯'**
+  String get settingsApiIntegrationWebhookEditButton;
+
+  /// Web path: settings.apiIntegration.webhookDeleteButton
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'刪除'**
+  String get settingsApiIntegrationWebhookDeleteButton;
+
+  /// Web path: settings.apiIntegration.webhookDeleteConfirm
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'確定要刪除這個 Webhook 訂閱嗎？相關投遞紀錄也會一併刪除，且無法復原。'**
+  String get settingsApiIntegrationWebhookDeleteConfirm;
+
+  /// Web path: settings.apiIntegration.webhookSecretModalTitle
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'Webhook 簽章密鑰'**
+  String get settingsApiIntegrationWebhookSecretModalTitle;
+
+  /// Web path: settings.apiIntegration.webhookSecretModalWarning
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'此簽章密鑰僅顯示這一次，請立即複製並妥善保存；關閉後將無法再次取回。'**
+  String get settingsApiIntegrationWebhookSecretModalWarning;
+
+  /// Web path: settings.apiIntegration.webhookSignatureHeaderLabel
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'簽章標頭格式'**
+  String get settingsApiIntegrationWebhookSignatureHeaderLabel;
+
+  /// Web path: settings.apiIntegration.webhookSignatureHint
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'簽章內容為時間戳、半角句點與原始請求內容的 HMAC-SHA256；請比對時間戳（容忍 5 分鐘）以抵抗重放攻擊。'**
+  String get settingsApiIntegrationWebhookSignatureHint;
+
+  /// Web path: settings.apiIntegration.deliveryTitle
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'投遞紀錄'**
+  String get settingsApiIntegrationDeliveryTitle;
+
+  /// Web path: settings.apiIntegration.deliveryDescription
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'查看最近的 Webhook 投遞結果與失敗原因。'**
+  String get settingsApiIntegrationDeliveryDescription;
+
+  /// Web path: settings.apiIntegration.deliveryFilterLabel
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'篩選訂閱'**
+  String get settingsApiIntegrationDeliveryFilterLabel;
+
+  /// Web path: settings.apiIntegration.deliveryAllSubscriptions
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'全部訂閱'**
+  String get settingsApiIntegrationDeliveryAllSubscriptions;
+
+  /// Web path: settings.apiIntegration.deliveryNoItems
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'尚無投遞紀錄'**
+  String get settingsApiIntegrationDeliveryNoItems;
+
+  /// Web path: settings.apiIntegration.deliveryStatusPending
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'待投遞'**
+  String get settingsApiIntegrationDeliveryStatusPending;
+
+  /// Web path: settings.apiIntegration.deliveryStatusSuccess
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'成功'**
+  String get settingsApiIntegrationDeliveryStatusSuccess;
+
+  /// Web path: settings.apiIntegration.deliveryStatusFailed
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'失敗'**
+  String get settingsApiIntegrationDeliveryStatusFailed;
+
+  /// Web path: settings.apiIntegration.colEventType
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'事件類型'**
+  String get settingsApiIntegrationColEventType;
+
+  /// Web path: settings.apiIntegration.colAttempts
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'嘗試次數'**
+  String get settingsApiIntegrationColAttempts;
+
+  /// Web path: settings.apiIntegration.colStatusCode
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'狀態碼'**
+  String get settingsApiIntegrationColStatusCode;
+
+  /// Web path: settings.apiIntegration.colDeliveredAt
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'投遞時間'**
+  String get settingsApiIntegrationColDeliveredAt;
+
+  /// Web path: settings.apiIntegration.colError
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'錯誤訊息'**
+  String get settingsApiIntegrationColError;
+
+  /// Web path: settings.apiIntegration.event.created
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'交易新增'**
+  String get settingsApiIntegrationEventCreated;
+
+  /// Web path: settings.apiIntegration.event.updated
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'交易修改'**
+  String get settingsApiIntegrationEventUpdated;
+
+  /// Web path: settings.apiIntegration.event.deleted
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'交易刪除'**
+  String get settingsApiIntegrationEventDeleted;
+
+  /// Web path: settings.apiIntegration.loadTokensFailed
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'載入 API Token 失敗'**
+  String get settingsApiIntegrationLoadTokensFailed;
+
+  /// Web path: settings.apiIntegration.loadWebhooksFailed
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'載入 Webhook 訂閱失敗'**
+  String get settingsApiIntegrationLoadWebhooksFailed;
+
+  /// Web path: settings.apiIntegration.loadDeliveriesFailed
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'載入投遞紀錄失敗'**
+  String get settingsApiIntegrationLoadDeliveriesFailed;
+
+  /// Web path: settings.apiIntegration.createTokenFailed
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'建立 API Token 失敗'**
+  String get settingsApiIntegrationCreateTokenFailed;
+
+  /// Web path: settings.apiIntegration.revokeTokenFailed
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'撤銷 API Token 失敗'**
+  String get settingsApiIntegrationRevokeTokenFailed;
+
+  /// Web path: settings.apiIntegration.createWebhookFailed
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'建立 Webhook 訂閱失敗'**
+  String get settingsApiIntegrationCreateWebhookFailed;
+
+  /// Web path: settings.apiIntegration.updateWebhookFailed
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'更新 Webhook 訂閱失敗'**
+  String get settingsApiIntegrationUpdateWebhookFailed;
+
+  /// Web path: settings.apiIntegration.deleteWebhookFailed
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'刪除 Webhook 訂閱失敗'**
+  String get settingsApiIntegrationDeleteWebhookFailed;
+
+  /// Web path: settings.apiIntegration.urlRequired
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'請輸入目標網址'**
+  String get settingsApiIntegrationUrlRequired;
+
+  /// Web path: settings.apiIntegration.eventRequired
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'請至少勾選一個事件類型'**
+  String get settingsApiIntegrationEventRequired;
+
+  /// Web path: settings.apiIntegration.closeConfirm
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'我已複製，關閉視窗'**
+  String get settingsApiIntegrationCloseConfirm;
+
+  /// Web path: settings.apiIntegration.copyFailed
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'複製失敗（此環境可能不允許自動複製），請手動選取上方內容複製'**
+  String get settingsApiIntegrationCopyFailed;
 }
 
 class _AppLocalizationsDelegate

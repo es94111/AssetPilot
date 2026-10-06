@@ -7,7 +7,7 @@ import {
   LayoutDashboard, Receipt, ChartBar, Wallet, Building2, Tags, Repeat, CalendarDays,
   Briefcase, Key, User, Shield, Database, LogOut, TrendingUp, Coins,
   BarChart3, Settings2, Sun, Moon, Monitor, Info, TableProperties,
-  X, Plug, Bot, PanelLeftClose, PanelLeftOpen,
+  X, Plug, Bot, PanelLeftClose, PanelLeftOpen, Webhook,
 } from 'lucide-react';
 import { useEffect, useRef, useState, type ElementType } from 'react';
 import { useTheme, type Theme } from '@/hooks/useTheme';
@@ -47,6 +47,7 @@ const NAV_SECTIONS = [
       { path: '/settings/export',  labelKey: 'nav.exportImport', icon: Database },
       { path: '/settings/mcp',     labelKey: 'nav.mcp',          icon: Plug },
       { path: '/settings/mcp-connections', labelKey: 'nav.mcpConnections', icon: Bot },
+      { path: '/settings/api-integration', labelKey: 'nav.apiIntegration', icon: Webhook },
       { path: '/settings/account', labelKey: 'nav.account',      icon: User },
       { path: '/api-credits',      labelKey: 'nav.apiCredits',   icon: Key },
       { path: '/settings/admin',   labelKey: 'nav.admin',        icon: Shield, requireAdmin: true },

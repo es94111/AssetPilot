@@ -4762,6 +4762,299 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get featuresCalendarEventTypesTransfer => '轉帳';
+
+  @override
+  String get navApiIntegration => 'API 整合';
+
+  @override
+  String get commonRefresh => '重新整理';
+
+  @override
+  String get commonCopy => '複製';
+
+  @override
+  String get commonCopied => '已複製！';
+
+  @override
+  String get settingsApiIntegrationTitle => 'API 整合設定';
+
+  @override
+  String get settingsApiIntegrationDescription =>
+      '建立 API Token 供第三方服務呼叫 REST API，並透過 Webhook 訂閱交易異動事件。';
+
+  @override
+  String get settingsApiIntegrationTokenTitle => 'API Token';
+
+  @override
+  String get settingsApiIntegrationTokenDescription =>
+      '權杖可設定權限範圍，明文僅顯示一次，請在建立後立即妥善保存。每個帳號最多 20 組啟用中的權杖。';
+
+  @override
+  String get settingsApiIntegrationTokenCreateTitle => '建立新 Token';
+
+  @override
+  String get settingsApiIntegrationTokenNameLabel => '名稱';
+
+  @override
+  String get settingsApiIntegrationTokenNamePlaceholder => '例如：個人自動化腳本';
+
+  @override
+  String get settingsApiIntegrationTokenExpiresAtLabel => '到期時間（選填）';
+
+  @override
+  String get settingsApiIntegrationTokenScopesLabel => '權限範圍';
+
+  @override
+  String get settingsApiIntegrationTokenCreateButton => '建立 Token';
+
+  @override
+  String get settingsApiIntegrationTokenCreating => '建立中…';
+
+  @override
+  String get settingsApiIntegrationTokenListTitle => '我的 API Token';
+
+  @override
+  String get settingsApiIntegrationTokenNoItems => '尚未建立任何 API Token';
+
+  @override
+  String get settingsApiIntegrationTokenStatusActive => '啟用中';
+
+  @override
+  String get settingsApiIntegrationTokenStatusExpired => '已過期';
+
+  @override
+  String get settingsApiIntegrationTokenStatusRevoked => '已撤銷';
+
+  @override
+  String get settingsApiIntegrationTokenRevokeButton => '撤銷';
+
+  @override
+  String get settingsApiIntegrationTokenRevokeConfirm =>
+      '確定要撤銷這個 API Token 嗎？撤銷後使用此權杖的呼叫將立即被拒絕。';
+
+  @override
+  String get settingsApiIntegrationTokenRevoked => 'API Token 已撤銷';
+
+  @override
+  String get settingsApiIntegrationTokenModalTitle => 'API Token 已建立';
+
+  @override
+  String get settingsApiIntegrationTokenModalWarning =>
+      '此權杖僅顯示這一次，請立即複製並妥善保存；關閉後將無法再次查看明文。';
+
+  @override
+  String get settingsApiIntegrationTokenNameRequired => '請輸入名稱';
+
+  @override
+  String get settingsApiIntegrationTokenScopeRequired => '請至少勾選一個權限範圍';
+
+  @override
+  String get settingsApiIntegrationColName => '名稱';
+
+  @override
+  String get settingsApiIntegrationColPrefix => '權杖前綴';
+
+  @override
+  String get settingsApiIntegrationColScopes => '權限範圍';
+
+  @override
+  String get settingsApiIntegrationColStatus => '狀態';
+
+  @override
+  String get settingsApiIntegrationColCreatedAt => '建立時間';
+
+  @override
+  String get settingsApiIntegrationColLastUsedAt => '最後使用時間';
+
+  @override
+  String get settingsApiIntegrationColExpiresAt => '到期時間';
+
+  @override
+  String get settingsApiIntegrationColActions => '操作';
+
+  @override
+  String get settingsApiIntegrationNeverUsed => '尚未使用';
+
+  @override
+  String get settingsApiIntegrationNeverExpires => '永不過期';
+
+  @override
+  String get settingsApiIntegrationScopeTransactionsRead => '讀取交易';
+
+  @override
+  String get settingsApiIntegrationScopeTransactionsWrite => '新增交易';
+
+  @override
+  String get settingsApiIntegrationScopeWebhooksManage => '管理 Webhook';
+
+  @override
+  String get settingsApiIntegrationWebhookTitle => 'Webhook 訂閱';
+
+  @override
+  String get settingsApiIntegrationWebhookDescription =>
+      '訂閱交易異動事件；目標網址必須為公開 HTTPS，且不得指向本機或內部網路。';
+
+  @override
+  String get settingsApiIntegrationWebhookCreateTitle => '建立新訂閱';
+
+  @override
+  String get settingsApiIntegrationWebhookUrlLabel => '目標網址';
+
+  @override
+  String get settingsApiIntegrationWebhookUrlPlaceholder =>
+      '例如：https://example.com/hooks/assetpilot';
+
+  @override
+  String get settingsApiIntegrationWebhookEventsLabel => '事件類型';
+
+  @override
+  String get settingsApiIntegrationWebhookActiveLabel => '啟用此訂閱';
+
+  @override
+  String get settingsApiIntegrationWebhookCreateButton => '建立訂閱';
+
+  @override
+  String get settingsApiIntegrationWebhookSaveButton => '儲存變更';
+
+  @override
+  String get settingsApiIntegrationWebhookCancelEdit => '取消編輯';
+
+  @override
+  String get settingsApiIntegrationWebhookListTitle => '我的 Webhook 訂閱';
+
+  @override
+  String get settingsApiIntegrationWebhookNoItems => '尚未建立任何 Webhook 訂閱';
+
+  @override
+  String get settingsApiIntegrationColUrl => '目標網址';
+
+  @override
+  String get settingsApiIntegrationColEvents => '事件類型';
+
+  @override
+  String get settingsApiIntegrationColEnabled => '狀態';
+
+  @override
+  String get settingsApiIntegrationColLastSuccess => '上次成功';
+
+  @override
+  String get settingsApiIntegrationColLastFailure => '上次失敗';
+
+  @override
+  String get settingsApiIntegrationWebhookEnabled => '啟用中';
+
+  @override
+  String get settingsApiIntegrationWebhookDisabled => '已停用';
+
+  @override
+  String get settingsApiIntegrationWebhookEditButton => '編輯';
+
+  @override
+  String get settingsApiIntegrationWebhookDeleteButton => '刪除';
+
+  @override
+  String get settingsApiIntegrationWebhookDeleteConfirm =>
+      '確定要刪除這個 Webhook 訂閱嗎？相關投遞紀錄也會一併刪除，且無法復原。';
+
+  @override
+  String get settingsApiIntegrationWebhookSecretModalTitle => 'Webhook 簽章密鑰';
+
+  @override
+  String get settingsApiIntegrationWebhookSecretModalWarning =>
+      '此簽章密鑰僅顯示這一次，請立即複製並妥善保存；關閉後將無法再次取回。';
+
+  @override
+  String get settingsApiIntegrationWebhookSignatureHeaderLabel => '簽章標頭格式';
+
+  @override
+  String get settingsApiIntegrationWebhookSignatureHint =>
+      '簽章內容為時間戳、半角句點與原始請求內容的 HMAC-SHA256；請比對時間戳（容忍 5 分鐘）以抵抗重放攻擊。';
+
+  @override
+  String get settingsApiIntegrationDeliveryTitle => '投遞紀錄';
+
+  @override
+  String get settingsApiIntegrationDeliveryDescription =>
+      '查看最近的 Webhook 投遞結果與失敗原因。';
+
+  @override
+  String get settingsApiIntegrationDeliveryFilterLabel => '篩選訂閱';
+
+  @override
+  String get settingsApiIntegrationDeliveryAllSubscriptions => '全部訂閱';
+
+  @override
+  String get settingsApiIntegrationDeliveryNoItems => '尚無投遞紀錄';
+
+  @override
+  String get settingsApiIntegrationDeliveryStatusPending => '待投遞';
+
+  @override
+  String get settingsApiIntegrationDeliveryStatusSuccess => '成功';
+
+  @override
+  String get settingsApiIntegrationDeliveryStatusFailed => '失敗';
+
+  @override
+  String get settingsApiIntegrationColEventType => '事件類型';
+
+  @override
+  String get settingsApiIntegrationColAttempts => '嘗試次數';
+
+  @override
+  String get settingsApiIntegrationColStatusCode => '狀態碼';
+
+  @override
+  String get settingsApiIntegrationColDeliveredAt => '投遞時間';
+
+  @override
+  String get settingsApiIntegrationColError => '錯誤訊息';
+
+  @override
+  String get settingsApiIntegrationEventCreated => '交易新增';
+
+  @override
+  String get settingsApiIntegrationEventUpdated => '交易修改';
+
+  @override
+  String get settingsApiIntegrationEventDeleted => '交易刪除';
+
+  @override
+  String get settingsApiIntegrationLoadTokensFailed => '載入 API Token 失敗';
+
+  @override
+  String get settingsApiIntegrationLoadWebhooksFailed => '載入 Webhook 訂閱失敗';
+
+  @override
+  String get settingsApiIntegrationLoadDeliveriesFailed => '載入投遞紀錄失敗';
+
+  @override
+  String get settingsApiIntegrationCreateTokenFailed => '建立 API Token 失敗';
+
+  @override
+  String get settingsApiIntegrationRevokeTokenFailed => '撤銷 API Token 失敗';
+
+  @override
+  String get settingsApiIntegrationCreateWebhookFailed => '建立 Webhook 訂閱失敗';
+
+  @override
+  String get settingsApiIntegrationUpdateWebhookFailed => '更新 Webhook 訂閱失敗';
+
+  @override
+  String get settingsApiIntegrationDeleteWebhookFailed => '刪除 Webhook 訂閱失敗';
+
+  @override
+  String get settingsApiIntegrationUrlRequired => '請輸入目標網址';
+
+  @override
+  String get settingsApiIntegrationEventRequired => '請至少勾選一個事件類型';
+
+  @override
+  String get settingsApiIntegrationCloseConfirm => '我已複製，關閉視窗';
+
+  @override
+  String get settingsApiIntegrationCopyFailed =>
+      '複製失敗（此環境可能不允許自動複製），請手動選取上方內容複製';
 }
 
 /// The translations for Chinese, as used in China, using the Han script (`zh_Hans_CN`).
@@ -9518,6 +9811,299 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
 
   @override
   String get featuresCalendarEventTypesTransfer => '转账';
+
+  @override
+  String get navApiIntegration => 'API 整合';
+
+  @override
+  String get commonRefresh => '重新整理';
+
+  @override
+  String get commonCopy => '复制';
+
+  @override
+  String get commonCopied => '已复制！';
+
+  @override
+  String get settingsApiIntegrationTitle => 'API 整合设置';
+
+  @override
+  String get settingsApiIntegrationDescription =>
+      '创建 API Token 供第三方服务调用 REST API，并通过 Webhook 订阅交易变动事件。';
+
+  @override
+  String get settingsApiIntegrationTokenTitle => 'API Token';
+
+  @override
+  String get settingsApiIntegrationTokenDescription =>
+      '权杖可设置权限范围，明文仅显示一次，请在创建后立即妥善保存。每个账号最多 20 组启用中的权杖。';
+
+  @override
+  String get settingsApiIntegrationTokenCreateTitle => '创建新 Token';
+
+  @override
+  String get settingsApiIntegrationTokenNameLabel => '名称';
+
+  @override
+  String get settingsApiIntegrationTokenNamePlaceholder => '例如：个人自动化脚本';
+
+  @override
+  String get settingsApiIntegrationTokenExpiresAtLabel => '到期时间（选填）';
+
+  @override
+  String get settingsApiIntegrationTokenScopesLabel => '权限范围';
+
+  @override
+  String get settingsApiIntegrationTokenCreateButton => '创建 Token';
+
+  @override
+  String get settingsApiIntegrationTokenCreating => '创建中…';
+
+  @override
+  String get settingsApiIntegrationTokenListTitle => '我的 API Token';
+
+  @override
+  String get settingsApiIntegrationTokenNoItems => '尚未创建任何 API Token';
+
+  @override
+  String get settingsApiIntegrationTokenStatusActive => '启用中';
+
+  @override
+  String get settingsApiIntegrationTokenStatusExpired => '已过期';
+
+  @override
+  String get settingsApiIntegrationTokenStatusRevoked => '已撤销';
+
+  @override
+  String get settingsApiIntegrationTokenRevokeButton => '撤销';
+
+  @override
+  String get settingsApiIntegrationTokenRevokeConfirm =>
+      '确定要撤销这个 API Token 吗？撤销后使用此权杖的调用将立即被拒绝。';
+
+  @override
+  String get settingsApiIntegrationTokenRevoked => 'API Token 已撤销';
+
+  @override
+  String get settingsApiIntegrationTokenModalTitle => 'API Token 已创建';
+
+  @override
+  String get settingsApiIntegrationTokenModalWarning =>
+      '此权杖仅显示这一次，请立即复制并妥善保存；关闭后将无法再次查看明文。';
+
+  @override
+  String get settingsApiIntegrationTokenNameRequired => '请输入名称';
+
+  @override
+  String get settingsApiIntegrationTokenScopeRequired => '请至少勾选一个权限范围';
+
+  @override
+  String get settingsApiIntegrationColName => '名称';
+
+  @override
+  String get settingsApiIntegrationColPrefix => '权杖前缀';
+
+  @override
+  String get settingsApiIntegrationColScopes => '权限范围';
+
+  @override
+  String get settingsApiIntegrationColStatus => '状态';
+
+  @override
+  String get settingsApiIntegrationColCreatedAt => '创建时间';
+
+  @override
+  String get settingsApiIntegrationColLastUsedAt => '最后使用时间';
+
+  @override
+  String get settingsApiIntegrationColExpiresAt => '到期时间';
+
+  @override
+  String get settingsApiIntegrationColActions => '操作';
+
+  @override
+  String get settingsApiIntegrationNeverUsed => '尚未使用';
+
+  @override
+  String get settingsApiIntegrationNeverExpires => '永不过期';
+
+  @override
+  String get settingsApiIntegrationScopeTransactionsRead => '读取交易';
+
+  @override
+  String get settingsApiIntegrationScopeTransactionsWrite => '新增交易';
+
+  @override
+  String get settingsApiIntegrationScopeWebhooksManage => '管理 Webhook';
+
+  @override
+  String get settingsApiIntegrationWebhookTitle => 'Webhook 订阅';
+
+  @override
+  String get settingsApiIntegrationWebhookDescription =>
+      '订阅交易变动事件；目标网址必须为公开 HTTPS，且不得指向本机或内部网络。';
+
+  @override
+  String get settingsApiIntegrationWebhookCreateTitle => '创建新订阅';
+
+  @override
+  String get settingsApiIntegrationWebhookUrlLabel => '目标网址';
+
+  @override
+  String get settingsApiIntegrationWebhookUrlPlaceholder =>
+      '例如：https://example.com/hooks/assetpilot';
+
+  @override
+  String get settingsApiIntegrationWebhookEventsLabel => '事件类型';
+
+  @override
+  String get settingsApiIntegrationWebhookActiveLabel => '启用此订阅';
+
+  @override
+  String get settingsApiIntegrationWebhookCreateButton => '创建订阅';
+
+  @override
+  String get settingsApiIntegrationWebhookSaveButton => '保存变更';
+
+  @override
+  String get settingsApiIntegrationWebhookCancelEdit => '取消编辑';
+
+  @override
+  String get settingsApiIntegrationWebhookListTitle => '我的 Webhook 订阅';
+
+  @override
+  String get settingsApiIntegrationWebhookNoItems => '尚未创建任何 Webhook 订阅';
+
+  @override
+  String get settingsApiIntegrationColUrl => '目标网址';
+
+  @override
+  String get settingsApiIntegrationColEvents => '事件类型';
+
+  @override
+  String get settingsApiIntegrationColEnabled => '状态';
+
+  @override
+  String get settingsApiIntegrationColLastSuccess => '上次成功';
+
+  @override
+  String get settingsApiIntegrationColLastFailure => '上次失败';
+
+  @override
+  String get settingsApiIntegrationWebhookEnabled => '启用中';
+
+  @override
+  String get settingsApiIntegrationWebhookDisabled => '已停用';
+
+  @override
+  String get settingsApiIntegrationWebhookEditButton => '编辑';
+
+  @override
+  String get settingsApiIntegrationWebhookDeleteButton => '删除';
+
+  @override
+  String get settingsApiIntegrationWebhookDeleteConfirm =>
+      '确定要删除这个 Webhook 订阅吗？相关投递纪录也会一并删除，且无法复原。';
+
+  @override
+  String get settingsApiIntegrationWebhookSecretModalTitle => 'Webhook 签名密钥';
+
+  @override
+  String get settingsApiIntegrationWebhookSecretModalWarning =>
+      '此签名密钥仅显示这一次，请立即复制并妥善保存；关闭后将无法再次取回。';
+
+  @override
+  String get settingsApiIntegrationWebhookSignatureHeaderLabel => '签名标头格式';
+
+  @override
+  String get settingsApiIntegrationWebhookSignatureHint =>
+      '签名内容为时间戳、半角句点与原始请求内容的 HMAC-SHA256；请比对时间戳（容忍 5 分钟）以抵抗重放攻击。';
+
+  @override
+  String get settingsApiIntegrationDeliveryTitle => '投递纪录';
+
+  @override
+  String get settingsApiIntegrationDeliveryDescription =>
+      '查看最近的 Webhook 投递结果与失败原因。';
+
+  @override
+  String get settingsApiIntegrationDeliveryFilterLabel => '筛选订阅';
+
+  @override
+  String get settingsApiIntegrationDeliveryAllSubscriptions => '全部订阅';
+
+  @override
+  String get settingsApiIntegrationDeliveryNoItems => '尚无投递纪录';
+
+  @override
+  String get settingsApiIntegrationDeliveryStatusPending => '待投递';
+
+  @override
+  String get settingsApiIntegrationDeliveryStatusSuccess => '成功';
+
+  @override
+  String get settingsApiIntegrationDeliveryStatusFailed => '失败';
+
+  @override
+  String get settingsApiIntegrationColEventType => '事件类型';
+
+  @override
+  String get settingsApiIntegrationColAttempts => '尝试次数';
+
+  @override
+  String get settingsApiIntegrationColStatusCode => '状态码';
+
+  @override
+  String get settingsApiIntegrationColDeliveredAt => '投递时间';
+
+  @override
+  String get settingsApiIntegrationColError => '错误消息';
+
+  @override
+  String get settingsApiIntegrationEventCreated => '交易新增';
+
+  @override
+  String get settingsApiIntegrationEventUpdated => '交易修改';
+
+  @override
+  String get settingsApiIntegrationEventDeleted => '交易删除';
+
+  @override
+  String get settingsApiIntegrationLoadTokensFailed => '加载 API Token 失败';
+
+  @override
+  String get settingsApiIntegrationLoadWebhooksFailed => '加载 Webhook 订阅失败';
+
+  @override
+  String get settingsApiIntegrationLoadDeliveriesFailed => '加载投递纪录失败';
+
+  @override
+  String get settingsApiIntegrationCreateTokenFailed => '创建 API Token 失败';
+
+  @override
+  String get settingsApiIntegrationRevokeTokenFailed => '撤销 API Token 失败';
+
+  @override
+  String get settingsApiIntegrationCreateWebhookFailed => '创建 Webhook 订阅失败';
+
+  @override
+  String get settingsApiIntegrationUpdateWebhookFailed => '更新 Webhook 订阅失败';
+
+  @override
+  String get settingsApiIntegrationDeleteWebhookFailed => '删除 Webhook 订阅失败';
+
+  @override
+  String get settingsApiIntegrationUrlRequired => '请输入目标网址';
+
+  @override
+  String get settingsApiIntegrationEventRequired => '请至少勾选一个事件类型';
+
+  @override
+  String get settingsApiIntegrationCloseConfirm => '我已复制，关闭窗口';
+
+  @override
+  String get settingsApiIntegrationCopyFailed =>
+      '复制失败（此环境可能不允许自动复制），请手动选取上方内容复制';
 }
 
 /// The translations for Chinese, as used in Taiwan, using the Han script (`zh_Hant_TW`).
@@ -14278,4 +14864,297 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
 
   @override
   String get featuresCalendarEventTypesTransfer => '轉帳';
+
+  @override
+  String get navApiIntegration => 'API 整合';
+
+  @override
+  String get commonRefresh => '重新整理';
+
+  @override
+  String get commonCopy => '複製';
+
+  @override
+  String get commonCopied => '已複製！';
+
+  @override
+  String get settingsApiIntegrationTitle => 'API 整合設定';
+
+  @override
+  String get settingsApiIntegrationDescription =>
+      '建立 API Token 供第三方服務呼叫 REST API，並透過 Webhook 訂閱交易異動事件。';
+
+  @override
+  String get settingsApiIntegrationTokenTitle => 'API Token';
+
+  @override
+  String get settingsApiIntegrationTokenDescription =>
+      '權杖可設定權限範圍，明文僅顯示一次，請在建立後立即妥善保存。每個帳號最多 20 組啟用中的權杖。';
+
+  @override
+  String get settingsApiIntegrationTokenCreateTitle => '建立新 Token';
+
+  @override
+  String get settingsApiIntegrationTokenNameLabel => '名稱';
+
+  @override
+  String get settingsApiIntegrationTokenNamePlaceholder => '例如：個人自動化腳本';
+
+  @override
+  String get settingsApiIntegrationTokenExpiresAtLabel => '到期時間（選填）';
+
+  @override
+  String get settingsApiIntegrationTokenScopesLabel => '權限範圍';
+
+  @override
+  String get settingsApiIntegrationTokenCreateButton => '建立 Token';
+
+  @override
+  String get settingsApiIntegrationTokenCreating => '建立中…';
+
+  @override
+  String get settingsApiIntegrationTokenListTitle => '我的 API Token';
+
+  @override
+  String get settingsApiIntegrationTokenNoItems => '尚未建立任何 API Token';
+
+  @override
+  String get settingsApiIntegrationTokenStatusActive => '啟用中';
+
+  @override
+  String get settingsApiIntegrationTokenStatusExpired => '已過期';
+
+  @override
+  String get settingsApiIntegrationTokenStatusRevoked => '已撤銷';
+
+  @override
+  String get settingsApiIntegrationTokenRevokeButton => '撤銷';
+
+  @override
+  String get settingsApiIntegrationTokenRevokeConfirm =>
+      '確定要撤銷這個 API Token 嗎？撤銷後使用此權杖的呼叫將立即被拒絕。';
+
+  @override
+  String get settingsApiIntegrationTokenRevoked => 'API Token 已撤銷';
+
+  @override
+  String get settingsApiIntegrationTokenModalTitle => 'API Token 已建立';
+
+  @override
+  String get settingsApiIntegrationTokenModalWarning =>
+      '此權杖僅顯示這一次，請立即複製並妥善保存；關閉後將無法再次查看明文。';
+
+  @override
+  String get settingsApiIntegrationTokenNameRequired => '請輸入名稱';
+
+  @override
+  String get settingsApiIntegrationTokenScopeRequired => '請至少勾選一個權限範圍';
+
+  @override
+  String get settingsApiIntegrationColName => '名稱';
+
+  @override
+  String get settingsApiIntegrationColPrefix => '權杖前綴';
+
+  @override
+  String get settingsApiIntegrationColScopes => '權限範圍';
+
+  @override
+  String get settingsApiIntegrationColStatus => '狀態';
+
+  @override
+  String get settingsApiIntegrationColCreatedAt => '建立時間';
+
+  @override
+  String get settingsApiIntegrationColLastUsedAt => '最後使用時間';
+
+  @override
+  String get settingsApiIntegrationColExpiresAt => '到期時間';
+
+  @override
+  String get settingsApiIntegrationColActions => '操作';
+
+  @override
+  String get settingsApiIntegrationNeverUsed => '尚未使用';
+
+  @override
+  String get settingsApiIntegrationNeverExpires => '永不過期';
+
+  @override
+  String get settingsApiIntegrationScopeTransactionsRead => '讀取交易';
+
+  @override
+  String get settingsApiIntegrationScopeTransactionsWrite => '新增交易';
+
+  @override
+  String get settingsApiIntegrationScopeWebhooksManage => '管理 Webhook';
+
+  @override
+  String get settingsApiIntegrationWebhookTitle => 'Webhook 訂閱';
+
+  @override
+  String get settingsApiIntegrationWebhookDescription =>
+      '訂閱交易異動事件；目標網址必須為公開 HTTPS，且不得指向本機或內部網路。';
+
+  @override
+  String get settingsApiIntegrationWebhookCreateTitle => '建立新訂閱';
+
+  @override
+  String get settingsApiIntegrationWebhookUrlLabel => '目標網址';
+
+  @override
+  String get settingsApiIntegrationWebhookUrlPlaceholder =>
+      '例如：https://example.com/hooks/assetpilot';
+
+  @override
+  String get settingsApiIntegrationWebhookEventsLabel => '事件類型';
+
+  @override
+  String get settingsApiIntegrationWebhookActiveLabel => '啟用此訂閱';
+
+  @override
+  String get settingsApiIntegrationWebhookCreateButton => '建立訂閱';
+
+  @override
+  String get settingsApiIntegrationWebhookSaveButton => '儲存變更';
+
+  @override
+  String get settingsApiIntegrationWebhookCancelEdit => '取消編輯';
+
+  @override
+  String get settingsApiIntegrationWebhookListTitle => '我的 Webhook 訂閱';
+
+  @override
+  String get settingsApiIntegrationWebhookNoItems => '尚未建立任何 Webhook 訂閱';
+
+  @override
+  String get settingsApiIntegrationColUrl => '目標網址';
+
+  @override
+  String get settingsApiIntegrationColEvents => '事件類型';
+
+  @override
+  String get settingsApiIntegrationColEnabled => '狀態';
+
+  @override
+  String get settingsApiIntegrationColLastSuccess => '上次成功';
+
+  @override
+  String get settingsApiIntegrationColLastFailure => '上次失敗';
+
+  @override
+  String get settingsApiIntegrationWebhookEnabled => '啟用中';
+
+  @override
+  String get settingsApiIntegrationWebhookDisabled => '已停用';
+
+  @override
+  String get settingsApiIntegrationWebhookEditButton => '編輯';
+
+  @override
+  String get settingsApiIntegrationWebhookDeleteButton => '刪除';
+
+  @override
+  String get settingsApiIntegrationWebhookDeleteConfirm =>
+      '確定要刪除這個 Webhook 訂閱嗎？相關投遞紀錄也會一併刪除，且無法復原。';
+
+  @override
+  String get settingsApiIntegrationWebhookSecretModalTitle => 'Webhook 簽章密鑰';
+
+  @override
+  String get settingsApiIntegrationWebhookSecretModalWarning =>
+      '此簽章密鑰僅顯示這一次，請立即複製並妥善保存；關閉後將無法再次取回。';
+
+  @override
+  String get settingsApiIntegrationWebhookSignatureHeaderLabel => '簽章標頭格式';
+
+  @override
+  String get settingsApiIntegrationWebhookSignatureHint =>
+      '簽章內容為時間戳、半角句點與原始請求內容的 HMAC-SHA256；請比對時間戳（容忍 5 分鐘）以抵抗重放攻擊。';
+
+  @override
+  String get settingsApiIntegrationDeliveryTitle => '投遞紀錄';
+
+  @override
+  String get settingsApiIntegrationDeliveryDescription =>
+      '查看最近的 Webhook 投遞結果與失敗原因。';
+
+  @override
+  String get settingsApiIntegrationDeliveryFilterLabel => '篩選訂閱';
+
+  @override
+  String get settingsApiIntegrationDeliveryAllSubscriptions => '全部訂閱';
+
+  @override
+  String get settingsApiIntegrationDeliveryNoItems => '尚無投遞紀錄';
+
+  @override
+  String get settingsApiIntegrationDeliveryStatusPending => '待投遞';
+
+  @override
+  String get settingsApiIntegrationDeliveryStatusSuccess => '成功';
+
+  @override
+  String get settingsApiIntegrationDeliveryStatusFailed => '失敗';
+
+  @override
+  String get settingsApiIntegrationColEventType => '事件類型';
+
+  @override
+  String get settingsApiIntegrationColAttempts => '嘗試次數';
+
+  @override
+  String get settingsApiIntegrationColStatusCode => '狀態碼';
+
+  @override
+  String get settingsApiIntegrationColDeliveredAt => '投遞時間';
+
+  @override
+  String get settingsApiIntegrationColError => '錯誤訊息';
+
+  @override
+  String get settingsApiIntegrationEventCreated => '交易新增';
+
+  @override
+  String get settingsApiIntegrationEventUpdated => '交易修改';
+
+  @override
+  String get settingsApiIntegrationEventDeleted => '交易刪除';
+
+  @override
+  String get settingsApiIntegrationLoadTokensFailed => '載入 API Token 失敗';
+
+  @override
+  String get settingsApiIntegrationLoadWebhooksFailed => '載入 Webhook 訂閱失敗';
+
+  @override
+  String get settingsApiIntegrationLoadDeliveriesFailed => '載入投遞紀錄失敗';
+
+  @override
+  String get settingsApiIntegrationCreateTokenFailed => '建立 API Token 失敗';
+
+  @override
+  String get settingsApiIntegrationRevokeTokenFailed => '撤銷 API Token 失敗';
+
+  @override
+  String get settingsApiIntegrationCreateWebhookFailed => '建立 Webhook 訂閱失敗';
+
+  @override
+  String get settingsApiIntegrationUpdateWebhookFailed => '更新 Webhook 訂閱失敗';
+
+  @override
+  String get settingsApiIntegrationDeleteWebhookFailed => '刪除 Webhook 訂閱失敗';
+
+  @override
+  String get settingsApiIntegrationUrlRequired => '請輸入目標網址';
+
+  @override
+  String get settingsApiIntegrationEventRequired => '請至少勾選一個事件類型';
+
+  @override
+  String get settingsApiIntegrationCloseConfirm => '我已複製，關閉視窗';
+
+  @override
+  String get settingsApiIntegrationCopyFailed =>
+      '複製失敗（此環境可能不允許自動複製），請手動選取上方內容複製';
 }

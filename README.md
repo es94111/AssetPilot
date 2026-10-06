@@ -430,6 +430,10 @@ Docker 多數參數已有合理預設，只需關心「自動產生」與「功�
   投遞紀錄可於 `GET /api/user/webhooks/deliveries` 查詢。
 - **稽核**：Token 與 Webhook 的建立／更新／刪除皆寫入稽核日誌（僅記錄識別碼與名稱，
   絕不記錄 Token 明文或簽章密鑰）。
+- **設定頁 UI**：於「設定 → API 整合」（`/settings/api-integration`）以介面完成上述操作，
+  不需 `curl`。可勾選權限範圍建立 Token、建立／編輯／刪除 Webhook 訂閱、查詢投遞紀錄；
+  Token 明文與簽章密鑰都只在建立後的一次性提示中顯示（需確認已複製才能關閉），
+  簽鑰提示同時附上 `X-AssetPilot-Signature` 格式與時間戳比對說明。
 
 > Webhook 簽章密鑰的加密主金鑰為 `API_TOKEN_ENCRYPTION_KEY`；未設定時首次啟動會自動產生
 > 並寫入 `.env`（比照 `JWT_SECRET`）。一旦有訂閱後請勿更換。
@@ -470,6 +474,7 @@ Docker 多數參數已有合理預設，只需關心「自動產生」與「功�
 | `/finance/transactions`, `/finance/reports`, `/finance/budget`, `/finance/accounts`, `/finance/categories`, `/finance/recurring` | 收支管理 |
 | `/stocks`, `/stocks/transactions`, `/stocks/dividends`, `/stocks/realized` | 股票投資 |
 | `/settings/account`, `/settings/admin`, `/settings/export` | 設定（admin 僅管理員可見） |
+| `/settings/mcp`, `/settings/mcp-connections`, `/settings/api-integration` | MCP 連線、已連接 AI 工具、API 整合（Token 與 Webhook） |
 | `/api-credits` | API 使用與授權 |
 
 ### 信用卡繳費

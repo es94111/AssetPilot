@@ -5048,4 +5048,316 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get featuresCalendarEventTypesTransfer => 'Перевод';
+
+  @override
+  String get navApiIntegration => 'Интеграция API';
+
+  @override
+  String get commonRefresh => 'Обновить';
+
+  @override
+  String get commonCopy => 'Копировать';
+
+  @override
+  String get commonCopied => 'Скопировано!';
+
+  @override
+  String get settingsApiIntegrationTitle => 'Настройки интеграции API';
+
+  @override
+  String get settingsApiIntegrationDescription =>
+      'Создавайте API-токены для сторонних сервисов, вызывающих REST API, и подписывайтесь на события транзакций через вебхуки.';
+
+  @override
+  String get settingsApiIntegrationTokenTitle => 'API-токены';
+
+  @override
+  String get settingsApiIntegrationTokenDescription =>
+      'У токенов есть выбираемые области доступа, а открытый текст показывается только один раз — сохраните его сразу после создания. На аккаунт можно иметь до 20 активных токенов.';
+
+  @override
+  String get settingsApiIntegrationTokenCreateTitle => 'Создать новый токен';
+
+  @override
+  String get settingsApiIntegrationTokenNameLabel => 'Название';
+
+  @override
+  String get settingsApiIntegrationTokenNamePlaceholder =>
+      'Например: личный скрипт автоматизации';
+
+  @override
+  String get settingsApiIntegrationTokenExpiresAtLabel =>
+      'Срок действия (необязательно)';
+
+  @override
+  String get settingsApiIntegrationTokenScopesLabel => 'Области доступа';
+
+  @override
+  String get settingsApiIntegrationTokenCreateButton => 'Создать токен';
+
+  @override
+  String get settingsApiIntegrationTokenCreating => 'Создание…';
+
+  @override
+  String get settingsApiIntegrationTokenListTitle => 'Мои API-токены';
+
+  @override
+  String get settingsApiIntegrationTokenNoItems => 'API-токены ещё не созданы';
+
+  @override
+  String get settingsApiIntegrationTokenStatusActive => 'Активен';
+
+  @override
+  String get settingsApiIntegrationTokenStatusExpired => 'Истёк';
+
+  @override
+  String get settingsApiIntegrationTokenStatusRevoked => 'Отозван';
+
+  @override
+  String get settingsApiIntegrationTokenRevokeButton => 'Отозвать';
+
+  @override
+  String get settingsApiIntegrationTokenRevokeConfirm =>
+      'Отозвать этот API-токен? Запросы с ним будут немедленно отклоняться.';
+
+  @override
+  String get settingsApiIntegrationTokenRevoked => 'API-токен отозван';
+
+  @override
+  String get settingsApiIntegrationTokenModalTitle => 'API-токен создан';
+
+  @override
+  String get settingsApiIntegrationTokenModalWarning =>
+      'Этот токен показывается только один раз — скопируйте и сохраните его сейчас. После закрытия открытый текст больше не отобразится.';
+
+  @override
+  String get settingsApiIntegrationTokenNameRequired => 'Введите название';
+
+  @override
+  String get settingsApiIntegrationTokenScopeRequired =>
+      'Выберите хотя бы одну область доступа';
+
+  @override
+  String get settingsApiIntegrationColName => 'Название';
+
+  @override
+  String get settingsApiIntegrationColPrefix => 'Префикс';
+
+  @override
+  String get settingsApiIntegrationColScopes => 'Области доступа';
+
+  @override
+  String get settingsApiIntegrationColStatus => 'Статус';
+
+  @override
+  String get settingsApiIntegrationColCreatedAt => 'Создан';
+
+  @override
+  String get settingsApiIntegrationColLastUsedAt => 'Последнее использование';
+
+  @override
+  String get settingsApiIntegrationColExpiresAt => 'Истекает';
+
+  @override
+  String get settingsApiIntegrationColActions => 'Действия';
+
+  @override
+  String get settingsApiIntegrationNeverUsed => 'Не использовался';
+
+  @override
+  String get settingsApiIntegrationNeverExpires => 'Без срока действия';
+
+  @override
+  String get settingsApiIntegrationScopeTransactionsRead => 'Чтение транзакций';
+
+  @override
+  String get settingsApiIntegrationScopeTransactionsWrite =>
+      'Создание транзакций';
+
+  @override
+  String get settingsApiIntegrationScopeWebhooksManage =>
+      'Управление вебхуками';
+
+  @override
+  String get settingsApiIntegrationWebhookTitle => 'Подписки на вебхуки';
+
+  @override
+  String get settingsApiIntegrationWebhookDescription =>
+      'Подпишитесь на события транзакций. Целевой URL должен быть публичным HTTPS и не указывать на локальную или внутреннюю сеть.';
+
+  @override
+  String get settingsApiIntegrationWebhookCreateTitle => 'Создать подписку';
+
+  @override
+  String get settingsApiIntegrationWebhookUrlLabel => 'Целевой URL';
+
+  @override
+  String get settingsApiIntegrationWebhookUrlPlaceholder =>
+      'Например: https://example.com/hooks/assetpilot';
+
+  @override
+  String get settingsApiIntegrationWebhookEventsLabel => 'Типы событий';
+
+  @override
+  String get settingsApiIntegrationWebhookActiveLabel =>
+      'Включить эту подписку';
+
+  @override
+  String get settingsApiIntegrationWebhookCreateButton => 'Создать подписку';
+
+  @override
+  String get settingsApiIntegrationWebhookSaveButton => 'Сохранить изменения';
+
+  @override
+  String get settingsApiIntegrationWebhookCancelEdit => 'Отменить изменение';
+
+  @override
+  String get settingsApiIntegrationWebhookListTitle =>
+      'Мои подписки на вебхуки';
+
+  @override
+  String get settingsApiIntegrationWebhookNoItems => 'Подписки ещё не созданы';
+
+  @override
+  String get settingsApiIntegrationColUrl => 'Целевой URL';
+
+  @override
+  String get settingsApiIntegrationColEvents => 'События';
+
+  @override
+  String get settingsApiIntegrationColEnabled => 'Статус';
+
+  @override
+  String get settingsApiIntegrationColLastSuccess => 'Последний успех';
+
+  @override
+  String get settingsApiIntegrationColLastFailure => 'Последняя ошибка';
+
+  @override
+  String get settingsApiIntegrationWebhookEnabled => 'Включена';
+
+  @override
+  String get settingsApiIntegrationWebhookDisabled => 'Отключена';
+
+  @override
+  String get settingsApiIntegrationWebhookEditButton => 'Изменить';
+
+  @override
+  String get settingsApiIntegrationWebhookDeleteButton => 'Удалить';
+
+  @override
+  String get settingsApiIntegrationWebhookDeleteConfirm =>
+      'Удалить эту подписку? Записи о доставке также будут удалены, отменить это нельзя.';
+
+  @override
+  String get settingsApiIntegrationWebhookSecretModalTitle =>
+      'Ключ подписи вебхука';
+
+  @override
+  String get settingsApiIntegrationWebhookSecretModalWarning =>
+      'Этот ключ подписи показывается только один раз — скопируйте и сохраните его сейчас. После закрытия получить его снова не удастся.';
+
+  @override
+  String get settingsApiIntegrationWebhookSignatureHeaderLabel =>
+      'Формат заголовка подписи';
+
+  @override
+  String get settingsApiIntegrationWebhookSignatureHint =>
+      'Подпись — это HMAC-SHA256 от метки времени, точки и исходного тела запроса. Сравнивайте метку времени (допуск 5 минут), чтобы защититься от повторной отправки.';
+
+  @override
+  String get settingsApiIntegrationDeliveryTitle => 'Журнал доставки';
+
+  @override
+  String get settingsApiIntegrationDeliveryDescription =>
+      'Смотрите последние результаты доставки и причины ошибок.';
+
+  @override
+  String get settingsApiIntegrationDeliveryFilterLabel => 'Фильтр по подписке';
+
+  @override
+  String get settingsApiIntegrationDeliveryAllSubscriptions => 'Все подписки';
+
+  @override
+  String get settingsApiIntegrationDeliveryNoItems =>
+      'Записей о доставке пока нет';
+
+  @override
+  String get settingsApiIntegrationDeliveryStatusPending => 'Ожидает';
+
+  @override
+  String get settingsApiIntegrationDeliveryStatusSuccess => 'Успешно';
+
+  @override
+  String get settingsApiIntegrationDeliveryStatusFailed => 'Ошибка';
+
+  @override
+  String get settingsApiIntegrationColEventType => 'Событие';
+
+  @override
+  String get settingsApiIntegrationColAttempts => 'Попытки';
+
+  @override
+  String get settingsApiIntegrationColStatusCode => 'Код ответа';
+
+  @override
+  String get settingsApiIntegrationColDeliveredAt => 'Доставлено';
+
+  @override
+  String get settingsApiIntegrationColError => 'Сообщение об ошибке';
+
+  @override
+  String get settingsApiIntegrationEventCreated => 'Транзакция создана';
+
+  @override
+  String get settingsApiIntegrationEventUpdated => 'Транзакция изменена';
+
+  @override
+  String get settingsApiIntegrationEventDeleted => 'Транзакция удалена';
+
+  @override
+  String get settingsApiIntegrationLoadTokensFailed =>
+      'Не удалось загрузить API-токены';
+
+  @override
+  String get settingsApiIntegrationLoadWebhooksFailed =>
+      'Не удалось загрузить подписки на вебхуки';
+
+  @override
+  String get settingsApiIntegrationLoadDeliveriesFailed =>
+      'Не удалось загрузить журнал доставки';
+
+  @override
+  String get settingsApiIntegrationCreateTokenFailed =>
+      'Не удалось создать API-токен';
+
+  @override
+  String get settingsApiIntegrationRevokeTokenFailed =>
+      'Не удалось отозвать API-токен';
+
+  @override
+  String get settingsApiIntegrationCreateWebhookFailed =>
+      'Не удалось создать подписку';
+
+  @override
+  String get settingsApiIntegrationUpdateWebhookFailed =>
+      'Не удалось обновить подписку';
+
+  @override
+  String get settingsApiIntegrationDeleteWebhookFailed =>
+      'Не удалось удалить подписку';
+
+  @override
+  String get settingsApiIntegrationUrlRequired => 'Введите целевой URL';
+
+  @override
+  String get settingsApiIntegrationEventRequired =>
+      'Выберите хотя бы один тип события';
+
+  @override
+  String get settingsApiIntegrationCloseConfirm => 'Я скопировал, закрыть';
+
+  @override
+  String get settingsApiIntegrationCopyFailed =>
+      'Не удалось скопировать — автоматическое копирование может быть заблокировано; выделите значение выше и скопируйте вручную';
 }

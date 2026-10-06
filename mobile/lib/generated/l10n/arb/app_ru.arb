@@ -7672,5 +7672,475 @@
   "@featuresCalendarEventTypesTransfer": {
     "description": "Web path: features.calendar.eventTypes.transfer",
     "x-webPath": "features.calendar.eventTypes.transfer"
+  },
+  "navApiIntegration": "Интеграция API",
+  "@navApiIntegration": {
+    "description": "Web path: nav.apiIntegration",
+    "x-webPath": "nav.apiIntegration"
+  },
+  "commonRefresh": "Обновить",
+  "@commonRefresh": {
+    "description": "Web path: common.refresh",
+    "x-webPath": "common.refresh"
+  },
+  "commonCopy": "Копировать",
+  "@commonCopy": {
+    "description": "Web path: common.copy",
+    "x-webPath": "common.copy"
+  },
+  "commonCopied": "Скопировано!",
+  "@commonCopied": {
+    "description": "Web path: common.copied",
+    "x-webPath": "common.copied"
+  },
+  "settingsApiIntegrationTitle": "Настройки интеграции API",
+  "@settingsApiIntegrationTitle": {
+    "description": "Web path: settings.apiIntegration.title",
+    "x-webPath": "settings.apiIntegration.title"
+  },
+  "settingsApiIntegrationDescription": "Создавайте API-токены для сторонних сервисов, вызывающих REST API, и подписывайтесь на события транзакций через вебхуки.",
+  "@settingsApiIntegrationDescription": {
+    "description": "Web path: settings.apiIntegration.description",
+    "x-webPath": "settings.apiIntegration.description"
+  },
+  "settingsApiIntegrationTokenTitle": "API-токены",
+  "@settingsApiIntegrationTokenTitle": {
+    "description": "Web path: settings.apiIntegration.tokenTitle",
+    "x-webPath": "settings.apiIntegration.tokenTitle"
+  },
+  "settingsApiIntegrationTokenDescription": "У токенов есть выбираемые области доступа, а открытый текст показывается только один раз — сохраните его сразу после создания. На аккаунт можно иметь до 20 активных токенов.",
+  "@settingsApiIntegrationTokenDescription": {
+    "description": "Web path: settings.apiIntegration.tokenDescription",
+    "x-webPath": "settings.apiIntegration.tokenDescription"
+  },
+  "settingsApiIntegrationTokenCreateTitle": "Создать новый токен",
+  "@settingsApiIntegrationTokenCreateTitle": {
+    "description": "Web path: settings.apiIntegration.tokenCreateTitle",
+    "x-webPath": "settings.apiIntegration.tokenCreateTitle"
+  },
+  "settingsApiIntegrationTokenNameLabel": "Название",
+  "@settingsApiIntegrationTokenNameLabel": {
+    "description": "Web path: settings.apiIntegration.tokenNameLabel",
+    "x-webPath": "settings.apiIntegration.tokenNameLabel"
+  },
+  "settingsApiIntegrationTokenNamePlaceholder": "Например: личный скрипт автоматизации",
+  "@settingsApiIntegrationTokenNamePlaceholder": {
+    "description": "Web path: settings.apiIntegration.tokenNamePlaceholder",
+    "x-webPath": "settings.apiIntegration.tokenNamePlaceholder"
+  },
+  "settingsApiIntegrationTokenExpiresAtLabel": "Срок действия (необязательно)",
+  "@settingsApiIntegrationTokenExpiresAtLabel": {
+    "description": "Web path: settings.apiIntegration.tokenExpiresAtLabel",
+    "x-webPath": "settings.apiIntegration.tokenExpiresAtLabel"
+  },
+  "settingsApiIntegrationTokenScopesLabel": "Области доступа",
+  "@settingsApiIntegrationTokenScopesLabel": {
+    "description": "Web path: settings.apiIntegration.tokenScopesLabel",
+    "x-webPath": "settings.apiIntegration.tokenScopesLabel"
+  },
+  "settingsApiIntegrationTokenCreateButton": "Создать токен",
+  "@settingsApiIntegrationTokenCreateButton": {
+    "description": "Web path: settings.apiIntegration.tokenCreateButton",
+    "x-webPath": "settings.apiIntegration.tokenCreateButton"
+  },
+  "settingsApiIntegrationTokenCreating": "Создание…",
+  "@settingsApiIntegrationTokenCreating": {
+    "description": "Web path: settings.apiIntegration.tokenCreating",
+    "x-webPath": "settings.apiIntegration.tokenCreating"
+  },
+  "settingsApiIntegrationTokenListTitle": "Мои API-токены",
+  "@settingsApiIntegrationTokenListTitle": {
+    "description": "Web path: settings.apiIntegration.tokenListTitle",
+    "x-webPath": "settings.apiIntegration.tokenListTitle"
+  },
+  "settingsApiIntegrationTokenNoItems": "API-токены ещё не созданы",
+  "@settingsApiIntegrationTokenNoItems": {
+    "description": "Web path: settings.apiIntegration.tokenNoItems",
+    "x-webPath": "settings.apiIntegration.tokenNoItems"
+  },
+  "settingsApiIntegrationTokenStatusActive": "Активен",
+  "@settingsApiIntegrationTokenStatusActive": {
+    "description": "Web path: settings.apiIntegration.tokenStatusActive",
+    "x-webPath": "settings.apiIntegration.tokenStatusActive"
+  },
+  "settingsApiIntegrationTokenStatusExpired": "Истёк",
+  "@settingsApiIntegrationTokenStatusExpired": {
+    "description": "Web path: settings.apiIntegration.tokenStatusExpired",
+    "x-webPath": "settings.apiIntegration.tokenStatusExpired"
+  },
+  "settingsApiIntegrationTokenStatusRevoked": "Отозван",
+  "@settingsApiIntegrationTokenStatusRevoked": {
+    "description": "Web path: settings.apiIntegration.tokenStatusRevoked",
+    "x-webPath": "settings.apiIntegration.tokenStatusRevoked"
+  },
+  "settingsApiIntegrationTokenRevokeButton": "Отозвать",
+  "@settingsApiIntegrationTokenRevokeButton": {
+    "description": "Web path: settings.apiIntegration.tokenRevokeButton",
+    "x-webPath": "settings.apiIntegration.tokenRevokeButton"
+  },
+  "settingsApiIntegrationTokenRevokeConfirm": "Отозвать этот API-токен? Запросы с ним будут немедленно отклоняться.",
+  "@settingsApiIntegrationTokenRevokeConfirm": {
+    "description": "Web path: settings.apiIntegration.tokenRevokeConfirm",
+    "x-webPath": "settings.apiIntegration.tokenRevokeConfirm"
+  },
+  "settingsApiIntegrationTokenRevoked": "API-токен отозван",
+  "@settingsApiIntegrationTokenRevoked": {
+    "description": "Web path: settings.apiIntegration.tokenRevoked",
+    "x-webPath": "settings.apiIntegration.tokenRevoked"
+  },
+  "settingsApiIntegrationTokenModalTitle": "API-токен создан",
+  "@settingsApiIntegrationTokenModalTitle": {
+    "description": "Web path: settings.apiIntegration.tokenModalTitle",
+    "x-webPath": "settings.apiIntegration.tokenModalTitle"
+  },
+  "settingsApiIntegrationTokenModalWarning": "Этот токен показывается только один раз — скопируйте и сохраните его сейчас. После закрытия открытый текст больше не отобразится.",
+  "@settingsApiIntegrationTokenModalWarning": {
+    "description": "Web path: settings.apiIntegration.tokenModalWarning",
+    "x-webPath": "settings.apiIntegration.tokenModalWarning"
+  },
+  "settingsApiIntegrationTokenNameRequired": "Введите название",
+  "@settingsApiIntegrationTokenNameRequired": {
+    "description": "Web path: settings.apiIntegration.tokenNameRequired",
+    "x-webPath": "settings.apiIntegration.tokenNameRequired"
+  },
+  "settingsApiIntegrationTokenScopeRequired": "Выберите хотя бы одну область доступа",
+  "@settingsApiIntegrationTokenScopeRequired": {
+    "description": "Web path: settings.apiIntegration.tokenScopeRequired",
+    "x-webPath": "settings.apiIntegration.tokenScopeRequired"
+  },
+  "settingsApiIntegrationColName": "Название",
+  "@settingsApiIntegrationColName": {
+    "description": "Web path: settings.apiIntegration.colName",
+    "x-webPath": "settings.apiIntegration.colName"
+  },
+  "settingsApiIntegrationColPrefix": "Префикс",
+  "@settingsApiIntegrationColPrefix": {
+    "description": "Web path: settings.apiIntegration.colPrefix",
+    "x-webPath": "settings.apiIntegration.colPrefix"
+  },
+  "settingsApiIntegrationColScopes": "Области доступа",
+  "@settingsApiIntegrationColScopes": {
+    "description": "Web path: settings.apiIntegration.colScopes",
+    "x-webPath": "settings.apiIntegration.colScopes"
+  },
+  "settingsApiIntegrationColStatus": "Статус",
+  "@settingsApiIntegrationColStatus": {
+    "description": "Web path: settings.apiIntegration.colStatus",
+    "x-webPath": "settings.apiIntegration.colStatus"
+  },
+  "settingsApiIntegrationColCreatedAt": "Создан",
+  "@settingsApiIntegrationColCreatedAt": {
+    "description": "Web path: settings.apiIntegration.colCreatedAt",
+    "x-webPath": "settings.apiIntegration.colCreatedAt"
+  },
+  "settingsApiIntegrationColLastUsedAt": "Последнее использование",
+  "@settingsApiIntegrationColLastUsedAt": {
+    "description": "Web path: settings.apiIntegration.colLastUsedAt",
+    "x-webPath": "settings.apiIntegration.colLastUsedAt"
+  },
+  "settingsApiIntegrationColExpiresAt": "Истекает",
+  "@settingsApiIntegrationColExpiresAt": {
+    "description": "Web path: settings.apiIntegration.colExpiresAt",
+    "x-webPath": "settings.apiIntegration.colExpiresAt"
+  },
+  "settingsApiIntegrationColActions": "Действия",
+  "@settingsApiIntegrationColActions": {
+    "description": "Web path: settings.apiIntegration.colActions",
+    "x-webPath": "settings.apiIntegration.colActions"
+  },
+  "settingsApiIntegrationNeverUsed": "Не использовался",
+  "@settingsApiIntegrationNeverUsed": {
+    "description": "Web path: settings.apiIntegration.neverUsed",
+    "x-webPath": "settings.apiIntegration.neverUsed"
+  },
+  "settingsApiIntegrationNeverExpires": "Без срока действия",
+  "@settingsApiIntegrationNeverExpires": {
+    "description": "Web path: settings.apiIntegration.neverExpires",
+    "x-webPath": "settings.apiIntegration.neverExpires"
+  },
+  "settingsApiIntegrationScopeTransactionsRead": "Чтение транзакций",
+  "@settingsApiIntegrationScopeTransactionsRead": {
+    "description": "Web path: settings.apiIntegration.scope.transactionsRead",
+    "x-webPath": "settings.apiIntegration.scope.transactionsRead"
+  },
+  "settingsApiIntegrationScopeTransactionsWrite": "Создание транзакций",
+  "@settingsApiIntegrationScopeTransactionsWrite": {
+    "description": "Web path: settings.apiIntegration.scope.transactionsWrite",
+    "x-webPath": "settings.apiIntegration.scope.transactionsWrite"
+  },
+  "settingsApiIntegrationScopeWebhooksManage": "Управление вебхуками",
+  "@settingsApiIntegrationScopeWebhooksManage": {
+    "description": "Web path: settings.apiIntegration.scope.webhooksManage",
+    "x-webPath": "settings.apiIntegration.scope.webhooksManage"
+  },
+  "settingsApiIntegrationWebhookTitle": "Подписки на вебхуки",
+  "@settingsApiIntegrationWebhookTitle": {
+    "description": "Web path: settings.apiIntegration.webhookTitle",
+    "x-webPath": "settings.apiIntegration.webhookTitle"
+  },
+  "settingsApiIntegrationWebhookDescription": "Подпишитесь на события транзакций. Целевой URL должен быть публичным HTTPS и не указывать на локальную или внутреннюю сеть.",
+  "@settingsApiIntegrationWebhookDescription": {
+    "description": "Web path: settings.apiIntegration.webhookDescription",
+    "x-webPath": "settings.apiIntegration.webhookDescription"
+  },
+  "settingsApiIntegrationWebhookCreateTitle": "Создать подписку",
+  "@settingsApiIntegrationWebhookCreateTitle": {
+    "description": "Web path: settings.apiIntegration.webhookCreateTitle",
+    "x-webPath": "settings.apiIntegration.webhookCreateTitle"
+  },
+  "settingsApiIntegrationWebhookUrlLabel": "Целевой URL",
+  "@settingsApiIntegrationWebhookUrlLabel": {
+    "description": "Web path: settings.apiIntegration.webhookUrlLabel",
+    "x-webPath": "settings.apiIntegration.webhookUrlLabel"
+  },
+  "settingsApiIntegrationWebhookUrlPlaceholder": "Например: https://example.com/hooks/assetpilot",
+  "@settingsApiIntegrationWebhookUrlPlaceholder": {
+    "description": "Web path: settings.apiIntegration.webhookUrlPlaceholder",
+    "x-webPath": "settings.apiIntegration.webhookUrlPlaceholder"
+  },
+  "settingsApiIntegrationWebhookEventsLabel": "Типы событий",
+  "@settingsApiIntegrationWebhookEventsLabel": {
+    "description": "Web path: settings.apiIntegration.webhookEventsLabel",
+    "x-webPath": "settings.apiIntegration.webhookEventsLabel"
+  },
+  "settingsApiIntegrationWebhookActiveLabel": "Включить эту подписку",
+  "@settingsApiIntegrationWebhookActiveLabel": {
+    "description": "Web path: settings.apiIntegration.webhookActiveLabel",
+    "x-webPath": "settings.apiIntegration.webhookActiveLabel"
+  },
+  "settingsApiIntegrationWebhookCreateButton": "Создать подписку",
+  "@settingsApiIntegrationWebhookCreateButton": {
+    "description": "Web path: settings.apiIntegration.webhookCreateButton",
+    "x-webPath": "settings.apiIntegration.webhookCreateButton"
+  },
+  "settingsApiIntegrationWebhookSaveButton": "Сохранить изменения",
+  "@settingsApiIntegrationWebhookSaveButton": {
+    "description": "Web path: settings.apiIntegration.webhookSaveButton",
+    "x-webPath": "settings.apiIntegration.webhookSaveButton"
+  },
+  "settingsApiIntegrationWebhookCancelEdit": "Отменить изменение",
+  "@settingsApiIntegrationWebhookCancelEdit": {
+    "description": "Web path: settings.apiIntegration.webhookCancelEdit",
+    "x-webPath": "settings.apiIntegration.webhookCancelEdit"
+  },
+  "settingsApiIntegrationWebhookListTitle": "Мои подписки на вебхуки",
+  "@settingsApiIntegrationWebhookListTitle": {
+    "description": "Web path: settings.apiIntegration.webhookListTitle",
+    "x-webPath": "settings.apiIntegration.webhookListTitle"
+  },
+  "settingsApiIntegrationWebhookNoItems": "Подписки ещё не созданы",
+  "@settingsApiIntegrationWebhookNoItems": {
+    "description": "Web path: settings.apiIntegration.webhookNoItems",
+    "x-webPath": "settings.apiIntegration.webhookNoItems"
+  },
+  "settingsApiIntegrationColUrl": "Целевой URL",
+  "@settingsApiIntegrationColUrl": {
+    "description": "Web path: settings.apiIntegration.colUrl",
+    "x-webPath": "settings.apiIntegration.colUrl"
+  },
+  "settingsApiIntegrationColEvents": "События",
+  "@settingsApiIntegrationColEvents": {
+    "description": "Web path: settings.apiIntegration.colEvents",
+    "x-webPath": "settings.apiIntegration.colEvents"
+  },
+  "settingsApiIntegrationColEnabled": "Статус",
+  "@settingsApiIntegrationColEnabled": {
+    "description": "Web path: settings.apiIntegration.colEnabled",
+    "x-webPath": "settings.apiIntegration.colEnabled"
+  },
+  "settingsApiIntegrationColLastSuccess": "Последний успех",
+  "@settingsApiIntegrationColLastSuccess": {
+    "description": "Web path: settings.apiIntegration.colLastSuccess",
+    "x-webPath": "settings.apiIntegration.colLastSuccess"
+  },
+  "settingsApiIntegrationColLastFailure": "Последняя ошибка",
+  "@settingsApiIntegrationColLastFailure": {
+    "description": "Web path: settings.apiIntegration.colLastFailure",
+    "x-webPath": "settings.apiIntegration.colLastFailure"
+  },
+  "settingsApiIntegrationWebhookEnabled": "Включена",
+  "@settingsApiIntegrationWebhookEnabled": {
+    "description": "Web path: settings.apiIntegration.webhookEnabled",
+    "x-webPath": "settings.apiIntegration.webhookEnabled"
+  },
+  "settingsApiIntegrationWebhookDisabled": "Отключена",
+  "@settingsApiIntegrationWebhookDisabled": {
+    "description": "Web path: settings.apiIntegration.webhookDisabled",
+    "x-webPath": "settings.apiIntegration.webhookDisabled"
+  },
+  "settingsApiIntegrationWebhookEditButton": "Изменить",
+  "@settingsApiIntegrationWebhookEditButton": {
+    "description": "Web path: settings.apiIntegration.webhookEditButton",
+    "x-webPath": "settings.apiIntegration.webhookEditButton"
+  },
+  "settingsApiIntegrationWebhookDeleteButton": "Удалить",
+  "@settingsApiIntegrationWebhookDeleteButton": {
+    "description": "Web path: settings.apiIntegration.webhookDeleteButton",
+    "x-webPath": "settings.apiIntegration.webhookDeleteButton"
+  },
+  "settingsApiIntegrationWebhookDeleteConfirm": "Удалить эту подписку? Записи о доставке также будут удалены, отменить это нельзя.",
+  "@settingsApiIntegrationWebhookDeleteConfirm": {
+    "description": "Web path: settings.apiIntegration.webhookDeleteConfirm",
+    "x-webPath": "settings.apiIntegration.webhookDeleteConfirm"
+  },
+  "settingsApiIntegrationWebhookSecretModalTitle": "Ключ подписи вебхука",
+  "@settingsApiIntegrationWebhookSecretModalTitle": {
+    "description": "Web path: settings.apiIntegration.webhookSecretModalTitle",
+    "x-webPath": "settings.apiIntegration.webhookSecretModalTitle"
+  },
+  "settingsApiIntegrationWebhookSecretModalWarning": "Этот ключ подписи показывается только один раз — скопируйте и сохраните его сейчас. После закрытия получить его снова не удастся.",
+  "@settingsApiIntegrationWebhookSecretModalWarning": {
+    "description": "Web path: settings.apiIntegration.webhookSecretModalWarning",
+    "x-webPath": "settings.apiIntegration.webhookSecretModalWarning"
+  },
+  "settingsApiIntegrationWebhookSignatureHeaderLabel": "Формат заголовка подписи",
+  "@settingsApiIntegrationWebhookSignatureHeaderLabel": {
+    "description": "Web path: settings.apiIntegration.webhookSignatureHeaderLabel",
+    "x-webPath": "settings.apiIntegration.webhookSignatureHeaderLabel"
+  },
+  "settingsApiIntegrationWebhookSignatureHint": "Подпись — это HMAC-SHA256 от метки времени, точки и исходного тела запроса. Сравнивайте метку времени (допуск 5 минут), чтобы защититься от повторной отправки.",
+  "@settingsApiIntegrationWebhookSignatureHint": {
+    "description": "Web path: settings.apiIntegration.webhookSignatureHint",
+    "x-webPath": "settings.apiIntegration.webhookSignatureHint"
+  },
+  "settingsApiIntegrationDeliveryTitle": "Журнал доставки",
+  "@settingsApiIntegrationDeliveryTitle": {
+    "description": "Web path: settings.apiIntegration.deliveryTitle",
+    "x-webPath": "settings.apiIntegration.deliveryTitle"
+  },
+  "settingsApiIntegrationDeliveryDescription": "Смотрите последние результаты доставки и причины ошибок.",
+  "@settingsApiIntegrationDeliveryDescription": {
+    "description": "Web path: settings.apiIntegration.deliveryDescription",
+    "x-webPath": "settings.apiIntegration.deliveryDescription"
+  },
+  "settingsApiIntegrationDeliveryFilterLabel": "Фильтр по подписке",
+  "@settingsApiIntegrationDeliveryFilterLabel": {
+    "description": "Web path: settings.apiIntegration.deliveryFilterLabel",
+    "x-webPath": "settings.apiIntegration.deliveryFilterLabel"
+  },
+  "settingsApiIntegrationDeliveryAllSubscriptions": "Все подписки",
+  "@settingsApiIntegrationDeliveryAllSubscriptions": {
+    "description": "Web path: settings.apiIntegration.deliveryAllSubscriptions",
+    "x-webPath": "settings.apiIntegration.deliveryAllSubscriptions"
+  },
+  "settingsApiIntegrationDeliveryNoItems": "Записей о доставке пока нет",
+  "@settingsApiIntegrationDeliveryNoItems": {
+    "description": "Web path: settings.apiIntegration.deliveryNoItems",
+    "x-webPath": "settings.apiIntegration.deliveryNoItems"
+  },
+  "settingsApiIntegrationDeliveryStatusPending": "Ожидает",
+  "@settingsApiIntegrationDeliveryStatusPending": {
+    "description": "Web path: settings.apiIntegration.deliveryStatusPending",
+    "x-webPath": "settings.apiIntegration.deliveryStatusPending"
+  },
+  "settingsApiIntegrationDeliveryStatusSuccess": "Успешно",
+  "@settingsApiIntegrationDeliveryStatusSuccess": {
+    "description": "Web path: settings.apiIntegration.deliveryStatusSuccess",
+    "x-webPath": "settings.apiIntegration.deliveryStatusSuccess"
+  },
+  "settingsApiIntegrationDeliveryStatusFailed": "Ошибка",
+  "@settingsApiIntegrationDeliveryStatusFailed": {
+    "description": "Web path: settings.apiIntegration.deliveryStatusFailed",
+    "x-webPath": "settings.apiIntegration.deliveryStatusFailed"
+  },
+  "settingsApiIntegrationColEventType": "Событие",
+  "@settingsApiIntegrationColEventType": {
+    "description": "Web path: settings.apiIntegration.colEventType",
+    "x-webPath": "settings.apiIntegration.colEventType"
+  },
+  "settingsApiIntegrationColAttempts": "Попытки",
+  "@settingsApiIntegrationColAttempts": {
+    "description": "Web path: settings.apiIntegration.colAttempts",
+    "x-webPath": "settings.apiIntegration.colAttempts"
+  },
+  "settingsApiIntegrationColStatusCode": "Код ответа",
+  "@settingsApiIntegrationColStatusCode": {
+    "description": "Web path: settings.apiIntegration.colStatusCode",
+    "x-webPath": "settings.apiIntegration.colStatusCode"
+  },
+  "settingsApiIntegrationColDeliveredAt": "Доставлено",
+  "@settingsApiIntegrationColDeliveredAt": {
+    "description": "Web path: settings.apiIntegration.colDeliveredAt",
+    "x-webPath": "settings.apiIntegration.colDeliveredAt"
+  },
+  "settingsApiIntegrationColError": "Сообщение об ошибке",
+  "@settingsApiIntegrationColError": {
+    "description": "Web path: settings.apiIntegration.colError",
+    "x-webPath": "settings.apiIntegration.colError"
+  },
+  "settingsApiIntegrationEventCreated": "Транзакция создана",
+  "@settingsApiIntegrationEventCreated": {
+    "description": "Web path: settings.apiIntegration.event.created",
+    "x-webPath": "settings.apiIntegration.event.created"
+  },
+  "settingsApiIntegrationEventUpdated": "Транзакция изменена",
+  "@settingsApiIntegrationEventUpdated": {
+    "description": "Web path: settings.apiIntegration.event.updated",
+    "x-webPath": "settings.apiIntegration.event.updated"
+  },
+  "settingsApiIntegrationEventDeleted": "Транзакция удалена",
+  "@settingsApiIntegrationEventDeleted": {
+    "description": "Web path: settings.apiIntegration.event.deleted",
+    "x-webPath": "settings.apiIntegration.event.deleted"
+  },
+  "settingsApiIntegrationLoadTokensFailed": "Не удалось загрузить API-токены",
+  "@settingsApiIntegrationLoadTokensFailed": {
+    "description": "Web path: settings.apiIntegration.loadTokensFailed",
+    "x-webPath": "settings.apiIntegration.loadTokensFailed"
+  },
+  "settingsApiIntegrationLoadWebhooksFailed": "Не удалось загрузить подписки на вебхуки",
+  "@settingsApiIntegrationLoadWebhooksFailed": {
+    "description": "Web path: settings.apiIntegration.loadWebhooksFailed",
+    "x-webPath": "settings.apiIntegration.loadWebhooksFailed"
+  },
+  "settingsApiIntegrationLoadDeliveriesFailed": "Не удалось загрузить журнал доставки",
+  "@settingsApiIntegrationLoadDeliveriesFailed": {
+    "description": "Web path: settings.apiIntegration.loadDeliveriesFailed",
+    "x-webPath": "settings.apiIntegration.loadDeliveriesFailed"
+  },
+  "settingsApiIntegrationCreateTokenFailed": "Не удалось создать API-токен",
+  "@settingsApiIntegrationCreateTokenFailed": {
+    "description": "Web path: settings.apiIntegration.createTokenFailed",
+    "x-webPath": "settings.apiIntegration.createTokenFailed"
+  },
+  "settingsApiIntegrationRevokeTokenFailed": "Не удалось отозвать API-токен",
+  "@settingsApiIntegrationRevokeTokenFailed": {
+    "description": "Web path: settings.apiIntegration.revokeTokenFailed",
+    "x-webPath": "settings.apiIntegration.revokeTokenFailed"
+  },
+  "settingsApiIntegrationCreateWebhookFailed": "Не удалось создать подписку",
+  "@settingsApiIntegrationCreateWebhookFailed": {
+    "description": "Web path: settings.apiIntegration.createWebhookFailed",
+    "x-webPath": "settings.apiIntegration.createWebhookFailed"
+  },
+  "settingsApiIntegrationUpdateWebhookFailed": "Не удалось обновить подписку",
+  "@settingsApiIntegrationUpdateWebhookFailed": {
+    "description": "Web path: settings.apiIntegration.updateWebhookFailed",
+    "x-webPath": "settings.apiIntegration.updateWebhookFailed"
+  },
+  "settingsApiIntegrationDeleteWebhookFailed": "Не удалось удалить подписку",
+  "@settingsApiIntegrationDeleteWebhookFailed": {
+    "description": "Web path: settings.apiIntegration.deleteWebhookFailed",
+    "x-webPath": "settings.apiIntegration.deleteWebhookFailed"
+  },
+  "settingsApiIntegrationUrlRequired": "Введите целевой URL",
+  "@settingsApiIntegrationUrlRequired": {
+    "description": "Web path: settings.apiIntegration.urlRequired",
+    "x-webPath": "settings.apiIntegration.urlRequired"
+  },
+  "settingsApiIntegrationEventRequired": "Выберите хотя бы один тип события",
+  "@settingsApiIntegrationEventRequired": {
+    "description": "Web path: settings.apiIntegration.eventRequired",
+    "x-webPath": "settings.apiIntegration.eventRequired"
+  },
+  "settingsApiIntegrationCloseConfirm": "Я скопировал, закрыть",
+  "@settingsApiIntegrationCloseConfirm": {
+    "description": "Web path: settings.apiIntegration.closeConfirm",
+    "x-webPath": "settings.apiIntegration.closeConfirm"
+  },
+  "settingsApiIntegrationCopyFailed": "Не удалось скопировать — автоматическое копирование может быть заблокировано; выделите значение выше и скопируйте вручную",
+  "@settingsApiIntegrationCopyFailed": {
+    "description": "Web path: settings.apiIntegration.copyFailed",
+    "x-webPath": "settings.apiIntegration.copyFailed"
   }
 }

@@ -4834,4 +4834,298 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get featuresCalendarEventTypesTransfer => '이체';
+
+  @override
+  String get navApiIntegration => 'API 연동';
+
+  @override
+  String get commonRefresh => '새로고침';
+
+  @override
+  String get commonCopy => '복사';
+
+  @override
+  String get commonCopied => '복사되었습니다!';
+
+  @override
+  String get settingsApiIntegrationTitle => 'API 연동 설정';
+
+  @override
+  String get settingsApiIntegrationDescription =>
+      'REST API를 호출하는 외부 서비스를 위한 API 토큰을 만들고 Webhook으로 거래 이벤트를 구독하세요.';
+
+  @override
+  String get settingsApiIntegrationTokenTitle => 'API 토큰';
+
+  @override
+  String get settingsApiIntegrationTokenDescription =>
+      '토큰에는 선택 가능한 권한 범위가 있으며 평문은 한 번만 표시되므로 만든 직후 저장하세요. 계정당 활성 토큰은 최대 20개입니다.';
+
+  @override
+  String get settingsApiIntegrationTokenCreateTitle => '새 토큰 만들기';
+
+  @override
+  String get settingsApiIntegrationTokenNameLabel => '이름';
+
+  @override
+  String get settingsApiIntegrationTokenNamePlaceholder => '예: 개인 자동화 스크립트';
+
+  @override
+  String get settingsApiIntegrationTokenExpiresAtLabel => '만료 시간 (선택)';
+
+  @override
+  String get settingsApiIntegrationTokenScopesLabel => '권한 범위';
+
+  @override
+  String get settingsApiIntegrationTokenCreateButton => '토큰 만들기';
+
+  @override
+  String get settingsApiIntegrationTokenCreating => '만드는 중…';
+
+  @override
+  String get settingsApiIntegrationTokenListTitle => '내 API 토큰';
+
+  @override
+  String get settingsApiIntegrationTokenNoItems => '아직 API 토큰이 없습니다';
+
+  @override
+  String get settingsApiIntegrationTokenStatusActive => '사용 중';
+
+  @override
+  String get settingsApiIntegrationTokenStatusExpired => '만료됨';
+
+  @override
+  String get settingsApiIntegrationTokenStatusRevoked => '취소됨';
+
+  @override
+  String get settingsApiIntegrationTokenRevokeButton => '취소';
+
+  @override
+  String get settingsApiIntegrationTokenRevokeConfirm =>
+      '이 API 토큰을 취소할까요? 이 토큰을 사용하는 호출은 즉시 거부됩니다.';
+
+  @override
+  String get settingsApiIntegrationTokenRevoked => 'API 토큰이 취소되었습니다';
+
+  @override
+  String get settingsApiIntegrationTokenModalTitle => 'API 토큰이 생성되었습니다';
+
+  @override
+  String get settingsApiIntegrationTokenModalWarning =>
+      '이 토큰은 한 번만 표시됩니다. 지금 복사해 안전하게 보관하세요. 닫으면 평문을 다시 볼 수 없습니다.';
+
+  @override
+  String get settingsApiIntegrationTokenNameRequired => '이름을 입력하세요';
+
+  @override
+  String get settingsApiIntegrationTokenScopeRequired => '권한 범위를 하나 이상 선택하세요';
+
+  @override
+  String get settingsApiIntegrationColName => '이름';
+
+  @override
+  String get settingsApiIntegrationColPrefix => '접두사';
+
+  @override
+  String get settingsApiIntegrationColScopes => '권한 범위';
+
+  @override
+  String get settingsApiIntegrationColStatus => '상태';
+
+  @override
+  String get settingsApiIntegrationColCreatedAt => '생성 시간';
+
+  @override
+  String get settingsApiIntegrationColLastUsedAt => '마지막 사용';
+
+  @override
+  String get settingsApiIntegrationColExpiresAt => '만료 시간';
+
+  @override
+  String get settingsApiIntegrationColActions => '작업';
+
+  @override
+  String get settingsApiIntegrationNeverUsed => '사용 안 함';
+
+  @override
+  String get settingsApiIntegrationNeverExpires => '만료 없음';
+
+  @override
+  String get settingsApiIntegrationScopeTransactionsRead => '거래 조회';
+
+  @override
+  String get settingsApiIntegrationScopeTransactionsWrite => '거래 생성';
+
+  @override
+  String get settingsApiIntegrationScopeWebhooksManage => 'Webhook 관리';
+
+  @override
+  String get settingsApiIntegrationWebhookTitle => 'Webhook 구독';
+
+  @override
+  String get settingsApiIntegrationWebhookDescription =>
+      '거래 이벤트를 구독합니다. 대상 URL은 공개 HTTPS여야 하며 로컬 또는 내부 네트워크를 가리킬 수 없습니다.';
+
+  @override
+  String get settingsApiIntegrationWebhookCreateTitle => '새 구독 만들기';
+
+  @override
+  String get settingsApiIntegrationWebhookUrlLabel => '대상 URL';
+
+  @override
+  String get settingsApiIntegrationWebhookUrlPlaceholder =>
+      '예: https://example.com/hooks/assetpilot';
+
+  @override
+  String get settingsApiIntegrationWebhookEventsLabel => '이벤트 유형';
+
+  @override
+  String get settingsApiIntegrationWebhookActiveLabel => '이 구독 사용';
+
+  @override
+  String get settingsApiIntegrationWebhookCreateButton => '구독 만들기';
+
+  @override
+  String get settingsApiIntegrationWebhookSaveButton => '변경 사항 저장';
+
+  @override
+  String get settingsApiIntegrationWebhookCancelEdit => '편집 취소';
+
+  @override
+  String get settingsApiIntegrationWebhookListTitle => '내 Webhook 구독';
+
+  @override
+  String get settingsApiIntegrationWebhookNoItems => '아직 구독이 없습니다';
+
+  @override
+  String get settingsApiIntegrationColUrl => '대상 URL';
+
+  @override
+  String get settingsApiIntegrationColEvents => '이벤트';
+
+  @override
+  String get settingsApiIntegrationColEnabled => '상태';
+
+  @override
+  String get settingsApiIntegrationColLastSuccess => '마지막 성공';
+
+  @override
+  String get settingsApiIntegrationColLastFailure => '마지막 실패';
+
+  @override
+  String get settingsApiIntegrationWebhookEnabled => '사용 중';
+
+  @override
+  String get settingsApiIntegrationWebhookDisabled => '중지됨';
+
+  @override
+  String get settingsApiIntegrationWebhookEditButton => '편집';
+
+  @override
+  String get settingsApiIntegrationWebhookDeleteButton => '삭제';
+
+  @override
+  String get settingsApiIntegrationWebhookDeleteConfirm =>
+      '이 구독을 삭제할까요? 관련 전송 기록도 함께 삭제되며 되돌릴 수 없습니다.';
+
+  @override
+  String get settingsApiIntegrationWebhookSecretModalTitle => 'Webhook 서명 키';
+
+  @override
+  String get settingsApiIntegrationWebhookSecretModalWarning =>
+      '이 서명 키는 한 번만 표시됩니다. 지금 복사해 보관하세요. 닫으면 다시 가져올 수 없습니다.';
+
+  @override
+  String get settingsApiIntegrationWebhookSignatureHeaderLabel => '서명 헤더 형식';
+
+  @override
+  String get settingsApiIntegrationWebhookSignatureHint =>
+      '서명은 타임스탬프, 마침표, 원본 요청 본문에 대한 HMAC-SHA256입니다. 재전송 공격을 막으려면 타임스탬프를 비교하세요(허용 오차 5분).';
+
+  @override
+  String get settingsApiIntegrationDeliveryTitle => '전송 기록';
+
+  @override
+  String get settingsApiIntegrationDeliveryDescription =>
+      '최근 Webhook 전송 결과와 실패 원인을 확인하세요.';
+
+  @override
+  String get settingsApiIntegrationDeliveryFilterLabel => '구독으로 필터';
+
+  @override
+  String get settingsApiIntegrationDeliveryAllSubscriptions => '모든 구독';
+
+  @override
+  String get settingsApiIntegrationDeliveryNoItems => '아직 전송 기록이 없습니다';
+
+  @override
+  String get settingsApiIntegrationDeliveryStatusPending => '대기 중';
+
+  @override
+  String get settingsApiIntegrationDeliveryStatusSuccess => '성공';
+
+  @override
+  String get settingsApiIntegrationDeliveryStatusFailed => '실패';
+
+  @override
+  String get settingsApiIntegrationColEventType => '이벤트';
+
+  @override
+  String get settingsApiIntegrationColAttempts => '시도 횟수';
+
+  @override
+  String get settingsApiIntegrationColStatusCode => '상태 코드';
+
+  @override
+  String get settingsApiIntegrationColDeliveredAt => '전송 시간';
+
+  @override
+  String get settingsApiIntegrationColError => '오류 메시지';
+
+  @override
+  String get settingsApiIntegrationEventCreated => '거래 생성';
+
+  @override
+  String get settingsApiIntegrationEventUpdated => '거래 수정';
+
+  @override
+  String get settingsApiIntegrationEventDeleted => '거래 삭제';
+
+  @override
+  String get settingsApiIntegrationLoadTokensFailed => 'API 토큰을 불러오지 못했습니다';
+
+  @override
+  String get settingsApiIntegrationLoadWebhooksFailed =>
+      'Webhook 구독을 불러오지 못했습니다';
+
+  @override
+  String get settingsApiIntegrationLoadDeliveriesFailed => '전송 기록을 불러오지 못했습니다';
+
+  @override
+  String get settingsApiIntegrationCreateTokenFailed => 'API 토큰을 만들지 못했습니다';
+
+  @override
+  String get settingsApiIntegrationRevokeTokenFailed => 'API 토큰을 취소하지 못했습니다';
+
+  @override
+  String get settingsApiIntegrationCreateWebhookFailed => '구독을 만들지 못했습니다';
+
+  @override
+  String get settingsApiIntegrationUpdateWebhookFailed => '구독을 업데이트하지 못했습니다';
+
+  @override
+  String get settingsApiIntegrationDeleteWebhookFailed => '구독을 삭제하지 못했습니다';
+
+  @override
+  String get settingsApiIntegrationUrlRequired => '대상 URL을 입력하세요';
+
+  @override
+  String get settingsApiIntegrationEventRequired => '이벤트 유형을 하나 이상 선택하세요';
+
+  @override
+  String get settingsApiIntegrationCloseConfirm => '복사했습니다, 닫기';
+
+  @override
+  String get settingsApiIntegrationCopyFailed =>
+      '복사하지 못했습니다. 자동 복사가 차단된 환경일 수 있으니 위 값을 선택해 직접 복사하세요';
 }

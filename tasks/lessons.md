@@ -1,5 +1,26 @@
 # Lessons
 
+## 2026-10-06 Run `flutter pub get` in `mobile/` Before Regenerating Shared i18n
+- Mistake class: environment-dependent verification assumption / missing prerequisite step.
+- Failure mode: `npm run i18n:generate` was run without first executing `flutter pub get` inside `mobile/`. The Flutter SDK's `gen-l10n` then emitted an extra blank line after `import 'package:intl/intl.dart' as intl;` in all nine `app_localizations_<locale>.dart` files, even though the generated translations were correct. Local `npm run check:i18n` still passed because it compares the generator's *own* outputs, so the drift was invisible until CI's `git diff --exit-code` on the generated files failed.
+- Detection signal: CI `i18n-parity` failed at the "Check generated output drift" step with a one-line diff (`-` blank line) in `mobile/lib/generated/l10n/app_localizations_{ar,en,es,fr,hi,ko,pt,ru,zh}.dart`, while a clean checkout of `main` regenerated identically with the same local Flutter 3.47.6 — proving the difference came from the local working tree state, not the toolchain version.
+- Prevention rule: Treat `mobile/` Flutter prerequisites as part of the i18n generation phase — run `flutter pub get` in `mobile/` (matching the CI step order) before `npm run i18n:generate`, and after regenerating confirm with `git diff --exit-code` on the generated paths rather than trusting `check:i18n` alone.
+- Tripwire: Whenever CI reports generated-output drift but the same files look correct locally, prove reproducibility by running the generator in a fresh checkout of the base branch before looking for a toolchain difference; and always run `git diff --exit-code -- lib/i18n mobile/lib/generated` locally after any i18n change.
+
+## 2026-10-06 Keep Node-Only Modules Out of Client Bundles, and Prove It
+- Mistake class: architectural hazard avoided by design / verification gap.
+- Failure mode: The new `'use client'` settings page needed the authoritative scope and event lists that live in `lib/apiTokenCore.ts`, but that module imports `node:crypto` for token hashing and HMAC signing; importing it from a client component would pull Node built-ins into the browser bundle.
+- Detection signal: The module's top-level import list showed `node:crypto`, and the build output only warns at bundle-analysis time, so the mistake usually surfaces as a runtime failure or a silent bundle-size regression rather than a typecheck error.
+- Prevention rule: Duplicate tiny constant lists in a zero-dependency client module rather than importing server-only helpers, and add a test that asserts the duplicate exactly equals the server's authoritative list so the two cannot drift.
+- Tripwire: Before importing any `lib/*` module into a `'use client'` file, inspect its top-level imports for `node:*`, `next/headers`, and database modules; when duplication is chosen, add a parity assertion in the same commit.
+
+## 2026-10-06 i18n Generation Writes Files, So Do Not Stash Around It
+- Mistake class: unsafe execution ordering / missing verification.
+- Failure mode: To check whether Flutter's `untranslated message(s)` warnings were pre-existing, `git stash` was run, then `npm run i18n:generate` regenerated tracked output files, and the following `git stash pop` aborted because the newly regenerated files conflicted with the stash.
+- Detection signal: `git stash pop` failed with "Your local changes ... would be overwritten by merge" listing the generated `mobile/lib/generated/l10n/*.dart` files.
+- Prevention rule: Treat `npm run i18n:generate` as a write phase that dirties tracked files; to compare against a baseline, use `git stash` plus an explicit `git checkout -- .` before popping, or inspect the warning source directly instead of stashing.
+- Tripwire: Never run a generator between `git stash` and `git stash pop`; verify with `git status` before popping.
+
 ## 2026-07-29 Verify Descriptor Serialization, Not Only Helper Types
 - Mistake class: incorrect assumption about dependency behavior / missing verification.
 - Failure mode: Assumed the official `registerAppTool` helper would preserve OpenAI's top-level `securitySchemes` because its documented config accepts the field, but the installed MCP SDK 1.30 `registerTool` implementation destructures only standard fields and silently drops the extension.

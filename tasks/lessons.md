@@ -1,5 +1,12 @@
 # Lessons
 
+## 2026-10-06 Run `flutter pub get` in `mobile/` Before Regenerating Shared i18n
+- Mistake class: environment-dependent verification assumption / missing prerequisite step.
+- Failure mode: `npm run i18n:generate` was run without first executing `flutter pub get` inside `mobile/`. The Flutter SDK's `gen-l10n` then emitted an extra blank line after `import 'package:intl/intl.dart' as intl;` in all nine `app_localizations_<locale>.dart` files, even though the generated translations were correct. Local `npm run check:i18n` still passed because it compares the generator's *own* outputs, so the drift was invisible until CI's `git diff --exit-code` on the generated files failed.
+- Detection signal: CI `i18n-parity` failed at the "Check generated output drift" step with a one-line diff (`-` blank line) in `mobile/lib/generated/l10n/app_localizations_{ar,en,es,fr,hi,ko,pt,ru,zh}.dart`, while a clean checkout of `main` regenerated identically with the same local Flutter 3.47.6 — proving the difference came from the local working tree state, not the toolchain version.
+- Prevention rule: Treat `mobile/` Flutter prerequisites as part of the i18n generation phase — run `flutter pub get` in `mobile/` (matching the CI step order) before `npm run i18n:generate`, and after regenerating confirm with `git diff --exit-code` on the generated paths rather than trusting `check:i18n` alone.
+- Tripwire: Whenever CI reports generated-output drift but the same files look correct locally, prove reproducibility by running the generator in a fresh checkout of the base branch before looking for a toolchain difference; and always run `git diff --exit-code -- lib/i18n mobile/lib/generated` locally after any i18n change.
+
 ## 2026-10-06 Keep Node-Only Modules Out of Client Bundles, and Prove It
 - Mistake class: architectural hazard avoided by design / verification gap.
 - Failure mode: The new `'use client'` settings page needed the authoritative scope and event lists that live in `lib/apiTokenCore.ts`, but that module imports `node:crypto` for token hashing and HMAC signing; importing it from a client component would pull Node built-ins into the browser bundle.

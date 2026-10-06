@@ -9,7 +9,15 @@ import { createE2EStock } from './support/testUser';
 test('recording a buy transaction surfaces the holding in the portfolio', async ({ authedPage, testUser }) => {
   await createE2EStock(testUser.id, { symbol: '2330', name: '台積電', market: 'TW' });
 
-  await authedPage.goto('/stocks/transactions');
+  // StockTxClient 掛載時非同步呼叫 GET /api/stocks 取得股票清單，「新增交易」
+  // 對話框開啟時用 stocks[0]?.id 預選股票；若在該請求完成前就點擊新增，
+  // stockId 會是空字串，送出時觸發「請選擇股票」驗證錯誤（即使下拉選單因
+  // HTML <select> 的預設行為而「看起來」已選到唯一一個選項）。明確等待這個
+  // 請求完成，確保互動時 stocks 狀態已就緒，不是用延遲掩蓋競態。
+  await Promise.all([
+    authedPage.waitForResponse((resp) => resp.url().includes('/api/stocks') && resp.request().method() === 'GET'),
+    authedPage.goto('/stocks/transactions'),
+  ]);
   await expect(authedPage.getByRole('heading', { name: '股票交易紀錄' }).first()).toBeVisible();
 
   await authedPage.getByRole('button', { name: '新增交易' }).click();

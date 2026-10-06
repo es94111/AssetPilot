@@ -12,6 +12,22 @@ type Fixtures = {
 };
 
 export const test = base.extend<Fixtures>({
+  // 覆寫內建 page fixture：components/public/SplashIntro.tsx 的品牌入場動畫
+  // 以 sessionStorage 記錄「本工作階段已播放過」，否則每次造訪都會播放
+  // 2.1 秒、覆蓋全畫面的動畫。Playwright 每個測試都是全新瀏覽器 context
+  // （sessionStorage 必為空），若不先標記為已播放，會讓畫面斷言／截圖在
+  // 動畫期間抓到被蓋住的畫面（toBeVisible() 不檢查是否被其他元素遮擋）。
+  page: async ({ page }, use) => {
+    await page.addInitScript(() => {
+      try {
+        window.sessionStorage.setItem('assetpilot-splash-played', '1');
+      } catch {
+        // sessionStorage 可能在極少數環境被封鎖；忽略即可，頂多動畫多播一次。
+      }
+    });
+    await use(page);
+  },
+
   testUser: async ({}, use) => {
     const user = await createE2ETestUser();
     await use(user);

@@ -7,7 +7,10 @@
 //   2. /login 頁面本身渲染正確（標題、說明文字、可用的登入方式）。
 // 已登入後可存取頁面的情境由 dashboard.test.ts 等其他 spec 覆蓋
 // （透過 tests/e2e/support/testUser.ts 注入可重現的測試 session）。
-import { test, expect } from '@playwright/test';
+// 使用共用 fixtures（而非直接 import '@playwright/test'）是為了沿用其
+// page fixture 覆寫：預先標記品牌入場動畫（SplashIntro）已播放，避免該
+// 2.1 秒全螢幕動畫蓋住畫面，讓這裡的斷言更快、更穩定。
+import { test, expect } from './support/fixtures';
 
 test.describe('login', () => {
   test('unauthenticated users are redirected to /login', async ({ page }) => {

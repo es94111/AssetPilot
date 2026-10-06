@@ -9,7 +9,12 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground [a]:hover:bg-primary/80",
+        // 暗色模式 --primary 是給「亮色背景上的文字／連結」用的淺色調（例如側邊欄
+        // active 連結），白字按鈕若直接套用對比只有 2.15:1（issue #264 無障礙檢測
+        // 抓到，未達 WCAG AA 4.5:1）。改用 --primary-solid（兩種模式皆已通過
+        // tools/check-contrast.mjs 的「white on primary-solid」驗證）。
+        default:
+          "bg-primary text-primary-foreground dark:bg-[var(--primary-solid)] [a]:hover:bg-primary/80",
         outline:
           "border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
         secondary:

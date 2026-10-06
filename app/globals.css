@@ -350,11 +350,20 @@
 }
 .nav-link[aria-current='page'] {
   background: var(--primary-light-bg);
-  color: var(--primary);
+  /* --primary 在淺色模式對 --primary-light-bg 僅 4.43:1（未達 WCAG AA 4.5:1，
+     issue #264 無障礙檢測抓到）；--primary-solid 較深、對比足夠。暗色模式則維持
+     --primary（見下方 .dark-mode 覆寫）：暗色的 --primary-solid 反而比暗色
+     --primary-light-bg 更深，對比不足，而暗色 --primary 本身對 surface 已有
+     8.04:1（tools/check-contrast.mjs 的 primary/surface 組合）。 */
+  color: var(--primary-solid);
   font-weight: 600;
 }
 .nav-link[aria-current='page']:hover {
   background: var(--primary-soft-hover);
+  color: var(--primary-solid);
+}
+.dark-mode .nav-link[aria-current='page'],
+.dark-mode .nav-link[aria-current='page']:hover {
   color: var(--primary);
 }
 .nav-link:focus-visible {

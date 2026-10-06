@@ -1,6 +1,26 @@
 {
-  "currentVersion": "4.117.0",
+  "currentVersion": "4.118.0",
   "releases": [
+    {
+      "version": "4.118.0",
+      "date": "2026-10-06",
+      "title": "E2E、視覺回歸與無障礙測試框架",
+      "type": "improved",
+      "changes": [
+        {
+          "tag": "new",
+          "text": "新增 Playwright E2E 測試，涵蓋登入導向、新增交易、預算、持股（記一筆股票買進交易）、統計報表與交易記錄 CSV 匯出等主要流程；測試使用者與資料皆由程式直接建立／清除，不依賴 Google／LINE 等正式環境 OAuth 憑證。#264"
+        },
+        {
+          "tag": "new",
+          "text": "新增以 axe-core 進行的無障礙檢測與涵蓋淺色／深色主題的視覺回歸測試，並整合進新的 CI 流程（.github/workflows/e2e.yml），無障礙重大（critical／serious）違規會讓 CI 失敗。#264"
+        },
+        {
+          "tag": "fixed",
+          "text": "修正側邊欄目前頁面連結在淺色主題下的文字對比不足（4.43:1，未達 WCAG AA 4.5:1）、按鈕在深色主題下文字對比過低（2.15:1）、以及預算頁月份切換按鈕缺少無障礙標籤的問題（皆為新增無障礙檢測後發現）。#264"
+        }
+      ]
+    },
     {
       "version": "4.117.0",
       "date": "2026-10-06",

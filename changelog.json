@@ -4,12 +4,12 @@
     {
       "version": "4.115.1",
       "date": "2026-10-06",
-      "title": "修補 source-map-js 安全漏洞",
+      "title": "修補多項相依套件安全漏洞",
       "type": "fixed",
       "changes": [
         {
           "tag": "security",
-          "text": "將 source-map-js 固定更新至 1.2.2 以上，修補 CVE-2026-93749 高風險漏洞；確保所有相依套件解析出的版本均不低於修補版本。"
+          "text": "將 source-map-js 更新至 1.2.2 以上、proxy-addr 更新至 2.0.8 以上、fast-copy 更新至 4.1.0 以上，修補 CVE-2026-93749（GHSA-68fv-2mgg-jv7q）、CVE-2026-90711（GHSA-jqcg-44mw-7w3h）及 GHSA-jggr-w7fw-pc2j；確保所有相依套件解析出的版本均達修補版本。"
         }
       ]
     },

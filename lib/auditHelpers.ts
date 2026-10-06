@@ -25,6 +25,11 @@ const AUDIT_METADATA_ALLOWED_KEYS = new Set([
   // 刻意不重用 'transaction_id'——該鍵在既有寫入工具語意為單一交易列 id，重用會讓稽核閱讀者誤判
   // 查詢對象（research.md 第 10 節）。
   'repayment_summary_id',
+  // API Token／Webhook 管理稽核（008-api-token-webhook，issue #258）。
+  // 只記錄識別碼與名稱，絕不記錄 Token 明文或 Webhook 簽章密鑰。
+  'api_token_id', 'api_token_name', 'api_token_scopes',
+  'webhook_subscription_id', 'webhook_url', 'webhook_events',
+  'webhook_delivery_id', 'webhook_event_type', 'webhook_status',
 ]);
 
 export interface WriteAuditArgs {

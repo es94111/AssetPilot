@@ -5,6 +5,7 @@ import { normalizeCurrency, convertToTwd, normalizeDate, resolveOverseasFee } fr
 import { todayInUserTz, isValidIsoDate } from '../../../lib/userTime';
 import { computeTwdAmount } from '../../../lib/moneyDecimal';
 import { insertIncomeExpenseTransaction } from '../../../lib/transactionWriteCore';
+import { emitTransactionEvent } from '../../../lib/transactionWebhooks';
 
 type TransactionType = 'income' | 'expense' | 'transfer_in' | 'transfer_out';
 type SortField = 'date' | 'amount' | 'account' | 'category' | 'type';
@@ -310,6 +311,18 @@ export async function POST(request: NextRequest) {
     note: note || '',
     excludeFromStats: !!excludeFromStats,
     clientRef: typeof body.clientRef === 'string' && CLIENT_REF_REGEX.test(body.clientRef) ? body.clientRef : undefined,
+  });
+
+  // Webhook：交易新增事件（issue #258）。emit 為盡力而為，失敗不影響交易本身。
+  emitTransactionEvent(auth.userId, 'transaction.created', {
+    id: result.id,
+    type,
+    amount: twdAmountInt,
+    currency: converted.currency,
+    date,
+    account_id: accountId || null,
+    category_id: categoryId || null,
+    note: note || '',
   });
 
   return NextResponse.json(result, { status: 201 });

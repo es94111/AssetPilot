@@ -559,17 +559,19 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
         "股票持股已載入",
       ),
       description: "查詢目前股票持股（股數/均價/現價/未實現損益/幣別）",
-      inputSchema: {},
+      inputSchema: { ...ledgerIdShape },
     },
-    async () =>
-      withAudit(credential, "stock_holdings", () => {
-        const status = getStockPortfolioStatus(userId);
+    async ({ ledgerId }) => {
+      const scope = scopeFor(ledgerId);
+      return withAudit(credential, "stock_holdings", () => {
+        const status = getStockPortfolioStatus(scope.dataOwnerId);
         return toolResult({
           holdings: status.holdings,
           marketValue: status.marketValue,
           health: status.health,
         });
-      }),
+      });
+    },
   );
 
   server.registerTool(
@@ -586,17 +588,19 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
         dateFrom: z.string().optional(),
         dateTo: z.string().optional(),
         type: z.enum(["buy", "sell"]).optional(),
+        ...ledgerIdShape,
         ...paginationShape,
       },
     },
-    async ({ stockId, dateFrom, dateTo, type, page, pageSize }) => {
+    async ({ stockId, dateFrom, dateTo, type, ledgerId, page, pageSize }) => {
+      const scope = scopeFor(ledgerId);
       const {
         page: p,
         pageSize: ps,
         offset,
       } = resolvePagination({ page, pageSize });
       let where = "st.user_id = ?";
-      const params: Array<string | number | null> = [userId];
+      const params: Array<string | number | null> = [scope.dataOwnerId];
       if (stockId) {
         where += " AND st.stock_id = ?";
         params.push(stockId);
@@ -667,17 +671,19 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
         stockId: z.string().optional(),
         dateFrom: z.string().optional(),
         dateTo: z.string().optional(),
+        ...ledgerIdShape,
         ...paginationShape,
       },
     },
-    async ({ stockId, dateFrom, dateTo, page, pageSize }) => {
+    async ({ stockId, dateFrom, dateTo, ledgerId, page, pageSize }) => {
+      const scope = scopeFor(ledgerId);
       const {
         page: p,
         pageSize: ps,
         offset,
       } = resolvePagination({ page, pageSize });
       let where = "sd.user_id = ?";
-      const params: Array<string | number | null> = [userId];
+      const params: Array<string | number | null> = [scope.dataOwnerId];
       if (stockId) {
         where += " AND sd.stock_id = ?";
         params.push(stockId);
@@ -737,9 +743,10 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
         "定期定額已載入",
       ),
       description: "查詢股票定期定額排程清單",
-      inputSchema: { ...paginationShape },
+      inputSchema: { ...ledgerIdShape, ...paginationShape },
     },
-    async ({ page, pageSize }) => {
+    async ({ ledgerId, page, pageSize }) => {
+      const scope = scopeFor(ledgerId);
       const {
         page: p,
         pageSize: ps,
@@ -750,14 +757,14 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
           Number(
             queryOne(
               "SELECT COUNT(*) AS cnt FROM stock_recurring WHERE user_id = ?",
-              [userId],
+              [scope.dataOwnerId],
             )?.cnt,
           ) || 0;
         const rows = queryAll(
           `SELECT sr.*, s.symbol, s.market, s.currency, s.name AS stock_name
            FROM stock_recurring sr LEFT JOIN stocks s ON sr.stock_id = s.id
            WHERE sr.user_id = ? ORDER BY sr.start_date DESC LIMIT ? OFFSET ?`,
-          [userId, ps, offset],
+          [scope.dataOwnerId, ps, offset],
         );
         const items = rows.map((r) => ({
           id: r.id,
@@ -796,17 +803,19 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
         dateFrom: z.string().optional(),
         dateTo: z.string().optional(),
         stockId: z.string().optional(),
+        ...ledgerIdShape,
         ...paginationShape,
       },
     },
-    async ({ dateFrom, dateTo, stockId, page, pageSize }) =>
-      withAudit(credential, "stock_realized_pl", () => {
+    async ({ dateFrom, dateTo, stockId, ledgerId, page, pageSize }) => {
+      const scope = scopeFor(ledgerId);
+      return withAudit(credential, "stock_realized_pl", () => {
         const {
           page: p,
           pageSize: ps,
           offset,
         } = resolvePagination({ page, pageSize });
-        const result = getStockRealizedPl(userId, {
+        const result = getStockRealizedPl(scope.dataOwnerId, {
           dateFrom,
           dateTo,
           stockId,
@@ -821,7 +830,8 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
           totalPages: Math.ceil(total / ps),
           summary: result.summary,
         });
-      }),
+      });
+    },
   );
 
   // get_credit_card_repayment_preview：在送出還款前試算分配（007-mcp-credit-card-repayment，US2）。

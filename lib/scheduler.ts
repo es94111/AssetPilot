@@ -205,8 +205,8 @@ async function runScheduledReportNow(scheduleId, triggeredBy = '排程') {
       try {
         dedupRowId = crypto.randomUUID().replace(/-/g, '');
         db.run(
-          'INSERT INTO monthly_report_send_log (id, user_id, year_month, schedule_id, sent_at_utc) VALUES (?,?,?,?,?)',
-          [dedupRowId, u.id, ym, scheduleId, new Date(startedAt).toISOString()]
+          'INSERT INTO monthly_report_send_log (id, user_id, ledger_id, year_month, schedule_id, sent_at_utc) VALUES (?,?,?,?,?,?)',
+          [dedupRowId, u.id, delivery.ledgerId, ym, scheduleId, new Date(startedAt).toISOString()]
         );
       } catch (e) {
         if (/UNIQUE|constraint/i.test(String(e?.message || ''))) {
@@ -243,17 +243,26 @@ async function runScheduledReportNow(scheduleId, triggeredBy = '排程') {
         channelResults.push('Email 失敗：寄信服務未設定');
       } else {
       try {
-        const html = renderStatsEmailHtml(u.display_name, u.email, stats, locale);
-        const subject = stats.subject || `${stats.month} 個人資產統計報表`;
-        const result = await sendStatsEmail({ to: u.email, subject, html });
-        if (result) {
-          sent += 1;
-          provider = result.provider;
-          channelResults.push(`Email 成功(${provider || ''})`);
-        } else {
+        // 最後一次角色檢查緊貼著外部寄送呼叫；成員離開／被撤銷後即使排程已啟動，
+        // 也不得再收到共享帳本的統計資料。
+        const sendScope = resolveScheduleDelivery({ schedule, recipientId: u.id, action: '寄送' });
+        if (!sendScope.allowed) {
           failed += 1;
-          channelResults.push('Email 失敗');
-          errMsg = '寄信服務未設定';
+          channelResults.push(`Email 略過：${sendScope.reason}`);
+          errMsg = sendScope.reason;
+        } else {
+          const html = renderStatsEmailHtml(u.display_name, u.email, stats, locale);
+          const subject = stats.subject || `${stats.month} 個人資產統計報表`;
+          const result = await sendStatsEmail({ to: u.email, subject, html });
+          if (result) {
+            sent += 1;
+            provider = result.provider;
+            channelResults.push(`Email 成功(${provider || ''})`);
+          } else {
+            failed += 1;
+            channelResults.push('Email 失敗');
+            errMsg = '寄信服務未設定';
+          }
         }
       } catch (e) {
         failed += 1;
@@ -273,10 +282,17 @@ async function runScheduledReportNow(scheduleId, triggeredBy = '排程') {
         channelResults.push('LINE 失敗：使用者尚未綁定 LINE');
       } else {
       try {
-        const appUrl = process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || `https://${process.env.APP_HOST || 'localhost'}`;
-        await pushLineMessage(u.line_id, [buildStatsReportFlex(u.display_name, stats, appUrl, locale)]);
-        sent += 1;
-        channelResults.push('LINE 成功');
+        const sendScope = resolveScheduleDelivery({ schedule, recipientId: u.id, action: '寄送' });
+        if (!sendScope.allowed) {
+          failed += 1;
+          channelResults.push(`LINE 略過：${sendScope.reason}`);
+          errMsg = [errMsg, sendScope.reason].filter(Boolean).join('；');
+        } else {
+          const appUrl = process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || `https://${process.env.APP_HOST || 'localhost'}`;
+          await pushLineMessage(u.line_id, [buildStatsReportFlex(u.display_name, stats, appUrl, locale)]);
+          sent += 1;
+          channelResults.push('LINE 成功');
+        }
       } catch (e) {
         failed += 1;
         const msg = e?.message || '未知錯誤';
@@ -360,6 +376,14 @@ async function runLineExpenseReminderNow(reminderId, triggeredBy = '排程') {
     }
 
     try {
+      // 再緊貼實際 LINE push 呼叫重新查成員角色，避免排程查詢後到寄送前的撤銷競態。
+      const sendScope = resolveScheduleDelivery({ schedule: reminder, recipientId: u.id, action: '提醒' });
+      if (!sendScope.allowed) {
+        const summary = `${formatLocalSummaryTime(startedAt)} ${triggeredBy}：${sendScope.reason}`;
+        db.run('UPDATE line_expense_reminders SET last_summary = ?, updated_at = ? WHERE id = ?', [summary, startedAt, reminderId]);
+        saveDB();
+        return { status: 'unauthorized', sent: 0, failed: 0, skipped: 1, reason: sendScope.reason };
+      }
       await pushLineMessage(u.line_id, [buildExpenseReminderFlex(u.display_name, getUserLanguage(u.id))]);
       const finishedAt = Date.now();
       const summary = `${formatLocalSummaryTime(startedAt)} ${triggeredBy}：LINE 提醒成功（完成於 ${formatLocalSummaryTime(finishedAt)}）`;

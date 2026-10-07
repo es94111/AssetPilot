@@ -52,7 +52,8 @@ class LedgerOption {
 /// 帳本範圍由 ApiClient 的 `x-ledger-id` 決定（見 lib/api_client.dart）。
 class LedgerScreen extends StatefulWidget {
   final String? invitationToken;
-  const LedgerScreen({super.key, this.invitationToken});
+  final VoidCallback? onLedgerChanged;
+  const LedgerScreen({super.key, this.invitationToken, this.onLedgerChanged});
 
   @override
   State<LedgerScreen> createState() => _LedgerScreenState();
@@ -95,7 +96,11 @@ class _LedgerScreenState extends State<LedgerScreen> {
       final result = await ApiClient.instance.acceptLedgerInvitation(token);
       final ledgerId = '${result['ledgerId'] ?? ''}';
       if (ledgerId.isNotEmpty) {
-        await ApiClient.instance.setActiveLedgerId(ledgerId);
+        await ApiClient.instance.setActiveLedgerId(
+          ledgerId,
+          readOnly: '${result['role'] ?? ''}' == 'viewer',
+        );
+        widget.onLedgerChanged?.call();
       }
       if (mounted) toast(context, trKey('ledgerInviteAccepted'), isSuccess: true);
       _reload();
@@ -108,7 +113,11 @@ class _LedgerScreenState extends State<LedgerScreen> {
 
   Future<void> _select(LedgerOption ledger) async {
     if (ledger.id == ApiClient.instance.activeLedgerId) return;
-    await ApiClient.instance.setActiveLedgerId(ledger.id);
+    await ApiClient.instance.setActiveLedgerId(
+      ledger.id,
+      readOnly: ledger.readOnly,
+    );
+    widget.onLedgerChanged?.call();
     if (!mounted) return;
     if (ledger.readOnly) {
       toast(context, trKey('ledgerReadOnlyNotice'));
@@ -150,6 +159,7 @@ class _LedgerScreenState extends State<LedgerScreen> {
       final ledgerId = '${created['id'] ?? ''}';
       if (ledgerId.isNotEmpty) {
         await ApiClient.instance.setActiveLedgerId(ledgerId);
+        widget.onLedgerChanged?.call();
       }
       if (mounted) toast(context, trKey('ledgerCreated'), isSuccess: true);
       _reload();

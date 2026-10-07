@@ -202,8 +202,11 @@ class _HomeShellState extends State<HomeShell> {
       try {
         await Navigator.of(context).push(
           MaterialPageRoute(
-            builder: (_) =>
-                LedgerScreen(invitationToken: uri.queryParameters['token']),
+            builder: (_) => LedgerScreen(
+              invitationToken:
+                  uri.queryParameters['token'] ?? uri.queryParameters['invite'],
+              onLedgerChanged: _reloadAll,
+            ),
           ),
         );
         if (mounted) _reloadAll();
@@ -240,11 +243,15 @@ class _HomeShellState extends State<HomeShell> {
       uri.path == '/new';
 
   /// 共享帳本邀請連結：assetpilot://ledger/invite?token=…
-  bool _isLedgerInviteLink(Uri uri) =>
-      uri.scheme == 'assetpilot' &&
-      uri.host == 'ledger' &&
-      uri.path == '/invite' &&
-      (uri.queryParameters['token'] ?? '').isNotEmpty;
+  bool _isLedgerInviteLink(Uri uri) {
+    final customScheme =
+        uri.scheme == 'assetpilot' && uri.host == 'ledger' && uri.path == '/invite';
+    final verifiedWebLink = uri.scheme == 'https' &&
+        uri.host == 'asset.shao.one' &&
+        uri.path == '/settings/ledgers';
+    final token = uri.queryParameters['token'] ?? uri.queryParameters['invite'] ?? '';
+    return (customScheme || verifiedWebLink) && token.isNotEmpty;
+  }
 
   /// 切換帳本後重建所有分頁，確保畫面上不留前一個帳本的資料。
   void _reloadAll() => setState(() => _homeEpoch += 1);
@@ -261,6 +268,7 @@ class _HomeShellState extends State<HomeShell> {
       MoreScreen(
         key: ValueKey('more-$_homeEpoch'),
         onLoggedOut: widget.onLoggedOut,
+        onLedgerChanged: _reloadAll,
       ),
     ];
     final labels = [

@@ -43,19 +43,27 @@ class ApiClient {
   /// 後端以 `x-ledger-id` 決定記帳資料的帳本範圍；與 Web 端 lib/clientApi.ts 同名。
   static const ledgerHeader = 'x-ledger-id';
 
-  /// 需要帶上帳本範圍的 API 前綴。刻意與 lib/ledgerPolicy.ts 的
-  /// LEDGER_DATA_API_PREFIXES 一致；投資（/api/stocks）與帳號／偏好設定仍屬個人。
+  /// 需要帶上帳本範圍的 API 前綴。需與 lib/ledgerPolicy.ts 的
+  /// LEDGER_DATA_API_PREFIXES 一致（含 #283 已納入帳本的投資與匯率資料）。
   static const _ledgerDataPrefixes = <String>[
     '/api/accounts',
     '/api/calendar',
-    '/api/budget',
     '/api/categories',
     '/api/credit-card-repayment-summaries',
     '/api/dashboard',
+    '/api/budgets',
     '/api/recurring',
     '/api/reports',
     '/api/transactions',
     '/api/imports/progress',
+    '/api/stocks',
+    '/api/stock-transactions',
+    '/api/stock-dividends',
+    '/api/stock-recurring',
+    '/api/stock-realized',
+    '/api/stock-realized-pl',
+    '/api/stock-settings',
+    '/api/exchange-rates',
   ];
 
   /// 目前選取的帳本 id；空字串代表個人帳本。
@@ -93,7 +101,7 @@ class ApiClient {
 
   /// 顯示受認證保護的媒體（如交易照片）時，提供給 `Image.network` 的標頭。
   /// `/file` 端點走與一般 GET 相同的 Cookie 認證。
-  Map<String, String> mediaHeaders() => _headers();
+  Map<String, String> mediaHeaders() => _headers(path: '/api/transactions');
 
   /// 交易附件原圖的完整 URL，供 `Image.network` 搭配 [mediaHeaders] 載入。
   String attachmentFileUrl(String txId, String attachmentId) =>
@@ -137,8 +145,12 @@ class ApiClient {
   }
 
   /// 切換帳本並持久化；呼叫端切換後必須重新載入畫面資料（見 LedgerScreen）。
-  Future<void> setActiveLedgerId(String ledgerId) async {
+  Future<void> setActiveLedgerId(
+    String ledgerId, {
+    bool readOnly = false,
+  }) async {
     _activeLedgerId = ledgerId;
+    _activeLedgerReadOnly = readOnly;
     final p = await SharedPreferences.getInstance();
     if (ledgerId.isEmpty) {
       await p.remove(_kActiveLedger);
@@ -186,6 +198,12 @@ class ApiClient {
         : Platform.operatingSystem;
     return 'AssetPilotApp ($os)';
   }();
+
+  void _ensureLedgerWritable(String path) {
+    if (activeLedgerReadOnly && isLedgerDataPath(path)) {
+      throw ApiException(403, trKey('ledgerReadOnlyNotice'));
+    }
+  }
 
   Map<String, String> _headers({bool json = false, String path = ''}) => {
     if (json) 'Content-Type': 'application/json',
@@ -239,11 +257,7 @@ class ApiClient {
   }) async {
     // viewer 帳本一律不得寫入：在送出前就以伺服器相同的訊息拒絕，
     // 避免無謂的往返，也讓所有畫面共用同一道防線（伺服器仍是權威）。
-    if (activeLedgerReadOnly &&
-        method != 'GET' &&
-        isLedgerDataPath(path)) {
-      throw ApiException(403, trKey('ledgerReadOnlyNotice'));
-    }
+    if (method != 'GET') _ensureLedgerWritable(path);
     final hasBody = body != null;
     final t = timeout ?? _timeout;
     late http.Response res;
@@ -700,13 +714,16 @@ class ApiClient {
     List<String> paths,
   ) async {
     if (paths.isEmpty) return [];
+    _ensureLedgerWritable('/api/transactions/$transactionId/attachments');
     late http.Response res;
     try {
       final req = http.MultipartRequest(
         'POST',
         _uri('/api/transactions/$transactionId/attachments'),
       );
-      req.headers.addAll(_headers());
+      req.headers.addAll(
+        _headers(path: '/api/transactions/$transactionId/attachments'),
+      );
       for (final path in paths) {
         req.files.add(
           await http.MultipartFile.fromPath(

@@ -5,6 +5,7 @@ import '../models.dart';
 import '../theme.dart';
 import '../widgets.dart';
 import '../l10n.dart';
+import 'ledger_screen.dart' show LedgerOption;
 
 Map<String, String> get _freqLabels => {
   'daily': trKey('featuresRecurringFrequencyLabelsDaily'),
@@ -57,6 +58,7 @@ class ReportScheduleScreen extends StatefulWidget {
 
 class _ReportScheduleScreenState extends State<ReportScheduleScreen> {
   late Future<List<ReportSchedule>> _future;
+  Map<String, String> _ledgerNames = const {};
 
   @override
   void initState() {
@@ -65,7 +67,12 @@ class _ReportScheduleScreenState extends State<ReportScheduleScreen> {
   }
 
   Future<List<ReportSchedule>> _load() async {
-    final list = await ApiClient.instance.reportSchedules();
+    final api = ApiClient.instance;
+    final values = await Future.wait([api.reportSchedules(), api.ledgers()]);
+    final list = values[0];
+    final ledgers = values[1]
+        .map((e) => LedgerOption.fromJson((e as Map).cast<String, dynamic>()));
+    _ledgerNames = {for (final ledger in ledgers) ledger.id: ledger.displayName};
     return list
         .map((e) => ReportSchedule.fromJson((e as Map).cast<String, dynamic>()))
         .toList();
@@ -151,6 +158,10 @@ class _ReportScheduleScreenState extends State<ReportScheduleScreen> {
               separatorBuilder: (_, _) => Divider(height: 1),
               itemBuilder: (context, i) {
                 final s = list[i];
+                final ledgerName = _ledgerNames[s.ledgerId] ??
+                    (s.ledgerId.startsWith('personal:')
+                        ? trKey('ledgerPersonal')
+                        : trKey('ledgerCurrent'));
                 return ListTile(
                   leading: Icon(
                     Icons.schedule,
@@ -160,11 +171,7 @@ class _ReportScheduleScreenState extends State<ReportScheduleScreen> {
                   ),
                   title: Text(_scheduleSummary(s)),
                   subtitle: Text(
-                    s.lastRun > 0
-                        ? trKey('mobileDynamicLastSent', {
-                            'value': _fmtDate(s.lastRun),
-                          })
-                        : trKey('mobileLegacyNotSentYet'),
+                    '$ledgerName · ${s.lastRun > 0 ? trKey('mobileDynamicLastSent', {'value': _fmtDate(s.lastRun)}) : trKey('mobileLegacyNotSentYet')}',
                   ),
                   trailing: Switch(
                     value: s.enabled,
@@ -200,12 +207,16 @@ class _ReportScheduleFormState extends State<_ReportScheduleForm> {
   bool _notifyLine = false;
   bool _enabled = true;
   bool _saving = false;
+  String _ledgerId = '';
+  late Future<List<LedgerOption>> _ledgersFuture;
 
   bool get _isEdit => widget.existing != null;
 
   @override
   void initState() {
     super.initState();
+    _ledgerId = widget.existing?.ledgerId ?? ApiClient.instance.activeLedgerId;
+    _ledgersFuture = _loadLedgers();
     final e = widget.existing;
     if (e != null) {
       _freq = _freqLabels.containsKey(e.freq) ? e.freq : 'monthly';
@@ -217,6 +228,13 @@ class _ReportScheduleFormState extends State<_ReportScheduleForm> {
       _notifyLine = e.notifyLine;
       _enabled = e.enabled;
     }
+  }
+
+  Future<List<LedgerOption>> _loadLedgers() async {
+    final rows = await ApiClient.instance.ledgers();
+    return rows
+        .map((e) => LedgerOption.fromJson((e as Map).cast<String, dynamic>()))
+        .toList();
   }
 
   Future<void> _pickTime() async {
@@ -239,7 +257,17 @@ class _ReportScheduleFormState extends State<_ReportScheduleForm> {
     }
     setState(() => _saving = true);
     try {
+      final ledgers = await _ledgersFuture;
+      LedgerOption? selectedLedger;
+      for (final ledger in ledgers) {
+        if (ledger.id == _ledgerId) selectedLedger = ledger;
+      }
+      selectedLedger ??= ledgers.where((ledger) => ledger.isPersonal).firstOrNull;
+      if (selectedLedger == null || selectedLedger.readOnly) {
+        throw ApiException(403, trKey('ledgerReadOnlyNotice'));
+      }
       final body = <String, dynamic>{
+        'ledgerId': selectedLedger.id,
         'freq': _freq,
         'hour': _hour,
         'minute': _minute,
@@ -281,6 +309,51 @@ class _ReportScheduleFormState extends State<_ReportScheduleForm> {
               style: Theme.of(context).textTheme.titleLarge,
             ),
             SizedBox(height: 16),
+            FutureBuilder<List<LedgerOption>>(
+              future: _ledgersFuture,
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) {
+                  return const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 12),
+                    child: LinearProgressIndicator(),
+                  );
+                }
+                final options = snapshot.data!
+                    .where((ledger) => !ledger.readOnly)
+                    .toList();
+                String? selected;
+                for (final ledger in options) {
+                  if (ledger.id == _ledgerId) selected = ledger.id;
+                }
+                if (selected == null) {
+                  for (final ledger in options) {
+                    if (ledger.isPersonal) {
+                      selected = ledger.id;
+                      break;
+                    }
+                  }
+                }
+                if (options.isEmpty) {
+                  return Text(trKey('ledgerNoLedger'));
+                }
+                return DropdownButtonFormField<String>(
+                  initialValue: selected,
+                  decoration: InputDecoration(
+                    labelText: trKey('ledgerCurrent'),
+                    border: const OutlineInputBorder(),
+                  ),
+                  items: [
+                    for (final ledger in options)
+                      DropdownMenuItem(
+                        value: ledger.id,
+                        child: Text('${ledger.displayName} · ${ledger.roleLabel}'),
+                      ),
+                  ],
+                  onChanged: (value) => setState(() => _ledgerId = value ?? ''),
+                );
+              },
+            ),
+            SizedBox(height: 12),
             SegmentedButton<String>(
               segments: [
                 ButtonSegment(

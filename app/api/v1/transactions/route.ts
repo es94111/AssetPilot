@@ -147,7 +147,7 @@ export async function POST(request: NextRequest) {
   });
   if (!scope.ok) return ledgerScopeError(scope.reason);
 
-  const userTimezone = 'Asia/Taipei';
+  const userTimezone = scope.timezone || 'Asia/Taipei';
   const rawDate = body?.date;
   const date = rawDate == null || String(rawDate).trim() === ''
     ? todayInUserTz(userTimezone)

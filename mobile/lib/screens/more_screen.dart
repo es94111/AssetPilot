@@ -20,7 +20,12 @@ import 'settings_screen.dart';
 /// 這裡保留完整入口並以語義分組，方便探索其餘功能。
 class MoreScreen extends StatefulWidget {
   final VoidCallback onLoggedOut;
-  const MoreScreen({super.key, required this.onLoggedOut});
+  final VoidCallback onLedgerChanged;
+  const MoreScreen({
+    super.key,
+    required this.onLoggedOut,
+    required this.onLedgerChanged,
+  });
 
   @override
   State<MoreScreen> createState() => _MoreScreenState();
@@ -64,7 +69,9 @@ class _MoreScreenState extends State<MoreScreen> {
         Icons.menu_book_outlined,
         trKey('ledgerSwitchTitle'),
         () async {
-          await open(const LedgerScreen());
+          await open(
+            LedgerScreen(onLedgerChanged: widget.onLedgerChanged),
+          );
           // 回到本頁時重新檢查角色，切換到 viewer 帳本後立即隱藏寫入入口。
           await _refreshLedgerRole();
         },

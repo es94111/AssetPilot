@@ -146,21 +146,18 @@ function parseStatePayload(state: LineBotStateRow | null): RecordDraft {
 }
 
 function setLineBotState(lineUserId: string, userId: string, ledgerId: string, action: string, txType = '', payload: RecordDraft = {}): void {
-  // 以 UPDATE→INSERT 取代 SQLite 專屬的 INSERT OR REPLACE（本專案在 PostgreSQL 上執行）。
   const now = Date.now();
-  const db = getDB();
-  db.run(
-    `UPDATE line_bot_states SET user_id = ?, action = ?, tx_type = ?, payload = ?, updated_at = ?
-     WHERE line_user_id = ? AND ledger_id = ?`,
-    [userId, action, txType, JSON.stringify(payload), now, lineUserId, ledgerId]
+  getDB().run(
+    `INSERT INTO line_bot_states (line_user_id, user_id, action, tx_type, payload, ledger_id, updated_at)
+     VALUES (?,?,?,?,?,?,?)
+     ON CONFLICT (line_user_id, ledger_id) DO UPDATE SET
+       user_id = EXCLUDED.user_id,
+       action = EXCLUDED.action,
+       tx_type = EXCLUDED.tx_type,
+       payload = EXCLUDED.payload,
+       updated_at = EXCLUDED.updated_at`,
+    [lineUserId, userId, action, txType, JSON.stringify(payload), ledgerId, now]
   );
-  if (db.getRowsModified() === 0) {
-    db.run(
-      `INSERT INTO line_bot_states (line_user_id, user_id, action, tx_type, payload, ledger_id, updated_at)
-       VALUES (?,?,?,?,?,?,?)`,
-      [lineUserId, userId, action, txType, JSON.stringify(payload), ledgerId, now]
-    );
-  }
   saveDB();
 }
 
@@ -636,12 +633,17 @@ async function handleEvent(event: LineWebhookEvent, request: Request): Promise<v
   const ledgerScope: LedgerScope = activeLedger.ok
     ? activeLedger
     : resolveLedgerScope({ userId: user.id, ledgerId: '' }) as LedgerScope;
+  const ledgerUser: UserRow = { ...user, timezone: ledgerScope.timezone };
+  // 已離開／被移除的帳本仍存在選擇記錄中時，改回個人帳本並清掉記錄，
+  // 避免每次訊息都重試一次注定失敗的解析。
+  if (!activeLedger.ok && storedLedgerId) {
+    clearLineBotState(lineUserId, '');
+  }
   // 寫入一律檢查角色：viewer 只讀不寫（resolveLedgerScope 的 write 旗標）。
   const canWrite = (target: string) => {
     const scoped = resolveLedgerScope({ userId: user.id, ledgerId: target, write: true });
     return scoped.ok ? scoped : null;
   };
-  const activeLedgerLabel = ledgerScope.ledgerName || 'Personal ledger';
 
   if (postbackData && new URLSearchParams(postbackData).get('action') === 'ledger_menu') {
     const ledgers = listAuthorizedLedgers(user.id);
@@ -676,14 +678,14 @@ async function handleEvent(event: LineWebhookEvent, request: Request): Promise<v
       const draft = parseStatePayload(imageState);
       const ids = draft.linePhotoMessageIds || [];
       if (ids.length >= 5) {
-        await replyLineMessage(event.replyToken, [textMessage('單筆交易最多附 5 張照片。'), buildWizardStep(user, ledgerScope.dataOwnerId, imageState.action, draft)]);
+        await replyLineMessage(event.replyToken, [textMessage('單筆交易最多附 5 張照片。'), buildWizardStep(ledgerUser, ledgerScope.dataOwnerId, imageState.action, draft)]);
         return;
       }
       draft.linePhotoMessageIds = [...ids, incomingImageId];
       setLineBotState(lineUserId, user.id, ledgerScope.ledgerId, imageState.action, draft.type || '', draft);
       await replyLineMessage(event.replyToken, [
         textMessage(`已收到照片（${draft.linePhotoMessageIds.length}/5）。請繼續完成這筆交易，最後按「確認新增」。`),
-        buildWizardStep(user, ledgerScope.dataOwnerId, imageState.action, draft),
+        buildWizardStep(ledgerUser, ledgerScope.dataOwnerId, imageState.action, draft),
       ]);
       return;
     }
@@ -715,7 +717,7 @@ async function handleEvent(event: LineWebhookEvent, request: Request): Promise<v
       const draft: RecordDraft = { date: todayInUserTz(scoped.timezone), currency: userDefaultCurrency };
       if (txType) draft.type = txType as TxType;
       setLineBotState(lineUserId, user.id, ledgerScope.ledgerId, 'record_date', txType, draft);
-      await replyLineMessage(event.replyToken, [buildWizardStep(user, ledgerScope.dataOwnerId, 'record_date', draft)]);
+      await replyLineMessage(event.replyToken, [buildWizardStep(ledgerUser, ledgerScope.dataOwnerId, 'record_date', draft)]);
       return;
     }
     if (action === 'wizard_page') {
@@ -727,7 +729,7 @@ async function handleEvent(event: LineWebhookEvent, request: Request): Promise<v
       if (target === 'account') draft.accountPage = page;
       else draft.categoryPage = page;
       setLineBotState(lineUserId, user.id, ledgerScope.ledgerId, nextStep, draft.type || '', draft);
-      await replyLineMessage(event.replyToken, [buildWizardStep(user, ledgerScope.dataOwnerId, nextStep, draft)]);
+      await replyLineMessage(event.replyToken, [buildWizardStep(ledgerUser, ledgerScope.dataOwnerId, nextStep, draft)]);
       return;
     }
     if (action === 'wizard') {
@@ -781,7 +783,7 @@ async function handleEvent(event: LineWebhookEvent, request: Request): Promise<v
       }
       const nextStep = nextRecordStep(step);
       setLineBotState(lineUserId, user.id, ledgerScope.ledgerId, nextStep, draft.type || '', draft);
-      await replyLineMessage(event.replyToken, [buildWizardStep(user, ledgerScope.dataOwnerId, nextStep, draft)]);
+      await replyLineMessage(event.replyToken, [buildWizardStep(ledgerUser, ledgerScope.dataOwnerId, nextStep, draft)]);
       return;
     }
     if (action === 'query_menu') {
@@ -809,7 +811,7 @@ async function handleEvent(event: LineWebhookEvent, request: Request): Promise<v
     if (field === 'date') {
       const date = parseLineDateInput(normalized, ledgerScope.timezone);
       if (!date) {
-        await replyLineMessage(event.replyToken, [textMessage('日期請輸入 YYYY-MM-DD，或輸入今天／昨天，例如 2026-05-11'), buildWizardStep(user, ledgerScope.dataOwnerId, state.action, draft)]);
+        await replyLineMessage(event.replyToken, [textMessage('日期請輸入 YYYY-MM-DD，或輸入今天／昨天，例如 2026-05-11'), buildWizardStep(ledgerUser, ledgerScope.dataOwnerId, state.action, draft)]);
         return;
       }
       draft.date = date;
@@ -817,7 +819,7 @@ async function handleEvent(event: LineWebhookEvent, request: Request): Promise<v
       if (/收入|income|\+/.test(normalized)) draft.type = 'income';
       else if (/支出|expense|花費|-/.test(normalized)) draft.type = 'expense';
       else {
-        await replyLineMessage(event.replyToken, [textMessage('請選擇或輸入「收入」或「支出」。'), buildWizardStep(user, ledgerScope.dataOwnerId, state.action, draft)]);
+        await replyLineMessage(event.replyToken, [textMessage('請選擇或輸入「收入」或「支出」。'), buildWizardStep(ledgerUser, ledgerScope.dataOwnerId, state.action, draft)]);
         return;
       }
       draft.categoryId = undefined;
@@ -826,14 +828,14 @@ async function handleEvent(event: LineWebhookEvent, request: Request): Promise<v
     } else if (field === 'amount') {
       const amount = Number(normalized.replace(/,/g, ''));
       if (!Number.isFinite(amount) || amount <= 0) {
-        await replyLineMessage(event.replyToken, [textMessage('金額必須大於 0，請只輸入數字。'), buildWizardStep(user, ledgerScope.dataOwnerId, state.action, draft)]);
+        await replyLineMessage(event.replyToken, [textMessage('金額必須大於 0，請只輸入數字。'), buildWizardStep(ledgerUser, ledgerScope.dataOwnerId, state.action, draft)]);
         return;
       }
       draft.amount = amount;
     } else if (field === 'category') {
       if (!draft.type) {
         setLineBotState(lineUserId, user.id, ledgerScope.ledgerId, 'record_type', '', draft);
-        await replyLineMessage(event.replyToken, [buildWizardStep(user, ledgerScope.dataOwnerId, 'record_type', draft)]);
+        await replyLineMessage(event.replyToken, [buildWizardStep(ledgerUser, ledgerScope.dataOwnerId, 'record_type', draft)]);
         return;
       }
       const categories = listCategories(ledgerScope.dataOwnerId, draft.type);
@@ -842,7 +844,7 @@ async function handleEvent(event: LineWebhookEvent, request: Request): Promise<v
         return label.includes(normalized.toLowerCase()) || normalized.toLowerCase().includes(category.name.toLowerCase());
       });
       if (!matched) {
-        await replyLineMessage(event.replyToken, [textMessage('找不到這個分類，請按按鈕選擇或輸入分類名稱。'), buildWizardStep(user, ledgerScope.dataOwnerId, state.action, draft)]);
+        await replyLineMessage(event.replyToken, [textMessage('找不到這個分類，請按按鈕選擇或輸入分類名稱。'), buildWizardStep(ledgerUser, ledgerScope.dataOwnerId, state.action, draft)]);
         return;
       }
       draft.categoryId = matched.id;
@@ -852,7 +854,7 @@ async function handleEvent(event: LineWebhookEvent, request: Request): Promise<v
       const accounts = listAccounts(ledgerScope.dataOwnerId);
       const matched = accounts.find((account) => account.name.toLowerCase().includes(normalized.toLowerCase()) || normalized.toLowerCase().includes(account.name.toLowerCase()));
       if (!matched) {
-        await replyLineMessage(event.replyToken, [textMessage('找不到這個帳戶，請按按鈕選擇或輸入帳戶名稱。'), buildWizardStep(user, ledgerScope.dataOwnerId, state.action, draft)]);
+        await replyLineMessage(event.replyToken, [textMessage('找不到這個帳戶，請按按鈕選擇或輸入帳戶名稱。'), buildWizardStep(ledgerUser, ledgerScope.dataOwnerId, state.action, draft)]);
         return;
       }
       draft.accountId = matched.id;
@@ -876,13 +878,13 @@ async function handleEvent(event: LineWebhookEvent, request: Request): Promise<v
         await replyLineMessage(event.replyToken, [await createTransactionFromDraft(user, draft, scoped)]);
         return;
       }
-      await replyLineMessage(event.replyToken, [buildWizardStep(user, ledgerScope.dataOwnerId, 'record_confirm', draft)]);
+      await replyLineMessage(event.replyToken, [buildWizardStep(ledgerUser, ledgerScope.dataOwnerId, 'record_confirm', draft)]);
       return;
     }
 
     const nextStep = nextRecordStep(field);
     setLineBotState(lineUserId, user.id, ledgerScope.ledgerId, nextStep, draft.type || '', draft);
-    await replyLineMessage(event.replyToken, [buildWizardStep(user, ledgerScope.dataOwnerId, nextStep, draft)]);
+    await replyLineMessage(event.replyToken, [buildWizardStep(ledgerUser, ledgerScope.dataOwnerId, nextStep, draft)]);
     return;
   }
 

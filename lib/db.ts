@@ -433,8 +433,22 @@ async function _runMigrations(db: DatabaseLike): Promise<void> {
   alterIgnore(
     "ALTER TABLE monthly_report_send_log ADD COLUMN error_message TEXT NOT NULL DEFAULT ''",
   );
+  // issue #281：月報去重範圍必須包含帳本；否則同一收件者的個人與共享帳本排程
+  // 會互相抑制。舊列都回填為個人帳本，以保留既有 dedup 行為。
   alterIgnore(
-    "CREATE UNIQUE INDEX IF NOT EXISTS idx_monthly_report_send_log_user ON monthly_report_send_log(user_id, year_month)",
+    "ALTER TABLE monthly_report_send_log ADD COLUMN ledger_id TEXT NOT NULL DEFAULT ''",
+  );
+  alterIgnore(
+    "UPDATE monthly_report_send_log SET ledger_id = 'personal:' || user_id WHERE ledger_id = ''",
+  );
+  alterIgnore(
+    "ALTER TABLE monthly_report_send_log DROP CONSTRAINT IF EXISTS monthly_report_send_log_user_id_year_month_key",
+  );
+  alterIgnore(
+    "DROP INDEX IF EXISTS idx_monthly_report_send_log_user",
+  );
+  alterIgnore(
+    "CREATE UNIQUE INDEX IF NOT EXISTS idx_monthly_report_send_log_user_ledger_month ON monthly_report_send_log(user_id, ledger_id, year_month)",
   );
   alterIgnore(
     "CREATE INDEX IF NOT EXISTS idx_monthly_report_send_log_schedule ON monthly_report_send_log(schedule_id, year_month DESC)",

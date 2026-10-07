@@ -117,6 +117,15 @@ if (!DB_URL) {
       "INSERT INTO accounts (id, user_id, name, currency, created_at) VALUES (?,?,?,?,?)",
       [uid(), dataOwner, '共享現金', 'TWD', new Date().toISOString()],
     );
+    const sharedStockId = uid();
+    db.run(
+      'INSERT INTO stocks (id, user_id, symbol, market, name, shares, avg_cost, currency, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?)',
+      [sharedStockId, dataOwner, 'TEST281', 'TW', '共享測試股票', 10, 12, 'TWD', Date.now(), Date.now()],
+    );
+    db.run(
+      'INSERT INTO stock_transactions (id, user_id, stock_id, type, shares, price, fee, tax, date, note, created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)',
+      [uid(), dataOwner, sharedStockId, 'buy', 10, 12, 0, 0, '2026-10-01', '共享投資', Date.now()],
+    );
 
     await test('未指定帳本時所有整合沿用個人帳本，行為與過往一致', async () => {
       const scope = resolveLedgerScope({ userId: owner });
@@ -176,6 +185,15 @@ if (!DB_URL) {
           await client.callTool({ name: 'list_accounts', arguments: { ledgerId } }),
         ));
         assert.equal(sharedAccounts.total, 1);
+        const personalStocks = JSON.parse(firstTextContent(
+          await client.callTool({ name: 'list_stock_transactions', arguments: {} }),
+        ));
+        assert.equal(personalStocks.total, 0);
+        const sharedStocks = JSON.parse(firstTextContent(
+          await client.callTool({ name: 'list_stock_transactions', arguments: { ledgerId } }),
+        ));
+        assert.equal(sharedStocks.total, 1);
+        assert.equal(sharedStocks.items[0].note, '共享投資');
         const created = JSON.parse(firstTextContent(await client.callTool({
           name: 'create_transaction',
           arguments: { type: 'expense', amount: 88, ledgerId, note: 'MCP 共享記帳' },
@@ -240,6 +258,7 @@ if (!DB_URL) {
 
     await test('API Token：ledgerId 明確傳遞、viewer 唯讀、scope 與成員身分都重新檢查', async () => {
       const v1 = await import('../../app/api/v1/transactions/route.ts');
+      const { todayInUserTz } = await import('../../lib/userTime.ts');
       const viewerToken = createApiToken(viewer, 'viewer api', ['transactions:read', 'transactions:write']).token;
       const editorToken = createApiToken(editor, 'editor api', ['transactions:read', 'transactions:write']).token;
       const readOnlyToken = createApiToken(editor, 'editor read only', ['transactions:read']).token;
@@ -285,6 +304,20 @@ if (!DB_URL) {
       assert.equal(created.status, 201);
       const createdId = (await created.json()).transaction.id;
       assert.equal(queryOne('SELECT user_id FROM transactions WHERE id = ?', [createdId])?.user_id, dataOwner);
+
+      // Omitted date uses the selected ledger timezone rather than a hard-coded local timezone.
+      db.run("UPDATE financial_ledgers SET timezone = 'Pacific/Kiritimati' WHERE id = ?", [ledgerId]);
+      const timezoneWrite = await v1.POST(authed(
+        editorToken,
+        { type: 'expense', amount: 3, ledgerId, note: 'ledger timezone date' },
+        'POST',
+      ));
+      assert.equal(timezoneWrite.status, 201);
+      assert.equal(
+        (await timezoneWrite.json()).transaction.date,
+        todayInUserTz('Pacific/Kiritimati'),
+      );
+      db.run("UPDATE financial_ledgers SET timezone = 'Asia/Taipei' WHERE id = ?", [ledgerId]);
     });
 
     await test('離開或被移除後，所有用戶端立即失去共享帳本存取權', async () => {
@@ -313,6 +346,26 @@ if (!DB_URL) {
         Number(queryOne('SELECT COUNT(*) AS cnt FROM transactions WHERE user_id = ?', [dataOwner])?.cnt) > 0,
         true,
       );
+    });
+
+    await test('月報去重範圍包含帳本：個人與共享帳本可各自寄送', () => {
+      const month = `281-${uid().slice(0, 6)}`;
+      for (const targetLedger of [`personal:${owner}`, ledgerId]) {
+        db.run(
+          `INSERT INTO monthly_report_send_log
+           (id, user_id, ledger_id, year_month, schedule_id, sent_at_utc)
+           VALUES (?,?,?,?,?,?)`,
+          [uid(), owner, targetLedger, month, `rs-${targetLedger}`, new Date().toISOString()],
+        );
+      }
+      assert.equal(
+        Number(queryOne(
+          'SELECT COUNT(*) AS cnt FROM monthly_report_send_log WHERE user_id = ? AND year_month = ?',
+          [owner, month],
+        )?.cnt),
+        2,
+      );
+      db.run('DELETE FROM monthly_report_send_log WHERE user_id = ? AND year_month = ?', [owner, month]);
     });
 
     await test('LINE 對話狀態以帳本分離：不同帳本各自保留自己的草稿', async () => {
@@ -509,7 +562,16 @@ if (!DB_URL) {
       db.run('DELETE FROM report_schedules WHERE id = ?', [body.id]);
     });
   } finally {
-    for (const table of ['transactions', 'categories', 'accounts']) {
+    for (const table of [
+      'stock_transactions',
+      'stock_dividends',
+      'stock_recurring',
+      'transactions',
+      'categories',
+      'accounts',
+      'stocks',
+      'stock_settings',
+    ]) {
       db.run(`DELETE FROM ${table} WHERE user_id = ?`, [dataOwner]);
       for (const person of people) db.run(`DELETE FROM ${table} WHERE user_id = ?`, [person]);
     }

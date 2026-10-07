@@ -7,6 +7,9 @@ const LEDGER_DATA_API_PREFIXES = [
   "/api/stocks", "/api/stock-transactions", "/api/stock-dividends",
   "/api/stock-recurring", "/api/stock-realized", "/api/stock-realized-pl",
   "/api/stock-settings", "/api/exchange-rates",
+  // 010-bank-broker-reconciliation（issue #251）：對帳匯入會讀取帳本交易並寫入
+  // 對帳結果，必須走同一套帳本授權（viewer 唯讀、editor／owner 可寫）。
+  "/api/reconciliation",
 ];
 
 export function isLedgerDataPath(path: string): boolean {

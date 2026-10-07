@@ -1445,5 +1445,68 @@ async function _runMigrations(db: DatabaseLike): Promise<void> {
     WHERE is_shared = 0
     ON CONFLICT (ledger_id, user_id) DO NOTHING`);
 
+  // 010-bank-broker-reconciliation（issue #251）：銀行／券商對帳匯入與差異比對。
+  // 三張表皆為使用者資料，一律以 user_id 隔離（比照 transactions）；
+  // profile 為可重用的欄位對應設定，session 為一次匯入／比對，items 為其差異明細。
+  db.run(`CREATE TABLE IF NOT EXISTS reconciliation_import_profiles (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    name TEXT NOT NULL,
+    source TEXT NOT NULL DEFAULT 'csv',
+    config TEXT NOT NULL DEFAULT '{}',
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL
+  )`);
+  db.run(
+    "CREATE INDEX IF NOT EXISTS idx_reconciliation_profiles_user ON reconciliation_import_profiles(user_id, updated_at DESC)",
+  );
+  db.run(`CREATE TABLE IF NOT EXISTS reconciliation_sessions (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    ledger_id TEXT NOT NULL DEFAULT '',
+    account_id TEXT NOT NULL DEFAULT '',
+    source_kind TEXT NOT NULL,
+    source_format TEXT NOT NULL,
+    filename TEXT NOT NULL DEFAULT '',
+    profile_id TEXT NOT NULL DEFAULT '',
+    currency TEXT NOT NULL DEFAULT 'TWD',
+    period_start TEXT NOT NULL DEFAULT '',
+    period_end TEXT NOT NULL DEFAULT '',
+    statement_total INTEGER NOT NULL DEFAULT 0,
+    ledger_total INTEGER NOT NULL DEFAULT 0,
+    matched_count INTEGER NOT NULL DEFAULT 0,
+    ledger_only_count INTEGER NOT NULL DEFAULT 0,
+    statement_only_count INTEGER NOT NULL DEFAULT 0,
+    amount_mismatch_count INTEGER NOT NULL DEFAULT 0,
+    skipped_types TEXT NOT NULL DEFAULT '{}',
+    created_at INTEGER NOT NULL
+  )`);
+  db.run(
+    "CREATE INDEX IF NOT EXISTS idx_reconciliation_sessions_user ON reconciliation_sessions(user_id, created_at DESC)",
+  );
+  db.run(`CREATE TABLE IF NOT EXISTS reconciliation_items (
+    id TEXT PRIMARY KEY,
+    session_id TEXT NOT NULL REFERENCES reconciliation_sessions(id) ON DELETE CASCADE,
+    user_id TEXT NOT NULL,
+    kind TEXT NOT NULL,
+    confidence TEXT NOT NULL DEFAULT 'exact',
+    ledger_id TEXT NOT NULL DEFAULT '',
+    statement_line INTEGER NOT NULL DEFAULT 0,
+    date TEXT NOT NULL DEFAULT '',
+    direction TEXT NOT NULL DEFAULT 'debit',
+    ledger_amount NUMERIC NOT NULL DEFAULT 0,
+    statement_amount NUMERIC NOT NULL DEFAULT 0,
+    difference NUMERIC NOT NULL DEFAULT 0,
+    ledger_description TEXT NOT NULL DEFAULT '',
+    statement_description TEXT NOT NULL DEFAULT '',
+    created_at INTEGER NOT NULL
+  )`);
+  db.run(
+    "CREATE INDEX IF NOT EXISTS idx_reconciliation_items_session ON reconciliation_items(session_id, kind, date)",
+  );
+  alterIgnore(
+    "ALTER TABLE reconciliation_items ADD COLUMN confidence TEXT NOT NULL DEFAULT 'exact'",
+  );
+
   saveDB();
 }

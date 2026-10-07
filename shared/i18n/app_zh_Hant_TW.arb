@@ -8372,5 +8372,474 @@
   "@ledgerLastOwnerNotice": {
     "description": "Web path: ledger.lastOwnerNotice",
     "x-webPath": "ledger.lastOwnerNotice"
+  },
+  "navReconciliation": "銀行對帳匯入",
+  "@navReconciliation": {
+    "description": "Web path: nav.reconciliation",
+    "x-webPath": "nav.reconciliation"
+  },
+  "featuresReconciliationTitle": "銀行／券商對帳匯入",
+  "@featuresReconciliationTitle": {
+    "description": "Web path: features.reconciliation.title",
+    "x-webPath": "features.reconciliation.title"
+  },
+  "featuresReconciliationSubtitle": "匯入 OFX 或 CSV 對帳檔，與帳本交易比對並列出三類差異：帳本有對帳單無、對帳單有帳本無、金額不符。",
+  "@featuresReconciliationSubtitle": {
+    "description": "Web path: features.reconciliation.subtitle",
+    "x-webPath": "features.reconciliation.subtitle"
+  },
+  "featuresReconciliationImportSection": "匯入對帳檔",
+  "@featuresReconciliationImportSection": {
+    "description": "Web path: features.reconciliation.import.section",
+    "x-webPath": "features.reconciliation.import.section"
+  },
+  "featuresReconciliationImportHint": "支援 OFX 1.x／2.x 與銀行、券商 CSV；匯入為整批原子化，任何一列解析失敗即整批取消。",
+  "@featuresReconciliationImportHint": {
+    "description": "Web path: features.reconciliation.import.hint",
+    "x-webPath": "features.reconciliation.import.hint"
+  },
+  "featuresReconciliationImportFile": "對帳檔",
+  "@featuresReconciliationImportFile": {
+    "description": "Web path: features.reconciliation.import.file",
+    "x-webPath": "features.reconciliation.import.file"
+  },
+  "featuresReconciliationImportFileFormats": "可接受 .ofx、.qfx、.csv、.txt",
+  "@featuresReconciliationImportFileFormats": {
+    "description": "Web path: features.reconciliation.import.fileFormats",
+    "x-webPath": "features.reconciliation.import.fileFormats"
+  },
+  "featuresReconciliationImportAccount": "限定帳戶",
+  "@featuresReconciliationImportAccount": {
+    "description": "Web path: features.reconciliation.import.account",
+    "x-webPath": "features.reconciliation.import.account"
+  },
+  "featuresReconciliationImportAllAccounts": "全部帳戶",
+  "@featuresReconciliationImportAllAccounts": {
+    "description": "Web path: features.reconciliation.import.allAccounts",
+    "x-webPath": "features.reconciliation.import.allAccounts"
+  },
+  "featuresReconciliationImportSubmit": "開始匯入並比對",
+  "@featuresReconciliationImportSubmit": {
+    "description": "Web path: features.reconciliation.import.submit",
+    "x-webPath": "features.reconciliation.import.submit"
+  },
+  "featuresReconciliationImportRunning": "匯入中…",
+  "@featuresReconciliationImportRunning": {
+    "description": "Web path: features.reconciliation.import.running",
+    "x-webPath": "features.reconciliation.import.running"
+  },
+  "featuresReconciliationImportAtomicNote": "整批原子化：失敗會全部回滾，不會留下半套資料。",
+  "@featuresReconciliationImportAtomicNote": {
+    "description": "Web path: features.reconciliation.import.atomicNote",
+    "x-webPath": "features.reconciliation.import.atomicNote"
+  },
+  "featuresReconciliationProfileSection": "CSV 欄位對應",
+  "@featuresReconciliationProfileSection": {
+    "description": "Web path: features.reconciliation.profile.section",
+    "x-webPath": "features.reconciliation.profile.section"
+  },
+  "featuresReconciliationProfileSaved": "已儲存的對應設定",
+  "@featuresReconciliationProfileSaved": {
+    "description": "Web path: features.reconciliation.profile.saved",
+    "x-webPath": "features.reconciliation.profile.saved"
+  },
+  "featuresReconciliationProfileUseDraft": "使用下方設定（不儲存）",
+  "@featuresReconciliationProfileUseDraft": {
+    "description": "Web path: features.reconciliation.profile.useDraft",
+    "x-webPath": "features.reconciliation.profile.useDraft"
+  },
+  "featuresReconciliationProfileTemplate": "常用樣板",
+  "@featuresReconciliationProfileTemplate": {
+    "description": "Web path: features.reconciliation.profile.template",
+    "x-webPath": "features.reconciliation.profile.template"
+  },
+  "featuresReconciliationProfileChooseTemplate": "選擇樣板…",
+  "@featuresReconciliationProfileChooseTemplate": {
+    "description": "Web path: features.reconciliation.profile.chooseTemplate",
+    "x-webPath": "features.reconciliation.profile.chooseTemplate"
+  },
+  "featuresReconciliationProfileAmountSign": "金額正負號語意",
+  "@featuresReconciliationProfileAmountSign": {
+    "description": "Web path: features.reconciliation.profile.amountSign",
+    "x-webPath": "features.reconciliation.profile.amountSign"
+  },
+  "featuresReconciliationProfileAmountSignSigned": "負值為支出（銀行對帳單）",
+  "@featuresReconciliationProfileAmountSignSigned": {
+    "description": "Web path: features.reconciliation.profile.amountSignSigned",
+    "x-webPath": "features.reconciliation.profile.amountSignSigned"
+  },
+  "featuresReconciliationProfileAmountSignCreditCard": "正值為消費（信用卡帳單）",
+  "@featuresReconciliationProfileAmountSignCreditCard": {
+    "description": "Web path: features.reconciliation.profile.amountSignCreditCard",
+    "x-webPath": "features.reconciliation.profile.amountSignCreditCard"
+  },
+  "featuresReconciliationProfileDateFormat": "日期格式",
+  "@featuresReconciliationProfileDateFormat": {
+    "description": "Web path: features.reconciliation.profile.dateFormat",
+    "x-webPath": "features.reconciliation.profile.dateFormat"
+  },
+  "featuresReconciliationProfileDateFormatAuto": "自動判定",
+  "@featuresReconciliationProfileDateFormatAuto": {
+    "description": "Web path: features.reconciliation.profile.dateFormatAuto",
+    "x-webPath": "features.reconciliation.profile.dateFormatAuto"
+  },
+  "featuresReconciliationProfileDelimiter": "分隔符號",
+  "@featuresReconciliationProfileDelimiter": {
+    "description": "Web path: features.reconciliation.profile.delimiter",
+    "x-webPath": "features.reconciliation.profile.delimiter"
+  },
+  "featuresReconciliationProfileDelimiterComma": "逗號（,）",
+  "@featuresReconciliationProfileDelimiterComma": {
+    "description": "Web path: features.reconciliation.profile.delimiterComma",
+    "x-webPath": "features.reconciliation.profile.delimiterComma"
+  },
+  "featuresReconciliationProfileDelimiterSemicolon": "分號（;）",
+  "@featuresReconciliationProfileDelimiterSemicolon": {
+    "description": "Web path: features.reconciliation.profile.delimiterSemicolon",
+    "x-webPath": "features.reconciliation.profile.delimiterSemicolon"
+  },
+  "featuresReconciliationProfileDelimiterTab": "Tab",
+  "@featuresReconciliationProfileDelimiterTab": {
+    "description": "Web path: features.reconciliation.profile.delimiterTab",
+    "x-webPath": "features.reconciliation.profile.delimiterTab"
+  },
+  "featuresReconciliationProfileSkipRows": "略過前導列數",
+  "@featuresReconciliationProfileSkipRows": {
+    "description": "Web path: features.reconciliation.profile.skipRows",
+    "x-webPath": "features.reconciliation.profile.skipRows"
+  },
+  "featuresReconciliationProfileHasHeader": "第一列為標題列",
+  "@featuresReconciliationProfileHasHeader": {
+    "description": "Web path: features.reconciliation.profile.hasHeader",
+    "x-webPath": "features.reconciliation.profile.hasHeader"
+  },
+  "featuresReconciliationProfileDateColumn": "日期欄位名稱",
+  "@featuresReconciliationProfileDateColumn": {
+    "description": "Web path: features.reconciliation.profile.dateColumn",
+    "x-webPath": "features.reconciliation.profile.dateColumn"
+  },
+  "featuresReconciliationProfileAmountColumn": "金額欄位名稱",
+  "@featuresReconciliationProfileAmountColumn": {
+    "description": "Web path: features.reconciliation.profile.amountColumn",
+    "x-webPath": "features.reconciliation.profile.amountColumn"
+  },
+  "featuresReconciliationProfileDescriptionColumn": "摘要欄位名稱",
+  "@featuresReconciliationProfileDescriptionColumn": {
+    "description": "Web path: features.reconciliation.profile.descriptionColumn",
+    "x-webPath": "features.reconciliation.profile.descriptionColumn"
+  },
+  "featuresReconciliationProfileDebitColumn": "借方金額欄位名稱",
+  "@featuresReconciliationProfileDebitColumn": {
+    "description": "Web path: features.reconciliation.profile.debitColumn",
+    "x-webPath": "features.reconciliation.profile.debitColumn"
+  },
+  "featuresReconciliationProfileCreditColumn": "貸方金額欄位名稱",
+  "@featuresReconciliationProfileCreditColumn": {
+    "description": "Web path: features.reconciliation.profile.creditColumn",
+    "x-webPath": "features.reconciliation.profile.creditColumn"
+  },
+  "featuresReconciliationProfileFitidColumn": "交易識別碼欄位名稱（選填）",
+  "@featuresReconciliationProfileFitidColumn": {
+    "description": "Web path: features.reconciliation.profile.fitidColumn",
+    "x-webPath": "features.reconciliation.profile.fitidColumn"
+  },
+  "featuresReconciliationProfileColumnHint": "金額可填單一「金額」欄，或改用「借方／貸方」兩個欄位（二選一）。欄位名稱需與 CSV 標題完全一致。",
+  "@featuresReconciliationProfileColumnHint": {
+    "description": "Web path: features.reconciliation.profile.columnHint",
+    "x-webPath": "features.reconciliation.profile.columnHint"
+  },
+  "featuresReconciliationProfileName": "設定名稱",
+  "@featuresReconciliationProfileName": {
+    "description": "Web path: features.reconciliation.profile.name",
+    "x-webPath": "features.reconciliation.profile.name"
+  },
+  "featuresReconciliationProfileNamePlaceholder": "例如：某銀行信用卡帳單",
+  "@featuresReconciliationProfileNamePlaceholder": {
+    "description": "Web path: features.reconciliation.profile.namePlaceholder",
+    "x-webPath": "features.reconciliation.profile.namePlaceholder"
+  },
+  "featuresReconciliationProfileSave": "儲存此對應",
+  "@featuresReconciliationProfileSave": {
+    "description": "Web path: features.reconciliation.profile.save",
+    "x-webPath": "features.reconciliation.profile.save"
+  },
+  "featuresReconciliationProfileDelete": "刪除此對應",
+  "@featuresReconciliationProfileDelete": {
+    "description": "Web path: features.reconciliation.profile.delete",
+    "x-webPath": "features.reconciliation.profile.delete"
+  },
+  "featuresReconciliationResultTitle": "對帳結果摘要",
+  "@featuresReconciliationResultTitle": {
+    "description": "Web path: features.reconciliation.result.title",
+    "x-webPath": "features.reconciliation.result.title"
+  },
+  "featuresReconciliationResultFilename": "檔案",
+  "@featuresReconciliationResultFilename": {
+    "description": "Web path: features.reconciliation.result.filename",
+    "x-webPath": "features.reconciliation.result.filename"
+  },
+  "featuresReconciliationResultPeriod": "對帳期間",
+  "@featuresReconciliationResultPeriod": {
+    "description": "Web path: features.reconciliation.result.period",
+    "x-webPath": "features.reconciliation.result.period"
+  },
+  "featuresReconciliationResultMatched": "配對情形",
+  "@featuresReconciliationResultMatched": {
+    "description": "Web path: features.reconciliation.result.matched",
+    "x-webPath": "features.reconciliation.result.matched"
+  },
+  "featuresReconciliationResultMatchedValue": "成功配對 {matched} 筆（對帳單 {statement} 筆、帳本 {ledger} 筆）",
+  "@featuresReconciliationResultMatchedValue": {
+    "description": "Web path: features.reconciliation.result.matchedValue",
+    "x-webPath": "features.reconciliation.result.matchedValue",
+    "placeholders": {
+      "ledger": {},
+      "matched": {},
+      "statement": {}
+    }
+  },
+  "featuresReconciliationResultSkipped": "略過的交易型別：{detail}",
+  "@featuresReconciliationResultSkipped": {
+    "description": "Web path: features.reconciliation.result.skipped",
+    "x-webPath": "features.reconciliation.result.skipped",
+    "placeholders": {
+      "detail": {}
+    }
+  },
+  "featuresReconciliationDiffTitle": "差異明細",
+  "@featuresReconciliationDiffTitle": {
+    "description": "Web path: features.reconciliation.diff.title",
+    "x-webPath": "features.reconciliation.diff.title"
+  },
+  "featuresReconciliationDiffEmpty": "沒有差異：帳本與對帳單完全一致。",
+  "@featuresReconciliationDiffEmpty": {
+    "description": "Web path: features.reconciliation.diff.empty",
+    "x-webPath": "features.reconciliation.diff.empty"
+  },
+  "featuresReconciliationDiffCount": "{count} 筆",
+  "@featuresReconciliationDiffCount": {
+    "description": "Web path: features.reconciliation.diff.count",
+    "x-webPath": "features.reconciliation.diff.count",
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "featuresReconciliationDiffNone": "此類別沒有差異。",
+  "@featuresReconciliationDiffNone": {
+    "description": "Web path: features.reconciliation.diff.none",
+    "x-webPath": "features.reconciliation.diff.none"
+  },
+  "featuresReconciliationDiffColumnsDate": "日期",
+  "@featuresReconciliationDiffColumnsDate": {
+    "description": "Web path: features.reconciliation.diff.columns.date",
+    "x-webPath": "features.reconciliation.diff.columns.date"
+  },
+  "featuresReconciliationDiffColumnsLedger": "帳本金額",
+  "@featuresReconciliationDiffColumnsLedger": {
+    "description": "Web path: features.reconciliation.diff.columns.ledger",
+    "x-webPath": "features.reconciliation.diff.columns.ledger"
+  },
+  "featuresReconciliationDiffColumnsStatement": "對帳單金額",
+  "@featuresReconciliationDiffColumnsStatement": {
+    "description": "Web path: features.reconciliation.diff.columns.statement",
+    "x-webPath": "features.reconciliation.diff.columns.statement"
+  },
+  "featuresReconciliationDiffColumnsDifference": "差額",
+  "@featuresReconciliationDiffColumnsDifference": {
+    "description": "Web path: features.reconciliation.diff.columns.difference",
+    "x-webPath": "features.reconciliation.diff.columns.difference"
+  },
+  "featuresReconciliationDiffColumnsReference": "來源",
+  "@featuresReconciliationDiffColumnsReference": {
+    "description": "Web path: features.reconciliation.diff.columns.reference",
+    "x-webPath": "features.reconciliation.diff.columns.reference"
+  },
+  "featuresReconciliationDiffStatementLine": "對帳單第 {line} 列",
+  "@featuresReconciliationDiffStatementLine": {
+    "description": "Web path: features.reconciliation.diff.statementLine",
+    "x-webPath": "features.reconciliation.diff.statementLine",
+    "placeholders": {
+      "line": {}
+    }
+  },
+  "featuresReconciliationDiffLedgerRecord": "帳本紀錄",
+  "@featuresReconciliationDiffLedgerRecord": {
+    "description": "Web path: features.reconciliation.diff.ledgerRecord",
+    "x-webPath": "features.reconciliation.diff.ledgerRecord"
+  },
+  "featuresReconciliationDiffLedgerOnly": "帳本有、對帳單無",
+  "@featuresReconciliationDiffLedgerOnly": {
+    "description": "Web path: features.reconciliation.diff.ledgerOnly",
+    "x-webPath": "features.reconciliation.diff.ledgerOnly"
+  },
+  "featuresReconciliationDiffStatementOnly": "對帳單有、帳本無",
+  "@featuresReconciliationDiffStatementOnly": {
+    "description": "Web path: features.reconciliation.diff.statementOnly",
+    "x-webPath": "features.reconciliation.diff.statementOnly"
+  },
+  "featuresReconciliationDiffAmountMismatch": "金額不符",
+  "@featuresReconciliationDiffAmountMismatch": {
+    "description": "Web path: features.reconciliation.diff.amountMismatch",
+    "x-webPath": "features.reconciliation.diff.amountMismatch"
+  },
+  "featuresReconciliationSourceBank": "銀行",
+  "@featuresReconciliationSourceBank": {
+    "description": "Web path: features.reconciliation.source.bank",
+    "x-webPath": "features.reconciliation.source.bank"
+  },
+  "featuresReconciliationSourceCreditCard": "信用卡",
+  "@featuresReconciliationSourceCreditCard": {
+    "description": "Web path: features.reconciliation.source.creditCard",
+    "x-webPath": "features.reconciliation.source.creditCard"
+  },
+  "featuresReconciliationSourceInvestment": "券商",
+  "@featuresReconciliationSourceInvestment": {
+    "description": "Web path: features.reconciliation.source.investment",
+    "x-webPath": "features.reconciliation.source.investment"
+  },
+  "featuresReconciliationHistoryTitle": "對帳歷史",
+  "@featuresReconciliationHistoryTitle": {
+    "description": "Web path: features.reconciliation.history.title",
+    "x-webPath": "features.reconciliation.history.title"
+  },
+  "featuresReconciliationHistoryEmpty": "尚無對帳紀錄。",
+  "@featuresReconciliationHistoryEmpty": {
+    "description": "Web path: features.reconciliation.history.empty",
+    "x-webPath": "features.reconciliation.history.empty"
+  },
+  "featuresReconciliationHistoryColumnsTime": "時間",
+  "@featuresReconciliationHistoryColumnsTime": {
+    "description": "Web path: features.reconciliation.history.columns.time",
+    "x-webPath": "features.reconciliation.history.columns.time"
+  },
+  "featuresReconciliationHistoryColumnsSource": "來源",
+  "@featuresReconciliationHistoryColumnsSource": {
+    "description": "Web path: features.reconciliation.history.columns.source",
+    "x-webPath": "features.reconciliation.history.columns.source"
+  },
+  "featuresReconciliationHistoryColumnsPeriod": "期間",
+  "@featuresReconciliationHistoryColumnsPeriod": {
+    "description": "Web path: features.reconciliation.history.columns.period",
+    "x-webPath": "features.reconciliation.history.columns.period"
+  },
+  "featuresReconciliationHistoryColumnsCounts": "差異筆數",
+  "@featuresReconciliationHistoryColumnsCounts": {
+    "description": "Web path: features.reconciliation.history.columns.counts",
+    "x-webPath": "features.reconciliation.history.columns.counts"
+  },
+  "featuresReconciliationHistoryColumnsActions": "操作",
+  "@featuresReconciliationHistoryColumnsActions": {
+    "description": "Web path: features.reconciliation.history.columns.actions",
+    "x-webPath": "features.reconciliation.history.columns.actions"
+  },
+  "featuresReconciliationHistoryCountsValue": "金額不符 {mismatch}、對帳單獨有 {statementOnly}、帳本獨有 {ledgerOnly}",
+  "@featuresReconciliationHistoryCountsValue": {
+    "description": "Web path: features.reconciliation.history.countsValue",
+    "x-webPath": "features.reconciliation.history.countsValue",
+    "placeholders": {
+      "ledgerOnly": {},
+      "mismatch": {},
+      "statementOnly": {}
+    }
+  },
+  "featuresReconciliationHistoryView": "查看差異",
+  "@featuresReconciliationHistoryView": {
+    "description": "Web path: features.reconciliation.history.view",
+    "x-webPath": "features.reconciliation.history.view"
+  },
+  "featuresReconciliationHistoryViewing": "檢視中",
+  "@featuresReconciliationHistoryViewing": {
+    "description": "Web path: features.reconciliation.history.viewing",
+    "x-webPath": "features.reconciliation.history.viewing"
+  },
+  "featuresReconciliationMessagesImportDone": "已匯入並完成比對：{filename}",
+  "@featuresReconciliationMessagesImportDone": {
+    "description": "Web path: features.reconciliation.messages.importDone",
+    "x-webPath": "features.reconciliation.messages.importDone",
+    "placeholders": {
+      "filename": {}
+    }
+  },
+  "featuresReconciliationMessagesImportFailed": "匯入失敗，未寫入任何資料。",
+  "@featuresReconciliationMessagesImportFailed": {
+    "description": "Web path: features.reconciliation.messages.importFailed",
+    "x-webPath": "features.reconciliation.messages.importFailed"
+  },
+  "featuresReconciliationMessagesRowError": "第 {line} 列：{reason}",
+  "@featuresReconciliationMessagesRowError": {
+    "description": "Web path: features.reconciliation.messages.rowError",
+    "x-webPath": "features.reconciliation.messages.rowError",
+    "placeholders": {
+      "line": {},
+      "reason": {}
+    }
+  },
+  "featuresReconciliationMessagesChooseFile": "請先選擇對帳檔。",
+  "@featuresReconciliationMessagesChooseFile": {
+    "description": "Web path: features.reconciliation.messages.chooseFile",
+    "x-webPath": "features.reconciliation.messages.chooseFile"
+  },
+  "featuresReconciliationMessagesMissingDateColumn": "請設定日期欄位名稱。",
+  "@featuresReconciliationMessagesMissingDateColumn": {
+    "description": "Web path: features.reconciliation.messages.missingDateColumn",
+    "x-webPath": "features.reconciliation.messages.missingDateColumn"
+  },
+  "featuresReconciliationMessagesMissingAmountColumn": "請設定金額欄位，或借方／貸方欄位。",
+  "@featuresReconciliationMessagesMissingAmountColumn": {
+    "description": "Web path: features.reconciliation.messages.missingAmountColumn",
+    "x-webPath": "features.reconciliation.messages.missingAmountColumn"
+  },
+  "featuresReconciliationMessagesConflictingAmountColumn": "金額欄與借方／貸方欄只能二選一。",
+  "@featuresReconciliationMessagesConflictingAmountColumn": {
+    "description": "Web path: features.reconciliation.messages.conflictingAmountColumn",
+    "x-webPath": "features.reconciliation.messages.conflictingAmountColumn"
+  },
+  "featuresReconciliationMessagesProfileNameRequired": "請輸入對應設定的名稱。",
+  "@featuresReconciliationMessagesProfileNameRequired": {
+    "description": "Web path: features.reconciliation.messages.profileNameRequired",
+    "x-webPath": "features.reconciliation.messages.profileNameRequired"
+  },
+  "featuresReconciliationMessagesProfileSaved": "已儲存對應設定：{name}",
+  "@featuresReconciliationMessagesProfileSaved": {
+    "description": "Web path: features.reconciliation.messages.profileSaved",
+    "x-webPath": "features.reconciliation.messages.profileSaved",
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "featuresReconciliationMessagesProfileSaveFailed": "儲存對應設定失敗。",
+  "@featuresReconciliationMessagesProfileSaveFailed": {
+    "description": "Web path: features.reconciliation.messages.profileSaveFailed",
+    "x-webPath": "features.reconciliation.messages.profileSaveFailed"
+  },
+  "featuresReconciliationMessagesProfileDeleted": "已刪除對應設定。",
+  "@featuresReconciliationMessagesProfileDeleted": {
+    "description": "Web path: features.reconciliation.messages.profileDeleted",
+    "x-webPath": "features.reconciliation.messages.profileDeleted"
+  },
+  "featuresReconciliationMessagesProfileDeleteFailed": "刪除對應設定失敗。",
+  "@featuresReconciliationMessagesProfileDeleteFailed": {
+    "description": "Web path: features.reconciliation.messages.profileDeleteFailed",
+    "x-webPath": "features.reconciliation.messages.profileDeleteFailed"
+  },
+  "featuresReconciliationMessagesSessionLoadFailed": "讀取對帳結果失敗。",
+  "@featuresReconciliationMessagesSessionLoadFailed": {
+    "description": "Web path: features.reconciliation.messages.sessionLoadFailed",
+    "x-webPath": "features.reconciliation.messages.sessionLoadFailed"
+  },
+  "featuresReconciliationTemplatesSignedAmount": "單一金額欄（負值為支出）",
+  "@featuresReconciliationTemplatesSignedAmount": {
+    "description": "Web path: features.reconciliation.templates.signedAmount",
+    "x-webPath": "features.reconciliation.templates.signedAmount"
+  },
+  "featuresReconciliationTemplatesDebitCredit": "借方／貸方兩欄",
+  "@featuresReconciliationTemplatesDebitCredit": {
+    "description": "Web path: features.reconciliation.templates.debitCredit",
+    "x-webPath": "features.reconciliation.templates.debitCredit"
+  },
+  "featuresReconciliationTemplatesCreditCard": "信用卡帳單（正值為消費）",
+  "@featuresReconciliationTemplatesCreditCard": {
+    "description": "Web path: features.reconciliation.templates.creditCard",
+    "x-webPath": "features.reconciliation.templates.creditCard"
   }
 }

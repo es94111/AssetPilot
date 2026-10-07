@@ -5410,4 +5410,317 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get ledgerLastOwnerNotice =>
       'The owner must transfer ownership before leaving or deleting their account.';
+
+  @override
+  String get navReconciliation => 'مطابقة كشف الحساب';
+
+  @override
+  String get featuresReconciliationTitle =>
+      'مطابقة كشوف الحسابات البنكية والوساطة';
+
+  @override
+  String get featuresReconciliationSubtitle =>
+      'استورد كشف حساب بصيغة OFX أو CSV وقارنه بدفترك عبر ثلاثة أنواع من الفروق: موجود في الدفتر فقط، موجود في الكشف فقط، واختلاف المبلغ.';
+
+  @override
+  String get featuresReconciliationImportSection => 'استيراد كشف حساب';
+
+  @override
+  String get featuresReconciliationImportHint =>
+      'يدعم OFX 1.x / 2.x وملفات CSV البنكية وملفات الوسطاء. الاستيراد ذرّي: إذا فشل أي سطر تُرفض الدفعة بالكامل.';
+
+  @override
+  String get featuresReconciliationImportFile => 'ملف كشف الحساب';
+
+  @override
+  String get featuresReconciliationImportFileFormats =>
+      'يقبل .ofx و.qfx و.csv و.txt';
+
+  @override
+  String get featuresReconciliationImportAccount => 'قصْر على الحساب';
+
+  @override
+  String get featuresReconciliationImportAllAccounts => 'كل الحسابات';
+
+  @override
+  String get featuresReconciliationImportSubmit => 'استيراد ومقارنة';
+
+  @override
+  String get featuresReconciliationImportRunning => 'جارٍ الاستيراد…';
+
+  @override
+  String get featuresReconciliationImportAtomicNote =>
+      'دفعة ذرّية: تُلغى التغييرات بالكامل عند الفشل دون ترك بيانات جزئية.';
+
+  @override
+  String get featuresReconciliationProfileSection => 'تعيين أعمدة CSV';
+
+  @override
+  String get featuresReconciliationProfileSaved => 'التعيين المحفوظ';
+
+  @override
+  String get featuresReconciliationProfileUseDraft =>
+      'استخدام الإعدادات أدناه (دون حفظ)';
+
+  @override
+  String get featuresReconciliationProfileTemplate => 'قالب شائع';
+
+  @override
+  String get featuresReconciliationProfileChooseTemplate => 'اختر قالبًا…';
+
+  @override
+  String get featuresReconciliationProfileAmountSign => 'اصطلاح إشارة المبلغ';
+
+  @override
+  String get featuresReconciliationProfileAmountSignSigned =>
+      'القيمة السالبة خصم (كشف حساب بنكي)';
+
+  @override
+  String get featuresReconciliationProfileAmountSignCreditCard =>
+      'القيمة الموجبة شراء (كشف بطاقة ائتمان)';
+
+  @override
+  String get featuresReconciliationProfileDateFormat => 'تنسيق التاريخ';
+
+  @override
+  String get featuresReconciliationProfileDateFormatAuto => 'اكتشاف تلقائي';
+
+  @override
+  String get featuresReconciliationProfileDelimiter => 'الفاصل';
+
+  @override
+  String get featuresReconciliationProfileDelimiterComma => 'فاصلة (,)';
+
+  @override
+  String get featuresReconciliationProfileDelimiterSemicolon =>
+      'فاصلة منقوطة (;)';
+
+  @override
+  String get featuresReconciliationProfileDelimiterTab => 'علامة جدولة';
+
+  @override
+  String get featuresReconciliationProfileSkipRows => 'تخطّي الصفوف الأولى';
+
+  @override
+  String get featuresReconciliationProfileHasHeader => 'الصف الأول عنوان';
+
+  @override
+  String get featuresReconciliationProfileDateColumn => 'اسم عمود التاريخ';
+
+  @override
+  String get featuresReconciliationProfileAmountColumn => 'اسم عمود المبلغ';
+
+  @override
+  String get featuresReconciliationProfileDescriptionColumn => 'اسم عمود الوصف';
+
+  @override
+  String get featuresReconciliationProfileDebitColumn => 'اسم عمود المدين';
+
+  @override
+  String get featuresReconciliationProfileCreditColumn => 'اسم عمود الدائن';
+
+  @override
+  String get featuresReconciliationProfileFitidColumn =>
+      'اسم عمود معرّف العملية (اختياري)';
+
+  @override
+  String get featuresReconciliationProfileColumnHint =>
+      'املأ عمود مبلغ واحدًا أو عمودي المدين والدائن، وليس النمطين معًا. يجب أن تطابق الأسماء عناوين ملف CSV تمامًا.';
+
+  @override
+  String get featuresReconciliationProfileName => 'اسم التعيين';
+
+  @override
+  String get featuresReconciliationProfileNamePlaceholder =>
+      'مثال: كشف بطاقة ائتمان بنكي';
+
+  @override
+  String get featuresReconciliationProfileSave => 'حفظ هذا التعيين';
+
+  @override
+  String get featuresReconciliationProfileDelete => 'حذف هذا التعيين';
+
+  @override
+  String get featuresReconciliationResultTitle => 'ملخّص المطابقة';
+
+  @override
+  String get featuresReconciliationResultFilename => 'الملف';
+
+  @override
+  String get featuresReconciliationResultPeriod => 'فترة الكشف';
+
+  @override
+  String get featuresReconciliationResultMatched => 'المطابقات';
+
+  @override
+  String featuresReconciliationResultMatchedValue(
+    Object ledger,
+    Object matched,
+    Object statement,
+  ) {
+    return '$matched مطابقة (الكشف $statement، الدفتر $ledger)';
+  }
+
+  @override
+  String featuresReconciliationResultSkipped(Object detail) {
+    return 'أنواع العمليات المتخطّاة: $detail';
+  }
+
+  @override
+  String get featuresReconciliationDiffTitle => 'الفروق';
+
+  @override
+  String get featuresReconciliationDiffEmpty =>
+      'لا فروق: الدفتر وكشف الحساب متطابقان تمامًا.';
+
+  @override
+  String featuresReconciliationDiffCount(Object count) {
+    return '$count صف';
+  }
+
+  @override
+  String get featuresReconciliationDiffNone => 'لا فروق في هذه الفئة.';
+
+  @override
+  String get featuresReconciliationDiffColumnsDate => 'التاريخ';
+
+  @override
+  String get featuresReconciliationDiffColumnsLedger => 'المبلغ في الدفتر';
+
+  @override
+  String get featuresReconciliationDiffColumnsStatement => 'المبلغ في الكشف';
+
+  @override
+  String get featuresReconciliationDiffColumnsDifference => 'الفرق';
+
+  @override
+  String get featuresReconciliationDiffColumnsReference => 'المرجع';
+
+  @override
+  String featuresReconciliationDiffStatementLine(Object line) {
+    return 'سطر الكشف $line';
+  }
+
+  @override
+  String get featuresReconciliationDiffLedgerRecord => 'قيد الدفتر';
+
+  @override
+  String get featuresReconciliationDiffLedgerOnly => 'في الدفتر فقط';
+
+  @override
+  String get featuresReconciliationDiffStatementOnly => 'في الكشف فقط';
+
+  @override
+  String get featuresReconciliationDiffAmountMismatch => 'اختلاف في المبلغ';
+
+  @override
+  String get featuresReconciliationSourceBank => 'بنك';
+
+  @override
+  String get featuresReconciliationSourceCreditCard => 'بطاقة ائتمان';
+
+  @override
+  String get featuresReconciliationSourceInvestment => 'وسيط مالي';
+
+  @override
+  String get featuresReconciliationHistoryTitle => 'سجل المطابقة';
+
+  @override
+  String get featuresReconciliationHistoryEmpty => 'لا يوجد سجل مطابقة بعد.';
+
+  @override
+  String get featuresReconciliationHistoryColumnsTime => 'الوقت';
+
+  @override
+  String get featuresReconciliationHistoryColumnsSource => 'المصدر';
+
+  @override
+  String get featuresReconciliationHistoryColumnsPeriod => 'الفترة';
+
+  @override
+  String get featuresReconciliationHistoryColumnsCounts => 'عدد الفروق';
+
+  @override
+  String get featuresReconciliationHistoryColumnsActions => 'إجراءات';
+
+  @override
+  String featuresReconciliationHistoryCountsValue(
+    Object ledgerOnly,
+    Object mismatch,
+    Object statementOnly,
+  ) {
+    return 'اختلاف $mismatch، في الكشف فقط $statementOnly، في الدفتر فقط $ledgerOnly';
+  }
+
+  @override
+  String get featuresReconciliationHistoryView => 'عرض الفروق';
+
+  @override
+  String get featuresReconciliationHistoryViewing => 'قيد العرض';
+
+  @override
+  String featuresReconciliationMessagesImportDone(Object filename) {
+    return 'تم الاستيراد والمقارنة: $filename';
+  }
+
+  @override
+  String get featuresReconciliationMessagesImportFailed =>
+      'فشل الاستيراد؛ لم تُكتب أي بيانات.';
+
+  @override
+  String featuresReconciliationMessagesRowError(Object line, Object reason) {
+    return 'السطر $line: $reason';
+  }
+
+  @override
+  String get featuresReconciliationMessagesChooseFile =>
+      'اختر ملف كشف حساب أولًا.';
+
+  @override
+  String get featuresReconciliationMessagesMissingDateColumn =>
+      'حدّد اسم عمود التاريخ.';
+
+  @override
+  String get featuresReconciliationMessagesMissingAmountColumn =>
+      'حدّد عمود مبلغ أو عمودي المدين والدائن.';
+
+  @override
+  String get featuresReconciliationMessagesConflictingAmountColumn =>
+      'استخدم عمود مبلغ أو عمودي المدين والدائن، وليس كليهما.';
+
+  @override
+  String get featuresReconciliationMessagesProfileNameRequired =>
+      'أدخل اسمًا للتعيين.';
+
+  @override
+  String featuresReconciliationMessagesProfileSaved(Object name) {
+    return 'تم حفظ التعيين: $name';
+  }
+
+  @override
+  String get featuresReconciliationMessagesProfileSaveFailed =>
+      'فشل حفظ التعيين.';
+
+  @override
+  String get featuresReconciliationMessagesProfileDeleted => 'تم حذف التعيين.';
+
+  @override
+  String get featuresReconciliationMessagesProfileDeleteFailed =>
+      'فشل حذف التعيين.';
+
+  @override
+  String get featuresReconciliationMessagesSessionLoadFailed =>
+      'فشل تحميل نتيجة المطابقة.';
+
+  @override
+  String get featuresReconciliationTemplatesSignedAmount =>
+      'عمود مبلغ واحد (السالب خصم)';
+
+  @override
+  String get featuresReconciliationTemplatesDebitCredit =>
+      'عمودا المدين والدائن';
+
+  @override
+  String get featuresReconciliationTemplatesCreditCard =>
+      'كشف بطاقة ائتمان (الموجب شراء)';
 }

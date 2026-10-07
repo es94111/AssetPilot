@@ -20,6 +20,7 @@ const PAGE_TITLE_KEYS: Record<string, string> = {
   '/finance/accounts':     'nav.accounts',
   '/finance/categories':   'nav.categories',
   '/finance/recurring':    'nav.recurring',
+  '/finance/reconciliation': 'nav.reconciliation',
   '/stocks':               'nav.titleStocks',
   '/stocks/portfolio':     'nav.stocksPortfolio',
   '/stocks/transactions':  'nav.titleStockTransactions',
@@ -46,7 +47,9 @@ export default function AppLayout({ user, children }: { user: any; children: Rea
   const contentProvidesHeading = pathname === '/dashboard'
     || pathname === '/finance/info-board'
     || pathname === '/settings/export'
-    || pathname === '/settings/ledgers';
+    || pathname === '/settings/ledgers'
+    // 對帳頁面自行渲染 <h1>（標題層級由頁面內容決定），避免與 layout 的標題重複。
+    || pathname === '/finance/reconciliation';
 
   const closeSidebar = useCallback(() => {
     setSidebarOpen(false);

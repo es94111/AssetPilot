@@ -8357,5 +8357,474 @@
   "@ledgerLastOwnerNotice": {
     "description": "Web path: ledger.lastOwnerNotice",
     "x-webPath": "ledger.lastOwnerNotice"
+  },
+  "navReconciliation": "Conciliación bancaria",
+  "@navReconciliation": {
+    "description": "Web path: nav.reconciliation",
+    "x-webPath": "nav.reconciliation"
+  },
+  "featuresReconciliationTitle": "Conciliación de extractos bancarios / de bróker",
+  "@featuresReconciliationTitle": {
+    "description": "Web path: features.reconciliation.title",
+    "x-webPath": "features.reconciliation.title"
+  },
+  "featuresReconciliationSubtitle": "Importa un extracto OFX o CSV y compáralo con tu libro en tres tipos de diferencias: solo en el libro, solo en el extracto y diferencia de importe.",
+  "@featuresReconciliationSubtitle": {
+    "description": "Web path: features.reconciliation.subtitle",
+    "x-webPath": "features.reconciliation.subtitle"
+  },
+  "featuresReconciliationImportSection": "Importar un extracto",
+  "@featuresReconciliationImportSection": {
+    "description": "Web path: features.reconciliation.import.section",
+    "x-webPath": "features.reconciliation.import.section"
+  },
+  "featuresReconciliationImportHint": "Compatible con OFX 1.x / 2.x y CSV de bancos o brókers. La importación es atómica: si falla una fila, se rechaza todo el lote.",
+  "@featuresReconciliationImportHint": {
+    "description": "Web path: features.reconciliation.import.hint",
+    "x-webPath": "features.reconciliation.import.hint"
+  },
+  "featuresReconciliationImportFile": "Archivo de extracto",
+  "@featuresReconciliationImportFile": {
+    "description": "Web path: features.reconciliation.import.file",
+    "x-webPath": "features.reconciliation.import.file"
+  },
+  "featuresReconciliationImportFileFormats": "Acepta .ofx, .qfx, .csv, .txt",
+  "@featuresReconciliationImportFileFormats": {
+    "description": "Web path: features.reconciliation.import.fileFormats",
+    "x-webPath": "features.reconciliation.import.fileFormats"
+  },
+  "featuresReconciliationImportAccount": "Limitar a la cuenta",
+  "@featuresReconciliationImportAccount": {
+    "description": "Web path: features.reconciliation.import.account",
+    "x-webPath": "features.reconciliation.import.account"
+  },
+  "featuresReconciliationImportAllAccounts": "Todas las cuentas",
+  "@featuresReconciliationImportAllAccounts": {
+    "description": "Web path: features.reconciliation.import.allAccounts",
+    "x-webPath": "features.reconciliation.import.allAccounts"
+  },
+  "featuresReconciliationImportSubmit": "Importar y comparar",
+  "@featuresReconciliationImportSubmit": {
+    "description": "Web path: features.reconciliation.import.submit",
+    "x-webPath": "features.reconciliation.import.submit"
+  },
+  "featuresReconciliationImportRunning": "Importando…",
+  "@featuresReconciliationImportRunning": {
+    "description": "Web path: features.reconciliation.import.running",
+    "x-webPath": "features.reconciliation.import.running"
+  },
+  "featuresReconciliationImportAtomicNote": "Lote atómico: los fallos se revierten por completo, sin datos parciales.",
+  "@featuresReconciliationImportAtomicNote": {
+    "description": "Web path: features.reconciliation.import.atomicNote",
+    "x-webPath": "features.reconciliation.import.atomicNote"
+  },
+  "featuresReconciliationProfileSection": "Asignación de columnas CSV",
+  "@featuresReconciliationProfileSection": {
+    "description": "Web path: features.reconciliation.profile.section",
+    "x-webPath": "features.reconciliation.profile.section"
+  },
+  "featuresReconciliationProfileSaved": "Asignación guardada",
+  "@featuresReconciliationProfileSaved": {
+    "description": "Web path: features.reconciliation.profile.saved",
+    "x-webPath": "features.reconciliation.profile.saved"
+  },
+  "featuresReconciliationProfileUseDraft": "Usar la configuración inferior (sin guardar)",
+  "@featuresReconciliationProfileUseDraft": {
+    "description": "Web path: features.reconciliation.profile.useDraft",
+    "x-webPath": "features.reconciliation.profile.useDraft"
+  },
+  "featuresReconciliationProfileTemplate": "Plantilla común",
+  "@featuresReconciliationProfileTemplate": {
+    "description": "Web path: features.reconciliation.profile.template",
+    "x-webPath": "features.reconciliation.profile.template"
+  },
+  "featuresReconciliationProfileChooseTemplate": "Elegir una plantilla…",
+  "@featuresReconciliationProfileChooseTemplate": {
+    "description": "Web path: features.reconciliation.profile.chooseTemplate",
+    "x-webPath": "features.reconciliation.profile.chooseTemplate"
+  },
+  "featuresReconciliationProfileAmountSign": "Convención de signo del importe",
+  "@featuresReconciliationProfileAmountSign": {
+    "description": "Web path: features.reconciliation.profile.amountSign",
+    "x-webPath": "features.reconciliation.profile.amountSign"
+  },
+  "featuresReconciliationProfileAmountSignSigned": "Negativo es gasto (extracto bancario)",
+  "@featuresReconciliationProfileAmountSignSigned": {
+    "description": "Web path: features.reconciliation.profile.amountSignSigned",
+    "x-webPath": "features.reconciliation.profile.amountSignSigned"
+  },
+  "featuresReconciliationProfileAmountSignCreditCard": "Positivo es compra (extracto de tarjeta)",
+  "@featuresReconciliationProfileAmountSignCreditCard": {
+    "description": "Web path: features.reconciliation.profile.amountSignCreditCard",
+    "x-webPath": "features.reconciliation.profile.amountSignCreditCard"
+  },
+  "featuresReconciliationProfileDateFormat": "Formato de fecha",
+  "@featuresReconciliationProfileDateFormat": {
+    "description": "Web path: features.reconciliation.profile.dateFormat",
+    "x-webPath": "features.reconciliation.profile.dateFormat"
+  },
+  "featuresReconciliationProfileDateFormatAuto": "Detectar automáticamente",
+  "@featuresReconciliationProfileDateFormatAuto": {
+    "description": "Web path: features.reconciliation.profile.dateFormatAuto",
+    "x-webPath": "features.reconciliation.profile.dateFormatAuto"
+  },
+  "featuresReconciliationProfileDelimiter": "Delimitador",
+  "@featuresReconciliationProfileDelimiter": {
+    "description": "Web path: features.reconciliation.profile.delimiter",
+    "x-webPath": "features.reconciliation.profile.delimiter"
+  },
+  "featuresReconciliationProfileDelimiterComma": "Coma (,)",
+  "@featuresReconciliationProfileDelimiterComma": {
+    "description": "Web path: features.reconciliation.profile.delimiterComma",
+    "x-webPath": "features.reconciliation.profile.delimiterComma"
+  },
+  "featuresReconciliationProfileDelimiterSemicolon": "Punto y coma (;)",
+  "@featuresReconciliationProfileDelimiterSemicolon": {
+    "description": "Web path: features.reconciliation.profile.delimiterSemicolon",
+    "x-webPath": "features.reconciliation.profile.delimiterSemicolon"
+  },
+  "featuresReconciliationProfileDelimiterTab": "Tabulador",
+  "@featuresReconciliationProfileDelimiterTab": {
+    "description": "Web path: features.reconciliation.profile.delimiterTab",
+    "x-webPath": "features.reconciliation.profile.delimiterTab"
+  },
+  "featuresReconciliationProfileSkipRows": "Omitir filas iniciales",
+  "@featuresReconciliationProfileSkipRows": {
+    "description": "Web path: features.reconciliation.profile.skipRows",
+    "x-webPath": "features.reconciliation.profile.skipRows"
+  },
+  "featuresReconciliationProfileHasHeader": "La primera fila es el encabezado",
+  "@featuresReconciliationProfileHasHeader": {
+    "description": "Web path: features.reconciliation.profile.hasHeader",
+    "x-webPath": "features.reconciliation.profile.hasHeader"
+  },
+  "featuresReconciliationProfileDateColumn": "Nombre de la columna de fecha",
+  "@featuresReconciliationProfileDateColumn": {
+    "description": "Web path: features.reconciliation.profile.dateColumn",
+    "x-webPath": "features.reconciliation.profile.dateColumn"
+  },
+  "featuresReconciliationProfileAmountColumn": "Nombre de la columna de importe",
+  "@featuresReconciliationProfileAmountColumn": {
+    "description": "Web path: features.reconciliation.profile.amountColumn",
+    "x-webPath": "features.reconciliation.profile.amountColumn"
+  },
+  "featuresReconciliationProfileDescriptionColumn": "Nombre de la columna de descripción",
+  "@featuresReconciliationProfileDescriptionColumn": {
+    "description": "Web path: features.reconciliation.profile.descriptionColumn",
+    "x-webPath": "features.reconciliation.profile.descriptionColumn"
+  },
+  "featuresReconciliationProfileDebitColumn": "Nombre de la columna de débito",
+  "@featuresReconciliationProfileDebitColumn": {
+    "description": "Web path: features.reconciliation.profile.debitColumn",
+    "x-webPath": "features.reconciliation.profile.debitColumn"
+  },
+  "featuresReconciliationProfileCreditColumn": "Nombre de la columna de crédito",
+  "@featuresReconciliationProfileCreditColumn": {
+    "description": "Web path: features.reconciliation.profile.creditColumn",
+    "x-webPath": "features.reconciliation.profile.creditColumn"
+  },
+  "featuresReconciliationProfileFitidColumn": "Nombre de la columna de ID de transacción (opcional)",
+  "@featuresReconciliationProfileFitidColumn": {
+    "description": "Web path: features.reconciliation.profile.fitidColumn",
+    "x-webPath": "features.reconciliation.profile.fitidColumn"
+  },
+  "featuresReconciliationProfileColumnHint": "Use una sola columna de importe o las columnas de débito y crédito, no ambas. Los nombres deben coincidir exactamente con el encabezado del CSV.",
+  "@featuresReconciliationProfileColumnHint": {
+    "description": "Web path: features.reconciliation.profile.columnHint",
+    "x-webPath": "features.reconciliation.profile.columnHint"
+  },
+  "featuresReconciliationProfileName": "Nombre de la asignación",
+  "@featuresReconciliationProfileName": {
+    "description": "Web path: features.reconciliation.profile.name",
+    "x-webPath": "features.reconciliation.profile.name"
+  },
+  "featuresReconciliationProfileNamePlaceholder": "p. ej. Extracto de tarjeta de mi banco",
+  "@featuresReconciliationProfileNamePlaceholder": {
+    "description": "Web path: features.reconciliation.profile.namePlaceholder",
+    "x-webPath": "features.reconciliation.profile.namePlaceholder"
+  },
+  "featuresReconciliationProfileSave": "Guardar esta asignación",
+  "@featuresReconciliationProfileSave": {
+    "description": "Web path: features.reconciliation.profile.save",
+    "x-webPath": "features.reconciliation.profile.save"
+  },
+  "featuresReconciliationProfileDelete": "Eliminar esta asignación",
+  "@featuresReconciliationProfileDelete": {
+    "description": "Web path: features.reconciliation.profile.delete",
+    "x-webPath": "features.reconciliation.profile.delete"
+  },
+  "featuresReconciliationResultTitle": "Resumen de conciliación",
+  "@featuresReconciliationResultTitle": {
+    "description": "Web path: features.reconciliation.result.title",
+    "x-webPath": "features.reconciliation.result.title"
+  },
+  "featuresReconciliationResultFilename": "Archivo",
+  "@featuresReconciliationResultFilename": {
+    "description": "Web path: features.reconciliation.result.filename",
+    "x-webPath": "features.reconciliation.result.filename"
+  },
+  "featuresReconciliationResultPeriod": "Periodo del extracto",
+  "@featuresReconciliationResultPeriod": {
+    "description": "Web path: features.reconciliation.result.period",
+    "x-webPath": "features.reconciliation.result.period"
+  },
+  "featuresReconciliationResultMatched": "Coincidencias",
+  "@featuresReconciliationResultMatched": {
+    "description": "Web path: features.reconciliation.result.matched",
+    "x-webPath": "features.reconciliation.result.matched"
+  },
+  "featuresReconciliationResultMatchedValue": "{matched} coincidencias (extracto {statement}, libro {ledger})",
+  "@featuresReconciliationResultMatchedValue": {
+    "description": "Web path: features.reconciliation.result.matchedValue",
+    "x-webPath": "features.reconciliation.result.matchedValue",
+    "placeholders": {
+      "ledger": {},
+      "matched": {},
+      "statement": {}
+    }
+  },
+  "featuresReconciliationResultSkipped": "Tipos de transacción omitidos: {detail}",
+  "@featuresReconciliationResultSkipped": {
+    "description": "Web path: features.reconciliation.result.skipped",
+    "x-webPath": "features.reconciliation.result.skipped",
+    "placeholders": {
+      "detail": {}
+    }
+  },
+  "featuresReconciliationDiffTitle": "Diferencias",
+  "@featuresReconciliationDiffTitle": {
+    "description": "Web path: features.reconciliation.diff.title",
+    "x-webPath": "features.reconciliation.diff.title"
+  },
+  "featuresReconciliationDiffEmpty": "Sin diferencias: el libro y el extracto coinciden por completo.",
+  "@featuresReconciliationDiffEmpty": {
+    "description": "Web path: features.reconciliation.diff.empty",
+    "x-webPath": "features.reconciliation.diff.empty"
+  },
+  "featuresReconciliationDiffCount": "{count} filas",
+  "@featuresReconciliationDiffCount": {
+    "description": "Web path: features.reconciliation.diff.count",
+    "x-webPath": "features.reconciliation.diff.count",
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "featuresReconciliationDiffNone": "Sin diferencias en esta categoría.",
+  "@featuresReconciliationDiffNone": {
+    "description": "Web path: features.reconciliation.diff.none",
+    "x-webPath": "features.reconciliation.diff.none"
+  },
+  "featuresReconciliationDiffColumnsDate": "Fecha",
+  "@featuresReconciliationDiffColumnsDate": {
+    "description": "Web path: features.reconciliation.diff.columns.date",
+    "x-webPath": "features.reconciliation.diff.columns.date"
+  },
+  "featuresReconciliationDiffColumnsLedger": "Importe en el libro",
+  "@featuresReconciliationDiffColumnsLedger": {
+    "description": "Web path: features.reconciliation.diff.columns.ledger",
+    "x-webPath": "features.reconciliation.diff.columns.ledger"
+  },
+  "featuresReconciliationDiffColumnsStatement": "Importe en el extracto",
+  "@featuresReconciliationDiffColumnsStatement": {
+    "description": "Web path: features.reconciliation.diff.columns.statement",
+    "x-webPath": "features.reconciliation.diff.columns.statement"
+  },
+  "featuresReconciliationDiffColumnsDifference": "Diferencia",
+  "@featuresReconciliationDiffColumnsDifference": {
+    "description": "Web path: features.reconciliation.diff.columns.difference",
+    "x-webPath": "features.reconciliation.diff.columns.difference"
+  },
+  "featuresReconciliationDiffColumnsReference": "Referencia",
+  "@featuresReconciliationDiffColumnsReference": {
+    "description": "Web path: features.reconciliation.diff.columns.reference",
+    "x-webPath": "features.reconciliation.diff.columns.reference"
+  },
+  "featuresReconciliationDiffStatementLine": "Línea {line} del extracto",
+  "@featuresReconciliationDiffStatementLine": {
+    "description": "Web path: features.reconciliation.diff.statementLine",
+    "x-webPath": "features.reconciliation.diff.statementLine",
+    "placeholders": {
+      "line": {}
+    }
+  },
+  "featuresReconciliationDiffLedgerRecord": "Registro del libro",
+  "@featuresReconciliationDiffLedgerRecord": {
+    "description": "Web path: features.reconciliation.diff.ledgerRecord",
+    "x-webPath": "features.reconciliation.diff.ledgerRecord"
+  },
+  "featuresReconciliationDiffLedgerOnly": "Solo en el libro",
+  "@featuresReconciliationDiffLedgerOnly": {
+    "description": "Web path: features.reconciliation.diff.ledgerOnly",
+    "x-webPath": "features.reconciliation.diff.ledgerOnly"
+  },
+  "featuresReconciliationDiffStatementOnly": "Solo en el extracto",
+  "@featuresReconciliationDiffStatementOnly": {
+    "description": "Web path: features.reconciliation.diff.statementOnly",
+    "x-webPath": "features.reconciliation.diff.statementOnly"
+  },
+  "featuresReconciliationDiffAmountMismatch": "Importe divergente",
+  "@featuresReconciliationDiffAmountMismatch": {
+    "description": "Web path: features.reconciliation.diff.amountMismatch",
+    "x-webPath": "features.reconciliation.diff.amountMismatch"
+  },
+  "featuresReconciliationSourceBank": "Banco",
+  "@featuresReconciliationSourceBank": {
+    "description": "Web path: features.reconciliation.source.bank",
+    "x-webPath": "features.reconciliation.source.bank"
+  },
+  "featuresReconciliationSourceCreditCard": "Tarjeta de crédito",
+  "@featuresReconciliationSourceCreditCard": {
+    "description": "Web path: features.reconciliation.source.creditCard",
+    "x-webPath": "features.reconciliation.source.creditCard"
+  },
+  "featuresReconciliationSourceInvestment": "Bróker",
+  "@featuresReconciliationSourceInvestment": {
+    "description": "Web path: features.reconciliation.source.investment",
+    "x-webPath": "features.reconciliation.source.investment"
+  },
+  "featuresReconciliationHistoryTitle": "Historial de conciliaciones",
+  "@featuresReconciliationHistoryTitle": {
+    "description": "Web path: features.reconciliation.history.title",
+    "x-webPath": "features.reconciliation.history.title"
+  },
+  "featuresReconciliationHistoryEmpty": "Aún no hay conciliaciones.",
+  "@featuresReconciliationHistoryEmpty": {
+    "description": "Web path: features.reconciliation.history.empty",
+    "x-webPath": "features.reconciliation.history.empty"
+  },
+  "featuresReconciliationHistoryColumnsTime": "Fecha y hora",
+  "@featuresReconciliationHistoryColumnsTime": {
+    "description": "Web path: features.reconciliation.history.columns.time",
+    "x-webPath": "features.reconciliation.history.columns.time"
+  },
+  "featuresReconciliationHistoryColumnsSource": "Origen",
+  "@featuresReconciliationHistoryColumnsSource": {
+    "description": "Web path: features.reconciliation.history.columns.source",
+    "x-webPath": "features.reconciliation.history.columns.source"
+  },
+  "featuresReconciliationHistoryColumnsPeriod": "Período",
+  "@featuresReconciliationHistoryColumnsPeriod": {
+    "description": "Web path: features.reconciliation.history.columns.period",
+    "x-webPath": "features.reconciliation.history.columns.period"
+  },
+  "featuresReconciliationHistoryColumnsCounts": "Diferencias",
+  "@featuresReconciliationHistoryColumnsCounts": {
+    "description": "Web path: features.reconciliation.history.columns.counts",
+    "x-webPath": "features.reconciliation.history.columns.counts"
+  },
+  "featuresReconciliationHistoryColumnsActions": "Acciones",
+  "@featuresReconciliationHistoryColumnsActions": {
+    "description": "Web path: features.reconciliation.history.columns.actions",
+    "x-webPath": "features.reconciliation.history.columns.actions"
+  },
+  "featuresReconciliationHistoryCountsValue": "Divergentes {mismatch}, solo extracto {statementOnly}, solo libro {ledgerOnly}",
+  "@featuresReconciliationHistoryCountsValue": {
+    "description": "Web path: features.reconciliation.history.countsValue",
+    "x-webPath": "features.reconciliation.history.countsValue",
+    "placeholders": {
+      "ledgerOnly": {},
+      "mismatch": {},
+      "statementOnly": {}
+    }
+  },
+  "featuresReconciliationHistoryView": "Ver diferencias",
+  "@featuresReconciliationHistoryView": {
+    "description": "Web path: features.reconciliation.history.view",
+    "x-webPath": "features.reconciliation.history.view"
+  },
+  "featuresReconciliationHistoryViewing": "Viendo",
+  "@featuresReconciliationHistoryViewing": {
+    "description": "Web path: features.reconciliation.history.viewing",
+    "x-webPath": "features.reconciliation.history.viewing"
+  },
+  "featuresReconciliationMessagesImportDone": "Importado y comparado: {filename}",
+  "@featuresReconciliationMessagesImportDone": {
+    "description": "Web path: features.reconciliation.messages.importDone",
+    "x-webPath": "features.reconciliation.messages.importDone",
+    "placeholders": {
+      "filename": {}
+    }
+  },
+  "featuresReconciliationMessagesImportFailed": "La importación falló; no se escribió nada.",
+  "@featuresReconciliationMessagesImportFailed": {
+    "description": "Web path: features.reconciliation.messages.importFailed",
+    "x-webPath": "features.reconciliation.messages.importFailed"
+  },
+  "featuresReconciliationMessagesRowError": "Línea {line}: {reason}",
+  "@featuresReconciliationMessagesRowError": {
+    "description": "Web path: features.reconciliation.messages.rowError",
+    "x-webPath": "features.reconciliation.messages.rowError",
+    "placeholders": {
+      "line": {},
+      "reason": {}
+    }
+  },
+  "featuresReconciliationMessagesChooseFile": "Elige primero un archivo de extracto.",
+  "@featuresReconciliationMessagesChooseFile": {
+    "description": "Web path: features.reconciliation.messages.chooseFile",
+    "x-webPath": "features.reconciliation.messages.chooseFile"
+  },
+  "featuresReconciliationMessagesMissingDateColumn": "Indica el nombre de la columna de fecha.",
+  "@featuresReconciliationMessagesMissingDateColumn": {
+    "description": "Web path: features.reconciliation.messages.missingDateColumn",
+    "x-webPath": "features.reconciliation.messages.missingDateColumn"
+  },
+  "featuresReconciliationMessagesMissingAmountColumn": "Indica una columna de importe o las de débito y crédito.",
+  "@featuresReconciliationMessagesMissingAmountColumn": {
+    "description": "Web path: features.reconciliation.messages.missingAmountColumn",
+    "x-webPath": "features.reconciliation.messages.missingAmountColumn"
+  },
+  "featuresReconciliationMessagesConflictingAmountColumn": "Usa una columna de importe o las de débito y crédito, no ambas.",
+  "@featuresReconciliationMessagesConflictingAmountColumn": {
+    "description": "Web path: features.reconciliation.messages.conflictingAmountColumn",
+    "x-webPath": "features.reconciliation.messages.conflictingAmountColumn"
+  },
+  "featuresReconciliationMessagesProfileNameRequired": "Introduce un nombre para la asignación.",
+  "@featuresReconciliationMessagesProfileNameRequired": {
+    "description": "Web path: features.reconciliation.messages.profileNameRequired",
+    "x-webPath": "features.reconciliation.messages.profileNameRequired"
+  },
+  "featuresReconciliationMessagesProfileSaved": "Asignación guardada: {name}",
+  "@featuresReconciliationMessagesProfileSaved": {
+    "description": "Web path: features.reconciliation.messages.profileSaved",
+    "x-webPath": "features.reconciliation.messages.profileSaved",
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "featuresReconciliationMessagesProfileSaveFailed": "No se pudo guardar la asignación.",
+  "@featuresReconciliationMessagesProfileSaveFailed": {
+    "description": "Web path: features.reconciliation.messages.profileSaveFailed",
+    "x-webPath": "features.reconciliation.messages.profileSaveFailed"
+  },
+  "featuresReconciliationMessagesProfileDeleted": "Asignación eliminada.",
+  "@featuresReconciliationMessagesProfileDeleted": {
+    "description": "Web path: features.reconciliation.messages.profileDeleted",
+    "x-webPath": "features.reconciliation.messages.profileDeleted"
+  },
+  "featuresReconciliationMessagesProfileDeleteFailed": "No se pudo eliminar la asignación.",
+  "@featuresReconciliationMessagesProfileDeleteFailed": {
+    "description": "Web path: features.reconciliation.messages.profileDeleteFailed",
+    "x-webPath": "features.reconciliation.messages.profileDeleteFailed"
+  },
+  "featuresReconciliationMessagesSessionLoadFailed": "No se pudo cargar el resultado de conciliación.",
+  "@featuresReconciliationMessagesSessionLoadFailed": {
+    "description": "Web path: features.reconciliation.messages.sessionLoadFailed",
+    "x-webPath": "features.reconciliation.messages.sessionLoadFailed"
+  },
+  "featuresReconciliationTemplatesSignedAmount": "Una columna de importe (negativo = gasto)",
+  "@featuresReconciliationTemplatesSignedAmount": {
+    "description": "Web path: features.reconciliation.templates.signedAmount",
+    "x-webPath": "features.reconciliation.templates.signedAmount"
+  },
+  "featuresReconciliationTemplatesDebitCredit": "Columnas separadas de débito / crédito",
+  "@featuresReconciliationTemplatesDebitCredit": {
+    "description": "Web path: features.reconciliation.templates.debitCredit",
+    "x-webPath": "features.reconciliation.templates.debitCredit"
+  },
+  "featuresReconciliationTemplatesCreditCard": "Extracto de tarjeta (positivo = compra)",
+  "@featuresReconciliationTemplatesCreditCard": {
+    "description": "Web path: features.reconciliation.templates.creditCard",
+    "x-webPath": "features.reconciliation.templates.creditCard"
   }
 }

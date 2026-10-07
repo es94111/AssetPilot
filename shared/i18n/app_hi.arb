@@ -8357,5 +8357,474 @@
   "@ledgerLastOwnerNotice": {
     "description": "Web path: ledger.lastOwnerNotice",
     "x-webPath": "ledger.lastOwnerNotice"
+  },
+  "navReconciliation": "बैंक मिलान",
+  "@navReconciliation": {
+    "description": "Web path: nav.reconciliation",
+    "x-webPath": "nav.reconciliation"
+  },
+  "featuresReconciliationTitle": "बैंक / ब्रोकर विवरण मिलान",
+  "@featuresReconciliationTitle": {
+    "description": "Web path: features.reconciliation.title",
+    "x-webPath": "features.reconciliation.title"
+  },
+  "featuresReconciliationSubtitle": "OFX या CSV विवरण आयात करें और अपने बहीखाते से तीन प्रकार के अंतरों की तुलना करें: केवल बहीखाते में, केवल विवरण में, और राशि में अंतर।",
+  "@featuresReconciliationSubtitle": {
+    "description": "Web path: features.reconciliation.subtitle",
+    "x-webPath": "features.reconciliation.subtitle"
+  },
+  "featuresReconciliationImportSection": "विवरण आयात करें",
+  "@featuresReconciliationImportSection": {
+    "description": "Web path: features.reconciliation.import.section",
+    "x-webPath": "features.reconciliation.import.section"
+  },
+  "featuresReconciliationImportHint": "OFX 1.x / 2.x और बैंक या ब्रोकर CSV समर्थित है। आयात पूर्णतः परमाणु है: किसी भी पंक्ति के विफल होने पर पूरा बैच अस्वीकार हो जाता है।",
+  "@featuresReconciliationImportHint": {
+    "description": "Web path: features.reconciliation.import.hint",
+    "x-webPath": "features.reconciliation.import.hint"
+  },
+  "featuresReconciliationImportFile": "विवरण फ़ाइल",
+  "@featuresReconciliationImportFile": {
+    "description": "Web path: features.reconciliation.import.file",
+    "x-webPath": "features.reconciliation.import.file"
+  },
+  "featuresReconciliationImportFileFormats": ".ofx, .qfx, .csv, .txt स्वीकार्य",
+  "@featuresReconciliationImportFileFormats": {
+    "description": "Web path: features.reconciliation.import.fileFormats",
+    "x-webPath": "features.reconciliation.import.fileFormats"
+  },
+  "featuresReconciliationImportAccount": "खाते तक सीमित करें",
+  "@featuresReconciliationImportAccount": {
+    "description": "Web path: features.reconciliation.import.account",
+    "x-webPath": "features.reconciliation.import.account"
+  },
+  "featuresReconciliationImportAllAccounts": "सभी खाते",
+  "@featuresReconciliationImportAllAccounts": {
+    "description": "Web path: features.reconciliation.import.allAccounts",
+    "x-webPath": "features.reconciliation.import.allAccounts"
+  },
+  "featuresReconciliationImportSubmit": "आयात और तुलना करें",
+  "@featuresReconciliationImportSubmit": {
+    "description": "Web path: features.reconciliation.import.submit",
+    "x-webPath": "features.reconciliation.import.submit"
+  },
+  "featuresReconciliationImportRunning": "आयात हो रहा है…",
+  "@featuresReconciliationImportRunning": {
+    "description": "Web path: features.reconciliation.import.running",
+    "x-webPath": "features.reconciliation.import.running"
+  },
+  "featuresReconciliationImportAtomicNote": "परमाणु बैच: विफलता पर सब कुछ वापस हो जाता है, अधूरा डेटा नहीं रहता।",
+  "@featuresReconciliationImportAtomicNote": {
+    "description": "Web path: features.reconciliation.import.atomicNote",
+    "x-webPath": "features.reconciliation.import.atomicNote"
+  },
+  "featuresReconciliationProfileSection": "CSV कॉलम मैपिंग",
+  "@featuresReconciliationProfileSection": {
+    "description": "Web path: features.reconciliation.profile.section",
+    "x-webPath": "features.reconciliation.profile.section"
+  },
+  "featuresReconciliationProfileSaved": "सहेजी गई मैपिंग",
+  "@featuresReconciliationProfileSaved": {
+    "description": "Web path: features.reconciliation.profile.saved",
+    "x-webPath": "features.reconciliation.profile.saved"
+  },
+  "featuresReconciliationProfileUseDraft": "नीचे की सेटिंग्स उपयोग करें (सहेजी नहीं जाएगी)",
+  "@featuresReconciliationProfileUseDraft": {
+    "description": "Web path: features.reconciliation.profile.useDraft",
+    "x-webPath": "features.reconciliation.profile.useDraft"
+  },
+  "featuresReconciliationProfileTemplate": "सामान्य टेम्पलेट",
+  "@featuresReconciliationProfileTemplate": {
+    "description": "Web path: features.reconciliation.profile.template",
+    "x-webPath": "features.reconciliation.profile.template"
+  },
+  "featuresReconciliationProfileChooseTemplate": "टेम्पलेट चुनें…",
+  "@featuresReconciliationProfileChooseTemplate": {
+    "description": "Web path: features.reconciliation.profile.chooseTemplate",
+    "x-webPath": "features.reconciliation.profile.chooseTemplate"
+  },
+  "featuresReconciliationProfileAmountSign": "राशि चिह्न नियम",
+  "@featuresReconciliationProfileAmountSign": {
+    "description": "Web path: features.reconciliation.profile.amountSign",
+    "x-webPath": "features.reconciliation.profile.amountSign"
+  },
+  "featuresReconciliationProfileAmountSignSigned": "ऋणात्मक का अर्थ व्यय (बैंक विवरण)",
+  "@featuresReconciliationProfileAmountSignSigned": {
+    "description": "Web path: features.reconciliation.profile.amountSignSigned",
+    "x-webPath": "features.reconciliation.profile.amountSignSigned"
+  },
+  "featuresReconciliationProfileAmountSignCreditCard": "धनात्मक का अर्थ खरीद (क्रेडिट कार्ड विवरण)",
+  "@featuresReconciliationProfileAmountSignCreditCard": {
+    "description": "Web path: features.reconciliation.profile.amountSignCreditCard",
+    "x-webPath": "features.reconciliation.profile.amountSignCreditCard"
+  },
+  "featuresReconciliationProfileDateFormat": "दिनांक प्रारूप",
+  "@featuresReconciliationProfileDateFormat": {
+    "description": "Web path: features.reconciliation.profile.dateFormat",
+    "x-webPath": "features.reconciliation.profile.dateFormat"
+  },
+  "featuresReconciliationProfileDateFormatAuto": "स्वतः पहचानें",
+  "@featuresReconciliationProfileDateFormatAuto": {
+    "description": "Web path: features.reconciliation.profile.dateFormatAuto",
+    "x-webPath": "features.reconciliation.profile.dateFormatAuto"
+  },
+  "featuresReconciliationProfileDelimiter": "विभाजक",
+  "@featuresReconciliationProfileDelimiter": {
+    "description": "Web path: features.reconciliation.profile.delimiter",
+    "x-webPath": "features.reconciliation.profile.delimiter"
+  },
+  "featuresReconciliationProfileDelimiterComma": "कॉमा (,)",
+  "@featuresReconciliationProfileDelimiterComma": {
+    "description": "Web path: features.reconciliation.profile.delimiterComma",
+    "x-webPath": "features.reconciliation.profile.delimiterComma"
+  },
+  "featuresReconciliationProfileDelimiterSemicolon": "सेमीकोलन (;)",
+  "@featuresReconciliationProfileDelimiterSemicolon": {
+    "description": "Web path: features.reconciliation.profile.delimiterSemicolon",
+    "x-webPath": "features.reconciliation.profile.delimiterSemicolon"
+  },
+  "featuresReconciliationProfileDelimiterTab": "टैब",
+  "@featuresReconciliationProfileDelimiterTab": {
+    "description": "Web path: features.reconciliation.profile.delimiterTab",
+    "x-webPath": "features.reconciliation.profile.delimiterTab"
+  },
+  "featuresReconciliationProfileSkipRows": "शुरुआती पंक्तियाँ छोड़ें",
+  "@featuresReconciliationProfileSkipRows": {
+    "description": "Web path: features.reconciliation.profile.skipRows",
+    "x-webPath": "features.reconciliation.profile.skipRows"
+  },
+  "featuresReconciliationProfileHasHeader": "पहली पंक्ति हेडर है",
+  "@featuresReconciliationProfileHasHeader": {
+    "description": "Web path: features.reconciliation.profile.hasHeader",
+    "x-webPath": "features.reconciliation.profile.hasHeader"
+  },
+  "featuresReconciliationProfileDateColumn": "दिनांक कॉलम का नाम",
+  "@featuresReconciliationProfileDateColumn": {
+    "description": "Web path: features.reconciliation.profile.dateColumn",
+    "x-webPath": "features.reconciliation.profile.dateColumn"
+  },
+  "featuresReconciliationProfileAmountColumn": "राशि कॉलम का नाम",
+  "@featuresReconciliationProfileAmountColumn": {
+    "description": "Web path: features.reconciliation.profile.amountColumn",
+    "x-webPath": "features.reconciliation.profile.amountColumn"
+  },
+  "featuresReconciliationProfileDescriptionColumn": "विवरण कॉलम का नाम",
+  "@featuresReconciliationProfileDescriptionColumn": {
+    "description": "Web path: features.reconciliation.profile.descriptionColumn",
+    "x-webPath": "features.reconciliation.profile.descriptionColumn"
+  },
+  "featuresReconciliationProfileDebitColumn": "डेबिट कॉलम का नाम",
+  "@featuresReconciliationProfileDebitColumn": {
+    "description": "Web path: features.reconciliation.profile.debitColumn",
+    "x-webPath": "features.reconciliation.profile.debitColumn"
+  },
+  "featuresReconciliationProfileCreditColumn": "क्रेडिट कॉलम का नाम",
+  "@featuresReconciliationProfileCreditColumn": {
+    "description": "Web path: features.reconciliation.profile.creditColumn",
+    "x-webPath": "features.reconciliation.profile.creditColumn"
+  },
+  "featuresReconciliationProfileFitidColumn": "लेन-देन आईडी कॉलम का नाम (वैकल्पिक)",
+  "@featuresReconciliationProfileFitidColumn": {
+    "description": "Web path: features.reconciliation.profile.fitidColumn",
+    "x-webPath": "features.reconciliation.profile.fitidColumn"
+  },
+  "featuresReconciliationProfileColumnHint": "या तो एक अकेला राशि कॉलम भरें, या डेबिट और क्रेडिट दोनों कॉलम — दोनों शैलियाँ नहीं। नाम CSV हेडर से बिल्कुल मेल खाने चाहिए।",
+  "@featuresReconciliationProfileColumnHint": {
+    "description": "Web path: features.reconciliation.profile.columnHint",
+    "x-webPath": "features.reconciliation.profile.columnHint"
+  },
+  "featuresReconciliationProfileName": "मैपिंग का नाम",
+  "@featuresReconciliationProfileName": {
+    "description": "Web path: features.reconciliation.profile.name",
+    "x-webPath": "features.reconciliation.profile.name"
+  },
+  "featuresReconciliationProfileNamePlaceholder": "जैसे: मेरे बैंक का क्रेडिट कार्ड विवरण",
+  "@featuresReconciliationProfileNamePlaceholder": {
+    "description": "Web path: features.reconciliation.profile.namePlaceholder",
+    "x-webPath": "features.reconciliation.profile.namePlaceholder"
+  },
+  "featuresReconciliationProfileSave": "यह मैपिंग सहेजें",
+  "@featuresReconciliationProfileSave": {
+    "description": "Web path: features.reconciliation.profile.save",
+    "x-webPath": "features.reconciliation.profile.save"
+  },
+  "featuresReconciliationProfileDelete": "यह मैपिंग हटाएँ",
+  "@featuresReconciliationProfileDelete": {
+    "description": "Web path: features.reconciliation.profile.delete",
+    "x-webPath": "features.reconciliation.profile.delete"
+  },
+  "featuresReconciliationResultTitle": "मिलान सारांश",
+  "@featuresReconciliationResultTitle": {
+    "description": "Web path: features.reconciliation.result.title",
+    "x-webPath": "features.reconciliation.result.title"
+  },
+  "featuresReconciliationResultFilename": "फ़ाइल",
+  "@featuresReconciliationResultFilename": {
+    "description": "Web path: features.reconciliation.result.filename",
+    "x-webPath": "features.reconciliation.result.filename"
+  },
+  "featuresReconciliationResultPeriod": "विवरण अवधि",
+  "@featuresReconciliationResultPeriod": {
+    "description": "Web path: features.reconciliation.result.period",
+    "x-webPath": "features.reconciliation.result.period"
+  },
+  "featuresReconciliationResultMatched": "मिलान",
+  "@featuresReconciliationResultMatched": {
+    "description": "Web path: features.reconciliation.result.matched",
+    "x-webPath": "features.reconciliation.result.matched"
+  },
+  "featuresReconciliationResultMatchedValue": "{matched} मिलान (विवरण {statement}, बहीखाता {ledger})",
+  "@featuresReconciliationResultMatchedValue": {
+    "description": "Web path: features.reconciliation.result.matchedValue",
+    "x-webPath": "features.reconciliation.result.matchedValue",
+    "placeholders": {
+      "ledger": {},
+      "matched": {},
+      "statement": {}
+    }
+  },
+  "featuresReconciliationResultSkipped": "छोड़े गए लेन-देन प्रकार: {detail}",
+  "@featuresReconciliationResultSkipped": {
+    "description": "Web path: features.reconciliation.result.skipped",
+    "x-webPath": "features.reconciliation.result.skipped",
+    "placeholders": {
+      "detail": {}
+    }
+  },
+  "featuresReconciliationDiffTitle": "अंतर",
+  "@featuresReconciliationDiffTitle": {
+    "description": "Web path: features.reconciliation.diff.title",
+    "x-webPath": "features.reconciliation.diff.title"
+  },
+  "featuresReconciliationDiffEmpty": "कोई अंतर नहीं: बहीखाता और विवरण पूरी तरह मेल खाते हैं।",
+  "@featuresReconciliationDiffEmpty": {
+    "description": "Web path: features.reconciliation.diff.empty",
+    "x-webPath": "features.reconciliation.diff.empty"
+  },
+  "featuresReconciliationDiffCount": "{count} पंक्तियाँ",
+  "@featuresReconciliationDiffCount": {
+    "description": "Web path: features.reconciliation.diff.count",
+    "x-webPath": "features.reconciliation.diff.count",
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "featuresReconciliationDiffNone": "इस श्रेणी में कोई अंतर नहीं।",
+  "@featuresReconciliationDiffNone": {
+    "description": "Web path: features.reconciliation.diff.none",
+    "x-webPath": "features.reconciliation.diff.none"
+  },
+  "featuresReconciliationDiffColumnsDate": "दिनांक",
+  "@featuresReconciliationDiffColumnsDate": {
+    "description": "Web path: features.reconciliation.diff.columns.date",
+    "x-webPath": "features.reconciliation.diff.columns.date"
+  },
+  "featuresReconciliationDiffColumnsLedger": "बहीखाता राशि",
+  "@featuresReconciliationDiffColumnsLedger": {
+    "description": "Web path: features.reconciliation.diff.columns.ledger",
+    "x-webPath": "features.reconciliation.diff.columns.ledger"
+  },
+  "featuresReconciliationDiffColumnsStatement": "विवरण राशि",
+  "@featuresReconciliationDiffColumnsStatement": {
+    "description": "Web path: features.reconciliation.diff.columns.statement",
+    "x-webPath": "features.reconciliation.diff.columns.statement"
+  },
+  "featuresReconciliationDiffColumnsDifference": "अंतर",
+  "@featuresReconciliationDiffColumnsDifference": {
+    "description": "Web path: features.reconciliation.diff.columns.difference",
+    "x-webPath": "features.reconciliation.diff.columns.difference"
+  },
+  "featuresReconciliationDiffColumnsReference": "संदर्भ",
+  "@featuresReconciliationDiffColumnsReference": {
+    "description": "Web path: features.reconciliation.diff.columns.reference",
+    "x-webPath": "features.reconciliation.diff.columns.reference"
+  },
+  "featuresReconciliationDiffStatementLine": "विवरण पंक्ति {line}",
+  "@featuresReconciliationDiffStatementLine": {
+    "description": "Web path: features.reconciliation.diff.statementLine",
+    "x-webPath": "features.reconciliation.diff.statementLine",
+    "placeholders": {
+      "line": {}
+    }
+  },
+  "featuresReconciliationDiffLedgerRecord": "बहीखाता प्रविष्टि",
+  "@featuresReconciliationDiffLedgerRecord": {
+    "description": "Web path: features.reconciliation.diff.ledgerRecord",
+    "x-webPath": "features.reconciliation.diff.ledgerRecord"
+  },
+  "featuresReconciliationDiffLedgerOnly": "केवल बहीखाते में",
+  "@featuresReconciliationDiffLedgerOnly": {
+    "description": "Web path: features.reconciliation.diff.ledgerOnly",
+    "x-webPath": "features.reconciliation.diff.ledgerOnly"
+  },
+  "featuresReconciliationDiffStatementOnly": "केवल विवरण में",
+  "@featuresReconciliationDiffStatementOnly": {
+    "description": "Web path: features.reconciliation.diff.statementOnly",
+    "x-webPath": "features.reconciliation.diff.statementOnly"
+  },
+  "featuresReconciliationDiffAmountMismatch": "राशि में अंतर",
+  "@featuresReconciliationDiffAmountMismatch": {
+    "description": "Web path: features.reconciliation.diff.amountMismatch",
+    "x-webPath": "features.reconciliation.diff.amountMismatch"
+  },
+  "featuresReconciliationSourceBank": "बैंक",
+  "@featuresReconciliationSourceBank": {
+    "description": "Web path: features.reconciliation.source.bank",
+    "x-webPath": "features.reconciliation.source.bank"
+  },
+  "featuresReconciliationSourceCreditCard": "क्रेडिट कार्ड",
+  "@featuresReconciliationSourceCreditCard": {
+    "description": "Web path: features.reconciliation.source.creditCard",
+    "x-webPath": "features.reconciliation.source.creditCard"
+  },
+  "featuresReconciliationSourceInvestment": "ब्रोकर",
+  "@featuresReconciliationSourceInvestment": {
+    "description": "Web path: features.reconciliation.source.investment",
+    "x-webPath": "features.reconciliation.source.investment"
+  },
+  "featuresReconciliationHistoryTitle": "मिलान इतिहास",
+  "@featuresReconciliationHistoryTitle": {
+    "description": "Web path: features.reconciliation.history.title",
+    "x-webPath": "features.reconciliation.history.title"
+  },
+  "featuresReconciliationHistoryEmpty": "अभी कोई मिलान इतिहास नहीं।",
+  "@featuresReconciliationHistoryEmpty": {
+    "description": "Web path: features.reconciliation.history.empty",
+    "x-webPath": "features.reconciliation.history.empty"
+  },
+  "featuresReconciliationHistoryColumnsTime": "समय",
+  "@featuresReconciliationHistoryColumnsTime": {
+    "description": "Web path: features.reconciliation.history.columns.time",
+    "x-webPath": "features.reconciliation.history.columns.time"
+  },
+  "featuresReconciliationHistoryColumnsSource": "स्रोत",
+  "@featuresReconciliationHistoryColumnsSource": {
+    "description": "Web path: features.reconciliation.history.columns.source",
+    "x-webPath": "features.reconciliation.history.columns.source"
+  },
+  "featuresReconciliationHistoryColumnsPeriod": "अवधि",
+  "@featuresReconciliationHistoryColumnsPeriod": {
+    "description": "Web path: features.reconciliation.history.columns.period",
+    "x-webPath": "features.reconciliation.history.columns.period"
+  },
+  "featuresReconciliationHistoryColumnsCounts": "अंतर",
+  "@featuresReconciliationHistoryColumnsCounts": {
+    "description": "Web path: features.reconciliation.history.columns.counts",
+    "x-webPath": "features.reconciliation.history.columns.counts"
+  },
+  "featuresReconciliationHistoryColumnsActions": "क्रियाएँ",
+  "@featuresReconciliationHistoryColumnsActions": {
+    "description": "Web path: features.reconciliation.history.columns.actions",
+    "x-webPath": "features.reconciliation.history.columns.actions"
+  },
+  "featuresReconciliationHistoryCountsValue": "असंगत {mismatch}, केवल विवरण {statementOnly}, केवल बहीखाता {ledgerOnly}",
+  "@featuresReconciliationHistoryCountsValue": {
+    "description": "Web path: features.reconciliation.history.countsValue",
+    "x-webPath": "features.reconciliation.history.countsValue",
+    "placeholders": {
+      "ledgerOnly": {},
+      "mismatch": {},
+      "statementOnly": {}
+    }
+  },
+  "featuresReconciliationHistoryView": "अंतर देखें",
+  "@featuresReconciliationHistoryView": {
+    "description": "Web path: features.reconciliation.history.view",
+    "x-webPath": "features.reconciliation.history.view"
+  },
+  "featuresReconciliationHistoryViewing": "देखा जा रहा है",
+  "@featuresReconciliationHistoryViewing": {
+    "description": "Web path: features.reconciliation.history.viewing",
+    "x-webPath": "features.reconciliation.history.viewing"
+  },
+  "featuresReconciliationMessagesImportDone": "आयात और तुलना पूर्ण: {filename}",
+  "@featuresReconciliationMessagesImportDone": {
+    "description": "Web path: features.reconciliation.messages.importDone",
+    "x-webPath": "features.reconciliation.messages.importDone",
+    "placeholders": {
+      "filename": {}
+    }
+  },
+  "featuresReconciliationMessagesImportFailed": "आयात विफल; कुछ भी नहीं लिखा गया।",
+  "@featuresReconciliationMessagesImportFailed": {
+    "description": "Web path: features.reconciliation.messages.importFailed",
+    "x-webPath": "features.reconciliation.messages.importFailed"
+  },
+  "featuresReconciliationMessagesRowError": "पंक्ति {line}: {reason}",
+  "@featuresReconciliationMessagesRowError": {
+    "description": "Web path: features.reconciliation.messages.rowError",
+    "x-webPath": "features.reconciliation.messages.rowError",
+    "placeholders": {
+      "line": {},
+      "reason": {}
+    }
+  },
+  "featuresReconciliationMessagesChooseFile": "पहले विवरण फ़ाइल चुनें।",
+  "@featuresReconciliationMessagesChooseFile": {
+    "description": "Web path: features.reconciliation.messages.chooseFile",
+    "x-webPath": "features.reconciliation.messages.chooseFile"
+  },
+  "featuresReconciliationMessagesMissingDateColumn": "दिनांक कॉलम का नाम दें।",
+  "@featuresReconciliationMessagesMissingDateColumn": {
+    "description": "Web path: features.reconciliation.messages.missingDateColumn",
+    "x-webPath": "features.reconciliation.messages.missingDateColumn"
+  },
+  "featuresReconciliationMessagesMissingAmountColumn": "राशि कॉलम या डेबिट / क्रेडिट कॉलम सेट करें।",
+  "@featuresReconciliationMessagesMissingAmountColumn": {
+    "description": "Web path: features.reconciliation.messages.missingAmountColumn",
+    "x-webPath": "features.reconciliation.messages.missingAmountColumn"
+  },
+  "featuresReconciliationMessagesConflictingAmountColumn": "राशि कॉलम या डेबिट / क्रेडिट कॉलम — दोनों नहीं।",
+  "@featuresReconciliationMessagesConflictingAmountColumn": {
+    "description": "Web path: features.reconciliation.messages.conflictingAmountColumn",
+    "x-webPath": "features.reconciliation.messages.conflictingAmountColumn"
+  },
+  "featuresReconciliationMessagesProfileNameRequired": "मैपिंग के लिए नाम दर्ज करें।",
+  "@featuresReconciliationMessagesProfileNameRequired": {
+    "description": "Web path: features.reconciliation.messages.profileNameRequired",
+    "x-webPath": "features.reconciliation.messages.profileNameRequired"
+  },
+  "featuresReconciliationMessagesProfileSaved": "मैपिंग सहेजी गई: {name}",
+  "@featuresReconciliationMessagesProfileSaved": {
+    "description": "Web path: features.reconciliation.messages.profileSaved",
+    "x-webPath": "features.reconciliation.messages.profileSaved",
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "featuresReconciliationMessagesProfileSaveFailed": "मैपिंग सहेजने में विफल।",
+  "@featuresReconciliationMessagesProfileSaveFailed": {
+    "description": "Web path: features.reconciliation.messages.profileSaveFailed",
+    "x-webPath": "features.reconciliation.messages.profileSaveFailed"
+  },
+  "featuresReconciliationMessagesProfileDeleted": "मैपिंग हटाई गई।",
+  "@featuresReconciliationMessagesProfileDeleted": {
+    "description": "Web path: features.reconciliation.messages.profileDeleted",
+    "x-webPath": "features.reconciliation.messages.profileDeleted"
+  },
+  "featuresReconciliationMessagesProfileDeleteFailed": "मैपिंग हटाने में विफल।",
+  "@featuresReconciliationMessagesProfileDeleteFailed": {
+    "description": "Web path: features.reconciliation.messages.profileDeleteFailed",
+    "x-webPath": "features.reconciliation.messages.profileDeleteFailed"
+  },
+  "featuresReconciliationMessagesSessionLoadFailed": "मिलान परिणाम लोड करने में विफल।",
+  "@featuresReconciliationMessagesSessionLoadFailed": {
+    "description": "Web path: features.reconciliation.messages.sessionLoadFailed",
+    "x-webPath": "features.reconciliation.messages.sessionLoadFailed"
+  },
+  "featuresReconciliationTemplatesSignedAmount": "एकल राशि कॉलम (ऋणात्मक = व्यय)",
+  "@featuresReconciliationTemplatesSignedAmount": {
+    "description": "Web path: features.reconciliation.templates.signedAmount",
+    "x-webPath": "features.reconciliation.templates.signedAmount"
+  },
+  "featuresReconciliationTemplatesDebitCredit": "अलग डेबिट / क्रेडिट कॉलम",
+  "@featuresReconciliationTemplatesDebitCredit": {
+    "description": "Web path: features.reconciliation.templates.debitCredit",
+    "x-webPath": "features.reconciliation.templates.debitCredit"
+  },
+  "featuresReconciliationTemplatesCreditCard": "क्रेडिट कार्ड विवरण (धनात्मक = खरीद)",
+  "@featuresReconciliationTemplatesCreditCard": {
+    "description": "Web path: features.reconciliation.templates.creditCard",
+    "x-webPath": "features.reconciliation.templates.creditCard"
   }
 }

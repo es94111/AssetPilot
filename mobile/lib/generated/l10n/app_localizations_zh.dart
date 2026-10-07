@@ -5184,6 +5184,302 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get ledgerLastOwnerNotice => '擁有者離開帳本或刪除帳號前，必須先移交擁有權。';
+
+  @override
+  String get navReconciliation => '銀行對帳匯入';
+
+  @override
+  String get featuresReconciliationTitle => '銀行／券商對帳匯入';
+
+  @override
+  String get featuresReconciliationSubtitle =>
+      '匯入 OFX 或 CSV 對帳檔，與帳本交易比對並列出三類差異：帳本有對帳單無、對帳單有帳本無、金額不符。';
+
+  @override
+  String get featuresReconciliationImportSection => '匯入對帳檔';
+
+  @override
+  String get featuresReconciliationImportHint =>
+      '支援 OFX 1.x／2.x 與銀行、券商 CSV；匯入為整批原子化，任何一列解析失敗即整批取消。';
+
+  @override
+  String get featuresReconciliationImportFile => '對帳檔';
+
+  @override
+  String get featuresReconciliationImportFileFormats =>
+      '可接受 .ofx、.qfx、.csv、.txt';
+
+  @override
+  String get featuresReconciliationImportAccount => '限定帳戶';
+
+  @override
+  String get featuresReconciliationImportAllAccounts => '全部帳戶';
+
+  @override
+  String get featuresReconciliationImportSubmit => '開始匯入並比對';
+
+  @override
+  String get featuresReconciliationImportRunning => '匯入中…';
+
+  @override
+  String get featuresReconciliationImportAtomicNote =>
+      '整批原子化：失敗會全部回滾，不會留下半套資料。';
+
+  @override
+  String get featuresReconciliationProfileSection => 'CSV 欄位對應';
+
+  @override
+  String get featuresReconciliationProfileSaved => '已儲存的對應設定';
+
+  @override
+  String get featuresReconciliationProfileUseDraft => '使用下方設定（不儲存）';
+
+  @override
+  String get featuresReconciliationProfileTemplate => '常用樣板';
+
+  @override
+  String get featuresReconciliationProfileChooseTemplate => '選擇樣板…';
+
+  @override
+  String get featuresReconciliationProfileAmountSign => '金額正負號語意';
+
+  @override
+  String get featuresReconciliationProfileAmountSignSigned => '負值為支出（銀行對帳單）';
+
+  @override
+  String get featuresReconciliationProfileAmountSignCreditCard =>
+      '正值為消費（信用卡帳單）';
+
+  @override
+  String get featuresReconciliationProfileDateFormat => '日期格式';
+
+  @override
+  String get featuresReconciliationProfileDateFormatAuto => '自動判定';
+
+  @override
+  String get featuresReconciliationProfileDelimiter => '分隔符號';
+
+  @override
+  String get featuresReconciliationProfileDelimiterComma => '逗號（,）';
+
+  @override
+  String get featuresReconciliationProfileDelimiterSemicolon => '分號（;）';
+
+  @override
+  String get featuresReconciliationProfileDelimiterTab => 'Tab';
+
+  @override
+  String get featuresReconciliationProfileSkipRows => '略過前導列數';
+
+  @override
+  String get featuresReconciliationProfileHasHeader => '第一列為標題列';
+
+  @override
+  String get featuresReconciliationProfileDateColumn => '日期欄位名稱';
+
+  @override
+  String get featuresReconciliationProfileAmountColumn => '金額欄位名稱';
+
+  @override
+  String get featuresReconciliationProfileDescriptionColumn => '摘要欄位名稱';
+
+  @override
+  String get featuresReconciliationProfileDebitColumn => '借方金額欄位名稱';
+
+  @override
+  String get featuresReconciliationProfileCreditColumn => '貸方金額欄位名稱';
+
+  @override
+  String get featuresReconciliationProfileFitidColumn => '交易識別碼欄位名稱（選填）';
+
+  @override
+  String get featuresReconciliationProfileColumnHint =>
+      '金額可填單一「金額」欄，或改用「借方／貸方」兩個欄位（二選一）。欄位名稱需與 CSV 標題完全一致。';
+
+  @override
+  String get featuresReconciliationProfileName => '設定名稱';
+
+  @override
+  String get featuresReconciliationProfileNamePlaceholder => '例如：某銀行信用卡帳單';
+
+  @override
+  String get featuresReconciliationProfileSave => '儲存此對應';
+
+  @override
+  String get featuresReconciliationProfileDelete => '刪除此對應';
+
+  @override
+  String get featuresReconciliationResultTitle => '對帳結果摘要';
+
+  @override
+  String get featuresReconciliationResultFilename => '檔案';
+
+  @override
+  String get featuresReconciliationResultPeriod => '對帳期間';
+
+  @override
+  String get featuresReconciliationResultMatched => '配對情形';
+
+  @override
+  String featuresReconciliationResultMatchedValue(
+    Object ledger,
+    Object matched,
+    Object statement,
+  ) {
+    return '成功配對 $matched 筆（對帳單 $statement 筆、帳本 $ledger 筆）';
+  }
+
+  @override
+  String featuresReconciliationResultSkipped(Object detail) {
+    return '略過的交易型別：$detail';
+  }
+
+  @override
+  String get featuresReconciliationDiffTitle => '差異明細';
+
+  @override
+  String get featuresReconciliationDiffEmpty => '沒有差異：帳本與對帳單完全一致。';
+
+  @override
+  String featuresReconciliationDiffCount(Object count) {
+    return '$count 筆';
+  }
+
+  @override
+  String get featuresReconciliationDiffNone => '此類別沒有差異。';
+
+  @override
+  String get featuresReconciliationDiffColumnsDate => '日期';
+
+  @override
+  String get featuresReconciliationDiffColumnsLedger => '帳本金額';
+
+  @override
+  String get featuresReconciliationDiffColumnsStatement => '對帳單金額';
+
+  @override
+  String get featuresReconciliationDiffColumnsDifference => '差額';
+
+  @override
+  String get featuresReconciliationDiffColumnsReference => '來源';
+
+  @override
+  String featuresReconciliationDiffStatementLine(Object line) {
+    return '對帳單第 $line 列';
+  }
+
+  @override
+  String get featuresReconciliationDiffLedgerRecord => '帳本紀錄';
+
+  @override
+  String get featuresReconciliationDiffLedgerOnly => '帳本有、對帳單無';
+
+  @override
+  String get featuresReconciliationDiffStatementOnly => '對帳單有、帳本無';
+
+  @override
+  String get featuresReconciliationDiffAmountMismatch => '金額不符';
+
+  @override
+  String get featuresReconciliationSourceBank => '銀行';
+
+  @override
+  String get featuresReconciliationSourceCreditCard => '信用卡';
+
+  @override
+  String get featuresReconciliationSourceInvestment => '券商';
+
+  @override
+  String get featuresReconciliationHistoryTitle => '對帳歷史';
+
+  @override
+  String get featuresReconciliationHistoryEmpty => '尚無對帳紀錄。';
+
+  @override
+  String get featuresReconciliationHistoryColumnsTime => '時間';
+
+  @override
+  String get featuresReconciliationHistoryColumnsSource => '來源';
+
+  @override
+  String get featuresReconciliationHistoryColumnsPeriod => '期間';
+
+  @override
+  String get featuresReconciliationHistoryColumnsCounts => '差異筆數';
+
+  @override
+  String get featuresReconciliationHistoryColumnsActions => '操作';
+
+  @override
+  String featuresReconciliationHistoryCountsValue(
+    Object ledgerOnly,
+    Object mismatch,
+    Object statementOnly,
+  ) {
+    return '金額不符 $mismatch、對帳單獨有 $statementOnly、帳本獨有 $ledgerOnly';
+  }
+
+  @override
+  String get featuresReconciliationHistoryView => '查看差異';
+
+  @override
+  String get featuresReconciliationHistoryViewing => '檢視中';
+
+  @override
+  String featuresReconciliationMessagesImportDone(Object filename) {
+    return '已匯入並完成比對：$filename';
+  }
+
+  @override
+  String get featuresReconciliationMessagesImportFailed => '匯入失敗，未寫入任何資料。';
+
+  @override
+  String featuresReconciliationMessagesRowError(Object line, Object reason) {
+    return '第 $line 列：$reason';
+  }
+
+  @override
+  String get featuresReconciliationMessagesChooseFile => '請先選擇對帳檔。';
+
+  @override
+  String get featuresReconciliationMessagesMissingDateColumn => '請設定日期欄位名稱。';
+
+  @override
+  String get featuresReconciliationMessagesMissingAmountColumn =>
+      '請設定金額欄位，或借方／貸方欄位。';
+
+  @override
+  String get featuresReconciliationMessagesConflictingAmountColumn =>
+      '金額欄與借方／貸方欄只能二選一。';
+
+  @override
+  String get featuresReconciliationMessagesProfileNameRequired => '請輸入對應設定的名稱。';
+
+  @override
+  String featuresReconciliationMessagesProfileSaved(Object name) {
+    return '已儲存對應設定：$name';
+  }
+
+  @override
+  String get featuresReconciliationMessagesProfileSaveFailed => '儲存對應設定失敗。';
+
+  @override
+  String get featuresReconciliationMessagesProfileDeleted => '已刪除對應設定。';
+
+  @override
+  String get featuresReconciliationMessagesProfileDeleteFailed => '刪除對應設定失敗。';
+
+  @override
+  String get featuresReconciliationMessagesSessionLoadFailed => '讀取對帳結果失敗。';
+
+  @override
+  String get featuresReconciliationTemplatesSignedAmount => '單一金額欄（負值為支出）';
+
+  @override
+  String get featuresReconciliationTemplatesDebitCredit => '借方／貸方兩欄';
+
+  @override
+  String get featuresReconciliationTemplatesCreditCard => '信用卡帳單（正值為消費）';
 }
 
 /// The translations for Chinese, as used in China, using the Han script (`zh_Hans_CN`).
@@ -10367,6 +10663,302 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
   @override
   String get ledgerLastOwnerNotice =>
       'The owner must transfer ownership before leaving or deleting their account.';
+
+  @override
+  String get navReconciliation => '银行对账导入';
+
+  @override
+  String get featuresReconciliationTitle => '银行／券商对账导入';
+
+  @override
+  String get featuresReconciliationSubtitle =>
+      '导入 OFX 或 CSV 对账单，与账本交易比对并列出三类差异：账本有对账单无、对账单有账本无、金额不符。';
+
+  @override
+  String get featuresReconciliationImportSection => '导入对账单';
+
+  @override
+  String get featuresReconciliationImportHint =>
+      '支持 OFX 1.x／2.x 与银行、券商 CSV；导入为整批原子化，任何一列解析失败即整批取消。';
+
+  @override
+  String get featuresReconciliationImportFile => '对账单';
+
+  @override
+  String get featuresReconciliationImportFileFormats =>
+      '可接受 .ofx、.qfx、.csv、.txt';
+
+  @override
+  String get featuresReconciliationImportAccount => '限定账户';
+
+  @override
+  String get featuresReconciliationImportAllAccounts => '全部账户';
+
+  @override
+  String get featuresReconciliationImportSubmit => '开始导入并比对';
+
+  @override
+  String get featuresReconciliationImportRunning => '导入中…';
+
+  @override
+  String get featuresReconciliationImportAtomicNote =>
+      '整批原子化：失败会全部回滚，不会留下半套数据。';
+
+  @override
+  String get featuresReconciliationProfileSection => 'CSV 字段映射';
+
+  @override
+  String get featuresReconciliationProfileSaved => '已保存的映射设置';
+
+  @override
+  String get featuresReconciliationProfileUseDraft => '使用下方设置（不保存）';
+
+  @override
+  String get featuresReconciliationProfileTemplate => '常用模板';
+
+  @override
+  String get featuresReconciliationProfileChooseTemplate => '选择模板…';
+
+  @override
+  String get featuresReconciliationProfileAmountSign => '金额正负号语义';
+
+  @override
+  String get featuresReconciliationProfileAmountSignSigned => '负值为支出（银行对账单）';
+
+  @override
+  String get featuresReconciliationProfileAmountSignCreditCard =>
+      '正值为消费（信用卡对账单）';
+
+  @override
+  String get featuresReconciliationProfileDateFormat => '日期格式';
+
+  @override
+  String get featuresReconciliationProfileDateFormatAuto => '自动判断';
+
+  @override
+  String get featuresReconciliationProfileDelimiter => '分隔符';
+
+  @override
+  String get featuresReconciliationProfileDelimiterComma => '逗号（,）';
+
+  @override
+  String get featuresReconciliationProfileDelimiterSemicolon => '分号（;）';
+
+  @override
+  String get featuresReconciliationProfileDelimiterTab => 'Tab';
+
+  @override
+  String get featuresReconciliationProfileSkipRows => '跳过前置行数';
+
+  @override
+  String get featuresReconciliationProfileHasHeader => '第一行为标题行';
+
+  @override
+  String get featuresReconciliationProfileDateColumn => '日期列名称';
+
+  @override
+  String get featuresReconciliationProfileAmountColumn => '金额列名称';
+
+  @override
+  String get featuresReconciliationProfileDescriptionColumn => '摘要列名称';
+
+  @override
+  String get featuresReconciliationProfileDebitColumn => '借方金额列名称';
+
+  @override
+  String get featuresReconciliationProfileCreditColumn => '贷方金额列名称';
+
+  @override
+  String get featuresReconciliationProfileFitidColumn => '交易识别码列名称（选填）';
+
+  @override
+  String get featuresReconciliationProfileColumnHint =>
+      '金额可填单一“金额”列，或改用“借方／贷方”两个列（二选一）。列名称需与 CSV 标题完全一致。';
+
+  @override
+  String get featuresReconciliationProfileName => '设置名称';
+
+  @override
+  String get featuresReconciliationProfileNamePlaceholder => '例如：某银行信用卡对账单';
+
+  @override
+  String get featuresReconciliationProfileSave => '保存此映射';
+
+  @override
+  String get featuresReconciliationProfileDelete => '删除此映射';
+
+  @override
+  String get featuresReconciliationResultTitle => '对账结果摘要';
+
+  @override
+  String get featuresReconciliationResultFilename => '文件';
+
+  @override
+  String get featuresReconciliationResultPeriod => '对账期间';
+
+  @override
+  String get featuresReconciliationResultMatched => '配对情况';
+
+  @override
+  String featuresReconciliationResultMatchedValue(
+    Object ledger,
+    Object matched,
+    Object statement,
+  ) {
+    return '成功配对 $matched 笔（对账单 $statement 笔、账本 $ledger 笔）';
+  }
+
+  @override
+  String featuresReconciliationResultSkipped(Object detail) {
+    return '跳过的交易类型：$detail';
+  }
+
+  @override
+  String get featuresReconciliationDiffTitle => '差异明细';
+
+  @override
+  String get featuresReconciliationDiffEmpty => '没有差异：账本与对账单完全一致。';
+
+  @override
+  String featuresReconciliationDiffCount(Object count) {
+    return '$count 笔';
+  }
+
+  @override
+  String get featuresReconciliationDiffNone => '此类别没有差异。';
+
+  @override
+  String get featuresReconciliationDiffColumnsDate => '日期';
+
+  @override
+  String get featuresReconciliationDiffColumnsLedger => '账本金额';
+
+  @override
+  String get featuresReconciliationDiffColumnsStatement => '对账单金额';
+
+  @override
+  String get featuresReconciliationDiffColumnsDifference => '差额';
+
+  @override
+  String get featuresReconciliationDiffColumnsReference => '来源';
+
+  @override
+  String featuresReconciliationDiffStatementLine(Object line) {
+    return '对账单第 $line 行';
+  }
+
+  @override
+  String get featuresReconciliationDiffLedgerRecord => '账本记录';
+
+  @override
+  String get featuresReconciliationDiffLedgerOnly => '账本有、对账单无';
+
+  @override
+  String get featuresReconciliationDiffStatementOnly => '对账单有、账本无';
+
+  @override
+  String get featuresReconciliationDiffAmountMismatch => '金额不符';
+
+  @override
+  String get featuresReconciliationSourceBank => '银行';
+
+  @override
+  String get featuresReconciliationSourceCreditCard => '信用卡';
+
+  @override
+  String get featuresReconciliationSourceInvestment => '券商';
+
+  @override
+  String get featuresReconciliationHistoryTitle => '对账历史';
+
+  @override
+  String get featuresReconciliationHistoryEmpty => '尚无对账记录。';
+
+  @override
+  String get featuresReconciliationHistoryColumnsTime => '时间';
+
+  @override
+  String get featuresReconciliationHistoryColumnsSource => '来源';
+
+  @override
+  String get featuresReconciliationHistoryColumnsPeriod => '期间';
+
+  @override
+  String get featuresReconciliationHistoryColumnsCounts => '差异笔数';
+
+  @override
+  String get featuresReconciliationHistoryColumnsActions => '操作';
+
+  @override
+  String featuresReconciliationHistoryCountsValue(
+    Object ledgerOnly,
+    Object mismatch,
+    Object statementOnly,
+  ) {
+    return '金额不符 $mismatch、对账单独有 $statementOnly、账本独有 $ledgerOnly';
+  }
+
+  @override
+  String get featuresReconciliationHistoryView => '查看差异';
+
+  @override
+  String get featuresReconciliationHistoryViewing => '查看中';
+
+  @override
+  String featuresReconciliationMessagesImportDone(Object filename) {
+    return '已导入并完成比对：$filename';
+  }
+
+  @override
+  String get featuresReconciliationMessagesImportFailed => '导入失败，未写入任何数据。';
+
+  @override
+  String featuresReconciliationMessagesRowError(Object line, Object reason) {
+    return '第 $line 行：$reason';
+  }
+
+  @override
+  String get featuresReconciliationMessagesChooseFile => '请先选择对账单。';
+
+  @override
+  String get featuresReconciliationMessagesMissingDateColumn => '请设置日期列名称。';
+
+  @override
+  String get featuresReconciliationMessagesMissingAmountColumn =>
+      '请设置金额列，或借方／贷方列。';
+
+  @override
+  String get featuresReconciliationMessagesConflictingAmountColumn =>
+      '金额列与借方／贷方列只能二选一。';
+
+  @override
+  String get featuresReconciliationMessagesProfileNameRequired => '请输入映射设置的名称。';
+
+  @override
+  String featuresReconciliationMessagesProfileSaved(Object name) {
+    return '已保存映射设置：$name';
+  }
+
+  @override
+  String get featuresReconciliationMessagesProfileSaveFailed => '保存映射设置失败。';
+
+  @override
+  String get featuresReconciliationMessagesProfileDeleted => '已删除映射设置。';
+
+  @override
+  String get featuresReconciliationMessagesProfileDeleteFailed => '删除映射设置失败。';
+
+  @override
+  String get featuresReconciliationMessagesSessionLoadFailed => '读取对账结果失败。';
+
+  @override
+  String get featuresReconciliationTemplatesSignedAmount => '单一金额列（负值为支出）';
+
+  @override
+  String get featuresReconciliationTemplatesDebitCredit => '借方／贷方两列';
+
+  @override
+  String get featuresReconciliationTemplatesCreditCard => '信用卡对账单（正值为消费）';
 }
 
 /// The translations for Chinese, as used in Taiwan, using the Han script (`zh_Hant_TW`).
@@ -15549,4 +16141,300 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
 
   @override
   String get ledgerLastOwnerNotice => '擁有者離開帳本或刪除帳號前，必須先移交擁有權。';
+
+  @override
+  String get navReconciliation => '銀行對帳匯入';
+
+  @override
+  String get featuresReconciliationTitle => '銀行／券商對帳匯入';
+
+  @override
+  String get featuresReconciliationSubtitle =>
+      '匯入 OFX 或 CSV 對帳檔，與帳本交易比對並列出三類差異：帳本有對帳單無、對帳單有帳本無、金額不符。';
+
+  @override
+  String get featuresReconciliationImportSection => '匯入對帳檔';
+
+  @override
+  String get featuresReconciliationImportHint =>
+      '支援 OFX 1.x／2.x 與銀行、券商 CSV；匯入為整批原子化，任何一列解析失敗即整批取消。';
+
+  @override
+  String get featuresReconciliationImportFile => '對帳檔';
+
+  @override
+  String get featuresReconciliationImportFileFormats =>
+      '可接受 .ofx、.qfx、.csv、.txt';
+
+  @override
+  String get featuresReconciliationImportAccount => '限定帳戶';
+
+  @override
+  String get featuresReconciliationImportAllAccounts => '全部帳戶';
+
+  @override
+  String get featuresReconciliationImportSubmit => '開始匯入並比對';
+
+  @override
+  String get featuresReconciliationImportRunning => '匯入中…';
+
+  @override
+  String get featuresReconciliationImportAtomicNote =>
+      '整批原子化：失敗會全部回滾，不會留下半套資料。';
+
+  @override
+  String get featuresReconciliationProfileSection => 'CSV 欄位對應';
+
+  @override
+  String get featuresReconciliationProfileSaved => '已儲存的對應設定';
+
+  @override
+  String get featuresReconciliationProfileUseDraft => '使用下方設定（不儲存）';
+
+  @override
+  String get featuresReconciliationProfileTemplate => '常用樣板';
+
+  @override
+  String get featuresReconciliationProfileChooseTemplate => '選擇樣板…';
+
+  @override
+  String get featuresReconciliationProfileAmountSign => '金額正負號語意';
+
+  @override
+  String get featuresReconciliationProfileAmountSignSigned => '負值為支出（銀行對帳單）';
+
+  @override
+  String get featuresReconciliationProfileAmountSignCreditCard =>
+      '正值為消費（信用卡帳單）';
+
+  @override
+  String get featuresReconciliationProfileDateFormat => '日期格式';
+
+  @override
+  String get featuresReconciliationProfileDateFormatAuto => '自動判定';
+
+  @override
+  String get featuresReconciliationProfileDelimiter => '分隔符號';
+
+  @override
+  String get featuresReconciliationProfileDelimiterComma => '逗號（,）';
+
+  @override
+  String get featuresReconciliationProfileDelimiterSemicolon => '分號（;）';
+
+  @override
+  String get featuresReconciliationProfileDelimiterTab => 'Tab';
+
+  @override
+  String get featuresReconciliationProfileSkipRows => '略過前導列數';
+
+  @override
+  String get featuresReconciliationProfileHasHeader => '第一列為標題列';
+
+  @override
+  String get featuresReconciliationProfileDateColumn => '日期欄位名稱';
+
+  @override
+  String get featuresReconciliationProfileAmountColumn => '金額欄位名稱';
+
+  @override
+  String get featuresReconciliationProfileDescriptionColumn => '摘要欄位名稱';
+
+  @override
+  String get featuresReconciliationProfileDebitColumn => '借方金額欄位名稱';
+
+  @override
+  String get featuresReconciliationProfileCreditColumn => '貸方金額欄位名稱';
+
+  @override
+  String get featuresReconciliationProfileFitidColumn => '交易識別碼欄位名稱（選填）';
+
+  @override
+  String get featuresReconciliationProfileColumnHint =>
+      '金額可填單一「金額」欄，或改用「借方／貸方」兩個欄位（二選一）。欄位名稱需與 CSV 標題完全一致。';
+
+  @override
+  String get featuresReconciliationProfileName => '設定名稱';
+
+  @override
+  String get featuresReconciliationProfileNamePlaceholder => '例如：某銀行信用卡帳單';
+
+  @override
+  String get featuresReconciliationProfileSave => '儲存此對應';
+
+  @override
+  String get featuresReconciliationProfileDelete => '刪除此對應';
+
+  @override
+  String get featuresReconciliationResultTitle => '對帳結果摘要';
+
+  @override
+  String get featuresReconciliationResultFilename => '檔案';
+
+  @override
+  String get featuresReconciliationResultPeriod => '對帳期間';
+
+  @override
+  String get featuresReconciliationResultMatched => '配對情形';
+
+  @override
+  String featuresReconciliationResultMatchedValue(
+    Object ledger,
+    Object matched,
+    Object statement,
+  ) {
+    return '成功配對 $matched 筆（對帳單 $statement 筆、帳本 $ledger 筆）';
+  }
+
+  @override
+  String featuresReconciliationResultSkipped(Object detail) {
+    return '略過的交易型別：$detail';
+  }
+
+  @override
+  String get featuresReconciliationDiffTitle => '差異明細';
+
+  @override
+  String get featuresReconciliationDiffEmpty => '沒有差異：帳本與對帳單完全一致。';
+
+  @override
+  String featuresReconciliationDiffCount(Object count) {
+    return '$count 筆';
+  }
+
+  @override
+  String get featuresReconciliationDiffNone => '此類別沒有差異。';
+
+  @override
+  String get featuresReconciliationDiffColumnsDate => '日期';
+
+  @override
+  String get featuresReconciliationDiffColumnsLedger => '帳本金額';
+
+  @override
+  String get featuresReconciliationDiffColumnsStatement => '對帳單金額';
+
+  @override
+  String get featuresReconciliationDiffColumnsDifference => '差額';
+
+  @override
+  String get featuresReconciliationDiffColumnsReference => '來源';
+
+  @override
+  String featuresReconciliationDiffStatementLine(Object line) {
+    return '對帳單第 $line 列';
+  }
+
+  @override
+  String get featuresReconciliationDiffLedgerRecord => '帳本紀錄';
+
+  @override
+  String get featuresReconciliationDiffLedgerOnly => '帳本有、對帳單無';
+
+  @override
+  String get featuresReconciliationDiffStatementOnly => '對帳單有、帳本無';
+
+  @override
+  String get featuresReconciliationDiffAmountMismatch => '金額不符';
+
+  @override
+  String get featuresReconciliationSourceBank => '銀行';
+
+  @override
+  String get featuresReconciliationSourceCreditCard => '信用卡';
+
+  @override
+  String get featuresReconciliationSourceInvestment => '券商';
+
+  @override
+  String get featuresReconciliationHistoryTitle => '對帳歷史';
+
+  @override
+  String get featuresReconciliationHistoryEmpty => '尚無對帳紀錄。';
+
+  @override
+  String get featuresReconciliationHistoryColumnsTime => '時間';
+
+  @override
+  String get featuresReconciliationHistoryColumnsSource => '來源';
+
+  @override
+  String get featuresReconciliationHistoryColumnsPeriod => '期間';
+
+  @override
+  String get featuresReconciliationHistoryColumnsCounts => '差異筆數';
+
+  @override
+  String get featuresReconciliationHistoryColumnsActions => '操作';
+
+  @override
+  String featuresReconciliationHistoryCountsValue(
+    Object ledgerOnly,
+    Object mismatch,
+    Object statementOnly,
+  ) {
+    return '金額不符 $mismatch、對帳單獨有 $statementOnly、帳本獨有 $ledgerOnly';
+  }
+
+  @override
+  String get featuresReconciliationHistoryView => '查看差異';
+
+  @override
+  String get featuresReconciliationHistoryViewing => '檢視中';
+
+  @override
+  String featuresReconciliationMessagesImportDone(Object filename) {
+    return '已匯入並完成比對：$filename';
+  }
+
+  @override
+  String get featuresReconciliationMessagesImportFailed => '匯入失敗，未寫入任何資料。';
+
+  @override
+  String featuresReconciliationMessagesRowError(Object line, Object reason) {
+    return '第 $line 列：$reason';
+  }
+
+  @override
+  String get featuresReconciliationMessagesChooseFile => '請先選擇對帳檔。';
+
+  @override
+  String get featuresReconciliationMessagesMissingDateColumn => '請設定日期欄位名稱。';
+
+  @override
+  String get featuresReconciliationMessagesMissingAmountColumn =>
+      '請設定金額欄位，或借方／貸方欄位。';
+
+  @override
+  String get featuresReconciliationMessagesConflictingAmountColumn =>
+      '金額欄與借方／貸方欄只能二選一。';
+
+  @override
+  String get featuresReconciliationMessagesProfileNameRequired => '請輸入對應設定的名稱。';
+
+  @override
+  String featuresReconciliationMessagesProfileSaved(Object name) {
+    return '已儲存對應設定：$name';
+  }
+
+  @override
+  String get featuresReconciliationMessagesProfileSaveFailed => '儲存對應設定失敗。';
+
+  @override
+  String get featuresReconciliationMessagesProfileDeleted => '已刪除對應設定。';
+
+  @override
+  String get featuresReconciliationMessagesProfileDeleteFailed => '刪除對應設定失敗。';
+
+  @override
+  String get featuresReconciliationMessagesSessionLoadFailed => '讀取對帳結果失敗。';
+
+  @override
+  String get featuresReconciliationTemplatesSignedAmount => '單一金額欄（負值為支出）';
+
+  @override
+  String get featuresReconciliationTemplatesDebitCredit => '借方／貸方兩欄';
+
+  @override
+  String get featuresReconciliationTemplatesCreditCard => '信用卡帳單（正值為消費）';
 }

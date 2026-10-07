@@ -93,6 +93,9 @@ const AUDIT_ACTION_LABELS: Record<string, string> = {
   mcp_create_credit_card_repayment: "MCP 信用卡還款",
   restore_ai_created_transaction: "還原 AI 建立的交易",
   restore_ai_modified_note: "還原 AI 修改的備註",
+  // 010-bank-broker-reconciliation（issue #251）
+  import_reconciliation: "匯入銀行／券商對帳檔",
+  delete_reconciliation_profile: "刪除對帳欄位對應設定",
 };
 
 // 將稽核 metadata 整理為易讀的中文摘要，作為「詳情」欄位顯示。

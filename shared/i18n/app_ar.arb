@@ -8357,5 +8357,474 @@
   "@ledgerLastOwnerNotice": {
     "description": "Web path: ledger.lastOwnerNotice",
     "x-webPath": "ledger.lastOwnerNotice"
+  },
+  "navReconciliation": "مطابقة كشف الحساب",
+  "@navReconciliation": {
+    "description": "Web path: nav.reconciliation",
+    "x-webPath": "nav.reconciliation"
+  },
+  "featuresReconciliationTitle": "مطابقة كشوف الحسابات البنكية والوساطة",
+  "@featuresReconciliationTitle": {
+    "description": "Web path: features.reconciliation.title",
+    "x-webPath": "features.reconciliation.title"
+  },
+  "featuresReconciliationSubtitle": "استورد كشف حساب بصيغة OFX أو CSV وقارنه بدفترك عبر ثلاثة أنواع من الفروق: موجود في الدفتر فقط، موجود في الكشف فقط، واختلاف المبلغ.",
+  "@featuresReconciliationSubtitle": {
+    "description": "Web path: features.reconciliation.subtitle",
+    "x-webPath": "features.reconciliation.subtitle"
+  },
+  "featuresReconciliationImportSection": "استيراد كشف حساب",
+  "@featuresReconciliationImportSection": {
+    "description": "Web path: features.reconciliation.import.section",
+    "x-webPath": "features.reconciliation.import.section"
+  },
+  "featuresReconciliationImportHint": "يدعم OFX 1.x / 2.x وملفات CSV البنكية وملفات الوسطاء. الاستيراد ذرّي: إذا فشل أي سطر تُرفض الدفعة بالكامل.",
+  "@featuresReconciliationImportHint": {
+    "description": "Web path: features.reconciliation.import.hint",
+    "x-webPath": "features.reconciliation.import.hint"
+  },
+  "featuresReconciliationImportFile": "ملف كشف الحساب",
+  "@featuresReconciliationImportFile": {
+    "description": "Web path: features.reconciliation.import.file",
+    "x-webPath": "features.reconciliation.import.file"
+  },
+  "featuresReconciliationImportFileFormats": "يقبل .ofx و.qfx و.csv و.txt",
+  "@featuresReconciliationImportFileFormats": {
+    "description": "Web path: features.reconciliation.import.fileFormats",
+    "x-webPath": "features.reconciliation.import.fileFormats"
+  },
+  "featuresReconciliationImportAccount": "قصْر على الحساب",
+  "@featuresReconciliationImportAccount": {
+    "description": "Web path: features.reconciliation.import.account",
+    "x-webPath": "features.reconciliation.import.account"
+  },
+  "featuresReconciliationImportAllAccounts": "كل الحسابات",
+  "@featuresReconciliationImportAllAccounts": {
+    "description": "Web path: features.reconciliation.import.allAccounts",
+    "x-webPath": "features.reconciliation.import.allAccounts"
+  },
+  "featuresReconciliationImportSubmit": "استيراد ومقارنة",
+  "@featuresReconciliationImportSubmit": {
+    "description": "Web path: features.reconciliation.import.submit",
+    "x-webPath": "features.reconciliation.import.submit"
+  },
+  "featuresReconciliationImportRunning": "جارٍ الاستيراد…",
+  "@featuresReconciliationImportRunning": {
+    "description": "Web path: features.reconciliation.import.running",
+    "x-webPath": "features.reconciliation.import.running"
+  },
+  "featuresReconciliationImportAtomicNote": "دفعة ذرّية: تُلغى التغييرات بالكامل عند الفشل دون ترك بيانات جزئية.",
+  "@featuresReconciliationImportAtomicNote": {
+    "description": "Web path: features.reconciliation.import.atomicNote",
+    "x-webPath": "features.reconciliation.import.atomicNote"
+  },
+  "featuresReconciliationProfileSection": "تعيين أعمدة CSV",
+  "@featuresReconciliationProfileSection": {
+    "description": "Web path: features.reconciliation.profile.section",
+    "x-webPath": "features.reconciliation.profile.section"
+  },
+  "featuresReconciliationProfileSaved": "التعيين المحفوظ",
+  "@featuresReconciliationProfileSaved": {
+    "description": "Web path: features.reconciliation.profile.saved",
+    "x-webPath": "features.reconciliation.profile.saved"
+  },
+  "featuresReconciliationProfileUseDraft": "استخدام الإعدادات أدناه (دون حفظ)",
+  "@featuresReconciliationProfileUseDraft": {
+    "description": "Web path: features.reconciliation.profile.useDraft",
+    "x-webPath": "features.reconciliation.profile.useDraft"
+  },
+  "featuresReconciliationProfileTemplate": "قالب شائع",
+  "@featuresReconciliationProfileTemplate": {
+    "description": "Web path: features.reconciliation.profile.template",
+    "x-webPath": "features.reconciliation.profile.template"
+  },
+  "featuresReconciliationProfileChooseTemplate": "اختر قالبًا…",
+  "@featuresReconciliationProfileChooseTemplate": {
+    "description": "Web path: features.reconciliation.profile.chooseTemplate",
+    "x-webPath": "features.reconciliation.profile.chooseTemplate"
+  },
+  "featuresReconciliationProfileAmountSign": "اصطلاح إشارة المبلغ",
+  "@featuresReconciliationProfileAmountSign": {
+    "description": "Web path: features.reconciliation.profile.amountSign",
+    "x-webPath": "features.reconciliation.profile.amountSign"
+  },
+  "featuresReconciliationProfileAmountSignSigned": "القيمة السالبة خصم (كشف حساب بنكي)",
+  "@featuresReconciliationProfileAmountSignSigned": {
+    "description": "Web path: features.reconciliation.profile.amountSignSigned",
+    "x-webPath": "features.reconciliation.profile.amountSignSigned"
+  },
+  "featuresReconciliationProfileAmountSignCreditCard": "القيمة الموجبة شراء (كشف بطاقة ائتمان)",
+  "@featuresReconciliationProfileAmountSignCreditCard": {
+    "description": "Web path: features.reconciliation.profile.amountSignCreditCard",
+    "x-webPath": "features.reconciliation.profile.amountSignCreditCard"
+  },
+  "featuresReconciliationProfileDateFormat": "تنسيق التاريخ",
+  "@featuresReconciliationProfileDateFormat": {
+    "description": "Web path: features.reconciliation.profile.dateFormat",
+    "x-webPath": "features.reconciliation.profile.dateFormat"
+  },
+  "featuresReconciliationProfileDateFormatAuto": "اكتشاف تلقائي",
+  "@featuresReconciliationProfileDateFormatAuto": {
+    "description": "Web path: features.reconciliation.profile.dateFormatAuto",
+    "x-webPath": "features.reconciliation.profile.dateFormatAuto"
+  },
+  "featuresReconciliationProfileDelimiter": "الفاصل",
+  "@featuresReconciliationProfileDelimiter": {
+    "description": "Web path: features.reconciliation.profile.delimiter",
+    "x-webPath": "features.reconciliation.profile.delimiter"
+  },
+  "featuresReconciliationProfileDelimiterComma": "فاصلة (,)",
+  "@featuresReconciliationProfileDelimiterComma": {
+    "description": "Web path: features.reconciliation.profile.delimiterComma",
+    "x-webPath": "features.reconciliation.profile.delimiterComma"
+  },
+  "featuresReconciliationProfileDelimiterSemicolon": "فاصلة منقوطة (;)",
+  "@featuresReconciliationProfileDelimiterSemicolon": {
+    "description": "Web path: features.reconciliation.profile.delimiterSemicolon",
+    "x-webPath": "features.reconciliation.profile.delimiterSemicolon"
+  },
+  "featuresReconciliationProfileDelimiterTab": "علامة جدولة",
+  "@featuresReconciliationProfileDelimiterTab": {
+    "description": "Web path: features.reconciliation.profile.delimiterTab",
+    "x-webPath": "features.reconciliation.profile.delimiterTab"
+  },
+  "featuresReconciliationProfileSkipRows": "تخطّي الصفوف الأولى",
+  "@featuresReconciliationProfileSkipRows": {
+    "description": "Web path: features.reconciliation.profile.skipRows",
+    "x-webPath": "features.reconciliation.profile.skipRows"
+  },
+  "featuresReconciliationProfileHasHeader": "الصف الأول عنوان",
+  "@featuresReconciliationProfileHasHeader": {
+    "description": "Web path: features.reconciliation.profile.hasHeader",
+    "x-webPath": "features.reconciliation.profile.hasHeader"
+  },
+  "featuresReconciliationProfileDateColumn": "اسم عمود التاريخ",
+  "@featuresReconciliationProfileDateColumn": {
+    "description": "Web path: features.reconciliation.profile.dateColumn",
+    "x-webPath": "features.reconciliation.profile.dateColumn"
+  },
+  "featuresReconciliationProfileAmountColumn": "اسم عمود المبلغ",
+  "@featuresReconciliationProfileAmountColumn": {
+    "description": "Web path: features.reconciliation.profile.amountColumn",
+    "x-webPath": "features.reconciliation.profile.amountColumn"
+  },
+  "featuresReconciliationProfileDescriptionColumn": "اسم عمود الوصف",
+  "@featuresReconciliationProfileDescriptionColumn": {
+    "description": "Web path: features.reconciliation.profile.descriptionColumn",
+    "x-webPath": "features.reconciliation.profile.descriptionColumn"
+  },
+  "featuresReconciliationProfileDebitColumn": "اسم عمود المدين",
+  "@featuresReconciliationProfileDebitColumn": {
+    "description": "Web path: features.reconciliation.profile.debitColumn",
+    "x-webPath": "features.reconciliation.profile.debitColumn"
+  },
+  "featuresReconciliationProfileCreditColumn": "اسم عمود الدائن",
+  "@featuresReconciliationProfileCreditColumn": {
+    "description": "Web path: features.reconciliation.profile.creditColumn",
+    "x-webPath": "features.reconciliation.profile.creditColumn"
+  },
+  "featuresReconciliationProfileFitidColumn": "اسم عمود معرّف العملية (اختياري)",
+  "@featuresReconciliationProfileFitidColumn": {
+    "description": "Web path: features.reconciliation.profile.fitidColumn",
+    "x-webPath": "features.reconciliation.profile.fitidColumn"
+  },
+  "featuresReconciliationProfileColumnHint": "املأ عمود مبلغ واحدًا أو عمودي المدين والدائن، وليس النمطين معًا. يجب أن تطابق الأسماء عناوين ملف CSV تمامًا.",
+  "@featuresReconciliationProfileColumnHint": {
+    "description": "Web path: features.reconciliation.profile.columnHint",
+    "x-webPath": "features.reconciliation.profile.columnHint"
+  },
+  "featuresReconciliationProfileName": "اسم التعيين",
+  "@featuresReconciliationProfileName": {
+    "description": "Web path: features.reconciliation.profile.name",
+    "x-webPath": "features.reconciliation.profile.name"
+  },
+  "featuresReconciliationProfileNamePlaceholder": "مثال: كشف بطاقة ائتمان بنكي",
+  "@featuresReconciliationProfileNamePlaceholder": {
+    "description": "Web path: features.reconciliation.profile.namePlaceholder",
+    "x-webPath": "features.reconciliation.profile.namePlaceholder"
+  },
+  "featuresReconciliationProfileSave": "حفظ هذا التعيين",
+  "@featuresReconciliationProfileSave": {
+    "description": "Web path: features.reconciliation.profile.save",
+    "x-webPath": "features.reconciliation.profile.save"
+  },
+  "featuresReconciliationProfileDelete": "حذف هذا التعيين",
+  "@featuresReconciliationProfileDelete": {
+    "description": "Web path: features.reconciliation.profile.delete",
+    "x-webPath": "features.reconciliation.profile.delete"
+  },
+  "featuresReconciliationResultTitle": "ملخّص المطابقة",
+  "@featuresReconciliationResultTitle": {
+    "description": "Web path: features.reconciliation.result.title",
+    "x-webPath": "features.reconciliation.result.title"
+  },
+  "featuresReconciliationResultFilename": "الملف",
+  "@featuresReconciliationResultFilename": {
+    "description": "Web path: features.reconciliation.result.filename",
+    "x-webPath": "features.reconciliation.result.filename"
+  },
+  "featuresReconciliationResultPeriod": "فترة الكشف",
+  "@featuresReconciliationResultPeriod": {
+    "description": "Web path: features.reconciliation.result.period",
+    "x-webPath": "features.reconciliation.result.period"
+  },
+  "featuresReconciliationResultMatched": "المطابقات",
+  "@featuresReconciliationResultMatched": {
+    "description": "Web path: features.reconciliation.result.matched",
+    "x-webPath": "features.reconciliation.result.matched"
+  },
+  "featuresReconciliationResultMatchedValue": "{matched} مطابقة (الكشف {statement}، الدفتر {ledger})",
+  "@featuresReconciliationResultMatchedValue": {
+    "description": "Web path: features.reconciliation.result.matchedValue",
+    "x-webPath": "features.reconciliation.result.matchedValue",
+    "placeholders": {
+      "ledger": {},
+      "matched": {},
+      "statement": {}
+    }
+  },
+  "featuresReconciliationResultSkipped": "أنواع العمليات المتخطّاة: {detail}",
+  "@featuresReconciliationResultSkipped": {
+    "description": "Web path: features.reconciliation.result.skipped",
+    "x-webPath": "features.reconciliation.result.skipped",
+    "placeholders": {
+      "detail": {}
+    }
+  },
+  "featuresReconciliationDiffTitle": "الفروق",
+  "@featuresReconciliationDiffTitle": {
+    "description": "Web path: features.reconciliation.diff.title",
+    "x-webPath": "features.reconciliation.diff.title"
+  },
+  "featuresReconciliationDiffEmpty": "لا فروق: الدفتر وكشف الحساب متطابقان تمامًا.",
+  "@featuresReconciliationDiffEmpty": {
+    "description": "Web path: features.reconciliation.diff.empty",
+    "x-webPath": "features.reconciliation.diff.empty"
+  },
+  "featuresReconciliationDiffCount": "{count} صف",
+  "@featuresReconciliationDiffCount": {
+    "description": "Web path: features.reconciliation.diff.count",
+    "x-webPath": "features.reconciliation.diff.count",
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "featuresReconciliationDiffNone": "لا فروق في هذه الفئة.",
+  "@featuresReconciliationDiffNone": {
+    "description": "Web path: features.reconciliation.diff.none",
+    "x-webPath": "features.reconciliation.diff.none"
+  },
+  "featuresReconciliationDiffColumnsDate": "التاريخ",
+  "@featuresReconciliationDiffColumnsDate": {
+    "description": "Web path: features.reconciliation.diff.columns.date",
+    "x-webPath": "features.reconciliation.diff.columns.date"
+  },
+  "featuresReconciliationDiffColumnsLedger": "المبلغ في الدفتر",
+  "@featuresReconciliationDiffColumnsLedger": {
+    "description": "Web path: features.reconciliation.diff.columns.ledger",
+    "x-webPath": "features.reconciliation.diff.columns.ledger"
+  },
+  "featuresReconciliationDiffColumnsStatement": "المبلغ في الكشف",
+  "@featuresReconciliationDiffColumnsStatement": {
+    "description": "Web path: features.reconciliation.diff.columns.statement",
+    "x-webPath": "features.reconciliation.diff.columns.statement"
+  },
+  "featuresReconciliationDiffColumnsDifference": "الفرق",
+  "@featuresReconciliationDiffColumnsDifference": {
+    "description": "Web path: features.reconciliation.diff.columns.difference",
+    "x-webPath": "features.reconciliation.diff.columns.difference"
+  },
+  "featuresReconciliationDiffColumnsReference": "المرجع",
+  "@featuresReconciliationDiffColumnsReference": {
+    "description": "Web path: features.reconciliation.diff.columns.reference",
+    "x-webPath": "features.reconciliation.diff.columns.reference"
+  },
+  "featuresReconciliationDiffStatementLine": "سطر الكشف {line}",
+  "@featuresReconciliationDiffStatementLine": {
+    "description": "Web path: features.reconciliation.diff.statementLine",
+    "x-webPath": "features.reconciliation.diff.statementLine",
+    "placeholders": {
+      "line": {}
+    }
+  },
+  "featuresReconciliationDiffLedgerRecord": "قيد الدفتر",
+  "@featuresReconciliationDiffLedgerRecord": {
+    "description": "Web path: features.reconciliation.diff.ledgerRecord",
+    "x-webPath": "features.reconciliation.diff.ledgerRecord"
+  },
+  "featuresReconciliationDiffLedgerOnly": "في الدفتر فقط",
+  "@featuresReconciliationDiffLedgerOnly": {
+    "description": "Web path: features.reconciliation.diff.ledgerOnly",
+    "x-webPath": "features.reconciliation.diff.ledgerOnly"
+  },
+  "featuresReconciliationDiffStatementOnly": "في الكشف فقط",
+  "@featuresReconciliationDiffStatementOnly": {
+    "description": "Web path: features.reconciliation.diff.statementOnly",
+    "x-webPath": "features.reconciliation.diff.statementOnly"
+  },
+  "featuresReconciliationDiffAmountMismatch": "اختلاف في المبلغ",
+  "@featuresReconciliationDiffAmountMismatch": {
+    "description": "Web path: features.reconciliation.diff.amountMismatch",
+    "x-webPath": "features.reconciliation.diff.amountMismatch"
+  },
+  "featuresReconciliationSourceBank": "بنك",
+  "@featuresReconciliationSourceBank": {
+    "description": "Web path: features.reconciliation.source.bank",
+    "x-webPath": "features.reconciliation.source.bank"
+  },
+  "featuresReconciliationSourceCreditCard": "بطاقة ائتمان",
+  "@featuresReconciliationSourceCreditCard": {
+    "description": "Web path: features.reconciliation.source.creditCard",
+    "x-webPath": "features.reconciliation.source.creditCard"
+  },
+  "featuresReconciliationSourceInvestment": "وسيط مالي",
+  "@featuresReconciliationSourceInvestment": {
+    "description": "Web path: features.reconciliation.source.investment",
+    "x-webPath": "features.reconciliation.source.investment"
+  },
+  "featuresReconciliationHistoryTitle": "سجل المطابقة",
+  "@featuresReconciliationHistoryTitle": {
+    "description": "Web path: features.reconciliation.history.title",
+    "x-webPath": "features.reconciliation.history.title"
+  },
+  "featuresReconciliationHistoryEmpty": "لا يوجد سجل مطابقة بعد.",
+  "@featuresReconciliationHistoryEmpty": {
+    "description": "Web path: features.reconciliation.history.empty",
+    "x-webPath": "features.reconciliation.history.empty"
+  },
+  "featuresReconciliationHistoryColumnsTime": "الوقت",
+  "@featuresReconciliationHistoryColumnsTime": {
+    "description": "Web path: features.reconciliation.history.columns.time",
+    "x-webPath": "features.reconciliation.history.columns.time"
+  },
+  "featuresReconciliationHistoryColumnsSource": "المصدر",
+  "@featuresReconciliationHistoryColumnsSource": {
+    "description": "Web path: features.reconciliation.history.columns.source",
+    "x-webPath": "features.reconciliation.history.columns.source"
+  },
+  "featuresReconciliationHistoryColumnsPeriod": "الفترة",
+  "@featuresReconciliationHistoryColumnsPeriod": {
+    "description": "Web path: features.reconciliation.history.columns.period",
+    "x-webPath": "features.reconciliation.history.columns.period"
+  },
+  "featuresReconciliationHistoryColumnsCounts": "عدد الفروق",
+  "@featuresReconciliationHistoryColumnsCounts": {
+    "description": "Web path: features.reconciliation.history.columns.counts",
+    "x-webPath": "features.reconciliation.history.columns.counts"
+  },
+  "featuresReconciliationHistoryColumnsActions": "إجراءات",
+  "@featuresReconciliationHistoryColumnsActions": {
+    "description": "Web path: features.reconciliation.history.columns.actions",
+    "x-webPath": "features.reconciliation.history.columns.actions"
+  },
+  "featuresReconciliationHistoryCountsValue": "اختلاف {mismatch}، في الكشف فقط {statementOnly}، في الدفتر فقط {ledgerOnly}",
+  "@featuresReconciliationHistoryCountsValue": {
+    "description": "Web path: features.reconciliation.history.countsValue",
+    "x-webPath": "features.reconciliation.history.countsValue",
+    "placeholders": {
+      "ledgerOnly": {},
+      "mismatch": {},
+      "statementOnly": {}
+    }
+  },
+  "featuresReconciliationHistoryView": "عرض الفروق",
+  "@featuresReconciliationHistoryView": {
+    "description": "Web path: features.reconciliation.history.view",
+    "x-webPath": "features.reconciliation.history.view"
+  },
+  "featuresReconciliationHistoryViewing": "قيد العرض",
+  "@featuresReconciliationHistoryViewing": {
+    "description": "Web path: features.reconciliation.history.viewing",
+    "x-webPath": "features.reconciliation.history.viewing"
+  },
+  "featuresReconciliationMessagesImportDone": "تم الاستيراد والمقارنة: {filename}",
+  "@featuresReconciliationMessagesImportDone": {
+    "description": "Web path: features.reconciliation.messages.importDone",
+    "x-webPath": "features.reconciliation.messages.importDone",
+    "placeholders": {
+      "filename": {}
+    }
+  },
+  "featuresReconciliationMessagesImportFailed": "فشل الاستيراد؛ لم تُكتب أي بيانات.",
+  "@featuresReconciliationMessagesImportFailed": {
+    "description": "Web path: features.reconciliation.messages.importFailed",
+    "x-webPath": "features.reconciliation.messages.importFailed"
+  },
+  "featuresReconciliationMessagesRowError": "السطر {line}: {reason}",
+  "@featuresReconciliationMessagesRowError": {
+    "description": "Web path: features.reconciliation.messages.rowError",
+    "x-webPath": "features.reconciliation.messages.rowError",
+    "placeholders": {
+      "line": {},
+      "reason": {}
+    }
+  },
+  "featuresReconciliationMessagesChooseFile": "اختر ملف كشف حساب أولًا.",
+  "@featuresReconciliationMessagesChooseFile": {
+    "description": "Web path: features.reconciliation.messages.chooseFile",
+    "x-webPath": "features.reconciliation.messages.chooseFile"
+  },
+  "featuresReconciliationMessagesMissingDateColumn": "حدّد اسم عمود التاريخ.",
+  "@featuresReconciliationMessagesMissingDateColumn": {
+    "description": "Web path: features.reconciliation.messages.missingDateColumn",
+    "x-webPath": "features.reconciliation.messages.missingDateColumn"
+  },
+  "featuresReconciliationMessagesMissingAmountColumn": "حدّد عمود مبلغ أو عمودي المدين والدائن.",
+  "@featuresReconciliationMessagesMissingAmountColumn": {
+    "description": "Web path: features.reconciliation.messages.missingAmountColumn",
+    "x-webPath": "features.reconciliation.messages.missingAmountColumn"
+  },
+  "featuresReconciliationMessagesConflictingAmountColumn": "استخدم عمود مبلغ أو عمودي المدين والدائن، وليس كليهما.",
+  "@featuresReconciliationMessagesConflictingAmountColumn": {
+    "description": "Web path: features.reconciliation.messages.conflictingAmountColumn",
+    "x-webPath": "features.reconciliation.messages.conflictingAmountColumn"
+  },
+  "featuresReconciliationMessagesProfileNameRequired": "أدخل اسمًا للتعيين.",
+  "@featuresReconciliationMessagesProfileNameRequired": {
+    "description": "Web path: features.reconciliation.messages.profileNameRequired",
+    "x-webPath": "features.reconciliation.messages.profileNameRequired"
+  },
+  "featuresReconciliationMessagesProfileSaved": "تم حفظ التعيين: {name}",
+  "@featuresReconciliationMessagesProfileSaved": {
+    "description": "Web path: features.reconciliation.messages.profileSaved",
+    "x-webPath": "features.reconciliation.messages.profileSaved",
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "featuresReconciliationMessagesProfileSaveFailed": "فشل حفظ التعيين.",
+  "@featuresReconciliationMessagesProfileSaveFailed": {
+    "description": "Web path: features.reconciliation.messages.profileSaveFailed",
+    "x-webPath": "features.reconciliation.messages.profileSaveFailed"
+  },
+  "featuresReconciliationMessagesProfileDeleted": "تم حذف التعيين.",
+  "@featuresReconciliationMessagesProfileDeleted": {
+    "description": "Web path: features.reconciliation.messages.profileDeleted",
+    "x-webPath": "features.reconciliation.messages.profileDeleted"
+  },
+  "featuresReconciliationMessagesProfileDeleteFailed": "فشل حذف التعيين.",
+  "@featuresReconciliationMessagesProfileDeleteFailed": {
+    "description": "Web path: features.reconciliation.messages.profileDeleteFailed",
+    "x-webPath": "features.reconciliation.messages.profileDeleteFailed"
+  },
+  "featuresReconciliationMessagesSessionLoadFailed": "فشل تحميل نتيجة المطابقة.",
+  "@featuresReconciliationMessagesSessionLoadFailed": {
+    "description": "Web path: features.reconciliation.messages.sessionLoadFailed",
+    "x-webPath": "features.reconciliation.messages.sessionLoadFailed"
+  },
+  "featuresReconciliationTemplatesSignedAmount": "عمود مبلغ واحد (السالب خصم)",
+  "@featuresReconciliationTemplatesSignedAmount": {
+    "description": "Web path: features.reconciliation.templates.signedAmount",
+    "x-webPath": "features.reconciliation.templates.signedAmount"
+  },
+  "featuresReconciliationTemplatesDebitCredit": "عمودا المدين والدائن",
+  "@featuresReconciliationTemplatesDebitCredit": {
+    "description": "Web path: features.reconciliation.templates.debitCredit",
+    "x-webPath": "features.reconciliation.templates.debitCredit"
+  },
+  "featuresReconciliationTemplatesCreditCard": "كشف بطاقة ائتمان (الموجب شراء)",
+  "@featuresReconciliationTemplatesCreditCard": {
+    "description": "Web path: features.reconciliation.templates.creditCard",
+    "x-webPath": "features.reconciliation.templates.creditCard"
   }
 }

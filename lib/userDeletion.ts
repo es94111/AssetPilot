@@ -65,6 +65,11 @@ const USER_OWNED_DELETE_STATEMENTS = [
   "DELETE FROM mcp_credentials WHERE user_id = ?",
   "DELETE FROM mcp_oauth_connections WHERE user_id = ?",
   "DELETE FROM mcp_transaction_idempotency WHERE user_id = ?",
+  // 銀行／券商對帳（010-bank-broker-reconciliation，issue #251）：
+  // 差異明細先刪（FK 指向 session），再刪 session 與欄位對應設定。
+  "DELETE FROM reconciliation_items WHERE user_id = ?",
+  "DELETE FROM reconciliation_sessions WHERE user_id = ?",
+  "DELETE FROM reconciliation_import_profiles WHERE user_id = ?",
 ] as const;
 
 function normalizeEmail(email: string | number | null | undefined): string {

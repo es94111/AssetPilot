@@ -5263,4 +5263,308 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get ledgerLastOwnerNotice =>
       'The owner must transfer ownership before leaving or deleting their account.';
+
+  @override
+  String get navReconciliation => '은행 대사 가져오기';
+
+  @override
+  String get featuresReconciliationTitle => '은행 / 증권사 거래내역 대사';
+
+  @override
+  String get featuresReconciliationSubtitle =>
+      'OFX 또는 CSV 거래내역을 가져와 장부와 비교하고 세 가지 차이(장부에만 있음, 거래내역에만 있음, 금액 불일치)를 확인합니다.';
+
+  @override
+  String get featuresReconciliationImportSection => '거래내역 가져오기';
+
+  @override
+  String get featuresReconciliationImportHint =>
+      'OFX 1.x / 2.x와 은행·증권사 CSV를 지원합니다. 가져오기는 원자적이며 한 행이라도 실패하면 전체가 취소됩니다.';
+
+  @override
+  String get featuresReconciliationImportFile => '거래내역 파일';
+
+  @override
+  String get featuresReconciliationImportFileFormats =>
+      '.ofx, .qfx, .csv, .txt 지원';
+
+  @override
+  String get featuresReconciliationImportAccount => '계좌 한정';
+
+  @override
+  String get featuresReconciliationImportAllAccounts => '모든 계좌';
+
+  @override
+  String get featuresReconciliationImportSubmit => '가져오기 및 비교';
+
+  @override
+  String get featuresReconciliationImportRunning => '가져오는 중…';
+
+  @override
+  String get featuresReconciliationImportAtomicNote =>
+      '원자적 배치: 실패 시 전부 롤백되어 일부 데이터만 남지 않습니다.';
+
+  @override
+  String get featuresReconciliationProfileSection => 'CSV 열 매핑';
+
+  @override
+  String get featuresReconciliationProfileSaved => '저장된 매핑';
+
+  @override
+  String get featuresReconciliationProfileUseDraft => '아래 설정 사용(저장 안 함)';
+
+  @override
+  String get featuresReconciliationProfileTemplate => '자주 쓰는 템플릿';
+
+  @override
+  String get featuresReconciliationProfileChooseTemplate => '템플릿 선택…';
+
+  @override
+  String get featuresReconciliationProfileAmountSign => '금액 부호 규칙';
+
+  @override
+  String get featuresReconciliationProfileAmountSignSigned => '음수는 지출(은행 거래내역)';
+
+  @override
+  String get featuresReconciliationProfileAmountSignCreditCard =>
+      '양수는 결제(신용카드 거래내역)';
+
+  @override
+  String get featuresReconciliationProfileDateFormat => '날짜 형식';
+
+  @override
+  String get featuresReconciliationProfileDateFormatAuto => '자동 감지';
+
+  @override
+  String get featuresReconciliationProfileDelimiter => '구분자';
+
+  @override
+  String get featuresReconciliationProfileDelimiterComma => '쉼표(,)';
+
+  @override
+  String get featuresReconciliationProfileDelimiterSemicolon => '세미콜론(;)';
+
+  @override
+  String get featuresReconciliationProfileDelimiterTab => '탭';
+
+  @override
+  String get featuresReconciliationProfileSkipRows => '앞부분 행 건너뛰기';
+
+  @override
+  String get featuresReconciliationProfileHasHeader => '첫 행이 헤더입니다';
+
+  @override
+  String get featuresReconciliationProfileDateColumn => '날짜 열 이름';
+
+  @override
+  String get featuresReconciliationProfileAmountColumn => '금액 열 이름';
+
+  @override
+  String get featuresReconciliationProfileDescriptionColumn => '적요 열 이름';
+
+  @override
+  String get featuresReconciliationProfileDebitColumn => '출금 열 이름';
+
+  @override
+  String get featuresReconciliationProfileCreditColumn => '입금 열 이름';
+
+  @override
+  String get featuresReconciliationProfileFitidColumn => '거래 ID 열 이름(선택)';
+
+  @override
+  String get featuresReconciliationProfileColumnHint =>
+      '금액 열 하나만 사용하거나 출금·입금 열 두 개를 사용하세요(둘 다는 불가). 열 이름은 CSV 헤더와 정확히 일치해야 합니다.';
+
+  @override
+  String get featuresReconciliationProfileName => '매핑 이름';
+
+  @override
+  String get featuresReconciliationProfileNamePlaceholder =>
+      '예: 내 은행 신용카드 거래내역';
+
+  @override
+  String get featuresReconciliationProfileSave => '이 매핑 저장';
+
+  @override
+  String get featuresReconciliationProfileDelete => '이 매핑 삭제';
+
+  @override
+  String get featuresReconciliationResultTitle => '대사 결과 요약';
+
+  @override
+  String get featuresReconciliationResultFilename => '파일';
+
+  @override
+  String get featuresReconciliationResultPeriod => '거래내역 기간';
+
+  @override
+  String get featuresReconciliationResultMatched => '일치';
+
+  @override
+  String featuresReconciliationResultMatchedValue(
+    Object ledger,
+    Object matched,
+    Object statement,
+  ) {
+    return '$matched건 일치(거래내역 $statement건, 장부 $ledger건)';
+  }
+
+  @override
+  String featuresReconciliationResultSkipped(Object detail) {
+    return '건너뛴 거래 유형: $detail';
+  }
+
+  @override
+  String get featuresReconciliationDiffTitle => '차이 내역';
+
+  @override
+  String get featuresReconciliationDiffEmpty =>
+      '차이가 없습니다. 장부와 거래내역이 완전히 일치합니다.';
+
+  @override
+  String featuresReconciliationDiffCount(Object count) {
+    return '$count건';
+  }
+
+  @override
+  String get featuresReconciliationDiffNone => '이 범주에는 차이가 없습니다.';
+
+  @override
+  String get featuresReconciliationDiffColumnsDate => '날짜';
+
+  @override
+  String get featuresReconciliationDiffColumnsLedger => '장부 금액';
+
+  @override
+  String get featuresReconciliationDiffColumnsStatement => '거래내역 금액';
+
+  @override
+  String get featuresReconciliationDiffColumnsDifference => '차액';
+
+  @override
+  String get featuresReconciliationDiffColumnsReference => '출처';
+
+  @override
+  String featuresReconciliationDiffStatementLine(Object line) {
+    return '거래내역 $line행';
+  }
+
+  @override
+  String get featuresReconciliationDiffLedgerRecord => '장부 기록';
+
+  @override
+  String get featuresReconciliationDiffLedgerOnly => '장부에만 있음';
+
+  @override
+  String get featuresReconciliationDiffStatementOnly => '거래내역에만 있음';
+
+  @override
+  String get featuresReconciliationDiffAmountMismatch => '금액 불일치';
+
+  @override
+  String get featuresReconciliationSourceBank => '은행';
+
+  @override
+  String get featuresReconciliationSourceCreditCard => '신용카드';
+
+  @override
+  String get featuresReconciliationSourceInvestment => '증권사';
+
+  @override
+  String get featuresReconciliationHistoryTitle => '대사 기록';
+
+  @override
+  String get featuresReconciliationHistoryEmpty => '대사 기록이 없습니다.';
+
+  @override
+  String get featuresReconciliationHistoryColumnsTime => '일시';
+
+  @override
+  String get featuresReconciliationHistoryColumnsSource => '출처';
+
+  @override
+  String get featuresReconciliationHistoryColumnsPeriod => '기간';
+
+  @override
+  String get featuresReconciliationHistoryColumnsCounts => '차이 건수';
+
+  @override
+  String get featuresReconciliationHistoryColumnsActions => '작업';
+
+  @override
+  String featuresReconciliationHistoryCountsValue(
+    Object ledgerOnly,
+    Object mismatch,
+    Object statementOnly,
+  ) {
+    return '금액 불일치 $mismatch, 거래내역에만 $statementOnly, 장부에만 $ledgerOnly';
+  }
+
+  @override
+  String get featuresReconciliationHistoryView => '차이 보기';
+
+  @override
+  String get featuresReconciliationHistoryViewing => '보는 중';
+
+  @override
+  String featuresReconciliationMessagesImportDone(Object filename) {
+    return '가져오기 및 비교 완료: $filename';
+  }
+
+  @override
+  String get featuresReconciliationMessagesImportFailed =>
+      '가져오기에 실패했으며 아무것도 저장되지 않았습니다.';
+
+  @override
+  String featuresReconciliationMessagesRowError(Object line, Object reason) {
+    return '$line행: $reason';
+  }
+
+  @override
+  String get featuresReconciliationMessagesChooseFile => '먼저 거래내역 파일을 선택하세요.';
+
+  @override
+  String get featuresReconciliationMessagesMissingDateColumn =>
+      '날짜 열 이름을 설정하세요.';
+
+  @override
+  String get featuresReconciliationMessagesMissingAmountColumn =>
+      '금액 열 또는 출금·입금 열을 설정하세요.';
+
+  @override
+  String get featuresReconciliationMessagesConflictingAmountColumn =>
+      '금액 열과 출금·입금 열 중 하나만 사용하세요.';
+
+  @override
+  String get featuresReconciliationMessagesProfileNameRequired =>
+      '매핑 이름을 입력하세요.';
+
+  @override
+  String featuresReconciliationMessagesProfileSaved(Object name) {
+    return '매핑 저장됨: $name';
+  }
+
+  @override
+  String get featuresReconciliationMessagesProfileSaveFailed =>
+      '매핑 저장에 실패했습니다.';
+
+  @override
+  String get featuresReconciliationMessagesProfileDeleted => '매핑을 삭제했습니다.';
+
+  @override
+  String get featuresReconciliationMessagesProfileDeleteFailed =>
+      '매핑 삭제에 실패했습니다.';
+
+  @override
+  String get featuresReconciliationMessagesSessionLoadFailed =>
+      '대사 결과를 불러오지 못했습니다.';
+
+  @override
+  String get featuresReconciliationTemplatesSignedAmount => '단일 금액 열(음수 = 지출)';
+
+  @override
+  String get featuresReconciliationTemplatesDebitCredit => '출금 / 입금 열 분리';
+
+  @override
+  String get featuresReconciliationTemplatesCreditCard => '신용카드 거래내역(양수 = 결제)';
 }

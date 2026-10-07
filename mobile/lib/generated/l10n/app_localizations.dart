@@ -9540,6 +9540,542 @@ abstract class AppLocalizations {
   /// In zh_Hant_TW, this message translates to:
   /// **'擁有者離開帳本或刪除帳號前，必須先移交擁有權。'**
   String get ledgerLastOwnerNotice;
+
+  /// Web path: nav.reconciliation
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'銀行對帳匯入'**
+  String get navReconciliation;
+
+  /// Web path: features.reconciliation.title
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'銀行／券商對帳匯入'**
+  String get featuresReconciliationTitle;
+
+  /// Web path: features.reconciliation.subtitle
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'匯入 OFX 或 CSV 對帳檔，與帳本交易比對並列出三類差異：帳本有對帳單無、對帳單有帳本無、金額不符。'**
+  String get featuresReconciliationSubtitle;
+
+  /// Web path: features.reconciliation.import.section
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'匯入對帳檔'**
+  String get featuresReconciliationImportSection;
+
+  /// Web path: features.reconciliation.import.hint
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'支援 OFX 1.x／2.x 與銀行、券商 CSV；匯入為整批原子化，任何一列解析失敗即整批取消。'**
+  String get featuresReconciliationImportHint;
+
+  /// Web path: features.reconciliation.import.file
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'對帳檔'**
+  String get featuresReconciliationImportFile;
+
+  /// Web path: features.reconciliation.import.fileFormats
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'可接受 .ofx、.qfx、.csv、.txt'**
+  String get featuresReconciliationImportFileFormats;
+
+  /// Web path: features.reconciliation.import.account
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'限定帳戶'**
+  String get featuresReconciliationImportAccount;
+
+  /// Web path: features.reconciliation.import.allAccounts
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'全部帳戶'**
+  String get featuresReconciliationImportAllAccounts;
+
+  /// Web path: features.reconciliation.import.submit
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'開始匯入並比對'**
+  String get featuresReconciliationImportSubmit;
+
+  /// Web path: features.reconciliation.import.running
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'匯入中…'**
+  String get featuresReconciliationImportRunning;
+
+  /// Web path: features.reconciliation.import.atomicNote
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'整批原子化：失敗會全部回滾，不會留下半套資料。'**
+  String get featuresReconciliationImportAtomicNote;
+
+  /// Web path: features.reconciliation.profile.section
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'CSV 欄位對應'**
+  String get featuresReconciliationProfileSection;
+
+  /// Web path: features.reconciliation.profile.saved
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'已儲存的對應設定'**
+  String get featuresReconciliationProfileSaved;
+
+  /// Web path: features.reconciliation.profile.useDraft
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'使用下方設定（不儲存）'**
+  String get featuresReconciliationProfileUseDraft;
+
+  /// Web path: features.reconciliation.profile.template
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'常用樣板'**
+  String get featuresReconciliationProfileTemplate;
+
+  /// Web path: features.reconciliation.profile.chooseTemplate
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'選擇樣板…'**
+  String get featuresReconciliationProfileChooseTemplate;
+
+  /// Web path: features.reconciliation.profile.amountSign
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'金額正負號語意'**
+  String get featuresReconciliationProfileAmountSign;
+
+  /// Web path: features.reconciliation.profile.amountSignSigned
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'負值為支出（銀行對帳單）'**
+  String get featuresReconciliationProfileAmountSignSigned;
+
+  /// Web path: features.reconciliation.profile.amountSignCreditCard
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'正值為消費（信用卡帳單）'**
+  String get featuresReconciliationProfileAmountSignCreditCard;
+
+  /// Web path: features.reconciliation.profile.dateFormat
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'日期格式'**
+  String get featuresReconciliationProfileDateFormat;
+
+  /// Web path: features.reconciliation.profile.dateFormatAuto
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'自動判定'**
+  String get featuresReconciliationProfileDateFormatAuto;
+
+  /// Web path: features.reconciliation.profile.delimiter
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'分隔符號'**
+  String get featuresReconciliationProfileDelimiter;
+
+  /// Web path: features.reconciliation.profile.delimiterComma
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'逗號（,）'**
+  String get featuresReconciliationProfileDelimiterComma;
+
+  /// Web path: features.reconciliation.profile.delimiterSemicolon
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'分號（;）'**
+  String get featuresReconciliationProfileDelimiterSemicolon;
+
+  /// Web path: features.reconciliation.profile.delimiterTab
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'Tab'**
+  String get featuresReconciliationProfileDelimiterTab;
+
+  /// Web path: features.reconciliation.profile.skipRows
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'略過前導列數'**
+  String get featuresReconciliationProfileSkipRows;
+
+  /// Web path: features.reconciliation.profile.hasHeader
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'第一列為標題列'**
+  String get featuresReconciliationProfileHasHeader;
+
+  /// Web path: features.reconciliation.profile.dateColumn
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'日期欄位名稱'**
+  String get featuresReconciliationProfileDateColumn;
+
+  /// Web path: features.reconciliation.profile.amountColumn
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'金額欄位名稱'**
+  String get featuresReconciliationProfileAmountColumn;
+
+  /// Web path: features.reconciliation.profile.descriptionColumn
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'摘要欄位名稱'**
+  String get featuresReconciliationProfileDescriptionColumn;
+
+  /// Web path: features.reconciliation.profile.debitColumn
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'借方金額欄位名稱'**
+  String get featuresReconciliationProfileDebitColumn;
+
+  /// Web path: features.reconciliation.profile.creditColumn
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'貸方金額欄位名稱'**
+  String get featuresReconciliationProfileCreditColumn;
+
+  /// Web path: features.reconciliation.profile.fitidColumn
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'交易識別碼欄位名稱（選填）'**
+  String get featuresReconciliationProfileFitidColumn;
+
+  /// Web path: features.reconciliation.profile.columnHint
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'金額可填單一「金額」欄，或改用「借方／貸方」兩個欄位（二選一）。欄位名稱需與 CSV 標題完全一致。'**
+  String get featuresReconciliationProfileColumnHint;
+
+  /// Web path: features.reconciliation.profile.name
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'設定名稱'**
+  String get featuresReconciliationProfileName;
+
+  /// Web path: features.reconciliation.profile.namePlaceholder
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'例如：某銀行信用卡帳單'**
+  String get featuresReconciliationProfileNamePlaceholder;
+
+  /// Web path: features.reconciliation.profile.save
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'儲存此對應'**
+  String get featuresReconciliationProfileSave;
+
+  /// Web path: features.reconciliation.profile.delete
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'刪除此對應'**
+  String get featuresReconciliationProfileDelete;
+
+  /// Web path: features.reconciliation.result.title
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'對帳結果摘要'**
+  String get featuresReconciliationResultTitle;
+
+  /// Web path: features.reconciliation.result.filename
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'檔案'**
+  String get featuresReconciliationResultFilename;
+
+  /// Web path: features.reconciliation.result.period
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'對帳期間'**
+  String get featuresReconciliationResultPeriod;
+
+  /// Web path: features.reconciliation.result.matched
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'配對情形'**
+  String get featuresReconciliationResultMatched;
+
+  /// Web path: features.reconciliation.result.matchedValue
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'成功配對 {matched} 筆（對帳單 {statement} 筆、帳本 {ledger} 筆）'**
+  String featuresReconciliationResultMatchedValue(
+    Object ledger,
+    Object matched,
+    Object statement,
+  );
+
+  /// Web path: features.reconciliation.result.skipped
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'略過的交易型別：{detail}'**
+  String featuresReconciliationResultSkipped(Object detail);
+
+  /// Web path: features.reconciliation.diff.title
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'差異明細'**
+  String get featuresReconciliationDiffTitle;
+
+  /// Web path: features.reconciliation.diff.empty
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'沒有差異：帳本與對帳單完全一致。'**
+  String get featuresReconciliationDiffEmpty;
+
+  /// Web path: features.reconciliation.diff.count
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'{count} 筆'**
+  String featuresReconciliationDiffCount(Object count);
+
+  /// Web path: features.reconciliation.diff.none
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'此類別沒有差異。'**
+  String get featuresReconciliationDiffNone;
+
+  /// Web path: features.reconciliation.diff.columns.date
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'日期'**
+  String get featuresReconciliationDiffColumnsDate;
+
+  /// Web path: features.reconciliation.diff.columns.ledger
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'帳本金額'**
+  String get featuresReconciliationDiffColumnsLedger;
+
+  /// Web path: features.reconciliation.diff.columns.statement
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'對帳單金額'**
+  String get featuresReconciliationDiffColumnsStatement;
+
+  /// Web path: features.reconciliation.diff.columns.difference
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'差額'**
+  String get featuresReconciliationDiffColumnsDifference;
+
+  /// Web path: features.reconciliation.diff.columns.reference
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'來源'**
+  String get featuresReconciliationDiffColumnsReference;
+
+  /// Web path: features.reconciliation.diff.statementLine
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'對帳單第 {line} 列'**
+  String featuresReconciliationDiffStatementLine(Object line);
+
+  /// Web path: features.reconciliation.diff.ledgerRecord
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'帳本紀錄'**
+  String get featuresReconciliationDiffLedgerRecord;
+
+  /// Web path: features.reconciliation.diff.ledgerOnly
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'帳本有、對帳單無'**
+  String get featuresReconciliationDiffLedgerOnly;
+
+  /// Web path: features.reconciliation.diff.statementOnly
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'對帳單有、帳本無'**
+  String get featuresReconciliationDiffStatementOnly;
+
+  /// Web path: features.reconciliation.diff.amountMismatch
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'金額不符'**
+  String get featuresReconciliationDiffAmountMismatch;
+
+  /// Web path: features.reconciliation.source.bank
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'銀行'**
+  String get featuresReconciliationSourceBank;
+
+  /// Web path: features.reconciliation.source.creditCard
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'信用卡'**
+  String get featuresReconciliationSourceCreditCard;
+
+  /// Web path: features.reconciliation.source.investment
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'券商'**
+  String get featuresReconciliationSourceInvestment;
+
+  /// Web path: features.reconciliation.history.title
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'對帳歷史'**
+  String get featuresReconciliationHistoryTitle;
+
+  /// Web path: features.reconciliation.history.empty
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'尚無對帳紀錄。'**
+  String get featuresReconciliationHistoryEmpty;
+
+  /// Web path: features.reconciliation.history.columns.time
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'時間'**
+  String get featuresReconciliationHistoryColumnsTime;
+
+  /// Web path: features.reconciliation.history.columns.source
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'來源'**
+  String get featuresReconciliationHistoryColumnsSource;
+
+  /// Web path: features.reconciliation.history.columns.period
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'期間'**
+  String get featuresReconciliationHistoryColumnsPeriod;
+
+  /// Web path: features.reconciliation.history.columns.counts
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'差異筆數'**
+  String get featuresReconciliationHistoryColumnsCounts;
+
+  /// Web path: features.reconciliation.history.columns.actions
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'操作'**
+  String get featuresReconciliationHistoryColumnsActions;
+
+  /// Web path: features.reconciliation.history.countsValue
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'金額不符 {mismatch}、對帳單獨有 {statementOnly}、帳本獨有 {ledgerOnly}'**
+  String featuresReconciliationHistoryCountsValue(
+    Object ledgerOnly,
+    Object mismatch,
+    Object statementOnly,
+  );
+
+  /// Web path: features.reconciliation.history.view
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'查看差異'**
+  String get featuresReconciliationHistoryView;
+
+  /// Web path: features.reconciliation.history.viewing
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'檢視中'**
+  String get featuresReconciliationHistoryViewing;
+
+  /// Web path: features.reconciliation.messages.importDone
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'已匯入並完成比對：{filename}'**
+  String featuresReconciliationMessagesImportDone(Object filename);
+
+  /// Web path: features.reconciliation.messages.importFailed
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'匯入失敗，未寫入任何資料。'**
+  String get featuresReconciliationMessagesImportFailed;
+
+  /// Web path: features.reconciliation.messages.rowError
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'第 {line} 列：{reason}'**
+  String featuresReconciliationMessagesRowError(Object line, Object reason);
+
+  /// Web path: features.reconciliation.messages.chooseFile
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'請先選擇對帳檔。'**
+  String get featuresReconciliationMessagesChooseFile;
+
+  /// Web path: features.reconciliation.messages.missingDateColumn
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'請設定日期欄位名稱。'**
+  String get featuresReconciliationMessagesMissingDateColumn;
+
+  /// Web path: features.reconciliation.messages.missingAmountColumn
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'請設定金額欄位，或借方／貸方欄位。'**
+  String get featuresReconciliationMessagesMissingAmountColumn;
+
+  /// Web path: features.reconciliation.messages.conflictingAmountColumn
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'金額欄與借方／貸方欄只能二選一。'**
+  String get featuresReconciliationMessagesConflictingAmountColumn;
+
+  /// Web path: features.reconciliation.messages.profileNameRequired
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'請輸入對應設定的名稱。'**
+  String get featuresReconciliationMessagesProfileNameRequired;
+
+  /// Web path: features.reconciliation.messages.profileSaved
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'已儲存對應設定：{name}'**
+  String featuresReconciliationMessagesProfileSaved(Object name);
+
+  /// Web path: features.reconciliation.messages.profileSaveFailed
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'儲存對應設定失敗。'**
+  String get featuresReconciliationMessagesProfileSaveFailed;
+
+  /// Web path: features.reconciliation.messages.profileDeleted
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'已刪除對應設定。'**
+  String get featuresReconciliationMessagesProfileDeleted;
+
+  /// Web path: features.reconciliation.messages.profileDeleteFailed
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'刪除對應設定失敗。'**
+  String get featuresReconciliationMessagesProfileDeleteFailed;
+
+  /// Web path: features.reconciliation.messages.sessionLoadFailed
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'讀取對帳結果失敗。'**
+  String get featuresReconciliationMessagesSessionLoadFailed;
+
+  /// Web path: features.reconciliation.templates.signedAmount
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'單一金額欄（負值為支出）'**
+  String get featuresReconciliationTemplatesSignedAmount;
+
+  /// Web path: features.reconciliation.templates.debitCredit
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'借方／貸方兩欄'**
+  String get featuresReconciliationTemplatesDebitCredit;
+
+  /// Web path: features.reconciliation.templates.creditCard
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'信用卡帳單（正值為消費）'**
+  String get featuresReconciliationTemplatesCreditCard;
 }
 
 class _AppLocalizationsDelegate

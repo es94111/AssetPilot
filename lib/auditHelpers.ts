@@ -30,6 +30,11 @@ const AUDIT_METADATA_ALLOWED_KEYS = new Set([
   'api_token_id', 'api_token_name', 'api_token_scopes',
   'webhook_subscription_id', 'webhook_url', 'webhook_events',
   'webhook_delivery_id', 'webhook_event_type', 'webhook_status',
+  // 銀行／券商對帳匯入與差異比對稽核（010-bank-broker-reconciliation，issue #251）。
+  // 只記錄來源與差異筆數，不記錄帳號或交易明細（明細已存於 reconciliation_items）。
+  'reconciliation_session_id', 'reconciliation_profile_id',
+  'source_format', 'source_kind', 'statement_total', 'ledger_total',
+  'matched', 'ledger_only', 'statement_only', 'amount_mismatch',
 ]);
 
 export interface WriteAuditArgs {

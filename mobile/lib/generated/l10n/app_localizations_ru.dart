@@ -5496,4 +5496,324 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get ledgerLastOwnerNotice =>
       'The owner must transfer ownership before leaving or deleting their account.';
+
+  @override
+  String get navReconciliation => 'Сверка с банком';
+
+  @override
+  String get featuresReconciliationTitle =>
+      'Сверка банковских и брокерских выписок';
+
+  @override
+  String get featuresReconciliationSubtitle =>
+      'Импортируйте выписку OFX или CSV и сравните её с книгой по трём видам расхождений: только в книге, только в выписке и несовпадение суммы.';
+
+  @override
+  String get featuresReconciliationImportSection => 'Импорт выписки';
+
+  @override
+  String get featuresReconciliationImportHint =>
+      'Поддерживаются OFX 1.x / 2.x и CSV банков и брокеров. Импорт атомарный: при ошибке в любой строке отклоняется весь пакет.';
+
+  @override
+  String get featuresReconciliationImportFile => 'Файл выписки';
+
+  @override
+  String get featuresReconciliationImportFileFormats =>
+      'Принимаются .ofx, .qfx, .csv, .txt';
+
+  @override
+  String get featuresReconciliationImportAccount => 'Ограничить счётом';
+
+  @override
+  String get featuresReconciliationImportAllAccounts => 'Все счета';
+
+  @override
+  String get featuresReconciliationImportSubmit => 'Импортировать и сравнить';
+
+  @override
+  String get featuresReconciliationImportRunning => 'Импорт…';
+
+  @override
+  String get featuresReconciliationImportAtomicNote =>
+      'Атомарный пакет: при сбое всё откатывается без частичных данных.';
+
+  @override
+  String get featuresReconciliationProfileSection =>
+      'Сопоставление колонок CSV';
+
+  @override
+  String get featuresReconciliationProfileSaved => 'Сохранённое сопоставление';
+
+  @override
+  String get featuresReconciliationProfileUseDraft =>
+      'Использовать настройки ниже (без сохранения)';
+
+  @override
+  String get featuresReconciliationProfileTemplate => 'Типовой шаблон';
+
+  @override
+  String get featuresReconciliationProfileChooseTemplate => 'Выберите шаблон…';
+
+  @override
+  String get featuresReconciliationProfileAmountSign => 'Знак суммы';
+
+  @override
+  String get featuresReconciliationProfileAmountSignSigned =>
+      'Отрицательное — расход (банковская выписка)';
+
+  @override
+  String get featuresReconciliationProfileAmountSignCreditCard =>
+      'Положительное — покупка (выписка по карте)';
+
+  @override
+  String get featuresReconciliationProfileDateFormat => 'Формат даты';
+
+  @override
+  String get featuresReconciliationProfileDateFormatAuto =>
+      'Определять автоматически';
+
+  @override
+  String get featuresReconciliationProfileDelimiter => 'Разделитель';
+
+  @override
+  String get featuresReconciliationProfileDelimiterComma => 'Запятая (,)';
+
+  @override
+  String get featuresReconciliationProfileDelimiterSemicolon =>
+      'Точка с запятой (;)';
+
+  @override
+  String get featuresReconciliationProfileDelimiterTab => 'Табуляция';
+
+  @override
+  String get featuresReconciliationProfileSkipRows =>
+      'Пропустить первые строки';
+
+  @override
+  String get featuresReconciliationProfileHasHeader =>
+      'Первая строка — заголовки';
+
+  @override
+  String get featuresReconciliationProfileDateColumn => 'Имя колонки даты';
+
+  @override
+  String get featuresReconciliationProfileAmountColumn => 'Имя колонки суммы';
+
+  @override
+  String get featuresReconciliationProfileDescriptionColumn =>
+      'Имя колонки описания';
+
+  @override
+  String get featuresReconciliationProfileDebitColumn => 'Имя колонки дебета';
+
+  @override
+  String get featuresReconciliationProfileCreditColumn => 'Имя колонки кредита';
+
+  @override
+  String get featuresReconciliationProfileFitidColumn =>
+      'Имя колонки ID операции (необязательно)';
+
+  @override
+  String get featuresReconciliationProfileColumnHint =>
+      'Заполните либо одну колонку суммы, либо колонки дебета и кредита — но не обе схемы. Имена должны точно совпадать с заголовками CSV.';
+
+  @override
+  String get featuresReconciliationProfileName => 'Название сопоставления';
+
+  @override
+  String get featuresReconciliationProfileNamePlaceholder =>
+      'напр. Выписка по карте моего банка';
+
+  @override
+  String get featuresReconciliationProfileSave => 'Сохранить сопоставление';
+
+  @override
+  String get featuresReconciliationProfileDelete => 'Удалить сопоставление';
+
+  @override
+  String get featuresReconciliationResultTitle => 'Итоги сверки';
+
+  @override
+  String get featuresReconciliationResultFilename => 'Файл';
+
+  @override
+  String get featuresReconciliationResultPeriod => 'Период выписки';
+
+  @override
+  String get featuresReconciliationResultMatched => 'Совпадения';
+
+  @override
+  String featuresReconciliationResultMatchedValue(
+    Object ledger,
+    Object matched,
+    Object statement,
+  ) {
+    return '$matched совпадений (выписка $statement, книга $ledger)';
+  }
+
+  @override
+  String featuresReconciliationResultSkipped(Object detail) {
+    return 'Пропущенные типы операций: $detail';
+  }
+
+  @override
+  String get featuresReconciliationDiffTitle => 'Расхождения';
+
+  @override
+  String get featuresReconciliationDiffEmpty =>
+      'Расхождений нет: книга и выписка полностью совпадают.';
+
+  @override
+  String featuresReconciliationDiffCount(Object count) {
+    return '$count строк';
+  }
+
+  @override
+  String get featuresReconciliationDiffNone =>
+      'В этой категории расхождений нет.';
+
+  @override
+  String get featuresReconciliationDiffColumnsDate => 'Дата';
+
+  @override
+  String get featuresReconciliationDiffColumnsLedger => 'Сумма в книге';
+
+  @override
+  String get featuresReconciliationDiffColumnsStatement => 'Сумма в выписке';
+
+  @override
+  String get featuresReconciliationDiffColumnsDifference => 'Разница';
+
+  @override
+  String get featuresReconciliationDiffColumnsReference => 'Источник';
+
+  @override
+  String featuresReconciliationDiffStatementLine(Object line) {
+    return 'Строка $line выписки';
+  }
+
+  @override
+  String get featuresReconciliationDiffLedgerRecord => 'Запись в книге';
+
+  @override
+  String get featuresReconciliationDiffLedgerOnly => 'Только в книге';
+
+  @override
+  String get featuresReconciliationDiffStatementOnly => 'Только в выписке';
+
+  @override
+  String get featuresReconciliationDiffAmountMismatch => 'Несовпадение суммы';
+
+  @override
+  String get featuresReconciliationSourceBank => 'Банк';
+
+  @override
+  String get featuresReconciliationSourceCreditCard => 'Кредитная карта';
+
+  @override
+  String get featuresReconciliationSourceInvestment => 'Брокер';
+
+  @override
+  String get featuresReconciliationHistoryTitle => 'История сверок';
+
+  @override
+  String get featuresReconciliationHistoryEmpty => 'История сверок пуста.';
+
+  @override
+  String get featuresReconciliationHistoryColumnsTime => 'Время';
+
+  @override
+  String get featuresReconciliationHistoryColumnsSource => 'Источник';
+
+  @override
+  String get featuresReconciliationHistoryColumnsPeriod => 'Период';
+
+  @override
+  String get featuresReconciliationHistoryColumnsCounts => 'Расхождения';
+
+  @override
+  String get featuresReconciliationHistoryColumnsActions => 'Действия';
+
+  @override
+  String featuresReconciliationHistoryCountsValue(
+    Object ledgerOnly,
+    Object mismatch,
+    Object statementOnly,
+  ) {
+    return 'Несовпадений $mismatch, только в выписке $statementOnly, только в книге $ledgerOnly';
+  }
+
+  @override
+  String get featuresReconciliationHistoryView => 'Показать расхождения';
+
+  @override
+  String get featuresReconciliationHistoryViewing => 'Просмотр';
+
+  @override
+  String featuresReconciliationMessagesImportDone(Object filename) {
+    return 'Импортировано и сопоставлено: $filename';
+  }
+
+  @override
+  String get featuresReconciliationMessagesImportFailed =>
+      'Импорт не выполнен; данные не записаны.';
+
+  @override
+  String featuresReconciliationMessagesRowError(Object line, Object reason) {
+    return 'Строка $line: $reason';
+  }
+
+  @override
+  String get featuresReconciliationMessagesChooseFile =>
+      'Сначала выберите файл выписки.';
+
+  @override
+  String get featuresReconciliationMessagesMissingDateColumn =>
+      'Укажите имя колонки даты.';
+
+  @override
+  String get featuresReconciliationMessagesMissingAmountColumn =>
+      'Укажите колонку суммы либо колонки дебета и кредита.';
+
+  @override
+  String get featuresReconciliationMessagesConflictingAmountColumn =>
+      'Используйте либо колонку суммы, либо колонки дебета и кредита, но не обе.';
+
+  @override
+  String get featuresReconciliationMessagesProfileNameRequired =>
+      'Введите название сопоставления.';
+
+  @override
+  String featuresReconciliationMessagesProfileSaved(Object name) {
+    return 'Сопоставление сохранено: $name';
+  }
+
+  @override
+  String get featuresReconciliationMessagesProfileSaveFailed =>
+      'Не удалось сохранить сопоставление.';
+
+  @override
+  String get featuresReconciliationMessagesProfileDeleted =>
+      'Сопоставление удалено.';
+
+  @override
+  String get featuresReconciliationMessagesProfileDeleteFailed =>
+      'Не удалось удалить сопоставление.';
+
+  @override
+  String get featuresReconciliationMessagesSessionLoadFailed =>
+      'Не удалось загрузить результат сверки.';
+
+  @override
+  String get featuresReconciliationTemplatesSignedAmount =>
+      'Одна колонка суммы (минус — расход)';
+
+  @override
+  String get featuresReconciliationTemplatesDebitCredit =>
+      'Отдельные колонки дебета и кредита';
+
+  @override
+  String get featuresReconciliationTemplatesCreditCard =>
+      'Выписка по карте (плюс — покупка)';
 }

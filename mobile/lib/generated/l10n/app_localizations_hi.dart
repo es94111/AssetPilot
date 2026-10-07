@@ -5431,4 +5431,317 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get ledgerLastOwnerNotice =>
       'The owner must transfer ownership before leaving or deleting their account.';
+
+  @override
+  String get navReconciliation => 'बैंक मिलान';
+
+  @override
+  String get featuresReconciliationTitle => 'बैंक / ब्रोकर विवरण मिलान';
+
+  @override
+  String get featuresReconciliationSubtitle =>
+      'OFX या CSV विवरण आयात करें और अपने बहीखाते से तीन प्रकार के अंतरों की तुलना करें: केवल बहीखाते में, केवल विवरण में, और राशि में अंतर।';
+
+  @override
+  String get featuresReconciliationImportSection => 'विवरण आयात करें';
+
+  @override
+  String get featuresReconciliationImportHint =>
+      'OFX 1.x / 2.x और बैंक या ब्रोकर CSV समर्थित है। आयात पूर्णतः परमाणु है: किसी भी पंक्ति के विफल होने पर पूरा बैच अस्वीकार हो जाता है।';
+
+  @override
+  String get featuresReconciliationImportFile => 'विवरण फ़ाइल';
+
+  @override
+  String get featuresReconciliationImportFileFormats =>
+      '.ofx, .qfx, .csv, .txt स्वीकार्य';
+
+  @override
+  String get featuresReconciliationImportAccount => 'खाते तक सीमित करें';
+
+  @override
+  String get featuresReconciliationImportAllAccounts => 'सभी खाते';
+
+  @override
+  String get featuresReconciliationImportSubmit => 'आयात और तुलना करें';
+
+  @override
+  String get featuresReconciliationImportRunning => 'आयात हो रहा है…';
+
+  @override
+  String get featuresReconciliationImportAtomicNote =>
+      'परमाणु बैच: विफलता पर सब कुछ वापस हो जाता है, अधूरा डेटा नहीं रहता।';
+
+  @override
+  String get featuresReconciliationProfileSection => 'CSV कॉलम मैपिंग';
+
+  @override
+  String get featuresReconciliationProfileSaved => 'सहेजी गई मैपिंग';
+
+  @override
+  String get featuresReconciliationProfileUseDraft =>
+      'नीचे की सेटिंग्स उपयोग करें (सहेजी नहीं जाएगी)';
+
+  @override
+  String get featuresReconciliationProfileTemplate => 'सामान्य टेम्पलेट';
+
+  @override
+  String get featuresReconciliationProfileChooseTemplate => 'टेम्पलेट चुनें…';
+
+  @override
+  String get featuresReconciliationProfileAmountSign => 'राशि चिह्न नियम';
+
+  @override
+  String get featuresReconciliationProfileAmountSignSigned =>
+      'ऋणात्मक का अर्थ व्यय (बैंक विवरण)';
+
+  @override
+  String get featuresReconciliationProfileAmountSignCreditCard =>
+      'धनात्मक का अर्थ खरीद (क्रेडिट कार्ड विवरण)';
+
+  @override
+  String get featuresReconciliationProfileDateFormat => 'दिनांक प्रारूप';
+
+  @override
+  String get featuresReconciliationProfileDateFormatAuto => 'स्वतः पहचानें';
+
+  @override
+  String get featuresReconciliationProfileDelimiter => 'विभाजक';
+
+  @override
+  String get featuresReconciliationProfileDelimiterComma => 'कॉमा (,)';
+
+  @override
+  String get featuresReconciliationProfileDelimiterSemicolon => 'सेमीकोलन (;)';
+
+  @override
+  String get featuresReconciliationProfileDelimiterTab => 'टैब';
+
+  @override
+  String get featuresReconciliationProfileSkipRows =>
+      'शुरुआती पंक्तियाँ छोड़ें';
+
+  @override
+  String get featuresReconciliationProfileHasHeader => 'पहली पंक्ति हेडर है';
+
+  @override
+  String get featuresReconciliationProfileDateColumn => 'दिनांक कॉलम का नाम';
+
+  @override
+  String get featuresReconciliationProfileAmountColumn => 'राशि कॉलम का नाम';
+
+  @override
+  String get featuresReconciliationProfileDescriptionColumn =>
+      'विवरण कॉलम का नाम';
+
+  @override
+  String get featuresReconciliationProfileDebitColumn => 'डेबिट कॉलम का नाम';
+
+  @override
+  String get featuresReconciliationProfileCreditColumn => 'क्रेडिट कॉलम का नाम';
+
+  @override
+  String get featuresReconciliationProfileFitidColumn =>
+      'लेन-देन आईडी कॉलम का नाम (वैकल्पिक)';
+
+  @override
+  String get featuresReconciliationProfileColumnHint =>
+      'या तो एक अकेला राशि कॉलम भरें, या डेबिट और क्रेडिट दोनों कॉलम — दोनों शैलियाँ नहीं। नाम CSV हेडर से बिल्कुल मेल खाने चाहिए।';
+
+  @override
+  String get featuresReconciliationProfileName => 'मैपिंग का नाम';
+
+  @override
+  String get featuresReconciliationProfileNamePlaceholder =>
+      'जैसे: मेरे बैंक का क्रेडिट कार्ड विवरण';
+
+  @override
+  String get featuresReconciliationProfileSave => 'यह मैपिंग सहेजें';
+
+  @override
+  String get featuresReconciliationProfileDelete => 'यह मैपिंग हटाएँ';
+
+  @override
+  String get featuresReconciliationResultTitle => 'मिलान सारांश';
+
+  @override
+  String get featuresReconciliationResultFilename => 'फ़ाइल';
+
+  @override
+  String get featuresReconciliationResultPeriod => 'विवरण अवधि';
+
+  @override
+  String get featuresReconciliationResultMatched => 'मिलान';
+
+  @override
+  String featuresReconciliationResultMatchedValue(
+    Object ledger,
+    Object matched,
+    Object statement,
+  ) {
+    return '$matched मिलान (विवरण $statement, बहीखाता $ledger)';
+  }
+
+  @override
+  String featuresReconciliationResultSkipped(Object detail) {
+    return 'छोड़े गए लेन-देन प्रकार: $detail';
+  }
+
+  @override
+  String get featuresReconciliationDiffTitle => 'अंतर';
+
+  @override
+  String get featuresReconciliationDiffEmpty =>
+      'कोई अंतर नहीं: बहीखाता और विवरण पूरी तरह मेल खाते हैं।';
+
+  @override
+  String featuresReconciliationDiffCount(Object count) {
+    return '$count पंक्तियाँ';
+  }
+
+  @override
+  String get featuresReconciliationDiffNone => 'इस श्रेणी में कोई अंतर नहीं।';
+
+  @override
+  String get featuresReconciliationDiffColumnsDate => 'दिनांक';
+
+  @override
+  String get featuresReconciliationDiffColumnsLedger => 'बहीखाता राशि';
+
+  @override
+  String get featuresReconciliationDiffColumnsStatement => 'विवरण राशि';
+
+  @override
+  String get featuresReconciliationDiffColumnsDifference => 'अंतर';
+
+  @override
+  String get featuresReconciliationDiffColumnsReference => 'संदर्भ';
+
+  @override
+  String featuresReconciliationDiffStatementLine(Object line) {
+    return 'विवरण पंक्ति $line';
+  }
+
+  @override
+  String get featuresReconciliationDiffLedgerRecord => 'बहीखाता प्रविष्टि';
+
+  @override
+  String get featuresReconciliationDiffLedgerOnly => 'केवल बहीखाते में';
+
+  @override
+  String get featuresReconciliationDiffStatementOnly => 'केवल विवरण में';
+
+  @override
+  String get featuresReconciliationDiffAmountMismatch => 'राशि में अंतर';
+
+  @override
+  String get featuresReconciliationSourceBank => 'बैंक';
+
+  @override
+  String get featuresReconciliationSourceCreditCard => 'क्रेडिट कार्ड';
+
+  @override
+  String get featuresReconciliationSourceInvestment => 'ब्रोकर';
+
+  @override
+  String get featuresReconciliationHistoryTitle => 'मिलान इतिहास';
+
+  @override
+  String get featuresReconciliationHistoryEmpty => 'अभी कोई मिलान इतिहास नहीं।';
+
+  @override
+  String get featuresReconciliationHistoryColumnsTime => 'समय';
+
+  @override
+  String get featuresReconciliationHistoryColumnsSource => 'स्रोत';
+
+  @override
+  String get featuresReconciliationHistoryColumnsPeriod => 'अवधि';
+
+  @override
+  String get featuresReconciliationHistoryColumnsCounts => 'अंतर';
+
+  @override
+  String get featuresReconciliationHistoryColumnsActions => 'क्रियाएँ';
+
+  @override
+  String featuresReconciliationHistoryCountsValue(
+    Object ledgerOnly,
+    Object mismatch,
+    Object statementOnly,
+  ) {
+    return 'असंगत $mismatch, केवल विवरण $statementOnly, केवल बहीखाता $ledgerOnly';
+  }
+
+  @override
+  String get featuresReconciliationHistoryView => 'अंतर देखें';
+
+  @override
+  String get featuresReconciliationHistoryViewing => 'देखा जा रहा है';
+
+  @override
+  String featuresReconciliationMessagesImportDone(Object filename) {
+    return 'आयात और तुलना पूर्ण: $filename';
+  }
+
+  @override
+  String get featuresReconciliationMessagesImportFailed =>
+      'आयात विफल; कुछ भी नहीं लिखा गया।';
+
+  @override
+  String featuresReconciliationMessagesRowError(Object line, Object reason) {
+    return 'पंक्ति $line: $reason';
+  }
+
+  @override
+  String get featuresReconciliationMessagesChooseFile =>
+      'पहले विवरण फ़ाइल चुनें।';
+
+  @override
+  String get featuresReconciliationMessagesMissingDateColumn =>
+      'दिनांक कॉलम का नाम दें।';
+
+  @override
+  String get featuresReconciliationMessagesMissingAmountColumn =>
+      'राशि कॉलम या डेबिट / क्रेडिट कॉलम सेट करें।';
+
+  @override
+  String get featuresReconciliationMessagesConflictingAmountColumn =>
+      'राशि कॉलम या डेबिट / क्रेडिट कॉलम — दोनों नहीं।';
+
+  @override
+  String get featuresReconciliationMessagesProfileNameRequired =>
+      'मैपिंग के लिए नाम दर्ज करें।';
+
+  @override
+  String featuresReconciliationMessagesProfileSaved(Object name) {
+    return 'मैपिंग सहेजी गई: $name';
+  }
+
+  @override
+  String get featuresReconciliationMessagesProfileSaveFailed =>
+      'मैपिंग सहेजने में विफल।';
+
+  @override
+  String get featuresReconciliationMessagesProfileDeleted => 'मैपिंग हटाई गई।';
+
+  @override
+  String get featuresReconciliationMessagesProfileDeleteFailed =>
+      'मैपिंग हटाने में विफल।';
+
+  @override
+  String get featuresReconciliationMessagesSessionLoadFailed =>
+      'मिलान परिणाम लोड करने में विफल।';
+
+  @override
+  String get featuresReconciliationTemplatesSignedAmount =>
+      'एकल राशि कॉलम (ऋणात्मक = व्यय)';
+
+  @override
+  String get featuresReconciliationTemplatesDebitCredit =>
+      'अलग डेबिट / क्रेडिट कॉलम';
+
+  @override
+  String get featuresReconciliationTemplatesCreditCard =>
+      'क्रेडिट कार्ड विवरण (धनात्मक = खरीद)';
 }

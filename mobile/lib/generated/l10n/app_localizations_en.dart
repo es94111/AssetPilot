@@ -5434,4 +5434,322 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get ledgerLastOwnerNotice =>
       'The owner must transfer ownership before leaving or deleting their account.';
+
+  @override
+  String get navReconciliation => 'Bank reconciliation';
+
+  @override
+  String get featuresReconciliationTitle =>
+      'Bank / broker statement reconciliation';
+
+  @override
+  String get featuresReconciliationSubtitle =>
+      'Import an OFX or CSV statement and compare it with your ledger across three difference types: only in ledger, only in statement, and amount mismatch.';
+
+  @override
+  String get featuresReconciliationImportSection => 'Import a statement';
+
+  @override
+  String get featuresReconciliationImportHint =>
+      'Supports OFX 1.x / 2.x and bank or broker CSV. Imports are atomic: if any row fails to parse, the whole batch is rejected.';
+
+  @override
+  String get featuresReconciliationImportFile => 'Statement file';
+
+  @override
+  String get featuresReconciliationImportFileFormats =>
+      'Accepts .ofx, .qfx, .csv, .txt';
+
+  @override
+  String get featuresReconciliationImportAccount => 'Limit to account';
+
+  @override
+  String get featuresReconciliationImportAllAccounts => 'All accounts';
+
+  @override
+  String get featuresReconciliationImportSubmit => 'Import and compare';
+
+  @override
+  String get featuresReconciliationImportRunning => 'Importing…';
+
+  @override
+  String get featuresReconciliationImportAtomicNote =>
+      'Atomic batch: failures roll back completely, leaving no partial data.';
+
+  @override
+  String get featuresReconciliationProfileSection => 'CSV column mapping';
+
+  @override
+  String get featuresReconciliationProfileSaved => 'Saved mapping';
+
+  @override
+  String get featuresReconciliationProfileUseDraft =>
+      'Use settings below (not saved)';
+
+  @override
+  String get featuresReconciliationProfileTemplate => 'Common template';
+
+  @override
+  String get featuresReconciliationProfileChooseTemplate =>
+      'Choose a template…';
+
+  @override
+  String get featuresReconciliationProfileAmountSign =>
+      'Amount sign convention';
+
+  @override
+  String get featuresReconciliationProfileAmountSignSigned =>
+      'Negative means money out (bank statement)';
+
+  @override
+  String get featuresReconciliationProfileAmountSignCreditCard =>
+      'Positive means purchase (credit card statement)';
+
+  @override
+  String get featuresReconciliationProfileDateFormat => 'Date format';
+
+  @override
+  String get featuresReconciliationProfileDateFormatAuto =>
+      'Detect automatically';
+
+  @override
+  String get featuresReconciliationProfileDelimiter => 'Delimiter';
+
+  @override
+  String get featuresReconciliationProfileDelimiterComma => 'Comma (,)';
+
+  @override
+  String get featuresReconciliationProfileDelimiterSemicolon => 'Semicolon (;)';
+
+  @override
+  String get featuresReconciliationProfileDelimiterTab => 'Tab';
+
+  @override
+  String get featuresReconciliationProfileSkipRows => 'Skip leading rows';
+
+  @override
+  String get featuresReconciliationProfileHasHeader => 'First row is a header';
+
+  @override
+  String get featuresReconciliationProfileDateColumn => 'Date column name';
+
+  @override
+  String get featuresReconciliationProfileAmountColumn => 'Amount column name';
+
+  @override
+  String get featuresReconciliationProfileDescriptionColumn =>
+      'Description column name';
+
+  @override
+  String get featuresReconciliationProfileDebitColumn => 'Debit column name';
+
+  @override
+  String get featuresReconciliationProfileCreditColumn => 'Credit column name';
+
+  @override
+  String get featuresReconciliationProfileFitidColumn =>
+      'Transaction ID column name (optional)';
+
+  @override
+  String get featuresReconciliationProfileColumnHint =>
+      'Fill either a single amount column, or both debit and credit columns — not both styles. Column names must match the CSV header exactly.';
+
+  @override
+  String get featuresReconciliationProfileName => 'Mapping name';
+
+  @override
+  String get featuresReconciliationProfileNamePlaceholder =>
+      'e.g. My bank credit card statement';
+
+  @override
+  String get featuresReconciliationProfileSave => 'Save this mapping';
+
+  @override
+  String get featuresReconciliationProfileDelete => 'Delete this mapping';
+
+  @override
+  String get featuresReconciliationResultTitle => 'Reconciliation summary';
+
+  @override
+  String get featuresReconciliationResultFilename => 'File';
+
+  @override
+  String get featuresReconciliationResultPeriod => 'Statement period';
+
+  @override
+  String get featuresReconciliationResultMatched => 'Matches';
+
+  @override
+  String featuresReconciliationResultMatchedValue(
+    Object ledger,
+    Object matched,
+    Object statement,
+  ) {
+    return '$matched matched (statement $statement, ledger $ledger)';
+  }
+
+  @override
+  String featuresReconciliationResultSkipped(Object detail) {
+    return 'Skipped transaction types: $detail';
+  }
+
+  @override
+  String get featuresReconciliationDiffTitle => 'Differences';
+
+  @override
+  String get featuresReconciliationDiffEmpty =>
+      'No differences: the ledger and statement agree completely.';
+
+  @override
+  String featuresReconciliationDiffCount(Object count) {
+    return '$count rows';
+  }
+
+  @override
+  String get featuresReconciliationDiffNone =>
+      'No differences in this category.';
+
+  @override
+  String get featuresReconciliationDiffColumnsDate => 'Date';
+
+  @override
+  String get featuresReconciliationDiffColumnsLedger => 'Ledger amount';
+
+  @override
+  String get featuresReconciliationDiffColumnsStatement => 'Statement amount';
+
+  @override
+  String get featuresReconciliationDiffColumnsDifference => 'Difference';
+
+  @override
+  String get featuresReconciliationDiffColumnsReference => 'Reference';
+
+  @override
+  String featuresReconciliationDiffStatementLine(Object line) {
+    return 'Statement line $line';
+  }
+
+  @override
+  String get featuresReconciliationDiffLedgerRecord => 'Ledger entry';
+
+  @override
+  String get featuresReconciliationDiffLedgerOnly => 'Only in ledger';
+
+  @override
+  String get featuresReconciliationDiffStatementOnly => 'Only in statement';
+
+  @override
+  String get featuresReconciliationDiffAmountMismatch => 'Amount mismatch';
+
+  @override
+  String get featuresReconciliationSourceBank => 'Bank';
+
+  @override
+  String get featuresReconciliationSourceCreditCard => 'Credit card';
+
+  @override
+  String get featuresReconciliationSourceInvestment => 'Broker';
+
+  @override
+  String get featuresReconciliationHistoryTitle => 'Reconciliation history';
+
+  @override
+  String get featuresReconciliationHistoryEmpty =>
+      'No reconciliation history yet.';
+
+  @override
+  String get featuresReconciliationHistoryColumnsTime => 'Time';
+
+  @override
+  String get featuresReconciliationHistoryColumnsSource => 'Source';
+
+  @override
+  String get featuresReconciliationHistoryColumnsPeriod => 'Period';
+
+  @override
+  String get featuresReconciliationHistoryColumnsCounts => 'Differences';
+
+  @override
+  String get featuresReconciliationHistoryColumnsActions => 'Actions';
+
+  @override
+  String featuresReconciliationHistoryCountsValue(
+    Object ledgerOnly,
+    Object mismatch,
+    Object statementOnly,
+  ) {
+    return 'Mismatch $mismatch, statement-only $statementOnly, ledger-only $ledgerOnly';
+  }
+
+  @override
+  String get featuresReconciliationHistoryView => 'View differences';
+
+  @override
+  String get featuresReconciliationHistoryViewing => 'Viewing';
+
+  @override
+  String featuresReconciliationMessagesImportDone(Object filename) {
+    return 'Imported and compared: $filename';
+  }
+
+  @override
+  String get featuresReconciliationMessagesImportFailed =>
+      'Import failed; nothing was written.';
+
+  @override
+  String featuresReconciliationMessagesRowError(Object line, Object reason) {
+    return 'Line $line: $reason';
+  }
+
+  @override
+  String get featuresReconciliationMessagesChooseFile =>
+      'Choose a statement file first.';
+
+  @override
+  String get featuresReconciliationMessagesMissingDateColumn =>
+      'Set the date column name.';
+
+  @override
+  String get featuresReconciliationMessagesMissingAmountColumn =>
+      'Set an amount column, or the debit / credit columns.';
+
+  @override
+  String get featuresReconciliationMessagesConflictingAmountColumn =>
+      'Use either an amount column or the debit / credit columns, not both.';
+
+  @override
+  String get featuresReconciliationMessagesProfileNameRequired =>
+      'Enter a name for the mapping.';
+
+  @override
+  String featuresReconciliationMessagesProfileSaved(Object name) {
+    return 'Mapping saved: $name';
+  }
+
+  @override
+  String get featuresReconciliationMessagesProfileSaveFailed =>
+      'Failed to save the mapping.';
+
+  @override
+  String get featuresReconciliationMessagesProfileDeleted => 'Mapping deleted.';
+
+  @override
+  String get featuresReconciliationMessagesProfileDeleteFailed =>
+      'Failed to delete the mapping.';
+
+  @override
+  String get featuresReconciliationMessagesSessionLoadFailed =>
+      'Failed to load the reconciliation result.';
+
+  @override
+  String get featuresReconciliationTemplatesSignedAmount =>
+      'Single amount column (negative = money out)';
+
+  @override
+  String get featuresReconciliationTemplatesDebitCredit =>
+      'Separate debit / credit columns';
+
+  @override
+  String get featuresReconciliationTemplatesCreditCard =>
+      'Credit card statement (positive = purchase)';
 }

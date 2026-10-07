@@ -5533,4 +5533,331 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get ledgerLastOwnerNotice =>
       'The owner must transfer ownership before leaving or deleting their account.';
+
+  @override
+  String get navReconciliation => 'Conciliación bancaria';
+
+  @override
+  String get featuresReconciliationTitle =>
+      'Conciliación de extractos bancarios / de bróker';
+
+  @override
+  String get featuresReconciliationSubtitle =>
+      'Importa un extracto OFX o CSV y compáralo con tu libro en tres tipos de diferencias: solo en el libro, solo en el extracto y diferencia de importe.';
+
+  @override
+  String get featuresReconciliationImportSection => 'Importar un extracto';
+
+  @override
+  String get featuresReconciliationImportHint =>
+      'Compatible con OFX 1.x / 2.x y CSV de bancos o brókers. La importación es atómica: si falla una fila, se rechaza todo el lote.';
+
+  @override
+  String get featuresReconciliationImportFile => 'Archivo de extracto';
+
+  @override
+  String get featuresReconciliationImportFileFormats =>
+      'Acepta .ofx, .qfx, .csv, .txt';
+
+  @override
+  String get featuresReconciliationImportAccount => 'Limitar a la cuenta';
+
+  @override
+  String get featuresReconciliationImportAllAccounts => 'Todas las cuentas';
+
+  @override
+  String get featuresReconciliationImportSubmit => 'Importar y comparar';
+
+  @override
+  String get featuresReconciliationImportRunning => 'Importando…';
+
+  @override
+  String get featuresReconciliationImportAtomicNote =>
+      'Lote atómico: los fallos se revierten por completo, sin datos parciales.';
+
+  @override
+  String get featuresReconciliationProfileSection =>
+      'Asignación de columnas CSV';
+
+  @override
+  String get featuresReconciliationProfileSaved => 'Asignación guardada';
+
+  @override
+  String get featuresReconciliationProfileUseDraft =>
+      'Usar la configuración inferior (sin guardar)';
+
+  @override
+  String get featuresReconciliationProfileTemplate => 'Plantilla común';
+
+  @override
+  String get featuresReconciliationProfileChooseTemplate =>
+      'Elegir una plantilla…';
+
+  @override
+  String get featuresReconciliationProfileAmountSign =>
+      'Convención de signo del importe';
+
+  @override
+  String get featuresReconciliationProfileAmountSignSigned =>
+      'Negativo es gasto (extracto bancario)';
+
+  @override
+  String get featuresReconciliationProfileAmountSignCreditCard =>
+      'Positivo es compra (extracto de tarjeta)';
+
+  @override
+  String get featuresReconciliationProfileDateFormat => 'Formato de fecha';
+
+  @override
+  String get featuresReconciliationProfileDateFormatAuto =>
+      'Detectar automáticamente';
+
+  @override
+  String get featuresReconciliationProfileDelimiter => 'Delimitador';
+
+  @override
+  String get featuresReconciliationProfileDelimiterComma => 'Coma (,)';
+
+  @override
+  String get featuresReconciliationProfileDelimiterSemicolon =>
+      'Punto y coma (;)';
+
+  @override
+  String get featuresReconciliationProfileDelimiterTab => 'Tabulador';
+
+  @override
+  String get featuresReconciliationProfileSkipRows => 'Omitir filas iniciales';
+
+  @override
+  String get featuresReconciliationProfileHasHeader =>
+      'La primera fila es el encabezado';
+
+  @override
+  String get featuresReconciliationProfileDateColumn =>
+      'Nombre de la columna de fecha';
+
+  @override
+  String get featuresReconciliationProfileAmountColumn =>
+      'Nombre de la columna de importe';
+
+  @override
+  String get featuresReconciliationProfileDescriptionColumn =>
+      'Nombre de la columna de descripción';
+
+  @override
+  String get featuresReconciliationProfileDebitColumn =>
+      'Nombre de la columna de débito';
+
+  @override
+  String get featuresReconciliationProfileCreditColumn =>
+      'Nombre de la columna de crédito';
+
+  @override
+  String get featuresReconciliationProfileFitidColumn =>
+      'Nombre de la columna de ID de transacción (opcional)';
+
+  @override
+  String get featuresReconciliationProfileColumnHint =>
+      'Use una sola columna de importe o las columnas de débito y crédito, no ambas. Los nombres deben coincidir exactamente con el encabezado del CSV.';
+
+  @override
+  String get featuresReconciliationProfileName => 'Nombre de la asignación';
+
+  @override
+  String get featuresReconciliationProfileNamePlaceholder =>
+      'p. ej. Extracto de tarjeta de mi banco';
+
+  @override
+  String get featuresReconciliationProfileSave => 'Guardar esta asignación';
+
+  @override
+  String get featuresReconciliationProfileDelete => 'Eliminar esta asignación';
+
+  @override
+  String get featuresReconciliationResultTitle => 'Resumen de conciliación';
+
+  @override
+  String get featuresReconciliationResultFilename => 'Archivo';
+
+  @override
+  String get featuresReconciliationResultPeriod => 'Periodo del extracto';
+
+  @override
+  String get featuresReconciliationResultMatched => 'Coincidencias';
+
+  @override
+  String featuresReconciliationResultMatchedValue(
+    Object ledger,
+    Object matched,
+    Object statement,
+  ) {
+    return '$matched coincidencias (extracto $statement, libro $ledger)';
+  }
+
+  @override
+  String featuresReconciliationResultSkipped(Object detail) {
+    return 'Tipos de transacción omitidos: $detail';
+  }
+
+  @override
+  String get featuresReconciliationDiffTitle => 'Diferencias';
+
+  @override
+  String get featuresReconciliationDiffEmpty =>
+      'Sin diferencias: el libro y el extracto coinciden por completo.';
+
+  @override
+  String featuresReconciliationDiffCount(Object count) {
+    return '$count filas';
+  }
+
+  @override
+  String get featuresReconciliationDiffNone =>
+      'Sin diferencias en esta categoría.';
+
+  @override
+  String get featuresReconciliationDiffColumnsDate => 'Fecha';
+
+  @override
+  String get featuresReconciliationDiffColumnsLedger => 'Importe en el libro';
+
+  @override
+  String get featuresReconciliationDiffColumnsStatement =>
+      'Importe en el extracto';
+
+  @override
+  String get featuresReconciliationDiffColumnsDifference => 'Diferencia';
+
+  @override
+  String get featuresReconciliationDiffColumnsReference => 'Referencia';
+
+  @override
+  String featuresReconciliationDiffStatementLine(Object line) {
+    return 'Línea $line del extracto';
+  }
+
+  @override
+  String get featuresReconciliationDiffLedgerRecord => 'Registro del libro';
+
+  @override
+  String get featuresReconciliationDiffLedgerOnly => 'Solo en el libro';
+
+  @override
+  String get featuresReconciliationDiffStatementOnly => 'Solo en el extracto';
+
+  @override
+  String get featuresReconciliationDiffAmountMismatch => 'Importe divergente';
+
+  @override
+  String get featuresReconciliationSourceBank => 'Banco';
+
+  @override
+  String get featuresReconciliationSourceCreditCard => 'Tarjeta de crédito';
+
+  @override
+  String get featuresReconciliationSourceInvestment => 'Bróker';
+
+  @override
+  String get featuresReconciliationHistoryTitle =>
+      'Historial de conciliaciones';
+
+  @override
+  String get featuresReconciliationHistoryEmpty => 'Aún no hay conciliaciones.';
+
+  @override
+  String get featuresReconciliationHistoryColumnsTime => 'Fecha y hora';
+
+  @override
+  String get featuresReconciliationHistoryColumnsSource => 'Origen';
+
+  @override
+  String get featuresReconciliationHistoryColumnsPeriod => 'Período';
+
+  @override
+  String get featuresReconciliationHistoryColumnsCounts => 'Diferencias';
+
+  @override
+  String get featuresReconciliationHistoryColumnsActions => 'Acciones';
+
+  @override
+  String featuresReconciliationHistoryCountsValue(
+    Object ledgerOnly,
+    Object mismatch,
+    Object statementOnly,
+  ) {
+    return 'Divergentes $mismatch, solo extracto $statementOnly, solo libro $ledgerOnly';
+  }
+
+  @override
+  String get featuresReconciliationHistoryView => 'Ver diferencias';
+
+  @override
+  String get featuresReconciliationHistoryViewing => 'Viendo';
+
+  @override
+  String featuresReconciliationMessagesImportDone(Object filename) {
+    return 'Importado y comparado: $filename';
+  }
+
+  @override
+  String get featuresReconciliationMessagesImportFailed =>
+      'La importación falló; no se escribió nada.';
+
+  @override
+  String featuresReconciliationMessagesRowError(Object line, Object reason) {
+    return 'Línea $line: $reason';
+  }
+
+  @override
+  String get featuresReconciliationMessagesChooseFile =>
+      'Elige primero un archivo de extracto.';
+
+  @override
+  String get featuresReconciliationMessagesMissingDateColumn =>
+      'Indica el nombre de la columna de fecha.';
+
+  @override
+  String get featuresReconciliationMessagesMissingAmountColumn =>
+      'Indica una columna de importe o las de débito y crédito.';
+
+  @override
+  String get featuresReconciliationMessagesConflictingAmountColumn =>
+      'Usa una columna de importe o las de débito y crédito, no ambas.';
+
+  @override
+  String get featuresReconciliationMessagesProfileNameRequired =>
+      'Introduce un nombre para la asignación.';
+
+  @override
+  String featuresReconciliationMessagesProfileSaved(Object name) {
+    return 'Asignación guardada: $name';
+  }
+
+  @override
+  String get featuresReconciliationMessagesProfileSaveFailed =>
+      'No se pudo guardar la asignación.';
+
+  @override
+  String get featuresReconciliationMessagesProfileDeleted =>
+      'Asignación eliminada.';
+
+  @override
+  String get featuresReconciliationMessagesProfileDeleteFailed =>
+      'No se pudo eliminar la asignación.';
+
+  @override
+  String get featuresReconciliationMessagesSessionLoadFailed =>
+      'No se pudo cargar el resultado de conciliación.';
+
+  @override
+  String get featuresReconciliationTemplatesSignedAmount =>
+      'Una columna de importe (negativo = gasto)';
+
+  @override
+  String get featuresReconciliationTemplatesDebitCredit =>
+      'Columnas separadas de débito / crédito';
+
+  @override
+  String get featuresReconciliationTemplatesCreditCard =>
+      'Extracto de tarjeta (positivo = compra)';
 }

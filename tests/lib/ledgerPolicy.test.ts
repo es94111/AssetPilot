@@ -45,9 +45,13 @@ test("bookkeeping and investment APIs use the selected ledger context", () => {
     assert.equal(isLedgerDataPath(path), true, path);
   }
   assert.equal(isLedgerDataPath('/api/exchange-rates/settings'), true);
+  assert.equal(isLedgerDataPath('/api/reconciliation'), true);
+  assert.equal(isLedgerDataPath('/api/reconciliation/import'), true);
+  assert.equal(isLedgerDataPath('/api/reconciliation/sessions/abc'), true);
   assert.equal(isLedgerDataPath('/api/ledgers'), false);
   assert.equal(isLedgerDataPath('/api/user/settings/default-currency'), false);
   assert.equal(isLedgerDataPath('/api/transactions-other'), false);
+  assert.equal(isLedgerDataPath('/api/reconciliation-other'), false);
 });
 
 test('invitation login redirects and file links retain ledger context without allowing external redirects', () => {

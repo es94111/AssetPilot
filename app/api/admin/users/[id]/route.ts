@@ -2,7 +2,10 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "../../../../../lib/apiHelpers";
 import { getDB, queryOne, saveDB } from "../../../../../lib/db";
-import { deleteUserCompletely } from "../../../../../lib/userDeletion";
+import {
+  deleteUserCompletely,
+  LedgerOwnershipTransferRequiredError,
+} from "../../../../../lib/userDeletion";
 import { auditSensitiveAction } from "../../../../../lib/auditHelpers";
 
 export async function PUT(request, { params }) {
@@ -146,7 +149,14 @@ export async function DELETE(request, { params }) {
 
   // 完整刪除：所有 user_id 關聯資料表 + 交易憑證照片實體檔案（本機/S3）+ 全域引用。
   // 與自助刪除帳號共用同一流程，避免漏表。
-  await deleteUserCompletely(id);
+  try {
+    await deleteUserCompletely(id);
+  } catch (error) {
+    if (error instanceof LedgerOwnershipTransferRequiredError) {
+      return NextResponse.json({ error: error.message }, { status: 409 });
+    }
+    throw error;
+  }
   saveDB();
 
   // 敏感操作：刪除帳號（含其所有資料）。

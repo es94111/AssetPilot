@@ -1,3 +1,4 @@
+import { withLedgerWriteAudit } from '../../../../lib/ledgerContext';
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "../../../../lib/apiHelpers";
 import { getDB, queryAll, queryOne, saveDB } from "../../../../lib/db";
@@ -100,7 +101,7 @@ function normalizeImportedCategory(
   return categoryFromAccountType(accountType || "checking");
 }
 
-export async function POST(request: NextRequest) {
+async function handlePOST(request: NextRequest) {
   const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
@@ -141,7 +142,7 @@ export async function POST(request: NextRequest) {
   const ipAddress = getRequestIpFromHeaders(request.headers);
   const userAgent = request.headers.get("user-agent") || "";
   const userRow = queryOne("SELECT is_admin FROM users WHERE id = ?", [
-    auth.userId,
+    auth.actorUserId,
   ]);
   const userRole = userRow?.is_admin ? "admin" : "user";
 
@@ -342,3 +343,5 @@ export async function POST(request: NextRequest) {
     releaseImportLock(auth.userId);
   }
 }
+
+export const POST = withLedgerWriteAudit(handlePOST);

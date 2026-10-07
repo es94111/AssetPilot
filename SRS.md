@@ -61,6 +61,16 @@
 | 一般使用者 | 透過外部身份服務登入後使用所有記帳、股票與報表功能                         |
 | 訪客       | 未登入狀態，僅可瀏覽登入、隱私權政策、服務條款與公開首頁                     |
 
+#### 共享帳本角色（#262）
+
+帳本角色獨立於站台管理員身分：`owner` 可編輯並管理成員、邀請、稽核及移交；`editor` 可讀寫記帳資料但不可管理成員；`viewer` 只可讀取及匯出，所有狀態變更方法皆回覆 403。站台管理員不會因其全站角色自動取得其他帳本的成員權限。
+
+本階段共享帳本以空白資料建立，涵蓋帳戶、分類、交易／附件／轉帳／還款摘要、預算與固定收支；原個人資料維持私有。每個帳本的 `data_owner_id` 為穩定資料命名空間，沿用既有查詢的 `user_id` 欄位但不等同於建立者或操作者。所有記帳 API 經中央授權把登入者與資料命名空間分離，並保留 `actorUserId` 供個人偏好與稽核使用。沒有指定帳本的既有用戶端與整合保持個人帳本行為。
+
+Email 邀請使用高熵單次 token，資料庫只存 SHA-256 雜湊，7 天到期，接受時驗證目前登入信箱、期限與撤銷狀態。成員變更及擁有權移交以帳本列鎖和交易序列化；owner 不可直接降級、移除或離開，須先移交給有效成員。成員移除／離開即撤銷新請求的權限與既有待接受邀請，資料及稽核仍屬帳本。刪除 former owner 的個人帳號不刪除共享記帳；仍持有共享帳本的 owner 由 API 及資料庫雙層阻擋刪除。
+
+新增 `financial_ledgers`、`ledger_members`、`ledger_invitations`、`ledger_audit_log`，部署啟動冪等建立個人帳本與 owner 成員，不重寫既有財務列。寫入稽核記錄操作者 ID、Email、當時角色、資源與結果；owner 可從帳本管理頁查閱。投資、Flutter 共享 UI、MCP／第三方整合及通知排程的帳本選擇另行追蹤。
+
 ### 1.5 名詞定義
 
 | 名詞     | 定義                                                                 |
@@ -549,7 +559,7 @@ CSV 內容經過 Formula Injection 防護處理（以 `=`、`+`、`-`、`@` 開�
 
 #### 離線記帳佇列
 
-- 純邏輯模組 `lib/offlineQueueCore.ts`（不依賴瀏覽器或伺服器端 API，可獨立單元測試）定義佇列項目形狀、解析／序列化、去重、容量上限（200 筆）、重試與指數退避（5 秒起、上限 5 分鐘、最多自動重試 5 次）與 `isRetryableStatus`
+- 純邏輯模組 `lib/offlineQueueCore.ts`（不依賴瀏覽器或伺服器端 API，可獨立單元測試）定義佇列項目形狀、解析／序列化、去重、容量上限（200 筆；已滿時拒絕新項目並保留全部未同步交易，不淘汰舊項目）、重試與指數退避（5 秒起、上限 5 分鐘、最多自動重試 5 次）與 `isRetryableStatus`
 - 瀏覽器 I/O 模組 `lib/clientOfflineQueue.ts` 以使用者分隔的 `localStorage` key（`assetpilot.offlineQueue.<userId>`）持久化；`OfflineSyncStatus` 會先綁定 user id 再啟動同步。登出會停用本頁並透過 `storage` event 通知其他分頁停止同步，同一使用者重新登入可恢復佇列，不同使用者登入會清除其他 user keys；舊版未分隔 key 會移除。寫入後回讀驗證，儲存空間不可用時回報失敗、前端不得顯示「已離線儲存」。佇列變更／恢復連線時自動送出，網路層錯誤即使 `navigator.onLine` 誤報在線也會立即重試。
 - `components/features/transactions/TransactionsClient.tsx` 於新增收支／轉帳遇上連線層失敗（`isNetworkError`）時改存入佇列，並以 Toast 提示
 - `components/features/offline/OfflineSyncStatus.tsx`（掛載於 `AppLayout`）顯示離線／待同步筆數，並對失敗項目提供「重試」與「捨棄」
@@ -1051,6 +1061,7 @@ API 路徑統一以 `/api/` 為前綴。所有需認證的路由自動套用 aut
 
 | 版本 | 日期 | 變更說明 |
 | --- | --- | --- |
+| 4.119.0 | 2026-10-07 | 新增 #262 共享帳本：空白帳本、Email 單次邀請與 owner/editor/viewer 角色；記帳資料 API 驗證帳本成員與寫入權限，稽核實際操作者及結果；支援離開、移除、owner 移交與刪除帳號保護，資料仍屬帳本；Web 提供帳本切換與管理，離線佇列保留原帳本歸屬。既有個人資料不自動共享；投資及 Flutter／MCP／API Token／LINE／通知排程後續另案。新增 PostgreSQL 授權整合及 Web E2E／axe 測試。 |
 | 4.117.0 | 2026-10-06 | 新增 `/settings/api-integration` 設定頁 UI，讓使用者以介面（而非 `curl`）管理 #258 提供的 API Token 與 Webhook。新增 `components/features/settings/ApiIntegrationSettingsClient.tsx` 與對應頁面 `app/settings/api-integration/page.tsx`：Token 區可勾選權限範圍（`transactions:read`／`transactions:write`／`webhooks:manage`）建立、列出（名稱／前綴／範圍／狀態／建立、最後使用、到期時間）並撤銷；Webhook 區可建立、行內編輯（網址／事件／啟用狀態）與刪除訂閱，並可依訂閱篩選投遞紀錄（事件類型／狀態／嘗試次數／狀態碼／錯誤訊息）。建立 Token 與 Webhook 後皆以一次性 Modal 顯示明文權杖／簽章密鑰，必須按「我已複製」才能關閉，離開頁面即不再顯示；簽鑰 Modal 另附 `X-AssetPilot-Signature: t=<unix 秒>,v1=<hex>` 格式與時間戳容忍度說明。新增零相依 `lib/apiIntegrationUi.ts`（scope／event 選項、預設值、勾選切換與回應值正規化），刻意不 import `lib/apiTokenCore.ts`，避免把 `node:crypto` 帶進 client bundle；改由 `tests/lib/apiIntegrationUi.test.ts` 斷言 UI 清單與 `API_TOKEN_SCOPES`／`WEBHOOK_EVENTS` 一致，並驗證所有 labelKey 都存在於 zh-TW 字典（防止動態鍵繞過 `check:i18n` 的靜態鍵掃描）。`components/layout/Sidebar.tsx` 與 `AppLayout` 新增 `nav.apiIntegration` 導覽項目與頁首標題。i18n：`shared/i18n/app_*.arb` 新增 94 鍵（`nav.apiIntegration`、`common.refresh`／`copy`／`copied`、`settings.apiIntegration.*`），經 `npm run i18n:generate` 重新產生 Web 字典與 Flutter l10n 產物，10 語言對齊。測試：新增 `tests/lib/apiIntegrationUi.test.ts`（9 項，零相依、無需 PostgreSQL）並納入 `npm test`。複製一次性憑證時只在 `navigator.clipboard.writeText()` 成功後才標記為已複製，失敗（例如非安全脈絡下自架的 `http://<區網 IP>:3000`）會顯示 `settings.apiIntegration.copyFailed` 並維持關閉鈕停用，避免使用者未實際複製即關閉視窗而永久遺失明文；載入投遞紀錄以遞增序號認領請求，只採用最後一次回應，避免切換篩選時舊回應覆蓋新結果。驗證：`npm run typecheck`、`npm test`（含 `check:iso`、`check:i18n` 1,517 鍵對齊）、`npm run build`（`/settings/api-integration` 已列入路由輸出）皆通過。 |
 | 4.115.1 | 2026-10-06 | 將 `source-map-js` 更新至 1.2.2 以上、`proxy-addr` 更新至 2.0.8 以上、`fast-copy` 更新至 4.1.0 以上，修補 CVE-2026-93749（GHSA-68fv-2mgg-jv7q）、CVE-2026-90711（GHSA-jqcg-44mw-7w3h）及 GHSA-jggr-w7fw-pc2j；確認所有解析出的相依副本均達修補版本。 |
 | 4.115.0 | 2026-10-06 | 新增 `/finance/calendar` 與登入限定 `/api/calendar`，以月／週切換檢視交易、既有股利日期和啟用中固定收支排程（排程與股利唯讀）；日期格顯示同日摘要並在選取後展開細節，新增交易按鈕會將選取日期帶入既有交易表單。`lib/calendarDates.ts` 以 UTC 日期元件做純日期區間計算，初始「今天」及 API 今日值依 `users.timezone`；新增 `tests/lib/calendar.test.ts` 涵蓋週／月邊界、閏日、使用者時區跨日及三種事件聚合，並納入 `npm test`。新增 25 個行事曆／導覽多語系鍵並重新產生 Web 與 Flutter 共用翻譯。 |\n| 4.114.0 | 2026-10-05 | 新增 TWSE／TPEx 歷史日 OHLC 查詢與支援日／週／月切換的股價 K 線圖，並標示交易買入／賣出。 |

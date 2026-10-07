@@ -1,9 +1,10 @@
 // @ts-nocheck
+import { withLedgerWriteAudit } from '../../../../lib/ledgerContext';
 import { NextResponse } from 'next/server';
 import { requireAuth } from '../../../../lib/apiHelpers';
 import { processRecurringForUser } from '../../../../lib/recurringHelpers';
 
-export async function POST(request) {
+async function handlePOST(request) {
   const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
@@ -15,3 +16,5 @@ export async function POST(request) {
     return NextResponse.json({ error: '產生流程失敗' }, { status: 500 });
   }
 }
+
+export const POST = withLedgerWriteAudit(handlePOST);

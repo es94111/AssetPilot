@@ -5055,6 +5055,135 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get settingsApiIntegrationCopyFailed =>
       '複製失敗（此環境可能不允許自動複製），請手動選取上方內容複製';
+
+  @override
+  String get navLedgers => '共享帳本';
+
+  @override
+  String get ledgerTitle => '帳本共享管理';
+
+  @override
+  String get ledgerDescription => '建立空白共享帳本、邀請成員並管理存取權限。';
+
+  @override
+  String get ledgerActiveLedger => '目前帳本';
+
+  @override
+  String get ledgerPersonal => '個人帳本';
+
+  @override
+  String get ledgerManage => '管理帳本';
+
+  @override
+  String get ledgerLoadError => '無法載入帳本。';
+
+  @override
+  String get ledgerCreate => '建立空白共享帳本';
+
+  @override
+  String get ledgerCreateName => '帳本名稱';
+
+  @override
+  String get ledgerCreateButton => '建立帳本';
+
+  @override
+  String get ledgerCreated => '共享帳本已建立。';
+
+  @override
+  String get ledgerCreateError => '無法建立帳本。';
+
+  @override
+  String get ledgerInvited => '邀請信已寄出。';
+
+  @override
+  String get ledgerInviteAccepted => '已接受帳本邀請。';
+
+  @override
+  String get ledgerError => '無法完成此操作。';
+
+  @override
+  String get ledgerRemoveConfirm => '確定要將此成員移出帳本嗎？';
+
+  @override
+  String get ledgerTransferConfirm => '確定將帳本擁有權移交給此成員？你將改為編輯者。';
+
+  @override
+  String get ledgerOwnerTransferred => '帳本擁有權已移交。';
+
+  @override
+  String get ledgerLeaveConfirm => '確定離開此帳本？離開後將立即失去存取權。';
+
+  @override
+  String get ledgerLeft => '你已離開帳本。';
+
+  @override
+  String get ledgerInviteInstructions => '你收到共享帳本邀請。請使用收到邀請的電子郵件帳號登入。';
+
+  @override
+  String get ledgerAcceptInvite => '接受邀請';
+
+  @override
+  String get ledgerEmptySharedNotice => '共享帳本會以空白資料建立，不會自動複製你的個人記帳資料。';
+
+  @override
+  String get ledgerMembers => '成員';
+
+  @override
+  String get ledgerLeave => '離開帳本';
+
+  @override
+  String get ledgerInviteEmail => '成員電子郵件';
+
+  @override
+  String get ledgerRole => '存取權限';
+
+  @override
+  String get ledgerOwner => '擁有者';
+
+  @override
+  String get ledgerEditor => '編輯者';
+
+  @override
+  String get ledgerViewer => '檢視者（唯讀）';
+
+  @override
+  String get ledgerSendInvite => '寄送邀請';
+
+  @override
+  String get ledgerPersonalOnly => '這是你的私人帳本。建立共享帳本後即可邀請成員。';
+
+  @override
+  String get ledgerNoMembers => '找不到成員。';
+
+  @override
+  String get ledgerChangeRole => '變更角色';
+
+  @override
+  String get ledgerTransferOwner => '移交擁有權';
+
+  @override
+  String get ledgerRemove => '移除';
+
+  @override
+  String get ledgerPendingInvitations => '待處理邀請';
+
+  @override
+  String get ledgerNoInvitations => '目前沒有待處理邀請。';
+
+  @override
+  String get ledgerInvitationExpires => '到期日';
+
+  @override
+  String get ledgerRevoke => '撤銷邀請';
+
+  @override
+  String get ledgerAudit => '近期活動';
+
+  @override
+  String get ledgerNoAudit => '尚無活動紀錄。';
+
+  @override
+  String get ledgerLastOwnerNotice => '擁有者離開帳本或刪除帳號前，必須先移交擁有權。';
 }
 
 /// The translations for Chinese, as used in China, using the Han script (`zh_Hans_CN`).
@@ -10104,6 +10233,140 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
   @override
   String get settingsApiIntegrationCopyFailed =>
       '复制失败（此环境可能不允许自动复制），请手动选取上方内容复制';
+
+  @override
+  String get navLedgers => '共享账本';
+
+  @override
+  String get ledgerTitle => '账本共享管理';
+
+  @override
+  String get ledgerDescription => '创建空白共享账本、邀请成员并管理访问权限。';
+
+  @override
+  String get ledgerActiveLedger => '当前账本';
+
+  @override
+  String get ledgerPersonal => '个人账本';
+
+  @override
+  String get ledgerManage => '管理账本';
+
+  @override
+  String get ledgerLoadError => 'Could not load ledgers.';
+
+  @override
+  String get ledgerCreate => '创建空白共享账本';
+
+  @override
+  String get ledgerCreateName => '账本名称';
+
+  @override
+  String get ledgerCreateButton => '创建账本';
+
+  @override
+  String get ledgerCreated => 'Shared ledger created.';
+
+  @override
+  String get ledgerCreateError => 'Could not create the ledger.';
+
+  @override
+  String get ledgerInvited => 'Invitation sent by email.';
+
+  @override
+  String get ledgerInviteAccepted => 'Invitation accepted.';
+
+  @override
+  String get ledgerError => 'The request could not be completed.';
+
+  @override
+  String get ledgerRemoveConfirm => 'Remove this member from the ledger?';
+
+  @override
+  String get ledgerTransferConfirm =>
+      'Transfer ownership to this member? You will become an editor.';
+
+  @override
+  String get ledgerOwnerTransferred => 'Ledger ownership transferred.';
+
+  @override
+  String get ledgerLeaveConfirm =>
+      'Leave this ledger? You will lose access immediately.';
+
+  @override
+  String get ledgerLeft => 'You left the ledger.';
+
+  @override
+  String get ledgerInviteInstructions =>
+      'You have been invited to a shared ledger. Sign in with the email address that received the invitation.';
+
+  @override
+  String get ledgerAcceptInvite => '接受邀请';
+
+  @override
+  String get ledgerEmptySharedNotice => '共享账本以空白状态创建，不会自动复制个人记账数据。';
+
+  @override
+  String get ledgerMembers => '成员';
+
+  @override
+  String get ledgerLeave => '离开账本';
+
+  @override
+  String get ledgerInviteEmail => '成员电子邮箱';
+
+  @override
+  String get ledgerRole => '访问权限';
+
+  @override
+  String get ledgerOwner => '所有者';
+
+  @override
+  String get ledgerEditor => '编辑者';
+
+  @override
+  String get ledgerViewer => '查看者（只读）';
+
+  @override
+  String get ledgerSendInvite => '发送邀请';
+
+  @override
+  String get ledgerPersonalOnly =>
+      'This is your private ledger. Create a shared ledger to invite members.';
+
+  @override
+  String get ledgerNoMembers => 'No members found.';
+
+  @override
+  String get ledgerChangeRole => 'Change role';
+
+  @override
+  String get ledgerTransferOwner => '移交所有权';
+
+  @override
+  String get ledgerRemove => 'Remove';
+
+  @override
+  String get ledgerPendingInvitations => '待处理邀请';
+
+  @override
+  String get ledgerNoInvitations => 'No pending invitations.';
+
+  @override
+  String get ledgerInvitationExpires => 'Expires';
+
+  @override
+  String get ledgerRevoke => 'Revoke invitation';
+
+  @override
+  String get ledgerAudit => '近期活动';
+
+  @override
+  String get ledgerNoAudit => 'No activity recorded yet.';
+
+  @override
+  String get ledgerLastOwnerNotice =>
+      'The owner must transfer ownership before leaving or deleting their account.';
 }
 
 /// The translations for Chinese, as used in Taiwan, using the Han script (`zh_Hant_TW`).
@@ -15157,4 +15420,133 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
   @override
   String get settingsApiIntegrationCopyFailed =>
       '複製失敗（此環境可能不允許自動複製），請手動選取上方內容複製';
+
+  @override
+  String get navLedgers => '共享帳本';
+
+  @override
+  String get ledgerTitle => '帳本共享管理';
+
+  @override
+  String get ledgerDescription => '建立空白共享帳本、邀請成員並管理存取權限。';
+
+  @override
+  String get ledgerActiveLedger => '目前帳本';
+
+  @override
+  String get ledgerPersonal => '個人帳本';
+
+  @override
+  String get ledgerManage => '管理帳本';
+
+  @override
+  String get ledgerLoadError => '無法載入帳本。';
+
+  @override
+  String get ledgerCreate => '建立空白共享帳本';
+
+  @override
+  String get ledgerCreateName => '帳本名稱';
+
+  @override
+  String get ledgerCreateButton => '建立帳本';
+
+  @override
+  String get ledgerCreated => '共享帳本已建立。';
+
+  @override
+  String get ledgerCreateError => '無法建立帳本。';
+
+  @override
+  String get ledgerInvited => '邀請信已寄出。';
+
+  @override
+  String get ledgerInviteAccepted => '已接受帳本邀請。';
+
+  @override
+  String get ledgerError => '無法完成此操作。';
+
+  @override
+  String get ledgerRemoveConfirm => '確定要將此成員移出帳本嗎？';
+
+  @override
+  String get ledgerTransferConfirm => '確定將帳本擁有權移交給此成員？你將改為編輯者。';
+
+  @override
+  String get ledgerOwnerTransferred => '帳本擁有權已移交。';
+
+  @override
+  String get ledgerLeaveConfirm => '確定離開此帳本？離開後將立即失去存取權。';
+
+  @override
+  String get ledgerLeft => '你已離開帳本。';
+
+  @override
+  String get ledgerInviteInstructions => '你收到共享帳本邀請。請使用收到邀請的電子郵件帳號登入。';
+
+  @override
+  String get ledgerAcceptInvite => '接受邀請';
+
+  @override
+  String get ledgerEmptySharedNotice => '共享帳本會以空白資料建立，不會自動複製你的個人記帳資料。';
+
+  @override
+  String get ledgerMembers => '成員';
+
+  @override
+  String get ledgerLeave => '離開帳本';
+
+  @override
+  String get ledgerInviteEmail => '成員電子郵件';
+
+  @override
+  String get ledgerRole => '存取權限';
+
+  @override
+  String get ledgerOwner => '擁有者';
+
+  @override
+  String get ledgerEditor => '編輯者';
+
+  @override
+  String get ledgerViewer => '檢視者（唯讀）';
+
+  @override
+  String get ledgerSendInvite => '寄送邀請';
+
+  @override
+  String get ledgerPersonalOnly => '這是你的私人帳本。建立共享帳本後即可邀請成員。';
+
+  @override
+  String get ledgerNoMembers => '找不到成員。';
+
+  @override
+  String get ledgerChangeRole => '變更角色';
+
+  @override
+  String get ledgerTransferOwner => '移交擁有權';
+
+  @override
+  String get ledgerRemove => '移除';
+
+  @override
+  String get ledgerPendingInvitations => '待處理邀請';
+
+  @override
+  String get ledgerNoInvitations => '目前沒有待處理邀請。';
+
+  @override
+  String get ledgerInvitationExpires => '到期日';
+
+  @override
+  String get ledgerRevoke => '撤銷邀請';
+
+  @override
+  String get ledgerAudit => '近期活動';
+
+  @override
+  String get ledgerNoAudit => '尚無活動紀錄。';
+
+  @override
+  String get ledgerLastOwnerNotice => '擁有者離開帳本或刪除帳號前，必須先移交擁有權。';
 }

@@ -13,9 +13,14 @@ import {
 import logger from "@/lib/logger";
 import { isActiveUserFlag } from "./userActive";
 import { triggerUserRequestMaintenance } from "./requestMaintenance";
+import { applyLedgerContext, isLedgerDataApiRequest } from "./ledgerContext";
 
 type ApiAuthResult = {
   userId: string;
+  actorUserId: string;
+  ledgerId?: string;
+  ledgerRole?: "owner" | "editor" | "viewer";
+  isSharedLedger?: boolean;
   userTimezone: string;
   email: string;
   displayName: string;
@@ -231,8 +236,9 @@ export async function requireAuth(
       return authErrorResponse("登入已失效，請重新登入");
     }
 
-    const authResult = {
+    const authResult: ApiAuthResult = {
       userId: user.id as string,
+      actorUserId: user.id as string,
       userTimezone: (user.timezone as string) || "Asia/Taipei",
       email: (user.email as string) || "",
       displayName: (user.display_name as string) || "",
@@ -251,9 +257,12 @@ export async function requireAuth(
       authResult.userTimezone,
     );
     triggerUserRequestMaintenance(
-      authResult.userId,
+      authResult.actorUserId,
       authResult.userTimezone,
     );
+    if (isLedgerDataApiRequest(request)) {
+      return applyLedgerContext(request, authResult);
+    }
     return authResult;
   }
 

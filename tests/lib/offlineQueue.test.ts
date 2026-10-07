@@ -78,18 +78,20 @@ test('serializeQueue 與 parseQueue 往返一致', () => {
   assert.deepEqual(roundTrip, items);
 });
 
-test('enqueue 不重複加入同 id，且容量上限丟棄最舊項目', () => {
+test('enqueue 不重複加入同 id，且容量上限拒絕新項目而保留全部既有資料', () => {
   const first = createQueueItem({ kind: 'transaction', payload: {}, now: 1, id: '1'.repeat(32) });
   let queue = enqueue([], first);
   queue = enqueue(queue, first);
   assert.equal(queue.length, 1, '同 id 不應重複加入');
 
-  for (let i = 0; i < MAX_QUEUE_SIZE + 10; i += 1) {
+  for (let i = 0; i < MAX_QUEUE_SIZE - 1; i += 1) {
     queue = enqueue(queue, createQueueItem({ kind: 'transaction', payload: { i }, now: 1000 + i }));
   }
+  const fullQueue = queue;
+  const overflow = createQueueItem({ kind: 'transaction', payload: { overflow: true }, now: 9999 });
   assert.equal(queue.length, MAX_QUEUE_SIZE);
-  // 最舊的 first 應已被丟棄，最新加入的仍在。
-  assert.ok(!queue.some((item) => item.id === first.id));
+  assert.equal(enqueue(queue, overflow), fullQueue, '容量已滿時應拒絕新項目');
+  assert.ok(queue.some((item) => item.id === first.id), '最舊的待同步資料必須保留');
 });
 
 test('removeItem / pendingItems / failedItems 正確分流', () => {

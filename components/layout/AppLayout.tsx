@@ -30,7 +30,8 @@ const PAGE_TITLE_KEYS: Record<string, string> = {
   '/settings/account':     'nav.account',
   '/settings/admin':       'nav.admin',
   '/settings/export':      'nav.exportImport',
-  '/settings/mcp':         'nav.mcp',
+  '/settings/ledgers':       'nav.ledgers',
+  '/settings/mcp':           'nav.mcp',
   '/settings/mcp-connections': 'nav.mcpConnections',
   '/settings/api-integration': 'nav.apiIntegration',
 };
@@ -44,7 +45,8 @@ export default function AppLayout({ user, children }: { user: any; children: Rea
   const title = titleKey ? t(titleKey) : 'AssetPilot';
   const contentProvidesHeading = pathname === '/dashboard'
     || pathname === '/finance/info-board'
-    || pathname === '/settings/export';
+    || pathname === '/settings/export'
+    || pathname === '/settings/ledgers';
 
   const closeSidebar = useCallback(() => {
     setSidebarOpen(false);

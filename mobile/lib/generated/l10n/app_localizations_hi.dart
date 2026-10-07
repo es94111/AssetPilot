@@ -5295,4 +5295,140 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get settingsApiIntegrationCopyFailed =>
       'कॉपी नहीं हो सका — यहाँ स्वतः कॉपी अवरुद्ध हो सकती है; ऊपर दिया मान चुनकर मैन्युअल रूप से कॉपी करें';
+
+  @override
+  String get navLedgers => 'साझा खाते';
+
+  @override
+  String get ledgerTitle => 'खाता साझा करना';
+
+  @override
+  String get ledgerDescription =>
+      'खाली साझा खाता बनाएँ, सदस्यों को आमंत्रित करें और उनकी पहुँच प्रबंधित करें।';
+
+  @override
+  String get ledgerActiveLedger => 'सक्रिय खाता';
+
+  @override
+  String get ledgerPersonal => 'निजी खाता';
+
+  @override
+  String get ledgerManage => 'खाते प्रबंधित करें';
+
+  @override
+  String get ledgerLoadError => 'Could not load ledgers.';
+
+  @override
+  String get ledgerCreate => 'खाली साझा खाता बनाएँ';
+
+  @override
+  String get ledgerCreateName => 'खाते का नाम';
+
+  @override
+  String get ledgerCreateButton => 'खाता बनाएँ';
+
+  @override
+  String get ledgerCreated => 'Shared ledger created.';
+
+  @override
+  String get ledgerCreateError => 'Could not create the ledger.';
+
+  @override
+  String get ledgerInvited => 'Invitation sent by email.';
+
+  @override
+  String get ledgerInviteAccepted => 'Invitation accepted.';
+
+  @override
+  String get ledgerError => 'The request could not be completed.';
+
+  @override
+  String get ledgerRemoveConfirm => 'Remove this member from the ledger?';
+
+  @override
+  String get ledgerTransferConfirm =>
+      'Transfer ownership to this member? You will become an editor.';
+
+  @override
+  String get ledgerOwnerTransferred => 'Ledger ownership transferred.';
+
+  @override
+  String get ledgerLeaveConfirm =>
+      'Leave this ledger? You will lose access immediately.';
+
+  @override
+  String get ledgerLeft => 'You left the ledger.';
+
+  @override
+  String get ledgerInviteInstructions =>
+      'You have been invited to a shared ledger. Sign in with the email address that received the invitation.';
+
+  @override
+  String get ledgerAcceptInvite => 'आमंत्रण स्वीकारें';
+
+  @override
+  String get ledgerEmptySharedNotice =>
+      'साझा खाते खाली बनाए जाते हैं। निजी डेटा अपने-आप कॉपी नहीं होता।';
+
+  @override
+  String get ledgerMembers => 'सदस्य';
+
+  @override
+  String get ledgerLeave => 'खाता छोड़ें';
+
+  @override
+  String get ledgerInviteEmail => 'सदस्य का ईमेल';
+
+  @override
+  String get ledgerRole => 'पहुँच स्तर';
+
+  @override
+  String get ledgerOwner => 'स्वामी';
+
+  @override
+  String get ledgerEditor => 'संपादक';
+
+  @override
+  String get ledgerViewer => 'दर्शक (केवल पढ़ें)';
+
+  @override
+  String get ledgerSendInvite => 'आमंत्रण भेजें';
+
+  @override
+  String get ledgerPersonalOnly =>
+      'This is your private ledger. Create a shared ledger to invite members.';
+
+  @override
+  String get ledgerNoMembers => 'No members found.';
+
+  @override
+  String get ledgerChangeRole => 'Change role';
+
+  @override
+  String get ledgerTransferOwner => 'स्वामित्व हस्तांतरित करें';
+
+  @override
+  String get ledgerRemove => 'Remove';
+
+  @override
+  String get ledgerPendingInvitations => 'लंबित आमंत्रण';
+
+  @override
+  String get ledgerNoInvitations => 'No pending invitations.';
+
+  @override
+  String get ledgerInvitationExpires => 'Expires';
+
+  @override
+  String get ledgerRevoke => 'Revoke invitation';
+
+  @override
+  String get ledgerAudit => 'हाल की गतिविधि';
+
+  @override
+  String get ledgerNoAudit => 'No activity recorded yet.';
+
+  @override
+  String get ledgerLastOwnerNotice =>
+      'The owner must transfer ownership before leaving or deleting their account.';
 }

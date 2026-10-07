@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { apiGet, apiPost, apiPut, apiDelete, notifyDataChanged, isNetworkError, DATA_CHANGED_EVENT } from '../../../lib/clientApi';
+import { apiGet, apiPost, apiPut, apiDelete, activeLedgerFileUrl, getActiveLedgerHeaders, notifyDataChanged, isNetworkError, DATA_CHANGED_EVENT } from '../../../lib/clientApi';
 import { enqueueOffline } from '../../../lib/clientOfflineQueue';
+import { newQueueId } from '../../../lib/offlineQueueCore';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useT } from '@/components/i18n/I18nProvider';
@@ -413,6 +414,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
     const res = await fetch(`/api/transactions/${transactionId}/attachments`, {
       method: 'POST',
       credentials: 'include',
+      headers: getActiveLedgerHeaders(),
       body: data,
     });
     const payload = await res.json().catch(() => ({}));
@@ -451,8 +453,10 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
     if (!/^[A-Z]{3}$/.test(form.currency)) { setAdvancedOpen(true); setFormError(t('features.accounts.messages.currencyInvalid')); return; }
     setSaving(true);
     setFormError('');
+    const clientRef = editId ? undefined : newQueueId();
     const isForex = form.currency && form.currency !== 'TWD';
     const body = {
+      ...(clientRef ? { clientRef } : {}),
       date: form.date,
       type: form.type,
       amount: Number(form.amount),
@@ -488,7 +492,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
         } catch (networkError: any) {
           if (!isNetworkError(networkError)) throw networkError;
           // 離線（或連線中斷）：改存本機佇列，恢復連線後由 OfflineSyncStatus 自動送出。
-          const { persisted } = enqueueOffline('transaction', body);
+          const { persisted } = enqueueOffline('transaction', body, clientRef);
           if (!persisted) {
             // 本機儲存不可用（隱私模式／配額用盡）：不可謊稱已儲存，必須讓使用者知道。
             setFormError(t('features.offline.saveFailed'));
@@ -540,14 +544,16 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
     }
     setSaving(true);
     setFormError('');
+    const clientRef = newQueueId();
+    const transferPayload = {
+      date: transferForm.date,
+      amount: Number(transferForm.amount),
+      fromAccountId: transferForm.fromAccountId,
+      toAccountId: transferForm.toAccountId,
+      note: transferForm.note,
+    };
     try {
-      await apiPost('/api/transactions/transfer', {
-        date: transferForm.date,
-        amount: Number(transferForm.amount),
-        fromAccountId: transferForm.fromAccountId,
-        toAccountId: transferForm.toAccountId,
-        note: transferForm.note,
-      });
+      await apiPost('/api/transactions/transfer', { ...transferPayload, clientRef });
       setTransferModal(false);
       setPage(1);
       await load(1);
@@ -555,13 +561,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
     } catch (e: any) {
       if (isNetworkError(e)) {
         // 離線：整筆轉帳（含配對兩腳）排入佇列，恢復連線後一次送出。
-        const { persisted } = enqueueOffline('transfer', {
-          date: transferForm.date,
-          amount: Number(transferForm.amount),
-          fromAccountId: transferForm.fromAccountId,
-          toAccountId: transferForm.toAccountId,
-          note: transferForm.note,
-        });
+        const { persisted } = enqueueOffline('transfer', transferPayload, clientRef);
         if (!persisted) {
           setFormError(t('features.offline.saveFailed'));
         } else {
@@ -928,7 +928,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
                       <div className="min-w-0 flex-1">
                         {tx.attachmentCount > 0 && tx.firstAttachmentId && (
                           tx.attachmentCount === 1 ? (
-                            <a className="inline-flex min-h-11 items-center gap-2 px-2 text-xs font-medium text-sky-600" href={`/api/transactions/${tx.id}/attachments/${tx.firstAttachmentId}/file`} target="_blank" rel="noreferrer">
+                            <a className="inline-flex min-h-11 items-center gap-2 px-2 text-xs font-medium text-sky-600" href={activeLedgerFileUrl(`/api/transactions/${tx.id}/attachments/${tx.firstAttachmentId}/file`)} target="_blank" rel="noreferrer">
                               <Image size={17} aria-hidden="true" /> {t('features.transactions.photoOne')}
                             </a>
                           ) : (
@@ -1008,7 +1008,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
                         tx.attachmentCount === 1 ? (
                           <a
                             className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-sky-600 hover:text-sky-700"
-                            href={`/api/transactions/${tx.id}/attachments/${tx.firstAttachmentId}/file`}
+                            href={activeLedgerFileUrl(`/api/transactions/${tx.id}/attachments/${tx.firstAttachmentId}/file`)}
                             target="_blank"
                             rel="noreferrer"
                           >
@@ -1192,7 +1192,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
                   <ul className="space-y-1 rounded-md border border-slate-200 bg-white px-3 py-2">
                     {editAttachments.filter(a => !pendingDeleteIds.has(a.id)).map(a => (
                       <li key={a.id} className="flex items-center justify-between gap-2 text-xs text-slate-600">
-                        <a href={a.url} target="_blank" rel="noreferrer" className="min-w-0 truncate text-sky-600 hover:text-sky-700">{a.filename || t('features.transactions.photos')}</a>
+                        <a href={activeLedgerFileUrl(a.url)} target="_blank" rel="noreferrer" className="min-w-0 truncate text-sky-600 hover:text-sky-700">{a.filename || t('features.transactions.photos')}</a>
                         <button
                           type="button"
                           className="shrink-0 font-medium text-slate-500 hover:text-red-600"
@@ -1330,14 +1330,14 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
               {attachmentPickerItems.map((item, index) => (
                 <li key={item.id}>
                   <a
-                    href={item.url}
+                    href={activeLedgerFileUrl(item.url)}
                     target="_blank"
                     rel="noreferrer"
                     className="flex items-center gap-3 rounded-md border border-slate-200 p-2 text-sm hover:bg-slate-50"
                     onClick={() => setAttachmentPickerTxId(null)}
                   >
                     <img
-                      src={item.url}
+                      src={activeLedgerFileUrl(item.url)}
                       alt={item.filename || t('features.transactions.photoCount', { count: index + 1 })}
                       className="h-12 w-12 flex-none rounded object-cover"
                       onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}

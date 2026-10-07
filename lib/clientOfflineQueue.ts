@@ -27,7 +27,7 @@ import {
   type OfflineQueueKind,
   type QueueSummary,
 } from './offlineQueueCore';
-import { notifyDataChanged } from './clientApi';
+import { getActiveLedgerId, notifyDataChanged } from './clientApi';
 
 const STORAGE_PREFIX = 'assetpilot.offlineQueue';
 /** 舊版未區分使用者的固定鍵；登入時一次性清除，避免跨使用者殘留財務資料。 */
@@ -164,13 +164,24 @@ export function getQueueSummary(): QueueSummary {
  */
 export function enqueueOffline(
   kind: OfflineQueueKind,
-  payload: Record<string, unknown>
+  payload: Record<string, unknown>,
+  id?: string,
 ): { item: OfflineQueueItem; persisted: boolean } {
-  const item = createQueueItem({ kind, payload, now: Date.now() });
+  const item = createQueueItem({
+    kind,
+    payload,
+    now: Date.now(),
+    id,
+    ledgerId: getActiveLedgerId() || undefined,
+  });
   // 未綁定已驗證使用者（登出／跨分頁身分切換期間）一律 fail closed，不能寫入
   // 共用 base key，否則下一位使用者可能在不知情下收到這筆離線交易。
   if (!activeUserId) return { item, persisted: false };
-  const persisted = writeQueue(enqueue(readQueue(), item), item.id);
+  const current = readQueue();
+  if (current.some((existing) => existing.id === item.id)) return { item, persisted: true };
+  const next = enqueue(current, item);
+  if (next === current) return { item, persisted: false };
+  const persisted = writeQueue(next, item.id);
   return { item, persisted };
 }
 
@@ -200,10 +211,12 @@ interface SendOutcome {
 async function sendItem(item: OfflineQueueItem): Promise<SendOutcome> {
   const endpoint = ENDPOINTS[item.kind];
   try {
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (item.ledgerId) headers['x-ledger-id'] = item.ledgerId;
     const res = await fetch(endpoint.url, {
       method: 'POST',
       credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       // clientRef 同時作為伺服器端 (user_id, client_ref) 唯一鍵。
       body: JSON.stringify({ ...item.payload, clientRef: item.id }),
     });

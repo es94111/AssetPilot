@@ -1,3 +1,4 @@
+import { withLedgerWriteAudit } from '../../../../lib/ledgerContext';
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '../../../../lib/apiHelpers';
 import { getDB, queryOne, saveDB } from '../../../../lib/db';
@@ -6,6 +7,7 @@ import { ownsResource, assertOptimisticLock, lockErrorResponse } from '../../../
 import { computeTwdAmount } from '../../../../lib/moneyDecimal';
 import { insertFeeTransaction } from '../../../../lib/overseasFee';
 import { listTransactionAttachments } from '../../../../lib/transactionAttachments';
+import { ledgerFileUrl } from '../../../../lib/ledgerPolicy';
 import { findTransactionEditBlock } from '../../../../lib/transactionEditRules';
 import { deleteTransactionCascade, isDisabledCreditCard } from '../../../../lib/transactionWriteCore';
 import { emitTransactionEvent } from '../../../../lib/transactionWebhooks';
@@ -13,6 +15,7 @@ import { emitTransactionEvent } from '../../../../lib/transactionWebhooks';
 type RouteContext = { params: Promise<{ txId: string }> };
 interface Auth {
   userId: string;
+  actorUserId: string;
   userTimezone: string;
   email: string;
   displayName: string;
@@ -124,7 +127,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
       byteSize: Number(item.byte_size) || 0,
       storage: item.storage,
       createdAt: Number(item.created_at) || 0,
-      url: `/api/transactions/${txId}/attachments/${item.id}/file`,
+      url: ledgerFileUrl(`/api/transactions/${txId}/attachments/${item.id}/file`, auth.ledgerId),
     })),
   });
 }
@@ -254,21 +257,21 @@ async function updateHandler(request: NextRequest, txId: string, auth: Auth) {
   return NextResponse.json({ ok: true, fxFee, updatedAt: nowMs });
 }
 
-export async function PUT(request: NextRequest, { params }: RouteContext) {
+async function handlePUT(request: NextRequest, { params }: RouteContext) {
   const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
   const { txId } = await params;
   return updateHandler(request, txId, auth);
 }
 
-export async function PATCH(request: NextRequest, { params }: RouteContext) {
+async function handlePATCH(request: NextRequest, { params }: RouteContext) {
   const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
   const { txId } = await params;
   return updateHandler(request, txId, auth);
 }
 
-export async function DELETE(request: NextRequest, { params }: RouteContext) {
+async function handleDELETE(request: NextRequest, { params }: RouteContext) {
   const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
@@ -306,3 +309,7 @@ export async function DELETE(request: NextRequest, { params }: RouteContext) {
   });
   return NextResponse.json({ ok: true });
 }
+
+export const PUT = withLedgerWriteAudit(handlePUT);
+export const PATCH = withLedgerWriteAudit(handlePATCH);
+export const DELETE = withLedgerWriteAudit(handleDELETE);

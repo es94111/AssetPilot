@@ -17,7 +17,7 @@ import test from 'node:test';
 function installBrowserShim() {
   const store = new Map<string, string>();
   const listeners = new Map<string, Set<(event: unknown) => void>>();
-  const calls: Array<{ url: string; body: Record<string, unknown> }> = [];
+  const calls: Array<{ url: string; body: Record<string, unknown>; headers?: Record<string, string> }> = [];
   let responder: (url: string, body: Record<string, unknown>) => { status: number; json?: unknown; throws?: boolean } =
     () => ({ status: 201, json: { id: 'server-id' } });
 
@@ -74,9 +74,9 @@ function installBrowserShim() {
   defineGlobal('CustomEvent', ShimCustomEvent);
   defineGlobal('window', windowShim);
   defineGlobal('navigator', { onLine: true });
-  defineGlobal('fetch', async (url: string, init?: { body?: string }) => {
+  defineGlobal('fetch', async (url: string, init?: { body?: string; headers?: Record<string, string> }) => {
     const body = init?.body ? (JSON.parse(init.body) as Record<string, unknown>) : {};
-    calls.push({ url, body });
+    calls.push({ url, body, headers: init?.headers });
     const outcome = responder(url, body);
     if (outcome.throws) throw new TypeError('Failed to fetch');
     return {
@@ -138,6 +138,63 @@ test('離線排入 → 恢復連線後自動送出：成功項目自佇列移除
     assert.deepEqual(summary, { pending: 0, failed: 0, total: 0 });
     assert.equal(mod.getQueue().length, 0, '成功項目應自佇列移除');
     assert.deepEqual(received, ['transactions:offline-sync'], '成功送出後應派送 offline-sync data-changed');
+  } finally {
+    shim.restore();
+  }
+});
+
+test('離線交易固定使用建立時的帳本，不隨後續帳本切換而轉移', async () => {
+  const shim = installBrowserShim();
+  try {
+    const mod = await import('../../lib/clientOfflineQueue.ts');
+    mod.setOfflineQueueUser('ledger-user');
+    shim.setOnline(false);
+    shim.store.set('assetpilot.active-ledger-id', 'shared-ledger-a');
+    const { item } = mod.enqueueOffline('transaction', { amount: 10 });
+    assert.equal(item.ledgerId, 'shared-ledger-a');
+    assert.equal(mod.getQueue()[0].ledgerId, 'shared-ledger-a');
+    shim.store.set('assetpilot.active-ledger-id', 'shared-ledger-b');
+    shim.setOnline(true);
+    await mod.flushOfflineQueue();
+    assert.equal(shim.calls[0].headers?.['x-ledger-id'], 'shared-ledger-a');
+  } finally {
+    shim.restore();
+  }
+});
+
+test('在線請求重試佇列沿用第一次 POST 的 idempotency key', async () => {
+  const shim = installBrowserShim();
+  try {
+    const mod = await import('../../lib/clientOfflineQueue.ts');
+    mod.setOfflineQueueUser('ambiguous-write-user');
+    const clientRef = 'a'.repeat(32);
+    shim.setOnline(false);
+    const { item, persisted } = mod.enqueueOffline('transaction', { amount: 25, clientRef }, clientRef);
+    assert.equal(persisted, true);
+    assert.equal(item.id, clientRef);
+    shim.setOnline(true);
+    await mod.flushOfflineQueue();
+    assert.equal(shim.calls[0].body.clientRef, clientRef);
+  } finally {
+    shim.restore();
+  }
+});
+
+test('離線佇列容量已滿時拒絕新項目並保留所有未同步資料', async () => {
+  const shim = installBrowserShim();
+  try {
+    const mod = await import('../../lib/clientOfflineQueue.ts');
+    const { createQueueItem, MAX_QUEUE_SIZE } = await import('../../lib/offlineQueueCore.ts');
+    mod.setOfflineQueueUser('full-queue-user');
+    const items = Array.from({ length: MAX_QUEUE_SIZE }, (_, index) => createQueueItem({
+      kind: 'transaction', payload: { index }, now: index + 1, id: index.toString(16).padStart(32, '0'),
+    }));
+    const key = 'assetpilot.offlineQueue.full-queue-user';
+    shim.store.set(key, JSON.stringify(items));
+    const result = mod.enqueueOffline('transaction', { amount: 999 });
+    assert.equal(result.persisted, false);
+    assert.deepEqual(mod.getQueue(), items);
+    assert.ok(mod.getQueue().some((item) => item.id === items[0].id));
   } finally {
     shim.restore();
   }

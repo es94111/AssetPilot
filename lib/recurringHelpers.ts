@@ -113,6 +113,7 @@ export function processOneRecurring(
 
 export interface RecurringOptions {
   maxSync?: number;
+  userTimezone?: string;
 }
 
 export function processRecurringForUser(userId: string, opts: RecurringOptions = {}): number {
@@ -120,8 +121,9 @@ export function processRecurringForUser(userId: string, opts: RecurringOptions =
   let generated = 0;
   let bgScheduled = false;
 
-  const userRow = queryOne('SELECT timezone FROM users WHERE id = ?', [userId]);
-  const userTimezone = (userRow && userRow.timezone as string) || 'Asia/Taipei';
+  const userRow = opts.userTimezone ? null : queryOne('SELECT timezone FROM users WHERE id = ?', [userId]);
+  const ledgerTimezone = userRow ? '' : String(queryOne('SELECT timezone FROM financial_ledgers WHERE data_owner_id = ?', [userId])?.timezone || '');
+  const userTimezone = opts.userTimezone || (userRow && userRow.timezone as string) || ledgerTimezone || 'Asia/Taipei';
 
   const recs = queryAll(
     'SELECT * FROM recurring WHERE user_id = ? AND is_active = 1 AND needs_attention = 0',
@@ -133,7 +135,7 @@ export function processRecurringForUser(userId: string, opts: RecurringOptions =
       if (!bgScheduled) {
         bgScheduled = true;
         setImmediate(() => {
-          try { processRecurringForUser(userId, { maxSync: Infinity }); }
+          try { processRecurringForUser(userId, { maxSync: Infinity, userTimezone }); }
           catch (e) { console.error('[004-recurring] bg resume failed for', userId, e); }
         });
       }

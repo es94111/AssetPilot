@@ -9282,6 +9282,264 @@ abstract class AppLocalizations {
   /// In zh_Hant_TW, this message translates to:
   /// **'複製失敗（此環境可能不允許自動複製），請手動選取上方內容複製'**
   String get settingsApiIntegrationCopyFailed;
+
+  /// Web path: nav.ledgers
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'共享帳本'**
+  String get navLedgers;
+
+  /// Web path: ledger.title
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'帳本共享管理'**
+  String get ledgerTitle;
+
+  /// Web path: ledger.description
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'建立空白共享帳本、邀請成員並管理存取權限。'**
+  String get ledgerDescription;
+
+  /// Web path: ledger.activeLedger
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'目前帳本'**
+  String get ledgerActiveLedger;
+
+  /// Web path: ledger.personal
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'個人帳本'**
+  String get ledgerPersonal;
+
+  /// Web path: ledger.manage
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'管理帳本'**
+  String get ledgerManage;
+
+  /// Web path: ledger.loadError
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'無法載入帳本。'**
+  String get ledgerLoadError;
+
+  /// Web path: ledger.create
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'建立空白共享帳本'**
+  String get ledgerCreate;
+
+  /// Web path: ledger.createName
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'帳本名稱'**
+  String get ledgerCreateName;
+
+  /// Web path: ledger.createButton
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'建立帳本'**
+  String get ledgerCreateButton;
+
+  /// Web path: ledger.created
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'共享帳本已建立。'**
+  String get ledgerCreated;
+
+  /// Web path: ledger.createError
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'無法建立帳本。'**
+  String get ledgerCreateError;
+
+  /// Web path: ledger.invited
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'邀請信已寄出。'**
+  String get ledgerInvited;
+
+  /// Web path: ledger.inviteAccepted
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'已接受帳本邀請。'**
+  String get ledgerInviteAccepted;
+
+  /// Web path: ledger.error
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'無法完成此操作。'**
+  String get ledgerError;
+
+  /// Web path: ledger.removeConfirm
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'確定要將此成員移出帳本嗎？'**
+  String get ledgerRemoveConfirm;
+
+  /// Web path: ledger.transferConfirm
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'確定將帳本擁有權移交給此成員？你將改為編輯者。'**
+  String get ledgerTransferConfirm;
+
+  /// Web path: ledger.ownerTransferred
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'帳本擁有權已移交。'**
+  String get ledgerOwnerTransferred;
+
+  /// Web path: ledger.leaveConfirm
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'確定離開此帳本？離開後將立即失去存取權。'**
+  String get ledgerLeaveConfirm;
+
+  /// Web path: ledger.left
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'你已離開帳本。'**
+  String get ledgerLeft;
+
+  /// Web path: ledger.inviteInstructions
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'你收到共享帳本邀請。請使用收到邀請的電子郵件帳號登入。'**
+  String get ledgerInviteInstructions;
+
+  /// Web path: ledger.acceptInvite
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'接受邀請'**
+  String get ledgerAcceptInvite;
+
+  /// Web path: ledger.emptySharedNotice
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'共享帳本會以空白資料建立，不會自動複製你的個人記帳資料。'**
+  String get ledgerEmptySharedNotice;
+
+  /// Web path: ledger.members
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'成員'**
+  String get ledgerMembers;
+
+  /// Web path: ledger.leave
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'離開帳本'**
+  String get ledgerLeave;
+
+  /// Web path: ledger.inviteEmail
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'成員電子郵件'**
+  String get ledgerInviteEmail;
+
+  /// Web path: ledger.role
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'存取權限'**
+  String get ledgerRole;
+
+  /// Web path: ledger.owner
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'擁有者'**
+  String get ledgerOwner;
+
+  /// Web path: ledger.editor
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'編輯者'**
+  String get ledgerEditor;
+
+  /// Web path: ledger.viewer
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'檢視者（唯讀）'**
+  String get ledgerViewer;
+
+  /// Web path: ledger.sendInvite
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'寄送邀請'**
+  String get ledgerSendInvite;
+
+  /// Web path: ledger.personalOnly
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'這是你的私人帳本。建立共享帳本後即可邀請成員。'**
+  String get ledgerPersonalOnly;
+
+  /// Web path: ledger.noMembers
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'找不到成員。'**
+  String get ledgerNoMembers;
+
+  /// Web path: ledger.changeRole
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'變更角色'**
+  String get ledgerChangeRole;
+
+  /// Web path: ledger.transferOwner
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'移交擁有權'**
+  String get ledgerTransferOwner;
+
+  /// Web path: ledger.remove
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'移除'**
+  String get ledgerRemove;
+
+  /// Web path: ledger.pendingInvitations
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'待處理邀請'**
+  String get ledgerPendingInvitations;
+
+  /// Web path: ledger.noInvitations
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'目前沒有待處理邀請。'**
+  String get ledgerNoInvitations;
+
+  /// Web path: ledger.invitationExpires
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'到期日'**
+  String get ledgerInvitationExpires;
+
+  /// Web path: ledger.revoke
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'撤銷邀請'**
+  String get ledgerRevoke;
+
+  /// Web path: ledger.audit
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'近期活動'**
+  String get ledgerAudit;
+
+  /// Web path: ledger.noAudit
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'尚無活動紀錄。'**
+  String get ledgerNoAudit;
+
+  /// Web path: ledger.lastOwnerNotice
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'擁有者離開帳本或刪除帳號前，必須先移交擁有權。'**
+  String get ledgerLastOwnerNotice;
 }
 
 class _AppLocalizationsDelegate

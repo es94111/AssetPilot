@@ -8142,5 +8142,220 @@
   "@settingsApiIntegrationCopyFailed": {
     "description": "Web path: settings.apiIntegration.copyFailed",
     "x-webPath": "settings.apiIntegration.copyFailed"
+  },
+  "navLedgers": "Общие счета",
+  "@navLedgers": {
+    "description": "Web path: nav.ledgers",
+    "x-webPath": "nav.ledgers"
+  },
+  "ledgerTitle": "Общий доступ к счетам",
+  "@ledgerTitle": {
+    "description": "Web path: ledger.title",
+    "x-webPath": "ledger.title"
+  },
+  "ledgerDescription": "Создайте пустой общий счёт, приглашайте участников и управляйте доступом.",
+  "@ledgerDescription": {
+    "description": "Web path: ledger.description",
+    "x-webPath": "ledger.description"
+  },
+  "ledgerActiveLedger": "Текущий счёт",
+  "@ledgerActiveLedger": {
+    "description": "Web path: ledger.activeLedger",
+    "x-webPath": "ledger.activeLedger"
+  },
+  "ledgerPersonal": "Личный счёт",
+  "@ledgerPersonal": {
+    "description": "Web path: ledger.personal",
+    "x-webPath": "ledger.personal"
+  },
+  "ledgerManage": "Управление счетами",
+  "@ledgerManage": {
+    "description": "Web path: ledger.manage",
+    "x-webPath": "ledger.manage"
+  },
+  "ledgerLoadError": "Could not load ledgers.",
+  "@ledgerLoadError": {
+    "description": "Web path: ledger.loadError",
+    "x-webPath": "ledger.loadError"
+  },
+  "ledgerCreate": "Создать пустой общий счёт",
+  "@ledgerCreate": {
+    "description": "Web path: ledger.create",
+    "x-webPath": "ledger.create"
+  },
+  "ledgerCreateName": "Название счёта",
+  "@ledgerCreateName": {
+    "description": "Web path: ledger.createName",
+    "x-webPath": "ledger.createName"
+  },
+  "ledgerCreateButton": "Создать счёт",
+  "@ledgerCreateButton": {
+    "description": "Web path: ledger.createButton",
+    "x-webPath": "ledger.createButton"
+  },
+  "ledgerCreated": "Shared ledger created.",
+  "@ledgerCreated": {
+    "description": "Web path: ledger.created",
+    "x-webPath": "ledger.created"
+  },
+  "ledgerCreateError": "Could not create the ledger.",
+  "@ledgerCreateError": {
+    "description": "Web path: ledger.createError",
+    "x-webPath": "ledger.createError"
+  },
+  "ledgerInvited": "Invitation sent by email.",
+  "@ledgerInvited": {
+    "description": "Web path: ledger.invited",
+    "x-webPath": "ledger.invited"
+  },
+  "ledgerInviteAccepted": "Invitation accepted.",
+  "@ledgerInviteAccepted": {
+    "description": "Web path: ledger.inviteAccepted",
+    "x-webPath": "ledger.inviteAccepted"
+  },
+  "ledgerError": "The request could not be completed.",
+  "@ledgerError": {
+    "description": "Web path: ledger.error",
+    "x-webPath": "ledger.error"
+  },
+  "ledgerRemoveConfirm": "Remove this member from the ledger?",
+  "@ledgerRemoveConfirm": {
+    "description": "Web path: ledger.removeConfirm",
+    "x-webPath": "ledger.removeConfirm"
+  },
+  "ledgerTransferConfirm": "Transfer ownership to this member? You will become an editor.",
+  "@ledgerTransferConfirm": {
+    "description": "Web path: ledger.transferConfirm",
+    "x-webPath": "ledger.transferConfirm"
+  },
+  "ledgerOwnerTransferred": "Ledger ownership transferred.",
+  "@ledgerOwnerTransferred": {
+    "description": "Web path: ledger.ownerTransferred",
+    "x-webPath": "ledger.ownerTransferred"
+  },
+  "ledgerLeaveConfirm": "Leave this ledger? You will lose access immediately.",
+  "@ledgerLeaveConfirm": {
+    "description": "Web path: ledger.leaveConfirm",
+    "x-webPath": "ledger.leaveConfirm"
+  },
+  "ledgerLeft": "You left the ledger.",
+  "@ledgerLeft": {
+    "description": "Web path: ledger.left",
+    "x-webPath": "ledger.left"
+  },
+  "ledgerInviteInstructions": "You have been invited to a shared ledger. Sign in with the email address that received the invitation.",
+  "@ledgerInviteInstructions": {
+    "description": "Web path: ledger.inviteInstructions",
+    "x-webPath": "ledger.inviteInstructions"
+  },
+  "ledgerAcceptInvite": "Принять приглашение",
+  "@ledgerAcceptInvite": {
+    "description": "Web path: ledger.acceptInvite",
+    "x-webPath": "ledger.acceptInvite"
+  },
+  "ledgerEmptySharedNotice": "Общие счета создаются пустыми. Личные данные не копируются автоматически.",
+  "@ledgerEmptySharedNotice": {
+    "description": "Web path: ledger.emptySharedNotice",
+    "x-webPath": "ledger.emptySharedNotice"
+  },
+  "ledgerMembers": "Участники",
+  "@ledgerMembers": {
+    "description": "Web path: ledger.members",
+    "x-webPath": "ledger.members"
+  },
+  "ledgerLeave": "Покинуть счёт",
+  "@ledgerLeave": {
+    "description": "Web path: ledger.leave",
+    "x-webPath": "ledger.leave"
+  },
+  "ledgerInviteEmail": "Электронная почта участника",
+  "@ledgerInviteEmail": {
+    "description": "Web path: ledger.inviteEmail",
+    "x-webPath": "ledger.inviteEmail"
+  },
+  "ledgerRole": "Уровень доступа",
+  "@ledgerRole": {
+    "description": "Web path: ledger.role",
+    "x-webPath": "ledger.role"
+  },
+  "ledgerOwner": "Владелец",
+  "@ledgerOwner": {
+    "description": "Web path: ledger.owner",
+    "x-webPath": "ledger.owner"
+  },
+  "ledgerEditor": "Редактор",
+  "@ledgerEditor": {
+    "description": "Web path: ledger.editor",
+    "x-webPath": "ledger.editor"
+  },
+  "ledgerViewer": "Просмотр (только чтение)",
+  "@ledgerViewer": {
+    "description": "Web path: ledger.viewer",
+    "x-webPath": "ledger.viewer"
+  },
+  "ledgerSendInvite": "Отправить приглашение",
+  "@ledgerSendInvite": {
+    "description": "Web path: ledger.sendInvite",
+    "x-webPath": "ledger.sendInvite"
+  },
+  "ledgerPersonalOnly": "This is your private ledger. Create a shared ledger to invite members.",
+  "@ledgerPersonalOnly": {
+    "description": "Web path: ledger.personalOnly",
+    "x-webPath": "ledger.personalOnly"
+  },
+  "ledgerNoMembers": "No members found.",
+  "@ledgerNoMembers": {
+    "description": "Web path: ledger.noMembers",
+    "x-webPath": "ledger.noMembers"
+  },
+  "ledgerChangeRole": "Change role",
+  "@ledgerChangeRole": {
+    "description": "Web path: ledger.changeRole",
+    "x-webPath": "ledger.changeRole"
+  },
+  "ledgerTransferOwner": "Передать владение",
+  "@ledgerTransferOwner": {
+    "description": "Web path: ledger.transferOwner",
+    "x-webPath": "ledger.transferOwner"
+  },
+  "ledgerRemove": "Remove",
+  "@ledgerRemove": {
+    "description": "Web path: ledger.remove",
+    "x-webPath": "ledger.remove"
+  },
+  "ledgerPendingInvitations": "Ожидающие приглашения",
+  "@ledgerPendingInvitations": {
+    "description": "Web path: ledger.pendingInvitations",
+    "x-webPath": "ledger.pendingInvitations"
+  },
+  "ledgerNoInvitations": "No pending invitations.",
+  "@ledgerNoInvitations": {
+    "description": "Web path: ledger.noInvitations",
+    "x-webPath": "ledger.noInvitations"
+  },
+  "ledgerInvitationExpires": "Expires",
+  "@ledgerInvitationExpires": {
+    "description": "Web path: ledger.invitationExpires",
+    "x-webPath": "ledger.invitationExpires"
+  },
+  "ledgerRevoke": "Revoke invitation",
+  "@ledgerRevoke": {
+    "description": "Web path: ledger.revoke",
+    "x-webPath": "ledger.revoke"
+  },
+  "ledgerAudit": "Недавняя активность",
+  "@ledgerAudit": {
+    "description": "Web path: ledger.audit",
+    "x-webPath": "ledger.audit"
+  },
+  "ledgerNoAudit": "No activity recorded yet.",
+  "@ledgerNoAudit": {
+    "description": "Web path: ledger.noAudit",
+    "x-webPath": "ledger.noAudit"
+  },
+  "ledgerLastOwnerNotice": "The owner must transfer ownership before leaving or deleting their account.",
+  "@ledgerLastOwnerNotice": {
+    "description": "Web path: ledger.lastOwnerNotice",
+    "x-webPath": "ledger.lastOwnerNotice"
   }
 }

@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
      LEFT JOIN stocks s ON s.id = sd.stock_id AND s.user_id = sd.user_id
      WHERE sd.user_id = ? AND sd.date >= ? AND sd.date <= ?
      ORDER BY sd.date, sd.created_at, sd.id`,
-    [auth.userId, range.from, range.to],
+    [auth.actorUserId, range.from, range.to],
   );
   const recurringSchedules = queryAll(
     `SELECT r.id, r.type, r.frequency, r.start_date, r.last_generated, r.is_active,

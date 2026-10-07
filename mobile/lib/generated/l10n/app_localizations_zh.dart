@@ -5186,6 +5186,27 @@ class AppLocalizationsZh extends AppLocalizations {
   String get ledgerLastOwnerNotice => '擁有者離開帳本或刪除帳號前，必須先移交擁有權。';
 
   @override
+  String get ledgerSwitchTitle => '切換帳本';
+
+  @override
+  String get ledgerSwitchHint => '切換後的新增與查詢都會套用到這個帳本。';
+
+  @override
+  String get ledgerCurrent => '目前帳本';
+
+  @override
+  String get ledgerRoleLabel => '我的角色';
+
+  @override
+  String get ledgerReadOnlyNotice => '此帳本為唯讀，你只能檢視資料。';
+
+  @override
+  String get ledgerSwitchFailed => '無法切換帳本，請稍後再試。';
+
+  @override
+  String get ledgerNoLedger => '找不到可存取的帳本。';
+
+  @override
   String get navReconciliation => '銀行對帳匯入';
 
   @override
@@ -10694,6 +10715,27 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
       'The owner must transfer ownership before leaving or deleting their account.';
 
   @override
+  String get ledgerSwitchTitle => '切换账本';
+
+  @override
+  String get ledgerSwitchHint => '切换后的新增与查询都会套用到这个账本。';
+
+  @override
+  String get ledgerCurrent => '当前账本';
+
+  @override
+  String get ledgerRoleLabel => '我的角色';
+
+  @override
+  String get ledgerReadOnlyNotice => '此账本为只读，你只能查看数据。';
+
+  @override
+  String get ledgerSwitchFailed => '无法切换账本，请稍后再试。';
+
+  @override
+  String get ledgerNoLedger => '找不到可访问的账本。';
+
+  @override
   String get navReconciliation => '银行对账导入';
 
   @override
@@ -16199,6 +16241,27 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
 
   @override
   String get ledgerLastOwnerNotice => '擁有者離開帳本或刪除帳號前，必須先移交擁有權。';
+
+  @override
+  String get ledgerSwitchTitle => '切換帳本';
+
+  @override
+  String get ledgerSwitchHint => '切換後的新增與查詢都會套用到這個帳本。';
+
+  @override
+  String get ledgerCurrent => '目前帳本';
+
+  @override
+  String get ledgerRoleLabel => '我的角色';
+
+  @override
+  String get ledgerReadOnlyNotice => '此帳本為唯讀，你只能檢視資料。';
+
+  @override
+  String get ledgerSwitchFailed => '無法切換帳本，請稍後再試。';
+
+  @override
+  String get ledgerNoLedger => '找不到可存取的帳本。';
 
   @override
   String get navReconciliation => '銀行對帳匯入';

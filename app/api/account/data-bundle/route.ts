@@ -10,13 +10,32 @@ export const dynamic = 'force-dynamic';
 // 上傳備份上限（合理上界，避免記憶體爆量）：200 MB
 const MAX_BUNDLE_BYTES = 200 * 1024 * 1024;
 
+/**
+ * 讀取呼叫端指定的帳本（issue #281）。
+ *
+ * 未指定時維持既有個人資料 bundle 行為；指定共享帳本時，lib/userDataBundle 會
+ * 要求呼叫者是該帳本 owner，否則拒絕匯出／還原。
+ */
+function requestedLedgerId(request: NextRequest): string {
+  const header = String(request.headers.get('x-ledger-id') || '').trim();
+  if (header) return header;
+  try {
+    return String(new URL(request.url).searchParams.get('ledgerId') || '').trim();
+  } catch {
+    return '';
+  }
+}
+
 // GET：下載目前使用者的完整資料備份（含圖片）ZIP
 export async function GET(request: NextRequest) {
   const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
   try {
-    const { buffer, filename, counts } = await exportUserBundle(auth.userId);
+    const { buffer, filename, counts, ledgerId, isShared } = await exportUserBundle(
+      auth.userId,
+      requestedLedgerId(request),
+    );
 
     writeOperationAudit({
       userId: auth.userId,
@@ -26,7 +45,13 @@ export async function GET(request: NextRequest) {
       userAgent: request.headers.get('user-agent') || '',
       result: 'success',
       isAdminOperation: false,
-      metadata: { byteSize: buffer.length, filename, rows: Object.values(counts).reduce((a, b) => a + b, 0) },
+      metadata: {
+        byteSize: buffer.length,
+        filename,
+        rows: Object.values(counts).reduce((a, b) => a + b, 0),
+        ledger_id: ledgerId,
+        shared_ledger: isShared,
+      },
     });
 
     return new NextResponse(new Uint8Array(buffer), {
@@ -61,7 +86,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: `備份檔過大（上限 ${Math.round(MAX_BUNDLE_BYTES / 1024 / 1024)} MB）` }, { status: 400 });
     }
 
-    const summary = await restoreUserBundle(auth.userId, buffer);
+    const summary = await restoreUserBundle(auth.userId, buffer, requestedLedgerId(request));
     const totalInserted = Object.values(summary.perTable).reduce((a, t) => a + t.inserted, 0);
     const totalSkipped = Object.values(summary.perTable).reduce((a, t) => a + t.skipped, 0);
 

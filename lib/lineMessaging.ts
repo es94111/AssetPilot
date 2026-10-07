@@ -172,6 +172,47 @@ function uriButton(label: string, uri: string) {
   };
 }
 
+/**
+ * 帳本選擇選單（issue #281）。
+ *
+ * 只列出使用者目前仍是成員的帳本；viewer 標示唯讀。回傳的 postback data
+ * 只帶帳本 id（可預期、可稽核），實際授權一律在 postback 處理時重新查詢。
+ */
+export function buildLedgerMenuFlex(
+  ledgers: Array<{ ledgerId: string; name: string; role: string; isShared: boolean }>,
+  activeLedgerId: string,
+): LineFlexMessage {
+  const labels = ledgers.map((ledger) => {
+    const suffix = ledger.role === 'viewer' ? '（唯讀）' : ledger.role === 'owner' ? '（擁有者）' : '';
+    const active = ledger.ledgerId === activeLedgerId ? '✓ ' : '';
+    return {
+      label: `${active}${ledger.name || 'Personal ledger'}${suffix}`.slice(0, 20),
+      data: `action=ledger_select&ledger=${encodeURIComponent(ledger.ledgerId)}`,
+      displayText: `切換帳本：${ledger.name || 'Personal ledger'}`,
+      primary: ledger.ledgerId === activeLedgerId,
+    };
+  });
+  return {
+    type: 'flex',
+    altText: '選擇帳本',
+    contents: {
+      type: 'bubble',
+      size: 'mega',
+      header: lineHeader('選擇帳本'),
+      body: lineBody([
+        {
+          type: 'text',
+          text: '切換後的新增記錄與查詢都會套用到這個帳本；共享帳本會依你的角色決定是否可寫入。',
+          wrap: true,
+          size: 'sm',
+          color: FLEX_COLORS.muted,
+        },
+      ]),
+      footer: lineFooter(labels.length > 0 ? labels : [postbackButton('回主選單', 'action=menu', '選單')]),
+    },
+  };
+}
+
 export function buildMainMenuFlex(appUrl: string, linked: boolean): LineFlexMessage {
   const bindUrl = `${appUrl.replace(/\/$/, '')}/settings/account`;
   return {
@@ -195,6 +236,7 @@ export function buildMainMenuFlex(appUrl: string, linked: boolean): LineFlexMess
             postbackButton('新增記錄', 'action=record_wizard', '新增記錄', 'primary'),
             postbackButton('快速支出', 'action=record&type=expense', '新增支出'),
             postbackButton('查看紀錄', 'action=query_menu', '查看紀錄'),
+            postbackButton('選擇帳本', 'action=ledger_menu', '選擇帳本'),
           ]
         : [uriButton('綁定 LINE 帳號', bindUrl)]),
     },

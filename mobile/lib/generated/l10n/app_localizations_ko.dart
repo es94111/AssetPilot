@@ -5265,6 +5265,27 @@ class AppLocalizationsKo extends AppLocalizations {
       'The owner must transfer ownership before leaving or deleting their account.';
 
   @override
+  String get ledgerSwitchTitle => '장부 전환';
+
+  @override
+  String get ledgerSwitchHint => '전환 후 새 기록과 조회는 이 장부에 적용됩니다.';
+
+  @override
+  String get ledgerCurrent => '현재 장부';
+
+  @override
+  String get ledgerRoleLabel => '내 역할';
+
+  @override
+  String get ledgerReadOnlyNotice => '이 장부는 읽기 전용이며 데이터를 볼 수만 있습니다.';
+
+  @override
+  String get ledgerSwitchFailed => '장부를 전환할 수 없습니다. 다시 시도해 주세요.';
+
+  @override
+  String get ledgerNoLedger => '접근 가능한 장부를 찾을 수 없습니다.';
+
+  @override
   String get navReconciliation => '은행 대사 가져오기';
 
   @override

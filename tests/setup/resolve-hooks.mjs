@@ -4,6 +4,7 @@
 //   2. 省略副檔名的相對匯入（webpack 預設支援，Node 原生 ESM 解析器不支援）
 // 不修改任何production程式碼；僅在 `node --import tests/setup/register.mjs` 測試執行時生效。
 import { existsSync } from 'node:fs';
+import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
@@ -29,6 +30,12 @@ export async function resolve(specifier, context, nextResolve) {
     if (abs) return nextResolve(pathToFileURL(abs).href, context);
   }
 
+  if (specifier.endsWith('.json')) {
+    // Node 原生 ESM 需要 `with { type: 'json' }`，但 Next/webpack 的既有 JSON 匯入
+    // 不帶屬性；測試時改由下面的 load hook 直接回傳解析結果。
+    return { url: new URL(specifier, context.parentURL).href, shortCircuit: true, format: 'json' };
+  }
+
   if (specifier.startsWith('.') || specifier.startsWith('/')) {
     try {
       return await nextResolve(specifier, context);
@@ -42,4 +49,13 @@ export async function resolve(specifier, context, nextResolve) {
   }
 
   return nextResolve(specifier, context);
+}
+
+export async function load(url, context, nextLoad) {
+  if (url.endsWith('.json')) {
+    const source = await readFile(fileURLToPath(url), 'utf8');
+    JSON.parse(source);
+    return { format: 'json', source, shortCircuit: true };
+  }
+  return nextLoad(url, context);
 }

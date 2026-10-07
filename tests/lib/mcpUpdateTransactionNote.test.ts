@@ -436,14 +436,18 @@ if (!DB_URL) {
     );
     await withMcpClient(async (client) => {
       for (const toolName of ['delete_transaction', 'update_transaction']) {
-        await assert.rejects(
-          () => client.callTool({ name: toolName, arguments: { transactionId: expenseTxId } }),
-          (error: unknown) => {
-            assert.match(String((error as Error)?.message || error), /not found/i);
-            return true;
-          },
-          `${toolName} 應回傳 MCP 協定層級的「工具不存在」錯誤`
-        );
+        // MCP SDK 1.31 起把「工具不存在」以 isError 結果回傳，而非丟出例外；
+        // 兩者都代表協定層級拒絕，故同時接受（皆不得觸及任何資料）。
+        let protocolError = '';
+        try {
+          const result = await client.callTool({ name: toolName, arguments: { transactionId: expenseTxId } });
+          if ((result as { isError?: boolean }).isError) {
+            protocolError = (result as { content?: Array<{ text?: string }> }).content?.[0]?.text || '';
+          }
+        } catch (error) {
+          protocolError = String((error as Error)?.message || error);
+        }
+        assert.match(protocolError, /not found/i, `${toolName} 應回傳 MCP 協定層級的「工具不存在」錯誤`);
       }
     });
     const after = queryOne(

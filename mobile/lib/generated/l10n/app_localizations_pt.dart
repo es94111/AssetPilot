@@ -5501,6 +5501,30 @@ class AppLocalizationsPt extends AppLocalizations {
       'The owner must transfer ownership before leaving or deleting their account.';
 
   @override
+  String get ledgerSwitchTitle => 'Trocar livro';
+
+  @override
+  String get ledgerSwitchHint =>
+      'Novos registros e consultas usarão este livro após a troca.';
+
+  @override
+  String get ledgerCurrent => 'Livro atual';
+
+  @override
+  String get ledgerRoleLabel => 'Meu papel';
+
+  @override
+  String get ledgerReadOnlyNotice =>
+      'Este livro é somente leitura; você só pode visualizar os dados.';
+
+  @override
+  String get ledgerSwitchFailed =>
+      'Não foi possível trocar de livro. Tente novamente.';
+
+  @override
+  String get ledgerNoLedger => 'Nenhum livro acessível encontrado.';
+
+  @override
   String get navReconciliation => 'Conciliação bancária';
 
   @override
@@ -11345,6 +11369,30 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   @override
   String get ledgerLastOwnerNotice =>
       'The owner must transfer ownership before leaving or deleting their account.';
+
+  @override
+  String get ledgerSwitchTitle => 'Trocar livro';
+
+  @override
+  String get ledgerSwitchHint =>
+      'Novos registros e consultas usarão este livro após a troca.';
+
+  @override
+  String get ledgerCurrent => 'Livro atual';
+
+  @override
+  String get ledgerRoleLabel => 'Meu papel';
+
+  @override
+  String get ledgerReadOnlyNotice =>
+      'Este livro é somente leitura; você só pode visualizar os dados.';
+
+  @override
+  String get ledgerSwitchFailed =>
+      'Não foi possível trocar de livro. Tente novamente.';
+
+  @override
+  String get ledgerNoLedger => 'Nenhum livro acessível encontrado.';
 
   @override
   String get navReconciliation => 'Conciliação bancária';

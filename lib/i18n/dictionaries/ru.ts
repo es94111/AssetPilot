@@ -1948,5 +1948,12 @@ export const ru = {
     audit: "Недавняя активность",
     noAudit: "No activity recorded yet.",
     lastOwnerNotice: "The owner must transfer ownership before leaving or deleting their account.",
+    switchTitle: "Сменить книгу",
+    switchHint: "Новые записи и запросы будут использовать эту книгу после переключения.",
+    current: "Текущая книга",
+    roleLabel: "Моя роль",
+    readOnlyNotice: "Эта книга доступна только для чтения; вы можете только просматривать данные.",
+    switchFailed: "Не удалось сменить книгу. Повторите попытку.",
+    noLedger: "Доступных книг не найдено.",
   },
 } satisfies DeepPartialDict<Dictionary>;

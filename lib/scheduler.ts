@@ -7,6 +7,7 @@ import { getDB, queryAll, queryOne, saveDB } from './db';
 import { getActiveEmailProviders, sendStatsEmail } from './emailService';
 import { LINE_MESSAGING_CHANNEL_ACCESS_TOKEN, buildExpenseReminderFlex, buildStatsReportFlex, pushLineMessage } from './lineMessaging';
 import { buildUserStatsReport, renderStatsEmailHtml } from './statsEmailReport';
+import { resolveLedgerScope } from './ledgerScope';
 import { getUserLanguage } from './i18n/userLanguage';
 import * as userTime from './userTime';
 
@@ -83,6 +84,34 @@ function scheduleWantsLine(schedule) {
   return schedule.notify_line === 1;
 }
 
+// ── 排程通知的帳本授權（issue #281）──
+// 排程列上的 ledger_id 決定通知要以哪個帳本為資料範圍；寄送／提醒當下重新查詢
+// 成員角色，被移除或離開後（resolveLedgerScope 找不到成員）即拒絕寄送。
+// 舊資料列或後台建立的排程沒有 ledger_id，一律回退到收件者自己的個人帳本，
+// 維持既有「寄給自己」的行為不變。
+function resolveScheduleDelivery({ schedule, recipientId, action }) {
+  const ledgerId = String(schedule?.ledger_id || '').trim() || `personal:${recipientId}`;
+  const scope = resolveLedgerScope({ userId: recipientId, ledgerId });
+  if (!scope.ok) {
+    return {
+      allowed: false,
+      reason: `已失去此帳本權限，略過${action}（請重新選擇帳本或移除排程）`,
+    };
+  }
+  if (scope.role === 'viewer') {
+    return {
+      allowed: false,
+      reason: `此帳本為唯讀，檢視者不接收${action}`,
+    };
+  }
+  return {
+    allowed: true,
+    dataOwnerId: scope.dataOwnerId,
+    timezone: scope.timezone,
+    ledgerId: scope.ledgerId,
+  };
+}
+
 // ── 嘗試寄送單一排程報表 ──
 // 完整 Email 寄送邏輯待移植；目前記錄意圖並更新 last_run 防重複觸發
 async function runScheduledReportNow(scheduleId, triggeredBy = '排程') {
@@ -110,6 +139,20 @@ async function runScheduledReportNow(scheduleId, triggeredBy = '排程') {
         [`${formatLocalSummaryTime(startedAt)} ${triggeredBy}：使用者帳號已停用，略過寄送`, startedAt, scheduleId]);
       saveDB();
       return { status: 'skipped', sent: 0, failed: 0, skipped: 1, reason: '使用者帳號已停用' };
+    }
+
+    // issue #281：寄送當下重新授權。排程綁定帳本；若收件者已離開或被移出該帳本，
+    // 或角色降為 viewer，就不再寄送共享帳本資料（不寄給無權限的收件者）。
+    const delivery = resolveScheduleDelivery({
+      schedule,
+      recipientId: u.id,
+      action: '寄送',
+    });
+    if (!delivery.allowed) {
+      const summary = `${formatLocalSummaryTime(startedAt)} ${triggeredBy}：${delivery.reason}`;
+      db.run('UPDATE report_schedules SET last_summary = ?, updated_at = ? WHERE id = ?', [summary, startedAt, scheduleId]);
+      saveDB();
+      return { status: 'unauthorized', sent: 0, failed: 0, skipped: 1, reason: delivery.reason };
     }
 
     const wantsEmail = scheduleWantsEmail(schedule);
@@ -182,7 +225,14 @@ async function runScheduledReportNow(scheduleId, triggeredBy = '排程') {
     let errMsg = '';
     const channelResults = [];
     const locale = getUserLanguage(u.id);
-    const stats = buildUserStatsReport(u.id, schedule.freq, u.timezone || 'Asia/Taipei', locale);
+    // 報表內容以「帳本資料擁有者」為範圍：個人帳本即收件者本人，共享帳本為帳本資料，
+    // 與 Web／MCP／API 對同一帳本看到的數字一致。
+    const stats = buildUserStatsReport(
+      delivery.dataOwnerId,
+      schedule.freq,
+      delivery.timezone || u.timezone || 'Asia/Taipei',
+      locale,
+    );
 
     if (wantsEmail) {
       if (invalidEmail) {
@@ -280,6 +330,21 @@ async function runLineExpenseReminderNow(reminderId, triggeredBy = '排程') {
       saveDB();
       return { status: 'skipped', sent: 0, failed: 0, skipped: 1, reason: '使用者帳號已停用' };
     }
+
+    // issue #281：提醒寄送前重新授權。必須先於任何通道設定檢查，否則「已離開帳本」
+    // 的排程會因為服務未設定而回報成非授權問題，掩蓋真正的失權狀態。
+    const delivery = resolveScheduleDelivery({
+      schedule: reminder,
+      recipientId: u.id,
+      action: '提醒',
+    });
+    if (!delivery.allowed) {
+      const summary = `${formatLocalSummaryTime(startedAt)} ${triggeredBy}：${delivery.reason}`;
+      db.run('UPDATE line_expense_reminders SET last_summary = ?, updated_at = ? WHERE id = ?', [summary, startedAt, reminderId]);
+      saveDB();
+      return { status: 'unauthorized', sent: 0, failed: 0, skipped: 1, reason: delivery.reason };
+    }
+
     if (!LINE_MESSAGING_CHANNEL_ACCESS_TOKEN) {
       const summary = `${formatLocalSummaryTime(startedAt)} ${triggeredBy}：LINE Messaging API 未設定`;
       db.run('UPDATE line_expense_reminders SET last_summary = ?, updated_at = ? WHERE id = ?', [summary, startedAt, reminderId]);

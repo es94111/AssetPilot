@@ -5534,6 +5534,30 @@ class AppLocalizationsFr extends AppLocalizations {
       'The owner must transfer ownership before leaving or deleting their account.';
 
   @override
+  String get ledgerSwitchTitle => 'Changer de registre';
+
+  @override
+  String get ledgerSwitchHint =>
+      'Les nouveaux enregistrements et requêtes utiliseront ce registre après le changement.';
+
+  @override
+  String get ledgerCurrent => 'Registre actuel';
+
+  @override
+  String get ledgerRoleLabel => 'Mon rôle';
+
+  @override
+  String get ledgerReadOnlyNotice =>
+      'Ce registre est en lecture seule ; vous pouvez seulement consulter les données.';
+
+  @override
+  String get ledgerSwitchFailed =>
+      'Impossible de changer de registre. Veuillez réessayer.';
+
+  @override
+  String get ledgerNoLedger => 'Aucun registre accessible trouvé.';
+
+  @override
   String get navReconciliation => 'Rapprochement bancaire';
 
   @override

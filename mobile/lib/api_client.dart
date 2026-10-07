@@ -37,6 +37,45 @@ class ApiClient {
 
   static const _kCookie = 'authCookie';
   static const _kAppDeviceId = 'appDeviceId';
+  /// 目前選取的帳本（issue #281）。未設定時代表個人帳本，行為與過往版本相同。
+  static const _kActiveLedger = 'activeLedgerId';
+
+  /// 後端以 `x-ledger-id` 決定記帳資料的帳本範圍；與 Web 端 lib/clientApi.ts 同名。
+  static const ledgerHeader = 'x-ledger-id';
+
+  /// 需要帶上帳本範圍的 API 前綴。刻意與 lib/ledgerPolicy.ts 的
+  /// LEDGER_DATA_API_PREFIXES 一致；投資（/api/stocks）與帳號／偏好設定仍屬個人。
+  static const _ledgerDataPrefixes = <String>[
+    '/api/accounts',
+    '/api/calendar',
+    '/api/budget',
+    '/api/categories',
+    '/api/credit-card-repayment-summaries',
+    '/api/dashboard',
+    '/api/recurring',
+    '/api/reports',
+    '/api/transactions',
+    '/api/imports/progress',
+  ];
+
+  /// 目前選取的帳本 id；空字串代表個人帳本。
+  String _activeLedgerId = '';
+
+  /// 目前帳本是否唯讀（viewer）。由 [ledgers]／[refreshLedgerRole] 更新；
+  /// 只影響 UI 的寫入入口與本地提前拒絕，伺服器端仍會逐次驗證角色。
+  bool _activeLedgerReadOnly = false;
+
+  String get activeLedgerId => _activeLedgerId;
+
+  bool get activeLedgerReadOnly => _activeLedgerReadOnly;
+
+  /// 該路徑是否屬於記帳資料（需套用帳本範圍）。
+  static bool isLedgerDataPath(String path) {
+    final clean = path.split('?').first;
+    return _ledgerDataPrefixes.any(
+      (prefix) => clean == prefix || clean.startsWith('$prefix/'),
+    );
+  }
 
   // 認證 Cookie 的加密儲存（Android 使用 flutter_secure_storage 的 Keystore-backed defaults）。
   static const _secure = FlutterSecureStorage(aOptions: AndroidOptions());
@@ -93,7 +132,27 @@ class ApiClient {
       }
       await p.remove(_kCookie);
     }
+    _activeLedgerId = p.getString(_kActiveLedger) ?? '';
     authState.value = isLoggedIn;
+  }
+
+  /// 切換帳本並持久化；呼叫端切換後必須重新載入畫面資料（見 LedgerScreen）。
+  Future<void> setActiveLedgerId(String ledgerId) async {
+    _activeLedgerId = ledgerId;
+    final p = await SharedPreferences.getInstance();
+    if (ledgerId.isEmpty) {
+      await p.remove(_kActiveLedger);
+    } else {
+      await p.setString(_kActiveLedger, ledgerId);
+    }
+  }
+
+  /// 登出時回到個人帳本，避免下一位使用者沿用前一位的共享帳本選取。
+  Future<void> clearActiveLedger() async {
+    _activeLedgerId = '';
+    _activeLedgerReadOnly = false;
+    final p = await SharedPreferences.getInstance();
+    await p.remove(_kActiveLedger);
   }
 
   // ── 低階請求 ────────────────────────────────────────────────
@@ -128,8 +187,11 @@ class ApiClient {
     return 'AssetPilotApp ($os)';
   }();
 
-  Map<String, String> _headers({bool json = false}) => {
+  Map<String, String> _headers({bool json = false, String path = ''}) => {
     if (json) 'Content-Type': 'application/json',
+    // 只有記帳資料端點帶帳本範圍；未選取帳本（個人帳本）時完全不帶標頭。
+    if (_activeLedgerId.isNotEmpty && isLedgerDataPath(path))
+      ledgerHeader: _activeLedgerId,
     // 後端對帶 cookie 的寫入請求做 CSRF 來源檢查（middleware）。原生 App 不會
     // 自動帶 Origin，缺少時 isOriginAllowed('') 會回 false → 403。送出與後端
     // 同源的 Origin 讓寫入操作通過 CSRF 防護。
@@ -159,6 +221,7 @@ class ApiClient {
     _cookie = null;
     await _persistCookie();
     authState.value = false;
+    await clearActiveLedger();
     await AppWidgetSync.clearDashboard();
   }
 
@@ -174,6 +237,13 @@ class ApiClient {
     Object? body,
     Duration? timeout,
   }) async {
+    // viewer 帳本一律不得寫入：在送出前就以伺服器相同的訊息拒絕，
+    // 避免無謂的往返，也讓所有畫面共用同一道防線（伺服器仍是權威）。
+    if (activeLedgerReadOnly &&
+        method != 'GET' &&
+        isLedgerDataPath(path)) {
+      throw ApiException(403, trKey('ledgerReadOnlyNotice'));
+    }
     final hasBody = body != null;
     final t = timeout ?? _timeout;
     late http.Response res;
@@ -184,7 +254,7 @@ class ApiClient {
     for (var attempt = 0; ; attempt++) {
       try {
         final uri = _uri(path);
-        final headers = _headers(json: hasBody);
+        final headers = _headers(json: hasBody, path: path);
         final encoded = hasBody ? jsonEncode(body) : null;
         // 以 SentryHttpClient 包裝，讓每個 API 請求自動產生效能 span 與麵包屑
         // （方法／路徑／狀態碼／耗時），用於監控 API 延遲造成的效能下降。
@@ -920,6 +990,48 @@ class ApiClient {
       _send('DELETE', '/api/account/settings/google');
 
   Future<void> unlinkLine() => _send('DELETE', '/api/account/settings/line');
+
+  // ── 共享帳本（issue #281）────────────────────────────────────
+  /// 列出目前仍是成員的帳本（含角色），同時更新目前帳本的唯讀狀態。
+  Future<List<dynamic>> ledgers() async {
+    final r = await _send('GET', '/api/ledgers');
+    final rows = r is List ? r : const [];
+    updateLedgerRoleState(rows);
+    return rows;
+  }
+
+  /// 依帳本清單更新目前帳本的唯讀狀態；選取的帳本已不在清單中時視為
+  /// 個人帳本（可寫），避免殘留的 viewer 狀態永久鎖住寫入。
+  void updateLedgerRoleState(List<dynamic> rows) {
+    final active = _activeLedgerId;
+    if (active.isEmpty) {
+      _activeLedgerReadOnly = false;
+      return;
+    }
+    final selected = rows
+        .where((e) => e is Map && '${e['id'] ?? ''}' == active)
+        .toList();
+    _activeLedgerReadOnly =
+        selected.isNotEmpty && '${(selected.first as Map)['role'] ?? ''}' == 'viewer';
+  }
+
+  /// 建立空白共享帳本。
+  Future<Map<String, dynamic>> createLedger(String name) =>
+      _getMapFromSend('POST', '/api/ledgers', body: {'name': name});
+
+  /// 接受邀請（token 來自邀請信連結／深層連結）。
+  Future<Map<String, dynamic>> acceptLedgerInvitation(String token) =>
+      _getMapFromSend('POST', '/api/ledgers/invitations/accept', body: {
+        'token': token,
+      });
+
+  /// 帳本成員清單。
+  Future<Map<String, dynamic>> ledgerMembers(String ledgerId) =>
+      _getMap('/api/ledgers/${Uri.encodeComponent(ledgerId)}/members');
+
+  /// 離開共享帳本（owner 需先移交）。
+  Future<void> leaveLedger(String ledgerId) =>
+      _send('POST', '/api/ledgers/${Uri.encodeComponent(ledgerId)}/leave');
 
   // ── 定期報表通知排程 ────────────────────────────────────────
   Future<List<dynamic>> reportSchedules() async {

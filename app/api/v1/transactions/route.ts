@@ -12,13 +12,32 @@ import { todayInUserTz, isValidIsoDate } from '../../../../lib/userTime';
 import { computeTwdAmount } from '../../../../lib/moneyDecimal';
 import { insertIncomeExpenseTransaction } from '../../../../lib/transactionWriteCore';
 import { emitTransactionEvent } from '../../../../lib/transactionWebhooks';
+import { resolveLedgerScope } from '../../../../lib/ledgerScope';
 import {
   requireApiToken,
   jsonNoStore,
+  readRequestedLedgerId,
 } from '../../../../lib/apiTokenRequestAuth';
 
 const TRANSACTION_TYPES = new Set(['income', 'expense']);
 const MAX_ITEMS = 200;
+
+/**
+ * 帳本授權失敗一律以既有錯誤形狀回覆：不區分「不存在」與「非成員」，
+ * 避免洩漏其他帳本的存在。viewer 寫入則明確回 403（與站內 API 一致）。
+ */
+function ledgerScopeError(reason: 'not-a-member' | 'read-only' | 'not-found'): NextResponse {
+  if (reason === 'read-only') {
+    return jsonNoStore(
+      { error: '此帳本為唯讀，無法修改資料', code: 'Forbidden' },
+      { status: 403 },
+    );
+  }
+  return jsonNoStore(
+    { error: '找不到帳本或沒有存取權', code: 'NotFound' },
+    { status: 404 },
+  );
+}
 
 interface TransactionRow {
   id: string;
@@ -71,9 +90,15 @@ export async function GET(request: NextRequest) {
     return jsonNoStore({ error: 'type 必須為 income 或 expense', code: 'ValidationError' }, { status: 400 });
   }
 
+  const scope = resolveLedgerScope({
+    userId: auth.userId,
+    ledgerId: readRequestedLedgerId(request),
+  });
+  if (!scope.ok) return ledgerScopeError(scope.reason);
+
   // 僅回傳一般收支（排除自動產生的手續費副交易與轉帳腳），與對外語意一致。
   let where = "t.user_id = ? AND t.type IN ('income', 'expense') AND COALESCE(t.is_fx_fee, 0) = 0";
-  const params: Array<string | number | null> = [auth.userId];
+  const params: Array<string | number | null> = [scope.dataOwnerId];
   if (dateFrom) { where += ' AND t.date >= ?'; params.push(dateFrom); }
   if (dateTo) { where += ' AND t.date <= ?'; params.push(dateTo); }
   if (type) { where += ' AND t.type = ?'; params.push(type); }
@@ -107,12 +132,20 @@ export async function POST(request: NextRequest) {
     accountId?: string | null;
     note?: string;
     excludeFromStats?: boolean;
+    ledgerId?: string;
   };
 
   const type = String(body?.type || '');
   if (!TRANSACTION_TYPES.has(type)) {
     return jsonNoStore({ error: 'type 必須為 income 或 expense', code: 'ValidationError' }, { status: 400 });
   }
+
+  const scope = resolveLedgerScope({
+    userId: auth.userId,
+    ledgerId: readRequestedLedgerId(request, body),
+    write: true,
+  });
+  if (!scope.ok) return ledgerScopeError(scope.reason);
 
   const userTimezone = 'Asia/Taipei';
   const rawDate = body?.date;
@@ -134,7 +167,7 @@ export async function POST(request: NextRequest) {
       Number(body.originalAmount ?? body.amount),
       body.currency || 'TWD',
       body.fxRate ?? undefined,
-      auth.userId,
+      scope.dataOwnerId,
     );
   } catch (e) {
     return jsonNoStore(
@@ -152,7 +185,7 @@ export async function POST(request: NextRequest) {
   if (categoryId) {
     const catRow = queryOne(
       'SELECT id, parent_id FROM categories WHERE id = ? AND user_id = ?',
-      [categoryId, auth.userId],
+      [categoryId, scope.dataOwnerId],
     );
     if (!catRow) {
       return jsonNoStore({ error: '分類不存在或無權限', code: 'ValidationError', field: 'categoryId' }, { status: 400 });
@@ -167,7 +200,7 @@ export async function POST(request: NextRequest) {
   if (accountId) {
     const accRow = queryOne(
       'SELECT id, category, account_type, is_active FROM accounts WHERE id = ? AND user_id = ?',
-      [accountId, auth.userId],
+      [accountId, scope.dataOwnerId],
     );
     if (!accRow) {
       return jsonNoStore({ error: '帳戶不存在或無權限', code: 'ValidationError', field: 'accountId' }, { status: 400 });
@@ -180,7 +213,7 @@ export async function POST(request: NextRequest) {
 
   // 國外刷卡手續費另存為獨立交易，故原交易 twd_amount 不含手續費（fx_fee=0）。
   const fxFee = resolveOverseasFee({
-    userId: auth.userId,
+    userId: scope.dataOwnerId,
     accountId,
     currency: converted.currency,
     twdBase: converted.twdAmount,
@@ -195,7 +228,7 @@ export async function POST(request: NextRequest) {
   let result;
   try {
     result = insertIncomeExpenseTransaction({
-      userId: auth.userId,
+      userId: scope.dataOwnerId,
       type,
       twdAmount: twdAmountInt,
       currency: converted.currency,
@@ -215,7 +248,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  emitTransactionEvent(auth.userId, 'transaction.created', {
+  emitTransactionEvent(scope.dataOwnerId, 'transaction.created', {
     id: result.id,
     type,
     amount: twdAmountInt,

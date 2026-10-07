@@ -42,8 +42,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Future<Dashboard> _load(String yearMonth) async {
     final json = await ApiClient.instance.dashboard(yearMonth);
     final dashboard = Dashboard.fromJson(json);
-    await AppWidgetSync.updateDashboard(dashboard);
-    unawaited(_refreshSecondaryWidgetSnapshots(yearMonth));
+    // 桌面小工具與背景 Worker 只反映個人帳本（issue #281）：切到共享帳本時不覆寫
+    // 小工具快照，否則會把共享帳本數字與個人快取混在一起。
+    if (ApiClient.instance.activeLedgerId.isEmpty) {
+      await AppWidgetSync.updateDashboard(dashboard);
+      unawaited(_refreshSecondaryWidgetSnapshots(yearMonth));
+    }
     return dashboard;
   }
 

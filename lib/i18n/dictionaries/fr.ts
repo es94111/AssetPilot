@@ -1948,5 +1948,12 @@ export const fr = {
     audit: "Activité récente",
     noAudit: "No activity recorded yet.",
     lastOwnerNotice: "The owner must transfer ownership before leaving or deleting their account.",
+    switchTitle: "Changer de registre",
+    switchHint: "Les nouveaux enregistrements et requêtes utiliseront ce registre après le changement.",
+    current: "Registre actuel",
+    roleLabel: "Mon rôle",
+    readOnlyNotice: "Ce registre est en lecture seule ; vous pouvez seulement consulter les données.",
+    switchFailed: "Impossible de changer de registre. Veuillez réessayer.",
+    noLedger: "Aucun registre accessible trouvé.",
   },
 } satisfies DeepPartialDict<Dictionary>;

@@ -1948,5 +1948,12 @@ export const hi = {
     audit: "हाल की गतिविधि",
     noAudit: "No activity recorded yet.",
     lastOwnerNotice: "The owner must transfer ownership before leaving or deleting their account.",
+    switchTitle: "लेजर बदलें",
+    switchHint: "बदलने के बाद नई प्रविष्टियाँ और क्वेरी इस लेजर का उपयोग करेंगी।",
+    current: "वर्तमान लेजर",
+    roleLabel: "मेरी भूमिका",
+    readOnlyNotice: "यह लेजर केवल पढ़ने योग्य है; आप केवल डेटा देख सकते हैं।",
+    switchFailed: "लेजर बदल नहीं सका। कृपया पुनः प्रयास करें।",
+    noLedger: "कोई सुलभ लेजर नहीं मिला।",
   },
 } satisfies DeepPartialDict<Dictionary>;

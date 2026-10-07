@@ -87,3 +87,29 @@ export function jsonNoStore(body: unknown, init: { status?: number } = {}): Next
     headers: { 'Cache-Control': 'no-store' },
   });
 }
+
+/**
+ * 讀取呼叫端明確指定的帳本 ID（issue #281）。
+ *
+ * 公開 API 沒有 Cookie 與 `x-ledger-id` 標頭，改以 query string `ledgerId`
+ * 或 JSON body `ledgerId` 明確傳遞；未指定時維持既有個人帳本行為。
+ */
+export function readRequestedLedgerId(request: {
+  url?: string;
+  headers: { get(name: string): string | null };
+}, body?: unknown): string {
+  const header = String(request.headers.get('x-ledger-id') || '').trim();
+  if (header) return header;
+  try {
+    const url = new URL(String(request.url || ''), 'http://localhost');
+    const query = String(url.searchParams.get('ledgerId') || '').trim();
+    if (query) return query;
+  } catch {
+    /* 非標準 URL 時略過，交由 body 決定 */
+  }
+  if (body && typeof body === 'object' && !Array.isArray(body)) {
+    const value = (body as { ledgerId?: unknown }).ledgerId;
+    if (value != null) return String(value).trim();
+  }
+  return '';
+}

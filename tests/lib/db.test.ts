@@ -43,19 +43,21 @@ if (!DB_URL) {
       'INSERT INTO users (id, email, password_hash, display_name, created_at) VALUES (?,?,?,?,?)',
       [userId, `${userId}@example.com`, 'x', '測試使用者', now]
     );
-    // (a) 一筆 ai_created=0 的交易，對應一筆 mcp_create_transaction 稽核列。
+    // (a) 一筆 ai_created=0 的轉出腳交易，對應一筆 mcp_create_transaction 稽核列，
+    //     且其 linked_id 指向轉入腳——與 transactionWriteCore 實際寫入的方向一致
+    //     （轉出腳的 linked_id = 轉入腳 id）。
     db.run(
-      'INSERT INTO transactions (id, user_id, type, amount, date, ai_created) VALUES (?,?,?,?,?,?)',
-      [txIdA, userId, 'expense', 100, '2026-08-14', 0]
+      'INSERT INTO transactions (id, user_id, type, amount, date, linked_id, ai_created) VALUES (?,?,?,?,?,?,?)',
+      [txIdA, userId, 'transfer_out', 100, '2026-08-14', txIdB, 0]
     );
     db.run(
       'INSERT INTO data_operation_audit_log (id, user_id, role, action, timestamp, result, metadata) VALUES (?,?,?,?,?,?,?)',
       [uid(), userId, 'user', 'mcp_create_transaction', now, 'success', JSON.stringify({ transaction_id: txIdA })]
     );
-    // (b) 另一筆 ai_created=0、linked_id 指向 (a) 該筆的交易（模擬轉帳另一腳／手續費子交易）。
+    // (b) 另一筆 ai_created=0 的轉入腳交易，會被第二段沿 linked_id 傳播回填。
     db.run(
-      'INSERT INTO transactions (id, user_id, type, amount, date, linked_id, ai_created) VALUES (?,?,?,?,?,?,?)',
-      [txIdB, userId, 'transfer_in', 100, '2026-08-14', txIdA, 0]
+      'INSERT INTO transactions (id, user_id, type, amount, date, ai_created) VALUES (?,?,?,?,?,?)',
+      [txIdB, userId, 'transfer_in', 100, '2026-08-14', 0]
     );
   });
 

@@ -1,3 +1,4 @@
+import { withLedgerWriteAudit } from '../../../../../../lib/ledgerContext';
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '../../../../../../lib/apiHelpers';
 import { queryOne, saveDB } from '../../../../../../lib/db';
@@ -16,7 +17,7 @@ function requestMeta(request: NextRequest) {
   };
 }
 
-export async function DELETE(request: NextRequest, { params }: RouteContext) {
+async function handleDELETE(request: NextRequest, { params }: RouteContext) {
   const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
   const { txId, attachmentId } = await params;
@@ -37,3 +38,5 @@ export async function DELETE(request: NextRequest, { params }: RouteContext) {
   });
   return NextResponse.json({ ok: true });
 }
+
+export const DELETE = withLedgerWriteAudit(handleDELETE);

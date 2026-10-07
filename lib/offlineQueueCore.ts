@@ -26,6 +26,8 @@ export interface OfflineQueueItem {
   /** client 產生的 idempotency key，同時作為本地識別碼。 */
   id: string;
   kind: OfflineQueueKind;
+  /** 建立佇列項目時選取的帳本；舊項目省略時安全地送至個人帳本。 */
+  ledgerId?: string;
   /** 送出時原樣 POST 的請求本體。 */
   payload: Record<string, unknown>;
   /** 建立時間（epoch ms）。 */
@@ -61,12 +63,14 @@ export interface CreateQueueItemInput {
   payload: Record<string, unknown>;
   now: number;
   id?: string;
+  ledgerId?: string;
 }
 
 export function createQueueItem(input: CreateQueueItemInput): OfflineQueueItem {
   return {
     id: input.id ?? newQueueId(),
     kind: input.kind,
+    ...(input.ledgerId ? { ledgerId: input.ledgerId } : {}),
     payload: input.payload,
     createdAt: input.now,
     attempts: 0,
@@ -85,7 +89,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 /** 解析單一項目；形狀不合法回傳 null（外來資料一律不信任）。 */
 export function parseQueueItem(value: unknown): OfflineQueueItem | null {
   if (!isRecord(value)) return null;
-  const { id, kind, payload, createdAt, attempts, status, lastError } = value;
+  const { id, kind, payload, createdAt, attempts, status, lastError, ledgerId } = value;
   if (typeof id !== 'string' || id.length === 0) return null;
   if (!isQueueKind(kind)) return null;
   if (!isRecord(payload)) return null;
@@ -96,6 +100,7 @@ export function parseQueueItem(value: unknown): OfflineQueueItem | null {
   const item: OfflineQueueItem = {
     id,
     kind,
+    ...(typeof ledgerId === 'string' && ledgerId ? { ledgerId } : {}),
     payload,
     createdAt: created,
     attempts: Number.isFinite(attemptCount) && attemptCount > 0 ? Math.floor(attemptCount) : 0,

@@ -1,3 +1,4 @@
+import { withLedgerWriteAudit } from '../../../../lib/ledgerContext';
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "../../../../lib/apiHelpers";
 import { getDB, queryAll, queryOne, saveDB } from "../../../../lib/db";
@@ -340,17 +341,17 @@ async function updateAccount(request: NextRequest, id: string) {
   return NextResponse.json({ ok: true, updatedAt: nowMs });
 }
 
-export async function PUT(request: NextRequest, { params }: RouteContext) {
+async function handlePUT(request: NextRequest, { params }: RouteContext) {
   const { id } = await params;
   return updateAccount(request, id);
 }
 
-export async function PATCH(request: NextRequest, { params }: RouteContext) {
+async function handlePATCH(request: NextRequest, { params }: RouteContext) {
   const { id } = await params;
   return updateAccount(request, id);
 }
 
-export async function DELETE(request: NextRequest, { params }: RouteContext) {
+async function handleDELETE(request: NextRequest, { params }: RouteContext) {
   const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
@@ -427,3 +428,7 @@ export async function DELETE(request: NextRequest, { params }: RouteContext) {
   saveDB();
   return NextResponse.json({ ok: true });
 }
+
+export const PUT = withLedgerWriteAudit(handlePUT);
+export const PATCH = withLedgerWriteAudit(handlePATCH);
+export const DELETE = withLedgerWriteAudit(handleDELETE);

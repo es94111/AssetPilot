@@ -14,6 +14,15 @@ import crypto from "crypto";
 import { getDB, queryOne } from "./db";
 import { purgeUserPhotoFiles } from "./transactionAttachments";
 
+export class LedgerOwnershipTransferRequiredError extends Error {
+  readonly code = "LEDGER_OWNERSHIP_TRANSFER_REQUIRED";
+
+  constructor() {
+    super("請先將共享帳本移交給其他成員，再刪除帳號");
+    this.name = "LedgerOwnershipTransferRequiredError";
+  }
+}
+
 // 所有「以 user_id 為外鍵、屬於該使用者」的資料表。新增使用者相關資料表時，請同步加入此清單。
 // 以固定 SQL 清單取代動態表名插值；表名不是使用者輸入，也不應進入 SQL 組字串流程。
 const USER_OWNED_DELETE_STATEMENTS = [
@@ -101,6 +110,14 @@ export async function deleteUserCompletely(userId: string): Promise<void> {
   const db = getDB();
   const user = queryOne("SELECT email FROM users WHERE id = ?", [userId]);
   const hashedEmail = user ? createHashedEmail(user.email || "") : "";
+  if (
+    queryOne(
+      "SELECT id FROM financial_ledgers WHERE owner_user_id = ? AND is_shared = 1 LIMIT 1",
+      [userId],
+    )
+  ) {
+    throw new LedgerOwnershipTransferRequiredError();
+  }
 
   // 1) 先刪實體照片檔案（需在 DB 列被刪除前讀取 transaction_attachments）。
   //    檔案層失敗不阻擋帳號刪除；purgeUserPhotoFiles 內部已吞下個別錯誤。
@@ -128,6 +145,10 @@ export async function deleteUserCompletely(userId: string): Promise<void> {
       [userId],
     );
     removeFromReportScheduleTargets(db, userId);
+    db.run(
+      "DELETE FROM financial_ledgers WHERE owner_user_id = ? AND is_shared = 0",
+      [userId],
+    );
     db.run("DELETE FROM users WHERE id = ?", [userId]);
     db.run("COMMIT");
   } catch (error) {

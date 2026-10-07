@@ -1,3 +1,4 @@
+import { withLedgerWriteAudit } from '../../../../lib/ledgerContext';
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '../../../../lib/apiHelpers';
 import { getDB, queryOne, saveDB } from '../../../../lib/db';
@@ -28,7 +29,7 @@ function asRow<T>(row: Record<string, string | number | null> | null): T | null 
   return row as unknown as T | null;
 }
 
-export async function POST(request: NextRequest) {
+async function handlePOST(request: NextRequest) {
   const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
@@ -109,3 +110,5 @@ export async function POST(request: NextRequest) {
   saveDB();
   return NextResponse.json({ affectedIds: ids, affectedCount: ids.length, updated: ids.length, updatedAt: nowMs });
 }
+
+export const POST = withLedgerWriteAudit(handlePOST);

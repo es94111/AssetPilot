@@ -8157,5 +8157,220 @@
   "@settingsApiIntegrationCopyFailed": {
     "description": "Web path: settings.apiIntegration.copyFailed",
     "x-webPath": "settings.apiIntegration.copyFailed"
+  },
+  "navLedgers": "共享帳本",
+  "@navLedgers": {
+    "description": "Web path: nav.ledgers",
+    "x-webPath": "nav.ledgers"
+  },
+  "ledgerTitle": "帳本共享管理",
+  "@ledgerTitle": {
+    "description": "Web path: ledger.title",
+    "x-webPath": "ledger.title"
+  },
+  "ledgerDescription": "建立空白共享帳本、邀請成員並管理存取權限。",
+  "@ledgerDescription": {
+    "description": "Web path: ledger.description",
+    "x-webPath": "ledger.description"
+  },
+  "ledgerActiveLedger": "目前帳本",
+  "@ledgerActiveLedger": {
+    "description": "Web path: ledger.activeLedger",
+    "x-webPath": "ledger.activeLedger"
+  },
+  "ledgerPersonal": "個人帳本",
+  "@ledgerPersonal": {
+    "description": "Web path: ledger.personal",
+    "x-webPath": "ledger.personal"
+  },
+  "ledgerManage": "管理帳本",
+  "@ledgerManage": {
+    "description": "Web path: ledger.manage",
+    "x-webPath": "ledger.manage"
+  },
+  "ledgerLoadError": "無法載入帳本。",
+  "@ledgerLoadError": {
+    "description": "Web path: ledger.loadError",
+    "x-webPath": "ledger.loadError"
+  },
+  "ledgerCreate": "建立空白共享帳本",
+  "@ledgerCreate": {
+    "description": "Web path: ledger.create",
+    "x-webPath": "ledger.create"
+  },
+  "ledgerCreateName": "帳本名稱",
+  "@ledgerCreateName": {
+    "description": "Web path: ledger.createName",
+    "x-webPath": "ledger.createName"
+  },
+  "ledgerCreateButton": "建立帳本",
+  "@ledgerCreateButton": {
+    "description": "Web path: ledger.createButton",
+    "x-webPath": "ledger.createButton"
+  },
+  "ledgerCreated": "共享帳本已建立。",
+  "@ledgerCreated": {
+    "description": "Web path: ledger.created",
+    "x-webPath": "ledger.created"
+  },
+  "ledgerCreateError": "無法建立帳本。",
+  "@ledgerCreateError": {
+    "description": "Web path: ledger.createError",
+    "x-webPath": "ledger.createError"
+  },
+  "ledgerInvited": "邀請信已寄出。",
+  "@ledgerInvited": {
+    "description": "Web path: ledger.invited",
+    "x-webPath": "ledger.invited"
+  },
+  "ledgerInviteAccepted": "已接受帳本邀請。",
+  "@ledgerInviteAccepted": {
+    "description": "Web path: ledger.inviteAccepted",
+    "x-webPath": "ledger.inviteAccepted"
+  },
+  "ledgerError": "無法完成此操作。",
+  "@ledgerError": {
+    "description": "Web path: ledger.error",
+    "x-webPath": "ledger.error"
+  },
+  "ledgerRemoveConfirm": "確定要將此成員移出帳本嗎？",
+  "@ledgerRemoveConfirm": {
+    "description": "Web path: ledger.removeConfirm",
+    "x-webPath": "ledger.removeConfirm"
+  },
+  "ledgerTransferConfirm": "確定將帳本擁有權移交給此成員？你將改為編輯者。",
+  "@ledgerTransferConfirm": {
+    "description": "Web path: ledger.transferConfirm",
+    "x-webPath": "ledger.transferConfirm"
+  },
+  "ledgerOwnerTransferred": "帳本擁有權已移交。",
+  "@ledgerOwnerTransferred": {
+    "description": "Web path: ledger.ownerTransferred",
+    "x-webPath": "ledger.ownerTransferred"
+  },
+  "ledgerLeaveConfirm": "確定離開此帳本？離開後將立即失去存取權。",
+  "@ledgerLeaveConfirm": {
+    "description": "Web path: ledger.leaveConfirm",
+    "x-webPath": "ledger.leaveConfirm"
+  },
+  "ledgerLeft": "你已離開帳本。",
+  "@ledgerLeft": {
+    "description": "Web path: ledger.left",
+    "x-webPath": "ledger.left"
+  },
+  "ledgerInviteInstructions": "你收到共享帳本邀請。請使用收到邀請的電子郵件帳號登入。",
+  "@ledgerInviteInstructions": {
+    "description": "Web path: ledger.inviteInstructions",
+    "x-webPath": "ledger.inviteInstructions"
+  },
+  "ledgerAcceptInvite": "接受邀請",
+  "@ledgerAcceptInvite": {
+    "description": "Web path: ledger.acceptInvite",
+    "x-webPath": "ledger.acceptInvite"
+  },
+  "ledgerEmptySharedNotice": "共享帳本會以空白資料建立，不會自動複製你的個人記帳資料。",
+  "@ledgerEmptySharedNotice": {
+    "description": "Web path: ledger.emptySharedNotice",
+    "x-webPath": "ledger.emptySharedNotice"
+  },
+  "ledgerMembers": "成員",
+  "@ledgerMembers": {
+    "description": "Web path: ledger.members",
+    "x-webPath": "ledger.members"
+  },
+  "ledgerLeave": "離開帳本",
+  "@ledgerLeave": {
+    "description": "Web path: ledger.leave",
+    "x-webPath": "ledger.leave"
+  },
+  "ledgerInviteEmail": "成員電子郵件",
+  "@ledgerInviteEmail": {
+    "description": "Web path: ledger.inviteEmail",
+    "x-webPath": "ledger.inviteEmail"
+  },
+  "ledgerRole": "存取權限",
+  "@ledgerRole": {
+    "description": "Web path: ledger.role",
+    "x-webPath": "ledger.role"
+  },
+  "ledgerOwner": "擁有者",
+  "@ledgerOwner": {
+    "description": "Web path: ledger.owner",
+    "x-webPath": "ledger.owner"
+  },
+  "ledgerEditor": "編輯者",
+  "@ledgerEditor": {
+    "description": "Web path: ledger.editor",
+    "x-webPath": "ledger.editor"
+  },
+  "ledgerViewer": "檢視者（唯讀）",
+  "@ledgerViewer": {
+    "description": "Web path: ledger.viewer",
+    "x-webPath": "ledger.viewer"
+  },
+  "ledgerSendInvite": "寄送邀請",
+  "@ledgerSendInvite": {
+    "description": "Web path: ledger.sendInvite",
+    "x-webPath": "ledger.sendInvite"
+  },
+  "ledgerPersonalOnly": "這是你的私人帳本。建立共享帳本後即可邀請成員。",
+  "@ledgerPersonalOnly": {
+    "description": "Web path: ledger.personalOnly",
+    "x-webPath": "ledger.personalOnly"
+  },
+  "ledgerNoMembers": "找不到成員。",
+  "@ledgerNoMembers": {
+    "description": "Web path: ledger.noMembers",
+    "x-webPath": "ledger.noMembers"
+  },
+  "ledgerChangeRole": "變更角色",
+  "@ledgerChangeRole": {
+    "description": "Web path: ledger.changeRole",
+    "x-webPath": "ledger.changeRole"
+  },
+  "ledgerTransferOwner": "移交擁有權",
+  "@ledgerTransferOwner": {
+    "description": "Web path: ledger.transferOwner",
+    "x-webPath": "ledger.transferOwner"
+  },
+  "ledgerRemove": "移除",
+  "@ledgerRemove": {
+    "description": "Web path: ledger.remove",
+    "x-webPath": "ledger.remove"
+  },
+  "ledgerPendingInvitations": "待處理邀請",
+  "@ledgerPendingInvitations": {
+    "description": "Web path: ledger.pendingInvitations",
+    "x-webPath": "ledger.pendingInvitations"
+  },
+  "ledgerNoInvitations": "目前沒有待處理邀請。",
+  "@ledgerNoInvitations": {
+    "description": "Web path: ledger.noInvitations",
+    "x-webPath": "ledger.noInvitations"
+  },
+  "ledgerInvitationExpires": "到期日",
+  "@ledgerInvitationExpires": {
+    "description": "Web path: ledger.invitationExpires",
+    "x-webPath": "ledger.invitationExpires"
+  },
+  "ledgerRevoke": "撤銷邀請",
+  "@ledgerRevoke": {
+    "description": "Web path: ledger.revoke",
+    "x-webPath": "ledger.revoke"
+  },
+  "ledgerAudit": "近期活動",
+  "@ledgerAudit": {
+    "description": "Web path: ledger.audit",
+    "x-webPath": "ledger.audit"
+  },
+  "ledgerNoAudit": "尚無活動紀錄。",
+  "@ledgerNoAudit": {
+    "description": "Web path: ledger.noAudit",
+    "x-webPath": "ledger.noAudit"
+  },
+  "ledgerLastOwnerNotice": "擁有者離開帳本或刪除帳號前，必須先移交擁有權。",
+  "@ledgerLastOwnerNotice": {
+    "description": "Web path: ledger.lastOwnerNotice",
+    "x-webPath": "ledger.lastOwnerNotice"
   }
 }

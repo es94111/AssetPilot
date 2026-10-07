@@ -1,5 +1,7 @@
 'use client';
 
+import { getActiveLedgerHeaders } from '@/lib/clientApi';
+
 import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/Input';
@@ -135,7 +137,7 @@ function parseCsv(text: string) {
 }
 
 async function downloadFromUrl(url: string) {
-  const res = await fetch(url, { credentials: 'include' });
+  const res = await fetch(url, { credentials: 'include', headers: getActiveLedgerHeaders() });
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));
     throw new Error(data.error || `HTTP ${res.status}`);
@@ -218,7 +220,7 @@ export default function DataTransferClient({ user }: { user: UserLike }) {
       const res = await fetch(importUrl, {
         method: 'POST',
         credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...getActiveLedgerHeaders() },
         body: JSON.stringify({ rows, autoCreate: true }),
       });
       const data = await res.json().catch(() => ({}));

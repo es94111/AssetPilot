@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { apiGet, apiPost, apiPut, apiDelete, notifyDataChanged, isNetworkError, DATA_CHANGED_EVENT } from '../../../lib/clientApi';
+import { apiGet, apiPost, apiPut, apiDelete, activeLedgerFileUrl, getActiveLedgerHeaders, notifyDataChanged, isNetworkError, DATA_CHANGED_EVENT } from '../../../lib/clientApi';
 import { enqueueOffline } from '../../../lib/clientOfflineQueue';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -413,6 +413,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
     const res = await fetch(`/api/transactions/${transactionId}/attachments`, {
       method: 'POST',
       credentials: 'include',
+      headers: getActiveLedgerHeaders(),
       body: data,
     });
     const payload = await res.json().catch(() => ({}));
@@ -928,7 +929,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
                       <div className="min-w-0 flex-1">
                         {tx.attachmentCount > 0 && tx.firstAttachmentId && (
                           tx.attachmentCount === 1 ? (
-                            <a className="inline-flex min-h-11 items-center gap-2 px-2 text-xs font-medium text-sky-600" href={`/api/transactions/${tx.id}/attachments/${tx.firstAttachmentId}/file`} target="_blank" rel="noreferrer">
+                            <a className="inline-flex min-h-11 items-center gap-2 px-2 text-xs font-medium text-sky-600" href={activeLedgerFileUrl(`/api/transactions/${tx.id}/attachments/${tx.firstAttachmentId}/file`)} target="_blank" rel="noreferrer">
                               <Image size={17} aria-hidden="true" /> {t('features.transactions.photoOne')}
                             </a>
                           ) : (
@@ -1008,7 +1009,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
                         tx.attachmentCount === 1 ? (
                           <a
                             className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-sky-600 hover:text-sky-700"
-                            href={`/api/transactions/${tx.id}/attachments/${tx.firstAttachmentId}/file`}
+                            href={activeLedgerFileUrl(`/api/transactions/${tx.id}/attachments/${tx.firstAttachmentId}/file`)}
                             target="_blank"
                             rel="noreferrer"
                           >
@@ -1192,7 +1193,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
                   <ul className="space-y-1 rounded-md border border-slate-200 bg-white px-3 py-2">
                     {editAttachments.filter(a => !pendingDeleteIds.has(a.id)).map(a => (
                       <li key={a.id} className="flex items-center justify-between gap-2 text-xs text-slate-600">
-                        <a href={a.url} target="_blank" rel="noreferrer" className="min-w-0 truncate text-sky-600 hover:text-sky-700">{a.filename || t('features.transactions.photos')}</a>
+                        <a href={activeLedgerFileUrl(a.url)} target="_blank" rel="noreferrer" className="min-w-0 truncate text-sky-600 hover:text-sky-700">{a.filename || t('features.transactions.photos')}</a>
                         <button
                           type="button"
                           className="shrink-0 font-medium text-slate-500 hover:text-red-600"
@@ -1330,14 +1331,14 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
               {attachmentPickerItems.map((item, index) => (
                 <li key={item.id}>
                   <a
-                    href={item.url}
+                    href={activeLedgerFileUrl(item.url)}
                     target="_blank"
                     rel="noreferrer"
                     className="flex items-center gap-3 rounded-md border border-slate-200 p-2 text-sm hover:bg-slate-50"
                     onClick={() => setAttachmentPickerTxId(null)}
                   >
                     <img
-                      src={item.url}
+                      src={activeLedgerFileUrl(item.url)}
                       alt={item.filename || t('features.transactions.photoCount', { count: index + 1 })}
                       className="h-12 w-12 flex-none rounded object-cover"
                       onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}

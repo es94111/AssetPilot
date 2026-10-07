@@ -1,3 +1,4 @@
+import { withLedgerWriteAudit } from '../../../lib/ledgerContext';
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '../../../lib/apiHelpers';
 import { queryAll, queryOne } from '../../../lib/db';
@@ -237,7 +238,7 @@ export async function GET(request: NextRequest) {
   return NextResponse.json(response);
 }
 
-export async function POST(request: NextRequest) {
+async function handlePOST(request: NextRequest) {
   const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
@@ -331,3 +332,5 @@ export async function POST(request: NextRequest) {
 
   return NextResponse.json(result, { status: 201 });
 }
+
+export const POST = withLedgerWriteAudit(handlePOST);

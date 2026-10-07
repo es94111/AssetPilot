@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
 
     const csv = buildCsv(headers, dataRows);
     const filename = `accounts-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}.csv`;
-    const userRow = queryOne('SELECT is_admin FROM users WHERE id = ?', [auth.userId]);
+    const userRow = queryOne('SELECT is_admin FROM users WHERE id = ?', [auth.actorUserId]);
     writeOperationAudit({
       userId: auth.userId,
       role: userRow?.is_admin ? 'admin' : 'user',

@@ -1,7 +1,41 @@
 // lib/clientApi.ts — 前端 API 呼叫工具（client-side only）
+import { isLedgerDataPath, ledgerFileUrl } from './ledgerPolicy';
+
+export const ACTIVE_LEDGER_STORAGE_KEY = 'assetpilot.active-ledger-id';
+export const LEDGER_CHANGED_EVENT = 'assetpilot:ledger-changed';
+
+export function setActiveLedgerId(ledgerId: string): void {
+  window.localStorage.setItem(ACTIVE_LEDGER_STORAGE_KEY, ledgerId);
+  document.cookie = `activeLedgerId=${encodeURIComponent(ledgerId)}; Path=/; SameSite=Strict${window.location.protocol === 'https:' ? '; Secure' : ''}`;
+  window.dispatchEvent(new CustomEvent(LEDGER_CHANGED_EVENT, { detail: { ledgerId } }));
+}
+
+export function getActiveLedgerId(): string {
+  if (typeof window === 'undefined') return '';
+  try {
+    return window.localStorage.getItem(ACTIVE_LEDGER_STORAGE_KEY) || '';
+  } catch {
+    return '';
+  }
+}
+
+export function getActiveLedgerHeaders(): Record<string, string> {
+  if (typeof window !== 'undefined' && window.location?.pathname?.startsWith('/stocks')) return {};
+  const ledgerId = getActiveLedgerId();
+  return ledgerId ? { 'x-ledger-id': ledgerId } : {};
+}
+
+export function activeLedgerFileUrl(url: string): string {
+  return ledgerFileUrl(url, getActiveLedgerId());
+}
 
 export async function apiFetch(url: string, options: RequestInit = {}) {
-  const res = await fetch(url, { credentials: 'include', ...options });
+  const headers = new Headers(options.headers);
+  if (isLedgerDataPath(url.split('?')[0])) {
+    const ledgerId = getActiveLedgerHeaders()['x-ledger-id'];
+    if (ledgerId && !headers.has('x-ledger-id')) headers.set('x-ledger-id', ledgerId);
+  }
+  const res = await fetch(url, { ...options, credentials: options.credentials || 'include', headers });
   if (res.status === 401) { window.location.href = '/login'; throw new Error('請先登入'); }
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);

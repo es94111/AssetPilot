@@ -384,7 +384,16 @@ export async function getDashboardData(month?: string): Promise<DashboardRespons
   // 能在 Node 原生測試環境中被獨立匯入與測試。
   const { requireAuth } = await import('@/lib/auth');
   const session = await requireAuth();
-  
+  const { cookies } = await import('next/headers');
+  const { verifyToken } = await import('@/lib/auth');
+  const cookieStore = await cookies();
+  const selectedLedger = cookieStore.get('activeLedgerId')?.value || '';
+  const actorId = String((verifyToken(session) as { userId: string }).userId);
+  const ledgerMember = selectedLedger ? queryOne(
+    'SELECT ledger_id FROM ledger_members WHERE ledger_id = ? AND user_id = ?',
+    [selectedLedger, actorId],
+  ) : null;
+
   const port = process.env.PORT || 3000;
   const url = month
     ? `http://localhost:${port}/api/dashboard?yearMonth=${month}`
@@ -395,6 +404,7 @@ export async function getDashboardData(month?: string): Promise<DashboardRespons
   const res = await fetch(url, {
     headers: {
       Cookie: `authToken=${session}`,
+      ...(ledgerMember ? { 'x-ledger-id': selectedLedger } : {}),
     },
   });
 

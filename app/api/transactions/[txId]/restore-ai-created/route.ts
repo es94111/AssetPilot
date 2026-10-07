@@ -1,3 +1,4 @@
+import { withLedgerWriteAudit } from '../../../../../lib/ledgerContext';
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '../../../../../lib/apiHelpers';
 import { ownsResource } from '../../../../../lib/resourceHelpers';
@@ -12,7 +13,7 @@ interface TransactionRow {
   linked_id: string | null;
 }
 
-export async function POST(request: NextRequest, { params }: RouteContext) {
+async function handlePOST(request: NextRequest, { params }: RouteContext) {
   const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
@@ -36,3 +37,5 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
 
   return NextResponse.json({ ok: true, removedIds });
 }
+
+export const POST = withLedgerWriteAudit(handlePOST);

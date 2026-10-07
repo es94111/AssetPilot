@@ -20,8 +20,8 @@ function resolveWithExtension(basePathNoExt) {
 }
 
 export async function resolve(specifier, context, nextResolve) {
-  if (specifier === 'next/server') {
-    return nextResolve('next/server.js', context);
+  if (['next/server', 'next/headers', 'next/navigation'].includes(specifier)) {
+    return nextResolve(`${specifier}.js`, context);
   }
 
   if (specifier.startsWith('@/')) {

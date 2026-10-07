@@ -133,10 +133,10 @@ export async function GET(request: NextRequest) {
   ));
   const bankStatus = getBankStatusAsOf(auth.userId, todayS);
   const bankBalance = bankStatus.displayBalanceTwd;
-  const stockStatus = getStockPortfolioStatus(auth.userId);
+  const stockStatus = getStockPortfolioStatus(auth.actorUserId);
   const settings = queryOne(
     'SELECT dashboard_layout, dashboard_layout_updated_at FROM user_settings WHERE user_id = ?',
-    [auth.userId]
+    [auth.actorUserId]
   ) as SettingsRow | null;
   const recurringForecastRows = queryAll(`
     SELECT r.id, r.type, r.amount, r.fx_fee, r.currency, r.fx_rate, r.frequency, r.start_date, r.last_generated,

@@ -7,6 +7,9 @@ info:
     個人資產管理平台 AssetPilot 的完整 API Schema。
     供 Cloudflare API Shield Schema Validation 使用。
     認證方式：JWT 儲存於 httpOnly Cookie（token），除 /api/auth/* 與 /api/config 外均需認證。
+    記帳 API 可用 X-Ledger-Id header 或 ledgerId query 選擇帳本，未指定則使用個人帳本。
+    每次請求皆驗證登入者的帳本成員資格；viewer 僅可 GET/HEAD/OPTIONS。
+    個人偏好、投資、登入憑證及 MCP/API Token/LINE 整合不採用共享帳本選擇。
 
 servers:
   - url: https://asset.shao.one
@@ -16,6 +19,8 @@ servers:
 # 標籤定義（對應 Cloudflare API Shield Endpoint Labels）
 # ─────────────────────────────────────────
 tags:
+  - name: Ledgers
+    description: 共享帳本與成員授權
   - name: Config
     description: 系統設定與版本資訊（cf-web-page）
   - name: Auth
@@ -65,7 +70,44 @@ components:
       in: cookie
       name: token
 
+  parameters:
+    LedgerId:
+      in: path
+      name: ledgerId
+      required: true
+      schema:
+        type: string
+    LedgerSelection:
+      in: header
+      name: X-Ledger-Id
+      description: 目前帳本，省略時使用個人帳本；不可用此值冒用非成員帳本。
+      schema:
+        type: string
+
   schemas:
+    Ledger:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        isShared: { type: boolean }
+        isPersonal: { type: boolean }
+        ownerUserId: { type: string }
+        role: { type: string, enum: [owner, editor, viewer] }
+        memberCount: { type: integer }
+        createdAt: { type: integer }
+    LedgerMemberRole:
+      type: object
+      required: [userId, role]
+      properties:
+        userId: { type: string }
+        role: { type: string, enum: [editor, viewer] }
+    LedgerMemberTarget:
+      type: object
+      required: [userId]
+      properties:
+        userId: { type: string }
+
     # ── 通用 ──
     IdObject:
       type: object
@@ -645,6 +687,170 @@ security:
 # 路由定義
 # ─────────────────────────────────────────
 paths:
+  /api/ledgers:
+    get:
+      tags: [Ledgers]
+      summary: 列出目前登入者加入的帳本
+      responses:
+        "200":
+          description: 個人與共享帳本清單（不包含其他使用者的帳本）
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Ledger" }
+    post:
+      tags: [Ledgers]
+      summary: 建立空白共享帳本，不複製個人資料
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string, minLength: 1, maxLength: 80 }
+      responses:
+        "201": { description: 已建立帳本，建立者為 owner }
+        "400": { description: 帳本名稱無效 }
+
+  /api/ledgers/{ledgerId}/members:
+    parameters:
+      - { $ref: "#/components/parameters/LedgerId" }
+    get:
+      tags: [Ledgers]
+      summary: 成員可讀取此帳本成員與角色
+      responses:
+        "200": { description: 帳本資訊與成員清單 }
+        "404": { description: 找不到帳本或非成員 }
+    post:
+      tags: [Ledgers]
+      summary: owner 以 Email 邀請 editor 或 viewer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, role]
+              properties:
+                email: { type: string, format: email }
+                role: { type: string, enum: [editor, viewer] }
+      responses:
+        "201": { description: 已寄送 7 天有效的單次邀請，不回傳原始 token }
+        "403": { description: 非 owner }
+        "409": { description: 已是成員 }
+        "503": { description: 寄信服務未設定或寄送失敗，邀請已撤銷 }
+    patch:
+      tags: [Ledgers]
+      summary: owner 修改其他成員的 editor/viewer 角色
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LedgerMemberRole" }
+      responses:
+        "200": { description: 已更新角色 }
+        "403": { description: 非 owner }
+        "409": { description: owner 必須使用移交功能 }
+    delete:
+      tags: [Ledgers]
+      summary: owner 移除非 owner 成員，資料仍歸帳本所有
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LedgerMemberTarget" }
+      responses:
+        "200": { description: 已移除，新請求立即失去存取權 }
+        "403": { description: 非 owner }
+        "409": { description: 不可移除 owner }
+
+  /api/ledgers/{ledgerId}/invitations:
+    parameters:
+      - { $ref: "#/components/parameters/LedgerId" }
+    get:
+      tags: [Ledgers]
+      summary: owner 列出尚未接受且未到期的邀請（不含 token 雜湊）
+      responses:
+        "200": { description: 待處理邀請清單 }
+        "403": { description: 非 owner }
+    delete:
+      tags: [Ledgers]
+      summary: owner 撤銷邀請
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [invitationId]
+              properties:
+                invitationId: { type: string }
+      responses:
+        "200": { description: 已撤銷 }
+        "404": { description: 找不到待處理邀請 }
+
+  /api/ledgers/invitations/accept:
+    post:
+      tags: [Ledgers]
+      summary: 使用受邀電子郵件帳號登入後接受邀請
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token]
+              properties:
+                token: { type: string, pattern: "^[a-fA-F0-9]{64}$" }
+      responses:
+        "200": { description: 已加入帳本，回傳 ledgerId 與角色 }
+        "403": { description: 登入信箱不是受邀信箱 }
+        "404": { description: 邀請無效、到期、撤銷或已使用 }
+        "409": { description: 已是帳本成員 }
+
+  /api/ledgers/{ledgerId}/transfer:
+    parameters:
+      - { $ref: "#/components/parameters/LedgerId" }
+    post:
+      tags: [Ledgers]
+      summary: owner 移交給另一位有效成員，原 owner 變為 editor
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LedgerMemberTarget" }
+      responses:
+        "200": { description: 已原子移交擁有權，財務列的歸屬不變 }
+        "403": { description: 非 owner }
+        "404": { description: 目標不是有效帳本成員 }
+
+  /api/ledgers/{ledgerId}/leave:
+    parameters:
+      - { $ref: "#/components/parameters/LedgerId" }
+    post:
+      tags: [Ledgers]
+      summary: editor 或 viewer 離開帳本，資料仍屬帳本
+      responses:
+        "200": { description: 已離開 }
+        "409": { description: owner 必須先移交擁有權 }
+
+  /api/ledgers/{ledgerId}/audit:
+    parameters:
+      - { $ref: "#/components/parameters/LedgerId" }
+    get:
+      tags: [Ledgers]
+      summary: owner 查閱帳本操作稽核（含操作者 ID、Email、角色與結果）
+      parameters:
+        - in: query
+          name: limit
+          schema: { type: integer, minimum: 1, maximum: 200, default: 100 }
+      responses:
+        "200": { description: 最新稽核清單 }
+        "403": { description: 非 owner }
+
   # ── 公開頁面 ──────────────────────────
   /api/config:
     get:

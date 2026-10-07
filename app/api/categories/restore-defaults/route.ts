@@ -1,9 +1,10 @@
+import { withLedgerWriteAudit } from '../../../../lib/ledgerContext';
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '../../../../lib/apiHelpers';
 import { getDB, saveDB } from '../../../../lib/db';
 import { backfillDefaultsForUser } from '../../../../lib/userDefaults';
 
-export async function POST(request: NextRequest) {
+async function handlePOST(request: NextRequest) {
   const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
@@ -29,3 +30,5 @@ export async function POST(request: NextRequest) {
   saveDB();
   return NextResponse.json({ ok: true, restored: inserted });
 }
+
+export const POST = withLedgerWriteAudit(handlePOST);

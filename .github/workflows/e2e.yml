@@ -14,6 +14,8 @@ on:
       - "components/**"
       - "lib/**"
       - "tests/e2e/**"
+      - "tests/lib/*Ledger*.test.ts"
+      - "tests/lib/ledgerPolicy.test.ts"
       - "playwright.config.ts"
       - "package.json"
       - "package-lock.json"
@@ -62,6 +64,9 @@ jobs:
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
+
+      - name: Run shared-ledger authorization and PostgreSQL integration tests
+        run: npm run test:ledger-policy && npm run test:shared-ledger
 
       - name: Run E2E, accessibility, and visual regression tests
         run: npm run test:e2e

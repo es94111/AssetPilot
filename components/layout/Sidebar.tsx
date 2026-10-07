@@ -7,13 +7,14 @@ import {
   LayoutDashboard, Receipt, ChartBar, Wallet, Building2, Tags, Repeat, CalendarDays,
   Briefcase, Key, User, Shield, Database, LogOut, TrendingUp, Coins,
   BarChart3, Settings2, Sun, Moon, Monitor, Info, TableProperties,
-  X, Plug, Bot, PanelLeftClose, PanelLeftOpen, Webhook,
+  X, Plug, Bot, PanelLeftClose, PanelLeftOpen, Webhook, Users,
 } from 'lucide-react';
 import { useEffect, useRef, useState, type ElementType } from 'react';
 import { useTheme, type Theme } from '@/hooks/useTheme';
 import { useT } from '@/components/i18n/I18nProvider';
 import { notifyOfflineQueueLogout } from '@/lib/clientOfflineQueue';
 import Modal from '@/components/ui/Modal';
+import LedgerSwitcher from '@/components/features/ledgers/LedgerSwitcher';
 
 // label 以譯文鍵（labelKey）表示，於 render 時用 t() 解析。
 const NAV_SECTIONS = [
@@ -45,6 +46,7 @@ const NAV_SECTIONS = [
     labelKey: 'nav.sections.system',
     items: [
       { path: '/settings/export',  labelKey: 'nav.exportImport', icon: Database },
+      { path: '/settings/ledgers', labelKey: 'nav.ledgers',      icon: Users },
       { path: '/settings/mcp',     labelKey: 'nav.mcp',          icon: Plug },
       { path: '/settings/mcp-connections', labelKey: 'nav.mcpConnections', icon: Bot },
       { path: '/settings/api-integration', labelKey: 'nav.apiIntegration', icon: Webhook },
@@ -209,6 +211,8 @@ export default function Sidebar({ user, open, onClose }: { user: any; open?: boo
             <X size={20} aria-hidden="true" />
           </button>
         </div>
+
+        <LedgerSwitcher collapsed={collapsed} onNavigate={onClose} />
 
         {/* Nav */}
         <nav className="flex-1 overflow-y-auto overflow-x-hidden px-3 py-4" aria-label={t('shell.mainNav')}>

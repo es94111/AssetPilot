@@ -1,6 +1,8 @@
+import { withLedgerWriteAudit } from '../../../../../lib/ledgerContext';
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '../../../../../lib/apiHelpers';
 import { queryOne, saveDB } from '../../../../../lib/db';
+import { ledgerFileUrl } from '../../../../../lib/ledgerPolicy';
 import { writeOperationAudit } from '../../../../../lib/auditHelpers';
 import { getRequestIpFromHeaders } from '../../../../../lib/loginHelpers';
 import { getDefaultTransactionPhotoStorage, listTransactionAttachments, saveTransactionPhoto } from '../../../../../lib/transactionAttachments';
@@ -35,12 +37,12 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
     byteSize: Number(item.byte_size) || 0,
     storage: item.storage,
     createdAt: Number(item.created_at) || 0,
-    url: `/api/transactions/${txId}/attachments/${item.id}/file`,
+    url: ledgerFileUrl(`/api/transactions/${txId}/attachments/${item.id}/file`, auth.ledgerId),
   }));
   return NextResponse.json({ attachments });
 }
 
-export async function POST(request: NextRequest, { params }: RouteContext) {
+async function handlePOST(request: NextRequest, { params }: RouteContext) {
   const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
   const { txId } = await params;
@@ -95,3 +97,5 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
     return NextResponse.json({ error: (e as Error)?.message || '照片上傳失敗' }, { status: 500 });
   }
 }
+
+export const POST = withLedgerWriteAudit(handlePOST);

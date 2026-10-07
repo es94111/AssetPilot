@@ -1365,5 +1365,85 @@ async function _runMigrations(db: DatabaseLike): Promise<void> {
     "ALTER TABLE stock_recurring ADD CONSTRAINT stock_recurring_stock_fk FOREIGN KEY (stock_id) REFERENCES stocks(id) ON DELETE CASCADE NOT VALID",
   );
 
+  db.run(`CREATE TABLE IF NOT EXISTS financial_ledgers (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    owner_user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    data_owner_id TEXT NOT NULL UNIQUE,
+    timezone TEXT NOT NULL DEFAULT 'Asia/Taipei',
+    is_shared INTEGER NOT NULL DEFAULT 0 CHECK (is_shared IN (0,1)),
+    created_at INTEGER NOT NULL DEFAULT 0,
+    updated_at INTEGER NOT NULL DEFAULT 0
+  )`);
+  db.run("ALTER TABLE financial_ledgers ADD COLUMN IF NOT EXISTS timezone TEXT NOT NULL DEFAULT 'Asia/Taipei'");
+  db.run(`CREATE OR REPLACE FUNCTION protect_shared_ledger_owner() RETURNS trigger AS $$
+    BEGIN
+      IF EXISTS (SELECT 1 FROM financial_ledgers WHERE owner_user_id = OLD.id AND is_shared = 1) THEN
+        RAISE EXCEPTION 'LEDGER_OWNERSHIP_TRANSFER_REQUIRED';
+      END IF;
+      RETURN OLD;
+    END;
+  $$ LANGUAGE plpgsql`);
+  db.run("CREATE OR REPLACE TRIGGER protect_shared_ledger_owner BEFORE DELETE ON users FOR EACH ROW EXECUTE FUNCTION protect_shared_ledger_owner()");
+  db.run(`CREATE TABLE IF NOT EXISTS ledger_members (
+    ledger_id TEXT NOT NULL REFERENCES financial_ledgers(id) ON DELETE CASCADE,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    role TEXT NOT NULL CHECK (role IN ('owner','editor','viewer')),
+    joined_at INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (ledger_id, user_id)
+  )`);
+  db.run(
+    "CREATE INDEX IF NOT EXISTS idx_ledger_members_user ON ledger_members(user_id, ledger_id)",
+  );
+  db.run("CREATE UNIQUE INDEX IF NOT EXISTS idx_ledger_members_owner ON ledger_members(ledger_id) WHERE role = 'owner'");
+  db.run(`CREATE TABLE IF NOT EXISTS ledger_invitations (
+    id TEXT PRIMARY KEY,
+    ledger_id TEXT NOT NULL REFERENCES financial_ledgers(id) ON DELETE CASCADE,
+    email TEXT NOT NULL,
+    role TEXT NOT NULL CHECK (role IN ('editor','viewer')),
+    token_hash TEXT NOT NULL UNIQUE,
+    invited_by TEXT REFERENCES users(id) ON DELETE SET NULL,
+    created_at INTEGER NOT NULL,
+    expires_at INTEGER NOT NULL,
+    accepted_at INTEGER NOT NULL DEFAULT 0,
+    revoked_at INTEGER NOT NULL DEFAULT 0
+  )`);
+  db.run(
+    "CREATE INDEX IF NOT EXISTS idx_ledger_invitations_pending ON ledger_invitations(ledger_id, expires_at) WHERE accepted_at = 0 AND revoked_at = 0",
+  );
+  db.run(`CREATE TABLE IF NOT EXISTS ledger_audit_log (
+    id TEXT PRIMARY KEY,
+    ledger_id TEXT NOT NULL REFERENCES financial_ledgers(id) ON DELETE CASCADE,
+    actor_user_id TEXT NOT NULL,
+    actor_email TEXT NOT NULL DEFAULT '',
+    actor_role TEXT NOT NULL,
+    action TEXT NOT NULL,
+    resource_type TEXT NOT NULL DEFAULT '',
+    resource_id TEXT NOT NULL DEFAULT '',
+    result TEXT NOT NULL,
+    ip_address TEXT NOT NULL DEFAULT '',
+    user_agent TEXT NOT NULL DEFAULT '',
+    metadata TEXT NOT NULL DEFAULT '{}',
+    created_at INTEGER NOT NULL
+  )`);
+  db.run("ALTER TABLE ledger_audit_log ADD COLUMN IF NOT EXISTS actor_email TEXT NOT NULL DEFAULT ''");
+  db.run(
+    "CREATE INDEX IF NOT EXISTS idx_ledger_audit_log_ledger_time ON ledger_audit_log(ledger_id, created_at DESC)",
+  );
+  db.run(
+    "CREATE INDEX IF NOT EXISTS idx_ledger_audit_log_actor_time ON ledger_audit_log(actor_user_id, created_at DESC)",
+  );
+
+  db.run(`INSERT INTO financial_ledgers
+    (id, name, owner_user_id, data_owner_id, is_shared, created_at, updated_at)
+    SELECT 'personal:' || id, 'Personal ledger', id, id, 0, 0, 0
+    FROM users
+    ON CONFLICT (id) DO NOTHING`);
+  db.run(`INSERT INTO ledger_members (ledger_id, user_id, role, joined_at)
+    SELECT id, owner_user_id, 'owner', created_at
+    FROM financial_ledgers
+    WHERE is_shared = 0
+    ON CONFLICT (ledger_id, user_id) DO NOTHING`);
+
   saveDB();
 }

@@ -1,3 +1,4 @@
+import { withLedgerWriteAudit } from '../../../../lib/ledgerContext';
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '../../../../lib/apiHelpers';
 import { getDB, queryAll, queryOne, saveDB } from '../../../../lib/db';
@@ -60,7 +61,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
   return NextResponse.json(serializeCategory(row));
 }
 
-export async function PUT(request: NextRequest, { params }: RouteContext) {
+async function handlePUT(request: NextRequest, { params }: RouteContext) {
   const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
@@ -120,7 +121,7 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
   return NextResponse.json({ ok: true, id });
 }
 
-export async function DELETE(request: NextRequest, { params }: RouteContext) {
+async function handleDELETE(request: NextRequest, { params }: RouteContext) {
   const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
@@ -165,3 +166,6 @@ export async function DELETE(request: NextRequest, { params }: RouteContext) {
 
   return NextResponse.json({ ok: true, deletedIds: idsToDelete });
 }
+
+export const PUT = withLedgerWriteAudit(handlePUT);
+export const DELETE = withLedgerWriteAudit(handleDELETE);

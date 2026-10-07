@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 import { requireAuth, clearAuthCookie } from "../../../../lib/apiHelpers";
 import { queryOne, saveDB } from "../../../../lib/db";
-import { deleteUserCompletely } from "../../../../lib/userDeletion";
+import {
+  deleteUserCompletely,
+  LedgerOwnershipTransferRequiredError,
+} from "../../../../lib/userDeletion";
 import { auditSensitiveAction } from "../../../../lib/auditHelpers";
 
 function normalizeEmail(email: string | number | null | undefined) {
@@ -45,7 +48,14 @@ export async function POST(request: Request) {
 
   const deletedEmail = normalizeEmail(user.email);
   const wasAdmin = !!user.is_admin;
-  await deleteUserCompletely(auth.userId);
+  try {
+    await deleteUserCompletely(auth.userId);
+  } catch (error) {
+    if (error instanceof LedgerOwnershipTransferRequiredError) {
+      return NextResponse.json({ error: error.message }, { status: 409 });
+    }
+    throw error;
+  }
   saveDB();
 
   // 敏感操作：使用者自助刪除帳號（含所有資料）。於刪除後寫入以確保留痕。

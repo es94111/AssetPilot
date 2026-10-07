@@ -227,7 +227,11 @@ export function proxy(request: NextRequest): NextResponse {
     if (pathname.startsWith('/api/')) {
       return NextResponse.json({ error: '請先登入' }, { status: 401 });
     }
-    return NextResponse.redirect(new URL('/login', request.url));
+    const loginUrl = new URL('/login', request.url);
+    if (pathname === '/settings/ledgers') {
+      loginUrl.searchParams.set('returnTo', `${pathname}${request.nextUrl.search}`);
+    }
+    return NextResponse.redirect(loginUrl);
   }
 
   // Edge runtime 無法用 jsonwebtoken（Node.js only）；

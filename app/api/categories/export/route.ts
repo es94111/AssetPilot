@@ -1,8 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '../../../../lib/apiHelpers';
-import { queryAll, queryOne } from '../../../../lib/db';
+import { queryAll, queryAllInKeysetPages, queryOne } from '../../../../lib/db';
 import { buildCsv, writeOperationAudit } from '../../../../lib/auditHelpers';
 import { getRequestIpFromHeaders } from '../../../../lib/loginHelpers';
+import {
+  createXlsxExportResponse,
+  resolveExportFormat,
+  type XlsxColumn,
+} from '../../../../lib/xlsxExport';
+
+export const runtime = 'nodejs';
 
 type CategoryType = 'income' | 'expense';
 
@@ -29,11 +36,71 @@ function normalizeHexColor(c: unknown): string {
   return c;
 }
 
+async function* streamCategoryExportRows(userId: string): AsyncGenerator<CsvCell[]> {
+  const parents = queryAllInKeysetPages(
+    `SELECT type, name, color, COALESCE(sort_order, 0) AS export_cursor_sort_order, id AS export_cursor_id
+     FROM categories
+     WHERE user_id = ? AND (parent_id IS NULL OR parent_id = '')`,
+    [userId],
+    {
+      cursorColumns: ['COALESCE(sort_order, 0)', 'name', 'id'],
+      orderBy: ['COALESCE(sort_order, 0)', 'name', 'id'],
+      direction: 'ASC',
+      cursorFromRow: (row) => [row.export_cursor_sort_order, row.name, row.export_cursor_id],
+    },
+  );
+  for await (const parent of parents) {
+    yield [parent.type === 'income' ? '收入' : '支出', parent.name || '', '', normalizeHexColor(parent.color)];
+  }
+
+  const children = queryAllInKeysetPages(
+    `SELECT c.type, c.name, c.color, p.name AS parent_name,
+      COALESCE(c.sort_order, 0) AS export_cursor_sort_order, c.id AS export_cursor_id
+     FROM categories c
+     LEFT JOIN categories p ON p.id = c.parent_id AND p.user_id = c.user_id
+     WHERE c.user_id = ? AND c.parent_id IS NOT NULL AND c.parent_id <> ''`,
+    [userId],
+    {
+      cursorColumns: ['COALESCE(c.sort_order, 0)', 'c.name', 'c.id'],
+      orderBy: ['COALESCE(c.sort_order, 0)', 'c.name', 'c.id'],
+      direction: 'ASC',
+      cursorFromRow: (row) => [row.export_cursor_sort_order, row.name, row.export_cursor_id],
+    },
+  );
+  for await (const child of children) {
+    yield [child.type === 'income' ? '收入' : '支出', child.name || '', child.parent_name || '', normalizeHexColor(child.color)];
+  }
+}
+
 export async function GET(request: NextRequest) {
   const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
+  const { searchParams } = new URL(request.url);
+  const format = resolveExportFormat(searchParams.get('format'));
+
   try {
+    const headers = ['類型', '分類名稱', '上層分類', '顏色'];
+    const userRow = queryOne('SELECT is_admin FROM users WHERE id = ?', [auth.actorUserId]);
+    const ipAddress = getRequestIpFromHeaders(request.headers);
+    const userAgent = request.headers.get('user-agent') || '';
+    const role = userRow?.is_admin ? 'admin' : 'user';
+
+    if (format === 'xlsx') {
+      const columns: XlsxColumn[] = [
+        { header: '類型', type: 'text' },
+        { header: '分類名稱', type: 'text' },
+        { header: '上層分類', type: 'text' },
+        { header: '顏色', type: 'text' },
+      ];
+      return createXlsxExportResponse({
+        columns,
+        rows: streamCategoryExportRows(auth.userId),
+        filenamePrefix: 'categories',
+        audit: { userId: auth.userId, role, action: 'export_categories', ipAddress, userAgent },
+      });
+    }
+
     const cats = asRows<CategoryExportRow>(queryAll(
       "SELECT * FROM categories WHERE user_id = ? ORDER BY (parent_id IS NULL OR parent_id = '') DESC, sort_order ASC, name ASC",
       [auth.userId]
@@ -42,7 +109,6 @@ export async function GET(request: NextRequest) {
     cats.forEach(c => { idMap[c.id] = c; });
     const parents = cats.filter(c => !c.parent_id);
     const children = cats.filter(c => c.parent_id);
-    const headers = ['類型', '分類名稱', '上層分類', '顏色'];
     const dataRows: CsvCell[][] = [];
     parents.forEach(p => {
       dataRows.push([p.type === 'income' ? '收入' : '支出', p.name || '', '', normalizeHexColor(p.color || '')]);
@@ -55,16 +121,15 @@ export async function GET(request: NextRequest) {
     const csv = buildCsv(headers, dataRows);
     const filename = `categories-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}.csv`;
 
-    const userRow = queryOne('SELECT is_admin FROM users WHERE id = ?', [auth.actorUserId]);
     writeOperationAudit({
       userId: auth.userId,
-      role: userRow?.is_admin ? 'admin' : 'user',
+      role,
       action: 'export_categories',
-      ipAddress: getRequestIpFromHeaders(request.headers),
-      userAgent: request.headers.get('user-agent') || '',
+      ipAddress,
+      userAgent,
       result: 'success',
       isAdminOperation: false,
-      metadata: { rows: dataRows.length, byteSize: Buffer.byteLength(csv, 'utf8') },
+      metadata: { rows: dataRows.length, byteSize: Buffer.byteLength(csv, 'utf8'), format: 'csv' },
     });
 
     return new Response(csv, {

@@ -1493,6 +1493,18 @@ class AppLocalizationsKo extends AppLocalizations {
   String get featuresDataTransferExportCsv => 'CSV 내보내기';
 
   @override
+  String get featuresDataTransferExportFormat => '내보내기 형식';
+
+  @override
+  String get featuresDataTransferExportFormatCsv => 'CSV(.csv)';
+
+  @override
+  String get featuresDataTransferExportFormatXlsx => 'Excel(.xlsx)';
+
+  @override
+  String get featuresDataTransferExportXlsx => 'Excel로 내보내기';
+
+  @override
   String get featuresDataTransferExporting => '내보내는 중...';
 
   @override

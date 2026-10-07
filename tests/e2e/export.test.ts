@@ -1,4 +1,4 @@
-// tests/e2e/export.test.ts — 匯出（issue #264）
+// tests/e2e/export.test.ts — 匯出（issue #264、#261）
 import { test, expect } from './support/fixtures';
 import { createE2ETransaction } from './support/testUser';
 
@@ -16,4 +16,36 @@ test('user can export transactions as CSV', async ({ authedPage, testUser }) => 
   expect(download.suggestedFilename()).toMatch(/\.csv$/i);
   const path = await download.path();
   expect(path).toBeTruthy();
+});
+
+test('user can export transactions as XLSX', async ({ authedPage, testUser }) => {
+  await createE2ETransaction(testUser.id, { type: 'expense', amount: 1234.56, note: "=E2E 匯出測試" });
+  await authedPage.addInitScript(() => {
+    const testWindow = window as typeof window & { __xlsxBytes?: number; __xlsxName?: string };
+    Object.defineProperty(window, 'showSaveFilePicker', {
+      configurable: true,
+      value: async (options: { suggestedName?: string }) => {
+        testWindow.__xlsxName = options.suggestedName;
+        testWindow.__xlsxBytes = 0;
+        return {
+          createWritable: async () => new WritableStream<Uint8Array>({
+            write: (chunk) => { testWindow.__xlsxBytes = (testWindow.__xlsxBytes || 0) + chunk.byteLength; },
+          }),
+        };
+      },
+    });
+  });
+
+  await authedPage.goto('/settings/export');
+  await expect(authedPage.getByRole('heading', { name: '資料匯出匯入' }).first()).toBeVisible();
+
+  // 匯出頁可選擇 CSV 或 XLSX。
+  await authedPage.getByLabel('匯出格式').selectOption('xlsx');
+
+  const transactionsSection = authedPage.locator('section').filter({ hasText: '交易記錄' }).first();
+  await transactionsSection.getByRole('button', { name: '匯出 Excel' }).click();
+
+  await expect.poll(() => authedPage.evaluate(() => (window as typeof window & { __xlsxBytes?: number }).__xlsxBytes || 0)).toBeGreaterThan(0);
+  const suggestedName = await authedPage.evaluate(() => (window as typeof window & { __xlsxName?: string }).__xlsxName || '');
+  expect(suggestedName).toMatch(/^transactions-\d{8}\.xlsx$/);
 });

@@ -1,13 +1,23 @@
 // @ts-nocheck
 import { NextResponse } from "next/server";
 import { requireAuth } from "../../../../lib/apiHelpers";
-import { queryAll } from "../../../../lib/db";
+import { queryAll, queryAllInKeysetPages } from "../../../../lib/db";
 import {
   buildCsv,
   writeOperationAudit,
   isValidIso8601Date,
 } from "../../../../lib/auditHelpers";
 import { getRequestIpFromHeaders } from "../../../../lib/loginHelpers";
+import {
+  createXlsxExportResponse,
+  mapXlsxRows,
+  resolveExportFormat,
+  type XlsxColumn,
+} from "../../../../lib/xlsxExport";
+
+// xlsx 產生依賴 Node stream 與 write-excel-file，明確宣告 nodejs runtime，
+// 避免被推論為 edge runtime。
+export const runtime = "nodejs";
 
 export async function GET(request) {
   const auth = await requireAuth(request);
@@ -16,6 +26,7 @@ export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const dateFrom = searchParams.get("dateFrom") || "";
   const dateTo = searchParams.get("dateTo") || "";
+  const format = resolveExportFormat(searchParams.get("format"));
 
   try {
     let where = "WHERE st.user_id = ?";
@@ -29,16 +40,16 @@ export async function GET(request) {
       params.push(dateTo);
     }
 
-    const sql = `SELECT st.date, st.type, st.shares, st.price, st.fee, st.tax, st.realized_pl,
+    const baseSql = `SELECT st.date, st.type, st.shares, st.price, st.fee, st.tax, st.realized_pl,
       st.tax_auto_calculated, st.note,
-      s.symbol, s.market, s.name AS stock_name, s.stock_type, s.currency, a.name AS account_name
+      s.symbol, s.market, s.name AS stock_name, s.stock_type, s.currency, a.name AS account_name,
+      COALESCE(st.created_at, 0) AS export_cursor_created_at, st.id AS export_cursor_id
       FROM stock_transactions st
       JOIN stocks s ON st.stock_id = s.id AND s.user_id = st.user_id
       LEFT JOIN accounts a ON st.account_id = a.id AND a.user_id = st.user_id
-      ${where}
-      ORDER BY st.date DESC, st.created_at DESC`;
-    const rows = queryAll(sql, params);
-
+      ${where}`;
+    const orderBy = 'st.date, COALESCE(st.created_at, 0), st.id';
+    const sql = `${baseSql} ORDER BY st.date DESC, st.created_at DESC`;
     const headers = [
       "日期",
       "市場",
@@ -56,7 +67,7 @@ export async function GET(request) {
       "帳戶",
       "備註",
     ];
-    const dataRows = rows.map((r) => [
+    const exportRow = (r) => [
       r.date || "",
       r.market || "TW",
       r.symbol || "",
@@ -72,8 +83,47 @@ export async function GET(request) {
       Number(r.tax_auto_calculated) === 0 ? "否" : "是",
       r.account_name || "",
       r.note || "",
-    ]);
+    ];
 
+    const ipAddress = getRequestIpFromHeaders(request.headers) || "";
+    const userAgent = request.headers.get("user-agent") || "";
+
+    if (format === "xlsx") {
+      const columns: XlsxColumn[] = [
+        { header: "日期", type: "date" },
+        { header: "市場", type: "text" },
+        { header: "股票代號", type: "text" },
+        { header: "股票名稱", type: "text" },
+        { header: "股票類型", type: "text" },
+        { header: "幣別", type: "text" },
+        { header: "類型", type: "text" },
+        { header: "股數", type: "number", format: "#,##0.####" },
+        { header: "成交價", type: "number" },
+        { header: "手續費", type: "number" },
+        { header: "交易稅", type: "number" },
+        { header: "已實現損益", type: "number" },
+        { header: "稅額自動計算", type: "text" },
+        { header: "帳戶", type: "text" },
+        { header: "備註", type: "text" },
+      ];
+      return createXlsxExportResponse({
+        columns,
+        rows: mapXlsxRows(
+          queryAllInKeysetPages(baseSql, params, {
+            cursorColumns: ['st.date', 'COALESCE(st.created_at, 0)', 'st.id'],
+            orderBy: ['st.date', 'COALESCE(st.created_at, 0)', 'st.id'],
+            direction: 'DESC',
+            cursorFromRow: (row) => [row.date, row.export_cursor_created_at, row.export_cursor_id],
+          }),
+          exportRow,
+        ),
+        filenamePrefix: "stock-transactions",
+        audit: { userId: auth.userId, role: "user", action: "export_stock_transactions", ipAddress, userAgent, dateFrom, dateTo },
+      });
+    }
+
+    const rows = queryAll(sql, params);
+    const dataRows = rows.map(exportRow);
     const csv = buildCsv(headers, dataRows);
     const filename = `stock-transactions-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}.csv`;
 
@@ -81,8 +131,8 @@ export async function GET(request) {
       userId: auth.userId,
       role: "user",
       action: "export_stock_transactions",
-      ipAddress: getRequestIpFromHeaders(request.headers) || "",
-      userAgent: request.headers.get("user-agent") || "",
+      ipAddress,
+      userAgent,
       result: "success",
       isAdminOperation: false,
       metadata: {
@@ -90,6 +140,7 @@ export async function GET(request) {
         byteSize: Buffer.byteLength(csv, "utf8"),
         dateFrom,
         dateTo,
+        format: "csv",
       },
     });
 

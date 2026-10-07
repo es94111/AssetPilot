@@ -194,6 +194,54 @@ export function queryAll(
   return rows;
 }
 
+/**
+ * Fetch a large, ordered result in bounded pages rather than retaining all result rows.
+ * The supplied SQL must include a deterministic ORDER BY and must not contain LIMIT/OFFSET.
+ */
+export interface KeysetPageOptions<T extends Record<string, string | number | null>> {
+  /** SQL expressions used in the ORDER BY and seek tuple; keep their order aligned. */
+  cursorColumns: string[];
+  orderBy: string[];
+  direction: 'ASC' | 'DESC';
+  cursorFromRow: (row: T) => Array<string | number | null>;
+  pageSize?: number;
+}
+
+/**
+ * Fetch a large result in bounded keyset pages. The base query must end at its WHERE clause
+ * (or the end of FROM for an unfiltered query); ordering must be deterministic and include a
+ * unique tie-breaker. Keyset paging avoids OFFSET rescans and does not shift when new rows are
+ * inserted before the current cursor. All cursor/order columns use the same direction.
+ */
+export async function* queryAllInKeysetPages<T extends Record<string, string | number | null>>(
+  baseSql: string,
+  params: Array<string | number | null> = [],
+  options: KeysetPageOptions<T>,
+): AsyncGenerator<T> {
+  const pageSize = options.pageSize ?? 1000;
+  if (!Number.isSafeInteger(pageSize) || pageSize <= 0) {
+    throw new RangeError('pageSize must be a positive safe integer');
+  }
+  if (options.cursorColumns.length === 0 || options.orderBy.length !== options.cursorColumns.length) {
+    throw new RangeError('cursorColumns and orderBy must contain the same non-zero number of expressions');
+  }
+
+  let cursor: Array<string | number | null> | null = null;
+  for (;;) {
+    const seek = cursor
+      ? ` AND (${options.cursorColumns.join(', ')}) ${options.direction === 'ASC' ? '>' : '<'} (${options.cursorColumns.map(() => '?').join(', ')})`
+      : '';
+    const page = queryAll(
+      `${baseSql}${seek} ORDER BY ${options.orderBy.map((expression) => `${expression} ${options.direction}`).join(', ')} LIMIT ?`,
+      [...params, ...(cursor ?? []), pageSize],
+    ) as T[];
+    if (page.length === 0) return;
+    cursor = options.cursorFromRow(page[page.length - 1]);
+    for (const row of page) yield row;
+    if (page.length < pageSize) return;
+  }
+}
+
 // ── Migrations ──
 async function _runMigrations(db: DatabaseLike): Promise<void> {
   db.run(`CREATE TABLE IF NOT EXISTS users (

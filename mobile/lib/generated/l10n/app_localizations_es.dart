@@ -1577,6 +1577,18 @@ class AppLocalizationsEs extends AppLocalizations {
   String get featuresDataTransferExportCsv => 'Exportar CSV';
 
   @override
+  String get featuresDataTransferExportFormat => 'Formato de exportación';
+
+  @override
+  String get featuresDataTransferExportFormatCsv => 'CSV (.csv)';
+
+  @override
+  String get featuresDataTransferExportFormatXlsx => 'Excel (.xlsx)';
+
+  @override
+  String get featuresDataTransferExportXlsx => 'Exportar Excel';
+
+  @override
   String get featuresDataTransferExporting => 'Exportando...';
 
   @override

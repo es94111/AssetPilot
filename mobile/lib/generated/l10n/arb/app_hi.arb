@@ -2390,6 +2390,26 @@
     "description": "Web path: features.dataTransfer.exportCsv",
     "x-webPath": "features.dataTransfer.exportCsv"
   },
+  "featuresDataTransferExportFormat": "निर्यात प्रारूप",
+  "@featuresDataTransferExportFormat": {
+    "description": "Web path: features.dataTransfer.exportFormat",
+    "x-webPath": "features.dataTransfer.exportFormat"
+  },
+  "featuresDataTransferExportFormatCsv": "CSV (.csv)",
+  "@featuresDataTransferExportFormatCsv": {
+    "description": "Web path: features.dataTransfer.exportFormatCsv",
+    "x-webPath": "features.dataTransfer.exportFormatCsv"
+  },
+  "featuresDataTransferExportFormatXlsx": "Excel (.xlsx)",
+  "@featuresDataTransferExportFormatXlsx": {
+    "description": "Web path: features.dataTransfer.exportFormatXlsx",
+    "x-webPath": "features.dataTransfer.exportFormatXlsx"
+  },
+  "featuresDataTransferExportXlsx": "Excel निर्यात करें",
+  "@featuresDataTransferExportXlsx": {
+    "description": "Web path: features.dataTransfer.exportXlsx",
+    "x-webPath": "features.dataTransfer.exportXlsx"
+  },
   "featuresDataTransferExporting": "एक्सपोर्ट हो रहा है...",
   "@featuresDataTransferExporting": {
     "description": "Web path: features.dataTransfer.exporting",

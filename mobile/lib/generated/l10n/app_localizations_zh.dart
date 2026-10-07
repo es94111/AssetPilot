@@ -1468,6 +1468,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get featuresDataTransferExportCsv => '匯出 CSV';
 
   @override
+  String get featuresDataTransferExportFormat => '匯出格式';
+
+  @override
+  String get featuresDataTransferExportFormatCsv => 'CSV（.csv）';
+
+  @override
+  String get featuresDataTransferExportFormatXlsx => 'Excel（.xlsx）';
+
+  @override
+  String get featuresDataTransferExportXlsx => '匯出 Excel';
+
+  @override
   String get featuresDataTransferExporting => '匯出中...';
 
   @override
@@ -7262,6 +7274,18 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
   String get featuresDataTransferExportCsv => '导出 CSV';
 
   @override
+  String get featuresDataTransferExportFormat => '导出格式';
+
+  @override
+  String get featuresDataTransferExportFormatCsv => 'CSV（.csv）';
+
+  @override
+  String get featuresDataTransferExportFormatXlsx => 'Excel（.xlsx）';
+
+  @override
+  String get featuresDataTransferExportXlsx => '导出 Excel';
+
+  @override
   String get featuresDataTransferExporting => '导出中...';
 
   @override
@@ -13053,6 +13077,18 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
 
   @override
   String get featuresDataTransferExportCsv => '匯出 CSV';
+
+  @override
+  String get featuresDataTransferExportFormat => '匯出格式';
+
+  @override
+  String get featuresDataTransferExportFormatCsv => 'CSV（.csv）';
+
+  @override
+  String get featuresDataTransferExportFormatXlsx => 'Excel（.xlsx）';
+
+  @override
+  String get featuresDataTransferExportXlsx => '匯出 Excel';
 
   @override
   String get featuresDataTransferExporting => '匯出中...';

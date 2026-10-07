@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -5397,4 +5398,140 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get settingsApiIntegrationCopyFailed =>
       'No se pudo copiar — puede que el copiado automático esté bloqueado; selecciona el valor de arriba y cópialo manualmente';
+
+  @override
+  String get navLedgers => 'Libros compartidos';
+
+  @override
+  String get ledgerTitle => 'Compartir libros';
+
+  @override
+  String get ledgerDescription =>
+      'Crea un libro vacío, invita miembros y administra sus permisos.';
+
+  @override
+  String get ledgerActiveLedger => 'Libro activo';
+
+  @override
+  String get ledgerPersonal => 'Libro personal';
+
+  @override
+  String get ledgerManage => 'Administrar libros';
+
+  @override
+  String get ledgerLoadError => 'Could not load ledgers.';
+
+  @override
+  String get ledgerCreate => 'Crear libro compartido vacío';
+
+  @override
+  String get ledgerCreateName => 'Nombre del libro';
+
+  @override
+  String get ledgerCreateButton => 'Crear libro';
+
+  @override
+  String get ledgerCreated => 'Shared ledger created.';
+
+  @override
+  String get ledgerCreateError => 'Could not create the ledger.';
+
+  @override
+  String get ledgerInvited => 'Invitation sent by email.';
+
+  @override
+  String get ledgerInviteAccepted => 'Invitation accepted.';
+
+  @override
+  String get ledgerError => 'The request could not be completed.';
+
+  @override
+  String get ledgerRemoveConfirm => 'Remove this member from the ledger?';
+
+  @override
+  String get ledgerTransferConfirm =>
+      'Transfer ownership to this member? You will become an editor.';
+
+  @override
+  String get ledgerOwnerTransferred => 'Ledger ownership transferred.';
+
+  @override
+  String get ledgerLeaveConfirm =>
+      'Leave this ledger? You will lose access immediately.';
+
+  @override
+  String get ledgerLeft => 'You left the ledger.';
+
+  @override
+  String get ledgerInviteInstructions =>
+      'You have been invited to a shared ledger. Sign in with the email address that received the invitation.';
+
+  @override
+  String get ledgerAcceptInvite => 'Aceptar invitación';
+
+  @override
+  String get ledgerEmptySharedNotice =>
+      'Los libros compartidos empiezan vacíos. Los datos personales no se copian automáticamente.';
+
+  @override
+  String get ledgerMembers => 'Miembros';
+
+  @override
+  String get ledgerLeave => 'Salir del libro';
+
+  @override
+  String get ledgerInviteEmail => 'Correo del miembro';
+
+  @override
+  String get ledgerRole => 'Nivel de acceso';
+
+  @override
+  String get ledgerOwner => 'Propietario';
+
+  @override
+  String get ledgerEditor => 'Editor';
+
+  @override
+  String get ledgerViewer => 'Lector (solo lectura)';
+
+  @override
+  String get ledgerSendInvite => 'Enviar invitación';
+
+  @override
+  String get ledgerPersonalOnly =>
+      'This is your private ledger. Create a shared ledger to invite members.';
+
+  @override
+  String get ledgerNoMembers => 'No members found.';
+
+  @override
+  String get ledgerChangeRole => 'Change role';
+
+  @override
+  String get ledgerTransferOwner => 'Transferir propiedad';
+
+  @override
+  String get ledgerRemove => 'Remove';
+
+  @override
+  String get ledgerPendingInvitations => 'Invitaciones pendientes';
+
+  @override
+  String get ledgerNoInvitations => 'No pending invitations.';
+
+  @override
+  String get ledgerInvitationExpires => 'Expires';
+
+  @override
+  String get ledgerRevoke => 'Revoke invitation';
+
+  @override
+  String get ledgerAudit => 'Actividad reciente';
+
+  @override
+  String get ledgerNoAudit => 'No activity recorded yet.';
+
+  @override
+  String get ledgerLastOwnerNotice =>
+      'The owner must transfer ownership before leaving or deleting their account.';
 }

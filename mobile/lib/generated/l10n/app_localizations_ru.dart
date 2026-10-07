@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -5360,4 +5361,140 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get settingsApiIntegrationCopyFailed =>
       'Не удалось скопировать — автоматическое копирование может быть заблокировано; выделите значение выше и скопируйте вручную';
+
+  @override
+  String get navLedgers => 'Общие счета';
+
+  @override
+  String get ledgerTitle => 'Общий доступ к счетам';
+
+  @override
+  String get ledgerDescription =>
+      'Создайте пустой общий счёт, приглашайте участников и управляйте доступом.';
+
+  @override
+  String get ledgerActiveLedger => 'Текущий счёт';
+
+  @override
+  String get ledgerPersonal => 'Личный счёт';
+
+  @override
+  String get ledgerManage => 'Управление счетами';
+
+  @override
+  String get ledgerLoadError => 'Could not load ledgers.';
+
+  @override
+  String get ledgerCreate => 'Создать пустой общий счёт';
+
+  @override
+  String get ledgerCreateName => 'Название счёта';
+
+  @override
+  String get ledgerCreateButton => 'Создать счёт';
+
+  @override
+  String get ledgerCreated => 'Shared ledger created.';
+
+  @override
+  String get ledgerCreateError => 'Could not create the ledger.';
+
+  @override
+  String get ledgerInvited => 'Invitation sent by email.';
+
+  @override
+  String get ledgerInviteAccepted => 'Invitation accepted.';
+
+  @override
+  String get ledgerError => 'The request could not be completed.';
+
+  @override
+  String get ledgerRemoveConfirm => 'Remove this member from the ledger?';
+
+  @override
+  String get ledgerTransferConfirm =>
+      'Transfer ownership to this member? You will become an editor.';
+
+  @override
+  String get ledgerOwnerTransferred => 'Ledger ownership transferred.';
+
+  @override
+  String get ledgerLeaveConfirm =>
+      'Leave this ledger? You will lose access immediately.';
+
+  @override
+  String get ledgerLeft => 'You left the ledger.';
+
+  @override
+  String get ledgerInviteInstructions =>
+      'You have been invited to a shared ledger. Sign in with the email address that received the invitation.';
+
+  @override
+  String get ledgerAcceptInvite => 'Принять приглашение';
+
+  @override
+  String get ledgerEmptySharedNotice =>
+      'Общие счета создаются пустыми. Личные данные не копируются автоматически.';
+
+  @override
+  String get ledgerMembers => 'Участники';
+
+  @override
+  String get ledgerLeave => 'Покинуть счёт';
+
+  @override
+  String get ledgerInviteEmail => 'Электронная почта участника';
+
+  @override
+  String get ledgerRole => 'Уровень доступа';
+
+  @override
+  String get ledgerOwner => 'Владелец';
+
+  @override
+  String get ledgerEditor => 'Редактор';
+
+  @override
+  String get ledgerViewer => 'Просмотр (только чтение)';
+
+  @override
+  String get ledgerSendInvite => 'Отправить приглашение';
+
+  @override
+  String get ledgerPersonalOnly =>
+      'This is your private ledger. Create a shared ledger to invite members.';
+
+  @override
+  String get ledgerNoMembers => 'No members found.';
+
+  @override
+  String get ledgerChangeRole => 'Change role';
+
+  @override
+  String get ledgerTransferOwner => 'Передать владение';
+
+  @override
+  String get ledgerRemove => 'Remove';
+
+  @override
+  String get ledgerPendingInvitations => 'Ожидающие приглашения';
+
+  @override
+  String get ledgerNoInvitations => 'No pending invitations.';
+
+  @override
+  String get ledgerInvitationExpires => 'Expires';
+
+  @override
+  String get ledgerRevoke => 'Revoke invitation';
+
+  @override
+  String get ledgerAudit => 'Недавняя активность';
+
+  @override
+  String get ledgerNoAudit => 'No activity recorded yet.';
+
+  @override
+  String get ledgerLastOwnerNotice =>
+      'The owner must transfer ownership before leaving or deleting their account.';
 }

@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -5363,6 +5364,142 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get settingsApiIntegrationCopyFailed =>
       'Falha ao copiar — a cópia automática pode estar bloqueada; selecione o valor acima e copie manualmente';
+
+  @override
+  String get navLedgers => 'Contas compartilhadas';
+
+  @override
+  String get ledgerTitle => 'Compartilhamento de contas';
+
+  @override
+  String get ledgerDescription =>
+      'Crie uma conta vazia, convide membros e gerencie o acesso.';
+
+  @override
+  String get ledgerActiveLedger => 'Conta ativa';
+
+  @override
+  String get ledgerPersonal => 'Conta pessoal';
+
+  @override
+  String get ledgerManage => 'Gerenciar contas';
+
+  @override
+  String get ledgerLoadError => 'Could not load ledgers.';
+
+  @override
+  String get ledgerCreate => 'Criar conta compartilhada vazia';
+
+  @override
+  String get ledgerCreateName => 'Nome da conta';
+
+  @override
+  String get ledgerCreateButton => 'Criar conta';
+
+  @override
+  String get ledgerCreated => 'Shared ledger created.';
+
+  @override
+  String get ledgerCreateError => 'Could not create the ledger.';
+
+  @override
+  String get ledgerInvited => 'Invitation sent by email.';
+
+  @override
+  String get ledgerInviteAccepted => 'Invitation accepted.';
+
+  @override
+  String get ledgerError => 'The request could not be completed.';
+
+  @override
+  String get ledgerRemoveConfirm => 'Remove this member from the ledger?';
+
+  @override
+  String get ledgerTransferConfirm =>
+      'Transfer ownership to this member? You will become an editor.';
+
+  @override
+  String get ledgerOwnerTransferred => 'Ledger ownership transferred.';
+
+  @override
+  String get ledgerLeaveConfirm =>
+      'Leave this ledger? You will lose access immediately.';
+
+  @override
+  String get ledgerLeft => 'You left the ledger.';
+
+  @override
+  String get ledgerInviteInstructions =>
+      'You have been invited to a shared ledger. Sign in with the email address that received the invitation.';
+
+  @override
+  String get ledgerAcceptInvite => 'Aceitar convite';
+
+  @override
+  String get ledgerEmptySharedNotice =>
+      'As contas compartilhadas começam vazias. Dados pessoais não são copiados automaticamente.';
+
+  @override
+  String get ledgerMembers => 'Membros';
+
+  @override
+  String get ledgerLeave => 'Sair da conta';
+
+  @override
+  String get ledgerInviteEmail => 'E-mail do membro';
+
+  @override
+  String get ledgerRole => 'Nível de acesso';
+
+  @override
+  String get ledgerOwner => 'Proprietário';
+
+  @override
+  String get ledgerEditor => 'Editor';
+
+  @override
+  String get ledgerViewer => 'Leitor (somente leitura)';
+
+  @override
+  String get ledgerSendInvite => 'Enviar convite';
+
+  @override
+  String get ledgerPersonalOnly =>
+      'This is your private ledger. Create a shared ledger to invite members.';
+
+  @override
+  String get ledgerNoMembers => 'No members found.';
+
+  @override
+  String get ledgerChangeRole => 'Change role';
+
+  @override
+  String get ledgerTransferOwner => 'Transferir propriedade';
+
+  @override
+  String get ledgerRemove => 'Remove';
+
+  @override
+  String get ledgerPendingInvitations => 'Convites pendentes';
+
+  @override
+  String get ledgerNoInvitations => 'No pending invitations.';
+
+  @override
+  String get ledgerInvitationExpires => 'Expires';
+
+  @override
+  String get ledgerRevoke => 'Revoke invitation';
+
+  @override
+  String get ledgerAudit => 'Atividade recente';
+
+  @override
+  String get ledgerNoAudit => 'No activity recorded yet.';
+
+  @override
+  String get ledgerLastOwnerNotice =>
+      'The owner must transfer ownership before leaving or deleting their account.';
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -10715,4 +10852,140 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   @override
   String get settingsApiIntegrationCopyFailed =>
       'Falha ao copiar — a cópia automática pode estar bloqueada; selecione o valor acima e copie manualmente';
+
+  @override
+  String get navLedgers => 'Contas compartilhadas';
+
+  @override
+  String get ledgerTitle => 'Compartilhamento de contas';
+
+  @override
+  String get ledgerDescription =>
+      'Crie uma conta vazia, convide membros e gerencie o acesso.';
+
+  @override
+  String get ledgerActiveLedger => 'Conta ativa';
+
+  @override
+  String get ledgerPersonal => 'Conta pessoal';
+
+  @override
+  String get ledgerManage => 'Gerenciar contas';
+
+  @override
+  String get ledgerLoadError => 'Could not load ledgers.';
+
+  @override
+  String get ledgerCreate => 'Criar conta compartilhada vazia';
+
+  @override
+  String get ledgerCreateName => 'Nome da conta';
+
+  @override
+  String get ledgerCreateButton => 'Criar conta';
+
+  @override
+  String get ledgerCreated => 'Shared ledger created.';
+
+  @override
+  String get ledgerCreateError => 'Could not create the ledger.';
+
+  @override
+  String get ledgerInvited => 'Invitation sent by email.';
+
+  @override
+  String get ledgerInviteAccepted => 'Invitation accepted.';
+
+  @override
+  String get ledgerError => 'The request could not be completed.';
+
+  @override
+  String get ledgerRemoveConfirm => 'Remove this member from the ledger?';
+
+  @override
+  String get ledgerTransferConfirm =>
+      'Transfer ownership to this member? You will become an editor.';
+
+  @override
+  String get ledgerOwnerTransferred => 'Ledger ownership transferred.';
+
+  @override
+  String get ledgerLeaveConfirm =>
+      'Leave this ledger? You will lose access immediately.';
+
+  @override
+  String get ledgerLeft => 'You left the ledger.';
+
+  @override
+  String get ledgerInviteInstructions =>
+      'You have been invited to a shared ledger. Sign in with the email address that received the invitation.';
+
+  @override
+  String get ledgerAcceptInvite => 'Aceitar convite';
+
+  @override
+  String get ledgerEmptySharedNotice =>
+      'As contas compartilhadas começam vazias. Dados pessoais não são copiados automaticamente.';
+
+  @override
+  String get ledgerMembers => 'Membros';
+
+  @override
+  String get ledgerLeave => 'Sair da conta';
+
+  @override
+  String get ledgerInviteEmail => 'E-mail do membro';
+
+  @override
+  String get ledgerRole => 'Nível de acesso';
+
+  @override
+  String get ledgerOwner => 'Proprietário';
+
+  @override
+  String get ledgerEditor => 'Editor';
+
+  @override
+  String get ledgerViewer => 'Leitor (somente leitura)';
+
+  @override
+  String get ledgerSendInvite => 'Enviar convite';
+
+  @override
+  String get ledgerPersonalOnly =>
+      'This is your private ledger. Create a shared ledger to invite members.';
+
+  @override
+  String get ledgerNoMembers => 'No members found.';
+
+  @override
+  String get ledgerChangeRole => 'Change role';
+
+  @override
+  String get ledgerTransferOwner => 'Transferir propriedade';
+
+  @override
+  String get ledgerRemove => 'Remove';
+
+  @override
+  String get ledgerPendingInvitations => 'Convites pendentes';
+
+  @override
+  String get ledgerNoInvitations => 'No pending invitations.';
+
+  @override
+  String get ledgerInvitationExpires => 'Expires';
+
+  @override
+  String get ledgerRevoke => 'Revoke invitation';
+
+  @override
+  String get ledgerAudit => 'Atividade recente';
+
+  @override
+  String get ledgerNoAudit => 'No activity recorded yet.';
+
+  @override
+  String get ledgerLastOwnerNotice =>
+      'The owner must transfer ownership before leaving or deleting their account.';
 }

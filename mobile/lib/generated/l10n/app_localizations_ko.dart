@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -5128,4 +5129,139 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get settingsApiIntegrationCopyFailed =>
       '복사하지 못했습니다. 자동 복사가 차단된 환경일 수 있으니 위 값을 선택해 직접 복사하세요';
+
+  @override
+  String get navLedgers => '공유 장부';
+
+  @override
+  String get ledgerTitle => '장부 공유 관리';
+
+  @override
+  String get ledgerDescription => '빈 공유 장부를 만들고 구성원과 권한을 관리합니다.';
+
+  @override
+  String get ledgerActiveLedger => '활성 장부';
+
+  @override
+  String get ledgerPersonal => '개인 장부';
+
+  @override
+  String get ledgerManage => '장부 관리';
+
+  @override
+  String get ledgerLoadError => 'Could not load ledgers.';
+
+  @override
+  String get ledgerCreate => '빈 공유 장부 만들기';
+
+  @override
+  String get ledgerCreateName => '장부 이름';
+
+  @override
+  String get ledgerCreateButton => '장부 만들기';
+
+  @override
+  String get ledgerCreated => 'Shared ledger created.';
+
+  @override
+  String get ledgerCreateError => 'Could not create the ledger.';
+
+  @override
+  String get ledgerInvited => 'Invitation sent by email.';
+
+  @override
+  String get ledgerInviteAccepted => 'Invitation accepted.';
+
+  @override
+  String get ledgerError => 'The request could not be completed.';
+
+  @override
+  String get ledgerRemoveConfirm => 'Remove this member from the ledger?';
+
+  @override
+  String get ledgerTransferConfirm =>
+      'Transfer ownership to this member? You will become an editor.';
+
+  @override
+  String get ledgerOwnerTransferred => 'Ledger ownership transferred.';
+
+  @override
+  String get ledgerLeaveConfirm =>
+      'Leave this ledger? You will lose access immediately.';
+
+  @override
+  String get ledgerLeft => 'You left the ledger.';
+
+  @override
+  String get ledgerInviteInstructions =>
+      'You have been invited to a shared ledger. Sign in with the email address that received the invitation.';
+
+  @override
+  String get ledgerAcceptInvite => '초대 수락';
+
+  @override
+  String get ledgerEmptySharedNotice =>
+      '공유 장부는 빈 상태로 생성되며 개인 데이터가 자동 복사되지 않습니다.';
+
+  @override
+  String get ledgerMembers => '구성원';
+
+  @override
+  String get ledgerLeave => '장부 나가기';
+
+  @override
+  String get ledgerInviteEmail => '구성원 이메일';
+
+  @override
+  String get ledgerRole => '접근 권한';
+
+  @override
+  String get ledgerOwner => '소유자';
+
+  @override
+  String get ledgerEditor => '편집자';
+
+  @override
+  String get ledgerViewer => '뷰어(읽기 전용)';
+
+  @override
+  String get ledgerSendInvite => '초대 보내기';
+
+  @override
+  String get ledgerPersonalOnly =>
+      'This is your private ledger. Create a shared ledger to invite members.';
+
+  @override
+  String get ledgerNoMembers => 'No members found.';
+
+  @override
+  String get ledgerChangeRole => 'Change role';
+
+  @override
+  String get ledgerTransferOwner => '소유권 이전';
+
+  @override
+  String get ledgerRemove => 'Remove';
+
+  @override
+  String get ledgerPendingInvitations => '대기 중인 초대';
+
+  @override
+  String get ledgerNoInvitations => 'No pending invitations.';
+
+  @override
+  String get ledgerInvitationExpires => 'Expires';
+
+  @override
+  String get ledgerRevoke => 'Revoke invitation';
+
+  @override
+  String get ledgerAudit => '최근 활동';
+
+  @override
+  String get ledgerNoAudit => 'No activity recorded yet.';
+
+  @override
+  String get ledgerLastOwnerNotice =>
+      'The owner must transfer ownership before leaving or deleting their account.';
 }

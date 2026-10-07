@@ -159,7 +159,8 @@ export function countActiveSubscriptions(userId: string): number {
 
 /**
  * 建立或更新訂閱（相同 endpoint 重複訂閱＝更新，因此可安全重送）。
- * 上限檢查只在「新增」時生效，重新訂閱既有端點不受上限影響。
+ * 更新目前使用者已啟用的端點不增加數量、不受上限影響；新增端點、重新啟用或從其他帳號轉入
+ * 都會在 user advisory transaction lock 內檢查上限，避免多個服務實例同時超額新增。
  */
 export function savePushSubscription(
   userId: string,
@@ -167,41 +168,64 @@ export function savePushSubscription(
   userAgent = '',
 ): { id: string; created: boolean } {
   const normalized = normalizePushSubscription(raw);
-  const existing = queryOne(
-    'SELECT id, user_id, disabled_at FROM web_push_subscriptions WHERE endpoint = ?',
-    [normalized.endpoint],
-  ) as SubscriptionRow | null;
+  const db = getDB();
   const now = Date.now();
   const ua = String(userAgent || '').slice(0, 300);
 
-  if (existing?.id) {
-    const alreadyActiveForUser = String(existing.user_id) === userId && Number(existing.disabled_at) === 0;
-    // Reactivating a disabled endpoint or moving it from another account adds one active
-    // subscription to this user; enforce the same cap as a fresh endpoint before updating.
-    if (!alreadyActiveForUser && countActiveSubscriptions(userId) >= MAX_PUSH_SUBSCRIPTIONS) {
+  // A process-local mutex cannot protect a shared PostgreSQL deployment. Lock by stable user id
+  // inside a transaction so separate app instances serialize endpoint lookup, active-count check,
+  // and insert/reactivation/reassignment. Keep every operation synchronous until COMMIT because
+  // PostgresCompatDatabase intentionally forbids transaction ownership across async boundaries.
+  db.run('BEGIN');
+  try {
+    db.run(
+      'SELECT pg_advisory_xact_lock(hashtext(?))',
+      [`assetpilot:web-push-subscription-limit:${userId}`],
+    );
+
+    const existing = queryOne(
+      'SELECT id, user_id, disabled_at FROM web_push_subscriptions WHERE endpoint = ?',
+      [normalized.endpoint],
+    ) as SubscriptionRow | null;
+
+    if (existing?.id) {
+      const alreadyActiveForUser = String(existing.user_id) === userId && Number(existing.disabled_at) === 0;
+      // Reactivating a disabled endpoint or moving it from another account adds one active
+      // subscription to this user; enforce the same cap as a fresh endpoint before updating.
+      if (!alreadyActiveForUser && countActiveSubscriptions(userId) >= MAX_PUSH_SUBSCRIPTIONS) {
+        throw new PushSubscriptionError(`訂閱裝置數已達上限（${MAX_PUSH_SUBSCRIPTIONS}）`);
+      }
+      // 同一端點可能先前屬於其他使用者（共用裝置換人登入）：一律改綁到目前使用者，
+      // 避免前一位使用者的通知繼續送到該裝置。
+      db.run(
+        'UPDATE web_push_subscriptions SET user_id = ?, p256dh = ?, auth = ?, user_agent = ?, updated_at = ?, disabled_at = 0, failure_count = 0 WHERE id = ?',
+        [userId, normalized.p256dh, normalized.auth, ua, now, String(existing.id)],
+      );
+      db.run('COMMIT');
+      saveDB();
+      return { id: String(existing.id), created: false };
+    }
+
+    if (countActiveSubscriptions(userId) >= MAX_PUSH_SUBSCRIPTIONS) {
       throw new PushSubscriptionError(`訂閱裝置數已達上限（${MAX_PUSH_SUBSCRIPTIONS}）`);
     }
-    // 同一端點可能先前屬於其他使用者（共用裝置換人登入）：一律改綁到目前使用者，
-    // 避免前一位使用者的通知繼續送到該裝置。
-    getDB().run(
-      'UPDATE web_push_subscriptions SET user_id = ?, p256dh = ?, auth = ?, user_agent = ?, updated_at = ?, disabled_at = 0, failure_count = 0 WHERE id = ?',
-      [userId, normalized.p256dh, normalized.auth, ua, now, String(existing.id)],
+
+    const id = uid();
+    db.run(
+      'INSERT INTO web_push_subscriptions (id, user_id, endpoint, p256dh, auth, user_agent, created_at, updated_at, last_success_at, failure_count, disabled_at) VALUES (?,?,?,?,?,?,?,?,0,0,0)',
+      [id, userId, normalized.endpoint, normalized.p256dh, normalized.auth, ua, now, now],
     );
+    db.run('COMMIT');
     saveDB();
-    return { id: String(existing.id), created: false };
+    return { id, created: true };
+  } catch (error) {
+    try {
+      db.run('ROLLBACK');
+    } catch (rollbackError) {
+      console.error('[web-push] subscription transaction rollback failed', rollbackError);
+    }
+    throw error;
   }
-
-  if (countActiveSubscriptions(userId) >= MAX_PUSH_SUBSCRIPTIONS) {
-    throw new PushSubscriptionError(`訂閱裝置數已達上限（${MAX_PUSH_SUBSCRIPTIONS}）`);
-  }
-
-  const id = uid();
-  getDB().run(
-    'INSERT INTO web_push_subscriptions (id, user_id, endpoint, p256dh, auth, user_agent, created_at, updated_at, last_success_at, failure_count, disabled_at) VALUES (?,?,?,?,?,?,?,?,0,0,0)',
-    [id, userId, normalized.endpoint, normalized.p256dh, normalized.auth, ua, now, now],
-  );
-  saveDB();
-  return { id, created: true };
 }
 
 /** 解除訂閱：僅能刪除自己的訂閱（endpoint 為瀏覽器提供值，必須同時比對 user_id）。 */

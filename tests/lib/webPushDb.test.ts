@@ -9,6 +9,8 @@
 //   3. 通知類型逐一開關
 import assert from 'node:assert/strict';
 import test, { before, after } from 'node:test';
+import { spawn } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 
 const DB_URL = process.env.DATABASE_URL || process.env.POSTGRES_URL;
 
@@ -31,6 +33,50 @@ if (!DB_URL) {
     setUserPushPreference,
   } = await import('../../lib/webPush.ts');
   type DividendEvent = import('../../lib/webPushCore.ts').DividendEvent;
+
+  const subscriptionWorkerScript = fileURLToPath(
+    new URL('../helpers/webPushSubscriptionWorker.ts', import.meta.url),
+  );
+
+  function runSubscriptionWorker(endpoint: string): Promise<Record<string, unknown>> {
+    return new Promise((resolve, reject) => {
+      const child = spawn(
+        process.execPath,
+        [
+          '--experimental-transform-types',
+          '--import',
+          './tests/setup/register.mjs',
+          subscriptionWorkerScript,
+        ],
+        {
+          cwd: process.cwd(),
+          env: {
+            ...process.env,
+            WEBPUSH_TEST_USER_ID: userId,
+            WEBPUSH_TEST_ENDPOINT: endpoint,
+          },
+          stdio: ['ignore', 'pipe', 'pipe'],
+        },
+      );
+      let stdout = '';
+      let stderr = '';
+      child.stdout.setEncoding('utf8').on('data', (chunk: string) => { stdout += chunk; });
+      child.stderr.setEncoding('utf8').on('data', (chunk: string) => { stderr += chunk; });
+      child.once('error', reject);
+      child.once('close', (code) => {
+        if (code !== 0) {
+          reject(new Error(`subscription worker exited ${code}: ${stderr || stdout}`));
+          return;
+        }
+        try {
+          const line = stdout.trim().split(/\\r?\\n/).at(-1) || '';
+          resolve(JSON.parse(line) as Record<string, unknown>);
+        } catch (error) {
+          reject(new Error(`subscription worker returned invalid JSON: ${stdout}; ${stderr}; ${String(error)}`));
+        }
+      });
+    });
+  }
 
   await initDB();
 
@@ -324,6 +370,30 @@ if (!DB_URL) {
     );
     const owner = queryOne('SELECT user_id FROM web_push_subscriptions WHERE endpoint = ?', [sharedEndpoint]);
     assert.equal(owner?.user_id, otherUserId, '超過上限時不可先把其他使用者的端點改綁');
+    db.run('DELETE FROM web_push_subscriptions WHERE user_id = ?', [userId]);
+  });
+
+  test('不同 PostgreSQL 連線併發新增時，advisory lock 保證訂閱上限不超過 20', async () => {
+    const db = getDB();
+    db.run('DELETE FROM web_push_subscriptions WHERE user_id = ?', [userId]);
+
+    const attemptCount = MAX_PUSH_SUBSCRIPTIONS + 5;
+    const results = await Promise.all(
+      Array.from({ length: attemptCount }, (_, index) =>
+        runSubscriptionWorker(`https://fcm.googleapis.com/fcm/send/race/${userId}/${index}/${uid()}`),
+      ),
+    );
+    const succeeded = results.filter((result) => result.ok === true);
+    const rejected = results.filter((result) => result.ok === false);
+    assert.equal(succeeded.length, MAX_PUSH_SUBSCRIPTIONS);
+    assert.equal(rejected.length, attemptCount - MAX_PUSH_SUBSCRIPTIONS);
+    assert.ok(rejected.every((result) => result.code === 'InvalidPushSubscription'));
+
+    const persisted = queryOne(
+      'SELECT COUNT(*) AS cnt FROM web_push_subscriptions WHERE user_id = ? AND disabled_at = 0',
+      [userId],
+    );
+    assert.equal(Number(persisted?.cnt), MAX_PUSH_SUBSCRIPTIONS, '競態不得留下超額訂閱列');
     db.run('DELETE FROM web_push_subscriptions WHERE user_id = ?', [userId]);
   });
 

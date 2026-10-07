@@ -15,10 +15,11 @@ const DB_URL = process.env.DATABASE_URL || process.env.POSTGRES_URL;
 if (!DB_URL) {
   test('Web Push 訂閱去重與失效清理（略過：未設定 DATABASE_URL/POSTGRES_URL，需搭配 PostgreSQL 執行完整驗證）', () => {});
 } else {
-  const { initDB, getDB } = await import('../../lib/db.ts');
+  const { initDB, getDB, queryOne } = await import('../../lib/db.ts');
   const { uid } = await import('../../lib/userDefaults.ts');
   const {
     __setPushTransportForTests,
+    MAX_PUSH_SUBSCRIPTIONS,
     countActiveSubscriptions,
     dispatchPushEvent,
     hasRecordedPush,
@@ -34,6 +35,7 @@ if (!DB_URL) {
   await initDB();
 
   const userId = `test_webpush_${uid()}`;
+  const otherUserId = `test_webpush_other_${uid()}`;
   const now = new Date().toISOString();
   const subscriptionA = {
     endpoint: `https://fcm.googleapis.com/fcm/send/a/${uid()}`,
@@ -64,6 +66,10 @@ if (!DB_URL) {
       'INSERT INTO user_settings (user_id, updated_at) VALUES (?,?) ON CONFLICT (user_id) DO NOTHING',
       [userId, Date.now()],
     );
+    getDB().run(
+      'INSERT INTO users (id, email, password_hash, display_name, created_at) VALUES (?,?,?,?,?)',
+      [otherUserId, `${otherUserId}@example.com`, 'x', '其他測試使用者', now],
+    );
   });
 
   after(() => {
@@ -71,9 +77,9 @@ if (!DB_URL) {
     const db = getDB();
     db.run('DELETE FROM web_push_send_log WHERE user_id = ?', [userId]);
     db.run('DELETE FROM web_push_subscriptions WHERE endpoint IN (?,?)', [subscriptionA.endpoint, subscriptionB.endpoint]);
-    db.run('DELETE FROM web_push_subscriptions WHERE user_id = ?', [userId]);
+    db.run('DELETE FROM web_push_subscriptions WHERE user_id IN (?,?)', [userId, otherUserId]);
     db.run('DELETE FROM user_settings WHERE user_id = ?', [userId]);
-    db.run('DELETE FROM users WHERE id = ?', [userId]);
+    db.run('DELETE FROM users WHERE id IN (?,?)', [userId, otherUserId]);
     db.close();
   });
 
@@ -261,6 +267,64 @@ if (!DB_URL) {
     assert.equal(after.status, 'completed', '事後訂閱仍應收到當前狀態');
     assert.equal(sends, 1);
     removePushSubscription(userId, endpoint);
+  });
+
+  test('訂閱上限同時套用於新訂閱、重新啟用與跨帳號端點轉移', () => {
+    const db = getDB();
+    db.run('DELETE FROM web_push_subscriptions WHERE user_id = ?', [userId]);
+
+    const endpoints = Array.from({ length: MAX_PUSH_SUBSCRIPTIONS + 1 }, (_, index) =>
+      `https://fcm.googleapis.com/fcm/send/limit/${userId}/${index}/${uid()}`,
+    );
+    for (let index = 0; index < MAX_PUSH_SUBSCRIPTIONS; index += 1) {
+      savePushSubscription(userId, {
+        endpoint: endpoints[index],
+        keys: { p256dh: 'M'.repeat(87), auth: 'N'.repeat(22) },
+      });
+    }
+    assert.equal(countActiveSubscriptions(userId), MAX_PUSH_SUBSCRIPTIONS);
+    assert.throws(
+      () => savePushSubscription(userId, {
+        endpoint: endpoints[MAX_PUSH_SUBSCRIPTIONS],
+        keys: { p256dh: 'O'.repeat(87), auth: 'P'.repeat(22) },
+      }),
+      /上限/,
+    );
+
+    // 已停用的既有端點重新啟用也會增加 active 數，不能繞過上限。
+    db.run('UPDATE web_push_subscriptions SET disabled_at = ? WHERE user_id = ? AND endpoint = ?', [
+      Date.now(), userId, endpoints[0],
+    ]);
+    savePushSubscription(userId, {
+      endpoint: endpoints[MAX_PUSH_SUBSCRIPTIONS],
+      keys: { p256dh: 'O'.repeat(87), auth: 'P'.repeat(22) },
+    });
+    assert.equal(countActiveSubscriptions(userId), MAX_PUSH_SUBSCRIPTIONS);
+    assert.throws(
+      () => savePushSubscription(userId, {
+        endpoint: endpoints[0],
+        keys: { p256dh: 'M'.repeat(87), auth: 'N'.repeat(22) },
+      }),
+      /上限/,
+    );
+    assert.equal(countActiveSubscriptions(userId), MAX_PUSH_SUBSCRIPTIONS);
+
+    // 另一個使用者現有端點轉入目前帳號同樣會新增一個 active 訂閱，必須拒絕。
+    const sharedEndpoint = `https://fcm.googleapis.com/fcm/send/reassign/${uid()}`;
+    savePushSubscription(otherUserId, {
+      endpoint: sharedEndpoint,
+      keys: { p256dh: 'Q'.repeat(87), auth: 'R'.repeat(22) },
+    });
+    assert.throws(
+      () => savePushSubscription(userId, {
+        endpoint: sharedEndpoint,
+        keys: { p256dh: 'Q'.repeat(87), auth: 'R'.repeat(22) },
+      }),
+      /上限/,
+    );
+    const owner = queryOne('SELECT user_id FROM web_push_subscriptions WHERE endpoint = ?', [sharedEndpoint]);
+    assert.equal(owner?.user_id, otherUserId, '超過上限時不可先把其他使用者的端點改綁');
+    db.run('DELETE FROM web_push_subscriptions WHERE user_id = ?', [userId]);
   });
 
   test('測試通知：無訂閱時回報 skipped，有訂閱時實際發送且不寫去重紀錄', async () => {

@@ -61,16 +61,16 @@ export const PUSH_CATEGORY_COLUMNS: Record<PushCategory, string> = {
 
 interface SubscriptionRow {
   id: string | number;
-  user_id: string | number;
-  endpoint: string;
-  p256dh: string;
-  auth: string;
-  user_agent: string | number | null;
-  created_at: string | number;
-  updated_at: string | number;
-  last_success_at: string | number | null;
-  failure_count: string | number | null;
-  disabled_at: string | number | null;
+  user_id?: string | number;
+  endpoint?: string;
+  p256dh?: string;
+  auth?: string;
+  user_agent?: string | number | null;
+  created_at?: string | number;
+  updated_at?: string | number;
+  last_success_at?: string | number | null;
+  failure_count?: string | number | null;
+  disabled_at?: string | number | null;
 }
 
 // web-push 為 CommonJS 套件（相依 node 內建模組）。以動態 import 延遲載入，
@@ -167,13 +167,20 @@ export function savePushSubscription(
   userAgent = '',
 ): { id: string; created: boolean } {
   const normalized = normalizePushSubscription(raw);
-  const existing = queryOne('SELECT id FROM web_push_subscriptions WHERE endpoint = ?', [
-    normalized.endpoint,
-  ]);
+  const existing = queryOne(
+    'SELECT id, user_id, disabled_at FROM web_push_subscriptions WHERE endpoint = ?',
+    [normalized.endpoint],
+  ) as SubscriptionRow | null;
   const now = Date.now();
   const ua = String(userAgent || '').slice(0, 300);
 
   if (existing?.id) {
+    const alreadyActiveForUser = String(existing.user_id) === userId && Number(existing.disabled_at) === 0;
+    // Reactivating a disabled endpoint or moving it from another account adds one active
+    // subscription to this user; enforce the same cap as a fresh endpoint before updating.
+    if (!alreadyActiveForUser && countActiveSubscriptions(userId) >= MAX_PUSH_SUBSCRIPTIONS) {
+      throw new PushSubscriptionError(`訂閱裝置數已達上限（${MAX_PUSH_SUBSCRIPTIONS}）`);
+    }
     // 同一端點可能先前屬於其他使用者（共用裝置換人登入）：一律改綁到目前使用者，
     // 避免前一位使用者的通知繼續送到該裝置。
     getDB().run(

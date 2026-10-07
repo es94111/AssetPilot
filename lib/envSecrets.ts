@@ -80,13 +80,28 @@ export function ensureEnvSecrets(): void {
   if (Object.keys(updates).length === 0) return;
 
   const dir = path.dirname(envPath);
-  fs.mkdirSync(dir, { recursive: true });
   let lines = envContent ? envContent.split('\n').filter(line => line.trim() !== '') : [];
   for (const [key, value] of Object.entries(updates)) {
     lines = upsertEnvLine(lines, key, value);
   }
-  fs.writeFileSync(envPath, `${lines.join('\n')}\n`, { encoding: 'utf-8', mode: 0o600 });
-  try { fs.chmodSync(envPath, 0o600); } catch (_) {}
+  try {
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(envPath, `${lines.join('\n')}\n`, { encoding: 'utf-8', mode: 0o600 });
+    try { fs.chmodSync(envPath, 0o600); } catch (_) {}
+  } catch (error) {
+    // JWT/API encryption keys already failed startup before this Web Push change;
+    // do not silently weaken their persistence guarantees.
+    const mustPersistExistingSecrets = Boolean(updates.JWT_SECRET || updates.API_TOKEN_ENCRYPTION_KEY);
+    if (mustPersistExistingSecrets) throw error;
+
+    // VAPID is optional: if a read-only ENV_PATH prevents persistence, keep the
+    // process usable with the generated in-memory pair and clearly warn operators.
+    // Existing deployments can supply VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY via env.
+    console.error(
+      '[web-push] Could not persist generated VAPID keys to ENV_PATH; pushes will work only until restart. Configure a writable persistent ENV_PATH or set VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY.',
+      error,
+    );
+  }
 }
 
 export function writeEnvVars(updates: Record<string, string>): void {

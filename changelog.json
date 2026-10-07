@@ -1,6 +1,18 @@
 {
-  "currentVersion": "4.130.0",
+  "currentVersion": "4.131.0",
   "releases": [
+    {
+      "version": "4.131.0",
+      "date": "2026-10-07",
+      "title": "多幣別報表基準幣別切換",
+      "type": "new",
+      "changes": [
+        {
+          "tag": "new",
+          "text": "報表新增 ISO 4217 基準幣別切換，使用 decimal.js 全精度換算並標示匯率來源與時間戳；CSV 匯出同步套用所選幣別。#255"
+        }
+      ]
+    },
     {
       "version": "4.130.0",
       "date": "2026-10-07",

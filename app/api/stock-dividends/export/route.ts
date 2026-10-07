@@ -10,6 +10,7 @@ import {
 import { getRequestIpFromHeaders } from "../../../../lib/loginHelpers";
 import {
   createXlsxExportResponse,
+  mapXlsxRows,
   resolveExportFormat,
   type XlsxColumn,
 } from "../../../../lib/xlsxExport";
@@ -60,7 +61,7 @@ export async function GET(request) {
       "帳戶",
       "備註",
     ];
-    const dataRows = rows.map((r) => {
+    const exportRow = (r) => {
       let accountName = "";
       const cash = Number(r.cash_dividend || 0);
       if (cash > 0) {
@@ -93,10 +94,7 @@ export async function GET(request) {
         accountName,
         r.note || "",
       ];
-    });
-
-    const csv = buildCsv(headers, dataRows);
-    const filename = `stock-dividends-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}.csv`;
+    };
 
     const ipAddress = getRequestIpFromHeaders(request.headers) || "";
     const userAgent = request.headers.get("user-agent") || "";
@@ -104,24 +102,28 @@ export async function GET(request) {
     if (format === "xlsx") {
       const columns: XlsxColumn[] = [
         { header: "日期", type: "date" },
-        { header: "市場", type: "text", width: 8 },
-        { header: "股票代號", type: "text", width: 12 },
+        { header: "市場", type: "text" },
+        { header: "股票代號", type: "text" },
         { header: "股票名稱", type: "text" },
-        { header: "股票類型", type: "text", width: 12 },
-        { header: "幣別", type: "text", width: 8 },
+        { header: "股票類型", type: "text" },
+        { header: "幣別", type: "text" },
         { header: "現金股利", type: "number" },
         { header: "股票股利", type: "number", format: "#,##0.####" },
         { header: "帳戶", type: "text" },
-        { header: "備註", type: "text", width: 30 },
+        { header: "備註", type: "text" },
       ];
       return createXlsxExportResponse({
-        sheetName: "股利紀錄",
         columns,
-        rows: dataRows,
+        rows: mapXlsxRows(rows, exportRow),
+        rowCount: rows.length,
         filenamePrefix: "stock-dividends",
         audit: { userId: auth.userId, role: "user", action: "export_stock_dividends", ipAddress, userAgent, dateFrom, dateTo },
       });
     }
+
+    const dataRows = rows.map(exportRow);
+    const csv = buildCsv(headers, dataRows);
+    const filename = `stock-dividends-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}.csv`;
 
     writeOperationAudit({
       userId: auth.userId,

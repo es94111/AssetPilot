@@ -69,15 +69,15 @@ export async function GET(request: NextRequest) {
 
     if (format === 'xlsx') {
       const columns: XlsxColumn[] = [
-        { header: '類型', type: 'text', width: 8 },
-        { header: '分類名稱', type: 'text', width: 20 },
-        { header: '上層分類', type: 'text', width: 20 },
-        { header: '顏色', type: 'text', width: 10 },
+        { header: '類型', type: 'text' },
+        { header: '分類名稱', type: 'text' },
+        { header: '上層分類', type: 'text' },
+        { header: '顏色', type: 'text' },
       ];
       return createXlsxExportResponse({
-        sheetName: '分類',
         columns,
         rows: dataRows,
+        rowCount: dataRows.length,
         filenamePrefix: 'categories',
         audit: { userId: auth.userId, role, action: 'export_categories', ipAddress, userAgent },
       });

@@ -17,7 +17,6 @@ import {
   escapeFormulaText,
   parseDateOnly,
   resolveExportFormat,
-  sanitizeSheetName,
   toNumeric,
   xlsxFilename,
   XLSX_CONTENT_TYPE,
@@ -27,8 +26,8 @@ import {
 
 const ZIP_MAGIC = 'PK';
 
-async function readXlsx(rows: readonly XlsxRow[], columns: readonly XlsxColumn[], sheetName = 'S') {
-  const stream = await createXlsxStream({ sheetName, columns, rows });
+async function readXlsx(rows: Iterable<XlsxRow>, columns: readonly XlsxColumn[]) {
+  const stream = createXlsxStream({ columns, rows });
   const chunks: Buffer[] = [];
   for await (const chunk of stream) chunks.push(Buffer.from(chunk));
   const buffer = Buffer.concat(chunks);
@@ -57,9 +56,11 @@ test('xlsx：欄位標題列寫入第一列且為文字', async () => {
   const cells = cellsOf(header);
 
   assert.equal(cells.length, 2, '第一列應有兩個標題儲存格');
-  // 標題走 sharedStrings（t="s"），代表是文字而非數字／公式。
-  assert.match(cells[0], /t="s"/);
-  assert.match(cells[1], /t="s"/);
+  // inline string cells are explicitly text, never formula cells.
+  assert.match(cells[0], /t="inlineStr"/);
+  assert.match(cells[1], /t="inlineStr"/);
+  assert.match(cells[0], /<t>日期<\/t>/);
+  assert.match(cells[1], /<t>金額<\/t>/);
 });
 
 test('xlsx：日期為日期型別（序列值）並套用 yyyy-mm-dd 格式', async () => {
@@ -91,34 +92,21 @@ test('xlsx：金額為數值欄位（非字串）並套用千分位格式', asyn
 test('xlsx：Formula Injection 防護以 `\'` 前置且不使用公式儲存格', async () => {
   const dangerous = ['=1+1', '+1+1', '-1+1', '@SUM(A1)', "=cmd|' /c calc'!A0"];
   const rows: XlsxRow[] = dangerous.map((value) => [value]);
-  const { buffer, sheetXml } = await readXlsx(rows, [{ header: '備註', type: 'text' }]);
+  const { sheetXml, stylesXml } = await readXlsx(rows, [{ header: '備註', type: 'text' }]);
 
   // 整份活頁簿不得出現任何公式元素。
-  const zip = await JSZip.loadAsync(buffer);
-  const sharedStrings = await zip.file('xl/sharedStrings.xml')!.async('string');
   assert.ok(!/<f[ >]/.test(sheetXml), 'xlsx 不得包含公式儲存格');
 
   dangerous.forEach((value, index) => {
     const cells = cellsOf(rowXml(sheetXml, index + 2));
     assert.equal(cells.length, 1);
-    assert.match(cells[0], /t="s"/, `${value} 應以共享字串（文字）儲存`);
+    assert.match(cells[0], /t="inlineStr"/, `${value} 應以 inline string 文字儲存`);
+    const escaped = escapeFormulaText(value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    assert.ok(cells[0].includes(`<t>${escaped}</t>`), `儲存格應含安全文字 ${escaped}`);
   });
 
-  const escaped = dangerous.map(escapeFormulaText);
-  for (const value of escaped) {
-    // sharedStrings 只跳脫 & < >；撇號維持原樣。
-    const encoded = value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    assert.ok(
-      sharedStrings.includes(encoded),
-      `sharedStrings 應包含已轉義的值 ${value}`,
-    );
-  }
-
   // 文字欄位需標記為文字格式，讓 Excel 不再重新解讀內容。
-  assert.ok(
-    stylesXmlHasTextFormat(await zip.file('xl/styles.xml')!.async('string')),
-    '文字欄位應套用 @ 格式',
-  );
+  assert.ok(stylesXmlHasTextFormat(stylesXml), '文字欄位應套用 @ 格式');
 });
 
 function stylesXmlHasTextFormat(stylesXml: string): boolean {
@@ -126,11 +114,10 @@ function stylesXmlHasTextFormat(stylesXml: string): boolean {
 }
 
 test('xlsx：一般文字不含 `\'` 前置且保持原值', async () => {
-  const { buffer } = await readXlsx([['晚餐 -100']], [{ header: '備註', type: 'text' }]);
-  const zip = await JSZip.loadAsync(buffer);
-  const sharedStrings = await zip.file('xl/sharedStrings.xml')!.async('string');
-  assert.ok(sharedStrings.includes('晚餐 -100'), '非公式開頭的文字應原樣輸出');
-  assert.ok(!sharedStrings.includes("'晚餐 -100"), '非公式開頭的文字不應被前置撇號');
+  const { sheetXml } = await readXlsx([['晚餐 -100']], [{ header: '備註', type: 'text' }]);
+  const cell = cellsOf(rowXml(sheetXml, 2))[0];
+  assert.ok(cell.includes('<t>晚餐 -100</t>'), '非公式開頭的文字應原樣輸出');
+  assert.ok(!cell.includes("<t>'晚餐 -100</t>"), '非公式開頭的文字不應被前置撇號');
 });
 
 test('xlsx：空值不寫入儲存格，避免 Excel 出現 0 或空字串', async () => {
@@ -145,8 +132,9 @@ test('xlsx：空值不寫入儲存格，避免 Excel 出現 0 或空字串', asy
     ],
   );
   const cells = cellsOf(rowXml(sheetXml, 2));
-  assert.equal(cells.length, 1, '只有 0 應寫入儲存格');
-  assert.match(cells[0], /<v>0<\/v>/);
+  assert.equal(cells.length, 1, '空值應省略，只有數值 0 寫入儲存格');
+  assert.match(cells[0], /r="E2"/, '非空的 0 應保留在原欄位位置');
+  assert.match(cells[0], /<v>0<\/v>/, '數值 0 應保留為真正的數值');
 });
 
 test('parseDateOnly：接受 YYYY-MM-DD 與 UTC 午夜 Date，拒絕無效日期', () => {
@@ -195,22 +183,14 @@ test('xlsxFilename：帶日期後綴與 .xlsx 副檔名', () => {
   assert.equal(xlsxFilename('transactions', new Date(Date.UTC(2026, 9, 7))), 'transactions-20261007.xlsx');
 });
 
-test('sanitizeSheetName：套用 Excel 工作表命名限制', () => {
-  assert.equal(sanitizeSheetName('交易記錄'), '交易記錄');
-  assert.equal(sanitizeSheetName('a/b:c*d?e[f]g\\h'), 'a b c d e f g h');
-  assert.equal(sanitizeSheetName(''), 'Sheet1');
-  assert.equal(sanitizeSheetName('   '), 'Sheet1');
-  assert.equal(sanitizeSheetName('x'.repeat(40)).length, 31);
-});
-
 test('buildSheetData：第一列為標題、其後為資料列', () => {
   const data = buildSheetData(
     [{ header: '日期', type: 'date' }, { header: '金額', type: 'number' }],
     [['2026-08-14', 100], ['2026-08-15', 200]],
   );
   assert.equal(data.length, 3);
-  assert.equal((data[0][0] as { value: unknown }).value, '日期');
-  assert.equal((data[2][1] as { value: unknown }).value, 200);
+  assert.equal(data[0][0], '日期');
+  assert.equal(data[2][1], 200);
 });
 
 test('xlsx：串流輸出為有效 zip 內容', async () => {
@@ -226,19 +206,17 @@ test('xlsx：串流輸出為有效 zip 內容', async () => {
   );
 });
 
-test('xlsx：大量資料匯出仍為有效檔案且維持串流', async () => {
-  const rows: XlsxRow[] = [];
-  for (let i = 0; i < 20000; i += 1) {
-    rows.push([`2026-08-14`, 100 + i, '備註 ' + i]);
+test('xlsx：大量資料以 iterator 串流匯出，不先建立整份資料矩陣', async () => {
+  function* rows(): Generator<XlsxRow> {
+    for (let i = 0; i < 20000; i += 1) yield ['2026-08-14', 100 + i, `備註 ${i}`];
   }
-  const stream = await createXlsxStream({
-    sheetName: 'S',
+  const stream = createXlsxStream({
     columns: [
       { header: '日期', type: 'date' },
       { header: '金額', type: 'number' },
       { header: '備註', type: 'text' },
     ],
-    rows,
+    rows: rows(),
   });
 
   const chunks: Buffer[] = [];
@@ -248,6 +226,32 @@ test('xlsx：大量資料匯出仍為有效檔案且維持串流', async () => {
 
   const zip = await JSZip.loadAsync(buffer);
   const sheetXml = await zip.file('xl/worksheets/sheet1.xml')!.async('string');
-  // 標題列 + 20000 筆資料。
   assert.match(sheetXml, /<row r="20001"[ >]/, '應包含最後一筆資料列');
+});
+
+test('xlsx：串流會在 async row source 完成前開始輸出', async () => {
+  const totalRows = 50_000;
+  let producedRows = 0;
+  async function* rows(): AsyncGenerator<XlsxRow> {
+    for (let i = 0; i < totalRows; i += 1) {
+      producedRows += 1;
+      yield [`${'x'.repeat(300)}-${i}`];
+    }
+  }
+
+  const stream = createXlsxStream({
+    columns: [{ header: '備註', type: 'text' }],
+    rows: rows(),
+  });
+  assert.equal(producedRows, 0, '建立回應串流時不得預先消耗資料來源');
+
+  const reader = stream.getReader();
+  let result: ReadableStreamReadResult<Uint8Array>;
+  do {
+    result = await reader.read();
+    assert.equal(result.done, false, '資料來源仍未完成時應有串流輸出');
+  } while (producedRows === 0);
+
+  assert.ok(producedRows < totalRows, `${producedRows} rows were generated before first streamed output`);
+  await reader.cancel();
 });

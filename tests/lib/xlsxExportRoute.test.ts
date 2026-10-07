@@ -80,13 +80,12 @@ if (!DB_URL) {
       const zip = await assertXlsxResponse(res, /filename="transactions-\d{8}\.xlsx"/);
 
       const sheetXml = await zip.file('xl/worksheets/sheet1.xml')!.async('string');
-      const sharedStrings = await zip.file('xl/sharedStrings.xml')!.async('string');
       const stylesXml = await zip.file('xl/styles.xml')!.async('string');
 
       assert.ok(!/<f[ >]/.test(sheetXml), '不得輸出公式儲存格');
-      assert.ok(sharedStrings.includes('日期') && sharedStrings.includes('金額'), '第一列應為欄位標題');
+      assert.ok(sheetXml.includes('<t>日期</t>') && sheetXml.includes('<t>金額</t>'), '第一列應為欄位標題');
       assert.ok(
-        sharedStrings.includes("'=cmd|' /c calc'!A0"),
+        sheetXml.includes("<t>'=cmd|' /c calc'!A0</t>"),
         '公式開頭備註應前置撇號後以文字儲存',
       );
       // 日期欄以 Excel 序列值 46248（2026-08-14）寫入，金額欄為數值。

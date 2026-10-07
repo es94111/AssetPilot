@@ -10,6 +10,7 @@ import {
 import { getRequestIpFromHeaders } from "../../../../lib/loginHelpers";
 import {
   createXlsxExportResponse,
+  mapXlsxRows,
   resolveExportFormat,
   type XlsxColumn,
 } from "../../../../lib/xlsxExport";
@@ -66,7 +67,7 @@ export async function GET(request) {
       "帳戶",
       "備註",
     ];
-    const dataRows = rows.map((r) => [
+    const exportRow = (r) => [
       r.date || "",
       r.market || "TW",
       r.symbol || "",
@@ -82,10 +83,7 @@ export async function GET(request) {
       Number(r.tax_auto_calculated) === 0 ? "否" : "是",
       r.account_name || "",
       r.note || "",
-    ]);
-
-    const csv = buildCsv(headers, dataRows);
-    const filename = `stock-transactions-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}.csv`;
+    ];
 
     const ipAddress = getRequestIpFromHeaders(request.headers) || "";
     const userAgent = request.headers.get("user-agent") || "";
@@ -93,29 +91,33 @@ export async function GET(request) {
     if (format === "xlsx") {
       const columns: XlsxColumn[] = [
         { header: "日期", type: "date" },
-        { header: "市場", type: "text", width: 8 },
-        { header: "股票代號", type: "text", width: 12 },
+        { header: "市場", type: "text" },
+        { header: "股票代號", type: "text" },
         { header: "股票名稱", type: "text" },
-        { header: "股票類型", type: "text", width: 12 },
-        { header: "幣別", type: "text", width: 8 },
-        { header: "類型", type: "text", width: 8 },
+        { header: "股票類型", type: "text" },
+        { header: "幣別", type: "text" },
+        { header: "類型", type: "text" },
         { header: "股數", type: "number", format: "#,##0.####" },
         { header: "成交價", type: "number" },
         { header: "手續費", type: "number" },
         { header: "交易稅", type: "number" },
         { header: "已實現損益", type: "number" },
-        { header: "稅額自動計算", type: "text", width: 14 },
+        { header: "稅額自動計算", type: "text" },
         { header: "帳戶", type: "text" },
-        { header: "備註", type: "text", width: 30 },
+        { header: "備註", type: "text" },
       ];
       return createXlsxExportResponse({
-        sheetName: "股票交易",
         columns,
-        rows: dataRows,
+        rows: mapXlsxRows(rows, exportRow),
+        rowCount: rows.length,
         filenamePrefix: "stock-transactions",
         audit: { userId: auth.userId, role: "user", action: "export_stock_transactions", ipAddress, userAgent, dateFrom, dateTo },
       });
     }
+
+    const dataRows = rows.map(exportRow);
+    const csv = buildCsv(headers, dataRows);
+    const filename = `stock-transactions-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}.csv`;
 
     writeOperationAudit({
       userId: auth.userId,

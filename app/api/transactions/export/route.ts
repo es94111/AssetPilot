@@ -5,6 +5,7 @@ import { buildCsv, writeOperationAudit, isValidIso8601Date } from '../../../../l
 import { getRequestIpFromHeaders } from '../../../../lib/loginHelpers';
 import {
   createXlsxExportResponse,
+  mapXlsxRows,
   resolveExportFormat,
   type XlsxColumn,
 } from '../../../../lib/xlsxExport';
@@ -46,6 +47,19 @@ function txTypeToChinese(t: string | null) {
   return t || '';
 }
 
+function transactionExportCells(r: TransactionExportRow): CsvCell[] {
+  let category = '';
+  if (r.cat_name) {
+    category = r.parent_cat_name ? (r.parent_cat_name + ' > ' + r.cat_name) : r.cat_name;
+  }
+  return [
+    r.date || '', txTypeToChinese(r.type), category, r.amount,
+    r.currency || 'TWD', r.original_amount || r.amount || '', r.fx_rate || '1',
+    r.twd_amount || '', r.fx_fee || 0, r.account_name || '', r.transfer_to_account_name || '',
+    Number(r.exclude_from_stats) ? '是' : '否', r.tags || '[]', r.note || '',
+  ];
+}
+
 export async function GET(request: NextRequest) {
   const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
@@ -77,18 +91,6 @@ export async function GET(request: NextRequest) {
     const rows = asRows<TransactionExportRow>(queryAll(sql, params));
 
     const headers = ['日期', '類型', '分類', '金額', '幣別', '原始金額', '匯率', '台幣金額', '匯兌手續費', '帳戶', '轉入帳戶', '排除統計', '標籤', '備註'];
-    const dataRows: CsvCell[][] = rows.map(r => {
-      let category = '';
-      if (r.cat_name) {
-        category = r.parent_cat_name ? (r.parent_cat_name + ' > ' + r.cat_name) : r.cat_name;
-      }
-      return [
-        r.date || '', txTypeToChinese(r.type), category, r.amount,
-        r.currency || 'TWD', r.original_amount || r.amount || '', r.fx_rate || '1',
-        r.twd_amount || '', r.fx_fee || 0, r.account_name || '', r.transfer_to_account_name || '',
-        Number(r.exclude_from_stats) ? '是' : '否', r.tags || '[]', r.note || '',
-      ];
-    });
 
     const userRow = queryOne('SELECT is_admin FROM users WHERE id = ?', [auth.actorUserId]);
     const ipAddress = getRequestIpFromHeaders(request.headers);
@@ -98,29 +100,30 @@ export async function GET(request: NextRequest) {
     if (format === 'xlsx') {
       const columns: XlsxColumn[] = [
         { header: '日期', type: 'date' },
-        { header: '類型', type: 'text', width: 8 },
-        { header: '分類', type: 'text', width: 24 },
+        { header: '類型', type: 'text' },
+        { header: '分類', type: 'text' },
         { header: '金額', type: 'number' },
-        { header: '幣別', type: 'text', width: 8 },
+        { header: '幣別', type: 'text' },
         { header: '原始金額', type: 'number' },
         { header: '匯率', type: 'number', format: '0.000000' },
         { header: '台幣金額', type: 'number' },
         { header: '匯兌手續費', type: 'number' },
         { header: '帳戶', type: 'text' },
         { header: '轉入帳戶', type: 'text' },
-        { header: '排除統計', type: 'text', width: 10 },
-        { header: '標籤', type: 'text', width: 20 },
-        { header: '備註', type: 'text', width: 30 },
+        { header: '排除統計', type: 'text' },
+        { header: '標籤', type: 'text' },
+        { header: '備註', type: 'text' },
       ];
       return createXlsxExportResponse({
-        sheetName: '交易記錄',
         columns,
-        rows: dataRows,
+        rows: mapXlsxRows(rows, transactionExportCells),
+        rowCount: rows.length,
         filenamePrefix: 'transactions',
         audit: { userId: auth.userId, role, action: 'export_transactions', ipAddress, userAgent, dateFrom, dateTo },
       });
     }
 
+    const dataRows = rows.map(transactionExportCells);
     const csv = buildCsv(headers, dataRows);
     const filename = `transactions-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}.csv`;
 

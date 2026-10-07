@@ -5,6 +5,7 @@ import { buildCsv, writeOperationAudit } from '../../../../lib/auditHelpers';
 import { getRequestIpFromHeaders } from '../../../../lib/loginHelpers';
 import {
   createXlsxExportResponse,
+  mapXlsxRows,
   resolveExportFormat,
   type XlsxColumn,
 } from '../../../../lib/xlsxExport';
@@ -33,6 +34,14 @@ function asRows<T>(rows: Array<Record<string, string | number | null>>): T[] {
   return rows as unknown as T[];
 }
 
+function accountExportCells(r: AccountExportRow): CsvCell[] {
+  return [
+    r.name || '', r.category || '', r.account_type || '', r.initial_balance || 0,
+    r.currency || 'TWD', r.icon || 'fa-wallet', Number(r.exclude_from_total) ? '是' : '否',
+    r.linked_bank_name || '', r.overseas_fee_rate ?? '', r.note || '', r.created_at || '', r.updated_at || '',
+  ];
+}
+
 export async function GET(request: NextRequest) {
   const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
@@ -53,12 +62,6 @@ export async function GET(request: NextRequest) {
     ));
 
     const headers = ['帳戶名稱', '類別', '帳戶類型', '初始餘額', '幣別', '圖示', '排除總資產', '連結銀行帳戶', '海外手續費率', '備註', '建立時間', '更新時間'];
-    const dataRows: CsvCell[][] = rows.map(r => [
-      r.name || '', r.category || '', r.account_type || '', r.initial_balance || 0,
-      r.currency || 'TWD', r.icon || 'fa-wallet', Number(r.exclude_from_total) ? '是' : '否',
-      r.linked_bank_name || '', r.overseas_fee_rate ?? '', r.note || '', r.created_at || '', r.updated_at || '',
-    ]);
-
     const userRow = queryOne('SELECT is_admin FROM users WHERE id = ?', [auth.actorUserId]);
     const ipAddress = getRequestIpFromHeaders(request.headers);
     const userAgent = request.headers.get('user-agent') || '';
@@ -68,26 +71,27 @@ export async function GET(request: NextRequest) {
       const columns: XlsxColumn[] = [
         { header: '帳戶名稱', type: 'text' },
         { header: '類別', type: 'text' },
-        { header: '帳戶類型', type: 'text', width: 12 },
+        { header: '帳戶類型', type: 'text' },
         { header: '初始餘額', type: 'number' },
-        { header: '幣別', type: 'text', width: 8 },
-        { header: '圖示', type: 'text', width: 16 },
-        { header: '排除總資產', type: 'text', width: 12 },
+        { header: '幣別', type: 'text' },
+        { header: '圖示', type: 'text' },
+        { header: '排除總資產', type: 'text' },
         { header: '連結銀行帳戶', type: 'text' },
         { header: '海外手續費率', type: 'number', format: '0.0000' },
-        { header: '備註', type: 'text', width: 30 },
-        { header: '建立時間', type: 'text', width: 22 },
-        { header: '更新時間', type: 'text', width: 22 },
+        { header: '備註', type: 'text' },
+        { header: '建立時間', type: 'text' },
+        { header: '更新時間', type: 'text' },
       ];
       return createXlsxExportResponse({
-        sheetName: '帳戶',
         columns,
-        rows: dataRows,
+        rows: mapXlsxRows(rows, accountExportCells),
+        rowCount: rows.length,
         filenamePrefix: 'accounts',
         audit: { userId: auth.userId, role, action: 'export_accounts', ipAddress, userAgent },
       });
     }
 
+    const dataRows = rows.map(accountExportCells);
     const csv = buildCsv(headers, dataRows);
     const filename = `accounts-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}.csv`;
     writeOperationAudit({

@@ -279,6 +279,31 @@ function isBlockedHost(hostname: string): boolean {
   return false;
 }
 
+/**
+ * 判定「主機名」是否為不可投遞的目的地（不含 DNS 解析）。
+ * 匯出給投遞層重用，讓建立訂閱與實際連線兩個時機使用同一份規則，避免清單漂移。
+ */
+export function isBlockedWebhookHostname(hostname: string): boolean {
+  return isBlockedHost(normalizeHost(String(hostname || '')));
+}
+
+/**
+ * 判定「已解析的 IP 位址」是否為不可投遞的目的地（issue #285）。
+ *
+ * Webhook 訂閱在建立時只驗證字面 hostname，實際投遞前必須再檢查 DNS 解析
+ * 結果，否則公開網域可解析到內網位址（DNS rebinding／split-horizon）。
+ * 這裡刻意重用 `isPrivateIpv4`／`isPrivateIpv6` 的既有範圍清單，讓兩個時機
+ * 的判定完全一致；非 IP 字面值（含帶 zone id 的位址）一律視為阻擋。
+ */
+export function isBlockedIpAddress(address: string): boolean {
+  const value = String(address || '').trim().toLowerCase().replace(/^\[|\]$/g, '');
+  // zone id（如 fe80::1%en0）只在連結本地位址上出現，無法以純位址規則比對 → 直接阻擋。
+  if (!value || value.includes('%')) return true;
+  if (ipv4ToInt(value) != null) return isPrivateIpv4(value);
+  if (parseIpv6(value) != null) return isPrivateIpv6(value);
+  return true;
+}
+
 // ── 簽章密鑰的加密封裝（AES-256-GCM）──
 //
 // 格式：base64(iv).base64(tag).base64(ciphertext)

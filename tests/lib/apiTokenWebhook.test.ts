@@ -417,12 +417,16 @@ if (!DB_URL) {
   });
 
   test('成功投遞：以 HMAC 簽章送出，並記錄 success 與狀態碼', async () => {
-    const http = await import('node:http');
+    // 投遞層只允許「解析後為公開位址的 https 端點」，因此以封閉網路環境
+    // （假 DNS + 自簽憑證的測試 https 伺服器）模擬真實公開端點。
+    const { installWebhookNetHarness, startTestHttpsServer, TEST_HOSTNAME } =
+      await import('../support/webhookNetHarness.ts');
     const { verifyWebhookSignature, WEBHOOK_SIGNATURE_HEADER, WEBHOOK_EVENT_HEADER } =
       await import('../../lib/apiTokenCore.ts');
 
     const received: Array<{ body: string; signature: string; event: string }> = [];
-    const server = http.createServer((req, res) => {
+    const harness = installWebhookNetHarness();
+    const { server } = await startTestHttpsServer((req, res) => {
       let raw = '';
       req.on('data', (chunk) => { raw += chunk; });
       req.on('end', () => {
@@ -435,16 +439,13 @@ if (!DB_URL) {
         res.end('{"ok":true}');
       });
     });
-    await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
-    const port = (server.address() as { port: number }).port;
 
     const userId = 'test_webhook_' + uid();
     createTestUser(userId);
     try {
-      // 真實投遞目標為本機 HTTP；為驗證簽章流程，測試期間放行 http:// 與 loopback。
       const created = createWebhookSubscription(userId, 'https://example.com/replaced', ['transaction.created']);
       getDB().run('UPDATE webhook_subscriptions SET url = ? WHERE id = ?', [
-        `http://127.0.0.1:${port}/hooks`,
+        harness.publicUrl(TEST_HOSTNAME, server, '/hooks'),
         created.subscription.id,
       ]);
       enqueueWebhookEvent(userId, 'transaction.created', { id: 'tx1', amount: 100 });
@@ -476,25 +477,26 @@ if (!DB_URL) {
       assert.ok((sub?.lastSuccessAt || 0) > 0);
     } finally {
       await new Promise<void>((resolve) => server.close(() => resolve()));
+      harness.restore();
       cleanupUser(userId);
     }
   });
 
   test('5xx 回應會重試，4xx 則直接標記 failed（不再重試）', async () => {
-    const http = await import('node:http');
+    const { installWebhookNetHarness, startTestHttpsServer, TEST_HOSTNAME } =
+      await import('../support/webhookNetHarness.ts');
     let responder: (res: import('node:http').ServerResponse) => void = (res) => {
       res.writeHead(500); res.end('boom');
     };
-    const server = http.createServer((_req, res) => responder(res));
-    await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
-    const port = (server.address() as { port: number }).port;
+    const harness = installWebhookNetHarness();
+    const { server } = await startTestHttpsServer((_req, res) => responder(res));
 
     const userId = 'test_webhook_' + uid();
     createTestUser(userId);
     try {
       const created = createWebhookSubscription(userId, 'https://example.com/replaced', ['transaction.created']);
       getDB().run('UPDATE webhook_subscriptions SET url = ? WHERE id = ?', [
-        `http://127.0.0.1:${port}/hooks`,
+        harness.publicUrl(TEST_HOSTNAME, server, '/hooks'),
         created.subscription.id,
       ]);
       enqueueWebhookEvent(userId, 'transaction.created', { id: 'tx1' });
@@ -514,26 +516,27 @@ if (!DB_URL) {
       assert.equal(Number(row?.next_retry_at), 0);
     } finally {
       await new Promise<void>((resolve) => server.close(() => resolve()));
+      harness.restore();
       cleanupUser(userId);
     }
   });
 
   test('runDueWebhookDeliveries 認領後投遞，且不會重複投遞同一列', async () => {
-    const http = await import('node:http');
+    const { installWebhookNetHarness, startTestHttpsServer, TEST_HOSTNAME } =
+      await import('../support/webhookNetHarness.ts');
     let hitCount = 0;
-    const server = http.createServer((_req, res) => {
+    const harness = installWebhookNetHarness();
+    const { server } = await startTestHttpsServer((_req, res) => {
       hitCount += 1;
       res.writeHead(200); res.end('ok');
     });
-    await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
-    const port = (server.address() as { port: number }).port;
 
     const userId = 'test_webhook_' + uid();
     createTestUser(userId);
     try {
       const created = createWebhookSubscription(userId, 'https://example.com/replaced', ['transaction.created']);
       getDB().run('UPDATE webhook_subscriptions SET url = ? WHERE id = ?', [
-        `http://127.0.0.1:${port}/hooks`,
+        harness.publicUrl(TEST_HOSTNAME, server, '/hooks'),
         created.subscription.id,
       ]);
       enqueueWebhookEvent(userId, 'transaction.created', { id: 'tx1' });
@@ -558,6 +561,7 @@ if (!DB_URL) {
       assert.equal(hitCount, 1);
     } finally {
       await new Promise<void>((resolve) => server.close(() => resolve()));
+      harness.restore();
       cleanupUser(userId);
     }
   });

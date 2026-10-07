@@ -20,7 +20,6 @@ export function getActiveLedgerId(): string {
 }
 
 export function getActiveLedgerHeaders(): Record<string, string> {
-  if (typeof window !== 'undefined' && window.location?.pathname?.startsWith('/stocks')) return {};
   const ledgerId = getActiveLedgerId();
   return ledgerId ? { 'x-ledger-id': ledgerId } : {};
 }

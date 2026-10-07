@@ -1808,7 +1808,7 @@ export const ptBR = {
     left: "You left the ledger.",
     inviteInstructions: "You have been invited to a shared ledger. Sign in with the email address that received the invitation.",
     acceptInvite: "Aceitar convite",
-    emptySharedNotice: "As contas compartilhadas começam vazias. Dados pessoais não são copiados automaticamente.",
+    emptySharedNotice: "Contas compartilhadas nunca copiam dados pessoais automaticamente. Os investimentos criados com esta conta selecionada ficam visíveis para seus membros.",
     members: "Membros",
     leave: "Sair da conta",
     inviteEmail: "E-mail do membro",

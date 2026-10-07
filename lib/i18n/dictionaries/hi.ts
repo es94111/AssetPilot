@@ -1808,7 +1808,7 @@ export const hi = {
     left: "You left the ledger.",
     inviteInstructions: "You have been invited to a shared ledger. Sign in with the email address that received the invitation.",
     acceptInvite: "आमंत्रण स्वीकारें",
-    emptySharedNotice: "साझा खाते खाली बनाए जाते हैं। निजी डेटा अपने-आप कॉपी नहीं होता।",
+    emptySharedNotice: "साझा खाते निजी डेटा को अपने-आप कॉपी नहीं करते। इस खाते के चयनित होने पर जोड़े गए निवेश रिकॉर्ड इसके सदस्यों को दिखाई देते हैं।",
     members: "सदस्य",
     leave: "खाता छोड़ें",
     inviteEmail: "सदस्य का ईमेल",

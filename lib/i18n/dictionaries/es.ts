@@ -1808,7 +1808,7 @@ export const es = {
     left: "You left the ledger.",
     inviteInstructions: "You have been invited to a shared ledger. Sign in with the email address that received the invitation.",
     acceptInvite: "Aceptar invitación",
-    emptySharedNotice: "Los libros compartidos empiezan vacíos. Los datos personales no se copian automáticamente.",
+    emptySharedNotice: "Los libros compartidos nunca copian automáticamente los datos personales. Las inversiones creadas con este libro seleccionado son visibles para sus miembros.",
     members: "Miembros",
     leave: "Salir del libro",
     inviteEmail: "Correo del miembro",

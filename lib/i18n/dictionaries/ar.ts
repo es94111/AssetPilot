@@ -1808,7 +1808,7 @@ export const ar = {
     left: "You left the ledger.",
     inviteInstructions: "You have been invited to a shared ledger. Sign in with the email address that received the invitation.",
     acceptInvite: "قبول الدعوة",
-    emptySharedNotice: "تُنشأ الدفاتر المشتركة فارغة. لا تُنسخ البيانات الشخصية تلقائياً.",
+    emptySharedNotice: "لا تنسخ الحسابات المشتركة البيانات الشخصية تلقائياً. وتكون سجلات الاستثمار التي تُضاف أثناء اختيار هذا الحساب مرئية لأعضائه.",
     members: "الأعضاء",
     leave: "مغادرة الدفتر",
     inviteEmail: "بريد العضو الإلكتروني",

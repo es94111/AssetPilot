@@ -8268,7 +8268,7 @@
     "description": "Web path: ledger.acceptInvite",
     "x-webPath": "ledger.acceptInvite"
   },
-  "ledgerEmptySharedNotice": "Shared ledgers start empty. Personal data is never copied automatically.",
+  "ledgerEmptySharedNotice": "Shared ledgers never copy personal data automatically. Investment records created while this ledger is selected are visible to its members.",
   "@ledgerEmptySharedNotice": {
     "description": "Web path: ledger.emptySharedNotice",
     "x-webPath": "ledger.emptySharedNotice"

@@ -62,6 +62,26 @@ export function getNextStockRecurringDate(
   return null;
 }
 
+export function getDueStockRecurringPlanIds(
+  userId: string,
+  userTimezone = "Asia/Taipei",
+): string[] {
+  const today = todayInUserTz(userTimezone || "Asia/Taipei");
+  return queryAll(
+    "SELECT id, frequency, freq, start_date, next_date, last_generated FROM stock_recurring WHERE user_id = ? AND is_active = 1",
+    [userId],
+  )
+    .filter((plan) => {
+      const frequency = String(plan.frequency || plan.freq || "");
+      const startDate = String(plan.start_date || plan.next_date || "");
+      const scheduledDate = plan.last_generated
+        ? getNextStockRecurringDate(String(plan.last_generated), frequency)
+        : startDate;
+      return Boolean(scheduledDate && scheduledDate <= today);
+    })
+    .map((plan) => String(plan.id));
+}
+
 const twseHolidayCache = { set: null, timestamp: 0, lastFailedAt: 0 };
 const TWSE_HOLIDAY_CACHE_TTL = 24 * 60 * 60 * 1000;
 const TWSE_HOLIDAY_FAILURE_BACKOFF = 5 * 60 * 1000;
@@ -246,10 +266,18 @@ export async function processStockRecurringForUser(
     "SELECT * FROM stock_recurring WHERE user_id = ? AND is_active = 1",
     [userId],
   );
-  if (recs.length === 0) return { generated: 0, skipped: 0, postponed: 0 };
+  const todayS = todayInUserTz(opts.userTimezone || "Asia/Taipei");
+  const dueRecs = recs.filter((r) => {
+    const frequency = String(r.frequency || r.freq || "");
+    const startDate = String(r.start_date || r.next_date || "");
+    const scheduledDate = r.last_generated
+      ? getNextStockRecurringDate(r.last_generated, frequency)
+      : startDate;
+    return Boolean(scheduledDate && scheduledDate <= todayS);
+  });
+  if (dueRecs.length === 0) return { generated: 0, skipped: 0, postponed: 0 };
 
   const settings = getStockSettings(userId);
-  const todayS = todayInUserTz(opts.userTimezone || "Asia/Taipei");
   const holidaySet = await fetchTwseHolidaySet();
   const db = getDB();
   const now = Date.now();
@@ -258,7 +286,7 @@ export async function processStockRecurringForUser(
   let postponed = 0;
   let touched = false;
 
-  for (const r of recs) {
+  for (const r of dueRecs) {
     const frequency = String(r.frequency || r.freq || "");
     const startDate = String(r.start_date || r.next_date || "");
     const recurringAmount =
@@ -275,6 +303,20 @@ export async function processStockRecurringForUser(
         [r.stock_id, userId],
       );
       const market = normalizeStockMarket(stock?.market);
+      const accountId = String(r.account_id || "").trim();
+      if (
+        accountId &&
+        !queryOne("SELECT id FROM accounts WHERE id = ? AND user_id = ?", [accountId, userId])
+      ) {
+        db.run(
+          "UPDATE stock_recurring SET last_generated = ?, updated_at = ? WHERE id = ? AND user_id = ?",
+          [scheduledDate, now, r.id, userId],
+        );
+        touched = true;
+        skipped++;
+        scheduledDate = getNextStockRecurringDate(scheduledDate, frequency);
+        continue;
+      }
       const actualDate =
         market === "US"
           ? nextUsTradingDay(scheduledDate)

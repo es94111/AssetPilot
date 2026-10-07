@@ -1808,7 +1808,7 @@ export const en = {
     left: "You left the ledger.",
     inviteInstructions: "You have been invited to a shared ledger. Sign in with the email address that received the invitation.",
     acceptInvite: "Accept invitation",
-    emptySharedNotice: "Shared ledgers start empty. Personal data is never copied automatically.",
+    emptySharedNotice: "Shared ledgers never copy personal data automatically. Investment records created while this ledger is selected are visible to its members.",
     members: "Members",
     leave: "Leave ledger",
     inviteEmail: "Member email address",

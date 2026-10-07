@@ -157,19 +157,9 @@ export interface ExchangeRateSettings {
 }
 
 export function getExchangeRateSettings(userId: string): ExchangeRateSettings {
-  let row = queryOne("SELECT * FROM exchange_rate_settings WHERE user_id = ?", [
+  const row = queryOne("SELECT * FROM exchange_rate_settings WHERE user_id = ?", [
     userId,
   ]);
-  if (!row) {
-    getDB().run(
-      "INSERT INTO exchange_rate_settings (user_id, auto_update, last_synced_at, updated_at) VALUES (?, 0, 0, ?)",
-      [userId, Date.now()],
-    );
-    saveDB();
-    row = queryOne("SELECT * FROM exchange_rate_settings WHERE user_id = ?", [
-      userId,
-    ]);
-  }
   return {
     autoUpdate: !!row?.auto_update,
     lastSyncedAt: Number(row?.last_synced_at) || 0,

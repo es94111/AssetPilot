@@ -1806,7 +1806,7 @@ export const zhTW = {
     left: "你已離開帳本。",
     inviteInstructions: "你收到共享帳本邀請。請使用收到邀請的電子郵件帳號登入。",
     acceptInvite: "接受邀請",
-    emptySharedNotice: "共享帳本會以空白資料建立，不會自動複製你的個人記帳資料。",
+    emptySharedNotice: "共享帳本不會自動複製個人資料。選取此帳本時新增的投資資料會對其成員可見。",
     members: "成員",
     leave: "離開帳本",
     inviteEmail: "成員電子郵件",

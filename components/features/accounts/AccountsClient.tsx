@@ -61,7 +61,7 @@ export default function AccountsClient() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [repaymentOpen, setRepaymentOpen] = useState(false);
   const [fxRates, setFxRates] = useState<{ currency: string; rateToTwd: number }[]>([]);
-  const [fxSettings, setFxSettings] = useState<{ autoUpdate: boolean; lastSyncedAt?: number }>({ autoUpdate: false });
+  const [fxSettings, setFxSettings] = useState<{ autoUpdate: boolean; lastSyncedAt?: number; sharedLedger?: boolean }>({ autoUpdate: false });
   const [newFxCurrency, setNewFxCurrency] = useState('');
   const [newFxRate, setNewFxRate] = useState('');
   const [fxSaving, setFxSaving] = useState(false);
@@ -474,10 +474,12 @@ export default function AccountsClient() {
         <div className="flex items-center justify-between flex-wrap gap-3">
           <h3 className="text-lg font-semibold">{t('features.accounts.fx.title')}</h3>
           <div className="flex items-center gap-3 flex-wrap">
-            <label className="flex items-center gap-2 text-sm cursor-pointer">
-              <input type="checkbox" checked={fxSettings.autoUpdate} onChange={(e) => handleFxAutoUpdate(e.target.checked)} className="w-4 h-4" />
-              {t('features.accounts.fx.autoUpdate')}
-            </label>
+            {!fxSettings.sharedLedger && (
+              <label className="flex items-center gap-2 text-sm cursor-pointer">
+                <input type="checkbox" checked={fxSettings.autoUpdate} onChange={(e) => handleFxAutoUpdate(e.target.checked)} className="w-4 h-4" />
+                {t('features.accounts.fx.autoUpdate')}
+              </label>
+            )}
             <Button variant="outline" size="sm" onClick={handleFxSync} disabled={fxSyncing}>
               {fxSyncing ? t('features.accounts.fx.syncing') : t('features.accounts.fx.syncNow')}
             </Button>

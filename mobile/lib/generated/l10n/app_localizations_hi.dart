@@ -5368,7 +5368,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get ledgerEmptySharedNotice =>
-      'साझा खाते खाली बनाए जाते हैं। निजी डेटा अपने-आप कॉपी नहीं होता।';
+      'साझा खाते निजी डेटा को अपने-आप कॉपी नहीं करते। इस खाते के चयनित होने पर जोड़े गए निवेश रिकॉर्ड इसके सदस्यों को दिखाई देते हैं।';
 
   @override
   String get ledgerMembers => 'सदस्य';

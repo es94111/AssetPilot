@@ -1,4 +1,5 @@
 // @ts-nocheck
+import { withLedgerWriteAudit } from "../../../lib/ledgerContext";
 import { NextResponse } from "next/server";
 import { requireAuth } from "../../../lib/apiHelpers";
 import { getDB, queryAll, queryOne, saveDB } from "../../../lib/db";
@@ -163,7 +164,7 @@ export async function GET(request) {
   return NextResponse.json({ stocks: result, portfolioSummary });
 }
 
-export async function POST(request) {
+async function handlePOST(request) {
   const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
@@ -214,7 +215,7 @@ export async function POST(request) {
       finalName,
       type,
       currency,
-      new Date().toISOString(),
+      Date.now(),
     ],
   );
   saveDB();
@@ -224,3 +225,5 @@ export async function POST(request) {
     { status: 201 },
   );
 }
+
+export const POST = withLedgerWriteAudit(handlePOST);

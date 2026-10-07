@@ -1808,7 +1808,7 @@ export const ko = {
     left: "You left the ledger.",
     inviteInstructions: "You have been invited to a shared ledger. Sign in with the email address that received the invitation.",
     acceptInvite: "초대 수락",
-    emptySharedNotice: "공유 장부는 빈 상태로 생성되며 개인 데이터가 자동 복사되지 않습니다.",
+    emptySharedNotice: "공유 장부는 개인 데이터를 자동으로 복사하지 않습니다. 이 장부를 선택한 상태에서 추가한 투자 기록은 구성원에게 표시됩니다.",
     members: "구성원",
     leave: "장부 나가기",
     inviteEmail: "구성원 이메일",

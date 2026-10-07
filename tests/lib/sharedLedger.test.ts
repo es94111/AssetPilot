@@ -54,7 +54,7 @@ test('shared ledgers: real authenticated routes, invitations and ownership bound
   const originalRequire = Object.getOwnPropertyDescriptor(globalThis, 'require');
   Object.defineProperty(globalThis, 'require', { value: createRequire(import.meta.url), configurable: true });
 
-  const { initDB, getDB, queryOne } = await import('../../lib/db.ts');
+  const { initDB, getDB, queryAll, queryOne } = await import('../../lib/db.ts');
   const { uid } = await import('../../lib/userDefaults.ts');
   const { createLoginSession } = await import('../../lib/sessionHelpers.ts');
   const { requireAuth } = await import('../../lib/apiHelpers.ts');
@@ -76,14 +76,32 @@ test('shared ledgers: real authenticated routes, invitations and ownership bound
   const exports = await import('../../app/api/transactions/export/route.ts');
   const reports = await import('../../app/api/reports/route.ts');
   const calendar = await import('../../app/api/calendar/route.ts');
+  const stocks = await import('../../app/api/stocks/route.ts');
+  const stockItem = await import('../../app/api/stocks/[id]/route.ts');
+  const stockTransactions = await import('../../app/api/stock-transactions/route.ts');
+  const stockTransactionItem = await import('../../app/api/stock-transactions/[id]/route.ts');
+  const stockDividends = await import('../../app/api/stock-dividends/route.ts');
+  const stockDividendItem = await import('../../app/api/stock-dividends/[id]/route.ts');
+  const stockRecurring = await import('../../app/api/stock-recurring/route.ts');
+  const stockRecurringItem = await import('../../app/api/stock-recurring/[id]/toggle/route.ts');
+  const stockRecurringProcess = await import('../../app/api/stock-recurring/process/route.ts');
+  const stockSettings = await import('../../app/api/stock-settings/route.ts');
+  const stockRealized = await import('../../app/api/stock-realized/route.ts');
+  const stockRealizedPl = await import('../../app/api/stock-realized-pl/route.ts');
+  const exchangeRates = await import('../../app/api/exchange-rates/route.ts');
+  const exchangeRate = await import('../../app/api/exchange-rates/[currency]/route.ts');
+  const exchangeRateSettings = await import('../../app/api/exchange-rates/settings/route.ts');
   const { deleteUserCompletely, LedgerOwnershipTransferRequiredError } = await import('../../lib/userDeletion.ts');
   await initDB();
   const db = getDB();
   const owner = uid(), editor = uid(), viewer = uid(), outsider = uid();
   const people = [owner, editor, viewer, outsider];
   const tokens = new Map<string, string>();
-  let ledgerId = '', dataOwner = '', transactionId = '';
+  let ledgerId = '', dataOwner = '', transactionId = '', sharedAccountId = '';
+  let secondaryLedgerId = '', secondaryDataOwner = '';
   const privateTx = uid();
+  const privateStockId = uid();
+  const privateStockTxId = uid();
   const ctx = () => ({ params: Promise.resolve({ ledgerId }) });
   const request = (userId: string, path: string, method = 'GET', body?: unknown, ledger = ledgerId) => new NextRequest(`http://localhost${path}`, {
     method,
@@ -104,6 +122,10 @@ test('shared ledgers: real authenticated routes, invitations and ownership bound
       tokens.set(person, createLoginSession(person, 0, {}).token);
     }
     db.run('INSERT INTO transactions (id,user_id,type,amount,date,note) VALUES (?,?,?,?,?,?)', [privateTx, owner, 'expense', 77, '2026-10-01', 'private']);
+    db.run('INSERT INTO stocks (id,user_id,symbol,market,name,current_price,stock_type,currency,updated_at) VALUES (?,?,?,?,?,?,?,?,?)',
+      [privateStockId, owner, 'PRIVATE', 'US', 'Private holding', 110, 'stock', 'USD', Date.now()]);
+    db.run('INSERT INTO stock_transactions (id,user_id,stock_id,type,shares,price,fee,tax,date,note,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)',
+      [privateStockTxId, owner, privateStockId, 'buy', 5, 100, 0, 0, '2026-10-01', '', Date.now()]);
 
     await t.test('new shared ledger starts empty and existing personal data remains private', async () => {
       const personal = await ledgers.GET(request(owner, '/api/ledgers', 'GET', undefined, ''));
@@ -115,8 +137,12 @@ test('shared ledgers: real authenticated routes, invitations and ownership bound
       assert.notEqual(dataOwner, owner);
       const shared = await tx.GET(request(owner, '/api/transactions'));
       assert.equal((await shared.json()).total, 0);
+      const sharedStocks = await stocks.GET(request(owner, '/api/stocks'));
+      assert.deepEqual((await sharedStocks.json()).stocks, []);
       const personalRes = await tx.GET(request(owner, '/api/transactions', 'GET', undefined, ''));
       assert.equal((await personalRes.json()).total, 1);
+      const personalStocks = await stocks.GET(request(owner, '/api/stocks', 'GET', undefined, ''));
+      assert.equal((await personalStocks.json()).stocks[0].id, privateStockId);
       const forged = await tx.GET(request(outsider, '/api/transactions'));
       assert.equal(forged.status, 404);
     });
@@ -157,6 +183,7 @@ test('shared ledgers: real authenticated routes, invitations and ownership bound
       const accountRes = await accounts.POST(request(editor, '/api/accounts', 'POST', { name: 'Shared cash', category: 'cash', currency: 'TWD', initialBalance: 0 }));
       assert.equal(accountRes.status, 201);
       const accountId = (await accountRes.json()).id;
+      sharedAccountId = accountId;
       const createPayload = { type: 'expense', amount: 125, date: '2026-10-01', categoryId, accountId, note: 'Shared expense', clientRef: 'c'.repeat(32) };
       const created = await tx.POST(request(editor, '/api/transactions', 'POST', createPayload));
       assert.equal(created.status, 201, await created.clone().text());
@@ -176,6 +203,321 @@ test('shared ledgers: real authenticated routes, invitations and ownership bound
       assert.equal(log?.actor_email, `${editor}@example.com`);
     });
 
+    await t.test('investment holdings, FX, and linked accounts stay within the selected ledger', async () => {
+      const personalAccountRes = await accounts.POST(request(owner, '/api/accounts', 'POST', {
+        name: 'Private cash', category: 'cash', currency: 'TWD', initialBalance: 0,
+      }, ''));
+      assert.equal(personalAccountRes.status, 201);
+      const privateAccountId = String((await personalAccountRes.json()).id);
+      db.run('INSERT INTO exchange_rates (user_id,currency,rate_to_twd,updated_at,is_manual) VALUES (?,?,?,?,1)',
+        [owner, 'USD', '999', Date.now()]);
+      db.run('INSERT INTO exchange_rate_settings (user_id,auto_update,last_synced_at,updated_at) VALUES (?,1,123,?)',
+        [owner, Date.now()]);
+
+      const stockRes = await stocks.POST(request(editor, '/api/stocks', 'POST', {
+        market: 'US', symbol: 'AAPL', name: 'Apple',
+      }));
+      assert.equal(stockRes.status, 201, await stockRes.clone().text());
+      const stockId = String((await stockRes.json()).id);
+      assert.equal(queryOne('SELECT user_id FROM stocks WHERE id = ?', [stockId])?.user_id, dataOwner);
+
+      const crossLedgerStock = await stockTransactions.POST(request(editor, '/api/stock-transactions', 'POST', {
+        stockId: privateStockId, type: 'buy', shares: 1, price: 10, accountId: sharedAccountId, date: '2026-10-01',
+      }));
+      assert.equal(crossLedgerStock.status, 400);
+      const crossLedgerAccount = await stockTransactions.POST(request(editor, '/api/stock-transactions', 'POST', {
+        stockId, type: 'buy', shares: 1, price: 10, accountId: privateAccountId, date: '2026-10-01',
+      }));
+      assert.equal(crossLedgerAccount.status, 400);
+
+      const tradeRes = await stockTransactions.POST(request(editor, '/api/stock-transactions', 'POST', {
+        stockId, type: 'buy', shares: 2, price: 10, accountId: sharedAccountId, date: '2026-10-01', note: 'Shared purchase',
+      }));
+      assert.equal(tradeRes.status, 201, await tradeRes.clone().text());
+      const tradeId = String((await tradeRes.json()).id);
+      assert.equal(queryOne('SELECT user_id FROM stock_transactions WHERE id = ?', [tradeId])?.user_id, dataOwner);
+
+      const priced = await stockItem.PUT(request(editor, `/api/stocks/${stockId}`, 'PUT', { currentPrice: 12 }), {
+        params: Promise.resolve({ id: stockId }),
+      });
+      assert.equal(priced.status, 200);
+
+      const crossLedgerDividend = await stockDividends.POST(request(editor, '/api/stock-dividends', 'POST', {
+        stockId, date: '2026-10-02', cashDividend: 3, accountId: privateAccountId,
+      }));
+      assert.equal(crossLedgerDividend.status, 400);
+      const dividendRes = await stockDividends.POST(request(editor, '/api/stock-dividends', 'POST', {
+        stockId, date: '2026-10-02', cashDividend: 3, accountId: sharedAccountId,
+      }));
+      assert.equal(dividendRes.status, 201, await dividendRes.clone().text());
+      const dividendId = String((await dividendRes.json()).id);
+      assert.equal(queryOne('SELECT user_id FROM stock_dividends WHERE id = ?', [dividendId])?.user_id, dataOwner);
+
+      const crossLedgerPlan = await stockRecurring.POST(request(editor, '/api/stock-recurring', 'POST', {
+        stockId, amount: 50, frequency: 'monthly', startDate: '2099-01-01', accountId: privateAccountId,
+      }));
+      assert.equal(crossLedgerPlan.status, 400);
+      const planRes = await stockRecurring.POST(request(editor, '/api/stock-recurring', 'POST', {
+        stockId, amount: 50, frequency: 'monthly', startDate: '2099-01-01', accountId: sharedAccountId,
+      }));
+      assert.equal(planRes.status, 200, await planRes.clone().text());
+      const planId = String((await planRes.json()).id);
+      assert.equal(queryOne('SELECT user_id FROM stock_recurring WHERE id = ?', [planId])?.user_id, dataOwner);
+
+      assert.equal(queryOne('SELECT rate_to_twd FROM exchange_rates WHERE user_id = ? AND currency = ?', [owner, 'USD'])?.rate_to_twd, '999');
+      const sharedFx = await exchangeRates.GET(request(editor, '/api/exchange-rates'));
+      const sharedFxData = await sharedFx.json();
+      assert.equal(sharedFxData.settings.autoUpdate, false);
+      assert.equal(sharedFxData.settings.sharedLedger, true);
+      assert.notEqual(sharedFxData.rates.find((rate: any) => rate.currency === 'USD')?.rateToTwd, 999);
+      assert.equal((await exchangeRateSettings.PUT(request(editor, '/api/exchange-rates/settings', 'PUT', { autoUpdate: true }))).status, 403);
+      const sharedRate = await exchangeRate.PUT(request(editor, '/api/exchange-rates/USD', 'PUT', { rateToTwd: 30 }), {
+        params: Promise.resolve({ currency: 'USD' }),
+      });
+      assert.equal(sharedRate.status, 200);
+      assert.equal(queryOne('SELECT user_id FROM exchange_rates WHERE user_id = ? AND currency = ?', [dataOwner, 'USD'])?.user_id, dataOwner);
+
+      const portfolio = await stocks.GET(request(editor, '/api/stocks'));
+      const portfolioData = await portfolio.json();
+      assert.equal(portfolioData.stocks[0].id, stockId);
+      assert.equal(portfolioData.portfolioSummary.totalMarketValue, 720);
+      assert.equal((await stockRealized.GET(request(editor, '/api/stock-realized'))).status, 200);
+      assert.equal((await stockRealizedPl.GET(request(editor, '/api/stock-realized-pl'))).status, 200);
+      const stillPrivate = await stocks.GET(request(owner, '/api/stocks', 'GET', undefined, ''));
+      assert.equal((await stillPrivate.json()).stocks[0].id, privateStockId);
+
+      for (const action of ['POST /api/stock-transactions', 'POST /api/stock-dividends', 'POST /api/stock-recurring']) {
+        const log = queryOne('SELECT actor_user_id, result FROM ledger_audit_log WHERE ledger_id = ? AND action = ? AND result = \'success\' ORDER BY created_at DESC LIMIT 1', [ledgerId, action]);
+        assert.equal(log?.actor_user_id, editor, action);
+        assert.equal(log?.result, 'success', action);
+      }
+      const failedTradeLog = queryOne('SELECT actor_user_id, result FROM ledger_audit_log WHERE ledger_id = ? AND action = ? AND result = \'failed\' ORDER BY created_at DESC LIMIT 1', [ledgerId, 'POST /api/stock-transactions']);
+      assert.equal(failedTradeLog?.actor_user_id, editor);
+      assert.equal(failedTradeLog?.result, 'failed');
+    });
+
+    await t.test('owner and editor reads process stock recurring per ledger using ledger timezone and audit the actor', async () => {
+      const timezoneCandidates = [
+        ['Pacific/Kiritimati', 'Pacific/Honolulu'],
+        ['UTC', 'Pacific/Honolulu'],
+        ['Europe/London', 'America/Los_Angeles'],
+      ] as const;
+      const timezonePair = timezoneCandidates.find(([ledgerTimezone, memberTimezone]) => {
+        const ledgerDate = todayInUserTz(ledgerTimezone);
+        const memberDate = todayInUserTz(memberTimezone);
+        const weekday = new Date(`${ledgerDate}T00:00:00Z`).getUTCDay();
+        return ledgerDate > memberDate && weekday > 0 && weekday < 6;
+      });
+      const ledgerTimezone = timezonePair?.[0] || 'Pacific/Kiritimati';
+      const memberTimezone = timezonePair?.[1] || 'Pacific/Honolulu';
+      const ledgerToday = todayInUserTz(ledgerTimezone);
+      const latestTradingDate = (date: string) => {
+        const candidate = new Date(`${date}T00:00:00Z`);
+        while (candidate.getUTCDay() === 0 || candidate.getUTCDay() === 6) {
+          candidate.setUTCDate(candidate.getUTCDate() - 1);
+        }
+        return candidate.toISOString().slice(0, 10);
+      };
+      const scheduledDate = timezonePair ? ledgerToday : latestTradingDate(ledgerToday);
+      const originalLedgerTimezone = queryOne('SELECT timezone FROM financial_ledgers WHERE id = ?', [ledgerId])?.timezone;
+      const originalMemberTimezone = queryOne('SELECT timezone FROM users WHERE id = ?', [editor])?.timezone;
+      const originalFetch = globalThis.fetch;
+      let marketDataRequests = 0;
+      let stockDayGate: { started: () => void; wait: Promise<void> } | null = null;
+      globalThis.fetch = (async (input: RequestInfo | URL) => {
+        const url = new URL(String(input));
+        if (url.pathname.includes('holidaySchedule')) {
+          marketDataRequests++;
+          return Response.json([]);
+        }
+        if (url.pathname.endsWith('/exchangeReport/STOCK_DAY')) {
+          marketDataRequests++;
+          const gate = stockDayGate;
+          if (gate) {
+            stockDayGate = null;
+            gate.started();
+            await gate.wait;
+          }
+          const date = String(url.searchParams.get('date') || '');
+          const rocDate = `${Number(date.slice(0, 4)) - 1911}/${date.slice(4, 6)}/${date.slice(6, 8)}`;
+          return Response.json({ stat: 'OK', data: [[rocDate, '', '0', '10', '10', '10', '10']] });
+        }
+        return new Response(null, { status: 404 });
+      }) as typeof fetch;
+
+      const waitForGeneratedTrade = async (targetLedgerId: string, targetDataOwner: string, planId: string) => {
+        for (let attempt = 0; attempt < 150; attempt++) {
+          const trade = queryOne(
+            'SELECT id, user_id, account_id, date FROM stock_transactions WHERE user_id = ? AND recurring_plan_id = ? AND period_start_date = ?',
+            [targetDataOwner, planId, scheduledDate],
+          );
+          const auditEntry = queryOne(
+            "SELECT actor_user_id, actor_role, result, metadata FROM ledger_audit_log WHERE ledger_id = ? AND action = 'stock_recurring.generated' ORDER BY created_at DESC LIMIT 1",
+            [targetLedgerId],
+          );
+          if (trade && auditEntry) return { trade, auditEntry };
+          await new Promise((resolve) => setTimeout(resolve, 20));
+        }
+        const plan = queryOne('SELECT last_generated, updated_at FROM stock_recurring WHERE id = ?', [planId]);
+        const transactions = queryAll('SELECT id, date, period_start_date FROM stock_transactions WHERE user_id = ? AND recurring_plan_id = ?', [targetDataOwner, planId]);
+        const audits = queryAll("SELECT actor_user_id, actor_role, result, metadata FROM ledger_audit_log WHERE ledger_id = ? AND action = 'stock_recurring.generated'", [targetLedgerId]);
+        assert.fail(`Stock recurring plan ${planId} was not processed for ledger ${targetLedgerId}; plan=${JSON.stringify(plan)} transactions=${JSON.stringify(transactions)} audits=${JSON.stringify(audits)}`);
+      };
+
+      try {
+        db.run('UPDATE financial_ledgers SET timezone = ? WHERE id = ?', [ledgerTimezone, ledgerId]);
+        db.run('UPDATE users SET timezone = ? WHERE id = ?', [memberTimezone, editor]);
+        const recurringStock = await stocks.POST(request(editor, '/api/stocks', 'POST', {
+          market: 'TW', symbol: '0050', name: 'Recurring ETF',
+        }));
+        assert.equal(recurringStock.status, 201, await recurringStock.clone().text());
+        const recurringStockId = String((await recurringStock.json()).id);
+        const duePlan = await stockRecurring.POST(request(editor, '/api/stock-recurring', 'POST', {
+          stockId: recurringStockId, amount: 100, frequency: 'yearly', startDate: scheduledDate,
+          accountId: sharedAccountId, note: 'Ledger timezone recurring fixture',
+        }));
+        assert.equal(duePlan.status, 200, await duePlan.clone().text());
+        const duePlanId = String((await duePlan.json()).id);
+        assert.equal(marketDataRequests, 0, 'future recurring plans should not trigger market-data requests');
+
+        await stocks.GET(request(viewer, '/api/stocks'));
+        assert.equal(queryOne('SELECT id FROM stock_transactions WHERE user_id = ? AND recurring_plan_id = ?', [dataOwner, duePlanId]), null,
+          'viewers must not trigger shared recurring writes');
+
+        await Promise.all([
+          stocks.GET(request(editor, '/api/stocks')),
+          stocks.GET(request(editor, '/api/stocks')),
+        ]);
+        const firstLedgerRun = await waitForGeneratedTrade(ledgerId, dataOwner, duePlanId);
+        assert.ok(marketDataRequests >= 2, 'due plans should fetch holidays and historical prices');
+        assert.equal(firstLedgerRun.trade.user_id, dataOwner);
+        assert.equal(firstLedgerRun.trade.account_id, sharedAccountId);
+        assert.equal(firstLedgerRun.auditEntry.actor_user_id, editor);
+        assert.equal(firstLedgerRun.auditEntry.actor_role, 'editor');
+        assert.equal(firstLedgerRun.auditEntry.result, 'success');
+        const firstMetadata = typeof firstLedgerRun.auditEntry.metadata === 'string'
+          ? JSON.parse(firstLedgerRun.auditEntry.metadata)
+          : firstLedgerRun.auditEntry.metadata;
+        assert.equal(firstMetadata.timezone, ledgerTimezone);
+        assert.equal(firstMetadata.asOfDate, ledgerToday);
+        assert.equal(Number(queryOne(
+          'SELECT COUNT(*) AS count FROM stock_transactions WHERE user_id = ? AND recurring_plan_id = ?',
+          [dataOwner, duePlanId],
+        )?.count), 1, 'concurrent requests must not duplicate a recurring trade');
+        assert.equal(Number(queryOne(
+          "SELECT COUNT(*) AS count FROM ledger_audit_log WHERE ledger_id = ? AND action = 'stock_recurring.generated'",
+          [ledgerId],
+        )?.count), 1, 'a ledger-scoped run should emit one outcome audit');
+
+        const manualStock = await stocks.POST(request(editor, '/api/stocks', 'POST', {
+          market: 'TW', symbol: '0051', name: 'Manual recurring ETF',
+        }));
+        assert.equal(manualStock.status, 201, await manualStock.clone().text());
+        const manualPlan = await stockRecurring.POST(request(editor, '/api/stock-recurring', 'POST', {
+          stockId: String((await manualStock.json()).id), amount: 100, frequency: 'yearly', startDate: scheduledDate,
+          accountId: sharedAccountId, note: 'Manual process recurring fixture',
+        }));
+        assert.equal(manualPlan.status, 200, await manualPlan.clone().text());
+        const manualPlanId = String((await manualPlan.json()).id);
+        let signalPriceLookup!: () => void;
+        let releasePriceLookup!: () => void;
+        const priceLookupStarted = new Promise<void>((resolve) => { signalPriceLookup = resolve; });
+        const priceLookupHold = new Promise<void>((resolve) => { releasePriceLookup = resolve; });
+        stockDayGate = { started: signalPriceLookup, wait: priceLookupHold };
+        const priceRequestsBeforeManualRun = marketDataRequests;
+        const automaticRead = stocks.GET(request(editor, '/api/stocks'));
+        await priceLookupStarted;
+
+        const lateStock = await stocks.POST(request(editor, '/api/stocks', 'POST', {
+          market: 'TW', symbol: '0052', name: 'Late recurring ETF',
+        }));
+        assert.equal(lateStock.status, 201, await lateStock.clone().text());
+        const latePlan = await stockRecurring.POST(request(editor, '/api/stock-recurring', 'POST', {
+          stockId: String((await lateStock.json()).id), amount: 100, frequency: 'yearly', startDate: scheduledDate,
+          accountId: sharedAccountId, note: 'Added during automatic recurring run',
+        }));
+        assert.equal(latePlan.status, 200, await latePlan.clone().text());
+        const latePlanId = String((await latePlan.json()).id);
+        const manualRunPromise = stockRecurringProcess.POST(request(editor, '/api/stock-recurring/process', 'POST'));
+        releasePriceLookup();
+        const [autoResponse, manualRun] = await Promise.all([automaticRead, manualRunPromise]);
+        assert.equal(autoResponse.status, 200);
+        assert.equal(manualRun.status, 200, await manualRun.clone().text());
+        assert.equal((await manualRun.json()).generated, 2,
+          'the explicit process route should join the active pass and drain newly due plans');
+        assert.equal(marketDataRequests, priceRequestsBeforeManualRun + 2,
+          'the joined passes should fetch each distinct stock price once');
+        for (const planId of [manualPlanId, latePlanId]) {
+          assert.equal(Number(queryOne(
+            'SELECT COUNT(*) AS count FROM stock_transactions WHERE user_id = ? AND recurring_plan_id = ?',
+            [dataOwner, planId],
+          )?.count), 1, 'each due plan should create exactly one trade');
+        }
+        assert.equal(Number(queryOne(
+          "SELECT COUNT(*) AS count FROM ledger_audit_log WHERE ledger_id = ? AND action = 'stock_recurring.generated'",
+          [ledgerId],
+        )?.count), 3, 'automatic and manual passes should each audit one generated result');
+
+        const secondCreated = await ledgers.POST(request(owner, '/api/ledgers', 'POST', { name: 'Second investment ledger' }, ''));
+        assert.equal(secondCreated.status, 201, await secondCreated.clone().text());
+        secondaryLedgerId = String((await secondCreated.json()).id);
+        secondaryDataOwner = String(queryOne('SELECT data_owner_id FROM financial_ledgers WHERE id = ?', [secondaryLedgerId])?.data_owner_id);
+        db.run('INSERT INTO ledger_members (ledger_id, user_id, role, joined_at) VALUES (?, ?, \'editor\', ?)',
+          [secondaryLedgerId, editor, Date.now()]);
+        db.run('UPDATE financial_ledgers SET timezone = ? WHERE id = ?', [ledgerTimezone, secondaryLedgerId]);
+        const secondaryStockId = uid();
+        const secondaryPlanId = uid();
+        db.run('INSERT INTO stocks (id,user_id,symbol,market,name,current_price,stock_type,currency,updated_at) VALUES (?,?,?,?,?,?,?,?,?)',
+          [secondaryStockId, secondaryDataOwner, '0050', 'TW', 'Second recurring ETF', 10, 'etf', 'TWD', Date.now()]);
+        db.run('INSERT INTO stock_recurring (id,user_id,stock_id,amount,frequency,start_date,account_id,note,is_active,last_generated,created_at,updated_at) VALUES (?,?,?,?,?,?,\'\',?,1,NULL,?,?)',
+          [secondaryPlanId, secondaryDataOwner, secondaryStockId, 100, 'yearly', scheduledDate, 'Second ledger recurring fixture', Date.now(), Date.now()]);
+
+        const secondLedgerRead = await stocks.GET(request(editor, '/api/stocks', 'GET', undefined, secondaryLedgerId));
+        assert.equal(secondLedgerRead.status, 200);
+        const secondLedgerRun = await waitForGeneratedTrade(secondaryLedgerId, secondaryDataOwner, secondaryPlanId);
+        assert.equal(secondLedgerRun.trade.user_id, secondaryDataOwner);
+        assert.equal(secondLedgerRun.auditEntry.actor_user_id, editor);
+        const secondMetadata = typeof secondLedgerRun.auditEntry.metadata === 'string'
+          ? JSON.parse(secondLedgerRun.auditEntry.metadata)
+          : secondLedgerRun.auditEntry.metadata;
+        assert.equal(secondMetadata.timezone, ledgerTimezone);
+      } finally {
+        globalThis.fetch = originalFetch;
+        if (originalLedgerTimezone) db.run('UPDATE financial_ledgers SET timezone = ? WHERE id = ?', [originalLedgerTimezone, ledgerId]);
+        if (originalMemberTimezone) db.run('UPDATE users SET timezone = ? WHERE id = ?', [originalMemberTimezone, editor]);
+        if (secondaryDataOwner) {
+          for (const table of ['transactions', 'accounts', 'categories', 'budgets', 'recurring', 'stock_transactions', 'stock_dividends', 'stock_recurring', 'stocks', 'stock_settings', 'exchange_rates', 'exchange_rate_settings']) {
+            db.run(`DELETE FROM ${table} WHERE user_id = ?`, [secondaryDataOwner]);
+          }
+        }
+        if (secondaryLedgerId) {
+          db.run('DELETE FROM financial_ledgers WHERE id = ?', [secondaryLedgerId]);
+          secondaryLedgerId = '';
+          secondaryDataOwner = '';
+        }
+      }
+    });
+
+    await t.test('investment viewers can read but cannot write or alter private settings', async () => {
+      for (const [path, route] of [
+        ['/api/stocks', stocks], ['/api/stock-transactions', stockTransactions],
+        ['/api/stock-dividends', stockDividends], ['/api/stock-recurring', stockRecurring],
+        ['/api/stock-realized', stockRealized], ['/api/stock-realized-pl', stockRealizedPl],
+        ['/api/stock-settings', stockSettings], ['/api/exchange-rates', exchangeRates],
+      ] as const) {
+        assert.equal((await route.GET(request(viewer, path))).status, 200, path);
+      }
+      assert.equal(queryOne('SELECT user_id FROM stock_settings WHERE user_id = ?', [dataOwner]), null);
+      assert.equal(queryOne('SELECT user_id FROM exchange_rate_settings WHERE user_id = ?', [dataOwner]), null);
+      assert.equal((await stocks.POST(request(viewer, '/api/stocks', 'POST', {}))).status, 403);
+      assert.equal((await stockTransactions.POST(request(viewer, '/api/stock-transactions', 'POST', {}))).status, 403);
+      assert.equal((await stockDividends.POST(request(viewer, '/api/stock-dividends', 'POST', {}))).status, 403);
+      assert.equal((await stockRecurring.POST(request(viewer, '/api/stock-recurring', 'POST', {}))).status, 403);
+      assert.equal((await stockSettings.PUT(request(viewer, '/api/stock-settings', 'PUT', {}))).status, 403);
+      assert.equal((await exchangeRates.PUT(request(viewer, '/api/exchange-rates', 'PUT', {}))).status, 403);
+      assert.equal((await exchangeRateSettings.PUT(request(viewer, '/api/exchange-rates/settings', 'PUT', { autoUpdate: true }))).status, 403);
+    });
+
     await t.test('viewer can read all bookkeeping APIs but every write method is forbidden', async () => {
       for (const [path, route] of [['/api/accounts', accounts], ['/api/categories', categories], ['/api/budgets', budgets], ['/api/recurring', recurring], ['/api/transactions', tx]] as const) {
         assert.equal((await route.GET(request(viewer, path))).status, 200, path);
@@ -192,8 +534,11 @@ test('shared ledgers: real authenticated routes, invitations and ownership bound
       assert.equal((await tx.GET(request(viewer, `/api/transactions?ledgerId=${ledgerId}`, 'GET', undefined, `personal:${viewer}`))).status, 400);
     });
 
-    await t.test('private settings and investment identity stay personal; viewers do not generate shared recurring writes', async () => {
-      for (const path of ['/api/stocks', '/api/user/settings/default-currency', '/api/user/api-tokens']) {
+    await t.test('personal preferences stay private; viewers do not generate shared recurring writes', async () => {
+      const sharedInvestmentAuth = await requireAuth(request(viewer, '/api/stocks'));
+      assert.ok(!(sharedInvestmentAuth instanceof Response));
+      assert.equal(sharedInvestmentAuth.userId, dataOwner);
+      for (const path of ['/api/user/settings/default-currency', '/api/user/api-tokens']) {
         const auth = await requireAuth(request(viewer, path));
         assert.ok(!(auth instanceof Response));
         assert.equal(auth.userId, viewer);
@@ -214,6 +559,7 @@ test('shared ledgers: real authenticated routes, invitations and ownership bound
       assert.equal((await members.PATCH(request(owner, `/api/ledgers/${ledgerId}/members`, 'PATCH', { userId: viewer, role: 'editor' }), ctx())).status, 200);
       assert.equal((await members.DELETE(request(owner, `/api/ledgers/${ledgerId}/members`, 'DELETE', { userId: viewer }), ctx())).status, 200);
       assert.equal((await tx.GET(request(viewer, '/api/transactions'))).status, 404);
+      assert.equal((await stocks.GET(request(viewer, '/api/stocks'))).status, 404);
       assert.equal(queryOne('SELECT user_id FROM transactions WHERE id = ?', [transactionId])?.user_id, dataOwner);
       assert.equal((await leave.POST(request(editor, `/api/ledgers/${ledgerId}/leave`, 'POST'), ctx())).status, 200);
       assert.equal((await tx.GET(request(editor, '/api/transactions'))).status, 404);
@@ -235,10 +581,12 @@ test('shared ledgers: real authenticated routes, invitations and ownership bound
     });
   } finally {
     await new Promise((resolve) => setTimeout(resolve, 100));
-    for (const table of ['transactions', 'accounts', 'categories', 'budgets', 'recurring', 'deleted_defaults', 'credit_card_repayment_summaries', 'transaction_attachments', 'user_photo_keys']) {
-      for (const id of [dataOwner, ...people]) db.run(`DELETE FROM ${table} WHERE user_id = ?`, [id]);
+    for (const table of ['transactions', 'accounts', 'categories', 'budgets', 'recurring', 'stock_transactions', 'stock_dividends', 'stock_recurring', 'stocks', 'stock_settings', 'exchange_rates', 'exchange_rate_settings', 'deleted_defaults', 'credit_card_repayment_summaries', 'transaction_attachments', 'user_photo_keys']) {
+      for (const id of [dataOwner, secondaryDataOwner, ...people]) db.run(`DELETE FROM ${table} WHERE user_id = ?`, [id]);
     }
-    db.run('DELETE FROM financial_ledgers WHERE id = ?', [ledgerId]);
+    for (const id of [ledgerId, secondaryLedgerId]) {
+      if (id) db.run('DELETE FROM financial_ledgers WHERE id = ?', [id]);
+    }
     for (const person of people) {
       db.run('DELETE FROM data_operation_audit_log WHERE user_id = ?', [person]);
       db.run('DELETE FROM login_sessions WHERE user_id = ?', [person]);

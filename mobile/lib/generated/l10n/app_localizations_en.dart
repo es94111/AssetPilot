@@ -5371,7 +5371,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get ledgerEmptySharedNotice =>
-      'Shared ledgers start empty. Personal data is never copied automatically.';
+      'Shared ledgers never copy personal data automatically. Investment records created while this ledger is selected are visible to its members.';
 
   @override
   String get ledgerMembers => 'Members';

@@ -1808,7 +1808,7 @@ export const ru = {
     left: "You left the ledger.",
     inviteInstructions: "You have been invited to a shared ledger. Sign in with the email address that received the invitation.",
     acceptInvite: "Принять приглашение",
-    emptySharedNotice: "Общие счета создаются пустыми. Личные данные не копируются автоматически.",
+    emptySharedNotice: "Общие счета не копируют личные данные автоматически. Инвестиционные записи, созданные при выборе этого счета, видны его участникам.",
     members: "Участники",
     leave: "Покинуть счёт",
     inviteEmail: "Электронная почта участника",

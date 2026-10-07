@@ -1,9 +1,10 @@
 // @ts-nocheck
+import { withLedgerWriteAudit } from "../../../../lib/ledgerContext";
 import { NextResponse } from "next/server";
 import { requireAuth } from "../../../../lib/apiHelpers";
 import { getDB, queryOne, saveDB } from "../../../../lib/db";
 
-export async function POST(request) {
+async function handlePOST(request) {
   const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
@@ -22,7 +23,7 @@ export async function POST(request) {
 
   const db = getDB();
   let updated = 0;
-  const nowIso = new Date().toISOString();
+  const now = Date.now();
 
   for (const u of updates) {
     const stockId = u.stockId || u.id;
@@ -49,12 +50,12 @@ export async function POST(request) {
     if (typeof u.delisted === "boolean") {
       db.run(
         "UPDATE stocks SET current_price = ?, delisted = ?, updated_at = ? WHERE id = ? AND user_id = ?",
-        [currentPrice, u.delisted ? 1 : 0, nowIso, stockId, auth.userId],
+        [currentPrice, u.delisted ? 1 : 0, now, stockId, auth.userId],
       );
     } else {
       db.run(
         "UPDATE stocks SET current_price = ?, updated_at = ? WHERE id = ? AND user_id = ?",
-        [currentPrice, nowIso, stockId, auth.userId],
+        [currentPrice, now, stockId, auth.userId],
       );
     }
     updated += 1;
@@ -63,3 +64,5 @@ export async function POST(request) {
 
   return NextResponse.json({ ok: true, updated });
 }
+
+export const POST = withLedgerWriteAudit(handlePOST);

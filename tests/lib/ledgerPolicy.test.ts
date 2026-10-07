@@ -37,11 +37,14 @@ test("viewers can read but cannot mutate through any unsafe HTTP method", () => 
   }
 });
 
-test("only bookkeeping APIs use the selected ledger context", () => {
+test("bookkeeping and investment APIs use the selected ledger context", () => {
   assert.equal(isLedgerDataPath('/api/transactions/tx-1'), true);
   assert.equal(isLedgerDataPath('/api/accounts'), true);
   assert.equal(isLedgerDataPath('/api/imports/progress'), true);
-  assert.equal(isLedgerDataPath('/api/stocks'), false);
+  for (const path of ['/api/stocks', '/api/stock-transactions', '/api/stock-dividends', '/api/stock-recurring', '/api/stock-realized', '/api/stock-realized-pl', '/api/stock-settings', '/api/exchange-rates', '/api/exchange-rates/USD']) {
+    assert.equal(isLedgerDataPath(path), true, path);
+  }
+  assert.equal(isLedgerDataPath('/api/exchange-rates/settings'), true);
   assert.equal(isLedgerDataPath('/api/ledgers'), false);
   assert.equal(isLedgerDataPath('/api/user/settings/default-currency'), false);
   assert.equal(isLedgerDataPath('/api/transactions-other'), false);

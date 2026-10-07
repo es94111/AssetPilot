@@ -8253,7 +8253,7 @@
     "description": "Web path: ledger.acceptInvite",
     "x-webPath": "ledger.acceptInvite"
   },
-  "ledgerEmptySharedNotice": "साझा खाते खाली बनाए जाते हैं। निजी डेटा अपने-आप कॉपी नहीं होता।",
+  "ledgerEmptySharedNotice": "साझा खाते निजी डेटा को अपने-आप कॉपी नहीं करते। इस खाते के चयनित होने पर जोड़े गए निवेश रिकॉर्ड इसके सदस्यों को दिखाई देते हैं।",
   "@ledgerEmptySharedNotice": {
     "description": "Web path: ledger.emptySharedNotice",
     "x-webPath": "ledger.emptySharedNotice"

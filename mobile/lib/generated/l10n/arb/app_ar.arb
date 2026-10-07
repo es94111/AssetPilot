@@ -8253,7 +8253,7 @@
     "description": "Web path: ledger.acceptInvite",
     "x-webPath": "ledger.acceptInvite"
   },
-  "ledgerEmptySharedNotice": "تُنشأ الدفاتر المشتركة فارغة. لا تُنسخ البيانات الشخصية تلقائياً.",
+  "ledgerEmptySharedNotice": "لا تنسخ الحسابات المشتركة البيانات الشخصية تلقائياً. وتكون سجلات الاستثمار التي تُضاف أثناء اختيار هذا الحساب مرئية لأعضائه.",
   "@ledgerEmptySharedNotice": {
     "description": "Web path: ledger.emptySharedNotice",
     "x-webPath": "ledger.emptySharedNotice"

@@ -5469,7 +5469,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get ledgerEmptySharedNotice =>
-      'Les comptes partagés sont créés vides. Les données personnelles ne sont jamais copiées automatiquement.';
+      'Les comptes partagés ne copient jamais automatiquement les données personnelles. Les investissements créés lorsque ce compte est sélectionné sont visibles par ses membres.';
 
   @override
   String get ledgerMembers => 'Membres';

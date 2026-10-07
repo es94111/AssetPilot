@@ -5470,7 +5470,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get ledgerEmptySharedNotice =>
-      'Los libros compartidos empiezan vacíos. Los datos personales no se copian automáticamente.';
+      'Los libros compartidos nunca copian automáticamente los datos personales. Las inversiones creadas con este libro seleccionado son visibles para sus miembros.';
 
   @override
   String get ledgerMembers => 'Miembros';

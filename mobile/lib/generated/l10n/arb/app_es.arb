@@ -8253,7 +8253,7 @@
     "description": "Web path: ledger.acceptInvite",
     "x-webPath": "ledger.acceptInvite"
   },
-  "ledgerEmptySharedNotice": "Los libros compartidos empiezan vacíos. Los datos personales no se copian automáticamente.",
+  "ledgerEmptySharedNotice": "Los libros compartidos nunca copian automáticamente los datos personales. Las inversiones creadas con este libro seleccionado son visibles para sus miembros.",
   "@ledgerEmptySharedNotice": {
     "description": "Web path: ledger.emptySharedNotice",
     "x-webPath": "ledger.emptySharedNotice"

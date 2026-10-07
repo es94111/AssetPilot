@@ -118,6 +118,9 @@ export default function LedgerSwitcher({
           </option>
         ))}
       </select>
+      {ledgers.find((ledger) => ledger.id === activeId)?.isShared && (
+        <p className="mt-2 text-xs" style={{ color: 'var(--text-secondary)' }}>{t('ledger.emptySharedNotice')}</p>
+      )}
       {ledgers.find((ledger) => ledger.id === activeId)?.role === 'viewer' && (
         <p className="mt-2 text-xs" style={{ color: 'var(--text-secondary)' }}>{t('ledger.viewer')}</p>
       )}

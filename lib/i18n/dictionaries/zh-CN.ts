@@ -1808,7 +1808,7 @@ export const zhCN = {
     left: "You left the ledger.",
     inviteInstructions: "You have been invited to a shared ledger. Sign in with the email address that received the invitation.",
     acceptInvite: "接受邀请",
-    emptySharedNotice: "共享账本以空白状态创建，不会自动复制个人记账数据。",
+    emptySharedNotice: "共享账本不会自动复制个人数据。选择此账本时新增的投资数据将对其成员可见。",
     members: "成员",
     leave: "离开账本",
     inviteEmail: "成员电子邮箱",

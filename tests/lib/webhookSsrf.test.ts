@@ -153,6 +153,9 @@ test('Webhook 投遞：訂閱網址的 DNS 解析結果含私有位址時拒絕�
     ['private-g.example', 'fe80::1', 6],
     ['private-h.example', 'fd00::1', 6],
     ['private-i.example', '::ffff:127.0.0.1', 6],
+    ['private-j.example', 'fec0::1', 6],
+    ['private-k.example', '2001:db8::1', 6],
+    ['private-l.example', '3fff::1', 6],
   ];
   const harness = installWebhookNetHarness({
     extraHosts: Object.fromEntries(
@@ -552,7 +555,15 @@ test('Webhook 投遞：無法解析的主機名視為可重試的連線錯誤（
 });
 
 test('isBlockedIpAddress：公開位址放行、非公開位址與非法值一律阻擋', () => {
-  for (const allowed of [FAKE_PUBLIC_IPV4, FAKE_PUBLIC_IPV6, '8.8.8.8', '2001:4860:4860::8888']) {
+  for (const allowed of [
+    FAKE_PUBLIC_IPV4,
+    FAKE_PUBLIC_IPV6,
+    '8.8.8.8',
+    '2001:4860:4860::8888',
+    '::ffff:8.8.8.8',
+    '64:ff9b::808:808',
+    '2002:0808:0808::1',
+  ]) {
     assert.equal(isBlockedIpAddress(allowed), false, `應放行公開位址 ${allowed}`);
   }
   for (const blocked of [
@@ -563,17 +574,28 @@ test('isBlockedIpAddress：公開位址放行、非公開位址與非法值一�
     '172.16.0.1',
     '172.31.255.254',
     '192.168.1.1',
+    '192.0.2.1',
+    '192.88.99.1',
     '100.64.0.1',
     '169.254.169.254',
     '198.18.0.1',
+    '198.51.100.1',
+    '203.0.113.1',
     '224.0.0.1',
     '240.0.0.1',
     '255.255.255.255',
     '::1',
     '::',
     'fe80::1',
+    'fec0::1',
+    'fecf:ffff::1',
     'fd00::1',
     'ff02::1',
+    '100::1',
+    '2001::1',
+    '2001:db8::1',
+    '3fff::1',
+    '64:ff9b:1::1',
     '::ffff:127.0.0.1',
     '64:ff9b::7f00:1',
     '2002:7f00:1::',

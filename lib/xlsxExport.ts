@@ -7,7 +7,7 @@
 import XlsxStreamWriter from 'xlsx-stream-writer';
 import { writeOperationAudit } from './auditHelpers';
 
-export type XlsxColumnType = 'date' | 'number' | 'text';
+export type XlsxColumnType = 'date' | 'datetime' | 'number' | 'text';
 
 export interface XlsxColumn {
   header: string;
@@ -21,6 +21,7 @@ export type XlsxRows = Iterable<XlsxRow> | AsyncIterable<XlsxRow>;
 
 const DEFAULT_FORMATS: Record<XlsxColumnType, string> = {
   date: 'yyyy-mm-dd',
+  datetime: 'yyyy-mm-dd hh:mm:ss',
   number: '#,##0.00',
   text: '@',
 };
@@ -66,6 +67,19 @@ export function parseDateOnly(value: unknown): Date | null {
   return date;
 }
 
+export function parseDateTime(value: unknown): Date | null {
+  if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value;
+  if (typeof value === 'number') {
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? null : date;
+  }
+  if (typeof value !== 'string' || value.trim() === '') return null;
+  const dateOnly = parseDateOnly(value);
+  if (dateOnly) return dateOnly;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
 export function toNumeric(value: unknown): number | null {
   if (value === null || value === undefined || value === '') return null;
   const number = typeof value === 'number' ? value : Number(value);
@@ -74,6 +88,7 @@ export function toNumeric(value: unknown): number | null {
 
 function cellValue(value: unknown, column: XlsxColumn): string | number | Date | null {
   if (column.type === 'date') return parseDateOnly(value);
+  if (column.type === 'datetime') return parseDateTime(value);
   if (column.type === 'number') return toNumeric(value);
   if (value === null || value === undefined) return null;
   const text = escapeFormulaText(String(value));

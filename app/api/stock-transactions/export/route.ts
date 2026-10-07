@@ -111,7 +111,7 @@ export async function GET(request) {
         rows: mapXlsxRows(
           queryAllInKeysetPages(baseSql, params, {
             cursorColumns: ['st.date', 'COALESCE(st.created_at, 0)', 'st.id'],
-            orderBy: 'st.date, COALESCE(st.created_at, 0), st.id',
+            orderBy: ['st.date', 'COALESCE(st.created_at, 0)', 'st.id'],
             direction: 'DESC',
             cursorFromRow: (row) => [row.date, row.export_cursor_created_at, row.export_cursor_id],
           }),

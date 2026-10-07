@@ -44,7 +44,7 @@ async function* streamCategoryExportRows(userId: string): AsyncGenerator<CsvCell
     [userId],
     {
       cursorColumns: ['COALESCE(sort_order, 0)', 'name', 'id'],
-      orderBy: 'COALESCE(sort_order, 0), name, id',
+      orderBy: ['COALESCE(sort_order, 0)', 'name', 'id'],
       direction: 'ASC',
       cursorFromRow: (row) => [row.export_cursor_sort_order, row.name, row.export_cursor_id],
     },
@@ -62,7 +62,7 @@ async function* streamCategoryExportRows(userId: string): AsyncGenerator<CsvCell
     [userId],
     {
       cursorColumns: ['COALESCE(c.sort_order, 0)', 'c.name', 'c.id'],
-      orderBy: 'COALESCE(c.sort_order, 0), c.name, c.id',
+      orderBy: ['COALESCE(c.sort_order, 0)', 'c.name', 'c.id'],
       direction: 'ASC',
       cursorFromRow: (row) => [row.export_cursor_sort_order, row.name, row.export_cursor_id],
     },

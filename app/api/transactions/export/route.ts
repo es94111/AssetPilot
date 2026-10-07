@@ -122,7 +122,7 @@ export async function GET(request: NextRequest) {
             params,
             {
               cursorColumns: ['t.date', 'COALESCE(t.created_at, 0)', 't.id'],
-              orderBy: 't.date, COALESCE(t.created_at, 0), t.id',
+              orderBy: ['t.date', 'COALESCE(t.created_at, 0)', 't.id'],
               direction: 'DESC',
               cursorFromRow: (row) => [row.date, row.export_cursor_created_at, row.export_cursor_id],
             },

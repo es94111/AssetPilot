@@ -26,6 +26,7 @@ if (!DB_URL) {
   const transactionsExport = await import('../../app/api/transactions/export/route.ts');
   const accountsExport = await import('../../app/api/accounts/export/route.ts');
   const categoriesExport = await import('../../app/api/categories/export/route.ts');
+  const stockDividendsExport = await import('../../app/api/stock-dividends/export/route.ts');
 
   await initDB();
   const db = getDB();
@@ -41,6 +42,8 @@ if (!DB_URL) {
 
   function cleanup() {
     db.run('DELETE FROM transactions WHERE user_id = ?', [userId]);
+    db.run('DELETE FROM stock_dividends WHERE user_id = ?', [userId]);
+    db.run('DELETE FROM stocks WHERE user_id = ?', [userId]);
     db.run('DELETE FROM accounts WHERE user_id = ?', [userId]);
     db.run('DELETE FROM categories WHERE user_id = ?', [userId]);
     db.run('DELETE FROM data_operation_audit_log WHERE user_id = ?', [userId]);
@@ -58,9 +61,27 @@ if (!DB_URL) {
       'INSERT INTO transactions (id,user_id,type,amount,currency,date,note) VALUES (?,?,?,?,?,?,?)',
       [uid(), userId, 'expense', 1234.56, 'TWD', '2026-08-14', unsafeNote],
     );
+    const accountId = uid();
     getDB().run(
-      'INSERT INTO accounts (id,user_id,name,initial_balance,currency,created_at) VALUES (?,?,?,?,?,?)',
-      [uid(), userId, '現金', 5000.5, 'TWD', '2026-08-14'],
+      'INSERT INTO accounts (id,user_id,name,initial_balance,currency,created_at,updated_at) VALUES (?,?,?,?,?,?,?)',
+      [accountId, userId, '現金', 5000.5, 'TWD', '2026-08-14', Date.UTC(2026, 7, 15, 12, 34, 56)],
+    );
+    const stockId = uid();
+    getDB().run(
+      'INSERT INTO stocks (id,user_id,symbol,name,market,stock_type,currency,created_at) VALUES (?,?,?,?,?,?,?,?)',
+      [stockId, userId, '2330', '台積電', 'TW', 'stock', 'TWD', Date.now()],
+    );
+    getDB().run(
+      'INSERT INTO stock_dividends (id,user_id,stock_id,cash_dividend,stock_dividend_shares,date,account_id,note,created_at) VALUES (?,?,?,?,?,?,?,?,?)',
+      [uid(), userId, stockId, 50, 1, '2026-08-14', null, '台積電股利', 2],
+    );
+    db.run(
+      'INSERT INTO stock_dividends (id,user_id,stock_id,cash_dividend,stock_dividend_shares,date,account_id,note,created_at) VALUES (?,?,?,?,?,?,?,?,?)',
+      [uid(), userId, stockId, 0, 1, '2026-08-15', accountId, '純股票股利', 3],
+    );
+    getDB().run(
+      'INSERT INTO transactions (id,user_id,type,amount,currency,date,account_id,note,created_at) VALUES (?,?,?,?,?,?,?,?,?)',
+      [uid(), userId, 'income', 50, 'TWD', '2026-08-14', accountId, '2330 股利入帳', 1],
     );
     const parentCategoryId = uid();
     getDB().run(
@@ -135,7 +156,20 @@ if (!DB_URL) {
 
     await t.test('帳戶與分類匯出：亦支援 ?format=xlsx', async () => {
       const accountRes = await accountsExport.GET(request('/api/accounts/export?format=xlsx'));
-      await assertXlsxResponse(accountRes, /filename="accounts-\d{8}\.xlsx"/);
+      const accountZip = await assertXlsxResponse(accountRes, /filename="accounts-\d{8}\.xlsx"/);
+      const accountSheet = await accountZip.file('xl/worksheets/sheet1.xml')!.async('string');
+      const accountStyles = await accountZip.file('xl/styles.xml')!.async('string');
+      assert.match(accountSheet, /<c r="K2" t="n" s="\d+"><v>46248<\/v><\/c>/, '帳戶建立日期應為 Excel date cell');
+      assert.match(accountSheet, /<c r="L2" t="n" s="\d+"><v>46249\.524259259255<\/v><\/c>/, '更新時間應為 Excel datetime cell');
+      assert.ok(accountStyles.includes('yyyy-mm-dd hh:mm:ss'));
+
+      const dividendRes = await stockDividendsExport.GET(request('/api/stock-dividends/export?format=xlsx'));
+      const dividendZip = await assertXlsxResponse(dividendRes, /filename="stock-dividends-\d{8}\.xlsx"/);
+      const dividendSheet = await dividendZip.file('xl/worksheets/sheet1.xml')!.async('string');
+      const stockOnlyDividendRow = /<row r="2"[^>]*>[\s\S]*?<\/row>/.exec(dividendSheet)?.[0] || '';
+      const cashDividendRow = /<row r="3"[^>]*>[\s\S]*?<\/row>/.exec(dividendSheet)?.[0] || '';
+      assert.ok(!stockOnlyDividendRow.includes('<t>現金</t>'), '純股票股利應遵守舊有行為，不顯示帳戶');
+      assert.ok(cashDividendRow.includes('<t>現金</t>'), '現金股利應以 set-based lookup 取得入帳帳戶');
 
       const categoryRes = await categoriesExport.GET(request('/api/categories/export?format=xlsx'));
       const categoryZip = await assertXlsxResponse(categoryRes, /filename="categories-\d{8}\.xlsx"/);
@@ -156,7 +190,7 @@ if (!DB_URL) {
             [],
             {
               cursorColumns: ['n'],
-              orderBy: 'n',
+              orderBy: ['n'],
               direction: 'ASC',
               pageSize: 400,
               cursorFromRow: (row) => [row.value],

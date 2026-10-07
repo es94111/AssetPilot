@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { NextResponse } from "next/server";
 import { requireAuth } from "../../../../lib/apiHelpers";
-import { queryAll, queryAllInKeysetPages, queryOne } from "../../../../lib/db";
+import { queryAll, queryAllInKeysetPages } from "../../../../lib/db";
 import {
   buildCsv,
   writeOperationAudit,
@@ -41,12 +41,27 @@ export async function GET(request) {
     }
 
     const baseSql = `SELECT sd.id, sd.date, sd.cash_dividend, sd.stock_dividend_shares, sd.account_id, sd.note,
-      s.symbol, s.market, s.name AS stock_name, s.stock_type, s.currency, a.name AS dividend_account_name,
+      s.symbol, s.market, s.name AS stock_name, s.stock_type, s.currency,
+      CASE WHEN COALESCE(sd.cash_dividend, 0) > 0
+        THEN COALESCE(NULLIF(a.name, ''), matched_dividend_account.account_name, '')
+        ELSE ''
+      END AS dividend_account_name,
       COALESCE(sd.created_at, 0) AS export_cursor_created_at
       FROM stock_dividends sd
       JOIN stocks s ON sd.stock_id = s.id AND s.user_id = sd.user_id
       LEFT JOIN accounts a ON sd.account_id = a.id AND a.user_id = sd.user_id
-      ${where}`;
+      LEFT JOIN LATERAL (
+        SELECT match_account.name AS account_name
+        FROM transactions t
+        LEFT JOIN accounts match_account ON match_account.id = t.account_id AND match_account.user_id = t.user_id
+        WHERE sd.cash_dividend > 0
+          AND t.user_id = sd.user_id AND t.date = sd.date AND t.type = 'income'
+          AND ABS(t.amount - sd.cash_dividend) < 0.01
+          AND (t.note LIKE '%股利%' OR t.note LIKE '%dividend%' OR t.note LIKE '%' || s.symbol || '%')
+        ORDER BY t.created_at DESC, t.id DESC
+        LIMIT 1
+      ) matched_dividend_account ON TRUE
+      ${where}`
     const orderBy = 'sd.date, COALESCE(sd.created_at, 0), sd.id';
     const sql = `${baseSql} ORDER BY sd.date DESC, sd.created_at DESC`;
     const headers = [
@@ -62,26 +77,7 @@ export async function GET(request) {
       "備註",
     ];
     const exportRow = (r) => {
-      let accountName = "";
-      const cash = Number(r.cash_dividend || 0);
-      if (cash > 0) {
-        const tx = queryOne(
-          `SELECT a.name AS account_name FROM transactions t
-           LEFT JOIN accounts a ON t.account_id = a.id
-           WHERE t.user_id = ? AND t.date = ? AND t.type = 'income' AND ABS(t.amount - ?) < 0.01
-             AND (t.note LIKE ? OR t.note LIKE ? OR t.note LIKE ?)
-           ORDER BY t.created_at DESC LIMIT 1`,
-          [
-            auth.userId,
-            r.date,
-            cash,
-            "%股利%",
-            "%dividend%",
-            "%" + (r.symbol || "") + "%",
-          ],
-        );
-        accountName = r.dividend_account_name || tx?.account_name || "";
-      }
+      const accountName = r.dividend_account_name || "";
       return [
         r.date || "",
         r.market || "TW",
@@ -117,7 +113,7 @@ export async function GET(request) {
         rows: mapXlsxRows(
           queryAllInKeysetPages(baseSql, params, {
             cursorColumns: ['sd.date', 'COALESCE(sd.created_at, 0)', 'sd.id'],
-            orderBy: 'sd.date, COALESCE(sd.created_at, 0), sd.id',
+            orderBy: ['sd.date', 'COALESCE(sd.created_at, 0)', 'sd.id'],
             direction: 'DESC',
             cursorFromRow: (row) => [row.date, row.export_cursor_created_at, row.id],
           }),

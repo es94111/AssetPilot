@@ -201,7 +201,7 @@ export function queryAll(
 export interface KeysetPageOptions<T extends Record<string, string | number | null>> {
   /** SQL expressions used in the ORDER BY and seek tuple; keep their order aligned. */
   cursorColumns: string[];
-  orderBy: string;
+  orderBy: string[];
   direction: 'ASC' | 'DESC';
   cursorFromRow: (row: T) => Array<string | number | null>;
   pageSize?: number;
@@ -211,7 +211,7 @@ export interface KeysetPageOptions<T extends Record<string, string | number | nu
  * Fetch a large result in bounded keyset pages. The base query must end at its WHERE clause
  * (or the end of FROM for an unfiltered query); ordering must be deterministic and include a
  * unique tie-breaker. Keyset paging avoids OFFSET rescans and does not shift when new rows are
- * inserted before the current cursor.
+ * inserted before the current cursor. All cursor/order columns use the same direction.
  */
 export async function* queryAllInKeysetPages<T extends Record<string, string | number | null>>(
   baseSql: string,
@@ -222,8 +222,8 @@ export async function* queryAllInKeysetPages<T extends Record<string, string | n
   if (!Number.isSafeInteger(pageSize) || pageSize <= 0) {
     throw new RangeError('pageSize must be a positive safe integer');
   }
-  if (options.cursorColumns.length === 0) {
-    throw new RangeError('cursorColumns must not be empty');
+  if (options.cursorColumns.length === 0 || options.orderBy.length !== options.cursorColumns.length) {
+    throw new RangeError('cursorColumns and orderBy must contain the same non-zero number of expressions');
   }
 
   let cursor: Array<string | number | null> | null = null;
@@ -232,7 +232,7 @@ export async function* queryAllInKeysetPages<T extends Record<string, string | n
       ? ` AND (${options.cursorColumns.join(', ')}) ${options.direction === 'ASC' ? '>' : '<'} (${options.cursorColumns.map(() => '?').join(', ')})`
       : '';
     const page = queryAll(
-      `${baseSql}${seek} ORDER BY ${options.orderBy} ${options.direction} LIMIT ?`,
+      `${baseSql}${seek} ORDER BY ${options.orderBy.map((expression) => `${expression} ${options.direction}`).join(', ')} LIMIT ?`,
       [...params, ...(cursor ?? []), pageSize],
     ) as T[];
     if (page.length === 0) return;

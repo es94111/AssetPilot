@@ -16,6 +16,7 @@ import {
   createXlsxStream,
   escapeFormulaText,
   parseDateOnly,
+  parseDateTime,
   resolveExportFormat,
   toNumeric,
   xlsxFilename,
@@ -148,6 +149,16 @@ test('parseDateOnly：接受 YYYY-MM-DD 與 UTC 午夜 Date，拒絕無效日期
   assert.equal(parseDateOnly(null), null);
   assert.equal(parseDateOnly(20260814), null);
   assert.equal(parseDateOnly(new Date('invalid')), null);
+});
+
+test('parseDateTime：接受 epoch milliseconds 與 ISO timestamps', () => {
+  const epoch = Date.UTC(2026, 7, 15, 12, 34, 56);
+  assert.equal(parseDateTime(epoch)?.toISOString(), '2026-08-15T12:34:56.000Z');
+  assert.equal(parseDateTime('2026-08-15T12:34:56.000Z')?.getTime(), epoch);
+  assert.equal(parseDateTime('2026-08-15')?.toISOString(), '2026-08-15T00:00:00.000Z');
+  assert.equal(parseDateTime('not-a-date'), null);
+  assert.equal(parseDateTime(null), null);
+  assert.equal(parseDateTime(Number.NaN), null);
 });
 
 test('toNumeric：數值字串轉為 Number，空值與非有限數視為空', () => {

@@ -58,7 +58,6 @@ export async function GET(request: NextRequest) {
       FROM accounts a
       LEFT JOIN accounts linked ON linked.id = a.linked_bank_id AND linked.user_id = a.user_id
       WHERE a.user_id = ?`;
-    const orderBy = "COALESCE(a.sort_order, 0), COALESCE(a.created_at, ''), a.name, a.id";
     const sql = `${baseSql} ORDER BY a.sort_order ASC, a.created_at ASC, a.name ASC`;
     const params = [auth.userId];
 
@@ -80,8 +79,8 @@ export async function GET(request: NextRequest) {
         { header: '連結銀行帳戶', type: 'text' },
         { header: '海外手續費率', type: 'number', format: '0.0000' },
         { header: '備註', type: 'text' },
-        { header: '建立時間', type: 'text' },
-        { header: '更新時間', type: 'text' },
+        { header: '建立時間', type: 'date' },
+        { header: '更新時間', type: 'datetime' },
       ];
       return createXlsxExportResponse({
         columns,
@@ -91,7 +90,7 @@ export async function GET(request: NextRequest) {
             params,
             {
               cursorColumns: ['COALESCE(a.sort_order, 0)', "COALESCE(a.created_at, '')", 'a.name', 'a.id'],
-              orderBy: "COALESCE(a.sort_order, 0), COALESCE(a.created_at, ''), a.name, a.id",
+              orderBy: ['COALESCE(a.sort_order, 0)', "COALESCE(a.created_at, '')", 'a.name', 'a.id'],
               direction: 'ASC',
               cursorFromRow: (row) => [row.export_cursor_sort_order, row.export_cursor_created_at, row.name, row.export_cursor_id],
             },

@@ -1,6 +1,18 @@
 {
-  "currentVersion": "4.134.0",
+  "currentVersion": "4.135.0",
   "releases": [
+    {
+      "version": "4.135.0",
+      "date": "2026-10-08",
+      "title": "Excel (.xlsx) 匯出格式",
+      "type": "new",
+      "changes": [
+        {
+          "tag": "new",
+          "text": "匯出頁可選擇 CSV 或 Excel（.xlsx）：帳戶、交易、分類、股票交易與股利五個模組共用匯出端點。Excel 欄位具正確日期與數字型別，採 keyset 分頁及逐列串流產生，Formula Injection 防護與匯出稽核亦適用。#261"
+        }
+      ]
+    },
     {
       "version": "4.134.0",
       "date": "2026-10-08",

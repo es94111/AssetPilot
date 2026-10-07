@@ -136,12 +136,44 @@ function parseCsv(text: string) {
   });
 }
 
-async function downloadFromUrl(url: string) {
+type SaveFilePickerWindow = Window & {
+  showSaveFilePicker?: (options?: { suggestedName?: string; types?: Array<{ description: string; accept: Record<string, string[]> }> }) => Promise<{
+    createWritable: () => Promise<WritableStream<Uint8Array>>;
+  }>;
+};
+
+async function downloadFromUrl(url: string, options: { streamToFile?: boolean; suggestedName?: string } = {}) {
+  let writable: WritableStream<Uint8Array> | undefined;
+  if (options.streamToFile) {
+    const picker = (window as SaveFilePickerWindow).showSaveFilePicker;
+    if (picker) {
+      try {
+        const file = await picker.call(window, {
+          suggestedName: options.suggestedName,
+          types: [{
+            description: 'Excel workbook',
+            accept: { 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'] },
+          }],
+        });
+        writable = await file.createWritable();
+      } catch (error) {
+        if (error instanceof DOMException && error.name === 'AbortError') return false;
+        throw error;
+      }
+    }
+  }
+
   const res = await fetch(url, { credentials: 'include', headers: getActiveLedgerHeaders() });
   if (!res.ok) {
+    await writable?.abort().catch(() => undefined);
     const data = await res.json().catch(() => ({}));
     throw new Error(data.error || `HTTP ${res.status}`);
   }
+  if (writable && res.body) {
+    await res.body.pipeTo(writable);
+    return true;
+  }
+  await writable?.abort().catch(() => undefined);
   const blob = await res.blob();
   const href = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -153,6 +185,7 @@ async function downloadFromUrl(url: string) {
   a.click();
   a.remove();
   URL.revokeObjectURL(href);
+  return true;
 }
 
 export default function DataTransferClient({ user }: { user: UserLike }) {
@@ -203,8 +236,14 @@ export default function DataTransferClient({ user }: { user: UserLike }) {
     setBusyKey(key);
     setStatus('');
     try {
-      await downloadFromUrl(url + exportQuery);
-      setStatus(t('features.dataTransfer.messages.exportSuccess'));
+      const extension = exportFormat === 'xlsx' ? 'xlsx' : 'csv';
+      const moduleKey = key.replace(/-export$/, '');
+      const suggestedName = `${moduleKey}-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}.${extension}`;
+      const downloaded = await downloadFromUrl(url + exportQuery, {
+        streamToFile: exportFormat === 'xlsx',
+        suggestedName,
+      });
+      if (downloaded) setStatus(t('features.dataTransfer.messages.exportSuccess'));
     } catch (e: any) {
       setStatus(e.message || t('features.dataTransfer.messages.exportFailed'));
     }

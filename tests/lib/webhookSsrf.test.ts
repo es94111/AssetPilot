@@ -420,6 +420,123 @@ test('Webhook 投遞：回應主體長度上限維持 500 字元（避免被對�
   }
 });
 
+test('Webhook 投遞：對方送出標頭後中斷連線必須收斂為可重試失敗，不得卡住 promise', async () => {
+  const harness = installWebhookNetHarness();
+  // 宣告 Content-Length 後只送一部分就斷線：Node 不會發出 'end'，若未處理 'close'／'aborted'
+  // 則投遞 promise 永不解決，投遞列會永遠卡在認領狀態。
+  const { server } = await startTestHttpsServer((_req, res) => {
+    res.writeHead(200, { 'Content-Type': 'text/plain', 'Content-Length': '1000' });
+    res.write('partial');
+    setTimeout(() => res.destroy(), 20);
+  });
+  try {
+    const result = await Promise.race([
+      sendWebhookPayload(target(harness.publicUrl(TEST_HOSTNAME, server, '/hooks'))),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('sendWebhookPayload 未在中斷後收斂（promise 卡住）')), 4_000),
+      ),
+    ]);
+    assert.equal(result.ok, false);
+    assert.equal(result.statusCode, 0, '中斷屬於連線層失敗，狀態碼 0 代表可重試');
+    assert.equal(result.blocked, false, '對方中斷不是本機安全政策阻擋');
+    assert.ok(result.error.length > 0);
+  } finally {
+    await new Promise<void>((resolve) => server.close(() => resolve()));
+    harness.restore();
+  }
+});
+
+test('Webhook 投遞：慢速滴流的對方不得拖過投遞逾時（絕對截止時間，非閒置計時器）', async () => {
+  const harness = installWebhookNetHarness();
+  // 每 80ms 送一點內容、永不結束：若逾時用閒置計時器就會被持續重置而無限延長，
+  // 拖過認領視窗後同一列可能被另一個 drain 重複投遞。
+  const { server } = await startTestHttpsServer((_req, res) => {
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    const timer = setInterval(() => res.write('drip'), 80);
+    res.on('close', () => clearInterval(timer));
+  });
+  try {
+    const startedAt = Date.now();
+    const result = await sendWebhookPayload(target(harness.publicUrl(TEST_HOSTNAME, server, '/hooks')), 600);
+    const elapsed = Date.now() - startedAt;
+    assert.equal(result.ok, false);
+    assert.equal(result.statusCode, 0);
+    assert.equal(result.blocked, false);
+    assert.ok(elapsed < 3_000, `必須在逾時附近收斂（實際 ${elapsed}ms）`);
+  } finally {
+    await new Promise<void>((resolve) => server.close(() => resolve()));
+    harness.restore();
+  }
+});
+
+test('Webhook 投遞：3xx 的對方持續送內容時仍須立刻釋放連線（不得洩漏 socket）', async () => {
+  const harness = installWebhookNetHarness();
+  let connections = 0;
+  const { server } = await startTestHttpsServer((_req, res) => {
+    res.writeHead(307, { Location: 'https://internal.example/steal' });
+    const timer = setInterval(() => res.write('keep-alive-chunk'), 50);
+    res.on('close', () => clearInterval(timer));
+  });
+  server.on('connection', () => {
+    connections += 1;
+  });
+
+  try {
+    const result = await sendWebhookPayload(target(harness.publicUrl(TEST_HOSTNAME, server, '/hooks')));
+    assert.equal(result.blocked, true);
+    assert.equal(result.statusCode, 307);
+
+    const open = () =>
+      new Promise<number>((resolve, reject) => {
+        server.getConnections((error, count) => (error ? reject(error) : resolve(count)));
+      });
+    // 等待對方／我們各自關閉連線（正常情況下我們主動 destroy）
+    for (let i = 0; i < 40 && (await open()) > 0; i += 1) {
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+    assert.equal(connections, 1, '只應建立一條連線');
+    assert.equal(await open(), 0, '拒投後必須立刻銷毀連線，不得被對方的內容拖住');
+  } finally {
+    await new Promise<void>((resolve) => server.close(() => resolve()));
+    harness.restore();
+  }
+});
+
+test('Webhook 投遞：請求帶 Content-Length，維持舊版 fetch() 的位元組框架', async () => {
+  const harness = installWebhookNetHarness();
+  let observed: { contentLength: string; transferEncoding: string; body: string } | null = null;
+  const { server } = await startTestHttpsServer((req, res) => {
+    let raw = '';
+    req.on('data', (chunk) => {
+      raw += chunk;
+    });
+    req.on('end', () => {
+      observed = {
+        contentLength: String(req.headers['content-length'] ?? ''),
+        transferEncoding: String(req.headers['transfer-encoding'] ?? ''),
+        body: raw,
+      };
+      res.writeHead(200);
+      res.end('ok');
+    });
+  });
+  try {
+    const rawBody = '{"id":"tx1","amount":100}';
+    const result = await sendWebhookPayload(
+      target(harness.publicUrl(TEST_HOSTNAME, server, '/hooks'), { rawBody }),
+    );
+    assert.equal(result.ok, true);
+    assert.ok(observed);
+    const seen = observed as unknown as { contentLength: string; transferEncoding: string; body: string };
+    assert.equal(seen.contentLength, String(Buffer.byteLength(rawBody)), '應帶正確的 Content-Length');
+    assert.equal(seen.transferEncoding, '', '不得使用 chunked（部分接收端會因此拒絕）');
+    assert.equal(seen.body, rawBody);
+  } finally {
+    await new Promise<void>((resolve) => server.close(() => resolve()));
+    harness.restore();
+  }
+});
+
 test('Webhook 投遞：無法解析的主機名視為可重試的連線錯誤（非政策阻擋）', async () => {
   const harness = installWebhookNetHarness();
   try {

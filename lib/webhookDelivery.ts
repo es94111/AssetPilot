@@ -127,6 +127,9 @@ export async function sendWebhookPayload(
   const timestampSeconds = Math.floor(Date.now() / 1000);
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
+    // 明確帶上 Content-Length：否則 Node 會改用 chunked 編碼，與舊版 fetch() 送出的
+    // 位元組框架不同，部分閘道／會讀 content-length 的接收端會因此驗證失敗。
+    'Content-Length': String(Buffer.byteLength(target.rawBody)),
     // Host 必須是原始主機名（而非鎖定的 IP），否則共享主機／反向代理會路由錯誤。
     Host: url.host,
     [WEBHOOK_EVENT_HEADER]: target.eventType,
@@ -136,6 +139,23 @@ export async function sendWebhookPayload(
   };
 
   return await new Promise<WebhookDeliveryResult>((resolve) => {
+    // 多條路徑（正常結束、對方中斷、逾時、連線錯誤）都可能收斂，必須只解決一次。
+    let settled = false;
+    let deadlineTimer: ReturnType<typeof setTimeout> | undefined;
+    const finish = (result: WebhookDeliveryResult) => {
+      if (settled) return;
+      settled = true;
+      if (deadlineTimer) clearTimeout(deadlineTimer);
+      resolve(result);
+    };
+    const connectionError = (message: string): WebhookDeliveryResult => ({
+      ok: false,
+      statusCode: 0,
+      responseBody: '',
+      error: message,
+      blocked: false,
+    });
+
     const request = https.request(
       {
         protocol: 'https:',
@@ -154,18 +174,23 @@ export async function sendWebhookPayload(
 
         // 3. 任何 3xx 一律拒投：不跟隨、不讀取、不重送。
         if (statusCode >= 300 && statusCode < 400) {
-          response.resume();
           // 附上目的地（去控制字元並截斷）方便使用者修正訂閱網址；此值來自對方伺服器，
           // 不可能是本站機密，但仍須清理以免污染日誌與 UI。
           const location = String(response.headers.location || '(未提供 Location)')
             .replace(/[\u0000-\u001f\u007f]+/g, ' ')
             .slice(0, 200);
-          resolve(
+          finish(
             blocked(
               `Webhook 目標回應 HTTP ${statusCode} 重新導向至 ${location}；依安全政策不跟隨重新導向`,
               statusCode,
             ),
           );
+          // 立即銷毀連線：對方若持續送內容（甚至無止盡），也不該由我們持有 socket。
+          // 先掛上 no-op error 監聽：destroy 可能讓 response 以 error 收尾，而沒有監聽器的
+          // 'error' 事件會直接拋出。
+          response.on('error', () => {});
+          response.destroy();
+          request.destroy();
           return;
         }
 
@@ -179,7 +204,7 @@ export async function sendWebhookPayload(
         });
         response.on('end', () => {
           const body = Buffer.concat(chunks).toString('utf8').slice(0, RESPONSE_BODY_MAX);
-          resolve({
+          finish({
             ok: statusCode >= 200 && statusCode < 300,
             statusCode,
             responseBody: body,
@@ -187,20 +212,27 @@ export async function sendWebhookPayload(
             blocked: false,
           });
         });
+        // 對方送出標頭後中途斷線（截斷的回應，例如反向代理逾時或被攻擊者刻意中斷）不會
+        // 觸發 'end'，若不在此收斂，promise 將永不解決、投遞列卡在認領狀態無法更新。
+        response.on('close', () => {
+          if (!response.complete) {
+            finish(connectionError('Webhook 回應未完整即中斷連線'));
+          }
+        });
+        response.on('error', (error: Error) => {
+          finish(connectionError(error instanceof Error ? error.message : String(error)));
+        });
       },
     );
 
-    request.setTimeout(timeoutMs, () => {
+    // 絕對上限（對應舊版 fetch() 實作的 AbortController 截止時間）。刻意不用
+    // request.setTimeout：那是「閒置」計時器，會被持續的少量資料重置，慢速滴流的
+    // 對方可藉此拖過認領視窗，讓同一列被另一個 drain 重複投遞。
+    deadlineTimer = setTimeout(() => {
       request.destroy(new Error(`Webhook 投遞逾時（${timeoutMs}ms）`));
-    });
+    }, timeoutMs);
     request.on('error', (error: Error) => {
-      resolve({
-        ok: false,
-        statusCode: 0,
-        responseBody: '',
-        error: error instanceof Error ? error.message : String(error),
-        blocked: false,
-      });
+      finish(connectionError(error instanceof Error ? error.message : String(error)));
     });
 
     request.write(target.rawBody);

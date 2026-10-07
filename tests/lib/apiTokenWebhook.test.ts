@@ -566,6 +566,62 @@ if (!DB_URL) {
     }
   });
 
+  test('批次內每筆 Webhook 都從實際認領時刻開始租約', async () => {
+    const { installWebhookNetHarness, startTestHttpsServer, TEST_HOSTNAME } =
+      await import('../support/webhookNetHarness.ts');
+    let hitCount = 0;
+    let secondLeaseRemaining = 0;
+    let secondDeliveryId = '';
+    const harness = installWebhookNetHarness();
+    const { server } = await startTestHttpsServer((_req, res) => {
+      hitCount += 1;
+      if (hitCount === 1) {
+        setTimeout(() => {
+          res.writeHead(200);
+          res.end('ok');
+        }, 6_000);
+        return;
+      }
+      if (hitCount === 2) {
+        const row = queryOne('SELECT next_retry_at FROM webhook_deliveries WHERE id = ?', [secondDeliveryId]);
+        secondLeaseRemaining = Number(row?.next_retry_at) - Date.now();
+      }
+      res.writeHead(200);
+      res.end('ok');
+    });
+
+    const userId = 'test_webhook_lease_' + uid();
+    createTestUser(userId);
+    try {
+      const url = harness.publicUrl(TEST_HOSTNAME, server, '/hooks');
+      const first = createWebhookSubscription(userId, 'https://example.com/first', ['transaction.created']);
+      const second = createWebhookSubscription(userId, 'https://example.com/second', ['transaction.created']);
+      getDB().run('UPDATE webhook_subscriptions SET url = ? WHERE id IN (?, ?)', [
+        url,
+        first.subscription.id,
+        second.subscription.id,
+      ]);
+      enqueueWebhookEvent(userId, 'transaction.created', { id: 'tx-lease' });
+
+      const firstDeliveryId = listWebhookDeliveries(userId, { subscriptionId: first.subscription.id })[0].id;
+      secondDeliveryId = String(listWebhookDeliveries(userId, { subscriptionId: second.subscription.id })[0].id);
+      // 保證批次排序為 first → second，即使資料庫在同一毫秒建立兩列。
+      getDB().run('UPDATE webhook_deliveries SET created_at = ? WHERE id = ?', [Date.now() - 2_000, firstDeliveryId]);
+      getDB().run('UPDATE webhook_deliveries SET created_at = ? WHERE id = ?', [Date.now() - 1_000, secondDeliveryId]);
+
+      assert.equal(await runDueWebhookDeliveries(), 2);
+      assert.equal(hitCount, 2);
+      assert.ok(
+        secondLeaseRemaining > 20_000,
+        `第二筆投遞應有完整的新租約（剩餘 ${secondLeaseRemaining}ms），不可沿用批次開始時的舊租約`,
+      );
+    } finally {
+      await new Promise<void>((resolve) => server.close(() => resolve()));
+      harness.restore();
+      cleanupUser(userId);
+    }
+  });
+
   test('簽章密鑰無法解密時直接永久失敗（不再無意義重試）', async () => {
     const userId = 'test_webhook_' + uid();
     createTestUser(userId);

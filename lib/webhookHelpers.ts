@@ -16,7 +16,6 @@ import {
   WEBHOOK_TIMESTAMP_HEADER,
   WEBHOOK_EVENT_HEADER,
   WEBHOOK_DELIVERY_HEADER,
-  DELIVERY_TIMEOUT_MS,
   MAX_DELIVERY_ATTEMPTS,
   decryptSecret,
   encryptSecret,
@@ -27,7 +26,7 @@ import {
   validateWebhookUrl,
   type WebhookEvent,
 } from './apiTokenCore';
-import { sendWebhookPayload } from './webhookDelivery';
+import { sendWebhookPayload, WEBHOOK_DELIVERY_CLAIM_LEASE_MS } from './webhookDelivery';
 
 export {
   WEBHOOK_EVENTS,
@@ -449,8 +448,9 @@ export async function attemptWebhookDelivery(
  * 由已驗證的使用者請求觸發（見 lib/transactionWebhooks.ts 與 requestMaintenance 慣例）。
  *
  * 以「原子認領」避免多個請求同時掃到同一列而重複投遞：先把 next_retry_at 往後推
- * 作為租約，只有認領成功的請求才會實際投遞。程序若在投遞中斷，該列仍會在租約到期後
- * （最多 2 倍逾時）被重新拾起，不會永久卡住。
+ * 作為租約，只有認領成功的請求才會實際投遞。每列在輪到自己時才開始租約，且租期
+ * 長於 DNS 與 HTTPS 投遞的最長逾時總和並留有緩衝；程序若在投遞中斷，該列仍會在
+ * 租約到期後被重新拾起，不會永久卡住。
  */
 export async function runDueWebhookDeliveries(now: number = Date.now()): Promise<number> {
   const rows = queryAll(
@@ -459,15 +459,18 @@ export async function runDueWebhookDeliveries(now: number = Date.now()): Promise
   ) as unknown as Array<{ id: string | number; attempts: string | number; next_retry_at: string | number | null }>;
 
   const db = getDB();
-  const claimedUntil = now + DELIVERY_TIMEOUT_MS * 2;
   let processed = 0;
   for (const row of rows) {
+    // rows 是按批次起始時刻查詢，但前面的 webhook 可能耗時數秒；每列必須以實際
+    // 認領時刻建立新租約，否則後續列的租期會在進入投遞前就被前一筆消耗掉。
+    const claimStartedAt = Math.max(Date.now(), now);
+    const claimedUntil = claimStartedAt + WEBHOOK_DELIVERY_CLAIM_LEASE_MS;
     db.run(
       "UPDATE webhook_deliveries SET next_retry_at = ? WHERE id = ? AND status = 'pending' AND next_retry_at = ?",
       [claimedUntil, String(row.id), Number(row.next_retry_at) || 0],
     );
     if (db.getRowsModified() === 0) continue; // 已被其他請求認領
-    await attemptWebhookDelivery(String(row.id), now);
+    await attemptWebhookDelivery(String(row.id), claimStartedAt);
     processed += 1;
   }
   return processed;

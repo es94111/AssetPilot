@@ -38,6 +38,10 @@ const HTTPS_DEFAULT_PORT = 443;
 // 的 `DELIVERY_TIMEOUT_MS * 2`，否則認領可能在使用中過期而被第二次認領重複投遞。
 const DNS_LOOKUP_TIMEOUT_MS = 5_000;
 
+// DNS may consume 5s and the HTTPS request another 10s; add one request-timeout margin so
+// another drain cannot reclaim an in-flight row even when the earlier batch took time.
+export const WEBHOOK_DELIVERY_CLAIM_LEASE_MS = DNS_LOOKUP_TIMEOUT_MS + DELIVERY_TIMEOUT_MS * 2;
+
 export interface WebhookDeliveryResult {
   ok: boolean;
   statusCode: number;
@@ -225,11 +229,30 @@ export async function sendWebhookPayload(
       },
     );
 
+    // HTTP 101 會走 ClientRequest 的 upgrade 事件，而不是一般 response callback；
+    // webhook 投遞不支援協定升級，需明確收斂結果並關閉升級後的 socket。
+    request.on('upgrade', (response, socket) => {
+      const statusCode = Number(response.statusCode) || 101;
+      finish({
+        ok: false,
+        statusCode,
+        responseBody: '',
+        error: `Webhook 目標回應 HTTP ${statusCode} Upgrade；不支援協定升級`,
+        blocked: false,
+      });
+      socket.on('error', () => {});
+      socket.destroy();
+      request.destroy();
+    });
+
     // 絕對上限（對應舊版 fetch() 實作的 AbortController 截止時間）。刻意不用
     // request.setTimeout：那是「閒置」計時器，會被持續的少量資料重置，慢速滴流的
     // 對方可藉此拖過認領視窗，讓同一列被另一個 drain 重複投遞。
     deadlineTimer = setTimeout(() => {
-      request.destroy(new Error(`Webhook 投遞逾時（${timeoutMs}ms）`));
+      const error = new Error(`Webhook 投遞逾時（${timeoutMs}ms）`);
+      // 先解決，避免某些 socket close/upgrade 時序下 destroy() 不發出 error 而懸掛。
+      finish(connectionError(error.message));
+      request.destroy(error);
     }, timeoutMs);
     request.on('error', (error: Error) => {
       finish(connectionError(error instanceof Error ? error.message : String(error)));

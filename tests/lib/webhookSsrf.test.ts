@@ -449,6 +449,38 @@ test('Webhook 投遞：對方送出標頭後中斷連線必須收斂為可重試
   }
 });
 
+test('Webhook 投遞：HTTP 101 升級回應必須結束投遞並關閉 socket', async () => {
+  const harness = installWebhookNetHarness();
+  const { server } = await startTestHttpsServer((_req, res) => {
+    res.writeHead(101, { Connection: 'Upgrade', Upgrade: 'webhook-test' });
+    res.flushHeaders();
+  });
+  try {
+    const result = await Promise.race([
+      sendWebhookPayload(target(harness.publicUrl(TEST_HOSTNAME, server, '/hooks')), 600),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('HTTP 101 Upgrade 未能收斂')), 2_000),
+      ),
+    ]);
+    assert.equal(result.ok, false);
+    assert.equal(result.statusCode, 101, 'HTTP 101 應由 upgrade 路徑回報，而非等待逾時');
+    assert.equal(result.blocked, false);
+    assert.match(result.error, /不支援協定升級/);
+
+    const open = () =>
+      new Promise<number>((resolve, reject) => {
+        server.getConnections((error, count) => (error ? reject(error) : resolve(count)));
+      });
+    for (let i = 0; i < 20 && (await open()) > 0; i += 1) {
+      await new Promise((resolve) => setTimeout(resolve, 25));
+    }
+    assert.equal(await open(), 0, '不支援的升級回應不得留下連線');
+  } finally {
+    await new Promise<void>((resolve) => server.close(() => resolve()));
+    harness.restore();
+  }
+});
+
 test('Webhook 投遞：慢速滴流的對方不得拖過投遞逾時（絕對截止時間，非閒置計時器）', async () => {
   const harness = installWebhookNetHarness();
   // 每 80ms 送一點內容、永不結束：若逾時用閒置計時器就會被持續重置而無限延長，

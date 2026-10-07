@@ -67,6 +67,9 @@ let hardFail = 0;
 let softWarn = 0;
 
 console.log(`=== i18n 字典對齊（來源：${SOURCE_LOCALE}，共 ${sourceKeys.size} 鍵）===\n`);
+// zh-TW is the canonical source; generate-shared-i18n --check validates its generated output.
+// Print it explicitly so the report accounts for all ten supported locales (source + nine translations).
+console.log(`  ✓ ${SOURCE_LOCALE.padEnd(6)} 來源基準（已由生成輸出檢查驗證）`);
 
 for (const locale of LOCALES) {
   if (locale === SOURCE_LOCALE) continue;

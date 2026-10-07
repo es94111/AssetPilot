@@ -5,12 +5,23 @@
 // 在無 DB 環境仍可通過。
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import crypto from 'node:crypto';
 
 const DB_URL = process.env.DATABASE_URL || process.env.POSTGRES_URL;
 
 if (!DB_URL) {
   test('sharedLedgerClients（略過：未設定 DATABASE_URL/POSTGRES_URL，需搭配 PostgreSQL 執行完整驗證）', () => {});
 } else {
+  // 測試會經由已驗證請求觸發 triggerUserRequestMaintenance()，其內部以
+  // fire-and-forget 方式呼叫股價自動更新；停用以避免測試環境對外發出真實
+  // 股價 API 請求（與 tests/lib/sharedLedger.test.ts 既有慣例一致）。
+  process.env.STOCK_AUTO_UPDATE_ENABLED = 'false';
+  // 要實際呼叫 app/api/line/webhook/route.ts 的 POST（而非只測 schema），需要讓
+  // lib/lineMessaging.ts 於模組載入時讀到非空密鑰；這兩個常數在該模組載入時
+  // 就會被求值快取，必須在任何 import 之前設定完成。
+  process.env.LINE_MESSAGING_CHANNEL_SECRET = 'test_281_line_channel_secret';
+  process.env.LINE_MESSAGING_CHANNEL_ACCESS_TOKEN = 'test_281_line_channel_access_token';
+
   const { initDB, getDB, queryOne } = await import('../../lib/db.ts');
   const { uid } = await import('../../lib/userDefaults.ts');
   const { createSharedLedger } = await import('../../lib/ledgerCore.ts');
@@ -60,6 +71,40 @@ if (!DB_URL) {
 
   function removeMember(person: string) {
     db.run('DELETE FROM ledger_members WHERE ledger_id = ? AND user_id = ?', [ledgerId, person]);
+  }
+
+  // 以真實 HMAC 簽名送出一個 LINE webhook 事件，實際呼叫 webhook.POST()
+  // （而非直接操作 line_bot_states 資料表），用來驗證 handleEvent 內的
+  // 帳本解析、getLineBotState／setLineBotState 真的以 ledger_id 分離。
+  // 送出期間會攔截 fetch 到 api.line.me 的呼叫，避免測試對外發出真實請求。
+  async function postLineEvent(
+    webhookModule: { POST: (req: Request) => Promise<Response> },
+    event: Record<string, unknown>,
+  ): Promise<void> {
+    const body = JSON.stringify({ events: [event] });
+    const signature = crypto
+      .createHmac('sha256', process.env.LINE_MESSAGING_CHANNEL_SECRET!)
+      .update(body)
+      .digest('base64');
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = (async (input: unknown, init?: unknown) => {
+      const href = typeof input === 'string' ? input : (input as { url?: string })?.url || '';
+      if (href.includes('api.line.me')) {
+        return new Response(JSON.stringify({}), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      }
+      return originalFetch(input as never, init as never);
+    }) as typeof fetch;
+    try {
+      const req = new Request('http://localhost/api/line/webhook', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'x-line-signature': signature },
+        body,
+      });
+      const res = await webhookModule.POST(req);
+      assert.equal(res.status, 200, `LINE webhook 事件應回 200，實得 ${res.status}`);
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
   }
 
   type McpClient = InstanceType<typeof Client>;
@@ -368,14 +413,16 @@ if (!DB_URL) {
       db.run('DELETE FROM monthly_report_send_log WHERE user_id = ? AND year_month = ?', [owner, month]);
     });
 
-    await test('LINE 對話狀態以帳本分離：不同帳本各自保留自己的草稿', async () => {
+    await test('LINE 對話狀態以帳本分離：不同帳本各自保留自己的草稿（實際呼叫 webhook.POST）', async () => {
       const webhook = await import('../../app/api/line/webhook/route.ts');
       const lineUserId = `t281_line_${uid()}`;
       db.run('UPDATE users SET line_id = ? WHERE id = ?', [lineUserId, owner]);
       const personalLedger = `personal:${owner}`;
       const now = Date.now();
+      const replyToken = () => `rt_${uid()}`;
 
-      // 分別在兩個帳本建立對話草稿（模擬切換帳本後各自輸入到一半）。
+      // 分別在兩個帳本預先建立對話草稿（模擬切換帳本後各自輸入到一半），
+      // 兩筆都還沒附照片。
       db.run('DELETE FROM line_bot_states WHERE line_user_id = ?', [lineUserId]);
       db.run(
         `INSERT INTO line_bot_states (line_user_id, user_id, action, tx_type, payload, ledger_id, updated_at)
@@ -388,20 +435,55 @@ if (!DB_URL) {
         [lineUserId, owner, 'record_amount', 'expense', JSON.stringify({ date: '2026-10-02', type: 'expense', amount: 200 }), ledgerId, now],
       );
 
-      const personalDraft = JSON.parse(String(queryOne(
-        'SELECT payload FROM line_bot_states WHERE line_user_id = ? AND ledger_id = ?',
-        [lineUserId, personalLedger],
-      )?.payload));
-      const sharedDraft = JSON.parse(String(queryOne(
+      // 1) 真實送出 ledger_select postback 切到共享帳本 → 驗證 setActiveLineLedgerId
+      //    真的把選擇寫回去、且下一個事件能讀回來（迴歸測試：曾發生 setter 寫
+      //    activeLedgerId、getter 卻讀 ledgerId 的鍵名不一致，導致選擇永遠讀不回來）。
+      await postLineEvent(webhook, {
+        type: 'postback', replyToken: replyToken(), source: { userId: lineUserId },
+        postback: { data: `action=ledger_select&ledger=${encodeURIComponent(ledgerId)}` },
+      });
+
+      // 2) 送一張照片事件（不帶 ledger 參數，純粹依賴「上次選取」的帳本）→
+      //    應該命中共享帳本的草稿並把照片附加上去，個人帳本草稿不受影響。
+      await postLineEvent(webhook, {
+        type: 'message', replyToken: replyToken(), source: { userId: lineUserId },
+        message: { type: 'image', id: `img_shared_${uid()}` },
+      });
+
+      const sharedAfter = JSON.parse(String(queryOne(
         'SELECT payload FROM line_bot_states WHERE line_user_id = ? AND ledger_id = ?',
         [lineUserId, ledgerId],
       )?.payload));
-      assert.equal(personalDraft.amount, 100);
-      assert.equal(sharedDraft.amount, 200);
-      assert.notEqual(personalDraft.date, sharedDraft.date);
+      const personalAfterSharedPhoto = JSON.parse(String(queryOne(
+        'SELECT payload FROM line_bot_states WHERE line_user_id = ? AND ledger_id = ?',
+        [lineUserId, personalLedger],
+      )?.payload));
+      assert.equal(sharedAfter.amount, 200, '共享帳本草稿金額應維持不變');
+      assert.equal(sharedAfter.linePhotoMessageIds?.length, 1, '照片應附加到目前選取（共享）帳本的草稿');
+      assert.equal(personalAfterSharedPhoto.linePhotoMessageIds, undefined, '個人帳本草稿不應被共享帳本的照片事件誤寫');
 
-      // webhook 模組可載入，且狀態查詢確實以複合鍵（line_user_id, ledger_id）為準。
-      assert.equal(typeof webhook.POST, 'function');
+      // 3) 切回個人帳本，再送一張照片 → 應該命中個人帳本草稿，共享帳本草稿維持剛才的 1 張不變。
+      await postLineEvent(webhook, {
+        type: 'postback', replyToken: replyToken(), source: { userId: lineUserId },
+        postback: { data: `action=ledger_select&ledger=${encodeURIComponent(personalLedger)}` },
+      });
+      await postLineEvent(webhook, {
+        type: 'message', replyToken: replyToken(), source: { userId: lineUserId },
+        message: { type: 'image', id: `img_personal_${uid()}` },
+      });
+
+      const personalAfter = JSON.parse(String(queryOne(
+        'SELECT payload FROM line_bot_states WHERE line_user_id = ? AND ledger_id = ?',
+        [lineUserId, personalLedger],
+      )?.payload));
+      const sharedAfterSwitchBack = JSON.parse(String(queryOne(
+        'SELECT payload FROM line_bot_states WHERE line_user_id = ? AND ledger_id = ?',
+        [lineUserId, ledgerId],
+      )?.payload));
+      assert.equal(personalAfter.amount, 100, '個人帳本草稿金額應維持不變');
+      assert.equal(personalAfter.linePhotoMessageIds?.length, 1, '照片應附加到切回後目前選取（個人）帳本的草稿');
+      assert.equal(sharedAfterSwitchBack.linePhotoMessageIds?.length, 1, '共享帳本草稿不應被切回個人帳本後的照片事件誤寫，應維持原有 1 張');
+
       db.run('UPDATE users SET line_id = ? WHERE id = ?', ['', owner]);
       db.run('DELETE FROM line_bot_states WHERE line_user_id = ?', [lineUserId]);
     });
@@ -545,12 +627,25 @@ if (!DB_URL) {
       }));
       assert.equal(outsiderDenied.status, 404);
 
-      // 更新時指定已無權限的帳本（editor 已被移出）→ 404，不會把排程留在無權限帳本。
+      // 更新時指定已無權限的帳本 → 404，不會把排程留在無權限帳本。
+      // 須由 editor 更新「自己」建立的排程（而非 owner 的排程），否則會先被
+      // 路由既有的擁有權檢查（WHERE id = ? AND user_id = ?）擋下 404，
+      // 根本不會跑到新增的帳本授權重新檢查，使此案例形同未測試。
+      const editorOwnCreated = await schedules.POST(request(editor, '/api/user/report-schedules', 'POST', {
+        freq: 'daily',
+        ledgerId,
+        notifyEmail: true,
+      }));
+      assert.equal(editorOwnCreated.status, 201);
+      const editorOwnBody = await editorOwnCreated.json();
+      removeMember(editor);
       const editDenied = await scheduleItem.PUT(
-        request(editor, `/api/user/report-schedules/${body.id}`, 'PUT', { ledgerId }),
-        { params: Promise.resolve({ id: body.id }) },
+        request(editor, `/api/user/report-schedules/${editorOwnBody.id}`, 'PUT', { ledgerId }),
+        { params: Promise.resolve({ id: editorOwnBody.id }) },
       );
       assert.equal(editDenied.status, 404);
+      db.run('DELETE FROM report_schedules WHERE id = ?', [editorOwnBody.id]);
+      addMember(editor, 'editor');
 
       const switched = await scheduleItem.PUT(
         request(owner, `/api/user/report-schedules/${body.id}`, 'PUT', { ledgerId: `personal:${owner}` }),

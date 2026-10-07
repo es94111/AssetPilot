@@ -64,6 +64,9 @@ class ApiClient {
     '/api/stock-realized-pl',
     '/api/stock-settings',
     '/api/exchange-rates',
+    // 010-bank-broker-reconciliation（issue #251）：對帳匯入讀寫帳本交易，
+    // 需與 lib/ledgerPolicy.ts 的 LEDGER_DATA_API_PREFIXES 一致。
+    '/api/reconciliation',
   ];
 
   /// 目前選取的帳本 id；空字串代表個人帳本。

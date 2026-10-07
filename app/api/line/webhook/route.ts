@@ -175,8 +175,8 @@ function getActiveLineLedgerId(lineUserId: string): string {
   ));
   if (!row?.payload) return '';
   try {
-    const parsed = JSON.parse(String(row.payload)) as { ledgerId?: unknown };
-    return typeof parsed?.ledgerId === 'string' ? parsed.ledgerId : '';
+    const parsed = JSON.parse(String(row.payload)) as { activeLedgerId?: unknown };
+    return typeof parsed?.activeLedgerId === 'string' ? parsed.activeLedgerId : '';
   } catch {
     return '';
   }
@@ -635,8 +635,10 @@ async function handleEvent(event: LineWebhookEvent, request: Request): Promise<v
     : resolveLedgerScope({ userId: user.id, ledgerId: '' }) as LedgerScope;
   const ledgerUser: UserRow = { ...user, timezone: ledgerScope.timezone };
   // 已離開／被移除的帳本仍存在選擇記錄中時，改回個人帳本並清掉記錄，
-  // 避免每次訊息都重試一次注定失敗的解析。
-  if (!activeLedger.ok && storedLedgerId) {
+  // 避免每次訊息都重試一次注定失敗的解析。僅在「儲存的選擇」本身已失效時才清除；
+  // 不可因單次請求夾帶的舊帳本 id（例如過期的精靈步驟按鈕）解析失敗，
+  // 就連坐清掉目前仍有效的帳本選擇。
+  if (storedLedgerId && !resolveLedgerScope({ userId: user.id, ledgerId: storedLedgerId }).ok) {
     clearLineBotState(lineUserId, '');
   }
   // 寫入一律檢查角色：viewer 只讀不寫（resolveLedgerScope 的 write 旗標）。

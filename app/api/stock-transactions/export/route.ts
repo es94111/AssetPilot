@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { NextResponse } from "next/server";
 import { requireAuth } from "../../../../lib/apiHelpers";
-import { queryAll } from "../../../../lib/db";
+import { queryAll, queryAllInKeysetPages } from "../../../../lib/db";
 import {
   buildCsv,
   writeOperationAudit,
@@ -40,16 +40,16 @@ export async function GET(request) {
       params.push(dateTo);
     }
 
-    const sql = `SELECT st.date, st.type, st.shares, st.price, st.fee, st.tax, st.realized_pl,
+    const baseSql = `SELECT st.date, st.type, st.shares, st.price, st.fee, st.tax, st.realized_pl,
       st.tax_auto_calculated, st.note,
-      s.symbol, s.market, s.name AS stock_name, s.stock_type, s.currency, a.name AS account_name
+      s.symbol, s.market, s.name AS stock_name, s.stock_type, s.currency, a.name AS account_name,
+      COALESCE(st.created_at, 0) AS export_cursor_created_at, st.id AS export_cursor_id
       FROM stock_transactions st
       JOIN stocks s ON st.stock_id = s.id AND s.user_id = st.user_id
       LEFT JOIN accounts a ON st.account_id = a.id AND a.user_id = st.user_id
-      ${where}
-      ORDER BY st.date DESC, st.created_at DESC`;
-    const rows = queryAll(sql, params);
-
+      ${where}`;
+    const orderBy = 'st.date, COALESCE(st.created_at, 0), st.id';
+    const sql = `${baseSql} ORDER BY st.date DESC, st.created_at DESC`;
     const headers = [
       "日期",
       "市場",
@@ -108,13 +108,21 @@ export async function GET(request) {
       ];
       return createXlsxExportResponse({
         columns,
-        rows: mapXlsxRows(rows, exportRow),
-        rowCount: rows.length,
+        rows: mapXlsxRows(
+          queryAllInKeysetPages(baseSql, params, {
+            cursorColumns: ['st.date', 'COALESCE(st.created_at, 0)', 'st.id'],
+            orderBy: 'st.date, COALESCE(st.created_at, 0), st.id',
+            direction: 'DESC',
+            cursorFromRow: (row) => [row.date, row.export_cursor_created_at, row.export_cursor_id],
+          }),
+          exportRow,
+        ),
         filenamePrefix: "stock-transactions",
         audit: { userId: auth.userId, role: "user", action: "export_stock_transactions", ipAddress, userAgent, dateFrom, dateTo },
       });
     }
 
+    const rows = queryAll(sql, params);
     const dataRows = rows.map(exportRow);
     const csv = buildCsv(headers, dataRows);
     const filename = `stock-transactions-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}.csv`;

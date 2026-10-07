@@ -11,6 +11,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import JSZip from 'jszip';
+import { createXlsxExportResponse, mapXlsxRows } from '../../lib/xlsxExport.ts';
 
 const DB_URL = process.env.DATABASE_URL || process.env.POSTGRES_URL;
 
@@ -18,7 +19,7 @@ if (!DB_URL) {
   test('xlsxExportRoute（略過：未設定 DATABASE_URL/POSTGRES_URL，需搭配 PostgreSQL 執行完整驗證）', () => {});
 } else {
   test('xlsx 匯出端點：CSV／XLSX 雙格式與稽核', async (t) => {
-  const { initDB, getDB, queryAll } = await import('../../lib/db.ts');
+  const { initDB, getDB, queryAll, queryAllInKeysetPages } = await import('../../lib/db.ts');
   const { uid } = await import('../../lib/userDefaults.ts');
   const { createLoginSession } = await import('../../lib/sessionHelpers.ts');
   const { NextRequest } = await import('next/server');
@@ -60,6 +61,15 @@ if (!DB_URL) {
     getDB().run(
       'INSERT INTO accounts (id,user_id,name,initial_balance,currency,created_at) VALUES (?,?,?,?,?,?)',
       [uid(), userId, '現金', 5000.5, 'TWD', '2026-08-14'],
+    );
+    const parentCategoryId = uid();
+    getDB().run(
+      'INSERT INTO categories (id,user_id,name,type,color,parent_id,sort_order) VALUES (?,?,?,?,?,?,?)',
+      [parentCategoryId, userId, '飲食', 'expense', '#abc', '', 1],
+    );
+    getDB().run(
+      'INSERT INTO categories (id,user_id,name,type,color,parent_id,sort_order) VALUES (?,?,?,?,?,?,?)',
+      [uid(), userId, '早餐', 'expense', '#123456', parentCategoryId, 1],
     );
 
     async function assertXlsxResponse(res: Response, expectedFilename: RegExp) {
@@ -128,7 +138,79 @@ if (!DB_URL) {
       await assertXlsxResponse(accountRes, /filename="accounts-\d{8}\.xlsx"/);
 
       const categoryRes = await categoriesExport.GET(request('/api/categories/export?format=xlsx'));
-      await assertXlsxResponse(categoryRes, /filename="categories-\d{8}\.xlsx"/);
+      const categoryZip = await assertXlsxResponse(categoryRes, /filename="categories-\d{8}\.xlsx"/);
+      const categorySheet = await categoryZip.file('xl/worksheets/sheet1.xml')!.async('string');
+      assert.ok(categorySheet.includes('<t>飲食</t>'), '應包含父分類列');
+      assert.ok(categorySheet.includes('<t>早餐</t>'), '應包含子分類列');
+      assert.ok(categorySheet.includes('<t>#AABBCC</t>'), '父分類色碼應正規化為大寫六碼');
+      const childRow = /<row r="3"[^>]*>[\s\S]*?<\/row>/.exec(categorySheet)?.[0] || '';
+      assert.ok(childRow.includes('<t>飲食</t>'), '子分類列應包含父分類名稱');
+    });
+
+    await t.test('XLSX 多頁資料逐頁輸出並在完成後記錄實際列數', async () => {
+      const res = createXlsxExportResponse({
+        columns: [{ header: '序號', type: 'number' }],
+        rows: mapXlsxRows(
+          queryAllInKeysetPages<Record<string, string | number | null>>(
+            'SELECT n AS value FROM generate_series(1, 1001) AS series(n) WHERE n >= 1',
+            [],
+            {
+              cursorColumns: ['n'],
+              orderBy: 'n',
+              direction: 'ASC',
+              pageSize: 400,
+              cursorFromRow: (row) => [row.value],
+            },
+          ),
+          (row) => [row.value],
+        ),
+        filenamePrefix: 'test-paged-export',
+        audit: {
+          userId,
+          role: 'user',
+          action: 'test_xlsx_paged_export',
+          ipAddress: '',
+          userAgent: '',
+        },
+      });
+      const buffer = Buffer.from(await res.arrayBuffer());
+      const zip = await JSZip.loadAsync(buffer);
+      const sheetXml = await zip.file('xl/worksheets/sheet1.xml')!.async('string');
+      assert.match(sheetXml, /r="A1002"[^>]*>[^<]*<v>1001<\/v>/, '最後一筆資料須跨頁輸出');
+      const audit = queryAll(
+        "SELECT result, metadata FROM data_operation_audit_log WHERE user_id = ? AND action = 'test_xlsx_paged_export'",
+        [userId],
+      );
+      assert.equal(audit.length, 1);
+      assert.equal(audit[0].result, 'success');
+      assert.ok(String(audit[0].metadata).includes('"rows":1001'));
+    });
+
+    await t.test('XLSX 串流中途失敗時不記錄成功稽核', async () => {
+      async function* failingRows() {
+        yield ['2026-08-14', 1];
+        throw new Error('synthetic stream failure');
+      }
+      const res = createXlsxExportResponse({
+        columns: [{ header: '日期', type: 'date' }, { header: '金額', type: 'number' }],
+        rows: failingRows(),
+        filenamePrefix: 'test-failing-export',
+        audit: {
+          userId,
+          role: 'user',
+          action: 'test_xlsx_stream_failure',
+          ipAddress: '',
+          userAgent: '',
+        },
+      });
+      await assert.rejects(() => res.arrayBuffer());
+      const audit = queryAll(
+        "SELECT result, metadata FROM data_operation_audit_log WHERE user_id = ? AND action = 'test_xlsx_stream_failure'",
+        [userId],
+      );
+      assert.equal(audit.length, 1);
+      assert.equal(audit[0].result, 'failed');
+      assert.ok(String(audit[0].metadata).includes('synthetic stream failure'));
     });
 
     await t.test('無效 format 值回退 CSV，不會產生非預期格式', async () => {

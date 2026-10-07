@@ -452,7 +452,7 @@ Docker 多數參數已有合理預設，只需關心「自動產生」與「功�
 ### 資料治理
 
 - **CSV 匯出**：交易／分類／股票交易／股利紀錄；純伺服器端 stream + UTF-8 BOM + Formula Injection 防護
-- **Excel 匯出**：同一組匯出端點加上 `?format=xlsx`，欄位標題、日期與數字（金額）為正確型別，沿用 Formula Injection 防護；`xlsx-stream-writer` 逐列串流產生，不先累積整份工作表或檔案
+- **Excel 匯出**：同一組匯出端點加上 `?format=xlsx`，欄位標題、日期與數字（金額）為正確型別，沿用 Formula Injection 防護；`xlsx-stream-writer` 逐列串流產生，資料庫查詢以固定 1,000 列分頁，不先累積整份工作表或檔案
 - **CSV 匯入**：互斥鎖（重入回 409）+ 全 DB transaction 原子化 + 進度回饋
 - **整檔備份／還原**：SQL 備份下載／上傳、還原失敗自動回滾、管理員列管 5 份／90 天
 - **稽核日誌**：管理員與使用者分開檢視；過濾、CSV 匯出、清空、保留天數設定

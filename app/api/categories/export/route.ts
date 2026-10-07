@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '../../../../lib/apiHelpers';
-import { queryAll, queryOne } from '../../../../lib/db';
+import { queryAll, queryAllInKeysetPages, queryOne } from '../../../../lib/db';
 import { buildCsv, writeOperationAudit } from '../../../../lib/auditHelpers';
 import { getRequestIpFromHeaders } from '../../../../lib/loginHelpers';
 import {
@@ -36,6 +36,42 @@ function normalizeHexColor(c: unknown): string {
   return c;
 }
 
+async function* streamCategoryExportRows(userId: string): AsyncGenerator<CsvCell[]> {
+  const parents = queryAllInKeysetPages(
+    `SELECT type, name, color, COALESCE(sort_order, 0) AS export_cursor_sort_order, id AS export_cursor_id
+     FROM categories
+     WHERE user_id = ? AND (parent_id IS NULL OR parent_id = '')`,
+    [userId],
+    {
+      cursorColumns: ['COALESCE(sort_order, 0)', 'name', 'id'],
+      orderBy: 'COALESCE(sort_order, 0), name, id',
+      direction: 'ASC',
+      cursorFromRow: (row) => [row.export_cursor_sort_order, row.name, row.export_cursor_id],
+    },
+  );
+  for await (const parent of parents) {
+    yield [parent.type === 'income' ? '收入' : '支出', parent.name || '', '', normalizeHexColor(parent.color)];
+  }
+
+  const children = queryAllInKeysetPages(
+    `SELECT c.type, c.name, c.color, p.name AS parent_name,
+      COALESCE(c.sort_order, 0) AS export_cursor_sort_order, c.id AS export_cursor_id
+     FROM categories c
+     LEFT JOIN categories p ON p.id = c.parent_id AND p.user_id = c.user_id
+     WHERE c.user_id = ? AND c.parent_id IS NOT NULL AND c.parent_id <> ''`,
+    [userId],
+    {
+      cursorColumns: ['COALESCE(c.sort_order, 0)', 'c.name', 'c.id'],
+      orderBy: 'COALESCE(c.sort_order, 0), c.name, c.id',
+      direction: 'ASC',
+      cursorFromRow: (row) => [row.export_cursor_sort_order, row.name, row.export_cursor_id],
+    },
+  );
+  for await (const child of children) {
+    yield [child.type === 'income' ? '收入' : '支出', child.name || '', child.parent_name || '', normalizeHexColor(child.color)];
+  }
+}
+
 export async function GET(request: NextRequest) {
   const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
@@ -44,24 +80,7 @@ export async function GET(request: NextRequest) {
   const format = resolveExportFormat(searchParams.get('format'));
 
   try {
-    const cats = asRows<CategoryExportRow>(queryAll(
-      "SELECT * FROM categories WHERE user_id = ? ORDER BY (parent_id IS NULL OR parent_id = '') DESC, sort_order ASC, name ASC",
-      [auth.userId]
-    ));
-    const idMap: Record<string, CategoryExportRow> = {};
-    cats.forEach(c => { idMap[c.id] = c; });
-    const parents = cats.filter(c => !c.parent_id);
-    const children = cats.filter(c => c.parent_id);
     const headers = ['類型', '分類名稱', '上層分類', '顏色'];
-    const dataRows: CsvCell[][] = [];
-    parents.forEach(p => {
-      dataRows.push([p.type === 'income' ? '收入' : '支出', p.name || '', '', normalizeHexColor(p.color || '')]);
-    });
-    children.forEach(c => {
-      const parent = idMap[c.parent_id || ''];
-      dataRows.push([c.type === 'income' ? '收入' : '支出', c.name || '', parent?.name || '', normalizeHexColor(c.color || '')]);
-    });
-
     const userRow = queryOne('SELECT is_admin FROM users WHERE id = ?', [auth.actorUserId]);
     const ipAddress = getRequestIpFromHeaders(request.headers);
     const userAgent = request.headers.get('user-agent') || '';
@@ -76,12 +95,28 @@ export async function GET(request: NextRequest) {
       ];
       return createXlsxExportResponse({
         columns,
-        rows: dataRows,
-        rowCount: dataRows.length,
+        rows: streamCategoryExportRows(auth.userId),
         filenamePrefix: 'categories',
         audit: { userId: auth.userId, role, action: 'export_categories', ipAddress, userAgent },
       });
     }
+
+    const cats = asRows<CategoryExportRow>(queryAll(
+      "SELECT * FROM categories WHERE user_id = ? ORDER BY (parent_id IS NULL OR parent_id = '') DESC, sort_order ASC, name ASC",
+      [auth.userId]
+    ));
+    const idMap: Record<string, CategoryExportRow> = {};
+    cats.forEach(c => { idMap[c.id] = c; });
+    const parents = cats.filter(c => !c.parent_id);
+    const children = cats.filter(c => c.parent_id);
+    const dataRows: CsvCell[][] = [];
+    parents.forEach(p => {
+      dataRows.push([p.type === 'income' ? '收入' : '支出', p.name || '', '', normalizeHexColor(p.color || '')]);
+    });
+    children.forEach(c => {
+      const parent = idMap[c.parent_id || ''];
+      dataRows.push([c.type === 'income' ? '收入' : '支出', c.name || '', parent?.name || '', normalizeHexColor(c.color || '')]);
+    });
 
     const csv = buildCsv(headers, dataRows);
     const filename = `categories-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}.csv`;

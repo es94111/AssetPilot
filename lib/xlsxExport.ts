@@ -105,11 +105,11 @@ export async function* buildXlsxRows(
   yield* xlsxRowsSync(columns, rows as Iterable<XlsxRow>);
 }
 
-export function* mapXlsxRows<T>(
-  rows: Iterable<T>,
+export async function* mapXlsxRows<T>(
+  rows: Iterable<T> | AsyncIterable<T>,
   mapRow: (row: T) => XlsxRow,
-): Generator<XlsxRow> {
-  for (const row of rows) yield mapRow(row);
+): AsyncGenerator<XlsxRow> {
+  for await (const row of rows) yield mapRow(row);
 }
 
 /** 測試用的有限資料 materializer；正式路由直接使用 buildXlsxRows 串流。 */
@@ -169,7 +169,6 @@ export const XLSX_CONTENT_TYPE = 'application/vnd.openxmlformats-officedocument.
 export interface XlsxExportArgs {
   columns: readonly XlsxColumn[];
   rows: XlsxRows;
-  rowCount: number;
   filenamePrefix: string;
   audit: {
     userId: string;
@@ -182,29 +181,64 @@ export interface XlsxExportArgs {
   };
 }
 
-/** 建立串流下載回應並寫入與 CSV 匯出一致的操作稽核。 */
+/** 建立串流下載回應，待檔案串流完整結束後才記錄成功稽核。 */
 export function createXlsxExportResponse(args: XlsxExportArgs): Response {
   const filename = xlsxFilename(args.filenamePrefix);
-  const stream = createXlsxStream({ columns: args.columns, rows: args.rows });
+  let rowsWritten = 0;
+  let auditWritten = false;
+  const rows = (async function* (): AsyncGenerator<XlsxRow> {
+    for await (const row of args.rows) {
+      rowsWritten += 1;
+      yield row;
+    }
+  })();
+  const source = createXlsxStream({ columns: args.columns, rows });
+  const reader = source.getReader();
 
-  writeOperationAudit({
-    userId: args.audit.userId,
-    role: args.audit.role,
-    action: args.audit.action,
-    ipAddress: args.audit.ipAddress,
-    userAgent: args.audit.userAgent,
-    result: 'success',
-    isAdminOperation: false,
-    metadata: {
-      rows: args.rowCount,
-      filename,
-      dateFrom: args.audit.dateFrom,
-      dateTo: args.audit.dateTo,
-      format: 'xlsx',
+  const audit = (result: string, error?: unknown) => {
+    if (auditWritten) return;
+    auditWritten = true;
+    writeOperationAudit({
+      userId: args.audit.userId,
+      role: args.audit.role,
+      action: args.audit.action,
+      ipAddress: args.audit.ipAddress,
+      userAgent: args.audit.userAgent,
+      result,
+      isAdminOperation: false,
+      metadata: {
+        rows: rowsWritten,
+        filename,
+        dateFrom: args.audit.dateFrom,
+        dateTo: args.audit.dateTo,
+        format: 'xlsx',
+        ...(error ? { failure_reason: String(error instanceof Error ? error.message : error).slice(0, 200) } : {}),
+      },
+    });
+  };
+
+  const responseStream = new ReadableStream<Uint8Array>({
+    async pull(controller) {
+      try {
+        const next = await reader.read();
+        if (next.done) {
+          audit('success');
+          controller.close();
+        } else {
+          controller.enqueue(next.value);
+        }
+      } catch (error) {
+        audit('failed', error);
+        controller.error(error);
+      }
+    },
+    async cancel(reason) {
+      audit('cancelled', reason);
+      await reader.cancel(reason).catch(() => undefined);
     },
   });
 
-  return new Response(stream, {
+  return new Response(responseStream, {
     headers: {
       'Content-Type': XLSX_CONTENT_TYPE,
       'Content-Disposition': `attachment; filename="${filename}"`,

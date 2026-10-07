@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '../../../../lib/apiHelpers';
-import { queryAll, queryOne } from '../../../../lib/db';
+import { queryAll, queryAllInKeysetPages, queryOne } from '../../../../lib/db';
 import { buildCsv, writeOperationAudit, isValidIso8601Date } from '../../../../lib/auditHelpers';
 import { getRequestIpFromHeaders } from '../../../../lib/loginHelpers';
 import {
@@ -75,21 +75,21 @@ export async function GET(request: NextRequest) {
     if (dateFrom && isValidIso8601Date(dateFrom)) { where += ' AND t.date >= ?'; params.push(dateFrom); }
     if (dateTo && isValidIso8601Date(dateTo)) { where += ' AND t.date <= ?'; params.push(dateTo); }
 
-    const sql = `SELECT t.date, t.type, t.amount, t.currency, t.original_amount, t.fx_rate,
+    const baseSql = `SELECT t.date, t.type, t.amount, t.currency, t.original_amount, t.fx_rate,
       t.twd_amount, t.fx_fee, t.exclude_from_stats, t.tags, t.note,
       c.name AS cat_name, c.parent_id AS cat_parent_id,
       pc.name AS parent_cat_name,
       a.name AS account_name,
-      ta.name AS transfer_to_account_name
+      ta.name AS transfer_to_account_name,
+      COALESCE(t.created_at, 0) AS export_cursor_created_at, t.id AS export_cursor_id
       FROM transactions t
       LEFT JOIN categories c ON t.category_id = c.id
       LEFT JOIN categories pc ON c.parent_id = pc.id
       LEFT JOIN accounts a ON t.account_id = a.id
       LEFT JOIN accounts ta ON t.transfer_to_account_id = ta.id
-      ${where}
-      ORDER BY t.date DESC, t.created_at DESC`;
-    const rows = asRows<TransactionExportRow>(queryAll(sql, params));
-
+      ${where}`;
+    const orderBy = 't.date DESC, COALESCE(t.created_at, 0) DESC, t.id DESC';
+    const sql = `${baseSql} ORDER BY t.date DESC, t.created_at DESC`;
     const headers = ['日期', '類型', '分類', '金額', '幣別', '原始金額', '匯率', '台幣金額', '匯兌手續費', '帳戶', '轉入帳戶', '排除統計', '標籤', '備註'];
 
     const userRow = queryOne('SELECT is_admin FROM users WHERE id = ?', [auth.actorUserId]);
@@ -116,13 +116,25 @@ export async function GET(request: NextRequest) {
       ];
       return createXlsxExportResponse({
         columns,
-        rows: mapXlsxRows(rows, transactionExportCells),
-        rowCount: rows.length,
+        rows: mapXlsxRows(
+          queryAllInKeysetPages(
+            baseSql,
+            params,
+            {
+              cursorColumns: ['t.date', 'COALESCE(t.created_at, 0)', 't.id'],
+              orderBy: 't.date, COALESCE(t.created_at, 0), t.id',
+              direction: 'DESC',
+              cursorFromRow: (row) => [row.date, row.export_cursor_created_at, row.export_cursor_id],
+            },
+          ) as AsyncIterable<TransactionExportRow>,
+          transactionExportCells,
+        ),
         filenamePrefix: 'transactions',
         audit: { userId: auth.userId, role, action: 'export_transactions', ipAddress, userAgent, dateFrom, dateTo },
       });
     }
 
+    const rows = asRows<TransactionExportRow>(queryAll(sql, params));
     const dataRows = rows.map(transactionExportCells);
     const csv = buildCsv(headers, dataRows);
     const filename = `transactions-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}.csv`;

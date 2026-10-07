@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '../../../../lib/apiHelpers';
-import { queryAll, queryOne } from '../../../../lib/db';
+import { queryAll, queryAllInKeysetPages, queryOne } from '../../../../lib/db';
 import { buildCsv, writeOperationAudit } from '../../../../lib/auditHelpers';
 import { getRequestIpFromHeaders } from '../../../../lib/loginHelpers';
 import {
@@ -50,16 +50,17 @@ export async function GET(request: NextRequest) {
   const format = resolveExportFormat(searchParams.get('format'));
 
   try {
-    const rows = asRows<AccountExportRow>(queryAll(
-      `SELECT a.name, a.category, a.account_type, a.initial_balance, a.currency, a.icon,
-        a.exclude_from_total, a.linked_bank_id, linked.name AS linked_bank_name,
-        a.overseas_fee_rate, a.note, a.created_at, a.updated_at
-       FROM accounts a
-       LEFT JOIN accounts linked ON linked.id = a.linked_bank_id AND linked.user_id = a.user_id
-       WHERE a.user_id = ?
-       ORDER BY a.sort_order ASC, a.created_at ASC, a.name ASC`,
-      [auth.userId]
-    ));
+    const baseSql = `SELECT a.name, a.category, a.account_type, a.initial_balance, a.currency, a.icon,
+      a.exclude_from_total, a.linked_bank_id, linked.name AS linked_bank_name,
+      a.overseas_fee_rate, a.note, a.created_at, a.updated_at,
+      COALESCE(a.sort_order, 0) AS export_cursor_sort_order,
+      COALESCE(a.created_at, '') AS export_cursor_created_at, a.id AS export_cursor_id
+      FROM accounts a
+      LEFT JOIN accounts linked ON linked.id = a.linked_bank_id AND linked.user_id = a.user_id
+      WHERE a.user_id = ?`;
+    const orderBy = "COALESCE(a.sort_order, 0), COALESCE(a.created_at, ''), a.name, a.id";
+    const sql = `${baseSql} ORDER BY a.sort_order ASC, a.created_at ASC, a.name ASC`;
+    const params = [auth.userId];
 
     const headers = ['帳戶名稱', '類別', '帳戶類型', '初始餘額', '幣別', '圖示', '排除總資產', '連結銀行帳戶', '海外手續費率', '備註', '建立時間', '更新時間'];
     const userRow = queryOne('SELECT is_admin FROM users WHERE id = ?', [auth.actorUserId]);
@@ -84,13 +85,25 @@ export async function GET(request: NextRequest) {
       ];
       return createXlsxExportResponse({
         columns,
-        rows: mapXlsxRows(rows, accountExportCells),
-        rowCount: rows.length,
+        rows: mapXlsxRows(
+          queryAllInKeysetPages(
+            baseSql,
+            params,
+            {
+              cursorColumns: ['COALESCE(a.sort_order, 0)', "COALESCE(a.created_at, '')", 'a.name', 'a.id'],
+              orderBy: "COALESCE(a.sort_order, 0), COALESCE(a.created_at, ''), a.name, a.id",
+              direction: 'ASC',
+              cursorFromRow: (row) => [row.export_cursor_sort_order, row.export_cursor_created_at, row.name, row.export_cursor_id],
+            },
+          ),
+          (row) => accountExportCells(row as unknown as AccountExportRow),
+        ),
         filenamePrefix: 'accounts',
         audit: { userId: auth.userId, role, action: 'export_accounts', ipAddress, userAgent },
       });
     }
 
+    const rows = asRows<AccountExportRow>(queryAll(sql, params));
     const dataRows = rows.map(accountExportCells);
     const csv = buildCsv(headers, dataRows);
     const filename = `accounts-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}.csv`;

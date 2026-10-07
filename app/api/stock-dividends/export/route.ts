@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { NextResponse } from "next/server";
 import { requireAuth } from "../../../../lib/apiHelpers";
-import { queryAll, queryOne } from "../../../../lib/db";
+import { queryAll, queryAllInKeysetPages, queryOne } from "../../../../lib/db";
 import {
   buildCsv,
   writeOperationAudit,
@@ -40,15 +40,15 @@ export async function GET(request) {
       params.push(dateTo);
     }
 
-    const sql = `SELECT sd.id, sd.date, sd.cash_dividend, sd.stock_dividend_shares, sd.account_id, sd.note,
-      s.symbol, s.market, s.name AS stock_name, s.stock_type, s.currency, a.name AS dividend_account_name
+    const baseSql = `SELECT sd.id, sd.date, sd.cash_dividend, sd.stock_dividend_shares, sd.account_id, sd.note,
+      s.symbol, s.market, s.name AS stock_name, s.stock_type, s.currency, a.name AS dividend_account_name,
+      COALESCE(sd.created_at, 0) AS export_cursor_created_at
       FROM stock_dividends sd
       JOIN stocks s ON sd.stock_id = s.id AND s.user_id = sd.user_id
       LEFT JOIN accounts a ON sd.account_id = a.id AND a.user_id = sd.user_id
-      ${where}
-      ORDER BY sd.date DESC, sd.created_at DESC`;
-    const rows = queryAll(sql, params);
-
+      ${where}`;
+    const orderBy = 'sd.date, COALESCE(sd.created_at, 0), sd.id';
+    const sql = `${baseSql} ORDER BY sd.date DESC, sd.created_at DESC`;
     const headers = [
       "日期",
       "市場",
@@ -114,13 +114,21 @@ export async function GET(request) {
       ];
       return createXlsxExportResponse({
         columns,
-        rows: mapXlsxRows(rows, exportRow),
-        rowCount: rows.length,
+        rows: mapXlsxRows(
+          queryAllInKeysetPages(baseSql, params, {
+            cursorColumns: ['sd.date', 'COALESCE(sd.created_at, 0)', 'sd.id'],
+            orderBy: 'sd.date, COALESCE(sd.created_at, 0), sd.id',
+            direction: 'DESC',
+            cursorFromRow: (row) => [row.date, row.export_cursor_created_at, row.id],
+          }),
+          exportRow,
+        ),
         filenamePrefix: "stock-dividends",
         audit: { userId: auth.userId, role: "user", action: "export_stock_dividends", ipAddress, userAgent, dateFrom, dateTo },
       });
     }
 
+    const rows = queryAll(sql, params);
     const dataRows = rows.map(exportRow);
     const csv = buildCsv(headers, dataRows);
     const filename = `stock-dividends-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}.csv`;

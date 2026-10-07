@@ -6246,4 +6246,215 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get notificationsPushGenericBody =>
       'आपके पास एक सूचना है। विवरण देखने के लिए AssetPilot खोलें।';
+
+  @override
+  String get navCloudInvoice => 'क्लाउड चालान';
+
+  @override
+  String get settingsInvoicesTitle => 'क्लाउड चालान कैरियर';
+
+  @override
+  String get settingsInvoicesDescription =>
+      'मोबाइल बारकोड कैरियर लिंक करने के बाद, आप वित्त मंत्रालय के ई-इनवॉइस प्लेटफ़ॉर्म से क्लाउड चालान मैन्युअल रूप से सिंक करके लेन-देन ड्राफ़्ट बना सकते हैं।';
+
+  @override
+  String get settingsInvoicesCarrierSectionTitle => 'मोबाइल बारकोड कैरियर';
+
+  @override
+  String get settingsInvoicesCarrierSectionDescription =>
+      'सत्यापन कोड AES-256-GCM से एन्क्रिप्ट करके संग्रहित किया जाता है। केवल मास्क किया गया बारकोड दिखाया जाता है और कोई API सत्यापन कोड वापस नहीं करता।';
+
+  @override
+  String get settingsInvoicesBarcodeLabel => 'मोबाइल बारकोड कैरियर';
+
+  @override
+  String get settingsInvoicesBarcodePlaceholder => '/ABC1234';
+
+  @override
+  String get settingsInvoicesBarcodeHint =>
+      'प्रारूप: स्लैश के बाद 7 बड़े अक्षर-अंक, जैसे /ABC1234।';
+
+  @override
+  String get settingsInvoicesVerifyCodeLabel => 'सत्यापन कोड';
+
+  @override
+  String get settingsInvoicesVerifyCodePlaceholder => '6-20 अक्षर-अंक';
+
+  @override
+  String get settingsInvoicesVerifyCodeHint =>
+      'ई-इनवॉइस प्लेटफ़ॉर्म पर सेट किया गया सत्यापन कोड। इसका उपयोग केवल आपके क्लाउड चालान देखने के लिए होता है।';
+
+  @override
+  String get settingsInvoicesBindButton => 'कैरियर लिंक करें';
+
+  @override
+  String get settingsInvoicesBinding => 'लिंक हो रहा है…';
+
+  @override
+  String get settingsInvoicesBindSuccess => 'कैरियर लिंक हो गया';
+
+  @override
+  String get settingsInvoicesBindFailed => 'कैरियर लिंक नहीं हो सका';
+
+  @override
+  String get settingsInvoicesUnbindButton => 'अनलिंक करें';
+
+  @override
+  String get settingsInvoicesUnbindConfirm =>
+      'इस मोबाइल बारकोड कैरियर को अनलिंक करें? मौजूदा चालान ड्राफ़्ट और दर्ज लेन-देन सुरक्षित रहेंगे।';
+
+  @override
+  String get settingsInvoicesUnbindSuccess => 'कैरियर अनलिंक हो गया';
+
+  @override
+  String get settingsInvoicesUnbindFailed => 'अनलिंक नहीं हो सका';
+
+  @override
+  String get settingsInvoicesNoCarriers =>
+      'अभी कोई मोबाइल बारकोड कैरियर लिंक नहीं है';
+
+  @override
+  String get settingsInvoicesSyncNow => 'अभी सिंक करें';
+
+  @override
+  String get settingsInvoicesSyncing => 'सिंक हो रहा है…';
+
+  @override
+  String settingsInvoicesSyncSummary(
+    Object created,
+    Object duplicates,
+    Object skipped,
+  ) {
+    return '$created जोड़े, $duplicates डुप्लिकेट, $skipped छोड़े गए';
+  }
+
+  @override
+  String get settingsInvoicesSyncFailed => 'सिंक विफल';
+
+  @override
+  String get settingsInvoicesSyncDegraded =>
+      'ई-इनवॉइस API कॉन्फ़िगर नहीं है, इसलिए सिंक उपलब्ध नहीं है।';
+
+  @override
+  String settingsInvoicesLastSyncAt(Object date) {
+    return 'अंतिम सिंक: $date';
+  }
+
+  @override
+  String get settingsInvoicesNeverSynced => 'कभी सिंक नहीं हुआ';
+
+  @override
+  String settingsInvoicesRetryAfter(Object seconds) {
+    return 'पिछला सिंक विफल रहा। $seconds सेकंड बाद पुनः प्रयास करें।';
+  }
+
+  @override
+  String get settingsInvoicesDraftsTitle => 'क्लाउड चालान ड्राफ़्ट';
+
+  @override
+  String get settingsInvoicesDraftsDescription =>
+      'केवल पुष्ट किए गए चालान से लेन-देन बनते हैं; ड्राफ़्ट आपके आँकड़ों को प्रभावित नहीं करते।';
+
+  @override
+  String get settingsInvoicesNoDrafts => 'अभी कोई क्लाउड चालान नहीं';
+
+  @override
+  String get settingsInvoicesFilterStatus => 'स्थिति';
+
+  @override
+  String get settingsInvoicesStatusAll => 'सभी';
+
+  @override
+  String get settingsInvoicesStatusDraft => 'ड्राफ़्ट';
+
+  @override
+  String get settingsInvoicesStatusImported => 'दर्ज';
+
+  @override
+  String get settingsInvoicesStatusDismissed => 'छोड़ा गया';
+
+  @override
+  String get settingsInvoicesColInvoiceNumber => 'चालान संख्या';
+
+  @override
+  String get settingsInvoicesColDate => 'चालान दिनांक';
+
+  @override
+  String get settingsInvoicesColSeller => 'स्टोर';
+
+  @override
+  String get settingsInvoicesColAmount => 'राशि';
+
+  @override
+  String get settingsInvoicesColStatus => 'स्थिति';
+
+  @override
+  String get settingsInvoicesColActions => 'क्रियाएँ';
+
+  @override
+  String get settingsInvoicesConfirmButton => 'पुष्टि करें';
+
+  @override
+  String get settingsInvoicesConfirmTitle => 'चालान की पुष्टि करें';
+
+  @override
+  String get settingsInvoicesAccountLabel => 'खाता';
+
+  @override
+  String get settingsInvoicesCategoryLabel => 'श्रेणी';
+
+  @override
+  String get settingsInvoicesNoteLabel => 'नोट (वैकल्पिक)';
+
+  @override
+  String get settingsInvoicesSelectAccount => 'कोई खाता नहीं';
+
+  @override
+  String get settingsInvoicesSelectCategory => 'कोई श्रेणी नहीं';
+
+  @override
+  String get settingsInvoicesSubmit => 'लेन-देन बनाएँ';
+
+  @override
+  String get settingsInvoicesSubmitting => 'बनाया जा रहा है…';
+
+  @override
+  String get settingsInvoicesDismissButton => 'छोड़ें';
+
+  @override
+  String get settingsInvoicesDismissConfirm =>
+      'इस चालान को छोड़ें? कोई लेन-देन नहीं बनेगा।';
+
+  @override
+  String get settingsInvoicesDismissSuccess => 'चालान छोड़ा गया';
+
+  @override
+  String get settingsInvoicesDismissFailed => 'छोड़ना विफल';
+
+  @override
+  String get settingsInvoicesImportSuccess => 'लेन-देन बन गया';
+
+  @override
+  String get settingsInvoicesImportFailed => 'लेन-देन नहीं बन सका';
+
+  @override
+  String get settingsInvoicesLoadFailed => 'लोड विफल';
+
+  @override
+  String get settingsInvoicesColLastSync => 'अंतिम सिंक';
+
+  @override
+  String get settingsInvoicesAutoSyncLabel => 'निर्धारित सिंक';
+
+  @override
+  String get settingsInvoicesAutoSyncHint =>
+      'सक्षम होने पर, ऐप के उपयोग के दौरान चालान प्रति घंटे अधिकतम एक बार स्वतः सिंक होते हैं। विफल सिंक त्रुटि स्थिति बनाए रखते हैं और स्वतः पुनः प्रयास नहीं करते।';
+
+  @override
+  String get settingsInvoicesAutoSyncUpdateFailed =>
+      'निर्धारित सिंक अपडेट नहीं हो सका';
+
+  @override
+  String get publicApiCreditsPageDescriptionsEinvoice =>
+      'कॉन्फ़िगर किए गए प्रदाता API endpoint के माध्यम से मोबाइल बारकोड से क्लाउड ई-चालान खोजें।';
 }

@@ -47,6 +47,10 @@ const DATA_TABLES: BundleTable[] = [
   { table: "stock_recurring", keys: ["id"] },
   { table: "stock_settings", keys: ["user_id"] },
   { table: "user_settings", keys: ["user_id"] },
+  // 雲端發票載具與匯入的發票草稿（issue #253）。憑證為密文，還原時原樣帶回，
+  // 因此還原後仍可解密（同一把 EINVOICE_ENCRYPTION_KEY 的前提下）。
+  { table: "invoice_carriers", keys: ["id"] },
+  { table: "invoice_imports", keys: ["id"] },
 ];
 
 const ATTACHMENTS_TABLE = "transaction_attachments";

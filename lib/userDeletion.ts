@@ -75,6 +75,9 @@ const USER_OWNED_DELETE_STATEMENTS = [
   "DELETE FROM reconciliation_items WHERE user_id = ?",
   "DELETE FROM reconciliation_sessions WHERE user_id = ?",
   "DELETE FROM reconciliation_import_profiles WHERE user_id = ?",
+  // 雲端發票載具憑證與匯入的發票草稿（issue #253）
+  "DELETE FROM invoice_imports WHERE user_id = ?",
+  "DELETE FROM invoice_carriers WHERE user_id = ?",
 ] as const;
 
 function normalizeEmail(email: string | number | null | undefined): string {

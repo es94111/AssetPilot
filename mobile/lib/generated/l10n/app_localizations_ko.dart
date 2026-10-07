@@ -6053,4 +6053,212 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get notificationsPushGenericBody =>
       '새 알림이 있습니다. 자세한 내용은 AssetPilot을 여세요.';
+
+  @override
+  String get navCloudInvoice => '클라우드 인보이스';
+
+  @override
+  String get settingsInvoicesTitle => '클라우드 인보이스 캐리어';
+
+  @override
+  String get settingsInvoicesDescription =>
+      '휴대전화 바코드 캐리어를 연동하면 재정부 전자세금계산서 플랫폼의 클라우드 인보이스를 수동으로 동기화하여 거래 초안으로 만들고 확인 후 반영할 수 있습니다.';
+
+  @override
+  String get settingsInvoicesCarrierSectionTitle => '휴대전화 바코드 캐리어';
+
+  @override
+  String get settingsInvoicesCarrierSectionDescription =>
+      '캐리어 인증 코드는 AES-256-GCM으로 암호화되어 저장되며, 화면에는 마스킹된 바코드만 표시되고 어떤 API도 인증 코드를 반환하지 않습니다.';
+
+  @override
+  String get settingsInvoicesBarcodeLabel => '휴대전화 바코드 캐리어';
+
+  @override
+  String get settingsInvoicesBarcodePlaceholder => '/ABC1234';
+
+  @override
+  String get settingsInvoicesBarcodeHint =>
+      '형식은 슬래시와 대문자 영숫자 7자리입니다(예: /ABC1234).';
+
+  @override
+  String get settingsInvoicesVerifyCodeLabel => '인증 코드';
+
+  @override
+  String get settingsInvoicesVerifyCodePlaceholder => '영숫자 6~20자리';
+
+  @override
+  String get settingsInvoicesVerifyCodeHint =>
+      '전자세금계산서 플랫폼에서 설정한 캐리어 인증 코드로, 본인의 클라우드 인보이스 조회에만 사용됩니다.';
+
+  @override
+  String get settingsInvoicesBindButton => '캐리어 연동';
+
+  @override
+  String get settingsInvoicesBinding => '연동 중…';
+
+  @override
+  String get settingsInvoicesBindSuccess => '캐리어가 연동되었습니다';
+
+  @override
+  String get settingsInvoicesBindFailed => '캐리어 연동에 실패했습니다';
+
+  @override
+  String get settingsInvoicesUnbindButton => '연동 해제';
+
+  @override
+  String get settingsInvoicesUnbindConfirm =>
+      '이 휴대전화 바코드 캐리어를 연동 해제할까요? 기존 인보이스 초안과 반영된 거래는 유지됩니다.';
+
+  @override
+  String get settingsInvoicesUnbindSuccess => '캐리어 연동이 해제되었습니다';
+
+  @override
+  String get settingsInvoicesUnbindFailed => '연동 해제에 실패했습니다';
+
+  @override
+  String get settingsInvoicesNoCarriers => '아직 연동된 휴대전화 바코드 캐리어가 없습니다';
+
+  @override
+  String get settingsInvoicesSyncNow => '지금 동기화';
+
+  @override
+  String get settingsInvoicesSyncing => '동기화 중…';
+
+  @override
+  String settingsInvoicesSyncSummary(
+    Object created,
+    Object duplicates,
+    Object skipped,
+  ) {
+    return '신규 $created건, 중복 $duplicates건, 건너뜀 $skipped건';
+  }
+
+  @override
+  String get settingsInvoicesSyncFailed => '동기화 실패';
+
+  @override
+  String get settingsInvoicesSyncDegraded =>
+      '전자세금계산서 API가 설정되지 않아 동기화할 수 없습니다.';
+
+  @override
+  String settingsInvoicesLastSyncAt(Object date) {
+    return '마지막 동기화: $date';
+  }
+
+  @override
+  String get settingsInvoicesNeverSynced => '동기화한 적 없음';
+
+  @override
+  String settingsInvoicesRetryAfter(Object seconds) {
+    return '지난 동기화가 실패했습니다. $seconds초 후 다시 시도하세요.';
+  }
+
+  @override
+  String get settingsInvoicesDraftsTitle => '클라우드 인보이스 초안';
+
+  @override
+  String get settingsInvoicesDraftsDescription =>
+      '확인한 인보이스만 거래로 생성되며, 미확인 초안은 통계에 영향을 주지 않습니다.';
+
+  @override
+  String get settingsInvoicesNoDrafts => '아직 클라우드 인보이스가 없습니다';
+
+  @override
+  String get settingsInvoicesFilterStatus => '상태';
+
+  @override
+  String get settingsInvoicesStatusAll => '전체';
+
+  @override
+  String get settingsInvoicesStatusDraft => '초안';
+
+  @override
+  String get settingsInvoicesStatusImported => '반영됨';
+
+  @override
+  String get settingsInvoicesStatusDismissed => '건너뜀';
+
+  @override
+  String get settingsInvoicesColInvoiceNumber => '인보이스 번호';
+
+  @override
+  String get settingsInvoicesColDate => '인보이스 날짜';
+
+  @override
+  String get settingsInvoicesColSeller => '상점';
+
+  @override
+  String get settingsInvoicesColAmount => '금액';
+
+  @override
+  String get settingsInvoicesColStatus => '상태';
+
+  @override
+  String get settingsInvoicesColActions => '작업';
+
+  @override
+  String get settingsInvoicesConfirmButton => '확인';
+
+  @override
+  String get settingsInvoicesConfirmTitle => '인보이스 확인';
+
+  @override
+  String get settingsInvoicesAccountLabel => '계좌';
+
+  @override
+  String get settingsInvoicesCategoryLabel => '분류';
+
+  @override
+  String get settingsInvoicesNoteLabel => '메모(선택)';
+
+  @override
+  String get settingsInvoicesSelectAccount => '계좌 선택 안 함';
+
+  @override
+  String get settingsInvoicesSelectCategory => '분류 선택 안 함';
+
+  @override
+  String get settingsInvoicesSubmit => '거래 생성';
+
+  @override
+  String get settingsInvoicesSubmitting => '생성 중…';
+
+  @override
+  String get settingsInvoicesDismissButton => '건너뛰기';
+
+  @override
+  String get settingsInvoicesDismissConfirm => '이 인보이스를 건너뛸까요? 거래는 생성되지 않습니다.';
+
+  @override
+  String get settingsInvoicesDismissSuccess => '인보이스를 건너뛰었습니다';
+
+  @override
+  String get settingsInvoicesDismissFailed => '건너뛰기에 실패했습니다';
+
+  @override
+  String get settingsInvoicesImportSuccess => '거래가 생성되었습니다';
+
+  @override
+  String get settingsInvoicesImportFailed => '거래 생성에 실패했습니다';
+
+  @override
+  String get settingsInvoicesLoadFailed => '불러오지 못했습니다';
+
+  @override
+  String get settingsInvoicesColLastSync => '마지막 동기화';
+
+  @override
+  String get settingsInvoicesAutoSyncLabel => '예약 동기화';
+
+  @override
+  String get settingsInvoicesAutoSyncHint =>
+      '사용 중 최대 1시간에 한 번 자동으로 동기화합니다. 동기화에 실패하면 오류 상태를 유지하고 자동 재시도 없이 잠시 대기합니다.';
+
+  @override
+  String get settingsInvoicesAutoSyncUpdateFailed => '예약 동기화 설정을 업데이트하지 못했습니다';
+
+  @override
+  String get publicApiCreditsPageDescriptionsEinvoice =>
+      '설정된 공급자 API 엔드포인트를 통해 모바일 바코드로 클라우드 전자 영수증을 조회합니다.';
 }

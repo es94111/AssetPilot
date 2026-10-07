@@ -9603,5 +9603,331 @@
   "@notificationsPushGenericBody": {
     "description": "Web path: notifications.push.generic.body",
     "x-webPath": "notifications.push.generic.body"
+  },
+  "navCloudInvoice": "क्लाउड चालान",
+  "@navCloudInvoice": {
+    "description": "Web path: nav.cloudInvoice",
+    "x-webPath": "nav.cloudInvoice"
+  },
+  "settingsInvoicesTitle": "क्लाउड चालान कैरियर",
+  "@settingsInvoicesTitle": {
+    "description": "Web path: settings.invoices.title",
+    "x-webPath": "settings.invoices.title"
+  },
+  "settingsInvoicesDescription": "मोबाइल बारकोड कैरियर लिंक करने के बाद, आप वित्त मंत्रालय के ई-इनवॉइस प्लेटफ़ॉर्म से क्लाउड चालान मैन्युअल रूप से सिंक करके लेन-देन ड्राफ़्ट बना सकते हैं।",
+  "@settingsInvoicesDescription": {
+    "description": "Web path: settings.invoices.description",
+    "x-webPath": "settings.invoices.description"
+  },
+  "settingsInvoicesCarrierSectionTitle": "मोबाइल बारकोड कैरियर",
+  "@settingsInvoicesCarrierSectionTitle": {
+    "description": "Web path: settings.invoices.carrierSectionTitle",
+    "x-webPath": "settings.invoices.carrierSectionTitle"
+  },
+  "settingsInvoicesCarrierSectionDescription": "सत्यापन कोड AES-256-GCM से एन्क्रिप्ट करके संग्रहित किया जाता है। केवल मास्क किया गया बारकोड दिखाया जाता है और कोई API सत्यापन कोड वापस नहीं करता।",
+  "@settingsInvoicesCarrierSectionDescription": {
+    "description": "Web path: settings.invoices.carrierSectionDescription",
+    "x-webPath": "settings.invoices.carrierSectionDescription"
+  },
+  "settingsInvoicesBarcodeLabel": "मोबाइल बारकोड कैरियर",
+  "@settingsInvoicesBarcodeLabel": {
+    "description": "Web path: settings.invoices.barcodeLabel",
+    "x-webPath": "settings.invoices.barcodeLabel"
+  },
+  "settingsInvoicesBarcodePlaceholder": "/ABC1234",
+  "@settingsInvoicesBarcodePlaceholder": {
+    "description": "Web path: settings.invoices.barcodePlaceholder",
+    "x-webPath": "settings.invoices.barcodePlaceholder"
+  },
+  "settingsInvoicesBarcodeHint": "प्रारूप: स्लैश के बाद 7 बड़े अक्षर-अंक, जैसे /ABC1234।",
+  "@settingsInvoicesBarcodeHint": {
+    "description": "Web path: settings.invoices.barcodeHint",
+    "x-webPath": "settings.invoices.barcodeHint"
+  },
+  "settingsInvoicesVerifyCodeLabel": "सत्यापन कोड",
+  "@settingsInvoicesVerifyCodeLabel": {
+    "description": "Web path: settings.invoices.verifyCodeLabel",
+    "x-webPath": "settings.invoices.verifyCodeLabel"
+  },
+  "settingsInvoicesVerifyCodePlaceholder": "6-20 अक्षर-अंक",
+  "@settingsInvoicesVerifyCodePlaceholder": {
+    "description": "Web path: settings.invoices.verifyCodePlaceholder",
+    "x-webPath": "settings.invoices.verifyCodePlaceholder"
+  },
+  "settingsInvoicesVerifyCodeHint": "ई-इनवॉइस प्लेटफ़ॉर्म पर सेट किया गया सत्यापन कोड। इसका उपयोग केवल आपके क्लाउड चालान देखने के लिए होता है।",
+  "@settingsInvoicesVerifyCodeHint": {
+    "description": "Web path: settings.invoices.verifyCodeHint",
+    "x-webPath": "settings.invoices.verifyCodeHint"
+  },
+  "settingsInvoicesBindButton": "कैरियर लिंक करें",
+  "@settingsInvoicesBindButton": {
+    "description": "Web path: settings.invoices.bindButton",
+    "x-webPath": "settings.invoices.bindButton"
+  },
+  "settingsInvoicesBinding": "लिंक हो रहा है…",
+  "@settingsInvoicesBinding": {
+    "description": "Web path: settings.invoices.binding",
+    "x-webPath": "settings.invoices.binding"
+  },
+  "settingsInvoicesBindSuccess": "कैरियर लिंक हो गया",
+  "@settingsInvoicesBindSuccess": {
+    "description": "Web path: settings.invoices.bindSuccess",
+    "x-webPath": "settings.invoices.bindSuccess"
+  },
+  "settingsInvoicesBindFailed": "कैरियर लिंक नहीं हो सका",
+  "@settingsInvoicesBindFailed": {
+    "description": "Web path: settings.invoices.bindFailed",
+    "x-webPath": "settings.invoices.bindFailed"
+  },
+  "settingsInvoicesUnbindButton": "अनलिंक करें",
+  "@settingsInvoicesUnbindButton": {
+    "description": "Web path: settings.invoices.unbindButton",
+    "x-webPath": "settings.invoices.unbindButton"
+  },
+  "settingsInvoicesUnbindConfirm": "इस मोबाइल बारकोड कैरियर को अनलिंक करें? मौजूदा चालान ड्राफ़्ट और दर्ज लेन-देन सुरक्षित रहेंगे।",
+  "@settingsInvoicesUnbindConfirm": {
+    "description": "Web path: settings.invoices.unbindConfirm",
+    "x-webPath": "settings.invoices.unbindConfirm"
+  },
+  "settingsInvoicesUnbindSuccess": "कैरियर अनलिंक हो गया",
+  "@settingsInvoicesUnbindSuccess": {
+    "description": "Web path: settings.invoices.unbindSuccess",
+    "x-webPath": "settings.invoices.unbindSuccess"
+  },
+  "settingsInvoicesUnbindFailed": "अनलिंक नहीं हो सका",
+  "@settingsInvoicesUnbindFailed": {
+    "description": "Web path: settings.invoices.unbindFailed",
+    "x-webPath": "settings.invoices.unbindFailed"
+  },
+  "settingsInvoicesNoCarriers": "अभी कोई मोबाइल बारकोड कैरियर लिंक नहीं है",
+  "@settingsInvoicesNoCarriers": {
+    "description": "Web path: settings.invoices.noCarriers",
+    "x-webPath": "settings.invoices.noCarriers"
+  },
+  "settingsInvoicesSyncNow": "अभी सिंक करें",
+  "@settingsInvoicesSyncNow": {
+    "description": "Web path: settings.invoices.syncNow",
+    "x-webPath": "settings.invoices.syncNow"
+  },
+  "settingsInvoicesSyncing": "सिंक हो रहा है…",
+  "@settingsInvoicesSyncing": {
+    "description": "Web path: settings.invoices.syncing",
+    "x-webPath": "settings.invoices.syncing"
+  },
+  "settingsInvoicesSyncSummary": "{created} जोड़े, {duplicates} डुप्लिकेट, {skipped} छोड़े गए",
+  "@settingsInvoicesSyncSummary": {
+    "description": "Web path: settings.invoices.syncSummary",
+    "x-webPath": "settings.invoices.syncSummary",
+    "placeholders": {
+      "created": {},
+      "duplicates": {},
+      "skipped": {}
+    }
+  },
+  "settingsInvoicesSyncFailed": "सिंक विफल",
+  "@settingsInvoicesSyncFailed": {
+    "description": "Web path: settings.invoices.syncFailed",
+    "x-webPath": "settings.invoices.syncFailed"
+  },
+  "settingsInvoicesSyncDegraded": "ई-इनवॉइस API कॉन्फ़िगर नहीं है, इसलिए सिंक उपलब्ध नहीं है।",
+  "@settingsInvoicesSyncDegraded": {
+    "description": "Web path: settings.invoices.syncDegraded",
+    "x-webPath": "settings.invoices.syncDegraded"
+  },
+  "settingsInvoicesLastSyncAt": "अंतिम सिंक: {date}",
+  "@settingsInvoicesLastSyncAt": {
+    "description": "Web path: settings.invoices.lastSyncAt",
+    "x-webPath": "settings.invoices.lastSyncAt",
+    "placeholders": {
+      "date": {}
+    }
+  },
+  "settingsInvoicesNeverSynced": "कभी सिंक नहीं हुआ",
+  "@settingsInvoicesNeverSynced": {
+    "description": "Web path: settings.invoices.neverSynced",
+    "x-webPath": "settings.invoices.neverSynced"
+  },
+  "settingsInvoicesRetryAfter": "पिछला सिंक विफल रहा। {seconds} सेकंड बाद पुनः प्रयास करें।",
+  "@settingsInvoicesRetryAfter": {
+    "description": "Web path: settings.invoices.retryAfter",
+    "x-webPath": "settings.invoices.retryAfter",
+    "placeholders": {
+      "seconds": {}
+    }
+  },
+  "settingsInvoicesDraftsTitle": "क्लाउड चालान ड्राफ़्ट",
+  "@settingsInvoicesDraftsTitle": {
+    "description": "Web path: settings.invoices.draftsTitle",
+    "x-webPath": "settings.invoices.draftsTitle"
+  },
+  "settingsInvoicesDraftsDescription": "केवल पुष्ट किए गए चालान से लेन-देन बनते हैं; ड्राफ़्ट आपके आँकड़ों को प्रभावित नहीं करते।",
+  "@settingsInvoicesDraftsDescription": {
+    "description": "Web path: settings.invoices.draftsDescription",
+    "x-webPath": "settings.invoices.draftsDescription"
+  },
+  "settingsInvoicesNoDrafts": "अभी कोई क्लाउड चालान नहीं",
+  "@settingsInvoicesNoDrafts": {
+    "description": "Web path: settings.invoices.noDrafts",
+    "x-webPath": "settings.invoices.noDrafts"
+  },
+  "settingsInvoicesFilterStatus": "स्थिति",
+  "@settingsInvoicesFilterStatus": {
+    "description": "Web path: settings.invoices.filterStatus",
+    "x-webPath": "settings.invoices.filterStatus"
+  },
+  "settingsInvoicesStatusAll": "सभी",
+  "@settingsInvoicesStatusAll": {
+    "description": "Web path: settings.invoices.statusAll",
+    "x-webPath": "settings.invoices.statusAll"
+  },
+  "settingsInvoicesStatusDraft": "ड्राफ़्ट",
+  "@settingsInvoicesStatusDraft": {
+    "description": "Web path: settings.invoices.statusDraft",
+    "x-webPath": "settings.invoices.statusDraft"
+  },
+  "settingsInvoicesStatusImported": "दर्ज",
+  "@settingsInvoicesStatusImported": {
+    "description": "Web path: settings.invoices.statusImported",
+    "x-webPath": "settings.invoices.statusImported"
+  },
+  "settingsInvoicesStatusDismissed": "छोड़ा गया",
+  "@settingsInvoicesStatusDismissed": {
+    "description": "Web path: settings.invoices.statusDismissed",
+    "x-webPath": "settings.invoices.statusDismissed"
+  },
+  "settingsInvoicesColInvoiceNumber": "चालान संख्या",
+  "@settingsInvoicesColInvoiceNumber": {
+    "description": "Web path: settings.invoices.colInvoiceNumber",
+    "x-webPath": "settings.invoices.colInvoiceNumber"
+  },
+  "settingsInvoicesColDate": "चालान दिनांक",
+  "@settingsInvoicesColDate": {
+    "description": "Web path: settings.invoices.colDate",
+    "x-webPath": "settings.invoices.colDate"
+  },
+  "settingsInvoicesColSeller": "स्टोर",
+  "@settingsInvoicesColSeller": {
+    "description": "Web path: settings.invoices.colSeller",
+    "x-webPath": "settings.invoices.colSeller"
+  },
+  "settingsInvoicesColAmount": "राशि",
+  "@settingsInvoicesColAmount": {
+    "description": "Web path: settings.invoices.colAmount",
+    "x-webPath": "settings.invoices.colAmount"
+  },
+  "settingsInvoicesColStatus": "स्थिति",
+  "@settingsInvoicesColStatus": {
+    "description": "Web path: settings.invoices.colStatus",
+    "x-webPath": "settings.invoices.colStatus"
+  },
+  "settingsInvoicesColActions": "क्रियाएँ",
+  "@settingsInvoicesColActions": {
+    "description": "Web path: settings.invoices.colActions",
+    "x-webPath": "settings.invoices.colActions"
+  },
+  "settingsInvoicesConfirmButton": "पुष्टि करें",
+  "@settingsInvoicesConfirmButton": {
+    "description": "Web path: settings.invoices.confirmButton",
+    "x-webPath": "settings.invoices.confirmButton"
+  },
+  "settingsInvoicesConfirmTitle": "चालान की पुष्टि करें",
+  "@settingsInvoicesConfirmTitle": {
+    "description": "Web path: settings.invoices.confirmTitle",
+    "x-webPath": "settings.invoices.confirmTitle"
+  },
+  "settingsInvoicesAccountLabel": "खाता",
+  "@settingsInvoicesAccountLabel": {
+    "description": "Web path: settings.invoices.accountLabel",
+    "x-webPath": "settings.invoices.accountLabel"
+  },
+  "settingsInvoicesCategoryLabel": "श्रेणी",
+  "@settingsInvoicesCategoryLabel": {
+    "description": "Web path: settings.invoices.categoryLabel",
+    "x-webPath": "settings.invoices.categoryLabel"
+  },
+  "settingsInvoicesNoteLabel": "नोट (वैकल्पिक)",
+  "@settingsInvoicesNoteLabel": {
+    "description": "Web path: settings.invoices.noteLabel",
+    "x-webPath": "settings.invoices.noteLabel"
+  },
+  "settingsInvoicesSelectAccount": "कोई खाता नहीं",
+  "@settingsInvoicesSelectAccount": {
+    "description": "Web path: settings.invoices.selectAccount",
+    "x-webPath": "settings.invoices.selectAccount"
+  },
+  "settingsInvoicesSelectCategory": "कोई श्रेणी नहीं",
+  "@settingsInvoicesSelectCategory": {
+    "description": "Web path: settings.invoices.selectCategory",
+    "x-webPath": "settings.invoices.selectCategory"
+  },
+  "settingsInvoicesSubmit": "लेन-देन बनाएँ",
+  "@settingsInvoicesSubmit": {
+    "description": "Web path: settings.invoices.submit",
+    "x-webPath": "settings.invoices.submit"
+  },
+  "settingsInvoicesSubmitting": "बनाया जा रहा है…",
+  "@settingsInvoicesSubmitting": {
+    "description": "Web path: settings.invoices.submitting",
+    "x-webPath": "settings.invoices.submitting"
+  },
+  "settingsInvoicesDismissButton": "छोड़ें",
+  "@settingsInvoicesDismissButton": {
+    "description": "Web path: settings.invoices.dismissButton",
+    "x-webPath": "settings.invoices.dismissButton"
+  },
+  "settingsInvoicesDismissConfirm": "इस चालान को छोड़ें? कोई लेन-देन नहीं बनेगा।",
+  "@settingsInvoicesDismissConfirm": {
+    "description": "Web path: settings.invoices.dismissConfirm",
+    "x-webPath": "settings.invoices.dismissConfirm"
+  },
+  "settingsInvoicesDismissSuccess": "चालान छोड़ा गया",
+  "@settingsInvoicesDismissSuccess": {
+    "description": "Web path: settings.invoices.dismissSuccess",
+    "x-webPath": "settings.invoices.dismissSuccess"
+  },
+  "settingsInvoicesDismissFailed": "छोड़ना विफल",
+  "@settingsInvoicesDismissFailed": {
+    "description": "Web path: settings.invoices.dismissFailed",
+    "x-webPath": "settings.invoices.dismissFailed"
+  },
+  "settingsInvoicesImportSuccess": "लेन-देन बन गया",
+  "@settingsInvoicesImportSuccess": {
+    "description": "Web path: settings.invoices.importSuccess",
+    "x-webPath": "settings.invoices.importSuccess"
+  },
+  "settingsInvoicesImportFailed": "लेन-देन नहीं बन सका",
+  "@settingsInvoicesImportFailed": {
+    "description": "Web path: settings.invoices.importFailed",
+    "x-webPath": "settings.invoices.importFailed"
+  },
+  "settingsInvoicesLoadFailed": "लोड विफल",
+  "@settingsInvoicesLoadFailed": {
+    "description": "Web path: settings.invoices.loadFailed",
+    "x-webPath": "settings.invoices.loadFailed"
+  },
+  "settingsInvoicesColLastSync": "अंतिम सिंक",
+  "@settingsInvoicesColLastSync": {
+    "description": "Web path: settings.invoices.colLastSync",
+    "x-webPath": "settings.invoices.colLastSync"
+  },
+  "settingsInvoicesAutoSyncLabel": "निर्धारित सिंक",
+  "@settingsInvoicesAutoSyncLabel": {
+    "description": "Web path: settings.invoices.autoSyncLabel",
+    "x-webPath": "settings.invoices.autoSyncLabel"
+  },
+  "settingsInvoicesAutoSyncHint": "सक्षम होने पर, ऐप के उपयोग के दौरान चालान प्रति घंटे अधिकतम एक बार स्वतः सिंक होते हैं। विफल सिंक त्रुटि स्थिति बनाए रखते हैं और स्वतः पुनः प्रयास नहीं करते।",
+  "@settingsInvoicesAutoSyncHint": {
+    "description": "Web path: settings.invoices.autoSyncHint",
+    "x-webPath": "settings.invoices.autoSyncHint"
+  },
+  "settingsInvoicesAutoSyncUpdateFailed": "निर्धारित सिंक अपडेट नहीं हो सका",
+  "@settingsInvoicesAutoSyncUpdateFailed": {
+    "description": "Web path: settings.invoices.autoSyncUpdateFailed",
+    "x-webPath": "settings.invoices.autoSyncUpdateFailed"
+  },
+  "publicApiCreditsPageDescriptionsEinvoice": "कॉन्फ़िगर किए गए प्रदाता API endpoint के माध्यम से मोबाइल बारकोड से क्लाउड ई-चालान खोजें।",
+  "@publicApiCreditsPageDescriptionsEinvoice": {
+    "description": "Web path: public.apiCreditsPage.descriptions.einvoice",
+    "x-webPath": "public.apiCreditsPage.descriptions.einvoice"
   }
 }

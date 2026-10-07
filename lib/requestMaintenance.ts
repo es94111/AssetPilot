@@ -78,6 +78,13 @@ export function triggerUserRequestMaintenance(userId: string, userTimezone: stri
     .then(({ checkAndRunStockPriceUpdateOnUserRequest }) => checkAndRunStockPriceUpdateOnUserRequest())
     .catch((error) => console.error('[stock-price-update] user-triggered import failed', error));
 
+  // 雲端發票排程同步（issue #253）：每位使用者各自節流，並只同步可重試的到期載具。
+  void import('./einvoiceSync')
+    .then(({ runDueInvoiceSyncsForUser }) =>
+      runDueInvoiceSyncsForUser(userId, userTimezone || 'Asia/Taipei', { now }),
+    )
+    .catch((error) => console.error('[einvoice-sync] user-triggered import failed', error));
+
   // Web Push 推播通知（issue #257）：帳單到期／預算超標／股利發放。
   // 與排程報表相同，只在已驗證請求中順帶掃描；發送端另有 UNIQUE 去重，
   // 因此即使多個請求同時觸發也不會重複推播（見 lib/webPush.ts）。

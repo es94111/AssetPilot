@@ -37,6 +37,11 @@ const AUDIT_METADATA_ALLOWED_KEYS = new Set([
   'reconciliation_session_id', 'reconciliation_profile_id',
   'source_format', 'source_kind', 'statement_total', 'ledger_total',
   'matched', 'ledger_only', 'statement_only', 'amount_mismatch',
+  // 雲端發票載具整合稽核（issue #253）。載具條碼只記錄「遮罩後」的值，
+  // 驗證碼（憑證明文）與其密文一律不進稽核日誌。
+  'carrier_id', 'carrier_barcode_masked', 'invoice_import_id',
+  'invoice_number', 'invoice_count', 'synced_count', 'skipped_count',
+  'provider', 'sync_status',
 ]);
 
 export interface WriteAuditArgs {

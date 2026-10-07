@@ -1515,6 +1515,83 @@ END $$`);
     created_at INTEGER NOT NULL
   )`);
 
+  // ── 雲端發票／載具自動匯入整合（issue #253）──
+  //
+  // 手機條碼載具綁定：與本功能相關的憑證（驗證碼）以 AES-256-GCM 加密後
+  // 存放，主金鑰取自環境變數（見 lib/einvoiceSecret.ts）。發票號碼同時是查詢
+  // 條件與去重鍵，故只保存遮罩後的前 4 碼（carrier_barcode_masked）供顯示。
+  db.run(`CREATE TABLE IF NOT EXISTS invoice_carriers (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    carrier_barcode TEXT NOT NULL,
+    carrier_barcode_masked TEXT NOT NULL DEFAULT '',
+    verify_code_encrypted TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'active' CHECK(status IN ('active','revoked')),
+    auto_sync INTEGER NOT NULL DEFAULT 1,
+    last_sync_at INTEGER DEFAULT 0,
+    last_sync_status TEXT NOT NULL DEFAULT '',
+    last_error TEXT NOT NULL DEFAULT '',
+    consecutive_failures INTEGER NOT NULL DEFAULT 0,
+    next_retry_at INTEGER DEFAULT 0,
+    last_sync_retryable INTEGER NOT NULL DEFAULT 1,
+    sync_lock_until INTEGER NOT NULL DEFAULT 0,
+    last_invoice_date TEXT NOT NULL DEFAULT '',
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL,
+    UNIQUE(user_id, carrier_barcode),
+    CONSTRAINT invoice_carriers_user_fk FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  )`);
+  alterIgnore(
+    "CREATE INDEX IF NOT EXISTS idx_invoice_carriers_user ON invoice_carriers(user_id, status)",
+  );
+  // `sync_lock_until` 是原子同步租約，避免同一載具被手動／排程併發查詢；
+  // 過期租約可於程序中止後回收，退避期間的請求也會被條件更新擋下。
+  alterIgnore(
+    "CREATE INDEX IF NOT EXISTS idx_invoice_carriers_pending ON invoice_carriers(status, next_retry_at)",
+  );
+  // 既有部署（早於排程同步）不會有 auto_sync 欄位，於啟動時冪等補上。
+  alterIgnore(
+    "ALTER TABLE invoice_carriers ADD COLUMN auto_sync INTEGER NOT NULL DEFAULT 1",
+  );
+  // 非重試錯誤（如 401/403）不再由排程自動觸發；手動同步仍可明確重試。
+  alterIgnore(
+    "ALTER TABLE invoice_carriers ADD COLUMN last_sync_retryable INTEGER NOT NULL DEFAULT 1",
+  );
+  // 單一載具只允許一個同步請求；短租約於程序中止時自動到期。
+  alterIgnore(
+    "ALTER TABLE invoice_carriers ADD COLUMN sync_lock_until INTEGER NOT NULL DEFAULT 0",
+  );
+
+  // 匯入的雲端發票：以 (user_id, invoice_number) 為唯一鍵去重，
+  // 重複匯入（同一張發票再次被拉取）不會產生第二列。
+  // `status` 保留草稿／已匯入／已略過，`transaction_id` 指向確認入帳後產生的交易。
+  db.run(`CREATE TABLE IF NOT EXISTS invoice_imports (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    carrier_id TEXT NOT NULL,
+    invoice_number TEXT NOT NULL,
+    invoice_date TEXT NOT NULL,
+    invoice_time TEXT NOT NULL DEFAULT '',
+    seller_name TEXT NOT NULL DEFAULT '',
+    amount NUMERIC NOT NULL DEFAULT 0,
+    status TEXT NOT NULL DEFAULT 'draft' CHECK(status IN ('draft','imported','dismissed')),
+    transaction_id TEXT NOT NULL DEFAULT '',
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL,
+    imported_at INTEGER DEFAULT 0,
+    UNIQUE(user_id, invoice_number),
+    CONSTRAINT invoice_imports_user_fk FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  )`);
+  alterIgnore(
+    "CREATE INDEX IF NOT EXISTS idx_invoice_imports_user_date ON invoice_imports(user_id, invoice_date DESC, invoice_time DESC)",
+  );
+  alterIgnore(
+    "CREATE INDEX IF NOT EXISTS idx_invoice_imports_status ON invoice_imports(user_id, status)",
+  );
+  alterIgnore(
+    "CREATE INDEX IF NOT EXISTS idx_invoice_imports_carrier ON invoice_imports(carrier_id, invoice_date DESC)",
+  );
+
   // REAL/DOUBLE PRECISION 會在 PostgreSQL 以 float4/float8 儲存金額，
   // 大額或多次換算可能產生不可逆的四捨五入。新表使用 NUMERIC；
   // 既有部署在此冪等轉型，保留資料值但避免後續再以二進位浮點儲存。
@@ -1602,6 +1679,12 @@ END $$`);
   );
   addCheck(
     "ALTER TABLE web_push_send_log ADD CONSTRAINT web_push_send_log_user_fk FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE NOT VALID",
+  );
+  addCheck(
+    "ALTER TABLE invoice_carriers ADD CONSTRAINT invoice_carriers_user_fk FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE NOT VALID",
+  );
+  addCheck(
+    "ALTER TABLE invoice_imports ADD CONSTRAINT invoice_imports_user_fk FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE NOT VALID",
   );
   addCheck(
     "ALTER TABLE stock_transactions ADD CONSTRAINT stock_transactions_stock_fk FOREIGN KEY (stock_id) REFERENCES stocks(id) ON DELETE CASCADE NOT VALID",

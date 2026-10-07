@@ -6367,4 +6367,217 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get notificationsPushGenericBody =>
       'Vous avez une notification. Ouvrez AssetPilot pour voir les détails.';
+
+  @override
+  String get navCloudInvoice => 'Factures cloud';
+
+  @override
+  String get settingsInvoicesTitle => 'Support de factures cloud';
+
+  @override
+  String get settingsInvoicesDescription =>
+      'Après avoir lié votre support de code-barres mobile, vous pouvez synchroniser manuellement les factures cloud de la plateforme de facturation électronique en brouillons de transactions à valider avant comptabilisation.';
+
+  @override
+  String get settingsInvoicesCarrierSectionTitle =>
+      'Support code-barres mobile';
+
+  @override
+  String get settingsInvoicesCarrierSectionDescription =>
+      'Le code de vérification est stocké chiffré avec AES-256-GCM. Seul le code-barres masqué est affiché et aucune API ne renvoie le code de vérification.';
+
+  @override
+  String get settingsInvoicesBarcodeLabel => 'Support code-barres mobile';
+
+  @override
+  String get settingsInvoicesBarcodePlaceholder => '/ABC1234';
+
+  @override
+  String get settingsInvoicesBarcodeHint =>
+      'Format : une barre oblique suivie de 7 caractères alphanumériques majuscules, par exemple /ABC1234.';
+
+  @override
+  String get settingsInvoicesVerifyCodeLabel => 'Code de vérification';
+
+  @override
+  String get settingsInvoicesVerifyCodePlaceholder =>
+      '6 à 20 caractères alphanumériques';
+
+  @override
+  String get settingsInvoicesVerifyCodeHint =>
+      'Le code de vérification défini sur la plateforme de facturation électronique. Il sert uniquement à consulter vos propres factures.';
+
+  @override
+  String get settingsInvoicesBindButton => 'Lier le support';
+
+  @override
+  String get settingsInvoicesBinding => 'Liaison…';
+
+  @override
+  String get settingsInvoicesBindSuccess => 'Support lié';
+
+  @override
+  String get settingsInvoicesBindFailed => 'Échec de la liaison';
+
+  @override
+  String get settingsInvoicesUnbindButton => 'Délier';
+
+  @override
+  String get settingsInvoicesUnbindConfirm =>
+      'Délier ce support code-barres ? Les brouillons et transactions déjà comptabilisées sont conservés.';
+
+  @override
+  String get settingsInvoicesUnbindSuccess => 'Support délié';
+
+  @override
+  String get settingsInvoicesUnbindFailed => 'Échec de la déliaison';
+
+  @override
+  String get settingsInvoicesNoCarriers =>
+      'Aucun support code-barres lié pour le moment';
+
+  @override
+  String get settingsInvoicesSyncNow => 'Synchroniser';
+
+  @override
+  String get settingsInvoicesSyncing => 'Synchronisation…';
+
+  @override
+  String settingsInvoicesSyncSummary(
+    Object created,
+    Object duplicates,
+    Object skipped,
+  ) {
+    return 'Ajoutées $created, doublons $duplicates, ignorées $skipped';
+  }
+
+  @override
+  String get settingsInvoicesSyncFailed => 'Échec de la synchronisation';
+
+  @override
+  String get settingsInvoicesSyncDegraded =>
+      'L\'API de facturation électronique n\'est pas configurée ; la synchronisation est indisponible.';
+
+  @override
+  String settingsInvoicesLastSyncAt(Object date) {
+    return 'Dernière synchronisation : $date';
+  }
+
+  @override
+  String get settingsInvoicesNeverSynced => 'Jamais synchronisé';
+
+  @override
+  String settingsInvoicesRetryAfter(Object seconds) {
+    return 'La dernière synchronisation a échoué. Réessayez dans $seconds secondes.';
+  }
+
+  @override
+  String get settingsInvoicesDraftsTitle => 'Brouillons de factures cloud';
+
+  @override
+  String get settingsInvoicesDraftsDescription =>
+      'Seules les factures confirmées créent des transactions. Les brouillons n\'affectent pas vos statistiques.';
+
+  @override
+  String get settingsInvoicesNoDrafts => 'Aucune facture cloud';
+
+  @override
+  String get settingsInvoicesFilterStatus => 'Statut';
+
+  @override
+  String get settingsInvoicesStatusAll => 'Toutes';
+
+  @override
+  String get settingsInvoicesStatusDraft => 'Brouillon';
+
+  @override
+  String get settingsInvoicesStatusImported => 'Comptabilisée';
+
+  @override
+  String get settingsInvoicesStatusDismissed => 'Ignorée';
+
+  @override
+  String get settingsInvoicesColInvoiceNumber => 'Numéro de facture';
+
+  @override
+  String get settingsInvoicesColDate => 'Date de facture';
+
+  @override
+  String get settingsInvoicesColSeller => 'Commerce';
+
+  @override
+  String get settingsInvoicesColAmount => 'Montant';
+
+  @override
+  String get settingsInvoicesColStatus => 'Statut';
+
+  @override
+  String get settingsInvoicesColActions => 'Actions';
+
+  @override
+  String get settingsInvoicesConfirmButton => 'Confirmer';
+
+  @override
+  String get settingsInvoicesConfirmTitle => 'Confirmer la facture';
+
+  @override
+  String get settingsInvoicesAccountLabel => 'Compte';
+
+  @override
+  String get settingsInvoicesCategoryLabel => 'Catégorie';
+
+  @override
+  String get settingsInvoicesNoteLabel => 'Note (facultatif)';
+
+  @override
+  String get settingsInvoicesSelectAccount => 'Aucun compte';
+
+  @override
+  String get settingsInvoicesSelectCategory => 'Aucune catégorie';
+
+  @override
+  String get settingsInvoicesSubmit => 'Créer la transaction';
+
+  @override
+  String get settingsInvoicesSubmitting => 'Création…';
+
+  @override
+  String get settingsInvoicesDismissButton => 'Ignorer';
+
+  @override
+  String get settingsInvoicesDismissConfirm =>
+      'Ignorer cette facture ? Aucune transaction ne sera créée.';
+
+  @override
+  String get settingsInvoicesDismissSuccess => 'Facture ignorée';
+
+  @override
+  String get settingsInvoicesDismissFailed => 'Échec de l\'ignorance';
+
+  @override
+  String get settingsInvoicesImportSuccess => 'Transaction créée';
+
+  @override
+  String get settingsInvoicesImportFailed => 'Échec de la création';
+
+  @override
+  String get settingsInvoicesLoadFailed => 'Échec du chargement';
+
+  @override
+  String get settingsInvoicesColLastSync => 'Dernière sync.';
+
+  @override
+  String get settingsInvoicesAutoSyncLabel => 'Synchronisation planifiée';
+
+  @override
+  String get settingsInvoicesAutoSyncHint =>
+      'Lorsqu\'il est activé, les factures se synchronisent automatiquement au maximum une fois par heure pendant votre utilisation. Les échecs conservent leur état d\'erreur et attendent au lieu de réessayer automatiquement.';
+
+  @override
+  String get settingsInvoicesAutoSyncUpdateFailed =>
+      'Échec de la mise à jour de la synchronisation planifiée';
+
+  @override
+  String get publicApiCreditsPageDescriptionsEinvoice =>
+      'Consultez les factures électroniques cloud par code-barres mobile via le point de terminaison API du fournisseur configuré.';
 }

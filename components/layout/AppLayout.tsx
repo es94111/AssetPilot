@@ -37,6 +37,7 @@ const PAGE_TITLE_KEYS: Record<string, string> = {
   '/settings/mcp-connections': 'nav.mcpConnections',
   '/settings/api-integration': 'nav.apiIntegration',
   '/settings/notifications':   'nav.notifications',
+  '/settings/invoices':       'nav.cloudInvoice',
 };
 
 export default function AppLayout({ user, children }: { user: any; children: React.ReactNode }) {

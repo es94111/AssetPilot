@@ -6327,6 +6327,219 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get notificationsPushGenericBody =>
       'Você tem uma notificação. Abra o AssetPilot para ver os detalhes.';
+
+  @override
+  String get navCloudInvoice => 'Faturas na nuvem';
+
+  @override
+  String get settingsInvoicesTitle => 'Portador de faturas na nuvem';
+
+  @override
+  String get settingsInvoicesDescription =>
+      'Depois de vincular seu portador de código de barras móvel, você pode sincronizar manualmente as faturas em nuvem da plataforma de nota fiscal eletrônica em rascunhos de transações para revisão antes de lançar.';
+
+  @override
+  String get settingsInvoicesCarrierSectionTitle =>
+      'Portador de código de barras móvel';
+
+  @override
+  String get settingsInvoicesCarrierSectionDescription =>
+      'O código de verificação é armazenado criptografado com AES-256-GCM. Apenas o código de barras mascarado é exibido e nenhuma API retorna o código de verificação.';
+
+  @override
+  String get settingsInvoicesBarcodeLabel =>
+      'Portador de código de barras móvel';
+
+  @override
+  String get settingsInvoicesBarcodePlaceholder => '/ABC1234';
+
+  @override
+  String get settingsInvoicesBarcodeHint =>
+      'Formato: uma barra seguida de 7 caracteres alfanuméricos maiúsculos, por exemplo /ABC1234.';
+
+  @override
+  String get settingsInvoicesVerifyCodeLabel => 'Código de verificação';
+
+  @override
+  String get settingsInvoicesVerifyCodePlaceholder =>
+      '6 a 20 caracteres alfanuméricos';
+
+  @override
+  String get settingsInvoicesVerifyCodeHint =>
+      'O código de verificação definido na plataforma de nota fiscal eletrônica. Usado apenas para consultar suas próprias faturas.';
+
+  @override
+  String get settingsInvoicesBindButton => 'Vincular portador';
+
+  @override
+  String get settingsInvoicesBinding => 'Vinculando…';
+
+  @override
+  String get settingsInvoicesBindSuccess => 'Portador vinculado';
+
+  @override
+  String get settingsInvoicesBindFailed => 'Falha ao vincular o portador';
+
+  @override
+  String get settingsInvoicesUnbindButton => 'Desvincular';
+
+  @override
+  String get settingsInvoicesUnbindConfirm =>
+      'Desvincular este portador de código de barras? Os rascunhos e lançamentos existentes serão mantidos.';
+
+  @override
+  String get settingsInvoicesUnbindSuccess => 'Portador desvinculado';
+
+  @override
+  String get settingsInvoicesUnbindFailed => 'Falha ao desvincular o portador';
+
+  @override
+  String get settingsInvoicesNoCarriers => 'Nenhum portador vinculado ainda';
+
+  @override
+  String get settingsInvoicesSyncNow => 'Sincronizar agora';
+
+  @override
+  String get settingsInvoicesSyncing => 'Sincronizando…';
+
+  @override
+  String settingsInvoicesSyncSummary(
+    Object created,
+    Object duplicates,
+    Object skipped,
+  ) {
+    return 'Adicionadas $created, duplicadas $duplicates, ignoradas $skipped';
+  }
+
+  @override
+  String get settingsInvoicesSyncFailed => 'Falha na sincronização';
+
+  @override
+  String get settingsInvoicesSyncDegraded =>
+      'A API de nota fiscal eletrônica não está configurada; a sincronização está indisponível.';
+
+  @override
+  String settingsInvoicesLastSyncAt(Object date) {
+    return 'Última sincronização: $date';
+  }
+
+  @override
+  String get settingsInvoicesNeverSynced => 'Nunca sincronizado';
+
+  @override
+  String settingsInvoicesRetryAfter(Object seconds) {
+    return 'A última sincronização falhou. Tente novamente em $seconds segundos.';
+  }
+
+  @override
+  String get settingsInvoicesDraftsTitle => 'Rascunhos de faturas';
+
+  @override
+  String get settingsInvoicesDraftsDescription =>
+      'Somente faturas confirmadas criam transações. Rascunhos não afetam suas estatísticas.';
+
+  @override
+  String get settingsInvoicesNoDrafts => 'Nenhuma fatura ainda';
+
+  @override
+  String get settingsInvoicesFilterStatus => 'Status';
+
+  @override
+  String get settingsInvoicesStatusAll => 'Todas';
+
+  @override
+  String get settingsInvoicesStatusDraft => 'Rascunho';
+
+  @override
+  String get settingsInvoicesStatusImported => 'Lançada';
+
+  @override
+  String get settingsInvoicesStatusDismissed => 'Ignorada';
+
+  @override
+  String get settingsInvoicesColInvoiceNumber => 'Número da fatura';
+
+  @override
+  String get settingsInvoicesColDate => 'Data da fatura';
+
+  @override
+  String get settingsInvoicesColSeller => 'Estabelecimento';
+
+  @override
+  String get settingsInvoicesColAmount => 'Valor';
+
+  @override
+  String get settingsInvoicesColStatus => 'Status';
+
+  @override
+  String get settingsInvoicesColActions => 'Ações';
+
+  @override
+  String get settingsInvoicesConfirmButton => 'Confirmar';
+
+  @override
+  String get settingsInvoicesConfirmTitle => 'Confirmar fatura';
+
+  @override
+  String get settingsInvoicesAccountLabel => 'Conta';
+
+  @override
+  String get settingsInvoicesCategoryLabel => 'Categoria';
+
+  @override
+  String get settingsInvoicesNoteLabel => 'Observação (opcional)';
+
+  @override
+  String get settingsInvoicesSelectAccount => 'Sem conta';
+
+  @override
+  String get settingsInvoicesSelectCategory => 'Sem categoria';
+
+  @override
+  String get settingsInvoicesSubmit => 'Criar transação';
+
+  @override
+  String get settingsInvoicesSubmitting => 'Criando…';
+
+  @override
+  String get settingsInvoicesDismissButton => 'Ignorar';
+
+  @override
+  String get settingsInvoicesDismissConfirm =>
+      'Ignorar esta fatura? Nenhuma transação será criada.';
+
+  @override
+  String get settingsInvoicesDismissSuccess => 'Fatura ignorada';
+
+  @override
+  String get settingsInvoicesDismissFailed => 'Falha ao ignorar a fatura';
+
+  @override
+  String get settingsInvoicesImportSuccess => 'Transação criada';
+
+  @override
+  String get settingsInvoicesImportFailed => 'Falha ao criar a transação';
+
+  @override
+  String get settingsInvoicesLoadFailed => 'Falha ao carregar';
+
+  @override
+  String get settingsInvoicesColLastSync => 'Última sincronização';
+
+  @override
+  String get settingsInvoicesAutoSyncLabel => 'Sincronização agendada';
+
+  @override
+  String get settingsInvoicesAutoSyncHint =>
+      'Quando ativado, as faturas sincronizam automaticamente no máximo uma vez por hora enquanto você usa o aplicativo. Sincronizações com falha mantêm o estado de erro e aguardam em vez de tentar novamente.';
+
+  @override
+  String get settingsInvoicesAutoSyncUpdateFailed =>
+      'Falha ao atualizar a sincronização agendada';
+
+  @override
+  String get publicApiCreditsPageDescriptionsEinvoice =>
+      'Consulte faturas eletrônicas na nuvem pelo código de barras móvel usando o endpoint de API do provedor configurado.';
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -12643,4 +12856,217 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   @override
   String get notificationsPushGenericBody =>
       'Você tem uma notificação. Abra o AssetPilot para ver os detalhes.';
+
+  @override
+  String get navCloudInvoice => 'Faturas na nuvem';
+
+  @override
+  String get settingsInvoicesTitle => 'Portador de faturas na nuvem';
+
+  @override
+  String get settingsInvoicesDescription =>
+      'Depois de vincular seu portador de código de barras móvel, você pode sincronizar manualmente as faturas em nuvem da plataforma de nota fiscal eletrônica em rascunhos de transações para revisão antes de lançar.';
+
+  @override
+  String get settingsInvoicesCarrierSectionTitle =>
+      'Portador de código de barras móvel';
+
+  @override
+  String get settingsInvoicesCarrierSectionDescription =>
+      'O código de verificação é armazenado criptografado com AES-256-GCM. Apenas o código de barras mascarado é exibido e nenhuma API retorna o código de verificação.';
+
+  @override
+  String get settingsInvoicesBarcodeLabel =>
+      'Portador de código de barras móvel';
+
+  @override
+  String get settingsInvoicesBarcodePlaceholder => '/ABC1234';
+
+  @override
+  String get settingsInvoicesBarcodeHint =>
+      'Formato: uma barra seguida de 7 caracteres alfanuméricos maiúsculos, por exemplo /ABC1234.';
+
+  @override
+  String get settingsInvoicesVerifyCodeLabel => 'Código de verificação';
+
+  @override
+  String get settingsInvoicesVerifyCodePlaceholder =>
+      '6 a 20 caracteres alfanuméricos';
+
+  @override
+  String get settingsInvoicesVerifyCodeHint =>
+      'O código de verificação definido na plataforma de nota fiscal eletrônica. Usado apenas para consultar suas próprias faturas.';
+
+  @override
+  String get settingsInvoicesBindButton => 'Vincular portador';
+
+  @override
+  String get settingsInvoicesBinding => 'Vinculando…';
+
+  @override
+  String get settingsInvoicesBindSuccess => 'Portador vinculado';
+
+  @override
+  String get settingsInvoicesBindFailed => 'Falha ao vincular o portador';
+
+  @override
+  String get settingsInvoicesUnbindButton => 'Desvincular';
+
+  @override
+  String get settingsInvoicesUnbindConfirm =>
+      'Desvincular este portador de código de barras? Os rascunhos e lançamentos existentes serão mantidos.';
+
+  @override
+  String get settingsInvoicesUnbindSuccess => 'Portador desvinculado';
+
+  @override
+  String get settingsInvoicesUnbindFailed => 'Falha ao desvincular o portador';
+
+  @override
+  String get settingsInvoicesNoCarriers => 'Nenhum portador vinculado ainda';
+
+  @override
+  String get settingsInvoicesSyncNow => 'Sincronizar agora';
+
+  @override
+  String get settingsInvoicesSyncing => 'Sincronizando…';
+
+  @override
+  String settingsInvoicesSyncSummary(
+    Object created,
+    Object duplicates,
+    Object skipped,
+  ) {
+    return 'Adicionadas $created, duplicadas $duplicates, ignoradas $skipped';
+  }
+
+  @override
+  String get settingsInvoicesSyncFailed => 'Falha na sincronização';
+
+  @override
+  String get settingsInvoicesSyncDegraded =>
+      'A API de nota fiscal eletrônica não está configurada; a sincronização está indisponível.';
+
+  @override
+  String settingsInvoicesLastSyncAt(Object date) {
+    return 'Última sincronização: $date';
+  }
+
+  @override
+  String get settingsInvoicesNeverSynced => 'Nunca sincronizado';
+
+  @override
+  String settingsInvoicesRetryAfter(Object seconds) {
+    return 'A última sincronização falhou. Tente novamente em $seconds segundos.';
+  }
+
+  @override
+  String get settingsInvoicesDraftsTitle => 'Rascunhos de faturas';
+
+  @override
+  String get settingsInvoicesDraftsDescription =>
+      'Somente faturas confirmadas criam transações. Rascunhos não afetam suas estatísticas.';
+
+  @override
+  String get settingsInvoicesNoDrafts => 'Nenhuma fatura ainda';
+
+  @override
+  String get settingsInvoicesFilterStatus => 'Status';
+
+  @override
+  String get settingsInvoicesStatusAll => 'Todas';
+
+  @override
+  String get settingsInvoicesStatusDraft => 'Rascunho';
+
+  @override
+  String get settingsInvoicesStatusImported => 'Lançada';
+
+  @override
+  String get settingsInvoicesStatusDismissed => 'Ignorada';
+
+  @override
+  String get settingsInvoicesColInvoiceNumber => 'Número da fatura';
+
+  @override
+  String get settingsInvoicesColDate => 'Data da fatura';
+
+  @override
+  String get settingsInvoicesColSeller => 'Estabelecimento';
+
+  @override
+  String get settingsInvoicesColAmount => 'Valor';
+
+  @override
+  String get settingsInvoicesColStatus => 'Status';
+
+  @override
+  String get settingsInvoicesColActions => 'Ações';
+
+  @override
+  String get settingsInvoicesConfirmButton => 'Confirmar';
+
+  @override
+  String get settingsInvoicesConfirmTitle => 'Confirmar fatura';
+
+  @override
+  String get settingsInvoicesAccountLabel => 'Conta';
+
+  @override
+  String get settingsInvoicesCategoryLabel => 'Categoria';
+
+  @override
+  String get settingsInvoicesNoteLabel => 'Observação (opcional)';
+
+  @override
+  String get settingsInvoicesSelectAccount => 'Sem conta';
+
+  @override
+  String get settingsInvoicesSelectCategory => 'Sem categoria';
+
+  @override
+  String get settingsInvoicesSubmit => 'Criar transação';
+
+  @override
+  String get settingsInvoicesSubmitting => 'Criando…';
+
+  @override
+  String get settingsInvoicesDismissButton => 'Ignorar';
+
+  @override
+  String get settingsInvoicesDismissConfirm =>
+      'Ignorar esta fatura? Nenhuma transação será criada.';
+
+  @override
+  String get settingsInvoicesDismissSuccess => 'Fatura ignorada';
+
+  @override
+  String get settingsInvoicesDismissFailed => 'Falha ao ignorar a fatura';
+
+  @override
+  String get settingsInvoicesImportSuccess => 'Transação criada';
+
+  @override
+  String get settingsInvoicesImportFailed => 'Falha ao criar a transação';
+
+  @override
+  String get settingsInvoicesLoadFailed => 'Falha ao carregar';
+
+  @override
+  String get settingsInvoicesColLastSync => 'Última sincronização';
+
+  @override
+  String get settingsInvoicesAutoSyncLabel => 'Sincronização agendada';
+
+  @override
+  String get settingsInvoicesAutoSyncHint =>
+      'Quando ativado, as faturas sincronizam automaticamente no máximo uma vez por hora enquanto você usa o aplicativo. Sincronizações com falha mantêm o estado de erro e aguardam em vez de tentar novamente.';
+
+  @override
+  String get settingsInvoicesAutoSyncUpdateFailed =>
+      'Falha ao atualizar a sincronização agendada';
+
+  @override
+  String get publicApiCreditsPageDescriptionsEinvoice =>
+      'Consulte faturas eletrônicas na nuvem pelo código de barras móvel usando o endpoint de API do provedor configurado.';
 }

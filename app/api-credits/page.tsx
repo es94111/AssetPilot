@@ -60,7 +60,7 @@ function getUsageNotes(t: T) {
 
 function getServiceKinds(t: T) {
   return [
-    { label: t('public.apiCreditsPage.serviceKinds.data'), count: 3, icon: 'database' },
+    { label: t('public.apiCreditsPage.serviceKinds.data'), count: 4, icon: 'database' },
     { label: t('public.apiCreditsPage.serviceKinds.auth'), count: 2, icon: 'key' },
     { label: t('public.apiCreditsPage.serviceKinds.email'), count: 3, icon: 'mail' },
     { label: t('public.apiCreditsPage.serviceKinds.backup'), count: 1, icon: 'cloud-upload' },
@@ -77,6 +77,7 @@ function translateApiDescription(name: string, fallback: string, t: T) {
   if (name.startsWith('Zeabur')) return t('public.apiCreditsPage.descriptions.zeabur');
   if (name === 'Resend') return t('public.apiCreditsPage.descriptions.resend');
   if (name === 'MEGA S4 Object Storage') return t('public.apiCreditsPage.descriptions.mega');
+  if (name === '財政部電子發票整合服務平台') return t('public.apiCreditsPage.descriptions.einvoice');
   return fallback;
 }
 

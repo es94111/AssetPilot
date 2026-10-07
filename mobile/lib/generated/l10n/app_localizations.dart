@@ -10918,6 +10918,388 @@ abstract class AppLocalizations {
   /// In zh_Hant_TW, this message translates to:
   /// **'有一則通知，開啟 AssetPilot 查看詳情。'**
   String get notificationsPushGenericBody;
+
+  /// Web path: nav.cloudInvoice
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'雲端發票'**
+  String get navCloudInvoice;
+
+  /// Web path: settings.invoices.title
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'雲端發票載具'**
+  String get settingsInvoicesTitle;
+
+  /// Web path: settings.invoices.description
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'綁定手機條碼載具後，可手動同步財政部電子發票平台的雲端發票，轉為交易草稿供您確認後入帳。'**
+  String get settingsInvoicesDescription;
+
+  /// Web path: settings.invoices.carrierSectionTitle
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'手機條碼載具'**
+  String get settingsInvoicesCarrierSectionTitle;
+
+  /// Web path: settings.invoices.carrierSectionDescription
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'載具驗證碼以 AES-256-GCM 加密儲存，畫面上只會顯示遮罩後的條碼，任何 API 都不會回傳驗證碼。'**
+  String get settingsInvoicesCarrierSectionDescription;
+
+  /// Web path: settings.invoices.barcodeLabel
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'手機條碼載具'**
+  String get settingsInvoicesBarcodeLabel;
+
+  /// Web path: settings.invoices.barcodePlaceholder
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'/ABC1234'**
+  String get settingsInvoicesBarcodePlaceholder;
+
+  /// Web path: settings.invoices.barcodeHint
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'格式為斜線加上 7 碼大寫英數字，例如 /ABC1234。'**
+  String get settingsInvoicesBarcodeHint;
+
+  /// Web path: settings.invoices.verifyCodeLabel
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'驗證碼'**
+  String get settingsInvoicesVerifyCodeLabel;
+
+  /// Web path: settings.invoices.verifyCodePlaceholder
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'6~20 碼英數字'**
+  String get settingsInvoicesVerifyCodePlaceholder;
+
+  /// Web path: settings.invoices.verifyCodeHint
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'於財政部電子發票整合服務平台設定的載具驗證碼，僅用於查詢您的雲端發票。'**
+  String get settingsInvoicesVerifyCodeHint;
+
+  /// Web path: settings.invoices.bindButton
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'綁定載具'**
+  String get settingsInvoicesBindButton;
+
+  /// Web path: settings.invoices.binding
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'綁定中…'**
+  String get settingsInvoicesBinding;
+
+  /// Web path: settings.invoices.bindSuccess
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'載具綁定成功'**
+  String get settingsInvoicesBindSuccess;
+
+  /// Web path: settings.invoices.bindFailed
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'載具綁定失敗'**
+  String get settingsInvoicesBindFailed;
+
+  /// Web path: settings.invoices.unbindButton
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'解除綁定'**
+  String get settingsInvoicesUnbindButton;
+
+  /// Web path: settings.invoices.unbindConfirm
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'確定解除此手機條碼載具？既有的發票草稿與已入帳交易會保留。'**
+  String get settingsInvoicesUnbindConfirm;
+
+  /// Web path: settings.invoices.unbindSuccess
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'已解除載具綁定'**
+  String get settingsInvoicesUnbindSuccess;
+
+  /// Web path: settings.invoices.unbindFailed
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'解除綁定失敗'**
+  String get settingsInvoicesUnbindFailed;
+
+  /// Web path: settings.invoices.noCarriers
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'尚未綁定任何手機條碼載具'**
+  String get settingsInvoicesNoCarriers;
+
+  /// Web path: settings.invoices.syncNow
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'立即同步'**
+  String get settingsInvoicesSyncNow;
+
+  /// Web path: settings.invoices.syncing
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'同步中…'**
+  String get settingsInvoicesSyncing;
+
+  /// Web path: settings.invoices.syncSummary
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'新增 {created} 筆、重複 {duplicates} 筆、略過 {skipped} 筆'**
+  String settingsInvoicesSyncSummary(
+    Object created,
+    Object duplicates,
+    Object skipped,
+  );
+
+  /// Web path: settings.invoices.syncFailed
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'同步失敗'**
+  String get settingsInvoicesSyncFailed;
+
+  /// Web path: settings.invoices.syncDegraded
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'財政部電子發票 API 尚未設定，暫時無法同步'**
+  String get settingsInvoicesSyncDegraded;
+
+  /// Web path: settings.invoices.lastSyncAt
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'上次同步：{date}'**
+  String settingsInvoicesLastSyncAt(Object date);
+
+  /// Web path: settings.invoices.neverSynced
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'尚未同步'**
+  String get settingsInvoicesNeverSynced;
+
+  /// Web path: settings.invoices.retryAfter
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'上次同步失敗，請於 {seconds} 秒後再試'**
+  String settingsInvoicesRetryAfter(Object seconds);
+
+  /// Web path: settings.invoices.draftsTitle
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'雲端發票草稿'**
+  String get settingsInvoicesDraftsTitle;
+
+  /// Web path: settings.invoices.draftsDescription
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'只有確認入帳的發票才會建立交易；未確認的草稿不會影響收支統計。'**
+  String get settingsInvoicesDraftsDescription;
+
+  /// Web path: settings.invoices.noDrafts
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'尚無雲端發票'**
+  String get settingsInvoicesNoDrafts;
+
+  /// Web path: settings.invoices.filterStatus
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'狀態'**
+  String get settingsInvoicesFilterStatus;
+
+  /// Web path: settings.invoices.statusAll
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'全部'**
+  String get settingsInvoicesStatusAll;
+
+  /// Web path: settings.invoices.statusDraft
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'草稿'**
+  String get settingsInvoicesStatusDraft;
+
+  /// Web path: settings.invoices.statusImported
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'已入帳'**
+  String get settingsInvoicesStatusImported;
+
+  /// Web path: settings.invoices.statusDismissed
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'已略過'**
+  String get settingsInvoicesStatusDismissed;
+
+  /// Web path: settings.invoices.colInvoiceNumber
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'發票號碼'**
+  String get settingsInvoicesColInvoiceNumber;
+
+  /// Web path: settings.invoices.colDate
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'發票日期'**
+  String get settingsInvoicesColDate;
+
+  /// Web path: settings.invoices.colSeller
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'店家'**
+  String get settingsInvoicesColSeller;
+
+  /// Web path: settings.invoices.colAmount
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'金額'**
+  String get settingsInvoicesColAmount;
+
+  /// Web path: settings.invoices.colStatus
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'狀態'**
+  String get settingsInvoicesColStatus;
+
+  /// Web path: settings.invoices.colActions
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'操作'**
+  String get settingsInvoicesColActions;
+
+  /// Web path: settings.invoices.confirmButton
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'確認入帳'**
+  String get settingsInvoicesConfirmButton;
+
+  /// Web path: settings.invoices.confirmTitle
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'確認發票入帳'**
+  String get settingsInvoicesConfirmTitle;
+
+  /// Web path: settings.invoices.accountLabel
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'帳戶'**
+  String get settingsInvoicesAccountLabel;
+
+  /// Web path: settings.invoices.categoryLabel
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'分類'**
+  String get settingsInvoicesCategoryLabel;
+
+  /// Web path: settings.invoices.noteLabel
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'備註（選填）'**
+  String get settingsInvoicesNoteLabel;
+
+  /// Web path: settings.invoices.selectAccount
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'不指定帳戶'**
+  String get settingsInvoicesSelectAccount;
+
+  /// Web path: settings.invoices.selectCategory
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'不指定分類'**
+  String get settingsInvoicesSelectCategory;
+
+  /// Web path: settings.invoices.submit
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'建立交易'**
+  String get settingsInvoicesSubmit;
+
+  /// Web path: settings.invoices.submitting
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'建立中…'**
+  String get settingsInvoicesSubmitting;
+
+  /// Web path: settings.invoices.dismissButton
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'略過'**
+  String get settingsInvoicesDismissButton;
+
+  /// Web path: settings.invoices.dismissConfirm
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'確定略過此發票？略過後不會建立交易。'**
+  String get settingsInvoicesDismissConfirm;
+
+  /// Web path: settings.invoices.dismissSuccess
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'已略過此發票'**
+  String get settingsInvoicesDismissSuccess;
+
+  /// Web path: settings.invoices.dismissFailed
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'略過失敗'**
+  String get settingsInvoicesDismissFailed;
+
+  /// Web path: settings.invoices.importSuccess
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'已建立交易'**
+  String get settingsInvoicesImportSuccess;
+
+  /// Web path: settings.invoices.importFailed
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'入帳失敗'**
+  String get settingsInvoicesImportFailed;
+
+  /// Web path: settings.invoices.loadFailed
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'載入失敗'**
+  String get settingsInvoicesLoadFailed;
+
+  /// Web path: settings.invoices.colLastSync
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'上次同步'**
+  String get settingsInvoicesColLastSync;
+
+  /// Web path: settings.invoices.autoSyncLabel
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'排程同步'**
+  String get settingsInvoicesAutoSyncLabel;
+
+  /// Web path: settings.invoices.autoSyncHint
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'開啟後，使用本服務時最多每小時自動同步一次；同步失敗會保留錯誤狀態並暫停重試，不會自動重試。'**
+  String get settingsInvoicesAutoSyncHint;
+
+  /// Web path: settings.invoices.autoSyncUpdateFailed
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'更新排程同步設定失敗'**
+  String get settingsInvoicesAutoSyncUpdateFailed;
+
+  /// Web path: public.apiCreditsPage.descriptions.einvoice
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'透過已設定的供應商 API endpoint，以手機條碼查詢雲端電子發票。'**
+  String get publicApiCreditsPageDescriptionsEinvoice;
 }
 
 class _AppLocalizationsDelegate

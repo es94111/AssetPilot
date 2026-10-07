@@ -288,7 +288,7 @@ export class PostgresCompatDatabase {
     return lastRowsModified;
   }
 
-  close(): void {
+  async close(): Promise<void> {
     if (this.transactionId) {
       try {
         runPg("ROLLBACK", [], this.transactionId);
@@ -298,7 +298,8 @@ export class PostgresCompatDatabase {
       this.transactionId = null;
       this.transactionOwnerAsyncId = null;
     }
-    worker?.terminate();
+    const currentWorker = worker;
     worker = null;
+    await currentWorker?.terminate();
   }
 }

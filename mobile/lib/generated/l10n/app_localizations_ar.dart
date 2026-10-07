@@ -5723,4 +5723,37 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get featuresReconciliationTemplatesCreditCard =>
       'كشف بطاقة ائتمان (الموجب شراء)';
+
+  @override
+  String get featuresReportsBaseCurrencyLabel => 'العملة الأساسية';
+
+  @override
+  String featuresReportsRateSource(Object source, Object time) {
+    return 'مصدر سعر الصرف: $source ($time)';
+  }
+
+  @override
+  String get featuresReportsRateSourceIdentity =>
+      'العملة الأساسية هي TWD؛ لا حاجة للتحويل';
+
+  @override
+  String get featuresReportsRateSourceManual => 'سعر مُدخل يدويًا';
+
+  @override
+  String get featuresReportsRateSourceApi =>
+      'واجهة أسعار الصرف العالمية المباشرة (يُعاد استخدام الذاكرة المؤقتة الحالية)';
+
+  @override
+  String get featuresReportsRateSourceDefault =>
+      'سعر النظام الافتراضي (لم يتم إعداد العملة بعد)';
+
+  @override
+  String get featuresReportsExportCsv => 'تصدير CSV';
+
+  @override
+  String get featuresReportsExporting => 'جارٍ التصدير...';
+
+  @override
+  String get featuresReportsRateTimestampUnavailable =>
+      'الطابع الزمني غير متاح (سعر النظام الافتراضي)';
 }

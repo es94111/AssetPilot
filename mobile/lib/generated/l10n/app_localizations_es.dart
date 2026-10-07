@@ -5860,4 +5860,37 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get featuresReconciliationTemplatesCreditCard =>
       'Extracto de tarjeta (positivo = compra)';
+
+  @override
+  String get featuresReportsBaseCurrencyLabel => 'Moneda base';
+
+  @override
+  String featuresReportsRateSource(Object source, Object time) {
+    return 'Fuente del tipo de cambio: $source ($time)';
+  }
+
+  @override
+  String get featuresReportsRateSourceIdentity =>
+      'La moneda base es TWD; no requiere conversión';
+
+  @override
+  String get featuresReportsRateSourceManual => 'Tipo introducido manualmente';
+
+  @override
+  String get featuresReportsRateSourceApi =>
+      'API global de tipos de cambio en vivo (se reutiliza la caché existente)';
+
+  @override
+  String get featuresReportsRateSourceDefault =>
+      'Tipo predeterminado del sistema (moneda aún no configurada)';
+
+  @override
+  String get featuresReportsExportCsv => 'Exportar CSV';
+
+  @override
+  String get featuresReportsExporting => 'Exportando...';
+
+  @override
+  String get featuresReportsRateTimestampUnavailable =>
+      'Marca de tiempo no disponible (tipo predeterminado del sistema)';
 }

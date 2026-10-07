@@ -8826,5 +8826,54 @@
   "@featuresReconciliationTemplatesCreditCard": {
     "description": "Web path: features.reconciliation.templates.creditCard",
     "x-webPath": "features.reconciliation.templates.creditCard"
+  },
+  "featuresReportsBaseCurrencyLabel": "Devise de référence",
+  "@featuresReportsBaseCurrencyLabel": {
+    "description": "Web path: features.reports.baseCurrencyLabel",
+    "x-webPath": "features.reports.baseCurrencyLabel"
+  },
+  "featuresReportsRateSource": "Source du taux de change : {source} ({time})",
+  "@featuresReportsRateSource": {
+    "description": "Web path: features.reports.rateSource",
+    "x-webPath": "features.reports.rateSource",
+    "placeholders": {
+      "source": {},
+      "time": {}
+    }
+  },
+  "featuresReportsRateSourceIdentity": "La devise de référence est le TWD ; aucune conversion nécessaire",
+  "@featuresReportsRateSourceIdentity": {
+    "description": "Web path: features.reports.rateSourceIdentity",
+    "x-webPath": "features.reports.rateSourceIdentity"
+  },
+  "featuresReportsRateSourceManual": "Taux saisi manuellement",
+  "@featuresReportsRateSourceManual": {
+    "description": "Web path: features.reports.rateSourceManual",
+    "x-webPath": "features.reports.rateSourceManual"
+  },
+  "featuresReportsRateSourceApi": "API mondiale des taux de change en direct (cache existant réutilisé)",
+  "@featuresReportsRateSourceApi": {
+    "description": "Web path: features.reports.rateSourceApi",
+    "x-webPath": "features.reports.rateSourceApi"
+  },
+  "featuresReportsRateSourceDefault": "Taux par défaut du système (devise pas encore configurée)",
+  "@featuresReportsRateSourceDefault": {
+    "description": "Web path: features.reports.rateSourceDefault",
+    "x-webPath": "features.reports.rateSourceDefault"
+  },
+  "featuresReportsExportCsv": "Exporter en CSV",
+  "@featuresReportsExportCsv": {
+    "description": "Web path: features.reports.exportCsv",
+    "x-webPath": "features.reports.exportCsv"
+  },
+  "featuresReportsExporting": "Exportation...",
+  "@featuresReportsExporting": {
+    "description": "Web path: features.reports.exporting",
+    "x-webPath": "features.reports.exporting"
+  },
+  "featuresReportsRateTimestampUnavailable": "Horodatage indisponible (taux système par défaut)",
+  "@featuresReportsRateTimestampUnavailable": {
+    "description": "Web path: features.reports.rateTimestampUnavailable",
+    "x-webPath": "features.reports.rateTimestampUnavailable"
   }
 }

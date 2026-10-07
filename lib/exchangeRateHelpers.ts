@@ -8,7 +8,7 @@ export { fxCache };
 
 export const FX_AUTO_SYNC_MIN_INTERVAL_MS = 30 * 60 * 1000;
 const GLOBAL_FX_CACHE_TTL = 5 * 60 * 1000;
-const SHARED_AUTO_RATE_TTL = 30 * 60 * 1000;
+const SHARED_AUTO_RATE_TTL = fxCache.EXCHANGE_RATE_CACHE_TTL_MS;
 
 interface GlobalFxData {
   conversion_rates?: Record<string, number>;
@@ -17,6 +17,14 @@ interface GlobalFxData {
 let globalFxCache: { data: GlobalFxData | null; timestamp: number } = { data: null, timestamp: 0 };
 let globalFxInflight: Promise<GlobalFxData | null> | null = null;
 const sharedAutoRateCache = new Map<string, { rate: string; fetchedAt: number }>();
+
+/** Read-only snapshot for report conversion; consumers must still enforce the 30-minute TTL. */
+export function getSharedAutoRateCacheSnapshot(): Map<string, { rate: string; fetchedAt: number }> {
+  return new Map([...sharedAutoRateCache.entries()].map(([currency, entry]) => [
+    currency,
+    { rate: entry.rate, fetchedAt: entry.fetchedAt },
+  ]));
+}
 
 async function fetchGlobalRealtimeRates(): Promise<GlobalFxData | null> {
   const now = Date.now();

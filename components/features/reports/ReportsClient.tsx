@@ -1,16 +1,24 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { apiGet } from '@/lib/clientApi';
+import Decimal from 'decimal.js';
+import { apiGet, getActiveLedgerHeaders } from '@/lib/clientApi';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import Chart from 'chart.js/auto';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useT } from '@/components/i18n/I18nProvider';
 import { localeTag } from '@/lib/i18n/localeTag';
+import {
+  REPORT_BASE_CURRENCY_DEFAULT,
+  formatReportMoney,
+  reportBaseCurrencyOptions,
+  reportRateSourceLabelKey,
+  resolveReportBaseCurrency,
+} from '@/lib/reportCurrency';
 
-function fmt(n: number | string, locale: string) {
-  return 'NT$ ' + Math.round(Number(n) || 0).toLocaleString(localeTag(locale));
+function money(n: number | string, currency: string, locale: string) {
+  return formatReportMoney(n, currency, localeTag(locale));
 }
 
 function percentOf(total: number, value: number) {
@@ -28,13 +36,13 @@ function groupCategoryRows(rows: any[], uncategorized: string) {
         parentId,
         parentName,
         parentColor: row.parentColor || row.color || '#94a3b8',
-        total: 0,
+        totalDecimal: new Decimal(0),
         children: [],
       });
     }
     const group = groups.get(parentId);
     const amount = Number(row.total) || 0;
-    group.total += amount;
+    group.totalDecimal = group.totalDecimal.plus(new Decimal(String(row.total ?? 0)));
     group.children.push({
       ...row,
       name: row.name || parentName,
@@ -42,7 +50,9 @@ function groupCategoryRows(rows: any[], uncategorized: string) {
       total: amount,
     });
   });
-  return Array.from(groups.values()).sort((a, b) => b.total - a.total);
+  return Array.from(groups.values())
+    .map(group => ({ ...group, total: group.totalDecimal.toNumber() }))
+    .sort((a, b) => b.total - a.total);
 }
 
 function getDateRange(period: string, customFrom: string, customTo: string) {
@@ -87,10 +97,10 @@ function shiftPeriod(from: string, to: string) {
   };
 }
 
-function compareText(current: number, previous: number, locale: string, t: (path: string, vars?: Record<string, string | number>) => string) {
+function compareText(current: number, previous: number, currency: string, locale: string, t: (path: string, vars?: Record<string, string | number>) => string) {
   const delta = current - previous;
   const sign = delta > 0 ? '+' : '';
-  const formattedDelta = `${sign}${fmt(delta, locale)}`;
+  const formattedDelta = `${sign}${money(delta, currency, locale)}`;
   if (previous === 0) return t('features.reports.previousNoData', { delta: formattedDelta });
   const rate = Math.round((delta / previous) * 10000) / 100;
   return t('features.reports.compareWithRate', { delta: formattedDelta, rate: `${sign}${rate}` });
@@ -119,12 +129,16 @@ export default function ReportsClient(_props: { user?: any } = {}) {
   const [type, setType] = useState(initialType === 'income' ? 'income' : 'expense');
   const [customFrom, setCustomFrom] = useState(searchParams.get('from') || '');
   const [customTo, setCustomTo] = useState(searchParams.get('to') || '');
+  const [baseCurrency, setBaseCurrency] = useState(resolveReportBaseCurrency(searchParams.get('baseCurrency')) || REPORT_BASE_CURRENCY_DEFAULT);
   const [reportData, setReportData] = useState<any>(null);
   const [previousReportData, setPreviousReportData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [loadError, setLoadError] = useState('');
   const [selectedCategoryKey, setSelectedCategoryKey] = useState<string | null>(null);
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chartInstanceRef = useRef<Chart | null>(null);
+  const reportRequestIdRef = useRef(0);
   // Chart data signature: skip rebuilds when data is unchanged during polling.
   const chartSignatureRef = useRef<string | null>(null);
   // Track the active theme so charts re-render with theme-matched axis/legend colors.
@@ -140,19 +154,29 @@ export default function ReportsClient(_props: { user?: any } = {}) {
   }, []);
 
   const fetchReport = useCallback(async (opts: { silent?: boolean } = {}) => {
+    const requestId = ++reportRequestIdRef.current;
     const { from, to } = getDateRange(period, customFrom, customTo);
     const previous = shiftPeriod(from, to);
+    const currencyQuery = `&baseCurrency=${encodeURIComponent(baseCurrency)}`;
     if (!opts.silent) setLoading(true);
     try {
       const [currentData, previousData] = await Promise.all([
-        apiGet(`/api/reports?type=${type}&from=${from}&to=${to}`),
-        apiGet(`/api/reports?type=${type}&from=${previous.from}&to=${previous.to}`).catch(() => null),
+        apiGet(`/api/reports?type=${type}&from=${from}&to=${to}${currencyQuery}`),
+        apiGet(`/api/reports?type=${type}&from=${previous.from}&to=${previous.to}${currencyQuery}`).catch(() => null),
       ]);
+      if (requestId !== reportRequestIdRef.current) return;
       setReportData(currentData);
       setPreviousReportData(previousData);
-    } catch (_) {}
-    if (!opts.silent) setLoading(false);
-  }, [period, customFrom, customTo, type]);
+      setLoadError('');
+    } catch (e: any) {
+      if (requestId !== reportRequestIdRef.current) return;
+      // 匯率不可用等情況會回 400；沿用既有靜默重試行為，但讓使用者看得到原因。
+      if (!opts.silent) setLoadError(String(e?.message || ''));
+      if (!opts.silent) { setReportData(null); setPreviousReportData(null); }
+    } finally {
+      if (requestId === reportRequestIdRef.current) setLoading(false);
+    }
+  }, [period, customFrom, customTo, type, baseCurrency]);
 
   useEffect(() => { fetchReport(); }, [fetchReport]);
 
@@ -162,12 +186,14 @@ export default function ReportsClient(_props: { user?: any } = {}) {
     const nextType = searchParams.get('type') === 'income' ? 'income' : 'expense';
     const nextFrom = searchParams.get('from') || '';
     const nextTo = searchParams.get('to') || '';
+    const nextBaseCurrency = resolveReportBaseCurrency(searchParams.get('baseCurrency')) || REPORT_BASE_CURRENCY_DEFAULT;
     const normalizedTab = nextTab === 'trend' || nextTab === 'daily' ? nextTab : 'category';
     if (normalizedTab !== activeTab) setActiveTab(normalizedTab);
     if (nextPeriod !== period) setPeriod(nextPeriod);
     if (nextType !== type) setType(nextType);
     if (nextFrom !== customFrom) setCustomFrom(nextFrom);
     if (nextTo !== customTo) setCustomTo(nextTo);
+    if (nextBaseCurrency !== baseCurrency) setBaseCurrency(nextBaseCurrency);
   }, [currentQuery]);
 
   useEffect(() => {
@@ -177,11 +203,13 @@ export default function ReportsClient(_props: { user?: any } = {}) {
     params.set('type', type);
     if (customFrom) params.set('from', customFrom);
     if (customTo) params.set('to', customTo);
+    // 預設基準幣別不寫入 URL，維持既有連結與預設行為一致。
+    if (baseCurrency !== REPORT_BASE_CURRENCY_DEFAULT) params.set('baseCurrency', baseCurrency);
     const nextQuery = params.toString();
     if (nextQuery !== currentQuery) {
       router.replace(`${pathname}?${nextQuery}`, { scroll: false });
     }
-  }, [activeTab, period, type, customFrom, customTo, currentQuery, pathname, router]);
+  }, [activeTab, period, type, customFrom, customTo, baseCurrency, currentQuery, pathname, router]);
 
   useEffect(() => {
     function refreshVisibleReport() {
@@ -339,6 +367,56 @@ export default function ReportsClient(_props: { user?: any } = {}) {
   const selectedRow = selectedCategoryKey ? catRows.find((row: any) => categoryRowKey(row) === selectedCategoryKey) : null;
   const expenseGroups = useMemo(() => groupCategoryRows(catRows, t('features.common.uncategorized')), [catRows, t]);
 
+  const rateInfo = reportData?.currency || null;
+  const baseCurrencyOptions = useMemo(
+    () => reportBaseCurrencyOptions(reportData?.availableCurrencies, baseCurrency),
+    [reportData, baseCurrency],
+  );
+  const rateSourceText = useMemo(() => {
+    const key = reportRateSourceLabelKey(rateInfo?.source);
+    return key ? t(key) : String(rateInfo?.source || '');
+  }, [rateInfo, t]);
+  const rateTimeText = useMemo(() => {
+    const value = rateInfo?.fetchedAt;
+    if (!value) return t('features.reports.rateTimestampUnavailable');
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) return String(value);
+    try {
+      return parsed.toLocaleString(localeTag(locale));
+    } catch {
+      return parsed.toISOString();
+    }
+  }, [rateInfo, locale, t]);
+
+  async function exportCsv() {
+    const { from, to } = getDateRange(period, customFrom, customTo);
+    const params = new URLSearchParams({ type, from, to, baseCurrency });
+    setExporting(true);
+    setLoadError('');
+    try {
+      const res = await fetch(`/api/reports/export?${params.toString()}`, {
+        credentials: 'include',
+        headers: getActiveLedgerHeaders(),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || `HTTP ${res.status}`);
+      }
+      const blob = await res.blob();
+      const href = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = href;
+      a.download = (res.headers.get('Content-Disposition') || '').match(/filename="([^"]+)"/)?.[1] || 'reports.csv';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(href);
+    } catch (e: any) {
+      setLoadError(String(e?.message || e));
+    }
+    setExporting(false);
+  }
+
   function jumpToTransactions(row: any) {
     const { from, to } = getDateRange(period, customFrom, customTo);
     const categoryId = row?.categoryId || (row?.isOtherGroup ? row?.parentId : '');
@@ -388,16 +466,42 @@ export default function ReportsClient(_props: { user?: any } = {}) {
           </>
         )}
         <Select options={[{ label: t('features.common.expense'), value: 'expense' }, { label: t('features.common.income'), value: 'income' }]} value={type} onChange={(e) => setType(e.target.value)} label={t('features.common.type')} className="w-32" />
+        <Select
+          options={baseCurrencyOptions.map((code) => ({ label: code, value: code }))}
+          value={baseCurrency}
+          onChange={(e) => setBaseCurrency(e.target.value)}
+          label={t('features.reports.baseCurrencyLabel')}
+          className="w-32"
+        />
+        <div className="flex items-end pb-4">
+          <button
+            type="button"
+            className="min-h-11 rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition-colors duration-150 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+            onClick={exportCsv}
+            disabled={exporting}
+          >
+            {exporting ? t('features.reports.exporting') : t('features.reports.exportCsv')}
+          </button>
+        </div>
       </div>
+
+      {rateInfo && baseCurrency !== REPORT_BASE_CURRENCY_DEFAULT && (
+        <p className="text-xs text-slate-500 dark:text-slate-400">
+          {t('features.reports.rateSource', { source: rateSourceText, time: rateTimeText })}
+        </p>
+      )}
+      {loadError && (
+        <p role="alert" className="text-sm text-rose-600 dark:text-rose-400">{loadError}</p>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="p-4 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-lg shadow-sm">
           <p className="text-sm text-slate-500">{t('features.reports.currentTotal')}</p>
-          <p className="text-2xl font-semibold text-slate-900">{fmt(grandTotal, locale)}</p>
+          <p className="text-2xl font-semibold text-slate-900">{money(grandTotal, baseCurrency, locale)}</p>
         </div>
         <div className="p-4 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-lg shadow-sm">
           <p className="text-sm text-slate-500">{t('features.reports.comparedPrevious')}</p>
-          <p className={`text-xl font-semibold ${(grandTotal - previousTotal) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>{compareText(grandTotal, previousTotal, locale, t)}</p>
+          <p className={`text-xl font-semibold ${(grandTotal - previousTotal) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>{compareText(grandTotal, previousTotal, baseCurrency, locale, t)}</p>
         </div>
       </div>
 
@@ -415,12 +519,12 @@ export default function ReportsClient(_props: { user?: any } = {}) {
         <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-lg shadow-sm space-y-4">
           <div className="flex justify-between items-center border-b pb-2">
             <h3 className="font-semibold text-lg">{t('features.reports.detailTitle', { type: type === 'expense' ? t('features.common.expense') : t('features.common.income') })}</h3>
-            <p className="font-bold">{t('features.reports.total', { amount: fmt(grandTotal, locale) })}</p>
+            <p className="font-bold">{t('features.reports.total', { amount: money(grandTotal, baseCurrency, locale) })}</p>
           </div>
           {selectedRow && (
             <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800 dark:border-blue-900/60 dark:bg-blue-950/40 dark:text-blue-200">
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <span>{t('features.reports.selectedCategory')}<strong>{selectedRow.parentName && selectedRow.parentName !== selectedRow.name ? `${selectedRow.parentName} › ` : ''}{selectedRow.name}</strong>{t('features.reports.selectedCategoryAmount', { amount: fmt(selectedRow.total, locale) })}</span>
+                <span>{t('features.reports.selectedCategory')}<strong>{selectedRow.parentName && selectedRow.parentName !== selectedRow.name ? `${selectedRow.parentName} › ` : ''}{selectedRow.name}</strong>{t('features.reports.selectedCategoryAmount', { amount: money(selectedRow.total, baseCurrency, locale) })}</span>
                 <button type="button" className="rounded-md border border-blue-300 px-3 py-1 text-xs font-medium hover:bg-blue-100 dark:border-blue-800 dark:hover:bg-blue-900/50" onClick={() => jumpToTransactions(selectedRow)}>
                   {t('features.reports.viewTransactions')}
                 </button>
@@ -441,7 +545,7 @@ export default function ReportsClient(_props: { user?: any } = {}) {
                         return (
                           <div
                             key={`${group.parentId}-${child.name}-bar-${childIndex}`}
-                            title={`${child.name} ${fmt(child.total, locale)}`}
+                            title={`${child.name} ${money(child.total, baseCurrency, locale)}`}
                             style={{ width: `${width}%`, background: child.color || '#94a3b8', height: '100%' }}
                           />
                         );
@@ -449,7 +553,7 @@ export default function ReportsClient(_props: { user?: any } = {}) {
                     </div>
                   </div>
                   <span className="w-12 text-right">{percentage}%</span>
-                  <span className="w-24 text-right font-medium">{fmt(group.total, locale)}</span>
+                  <span className="w-24 text-right font-medium">{money(group.total, baseCurrency, locale)}</span>
                 </div>
                 <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 pl-6 text-xs text-slate-500 dark:text-slate-400">
                   {group.children.map((child: any, childIndex: number) => {
@@ -475,7 +579,7 @@ export default function ReportsClient(_props: { user?: any } = {}) {
                   <div className="h-full rounded-full" style={{ width: `${percentage}%`, background: row.color || '#94a3b8' }} />
                 </div>
                 <span className="w-12 text-right">{percentage}%</span>
-                <span className="w-24 text-right font-medium">{fmt(row.total, locale)}</span>
+                <span className="w-24 text-right font-medium">{money(row.total, baseCurrency, locale)}</span>
               </button>
             );
           })}

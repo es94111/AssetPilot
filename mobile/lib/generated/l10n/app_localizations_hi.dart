@@ -5744,4 +5744,37 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get featuresReconciliationTemplatesCreditCard =>
       'क्रेडिट कार्ड विवरण (धनात्मक = खरीद)';
+
+  @override
+  String get featuresReportsBaseCurrencyLabel => 'आधार मुद्रा';
+
+  @override
+  String featuresReportsRateSource(Object source, Object time) {
+    return 'विनिमय दर स्रोत: $source ($time)';
+  }
+
+  @override
+  String get featuresReportsRateSourceIdentity =>
+      'आधार मुद्रा TWD है; रूपांतरण की आवश्यकता नहीं';
+
+  @override
+  String get featuresReportsRateSourceManual => 'मैन्युअल रूप से दर्ज दर';
+
+  @override
+  String get featuresReportsRateSourceApi =>
+      'वैश्विक लाइव विनिमय दर API (मौजूदा कैश का पुनः उपयोग)';
+
+  @override
+  String get featuresReportsRateSourceDefault =>
+      'सिस्टम डिफ़ॉल्ट दर (मुद्रा अभी कॉन्फ़िगर नहीं की गई)';
+
+  @override
+  String get featuresReportsExportCsv => 'CSV निर्यात करें';
+
+  @override
+  String get featuresReportsExporting => 'निर्यात हो रहा है...';
+
+  @override
+  String get featuresReportsRateTimestampUnavailable =>
+      'समय-मुद्रा उपलब्ध नहीं (सिस्टम डिफ़ॉल्ट दर)';
 }

@@ -8826,5 +8826,54 @@
   "@featuresReconciliationTemplatesCreditCard": {
     "description": "Web path: features.reconciliation.templates.creditCard",
     "x-webPath": "features.reconciliation.templates.creditCard"
+  },
+  "featuresReportsBaseCurrencyLabel": "基准币别",
+  "@featuresReportsBaseCurrencyLabel": {
+    "description": "Web path: features.reports.baseCurrencyLabel",
+    "x-webPath": "features.reports.baseCurrencyLabel"
+  },
+  "featuresReportsRateSource": "汇率来源：{source}（{time}）",
+  "@featuresReportsRateSource": {
+    "description": "Web path: features.reports.rateSource",
+    "x-webPath": "features.reports.rateSource",
+    "placeholders": {
+      "source": {},
+      "time": {}
+    }
+  },
+  "featuresReportsRateSourceIdentity": "基准币别为 TWD，无须换算",
+  "@featuresReportsRateSourceIdentity": {
+    "description": "Web path: features.reports.rateSourceIdentity",
+    "x-webPath": "features.reports.rateSourceIdentity"
+  },
+  "featuresReportsRateSourceManual": "手动输入汇率",
+  "@featuresReportsRateSourceManual": {
+    "description": "Web path: features.reports.rateSourceManual",
+    "x-webPath": "features.reports.rateSourceManual"
+  },
+  "featuresReportsRateSourceApi": "全球即时汇率 API（沿用既有缓存）",
+  "@featuresReportsRateSourceApi": {
+    "description": "Web path: features.reports.rateSourceApi",
+    "x-webPath": "features.reports.rateSourceApi"
+  },
+  "featuresReportsRateSourceDefault": "系统预设汇率（尚未设定该币别）",
+  "@featuresReportsRateSourceDefault": {
+    "description": "Web path: features.reports.rateSourceDefault",
+    "x-webPath": "features.reports.rateSourceDefault"
+  },
+  "featuresReportsExportCsv": "导出 CSV",
+  "@featuresReportsExportCsv": {
+    "description": "Web path: features.reports.exportCsv",
+    "x-webPath": "features.reports.exportCsv"
+  },
+  "featuresReportsExporting": "导出中...",
+  "@featuresReportsExporting": {
+    "description": "Web path: features.reports.exporting",
+    "x-webPath": "features.reports.exporting"
+  },
+  "featuresReportsRateTimestampUnavailable": "未提供时间戳（系统预设汇率）",
+  "@featuresReportsRateTimestampUnavailable": {
+    "description": "Web path: features.reports.rateTimestampUnavailable",
+    "x-webPath": "features.reports.rateTimestampUnavailable"
   }
 }

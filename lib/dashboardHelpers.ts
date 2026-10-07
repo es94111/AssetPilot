@@ -1,10 +1,12 @@
 import logger from '@/lib/logger';
+import Decimal from 'decimal.js';
 import type { DashboardLayoutPreference } from '@/lib/dashboardPreferences';
 import { getHoldingMarketContribution, type DashboardChangeDriver, type DashboardComparisonWindow } from '@/lib/dashboardInsights';
 import type { ScheduledCashOutlook } from '@/lib/dashboardForecast';
 import { queryAll, queryOne } from '@/lib/db';
 import { calcFifoLots } from '@/lib/moneyDecimal';
 import { normalizeCurrency } from '@/lib/accountHelpers';
+import { convertReportSummaryToBase } from '@/lib/reportCurrencyConversion';
 import { monthInUserTz, todayInUserTz } from '@/lib/userTime';
 
 export interface DashboardCategoryAggregateRow {
@@ -187,6 +189,21 @@ export interface TransactionsSummaryResult {
   dailyMap: Record<string, number>;
   monthlyMap: Record<string, number>;
   total: number;
+}
+
+/**
+ * 以基準幣別重新表達已彙總的報表結果（issue #255）。
+ * 彙總本身仍以 TWD 等值（transactions.amount）計算，換算只在最後一步、
+ * 以 decimal.js 全精度對每個已彙總欄位做一次，因此不引入浮點累加誤差。
+ * `rateToBase` 語意同 exchange_rates.rate_to_twd：1 單位基準幣別值多少 TWD。
+ */
+export function convertTransactionsSummaryToBaseCurrency(
+  summary: TransactionsSummaryResult,
+  rateToBase: Decimal.Value,
+  baseCurrency: string,
+): TransactionsSummaryResult {
+  if (baseCurrency === 'TWD') return summary;
+  return convertReportSummaryToBase(summary, rateToBase, baseCurrency);
 }
 
 // 抽取自 app/api/reports/route.ts（無行為變更）；userTimezone 未提供時查詢 users.timezone。

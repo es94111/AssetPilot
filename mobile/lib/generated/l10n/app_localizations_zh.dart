@@ -5480,6 +5480,35 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get featuresReconciliationTemplatesCreditCard => '信用卡帳單（正值為消費）';
+
+  @override
+  String get featuresReportsBaseCurrencyLabel => '基準幣別';
+
+  @override
+  String featuresReportsRateSource(Object source, Object time) {
+    return '匯率來源：$source（$time）';
+  }
+
+  @override
+  String get featuresReportsRateSourceIdentity => '基準幣別為 TWD，無須換算';
+
+  @override
+  String get featuresReportsRateSourceManual => '手動輸入匯率';
+
+  @override
+  String get featuresReportsRateSourceApi => '全球即時匯率 API（沿用既有快取）';
+
+  @override
+  String get featuresReportsRateSourceDefault => '系統預設匯率（尚未設定該幣別）';
+
+  @override
+  String get featuresReportsExportCsv => '匯出 CSV';
+
+  @override
+  String get featuresReportsExporting => '匯出中...';
+
+  @override
+  String get featuresReportsRateTimestampUnavailable => '未提供時間戳（系統預設匯率）';
 }
 
 /// The translations for Chinese, as used in China, using the Han script (`zh_Hans_CN`).
@@ -10959,6 +10988,35 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
 
   @override
   String get featuresReconciliationTemplatesCreditCard => '信用卡对账单（正值为消费）';
+
+  @override
+  String get featuresReportsBaseCurrencyLabel => '基准币别';
+
+  @override
+  String featuresReportsRateSource(Object source, Object time) {
+    return '汇率来源：$source（$time）';
+  }
+
+  @override
+  String get featuresReportsRateSourceIdentity => '基准币别为 TWD，无须换算';
+
+  @override
+  String get featuresReportsRateSourceManual => '手动输入汇率';
+
+  @override
+  String get featuresReportsRateSourceApi => '全球即时汇率 API（沿用既有缓存）';
+
+  @override
+  String get featuresReportsRateSourceDefault => '系统预设汇率（尚未设定该币别）';
+
+  @override
+  String get featuresReportsExportCsv => '导出 CSV';
+
+  @override
+  String get featuresReportsExporting => '导出中...';
+
+  @override
+  String get featuresReportsRateTimestampUnavailable => '未提供时间戳（系统预设汇率）';
 }
 
 /// The translations for Chinese, as used in Taiwan, using the Han script (`zh_Hant_TW`).
@@ -16437,4 +16495,33 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
 
   @override
   String get featuresReconciliationTemplatesCreditCard => '信用卡帳單（正值為消費）';
+
+  @override
+  String get featuresReportsBaseCurrencyLabel => '基準幣別';
+
+  @override
+  String featuresReportsRateSource(Object source, Object time) {
+    return '匯率來源：$source（$time）';
+  }
+
+  @override
+  String get featuresReportsRateSourceIdentity => '基準幣別為 TWD，無須換算';
+
+  @override
+  String get featuresReportsRateSourceManual => '手動輸入匯率';
+
+  @override
+  String get featuresReportsRateSourceApi => '全球即時匯率 API（沿用既有快取）';
+
+  @override
+  String get featuresReportsRateSourceDefault => '系統預設匯率（尚未設定該幣別）';
+
+  @override
+  String get featuresReportsExportCsv => '匯出 CSV';
+
+  @override
+  String get featuresReportsExporting => '匯出中...';
+
+  @override
+  String get featuresReportsRateTimestampUnavailable => '未提供時間戳（系統預設匯率）';
 }

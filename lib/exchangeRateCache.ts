@@ -4,7 +4,9 @@
 import Decimal from 'decimal.js';
 import type { DatabaseLike } from './db';
 
-const TTL_MS = 30 * 60 * 1000;        // 30 分鐘快取
+const EXCHANGE_RATE_CACHE_TTL_MS = 30 * 60 * 1000;        // 30 分鐘快取
+export { EXCHANGE_RATE_CACHE_TTL_MS };
+const TTL_MS = EXCHANGE_RATE_CACHE_TTL_MS;
 const FETCH_TIMEOUT_MS = 2000;         // 單次外部 API 逾時
 const RETRY_COUNT = 1;                 // 失敗重試 1 次
 

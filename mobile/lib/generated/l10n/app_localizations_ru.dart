@@ -5816,4 +5816,37 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get featuresReconciliationTemplatesCreditCard =>
       'Выписка по карте (плюс — покупка)';
+
+  @override
+  String get featuresReportsBaseCurrencyLabel => 'Базовая валюта';
+
+  @override
+  String featuresReportsRateSource(Object source, Object time) {
+    return 'Источник курса: $source ($time)';
+  }
+
+  @override
+  String get featuresReportsRateSourceIdentity =>
+      'Базовая валюта — TWD; конвертация не требуется';
+
+  @override
+  String get featuresReportsRateSourceManual => 'Курс, введённый вручную';
+
+  @override
+  String get featuresReportsRateSourceApi =>
+      'Глобальный API курсов в реальном времени (используется существующий кэш)';
+
+  @override
+  String get featuresReportsRateSourceDefault =>
+      'Системный курс по умолчанию (валюта ещё не настроена)';
+
+  @override
+  String get featuresReportsExportCsv => 'Экспорт CSV';
+
+  @override
+  String get featuresReportsExporting => 'Экспорт...';
+
+  @override
+  String get featuresReportsRateTimestampUnavailable =>
+      'Временная метка недоступна (системный курс по умолчанию)';
 }

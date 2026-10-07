@@ -1,6 +1,18 @@
 {
-  "currentVersion": "4.119.0",
+  "currentVersion": "4.119.1",
   "releases": [
+    {
+      "version": "4.119.1",
+      "date": "2026-10-07",
+      "title": "修補相依套件安全性弱點",
+      "type": "security",
+      "changes": [
+        {
+          "tag": "security",
+          "text": "將 sharp 升級至 0.35.5，修補 GHSA-wq5f-xc86-pv6w（CVE-2026-96889）；將 @modelcontextprotocol/sdk 升級至 1.31.0 以上，修補 GHSA-6qxp-vccf-f47h OAuth 憑證洩漏風險。"
+        }
+      ]
+    },
     {
       "version": "4.119.0",
       "date": "2026-10-07",

@@ -60,7 +60,7 @@
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",
-    "@modelcontextprotocol/sdk": "^1.30.0",
+    "@modelcontextprotocol/sdk": "^1.31.0",
     "@passwordless-id/webauthn": "^2.4.0",
     "@tailwindcss/postcss": "^4.3.3",
     "chart.js": "^4.5.1",
@@ -76,7 +76,7 @@
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "resend": "^6.27.0",
-    "sharp": "^0.35.4",
+    "sharp": "^0.35.5",
     "tailwind-merge": "^3.6.0",
     "tailwindcss": "^4.3.3",
     "zod": "^4.6.2"
@@ -84,7 +84,7 @@
   "overrides": {
     "postcss": "^8.5.28",
     "uuid": "^14.0.2",
-    "sharp": "^0.35.4",
+    "sharp": "^0.35.5",
     "fast-uri": "^4.2.1",
     "hono": "^4.13.7",
     "source-map-js": "^1.2.2",

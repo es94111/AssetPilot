@@ -8,6 +8,15 @@ import {
   isValidIso8601Date,
 } from "../../../../lib/auditHelpers";
 import { getRequestIpFromHeaders } from "../../../../lib/loginHelpers";
+import {
+  createXlsxExportResponse,
+  resolveExportFormat,
+  type XlsxColumn,
+} from "../../../../lib/xlsxExport";
+
+// xlsx 產生依賴 Node stream 與 write-excel-file，明確宣告 nodejs runtime，
+// 避免被推論為 edge runtime。
+export const runtime = "nodejs";
 
 export async function GET(request) {
   const auth = await requireAuth(request);
@@ -16,6 +25,7 @@ export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const dateFrom = searchParams.get("dateFrom") || "";
   const dateTo = searchParams.get("dateTo") || "";
+  const format = resolveExportFormat(searchParams.get("format"));
 
   try {
     let where = "WHERE sd.user_id = ?";
@@ -88,12 +98,37 @@ export async function GET(request) {
     const csv = buildCsv(headers, dataRows);
     const filename = `stock-dividends-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}.csv`;
 
+    const ipAddress = getRequestIpFromHeaders(request.headers) || "";
+    const userAgent = request.headers.get("user-agent") || "";
+
+    if (format === "xlsx") {
+      const columns: XlsxColumn[] = [
+        { header: "日期", type: "date" },
+        { header: "市場", type: "text", width: 8 },
+        { header: "股票代號", type: "text", width: 12 },
+        { header: "股票名稱", type: "text" },
+        { header: "股票類型", type: "text", width: 12 },
+        { header: "幣別", type: "text", width: 8 },
+        { header: "現金股利", type: "number" },
+        { header: "股票股利", type: "number", format: "#,##0.####" },
+        { header: "帳戶", type: "text" },
+        { header: "備註", type: "text", width: 30 },
+      ];
+      return createXlsxExportResponse({
+        sheetName: "股利紀錄",
+        columns,
+        rows: dataRows,
+        filenamePrefix: "stock-dividends",
+        audit: { userId: auth.userId, role: "user", action: "export_stock_dividends", ipAddress, userAgent, dateFrom, dateTo },
+      });
+    }
+
     writeOperationAudit({
       userId: auth.userId,
       role: "user",
       action: "export_stock_dividends",
-      ipAddress: getRequestIpFromHeaders(request.headers) || "",
-      userAgent: request.headers.get("user-agent") || "",
+      ipAddress,
+      userAgent,
       result: "success",
       isAdminOperation: false,
       metadata: {
@@ -101,6 +136,7 @@ export async function GET(request) {
         byteSize: Buffer.byteLength(csv, "utf8"),
         dateFrom,
         dateTo,
+        format: "csv",
       },
     });
 

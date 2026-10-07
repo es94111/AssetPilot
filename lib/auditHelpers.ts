@@ -8,6 +8,8 @@ const AUDIT_METADATA_ALLOWED_KEYS = new Set([
   'dateFrom', 'dateTo', 'failure_stage', 'failure_reason',
   'unknown_columns', 'backup_path', 'before_restore_path',
   'filename', 'filterParams',
+  // Excel (.xlsx) 匯出格式（issue #261）：記錄本次匯出為 csv 或 xlsx。
+  'format',
   'bucket', 'object_key', 'endpoint', 'region',
   'transaction_id', 'attachment_id', 'storage', 'mime_type',
   'linked_transaction_id',

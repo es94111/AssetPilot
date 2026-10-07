@@ -3,6 +3,13 @@ import { requireAuth } from '../../../../lib/apiHelpers';
 import { queryAll, queryOne } from '../../../../lib/db';
 import { buildCsv, writeOperationAudit, isValidIso8601Date } from '../../../../lib/auditHelpers';
 import { getRequestIpFromHeaders } from '../../../../lib/loginHelpers';
+import {
+  createXlsxExportResponse,
+  resolveExportFormat,
+  type XlsxColumn,
+} from '../../../../lib/xlsxExport';
+
+export const runtime = 'nodejs';
 
 type TransactionExportType = 'income' | 'expense' | 'transfer_out' | 'transfer_in';
 
@@ -46,6 +53,7 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const dateFrom = searchParams.get('dateFrom') || '';
   const dateTo = searchParams.get('dateTo') || '';
+  const format = resolveExportFormat(searchParams.get('format'));
 
   try {
     let where = 'WHERE t.user_id = ?';
@@ -82,20 +90,49 @@ export async function GET(request: NextRequest) {
       ];
     });
 
+    const userRow = queryOne('SELECT is_admin FROM users WHERE id = ?', [auth.actorUserId]);
+    const ipAddress = getRequestIpFromHeaders(request.headers);
+    const userAgent = request.headers.get('user-agent') || '';
+    const role = userRow?.is_admin ? 'admin' : 'user';
+
+    if (format === 'xlsx') {
+      const columns: XlsxColumn[] = [
+        { header: '日期', type: 'date' },
+        { header: '類型', type: 'text', width: 8 },
+        { header: '分類', type: 'text', width: 24 },
+        { header: '金額', type: 'number' },
+        { header: '幣別', type: 'text', width: 8 },
+        { header: '原始金額', type: 'number' },
+        { header: '匯率', type: 'number', format: '0.000000' },
+        { header: '台幣金額', type: 'number' },
+        { header: '匯兌手續費', type: 'number' },
+        { header: '帳戶', type: 'text' },
+        { header: '轉入帳戶', type: 'text' },
+        { header: '排除統計', type: 'text', width: 10 },
+        { header: '標籤', type: 'text', width: 20 },
+        { header: '備註', type: 'text', width: 30 },
+      ];
+      return createXlsxExportResponse({
+        sheetName: '交易記錄',
+        columns,
+        rows: dataRows,
+        filenamePrefix: 'transactions',
+        audit: { userId: auth.userId, role, action: 'export_transactions', ipAddress, userAgent, dateFrom, dateTo },
+      });
+    }
+
     const csv = buildCsv(headers, dataRows);
     const filename = `transactions-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}.csv`;
 
-    const userRow = queryOne('SELECT is_admin FROM users WHERE id = ?', [auth.actorUserId]);
-    const ipAddress = getRequestIpFromHeaders(request.headers);
     writeOperationAudit({
       userId: auth.userId,
-      role: userRow?.is_admin ? 'admin' : 'user',
+      role,
       action: 'export_transactions',
       ipAddress,
-      userAgent: request.headers.get('user-agent') || '',
+      userAgent,
       result: 'success',
       isAdminOperation: false,
-      metadata: { rows: dataRows.length, byteSize: Buffer.byteLength(csv, 'utf8'), dateFrom, dateTo },
+      metadata: { rows: dataRows.length, byteSize: Buffer.byteLength(csv, 'utf8'), dateFrom, dateTo, format: 'csv' },
     });
 
     return new Response(csv, {

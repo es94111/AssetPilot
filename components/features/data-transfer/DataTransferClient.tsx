@@ -159,6 +159,7 @@ export default function DataTransferClient({ user }: { user: UserLike }) {
   const { t } = useT();
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
+  const [exportFormat, setExportFormat] = useState<'csv' | 'xlsx'>('csv');
   const [busyKey, setBusyKey] = useState('');
   const [importResults, setImportResults] = useState<Record<string, CsvImportResult | null>>({});
   const [status, setStatus] = useState('');
@@ -178,8 +179,9 @@ export default function DataTransferClient({ user }: { user: UserLike }) {
     const params = new URLSearchParams();
     if (dateFrom) params.set('dateFrom', dateFrom);
     if (dateTo) params.set('dateTo', dateTo);
+    if (exportFormat === 'xlsx') params.set('format', 'xlsx');
     return params.toString() ? `?${params.toString()}` : '';
-  }, [dateFrom, dateTo]);
+  }, [dateFrom, dateTo, exportFormat]);
 
   useEffect(() => {
     if (!user?.isAdmin) return;
@@ -360,9 +362,18 @@ export default function DataTransferClient({ user }: { user: UserLike }) {
         <h1 className="text-2xl font-bold text-slate-900 mb-2">{t('features.dataTransfer.title')}</h1>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-xl shadow-sm">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-xl shadow-sm">
         <Input label={t('features.dataTransfer.exportStartDate')} type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
         <Input label={t('features.dataTransfer.exportEndDate')} type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
+        <Select
+          label={t('features.dataTransfer.exportFormat')}
+          value={exportFormat}
+          onChange={(e) => setExportFormat(e.target.value === 'xlsx' ? 'xlsx' : 'csv')}
+          options={[
+            { label: t('features.dataTransfer.exportFormatCsv'), value: 'csv' },
+            { label: t('features.dataTransfer.exportFormatXlsx'), value: 'xlsx' },
+          ]}
+        />
       </div>
 
       {status && <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">{status}</div>}
@@ -379,7 +390,9 @@ export default function DataTransferClient({ user }: { user: UserLike }) {
 
               <div className="flex flex-wrap gap-3">
                 <Button onClick={() => handleCsvExport(module.exportUrl, `${module.key}-export`)} disabled={busyKey === `${module.key}-export`}>
-                  {busyKey === `${module.key}-export` ? t('features.dataTransfer.exporting') : t('features.dataTransfer.exportCsv')}
+                  {busyKey === `${module.key}-export`
+                    ? t('features.dataTransfer.exporting')
+                    : (exportFormat === 'xlsx' ? t('features.dataTransfer.exportXlsx') : t('features.dataTransfer.exportCsv'))}
                 </Button>
                 <label className="inline-flex items-center gap-3 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 cursor-pointer hover:bg-slate-50">
                   <span>{busyKey === module.key ? t('features.dataTransfer.importing') : t('features.dataTransfer.chooseCsv')}</span>

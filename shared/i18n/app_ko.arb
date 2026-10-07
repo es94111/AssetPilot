@@ -2390,6 +2390,26 @@
     "description": "Web path: features.dataTransfer.exportCsv",
     "x-webPath": "features.dataTransfer.exportCsv"
   },
+  "featuresDataTransferExportFormat": "내보내기 형식",
+  "@featuresDataTransferExportFormat": {
+    "description": "Web path: features.dataTransfer.exportFormat",
+    "x-webPath": "features.dataTransfer.exportFormat"
+  },
+  "featuresDataTransferExportFormatCsv": "CSV(.csv)",
+  "@featuresDataTransferExportFormatCsv": {
+    "description": "Web path: features.dataTransfer.exportFormatCsv",
+    "x-webPath": "features.dataTransfer.exportFormatCsv"
+  },
+  "featuresDataTransferExportFormatXlsx": "Excel(.xlsx)",
+  "@featuresDataTransferExportFormatXlsx": {
+    "description": "Web path: features.dataTransfer.exportFormatXlsx",
+    "x-webPath": "features.dataTransfer.exportFormatXlsx"
+  },
+  "featuresDataTransferExportXlsx": "Excel로 내보내기",
+  "@featuresDataTransferExportXlsx": {
+    "description": "Web path: features.dataTransfer.exportXlsx",
+    "x-webPath": "features.dataTransfer.exportXlsx"
+  },
   "featuresDataTransferExporting": "내보내는 중...",
   "@featuresDataTransferExporting": {
     "description": "Web path: features.dataTransfer.exporting",

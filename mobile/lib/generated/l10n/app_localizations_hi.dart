@@ -1545,6 +1545,18 @@ class AppLocalizationsHi extends AppLocalizations {
   String get featuresDataTransferExportCsv => 'CSV एक्सपोर्ट करें';
 
   @override
+  String get featuresDataTransferExportFormat => 'निर्यात प्रारूप';
+
+  @override
+  String get featuresDataTransferExportFormatCsv => 'CSV (.csv)';
+
+  @override
+  String get featuresDataTransferExportFormatXlsx => 'Excel (.xlsx)';
+
+  @override
+  String get featuresDataTransferExportXlsx => 'Excel निर्यात करें';
+
+  @override
   String get featuresDataTransferExporting => 'एक्सपोर्ट हो रहा है...';
 
   @override

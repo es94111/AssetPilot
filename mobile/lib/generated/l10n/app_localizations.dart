@@ -2917,6 +2917,30 @@ abstract class AppLocalizations {
   /// **'匯出 CSV'**
   String get featuresDataTransferExportCsv;
 
+  /// Web path: features.dataTransfer.exportFormat
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'匯出格式'**
+  String get featuresDataTransferExportFormat;
+
+  /// Web path: features.dataTransfer.exportFormatCsv
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'CSV（.csv）'**
+  String get featuresDataTransferExportFormatCsv;
+
+  /// Web path: features.dataTransfer.exportFormatXlsx
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'Excel（.xlsx）'**
+  String get featuresDataTransferExportFormatXlsx;
+
+  /// Web path: features.dataTransfer.exportXlsx
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'匯出 Excel'**
+  String get featuresDataTransferExportXlsx;
+
   /// Web path: features.dataTransfer.exporting
   ///
   /// In zh_Hant_TW, this message translates to:

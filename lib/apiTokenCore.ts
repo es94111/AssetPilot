@@ -182,9 +182,13 @@ function isPrivateIpv4(ip: string): boolean {
     inRange('127.0.0.0', 8) ||
     inRange('169.254.0.0', 16) || // link-local（含雲端 metadata 169.254.169.254）
     inRange('172.16.0.0', 12) ||
-    inRange('192.0.0.0', 24) ||
+    inRange('192.0.0.0', 24) || // protocol assignments
+    inRange('192.0.2.0', 24) || // documentation TEST-NET-1
+    inRange('192.88.99.0', 24) || // deprecated 6to4 relay anycast
     inRange('192.168.0.0', 16) ||
     inRange('198.18.0.0', 15) || // benchmarking
+    inRange('198.51.100.0', 24) || // documentation TEST-NET-2
+    inRange('203.0.113.0', 24) || // documentation TEST-NET-3
     inRange('224.0.0.0', 4) || // multicast
     inRange('240.0.0.0', 4) // reserved（含 255.255.255.255）
   );
@@ -259,14 +263,18 @@ function isPrivateIpv6(ip: string): boolean {
   if (groups.every((g) => g === 0)) return true; // ::（未指定）
   if (groups.slice(0, 7).every((g) => g === 0) && groups[7] === 1) return true; // ::1（loopback）
 
-  // 任何可還原成 IPv4 的嵌入形式，一律以 IPv4 規則判定。
+  // 任何可還原成 IPv4 的嵌入形式，一律以 IPv4 規則判定，避免 IPv4-mapped、NAT64
+  // 或 6to4 等表示法把私有 IPv4 藏在 IPv6 位址內；若嵌入的是公開 IPv4，維持既有放行行為。
   const embedded = embeddedIpv4(groups);
   if (embedded) return isBlockedHost(embedded);
 
-  const [g0] = groups;
-  if ((g0 & 0xffc0) === 0xfe80) return true; // link-local fe80::/10
-  if ((g0 & 0xfe00) === 0xfc00) return true; // unique-local fc00::/7
-  if ((g0 & 0xff00) === 0xff00) return true; // multicast ff00::/8
+  const [g0, g1] = groups;
+  // 只有 2000::/3 是一般全域單播空間；其餘特殊用途、未指派及保留空間一律拒絕，
+  // 包含 link-local、deprecated site-local、ULA、unspecified、multicast 及 discard-only。
+  if ((g0 & 0xe000) !== 0x2000) return true;
+  if (g0 === 0x2001 && (g1 & 0xff80) === 0) return true; // IETF protocol assignments 2001::/23
+  if (g0 === 0x2001 && g1 === 0x0db8) return true; // documentation 2001:db8::/32
+  if (g0 === 0x3fff && (g1 & 0xf000) === 0) return true; // documentation 3fff::/20
   return false;
 }
 
@@ -277,6 +285,31 @@ function isBlockedHost(hostname: string): boolean {
   if (isPrivateIpv4(hostname)) return true;
   if (hostname.includes(':') && isPrivateIpv6(hostname)) return true;
   return false;
+}
+
+/**
+ * 判定「主機名」是否為不可投遞的目的地（不含 DNS 解析）。
+ * 匯出給投遞層重用，讓建立訂閱與實際連線兩個時機使用同一份規則，避免清單漂移。
+ */
+export function isBlockedWebhookHostname(hostname: string): boolean {
+  return isBlockedHost(normalizeHost(String(hostname || '')));
+}
+
+/**
+ * 判定「已解析的 IP 位址」是否為不可投遞的目的地（issue #285）。
+ *
+ * Webhook 訂閱在建立時只驗證字面 hostname，實際投遞前必須再檢查 DNS 解析
+ * 結果，否則公開網域可解析到內網位址（DNS rebinding／split-horizon）。
+ * 這裡刻意重用 `isPrivateIpv4`／`isPrivateIpv6` 的既有範圍清單，讓兩個時機
+ * 的判定完全一致；非 IP 字面值（含帶 zone id 的位址）一律視為阻擋。
+ */
+export function isBlockedIpAddress(address: string): boolean {
+  const value = String(address || '').trim().toLowerCase().replace(/^\[|\]$/g, '');
+  // zone id（如 fe80::1%en0）只在連結本地位址上出現，無法以純位址規則比對 → 直接阻擋。
+  if (!value || value.includes('%')) return true;
+  if (ipv4ToInt(value) != null) return isPrivateIpv4(value);
+  if (parseIpv6(value) != null) return isPrivateIpv6(value);
+  return true;
 }
 
 // ── 簽章密鑰的加密封裝（AES-256-GCM）──

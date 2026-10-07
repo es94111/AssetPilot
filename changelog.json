@@ -1,6 +1,18 @@
 {
-  "currentVersion": "4.132.0",
+  "currentVersion": "4.133.0",
   "releases": [
+    {
+      "version": "4.133.0",
+      "date": "2026-10-07",
+      "title": "修補 Webhook 重新導向 SSRF 弱點",
+      "type": "security",
+      "changes": [
+        {
+          "tag": "security",
+          "text": "Webhook 投遞前重新驗證 URL 與所有 DNS 解析出的 IPv4／IPv6 位址，並以已驗證的公開 IP 直接連線、保留原始主機名的 TLS 驗證；拒絕所有 3xx，避免帶簽章的 payload 被轉送至內部、metadata 或特殊保留目的地；維持合法公開 Webhook 的簽章、請求框架與重試行為，並補強逾時、回應中斷及批次認領租約。#285"
+        }
+      ]
+    },
     {
       "version": "4.132.0",
       "date": "2026-10-08",

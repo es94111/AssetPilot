@@ -1515,7 +1515,7 @@ export const zhTW = {
       badgeBehind: "進度落後",
       badgeOverdue: "已逾期",
       badgeOnTrack: "進度正常",
-      badgeRepaid: "已清償",
+      badgeRepaid: "期程結束",
       projectedDate: "預估達成日：{date}",
       projectedUnavailable: "需有存款進度",
       requiredDaily: "每日需存 {amount}",

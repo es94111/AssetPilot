@@ -6004,7 +6004,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get featuresGoalsBadgeOnTrack => 'В графике';
 
   @override
-  String get featuresGoalsBadgeRepaid => 'Погашено';
+  String get featuresGoalsBadgeRepaid => 'График завершён';
 
   @override
   String featuresGoalsProjectedDate(Object date) {

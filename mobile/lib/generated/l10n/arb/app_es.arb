@@ -9126,7 +9126,7 @@
     "description": "Web path: features.goals.badgeOnTrack",
     "x-webPath": "features.goals.badgeOnTrack"
   },
-  "featuresGoalsBadgeRepaid": "Pagada",
+  "featuresGoalsBadgeRepaid": "Calendario finalizado",
   "@featuresGoalsBadgeRepaid": {
     "description": "Web path: features.goals.badgeRepaid",
     "x-webPath": "features.goals.badgeRepaid"

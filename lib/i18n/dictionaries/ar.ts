@@ -1517,7 +1517,7 @@ export const ar = {
       badgeBehind: "متأخر",
       badgeOverdue: "متأخر عن الموعد",
       badgeOnTrack: "على المسار",
-      badgeRepaid: "مسدد",
+      badgeRepaid: "انتهى الجدول",
       projectedDate: "الإنجاز المتوقع: {date}",
       projectedUnavailable: "يتطلب تقدمًا",
       requiredDaily: "وفّر {amount} يوميًا",

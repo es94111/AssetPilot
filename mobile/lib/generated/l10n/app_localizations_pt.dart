@@ -6012,7 +6012,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get featuresGoalsBadgeOnTrack => 'No prazo';
 
   @override
-  String get featuresGoalsBadgeRepaid => 'Pago';
+  String get featuresGoalsBadgeRepaid => 'Cronograma encerrado';
 
   @override
   String featuresGoalsProjectedDate(Object date) {
@@ -12148,7 +12148,7 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String get featuresGoalsBadgeOnTrack => 'No prazo';
 
   @override
-  String get featuresGoalsBadgeRepaid => 'Pago';
+  String get featuresGoalsBadgeRepaid => 'Cronograma encerrado';
 
   @override
   String featuresGoalsProjectedDate(Object date) {

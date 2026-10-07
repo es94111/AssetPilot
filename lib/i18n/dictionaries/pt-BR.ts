@@ -1517,7 +1517,7 @@ export const ptBR = {
       badgeBehind: "Atrasada",
       badgeOverdue: "Vencida",
       badgeOnTrack: "No prazo",
-      badgeRepaid: "Pago",
+      badgeRepaid: "Cronograma encerrado",
       projectedDate: "Conclusão prevista: {date}",
       projectedUnavailable: "requer progresso",
       requiredDaily: "Poupe {amount} por dia",

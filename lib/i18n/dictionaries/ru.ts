@@ -1517,7 +1517,7 @@ export const ru = {
       badgeBehind: "Отставание",
       badgeOverdue: "Просрочено",
       badgeOnTrack: "В графике",
-      badgeRepaid: "Погашено",
+      badgeRepaid: "График завершён",
       projectedDate: "Прогноз завершения: {date}",
       projectedUnavailable: "нужен прогресс",
       requiredDaily: "Откладывайте {amount} в день",

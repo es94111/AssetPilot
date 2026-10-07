@@ -1517,7 +1517,7 @@ export const fr = {
       badgeBehind: "En retard",
       badgeOverdue: "En retard",
       badgeOnTrack: "Dans les temps",
-      badgeRepaid: "Remboursé",
+      badgeRepaid: "Échéancier terminé",
       projectedDate: "Achèvement prévu : {date}",
       projectedUnavailable: "nécessite des progrès",
       requiredDaily: "Épargnez {amount} par jour",

@@ -9126,7 +9126,7 @@
     "description": "Web path: features.goals.badgeOnTrack",
     "x-webPath": "features.goals.badgeOnTrack"
   },
-  "featuresGoalsBadgeRepaid": "चुकता",
+  "featuresGoalsBadgeRepaid": "अनुसूची समाप्त",
   "@featuresGoalsBadgeRepaid": {
     "description": "Web path: features.goals.badgeRepaid",
     "x-webPath": "features.goals.badgeRepaid"

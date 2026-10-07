@@ -1517,7 +1517,7 @@ export const hi = {
       badgeBehind: "पीछे",
       badgeOverdue: "अतिदेय",
       badgeOnTrack: "सही दिशा में",
-      badgeRepaid: "चुकता",
+      badgeRepaid: "अनुसूची समाप्त",
       projectedDate: "अनुमानित पूर्णता: {date}",
       projectedUnavailable: "प्रगति आवश्यक",
       requiredDaily: "रोज़ {amount} बचाएँ",

@@ -1517,7 +1517,7 @@ export const en = {
       badgeBehind: "进度落后",
       badgeOverdue: "已逾期",
       badgeOnTrack: "进度正常",
-      badgeRepaid: "已清偿",
+      badgeRepaid: "Schedule ended",
       projectedDate: "预计达成日：{date}",
       projectedUnavailable: "需有存款进度",
       requiredDaily: "每日需存 {amount}",

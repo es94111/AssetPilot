@@ -10410,7 +10410,7 @@ abstract class AppLocalizations {
   /// Web path: features.goals.badgeRepaid
   ///
   /// In zh_Hant_TW, this message translates to:
-  /// **'已清償'**
+  /// **'期程結束'**
   String get featuresGoalsBadgeRepaid;
 
   /// Web path: features.goals.projectedDate

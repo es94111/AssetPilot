@@ -1517,7 +1517,7 @@ export const zhCN = {
       badgeBehind: "Behind",
       badgeOverdue: "Overdue",
       badgeOnTrack: "On track",
-      badgeRepaid: "Repaid",
+      badgeRepaid: "计划期满",
       projectedDate: "Projected completion: {date}",
       projectedUnavailable: "needs progress",
       requiredDaily: "Save {amount} per day",

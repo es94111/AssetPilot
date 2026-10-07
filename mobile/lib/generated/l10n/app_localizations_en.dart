@@ -5940,7 +5940,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get featuresGoalsBadgeOnTrack => '进度正常';
 
   @override
-  String get featuresGoalsBadgeRepaid => '已清偿';
+  String get featuresGoalsBadgeRepaid => 'Schedule ended';
 
   @override
   String featuresGoalsProjectedDate(Object date) {

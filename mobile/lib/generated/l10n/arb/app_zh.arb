@@ -9141,7 +9141,7 @@
     "description": "Web path: features.goals.badgeOnTrack",
     "x-webPath": "features.goals.badgeOnTrack"
   },
-  "featuresGoalsBadgeRepaid": "已清償",
+  "featuresGoalsBadgeRepaid": "期程結束",
   "@featuresGoalsBadgeRepaid": {
     "description": "Web path: features.goals.badgeRepaid",
     "x-webPath": "features.goals.badgeRepaid"

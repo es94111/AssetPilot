@@ -1517,7 +1517,7 @@ export const ko = {
       badgeBehind: "지연",
       badgeOverdue: "기한 초과",
       badgeOnTrack: "정상 진행",
-      badgeRepaid: "상환 완료",
+      badgeRepaid: "상환 일정 종료",
       projectedDate: "예상 완료일: {date}",
       projectedUnavailable: "진행 필요",
       requiredDaily: "하루 {amount} 저축",

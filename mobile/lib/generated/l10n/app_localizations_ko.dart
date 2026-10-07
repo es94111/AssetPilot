@@ -5748,7 +5748,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get featuresGoalsBadgeOnTrack => '정상 진행';
 
   @override
-  String get featuresGoalsBadgeRepaid => '상환 완료';
+  String get featuresGoalsBadgeRepaid => '상환 일정 종료';
 
   @override
   String featuresGoalsProjectedDate(Object date) {

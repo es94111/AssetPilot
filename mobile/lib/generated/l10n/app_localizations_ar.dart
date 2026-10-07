@@ -5910,7 +5910,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get featuresGoalsBadgeOnTrack => 'على المسار';
 
   @override
-  String get featuresGoalsBadgeRepaid => 'مسدد';
+  String get featuresGoalsBadgeRepaid => 'انتهى الجدول';
 
   @override
   String featuresGoalsProjectedDate(Object date) {

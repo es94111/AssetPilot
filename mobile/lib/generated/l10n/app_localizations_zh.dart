@@ -5661,7 +5661,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get featuresGoalsBadgeOnTrack => '進度正常';
 
   @override
-  String get featuresGoalsBadgeRepaid => '已清償';
+  String get featuresGoalsBadgeRepaid => '期程結束';
 
   @override
   String featuresGoalsProjectedDate(Object date) {
@@ -11454,7 +11454,7 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
   String get featuresGoalsBadgeOnTrack => 'On track';
 
   @override
-  String get featuresGoalsBadgeRepaid => 'Repaid';
+  String get featuresGoalsBadgeRepaid => '计划期满';
 
   @override
   String featuresGoalsProjectedDate(Object date) {
@@ -17248,7 +17248,7 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
   String get featuresGoalsBadgeOnTrack => '進度正常';
 
   @override
-  String get featuresGoalsBadgeRepaid => '已清償';
+  String get featuresGoalsBadgeRepaid => '期程結束';
 
   @override
   String featuresGoalsProjectedDate(Object date) {

@@ -6051,7 +6051,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get featuresGoalsBadgeOnTrack => 'Dans les temps';
 
   @override
-  String get featuresGoalsBadgeRepaid => 'Remboursé';
+  String get featuresGoalsBadgeRepaid => 'Échéancier terminé';
 
   @override
   String featuresGoalsProjectedDate(Object date) {

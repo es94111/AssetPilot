@@ -5931,7 +5931,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get featuresGoalsBadgeOnTrack => 'सही दिशा में';
 
   @override
-  String get featuresGoalsBadgeRepaid => 'चुकता';
+  String get featuresGoalsBadgeRepaid => 'अनुसूची समाप्त';
 
   @override
   String featuresGoalsProjectedDate(Object date) {

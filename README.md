@@ -482,7 +482,7 @@ Docker 多數參數已有合理預設，只需關心「自動產生」與「功�
 | `/` | 公開首頁 |
 | `/login` | 登入頁 |
 | `/dashboard` | 儀表板 |
-| `/finance/transactions`, `/finance/reports`, `/finance/budget`, `/finance/accounts`, `/finance/categories`, `/finance/recurring` | 收支管理 |
+| `/finance/transactions`, `/finance/reports`, `/finance/budget`, `/finance/accounts`, `/finance/categories`, `/finance/recurring`, `/finance/goals` | 收支管理與目標儲蓄 |
 | `/stocks`, `/stocks/transactions`, `/stocks/dividends`, `/stocks/realized` | 股票投資 |
 | `/settings/account`, `/settings/admin`, `/settings/export` | 設定（admin 僅管理員可見） |
 | `/settings/mcp`, `/settings/mcp-connections`, `/settings/api-integration` | MCP 連線、已連接 AI 工具、API 整合（Token 與 Webhook） |

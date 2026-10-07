@@ -4,6 +4,7 @@ export const DASHBOARD_MODULE_IDS = [
   'whyChanged',
   'cashOutlook',
   'savingsScenario',
+  'goalReminders',
   'spending',
   'portfolioHealth',
   'incomeRecent',

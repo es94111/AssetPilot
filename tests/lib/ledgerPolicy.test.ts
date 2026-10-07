@@ -41,6 +41,10 @@ test("bookkeeping and investment APIs use the selected ledger context", () => {
   assert.equal(isLedgerDataPath('/api/transactions/tx-1'), true);
   assert.equal(isLedgerDataPath('/api/accounts'), true);
   assert.equal(isLedgerDataPath('/api/imports/progress'), true);
+  assert.equal(isLedgerDataPath('/api/goals'), true);
+  assert.equal(isLedgerDataPath('/api/goals/goal-1'), true);
+  assert.equal(isLedgerDataPath('/api/repayment-plans'), true);
+  assert.equal(isLedgerDataPath('/api/repayment-plans/plan-1'), true);
   for (const path of ['/api/stocks', '/api/stock-transactions', '/api/stock-dividends', '/api/stock-recurring', '/api/stock-realized', '/api/stock-realized-pl', '/api/stock-settings', '/api/exchange-rates', '/api/exchange-rates/USD']) {
     assert.equal(isLedgerDataPath(path), true, path);
   }

@@ -14,6 +14,7 @@ import {
   Repeat2,
   ShieldAlert,
   Tag,
+  Target,
   TrendingDown,
   TrendingUp,
 } from 'lucide-react';
@@ -140,6 +141,7 @@ export default async function DashboardPage(props: { searchParams: Promise<{ mon
   const comparison = data.comparison;
   const portfolio = data.portfolioHealth;
   const cashOutlook = data.cashOutlook;
+  const goalReminders = Array.isArray(data.goalReminders) ? data.goalReminders : [];
   const cashOutlookActionHref = (cashOutlook?.startingBalance ?? 0) < 0 && cashOutlook?.firstShortfallDate === cashOutlook?.today
     ? '/finance/accounts'
     : '/finance/recurring';
@@ -385,6 +387,50 @@ export default async function DashboardPage(props: { searchParams: Promise<{ mon
       </section>
     ),
     savingsScenario: <SavingsScenario key="savingsScenario" />,
+    goalReminders: (
+      <section key="goalReminders" className="section-card" aria-labelledby="dashboard-goal-reminders-title">
+        <div className="section-card-header">
+          <div>
+            <h2 id="dashboard-goal-reminders-title" className="section-card-title">{t('dashboard.goalReminders.title')}</h2>
+            <p className="mt-1 text-sm" style={{ color: 'var(--text-muted)' }}>{t('dashboard.goalReminders.subtitle')}</p>
+          </div>
+          {goalReminders.length > 0
+            ? <Target size={22} style={{ color: 'var(--expense)' }} aria-hidden="true" />
+            : <CheckCircle2 size={22} style={{ color: 'var(--income)' }} aria-hidden="true" />}
+        </div>
+        {goalReminders.length === 0 ? (
+          <div className="flex min-h-32 flex-col items-center justify-center rounded-2xl border border-dashed px-4 py-6 text-center" style={{ borderColor: 'var(--border)' }}>
+            <CheckCircle2 size={30} className="mb-2" style={{ color: 'var(--income)' }} aria-hidden="true" />
+            <p className="text-sm font-semibold" style={{ color: 'var(--text)' }}>{t('dashboard.goalReminders.allOnTrack')}</p>
+            <Link href="/finance/goals" className="mt-3 inline-flex min-h-11 items-center gap-1 rounded-lg px-3 font-semibold text-primary hover:bg-primary/10">
+              {t('nav.goals')} <ArrowRight size={15} aria-hidden="true" />
+            </Link>
+          </div>
+        ) : (
+          <>
+            <ul className="space-y-2">{goalReminders.map(reminder => (
+              <li key={reminder.id}>
+                <Link href="/finance/goals" className="group flex min-h-14 items-center gap-3 rounded-xl border px-3 py-2.5 transition-colors hover:bg-primary/5" style={{ borderColor: 'var(--border)' }}>
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl" style={{ background: 'var(--expense-bg)', color: 'var(--expense)' }}><Target size={18} aria-hidden="true" /></span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-semibold" style={{ color: 'var(--text)' }}>{reminder.name}</span>
+                    <span className="mt-0.5 block text-xs tabular-nums" style={{ color: 'var(--text-muted)' }}>
+                      {reminder.overdue
+                        ? t('dashboard.goalReminders.overdue', { percent: reminder.progressPercent.toFixed(1), amount: fmtMoney(reminder.shortfallAmount, locale), date: fmtDate(reminder.targetDate, locale) })
+                        : t('dashboard.goalReminders.behind', { percent: reminder.progressPercent.toFixed(1), amount: fmtMoney(reminder.shortfallAmount, locale), days: reminder.daysRemaining })}
+                    </span>
+                  </span>
+                  <ArrowRight size={17} className="shrink-0 transition-transform group-hover:translate-x-1" style={{ color: 'var(--text-muted)' }} aria-hidden="true" />
+                </Link>
+              </li>
+            ))}</ul>
+            <Link href="/finance/goals" className="mt-3 inline-flex min-h-11 items-center gap-1 rounded-lg px-3 font-semibold text-primary hover:bg-primary/10">
+              {t('dashboard.goalReminders.manage')} <ArrowRight size={15} aria-hidden="true" />
+            </Link>
+          </>
+        )}
+      </section>
+    ),
     spending: (
       <section key="spending" className="section-card" aria-labelledby="dashboard-expense-title">
         <div className="section-card-header">

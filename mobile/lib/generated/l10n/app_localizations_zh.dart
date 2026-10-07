@@ -5530,6 +5530,270 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get featuresReportsRateTimestampUnavailable => '未提供時間戳（系統預設匯率）';
+
+  @override
+  String get navGoals => '目標儲蓄';
+
+  @override
+  String get featuresGoalsSavingsTitle => '儲蓄目標';
+
+  @override
+  String get featuresGoalsRepaymentTitle => '還款計畫';
+
+  @override
+  String get featuresGoalsAddGoal => '新增目標';
+
+  @override
+  String get featuresGoalsAddPlan => '新增還款計畫';
+
+  @override
+  String get featuresGoalsEditGoal => '編輯目標';
+
+  @override
+  String get featuresGoalsDeleteGoal => '刪除目標';
+
+  @override
+  String get featuresGoalsEditPlan => '編輯還款計畫';
+
+  @override
+  String get featuresGoalsDeletePlan => '刪除還款計畫';
+
+  @override
+  String get featuresGoalsNewGoal => '新增儲蓄目標';
+
+  @override
+  String get featuresGoalsNewPlan => '新增還款計畫';
+
+  @override
+  String get featuresGoalsNoGoals => '尚未建立儲蓄目標';
+
+  @override
+  String get featuresGoalsNoPlans => '尚未建立還款計畫';
+
+  @override
+  String get featuresGoalsGoalNameLabel => '目標名稱 *';
+
+  @override
+  String get featuresGoalsPlanNameLabel => '計畫名稱 *';
+
+  @override
+  String get featuresGoalsTargetAmountLabel => '目標金額 *';
+
+  @override
+  String get featuresGoalsTargetDateInputLabel => '目標日期 *';
+
+  @override
+  String get featuresGoalsTargetDateLabel => '目標日期';
+
+  @override
+  String get featuresGoalsPrincipalLabel => '本金 *';
+
+  @override
+  String get featuresGoalsRateLabel => '年利率（%）';
+
+  @override
+  String get featuresGoalsPeriodsLabel => '期數（月）*';
+
+  @override
+  String get featuresGoalsStartDateLabel => '首次應繳日 *';
+
+  @override
+  String get featuresGoalsLinkTypeLabel => '綁定來源';
+
+  @override
+  String get featuresGoalsLinkNone => '不綁定';
+
+  @override
+  String get featuresGoalsLinkAccountOption => '綁定帳戶餘額';
+
+  @override
+  String get featuresGoalsLinkCategoryOption => '綁定分類支出';
+
+  @override
+  String featuresGoalsLinkAccount(Object name) {
+    return '帳戶：$name';
+  }
+
+  @override
+  String featuresGoalsLinkCategory(Object name) {
+    return '分類：$name';
+  }
+
+  @override
+  String get featuresGoalsAccountLabel => '帳戶';
+
+  @override
+  String get featuresGoalsCategoryLabel => '分類';
+
+  @override
+  String get featuresGoalsSelectPlaceholder => '請選擇';
+
+  @override
+  String featuresGoalsProgressLabel(Object name) {
+    return '$name 進度';
+  }
+
+  @override
+  String featuresGoalsPlanProgressLabel(Object name) {
+    return '$name 還款進度';
+  }
+
+  @override
+  String featuresGoalsProgressSummary(Object percent, Object remaining) {
+    return '已存 $percent%（尚缺 $remaining）';
+  }
+
+  @override
+  String featuresGoalsPlanProgressSummary(Object elapsed, Object total) {
+    return '時程已到期 $elapsed／$total 期';
+  }
+
+  @override
+  String get featuresGoalsBadgeAchieved => '已達成';
+
+  @override
+  String get featuresGoalsBadgeBehind => '進度落後';
+
+  @override
+  String get featuresGoalsBadgeOverdue => '已逾期';
+
+  @override
+  String get featuresGoalsBadgeOnTrack => '進度正常';
+
+  @override
+  String get featuresGoalsBadgeRepaid => '已清償';
+
+  @override
+  String featuresGoalsProjectedDate(Object date) {
+    return '預估達成日：$date';
+  }
+
+  @override
+  String get featuresGoalsProjectedUnavailable => '需有存款進度';
+
+  @override
+  String featuresGoalsRequiredDaily(Object amount) {
+    return '每日需存 $amount';
+  }
+
+  @override
+  String featuresGoalsPlanTerms(Object principal, Object rate, Object periods) {
+    return '本金 $principal · 年利率 $rate% · $periods 期';
+  }
+
+  @override
+  String get featuresGoalsMonthlyPayment => '每月應繳';
+
+  @override
+  String get featuresGoalsTotalPayment => '還款總額';
+
+  @override
+  String featuresGoalsTotalInterest(Object amount) {
+    return '利息總額 $amount';
+  }
+
+  @override
+  String get featuresGoalsRemainingBalance => '剩餘本金';
+
+  @override
+  String featuresGoalsNextDue(Object date, Object amount) {
+    return '下期 $date · $amount';
+  }
+
+  @override
+  String get featuresGoalsFinalDue => '最後一期';
+
+  @override
+  String get featuresGoalsViewSchedule => '查看攤還表';
+
+  @override
+  String featuresGoalsScheduleTitle(Object name) {
+    return '$name 攤還表';
+  }
+
+  @override
+  String get featuresGoalsScheduleTitleFallback => '攤還表';
+
+  @override
+  String featuresGoalsScheduleCaption(Object name) {
+    return '$name 各期還款明細';
+  }
+
+  @override
+  String get featuresGoalsTablePeriod => '期數';
+
+  @override
+  String get featuresGoalsTableDueDate => '應繳月';
+
+  @override
+  String get featuresGoalsTablePayment => '應繳金額';
+
+  @override
+  String get featuresGoalsTablePrincipal => '本金';
+
+  @override
+  String get featuresGoalsTableInterest => '利息';
+
+  @override
+  String get featuresGoalsTableBalance => '剩餘本金';
+
+  @override
+  String get featuresGoalsPreviewTitle => '攤還試算';
+
+  @override
+  String get featuresGoalsSaveError => '儲存失敗，請稍後再試';
+
+  @override
+  String featuresGoalsDeleteGoalConfirm(Object name) {
+    return '確定刪除「$name」？';
+  }
+
+  @override
+  String featuresGoalsDeletePlanConfirm(Object name) {
+    return '確定刪除「$name」？';
+  }
+
+  @override
+  String get dashboardGoalRemindersTitle => '目標進度提醒';
+
+  @override
+  String get dashboardGoalRemindersSubtitle => '進度落後的儲蓄目標會在此提醒';
+
+  @override
+  String get dashboardGoalRemindersAllOnTrack => '所有儲蓄目標進度正常';
+
+  @override
+  String dashboardGoalRemindersBehind(
+    Object percent,
+    Object amount,
+    Object days,
+  ) {
+    return '已存 $percent%，尚缺 $amount，剩 $days 天';
+  }
+
+  @override
+  String dashboardGoalRemindersOverdue(
+    Object percent,
+    Object amount,
+    Object date,
+  ) {
+    return '已存 $percent%，尚缺 $amount，已過目標日 $date';
+  }
+
+  @override
+  String get dashboardGoalRemindersManage => '管理目標儲蓄';
+
+  @override
+  String get dashboardPersonalizeModulesGoalReminders => '目標進度提醒';
+
+  @override
+  String get featuresGoalsPlanProgressNote => '期數依首次應繳日推算；此計畫尚未記錄實際還款。';
+
+  @override
+  String get featuresGoalsScheduleInvalid => '計畫需調整';
+
+  @override
+  String get featuresGoalsScheduleInvalidShort => '計畫需調整';
 }
 
 /// The translations for Chinese, as used in China, using the Han script (`zh_Hans_CN`).
@@ -11059,6 +11323,272 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
 
   @override
   String get featuresReportsRateTimestampUnavailable => '未提供时间戳（系统预设汇率）';
+
+  @override
+  String get navGoals => 'Goals';
+
+  @override
+  String get featuresGoalsSavingsTitle => 'Savings goals';
+
+  @override
+  String get featuresGoalsRepaymentTitle => 'Repayment plans';
+
+  @override
+  String get featuresGoalsAddGoal => 'Add goal';
+
+  @override
+  String get featuresGoalsAddPlan => 'Add repayment plan';
+
+  @override
+  String get featuresGoalsEditGoal => 'Edit goal';
+
+  @override
+  String get featuresGoalsDeleteGoal => 'Delete goal';
+
+  @override
+  String get featuresGoalsEditPlan => 'Edit repayment plan';
+
+  @override
+  String get featuresGoalsDeletePlan => 'Delete repayment plan';
+
+  @override
+  String get featuresGoalsNewGoal => 'New savings goal';
+
+  @override
+  String get featuresGoalsNewPlan => 'New repayment plan';
+
+  @override
+  String get featuresGoalsNoGoals => 'No savings goals yet';
+
+  @override
+  String get featuresGoalsNoPlans => 'No repayment plans yet';
+
+  @override
+  String get featuresGoalsGoalNameLabel => 'Goal name *';
+
+  @override
+  String get featuresGoalsPlanNameLabel => 'Plan name *';
+
+  @override
+  String get featuresGoalsTargetAmountLabel => 'Target amount *';
+
+  @override
+  String get featuresGoalsTargetDateInputLabel => 'Target date *';
+
+  @override
+  String get featuresGoalsTargetDateLabel => 'Target date';
+
+  @override
+  String get featuresGoalsPrincipalLabel => 'Principal *';
+
+  @override
+  String get featuresGoalsRateLabel => 'Annual rate (%)';
+
+  @override
+  String get featuresGoalsPeriodsLabel => 'Periods (months) *';
+
+  @override
+  String get featuresGoalsStartDateLabel => 'First due date *';
+
+  @override
+  String get featuresGoalsLinkTypeLabel => 'Linked source';
+
+  @override
+  String get featuresGoalsLinkNone => 'Not linked';
+
+  @override
+  String get featuresGoalsLinkAccountOption => 'Link account balance';
+
+  @override
+  String get featuresGoalsLinkCategoryOption => 'Link category spending';
+
+  @override
+  String featuresGoalsLinkAccount(Object name) {
+    return 'Account: $name';
+  }
+
+  @override
+  String featuresGoalsLinkCategory(Object name) {
+    return 'Category: $name';
+  }
+
+  @override
+  String get featuresGoalsAccountLabel => 'Account';
+
+  @override
+  String get featuresGoalsCategoryLabel => 'Category';
+
+  @override
+  String get featuresGoalsSelectPlaceholder => 'Select';
+
+  @override
+  String featuresGoalsProgressLabel(Object name) {
+    return '$name progress';
+  }
+
+  @override
+  String featuresGoalsPlanProgressLabel(Object name) {
+    return '$name repayment progress';
+  }
+
+  @override
+  String featuresGoalsProgressSummary(Object percent, Object remaining) {
+    return '$percent% saved ($remaining to go)';
+  }
+
+  @override
+  String featuresGoalsPlanProgressSummary(Object elapsed, Object total) {
+    return '计划已到期 $elapsed／$total 期';
+  }
+
+  @override
+  String get featuresGoalsBadgeAchieved => 'Achieved';
+
+  @override
+  String get featuresGoalsBadgeBehind => 'Behind';
+
+  @override
+  String get featuresGoalsBadgeOverdue => 'Overdue';
+
+  @override
+  String get featuresGoalsBadgeOnTrack => 'On track';
+
+  @override
+  String get featuresGoalsBadgeRepaid => 'Repaid';
+
+  @override
+  String featuresGoalsProjectedDate(Object date) {
+    return 'Projected completion: $date';
+  }
+
+  @override
+  String get featuresGoalsProjectedUnavailable => 'needs progress';
+
+  @override
+  String featuresGoalsRequiredDaily(Object amount) {
+    return 'Save $amount per day';
+  }
+
+  @override
+  String featuresGoalsPlanTerms(Object principal, Object rate, Object periods) {
+    return 'Principal $principal · $rate% APR · $periods periods';
+  }
+
+  @override
+  String get featuresGoalsMonthlyPayment => 'Monthly payment';
+
+  @override
+  String get featuresGoalsTotalPayment => 'Total payment';
+
+  @override
+  String featuresGoalsTotalInterest(Object amount) {
+    return 'Total interest $amount';
+  }
+
+  @override
+  String get featuresGoalsRemainingBalance => 'Remaining balance';
+
+  @override
+  String featuresGoalsNextDue(Object date, Object amount) {
+    return 'Next $date · $amount';
+  }
+
+  @override
+  String get featuresGoalsFinalDue => 'Final payment';
+
+  @override
+  String get featuresGoalsViewSchedule => 'View schedule';
+
+  @override
+  String featuresGoalsScheduleTitle(Object name) {
+    return '$name amortization schedule';
+  }
+
+  @override
+  String get featuresGoalsScheduleTitleFallback => 'Amortization schedule';
+
+  @override
+  String featuresGoalsScheduleCaption(Object name) {
+    return '$name period-by-period repayment detail';
+  }
+
+  @override
+  String get featuresGoalsTablePeriod => 'Period';
+
+  @override
+  String get featuresGoalsTableDueDate => 'Due month';
+
+  @override
+  String get featuresGoalsTablePayment => 'Payment';
+
+  @override
+  String get featuresGoalsTablePrincipal => 'Principal';
+
+  @override
+  String get featuresGoalsTableInterest => 'Interest';
+
+  @override
+  String get featuresGoalsTableBalance => 'Remaining';
+
+  @override
+  String get featuresGoalsPreviewTitle => 'Repayment preview';
+
+  @override
+  String get featuresGoalsSaveError => 'Save failed, please try again';
+
+  @override
+  String featuresGoalsDeleteGoalConfirm(Object name) {
+    return 'Delete \"$name\"?';
+  }
+
+  @override
+  String featuresGoalsDeletePlanConfirm(Object name) {
+    return 'Delete \"$name\"?';
+  }
+
+  @override
+  String get dashboardGoalRemindersTitle => 'Goal progress reminders';
+
+  @override
+  String get dashboardGoalRemindersSubtitle =>
+      'Savings goals behind schedule appear here';
+
+  @override
+  String get dashboardGoalRemindersAllOnTrack =>
+      'All savings goals are on track';
+
+  @override
+  String dashboardGoalRemindersBehind(
+    Object percent,
+    Object amount,
+    Object days,
+  ) {
+    return '$percent% saved, $amount behind, $days days left';
+  }
+
+  @override
+  String dashboardGoalRemindersOverdue(
+    Object percent,
+    Object amount,
+    Object date,
+  ) {
+    return '$percent% saved, $amount behind, target date $date passed';
+  }
+
+  @override
+  String get dashboardGoalRemindersManage => 'Manage goals';
+
+  @override
+  String get dashboardPersonalizeModulesGoalReminders => 'Goal reminders';
+
+  @override
+  String get featuresGoalsPlanProgressNote => '期数根据首次应还日推算；此计划尚未记录实际还款。';
+
+  @override
+  String get featuresGoalsScheduleInvalid => '计划需调整';
+
+  @override
+  String get featuresGoalsScheduleInvalidShort => '计划需调整';
 }
 
 /// The translations for Chinese, as used in Taiwan, using the Han script (`zh_Hant_TW`).
@@ -16587,4 +17117,268 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
 
   @override
   String get featuresReportsRateTimestampUnavailable => '未提供時間戳（系統預設匯率）';
+
+  @override
+  String get navGoals => '目標儲蓄';
+
+  @override
+  String get featuresGoalsSavingsTitle => '儲蓄目標';
+
+  @override
+  String get featuresGoalsRepaymentTitle => '還款計畫';
+
+  @override
+  String get featuresGoalsAddGoal => '新增目標';
+
+  @override
+  String get featuresGoalsAddPlan => '新增還款計畫';
+
+  @override
+  String get featuresGoalsEditGoal => '編輯目標';
+
+  @override
+  String get featuresGoalsDeleteGoal => '刪除目標';
+
+  @override
+  String get featuresGoalsEditPlan => '編輯還款計畫';
+
+  @override
+  String get featuresGoalsDeletePlan => '刪除還款計畫';
+
+  @override
+  String get featuresGoalsNewGoal => '新增儲蓄目標';
+
+  @override
+  String get featuresGoalsNewPlan => '新增還款計畫';
+
+  @override
+  String get featuresGoalsNoGoals => '尚未建立儲蓄目標';
+
+  @override
+  String get featuresGoalsNoPlans => '尚未建立還款計畫';
+
+  @override
+  String get featuresGoalsGoalNameLabel => '目標名稱 *';
+
+  @override
+  String get featuresGoalsPlanNameLabel => '計畫名稱 *';
+
+  @override
+  String get featuresGoalsTargetAmountLabel => '目標金額 *';
+
+  @override
+  String get featuresGoalsTargetDateInputLabel => '目標日期 *';
+
+  @override
+  String get featuresGoalsTargetDateLabel => '目標日期';
+
+  @override
+  String get featuresGoalsPrincipalLabel => '本金 *';
+
+  @override
+  String get featuresGoalsRateLabel => '年利率（%）';
+
+  @override
+  String get featuresGoalsPeriodsLabel => '期數（月）*';
+
+  @override
+  String get featuresGoalsStartDateLabel => '首次應繳日 *';
+
+  @override
+  String get featuresGoalsLinkTypeLabel => '綁定來源';
+
+  @override
+  String get featuresGoalsLinkNone => '不綁定';
+
+  @override
+  String get featuresGoalsLinkAccountOption => '綁定帳戶餘額';
+
+  @override
+  String get featuresGoalsLinkCategoryOption => '綁定分類支出';
+
+  @override
+  String featuresGoalsLinkAccount(Object name) {
+    return '帳戶：$name';
+  }
+
+  @override
+  String featuresGoalsLinkCategory(Object name) {
+    return '分類：$name';
+  }
+
+  @override
+  String get featuresGoalsAccountLabel => '帳戶';
+
+  @override
+  String get featuresGoalsCategoryLabel => '分類';
+
+  @override
+  String get featuresGoalsSelectPlaceholder => '請選擇';
+
+  @override
+  String featuresGoalsProgressLabel(Object name) {
+    return '$name 進度';
+  }
+
+  @override
+  String featuresGoalsPlanProgressLabel(Object name) {
+    return '$name 還款進度';
+  }
+
+  @override
+  String featuresGoalsProgressSummary(Object percent, Object remaining) {
+    return '已存 $percent%（尚缺 $remaining）';
+  }
+
+  @override
+  String featuresGoalsPlanProgressSummary(Object elapsed, Object total) {
+    return '時程已到期 $elapsed／$total 期';
+  }
+
+  @override
+  String get featuresGoalsBadgeAchieved => '已達成';
+
+  @override
+  String get featuresGoalsBadgeBehind => '進度落後';
+
+  @override
+  String get featuresGoalsBadgeOverdue => '已逾期';
+
+  @override
+  String get featuresGoalsBadgeOnTrack => '進度正常';
+
+  @override
+  String get featuresGoalsBadgeRepaid => '已清償';
+
+  @override
+  String featuresGoalsProjectedDate(Object date) {
+    return '預估達成日：$date';
+  }
+
+  @override
+  String get featuresGoalsProjectedUnavailable => '需有存款進度';
+
+  @override
+  String featuresGoalsRequiredDaily(Object amount) {
+    return '每日需存 $amount';
+  }
+
+  @override
+  String featuresGoalsPlanTerms(Object principal, Object rate, Object periods) {
+    return '本金 $principal · 年利率 $rate% · $periods 期';
+  }
+
+  @override
+  String get featuresGoalsMonthlyPayment => '每月應繳';
+
+  @override
+  String get featuresGoalsTotalPayment => '還款總額';
+
+  @override
+  String featuresGoalsTotalInterest(Object amount) {
+    return '利息總額 $amount';
+  }
+
+  @override
+  String get featuresGoalsRemainingBalance => '剩餘本金';
+
+  @override
+  String featuresGoalsNextDue(Object date, Object amount) {
+    return '下期 $date · $amount';
+  }
+
+  @override
+  String get featuresGoalsFinalDue => '最後一期';
+
+  @override
+  String get featuresGoalsViewSchedule => '查看攤還表';
+
+  @override
+  String featuresGoalsScheduleTitle(Object name) {
+    return '$name 攤還表';
+  }
+
+  @override
+  String get featuresGoalsScheduleTitleFallback => '攤還表';
+
+  @override
+  String featuresGoalsScheduleCaption(Object name) {
+    return '$name 各期還款明細';
+  }
+
+  @override
+  String get featuresGoalsTablePeriod => '期數';
+
+  @override
+  String get featuresGoalsTableDueDate => '應繳月';
+
+  @override
+  String get featuresGoalsTablePayment => '應繳金額';
+
+  @override
+  String get featuresGoalsTablePrincipal => '本金';
+
+  @override
+  String get featuresGoalsTableInterest => '利息';
+
+  @override
+  String get featuresGoalsTableBalance => '剩餘本金';
+
+  @override
+  String get featuresGoalsPreviewTitle => '攤還試算';
+
+  @override
+  String get featuresGoalsSaveError => '儲存失敗，請稍後再試';
+
+  @override
+  String featuresGoalsDeleteGoalConfirm(Object name) {
+    return '確定刪除「$name」？';
+  }
+
+  @override
+  String featuresGoalsDeletePlanConfirm(Object name) {
+    return '確定刪除「$name」？';
+  }
+
+  @override
+  String get dashboardGoalRemindersTitle => '目標進度提醒';
+
+  @override
+  String get dashboardGoalRemindersSubtitle => '進度落後的儲蓄目標會在此提醒';
+
+  @override
+  String get dashboardGoalRemindersAllOnTrack => '所有儲蓄目標進度正常';
+
+  @override
+  String dashboardGoalRemindersBehind(
+    Object percent,
+    Object amount,
+    Object days,
+  ) {
+    return '已存 $percent%，尚缺 $amount，剩 $days 天';
+  }
+
+  @override
+  String dashboardGoalRemindersOverdue(
+    Object percent,
+    Object amount,
+    Object date,
+  ) {
+    return '已存 $percent%，尚缺 $amount，已過目標日 $date';
+  }
+
+  @override
+  String get dashboardGoalRemindersManage => '管理目標儲蓄';
+
+  @override
+  String get dashboardPersonalizeModulesGoalReminders => '目標進度提醒';
+
+  @override
+  String get featuresGoalsPlanProgressNote => '期數依首次應繳日推算；此計畫尚未記錄實際還款。';
+
+  @override
+  String get featuresGoalsScheduleInvalid => '計畫需調整';
+
+  @override
+  String get featuresGoalsScheduleInvalidShort => '計畫需調整';
 }

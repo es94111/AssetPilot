@@ -277,6 +277,58 @@ components:
         yearMonth:
           type: string
 
+    # ── 目標儲蓄與還款計畫（issue #260）──
+    SavingsGoalInput:
+      type: object
+      required: [name, targetAmount, targetDate]
+      properties:
+        name:
+          type: string
+          maxLength: 60
+        targetAmount:
+          type: integer
+          minimum: 1
+          maximum: 1000000000
+          description: 目標金額（TWD）
+        targetDate:
+          type: string
+          pattern: "^\\d{4}-\\d{2}-\\d{2}$"
+        accountId:
+          type: [string, "null"]
+          description: 綁定帳戶（以帳戶餘額為已存）；與 categoryId 擇一
+        categoryId:
+          type: [string, "null"]
+          description: 綁定分類（以建立日起該分類支出累計為已存）；與 accountId 擇一
+
+    RepaymentPlanInput:
+      type: object
+      required: [name, principal, periods, startDate]
+      properties:
+        name:
+          type: string
+          maxLength: 60
+        principal:
+          type: integer
+          minimum: 1
+          maximum: 1000000000
+        annualRatePercent:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: 年利率（百分比，預設 0）
+        periods:
+          type: integer
+          minimum: 1
+          maximum: 600
+          description: 期數（月）
+        startDate:
+          type: string
+          pattern: "^\\d{4}-\\d{2}-\\d{2}$"
+          description: 首次應繳日
+        accountId:
+          type: [string, "null"]
+          description: 還款來源帳戶標記（不影響攤還計算）
+
     # ── 固定收支 ──
     RecurringInput:
       type: object
@@ -1781,6 +1833,165 @@ paths:
       responses:
         "200":
           description: 刪除成功
+
+  # ── 目標儲蓄與還款計畫（issue #260）──────────
+  /api/goals:
+    get:
+      operationId: getSavingsGoals
+      tags: [Goals]
+      summary: 取得儲蓄目標清單（含進度與預估達成日）
+      responses:
+        "200":
+          description: 儲蓄目標陣列
+    post:
+      operationId: createSavingsGoal
+      tags: [Goals]
+      summary: 新增儲蓄目標
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SavingsGoalInput"
+      responses:
+        "201":
+          description: 建立成功，回傳含進度的目標
+        "400":
+          description: 驗證失敗
+
+  /api/goals/{id}:
+    get:
+      operationId: getSavingsGoal
+      tags: [Goals]
+      summary: 取得單一儲蓄目標（含進度）
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 目標詳細資料
+        "404":
+          description: 目標不存在或無權限
+    put:
+      operationId: updateSavingsGoal
+      tags: [Goals]
+      summary: 更新儲蓄目標（不變更起算日）
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SavingsGoalInput"
+      responses:
+        "200":
+          description: 更新成功
+        "400":
+          description: 驗證失敗
+        "404":
+          description: 目標不存在或無權限
+    delete:
+      operationId: deleteSavingsGoal
+      tags: [Goals]
+      summary: 刪除儲蓄目標
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 刪除成功
+        "404":
+          description: 目標不存在或無權限
+
+  /api/repayment-plans:
+    get:
+      operationId: getRepaymentPlans
+      tags: [Goals]
+      summary: 取得還款計畫清單（摘要，不含完整攤還表）
+      responses:
+        "200":
+          description: 還款計畫陣列
+    post:
+      operationId: createRepaymentPlan
+      tags: [Goals]
+      summary: 新增還款計畫
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RepaymentPlanInput"
+      responses:
+        "201":
+          description: 建立成功
+        "400":
+          description: 驗證失敗
+
+  /api/repayment-plans/{id}:
+    get:
+      operationId: getRepaymentPlan
+      tags: [Goals]
+      summary: 取得單一還款計畫（含完整攤還表）
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 還款計畫與攤還表
+        "404":
+          description: 計畫不存在或無權限
+    put:
+      operationId: updateRepaymentPlan
+      tags: [Goals]
+      summary: 更新還款計畫並重算攤還表
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RepaymentPlanInput"
+      responses:
+        "200":
+          description: 更新成功
+        "400":
+          description: 驗證失敗
+        "404":
+          description: 計畫不存在或無權限
+    delete:
+      operationId: deleteRepaymentPlan
+      tags: [Goals]
+      summary: 刪除還款計畫
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 刪除成功
+        "404":
+          description: 計畫不存在或無權限
 
   # ── 固定收支 ──────────────────────────
   /api/recurring:

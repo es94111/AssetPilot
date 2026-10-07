@@ -34,6 +34,8 @@ const USER_OWNED_DELETE_STATEMENTS = [
   "DELETE FROM recurring WHERE user_id = ?",
   "DELETE FROM deleted_defaults WHERE user_id = ?",
   "DELETE FROM credit_card_repayment_summaries WHERE user_id = ?",
+  "DELETE FROM savings_goals WHERE user_id = ?",
+  "DELETE FROM repayment_plans WHERE user_id = ?",
   // 股票
   "DELETE FROM stocks WHERE user_id = ?",
   "DELETE FROM stock_transactions WHERE user_id = ?",

@@ -5809,4 +5809,269 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get featuresReportsRateTimestampUnavailable =>
       'Timestamp unavailable (system default rate)';
+
+  @override
+  String get navGoals => '目标储蓄';
+
+  @override
+  String get featuresGoalsSavingsTitle => '储蓄目标';
+
+  @override
+  String get featuresGoalsRepaymentTitle => '还款计划';
+
+  @override
+  String get featuresGoalsAddGoal => '新增目标';
+
+  @override
+  String get featuresGoalsAddPlan => '新增还款计划';
+
+  @override
+  String get featuresGoalsEditGoal => '编辑目标';
+
+  @override
+  String get featuresGoalsDeleteGoal => '删除目标';
+
+  @override
+  String get featuresGoalsEditPlan => '编辑还款计划';
+
+  @override
+  String get featuresGoalsDeletePlan => '删除还款计划';
+
+  @override
+  String get featuresGoalsNewGoal => '新增储蓄目标';
+
+  @override
+  String get featuresGoalsNewPlan => '新增还款计划';
+
+  @override
+  String get featuresGoalsNoGoals => '尚未创建储蓄目标';
+
+  @override
+  String get featuresGoalsNoPlans => '尚未创建还款计划';
+
+  @override
+  String get featuresGoalsGoalNameLabel => '目标名称 *';
+
+  @override
+  String get featuresGoalsPlanNameLabel => '计划名称 *';
+
+  @override
+  String get featuresGoalsTargetAmountLabel => '目标金额 *';
+
+  @override
+  String get featuresGoalsTargetDateInputLabel => '目标日期 *';
+
+  @override
+  String get featuresGoalsTargetDateLabel => '目标日期';
+
+  @override
+  String get featuresGoalsPrincipalLabel => '本金 *';
+
+  @override
+  String get featuresGoalsRateLabel => '年利率（%）';
+
+  @override
+  String get featuresGoalsPeriodsLabel => '期数（月）*';
+
+  @override
+  String get featuresGoalsStartDateLabel => '首次应缴日 *';
+
+  @override
+  String get featuresGoalsLinkTypeLabel => '绑定来源';
+
+  @override
+  String get featuresGoalsLinkNone => '不绑定';
+
+  @override
+  String get featuresGoalsLinkAccountOption => '绑定账户余额';
+
+  @override
+  String get featuresGoalsLinkCategoryOption => '绑定分类支出';
+
+  @override
+  String featuresGoalsLinkAccount(Object name) {
+    return '账户：$name';
+  }
+
+  @override
+  String featuresGoalsLinkCategory(Object name) {
+    return '分类：$name';
+  }
+
+  @override
+  String get featuresGoalsAccountLabel => '账户';
+
+  @override
+  String get featuresGoalsCategoryLabel => '分类';
+
+  @override
+  String get featuresGoalsSelectPlaceholder => '请选择';
+
+  @override
+  String featuresGoalsProgressLabel(Object name) {
+    return '$name 进度';
+  }
+
+  @override
+  String featuresGoalsPlanProgressLabel(Object name) {
+    return '$name 还款进度';
+  }
+
+  @override
+  String featuresGoalsProgressSummary(Object percent, Object remaining) {
+    return '已存 $percent%（尚缺 $remaining）';
+  }
+
+  @override
+  String featuresGoalsPlanProgressSummary(Object elapsed, Object total) {
+    return '$elapsed of $total installments due';
+  }
+
+  @override
+  String get featuresGoalsBadgeAchieved => '已达成';
+
+  @override
+  String get featuresGoalsBadgeBehind => '进度落后';
+
+  @override
+  String get featuresGoalsBadgeOverdue => '已逾期';
+
+  @override
+  String get featuresGoalsBadgeOnTrack => '进度正常';
+
+  @override
+  String get featuresGoalsBadgeRepaid => '已清偿';
+
+  @override
+  String featuresGoalsProjectedDate(Object date) {
+    return '预计达成日：$date';
+  }
+
+  @override
+  String get featuresGoalsProjectedUnavailable => '需有存款进度';
+
+  @override
+  String featuresGoalsRequiredDaily(Object amount) {
+    return '每日需存 $amount';
+  }
+
+  @override
+  String featuresGoalsPlanTerms(Object principal, Object rate, Object periods) {
+    return '本金 $principal · 年利率 $rate% · $periods 期';
+  }
+
+  @override
+  String get featuresGoalsMonthlyPayment => '每月应缴';
+
+  @override
+  String get featuresGoalsTotalPayment => '还款总额';
+
+  @override
+  String featuresGoalsTotalInterest(Object amount) {
+    return '利息总额 $amount';
+  }
+
+  @override
+  String get featuresGoalsRemainingBalance => '剩余本金';
+
+  @override
+  String featuresGoalsNextDue(Object date, Object amount) {
+    return '下期 $date · $amount';
+  }
+
+  @override
+  String get featuresGoalsFinalDue => '最后一期';
+
+  @override
+  String get featuresGoalsViewSchedule => '查看摊还表';
+
+  @override
+  String featuresGoalsScheduleTitle(Object name) {
+    return '$name 摊还表';
+  }
+
+  @override
+  String get featuresGoalsScheduleTitleFallback => '摊还表';
+
+  @override
+  String featuresGoalsScheduleCaption(Object name) {
+    return '$name 各期还款明细';
+  }
+
+  @override
+  String get featuresGoalsTablePeriod => '期数';
+
+  @override
+  String get featuresGoalsTableDueDate => '应缴月';
+
+  @override
+  String get featuresGoalsTablePayment => '应缴金额';
+
+  @override
+  String get featuresGoalsTablePrincipal => '本金';
+
+  @override
+  String get featuresGoalsTableInterest => '利息';
+
+  @override
+  String get featuresGoalsTableBalance => '剩余本金';
+
+  @override
+  String get featuresGoalsPreviewTitle => '摊还试算';
+
+  @override
+  String get featuresGoalsSaveError => '保存失败，请稍后再试';
+
+  @override
+  String featuresGoalsDeleteGoalConfirm(Object name) {
+    return '确定删除「$name」？';
+  }
+
+  @override
+  String featuresGoalsDeletePlanConfirm(Object name) {
+    return '确定删除「$name」？';
+  }
+
+  @override
+  String get dashboardGoalRemindersTitle => '目标进度提醒';
+
+  @override
+  String get dashboardGoalRemindersSubtitle => '进度落后的储蓄目标会在此提醒';
+
+  @override
+  String get dashboardGoalRemindersAllOnTrack => '所有储蓄目标进度正常';
+
+  @override
+  String dashboardGoalRemindersBehind(
+    Object percent,
+    Object amount,
+    Object days,
+  ) {
+    return '已存 $percent%，尚缺 $amount，剩 $days 天';
+  }
+
+  @override
+  String dashboardGoalRemindersOverdue(
+    Object percent,
+    Object amount,
+    Object date,
+  ) {
+    return '已存 $percent%，尚缺 $amount，已过目标日 $date';
+  }
+
+  @override
+  String get dashboardGoalRemindersManage => '管理目标储蓄';
+
+  @override
+  String get dashboardPersonalizeModulesGoalReminders => '目标进度提醒';
+
+  @override
+  String get featuresGoalsPlanProgressNote =>
+      'Due periods are estimated from the first due date; actual payments are not recorded.';
+
+  @override
+  String get featuresGoalsScheduleInvalid => 'Needs editing';
+
+  @override
+  String get featuresGoalsScheduleInvalidShort => 'Needs editing';
 }

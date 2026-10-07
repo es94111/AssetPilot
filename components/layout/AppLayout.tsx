@@ -17,6 +17,7 @@ const PAGE_TITLE_KEYS: Record<string, string> = {
   '/finance/calendar':     'nav.calendar',
   '/finance/reports':      'nav.reports',
   '/finance/budget':       'nav.budget',
+  '/finance/goals':        'nav.goals',
   '/finance/accounts':     'nav.accounts',
   '/finance/categories':   'nav.categories',
   '/finance/recurring':    'nav.recurring',

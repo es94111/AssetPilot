@@ -3,6 +3,7 @@ import Decimal from 'decimal.js';
 import type { DashboardLayoutPreference } from '@/lib/dashboardPreferences';
 import { getHoldingMarketContribution, type DashboardChangeDriver, type DashboardComparisonWindow } from '@/lib/dashboardInsights';
 import type { ScheduledCashOutlook } from '@/lib/dashboardForecast';
+import type { GoalReminder } from '@/lib/savingsGoal';
 import { queryAll, queryOne } from '@/lib/db';
 import { calcFifoLots } from '@/lib/moneyDecimal';
 import { normalizeCurrency } from '@/lib/accountHelpers';
@@ -69,6 +70,7 @@ export interface DashboardResponse {
     uncategorizedTransactionCount: number;
     uncategorizedAmount: number;
   };
+  goalReminders: GoalReminder[];
   preferences: {
     layout: DashboardLayoutPreference;
     updatedAt: number;

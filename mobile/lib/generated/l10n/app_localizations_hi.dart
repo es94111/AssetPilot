@@ -5800,4 +5800,271 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get featuresReportsRateTimestampUnavailable =>
       'समय-मुद्रा उपलब्ध नहीं (सिस्टम डिफ़ॉल्ट दर)';
+
+  @override
+  String get navGoals => 'लक्ष्य';
+
+  @override
+  String get featuresGoalsSavingsTitle => 'बचत लक्ष्य';
+
+  @override
+  String get featuresGoalsRepaymentTitle => 'भुगतान योजनाएँ';
+
+  @override
+  String get featuresGoalsAddGoal => 'लक्ष्य जोड़ें';
+
+  @override
+  String get featuresGoalsAddPlan => 'भुगतान योजना जोड़ें';
+
+  @override
+  String get featuresGoalsEditGoal => 'लक्ष्य संपादित करें';
+
+  @override
+  String get featuresGoalsDeleteGoal => 'लक्ष्य हटाएँ';
+
+  @override
+  String get featuresGoalsEditPlan => 'भुगतान योजना संपादित करें';
+
+  @override
+  String get featuresGoalsDeletePlan => 'भुगतान योजना हटाएँ';
+
+  @override
+  String get featuresGoalsNewGoal => 'नया बचत लक्ष्य';
+
+  @override
+  String get featuresGoalsNewPlan => 'नई भुगतान योजना';
+
+  @override
+  String get featuresGoalsNoGoals => 'अभी कोई बचत लक्ष्य नहीं';
+
+  @override
+  String get featuresGoalsNoPlans => 'अभी कोई भुगतान योजना नहीं';
+
+  @override
+  String get featuresGoalsGoalNameLabel => 'लक्ष्य का नाम *';
+
+  @override
+  String get featuresGoalsPlanNameLabel => 'योजना का नाम *';
+
+  @override
+  String get featuresGoalsTargetAmountLabel => 'लक्ष्य राशि *';
+
+  @override
+  String get featuresGoalsTargetDateInputLabel => 'लक्ष्य तिथि *';
+
+  @override
+  String get featuresGoalsTargetDateLabel => 'लक्ष्य तिथि';
+
+  @override
+  String get featuresGoalsPrincipalLabel => 'मूलधन *';
+
+  @override
+  String get featuresGoalsRateLabel => 'वार्षिक दर (%)';
+
+  @override
+  String get featuresGoalsPeriodsLabel => 'किस्तें (महीने) *';
+
+  @override
+  String get featuresGoalsStartDateLabel => 'पहली देय तिथि *';
+
+  @override
+  String get featuresGoalsLinkTypeLabel => 'लिंक किया स्रोत';
+
+  @override
+  String get featuresGoalsLinkNone => 'लिंक नहीं';
+
+  @override
+  String get featuresGoalsLinkAccountOption => 'खाता शेष लिंक करें';
+
+  @override
+  String get featuresGoalsLinkCategoryOption => 'श्रेणी व्यय लिंक करें';
+
+  @override
+  String featuresGoalsLinkAccount(Object name) {
+    return 'खाता: $name';
+  }
+
+  @override
+  String featuresGoalsLinkCategory(Object name) {
+    return 'श्रेणी: $name';
+  }
+
+  @override
+  String get featuresGoalsAccountLabel => 'खाता';
+
+  @override
+  String get featuresGoalsCategoryLabel => 'श्रेणी';
+
+  @override
+  String get featuresGoalsSelectPlaceholder => 'चुनें';
+
+  @override
+  String featuresGoalsProgressLabel(Object name) {
+    return '$name प्रगति';
+  }
+
+  @override
+  String featuresGoalsPlanProgressLabel(Object name) {
+    return '$name भुगतान प्रगति';
+  }
+
+  @override
+  String featuresGoalsProgressSummary(Object percent, Object remaining) {
+    return '$percent% बचत ($remaining शेष)';
+  }
+
+  @override
+  String featuresGoalsPlanProgressSummary(Object elapsed, Object total) {
+    return '$elapsed में से $total किस्तों की देय तिथि आ चुकी है';
+  }
+
+  @override
+  String get featuresGoalsBadgeAchieved => 'प्राप्त';
+
+  @override
+  String get featuresGoalsBadgeBehind => 'पीछे';
+
+  @override
+  String get featuresGoalsBadgeOverdue => 'अतिदेय';
+
+  @override
+  String get featuresGoalsBadgeOnTrack => 'सही दिशा में';
+
+  @override
+  String get featuresGoalsBadgeRepaid => 'चुकता';
+
+  @override
+  String featuresGoalsProjectedDate(Object date) {
+    return 'अनुमानित पूर्णता: $date';
+  }
+
+  @override
+  String get featuresGoalsProjectedUnavailable => 'प्रगति आवश्यक';
+
+  @override
+  String featuresGoalsRequiredDaily(Object amount) {
+    return 'रोज़ $amount बचाएँ';
+  }
+
+  @override
+  String featuresGoalsPlanTerms(Object principal, Object rate, Object periods) {
+    return 'मूलधन $principal · $rate% वार्षिक · $periods किस्तें';
+  }
+
+  @override
+  String get featuresGoalsMonthlyPayment => 'मासिक भुगतान';
+
+  @override
+  String get featuresGoalsTotalPayment => 'कुल भुगतान';
+
+  @override
+  String featuresGoalsTotalInterest(Object amount) {
+    return 'कुल ब्याज $amount';
+  }
+
+  @override
+  String get featuresGoalsRemainingBalance => 'शेष राशि';
+
+  @override
+  String featuresGoalsNextDue(Object date, Object amount) {
+    return 'अगला $date · $amount';
+  }
+
+  @override
+  String get featuresGoalsFinalDue => 'अंतिम किस्त';
+
+  @override
+  String get featuresGoalsViewSchedule => 'अनुसूची देखें';
+
+  @override
+  String featuresGoalsScheduleTitle(Object name) {
+    return '$name परिशोधन अनुसूची';
+  }
+
+  @override
+  String get featuresGoalsScheduleTitleFallback => 'परिशोधन अनुसूची';
+
+  @override
+  String featuresGoalsScheduleCaption(Object name) {
+    return '$name की किस्त-वार भुगतान विवरण';
+  }
+
+  @override
+  String get featuresGoalsTablePeriod => 'किस्त';
+
+  @override
+  String get featuresGoalsTableDueDate => 'देय माह';
+
+  @override
+  String get featuresGoalsTablePayment => 'भुगतान';
+
+  @override
+  String get featuresGoalsTablePrincipal => 'मूलधन';
+
+  @override
+  String get featuresGoalsTableInterest => 'ब्याज';
+
+  @override
+  String get featuresGoalsTableBalance => 'शेष';
+
+  @override
+  String get featuresGoalsPreviewTitle => 'भुगतान पूर्वावलोकन';
+
+  @override
+  String get featuresGoalsSaveError => 'सहेजना विफल';
+
+  @override
+  String featuresGoalsDeleteGoalConfirm(Object name) {
+    return '«$name» हटाएँ?';
+  }
+
+  @override
+  String featuresGoalsDeletePlanConfirm(Object name) {
+    return '«$name» हटाएँ?';
+  }
+
+  @override
+  String get dashboardGoalRemindersTitle => 'लक्ष्य प्रगति अनुस्मारक';
+
+  @override
+  String get dashboardGoalRemindersSubtitle =>
+      'पीछे चल रहे बचत लक्ष्य यहाँ दिखेंगे';
+
+  @override
+  String get dashboardGoalRemindersAllOnTrack =>
+      'सभी बचत लक्ष्य सही दिशा में हैं';
+
+  @override
+  String dashboardGoalRemindersBehind(
+    Object percent,
+    Object amount,
+    Object days,
+  ) {
+    return '$percent% बचत, $amount कम, $days दिन शेष';
+  }
+
+  @override
+  String dashboardGoalRemindersOverdue(
+    Object percent,
+    Object amount,
+    Object date,
+  ) {
+    return '$percent% बचत, $amount कम, लक्ष्य तिथि $date बीत गई';
+  }
+
+  @override
+  String get dashboardGoalRemindersManage => 'लक्ष्य प्रबंधित करें';
+
+  @override
+  String get dashboardPersonalizeModulesGoalReminders => 'लक्ष्य अनुस्मारक';
+
+  @override
+  String get featuresGoalsPlanProgressNote =>
+      'देय किस्तों का अनुमान पहली देय तिथि से लगाया जाता है; वास्तविक भुगतान दर्ज नहीं किए जाते।';
+
+  @override
+  String get featuresGoalsScheduleInvalid => 'संपादन आवश्यक';
+
+  @override
+  String get featuresGoalsScheduleInvalidShort => 'संपादन आवश्यक';
 }

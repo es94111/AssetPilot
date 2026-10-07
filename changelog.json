@@ -1,6 +1,18 @@
 {
-  "currentVersion": "4.131.0",
+  "currentVersion": "4.132.0",
   "releases": [
+    {
+      "version": "4.132.0",
+      "date": "2026-10-08",
+      "title": "共享帳本用戶端與整合選取",
+      "type": "new",
+      "changes": [
+        {
+          "tag": "new",
+          "text": "Flutter、MCP、API Token、LINE 與個人通知排程皆可明確選取已授權的共享帳本，重新檢查成員角色與 token scope 且登入憑證不共享；LINE 對話狀態、MCP 冪等鍵、排程通知與個人資料備份／還原一併以帳本分離並於操作當下重新授權，個人帳本預設行為不變。#281"
+        }
+      ]
+    },
     {
       "version": "4.131.0",
       "date": "2026-10-07",

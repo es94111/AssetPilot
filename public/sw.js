@@ -169,3 +169,60 @@ self.addEventListener('fetch', (event) => {
 self.addEventListener('message', (event) => {
   if (event.data === 'SKIP_WAITING') self.skipWaiting();
 });
+
+// ── Web Push 推播通知（issue #257）──
+// 通知一律由 push service 的 payload 帶來（伺服器以 VAPID 簽章），SW 只負責顯示與導頁。
+// 刻意不快取任何通知內容：財務摘要留在記憶體中，關閉通知即消失。
+const NOTIFICATION_ICON = '/icons/icon-192.png';
+
+self.addEventListener('push', (event) => {
+  let payload = {};
+  try {
+    payload = event.data ? event.data.json() : {};
+  } catch {
+    payload = {};
+  }
+  const title = typeof payload.title === 'string' && payload.title ? payload.title : 'AssetPilot';
+  const body = typeof payload.body === 'string' ? payload.body : '';
+  const tag = typeof payload.tag === 'string' && payload.tag ? payload.tag : undefined;
+  const url = typeof payload.url === 'string'
+    && payload.url.startsWith('/')
+    && !payload.url.startsWith('//')
+    && !payload.url.includes('\\')
+    ? payload.url
+    : '/dashboard';
+
+  event.waitUntil(
+    self.registration.showNotification(title, {
+      body,
+      tag,
+      icon: NOTIFICATION_ICON,
+      badge: NOTIFICATION_ICON,
+      // 同一事件（同 tag）再次送達時取代舊通知，不重複堆疊。
+      renotify: false,
+      data: { url },
+    })
+  );
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const target = new URL(
+    (event.notification.data && event.notification.data.url) || '/dashboard',
+    self.location.origin
+  ).href;
+
+  event.waitUntil(
+    (async () => {
+      // 已有開啟中的 App 分頁就直接聚焦並導頁，避免每次點通知都多開一個視窗。
+      const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+      for (const client of clients) {
+        if (new URL(client.url).origin !== self.location.origin) continue;
+        await client.focus();
+        if (typeof client.navigate === 'function') await client.navigate(target);
+        return;
+      }
+      await self.clients.openWindow(target);
+    })()
+  );
+});

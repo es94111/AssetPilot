@@ -9375,5 +9375,257 @@
   "@featuresGoalsScheduleInvalidShort": {
     "description": "Web path: features.goals.scheduleInvalidShort",
     "x-webPath": "features.goals.scheduleInvalidShort"
+  },
+  "settingsNotificationsTitle": "推播通知",
+  "@settingsNotificationsTitle": {
+    "description": "Web path: settings.notifications.title",
+    "x-webPath": "settings.notifications.title"
+  },
+  "settingsNotificationsDescription": "開啟後，符合條件的事件會即時推播到已訂閱的裝置。此設定不影響 Email／LINE 報表通知。",
+  "@settingsNotificationsDescription": {
+    "description": "Web path: settings.notifications.description",
+    "x-webPath": "settings.notifications.description"
+  },
+  "settingsNotificationsUnsupported": "此瀏覽器不支援推播通知（需支援 Service Worker 與 Push API）。",
+  "@settingsNotificationsUnsupported": {
+    "description": "Web path: settings.notifications.unsupported",
+    "x-webPath": "settings.notifications.unsupported"
+  },
+  "settingsNotificationsDisabledOnServer": "伺服器尚未啟用 Web Push（缺少 VAPID 金鑰設定）。",
+  "@settingsNotificationsDisabledOnServer": {
+    "description": "Web path: settings.notifications.disabledOnServer",
+    "x-webPath": "settings.notifications.disabledOnServer"
+  },
+  "settingsNotificationsPermissionDenied": "瀏覽器已封鎖通知權限，請在瀏覽器設定中允許本站通知後再試。",
+  "@settingsNotificationsPermissionDenied": {
+    "description": "Web path: settings.notifications.permissionDenied",
+    "x-webPath": "settings.notifications.permissionDenied"
+  },
+  "settingsNotificationsSubscribe": "在此裝置啟用推播",
+  "@settingsNotificationsSubscribe": {
+    "description": "Web path: settings.notifications.subscribe",
+    "x-webPath": "settings.notifications.subscribe"
+  },
+  "settingsNotificationsSubscribing": "啟用中…",
+  "@settingsNotificationsSubscribing": {
+    "description": "Web path: settings.notifications.subscribing",
+    "x-webPath": "settings.notifications.subscribing"
+  },
+  "settingsNotificationsSubscribed": "此裝置已訂閱推播通知。",
+  "@settingsNotificationsSubscribed": {
+    "description": "Web path: settings.notifications.subscribed",
+    "x-webPath": "settings.notifications.subscribed"
+  },
+  "settingsNotificationsSubscribeSuccess": "已在此裝置啟用推播通知。",
+  "@settingsNotificationsSubscribeSuccess": {
+    "description": "Web path: settings.notifications.subscribeSuccess",
+    "x-webPath": "settings.notifications.subscribeSuccess"
+  },
+  "settingsNotificationsSubscribeFailed": "啟用推播失敗：{error}",
+  "@settingsNotificationsSubscribeFailed": {
+    "description": "Web path: settings.notifications.subscribeFailed",
+    "x-webPath": "settings.notifications.subscribeFailed",
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "settingsNotificationsUnsubscribe": "解除此裝置訂閱",
+  "@settingsNotificationsUnsubscribe": {
+    "description": "Web path: settings.notifications.unsubscribe",
+    "x-webPath": "settings.notifications.unsubscribe"
+  },
+  "settingsNotificationsUnsubscribeSuccess": "已解除此裝置的推播訂閱。",
+  "@settingsNotificationsUnsubscribeSuccess": {
+    "description": "Web path: settings.notifications.unsubscribeSuccess",
+    "x-webPath": "settings.notifications.unsubscribeSuccess"
+  },
+  "settingsNotificationsUnsubscribeFailed": "解除訂閱失敗：{error}",
+  "@settingsNotificationsUnsubscribeFailed": {
+    "description": "Web path: settings.notifications.unsubscribeFailed",
+    "x-webPath": "settings.notifications.unsubscribeFailed",
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "settingsNotificationsCategoriesTitle": "通知類型",
+  "@settingsNotificationsCategoriesTitle": {
+    "description": "Web path: settings.notifications.categoriesTitle",
+    "x-webPath": "settings.notifications.categoriesTitle"
+  },
+  "settingsNotificationsBillDue": "帳單到期",
+  "@settingsNotificationsBillDue": {
+    "description": "Web path: settings.notifications.billDue",
+    "x-webPath": "settings.notifications.billDue"
+  },
+  "settingsNotificationsBillDueHint": "信用卡每月結帳日當天，若當期有新消費就提醒。",
+  "@settingsNotificationsBillDueHint": {
+    "description": "Web path: settings.notifications.billDueHint",
+    "x-webPath": "settings.notifications.billDueHint"
+  },
+  "settingsNotificationsBudgetExceeded": "預算超標",
+  "@settingsNotificationsBudgetExceeded": {
+    "description": "Web path: settings.notifications.budgetExceeded",
+    "x-webPath": "settings.notifications.budgetExceeded"
+  },
+  "settingsNotificationsBudgetExceededHint": "當月某項預算的已用金額超過預算時提醒（每項預算每月一次）。",
+  "@settingsNotificationsBudgetExceededHint": {
+    "description": "Web path: settings.notifications.budgetExceededHint",
+    "x-webPath": "settings.notifications.budgetExceededHint"
+  },
+  "settingsNotificationsDividend": "股利發放",
+  "@settingsNotificationsDividend": {
+    "description": "Web path: settings.notifications.dividend",
+    "x-webPath": "settings.notifications.dividend"
+  },
+  "settingsNotificationsDividendHint": "股利紀錄的發放日當天提醒。",
+  "@settingsNotificationsDividendHint": {
+    "description": "Web path: settings.notifications.dividendHint",
+    "x-webPath": "settings.notifications.dividendHint"
+  },
+  "settingsNotificationsDevicesTitle": "已訂閱裝置",
+  "@settingsNotificationsDevicesTitle": {
+    "description": "Web path: settings.notifications.devicesTitle",
+    "x-webPath": "settings.notifications.devicesTitle"
+  },
+  "settingsNotificationsNoDevices": "尚無訂閱裝置。",
+  "@settingsNotificationsNoDevices": {
+    "description": "Web path: settings.notifications.noDevices",
+    "x-webPath": "settings.notifications.noDevices"
+  },
+  "settingsNotificationsDeviceUnknown": "未知裝置",
+  "@settingsNotificationsDeviceUnknown": {
+    "description": "Web path: settings.notifications.deviceUnknown",
+    "x-webPath": "settings.notifications.deviceUnknown"
+  },
+  "settingsNotificationsDeviceSubscribedAt": "訂閱於 {date}",
+  "@settingsNotificationsDeviceSubscribedAt": {
+    "description": "Web path: settings.notifications.deviceSubscribedAt",
+    "x-webPath": "settings.notifications.deviceSubscribedAt",
+    "placeholders": {
+      "date": {}
+    }
+  },
+  "settingsNotificationsDeviceDisabled": "已停用（多次發送失敗，請重新訂閱）",
+  "@settingsNotificationsDeviceDisabled": {
+    "description": "Web path: settings.notifications.deviceDisabled",
+    "x-webPath": "settings.notifications.deviceDisabled"
+  },
+  "settingsNotificationsRemoveDevice": "刪除",
+  "@settingsNotificationsRemoveDevice": {
+    "description": "Web path: settings.notifications.removeDevice",
+    "x-webPath": "settings.notifications.removeDevice"
+  },
+  "settingsNotificationsDeviceRemoved": "已刪除訂閱裝置。",
+  "@settingsNotificationsDeviceRemoved": {
+    "description": "Web path: settings.notifications.deviceRemoved",
+    "x-webPath": "settings.notifications.deviceRemoved"
+  },
+  "settingsNotificationsDeviceRemoveFailed": "刪除裝置失敗：{error}",
+  "@settingsNotificationsDeviceRemoveFailed": {
+    "description": "Web path: settings.notifications.deviceRemoveFailed",
+    "x-webPath": "settings.notifications.deviceRemoveFailed",
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "settingsNotificationsTestTitle": "測試通知",
+  "@settingsNotificationsTestTitle": {
+    "description": "Web path: settings.notifications.testTitle",
+    "x-webPath": "settings.notifications.testTitle"
+  },
+  "settingsNotificationsTestButton": "傳送測試通知",
+  "@settingsNotificationsTestButton": {
+    "description": "Web path: settings.notifications.testButton",
+    "x-webPath": "settings.notifications.testButton"
+  },
+  "settingsNotificationsTestSending": "傳送中…",
+  "@settingsNotificationsTestSending": {
+    "description": "Web path: settings.notifications.testSending",
+    "x-webPath": "settings.notifications.testSending"
+  },
+  "settingsNotificationsTestSent": "測試通知已送出（成功 {delivered} 個裝置）。",
+  "@settingsNotificationsTestSent": {
+    "description": "Web path: settings.notifications.testSent",
+    "x-webPath": "settings.notifications.testSent",
+    "placeholders": {
+      "delivered": {}
+    }
+  },
+  "settingsNotificationsTestNoDevice": "請先在此裝置啟用推播，再傳送測試通知。",
+  "@settingsNotificationsTestNoDevice": {
+    "description": "Web path: settings.notifications.testNoDevice",
+    "x-webPath": "settings.notifications.testNoDevice"
+  },
+  "settingsNotificationsTestFailed": "測試通知發送失敗：{error}",
+  "@settingsNotificationsTestFailed": {
+    "description": "Web path: settings.notifications.testFailed",
+    "x-webPath": "settings.notifications.testFailed",
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "notificationsPushBillDueTitle": "信用卡帳單已結帳",
+  "@notificationsPushBillDueTitle": {
+    "description": "Web path: notifications.push.billDue.title",
+    "x-webPath": "notifications.push.billDue.title"
+  },
+  "notificationsPushBillDueBody": "{account} 於 {date} 結帳，本期消費 {amount}。",
+  "@notificationsPushBillDueBody": {
+    "description": "Web path: notifications.push.billDue.body",
+    "x-webPath": "notifications.push.billDue.body",
+    "placeholders": {
+      "account": {},
+      "date": {},
+      "amount": {}
+    }
+  },
+  "notificationsPushBudgetExceededTitle": "「{category}」預算超標",
+  "@notificationsPushBudgetExceededTitle": {
+    "description": "Web path: notifications.push.budgetExceeded.title",
+    "x-webPath": "notifications.push.budgetExceeded.title",
+    "placeholders": {
+      "category": {}
+    }
+  },
+  "notificationsPushBudgetExceededBody": "{month} 已用 {used}，預算 {budget}。",
+  "@notificationsPushBudgetExceededBody": {
+    "description": "Web path: notifications.push.budgetExceeded.body",
+    "x-webPath": "notifications.push.budgetExceeded.body",
+    "placeholders": {
+      "month": {},
+      "used": {},
+      "budget": {}
+    }
+  },
+  "notificationsPushDividendTitle": "股利發放提醒",
+  "@notificationsPushDividendTitle": {
+    "description": "Web path: notifications.push.dividend.title",
+    "x-webPath": "notifications.push.dividend.title"
+  },
+  "notificationsPushDividendBody": "{symbol} 於 {date} 發放股利：現金 {cash}、股票 {shares} 股。",
+  "@notificationsPushDividendBody": {
+    "description": "Web path: notifications.push.dividend.body",
+    "x-webPath": "notifications.push.dividend.body",
+    "placeholders": {
+      "symbol": {},
+      "date": {},
+      "cash": {},
+      "shares": {}
+    }
+  },
+  "notificationsPushTestTitle": "測試推播通知",
+  "@notificationsPushTestTitle": {
+    "description": "Web path: notifications.push.test.title",
+    "x-webPath": "notifications.push.test.title"
+  },
+  "notificationsPushTestBody": "如果你看到這則通知，代表此裝置的推播設定正確。",
+  "@notificationsPushTestBody": {
+    "description": "Web path: notifications.push.test.body",
+    "x-webPath": "notifications.push.test.body"
+  },
+  "navNotifications": "通知設定",
+  "@navNotifications": {
+    "description": "Web path: nav.notifications",
+    "x-webPath": "nav.notifications"
   }
 }

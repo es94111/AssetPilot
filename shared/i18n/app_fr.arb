@@ -9360,5 +9360,257 @@
   "@featuresGoalsScheduleInvalidShort": {
     "description": "Web path: features.goals.scheduleInvalidShort",
     "x-webPath": "features.goals.scheduleInvalidShort"
+  },
+  "settingsNotificationsTitle": "Notifications push",
+  "@settingsNotificationsTitle": {
+    "description": "Web path: settings.notifications.title",
+    "x-webPath": "settings.notifications.title"
+  },
+  "settingsNotificationsDescription": "Lorsqu'elles sont activées, les événements correspondants sont envoyés instantanément à vos appareils abonnés. Cela n'affecte pas les notifications de rapport Email/LINE.",
+  "@settingsNotificationsDescription": {
+    "description": "Web path: settings.notifications.description",
+    "x-webPath": "settings.notifications.description"
+  },
+  "settingsNotificationsUnsupported": "Ce navigateur ne prend pas en charge les notifications push (Service Worker et Push API requis).",
+  "@settingsNotificationsUnsupported": {
+    "description": "Web path: settings.notifications.unsupported",
+    "x-webPath": "settings.notifications.unsupported"
+  },
+  "settingsNotificationsDisabledOnServer": "Web Push n'est pas activé sur le serveur (configuration des clés VAPID manquante).",
+  "@settingsNotificationsDisabledOnServer": {
+    "description": "Web path: settings.notifications.disabledOnServer",
+    "x-webPath": "settings.notifications.disabledOnServer"
+  },
+  "settingsNotificationsPermissionDenied": "L'autorisation de notification est bloquée. Autorisez les notifications pour ce site dans les paramètres du navigateur, puis réessayez.",
+  "@settingsNotificationsPermissionDenied": {
+    "description": "Web path: settings.notifications.permissionDenied",
+    "x-webPath": "settings.notifications.permissionDenied"
+  },
+  "settingsNotificationsSubscribe": "Activer le push sur cet appareil",
+  "@settingsNotificationsSubscribe": {
+    "description": "Web path: settings.notifications.subscribe",
+    "x-webPath": "settings.notifications.subscribe"
+  },
+  "settingsNotificationsSubscribing": "Activation…",
+  "@settingsNotificationsSubscribing": {
+    "description": "Web path: settings.notifications.subscribing",
+    "x-webPath": "settings.notifications.subscribing"
+  },
+  "settingsNotificationsSubscribed": "Cet appareil est abonné aux notifications push.",
+  "@settingsNotificationsSubscribed": {
+    "description": "Web path: settings.notifications.subscribed",
+    "x-webPath": "settings.notifications.subscribed"
+  },
+  "settingsNotificationsSubscribeSuccess": "Notifications push activées sur cet appareil.",
+  "@settingsNotificationsSubscribeSuccess": {
+    "description": "Web path: settings.notifications.subscribeSuccess",
+    "x-webPath": "settings.notifications.subscribeSuccess"
+  },
+  "settingsNotificationsSubscribeFailed": "Échec de l'activation du push : {error}",
+  "@settingsNotificationsSubscribeFailed": {
+    "description": "Web path: settings.notifications.subscribeFailed",
+    "x-webPath": "settings.notifications.subscribeFailed",
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "settingsNotificationsUnsubscribe": "Désabonner cet appareil",
+  "@settingsNotificationsUnsubscribe": {
+    "description": "Web path: settings.notifications.unsubscribe",
+    "x-webPath": "settings.notifications.unsubscribe"
+  },
+  "settingsNotificationsUnsubscribeSuccess": "Cet appareil a été désabonné.",
+  "@settingsNotificationsUnsubscribeSuccess": {
+    "description": "Web path: settings.notifications.unsubscribeSuccess",
+    "x-webPath": "settings.notifications.unsubscribeSuccess"
+  },
+  "settingsNotificationsUnsubscribeFailed": "Échec du désabonnement : {error}",
+  "@settingsNotificationsUnsubscribeFailed": {
+    "description": "Web path: settings.notifications.unsubscribeFailed",
+    "x-webPath": "settings.notifications.unsubscribeFailed",
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "settingsNotificationsCategoriesTitle": "Types de notification",
+  "@settingsNotificationsCategoriesTitle": {
+    "description": "Web path: settings.notifications.categoriesTitle",
+    "x-webPath": "settings.notifications.categoriesTitle"
+  },
+  "settingsNotificationsBillDue": "Échéance de facture",
+  "@settingsNotificationsBillDue": {
+    "description": "Web path: settings.notifications.billDue",
+    "x-webPath": "settings.notifications.billDue"
+  },
+  "settingsNotificationsBillDueHint": "Vous rappelle le jour de clôture mensuel de la carte en cas de nouvelles dépenses.",
+  "@settingsNotificationsBillDueHint": {
+    "description": "Web path: settings.notifications.billDueHint",
+    "x-webPath": "settings.notifications.billDueHint"
+  },
+  "settingsNotificationsBudgetExceeded": "Budget dépassé",
+  "@settingsNotificationsBudgetExceeded": {
+    "description": "Web path: settings.notifications.budgetExceeded",
+    "x-webPath": "settings.notifications.budgetExceeded"
+  },
+  "settingsNotificationsBudgetExceededHint": "Vous avertit lorsqu’un budget mensuel est dépassé (une fois par budget et par mois).",
+  "@settingsNotificationsBudgetExceededHint": {
+    "description": "Web path: settings.notifications.budgetExceededHint",
+    "x-webPath": "settings.notifications.budgetExceededHint"
+  },
+  "settingsNotificationsDividend": "Versement de dividende",
+  "@settingsNotificationsDividend": {
+    "description": "Web path: settings.notifications.dividend",
+    "x-webPath": "settings.notifications.dividend"
+  },
+  "settingsNotificationsDividendHint": "Vous rappelle le jour de versement de vos dividendes enregistrés.",
+  "@settingsNotificationsDividendHint": {
+    "description": "Web path: settings.notifications.dividendHint",
+    "x-webPath": "settings.notifications.dividendHint"
+  },
+  "settingsNotificationsDevicesTitle": "Appareils abonnés",
+  "@settingsNotificationsDevicesTitle": {
+    "description": "Web path: settings.notifications.devicesTitle",
+    "x-webPath": "settings.notifications.devicesTitle"
+  },
+  "settingsNotificationsNoDevices": "Aucun appareil abonné pour le moment.",
+  "@settingsNotificationsNoDevices": {
+    "description": "Web path: settings.notifications.noDevices",
+    "x-webPath": "settings.notifications.noDevices"
+  },
+  "settingsNotificationsDeviceUnknown": "Appareil inconnu",
+  "@settingsNotificationsDeviceUnknown": {
+    "description": "Web path: settings.notifications.deviceUnknown",
+    "x-webPath": "settings.notifications.deviceUnknown"
+  },
+  "settingsNotificationsDeviceSubscribedAt": "Abonné le {date}",
+  "@settingsNotificationsDeviceSubscribedAt": {
+    "description": "Web path: settings.notifications.deviceSubscribedAt",
+    "x-webPath": "settings.notifications.deviceSubscribedAt",
+    "placeholders": {
+      "date": {}
+    }
+  },
+  "settingsNotificationsDeviceDisabled": "Désactivé (échecs d'envoi répétés — veuillez vous réabonner)",
+  "@settingsNotificationsDeviceDisabled": {
+    "description": "Web path: settings.notifications.deviceDisabled",
+    "x-webPath": "settings.notifications.deviceDisabled"
+  },
+  "settingsNotificationsRemoveDevice": "Supprimer",
+  "@settingsNotificationsRemoveDevice": {
+    "description": "Web path: settings.notifications.removeDevice",
+    "x-webPath": "settings.notifications.removeDevice"
+  },
+  "settingsNotificationsDeviceRemoved": "Appareil abonné supprimé.",
+  "@settingsNotificationsDeviceRemoved": {
+    "description": "Web path: settings.notifications.deviceRemoved",
+    "x-webPath": "settings.notifications.deviceRemoved"
+  },
+  "settingsNotificationsDeviceRemoveFailed": "Échec de la suppression de l'appareil : {error}",
+  "@settingsNotificationsDeviceRemoveFailed": {
+    "description": "Web path: settings.notifications.deviceRemoveFailed",
+    "x-webPath": "settings.notifications.deviceRemoveFailed",
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "settingsNotificationsTestTitle": "Notification de test",
+  "@settingsNotificationsTestTitle": {
+    "description": "Web path: settings.notifications.testTitle",
+    "x-webPath": "settings.notifications.testTitle"
+  },
+  "settingsNotificationsTestButton": "Envoyer une notification de test",
+  "@settingsNotificationsTestButton": {
+    "description": "Web path: settings.notifications.testButton",
+    "x-webPath": "settings.notifications.testButton"
+  },
+  "settingsNotificationsTestSending": "Envoi…",
+  "@settingsNotificationsTestSending": {
+    "description": "Web path: settings.notifications.testSending",
+    "x-webPath": "settings.notifications.testSending"
+  },
+  "settingsNotificationsTestSent": "Notification de test envoyée ({delivered} appareil(s) livré(s)).",
+  "@settingsNotificationsTestSent": {
+    "description": "Web path: settings.notifications.testSent",
+    "x-webPath": "settings.notifications.testSent",
+    "placeholders": {
+      "delivered": {}
+    }
+  },
+  "settingsNotificationsTestNoDevice": "Activez le push sur cet appareil avant d'envoyer une notification de test.",
+  "@settingsNotificationsTestNoDevice": {
+    "description": "Web path: settings.notifications.testNoDevice",
+    "x-webPath": "settings.notifications.testNoDevice"
+  },
+  "settingsNotificationsTestFailed": "Échec de la notification de test : {error}",
+  "@settingsNotificationsTestFailed": {
+    "description": "Web path: settings.notifications.testFailed",
+    "x-webPath": "settings.notifications.testFailed",
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "notificationsPushBillDueTitle": "Relevé de carte clôturé",
+  "@notificationsPushBillDueTitle": {
+    "description": "Web path: notifications.push.billDue.title",
+    "x-webPath": "notifications.push.billDue.title"
+  },
+  "notificationsPushBillDueBody": "{account} a été clôturé le {date} avec {amount} pour ce cycle.",
+  "@notificationsPushBillDueBody": {
+    "description": "Web path: notifications.push.billDue.body",
+    "x-webPath": "notifications.push.billDue.body",
+    "placeholders": {
+      "account": {},
+      "date": {},
+      "amount": {}
+    }
+  },
+  "notificationsPushBudgetExceededTitle": "Budget « {category} » dépassé",
+  "@notificationsPushBudgetExceededTitle": {
+    "description": "Web path: notifications.push.budgetExceeded.title",
+    "x-webPath": "notifications.push.budgetExceeded.title",
+    "placeholders": {
+      "category": {}
+    }
+  },
+  "notificationsPushBudgetExceededBody": "{month} : {used} utilisés sur {budget}.",
+  "@notificationsPushBudgetExceededBody": {
+    "description": "Web path: notifications.push.budgetExceeded.body",
+    "x-webPath": "notifications.push.budgetExceeded.body",
+    "placeholders": {
+      "month": {},
+      "used": {},
+      "budget": {}
+    }
+  },
+  "notificationsPushDividendTitle": "Rappel de versement de dividende",
+  "@notificationsPushDividendTitle": {
+    "description": "Web path: notifications.push.dividend.title",
+    "x-webPath": "notifications.push.dividend.title"
+  },
+  "notificationsPushDividendBody": "{symbol} a versé des dividendes le {date} : {cash} en numéraire, {shares} actions.",
+  "@notificationsPushDividendBody": {
+    "description": "Web path: notifications.push.dividend.body",
+    "x-webPath": "notifications.push.dividend.body",
+    "placeholders": {
+      "symbol": {},
+      "date": {},
+      "cash": {},
+      "shares": {}
+    }
+  },
+  "notificationsPushTestTitle": "Notification push de test",
+  "@notificationsPushTestTitle": {
+    "description": "Web path: notifications.push.test.title",
+    "x-webPath": "notifications.push.test.title"
+  },
+  "notificationsPushTestBody": "Si vous voyez cette notification, les notifications push fonctionnent sur cet appareil.",
+  "@notificationsPushTestBody": {
+    "description": "Web path: notifications.push.test.body",
+    "x-webPath": "notifications.push.test.body"
+  },
+  "navNotifications": "Notifications",
+  "@navNotifications": {
+    "description": "Web path: nav.notifications",
+    "x-webPath": "nav.notifications"
   }
 }

@@ -9360,5 +9360,257 @@
   "@featuresGoalsScheduleInvalidShort": {
     "description": "Web path: features.goals.scheduleInvalidShort",
     "x-webPath": "features.goals.scheduleInvalidShort"
+  },
+  "settingsNotificationsTitle": "Push-уведомления",
+  "@settingsNotificationsTitle": {
+    "description": "Web path: settings.notifications.title",
+    "x-webPath": "settings.notifications.title"
+  },
+  "settingsNotificationsDescription": "Если включено, подходящие события мгновенно отправляются на ваши подписанные устройства. На уведомления отчётов по Email/LINE это не влияет.",
+  "@settingsNotificationsDescription": {
+    "description": "Web path: settings.notifications.description",
+    "x-webPath": "settings.notifications.description"
+  },
+  "settingsNotificationsUnsupported": "Этот браузер не поддерживает push-уведомления (требуются Service Worker и Push API).",
+  "@settingsNotificationsUnsupported": {
+    "description": "Web path: settings.notifications.unsupported",
+    "x-webPath": "settings.notifications.unsupported"
+  },
+  "settingsNotificationsDisabledOnServer": "Web Push не включён на сервере (отсутствует настройка ключей VAPID).",
+  "@settingsNotificationsDisabledOnServer": {
+    "description": "Web path: settings.notifications.disabledOnServer",
+    "x-webPath": "settings.notifications.disabledOnServer"
+  },
+  "settingsNotificationsPermissionDenied": "Разрешение на уведомления заблокировано. Разрешите уведомления для этого сайта в настройках браузера и повторите попытку.",
+  "@settingsNotificationsPermissionDenied": {
+    "description": "Web path: settings.notifications.permissionDenied",
+    "x-webPath": "settings.notifications.permissionDenied"
+  },
+  "settingsNotificationsSubscribe": "Включить push на этом устройстве",
+  "@settingsNotificationsSubscribe": {
+    "description": "Web path: settings.notifications.subscribe",
+    "x-webPath": "settings.notifications.subscribe"
+  },
+  "settingsNotificationsSubscribing": "Включение…",
+  "@settingsNotificationsSubscribing": {
+    "description": "Web path: settings.notifications.subscribing",
+    "x-webPath": "settings.notifications.subscribing"
+  },
+  "settingsNotificationsSubscribed": "Это устройство подписано на push-уведомления.",
+  "@settingsNotificationsSubscribed": {
+    "description": "Web path: settings.notifications.subscribed",
+    "x-webPath": "settings.notifications.subscribed"
+  },
+  "settingsNotificationsSubscribeSuccess": "Push-уведомления включены на этом устройстве.",
+  "@settingsNotificationsSubscribeSuccess": {
+    "description": "Web path: settings.notifications.subscribeSuccess",
+    "x-webPath": "settings.notifications.subscribeSuccess"
+  },
+  "settingsNotificationsSubscribeFailed": "Не удалось включить push: {error}",
+  "@settingsNotificationsSubscribeFailed": {
+    "description": "Web path: settings.notifications.subscribeFailed",
+    "x-webPath": "settings.notifications.subscribeFailed",
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "settingsNotificationsUnsubscribe": "Отписать это устройство",
+  "@settingsNotificationsUnsubscribe": {
+    "description": "Web path: settings.notifications.unsubscribe",
+    "x-webPath": "settings.notifications.unsubscribe"
+  },
+  "settingsNotificationsUnsubscribeSuccess": "Подписка этого устройства отменена.",
+  "@settingsNotificationsUnsubscribeSuccess": {
+    "description": "Web path: settings.notifications.unsubscribeSuccess",
+    "x-webPath": "settings.notifications.unsubscribeSuccess"
+  },
+  "settingsNotificationsUnsubscribeFailed": "Не удалось отменить подписку: {error}",
+  "@settingsNotificationsUnsubscribeFailed": {
+    "description": "Web path: settings.notifications.unsubscribeFailed",
+    "x-webPath": "settings.notifications.unsubscribeFailed",
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "settingsNotificationsCategoriesTitle": "Типы уведомлений",
+  "@settingsNotificationsCategoriesTitle": {
+    "description": "Web path: settings.notifications.categoriesTitle",
+    "x-webPath": "settings.notifications.categoriesTitle"
+  },
+  "settingsNotificationsBillDue": "Срок оплаты счёта",
+  "@settingsNotificationsBillDue": {
+    "description": "Web path: settings.notifications.billDue",
+    "x-webPath": "settings.notifications.billDue"
+  },
+  "settingsNotificationsBillDueHint": "Напомнит в день закрытия месячной выписки по карте при новых расходах.",
+  "@settingsNotificationsBillDueHint": {
+    "description": "Web path: settings.notifications.billDueHint",
+    "x-webPath": "settings.notifications.billDueHint"
+  },
+  "settingsNotificationsBudgetExceeded": "Бюджет превышен",
+  "@settingsNotificationsBudgetExceeded": {
+    "description": "Web path: settings.notifications.budgetExceeded",
+    "x-webPath": "settings.notifications.budgetExceeded"
+  },
+  "settingsNotificationsBudgetExceededHint": "Уведомит при превышении месячного бюджета (один раз на бюджет в месяц).",
+  "@settingsNotificationsBudgetExceededHint": {
+    "description": "Web path: settings.notifications.budgetExceededHint",
+    "x-webPath": "settings.notifications.budgetExceededHint"
+  },
+  "settingsNotificationsDividend": "Выплата дивидендов",
+  "@settingsNotificationsDividend": {
+    "description": "Web path: settings.notifications.dividend",
+    "x-webPath": "settings.notifications.dividend"
+  },
+  "settingsNotificationsDividendHint": "Напомнит в день выплаты по вашим записям о дивидендах.",
+  "@settingsNotificationsDividendHint": {
+    "description": "Web path: settings.notifications.dividendHint",
+    "x-webPath": "settings.notifications.dividendHint"
+  },
+  "settingsNotificationsDevicesTitle": "Подписанные устройства",
+  "@settingsNotificationsDevicesTitle": {
+    "description": "Web path: settings.notifications.devicesTitle",
+    "x-webPath": "settings.notifications.devicesTitle"
+  },
+  "settingsNotificationsNoDevices": "Пока нет подписанных устройств.",
+  "@settingsNotificationsNoDevices": {
+    "description": "Web path: settings.notifications.noDevices",
+    "x-webPath": "settings.notifications.noDevices"
+  },
+  "settingsNotificationsDeviceUnknown": "Неизвестное устройство",
+  "@settingsNotificationsDeviceUnknown": {
+    "description": "Web path: settings.notifications.deviceUnknown",
+    "x-webPath": "settings.notifications.deviceUnknown"
+  },
+  "settingsNotificationsDeviceSubscribedAt": "Подписано {date}",
+  "@settingsNotificationsDeviceSubscribedAt": {
+    "description": "Web path: settings.notifications.deviceSubscribedAt",
+    "x-webPath": "settings.notifications.deviceSubscribedAt",
+    "placeholders": {
+      "date": {}
+    }
+  },
+  "settingsNotificationsDeviceDisabled": "Отключено (повторные ошибки доставки — подпишитесь заново)",
+  "@settingsNotificationsDeviceDisabled": {
+    "description": "Web path: settings.notifications.deviceDisabled",
+    "x-webPath": "settings.notifications.deviceDisabled"
+  },
+  "settingsNotificationsRemoveDevice": "Удалить",
+  "@settingsNotificationsRemoveDevice": {
+    "description": "Web path: settings.notifications.removeDevice",
+    "x-webPath": "settings.notifications.removeDevice"
+  },
+  "settingsNotificationsDeviceRemoved": "Подписанное устройство удалено.",
+  "@settingsNotificationsDeviceRemoved": {
+    "description": "Web path: settings.notifications.deviceRemoved",
+    "x-webPath": "settings.notifications.deviceRemoved"
+  },
+  "settingsNotificationsDeviceRemoveFailed": "Не удалось удалить устройство: {error}",
+  "@settingsNotificationsDeviceRemoveFailed": {
+    "description": "Web path: settings.notifications.deviceRemoveFailed",
+    "x-webPath": "settings.notifications.deviceRemoveFailed",
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "settingsNotificationsTestTitle": "Тестовое уведомление",
+  "@settingsNotificationsTestTitle": {
+    "description": "Web path: settings.notifications.testTitle",
+    "x-webPath": "settings.notifications.testTitle"
+  },
+  "settingsNotificationsTestButton": "Отправить тестовое уведомление",
+  "@settingsNotificationsTestButton": {
+    "description": "Web path: settings.notifications.testButton",
+    "x-webPath": "settings.notifications.testButton"
+  },
+  "settingsNotificationsTestSending": "Отправка…",
+  "@settingsNotificationsTestSending": {
+    "description": "Web path: settings.notifications.testSending",
+    "x-webPath": "settings.notifications.testSending"
+  },
+  "settingsNotificationsTestSent": "Тестовое уведомление отправлено (доставлено на {delivered} устройств).",
+  "@settingsNotificationsTestSent": {
+    "description": "Web path: settings.notifications.testSent",
+    "x-webPath": "settings.notifications.testSent",
+    "placeholders": {
+      "delivered": {}
+    }
+  },
+  "settingsNotificationsTestNoDevice": "Сначала включите push на этом устройстве, затем отправьте тестовое уведомление.",
+  "@settingsNotificationsTestNoDevice": {
+    "description": "Web path: settings.notifications.testNoDevice",
+    "x-webPath": "settings.notifications.testNoDevice"
+  },
+  "settingsNotificationsTestFailed": "Не удалось отправить тестовое уведомление: {error}",
+  "@settingsNotificationsTestFailed": {
+    "description": "Web path: settings.notifications.testFailed",
+    "x-webPath": "settings.notifications.testFailed",
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "notificationsPushBillDueTitle": "Выписка по карте закрыта",
+  "@notificationsPushBillDueTitle": {
+    "description": "Web path: notifications.push.billDue.title",
+    "x-webPath": "notifications.push.billDue.title"
+  },
+  "notificationsPushBillDueBody": "{account}: выписка закрыта {date}, расходы за период {amount}.",
+  "@notificationsPushBillDueBody": {
+    "description": "Web path: notifications.push.billDue.body",
+    "x-webPath": "notifications.push.billDue.body",
+    "placeholders": {
+      "account": {},
+      "date": {},
+      "amount": {}
+    }
+  },
+  "notificationsPushBudgetExceededTitle": "Бюджет «{category}» превышен",
+  "@notificationsPushBudgetExceededTitle": {
+    "description": "Web path: notifications.push.budgetExceeded.title",
+    "x-webPath": "notifications.push.budgetExceeded.title",
+    "placeholders": {
+      "category": {}
+    }
+  },
+  "notificationsPushBudgetExceededBody": "{month}: использовано {used} из {budget}.",
+  "@notificationsPushBudgetExceededBody": {
+    "description": "Web path: notifications.push.budgetExceeded.body",
+    "x-webPath": "notifications.push.budgetExceeded.body",
+    "placeholders": {
+      "month": {},
+      "used": {},
+      "budget": {}
+    }
+  },
+  "notificationsPushDividendTitle": "Напоминание о выплате дивидендов",
+  "@notificationsPushDividendTitle": {
+    "description": "Web path: notifications.push.dividend.title",
+    "x-webPath": "notifications.push.dividend.title"
+  },
+  "notificationsPushDividendBody": "{symbol} выплатил дивиденды {date}: денежные {cash}, акции {shares}.",
+  "@notificationsPushDividendBody": {
+    "description": "Web path: notifications.push.dividend.body",
+    "x-webPath": "notifications.push.dividend.body",
+    "placeholders": {
+      "symbol": {},
+      "date": {},
+      "cash": {},
+      "shares": {}
+    }
+  },
+  "notificationsPushTestTitle": "Тестовое push-уведомление",
+  "@notificationsPushTestTitle": {
+    "description": "Web path: notifications.push.test.title",
+    "x-webPath": "notifications.push.test.title"
+  },
+  "notificationsPushTestBody": "Если вы видите это уведомление, push-уведомления работают на этом устройстве.",
+  "@notificationsPushTestBody": {
+    "description": "Web path: notifications.push.test.body",
+    "x-webPath": "notifications.push.test.body"
+  },
+  "navNotifications": "Уведомления",
+  "@navNotifications": {
+    "description": "Web path: nav.notifications",
+    "x-webPath": "nav.notifications"
   }
 }

@@ -13,6 +13,9 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
+# Build-time module analysis may load lib/db.ts; direct generated secrets to a throwaway path
+# so VAPID/JWT/API keys never get embedded in the standalone image. Runner sets the volume path below.
+ENV ENV_PATH=/tmp/assetpilot-build-env/.env
 RUN npm run build
 
 # ── Stage 3: 執行階段 ──
@@ -79,6 +82,28 @@ COPY --from=builder --chown=nextjs:nodejs /app/node_modules/postgres-date ./node
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/postgres-interval ./node_modules/postgres-interval
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/split2 ./node_modules/split2
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/xtend ./node_modules/xtend
+# web-push（Web Push 推播，issue #257）以動態 import 延遲載入，Next.js standalone
+# tracing 抓不到這條路徑，需手動複製本體與完整相依閉包（17 個套件，含
+# http_ece 加密實作、jws/jwa/ecdsa-sig-formatter 為 VAPID 簽章、
+# https-proxy-agent 為代理支援）。漏掉任何一個都會在發送時才以 MODULE_NOT_FOUND 失敗。
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/web-push ./node_modules/web-push
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/http_ece ./node_modules/http_ece
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/jws ./node_modules/jws
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/jwa ./node_modules/jwa
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/ecdsa-sig-formatter ./node_modules/ecdsa-sig-formatter
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/buffer-equal-constant-time ./node_modules/buffer-equal-constant-time
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/safe-buffer ./node_modules/safe-buffer
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/asn1.js ./node_modules/asn1.js
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/bn.js ./node_modules/bn.js
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/inherits ./node_modules/inherits
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/minimalistic-assert ./node_modules/minimalistic-assert
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/safer-buffer ./node_modules/safer-buffer
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/https-proxy-agent ./node_modules/https-proxy-agent
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/agent-base ./node_modules/agent-base
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/debug ./node_modules/debug
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/ms ./node_modules/ms
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/minimist ./node_modules/minimist
+
 # sharp（交易照片壓縮）為 serverExternalPackages，於 runtime require，需手動複製其
 # 本體與相依：平台專屬原生套件（@img/sharp-linuxmusl-*、libvips、@img/colour）、
 # detect-libc、semver。

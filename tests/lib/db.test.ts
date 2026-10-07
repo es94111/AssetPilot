@@ -120,6 +120,58 @@ if (!DB_URL) {
     assert.ok(cols[0].column_name === 'repayment_summary_id');
   });
 
+  test('Web Push 訂閱／去重資料表與 user_settings 開關欄位由 migration 建立', () => {
+    const subscriptionColumns = queryAll(
+      `SELECT column_name FROM information_schema.columns
+       WHERE table_name = 'web_push_subscriptions' ORDER BY ordinal_position`,
+    ) as Array<{ column_name: string }>;
+    assert.deepEqual(
+      subscriptionColumns.map((column) => column.column_name),
+      [
+        'id', 'user_id', 'endpoint', 'p256dh', 'auth', 'user_agent', 'created_at',
+        'updated_at', 'last_success_at', 'failure_count', 'disabled_at',
+      ],
+    );
+
+    const sendLogColumns = queryAll(
+      `SELECT column_name FROM information_schema.columns
+       WHERE table_name = 'web_push_send_log' ORDER BY ordinal_position`,
+    ) as Array<{ column_name: string }>;
+    assert.deepEqual(
+      sendLogColumns.map((column) => column.column_name),
+      ['id', 'user_id', 'category', 'event_key', 'sent_at_utc', 'send_status', 'delivered', 'error_message'],
+    );
+
+    const preferenceColumns = queryAll(
+      `SELECT column_name FROM information_schema.columns
+       WHERE table_name = 'user_settings' AND column_name IN ('push_bill_due','push_budget_exceeded','push_dividend')`,
+    ) as Array<{ column_name: string }>;
+    assert.deepEqual(
+      preferenceColumns.map((column) => column.column_name).sort(),
+      ['push_bill_due', 'push_budget_exceeded', 'push_dividend'],
+    );
+
+    const uniqueIndexes = queryAll(
+      `SELECT indexdef FROM pg_indexes WHERE tablename = 'web_push_send_log'`,
+    ) as Array<{ indexdef: string }>;
+    assert.ok(
+      uniqueIndexes.some((index) => /CREATE UNIQUE INDEX/i.test(index.indexdef)
+        && /\(user_id, category, event_key\)/i.test(index.indexdef)),
+      'web_push_send_log 必須以 user_id + category + event_key 唯一去重',
+    );
+  });
+
+  test('Web Push 去重 UNIQUE 條件拒絕同一事件重複 INSERT', () => {
+    const db = getDB();
+    const eventId = uid();
+    const insert = (id: string) => db.run(
+      'INSERT INTO web_push_send_log (id,user_id,category,event_key,sent_at_utc) VALUES (?,?,?,?,?)',
+      [id, userId, 'dividend', `dividend:${eventId}`, new Date().toISOString()],
+    );
+    insert(uid());
+    assert.throws(() => insert(uid()), /duplicate key|unique|constraint/i);
+  });
+
   test('兩個新索引可重複執行不報錯', () => {
     getDB().run('CREATE INDEX IF NOT EXISTS idx_ccr_summaries_user ON credit_card_repayment_summaries(user_id)');
     getDB().run('CREATE INDEX IF NOT EXISTS idx_transactions_repayment_summary ON transactions(repayment_summary_id) WHERE repayment_summary_id != \'\'');

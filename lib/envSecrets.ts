@@ -1,6 +1,7 @@
 import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
+import { generateVapidKeys, isValidVapidKeyPair } from './webPushCore';
 
 let initialized = false;
 
@@ -61,6 +62,19 @@ export function ensureEnvSecrets(): void {
   if (!process.env.API_TOKEN_ENCRYPTION_KEY) {
     updates.API_TOKEN_ENCRYPTION_KEY = generateSecret(64);
     process.env.API_TOKEN_ENCRYPTION_KEY = updates.API_TOKEN_ENCRYPTION_KEY;
+  }
+
+  // Web Push VAPID 金鑰（issue #257）首啟產生並寫入同一個 ENV_PATH 持久化 Volume。
+  // 先載入外部環境／既有 .env 值；只有缺少或公私鑰不相配時才重新產生，
+  // 確保容器重啟後沿用同一組金鑰、既有瀏覽器訂閱不會失效。
+  const vapidPublic = String(process.env.VAPID_PUBLIC_KEY || '').trim();
+  const vapidPrivate = String(process.env.VAPID_PRIVATE_KEY || '').trim();
+  if (!isValidVapidKeyPair(vapidPublic, vapidPrivate)) {
+    const vapid = generateVapidKeys();
+    updates.VAPID_PUBLIC_KEY = vapid.publicKey;
+    updates.VAPID_PRIVATE_KEY = vapid.privateKey;
+    process.env.VAPID_PUBLIC_KEY = vapid.publicKey;
+    process.env.VAPID_PRIVATE_KEY = vapid.privateKey;
   }
 
   if (Object.keys(updates).length === 0) return;

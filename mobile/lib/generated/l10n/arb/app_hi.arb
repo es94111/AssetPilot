@@ -9360,5 +9360,257 @@
   "@featuresGoalsScheduleInvalidShort": {
     "description": "Web path: features.goals.scheduleInvalidShort",
     "x-webPath": "features.goals.scheduleInvalidShort"
+  },
+  "settingsNotificationsTitle": "पुश सूचनाएँ",
+  "@settingsNotificationsTitle": {
+    "description": "Web path: settings.notifications.title",
+    "x-webPath": "settings.notifications.title"
+  },
+  "settingsNotificationsDescription": "सक्षम होने पर, मेल खाती घटनाएँ आपके सब्सक्राइब किए गए उपकरणों पर तुरंत भेजी जाती हैं। यह Email/LINE रिपोर्ट सूचनाओं को प्रभावित नहीं करता।",
+  "@settingsNotificationsDescription": {
+    "description": "Web path: settings.notifications.description",
+    "x-webPath": "settings.notifications.description"
+  },
+  "settingsNotificationsUnsupported": "यह ब्राउज़र पुश सूचनाएँ समर्थित नहीं करता (Service Worker और Push API आवश्यक)।",
+  "@settingsNotificationsUnsupported": {
+    "description": "Web path: settings.notifications.unsupported",
+    "x-webPath": "settings.notifications.unsupported"
+  },
+  "settingsNotificationsDisabledOnServer": "सर्वर पर Web Push सक्षम नहीं है (VAPID कुंजी कॉन्फ़िगरेशन अनुपलब्ध)।",
+  "@settingsNotificationsDisabledOnServer": {
+    "description": "Web path: settings.notifications.disabledOnServer",
+    "x-webPath": "settings.notifications.disabledOnServer"
+  },
+  "settingsNotificationsPermissionDenied": "सूचना अनुमति अवरुद्ध है। ब्राउज़र सेटिंग में इस साइट के लिए सूचनाएँ अनुमत करें और पुनः प्रयास करें।",
+  "@settingsNotificationsPermissionDenied": {
+    "description": "Web path: settings.notifications.permissionDenied",
+    "x-webPath": "settings.notifications.permissionDenied"
+  },
+  "settingsNotificationsSubscribe": "इस उपकरण पर पुश सक्षम करें",
+  "@settingsNotificationsSubscribe": {
+    "description": "Web path: settings.notifications.subscribe",
+    "x-webPath": "settings.notifications.subscribe"
+  },
+  "settingsNotificationsSubscribing": "सक्षम किया जा रहा है…",
+  "@settingsNotificationsSubscribing": {
+    "description": "Web path: settings.notifications.subscribing",
+    "x-webPath": "settings.notifications.subscribing"
+  },
+  "settingsNotificationsSubscribed": "यह उपकरण पुश सूचनाओं के लिए सब्सक्राइब है।",
+  "@settingsNotificationsSubscribed": {
+    "description": "Web path: settings.notifications.subscribed",
+    "x-webPath": "settings.notifications.subscribed"
+  },
+  "settingsNotificationsSubscribeSuccess": "इस उपकरण पर पुश सूचनाएँ सक्षम की गईं।",
+  "@settingsNotificationsSubscribeSuccess": {
+    "description": "Web path: settings.notifications.subscribeSuccess",
+    "x-webPath": "settings.notifications.subscribeSuccess"
+  },
+  "settingsNotificationsSubscribeFailed": "पुश सक्षम करने में विफल: {error}",
+  "@settingsNotificationsSubscribeFailed": {
+    "description": "Web path: settings.notifications.subscribeFailed",
+    "x-webPath": "settings.notifications.subscribeFailed",
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "settingsNotificationsUnsubscribe": "इस उपकरण की सदस्यता समाप्त करें",
+  "@settingsNotificationsUnsubscribe": {
+    "description": "Web path: settings.notifications.unsubscribe",
+    "x-webPath": "settings.notifications.unsubscribe"
+  },
+  "settingsNotificationsUnsubscribeSuccess": "इस उपकरण की सदस्यता समाप्त कर दी गई।",
+  "@settingsNotificationsUnsubscribeSuccess": {
+    "description": "Web path: settings.notifications.unsubscribeSuccess",
+    "x-webPath": "settings.notifications.unsubscribeSuccess"
+  },
+  "settingsNotificationsUnsubscribeFailed": "सदस्यता समाप्त करने में विफल: {error}",
+  "@settingsNotificationsUnsubscribeFailed": {
+    "description": "Web path: settings.notifications.unsubscribeFailed",
+    "x-webPath": "settings.notifications.unsubscribeFailed",
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "settingsNotificationsCategoriesTitle": "सूचना प्रकार",
+  "@settingsNotificationsCategoriesTitle": {
+    "description": "Web path: settings.notifications.categoriesTitle",
+    "x-webPath": "settings.notifications.categoriesTitle"
+  },
+  "settingsNotificationsBillDue": "बिल देय",
+  "@settingsNotificationsBillDue": {
+    "description": "Web path: settings.notifications.billDue",
+    "x-webPath": "settings.notifications.billDue"
+  },
+  "settingsNotificationsBillDueHint": "कार्ड के मासिक स्टेटमेंट क्लोज़िंग दिन पर नए खर्च होने पर याद दिलाता है।",
+  "@settingsNotificationsBillDueHint": {
+    "description": "Web path: settings.notifications.billDueHint",
+    "x-webPath": "settings.notifications.billDueHint"
+  },
+  "settingsNotificationsBudgetExceeded": "बजट से अधिक",
+  "@settingsNotificationsBudgetExceeded": {
+    "description": "Web path: settings.notifications.budgetExceeded",
+    "x-webPath": "settings.notifications.budgetExceeded"
+  },
+  "settingsNotificationsBudgetExceededHint": "मासिक बजट से अधिक खर्च होने पर याद दिलाता है (प्रति बजट प्रति माह एक बार)।",
+  "@settingsNotificationsBudgetExceededHint": {
+    "description": "Web path: settings.notifications.budgetExceededHint",
+    "x-webPath": "settings.notifications.budgetExceededHint"
+  },
+  "settingsNotificationsDividend": "लाभांश भुगतान",
+  "@settingsNotificationsDividend": {
+    "description": "Web path: settings.notifications.dividend",
+    "x-webPath": "settings.notifications.dividend"
+  },
+  "settingsNotificationsDividendHint": "आपके लाभांश रिकॉर्ड के भुगतान दिवस पर याद दिलाता है।",
+  "@settingsNotificationsDividendHint": {
+    "description": "Web path: settings.notifications.dividendHint",
+    "x-webPath": "settings.notifications.dividendHint"
+  },
+  "settingsNotificationsDevicesTitle": "सब्सक्राइब किए गए उपकरण",
+  "@settingsNotificationsDevicesTitle": {
+    "description": "Web path: settings.notifications.devicesTitle",
+    "x-webPath": "settings.notifications.devicesTitle"
+  },
+  "settingsNotificationsNoDevices": "अभी तक कोई सब्सक्राइब किया गया उपकरण नहीं।",
+  "@settingsNotificationsNoDevices": {
+    "description": "Web path: settings.notifications.noDevices",
+    "x-webPath": "settings.notifications.noDevices"
+  },
+  "settingsNotificationsDeviceUnknown": "अज्ञात उपकरण",
+  "@settingsNotificationsDeviceUnknown": {
+    "description": "Web path: settings.notifications.deviceUnknown",
+    "x-webPath": "settings.notifications.deviceUnknown"
+  },
+  "settingsNotificationsDeviceSubscribedAt": "{date} को सब्सक्राइब किया",
+  "@settingsNotificationsDeviceSubscribedAt": {
+    "description": "Web path: settings.notifications.deviceSubscribedAt",
+    "x-webPath": "settings.notifications.deviceSubscribedAt",
+    "placeholders": {
+      "date": {}
+    }
+  },
+  "settingsNotificationsDeviceDisabled": "अक्षम (बार-बार डिलीवरी विफल — कृपया पुनः सब्सक्राइब करें)",
+  "@settingsNotificationsDeviceDisabled": {
+    "description": "Web path: settings.notifications.deviceDisabled",
+    "x-webPath": "settings.notifications.deviceDisabled"
+  },
+  "settingsNotificationsRemoveDevice": "हटाएँ",
+  "@settingsNotificationsRemoveDevice": {
+    "description": "Web path: settings.notifications.removeDevice",
+    "x-webPath": "settings.notifications.removeDevice"
+  },
+  "settingsNotificationsDeviceRemoved": "सब्सक्राइब किया गया उपकरण हटाया गया।",
+  "@settingsNotificationsDeviceRemoved": {
+    "description": "Web path: settings.notifications.deviceRemoved",
+    "x-webPath": "settings.notifications.deviceRemoved"
+  },
+  "settingsNotificationsDeviceRemoveFailed": "उपकरण हटाने में विफल: {error}",
+  "@settingsNotificationsDeviceRemoveFailed": {
+    "description": "Web path: settings.notifications.deviceRemoveFailed",
+    "x-webPath": "settings.notifications.deviceRemoveFailed",
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "settingsNotificationsTestTitle": "परीक्षण सूचना",
+  "@settingsNotificationsTestTitle": {
+    "description": "Web path: settings.notifications.testTitle",
+    "x-webPath": "settings.notifications.testTitle"
+  },
+  "settingsNotificationsTestButton": "परीक्षण सूचना भेजें",
+  "@settingsNotificationsTestButton": {
+    "description": "Web path: settings.notifications.testButton",
+    "x-webPath": "settings.notifications.testButton"
+  },
+  "settingsNotificationsTestSending": "भेजा जा रहा है…",
+  "@settingsNotificationsTestSending": {
+    "description": "Web path: settings.notifications.testSending",
+    "x-webPath": "settings.notifications.testSending"
+  },
+  "settingsNotificationsTestSent": "परीक्षण सूचना भेजी गई ({delivered} उपकरण)।",
+  "@settingsNotificationsTestSent": {
+    "description": "Web path: settings.notifications.testSent",
+    "x-webPath": "settings.notifications.testSent",
+    "placeholders": {
+      "delivered": {}
+    }
+  },
+  "settingsNotificationsTestNoDevice": "परीक्षण सूचना भेजने से पहले इस उपकरण पर पुश सक्षम करें।",
+  "@settingsNotificationsTestNoDevice": {
+    "description": "Web path: settings.notifications.testNoDevice",
+    "x-webPath": "settings.notifications.testNoDevice"
+  },
+  "settingsNotificationsTestFailed": "परीक्षण सूचना विफल: {error}",
+  "@settingsNotificationsTestFailed": {
+    "description": "Web path: settings.notifications.testFailed",
+    "x-webPath": "settings.notifications.testFailed",
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "notificationsPushBillDueTitle": "क्रेडिट कार्ड स्टेटमेंट बंद",
+  "@notificationsPushBillDueTitle": {
+    "description": "Web path: notifications.push.billDue.title",
+    "x-webPath": "notifications.push.billDue.title"
+  },
+  "notificationsPushBillDueBody": "{account} ने {date} को क्लोज़ किया, इस चक्र में {amount}।",
+  "@notificationsPushBillDueBody": {
+    "description": "Web path: notifications.push.billDue.body",
+    "x-webPath": "notifications.push.billDue.body",
+    "placeholders": {
+      "account": {},
+      "date": {},
+      "amount": {}
+    }
+  },
+  "notificationsPushBudgetExceededTitle": "“{category}” बजट से अधिक",
+  "@notificationsPushBudgetExceededTitle": {
+    "description": "Web path: notifications.push.budgetExceeded.title",
+    "x-webPath": "notifications.push.budgetExceeded.title",
+    "placeholders": {
+      "category": {}
+    }
+  },
+  "notificationsPushBudgetExceededBody": "{month}: {budget} में से {used} उपयोग।",
+  "@notificationsPushBudgetExceededBody": {
+    "description": "Web path: notifications.push.budgetExceeded.body",
+    "x-webPath": "notifications.push.budgetExceeded.body",
+    "placeholders": {
+      "month": {},
+      "budget": {},
+      "used": {}
+    }
+  },
+  "notificationsPushDividendTitle": "लाभांश भुगतान अनुस्मारक",
+  "@notificationsPushDividendTitle": {
+    "description": "Web path: notifications.push.dividend.title",
+    "x-webPath": "notifications.push.dividend.title"
+  },
+  "notificationsPushDividendBody": "{symbol} ने {date} को लाभांश दिया: नकद {cash}, स्टॉक {shares} शेयर।",
+  "@notificationsPushDividendBody": {
+    "description": "Web path: notifications.push.dividend.body",
+    "x-webPath": "notifications.push.dividend.body",
+    "placeholders": {
+      "symbol": {},
+      "date": {},
+      "cash": {},
+      "shares": {}
+    }
+  },
+  "notificationsPushTestTitle": "परीक्षण पुश सूचना",
+  "@notificationsPushTestTitle": {
+    "description": "Web path: notifications.push.test.title",
+    "x-webPath": "notifications.push.test.title"
+  },
+  "notificationsPushTestBody": "यदि आप यह सूचना देख सकते हैं, तो इस उपकरण पर पुश सूचनाएँ काम करती हैं।",
+  "@notificationsPushTestBody": {
+    "description": "Web path: notifications.push.test.body",
+    "x-webPath": "notifications.push.test.body"
+  },
+  "navNotifications": "सूचनाएँ",
+  "@navNotifications": {
+    "description": "Web path: nav.notifications",
+    "x-webPath": "nav.notifications"
   }
 }

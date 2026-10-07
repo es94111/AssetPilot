@@ -8,6 +8,6 @@ Stocks retain their market currency (for example, TWD or USD). Combined portfoli
 
 ## Permissions, auditing, and notifications
 
-Owners and editors can write investment data; viewers can only read it. Investment requests resolve membership before accessing data, and stock trades, dividends, and recurring-investment operations are audited with the acting member, role, endpoint, and success/failure outcome. Funding accounts must belong to the same ledger namespace as the investment record. Invalid legacy recurring plans referencing an account outside that namespace are skipped rather than generating a linked trade.
+Owners and editors can write investment data; viewers can only read it. An owner/editor request automatically processes due stock recurring plans for that ledger using its timezone; processing is deduplicated per ledger and audits the requesting member, role, counts, and outcome. Other investment writes are also audited with the acting member, role, endpoint, and success/failure outcome. Funding accounts must belong to the same ledger namespace as the investment record. Invalid legacy recurring plans referencing an account outside that namespace are skipped rather than generating a linked trade.
 
 Investment changes and recurring-investment processing do not send email or LINE notifications. Personal report schedules, notification preferences, and credentials remain private to each member and are not shared with the ledger. Removing a member or leaving revokes ledger access immediately; investment records remain with the ledger.

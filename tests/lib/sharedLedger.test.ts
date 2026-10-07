@@ -54,7 +54,7 @@ test('shared ledgers: real authenticated routes, invitations and ownership bound
   const originalRequire = Object.getOwnPropertyDescriptor(globalThis, 'require');
   Object.defineProperty(globalThis, 'require', { value: createRequire(import.meta.url), configurable: true });
 
-  const { initDB, getDB, queryOne } = await import('../../lib/db.ts');
+  const { initDB, getDB, queryAll, queryOne } = await import('../../lib/db.ts');
   const { uid } = await import('../../lib/userDefaults.ts');
   const { createLoginSession } = await import('../../lib/sessionHelpers.ts');
   const { requireAuth } = await import('../../lib/apiHelpers.ts');
@@ -97,6 +97,7 @@ test('shared ledgers: real authenticated routes, invitations and ownership bound
   const people = [owner, editor, viewer, outsider];
   const tokens = new Map<string, string>();
   let ledgerId = '', dataOwner = '', transactionId = '', sharedAccountId = '';
+  let secondaryLedgerId = '', secondaryDataOwner = '';
   const privateTx = uid();
   const privateStockId = uid();
   const privateStockTxId = uid();
@@ -294,6 +295,152 @@ test('shared ledgers: real authenticated routes, invitations and ownership bound
       assert.equal(failedTradeLog?.result, 'failed');
     });
 
+    await t.test('owner and editor reads process stock recurring per ledger using ledger timezone and audit the actor', async () => {
+      const timezoneCandidates = [
+        ['Pacific/Kiritimati', 'Pacific/Honolulu'],
+        ['UTC', 'Pacific/Honolulu'],
+        ['Europe/London', 'America/Los_Angeles'],
+      ] as const;
+      const timezonePair = timezoneCandidates.find(([ledgerTimezone, memberTimezone]) => {
+        const ledgerDate = todayInUserTz(ledgerTimezone);
+        const memberDate = todayInUserTz(memberTimezone);
+        const weekday = new Date(`${ledgerDate}T00:00:00Z`).getUTCDay();
+        return ledgerDate > memberDate && weekday > 0 && weekday < 6;
+      });
+      const ledgerTimezone = timezonePair?.[0] || 'Pacific/Kiritimati';
+      const memberTimezone = timezonePair?.[1] || 'Pacific/Honolulu';
+      const ledgerToday = todayInUserTz(ledgerTimezone);
+      const latestTradingDate = (date: string) => {
+        const candidate = new Date(`${date}T00:00:00Z`);
+        while (candidate.getUTCDay() === 0 || candidate.getUTCDay() === 6) {
+          candidate.setUTCDate(candidate.getUTCDate() - 1);
+        }
+        return candidate.toISOString().slice(0, 10);
+      };
+      const scheduledDate = timezonePair ? ledgerToday : latestTradingDate(ledgerToday);
+      const originalLedgerTimezone = queryOne('SELECT timezone FROM financial_ledgers WHERE id = ?', [ledgerId])?.timezone;
+      const originalMemberTimezone = queryOne('SELECT timezone FROM users WHERE id = ?', [editor])?.timezone;
+      const originalFetch = globalThis.fetch;
+      let marketDataRequests = 0;
+      globalThis.fetch = (async (input: RequestInfo | URL) => {
+        const url = new URL(String(input));
+        if (url.pathname.includes('holidaySchedule')) {
+          marketDataRequests++;
+          return Response.json([]);
+        }
+        if (url.pathname.endsWith('/exchangeReport/STOCK_DAY')) {
+          marketDataRequests++;
+          const date = String(url.searchParams.get('date') || '');
+          const rocDate = `${Number(date.slice(0, 4)) - 1911}/${date.slice(4, 6)}/${date.slice(6, 8)}`;
+          return Response.json({ stat: 'OK', data: [[rocDate, '', '0', '10', '10', '10', '10']] });
+        }
+        return new Response(null, { status: 404 });
+      }) as typeof fetch;
+
+      const waitForGeneratedTrade = async (targetLedgerId: string, targetDataOwner: string, planId: string) => {
+        for (let attempt = 0; attempt < 150; attempt++) {
+          const trade = queryOne(
+            'SELECT id, user_id, account_id, date FROM stock_transactions WHERE user_id = ? AND recurring_plan_id = ? AND period_start_date = ?',
+            [targetDataOwner, planId, scheduledDate],
+          );
+          const auditEntry = queryOne(
+            "SELECT actor_user_id, actor_role, result, metadata FROM ledger_audit_log WHERE ledger_id = ? AND action = 'stock_recurring.generated' ORDER BY created_at DESC LIMIT 1",
+            [targetLedgerId],
+          );
+          if (trade && auditEntry) return { trade, auditEntry };
+          await new Promise((resolve) => setTimeout(resolve, 20));
+        }
+        const plan = queryOne('SELECT last_generated, updated_at FROM stock_recurring WHERE id = ?', [planId]);
+        const transactions = queryAll('SELECT id, date, period_start_date FROM stock_transactions WHERE user_id = ? AND recurring_plan_id = ?', [targetDataOwner, planId]);
+        const audits = queryAll("SELECT actor_user_id, actor_role, result, metadata FROM ledger_audit_log WHERE ledger_id = ? AND action = 'stock_recurring.generated'", [targetLedgerId]);
+        assert.fail(`Stock recurring plan ${planId} was not processed for ledger ${targetLedgerId}; plan=${JSON.stringify(plan)} transactions=${JSON.stringify(transactions)} audits=${JSON.stringify(audits)}`);
+      };
+
+      try {
+        db.run('UPDATE financial_ledgers SET timezone = ? WHERE id = ?', [ledgerTimezone, ledgerId]);
+        db.run('UPDATE users SET timezone = ? WHERE id = ?', [memberTimezone, editor]);
+        const recurringStock = await stocks.POST(request(editor, '/api/stocks', 'POST', {
+          market: 'TW', symbol: '0050', name: 'Recurring ETF',
+        }));
+        assert.equal(recurringStock.status, 201, await recurringStock.clone().text());
+        const recurringStockId = String((await recurringStock.json()).id);
+        const duePlan = await stockRecurring.POST(request(editor, '/api/stock-recurring', 'POST', {
+          stockId: recurringStockId, amount: 100, frequency: 'yearly', startDate: scheduledDate,
+          accountId: sharedAccountId, note: 'Ledger timezone recurring fixture',
+        }));
+        assert.equal(duePlan.status, 200, await duePlan.clone().text());
+        const duePlanId = String((await duePlan.json()).id);
+        assert.equal(marketDataRequests, 0, 'future recurring plans should not trigger market-data requests');
+
+        await stocks.GET(request(viewer, '/api/stocks'));
+        assert.equal(queryOne('SELECT id FROM stock_transactions WHERE user_id = ? AND recurring_plan_id = ?', [dataOwner, duePlanId]), null,
+          'viewers must not trigger shared recurring writes');
+
+        await Promise.all([
+          stocks.GET(request(editor, '/api/stocks')),
+          stocks.GET(request(editor, '/api/stocks')),
+        ]);
+        const firstLedgerRun = await waitForGeneratedTrade(ledgerId, dataOwner, duePlanId);
+        assert.ok(marketDataRequests >= 2, 'due plans should fetch holidays and historical prices');
+        assert.equal(firstLedgerRun.trade.user_id, dataOwner);
+        assert.equal(firstLedgerRun.trade.account_id, sharedAccountId);
+        assert.equal(firstLedgerRun.auditEntry.actor_user_id, editor);
+        assert.equal(firstLedgerRun.auditEntry.actor_role, 'editor');
+        assert.equal(firstLedgerRun.auditEntry.result, 'success');
+        const firstMetadata = typeof firstLedgerRun.auditEntry.metadata === 'string'
+          ? JSON.parse(firstLedgerRun.auditEntry.metadata)
+          : firstLedgerRun.auditEntry.metadata;
+        assert.equal(firstMetadata.timezone, ledgerTimezone);
+        assert.equal(firstMetadata.asOfDate, ledgerToday);
+        assert.equal(Number(queryOne(
+          'SELECT COUNT(*) AS count FROM stock_transactions WHERE user_id = ? AND recurring_plan_id = ?',
+          [dataOwner, duePlanId],
+        )?.count), 1, 'concurrent requests must not duplicate a recurring trade');
+        assert.equal(Number(queryOne(
+          "SELECT COUNT(*) AS count FROM ledger_audit_log WHERE ledger_id = ? AND action = 'stock_recurring.generated'",
+          [ledgerId],
+        )?.count), 1, 'a ledger-scoped run should emit one outcome audit');
+
+        const secondCreated = await ledgers.POST(request(owner, '/api/ledgers', 'POST', { name: 'Second investment ledger' }, ''));
+        assert.equal(secondCreated.status, 201, await secondCreated.clone().text());
+        secondaryLedgerId = String((await secondCreated.json()).id);
+        secondaryDataOwner = String(queryOne('SELECT data_owner_id FROM financial_ledgers WHERE id = ?', [secondaryLedgerId])?.data_owner_id);
+        db.run('INSERT INTO ledger_members (ledger_id, user_id, role, joined_at) VALUES (?, ?, \'editor\', ?)',
+          [secondaryLedgerId, editor, Date.now()]);
+        db.run('UPDATE financial_ledgers SET timezone = ? WHERE id = ?', [ledgerTimezone, secondaryLedgerId]);
+        const secondaryStockId = uid();
+        const secondaryPlanId = uid();
+        db.run('INSERT INTO stocks (id,user_id,symbol,market,name,current_price,stock_type,currency,updated_at) VALUES (?,?,?,?,?,?,?,?,?)',
+          [secondaryStockId, secondaryDataOwner, '0050', 'TW', 'Second recurring ETF', 10, 'etf', 'TWD', Date.now()]);
+        db.run('INSERT INTO stock_recurring (id,user_id,stock_id,amount,frequency,start_date,account_id,note,is_active,last_generated,created_at,updated_at) VALUES (?,?,?,?,?,?,\'\',?,1,NULL,?,?)',
+          [secondaryPlanId, secondaryDataOwner, secondaryStockId, 100, 'yearly', scheduledDate, 'Second ledger recurring fixture', Date.now(), Date.now()]);
+
+        const secondLedgerRead = await stocks.GET(request(editor, '/api/stocks', 'GET', undefined, secondaryLedgerId));
+        assert.equal(secondLedgerRead.status, 200);
+        const secondLedgerRun = await waitForGeneratedTrade(secondaryLedgerId, secondaryDataOwner, secondaryPlanId);
+        assert.equal(secondLedgerRun.trade.user_id, secondaryDataOwner);
+        assert.equal(secondLedgerRun.auditEntry.actor_user_id, editor);
+        const secondMetadata = typeof secondLedgerRun.auditEntry.metadata === 'string'
+          ? JSON.parse(secondLedgerRun.auditEntry.metadata)
+          : secondLedgerRun.auditEntry.metadata;
+        assert.equal(secondMetadata.timezone, ledgerTimezone);
+      } finally {
+        globalThis.fetch = originalFetch;
+        if (originalLedgerTimezone) db.run('UPDATE financial_ledgers SET timezone = ? WHERE id = ?', [originalLedgerTimezone, ledgerId]);
+        if (originalMemberTimezone) db.run('UPDATE users SET timezone = ? WHERE id = ?', [originalMemberTimezone, editor]);
+        if (secondaryDataOwner) {
+          for (const table of ['transactions', 'accounts', 'categories', 'budgets', 'recurring', 'stock_transactions', 'stock_dividends', 'stock_recurring', 'stocks', 'stock_settings', 'exchange_rates', 'exchange_rate_settings']) {
+            db.run(`DELETE FROM ${table} WHERE user_id = ?`, [secondaryDataOwner]);
+          }
+        }
+        if (secondaryLedgerId) {
+          db.run('DELETE FROM financial_ledgers WHERE id = ?', [secondaryLedgerId]);
+          secondaryLedgerId = '';
+          secondaryDataOwner = '';
+        }
+      }
+    });
+
     await t.test('investment viewers can read but cannot write or alter private settings', async () => {
       for (const [path, route] of [
         ['/api/stocks', stocks], ['/api/stock-transactions', stockTransactions],
@@ -378,9 +525,11 @@ test('shared ledgers: real authenticated routes, invitations and ownership bound
   } finally {
     await new Promise((resolve) => setTimeout(resolve, 100));
     for (const table of ['transactions', 'accounts', 'categories', 'budgets', 'recurring', 'stock_transactions', 'stock_dividends', 'stock_recurring', 'stocks', 'stock_settings', 'exchange_rates', 'exchange_rate_settings', 'deleted_defaults', 'credit_card_repayment_summaries', 'transaction_attachments', 'user_photo_keys']) {
-      for (const id of [dataOwner, ...people]) db.run(`DELETE FROM ${table} WHERE user_id = ?`, [id]);
+      for (const id of [dataOwner, secondaryDataOwner, ...people]) db.run(`DELETE FROM ${table} WHERE user_id = ?`, [id]);
     }
-    db.run('DELETE FROM financial_ledgers WHERE id = ?', [ledgerId]);
+    for (const id of [ledgerId, secondaryLedgerId]) {
+      if (id) db.run('DELETE FROM financial_ledgers WHERE id = ?', [id]);
+    }
     for (const person of people) {
       db.run('DELETE FROM data_operation_audit_log WHERE user_id = ?', [person]);
       db.run('DELETE FROM login_sessions WHERE user_id = ?', [person]);

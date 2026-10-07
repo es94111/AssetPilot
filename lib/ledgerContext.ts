@@ -9,6 +9,8 @@ type LedgerLookup = Record<string, string | number | null>;
 
 const READ_ONLY_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
 const recurringChecks = new Map<string, string>();
+const stockRecurringChecks = new Map<string, string>();
+const stockRecurringInflight = new Set<string>();
 const auditContexts = new WeakMap<object, {
   ledgerId: string;
   actorUserId: string;
@@ -176,6 +178,72 @@ function processDueRecurringForLedger(
   }
 }
 
+function processDueStockRecurringForLedger(
+  dataOwnerId: string,
+  timezone: string,
+  context: { ledgerId: string; actorUserId: string; actorEmail: string; role: LedgerRole },
+): void {
+  const ledgerTimezone = timezone || "Asia/Taipei";
+  const today = todayInUserTz(ledgerTimezone);
+  const version = queryOne(
+    `SELECT COUNT(*) AS cnt,
+            COALESCE(MAX(COALESCE(updated_at, created_at, 0)), 0) AS updated_at,
+            COALESCE(MAX(COALESCE(last_generated, '')), '') AS last_generated
+     FROM stock_recurring WHERE user_id = ?`,
+    [dataOwnerId],
+  );
+  const cacheKey = `${ledgerTimezone}:${today}:${version?.cnt || 0}:${version?.updated_at || 0}:${version?.last_generated || ""}`;
+  const ledgerId = context.ledgerId;
+  if (stockRecurringChecks.get(ledgerId) === cacheKey || stockRecurringInflight.has(ledgerId)) return;
+
+  stockRecurringChecks.set(ledgerId, cacheKey);
+  stockRecurringInflight.add(ledgerId);
+  import("./stockRecurringHelpers")
+    .then(({ processStockRecurringForUser }) =>
+      processStockRecurringForUser(dataOwnerId, { userTimezone: ledgerTimezone }),
+    )
+    .then((result) => {
+      if (result.skipped > 0) stockRecurringChecks.delete(ledgerId);
+      if (result.generated > 0 || result.skipped > 0 || result.postponed > 0) {
+        writeLedgerAudit({
+          ledgerId,
+          actorUserId: context.actorUserId,
+          actorEmail: context.actorEmail,
+          actorRole: context.role,
+          action: "stock_recurring.generated",
+          resourceType: "stock_transactions",
+          result: result.generated > 0 ? "success" : "failed",
+          metadata: {
+            generated: result.generated,
+            skipped: result.skipped,
+            postponed: result.postponed,
+            timezone: ledgerTimezone,
+            asOfDate: today,
+          },
+        });
+      }
+    })
+    .catch((error) => {
+      stockRecurringChecks.delete(ledgerId);
+      try {
+        writeLedgerAudit({
+          ledgerId,
+          actorUserId: context.actorUserId,
+          actorEmail: context.actorEmail,
+          actorRole: context.role,
+          action: "stock_recurring.generated",
+          resourceType: "stock_transactions",
+          result: "failed",
+          metadata: { timezone: ledgerTimezone, asOfDate: today, error: String(error?.message || error).slice(0, 200) },
+        });
+      } catch (auditError) {
+        console.error("[ledger] Failed to audit shared-ledger stock recurring failure", auditError);
+      }
+      console.error("[ledger] Failed to process shared-ledger stock recurring investments", error);
+    })
+    .finally(() => stockRecurringInflight.delete(ledgerId));
+}
+
 export function applyLedgerContext<T extends { userId: string; userTimezone: string }>(
   request: any,
   auth: T,
@@ -228,9 +296,12 @@ export function applyLedgerContext<T extends { userId: string; userTimezone: str
 
   const dataOwnerId = String(ledger?.data_owner_id || "");
   if (dataOwnerId && dataOwnerId !== actorUserId && decision.role !== "viewer") {
-    processDueRecurringForLedger(dataOwnerId, String(ledger?.timezone || "Asia/Taipei"), {
-      ledgerId, actorUserId, actorEmail, role: decision.role,
-    });
+    const timezone = String(ledger?.timezone || "Asia/Taipei");
+    const context = { ledgerId, actorUserId, actorEmail, role: decision.role };
+    processDueRecurringForLedger(dataOwnerId, timezone, context);
+    if (Number(ledger?.is_shared) === 1) {
+      processDueStockRecurringForLedger(dataOwnerId, timezone, context);
+    }
   }
   return {
     ...auth,

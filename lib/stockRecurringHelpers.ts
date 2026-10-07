@@ -246,10 +246,18 @@ export async function processStockRecurringForUser(
     "SELECT * FROM stock_recurring WHERE user_id = ? AND is_active = 1",
     [userId],
   );
-  if (recs.length === 0) return { generated: 0, skipped: 0, postponed: 0 };
+  const todayS = todayInUserTz(opts.userTimezone || "Asia/Taipei");
+  const dueRecs = recs.filter((r) => {
+    const frequency = String(r.frequency || r.freq || "");
+    const startDate = String(r.start_date || r.next_date || "");
+    const scheduledDate = r.last_generated
+      ? getNextStockRecurringDate(r.last_generated, frequency)
+      : startDate;
+    return Boolean(scheduledDate && scheduledDate <= todayS);
+  });
+  if (dueRecs.length === 0) return { generated: 0, skipped: 0, postponed: 0 };
 
   const settings = getStockSettings(userId);
-  const todayS = todayInUserTz(opts.userTimezone || "Asia/Taipei");
   const holidaySet = await fetchTwseHolidaySet();
   const db = getDB();
   const now = Date.now();
@@ -258,7 +266,7 @@ export async function processStockRecurringForUser(
   let postponed = 0;
   let touched = false;
 
-  for (const r of recs) {
+  for (const r of dueRecs) {
     const frequency = String(r.frequency || r.freq || "");
     const startDate = String(r.start_date || r.next_date || "");
     const recurringAmount =

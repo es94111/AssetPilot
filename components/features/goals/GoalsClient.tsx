@@ -9,7 +9,7 @@ import { Select } from '@/components/ui/Select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useT } from '@/components/i18n/I18nProvider';
 import { localeTag } from '@/lib/i18n/localeTag';
-import { addMonthsClamped, buildAmortizationSchedule } from '@/lib/savingsGoal';
+import { addMonthsClamped, buildAmortizationSchedule, todayInTimezone } from '@/lib/savingsGoal';
 
 interface GoalView {
   id: string;
@@ -43,17 +43,19 @@ interface RepaymentPlanView {
   monthlyPayment: number;
   totalPayment: number;
   totalInterest: number;
-  paidPeriods: number;
+  elapsedPeriods: number;
   remainingPeriods: number;
-  paidPrincipal: number;
+  elapsedPrincipal: number;
   remainingBalance: number;
-  paidInterest: number;
+  elapsedInterest: number;
   remainingInterest: number;
   nextDueDate: string | null;
   nextPaymentAmount: number;
   finalDueDate: string;
-  completed: boolean;
+  scheduleComplete: boolean;
   progressPercent: number;
+  scheduleValid: boolean;
+  scheduleError: string | null;
 }
 
 interface RepaymentPlanDetail extends RepaymentPlanView {
@@ -94,7 +96,7 @@ function dayLabel(date: string, locale: string) {
   }).format(new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3]))));
 }
 
-export default function GoalsClient() {
+export default function GoalsClient({ userTimezone }: { userTimezone: string }) {
   const { t, locale } = useT();
   const [goals, setGoals] = useState<GoalView[]>([]);
   const [plans, setPlans] = useState<RepaymentPlanView[]>([]);
@@ -207,7 +209,7 @@ export default function GoalsClient() {
       });
     } else {
       setGoalEditId(null);
-      setGoalForm({ ...EMPTY_GOAL_FORM, targetDate: addMonthsClamped(new Date().toISOString().slice(0, 10), 12) });
+      setGoalForm({ ...EMPTY_GOAL_FORM, targetDate: addMonthsClamped(todayInTimezone(userTimezone), 12) });
     }
     setGoalDialogOpen(true);
   }
@@ -225,7 +227,7 @@ export default function GoalsClient() {
       });
     } else {
       setPlanEditId(null);
-      setPlanForm({ ...EMPTY_PLAN_FORM, startDate: new Date().toISOString().slice(0, 10) });
+      setPlanForm({ ...EMPTY_PLAN_FORM, startDate: todayInTimezone(userTimezone) });
     }
     setPlanDialogOpen(true);
   }
@@ -409,41 +411,54 @@ export default function GoalsClient() {
                     </div>
                   </div>
 
-                  <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
-                    <div>
-                      <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{t('features.goals.monthlyPayment')}</p>
-                      <strong className="tabular-nums" style={{ color: 'var(--text)' }}>{money(plan.monthlyPayment, locale)}</strong>
-                    </div>
-                    <div>
-                      <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{t('features.goals.remainingBalance')}</p>
-                      <strong className="tabular-nums" style={{ color: 'var(--text)' }}>{money(plan.remainingBalance, locale)}</strong>
-                    </div>
-                  </div>
+                  {plan.scheduleValid ? (
+                    <>
+                      <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
+                        <div>
+                          <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{t('features.goals.monthlyPayment')}</p>
+                          <strong className="tabular-nums" style={{ color: 'var(--text)' }}>{money(plan.monthlyPayment, locale)}</strong>
+                        </div>
+                        <div>
+                          <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{t('features.goals.remainingBalance')}</p>
+                          <strong className="tabular-nums" style={{ color: 'var(--text)' }}>{money(plan.remainingBalance, locale)}</strong>
+                        </div>
+                      </div>
 
-                  <div className="mt-3">
-                    <div className="h-2.5 w-full overflow-hidden rounded-full" style={{ background: 'var(--surface-hover)' }}
-                      role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(percent)}
-                      aria-label={t('features.goals.planProgressLabel', { name: plan.name })}>
-                      <div className="h-full rounded-full transition-all"
-                        style={{ width: `${percent}%`, background: plan.completed ? 'var(--income)' : 'var(--primary)' }} />
-                    </div>
-                    <p className="mt-2 text-sm tabular-nums" style={{ color: 'var(--text-muted)' }}>
-                      {t('features.goals.planProgressSummary', { paid: String(plan.paidPeriods), total: String(plan.periods) })}
+                      <div className="mt-3">
+                        <div className="h-2.5 w-full overflow-hidden rounded-full" style={{ background: 'var(--surface-hover)' }}
+                          role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(percent)}
+                          aria-label={t('features.goals.planProgressLabel', { name: plan.name })}>
+                          <div className="h-full rounded-full transition-all"
+                            style={{ width: `${percent}%`, background: plan.scheduleComplete ? 'var(--income)' : 'var(--primary)' }} />
+                        </div>
+                        <p className="mt-2 text-sm tabular-nums" style={{ color: 'var(--text-muted)' }}>
+                          {t('features.goals.planProgressSummary', { elapsed: String(plan.elapsedPeriods), total: String(plan.periods) })}
+                        </p>
+                        <p className="mt-1 text-xs" style={{ color: 'var(--text-muted)' }}>{t('features.goals.planProgressNote')}</p>
+                      </div>
+                    </>
+                  ) : (
+                    <p role="alert" className="mt-3 rounded-xl px-3 py-2 text-sm" style={{ background: 'var(--expense-bg)', color: 'var(--expense)' }}>
+                      {t('features.goals.scheduleInvalid')}
                     </p>
-                  </div>
+                  )}
 
                   <div className="mt-3 flex flex-wrap gap-2 text-xs">
-                    {plan.completed ? (
+                    {!plan.scheduleValid ? (
+                      <span className="rounded-full px-2.5 py-1 font-semibold" style={{ background: 'var(--expense-bg)', color: 'var(--expense)' }}>{t('features.goals.scheduleInvalidShort')}</span>
+                    ) : plan.scheduleComplete ? (
                       <span className="rounded-full px-2.5 py-1 font-semibold" style={{ background: 'var(--income-bg)', color: 'var(--income)' }}>{t('features.goals.badgeRepaid')}</span>
                     ) : (
                       <span className="rounded-full px-2.5 py-1 tabular-nums" style={{ background: 'var(--surface-hover)', color: 'var(--text-muted)' }}>
                         {t('features.goals.nextDue', { date: plan.nextDueDate ? dayLabel(plan.nextDueDate, locale) : '—', amount: money(plan.nextPaymentAmount, locale) })}
                       </span>
                     )}
-                    <span className="rounded-full px-2.5 py-1 tabular-nums" style={{ background: 'var(--surface-hover)', color: 'var(--text-muted)' }}>
-                      {t('features.goals.totalInterest', { amount: money(plan.totalInterest, locale) })}
-                    </span>
-                    <button type="button" className="rounded-full px-2.5 py-1 font-semibold underline" style={{ background: 'var(--primary-light-bg)', color: 'var(--primary)' }} onClick={() => openSchedule(plan.id)}>
+                    {plan.scheduleValid && (
+                      <span className="rounded-full px-2.5 py-1 tabular-nums" style={{ background: 'var(--surface-hover)', color: 'var(--text-muted)' }}>
+                        {t('features.goals.totalInterest', { amount: money(plan.totalInterest, locale) })}
+                      </span>
+                    )}
+                    <button type="button" disabled={!plan.scheduleValid} className="rounded-full px-2.5 py-1 font-semibold underline disabled:cursor-not-allowed disabled:opacity-50" style={{ background: 'var(--primary-light-bg)', color: 'var(--primary)' }} onClick={() => openSchedule(plan.id)}>
                       {t('features.goals.viewSchedule')}
                     </button>
                   </div>

@@ -9,8 +9,9 @@ import Decimal from 'decimal.js';
 import { queryAll, queryOne } from './db';
 import { getExchangeRateToTwdAsDecimal, normalizeCurrency } from './accountHelpers';
 import {
-  buildGoalReminders,
+  addMonthsClamped,
   buildAmortizationSchedule,
+  buildGoalReminders,
   computeGoalProgress,
   computeRepaymentProgress,
   type AmortizationSchedule,
@@ -70,7 +71,7 @@ function resolveCategoryIds(userId: string, categoryId: string): string[] {
 }
 
 /** 目標「已存」金額（TWD）：依綁定來源（帳戶餘額／分類支出累計）計算。 */
-export function getGoalContributedAmount(userId: string, goal: SavingsGoalRow): number {
+export function getGoalContributedAmount(userId: string, goal: SavingsGoalRow, today: string): number {
   if (goal.account_id) {
     const account = asRow<{ initial_balance: number | string | null; currency: string | null }>(queryOne(
       'SELECT initial_balance, currency FROM accounts WHERE id = ? AND user_id = ?',
@@ -84,8 +85,8 @@ export function getGoalContributedAmount(userId: string, goal: SavingsGoalRow): 
       original_amount: number | string | null;
       currency: string | null;
     }>(queryAll(
-      'SELECT type, amount, original_amount, currency FROM transactions WHERE account_id = ? AND user_id = ?',
-      [goal.account_id, userId],
+      'SELECT type, amount, original_amount, currency FROM transactions WHERE account_id = ? AND user_id = ? AND date <= ?',
+      [goal.account_id, userId, today],
     ));
     let balance = new Decimal(String(account.initial_balance ?? 0));
     const exchangeRate = new Decimal(getExchangeRateToTwdAsDecimal(userId, currency));
@@ -119,8 +120,8 @@ export function getGoalContributedAmount(userId: string, goal: SavingsGoalRow): 
     const row = queryOne(
       `SELECT COALESCE(SUM(twd_amount), 0) AS total FROM transactions
        WHERE user_id = ? AND type = 'expense' AND exclude_from_stats = 0
-         AND date >= ? AND category_id IN (${categoryIds.map(() => '?').join(',')})`,
-      [userId, goal.start_date, ...categoryIds],
+         AND date >= ? AND date <= ? AND category_id IN (${categoryIds.map(() => '?').join(',')})`,
+      [userId, goal.start_date, today, ...categoryIds],
     ) as { total: string | number | null } | null;
     return Math.round(Number(row?.total) || 0);
   }
@@ -149,7 +150,7 @@ export function buildSavingsGoalView(userId: string, goal: SavingsGoalRow, today
     targetAmount: Number(goal.target_amount) || 0,
     targetDate: goal.target_date,
     startDate: goal.start_date,
-    contributedAmount: getGoalContributedAmount(userId, goal),
+    contributedAmount: getGoalContributedAmount(userId, goal, today),
     today,
   });
   return {
@@ -189,6 +190,8 @@ export interface RepaymentPlanView extends RepaymentProgress {
   monthlyPayment: number;
   totalPayment: number;
   totalInterest: number;
+  scheduleValid: boolean;
+  scheduleError: string | null;
   createdAt: number;
   updatedAt: number;
 }
@@ -199,27 +202,60 @@ export interface RepaymentPlanDetail extends RepaymentPlanView {
 }
 
 export function buildRepaymentPlanView(plan: RepaymentPlanRow, today: string): RepaymentPlanView {
-  const schedule = buildAmortizationSchedule({
-    principal: Number(plan.principal) || 0,
-    annualRatePercent: Number(plan.annual_rate) || 0,
-    periods: Number(plan.periods) || 0,
-  });
-  const progress = computeRepaymentProgress({ startDate: plan.start_date, today, schedule });
-  return {
-    ...progress,
+  const planPrincipal = new Decimal(String(plan.principal ?? 0));
+  const principal = planPrincipal.isFinite() ? planPrincipal.toNumber() : 0;
+  const annualRatePercent = Number(plan.annual_rate) || 0;
+  const periods = Number(plan.periods) || 0;
+  const base = {
     id: plan.id,
     name: plan.name,
     startDate: plan.start_date,
     accountId: plan.account_id || null,
-    principal: schedule.principal,
-    annualRatePercent: schedule.annualRatePercent,
-    periods: schedule.periods,
-    monthlyPayment: schedule.monthlyPayment,
-    totalPayment: schedule.totalPayment,
-    totalInterest: schedule.totalInterest,
+    principal,
+    annualRatePercent,
+    periods,
     createdAt: Number(plan.created_at) || 0,
     updatedAt: Number(plan.updated_at) || 0,
   };
+
+  try {
+    const schedule = buildAmortizationSchedule({ principal, annualRatePercent, periods });
+    const progress = computeRepaymentProgress({ startDate: plan.start_date, today, schedule });
+    return {
+      ...progress,
+      ...base,
+      principal: schedule.principal,
+      annualRatePercent: schedule.annualRatePercent,
+      periods: schedule.periods,
+      monthlyPayment: schedule.monthlyPayment,
+      totalPayment: schedule.totalPayment,
+      totalInterest: schedule.totalInterest,
+      scheduleValid: true,
+      scheduleError: null,
+    };
+  } catch (error) {
+    // A pre-validation stored row must not break the whole list response. Keep the plan
+    // editable and visible, but do not fabricate payment/progress values for an invalid schedule.
+    return {
+      elapsedPeriods: 0,
+      remainingPeriods: Math.max(0, periods),
+      elapsedPrincipal: 0,
+      remainingBalance: Math.max(0, principal),
+      elapsedInterest: 0,
+      remainingInterest: 0,
+      nextDueDate: plan.start_date || null,
+      nextPaymentAmount: 0,
+      finalDueDate: periods > 0 ? addMonthsClamped(plan.start_date, periods - 1) : plan.start_date,
+      scheduleComplete: false,
+      progressPercent: 0,
+      ...base,
+      monthlyPayment: 0,
+      totalPayment: 0,
+      totalInterest: 0,
+      scheduleValid: false,
+      scheduleError: error instanceof Error ? error.message : 'Invalid amortization schedule',
+    };
+  }
 }
 
 export function buildRepaymentPlanDetail(plan: RepaymentPlanRow, today: string): RepaymentPlanDetail {

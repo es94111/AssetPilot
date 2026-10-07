@@ -144,6 +144,10 @@ if (!DB_URL) {
       'INSERT INTO accounts (id, user_id, name, category, account_type, currency, initial_balance, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?)',
       [accountId, userId, '儲蓄專戶', 'bank', '銀行', 'TWD', 250_000, '2026-01-01', now],
     );
+    getDB().run(
+      'INSERT INTO transactions (id, user_id, type, amount, currency, original_amount, twd_amount, date, account_id, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)',
+      [uid(), userId, 'income', 50_000, 'TWD', 50_000, 50_000, '2099-01-01', accountId, now, now],
+    );
 
     const created = await goalsRoute.POST(authedRequest(userId, 'POST', 'http://localhost/api/goals', {
       name: '裝潢基金', targetAmount: 500_000, targetDate: '2027-12-31', accountId,
@@ -151,7 +155,7 @@ if (!DB_URL) {
     assert.equal(created.status, 201);
     const createdBody = await created.json();
     goalIds.push(createdBody.id);
-    assert.equal(createdBody.contributedAmount, 250_000, '已存應等於帳戶餘額');
+    assert.equal(createdBody.contributedAmount, 250_000, '已存應等於截至今日的帳戶餘額（未來收入不得提前計入）');
     assert.equal(createdBody.remainingAmount, 250_000);
     assert.equal(createdBody.accountId, accountId);
 
@@ -160,7 +164,25 @@ if (!DB_URL) {
     const listBody = await list.json() as Array<{ id: string }>;
     assert.ok(listBody.some(goal => goal.id === createdBody.id), '清單應包含剛建立的目標');
 
-    getDB().run('DELETE FROM accounts WHERE id = ?', [accountId]);
+    const liabilityId = uid();
+    getDB().run(
+      'INSERT INTO accounts (id, user_id, name, category, account_type, currency, initial_balance, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?)',
+      [liabilityId, userId, '信用卡', 'credit_card', '信用卡', 'TWD', 0, '2026-01-01', now],
+    );
+    getDB().run(
+      'INSERT INTO transactions (id, user_id, type, amount, currency, original_amount, twd_amount, date, account_id, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)',
+      [uid(), userId, 'expense', 5_000, 'TWD', 5_000, 5_000, createdBody.startDate, liabilityId, now, now],
+    );
+    const liabilityGoal = await goalsRoute.POST(authedRequest(userId, 'POST', 'http://localhost/api/goals', {
+      name: '負債帳戶目標', targetAmount: 10_000, targetDate: '2027-12-31', accountId: liabilityId,
+    }));
+    const liabilityBody = await liabilityGoal.json();
+    goalIds.push(liabilityBody.id);
+    assert.equal(liabilityBody.contributedAmount, 0, '負數帳戶餘額不得成為負儲蓄進度');
+    assert.equal(liabilityBody.progressPercent, 0);
+
+    getDB().run('DELETE FROM transactions WHERE account_id IN (?,?)', [accountId, liabilityId]);
+    getDB().run('DELETE FROM accounts WHERE id IN (?,?)', [accountId, liabilityId]);
   });
 
   test('GET /api/goals：綁定分類的目標以建立日起該分類支出累計為已存', async () => {
@@ -189,11 +211,16 @@ if (!DB_URL) {
       'INSERT INTO transactions (id, user_id, type, amount, currency, original_amount, twd_amount, date, category_id, exclude_from_stats, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',
       [uid(), userId, 'expense', 99_999, 'TWD', 99_999, 99_999, today, categoryId, 1, now, now],
     );
+    // 尚未到期的預約交易不應提前算入目標進度。
+    getDB().run(
+      'INSERT INTO transactions (id, user_id, type, amount, currency, original_amount, twd_amount, date, category_id, exclude_from_stats, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',
+      [uid(), userId, 'expense', 88_000, 'TWD', 88_000, 88_000, '2099-01-01', categoryId, 0, now, now],
+    );
 
     const detail = await goalItemRoute.GET(authedRequest(userId, 'GET', `http://localhost/api/goals/${body.id}`), ctx(body.id));
     assert.equal(detail.status, 200);
     const detailBody = await detail.json();
-    assert.equal(detailBody.contributedAmount, 12_000, '已存應只計入未排除統計的分類支出');
+    assert.equal(detailBody.contributedAmount, 12_000, '已存應只計入今天以前且未排除統計的分類支出');
     assert.equal(detailBody.remainingAmount, 48_000);
 
     getDB().run('DELETE FROM transactions WHERE user_id = ? AND category_id = ?', [userId, categoryId]);
@@ -270,17 +297,34 @@ if (!DB_URL) {
     assert.ok(Math.abs(principalSum - 240_000) <= 0.01, `本金加總 ${principalSum} 應等於 240000`);
   });
 
-  test('GET /api/repayment-plans：清單回摘要（不含完整攤還表）', async () => {
+  test('GET /api/repayment-plans：無效舊計畫不會阻斷整份清單', async () => {
+    const legacyId = uid();
+    getDB().run(
+      'INSERT INTO repayment_plans (id, user_id, name, principal, annual_rate, periods, start_date, account_id, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?)',
+      [legacyId, userId, '舊版不可攤還計畫', 1_000_000, 100, 600, '2026-01-01', '', now, now],
+    );
+
     const list = await plansRoute.GET(authedRequest(userId, 'GET', 'http://localhost/api/repayment-plans'));
     assert.equal(list.status, 200);
-    const body = await list.json() as Array<Record<string, unknown>>;
+    const body = await list.json() as Array<Record<string, unknown> & { id: string }>;
     assert.ok(body.length >= 1);
-    for (const plan of body) {
+    for (const plan of body.filter(item => item.id !== legacyId)) {
       assert.equal(plan.schedule, undefined, '清單端點不應回傳完整攤還表');
       assert.equal(typeof plan.monthlyPayment, 'number');
-      assert.equal(typeof plan.paidPeriods, 'number');
+      assert.equal(typeof plan.elapsedPeriods, 'number');
       assert.equal(typeof plan.remainingBalance, 'number');
+      assert.equal(plan.scheduleValid, true);
     }
+    const invalidLegacy = body.find(plan => plan.id === legacyId);
+    assert.ok(invalidLegacy, '舊計畫仍應留在清單中供編輯或刪除');
+    assert.equal(invalidLegacy.scheduleValid, false);
+
+    const detail = await planItemRoute.GET(
+      authedRequest(userId, 'GET', `http://localhost/api/repayment-plans/${legacyId}`),
+      ctx(legacyId),
+    );
+    assert.equal(detail.status, 409, '無效舊計畫應回明確衝突，而非 500');
+    assert.equal((await detail.json()).code, 'InvalidRepaymentSchedule');
   });
 
   test('POST /api/repayment-plans：驗證失敗回 400', async () => {

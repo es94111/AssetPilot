@@ -18,6 +18,7 @@ import {
   isValidGoalDate,
   parseRepaymentPlanRequest,
   parseSavingsGoalRequest,
+  todayInTimezone,
   MAX_REPAYMENT_PERIODS,
 } from '../../lib/savingsGoal.ts';
 
@@ -33,6 +34,12 @@ test('isValidGoalDate 接受真實日期並拒絕不存在或格式錯誤的日�
   assert.equal(isValidGoalDate(''), false);
   assert.equal(isValidGoalDate(null), false);
   assert.equal(isValidGoalDate(20260101), false);
+});
+
+test('todayInTimezone returns the user-local calendar day at UTC date boundaries', () => {
+  const instant = new Date('2026-10-07T16:30:00.000Z');
+  assert.equal(todayInTimezone('Asia/Taipei', instant), '2026-10-08');
+  assert.equal(todayInTimezone('America/Los_Angeles', instant), '2026-10-07');
 });
 
 test('daysBetween 以 UTC 日界計算，不受執行環境時區影響', () => {
@@ -93,6 +100,19 @@ test('computeGoalProgress 在達成時將剩餘與落後歸零並標記 achieved
   assert.equal(progress.shortfallAmount, 0);
   assert.equal(progress.progressPercent, 100, '超過目標時百分比應夾在 100');
   assert.equal(progress.projectedCompletionDate, '2026-03-01');
+});
+
+test('computeGoalProgress clamps negative linked balances to zero', () => {
+  const progress = computeGoalProgress({
+    targetAmount: 100,
+    targetDate: '2026-12-31',
+    startDate: '2026-01-01',
+    contributedAmount: -50,
+    today: '2026-01-01',
+  });
+  assert.equal(progress.contributedAmount, 0);
+  assert.equal(progress.progressPercent, 0);
+  assert.equal(progress.remainingAmount, 100);
 });
 
 test('computeGoalProgress 以目前速度外推預估達成日', () => {
@@ -225,7 +245,6 @@ test('buildAmortizationSchedule 各期本金加總等於原始本金且末期後
     { principal: 100_000, annualRatePercent: 12, periods: 24 },
     { principal: 1_200, annualRatePercent: 0, periods: 12 },
     { principal: 999_999, annualRatePercent: 3.7777, periods: 37 },
-    { principal: 100, annualRatePercent: 100, periods: 600 },
   ];
   for (const input of cases) {
     const schedule = buildAmortizationSchedule(input);
@@ -250,6 +269,14 @@ test('buildAmortizationSchedule 每期應繳金額不為負且利息隨餘額遞
   assert.ok(schedule.payments[0].principal < schedule.payments[35].principal, '本金佔比應逐期提高');
 });
 
+test('buildAmortizationSchedule rejects a term whose rounded installments clear early', () => {
+  assert.throws(
+    () => buildAmortizationSchedule({ principal: 10, annualRatePercent: 0, periods: 600 }),
+    /指定期數前清償/,
+    '不得回傳餘額已清償後還包含零額分期的名義期程',
+  );
+});
+
 test('buildAmortizationSchedule 拒絕不合法輸入', () => {
   assert.throws(() => buildAmortizationSchedule({ principal: 0, annualRatePercent: 0, periods: 12 }), /principal/);
   assert.throws(() => buildAmortizationSchedule({ principal: -1, annualRatePercent: 0, periods: 12 }), /principal/);
@@ -260,6 +287,16 @@ test('buildAmortizationSchedule 拒絕不合法輸入', () => {
     () => buildAmortizationSchedule({ principal: 1000, annualRatePercent: 0, periods: MAX_REPAYMENT_PERIODS + 1 }),
     /periods/,
   );
+  assert.throws(
+    () => buildAmortizationSchedule({ principal: 1_000_000, annualRatePercent: 100, periods: 600 }),
+    /無法按期清償/,
+    '月付金被四捨五入後不足付息時應拒絕建立攤還表',
+  );
+  assert.throws(
+    () => buildAmortizationSchedule({ principal: 1_000_000, annualRatePercent: 99.9, periods: 60 }),
+    /最後一期金額/,
+    '四捨五入造成過大尾款時應拒絕呈現為平均月付計畫',
+  );
 });
 
 // ── 還款進度 ──
@@ -268,28 +305,28 @@ test('computeRepaymentProgress 依首次應繳日推算已到期期數與剩餘�
   const schedule = buildAmortizationSchedule({ principal: 120_000, annualRatePercent: 0, periods: 12 });
   // 首次應繳 2026-01-15；今日 2026-03-20 → 1/15、2/15、3/15 共 3 期到期。
   const progress = computeRepaymentProgress({ startDate: '2026-01-15', today: '2026-03-20', schedule });
-  assert.equal(progress.paidPeriods, 3);
+  assert.equal(progress.elapsedPeriods, 3);
   assert.equal(progress.remainingPeriods, 9);
-  assert.equal(progress.paidPrincipal, 30_000);
+  assert.equal(progress.elapsedPrincipal, 30_000);
   assert.equal(progress.remainingBalance, 90_000);
   assert.equal(progress.nextDueDate, '2026-04-15');
   assert.equal(progress.nextPaymentAmount, 10_000);
   assert.equal(progress.finalDueDate, '2026-12-15');
-  assert.equal(progress.completed, false);
+  assert.equal(progress.scheduleComplete, false);
   assert.equal(progress.progressPercent, 25);
 });
 
 test('computeRepaymentProgress 在首期到期前為零期，且全數到期時標記完成', () => {
   const schedule = buildAmortizationSchedule({ principal: 24_000, annualRatePercent: 0, periods: 12 });
   const before = computeRepaymentProgress({ startDate: '2026-01-15', today: '2026-01-14', schedule });
-  assert.equal(before.paidPeriods, 0);
+  assert.equal(before.elapsedPeriods, 0);
   assert.equal(before.remainingBalance, 24_000);
   assert.equal(before.nextDueDate, '2026-01-15');
   assert.equal(before.progressPercent, 0);
 
   const done = computeRepaymentProgress({ startDate: '2026-01-15', today: '2026-12-15', schedule });
-  assert.equal(done.paidPeriods, 12);
-  assert.equal(done.completed, true);
+  assert.equal(done.elapsedPeriods, 12);
+  assert.equal(done.scheduleComplete, true);
   assert.equal(done.remainingBalance, 0);
   assert.equal(done.nextDueDate, null);
   assert.equal(done.nextPaymentAmount, 0);
@@ -300,7 +337,7 @@ test('computeRepaymentProgress 月底應繳日以夾擠月份推算', () => {
   const schedule = buildAmortizationSchedule({ principal: 12_000, annualRatePercent: 0, periods: 12 });
   // 1/31 起算：2 月應繳日夾到 2/28。
   const progress = computeRepaymentProgress({ startDate: '2026-01-31', today: '2026-02-28', schedule });
-  assert.equal(progress.paidPeriods, 2);
+  assert.equal(progress.elapsedPeriods, 2);
   assert.equal(progress.nextDueDate, '2026-03-31');
   assert.equal(progress.finalDueDate, '2026-12-31');
 });
@@ -342,4 +379,17 @@ test('parseRepaymentPlanRequest 驗證本金、利率、期數與日期', () => 
   // 利率四捨五入至小數 4 位。
   const rounded = parseRepaymentPlanRequest({ name: 'a', principal: 100, annualRatePercent: 2.3456789, periods: 12, startDate: '2026-01-01' });
   assert.equal((rounded as { annualRatePercent: number }).annualRatePercent, 2.3457);
+
+  const nonAmortizing = parseRepaymentPlanRequest({
+    name: '不可清償計畫', principal: 1_000_000, annualRatePercent: 100, periods: 600, startDate: '2026-01-01',
+  });
+  assert.equal((nonAmortizing as { field: string }).field, 'periods', '無法攤還的輸入組合應在寫入前被拒絕');
+  const balloon = parseRepaymentPlanRequest({
+    name: '尾款過高計畫', principal: 1_000_000, annualRatePercent: 99.9, periods: 60, startDate: '2026-01-01',
+  });
+  assert.equal((balloon as { field: string }).field, 'periods', '尾款過高的輸入組合應在寫入前被拒絕');
+  const earlyPayoff = parseRepaymentPlanRequest({
+    name: '無法分期計畫', principal: 10, annualRatePercent: 0, periods: 600, startDate: '2026-01-01',
+  });
+  assert.equal((earlyPayoff as { field: string }).field, 'periods', '月付金精度導致提前清償的期程應被拒絕');
 });

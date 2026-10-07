@@ -40,6 +40,17 @@ export function isValidGoalDate(value: unknown): boolean {
   return day <= daysInMonth;
 }
 
+export function todayInTimezone(timezone: string, now: Date | number = Date.now()): string {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: timezone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(now instanceof Date ? now : new Date(now));
+  const values = Object.fromEntries(parts.map(part => [part.type, part.value]));
+  return `${values.year}-${values.month}-${values.day}`;
+}
+
 /** to − from 的天數差（整數；to 較早時為負）。 */
 export function daysBetween(from: string, to: string): number {
   const start = toDayMs(from);
@@ -139,10 +150,20 @@ export function parseRepaymentPlanRequest(body: unknown): ValidationFailure | Re
     return { error: '首次應繳日格式無效（需為 YYYY-MM-DD）', field: 'startDate' };
   }
 
+  const normalizedRate = new Decimal(annualRatePercent).toDecimalPlaces(4, Decimal.ROUND_HALF_UP).toNumber();
+  try {
+    buildAmortizationSchedule({ principal, annualRatePercent: normalizedRate, periods });
+  } catch (_) {
+    return {
+      error: '本金、年利率與期數的組合無法在每期四捨五入後清償，請調整利率或期數',
+      field: 'periods',
+    };
+  }
+
   return {
     name,
     principal,
-    annualRatePercent: new Decimal(annualRatePercent).toDecimalPlaces(4, Decimal.ROUND_HALF_UP).toNumber(),
+    annualRatePercent: normalizedRate,
     periods,
     startDate: String(input.startDate),
     accountId: input.accountId ? String(input.accountId) : null,
@@ -191,7 +212,7 @@ export interface SavingsGoalProgress {
 
 export function computeGoalProgress(input: SavingsGoalProgressInput): SavingsGoalProgress {
   const target = new Decimal(input.targetAmount || 0);
-  const contributed = new Decimal(input.contributedAmount || 0);
+  const contributed = Decimal.max(0, new Decimal(input.contributedAmount || 0));
   const totalDays = Math.max(1, daysBetween(input.startDate, input.targetDate));
   const elapsedDays = Math.min(Math.max(daysBetween(input.startDate, input.today), 0), totalDays);
   const daysRemaining = Math.max(0, daysBetween(input.today, input.targetDate));
@@ -299,18 +320,28 @@ export function buildAmortizationSchedule(input: AmortizationInput): Amortizatio
       .toDecimalPlaces(2, Decimal.ROUND_HALF_UP);
   }
 
+  const firstInterest = principal.times(monthlyRate).toDecimalPlaces(2, Decimal.ROUND_HALF_UP);
+  if (monthlyPayment.lte(firstInterest)) {
+    throw new Error('buildAmortizationSchedule: 月付金不足以支付首期利息，無法按期清償');
+  }
+
   const payments: AmortizationPayment[] = [];
   let balance = principal;
   let totalPayment = new Decimal(0);
   let totalInterest = new Decimal(0);
 
   for (let period = 1; period <= periods; period += 1) {
+    if (balance.lte(0)) {
+      payments.push({ period, payment: 0, principal: 0, interest: 0, remainingBalance: 0 });
+      continue;
+    }
+
     const interest = balance.times(monthlyRate).toDecimalPlaces(2, Decimal.ROUND_HALF_UP);
-    // 最後一期清償全部剩餘本金；其餘期數以月付金扣除利息為本金，並夾在餘額內防禦性收斂。
-    const principalPart = period === periods
+    const scheduledPrincipal = monthlyPayment.minus(interest);
+    const principalPart = period === periods || scheduledPrincipal.gte(balance)
       ? balance
-      : Decimal.min(monthlyPayment.minus(interest), balance);
-    const payment = period === periods ? principalPart.plus(interest) : monthlyPayment;
+      : scheduledPrincipal;
+    const payment = principalPart.plus(interest);
     balance = balance.minus(principalPart);
     totalPayment = totalPayment.plus(payment);
     totalInterest = totalInterest.plus(interest);
@@ -321,6 +352,16 @@ export function buildAmortizationSchedule(input: AmortizationInput): Amortizatio
       interest: money(interest),
       remainingBalance: money(balance),
     });
+  }
+
+  const lastInstallmentIndex = payments.findLastIndex(row => row.payment > 0);
+  if (lastInstallmentIndex !== periods - 1) {
+    throw new Error('buildAmortizationSchedule: 四捨五入會在指定期數前清償，無法維持固定月付期程');
+  }
+  const finalPayment = new Decimal(payments[lastInstallmentIndex].payment);
+  const roundingTolerance = new Decimal(periods).times('0.01');
+  if (finalPayment.minus(monthlyPayment).gt(roundingTolerance)) {
+    throw new Error('buildAmortizationSchedule: 最後一期金額超出合理的四捨五入差額');
   }
 
   return {
@@ -342,21 +383,21 @@ export interface RepaymentProgressInput {
 }
 
 export interface RepaymentProgress {
-  /** 已到期期數（依首次應繳日推算，上限為總期數） */
-  paidPeriods: number;
+  /** 已到期的期數（依首次應繳日推算；不代表使用者已實際付款） */
+  elapsedPeriods: number;
   remainingPeriods: number;
-  /** 已到期期數對應的本金累計 */
-  paidPrincipal: number;
-  /** 目前剩餘本金 */
+  /** 已到期期數對應的預定本金 */
+  elapsedPrincipal: number;
+  /** 預定剩餘本金（依攤還表推算，非銀行即時餘額） */
   remainingBalance: number;
-  /** 已到期期數對應的利息累計 */
-  paidInterest: number;
+  /** 已到期期數對應的預定利息 */
+  elapsedInterest: number;
   remainingInterest: number;
   /** 下期應繳日（已到期滿時為 null） */
   nextDueDate: string | null;
   nextPaymentAmount: number;
   finalDueDate: string;
-  completed: boolean;
+  scheduleComplete: boolean;
   progressPercent: number;
 }
 
@@ -365,35 +406,35 @@ export function computeRepaymentProgress(input: RepaymentProgressInput): Repayme
   const { schedule } = input;
   const periods = schedule.periods;
 
-  let paidPeriods = 0;
+  let elapsedPeriods = 0;
   for (let period = 1; period <= periods; period += 1) {
     const dueDate = addMonthsClamped(input.startDate, period - 1);
-    if (dueDate <= input.today) paidPeriods = period;
+    if (dueDate <= input.today) elapsedPeriods = period;
     else break;
   }
 
-  const completed = paidPeriods >= periods;
-  const paidPrincipal = schedule.payments
-    .slice(0, paidPeriods)
+  const completed = elapsedPeriods >= periods;
+  const elapsedPrincipal = schedule.payments
+    .slice(0, elapsedPeriods)
     .reduce((sum, row) => sum.plus(row.principal), new Decimal(0));
-  const paidInterest = schedule.payments
-    .slice(0, paidPeriods)
+  const elapsedInterest = schedule.payments
+    .slice(0, elapsedPeriods)
     .reduce((sum, row) => sum.plus(row.interest), new Decimal(0));
-  const remainingBalance = new Decimal(schedule.principal).minus(paidPrincipal);
-  const remainingInterest = new Decimal(schedule.totalInterest).minus(paidInterest);
+  const remainingBalance = new Decimal(schedule.principal).minus(elapsedPrincipal);
+  const remainingInterest = new Decimal(schedule.totalInterest).minus(elapsedInterest);
 
   return {
-    paidPeriods,
-    remainingPeriods: periods - paidPeriods,
-    paidPrincipal: money(paidPrincipal),
+    elapsedPeriods,
+    remainingPeriods: periods - elapsedPeriods,
+    elapsedPrincipal: money(elapsedPrincipal),
     remainingBalance: money(Decimal.max(0, remainingBalance)),
-    paidInterest: money(paidInterest),
+    elapsedInterest: money(elapsedInterest),
     remainingInterest: money(Decimal.max(0, remainingInterest)),
-    nextDueDate: completed ? null : addMonthsClamped(input.startDate, paidPeriods),
-    nextPaymentAmount: completed ? 0 : schedule.payments[paidPeriods].payment,
+    nextDueDate: completed ? null : addMonthsClamped(input.startDate, elapsedPeriods),
+    nextPaymentAmount: completed ? 0 : schedule.payments[elapsedPeriods].payment,
     finalDueDate: addMonthsClamped(input.startDate, periods - 1),
-    completed,
-    progressPercent: periods > 0 ? percent(new Decimal(paidPeriods).div(periods).times(100)) : 0,
+    scheduleComplete: completed,
+    progressPercent: periods > 0 ? percent(new Decimal(elapsedPeriods).div(periods).times(100)) : 0,
   };
 }
 

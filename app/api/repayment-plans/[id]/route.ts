@@ -16,7 +16,14 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
   const plan = findRepaymentPlanRow(auth.userId, id);
   if (!plan) return NextResponse.json({ error: '還款計畫不存在或無權限', code: 'NotFound' }, { status: 404 });
 
-  return NextResponse.json(buildRepaymentPlanDetail(plan, todayInUserTz(auth.userTimezone)));
+  try {
+    return NextResponse.json(buildRepaymentPlanDetail(plan, todayInUserTz(auth.userTimezone)));
+  } catch (_) {
+    return NextResponse.json({
+      error: '此計畫目前無法產生有效攤還表，請編輯計畫調整本金、年利率或期數',
+      code: 'InvalidRepaymentSchedule',
+    }, { status: 409 });
+  }
 }
 
 async function handlePUT(request: NextRequest, { params }: RouteContext) {

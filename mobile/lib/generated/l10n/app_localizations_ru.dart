@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -5433,7 +5434,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get ledgerEmptySharedNotice =>
-      'Общие счета создаются пустыми. Личные данные не копируются автоматически.';
+      'Общие счета не копируют личные данные автоматически. Инвестиционные записи, созданные при выборе этого счета, видны его участникам.';
 
   @override
   String get ledgerMembers => 'Участники';

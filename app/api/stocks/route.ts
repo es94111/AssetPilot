@@ -215,7 +215,7 @@ async function handlePOST(request) {
       finalName,
       type,
       currency,
-      new Date().toISOString(),
+      Date.now(),
     ],
   );
   saveDB();

@@ -23,7 +23,7 @@ async function handlePOST(request) {
 
   const db = getDB();
   let updated = 0;
-  const nowIso = new Date().toISOString();
+  const now = Date.now();
 
   for (const u of updates) {
     const stockId = u.stockId || u.id;
@@ -50,12 +50,12 @@ async function handlePOST(request) {
     if (typeof u.delisted === "boolean") {
       db.run(
         "UPDATE stocks SET current_price = ?, delisted = ?, updated_at = ? WHERE id = ? AND user_id = ?",
-        [currentPrice, u.delisted ? 1 : 0, nowIso, stockId, auth.userId],
+        [currentPrice, u.delisted ? 1 : 0, now, stockId, auth.userId],
       );
     } else {
       db.run(
         "UPDATE stocks SET current_price = ?, updated_at = ? WHERE id = ? AND user_id = ?",
-        [currentPrice, nowIso, stockId, auth.userId],
+        [currentPrice, now, stockId, auth.userId],
       );
     }
     updated += 1;

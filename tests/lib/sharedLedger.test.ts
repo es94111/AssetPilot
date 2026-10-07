@@ -121,7 +121,7 @@ test('shared ledgers: real authenticated routes, invitations and ownership bound
     }
     db.run('INSERT INTO transactions (id,user_id,type,amount,date,note) VALUES (?,?,?,?,?,?)', [privateTx, owner, 'expense', 77, '2026-10-01', 'private']);
     db.run('INSERT INTO stocks (id,user_id,symbol,market,name,current_price,stock_type,currency,updated_at) VALUES (?,?,?,?,?,?,?,?,?)',
-      [privateStockId, owner, 'PRIVATE', 'US', 'Private holding', 110, 'stock', 'USD', new Date().toISOString()]);
+      [privateStockId, owner, 'PRIVATE', 'US', 'Private holding', 110, 'stock', 'USD', Date.now()]);
     db.run('INSERT INTO stock_transactions (id,user_id,stock_id,type,shares,price,fee,tax,date,note,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)',
       [privateStockTxId, owner, privateStockId, 'buy', 5, 100, 0, 0, '2026-10-01', '', Date.now()]);
 
@@ -330,8 +330,11 @@ test('shared ledgers: real authenticated routes, invitations and ownership bound
       assert.equal((await tx.GET(request(viewer, `/api/transactions?ledgerId=${ledgerId}`, 'GET', undefined, `personal:${viewer}`))).status, 400);
     });
 
-    await t.test('private settings and investment identity stay personal; viewers do not generate shared recurring writes', async () => {
-      for (const path of ['/api/stocks', '/api/user/settings/default-currency', '/api/user/api-tokens']) {
+    await t.test('personal preferences stay private; viewers do not generate shared recurring writes', async () => {
+      const sharedInvestmentAuth = await requireAuth(request(viewer, '/api/stocks'));
+      assert.ok(!(sharedInvestmentAuth instanceof Response));
+      assert.equal(sharedInvestmentAuth.userId, dataOwner);
+      for (const path of ['/api/user/settings/default-currency', '/api/user/api-tokens']) {
         const auth = await requireAuth(request(viewer, path));
         assert.ok(!(auth instanceof Response));
         assert.equal(auth.userId, viewer);

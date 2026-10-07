@@ -9418,7 +9418,7 @@ abstract class AppLocalizations {
   /// Web path: ledger.emptySharedNotice
   ///
   /// In zh_Hant_TW, this message translates to:
-  /// **'共享帳本會以空白資料建立，不會自動複製你的個人記帳資料。'**
+  /// **'共享帳本不會自動複製個人資料。選取此帳本時新增的投資資料會對其成員可見。'**
   String get ledgerEmptySharedNotice;
 
   /// Web path: ledger.members

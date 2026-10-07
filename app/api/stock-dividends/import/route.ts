@@ -199,7 +199,7 @@ async function handlePOST(request) {
             0,
             inferredType,
             currency,
-            new Date().toISOString(),
+            Date.now(),
           ],
         );
         stock = queryOne("SELECT * FROM stocks WHERE id = ?", [sid]);

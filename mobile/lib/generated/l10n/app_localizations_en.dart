@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -5371,7 +5372,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get ledgerEmptySharedNotice =>
-      'Shared ledgers start empty. Personal data is never copied automatically.';
+      'Shared ledgers never copy personal data automatically. Investment records created while this ledger is selected are visible to its members.';
 
   @override
   String get ledgerMembers => 'Members';

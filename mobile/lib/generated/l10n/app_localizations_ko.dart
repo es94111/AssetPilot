@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -5200,7 +5201,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get ledgerEmptySharedNotice =>
-      '공유 장부는 빈 상태로 생성되며 개인 데이터가 자동 복사되지 않습니다.';
+      '공유 장부는 개인 데이터를 자동으로 복사하지 않습니다. 이 장부를 선택한 상태에서 추가한 투자 기록은 구성원에게 표시됩니다.';
 
   @override
   String get ledgerMembers => '구성원';

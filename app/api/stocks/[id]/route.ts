@@ -43,7 +43,7 @@ async function handlePUT(request, { params }) {
       name || s.name,
       currentPrice == null ? s.current_price : currentPrice,
       type,
-      new Date().toISOString(),
+      Date.now(),
       id,
       auth.userId,
     ],

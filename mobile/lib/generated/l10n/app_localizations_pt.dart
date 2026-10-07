@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -5436,7 +5437,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get ledgerEmptySharedNotice =>
-      'As contas compartilhadas começam vazias. Dados pessoais não são copiados automaticamente.';
+      'Contas compartilhadas nunca copiam dados pessoais automaticamente. Os investimentos criados com esta conta selecionada ficam visíveis para seus membros.';
 
   @override
   String get ledgerMembers => 'Membros';
@@ -10924,7 +10925,7 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get ledgerEmptySharedNotice =>
-      'As contas compartilhadas começam vazias. Dados pessoais não são copiados automaticamente.';
+      'Contas compartilhadas nunca copiam dados pessoais automaticamente. Os investimentos criados com esta conta selecionada ficam visíveis para seus membros.';
 
   @override
   String get ledgerMembers => 'Membros';

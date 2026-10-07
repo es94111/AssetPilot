@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -5347,7 +5348,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get ledgerEmptySharedNotice =>
-      'تُنشأ الدفاتر المشتركة فارغة. لا تُنسخ البيانات الشخصية تلقائياً.';
+      'لا تنسخ الحسابات المشتركة البيانات الشخصية تلقائياً. وتكون سجلات الاستثمار التي تُضاف أثناء اختيار هذا الحساب مرئية لأعضائه.';
 
   @override
   String get ledgerMembers => 'الأعضاء';

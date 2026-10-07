@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -5123,7 +5124,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get ledgerAcceptInvite => '接受邀請';
 
   @override
-  String get ledgerEmptySharedNotice => '共享帳本會以空白資料建立，不會自動複製你的個人記帳資料。';
+  String get ledgerEmptySharedNotice => '共享帳本不會自動複製個人資料。選取此帳本時新增的投資資料會對其成員可見。';
 
   @override
   String get ledgerMembers => '成員';
@@ -10304,7 +10305,7 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
   String get ledgerAcceptInvite => '接受邀请';
 
   @override
-  String get ledgerEmptySharedNotice => '共享账本以空白状态创建，不会自动复制个人记账数据。';
+  String get ledgerEmptySharedNotice => '共享账本不会自动复制个人数据。选择此账本时新增的投资数据将对其成员可见。';
 
   @override
   String get ledgerMembers => '成员';
@@ -15488,7 +15489,7 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
   String get ledgerAcceptInvite => '接受邀請';
 
   @override
-  String get ledgerEmptySharedNotice => '共享帳本會以空白資料建立，不會自動複製你的個人記帳資料。';
+  String get ledgerEmptySharedNotice => '共享帳本不會自動複製個人資料。選取此帳本時新增的投資資料會對其成員可見。';
 
   @override
   String get ledgerMembers => '成員';

@@ -84,6 +84,7 @@ test('shared ledgers: real authenticated routes, invitations and ownership bound
   const stockDividendItem = await import('../../app/api/stock-dividends/[id]/route.ts');
   const stockRecurring = await import('../../app/api/stock-recurring/route.ts');
   const stockRecurringItem = await import('../../app/api/stock-recurring/[id]/toggle/route.ts');
+  const stockRecurringProcess = await import('../../app/api/stock-recurring/process/route.ts');
   const stockSettings = await import('../../app/api/stock-settings/route.ts');
   const stockRealized = await import('../../app/api/stock-realized/route.ts');
   const stockRealizedPl = await import('../../app/api/stock-realized-pl/route.ts');
@@ -322,6 +323,7 @@ test('shared ledgers: real authenticated routes, invitations and ownership bound
       const originalMemberTimezone = queryOne('SELECT timezone FROM users WHERE id = ?', [editor])?.timezone;
       const originalFetch = globalThis.fetch;
       let marketDataRequests = 0;
+      let stockDayGate: { started: () => void; wait: Promise<void> } | null = null;
       globalThis.fetch = (async (input: RequestInfo | URL) => {
         const url = new URL(String(input));
         if (url.pathname.includes('holidaySchedule')) {
@@ -330,6 +332,12 @@ test('shared ledgers: real authenticated routes, invitations and ownership bound
         }
         if (url.pathname.endsWith('/exchangeReport/STOCK_DAY')) {
           marketDataRequests++;
+          const gate = stockDayGate;
+          if (gate) {
+            stockDayGate = null;
+            gate.started();
+            await gate.wait;
+          }
           const date = String(url.searchParams.get('date') || '');
           const rocDate = `${Number(date.slice(0, 4)) - 1911}/${date.slice(4, 6)}/${date.slice(6, 8)}`;
           return Response.json({ stat: 'OK', data: [[rocDate, '', '0', '10', '10', '10', '10']] });
@@ -400,6 +408,55 @@ test('shared ledgers: real authenticated routes, invitations and ownership bound
           "SELECT COUNT(*) AS count FROM ledger_audit_log WHERE ledger_id = ? AND action = 'stock_recurring.generated'",
           [ledgerId],
         )?.count), 1, 'a ledger-scoped run should emit one outcome audit');
+
+        const manualStock = await stocks.POST(request(editor, '/api/stocks', 'POST', {
+          market: 'TW', symbol: '0051', name: 'Manual recurring ETF',
+        }));
+        assert.equal(manualStock.status, 201, await manualStock.clone().text());
+        const manualPlan = await stockRecurring.POST(request(editor, '/api/stock-recurring', 'POST', {
+          stockId: String((await manualStock.json()).id), amount: 100, frequency: 'yearly', startDate: scheduledDate,
+          accountId: sharedAccountId, note: 'Manual process recurring fixture',
+        }));
+        assert.equal(manualPlan.status, 200, await manualPlan.clone().text());
+        const manualPlanId = String((await manualPlan.json()).id);
+        let signalPriceLookup!: () => void;
+        let releasePriceLookup!: () => void;
+        const priceLookupStarted = new Promise<void>((resolve) => { signalPriceLookup = resolve; });
+        const priceLookupHold = new Promise<void>((resolve) => { releasePriceLookup = resolve; });
+        stockDayGate = { started: signalPriceLookup, wait: priceLookupHold };
+        const priceRequestsBeforeManualRun = marketDataRequests;
+        const automaticRead = stocks.GET(request(editor, '/api/stocks'));
+        await priceLookupStarted;
+
+        const lateStock = await stocks.POST(request(editor, '/api/stocks', 'POST', {
+          market: 'TW', symbol: '0052', name: 'Late recurring ETF',
+        }));
+        assert.equal(lateStock.status, 201, await lateStock.clone().text());
+        const latePlan = await stockRecurring.POST(request(editor, '/api/stock-recurring', 'POST', {
+          stockId: String((await lateStock.json()).id), amount: 100, frequency: 'yearly', startDate: scheduledDate,
+          accountId: sharedAccountId, note: 'Added during automatic recurring run',
+        }));
+        assert.equal(latePlan.status, 200, await latePlan.clone().text());
+        const latePlanId = String((await latePlan.json()).id);
+        const manualRunPromise = stockRecurringProcess.POST(request(editor, '/api/stock-recurring/process', 'POST'));
+        releasePriceLookup();
+        const [autoResponse, manualRun] = await Promise.all([automaticRead, manualRunPromise]);
+        assert.equal(autoResponse.status, 200);
+        assert.equal(manualRun.status, 200, await manualRun.clone().text());
+        assert.equal((await manualRun.json()).generated, 2,
+          'the explicit process route should join the active pass and drain newly due plans');
+        assert.equal(marketDataRequests, priceRequestsBeforeManualRun + 2,
+          'the joined passes should fetch each distinct stock price once');
+        for (const planId of [manualPlanId, latePlanId]) {
+          assert.equal(Number(queryOne(
+            'SELECT COUNT(*) AS count FROM stock_transactions WHERE user_id = ? AND recurring_plan_id = ?',
+            [dataOwner, planId],
+          )?.count), 1, 'each due plan should create exactly one trade');
+        }
+        assert.equal(Number(queryOne(
+          "SELECT COUNT(*) AS count FROM ledger_audit_log WHERE ledger_id = ? AND action = 'stock_recurring.generated'",
+          [ledgerId],
+        )?.count), 3, 'automatic and manual passes should each audit one generated result');
 
         const secondCreated = await ledgers.POST(request(owner, '/api/ledgers', 'POST', { name: 'Second investment ledger' }, ''));
         assert.equal(secondCreated.status, 201, await secondCreated.clone().text());

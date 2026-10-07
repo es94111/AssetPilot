@@ -62,6 +62,26 @@ export function getNextStockRecurringDate(
   return null;
 }
 
+export function getDueStockRecurringPlanIds(
+  userId: string,
+  userTimezone = "Asia/Taipei",
+): string[] {
+  const today = todayInUserTz(userTimezone || "Asia/Taipei");
+  return queryAll(
+    "SELECT id, frequency, freq, start_date, next_date, last_generated FROM stock_recurring WHERE user_id = ? AND is_active = 1",
+    [userId],
+  )
+    .filter((plan) => {
+      const frequency = String(plan.frequency || plan.freq || "");
+      const startDate = String(plan.start_date || plan.next_date || "");
+      const scheduledDate = plan.last_generated
+        ? getNextStockRecurringDate(String(plan.last_generated), frequency)
+        : startDate;
+      return Boolean(scheduledDate && scheduledDate <= today);
+    })
+    .map((plan) => String(plan.id));
+}
+
 const twseHolidayCache = { set: null, timestamp: 0, lastFailedAt: 0 };
 const TWSE_HOLIDAY_CACHE_TTL = 24 * 60 * 60 * 1000;
 const TWSE_HOLIDAY_FAILURE_BACKOFF = 5 * 60 * 1000;

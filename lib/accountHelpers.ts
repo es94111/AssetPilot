@@ -1,15 +1,9 @@
 // lib/accountHelpers.ts — 帳戶、貨幣、匯率共用邏輯
 import Decimal from "decimal.js";
 import { getDB, queryOne, queryAll, saveDB } from "./db";
+import { DEFAULT_EXCHANGE_RATES } from "./exchangeRateDefaults";
 
-export const DEFAULT_EXCHANGE_RATES: Record<string, number> = {
-  TWD: 1,
-  USD: 31.5,
-  JPY: 0.21,
-  EUR: 34.2,
-  CNY: 4.35,
-  HKD: 4.03,
-};
+export { DEFAULT_EXCHANGE_RATES };
 
 export function normalizeCurrency(code: string | null | undefined): string {
   const c = String(code || "TWD")

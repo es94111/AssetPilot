@@ -5567,4 +5567,33 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get featuresReconciliationTemplatesCreditCard => '신용카드 거래내역(양수 = 결제)';
+
+  @override
+  String get featuresReportsBaseCurrencyLabel => '기준 통화';
+
+  @override
+  String featuresReportsRateSource(Object source, Object time) {
+    return '환율 출처: $source ($time)';
+  }
+
+  @override
+  String get featuresReportsRateSourceIdentity => '기준 통화가 TWD이므로 환산이 필요하지 않습니다';
+
+  @override
+  String get featuresReportsRateSourceManual => '수동 입력 환율';
+
+  @override
+  String get featuresReportsRateSourceApi => '글로벌 실시간 환율 API(기존 캐시 재사용)';
+
+  @override
+  String get featuresReportsRateSourceDefault => '시스템 기본 환율(아직 설정되지 않은 통화)';
+
+  @override
+  String get featuresReportsExportCsv => 'CSV 내보내기';
+
+  @override
+  String get featuresReportsExporting => '내보내는 중...';
+
+  @override
+  String get featuresReportsRateTimestampUnavailable => '타임스탬프 없음(시스템 기본 환율)';
 }

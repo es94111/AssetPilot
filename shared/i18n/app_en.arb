@@ -8841,5 +8841,54 @@
   "@featuresReconciliationTemplatesCreditCard": {
     "description": "Web path: features.reconciliation.templates.creditCard",
     "x-webPath": "features.reconciliation.templates.creditCard"
+  },
+  "featuresReportsBaseCurrencyLabel": "Base currency",
+  "@featuresReportsBaseCurrencyLabel": {
+    "description": "Web path: features.reports.baseCurrencyLabel",
+    "x-webPath": "features.reports.baseCurrencyLabel"
+  },
+  "featuresReportsRateSource": "Exchange rate source: {source} ({time})",
+  "@featuresReportsRateSource": {
+    "description": "Web path: features.reports.rateSource",
+    "x-webPath": "features.reports.rateSource",
+    "placeholders": {
+      "source": {},
+      "time": {}
+    }
+  },
+  "featuresReportsRateSourceIdentity": "Base currency is TWD; no conversion needed",
+  "@featuresReportsRateSourceIdentity": {
+    "description": "Web path: features.reports.rateSourceIdentity",
+    "x-webPath": "features.reports.rateSourceIdentity"
+  },
+  "featuresReportsRateSourceManual": "Manually entered rate",
+  "@featuresReportsRateSourceManual": {
+    "description": "Web path: features.reports.rateSourceManual",
+    "x-webPath": "features.reports.rateSourceManual"
+  },
+  "featuresReportsRateSourceApi": "Global live exchange rate API (existing cache reused)",
+  "@featuresReportsRateSourceApi": {
+    "description": "Web path: features.reports.rateSourceApi",
+    "x-webPath": "features.reports.rateSourceApi"
+  },
+  "featuresReportsRateSourceDefault": "System default rate (currency not yet configured)",
+  "@featuresReportsRateSourceDefault": {
+    "description": "Web path: features.reports.rateSourceDefault",
+    "x-webPath": "features.reports.rateSourceDefault"
+  },
+  "featuresReportsExportCsv": "Export CSV",
+  "@featuresReportsExportCsv": {
+    "description": "Web path: features.reports.exportCsv",
+    "x-webPath": "features.reports.exportCsv"
+  },
+  "featuresReportsExporting": "Exporting...",
+  "@featuresReportsExporting": {
+    "description": "Web path: features.reports.exporting",
+    "x-webPath": "features.reports.exporting"
+  },
+  "featuresReportsRateTimestampUnavailable": "Timestamp unavailable (system default rate)",
+  "@featuresReportsRateTimestampUnavailable": {
+    "description": "Web path: features.reports.rateTimestampUnavailable",
+    "x-webPath": "features.reports.rateTimestampUnavailable"
   }
 }

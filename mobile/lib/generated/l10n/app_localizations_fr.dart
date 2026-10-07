@@ -5862,4 +5862,37 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get featuresReconciliationTemplatesCreditCard =>
       'Relevé de carte (positif = achat)';
+
+  @override
+  String get featuresReportsBaseCurrencyLabel => 'Devise de référence';
+
+  @override
+  String featuresReportsRateSource(Object source, Object time) {
+    return 'Source du taux de change : $source ($time)';
+  }
+
+  @override
+  String get featuresReportsRateSourceIdentity =>
+      'La devise de référence est le TWD ; aucune conversion nécessaire';
+
+  @override
+  String get featuresReportsRateSourceManual => 'Taux saisi manuellement';
+
+  @override
+  String get featuresReportsRateSourceApi =>
+      'API mondiale des taux de change en direct (cache existant réutilisé)';
+
+  @override
+  String get featuresReportsRateSourceDefault =>
+      'Taux par défaut du système (devise pas encore configurée)';
+
+  @override
+  String get featuresReportsExportCsv => 'Exporter en CSV';
+
+  @override
+  String get featuresReportsExporting => 'Exportation...';
+
+  @override
+  String get featuresReportsRateTimestampUnavailable =>
+      'Horodatage indisponible (taux système par défaut)';
 }

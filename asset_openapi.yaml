@@ -1909,13 +1909,63 @@ paths:
           in: query
           schema:
             type: string
+            format: date
         - name: to
           in: query
           schema:
             type: string
+            format: date
+        - name: baseCurrency
+          in: query
+          description: ISO 4217 基準幣別；未提供時沿用既有 TWD 等值行為
+          schema:
+            type: string
+            pattern: '^[A-Za-z]{3}$'
+            default: TWD
       responses:
         "200":
-          description: 報表資料
+          description: 報表資料；指定非 TWD 基準時另含匯率來源、ISO 8601 UTC 時間戳與可用幣別
+        "400":
+          description: 日期區間無效、基準幣別不在 ISO 4217 白名單或匯率不可用
+
+  /api/reports/export:
+    get:
+      operationId: exportReportsCsv
+      tags: [Dashboard]
+      summary: 匯出統計報表 CSV
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [income, expense]
+            default: expense
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: baseCurrency
+          in: query
+          description: ISO 4217 基準幣別；未提供時沿用既有 TWD 等值行為
+          schema:
+            type: string
+            pattern: '^[A-Za-z]{3}$'
+            default: TWD
+      responses:
+        "200":
+          description: UTF-8 BOM CSV，含所選基準幣別、匯率來源與時間戳
+          content:
+            text/csv:
+              schema:
+                type: string
+        "400":
+          description: 日期區間無效、基準幣別不在 ISO 4217 白名單或匯率不可用
 
   # ── TWSE 台股 API ─────────────────────
   /api/twse/stock/{symbol}:

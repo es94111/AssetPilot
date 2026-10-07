@@ -5752,4 +5752,37 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get featuresReconciliationTemplatesCreditCard =>
       'Credit card statement (positive = purchase)';
+
+  @override
+  String get featuresReportsBaseCurrencyLabel => 'Base currency';
+
+  @override
+  String featuresReportsRateSource(Object source, Object time) {
+    return 'Exchange rate source: $source ($time)';
+  }
+
+  @override
+  String get featuresReportsRateSourceIdentity =>
+      'Base currency is TWD; no conversion needed';
+
+  @override
+  String get featuresReportsRateSourceManual => 'Manually entered rate';
+
+  @override
+  String get featuresReportsRateSourceApi =>
+      'Global live exchange rate API (existing cache reused)';
+
+  @override
+  String get featuresReportsRateSourceDefault =>
+      'System default rate (currency not yet configured)';
+
+  @override
+  String get featuresReportsExportCsv => 'Export CSV';
+
+  @override
+  String get featuresReportsExporting => 'Exporting...';
+
+  @override
+  String get featuresReportsRateTimestampUnavailable =>
+      'Timestamp unavailable (system default rate)';
 }

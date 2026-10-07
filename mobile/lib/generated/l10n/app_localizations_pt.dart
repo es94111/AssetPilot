@@ -5824,6 +5824,39 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get featuresReconciliationTemplatesCreditCard =>
       'Fatura do cartão (positivo = compra)';
+
+  @override
+  String get featuresReportsBaseCurrencyLabel => 'Moeda base';
+
+  @override
+  String featuresReportsRateSource(Object source, Object time) {
+    return 'Fonte da taxa de câmbio: $source ($time)';
+  }
+
+  @override
+  String get featuresReportsRateSourceIdentity =>
+      'A moeda base é TWD; conversão não necessária';
+
+  @override
+  String get featuresReportsRateSourceManual => 'Taxa inserida manualmente';
+
+  @override
+  String get featuresReportsRateSourceApi =>
+      'API global de taxas de câmbio ao vivo (cache existente reutilizado)';
+
+  @override
+  String get featuresReportsRateSourceDefault =>
+      'Taxa padrão do sistema (moeda ainda não configurada)';
+
+  @override
+  String get featuresReportsExportCsv => 'Exportar CSV';
+
+  @override
+  String get featuresReportsExporting => 'Exportando...';
+
+  @override
+  String get featuresReportsRateTimestampUnavailable =>
+      'Registro de data indisponível (taxa padrão do sistema)';
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -11637,4 +11670,37 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   @override
   String get featuresReconciliationTemplatesCreditCard =>
       'Fatura do cartão (positivo = compra)';
+
+  @override
+  String get featuresReportsBaseCurrencyLabel => 'Moeda base';
+
+  @override
+  String featuresReportsRateSource(Object source, Object time) {
+    return 'Fonte da taxa de câmbio: $source ($time)';
+  }
+
+  @override
+  String get featuresReportsRateSourceIdentity =>
+      'A moeda base é TWD; conversão não necessária';
+
+  @override
+  String get featuresReportsRateSourceManual => 'Taxa inserida manualmente';
+
+  @override
+  String get featuresReportsRateSourceApi =>
+      'API global de taxas de câmbio ao vivo (cache existente reutilizado)';
+
+  @override
+  String get featuresReportsRateSourceDefault =>
+      'Taxa padrão do sistema (moeda ainda não configurada)';
+
+  @override
+  String get featuresReportsExportCsv => 'Exportar CSV';
+
+  @override
+  String get featuresReportsExporting => 'Exportando...';
+
+  @override
+  String get featuresReportsRateTimestampUnavailable =>
+      'Registro de data indisponível (taxa padrão do sistema)';
 }

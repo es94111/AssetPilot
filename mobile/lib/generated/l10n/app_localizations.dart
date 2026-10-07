@@ -10076,6 +10076,60 @@ abstract class AppLocalizations {
   /// In zh_Hant_TW, this message translates to:
   /// **'信用卡帳單（正值為消費）'**
   String get featuresReconciliationTemplatesCreditCard;
+
+  /// Web path: features.reports.baseCurrencyLabel
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'基準幣別'**
+  String get featuresReportsBaseCurrencyLabel;
+
+  /// Web path: features.reports.rateSource
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'匯率來源：{source}（{time}）'**
+  String featuresReportsRateSource(Object source, Object time);
+
+  /// Web path: features.reports.rateSourceIdentity
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'基準幣別為 TWD，無須換算'**
+  String get featuresReportsRateSourceIdentity;
+
+  /// Web path: features.reports.rateSourceManual
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'手動輸入匯率'**
+  String get featuresReportsRateSourceManual;
+
+  /// Web path: features.reports.rateSourceApi
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'全球即時匯率 API（沿用既有快取）'**
+  String get featuresReportsRateSourceApi;
+
+  /// Web path: features.reports.rateSourceDefault
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'系統預設匯率（尚未設定該幣別）'**
+  String get featuresReportsRateSourceDefault;
+
+  /// Web path: features.reports.exportCsv
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'匯出 CSV'**
+  String get featuresReportsExportCsv;
+
+  /// Web path: features.reports.exporting
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'匯出中...'**
+  String get featuresReportsExporting;
+
+  /// Web path: features.reports.rateTimestampUnavailable
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'未提供時間戳（系統預設匯率）'**
+  String get featuresReportsRateTimestampUnavailable;
 }
 
 class _AppLocalizationsDelegate

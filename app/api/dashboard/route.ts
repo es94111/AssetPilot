@@ -9,6 +9,7 @@ import {
   type DashboardComparisonCategory,
 } from '../../../lib/dashboardInsights';
 import { parseDashboardLayout } from '../../../lib/dashboardPreferences';
+import { listGoalReminders } from '../../../lib/savingsGoalStore';
 import { buildScheduledCashOutlook, getScheduledAccountImpactTwd, type ScheduledCashInput } from '../../../lib/dashboardForecast';
 import {
   buildCategoryAggregateNodes,
@@ -243,6 +244,7 @@ export async function GET(request: NextRequest) {
      WHERE user_id = ? AND is_active = 1 AND needs_attention = 1`,
     [auth.userId]
   ) as CountRow | null)?.count) || 0;
+  const goalReminders = listGoalReminders(auth.userId, todayS, 3);
   const uncategorized = queryOne(
     `SELECT COUNT(*) AS count, COALESCE(SUM(amount), 0) AS total
      FROM transactions
@@ -303,6 +305,7 @@ export async function GET(request: NextRequest) {
       uncategorizedTransactionCount: Number(uncategorized?.count) || 0,
       uncategorizedAmount: totalFromRow(uncategorized),
     },
+    goalReminders,
     preferences: {
       layout: parseDashboardLayout(settings?.dashboard_layout),
       updatedAt: Number(settings?.dashboard_layout_updated_at) || 0,

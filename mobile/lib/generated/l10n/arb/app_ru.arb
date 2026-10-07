@@ -8910,5 +8910,435 @@
   "@featuresReportsRateTimestampUnavailable": {
     "description": "Web path: features.reports.rateTimestampUnavailable",
     "x-webPath": "features.reports.rateTimestampUnavailable"
+  },
+  "navGoals": "Цели",
+  "@navGoals": {
+    "description": "Web path: nav.goals",
+    "x-webPath": "nav.goals"
+  },
+  "featuresGoalsSavingsTitle": "Цели накопления",
+  "@featuresGoalsSavingsTitle": {
+    "description": "Web path: features.goals.savingsTitle",
+    "x-webPath": "features.goals.savingsTitle"
+  },
+  "featuresGoalsRepaymentTitle": "Планы погашения",
+  "@featuresGoalsRepaymentTitle": {
+    "description": "Web path: features.goals.repaymentTitle",
+    "x-webPath": "features.goals.repaymentTitle"
+  },
+  "featuresGoalsAddGoal": "Добавить цель",
+  "@featuresGoalsAddGoal": {
+    "description": "Web path: features.goals.addGoal",
+    "x-webPath": "features.goals.addGoal"
+  },
+  "featuresGoalsAddPlan": "Добавить план погашения",
+  "@featuresGoalsAddPlan": {
+    "description": "Web path: features.goals.addPlan",
+    "x-webPath": "features.goals.addPlan"
+  },
+  "featuresGoalsEditGoal": "Изменить цель",
+  "@featuresGoalsEditGoal": {
+    "description": "Web path: features.goals.editGoal",
+    "x-webPath": "features.goals.editGoal"
+  },
+  "featuresGoalsDeleteGoal": "Удалить цель",
+  "@featuresGoalsDeleteGoal": {
+    "description": "Web path: features.goals.deleteGoal",
+    "x-webPath": "features.goals.deleteGoal"
+  },
+  "featuresGoalsEditPlan": "Изменить план погашения",
+  "@featuresGoalsEditPlan": {
+    "description": "Web path: features.goals.editPlan",
+    "x-webPath": "features.goals.editPlan"
+  },
+  "featuresGoalsDeletePlan": "Удалить план погашения",
+  "@featuresGoalsDeletePlan": {
+    "description": "Web path: features.goals.deletePlan",
+    "x-webPath": "features.goals.deletePlan"
+  },
+  "featuresGoalsNewGoal": "Новая цель накопления",
+  "@featuresGoalsNewGoal": {
+    "description": "Web path: features.goals.newGoal",
+    "x-webPath": "features.goals.newGoal"
+  },
+  "featuresGoalsNewPlan": "Новый план погашения",
+  "@featuresGoalsNewPlan": {
+    "description": "Web path: features.goals.newPlan",
+    "x-webPath": "features.goals.newPlan"
+  },
+  "featuresGoalsNoGoals": "Целей накопления пока нет",
+  "@featuresGoalsNoGoals": {
+    "description": "Web path: features.goals.noGoals",
+    "x-webPath": "features.goals.noGoals"
+  },
+  "featuresGoalsNoPlans": "Планов погашения пока нет",
+  "@featuresGoalsNoPlans": {
+    "description": "Web path: features.goals.noPlans",
+    "x-webPath": "features.goals.noPlans"
+  },
+  "featuresGoalsGoalNameLabel": "Название цели *",
+  "@featuresGoalsGoalNameLabel": {
+    "description": "Web path: features.goals.goalNameLabel",
+    "x-webPath": "features.goals.goalNameLabel"
+  },
+  "featuresGoalsPlanNameLabel": "Название плана *",
+  "@featuresGoalsPlanNameLabel": {
+    "description": "Web path: features.goals.planNameLabel",
+    "x-webPath": "features.goals.planNameLabel"
+  },
+  "featuresGoalsTargetAmountLabel": "Целевая сумма *",
+  "@featuresGoalsTargetAmountLabel": {
+    "description": "Web path: features.goals.targetAmountLabel",
+    "x-webPath": "features.goals.targetAmountLabel"
+  },
+  "featuresGoalsTargetDateInputLabel": "Целевая дата *",
+  "@featuresGoalsTargetDateInputLabel": {
+    "description": "Web path: features.goals.targetDateInputLabel",
+    "x-webPath": "features.goals.targetDateInputLabel"
+  },
+  "featuresGoalsTargetDateLabel": "Целевая дата",
+  "@featuresGoalsTargetDateLabel": {
+    "description": "Web path: features.goals.targetDateLabel",
+    "x-webPath": "features.goals.targetDateLabel"
+  },
+  "featuresGoalsPrincipalLabel": "Основной долг *",
+  "@featuresGoalsPrincipalLabel": {
+    "description": "Web path: features.goals.principalLabel",
+    "x-webPath": "features.goals.principalLabel"
+  },
+  "featuresGoalsRateLabel": "Годовая ставка (%)",
+  "@featuresGoalsRateLabel": {
+    "description": "Web path: features.goals.rateLabel",
+    "x-webPath": "features.goals.rateLabel"
+  },
+  "featuresGoalsPeriodsLabel": "Периоды (мес.) *",
+  "@featuresGoalsPeriodsLabel": {
+    "description": "Web path: features.goals.periodsLabel",
+    "x-webPath": "features.goals.periodsLabel"
+  },
+  "featuresGoalsStartDateLabel": "Первый платёж *",
+  "@featuresGoalsStartDateLabel": {
+    "description": "Web path: features.goals.startDateLabel",
+    "x-webPath": "features.goals.startDateLabel"
+  },
+  "featuresGoalsLinkTypeLabel": "Связанный источник",
+  "@featuresGoalsLinkTypeLabel": {
+    "description": "Web path: features.goals.linkTypeLabel",
+    "x-webPath": "features.goals.linkTypeLabel"
+  },
+  "featuresGoalsLinkNone": "Не связано",
+  "@featuresGoalsLinkNone": {
+    "description": "Web path: features.goals.linkNone",
+    "x-webPath": "features.goals.linkNone"
+  },
+  "featuresGoalsLinkAccountOption": "Связать с балансом счёта",
+  "@featuresGoalsLinkAccountOption": {
+    "description": "Web path: features.goals.linkAccountOption",
+    "x-webPath": "features.goals.linkAccountOption"
+  },
+  "featuresGoalsLinkCategoryOption": "Связать с расходами категории",
+  "@featuresGoalsLinkCategoryOption": {
+    "description": "Web path: features.goals.linkCategoryOption",
+    "x-webPath": "features.goals.linkCategoryOption"
+  },
+  "featuresGoalsLinkAccount": "Счёт: {name}",
+  "@featuresGoalsLinkAccount": {
+    "description": "Web path: features.goals.linkAccount",
+    "x-webPath": "features.goals.linkAccount",
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "featuresGoalsLinkCategory": "Категория: {name}",
+  "@featuresGoalsLinkCategory": {
+    "description": "Web path: features.goals.linkCategory",
+    "x-webPath": "features.goals.linkCategory",
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "featuresGoalsAccountLabel": "Счёт",
+  "@featuresGoalsAccountLabel": {
+    "description": "Web path: features.goals.accountLabel",
+    "x-webPath": "features.goals.accountLabel"
+  },
+  "featuresGoalsCategoryLabel": "Категория",
+  "@featuresGoalsCategoryLabel": {
+    "description": "Web path: features.goals.categoryLabel",
+    "x-webPath": "features.goals.categoryLabel"
+  },
+  "featuresGoalsSelectPlaceholder": "Выберите",
+  "@featuresGoalsSelectPlaceholder": {
+    "description": "Web path: features.goals.selectPlaceholder",
+    "x-webPath": "features.goals.selectPlaceholder"
+  },
+  "featuresGoalsProgressLabel": "Прогресс {name}",
+  "@featuresGoalsProgressLabel": {
+    "description": "Web path: features.goals.progressLabel",
+    "x-webPath": "features.goals.progressLabel",
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "featuresGoalsPlanProgressLabel": "Прогресс погашения {name}",
+  "@featuresGoalsPlanProgressLabel": {
+    "description": "Web path: features.goals.planProgressLabel",
+    "x-webPath": "features.goals.planProgressLabel",
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "featuresGoalsProgressSummary": "Накоплено {percent}% (осталось {remaining})",
+  "@featuresGoalsProgressSummary": {
+    "description": "Web path: features.goals.progressSummary",
+    "x-webPath": "features.goals.progressSummary",
+    "placeholders": {
+      "percent": {},
+      "remaining": {}
+    }
+  },
+  "featuresGoalsPlanProgressSummary": "Наступил срок {elapsed} из {total} платежей",
+  "@featuresGoalsPlanProgressSummary": {
+    "description": "Web path: features.goals.planProgressSummary",
+    "x-webPath": "features.goals.planProgressSummary",
+    "placeholders": {
+      "elapsed": {},
+      "total": {}
+    }
+  },
+  "featuresGoalsBadgeAchieved": "Достигнуто",
+  "@featuresGoalsBadgeAchieved": {
+    "description": "Web path: features.goals.badgeAchieved",
+    "x-webPath": "features.goals.badgeAchieved"
+  },
+  "featuresGoalsBadgeBehind": "Отставание",
+  "@featuresGoalsBadgeBehind": {
+    "description": "Web path: features.goals.badgeBehind",
+    "x-webPath": "features.goals.badgeBehind"
+  },
+  "featuresGoalsBadgeOverdue": "Просрочено",
+  "@featuresGoalsBadgeOverdue": {
+    "description": "Web path: features.goals.badgeOverdue",
+    "x-webPath": "features.goals.badgeOverdue"
+  },
+  "featuresGoalsBadgeOnTrack": "В графике",
+  "@featuresGoalsBadgeOnTrack": {
+    "description": "Web path: features.goals.badgeOnTrack",
+    "x-webPath": "features.goals.badgeOnTrack"
+  },
+  "featuresGoalsBadgeRepaid": "График завершён",
+  "@featuresGoalsBadgeRepaid": {
+    "description": "Web path: features.goals.badgeRepaid",
+    "x-webPath": "features.goals.badgeRepaid"
+  },
+  "featuresGoalsProjectedDate": "Прогноз завершения: {date}",
+  "@featuresGoalsProjectedDate": {
+    "description": "Web path: features.goals.projectedDate",
+    "x-webPath": "features.goals.projectedDate",
+    "placeholders": {
+      "date": {}
+    }
+  },
+  "featuresGoalsProjectedUnavailable": "нужен прогресс",
+  "@featuresGoalsProjectedUnavailable": {
+    "description": "Web path: features.goals.projectedUnavailable",
+    "x-webPath": "features.goals.projectedUnavailable"
+  },
+  "featuresGoalsRequiredDaily": "Откладывайте {amount} в день",
+  "@featuresGoalsRequiredDaily": {
+    "description": "Web path: features.goals.requiredDaily",
+    "x-webPath": "features.goals.requiredDaily",
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "featuresGoalsPlanTerms": "Основной долг {principal} · {rate}% годовых · {periods} периодов",
+  "@featuresGoalsPlanTerms": {
+    "description": "Web path: features.goals.planTerms",
+    "x-webPath": "features.goals.planTerms",
+    "placeholders": {
+      "principal": {},
+      "rate": {},
+      "periods": {}
+    }
+  },
+  "featuresGoalsMonthlyPayment": "Ежемесячный платёж",
+  "@featuresGoalsMonthlyPayment": {
+    "description": "Web path: features.goals.monthlyPayment",
+    "x-webPath": "features.goals.monthlyPayment"
+  },
+  "featuresGoalsTotalPayment": "Общая сумма",
+  "@featuresGoalsTotalPayment": {
+    "description": "Web path: features.goals.totalPayment",
+    "x-webPath": "features.goals.totalPayment"
+  },
+  "featuresGoalsTotalInterest": "Всего процентов {amount}",
+  "@featuresGoalsTotalInterest": {
+    "description": "Web path: features.goals.totalInterest",
+    "x-webPath": "features.goals.totalInterest",
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "featuresGoalsRemainingBalance": "Остаток долга",
+  "@featuresGoalsRemainingBalance": {
+    "description": "Web path: features.goals.remainingBalance",
+    "x-webPath": "features.goals.remainingBalance"
+  },
+  "featuresGoalsNextDue": "Следующий {date} · {amount}",
+  "@featuresGoalsNextDue": {
+    "description": "Web path: features.goals.nextDue",
+    "x-webPath": "features.goals.nextDue",
+    "placeholders": {
+      "date": {},
+      "amount": {}
+    }
+  },
+  "featuresGoalsFinalDue": "Последний платёж",
+  "@featuresGoalsFinalDue": {
+    "description": "Web path: features.goals.finalDue",
+    "x-webPath": "features.goals.finalDue"
+  },
+  "featuresGoalsViewSchedule": "Показать график",
+  "@featuresGoalsViewSchedule": {
+    "description": "Web path: features.goals.viewSchedule",
+    "x-webPath": "features.goals.viewSchedule"
+  },
+  "featuresGoalsScheduleTitle": "График погашения {name}",
+  "@featuresGoalsScheduleTitle": {
+    "description": "Web path: features.goals.scheduleTitle",
+    "x-webPath": "features.goals.scheduleTitle",
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "featuresGoalsScheduleTitleFallback": "График погашения",
+  "@featuresGoalsScheduleTitleFallback": {
+    "description": "Web path: features.goals.scheduleTitleFallback",
+    "x-webPath": "features.goals.scheduleTitleFallback"
+  },
+  "featuresGoalsScheduleCaption": "Детали платежей {name}",
+  "@featuresGoalsScheduleCaption": {
+    "description": "Web path: features.goals.scheduleCaption",
+    "x-webPath": "features.goals.scheduleCaption",
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "featuresGoalsTablePeriod": "Период",
+  "@featuresGoalsTablePeriod": {
+    "description": "Web path: features.goals.tablePeriod",
+    "x-webPath": "features.goals.tablePeriod"
+  },
+  "featuresGoalsTableDueDate": "Месяц платежа",
+  "@featuresGoalsTableDueDate": {
+    "description": "Web path: features.goals.tableDueDate",
+    "x-webPath": "features.goals.tableDueDate"
+  },
+  "featuresGoalsTablePayment": "Платёж",
+  "@featuresGoalsTablePayment": {
+    "description": "Web path: features.goals.tablePayment",
+    "x-webPath": "features.goals.tablePayment"
+  },
+  "featuresGoalsTablePrincipal": "Основной долг",
+  "@featuresGoalsTablePrincipal": {
+    "description": "Web path: features.goals.tablePrincipal",
+    "x-webPath": "features.goals.tablePrincipal"
+  },
+  "featuresGoalsTableInterest": "Проценты",
+  "@featuresGoalsTableInterest": {
+    "description": "Web path: features.goals.tableInterest",
+    "x-webPath": "features.goals.tableInterest"
+  },
+  "featuresGoalsTableBalance": "Остаток",
+  "@featuresGoalsTableBalance": {
+    "description": "Web path: features.goals.tableBalance",
+    "x-webPath": "features.goals.tableBalance"
+  },
+  "featuresGoalsPreviewTitle": "Предпросмотр",
+  "@featuresGoalsPreviewTitle": {
+    "description": "Web path: features.goals.previewTitle",
+    "x-webPath": "features.goals.previewTitle"
+  },
+  "featuresGoalsSaveError": "Не удалось сохранить",
+  "@featuresGoalsSaveError": {
+    "description": "Web path: features.goals.saveError",
+    "x-webPath": "features.goals.saveError"
+  },
+  "featuresGoalsDeleteGoalConfirm": "Удалить «{name}»?",
+  "@featuresGoalsDeleteGoalConfirm": {
+    "description": "Web path: features.goals.deleteGoalConfirm",
+    "x-webPath": "features.goals.deleteGoalConfirm",
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "featuresGoalsDeletePlanConfirm": "Удалить «{name}»?",
+  "@featuresGoalsDeletePlanConfirm": {
+    "description": "Web path: features.goals.deletePlanConfirm",
+    "x-webPath": "features.goals.deletePlanConfirm",
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "dashboardGoalRemindersTitle": "Напоминания о целях",
+  "@dashboardGoalRemindersTitle": {
+    "description": "Web path: dashboard.goalReminders.title",
+    "x-webPath": "dashboard.goalReminders.title"
+  },
+  "dashboardGoalRemindersSubtitle": "Отстающие цели появляются здесь",
+  "@dashboardGoalRemindersSubtitle": {
+    "description": "Web path: dashboard.goalReminders.subtitle",
+    "x-webPath": "dashboard.goalReminders.subtitle"
+  },
+  "dashboardGoalRemindersAllOnTrack": "Все цели идут по графику",
+  "@dashboardGoalRemindersAllOnTrack": {
+    "description": "Web path: dashboard.goalReminders.allOnTrack",
+    "x-webPath": "dashboard.goalReminders.allOnTrack"
+  },
+  "dashboardGoalRemindersBehind": "Накоплено {percent}%, не хватает {amount}, осталось {days} дн.",
+  "@dashboardGoalRemindersBehind": {
+    "description": "Web path: dashboard.goalReminders.behind",
+    "x-webPath": "dashboard.goalReminders.behind",
+    "placeholders": {
+      "percent": {},
+      "amount": {},
+      "days": {}
+    }
+  },
+  "dashboardGoalRemindersOverdue": "Накоплено {percent}%, не хватает {amount}, срок {date} прошёл",
+  "@dashboardGoalRemindersOverdue": {
+    "description": "Web path: dashboard.goalReminders.overdue",
+    "x-webPath": "dashboard.goalReminders.overdue",
+    "placeholders": {
+      "percent": {},
+      "amount": {},
+      "date": {}
+    }
+  },
+  "dashboardGoalRemindersManage": "Управление целями",
+  "@dashboardGoalRemindersManage": {
+    "description": "Web path: dashboard.goalReminders.manage",
+    "x-webPath": "dashboard.goalReminders.manage"
+  },
+  "dashboardPersonalizeModulesGoalReminders": "Напоминания о целях",
+  "@dashboardPersonalizeModulesGoalReminders": {
+    "description": "Web path: dashboard.personalize.modules.goalReminders",
+    "x-webPath": "dashboard.personalize.modules.goalReminders"
+  },
+  "featuresGoalsPlanProgressNote": "Сроки рассчитываются от первой даты платежа; фактические платежи не фиксируются.",
+  "@featuresGoalsPlanProgressNote": {
+    "description": "Web path: features.goals.planProgressNote",
+    "x-webPath": "features.goals.planProgressNote"
+  },
+  "featuresGoalsScheduleInvalid": "Требует правки",
+  "@featuresGoalsScheduleInvalid": {
+    "description": "Web path: features.goals.scheduleInvalid",
+    "x-webPath": "features.goals.scheduleInvalid"
+  },
+  "featuresGoalsScheduleInvalidShort": "Требует правки",
+  "@featuresGoalsScheduleInvalidShort": {
+    "description": "Web path: features.goals.scheduleInvalidShort",
+    "x-webPath": "features.goals.scheduleInvalidShort"
   }
 }

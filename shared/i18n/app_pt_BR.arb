@@ -8910,5 +8910,435 @@
   "@featuresReportsRateTimestampUnavailable": {
     "description": "Web path: features.reports.rateTimestampUnavailable",
     "x-webPath": "features.reports.rateTimestampUnavailable"
+  },
+  "navGoals": "Metas",
+  "@navGoals": {
+    "description": "Web path: nav.goals",
+    "x-webPath": "nav.goals"
+  },
+  "featuresGoalsSavingsTitle": "Metas de poupança",
+  "@featuresGoalsSavingsTitle": {
+    "description": "Web path: features.goals.savingsTitle",
+    "x-webPath": "features.goals.savingsTitle"
+  },
+  "featuresGoalsRepaymentTitle": "Planos de pagamento",
+  "@featuresGoalsRepaymentTitle": {
+    "description": "Web path: features.goals.repaymentTitle",
+    "x-webPath": "features.goals.repaymentTitle"
+  },
+  "featuresGoalsAddGoal": "Adicionar meta",
+  "@featuresGoalsAddGoal": {
+    "description": "Web path: features.goals.addGoal",
+    "x-webPath": "features.goals.addGoal"
+  },
+  "featuresGoalsAddPlan": "Adicionar plano de pagamento",
+  "@featuresGoalsAddPlan": {
+    "description": "Web path: features.goals.addPlan",
+    "x-webPath": "features.goals.addPlan"
+  },
+  "featuresGoalsEditGoal": "Editar meta",
+  "@featuresGoalsEditGoal": {
+    "description": "Web path: features.goals.editGoal",
+    "x-webPath": "features.goals.editGoal"
+  },
+  "featuresGoalsDeleteGoal": "Excluir meta",
+  "@featuresGoalsDeleteGoal": {
+    "description": "Web path: features.goals.deleteGoal",
+    "x-webPath": "features.goals.deleteGoal"
+  },
+  "featuresGoalsEditPlan": "Editar plano de pagamento",
+  "@featuresGoalsEditPlan": {
+    "description": "Web path: features.goals.editPlan",
+    "x-webPath": "features.goals.editPlan"
+  },
+  "featuresGoalsDeletePlan": "Excluir plano de pagamento",
+  "@featuresGoalsDeletePlan": {
+    "description": "Web path: features.goals.deletePlan",
+    "x-webPath": "features.goals.deletePlan"
+  },
+  "featuresGoalsNewGoal": "Nova meta de poupança",
+  "@featuresGoalsNewGoal": {
+    "description": "Web path: features.goals.newGoal",
+    "x-webPath": "features.goals.newGoal"
+  },
+  "featuresGoalsNewPlan": "Novo plano de pagamento",
+  "@featuresGoalsNewPlan": {
+    "description": "Web path: features.goals.newPlan",
+    "x-webPath": "features.goals.newPlan"
+  },
+  "featuresGoalsNoGoals": "Nenhuma meta de poupança ainda",
+  "@featuresGoalsNoGoals": {
+    "description": "Web path: features.goals.noGoals",
+    "x-webPath": "features.goals.noGoals"
+  },
+  "featuresGoalsNoPlans": "Nenhum plano de pagamento ainda",
+  "@featuresGoalsNoPlans": {
+    "description": "Web path: features.goals.noPlans",
+    "x-webPath": "features.goals.noPlans"
+  },
+  "featuresGoalsGoalNameLabel": "Nome da meta *",
+  "@featuresGoalsGoalNameLabel": {
+    "description": "Web path: features.goals.goalNameLabel",
+    "x-webPath": "features.goals.goalNameLabel"
+  },
+  "featuresGoalsPlanNameLabel": "Nome do plano *",
+  "@featuresGoalsPlanNameLabel": {
+    "description": "Web path: features.goals.planNameLabel",
+    "x-webPath": "features.goals.planNameLabel"
+  },
+  "featuresGoalsTargetAmountLabel": "Valor da meta *",
+  "@featuresGoalsTargetAmountLabel": {
+    "description": "Web path: features.goals.targetAmountLabel",
+    "x-webPath": "features.goals.targetAmountLabel"
+  },
+  "featuresGoalsTargetDateInputLabel": "Data da meta *",
+  "@featuresGoalsTargetDateInputLabel": {
+    "description": "Web path: features.goals.targetDateInputLabel",
+    "x-webPath": "features.goals.targetDateInputLabel"
+  },
+  "featuresGoalsTargetDateLabel": "Data da meta",
+  "@featuresGoalsTargetDateLabel": {
+    "description": "Web path: features.goals.targetDateLabel",
+    "x-webPath": "features.goals.targetDateLabel"
+  },
+  "featuresGoalsPrincipalLabel": "Principal *",
+  "@featuresGoalsPrincipalLabel": {
+    "description": "Web path: features.goals.principalLabel",
+    "x-webPath": "features.goals.principalLabel"
+  },
+  "featuresGoalsRateLabel": "Taxa anual (%)",
+  "@featuresGoalsRateLabel": {
+    "description": "Web path: features.goals.rateLabel",
+    "x-webPath": "features.goals.rateLabel"
+  },
+  "featuresGoalsPeriodsLabel": "Parcelas (meses) *",
+  "@featuresGoalsPeriodsLabel": {
+    "description": "Web path: features.goals.periodsLabel",
+    "x-webPath": "features.goals.periodsLabel"
+  },
+  "featuresGoalsStartDateLabel": "Primeiro vencimento *",
+  "@featuresGoalsStartDateLabel": {
+    "description": "Web path: features.goals.startDateLabel",
+    "x-webPath": "features.goals.startDateLabel"
+  },
+  "featuresGoalsLinkTypeLabel": "Origem vinculada",
+  "@featuresGoalsLinkTypeLabel": {
+    "description": "Web path: features.goals.linkTypeLabel",
+    "x-webPath": "features.goals.linkTypeLabel"
+  },
+  "featuresGoalsLinkNone": "Não vinculado",
+  "@featuresGoalsLinkNone": {
+    "description": "Web path: features.goals.linkNone",
+    "x-webPath": "features.goals.linkNone"
+  },
+  "featuresGoalsLinkAccountOption": "Vincular saldo da conta",
+  "@featuresGoalsLinkAccountOption": {
+    "description": "Web path: features.goals.linkAccountOption",
+    "x-webPath": "features.goals.linkAccountOption"
+  },
+  "featuresGoalsLinkCategoryOption": "Vincular gastos da categoria",
+  "@featuresGoalsLinkCategoryOption": {
+    "description": "Web path: features.goals.linkCategoryOption",
+    "x-webPath": "features.goals.linkCategoryOption"
+  },
+  "featuresGoalsLinkAccount": "Conta: {name}",
+  "@featuresGoalsLinkAccount": {
+    "description": "Web path: features.goals.linkAccount",
+    "x-webPath": "features.goals.linkAccount",
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "featuresGoalsLinkCategory": "Categoria: {name}",
+  "@featuresGoalsLinkCategory": {
+    "description": "Web path: features.goals.linkCategory",
+    "x-webPath": "features.goals.linkCategory",
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "featuresGoalsAccountLabel": "Conta",
+  "@featuresGoalsAccountLabel": {
+    "description": "Web path: features.goals.accountLabel",
+    "x-webPath": "features.goals.accountLabel"
+  },
+  "featuresGoalsCategoryLabel": "Categoria",
+  "@featuresGoalsCategoryLabel": {
+    "description": "Web path: features.goals.categoryLabel",
+    "x-webPath": "features.goals.categoryLabel"
+  },
+  "featuresGoalsSelectPlaceholder": "Selecionar",
+  "@featuresGoalsSelectPlaceholder": {
+    "description": "Web path: features.goals.selectPlaceholder",
+    "x-webPath": "features.goals.selectPlaceholder"
+  },
+  "featuresGoalsProgressLabel": "Progresso de {name}",
+  "@featuresGoalsProgressLabel": {
+    "description": "Web path: features.goals.progressLabel",
+    "x-webPath": "features.goals.progressLabel",
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "featuresGoalsPlanProgressLabel": "Progresso de pagamento de {name}",
+  "@featuresGoalsPlanProgressLabel": {
+    "description": "Web path: features.goals.planProgressLabel",
+    "x-webPath": "features.goals.planProgressLabel",
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "featuresGoalsProgressSummary": "{percent}% poupado ({remaining} restante)",
+  "@featuresGoalsProgressSummary": {
+    "description": "Web path: features.goals.progressSummary",
+    "x-webPath": "features.goals.progressSummary",
+    "placeholders": {
+      "percent": {},
+      "remaining": {}
+    }
+  },
+  "featuresGoalsPlanProgressSummary": "{elapsed} de {total} parcelas vencidas",
+  "@featuresGoalsPlanProgressSummary": {
+    "description": "Web path: features.goals.planProgressSummary",
+    "x-webPath": "features.goals.planProgressSummary",
+    "placeholders": {
+      "elapsed": {},
+      "total": {}
+    }
+  },
+  "featuresGoalsBadgeAchieved": "Alcançada",
+  "@featuresGoalsBadgeAchieved": {
+    "description": "Web path: features.goals.badgeAchieved",
+    "x-webPath": "features.goals.badgeAchieved"
+  },
+  "featuresGoalsBadgeBehind": "Atrasada",
+  "@featuresGoalsBadgeBehind": {
+    "description": "Web path: features.goals.badgeBehind",
+    "x-webPath": "features.goals.badgeBehind"
+  },
+  "featuresGoalsBadgeOverdue": "Vencida",
+  "@featuresGoalsBadgeOverdue": {
+    "description": "Web path: features.goals.badgeOverdue",
+    "x-webPath": "features.goals.badgeOverdue"
+  },
+  "featuresGoalsBadgeOnTrack": "No prazo",
+  "@featuresGoalsBadgeOnTrack": {
+    "description": "Web path: features.goals.badgeOnTrack",
+    "x-webPath": "features.goals.badgeOnTrack"
+  },
+  "featuresGoalsBadgeRepaid": "Cronograma encerrado",
+  "@featuresGoalsBadgeRepaid": {
+    "description": "Web path: features.goals.badgeRepaid",
+    "x-webPath": "features.goals.badgeRepaid"
+  },
+  "featuresGoalsProjectedDate": "Conclusão prevista: {date}",
+  "@featuresGoalsProjectedDate": {
+    "description": "Web path: features.goals.projectedDate",
+    "x-webPath": "features.goals.projectedDate",
+    "placeholders": {
+      "date": {}
+    }
+  },
+  "featuresGoalsProjectedUnavailable": "requer progresso",
+  "@featuresGoalsProjectedUnavailable": {
+    "description": "Web path: features.goals.projectedUnavailable",
+    "x-webPath": "features.goals.projectedUnavailable"
+  },
+  "featuresGoalsRequiredDaily": "Poupe {amount} por dia",
+  "@featuresGoalsRequiredDaily": {
+    "description": "Web path: features.goals.requiredDaily",
+    "x-webPath": "features.goals.requiredDaily",
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "featuresGoalsPlanTerms": "Principal {principal} · {rate}% a.a. · {periods} parcelas",
+  "@featuresGoalsPlanTerms": {
+    "description": "Web path: features.goals.planTerms",
+    "x-webPath": "features.goals.planTerms",
+    "placeholders": {
+      "principal": {},
+      "rate": {},
+      "periods": {}
+    }
+  },
+  "featuresGoalsMonthlyPayment": "Pagamento mensal",
+  "@featuresGoalsMonthlyPayment": {
+    "description": "Web path: features.goals.monthlyPayment",
+    "x-webPath": "features.goals.monthlyPayment"
+  },
+  "featuresGoalsTotalPayment": "Pagamento total",
+  "@featuresGoalsTotalPayment": {
+    "description": "Web path: features.goals.totalPayment",
+    "x-webPath": "features.goals.totalPayment"
+  },
+  "featuresGoalsTotalInterest": "Juros totais {amount}",
+  "@featuresGoalsTotalInterest": {
+    "description": "Web path: features.goals.totalInterest",
+    "x-webPath": "features.goals.totalInterest",
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "featuresGoalsRemainingBalance": "Saldo restante",
+  "@featuresGoalsRemainingBalance": {
+    "description": "Web path: features.goals.remainingBalance",
+    "x-webPath": "features.goals.remainingBalance"
+  },
+  "featuresGoalsNextDue": "Próximo {date} · {amount}",
+  "@featuresGoalsNextDue": {
+    "description": "Web path: features.goals.nextDue",
+    "x-webPath": "features.goals.nextDue",
+    "placeholders": {
+      "date": {},
+      "amount": {}
+    }
+  },
+  "featuresGoalsFinalDue": "Último pagamento",
+  "@featuresGoalsFinalDue": {
+    "description": "Web path: features.goals.finalDue",
+    "x-webPath": "features.goals.finalDue"
+  },
+  "featuresGoalsViewSchedule": "Ver tabela",
+  "@featuresGoalsViewSchedule": {
+    "description": "Web path: features.goals.viewSchedule",
+    "x-webPath": "features.goals.viewSchedule"
+  },
+  "featuresGoalsScheduleTitle": "Tabela de amortização de {name}",
+  "@featuresGoalsScheduleTitle": {
+    "description": "Web path: features.goals.scheduleTitle",
+    "x-webPath": "features.goals.scheduleTitle",
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "featuresGoalsScheduleTitleFallback": "Tabela de amortização",
+  "@featuresGoalsScheduleTitleFallback": {
+    "description": "Web path: features.goals.scheduleTitleFallback",
+    "x-webPath": "features.goals.scheduleTitleFallback"
+  },
+  "featuresGoalsScheduleCaption": "Detalhe das parcelas de {name}",
+  "@featuresGoalsScheduleCaption": {
+    "description": "Web path: features.goals.scheduleCaption",
+    "x-webPath": "features.goals.scheduleCaption",
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "featuresGoalsTablePeriod": "Parcela",
+  "@featuresGoalsTablePeriod": {
+    "description": "Web path: features.goals.tablePeriod",
+    "x-webPath": "features.goals.tablePeriod"
+  },
+  "featuresGoalsTableDueDate": "Mês de vencimento",
+  "@featuresGoalsTableDueDate": {
+    "description": "Web path: features.goals.tableDueDate",
+    "x-webPath": "features.goals.tableDueDate"
+  },
+  "featuresGoalsTablePayment": "Pagamento",
+  "@featuresGoalsTablePayment": {
+    "description": "Web path: features.goals.tablePayment",
+    "x-webPath": "features.goals.tablePayment"
+  },
+  "featuresGoalsTablePrincipal": "Principal",
+  "@featuresGoalsTablePrincipal": {
+    "description": "Web path: features.goals.tablePrincipal",
+    "x-webPath": "features.goals.tablePrincipal"
+  },
+  "featuresGoalsTableInterest": "Juros",
+  "@featuresGoalsTableInterest": {
+    "description": "Web path: features.goals.tableInterest",
+    "x-webPath": "features.goals.tableInterest"
+  },
+  "featuresGoalsTableBalance": "Restante",
+  "@featuresGoalsTableBalance": {
+    "description": "Web path: features.goals.tableBalance",
+    "x-webPath": "features.goals.tableBalance"
+  },
+  "featuresGoalsPreviewTitle": "Prévia do pagamento",
+  "@featuresGoalsPreviewTitle": {
+    "description": "Web path: features.goals.previewTitle",
+    "x-webPath": "features.goals.previewTitle"
+  },
+  "featuresGoalsSaveError": "Falha ao salvar",
+  "@featuresGoalsSaveError": {
+    "description": "Web path: features.goals.saveError",
+    "x-webPath": "features.goals.saveError"
+  },
+  "featuresGoalsDeleteGoalConfirm": "Excluir \"{name}\"?",
+  "@featuresGoalsDeleteGoalConfirm": {
+    "description": "Web path: features.goals.deleteGoalConfirm",
+    "x-webPath": "features.goals.deleteGoalConfirm",
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "featuresGoalsDeletePlanConfirm": "Excluir \"{name}\"?",
+  "@featuresGoalsDeletePlanConfirm": {
+    "description": "Web path: features.goals.deletePlanConfirm",
+    "x-webPath": "features.goals.deletePlanConfirm",
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "dashboardGoalRemindersTitle": "Lembretes de metas",
+  "@dashboardGoalRemindersTitle": {
+    "description": "Web path: dashboard.goalReminders.title",
+    "x-webPath": "dashboard.goalReminders.title"
+  },
+  "dashboardGoalRemindersSubtitle": "Metas atrasadas aparecem aqui",
+  "@dashboardGoalRemindersSubtitle": {
+    "description": "Web path: dashboard.goalReminders.subtitle",
+    "x-webPath": "dashboard.goalReminders.subtitle"
+  },
+  "dashboardGoalRemindersAllOnTrack": "Todas as metas estão no prazo",
+  "@dashboardGoalRemindersAllOnTrack": {
+    "description": "Web path: dashboard.goalReminders.allOnTrack",
+    "x-webPath": "dashboard.goalReminders.allOnTrack"
+  },
+  "dashboardGoalRemindersBehind": "{percent}% poupado, faltam {amount}, {days} dias restantes",
+  "@dashboardGoalRemindersBehind": {
+    "description": "Web path: dashboard.goalReminders.behind",
+    "x-webPath": "dashboard.goalReminders.behind",
+    "placeholders": {
+      "percent": {},
+      "amount": {},
+      "days": {}
+    }
+  },
+  "dashboardGoalRemindersOverdue": "{percent}% poupado, faltam {amount}, prazo venceu em {date}",
+  "@dashboardGoalRemindersOverdue": {
+    "description": "Web path: dashboard.goalReminders.overdue",
+    "x-webPath": "dashboard.goalReminders.overdue",
+    "placeholders": {
+      "percent": {},
+      "amount": {},
+      "date": {}
+    }
+  },
+  "dashboardGoalRemindersManage": "Gerenciar metas",
+  "@dashboardGoalRemindersManage": {
+    "description": "Web path: dashboard.goalReminders.manage",
+    "x-webPath": "dashboard.goalReminders.manage"
+  },
+  "dashboardPersonalizeModulesGoalReminders": "Lembretes de metas",
+  "@dashboardPersonalizeModulesGoalReminders": {
+    "description": "Web path: dashboard.personalize.modules.goalReminders",
+    "x-webPath": "dashboard.personalize.modules.goalReminders"
+  },
+  "featuresGoalsPlanProgressNote": "As parcelas vencidas são estimadas a partir do primeiro vencimento; pagamentos reais não são registrados.",
+  "@featuresGoalsPlanProgressNote": {
+    "description": "Web path: features.goals.planProgressNote",
+    "x-webPath": "features.goals.planProgressNote"
+  },
+  "featuresGoalsScheduleInvalid": "Precisa editar",
+  "@featuresGoalsScheduleInvalid": {
+    "description": "Web path: features.goals.scheduleInvalid",
+    "x-webPath": "features.goals.scheduleInvalid"
+  },
+  "featuresGoalsScheduleInvalidShort": "Precisa editar",
+  "@featuresGoalsScheduleInvalidShort": {
+    "description": "Web path: features.goals.scheduleInvalidShort",
+    "x-webPath": "features.goals.scheduleInvalidShort"
   }
 }

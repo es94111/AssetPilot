@@ -5873,4 +5873,270 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get featuresReportsRateTimestampUnavailable =>
       'Временная метка недоступна (системный курс по умолчанию)';
+
+  @override
+  String get navGoals => 'Цели';
+
+  @override
+  String get featuresGoalsSavingsTitle => 'Цели накопления';
+
+  @override
+  String get featuresGoalsRepaymentTitle => 'Планы погашения';
+
+  @override
+  String get featuresGoalsAddGoal => 'Добавить цель';
+
+  @override
+  String get featuresGoalsAddPlan => 'Добавить план погашения';
+
+  @override
+  String get featuresGoalsEditGoal => 'Изменить цель';
+
+  @override
+  String get featuresGoalsDeleteGoal => 'Удалить цель';
+
+  @override
+  String get featuresGoalsEditPlan => 'Изменить план погашения';
+
+  @override
+  String get featuresGoalsDeletePlan => 'Удалить план погашения';
+
+  @override
+  String get featuresGoalsNewGoal => 'Новая цель накопления';
+
+  @override
+  String get featuresGoalsNewPlan => 'Новый план погашения';
+
+  @override
+  String get featuresGoalsNoGoals => 'Целей накопления пока нет';
+
+  @override
+  String get featuresGoalsNoPlans => 'Планов погашения пока нет';
+
+  @override
+  String get featuresGoalsGoalNameLabel => 'Название цели *';
+
+  @override
+  String get featuresGoalsPlanNameLabel => 'Название плана *';
+
+  @override
+  String get featuresGoalsTargetAmountLabel => 'Целевая сумма *';
+
+  @override
+  String get featuresGoalsTargetDateInputLabel => 'Целевая дата *';
+
+  @override
+  String get featuresGoalsTargetDateLabel => 'Целевая дата';
+
+  @override
+  String get featuresGoalsPrincipalLabel => 'Основной долг *';
+
+  @override
+  String get featuresGoalsRateLabel => 'Годовая ставка (%)';
+
+  @override
+  String get featuresGoalsPeriodsLabel => 'Периоды (мес.) *';
+
+  @override
+  String get featuresGoalsStartDateLabel => 'Первый платёж *';
+
+  @override
+  String get featuresGoalsLinkTypeLabel => 'Связанный источник';
+
+  @override
+  String get featuresGoalsLinkNone => 'Не связано';
+
+  @override
+  String get featuresGoalsLinkAccountOption => 'Связать с балансом счёта';
+
+  @override
+  String get featuresGoalsLinkCategoryOption => 'Связать с расходами категории';
+
+  @override
+  String featuresGoalsLinkAccount(Object name) {
+    return 'Счёт: $name';
+  }
+
+  @override
+  String featuresGoalsLinkCategory(Object name) {
+    return 'Категория: $name';
+  }
+
+  @override
+  String get featuresGoalsAccountLabel => 'Счёт';
+
+  @override
+  String get featuresGoalsCategoryLabel => 'Категория';
+
+  @override
+  String get featuresGoalsSelectPlaceholder => 'Выберите';
+
+  @override
+  String featuresGoalsProgressLabel(Object name) {
+    return 'Прогресс $name';
+  }
+
+  @override
+  String featuresGoalsPlanProgressLabel(Object name) {
+    return 'Прогресс погашения $name';
+  }
+
+  @override
+  String featuresGoalsProgressSummary(Object percent, Object remaining) {
+    return 'Накоплено $percent% (осталось $remaining)';
+  }
+
+  @override
+  String featuresGoalsPlanProgressSummary(Object elapsed, Object total) {
+    return 'Наступил срок $elapsed из $total платежей';
+  }
+
+  @override
+  String get featuresGoalsBadgeAchieved => 'Достигнуто';
+
+  @override
+  String get featuresGoalsBadgeBehind => 'Отставание';
+
+  @override
+  String get featuresGoalsBadgeOverdue => 'Просрочено';
+
+  @override
+  String get featuresGoalsBadgeOnTrack => 'В графике';
+
+  @override
+  String get featuresGoalsBadgeRepaid => 'График завершён';
+
+  @override
+  String featuresGoalsProjectedDate(Object date) {
+    return 'Прогноз завершения: $date';
+  }
+
+  @override
+  String get featuresGoalsProjectedUnavailable => 'нужен прогресс';
+
+  @override
+  String featuresGoalsRequiredDaily(Object amount) {
+    return 'Откладывайте $amount в день';
+  }
+
+  @override
+  String featuresGoalsPlanTerms(Object principal, Object rate, Object periods) {
+    return 'Основной долг $principal · $rate% годовых · $periods периодов';
+  }
+
+  @override
+  String get featuresGoalsMonthlyPayment => 'Ежемесячный платёж';
+
+  @override
+  String get featuresGoalsTotalPayment => 'Общая сумма';
+
+  @override
+  String featuresGoalsTotalInterest(Object amount) {
+    return 'Всего процентов $amount';
+  }
+
+  @override
+  String get featuresGoalsRemainingBalance => 'Остаток долга';
+
+  @override
+  String featuresGoalsNextDue(Object date, Object amount) {
+    return 'Следующий $date · $amount';
+  }
+
+  @override
+  String get featuresGoalsFinalDue => 'Последний платёж';
+
+  @override
+  String get featuresGoalsViewSchedule => 'Показать график';
+
+  @override
+  String featuresGoalsScheduleTitle(Object name) {
+    return 'График погашения $name';
+  }
+
+  @override
+  String get featuresGoalsScheduleTitleFallback => 'График погашения';
+
+  @override
+  String featuresGoalsScheduleCaption(Object name) {
+    return 'Детали платежей $name';
+  }
+
+  @override
+  String get featuresGoalsTablePeriod => 'Период';
+
+  @override
+  String get featuresGoalsTableDueDate => 'Месяц платежа';
+
+  @override
+  String get featuresGoalsTablePayment => 'Платёж';
+
+  @override
+  String get featuresGoalsTablePrincipal => 'Основной долг';
+
+  @override
+  String get featuresGoalsTableInterest => 'Проценты';
+
+  @override
+  String get featuresGoalsTableBalance => 'Остаток';
+
+  @override
+  String get featuresGoalsPreviewTitle => 'Предпросмотр';
+
+  @override
+  String get featuresGoalsSaveError => 'Не удалось сохранить';
+
+  @override
+  String featuresGoalsDeleteGoalConfirm(Object name) {
+    return 'Удалить «$name»?';
+  }
+
+  @override
+  String featuresGoalsDeletePlanConfirm(Object name) {
+    return 'Удалить «$name»?';
+  }
+
+  @override
+  String get dashboardGoalRemindersTitle => 'Напоминания о целях';
+
+  @override
+  String get dashboardGoalRemindersSubtitle =>
+      'Отстающие цели появляются здесь';
+
+  @override
+  String get dashboardGoalRemindersAllOnTrack => 'Все цели идут по графику';
+
+  @override
+  String dashboardGoalRemindersBehind(
+    Object percent,
+    Object amount,
+    Object days,
+  ) {
+    return 'Накоплено $percent%, не хватает $amount, осталось $days дн.';
+  }
+
+  @override
+  String dashboardGoalRemindersOverdue(
+    Object percent,
+    Object amount,
+    Object date,
+  ) {
+    return 'Накоплено $percent%, не хватает $amount, срок $date прошёл';
+  }
+
+  @override
+  String get dashboardGoalRemindersManage => 'Управление целями';
+
+  @override
+  String get dashboardPersonalizeModulesGoalReminders => 'Напоминания о целях';
+
+  @override
+  String get featuresGoalsPlanProgressNote =>
+      'Сроки рассчитываются от первой даты платежа; фактические платежи не фиксируются.';
+
+  @override
+  String get featuresGoalsScheduleInvalid => 'Требует правки';
+
+  @override
+  String get featuresGoalsScheduleInvalidShort => 'Требует правки';
 }

@@ -5917,4 +5917,271 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get featuresReportsRateTimestampUnavailable =>
       'Marca de tiempo no disponible (tipo predeterminado del sistema)';
+
+  @override
+  String get navGoals => 'Metas';
+
+  @override
+  String get featuresGoalsSavingsTitle => 'Metas de ahorro';
+
+  @override
+  String get featuresGoalsRepaymentTitle => 'Planes de pago';
+
+  @override
+  String get featuresGoalsAddGoal => 'Añadir meta';
+
+  @override
+  String get featuresGoalsAddPlan => 'Añadir plan de pago';
+
+  @override
+  String get featuresGoalsEditGoal => 'Editar meta';
+
+  @override
+  String get featuresGoalsDeleteGoal => 'Eliminar meta';
+
+  @override
+  String get featuresGoalsEditPlan => 'Editar plan de pago';
+
+  @override
+  String get featuresGoalsDeletePlan => 'Eliminar plan de pago';
+
+  @override
+  String get featuresGoalsNewGoal => 'Nueva meta de ahorro';
+
+  @override
+  String get featuresGoalsNewPlan => 'Nuevo plan de pago';
+
+  @override
+  String get featuresGoalsNoGoals => 'Aún no hay metas de ahorro';
+
+  @override
+  String get featuresGoalsNoPlans => 'Aún no hay planes de pago';
+
+  @override
+  String get featuresGoalsGoalNameLabel => 'Nombre de la meta *';
+
+  @override
+  String get featuresGoalsPlanNameLabel => 'Nombre del plan *';
+
+  @override
+  String get featuresGoalsTargetAmountLabel => 'Importe objetivo *';
+
+  @override
+  String get featuresGoalsTargetDateInputLabel => 'Fecha objetivo *';
+
+  @override
+  String get featuresGoalsTargetDateLabel => 'Fecha objetivo';
+
+  @override
+  String get featuresGoalsPrincipalLabel => 'Capital *';
+
+  @override
+  String get featuresGoalsRateLabel => 'Tasa anual (%)';
+
+  @override
+  String get featuresGoalsPeriodsLabel => 'Plazos (meses) *';
+
+  @override
+  String get featuresGoalsStartDateLabel => 'Primer vencimiento *';
+
+  @override
+  String get featuresGoalsLinkTypeLabel => 'Origen vinculado';
+
+  @override
+  String get featuresGoalsLinkNone => 'Sin vincular';
+
+  @override
+  String get featuresGoalsLinkAccountOption => 'Vincular saldo de cuenta';
+
+  @override
+  String get featuresGoalsLinkCategoryOption => 'Vincular gasto de categoría';
+
+  @override
+  String featuresGoalsLinkAccount(Object name) {
+    return 'Cuenta: $name';
+  }
+
+  @override
+  String featuresGoalsLinkCategory(Object name) {
+    return 'Categoría: $name';
+  }
+
+  @override
+  String get featuresGoalsAccountLabel => 'Cuenta';
+
+  @override
+  String get featuresGoalsCategoryLabel => 'Categoría';
+
+  @override
+  String get featuresGoalsSelectPlaceholder => 'Seleccionar';
+
+  @override
+  String featuresGoalsProgressLabel(Object name) {
+    return 'Progreso de $name';
+  }
+
+  @override
+  String featuresGoalsPlanProgressLabel(Object name) {
+    return 'Progreso de pago de $name';
+  }
+
+  @override
+  String featuresGoalsProgressSummary(Object percent, Object remaining) {
+    return '$percent% ahorrado ($remaining restantes)';
+  }
+
+  @override
+  String featuresGoalsPlanProgressSummary(Object elapsed, Object total) {
+    return '$elapsed de $total cuotas vencidas';
+  }
+
+  @override
+  String get featuresGoalsBadgeAchieved => 'Alcanzada';
+
+  @override
+  String get featuresGoalsBadgeBehind => 'Atrasada';
+
+  @override
+  String get featuresGoalsBadgeOverdue => 'Vencida';
+
+  @override
+  String get featuresGoalsBadgeOnTrack => 'En curso';
+
+  @override
+  String get featuresGoalsBadgeRepaid => 'Calendario finalizado';
+
+  @override
+  String featuresGoalsProjectedDate(Object date) {
+    return 'Finalización prevista: $date';
+  }
+
+  @override
+  String get featuresGoalsProjectedUnavailable => 'requiere progreso';
+
+  @override
+  String featuresGoalsRequiredDaily(Object amount) {
+    return 'Ahorra $amount al día';
+  }
+
+  @override
+  String featuresGoalsPlanTerms(Object principal, Object rate, Object periods) {
+    return 'Capital $principal · $rate% anual · $periods plazos';
+  }
+
+  @override
+  String get featuresGoalsMonthlyPayment => 'Pago mensual';
+
+  @override
+  String get featuresGoalsTotalPayment => 'Pago total';
+
+  @override
+  String featuresGoalsTotalInterest(Object amount) {
+    return 'Interés total $amount';
+  }
+
+  @override
+  String get featuresGoalsRemainingBalance => 'Saldo restante';
+
+  @override
+  String featuresGoalsNextDue(Object date, Object amount) {
+    return 'Próximo $date · $amount';
+  }
+
+  @override
+  String get featuresGoalsFinalDue => 'Último pago';
+
+  @override
+  String get featuresGoalsViewSchedule => 'Ver tabla';
+
+  @override
+  String featuresGoalsScheduleTitle(Object name) {
+    return 'Tabla de amortización de $name';
+  }
+
+  @override
+  String get featuresGoalsScheduleTitleFallback => 'Tabla de amortización';
+
+  @override
+  String featuresGoalsScheduleCaption(Object name) {
+    return 'Detalle de pagos de $name';
+  }
+
+  @override
+  String get featuresGoalsTablePeriod => 'Plazo';
+
+  @override
+  String get featuresGoalsTableDueDate => 'Mes de pago';
+
+  @override
+  String get featuresGoalsTablePayment => 'Pago';
+
+  @override
+  String get featuresGoalsTablePrincipal => 'Capital';
+
+  @override
+  String get featuresGoalsTableInterest => 'Interés';
+
+  @override
+  String get featuresGoalsTableBalance => 'Restante';
+
+  @override
+  String get featuresGoalsPreviewTitle => 'Vista previa';
+
+  @override
+  String get featuresGoalsSaveError => 'No se pudo guardar';
+
+  @override
+  String featuresGoalsDeleteGoalConfirm(Object name) {
+    return '¿Eliminar «$name»?';
+  }
+
+  @override
+  String featuresGoalsDeletePlanConfirm(Object name) {
+    return '¿Eliminar «$name»?';
+  }
+
+  @override
+  String get dashboardGoalRemindersTitle => 'Recordatorios de metas';
+
+  @override
+  String get dashboardGoalRemindersSubtitle =>
+      'Las metas atrasadas aparecen aquí';
+
+  @override
+  String get dashboardGoalRemindersAllOnTrack => 'Todas las metas van en curso';
+
+  @override
+  String dashboardGoalRemindersBehind(
+    Object percent,
+    Object amount,
+    Object days,
+  ) {
+    return '$percent% ahorrado, faltan $amount, quedan $days días';
+  }
+
+  @override
+  String dashboardGoalRemindersOverdue(
+    Object percent,
+    Object amount,
+    Object date,
+  ) {
+    return '$percent% ahorrado, faltan $amount, venció el $date';
+  }
+
+  @override
+  String get dashboardGoalRemindersManage => 'Gestionar metas';
+
+  @override
+  String get dashboardPersonalizeModulesGoalReminders =>
+      'Recordatorios de metas';
+
+  @override
+  String get featuresGoalsPlanProgressNote =>
+      'Las cuotas vencidas se estiman desde la primera fecha de vencimiento; no se registran pagos reales.';
+
+  @override
+  String get featuresGoalsScheduleInvalid => 'Requiere edición';
+
+  @override
+  String get featuresGoalsScheduleInvalidShort => 'Requiere edición';
 }

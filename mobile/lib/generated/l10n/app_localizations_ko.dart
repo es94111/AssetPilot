@@ -5617,4 +5617,269 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get featuresReportsRateTimestampUnavailable => '타임스탬프 없음(시스템 기본 환율)';
+
+  @override
+  String get navGoals => '목표';
+
+  @override
+  String get featuresGoalsSavingsTitle => '저축 목표';
+
+  @override
+  String get featuresGoalsRepaymentTitle => '상환 계획';
+
+  @override
+  String get featuresGoalsAddGoal => '목표 추가';
+
+  @override
+  String get featuresGoalsAddPlan => '상환 계획 추가';
+
+  @override
+  String get featuresGoalsEditGoal => '목표 편집';
+
+  @override
+  String get featuresGoalsDeleteGoal => '목표 삭제';
+
+  @override
+  String get featuresGoalsEditPlan => '상환 계획 편집';
+
+  @override
+  String get featuresGoalsDeletePlan => '상환 계획 삭제';
+
+  @override
+  String get featuresGoalsNewGoal => '새 저축 목표';
+
+  @override
+  String get featuresGoalsNewPlan => '새 상환 계획';
+
+  @override
+  String get featuresGoalsNoGoals => '아직 저축 목표가 없습니다';
+
+  @override
+  String get featuresGoalsNoPlans => '아직 상환 계획이 없습니다';
+
+  @override
+  String get featuresGoalsGoalNameLabel => '목표 이름 *';
+
+  @override
+  String get featuresGoalsPlanNameLabel => '계획 이름 *';
+
+  @override
+  String get featuresGoalsTargetAmountLabel => '목표 금액 *';
+
+  @override
+  String get featuresGoalsTargetDateInputLabel => '목표 날짜 *';
+
+  @override
+  String get featuresGoalsTargetDateLabel => '목표 날짜';
+
+  @override
+  String get featuresGoalsPrincipalLabel => '원금 *';
+
+  @override
+  String get featuresGoalsRateLabel => '연이율 (%)';
+
+  @override
+  String get featuresGoalsPeriodsLabel => '기간 (개월) *';
+
+  @override
+  String get featuresGoalsStartDateLabel => '첫 납부일 *';
+
+  @override
+  String get featuresGoalsLinkTypeLabel => '연결 대상';
+
+  @override
+  String get featuresGoalsLinkNone => '연결 안 함';
+
+  @override
+  String get featuresGoalsLinkAccountOption => '계좌 잔액 연결';
+
+  @override
+  String get featuresGoalsLinkCategoryOption => '분류 지출 연결';
+
+  @override
+  String featuresGoalsLinkAccount(Object name) {
+    return '계좌: $name';
+  }
+
+  @override
+  String featuresGoalsLinkCategory(Object name) {
+    return '분류: $name';
+  }
+
+  @override
+  String get featuresGoalsAccountLabel => '계좌';
+
+  @override
+  String get featuresGoalsCategoryLabel => '분류';
+
+  @override
+  String get featuresGoalsSelectPlaceholder => '선택';
+
+  @override
+  String featuresGoalsProgressLabel(Object name) {
+    return '$name 진행률';
+  }
+
+  @override
+  String featuresGoalsPlanProgressLabel(Object name) {
+    return '$name 상환 진행률';
+  }
+
+  @override
+  String featuresGoalsProgressSummary(Object percent, Object remaining) {
+    return '$percent% 저축 ($remaining 남음)';
+  }
+
+  @override
+  String featuresGoalsPlanProgressSummary(Object elapsed, Object total) {
+    return '전체 $total회 중 $elapsed회 납부 예정일 경과';
+  }
+
+  @override
+  String get featuresGoalsBadgeAchieved => '달성';
+
+  @override
+  String get featuresGoalsBadgeBehind => '지연';
+
+  @override
+  String get featuresGoalsBadgeOverdue => '기한 초과';
+
+  @override
+  String get featuresGoalsBadgeOnTrack => '정상 진행';
+
+  @override
+  String get featuresGoalsBadgeRepaid => '상환 일정 종료';
+
+  @override
+  String featuresGoalsProjectedDate(Object date) {
+    return '예상 완료일: $date';
+  }
+
+  @override
+  String get featuresGoalsProjectedUnavailable => '진행 필요';
+
+  @override
+  String featuresGoalsRequiredDaily(Object amount) {
+    return '하루 $amount 저축';
+  }
+
+  @override
+  String featuresGoalsPlanTerms(Object principal, Object rate, Object periods) {
+    return '원금 $principal · 연 $rate% · $periods회';
+  }
+
+  @override
+  String get featuresGoalsMonthlyPayment => '월 납부액';
+
+  @override
+  String get featuresGoalsTotalPayment => '총 상환액';
+
+  @override
+  String featuresGoalsTotalInterest(Object amount) {
+    return '총 이자 $amount';
+  }
+
+  @override
+  String get featuresGoalsRemainingBalance => '남은 원금';
+
+  @override
+  String featuresGoalsNextDue(Object date, Object amount) {
+    return '다음 $date · $amount';
+  }
+
+  @override
+  String get featuresGoalsFinalDue => '마지막 납부';
+
+  @override
+  String get featuresGoalsViewSchedule => '상환표 보기';
+
+  @override
+  String featuresGoalsScheduleTitle(Object name) {
+    return '$name 상환표';
+  }
+
+  @override
+  String get featuresGoalsScheduleTitleFallback => '상환표';
+
+  @override
+  String featuresGoalsScheduleCaption(Object name) {
+    return '$name 회차별 상환 내역';
+  }
+
+  @override
+  String get featuresGoalsTablePeriod => '회차';
+
+  @override
+  String get featuresGoalsTableDueDate => '납부 월';
+
+  @override
+  String get featuresGoalsTablePayment => '납부액';
+
+  @override
+  String get featuresGoalsTablePrincipal => '원금';
+
+  @override
+  String get featuresGoalsTableInterest => '이자';
+
+  @override
+  String get featuresGoalsTableBalance => '잔액';
+
+  @override
+  String get featuresGoalsPreviewTitle => '상환 미리보기';
+
+  @override
+  String get featuresGoalsSaveError => '저장에 실패했습니다';
+
+  @override
+  String featuresGoalsDeleteGoalConfirm(Object name) {
+    return '\"$name\"을(를) 삭제할까요?';
+  }
+
+  @override
+  String featuresGoalsDeletePlanConfirm(Object name) {
+    return '\"$name\"을(를) 삭제할까요?';
+  }
+
+  @override
+  String get dashboardGoalRemindersTitle => '목표 진행 알림';
+
+  @override
+  String get dashboardGoalRemindersSubtitle => '지연된 저축 목표가 여기에 표시됩니다';
+
+  @override
+  String get dashboardGoalRemindersAllOnTrack => '모든 저축 목표가 정상 진행 중입니다';
+
+  @override
+  String dashboardGoalRemindersBehind(
+    Object percent,
+    Object amount,
+    Object days,
+  ) {
+    return '$percent% 저축, $amount 부족, $days일 남음';
+  }
+
+  @override
+  String dashboardGoalRemindersOverdue(
+    Object percent,
+    Object amount,
+    Object date,
+  ) {
+    return '$percent% 저축, $amount 부족, 목표일 $date 경과';
+  }
+
+  @override
+  String get dashboardGoalRemindersManage => '목표 관리';
+
+  @override
+  String get dashboardPersonalizeModulesGoalReminders => '목표 알림';
+
+  @override
+  String get featuresGoalsPlanProgressNote =>
+      '경과 회차는 최초 납부일을 기준으로 계산하며 실제 납부 내역은 기록하지 않습니다.';
+
+  @override
+  String get featuresGoalsScheduleInvalid => '수정 필요';
+
+  @override
+  String get featuresGoalsScheduleInvalidShort => '수정 필요';
 }

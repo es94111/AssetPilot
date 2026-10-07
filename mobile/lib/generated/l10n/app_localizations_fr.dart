@@ -5919,4 +5919,272 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get featuresReportsRateTimestampUnavailable =>
       'Horodatage indisponible (taux système par défaut)';
+
+  @override
+  String get navGoals => 'Objectifs';
+
+  @override
+  String get featuresGoalsSavingsTitle => 'Objectifs d\'épargne';
+
+  @override
+  String get featuresGoalsRepaymentTitle => 'Plans de remboursement';
+
+  @override
+  String get featuresGoalsAddGoal => 'Ajouter un objectif';
+
+  @override
+  String get featuresGoalsAddPlan => 'Ajouter un plan de remboursement';
+
+  @override
+  String get featuresGoalsEditGoal => 'Modifier l\'objectif';
+
+  @override
+  String get featuresGoalsDeleteGoal => 'Supprimer l\'objectif';
+
+  @override
+  String get featuresGoalsEditPlan => 'Modifier le plan de remboursement';
+
+  @override
+  String get featuresGoalsDeletePlan => 'Supprimer le plan de remboursement';
+
+  @override
+  String get featuresGoalsNewGoal => 'Nouvel objectif d\'épargne';
+
+  @override
+  String get featuresGoalsNewPlan => 'Nouveau plan de remboursement';
+
+  @override
+  String get featuresGoalsNoGoals => 'Aucun objectif d\'épargne';
+
+  @override
+  String get featuresGoalsNoPlans => 'Aucun plan de remboursement';
+
+  @override
+  String get featuresGoalsGoalNameLabel => 'Nom de l\'objectif *';
+
+  @override
+  String get featuresGoalsPlanNameLabel => 'Nom du plan *';
+
+  @override
+  String get featuresGoalsTargetAmountLabel => 'Montant cible *';
+
+  @override
+  String get featuresGoalsTargetDateInputLabel => 'Date cible *';
+
+  @override
+  String get featuresGoalsTargetDateLabel => 'Date cible';
+
+  @override
+  String get featuresGoalsPrincipalLabel => 'Capital *';
+
+  @override
+  String get featuresGoalsRateLabel => 'Taux annuel (%)';
+
+  @override
+  String get featuresGoalsPeriodsLabel => 'Échéances (mois) *';
+
+  @override
+  String get featuresGoalsStartDateLabel => 'Première échéance *';
+
+  @override
+  String get featuresGoalsLinkTypeLabel => 'Source liée';
+
+  @override
+  String get featuresGoalsLinkNone => 'Non lié';
+
+  @override
+  String get featuresGoalsLinkAccountOption => 'Lier au solde du compte';
+
+  @override
+  String get featuresGoalsLinkCategoryOption =>
+      'Lier aux dépenses de catégorie';
+
+  @override
+  String featuresGoalsLinkAccount(Object name) {
+    return 'Compte : $name';
+  }
+
+  @override
+  String featuresGoalsLinkCategory(Object name) {
+    return 'Catégorie : $name';
+  }
+
+  @override
+  String get featuresGoalsAccountLabel => 'Compte';
+
+  @override
+  String get featuresGoalsCategoryLabel => 'Catégorie';
+
+  @override
+  String get featuresGoalsSelectPlaceholder => 'Sélectionner';
+
+  @override
+  String featuresGoalsProgressLabel(Object name) {
+    return 'Progression de $name';
+  }
+
+  @override
+  String featuresGoalsPlanProgressLabel(Object name) {
+    return 'Progression du remboursement de $name';
+  }
+
+  @override
+  String featuresGoalsProgressSummary(Object percent, Object remaining) {
+    return '$percent % épargnés ($remaining restants)';
+  }
+
+  @override
+  String featuresGoalsPlanProgressSummary(Object elapsed, Object total) {
+    return '$elapsed échéances sur $total sont arrivées à terme';
+  }
+
+  @override
+  String get featuresGoalsBadgeAchieved => 'Atteint';
+
+  @override
+  String get featuresGoalsBadgeBehind => 'En retard';
+
+  @override
+  String get featuresGoalsBadgeOverdue => 'En retard';
+
+  @override
+  String get featuresGoalsBadgeOnTrack => 'Dans les temps';
+
+  @override
+  String get featuresGoalsBadgeRepaid => 'Échéancier terminé';
+
+  @override
+  String featuresGoalsProjectedDate(Object date) {
+    return 'Achèvement prévu : $date';
+  }
+
+  @override
+  String get featuresGoalsProjectedUnavailable => 'nécessite des progrès';
+
+  @override
+  String featuresGoalsRequiredDaily(Object amount) {
+    return 'Épargnez $amount par jour';
+  }
+
+  @override
+  String featuresGoalsPlanTerms(Object principal, Object rate, Object periods) {
+    return 'Capital $principal · $rate % · $periods échéances';
+  }
+
+  @override
+  String get featuresGoalsMonthlyPayment => 'Mensualité';
+
+  @override
+  String get featuresGoalsTotalPayment => 'Total remboursé';
+
+  @override
+  String featuresGoalsTotalInterest(Object amount) {
+    return 'Intérêts totaux $amount';
+  }
+
+  @override
+  String get featuresGoalsRemainingBalance => 'Capital restant';
+
+  @override
+  String featuresGoalsNextDue(Object date, Object amount) {
+    return 'Prochain $date · $amount';
+  }
+
+  @override
+  String get featuresGoalsFinalDue => 'Dernière échéance';
+
+  @override
+  String get featuresGoalsViewSchedule => 'Voir le tableau';
+
+  @override
+  String featuresGoalsScheduleTitle(Object name) {
+    return 'Tableau d\'amortissement de $name';
+  }
+
+  @override
+  String get featuresGoalsScheduleTitleFallback => 'Tableau d\'amortissement';
+
+  @override
+  String featuresGoalsScheduleCaption(Object name) {
+    return 'Détail des échéances de $name';
+  }
+
+  @override
+  String get featuresGoalsTablePeriod => 'Échéance';
+
+  @override
+  String get featuresGoalsTableDueDate => 'Mois dû';
+
+  @override
+  String get featuresGoalsTablePayment => 'Paiement';
+
+  @override
+  String get featuresGoalsTablePrincipal => 'Capital';
+
+  @override
+  String get featuresGoalsTableInterest => 'Intérêts';
+
+  @override
+  String get featuresGoalsTableBalance => 'Restant';
+
+  @override
+  String get featuresGoalsPreviewTitle => 'Aperçu du remboursement';
+
+  @override
+  String get featuresGoalsSaveError => 'Échec de l\'enregistrement';
+
+  @override
+  String featuresGoalsDeleteGoalConfirm(Object name) {
+    return 'Supprimer « $name » ?';
+  }
+
+  @override
+  String featuresGoalsDeletePlanConfirm(Object name) {
+    return 'Supprimer « $name » ?';
+  }
+
+  @override
+  String get dashboardGoalRemindersTitle => 'Rappels d’objectifs';
+
+  @override
+  String get dashboardGoalRemindersSubtitle =>
+      'Les objectifs en retard apparaissent ici';
+
+  @override
+  String get dashboardGoalRemindersAllOnTrack =>
+      'Tous les objectifs sont dans les temps';
+
+  @override
+  String dashboardGoalRemindersBehind(
+    Object percent,
+    Object amount,
+    Object days,
+  ) {
+    return '$percent % épargnés, $amount manquants, $days jours restants';
+  }
+
+  @override
+  String dashboardGoalRemindersOverdue(
+    Object percent,
+    Object amount,
+    Object date,
+  ) {
+    return '$percent % épargnés, $amount manquants, échéance dépassée le $date';
+  }
+
+  @override
+  String get dashboardGoalRemindersManage => 'Gérer les objectifs';
+
+  @override
+  String get dashboardPersonalizeModulesGoalReminders => 'Rappels d’objectifs';
+
+  @override
+  String get featuresGoalsPlanProgressNote =>
+      'Les échéances écoulées sont estimées à partir de la première date ; les paiements réels ne sont pas enregistrés.';
+
+  @override
+  String get featuresGoalsScheduleInvalid => 'À modifier';
+
+  @override
+  String get featuresGoalsScheduleInvalidShort => 'À modifier';
 }

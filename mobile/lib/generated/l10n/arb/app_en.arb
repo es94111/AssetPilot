@@ -8925,5 +8925,435 @@
   "@featuresReportsRateTimestampUnavailable": {
     "description": "Web path: features.reports.rateTimestampUnavailable",
     "x-webPath": "features.reports.rateTimestampUnavailable"
+  },
+  "navGoals": "目标储蓄",
+  "@navGoals": {
+    "description": "Web path: nav.goals",
+    "x-webPath": "nav.goals"
+  },
+  "featuresGoalsSavingsTitle": "储蓄目标",
+  "@featuresGoalsSavingsTitle": {
+    "description": "Web path: features.goals.savingsTitle",
+    "x-webPath": "features.goals.savingsTitle"
+  },
+  "featuresGoalsRepaymentTitle": "还款计划",
+  "@featuresGoalsRepaymentTitle": {
+    "description": "Web path: features.goals.repaymentTitle",
+    "x-webPath": "features.goals.repaymentTitle"
+  },
+  "featuresGoalsAddGoal": "新增目标",
+  "@featuresGoalsAddGoal": {
+    "description": "Web path: features.goals.addGoal",
+    "x-webPath": "features.goals.addGoal"
+  },
+  "featuresGoalsAddPlan": "新增还款计划",
+  "@featuresGoalsAddPlan": {
+    "description": "Web path: features.goals.addPlan",
+    "x-webPath": "features.goals.addPlan"
+  },
+  "featuresGoalsEditGoal": "编辑目标",
+  "@featuresGoalsEditGoal": {
+    "description": "Web path: features.goals.editGoal",
+    "x-webPath": "features.goals.editGoal"
+  },
+  "featuresGoalsDeleteGoal": "删除目标",
+  "@featuresGoalsDeleteGoal": {
+    "description": "Web path: features.goals.deleteGoal",
+    "x-webPath": "features.goals.deleteGoal"
+  },
+  "featuresGoalsEditPlan": "编辑还款计划",
+  "@featuresGoalsEditPlan": {
+    "description": "Web path: features.goals.editPlan",
+    "x-webPath": "features.goals.editPlan"
+  },
+  "featuresGoalsDeletePlan": "删除还款计划",
+  "@featuresGoalsDeletePlan": {
+    "description": "Web path: features.goals.deletePlan",
+    "x-webPath": "features.goals.deletePlan"
+  },
+  "featuresGoalsNewGoal": "新增储蓄目标",
+  "@featuresGoalsNewGoal": {
+    "description": "Web path: features.goals.newGoal",
+    "x-webPath": "features.goals.newGoal"
+  },
+  "featuresGoalsNewPlan": "新增还款计划",
+  "@featuresGoalsNewPlan": {
+    "description": "Web path: features.goals.newPlan",
+    "x-webPath": "features.goals.newPlan"
+  },
+  "featuresGoalsNoGoals": "尚未创建储蓄目标",
+  "@featuresGoalsNoGoals": {
+    "description": "Web path: features.goals.noGoals",
+    "x-webPath": "features.goals.noGoals"
+  },
+  "featuresGoalsNoPlans": "尚未创建还款计划",
+  "@featuresGoalsNoPlans": {
+    "description": "Web path: features.goals.noPlans",
+    "x-webPath": "features.goals.noPlans"
+  },
+  "featuresGoalsGoalNameLabel": "目标名称 *",
+  "@featuresGoalsGoalNameLabel": {
+    "description": "Web path: features.goals.goalNameLabel",
+    "x-webPath": "features.goals.goalNameLabel"
+  },
+  "featuresGoalsPlanNameLabel": "计划名称 *",
+  "@featuresGoalsPlanNameLabel": {
+    "description": "Web path: features.goals.planNameLabel",
+    "x-webPath": "features.goals.planNameLabel"
+  },
+  "featuresGoalsTargetAmountLabel": "目标金额 *",
+  "@featuresGoalsTargetAmountLabel": {
+    "description": "Web path: features.goals.targetAmountLabel",
+    "x-webPath": "features.goals.targetAmountLabel"
+  },
+  "featuresGoalsTargetDateInputLabel": "目标日期 *",
+  "@featuresGoalsTargetDateInputLabel": {
+    "description": "Web path: features.goals.targetDateInputLabel",
+    "x-webPath": "features.goals.targetDateInputLabel"
+  },
+  "featuresGoalsTargetDateLabel": "目标日期",
+  "@featuresGoalsTargetDateLabel": {
+    "description": "Web path: features.goals.targetDateLabel",
+    "x-webPath": "features.goals.targetDateLabel"
+  },
+  "featuresGoalsPrincipalLabel": "本金 *",
+  "@featuresGoalsPrincipalLabel": {
+    "description": "Web path: features.goals.principalLabel",
+    "x-webPath": "features.goals.principalLabel"
+  },
+  "featuresGoalsRateLabel": "年利率（%）",
+  "@featuresGoalsRateLabel": {
+    "description": "Web path: features.goals.rateLabel",
+    "x-webPath": "features.goals.rateLabel"
+  },
+  "featuresGoalsPeriodsLabel": "期数（月）*",
+  "@featuresGoalsPeriodsLabel": {
+    "description": "Web path: features.goals.periodsLabel",
+    "x-webPath": "features.goals.periodsLabel"
+  },
+  "featuresGoalsStartDateLabel": "首次应缴日 *",
+  "@featuresGoalsStartDateLabel": {
+    "description": "Web path: features.goals.startDateLabel",
+    "x-webPath": "features.goals.startDateLabel"
+  },
+  "featuresGoalsLinkTypeLabel": "绑定来源",
+  "@featuresGoalsLinkTypeLabel": {
+    "description": "Web path: features.goals.linkTypeLabel",
+    "x-webPath": "features.goals.linkTypeLabel"
+  },
+  "featuresGoalsLinkNone": "不绑定",
+  "@featuresGoalsLinkNone": {
+    "description": "Web path: features.goals.linkNone",
+    "x-webPath": "features.goals.linkNone"
+  },
+  "featuresGoalsLinkAccountOption": "绑定账户余额",
+  "@featuresGoalsLinkAccountOption": {
+    "description": "Web path: features.goals.linkAccountOption",
+    "x-webPath": "features.goals.linkAccountOption"
+  },
+  "featuresGoalsLinkCategoryOption": "绑定分类支出",
+  "@featuresGoalsLinkCategoryOption": {
+    "description": "Web path: features.goals.linkCategoryOption",
+    "x-webPath": "features.goals.linkCategoryOption"
+  },
+  "featuresGoalsLinkAccount": "账户：{name}",
+  "@featuresGoalsLinkAccount": {
+    "description": "Web path: features.goals.linkAccount",
+    "x-webPath": "features.goals.linkAccount",
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "featuresGoalsLinkCategory": "分类：{name}",
+  "@featuresGoalsLinkCategory": {
+    "description": "Web path: features.goals.linkCategory",
+    "x-webPath": "features.goals.linkCategory",
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "featuresGoalsAccountLabel": "账户",
+  "@featuresGoalsAccountLabel": {
+    "description": "Web path: features.goals.accountLabel",
+    "x-webPath": "features.goals.accountLabel"
+  },
+  "featuresGoalsCategoryLabel": "分类",
+  "@featuresGoalsCategoryLabel": {
+    "description": "Web path: features.goals.categoryLabel",
+    "x-webPath": "features.goals.categoryLabel"
+  },
+  "featuresGoalsSelectPlaceholder": "请选择",
+  "@featuresGoalsSelectPlaceholder": {
+    "description": "Web path: features.goals.selectPlaceholder",
+    "x-webPath": "features.goals.selectPlaceholder"
+  },
+  "featuresGoalsProgressLabel": "{name} 进度",
+  "@featuresGoalsProgressLabel": {
+    "description": "Web path: features.goals.progressLabel",
+    "x-webPath": "features.goals.progressLabel",
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "featuresGoalsPlanProgressLabel": "{name} 还款进度",
+  "@featuresGoalsPlanProgressLabel": {
+    "description": "Web path: features.goals.planProgressLabel",
+    "x-webPath": "features.goals.planProgressLabel",
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "featuresGoalsProgressSummary": "已存 {percent}%（尚缺 {remaining}）",
+  "@featuresGoalsProgressSummary": {
+    "description": "Web path: features.goals.progressSummary",
+    "x-webPath": "features.goals.progressSummary",
+    "placeholders": {
+      "percent": {},
+      "remaining": {}
+    }
+  },
+  "featuresGoalsPlanProgressSummary": "{elapsed} of {total} installments due",
+  "@featuresGoalsPlanProgressSummary": {
+    "description": "Web path: features.goals.planProgressSummary",
+    "x-webPath": "features.goals.planProgressSummary",
+    "placeholders": {
+      "elapsed": {},
+      "total": {}
+    }
+  },
+  "featuresGoalsBadgeAchieved": "已达成",
+  "@featuresGoalsBadgeAchieved": {
+    "description": "Web path: features.goals.badgeAchieved",
+    "x-webPath": "features.goals.badgeAchieved"
+  },
+  "featuresGoalsBadgeBehind": "进度落后",
+  "@featuresGoalsBadgeBehind": {
+    "description": "Web path: features.goals.badgeBehind",
+    "x-webPath": "features.goals.badgeBehind"
+  },
+  "featuresGoalsBadgeOverdue": "已逾期",
+  "@featuresGoalsBadgeOverdue": {
+    "description": "Web path: features.goals.badgeOverdue",
+    "x-webPath": "features.goals.badgeOverdue"
+  },
+  "featuresGoalsBadgeOnTrack": "进度正常",
+  "@featuresGoalsBadgeOnTrack": {
+    "description": "Web path: features.goals.badgeOnTrack",
+    "x-webPath": "features.goals.badgeOnTrack"
+  },
+  "featuresGoalsBadgeRepaid": "Schedule ended",
+  "@featuresGoalsBadgeRepaid": {
+    "description": "Web path: features.goals.badgeRepaid",
+    "x-webPath": "features.goals.badgeRepaid"
+  },
+  "featuresGoalsProjectedDate": "预计达成日：{date}",
+  "@featuresGoalsProjectedDate": {
+    "description": "Web path: features.goals.projectedDate",
+    "x-webPath": "features.goals.projectedDate",
+    "placeholders": {
+      "date": {}
+    }
+  },
+  "featuresGoalsProjectedUnavailable": "需有存款进度",
+  "@featuresGoalsProjectedUnavailable": {
+    "description": "Web path: features.goals.projectedUnavailable",
+    "x-webPath": "features.goals.projectedUnavailable"
+  },
+  "featuresGoalsRequiredDaily": "每日需存 {amount}",
+  "@featuresGoalsRequiredDaily": {
+    "description": "Web path: features.goals.requiredDaily",
+    "x-webPath": "features.goals.requiredDaily",
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "featuresGoalsPlanTerms": "本金 {principal} · 年利率 {rate}% · {periods} 期",
+  "@featuresGoalsPlanTerms": {
+    "description": "Web path: features.goals.planTerms",
+    "x-webPath": "features.goals.planTerms",
+    "placeholders": {
+      "principal": {},
+      "rate": {},
+      "periods": {}
+    }
+  },
+  "featuresGoalsMonthlyPayment": "每月应缴",
+  "@featuresGoalsMonthlyPayment": {
+    "description": "Web path: features.goals.monthlyPayment",
+    "x-webPath": "features.goals.monthlyPayment"
+  },
+  "featuresGoalsTotalPayment": "还款总额",
+  "@featuresGoalsTotalPayment": {
+    "description": "Web path: features.goals.totalPayment",
+    "x-webPath": "features.goals.totalPayment"
+  },
+  "featuresGoalsTotalInterest": "利息总额 {amount}",
+  "@featuresGoalsTotalInterest": {
+    "description": "Web path: features.goals.totalInterest",
+    "x-webPath": "features.goals.totalInterest",
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "featuresGoalsRemainingBalance": "剩余本金",
+  "@featuresGoalsRemainingBalance": {
+    "description": "Web path: features.goals.remainingBalance",
+    "x-webPath": "features.goals.remainingBalance"
+  },
+  "featuresGoalsNextDue": "下期 {date} · {amount}",
+  "@featuresGoalsNextDue": {
+    "description": "Web path: features.goals.nextDue",
+    "x-webPath": "features.goals.nextDue",
+    "placeholders": {
+      "date": {},
+      "amount": {}
+    }
+  },
+  "featuresGoalsFinalDue": "最后一期",
+  "@featuresGoalsFinalDue": {
+    "description": "Web path: features.goals.finalDue",
+    "x-webPath": "features.goals.finalDue"
+  },
+  "featuresGoalsViewSchedule": "查看摊还表",
+  "@featuresGoalsViewSchedule": {
+    "description": "Web path: features.goals.viewSchedule",
+    "x-webPath": "features.goals.viewSchedule"
+  },
+  "featuresGoalsScheduleTitle": "{name} 摊还表",
+  "@featuresGoalsScheduleTitle": {
+    "description": "Web path: features.goals.scheduleTitle",
+    "x-webPath": "features.goals.scheduleTitle",
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "featuresGoalsScheduleTitleFallback": "摊还表",
+  "@featuresGoalsScheduleTitleFallback": {
+    "description": "Web path: features.goals.scheduleTitleFallback",
+    "x-webPath": "features.goals.scheduleTitleFallback"
+  },
+  "featuresGoalsScheduleCaption": "{name} 各期还款明细",
+  "@featuresGoalsScheduleCaption": {
+    "description": "Web path: features.goals.scheduleCaption",
+    "x-webPath": "features.goals.scheduleCaption",
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "featuresGoalsTablePeriod": "期数",
+  "@featuresGoalsTablePeriod": {
+    "description": "Web path: features.goals.tablePeriod",
+    "x-webPath": "features.goals.tablePeriod"
+  },
+  "featuresGoalsTableDueDate": "应缴月",
+  "@featuresGoalsTableDueDate": {
+    "description": "Web path: features.goals.tableDueDate",
+    "x-webPath": "features.goals.tableDueDate"
+  },
+  "featuresGoalsTablePayment": "应缴金额",
+  "@featuresGoalsTablePayment": {
+    "description": "Web path: features.goals.tablePayment",
+    "x-webPath": "features.goals.tablePayment"
+  },
+  "featuresGoalsTablePrincipal": "本金",
+  "@featuresGoalsTablePrincipal": {
+    "description": "Web path: features.goals.tablePrincipal",
+    "x-webPath": "features.goals.tablePrincipal"
+  },
+  "featuresGoalsTableInterest": "利息",
+  "@featuresGoalsTableInterest": {
+    "description": "Web path: features.goals.tableInterest",
+    "x-webPath": "features.goals.tableInterest"
+  },
+  "featuresGoalsTableBalance": "剩余本金",
+  "@featuresGoalsTableBalance": {
+    "description": "Web path: features.goals.tableBalance",
+    "x-webPath": "features.goals.tableBalance"
+  },
+  "featuresGoalsPreviewTitle": "摊还试算",
+  "@featuresGoalsPreviewTitle": {
+    "description": "Web path: features.goals.previewTitle",
+    "x-webPath": "features.goals.previewTitle"
+  },
+  "featuresGoalsSaveError": "保存失败，请稍后再试",
+  "@featuresGoalsSaveError": {
+    "description": "Web path: features.goals.saveError",
+    "x-webPath": "features.goals.saveError"
+  },
+  "featuresGoalsDeleteGoalConfirm": "确定删除「{name}」？",
+  "@featuresGoalsDeleteGoalConfirm": {
+    "description": "Web path: features.goals.deleteGoalConfirm",
+    "x-webPath": "features.goals.deleteGoalConfirm",
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "featuresGoalsDeletePlanConfirm": "确定删除「{name}」？",
+  "@featuresGoalsDeletePlanConfirm": {
+    "description": "Web path: features.goals.deletePlanConfirm",
+    "x-webPath": "features.goals.deletePlanConfirm",
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "dashboardGoalRemindersTitle": "目标进度提醒",
+  "@dashboardGoalRemindersTitle": {
+    "description": "Web path: dashboard.goalReminders.title",
+    "x-webPath": "dashboard.goalReminders.title"
+  },
+  "dashboardGoalRemindersSubtitle": "进度落后的储蓄目标会在此提醒",
+  "@dashboardGoalRemindersSubtitle": {
+    "description": "Web path: dashboard.goalReminders.subtitle",
+    "x-webPath": "dashboard.goalReminders.subtitle"
+  },
+  "dashboardGoalRemindersAllOnTrack": "所有储蓄目标进度正常",
+  "@dashboardGoalRemindersAllOnTrack": {
+    "description": "Web path: dashboard.goalReminders.allOnTrack",
+    "x-webPath": "dashboard.goalReminders.allOnTrack"
+  },
+  "dashboardGoalRemindersBehind": "已存 {percent}%，尚缺 {amount}，剩 {days} 天",
+  "@dashboardGoalRemindersBehind": {
+    "description": "Web path: dashboard.goalReminders.behind",
+    "x-webPath": "dashboard.goalReminders.behind",
+    "placeholders": {
+      "percent": {},
+      "amount": {},
+      "days": {}
+    }
+  },
+  "dashboardGoalRemindersOverdue": "已存 {percent}%，尚缺 {amount}，已过目标日 {date}",
+  "@dashboardGoalRemindersOverdue": {
+    "description": "Web path: dashboard.goalReminders.overdue",
+    "x-webPath": "dashboard.goalReminders.overdue",
+    "placeholders": {
+      "percent": {},
+      "amount": {},
+      "date": {}
+    }
+  },
+  "dashboardGoalRemindersManage": "管理目标储蓄",
+  "@dashboardGoalRemindersManage": {
+    "description": "Web path: dashboard.goalReminders.manage",
+    "x-webPath": "dashboard.goalReminders.manage"
+  },
+  "dashboardPersonalizeModulesGoalReminders": "目标进度提醒",
+  "@dashboardPersonalizeModulesGoalReminders": {
+    "description": "Web path: dashboard.personalize.modules.goalReminders",
+    "x-webPath": "dashboard.personalize.modules.goalReminders"
+  },
+  "featuresGoalsPlanProgressNote": "Due periods are estimated from the first due date; actual payments are not recorded.",
+  "@featuresGoalsPlanProgressNote": {
+    "description": "Web path: features.goals.planProgressNote",
+    "x-webPath": "features.goals.planProgressNote"
+  },
+  "featuresGoalsScheduleInvalid": "Needs editing",
+  "@featuresGoalsScheduleInvalid": {
+    "description": "Web path: features.goals.scheduleInvalid",
+    "x-webPath": "features.goals.scheduleInvalid"
+  },
+  "featuresGoalsScheduleInvalidShort": "Needs editing",
+  "@featuresGoalsScheduleInvalidShort": {
+    "description": "Web path: features.goals.scheduleInvalidShort",
+    "x-webPath": "features.goals.scheduleInvalidShort"
   }
 }

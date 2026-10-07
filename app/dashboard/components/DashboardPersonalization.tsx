@@ -26,6 +26,7 @@ const labelKeys: Record<DashboardModuleId, string> = {
   cashOutlook: "dashboard.personalize.modules.cashOutlook",
   whyChanged: "dashboard.personalize.modules.whyChanged",
   savingsScenario: "dashboard.personalize.modules.savingsScenario",
+  goalReminders: "dashboard.personalize.modules.goalReminders",
   spending: "dashboard.personalize.modules.spending",
   portfolioHealth: "dashboard.personalize.modules.portfolioHealth",
   incomeRecent: "dashboard.personalize.modules.incomeRecent",

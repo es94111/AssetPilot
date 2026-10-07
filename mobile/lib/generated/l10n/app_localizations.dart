@@ -10172,6 +10172,458 @@ abstract class AppLocalizations {
   /// In zh_Hant_TW, this message translates to:
   /// **'未提供時間戳（系統預設匯率）'**
   String get featuresReportsRateTimestampUnavailable;
+
+  /// Web path: nav.goals
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'目標儲蓄'**
+  String get navGoals;
+
+  /// Web path: features.goals.savingsTitle
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'儲蓄目標'**
+  String get featuresGoalsSavingsTitle;
+
+  /// Web path: features.goals.repaymentTitle
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'還款計畫'**
+  String get featuresGoalsRepaymentTitle;
+
+  /// Web path: features.goals.addGoal
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'新增目標'**
+  String get featuresGoalsAddGoal;
+
+  /// Web path: features.goals.addPlan
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'新增還款計畫'**
+  String get featuresGoalsAddPlan;
+
+  /// Web path: features.goals.editGoal
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'編輯目標'**
+  String get featuresGoalsEditGoal;
+
+  /// Web path: features.goals.deleteGoal
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'刪除目標'**
+  String get featuresGoalsDeleteGoal;
+
+  /// Web path: features.goals.editPlan
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'編輯還款計畫'**
+  String get featuresGoalsEditPlan;
+
+  /// Web path: features.goals.deletePlan
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'刪除還款計畫'**
+  String get featuresGoalsDeletePlan;
+
+  /// Web path: features.goals.newGoal
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'新增儲蓄目標'**
+  String get featuresGoalsNewGoal;
+
+  /// Web path: features.goals.newPlan
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'新增還款計畫'**
+  String get featuresGoalsNewPlan;
+
+  /// Web path: features.goals.noGoals
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'尚未建立儲蓄目標'**
+  String get featuresGoalsNoGoals;
+
+  /// Web path: features.goals.noPlans
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'尚未建立還款計畫'**
+  String get featuresGoalsNoPlans;
+
+  /// Web path: features.goals.goalNameLabel
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'目標名稱 *'**
+  String get featuresGoalsGoalNameLabel;
+
+  /// Web path: features.goals.planNameLabel
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'計畫名稱 *'**
+  String get featuresGoalsPlanNameLabel;
+
+  /// Web path: features.goals.targetAmountLabel
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'目標金額 *'**
+  String get featuresGoalsTargetAmountLabel;
+
+  /// Web path: features.goals.targetDateInputLabel
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'目標日期 *'**
+  String get featuresGoalsTargetDateInputLabel;
+
+  /// Web path: features.goals.targetDateLabel
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'目標日期'**
+  String get featuresGoalsTargetDateLabel;
+
+  /// Web path: features.goals.principalLabel
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'本金 *'**
+  String get featuresGoalsPrincipalLabel;
+
+  /// Web path: features.goals.rateLabel
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'年利率（%）'**
+  String get featuresGoalsRateLabel;
+
+  /// Web path: features.goals.periodsLabel
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'期數（月）*'**
+  String get featuresGoalsPeriodsLabel;
+
+  /// Web path: features.goals.startDateLabel
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'首次應繳日 *'**
+  String get featuresGoalsStartDateLabel;
+
+  /// Web path: features.goals.linkTypeLabel
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'綁定來源'**
+  String get featuresGoalsLinkTypeLabel;
+
+  /// Web path: features.goals.linkNone
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'不綁定'**
+  String get featuresGoalsLinkNone;
+
+  /// Web path: features.goals.linkAccountOption
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'綁定帳戶餘額'**
+  String get featuresGoalsLinkAccountOption;
+
+  /// Web path: features.goals.linkCategoryOption
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'綁定分類支出'**
+  String get featuresGoalsLinkCategoryOption;
+
+  /// Web path: features.goals.linkAccount
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'帳戶：{name}'**
+  String featuresGoalsLinkAccount(Object name);
+
+  /// Web path: features.goals.linkCategory
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'分類：{name}'**
+  String featuresGoalsLinkCategory(Object name);
+
+  /// Web path: features.goals.accountLabel
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'帳戶'**
+  String get featuresGoalsAccountLabel;
+
+  /// Web path: features.goals.categoryLabel
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'分類'**
+  String get featuresGoalsCategoryLabel;
+
+  /// Web path: features.goals.selectPlaceholder
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'請選擇'**
+  String get featuresGoalsSelectPlaceholder;
+
+  /// Web path: features.goals.progressLabel
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'{name} 進度'**
+  String featuresGoalsProgressLabel(Object name);
+
+  /// Web path: features.goals.planProgressLabel
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'{name} 還款進度'**
+  String featuresGoalsPlanProgressLabel(Object name);
+
+  /// Web path: features.goals.progressSummary
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'已存 {percent}%（尚缺 {remaining}）'**
+  String featuresGoalsProgressSummary(Object percent, Object remaining);
+
+  /// Web path: features.goals.planProgressSummary
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'時程已到期 {elapsed}／{total} 期'**
+  String featuresGoalsPlanProgressSummary(Object elapsed, Object total);
+
+  /// Web path: features.goals.badgeAchieved
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'已達成'**
+  String get featuresGoalsBadgeAchieved;
+
+  /// Web path: features.goals.badgeBehind
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'進度落後'**
+  String get featuresGoalsBadgeBehind;
+
+  /// Web path: features.goals.badgeOverdue
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'已逾期'**
+  String get featuresGoalsBadgeOverdue;
+
+  /// Web path: features.goals.badgeOnTrack
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'進度正常'**
+  String get featuresGoalsBadgeOnTrack;
+
+  /// Web path: features.goals.badgeRepaid
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'期程結束'**
+  String get featuresGoalsBadgeRepaid;
+
+  /// Web path: features.goals.projectedDate
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'預估達成日：{date}'**
+  String featuresGoalsProjectedDate(Object date);
+
+  /// Web path: features.goals.projectedUnavailable
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'需有存款進度'**
+  String get featuresGoalsProjectedUnavailable;
+
+  /// Web path: features.goals.requiredDaily
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'每日需存 {amount}'**
+  String featuresGoalsRequiredDaily(Object amount);
+
+  /// Web path: features.goals.planTerms
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'本金 {principal} · 年利率 {rate}% · {periods} 期'**
+  String featuresGoalsPlanTerms(Object principal, Object rate, Object periods);
+
+  /// Web path: features.goals.monthlyPayment
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'每月應繳'**
+  String get featuresGoalsMonthlyPayment;
+
+  /// Web path: features.goals.totalPayment
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'還款總額'**
+  String get featuresGoalsTotalPayment;
+
+  /// Web path: features.goals.totalInterest
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'利息總額 {amount}'**
+  String featuresGoalsTotalInterest(Object amount);
+
+  /// Web path: features.goals.remainingBalance
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'剩餘本金'**
+  String get featuresGoalsRemainingBalance;
+
+  /// Web path: features.goals.nextDue
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'下期 {date} · {amount}'**
+  String featuresGoalsNextDue(Object date, Object amount);
+
+  /// Web path: features.goals.finalDue
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'最後一期'**
+  String get featuresGoalsFinalDue;
+
+  /// Web path: features.goals.viewSchedule
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'查看攤還表'**
+  String get featuresGoalsViewSchedule;
+
+  /// Web path: features.goals.scheduleTitle
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'{name} 攤還表'**
+  String featuresGoalsScheduleTitle(Object name);
+
+  /// Web path: features.goals.scheduleTitleFallback
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'攤還表'**
+  String get featuresGoalsScheduleTitleFallback;
+
+  /// Web path: features.goals.scheduleCaption
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'{name} 各期還款明細'**
+  String featuresGoalsScheduleCaption(Object name);
+
+  /// Web path: features.goals.tablePeriod
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'期數'**
+  String get featuresGoalsTablePeriod;
+
+  /// Web path: features.goals.tableDueDate
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'應繳月'**
+  String get featuresGoalsTableDueDate;
+
+  /// Web path: features.goals.tablePayment
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'應繳金額'**
+  String get featuresGoalsTablePayment;
+
+  /// Web path: features.goals.tablePrincipal
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'本金'**
+  String get featuresGoalsTablePrincipal;
+
+  /// Web path: features.goals.tableInterest
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'利息'**
+  String get featuresGoalsTableInterest;
+
+  /// Web path: features.goals.tableBalance
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'剩餘本金'**
+  String get featuresGoalsTableBalance;
+
+  /// Web path: features.goals.previewTitle
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'攤還試算'**
+  String get featuresGoalsPreviewTitle;
+
+  /// Web path: features.goals.saveError
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'儲存失敗，請稍後再試'**
+  String get featuresGoalsSaveError;
+
+  /// Web path: features.goals.deleteGoalConfirm
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'確定刪除「{name}」？'**
+  String featuresGoalsDeleteGoalConfirm(Object name);
+
+  /// Web path: features.goals.deletePlanConfirm
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'確定刪除「{name}」？'**
+  String featuresGoalsDeletePlanConfirm(Object name);
+
+  /// Web path: dashboard.goalReminders.title
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'目標進度提醒'**
+  String get dashboardGoalRemindersTitle;
+
+  /// Web path: dashboard.goalReminders.subtitle
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'進度落後的儲蓄目標會在此提醒'**
+  String get dashboardGoalRemindersSubtitle;
+
+  /// Web path: dashboard.goalReminders.allOnTrack
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'所有儲蓄目標進度正常'**
+  String get dashboardGoalRemindersAllOnTrack;
+
+  /// Web path: dashboard.goalReminders.behind
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'已存 {percent}%，尚缺 {amount}，剩 {days} 天'**
+  String dashboardGoalRemindersBehind(
+    Object percent,
+    Object amount,
+    Object days,
+  );
+
+  /// Web path: dashboard.goalReminders.overdue
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'已存 {percent}%，尚缺 {amount}，已過目標日 {date}'**
+  String dashboardGoalRemindersOverdue(
+    Object percent,
+    Object amount,
+    Object date,
+  );
+
+  /// Web path: dashboard.goalReminders.manage
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'管理目標儲蓄'**
+  String get dashboardGoalRemindersManage;
+
+  /// Web path: dashboard.personalize.modules.goalReminders
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'目標進度提醒'**
+  String get dashboardPersonalizeModulesGoalReminders;
+
+  /// Web path: features.goals.planProgressNote
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'期數依首次應繳日推算；此計畫尚未記錄實際還款。'**
+  String get featuresGoalsPlanProgressNote;
+
+  /// Web path: features.goals.scheduleInvalid
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'計畫需調整'**
+  String get featuresGoalsScheduleInvalid;
+
+  /// Web path: features.goals.scheduleInvalidShort
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'計畫需調整'**
+  String get featuresGoalsScheduleInvalidShort;
 }
 
 class _AppLocalizationsDelegate

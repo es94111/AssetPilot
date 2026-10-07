@@ -5779,4 +5779,271 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get featuresReportsRateTimestampUnavailable =>
       'الطابع الزمني غير متاح (سعر النظام الافتراضي)';
+
+  @override
+  String get navGoals => 'الأهداف';
+
+  @override
+  String get featuresGoalsSavingsTitle => 'أهداف الادخار';
+
+  @override
+  String get featuresGoalsRepaymentTitle => 'خطط السداد';
+
+  @override
+  String get featuresGoalsAddGoal => 'إضافة هدف';
+
+  @override
+  String get featuresGoalsAddPlan => 'إضافة خطة سداد';
+
+  @override
+  String get featuresGoalsEditGoal => 'تحرير الهدف';
+
+  @override
+  String get featuresGoalsDeleteGoal => 'حذف الهدف';
+
+  @override
+  String get featuresGoalsEditPlan => 'تحرير خطة السداد';
+
+  @override
+  String get featuresGoalsDeletePlan => 'حذف خطة السداد';
+
+  @override
+  String get featuresGoalsNewGoal => 'هدف ادخار جديد';
+
+  @override
+  String get featuresGoalsNewPlan => 'خطة سداد جديدة';
+
+  @override
+  String get featuresGoalsNoGoals => 'لا توجد أهداف ادخار بعد';
+
+  @override
+  String get featuresGoalsNoPlans => 'لا توجد خطط سداد بعد';
+
+  @override
+  String get featuresGoalsGoalNameLabel => 'اسم الهدف *';
+
+  @override
+  String get featuresGoalsPlanNameLabel => 'اسم الخطة *';
+
+  @override
+  String get featuresGoalsTargetAmountLabel => 'المبلغ المستهدف *';
+
+  @override
+  String get featuresGoalsTargetDateInputLabel => 'التاريخ المستهدف *';
+
+  @override
+  String get featuresGoalsTargetDateLabel => 'التاريخ المستهدف';
+
+  @override
+  String get featuresGoalsPrincipalLabel => 'أصل الدين *';
+
+  @override
+  String get featuresGoalsRateLabel => 'المعدل السنوي (%)';
+
+  @override
+  String get featuresGoalsPeriodsLabel => 'عدد الأقساط (أشهر) *';
+
+  @override
+  String get featuresGoalsStartDateLabel => 'تاريخ أول قسط *';
+
+  @override
+  String get featuresGoalsLinkTypeLabel => 'المصدر المرتبط';
+
+  @override
+  String get featuresGoalsLinkNone => 'غير مرتبط';
+
+  @override
+  String get featuresGoalsLinkAccountOption => 'ربط رصيد الحساب';
+
+  @override
+  String get featuresGoalsLinkCategoryOption => 'ربط إنفاق الفئة';
+
+  @override
+  String featuresGoalsLinkAccount(Object name) {
+    return 'الحساب: $name';
+  }
+
+  @override
+  String featuresGoalsLinkCategory(Object name) {
+    return 'الفئة: $name';
+  }
+
+  @override
+  String get featuresGoalsAccountLabel => 'الحساب';
+
+  @override
+  String get featuresGoalsCategoryLabel => 'الفئة';
+
+  @override
+  String get featuresGoalsSelectPlaceholder => 'اختر';
+
+  @override
+  String featuresGoalsProgressLabel(Object name) {
+    return 'تقدم $name';
+  }
+
+  @override
+  String featuresGoalsPlanProgressLabel(Object name) {
+    return 'تقدم سداد $name';
+  }
+
+  @override
+  String featuresGoalsProgressSummary(Object percent, Object remaining) {
+    return 'تم توفير $percent% (يتبقى $remaining)';
+  }
+
+  @override
+  String featuresGoalsPlanProgressSummary(Object elapsed, Object total) {
+    return 'استحق $elapsed من أصل $total قسطًا';
+  }
+
+  @override
+  String get featuresGoalsBadgeAchieved => 'محقق';
+
+  @override
+  String get featuresGoalsBadgeBehind => 'متأخر';
+
+  @override
+  String get featuresGoalsBadgeOverdue => 'متأخر عن الموعد';
+
+  @override
+  String get featuresGoalsBadgeOnTrack => 'على المسار';
+
+  @override
+  String get featuresGoalsBadgeRepaid => 'انتهى الجدول';
+
+  @override
+  String featuresGoalsProjectedDate(Object date) {
+    return 'الإنجاز المتوقع: $date';
+  }
+
+  @override
+  String get featuresGoalsProjectedUnavailable => 'يتطلب تقدمًا';
+
+  @override
+  String featuresGoalsRequiredDaily(Object amount) {
+    return 'وفّر $amount يوميًا';
+  }
+
+  @override
+  String featuresGoalsPlanTerms(Object principal, Object rate, Object periods) {
+    return 'أصل $principal · $rate% سنويًا · $periods قسطًا';
+  }
+
+  @override
+  String get featuresGoalsMonthlyPayment => 'القسط الشهري';
+
+  @override
+  String get featuresGoalsTotalPayment => 'إجمالي السداد';
+
+  @override
+  String featuresGoalsTotalInterest(Object amount) {
+    return 'إجمالي الفائدة $amount';
+  }
+
+  @override
+  String get featuresGoalsRemainingBalance => 'الرصيد المتبقي';
+
+  @override
+  String featuresGoalsNextDue(Object date, Object amount) {
+    return 'التالي $date · $amount';
+  }
+
+  @override
+  String get featuresGoalsFinalDue => 'القسط الأخير';
+
+  @override
+  String get featuresGoalsViewSchedule => 'عرض الجدول';
+
+  @override
+  String featuresGoalsScheduleTitle(Object name) {
+    return 'جدول إطفاء $name';
+  }
+
+  @override
+  String get featuresGoalsScheduleTitleFallback => 'جدول الإطفاء';
+
+  @override
+  String featuresGoalsScheduleCaption(Object name) {
+    return 'تفاصيل السداد لـ $name';
+  }
+
+  @override
+  String get featuresGoalsTablePeriod => 'القسط';
+
+  @override
+  String get featuresGoalsTableDueDate => 'شهر الاستحقاق';
+
+  @override
+  String get featuresGoalsTablePayment => 'القسط';
+
+  @override
+  String get featuresGoalsTablePrincipal => 'أصل الدين';
+
+  @override
+  String get featuresGoalsTableInterest => 'الفائدة';
+
+  @override
+  String get featuresGoalsTableBalance => 'المتبقي';
+
+  @override
+  String get featuresGoalsPreviewTitle => 'معاينة السداد';
+
+  @override
+  String get featuresGoalsSaveError => 'فشل الحفظ';
+
+  @override
+  String featuresGoalsDeleteGoalConfirm(Object name) {
+    return 'هل تريد حذف «$name»؟';
+  }
+
+  @override
+  String featuresGoalsDeletePlanConfirm(Object name) {
+    return 'هل تريد حذف «$name»؟';
+  }
+
+  @override
+  String get dashboardGoalRemindersTitle => 'تذكيرات الأهداف';
+
+  @override
+  String get dashboardGoalRemindersSubtitle =>
+      'تظهر هنا أهداف الادخار المتأخرة';
+
+  @override
+  String get dashboardGoalRemindersAllOnTrack =>
+      'جميع أهداف الادخار على المسار';
+
+  @override
+  String dashboardGoalRemindersBehind(
+    Object percent,
+    Object amount,
+    Object days,
+  ) {
+    return 'تم توفير $percent%، ينقص $amount، يتبقى $days يومًا';
+  }
+
+  @override
+  String dashboardGoalRemindersOverdue(
+    Object percent,
+    Object amount,
+    Object date,
+  ) {
+    return 'تم توفير $percent%، ينقص $amount، انقضى $date';
+  }
+
+  @override
+  String get dashboardGoalRemindersManage => 'إدارة الأهداف';
+
+  @override
+  String get dashboardPersonalizeModulesGoalReminders => 'تذكيرات الأهداف';
+
+  @override
+  String get featuresGoalsPlanProgressNote =>
+      'تُقدّر الأقساط المستحقة من تاريخ أول استحقاق؛ لا تُسجّل الدفعات الفعلية.';
+
+  @override
+  String get featuresGoalsScheduleInvalid => 'يتطلب التعديل';
+
+  @override
+  String get featuresGoalsScheduleInvalidShort => 'يتطلب التعديل';
 }

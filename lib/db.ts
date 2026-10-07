@@ -1264,6 +1264,41 @@ END $$`);
     "CREATE INDEX IF NOT EXISTS idx_transactions_repayment_summary ON transactions(repayment_summary_id) WHERE repayment_summary_id != ''",
   );
 
+  // 目標儲蓄與還款計畫（issue #260）：追蹤「為某個目標存錢」與「負債攤還」進度。
+  // 綁定來源二選一（帳戶餘額／分類支出累計）或皆不綁定；目標金額與攤還欄位一律
+  // 以使用者基準幣別（TWD）為單位，故不需額外幣別欄位。
+  db.run(`CREATE TABLE IF NOT EXISTS savings_goals (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    name TEXT NOT NULL,
+    target_amount NUMERIC NOT NULL CHECK (target_amount > 0 AND target_amount::text NOT IN ('NaN', 'Infinity', '-Infinity')),
+    target_date TEXT NOT NULL,
+    start_date TEXT NOT NULL,
+    account_id TEXT DEFAULT '',
+    category_id TEXT DEFAULT '',
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL
+  )`);
+  alterIgnore(
+    "CREATE INDEX IF NOT EXISTS idx_savings_goals_user ON savings_goals(user_id, created_at)",
+  );
+
+  db.run(`CREATE TABLE IF NOT EXISTS repayment_plans (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    name TEXT NOT NULL,
+    principal NUMERIC NOT NULL CHECK (principal > 0 AND principal::text NOT IN ('NaN', 'Infinity', '-Infinity')),
+    annual_rate NUMERIC NOT NULL DEFAULT 0 CHECK (annual_rate >= 0 AND annual_rate::text NOT IN ('NaN', 'Infinity', '-Infinity')),
+    periods INTEGER NOT NULL CHECK (periods > 0),
+    start_date TEXT NOT NULL,
+    account_id TEXT DEFAULT '',
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL
+  )`);
+  alterIgnore(
+    "CREATE INDEX IF NOT EXISTS idx_repayment_plans_user ON repayment_plans(user_id, start_date)",
+  );
+
   // 008-api-token-webhook：第三方自動化整合用的 API Token 與 Webhook 訂閱（issue #258）。
   // Token 只存雜湊（token_hash，不可逆）；Webhook 簽章密鑰需於投遞時取回明文計算 HMAC，
   // 故以 AES-256-GCM 加密後存於 secret_encrypted（見 lib/apiTokenCore.ts 的設計取捨）。

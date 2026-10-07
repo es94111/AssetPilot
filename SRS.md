@@ -277,10 +277,27 @@ Google 或 LINE 首次登入時，若 Email 尚未存在，系統會自動建立
 
 固定收支列表每一筆卡片顯示：起始日、上次產生日、下次產生日。若啟用且下次產生日已經到期，會以警示色加上「（待執行）」提醒。備註也會直接顯示在卡片上。編輯現有固定收支時，若原分類或帳戶已被刪除，下拉選單會插入「（原分類已刪除）」或「（原帳戶已刪除）」佔位項目，避免 `select.value` 靜默被清空。
 
+#### 目標儲蓄與還款計畫
+
+儲蓄目標（`/finance/goals`）以「名稱 + 目標金額 + 目標日期 + 綁定來源」描述一筆要存到的錢。綁定來源二選一（或皆不綁定）：
+
+- **綁定帳戶**：以該帳戶目前餘額為「已存」，非 TWD 帳戶換算為 TWD 等值，語意與儀表板銀行餘額一致。
+- **綁定分類**：以**建立目標當日**起該分類（含一層子分類）的支出累計為「已存」，語意與預算「已用金額」一致；`exclude_from_stats` 的交易不計入。
+
+每張目標卡片顯示：已存／目標、進度條、尚缺金額、預估達成日（以「已存 ÷ 已過天數」的日均速度外推；零進度時顯示「需有存款進度」）、剩餘期間所需日均金額，以及進度狀態徽章（進度正常／進度落後／已逾期／已達成）。
+
+還款計畫以「名稱 + 本金 + 年利率 + 期數 + 首次應繳日」描述一筆債務，採**本息平均攤還（annuity）**自動產生攤還表：每期先以餘額計息（四捨五入至分）再沖本金，最後一期以當時餘額清償，因此「各期本金加總 = 原始本金」與「最後一期後餘額 = 0」恆成立。月付金經四捨五入後若不足支付首期利息（無法按期攤還），建立時會拒絕該本金／利率／期數組合。清單摘要顯示月付金、依首次應繳日推算的已到期期數、預定剩餘本金、利息總額與下期應繳日；已到期期數不代表實際付款（系統不記錄實際還款）。完整攤還表由單筆端點提供；Web 於建立對話框即時試算，並可開啟攤還表明細。
+
+進度判定以**時間比例**為準（已過天數 ÷ 總天數 × 目標金額 = 此刻應達金額），未達者視為落後；儀表板「目標進度提醒」卡片列出落後目標（逾期者優先、缺口大者在前，最多 3 筆），全部正常時顯示「所有儲蓄目標進度正常」。此卡片可於儀表板個人化設定中排序／隱藏。
+
+金額計算一律以 `decimal.js`（`lib/savingsGoal.ts`），避免浮點誤差；本檔同時被伺服器路由與用戶端元件 import，兩端數值不可能分歧。
+
 #### 不做什麼
 
 - 不做智慧偵測（自動辨識某筆交易該轉為固定收支），留給未來版本
 - 不做超支推播／email 通知，僅在儀表板視覺提示
+- 不做目標的自動存入／自動轉帳，也不做還款的自動記帳（僅計算與追蹤）
+- 不做進度落後的外部通知（推播／LINE／email），僅於儀表板顯示提醒卡片
 
 ---
 
@@ -500,6 +517,7 @@ CSV 內容經過 Formula Injection 防護處理（以 `=`、`+`、`-`、`@` 開�
 | `/finance/calendar` | 行事曆（交易、股利與固定收支） |
 | `/finance/reports` | 統計報表 |
 | `/finance/budget` | 預算管理 |
+| `/finance/goals` | 目標儲蓄與還款計畫 |
 | `/finance/accounts` | 帳戶管理（含匯率設定） |
 | `/finance/categories` | 分類管理 |
 | `/finance/recurring` | 固定收支 |
@@ -1090,6 +1108,8 @@ API 路徑統一以 `/api/` 為前綴。所有需認證的路由自動套用 aut
 
 | 版本 | 日期 | 變更說明 |
 | --- | --- | --- |
+| 4.134.0 | 2026-10-08 | 新增 #260 目標儲蓄與還款計畫：建立可綁定帳戶餘額或分類支出的儲蓄目標，追蹤進度、預估達成日與落後提醒；建立本息平均攤還計畫與逐期攤還表，金額以 decimal.js 計算。新增個人化儀表板提醒、帳本授權 API、PostgreSQL schema、10 語言介面與自動化測試。 |
+| 4.133.0 | 2026-10-07 | 修補 #285 Webhook 重新導向 SSRF 弱點：投遞前驗證 URL 與 DNS 解析位址，以已驗證公開 IP 連線並拒絕 3xx，避免簽章 payload 被轉送至內部或特殊保留目的地。 |
 | 4.131.0 | 2026-10-07 | #255 多幣別報表基準幣別切換：報表可切換 ISO 4217 基準幣別，採 decimal.js 全精度換算，顯示匯率來源與實際時間戳，並以相同幣別匯出 CSV。 |
 | 4.119.0 | 2026-10-07 | 新增 #262 共享帳本：空白帳本、Email 單次邀請與 owner/editor/viewer 角色；記帳資料 API 驗證帳本成員與寫入權限，稽核實際操作者及結果；支援離開、移除、owner 移交與刪除帳號保護，資料仍屬帳本；Web 提供帳本切換與管理，離線佇列保留原帳本歸屬。既有個人資料不自動共享；投資及 Flutter／MCP／API Token／LINE／通知排程後續另案。新增 PostgreSQL 授權整合及 Web E2E／axe 測試。 |
 | 4.117.0 | 2026-10-06 | 新增 `/settings/api-integration` 設定頁 UI，讓使用者以介面（而非 `curl`）管理 #258 提供的 API Token 與 Webhook。新增 `components/features/settings/ApiIntegrationSettingsClient.tsx` 與對應頁面 `app/settings/api-integration/page.tsx`：Token 區可勾選權限範圍（`transactions:read`／`transactions:write`／`webhooks:manage`）建立、列出（名稱／前綴／範圍／狀態／建立、最後使用、到期時間）並撤銷；Webhook 區可建立、行內編輯（網址／事件／啟用狀態）與刪除訂閱，並可依訂閱篩選投遞紀錄（事件類型／狀態／嘗試次數／狀態碼／錯誤訊息）。建立 Token 與 Webhook 後皆以一次性 Modal 顯示明文權杖／簽章密鑰，必須按「我已複製」才能關閉，離開頁面即不再顯示；簽鑰 Modal 另附 `X-AssetPilot-Signature: t=<unix 秒>,v1=<hex>` 格式與時間戳容忍度說明。新增零相依 `lib/apiIntegrationUi.ts`（scope／event 選項、預設值、勾選切換與回應值正規化），刻意不 import `lib/apiTokenCore.ts`，避免把 `node:crypto` 帶進 client bundle；改由 `tests/lib/apiIntegrationUi.test.ts` 斷言 UI 清單與 `API_TOKEN_SCOPES`／`WEBHOOK_EVENTS` 一致，並驗證所有 labelKey 都存在於 zh-TW 字典（防止動態鍵繞過 `check:i18n` 的靜態鍵掃描）。`components/layout/Sidebar.tsx` 與 `AppLayout` 新增 `nav.apiIntegration` 導覽項目與頁首標題。i18n：`shared/i18n/app_*.arb` 新增 94 鍵（`nav.apiIntegration`、`common.refresh`／`copy`／`copied`、`settings.apiIntegration.*`），經 `npm run i18n:generate` 重新產生 Web 字典與 Flutter l10n 產物，10 語言對齊。測試：新增 `tests/lib/apiIntegrationUi.test.ts`（9 項，零相依、無需 PostgreSQL）並納入 `npm test`。複製一次性憑證時只在 `navigator.clipboard.writeText()` 成功後才標記為已複製，失敗（例如非安全脈絡下自架的 `http://<區網 IP>:3000`）會顯示 `settings.apiIntegration.copyFailed` 並維持關閉鈕停用，避免使用者未實際複製即關閉視窗而永久遺失明文；載入投遞紀錄以遞增序號認領請求，只採用最後一次回應，避免切換篩選時舊回應覆蓋新結果。驗證：`npm run typecheck`、`npm test`（含 `check:iso`、`check:i18n` 1,517 鍵對齊）、`npm run build`（`/settings/api-integration` 已列入路由輸出）皆通過。 |

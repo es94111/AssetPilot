@@ -8358,6 +8358,41 @@
     "description": "Web path: ledger.lastOwnerNotice",
     "x-webPath": "ledger.lastOwnerNotice"
   },
+  "ledgerSwitchTitle": "Сменить книгу",
+  "@ledgerSwitchTitle": {
+    "description": "Web path: ledger.switchTitle",
+    "x-webPath": "ledger.switchTitle"
+  },
+  "ledgerSwitchHint": "Новые записи и запросы будут использовать эту книгу после переключения.",
+  "@ledgerSwitchHint": {
+    "description": "Web path: ledger.switchHint",
+    "x-webPath": "ledger.switchHint"
+  },
+  "ledgerCurrent": "Текущая книга",
+  "@ledgerCurrent": {
+    "description": "Web path: ledger.current",
+    "x-webPath": "ledger.current"
+  },
+  "ledgerRoleLabel": "Моя роль",
+  "@ledgerRoleLabel": {
+    "description": "Web path: ledger.roleLabel",
+    "x-webPath": "ledger.roleLabel"
+  },
+  "ledgerReadOnlyNotice": "Эта книга доступна только для чтения; вы можете только просматривать данные.",
+  "@ledgerReadOnlyNotice": {
+    "description": "Web path: ledger.readOnlyNotice",
+    "x-webPath": "ledger.readOnlyNotice"
+  },
+  "ledgerSwitchFailed": "Не удалось сменить книгу. Повторите попытку.",
+  "@ledgerSwitchFailed": {
+    "description": "Web path: ledger.switchFailed",
+    "x-webPath": "ledger.switchFailed"
+  },
+  "ledgerNoLedger": "Доступных книг не найдено.",
+  "@ledgerNoLedger": {
+    "description": "Web path: ledger.noLedger",
+    "x-webPath": "ledger.noLedger"
+  },
   "navReconciliation": "Сверка с банком",
   "@navReconciliation": {
     "description": "Web path: nav.reconciliation",

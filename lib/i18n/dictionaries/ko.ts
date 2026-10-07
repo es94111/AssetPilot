@@ -1948,5 +1948,12 @@ export const ko = {
     audit: "최근 활동",
     noAudit: "No activity recorded yet.",
     lastOwnerNotice: "The owner must transfer ownership before leaving or deleting their account.",
+    switchTitle: "장부 전환",
+    switchHint: "전환 후 새 기록과 조회는 이 장부에 적용됩니다.",
+    current: "현재 장부",
+    roleLabel: "내 역할",
+    readOnlyNotice: "이 장부는 읽기 전용이며 데이터를 볼 수만 있습니다.",
+    switchFailed: "장부를 전환할 수 없습니다. 다시 시도해 주세요.",
+    noLedger: "접근 가능한 장부를 찾을 수 없습니다.",
   },
 } satisfies DeepPartialDict<Dictionary>;

@@ -1948,5 +1948,12 @@ export const zhCN = {
     audit: "近期活动",
     noAudit: "No activity recorded yet.",
     lastOwnerNotice: "The owner must transfer ownership before leaving or deleting their account.",
+    switchTitle: "切换账本",
+    switchHint: "切换后的新增与查询都会套用到这个账本。",
+    current: "当前账本",
+    roleLabel: "我的角色",
+    readOnlyNotice: "此账本为只读，你只能查看数据。",
+    switchFailed: "无法切换账本，请稍后再试。",
+    noLedger: "找不到可访问的账本。",
   },
 } satisfies DeepPartialDict<Dictionary>;

@@ -788,6 +788,7 @@ class Passkey {
 /// `GET /api/user/report-schedules` — 定期報表通知排程
 class ReportSchedule {
   final String id;
+  final String ledgerId;
   final String freq; // daily / weekly / monthly
   final int hour;
   final int minute;
@@ -800,6 +801,7 @@ class ReportSchedule {
 
   ReportSchedule({
     required this.id,
+    required this.ledgerId,
     required this.freq,
     required this.hour,
     required this.minute,
@@ -813,6 +815,7 @@ class ReportSchedule {
 
   factory ReportSchedule.fromJson(Map<String, dynamic> j) => ReportSchedule(
     id: _asStr(j['id']),
+    ledgerId: _asStr(j['ledgerId']),
     freq: _asStr(j['freq']).isEmpty ? 'monthly' : _asStr(j['freq']),
     hour: _asNum(j['hour']).toInt(),
     minute: _asNum(j['minute']).toInt(),

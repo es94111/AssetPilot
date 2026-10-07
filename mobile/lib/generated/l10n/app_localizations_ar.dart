@@ -5412,6 +5412,29 @@ class AppLocalizationsAr extends AppLocalizations {
       'The owner must transfer ownership before leaving or deleting their account.';
 
   @override
+  String get ledgerSwitchTitle => 'تبديل دفتر الحسابات';
+
+  @override
+  String get ledgerSwitchHint =>
+      'ستستخدم السجلات والاستعلامات الجديدة هذا الدفتر بعد التبديل.';
+
+  @override
+  String get ledgerCurrent => 'الدفتر الحالي';
+
+  @override
+  String get ledgerRoleLabel => 'دوري';
+
+  @override
+  String get ledgerReadOnlyNotice =>
+      'هذا الدفتر للقراءة فقط؛ يمكنك عرض البيانات فقط.';
+
+  @override
+  String get ledgerSwitchFailed => 'تعذر تبديل الدفاتر. حاول مرة أخرى.';
+
+  @override
+  String get ledgerNoLedger => 'لم يتم العثور على دفتر يمكن الوصول إليه.';
+
+  @override
   String get navReconciliation => 'مطابقة كشف الحساب';
 
   @override

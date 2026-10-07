@@ -56,11 +56,22 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
   @override
   void initState() {
     super.initState();
+    _refreshLedgerRole();
     _future = _load();
   }
 
   static String _ymd(DateTime d) =>
       '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+
+  /// 取得目前帳本角色，viewer 時隱藏新增入口（伺服器端仍會逐次驗證）。
+  Future<void> _refreshLedgerRole() async {
+    try {
+      await ApiClient.instance.ledgers();
+      if (mounted) setState(() {});
+    } catch (_) {
+      /* 角色查詢失敗時維持可寫，實際寫入仍由伺服器把關 */
+    }
+  }
 
   Future<_TransactionsData> _load() async {
     final api = ApiClient.instance;
@@ -445,11 +456,14 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _openForm(),
-        icon: Icon(Icons.add),
-        label: Text(trKey('mobileLegacyAddTransaction')),
-      ),
+      // viewer 帳本不顯示新增入口（伺服器端同樣會拒絕寫入）。
+      floatingActionButton: ApiClient.instance.activeLedgerReadOnly
+          ? null
+          : FloatingActionButton.extended(
+              onPressed: () => _openForm(),
+              icon: Icon(Icons.add),
+              label: Text(trKey('mobileLegacyAddTransaction')),
+            ),
       body: AsyncView<_TransactionsData>(
         future: _future,
         onRetry: _reload,

@@ -398,6 +398,13 @@ async function _runMigrations(db: DatabaseLike): Promise<void> {
   alterIgnore(
     "ALTER TABLE report_schedules ADD COLUMN minute INTEGER NOT NULL DEFAULT 0",
   );
+  // issue #281：排程綁定帳本；既有列一律回填為個人帳本，寄送時再重新授權。
+  alterIgnore(
+    "ALTER TABLE report_schedules ADD COLUMN ledger_id TEXT NOT NULL DEFAULT ''",
+  );
+  alterIgnore(
+    "UPDATE report_schedules SET ledger_id = 'personal:' || user_id WHERE ledger_id = ''",
+  );
   alterIgnore(
     "CREATE INDEX IF NOT EXISTS idx_report_schedules_user ON report_schedules(user_id)",
   );
@@ -426,8 +433,22 @@ async function _runMigrations(db: DatabaseLike): Promise<void> {
   alterIgnore(
     "ALTER TABLE monthly_report_send_log ADD COLUMN error_message TEXT NOT NULL DEFAULT ''",
   );
+  // issue #281：月報去重範圍必須包含帳本；否則同一收件者的個人與共享帳本排程
+  // 會互相抑制。舊列都回填為個人帳本，以保留既有 dedup 行為。
   alterIgnore(
-    "CREATE UNIQUE INDEX IF NOT EXISTS idx_monthly_report_send_log_user ON monthly_report_send_log(user_id, year_month)",
+    "ALTER TABLE monthly_report_send_log ADD COLUMN ledger_id TEXT NOT NULL DEFAULT ''",
+  );
+  alterIgnore(
+    "UPDATE monthly_report_send_log SET ledger_id = 'personal:' || user_id WHERE ledger_id = ''",
+  );
+  alterIgnore(
+    "ALTER TABLE monthly_report_send_log DROP CONSTRAINT IF EXISTS monthly_report_send_log_user_id_year_month_key",
+  );
+  alterIgnore(
+    "DROP INDEX IF EXISTS idx_monthly_report_send_log_user",
+  );
+  alterIgnore(
+    "CREATE UNIQUE INDEX IF NOT EXISTS idx_monthly_report_send_log_user_ledger_month ON monthly_report_send_log(user_id, ledger_id, year_month)",
   );
   alterIgnore(
     "CREATE INDEX IF NOT EXISTS idx_monthly_report_send_log_schedule ON monthly_report_send_log(schedule_id, year_month DESC)",
@@ -653,17 +674,42 @@ async function _runMigrations(db: DatabaseLike): Promise<void> {
     created_at INTEGER NOT NULL
   )`);
 
+  // issue #281：LINE 對話狀態以「LINE 使用者＋帳本」為範圍。舊版只有
+  // line_user_id 主鍵，無法在同一個 LINE 帳號下維護不同帳本的草稿（切換帳本會
+  // 覆蓋既有草稿）；新建的資料表改以複合主鍵，並保留 line_user_id 唯一索引給
+  // 尚未遷移的舊列（該索引在回填完成後移除）。
   db.run(`CREATE TABLE IF NOT EXISTS line_bot_states (
-    line_user_id TEXT PRIMARY KEY,
+    line_user_id TEXT NOT NULL,
     user_id TEXT NOT NULL,
     action TEXT NOT NULL,
     tx_type TEXT DEFAULT '',
     payload TEXT DEFAULT '{}',
-    updated_at INTEGER NOT NULL
+    ledger_id TEXT NOT NULL DEFAULT '',
+    updated_at INTEGER NOT NULL,
+    PRIMARY KEY (line_user_id, ledger_id)
   )`);
   alterIgnore(
     "ALTER TABLE line_bot_states ADD COLUMN payload TEXT DEFAULT '{}'",
   );
+  alterIgnore(
+    "ALTER TABLE line_bot_states ADD COLUMN ledger_id TEXT NOT NULL DEFAULT ''",
+  );
+  alterIgnore(
+    "UPDATE line_bot_states SET ledger_id = 'personal:' || user_id WHERE ledger_id = ''",
+  );
+  // 既有部署的主鍵只有 line_user_id；改為複合主鍵前必須先換掉，否則同一 LINE 帳號
+  // 在第二個帳本建立草稿時會撞上舊主鍵。以 pg_constraint 檢查單欄主鍵再換，重跑安全。
+  alterIgnore(`DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM pg_constraint c
+    JOIN pg_class t ON t.oid = c.conrelid
+    WHERE t.relname = 'line_bot_states' AND c.contype = 'p' AND array_length(c.conkey, 1) = 1
+  ) THEN
+    ALTER TABLE line_bot_states DROP CONSTRAINT line_bot_states_pkey;
+    ALTER TABLE line_bot_states ADD CONSTRAINT line_bot_states_pkey PRIMARY KEY (line_user_id, ledger_id);
+  END IF;
+END $$`);
 
   db.run(`CREATE TABLE IF NOT EXISTS line_expense_reminders (
     id              TEXT    PRIMARY KEY,
@@ -681,6 +727,13 @@ async function _runMigrations(db: DatabaseLike): Promise<void> {
   )`);
   alterIgnore(
     "ALTER TABLE line_expense_reminders ADD COLUMN minute INTEGER NOT NULL DEFAULT 0",
+  );
+  // issue #281：LINE 支出提醒同樣綁定帳本，寄送前重新確認成員身分。
+  alterIgnore(
+    "ALTER TABLE line_expense_reminders ADD COLUMN ledger_id TEXT NOT NULL DEFAULT ''",
+  );
+  alterIgnore(
+    "UPDATE line_expense_reminders SET ledger_id = 'personal:' || user_id WHERE ledger_id = ''",
   );
   alterIgnore(
     "CREATE INDEX IF NOT EXISTS idx_line_expense_reminders_user ON line_expense_reminders(user_id)",
@@ -1161,6 +1214,7 @@ async function _runMigrations(db: DatabaseLike): Promise<void> {
   db.run(`CREATE TABLE IF NOT EXISTS mcp_transaction_idempotency (
     id TEXT PRIMARY KEY,
     credential_id TEXT NOT NULL,
+    ledger_id TEXT NOT NULL DEFAULT '',
     user_id TEXT NOT NULL,
     idempotency_key TEXT NOT NULL,
     transaction_id TEXT NOT NULL,
@@ -1169,8 +1223,20 @@ async function _runMigrations(db: DatabaseLike): Promise<void> {
     created_at INTEGER NOT NULL,
     expires_at INTEGER NOT NULL
   )`);
+  // issue #281：冪等鍵改以「憑證＋帳本」為範圍，同一憑證在不同帳本可用相同鍵。
+  // 既有資料列全部來自個人帳本，先回填 ledger_id 再換掉舊的唯一索引，否則部署後
+  // 重送同一個冪等鍵會因比對不到而重複建立交易。
   alterIgnore(
-    "CREATE UNIQUE INDEX IF NOT EXISTS idx_mcp_idempotency_key ON mcp_transaction_idempotency(credential_id, idempotency_key)",
+    "ALTER TABLE mcp_transaction_idempotency ADD COLUMN ledger_id TEXT NOT NULL DEFAULT ''",
+  );
+  alterIgnore(
+    "UPDATE mcp_transaction_idempotency SET ledger_id = 'personal:' || user_id WHERE ledger_id = ''",
+  );
+  alterIgnore(
+    "DROP INDEX IF EXISTS idx_mcp_idempotency_key",
+  );
+  alterIgnore(
+    "CREATE UNIQUE INDEX IF NOT EXISTS idx_mcp_idempotency_key ON mcp_transaction_idempotency(credential_id, ledger_id, idempotency_key)",
   );
   alterIgnore(
     "CREATE INDEX IF NOT EXISTS idx_mcp_idempotency_expires ON mcp_transaction_idempotency(expires_at)",

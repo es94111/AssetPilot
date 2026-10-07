@@ -8358,6 +8358,41 @@
     "description": "Web path: ledger.lastOwnerNotice",
     "x-webPath": "ledger.lastOwnerNotice"
   },
+  "ledgerSwitchTitle": "تبديل دفتر الحسابات",
+  "@ledgerSwitchTitle": {
+    "description": "Web path: ledger.switchTitle",
+    "x-webPath": "ledger.switchTitle"
+  },
+  "ledgerSwitchHint": "ستستخدم السجلات والاستعلامات الجديدة هذا الدفتر بعد التبديل.",
+  "@ledgerSwitchHint": {
+    "description": "Web path: ledger.switchHint",
+    "x-webPath": "ledger.switchHint"
+  },
+  "ledgerCurrent": "الدفتر الحالي",
+  "@ledgerCurrent": {
+    "description": "Web path: ledger.current",
+    "x-webPath": "ledger.current"
+  },
+  "ledgerRoleLabel": "دوري",
+  "@ledgerRoleLabel": {
+    "description": "Web path: ledger.roleLabel",
+    "x-webPath": "ledger.roleLabel"
+  },
+  "ledgerReadOnlyNotice": "هذا الدفتر للقراءة فقط؛ يمكنك عرض البيانات فقط.",
+  "@ledgerReadOnlyNotice": {
+    "description": "Web path: ledger.readOnlyNotice",
+    "x-webPath": "ledger.readOnlyNotice"
+  },
+  "ledgerSwitchFailed": "تعذر تبديل الدفاتر. حاول مرة أخرى.",
+  "@ledgerSwitchFailed": {
+    "description": "Web path: ledger.switchFailed",
+    "x-webPath": "ledger.switchFailed"
+  },
+  "ledgerNoLedger": "لم يتم العثور على دفتر يمكن الوصول إليه.",
+  "@ledgerNoLedger": {
+    "description": "Web path: ledger.noLedger",
+    "x-webPath": "ledger.noLedger"
+  },
   "navReconciliation": "مطابقة كشف الحساب",
   "@navReconciliation": {
     "description": "Web path: nav.reconciliation",

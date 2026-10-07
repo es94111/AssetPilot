@@ -48,6 +48,15 @@
                       android:host="asset.shao.one"
                       android:pathPrefix="/app/line-callback"/>
             </intent-filter>
+            <!-- Shared-ledger invitation links are issued as /settings/ledgers?invite=... -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="https"
+                      android:host="asset.shao.one"
+                      android:pathPrefix="/settings/ledgers"/>
+            </intent-filter>
             <!-- Debug/local fallback: the web callback page redirects here so the
                  App can resume OAuth without relying on App Links verification. -->
             <intent-filter>
@@ -63,6 +72,14 @@
                 <category android:name="android.intent.category.BROWSABLE"/>
                 <data android:scheme="assetpilot"
                       android:host="line-callback"/>
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="assetpilot"
+                      android:host="ledger"
+                      android:pathPrefix="/invite"/>
             </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.VIEW"/>

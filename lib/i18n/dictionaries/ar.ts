@@ -1948,5 +1948,12 @@ export const ar = {
     audit: "النشاط الأخير",
     noAudit: "No activity recorded yet.",
     lastOwnerNotice: "The owner must transfer ownership before leaving or deleting their account.",
+    switchTitle: "تبديل دفتر الحسابات",
+    switchHint: "ستستخدم السجلات والاستعلامات الجديدة هذا الدفتر بعد التبديل.",
+    current: "الدفتر الحالي",
+    roleLabel: "دوري",
+    readOnlyNotice: "هذا الدفتر للقراءة فقط؛ يمكنك عرض البيانات فقط.",
+    switchFailed: "تعذر تبديل الدفاتر. حاول مرة أخرى.",
+    noLedger: "لم يتم العثور على دفتر يمكن الوصول إليه.",
   },
 } satisfies DeepPartialDict<Dictionary>;

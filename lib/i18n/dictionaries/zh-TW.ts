@@ -1946,6 +1946,13 @@ export const zhTW = {
     audit: "近期活動",
     noAudit: "尚無活動紀錄。",
     lastOwnerNotice: "擁有者離開帳本或刪除帳號前，必須先移交擁有權。",
+    switchTitle: "切換帳本",
+    switchHint: "切換後的新增與查詢都會套用到這個帳本。",
+    current: "目前帳本",
+    roleLabel: "我的角色",
+    readOnlyNotice: "此帳本為唯讀，你只能檢視資料。",
+    switchFailed: "無法切換帳本，請稍後再試。",
+    noLedger: "找不到可存取的帳本。",
   },
 };
 

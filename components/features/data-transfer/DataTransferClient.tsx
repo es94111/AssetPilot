@@ -258,7 +258,10 @@ export default function DataTransferClient({ user }: { user: UserLike }) {
       const res = await fetch('/api/account/data-bundle', {
         method: 'POST',
         credentials: 'include',
-        headers: { 'Content-Type': 'application/octet-stream' },
+        headers: {
+          'Content-Type': 'application/octet-stream',
+          ...getActiveLedgerHeaders(),
+        },
         body: buffer,
       });
       const data = await res.json().catch(() => ({}));

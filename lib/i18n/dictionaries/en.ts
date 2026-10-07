@@ -1948,5 +1948,12 @@ export const en = {
     audit: "Recent activity",
     noAudit: "No activity recorded yet.",
     lastOwnerNotice: "The owner must transfer ownership before leaving or deleting their account.",
+    switchTitle: "Switch ledger",
+    switchHint: "New records and queries will use this ledger after switching.",
+    current: "Current ledger",
+    roleLabel: "My role",
+    readOnlyNotice: "This ledger is read-only; you can only view data.",
+    switchFailed: "Could not switch ledgers. Please try again.",
+    noLedger: "No accessible ledger found.",
   },
 } satisfies DeepPartialDict<Dictionary>;

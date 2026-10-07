@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'api_client.dart';
 import 'generated/l10n/app_localizations.dart';
 import 'screens/dashboard_screen.dart';
+import 'screens/ledger_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/more_screen.dart';
 import 'screens/onboarding_screen.dart';
@@ -165,6 +166,8 @@ class HomeShell extends StatefulWidget {
 
 class _HomeShellState extends State<HomeShell> {
   int _index = 0;
+  /// 帳本切換時遞增，讓 IndexedStack 內的分頁全部重建（不保留舊帳本快取）。
+  int _homeEpoch = 0;
   final AppLinks _appLinks = AppLinks();
   StreamSubscription<Uri>? _linkSubscription;
   bool _openingDeepLink = false;
@@ -194,6 +197,24 @@ class _HomeShellState extends State<HomeShell> {
   }
 
   Future<void> _handleIncomingLink(Uri uri) async {
+    if (_isLedgerInviteLink(uri) && !_openingDeepLink && mounted) {
+      _openingDeepLink = true;
+      try {
+        await Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => LedgerScreen(
+              invitationToken:
+                  uri.queryParameters['token'] ?? uri.queryParameters['invite'],
+              onLedgerChanged: _reloadAll,
+            ),
+          ),
+        );
+        if (mounted) _reloadAll();
+      } finally {
+        _openingDeepLink = false;
+      }
+      return;
+    }
     if (!_isNewTransactionLink(uri) || _openingDeepLink || !mounted) return;
 
     // 同步設旗標（await 前），擋掉冷啟動時 getInitialLink 與 uriLinkStream
@@ -221,16 +242,34 @@ class _HomeShellState extends State<HomeShell> {
       uri.host == 'transaction' &&
       uri.path == '/new';
 
+  /// 共享帳本邀請連結：assetpilot://ledger/invite?token=…
+  bool _isLedgerInviteLink(Uri uri) {
+    final customScheme =
+        uri.scheme == 'assetpilot' && uri.host == 'ledger' && uri.path == '/invite';
+    final verifiedWebLink = uri.scheme == 'https' &&
+        uri.host == 'asset.shao.one' &&
+        uri.path == '/settings/ledgers';
+    final token = uri.queryParameters['token'] ?? uri.queryParameters['invite'] ?? '';
+    return (customScheme || verifiedWebLink) && token.isNotEmpty;
+  }
+
+  /// 切換帳本後重建所有分頁，確保畫面上不留前一個帳本的資料。
+  void _reloadAll() => setState(() => _homeEpoch += 1);
+
   @override
   Widget build(BuildContext context) {
     // 五個分頁：總覽／交易／股票／報表／更多。報表從「更多」提升為一級分頁，
     // 高頻功能（帳戶、預算）則由 Dashboard 快速入口與「更多」分區進入。
     final pages = [
-      DashboardScreen(),
-      TransactionsScreen(),
-      StocksScreen(),
-      ReportsScreen(),
-      MoreScreen(onLoggedOut: widget.onLoggedOut),
+      DashboardScreen(key: ValueKey('dashboard-$_homeEpoch')),
+      TransactionsScreen(key: ValueKey('transactions-$_homeEpoch')),
+      StocksScreen(key: ValueKey('stocks-$_homeEpoch')),
+      ReportsScreen(key: ValueKey('reports-$_homeEpoch')),
+      MoreScreen(
+        key: ValueKey('more-$_homeEpoch'),
+        onLoggedOut: widget.onLoggedOut,
+        onLedgerChanged: _reloadAll,
+      ),
     ];
     final labels = [
       trKey('mobileLegacyHome'),

@@ -5436,6 +5436,30 @@ class AppLocalizationsEn extends AppLocalizations {
       'The owner must transfer ownership before leaving or deleting their account.';
 
   @override
+  String get ledgerSwitchTitle => 'Switch ledger';
+
+  @override
+  String get ledgerSwitchHint =>
+      'New records and queries will use this ledger after switching.';
+
+  @override
+  String get ledgerCurrent => 'Current ledger';
+
+  @override
+  String get ledgerRoleLabel => 'My role';
+
+  @override
+  String get ledgerReadOnlyNotice =>
+      'This ledger is read-only; you can only view data.';
+
+  @override
+  String get ledgerSwitchFailed =>
+      'Could not switch ledgers. Please try again.';
+
+  @override
+  String get ledgerNoLedger => 'No accessible ledger found.';
+
+  @override
   String get navReconciliation => 'Bank reconciliation';
 
   @override

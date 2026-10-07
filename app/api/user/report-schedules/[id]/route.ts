@@ -4,10 +4,12 @@
 import { NextResponse } from 'next/server';
 import { requireAuth } from '../../../../../lib/apiHelpers';
 import { getDB, queryOne, saveDB } from '../../../../../lib/db';
+import { resolveLedgerScope } from '../../../../../lib/ledgerScope';
 
 function serializeSchedule(row) {
   return {
-    id: row.id, userId: row.user_id, freq: row.freq,
+    id: row.id, userId: row.user_id, ledgerId: row.ledger_id || `personal:${row.user_id}`,
+    freq: row.freq,
     hour: Number(row.hour) || 0, minute: Number(row.minute) || 0, weekday: Number(row.weekday) || 0,
     dayOfMonth: Number(row.day_of_month) || 0, enabled: row.enabled === 1,
     notifyEmail: row.notify_email !== 0, notifyLine: row.notify_line === 1,
@@ -40,6 +42,19 @@ export async function PUT(request, { params }) {
   if (body?.enabled !== undefined) updates.enabled = body.enabled ? 1 : 0;
   if (body?.notifyEmail !== undefined) updates.notify_email = body.notifyEmail ? 1 : 0;
   if (body?.notifyLine !== undefined) updates.notify_line = body.notifyLine ? 1 : 0;
+  // issue #281：切換排程的帳本前，重新確認呼叫者對目標帳本仍有寫入權限；
+  // 已離開的帳本不可再被指定，避免把既有排程留在無權限的共享帳本上繼續寄送。
+  if (body?.ledgerId !== undefined) {
+    const target = String(body.ledgerId || '').trim();
+    const targetScope = resolveLedgerScope({ userId: auth.userId, ledgerId: target, write: true });
+    if (!targetScope.ok) {
+      return NextResponse.json(
+        { error: targetScope.reason === 'read-only' ? '此帳本為唯讀，無法作為通知排程範圍' : '找不到帳本或沒有存取權' },
+        { status: targetScope.reason === 'read-only' ? 403 : 404 },
+      );
+    }
+    updates.ledger_id = targetScope.ledgerId;
+  }
 
   const nextNotifyEmail = updates.notify_email !== undefined ? updates.notify_email : (row.notify_email !== 0 ? 1 : 0);
   const nextNotifyLine = updates.notify_line !== undefined ? updates.notify_line : (row.notify_line === 1 ? 1 : 0);

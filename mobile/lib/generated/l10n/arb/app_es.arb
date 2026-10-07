@@ -8358,6 +8358,41 @@
     "description": "Web path: ledger.lastOwnerNotice",
     "x-webPath": "ledger.lastOwnerNotice"
   },
+  "ledgerSwitchTitle": "Cambiar libro",
+  "@ledgerSwitchTitle": {
+    "description": "Web path: ledger.switchTitle",
+    "x-webPath": "ledger.switchTitle"
+  },
+  "ledgerSwitchHint": "Los registros y consultas nuevos usarán este libro tras el cambio.",
+  "@ledgerSwitchHint": {
+    "description": "Web path: ledger.switchHint",
+    "x-webPath": "ledger.switchHint"
+  },
+  "ledgerCurrent": "Libro actual",
+  "@ledgerCurrent": {
+    "description": "Web path: ledger.current",
+    "x-webPath": "ledger.current"
+  },
+  "ledgerRoleLabel": "Mi rol",
+  "@ledgerRoleLabel": {
+    "description": "Web path: ledger.roleLabel",
+    "x-webPath": "ledger.roleLabel"
+  },
+  "ledgerReadOnlyNotice": "Este libro es de solo lectura; solo puedes consultar los datos.",
+  "@ledgerReadOnlyNotice": {
+    "description": "Web path: ledger.readOnlyNotice",
+    "x-webPath": "ledger.readOnlyNotice"
+  },
+  "ledgerSwitchFailed": "No se pudo cambiar de libro. Inténtalo de nuevo.",
+  "@ledgerSwitchFailed": {
+    "description": "Web path: ledger.switchFailed",
+    "x-webPath": "ledger.switchFailed"
+  },
+  "ledgerNoLedger": "No se encontró ningún libro accesible.",
+  "@ledgerNoLedger": {
+    "description": "Web path: ledger.noLedger",
+    "x-webPath": "ledger.noLedger"
+  },
   "navReconciliation": "Conciliación bancaria",
   "@navReconciliation": {
     "description": "Web path: nav.reconciliation",

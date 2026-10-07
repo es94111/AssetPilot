@@ -15,6 +15,7 @@ const EXPECTED_TOOL_NAMES = [
   'list_budgets',
   'list_categories',
   'list_credit_card_repayments',
+  'list_ledgers',
   'list_recurring',
   'list_stock_dividends',
   'list_stock_holdings',

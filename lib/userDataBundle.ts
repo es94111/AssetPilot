@@ -14,6 +14,7 @@ import {
   type TransactionAttachmentRow,
 } from "./transactionAttachments";
 import changelog from "../changelog.json";
+import { resolveBundleLedger } from "./ledgerScope";
 
 export const BUNDLE_FORMAT = "assetpilot-user-bundle";
 export const BUNDLE_VERSION = 1;
@@ -99,16 +100,29 @@ function appVersion(): string {
 
 export async function exportUserBundle(
   userId: string,
+  ledgerId?: string | null,
 ): Promise<{
   buffer: Buffer;
   filename: string;
   counts: Record<string, number>;
+  ledgerId: string;
+  isShared: boolean;
 }> {
+  const ledger = resolveBundleLedger({ userId, ledgerId });
+  if (!ledger.ok) {
+    throw new BundleError(
+      ledger.reason === "not-owner"
+        ? "只有共享帳本的擁有者可以備份或還原此帳本"
+        : "找不到帳本或沒有存取權",
+    );
+  }
+  // 共享帳本一律以帳本的資料擁有者為範圍；個人帳本即呼叫者本人。
+  const dataOwnerId = ledger.dataOwnerId;
   const zip = new JSZip();
   const counts: Record<string, number> = {};
 
   for (const { table } of DATA_TABLES) {
-    const rows = queryAll(`SELECT * FROM ${table} WHERE user_id = ?`, [userId]);
+    const rows = queryAll(`SELECT * FROM ${table} WHERE user_id = ?`, [dataOwnerId]);
     counts[table] = rows.length;
     zip.file(
       `data/${table}.json`,
@@ -121,7 +135,7 @@ export async function exportUserBundle(
   // the cast only supplies the typed attachment fields used by storage helpers.
   const attachments = queryAll(
     `SELECT * FROM ${ATTACHMENTS_TABLE} WHERE user_id = ?`,
-    [userId],
+    [dataOwnerId],
   ) as unknown as TransactionAttachmentRow[];
   counts[ATTACHMENTS_TABLE] = attachments.length;
   zip.file(
@@ -146,7 +160,8 @@ export async function exportUserBundle(
     version: BUNDLE_VERSION,
     exportedAt: new Date().toISOString(), // UTC ISO 8601 Z（Constitution 原則 IV）
     appVersion: appVersion(),
-    userId,
+    userId: dataOwnerId,
+    ledgerId: ledger.ledgerId,
     counts,
   };
   zip.file(
@@ -155,8 +170,8 @@ export async function exportUserBundle(
   );
 
   const buffer = await zip.generateAsync({ type: "nodebuffer" });
-  const filename = `assetpilot-backup-${userId.slice(0, 8)}-${bundleTimestamp()}.zip`;
-  return { buffer, filename, counts };
+  const filename = `assetpilot-backup-${dataOwnerId.slice(0, 8)}-${bundleTimestamp()}.zip`;
+  return { buffer, filename, counts, ledgerId: ledger.ledgerId, isShared: ledger.isShared };
 }
 
 // ───────────────────────── 還原（合併式） ─────────────────────────
@@ -210,7 +225,18 @@ async function readJsonEntry(
 export async function restoreUserBundle(
   userId: string,
   zipBuffer: Buffer,
+  ledgerId?: string | null,
 ): Promise<RestoreSummary> {
+  const ledger = resolveBundleLedger({ userId, ledgerId });
+  if (!ledger.ok) {
+    throw new BundleError(
+      ledger.reason === "not-owner"
+        ? "只有共享帳本的擁有者可以備份或還原此帳本"
+        : "找不到帳本或沒有存取權",
+    );
+  }
+  // 還原一律寫入這個範圍，成員無法藉由備份把資料塞進其他帳本或個人帳本。
+  const targetUserId = ledger.dataOwnerId;
   let zip: JSZip;
   try {
     zip = await JSZip.loadAsync(zipBuffer, { checkCRC32: true });
@@ -256,7 +282,7 @@ export async function restoreUserBundle(
         if (!isJsonObject(raw)) continue;
         // SAFETY: the object comes from the fixed attachment export schema; the
         // helper validates the required id/storage fields before writing.
-        const row: Row = { ...raw, user_id: userId };
+        const row: Row = { ...raw, user_id: targetUserId };
         const id = String(row.id || "");
         if (!id) continue;
         if (rowExists(ATTACHMENTS_TABLE, ["id"], row)) {
@@ -272,7 +298,7 @@ export async function restoreUserBundle(
           // SAFETY: row was read from data/transaction_attachments.json and its
           // required fields are validated by restoreAttachmentFromBundle.
           await restoreAttachmentFromBundle(
-            userId,
+            targetUserId,
             row as unknown as TransactionAttachmentRow,
             await imgEntry.async("nodebuffer"),
           );
@@ -295,7 +321,7 @@ export async function restoreUserBundle(
       if (!Array.isArray(rows)) continue;
       for (const raw of rows) {
         if (!isJsonObject(raw)) continue;
-        const row: Row = { ...raw, user_id: userId };
+        const row: Row = { ...raw, user_id: targetUserId };
         if (rowExists(table, keys, row)) {
           perTable[table].skipped += 1;
           continue;
@@ -314,7 +340,7 @@ export async function restoreUserBundle(
     for (const restored of restoredAttachments) {
       try {
         await deleteTransactionAttachment(
-          userId,
+          targetUserId,
           restored.transactionId,
           restored.attachmentId,
         );

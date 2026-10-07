@@ -15,6 +15,28 @@ import 'package:assetpilot/format.dart';
 import 'package:assetpilot/theme.dart';
 
 void main() {
+  test('帳本選取標頭只套用於共用記帳與投資資料 API', () {
+    for (final path in [
+      '/api/accounts',
+      '/api/transactions/tx-1',
+      '/api/stocks',
+      '/api/stock-transactions',
+      '/api/stock-dividends',
+      '/api/stock-recurring',
+      '/api/exchange-rates/TWD',
+    ]) {
+      expect(ApiClient.isLedgerDataPath(path), isTrue, reason: path);
+    }
+    for (final path in [
+      '/api/user/settings',
+      '/api/user/report-schedules',
+      '/api/user/api-tokens',
+      '/api/stocks-other',
+    ]) {
+      expect(ApiClient.isLedgerDataPath(path), isFalse, reason: path);
+    }
+  });
+
   test('Sentry 保留 HTTP 診斷但不重複建立已處理的失敗事件', () {
     final options = SentryFlutterOptions();
 

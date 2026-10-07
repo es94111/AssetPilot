@@ -7,6 +7,7 @@ import { getDB, queryAll, queryOne, saveDB } from './db';
 import { getActiveEmailProviders, sendStatsEmail } from './emailService';
 import { LINE_MESSAGING_CHANNEL_ACCESS_TOKEN, buildExpenseReminderFlex, buildStatsReportFlex, pushLineMessage } from './lineMessaging';
 import { buildUserStatsReport, renderStatsEmailHtml } from './statsEmailReport';
+import { resolveLedgerScope } from './ledgerScope';
 import { getUserLanguage } from './i18n/userLanguage';
 import * as userTime from './userTime';
 
@@ -83,6 +84,34 @@ function scheduleWantsLine(schedule) {
   return schedule.notify_line === 1;
 }
 
+// ── 排程通知的帳本授權（issue #281）──
+// 排程列上的 ledger_id 決定通知要以哪個帳本為資料範圍；寄送／提醒當下重新查詢
+// 成員角色，被移除或離開後（resolveLedgerScope 找不到成員）即拒絕寄送。
+// 舊資料列或後台建立的排程沒有 ledger_id，一律回退到收件者自己的個人帳本，
+// 維持既有「寄給自己」的行為不變。
+function resolveScheduleDelivery({ schedule, recipientId, action }) {
+  const ledgerId = String(schedule?.ledger_id || '').trim() || `personal:${recipientId}`;
+  const scope = resolveLedgerScope({ userId: recipientId, ledgerId });
+  if (!scope.ok) {
+    return {
+      allowed: false,
+      reason: `已失去此帳本權限，略過${action}（請重新選擇帳本或移除排程）`,
+    };
+  }
+  if (scope.role === 'viewer') {
+    return {
+      allowed: false,
+      reason: `此帳本為唯讀，檢視者不接收${action}`,
+    };
+  }
+  return {
+    allowed: true,
+    dataOwnerId: scope.dataOwnerId,
+    timezone: scope.timezone,
+    ledgerId: scope.ledgerId,
+  };
+}
+
 // ── 嘗試寄送單一排程報表 ──
 // 完整 Email 寄送邏輯待移植；目前記錄意圖並更新 last_run 防重複觸發
 async function runScheduledReportNow(scheduleId, triggeredBy = '排程') {
@@ -110,6 +139,20 @@ async function runScheduledReportNow(scheduleId, triggeredBy = '排程') {
         [`${formatLocalSummaryTime(startedAt)} ${triggeredBy}：使用者帳號已停用，略過寄送`, startedAt, scheduleId]);
       saveDB();
       return { status: 'skipped', sent: 0, failed: 0, skipped: 1, reason: '使用者帳號已停用' };
+    }
+
+    // issue #281：寄送當下重新授權。排程綁定帳本；若收件者已離開或被移出該帳本，
+    // 或角色降為 viewer，就不再寄送共享帳本資料（不寄給無權限的收件者）。
+    const delivery = resolveScheduleDelivery({
+      schedule,
+      recipientId: u.id,
+      action: '寄送',
+    });
+    if (!delivery.allowed) {
+      const summary = `${formatLocalSummaryTime(startedAt)} ${triggeredBy}：${delivery.reason}`;
+      db.run('UPDATE report_schedules SET last_summary = ?, updated_at = ? WHERE id = ?', [summary, startedAt, scheduleId]);
+      saveDB();
+      return { status: 'unauthorized', sent: 0, failed: 0, skipped: 1, reason: delivery.reason };
     }
 
     const wantsEmail = scheduleWantsEmail(schedule);
@@ -162,8 +205,8 @@ async function runScheduledReportNow(scheduleId, triggeredBy = '排程') {
       try {
         dedupRowId = crypto.randomUUID().replace(/-/g, '');
         db.run(
-          'INSERT INTO monthly_report_send_log (id, user_id, year_month, schedule_id, sent_at_utc) VALUES (?,?,?,?,?)',
-          [dedupRowId, u.id, ym, scheduleId, new Date(startedAt).toISOString()]
+          'INSERT INTO monthly_report_send_log (id, user_id, ledger_id, year_month, schedule_id, sent_at_utc) VALUES (?,?,?,?,?,?)',
+          [dedupRowId, u.id, delivery.ledgerId, ym, scheduleId, new Date(startedAt).toISOString()]
         );
       } catch (e) {
         if (/UNIQUE|constraint/i.test(String(e?.message || ''))) {
@@ -182,7 +225,14 @@ async function runScheduledReportNow(scheduleId, triggeredBy = '排程') {
     let errMsg = '';
     const channelResults = [];
     const locale = getUserLanguage(u.id);
-    const stats = buildUserStatsReport(u.id, schedule.freq, u.timezone || 'Asia/Taipei', locale);
+    // 報表內容以「帳本資料擁有者」為範圍：個人帳本即收件者本人，共享帳本為帳本資料，
+    // 與 Web／MCP／API 對同一帳本看到的數字一致。
+    const stats = buildUserStatsReport(
+      delivery.dataOwnerId,
+      schedule.freq,
+      delivery.timezone || u.timezone || 'Asia/Taipei',
+      locale,
+    );
 
     if (wantsEmail) {
       if (invalidEmail) {
@@ -193,17 +243,26 @@ async function runScheduledReportNow(scheduleId, triggeredBy = '排程') {
         channelResults.push('Email 失敗：寄信服務未設定');
       } else {
       try {
-        const html = renderStatsEmailHtml(u.display_name, u.email, stats, locale);
-        const subject = stats.subject || `${stats.month} 個人資產統計報表`;
-        const result = await sendStatsEmail({ to: u.email, subject, html });
-        if (result) {
-          sent += 1;
-          provider = result.provider;
-          channelResults.push(`Email 成功(${provider || ''})`);
-        } else {
+        // 最後一次角色檢查緊貼著外部寄送呼叫；成員離開／被撤銷後即使排程已啟動，
+        // 也不得再收到共享帳本的統計資料。
+        const sendScope = resolveScheduleDelivery({ schedule, recipientId: u.id, action: '寄送' });
+        if (!sendScope.allowed) {
           failed += 1;
-          channelResults.push('Email 失敗');
-          errMsg = '寄信服務未設定';
+          channelResults.push(`Email 略過：${sendScope.reason}`);
+          errMsg = sendScope.reason;
+        } else {
+          const html = renderStatsEmailHtml(u.display_name, u.email, stats, locale);
+          const subject = stats.subject || `${stats.month} 個人資產統計報表`;
+          const result = await sendStatsEmail({ to: u.email, subject, html });
+          if (result) {
+            sent += 1;
+            provider = result.provider;
+            channelResults.push(`Email 成功(${provider || ''})`);
+          } else {
+            failed += 1;
+            channelResults.push('Email 失敗');
+            errMsg = '寄信服務未設定';
+          }
         }
       } catch (e) {
         failed += 1;
@@ -223,10 +282,17 @@ async function runScheduledReportNow(scheduleId, triggeredBy = '排程') {
         channelResults.push('LINE 失敗：使用者尚未綁定 LINE');
       } else {
       try {
-        const appUrl = process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || `https://${process.env.APP_HOST || 'localhost'}`;
-        await pushLineMessage(u.line_id, [buildStatsReportFlex(u.display_name, stats, appUrl, locale)]);
-        sent += 1;
-        channelResults.push('LINE 成功');
+        const sendScope = resolveScheduleDelivery({ schedule, recipientId: u.id, action: '寄送' });
+        if (!sendScope.allowed) {
+          failed += 1;
+          channelResults.push(`LINE 略過：${sendScope.reason}`);
+          errMsg = [errMsg, sendScope.reason].filter(Boolean).join('；');
+        } else {
+          const appUrl = process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || `https://${process.env.APP_HOST || 'localhost'}`;
+          await pushLineMessage(u.line_id, [buildStatsReportFlex(u.display_name, stats, appUrl, locale)]);
+          sent += 1;
+          channelResults.push('LINE 成功');
+        }
       } catch (e) {
         failed += 1;
         const msg = e?.message || '未知錯誤';
@@ -280,6 +346,21 @@ async function runLineExpenseReminderNow(reminderId, triggeredBy = '排程') {
       saveDB();
       return { status: 'skipped', sent: 0, failed: 0, skipped: 1, reason: '使用者帳號已停用' };
     }
+
+    // issue #281：提醒寄送前重新授權。必須先於任何通道設定檢查，否則「已離開帳本」
+    // 的排程會因為服務未設定而回報成非授權問題，掩蓋真正的失權狀態。
+    const delivery = resolveScheduleDelivery({
+      schedule: reminder,
+      recipientId: u.id,
+      action: '提醒',
+    });
+    if (!delivery.allowed) {
+      const summary = `${formatLocalSummaryTime(startedAt)} ${triggeredBy}：${delivery.reason}`;
+      db.run('UPDATE line_expense_reminders SET last_summary = ?, updated_at = ? WHERE id = ?', [summary, startedAt, reminderId]);
+      saveDB();
+      return { status: 'unauthorized', sent: 0, failed: 0, skipped: 1, reason: delivery.reason };
+    }
+
     if (!LINE_MESSAGING_CHANNEL_ACCESS_TOKEN) {
       const summary = `${formatLocalSummaryTime(startedAt)} ${triggeredBy}：LINE Messaging API 未設定`;
       db.run('UPDATE line_expense_reminders SET last_summary = ?, updated_at = ? WHERE id = ?', [summary, startedAt, reminderId]);
@@ -295,6 +376,14 @@ async function runLineExpenseReminderNow(reminderId, triggeredBy = '排程') {
     }
 
     try {
+      // 再緊貼實際 LINE push 呼叫重新查成員角色，避免排程查詢後到寄送前的撤銷競態。
+      const sendScope = resolveScheduleDelivery({ schedule: reminder, recipientId: u.id, action: '提醒' });
+      if (!sendScope.allowed) {
+        const summary = `${formatLocalSummaryTime(startedAt)} ${triggeredBy}：${sendScope.reason}`;
+        db.run('UPDATE line_expense_reminders SET last_summary = ?, updated_at = ? WHERE id = ?', [summary, startedAt, reminderId]);
+        saveDB();
+        return { status: 'unauthorized', sent: 0, failed: 0, skipped: 1, reason: sendScope.reason };
+      }
       await pushLineMessage(u.line_id, [buildExpenseReminderFlex(u.display_name, getUserLanguage(u.id))]);
       const finishedAt = Date.now();
       const summary = `${formatLocalSummaryTime(startedAt)} ${triggeredBy}：LINE 提醒成功（完成於 ${formatLocalSummaryTime(finishedAt)}）`;

@@ -8358,6 +8358,41 @@
     "description": "Web path: ledger.lastOwnerNotice",
     "x-webPath": "ledger.lastOwnerNotice"
   },
+  "ledgerSwitchTitle": "लेजर बदलें",
+  "@ledgerSwitchTitle": {
+    "description": "Web path: ledger.switchTitle",
+    "x-webPath": "ledger.switchTitle"
+  },
+  "ledgerSwitchHint": "बदलने के बाद नई प्रविष्टियाँ और क्वेरी इस लेजर का उपयोग करेंगी।",
+  "@ledgerSwitchHint": {
+    "description": "Web path: ledger.switchHint",
+    "x-webPath": "ledger.switchHint"
+  },
+  "ledgerCurrent": "वर्तमान लेजर",
+  "@ledgerCurrent": {
+    "description": "Web path: ledger.current",
+    "x-webPath": "ledger.current"
+  },
+  "ledgerRoleLabel": "मेरी भूमिका",
+  "@ledgerRoleLabel": {
+    "description": "Web path: ledger.roleLabel",
+    "x-webPath": "ledger.roleLabel"
+  },
+  "ledgerReadOnlyNotice": "यह लेजर केवल पढ़ने योग्य है; आप केवल डेटा देख सकते हैं।",
+  "@ledgerReadOnlyNotice": {
+    "description": "Web path: ledger.readOnlyNotice",
+    "x-webPath": "ledger.readOnlyNotice"
+  },
+  "ledgerSwitchFailed": "लेजर बदल नहीं सका। कृपया पुनः प्रयास करें।",
+  "@ledgerSwitchFailed": {
+    "description": "Web path: ledger.switchFailed",
+    "x-webPath": "ledger.switchFailed"
+  },
+  "ledgerNoLedger": "कोई सुलभ लेजर नहीं मिला।",
+  "@ledgerNoLedger": {
+    "description": "Web path: ledger.noLedger",
+    "x-webPath": "ledger.noLedger"
+  },
   "navReconciliation": "बैंक मिलान",
   "@navReconciliation": {
     "description": "Web path: nav.reconciliation",

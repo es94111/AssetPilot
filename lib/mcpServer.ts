@@ -28,6 +28,7 @@ import {
 } from "./transactionWriteCore";
 import { uid } from "./userDefaults";
 import type { VerifyMcpTokenResult } from "./mcpAuth";
+import { listAuthorizedLedgers, resolveLedgerScope, type LedgerScope } from "./ledgerScope";
 import {
   TRANSACTION_NOTE_MAX_LENGTH,
   findTransactionEditBlock,
@@ -147,6 +148,63 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
   const { userId } = credential;
   const server = new McpServer({ name: "assetpilot-mcp", version: "1.0.0" });
 
+  /**
+   * 解析工具呼叫要作用的帳本（issue #281）。
+   *
+   * 未指定 ledgerId 時沿用憑證所有人的個人帳本——既有行為不變；指定時每次呼叫
+   * 都重新查詢成員角色，因此離開／被移除後立即失去存取權，且 viewer 不得寫入。
+   * 憑證本身永遠屬於個人，不會因選取共享帳本而共享給其他成員。
+   */
+  function scopeFor(
+    ledgerId: string | undefined,
+    write = false,
+  ): LedgerScope {
+    const resolved = resolveLedgerScope({ userId, ledgerId, write });
+    if (!resolved.ok) {
+      throw new Error(
+        resolved.reason === "read-only"
+          ? "此帳本為唯讀，你的角色為檢視者，無法新增或修改資料"
+          : "找不到帳本或沒有存取權",
+      );
+    }
+    return resolved;
+  }
+
+  const ledgerIdShape = {
+    ledgerId: z
+      .string()
+      .optional()
+      .describe(
+        "帳本 id；省略時使用你的個人帳本。可用 list_ledgers 取得可存取的帳本清單",
+      ),
+  };
+
+  server.registerTool(
+    "list_ledgers",
+    {
+      ...createReadOnlyOAuthToolDescriptor(
+        "查詢可存取帳本",
+        "正在查詢帳本…",
+        "帳本清單已載入",
+      ),
+      description:
+        "列出你目前仍是成員的帳本（個人帳本與已接受邀請的共享帳本），含你在各帳本的角色；其他工具可用回傳的 ledgerId 明確指定要操作的帳本。",
+      inputSchema: {},
+    },
+    async () =>
+      withAudit(credential, "ledgers_list", () =>
+        toolResult({
+          items: listAuthorizedLedgers(userId).map((ledger) => ({
+            ledgerId: ledger.ledgerId,
+            name: ledger.name,
+            role: ledger.role,
+            isShared: ledger.isShared,
+            readOnly: ledger.role === "viewer",
+          })),
+        }),
+      ),
+  );
+
   server.registerTool(
     "list_transactions",
     {
@@ -166,6 +224,7 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
         accountId: z.string().optional(),
         keyword: z.string().optional(),
         excludeTransfer: z.boolean().optional(),
+        ...ledgerIdShape,
         ...paginationShape,
       },
     },
@@ -177,6 +236,7 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
       accountId,
       keyword,
       excludeTransfer,
+      ledgerId,
       page,
       pageSize,
     }) => {
@@ -185,8 +245,9 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
         pageSize: ps,
         offset,
       } = resolvePagination({ page, pageSize });
+      const scope = scopeFor(ledgerId);
       let where = "t.user_id = ?";
-      const params: Array<string | number | null> = [userId];
+      const params: Array<string | number | null> = [scope.dataOwnerId];
       if (dateFrom) {
         where += " AND t.date >= ?";
         params.push(dateFrom);
@@ -257,12 +318,15 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
         type: z.enum(["income", "expense"]).optional(),
         from: z.string().optional(),
         to: z.string().optional(),
+        ...ledgerIdShape,
       },
     },
-    async ({ type, from, to }) =>
-      withAudit(credential, "reports_summary", () =>
-        toolResult(getTransactionsSummary(userId, { type, from, to })),
-      ),
+    async ({ type, from, to, ledgerId }) => {
+      const scope = scopeFor(ledgerId);
+      return withAudit(credential, "reports_summary", () =>
+        toolResult(getTransactionsSummary(scope.dataOwnerId, { type, from, to })),
+      );
+    },
   );
 
   server.registerTool(
@@ -274,9 +338,10 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
         "帳戶清單已載入",
       ),
       description: "查詢帳戶清單（含餘額、幣別）",
-      inputSchema: { ...paginationShape },
+      inputSchema: { ...ledgerIdShape, ...paginationShape },
     },
-    async ({ page, pageSize }) => {
+    async ({ ledgerId, page, pageSize }) => {
+      const scope = scopeFor(ledgerId);
       const {
         page: p,
         pageSize: ps,
@@ -286,12 +351,12 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
         const total =
           Number(
             queryOne("SELECT COUNT(*) AS cnt FROM accounts WHERE user_id = ?", [
-              userId,
+              scope.dataOwnerId,
             ])?.cnt,
           ) || 0;
         const rows = queryAll(
           "SELECT * FROM accounts WHERE user_id = ? ORDER BY created_at LIMIT ? OFFSET ?",
-          [userId, ps, offset],
+          [scope.dataOwnerId, ps, offset],
         );
         const items = rows.map((r) => ({
           id: r.id,
@@ -322,9 +387,10 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
         "分類清單已載入",
       ),
       description: "查詢收支分類清單（含階層 parentId）",
-      inputSchema: { ...paginationShape },
+      inputSchema: { ...ledgerIdShape, ...paginationShape },
     },
-    async ({ page, pageSize }) => {
+    async ({ ledgerId, page, pageSize }) => {
+      const scope = scopeFor(ledgerId);
       const {
         page: p,
         pageSize: ps,
@@ -335,12 +401,12 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
           Number(
             queryOne(
               "SELECT COUNT(*) AS cnt FROM categories WHERE user_id = ?",
-              [userId],
+              [scope.dataOwnerId],
             )?.cnt,
           ) || 0;
         const rows = queryAll(
           "SELECT id, name, type, color, parent_id FROM categories WHERE user_id = ? ORDER BY sort_order LIMIT ? OFFSET ?",
-          [userId, ps, offset],
+          [scope.dataOwnerId, ps, offset],
         );
         const items = rows.map((r) => ({
           id: r.id,
@@ -369,9 +435,14 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
         "預算資料已載入",
       ),
       description: "查詢預算設定與期間內執行狀況",
-      inputSchema: { yearMonth: z.string().optional(), ...paginationShape },
+      inputSchema: {
+        yearMonth: z.string().optional(),
+        ...ledgerIdShape,
+        ...paginationShape,
+      },
     },
-    async ({ yearMonth, page, pageSize }) => {
+    async ({ yearMonth, ledgerId, page, pageSize }) => {
+      const scope = scopeFor(ledgerId);
       const {
         page: p,
         pageSize: ps,
@@ -379,7 +450,7 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
       } = resolvePagination({ page, pageSize });
       return withAudit(credential, "budgets_list", () => {
         let where = "user_id = ?";
-        const params: Array<string | number | null> = [userId];
+        const params: Array<string | number | null> = [scope.dataOwnerId];
         if (yearMonth) {
           where += " AND year_month = ?";
           params.push(yearMonth);
@@ -399,7 +470,7 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
           let usedSql =
             "SELECT COALESCE(SUM(twd_amount),0) AS used FROM transactions WHERE user_id = ? AND type='expense' AND date LIKE ? AND exclude_from_stats = 0";
           const usedParams: Array<string | number | null> = [
-            userId,
+            scope.dataOwnerId,
             `${b.year_month}%`,
           ];
           if (b.category_id) {
@@ -435,9 +506,10 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
         "固定收支已載入",
       ),
       description: "查詢固定收支排程清單",
-      inputSchema: { ...paginationShape },
+      inputSchema: { ...ledgerIdShape, ...paginationShape },
     },
-    async ({ page, pageSize }) => {
+    async ({ ledgerId, page, pageSize }) => {
+      const scope = scopeFor(ledgerId);
       const {
         page: p,
         pageSize: ps,
@@ -448,12 +520,12 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
           Number(
             queryOne(
               "SELECT COUNT(*) AS cnt FROM recurring WHERE user_id = ?",
-              [userId],
+              [scope.dataOwnerId],
             )?.cnt,
           ) || 0;
         const rows = queryAll(
           "SELECT * FROM recurring WHERE user_id = ? ORDER BY start_date DESC LIMIT ? OFFSET ?",
-          [userId, ps, offset],
+          [scope.dataOwnerId, ps, offset],
         );
         const items = rows.map((r) => ({
           id: r.id,
@@ -487,17 +559,19 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
         "股票持股已載入",
       ),
       description: "查詢目前股票持股（股數/均價/現價/未實現損益/幣別）",
-      inputSchema: {},
+      inputSchema: { ...ledgerIdShape },
     },
-    async () =>
-      withAudit(credential, "stock_holdings", () => {
-        const status = getStockPortfolioStatus(userId);
+    async ({ ledgerId }) => {
+      const scope = scopeFor(ledgerId);
+      return withAudit(credential, "stock_holdings", () => {
+        const status = getStockPortfolioStatus(scope.dataOwnerId);
         return toolResult({
           holdings: status.holdings,
           marketValue: status.marketValue,
           health: status.health,
         });
-      }),
+      });
+    },
   );
 
   server.registerTool(
@@ -514,17 +588,19 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
         dateFrom: z.string().optional(),
         dateTo: z.string().optional(),
         type: z.enum(["buy", "sell"]).optional(),
+        ...ledgerIdShape,
         ...paginationShape,
       },
     },
-    async ({ stockId, dateFrom, dateTo, type, page, pageSize }) => {
+    async ({ stockId, dateFrom, dateTo, type, ledgerId, page, pageSize }) => {
+      const scope = scopeFor(ledgerId);
       const {
         page: p,
         pageSize: ps,
         offset,
       } = resolvePagination({ page, pageSize });
       let where = "st.user_id = ?";
-      const params: Array<string | number | null> = [userId];
+      const params: Array<string | number | null> = [scope.dataOwnerId];
       if (stockId) {
         where += " AND st.stock_id = ?";
         params.push(stockId);
@@ -595,17 +671,19 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
         stockId: z.string().optional(),
         dateFrom: z.string().optional(),
         dateTo: z.string().optional(),
+        ...ledgerIdShape,
         ...paginationShape,
       },
     },
-    async ({ stockId, dateFrom, dateTo, page, pageSize }) => {
+    async ({ stockId, dateFrom, dateTo, ledgerId, page, pageSize }) => {
+      const scope = scopeFor(ledgerId);
       const {
         page: p,
         pageSize: ps,
         offset,
       } = resolvePagination({ page, pageSize });
       let where = "sd.user_id = ?";
-      const params: Array<string | number | null> = [userId];
+      const params: Array<string | number | null> = [scope.dataOwnerId];
       if (stockId) {
         where += " AND sd.stock_id = ?";
         params.push(stockId);
@@ -665,9 +743,10 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
         "定期定額已載入",
       ),
       description: "查詢股票定期定額排程清單",
-      inputSchema: { ...paginationShape },
+      inputSchema: { ...ledgerIdShape, ...paginationShape },
     },
-    async ({ page, pageSize }) => {
+    async ({ ledgerId, page, pageSize }) => {
+      const scope = scopeFor(ledgerId);
       const {
         page: p,
         pageSize: ps,
@@ -678,14 +757,14 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
           Number(
             queryOne(
               "SELECT COUNT(*) AS cnt FROM stock_recurring WHERE user_id = ?",
-              [userId],
+              [scope.dataOwnerId],
             )?.cnt,
           ) || 0;
         const rows = queryAll(
           `SELECT sr.*, s.symbol, s.market, s.currency, s.name AS stock_name
            FROM stock_recurring sr LEFT JOIN stocks s ON sr.stock_id = s.id
            WHERE sr.user_id = ? ORDER BY sr.start_date DESC LIMIT ? OFFSET ?`,
-          [userId, ps, offset],
+          [scope.dataOwnerId, ps, offset],
         );
         const items = rows.map((r) => ({
           id: r.id,
@@ -724,17 +803,19 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
         dateFrom: z.string().optional(),
         dateTo: z.string().optional(),
         stockId: z.string().optional(),
+        ...ledgerIdShape,
         ...paginationShape,
       },
     },
-    async ({ dateFrom, dateTo, stockId, page, pageSize }) =>
-      withAudit(credential, "stock_realized_pl", () => {
+    async ({ dateFrom, dateTo, stockId, ledgerId, page, pageSize }) => {
+      const scope = scopeFor(ledgerId);
+      return withAudit(credential, "stock_realized_pl", () => {
         const {
           page: p,
           pageSize: ps,
           offset,
         } = resolvePagination({ page, pageSize });
-        const result = getStockRealizedPl(userId, {
+        const result = getStockRealizedPl(scope.dataOwnerId, {
           dateFrom,
           dateTo,
           stockId,
@@ -749,7 +830,8 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
           totalPages: Math.ceil(total / ps),
           summary: result.summary,
         });
-      }),
+      });
+    },
   );
 
   // get_credit_card_repayment_preview：在送出還款前試算分配（007-mcp-credit-card-repayment，US2）。
@@ -773,9 +855,11 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
         totalAmount: z
           .union([z.number(), z.string()])
           .describe("欲試算的總金額，須為大於 0 的整數（以付款帳戶幣別計）"),
+        ...ledgerIdShape,
       },
     },
-    async ({ fromAccountId, totalAmount }) => {
+    async ({ fromAccountId, totalAmount, ledgerId }) => {
+      const scope = scopeFor(ledgerId);
       // 第 1 步：totalAmount 為大於 0 的整數（V1，與 create_credit_card_repayment 逐字相同）
       const numTotal = Number(totalAmount);
       if (!Number.isInteger(numTotal) || numTotal <= 0) {
@@ -785,7 +869,7 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
       // 第 2 步：讀取付款帳戶（V2）
       const fromAccount = queryOne(
         "SELECT id, currency, account_type, name FROM accounts WHERE id = ? AND user_id = ?",
-        [fromAccountId, userId],
+        [fromAccountId, scope.dataOwnerId],
       );
       if (!fromAccount) throw new Error("付款帳戶不存在");
 
@@ -799,7 +883,7 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
       );
 
       // 第 4 步：collectPayableCards 查詢當下即時取得（V4）
-      const cards = collectPayableCards(userId, fromAccountId, fromCurrency);
+      const cards = collectPayableCards(scope.dataOwnerId, fromAccountId, fromCurrency);
       if (cards.length === 0) {
         throw new Error("此付款帳戶目前沒有可還款的信用卡");
       }
@@ -813,7 +897,7 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
 
       // 第 6 步：計算分配（唯讀——computeRepaymentAllocation 只呼叫匯率查詢，不寫入任何資料，FR-009）
       const details = computeRepaymentAllocation(
-        userId,
+        scope.dataOwnerId,
         fromCurrency,
         numTotal,
         cards,
@@ -868,11 +952,13 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
           .string()
           .optional()
           .describe("結束日期 YYYY-MM-DD（含當日），依還款日期篩選"),
+        ...ledgerIdShape,
         ...paginationShape,
       },
     },
-    async ({ dateFrom, dateTo, page, pageSize }) =>
-      withAudit(credential, "credit_card_repayments_list", () => {
+    async ({ dateFrom, dateTo, ledgerId, page, pageSize }) => {
+      const scope = scopeFor(ledgerId);
+      return withAudit(credential, "credit_card_repayments_list", () => {
         const {
           page: p,
           pageSize: ps,
@@ -880,7 +966,7 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
         } = resolvePagination({ page, pageSize });
         // 組查詢條件：WHERE user_id = ?（必要）＋ dateFrom／dateTo
         let where = "user_id = ?";
-        const params: Array<string | number | null> = [userId];
+        const params: Array<string | number | null> = [scope.dataOwnerId];
         if (dateFrom) {
           where += " AND date >= ?";
           params.push(dateFrom);
@@ -905,7 +991,7 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
 
         // 對每一列呼叫 evaluateRepaymentSummary() 取得各卡 status 與整體 stale（FR-011、FR-012）
         const items = rows.map((row) => {
-          const { allocations, stale } = evaluateRepaymentSummary(userId, {
+          const { allocations, stale } = evaluateRepaymentSummary(scope.dataOwnerId, {
             date: String(row.date),
             from_account_id: String(row.from_account_id),
             allocations: String(row.allocations ?? ""),
@@ -933,7 +1019,8 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
           pageSize: ps,
           totalPages: Math.ceil(total / ps),
         });
-      }),
+      });
+    },
   );
 
   // create_transaction 與 create_credit_card_repayment 皆僅在憑證已開啟「允許新增資料」時才註冊；
@@ -1005,8 +1092,9 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
             .string()
             .optional()
             .describe(
-              "冪等鍵；同一憑證 24 小時內以相同值重複呼叫，回傳先前建立結果，不重複建立",
+              "冪等鍵；同一憑證在同一帳本 24 小時內以相同值重複呼叫，回傳先前建立結果，不重複建立",
             ),
+          ...ledgerIdShape,
         },
       },
       async ({
@@ -1021,11 +1109,14 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
         toAccountId,
         note,
         idempotencyKey,
+        ledgerId,
       }) => {
+        // 授權先於冪等快取：離開或被移除後不得再讀回共享帳本的既有回應。
+        const scope = scopeFor(ledgerId, true);
         if (idempotencyKey) {
           const cached = queryOne(
-            "SELECT response_json FROM mcp_transaction_idempotency WHERE credential_id = ? AND idempotency_key = ? AND expires_at > ?",
-            [credential.credentialId, idempotencyKey, Date.now()],
+            "SELECT response_json FROM mcp_transaction_idempotency WHERE credential_id = ? AND idempotency_key = ? AND ledger_id = ? AND expires_at > ?",
+            [credential.credentialId, idempotencyKey, scope.ledgerId, Date.now()],
           );
           if (cached) {
             return toolResult(parseStoredJson(cached.response_json));
@@ -1041,10 +1132,7 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
         }
         let date: string;
         if (rawDate == null || String(rawDate).trim() === "") {
-          const userRow = queryOne("SELECT timezone FROM users WHERE id = ?", [
-            userId,
-          ]);
-          date = todayInUserTz((userRow?.timezone as string) || "Asia/Taipei");
+          date = todayInUserTz(scope.timezone);
         } else {
           date = normalizeDate(rawDate);
         }
@@ -1063,11 +1151,11 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
             throw new Error("轉出與轉入帳戶不可相同");
           const fromAccount = queryOne(
             "SELECT id, currency FROM accounts WHERE id = ? AND user_id = ?",
-            [fromAccountId, userId],
+            [fromAccountId, scope.dataOwnerId],
           );
           const toAccount = queryOne(
             "SELECT id, currency FROM accounts WHERE id = ? AND user_id = ?",
-            [toAccountId, userId],
+            [toAccountId, scope.dataOwnerId],
           );
           if (!fromAccount || !toAccount) throw new Error("帳戶不存在或無權限");
           const fromCurrency = normalizeCurrency(
@@ -1082,9 +1170,9 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
             );
           }
 
-          const converted = convertToTwd(numAmount, fromCurrency, null, userId);
+          const converted = convertToTwd(numAmount, fromCurrency, null, scope.dataOwnerId);
           const pair = insertTransferPair({
-            userId,
+            userId: scope.dataOwnerId,
             fromAccountId,
             toAccountId,
             fromCurrency,
@@ -1106,7 +1194,7 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
         } else {
           const accounts = queryAll(
             "SELECT id, category, account_type, is_active FROM accounts WHERE user_id = ?",
-            [userId],
+            [scope.dataOwnerId],
           );
           let resolvedAccountId: string;
           if (accountId) {
@@ -1130,7 +1218,7 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
           if (categoryId) {
             const owned = queryOne(
               "SELECT id FROM categories WHERE id = ? AND user_id = ?",
-              [categoryId, userId],
+              [categoryId, scope.dataOwnerId],
             );
             resolvedCategoryId = owned ? categoryId : null;
           }
@@ -1139,10 +1227,10 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
             numAmount,
             currency || "TWD",
             fxRate,
-            userId,
+            scope.dataOwnerId,
           );
           const fxFee = resolveOverseasFee({
-            userId,
+            userId: scope.dataOwnerId,
             accountId: resolvedAccountId,
             currency: converted.currency,
             twdBase: converted.twdAmount,
@@ -1155,7 +1243,7 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
           );
 
           const created = insertIncomeExpenseTransaction({
-            userId,
+            userId: scope.dataOwnerId,
             type,
             twdAmount: twdAmountInt,
             currency: converted.currency,
@@ -1188,13 +1276,14 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
           const idemNow = Date.now();
           getDB().run(
             `INSERT INTO mcp_transaction_idempotency
-             (id, credential_id, user_id, idempotency_key, transaction_id, linked_transaction_id, response_json, created_at, expires_at)
-             VALUES (?,?,?,?,?,?,?,?,?)
-             ON CONFLICT (credential_id, idempotency_key) DO NOTHING`,
+             (id, credential_id, ledger_id, user_id, idempotency_key, transaction_id, linked_transaction_id, response_json, created_at, expires_at)
+             VALUES (?,?,?,?,?,?,?,?,?,?)
+             ON CONFLICT (credential_id, ledger_id, idempotency_key) DO NOTHING`,
             [
               uid(),
               credential.credentialId,
-              userId,
+              scope.ledgerId,
+              scope.dataOwnerId,
               idempotencyKey,
               transactionIdForAudit,
               linkedTransactionIdForAudit,
@@ -1206,8 +1295,8 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
           saveDB();
           // 極端併發：兩個相同 key 的請求同時通過命中檢查，衝突後改讀已存在列，確保回應與稽核不重複建立。
           const stored = queryOne(
-            "SELECT response_json FROM mcp_transaction_idempotency WHERE credential_id = ? AND idempotency_key = ?",
-            [credential.credentialId, idempotencyKey],
+            "SELECT response_json FROM mcp_transaction_idempotency WHERE credential_id = ? AND idempotency_key = ? AND ledger_id = ?",
+            [credential.credentialId, idempotencyKey, scope.ledgerId],
           );
           if (stored) response = parseStoredJson(stored.response_json);
         }
@@ -1257,16 +1346,25 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
             .string()
             .optional()
             .describe(
-              "冪等鍵；同一憑證 24 小時內以相同值重複呼叫，回傳先前建立結果，不重複建立",
+              "冪等鍵；同一憑證在同一帳本 24 小時內以相同值重複呼叫，回傳先前建立結果，不重複建立",
             ),
+          ...ledgerIdShape,
         },
       },
-      async ({ fromAccountId, totalAmount, date: rawDate, idempotencyKey }) => {
+      async ({
+        fromAccountId,
+        totalAmount,
+        date: rawDate,
+        idempotencyKey,
+        ledgerId,
+      }) => {
+        // 授權先於冪等快取：離開或被移除後不得再讀回共享帳本的既有回應。
+        const scope = scopeFor(ledgerId, true);
         // 第 1 步：冪等鍵命中檢查（比照既有 create_transaction，FR-008）
         if (idempotencyKey) {
           const cached = queryOne(
-            "SELECT response_json FROM mcp_transaction_idempotency WHERE credential_id = ? AND idempotency_key = ? AND expires_at > ?",
-            [credential.credentialId, idempotencyKey, Date.now()],
+            "SELECT response_json FROM mcp_transaction_idempotency WHERE credential_id = ? AND idempotency_key = ? AND ledger_id = ? AND expires_at > ?",
+            [credential.credentialId, idempotencyKey, scope.ledgerId, Date.now()],
           );
           if (cached) {
             return toolResult(parseStoredJson(cached.response_json));
@@ -1282,7 +1380,7 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
         // 第 3 步：讀取付款帳戶（V2）
         const fromAccount = queryOne(
           "SELECT id, currency, account_type, name FROM accounts WHERE id = ? AND user_id = ?",
-          [fromAccountId, userId],
+          [fromAccountId, scope.dataOwnerId],
         );
         if (!fromAccount) throw new Error("付款帳戶不存在");
 
@@ -1291,13 +1389,10 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
           throw new Error("付款帳戶不可為信用卡");
         }
 
-        // 第 5 步：日期解析（比照既有 create_transaction，不使用 auth.userTimezone——research.md 第 5 節）
+        // 第 5 步：日期解析（比照既有 create_transaction；共享帳本以帳本時區為準，個人帳本仍為使用者時區）
         let date: string;
         if (rawDate == null || String(rawDate).trim() === "") {
-          const userRow = queryOne("SELECT timezone FROM users WHERE id = ?", [
-            userId,
-          ]);
-          date = todayInUserTz((userRow?.timezone as string) || "Asia/Taipei");
+          date = todayInUserTz(scope.timezone);
         } else {
           date = normalizeDate(rawDate);
         }
@@ -1307,7 +1402,7 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
         );
 
         // 第 6 步：collectPayableCards 送出當下重新取得（FR-010），V4
-        const cards = collectPayableCards(userId, fromAccountId, fromCurrency);
+        const cards = collectPayableCards(scope.dataOwnerId, fromAccountId, fromCurrency);
         if (cards.length === 0) {
           throw new Error("此付款帳戶目前沒有可還款的信用卡");
         }
@@ -1323,13 +1418,13 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
         // 不額外包 try/catch——任一步驟拋出的例外直接讓 MCP SDK 轉為 isError: true，
         // 比照既有 create_transaction 的既有手法（不像 HTTP 路由需要固定訊息殼）。
         const details = computeRepaymentAllocation(
-          userId,
+          scope.dataOwnerId,
           fromCurrency,
           numTotal,
           cards,
         );
         const { summaryId, allocations } = executeRepayment({
-          userId,
+          userId: scope.dataOwnerId,
           fromAccountId,
           fromAccountName: fromAccount.name as string,
           fromCurrency,
@@ -1354,13 +1449,14 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
           const idemNow = Date.now();
           getDB().run(
             `INSERT INTO mcp_transaction_idempotency
-             (id, credential_id, user_id, idempotency_key, transaction_id, linked_transaction_id, response_json, created_at, expires_at)
-             VALUES (?,?,?,?,?,?,?,?,?)
-             ON CONFLICT (credential_id, idempotency_key) DO NOTHING`,
+             (id, credential_id, ledger_id, user_id, idempotency_key, transaction_id, linked_transaction_id, response_json, created_at, expires_at)
+             VALUES (?,?,?,?,?,?,?,?,?,?)
+             ON CONFLICT (credential_id, ledger_id, idempotency_key) DO NOTHING`,
             [
               uid(),
               credential.credentialId,
-              userId,
+              scope.ledgerId,
+              scope.dataOwnerId,
               idempotencyKey,
               summaryId,
               "",
@@ -1372,8 +1468,8 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
           saveDB();
           // 極端併發：兩個相同 key 的請求同時通過命中檢查，衝突後改讀已存在列，確保回應不重複建立。
           const stored = queryOne(
-            "SELECT response_json FROM mcp_transaction_idempotency WHERE credential_id = ? AND idempotency_key = ?",
-            [credential.credentialId, idempotencyKey],
+            "SELECT response_json FROM mcp_transaction_idempotency WHERE credential_id = ? AND idempotency_key = ? AND ledger_id = ?",
+            [credential.credentialId, idempotencyKey, scope.ledgerId],
           );
           if (stored)
             response = parseStoredJson<typeof response>(stored.response_json);
@@ -1419,17 +1515,20 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
           note: z
             .string()
             .describe("新的備註全文；空字串代表清空備註；長度上限 200 字"),
+          ...ledgerIdShape,
         },
       },
-      async ({ transactionId, note }) => {
+      async ({ transactionId, note, ledgerId }) => {
         // 處理順序第 1-3 步：前置檢查，順序不可調換，任一失敗皆不變更任何資料、不寫入稽核。
+        // 先解析帳本授權，viewer 一律不得寫入（issue #281）。
+        const scope = scopeFor(ledgerId, true);
         if (String(note).length > TRANSACTION_NOTE_MAX_LENGTH) {
           throw new Error(`備註長度不可超過 ${TRANSACTION_NOTE_MAX_LENGTH} 字`);
         }
         // 欄位清單須逐一列舉、禁止省略號；須涵蓋 findTransactionEditBlock() 讀取的所有欄位。
         const row = queryOne(
           "SELECT id, is_fx_fee FROM transactions WHERE id = ? AND user_id = ?",
-          [transactionId, userId],
+          [transactionId, scope.dataOwnerId],
         );
         if (!row) {
           throw new Error("交易不存在或無權限");
@@ -1445,7 +1544,7 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
         // 取得異動前的舊值）與旗標，嚴禁讀改寫（FR-002、並行編輯保證；005 FR-003/FR-007）。
         getDB().run(
           "UPDATE transactions SET note = ?, pre_ai_note = note, note_ai_modified = 1, updated_at = ? WHERE id = ? AND user_id = ?",
-          [note, Date.now(), transactionId, userId],
+          [note, Date.now(), transactionId, scope.dataOwnerId],
         );
         saveDB();
 
@@ -1456,7 +1555,7 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
            LEFT JOIN categories c ON c.id = t.category_id
            LEFT JOIN accounts a ON a.id = t.account_id
            WHERE t.id = ? AND t.user_id = ?`,
-          [transactionId, userId],
+          [transactionId, scope.dataOwnerId],
         );
         const transaction = mapTransactionRowForMcp(
           updated as Record<string, string | number | null>,

@@ -1948,5 +1948,12 @@ export const ptBR = {
     audit: "Atividade recente",
     noAudit: "No activity recorded yet.",
     lastOwnerNotice: "The owner must transfer ownership before leaving or deleting their account.",
+    switchTitle: "Trocar livro",
+    switchHint: "Novos registros e consultas usarão este livro após a troca.",
+    current: "Livro atual",
+    roleLabel: "Meu papel",
+    readOnlyNotice: "Este livro é somente leitura; você só pode visualizar os dados.",
+    switchFailed: "Não foi possível trocar de livro. Tente novamente.",
+    noLedger: "Nenhum livro acessível encontrado.",
   },
 } satisfies DeepPartialDict<Dictionary>;

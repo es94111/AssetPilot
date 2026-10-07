@@ -5535,6 +5535,30 @@ class AppLocalizationsEs extends AppLocalizations {
       'The owner must transfer ownership before leaving or deleting their account.';
 
   @override
+  String get ledgerSwitchTitle => 'Cambiar libro';
+
+  @override
+  String get ledgerSwitchHint =>
+      'Los registros y consultas nuevos usarán este libro tras el cambio.';
+
+  @override
+  String get ledgerCurrent => 'Libro actual';
+
+  @override
+  String get ledgerRoleLabel => 'Mi rol';
+
+  @override
+  String get ledgerReadOnlyNotice =>
+      'Este libro es de solo lectura; solo puedes consultar los datos.';
+
+  @override
+  String get ledgerSwitchFailed =>
+      'No se pudo cambiar de libro. Inténtalo de nuevo.';
+
+  @override
+  String get ledgerNoLedger => 'No se encontró ningún libro accesible.';
+
+  @override
   String get navReconciliation => 'Conciliación bancaria';
 
   @override

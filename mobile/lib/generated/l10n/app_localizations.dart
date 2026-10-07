@@ -9541,6 +9541,48 @@ abstract class AppLocalizations {
   /// **'擁有者離開帳本或刪除帳號前，必須先移交擁有權。'**
   String get ledgerLastOwnerNotice;
 
+  /// Web path: ledger.switchTitle
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'切換帳本'**
+  String get ledgerSwitchTitle;
+
+  /// Web path: ledger.switchHint
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'切換後的新增與查詢都會套用到這個帳本。'**
+  String get ledgerSwitchHint;
+
+  /// Web path: ledger.current
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'目前帳本'**
+  String get ledgerCurrent;
+
+  /// Web path: ledger.roleLabel
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'我的角色'**
+  String get ledgerRoleLabel;
+
+  /// Web path: ledger.readOnlyNotice
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'此帳本為唯讀，你只能檢視資料。'**
+  String get ledgerReadOnlyNotice;
+
+  /// Web path: ledger.switchFailed
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'無法切換帳本，請稍後再試。'**
+  String get ledgerSwitchFailed;
+
+  /// Web path: ledger.noLedger
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'找不到可存取的帳本。'**
+  String get ledgerNoLedger;
+
   /// Web path: nav.reconciliation
   ///
   /// In zh_Hant_TW, this message translates to:

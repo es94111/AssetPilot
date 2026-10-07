@@ -5,10 +5,12 @@
 import { NextResponse } from 'next/server';
 import { requireAuth } from '../../../../lib/apiHelpers';
 import { getDB, queryOne, queryAll, saveDB } from '../../../../lib/db';
+import { resolveLedgerScope } from '../../../../lib/ledgerScope';
 
 function serializeSchedule(row) {
   return {
-    id: row.id, userId: row.user_id, freq: row.freq,
+    id: row.id, userId: row.user_id, ledgerId: row.ledger_id || `personal:${row.user_id}`,
+    freq: row.freq,
     hour: Number(row.hour) || 0, minute: Number(row.minute) || 0, weekday: Number(row.weekday) || 0,
     dayOfMonth: Number(row.day_of_month) || 0, enabled: row.enabled === 1,
     notifyEmail: row.notify_email !== 0, notifyLine: row.notify_line === 1,
@@ -41,6 +43,17 @@ export async function POST(request) {
     return NextResponse.json({ error: 'freq 須為 daily/weekly/monthly' }, { status: 400 });
   }
 
+  // issue #281：排程綁定帳本。未指定時沿用個人帳本（既有行為不變）；
+  // 指定共享帳本時必須當下仍是成員，且 viewer 不得建立以共享帳本為範圍的通知。
+  const ledgerId = String(body?.ledgerId || '').trim();
+  const scope = resolveLedgerScope({ userId: auth.userId, ledgerId, write: true });
+  if (!scope.ok) {
+    return NextResponse.json(
+      { error: scope.reason === 'read-only' ? '此帳本為唯讀，無法建立通知排程' : '找不到帳本或沒有存取權' },
+      { status: scope.reason === 'read-only' ? 403 : 404 },
+    );
+  }
+
   const hour = clampInt(body?.hour, 0, 23, 9);
   const minute = clampInt(body?.minute, 0, 59, 0);
   const weekday = clampInt(body?.weekday, 0, 6, 1);
@@ -56,8 +69,8 @@ export async function POST(request) {
   const id = 'rs_' + nowMs + '_' + Math.random().toString(36).slice(2, 10);
 
   getDB().run(
-    'INSERT INTO report_schedules (id, user_id, freq, hour, minute, weekday, day_of_month, notify_email, notify_line, enabled, last_run, last_summary, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, \'\', ?, ?)',
-    [id, auth.userId, freq, hour, minute, weekday, dayOfMonth, notifyEmail, notifyLine, enabled, nowMs, nowMs]
+    'INSERT INTO report_schedules (id, user_id, ledger_id, freq, hour, minute, weekday, day_of_month, notify_email, notify_line, enabled, last_run, last_summary, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, \'\', ?, ?)',
+    [id, auth.userId, scope.ledgerId, freq, hour, minute, weekday, dayOfMonth, notifyEmail, notifyLine, enabled, nowMs, nowMs]
   );
   saveDB();
   const row = queryOne('SELECT * FROM report_schedules WHERE id = ?', [id]);

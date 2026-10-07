@@ -5498,6 +5498,30 @@ class AppLocalizationsRu extends AppLocalizations {
       'The owner must transfer ownership before leaving or deleting their account.';
 
   @override
+  String get ledgerSwitchTitle => 'Сменить книгу';
+
+  @override
+  String get ledgerSwitchHint =>
+      'Новые записи и запросы будут использовать эту книгу после переключения.';
+
+  @override
+  String get ledgerCurrent => 'Текущая книга';
+
+  @override
+  String get ledgerRoleLabel => 'Моя роль';
+
+  @override
+  String get ledgerReadOnlyNotice =>
+      'Эта книга доступна только для чтения; вы можете только просматривать данные.';
+
+  @override
+  String get ledgerSwitchFailed =>
+      'Не удалось сменить книгу. Повторите попытку.';
+
+  @override
+  String get ledgerNoLedger => 'Доступных книг не найдено.';
+
+  @override
   String get navReconciliation => 'Сверка с банком';
 
   @override

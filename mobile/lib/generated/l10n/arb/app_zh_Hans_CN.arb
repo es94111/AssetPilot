@@ -8358,6 +8358,41 @@
     "description": "Web path: ledger.lastOwnerNotice",
     "x-webPath": "ledger.lastOwnerNotice"
   },
+  "ledgerSwitchTitle": "切换账本",
+  "@ledgerSwitchTitle": {
+    "description": "Web path: ledger.switchTitle",
+    "x-webPath": "ledger.switchTitle"
+  },
+  "ledgerSwitchHint": "切换后的新增与查询都会套用到这个账本。",
+  "@ledgerSwitchHint": {
+    "description": "Web path: ledger.switchHint",
+    "x-webPath": "ledger.switchHint"
+  },
+  "ledgerCurrent": "当前账本",
+  "@ledgerCurrent": {
+    "description": "Web path: ledger.current",
+    "x-webPath": "ledger.current"
+  },
+  "ledgerRoleLabel": "我的角色",
+  "@ledgerRoleLabel": {
+    "description": "Web path: ledger.roleLabel",
+    "x-webPath": "ledger.roleLabel"
+  },
+  "ledgerReadOnlyNotice": "此账本为只读，你只能查看数据。",
+  "@ledgerReadOnlyNotice": {
+    "description": "Web path: ledger.readOnlyNotice",
+    "x-webPath": "ledger.readOnlyNotice"
+  },
+  "ledgerSwitchFailed": "无法切换账本，请稍后再试。",
+  "@ledgerSwitchFailed": {
+    "description": "Web path: ledger.switchFailed",
+    "x-webPath": "ledger.switchFailed"
+  },
+  "ledgerNoLedger": "找不到可访问的账本。",
+  "@ledgerNoLedger": {
+    "description": "Web path: ledger.noLedger",
+    "x-webPath": "ledger.noLedger"
+  },
   "navReconciliation": "银行对账导入",
   "@navReconciliation": {
     "description": "Web path: nav.reconciliation",

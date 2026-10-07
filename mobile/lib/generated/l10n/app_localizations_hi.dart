@@ -5433,6 +5433,29 @@ class AppLocalizationsHi extends AppLocalizations {
       'The owner must transfer ownership before leaving or deleting their account.';
 
   @override
+  String get ledgerSwitchTitle => 'लेजर बदलें';
+
+  @override
+  String get ledgerSwitchHint =>
+      'बदलने के बाद नई प्रविष्टियाँ और क्वेरी इस लेजर का उपयोग करेंगी।';
+
+  @override
+  String get ledgerCurrent => 'वर्तमान लेजर';
+
+  @override
+  String get ledgerRoleLabel => 'मेरी भूमिका';
+
+  @override
+  String get ledgerReadOnlyNotice =>
+      'यह लेजर केवल पढ़ने योग्य है; आप केवल डेटा देख सकते हैं।';
+
+  @override
+  String get ledgerSwitchFailed => 'लेजर बदल नहीं सका। कृपया पुनः प्रयास करें।';
+
+  @override
+  String get ledgerNoLedger => 'कोई सुलभ लेजर नहीं मिला।';
+
+  @override
   String get navReconciliation => 'बैंक मिलान';
 
   @override

@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { apiGet, apiPost, apiPut, apiDelete, activeLedgerFileUrl, getActiveLedgerHeaders, notifyDataChanged, isNetworkError, DATA_CHANGED_EVENT } from '../../../lib/clientApi';
 import { enqueueOffline } from '../../../lib/clientOfflineQueue';
+import { newQueueId } from '../../../lib/offlineQueueCore';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useT } from '@/components/i18n/I18nProvider';
@@ -452,8 +453,10 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
     if (!/^[A-Z]{3}$/.test(form.currency)) { setAdvancedOpen(true); setFormError(t('features.accounts.messages.currencyInvalid')); return; }
     setSaving(true);
     setFormError('');
+    const clientRef = editId ? undefined : newQueueId();
     const isForex = form.currency && form.currency !== 'TWD';
     const body = {
+      ...(clientRef ? { clientRef } : {}),
       date: form.date,
       type: form.type,
       amount: Number(form.amount),
@@ -489,7 +492,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
         } catch (networkError: any) {
           if (!isNetworkError(networkError)) throw networkError;
           // 離線（或連線中斷）：改存本機佇列，恢復連線後由 OfflineSyncStatus 自動送出。
-          const { persisted } = enqueueOffline('transaction', body);
+          const { persisted } = enqueueOffline('transaction', body, clientRef);
           if (!persisted) {
             // 本機儲存不可用（隱私模式／配額用盡）：不可謊稱已儲存，必須讓使用者知道。
             setFormError(t('features.offline.saveFailed'));
@@ -541,14 +544,16 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
     }
     setSaving(true);
     setFormError('');
+    const clientRef = newQueueId();
+    const transferPayload = {
+      date: transferForm.date,
+      amount: Number(transferForm.amount),
+      fromAccountId: transferForm.fromAccountId,
+      toAccountId: transferForm.toAccountId,
+      note: transferForm.note,
+    };
     try {
-      await apiPost('/api/transactions/transfer', {
-        date: transferForm.date,
-        amount: Number(transferForm.amount),
-        fromAccountId: transferForm.fromAccountId,
-        toAccountId: transferForm.toAccountId,
-        note: transferForm.note,
-      });
+      await apiPost('/api/transactions/transfer', { ...transferPayload, clientRef });
       setTransferModal(false);
       setPage(1);
       await load(1);
@@ -556,13 +561,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
     } catch (e: any) {
       if (isNetworkError(e)) {
         // 離線：整筆轉帳（含配對兩腳）排入佇列，恢復連線後一次送出。
-        const { persisted } = enqueueOffline('transfer', {
-          date: transferForm.date,
-          amount: Number(transferForm.amount),
-          fromAccountId: transferForm.fromAccountId,
-          toAccountId: transferForm.toAccountId,
-          note: transferForm.note,
-        });
+        const { persisted } = enqueueOffline('transfer', transferPayload, clientRef);
         if (!persisted) {
           setFormError(t('features.offline.saveFailed'));
         } else {

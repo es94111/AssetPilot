@@ -559,7 +559,7 @@ CSV 內容經過 Formula Injection 防護處理（以 `=`、`+`、`-`、`@` 開�
 
 #### 離線記帳佇列
 
-- 純邏輯模組 `lib/offlineQueueCore.ts`（不依賴瀏覽器或伺服器端 API，可獨立單元測試）定義佇列項目形狀、解析／序列化、去重、容量上限（200 筆）、重試與指數退避（5 秒起、上限 5 分鐘、最多自動重試 5 次）與 `isRetryableStatus`
+- 純邏輯模組 `lib/offlineQueueCore.ts`（不依賴瀏覽器或伺服器端 API，可獨立單元測試）定義佇列項目形狀、解析／序列化、去重、容量上限（200 筆；已滿時拒絕新項目並保留全部未同步交易，不淘汰舊項目）、重試與指數退避（5 秒起、上限 5 分鐘、最多自動重試 5 次）與 `isRetryableStatus`
 - 瀏覽器 I/O 模組 `lib/clientOfflineQueue.ts` 以使用者分隔的 `localStorage` key（`assetpilot.offlineQueue.<userId>`）持久化；`OfflineSyncStatus` 會先綁定 user id 再啟動同步。登出會停用本頁並透過 `storage` event 通知其他分頁停止同步，同一使用者重新登入可恢復佇列，不同使用者登入會清除其他 user keys；舊版未分隔 key 會移除。寫入後回讀驗證，儲存空間不可用時回報失敗、前端不得顯示「已離線儲存」。佇列變更／恢復連線時自動送出，網路層錯誤即使 `navigator.onLine` 誤報在線也會立即重試。
 - `components/features/transactions/TransactionsClient.tsx` 於新增收支／轉帳遇上連線層失敗（`isNetworkError`）時改存入佇列，並以 Toast 提示
 - `components/features/offline/OfflineSyncStatus.tsx`（掛載於 `AppLayout`）顯示離線／待同步筆數，並對失敗項目提供「重試」與「捨棄」

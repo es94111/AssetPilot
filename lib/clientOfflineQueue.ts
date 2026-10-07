@@ -164,18 +164,24 @@ export function getQueueSummary(): QueueSummary {
  */
 export function enqueueOffline(
   kind: OfflineQueueKind,
-  payload: Record<string, unknown>
+  payload: Record<string, unknown>,
+  id?: string,
 ): { item: OfflineQueueItem; persisted: boolean } {
   const item = createQueueItem({
     kind,
     payload,
     now: Date.now(),
+    id,
     ledgerId: getActiveLedgerId() || undefined,
   });
   // 未綁定已驗證使用者（登出／跨分頁身分切換期間）一律 fail closed，不能寫入
   // 共用 base key，否則下一位使用者可能在不知情下收到這筆離線交易。
   if (!activeUserId) return { item, persisted: false };
-  const persisted = writeQueue(enqueue(readQueue(), item), item.id);
+  const current = readQueue();
+  if (current.some((existing) => existing.id === item.id)) return { item, persisted: true };
+  const next = enqueue(current, item);
+  if (next === current) return { item, persisted: false };
+  const persisted = writeQueue(next, item.id);
   return { item, persisted };
 }
 

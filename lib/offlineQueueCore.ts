@@ -136,13 +136,11 @@ export function serializeQueue(items: OfflineQueueItem[]): string {
 }
 
 /**
- * 加入一筆新項目。同一 id 已存在時不重複加入；超過容量上限時丟棄最舊的項目，
- * 確保新資料永遠進得來（離線記帳的核心價值是「當下一定要記得到」）。
- */
+/** Add an item without ever discarding previously persisted financial entries. */
 export function enqueue(items: OfflineQueueItem[], item: OfflineQueueItem): OfflineQueueItem[] {
   if (items.some((existing) => existing.id === item.id)) return items;
-  const next = [...items, item];
-  return next.length > MAX_QUEUE_SIZE ? next.slice(next.length - MAX_QUEUE_SIZE) : next;
+  if (items.length >= MAX_QUEUE_SIZE) return items;
+  return [...items, item];
 }
 
 export function removeItem(items: OfflineQueueItem[], id: string): OfflineQueueItem[] {

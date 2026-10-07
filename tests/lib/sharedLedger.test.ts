@@ -157,9 +157,14 @@ test('shared ledgers: real authenticated routes, invitations and ownership bound
       const accountRes = await accounts.POST(request(editor, '/api/accounts', 'POST', { name: 'Shared cash', category: 'cash', currency: 'TWD', initialBalance: 0 }));
       assert.equal(accountRes.status, 201);
       const accountId = (await accountRes.json()).id;
-      const created = await tx.POST(request(editor, '/api/transactions', 'POST', { type: 'expense', amount: 125, date: '2026-10-01', categoryId, accountId, note: 'Shared expense' }));
+      const createPayload = { type: 'expense', amount: 125, date: '2026-10-01', categoryId, accountId, note: 'Shared expense', clientRef: 'c'.repeat(32) };
+      const created = await tx.POST(request(editor, '/api/transactions', 'POST', createPayload));
       assert.equal(created.status, 201, await created.clone().text());
       transactionId = (await created.json()).id;
+      const retried = await tx.POST(request(editor, '/api/transactions', 'POST', createPayload));
+      assert.equal(retried.status, 201, await retried.clone().text());
+      assert.equal((await retried.json()).id, transactionId);
+      assert.equal(Number(queryOne('SELECT COUNT(*) AS count FROM transactions WHERE user_id = ? AND client_ref = ?', [dataOwner, createPayload.clientRef])?.count), 1);
       assert.equal(queryOne('SELECT user_id FROM transactions WHERE id = ?', [transactionId])?.user_id, dataOwner);
       const privateRead = await txItem.GET(request(editor, `/api/transactions/${privateTx}`), { params: Promise.resolve({ txId: privateTx }) });
       assert.equal(privateRead.status, 404);

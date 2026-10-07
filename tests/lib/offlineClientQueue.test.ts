@@ -162,6 +162,44 @@ test('離線交易固定使用建立時的帳本，不隨後續帳本切換而�
   }
 });
 
+test('在線請求重試佇列沿用第一次 POST 的 idempotency key', async () => {
+  const shim = installBrowserShim();
+  try {
+    const mod = await import('../../lib/clientOfflineQueue.ts');
+    mod.setOfflineQueueUser('ambiguous-write-user');
+    const clientRef = 'a'.repeat(32);
+    shim.setOnline(false);
+    const { item, persisted } = mod.enqueueOffline('transaction', { amount: 25, clientRef }, clientRef);
+    assert.equal(persisted, true);
+    assert.equal(item.id, clientRef);
+    shim.setOnline(true);
+    await mod.flushOfflineQueue();
+    assert.equal(shim.calls[0].body.clientRef, clientRef);
+  } finally {
+    shim.restore();
+  }
+});
+
+test('離線佇列容量已滿時拒絕新項目並保留所有未同步資料', async () => {
+  const shim = installBrowserShim();
+  try {
+    const mod = await import('../../lib/clientOfflineQueue.ts');
+    const { createQueueItem, MAX_QUEUE_SIZE } = await import('../../lib/offlineQueueCore.ts');
+    mod.setOfflineQueueUser('full-queue-user');
+    const items = Array.from({ length: MAX_QUEUE_SIZE }, (_, index) => createQueueItem({
+      kind: 'transaction', payload: { index }, now: index + 1, id: index.toString(16).padStart(32, '0'),
+    }));
+    const key = 'assetpilot.offlineQueue.full-queue-user';
+    shim.store.set(key, JSON.stringify(items));
+    const result = mod.enqueueOffline('transaction', { amount: 999 });
+    assert.equal(result.persisted, false);
+    assert.deepEqual(mod.getQueue(), items);
+    assert.ok(mod.getQueue().some((item) => item.id === items[0].id));
+  } finally {
+    shim.restore();
+  }
+});
+
 test('可重試失敗（網路層）：留在佇列並累積嘗試次數', async () => {
   const shim = installBrowserShim();
   try {

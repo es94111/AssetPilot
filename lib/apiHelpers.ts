@@ -13,7 +13,11 @@ import {
 import logger from "@/lib/logger";
 import { isActiveUserFlag } from "./userActive";
 import { triggerUserRequestMaintenance } from "./requestMaintenance";
-import { applyLedgerContext, isLedgerDataApiRequest } from "./ledgerContext";
+import {
+  applyLedgerContext,
+  ensurePersonalLedger,
+  isLedgerDataApiRequest,
+} from "./ledgerContext";
 
 type ApiAuthResult = {
   userId: string;
@@ -251,11 +255,29 @@ export async function requireAuth(
       themeMode: (user.theme_mode as string) || "system",
       sessionId,
     };
-    processDueRecurringOncePerDay(authResult.userId, authResult.userTimezone);
-    processDueStockRecurringOncePerDay(
-      authResult.userId,
-      authResult.userTimezone,
-    );
+    const ledgerDataRequest = isLedgerDataApiRequest(request);
+    let processPersonalRecurring = !ledgerDataRequest;
+    if (ledgerDataRequest) {
+      const headerLedgerId = String(request?.headers?.get?.("x-ledger-id") || "").trim();
+      const queryLedgerId = new URL(String(request?.url || ""), "http://localhost").searchParams.get("ledgerId")?.trim() || "";
+      if (!headerLedgerId || !queryLedgerId || headerLedgerId === queryLedgerId) {
+        const ledgerId = headerLedgerId || queryLedgerId || ensurePersonalLedger(authResult.userId);
+        const selectedLedger = queryOne(
+          `SELECT l.is_shared FROM financial_ledgers l
+           JOIN ledger_members m ON m.ledger_id = l.id AND m.user_id = ?
+           WHERE l.id = ?`,
+          [authResult.userId, ledgerId],
+        );
+        processPersonalRecurring = !!selectedLedger && Number(selectedLedger.is_shared) === 0;
+      }
+    }
+    if (processPersonalRecurring) {
+      processDueRecurringOncePerDay(authResult.userId, authResult.userTimezone);
+      processDueStockRecurringOncePerDay(
+        authResult.userId,
+        authResult.userTimezone,
+      );
+    }
     triggerUserRequestMaintenance(
       authResult.actorUserId,
       authResult.userTimezone,

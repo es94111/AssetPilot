@@ -8253,7 +8253,7 @@
     "description": "Web path: ledger.acceptInvite",
     "x-webPath": "ledger.acceptInvite"
   },
-  "ledgerEmptySharedNotice": "共享账本以空白状态创建，不会自动复制个人记账数据。",
+  "ledgerEmptySharedNotice": "共享账本不会自动复制个人数据。选择此账本时新增的投资数据将对其成员可见。",
   "@ledgerEmptySharedNotice": {
     "description": "Web path: ledger.emptySharedNotice",
     "x-webPath": "ledger.emptySharedNotice"

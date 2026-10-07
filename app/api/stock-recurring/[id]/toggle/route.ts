@@ -1,9 +1,10 @@
 // @ts-nocheck
+import { withLedgerWriteAudit } from "../../../../../lib/ledgerContext";
 import { NextResponse } from 'next/server';
 import { requireAuth } from '../../../../../lib/apiHelpers';
 import { getDB, queryOne, saveDB } from '../../../../../lib/db';
 
-export async function PATCH(request, { params }) {
+async function handlePATCH(request, { params }) {
   const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
@@ -15,3 +16,5 @@ export async function PATCH(request, { params }) {
   saveDB();
   return NextResponse.json({ isActive: !r.is_active });
 }
+
+export const PATCH = withLedgerWriteAudit(handlePATCH);

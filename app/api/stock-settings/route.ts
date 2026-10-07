@@ -1,4 +1,5 @@
 // @ts-nocheck
+import { withLedgerWriteAudit } from "../../../lib/ledgerContext";
 import { NextResponse } from 'next/server';
 import { requireAuth } from '../../../lib/apiHelpers';
 import { getDB, saveDB } from '../../../lib/db';
@@ -12,7 +13,7 @@ export async function GET(request) {
   return NextResponse.json(settings);
 }
 
-export async function PUT(request) {
+async function handlePUT(request) {
   const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
@@ -23,11 +24,19 @@ export async function PUT(request) {
     const normalized = normalizeStockSettingsInput(body, current);
     const db = getDB();
     db.run(
-      `UPDATE stock_settings
-      SET fee_rate = ?, fee_discount = ?, fee_min_lot = ?, fee_min_odd = ?,
-          sell_tax_rate_stock = ?, sell_tax_rate_etf = ?, sell_tax_rate_warrant = ?, sell_tax_min = ?, updated_at = ?
-      WHERE user_id = ?`,
+      `INSERT INTO stock_settings
+       (user_id, fee_rate, fee_discount, fee_min_lot, fee_min_odd, sell_tax_rate_stock,
+        sell_tax_rate_etf, sell_tax_rate_warrant, sell_tax_min, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       ON CONFLICT(user_id) DO UPDATE SET
+        fee_rate = excluded.fee_rate, fee_discount = excluded.fee_discount,
+        fee_min_lot = excluded.fee_min_lot, fee_min_odd = excluded.fee_min_odd,
+        sell_tax_rate_stock = excluded.sell_tax_rate_stock,
+        sell_tax_rate_etf = excluded.sell_tax_rate_etf,
+        sell_tax_rate_warrant = excluded.sell_tax_rate_warrant,
+        sell_tax_min = excluded.sell_tax_min, updated_at = excluded.updated_at`,
       [
+        auth.userId,
         normalized.feeRate,
         normalized.feeDiscount,
         normalized.feeMinLot,
@@ -37,7 +46,6 @@ export async function PUT(request) {
         normalized.sellTaxRateWarrant,
         normalized.sellTaxMin,
         Date.now(),
-        auth.userId,
       ]
     );
     saveDB();
@@ -46,3 +54,5 @@ export async function PUT(request) {
     return NextResponse.json({ error: e.message || '股票設定更新失敗' }, { status: 400 });
   }
 }
+
+export const PUT = withLedgerWriteAudit(handlePUT);

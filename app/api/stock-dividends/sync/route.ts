@@ -1,4 +1,5 @@
 // @ts-nocheck
+import { withLedgerWriteAudit } from "../../../../lib/ledgerContext";
 import { NextResponse } from "next/server";
 import { requireAuth } from "../../../../lib/apiHelpers";
 import { getDB, queryAll, queryOne, saveDB } from "../../../../lib/db";
@@ -98,7 +99,7 @@ function todayStr() {
 
 const delay = (ms) => new Promise((r) => setTimeout(r, ms));
 
-export async function POST(request) {
+async function handlePOST(request) {
   const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
@@ -326,7 +327,11 @@ export async function POST(request) {
       const divId = uid();
       const divNote = `${div.market === "US" ? "Yahoo Finance" : "TWSE"}自動同步（每股$${cashPerShare}${stockPer1000 > 0 ? `, 每千股配${stockPer1000}股` : ""}）`;
       const account = queryOne(
-        "SELECT account_id FROM stock_transactions WHERE user_id = ? AND stock_id = ? AND type = 'buy' AND account_id IS NOT NULL AND account_id != '' ORDER BY date DESC LIMIT 1",
+        `SELECT st.account_id FROM stock_transactions st
+         JOIN accounts a ON a.id = st.account_id AND a.user_id = st.user_id
+         WHERE st.user_id = ? AND st.stock_id = ? AND st.type = 'buy'
+           AND st.account_id IS NOT NULL AND st.account_id != ''
+         ORDER BY st.date DESC LIMIT 1`,
         [auth.userId, stock.id],
       );
       const accountId = account?.account_id || null;
@@ -378,3 +383,5 @@ export async function POST(request) {
     );
   }
 }
+
+export const POST = withLedgerWriteAudit(handlePOST);

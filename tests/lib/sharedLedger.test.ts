@@ -76,14 +76,30 @@ test('shared ledgers: real authenticated routes, invitations and ownership bound
   const exports = await import('../../app/api/transactions/export/route.ts');
   const reports = await import('../../app/api/reports/route.ts');
   const calendar = await import('../../app/api/calendar/route.ts');
+  const stocks = await import('../../app/api/stocks/route.ts');
+  const stockItem = await import('../../app/api/stocks/[id]/route.ts');
+  const stockTransactions = await import('../../app/api/stock-transactions/route.ts');
+  const stockTransactionItem = await import('../../app/api/stock-transactions/[id]/route.ts');
+  const stockDividends = await import('../../app/api/stock-dividends/route.ts');
+  const stockDividendItem = await import('../../app/api/stock-dividends/[id]/route.ts');
+  const stockRecurring = await import('../../app/api/stock-recurring/route.ts');
+  const stockRecurringItem = await import('../../app/api/stock-recurring/[id]/toggle/route.ts');
+  const stockSettings = await import('../../app/api/stock-settings/route.ts');
+  const stockRealized = await import('../../app/api/stock-realized/route.ts');
+  const stockRealizedPl = await import('../../app/api/stock-realized-pl/route.ts');
+  const exchangeRates = await import('../../app/api/exchange-rates/route.ts');
+  const exchangeRate = await import('../../app/api/exchange-rates/[currency]/route.ts');
+  const exchangeRateSettings = await import('../../app/api/exchange-rates/settings/route.ts');
   const { deleteUserCompletely, LedgerOwnershipTransferRequiredError } = await import('../../lib/userDeletion.ts');
   await initDB();
   const db = getDB();
   const owner = uid(), editor = uid(), viewer = uid(), outsider = uid();
   const people = [owner, editor, viewer, outsider];
   const tokens = new Map<string, string>();
-  let ledgerId = '', dataOwner = '', transactionId = '';
+  let ledgerId = '', dataOwner = '', transactionId = '', sharedAccountId = '';
   const privateTx = uid();
+  const privateStockId = uid();
+  const privateStockTxId = uid();
   const ctx = () => ({ params: Promise.resolve({ ledgerId }) });
   const request = (userId: string, path: string, method = 'GET', body?: unknown, ledger = ledgerId) => new NextRequest(`http://localhost${path}`, {
     method,
@@ -104,6 +120,10 @@ test('shared ledgers: real authenticated routes, invitations and ownership bound
       tokens.set(person, createLoginSession(person, 0, {}).token);
     }
     db.run('INSERT INTO transactions (id,user_id,type,amount,date,note) VALUES (?,?,?,?,?,?)', [privateTx, owner, 'expense', 77, '2026-10-01', 'private']);
+    db.run('INSERT INTO stocks (id,user_id,symbol,market,name,current_price,stock_type,currency,updated_at) VALUES (?,?,?,?,?,?,?,?,?)',
+      [privateStockId, owner, 'PRIVATE', 'US', 'Private holding', 110, 'stock', 'USD', new Date().toISOString()]);
+    db.run('INSERT INTO stock_transactions (id,user_id,stock_id,type,shares,price,fee,tax,date,note,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)',
+      [privateStockTxId, owner, privateStockId, 'buy', 5, 100, 0, 0, '2026-10-01', '', Date.now()]);
 
     await t.test('new shared ledger starts empty and existing personal data remains private', async () => {
       const personal = await ledgers.GET(request(owner, '/api/ledgers', 'GET', undefined, ''));
@@ -115,8 +135,12 @@ test('shared ledgers: real authenticated routes, invitations and ownership bound
       assert.notEqual(dataOwner, owner);
       const shared = await tx.GET(request(owner, '/api/transactions'));
       assert.equal((await shared.json()).total, 0);
+      const sharedStocks = await stocks.GET(request(owner, '/api/stocks'));
+      assert.deepEqual((await sharedStocks.json()).stocks, []);
       const personalRes = await tx.GET(request(owner, '/api/transactions', 'GET', undefined, ''));
       assert.equal((await personalRes.json()).total, 1);
+      const personalStocks = await stocks.GET(request(owner, '/api/stocks', 'GET', undefined, ''));
+      assert.equal((await personalStocks.json()).stocks[0].id, privateStockId);
       const forged = await tx.GET(request(outsider, '/api/transactions'));
       assert.equal(forged.status, 404);
     });
@@ -157,6 +181,7 @@ test('shared ledgers: real authenticated routes, invitations and ownership bound
       const accountRes = await accounts.POST(request(editor, '/api/accounts', 'POST', { name: 'Shared cash', category: 'cash', currency: 'TWD', initialBalance: 0 }));
       assert.equal(accountRes.status, 201);
       const accountId = (await accountRes.json()).id;
+      sharedAccountId = accountId;
       const createPayload = { type: 'expense', amount: 125, date: '2026-10-01', categoryId, accountId, note: 'Shared expense', clientRef: 'c'.repeat(32) };
       const created = await tx.POST(request(editor, '/api/transactions', 'POST', createPayload));
       assert.equal(created.status, 201, await created.clone().text());
@@ -174,6 +199,119 @@ test('shared ledgers: real authenticated routes, invitations and ownership bound
       const log = queryOne("SELECT actor_user_id, actor_email, result FROM ledger_audit_log WHERE ledger_id = ? AND action = 'POST /api/transactions' AND result = 'success'", [ledgerId]);
       assert.equal(log?.actor_user_id, editor);
       assert.equal(log?.actor_email, `${editor}@example.com`);
+    });
+
+    await t.test('investment holdings, FX, and linked accounts stay within the selected ledger', async () => {
+      const personalAccountRes = await accounts.POST(request(owner, '/api/accounts', 'POST', {
+        name: 'Private cash', category: 'cash', currency: 'TWD', initialBalance: 0,
+      }, ''));
+      assert.equal(personalAccountRes.status, 201);
+      const privateAccountId = String((await personalAccountRes.json()).id);
+      db.run('INSERT INTO exchange_rates (user_id,currency,rate_to_twd,updated_at,is_manual) VALUES (?,?,?,?,1)',
+        [owner, 'USD', '999', Date.now()]);
+      db.run('INSERT INTO exchange_rate_settings (user_id,auto_update,last_synced_at,updated_at) VALUES (?,1,123,?)',
+        [owner, Date.now()]);
+
+      const stockRes = await stocks.POST(request(editor, '/api/stocks', 'POST', {
+        market: 'US', symbol: 'AAPL', name: 'Apple',
+      }));
+      assert.equal(stockRes.status, 201, await stockRes.clone().text());
+      const stockId = String((await stockRes.json()).id);
+      assert.equal(queryOne('SELECT user_id FROM stocks WHERE id = ?', [stockId])?.user_id, dataOwner);
+
+      const crossLedgerStock = await stockTransactions.POST(request(editor, '/api/stock-transactions', 'POST', {
+        stockId: privateStockId, type: 'buy', shares: 1, price: 10, accountId: sharedAccountId, date: '2026-10-01',
+      }));
+      assert.equal(crossLedgerStock.status, 400);
+      const crossLedgerAccount = await stockTransactions.POST(request(editor, '/api/stock-transactions', 'POST', {
+        stockId, type: 'buy', shares: 1, price: 10, accountId: privateAccountId, date: '2026-10-01',
+      }));
+      assert.equal(crossLedgerAccount.status, 400);
+
+      const tradeRes = await stockTransactions.POST(request(editor, '/api/stock-transactions', 'POST', {
+        stockId, type: 'buy', shares: 2, price: 10, accountId: sharedAccountId, date: '2026-10-01', note: 'Shared purchase',
+      }));
+      assert.equal(tradeRes.status, 201, await tradeRes.clone().text());
+      const tradeId = String((await tradeRes.json()).id);
+      assert.equal(queryOne('SELECT user_id FROM stock_transactions WHERE id = ?', [tradeId])?.user_id, dataOwner);
+
+      const priced = await stockItem.PUT(request(editor, `/api/stocks/${stockId}`, 'PUT', { currentPrice: 12 }), {
+        params: Promise.resolve({ id: stockId }),
+      });
+      assert.equal(priced.status, 200);
+
+      const crossLedgerDividend = await stockDividends.POST(request(editor, '/api/stock-dividends', 'POST', {
+        stockId, date: '2026-10-02', cashDividend: 3, accountId: privateAccountId,
+      }));
+      assert.equal(crossLedgerDividend.status, 400);
+      const dividendRes = await stockDividends.POST(request(editor, '/api/stock-dividends', 'POST', {
+        stockId, date: '2026-10-02', cashDividend: 3, accountId: sharedAccountId,
+      }));
+      assert.equal(dividendRes.status, 201, await dividendRes.clone().text());
+      const dividendId = String((await dividendRes.json()).id);
+      assert.equal(queryOne('SELECT user_id FROM stock_dividends WHERE id = ?', [dividendId])?.user_id, dataOwner);
+
+      const crossLedgerPlan = await stockRecurring.POST(request(editor, '/api/stock-recurring', 'POST', {
+        stockId, amount: 50, frequency: 'monthly', startDate: '2099-01-01', accountId: privateAccountId,
+      }));
+      assert.equal(crossLedgerPlan.status, 400);
+      const planRes = await stockRecurring.POST(request(editor, '/api/stock-recurring', 'POST', {
+        stockId, amount: 50, frequency: 'monthly', startDate: '2099-01-01', accountId: sharedAccountId,
+      }));
+      assert.equal(planRes.status, 200, await planRes.clone().text());
+      const planId = String((await planRes.json()).id);
+      assert.equal(queryOne('SELECT user_id FROM stock_recurring WHERE id = ?', [planId])?.user_id, dataOwner);
+
+      assert.equal(queryOne('SELECT rate_to_twd FROM exchange_rates WHERE user_id = ? AND currency = ?', [owner, 'USD'])?.rate_to_twd, '999');
+      const sharedFx = await exchangeRates.GET(request(editor, '/api/exchange-rates'));
+      const sharedFxData = await sharedFx.json();
+      assert.equal(sharedFxData.settings.autoUpdate, false);
+      assert.equal(sharedFxData.settings.sharedLedger, true);
+      assert.notEqual(sharedFxData.rates.find((rate: any) => rate.currency === 'USD')?.rateToTwd, 999);
+      assert.equal((await exchangeRateSettings.PUT(request(editor, '/api/exchange-rates/settings', 'PUT', { autoUpdate: true }))).status, 403);
+      const sharedRate = await exchangeRate.PUT(request(editor, '/api/exchange-rates/USD', 'PUT', { rateToTwd: 30 }), {
+        params: Promise.resolve({ currency: 'USD' }),
+      });
+      assert.equal(sharedRate.status, 200);
+      assert.equal(queryOne('SELECT user_id FROM exchange_rates WHERE user_id = ? AND currency = ?', [dataOwner, 'USD'])?.user_id, dataOwner);
+
+      const portfolio = await stocks.GET(request(editor, '/api/stocks'));
+      const portfolioData = await portfolio.json();
+      assert.equal(portfolioData.stocks[0].id, stockId);
+      assert.equal(portfolioData.portfolioSummary.totalMarketValue, 720);
+      assert.equal((await stockRealized.GET(request(editor, '/api/stock-realized'))).status, 200);
+      assert.equal((await stockRealizedPl.GET(request(editor, '/api/stock-realized-pl'))).status, 200);
+      const stillPrivate = await stocks.GET(request(owner, '/api/stocks', 'GET', undefined, ''));
+      assert.equal((await stillPrivate.json()).stocks[0].id, privateStockId);
+
+      for (const action of ['POST /api/stock-transactions', 'POST /api/stock-dividends', 'POST /api/stock-recurring']) {
+        const log = queryOne('SELECT actor_user_id, result FROM ledger_audit_log WHERE ledger_id = ? AND action = ? AND result = \'success\' ORDER BY created_at DESC LIMIT 1', [ledgerId, action]);
+        assert.equal(log?.actor_user_id, editor, action);
+        assert.equal(log?.result, 'success', action);
+      }
+      const failedTradeLog = queryOne('SELECT actor_user_id, result FROM ledger_audit_log WHERE ledger_id = ? AND action = ? AND result = \'failed\' ORDER BY created_at DESC LIMIT 1', [ledgerId, 'POST /api/stock-transactions']);
+      assert.equal(failedTradeLog?.actor_user_id, editor);
+      assert.equal(failedTradeLog?.result, 'failed');
+    });
+
+    await t.test('investment viewers can read but cannot write or alter private settings', async () => {
+      for (const [path, route] of [
+        ['/api/stocks', stocks], ['/api/stock-transactions', stockTransactions],
+        ['/api/stock-dividends', stockDividends], ['/api/stock-recurring', stockRecurring],
+        ['/api/stock-realized', stockRealized], ['/api/stock-realized-pl', stockRealizedPl],
+        ['/api/stock-settings', stockSettings], ['/api/exchange-rates', exchangeRates],
+      ] as const) {
+        assert.equal((await route.GET(request(viewer, path))).status, 200, path);
+      }
+      assert.equal(queryOne('SELECT user_id FROM stock_settings WHERE user_id = ?', [dataOwner]), null);
+      assert.equal(queryOne('SELECT user_id FROM exchange_rate_settings WHERE user_id = ?', [dataOwner]), null);
+      assert.equal((await stocks.POST(request(viewer, '/api/stocks', 'POST', {}))).status, 403);
+      assert.equal((await stockTransactions.POST(request(viewer, '/api/stock-transactions', 'POST', {}))).status, 403);
+      assert.equal((await stockDividends.POST(request(viewer, '/api/stock-dividends', 'POST', {}))).status, 403);
+      assert.equal((await stockRecurring.POST(request(viewer, '/api/stock-recurring', 'POST', {}))).status, 403);
+      assert.equal((await stockSettings.PUT(request(viewer, '/api/stock-settings', 'PUT', {}))).status, 403);
+      assert.equal((await exchangeRates.PUT(request(viewer, '/api/exchange-rates', 'PUT', {}))).status, 403);
+      assert.equal((await exchangeRateSettings.PUT(request(viewer, '/api/exchange-rates/settings', 'PUT', { autoUpdate: true }))).status, 403);
     });
 
     await t.test('viewer can read all bookkeeping APIs but every write method is forbidden', async () => {
@@ -214,6 +352,7 @@ test('shared ledgers: real authenticated routes, invitations and ownership bound
       assert.equal((await members.PATCH(request(owner, `/api/ledgers/${ledgerId}/members`, 'PATCH', { userId: viewer, role: 'editor' }), ctx())).status, 200);
       assert.equal((await members.DELETE(request(owner, `/api/ledgers/${ledgerId}/members`, 'DELETE', { userId: viewer }), ctx())).status, 200);
       assert.equal((await tx.GET(request(viewer, '/api/transactions'))).status, 404);
+      assert.equal((await stocks.GET(request(viewer, '/api/stocks'))).status, 404);
       assert.equal(queryOne('SELECT user_id FROM transactions WHERE id = ?', [transactionId])?.user_id, dataOwner);
       assert.equal((await leave.POST(request(editor, `/api/ledgers/${ledgerId}/leave`, 'POST'), ctx())).status, 200);
       assert.equal((await tx.GET(request(editor, '/api/transactions'))).status, 404);
@@ -235,7 +374,7 @@ test('shared ledgers: real authenticated routes, invitations and ownership bound
     });
   } finally {
     await new Promise((resolve) => setTimeout(resolve, 100));
-    for (const table of ['transactions', 'accounts', 'categories', 'budgets', 'recurring', 'deleted_defaults', 'credit_card_repayment_summaries', 'transaction_attachments', 'user_photo_keys']) {
+    for (const table of ['transactions', 'accounts', 'categories', 'budgets', 'recurring', 'stock_transactions', 'stock_dividends', 'stock_recurring', 'stocks', 'stock_settings', 'exchange_rates', 'exchange_rate_settings', 'deleted_defaults', 'credit_card_repayment_summaries', 'transaction_attachments', 'user_photo_keys']) {
       for (const id of [dataOwner, ...people]) db.run(`DELETE FROM ${table} WHERE user_id = ?`, [id]);
     }
     db.run('DELETE FROM financial_ledgers WHERE id = ?', [ledgerId]);

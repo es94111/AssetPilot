@@ -1,4 +1,4 @@
-import { getDB, queryAll, queryOne, saveDB } from "./db";
+import { queryAll, queryOne } from "./db";
 import { getExchangeRateToTwd } from "./accountHelpers";
 import { calcFifoLots } from "./moneyDecimal";
 import {
@@ -43,30 +43,10 @@ function roundStockMoney(value: number, currency: string): number {
 }
 
 export function getStockSettings(userId: string): StockSettings {
-  const db = getDB();
   const row = queryOne("SELECT * FROM stock_settings WHERE user_id = ?", [
     userId,
   ]);
-  if (!row) {
-    db.run(
-      `INSERT INTO stock_settings (user_id, fee_rate, fee_discount, fee_min_lot, fee_min_odd, sell_tax_rate_stock, sell_tax_rate_etf, sell_tax_rate_warrant, sell_tax_min, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        userId,
-        DEFAULT_STOCK_SETTINGS.feeRate,
-        DEFAULT_STOCK_SETTINGS.feeDiscount,
-        DEFAULT_STOCK_SETTINGS.feeMinLot,
-        DEFAULT_STOCK_SETTINGS.feeMinOdd,
-        DEFAULT_STOCK_SETTINGS.sellTaxRateStock,
-        DEFAULT_STOCK_SETTINGS.sellTaxRateEtf,
-        DEFAULT_STOCK_SETTINGS.sellTaxRateWarrant,
-        DEFAULT_STOCK_SETTINGS.sellTaxMin,
-        Date.now(),
-      ],
-    );
-    saveDB();
-    return { ...DEFAULT_STOCK_SETTINGS };
-  }
+  if (!row) return { ...DEFAULT_STOCK_SETTINGS };
   return {
     feeRate: toNum(row.fee_rate, DEFAULT_STOCK_SETTINGS.feeRate),
     feeDiscount: toNum(row.fee_discount, DEFAULT_STOCK_SETTINGS.feeDiscount),

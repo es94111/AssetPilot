@@ -4,6 +4,9 @@ const LEDGER_DATA_API_PREFIXES = [
   "/api/accounts", "/api/calendar", "/api/categories",
   "/api/credit-card-repayment-summaries", "/api/dashboard", "/api/budgets",
   "/api/recurring", "/api/reports", "/api/transactions", "/api/imports/progress",
+  "/api/stocks", "/api/stock-transactions", "/api/stock-dividends",
+  "/api/stock-recurring", "/api/stock-realized", "/api/stock-realized-pl",
+  "/api/stock-settings", "/api/exchange-rates",
 ];
 
 export function isLedgerDataPath(path: string): boolean {

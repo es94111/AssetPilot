@@ -1,9 +1,10 @@
 // @ts-nocheck
+import { withLedgerWriteAudit } from "../../../../lib/ledgerContext";
 import { NextResponse } from 'next/server';
 import { requireAuth } from '../../../../lib/apiHelpers';
 import { getDB, queryAll, queryOne, saveDB } from '../../../../lib/db';
 
-export async function POST(request) {
+async function handlePOST(request) {
   const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
@@ -42,3 +43,5 @@ export async function POST(request) {
 
   return NextResponse.json({ deleted, linkedDeleted });
 }
+
+export const POST = withLedgerWriteAudit(handlePOST);

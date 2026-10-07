@@ -8253,7 +8253,7 @@
     "description": "Web path: ledger.acceptInvite",
     "x-webPath": "ledger.acceptInvite"
   },
-  "ledgerEmptySharedNotice": "Les comptes partagés sont créés vides. Les données personnelles ne sont jamais copiées automatiquement.",
+  "ledgerEmptySharedNotice": "Les comptes partagés ne copient jamais automatiquement les données personnelles. Les investissements créés lorsque ce compte est sélectionné sont visibles par ses membres.",
   "@ledgerEmptySharedNotice": {
     "description": "Web path: ledger.emptySharedNotice",
     "x-webPath": "ledger.emptySharedNotice"

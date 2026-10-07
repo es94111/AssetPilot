@@ -1,4 +1,5 @@
 // @ts-nocheck
+import { withLedgerWriteAudit } from "../../../lib/ledgerContext";
 import { NextResponse } from 'next/server';
 import { requireAuth } from '../../../lib/apiHelpers';
 import { getDB, queryOne, saveDB } from '../../../lib/db';
@@ -10,8 +11,10 @@ export async function GET(request) {
   const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
-  const settings = getExchangeRateSettings(auth.userId);
-  const shouldAutoSync = settings.autoUpdate
+  const settings = auth.isSharedLedger
+    ? { autoUpdate: false, lastSyncedAt: 0, sharedLedger: true }
+    : getExchangeRateSettings(auth.userId);
+  const shouldAutoSync = !auth.isSharedLedger && settings.autoUpdate
     && (!settings.lastSyncedAt || (Date.now() - settings.lastSyncedAt) >= FX_AUTO_SYNC_MIN_INTERVAL_MS);
 
   if (shouldAutoSync) {
@@ -24,11 +27,13 @@ export async function GET(request) {
 
   const map = getUserExchangeRateMap(auth.userId);
   const rates = Object.keys(map).sort().map(currency => ({ currency, rateToTwd: map[currency] }));
-  const freshSettings = getExchangeRateSettings(auth.userId);
+  const freshSettings = auth.isSharedLedger
+    ? { autoUpdate: false, lastSyncedAt: 0, sharedLedger: true }
+    : getExchangeRateSettings(auth.userId);
   return NextResponse.json({ rates, settings: freshSettings });
 }
 
-export async function PUT(request) {
+async function handlePUT(request) {
   const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
@@ -69,6 +74,10 @@ export async function PUT(request) {
 
   const map = getUserExchangeRateMap(auth.userId);
   const updatedRates = Object.keys(map).sort().map(currency => ({ currency, rateToTwd: map[currency] }));
-  const settings = getExchangeRateSettings(auth.userId);
+  const settings = auth.isSharedLedger
+    ? { autoUpdate: false, lastSyncedAt: 0, sharedLedger: true }
+    : getExchangeRateSettings(auth.userId);
   return NextResponse.json({ rates: updatedRates, settings });
 }
+
+export const PUT = withLedgerWriteAudit(handlePUT);

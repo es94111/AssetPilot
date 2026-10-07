@@ -275,6 +275,20 @@ export async function processStockRecurringForUser(
         [r.stock_id, userId],
       );
       const market = normalizeStockMarket(stock?.market);
+      const accountId = String(r.account_id || "").trim();
+      if (
+        accountId &&
+        !queryOne("SELECT id FROM accounts WHERE id = ? AND user_id = ?", [accountId, userId])
+      ) {
+        db.run(
+          "UPDATE stock_recurring SET last_generated = ?, updated_at = ? WHERE id = ? AND user_id = ?",
+          [scheduledDate, now, r.id, userId],
+        );
+        touched = true;
+        skipped++;
+        scheduledDate = getNextStockRecurringDate(scheduledDate, frequency);
+        continue;
+      }
       const actualDate =
         market === "US"
           ? nextUsTradingDay(scheduledDate)

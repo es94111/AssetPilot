@@ -1,4 +1,5 @@
 // @ts-nocheck
+import { withLedgerWriteAudit } from "../../../lib/ledgerContext";
 import { NextResponse } from "next/server";
 import { requireAuth } from "../../../lib/apiHelpers";
 import { getDB, queryAll, queryOne, saveDB } from "../../../lib/db";
@@ -60,7 +61,7 @@ export async function GET(request) {
   return NextResponse.json(queryAll(sql, params));
 }
 
-export async function POST(request) {
+async function handlePOST(request) {
   const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
@@ -174,3 +175,5 @@ export async function POST(request) {
 
   return NextResponse.json({ id, synthTxId }, { status: 201 });
 }
+
+export const POST = withLedgerWriteAudit(handlePOST);

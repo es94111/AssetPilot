@@ -1,4 +1,5 @@
 // @ts-nocheck
+import { withLedgerWriteAudit } from "../../../../lib/ledgerContext";
 import { NextResponse } from "next/server";
 import { requireAuth } from "../../../../lib/apiHelpers";
 import { getDB, queryAll, queryOne, saveDB } from "../../../../lib/db";
@@ -50,7 +51,7 @@ function releaseImportLock(userId) {
   importLocks.delete(userId);
 }
 
-export async function POST(request) {
+async function handlePOST(request) {
   const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
@@ -373,3 +374,5 @@ export async function POST(request) {
     releaseImportLock(auth.userId);
   }
 }
+
+export const POST = withLedgerWriteAudit(handlePOST);

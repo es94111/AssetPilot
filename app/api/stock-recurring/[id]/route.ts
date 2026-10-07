@@ -1,10 +1,11 @@
 // @ts-nocheck
+import { withLedgerWriteAudit } from "../../../../lib/ledgerContext";
 import { NextResponse } from "next/server";
 import { requireAuth } from "../../../../lib/apiHelpers";
 import { getDB, queryOne, saveDB } from "../../../../lib/db";
 import { normalizeDate } from "../../../../lib/accountHelpers";
 
-export async function PUT(request, { params }) {
+async function handlePUT(request, { params }) {
   const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
@@ -76,7 +77,7 @@ export async function PUT(request, { params }) {
   return NextResponse.json({ ok: true });
 }
 
-export async function DELETE(request, { params }) {
+async function handleDELETE(request, { params }) {
   const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
@@ -88,3 +89,6 @@ export async function DELETE(request, { params }) {
   saveDB();
   return NextResponse.json({ ok: true });
 }
+
+export const PUT = withLedgerWriteAudit(handlePUT);
+export const DELETE = withLedgerWriteAudit(handleDELETE);

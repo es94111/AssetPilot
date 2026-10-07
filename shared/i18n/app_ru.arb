@@ -8253,7 +8253,7 @@
     "description": "Web path: ledger.acceptInvite",
     "x-webPath": "ledger.acceptInvite"
   },
-  "ledgerEmptySharedNotice": "Общие счета создаются пустыми. Личные данные не копируются автоматически.",
+  "ledgerEmptySharedNotice": "Общие счета не копируют личные данные автоматически. Инвестиционные записи, созданные при выборе этого счета, видны его участникам.",
   "@ledgerEmptySharedNotice": {
     "description": "Web path: ledger.emptySharedNotice",
     "x-webPath": "ledger.emptySharedNotice"

@@ -2725,6 +2725,17 @@ class AppLocalizationsEs extends AppLocalizations {
       'Introduce un precio válido';
 
   @override
+  String get featuresStocksTransactionsDayTradeLabel =>
+      'Day trade (tipo impositivo reducido)';
+
+  @override
+  String get featuresStocksTransactionsDayTradeHint =>
+      'Misma cuenta, mismo día, compra en efectivo y venta del mismo valor; el impuesto usa el tipo del 0,15 % (art. 2-2 de la Securities Transaction Tax Act).';
+
+  @override
+  String get featuresStocksTransactionsDayTradeBadge => 'Day trade';
+
+  @override
   String get featuresStocksDividendsTitle => 'Dividendos';
 
   @override
@@ -2786,6 +2797,25 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get featuresStocksDividendsMessagesDividendRequired =>
       'Introduce dividendo en efectivo o en acciones';
+
+  @override
+  String get featuresStocksDividendsReinvestLabel =>
+      'Reinvertir dividendo (DRIP)';
+
+  @override
+  String get featuresStocksDividendsReinvestHint =>
+      'Reinvierte el dividendo en efectivo en el mismo valor; se crea automáticamente un registro de compra y se incluye en la base de coste FIFO.';
+
+  @override
+  String get featuresStocksDividendsReinvestSharesLabel =>
+      'Acciones reinvertidas';
+
+  @override
+  String get featuresStocksDividendsReinvestPriceLabel =>
+      'Precio de reinversión por acción';
+
+  @override
+  String get featuresStocksDividendsReinvestBadge => 'Reinvertido';
 
   @override
   String get featuresStocksRealizedTitle => 'Gan./pérd. realizada';

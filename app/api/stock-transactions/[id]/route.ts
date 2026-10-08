@@ -6,8 +6,11 @@ import { getDB, queryOne, saveDB } from "../../../../lib/db";
 import { normalizeDate } from "../../../../lib/accountHelpers";
 import {
   getStockSettings,
-  calcStockFee,
-  calcStockTax,
+  calcStockFeeForTrade,
+  calcStockTaxForTrade,
+  isProtectedSyntheticTransaction,
+  canMarkDayTrade,
+  normalizeDayTradeFlag,
   validateChainConstraint,
 } from "../../../../lib/stockHelpers";
 import { isValidStockShareQuantity } from "../../../../lib/stockMarket";
@@ -72,6 +75,12 @@ async function handlePUT(request, { params }) {
   );
   if (!t)
     return NextResponse.json({ error: "交易紀錄不存在" }, { status: 404 });
+  if (isProtectedSyntheticTransaction(t.note)) {
+    return NextResponse.json(
+      { error: "股利合成交易必須透過編輯或刪除對應股利紀錄處理" },
+      { status: 400 },
+    );
+  }
 
   const chain = validateChainConstraint(
     auth.userId,
@@ -90,37 +99,65 @@ async function handlePUT(request, { params }) {
     );
   }
 
-  const taxAutoCalc =
-    body.tax === undefined || body.tax === null || body.tax === "" ? 1 : 0;
   const stock = queryOne(
     "SELECT stock_type, market FROM stocks WHERE id = ? AND user_id = ?",
     [t.stock_id, auth.userId],
   );
   if (!isValidStockShareQuantity(shareNum, stock?.market || "TW"))
     return NextResponse.json({ error: "股數必須為整數" }, { status: 400 });
+
+  // 現股當沖僅適用台股一般股票，且僅限賣出交易（證券交易稅條例第 2 條之 2）。
+  // Older clients omit the newly added flag; preserve the stored setting on such edits.
+  const dayTrade =
+    body.dayTrade === undefined
+      ? type === "sell"
+        ? normalizeDayTradeFlag(t.day_trade)
+        : false
+      : normalizeDayTradeFlag(body.dayTrade);
+  if (dayTrade && !canMarkDayTrade(stock?.stock_type || "stock", stock?.market || "TW")) {
+    return NextResponse.json(
+      { error: "現股當沖僅適用台股一般股票（ETF／權證不適用）" },
+      { status: 400 },
+    );
+  }
+  if (dayTrade && type !== "sell") {
+    return NextResponse.json(
+      { error: "現股當沖標記僅適用於賣出交易" },
+      { status: 400 },
+    );
+  }
   const settings = getStockSettings(auth.userId);
-  const amount = shareNum * priceNum;
   const finalFee = feeProvided
     ? manualFee
-    : calcStockFee(amount, shareNum, settings, stock?.market || "TW");
+    : calcStockFeeForTrade(
+        shares,
+        price,
+        settings,
+        stock?.market || "TW",
+      );
+  // An explicit tax value is always treated as a manual override, including when
+  // the day-trade flag changes. Leave the field blank to recalculate using the flag.
   const finalTax =
     type === "sell"
       ? taxProvided
         ? manualTax
-        : calcStockTax(
-            amount,
+        : calcStockTaxForTrade(
+            shares,
+            price,
             stock?.stock_type || "stock",
             settings,
             stock?.market || "TW",
+            dayTrade,
           )
       : taxProvided
         ? manualTax
         : 0;
+  const nextTaxAutoCalc = taxProvided ? 0 : 1;
   const db = getDB();
   db.run("BEGIN");
   try {
     db.run(
-      "UPDATE stock_transactions SET date=?, type=?, shares=?, price=?, fee=?, tax=?, account_id=?, note=?, tax_auto_calculated=? WHERE id=? AND user_id=?",
+      "UPDATE stock_transactions SET date=?, type=?, shares=?, price=?, fee=?, tax=?, account_id=?, note=?, tax_auto_calculated=?, day_trade=? WHERE id=? AND user_id=?",
       [
         date,
         type,
@@ -130,7 +167,8 @@ async function handlePUT(request, { params }) {
         finalTax,
         accountId || "",
         note || "",
-        taxAutoCalc,
+        nextTaxAutoCalc,
+        dayTrade && type === "sell" ? 1 : 0,
         id,
         auth.userId,
       ],
@@ -157,6 +195,16 @@ async function handleDELETE(request, { params }) {
   if (auth instanceof NextResponse) return auth;
 
   const { id } = await params;
+  const existing = queryOne(
+    "SELECT note FROM stock_transactions WHERE id = ? AND user_id = ?",
+    [id, auth.userId],
+  );
+  if (existing && isProtectedSyntheticTransaction(existing.note)) {
+    return NextResponse.json(
+      { error: "股利合成交易必須透過刪除對應股利紀錄連動處理，請至「股利紀錄」頁刪除" },
+      { status: 400 },
+    );
+  }
   const db = getDB();
   db.run("DELETE FROM stock_transactions WHERE id = ? AND user_id = ?", [
     id,

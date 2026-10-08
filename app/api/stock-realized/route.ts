@@ -25,7 +25,7 @@ export async function GET(request) {
   const realized = [];
   stocks.forEach((s) => {
     const txs = queryAll(
-      "SELECT * FROM stock_transactions WHERE stock_id = ? AND user_id = ? ORDER BY date, created_at",
+      "SELECT * FROM stock_transactions WHERE stock_id = ? AND user_id = ? ORDER BY date, created_at, id",
       [s.id, auth.userId],
     );
     const lots = [];

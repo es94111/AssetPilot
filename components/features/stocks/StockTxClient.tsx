@@ -43,11 +43,19 @@ const EMPTY_FORM = {
   price: "",
   fee: "",
   tax: "",
+  dayTrade: false,
   note: "",
 };
 const PAGE_SIZE_OPTIONS = [10, 20, 50, 100, 200];
 
 type QueryParams = { get(name: string): string | null };
+
+function isDayTradeEligibleStock(stock: any): boolean {
+  return (
+    String(stock?.market || "TW").toUpperCase() !== "US" &&
+    (stock?.stockType || stock?.stock_type || "stock") === "stock"
+  );
+}
 
 function readPageParam(searchParams: QueryParams) {
   return Math.max(1, Number(searchParams.get("page")) || 1);
@@ -188,6 +196,8 @@ export default function StockTxClient(_props: { user?: any } = {}) {
       shares: shareNum,
       price: Number(form.price),
       note: form.note,
+      dayTrade:
+        form.type === "sell" && dayTradeEligible ? !!form.dayTrade : false,
     };
     const feeText = String(form.fee ?? "").trim();
     const taxText = String(form.tax ?? "").trim();
@@ -221,6 +231,11 @@ export default function StockTxClient(_props: { user?: any } = {}) {
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const selectedStock = stocks.find((s) => s.id === form.stockId);
   const fractionalShares = allowsFractionalShares(selectedStock?.market);
+  // 現股當沖僅適用台股一般股票（ETF／權證不適用，證券交易稅條例第 2 條之 2）。
+  const dayTradeEligible =
+    String(selectedStock?.market || "TW").toUpperCase() !== "US" &&
+    (selectedStock?.stockType || selectedStock?.stock_type || "stock") ===
+      "stock";
 
   return (
     <div className="space-y-6">
@@ -322,9 +337,14 @@ export default function StockTxClient(_props: { user?: any } = {}) {
                 value: s.id,
               }))}
               value={form.stockId}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, stockId: e.target.value }))
-              }
+              onChange={(e) => {
+                const nextStock = stocks.find((stock) => stock.id === e.target.value);
+                setForm((f) => ({
+                  ...f,
+                  stockId: e.target.value,
+                  dayTrade: isDayTradeEligibleStock(nextStock) ? f.dayTrade : false,
+                }));
+              }}
             />
             <Select
               label={t("features.stocks.transactions.typeLabel")}
@@ -333,7 +353,13 @@ export default function StockTxClient(_props: { user?: any } = {}) {
                 { label: t("features.stocks.common.sell"), value: "sell" },
               ]}
               value={form.type}
-              onChange={(e) => setForm((f) => ({ ...f, type: e.target.value }))}
+              onChange={(e) =>
+                setForm((f) => ({
+                  ...f,
+                  type: e.target.value,
+                  dayTrade: e.target.value === "sell" ? f.dayTrade : false,
+                }))
+              }
             />
             <Input
               label={t("features.stocks.transactions.dateLabel")}
@@ -367,15 +393,36 @@ export default function StockTxClient(_props: { user?: any } = {}) {
               onChange={(e) => setForm((f) => ({ ...f, fee: e.target.value }))}
             />
             {form.type === "sell" && (
-              <Input
-                label={t("features.stocks.transactions.taxLabel")}
-                type="number"
-                placeholder={t("features.stocks.common.autoCalculate")}
-                value={form.tax}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, tax: e.target.value }))
-                }
-              />
+              <>
+                <Input
+                  label={t("features.stocks.transactions.taxLabel")}
+                  type="number"
+                  placeholder={t("features.stocks.common.autoCalculate")}
+                  value={form.tax}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, tax: e.target.value }))
+                  }
+                />
+                {/* 現股當沖（證券交易稅條例第 2 條之 2）：僅台股一般股票適用，稅率減半為 0.15%。 */}
+                {dayTradeEligible && (
+                  <label className="mb-4 flex items-start gap-2 text-sm text-gray-700">
+                    <input
+                      type="checkbox"
+                      className="mt-1 h-4 w-4"
+                      checked={!!form.dayTrade}
+                      onChange={(e) =>
+                        setForm((f) => ({ ...f, dayTrade: e.target.checked }))
+                      }
+                    />
+                    <span>
+                      {t("features.stocks.transactions.dayTradeLabel")}
+                      <span className="block text-xs text-slate-500">
+                        {t("features.stocks.transactions.dayTradeHint")}
+                      </span>
+                    </span>
+                  </label>
+                )}
+              </>
             )}
             <Input
               label={t("features.common.note")}
@@ -433,6 +480,11 @@ export default function StockTxClient(_props: { user?: any } = {}) {
                         ? t("features.stocks.common.buy")
                         : t("features.stocks.common.sell")}
                     </span>
+                    {Number(tx.day_trade) === 1 && (
+                      <span className="ml-1 px-2 py-1 rounded text-xs bg-amber-100 text-amber-800">
+                        {t("features.stocks.transactions.dayTradeBadge")}
+                      </span>
+                    )}
                   </TableCell>
                   <TableCell>
                     {String(tx.market || "TW").toUpperCase() === "US"
@@ -463,7 +515,15 @@ export default function StockTxClient(_props: { user?: any } = {}) {
                           shares: String(tx.shares ?? ""),
                           price: String(tx.price ?? ""),
                           fee: tx.fee != null ? String(tx.fee) : "",
-                          tax: tx.tax != null ? String(tx.tax) : "",
+                          // Leave calculated tax empty so a day-trade toggle recalculates it;
+                          // only a user-entered manual tax is sent back as an override.
+                          tax:
+                            Number(tx.tax_auto_calculated) === 1
+                              ? ""
+                              : tx.tax != null
+                                ? String(tx.tax)
+                                : "",
+                          dayTrade: Number(tx.day_trade) === 1,
                           note: tx.note || "",
                         });
                         setEditId(tx.id);

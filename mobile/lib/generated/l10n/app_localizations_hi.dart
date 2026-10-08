@@ -2679,6 +2679,16 @@ class AppLocalizationsHi extends AppLocalizations {
       'मान्य कीमत दर्ज करें';
 
   @override
+  String get featuresStocksTransactionsDayTradeLabel => 'डे ट्रेड (आधी कर दर)';
+
+  @override
+  String get featuresStocksTransactionsDayTradeHint =>
+      'एक ही खाता, एक ही कारोबारी दिन, समान मात्रा की नकद खरीद और बिक्री; बिक्री कर 0.15% दर पर (धारा 2-2)।';
+
+  @override
+  String get featuresStocksTransactionsDayTradeBadge => 'डे ट्रेड';
+
+  @override
   String get featuresStocksDividendsTitle => 'डिविडेंड';
 
   @override
@@ -2737,6 +2747,23 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get featuresStocksDividendsMessagesDividendRequired =>
       'नकद डिविडेंड या शेयर डिविडेंड दर्ज करें';
+
+  @override
+  String get featuresStocksDividendsReinvestLabel => 'लाभांश पुनर्निवेश (DRIP)';
+
+  @override
+  String get featuresStocksDividendsReinvestHint =>
+      'नकद लाभांश को उसी स्टॉक में पुनर्निवेशित करता है; एक खरीद रिकॉर्ड स्वतः बनता है और FIFO लागत आधार में जोड़ा जाता है।';
+
+  @override
+  String get featuresStocksDividendsReinvestSharesLabel => 'पुनर्निवेशित शेयर';
+
+  @override
+  String get featuresStocksDividendsReinvestPriceLabel =>
+      'पुनर्निवेश प्रति शेयर मूल्य';
+
+  @override
+  String get featuresStocksDividendsReinvestBadge => 'पुनर्निवेशित';
 
   @override
   String get featuresStocksRealizedTitle => 'वास्तविक P/L';

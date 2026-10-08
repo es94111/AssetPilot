@@ -101,7 +101,7 @@ function buildStockSummary(userId) {
 
   for (const stock of stocks) {
     const txs = queryAll(
-      'SELECT * FROM stock_transactions WHERE user_id = ? AND stock_id = ? ORDER BY date, created_at',
+      'SELECT * FROM stock_transactions WHERE user_id = ? AND stock_id = ? ORDER BY date, created_at, id',
       [userId, stock.id]
     );
     let shares = 0;

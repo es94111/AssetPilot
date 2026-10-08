@@ -1356,6 +1356,9 @@ export const fr = {
           sharesRequired: "Saisissez un nombre de titres valide",
           priceRequired: "Saisissez un prix valide",
         },
+        dayTradeLabel: "Day trade (taux réduit de moitié)",
+        dayTradeHint: "Même compte, même jour ouvré, achat au comptant et vente de la même quantité ; taxe de vente à 0,15 % (art. 2-2).",
+        dayTradeBadge: "Day trade",
       },
       dividends: {
         title: "Dividendes",
@@ -1376,6 +1379,11 @@ export const fr = {
           stockRequired: "Sélectionnez une action",
           dividendRequired: "Saisissez un dividende en espèces ou en actions",
         },
+        reinvestLabel: "Réinvestir le dividende (DRIP)",
+        reinvestHint: "Réinvestit le dividende en espèces dans le même titre ; un enregistrement d’achat est créé automatiquement et intégré à la base de coût FIFO.",
+        reinvestSharesLabel: "Actions réinvesties",
+        reinvestPriceLabel: "Prix de réinvestissement par action",
+        reinvestBadge: "Réinvesti",
       },
       realized: {
         title: "P/L réalisé",

@@ -2665,6 +2665,17 @@ class AppLocalizationsAr extends AppLocalizations {
       'أدخل سعرًا صحيحًا';
 
   @override
+  String get featuresStocksTransactionsDayTradeLabel =>
+      'التداول اليومي (نصف معدل الضريبة)';
+
+  @override
+  String get featuresStocksTransactionsDayTradeHint =>
+      'نفس الحساب، نفس يوم العمل، شراء نقدي وبيع لنفس الكمية؛ تُطبَّق ضريبة البيع بنسبة 0.15% وفق المادة 2-2.';
+
+  @override
+  String get featuresStocksTransactionsDayTradeBadge => 'تداول يومي';
+
+  @override
   String get featuresStocksDividendsTitle => 'التوزيعات';
 
   @override
@@ -2723,6 +2734,25 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get featuresStocksDividendsMessagesDividendRequired =>
       'أدخل توزيعًا نقديًا أو توزيع أسهم';
+
+  @override
+  String get featuresStocksDividendsReinvestLabel =>
+      'إعادة استثمار التوزيعات (DRIP)';
+
+  @override
+  String get featuresStocksDividendsReinvestHint =>
+      'يُعاد استثمار التوزيعات النقدية في نفس الورقة؛ ويُنشأ سجل شراء تلقائيًا ويُدرج في أساس تكلفة FIFO.';
+
+  @override
+  String get featuresStocksDividendsReinvestSharesLabel =>
+      'الأسهم المعاد استثمارها';
+
+  @override
+  String get featuresStocksDividendsReinvestPriceLabel =>
+      'سعر إعادة الاستثمار للسهم';
+
+  @override
+  String get featuresStocksDividendsReinvestBadge => 'معاد استثماره';
 
   @override
   String get featuresStocksRealizedTitle => 'الربح/الخسارة المحققة';

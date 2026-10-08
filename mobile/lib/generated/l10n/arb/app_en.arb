@@ -4043,6 +4043,21 @@
     "description": "Web path: features.stocks.transactions.messages.priceRequired",
     "x-webPath": "features.stocks.transactions.messages.priceRequired"
   },
+  "featuresStocksTransactionsDayTradeLabel": "Day trade (half tax rate)",
+  "@featuresStocksTransactionsDayTradeLabel": {
+    "description": "Web path: features.stocks.transactions.dayTradeLabel",
+    "x-webPath": "features.stocks.transactions.dayTradeLabel"
+  },
+  "featuresStocksTransactionsDayTradeHint": "Same account, same business day, cash buy and sell of the same security quantity; the sell tax uses the 0.15% rate under Article 2-2 of the Securities Transaction Tax Act.",
+  "@featuresStocksTransactionsDayTradeHint": {
+    "description": "Web path: features.stocks.transactions.dayTradeHint",
+    "x-webPath": "features.stocks.transactions.dayTradeHint"
+  },
+  "featuresStocksTransactionsDayTradeBadge": "Day trade",
+  "@featuresStocksTransactionsDayTradeBadge": {
+    "description": "Web path: features.stocks.transactions.dayTradeBadge",
+    "x-webPath": "features.stocks.transactions.dayTradeBadge"
+  },
   "featuresStocksDividendsTitle": "Dividends",
   "@featuresStocksDividendsTitle": {
     "description": "Web path: features.stocks.dividends.title",
@@ -4131,6 +4146,31 @@
   "@featuresStocksDividendsMessagesDividendRequired": {
     "description": "Web path: features.stocks.dividends.messages.dividendRequired",
     "x-webPath": "features.stocks.dividends.messages.dividendRequired"
+  },
+  "featuresStocksDividendsReinvestLabel": "Reinvest dividend (DRIP)",
+  "@featuresStocksDividendsReinvestLabel": {
+    "description": "Web path: features.stocks.dividends.reinvestLabel",
+    "x-webPath": "features.stocks.dividends.reinvestLabel"
+  },
+  "featuresStocksDividendsReinvestHint": "Reinvest the cash dividend into the same stock; a buy record is created automatically and included in the FIFO cost basis.",
+  "@featuresStocksDividendsReinvestHint": {
+    "description": "Web path: features.stocks.dividends.reinvestHint",
+    "x-webPath": "features.stocks.dividends.reinvestHint"
+  },
+  "featuresStocksDividendsReinvestSharesLabel": "Reinvested shares",
+  "@featuresStocksDividendsReinvestSharesLabel": {
+    "description": "Web path: features.stocks.dividends.reinvestSharesLabel",
+    "x-webPath": "features.stocks.dividends.reinvestSharesLabel"
+  },
+  "featuresStocksDividendsReinvestPriceLabel": "Reinvest price per share",
+  "@featuresStocksDividendsReinvestPriceLabel": {
+    "description": "Web path: features.stocks.dividends.reinvestPriceLabel",
+    "x-webPath": "features.stocks.dividends.reinvestPriceLabel"
+  },
+  "featuresStocksDividendsReinvestBadge": "Reinvested",
+  "@featuresStocksDividendsReinvestBadge": {
+    "description": "Web path: features.stocks.dividends.reinvestBadge",
+    "x-webPath": "features.stocks.dividends.reinvestBadge"
   },
   "featuresStocksRealizedTitle": "Realized P/L",
   "@featuresStocksRealizedTitle": {

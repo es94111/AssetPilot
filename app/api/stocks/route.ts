@@ -31,7 +31,7 @@ export async function GET(request) {
 
   const result = stocks.map((s) => {
     const txs = queryAll(
-      "SELECT * FROM stock_transactions WHERE stock_id = ? AND user_id = ? ORDER BY date, created_at",
+      "SELECT * FROM stock_transactions WHERE stock_id = ? AND user_id = ? ORDER BY date, created_at, id",
       [s.id, auth.userId],
     );
     const divs = queryAll(

@@ -1356,6 +1356,9 @@ export const ko = {
           sharesRequired: "올바른 주식 수를 입력하세요",
           priceRequired: "올바른 가격을 입력하세요",
         },
+        dayTradeLabel: "데이트레이드 (세율 절반)",
+        dayTradeHint: "동일 계좌, 동일 영업일, 동일 수량 현금 매수·매도; 매도세는 0.15% 적용(제2조의2).",
+        dayTradeBadge: "데이트레이드",
       },
       dividends: {
         title: "배당",
@@ -1376,6 +1379,11 @@ export const ko = {
           stockRequired: "주식을 선택하세요",
           dividendRequired: "현금 배당 또는 주식 배당을 입력하세요",
         },
+        reinvestLabel: "배당 재투자 (DRIP)",
+        reinvestHint: "현금 배당을 동일 종목에 재투자하며, 매수 기록이 자동 생성되어 FIFO 원가 기준에 반영됩니다.",
+        reinvestSharesLabel: "재투자 주식 수",
+        reinvestPriceLabel: "재투자 주당 가격",
+        reinvestBadge: "재투자",
       },
       realized: {
         title: "실현 손익",

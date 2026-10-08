@@ -7,8 +7,10 @@ import { uid } from "../../../lib/userDefaults";
 import { normalizeDate } from "../../../lib/accountHelpers";
 import {
   getStockSettings,
-  calcStockFee,
-  calcStockTax,
+  calcStockFeeForTrade,
+  calcStockTaxForTrade,
+  canMarkDayTrade,
+  normalizeDayTradeFlag,
   getSharesAtDate,
   validateChainConstraint,
 } from "../../../lib/stockHelpers";
@@ -126,6 +128,21 @@ async function handlePOST(request) {
   if (!isValidStockShareQuantity(shareNum, stock.market))
     return NextResponse.json({ error: "股數必須為整數" }, { status: 400 });
 
+  // 現股當沖僅適用台股股票類型（證券交易稅條例第 2 條之 2）；ETF／權證不適用。
+  const dayTrade = normalizeDayTradeFlag(body.dayTrade);
+  if (dayTrade && !canMarkDayTrade(stock.stock_type, stock.market)) {
+    return NextResponse.json(
+      { error: "現股當沖僅適用台股一般股票（ETF／權證不適用）" },
+      { status: 400 },
+    );
+  }
+  if (dayTrade && type !== "sell") {
+    return NextResponse.json(
+      { error: "現股當沖標記僅適用於賣出交易" },
+      { status: 400 },
+    );
+  }
+
   if (accountId) {
     const acc = queryOne(
       "SELECT id FROM accounts WHERE id = ? AND user_id = ?",
@@ -166,19 +183,25 @@ async function handlePOST(request) {
   const taxAutoCalc =
     body.tax === undefined || body.tax === null || body.tax === "" ? 1 : 0;
   const settings = getStockSettings(auth.userId);
-  const amount = shareNum * priceNum;
   const finalFee = feeProvided
     ? manualFee
-    : calcStockFee(amount, shareNum, settings, stock.market || "TW");
+    : calcStockFeeForTrade(
+        shares,
+        price,
+        settings,
+        stock.market || "TW",
+      );
   const finalTax =
     type === "sell"
       ? taxProvided
         ? manualTax
-        : calcStockTax(
-            amount,
+        : calcStockTaxForTrade(
+            shares,
+            price,
             stock.stock_type || "stock",
             settings,
             stock.market || "TW",
+            dayTrade,
           )
       : taxProvided
         ? manualTax
@@ -186,7 +209,7 @@ async function handlePOST(request) {
   const id = uid();
   const db = getDB();
   db.run(
-    "INSERT INTO stock_transactions (id,user_id,stock_id,date,type,shares,price,fee,tax,account_id,note,created_at,tax_auto_calculated) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
+    "INSERT INTO stock_transactions (id,user_id,stock_id,date,type,shares,price,fee,tax,account_id,note,created_at,tax_auto_calculated,day_trade) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
     [
       id,
       auth.userId,
@@ -201,6 +224,7 @@ async function handlePOST(request) {
       note || "",
       Date.now(),
       taxAutoCalc,
+      dayTrade ? 1 : 0,
     ],
   );
   saveDB();

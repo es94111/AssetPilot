@@ -1356,6 +1356,9 @@ export const es = {
           sharesRequired: "Introduce una cantidad válida de acciones",
           priceRequired: "Introduce un precio válido",
         },
+        dayTradeLabel: "Day trade (tipo impositivo reducido)",
+        dayTradeHint: "Misma cuenta, mismo día, compra en efectivo y venta del mismo valor; el impuesto usa el tipo del 0,15 % (art. 2-2 de la Securities Transaction Tax Act).",
+        dayTradeBadge: "Day trade",
       },
       dividends: {
         title: "Dividendos",
@@ -1376,6 +1379,11 @@ export const es = {
           stockRequired: "Selecciona una acción",
           dividendRequired: "Introduce dividendo en efectivo o en acciones",
         },
+        reinvestLabel: "Reinvertir dividendo (DRIP)",
+        reinvestHint: "Reinvierte el dividendo en efectivo en el mismo valor; se crea automáticamente un registro de compra y se incluye en la base de coste FIFO.",
+        reinvestSharesLabel: "Acciones reinvertidas",
+        reinvestPriceLabel: "Precio de reinversión por acción",
+        reinvestBadge: "Reinvertido",
       },
       realized: {
         title: "Gan./pérd. realizada",

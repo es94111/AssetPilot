@@ -4028,6 +4028,21 @@
     "description": "Web path: features.stocks.transactions.messages.priceRequired",
     "x-webPath": "features.stocks.transactions.messages.priceRequired"
   },
+  "featuresStocksTransactionsDayTradeLabel": "डे ट्रेड (आधी कर दर)",
+  "@featuresStocksTransactionsDayTradeLabel": {
+    "description": "Web path: features.stocks.transactions.dayTradeLabel",
+    "x-webPath": "features.stocks.transactions.dayTradeLabel"
+  },
+  "featuresStocksTransactionsDayTradeHint": "एक ही खाता, एक ही कारोबारी दिन, समान मात्रा की नकद खरीद और बिक्री; बिक्री कर 0.15% दर पर (धारा 2-2)।",
+  "@featuresStocksTransactionsDayTradeHint": {
+    "description": "Web path: features.stocks.transactions.dayTradeHint",
+    "x-webPath": "features.stocks.transactions.dayTradeHint"
+  },
+  "featuresStocksTransactionsDayTradeBadge": "डे ट्रेड",
+  "@featuresStocksTransactionsDayTradeBadge": {
+    "description": "Web path: features.stocks.transactions.dayTradeBadge",
+    "x-webPath": "features.stocks.transactions.dayTradeBadge"
+  },
   "featuresStocksDividendsTitle": "डिविडेंड",
   "@featuresStocksDividendsTitle": {
     "description": "Web path: features.stocks.dividends.title",
@@ -4116,6 +4131,31 @@
   "@featuresStocksDividendsMessagesDividendRequired": {
     "description": "Web path: features.stocks.dividends.messages.dividendRequired",
     "x-webPath": "features.stocks.dividends.messages.dividendRequired"
+  },
+  "featuresStocksDividendsReinvestLabel": "लाभांश पुनर्निवेश (DRIP)",
+  "@featuresStocksDividendsReinvestLabel": {
+    "description": "Web path: features.stocks.dividends.reinvestLabel",
+    "x-webPath": "features.stocks.dividends.reinvestLabel"
+  },
+  "featuresStocksDividendsReinvestHint": "नकद लाभांश को उसी स्टॉक में पुनर्निवेशित करता है; एक खरीद रिकॉर्ड स्वतः बनता है और FIFO लागत आधार में जोड़ा जाता है।",
+  "@featuresStocksDividendsReinvestHint": {
+    "description": "Web path: features.stocks.dividends.reinvestHint",
+    "x-webPath": "features.stocks.dividends.reinvestHint"
+  },
+  "featuresStocksDividendsReinvestSharesLabel": "पुनर्निवेशित शेयर",
+  "@featuresStocksDividendsReinvestSharesLabel": {
+    "description": "Web path: features.stocks.dividends.reinvestSharesLabel",
+    "x-webPath": "features.stocks.dividends.reinvestSharesLabel"
+  },
+  "featuresStocksDividendsReinvestPriceLabel": "पुनर्निवेश प्रति शेयर मूल्य",
+  "@featuresStocksDividendsReinvestPriceLabel": {
+    "description": "Web path: features.stocks.dividends.reinvestPriceLabel",
+    "x-webPath": "features.stocks.dividends.reinvestPriceLabel"
+  },
+  "featuresStocksDividendsReinvestBadge": "पुनर्निवेशित",
+  "@featuresStocksDividendsReinvestBadge": {
+    "description": "Web path: features.stocks.dividends.reinvestBadge",
+    "x-webPath": "features.stocks.dividends.reinvestBadge"
   },
   "featuresStocksRealizedTitle": "वास्तविक P/L",
   "@featuresStocksRealizedTitle": {

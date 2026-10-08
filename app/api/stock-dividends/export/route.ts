@@ -9,6 +9,10 @@ import {
 } from "../../../../lib/auditHelpers";
 import { getRequestIpFromHeaders } from "../../../../lib/loginHelpers";
 import {
+  hasAmbiguousLegacyStockDividendTransactions,
+  hasUnmatchedLegacyStockDividendTransactions,
+} from "../../../../lib/stockHelpers";
+import {
   createXlsxExportResponse,
   mapXlsxRows,
   resolveExportFormat,
@@ -29,6 +33,20 @@ export async function GET(request) {
   const format = resolveExportFormat(searchParams.get("format"));
 
   try {
+    const legacyStockIds = queryAll(
+      "SELECT DISTINCT stock_id FROM stock_transactions WHERE user_id = ? AND type = 'buy' AND price = 0 AND COALESCE(linked_dividend_id, '') = '' AND (note LIKE '[SYNTH] 股票股利%' OR note LIKE '股票股利配發%')",
+      [auth.userId],
+    );
+    if (legacyStockIds.some((row) =>
+      hasUnmatchedLegacyStockDividendTransactions(auth.userId, String(row.stock_id)) ||
+      hasAmbiguousLegacyStockDividendTransactions(auth.userId, String(row.stock_id))
+    )) {
+      return NextResponse.json(
+        { error: "存在無法安全配對的舊版股票股利合成交易，請先透過股利紀錄整理後再匯出" },
+        { status: 409 },
+      );
+    }
+
     let where = "WHERE sd.user_id = ?";
     const params = [auth.userId];
     if (dateFrom && isValidIso8601Date(dateFrom)) {
@@ -41,6 +59,49 @@ export async function GET(request) {
     }
 
     const baseSql = `SELECT sd.id, sd.date, sd.cash_dividend, sd.stock_dividend_shares, sd.account_id, sd.note,
+      sd.reinvest, sd.reinvest_shares, sd.reinvest_price,
+      CASE WHEN EXISTS (
+        SELECT 1 FROM stock_transactions st
+        WHERE st.user_id = sd.user_id AND st.linked_dividend_id = sd.id AND st.type = 'buy'
+          AND st.price = 0 AND st.note LIKE '[SYNTH] 股票股利%'
+      ) THEN (
+        SELECT st.created_at FROM stock_transactions st
+        WHERE st.user_id = sd.user_id AND st.linked_dividend_id = sd.id AND st.type = 'buy'
+          AND st.price = 0 AND st.note LIKE '[SYNTH] 股票股利%'
+        ORDER BY st.created_at, st.id LIMIT 1
+      ) ELSE (
+        SELECT st.created_at FROM stock_transactions st
+        WHERE st.user_id = sd.user_id AND st.stock_id = sd.stock_id AND st.date = sd.date
+          AND st.type = 'buy' AND st.price = 0 AND COALESCE(st.linked_dividend_id, '') = ''
+          AND ABS(st.shares - sd.stock_dividend_shares) < 0.001
+          AND (st.note LIKE '[SYNTH] 股票股利%' OR st.note LIKE '股票股利配發%')
+        ORDER BY st.created_at, st.id LIMIT 1
+      ) END AS stock_dividend_tx_created_at,
+      CASE WHEN EXISTS (
+        SELECT 1 FROM stock_transactions st
+        WHERE st.user_id = sd.user_id AND st.linked_dividend_id = sd.id AND st.type = 'buy'
+          AND st.price = 0 AND st.note LIKE '[SYNTH] 股票股利%'
+      ) THEN (
+        SELECT st.id FROM stock_transactions st
+        WHERE st.user_id = sd.user_id AND st.linked_dividend_id = sd.id AND st.type = 'buy'
+          AND st.price = 0 AND st.note LIKE '[SYNTH] 股票股利%'
+        ORDER BY st.created_at, st.id LIMIT 1
+      ) ELSE (
+        SELECT st.id FROM stock_transactions st
+        WHERE st.user_id = sd.user_id AND st.stock_id = sd.stock_id AND st.date = sd.date
+          AND st.type = 'buy' AND st.price = 0 AND COALESCE(st.linked_dividend_id, '') = ''
+          AND ABS(st.shares - sd.stock_dividend_shares) < 0.001
+          AND (st.note LIKE '[SYNTH] 股票股利%' OR st.note LIKE '股票股利配發%')
+        ORDER BY st.created_at, st.id LIMIT 1
+      ) END AS stock_dividend_tx_id,
+      (SELECT st.created_at FROM stock_transactions st
+       WHERE st.user_id = sd.user_id AND st.linked_dividend_id = sd.id AND st.type = 'buy'
+         AND st.note LIKE '[DRIP] 股利再投資%'
+       ORDER BY st.created_at, st.id LIMIT 1) AS reinvest_tx_created_at,
+      (SELECT st.id FROM stock_transactions st
+       WHERE st.user_id = sd.user_id AND st.linked_dividend_id = sd.id AND st.type = 'buy'
+         AND st.note LIKE '[DRIP] 股利再投資%'
+       ORDER BY st.created_at, st.id LIMIT 1) AS reinvest_tx_id,
       s.symbol, s.market, s.name AS stock_name, s.stock_type, s.currency,
       CASE WHEN COALESCE(sd.cash_dividend, 0) > 0
         THEN COALESCE(NULLIF(a.name, ''), matched_dividend_account.account_name, '')
@@ -61,9 +122,8 @@ export async function GET(request) {
         ORDER BY t.created_at DESC, t.id DESC
         LIMIT 1
       ) matched_dividend_account ON TRUE
-      ${where}`
-    const orderBy = 'sd.date, COALESCE(sd.created_at, 0), sd.id';
-    const sql = `${baseSql} ORDER BY sd.date DESC, sd.created_at DESC`;
+      ${where}`;
+    const sql = `${baseSql} ORDER BY sd.date DESC, COALESCE(sd.created_at, 0) DESC, sd.id DESC`;
     const headers = [
       "日期",
       "市場",
@@ -73,6 +133,13 @@ export async function GET(request) {
       "幣別",
       "現金股利",
       "股票股利",
+      "再投資",
+      "再投資股數",
+      "再投資價格",
+      "股票股利 FIFO 排序時間",
+      "再投資 FIFO 排序時間",
+      "股票股利 FIFO 排序識別碼",
+      "再投資 FIFO 排序識別碼",
       "帳戶",
       "備註",
     ];
@@ -87,6 +154,13 @@ export async function GET(request) {
         r.currency || "TWD",
         r.cash_dividend || 0,
         r.stock_dividend_shares || 0,
+        Number(r.reinvest) === 1 ? "是" : "否",
+        Number(r.reinvest_shares) || 0,
+        Number(r.reinvest_price) || 0,
+        r.stock_dividend_tx_created_at ?? "",
+        r.reinvest_tx_created_at ?? "",
+        r.stock_dividend_tx_id || "",
+        r.reinvest_tx_id || "",
         accountName,
         r.note || "",
       ];
@@ -105,6 +179,13 @@ export async function GET(request) {
         { header: "幣別", type: "text" },
         { header: "現金股利", type: "number" },
         { header: "股票股利", type: "number", format: "#,##0.####" },
+        { header: "再投資", type: "text" },
+        { header: "再投資股數", type: "number", format: "#,##0.####" },
+        { header: "再投資價格", type: "number" },
+        { header: "股票股利 FIFO 排序時間", type: "datetime" },
+        { header: "再投資 FIFO 排序時間", type: "datetime" },
+        { header: "股票股利 FIFO 排序識別碼", type: "text" },
+        { header: "再投資 FIFO 排序識別碼", type: "text" },
         { header: "帳戶", type: "text" },
         { header: "備註", type: "text" },
       ];

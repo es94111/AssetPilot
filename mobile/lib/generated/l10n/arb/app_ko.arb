@@ -4028,6 +4028,21 @@
     "description": "Web path: features.stocks.transactions.messages.priceRequired",
     "x-webPath": "features.stocks.transactions.messages.priceRequired"
   },
+  "featuresStocksTransactionsDayTradeLabel": "데이트레이드 (세율 절반)",
+  "@featuresStocksTransactionsDayTradeLabel": {
+    "description": "Web path: features.stocks.transactions.dayTradeLabel",
+    "x-webPath": "features.stocks.transactions.dayTradeLabel"
+  },
+  "featuresStocksTransactionsDayTradeHint": "동일 계좌, 동일 영업일, 동일 수량 현금 매수·매도; 매도세는 0.15% 적용(제2조의2).",
+  "@featuresStocksTransactionsDayTradeHint": {
+    "description": "Web path: features.stocks.transactions.dayTradeHint",
+    "x-webPath": "features.stocks.transactions.dayTradeHint"
+  },
+  "featuresStocksTransactionsDayTradeBadge": "데이트레이드",
+  "@featuresStocksTransactionsDayTradeBadge": {
+    "description": "Web path: features.stocks.transactions.dayTradeBadge",
+    "x-webPath": "features.stocks.transactions.dayTradeBadge"
+  },
   "featuresStocksDividendsTitle": "배당",
   "@featuresStocksDividendsTitle": {
     "description": "Web path: features.stocks.dividends.title",
@@ -4116,6 +4131,31 @@
   "@featuresStocksDividendsMessagesDividendRequired": {
     "description": "Web path: features.stocks.dividends.messages.dividendRequired",
     "x-webPath": "features.stocks.dividends.messages.dividendRequired"
+  },
+  "featuresStocksDividendsReinvestLabel": "배당 재투자 (DRIP)",
+  "@featuresStocksDividendsReinvestLabel": {
+    "description": "Web path: features.stocks.dividends.reinvestLabel",
+    "x-webPath": "features.stocks.dividends.reinvestLabel"
+  },
+  "featuresStocksDividendsReinvestHint": "현금 배당을 동일 종목에 재투자하며, 매수 기록이 자동 생성되어 FIFO 원가 기준에 반영됩니다.",
+  "@featuresStocksDividendsReinvestHint": {
+    "description": "Web path: features.stocks.dividends.reinvestHint",
+    "x-webPath": "features.stocks.dividends.reinvestHint"
+  },
+  "featuresStocksDividendsReinvestSharesLabel": "재투자 주식 수",
+  "@featuresStocksDividendsReinvestSharesLabel": {
+    "description": "Web path: features.stocks.dividends.reinvestSharesLabel",
+    "x-webPath": "features.stocks.dividends.reinvestSharesLabel"
+  },
+  "featuresStocksDividendsReinvestPriceLabel": "재투자 주당 가격",
+  "@featuresStocksDividendsReinvestPriceLabel": {
+    "description": "Web path: features.stocks.dividends.reinvestPriceLabel",
+    "x-webPath": "features.stocks.dividends.reinvestPriceLabel"
+  },
+  "featuresStocksDividendsReinvestBadge": "재투자",
+  "@featuresStocksDividendsReinvestBadge": {
+    "description": "Web path: features.stocks.dividends.reinvestBadge",
+    "x-webPath": "features.stocks.dividends.reinvestBadge"
   },
   "featuresStocksRealizedTitle": "실현 손익",
   "@featuresStocksRealizedTitle": {

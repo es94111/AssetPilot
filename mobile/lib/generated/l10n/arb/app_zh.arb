@@ -4152,6 +4152,21 @@
     "description": "Web path: features.stocks.transactions.messages.priceRequired",
     "x-webPath": "features.stocks.transactions.messages.priceRequired"
   },
+  "featuresStocksTransactionsDayTradeLabel": "現股當沖（稅率減半）",
+  "@featuresStocksTransactionsDayTradeLabel": {
+    "description": "Web path: features.stocks.transactions.dayTradeLabel",
+    "x-webPath": "features.stocks.transactions.dayTradeLabel"
+  },
+  "featuresStocksTransactionsDayTradeHint": "同一帳戶同日現款買進與現券賣出同種類同數量，賣出證交稅依證交稅條例第 2 條之 2 以 0.15% 計算。",
+  "@featuresStocksTransactionsDayTradeHint": {
+    "description": "Web path: features.stocks.transactions.dayTradeHint",
+    "x-webPath": "features.stocks.transactions.dayTradeHint"
+  },
+  "featuresStocksTransactionsDayTradeBadge": "當沖",
+  "@featuresStocksTransactionsDayTradeBadge": {
+    "description": "Web path: features.stocks.transactions.dayTradeBadge",
+    "x-webPath": "features.stocks.transactions.dayTradeBadge"
+  },
   "featuresStocksDividendsTitle": "股利紀錄",
   "@featuresStocksDividendsTitle": {
     "description": "Web path: features.stocks.dividends.title",
@@ -4240,6 +4255,31 @@
   "@featuresStocksDividendsMessagesDividendRequired": {
     "description": "Web path: features.stocks.dividends.messages.dividendRequired",
     "x-webPath": "features.stocks.dividends.messages.dividendRequired"
+  },
+  "featuresStocksDividendsReinvestLabel": "股利再投資（DRIP）",
+  "@featuresStocksDividendsReinvestLabel": {
+    "description": "Web path: features.stocks.dividends.reinvestLabel",
+    "x-webPath": "features.stocks.dividends.reinvestLabel"
+  },
+  "featuresStocksDividendsReinvestHint": "以現金股利再買入同一標的，系統會自動產生一筆買進紀錄並計入 FIFO 成本基礎。",
+  "@featuresStocksDividendsReinvestHint": {
+    "description": "Web path: features.stocks.dividends.reinvestHint",
+    "x-webPath": "features.stocks.dividends.reinvestHint"
+  },
+  "featuresStocksDividendsReinvestSharesLabel": "再投資股數",
+  "@featuresStocksDividendsReinvestSharesLabel": {
+    "description": "Web path: features.stocks.dividends.reinvestSharesLabel",
+    "x-webPath": "features.stocks.dividends.reinvestSharesLabel"
+  },
+  "featuresStocksDividendsReinvestPriceLabel": "再投資每股價格",
+  "@featuresStocksDividendsReinvestPriceLabel": {
+    "description": "Web path: features.stocks.dividends.reinvestPriceLabel",
+    "x-webPath": "features.stocks.dividends.reinvestPriceLabel"
+  },
+  "featuresStocksDividendsReinvestBadge": "再投資",
+  "@featuresStocksDividendsReinvestBadge": {
+    "description": "Web path: features.stocks.dividends.reinvestBadge",
+    "x-webPath": "features.stocks.dividends.reinvestBadge"
   },
   "featuresStocksRealizedTitle": "實現損益",
   "@featuresStocksRealizedTitle": {

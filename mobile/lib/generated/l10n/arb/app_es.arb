@@ -4028,6 +4028,21 @@
     "description": "Web path: features.stocks.transactions.messages.priceRequired",
     "x-webPath": "features.stocks.transactions.messages.priceRequired"
   },
+  "featuresStocksTransactionsDayTradeLabel": "Day trade (tipo impositivo reducido)",
+  "@featuresStocksTransactionsDayTradeLabel": {
+    "description": "Web path: features.stocks.transactions.dayTradeLabel",
+    "x-webPath": "features.stocks.transactions.dayTradeLabel"
+  },
+  "featuresStocksTransactionsDayTradeHint": "Misma cuenta, mismo día, compra en efectivo y venta del mismo valor; el impuesto usa el tipo del 0,15 % (art. 2-2 de la Securities Transaction Tax Act).",
+  "@featuresStocksTransactionsDayTradeHint": {
+    "description": "Web path: features.stocks.transactions.dayTradeHint",
+    "x-webPath": "features.stocks.transactions.dayTradeHint"
+  },
+  "featuresStocksTransactionsDayTradeBadge": "Day trade",
+  "@featuresStocksTransactionsDayTradeBadge": {
+    "description": "Web path: features.stocks.transactions.dayTradeBadge",
+    "x-webPath": "features.stocks.transactions.dayTradeBadge"
+  },
   "featuresStocksDividendsTitle": "Dividendos",
   "@featuresStocksDividendsTitle": {
     "description": "Web path: features.stocks.dividends.title",
@@ -4116,6 +4131,31 @@
   "@featuresStocksDividendsMessagesDividendRequired": {
     "description": "Web path: features.stocks.dividends.messages.dividendRequired",
     "x-webPath": "features.stocks.dividends.messages.dividendRequired"
+  },
+  "featuresStocksDividendsReinvestLabel": "Reinvertir dividendo (DRIP)",
+  "@featuresStocksDividendsReinvestLabel": {
+    "description": "Web path: features.stocks.dividends.reinvestLabel",
+    "x-webPath": "features.stocks.dividends.reinvestLabel"
+  },
+  "featuresStocksDividendsReinvestHint": "Reinvierte el dividendo en efectivo en el mismo valor; se crea automáticamente un registro de compra y se incluye en la base de coste FIFO.",
+  "@featuresStocksDividendsReinvestHint": {
+    "description": "Web path: features.stocks.dividends.reinvestHint",
+    "x-webPath": "features.stocks.dividends.reinvestHint"
+  },
+  "featuresStocksDividendsReinvestSharesLabel": "Acciones reinvertidas",
+  "@featuresStocksDividendsReinvestSharesLabel": {
+    "description": "Web path: features.stocks.dividends.reinvestSharesLabel",
+    "x-webPath": "features.stocks.dividends.reinvestSharesLabel"
+  },
+  "featuresStocksDividendsReinvestPriceLabel": "Precio de reinversión por acción",
+  "@featuresStocksDividendsReinvestPriceLabel": {
+    "description": "Web path: features.stocks.dividends.reinvestPriceLabel",
+    "x-webPath": "features.stocks.dividends.reinvestPriceLabel"
+  },
+  "featuresStocksDividendsReinvestBadge": "Reinvertido",
+  "@featuresStocksDividendsReinvestBadge": {
+    "description": "Web path: features.stocks.dividends.reinvestBadge",
+    "x-webPath": "features.stocks.dividends.reinvestBadge"
   },
   "featuresStocksRealizedTitle": "Gan./pérd. realizada",
   "@featuresStocksRealizedTitle": {

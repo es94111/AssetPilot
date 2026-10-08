@@ -33,6 +33,7 @@ const USER_OWNED_DELETE_STATEMENTS = [
   "DELETE FROM budgets WHERE user_id = ?",
   "DELETE FROM recurring WHERE user_id = ?",
   "DELETE FROM deleted_defaults WHERE user_id = ?",
+  "DELETE FROM recurring_suggestion_dismissals WHERE user_id = ?",
   "DELETE FROM credit_card_repayment_summaries WHERE user_id = ?",
   "DELETE FROM savings_goals WHERE user_id = ?",
   "DELETE FROM repayment_plans WHERE user_id = ?",

@@ -11366,6 +11366,107 @@ abstract class AppLocalizations {
   /// In zh_Hant_TW, this message translates to:
   /// **'未指定'**
   String get featuresStocksTransactionsAccountUnspecified;
+
+  /// Web path: features.smartAssist.loading
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'正在產生分類建議…'**
+  String get featuresSmartAssistLoading;
+
+  /// Web path: features.smartAssist.suggestionTitle
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'分類建議'**
+  String get featuresSmartAssistSuggestionTitle;
+
+  /// Web path: features.smartAssist.hideSuggestions
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'隱藏建議'**
+  String get featuresSmartAssistHideSuggestions;
+
+  /// Web path: features.smartAssist.suggestionNote
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'建議僅為提示，不會自動套用；請確認後再選擇分類。'**
+  String get featuresSmartAssistSuggestionNote;
+
+  /// Web path: features.smartAssist.confidenceHint
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'信心度 {percent}%（依據 {count} 筆歷史交易）'**
+  String featuresSmartAssistConfidenceHint(Object percent, Object count);
+
+  /// Web path: features.smartAssist.recurringTitle
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'疑似固定收支'**
+  String get featuresSmartAssistRecurringTitle;
+
+  /// Web path: features.smartAssist.recurringHint
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'系統偵測到下列重複交易，可能適合設為固定收支。按下按鈕只會帶入表單，仍需你確認儲存。'**
+  String get featuresSmartAssistRecurringHint;
+
+  /// Web path: features.smartAssist.recurringDetail
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'分類：{category} · 帳戶：{account} · 共 {count} 筆 · 最近一筆 {lastDate}'**
+  String featuresSmartAssistRecurringDetail(
+    Object category,
+    Object account,
+    Object count,
+    Object lastDate,
+  );
+
+  /// Web path: features.smartAssist.confidenceLabel
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'信心度 {percent}%'**
+  String featuresSmartAssistConfidenceLabel(Object percent);
+
+  /// Web path: features.smartAssist.dismiss
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'不再提示'**
+  String get featuresSmartAssistDismiss;
+
+  /// Web path: features.smartAssist.createRecurring
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'設為固定收支'**
+  String get featuresSmartAssistCreateRecurring;
+
+  /// Web path: features.smartAssist.disabledNotice
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'智慧輔助已關閉。你可以在「設定 › 帳號」重新開啟分類建議與固定收支偵測。'**
+  String get featuresSmartAssistDisabledNotice;
+
+  /// Web path: settings.account.smartAssistTitle
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'智慧輔助'**
+  String get settingsAccountSmartAssistTitle;
+
+  /// Web path: settings.account.smartAssistDescription
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'新增交易時顯示分類建議，並在固定收支頁提示疑似週期性的交易。建議僅為提示，需你確認後才會寫入。'**
+  String get settingsAccountSmartAssistDescription;
+
+  /// Web path: settings.account.smartAssistEnable
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'啟用分類建議與固定收支偵測'**
+  String get settingsAccountSmartAssistEnable;
+
+  /// Web path: features.smartAssist.fxRateRequired
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'請輸入有效匯率後再儲存。'**
+  String get featuresSmartAssistFxRateRequired;
 }
 
 class _AppLocalizationsDelegate

@@ -9984,5 +9984,98 @@
   "@featuresStocksTransactionsAccountUnspecified": {
     "description": "Web path: features.stocks.transactions.accountUnspecified",
     "x-webPath": "features.stocks.transactions.accountUnspecified"
+  },
+  "featuresSmartAssistLoading": "Generando sugerencias de categoría…",
+  "@featuresSmartAssistLoading": {
+    "description": "Web path: features.smartAssist.loading",
+    "x-webPath": "features.smartAssist.loading"
+  },
+  "featuresSmartAssistSuggestionTitle": "Sugerencias de categoría",
+  "@featuresSmartAssistSuggestionTitle": {
+    "description": "Web path: features.smartAssist.suggestionTitle",
+    "x-webPath": "features.smartAssist.suggestionTitle"
+  },
+  "featuresSmartAssistHideSuggestions": "Ocultar sugerencias",
+  "@featuresSmartAssistHideSuggestions": {
+    "description": "Web path: features.smartAssist.hideSuggestions",
+    "x-webPath": "features.smartAssist.hideSuggestions"
+  },
+  "featuresSmartAssistSuggestionNote": "Las sugerencias son solo orientativas y nunca se aplican solas. Confírmalas antes de elegir una categoría.",
+  "@featuresSmartAssistSuggestionNote": {
+    "description": "Web path: features.smartAssist.suggestionNote",
+    "x-webPath": "features.smartAssist.suggestionNote"
+  },
+  "featuresSmartAssistConfidenceHint": "Confianza {percent} % (según {count} transacciones anteriores)",
+  "@featuresSmartAssistConfidenceHint": {
+    "description": "Web path: features.smartAssist.confidenceHint",
+    "x-webPath": "features.smartAssist.confidenceHint",
+    "placeholders": {
+      "percent": {},
+      "count": {}
+    }
+  },
+  "featuresSmartAssistRecurringTitle": "Posibles movimientos recurrentes",
+  "@featuresSmartAssistRecurringTitle": {
+    "description": "Web path: features.smartAssist.recurringTitle",
+    "x-webPath": "features.smartAssist.recurringTitle"
+  },
+  "featuresSmartAssistRecurringHint": "Estos movimientos repetidos podrían convertirse en recurrentes. El botón solo rellena el formulario: tú confirmas y guardas.",
+  "@featuresSmartAssistRecurringHint": {
+    "description": "Web path: features.smartAssist.recurringHint",
+    "x-webPath": "features.smartAssist.recurringHint"
+  },
+  "featuresSmartAssistRecurringDetail": "Categoría: {category} · Cuenta: {account} · {count} registros · Último {lastDate}",
+  "@featuresSmartAssistRecurringDetail": {
+    "description": "Web path: features.smartAssist.recurringDetail",
+    "x-webPath": "features.smartAssist.recurringDetail",
+    "placeholders": {
+      "category": {},
+      "account": {},
+      "count": {},
+      "lastDate": {}
+    }
+  },
+  "featuresSmartAssistConfidenceLabel": "Confianza {percent} %",
+  "@featuresSmartAssistConfidenceLabel": {
+    "description": "Web path: features.smartAssist.confidenceLabel",
+    "x-webPath": "features.smartAssist.confidenceLabel",
+    "placeholders": {
+      "percent": {}
+    }
+  },
+  "featuresSmartAssistDismiss": "No volver a sugerir",
+  "@featuresSmartAssistDismiss": {
+    "description": "Web path: features.smartAssist.dismiss",
+    "x-webPath": "features.smartAssist.dismiss"
+  },
+  "featuresSmartAssistCreateRecurring": "Crear recurrente",
+  "@featuresSmartAssistCreateRecurring": {
+    "description": "Web path: features.smartAssist.createRecurring",
+    "x-webPath": "features.smartAssist.createRecurring"
+  },
+  "featuresSmartAssistDisabledNotice": "El asistente inteligente está desactivado. Puedes reactivar las sugerencias de categoría y la detección de recurrentes en Ajustes › Cuenta.",
+  "@featuresSmartAssistDisabledNotice": {
+    "description": "Web path: features.smartAssist.disabledNotice",
+    "x-webPath": "features.smartAssist.disabledNotice"
+  },
+  "settingsAccountSmartAssistTitle": "Asistente inteligente",
+  "@settingsAccountSmartAssistTitle": {
+    "description": "Web path: settings.account.smartAssistTitle",
+    "x-webPath": "settings.account.smartAssistTitle"
+  },
+  "settingsAccountSmartAssistDescription": "Muestra sugerencias de categoría al añadir un movimiento y señala movimientos posiblemente recurrentes en la página de recurrentes. Son solo sugerencias y se guardan únicamente tras tu confirmación.",
+  "@settingsAccountSmartAssistDescription": {
+    "description": "Web path: settings.account.smartAssistDescription",
+    "x-webPath": "settings.account.smartAssistDescription"
+  },
+  "settingsAccountSmartAssistEnable": "Activar sugerencias de categoría y detección de recurrentes",
+  "@settingsAccountSmartAssistEnable": {
+    "description": "Web path: settings.account.smartAssistEnable",
+    "x-webPath": "settings.account.smartAssistEnable"
+  },
+  "featuresSmartAssistFxRateRequired": "Introduce un tipo de cambio válido antes de guardar.",
+  "@featuresSmartAssistFxRateRequired": {
+    "description": "Web path: features.smartAssist.fxRateRequired",
+    "x-webPath": "features.smartAssist.fxRateRequired"
   }
 }

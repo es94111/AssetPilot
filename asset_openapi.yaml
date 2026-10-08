@@ -1237,6 +1237,39 @@ paths:
           description: 找不到此 Passkey
 
   # ── 分類 ──────────────────────────────
+  /api/user/settings/smart-assist:
+    get:
+      operationId: getSmartAssistSettings
+      tags: [Account]
+      summary: 取得智慧輔助開關（分類建議／固定收支偵測，#252）
+      responses:
+        "200":
+          description: 目前設定
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  enabled:
+                    type: boolean
+    put:
+      operationId: updateSmartAssistSettings
+      tags: [Account]
+      summary: 更新智慧輔助開關（關閉後兩個建議端點皆回傳空結果）
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [enabled]
+              properties:
+                enabled:
+                  type: boolean
+      responses:
+        "200":
+          description: 更新成功
+
   /api/categories:
     get:
       operationId: getCategories
@@ -1724,6 +1757,51 @@ paths:
         "200":
           description: 轉帳成功
 
+  /api/transactions/suggestions:
+    get:
+      operationId: getTransactionCategorySuggestions
+      tags: [Transactions]
+      summary: 依摘要與歷史紀錄取得分類建議（Top-N 附信心度；僅提示，需使用者確認才寫入）
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [income, expense]
+        - name: note
+          in: query
+          schema:
+            type: string
+            maxLength: 200
+      responses:
+        "200":
+          description: 分類建議（enabled=false 代表使用者已關閉智慧輔助）
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  enabled:
+                    type: boolean
+                  suggestions:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        categoryId:
+                          type: string
+                        categoryName:
+                          type: string
+                        parentName:
+                          type: string
+                          nullable: true
+                        confidence:
+                          type: number
+                          minimum: 0
+                          maximum: 1
+                        matchedCount:
+                          type: integer
+
   /api/transactions/batch-delete:
     post:
       operationId: batchDeleteTransactions
@@ -2106,6 +2184,82 @@ paths:
       responses:
         "200":
           description: 執行結果
+
+  /api/recurring/suggestions:
+    get:
+      operationId: getRecurringSuggestions
+      tags: [Recurring]
+      summary: 掃描交易找出疑似週期性群組（僅提示，需使用者確認才建立固定收支）
+      responses:
+        "200":
+          description: 週期性建議（enabled=false 代表使用者已關閉智慧輔助）
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  enabled:
+                    type: boolean
+                  suggestions:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        signature:
+                          type: string
+                        type:
+                          type: string
+                          enum: [income, expense]
+                        amount:
+                          type: number
+                          description: 最新交易的 TWD 金額（供顯示與群組參考）
+                        suggestedAmount:
+                          type: number
+                          description: 最近一筆交易的原幣金額（供新增表單預填）
+                        currency:
+                          type: string
+                        fxRate:
+                          type: string
+                        frequency:
+                          type: string
+                          enum: [daily, weekly, monthly, yearly]
+                        confidence:
+                          type: number
+                          minimum: 0
+                          maximum: 1
+                        occurrences:
+                          type: integer
+                        categoryId:
+                          type: string
+                          nullable: true
+                        accountId:
+                          type: string
+                          nullable: true
+                        firstDate:
+                          type: string
+                        lastDate:
+                          type: string
+                        suggestedStartDate:
+                          type: string
+
+  /api/recurring/suggestions/dismiss:
+    post:
+      operationId: dismissRecurringSuggestion
+      tags: [Recurring]
+      summary: 忽略某組週期性建議（僅影響提示，不改動任何交易或固定收支）
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [signature]
+              properties:
+                signature:
+                  type: string
+      responses:
+        "200":
+          description: 已記錄忽略
 
   # ── 儀表板 / 報表 ─────────────────────
   /api/dashboard:

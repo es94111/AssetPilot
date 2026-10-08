@@ -6578,6 +6578,72 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get featuresStocksTransactionsAccountUnspecified => 'Não especificada';
+
+  @override
+  String get featuresSmartAssistLoading => 'Gerando sugestões de categoria…';
+
+  @override
+  String get featuresSmartAssistSuggestionTitle => 'Sugestões de categoria';
+
+  @override
+  String get featuresSmartAssistHideSuggestions => 'Ocultar sugestões';
+
+  @override
+  String get featuresSmartAssistSuggestionNote =>
+      'As sugestões são apenas indicações e nunca são aplicadas automaticamente. Confirme antes de escolher uma categoria.';
+
+  @override
+  String featuresSmartAssistConfidenceHint(Object percent, Object count) {
+    return 'Confiança $percent% (com base em $count transações anteriores)';
+  }
+
+  @override
+  String get featuresSmartAssistRecurringTitle =>
+      'Possíveis lançamentos recorrentes';
+
+  @override
+  String get featuresSmartAssistRecurringHint =>
+      'Estes lançamentos repetidos podem virar lançamentos recorrentes. O botão apenas preenche o formulário — você confirma e salva.';
+
+  @override
+  String featuresSmartAssistRecurringDetail(
+    Object category,
+    Object account,
+    Object count,
+    Object lastDate,
+  ) {
+    return 'Categoria: $category · Conta: $account · $count ocorrências · Última $lastDate';
+  }
+
+  @override
+  String featuresSmartAssistConfidenceLabel(Object percent) {
+    return 'Confiança $percent%';
+  }
+
+  @override
+  String get featuresSmartAssistDismiss => 'Não sugerir novamente';
+
+  @override
+  String get featuresSmartAssistCreateRecurring => 'Criar recorrência';
+
+  @override
+  String get featuresSmartAssistDisabledNotice =>
+      'O assistente inteligente está desativado. Você pode reativar as sugestões de categoria e a detecção de recorrências em Configurações › Conta.';
+
+  @override
+  String get settingsAccountSmartAssistTitle => 'Assistente inteligente';
+
+  @override
+  String get settingsAccountSmartAssistDescription =>
+      'Mostra sugestões de categoria ao adicionar um lançamento e destaca lançamentos possivelmente recorrentes na página de recorrências. As sugestões são apenas indicações e só são gravadas após sua confirmação.';
+
+  @override
+  String get settingsAccountSmartAssistEnable =>
+      'Ativar sugestões de categoria e detecção de recorrências';
+
+  @override
+  String get featuresSmartAssistFxRateRequired =>
+      'Informe uma taxa de câmbio válida antes de salvar.';
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -13145,4 +13211,70 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get featuresStocksTransactionsAccountUnspecified => 'Não especificada';
+
+  @override
+  String get featuresSmartAssistLoading => 'Gerando sugestões de categoria…';
+
+  @override
+  String get featuresSmartAssistSuggestionTitle => 'Sugestões de categoria';
+
+  @override
+  String get featuresSmartAssistHideSuggestions => 'Ocultar sugestões';
+
+  @override
+  String get featuresSmartAssistSuggestionNote =>
+      'As sugestões são apenas indicações e nunca são aplicadas automaticamente. Confirme antes de escolher uma categoria.';
+
+  @override
+  String featuresSmartAssistConfidenceHint(Object percent, Object count) {
+    return 'Confiança $percent% (com base em $count transações anteriores)';
+  }
+
+  @override
+  String get featuresSmartAssistRecurringTitle =>
+      'Possíveis lançamentos recorrentes';
+
+  @override
+  String get featuresSmartAssistRecurringHint =>
+      'Estes lançamentos repetidos podem virar lançamentos recorrentes. O botão apenas preenche o formulário — você confirma e salva.';
+
+  @override
+  String featuresSmartAssistRecurringDetail(
+    Object category,
+    Object account,
+    Object count,
+    Object lastDate,
+  ) {
+    return 'Categoria: $category · Conta: $account · $count ocorrências · Última $lastDate';
+  }
+
+  @override
+  String featuresSmartAssistConfidenceLabel(Object percent) {
+    return 'Confiança $percent%';
+  }
+
+  @override
+  String get featuresSmartAssistDismiss => 'Não sugerir novamente';
+
+  @override
+  String get featuresSmartAssistCreateRecurring => 'Criar recorrência';
+
+  @override
+  String get featuresSmartAssistDisabledNotice =>
+      'O assistente inteligente está desativado. Você pode reativar as sugestões de categoria e a detecção de recorrências em Configurações › Conta.';
+
+  @override
+  String get settingsAccountSmartAssistTitle => 'Assistente inteligente';
+
+  @override
+  String get settingsAccountSmartAssistDescription =>
+      'Mostra sugestões de categoria ao adicionar um lançamento e destaca lançamentos possivelmente recorrentes na página de recorrências. As sugestões são apenas indicações e só são gravadas após sua confirmação.';
+
+  @override
+  String get settingsAccountSmartAssistEnable =>
+      'Ativar sugestões de categoria e detecção de recorrências';
+
+  @override
+  String get featuresSmartAssistFxRateRequired =>
+      'Informe uma taxa de câmbio válida antes de salvar.';
 }

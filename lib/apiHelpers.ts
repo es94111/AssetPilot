@@ -179,12 +179,19 @@ function authErrorResponse(message: string): NextResponse {
   return response;
 }
 
+type RequireAuthOptions = {
+  /** Skip automatic work for endpoints that must not cause implicit writes. */
+  skipAutomaticProcessing?: boolean;
+};
+
 export function requireAuth(
   request: any,
+  options?: RequireAuthOptions,
 ): Promise<ApiAuthResult | NextResponse>;
 export function requireAuth(): Promise<string>;
 export async function requireAuth(
   request?: any,
+  options: RequireAuthOptions = {},
 ): Promise<ApiAuthResult | NextResponse | string> {
   if (request) {
     const token = request.cookies?.get("authToken")?.value;
@@ -271,19 +278,23 @@ export async function requireAuth(
         processPersonalRecurring = !!selectedLedger && Number(selectedLedger.is_shared) === 0;
       }
     }
-    if (processPersonalRecurring) {
-      processDueRecurringOncePerDay(authResult.userId, authResult.userTimezone);
-      processDueStockRecurringOncePerDay(
-        authResult.userId,
+    if (!options.skipAutomaticProcessing) {
+      if (processPersonalRecurring) {
+        processDueRecurringOncePerDay(authResult.userId, authResult.userTimezone);
+        processDueStockRecurringOncePerDay(
+          authResult.userId,
+          authResult.userTimezone,
+        );
+      }
+      triggerUserRequestMaintenance(
+        authResult.actorUserId,
         authResult.userTimezone,
       );
     }
-    triggerUserRequestMaintenance(
-      authResult.actorUserId,
-      authResult.userTimezone,
-    );
     if (isLedgerDataApiRequest(request)) {
-      return applyLedgerContext(request, authResult);
+      return applyLedgerContext(request, authResult, {
+        skipAutomaticProcessing: options.skipAutomaticProcessing,
+      });
     }
     return authResult;
   }

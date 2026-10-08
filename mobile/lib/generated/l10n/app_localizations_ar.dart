@@ -6472,4 +6472,69 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get featuresStocksTransactionsAccountUnspecified => 'غير محدد';
+
+  @override
+  String get featuresSmartAssistLoading => 'جارٍ إنشاء اقتراحات التصنيف…';
+
+  @override
+  String get featuresSmartAssistSuggestionTitle => 'اقتراحات التصنيف';
+
+  @override
+  String get featuresSmartAssistHideSuggestions => 'إخفاء الاقتراحات';
+
+  @override
+  String get featuresSmartAssistSuggestionNote =>
+      'الاقتراحات إرشادية فقط ولا تُطبَّق تلقائيًا؛ أكِّد قبل اختيار التصنيف.';
+
+  @override
+  String featuresSmartAssistConfidenceHint(Object percent, Object count) {
+    return 'الثقة $percent٪ (بناءً على $count معاملة سابقة)';
+  }
+
+  @override
+  String get featuresSmartAssistRecurringTitle => 'معاملات متكررة محتملة';
+
+  @override
+  String get featuresSmartAssistRecurringHint =>
+      'قد تكون هذه المعاملات المتكررة مناسبة كمعاملات ثابتة. الزر يملأ النموذج فقط، وأنت من يؤكد ويحفظ.';
+
+  @override
+  String featuresSmartAssistRecurringDetail(
+    Object category,
+    Object account,
+    Object count,
+    Object lastDate,
+  ) {
+    return 'التصنيف: $category · الحساب: $account · $count معاملة · آخرها $lastDate';
+  }
+
+  @override
+  String featuresSmartAssistConfidenceLabel(Object percent) {
+    return 'الثقة $percent٪';
+  }
+
+  @override
+  String get featuresSmartAssistDismiss => 'عدم الاقتراح مجددًا';
+
+  @override
+  String get featuresSmartAssistCreateRecurring => 'إنشاء معاملة ثابتة';
+
+  @override
+  String get featuresSmartAssistDisabledNotice =>
+      'المساعد الذكي معطّل. يمكنك إعادة تفعيل اقتراحات التصنيف واكتشاف المعاملات المتكررة من الإعدادات › الحساب.';
+
+  @override
+  String get settingsAccountSmartAssistTitle => 'المساعد الذكي';
+
+  @override
+  String get settingsAccountSmartAssistDescription =>
+      'يعرض اقتراحات التصنيف عند إضافة معاملة، ويسلّط الضوء على المعاملات المتكررة المحتملة في صفحة المعاملات الثابتة. الاقتراحات إرشادية فقط وتُكتب بعد تأكيدك.';
+
+  @override
+  String get settingsAccountSmartAssistEnable =>
+      'تفعيل اقتراحات التصنيف واكتشاف المعاملات المتكررة';
+
+  @override
+  String get featuresSmartAssistFxRateRequired =>
+      'أدخل سعر صرف صالحًا قبل الحفظ.';
 }

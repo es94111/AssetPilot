@@ -6619,4 +6619,71 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get featuresStocksTransactionsAccountUnspecified => 'Non spécifié';
+
+  @override
+  String get featuresSmartAssistLoading =>
+      'Génération des suggestions de catégorie…';
+
+  @override
+  String get featuresSmartAssistSuggestionTitle => 'Suggestions de catégorie';
+
+  @override
+  String get featuresSmartAssistHideSuggestions => 'Masquer les suggestions';
+
+  @override
+  String get featuresSmartAssistSuggestionNote =>
+      'Les suggestions sont indicatives et ne sont jamais appliquées automatiquement. Confirmez avant de choisir une catégorie.';
+
+  @override
+  String featuresSmartAssistConfidenceHint(Object percent, Object count) {
+    return 'Confiance $percent % (d’après $count transactions passées)';
+  }
+
+  @override
+  String get featuresSmartAssistRecurringTitle =>
+      'Opérations récurrentes possibles';
+
+  @override
+  String get featuresSmartAssistRecurringHint =>
+      'Ces opérations répétées pourraient devenir des opérations récurrentes. Le bouton ne fait que préremplir le formulaire : c’est vous qui confirmez et enregistrez.';
+
+  @override
+  String featuresSmartAssistRecurringDetail(
+    Object category,
+    Object account,
+    Object count,
+    Object lastDate,
+  ) {
+    return 'Catégorie : $category · Compte : $account · $count occurrences · Dernière $lastDate';
+  }
+
+  @override
+  String featuresSmartAssistConfidenceLabel(Object percent) {
+    return 'Confiance $percent %';
+  }
+
+  @override
+  String get featuresSmartAssistDismiss => 'Ne plus suggérer';
+
+  @override
+  String get featuresSmartAssistCreateRecurring => 'Créer une récurrence';
+
+  @override
+  String get featuresSmartAssistDisabledNotice =>
+      'L’assistant intelligent est désactivé. Vous pouvez réactiver les suggestions de catégorie et la détection de récurrences dans Paramètres › Compte.';
+
+  @override
+  String get settingsAccountSmartAssistTitle => 'Assistant intelligent';
+
+  @override
+  String get settingsAccountSmartAssistDescription =>
+      'Affiche des suggestions de catégorie lors de l’ajout d’une transaction et signale les transactions potentiellement récurrentes sur la page des récurrences. Les suggestions sont indicatives et ne sont enregistrées qu’après votre confirmation.';
+
+  @override
+  String get settingsAccountSmartAssistEnable =>
+      'Activer les suggestions de catégorie et la détection de récurrences';
+
+  @override
+  String get featuresSmartAssistFxRateRequired =>
+      'Saisissez un taux de change valide avant d’enregistrer.';
 }

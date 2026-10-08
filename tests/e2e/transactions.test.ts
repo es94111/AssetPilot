@@ -9,19 +9,35 @@ test('transactions page loads', async ({ authedPage }) => {
   await expect(authedPage.getByRole('heading', { name: '交易記錄' }).first()).toBeVisible();
 });
 
-test('user can add a new expense transaction end-to-end', async ({ authedPage }) => {
+test('user gets an explicit category suggestion from matching transaction history', async ({ authedPage }) => {
+  const categoriesResponse = await authedPage.request.get('/api/categories');
+  expect(categoriesResponse.ok()).toBeTruthy();
+  const categories = await categoriesResponse.json();
+  const category = categories.find((item: { parentId?: string; id: string; name: string }) => item.parentId);
+  expect(category, 'the test user has at least one default leaf category').toBeTruthy();
+
+  for (const date of ['2026-09-10', '2026-09-17', '2026-09-24']) {
+    const response = await authedPage.request.post('/api/transactions', {
+      headers: { Origin: 'http://localhost:3000' },
+      data: {
+        type: 'expense', amount: 420, date, categoryId: category.id,
+        note: 'coffee shop', currency: 'TWD',
+      },
+    });
+    expect(response.ok(), `transaction seed failed (${response.status()}): ${await response.text()}`).toBeTruthy();
+  }
+
   await authedPage.goto('/finance/transactions');
-
-  // 桌面與行動版各有一顆「新增交易」按鈕（行動版 FAB 於桌面寬度被 CSS 隱藏但仍在 DOM 中），
-  // 於預設桌機視窗下取第一個（桌面版）即為實際可見的按鈕。
   await authedPage.getByRole('button', { name: '新增交易' }).first().click();
-
   const dialog = authedPage.getByRole('dialog');
-  await expect(dialog.getByText('新增交易')).toBeVisible();
+  await dialog.locator('details > summary').click();
+  await dialog.locator('#transaction-note').fill('coffee shop');
 
-  await dialog.locator('#transaction-amount').fill('888');
-  await dialog.getByRole('button', { name: '儲存' }).click();
-
-  await expect(dialog).toBeHidden();
-  await expect(authedPage.getByText('NT$ 888').first()).toBeVisible();
+  // The recommendation is a button with a confidence percentage; it is not
+  // applied until the user explicitly selects the suggestion.
+  const suggestion = dialog.getByRole('button').filter({ hasText: category.name }).filter({ hasText: /\d+%/ });
+  await expect(suggestion).toBeVisible();
+  await expect(dialog.locator('#transaction-category')).toHaveValue('');
+  await suggestion.click();
+  await expect(dialog.locator('#transaction-category')).toHaveValue(category.id);
 });

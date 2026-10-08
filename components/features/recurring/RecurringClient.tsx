@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { apiGet, apiPost, apiPut, apiDelete, apiPatch } from '@/lib/clientApi';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/Input';
@@ -8,6 +8,7 @@ import { Select } from '@/components/ui/Select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useT } from '@/components/i18n/I18nProvider';
 import { localeTag } from '@/lib/i18n/localeTag';
+import { RecurringFxRequestGuard, type FxRateRequestToken } from '@/lib/recurringFxRequest';
 import { Plus, Trash2, Edit3, Pause, Play, StickyNote, Repeat } from 'lucide-react';
 
 const FREQUENCY_VALUES = ['daily', 'weekly', 'monthly', 'yearly'] as const;
@@ -38,6 +39,20 @@ export default function RecurringClient(_props: { user?: any } = {}) {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [fxLoading, setFxLoading] = useState(false);
   const [fxFeeEdited, setFxFeeEdited] = useState(false);
+  // 固定收支智慧偵測（issue #252）：僅為提示，使用者按「設為固定收支」才寫入。
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [suggestionsEnabled, setSuggestionsEnabled] = useState(true);
+  const [prefillSignature, setPrefillSignature] = useState<string | null>(null);
+  const [prefillCurrency, setPrefillCurrency] = useState<string | null>(null);
+  const [prefillFxRate, setPrefillFxRate] = useState<string | null>(null);
+  const fxRateRequestGuard = useRef(new RecurringFxRequestGuard());
+  const preservedHistoricalCurrencyRef = useRef<string | null>(null);
+
+  const closeDialog = useCallback(() => {
+    fxRateRequestGuard.current.invalidate();
+    setFxLoading(false);
+    setDialogOpen(false);
+  }, []);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -61,55 +76,90 @@ export default function RecurringClient(_props: { user?: any } = {}) {
     setLoading(false);
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  // 週期偵測建議：載入清單後另外查詢，失敗（含後端未啟用）時靜默略過，不影響主要功能。
+  const loadSuggestions = useCallback(async () => {
+    try {
+      const data = await apiGet('/api/recurring/suggestions');
+      setSuggestionsEnabled(data?.enabled !== false);
+      setSuggestions(Array.isArray(data?.suggestions) ? data.suggestions : []);
+    } catch (_) {
+      setSuggestions([]);
+    }
+  }, []);
 
-  const fetchFxRate = useCallback(async (currency: string) => {
-    const normalizedCurrency = String(currency || '').toUpperCase();
-    if (!normalizedCurrency || normalizedCurrency === 'TWD') {
-      setFxLoading(false);
-      setForm((current) => current.currency === 'TWD' ? { ...current, fxRate: '' } : current);
+  useEffect(() => { load(); }, [load]);
+  useEffect(() => { void loadSuggestions(); }, [loadSuggestions]);
+
+  const fetchFxRate = useCallback(async (request: FxRateRequestToken) => {
+    const normalizedCurrency = request.currency;
+    if (!normalizedCurrency || normalizedCurrency === 'TWD' || !fxRateRequestGuard.current.isLatest(request)) {
       return;
     }
 
     setFxLoading(true);
+    const applyRate = (rate: unknown) => {
+      const rateToTwd = String(rate || '');
+      if (!(Number(rateToTwd) > 0)) return;
+      setForm((current) => fxRateRequestGuard.current.canApply(request, {
+        currentCurrency: current.currency,
+        preservedHistoricalCurrency: preservedHistoricalCurrencyRef.current,
+      }) ? { ...current, fxRate: rateToTwd } : current);
+    };
+
     try {
       const refresh = await apiPost('/api/exchange-rates/refresh', { currencies: [normalizedCurrency] });
       const matched = Array.isArray(refresh?.rates)
         ? refresh.rates.find((rate: any) => rate.currency === normalizedCurrency)
         : null;
-      if (matched?.rateToTwd) {
-        setForm((current) => current.currency === normalizedCurrency ? { ...current, fxRate: String(matched.rateToTwd) } : current);
-      }
+      if (matched?.rateToTwd) applyRate(matched.rateToTwd);
     } catch (_) {
       try {
         const existing = await apiGet('/api/exchange-rates');
         const matched = Array.isArray(existing?.rates)
           ? existing.rates.find((rate: any) => rate.currency === normalizedCurrency)
           : null;
-        if (matched?.rateToTwd) {
-          setForm((current) => current.currency === normalizedCurrency ? { ...current, fxRate: String(matched.rateToTwd) } : current);
-        }
+        if (matched?.rateToTwd) applyRate(matched.rateToTwd);
       } catch (_) {
         // Keep manual entry available when auto fetch fails.
       }
     } finally {
-      setFxLoading(false);
+      if (fxRateRequestGuard.current.isLatest(request)) setFxLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    if (!dialogOpen) return;
-    if (editId) return;
+    if (!dialogOpen || editId) return;
     if (!form.currency || form.currency === 'TWD') {
+      fxRateRequestGuard.current.invalidate();
       setFxLoading(false);
       return;
     }
-    void fetchFxRate(form.currency);
-  }, [dialogOpen, editId, form.currency, fetchFxRate]);
+    // A historical suggestion owns its same-currency rate; invalidate any earlier
+    // lookup before restoring it so an older response cannot overwrite the prefill.
+    if (prefillCurrency && form.currency === prefillCurrency) {
+      fxRateRequestGuard.current.invalidate();
+      setFxLoading(false);
+      if (prefillFxRate && !form.fxRate) {
+        setForm((current) => current.currency === prefillCurrency && !current.fxRate
+          ? { ...current, fxRate: prefillFxRate }
+          : current);
+      }
+      return;
+    }
+    const request = fxRateRequestGuard.current.begin(form.currency);
+    void fetchFxRate(request);
+    return () => {
+      if (fxRateRequestGuard.current.isLatest(request)) fxRateRequestGuard.current.invalidate();
+    };
+  }, [dialogOpen, editId, form.currency, fetchFxRate, prefillCurrency, prefillFxRate]);
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     if (!form.amount || Number(form.amount) <= 0) { setFormError(t('features.recurring.messages.amountRequired')); return; }
+    if (form.currency !== 'TWD' && !(Number(form.fxRate) > 0)) {
+      setFormError(t('features.smartAssist.fxRateRequired'));
+      return;
+    }
     setSaving(true);
     setFormError('');
     const body = {
@@ -129,9 +179,51 @@ export default function RecurringClient(_props: { user?: any } = {}) {
     try {
       if (editId) { await apiPut(`/api/recurring/${editId}`, body); }
       else { await apiPost('/api/recurring', body); }
+      // 由建議卡片建立的配方一旦寫入成功，該組建議即不再提示（使用者已確認）。
+      if (prefillSignature) {
+        await apiPost('/api/recurring/suggestions/dismiss', { signature: prefillSignature }).catch(() => {});
+        setPrefillSignature(null);
+      }
       await load();
+      await loadSuggestions();
     } catch (e: any) { setFormError(e.message); }
     setSaving(false);
+  }
+
+  async function handleDismissSuggestion(signature: string) {
+    try {
+      await apiPost('/api/recurring/suggestions/dismiss', { signature });
+      setSuggestions((current) => current.filter((item) => item.signature !== signature));
+    } catch (e: any) { alert(e.message); }
+  }
+
+  /** 由建議卡片帶入表單預填值；仍須使用者按「儲存」才會寫入固定收支。 */
+  function openCreateFromSuggestion(suggestion: any) {
+    const currency = String(suggestion.currency || 'TWD').toUpperCase();
+    fxRateRequestGuard.current.invalidate();
+    preservedHistoricalCurrencyRef.current = currency;
+    setFxLoading(false);
+    setForm({
+      ...EMPTY_FORM,
+      type: suggestion.type,
+      // suggestion.amount 是 TWD 金額；新增表單收的是原幣金額，故用最近一筆交易的
+      // original_amount / currency / fx_rate 預填，避免外幣交易被再乘一次匯率。
+      amount: String(suggestion.suggestedAmount ?? suggestion.amount),
+      currency,
+      fxRate: String(suggestion.fxRate || 1),
+      categoryId: suggestion.categoryId || '',
+      accountId: suggestion.accountId || '',
+      frequency: suggestion.frequency,
+      startDate: suggestion.suggestedStartDate || new Date().toISOString().slice(0, 10),
+      note: suggestion.sampleNote || '',
+    });
+    setEditId(null);
+    setFxFeeEdited(false);
+    setPrefillCurrency(currency);
+    setPrefillFxRate(String(suggestion.fxRate || 1));
+    setPrefillSignature(suggestion.signature || null);
+    setFormError('');
+    setDialogOpen(true);
   }
 
   async function handleDelete() {
@@ -147,8 +239,13 @@ export default function RecurringClient(_props: { user?: any } = {}) {
     const preferredAccount = accounts.find((account: any) => String(account.currency || 'TWD').toUpperCase() === defaultCurrency) || accounts[0];
     const defaultAccountId = preferredAccount?.id || '';
     const nextCurrency = String(preferredAccount?.currency || defaultCurrency || 'TWD').toUpperCase();
+    fxRateRequestGuard.current.invalidate();
+    preservedHistoricalCurrencyRef.current = null;
     setForm({ ...EMPTY_FORM, startDate: new Date().toISOString().slice(0, 10), accountId: defaultAccountId, currency: nextCurrency, fxRate: '' });
     setEditId(null);
+    setPrefillSignature(null);
+    setPrefillCurrency(null);
+    setPrefillFxRate(null);
     setFxFeeEdited(false);
     setFormError('');
     setDialogOpen(true);
@@ -156,6 +253,8 @@ export default function RecurringClient(_props: { user?: any } = {}) {
 
   function openEdit(rec: any) {
     const currency = String(rec.currency || 'TWD').toUpperCase();
+    fxRateRequestGuard.current.invalidate();
+    preservedHistoricalCurrencyRef.current = null;
     const rate = Number(rec.fxRate || rec.fx_rate) || 1;
     const shownAmount = (currency === 'TWD' || !(rate > 0)) ? Number(rec.amount) || 0 : (Number(rec.amount) || 0) / rate;
     setForm({
@@ -170,6 +269,9 @@ export default function RecurringClient(_props: { user?: any } = {}) {
       fxFee: Number(rec.fxFee) > 0 ? String(Math.round(Number(rec.fxFee))) : '',
     });
     setEditId(rec.id);
+    setPrefillSignature(null);
+    setPrefillCurrency(null);
+    setPrefillFxRate(null);
     setFxFeeEdited(Number(rec.fxFee) > 0);
     setFormError('');
     setDialogOpen(true);
@@ -207,13 +309,19 @@ export default function RecurringClient(_props: { user?: any } = {}) {
 
       <Button onClick={openCreate}><Plus size={16} className="mr-2" /> {t('features.recurring.add')}</Button>
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      <Dialog open={dialogOpen} onOpenChange={(open) => {
+        if (!open) closeDialog();
+        else setDialogOpen(true);
+      }}>
         <DialogContent>
           <DialogHeader><DialogTitle>{editId ? t('features.recurring.edit') : t('features.recurring.create')}</DialogTitle></DialogHeader>
           <form onSubmit={handleSave} className="space-y-4">
             <Select label={t('features.common.type')} options={[{label: t('features.common.expense'), value: 'expense'}, {label: t('features.common.income'), value: 'income'}]} value={form.type} onChange={e => setForm(f => ({ ...f, type: e.target.value }))} />
             <Input label={t('features.recurring.amountLabel')} type="number" step="any" min="0" value={form.amount} onChange={e => setForm(f => ({ ...f, amount: e.target.value }))} />
-            <Select label={t('features.common.currency')} options={currencyOptions.map(currency => ({ label: currency, value: currency }))} value={form.currency} onChange={e => setForm(f => ({ ...f, currency: e.target.value.toUpperCase(), fxRate: '' }))} />
+            <Select label={t('features.common.currency')} options={currencyOptions.map(currency => ({ label: currency, value: currency }))} value={form.currency} onChange={e => {
+              const currency = e.target.value.toUpperCase();
+              setForm(f => ({ ...f, currency, fxRate: currency === prefillCurrency ? (prefillFxRate || '') : '' }));
+            }} />
             {form.currency !== 'TWD' && (
               <div className="space-y-1">
                 <Input label={t('features.common.exchangeRate')} type="number" step="0.0001" value={form.fxRate} onChange={e => setForm(f => ({ ...f, fxRate: e.target.value }))} />
@@ -248,7 +356,7 @@ export default function RecurringClient(_props: { user?: any } = {}) {
             <Select label={t('features.common.account')} options={[{label: t('features.common.unspecified'), value: ''}, ...accounts.map(a => ({ label: a.name, value: a.id }))]} value={form.accountId} onChange={e => {
               const acct = accounts.find((account: any) => account.id === e.target.value);
               const nextCurrency = String(acct?.currency || 'TWD').toUpperCase();
-              setForm(f => ({ ...f, accountId: e.target.value, currency: nextCurrency, fxRate: '' }));
+              setForm(f => ({ ...f, accountId: e.target.value, currency: nextCurrency, fxRate: nextCurrency === prefillCurrency ? (prefillFxRate || '') : '' }));
             }} />
             <Select label={t('features.recurring.frequency')} options={frequencyOptions} value={form.frequency} onChange={e => setForm(f => ({ ...f, frequency: e.target.value }))} />
             <Input label={t('features.recurring.startDate')} type="date" value={form.startDate} onChange={e => setForm(f => ({ ...f, startDate: e.target.value }))} />
@@ -259,12 +367,55 @@ export default function RecurringClient(_props: { user?: any } = {}) {
             </label>
             {formError && <p className="text-red-500 text-sm">{formError}</p>}
             <div className="flex gap-2">
-              <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>{t('common.cancel')}</Button>
-              <Button type="submit" disabled={saving}>{saving ? t('common.saving') : t('common.save')}</Button>
+              <Button type="button" variant="outline" onClick={closeDialog}>{t('common.cancel')}</Button>
+              <Button type="submit" disabled={saving || fxLoading}>{saving ? t('common.saving') : t('common.save')}</Button>
             </div>
           </form>
         </DialogContent>
       </Dialog>
+
+      {!suggestionsEnabled && (
+        <p className="text-xs text-slate-500">{t('features.smartAssist.disabledNotice')}</p>
+      )}
+
+      {suggestionsEnabled && suggestions.length > 0 && (
+        <section className="rounded-xl border border-amber-300 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950/40">
+          <h3 className="text-base font-semibold text-amber-900 dark:text-amber-100">{t('features.smartAssist.recurringTitle')}</h3>
+          <p className="mt-1 text-xs leading-snug text-amber-800 dark:text-amber-200">{t('features.smartAssist.recurringHint')}</p>
+          <ul className="mt-3 space-y-2">
+            {suggestions.map((suggestion) => (
+              <li key={suggestion.signature} className="flex flex-col gap-2 rounded-lg border border-amber-200 bg-white p-3 sm:flex-row sm:items-center sm:justify-between dark:border-amber-900 dark:bg-slate-900">
+                <div className="min-w-0 text-sm text-slate-700 dark:text-slate-100">
+                  <p className="font-semibold">
+                    {suggestion.type === 'income' ? t('features.common.income') : t('features.common.expense')}
+                    {' · '}{fmt(suggestion.amount, locale)}
+                    {' · '}{t(`features.recurring.frequencyLabels.${suggestion.frequency}`)}
+                  </p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    {t('features.smartAssist.recurringDetail', {
+                      category: suggestion.categoryName || t('features.common.uncategorized'),
+                      account: suggestion.accountName || t('features.common.unspecified'),
+                      count: suggestion.occurrences,
+                      lastDate: suggestion.lastDate,
+                    })}
+                  </p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    {t('features.smartAssist.confidenceLabel', { percent: Math.round(Number(suggestion.confidence) * 100) })}
+                  </p>
+                </div>
+                <div className="flex shrink-0 gap-2">
+                  <Button variant="outline" className="min-h-9" onClick={() => handleDismissSuggestion(suggestion.signature)}>
+                    {t('features.smartAssist.dismiss')}
+                  </Button>
+                  <Button className="min-h-9" onClick={() => openCreateFromSuggestion(suggestion)}>
+                    {t('features.smartAssist.createRecurring')}
+                  </Button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" aria-busy="true">

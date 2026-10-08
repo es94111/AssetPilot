@@ -6499,4 +6499,70 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get featuresStocksTransactionsAccountUnspecified => 'Unspecified';
+
+  @override
+  String get featuresSmartAssistLoading => 'Generating category suggestions…';
+
+  @override
+  String get featuresSmartAssistSuggestionTitle => 'Category suggestions';
+
+  @override
+  String get featuresSmartAssistHideSuggestions => 'Hide suggestions';
+
+  @override
+  String get featuresSmartAssistSuggestionNote =>
+      'Suggestions are hints only and are never applied automatically. Confirm before choosing a category.';
+
+  @override
+  String featuresSmartAssistConfidenceHint(Object percent, Object count) {
+    return 'Confidence $percent% (based on $count past transactions)';
+  }
+
+  @override
+  String get featuresSmartAssistRecurringTitle =>
+      'Possible recurring transactions';
+
+  @override
+  String get featuresSmartAssistRecurringHint =>
+      'The following repeated transactions may be worth turning into recurring entries. The button only fills the form — you still confirm and save.';
+
+  @override
+  String featuresSmartAssistRecurringDetail(
+    Object category,
+    Object account,
+    Object count,
+    Object lastDate,
+  ) {
+    return 'Category: $category · Account: $account · $count occurrences · Latest $lastDate';
+  }
+
+  @override
+  String featuresSmartAssistConfidenceLabel(Object percent) {
+    return 'Confidence $percent%';
+  }
+
+  @override
+  String get featuresSmartAssistDismiss => 'Don\'t suggest again';
+
+  @override
+  String get featuresSmartAssistCreateRecurring => 'Create recurring';
+
+  @override
+  String get featuresSmartAssistDisabledNotice =>
+      'Smart assist is off. You can re-enable category suggestions and recurring detection in Settings › Account.';
+
+  @override
+  String get settingsAccountSmartAssistTitle => 'Smart assist';
+
+  @override
+  String get settingsAccountSmartAssistDescription =>
+      'Show category suggestions when adding a transaction, and highlight possibly recurring transactions on the recurring page. Suggestions are hints only and are written only after you confirm.';
+
+  @override
+  String get settingsAccountSmartAssistEnable =>
+      'Enable category suggestions and recurring detection';
+
+  @override
+  String get featuresSmartAssistFxRateRequired =>
+      'Enter a valid exchange rate before saving.';
 }

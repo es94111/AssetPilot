@@ -9999,5 +9999,98 @@
   "@featuresStocksTransactionsAccountUnspecified": {
     "description": "Web path: features.stocks.transactions.accountUnspecified",
     "x-webPath": "features.stocks.transactions.accountUnspecified"
+  },
+  "featuresSmartAssistLoading": "正在產生分類建議…",
+  "@featuresSmartAssistLoading": {
+    "description": "Web path: features.smartAssist.loading",
+    "x-webPath": "features.smartAssist.loading"
+  },
+  "featuresSmartAssistSuggestionTitle": "分類建議",
+  "@featuresSmartAssistSuggestionTitle": {
+    "description": "Web path: features.smartAssist.suggestionTitle",
+    "x-webPath": "features.smartAssist.suggestionTitle"
+  },
+  "featuresSmartAssistHideSuggestions": "隱藏建議",
+  "@featuresSmartAssistHideSuggestions": {
+    "description": "Web path: features.smartAssist.hideSuggestions",
+    "x-webPath": "features.smartAssist.hideSuggestions"
+  },
+  "featuresSmartAssistSuggestionNote": "建議僅為提示，不會自動套用；請確認後再選擇分類。",
+  "@featuresSmartAssistSuggestionNote": {
+    "description": "Web path: features.smartAssist.suggestionNote",
+    "x-webPath": "features.smartAssist.suggestionNote"
+  },
+  "featuresSmartAssistConfidenceHint": "信心度 {percent}%（依據 {count} 筆歷史交易）",
+  "@featuresSmartAssistConfidenceHint": {
+    "description": "Web path: features.smartAssist.confidenceHint",
+    "x-webPath": "features.smartAssist.confidenceHint",
+    "placeholders": {
+      "percent": {},
+      "count": {}
+    }
+  },
+  "featuresSmartAssistRecurringTitle": "疑似固定收支",
+  "@featuresSmartAssistRecurringTitle": {
+    "description": "Web path: features.smartAssist.recurringTitle",
+    "x-webPath": "features.smartAssist.recurringTitle"
+  },
+  "featuresSmartAssistRecurringHint": "系統偵測到下列重複交易，可能適合設為固定收支。按下按鈕只會帶入表單，仍需你確認儲存。",
+  "@featuresSmartAssistRecurringHint": {
+    "description": "Web path: features.smartAssist.recurringHint",
+    "x-webPath": "features.smartAssist.recurringHint"
+  },
+  "featuresSmartAssistRecurringDetail": "分類：{category} · 帳戶：{account} · 共 {count} 筆 · 最近一筆 {lastDate}",
+  "@featuresSmartAssistRecurringDetail": {
+    "description": "Web path: features.smartAssist.recurringDetail",
+    "x-webPath": "features.smartAssist.recurringDetail",
+    "placeholders": {
+      "category": {},
+      "account": {},
+      "count": {},
+      "lastDate": {}
+    }
+  },
+  "featuresSmartAssistConfidenceLabel": "信心度 {percent}%",
+  "@featuresSmartAssistConfidenceLabel": {
+    "description": "Web path: features.smartAssist.confidenceLabel",
+    "x-webPath": "features.smartAssist.confidenceLabel",
+    "placeholders": {
+      "percent": {}
+    }
+  },
+  "featuresSmartAssistDismiss": "不再提示",
+  "@featuresSmartAssistDismiss": {
+    "description": "Web path: features.smartAssist.dismiss",
+    "x-webPath": "features.smartAssist.dismiss"
+  },
+  "featuresSmartAssistCreateRecurring": "設為固定收支",
+  "@featuresSmartAssistCreateRecurring": {
+    "description": "Web path: features.smartAssist.createRecurring",
+    "x-webPath": "features.smartAssist.createRecurring"
+  },
+  "featuresSmartAssistDisabledNotice": "智慧輔助已關閉。你可以在「設定 › 帳號」重新開啟分類建議與固定收支偵測。",
+  "@featuresSmartAssistDisabledNotice": {
+    "description": "Web path: features.smartAssist.disabledNotice",
+    "x-webPath": "features.smartAssist.disabledNotice"
+  },
+  "settingsAccountSmartAssistTitle": "智慧輔助",
+  "@settingsAccountSmartAssistTitle": {
+    "description": "Web path: settings.account.smartAssistTitle",
+    "x-webPath": "settings.account.smartAssistTitle"
+  },
+  "settingsAccountSmartAssistDescription": "新增交易時顯示分類建議，並在固定收支頁提示疑似週期性的交易。建議僅為提示，需你確認後才會寫入。",
+  "@settingsAccountSmartAssistDescription": {
+    "description": "Web path: settings.account.smartAssistDescription",
+    "x-webPath": "settings.account.smartAssistDescription"
+  },
+  "settingsAccountSmartAssistEnable": "啟用分類建議與固定收支偵測",
+  "@settingsAccountSmartAssistEnable": {
+    "description": "Web path: settings.account.smartAssistEnable",
+    "x-webPath": "settings.account.smartAssistEnable"
+  },
+  "featuresSmartAssistFxRateRequired": "請輸入有效匯率後再儲存。",
+  "@featuresSmartAssistFxRateRequired": {
+    "description": "Web path: features.smartAssist.fxRateRequired",
+    "x-webPath": "features.smartAssist.fxRateRequired"
   }
 }

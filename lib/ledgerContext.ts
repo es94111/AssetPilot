@@ -292,6 +292,7 @@ function processDueStockRecurringForLedger(
 export function applyLedgerContext<T extends { userId: string; userTimezone: string }>(
   request: any,
   auth: T,
+  options: { skipAutomaticProcessing?: boolean } = {},
 ): (T & {
   actorUserId: string;
   ledgerId: string;
@@ -340,7 +341,7 @@ export function applyLedgerContext<T extends { userId: string; userTimezone: str
   }
 
   const dataOwnerId = String(ledger?.data_owner_id || "");
-  if (dataOwnerId && dataOwnerId !== actorUserId && decision.role !== "viewer") {
+  if (!options.skipAutomaticProcessing && dataOwnerId && dataOwnerId !== actorUserId && decision.role !== "viewer") {
     const timezone = String(ledger?.timezone || "Asia/Taipei");
     const context = { ledgerId, actorUserId, actorEmail, role: decision.role };
     processDueRecurringForLedger(dataOwnerId, timezone, context);

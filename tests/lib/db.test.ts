@@ -248,4 +248,34 @@ if (!DB_URL) {
     ) as Array<{ indexname: string }>;
     assert.equal(indexes.length, 5, '應有 5 個載具／發票查詢索引');
   });
+
+  test('issue #252 智慧輔助設定與建議忽略清單 migration 存在且可冪等重跑', () => {
+    const settingsColumns = queryAll(
+      `SELECT column_name, column_default, is_nullable FROM information_schema.columns
+       WHERE table_name = 'user_settings' AND column_name = 'ai_assist_enabled'`,
+    ) as Array<{ column_name: string; column_default: string | null; is_nullable: string }>;
+    assert.equal(settingsColumns.length, 1, 'user_settings.ai_assist_enabled 應存在');
+    assert.equal(settingsColumns[0].is_nullable, 'NO', '開關欄位應不可為 NULL');
+
+    const dismissalColumns = queryAll(
+      `SELECT column_name FROM information_schema.columns
+       WHERE table_name = 'recurring_suggestion_dismissals' ORDER BY ordinal_position`,
+    ) as Array<{ column_name: string }>;
+    assert.deepEqual(dismissalColumns.map((row) => row.column_name), ['user_id', 'signature', 'dismissed_at']);
+
+    const db = getDB();
+    const ddl = [
+      `CREATE TABLE IF NOT EXISTS recurring_suggestion_dismissals (
+        user_id TEXT NOT NULL,
+        signature TEXT NOT NULL,
+        dismissed_at INTEGER NOT NULL DEFAULT 0,
+        PRIMARY KEY (user_id, signature)
+      )`,
+      'CREATE INDEX IF NOT EXISTS idx_recurring_suggestion_dismissals_user ON recurring_suggestion_dismissals(user_id)',
+      'CREATE INDEX IF NOT EXISTS idx_transactions_user_type_date ON transactions(user_id, type, date DESC)',
+      'CREATE INDEX IF NOT EXISTS idx_transactions_user_date ON transactions(user_id, date DESC)',
+    ];
+    for (const statement of ddl) db.run(statement);
+    for (const statement of ddl) db.run(statement);
+  });
 }

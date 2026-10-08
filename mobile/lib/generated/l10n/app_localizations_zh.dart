@@ -6198,6 +6198,68 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get featuresStocksTransactionsAccountUnspecified => '未指定';
+
+  @override
+  String get featuresSmartAssistLoading => '正在產生分類建議…';
+
+  @override
+  String get featuresSmartAssistSuggestionTitle => '分類建議';
+
+  @override
+  String get featuresSmartAssistHideSuggestions => '隱藏建議';
+
+  @override
+  String get featuresSmartAssistSuggestionNote => '建議僅為提示，不會自動套用；請確認後再選擇分類。';
+
+  @override
+  String featuresSmartAssistConfidenceHint(Object percent, Object count) {
+    return '信心度 $percent%（依據 $count 筆歷史交易）';
+  }
+
+  @override
+  String get featuresSmartAssistRecurringTitle => '疑似固定收支';
+
+  @override
+  String get featuresSmartAssistRecurringHint =>
+      '系統偵測到下列重複交易，可能適合設為固定收支。按下按鈕只會帶入表單，仍需你確認儲存。';
+
+  @override
+  String featuresSmartAssistRecurringDetail(
+    Object category,
+    Object account,
+    Object count,
+    Object lastDate,
+  ) {
+    return '分類：$category · 帳戶：$account · 共 $count 筆 · 最近一筆 $lastDate';
+  }
+
+  @override
+  String featuresSmartAssistConfidenceLabel(Object percent) {
+    return '信心度 $percent%';
+  }
+
+  @override
+  String get featuresSmartAssistDismiss => '不再提示';
+
+  @override
+  String get featuresSmartAssistCreateRecurring => '設為固定收支';
+
+  @override
+  String get featuresSmartAssistDisabledNotice =>
+      '智慧輔助已關閉。你可以在「設定 › 帳號」重新開啟分類建議與固定收支偵測。';
+
+  @override
+  String get settingsAccountSmartAssistTitle => '智慧輔助';
+
+  @override
+  String get settingsAccountSmartAssistDescription =>
+      '新增交易時顯示分類建議，並在固定收支頁提示疑似週期性的交易。建議僅為提示，需你確認後才會寫入。';
+
+  @override
+  String get settingsAccountSmartAssistEnable => '啟用分類建議與固定收支偵測';
+
+  @override
+  String get featuresSmartAssistFxRateRequired => '請輸入有效匯率後再儲存。';
 }
 
 /// The translations for Chinese, as used in China, using the Han script (`zh_Hans_CN`).
@@ -12397,6 +12459,68 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
 
   @override
   String get featuresStocksTransactionsAccountUnspecified => '未指定';
+
+  @override
+  String get featuresSmartAssistLoading => '正在生成分类建议…';
+
+  @override
+  String get featuresSmartAssistSuggestionTitle => '分类建议';
+
+  @override
+  String get featuresSmartAssistHideSuggestions => '隐藏建议';
+
+  @override
+  String get featuresSmartAssistSuggestionNote => '建议仅供参考，不会自动套用；请确认后再选择分类。';
+
+  @override
+  String featuresSmartAssistConfidenceHint(Object percent, Object count) {
+    return '信心度 $percent%（依据 $count 笔历史交易）';
+  }
+
+  @override
+  String get featuresSmartAssistRecurringTitle => '疑似固定收支';
+
+  @override
+  String get featuresSmartAssistRecurringHint =>
+      '系统检测到下列重复交易，可能适合设为固定收支。按下按钮只会带入表单，仍需你确认保存。';
+
+  @override
+  String featuresSmartAssistRecurringDetail(
+    Object category,
+    Object account,
+    Object count,
+    Object lastDate,
+  ) {
+    return '分类：$category · 账户：$account · 共 $count 笔 · 最近一笔 $lastDate';
+  }
+
+  @override
+  String featuresSmartAssistConfidenceLabel(Object percent) {
+    return '信心度 $percent%';
+  }
+
+  @override
+  String get featuresSmartAssistDismiss => '不再提示';
+
+  @override
+  String get featuresSmartAssistCreateRecurring => '设为固定收支';
+
+  @override
+  String get featuresSmartAssistDisabledNotice =>
+      '智能辅助已关闭。你可以在“设置 › 账号”中重新开启分类建议与固定收支检测。';
+
+  @override
+  String get settingsAccountSmartAssistTitle => '智能辅助';
+
+  @override
+  String get settingsAccountSmartAssistDescription =>
+      '新增交易时显示分类建议，并在固定收支页提示疑似周期性的交易。建议仅供参考，需你确认后才会写入。';
+
+  @override
+  String get settingsAccountSmartAssistEnable => '启用分类建议与固定收支检测';
+
+  @override
+  String get featuresSmartAssistFxRateRequired => '请输入有效汇率后再保存。';
 }
 
 /// The translations for Chinese, as used in Taiwan, using the Han script (`zh_Hant_TW`).
@@ -18593,4 +18717,66 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
 
   @override
   String get featuresStocksTransactionsAccountUnspecified => '未指定';
+
+  @override
+  String get featuresSmartAssistLoading => '正在產生分類建議…';
+
+  @override
+  String get featuresSmartAssistSuggestionTitle => '分類建議';
+
+  @override
+  String get featuresSmartAssistHideSuggestions => '隱藏建議';
+
+  @override
+  String get featuresSmartAssistSuggestionNote => '建議僅為提示，不會自動套用；請確認後再選擇分類。';
+
+  @override
+  String featuresSmartAssistConfidenceHint(Object percent, Object count) {
+    return '信心度 $percent%（依據 $count 筆歷史交易）';
+  }
+
+  @override
+  String get featuresSmartAssistRecurringTitle => '疑似固定收支';
+
+  @override
+  String get featuresSmartAssistRecurringHint =>
+      '系統偵測到下列重複交易，可能適合設為固定收支。按下按鈕只會帶入表單，仍需你確認儲存。';
+
+  @override
+  String featuresSmartAssistRecurringDetail(
+    Object category,
+    Object account,
+    Object count,
+    Object lastDate,
+  ) {
+    return '分類：$category · 帳戶：$account · 共 $count 筆 · 最近一筆 $lastDate';
+  }
+
+  @override
+  String featuresSmartAssistConfidenceLabel(Object percent) {
+    return '信心度 $percent%';
+  }
+
+  @override
+  String get featuresSmartAssistDismiss => '不再提示';
+
+  @override
+  String get featuresSmartAssistCreateRecurring => '設為固定收支';
+
+  @override
+  String get featuresSmartAssistDisabledNotice =>
+      '智慧輔助已關閉。你可以在「設定 › 帳號」重新開啟分類建議與固定收支偵測。';
+
+  @override
+  String get settingsAccountSmartAssistTitle => '智慧輔助';
+
+  @override
+  String get settingsAccountSmartAssistDescription =>
+      '新增交易時顯示分類建議，並在固定收支頁提示疑似週期性的交易。建議僅為提示，需你確認後才會寫入。';
+
+  @override
+  String get settingsAccountSmartAssistEnable => '啟用分類建議與固定收支偵測';
+
+  @override
+  String get featuresSmartAssistFxRateRequired => '請輸入有效匯率後再儲存。';
 }

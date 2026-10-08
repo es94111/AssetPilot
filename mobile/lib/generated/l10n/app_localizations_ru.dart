@@ -6570,4 +6570,71 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get featuresStocksTransactionsAccountUnspecified => 'Не указан';
+
+  @override
+  String get featuresSmartAssistLoading =>
+      'Формируются рекомендации категорий…';
+
+  @override
+  String get featuresSmartAssistSuggestionTitle => 'Рекомендации категорий';
+
+  @override
+  String get featuresSmartAssistHideSuggestions => 'Скрыть рекомендации';
+
+  @override
+  String get featuresSmartAssistSuggestionNote =>
+      'Рекомендации носят справочный характер и не применяются автоматически. Подтвердите выбор категории.';
+
+  @override
+  String featuresSmartAssistConfidenceHint(Object percent, Object count) {
+    return 'Уверенность $percent% (на основе $count прошлых операций)';
+  }
+
+  @override
+  String get featuresSmartAssistRecurringTitle =>
+      'Возможные повторяющиеся операции';
+
+  @override
+  String get featuresSmartAssistRecurringHint =>
+      'Эти повторяющиеся операции можно сделать регулярными. Кнопка только заполняет форму — сохранение подтверждаете вы.';
+
+  @override
+  String featuresSmartAssistRecurringDetail(
+    Object category,
+    Object account,
+    Object count,
+    Object lastDate,
+  ) {
+    return 'Категория: $category · Счёт: $account · $count операций · Последняя $lastDate';
+  }
+
+  @override
+  String featuresSmartAssistConfidenceLabel(Object percent) {
+    return 'Уверенность $percent%';
+  }
+
+  @override
+  String get featuresSmartAssistDismiss => 'Больше не предлагать';
+
+  @override
+  String get featuresSmartAssistCreateRecurring => 'Создать регулярную';
+
+  @override
+  String get featuresSmartAssistDisabledNotice =>
+      'Умный помощник отключён. Рекомендации категорий и поиск повторяющихся операций можно снова включить в разделе Настройки › Аккаунт.';
+
+  @override
+  String get settingsAccountSmartAssistTitle => 'Умный помощник';
+
+  @override
+  String get settingsAccountSmartAssistDescription =>
+      'Показывает рекомендации категорий при добавлении операции и отмечает возможно повторяющиеся операции на странице регулярных. Рекомендации носят справочный характер и сохраняются только после подтверждения.';
+
+  @override
+  String get settingsAccountSmartAssistEnable =>
+      'Включить рекомендации категорий и поиск повторяющихся операций';
+
+  @override
+  String get featuresSmartAssistFxRateRequired =>
+      'Перед сохранением введите корректный курс обмена。';
 }

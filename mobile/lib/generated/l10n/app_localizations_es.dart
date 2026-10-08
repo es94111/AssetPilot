@@ -6618,4 +6618,71 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get featuresStocksTransactionsAccountUnspecified => 'Sin especificar';
+
+  @override
+  String get featuresSmartAssistLoading =>
+      'Generando sugerencias de categoría…';
+
+  @override
+  String get featuresSmartAssistSuggestionTitle => 'Sugerencias de categoría';
+
+  @override
+  String get featuresSmartAssistHideSuggestions => 'Ocultar sugerencias';
+
+  @override
+  String get featuresSmartAssistSuggestionNote =>
+      'Las sugerencias son solo orientativas y nunca se aplican solas. Confírmalas antes de elegir una categoría.';
+
+  @override
+  String featuresSmartAssistConfidenceHint(Object percent, Object count) {
+    return 'Confianza $percent % (según $count transacciones anteriores)';
+  }
+
+  @override
+  String get featuresSmartAssistRecurringTitle =>
+      'Posibles movimientos recurrentes';
+
+  @override
+  String get featuresSmartAssistRecurringHint =>
+      'Estos movimientos repetidos podrían convertirse en recurrentes. El botón solo rellena el formulario: tú confirmas y guardas.';
+
+  @override
+  String featuresSmartAssistRecurringDetail(
+    Object category,
+    Object account,
+    Object count,
+    Object lastDate,
+  ) {
+    return 'Categoría: $category · Cuenta: $account · $count registros · Último $lastDate';
+  }
+
+  @override
+  String featuresSmartAssistConfidenceLabel(Object percent) {
+    return 'Confianza $percent %';
+  }
+
+  @override
+  String get featuresSmartAssistDismiss => 'No volver a sugerir';
+
+  @override
+  String get featuresSmartAssistCreateRecurring => 'Crear recurrente';
+
+  @override
+  String get featuresSmartAssistDisabledNotice =>
+      'El asistente inteligente está desactivado. Puedes reactivar las sugerencias de categoría y la detección de recurrentes en Ajustes › Cuenta.';
+
+  @override
+  String get settingsAccountSmartAssistTitle => 'Asistente inteligente';
+
+  @override
+  String get settingsAccountSmartAssistDescription =>
+      'Muestra sugerencias de categoría al añadir un movimiento y señala movimientos posiblemente recurrentes en la página de recurrentes. Son solo sugerencias y se guardan únicamente tras tu confirmación.';
+
+  @override
+  String get settingsAccountSmartAssistEnable =>
+      'Activar sugerencias de categoría y detección de recurrentes';
+
+  @override
+  String get featuresSmartAssistFxRateRequired =>
+      'Introduce un tipo de cambio válido antes de guardar.';
 }

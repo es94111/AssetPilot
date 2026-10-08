@@ -6296,4 +6296,67 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get featuresStocksTransactionsAccountUnspecified => '미지정';
+
+  @override
+  String get featuresSmartAssistLoading => '카테고리 추천을 생성하는 중…';
+
+  @override
+  String get featuresSmartAssistSuggestionTitle => '카테고리 추천';
+
+  @override
+  String get featuresSmartAssistHideSuggestions => '추천 숨기기';
+
+  @override
+  String get featuresSmartAssistSuggestionNote =>
+      '추천은 참고용이며 자동으로 적용되지 않습니다. 카테고리를 선택하기 전에 확인하세요.';
+
+  @override
+  String featuresSmartAssistConfidenceHint(Object percent, Object count) {
+    return '신뢰도 $percent% (지난 거래 $count건 기준)';
+  }
+
+  @override
+  String get featuresSmartAssistRecurringTitle => '반복 거래 가능성';
+
+  @override
+  String get featuresSmartAssistRecurringHint =>
+      '다음 반복 거래는 고정 수입/지출로 만들기 좋습니다. 버튼은 양식만 채우며, 확인 후 저장해야 반영됩니다.';
+
+  @override
+  String featuresSmartAssistRecurringDetail(
+    Object category,
+    Object account,
+    Object count,
+    Object lastDate,
+  ) {
+    return '카테고리: $category · 계좌: $account · $count건 · 최근 $lastDate';
+  }
+
+  @override
+  String featuresSmartAssistConfidenceLabel(Object percent) {
+    return '신뢰도 $percent%';
+  }
+
+  @override
+  String get featuresSmartAssistDismiss => '다시 추천하지 않기';
+
+  @override
+  String get featuresSmartAssistCreateRecurring => '고정 수입/지출로 만들기';
+
+  @override
+  String get featuresSmartAssistDisabledNotice =>
+      '스마트 도우미가 꺼져 있습니다. 설정 › 계정에서 카테고리 추천과 반복 거래 감지를 다시 켤 수 있습니다.';
+
+  @override
+  String get settingsAccountSmartAssistTitle => '스마트 도우미';
+
+  @override
+  String get settingsAccountSmartAssistDescription =>
+      '거래를 추가할 때 카테고리 추천을 표시하고, 고정 수입/지출 페이지에서 반복 가능성이 있는 거래를 알려 줍니다. 추천은 참고용이며 확인 후에만 저장됩니다.';
+
+  @override
+  String get settingsAccountSmartAssistEnable => '카테고리 추천 및 반복 거래 감지 사용';
+
+  @override
+  String get featuresSmartAssistFxRateRequired => '저장하기 전에 유효한 환율을 입력하세요。';
 }

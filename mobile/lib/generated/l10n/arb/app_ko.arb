@@ -9984,5 +9984,98 @@
   "@featuresStocksTransactionsAccountUnspecified": {
     "description": "Web path: features.stocks.transactions.accountUnspecified",
     "x-webPath": "features.stocks.transactions.accountUnspecified"
+  },
+  "featuresSmartAssistLoading": "카테고리 추천을 생성하는 중…",
+  "@featuresSmartAssistLoading": {
+    "description": "Web path: features.smartAssist.loading",
+    "x-webPath": "features.smartAssist.loading"
+  },
+  "featuresSmartAssistSuggestionTitle": "카테고리 추천",
+  "@featuresSmartAssistSuggestionTitle": {
+    "description": "Web path: features.smartAssist.suggestionTitle",
+    "x-webPath": "features.smartAssist.suggestionTitle"
+  },
+  "featuresSmartAssistHideSuggestions": "추천 숨기기",
+  "@featuresSmartAssistHideSuggestions": {
+    "description": "Web path: features.smartAssist.hideSuggestions",
+    "x-webPath": "features.smartAssist.hideSuggestions"
+  },
+  "featuresSmartAssistSuggestionNote": "추천은 참고용이며 자동으로 적용되지 않습니다. 카테고리를 선택하기 전에 확인하세요.",
+  "@featuresSmartAssistSuggestionNote": {
+    "description": "Web path: features.smartAssist.suggestionNote",
+    "x-webPath": "features.smartAssist.suggestionNote"
+  },
+  "featuresSmartAssistConfidenceHint": "신뢰도 {percent}% (지난 거래 {count}건 기준)",
+  "@featuresSmartAssistConfidenceHint": {
+    "description": "Web path: features.smartAssist.confidenceHint",
+    "x-webPath": "features.smartAssist.confidenceHint",
+    "placeholders": {
+      "percent": {},
+      "count": {}
+    }
+  },
+  "featuresSmartAssistRecurringTitle": "반복 거래 가능성",
+  "@featuresSmartAssistRecurringTitle": {
+    "description": "Web path: features.smartAssist.recurringTitle",
+    "x-webPath": "features.smartAssist.recurringTitle"
+  },
+  "featuresSmartAssistRecurringHint": "다음 반복 거래는 고정 수입/지출로 만들기 좋습니다. 버튼은 양식만 채우며, 확인 후 저장해야 반영됩니다.",
+  "@featuresSmartAssistRecurringHint": {
+    "description": "Web path: features.smartAssist.recurringHint",
+    "x-webPath": "features.smartAssist.recurringHint"
+  },
+  "featuresSmartAssistRecurringDetail": "카테고리: {category} · 계좌: {account} · {count}건 · 최근 {lastDate}",
+  "@featuresSmartAssistRecurringDetail": {
+    "description": "Web path: features.smartAssist.recurringDetail",
+    "x-webPath": "features.smartAssist.recurringDetail",
+    "placeholders": {
+      "category": {},
+      "account": {},
+      "count": {},
+      "lastDate": {}
+    }
+  },
+  "featuresSmartAssistConfidenceLabel": "신뢰도 {percent}%",
+  "@featuresSmartAssistConfidenceLabel": {
+    "description": "Web path: features.smartAssist.confidenceLabel",
+    "x-webPath": "features.smartAssist.confidenceLabel",
+    "placeholders": {
+      "percent": {}
+    }
+  },
+  "featuresSmartAssistDismiss": "다시 추천하지 않기",
+  "@featuresSmartAssistDismiss": {
+    "description": "Web path: features.smartAssist.dismiss",
+    "x-webPath": "features.smartAssist.dismiss"
+  },
+  "featuresSmartAssistCreateRecurring": "고정 수입/지출로 만들기",
+  "@featuresSmartAssistCreateRecurring": {
+    "description": "Web path: features.smartAssist.createRecurring",
+    "x-webPath": "features.smartAssist.createRecurring"
+  },
+  "featuresSmartAssistDisabledNotice": "스마트 도우미가 꺼져 있습니다. 설정 › 계정에서 카테고리 추천과 반복 거래 감지를 다시 켤 수 있습니다.",
+  "@featuresSmartAssistDisabledNotice": {
+    "description": "Web path: features.smartAssist.disabledNotice",
+    "x-webPath": "features.smartAssist.disabledNotice"
+  },
+  "settingsAccountSmartAssistTitle": "스마트 도우미",
+  "@settingsAccountSmartAssistTitle": {
+    "description": "Web path: settings.account.smartAssistTitle",
+    "x-webPath": "settings.account.smartAssistTitle"
+  },
+  "settingsAccountSmartAssistDescription": "거래를 추가할 때 카테고리 추천을 표시하고, 고정 수입/지출 페이지에서 반복 가능성이 있는 거래를 알려 줍니다. 추천은 참고용이며 확인 후에만 저장됩니다.",
+  "@settingsAccountSmartAssistDescription": {
+    "description": "Web path: settings.account.smartAssistDescription",
+    "x-webPath": "settings.account.smartAssistDescription"
+  },
+  "settingsAccountSmartAssistEnable": "카테고리 추천 및 반복 거래 감지 사용",
+  "@settingsAccountSmartAssistEnable": {
+    "description": "Web path: settings.account.smartAssistEnable",
+    "x-webPath": "settings.account.smartAssistEnable"
+  },
+  "featuresSmartAssistFxRateRequired": "저장하기 전에 유효한 환율을 입력하세요。",
+  "@featuresSmartAssistFxRateRequired": {
+    "description": "Web path: features.smartAssist.fxRateRequired",
+    "x-webPath": "features.smartAssist.fxRateRequired"
   }
 }

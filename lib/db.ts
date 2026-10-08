@@ -721,6 +721,31 @@ async function _runMigrations(db: DatabaseLike): Promise<void> {
   alterIgnore(
     "ALTER TABLE user_settings ADD COLUMN dashboard_layout_updated_at INTEGER DEFAULT 0",
   );
+  // 智慧輔助（分類建議／固定收支偵測）總開關。預設開啟；使用者可於帳號設定關閉。
+  // 見 lib/smartAssist.ts 與 issue #252。
+  alterIgnore(
+    "ALTER TABLE user_settings ADD COLUMN ai_assist_enabled INTEGER NOT NULL DEFAULT 1",
+  );
+
+  // 「不要提示這組固定收支建議」的忽略清單。簽章由類型／分類／帳戶／幣別／金額組成
+  // （lib/smartAssist.ts 的 recurringSuggestionSignature），僅作用於提示層。
+  db.run(`CREATE TABLE IF NOT EXISTS recurring_suggestion_dismissals (
+    user_id TEXT NOT NULL,
+    signature TEXT NOT NULL,
+    dismissed_at INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (user_id, signature)
+  )`);
+  alterIgnore(
+    "CREATE INDEX IF NOT EXISTS idx_recurring_suggestion_dismissals_user ON recurring_suggestion_dismissals(user_id)",
+  );
+  // 智慧輔助的歷史掃描索引（issue #252）：分類建議以 (user_id, type) 取最近交易；
+  // 週期偵測以 (user_id, date) 取時間序列。
+  alterIgnore(
+    "CREATE INDEX IF NOT EXISTS idx_transactions_user_type_date ON transactions(user_id, type, date DESC)",
+  );
+  alterIgnore(
+    "CREATE INDEX IF NOT EXISTS idx_transactions_user_date ON transactions(user_id, date DESC)",
+  );
 
   // 交易憑證照片的每使用者資料金鑰（DEK），已被 PHOTO_MASTER_KEY 包覆。見 lib/photoCrypto.ts。
   db.run(`CREATE TABLE IF NOT EXISTS user_photo_keys (

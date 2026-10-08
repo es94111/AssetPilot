@@ -61,6 +61,9 @@ export default function AccountSettingsClient({
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteConfirmEmail, setDeleteConfirmEmail] = useState("");
   const [deleting, setDeleting] = useState(false);
+  // 智慧輔助（分類建議／固定收支偵測）總開關（issue #252）。
+  const [smartAssistEnabled, setSmartAssistEnabled] = useState(true);
+  const [smartAssistSaving, setSmartAssistSaving] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -76,6 +79,24 @@ export default function AccountSettingsClient({
     } catch (_) {}
     setLoading(false);
   }, []);
+
+  const loadSmartAssist = useCallback(async () => {
+    try {
+      const res = await apiGet("/api/user/settings/smart-assist");
+      setSmartAssistEnabled(res?.enabled !== false);
+    } catch (_) {}
+  }, []);
+
+  async function handleSmartAssist(next: boolean) {
+    setSmartAssistEnabled(next);
+    setSmartAssistSaving(true);
+    try {
+      await apiPut("/api/user/settings/smart-assist", { enabled: next });
+    } catch (_) {
+      setSmartAssistEnabled(!next);
+    }
+    setSmartAssistSaving(false);
+  }
 
   const loadPasskeys = useCallback(async () => {
     setPkLoading(true);
@@ -109,7 +130,8 @@ export default function AccountSettingsClient({
     loadPasskeys();
     loadSessions();
     loadLoginAudit();
-  }, [load, loadPasskeys, loadSessions, loadLoginAudit]);
+    loadSmartAssist();
+  }, [load, loadPasskeys, loadSessions, loadLoginAudit, loadSmartAssist]);
 
   async function handleDisplayName(e: React.FormEvent) {
     e.preventDefault();
@@ -396,6 +418,22 @@ export default function AccountSettingsClient({
             </label>
           ))}
         </div>
+      </div>
+
+      {/* Smart assist (issue #252) */}
+      <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-xl shadow-sm">
+        <h3 className="text-lg font-semibold mb-2">{ta("smartAssistTitle")}</h3>
+        <p className="text-sm text-slate-500 mb-3">{ta("smartAssistDescription")}</p>
+        <label className="flex items-center gap-2 cursor-pointer text-sm">
+          <input
+            type="checkbox"
+            className="w-4 h-4"
+            checked={smartAssistEnabled}
+            disabled={smartAssistSaving}
+            onChange={(e) => handleSmartAssist(e.target.checked)}
+          />
+          {ta("smartAssistEnable")}
+        </label>
       </div>
 
       <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-xl shadow-sm">

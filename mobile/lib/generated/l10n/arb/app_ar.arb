@@ -9984,5 +9984,98 @@
   "@featuresStocksTransactionsAccountUnspecified": {
     "description": "Web path: features.stocks.transactions.accountUnspecified",
     "x-webPath": "features.stocks.transactions.accountUnspecified"
+  },
+  "featuresSmartAssistLoading": "جارٍ إنشاء اقتراحات التصنيف…",
+  "@featuresSmartAssistLoading": {
+    "description": "Web path: features.smartAssist.loading",
+    "x-webPath": "features.smartAssist.loading"
+  },
+  "featuresSmartAssistSuggestionTitle": "اقتراحات التصنيف",
+  "@featuresSmartAssistSuggestionTitle": {
+    "description": "Web path: features.smartAssist.suggestionTitle",
+    "x-webPath": "features.smartAssist.suggestionTitle"
+  },
+  "featuresSmartAssistHideSuggestions": "إخفاء الاقتراحات",
+  "@featuresSmartAssistHideSuggestions": {
+    "description": "Web path: features.smartAssist.hideSuggestions",
+    "x-webPath": "features.smartAssist.hideSuggestions"
+  },
+  "featuresSmartAssistSuggestionNote": "الاقتراحات إرشادية فقط ولا تُطبَّق تلقائيًا؛ أكِّد قبل اختيار التصنيف.",
+  "@featuresSmartAssistSuggestionNote": {
+    "description": "Web path: features.smartAssist.suggestionNote",
+    "x-webPath": "features.smartAssist.suggestionNote"
+  },
+  "featuresSmartAssistConfidenceHint": "الثقة {percent}٪ (بناءً على {count} معاملة سابقة)",
+  "@featuresSmartAssistConfidenceHint": {
+    "description": "Web path: features.smartAssist.confidenceHint",
+    "x-webPath": "features.smartAssist.confidenceHint",
+    "placeholders": {
+      "percent": {},
+      "count": {}
+    }
+  },
+  "featuresSmartAssistRecurringTitle": "معاملات متكررة محتملة",
+  "@featuresSmartAssistRecurringTitle": {
+    "description": "Web path: features.smartAssist.recurringTitle",
+    "x-webPath": "features.smartAssist.recurringTitle"
+  },
+  "featuresSmartAssistRecurringHint": "قد تكون هذه المعاملات المتكررة مناسبة كمعاملات ثابتة. الزر يملأ النموذج فقط، وأنت من يؤكد ويحفظ.",
+  "@featuresSmartAssistRecurringHint": {
+    "description": "Web path: features.smartAssist.recurringHint",
+    "x-webPath": "features.smartAssist.recurringHint"
+  },
+  "featuresSmartAssistRecurringDetail": "التصنيف: {category} · الحساب: {account} · {count} معاملة · آخرها {lastDate}",
+  "@featuresSmartAssistRecurringDetail": {
+    "description": "Web path: features.smartAssist.recurringDetail",
+    "x-webPath": "features.smartAssist.recurringDetail",
+    "placeholders": {
+      "category": {},
+      "account": {},
+      "count": {},
+      "lastDate": {}
+    }
+  },
+  "featuresSmartAssistConfidenceLabel": "الثقة {percent}٪",
+  "@featuresSmartAssistConfidenceLabel": {
+    "description": "Web path: features.smartAssist.confidenceLabel",
+    "x-webPath": "features.smartAssist.confidenceLabel",
+    "placeholders": {
+      "percent": {}
+    }
+  },
+  "featuresSmartAssistDismiss": "عدم الاقتراح مجددًا",
+  "@featuresSmartAssistDismiss": {
+    "description": "Web path: features.smartAssist.dismiss",
+    "x-webPath": "features.smartAssist.dismiss"
+  },
+  "featuresSmartAssistCreateRecurring": "إنشاء معاملة ثابتة",
+  "@featuresSmartAssistCreateRecurring": {
+    "description": "Web path: features.smartAssist.createRecurring",
+    "x-webPath": "features.smartAssist.createRecurring"
+  },
+  "featuresSmartAssistDisabledNotice": "المساعد الذكي معطّل. يمكنك إعادة تفعيل اقتراحات التصنيف واكتشاف المعاملات المتكررة من الإعدادات › الحساب.",
+  "@featuresSmartAssistDisabledNotice": {
+    "description": "Web path: features.smartAssist.disabledNotice",
+    "x-webPath": "features.smartAssist.disabledNotice"
+  },
+  "settingsAccountSmartAssistTitle": "المساعد الذكي",
+  "@settingsAccountSmartAssistTitle": {
+    "description": "Web path: settings.account.smartAssistTitle",
+    "x-webPath": "settings.account.smartAssistTitle"
+  },
+  "settingsAccountSmartAssistDescription": "يعرض اقتراحات التصنيف عند إضافة معاملة، ويسلّط الضوء على المعاملات المتكررة المحتملة في صفحة المعاملات الثابتة. الاقتراحات إرشادية فقط وتُكتب بعد تأكيدك.",
+  "@settingsAccountSmartAssistDescription": {
+    "description": "Web path: settings.account.smartAssistDescription",
+    "x-webPath": "settings.account.smartAssistDescription"
+  },
+  "settingsAccountSmartAssistEnable": "تفعيل اقتراحات التصنيف واكتشاف المعاملات المتكررة",
+  "@settingsAccountSmartAssistEnable": {
+    "description": "Web path: settings.account.smartAssistEnable",
+    "x-webPath": "settings.account.smartAssistEnable"
+  },
+  "featuresSmartAssistFxRateRequired": "أدخل سعر صرف صالحًا قبل الحفظ.",
+  "@featuresSmartAssistFxRateRequired": {
+    "description": "Web path: features.smartAssist.fxRateRequired",
+    "x-webPath": "features.smartAssist.fxRateRequired"
   }
 }

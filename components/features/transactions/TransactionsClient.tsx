@@ -158,6 +158,11 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
   const [pendingDeleteIds, setPendingDeleteIds] = useState<Set<string>>(new Set());
   const [loadFailed, setLoadFailed] = useState(false);
   const [offline, setOffline] = useState(false);
+  // 分類建議（issue #252）：僅為提示，使用者點選 chip 才會寫入 form.categoryId。
+  const [categorySuggestions, setCategorySuggestions] = useState<Array<{ categoryId: string; categoryName: string; parentName: string | null; confidence: number; matchedCount: number }>>([]);
+  const [suggestionsLoading, setSuggestionsLoading] = useState(false);
+  const [suggestionsHidden, setSuggestionsHidden] = useState(false);
+  const latestSuggestionsLoadId = useRef(0);
   const latestLoadId = useRef(0);
 
   const load = useCallback(async (p = page) => {
@@ -308,6 +313,8 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
     setEditAttachmentsLoading(false);
     setPendingDeleteIds(new Set());
     setAdvancedOpen(false);
+    setCategorySuggestions([]);
+    setSuggestionsHidden(false);
     setModal(true);
   }
 
@@ -316,6 +323,42 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
     setQuickCreateHandled(true);
     openAdd(searchParams.get('date') || undefined);
   }, [currentQuery, metaLoaded, pathname, quickCreateHandled, searchParams]);
+
+  // 分類建議：僅在「新增」且摘要與分類皆尚未填寫時查詢，避免覆蓋使用者已做的選擇。
+  // 以遞增序號認領回應，避免快速輸入時舊回應覆蓋新結果。
+  useEffect(() => {
+    const loadId = ++latestSuggestionsLoadId.current;
+    if (!modal || editId || suggestionsHidden) {
+      setCategorySuggestions([]);
+      setSuggestionsLoading(false);
+      return;
+    }
+    const note = form.note.trim();
+    if (note.length < 2) {
+      setCategorySuggestions([]);
+      setSuggestionsLoading(false);
+      return;
+    }
+    setSuggestionsLoading(true);
+    const timer = window.setTimeout(() => {
+      const params = new URLSearchParams({ type: form.type, note });
+      apiGet(`/api/transactions/suggestions?${params}`)
+        .then((data) => {
+          if (loadId !== latestSuggestionsLoadId.current) return;
+          setCategorySuggestions(Array.isArray(data?.suggestions) ? data.suggestions : []);
+        })
+        .catch(() => {
+          if (loadId === latestSuggestionsLoadId.current) setCategorySuggestions([]);
+        })
+        .finally(() => {
+          if (loadId === latestSuggestionsLoadId.current) setSuggestionsLoading(false);
+        });
+    }, 350);
+    return () => {
+      window.clearTimeout(timer);
+      if (loadId === latestSuggestionsLoadId.current) latestSuggestionsLoadId.current += 1;
+    };
+  }, [modal, editId, form.type, form.note, suggestionsHidden]);
 
   const fetchFxRate = useCallback(async (currency: string) => {
     const normalizedCurrency = String(currency || '').toUpperCase();
@@ -1108,6 +1151,42 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
                   </optgroup>
                 ))}
               </select>
+              {!editId && suggestionsLoading && (
+                <p className="text-xs text-slate-500">{t('features.smartAssist.loading')}</p>
+              )}
+              {!editId && !suggestionsHidden && !suggestionsLoading && categorySuggestions.length > 0 && (
+                <div className="mt-1 rounded-xl border border-sky-200 bg-sky-50 p-2 dark:border-sky-900 dark:bg-sky-950/40">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-semibold text-sky-800 dark:text-sky-200">{t('features.smartAssist.suggestionTitle')}</span>
+                    <button
+                      type="button"
+                      className="text-xs font-medium text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+                      onClick={() => { setSuggestionsHidden(true); setCategorySuggestions([]); }}
+                    >
+                      {t('features.smartAssist.hideSuggestions')}
+                    </button>
+                  </div>
+                  <div className="mt-1.5 flex flex-wrap gap-1.5">
+                    {categorySuggestions.map((suggestion) => (
+                      <button
+                        key={suggestion.categoryId}
+                        type="button"
+                        aria-pressed={form.categoryId === suggestion.categoryId}
+                        title={t('features.smartAssist.confidenceHint', {
+                          percent: Math.round(suggestion.confidence * 100),
+                          count: suggestion.matchedCount,
+                        })}
+                        className={`min-h-9 rounded-full border px-3 text-xs font-medium transition-colors ${form.categoryId === suggestion.categoryId ? 'border-primary bg-primary text-white' : 'border-sky-300 bg-white text-sky-900 hover:bg-sky-100 dark:border-sky-800 dark:bg-slate-900 dark:text-sky-100 dark:hover:bg-slate-800'}`}
+                        onClick={() => setForm((current) => ({ ...current, categoryId: suggestion.categoryId }))}
+                      >
+                        {suggestion.parentName ? `${suggestion.parentName} › ` : ''}{suggestion.categoryName}
+                        <span className="ms-1 tabular-nums opacity-80">{Math.round(suggestion.confidence * 100)}%</span>
+                      </button>
+                    ))}
+                  </div>
+                  <p className="mt-1 text-[11px] leading-snug text-slate-500 dark:text-slate-400">{t('features.smartAssist.suggestionNote')}</p>
+                </div>
+              )}
             </div>
             <div className="flex flex-col gap-1">
               <label htmlFor="transaction-account" className="text-sm font-medium text-gray-700 dark:text-slate-200">{t('features.common.account')}</label>

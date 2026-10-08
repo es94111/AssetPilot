@@ -6493,4 +6493,69 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get featuresStocksTransactionsAccountUnspecified => 'निर्दिष्ट नहीं';
+
+  @override
+  String get featuresSmartAssistLoading => 'श्रेणी सुझाव बनाए जा रहे हैं…';
+
+  @override
+  String get featuresSmartAssistSuggestionTitle => 'श्रेणी सुझाव';
+
+  @override
+  String get featuresSmartAssistHideSuggestions => 'सुझाव छिपाएँ';
+
+  @override
+  String get featuresSmartAssistSuggestionNote =>
+      'सुझाव केवल संकेत हैं और स्वतः लागू नहीं होते; श्रेणी चुनने से पहले पुष्टि करें।';
+
+  @override
+  String featuresSmartAssistConfidenceHint(Object percent, Object count) {
+    return 'विश्वास $percent% ($count पिछले लेन-देन के आधार पर)';
+  }
+
+  @override
+  String get featuresSmartAssistRecurringTitle => 'संभावित नियमित लेन-देन';
+
+  @override
+  String get featuresSmartAssistRecurringHint =>
+      'ये दोहराए जाने वाले लेन-देन नियमित बनाए जा सकते हैं। बटन केवल फ़ॉर्म भरता है—पुष्टि और सहेजना आप करते हैं।';
+
+  @override
+  String featuresSmartAssistRecurringDetail(
+    Object category,
+    Object account,
+    Object count,
+    Object lastDate,
+  ) {
+    return 'श्रेणी: $category · खाता: $account · $count बार · अंतिम $lastDate';
+  }
+
+  @override
+  String featuresSmartAssistConfidenceLabel(Object percent) {
+    return 'विश्वास $percent%';
+  }
+
+  @override
+  String get featuresSmartAssistDismiss => 'दोबारा सुझाव न दें';
+
+  @override
+  String get featuresSmartAssistCreateRecurring => 'नियमित बनाएँ';
+
+  @override
+  String get featuresSmartAssistDisabledNotice =>
+      'स्मार्ट सहायता बंद है। आप सेटिंग्स › खाता में श्रेणी सुझाव और नियमित पहचान फिर से चालू कर सकते हैं।';
+
+  @override
+  String get settingsAccountSmartAssistTitle => 'स्मार्ट सहायता';
+
+  @override
+  String get settingsAccountSmartAssistDescription =>
+      'लेन-देन जोड़ते समय श्रेणी सुझाव दिखाता है और नियमित पृष्ठ पर संभावित नियमित लेन-देन चिह्नित करता है। सुझाव केवल संकेत हैं और आपकी पुष्टि के बाद ही लिखे जाते हैं।';
+
+  @override
+  String get settingsAccountSmartAssistEnable =>
+      'श्रेणी सुझाव और नियमित पहचान सक्षम करें';
+
+  @override
+  String get featuresSmartAssistFxRateRequired =>
+      'सहेजने से पहले मान्य विनिमय दर दर्ज करें।';
 }

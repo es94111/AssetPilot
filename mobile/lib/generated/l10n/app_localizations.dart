@@ -8743,6 +8743,18 @@ abstract class AppLocalizations {
   /// **'{count} 筆排程'**
   String featuresCalendarRecurringCount(Object count);
 
+  /// Web path: features.calendar.incomeAmount
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'收入 {amount}'**
+  String featuresCalendarIncomeAmount(Object amount);
+
+  /// Web path: features.calendar.expenseAmount
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'支出 {amount}'**
+  String featuresCalendarExpenseAmount(Object amount);
+
   /// Web path: features.calendar.transaction
   ///
   /// In zh_Hant_TW, this message translates to:

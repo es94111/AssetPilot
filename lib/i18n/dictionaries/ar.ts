@@ -1477,6 +1477,8 @@ export const ar = {
       transactionCount: "{count} معاملات",
       dividendCount: "{count} أرباح",
       recurringCount: "{count} جداول",
+      incomeAmount: "دخل {amount}",
+      expenseAmount: "مصروف {amount}",
       transaction: "معاملة",
       dividend: "توزيعات أرباح",
       readOnlySchedule: "متكرر (للقراءة فقط)",

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { buildCalendarEvents, getTodayInTimezone } from '../../lib/calendarEvents.ts';
+import { buildCalendarDailyTotals, buildCalendarEvents, getTodayInTimezone } from '../../lib/calendarEvents.ts';
 import { addCalendarDays, getCalendarRange, isCalendarIsoDate, listCalendarDates, shiftCalendarAnchor } from '../../lib/calendarDates.ts';
 
 
@@ -56,4 +56,28 @@ test('calendar events aggregate transactions, dividends, and read-only recurring
   assert.equal(sameDay.find((event) => event.kind === 'recurring')?.id, 'recurring:rent:2026-10-08');
   assert.equal(events.some((event) => event.id.includes('paused')), false);
   assert.equal(events.some((event) => event.id.includes('outside')), false);
+});
+
+test('calendar daily totals sum income/expense per date and ignore out-of-range or non income/expense rows', () => {
+  const range = { from: '2026-10-06', to: '2026-10-12' };
+  const totals = buildCalendarDailyTotals(range, [
+    { date: '2026-10-08', type: 'expense', total: 125 },
+    { date: '2026-10-08', type: 'income', total: 500 },
+    { date: '2026-10-08', type: 'income', total: 80 },
+    { date: '2026-10-09', type: 'expense', total: 40 },
+    { date: '2026-10-09', type: 'transfer', total: 999 },
+    { date: '2026-10-13', type: 'expense', total: 1 },
+    { date: 'not-a-date', type: 'income', total: 1 },
+  ]);
+
+  assert.deepEqual(totals['2026-10-08'], { income: 580, expense: 125 });
+  assert.deepEqual(totals['2026-10-09'], { income: 0, expense: 40 });
+  assert.equal(totals['2026-10-13'], undefined);
+  assert.equal(Object.keys(totals).length, 2);
+});
+
+test('calendar daily totals return empty map for an invalid range', () => {
+  assert.deepEqual(buildCalendarDailyTotals({ from: '2026-10-12', to: '2026-10-06' }, [
+    { date: '2026-10-08', type: 'income', total: 100 },
+  ]), {});
 });

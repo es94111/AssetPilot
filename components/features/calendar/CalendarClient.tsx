@@ -9,6 +9,11 @@ import { localeTag } from '@/lib/i18n/localeTag';
 import { getCalendarRange, listCalendarDates, shiftCalendarAnchor, type CalendarRange, type CalendarView } from '@/lib/calendarDates';
 import type { CalendarEvent } from '@/lib/calendarEvents';
 
+interface CalendarDailyTotal {
+  income: number;
+  expense: number;
+}
+
 interface CalendarPayload {
   anchor: string;
   view: CalendarView;
@@ -16,6 +21,7 @@ interface CalendarPayload {
   timezone: string;
   today: string;
   events: CalendarEvent[];
+  dailyTotals: Record<string, CalendarDailyTotal>;
 }
 
 const KIND_ORDER: CalendarEvent['kind'][] = ['transaction', 'dividend', 'recurring'];
@@ -118,6 +124,18 @@ export default function CalendarClient({ initialDate }: { initialDate: string })
     ].filter(Boolean);
   }
 
+  function totalForDate(date: string): CalendarDailyTotal {
+    return payload?.dailyTotals?.[date] || { income: 0, expense: 0 };
+  }
+
+  function amountSummaryForDate(date: string): string[] {
+    const { income, expense } = totalForDate(date);
+    return [
+      income > 0 ? t('features.calendar.incomeAmount', { amount: currencyAmount(income, 'TWD', locale) }) : '',
+      expense > 0 ? t('features.calendar.expenseAmount', { amount: currencyAmount(expense, 'TWD', locale) }) : '',
+    ].filter(Boolean);
+  }
+
   function eventTitle(event: CalendarEvent): string {
     if (event.kind === 'transaction') return transactionTypeLabel(event.type, t);
     if (event.kind === 'dividend') return t('features.calendar.dividend');
@@ -195,13 +213,16 @@ export default function CalendarClient({ initialDate }: { initialDate: string })
             const isCurrentMonth = view === 'week' || date.slice(0, 7) === anchor.slice(0, 7);
             const isSelected = date === selectedDate;
             const dateSummary = summaryForDate(date);
+            const amountSummary = amountSummaryForDate(date);
+            const dayTotal = totalForDate(date);
             const hasEvents = dateSummary.length > 0;
+            const ariaSummary = [...dateSummary, ...amountSummary];
             return (
               <button
                 key={date}
                 type="button"
                 aria-pressed={isSelected}
-                aria-label={`${formatIsoDate(date, locale, { dateStyle: 'full' })}${dateSummary.length ? `, ${dateSummary.join(', ')}` : ''}`}
+                aria-label={`${formatIsoDate(date, locale, { dateStyle: 'full' })}${ariaSummary.length ? `, ${ariaSummary.join(', ')}` : ''}`}
                 onClick={() => setSelectedDate(date)}
                 className="flex min-h-[5.7rem] min-w-0 flex-col items-start border-b border-e p-1.5 text-start transition-colors focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-primary sm:min-h-28 sm:p-2.5"
                 style={{ borderColor: 'var(--border)', background: isSelected ? 'var(--primary-light-bg)' : 'transparent', color: isCurrentMonth ? 'var(--text)' : 'var(--text-muted)' }}
@@ -212,6 +233,12 @@ export default function CalendarClient({ initialDate }: { initialDate: string })
                 {hasEvents && (
                   <span className="mt-1 flex w-full flex-col gap-0.5 overflow-hidden text-[9px] leading-tight sm:text-[11px]">
                     {dateSummary.map((summary) => <span key={summary} className="truncate rounded px-1 py-0.5" style={{ background: 'var(--surface-hover)', color: 'var(--text-secondary)' }}>{summary}</span>)}
+                  </span>
+                )}
+                {(dayTotal.income > 0 || dayTotal.expense > 0) && (
+                  <span className="mt-0.5 flex w-full flex-col gap-0.5 overflow-hidden text-[9px] font-semibold leading-tight tabular-nums sm:text-[11px]">
+                    {dayTotal.income > 0 && <span className="truncate" style={{ color: 'var(--income)' }}>{'+'}{currencyAmount(dayTotal.income, 'TWD', locale)}</span>}
+                    {dayTotal.expense > 0 && <span className="truncate" style={{ color: 'var(--expense)' }}>{'\u2212'}{currencyAmount(dayTotal.expense, 'TWD', locale)}</span>}
                   </span>
                 )}
               </button>

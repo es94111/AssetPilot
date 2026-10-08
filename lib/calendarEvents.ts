@@ -28,6 +28,13 @@ export interface CalendarEventInput {
   recurringSchedules: Array<Record<string, unknown>>;
 }
 
+export interface CalendarDailyTotal {
+  income: number;
+  expense: number;
+}
+
+export type CalendarDailyTotalRow = Record<string, unknown>;
+
 function safeNumber(value: unknown): number {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : 0;
@@ -115,4 +122,27 @@ export function buildCalendarEvents(input: CalendarEventInput): CalendarEvent[] 
   }
 
   return events.sort((a, b) => a.date.localeCompare(b.date) || a.kind.localeCompare(b.kind) || a.id.localeCompare(b.id));
+}
+
+/**
+ * 依日期加總「實際交易」的收入／支出金額（台幣），語意與其他畫面（如 Dashboard）
+ * 的統計口徑一致：僅計 type 為 income/expense（排除轉帳），且排除「不計入統計」
+ * 的交易。股利與固定收支排程（預計金額）不併入，維持既有的筆數徽章。
+ * 呼叫端應以已套用上述過濾條件的 SQL（GROUP BY date, type）彙總後傳入 rows。
+ */
+export function buildCalendarDailyTotals(range: CalendarRange, rows: CalendarDailyTotalRow[]): Record<string, CalendarDailyTotal> {
+  const { from, to } = range;
+  const totals: Record<string, CalendarDailyTotal> = {};
+  if (!isCalendarIsoDate(from) || !isCalendarIsoDate(to) || from > to) return totals;
+
+  for (const row of rows) {
+    const date = text(row.date);
+    if (!isCalendarIsoDate(date) || date < from || date > to) continue;
+    const type = text(row.type);
+    if (type !== 'income' && type !== 'expense') continue;
+    const amount = safeNumber(row.total);
+    if (!totals[date]) totals[date] = { income: 0, expense: 0 };
+    totals[date][type] += amount;
+  }
+  return totals;
 }

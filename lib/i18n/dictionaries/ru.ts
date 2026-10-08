@@ -1477,6 +1477,8 @@ export const ru = {
       transactionCount: "{count} операций",
       dividendCount: "{count} дивидендов",
       recurringCount: "{count} расписаний",
+      incomeAmount: "Доход {amount}",
+      expenseAmount: "Расход {amount}",
       transaction: "Операция",
       dividend: "Дивиденд",
       readOnlySchedule: "Регулярное (только чтение)",

@@ -1475,6 +1475,8 @@ export const zhTW = {
       transactionCount: "{count} 筆交易",
       dividendCount: "{count} 筆股利",
       recurringCount: "{count} 筆排程",
+      incomeAmount: "收入 {amount}",
+      expenseAmount: "支出 {amount}",
       transaction: "交易",
       dividend: "股利",
       readOnlySchedule: "固定收支（唯讀）",

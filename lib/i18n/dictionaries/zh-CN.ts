@@ -1477,6 +1477,8 @@ export const zhCN = {
       transactionCount: "{count} 笔交易",
       dividendCount: "{count} 笔股利",
       recurringCount: "{count} 个计划",
+      incomeAmount: "收入 {amount}",
+      expenseAmount: "支出 {amount}",
       transaction: "交易",
       dividend: "股利",
       readOnlySchedule: "固定收支（只读）",

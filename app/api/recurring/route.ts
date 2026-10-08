@@ -5,7 +5,8 @@ import { requireAuth } from '../../../lib/apiHelpers';
 import { getDB, queryAll, queryOne, saveDB } from '../../../lib/db';
 import { normalizeCurrency, convertToTwd, normalizeDate, resolveOverseasFee } from '../../../lib/accountHelpers';
 import { uid } from '../../../lib/userDefaults';
-import { isValidIsoDate } from '../../../lib/userTime';
+import { getRecurringSuggestions, isSmartAssistEnabled } from '../../../lib/smartAssist';
+import { todayInUserTz, isValidIsoDate } from '../../../lib/userTime';
 import { getNextRecurringDate } from '../../../lib/recurringHelpers';
 
 const VALID_RECURRING_FREQ = new Set(['daily', 'weekly', 'monthly', 'yearly']);
@@ -76,6 +77,28 @@ async function handlePOST(request) {
   if (!normalizedStart || !isValidIsoDate(normalizedStart)) {
     return NextResponse.json({ error: '起始日期格式無效', code: 'ValidationError', field: 'startDate' }, { status: 400 });
   }
+
+  // Suggestion-derived recipes are revalidated at write time because a card can
+  // remain open past its suggested start date. Use auth.userTimezone, which is
+  // resolved to the active shared ledger timezone by ledger context.
+  const suggestionSignature = String(body.smartSuggestionSignature || '').trim();
+  if (suggestionSignature) {
+    const suggestions = getRecurringSuggestions({
+      userId: auth.userId,
+      userTimezone: auth.userTimezone,
+      enabled: isSmartAssistEnabled(auth.actorUserId),
+    });
+    const stillCurrent = suggestions.enabled
+      && suggestions.suggestions.some((suggestion) => suggestion.signature === suggestionSignature);
+    const today = todayInUserTz(auth.userTimezone || 'Asia/Taipei');
+    if (!stillCurrent || normalizedStart < today) {
+      return NextResponse.json(
+        { error: '此固定收支建議已過期，請重新整理建議後再儲存', code: 'RecurringSuggestionExpired' },
+        { status: 409 },
+      );
+    }
+  }
+
   currency = normalizeCurrency(currency || 'TWD');
   let converted;
   try {

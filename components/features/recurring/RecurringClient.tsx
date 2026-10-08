@@ -8,7 +8,7 @@ import { Select } from '@/components/ui/Select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useT } from '@/components/i18n/I18nProvider';
 import { localeTag } from '@/lib/i18n/localeTag';
-import { RecurringFxRequestGuard, type FxRateRequestToken } from '@/lib/recurringFxRequest';
+import { RecurringFxRequestGuard, resolveFxRateAfterAccountCurrencyChange, type FxRateRequestToken } from '@/lib/recurringFxRequest';
 import { Plus, Trash2, Edit3, Pause, Play, StickyNote, Repeat } from 'lucide-react';
 
 const FREQUENCY_VALUES = ['daily', 'weekly', 'monthly', 'yearly'] as const;
@@ -47,6 +47,7 @@ export default function RecurringClient(_props: { user?: any } = {}) {
   const [prefillFxRate, setPrefillFxRate] = useState<string | null>(null);
   const fxRateRequestGuard = useRef(new RecurringFxRequestGuard());
   const preservedHistoricalCurrencyRef = useRef<string | null>(null);
+  const fxRateManuallyEditedRef = useRef(false);
 
   const closeDialog = useCallback(() => {
     fxRateRequestGuard.current.invalidate();
@@ -103,6 +104,7 @@ export default function RecurringClient(_props: { user?: any } = {}) {
       setForm((current) => fxRateRequestGuard.current.canApply(request, {
         currentCurrency: current.currency,
         preservedHistoricalCurrency: preservedHistoricalCurrencyRef.current,
+        fxRateManuallyEdited: fxRateManuallyEditedRef.current,
       }) ? { ...current, fxRate: rateToTwd } : current);
     };
 
@@ -147,6 +149,7 @@ export default function RecurringClient(_props: { user?: any } = {}) {
       return;
     }
     const request = fxRateRequestGuard.current.begin(form.currency);
+    fxRateManuallyEditedRef.current = false;
     void fetchFxRate(request);
     return () => {
       if (fxRateRequestGuard.current.isLatest(request)) fxRateRequestGuard.current.invalidate();
@@ -173,6 +176,7 @@ export default function RecurringClient(_props: { user?: any } = {}) {
       startDate: form.startDate,
       note: form.note,
       excludeFromStats: form.excludeFromStats,
+      ...(prefillSignature ? { smartSuggestionSignature: prefillSignature } : {}),
       // Foreign-currency credit cards: only send a manually overridden fee.
       ...(overseasApplies && form.fxFee !== '' ? { fxFee: Math.max(0, Number(form.fxFee) || 0) } : {}),
     };
@@ -202,6 +206,7 @@ export default function RecurringClient(_props: { user?: any } = {}) {
     const currency = String(suggestion.currency || 'TWD').toUpperCase();
     fxRateRequestGuard.current.invalidate();
     preservedHistoricalCurrencyRef.current = currency;
+    fxRateManuallyEditedRef.current = false;
     setFxLoading(false);
     setForm({
       ...EMPTY_FORM,
@@ -241,6 +246,7 @@ export default function RecurringClient(_props: { user?: any } = {}) {
     const nextCurrency = String(preferredAccount?.currency || defaultCurrency || 'TWD').toUpperCase();
     fxRateRequestGuard.current.invalidate();
     preservedHistoricalCurrencyRef.current = null;
+    fxRateManuallyEditedRef.current = false;
     setForm({ ...EMPTY_FORM, startDate: new Date().toISOString().slice(0, 10), accountId: defaultAccountId, currency: nextCurrency, fxRate: '' });
     setEditId(null);
     setPrefillSignature(null);
@@ -255,6 +261,7 @@ export default function RecurringClient(_props: { user?: any } = {}) {
     const currency = String(rec.currency || 'TWD').toUpperCase();
     fxRateRequestGuard.current.invalidate();
     preservedHistoricalCurrencyRef.current = null;
+    fxRateManuallyEditedRef.current = false;
     const rate = Number(rec.fxRate || rec.fx_rate) || 1;
     const shownAmount = (currency === 'TWD' || !(rate > 0)) ? Number(rec.amount) || 0 : (Number(rec.amount) || 0) / rate;
     setForm({
@@ -320,11 +327,29 @@ export default function RecurringClient(_props: { user?: any } = {}) {
             <Input label={t('features.recurring.amountLabel')} type="number" step="any" min="0" value={form.amount} onChange={e => setForm(f => ({ ...f, amount: e.target.value }))} />
             <Select label={t('features.common.currency')} options={currencyOptions.map(currency => ({ label: currency, value: currency }))} value={form.currency} onChange={e => {
               const currency = e.target.value.toUpperCase();
-              setForm(f => ({ ...f, currency, fxRate: currency === prefillCurrency ? (prefillFxRate || '') : '' }));
+              const currencyChanged = currency !== form.currency;
+              if (currencyChanged) {
+                fxRateRequestGuard.current.invalidate();
+                fxRateManuallyEditedRef.current = false;
+                setFxLoading(false);
+              }
+              const fxRate = resolveFxRateAfterAccountCurrencyChange({
+                currentRate: form.fxRate,
+                currentCurrency: form.currency,
+                nextCurrency: currency,
+                preservedHistoricalCurrency: prefillCurrency,
+                historicalRate: prefillFxRate,
+              });
+              setForm(f => ({ ...f, currency, fxRate }));
             }} />
             {form.currency !== 'TWD' && (
               <div className="space-y-1">
-                <Input label={t('features.common.exchangeRate')} type="number" step="0.0001" value={form.fxRate} onChange={e => setForm(f => ({ ...f, fxRate: e.target.value }))} />
+                <Input label={t('features.common.exchangeRate')} type="number" step="0.0001" value={form.fxRate} onChange={e => {
+                  fxRateRequestGuard.current.invalidate();
+                  fxRateManuallyEditedRef.current = true;
+                  setFxLoading(false);
+                  setForm(f => ({ ...f, fxRate: e.target.value }));
+                }} />
                 {fxLoading && <p className="text-xs text-slate-500">{t('features.recurring.latestRateLoading')}</p>}
               </div>
             )}
@@ -356,7 +381,20 @@ export default function RecurringClient(_props: { user?: any } = {}) {
             <Select label={t('features.common.account')} options={[{label: t('features.common.unspecified'), value: ''}, ...accounts.map(a => ({ label: a.name, value: a.id }))]} value={form.accountId} onChange={e => {
               const acct = accounts.find((account: any) => account.id === e.target.value);
               const nextCurrency = String(acct?.currency || 'TWD').toUpperCase();
-              setForm(f => ({ ...f, accountId: e.target.value, currency: nextCurrency, fxRate: nextCurrency === prefillCurrency ? (prefillFxRate || '') : '' }));
+              const currencyChanged = nextCurrency !== form.currency;
+              if (currencyChanged) {
+                fxRateRequestGuard.current.invalidate();
+                fxRateManuallyEditedRef.current = false;
+                setFxLoading(false);
+              }
+              const fxRate = resolveFxRateAfterAccountCurrencyChange({
+                currentRate: form.fxRate,
+                currentCurrency: form.currency,
+                nextCurrency,
+                preservedHistoricalCurrency: prefillCurrency,
+                historicalRate: prefillFxRate,
+              });
+              setForm(f => ({ ...f, accountId: e.target.value, currency: nextCurrency, fxRate }));
             }} />
             <Select label={t('features.recurring.frequency')} options={frequencyOptions} value={form.frequency} onChange={e => setForm(f => ({ ...f, frequency: e.target.value }))} />
             <Input label={t('features.recurring.startDate')} type="date" value={form.startDate} onChange={e => setForm(f => ({ ...f, startDate: e.target.value }))} />

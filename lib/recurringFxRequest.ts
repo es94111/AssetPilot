@@ -11,8 +11,33 @@ export interface FxRateRequestToken {
 
 export interface FxRateRequestContext {
   currentCurrency: string;
-  /** 此幣別的 historical rate 由建議表單保留；不接受即時查詢覆寫。 */
+  /** This currency's historical suggestion rate is preserved and cannot be overwritten. */
   preservedHistoricalCurrency: string | null;
+  /** The user typed a rate after this lookup began. */
+  fxRateManuallyEdited?: boolean;
+}
+
+export interface AccountCurrencyRateInput {
+  currentRate: string;
+  currentCurrency: string;
+  nextCurrency: string;
+  preservedHistoricalCurrency: string | null;
+  historicalRate: string | null;
+}
+
+/**
+ * Preserve the active rate when an account changes without changing currency.
+ * A real currency change resets to blank or restores the historical suggestion rate.
+ */
+export function resolveFxRateAfterAccountCurrencyChange(input: AccountCurrencyRateInput): string {
+  const currentCurrency = String(input.currentCurrency || '').toUpperCase();
+  const nextCurrency = String(input.nextCurrency || '').toUpperCase();
+  if (currentCurrency === nextCurrency) return input.currentRate;
+  const historicalCurrency = input.preservedHistoricalCurrency == null
+    ? null
+    : String(input.preservedHistoricalCurrency).toUpperCase();
+  if (nextCurrency === historicalCurrency) return input.historicalRate || '';
+  return '';
 }
 
 export class RecurringFxRequestGuard {
@@ -41,6 +66,7 @@ export class RecurringFxRequestGuard {
       : String(context.preservedHistoricalCurrency).toUpperCase();
     return this.isLatest(token)
       && token.currency === currentCurrency
-      && token.currency !== preservedCurrency;
+      && token.currency !== preservedCurrency
+      && context.fxRateManuallyEdited !== true;
   }
 }

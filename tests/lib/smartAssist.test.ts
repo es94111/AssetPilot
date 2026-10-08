@@ -20,6 +20,7 @@ if (!DB_URL) {
   const { uid } = await import('../../lib/userDefaults.ts');
   const { createLoginSession } = await import('../../lib/sessionHelpers.ts');
   const { NextRequest } = await import('next/server');
+  const { addDaysToIsoDate } = await import('../../lib/recurringSchedule.ts');
   const { todayInUserTz } = await import('../../lib/userTime.ts');
   const {
     isSmartAssistEnabled,
@@ -31,6 +32,7 @@ if (!DB_URL) {
   } = await import('../../lib/smartAssist.ts');
   const suggestionsRoute = await import('../../app/api/transactions/suggestions/route.ts');
   const recurringSuggestionsRoute = await import('../../app/api/recurring/suggestions/route.ts');
+  const recurringRoute = await import('../../app/api/recurring/route.ts');
   const dismissRoute = await import('../../app/api/recurring/suggestions/dismiss/route.ts');
   const smartAssistRoute = await import('../../app/api/user/settings/smart-assist/route.ts');
 
@@ -390,6 +392,38 @@ if (!DB_URL) {
       null,
       '智慧輔助設定端點不可隱式執行到期固定收支',
     );
+  });
+
+  test('建立建議配方時以帳本時區重新驗證起始日，拒絕已過期日期', async () => {
+    for (const date of recentMonthlyDates(4)) {
+      insertTx({ type: 'expense', amount: 15555, date, categoryId: rentId, note: 'stale-guard recurring' });
+    }
+    const suggestion = getRecurringSuggestions({ userId, userTimezone: 'Asia/Taipei' })
+      .suggestions.find((item) => item.amount === 15555);
+    assert.ok(suggestion, '應先有一筆目前有效的建議');
+    const pastStartDate = addDaysToIsoDate(today, -1);
+    assert.ok(pastStartDate);
+    const countBefore = Number(queryOne('SELECT COUNT(*) AS cnt FROM recurring WHERE user_id = ?', [userId])?.cnt) || 0;
+
+    const response = await recurringRoute.POST(authedRequest(
+      'POST',
+      'http://localhost/api/recurring',
+      {
+        type: suggestion.type,
+        amount: suggestion.suggestedAmount,
+        currency: suggestion.currency,
+        fxRate: suggestion.fxRate,
+        categoryId: suggestion.categoryId,
+        accountId: suggestion.accountId,
+        frequency: suggestion.frequency,
+        startDate: pastStartDate,
+        note: suggestion.sampleNote,
+        smartSuggestionSignature: suggestion.signature,
+      },
+    ));
+    assert.equal(response.status, 409, 'server must reject a suggestion whose start date passed');
+    const countAfter = Number(queryOne('SELECT COUNT(*) AS cnt FROM recurring WHERE user_id = ?', [userId])?.cnt) || 0;
+    assert.equal(countAfter, countBefore, 'expired suggestion must not create a recurring recipe');
   });
 
   test('未登入時建議端點回傳 401（不做匿名推論）', async () => {

@@ -229,6 +229,11 @@ export function detectRecurringPatterns(input: DetectRecurringInput): DetectedRe
 
     const match = matchFrequency(intervals);
     if (!match || match.confidence < RECURRING_DETECTION_MIN_CONFIDENCE) continue;
+    // Recurring schedules advance from the previous generated date and do not
+    // persist a separate month-end/day-of-month anchor. Dates 29-31 can clamp
+    // in shorter months and then drift (e.g. Aug 31 -> Sep 30 -> Oct 30), so do
+    // not suggest a monthly recipe the existing scheduler cannot represent.
+    if (match.frequency === 'monthly' && occurrences.some((tx) => Number(tx.date.slice(8, 10)) > 28)) continue;
 
     // Require recent activity in addition to a stable historical cadence. Otherwise
     // an old daily pattern could be mistaken for an active recipe and backfill years
@@ -243,6 +248,11 @@ export function detectRecurringPatterns(input: DetectRecurringInput): DetectedRe
     }
 
     const latest = occurrences[occurrences.length - 1];
+    const suggestedStartDate = getNextRecurringDate(latest.date, match.frequency);
+    // Even a recently active pattern can have its next occurrence already due
+    // after a long gap at the edge of the staleness window. Do not create a
+    // recipe that would immediately backfill a past-dated transaction.
+    if (!suggestedStartDate || (input.today && suggestedStartDate < input.today)) continue;
     suggestions.push({
       categoryId: latest.categoryId,
       categoryName: null,
@@ -262,7 +272,7 @@ export function detectRecurringPatterns(input: DetectRecurringInput): DetectedRe
       lastDate: latest.date,
       sampleNote: String(latest.note || ''),
       latestTransactionId: latest.id,
-      suggestedStartDate: getNextRecurringDate(latest.date, match.frequency) || latest.date,
+      suggestedStartDate,
       transactionIds: occurrences.map((tx) => tx.id),
     });
   }

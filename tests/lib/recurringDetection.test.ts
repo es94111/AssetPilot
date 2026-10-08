@@ -140,6 +140,30 @@ test('收入週期（每月薪資）同樣會被偵測', () => {
   assert.equal(result[0].frequency, 'monthly');
 });
 
+test('month-end monthly patterns are not suggested when the existing schedule would drift', () => {
+  const result = detectRecurringPatterns({
+    today: TODAY,
+    transactions: [
+      tx({ date: '2026-07-31', amount: 4800, note: 'rent end month' }),
+      tx({ date: '2026-08-31', amount: 4800, note: 'rent end month' }),
+      tx({ date: '2026-09-30', amount: 4800, note: 'rent end month' }),
+    ],
+  });
+  assert.deepEqual(result, [], 'month-end cadence cannot be represented without a stable anchor day');
+});
+
+test('patterns whose next occurrence is already overdue are not suggested', () => {
+  const result = detectRecurringPatterns({
+    today: '2026-10-08',
+    transactions: [
+      tx({ date: '2026-06-19', amount: 900, note: 'old monthly bill' }),
+      tx({ date: '2026-07-19', amount: 900, note: 'old monthly bill' }),
+      tx({ date: '2026-08-19', amount: 900, note: 'old monthly bill' }),
+    ],
+  });
+  assert.deepEqual(result, [], 'next occurrence 2026-09-19 is past due and would be backfilled immediately');
+});
+
 test('過期週期群組不再提示，避免確認後回補多年舊交易', () => {
   const result = detectRecurringPatterns({
     today: TODAY,
@@ -172,10 +196,10 @@ test('每週週期可辨識且容忍週末順延', () => {
   const result = detectRecurringPatterns({
     today: TODAY,
     transactions: [
-      tx({ date: '2026-09-06', amount: 300, note: '健身房' }),
-      tx({ date: '2026-09-13', amount: 300, note: '健身房' }),
-      tx({ date: '2026-09-20', amount: 300, note: '健身房' }),
+      tx({ date: '2026-09-14', amount: 300, note: '健身房' }),
+      tx({ date: '2026-09-21', amount: 300, note: '健身房' }),
       tx({ date: '2026-09-28', amount: 300, note: '健身房' }),
+      tx({ date: '2026-10-05', amount: 300, note: '健身房' }),
     ],
   });
   assert.equal(result.length, 1);
@@ -261,12 +285,12 @@ test('已存在的固定收支不會再被提示（filterExistingRecurring）', 
   const detected = detectRecurringPatterns({
     today: TODAY,
     transactions: [
-      tx({ date: '2026-07-01', categoryId: 'rent', accountId: 'bank', amount: 15000 }),
-      tx({ date: '2026-08-01', categoryId: 'rent', accountId: 'bank', amount: 15000 }),
-      tx({ date: '2026-09-01', categoryId: 'rent', accountId: 'bank', amount: 15000 }),
-      tx({ date: '2026-07-05', categoryId: 'gym', accountId: 'card-1', amount: 1200 }),
-      tx({ date: '2026-08-05', categoryId: 'gym', accountId: 'card-1', amount: 1200 }),
-      tx({ date: '2026-09-05', categoryId: 'gym', accountId: 'card-1', amount: 1200 }),
+      tx({ date: '2026-07-10', categoryId: 'rent', accountId: 'bank', amount: 15000 }),
+      tx({ date: '2026-08-10', categoryId: 'rent', accountId: 'bank', amount: 15000 }),
+      tx({ date: '2026-09-10', categoryId: 'rent', accountId: 'bank', amount: 15000 }),
+      tx({ date: '2026-07-15', categoryId: 'gym', accountId: 'card-1', amount: 1200 }),
+      tx({ date: '2026-08-15', categoryId: 'gym', accountId: 'card-1', amount: 1200 }),
+      tx({ date: '2026-09-15', categoryId: 'gym', accountId: 'card-1', amount: 1200 }),
     ],
   });
   assert.equal(detected.length, 2);
